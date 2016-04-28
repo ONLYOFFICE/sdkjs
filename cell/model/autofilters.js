@@ -158,7 +158,8 @@
 			this.automaticRowCount = null;
 			this.displayName  = null;
             this.isTextFilter = null;
-
+            this.colorsFill = null;
+            this.colorsFont = null;
 			
 			return this;
 		}
@@ -179,6 +180,8 @@
 					case this.Properties.automaticRowCount: return this.automaticRowCount; break;
 					case this.Properties.displayName: return this.displayName; break;
                     case this.Properties.isTextFilter: return this.isTextFilter; break;
+                    case this.Properties.colorsFill: return this.colorsFill; break;
+                    case this.Properties.colorsFont: return this.colorsFont; break;
 				}
 
 				return null;
@@ -191,6 +194,8 @@
 					case this.Properties.automaticRowCount: this.automaticRowCount = value;break;
 					case this.Properties.displayName: this.displayName = value;break;
                     case this.Properties.isTextFilter: this.IsTextFilter = value;break;
+                    case this.Properties.colorsFill: this.colorsFill = value;break;
+                    case this.Properties.colorsFont: this.colorsFont = value;break;
 				}
 			},
 			
@@ -203,6 +208,8 @@
 			
 			asc_setDiplayName : function(val) { this.displayName = val; },
             asc_setIsTextFilter : function(val) { this.isTextFilter = val; },
+            asc_setColorsFill : function(val) { this.colorsFill = val; },
+            asc_setColorsFont : function(val) { this.colorsFont = val; },
 			
 			asc_getCellId : function() { return this.cellId; },
 			asc_getValues : function() { return this.values; },
@@ -211,6 +218,8 @@
 			asc_getSortState : function() { return this.sortVal; },
 			asc_getDisplayName : function(val) { return this.displayName; },
             asc_getIsTextFilter : function(val) { return this.IsTextFilter; },
+            asc_getColorsFill : function(val) { return this.colorsFill; },
+            asc_getColorsFont : function(val) { return this.colorsFont; }
 		};
 		
 		var g_oAutoFilterObj = {
@@ -4666,6 +4675,8 @@
 		prot["asc_getCellId"]					= prot.asc_getCellId;
 		prot["asc_getDisplayName"]				= prot.asc_getDisplayName;
         prot["asc_getIsTextFilter"]				= prot.asc_getIsTextFilter;
+        prot["asc_getColorsFill"]				= prot.asc_getColorsFill;
+        prot["asc_getColorsFont"]				= prot.asc_getColorsFont;
 		
 		window["AscCommonExcel"].AutoFilterObj = AutoFilterObj;
 		prot									= AutoFilterObj.prototype;
