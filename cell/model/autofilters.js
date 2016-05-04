@@ -574,7 +574,7 @@
 							var isDateTimeFormat = cell.getNumFormat().isDateTimeFormat();
 							var currentValue = isDateTimeFormat ? cell.getValueWithoutFormat() : cell.getValueWithFormat();
 							
-							var isSetHidden = newFilterColumn.isHideValue(currentValue, isDateTimeFormat);
+							var isSetHidden = newFilterColumn.isHideValue(currentValue, isDateTimeFormat, null, cell);
 							
 							if(isSetHidden !== worksheet.getRowHidden(i) && minChangeRow === null)
 								minChangeRow = i;
@@ -2454,7 +2454,7 @@
 						var isDateTimeFormat = cell.getNumFormat().isDateTimeFormat();
 						var val = isDateTimeFormat ? cell.getValueWithoutFormat() : cell.getValueWithFormat()
 
-						if(filterColumns[j].isHideValue(val, isDateTimeFormat))
+						if(filterColumns[j].isHideValue(val, isDateTimeFormat, null, cell))
 						{
 							result = true;
 							break;
@@ -3481,7 +3481,7 @@
 								//filter current button
 								var checkValue = isDateTimeFormat ? val : text;
 								if (!currentFilterColumn.Top10 && !currentFilterColumn.CustomFiltersObj &&
-									!currentFilterColumn.ColorFilter && !currentFilterColumn.isHideValue(checkValue, isDateTimeFormat))
+									!currentFilterColumn.ColorFilter && !currentFilterColumn.isHideValue(checkValue, isDateTimeFormat, null, cell))
 								{
 									if(isOpenHiddenRows)
 										worksheet.setRowHidden(false, i, i);
