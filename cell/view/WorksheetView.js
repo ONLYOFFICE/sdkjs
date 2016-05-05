@@ -12720,10 +12720,20 @@
 
             if(!cell)
             {
-                continue;
+                //добавляем без цвета ячейку
+				if(true !== alreadyAddColors[null])
+				{
+					alreadyAddColors[null] = true;
+					
+					var ascColor = new Asc.asc_CColor();
+					ascColor.asc_putType(Asc.c_oAscColor.COLOR_TYPE_NONE);
+					res.colors.push(ascColor);
+				}
+				
+				continue;
             }
 
-            if(cell.isEmptyText() === false)
+            if(false === cell.isEmptyText())
             {
                 var type = cell.getType();
                 if(type === 0)
@@ -12736,12 +12746,12 @@
                 }
             }
 
-            if(cell.oValue.multiText !== null)
+            if(null !== cell.oValue.multiText)
             {
                 for(var j = 0; j < cell.oValue.multiText.length; j++)
                 {
                     var fontColor = cell.oValue.multiText[j].format ? cell.oValue.multiText[j].format.c : null;
-                    if(fontColor !== null && alreadyAddFontColors[fontColor.rgb] !== true && g_oColorManager.isEqual(fontColor, g_oDefaultFont.c) === false)
+                    if(null !== fontColor && true !== alreadyAddFontColors[fontColor.rgb] && false === g_oColorManager.isEqual(fontColor, g_oDefaultFont.c))
                     {
                         var ascFontColor = getAscColor(fontColor);
 						
@@ -12753,7 +12763,7 @@
             else
             {
                 var fontColor =  cell.xfs && cell.xfs.font ? cell.xfs.font.c : null;
-                if(fontColor !== null && alreadyAddFontColors[fontColor.rgb] !== true && g_oColorManager.isEqual(fontColor, g_oDefaultFont.c) === false)
+                if(null !== fontColor && true !== alreadyAddFontColors[fontColor.rgb] && false === g_oColorManager.isEqual(fontColor, g_oDefaultFont.c))
                 {
                     var ascFontColor = getAscColor(fontColor);
 					
@@ -12763,13 +12773,21 @@
             }
 
             var color = cell.getStyle();
-            if(color !== null && color.fill && color.fill.bg && alreadyAddColors[color.fill.bg.rgb] !== true)
+            if(null !== color && color.fill && color.fill.bg && true !== alreadyAddColors[color.fill.bg.rgb])
             {
                 var ascColor = getAscColor(color.fill.bg);
 				
 				res.colors.push(ascColor);
                 alreadyAddColors[color.fill.bg.rgb] = true;
             }
+			else if(null === color && true !== alreadyAddColors[null])
+			{
+				alreadyAddColors[null] = true;
+				
+				var ascColor = new Asc.asc_CColor();
+				ascColor.asc_putType(Asc.c_oAscColor.COLOR_TYPE_NONE);
+				res.colors.push(ascColor);
+			}
         }
 
         if(tempDigit > tempText)
