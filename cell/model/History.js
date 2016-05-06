@@ -138,6 +138,7 @@ function (window, undefined) {
 	window['AscCH'].historyitem_AutoFilter_ChangeTableInfo = 12;
 	window['AscCH'].historyitem_AutoFilter_ChangeTableRef = 13;
 	window['AscCH'].historyitem_AutoFilter_ChangeTableName = 14;
+	window['AscCH'].historyitem_AutoFilter_ClearFilterColumn = 15;
 })(window);
 
 
