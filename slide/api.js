@@ -4745,6 +4745,10 @@ background-repeat: no-repeat;\
         }
     };
 
+    asc_docs_api.prototype.asc_replaceLoadImageCallback = function(fCallback){
+        this.asyncImageEndLoaded2 = fCallback;
+    };
+
     asc_docs_api.prototype.asyncImageEndLoaded = function(_image)
     {
         // отжать заморозку меню

@@ -44,10 +44,7 @@ function CImageShape()
     this.blipFill = null;
     this.style    = null;
 
-    this.cursorTypes = [];
 
-
-    this.selected = false;
 
     this.Id = AscCommon.g_oIdCounter.Get_NewId();
     AscCommon.g_oTableId.Add( this, this.Id );
@@ -690,6 +687,16 @@ CImageShape.prototype.Undo = function(data)
 {
     switch(data.Type)
     {
+        case AscDFH.historyitem_ImageShapeSetData:
+        {
+            this.m_sData = data.oldData;
+            break;
+        }
+        case AscDFH.historyitem_ImageShapeSetApplicationId:
+        {
+            this.m_sData = data.oldId;
+            break;
+        }
         case AscDFH.historyitem_AutoShapes_SetBFromSerialize:
         {
             this.fromSerialize = data.oldPr;
@@ -771,6 +778,17 @@ CImageShape.prototype.Redo = function(data)
 {
     switch(data.Type)
     {
+
+        case AscDFH.historyitem_ImageShapeSetData:
+        {
+            this.m_sData = data.newData;
+            break;
+        }
+        case AscDFH.historyitem_ImageShapeSetApplicationId:
+        {
+            this.m_sData = data.newId;
+            break;
+        }
         case AscDFH.historyitem_AutoShapes_SetBFromSerialize:
         {
             this.fromSerialize = data.newPr;
@@ -853,6 +871,17 @@ CImageShape.prototype.Save_Changes = function(data, w)
     w.WriteLong(data.Type);
     switch(data.Type)
     {
+        case AscDFH.historyitem_ImageShapeSetData:
+        {
+            AscFormat.writeString(w, data.newData);
+            break;
+        }
+        case AscDFH.historyitem_ImageShapeSetApplicationId:
+        {
+
+            AscFormat.writeString(w, data.newId);
+            break;
+        }
         case AscDFH.historyitem_AutoShapes_SetBFromSerialize:
         {
             AscFormat.writeBool(w, data.newPr);
@@ -927,6 +956,16 @@ CImageShape.prototype.Load_Changes = function(r)
     var type = r.GetLong();
     switch(type)
     {
+        case AscDFH.historyitem_ImageShapeSetData:
+        {
+            this.m_sData = AscFormat.readString(r);
+            break;
+        }
+        case AscDFH.historyitem_ImageShapeSetApplicationId:
+        {
+            this.m_sApplicationId = AscFormat.readString(r);
+            break;
+        }
         case AscDFH.historyitem_AutoShapes_SetBFromSerialize:
         {
             this.fromSerialize = AscFormat.readBool(r);

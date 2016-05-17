@@ -280,6 +280,7 @@ CGraphicObjects.prototype =
     },
 
     createImage: DrawingObjectsController.prototype.createImage,
+    createOleObject: DrawingObjectsController.prototype.createOleObject,
     createTextArt: DrawingObjectsController.prototype.createTextArt,
     getChartObject: DrawingObjectsController.prototype.getChartObject,
     getChartSpace2: DrawingObjectsController.prototype.getChartSpace2,
@@ -1239,6 +1240,16 @@ CGraphicObjects.prototype =
         this.document.OnMouseUp(e, x, y, pageIndex);
     },
 
+    handleOleObjectDoubleClick: function(drawing, oleObject, e, x, y, pageIndex)
+    {
+        if(false === this.document.Document_Is_SelectionLocked(changestype_Drawing_Props))
+        {
+            editor.asc_pluginRun(oleObject.m_sApplicationId, oleObject.m_sData);
+        }
+        this.changeCurrentState(new AscFormat.NullState(this));
+        this.document.OnMouseUp(e, x, y, pageIndex);
+    },
+
     handleMathDrawingDoubleClick : function(drawing, e, x, y, pageIndex)
     {
         drawing.Convert_ToMathObject();
@@ -1276,6 +1287,41 @@ CGraphicObjects.prototype =
                 {
                     this.resetSelection2();
                     this.document.Add_InlineImage(W, H, Img, Chart, bFlow );
+                }
+            }
+        }
+    },
+
+    addOleObject: function(W, H, Img, Data, sApplicationId)
+    {
+        var content = this.getTargetDocContent();
+        if(content)
+        {
+            if(!content.bPresentation){
+                content.Add_OleObject(W, H, Img, Data, sApplicationId);
+            }
+            else{
+                if(this.selectedObjects.length > 0)
+                {
+                    this.resetSelection2();
+                    this.document.Add_OleObject(W, H, Img, Data, sApplicationId);
+                }
+            }
+        }
+        else
+        {
+            if(this.selectedObjects[0] && this.selectedObjects[0].parent && this.selectedObjects[0].parent.Is_Inline())
+            {
+                this.resetInternalSelection();
+                this.document.Remove(1, true);
+                this.document.Add_OleObject(W, H, Img, Data, sApplicationId);
+            }
+            else
+            {
+                if(this.selectedObjects.length > 0)
+                {
+                    this.resetSelection2();
+                    this.document.Add_OleObject(W, H, Img, Data, sApplicationId);
                 }
             }
         }
@@ -1960,7 +2006,7 @@ CGraphicObjects.prototype =
     {
         if(drawing && drawing.GraphicObj)
         {
-            if(drawing.GraphicObj.getObjectType() !== AscDFH.historyitem_type_ImageShape && drawing.GraphicObj.getObjectType() !== AscDFH.historyitem_type_ChartSpace)
+            if(drawing.GraphicObj.getObjectType() !== AscDFH.historyitem_type_ImageShape && drawing.GraphicObj.getObjectType() !== AscDFH.historyitem_type_OleObject && drawing.GraphicObj.getObjectType() !== AscDFH.historyitem_type_ChartSpace)
                 return null;
         }
         this.handleEventMode = HANDLE_EVENT_MODE_CURSOR;
@@ -1981,7 +2027,7 @@ CGraphicObjects.prototype =
                 }
                 else
                 {
-                    if(object.getObjectType() === AscDFH.historyitem_type_ImageShape && object.parent)
+                    if((object.getObjectType() === AscDFH.historyitem_type_ImageShape || object.getObjectType() === AscDFH.historyitem_type_OleObject) && object.parent)
                     {
                         var oShape = object.parent.isShapeChild(true);
                         if(oShape)

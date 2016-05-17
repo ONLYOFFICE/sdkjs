@@ -15207,6 +15207,7 @@ CParagraphRevisionsChangesChecker.prototype.Add_Drawing = function(Drawing)
             }
             case AscDFH.historyitem_type_ImageShape:
             case AscDFH.historyitem_type_Image:
+            case AscDFH.historyitem_type_OleObject:
             {
                 this.AddRemove.Value.push(c_oAscRevisionsObjectType.Image);
                 break;

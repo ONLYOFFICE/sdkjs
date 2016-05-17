@@ -36,16 +36,9 @@ var History = AscCommon.History;
 function CGraphicFrame()
 {
     CGraphicFrame.superclass.constructor.call(this);
-    this.parent = null;
     this.graphicObject = null;
     this.nvGraphicFramePr = null;
-    this.spPr = null;
-    this.group = null;
 
-    this.x = null;
-    this.y = null;
-    this.extX = null;
-    this.extY = null;
     this.compiledHierarchy = [];
     this.Pages      = [];
     this.Id = AscCommon.g_oIdCounter.Get_NewId();
@@ -60,7 +53,6 @@ function CGraphicFrame()
         recalculateTable: true
     };
     this.RecalcInfo = {};
-    this.bDeleted = true;
 }
 
 AscCommon.extendClass(CGraphicFrame, AscFormat.CGraphicObjectBase);
