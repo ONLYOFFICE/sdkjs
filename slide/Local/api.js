@@ -30,16 +30,16 @@ var c_oAscError = Asc.c_oAscError;
 /////////////////////////////////////////////////////////
 //////////////        OPEN       ////////////////////////
 /////////////////////////////////////////////////////////
-asc_docs_api.prototype._OfflineAppDocumentStartLoad = function()
+Asc['asc_docs_api'].prototype._OfflineAppDocumentStartLoad = function()
 {
 	this.asc_registerCallback('asc_onDocumentContentReady', function(){
 		DesktopOfflineUpdateLocalName(editor);
 	});
-	
-	History.UserSaveMode = true;
+
+	AscCommon.History.UserSaveMode = true;
     window["AscDesktopEditor"]["LocalStartOpen"]();
 };
-asc_docs_api.prototype._OfflineAppDocumentEndLoad = function(_url, _data)
+Asc['asc_docs_api'].prototype._OfflineAppDocumentEndLoad = function(_url, _data)
 {
 	AscCommon.g_oIdCounter.m_sUserId = window["AscDesktopEditor"]["CheckUserId"]();
 	if (_data == "")
@@ -69,7 +69,7 @@ window["DesktopOfflineAppDocumentEndLoad"] = function(_url, _data)
 /////////////////////////////////////////////////////////
 //////////////        CHANGES       /////////////////////
 /////////////////////////////////////////////////////////
-CHistory.prototype.Reset_SavedIndex = function(IsUserSave)
+AscCommon.CHistory.prototype.Reset_SavedIndex = function(IsUserSave)
 {
 	if (true === this.Is_UserSaveMode())
 	{
@@ -86,7 +86,7 @@ CHistory.prototype.Reset_SavedIndex = function(IsUserSave)
 		this.ForceSave  = false;
 	}
 };
-CHistory.prototype.Have_Changes = function(IsNotUserSave, IsNoSavedNoModifyed)
+AscCommon.CHistory.prototype.Have_Changes = function(IsNotUserSave, IsNoSavedNoModifyed)
 {
 	if (true === this.Is_UserSaveMode() && true !== IsNotUserSave)
 	{
@@ -129,32 +129,36 @@ window["DesktopOfflineAppDocumentApplyChanges"] = function(_changes)
 /////////////////////////////////////////////////////////
 ////////////////        SAVE       //////////////////////
 /////////////////////////////////////////////////////////
-asc_docs_api.prototype.SetDocumentModified = function(bValue)
+Asc['asc_docs_api'].prototype.SetDocumentModified = function(bValue)
 {
     this.isDocumentModify = bValue;
     this.asc_fireCallback("asc_onDocumentModifiedChanged");
 
     if (undefined !== window["AscDesktopEditor"])
     {
-        window["AscDesktopEditor"]["onDocumentModifiedChanged"](History ? History.Have_Changes(undefined, true) : bValue);
+        window["AscDesktopEditor"]["onDocumentModifiedChanged"](AscCommon.History ? AscCommon.History.Have_Changes(undefined, true) : bValue);
     }
 };
 
-asc_docs_api.prototype.asc_Save = function (isNoUserSave, isSaveAs)
+Asc['asc_docs_api'].prototype.asc_Save = function (isNoUserSave, isSaveAs)
 {
     if (true !== isNoUserSave)
         this.IsUserSave = true;
 	
 	if (this.IsUserSave)
 	{
-		this.LastUserSavedIndex = History.UserSavedIndex;
+		this.LastUserSavedIndex = AscCommon.History.UserSavedIndex;
 	}
 
     if (true === this.canSave && !this.isLongAction())
 	{
 		var _isNaturalSave = this.IsUserSave;
 		this.canSave = false;
-		this.CoAuthoringApi.askSaveChanges(OnSave_Callback);
+
+		var t = this;
+		this.CoAuthoringApi.askSaveChanges(function(e) {
+			t.onSaveCallback(e);
+		});
 		
 		if (this.CoAuthoringApi.onUnSaveLock)
 			this.CoAuthoringApi.onUnSaveLock();
@@ -181,7 +185,7 @@ window["DesktopOfflineAppDocumentEndSave"] = function(error)
 	if (0 == error)
 		DesktopOfflineUpdateLocalName(editor);
 	else
-		History.UserSavedIndex = editor.LastUserSavedIndex;
+		AscCommon.History.UserSavedIndex = editor.LastUserSavedIndex;
 	
 	editor.UpdateInterfaceState();
 	editor.LastUserSavedIndex = undefined;
@@ -189,42 +193,42 @@ window["DesktopOfflineAppDocumentEndSave"] = function(error)
 	if (2 == error)
 		editor.sendEvent("asc_onError", c_oAscError.ID.ConvertationError, c_oAscError.Level.Critical);
 };
-asc_docs_api.prototype.asc_DownloadAs = function(typeFile, bIsDownloadEvent) 
+Asc['asc_docs_api'].prototype.asc_DownloadAs = function(typeFile, bIsDownloadEvent) 
 {
 	this.asc_Save(false, true);
 };
 
-asc_docs_api.prototype.AddImageUrl = function(url, imgProp)
+Asc['asc_docs_api'].prototype.AddImageUrl = function(url, imgProp)
 {
 	var _url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](url);
 	this.AddImageUrlAction(AscCommon.g_oDocumentUrls.getImageUrl(_url), imgProp);
 };
-asc_docs_api.prototype.AddImage = function()
+Asc['asc_docs_api'].prototype.AddImage = function()
 {
 	window["AscDesktopEditor"]["LocalFileGetImageUrlFromOpenFileDialog"]();
 };
-asc_docs_api.prototype.asc_addImage = function()
+Asc['asc_docs_api'].prototype.asc_addImage = function()
 {
   window["AscDesktopEditor"]["LocalFileGetImageUrlFromOpenFileDialog"]();
 };
-asc_docs_api.prototype.asc_isOffline = function()
+Asc['asc_docs_api'].prototype.asc_isOffline = function()
 {
 	return true;
 };
-asc_docs_api.prototype.SetThemesPath = function(path)
+Asc['asc_docs_api'].prototype.SetThemesPath = function(path)
 {
 	this.ThemeLoader.ThemesUrl = path;
 	this.ThemeLoader.ThemesUrlAbs = path;
 };
 
-asc_docs_api.prototype["asc_addImage"] = asc_docs_api.prototype.asc_addImage;
-asc_docs_api.prototype["AddImageUrl"] = asc_docs_api.prototype.AddImageUrl;
-asc_docs_api.prototype["AddImage"] = asc_docs_api.prototype.AddImage;
-asc_docs_api.prototype["asc_Save"] = asc_docs_api.prototype.asc_Save;
-asc_docs_api.prototype["asc_DownloadAs"] = asc_docs_api.prototype.asc_DownloadAs;
-asc_docs_api.prototype["asc_isOffline"] = asc_docs_api.prototype.asc_isOffline;
-asc_docs_api.prototype["SetDocumentModified"] = asc_docs_api.prototype.SetDocumentModified;
-asc_docs_api.prototype["SetThemesPath"] = asc_docs_api.prototype.SetThemesPath;
+Asc['asc_docs_api'].prototype["asc_addImage"] = Asc['asc_docs_api'].prototype.asc_addImage;
+Asc['asc_docs_api'].prototype["AddImageUrl"] = Asc['asc_docs_api'].prototype.AddImageUrl;
+Asc['asc_docs_api'].prototype["AddImage"] = Asc['asc_docs_api'].prototype.AddImage;
+Asc['asc_docs_api'].prototype["asc_Save"] = Asc['asc_docs_api'].prototype.asc_Save;
+Asc['asc_docs_api'].prototype["asc_DownloadAs"] = Asc['asc_docs_api'].prototype.asc_DownloadAs;
+Asc['asc_docs_api'].prototype["asc_isOffline"] = Asc['asc_docs_api'].prototype.asc_isOffline;
+Asc['asc_docs_api'].prototype["SetDocumentModified"] = Asc['asc_docs_api'].prototype.SetDocumentModified;
+Asc['asc_docs_api'].prototype["SetThemesPath"] = Asc['asc_docs_api'].prototype.SetThemesPath;
 
 window["DesktopOfflineAppDocumentAddImageEnd"] = function(url)
 {

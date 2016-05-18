@@ -32,6 +32,7 @@
 // Import
 var g_oTableId = AscCommon.g_oTableId;
 var g_oTextMeasurer = AscCommon.g_oTextMeasurer;
+var History = AscCommon.History;
 
 var c_oAscShdNil = Asc.c_oAscShdNil;
 
@@ -1156,32 +1157,10 @@ ParaRun.prototype.Recalculate_CurPos = function(X, Y, CurrentRun, _CurRange, _Cu
             var Item = this.Content[Pos];
             var ItemType = Item.Type;
 
-            switch( ItemType )
-            {
-                case para_Text:
-                case para_Space:
-                case para_Sym:
-                case para_PageNum:
-                case para_Tab:
-                case para_End:
-                case para_NewLine:
-                case para_Math_Text:
-                case para_Math_BreakOperator:
-                case para_Math_Placeholder:
-                case para_Math_Ampersand:
-                {
-                    X += Item.Get_WidthVisible();
-                    break;
-                }
-                case para_Drawing:
-                {
-                    if ( drawing_Inline != Item.DrawingType )
-                        break;
+            if (para_Drawing === ItemType && drawing_Inline !== Item.DrawingType)
+                continue;
 
-                    X += Item.Get_WidthVisible();
-                    break;
-                }
-            }
+            X += Item.Get_WidthVisible();
         }
     }
 
@@ -1476,7 +1455,7 @@ ParaRun.prototype.Split = function (ContentPos, Depth)
 ParaRun.prototype.Split2 = function(CurPos, Parent, ParentPos)
 {
     History.Add(this, {Type : AscDFH.historyitem_ParaRun_OnStartSplit, Pos : CurPos});
-    CollaborativeEditing.OnStart_SplitRun(this, CurPos);
+    AscCommon.CollaborativeEditing.OnStart_SplitRun(this, CurPos);
 
     // Если задается Parent и ParentPos, тогда ран автоматически добавляется в родительский класс
     var UpdateParent    = (undefined !== Parent && undefined !== ParentPos && this === Parent.Content[ParentPos] ? true : false);
@@ -1614,7 +1593,7 @@ ParaRun.prototype.Split2 = function(CurPos, Parent, ParentPos)
     }
 
     History.Add(this, {Type : AscDFH.historyitem_ParaRun_OnEndSplit, NewRun : NewRun});
-    CollaborativeEditing.OnEnd_SplitRun(NewRun);
+    AscCommon.CollaborativeEditing.OnEnd_SplitRun(NewRun);
     return NewRun;
 };
 
@@ -2294,12 +2273,16 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
             {
                 case para_Sym:
                 case para_Text:
+                case para_FootnoteReference:
                 {
                     // Отмечаем, что началось слово
                     StartWord = true;
 
                     // При проверке, убирается ли слово, мы должны учитывать ширину предшествующих пробелов.
                     var LetterLen = Item.Width / TEXTWIDTH_DIVIDER;//var LetterLen = Item.Get_Width();
+                    
+                    if (para_FootnoteReference === ItemType)
+                        PRS.Add_FootnoteReference(Item, Pos);
 
                     if (true !== Word)
                     {
@@ -3133,6 +3116,7 @@ ParaRun.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _Cur
             case para_Sym:
             case para_Text:
             case para_PageNum:
+            case para_FootnoteReference:
             {
                 UpdateLineMetricsText = true;
                 break;
@@ -3230,6 +3214,7 @@ ParaRun.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
         {
             case para_Sym:
             case para_Text:
+            case para_FootnoteReference:
             {
                 PRSC.Letters++;
 
@@ -3380,6 +3365,7 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
         {
             case para_Sym:
             case para_Text:
+            case para_FootnoteReference:
             {
                 var WidthVisible = 0;
 
@@ -4277,6 +4263,7 @@ ParaRun.prototype.Draw_HighLights = function(PDSH)
             case para_Math_BreakOperator:
             case para_Math_Ampersand:
             case para_Sym:
+            case para_FootnoteReference:
             {
                 if ( para_Drawing === ItemType && !Item.Is_Inline() )
                     break;
@@ -4437,19 +4424,25 @@ ParaRun.prototype.Draw_Elements = function(PDSE)
         var ItemType = Item.Type;
 
         var TempY = Y;
-        switch( CurTextPr.VertAlign )
+
+        if (ItemType === para_FootnoteReference)
         {
-            case AscCommon.vertalign_SubScript:
+            Y -= vertalign_Koef_Super * CurTextPr.FontSize * g_dKoef_pt_to_mm;
+        }
+        else
+        {
+            switch (CurTextPr.VertAlign)
             {
-                Y -= vertalign_Koef_Sub * CurTextPr.FontSize * g_dKoef_pt_to_mm;
-
-                break;
-            }
-            case AscCommon.vertalign_SuperScript:
-            {
-                Y -= vertalign_Koef_Super * CurTextPr.FontSize * g_dKoef_pt_to_mm;
-
-                break;
+                case AscCommon.vertalign_SubScript:
+                {
+                    Y -= vertalign_Koef_Sub * CurTextPr.FontSize * g_dKoef_pt_to_mm;
+                    break;
+                }
+                case AscCommon.vertalign_SuperScript:
+                {
+                    Y -= vertalign_Koef_Super * CurTextPr.FontSize * g_dKoef_pt_to_mm;
+                    break;
+                }
             }
         }
 
@@ -4460,6 +4453,7 @@ ParaRun.prototype.Draw_Elements = function(PDSE)
             case para_Tab:
             case para_Text:
             case para_Sym:
+            case para_FootnoteReference:
             {
                 if (para_Tab === ItemType)
                 {
@@ -4469,7 +4463,7 @@ ParaRun.prototype.Draw_Elements = function(PDSE)
 
                 if (para_Drawing != ItemType || Item.Is_Inline())
                 {
-                    Item.Draw(X, Y - this.YOffset, pGraphics);
+                    Item.Draw(X, Y - this.YOffset, pGraphics, PDSE);
                     X += Item.Get_WidthVisible();
                 }
 
@@ -4730,6 +4724,7 @@ ParaRun.prototype.Draw_Lines = function(PDSL)
             case para_Tab:
             case para_Text:
             case para_Sym:
+            case para_FootnoteReference:
             {
                 if ( para_Drawing != ItemType || Item.Is_Inline() )
                 {
@@ -6235,7 +6230,7 @@ ParaRun.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
 ParaRun.prototype.Split_Run = function(Pos)
 {
     History.Add(this, {Type : AscDFH.historyitem_ParaRun_OnStartSplit, Pos : Pos});
-    CollaborativeEditing.OnStart_SplitRun(this, Pos);
+    AscCommon.CollaborativeEditing.OnStart_SplitRun(this, Pos);
 
     // Создаем новый ран
     var bMathRun = this.Type == para_Math_Run;
@@ -6317,7 +6312,7 @@ ParaRun.prototype.Split_Run = function(Pos)
     }
 
     History.Add(this, {Type : AscDFH.historyitem_ParaRun_OnEndSplit, NewRun : NewRun});
-    CollaborativeEditing.OnEnd_SplitRun(NewRun);
+    AscCommon.CollaborativeEditing.OnEnd_SplitRun(NewRun);
     return NewRun;
 };
 
@@ -8632,12 +8627,12 @@ ParaRun.prototype.Load_Changes = function(Reader, Reader2, Color)
                     {
                         this.CollaborativeMarks.Update_OnAdd( Pos );
                         this.CollaborativeMarks.Add( Pos, Pos + 1, Color );
-                        CollaborativeEditing.Add_ChangedClass(this);
+                        AscCommon.CollaborativeEditing.Add_ChangedClass(this);
                     }
 
                     this.Content.splice(Pos, 0, Element);
                     this.private_UpdatePositionsOnAdd(Pos);
-                    CollaborativeEditing.Update_DocumentPositionsOnAdd(this, Pos);
+                    AscCommon.CollaborativeEditing.Update_DocumentPositionsOnAdd(this, Pos);
                 }
             }
 
@@ -8664,7 +8659,7 @@ ParaRun.prototype.Load_Changes = function(Reader, Reader2, Color)
                 this.CollaborativeMarks.Update_OnRemove(ChangesPos, 1);
                 this.Content.splice(ChangesPos, 1);
                 this.private_UpdatePositionsOnRemove(ChangesPos, 1);
-                CollaborativeEditing.Update_DocumentPositionsOnRemove(this, ChangesPos, 1);
+                AscCommon.CollaborativeEditing.Update_DocumentPositionsOnRemove(this, ChangesPos, 1);
             }
 
             this.RecalcInfo.Measure = true;
@@ -8681,11 +8676,11 @@ ParaRun.prototype.Load_Changes = function(Reader, Reader2, Color)
             this.Pr.Read_FromBinary( Reader );
 
             var unifill = this.Pr.Unifill;
-            if(typeof CollaborativeEditing !== "undefined")
+            if(typeof AscCommon.CollaborativeEditing !== "undefined")
             {
                 if(unifill && unifill.fill && unifill.fill.type === Asc.c_oAscFill.FILL_TYPE_BLIP && typeof unifill.fill.RasterImageId === "string" && unifill.fill.RasterImageId.length > 0)
                 {
-                    CollaborativeEditing.Add_NewImage(AscCommon.getFullImageSrc2(unifill.fill.RasterImageId));
+                    AscCommon.CollaborativeEditing.Add_NewImage(AscCommon.getFullImageSrc2(unifill.fill.RasterImageId));
                 }
             }
 
@@ -8800,11 +8795,11 @@ ParaRun.prototype.Load_Changes = function(Reader, Reader2, Color)
                 var unifill = new AscFormat.CUniFill();
                 unifill.Read_FromBinary(Reader);
                 this.Pr.Unifill = unifill;
-                if(typeof CollaborativeEditing !== "undefined")
+                if(typeof AscCommon.CollaborativeEditing !== "undefined")
                 {
                     if(unifill.fill && unifill.fill.type === Asc.c_oAscFill.FILL_TYPE_BLIP && typeof unifill.fill.RasterImageId === "string" && unifill.fill.RasterImageId.length > 0)
                     {
-                        CollaborativeEditing.Add_NewImage(AscCommon.getFullImageSrc2(unifill.fill.RasterImageId));
+                        AscCommon.CollaborativeEditing.Add_NewImage(AscCommon.getFullImageSrc2(unifill.fill.RasterImageId));
                     }
                 }
             }
@@ -9301,14 +9296,14 @@ ParaRun.prototype.Load_Changes = function(Reader, Reader2, Color)
         {
             // Long
             var Pos = Reader.GetLong();
-            CollaborativeEditing.OnStart_SplitRun(this, Pos);
+            AscCommon.CollaborativeEditing.OnStart_SplitRun(this, Pos);
             break;
         }
         case AscDFH.historyitem_ParaRun_OnEndSplit:
         {
             // String2
             var RunId = Reader.GetString2();
-            CollaborativeEditing.OnEnd_SplitRun(g_oTableId.Get_ById(RunId));
+            AscCommon.CollaborativeEditing.OnEnd_SplitRun(g_oTableId.Get_ById(RunId));
             break;
         }
         case AscDFH.historyitem_ParaRun_MathAlnAt:
@@ -9455,7 +9450,7 @@ ParaRun.prototype.private_IsCollPrChangeMine = function()
 ParaRun.prototype.private_AddCollPrChangeOther = function(Color)
 {
     this.CollPrChangeOther = Color;
-    CollaborativeEditing.Add_ChangedClass(this);
+    AscCommon.CollaborativeEditing.Add_ChangedClass(this);
 };
 ParaRun.prototype.private_GetCollPrChangeOther = function()
 {
@@ -11035,3 +11030,12 @@ CReviewInfo.prototype.Get_UserId = function()
 {
     return this.UserId;
 };
+
+function CanUpdatePosition(Para, Run) {
+    return (Para && true === Para.Is_UseInDocument() && true === Run.Is_UseInParagraph());
+}
+
+//--------------------------------------------------------export----------------------------------------------------
+window['AscCommonWord'] = window['AscCommonWord'] || {};
+window['AscCommonWord'].ParaRun = ParaRun;
+window['AscCommonWord'].CanUpdatePosition = CanUpdatePosition;

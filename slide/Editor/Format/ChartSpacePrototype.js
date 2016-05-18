@@ -175,7 +175,6 @@ CChartSpace.prototype.getNumByCardDirection = CShape.prototype.getNumByCardDirec
 CChartSpace.prototype.getCardDirectionByNum = CShape.prototype.getCardDirectionByNum;
 CChartSpace.prototype.getResizeCoefficients = CShape.prototype.getResizeCoefficients;
 CChartSpace.prototype.check_bounds = CShape.prototype.check_bounds;
-CChartSpace.prototype.normalize = CShape.prototype.normalize;
 CChartSpace.prototype.getFullFlipH = CShape.prototype.getFullFlipH;
 CChartSpace.prototype.getFullFlipV = CShape.prototype.getFullFlipV;
 CChartSpace.prototype.setWorksheet = CShape.prototype.setWorksheet;
@@ -381,7 +380,7 @@ CChartSpace.prototype.recalculate = function()
             this.recalculateTransform();
             this.rectGeometry.Recalculate(this.extX, this.extY);
             this.recalcInfo.recalculateTransform = false;
-            this.calculateSnapArrays();
+            this.recalculateSnapArrays();
             b_transform = true;
         }
         if(this.recalcInfo.recalculateReferences)
@@ -732,3 +731,7 @@ CTablePr.prototype.Init_Default = function()
     this.TableW                = new CTableMeasurement(tblwidth_Auto, 0);
     this.TableLayout           = tbllayout_AutoFit;
 };
+
+//----------------------------------------------------------export----------------------------------------------------
+window['AscFormat'] = window['AscFormat'] || {};
+window['AscFormat'].getChartTranslateManager = getChartTranslateManager;

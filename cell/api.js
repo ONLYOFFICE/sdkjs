@@ -30,11 +30,7 @@ var editor;
  * @param {undefined} undefined
  */
   function(window, undefined) {
-
   var asc = window["Asc"];
-  var asc_applyFunction = asc.applyFunction;
-  var asc_CCollaborativeEditing = asc.CCollaborativeEditing;
-  var asc_CAdjustPrint = asc.asc_CAdjustPrint;
   var prot;
 
   var c_oAscAdvancedOptionsAction = AscCommon.c_oAscAdvancedOptionsAction;
@@ -47,9 +43,6 @@ var editor;
   var parserHelp = AscCommon.parserHelp;
   var g_oIdCounter = AscCommon.g_oIdCounter;
   var g_oTableId = AscCommon.g_oTableId;
-  var oNumFormatCache = AscCommon.oNumFormatCache;
-  var g_aCultureInfos = AscCommon.g_aCultureInfos;
-  var PasteElementsId = AscCommon.PasteElementsId;
 
   var c_oAscLockTypeElem = AscCommonExcel.c_oAscLockTypeElem;
 
@@ -59,33 +52,34 @@ var editor;
   var c_oAscAdvancedOptionsID = asc.c_oAscAdvancedOptionsID;
   var c_oAscAsyncActionType = asc.c_oAscAsyncActionType;
 
+  var History = null;
+
 
   /**
    *
-   * @param name
-   * @param inputName
+   * @param config
    * @param eventsHandlers
    * @constructor
    * @returns {spreadsheet_api}
-   * @extends {baseEditorsApi}
+   * @extends {AscCommon.baseEditorsApi}
    */
-  function spreadsheet_api(name, inputName, eventsHandlers) {
-    spreadsheet_api.superclass.constructor.call(this, name);
-    this.editorId = AscCommon.c_oEditorId.Spreadsheet;
+  function spreadsheet_api(config) {
+    spreadsheet_api.superclass.constructor.call(this, config, AscCommon.c_oEditorId.Spreadsheet);
 
     /************ private!!! **************/
-    this.topLineEditorName = inputName;
+    this.topLineEditorName = config['id-input'] || '';
     this.topLineEditorElement = null;
 
-    this.controller = new asc.asc_CEventsController();
+    this.controller = null;
 
-    this.handlers = new asc.asc_CHandlersList(eventsHandlers);
+    this.handlers = new AscCommonExcel.asc_CHandlersList();
     // Вид печати
     this.adjustPrint = null;
 
     this.fontRenderingMode = Asc.c_oAscFontRenderingModeType.hintingAndSubpixeling;
     this.wb = null;
     this.wbModel = null;
+    this.tmpLocale = null;
 
     this.documentFormatSave = c_oAscFileType.XLSX;
 
@@ -131,15 +125,15 @@ var editor;
     this._init();
     return this;
   }
-  AscCommon.extendClass(spreadsheet_api, baseEditorsApi);
+  AscCommon.extendClass(spreadsheet_api, AscCommon.baseEditorsApi);
 
   spreadsheet_api.prototype.sendEvent = function() {
     this.handlers.trigger.apply(this.handlers, arguments);
   };
 
   spreadsheet_api.prototype._init = function() {
+    spreadsheet_api.superclass._init.call(this);
     this.topLineEditorElement = document.getElementById(this.topLineEditorName);
-    this.formulasList = AscCommonExcel.getFormulasInfo();
     // ToDo нужно ли это
     asc['editor'] = ( asc['editor'] || this );
     AscCommon.AscBrowser.checkZoom();
@@ -151,7 +145,7 @@ var editor;
     var arr_colors = new Array(10);
     var _count = arr_colors.length;
     for (var i = 0; i < _count; ++i) {
-      var color = g_oColorManager.getThemeColor(i);
+      var color = AscCommonExcel.g_oColorManager.getThemeColor(i);
       arr_colors[i] = new CColor(color.getR(), color.getG(), color.getB());
     }
 
@@ -201,11 +195,11 @@ var editor;
     var _cur_index = 0;
 
     for (var i = 0; i < _count; ++i) {
-      var basecolor = g_oColorManager.getThemeColor(i);
-      var aTints = g_oThemeColorsDefaultModsSpreadsheet[AscCommon.GetDefaultColorModsIndex(basecolor.getR(), basecolor.getG(), basecolor.getB())];
+      var basecolor = AscCommonExcel.g_oColorManager.getThemeColor(i);
+      var aTints = AscCommonExcel.g_oThemeColorsDefaultModsSpreadsheet[AscCommon.GetDefaultColorModsIndex(basecolor.getR(), basecolor.getG(), basecolor.getB())];
       for (var j = 0, length = aTints.length; j < length; ++j) {
         var tint = aTints[j];
-        var color = g_oColorManager.getThemeColor(i, tint);
+        var color = AscCommonExcel.g_oColorManager.getThemeColor(i, tint);
         _ret_array[_cur_index] = new CColor(color.getR(), color.getG(), color.getB());
         _cur_index++;
       }
@@ -334,9 +328,9 @@ var editor;
 
   spreadsheet_api.prototype.asc_getLocaleExample = function(val, number, date) {
     var res = '';
-    var cultureInfo = g_aCultureInfos[val];
+    var cultureInfo = AscCommon.g_aCultureInfos[val];
     if (cultureInfo) {
-      var numFormatDigit = oNumFormatCache.get('#,##0.00');
+      var numFormatDigit = AscCommon.oNumFormatCache.get('#,##0.00');
 
       var dateElems = [];
       for (var i = 0; i < cultureInfo.ShortDatePattern.length; ++i) {
@@ -357,7 +351,7 @@ var editor;
       if (cultureInfo.AMDesignator && cultureInfo.PMDesignator) {
         formatDate += " AM/PM";
       }
-      var numFormatDate = oNumFormatCache.get(formatDate);
+      var numFormatDate = AscCommon.oNumFormatCache.get(formatDate);
 
       res += numFormatDigit.formatToChart(number, cultureInfo);
       res += '; ';
@@ -366,113 +360,25 @@ var editor;
     return res;
   };
   spreadsheet_api.prototype.asc_getLocaleCurrency = function(val) {
-    var res = '';
-    var cultureInfo = g_aCultureInfos[val];
+    var cultureInfo = AscCommon.g_aCultureInfos[val];
     if (!cultureInfo) {
-      cultureInfo = g_aCultureInfos[1033];
+      cultureInfo = AscCommon.g_aCultureInfos[1033];
     }
-    var prefixs = ['_ ', '_-', '_(', '_)'];
-    var prefix = prefixs[0];
-    var postfix = prefixs[0];
-    var numberFormat = '#,##0.00';
-    var nullSignFormat = '* "-"??';
-    var positiveNumberFormat = '* ' + numberFormat;
-    var signCurrencyFormat = '[$' + cultureInfo.CurrencySymbol + '-' + cultureInfo.LCID.toString(16).toUpperCase() + ']';
-    var positiveFormat;
-    var negativeFormat;
-    var nullFormat;
-    switch (cultureInfo.CurrencyNegativePattern) {
-      case 0:
-        prefix = prefixs[2];
-        postfix = prefixs[3];
-        negativeFormat = prefix + signCurrencyFormat + '* \\(' + numberFormat + '\\)';
-        break;
-      case 1:
-        prefix = postfix = prefixs[1];
-        negativeFormat = '\\-' + signCurrencyFormat + '* ' + numberFormat + postfix;
-        break;
-      case 2:
-        negativeFormat = prefix + signCurrencyFormat + '\\ * \\-' + numberFormat + postfix;
-        break;
-      case 3:
-        prefix = postfix = prefixs[1];
-        negativeFormat = prefix + signCurrencyFormat + '\\ * ' + numberFormat + '\\-';
-        break;
-      case 4:
-        prefix = prefixs[2];
-        postfix = prefixs[3];
-        negativeFormat = prefix + '* \\(' + numberFormat + '\\)' + signCurrencyFormat + postfix;
-        break;
-      case 5:
-        prefix = postfix = prefixs[1];
-        negativeFormat = '\\-* ' + numberFormat + signCurrencyFormat + postfix;
-        break;
-      case 6:
-        negativeFormat = prefix + '* ' + numberFormat + '\\-' + signCurrencyFormat + postfix;
-        break;
-      case 7:
-        negativeFormat = prefix + '* ' + numberFormat + signCurrencyFormat + '\\-';
-        break;
-      case 8:
-        prefix = postfix = prefixs[1];
-        negativeFormat = '\\-* ' + numberFormat + '\\ ' + signCurrencyFormat + postfix;
-        break;
-      case 9:
-        prefix = postfix = prefixs[1];
-        negativeFormat = '\\-' + signCurrencyFormat + '\\ * ' + numberFormat + postfix;
-        break;
-      case 10:
-        negativeFormat = prefix + '* ' + numberFormat + '\\ ' + signCurrencyFormat + '\\-';
-        break;
-      case 11:
-        negativeFormat = prefix + signCurrencyFormat + '\\ * ' + numberFormat + '\\-';
-        break;
-      case 12:
-        negativeFormat = prefix + signCurrencyFormat + '\\ * \\-' + numberFormat + postfix;
-        break;
-      case 13:
-        negativeFormat = prefix + '* ' + numberFormat + '\\-\\ ' + signCurrencyFormat + postfix;
-        break;
-      case 14:
-        prefix = prefixs[2];
-        postfix = prefixs[3];
-        negativeFormat = prefix + signCurrencyFormat + '\\ * \\(' + numberFormat + '\\)';
-        break;
-      case 15:
-        prefix = prefixs[2];
-        postfix = prefixs[3];
-        negativeFormat = prefix + '* \\(' + numberFormat + '\\)\\ ' + signCurrencyFormat + postfix;
-        break;
-    }
-    switch (cultureInfo.CurrencyPositivePattern) {
-      case 0:
-        positiveFormat = signCurrencyFormat + positiveNumberFormat;
-        nullFormat = signCurrencyFormat + nullSignFormat;
-        break;
-      case 1:
-        positiveFormat = positiveNumberFormat + signCurrencyFormat;
-        nullFormat = nullSignFormat + signCurrencyFormat;
-        break;
-      case 2:
-        positiveFormat = signCurrencyFormat + '\\ ' + positiveNumberFormat;
-        nullFormat = signCurrencyFormat + '\\ ' + nullSignFormat;
-        break;
-      case 3:
-        positiveFormat = positiveNumberFormat + '\\ ' + signCurrencyFormat;
-        nullFormat = nullSignFormat + '\\ ' + signCurrencyFormat;
-        break;
-    }
-    positiveFormat = prefix + positiveFormat + postfix;
-    nullFormat = prefix + nullFormat + postfix;
-    var textFormat = prefix + '@' + postfix;
-    return positiveFormat + ';' + negativeFormat + ';' + nullFormat + ';' + textFormat;
+    return AscCommonExcel.getCurrencyFormat(cultureInfo, true, true, true);
   };
   spreadsheet_api.prototype.asc_setLocale = function(val) {
+    if (!this.isLoadFullApi) {
+      this.tmpLocale = val;
+      return;
+    }
+    if (null === val) {
+      return;
+    }
     AscCommon.setCurrentCultureInfo(val);
     parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSeparator);
 	  if (this.wbModel) {
       AscCommon.oGeneralEditFormatCache.cleanCache();
-      oNumFormatCache.cleanCache();
+      AscCommon.oNumFormatCache.cleanCache();
       this.wbModel.rebuildColors();
       if (this.IsSendDocumentLoadCompleate) {
         this._onUpdateAfterApplyChanges();
@@ -482,19 +388,14 @@ var editor;
 
   spreadsheet_api.prototype.asc_LoadEmptyDocument = function() {
     this.CoAuthoringApi.auth(this.getViewMode());
-
-    var emptyWorkbook = AscCommonExcel.getEmptyWorkbook() + "";
-    if (emptyWorkbook.length && (Asc.c_oSerFormat.Signature === emptyWorkbook.substring(0, Asc.c_oSerFormat.Signature.length))) {
-      this.isChartEditor = true;
-      this._startOpenDocument(emptyWorkbook);
-    }
+    this.onEndLoadFile(true);
   };
 
   spreadsheet_api.prototype._openDocument = function(data) {
-    var wb = new Workbook(this.handlers, this);
+    var wb = new AscCommonExcel.Workbook(this.handlers, this);
     this.initGlobalObjects(wb);
     this.wbModel = wb;
-    var oBinaryFileReader = new Asc.BinaryFileReader();
+    var oBinaryFileReader = new AscCommonExcel.BinaryFileReader();
     oBinaryFileReader.Read(data, wb);
     g_oIdCounter.Set_Load(false);
     return wb;
@@ -502,7 +403,7 @@ var editor;
 
   spreadsheet_api.prototype.initGlobalObjects = function(wbModel) {
     // History & global counters
-    History = new CHistory(wbModel);
+    History.init(wbModel);
 
     g_oTableId.init();
     AscCommonExcel.g_oUndoRedoCell = new AscCommonExcel.UndoRedoCell(wbModel);
@@ -520,7 +421,7 @@ var editor;
     }
 
     if (c_oAscFileType.PDF === typeFile) {
-      this.adjustPrint = new asc_CAdjustPrint();
+      this.adjustPrint = new Asc.asc_CAdjustPrint();
     }
     this._asc_downloadAs(typeFile, c_oAscAsyncAction.DownloadAs, {downloadType: bIsDownloadEvent ? DownloadType.Download: DownloadType.None});
   };
@@ -554,7 +455,7 @@ var editor;
       return;
     }
 
-    this.adjustPrint = adjustPrint ? adjustPrint : new asc_CAdjustPrint();
+    this.adjustPrint = adjustPrint ? adjustPrint : new Asc.asc_CAdjustPrint();
     this._asc_downloadAs(c_oAscFileType.PDF, c_oAscAsyncAction.Print, {downloadType: bIsDownloadEvent ? DownloadType.Print: DownloadType.None});
   };
 
@@ -747,10 +648,14 @@ var editor;
   };
 
   spreadsheet_api.prototype.getViewMode = function() {
-    return this.controller.getViewerMode();
+    return this.isViewMode;
   };
 
   spreadsheet_api.prototype.asc_setViewMode = function(isViewerMode) {
+    if (!this.isLoadFullApi) {
+      this.isViewMode = isViewerMode;
+      return;
+    }
     this.controller.setViewerMode(isViewerMode);
     if (this.collaborativeEditing) {
       this.collaborativeEditing.setViewerMode(isViewerMode);
@@ -853,27 +758,27 @@ var editor;
   };
   spreadsheet_api.prototype._onOpenCommand = function(data) {
     var t = this;
-    AscCommon.openFileCommand(data, this.documentUrlChanges, Asc.c_oSerFormat.Signature, function(error, result) {
+    AscCommon.openFileCommand(data, this.documentUrlChanges, AscCommon.c_oSerFormat.Signature, function(error, result) {
       if (error || !result.bSerFormat) {
         var oError = {returnCode: c_oAscError.Level.Critical, val: c_oAscError.ID.Unknown};
         t.handlers.trigger("asc_onError", oError.val, oError.returnCode);
         return;
       }
 
-      t._startOpenDocument(result.data);
+      t.onEndLoadFile(result.data);
     });
   };
 
   spreadsheet_api.prototype._OfflineAppDocumentEndLoad = function() {
     var data = getTestWorkbook();
     var sData = data + "";
-    if (Asc.c_oSerFormat.Signature === sData.substring(0, Asc.c_oSerFormat.Signature.length)) {
-      this._startOpenDocument(sData);
+    if (AscCommon.c_oSerFormat.Signature === sData.substring(0, AscCommon.c_oSerFormat.Signature.length)) {
+      this.openDocument(sData);
     }
   };
 
   spreadsheet_api.prototype._asc_save2 = function() {
-    var oBinaryFileWriter = new Asc.BinaryFileWriter(this.wbModel);
+    var oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(this.wbModel);
     var dataContainer = {data: null, part: null, index: 0, count: 0};
     dataContainer.data = oBinaryFileWriter.Write();
     var filetype = 0x1002;
@@ -949,7 +854,7 @@ var editor;
       return;
     } else {
       this.wb._initCommentsToSave();
-      var oBinaryFileWriter = new Asc.BinaryFileWriter(this.wbModel);
+      var oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(this.wbModel);
       if (c_oAscFileType.CSV === sFormat) {
         if (options.CSVOptions instanceof asc.asc_CCSVAdvancedOptions) {
           oAdditionalData["codepage"] = options.CSVOptions.asc_getCodePage();
@@ -1047,6 +952,7 @@ var editor;
 
   spreadsheet_api.prototype.asc_registerCallback = function(name, callback, replaceOldCallback) {
     this.handlers.add(name, callback, replaceOldCallback);
+    return;
 
     /*
      Не самая хорошая схема для отправки эвентов:
@@ -1059,21 +965,6 @@ var editor;
     } else if (null !== this._gui_color_schemes && "asc_onSendThemeColorSchemes" === name) {
       this.handlers.trigger("asc_onSendThemeColorSchemes", this._gui_color_schemes);
       this._gui_color_schemes = null;
-    } else if ("asc_onInitEditorShapes" === name) {
-      this.handlers.trigger("asc_onInitEditorShapes", AscCommon.g_oAutoShapesGroups, AscCommon.g_oAutoShapesTypes);
-    } else if ("asc_onInitEditorTextArts" === name) {
-      this.handlers.trigger("asc_onInitEditorTextArts", [AscCommon.g_oPresetTxWarpGroups, AscCommon.g_PresetTxWarpTypes]);
-    } else if ("asc_onInitStandartTextures" === name) {
-      var _count = AscCommon.g_oUserTexturePresets.length;
-      var arr = new Array(_count);
-      for (var i = 0; i < _count; ++i) {
-        arr[i] = new AscCommon.asc_CTexture();
-        arr[i].Id = i;
-        arr[i].Image = AscCommon.g_oUserTexturePresets[i];
-        this.ImageLoader.LoadImage(AscCommon.g_oUserTexturePresets[i], 1);
-      }
-
-      this.handlers.trigger("asc_onInitStandartTextures", arr);
     }
   };
 
@@ -1092,7 +983,7 @@ var editor;
 
   spreadsheet_api.prototype.asc_SetFastCollaborative = function(bFast) {
     if (this.collaborativeEditing) {
-      CollaborativeEditing.Set_Fast(bFast);
+      AscCommon.CollaborativeEditing.Set_Fast(bFast);
       this.collaborativeEditing.setFast(bFast);
     }
   };
@@ -1140,7 +1031,17 @@ var editor;
     this.FontLoader.LoadDocumentFonts2(arrLoadFonts);
   };
 
-  spreadsheet_api.prototype._startOpenDocument = function(sData) {
+  spreadsheet_api.prototype.openDocument = function(sData) {
+    if (true === sData) {
+      // Empty Document
+      sData = AscCommonExcel.getEmptyWorkbook() + "";
+      if (sData.length && (AscCommon.c_oSerFormat.Signature === sData.substring(0, AscCommon.c_oSerFormat.Signature.length))) {
+        this.isChartEditor = true;
+      } else {
+        return;
+      }
+    }
+
     this.wbModel = this._openDocument(sData);
 
     this.FontLoader.LoadDocumentFonts(this.wbModel.generateFontMap2());
@@ -1148,8 +1049,8 @@ var editor;
     // Какая-то непонятная заглушка, чтобы не падало в ipad
     if (this.isMobileVersion) {
       AscCommon.AscBrowser.isSafariMacOs = false;
-      PasteElementsId.PASTE_ELEMENT_ID = "wrd_pastebin";
-      PasteElementsId.ELEMENT_DISPAY_STYLE = "none";
+      AscCommon.PasteElementsId.PASTE_ELEMENT_ID = "wrd_pastebin";
+      AscCommon.PasteElementsId.ELEMENT_DISPAY_STYLE = "none";
     }
 
     if (AscCommon.AscBrowser.isSafariMacOs) {
@@ -1194,7 +1095,7 @@ var editor;
   /////////////////////////////////////////////////////////////////////////
   spreadsheet_api.prototype._coAuthoringInitEnd = function() {
     var t = this;
-    this.collaborativeEditing = new asc_CCollaborativeEditing(/*handlers*/{
+    this.collaborativeEditing = new AscCommonExcel.CCollaborativeEditing(/*handlers*/{
       "askLock": function() {
         t.CoAuthoringApi.askLock.apply(t.CoAuthoringApi, arguments);
       },
@@ -1458,7 +1359,7 @@ var editor;
     } else if (this.wb && !window["NATIVE_EDITOR_ENJINE"]) {
       // Нужно послать 'обновить свойства' (иначе для удаления данных не обновится строка формул).
       // ToDo Возможно стоит обновлять только строку формул
-      CollaborativeEditing.Load_Images();
+      AscCommon.CollaborativeEditing.Load_Images();
       this.wb._onWSSelectionChanged(null);
       this.wb.getWorksheet().updateVisibleRange();
     }
@@ -1563,13 +1464,15 @@ var editor;
       return;
     }
 
-    this.wb = new asc.WorkbookView(this.wbModel, this.controller, this.handlers, this.HtmlElement, this.topLineEditorElement, this, this.collaborativeEditing, this.fontRenderingMode);
+    this.wb = new AscCommonExcel.WorkbookView(this.wbModel, this.controller, this.handlers, this.HtmlElement, this.topLineEditorElement, this, this.collaborativeEditing, this.fontRenderingMode);
 
     this.DocumentLoadComplete = true;
 
     this.asc_CheckGuiControlColors();
     this.asc_SendThemeColorScheme();
     this.asc_ApplyColorScheme(false);
+
+    this.sendStandartTextures();
 
     // Применяем пришедшие при открытии изменения
     this._applyFirstLoadChanges();
@@ -1632,7 +1535,7 @@ var editor;
         this.sync_StartAction(c_oAscAsyncActionType.Information, c_oAscAsyncAction.Save);
       }
 
-      CollaborativeEditing.Clear_CollaborativeMarks();
+      AscCommon.CollaborativeEditing.Clear_CollaborativeMarks();
       // Принимаем чужие изменения
       this.collaborativeEditing.applyChanges();
 
@@ -1688,16 +1591,16 @@ var editor;
   spreadsheet_api.prototype._getIsLockObjectSheet = function(lockInfo, callback) {
     if (false === this.collaborativeEditing.getCollaborativeEditing()) {
       // Пользователь редактирует один: не ждем ответа, а сразу продолжаем редактирование
-      asc_applyFunction(callback, true);
+      AscCommonExcel.applyFunction(callback, true);
       callback = undefined;
     }
     if (false !== this.collaborativeEditing.getLockIntersection(lockInfo, c_oAscLockTypes.kLockTypeMine, /*bCheckOnlyLockAll*/false)) {
       // Редактируем сами
-      asc_applyFunction(callback, true);
+      AscCommonExcel.applyFunction(callback, true);
       return;
     } else if (false !== this.collaborativeEditing.getLockIntersection(lockInfo, c_oAscLockTypes.kLockTypeOther, /*bCheckOnlyLockAll*/false)) {
       // Уже ячейку кто-то редактирует
-      asc_applyFunction(callback, false);
+      AscCommonExcel.applyFunction(callback, false);
       return;
     }
 
@@ -1712,16 +1615,16 @@ var editor;
 
     if (false === this.collaborativeEditing.getCollaborativeEditing()) {
       // Пользователь редактирует один: не ждем ответа, а сразу продолжаем редактирование
-      asc_applyFunction(callback, true);
+      AscCommonExcel.applyFunction(callback, true);
       callback = undefined;
     }
     if (false !== this.collaborativeEditing.getLockIntersection(lockInfo, c_oAscLockTypes.kLockTypeMine, /*bCheckOnlyLockAll*/false)) {
       // Редактируем сами
-      asc_applyFunction(callback, true);
+      AscCommonExcel.applyFunction(callback, true);
       return;
     } else if (false !== this.collaborativeEditing.getLockIntersection(lockInfo, c_oAscLockTypes.kLockTypeOther, /*bCheckOnlyLockAll*/false)) {
       // Уже ячейку кто-то редактирует
-      asc_applyFunction(callback, false);
+      AscCommonExcel.applyFunction(callback, false);
       return;
     }
 
@@ -1755,7 +1658,7 @@ var editor;
     var t = this;
     var changeTabColorCallback = function(res) {
       if (res) {
-        color = CorrectAscColor(color);
+        color = AscCommonExcel.CorrectAscColor(color);
         t.wbModel.getWorksheet(index).setTabColor(color);
       }
     };
@@ -2071,6 +1974,11 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_enableKeyEvents = function(isEnabled) {
+    if (!this.isLoadFullApi) {
+      this.tmpFocus = isEnabled;
+      return;
+    }
+
     if (this.wb) {
       this.wb.enableKeyEventsHandler(isEnabled);
     }
@@ -2347,7 +2255,7 @@ var editor;
   // Для вставки диаграмм в Word
   spreadsheet_api.prototype.asc_getBinaryFileWriter = function() {
     this.wb._initCommentsToSave();
-    return new Asc.BinaryFileWriter(this.wbModel);
+    return new AscCommonExcel.BinaryFileWriter(this.wbModel);
   };
 
   spreadsheet_api.prototype.asc_getWordChartObject = function() {
@@ -2590,10 +2498,6 @@ var editor;
     return ws.objectRender.getOriginalImageSize();
   };
 
-  spreadsheet_api.prototype.asc_setInterfaceDrawImagePlaceShape = function(elementId) {
-    this.shapeElementId = elementId;
-  };
-
   spreadsheet_api.prototype.asc_setInterfaceDrawImagePlaceTextArt = function(elementId) {
     this.textArtElementId = elementId;
   };
@@ -2627,6 +2531,15 @@ var editor;
     var ws = this.wb.getWorksheet();
     ws.objectRender.setDrawImagePlaceParagraph(element_id, props);
   };
+
+    spreadsheet_api.prototype.asc_replaceLoadImageCallback = function(fCallback){
+        if(this.wb){
+            var ws = this.wb.getWorksheet();
+            if(ws.objectRender){
+                ws.objectRender.asyncImageEndLoaded = fCallback;
+            }
+        }
+    };
 
   spreadsheet_api.prototype.asyncImageEndLoaded = function(_image) {
     if (this.wb) {
@@ -2817,7 +2730,7 @@ var editor;
       ws.objectRender.controller.setCellTextColor(color);
     } else {
       if (color instanceof Asc.asc_CColor) {
-        color = CorrectAscColor(color);
+        color = AscCommonExcel.CorrectAscColor(color);
         this.wb.setFontAttributes("c", color);
         this.wb.restoreFocus();
       }
@@ -2832,7 +2745,7 @@ var editor;
     } else {
       if (color instanceof Asc.asc_CColor || null == color) {
         if (null != color) {
-          color = CorrectAscColor(color);
+          color = AscCommonExcel.CorrectAscColor(color);
         }
         this.wb.getWorksheet().setSelectionInfo("bc", color);
         this.wb.restoreFocus();
@@ -3089,7 +3002,7 @@ var editor;
     }
     if (!History.Is_Modified(true) && !(this.collaborativeEditing.getCollaborativeEditing() && 0 !== this.collaborativeEditing.getOwnLocksLength())) {
       if (this.collaborativeEditing.getFast() && this.collaborativeEditing.haveOtherChanges()) {
-        CollaborativeEditing.Clear_CollaborativeMarks();
+        AscCommon.CollaborativeEditing.Clear_CollaborativeMarks();
 
         // Принимаем чужие изменения
         this.collaborativeEditing.applyChanges();
@@ -3154,7 +3067,7 @@ var editor;
       AscCommonExcel.cFormulaFunctionToLocale = {};
       var localName;
       for (var i in AscCommonExcel.cFormulaFunction) {
-        localName = oLocalizedData[i] ? oLocalizedData[i]['n'] : null;
+        localName = oLocalizedData[i] ? oLocalizedData[i] : null;
         localName = localName ? localName : i;
         AscCommonExcel.cFormulaFunctionLocalized[localName] = AscCommonExcel.cFormulaFunction[i];
         AscCommonExcel.cFormulaFunctionToLocale[i] = localName;
@@ -3178,21 +3091,21 @@ var editor;
     this.User.setId("TM");
     this.User.setUserName("native");
 
-    this.wbModel = new Workbook(this.handlers, this);
+    this.wbModel = new AscCommonExcel.Workbook(this.handlers, this);
     this.initGlobalObjects(this.wbModel);
 
-    var oBinaryFileReader = new Asc.BinaryFileReader();
+    var oBinaryFileReader = new AscCommonExcel.BinaryFileReader();
 
     if (undefined === version) {
       oBinaryFileReader.Read(base64File, this.wbModel);
     } else {
-      g_nCurFileVersion = version;
+      AscCommon.CurFileVersion = version;
       oBinaryFileReader.ReadData(base64File, this.wbModel);
     }
     g_oIdCounter.Set_Load(false);
 
     this._coAuthoringInit();
-    this.wb = new asc.WorkbookView(this.wbModel, this.controller, this.handlers, window["_null_object"], window["_null_object"], this, this.collaborativeEditing, this.fontRenderingMode);
+    this.wb = new AscCommonExcel.WorkbookView(this.wbModel, this.controller, this.handlers, window["_null_object"], window["_null_object"], this, this.collaborativeEditing, this.fontRenderingMode);
   };
 
   spreadsheet_api.prototype.asc_nativeCalculateFile = function() {
@@ -3218,12 +3131,12 @@ var editor;
 
   spreadsheet_api.prototype.asc_nativeGetFile = function() {
     this.wb._initCommentsToSave();
-    var oBinaryFileWriter = new Asc.BinaryFileWriter(this.wbModel);
+    var oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(this.wbModel);
     return oBinaryFileWriter.Write();
   };
   spreadsheet_api.prototype.asc_nativeGetFileData = function() {
     this.wb._initCommentsToSave();
-    var oBinaryFileWriter = new Asc.BinaryFileWriter(this.wbModel);
+    var oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(this.wbModel);
     oBinaryFileWriter.Write2();
 
     var _header = oBinaryFileWriter.WriteFileHeader(oBinaryFileWriter.Memory.GetCurPosition());
@@ -3265,7 +3178,7 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_nativePrint = function(_printer, _page, _param) {
-    var _adjustPrint = window.AscDesktopEditor_PrintData ? window.AscDesktopEditor_PrintData : new asc_CAdjustPrint();
+    var _adjustPrint = window.AscDesktopEditor_PrintData ? window.AscDesktopEditor_PrintData : new Asc.asc_CAdjustPrint();
     window.AscDesktopEditor_PrintData = undefined;
 
     if (1 == _param) {
@@ -3318,6 +3231,22 @@ var editor;
     window["native"]["Save_End"]("", _ret.GetCurPosition());
     return _ret.data;
   };
+
+  spreadsheet_api.prototype._onEndLoadSdk = function() {
+    History = AscCommon.History;
+
+    if (this.isMobileVersion)
+        this.asc_setMobileVersion(true);
+
+    spreadsheet_api.superclass._onEndLoadSdk.call(this);
+
+    this.controller = new AscCommonExcel.asc_CEventsController();
+
+    this.formulasList = AscCommonExcel.getFormulasInfo();
+    this.asc_setLocale(this.tmpLocale);
+    this.asc_setViewMode(this.isViewMode);
+  };
+
   /*
    * Export
    * -----------------------------------------------------------------------------
@@ -3331,7 +3260,6 @@ var editor;
   prot = spreadsheet_api.prototype;
 
   prot["asc_GetFontThumbnailsPath"] = prot.asc_GetFontThumbnailsPath;
-  prot["asc_SetFontsPath"] = prot.asc_SetFontsPath;
   prot["asc_setDocInfo"] = prot.asc_setDocInfo;
   prot["asc_getLocaleExample"] = prot.asc_getLocaleExample;
   prot["asc_getLocaleCurrency"] = prot.asc_getLocaleCurrency;
@@ -3463,6 +3391,8 @@ var editor;
   prot["asc_setSelectedDrawingObjectLayer"] = prot.asc_setSelectedDrawingObjectLayer;
   prot["asc_getChartPreviews"] = prot.asc_getChartPreviews;
   prot["asc_getTextArtPreviews"] = prot.asc_getTextArtPreviews;
+  prot['asc_getPropertyEditorShapes'] = prot.asc_getPropertyEditorShapes;
+  prot['asc_getPropertyEditorTextArts'] = prot.asc_getPropertyEditorTextArts;
   prot["asc_checkDataRange"] = prot.asc_checkDataRange;
   prot["asc_getBinaryFileWriter"] = prot.asc_getBinaryFileWriter;
   prot["asc_getWordChartObject"] = prot.asc_getWordChartObject;

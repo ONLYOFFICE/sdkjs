@@ -32,37 +32,37 @@
 //----------------------------------------------------------------------------------------------------------------------
 //  asc_docs_api (Обращение из апи)
 //----------------------------------------------------------------------------------------------------------------------
-asc_docs_api.prototype.asc_GetStyleFromFormatting = function()
+Asc['asc_docs_api'].prototype.asc_GetStyleFromFormatting = function()
 {
     return this.WordControl.m_oLogicDocument.Get_StyleFromFormatting();
 };
-asc_docs_api.prototype.asc_AddNewStyle = function(oStyle)
+Asc['asc_docs_api'].prototype.asc_AddNewStyle = function(oStyle)
 {
     this.WordControl.m_oLogicDocument.Add_NewStyle(oStyle);
 };
-asc_docs_api.prototype.asc_RemoveStyle = function(sName)
+Asc['asc_docs_api'].prototype.asc_RemoveStyle = function(sName)
 {
     this.WordControl.m_oLogicDocument.Remove_Style(sName);
 };
-asc_docs_api.prototype.asc_RemoveAllCustomStyles = function()
+Asc['asc_docs_api'].prototype.asc_RemoveAllCustomStyles = function()
 {
     this.WordControl.m_oLogicDocument.Remove_AllCustomStyles();
 };
-asc_docs_api.prototype.asc_IsStyleDefault = function(sName)
+Asc['asc_docs_api'].prototype.asc_IsStyleDefault = function(sName)
 {
     return this.WordControl.m_oLogicDocument.Is_StyleDefault(sName);
 };
-asc_docs_api.prototype.asc_IsDefaultStyleChanged = function(sName)
+Asc['asc_docs_api'].prototype.asc_IsDefaultStyleChanged = function(sName)
 {
     return this.WordControl.m_oLogicDocument.Is_DefaultStyleChanged(sName);
 };
 
-asc_docs_api.prototype['asc_GetStyleFromFormatting'] = asc_docs_api.prototype.asc_GetStyleFromFormatting;
-asc_docs_api.prototype['asc_AddNewStyle']            = asc_docs_api.prototype.asc_AddNewStyle;
-asc_docs_api.prototype['asc_RemoveStyle']            = asc_docs_api.prototype.asc_RemoveStyle;
-asc_docs_api.prototype['asc_RemoveAllCustomStyles']  = asc_docs_api.prototype.asc_RemoveAllCustomStyles;
-asc_docs_api.prototype['asc_IsStyleDefault']         = asc_docs_api.prototype.asc_IsStyleDefault;
-asc_docs_api.prototype['asc_IsDefaultStyleChanged']  = asc_docs_api.prototype.asc_IsDefaultStyleChanged;
+Asc['asc_docs_api'].prototype['asc_GetStyleFromFormatting'] = Asc['asc_docs_api'].prototype.asc_GetStyleFromFormatting;
+Asc['asc_docs_api'].prototype['asc_AddNewStyle']            = Asc['asc_docs_api'].prototype.asc_AddNewStyle;
+Asc['asc_docs_api'].prototype['asc_RemoveStyle']            = Asc['asc_docs_api'].prototype.asc_RemoveStyle;
+Asc['asc_docs_api'].prototype['asc_RemoveAllCustomStyles']  = Asc['asc_docs_api'].prototype.asc_RemoveAllCustomStyles;
+Asc['asc_docs_api'].prototype['asc_IsStyleDefault']         = Asc['asc_docs_api'].prototype.asc_IsStyleDefault;
+Asc['asc_docs_api'].prototype['asc_IsDefaultStyleChanged']  = Asc['asc_docs_api'].prototype.asc_IsDefaultStyleChanged;
 //----------------------------------------------------------------------------------------------------------------------
 //  CDocument
 //----------------------------------------------------------------------------------------------------------------------
@@ -102,7 +102,7 @@ CDocument.prototype.Add_NewStyle = function(oStyle)
 {
     if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Document_Styles, {Type : AscCommon.changestype_2_AdditionalTypes, Types : [AscCommon.changestype_Paragraph_Properties]}))
     {
-        History.Create_NewPoint(AscDFH.historydescription_Document_AddNewStyle);
+        AscCommon.History.Create_NewPoint(AscDFH.historydescription_Document_AddNewStyle);
         var NewStyle = this.Styles.Create_StyleFromInterface(oStyle);
         this.Set_ParagraphStyle(NewStyle.Get_Name());
         this.Recalculate();
@@ -121,7 +121,7 @@ CDocument.prototype.Remove_Style = function(sStyleName)
 
     if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Document_Styles))
     {
-        History.Create_NewPoint(AscDFH.historydescription_Document_RemoveStyle);
+        AscCommon.History.Create_NewPoint(AscDFH.historydescription_Document_RemoveStyle);
         this.Styles.Remove_StyleFromInterface(StyleId);
         this.Recalculate();
         this.Document_UpdateInterfaceState();
@@ -134,7 +134,7 @@ CDocument.prototype.Remove_AllCustomStyles = function()
 {
     if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Document_Styles))
     {
-        History.Create_NewPoint(AscDFH.historydescription_Document_RemoveAllCustomStyles);
+        AscCommon.History.Create_NewPoint(AscDFH.historydescription_Document_RemoveAllCustomStyles);
         this.Styles.Remove_AllCustomStylesFromInterface();
         this.Recalculate();
         this.Document_UpdateInterfaceState();

@@ -503,7 +503,7 @@ Complex.prototype = {
         return c.toString();
     },
     Cos:function () {
-        if ( i ) {
+        if ( this.img ) {
             var a = Math.cos( this.real ) * Math.cosh( this.img );
             this.img = -( Math.sin( this.real ) * Math.sinh( this.img ) );
             this.real = a;
@@ -525,7 +525,7 @@ Complex.prototype = {
 
         var a = this.real, b = this.img,
             c = comp.real, d = comp.img,
-            f = 1 / (c * c + d * d)
+            f = 1 / (c * c + d * d);
 
         if( Math.abs(f) == Infinity ){
             return new cError( cErrorType.not_numeric );
@@ -578,7 +578,7 @@ Complex.prototype = {
     },
     Log2:function () {
 
-        var c = new Complex( Math.ln( 2 ), 0 )
+        var c = new Complex( Math.ln( 2 ), 0 );
         var r = this.Ln();
 
         if( r instanceof cError ){
@@ -611,7 +611,7 @@ Complex.prototype = {
                 phi;
 
             phi = Math.acos( this.real / p );
-            if ( i < 0 ) {
+            if ( this.img < 0 ) {
                 phi = -phi;
             }
 

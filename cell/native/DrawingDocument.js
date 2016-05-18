@@ -24,145 +24,8 @@
 */
 "use strict";
 
-var g_dDpiX = 96.0;
-var g_dDpiY = 96.0;
-
-var g_dKoef_mm_to_pix = g_dDpiX / 25.4;
-var g_dKoef_pix_to_mm = 25.4 / g_dDpiX;
-
-var g_fontManager = new window['AscFonts'].CFontManager();
-g_fontManager.Initialize(true);
-
-function SetHintsProps(bIsHinting, bIsSubpixHinting)
-{
-    if (undefined === g_fontManager.m_oLibrary.tt_hint_props)
-        return;
-
-    if (bIsHinting && bIsSubpixHinting)
-    {
-        g_fontManager.m_oLibrary.tt_hint_props.TT_USE_BYTECODE_INTERPRETER = true;
-        g_fontManager.m_oLibrary.tt_hint_props.TT_CONFIG_OPTION_SUBPIXEL_HINTING = true;
-
-        g_fontManager.LOAD_MODE = 40968;
-    }
-    else if (bIsHinting)
-    {
-        g_fontManager.m_oLibrary.tt_hint_props.TT_USE_BYTECODE_INTERPRETER = true;
-        g_fontManager.m_oLibrary.tt_hint_props.TT_CONFIG_OPTION_SUBPIXEL_HINTING = false;
-
-        g_fontManager.LOAD_MODE = 40968;
-    }
-    else
-    {
-        g_fontManager.m_oLibrary.tt_hint_props.TT_USE_BYTECODE_INTERPRETER = true;
-        g_fontManager.m_oLibrary.tt_hint_props.TT_CONFIG_OPTION_SUBPIXEL_HINTING = false;
-
-        g_fontManager.LOAD_MODE = 40970;
-    }
-}
-
-SetHintsProps(true, true);
-
-function CTableMarkup(Table)
-{
-    this.Internal =
-    {
-        RowIndex  : 0,
-        CellIndex : 0,
-        PageNum   : 0
-    };
-    this.Table = Table;
-    this.X = 0; // Смещение таблицы от начала страницы до первой колонки
-
-    this.Cols    = []; // массив ширин колонок
-    this.Margins = []; // массив левых и правых маргинов
-
-    this.Rows    = []; // массив позиций, высот строк(для данной страницы)
-                                // Rows = [ { Y : , H :  }, ... ]
-
-    this.CurCol = 0; // текущая колонка
-    this.CurRow = 0; // текущая строка
-
-    this.TransformX = 0;
-    this.TransformY = 0;
-}
-
-CTableMarkup.prototype =
-{
-    CreateDublicate : function()
-    {
-        var obj = new CTableMarkup(this.Table);
-
-        obj.Internal = { RowIndex : this.Internal.RowIndex, CellIndex : this.Internal.CellIndex, PageNum : this.Internal.PageNum };
-        obj.X = this.X;
-
-        var len = this.Cols.length;
-        for (var i = 0; i < len; i++)
-            obj.Cols[i] = this.Cols[i];
-
-        len = this.Margins.length;
-        for (var i = 0; i < len; i++)
-            obj.Margins[i] = { Left : this.Margins[i].Left, Right : this.Margins[i].Right };
-
-        len = this.Rows.length;
-        for (var i = 0; i < len; i++)
-            obj.Rows[i] = { Y : this.Rows[i].Y, H : this.Rows[i].H };
-
-        obj.CurRow = this.CurRow;
-        obj.CurCol = this.CurCol;
-
-        return obj;
-    },
-
-    CorrectFrom : function()
-    {
-        this.X += this.TransformX;
-
-        var _len = this.Rows.length;
-        for (var i = 0; i < _len; i++)
-        {
-            this.Rows[i].Y += this.TransformY;
-        }
-    },
-
-    CorrectTo : function()
-    {
-        this.X -= this.TransformX;
-
-        var _len = this.Rows.length;
-        for (var i = 0; i < _len; i++)
-        {
-            this.Rows[i].Y -= this.TransformY;
-        }
-    },
-
-    Get_X : function()
-    {
-        return this.X;
-    },
-
-    Get_Y : function()
-    {
-        var _Y = 0;
-        if (this.Rows.length > 0)
-        {
-            _Y = this.Rows[0].Y;
-        }
-        return _Y;
-    }
-};
-
-function CTableOutline(Table, PageNum, X, Y, W, H)
-{
-    this.Table = Table;
-    this.PageNum = PageNum;
-
-    this.X = X;
-    this.Y = Y;
-
-    this.W = W;
-    this.H = H;
-}
+var g_dKoef_pix_to_mm = AscCommon.g_dKoef_pix_to_mm;
+var g_dKoef_mm_to_pix = AscCommon.g_dKoef_mm_to_pix;
 
 function CTextMeasurer()
 {
@@ -447,7 +310,7 @@ function CTableOutlineDr()
         this.IsChangeSmall = true;
         this.ChangeSmallPoint = pos;
 
-        if (!this.TableMatrix || global_MatrixTransformer.IsIdentity(this.TableMatrix))
+        if (!this.TableMatrix || AscCommon.global_MatrixTransformer.IsIdentity(this.TableMatrix))
         {
             if (word_control.MobileTouchManager)
             {
@@ -542,7 +405,7 @@ function CTableOutlineDr()
         {
             if (word_control.MobileTouchManager)
             {
-                var _invert = global_MatrixTransformer.Invert(this.TableMatrix);
+                var _invert = AscCommon.global_MatrixTransformer.Invert(this.TableMatrix);
                 var _posx = _invert.TransformPointX(pos.X, pos.Y);
                 var _posy = _invert.TransformPointY(pos.X, pos.Y);
 
@@ -566,7 +429,7 @@ function CTableOutlineDr()
                 return false;
             }
 
-            var _invert = global_MatrixTransformer.Invert(this.TableMatrix);
+            var _invert = AscCommon.global_MatrixTransformer.Invert(this.TableMatrix);
             var _posx = _invert.TransformPointX(pos.X, pos.Y);
             var _posy = _invert.TransformPointY(pos.X, pos.Y);
             switch (this.TrackTablePos)
@@ -789,7 +652,7 @@ function CTableOutlineDr()
         if (transform)
             this.TableMatrix = transform.CreateDublicate();
 
-        if (!this.TableMatrix || global_MatrixTransformer.IsIdentity(this.TableMatrix))
+        if (!this.TableMatrix || AscCommon.global_MatrixTransformer.IsIdentity(this.TableMatrix))
         {
             var pos = word_control.m_oDrawingDocument.ConvertCoordsToCursor(this.TableOutline.X, this.TableOutline.Y, this.TableOutline.PageNum, true);
 
@@ -947,14 +810,6 @@ function CCacheManager()
     }
 }
 
-function _rect()
-{
-    this.x = 0;
-    this.y = 0;
-    this.w = 0;
-    this.h = 0;
-}
-
 function CDrawingPage()
 {
     this.left   = 0;
@@ -1006,7 +861,7 @@ function CPage()
 
         var selectionArray = this.selectionArray;
 
-        if (null == TextMatrix || global_MatrixTransformer.IsIdentity(TextMatrix))
+        if (null == TextMatrix || AscCommon.global_MatrixTransformer.IsIdentity(TextMatrix))
         {
             for (var i = 0; i < selectionArray.length; i++)
             {
@@ -1626,7 +1481,7 @@ function CPage()
             coords.tx = xDst;
             coords.ty = yDst;
 
-            global_MatrixTransformer.MultiplyAppend(_ft, coords);
+            AscCommon.global_MatrixTransformer.MultiplyAppend(_ft, coords);
 
             ctx.transform(_ft.sx,_ft.shy,_ft.shx,_ft.sy,_ft.tx,_ft.ty);
 
@@ -3719,7 +3574,7 @@ function CDrawingDocument(drawingObjects)
         var bIsChanged = false;
         if (null == this.TableStylesLastLook)
         {
-            this.TableStylesLastLook = new CTablePropLook();
+            this.TableStylesLastLook = new Asc.CTablePropLook();
 
             this.TableStylesLastLook.FirstCol = tableLook.FirstCol;
             this.TableStylesLastLook.FirstRow = tableLook.FirstRow;
@@ -3797,7 +3652,7 @@ function CDrawingDocument(drawingObjects)
         _canvas.height = TABLE_STYLE_HEIGHT_PIX;
         var ctx = _canvas.getContext('2d');
 
-        History.TurnOff();
+        AscCommon.History.TurnOff();
         for (var i1 = 0; i1 < _styles_len; i1++)
         {
             var i = _styles[i1];
@@ -3815,9 +3670,9 @@ function CDrawingDocument(drawingObjects)
             ctx.fillStyle = "#FFFFFF";
             ctx.fillRect(0, 0, _canvas.width, _canvas.height);
 
-            var graphics = new CGraphics();
+            var graphics = new AscCommon.CGraphics();
             graphics.init(ctx, _canvas.width, _canvas.height, _pageW, _pageH);
-            graphics.m_oFontManager = g_fontManager;
+            graphics.m_oFontManager = AscCommon.g_fontManager;
             graphics.transform(1,0,0,1,0,0);
 
             table.Recalculate_Page(0);
@@ -3829,7 +3684,7 @@ function CDrawingDocument(drawingObjects)
             _styleD.Id = i;
             _dst_styles.push(_styleD);
         }
-        History.TurnOn();
+        AscCommon.History.TurnOn();
 
         this.m_oWordControl.m_oApi.sync_InitEditorTableStyles(_dst_styles);
     }
@@ -3844,3 +3699,8 @@ function CDrawingDocument(drawingObjects)
     }
 
 }
+
+//--------------------------------------------------------export----------------------------------------------------
+window['AscCommon'] = window['AscCommon'] || {};
+window['AscCommon'].CPage = CPage;
+window['AscCommon'].CDrawingDocument = CDrawingDocument;

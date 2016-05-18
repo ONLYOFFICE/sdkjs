@@ -961,6 +961,13 @@
                     ( b.length == 1? "0" + b: b);
               }
               return this.hex;
+          },
+
+          Compare: function(Color) {
+              return (this.r === Color.r && this.g === Color.g && this.b === Color.b && this.a === Color.a);
+          },
+          Copy: function() {
+              return new CColor(this.r, this.g, this.b, this.a);
           }
       };
 
@@ -1046,8 +1053,8 @@
           else
           {
               this.Color = CreateAscColorCustom(0,0,0);
-              this.Size  = 0.5 * g_dKoef_pt_to_mm;
-              this.Value = border_Single;
+              this.Size  = 0.5 * AscCommonWord.g_dKoef_pt_to_mm;
+              this.Value = AscCommonWord.border_Single;
               this.Space = 0;
           }
       }
@@ -1328,7 +1335,7 @@
               this.Brd               = (undefined != obj.Brd     && null != obj.Brd)     ? new asc_CParagraphBorders (obj.Brd) : null;
               this.Shd               = (undefined != obj.Shd     && null != obj.Shd)     ? new asc_CParagraphShd (obj.Shd) : null;
               this.Tabs              = (undefined != obj.Tabs)                           ? new asc_CParagraphTabs(obj.Tabs) : undefined;
-              this.DefaultTab        = Default_Tab_Stop;
+              this.DefaultTab        = AscCommonWord.Default_Tab_Stop;
               this.Locked            = (undefined != obj.Locked  && null != obj.Locked ) ? obj.Locked : false;
               this.CanAddTable       = (undefined != obj.CanAddTable )                   ? obj.CanAddTable : true;
 
@@ -1578,6 +1585,28 @@
           return this.Style;
       };
 
+    /** @constructor */
+    function asc_CChartTranslate() {
+        this.title = "Diagram Title";
+        this.xAxis = "X Axis";
+        this.yAxis = "Y Axis";
+        this.series = "Series";
+    }
+
+    asc_CChartTranslate.prototype = {
+        asc_getTitle: function() { return this.title; },
+        asc_setTitle: function(val) { this.title = val; },
+
+        asc_getXAxis: function() { return this.xAxis; },
+        asc_setXAxis: function(val) { this.xAxis = val; },
+
+        asc_getYAxis: function() { return this.yAxis; },
+        asc_setYAxis: function(val) { this.yAxis = val; },
+
+        asc_getSeries: function() { return this.series; },
+        asc_setSeries: function(val) { this.series = val; }
+    };
+
       function asc_TextArtTranslate()
       {
           this.DefaultText = "Your text here";
@@ -1819,12 +1848,12 @@
           asc_getOriginSize: function(api)
           {
               var _section_select = api.WordControl.m_oLogicDocument.Get_PageSizesByDrawingObjects();
-              var _page_width             = Page_Width;
-              var _page_height            = Page_Height;
-              var _page_x_left_margin     = X_Left_Margin;
-              var _page_y_top_margin      = Y_Top_Margin;
-              var _page_x_right_margin    = X_Right_Margin;
-              var _page_y_bottom_margin   = Y_Bottom_Margin;
+              var _page_width             = AscCommon.Page_Width;
+              var _page_height            = AscCommon.Page_Height;
+              var _page_x_left_margin     = AscCommon.X_Left_Margin;
+              var _page_y_top_margin      = AscCommon.Y_Top_Margin;
+              var _page_x_right_margin    = AscCommon.X_Right_Margin;
+              var _page_y_bottom_margin   = AscCommon.Y_Bottom_Margin;
 
               if (_section_select)
               {
@@ -1844,8 +1873,8 @@
                   var bIsCorrect = false;
                   if (_image.Image != null)
                   {
-                      var __w = Math.max(parseInt(_image.Image.width * g_dKoef_pix_to_mm), 1);
-                      var __h = Math.max(parseInt(_image.Image.height * g_dKoef_pix_to_mm), 1);
+                      var __w = Math.max(parseInt(_image.Image.width * AscCommon.g_dKoef_pix_to_mm), 1);
+                      var __h = Math.max(parseInt(_image.Image.height * AscCommon.g_dKoef_pix_to_mm), 1);
 
                       var dKoef = Math.max(__w / _w, __h / _h);
                       if (dKoef > 1)
@@ -2643,6 +2672,17 @@
       prot["asc_putStyle"] = prot.asc_putStyle;
       prot["asc_getStyle"] = prot.asc_getStyle;
 
+    window["Asc"]["asc_CChartTranslate"] = window["Asc"].asc_CChartTranslate = asc_CChartTranslate;
+    prot = asc_CChartTranslate.prototype;
+    prot["asc_getTitle"] = prot.asc_getTitle;
+    prot["asc_setTitle"] = prot.asc_setTitle;
+    prot["asc_getXAxis"] = prot.asc_getXAxis;
+    prot["asc_setXAxis"] = prot.asc_setXAxis;
+    prot["asc_getYAxis"] = prot.asc_getYAxis;
+    prot["asc_setYAxis"] = prot.asc_setYAxis;
+    prot["asc_getSeries"] = prot.asc_getSeries;
+    prot["asc_setSeries"] = prot.asc_setSeries;
+
       window["Asc"]["asc_TextArtTranslate"] = window["Asc"].asc_TextArtTranslate = asc_TextArtTranslate;
       prot = asc_TextArtTranslate.prototype;
       prot["asc_setDefaultText"] = prot.asc_setDefaultText;
@@ -2889,5 +2929,4 @@
       prot["asc_getName"] = prot["get_Name"] = prot.asc_getName;
       prot["asc_getType"] = prot["get_Type"] = prot.asc_getType;
       prot["asc_getImage"] = prot.asc_getImage;
-}
-)(window);
+})(window);

@@ -447,8 +447,8 @@ var UndoRedoDataTypes = new function() {
 	{
 		switch(nType)
 		{
-			case this.ValueMultiTextElem: return new CCellValueMultiText();break;
-			case this.CellValue:return new CCellValue();break;
+			case this.ValueMultiTextElem: return new AscCommonExcel.CCellValueMultiText();break;
+			case this.CellValue:return new AscCommonExcel.CCellValue();break;
 			case this.CellValueData: return new UndoRedoData_CellValueData();break;
 			case this.CellData: return new UndoRedoData_CellData();break;
 			case this.CellSimpleData: return new UndoRedoData_CellSimpleData();break;
@@ -459,15 +459,15 @@ var UndoRedoDataTypes = new function() {
 			case this.ColProp: return new UndoRedoData_ColProp();break;
 			case this.RowProp: return new UndoRedoData_RowProp();break;
 			case this.BBox: return new UndoRedoData_BBox();break;
-			case this.Hyperlink: return new Hyperlink();break;
+			case this.Hyperlink: return new AscCommonExcel.Hyperlink();break;
 			case this.SortData: return new UndoRedoData_SortData();break;
-			case this.StyleFont: return new Font();break;
-			case this.StyleFill: return new Fill();break;
-			case this.StyleNum: return new Num();break;
-			case this.StyleBorder: return new Border();break;
-			case this.StyleBorderProp: return new BorderProp();break;
-			case this.StyleXfs: return new CellXfs();break;
-			case this.StyleAlign: return new Align();break;
+			case this.StyleFont: return new AscCommonExcel.Font();break;
+			case this.StyleFill: return new AscCommonExcel.Fill();break;
+			case this.StyleNum: return new AscCommonExcel.Num();break;
+			case this.StyleBorder: return new AscCommonExcel.Border();break;
+			case this.StyleBorderProp: return new AscCommonExcel.BorderProp();break;
+			case this.StyleXfs: return new AscCommonExcel.CellXfs();break;
+			case this.StyleAlign: return new AscCommonExcel.Align();break;
 			case this.CommentData: return new Asc.asc_CCommentData();break;
 			case this.CompositeCommentData: return new AscCommonExcel.CompositeCommentData();break;
 			case this.ChartSeriesData: return new AscFormat.asc_CChartSeria();break;
@@ -486,8 +486,8 @@ var UndoRedoDataTypes = new function() {
 			case this.AutoFiltersOptionsElements: return new AscCommonExcel.AutoFiltersOptionsElements(); break;
 			case this.AddFormatTableOptions: return new AscCommonExcel.AddFormatTableOptions(); break;
 			case this.SingleProperty: return new UndoRedoData_SingleProperty(); break;
-			case this.RgbColor: return new RgbColor(); break;
-			case this.ThemeColor: return new ThemeColor(); break;
+			case this.RgbColor: return new AscCommonExcel.RgbColor(); break;
+			case this.ThemeColor: return new AscCommonExcel.ThemeColor(); break;
 			case this.SheetViewSettings: return new AscCommonExcel.asc_CSheetViewSettings(); break;
             case this.GraphicObjects: return new UndoRedoDataGraphicObjects();break;
             case this.GlobalTableIdAdd: return new UndoRedoData_GTableIdAdd(); break;
@@ -864,9 +864,10 @@ function UndoRedoData_ColProp(col){
 UndoRedoData_ColProp.prototype = {
 	isEqual : function(val)
 	{
+		var defaultColWidth = AscCommonExcel.oDefaultMetrics.ColWidthChars;
 		return this.hd == val.hd && this.CustomWidth == val.CustomWidth && ((this.BestFit == val.BestFit && this.width == val.width) ||
-			((null == this.width || gc_dDefaultColWidthCharsAttribute == this.width) && (null == this.BestFit || true == this.BestFit) &&
-			(null == val.width || gc_dDefaultColWidthCharsAttribute == val.width) && (null == val.BestFit || true == val.BestFit)));
+			((null == this.width || defaultColWidth == this.width) && (null == this.BestFit || true == this.BestFit) &&
+			(null == val.width || defaultColWidth == val.width) && (null == val.BestFit || true == val.BestFit)));
 	},
 	getType : function()
 	{
@@ -908,8 +909,8 @@ function UndoRedoData_RowProp(row){
 	if(null != row)
 	{
 		this.h = row.h;
-		this.hd = 0 != (g_nRowFlag_hd & row.flags);
-		this.CustomHeight = 0 != (g_nRowFlag_CustomHeight & row.flags);
+		this.hd = 0 != (AscCommonExcel.g_nRowFlag_hd & row.flags);
+		this.CustomHeight = 0 != (AscCommonExcel.g_nRowFlag_CustomHeight & row.flags);
 	}
 	else
 	{
@@ -921,9 +922,10 @@ function UndoRedoData_RowProp(row){
 UndoRedoData_RowProp.prototype = {
 	isEqual : function(val)
 	{
+		var defaultRowHeight = AscCommonExcel.oDefaultMetrics.RowHeight;
 		return this.hd == val.hd && ((this.CustomHeight == val.CustomHeight && this.h == val.h) ||
-			((null == this.h || gc_dDefaultRowHeightAttribute == this.h) && (null == this.CustomHeight || false == this.CustomHeight) &&
-			(null == val.h || gc_dDefaultRowHeightAttribute == val.h) && (null == val.CustomHeight || false == val.CustomHeight)));
+			((null == this.h || defaultRowHeight == this.h) && (null == this.CustomHeight || false == this.CustomHeight) &&
+			(null == val.h || defaultRowHeight == val.h) && (null == val.CustomHeight || false == val.CustomHeight)));
 	},
 	getType : function()
 	{
@@ -3205,7 +3207,7 @@ UndoRedoWoorksheet.prototype = {
 			index = Data.index;
 			if(false != this.wb.bCollaborativeChanges)
 			{
-			    if (g_nAllColIndex == index) {
+			    if (AscCommonExcel.g_nAllColIndex == index) {
 			        range = new Asc.Range(0, 0, gc_nMaxCol0, gc_nMaxRow0);
 			    }
 			    else {
@@ -3549,14 +3551,7 @@ UndoRedoWoorksheet.prototype = {
 						if(null != oConflictWs)
 							oConflictWs.renameWsToCollaborate(this.wb.getUniqueSheetNameFrom(oConflictWs.getName(), true));
 					}
-                    var dN;
-                    for(var id in arrDefNameRecalc ){
-                        dN  = arrDefNameRecalc[id];
-                        if( !dN.parsedRef && dN.Ref ){
-                            dN.parsedRef = new AscCommonExcel.parserFormula(dN.Ref, "", ws.workbook.getWorksheet(0));
-                            dN.parsedRef.parse();
-                        }
-                    }
+					AscCommonExcel.buildDefNameAfterRenameWorksheet();
 				}
 				ws.setName(name, true);
 			}
@@ -3711,7 +3706,7 @@ UndoRedoRowCol.prototype = {
 			}
 			else
 			{
-			    if (g_nAllColIndex == nIndex) {
+			    if (AscCommonExcel.g_nAllColIndex == nIndex) {
 			        oLockInfo["rangeOrObjectId"] = new Asc.Range(0, 0, gc_nMaxCol0, gc_nMaxRow0);
 			    }
 			    else{

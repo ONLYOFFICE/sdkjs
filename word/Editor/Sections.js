@@ -33,12 +33,7 @@
 
 // Import
 var g_oTableId = AscCommon.g_oTableId;
-
-var section_type_NextPage   = 0x00;
-var section_type_OddPage    = 0x01;
-var section_type_EvenPage   = 0x02;
-var section_type_Continuous = 0x03;
-var section_type_Column     = 0x04;
+var History = AscCommon.History;
 
 var section_borders_DisplayAllPages     = 0x00;
 var section_borders_DisplayFirstPage    = 0x01;
@@ -54,7 +49,7 @@ function CSectionPr(LogicDocument)
 {
     this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
-    this.Type          = section_type_NextPage;
+    this.Type          = 'undefined' !== typeof c_oAscSectionBreakType ? c_oAscSectionBreakType.NextPage : undefined;
     this.PageSize      = new CSectionPageSize();
     this.PageMargins   = new CSectionPageMargins();
 
@@ -315,7 +310,7 @@ CSectionPr.prototype =
                 
                 this.Set_PageSize(H, W);
                 
-                if ( orientation_Portrait === Orient )
+                if ( Asc.c_oAscPageOrientation.PagePortrait === Orient )
                     this.Set_PageMargins( T, R, B, L );
                 else
                     this.Set_PageMargins( B, L, T, R );
@@ -1732,7 +1727,7 @@ function CSectionPageSize()
 {
     this.W      = 210;
     this.H      = 297;
-    this.Orient = orientation_Portrait;
+    this.Orient = Asc.c_oAscPageOrientation.PagePortrait;
 }
 
 CSectionPageSize.prototype =
@@ -2045,3 +2040,7 @@ function CSectionLayoutInfo(X, Y, XLimit, YLimit)
     this.YLimit  = YLimit;
     this.Columns = [];
 }
+
+//--------------------------------------------------------export----------------------------------------------------
+window['AscCommonWord'] = window['AscCommonWord'] || {};
+window['AscCommonWord'].CSectionPr = CSectionPr;

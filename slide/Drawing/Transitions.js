@@ -24,6 +24,10 @@
 */
 "use strict";
 
+// Import
+var global_MatrixTransformer = AscCommon.global_MatrixTransformer;
+var g_dKoef_mm_to_pix = AscCommon.g_dKoef_mm_to_pix;
+
 function CCacheSlideImage()
 {
     this.Image = null;
@@ -40,7 +44,8 @@ var __nextFrame = (function() {
 })();
 
 var __cancelFrame = (function () {
-        return window.cancelRequestAnimationFrame ||
+        return window.cancelAnimationFrame ||
+            window.cancelRequestAnimationFrame ||
             window.webkitCancelAnimationFrame ||
             window.webkitCancelRequestAnimationFrame ||
             window.mozCancelRequestAnimationFrame ||
@@ -64,7 +69,7 @@ function CTransitionAnimation(htmlpage)
     this.CacheImage1 = new CCacheSlideImage();
     this.CacheImage2 = new CCacheSlideImage();
 
-    this.Rect = new _rect();
+    this.Rect = new AscCommon._rect();
     this.Params = null;
 
     this.IsBackward = false;
@@ -213,9 +218,9 @@ function CTransitionAnimation(htmlpage)
 
             this.CacheImage1.Image = this.CreateImage(_w, _h);
 
-            var g = new CGraphics();
+            var g = new AscCommon.CGraphics();
             g.init(this.CacheImage1.Image.getContext('2d'), _w, _h, _w_mm, _h_mm);
-            g.m_oFontManager = g_fontManager;
+            g.m_oFontManager = AscCommon.g_fontManager;
 
             g.transform(1,0,0,1,0,0);
             g.IsNoDrawingEmptyPlaceholder = true;
@@ -254,9 +259,9 @@ function CTransitionAnimation(htmlpage)
 
             this.CacheImage2.Image = this.CreateImage(_w, _h);
 
-            var g = new CGraphics();
+            var g = new AscCommon.CGraphics();
             g.init(this.CacheImage2.Image.getContext('2d'), _w, _h, _w_mm, _h_mm);
-            g.m_oFontManager = g_fontManager;
+            g.m_oFontManager = AscCommon.g_fontManager;
 
             g.transform(1,0,0,1,0,0);
             g.IsNoDrawingEmptyPlaceholder = true;
@@ -268,8 +273,19 @@ function CTransitionAnimation(htmlpage)
         }
     }
 
+    this.StopIfPlaying = function()
+    {
+        if (this.IsPlaying())
+        {
+            __cancelFrame(this.TimerId);
+            this.TimerId = null;
+        }
+    }
+
     this.Start = function(isButtonPreview)
     {
+        this.StopIfPlaying();
+
         if (true == isButtonPreview)
         {
             this.CalculateRect();
@@ -2687,9 +2703,9 @@ function CDemonstrationManager(htmlpage)
 
         var _image = this.CacheImagesManager.Lock(_w, _h);
 
-        var g = new CGraphics();
+        var g = new AscCommon.CGraphics();
         g.init(_image.image.getContext('2d'), _w, _h, _w_mm, _h_mm);
-        g.m_oFontManager = g_fontManager;
+        g.m_oFontManager = AscCommon.g_fontManager;
 
         g.transform(1,0,0,1,0,0);
         g.IsNoDrawingEmptyPlaceholder = true;
@@ -3070,6 +3086,10 @@ function CDemonstrationManager(htmlpage)
                 if (oThis.IsPlayMode)
                 {
                     oThis.SlideNum++;
+                    if(oThis.SlideNum === oThis.SlidesCount && oThis.HtmlPage.m_oApi.WordControl.m_oLogicDocument.isLoopShowMode())
+                    {
+                        oThis.SlideNum = 0;
+                    }
                     oThis.HtmlPage.m_oApi.sync_DemonstrationSlideChanged(oThis.SlideNum);
                     oThis.StartSlide(true, false);
                 }
@@ -3127,6 +3147,9 @@ function CDemonstrationManager(htmlpage)
         if (!_is_transition)
             this.SlideNum++;
 
+        if (this.HtmlPage.m_oApi.WordControl.m_oLogicDocument.isLoopShowMode() && (this.SlideNum >= this.SlidesCount))
+            this.SlideNum = 0;
+
         if (this.SlideNum > this.SlidesCount)
             this.End();
         else
@@ -3146,6 +3169,13 @@ function CDemonstrationManager(htmlpage)
             this.CorrectSlideNum();
 
             // TODO: backward transition
+            this.StartSlideBackward();
+            this.HtmlPage.m_oApi.sync_DemonstrationSlideChanged(this.SlideNum);
+        }
+        else if(this.HtmlPage.m_oApi.WordControl.m_oLogicDocument.isLoopShowMode())
+        {
+            this.CorrectSlideNum();
+            this.SlideNum = this.SlidesCount;
             this.StartSlideBackward();
             this.HtmlPage.m_oApi.sync_DemonstrationSlideChanged(this.SlideNum);
         }

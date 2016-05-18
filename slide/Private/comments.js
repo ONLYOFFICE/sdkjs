@@ -24,7 +24,7 @@
 */
 "use strict";
 
-asc_docs_api.prototype.asc_addComment = function(AscCommentData) {
+Asc['asc_docs_api'].prototype.asc_addComment = function(AscCommentData) {
   //if ( true === CollaborativeEditing.Get_GlobalLock() )
   //   return;
 
@@ -41,4 +41,4 @@ asc_docs_api.prototype.asc_addComment = function(AscCommentData) {
   }
 };
 
-asc_docs_api.prototype['asc_addComment'] = asc_docs_api.prototype.asc_addComment;
+Asc['asc_docs_api'].prototype['asc_addComment'] = Asc['asc_docs_api'].prototype.asc_addComment;

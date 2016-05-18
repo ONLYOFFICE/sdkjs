@@ -26,6 +26,7 @@
 
 // Import
 var g_oTableId = AscCommon.g_oTableId;
+var History = AscCommon.History;
 
 function Slide(presentation, slideLayout, slideNum)
 {
@@ -695,11 +696,11 @@ Slide.prototype =
                 {
                     Fill = this.cSld.Bg.bgPr.Fill;
                 }
-                if(typeof CollaborativeEditing !== "undefined")
+                if(typeof AscCommon.CollaborativeEditing !== "undefined")
                 {
                     if(Fill && Fill.fill && Fill.fill.type === Asc.c_oAscFill.FILL_TYPE_BLIP && typeof Fill.fill.RasterImageId === "string" && Fill.fill.RasterImageId.length > 0)
                     {
-						CollaborativeEditing.Add_NewImage(AscCommon.getFullImageSrc2(Fill.fill.RasterImageId));
+                        AscCommon.CollaborativeEditing.Add_NewImage(AscCommon.getFullImageSrc2(Fill.fill.RasterImageId));
                     }
                 }
                 break;
@@ -848,6 +849,7 @@ Slide.prototype =
                     break;
                 }
                 case AscDFH.historyitem_type_ImageShape:
+                case AscDFH.historyitem_type_OleObject:
                 {
                     if(!drawing.nvPicPr)
                     {
@@ -1000,7 +1002,7 @@ Slide.prototype =
         {
             return this.Layout.Master.clrMap;
         }
-        return G_O_DEFAULT_COLOR_MAP;
+        return AscFormat.G_O_DEFAULT_COLOR_MAP;
     },
 
     recalculate: function()
@@ -1276,7 +1278,7 @@ Slide.prototype =
     {
         if(typeof this.cachedImage === "string" && this.cachedImage.length > 0)
             return this.cachedImage;
-        return ShapeToImageConverter(this, 0).ImageUrl;
+        return AscCommon.ShapeToImageConverter(this, 0).ImageUrl;
     },
 
     checkNoTransformPlaceholder: function()
@@ -1285,7 +1287,7 @@ Slide.prototype =
         for(var i = 0; i < sp_tree.length; ++i)
         {
             var sp = sp_tree[i];
-            if(sp.getObjectType() === AscDFH.historyitem_type_Shape || sp.getObjectType() === AscDFH.historyitem_type_ImageShape)
+            if(sp.getObjectType() === AscDFH.historyitem_type_Shape || sp.getObjectType() === AscDFH.historyitem_type_ImageShapee || sp.getObjectType() === AscDFH.historyitem_type_OleObject)
             {
                 if(sp.isPlaceholder && sp.isPlaceholder())
                 {
@@ -1754,3 +1756,9 @@ SlideComments.prototype =
         }
     }
 };
+
+//--------------------------------------------------------export----------------------------------------------------
+window['AscCommonSlide'] = window['AscCommonSlide'] || {};
+window['AscCommonSlide'].Slide = Slide;
+window['AscCommonSlide'].PropLocker = PropLocker;
+window['AscCommonSlide'].SlideComments = SlideComments;

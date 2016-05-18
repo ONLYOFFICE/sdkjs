@@ -414,11 +414,10 @@ $( function () {
     var oParser, wb, ws, dif = 1e-9,
         data = getTestWorkbook(),
         sData = data + "";
-    if ( Asc.c_oSerFormat.Signature === sData.substring( 0, Asc.c_oSerFormat.Signature.length ) ) {
+    if ( AscCommon.c_oSerFormat.Signature === sData.substring( 0, AscCommon.c_oSerFormat.Signature.length ) ) {
         var sUrlPath = "offlinedocs/";
-        wb = new Workbook( new Asc.asc_CHandlersList(), {wb:{getWorksheet:function(){}}} );
-
-        History = new CHistory(wb);
+        wb = new AscCommonExcel.Workbook( new AscCommonExcel.asc_CHandlersList(), {wb:{getWorksheet:function(){}}} );
+        AscCommon.History.init(wb);
 
         AscCommon.g_oTableId.init();
         if ( this.User )
@@ -434,7 +433,7 @@ $( function () {
 //        g_oUndoRedoGraphicObjects = new UndoRedoGraphicObjects(wb);
         g_oIdCounter.Set_Load(false);
 
-        var oBinaryFileReader = new Asc.BinaryFileReader();
+        var oBinaryFileReader = new AscCommonExcel.BinaryFileReader();
         oBinaryFileReader.Read( sData, wb );
         ws = wb.getWorksheet( wb.getActive() );
         AscCommonExcel.getFormulasInfo();
@@ -1261,7 +1260,7 @@ $( function () {
 
     test( "Test: \"TEXT\"", function () {
 
-        wb.dependencyFormulas = new DependencyGraph( wb );
+        wb.dependencyFormulas = new AscCommonExcel.DependencyGraph( wb );
 
         oParser = new parserFormula( "TEXT(1234.567,\"$0.00\")", "A2", ws );
         ok( oParser.parse() );
@@ -1275,7 +1274,7 @@ $( function () {
 
     test( "Test: \"WORKDAY\"", function () {
 
-        wb.dependencyFormulas = new DependencyGraph( wb );
+        wb.dependencyFormulas = new AscCommonExcel.DependencyGraph( wb );
 
         oParser = new parserFormula( "WORKDAY(DATE(2006,1,1),0)", "A2", ws );
         ok( oParser.parse() );

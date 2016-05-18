@@ -24,10 +24,13 @@
 */
 "use strict";
 
+(function(window, undefined){
+
 // Import
 var CShape = AscFormat.CShape;
 var CChartSpace = AscFormat.CChartSpace;
 
+    // ToDo перенести в один файл!
 function getChartTranslateManager()
 {
     return window["Asc"]["editor"].chartTranslate;
@@ -66,7 +69,6 @@ CChartSpace.prototype.getNumByCardDirection = CShape.prototype.getNumByCardDirec
 CChartSpace.prototype.getCardDirectionByNum = CShape.prototype.getCardDirectionByNum;
 CChartSpace.prototype.getResizeCoefficients = CShape.prototype.getResizeCoefficients;
 CChartSpace.prototype.check_bounds = CShape.prototype.check_bounds;
-CChartSpace.prototype.normalize = CShape.prototype.normalize;
 CChartSpace.prototype.getFullFlipH = CShape.prototype.getFullFlipH;
 CChartSpace.prototype.getFullFlipV = CShape.prototype.getFullFlipV;
 CChartSpace.prototype.setWorksheet = CShape.prototype.setWorksheet;
@@ -286,7 +288,7 @@ CChartSpace.prototype.recalculate = function()
         if(this.recalcInfo.recalculateTransform)
         {
             this.recalculateTransform();
-            this.calculateSnapArrays();
+            this.recalculateSnapArrays();
             this.rectGeometry.Recalculate(this.extX, this.extY);
             this.recalcInfo.recalculateTransform = false;
             b_transform = true;
@@ -507,3 +509,8 @@ CChartSpace.prototype.recalculateLocalTransform = CShape.prototype.recalculateLo
 
 CChartSpace.prototype.Get_Theme = CShape.prototype.Get_Theme;
 CChartSpace.prototype.Get_ColorMap = CShape.prototype.Get_ColorMap;
+
+    //----------------------------------------------------------export----------------------------------------------------
+    window['AscFormat'] = window['AscFormat'] || {};
+    window['AscFormat'].getChartTranslateManager = getChartTranslateManager;
+})(window);

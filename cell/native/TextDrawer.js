@@ -868,8 +868,8 @@ function CTextDrawer(dWidth, dHeight, bDivByLInes, oTheme, bDivGlyphs)
     this.m_oGrFonts     = new AscCommon.CGrRFonts();
     this.m_oCurComment     = null;
 
-    this.m_oPen     = new CPen();
-    this.m_oBrush   = new CBrush();
+    this.m_oPen     = new AscCommon.CPen();
+    this.m_oBrush   = new AscCommon.CBrush();
 
     this.m_oLine = null;
     this.m_oFill = null;
@@ -2508,4 +2508,5 @@ function GetRectContentWidth(oContent, dMaxWidth)
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].CTextDrawer = CTextDrawer;
+    window['AscFormat'].GetRectContentWidth = GetRectContentWidth;
 })(window);

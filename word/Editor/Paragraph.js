@@ -42,6 +42,7 @@ var align_Left = AscCommon.align_Left;
 var align_Center = AscCommon.align_Center;
 var g_oTableId = AscCommon.g_oTableId;
 var g_oTextMeasurer = AscCommon.g_oTextMeasurer;
+var History = AscCommon.History;
 
 var linerule_Exact = Asc.linerule_Exact;
 var c_oAscRelativeFromV = Asc.c_oAscRelativeFromV;
@@ -51,6 +52,108 @@ var type_Paragraph = 0x0001;
 var UnknownValue  = null;
 
 var REVIEW_COLOR = new AscCommon.CColor(255, 0, 0, 255);
+
+function CRevisionsChange()
+{
+    this.Type      = c_oAscRevisionsChangeType.Unknown;
+    this.X         = 0;
+    this.Y         = 0;
+    this.Value     = "";
+
+    this.UserName  = "";
+    this.UserId    = "";
+    this.DateTime  = "";
+    this.UserColor = new AscCommon.CColor(0, 0, 0, 255);
+
+    this.Paragraph = null;
+    this.StartPos  = null;
+    this.EndPos    = null;
+
+    this._X       = 0;
+    this._Y       = 0;
+    this._PageNum = 0;
+    this._PosChanged = false;
+}
+CRevisionsChange.prototype.get_UserId = function(){return this.UserId;};
+CRevisionsChange.prototype.put_UserId = function(UserId)
+{
+    this.UserId = UserId;
+    this.private_UpdateUserColor();
+};
+CRevisionsChange.prototype.get_UserName = function(){return this.UserName;};
+CRevisionsChange.prototype.put_UserName = function(UserName)
+{
+    this.UserName = UserName;
+    this.private_UpdateUserColor();
+};
+CRevisionsChange.prototype.get_DateTime = function(){return this.DateTime};
+CRevisionsChange.prototype.put_DateTime = function(DateTime){this.DateTime = DateTime};
+CRevisionsChange.prototype.get_UserColor = function(){return this.UserColor;};
+CRevisionsChange.prototype.get_StartPos = function(){return this.StartPos};
+CRevisionsChange.prototype.put_StartPos = function(StartPos){this.StartPos = StartPos;};
+CRevisionsChange.prototype.get_EndPos = function(){return this.EndPos};
+CRevisionsChange.prototype.put_EndPos = function(EndPos){this.EndPos = EndPos;};
+CRevisionsChange.prototype.get_Type  = function(){return this.Type;};
+CRevisionsChange.prototype.get_X     = function(){return this.X;};
+CRevisionsChange.prototype.get_Y     = function(){return this.Y;};
+CRevisionsChange.prototype.get_Value = function(){return this.Value;};
+CRevisionsChange.prototype.put_Type  = function(Type){this.Type = Type;};
+CRevisionsChange.prototype.put_XY    = function(X, Y){this.X = X; this.Y = Y;};
+CRevisionsChange.prototype.put_Value = function(Value){this.Value = Value;};
+CRevisionsChange.prototype.put_Paragraph = function(Para){this.Paragraph = Para;};
+CRevisionsChange.prototype.get_Paragraph = function(){return this.Paragraph;};
+CRevisionsChange.prototype.get_LockUserId = function()
+{
+    if (this.Paragraph)
+    {
+        var Lock = this.Paragraph.Get_Lock();
+        var LockType = Lock.Get_Type();
+
+        if (locktype_Mine !== LockType && locktype_None !== LockType)
+            return Lock.Get_UserId();
+    }
+
+    return null;
+};
+CRevisionsChange.prototype.put_InternalPos = function(x, y, pageNum)
+{
+    if (this._PageNum !== pageNum
+      || Math.abs(this._X - x) > 0.001
+      || Math.abs(this._Y - y) > 0.001)
+    {
+        this._X = x;
+        this._Y = y;
+        this._PageNum = pageNum;
+        this._PosChanged = true;
+    }
+    else
+    {
+        this._PosChanged = false;
+    }
+};
+CRevisionsChange.prototype.get_InternalPosX = function()
+{
+    return this._X;
+};
+CRevisionsChange.prototype.get_InternalPosY = function()
+{
+    return this._Y;
+};
+CRevisionsChange.prototype.get_InternalPosPageNum = function()
+{
+    return this._PageNum;
+};
+CRevisionsChange.prototype.ComparePrevPosition = function()
+{
+    if (true === this._PosChanged)
+        return false;
+
+    return true;
+};
+CRevisionsChange.prototype.private_UpdateUserColor = function()
+{
+    this.UserColor = AscCommon.getUserColorById(this.UserId, this.UserName, true, false);
+};
 
 // Класс Paragraph
 function Paragraph(DrawingDocument, Parent, PageNum, X, Y, XLimit, YLimit, bFromPresentation)
@@ -157,8 +260,8 @@ function Paragraph(DrawingDocument, Parent, PageNum, X, Y, XLimit, YLimit, bFrom
     if (false === AscCommon.g_oIdCounter.m_bLoad && true === History.Is_On())
     {
         this.Lock.Set_Type(AscCommon.locktype_Mine, false);
-        if (CollaborativeEditing)
-            CollaborativeEditing.Add_Unlock2(this);
+        if (AscCommon.CollaborativeEditing)
+            AscCommon.CollaborativeEditing.Add_Unlock2(this);
     }
 
     this.DeleteCommentOnRemove    = true; // Удаляем ли комменты в функциях Internal_Content_Remove
@@ -1868,6 +1971,7 @@ Paragraph.prototype =
 
                 var Range = Line.Ranges[CurRange];
 
+                PDSE.Set_LineMetrics(Y, Y - Line.Metrics.Ascent, Y + Line.Metrics.Descent);
                 PDSE.Reset_Range( CurPage, CurLine, CurRange, X, Y );
 
                 var StartPos = Range.StartPos;
@@ -2967,6 +3071,8 @@ Paragraph.prototype =
             case para_Tab:
             case para_Drawing:
             case para_NewLine:
+            case para_FootnoteReference:
+            default:
             {
                 // Элементы данного типа добавляем во внутренний элемент
                 this.Content[this.CurPos.ContentPos].Add(Item);
@@ -9169,7 +9275,7 @@ Paragraph.prototype =
         if (null != Hyperlink && (Y <= this.Pages[CurPage].Bounds.Bottom && Y >= this.Pages[CurPage].Bounds.Top))
         {
             MMData.Type      = AscCommon.c_oAscMouseMoveDataTypes.Hyperlink;
-            MMData.Hyperlink = new CHyperlinkProperty( Hyperlink );
+            MMData.Hyperlink = new Asc.CHyperlinkProperty( Hyperlink );
         }
         else
             MMData.Type      = AscCommon.c_oAscMouseMoveDataTypes.Common;
@@ -11740,7 +11846,7 @@ Paragraph.prototype =
                             Element.Set_Paragraph(this);
 
                         this.Content.splice(Pos, 0, Element);
-                        CollaborativeEditing.Update_DocumentPositionsOnAdd(this, Pos);
+                        AscCommon.CollaborativeEditing.Update_DocumentPositionsOnAdd(this, Pos);
 
                         if (Element.Recalc_RunsCompiledPr)
                             Element.Recalc_RunsCompiledPr();
@@ -11768,7 +11874,7 @@ Paragraph.prototype =
                         continue;
 
                     this.Content.splice(ChangesPos, 1);
-                    CollaborativeEditing.Update_DocumentPositionsOnRemove(this, ChangesPos, 1);
+                    AscCommon.CollaborativeEditing.Update_DocumentPositionsOnRemove(this, ChangesPos, 1);
                 }
 
                 this.private_ResetSelection();
@@ -12544,7 +12650,7 @@ Paragraph.prototype =
             }
         }
 
-        CollaborativeEditing.Add_NewObject( this );
+        AscCommon.CollaborativeEditing.Add_NewObject( this );
 
         this.bFromDocument = Reader.GetBool();
         if(!this.bFromDocument)
@@ -12562,7 +12668,7 @@ Paragraph.prototype =
         }
         else
         {
-            CollaborativeEditing.Add_LinkData(this, {});
+            AscCommon.CollaborativeEditing.Add_LinkData(this, {});
         }
 
         this.PageNum = 0;
@@ -13215,7 +13321,7 @@ Paragraph.prototype.Get_StyleFromFormatting = function()
 Paragraph.prototype.private_AddCollPrChange = function(Color)
 {
     this.CollPrChange = Color;
-    CollaborativeEditing.Add_ChangedClass(this);
+    AscCommon.CollaborativeEditing.Add_ChangedClass(this);
 };
 Paragraph.prototype.private_GetCollPrChange = function()
 {
@@ -14293,6 +14399,11 @@ CParagraphContentPos.prototype =
         this.Depth = ContentPos.Depth;
     },
 
+    /**
+     * Сравниваем текущую позицию с заданной.
+     * @param {CParagraphContentPos} Pos
+     * @returns {number} 0 - позиции совпадают, 1 - текущая позиция дальше заданной, -1 - текущая позиция до заданной.
+     */
     Compare : function(Pos)
     {
         var CurDepth = 0;
@@ -14493,6 +14604,10 @@ function CParagraphDrawStateElements()
 
     this.X = 0;
     this.Y = 0;
+
+    this.LineTop    = 0;
+    this.LineBottom = 0;
+    this.BaseLine   = 0;
 }
 
 CParagraphDrawStateElements.prototype =
@@ -14518,6 +14633,13 @@ CParagraphDrawStateElements.prototype =
 
         this.X = X;
         this.Y = Y;
+    },
+
+    Set_LineMetrics : function(BaseLine, Top, Bottom)
+    {
+        this.LineTop    = Top;
+        this.LineBottom = Bottom;
+        this.BaseLine   = BaseLine;
     }
 };
 
@@ -15090,6 +15212,7 @@ CParagraphRevisionsChangesChecker.prototype.Add_Drawing = function(Drawing)
             }
             case AscDFH.historyitem_type_ImageShape:
             case AscDFH.historyitem_type_Image:
+            case AscDFH.historyitem_type_OleObject:
             {
                 this.AddRemove.Value.push(c_oAscRevisionsObjectType.Image);
                 break;
@@ -15157,3 +15280,28 @@ CParagraphRevisionsChangesChecker.prototype.Get_PrChangeUserId = function()
 {
     return this.TextPr.UserId;
 };
+
+//--------------------------------------------------------export----------------------------------------------------
+window['AscCommonWord'] = window['AscCommonWord'] || {};
+window['AscCommonWord'].Paragraph = Paragraph;
+window['AscCommonWord'].UnknownValue = UnknownValue;
+
+CRevisionsChange.prototype['get_UserId'] = CRevisionsChange.prototype.get_UserId;
+CRevisionsChange.prototype['put_UserId'] = CRevisionsChange.prototype.put_UserId;
+CRevisionsChange.prototype['get_UserName'] = CRevisionsChange.prototype.get_UserName;
+CRevisionsChange.prototype['put_UserName'] = CRevisionsChange.prototype.put_UserName;
+CRevisionsChange.prototype['get_DateTime'] = CRevisionsChange.prototype.get_DateTime;
+CRevisionsChange.prototype['put_DateTime'] = CRevisionsChange.prototype.put_DateTime;
+CRevisionsChange.prototype['get_UserColor'] = CRevisionsChange.prototype.get_UserColor;
+CRevisionsChange.prototype['get_StartPos'] = CRevisionsChange.prototype.get_StartPos;
+CRevisionsChange.prototype['put_StartPos'] = CRevisionsChange.prototype.put_StartPos;
+CRevisionsChange.prototype['get_EndPos'] = CRevisionsChange.prototype.get_EndPos;
+CRevisionsChange.prototype['put_EndPos'] = CRevisionsChange.prototype.put_EndPos;
+CRevisionsChange.prototype['get_Type'] = CRevisionsChange.prototype.get_Type;
+CRevisionsChange.prototype['get_X'] = CRevisionsChange.prototype.get_X;
+CRevisionsChange.prototype['get_Y'] = CRevisionsChange.prototype.get_Y;
+CRevisionsChange.prototype['get_Value'] = CRevisionsChange.prototype.get_Value;
+CRevisionsChange.prototype['put_Type'] = CRevisionsChange.prototype.put_Type;
+CRevisionsChange.prototype['put_XY'] = CRevisionsChange.prototype.put_XY;
+CRevisionsChange.prototype['put_Value'] = CRevisionsChange.prototype.put_Value;
+CRevisionsChange.prototype['get_LockUserId'] = CRevisionsChange.prototype.get_LockUserId;

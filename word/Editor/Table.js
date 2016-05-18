@@ -24,12 +24,6 @@
 */
 "use strict";
 
-/**
-* User: Ilja.Kirillov
-* Date: 20.12.11
-* Time: 14:36
-*/
-
 // TODO: При расчете таблиц есть один баг, который надо будет поправить в будущем:
 //       при разбиении строки на страницы возможен вариант, когда у каких-то ячеек
 //       убирается содержимое на первой странице, а у каких-то - нет. В данном случае
@@ -49,6 +43,7 @@
 var align_Left = AscCommon.align_Left;
 var CMouseMoveData = AscCommon.CMouseMoveData;
 var g_oTableId = AscCommon.g_oTableId;
+var History = AscCommon.History;
 
 var linerule_AtLeast = Asc.linerule_AtLeast;
 var c_oAscError = Asc.c_oAscError;
@@ -76,7 +71,7 @@ function CTable(DrawingDocument, Parent, Inline, PageNum, X, Y, XLimit, YLimit, 
 {
     this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
-    this.Markup = new CTableMarkup(this);
+    this.Markup = new AscCommon.CTableMarkup(this);
 
     this.Prev = null;
     this.Next = null;
@@ -89,8 +84,8 @@ function CTable(DrawingDocument, Parent, Inline, PageNum, X, Y, XLimit, YLimit, 
     if (false === AscCommon.g_oIdCounter.m_bLoad && true === History.Is_On())
     {
         this.Lock.Set_Type(AscCommon.locktype_Mine, false);
-        if (CollaborativeEditing)
-            CollaborativeEditing.Add_Unlock2(this);
+        if (AscCommon.CollaborativeEditing)
+            AscCommon.CollaborativeEditing.Add_Unlock2(this);
     }
     
     this.DrawingDocument = null;
@@ -791,7 +786,7 @@ CTable.prototype =
 
         if(!this.bPresentation)
         {
-            this.DrawingDocument.CheckTableStyles( new CTablePropLook( this.TableLook ) );
+            this.DrawingDocument.CheckTableStyles( new Asc.CTablePropLook( this.TableLook ) );
         }
 
         return Pr;
@@ -5151,7 +5146,7 @@ CTable.prototype =
                     if (null != Element)
                     {
                         this.Content.splice(Pos, 0, Element);
-                        CollaborativeEditing.Update_DocumentPositionsOnAdd(this, Pos);
+                        AscCommon.CollaborativeEditing.Update_DocumentPositionsOnAdd(this, Pos);
                     }
                 }
 
@@ -5177,7 +5172,7 @@ CTable.prototype =
                         continue;
 
                     this.Content.splice(Pos, 1);
-                    CollaborativeEditing.Update_DocumentPositionsOnRemove(this, Pos, 1);
+                    AscCommon.CollaborativeEditing.Update_DocumentPositionsOnRemove(this, Pos, 1);
                 }
 
                 this.Recalc_CompiledPr2();
@@ -5420,7 +5415,7 @@ CTable.prototype =
 
         this.Internal_ReIndexing();
 
-        CollaborativeEditing.Add_NewObject(this);
+        AscCommon.CollaborativeEditing.Add_NewObject(this);
 
         var DrawingDocument = editor.WordControl.m_oDrawingDocument;
         if ( undefined !== DrawingDocument && null !== DrawingDocument )
@@ -5432,7 +5427,7 @@ CTable.prototype =
         // Добавляем, чтобы в конце выставить CurCell
         var LinkData = {};
         LinkData.CurCell = true;
-        CollaborativeEditing.Add_LinkData( this, LinkData );
+        AscCommon.CollaborativeEditing.Add_LinkData( this, LinkData );
     },
 
     Load_LinkData : function(LinkData)
@@ -6837,6 +6832,13 @@ CTable.prototype =
         this.Selection.Use  = true;
         this.Selection.Type = table_Selection_Text;
         this.CurCell.Content.Add_InlineImage(W,H,Img, Chart, bFlow);
+    },
+
+    Add_OleObject : function(W, H, Img, Data)
+    {
+        this.Selection.Use  = true;
+        this.Selection.Type = table_Selection_Text;
+        this.CurCell.Content.Add_OleObject(W, H, Img, Data);
     },
 
     Add_TextArt : function(nStyle)
@@ -13293,7 +13295,7 @@ CTable.prototype.private_StartTrackTable = function(CurPage)
         return;
 
     var Bounds     = this.Get_PageBounds(CurPage);
-    var NewOutline = new CTableOutline(this, this.Get_AbsolutePage(CurPage), Bounds.Left, Bounds.Top, Bounds.Right - Bounds.Left, Bounds.Bottom - Bounds.Top);
+    var NewOutline = new AscCommon.CTableOutline(this, this.Get_AbsolutePage(CurPage), Bounds.Left, Bounds.Top, Bounds.Right - Bounds.Left, Bounds.Bottom - Bounds.Top);
 
     var Transform = this.Get_ParentTextTransform();
     this.DrawingDocument.StartTrackTable(NewOutline, Transform);
@@ -13825,3 +13827,7 @@ CTableAnchorPosition.prototype =
         return Value;
     }
 };
+
+//--------------------------------------------------------export----------------------------------------------------
+window['AscCommonWord'] = window['AscCommonWord'] || {};
+window['AscCommonWord'].CTable = CTable;

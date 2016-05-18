@@ -1157,13 +1157,13 @@ CDegreeSubSup.prototype.Apply_MenuProps = function(Props)
     {
         if(Props.ScriptType == c_oAscMathInterfaceScript.PreSubSup && this.Pr.type == DEGREE_SubSup)
         {
-            History.Add(this, new CChangesMathDegreeSubSupType(DEGREE_PreSubSup, this.Pr.type));
+            AscCommon.History.Add(this, new CChangesMathDegreeSubSupType(DEGREE_PreSubSup, this.Pr.type));
             this.raw_SetType(DEGREE_PreSubSup);
         }
 
         if(Props.ScriptType == c_oAscMathInterfaceScript.SubSup && this.Pr.type == DEGREE_PreSubSup)
         {
-            History.Add(this, new CChangesMathDegreeSubSupType(DEGREE_SubSup, this.Pr.type));
+            AscCommon.History.Add(this, new CChangesMathDegreeSubSupType(DEGREE_SubSup, this.Pr.type));
             this.raw_SetType(DEGREE_SubSup);
         }
     }
@@ -1204,6 +1204,11 @@ AscCommon.extendClass(CMathMenuScript, CMathMenuBase);
 
 CMathMenuScript.prototype.get_ScriptType = function(){return this.ScriptType;};
 CMathMenuScript.prototype.put_ScriptType = function(Type){this.ScriptType = Type;};
+
+//--------------------------------------------------------export----------------------------------------------------
+window['AscCommonWord'] = window['AscCommonWord'] || {};
+window['AscCommonWord'].CDegreeSubSup = CDegreeSubSup;
+window['AscCommonWord'].CDegree = CDegree;
 
 window["CMathMenuScript"] = CMathMenuScript;
 CMathMenuScript.prototype["get_ScriptType"] = CMathMenuScript.prototype.get_ScriptType;

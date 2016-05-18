@@ -22,6 +22,10 @@
  * Pursuant to Section 7  3(e) we decline to grant you any rights under trademark law for use of our trademarks.
  *
 */
+
+// Import
+var History = AscCommon.History;
+
 var WRAP_TEXT_SIDE_BOTH_SIDES = 0x00;
 var WRAP_TEXT_SIDE_LARGEST = 0x01;
 var WRAP_TEXT_SIDE_LEFT = 0x02;
@@ -650,14 +654,14 @@ CWrapPolygon.prototype =
     calculateRelToAbs: function(transform, drawing)
     {
 
-        var bounds = drawing.bounds, oDistance = drawing.parent.Get_Distance();
+        var bounds = drawing.bounds, oDistance = drawing.parent.Get_Distance(), oEffectExtent = drawing.parent.EffectExtent;
         if(this.relativeArrPoints.length === 0)
         {
             this.arrPoints.length = 0;
-            this.localLeft = bounds.l - oDistance.L;
-            this.localRight = bounds.r + oDistance.R;
-            this.localTop = bounds.t - oDistance.T;
-            this.localBottom = bounds.b + oDistance.B;
+            this.localLeft = bounds.l - oDistance.L - AscFormat.getValOrDefault(oEffectExtent.L, 0);
+            this.localRight = bounds.r + oDistance.R + AscFormat.getValOrDefault(oEffectExtent.R, 0);
+            this.localTop = bounds.t - oDistance.T - AscFormat.getValOrDefault(oEffectExtent.T, 0);
+            this.localBottom = bounds.b + oDistance.B + AscFormat.getValOrDefault(oEffectExtent.B, 0);
             return;
         }
         var relArr = this.relativeArrPoints;
@@ -692,24 +696,24 @@ CWrapPolygon.prototype =
         }
 
         if(bounds.l < min_x)
-            this.localLeft = bounds.l - oDistance.L;
+            this.localLeft = bounds.l - oDistance.L  - AscFormat.getValOrDefault(oEffectExtent.L, 0);
         else
-            this.localLeft  = min_x - oDistance.L;
+            this.localLeft  = min_x - oDistance.L  - AscFormat.getValOrDefault(oEffectExtent.L, 0);
 
         if(bounds.r > max_x)
-            this.localRight = bounds.r + oDistance.R;
+            this.localRight = bounds.r + oDistance.R + AscFormat.getValOrDefault(oEffectExtent.R, 0);
         else
-            this.localRight = max_x + oDistance.R;
+            this.localRight = max_x + oDistance.R + AscFormat.getValOrDefault(oEffectExtent.R, 0);
 
         if(bounds.t < min_y)
-            this.localTop = bounds.t - oDistance.T;
+            this.localTop = bounds.t - oDistance.T - AscFormat.getValOrDefault(oEffectExtent.T, 0);
         else
-            this.localTop = min_y - oDistance.T;
+            this.localTop = min_y - oDistance.T - AscFormat.getValOrDefault(oEffectExtent.T, 0);
 
         if(bounds.b > max_y)
-            this.localBottom = bounds.b + oDistance.B;
+            this.localBottom = bounds.b + oDistance.B + AscFormat.getValOrDefault(oEffectExtent.B, 0);
         else
-            this.localBottom = max_y + oDistance.B;
+            this.localBottom = max_y + oDistance.B + AscFormat.getValOrDefault(oEffectExtent.B, 0);
     },
 
     calculateAbsToRel: function(drawing, aPoints)
@@ -720,7 +724,7 @@ CWrapPolygon.prototype =
             return relArr;
         }
         var transform = drawing.localTransform;
-        var invert_transform = global_MatrixTransformer.Invert(transform);
+        var invert_transform = AscCommon.global_MatrixTransformer.Invert(transform);
         for(var point_index = 0; point_index < aPoints.length; ++point_index)
         {
             var abs_point = aPoints[point_index];
@@ -1096,3 +1100,7 @@ TrackPointWrapPointWrapPolygon.prototype =
         overlay.ds();
     }
 };
+
+//--------------------------------------------------------export----------------------------------------------------
+window['AscCommonWord'] = window['AscCommonWord'] || {};
+window['AscCommonWord'].CWrapPolygon = CWrapPolygon;

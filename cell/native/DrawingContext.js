@@ -44,7 +44,7 @@
         var g = color.getG();
         var b = color.getB();
         var bTheme = false;
-        if(color instanceof ThemeColor && null != color.theme)
+        if(color instanceof AscCommonExcel.ThemeColor && null != color.theme)
         {
             var array_colors_types = [6, 15, 7, 16, 0, 1, 2, 3, 4, 5];
             var themePresentation = array_colors_types[color.theme];
@@ -52,8 +52,8 @@
             if(null != color.tint)
                 tintExcel = color.tint;
             var tintPresentation = 0;
-            var basecolor = g_oColorManager.getThemeColor(color.theme);
-            var oThemeColorTint = g_oThemeColorsDefaultModsSpreadsheet[AscCommon.GetDefaultColorModsIndex(basecolor.getR(), basecolor.getG(), basecolor.getB())];
+            var basecolor = AscCommonExcel.g_oColorManager.getThemeColor(color.theme);
+            var oThemeColorTint = AscCommonExcel.g_oThemeColorsDefaultModsSpreadsheet[AscCommon.GetDefaultColorModsIndex(basecolor.getR(), basecolor.getG(), basecolor.getB())];
             if(null != oThemeColorTint)
             {
                 for(var i = 0 , length = oThemeColorTint.length; i < length; ++i)
@@ -127,13 +127,6 @@
         return (y + p + a) / ppi * 72;
     }
 
-    function deg2rad(deg){
-        return deg * Math.PI / 180.0;
-    }
-
-    function rad2deg(rad){
-        return rad * 180.0 / Math.PI;
-    }
     /**
      * @constructor
      */
@@ -218,7 +211,7 @@
 
     Matrix.prototype.rotate = function (a, order) {
         var m = new Matrix();
-        var rad = deg2rad(a);
+        var rad = AscCommon.deg2rad(a);
         m.sx  = Math.cos(rad);
         m.shx = Math.sin(rad);
         m.shy = -Math.sin(rad);
@@ -270,7 +263,7 @@
         this.transformPoint(x1, y1);
         this.transformPoint(x2, y2);
         var a = Math.atan2(y2-y1, x2-x1);
-        return rad2deg(a);
+        return AscCommon.rad2deg(a);
     };
 
     /**
@@ -734,7 +727,7 @@
     };
 
     /**
-     * @param {RgbColor || ThemeColor || AscCommon.CColor} val
+     * @param {AscCommonExcel.RgbColor || AscCommonExcel.ThemeColor || AscCommon.CColor} val
      * @returns {DrawingContext}
      */
     DrawingContext.prototype.setFillStyle = function (val) {
@@ -754,7 +747,7 @@
     };
 
     /**
-     * @param {RgbColor || ThemeColor || AscCommon.CColor} val
+     * @param {AscCommonExcel.RgbColor || AscCommonExcel.ThemeColor || AscCommon.CColor} val
      * @returns {DrawingContext}
      */
     DrawingContext.prototype.setStrokeStyle = function (val) {

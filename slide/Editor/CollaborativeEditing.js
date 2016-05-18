@@ -24,7 +24,6 @@
 */
 "use strict";
 
-
 /**
  *
  * @constructor
@@ -57,34 +56,34 @@ CCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalIn
     this.RefreshPosExtChanges();
 
     // Генерируем свои изменения
-    var StartPoint = ( null === History.SavedIndex ? 0 : History.SavedIndex + 1 );
+    var StartPoint = ( null === AscCommon.History.SavedIndex ? 0 : AscCommon.History.SavedIndex + 1 );
     var LastPoint  = -1;
     if ( this.m_nUseType <= 0 )
     {
         // (ненужные точки предварительно удаляем)
-        History.Clear_Redo();
-        LastPoint = History.Points.length - 1;
+        AscCommon.History.Clear_Redo();
+        LastPoint = AscCommon.History.Points.length - 1;
     }
     else
     {
-        LastPoint = History.Index;
+        LastPoint = AscCommon.History.Index;
     }
     // Просчитаем сколько изменений на сервер пересылать не надо
     var SumIndex = 0;
     var StartPoint2 = Math.min( StartPoint, LastPoint + 1 );
     for ( var PointIndex = 0; PointIndex < StartPoint2; PointIndex++ )
     {
-        var Point = History.Points[PointIndex];
+        var Point = AscCommon.History.Points[PointIndex];
         SumIndex += Point.Items.length;
     }
-    var deleteIndex = ( null === History.SavedIndex ? null : SumIndex );
+    var deleteIndex = ( null === AscCommon.History.SavedIndex ? null : SumIndex );
 
     var aChanges = [];
     for ( var PointIndex = StartPoint; PointIndex <= LastPoint; PointIndex++ )
     {
-        var Point = History.Points[PointIndex];
+        var Point = AscCommon.History.Points[PointIndex];
 
-        History.Update_PointInfoItem(PointIndex, StartPoint, LastPoint, SumIndex, deleteIndex);
+        AscCommon.History.Update_PointInfoItem(PointIndex, StartPoint, LastPoint, SumIndex, deleteIndex);
         for ( var Index = 0; Index < Point.Items.length; Index++ )
         {
             var Item = Point.Items[Index];
@@ -106,7 +105,7 @@ CCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalIn
         {
             editor.WordControl.m_oLogicDocument.DrawingDocument.UnLockSlide(Class.num);
         }
-        if(Class instanceof PropLocker)
+        if(Class instanceof AscCommonSlide.PropLocker)
         {
             var Class2 = AscCommon.g_oTableId.Get_ById(Class.objectId);
             if(Class2 && Class2.getObjectType && Class2.getObjectType() === AscDFH.historyitem_type_Slide && Class2.deleteLock === Class)
@@ -122,7 +121,8 @@ CCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalIn
                 || Class.getObjectType() === AscDFH.historyitem_type_ImageShape
                 || Class.getObjectType() === AscDFH.historyitem_type_GroupShape
                 || Class.getObjectType() === AscDFH.historyitem_type_GraphicFrame
-                || Class.getObjectType() === AscDFH.historyitem_type_ChartSpace) && AscCommon.isRealObject(Class.parent))
+                || Class.getObjectType() === AscDFH.historyitem_type_ChartSpace
+                || Class.getObjectType() === AscDFH.historyitem_type_OleObject) && AscCommon.isRealObject(Class.parent))
             {
                 if(Class.parent && AscFormat.isRealNumber(Class.parent.num))
                 {
@@ -169,28 +169,28 @@ CCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalIn
 
     if (0 < aChanges.length || null !== deleteIndex) {
         editor.CoAuthoringApi.saveChanges(aChanges, deleteIndex, AdditionalInfo);
-        History.CanNotAddChanges = true;
+        AscCommon.History.CanNotAddChanges = true;
     } else
         editor.CoAuthoringApi.unLockDocument(true);
 
     if ( -1 === this.m_nUseType )
     {
         // Чистим Undo/Redo только во время совместного редактирования
-        History.Clear();
-        History.SavedIndex = null;
+        AscCommon.History.Clear();
+        AscCommon.History.SavedIndex = null;
     }
     else if ( 0 === this.m_nUseType )
     {
         // Чистим Undo/Redo только во время совместного редактирования
-        History.Clear();
-        History.SavedIndex = null;
+        AscCommon.History.Clear();
+        AscCommon.History.SavedIndex = null;
 
         this.m_nUseType = 1;
     }
     else
     {
         // Обновляем точку последнего сохранения в истории
-        History.Reset_SavedIndex(IsUserSave);
+        AscCommon.History.Reset_SavedIndex(IsUserSave);
     }
 
     for(var i = 0; i < num_arr.length; ++i)
@@ -231,14 +231,14 @@ CCollaborativeEditing.prototype.Release_Locks = function()
         var CurLockType = this.m_aNeedUnlock[Index].Lock.Get_Type();
         if  ( AscCommon.locktype_Other3 != CurLockType && AscCommon.locktype_Other != CurLockType )
         {
-            //if(this.m_aNeedUnlock[Index] instanceof Slide)                                                      //TODO: проверять LockObject
+            //if(this.m_aNeedUnlock[Index] instanceof AscCommonSlide.Slide)                                                      //TODO: проверять LockObject
             //    editor.WordControl.m_oLogicDocument.DrawingDocument.UnLockSlide(this.m_aNeedUnlock[Index].num);
             var Class =  this.m_aNeedUnlock[Index];
             this.m_aNeedUnlock[Index].Lock.Set_Type( AscCommon.locktype_None, false);
-            if ( Class instanceof PropLocker )
+            if ( Class instanceof AscCommonSlide.PropLocker )
             {
                 var object = AscCommon.g_oTableId.Get_ById(Class.objectId);
-                if(object instanceof CPresentation)
+                if(object instanceof AscCommonSlide.CPresentation)
                 {
                     if(Class === editor.WordControl.m_oLogicDocument.themeLock)
                     {
@@ -258,7 +258,7 @@ CCollaborativeEditing.prototype.Release_Locks = function()
                     editor.WordControl.m_oLogicDocument.DrawingDocument.UnLockSlide(object.num);
                 }
             }
-            if(Class instanceof CComment)
+            if(Class instanceof AscCommon.CComment)
             {
                 editor.sync_UnLockComment(Class.Get_Id());
             }
@@ -266,7 +266,7 @@ CCollaborativeEditing.prototype.Release_Locks = function()
         else if ( AscCommon.locktype_Other3 === CurLockType )
         {
             this.m_aNeedUnlock[Index].Lock.Set_Type( AscCommon.locktype_Other, false);
-            if(this.m_aNeedUnlock[Index] instanceof Slide)
+            if(this.m_aNeedUnlock[Index] instanceof AscCommonSlide.Slide)
                 editor.WordControl.m_oLogicDocument.DrawingDocument.LockSlide(this.m_aNeedUnlock[Index].num);
         }
         if(this.m_aNeedUnlock[Index].parent && AscFormat.isRealNumber(this.m_aNeedUnlock[Index].parent.num))
@@ -282,8 +282,8 @@ CCollaborativeEditing.prototype.OnEnd_Load_Objects = function()
     // Данная функция вызывается, когда загрузились внешние объекты (картинки и шрифты)
 
     // Снимаем лок
-    CollaborativeEditing.m_bGlobalLock = false;
-    CollaborativeEditing.m_bGlobalLockSelection = false;
+    AscCommon.CollaborativeEditing.m_bGlobalLock = false;
+    AscCommon.CollaborativeEditing.m_bGlobalLockSelection = false;
 
     // Запускаем полный пересчет документа
     var LogicDocument = editor.WordControl.m_oLogicDocument;
@@ -364,7 +364,7 @@ CCollaborativeEditing.prototype.OnEnd_CheckLock = function()
                         if ( null != Class )
                         {
                             Class.Lock.Set_Type( AscCommon.locktype_Mine, false );
-                            if(Class instanceof Slide)
+                            if(Class instanceof AscCommonSlide.Slide)
                                 editor.WordControl.m_oLogicDocument.DrawingDocument.UnLockSlide(Class.num);
                             this.Add_Unlock2( Class );
                         }
@@ -381,22 +381,22 @@ CCollaborativeEditing.prototype.OnEnd_CheckLock = function()
 
 CCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
 {
-    if (true === CollaborativeEditing.m_bGlobalLock)
+    if (true === AscCommon.CollaborativeEditing.m_bGlobalLock)
     {
-        if (false == editor.checkLongActionCallback(CollaborativeEditing.OnCallback_AskLock, result))
+        if (false == editor.checkLongActionCallback(AscCommon.CollaborativeEditing.OnCallback_AskLock, result))
             return;
 
         // Снимаем глобальный лок
-        CollaborativeEditing.m_bGlobalLock = false;
+        AscCommon.CollaborativeEditing.m_bGlobalLock = false;
 
         if (result["lock"])
         {
             // Пробегаемся по массиву и проставляем, что залочено нами
 
-            var Count = CollaborativeEditing.m_aCheckLocks.length;
+            var Count = AscCommon.CollaborativeEditing.m_aCheckLocks.length;
             for ( var Index = 0; Index < Count; Index++ )
             {
-                var oItem = CollaborativeEditing.m_aCheckLocks[Index];
+                var oItem = AscCommon.CollaborativeEditing.m_aCheckLocks[Index];
                 var item;
                 switch(oItem["type"])
                 {
@@ -421,9 +421,9 @@ CCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
                     if ( null != Class )
                     {
                         Class.Lock.Set_Type( AscCommon.locktype_Mine );
-                        if(Class instanceof Slide)
+                        if(Class instanceof AscCommonSlide.Slide)
                             editor.WordControl.m_oLogicDocument.DrawingDocument.UnLockSlide(Class.num);
-                        CollaborativeEditing.Add_Unlock2( Class );
+                        AscCommon.CollaborativeEditing.Add_Unlock2( Class );
                     }
                 }
             }
@@ -437,7 +437,7 @@ CCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
 
             // Делаем откат на 1 шаг назад и удаляем из Undo/Redo эту последнюю точку
             editor.WordControl.m_oLogicDocument.Document_Undo();
-            History.Clear_Redo();
+            AscCommon.History.Clear_Redo();
         }
 
     }
@@ -476,8 +476,8 @@ CCollaborativeEditing.prototype.RefreshPosExtChanges = function()
 {
     if(this.ScaleX != null && this.ScaleY != null)
     {
-        this.RewriteChanges(this.PosExtChangesX, this.ScaleX, History.BinaryWriter);
-        this.RewriteChanges(this.PosExtChangesY, this.ScaleY, History.BinaryWriter);
+        this.RewriteChanges(this.PosExtChangesX, this.ScaleX, AscCommon.History.BinaryWriter);
+        this.RewriteChanges(this.PosExtChangesY, this.ScaleY, AscCommon.History.BinaryWriter);
     }
     this.PosExtChangesX.length = 0;
     this.PosExtChangesY.length = 0;
@@ -500,7 +500,7 @@ CCollaborativeEditing.prototype.Update_ForeignCursorsPositions = function()
         }
         return;
     }
-    var bTable = (oTargetDocContentOrTable instanceof CTable);
+    var bTable = (oTargetDocContentOrTable instanceof AscCommonWord.CTable);
     for (var UserId in this.m_aForeignCursors){
         var DocPos = this.m_aForeignCursors[UserId];
         if (!DocPos || DocPos.length <= 0)
@@ -515,7 +515,7 @@ CCollaborativeEditing.prototype.Update_ForeignCursorsPositions = function()
 };
 
 CCollaborativeEditing.prototype.Update_ForeignCursorPosition = function(UserId, Run, InRunPos, isRemoveLabel, oTargetDocContentOrTable, bTable){
-    if (!(Run instanceof ParaRun))
+    if (!(Run instanceof AscCommonWord.ParaRun))
         return;
 
     var DrawingDocument = editor.WordControl.m_oDrawingDocument;
@@ -685,4 +685,6 @@ CCollaborativeEditing.prototype.Update_ForeignCursorLabelPosition = function(Use
     editor.sync_ShowForeignCursorLabel(UserId, X, Y, Color);
 };
 
-var CollaborativeEditing = new CCollaborativeEditing();
+//--------------------------------------------------------export----------------------------------------------------
+window['AscCommon'] = window['AscCommon'] || {};
+window['AscCommon'].CollaborativeEditing = new CCollaborativeEditing();

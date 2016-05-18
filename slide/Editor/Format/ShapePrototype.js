@@ -24,6 +24,8 @@
 */
 "use strict";
 
+(function(window, undefined){
+
 // Import
 var CShape = AscFormat.CShape;
 
@@ -47,32 +49,6 @@ pHText[0][AscFormat.phType_sldNum]   = "Slide number";// "Номер слайд�
 pHText[0][AscFormat.phType_subTitle] = "Slide subtitle";// "Подзаголовок слайда"; //(Subtitle)      ;
 pHText[0][AscFormat.phType_tbl]      = "Table";// "Таблица"; //(Table)                              ;
 pHText[0][AscFormat.phType_title]    = "Slide title";// "Заголовок слайда" ;  //(Title)             ;
-
-CRFonts.prototype.Merge = function(RFonts)
-{
-    if ( undefined !== RFonts.Ascii )
-        this.Ascii = RFonts.Ascii;
-
-    if ( undefined != RFonts.EastAsia )
-        this.EastAsia = RFonts.EastAsia;
-    else if ( undefined !== RFonts.Ascii )
-        this.EastAsia = RFonts.Ascii;
-
-    if ( undefined != RFonts.HAnsi )
-        this.HAnsi = RFonts.HAnsi;
-
-    else if ( undefined !== RFonts.Ascii )
-        this.HAnsi = RFonts.Ascii;
-
-    if ( undefined != RFonts.CS )
-        this.CS = RFonts.CS;
-
-    else if ( undefined !== RFonts.Ascii )
-        this.CS = RFonts.Ascii;
-
-    if ( undefined != RFonts.Hint )
-        this.Hint = RFonts.Hint;
-};
 
 CShape.prototype.setDrawingObjects = function(drawingObjects)
 {
@@ -103,7 +79,7 @@ CShape.prototype.Is_UseInDocument = function(drawingObjects)
 };
 CShape.prototype.setWorksheet = function(worksheet)
 {
-    History.Add(this, {Type: AscDFH.historyitem_AutoShapes_SetWorksheet, oldPr: this.worksheet, newPr: worksheet});
+    AscCommon.History.Add(this, {Type: AscDFH.historyitem_AutoShapes_SetWorksheet, oldPr: this.worksheet, newPr: worksheet});
     this.worksheet = worksheet;
     if(this.spTree)
     {
@@ -180,19 +156,6 @@ function addToDrawings(worksheet, graphic, position, lockByDefault)
         graphic.addToRecalculate();
     }
     return ret;
-}
-
-function deleteDrawingBase(aObjects, graphicId)
-{
-    var position = null;
-    for (var i = 0; i < aObjects.length; i++) {
-        if ( aObjects[i].graphicObject.Get_Id() == graphicId ) {
-            aObjects.splice(i, 1);
-            position = i;
-            break;
-        }
-    }
-    return position;
 }
 
 CShape.prototype.addToDrawingObjects =  function(pos)
@@ -325,7 +288,7 @@ CShape.prototype.recalcTextStyles = function()
 };
 CShape.prototype.addToRecalculate = function()
 {
-    History.RecalcData_Add({Type: AscDFH.historyitem_recalctype_Drawing, Object: this});
+    AscCommon.History.RecalcData_Add({Type: AscDFH.historyitem_recalctype_Drawing, Object: this});
 };
 CShape.prototype.getSlideIndex = function()
 {
@@ -507,7 +470,7 @@ CShape.prototype.recalculate = function ()
         }
         if (this.recalcInfo.recalculateTransform) {
             this.recalculateTransform();
-            this.calculateSnapArrays();
+            this.recalculateSnapArrays();
             this.recalcInfo.recalculateTransform = false;
         }
 
@@ -813,11 +776,8 @@ CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex)
     }
 };
 
-AscFormat.CTextBody.prototype.Get_Worksheet = function()
-{
-    return this.parent && this.parent.Get_Worksheet && this.parent.Get_Worksheet();
-};
-AscFormat.CTextBody.prototype.getDrawingDocument = function()
-{
-    return this.parent && this.parent.getDrawingDocument && this.parent.getDrawingDocument();
-};
+    //--------------------------------------------------------export----------------------------------------------------
+    window['AscFormat'] = window['AscFormat'] || {};
+    window['AscFormat'].G_O_DEFAULT_COLOR_MAP = G_O_DEFAULT_COLOR_MAP;
+    window['AscFormat'].addToDrawings = addToDrawings;
+})(window);

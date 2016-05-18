@@ -24,6 +24,8 @@
 */
 "use strict";
 
+(function(window, undefined){
+
 // Import
 var getFullImageSrc2 = AscCommon.getFullImageSrc2;
 
@@ -31,8 +33,6 @@ var CShapeColor = AscFormat.CShapeColor;
 
 var c_oAscFill = Asc.c_oAscFill;
 
-window.IsShapeToImageConverter = false;
-window.IsShapeToImageConverter;
 function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
 {
     switch (type)
@@ -937,8 +937,8 @@ CShapeDrawer.prototype =
 
                     if (bIsThumbnail)
                     {
-                        koefX = __graphics.m_dDpiX / g_dDpiX;
-                        koefY = __graphics.m_dDpiY / g_dDpiX;
+                        koefX = __graphics.m_dDpiX / AscCommon.g_dDpiX;
+                        koefY = __graphics.m_dDpiY / AscCommon.g_dDpiX;
 
                         if (editor.WordControl.bIsRetinaSupport)
                         {
@@ -1083,7 +1083,18 @@ CShapeDrawer.prototype =
                 var gradObj = null;
                 if (_fill.lin)
                 {
-                    var points = this.getGradientPoints(this.min_x, this.min_y, this.max_x, this.max_y, _fill.lin.angle, _fill.lin.scale);
+                    var _angle = _fill.lin.angle;
+                    if (_fill.rotateWithShape === false)
+                    {
+                        var matrix_transform = (this.Graphics.IsTrack === true) ? this.Graphics.Graphics.m_oTransform : this.Graphics.m_oTransform;
+                        if (matrix_transform)
+                        {
+                            //_angle -= (60000 * this.Graphics.m_oTransform.GetRotation());
+                            _angle = AscCommon.GradientGetAngleNoRotate(_angle, matrix_transform);
+                        }
+                    }
+
+                    var points = this.getGradientPoints(this.min_x, this.min_y, this.max_x, this.max_y, _angle, _fill.lin.scale);
                     gradObj = _ctx.createLinearGradient(points.x0, points.y0, points.x1, points.y1);
                 }
                 else if (_fill.path)
@@ -1226,7 +1237,7 @@ CShapeDrawer.prototype =
             // и отправляем на отрисовку (с матрицей)
 
             var trans = (this.Graphics.IsTrack === true) ? this.Graphics.Graphics.m_oFullTransform : this.Graphics.m_oFullTransform;
-            var trans1 = global_MatrixTransformer.Invert(trans);
+            var trans1 = AscCommon.global_MatrixTransformer.Invert(trans);
 
             var x1 = trans.TransformPointX(0, 0);
             var y1 = trans.TransformPointY(0, 0);
@@ -1432,7 +1443,14 @@ CShapeDrawer.prototype =
                         var points = null;
                         if (_fill.lin)
                         {
-                            points = this.getGradientPoints(this.min_x, this.min_y, this.max_x, this.max_y, _fill.lin.angle, _fill.lin.scale);
+                            var _angle = _fill.lin.angle;
+                            if (_fill.rotateWithShape === false && this.Graphics.m_oTransform)
+                            {
+                                //_angle -= (60000 * this.Graphics.m_oTransform.GetRotation());
+                                _angle = AscCommon.GradientGetAngleNoRotate(_angle, this.Graphics.m_oTransform);
+                            }
+
+                            points = this.getGradientPoints(this.min_x, this.min_y, this.max_x, this.max_y, _angle, _fill.lin.scale);
                         }
                         else if (_fill.path)
                         {
@@ -1523,7 +1541,7 @@ CShapeDrawer.prototype =
                 // и отправляем на отрисовку (с матрицей)
 
                 var trans = (this.Graphics.RENDERER_PDF_FLAG === undefined) ? this.Graphics.m_oFullTransform : this.Graphics.GetTransform();
-                var trans1 = global_MatrixTransformer.Invert(trans);
+                var trans1 = AscCommon.global_MatrixTransformer.Invert(trans);
 
                 var lineSize = (this.Graphics.RENDERER_PDF_FLAG === undefined) ? this.Graphics.m_oContext.lineWidth : this.Graphics.GetLineWidth();
 
@@ -1683,7 +1701,7 @@ CShapeDrawer.prototype =
             return points;
         }
 
-        var grad_a = deg2rad(angle);
+        var grad_a = AscCommon.deg2rad(angle);
         if (!scale)
         {
             if (angle > 0 && angle < 90)
@@ -1828,10 +1846,10 @@ CShapeDrawer.prototype =
 
 function ShapeToImageConverter(shape, pageIndex)
 {
-	window.IsShapeToImageConverter = true;
+    AscCommon.IsShapeToImageConverter = true;
     var _bounds_cheker = new AscFormat.CSlideBoundsChecker();
 
-    var dKoef = g_dKoef_mm_to_pix;
+    var dKoef = AscCommon.g_dKoef_mm_to_pix;
     var w_mm = 210;
     var h_mm = 297;
     var w_px = (w_mm * dKoef) >> 0;
@@ -1871,9 +1889,9 @@ function ShapeToImageConverter(shape, pageIndex)
 
     var _ctx = _canvas.getContext('2d');
 
-    var g = new CGraphics();
+    var g = new AscCommon.CGraphics();
     g.init(_ctx, w_px, h_px, w_mm, h_mm);
-    g.m_oFontManager = g_fontManager;
+    g.m_oFontManager = AscCommon.g_fontManager;
 
     g.m_oCoordTransform.tx = -_bounds_cheker.Bounds.min_x;
     g.m_oCoordTransform.ty = -_bounds_cheker.Bounds.min_y;
@@ -1881,7 +1899,7 @@ function ShapeToImageConverter(shape, pageIndex)
 
     shape.draw(g, /*pageIndex*/0);
 
-	window.IsShapeToImageConverter = false;
+    AscCommon.IsShapeToImageConverter = false;
 
     var _ret = { ImageNative : _canvas, ImageUrl : "" };
     try
@@ -1901,3 +1919,6 @@ function ShapeToImageConverter(shape, pageIndex)
 //------------------------------------------------------------export----------------------------------------------------
 window['AscCommon'] = window['AscCommon'] || {};
 window['AscCommon'].CShapeDrawer = CShapeDrawer;
+window['AscCommon'].ShapeToImageConverter = ShapeToImageConverter;
+window['AscCommon'].IsShapeToImageConverter = false;
+})(window);

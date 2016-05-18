@@ -43,6 +43,12 @@
 		var PasteElementsId = AscCommon.PasteElementsId;
 		var PASTE_EMPTY = AscCommon.PASTE_EMPTY;
 		var CopyPasteCorrectString = AscCommon.CopyPasteCorrectString;
+		var History = AscCommon.History;
+		var pptx_content_loader = AscCommon.pptx_content_loader;
+		var pptx_content_writer = AscCommon.pptx_content_writer;
+		var g_dKoef_mm_to_pix = AscCommon.g_dKoef_mm_to_pix;
+
+		var CGraphicFrame = AscFormat.CGraphicFrame;
 
 		var doc = window.document;
 		
@@ -576,7 +582,7 @@
 			
 			_getBinaryForCopy: function(worksheet)
 			{
-				window.global_pptx_content_writer.Start_UseFullUrl();
+				pptx_content_writer.Start_UseFullUrl();
 				
 				//TODO стоит убрать заглушку при правке бага с activeRange
 				var cloneActiveRange = worksheet.activeRange.clone();
@@ -595,10 +601,10 @@
 					cloneActiveRange.r2 = temp;
 				};
 				
-				var oBinaryFileWriter = new Asc.BinaryFileWriter(worksheet.model.workbook, cloneActiveRange);
+				var oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(worksheet.model.workbook, cloneActiveRange);
 				var sBase64 = oBinaryFileWriter.Write();
 				
-				window.global_pptx_content_writer.End_UseFullUrl();
+				pptx_content_writer.End_UseFullUrl();
 				
 				return sBase64;
 			},
@@ -625,9 +631,9 @@
 						}	
 						else
 						{
-							window.global_pptx_content_writer.Start_UseFullUrl();
+							pptx_content_writer.Start_UseFullUrl();
 							
-							var oBinaryFileWriter = new Asc.BinaryFileWriter(worksheet.model.workbook, worksheet.activeRange);
+							var oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(worksheet.model.workbook, worksheet.activeRange);
 							var sBase64 = oBinaryFileWriter.Write();
 							if(this.element.children && this.element.children.length == 1 && AscBrowser.isWebkit && (true !== AscBrowser.isSafariMacOs))
 							{
@@ -640,7 +646,7 @@
 							//for buttons copy/paste
 							this.lStorage = sBase64;
 							
-							window.global_pptx_content_writer.End_UseFullUrl()
+							pptx_content_writer.End_UseFullUrl()
 						}
 					}
 					
@@ -704,15 +710,15 @@
 					}	
 					else
 					{
-						window.global_pptx_content_writer.Start_UseFullUrl();
+						pptx_content_writer.Start_UseFullUrl();
 						
-						var oBinaryFileWriter = new Asc.BinaryFileWriter(worksheet.model.workbook, worksheet.activeRange);
+						var oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(worksheet.model.workbook, worksheet.activeRange);
 						var sBase64 = oBinaryFileWriter.Write();
 						
 						//for buttons copy/paste
 						this.lStorage = sBase64;
 						
-						window.global_pptx_content_writer.End_UseFullUrl()
+						pptx_content_writer.End_UseFullUrl()
 					};
 					
 					while (this.element.hasChildNodes()) {
@@ -1414,6 +1420,7 @@
 					ifr.style.height = '100px';
 					ifr.style.overflow = 'hidden';
 					ifr.style.zIndex = -1000;
+					ifr.setAttribute("sandbox", "allow-same-origin");
 					document.body.appendChild(ifr);
 				};
 				
@@ -1500,7 +1507,7 @@
 				if (jqSpanObject.css('vertical-align') == 'baseline')
 					oNewItem.format.va = '';
 
-				oNewItem.format.c = new RgbColor(this._getBinaryColor(jqSpanObject.css('color')));
+				oNewItem.format.c = new AscCommonExcel.RgbColor(this._getBinaryColor(jqSpanObject.css('color')));
 				if (oNewItem.format.c == '')
 					oNewItem.format.c = null;
 				
@@ -1707,14 +1714,14 @@
 			
 			_pasteFromBinaryExcel: function(worksheet, base64, isIntoShape)
 			{
-				var oBinaryFileReader = new Asc.BinaryFileReader(true);
-				var tempWorkbook = new Workbook;
+				var oBinaryFileReader = new AscCommonExcel.BinaryFileReader(true);
+				var tempWorkbook = new AscCommonExcel.Workbook();
 				var t = this;
 				
-				window.global_pptx_content_loader.Start_UseFullUrl();
+				pptx_content_loader.Start_UseFullUrl();
 				oBinaryFileReader.Read(base64, tempWorkbook);
 				this.activeRange = oBinaryFileReader.copyPasteObj.activeRange;
-				var aPastedImages = window.global_pptx_content_loader.End_UseFullUrl();
+				var aPastedImages = pptx_content_loader.End_UseFullUrl();
 				
 				var pasteData = null;
 				if (tempWorkbook)
@@ -1754,7 +1761,7 @@
 					}
 					else 
 					{	
-						if(this._checkPasteFromBinaryExcel(worksheet, true))
+						if(this._checkPasteFromBinaryExcel(worksheet, true, pasteData))
 						{
 							var newFonts = {};
 							pasteData.generateFontMap(newFonts);
@@ -1782,7 +1789,7 @@
 			
 			_pasteFromBinaryPresentation: function(worksheet, base64, isIntoShape)
 			{
-				window.global_pptx_content_loader.Clear();
+				pptx_content_loader.Clear();
 
 				var _stream = AscFormat.CreateBinaryReader(base64, 0, base64.length);
 				var stream = new AscCommon.FileStream(_stream.data, _stream.size);
@@ -1849,20 +1856,32 @@
 				return false;
 			},
 			
-			_checkPasteFromBinaryExcel: function(worksheet, isWriteError)
+			_checkPasteFromBinaryExcel: function(worksheet, isWriteError, insertWorksheet)
 			{
 				var activeCellsPasteFragment = AscCommonExcel.g_oRangeCache.getAscRange(this.activeRange);
 				var rMax = (activeCellsPasteFragment.r2 - activeCellsPasteFragment.r1) + worksheet.activeRange.r1;
 				var cMax = (activeCellsPasteFragment.c2 - activeCellsPasteFragment.c1) + worksheet.activeRange.c1;
+				var res = true;
 				
 				//если область вставки выходит за пределы доступной области
 				if(cMax > AscCommon.gc_nMaxCol0 || rMax > AscCommon.gc_nMaxRow0)
 				{
 					if(isWriteError)
+					{
 						worksheet.handlers.trigger ("onErrorEvent", Asc.c_oAscError.ID.PasteMaxRangeError, Asc.c_oAscError.Level.NoCritical);
-					return false;
+					}
+					
+					res = false;
 				}
-				return true;
+				else if(!worksheet.handlers.trigger("getLockDefNameManagerStatus") && insertWorksheet && insertWorksheet.TableParts && insertWorksheet.TableParts.length)
+				{
+					//если пытаемся вставить вторым пользователем форматированную таблицу, когда первый уже добавил другую форматированную таблицу
+					worksheet.handlers.trigger("onErrorEvent", c_oAscError.ID.LockCreateDefName, c_oAscError.Level.NoCritical);
+					
+					res = false;
+				}
+				
+				return res;
 			},
 			
 			_getClassBinaryFromHtml: function(node)
@@ -2307,14 +2326,14 @@
 			    //создается глобальная переменная
 			    editor = { isDocumentEditor: true, WordControl: { m_oLogicDocument: newCDocument } };
 				
-				window.global_pptx_content_loader.Clear();
-				window.global_pptx_content_loader.Start_UseFullUrl();
+				pptx_content_loader.Clear();
+				pptx_content_loader.Start_UseFullUrl();
 				
 			    var openParams = { checkFileSize: false, charCount: 0, parCount: 0 };
-			    var oBinaryFileReader = new BinaryFileReader(newCDocument, openParams);
+			    var oBinaryFileReader = new AscCommonWord.BinaryFileReader(newCDocument, openParams);
 			    var oRes = oBinaryFileReader.ReadFromString(sBase64);
 				
-				window.global_pptx_content_loader.End_UseFullUrl();
+				pptx_content_loader.End_UseFullUrl();
 				History.TurnOn();
 				AscCommon.g_oIdCounter.m_bRead = false;
 			    editor = oOldEditor;
@@ -2890,7 +2909,7 @@
 							text = elem.textContent.replace('\t','');
 						if(elem.nodeName.toLowerCase() == 'br')
 							text = '\n';
-						var colorText = new RgbColor(t._getBinaryColor(style.getPropertyValue("color"))); 
+						var colorText = new AscCommonExcel.RgbColor(t._getBinaryColor(style.getPropertyValue("color"))); 
 						if(isText || (isText == '' && typeof isText == 'string'))
 							colorText = null;
 						res.push({
@@ -3503,14 +3522,14 @@
 				var defaultStyle = "solid";
 				var borderStyleName;
 				
-				var formatBorders = oldBorders ? oldBorders : new Border();
+				var formatBorders = oldBorders ? oldBorders : new AscCommonExcel.Border();
 				//top border for cell
 				if(top == cellTable.top && !formatBorders.t.s && borders.Top.Value !== 0/*border_None*/)
 				{
 					borderStyleName = this.clipboard._getBorderStyleName(defaultStyle, this.ws.objectRender.convertMetric(borders.Top.Size,3,1));
 					if (null !== borderStyleName) {
 						formatBorders.t.setStyle(borderStyleName);
-						formatBorders.t.c = new RgbColor(this.clipboard._getBinaryColor("rgb(" + borders.Top.Color.r + "," + borders.Top.Color.g + "," + borders.Top.Color.b + ")"));
+						formatBorders.t.c = new AscCommonExcel.RgbColor(this.clipboard._getBinaryColor("rgb(" + borders.Top.Color.r + "," + borders.Top.Color.g + "," + borders.Top.Color.b + ")"));
 					}
 				}
 				//left border for cell
@@ -3519,7 +3538,7 @@
 					borderStyleName = this.clipboard._getBorderStyleName(defaultStyle, this.ws.objectRender.convertMetric(borders.Left.Size,3,1));
 					if (null !== borderStyleName) {
 						formatBorders.l.setStyle(borderStyleName);
-						formatBorders.l.c = new RgbColor(this.clipboard._getBinaryColor("rgb(" + borders.Left.Color.r + "," + borders.Left.Color.g + "," + borders.Left.Color.b + ")"));
+						formatBorders.l.c = new AscCommonExcel.RgbColor(this.clipboard._getBinaryColor("rgb(" + borders.Left.Color.r + "," + borders.Left.Color.g + "," + borders.Left.Color.b + ")"));
 					}
 				}
 				//bottom border for cell
@@ -3528,7 +3547,7 @@
 					borderStyleName = this.clipboard._getBorderStyleName(defaultStyle, this.ws.objectRender.convertMetric(borders.Bottom.Size,3,1));
 					if (null !== borderStyleName) {
 						formatBorders.b.setStyle(borderStyleName);
-						formatBorders.b.c = new RgbColor(this.clipboard._getBinaryColor("rgb(" + borders.Bottom.Color.r + "," + borders.Bottom.Color.g + "," + borders.Bottom.Color.b + ")"));
+						formatBorders.b.c = new AscCommonExcel.RgbColor(this.clipboard._getBinaryColor("rgb(" + borders.Bottom.Color.r + "," + borders.Bottom.Color.g + "," + borders.Bottom.Color.b + ")"));
 					}
 				}
 				//right border for cell
@@ -3537,7 +3556,7 @@
 					borderStyleName = this.clipboard._getBorderStyleName(defaultStyle, this.ws.objectRender.convertMetric(borders.Right.Size,3,1));
 					if (null !== borderStyleName) {
 						formatBorders.r.setStyle(borderStyleName);
-						formatBorders.r.c = new RgbColor(this.clipboard._getBinaryColor("rgb(" + borders.Right.Color.r + "," + borders.Right.Color.g + "," + borders.Right.Color.b + ")"));
+						formatBorders.r.c = new AscCommonExcel.RgbColor(this.clipboard._getBinaryColor("rgb(" + borders.Right.Color.r + "," + borders.Right.Color.g + "," + borders.Right.Color.b + ")"));
 					}
 				}
 				
@@ -3747,7 +3766,7 @@
 					if(compiledPrCell && compiledPrCell.Shd.Value !== 1/*shd_Nil*/)
 					{	
 						var color = compiledPrCell.Shd.Color;
-						backgroundColor = new RgbColor(this.clipboard._getBinaryColor("rgb(" + color.r + "," + color.g + "," + color.b + ")"));
+						backgroundColor = new AscCommonExcel.RgbColor(this.clipboard._getBinaryColor("rgb(" + color.r + "," + color.g + "," + color.b + ")"));
 					};
 				};
 				
@@ -4169,10 +4188,10 @@
 				else if(paraPr.TextPr.VertAlign == 2)
 					paragraphVertAlign = "subscript";
 
-				var colorParagraph = new RgbColor(this.clipboard._getBinaryColor("rgb(" + paraPr.TextPr.Color.r + "," + paraPr.TextPr.Color.g + "," + paraPr.TextPr.Color.b + ")"));
+				var colorParagraph = new AscCommonExcel.RgbColor(this.clipboard._getBinaryColor("rgb(" + paraPr.TextPr.Color.r + "," + paraPr.TextPr.Color.g + "," + paraPr.TextPr.Color.b + ")"));
 				
 				if(cTextPr.Color)
-					colorText = new RgbColor(this.clipboard._getBinaryColor("rgb(" + cTextPr.Color.r + "," + cTextPr.Color.g + "," + cTextPr.Color.b + ")"));
+					colorText = new AscCommonExcel.RgbColor(this.clipboard._getBinaryColor("rgb(" + cTextPr.Color.r + "," + cTextPr.Color.g + "," + cTextPr.Color.b + ")"));
 				else
 					colorText = null;
 				
@@ -5344,8 +5363,8 @@
 		}
 
 		//---------------------------------------------------------export---------------------------------------------------
-		window["AscCommonExcel"].Clipboard = Clipboard;
 		window['AscCommonExcel'] = window['AscCommonExcel'] || {};
+		window["AscCommonExcel"].Clipboard = Clipboard;
 		window["AscCommonExcel"].SafariIntervalFocus2 = SafariIntervalFocus2;
 	}
 )(jQuery, window);

@@ -24,16 +24,11 @@
 */
 "use strict";
 
-/**
- * User: Ilja.Kirillov
- * Date: 13.12.11
- * Time: 14:51
- */
-
 // Import
 var hdrftr_Header = AscCommon.hdrftr_Header;
 var hdrftr_Footer = AscCommon.hdrftr_Footer;
 var g_oTableId = AscCommon.g_oTableId;
+var History = AscCommon.History;
 
 //-----------------------------------------------------------------------------------
 // Класс работающий с одним колонтитулом
@@ -657,6 +652,11 @@ CHeaderFooter.prototype =
     Add_InlineImage : function(W, H, Img, Chart, bFlow)
     {
         this.Content.Add_InlineImage(W,H,Img, Chart, bFlow);
+    },
+
+    Add_OleObject : function(W, H, Img, Data, sApplicationId)
+    {
+        this.Content.Add_OleObject(W, H, Img, Data, sApplicationId);
     },
 
     Add_TextArt : function(nStyle)
@@ -2447,3 +2447,8 @@ function CHdrFtrPage()
     this.Header = null;
     this.Footer = null;
 }
+
+//--------------------------------------------------------export----------------------------------------------------
+window['AscCommonWord'] = window['AscCommonWord'] || {};
+window['AscCommonWord'].CHeaderFooter = CHeaderFooter;
+window['AscCommonWord'].CHeaderFooterController = CHeaderFooterController;

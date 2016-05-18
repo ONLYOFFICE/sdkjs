@@ -26,12 +26,7 @@
 
 // Import
 var g_oTableId = AscCommon.g_oTableId;
-
-/**
- * User: Ilja.Kirillov
- * Date: 10.10.12
- * Time: 10:38
- */
+var History = AscCommon.History;
 
 function CCommentData()
 {
@@ -249,7 +244,7 @@ function CComment(Parent, Data)
     if ( false === AscCommon.g_oIdCounter.m_bLoad )
     {
         this.Lock.Set_Type( AscCommon.locktype_Mine, false );
-        CollaborativeEditing.Add_Unlock2( this );
+        AscCommon.CollaborativeEditing.Add_Unlock2( this );
     }
     
     this.Copy = function()
@@ -1477,3 +1472,8 @@ ParaComment.prototype.Check_RevisionsChanges = function(Checker, ContentPos, Dep
 ParaComment.prototype.Accept_RevisionChanges = function(Type, bAll){};
 ParaComment.prototype.Reject_RevisionChanges = function(Type, bAll){};
 
+//--------------------------------------------------------export----------------------------------------------------
+window['AscCommon'] = window['AscCommon'] || {};
+window['AscCommon'].CCommentData = CCommentData;
+window['AscCommon'].CComment = CComment;
+window['AscCommon'].ParaComment = ParaComment;

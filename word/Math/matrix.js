@@ -24,6 +24,9 @@
  */
 "use strict";
 
+// Import
+var History = AscCommon.History;
+
 var MATH_MC_JC = MCJC_CENTER;
 
 function CMathMatrixColumnPr()
@@ -1688,6 +1691,11 @@ CMathMenuEqArray.prototype.get_LineRule = function(){return this.RowRule;};
 CMathMenuEqArray.prototype.put_LineRule = function(Rule){this.RowRule = Rule;};
 CMathMenuEqArray.prototype.get_LineGap  = function(){return this.RowGap;};
 CMathMenuEqArray.prototype.put_LineGap  = function(Gap){this.RowGap = Gap;};
+
+//--------------------------------------------------------export----------------------------------------------------
+window['AscCommonWord'] = window['AscCommonWord'] || {};
+window['AscCommonWord'].CEqArray = CEqArray;
+window['AscCommonWord'].CMathMatrix = CMathMatrix;
 
 window["CMathMenuEqArray"] = CMathMenuEqArray;
 CMathMenuEqArray.prototype["get_Align"]    = CMathMenuEqArray.prototype.get_Align;

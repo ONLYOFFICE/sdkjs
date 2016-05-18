@@ -24,13 +24,8 @@
 */
 "use strict";
 
-/**
- * Created with JetBrains WebStorm.
- * User: Sergey.Luzyanin
- * Date: 6/26/13
- * Time: 2:04 PM
- * To change this template use File | Settings | File Templates.
- */
+// Import
+var History = AscCommon.History;
 
 function MasterSlide(presentation, theme)
 {
@@ -291,11 +286,11 @@ MasterSlide.prototype =
                 {
                     Fill = this.cSld.Bg.bgPr.Fill;
                 }
-                if(typeof CollaborativeEditing !== "undefined")
+                if(typeof AscCommon.CollaborativeEditing !== "undefined")
                 {
                     if(Fill && Fill.fill && Fill.fill.type === Asc.c_oAscFill.FILL_TYPE_BLIP && typeof Fill.fill.RasterImageId === "string" && Fill.fill.RasterImageId.length > 0)
                     {
-						CollaborativeEditing.Add_NewImage(AscCommon.getFullImageSrc2(Fill.fill.RasterImageId));
+                        AscCommon.CollaborativeEditing.Add_NewImage(AscCommon.getFullImageSrc2(Fill.fill.RasterImageId));
                     }
                 }
                 break;
@@ -729,9 +724,9 @@ function CMasterThumbnailDrawer()
 
         var _ctx = this.CanvasImage.getContext('2d');
 
-        var g = new CGraphics();
+        var g = new AscCommon.CGraphics();
         g.init(_ctx, w_px, h_px, this.WidthMM, this.HeightMM);
-        g.m_oFontManager = g_fontManager;
+        g.m_oFontManager = AscCommon.g_fontManager;
 
         g.transform(1,0,0,1,0,0);
 
@@ -924,10 +919,10 @@ function CMasterThumbnailDrawer()
         par.Recalculate_Page(0);
 
         // сбрасываем дпи
-        g.init(_ctx, w_px, h_px, w_px * g_dKoef_pix_to_mm,  h_px * g_dKoef_pix_to_mm);
+        g.init(_ctx, w_px, h_px, w_px * AscCommon.g_dKoef_pix_to_mm,  h_px * AscCommon.g_dKoef_pix_to_mm);
         g.CalculateFullTransform();
-        _text_x = 8 * g_dKoef_pix_to_mm;
-        _text_y = (h_px - 11) * g_dKoef_pix_to_mm;
+        _text_x = 8 * AscCommon.g_dKoef_pix_to_mm;
+        _text_y = (h_px - 11) * AscCommon.g_dKoef_pix_to_mm;
 
         par.Lines[0].Ranges[0].XVisible = _text_x;
         par.Lines[0].Y = _text_y;
@@ -956,3 +951,7 @@ function CMasterThumbnailDrawer()
         return "";
     }
 }
+
+//--------------------------------------------------------export----------------------------------------------------
+window['AscCommonSlide'] = window['AscCommonSlide'] || {};
+window['AscCommonSlide'].MasterSlide = MasterSlide;

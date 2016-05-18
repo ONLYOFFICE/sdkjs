@@ -23,9 +23,8 @@
  *
 */
 "use strict";
-//-----------------------------------------------------------------------------------
-// Global counters
-//-----------------------------------------------------------------------------------
+
+(function(window, undefined){
 
 /**
  *
@@ -126,7 +125,7 @@ CCollaborativeEditing.prototype.Load_Images = function(){
         var old_val =  Asc["editor"].ImageLoader.bIsAsyncLoadDocumentImages;
         Asc["editor"].ImageLoader.bIsAsyncLoadDocumentImages = true;
         Asc["editor"].ImageLoader.LoadDocumentImages(this.m_aNewImages, null);
-        CollaborativeEditing.m_aNewImages.length = 0;
+        AscCommon.CollaborativeEditing.m_aNewImages.length = 0;
         Asc["editor"].ImageLoader.bIsAsyncLoadDocumentImages = old_val;
     }
 }
@@ -220,4 +219,7 @@ CCollaborativeEditing.prototype.Clear_CollaborativeMarks = function()
     this.m_aChangedClasses = {};
 };
 
-var CollaborativeEditing = new CCollaborativeEditing();
+    //--------------------------------------------------------export----------------------------------------------------
+    window['AscCommon'] = window['AscCommon'] || {};
+    window['AscCommon'].CollaborativeEditing = new CCollaborativeEditing();
+})(window);

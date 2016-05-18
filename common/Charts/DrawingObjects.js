@@ -37,11 +37,16 @@ var c_oAscLockTypes = AscCommon.c_oAscLockTypes;
 var parserHelp = AscCommon.parserHelp;
 var gc_nMaxRow = AscCommon.gc_nMaxRow;
 var gc_nMaxCol = AscCommon.gc_nMaxCol;
+    var History = AscCommon.History;
 
 var BBoxInfo = AscFormat.BBoxInfo;
 var MOVE_DELTA = AscFormat.MOVE_DELTA;
 
 var c_oAscError = Asc.c_oAscError;
+var c_oAscChartTypeSettings = Asc.c_oAscChartTypeSettings;
+var c_oAscChartTitleShowSettings = Asc.c_oAscChartTitleShowSettings;
+var c_oAscGridLinesSettings = Asc.c_oAscGridLinesSettings;
+var c_oAscValAxisRule = Asc.c_oAscValAxisRule;
 var c_oAscInsertOptions = Asc.c_oAscInsertOptions;
 var c_oAscDeleteOptions = Asc.c_oAscDeleteOptions;
 var c_oAscSelectionType = Asc.c_oAscSelectionType;
@@ -94,30 +99,6 @@ asc_CChartStyle.prototype = {
 };
 
 /** @constructor */
-function asc_CChartTranslate() {
-
-    this.title = "Diagram Title";
-    this.xAxis = "X Axis";
-    this.yAxis = "Y Axis";
-    this.series = "Series";
-}
-
-asc_CChartTranslate.prototype = {
-
-    asc_getTitle: function() { return this.title; },
-    asc_setTitle: function(val) { this.title = val; },
-
-    asc_getXAxis: function() { return this.xAxis; },
-    asc_setXAxis: function(val) { this.xAxis = val; },
-
-    asc_getYAxis: function() { return this.yAxis; },
-    asc_setYAxis: function(val) { this.yAxis = val; },
-
-    asc_getSeries: function() { return this.series; },
-    asc_setSeries: function(val) { this.series = val; }
-};
-
-/** @constructor */
 function asc_CChartBinary(chart) {
 
     this["binary"] = null;
@@ -155,7 +136,7 @@ asc_CChartBinary.prototype = {
         var binary = this["binary"];
         var stream = AscFormat.CreateBinaryReader(this["binary"], 0, this["binary"].length);
         //надо сбросить то, что остался после открытия документа
-        window.global_pptx_content_loader.Clear();
+        AscCommon.pptx_content_loader.Clear();
         var oNewChartSpace = new AscFormat.CChartSpace();
         var oBinaryChartReader = new AscCommon.BinaryChartReader(stream);
         oBinaryChartReader.ExternalReadCT_ChartSpace(stream.size , oNewChartSpace, workSheet);
@@ -269,10 +250,10 @@ function CreateSparklineMarker(oUniFill)
 function CreateUniFillFromExcelColor(oExcelColor)
 {
     var oUnifill;
-    if(oExcelColor instanceof ThemeColor)
+    if(oExcelColor instanceof AscCommonExcel.ThemeColor)
     {
 
-        oUnifill = AscFormat.CreateUnifillSolidFillSchemeColorByIndex(map_themeExcel_to_themePresentation[oExcelColor.theme]);
+        oUnifill = AscFormat.CreateUnifillSolidFillSchemeColorByIndex(AscCommonExcel.map_themeExcel_to_themePresentation[oExcelColor.theme]);
         if(oExcelColor.tint != null)
         {
             var unicolor = oUnifill.fill.color;
@@ -397,24 +378,24 @@ CSparklineView.prototype.initFromSparkline = function(oSparkline, oSparklineGrou
 
 
 
-        val_ax_props.putTickLabelsPos(c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE);
+        val_ax_props.putTickLabelsPos(Asc.c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE);
         val_ax_props.putInvertValOrder(false);
-        val_ax_props.putDispUnitsRule(c_oAscValAxUnits.none);
-        val_ax_props.putMajorTickMark(c_oAscTickMark.TICK_MARK_NONE);
-        val_ax_props.putMinorTickMark(c_oAscTickMark.TICK_MARK_NONE);
-        val_ax_props.putCrossesRule(c_oAscCrossesRule.auto);
+        val_ax_props.putDispUnitsRule(Asc.c_oAscValAxUnits.none);
+        val_ax_props.putMajorTickMark(Asc.c_oAscTickMark.TICK_MARK_NONE);
+        val_ax_props.putMinorTickMark(Asc.c_oAscTickMark.TICK_MARK_NONE);
+        val_ax_props.putCrossesRule(Asc.c_oAscCrossesRule.auto);
 
 
 
         var cat_ax_props = new AscCommon.asc_CatAxisSettings();
-        cat_ax_props.putIntervalBetweenLabelsRule(c_oAscBetweenLabelsRule.auto);
-        cat_ax_props.putLabelsPosition(c_oAscLabelsPosition.betweenDivisions);
-        cat_ax_props.putTickLabelsPos(c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE);
+        cat_ax_props.putIntervalBetweenLabelsRule(Asc.c_oAscBetweenLabelsRule.auto);
+        cat_ax_props.putLabelsPosition(Asc.c_oAscLabelsPosition.betweenDivisions);
+        cat_ax_props.putTickLabelsPos(Asc.c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE);
         cat_ax_props.putLabelsAxisDistance(100);
-        cat_ax_props.putMajorTickMark(c_oAscTickMark.TICK_MARK_NONE);
-        cat_ax_props.putMinorTickMark(c_oAscTickMark.TICK_MARK_NONE);
+        cat_ax_props.putMajorTickMark(Asc.c_oAscTickMark.TICK_MARK_NONE);
+        cat_ax_props.putMinorTickMark(Asc.c_oAscTickMark.TICK_MARK_NONE);
         cat_ax_props.putIntervalBetweenTick(1);
-        cat_ax_props.putCrossesRule(c_oAscCrossesRule.auto);
+        cat_ax_props.putCrossesRule(Asc.c_oAscCrossesRule.auto);
         if(oSparklineGroup.rightToLeft)
         {
             cat_ax_props.putInvertCatOrder(true);
@@ -1365,7 +1346,7 @@ function DrawingObjects() {
         _this.drawingArea = currentSheet.drawingArea;
         _this.drawingArea.init();
         _this.coordsManager = new CoordsManager(worksheet, true);
-        _this.drawingDocument = currentSheet.model.DrawingDocument ? currentSheet.model.DrawingDocument : new CDrawingDocument(this);
+        _this.drawingDocument = currentSheet.model.DrawingDocument ? currentSheet.model.DrawingDocument : new AscCommon.CDrawingDocument(this);
         _this.drawingDocument.drawingObjects = this;
         _this.drawingDocument.AutoShapesTrack = autoShapeTrack;
         _this.drawingDocument.TargetHtmlElement = document.getElementById('id_target_cursor');
@@ -1409,7 +1390,7 @@ function DrawingObjects() {
         {
 			var localUrl = aImagesSync[i];
 			if(api.DocInfo && api.DocInfo.asc_getOfflineApp()) {
-          AscCommon.g_oDocumentUrls.addImageUrl(localUrl, api.FontLoader.fontFilesPath + "../Excel/document/media/" + localUrl);
+          AscCommon.g_oDocumentUrls.addImageUrl(localUrl, "/sdkjs/cell/document/media/" + localUrl);
 			}
             aImagesSync[i] = AscCommon.getFullImageSrc2(localUrl);
         }
@@ -1842,7 +1823,7 @@ function DrawingObjects() {
     };
 
     _this.clipGraphicsCanvas = function(canvas, graphicOption) {
-        if ( canvas instanceof CGraphics ) {
+        if ( canvas instanceof AscCommon.CGraphics ) {
 
             var x, y, w, h;
 
@@ -1884,7 +1865,7 @@ function DrawingObjects() {
     };
 
     _this.restoreGraphicsCanvas = function(canvas) {
-        if ( canvas instanceof CGraphics ) {
+        if ( canvas instanceof AscCommon.CGraphics ) {
             canvas.m_oContext.restore();
 
             // этот рестор нужен для восстановления сложных вложенных клипов
@@ -2113,14 +2094,14 @@ function DrawingObjects() {
             for (var i = 0; i < aObjects.length; i++) {
                 aObjects[i].graphicObject.deleteDrawingBase();
             }
-            var listRange = new Range(worksheet.model, 0, 0, worksheet.nRowsCount - 1, worksheet.nColsCount - 1);
+            var listRange = new AscCommonExcel.Range(worksheet.model, 0, 0, worksheet.nRowsCount - 1, worksheet.nColsCount - 1);
             listRange.cleanAll();
             worksheet._clean();
             History.Clear();
 
             History.TurnOff();
             aObjects.length = 0;
-            var listRange = new Range(worksheet.model, 0, 0, worksheet.nRowsCount - 1, worksheet.nColsCount - 1);
+            var listRange = new AscCommonExcel.Range(worksheet.model, 0, 0, worksheet.nRowsCount - 1, worksheet.nColsCount - 1);
             listRange.cleanAll();
             if ( worksheet.isChartAreaEditMode ) {
                 worksheet.isChartAreaEditMode = false;
@@ -2391,13 +2372,6 @@ function DrawingObjects() {
         }
     };
 
-    _this.clearSparklineGroups = function(oSparklineGroups, range) {
-        for(var i = 0; i < oSparklineGroups.arrSparklineGroup.length; ++i) {
-            var oSparklineGroup = oSparklineGroups.arrSparklineGroup[i];
-            oSparklineGroup.updateCache(range);
-        }
-    };
-
     _this.checkSparklineGroupMinMaxVal = function(oSparklineGroup)
     {
         var maxVal = null, minVal = null, i, j;
@@ -2454,7 +2428,7 @@ function DrawingObjects() {
         }
     };
 
-    _this.drawSparkLineGroups = function(oDrawingContext, oSparklineGroups, range, offsetX, offsetY)
+    _this.drawSparkLineGroups = function(oDrawingContext, aSparklineGroups, range, offsetX, offsetY)
     {
 
         var graphics, i, j;
@@ -2464,16 +2438,16 @@ function DrawingObjects() {
         }
         else
         {
-            graphics = new CGraphics();
+            graphics = new AscCommon.CGraphics();
             graphics.init(oDrawingContext.ctx, oDrawingContext.getWidth(0), oDrawingContext.getHeight(0),
                 oDrawingContext.getWidth(3)*nSparklineMultiplier, oDrawingContext.getHeight(3)*nSparklineMultiplier);
-            graphics.m_oFontManager = g_fontManager;
+            graphics.m_oFontManager = AscCommon.g_fontManager;
         }
 
         var _offX = offsetX* Asc.getCvtRatio(1, 3, oDrawingContext.getPPIX());
         var _offY = offsetY* Asc.getCvtRatio(1, 3, oDrawingContext.getPPIY());
-        for(i = 0; i < oSparklineGroups.arrSparklineGroup.length; ++i) {
-            var oSparklineGroup = oSparklineGroups.arrSparklineGroup[i];
+        for(i = 0; i < aSparklineGroups.length; ++i) {
+            var oSparklineGroup = aSparklineGroups[i];
 
             if(oSparklineGroup.type !== Asc.ESparklineType.Stacked &&
                 (Asc.SparklineAxisMinMax.Group === oSparklineGroup.minAxisType || Asc.SparklineAxisMinMax.Group === oSparklineGroup.maxAxisType))
@@ -3714,8 +3688,7 @@ function DrawingObjects() {
 //-----------------------------------------------------------------------------------
 
 function ObjectLocker(ws) {
-    var asc = window["Asc"];
-    var asc_applyFunction = asc.applyFunction;
+    var asc_applyFunction = AscCommonExcel.applyFunction;
 
     var _t = this;
     _t.bLock = true;
@@ -3922,17 +3895,6 @@ function CoordsManager(ws) {
     prot["asc_setStyle"] = prot.asc_setStyle;
     prot["asc_getImageUrl"] = prot.asc_getImageUrl;
     prot["asc_setImageUrl"] = prot.asc_setImageUrl;
-
-    window["Asc"]["asc_CChartTranslate"] = window["Asc"].asc_CChartTranslate = asc_CChartTranslate;
-    prot = asc_CChartTranslate.prototype;
-    prot["asc_getTitle"] = prot.asc_getTitle;
-    prot["asc_setTitle"] = prot.asc_setTitle;
-    prot["asc_getXAxis"] = prot.asc_getXAxis;
-    prot["asc_setXAxis"] = prot.asc_setXAxis;
-    prot["asc_getYAxis"] = prot.asc_getYAxis;
-    prot["asc_setYAxis"] = prot.asc_setYAxis;
-    prot["asc_getSeries"] = prot.asc_getSeries;
-    prot["asc_setSeries"] = prot.asc_setSeries;
 
     window["Asc"]["asc_CChartBinary"] = window["Asc"].asc_CChartBinary = asc_CChartBinary;
     prot = asc_CChartBinary.prototype;

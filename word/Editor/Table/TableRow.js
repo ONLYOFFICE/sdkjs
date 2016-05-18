@@ -23,11 +23,9 @@
  *
 */
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 28.12.2015
- * Time: 12:12
- */
+
+// Import
+var History = AscCommon.History;
 
 //----------------------------------------------------------------------------------------------------------------------
 // Класс CTableRow
@@ -77,8 +75,8 @@ function CTableRow(Table, Cols, TableGrid)
     this.PagesCount = 1;
 
     // Добавляем данный класс в список DocumentContent'ов
-    if (typeof CollaborativeEditing !== "undefined")
-        CollaborativeEditing.Add_NewDC(this);
+    if (typeof AscCommon.CollaborativeEditing !== "undefined")
+        AscCommon.CollaborativeEditing.Add_NewDC(this);
     this.m_oContentChanges = new AscCommon.CContentChanges(); // список изменений(добавление/удаление элементов)
 
     this.Index = 0;
@@ -1310,7 +1308,7 @@ CTableRow.prototype =
                     if (null != Element)
                     {
                         this.Content.splice(Pos, 0, Element);
-                        CollaborativeEditing.Update_DocumentPositionsOnAdd(this, Pos);
+                        AscCommon.CollaborativeEditing.Update_DocumentPositionsOnAdd(this, Pos);
                     }
                 }
 
@@ -1335,7 +1333,7 @@ CTableRow.prototype =
                         continue;
 
                     this.Content.splice(Pos, 1);
-                    CollaborativeEditing.Update_DocumentPositionsOnRemove(this, Pos, 1);
+                    AscCommon.CollaborativeEditing.Update_DocumentPositionsOnRemove(this, Pos, 1);
                 }
 
                 this.Internal_ReIndexing();
@@ -1412,7 +1410,7 @@ CTableRow.prototype =
 
         this.Internal_ReIndexing();
 
-        CollaborativeEditing.Add_NewObject(this);
+        AscCommon.CollaborativeEditing.Add_NewObject(this);
     },
 
     Load_LinkData : function(LinkData)
@@ -1488,3 +1486,7 @@ CTableRowRecalculateObject.prototype =
         }
     }
 };
+
+//--------------------------------------------------------export----------------------------------------------------
+window['AscCommonWord'] = window['AscCommonWord'] || {};
+window['AscCommonWord'].CTableRow = CTableRow;

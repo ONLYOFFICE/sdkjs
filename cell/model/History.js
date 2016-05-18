@@ -141,10 +141,9 @@ function (window, undefined) {
 	window['AscCH'].historyitem_AutoFilter_ClearFilterColumn = 15;
 })(window);
 
-
-function CHistory(workbook)
+function CHistory()
 {
-	this.workbook = workbook;
+	this.workbook = null;
     this.Index    = -1;
     this.Points   = [];
     this.TurnOffHistory = 0;
@@ -164,6 +163,9 @@ function CHistory(workbook)
   this.UserSaveMode   = false;
   this.UserSavedIndex = null;  // Номер точки, на которой произошло последнее сохранение пользователем (не автосохранение)
 }
+CHistory.prototype.init = function(workbook) {
+	this.workbook = workbook;
+};
 CHistory.prototype.Is_UserSaveMode = function() {
   return this.UserSaveMode;
 };
@@ -226,7 +228,7 @@ CHistory.prototype.UndoRedoPrepare = function (oRedoObjectParam, bUndo) {
 		this.TurnOff();
 	}
 	/* отключаем отрисовку на случай необходимости пересчета ячеек, заносим ячейку, при необходимости в список перерисовываемых */
-	lockDraw(this.workbook);
+	this.workbook.lockDraw();
 
 	if (bUndo)
 		this.workbook.bUndoChanges = true;
@@ -314,7 +316,7 @@ CHistory.prototype.RedoExecute = function(Point, oRedoObjectParam)
 		}
 		this._addRedoObjectParam(oRedoObjectParam, Item);
 	}
-	CollaborativeEditing.Apply_LinkData();
+	AscCommon.CollaborativeEditing.Apply_LinkData();
 	var wsViews = Asc["editor"].wb.wsViews;
 	this.Get_RecalcData(Point);
 	for(var i = 0; i < wsViews.length; ++i)
@@ -329,7 +331,7 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 	var wsViews, i, oState = null, bCoaut = false;
 	if (!bUndo && null == Point) {
 		Point = this.Points[this.Index];
-		CollaborativeEditing.Apply_LinkData();
+		AscCommon.CollaborativeEditing.Apply_LinkData();
 		bCoaut = true;
         if(!window["NATIVE_EDITOR_ENJINE"] || window['IS_NATIVE_EDITOR']) {
             this.Get_RecalcData(Point);
@@ -440,8 +442,8 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
     }
 
 	/* возвращаем отрисовку. и перерисовываем ячейки с предварительным пересчетом */
-	buildRecalc(this.workbook);
-	unLockDraw(this.workbook);
+	this.workbook.unLockDraw();
+	this.workbook.buildRecalc();
 	if (oRedoObjectParam.bIsOn)
 		this.TurnOn();
 };
@@ -895,5 +897,10 @@ CHistory.prototype._CheckCanNotAddChanges = function () {
         }
     } catch (e) {
     }
-}
-var History = null;
+};
+
+	//------------------------------------------------------------export--------------------------------------------------
+	window['AscCommon'] = window['AscCommon'] || {};
+	window['AscCommon'].CHistory = CHistory;
+	window['AscCommon'].History = new CHistory();
+})(window);

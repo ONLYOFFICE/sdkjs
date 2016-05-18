@@ -29,7 +29,7 @@
 		 * Import
 		 * -----------------------------------------------------------------------------
 		 */
-		var asc_applyFunction	= Asc.applyFunction;
+		var asc_applyFunction	= AscCommonExcel.applyFunction;
 		var asc_Range			= Asc.Range;
 
 		var c_oAscLockTypes = AscCommon.c_oAscLockTypes;
@@ -43,7 +43,7 @@
 		 * -----------------------------------------------------------------------------
 		 *
 		 * @constructor
-		 * @memberOf Asc
+		 * @memberOf AscCommonExcel
 		 */
 		function CCollaborativeEditing (handlers, isViewerMode) {
 			if ( !(this instanceof CCollaborativeEditing) ) {
@@ -52,7 +52,7 @@
 
 			this.m_nUseType					= 1;  // 1 - 1 клиент и мы сохраняем историю, -1 - несколько клиентов, 0 - переход из -1 в 1
 
-			this.handlers					= new Asc.asc_CHandlersList(handlers);
+			this.handlers					= new AscCommonExcel.asc_CHandlersList(handlers);
 			this.m_bIsViewerMode			= !!isViewerMode; // Режим Viewer-а
 			this.m_bGlobalLock				= false; // Глобальный lock
 			this.m_bGlobalLockEditCell		= false; // Глобальный lock (для редактирования ячейки) - отключаем смену select-а, но разрешаем сразу вводить
@@ -299,7 +299,7 @@
 				this.clearRecalcIndex();
 
 				// Чистим Undo/Redo
-				History.Clear();
+				AscCommon.History.Clear();
 
 				// Перерисовываем
 				if (bCheckRedraw) {
@@ -320,7 +320,7 @@
 					this.m_nUseType = 1;
 			} else {
 				// Обновляем точку последнего сохранения в истории
-				History.Reset_SavedIndex(IsUserSave);
+				AscCommon.History.Reset_SavedIndex(IsUserSave);
 			}
 		};
 
@@ -1068,7 +1068,7 @@
 		window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 		window['AscCommonExcel'].CLock = CLock;
 
-		window['Asc'].CCollaborativeEditing = CCollaborativeEditing;
+		window['AscCommonExcel'].CCollaborativeEditing = CCollaborativeEditing;
 		window['Asc'].CRecalcIndexElement = CRecalcIndexElement;
 		window['Asc'].CRecalcIndex = CRecalcIndex;
 	}

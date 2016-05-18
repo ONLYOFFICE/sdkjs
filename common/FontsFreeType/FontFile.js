@@ -1347,12 +1347,14 @@ function CFontFile(fileName, faceIndex)
 
                 var _width = pCurentGliph.bitmap.pitch;
 
+                var _disable_need_bold = (pFace.os2 && (pFace.os2.version != 0xFFFF) && (pFace.os2.usWeightClass >= 800)) ? true : false;
+
                 if (_width != 0)
                 {
                     var nRowSize = 0;
                     if (this.m_bAntiAliasing)
                     {
-                        if (this.m_bNeedDoBold)
+                        if (this.m_bNeedDoBold && !_disable_need_bold)
                             oSizes.oBitmap.nWidth++;
 
                         nRowSize = oSizes.oBitmap.nWidth;
@@ -1362,7 +1364,7 @@ function CFontFile(fileName, faceIndex)
                         nRowSize = (oSizes.oBitmap.nWidth + 7) >> 3;
                     }
 
-                    if (this.m_bNeedDoBold && this.m_bAntiAliasing)
+                    if (this.m_bNeedDoBold && this.m_bAntiAliasing && !_disable_need_bold)
                     {
                         var _width_im = oSizes.oBitmap.nWidth;
                         var _height = oSizes.oBitmap.nHeight;
@@ -1621,8 +1623,10 @@ function CFontFile(fileName, faceIndex)
                 oSizes.oBitmap.nWidth  = pCurentGliph.bitmap.width;
                 oSizes.oBitmap.nHeight = pCurentGliph.bitmap.rows;
 
+                var _disable_need_bold = (this.m_pFace.os2 && (this.m_pFace.os2.version != 0xFFFF) && (this.m_pFace.os2.usWeightClass >= 800)) ? true : false;
+
                 var nRowSize = 0;
-                if (this.m_bAntiAliasing)
+                if (this.m_bAntiAliasing && !_disable_need_bold)
                 {
                     if (this.m_bNeedDoBold)
                         oSizes.oBitmap.nWidth++;
@@ -1634,7 +1638,7 @@ function CFontFile(fileName, faceIndex)
                     nRowSize = (oSizes.oBitmap.nWidth + 7) >> 3;
                 }
 
-                if (this.m_bNeedDoBold && this.m_bAntiAliasing)
+                if (this.m_bNeedDoBold && this.m_bAntiAliasing && !_disable_need_bold)
                 {
                     var _width_im = oSizes.oBitmap.nWidth;
                     var _height = oSizes.oBitmap.nHeight;

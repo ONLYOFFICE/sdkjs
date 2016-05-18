@@ -84,7 +84,7 @@ function GenerateTableStyles(drawingDoc, logicDoc, tableLook)
     }
     var ctx = _canvas.getContext('2d');
 
-    History.TurnOff();
+    AscCommon.History.TurnOff();
     for (var i1 = 0; i1 < _styles_len; i1++)
     {
         var i = _styles[i1];
@@ -102,9 +102,9 @@ function GenerateTableStyles(drawingDoc, logicDoc, tableLook)
         ctx.fillStyle = "#FFFFFF";
         ctx.fillRect(0, 0, _canvas.width, _canvas.height);
 
-        var graphics = new CGraphics();
+        var graphics = new AscCommon.CGraphics();
         graphics.init(ctx, _canvas.width, _canvas.height, _pageW, _pageH);
-        graphics.m_oFontManager = g_fontManager;
+        graphics.m_oFontManager = AscCommon.g_fontManager;
         graphics.transform(1,0,0,1,0,0);
 
         table.Recalculate_Page(0);
@@ -116,7 +116,7 @@ function GenerateTableStyles(drawingDoc, logicDoc, tableLook)
         _styleD.Id = i;
         _dst_styles.push(_styleD);
     }
-    History.TurnOn();
+    AscCommon.History.TurnOn();
 
     return _dst_styles;
 }
@@ -134,3 +134,8 @@ g_oDocumentDefaultTablePr.Init_Default();
 g_oDocumentDefaultTableCellPr.Init_Default();
 g_oDocumentDefaultTableRowPr.Init_Default();
 g_oDocumentDefaultTableStylePr.Init_Default();
+
+//------------------------------------------------------------export----------------------------------------------------
+CAscTableStyle.prototype['get_Id'] = CAscTableStyle.prototype.get_Id;
+CAscTableStyle.prototype['get_Image'] = CAscTableStyle.prototype.get_Image;
+CAscTableStyle.prototype['get_Type'] = CAscTableStyle.prototype.get_Type;

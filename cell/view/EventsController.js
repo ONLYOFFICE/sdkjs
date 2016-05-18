@@ -24,11 +24,6 @@
 */
 "use strict";
 
-/* EventsController.js
- *
- * Author: Dmitry.Sokolov@avsmedia.net
- * Date:   May 16, 2012
- */
 (	/**
 	 * @param {jQuery} $
 	 * @param {Window} window
@@ -39,7 +34,7 @@
 		var AscBrowser = AscCommon.AscBrowser;
 
 		var asc = window["Asc"] ? window["Asc"] : (window["Asc"] = {});
-		var asc_applyFunction = asc.applyFunction;
+		var asc_applyFunction = AscCommonExcel.applyFunction;
 		var c_oTargetType = AscCommonExcel.c_oTargetType;
 
 		/**
@@ -129,7 +124,7 @@
 		}
 
 		/**
-		 * @param {WorkbookView} view
+		 * @param {AscCommonExcel.WorkbookView} view
 		 * @param {Element} widgetElem
 		 * @param {Element} canvasElem
 		 * @param {Object} handlers  Event handlers (resize, reinitializeScroll, scrollY, scrollX, changeSelection, ...)
@@ -140,7 +135,7 @@
 			this.view     = view;
 			this.widget   = widgetElem;
 			this.element  = canvasElem;
-			this.handlers = new asc.asc_CHandlersList(handlers);
+			this.handlers = new AscCommonExcel.asc_CHandlersList(handlers);
             this._createScrollBars();
             if( this.view.Api.isMobileVersion ){
                 var __hasTouch = 'ontouchstart' in window;
@@ -1569,12 +1564,8 @@
             this.view.MobileTouchManager.onTouchEnd(event);
         };
 
-        /*
-         * Export
-         * -----------------------------------------------------------------------------
-         */
-		window["Asc"]["asc_CEventsController"] = window["Asc"].asc_CEventsController = asc_CEventsController;
-
-
+		//------------------------------------------------------------export---------------------------------------------------
+		window['AscCommonExcel'] = window['AscCommonExcel'] || {};
+		window["AscCommonExcel"].asc_CEventsController = asc_CEventsController;
 	}
 )(jQuery, window);

@@ -22,10 +22,32 @@
  * Pursuant to Section 7  3(e) we decline to grant you any rights under trademark law for use of our trademarks.
  *
 */
-/**
-* @license Copyright (c) Ascensio System SIA 2012-2016. All rights reserved
-*
-* http://www.onlyoffice.com
-*
-* Version: @@Version (build:@@Build)
-*/
+"use strict";
+
+(function(window, undefined){
+CRFonts.prototype.Merge = function(RFonts)
+{
+    if ( undefined !== RFonts.Ascii )
+        this.Ascii = RFonts.Ascii;
+
+    if ( undefined != RFonts.EastAsia )
+        this.EastAsia = RFonts.EastAsia;
+    else if ( undefined !== RFonts.Ascii )
+        this.EastAsia = RFonts.Ascii;
+
+    if ( undefined != RFonts.HAnsi )
+        this.HAnsi = RFonts.HAnsi;
+
+    else if ( undefined !== RFonts.Ascii )
+        this.HAnsi = RFonts.Ascii;
+
+    if ( undefined != RFonts.CS )
+        this.CS = RFonts.CS;
+
+    else if ( undefined !== RFonts.Ascii )
+        this.CS = RFonts.Ascii;
+
+    if ( undefined != RFonts.Hint )
+        this.Hint = RFonts.Hint;
+};
+})(window);

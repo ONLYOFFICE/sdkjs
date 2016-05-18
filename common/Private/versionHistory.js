@@ -90,7 +90,7 @@
   prot["asc_setArrColors"] = prot.asc_setArrColors;
 })(window);
 
-baseEditorsApi.prototype.asc_showRevision = function(newObj) {
+AscCommon.baseEditorsApi.prototype.asc_showRevision = function(newObj) {
   if (!newObj.docId) {
     return;
   }
@@ -115,9 +115,9 @@ baseEditorsApi.prototype.asc_showRevision = function(newObj) {
     this.asc_LoadDocument(true);
   } else if (this.VersionHistory.currentChangeId < newObj.currentChangeId) {
     // Нужно только добавить некоторые изменения
-    CollaborativeEditing.Clear_CollaborativeMarks();
+    AscCommon.CollaborativeEditing.Clear_CollaborativeMarks();
     editor.VersionHistory.applyChanges(editor);
-    CollaborativeEditing.Apply_Changes();
+    AscCommon.CollaborativeEditing.Apply_Changes();
   }
 };
-baseEditorsApi.prototype['asc_showRevision'] = baseEditorsApi.prototype.asc_showRevision;
+AscCommon.baseEditorsApi.prototype['asc_showRevision'] = AscCommon.baseEditorsApi.prototype.asc_showRevision;

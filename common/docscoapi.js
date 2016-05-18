@@ -458,7 +458,6 @@
     this._countUsers = 0;
 
     this.isLicenseInit = false;
-    this.isAuthInit = false;
     this._locks = {};
     this._msgBuffer = [];
     this._lockCallbacks = {};
@@ -1173,29 +1172,30 @@
 
   DocsCoApi.prototype.init = function(user, docid, documentCallbackUrl, token, editorType, documentFormatSave) {
     this._user = user;
-    this._docid = docid;
+    this._docid = null;
     this._documentCallbackUrl = documentCallbackUrl;
     this._token = token;
     this.ownedLockBlocks = [];
-    this.sockjs_url = '/doc/' + docid + '/c';
+    this.sockjs_url = null;
     this.editorType = editorType;
     this._isExcel = c_oEditorId.Spreadsheet === editorType;
     this._isPresentation = c_oEditorId.Presentation === editorType;
     this._isAuth = false;
     this._documentFormatSave = documentFormatSave;
 
+    this.setDocId(docid);
     this._initSocksJs();
   };
   DocsCoApi.prototype.getDocId = function() {
     return this._docid;
   };
-  DocsCoApi.prototype.setDocId = function(docId) {
+  DocsCoApi.prototype.setDocId = function(docid) {
     //todo возможно надо менять sockjs_url
-    this._docid = docId;
+    this._docid = docid;
+    this.sockjs_url = '/doc/' + docid + '/c';
   };
   // Авторизация (ее нужно делать после выставления состояния редактора view-mode)
   DocsCoApi.prototype.auth = function(isViewer, opt_openCmd) {
-    this.isAuthInit = true;
     this._isViewer = isViewer;
     if (this._locks) {
       this.ownedLockBlocks = [];
@@ -1243,11 +1243,7 @@
       }
 
       t._state = ConnectionState.WaitAuth;
-      if (t.isAuthInit) {
-        t.auth(t._isViewer);
-      } else {
-        t.onFirstConnect();
-      }
+      t.onFirstConnect();
     };
     sockjs.onmessage = function(e) {
       //TODO: add checks and error handling

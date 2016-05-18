@@ -35,12 +35,9 @@ var CreateControlContainer = AscCommon.CreateControlContainer;
 var CreateControl = AscCommon.CreateControl;
 var global_keyboardEvent = AscCommon.global_keyboardEvent;
 var global_mouseEvent = AscCommon.global_mouseEvent;
-
-var g_dDpiX = 96.0;
-var g_dDpiY = 96.0;
-
-var g_dKoef_mm_to_pix = g_dDpiX / 25.4;
-var g_dKoef_pix_to_mm = 25.4 / g_dDpiX;
+var History = AscCommon.History;
+var g_dKoef_pix_to_mm = AscCommon.g_dKoef_pix_to_mm;
+var g_dKoef_mm_to_pix = AscCommon.g_dKoef_mm_to_pix;
 
 var g_bIsMobile = AscCommon.AscBrowser.isMobile;
 
@@ -52,12 +49,8 @@ var X_Right_Margin  = 15;  // 1.5 cm
 var Y_Bottom_Margin = 20;  // 2   cm
 var Y_Top_Margin    = 20;  // 2   cm
 
-var X_Left_Field   = X_Left_Margin;
 var X_Right_Field  = Page_Width  - X_Right_Margin;
 var Y_Bottom_Field = Page_Height - Y_Bottom_Margin;
-var Y_Top_Field    = Y_Top_Margin;
-
-
 
 var GlobalSkinTeamlab = {
     Name : "classic",
@@ -97,6 +90,22 @@ var GlobalSkinFlat = {
 };
 
 var GlobalSkin = GlobalSkinTeamlab;
+
+function updateGlobalSkin(newSkin) {
+    GlobalSkin.Name = newSkin.Name;
+    GlobalSkin.RulersButton = newSkin.RulersButton;
+    GlobalSkin.NavigationButtons = newSkin.NavigationButtons;
+    GlobalSkin.BackgroundColor = newSkin.BackgroundColor;
+    GlobalSkin.RulerDark = newSkin.RulerDark;
+    GlobalSkin.RulerLight = newSkin.RulerLight;
+    GlobalSkin.BackgroundScroll = newSkin.BackgroundScroll;
+    GlobalSkin.RulerOutline = newSkin.RulerOutline;
+    GlobalSkin.RulerMarkersFillColor = newSkin.RulerMarkersFillColor;
+    GlobalSkin.PageOutline = newSkin.PageOutline;
+    GlobalSkin.STYLE_THUMBNAIL_WIDTH = newSkin.STYLE_THUMBNAIL_WIDTH;
+    GlobalSkin.STYLE_THUMBNAIL_HEIGHT = newSkin.STYLE_THUMBNAIL_HEIGHT;
+    GlobalSkin.isNeedInvertOnActive = newSkin.isNeedInvertOnActive;
+}
 
 function CEditorPage(api)
 {
@@ -207,7 +216,7 @@ function CEditorPage(api)
     this.m_oVerRuler        = new CVerRuler();
     this.m_oVerRuler.IsCanMoveMargins = false;
 
-    this.m_oDrawingDocument = new CDrawingDocument();
+    this.m_oDrawingDocument = new AscCommon.CDrawingDocument();
     this.m_oLogicDocument   = null;
 
     this.m_oLayoutDrawer = new CLayoutThumbnailDrawer();
@@ -821,7 +830,7 @@ function CEditorPage(api)
         this.m_nZoomType = type;
 
         // нужно проверить режим и сбросить кеш грамотно (ie version)
-        g_fontManager.ClearRasterMemory();
+        AscCommon.g_fontManager.ClearRasterMemory();
 
         var oWordControl = oThis;
 
@@ -1569,8 +1578,8 @@ function CEditorPage(api)
             _yOffset += (7 * g_dKoef_mm_to_pix);
         }
 
-        if (window.closeDialogs != undefined)
-            closeDialogs();
+        if (window['closeDialogs'] != undefined)
+            window['closeDialogs']();
 
         AscCommon.check_MouseDownEvent(e, true);
         global_mouseEvent.LockMouse();
@@ -2011,7 +2020,7 @@ function CEditorPage(api)
             {
                 oWordControl.TextBoxInputFocus = false;
 
-                CollaborativeEditing.m_bGlobalLock = false;
+                AscCommon.CollaborativeEditing.m_bGlobalLock = false;
                 this.TextBoxInput.style.zIndex = -1;
                 this.TextBoxInput.style.top = "-1000px";
                 this.TextBoxInputFocus = false;
@@ -2052,7 +2061,7 @@ function CEditorPage(api)
         {
             oWordControl.TextBoxInputFocus = false;
 
-            CollaborativeEditing.m_bGlobalLock = false;
+            AscCommon.CollaborativeEditing.m_bGlobalLock = false;
             this.TextBoxInput.style.zIndex = -1;
             this.TextBoxInput.style.top = "-1000px";
             this.TextBoxInputFocus = false;
@@ -3138,7 +3147,7 @@ function CEditorPage(api)
 
             if (!_bIsWaitScheme)
             {
-                var _interval = (CollaborativeEditing.m_nUseType <= 0) ? oWordControl.m_nIntervalSlowAutosave : oWordControl.m_nIntervalFastAutosave;
+                var _interval = (AscCommon.CollaborativeEditing.m_nUseType <= 0) ? oWordControl.m_nIntervalSlowAutosave : oWordControl.m_nIntervalFastAutosave;
 
                 if ((_curTime - oWordControl.m_nLastAutosaveTime) > _interval && !oWordControl.m_oDrawingDocument.TransitionSlide.IsPlaying() && !oWordControl.m_oApi.isLongAction())
                 {
@@ -3379,6 +3388,9 @@ function CEditorPage(api)
             this.m_oDrawingDocument.IsEmptyPresentation = true;
         }
 
+        if (this.m_oDrawingDocument.TransitionSlide.IsPlaying())
+            this.m_oDrawingDocument.TransitionSlide.End(true);
+
         if (lPageNum != -1 && (lPageNum < 0 || lPageNum >= drDoc.SlidesCount))
             return;
 
@@ -3539,7 +3551,7 @@ function CEditorPage(api)
             return;
 
         oThis.TextBoxInputFocus = true;
-        CollaborativeEditing.m_bGlobalLock = true;
+        AscCommon.CollaborativeEditing.m_bGlobalLock = true;
         oThis.CheckTextBoxInputPos();
         oThis.TextBoxInput.style.zIndex = 90;
     }
@@ -3617,7 +3629,7 @@ function CEditorPage(api)
 
     this.onChangeTB = function()
     {
-        CollaborativeEditing.m_bGlobalLock = false;
+        AscCommon.CollaborativeEditing.m_bGlobalLock = false;
         this.TextBoxInput.style.zIndex = -1;
         this.TextBoxInput.style.top = "-1000px";
         this.TextBoxInputFocus = false;
@@ -3675,7 +3687,17 @@ function CEditorPage(api)
     }
 }
 
-function sendStatus(Message)
-{
-    editor.sync_StatusMessage(Message);
-}
+//------------------------------------------------------------export----------------------------------------------------
+window['AscCommon'] = window['AscCommon'] || {};
+window['AscCommonSlide'] = window['AscCommonSlide'] || {};
+window['AscCommonSlide'].GlobalSkinFlat = GlobalSkinFlat;
+window['AscCommonSlide'].GlobalSkin = GlobalSkin;
+window['AscCommonSlide'].updateGlobalSkin = updateGlobalSkin;
+window['AscCommonSlide'].CEditorPage = CEditorPage;
+
+window['AscCommon'].Page_Width = Page_Width;
+window['AscCommon'].Page_Height = Page_Height;
+window['AscCommon'].X_Left_Margin = X_Left_Margin;
+window['AscCommon'].X_Right_Margin = X_Right_Margin;
+window['AscCommon'].Y_Bottom_Margin = Y_Bottom_Margin;
+window['AscCommon'].Y_Top_Margin = Y_Top_Margin;

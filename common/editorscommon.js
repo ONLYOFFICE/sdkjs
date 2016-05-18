@@ -345,7 +345,13 @@ function mapAscServerErrorToAscError(nServerError) {
 		case c_oAscServerError.TaskResult : nRes = Asc.c_oAscError.ID.Database; break;
 		case c_oAscServerError.ConvertDownload : nRes = Asc.c_oAscError.ID.DownloadError; break;
 		case c_oAscServerError.ConvertTimeout : nRes = Asc.c_oAscError.ID.ConvertationTimeout; break;
+		case c_oAscServerError.ConvertDRM :
+		case c_oAscServerError.ConvertPASSWORD :
 		case c_oAscServerError.ConvertMS_OFFCRYPTO : nRes = Asc.c_oAscError.ID.ConvertationPassword; break;
+		case c_oAscServerError.ConvertCONVERT_CORRUPTED :
+		case c_oAscServerError.ConvertLIBREOFFICE :
+		case c_oAscServerError.ConvertPARAMS :
+		case c_oAscServerError.ConvertNEED_PARAMS :
 		case c_oAscServerError.ConvertUnknownFormat :
 		case c_oAscServerError.ConvertReadFile :
 		case c_oAscServerError.Convert : nRes = Asc.c_oAscError.ID.ConvertationError; break;
@@ -750,6 +756,12 @@ var c_oAscServerError = {
     ConvertTimeout:-83,
     ConvertReadFile:-84,
     ConvertMS_OFFCRYPTO:-85,
+    ConvertCONVERT_CORRUPTED:-86,
+    ConvertLIBREOFFICE:-87,
+    ConvertPARAMS:-88,
+    ConvertNEED_PARAMS:-89,
+    ConvertDRM:-90,
+    ConvertPASSWORD:-91,
 
     Upload:-100,
     UploadContentLength:-101,
@@ -1578,8 +1590,8 @@ parserHelper.prototype.getEscapeSheetName = function (sheet) {
 };
 /**
  * Проверяем ссылку на валидность для диаграммы или автофильтра
- * @param {Workbook} model
- * @param {WorkbookView} wb
+ * @param {AscCommonExcel.Workbook} model
+ * @param {AscCommonExcel.WorkbookView} wb
  * @param {Asc.c_oAscSelectionDialogType} dialogType
  * @param {string} dataRange
  * @param {boolean} fullCheck
@@ -1694,7 +1706,7 @@ parserHelper.prototype.setDigitSeparator = function( sep ){
     }
     return res;
   };
-  parserHelper.prototype.getColumnNameByType = function(value) {
+  parserHelper.prototype.getColumnNameByType = function(value, local) {
     switch (value) {
       case FormulaTablePartInfo.all:
       {
@@ -1912,7 +1924,7 @@ CTableId.prototype.Add = function(Class, Id)
         Class.Id = Id;
         this.m_aPairs[Id] = Class;
 
-        History.Add(this, { Type : AscDFH.historyitem_TableId_Add, Id : Id, Class : Class  });
+      AscCommon.History.Add(this, { Type : AscDFH.historyitem_TableId_Add, Id : Id, Class : Class  });
     }
 };
 CTableId.prototype.TurnOff = function()
@@ -1956,7 +1968,7 @@ CTableId.prototype.Reset_Id = function(Class, Id_new, Id_old)
         delete this.m_aPairs[Id_old];
         this.m_aPairs[Id_new] = Class;
 
-        History.Add(this, { Type : AscDFH.historyitem_TableId_Reset, Id_new : Id_new, Id_old : Id_old  });
+      AscCommon.History.Add(this, { Type : AscDFH.historyitem_TableId_Reset, Id_new : Id_new, Id_old : Id_old  });
     }
     else
     {
@@ -2003,22 +2015,22 @@ CTableId.prototype.Read_Class_FromBinary = function(Reader)
 
     switch( ElementType )
     {
-        case AscDFH.historyitem_type_Paragraph                : Element = new Paragraph(); break;
-        case AscDFH.historyitem_type_TextPr                   : Element = new ParaTextPr(); break;
-        case AscDFH.historyitem_type_Hyperlink                : Element = new ParaHyperlink(); break;
-        case AscDFH.historyitem_type_Drawing                  : Element = new ParaDrawing(); break;
-        case AscDFH.historyitem_type_Table                    : Element = new CTable(); break;
-        case AscDFH.historyitem_type_TableRow                 : Element = new CTableRow(); break;
-        case AscDFH.historyitem_type_TableCell                : Element = new CTableCell(); break;
-        case AscDFH.historyitem_type_DocumentContent          : Element = new CDocumentContent(); break;
-        case AscDFH.historyitem_type_HdrFtr                   : Element = new CHeaderFooter(); break;
-        case AscDFH.historyitem_type_AbstractNum              : Element = new CAbstractNum(); break;
-        case AscDFH.historyitem_type_Comment                  : Element = new CComment(); break;
-        case AscDFH.historyitem_type_Style                    : Element = new CStyle(); break;
-        case AscDFH.historyitem_type_CommentMark              : Element = new ParaComment(); break;
-        case AscDFH.historyitem_type_ParaRun                  : Element = new ParaRun(); break;
-        case AscDFH.historyitem_type_Section                  : Element = new CSectionPr(); break;
-        case AscDFH.historyitem_type_Field                    : Element = new ParaField(); break;
+        case AscDFH.historyitem_type_Paragraph                : Element = new AscCommonWord.Paragraph(); break;
+        case AscDFH.historyitem_type_TextPr                   : Element = new AscCommonWord.ParaTextPr(); break;
+        case AscDFH.historyitem_type_Hyperlink                : Element = new AscCommonWord.ParaHyperlink(); break;
+        case AscDFH.historyitem_type_Drawing                  : Element = new AscCommonWord.ParaDrawing(); break;
+        case AscDFH.historyitem_type_Table                    : Element = new AscCommonWord.CTable(); break;
+        case AscDFH.historyitem_type_TableRow                 : Element = new AscCommonWord.CTableRow(); break;
+        case AscDFH.historyitem_type_TableCell                : Element = new AscCommonWord.CTableCell(); break;
+        case AscDFH.historyitem_type_DocumentContent          : Element = new AscCommonWord.CDocumentContent(); break;
+        case AscDFH.historyitem_type_HdrFtr                   : Element = new AscCommonWord.CHeaderFooter(); break;
+        case AscDFH.historyitem_type_AbstractNum              : Element = new AscCommonWord.CAbstractNum(); break;
+        case AscDFH.historyitem_type_Comment                  : Element = new AscCommon.CComment(); break;
+        case AscDFH.historyitem_type_Style                    : Element = new AscCommonWord.CStyle(); break;
+        case AscDFH.historyitem_type_CommentMark              : Element = new AscCommon.ParaComment(); break;
+        case AscDFH.historyitem_type_ParaRun                  : Element = new AscCommonWord.ParaRun(); break;
+        case AscDFH.historyitem_type_Section                  : Element = new AscCommonWord.CSectionPr(); break;
+        case AscDFH.historyitem_type_Field                    : Element = new AscCommonWord.ParaField(); break;
 
         case AscDFH.historyitem_type_DefaultShapeDefinition   : Element = new AscFormat.DefaultShapeDefinition(); break;
         case AscDFH.historyitem_type_CNvPr                    : Element = new AscFormat.CNvPr(); break;
@@ -2111,36 +2123,36 @@ CTableId.prototype.Read_Class_FromBinary = function(Reader)
         case AscDFH.historyitem_type_TextBody                 : Element = new AscFormat.CTextBody(); break;
         case AscDFH.historyitem_type_CatAx                    : Element = new AscFormat.CCatAx(); break;
         case AscDFH.historyitem_type_ValAx                    : Element = new AscFormat.CValAx(); break;
-        case AscDFH.historyitem_type_WrapPolygon              : Element = new CWrapPolygon(); break;
+        case AscDFH.historyitem_type_WrapPolygon              : Element = new AscCommonWord.CWrapPolygon(); break;
         case AscDFH.historyitem_type_DateAx                   : Element = new AscFormat.CDateAx(); break;
         case AscDFH.historyitem_type_SerAx                    : Element = new AscFormat.CSerAx(); break;
         case AscDFH.historyitem_type_Title                    : Element = new AscFormat.CTitle(); break;
 
-        case AscDFH.historyitem_type_Math						: Element = new ParaMath(false); break;
-        case AscDFH.historyitem_type_MathContent				: Element = new CMathContent(); break;
-        case AscDFH.historyitem_type_acc						: Element = new CAccent(); break;
-        case AscDFH.historyitem_type_bar						: Element = new CBar(); break;
-        case AscDFH.historyitem_type_box						: Element = new CBox(); break;
-        case AscDFH.historyitem_type_borderBox					: Element = new CBorderBox(); break;
-        case AscDFH.historyitem_type_delimiter					: Element = new CDelimiter(); break;
-        case AscDFH.historyitem_type_eqArr						: Element = new CEqArray(); break;
-        case AscDFH.historyitem_type_frac                      : Element = new CFraction(); break;
-        case AscDFH.historyitem_type_mathFunc					: Element = new CMathFunc(); break;
-        case AscDFH.historyitem_type_groupChr					: Element = new CGroupCharacter(); break;
-        case AscDFH.historyitem_type_lim						: Element = new CLimit(); break;
-        case AscDFH.historyitem_type_matrix					: Element = new CMathMatrix(); break;
-        case AscDFH.historyitem_type_nary						: Element = new CNary(); break;
-        case AscDFH.historyitem_type_phant						: Element = new CPhantom(); break;
-        case AscDFH.historyitem_type_rad						: Element = new CRadical(); break;
-        case AscDFH.historyitem_type_deg_subsup				: Element = new CDegreeSubSup(); break;
-        case AscDFH.historyitem_type_deg						: Element = new CDegree(); break;
-        case AscDFH.historyitem_type_Slide                     : Element = new Slide(); break;
-        case  AscDFH.historyitem_type_SlideLayout              : Element = new SlideLayout(); break;
-        case  AscDFH.historyitem_type_SlideMaster              : Element = new MasterSlide(); break;
-        case  AscDFH.historyitem_type_SlideComments            : Element = new SlideComments(); break;
-        case  AscDFH.historyitem_type_PropLocker               : Element = new PropLocker(); break;
+        case AscDFH.historyitem_type_Math						: Element = new AscCommonWord.ParaMath(false); break;
+        case AscDFH.historyitem_type_MathContent				: Element = new AscCommonWord.CMathContent(); break;
+        case AscDFH.historyitem_type_acc						: Element = new AscCommonWord.CAccent(); break;
+        case AscDFH.historyitem_type_bar						: Element = new AscCommonWord.CBar(); break;
+        case AscDFH.historyitem_type_box						: Element = new AscCommonWord.CBox(); break;
+        case AscDFH.historyitem_type_borderBox					: Element = new AscCommonWord.CBorderBox(); break;
+        case AscDFH.historyitem_type_delimiter					: Element = new AscCommonWord.CDelimiter(); break;
+        case AscDFH.historyitem_type_eqArr						: Element = new AscCommonWord.CEqArray(); break;
+        case AscDFH.historyitem_type_frac                      : Element = new AscCommonWord.CFraction(); break;
+        case AscDFH.historyitem_type_mathFunc					: Element = new AscCommonWord.CMathFunc(); break;
+        case AscDFH.historyitem_type_groupChr					: Element = new AscCommonWord.CGroupCharacter(); break;
+        case AscDFH.historyitem_type_lim						: Element = new AscCommonWord.CLimit(); break;
+        case AscDFH.historyitem_type_matrix					: Element = new AscCommonWord.CMathMatrix(); break;
+        case AscDFH.historyitem_type_nary						: Element = new AscCommonWord.CNary(); break;
+        case AscDFH.historyitem_type_phant						: Element = new AscCommonWord.CPhantom(); break;
+        case AscDFH.historyitem_type_rad						: Element = new AscCommonWord.CRadical(); break;
+        case AscDFH.historyitem_type_deg_subsup				: Element = new AscCommonWord.CDegreeSubSup(); break;
+        case AscDFH.historyitem_type_deg						: Element = new AscCommonWord.CDegree(); break;
+        case AscDFH.historyitem_type_Slide                     : Element = new AscCommonSlide.Slide(); break;
+        case  AscDFH.historyitem_type_SlideLayout              : Element = new AscCommonSlide.SlideLayout(); break;
+        case  AscDFH.historyitem_type_SlideMaster              : Element = new AscCommonSlide.MasterSlide(); break;
+        case  AscDFH.historyitem_type_SlideComments            : Element = new AscCommonSlide.SlideComments(); break;
+        case  AscDFH.historyitem_type_PropLocker               : Element = new AscCommonSlide.PropLocker(); break;
         case  AscDFH.historyitem_type_Theme                    : Element = new AscFormat.CTheme(); break;
-        case  AscDFH.historyitem_type_GraphicFrame             : Element = new CGraphicFrame(); break;
+        case  AscDFH.historyitem_type_GraphicFrame             : Element = new AscFormat.CGraphicFrame(); break;
     }
 
     if ( null !== Element )
@@ -2239,18 +2251,18 @@ CTableId.prototype.Load_Changes = function(Reader, Reader2)
             if('undefined' != typeof editor && editor.WordControl && editor.WordControl.m_oLogicDocument)
             {
                 var oLogicDocument = editor.WordControl.m_oLogicDocument;
-                if(oLogicDocument instanceof CDocument)
+                if(oLogicDocument instanceof AscCommonWord.CDocument)
                 {
                     var oParaDrawing = oLogicDocument.DrawingObjects.getTrialImage(sUrl);
                     var oFirstParagraph = oLogicDocument.Get_FirstParagraph();
                     AscFormat.ExecuteNoHistory(function(){
-                        var oRun = new ParaRun();
+                        var oRun = new AscCommonWord.ParaRun();
                         oRun.Content.splice(0, 0, oParaDrawing);
                         oFirstParagraph.Content.splice(0, 0, oRun);
 						oLogicDocument.DrawingObjects.addGraphicObject(oParaDrawing);
                     }, this, []);
                 }
-                else if(oLogicDocument instanceof CPresentation)
+                else if(oLogicDocument instanceof AscCommonSlide.CPresentation)
                 {
                     if(oLogicDocument.Slides[0])
                     {
@@ -2418,11 +2430,11 @@ CLock.prototype.Set_Type = function(NewType, Redraw)
 CLock.prototype.Check = function(Id)
 {
 	if ( this.Type === locktype_Mine )
-		CollaborativeEditing.Add_CheckLock( false );
+    AscCommon.CollaborativeEditing.Add_CheckLock( false );
 	else if ( this.Type === locktype_Other || this.Type === locktype_Other2 || this.Type === locktype_Other3 )
-		CollaborativeEditing.Add_CheckLock( true );
+    AscCommon.CollaborativeEditing.Add_CheckLock( true );
 	else
-		CollaborativeEditing.Add_CheckLock( Id );
+    AscCommon.CollaborativeEditing.Add_CheckLock( Id );
 };
 CLock.prototype.Lock = function(bMine)
 {
@@ -2506,7 +2518,7 @@ function CContentChangesElement(Type, Pos, Count, Data) {
 
 CContentChangesElement.prototype.Refresh_BinaryData = function()
 {
-	var Binary_Writer = History.BinaryWriter;
+	var Binary_Writer = AscCommon.History.BinaryWriter;
 	var Binary_Pos = Binary_Writer.GetCurPosition();
 
 	this.m_pData.Data.UseArray = true;
@@ -2652,6 +2664,47 @@ CUserCacheColor.prototype.init = function(nColor) {
   this.Dark  = new CColor(R, G, B, 255);
 };
 
+  function loadScript(url, callback) {
+    if (window["NATIVE_EDITOR_ENJINE"] === true || window["Native"] !== undefined)
+    {
+        callback();
+        return;
+    }
+
+    if (window["AscDesktopEditor"])
+    {
+        var _ret_param = window["AscDesktopEditor"]["LoadJS"](url);
+        if (_ret_param == 1)
+        {
+            setTimeout(callback, 1);
+            return;
+        }
+        else if (_ret_param == 2)
+        {
+            window["asc_desktop_localModuleId"] = "sdk-all.js";
+            window["asc_desktop_context"] = { "completeLoad" : function() { return callback(); } };
+            return;
+        }
+    }
+
+    var script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.src = url;
+
+    script.onreadystatechange = callback;
+    script.onload = callback;
+
+    // Fire the loading
+    document.head.appendChild(script);
+  }
+  function loadSdk(sdkName, callback) {
+    if (window['AscNotLoadAllScript']) {
+      callback();
+    } else {
+      loadScript('./../../../../sdkjs/' + sdkName + '/sdk-all.js', callback);
+    }
+  }
+
 var g_oIdCounter = new CIdCounter();
 var g_oTableId = new CTableId();
 
@@ -2698,6 +2751,8 @@ window["SetDoctRendererParams"] = function(_params)
   window["AscCommon"].CLock = CLock;
   window["AscCommon"].CContentChanges = CContentChanges;
   window["AscCommon"].CContentChangesElement = CContentChangesElement;
+
+  window["AscCommon"].loadSdk = loadSdk;
 
   window["AscCommon"].g_oDocumentUrls = g_oDocumentUrls;
   window["AscCommon"].FormulaTablePartInfo = FormulaTablePartInfo;

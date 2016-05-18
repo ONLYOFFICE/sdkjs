@@ -24,11 +24,7 @@
 */
 "use strict";
 
-/**
- * User: Ilja.Kirillov
- * Date: 11.04.12
- * Time: 14:35
- */
+(function (window, undefined) {
 
 function CHistory(Document)
 {
@@ -1015,8 +1011,6 @@ CHistory.prototype =
     }
 };
 
-var History = null;
-
 function CRC32()
 {
     this.m_aTable = [];
@@ -1064,3 +1058,9 @@ CRC32.prototype.Calculate_ByByteArray = function(aArray, nSize)
 };
 
 var g_oCRC32 = new CRC32();
+
+    //----------------------------------------------------------export--------------------------------------------------
+    window['AscCommon'] = window['AscCommon'] || {};
+    window['AscCommon'].CHistory = CHistory;
+    window['AscCommon'].History = new CHistory();
+})(window);

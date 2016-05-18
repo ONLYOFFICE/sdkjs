@@ -24,18 +24,12 @@
 */
 "use strict";
 
-/* HandlerList.js
- *
- * Author: Alexey.Golubev@avsmedia.net
- * Date:   June 22, 2012
- */
 (
 	/**
 	 * @param {Window} window
 	 * @param {undefined} undefined
 	 */
 	function (window, undefined) {
-
 		/*
 		 * Import
 		 * -----------------------------------------------------------------------------
@@ -98,10 +92,8 @@
 			return false;
 		};
 
-		/*
-		 * Export
-		 * -----------------------------------------------------------------------------
-		 */
-		asc.asc_CHandlersList = asc_CHandlersList;
+		//---------------------------------------------------------export---------------------------------------------------
+		window['AscCommonExcel'] = window['AscCommonExcel'] || {};
+		AscCommonExcel.asc_CHandlersList = asc_CHandlersList;
 	}
 )(window);

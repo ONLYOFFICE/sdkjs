@@ -602,6 +602,7 @@ CClipboardBase.prototype =
             ifr.style.height = '100px';
             ifr.style.overflow = 'hidden';
             ifr.style.zIndex = -1000;
+            ifr.setAttribute("sandbox", "allow-same-origin");
             document.body.appendChild(ifr);
 
             this.CommonIframe = ifr;

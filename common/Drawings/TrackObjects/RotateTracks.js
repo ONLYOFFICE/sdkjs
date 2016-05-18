@@ -28,6 +28,7 @@
 
 // Import
 var CMatrix = AscCommon.CMatrix;
+var global_MatrixTransformer = AscCommon.global_MatrixTransformer;
     
 var c_oAscFill = Asc.c_oAscFill;
 
@@ -290,7 +291,7 @@ ObjectToDraw.prototype =
             {
                 var Para = AscCommon.g_oTableId.Get_ById( oComment.StartId );
                 if( editor && editor.WordControl && editor.WordControl.m_oLogicDocument && editor.WordControl.m_oLogicDocument.Comments &&
-                    (graphics instanceof CGraphics) && ( editor.WordControl.m_oLogicDocument.Comments.Is_Use() && true != editor.isViewMode))
+                    (graphics instanceof AscCommon.CGraphics) && ( editor.WordControl.m_oLogicDocument.Comments.Is_Use() && true != editor.isViewMode))
                 {
                     if(this.Comment.Additional.CommentId === editor.WordControl.m_oLogicDocument.Comments.Get_CurrentId())
                     {
@@ -343,7 +344,17 @@ function RotateTrackShapeImage(originalObject)
 {
     this.originalObject = originalObject;
     this.transform = new CMatrix();
-    this.overlayObject = new OverlayObject(originalObject.spPr.geometry, originalObject.extX, originalObject.extY, originalObject.brush, originalObject.pen, this.transform);
+    var brush;
+    if(originalObject.blipFill)
+    {
+        brush = new AscFormat.CUniFill();
+        brush.fill = originalObject.blipFill;
+    }
+    else
+    {
+        brush = originalObject.brush;
+    }
+    this.overlayObject = new OverlayObject(originalObject.spPr.geometry, originalObject.extX, originalObject.extY, brush, originalObject.pen, this.transform);
 
     this.angle = originalObject.rot;
     var full_flip_h = this.originalObject.getFullFlipH();
@@ -581,6 +592,6 @@ function RotateTrackGroup(originalObject)
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].OverlayObject = OverlayObject;
     window['AscFormat'].ObjectToDraw = ObjectToDraw;
-    window['AscFormat'].RotateTrackGroup = RotateTrackShapeImage;
+    window['AscFormat'].RotateTrackShapeImage = RotateTrackShapeImage;
     window['AscFormat'].RotateTrackGroup = RotateTrackGroup;
 })(window);

@@ -48,6 +48,7 @@
 	var cElementType = AscCommonExcel.cElementType;
 	var c_oAscCellEditorSelectState = AscCommonExcel.c_oAscCellEditorSelectState;
 	var c_oAscCellEditorState = asc.c_oAscCellEditorState;
+	var Fragment = AscCommonExcel.Fragment;
 
 	var asc_calcnpt = asc.calcNearestPt;
 	var asc_getcvt = asc.getCvtRatio;
@@ -220,7 +221,7 @@
 		t.overlayCtx = new asc.DrawingContext( {
 			canvas: t.canvasOverlay, units: 1/*pt*/, fmgrGraphics: this.fmgrGraphics, font: this.m_oFont
 		} );
-		t.textRender = new asc.CellTextRender( t.drawingCtx );
+		t.textRender = new AscCommonExcel.CellTextRender( t.drawingCtx );
 		t.textRender.setDefaultFont( settings.font.clone() );
 
 		// bind event handlers
@@ -2170,7 +2171,7 @@
 		}
 		tmp = this.options.fragments[tmp.index].format;
 
-		var result = new asc.asc_CFont();
+		var result = new AscCommonExcel.asc_CFont();
 		result.name = tmp.fn;
 		result.size = tmp.fs;
 		result.bold = tmp.b;
@@ -2736,9 +2737,7 @@
 	};
 
 
-	/*
-	 * Export
-	 * -----------------------------------------------------------------------------
-	 */
-	window["Asc"].CellEditor = CellEditor;
+	//------------------------------------------------------------export---------------------------------------------------
+	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
+	window["AscCommonExcel"].CellEditor = CellEditor;
 })( jQuery, window );

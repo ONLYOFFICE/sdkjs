@@ -283,7 +283,7 @@ CLimit.prototype.Apply_MenuProps = function(Props)
 
         if(this.Pr.type !== Type)
         {
-            History.Add(this, new CChangesMathLimitType(Type, this.Pr.type));
+            AscCommon.History.Add(this, new CChangesMathLimitType(Type, this.Pr.type));
             this.raw_SetType(Type);
         }
     }
@@ -404,3 +404,8 @@ CMathFunc.prototype.fillContent = function()
     this.elements[0][0] = this.getFName();
     this.elements[0][1] = this.getArgument();
 };
+
+//--------------------------------------------------------export----------------------------------------------------
+window['AscCommonWord'] = window['AscCommonWord'] || {};
+window['AscCommonWord'].CMathFunc = CMathFunc;
+window['AscCommonWord'].CLimit = CLimit;

@@ -25,6 +25,8 @@
 "use strict";
 
 (function(window, undefined){
+    // Import
+    var global_MatrixTransformer = AscCommon.global_MatrixTransformer;
 
 var TRANSLATE_HANDLE_NO_FLIP = [];
 TRANSLATE_HANDLE_NO_FLIP[0] = 0;
@@ -281,7 +283,15 @@ function ResizeTrackShapeImage(originalObject, cardDirection)
 
         if(!originalObject.isChart())
         {
-            this.brush = originalObject.brush;
+            if(originalObject.blipFill)
+            {
+                this.brush = new AscFormat.CUniFill();
+                this.brush.fill = originalObject.blipFill;
+            }
+            else
+            {
+                this.brush = originalObject.brush;
+            }
             this.pen = originalObject.pen;
         }
         else
@@ -1562,7 +1572,17 @@ function ShapeForResizeInGroup(originalObject, parentTrack)
         {
             this.geometry.Recalculate(this.extX, this.extY);
         }
-        this.overlayObject = new AscFormat.OverlayObject(this.geometry, this.extX, this.extY, originalObject.brush, originalObject.pen, this.transform);
+        var brush;
+        if(originalObject.blipFill)
+        {
+            brush = new AscFormat.CUniFill();
+            brush.fill = originalObject.blipFill;
+        }
+        else
+        {
+            brush = originalObject.brush;
+        }
+        this.overlayObject = new AscFormat.OverlayObject(this.geometry, this.extX, this.extY, brush, originalObject.pen, this.transform);
         this.updateSize = function(kw, kh)
         {
             var _kw, _kh;

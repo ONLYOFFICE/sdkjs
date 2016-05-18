@@ -37,7 +37,7 @@
      * @class
      * @name Api
      */
-    var Api = window["asc_docs_api"];
+    var Api = window["Asc"]["asc_docs_api"];
 
     /**
      * Class representing a container for paragraphs and tables.
@@ -236,6 +236,135 @@
     }
 
     /**
+     * Class representing a image.
+     * @constructor
+     */
+    function ApiImage(Image)
+    {
+        ApiImage.superclass.constructor.call(this, Image.parent);
+        this.Image = Image
+    }
+    AscCommon.extendClass(ApiImage, ApiDrawing);
+
+    /**
+     * Class representing a shape.
+     * @constructor
+     * */
+    function ApiShape(Shape)
+    {
+        ApiShape.superclass.constructor.call(this, Shape.parent);
+        this.Shape = Shape;
+    }
+    AscCommon.extendClass(ApiShape, ApiDrawing);
+
+    /**
+     * Class representing a Chart.
+     * @constructor
+     *
+     */
+    function ApiChart(Chart)
+    {
+        ApiChart.superclass.constructor.call(this, Chart.parent);
+        this.Chart = Chart;
+    }
+    AscCommon.extendClass(ApiChart, ApiDrawing);
+
+    /**
+     * Class representing a base class for color types
+     * @constructor
+     */
+    function ApiUniColor(Unicolor)
+    {
+        this.Unicolor = Unicolor;
+    }
+    /**
+     * Class representing RGB color
+     * @constructor
+     */
+    function ApiRGBColor(r, g, b)
+    {
+        ApiRGBColor.superclass.constructor.call(this, AscFormat.CreateUniColorRGB(r, g, b));
+    }
+    AscCommon.extendClass(ApiRGBColor, ApiUniColor);
+
+    /**
+     * Class representing a Scheme Color
+     * @constructor
+     */
+    function ApiSchemeColor(sColorId)
+    {
+        var oUniColor = new AscFormat.CUniColor();
+        oUniColor.setColor(new CSchemeColor());
+        switch(sColorId)
+        {
+            case "accent1": {  oUniColor.color.id  = 0; break;}
+            case "accent2": {  oUniColor.color.id  = 1; break;}
+            case "accent3": {  oUniColor.color.id  = 2; break;}
+            case "accent4": {  oUniColor.color.id  = 3; break;}
+            case "accent5": {  oUniColor.color.id  = 4; break;}
+            case "accent6": {  oUniColor.color.id  = 5; break;}
+            case "bg1": {  oUniColor.color.id      = 6; break;}
+            case "bg2": {  oUniColor.color.id      = 7; break;}
+            case "dk1": {  oUniColor.color.id      = 8; break;}
+            case "dk2": {  oUniColor.color.id      = 9; break;}
+            case "lt1": {  oUniColor.color.id      = 12; break;}
+            case "lt2": {  oUniColor.color.id      = 13; break;}
+            case "tx1": {  oUniColor.color.id      = 15; break;}
+            case "tx2": {  oUniColor.color.id      = 16; break;}
+            default: {  oUniColor.color.id      = 16; break;}
+        }
+        ApiSchemeColor.superclass.constructor.call(this, oUniColor);
+    }
+    AscCommon.extendClass(ApiSchemeColor, ApiUniColor);
+
+    /**
+     * Class representing a Preset Color
+     * @constructor
+     * */
+    function ApiPresetColor(sPresetColor)
+    {
+        var oUniColor = new AscFormat.CUniColor();
+        oUniColor.setColor(new CPrstColor());
+        oUniColor.color.id = sPresetColor;
+        ApiPresetColor.superclass.constructor.call(this, oUniColor);
+    }
+    AscCommon.extendClass(ApiPresetColor, ApiUniColor);
+
+    /**
+     * Class represent a base class fill
+     * @constructor
+     * */
+    function ApiFill(UniFill)
+    {
+        this.UniFill = UniFill;
+    }
+
+
+    /**
+     * Class represent a stroke class
+     * @constructor
+     */
+    function ApiStroke(oLn)
+    {
+        this.Ln= oLn;
+    }
+
+
+    /**
+     * Class represent gradient stop
+     * @constructor
+     * */
+    function ApiGradientStop(oApiUniColor, pos)
+    {
+        this.Gs = new AscFormat.CGs();
+        this.Gs.pos = pos;
+        this.Gs.color = oApiUniColor.Unicolor;
+    }
+
+
+
+
+    /**
      * Twentieths of a point (equivalent to 1/1440th of an inch).
      * @typedef {number} twips
      */
@@ -262,6 +391,11 @@
      * A numeric value from 0 to 255.
      * @typedef {number} byte
      */
+
+    /**
+     *  A numeric value from 0 to 359.
+     * @typedef {number} PositiveFixedAngle
+     * */
 
     /**
      * A border type
@@ -338,11 +472,44 @@
      * @typedef {number} EMU
      */
 
+    /**
+     * This type specifies the preset shape geometry that is to be used for a shape
+     * @typedef {("accentBorderCallout1" | "accentBorderCallout2" | "accentBorderCallout3" | "accentCallout1" | "accentCallout2" | "accentCallout3" | "actionButtonBackPrevious" | "actionButtonBeginning" | "actionButtonBlank" | "actionButtonDocument" | "actionButtonEnd" | "actionButtonForwardNext" | "actionButtonHelp" | "actionButtonHome" | "actionButtonInformation" | "actionButtonMovie" | "actionButtonReturn" | "actionButtonSound" | "arc" | "bentArrow" | "bentConnector2" | "bentConnector3" | "bentConnector4" | "bentConnector5" | "bentUpArrow" | "bevel" | "blockArc" | "borderCallout1" | "borderCallout2" | "borderCallout3" | "bracePair" | "bracketPair" | "callout1" | "callout2" | "callout3" | "can" | "chartPlus" | "chartStar" | "chartX" | "chevron" | "chord" | "circularArrow" | "cloud" | "cloudCallout" | "corner" | "cornerTabs" | "cube" | "curvedConnector2" | "curvedConnector3" | "curvedConnector4" | "curvedConnector5" | "curvedDownArrow" | "curvedLeftArrow" | "curvedRightArrow" | "curvedUpArrow" | "decagon" | "diagStripe" | "diamond" | "dodecagon" | "donut" | "doubleWave" | "downArrow" | "downArrowCallout" | "ellipse" | "ellipseRibbon" | "ellipseRibbon2" | "flowChartAlternateProcess" | "flowChartCollate" | "flowChartConnector" | "flowChartDecision" | "flowChartDelay" | "flowChartDisplay" | "flowChartDocument" | "flowChartExtract" | "flowChartInputOutput" | "flowChartInternalStorage" | "flowChartMagneticDisk" | "flowChartMagneticDrum" | "flowChartMagneticTape" | "flowChartManualInput" | "flowChartManualOperation" | "flowChartMerge" | "flowChartMultidocument" | "flowChartOfflineStorage" | "flowChartOffpageConnector" | "flowChartOnlineStorage" | "flowChartOr" | "flowChartPredefinedProcess" | "flowChartPreparation" | "flowChartProcess" | "flowChartPunchedCard" | "flowChartPunchedTape" | "flowChartSort" | "flowChartSummingJunction" | "flowChartTerminator" | "foldedCorner" | "frame" | "funnel" | "gear6" | "gear9" | "halfFrame" | "heart" | "heptagon" | "hexagon" | "homePlate" | "horizontalScroll" | "irregularSeal1" | "irregularSeal2" | "leftArrow" | "leftArrowCallout" | "leftBrace" | "leftBracket" | "leftCircularArrow" | "leftRightArrow" | "leftRightArrowCallout" | "leftRightCircularArrow" | "leftRightRibbon" | "leftRightUpArrow" | "leftUpArrow" | "lightningBolt" | "line" | "lineInv" | "mathDivide" | "mathEqual" | "mathMinus" | "mathMultiply" | "mathNotEqual" | "mathPlus" | "moon" | "nonIsoscelesTrapezoid" | "noSmoking" | "notchedRightArrow" | "octagon" | "parallelogram" | "pentagon" | "pie" | "pieWedge" | "plaque" | "plaqueTabs" | "plus" | "quadArrow" | "quadArrowCallout" | "rect" | "ribbon" | "ribbon2" | "rightArrow" | "rightArrowCallout" | "rightBrace" | "rightBracket" | "round1Rect" | "round2DiagRect" | "round2SameRect" | "roundRect" | "rtTriangle" | "smileyFace" | "snip1Rect" | "snip2DiagRect" | "snip2SameRect" | "snipRoundRect" | "squareTabs" | "star10" | "star12" | "star16" | "star24" | "star32" | "star4" | "star5" | "star6" | "star7" | "star8" | "straightConnector1" | "stripedRightArrow" | "sun" | "swooshArrow" | "teardrop" | "trapezoid" | "triangle" | "upArrowCallout" | "upDownArrow" | "upDownArrow" | "upDownArrowCallout" | "uturnArrow" | "verticalScroll" | "wave" | "wedgeEllipseCallout" | "wedgeRectCallout" | "wedgeRoundRectCallout")} ShapeType
+     */
+
+    /**
+     * This type specifies the types, create charts
+     * @typedef {("bar" | "barStacked" | "barStackedPercent" | "bar3D" | "barStacked3D" | "barStackedPercent3D" | "barStackedPercent3DPerspective" | "horizontalBar" | "horizontalBarStacked" | "horizontalBarStackedPercent" | "horizontalBar3D" | "horizontalBarStacked3D" | "horizontalBarStackedPercent3D" | "lineNormal" | "lineStacked" | "lineStackedPercent" | "line3D" | "pie" | "pie3D" | "doughnut" | "scatter" | "stock")} ChartType
+     */
+
+    /**
+     * @typedef {("top" | "center" | "bottom")} VerticalTextAlign
+     * */
+
+    /**
+     * @typedef {("accent1" | "accent2" | "accent3" | "accent4" | "accent5" | "accent6" | "bg1" | "bg2" | "dk1" | "dk2" | "lt1" | "lt2" | "tx1" | "tx2")} SchemeColorId
+     * */
+
+    /**
+     * @typedef {("aliceBlue" | "antiqueWhite" | "aqua" | "aquamarine" | "azure" | "beige" | "bisque" | "black" | "blanchedAlmond" | "blue" | "blueViolet" | "brown" | "burlyWood" | "cadetBlue" | "chartreuse" | "chocolate" | "coral" | "cornflowerBlue" | "cornsilk" | "crimson" | "cyan" | "darkBlue" | "darkCyan" | "darkGoldenrod" | "darkGray" | "darkGreen" | "darkGrey" | "darkKhaki" | "darkMagenta" | "darkOliveGreen" | "darkOrange" | "darkOrchid" | "darkRed" | "darkSalmon" | "darkSeaGreen" | "darkSlateBlue" | "darkSlateGray" | "darkSlateGrey" | "darkTurquoise" | "darkViolet" | "deepPink" | "deepSkyBlue" | "dimGray" | "dimGrey" | "dkBlue" | "dkCyan" | "dkGoldenrod" | "dkGray" | "dkGreen" | "dkGrey" | "dkKhaki" | "dkMagenta" | "dkOliveGreen" | "dkOrange" | "dkOrchid" | "dkRed" | "dkSalmon" | "dkSeaGreen" | "dkSlateBlue" | "dkSlateGray" | "dkSlateGrey" | "dkTurquoise" | "dkViolet" | "dodgerBlue" | "firebrick" | "floralWhite" | "forestGreen" | "fuchsia" | "gainsboro" | "ghostWhite" | "gold" | "goldenrod" | "gray" | "green" | "greenYellow" | "grey" | "honeydew" | "hotPink" | "indianRed" | "indigo" | "ivory" | "khaki" | "lavender" | "lavenderBlush" | "lawnGreen" | "lemonChiffon" | "lightBlue" | "lightCoral" | "lightCyan" | "lightGoldenrodYellow" | "lightGray" | "lightGreen" | "lightGrey" | "lightPink" | "lightSalmon" | "lightSeaGreen" | "lightSkyBlue" | "lightSlateGray" | "lightSlateGrey" | "lightSteelBlue" | "lightYellow" | "lime" | "limeGreen" | "linen" | "ltBlue" | "ltCoral" | "ltCyan" | "ltGoldenrodYellow" | "ltGray" | "ltGreen" | "ltGrey" | "ltPink" | "ltSalmon" | "ltSeaGreen" | "ltSkyBlue" | "ltSlateGray" | "ltSlateGrey" | "ltSteelBlue" | "ltYellow" | "magenta" | "maroon" | "medAquamarine" | "medBlue" | "mediumAquamarine" | "mediumBlue" | "mediumOrchid" | "mediumPurple" | "mediumSeaGreen" | "mediumSlateBlue" | "mediumSpringGreen" | "mediumTurquoise" | "mediumVioletRed" | "medOrchid" | "medPurple" | "medSeaGreen" | "medSlateBlue" | "medSpringGreen" | "medTurquoise" | "medVioletRed" | "midnightBlue" | "mintCream" | "mistyRose" | "moccasin" | "navajoWhite" | "navy" | "oldLace" | "olive" | "oliveDrab" | "orange" | "orangeRed" | "orchid" | "paleGoldenrod" | "paleGreen" | "paleTurquoise" | "paleVioletRed" | "papayaWhip" | "peachPuff" | "peru" | "pink" | "plum" | "powderBlue" | "purple" | "red" | "rosyBrown" | "royalBlue" | "saddleBrown" | "salmon" | "sandyBrown" | "seaGreen" | "seaShell" | "sienna" | "silver" | "skyBlue" | "slateBlue" | "slateGray" | "slateGrey" | "snow" | "springGreen" | "steelBlue" | "tan" | "teal" | "thistle" | "tomato" | "turquoise" | "violet" | "wheat" | "white" | "whiteSmoke" | "yellow" | "yellowGreen")} PresetColor
+     * */
+
+    /**
+     * @typedef {"tile" | "stretch"} BlipFillType
+     * */
+
+    /**
+     * @typedef {"cross" | "dashDnDiag" | "dashHorz" | "dashUpDiag" | "dashVert" | "diagBrick" | "diagCross" | "divot" | "dkDnDiag" | "dkHorz" | "dkUpDiag" | "dkVert" | "dnDiag" | "dotDmnd" | "dotGrid" | "horz" | "horzBrick" | "lgCheck" | "lgConfetti" | "lgGrid" | "ltDnDiag" | "ltHorz" | "ltUpDiag" | "ltVert" | "narHorz" | "narVert" | "openDmnd" | "pct10" | "pct20" | "pct25" | "pct30" | "pct40" | "pct5" | "pct50" | "pct60" | "pct70" | "pct75" | "pct80" | "pct90" | "plaid" | "shingle" | "smCheck" | "smConfetti" | "smGrid" | "solidDmnd" | "sphere" | "trellis" | "upDiag" | "vert" | "wave" | "wdDnDiag" | "wdUpDiag" | "weave" | "zigZag"} PatternType
+     * */
     //------------------------------------------------------------------------------------------------------------------
     //
     // Base Api
     //
     //------------------------------------------------------------------------------------------------------------------
+
+    /**
+     * @typedef {number} PositivePercentage
+     * */
 
     /**
      * Get main document
@@ -387,24 +554,404 @@
     {
         return new ApiRun(new ParaRun(null, false));
     };
+
     /**
-     * Create a drawing object.
+     * Create a image.
      * @memberof Api
+     * @param {string} sImageSrc
      * @param {EMU} nWidth
      * @param {EMU} nHeight
-     * @returns {ApiDrawing}
+     * @returns {ApiImage}
      */
-    Api.prototype.CreateDrawing = function(nWidth, nHeight)
+    Api.prototype.CreateImage = function(sImageSrc, nWidth, nHeight)
     {
         var nW = private_EMU2MM(nWidth);
         var nH = private_EMU2MM(nHeight);
 
         var oDrawing = new ParaDrawing(nW, nH, null, private_GetDrawingDocument(), private_GetLogicDocument(), null);
-        var oImage = private_GetLogicDocument().DrawingObjects.createImage("", 0, 0, nW, nH);
+        var oImage = private_GetLogicDocument().DrawingObjects.createImage(sImageSrc, 0, 0, nW, nH);
         oImage.setParent(oDrawing);
         oDrawing.Set_GraphicObject(oImage);
-        return new ApiDrawing(oDrawing);
+        return new ApiImage(oImage);
     };
+
+    /**
+     * Create a shape.
+     * @memberof Api
+     * @param {ShapeType} [sType="rect"]
+     * @param {EMU} nWidth
+     * @param {EMU} nHeight
+     * @param {ApiFill} oFill
+     * @param {ApiStroke} oStroke
+     * @returns {ApiShape}
+     * */
+    Api.prototype.CreateShape = function(sType, nWidth, nHeight, oFill, oStroke)
+    {
+        var oLogicDocument = private_GetLogicDocument();
+        var oDrawingDocuemnt = private_GetDrawingDocument();
+        var nW = private_EMU2MM(nWidth);
+        var nH = private_EMU2MM(nHeight);
+        var oDrawing = new ParaDrawing(nW, nH, null, oDrawingDocuemnt, oLogicDocument, null);
+        var oShapeTrack = new AscFormat.NewShapeTrack(sType, 0, 0, oLogicDocument.theme, null, null, null, 0);
+        oShapeTrack.track({}, nW, nH);
+        var oShape = oShapeTrack.getShape(true, oDrawingDocuemnt, null);
+        oShape.setParent(oDrawing);
+        oDrawing.Set_GraphicObject(oShape);
+        oShape.createTextBoxContent();
+        oShape.spPr.setFill(oFill.UniFill);
+        oShape.spPr.setLn(oStroke.Ln);
+        return new ApiShape(oShape);
+    };
+
+    /**
+     * Create a chart.
+     * @memberof Api
+     * @param {ChartType} [sType="bar"]
+     * @param {Array} aSeries
+     * @param {Array} aSeriesNames
+     * @param {Array} aCatNames
+     * @param {EMU} nWidth
+     * @param {EMU} nHeight
+     * @returns {ApiChart}
+     * */
+    Api.prototype.CreateChart = function(sType, aSeries, aSeriesNames, aCatNames, nWidth, nHeight)
+    {
+        var oDrawingDocument = private_GetDrawingDocument();
+        var oLogicDocument = private_GetLogicDocument();
+        var nW = private_EMU2MM(nWidth);
+        var nH = private_EMU2MM(nHeight);
+        var settings = new AscCommon.asc_ChartSettings();
+        switch (sType)
+        {
+            case "bar" :
+            {
+                settings.type = Asc.c_oAscChartTypeSettings.barNormal;
+                break;
+            }
+            case "barStacked":
+            {
+                settings.type = Asc.c_oAscChartTypeSettings.barStacked;
+                break;
+            }
+            case "barStackedPercent":
+            {
+                settings.type = Asc.c_oAscChartTypeSettings.barStackedPer;
+                break;
+            }
+            case "bar3D":
+            {
+                settings.type = Asc.c_oAscChartTypeSettings.barNormal3d;
+                break;
+            }
+            case "barStacked3D":
+            {
+                settings.type = Asc.c_oAscChartTypeSettings.barStacked3d;
+                break;
+            }
+            case "barStackedPercent3D":
+            {
+                settings.type = Asc.c_oAscChartTypeSettings.barStackedPer3d;
+                break;
+            }
+            case "barStackedPercent3DPerspective":
+            {
+                settings.type = Asc.c_oAscChartTypeSettings.barNormal3dPerspective;
+                break;
+            }
+            case "horizontalBar":
+            {
+                settings.type = Asc.c_oAscChartTypeSettings.hBarNormal;
+                break;
+            }
+            case "horizontalBarStacked":
+            {
+                settings.type = Asc.c_oAscChartTypeSettings.hBarStacked;
+                break;
+            }
+            case "horizontalBarStackedPercent":
+            {
+                settings.type = Asc.c_oAscChartTypeSettings.hBarStackedPer;
+                break;
+            }
+            case "horizontalBar3D":
+            {
+                settings.type = Asc.c_oAscChartTypeSettings.hBarNormal3d;
+                break;
+            }
+            case "horizontalBarStacked3D":
+            {
+                settings.type = Asc.c_oAscChartTypeSettings.hBarStacked3d;
+                break;
+            }
+            case "horizontalBarStackedPercent3D":
+            {
+                settings.type = Asc.c_oAscChartTypeSettings.hBarStackedPer3d;
+                break;
+            }
+            case "lineNormal":
+            {
+                settings.type = Asc.c_oAscChartTypeSettings.lineNormal;
+                break;
+            }
+            case "lineStacked":
+            {
+                settings.type = Asc.c_oAscChartTypeSettings.lineStacked;
+                break;
+            }
+            case "lineStackedPercent":
+            {
+                settings.type = Asc.c_oAscChartTypeSettings.lineStackedPer;
+                break;
+            }
+            case "line3D":
+            {
+                settings.type = Asc.c_oAscChartTypeSettings.line3d;
+                break;
+            }
+            case "pie":
+            {
+                settings.type = Asc.c_oAscChartTypeSettings.pie;
+                break;
+            }
+            case "pie3D":
+            {
+                settings.type = Asc.c_oAscChartTypeSettings.pie3d;
+                break;
+            }
+            case "doughnut":
+            {
+                settings.type = Asc.c_oAscChartTypeSettings.doughnut;
+                break;
+            }
+            case "scatter":
+            {
+                settings.type = Asc.c_oAscChartTypeSettings.scatter;
+                break;
+            }
+            case "stock":
+            {
+                settings.type = Asc.c_oAscChartTypeSettings.stock;
+                break;
+            }
+        }
+        var aAscSeries = [];
+        var aAlphaBet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
+        var oCat, i;
+        if(aCatNames.length > 0)
+        {
+            var aNumCache = [];
+            for(i = 0; i < aCatNames.length; ++i)
+            {
+                aNumCache.push({val: aCatNames[i] + ""});
+            }
+            oCat = { Formula: "Sheet1!$B$1:$" + AscFormat.CalcLiterByLength(aAlphaBet, aCatNames.length) + "$1", NumCache: aNumCache };
+        }
+        for(i = 0; i < aSeries.length; ++i)
+        {
+            var oAscSeries = new AscFormat.asc_CChartSeria();
+            oAscSeries.Val.NumCache = [];
+            var aData = aSeries[i];
+            var sEndLiter = AscFormat.CalcLiterByLength(aAlphaBet, aData.length);
+            oAscSeries.Val.Formula = 'Sheet1!' + '$B$' + (i + 2) + ':$' + sEndLiter + '$' + (i + 2);
+            if(aSeriesNames[i])
+            {
+                oAscSeries.TxCache.Formula =  'Sheet1!' + '$A$' + (i + 2);
+                oAscSeries.TxCache.Tx = aSeriesNames[i];
+            }
+            if(oCat)
+            {
+                oAscSeries.Cat = oCat;
+            }
+            for(var j = 0; j < aData.length; ++j)
+            {
+
+                oAscSeries.Val.NumCache.push({ numFormatStr: "General", isDateTimeFormat: false, val: aData[j], isHidden: false });
+            }
+            aAscSeries.push(oAscSeries);
+        }
+        var chartSeries = {series: aAscSeries, parsedHeaders: {bLeft: true, bTop: true}};
+        var oDrawing = new ParaDrawing( nW, nH, null, oDrawingDocument, null, null);
+        var oChartSpace = AscFormat.DrawingObjectsController.prototype._getChartSpace(chartSeries, settings, true);
+        if(!oChartSpace)
+        {
+            return null;
+        }
+        oChartSpace.setParent(oDrawing);
+        oDrawing.Set_GraphicObject(oChartSpace);
+        oChartSpace.setBDeleted(false);
+        oChartSpace.extX = nW;
+        oChartSpace.extY = nH;
+        AscFormat.CheckSpPrXfrm(oChartSpace);
+        oDrawing.setExtent( oChartSpace.spPr.xfrm.extX, oChartSpace.spPr.xfrm.extY );
+        return new ApiChart(oChartSpace);
+    };
+
+    /**
+     * Create a RGB color
+     * @memberof Api
+     * @param {byte} r
+     * @param {byte} g
+     * @param {byte} b
+     * @returns {ApiRGBColor}
+     */
+    Api.prototype.CreateRGBColor = function(r, g, b)
+    {
+        return new ApiRGBColor(r, g, b);
+    };
+
+    /**
+     * Create a scheme color
+     * @memberof Api
+     * @param {SchemeColorId} sSchemeColorId
+     * @returns {ApiSchemeColor}
+     */
+    Api.prototype.CreateSchemeColor = function(sSchemeColorId)
+    {
+        return new ApiSchemeColor(SchemeColorId);
+    };
+
+    /**
+     * Create preset color
+     * @memberof Api
+     * @param {PresetColor} sPresetColor
+     * @returns {ApiPresetColor};
+     * */
+    Api.prototype.CreatePresetColor = function(sPresetColor)
+    {
+        return new ApiPresetColor(sPresetColor);
+    };
+
+    /**
+     * Create a solid fill
+     * @memberof Api
+     * @param {ApiUniColor} oUniColor
+     * @returns {ApiFill}
+     * */
+    Api.prototype.CreateSolidFill = function(oUniColor)
+    {
+        return new ApiFill(AscFormat.CreateUniFillByUniColor(oUniColor.Unicolor));
+    };
+
+    /**
+     * Create a linear gradient fill
+     * @memberof Api
+     * @param {Array} aGradientStop
+     * @param {PositiveFixedAngle} Angle
+     * @returns {ApiFill}
+     */
+    Api.prototype.CreateLinearGradientFill = function(aGradientStop, Angle)
+    {
+        var oUniFill = new AscFormat.CUniFill();
+        oUniFill.fill = new AscFormat.CGradFill();
+        for(var i = 0; i < aGradientStop.length; ++i)
+        {
+            oUniFill.fill.colors.push(aGradientStop[i].Gs);
+        }
+        oUniFill.lin = new AscFormat.GradLin();
+        oUniFill.lin.angle = Angle*60000;
+        return new ApiFill(oUniFill);
+    };
+
+    /**
+     * Create a radial gradient fill
+     * @memberof Api
+     * @param {Array} aGradientStop
+     * @returns {ApiFill}
+     */
+    Api.prototype.CreateRadialGradientFill = function(aGradientStop)
+    {
+        var oUniFill = new AscFormat.CUniFill();
+        oUniFill.fill = new AscFormat.CGradFill();
+        for(var i = 0; i < aGradientStop.length; ++i)
+        {
+            oUniFill.fill.Gs.push(aGradientStop[i].Gs);
+        }
+        oUniFill.path = new AscFormat.GradPath();
+        return new ApiFill(oUniFill);
+    };
+
+    /**
+     * Create a pattern fill
+     * @memberof Api
+     * @param {PatternType} sPatternType
+     * @param {ApiUniColor} BgColor
+     * @param {ApiUniColor} FgColor
+     * @returns {ApiFill}
+     */
+    Api.prototype.CreatePatternFill= function(sPatternType, BgColor, FgColor)
+    {
+        var oUniFill = new AscFormat.CUniFill();
+        oUniFill.fill = new AscFormat.CPattFill();
+        oUniFill.fill.ftype = AscCommon.global_hatch_offsets[sPatternType];
+        oUniFill.fill.fgClr = FgColor.Unicolor;
+        oUniFill.fill.bgClr = BgColor.Unicolor;
+        return new ApiFill(oUniFill);
+    };
+
+    /**
+     * Create a blip fill
+     * @memberof Api
+     * @param {string} sImageUrl
+     * @param {BlipFillType} sBlipFillType
+     * @returns {ApiFill}
+     * */
+    Api.prototype.CreateBlipFill= function(sImageUrl, sBlipFillType)
+    {
+        var oUniFill = new AscFormat.CUniFill();
+        oUniFill.fill = new AscFormat.CBlipFill();
+        oUniFill.fill.RasterImageId = sImageUrl;
+        if(sBlipFillType === "tile")
+        {
+            oUniFill.fill.tile = new AscFormat.CBlipFillTile();
+        }
+        else if(sBlipFillType === "stretch")
+        {
+            oUniFill.fill.stretch = true;
+        }
+        return new ApiFill(oUniFill);
+    };
+
+    /**
+     * Create no fill
+     * @memberof Api
+     * @returns {ApiFill}
+     * */
+    Api.prototype.CreateNoFill= function(sImageUrl, sBlipFillType)
+    {
+        return new ApiFill(AscFormat.CreateNoFillUniFill());
+    };
+
+    /**
+     * Create a stroke
+     * @memberof Api
+     * @param {EMU} nWidth
+     * @param {ApiFill} oFill
+     * @returns {ApiStroke}
+     * */
+    Api.prototype.CreateStroke = function(nWidth, oFill)
+    {
+        if(nWidth === 0)
+        {
+            return new ApiStroke(AscFormat.CreateNoFillLine());
+        }
+        var oLn = new CLn();
+        oLn.w = nWidth;
+        oLn.Fill = oFill.UniFill;
+        return new ApiStroke(oLn);
+    };
+
+    /**
+     * Create a stroke
+     * @memberof Api
+     * @param {ApiUniColor} oUniColor
+     * @param {PositivePercentage} nPos
+     * @returns {ApiGradientStop}
+     * */
+    Api.prototype.CreateGradientStop = function(oUniColor, nPos)
+    {
+        return new ApiGradientStop(oUniColor, nPos);
+    };
+
 
     //------------------------------------------------------------------------------------------------------------------
     //
@@ -999,15 +1546,15 @@
     ApiSection.prototype.SetType = function(sType)
     {
         if ("oddPage" === sType)
-            this.Section.Set_Type(section_type_OddPage);
+            this.Section.Set_Type(Asc.c_oAscSectionBreakType.OddPage);
         else if ("evenPage" === sType)
-            this.Section.Set_Type(section_type_EvenPage);
+            this.Section.Set_Type(Asc.c_oAscSectionBreakType.EvenPage);
         else if ("continuous" === sType)
-            this.Section.Set_Type(section_type_Continuous);
+            this.Section.Set_Type(Asc.c_oAscSectionBreakType.Continuous);
         else if ("nextColumn" === sType)
-            this.Section.Set_Type(section_type_Column);
+            this.Section.Set_Type(Asc.c_oAscSectionBreakType.Column);
         else if ("nextPage" === sType)
-            this.Section.Set_Type(section_type_NextPage);
+            this.Section.Set_Type(Asc.c_oAscSectionBreakType.NextPage);
     };
     /**
      * Specify all text columns in the current section are of equal width.
@@ -1053,7 +1600,7 @@
     ApiSection.prototype.SetPageSize = function(nWidth, nHeight, isPortrait)
     {
         this.Section.Set_PageSize(private_Twips2MM(nWidth), private_Twips2MM(nHeight));
-        this.Section.Set_Orientation(false === isPortrait ? orientation_Landscape : orientation_Portrait, false);
+        this.Section.Set_Orientation(false === isPortrait ? Asc.c_oAscPageOrientation.PageLandscape : Asc.c_oAscPageOrientation.PagePortrait, false);
     };
     /**
      * Specify the page margins for all pages in this section.
@@ -1744,9 +2291,9 @@
             isNone = false;
 
         if (true === isNone)
-            this.TextPr.HighLight = highlight_None;
+            this.TextPr.HighLight = AscCommonWord.highlight_None;
         else
-            this.TextPr.HighLight = new CDocumentColor(r, g, b, false);
+            this.TextPr.HighLight = new AscCommonWord.CDocumentColor(r, g, b, false);
 
         this.private_OnChange();
     };
@@ -2272,13 +2819,13 @@
         else if ("decimalZero" === sType)
             nType = numbering_numfmt_DecimalZero;
 
-        var nAlign = AscCommon.align_Left;
+        var nAlign = align_Left;
         if ("left" === sAlign)
-            nAlign = AscCommon.align_Left;
+            nAlign = align_Left;
         else if ("right" === sAlign)
-            nAlign = AscCommon.align_Right;
+            nAlign = align_Right;
         else if ("center" === sAlign)
-            nAlign = AscCommon.align_Center;
+            nAlign = align_Center;
 
         this.Num.Set_Lvl_ByFormat(this.Lvl, nType, sTextFormatString, nAlign);
     };
@@ -2355,11 +2902,11 @@
     ApiTablePr.prototype.SetJc = function(sJcType)
     {
         if ("left" === sJcType)
-            this.TablePr.Jc = AscCommon.align_Left;
+            this.TablePr.Jc = align_Left;
         else if ("right" === sJcType)
-            this.TablePr.Jc = AscCommon.align_Right;
+            this.TablePr.Jc = align_Right;
         else if ("center" === sJcType)
-            this.TablePr.Jc = AscCommon.align_Center;
+            this.TablePr.Jc = align_Center;
         this.private_OnChange();
     };
     /**
@@ -2793,7 +3340,7 @@
             this.CellPr.VAlign = vertalignjc_Bottom;
         else if ("center" === sType)
             this.CellPr.VAlign = vertalignjc_Center;
-        
+
         this.private_OnChange();
     };
     /**
@@ -2920,49 +3467,56 @@
      */
     ApiDrawing.prototype.SetWrappingStyle = function(sType)
     {
-        if ("inline" === sType)
+        if(this.Drawing)
         {
-            this.Drawing.Set_DrawingType(drawing_Inline);
-            this.Drawing.Set_WrappingType(WRAPPING_TYPE_NONE);
-            this.Drawing.Set_BehindDoc(false);
+            if ("inline" === sType)
+            {
+                this.Drawing.Set_DrawingType(drawing_Inline);
+                this.Drawing.Set_WrappingType(WRAPPING_TYPE_NONE);
+                this.Drawing.Set_BehindDoc(false);
+            }
+            else if ("square" === sType)
+            {
+                this.Drawing.Set_DrawingType(drawing_Anchor);
+                this.Drawing.Set_WrappingType(WRAPPING_TYPE_SQUARE);
+                this.Drawing.Set_BehindDoc(false);
+            }
+            else if ("tight" === sType)
+            {
+                this.Drawing.Set_DrawingType(drawing_Anchor);
+                this.Drawing.Set_WrappingType(WRAPPING_TYPE_TIGHT);
+                this.Drawing.Set_BehindDoc(false);
+            }
+            else if ("through" === sType)
+            {
+                this.Drawing.Set_DrawingType(drawing_Anchor);
+                this.Drawing.Set_WrappingType(WRAPPING_TYPE_THROUGH);
+                this.Drawing.Set_BehindDoc(false);
+            }
+            else if ("topAndBottom" === sType)
+            {
+                this.Drawing.Set_DrawingType(drawing_Anchor);
+                this.Drawing.Set_WrappingType(WRAPPING_TYPE_TOP_AND_BOTTOM);
+                this.Drawing.Set_BehindDoc(false);
+            }
+            else if ("behind" === sType)
+            {
+                this.Drawing.Set_DrawingType(drawing_Anchor);
+                this.Drawing.Set_WrappingType(WRAPPING_TYPE_NONE);
+                this.Drawing.Set_BehindDoc(true);
+            }
+            else if ("inFront" === sType)
+            {
+                this.Drawing.Set_DrawingType(drawing_Anchor);
+                this.Drawing.Set_WrappingType(WRAPPING_TYPE_NONE);
+                this.Drawing.Set_BehindDoc(false);
+            }
+            this.Drawing.Check_WrapPolygon();
+            if(this.Drawing.GraphicObj && this.Drawing.GraphicObj.setRecalculateInfo)
+            {
+                this.Drawing.GraphicObj.setRecalculateInfo();
+            }
         }
-        else if ("square" === sType)
-        {
-            this.Drawing.Set_DrawingType(drawing_Anchor);
-            this.Drawing.Set_WrappingType(WRAPPING_TYPE_SQUARE);
-            this.Drawing.Set_BehindDoc(false);
-        }
-        else if ("tight" === sType)
-        {
-            this.Drawing.Set_DrawingType(drawing_Anchor);
-            this.Drawing.Set_WrappingType(WRAPPING_TYPE_TIGHT);
-            this.Drawing.Set_BehindDoc(false);
-        }
-        else if ("through" === sType)
-        {
-            this.Drawing.Set_DrawingType(drawing_Anchor);
-            this.Drawing.Set_WrappingType(WRAPPING_TYPE_THROUGH);
-            this.Drawing.Set_BehindDoc(false);
-        }
-        else if ("topAndBottom" === sType)
-        {
-            this.Drawing.Set_DrawingType(drawing_Anchor);
-            this.Drawing.Set_WrappingType(WRAPPING_TYPE_TOP_AND_BOTTOM);
-            this.Drawing.Set_BehindDoc(false);
-        }
-        else if ("behind" === sType)
-        {
-            this.Drawing.Set_DrawingType(drawing_Anchor);
-            this.Drawing.Set_WrappingType(WRAPPING_TYPE_NONE);
-            this.Drawing.Set_BehindDoc(true);
-        }
-        else if ("inFront" === sType)
-        {
-            this.Drawing.Set_DrawingType(drawing_Anchor);
-            this.Drawing.Set_WrappingType(WRAPPING_TYPE_NONE);
-            this.Drawing.Set_BehindDoc(false);
-        }
-
     };
 
     /**
@@ -3022,6 +3576,363 @@
         this.Drawing.Set_Distance(private_EMU2MM(nLeft), private_EMU2MM(nTop), private_EMU2MM(nRight), private_EMU2MM(nBottom));
     };
 
+
+    //------------------------------------------------------------------------------------------------------------------
+    //
+    // ApiImage
+    //
+    //------------------------------------------------------------------------------------------------------------------
+
+    /**
+     * Get the type of this class.
+     * @returns {"image"}
+     */
+    ApiImage.prototype.GetClassType = function()
+    {
+        return "image";
+    };
+
+    //------------------------------------------------------------------------------------------------------------------
+    //
+    // ApiShape
+    //
+    //------------------------------------------------------------------------------------------------------------------
+
+    /**
+     * Get the type of this class.
+     * @returns {"shape"}
+     */
+    ApiShape.prototype.GetClassType = function()
+    {
+        return "shape";
+    };
+
+
+    /**
+     * Set the line width color of shape
+     * @returns {ApiDocumentContent}
+     */
+    ApiShape.prototype.GetDocContent = function()
+    {
+        if(this.Shape && this.Shape.textBoxContent)
+        {
+            return new ApiDocumentContent(this.Shape.textBoxContent);
+        }
+        return null;
+    };
+
+    /**
+     * Set shape's content vertical align
+     * @param {VerticalTextAlign} VerticalAlign
+     */
+    ApiShape.prototype.SetVerticalTextAlign = function(VerticalAlign)
+    {
+        if(this.Shape)
+        {
+            switch(VerticalAlign)
+            {
+                case "top":
+                {
+                    this.Shape.setVerticalAlign(4);
+                    break;
+                }
+                case "center":
+                {
+                    this.Shape.setVerticalAlign(1);
+                    break;
+                }
+                case "bottom":
+                {
+                    this.Shape.setVerticalAlign(0);
+                    break;
+                }
+            }
+        }
+    };
+
+
+    //------------------------------------------------------------------------------------------------------------------
+    //
+    // ApiChart
+    //
+    //------------------------------------------------------------------------------------------------------------------
+    /**
+     * Get the type of this class.
+     * @returns {"chart"}
+     */
+    ApiChart.prototype.GetClassType = function()
+    {
+        return "chart";
+    };
+
+
+    /**
+     *  Specifies a chart title
+     *  @param {string} sTitle
+     * */
+    ApiChart.prototype.SetTitle = function (sTitle)
+    {
+        if(this.Chart)
+        {
+            if(typeof sTitle === "string" && sTitle.length > 0)
+            {
+                this.Chart.chart.setTitle(new AscFormat.CTitle());
+                this.Chart.chart.title.setTx(new AscFormat.CChartText());
+                this.Chart.chart.title.tx.setRich(AscFormat.CreateTextBodyFromString(sTitle, this.Chart.getDrawingDocument(), this.Chart.chart.title.tx))
+            }
+            else
+            {
+                this.Chart.chart.setTitle(null);
+            }
+        }
+    };
+
+    /**
+     *  Specifies a horizontal axis title
+     *  @param {string} sTitle
+     * */
+    ApiChart.prototype.SetHorAxisTitle = function (sTitle)
+    {
+        if(this.Chart)
+        {
+            var horAxis = this.Chart.chart.plotArea.getHorizontalAxis();
+            if(horAxis)
+            {
+                if(typeof sTitle === "string" && sTitle.length > 0)
+                {
+                    horAxis.setTitle(new AscFormat.CTitle());
+                    horAxis.title.setTx(new AscFormat.CChartText());
+                    horAxis.title.tx.setRich(AscFormat.CreateTextBodyFromString(sTitle, this.Chart.getDrawingDocument(), horAxis.title.tx));
+                    horAxis.title.setOverlay(false);
+                }
+                else
+                {
+                    horAxis.setTitle(null);
+                }
+            }
+        }
+    };
+
+    /**
+     *  Specifies a vertical axis title
+     *  @param {string} sTitle
+     * */
+    ApiChart.prototype.SetVerAxisTitle = function (sTitle)
+    {
+        if(this.Chart)
+        {
+            var verAxis = this.Chart.chart.plotArea.getVerticalAxis();
+            if(verAxis)
+            {
+                if(typeof sTitle === "string" && sTitle.length > 0)
+                {
+                    verAxis.setTitle(new AscFormat.CTitle());
+                    verAxis.title.setTx(new AscFormat.CChartText());
+                    verAxis.title.tx.setRich(AscFormat.CreateTextBodyFromString(sTitle, this.Chart.getDrawingDocument(), verAxis.title.tx));
+
+                    var _body_pr = new AscFormat.CBodyPr();
+                    _body_pr.reset();
+                    if(!verAxis.title.txPr)
+                    {
+                        verAxis.title.setTxPr(AscFormat.CreateTextBodyFromString("", this.Chart.getDrawingDocument(), verAxis.title));
+                    }
+                    var _text_body =  verAxis.title.txPr;
+                    _text_body.setBodyPr(_body_pr);
+                    verAxis.title.setOverlay(false);
+                }
+                else
+                {
+                    verAxis.setTitle(null);
+                }
+            }
+        }
+    };
+
+    /**
+     * Specifies a legend position
+     * @param {"left" | "top" | "right" | "bottom" | "none"} sLegendPos
+     * */
+    ApiChart.prototype.SetLegendPos = function(sLegendPos)
+    {
+        if(this.Chart && this.Chart.chart)
+        {
+            if(sLegendPos === "none")
+            {
+                if(this.Chart.chart.legend)
+                {
+                    this.Chart.chart.setLegend(null);
+                }
+            }
+            else
+            {
+                var nLegendPos = null;
+                switch(sLegendPos)
+                {
+                    case "left":
+                    {
+                        nLegendPos = Asc.c_oAscChartLegendShowSettings.left;
+                        break;
+                    }
+                    case "top":
+                    {
+                        nLegendPos = Asc.c_oAscChartLegendShowSettings.top;
+                        break;
+                    }
+                    case "right":
+                    {
+                        nLegendPos = Asc.c_oAscChartLegendShowSettings.right;
+                        break;
+                    }
+                    case "bottom":
+                    {
+                        nLegendPos = Asc.c_oAscChartLegendShowSettings.bottom;
+                        break;
+                    }
+                }
+                if(null !== nLegendPos)
+                {
+                    if(!this.Chart.chart.legend)
+                    {
+                        this.Chart.chart.setLegend(new AscFormat.CLegend());
+                    }
+                    if(this.Chart.chart.legend.legendPos !== nLegendPos)
+                        this.Chart.chart.legend.setLegendPos(nLegendPos);
+                    if(this.Chart.chart.legend.overlay !== false)
+                    {
+                        this.Chart.chart.legend.setOverlay(false);
+                    }
+                }
+            }
+        }
+    };
+
+    /**
+     * Spicifies a show options for data labels
+     * @param {boolean} bShowSerName
+     * @param {boolean} bShowCatName
+     * @param {boolean} bShowVal
+     * */
+    ApiChart.prototype.SetShowDataLabels = function(bShowSerName, bShowCatName, bShowVal)
+    {
+        if(this.Chart && this.Chart.chart && this.Chart.chart.plotArea && this.Chart.chart.plotArea.charts[0])
+        {
+            var oChart = this.Chart.chart.plotArea.charts[0];
+            if(false == bShowSerName && false == bShowCatName && false == bShowVal)
+            {
+                if(oChart.dLbls)
+                {
+                    oChart.setDLbls(null);
+                }
+            }
+            if(!oChart.dLbls)
+            {
+                oChart.setDLbls(new AscFormat.CDLbls());
+            }
+            oChart.dLbls.setSeparator(",");
+            oChart.dLbls.setShowSerName(true == bShowSerName);
+            oChart.dLbls.setShowCatName(true == bShowCatName);
+            oChart.dLbls.setShowVal(true == bShowVal);
+        }
+    };
+
+    //------------------------------------------------------------------------------------------------------------------
+    //
+    // ApiFill
+    //
+    //------------------------------------------------------------------------------------------------------------------
+    /**
+     * Get the type of this class.
+     * @returns {"fill"}
+     */
+    ApiFill.prototype.GetClassType = function()
+    {
+        return "fill";
+    };
+
+    //------------------------------------------------------------------------------------------------------------------
+    //
+    // ApiStroke
+    //
+    //------------------------------------------------------------------------------------------------------------------
+    /**
+     * Get the type of this class.
+     * @returns {"stroke"}
+     */
+    ApiStroke.prototype.GetClassType = function()
+    {
+        return "stroke";
+    };
+
+    //------------------------------------------------------------------------------------------------------------------
+    //
+    // ApiGradientStop
+    //
+    //------------------------------------------------------------------------------------------------------------------
+    /**
+     * Get the type of this class.
+     * @returns {"gradientStop"}
+     */
+    ApiGradientStop.prototype.GetClassType = function ()
+    {
+        return "gradientStop"
+    };
+    //------------------------------------------------------------------------------------------------------------------
+    //
+    // ApiUniColor
+    //
+    //------------------------------------------------------------------------------------------------------------------
+    /**
+     * Get the type of this class.
+     * @returns {"uniColor"}
+     */
+    ApiUniColor.prototype.GetClassType = function ()
+    {
+        return "uniColor"
+    };
+
+    //------------------------------------------------------------------------------------------------------------------
+    //
+    // ApiRGBColor
+    //
+    //------------------------------------------------------------------------------------------------------------------
+    /**
+     * Get the type of this class.
+     * @returns {"rgbColor"}
+     */
+    ApiRGBColor.prototype.GetClassType = function ()
+    {
+        return "rgbColor"
+    };
+
+    //------------------------------------------------------------------------------------------------------------------
+    //
+    // ApiSchemeColor
+    //
+    //------------------------------------------------------------------------------------------------------------------
+    /**
+     * Get the type of this class.
+     * @returns {"schemeColor"}
+     */
+    ApiSchemeColor.prototype.GetClassType = function ()
+    {
+        return "schemeColor"
+    };
+
+    //------------------------------------------------------------------------------------------------------------------
+    //
+    // ApiPresetColor
+    //
+    //------------------------------------------------------------------------------------------------------------------
+    /**
+     * Get the type of this class.
+     * @returns {"presetColor"}
+     */
+    ApiPresetColor.prototype.GetClassType = function ()
+    {
+        return "presetColor"
+    };
+
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Export
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3029,7 +3940,20 @@
     Api.prototype["CreateParagraph"]                 = Api.prototype.CreateParagraph;
     Api.prototype["CreateTable"]                     = Api.prototype.CreateTable;
     Api.prototype["CreateRun"]                       = Api.prototype.CreateRun;
-    Api.prototype["CreateDrawing"]                   = Api.prototype.CreateDrawing;
+    Api.prototype["CreateImage"]                     = Api.prototype.CreateImage;
+    Api.prototype["CreateShape"]                     = Api.prototype.CreateShape;
+    Api.prototype["CreateChart"]                     = Api.prototype.CreateChart;
+    Api.prototype["CreateRGBColor"]                  = Api.prototype.CreateRGBColor;
+    Api.prototype["CreateSchemeColor"]               = Api.prototype.CreateSchemeColor;
+    Api.prototype["CreatePresetColor"]               = Api.prototype.CreatePresetColor;
+    Api.prototype["CreateSolidFill"]                 = Api.prototype.CreateSolidFill;
+    Api.prototype["CreateLinearGradientFill"]        = Api.prototype.CreateLinearGradientFill;
+    Api.prototype["CreateRadialGradientFill"]        = Api.prototype.CreateRadialGradientFill;
+    Api.prototype["CreatePatternFill"]               = Api.prototype.CreatePatternFill;
+    Api.prototype["CreateBlipFill"]                  = Api.prototype.CreateBlipFill;
+    Api.prototype["CreateNoFill"]                    = Api.prototype.CreateNoFill;
+    Api.prototype["CreateStroke"]                    = Api.prototype.CreateStroke;
+    Api.prototype["CreateGradientStop"]              = Api.prototype.CreateGradientStop;
 
     ApiUnsupported.prototype["GetClassType"]         = ApiUnsupported.prototype.GetClassType;
 
@@ -3042,9 +3966,9 @@
     ApiDocumentContent.prototype["RemoveElement"]    = ApiDocumentContent.prototype.RemoveElement;
 
     ApiDocument.prototype["GetClassType"]            = ApiDocument.prototype.GetClassType;
-	ApiDocument.prototype["Create_NewHistoryPoint"]  = ApiDocument.prototype.Create_NewHistoryPoint;
-	ApiDocument.prototype["GetDefaultTextPr"]        = ApiDocument.prototype.GetDefaultTextPr;
-	ApiDocument.prototype["GetDefaultParaPr"]        = ApiDocument.prototype.GetDefaultParaPr;
+    ApiDocument.prototype["CreateNewHistoryPoint"]   = ApiDocument.prototype.CreateNewHistoryPoint;
+    ApiDocument.prototype["GetDefaultTextPr"]        = ApiDocument.prototype.GetDefaultTextPr;
+    ApiDocument.prototype["GetDefaultParaPr"]        = ApiDocument.prototype.GetDefaultParaPr;
     ApiDocument.prototype["GetStyle"]                = ApiDocument.prototype.GetStyle;
     ApiDocument.prototype["CreateStyle"]             = ApiDocument.prototype.CreateStyle;
     ApiDocument.prototype["GetDefaultStyle"]         = ApiDocument.prototype.GetDefaultStyle;
@@ -3236,6 +4160,34 @@
     ApiDrawing.prototype["SetHorPosition"]           = ApiDrawing.prototype.SetHorPosition;
     ApiDrawing.prototype["SetVerPosition"]           = ApiDrawing.prototype.SetVerPosition;
     ApiDrawing.prototype["SetDistances"]             = ApiDrawing.prototype.SetDistances;
+
+    ApiImage.prototype["GetClassType"]               = ApiImage.prototype.GetClassType;
+
+    ApiShape.prototype["GetClassType"]               = ApiShape.prototype.GetClassType;
+    ApiShape.prototype["GetDocContent"]              = ApiShape.prototype.GetDocContent;
+    ApiShape.prototype["SetVerticalTextAlign"]       = ApiShape.prototype.SetVerticalTextAlign;
+
+    ApiChart.prototype["GetClassType"]               = ApiChart.prototype.GetClassType;
+    ApiChart.prototype["SetTitle"]                   = ApiChart.prototype.SetTitle;
+    ApiChart.prototype["SetHorAxisTitle"]            = ApiChart.prototype.SetHorAxisTitle;
+    ApiChart.prototype["SetVerAxisTitle"]            = ApiChart.prototype.SetVerAxisTitle;
+    ApiChart.prototype["SetLegendPos"]               = ApiChart.prototype.SetLegendPos;
+    ApiChart.prototype["SetShowDataLabels"]          = ApiChart.prototype.SetShowDataLabels;
+
+    ApiFill.prototype["GetClassType"]                = ApiFill.prototype.GetClassType;
+
+    ApiStroke.prototype["GetClassType"]              = ApiStroke.prototype.GetClassType;
+
+    ApiGradientStop.prototype["GetClassType"]        = ApiGradientStop.prototype.GetClassType;
+
+    ApiUniColor.prototype["GetClassType"]            = ApiUniColor.prototype.GetClassType;
+
+    ApiRGBColor.prototype["GetClassType"]            = ApiRGBColor.prototype.GetClassType;
+
+    ApiSchemeColor.prototype["GetClassType"]         = ApiSchemeColor.prototype.GetClassType;
+
+    ApiPresetColor.prototype["GetClassType"]         = ApiPresetColor.prototype.GetClassType;
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Private area
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3272,7 +4224,7 @@
 
     function private_GetColor(r, g, b, Auto)
     {
-        return new CDocumentColor(r, g, b, Auto ? Auto : false);
+        return new AscCommonWord.CDocumentColor(r, g, b, Auto ? Auto : false);
     }
 
     function private_GetTabStop(nPos, sValue)
@@ -3294,13 +4246,13 @@
     function private_GetParaAlign(sJc)
     {
         if ("left" === sJc)
-            return AscCommon.align_Left;
+            return align_Left;
         else if ("right" === sJc)
-            return AscCommon.align_Right;
+            return align_Right;
         else if ("both" === sJc)
-            return AscCommon.align_Justify;
+            return align_Justify;
         else if ("center" === sJc)
-            return AscCommon.align_Center;
+            return align_Center;
 
         return undefined;
     }
@@ -3695,1120 +4647,3 @@
     };
 
 }(window, null));
-
-
-function TEST_BUILDER()
-{
-    var oLD = editor.WordControl.m_oLogicDocument;
-    oLD.Create_NewHistoryPoint();
-    //------------------------------------------------------------------------------------------------------------------
-
-    // Воссоздаем документ DemoHyden
-
-    var Api = editor;
-
-    var oParagraph, oRun, oDrawing, oParaMark;
-    var oDocument     = Api.GetDocument();
-    var oNoSpacingStyle = oDocument.GetStyle("No Spacing");
-    var oFinalSection   = oDocument.GetFinalSection();
-    oFinalSection.SetEqualColumns(2, 720);
-    oFinalSection.SetPageSize(12240, 15840);
-    oFinalSection.SetPageMargins(1440, 1440, 1440, 1440);
-    oFinalSection.SetHeaderDistance(720);
-    oFinalSection.SetFooterDistance(720);
-    oFinalSection.SetType("continuous");
-
-    // Генерим стили, которые будем использовать в документе
-    var oTextPr, oParaPr, oTablePr;
-
-    oTextPr = oDocument.GetDefaultTextPr();
-    oTextPr.SetFontSize(22);
-    oTextPr.SetLanguage("en-US");
-    oTextPr.SetFontFamily("Calibri");
-
-    oParaPr = oDocument.GetDefaultParaPr();
-    oParaPr.SetSpacingLine(276, "auto");
-    oParaPr.SetSpacingAfter(200);
-
-    var oNormalStyle = oDocument.GetDefaultStyle("paragraph");
-    oParaPr = oNormalStyle.GetParaPr();
-    oParaPr.SetSpacingLine(240, "auto");
-    oParaPr.SetJc("both");
-    oTextPr = oNormalStyle.GetTextPr();
-    oTextPr.SetColor(0x26, 0x26, 0x26, false);
-
-    var oHeading1Style = oDocument.CreateStyle("Heading 1", "paragraph");
-    oParaPr = oHeading1Style.GetParaPr();
-    oParaPr.SetKeepNext(true);
-    oParaPr.SetKeepLines(true);
-    oParaPr.SetSpacingAfter(240);
-    oTextPr = oHeading1Style.GetTextPr();
-    oTextPr.SetColor(0xff, 0x68, 0x00, false);
-    oTextPr.SetFontSize(40);
-    oTextPr.SetFontFamily("Calibri Light");
-
-    var oSubtitleStyle = oDocument.CreateStyle("Subtitle");
-    oParaPr = oSubtitleStyle.GetParaPr();
-    oParaPr.SetSpacingAfter(0);
-    oParaPr.SetSpacingBefore(240);
-    oTextPr = oSubtitleStyle.GetTextPr();
-    oTextPr.SetColor(0xff, 0x68, 0x00, false);
-    oTextPr.SetFontSize(32);
-    oTextPr.SetFontFamily("Calibri Light");
-
-    var oNormalTableStyle = oDocument.GetDefaultStyle("table");
-    oTablePr = oNormalTableStyle.GetTablePr();
-    oTablePr.SetTableInd(0);
-    oTablePr.SetTableCellMarginTop(0);
-    oTablePr.SetTableCellMarginLeft(108);
-    oTablePr.SetTableCellMarginRight(108);
-    oTablePr.SetTableCellMarginBottom(0);
-
-    var oTableGridStyle = oDocument.CreateStyle("TableGrid", "table");
-    oTableGridStyle.SetBasedOn(oNormalTableStyle);
-    oParaPr = oTableGridStyle.GetParaPr();
-    oParaPr.SetSpacingAfter(0);
-    oParaPr.SetSpacingLine("auto", 240);
-    oTablePr = oTableGridStyle.GetTablePr();
-    oTablePr.SetTableInd(0);
-    oTablePr.SetTableBorderTop("single", 4, 0, 0, 0, 0);
-    oTablePr.SetTableBorderLeft("single", 4, 0, 0, 0, 0);
-    oTablePr.SetTableBorderRight("single", 4, 0, 0, 0, 0);
-    oTablePr.SetTableBorderBottom("single", 4, 0, 0, 0, 0);
-    oTablePr.SetTableBorderInsideH("single", 4, 0, 0, 0, 0);
-    oTablePr.SetTableBorderInsideV("single", 4, 0, 0, 0, 0);
-    oTablePr.SetTableCellMarginTop(0);
-    oTablePr.SetTableCellMarginLeft(108);
-    oTablePr.SetTableCellMarginBottom(0);
-    oTablePr.SetTableCellMarginRight(108);
-
-    var oFooterStyle = oDocument.CreateStyle("Footer", "paragraph");
-    oParaPr = oFooterStyle.GetParaPr();
-    oParaPr.SetTabs([4680, 9360], ["center", "right"]);
-    oParaPr.SetSpacingAfter(0);
-    oParaPr.SetJc("left");
-    oTextPr = oFooterStyle.GetTextPr();
-    oTextPr.SetColor(0, 0, 0, true);
-    oTextPr.SetFontSize(22);
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetSpacingLine(276, "auto");
-    oParagraph.SetJc("left");
-    oParaMark = oParagraph.GetParagraphMarkTextPr();
-    oParaMark.SetFontSize(52);
-    oParaMark.SetColor(0x14, 0x14, 0x14, false);
-    oParaMark.SetSpacing(5);
-    oParagraph.AddPageBreak();
-    // TODO: Заполнить автофигуру
-    oDrawing = Api.CreateDrawing(5363210, 9655810);
-    oDrawing.SetWrappingStyle("inFront");
-    oDrawing.SetHorPosition("page", 155575);
-    oDrawing.SetVerPosition("page", 201295);
-    oParagraph.AddDrawing(oDrawing);
-    // TODO: Заполнить автофигуру
-    oDrawing = Api.CreateDrawing(1880870, 9655810);
-    oDrawing.SetWrappingStyle("inFront");
-    oDrawing.SetHorPosition("page", 5673725);
-    oDrawing.SetVerPosition("page", 201295);
-    oParagraph.AddDrawing(oDrawing);
-    oDocument.Push(oParagraph);
-
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetStyle(oNoSpacingStyle);
-    // TODO: Заполнить aвтофигуру
-    oDrawing = Api.CreateDrawing(5930900, 395605);
-    oDrawing.SetWrappingStyle("topAndBottom");
-    oDrawing.SetHorAlign("margin", "left");
-    oDrawing.SetVerPosition("paragraph", 5715);
-    oDrawing.SetDistances(114300, 0, 114300, 0);
-    oParagraph.AddDrawing(oDrawing);
-    oDocument.Push(oParagraph);
-
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetStyle(oHeading1Style);
-    // TODO: Заполнить aвтофигуру
-    oDrawing = Api.CreateDrawing(720725, 1204595);
-    oDrawing.SetWrappingStyle("tight");
-    oDrawing.SetHorAlign("margin", "left");
-    oDrawing.SetVerPosition("page", 1810470);
-    oDrawing.SetDistances(114300, 0, 114300, 0);
-    oParagraph.AddDrawing(oDrawing);
-    oParagraph.AddText("Overview");
-    oDocument.Push(oParagraph);
-
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.AddText("In the previous meeting of the board of directors funds were approved to take the product “Innovate 1” to market.  They have also allocated a sum of $250,000  towards market identification and launch efforts. This document describes in brief the objective set forth by the VP of marketing pursuant to the board’s decision.");
-    oDocument.Push(oParagraph);
-
-    oParagraph = Api.CreateParagraph();
-    oDocument.Push(oParagraph);
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetStyle(oHeading1Style);
-    oParagraph.SetSpacingAfter(100, true);
-    oParagraph.SetSpacingBefore(100, true);
-    // TODO: Заполнить aвтофигуру
-    oDrawing = Api.CreateDrawing(2695575, 2276475);
-    oDrawing.SetWrappingStyle("tight");
-    oDrawing.SetHorPosition("column", 3756901);
-    oDrawing.SetVerPosition("paragraph", 473470);
-    oDrawing.SetDistances(114300, 0, 114300, 0);
-    oParagraph.AddDrawing(oDrawing);
-    oParagraph.AddText("Summary");
-    oDocument.Push(oParagraph);
-
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetSpacingAfter(100, true);
-    oParagraph.SetSpacingBefore(100, true);
-    // TODO: Заполнить автофигуру
-    oDrawing = Api.CreateDrawing(3212465, 963295);
-    oDrawing.SetWrappingStyle("topAndBottom");
-    oDrawing.SetHorPosition("margin", 370205);
-    oDrawing.SetVerPosition("paragraph", 1170888);
-    oDrawing.SetDistances(114300, 0, 114300, 0);
-    oParagraph.AddDrawing(oDrawing);
-    oParagraph.AddText("After years of market research and focused creative effort we are in a position to take our “Innovate 1” to market. We have a three phase approach in place to complete the product and take the product to market.  The first step of this initiative is to test the market.  Once we have identified the market, then we will make any final product product to drive that effectively keeps down costs while meeting sales goals. ");
-    oDocument.Push(oParagraph);
-
-
-    oParagraph = Api.CreateParagraph();
-    oDocument.Push(oParagraph);
-
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetStyle(oHeading1Style);
-    oParagraph.SetSpacingAfter(100, true);
-    oParagraph.SetSpacingBefore(100, true);
-    // TODO: Заполнить автофигуру
-    oDrawing = Api.CreateDrawing(4051300, 2347595);
-    oDrawing.SetWrappingStyle("tight");
-    oDrawing.SetHorPosition("column", 2347595);
-    oDrawing.SetVerPosition("paragraph", 346075);
-    oDrawing.SetDistances(114300, 0, 114300, 0);
-    oParagraph.AddDrawing(oDrawing);
-    oParagraph.AddText("Financial Overview");
-    oDocument.Push(oParagraph);
-
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetIndRight(5040);
-    oParagraph.AddText("Included are the estimated investment costs to introduce the new product.  As you can see for the first 3 years we will be in the investment phase.  Generating market demand and building our reputation in this category.  By 201");
-    oParagraph.AddText("7");
-    oParagraph.AddText(" we expect to be profitable.");
-    oDocument.Push(oParagraph);
-
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetIndRight(5040);
-    oDocument.Push(oParagraph);
-
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetStyle(oHeading1Style);
-    oParagraph.SetSpacingAfter(100, true);
-    oParagraph.SetSpacingBefore(100, true);
-    oParagraph.AddText("Details");
-    oDocument.Push(oParagraph);
-
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetSpacingAfter(240);
-    oParagraph.AddText("Out of the $250,000 allocated for this effort, we would like to spend about $50,000 towards the identification of the market.  For this we are allowed to engage with a marketing consulting organization.  Let us start with creating an RFP for this and start inviting the bids.   We would like to get the selection process completed by no later than end of first quarter.");
-    oDocument.Push(oParagraph);
-
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetSpacingBefore(100, true);
-    oParagraph.SetSpacingAfter(360);
-    oDocument.Push(oParagraph);
-    var oSection1 = oDocument.CreateSection(oParagraph);
-    oSection1.SetEqualColumns(1, 720);
-    oSection1.SetPageSize(12240, 15840);
-    oSection1.SetPageMargins(1440, 1440, 1440, 1440);
-    oSection1.SetHeaderDistance(720);
-    oSection1.SetFooterDistance(576);
-
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetStyle(oSubtitleStyle);
-    // TODO: Заполнить автофигуру
-    oDrawing = Api.CreateDrawing(2718435, 762000);
-    oDrawing.SetWrappingStyle("square");
-    oDrawing.SetHorAlign("margin", "right");
-    oDrawing.SetVerPosition("paragraph", 17780);
-    oDrawing.SetDistances(114300, 0, 114300, 0);
-    oParagraph.AddDrawing(oDrawing);
-    oParagraph.AddText("Legal Issues");
-    oDocument.Push(oParagraph);
-
-
-    oParagraph = Api.CreateParagraph();
-    // TODO: Заполнить автофигуру
-    oDrawing = Api.CreateDrawing(2741295, 2273300);
-    oDrawing.SetWrappingStyle("square");
-    oDrawing.SetHorAlign("margin", "right");
-    oDrawing.SetVerPosition("paragraph", 632460);
-    oDrawing.SetDistances(114300, 0, 114300, 0);
-    oParagraph.AddDrawing(oDrawing);
-    oParagraph.AddText("To support the new product, the Legal Department will maintain a centralized repository for all patent investigations as well as marketing claims.  The release team will adhere to all of the standardized processes for releasing new products.   ");
-    oDocument.Push(oParagraph);
-
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetSpacingAfter(0);
-    oParagraph.AddText("As we approach release of the product, the Legal Department is prepared ");
-    oParagraph.AddText("to develop all licensing agreements and has streamlined coordination with the marketing and sales department on the license terms and addendums.   ");
-    oDocument.Push(oParagraph);
-
-
-    oParagraph = Api.CreateParagraph();
-    oDocument.Push(oParagraph);
-    oParagraph.SetStyle(oSubtitleStyle);
-    oParagraph.AddText("Statement on Timeline");
-
-
-    oParagraph = Api.CreateParagraph();
-    oDocument.Push(oParagraph);
-    oParagraph.SetSpacingAfter(0);
-    oParagraph.AddText("All timelines in this report are estimated and highly dependent upon each team meeting their individual objectives. There are many interdependencies that are detailed in the related project plan.  ");
-
-
-    oParagraph = Api.CreateParagraph();
-    oDocument.Push(oParagraph);
-    oParagraph.SetStyle(oSubtitleStyle);
-    oParagraph.AddText("Productivity Gains");
-
-
-    oParagraph = Api.CreateParagraph();
-    oDocument.Push(oParagraph);
-    oParagraph.AddText("To support the new product, the Legal Department will maintain a centralized repository for all patent investigations");
-    oParagraph.AddText(" as well as marketing claims.  ");
-
-
-    oParagraph = Api.CreateParagraph();
-    oDocument.Push(oParagraph);
-    oParagraph.SetStyle(oSubtitleStyle);
-    oParagraph.AddText("License Agreements");
-
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetSpacingAfter(0);
-    oParagraph.AddText("All timelines in this report are estimated and highly dependent upon each team meetin");
-    oParagraph.AddText("g their individual objectives.  I");
-    oParagraph.AddText("nterdependencies are detailed in the related project plan.  ");
-    oDocument.Push(oParagraph);
-
-
-    oParagraph = Api.CreateParagraph();
-    oDocument.Push(oParagraph);
-    oParagraph.SetStyle(oSubtitleStyle);
-    oParagraph.SetKeepNext(true);
-    oParagraph.SetKeepLines(true);
-    oParagraph.AddText("Revenue Forecasting");
-
-
-    oParagraph = Api.CreateParagraph();
-    oDocument.Push(oParagraph);
-    oParagraph.SetKeepNext(true);
-    oParagraph.SetKeepLines(true);
-    oParagraph.AddText("To support the new product, the Legal Department will maintain a centralized repository for all ");
-    oParagraph.AddText("patent investigations and");
-    oParagraph.AddText(" marketing claims.  The release team will adhere to all of the stand");
-    oParagraph.AddText("ardized processes for releasing ");
-    oParagraph.AddText("new products.   ");
-
-
-    var oTable = Api.CreateTable(2, 2);
-    oDocument.Push(oTable);
-    oTable.SetStyle(oTableGridStyle);
-    oTable.SetWidth("twips", 4311);
-    oTable.SetTableLook(true, true, false, false, true, false);
-    oTable.SetTableBorderTop("single", 4, 0, 0xAF, 0xAD, 0x91);
-    oTable.SetTableBorderBottom("single", 4, 0, 0xAF, 0xAD, 0x91);
-    oTable.SetTableBorderLeft("single", 4, 0, 0xAF, 0xAD, 0x91);
-    oTable.SetTableBorderRight("single", 4, 0, 0xAF, 0xAD, 0x91);
-    oTable.SetTableBorderInsideH("single", 4, 0, 0xAF, 0xAD, 0x91);
-    oTable.SetTableBorderInsideV("single", 4, 0, 0xAF, 0xAD, 0x91);
-    var oRow = oTable.GetRow(0), oCell, oCellContent;
-    if (oRow)
-    {
-        oRow.SetHeight("atLeast", 201);
-        oCell = oRow.GetCell(0);
-        oCell.SetWidth("twips", 1637);
-        oCell.SetShd("clear", 0xff, 0x68, 0x00, false);
-        oCell.SetVerticalAlign("center");
-        oCellContent = oCell.GetContent();
-        oParagraph = oCellContent.GetElement(0);
-        oParagraph.SetJc("center");
-        oRun = oParagraph.AddText("2014");
-        oRun.SetBold(true);
-        oRun.SetColor(0, 0, 0, false);
-
-        oCell = oRow.GetCell(1);
-        oCell.SetWidth("twips", 2674);
-        oCell.SetShd("clear", 0xff, 0x68, 0x00, false);
-        oCell.SetVerticalAlign("center");
-        oCellContent = oCell.GetContent();
-        oParagraph = oCellContent.GetElement(0);
-        oParagraph.SetJc("center");
-        oRun = oParagraph.AddText("2015");
-        oRun.SetBold(true);
-        oRun.SetColor(0, 0, 0, false);
-    }
-    oRow = oTable.GetRow(1);
-    if (oRow)
-    {
-        oRow.SetHeight("atLeast", 1070);
-        oCell = oRow.GetCell(0);
-        oCell.SetWidth("twips", 1637);
-        oCell.SetVerticalAlign("center");
-        oCellContent = oCell.GetContent();
-        oParagraph = oCellContent.GetElement(0);
-        oParagraph.SetJc("center");
-        oParagraph.AddText("All Projects");
-        oParagraph.AddLineBreak();
-        oParagraph.AddText("Pending");
-
-
-        oCell = oRow.GetCell(1);
-        oCell.SetWidth("twips", 2674);
-        oCell.SetShd("clear", 0, 0, 0, true);
-        oCell.SetVerticalAlign("center");
-        oCellContent = oCell.GetContent();
-        oCellContent.RemoveAllElements();
-        var oInnerTable = Api.CreateTable(3, 3);
-        oCellContent.Push(oInnerTable);
-        oInnerTable.SetStyle(oTableGridStyle);
-        oInnerTable.SetWidth("twips", 2448);
-        oInnerTable.SetTableLook(true, true, false, false, true, false);
-        var oMergeCells = [];
-        oRow = oInnerTable.GetRow(0);
-        if(oRow)
-        {
-            oRow.SetHeight("atLeast", 201);
-            oCell = oRow.GetCell(0);
-            if (oCell)
-            {
-                oMergeCells.push(oCell);
-            }
-            oCell = oRow.GetCell(1);
-            if (oCell)
-            {
-                oCell.SetWidth("twips", 865);
-                oCell.SetShd("clear", 0xFF, 0xc2, 0x99, false);
-                oCellContent = oCell.GetContent();
-                oParagraph = oCellContent.GetElement(0);
-                oParagraph.AddText("West");
-            }
-            oCell = oRow.GetCell(2);
-            if (oCell)
-            {
-                oCell.SetWidth("twips", 1092);
-                oCell.SetShd("clear", 0xff, 0xe0, 0xcc, false);
-                oCellContent = oCell.GetContent();
-                oParagraph = oCellContent.GetElement(0);
-                oParagraph.AddText("Approved");
-            }
-        }
-        oRow = oInnerTable.GetRow(1);
-        if (oRow)
-        {
-            oRow.SetHeight("atLeast", 196);
-            oCell = oRow.GetCell(0);
-            if (oCell)
-            {
-                oMergeCells.push(oCell);
-            }
-
-            oCell = oRow.GetCell(1);
-            if (oCell)
-            {
-                oCell.SetWidth("twips", 865);
-                oCell.SetShd("clear", 0xFF, 0xc2, 0x99, false);
-                oCellContent = oCell.GetContent();
-                oParagraph = oCellContent.GetElement(0);
-                oParagraph.AddText("Central");
-            }
-            oCell = oRow.GetCell(2);
-            if (oCell)
-            {
-                oCell.SetWidth("twips", 1092);
-                oCell.SetShd("clear", 0xff, 0xe0, 0xcc, false);
-                oCellContent = oCell.GetContent();
-                oParagraph = oCellContent.GetElement(0);
-                oParagraph.AddText("Pending");
-            }
-        }
-        oRow = oInnerTable.GetRow(2);
-        if (oRow)
-        {
-            oRow.SetHeight("atLeast", 196);
-            oCell = oRow.GetCell(0);
-            if (oCell)
-            {
-                oMergeCells.push(oCell);
-            }
-            oCell = oRow.GetCell(1);
-            if (oCell)
-            {
-                oCell.SetWidth("twips", 865);
-                oCell.SetShd("clear", 0xFF, 0xc2, 0x99, false);
-                oCellContent = oCell.GetContent();
-                oParagraph = oCellContent.GetElement(0);
-                oParagraph.AddText("East");
-            }
-            oCell = oRow.GetCell(2);
-            if (oCell)
-            {
-                oCell.SetWidth("twips", 1092);
-                oCell.SetShd("clear", 0xff, 0xe0, 0xcc, false);
-                oCellContent = oCell.GetContent();
-                oParagraph = oCellContent.GetElement(0);
-                oParagraph.AddText("Approved");
-            }
-        }
-        var oMergedCell = oInnerTable.MergeCells(oMergeCells);
-        oMergedCell.SetVerticalAlign("center");
-        oMergedCell.SetTextDirection("btlr");
-        oMergedCell.SetWidth("twips", 491);
-        oMergedCell.SetShd("clear", 0xff, 0xa4, 0x66, false);
-        oCellContent = oMergedCell.GetContent();
-        oParagraph = oCellContent.GetElement(0);
-        oParagraph.SetIndLeft(113);
-        oParagraph.SetIndRight(113);
-        oParagraph.SetJc("center");
-        oRun = oParagraph.AddText("USA");
-        oRun.SetBold(true);
-    }
-
-
-    oParagraph = Api.CreateParagraph();
-    oDocument.Push(oParagraph);
-    oTextPr = oParagraph.GetParagraphMarkTextPr();
-    oTextPr.SetColor(0xff, 0x00, 0x00);
-    oTextPr.SetFontFamily("Segoe UI");
-
-    // Filling ups header and footer
-    oSection1.SetTitlePage(true);
-    var oDocContent = oSection1.GetHeader("default", true);
-    oDocContent.RemoveAllElements();
-    oTable = Api.CreateTable(2, 1);
-    oDocContent.Push(oTable);
-    oTable.SetWidth("auto");
-    oTable.SetJc("right");
-    oTable.SetTableLook(true, true, false, false, true, false);
-
-    oRow = oTable.GetRow(0);
-    if (oRow)
-    {
-        oRow.SetHeight("atLeast", 792);
-        oCell = oRow.GetCell(0);
-        if (oCell)
-        {
-            oCell.SetWidth("twips", 3337);
-            oCell.SetVerticalAlign("bottom");
-            oCellContent = oCell.GetContent();
-            oParagraph = oCellContent.GetElement(0);
-            oParagraph.SetStyle("Header");
-            oParagraph.SetJc("right");
-            oTextPr = oParagraph.GetParagraphMarkTextPr();
-            oTextPr.SetFontFamily("Calibri Light");
-            oTextPr.SetFontSize(28);
-            oRun = oParagraph.AddText("HAYDEN MANAGEMENT");
-            oRun.SetSmallCaps(true);
-            oRun.SetFontSize(32);
-            oRun.SetFontFamily("Calibri Light");
-        }
-        oCell = oRow.GetCell(1);
-        if (oCell)
-        {
-            oCell.SetWidth("twips", 792);
-            oCell.SetShd("clear", 0xff, 0xa4, 0x65);
-            oCell.SetVerticalAlign("center");
-            oCellContent = oCell.GetContent();
-            oParagraph = oCellContent.GetElement(0);
-            oParagraph.SetStyle("Header");
-            oParagraph.SetJc("center");
-            oParagraph.GetParagraphMarkTextPr().SetColor(0xff, 0xff, 0xff);
-            oRun = oParagraph.AddText("1");
-            oRun.SetColor(0xff, 0xff, 0xff);
-        }
-    }
-
-    oParagraph = Api.CreateParagraph();
-    oDocContent.Push(oParagraph);
-
-    oDocContent = oSection1.GetFooter("default", true);
-    oDocContent.RemoveAllElements();
-    oTable = Api.CreateTable(2, 1);
-    oDocContent.Push(oTable);
-    oTable.SetWidth("auto");
-    oTable.SetJc("right");
-    oTable.SetTableLook(true, true, false, false, true, false);
-    oRow = oTable.GetRow(0);
-    if (oRow)
-    {
-        oCell = oRow.GetCell(0);
-        if (oCell)
-        {
-            oCell.SetWidth("auto");
-            oCellContent = oCell.GetContent();
-            oParagraph = oCellContent.GetElement(0);
-            oParagraph.SetStyle(oFooterStyle);
-            oParagraph.SetJc("right");
-            oParagraph.AddText("Hayden Management");
-            oParagraph.AddText(" | Confidential");
-        }
-        oCell = oRow.GetCell(1);
-        if (oCell)
-        {
-            oCell.SetWidth("auto");
-            oCellContent = oCell.GetContent();
-            oParagraph = oCellContent.GetElement(0);
-            oParagraph.SetStyle(oFooterStyle);
-            oParagraph.SetJc("right");
-            // TODO: Заполнить автофигуру
-            oDrawing = Api.CreateDrawing(495300, 481965);
-            oDrawing.SetWrappingStyle("inline");
-            oParagraph.AddDrawing(oDrawing);
-        }
-    }
-
-    oParagraph = Api.CreateParagraph();
-    oDocContent.Push(oParagraph);
-    oParagraph.SetStyle(oFooterStyle);
-
-    //------------------------------------------------------------------------------------------------------------------
-    oLD.Recalculate_FromStart(true);
-}
-
-function TEST_BUILDER2()
-{
-    var oLD = editor.WordControl.m_oLogicDocument;
-    oLD.Create_NewHistoryPoint();
-    //------------------------------------------------------------------------------------------------------------------
-    var Api = editor;
-    var oDocument  = Api.GetDocument();
-    var oParagraph, oTable, oTableRow, oCell, oCellContent, oRun, oDrawing;
-
-    //------------------------------------------------------------------------------------------------------------------
-    // TextPr
-    //------------------------------------------------------------------------------------------------------------------
-    oParagraph = Api.CreateParagraph();
-    oDocument.Push(oParagraph);
-
-    oParagraph.AddText("Plain");
-    oParagraph.AddText("Bold").SetBold(true);
-    oParagraph.AddText("Italic").SetItalic(true);
-    oParagraph.AddText("Strikeout").SetStrikeout(true);
-    oParagraph.AddText("Underline").SetUnderline(true);
-    oParagraph.AddText("Calibri").SetFontFamily("Calibri");
-    oParagraph.AddText("FontSize40").SetFontSize(40);
-    oParagraph.AddText("ColorGreen").SetColor(0, 255, 0);
-    oParagraph.AddText("Superscript").SetVertAlign("superscript");
-    oParagraph.AddText("Subscript").SetVertAlign("subscript");
-    oParagraph.AddText("HighlightBlue").SetHighlight(0, 0, 255);
-    oParagraph.AddText("Spacing 1pt").SetSpacing(20);
-    oParagraph.AddText("Spacing -1pt").SetSpacing(-20);
-    oParagraph.AddText("DoubleStrikeout").SetDoubleStrikeout(true);
-    oParagraph.AddText("Capitals").SetCaps(true);
-    oParagraph.AddText("SmallCapitals").SetSmallCaps(true);
-    oParagraph.AddText("Position +10pt").SetPosition(20);
-    oParagraph.AddText("Position -10pt").SetPosition(-20);
-    oParagraph.AddText("Language English(Canada)").SetLanguage("en-CA");
-    oParagraph.AddText("Language Russia").SetLanguage("ru-RU");
-    oParagraph.AddText("ShadeRed").SetShd("clear", 255, 0, 0);
-
-    //------------------------------------------------------------------------------------------------------------------
-    // ParaPr
-    //------------------------------------------------------------------------------------------------------------------
-    oParagraph = Api.CreateParagraph();
-    oParagraph.AddText("Normal paragraph");
-    oDocument.Push(oParagraph);
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetContextualSpacing(true);
-    oParagraph.AddText("ContextualSpacing is true");
-    oDocument.Push(oParagraph);
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetIndLeft(300);
-    oParagraph.AddText("Left indent is 15pt");
-    oDocument.Push(oParagraph);
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetIndRight(600);
-    oParagraph.AddText("Right indent is 30pt");
-    oDocument.Push(oParagraph);
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetIndFirstLine(100);
-    oParagraph.AddText("First line indent is 5pt");
-    oDocument.Push(oParagraph);
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetIndFirstLine(-100);
-    oParagraph.AddText("First line indent is -5pt");
-    oDocument.Push(oParagraph);
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetJc("left");
-    oParagraph.AddText("Paragraph align: left");
-    oDocument.Push(oParagraph);
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetJc("right");
-    oParagraph.AddText("Paragraph align: right");
-    oDocument.Push(oParagraph);
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetJc("center");
-    oParagraph.AddText("Paragraph align: center");
-    oDocument.Push(oParagraph);
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetJc("both");
-    oParagraph.AddText("Paragraph align: both both both both both both both both both both both both both both both both both both both both both both both both both both both both both both both both both both both both both both both both both both both both both both both both both both ");
-    oDocument.Push(oParagraph);
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetKeepLines(true);
-    oParagraph.AddText("KeepLines");
-    oDocument.Push(oParagraph);
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetKeepNext(true);
-    oParagraph.AddText("KeepNext");
-    oDocument.Push(oParagraph);
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetPageBreakBefore(true);
-    oParagraph.AddText("PageBreakBefore");
-    oDocument.Push(oParagraph);
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetSpacingLine(3 * 240, "auto");
-    oParagraph.AddText("Spacing: multiply 3");
-    oDocument.Push(oParagraph);
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetSpacingLine(200, "exact");
-    oParagraph.AddText("Spacing: exact 10pt");
-    oDocument.Push(oParagraph);
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetSpacingLine(400, "atLeast");
-    oParagraph.AddText("Spacing: atLeast 20pt");
-    oDocument.Push(oParagraph);
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetSpacingBefore(200);
-    oParagraph.SetSpacingAfter(0);
-    oParagraph.AddText("Spacing: before 10pt after 0");
-    oDocument.Push(oParagraph);
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetSpacingBefore(0, true);
-    oParagraph.SetSpacingAfter(0, true);
-    oParagraph.AddText("Spacing: before auto after auto");
-    oDocument.Push(oParagraph);
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetShd("clear", 0, 255, 0, false);
-    oParagraph.AddText("Shading: green");
-    oDocument.Push(oParagraph);
-
-    for (var nIndex = 0; nIndex < 3; ++nIndex)
-    {
-        oParagraph = Api.CreateParagraph();
-        oDocument.Push(oParagraph);
-        oParagraph.AddText("Borders");
-
-        oParagraph.SetTopBorder("single", 24, 0, 255, 0, 0);
-        oParagraph.SetBottomBorder("single", 24, 0, 0, 255, 0);
-        oParagraph.SetLeftBorder("single", 48, 0, 0, 0, 255);
-        oParagraph.SetRightBorder("single", 48, 0, 255, 255, 0);
-        oParagraph.SetBetweenBorder("single", 36, 0, 255, 0, 255);
-    }
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetWidowControl(false);
-    oParagraph.AddText("Widow control is off");
-    oDocument.Push(oParagraph);
-
-    oParagraph = Api.CreateParagraph();
-    oParagraph.SetTabs([1000, 1500, 3000], ["center", "left", "right"]);
-    oParagraph.AddText("Custom tabs (center, left, right)");
-    oDocument.Push(oParagraph);
-
-
-    var oNumbering = oDocument.CreateNumbering("bullet");
-    var oNumLvl;
-    for (var nLvl = 0; nLvl < 8; ++nLvl)
-    {
-        oNumLvl = oNumbering.GetLevel(nLvl);
-        oParagraph = Api.CreateParagraph();
-        oParagraph.AddText("Default bullet lvl " + (nLvl + 1));
-        oParagraph.SetNumbering(oNumLvl);
-        oParagraph.SetContextualSpacing(true);
-        oDocument.Push(oParagraph);
-    }
-
-    oNumbering = oDocument.CreateNumbering("numbered");
-    for (var nLvl = 0; nLvl < 8; ++nLvl)
-    {
-        oNumLvl = oNumbering.GetLevel(nLvl);
-        oParagraph = Api.CreateParagraph();
-        oParagraph.AddText("Default numbered lvl " + (nLvl + 1));
-        oParagraph.SetNumbering(oNumLvl);
-        oParagraph.SetContextualSpacing(true);
-        oDocument.Push(oParagraph);
-    }
-
-    oNumbering = oDocument.CreateNumbering("numbered");
-    for (var nLvl = 0; nLvl < 8; ++nLvl)
-    {
-        oNumLvl = oNumbering.GetLevel(nLvl);
-
-        var sFormatString = "";
-        for (var nTempLvl = 0; nTempLvl <= nLvl; ++nTempLvl)
-            sFormatString += "%" + nTempLvl + ".";
-
-        oNumLvl.SetCustomType("lowerRoman", sFormatString, "left");
-        oNumLvl.SetStart(nLvl + 1);
-        oNumLvl.SetSuff("space");
-
-        oParagraph = Api.CreateParagraph();
-        oParagraph.AddText("Custom numbered lvl " + (nLvl + 1));
-        oParagraph.SetNumbering(oNumLvl);
-        oParagraph.SetContextualSpacing(true);
-        oDocument.Push(oParagraph);
-
-        oParagraph = Api.CreateParagraph();
-        oParagraph.AddText("Custom numbered lvl " + (nLvl + 1));
-        oParagraph.SetNumbering(oNumLvl);
-        oParagraph.SetContextualSpacing(true);
-        oDocument.Push(oParagraph);
-    }
-
-    oNumbering = oDocument.CreateNumbering("bullet");
-    for (var nLvl = 0; nLvl < 8; ++nLvl)
-    {
-        oNumLvl = oNumbering.GetLevel(nLvl);
-
-        var sSymbolCharCode = 'a'.charCodeAt(0) + nLvl;
-        oNumLvl.SetTemplateType("bullet", String.fromCharCode(sSymbolCharCode));
-        oNumLvl.SetSuff("none");
-        oNumLvl.GetTextPr().SetBold(true);
-        oNumLvl.GetParaPr().SetJc("center");
-
-        oParagraph = Api.CreateParagraph();
-        oParagraph.AddText("Template bullet lvl " + (nLvl + 1));
-        oParagraph.SetNumbering(oNumLvl);
-        oParagraph.SetContextualSpacing(true);
-        oDocument.Push(oParagraph);
-
-        oParagraph = Api.CreateParagraph();
-        oParagraph.AddText("Template bullet  lvl " + (nLvl + 1));
-        oParagraph.SetNumbering(oNumLvl);
-        oParagraph.SetContextualSpacing(true);
-
-        oDocument.Push(oParagraph);
-    }
-
-    //------------------------------------------------------------------------------------------------------------------
-    // Header - Footer
-    //------------------------------------------------------------------------------------------------------------------
-    var oSection = oDocument.GetFinalSection();
-    var oHeader = oSection.GetHeader("default", true);
-
-    oParagraph = oHeader.GetElement(0);
-    oParagraph.AddText("I'm in default header");
-
-    //------------------------------------------------------------------------------------------------------------------
-    // TablePr
-    //------------------------------------------------------------------------------------------------------------------
-    oTable = Api.CreateTable(3, 3);
-    oDocument.Push(oTable);
-    oTable.SetJc("left");
-
-    oTable = Api.CreateTable(3, 3);
-    oDocument.Push(oTable);
-    oTable.SetJc("center");
-
-    oTable = Api.CreateTable(3, 3);
-    oDocument.Push(oTable);
-    oTable.SetJc("right");
-
-    var oTableStyle = oDocument.GetStyle("Bordered & Lined - Accent 3");
-    oTable = Api.CreateTable(10, 10);
-    oDocument.Push(oTable);
-    oTable.SetStyle(oTableStyle);
-
-    oTable = Api.CreateTable(10, 10);
-    oDocument.Push(oTable);
-    oTable.SetStyle(oTableStyle);
-    oTable.SetTableLook(false, false, true, true, false, true);
-
-    oTable = Api.CreateTable(10, 10);
-    oDocument.Push(oTable);
-    oTable.SetTableLook(true, true, true, true, true, true);
-    oTable.SetStyle(oTableStyle);
-    oTable.SetStyleColBandSize(2);
-    oTable.SetStyleRowBandSize(3);
-
-    oTable = Api.CreateTable(3, 3);
-    oDocument.Push(oTable);
-    oTable.SetShd("clear", 255, 0, 0);
-    oTable.SetTableBorderTop("single", 32, 0, 0, 255, 0);
-    oTable.SetTableBorderBottom("single", 64, 0, 0, 255, 0);
-    oTable.SetTableBorderLeft("single", 32, 0, 0, 0, 255);
-    oTable.SetTableBorderRight("single", 16, 0, 0, 0, 255);
-    oTable.SetTableBorderInsideV("single", 32, 0, 0, 0, 0);
-    oTable.SetTableBorderInsideH("single", 32, 0, 0, 0, 0);
-
-    oTable = Api.CreateTable(3, 3);
-    oDocument.Push(oTable);
-    oTable.SetTableInd(1000);
-    oTable.SetTableCellMarginBottom(200);
-    oTable.SetTableCellMarginTop(100);
-    oTable.SetTableCellMarginLeft(400);
-    oTable.SetTableCellMarginRight(200);
-    oTable.SetCellSpacing(200);
-
-    oTable = Api.CreateTable(3, 3);
-    oDocument.Push(oTable);
-    oTable.SetWidth("auto");
-
-    oTable = Api.CreateTable(3, 3);
-    oDocument.Push(oTable);
-    oTable.SetWidth("twips", 3000);
-
-    oTable = Api.CreateTable(3, 3);
-    oDocument.Push(oTable);
-    oTable.SetWidth("percent", 100);
-
-    oTable = Api.CreateTable(3, 3);
-    oDocument.Push(oTable);
-    oTable.SetTableLayout("fixed");
-
-    //------------------------------------------------------------------------------------------------------------------
-    // TableRowPr
-    //------------------------------------------------------------------------------------------------------------------
-    oTable = Api.CreateTable(3, 3);
-    oDocument.Push(oTable);
-    oTableRow = oTable.GetRow(0);
-    oTableRow.SetHeight("auto");
-    oTableRow = oTable.GetRow(1);
-    oTableRow.SetHeight("atLeast", 1000);
-    oTableRow = oTable.GetRow(2);
-    oTableRow.SetHeight("atLeast", 2000);
-
-    oTable = Api.CreateTable(10, 40);
-    oDocument.Push(oTable);
-    oTable.SetStyle(oTableStyle);
-    oTable.GetRow(0).SetTableHeader(true);
-    oTable.GetRow(1).SetTableHeader(true);
-
-    //------------------------------------------------------------------------------------------------------------------
-    // TableCellPr
-    //------------------------------------------------------------------------------------------------------------------
-    oTable = Api.CreateTable(3, 3);
-    oDocument.Push(oTable);
-    oTableRow = oTable.GetRow(0);
-    oCell = oTableRow.GetCell(1);
-    oCell.SetShd("clear", 255, 0, 0);
-    oTableRow = oTable.GetRow(1);
-    oCell = oTableRow.GetCell(0);
-    oCell.SetCellBorderTop("single", 32, 0, 0, 255, 0);
-    oCell.SetCellBorderBottom("single", 64, 0, 0, 255, 0);
-    oCell.SetCellBorderLeft("single", 32, 0, 0, 0, 255);
-    oCell.SetCellBorderRight("single", 16, 0, 0, 0, 255);
-
-    oTable = Api.CreateTable(3, 3);
-    oDocument.Push(oTable);
-    oTableRow = oTable.GetRow(0);
-    oCell = oTableRow.GetCell(1);
-    oCell.SetCellMarginBottom(300);
-    oCell.SetCellMarginLeft(100);
-    oCell.SetCellMarginRight(null);
-    oCell.SetCellMarginTop(400);
-
-    oTable = Api.CreateTable(3, 3);
-    oDocument.Push(oTable);
-    oTableRow = oTable.GetRow(0);
-    oCell = oTableRow.GetCell(0);
-    oCell.SetWidth("twips", 2000);
-    oTableRow = oTable.GetRow(1);
-    oTableRow.SetHeight("atLeast", 2000);
-    oCell = oTableRow.GetCell(0);
-    oCell.SetVerticalAlign("top");
-    oCellContent = oCell.GetContent();
-    oParagraph = oCellContent.GetElement(0);
-    oParagraph.AddText("Top");
-    oCell = oTableRow.GetCell(1);
-    oCell.SetVerticalAlign("center");
-    oCellContent = oCell.GetContent();
-    oParagraph = oCellContent.GetElement(0);
-    oParagraph.AddText("Center");
-    oCell = oTableRow.GetCell(2);
-    oCell.SetVerticalAlign("bottom");
-    oCellContent = oCell.GetContent();
-    oParagraph = oCellContent.GetElement(0);
-    oParagraph.AddText("Bottom");
-    oTableRow = oTable.GetRow(2);
-    oCell = oTableRow.GetCell(0);
-    oCell.SetTextDirection("lrtb");
-    oCellContent = oCell.GetContent();
-    oParagraph = oCellContent.GetElement(0);
-    oParagraph.AddText("left to right");
-    oParagraph.AddLineBreak();
-    oParagraph.AddText("top to bottom");
-    oCell = oTableRow.GetCell(1);
-    oCell.SetTextDirection("tbrl");
-    oCellContent = oCell.GetContent();
-    oParagraph = oCellContent.GetElement(0);
-    oParagraph.AddText("top to bottom");
-    oParagraph.AddLineBreak();
-    oParagraph.AddText("right to left");
-    oCell = oTableRow.GetCell(2);
-    oCell.SetTextDirection("btlr");
-    oCellContent = oCell.GetContent();
-    oParagraph = oCellContent.GetElement(0);
-    oParagraph.AddText("bottom to top");
-    oParagraph.AddLineBreak();
-    oParagraph.AddText("left to right");
-
-    oTable = Api.CreateTable(3, 3);
-    oDocument.Push(oTable);
-    oTableRow = oTable.GetRow(0);
-    oCell = oTableRow.GetCell(0);
-    oCell.SetNoWrap(false);
-    oCellContent = oCell.GetContent();
-    oParagraph = oCellContent.GetElement(0);
-    oParagraph.AddText("Wrap Wrap Wrap Wrap Wrap Wrap Wrap Wrap Wrap");
-    oCell = oTableRow.GetCell(1);
-    oCell.SetNoWrap(true);
-    oCellContent = oCell.GetContent();
-    oParagraph = oCellContent.GetElement(0);
-    oParagraph.AddText("No wrap No wrap No wrap No wrap No wrap No wrap No wrap");
-
-    //------------------------------------------------------------------------------------------------------------------
-    // TableStylePr
-    //------------------------------------------------------------------------------------------------------------------
-    oTableStyle = oDocument.CreateStyle("CustomTableStyle", "table");
-    oTable = Api.CreateTable(10, 10);
-    oDocument.Push(oTable);
-    oTable.SetStyle(oTableStyle);
-    oTable.SetTableLook(true, true, true, true, true, true);
-
-    oTableStyle.GetConditionalTableStyle("topLeftCell").GetTableCellPr().SetShd("clear", 255, 0, 0);
-    oTableStyle.GetConditionalTableStyle("topRightCell").GetTableCellPr().SetShd("clear", 0, 255, 0);
-    oTableStyle.GetConditionalTableStyle("bottomLeftCell").GetTableCellPr().SetShd("clear", 0, 0, 255);
-    oTableStyle.GetConditionalTableStyle("bottomRightCell").GetTableCellPr().SetShd("clear", 255, 255, 0);
-
-    oTableStyle.GetConditionalTableStyle("firstRow").GetParaPr().SetShd("clear", 255, 0, 0);
-    oTableStyle.GetConditionalTableStyle("lastRow").GetParaPr().SetShd("clear", 0, 255, 0);
-    oTableStyle.GetConditionalTableStyle("firstColumn").GetParaPr().SetShd("clear", 0, 0, 255);
-    oTableStyle.GetConditionalTableStyle("lastColumn").GetParaPr().SetShd("clear", 255, 255, 0);
-
-    oTableStyle.GetConditionalTableStyle("bandedRow").GetTableRowPr().SetHeight("atLeast", 500);
-    oTableStyle.GetConditionalTableStyle("bandedRowEven").GetTableRowPr().SetHeight("atLeast", 1000);
-
-    oTableStyle.GetConditionalTableStyle("bandedColumn").GetTextPr().SetBold(true);
-    oTableStyle.GetConditionalTableStyle("bandedColumnEven").GetTextPr().SetItalic(true);
-
-    oTableStyle.GetConditionalTableStyle("wholeTable").GetParaPr().SetSpacingAfter(0);
-    oTableStyle.GetConditionalTableStyle("wholeTable").GetTablePr().SetTableBorderLeft("single", 4, 0, 0, 0, 0);
-    oTableStyle.GetConditionalTableStyle("wholeTable").GetTablePr().SetTableBorderRight("single", 4, 0, 0, 0, 0);
-    oTableStyle.GetConditionalTableStyle("wholeTable").GetTablePr().SetTableBorderTop("single", 4, 0, 0, 0, 0);
-    oTableStyle.GetConditionalTableStyle("wholeTable").GetTablePr().SetTableBorderBottom("single", 4, 0, 0, 0, 0);
-    oTableStyle.GetConditionalTableStyle("wholeTable").GetTablePr().SetTableBorderInsideV("single", 4, 0, 0, 0, 0);
-    oTableStyle.GetConditionalTableStyle("wholeTable").GetTablePr().SetTableBorderInsideH("single", 4, 0, 0, 0, 0);
-
-    //------------------------------------------------------------------------------------------------------------------
-    // Add/Remove/Merge column and row
-    //------------------------------------------------------------------------------------------------------------------
-    oTable = Api.CreateTable(3, 3);
-    oDocument.Push(oTable);
-    oTable.GetRow(0).GetCell(0).GetContent().GetElement(0).AddText("Start rows count " + oTable.GetRowsCount() + " start columns count 3");
-    oTableRow = oTable.AddRow(oTable.GetRow(1).GetCell(0), true);
-    oTableRow.GetCell(0).GetContent().GetElement(0).AddText("A new row in position 1");
-    oTableRow = oTable.AddRow();
-    oTableRow.GetCell(0).GetContent().GetElement(0).AddText("A new row without position");
-    oTableRow.GetCell(oTableRow.GetCellsCount() - 1).GetContent().GetElement(0).AddText("Last cell before add column");
-    oTable.AddColumn();
-    oTableRow.GetCell(oTableRow.GetCellsCount() - 1).GetContent().GetElement(0).AddText("Last cell after add column");
-
-    oParagraph = Api.CreateParagraph();
-    oDocument.Push(oParagraph);
-    oParagraph.AddText("Remove row 1, remove column 3");
-    oTable = Api.CreateTable(5, 5);
-    oDocument.Push(oTable);
-    for (var nRowIndex = 0; nRowIndex < 5; ++nRowIndex)
-    {
-        for (var nCellIndex = 0; nCellIndex < 5; ++nCellIndex)
-        {
-            oTable.GetRow(nRowIndex).GetCell(nCellIndex).GetContent().GetElement(0).AddText("" + nRowIndex + nCellIndex);
-        }
-    }
-    oTable.RemoveRow(oTable.GetRow(1).GetCell(0));
-    oTable.RemoveColumn(oTable.GetRow(0).GetCell(3));
-
-    oTable = Api.CreateTable(5, 5);
-    oDocument.Push(oTable);
-
-    oCell = oTable.MergeCells([oTable.GetRow(1).GetCell(1), oTable.GetRow(1).GetCell(2), oTable.GetRow(2).GetCell(1), oTable.GetRow(2).GetCell(2)]);
-    oCell.GetContent().GetElement(0).AddText("Merged cell");
-
-    //------------------------------------------------------------------------------------------------------------------
-    // Create/Add/Change Run
-    //------------------------------------------------------------------------------------------------------------------
-    oParagraph = Api.CreateParagraph();
-    oDocument.Push(oParagraph);
-    oRun = Api.CreateRun();
-    oRun.AddText("Before add count : ");
-    oRun.AddTabStop();
-    oRun.AddText("" + oParagraph.GetElementsCount());
-    oRun.AddLineBreak();
-    oParagraph.AddElement(oRun);
-    oRun.AddText("After add count : ");
-    oRun.AddTabStop();
-    oRun.AddText("" + oParagraph.GetElementsCount());
-
-    //------------------------------------------------------------------------------------------------------------------
-    // Drawings
-    //------------------------------------------------------------------------------------------------------------------
-    oParagraph = Api.CreateParagraph();
-    oDocument.Push(oParagraph);
-    oDrawing = Api.CreateDrawing(1000 * 635, 2000 * 635);
-    oParagraph.AddDrawing(oDrawing);
-
-    oDrawing = Api.CreateDrawing(1000 * 635, 2000 * 635);
-    oParagraph.AddDrawing(oDrawing);
-    oDrawing.SetSize(2000 * 635, 2000 * 635);
-
-    oDrawing = Api.CreateDrawing(1000 * 635, 2000 * 635);
-    oParagraph.AddDrawing(oDrawing);
-    oDrawing.SetWrappingStyle("square");
-
-    oDrawing = Api.CreateDrawing(1000 * 635, 2000 * 635);
-    oParagraph.AddDrawing(oDrawing);
-    oDrawing.SetWrappingStyle("inFront");
-    oDrawing.SetHorAlign("margin", "right");
-    oDrawing.SetVerAlign("page", "bottom");
-
-    oDrawing = Api.CreateDrawing(1000 * 635, 2000 * 635);
-    oParagraph.AddDrawing(oDrawing);
-    oDrawing.SetWrappingStyle("inFront");
-    oDrawing.SetHorPosition("page", 36000 * 30);
-    oDrawing.SetVerPosition("page", 36000 * 60);
-
-    //------------------------------------------------------------------------------------------------------------------
-    oLD.Recalculate_FromStart();
-}
-

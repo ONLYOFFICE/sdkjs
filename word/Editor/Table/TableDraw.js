@@ -23,14 +23,10 @@
  *
 */
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 28.12.2015
- * Time: 12:22
- */
 
 // Import
 var c_oAscLineDrawingRule = AscCommon.c_oAscLineDrawingRule;
+var global_MatrixTransformer = AscCommon.global_MatrixTransformer;
 
 CTable.prototype.ReDraw = function()
 {

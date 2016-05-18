@@ -25,12 +25,6 @@
 "use strict";
 
 /**
- * User: Ilja.Kirillov
- * Date: 25.07.12
- * Time: 12:01
- */
-
-/**
  *
  * @constructor
  * @extends {AscCommon.CCollaborativeEditingBase}
@@ -55,18 +49,18 @@ CWordCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, Addition
     this.Refresh_DCChanges();
 
     // Генерируем свои изменения
-    var StartPoint = ( null === History.SavedIndex ? 0 : History.SavedIndex + 1 );
+    var StartPoint = ( null === AscCommon.History.SavedIndex ? 0 : AscCommon.History.SavedIndex + 1 );
     var LastPoint = -1;
 
     if (this.m_nUseType <= 0)
     {
         // (ненужные точки предварительно удаляем)
-        History.Clear_Redo();
-        LastPoint = History.Points.length - 1;
+        AscCommon.History.Clear_Redo();
+        LastPoint = AscCommon.History.Points.length - 1;
     }
     else
     {
-        LastPoint = History.Index;
+        LastPoint = AscCommon.History.Index;
     }
 
     // Просчитаем сколько изменений на сервер пересылать не надо
@@ -74,16 +68,16 @@ CWordCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, Addition
     var StartPoint2 = Math.min(StartPoint, LastPoint + 1);
     for (var PointIndex = 0; PointIndex < StartPoint2; PointIndex++)
     {
-        var Point = History.Points[PointIndex];
+        var Point = AscCommon.History.Points[PointIndex];
         SumIndex += Point.Items.length;
     }
-    var deleteIndex = ( null === History.SavedIndex ? null : SumIndex );
+    var deleteIndex = ( null === AscCommon.History.SavedIndex ? null : SumIndex );
 
     var aChanges = [];
     for (var PointIndex = StartPoint; PointIndex <= LastPoint; PointIndex++)
     {
-        var Point = History.Points[PointIndex];
-        History.Update_PointInfoItem(PointIndex, StartPoint, LastPoint, SumIndex, deleteIndex);
+        var Point = AscCommon.History.Points[PointIndex];
+        AscCommon.History.Update_PointInfoItem(PointIndex, StartPoint, LastPoint, SumIndex, deleteIndex);
 
         for (var Index = 0; Index < Point.Items.length; Index++)
         {
@@ -107,31 +101,31 @@ CWordCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, Addition
     this.m_aNeedUnlock.length = 0;
     this.m_aNeedUnlock2.length = 0;
 
-    var deleteIndex = ( null === History.SavedIndex ? null : SumIndex );
+    var deleteIndex = ( null === AscCommon.History.SavedIndex ? null : SumIndex );
     if (0 < aChanges.length || null !== deleteIndex) {
         editor.CoAuthoringApi.saveChanges(aChanges, deleteIndex, AdditionalInfo);
-        History.CanNotAddChanges = true;
+        AscCommon.History.CanNotAddChanges = true;
     } else
         editor.CoAuthoringApi.unLockDocument(true);
 
     if (-1 === this.m_nUseType)
     {
         // Чистим Undo/Redo только во время совместного редактирования
-        History.Clear();
-        History.SavedIndex = null;
+        AscCommon.History.Clear();
+        AscCommon.History.SavedIndex = null;
     }
     else if (0 === this.m_nUseType)
     {
         // Чистим Undo/Redo только во время совместного редактирования
-        History.Clear();
-        History.SavedIndex = null;
+        AscCommon.History.Clear();
+        AscCommon.History.SavedIndex = null;
 
         this.m_nUseType = 1;
     }
     else
     {
         // Обновляем точку последнего сохранения в истории
-        History.Reset_SavedIndex(IsUserSave);
+        AscCommon.History.Reset_SavedIndex(IsUserSave);
     }
 
     if (false !== IsUpdateInterface)
@@ -157,13 +151,13 @@ CWordCollaborativeEditing.prototype.Release_Locks = function()
         {
             this.m_aNeedUnlock[Index].Lock.Set_Type(AscCommon.locktype_None, false);
 
-            if (this.m_aNeedUnlock[Index] instanceof CHeaderFooterController)
+            if (this.m_aNeedUnlock[Index] instanceof AscCommonWord.CHeaderFooterController)
                 editor.sync_UnLockHeaderFooters();
-            else if (this.m_aNeedUnlock[Index] instanceof CDocument)
+            else if (this.m_aNeedUnlock[Index] instanceof AscCommonWord.CDocument)
                 editor.sync_UnLockDocumentProps();
-            else if (this.m_aNeedUnlock[Index] instanceof CComment)
+            else if (this.m_aNeedUnlock[Index] instanceof AscCommon.CComment)
                 editor.sync_UnLockComment(this.m_aNeedUnlock[Index].Get_Id());
-            else if (this.m_aNeedUnlock[Index] instanceof CGraphicObjects)
+            else if (this.m_aNeedUnlock[Index] instanceof AscCommonWord.CGraphicObjects)
                 editor.sync_UnLockDocumentSchema();
         }
         else if (AscCommon.locktype_Other3 === CurLockType)
@@ -177,8 +171,8 @@ CWordCollaborativeEditing.prototype.OnEnd_Load_Objects = function()
     // Данная функция вызывается, когда загрузились внешние объекты (картинки и шрифты)
 
     // Снимаем лок
-    CollaborativeEditing.m_bGlobalLock = false;
-    CollaborativeEditing.m_bGlobalLockSelection = false;
+    AscCommon.CollaborativeEditing.m_bGlobalLock = false;
+    AscCommon.CollaborativeEditing.m_bGlobalLockSelection = false;
 
     // Запускаем полный пересчет документа
     var LogicDocument = editor.WordControl.m_oLogicDocument;
@@ -268,7 +262,7 @@ CWordCollaborativeEditing.prototype.OnEnd_CheckLock = function(DontLockInFastMod
 };
 CWordCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
 {
-    var oThis   = CollaborativeEditing;
+    var oThis   = AscCommon.CollaborativeEditing;
     var oEditor = editor;
 
     if (true === oThis.m_bGlobalLock)
@@ -310,7 +304,7 @@ CWordCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
 
             // Делаем откат на 1 шаг назад и удаляем из Undo/Redo эту последнюю точку
             oEditor.WordControl.m_oLogicDocument.Document_Undo();
-            History.Clear_Redo();
+            AscCommon.History.Clear_Redo();
         }
 
         oEditor.isChartEditor = false;
@@ -395,7 +389,7 @@ CWordCollaborativeEditing.prototype.Update_ForeignCursorPosition = function(User
 {
     var DrawingDocument = this.m_oLogicDocument.DrawingDocument;
 
-    if (!(Run instanceof ParaRun))
+    if (!(Run instanceof AscCommonWord.ParaRun))
         return;
 
     var Paragraph = Run.Get_Paragraph();
@@ -569,4 +563,7 @@ CWordCollaborativeEditing.prototype.Update_ForeignCursorLabelPosition = function
     Api.sync_ShowForeignCursorLabel(UserId, X, Y, Color);
 };
 
-var CollaborativeEditing = new CWordCollaborativeEditing();
+//--------------------------------------------------------export----------------------------------------------------
+window['AscCommon'] = window['AscCommon'] || {};
+window['AscCommon'].CWordCollaborativeEditing = CWordCollaborativeEditing;
+window['AscCommon'].CollaborativeEditing = new CWordCollaborativeEditing();

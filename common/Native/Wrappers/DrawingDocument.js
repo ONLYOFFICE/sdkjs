@@ -26,115 +26,6 @@
 // Import
 var global_mouseEvent = AscCommon.global_mouseEvent;
 
-function CTableMarkup(Table)
-{
-    this.Internal =
-    {
-        RowIndex  : 0,
-        CellIndex : 0,
-        PageNum   : 0
-    };
-    this.Table = Table;
-    this.X = 0; // Смещение таблицы от начала страницы до первой колонки
-
-    this.Cols    = []; // массив ширин колонок
-    this.Margins = []; // массив левых и правых маргинов
-
-    this.Rows    = []; // массив позиций, высот строк(для данной страницы)
-    // Rows = [ { Y : , H :  }, ... ]
-
-    this.CurCol = 0; // текущая колонка
-    this.CurRow = 0; // текущая строка
-
-    this.TransformX = 0;
-    this.TransformY = 0;
-}
-
-CTableMarkup.prototype =
-{
-    CreateDublicate : function()
-    {
-        var obj = new CTableMarkup(this.Table);
-
-        obj.Internal = { RowIndex : this.Internal.RowIndex, CellIndex : this.Internal.CellIndex, PageNum : this.Internal.PageNum };
-        obj.X = this.X;
-
-        var len = this.Cols.length;
-        for (var i = 0; i < len; i++)
-            obj.Cols[i] = this.Cols[i];
-
-        len = this.Margins.length;
-        for (var i = 0; i < len; i++)
-            obj.Margins[i] = { Left : this.Margins[i].Left, Right : this.Margins[i].Right };
-
-        len = this.Rows.length;
-        for (var i = 0; i < len; i++)
-            obj.Rows[i] = { Y : this.Rows[i].Y, H : this.Rows[i].H };
-
-        obj.CurRow = this.CurRow;
-        obj.CurCol = this.CurCol;
-
-        return obj;
-    },
-
-    CorrectFrom : function()
-    {
-        this.X += this.TransformX;
-
-        var _len = this.Rows.length;
-        for (var i = 0; i < _len; i++)
-        {
-            this.Rows[i].Y += this.TransformY;
-        }
-    },
-
-    CorrectTo : function()
-    {
-        this.X -= this.TransformX;
-
-        var _len = this.Rows.length;
-        for (var i = 0; i < _len; i++)
-        {
-            this.Rows[i].Y -= this.TransformY;
-        }
-    },
-
-    Get_X : function()
-    {
-        return this.X;
-    },
-
-    Get_Y : function()
-    {
-        var _Y = 0;
-        if (this.Rows.length > 0)
-        {
-            _Y = this.Rows[0].Y;
-        }
-        return _Y;
-    }
-};
-
-function CTableOutline(Table, PageNum, X, Y, W, H)
-{
-    this.Table = Table;
-    this.PageNum = PageNum;
-
-    this.X = X;
-    this.Y = Y;
-
-    this.W = W;
-    this.H = H;
-}
-
-function _rect()
-{
-    this.x = 0;
-    this.y = 0;
-    this.w = 0;
-    this.h = 0;
-}
-
 function CTableOutlineDr()
 {
     this.image = {};
@@ -179,7 +70,7 @@ function CTableOutlineDr()
         this.IsChangeSmall = true;
         this.ChangeSmallPoint = pos;
 
-        if (!this.TableMatrix || global_MatrixTransformer.IsIdentity(this.TableMatrix))
+        if (!this.TableMatrix || AscCommon.global_MatrixTransformer.IsIdentity(this.TableMatrix))
         {
             switch (this.TrackTablePos)
             {
@@ -248,7 +139,7 @@ function CTableOutlineDr()
         }
         else
         {
-            var _invert = global_MatrixTransformer.Invert(this.TableMatrix);
+            var _invert = AscCommon.global_MatrixTransformer.Invert(this.TableMatrix);
             var _posx = _invert.TransformPointX(pos.X, pos.Y);
             var _posy = _invert.TransformPointY(pos.X, pos.Y);
             switch (this.TrackTablePos)
@@ -476,7 +367,7 @@ function CTableOutlineDr()
 
         var _bounds = this.Native["DD_GetControlSizes"]();
 
-        if (!this.TableMatrix || global_MatrixTransformer.IsIdentity(this.TableMatrix))
+        if (!this.TableMatrix || AscCommon.global_MatrixTransformer.IsIdentity(this.TableMatrix))
         {
             var pos = drDoc.__DD_ConvertCoordsToCursor(this.TableOutline.X, this.TableOutline.Y, this.TableOutline.PageNum);
 
@@ -2114,7 +2005,7 @@ CDrawingDocument.prototype =
 
     CheckTableStylesOne : function()
     {
-        var _tableLook = new CTablePropLook(undefined);
+        var _tableLook = new Asc.CTablePropLook(undefined);
 
         _tableLook.FirstRow = true;
         _tableLook.BandHor = true;
@@ -2148,7 +2039,7 @@ CDrawingDocument.prototype =
         var bIsChanged = false;
         if (null == this.TableStylesLastLook)
         {
-            this.TableStylesLastLook = new CTablePropLook();
+            this.TableStylesLastLook = new Asc.CTablePropLook();
 
             this.TableStylesLastLook.FirstCol = tableLook.FirstCol;
             this.TableStylesLastLook.FirstRow = tableLook.FirstRow;
@@ -2220,7 +2111,7 @@ CDrawingDocument.prototype =
 
         var Rows = 5;
 
-        History.TurnOff();
+        AscCommon.History.TurnOff();
         AscCommon.g_oTableId.m_bTurnOff = true;
         for (var i1 = 0; i1 < _styles_len; i1++)
         {
@@ -2284,7 +2175,7 @@ CDrawingDocument.prototype =
             _graphics.ClearParams();
         }
         AscCommon.g_oTableId.m_bTurnOff = false;
-        History.TurnOn();
+        AscCommon.History.TurnOn();
 
         _stream["ClearNoAttack"]();
         _stream["WriteByte"](3);
@@ -2967,3 +2858,6 @@ function check_MouseUpEvent(e)
     global_mouseEvent.IsLocked  = false;
 }
 
+//--------------------------------------------------------export----------------------------------------------------
+window['AscCommon'] = window['AscCommon'] || {};
+window['AscCommon'].CDrawingDocument = CDrawingDocument;

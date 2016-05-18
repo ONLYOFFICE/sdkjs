@@ -715,7 +715,7 @@ CRadical.prototype.Apply_MenuProps = function(Props)
     {
         if(true == this.Iterator.IsPlaceholder() && Props.HideDegree !== this.Pr.degHide)
         {
-            History.Add(this, new CChangesMathRadicalHideDegree( Props.HideDegree, this.Pr.degHide ));
+            AscCommon.History.Add(this, new CChangesMathRadicalHideDegree( Props.HideDegree, this.Pr.degHide ));
             this.raw_SetHideDegree(Props.HideDegree);
         }
     }
@@ -782,6 +782,10 @@ function CMathMenuRadical(Radical)
 AscCommon.extendClass(CMathMenuRadical, CMathMenuBase);
 CMathMenuRadical.prototype.get_HideDegree = function(){return this.HideDegree;};
 CMathMenuRadical.prototype.put_HideDegree = function(Hide){this.HideDegree = Hide;};
+
+//--------------------------------------------------------export----------------------------------------------------
+window['AscCommonWord'] = window['AscCommonWord'] || {};
+window['AscCommonWord'].CRadical = CRadical;
 
 window["CMathMenuRadical"] = CMathMenuRadical;
 CMathMenuRadical.prototype["get_HideDegree"] = CMathMenuRadical.prototype.get_HideDegree;

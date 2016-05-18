@@ -36,6 +36,7 @@ var CreateAscColor = AscCommon.CreateAscColor;
 var g_oIdCounter = AscCommon.g_oIdCounter;
 var g_oTableId = AscCommon.g_oTableId;
 var isRealObject = AscCommon.isRealObject;
+var History = AscCommon.History;
 
 var c_oAscColor = Asc.c_oAscColor;
 var c_oAscFill = Asc.c_oAscFill;
@@ -300,11 +301,6 @@ function checkThemeFonts(oFontMap, font_scheme)
 
 function ExecuteNoHistory(f, oThis, args)
 {
-    if(!(History instanceof CHistory))
-    {
-        History = {Add: function(){}};
-    }
-
     History.TurnOff && History.TurnOff();
 
     var b_table_id = false;
@@ -351,7 +347,7 @@ function checkTableCellPr(cellPr, slide, layout, master, theme)
     }
     else
     {
-        color_map = G_O_DEFAULT_COLOR_MAP;
+        color_map = AscFormat.G_O_DEFAULT_COLOR_MAP;
     }
 
     checkObjectUnifill(cellPr.Shd, theme, color_map);
@@ -375,13 +371,25 @@ var TYPE_TRACK = {
     GROUP : 0,
     GROUP_PASSIVE : 1,
     TEXT : 2,
-    EMPTY_PH : 3
+    EMPTY_PH : 3,
+    CHART_TEXT : 4
 };
 var TYPE_KIND = {
     SLIDE : 0,
     LAYOUT : 1,
     MASTER : 2
 };
+
+var TYPE_TRACK_SHAPE = 0;
+var TYPE_TRACK_GROUP = TYPE_TRACK_SHAPE;
+var TYPE_TRACK_GROUP_PASSIVE = 1;
+var TYPE_TRACK_TEXT = 2;
+var TYPE_TRACK_EMPTY_PH = 3;
+var TYPE_TRACK_CHART = 4;
+
+var SLIDE_KIND = 0;
+var LAYOUT_KIND = 1;
+var MASTER_KIND = 2;
 
 var map_prst_color = {};
 
@@ -620,6 +628,10 @@ var cd13 = 1.0/3.0;
 var cd23 = 2.0/3.0;
 var max_hls = 255.0;
 
+var DEC_GAMMA          = 2.3;
+var INC_GAMMA          = 1.0 / DEC_GAMMA;
+var MAX_PERCENT        = 100000;
+
 function CColorModifiers()
 {
     this.Mods = [];
@@ -827,6 +839,36 @@ CColorModifiers.prototype =
         return v1;
     },
 
+    lclRgbCompToCrgbComp: function(value)
+    {
+        return (value * MAX_PERCENT / 255);
+    },
+
+    lclCrgbCompToRgbComp: function(value)
+    {
+        return (value * 255 / MAX_PERCENT);
+    },
+
+    lclGamma: function(nComp, fGamma)
+    {
+        return (Math.pow(nComp/MAX_PERCENT, fGamma)*MAX_PERCENT) >> 0;
+    },
+
+    RgbtoCrgb: function(RGBA)
+    {
+        RGBA.R = this.lclGamma(this.lclRgbCompToCrgbComp(RGBA.R), DEC_GAMMA);
+        RGBA.G = this.lclGamma(this.lclRgbCompToCrgbComp(RGBA.G), DEC_GAMMA);
+        RGBA.B = this.lclGamma(this.lclRgbCompToCrgbComp(RGBA.B), DEC_GAMMA);
+    },
+
+
+    CrgbtoRgb: function(RGBA)
+    {
+        RGBA.R = this.lclCrgbCompToRgbComp(this.lclGamma(RGBA.R, INC_GAMMA)) >> 0;
+        RGBA.G = this.lclCrgbCompToRgbComp(this.lclGamma(RGBA.G, INC_GAMMA)) >> 0;
+        RGBA.B = this.lclCrgbCompToRgbComp(this.lclGamma(RGBA.B, INC_GAMMA)) >> 0;
+    },
+
     Apply : function(RGBA)
     {
         if (null == this.Mods)
@@ -948,66 +990,91 @@ CColorModifiers.prototype =
 
                 this.HSL2RGB(HSL, RGBA);
             }
-       else if (colorMod.name == "wordShade")
-       {
-           var val_ = colorMod.val/255;
-           //GBA.R = Math.max(0, (RGBA.R * (1 - val_)) >> 0);
-           //GBA.G = Math.max(0, (RGBA.G * (1 - val_)) >> 0);
-           //GBA.B = Math.max(0, (RGBA.B * (1 - val_)) >> 0);
+            else if (colorMod.name == "wordShade")
+            {
+                var val_ = colorMod.val/255;
+                //GBA.R = Math.max(0, (RGBA.R * (1 - val_)) >> 0);
+                //GBA.G = Math.max(0, (RGBA.G * (1 - val_)) >> 0);
+                //GBA.B = Math.max(0, (RGBA.B * (1 - val_)) >> 0);
 
 
-           //RGBA.R = Math.max(0,  ((1 - val_)*(- RGBA.R) + RGBA.R) >> 0);
-           //RGBA.G = Math.max(0,  ((1 - val_)*(- RGBA.G) + RGBA.G) >> 0);
-           //RGBA.B = Math.max(0,  ((1 - val_)*(- RGBA.B) + RGBA.B) >> 0);
+                //RGBA.R = Math.max(0,  ((1 - val_)*(- RGBA.R) + RGBA.R) >> 0);
+                //RGBA.G = Math.max(0,  ((1 - val_)*(- RGBA.G) + RGBA.G) >> 0);
+                //RGBA.B = Math.max(0,  ((1 - val_)*(- RGBA.B) + RGBA.B) >> 0);
 
-           var HSL = {H: 0, S: 0, L: 0};
-           this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
+                var HSL = {H: 0, S: 0, L: 0};
+                this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
 
-           if(HSL.L*val_ > max_hls)
-               HSL.L = max_hls;
-           else
-               HSL.L = Math.max(0, (HSL.L * val_) >> 0);
-           this.HSL2RGB(HSL, RGBA);
-       }
-         else if (colorMod.name == "wordTint")
-         {
-             var _val = colorMod.val/255;
-             //RGBA.R = Math.max(0,  ((1 - _val)*(255 - RGBA.R) + RGBA.R) >> 0);
-             //RGBA.G = Math.max(0,  ((1 - _val)*(255 - RGBA.G) + RGBA.G) >> 0);
-             //RGBA.B = Math.max(0,  ((1 - _val)*(255 - RGBA.B) + RGBA.B) >> 0);
+                if(HSL.L*val_ > max_hls)
+                    HSL.L = max_hls;
+                else
+                    HSL.L = Math.max(0, (HSL.L * val_) >> 0);
+                this.HSL2RGB(HSL, RGBA);
+            }
+            else if (colorMod.name == "wordTint")
+            {
+                var _val = colorMod.val/255;
+                //RGBA.R = Math.max(0,  ((1 - _val)*(255 - RGBA.R) + RGBA.R) >> 0);
+                //RGBA.G = Math.max(0,  ((1 - _val)*(255 - RGBA.G) + RGBA.G) >> 0);
+                //RGBA.B = Math.max(0,  ((1 - _val)*(255 - RGBA.B) + RGBA.B) >> 0);
 
-             var HSL = {H: 0, S: 0, L: 0};
-             this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
+                var HSL = {H: 0, S: 0, L: 0};
+                this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
 
-             var L_ = HSL.L*_val + (255 - colorMod.val);
-             if(L_ > max_hls)
-                 HSL.L = max_hls;
-             else
-                 HSL.L = Math.max(0, (L_) >> 0);
-             this.HSL2RGB(HSL, RGBA);
-         }
-         else if (colorMod.name == "shade")
-         {
-             RGBA.R = Math.max(0, scRGB_to_sRGB(sRGB_to_scRGB(RGBA.R/255) * val)*255 >> 0);
-             RGBA.G = Math.max(0, scRGB_to_sRGB(sRGB_to_scRGB(RGBA.G/255) * val)*255 >> 0);
-             RGBA.B = Math.max(0, scRGB_to_sRGB(sRGB_to_scRGB(RGBA.B/255) * val)*255 >> 0);
-         }
-         else if (colorMod.name == "tint")
-         {
-             if(val > 0)
-             {
-                 RGBA.R = Math.max(0, scRGB_to_sRGB(1 - (1 - sRGB_to_scRGB(RGBA.R/255)) * val)*255 >> 0);
-                 RGBA.G = Math.max(0, scRGB_to_sRGB(1 - (1 - sRGB_to_scRGB(RGBA.G/255)) * val)*255 >> 0);
-                 RGBA.B = Math.max(0, scRGB_to_sRGB(1 - (1 - sRGB_to_scRGB(RGBA.B/255)) * val)*255 >> 0);
-             }
-             else
-             {
-                 RGBA.R = Math.max(0, scRGB_to_sRGB(1 - (1 - sRGB_to_scRGB(RGBA.R/255)) * (1-val))*255 >> 0);
-                 RGBA.G = Math.max(0, scRGB_to_sRGB(1 - (1 - sRGB_to_scRGB(RGBA.G/255)) * (1-val))*255 >> 0);
-                 RGBA.B = Math.max(0, scRGB_to_sRGB(1 - (1 - sRGB_to_scRGB(RGBA.B/255)) * (1-val))*255 >> 0);
-             }
-         }
+                var L_ = HSL.L*_val + (255 - colorMod.val);
+                if(L_ > max_hls)
+                    HSL.L = max_hls;
+                else
+                    HSL.L = Math.max(0, (L_) >> 0);
+                this.HSL2RGB(HSL, RGBA);
+            }
+            else if (colorMod.name == "shade")
+            {
+                this.RgbtoCrgb(RGBA);
+                if (val < 0) val = 0;
+                if (val > 1) val = 1;
+                RGBA.R = ((RGBA.R * val)) >> 0;
+                RGBA.G = ((RGBA.G * val)) >> 0;
+                RGBA.B = ((RGBA.B * val)) >> 0;
+                this.CrgbtoRgb(RGBA);
+            }
+            else if (colorMod.name == "tint")
+            {
+                this.RgbtoCrgb(RGBA);
+                if (val < 0) val = 0;
+                if (val > 1) val = 1;
+                RGBA.R = ( MAX_PERCENT - (MAX_PERCENT - RGBA.R) * val );
+                RGBA.G = ( MAX_PERCENT - (MAX_PERCENT - RGBA.G) * val );
+                RGBA.B = ( MAX_PERCENT - (MAX_PERCENT - RGBA.B) * val );
+                this.CrgbtoRgb(RGBA);
+            }
+            else if (colorMod.name == "gamma")
+            {
+                this.RgbtoCrgb(RGBA);
+                RGBA.R = this.lclGamma(RGBA.R, INC_GAMMA);
+                RGBA.G = this.lclGamma(RGBA.G, INC_GAMMA);
+                RGBA.B = this.lclGamma(RGBA.B, INC_GAMMA);
+                this.CrgbtoRgb(RGBA);
+            }
+            else if (colorMod.name == "invGamma")
+            {
+                this.RgbtoCrgb(RGBA);
+                RGBA.R = this.lclGamma(RGBA.R, DEC_GAMMA);
+                RGBA.G = this.lclGamma(RGBA.G, DEC_GAMMA);
+                RGBA.B = this.lclGamma(RGBA.B, DEC_GAMMA);
+                this.CrgbtoRgb(RGBA);
+            }
         }
+    },
+
+    applyGamma : function(c, gamma)
+    {
+        // LO
+        var _max = 256;
+        var _ret = (Math.pow(c / _max, gamma) * _max) >> 0;
+        if (_ret > 255)
+            _ret = 255;
+        return _ret;
     }
 };
 
@@ -2538,6 +2605,8 @@ function CGradFill()
 
     this.lin = null;
     this.path = null;
+
+    this.rotateWithShape = null;
 }
 
 CGradFill.prototype =
@@ -2715,6 +2784,9 @@ CGradFill.prototype =
 
         if (this.path)
             duplicate.path = this.path.createDuplicate();
+
+        if (this.rotateWithShape != null)
+            duplicate.rotateWithShape = this.rotateWithShape;
 
         return duplicate;
     },
@@ -7066,11 +7138,11 @@ CSpPr.prototype =
                     this.Fill.Read_FromBinary(r);
 
 
-                    if(typeof CollaborativeEditing !== "undefined")
+                    if(typeof AscCommon.CollaborativeEditing !== "undefined")
                     {
                         if(this.Fill.fill && this.Fill.fill.type === c_oAscFill.FILL_TYPE_BLIP && typeof this.Fill.fill.RasterImageId === "string" && this.Fill.fill.RasterImageId.length > 0)
                         {
-							CollaborativeEditing.Add_NewImage(AscCommon.getFullImageSrc2(this.Fill.fill.RasterImageId));
+                            AscCommon.CollaborativeEditing.Add_NewImage(AscCommon.getFullImageSrc2(this.Fill.fill.RasterImageId));
                         }
                     }
                 }
@@ -11871,6 +11943,19 @@ function CorrectUniColor(asc_color, unicolor, flag)
     return ret;
 }
 
+    function deleteDrawingBase(aObjects, graphicId)
+    {
+        var position = null;
+        for (var i = 0; i < aObjects.length; i++) {
+            if ( aObjects[i].graphicObject.Get_Id() == graphicId ) {
+                aObjects.splice(i, 1);
+                position = i;
+                break;
+            }
+        }
+        return position;
+    }
+
     //----------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].CreateFontRef = CreateFontRef;
@@ -11968,6 +12053,7 @@ function CorrectUniColor(asc_color, unicolor, flag)
     window['AscFormat'].CreateAscTextArtProps = CreateAscTextArtProps;
     window['AscFormat'].CreateUnifillFromAscColor = CreateUnifillFromAscColor;
     window['AscFormat'].CorrectUniColor = CorrectUniColor;
+    window['AscFormat'].deleteDrawingBase = deleteDrawingBase;
 
     window['AscFormat'].Ax_Counter = Ax_Counter;
     window['AscFormat'].TYPE_TRACK = TYPE_TRACK;

@@ -24,6 +24,8 @@
 */
 "use strict";
 
+(function(window, undefined){
+
 // Import
 var CShape = AscFormat.CShape;
 var CGroupShape = AscFormat.CGroupShape;
@@ -115,7 +117,7 @@ CGroupShape.prototype.setDrawingObjects = function(drawingObjects)
 
 CGroupShape.prototype.setWorksheet = function(worksheet)
 {
-    History.Add(this, {Type: AscDFH.historyitem_AutoShapes_SetWorksheet, oldPr: this.worksheet, newPr: worksheet});
+    AscCommon.History.Add(this, {Type: AscDFH.historyitem_AutoShapes_SetWorksheet, oldPr: this.worksheet, newPr: worksheet});
     this.worksheet = worksheet;
     for(var i = 0; i < this.spTree.length; ++i)
     {
@@ -231,7 +233,7 @@ CGroupShape.prototype.recalculate = function()
         if(this.recalcInfo.recalculateTransform)
         {
             this.recalculateTransform();
-            this.calculateSnapArrays();
+            this.recalculateSnapArrays();
             this.recalcInfo.recalculateTransform = false;
         }
         if(this.recalcInfo.recalculateArrGraphicObjects)
@@ -250,3 +252,4 @@ CGroupShape.prototype.recalculate = function()
         }
     }, this, []);
 };
+})(window);

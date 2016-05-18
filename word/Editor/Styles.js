@@ -24,15 +24,10 @@
 */
 "use strict";
 
-/**
- * User: Ilja.Kirillov
- * Date: 11.11.11
- * Time: 14:46
- */
-
 // Import
 var align_Left = AscCommon.align_Left;
 var g_oTableId = AscCommon.g_oTableId;
+var History = AscCommon.History;
 
 var linerule_Auto = Asc.linerule_Auto;
 var c_oAscShdClear = Asc.c_oAscShdClear;
@@ -3631,7 +3626,7 @@ CStyle.prototype =
             }
         }
 
-        CollaborativeEditing.Add_LinkData(this, {StyleUpdate : true});
+        AscCommon.CollaborativeEditing.Add_LinkData(this, {StyleUpdate : true});
     },
 
     Write_ToBinary2 : function(Writer)
@@ -4263,6 +4258,16 @@ CStyles.prototype =
 
         return Styles;
     },
+    
+    CopyStyle : function()
+    {
+        var res = [];
+        for (var StyleId in this.Style)
+        {
+            res[StyleId] = this.Style[StyleId].Copy();
+        }
+        return res;
+    },
 
     Get_DefaultParaPr : function()
     {
@@ -4824,7 +4829,7 @@ CStyles.prototype =
                 continue;
 
             var AbstractNum = Numbering.Get_AbstractNum(NumPr.NumId);
-            if (!Num)
+            if (!AbstractNum)
                 continue;
 
             var iLvl = (NumPr.Lvl ? NumPr.Lvl : 0);
@@ -5035,7 +5040,7 @@ CStyles.prototype =
                 var Id = Reader.GetString2();
                 this.Style[Id] = g_oTableId.Get_ById( Id );
                 this.Update_Interface(Id);
-                CollaborativeEditing.Add_LinkData(this, {UpdateStyleId : Id});
+                AscCommon.CollaborativeEditing.Add_LinkData(this, {UpdateStyleId : Id});
                 break;
             }
             case AscDFH.historyitem_Styles_Remove:
@@ -5045,7 +5050,7 @@ CStyles.prototype =
                 var Id = Reader.GetString2();
                 delete this.Style[Id];
                 this.Update_Interface(Id);
-                CollaborativeEditing.Add_LinkData(this, {UpdateStyleId : Id});
+                AscCommon.CollaborativeEditing.Add_LinkData(this, {UpdateStyleId : Id});
                 break;
             }
             case AscDFH.historyitem_Styles_ChangeDefaultParaPr:
@@ -10737,10 +10742,9 @@ asc_CStyle.prototype.get_TextPr = function()
     return this.TextPr;
 };
 
-/*
- * Export
- * -----------------------------------------------------------------------------
- */
+//---------------------------------------------------------export---------------------------------------------------
+window['Asc'] = window['Asc'] || {};
+window['AscCommonWord'] = window['AscCommonWord'] || {};
 window["Asc"]["asc_CStyle"] = window["Asc"].asc_CStyle = asc_CStyle;
 asc_CStyle.prototype["get_Name"]    = asc_CStyle.prototype.get_Name;
 asc_CStyle.prototype["put_Name"]    = asc_CStyle.prototype.put_Name;
@@ -10753,4 +10757,14 @@ asc_CStyle.prototype["put_Type"]    = asc_CStyle.prototype.put_Type;
 asc_CStyle.prototype["get_Link"]    = asc_CStyle.prototype.get_Link;
 asc_CStyle.prototype["put_Link"]    = asc_CStyle.prototype.put_Link;
 
-
+window["AscCommonWord"].CDocumentColor = CDocumentColor;
+window["AscCommonWord"].CStyle = CStyle;
+window["AscCommonWord"].CTextPr = CTextPr;
+window["AscCommonWord"].CParaTabs = CParaTabs;
+window["AscCommonWord"].g_dKoef_pt_to_mm = g_dKoef_pt_to_mm;
+window["AscCommonWord"].border_Single = border_Single;
+window["AscCommonWord"].Default_Tab_Stop = Default_Tab_Stop;
+window["AscCommonWord"].highlight_None = highlight_None;
+window["AscCommonWord"].spacing_Auto = spacing_Auto;
+window["AscCommonWord"].wrap_NotBeside = wrap_NotBeside;
+window["AscCommonWord"].wrap_Around = wrap_Around;

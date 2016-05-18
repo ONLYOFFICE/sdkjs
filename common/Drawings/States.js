@@ -31,6 +31,7 @@ var HANDLE_EVENT_MODE_HANDLE = AscFormat.HANDLE_EVENT_MODE_HANDLE;
 var HANDLE_EVENT_MODE_CURSOR = AscFormat.HANDLE_EVENT_MODE_CURSOR;
 
 var isRealObject = AscCommon.isRealObject;
+    var History = AscCommon.History;
 
 var MOVE_DELTA = 1/100000;
 var SNAP_DISTANCE = 1.27;
@@ -233,7 +234,7 @@ NullState.prototype =
                         this.drawingObjects.checkChartTextSelection(true);
                         this.drawingObjects.drawingObjects.showDrawingObjects(true);
                     }
-                    CollaborativeEditing.Update_ForeignCursorsPositions();
+                    AscCommon.CollaborativeEditing.Update_ForeignCursorsPositions();
                 }
                 return ret;
             }
@@ -248,7 +249,7 @@ NullState.prototype =
                         this.drawingObjects.checkChartTextSelection(true);
                         this.drawingObjects.drawingObjects.showDrawingObjects(true);
                     }
-                    CollaborativeEditing.Update_ForeignCursorsPositions();
+                    AscCommon.CollaborativeEditing.Update_ForeignCursorsPositions();
                 }
                 return ret;
             }
@@ -266,7 +267,7 @@ NullState.prototype =
                     this.drawingObjects.checkChartTextSelection(true);
                     this.drawingObjects.drawingObjects.showDrawingObjects(true);
                 }
-                CollaborativeEditing.Update_ForeignCursorsPositions();
+                AscCommon.CollaborativeEditing.Update_ForeignCursorsPositions();
             }
             return ret;
         }
@@ -282,7 +283,7 @@ NullState.prototype =
                     this.drawingObjects.checkChartTextSelection(true);
                     this.drawingObjects.drawingObjects.showDrawingObjects(true);
                 }
-                CollaborativeEditing.Update_ForeignCursorsPositions();
+                AscCommon.CollaborativeEditing.Update_ForeignCursorsPositions();
             }
             return ret;
         }

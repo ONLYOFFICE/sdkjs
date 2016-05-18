@@ -49,6 +49,7 @@ var g_fontApplication = AscFonts.g_fontApplication;
 var g_oTableId = AscCommon.g_oTableId;
 var g_oTextMeasurer = AscCommon.g_oTextMeasurer;
 var isRealObject = AscCommon.isRealObject;
+var History = AscCommon.History;
 
 var HitInLine = AscFormat.HitInLine;
 var MOVE_DELTA = AscFormat.MOVE_DELTA;
@@ -91,6 +92,8 @@ var para_Math_Ampersand            = 0x0035; // &
 var para_Field                     = 0x0036; // Поле
 var para_Math_BreakOperator        = 0x0037; // break operator в формуле
 var para_Math_Content              = 0x0038; // math content
+var para_FootnoteReference         = 0x0039; // Ссылка на сноску
+var para_FootnoteRef               = 0x0040; // Номер сноски (должен быть только внутри сноски)
 
 
 
@@ -2329,11 +2332,11 @@ ParaTextPr.prototype =
                     unifill.Read_FromBinary(Reader);
                     this.Value.Unifill = unifill;
 
-                    if(typeof CollaborativeEditing !== "undefined")
+                    if(typeof AscCommon.CollaborativeEditing !== "undefined")
                     {
                         if(unifill.fill && unifill.fill.type === Asc.c_oAscFill.FILL_TYPE_BLIP && typeof unifill.fill.RasterImageId === "string" && unifill.fill.RasterImageId.length > 0)
                         {
-                            CollaborativeEditing.Add_NewImage(AscCommon.getFullImageSrc2(unifill.fill.RasterImageId));
+                            AscCommon.CollaborativeEditing.Add_NewImage(AscCommon.getFullImageSrc2(unifill.fill.RasterImageId));
                         }
                     }
                 }
@@ -2731,11 +2734,11 @@ ParaEnd.prototype =
         var strSectionBreak = "";
         switch ( Type )
         {
-            case section_type_Column     : strSectionBreak = " End of Section "; break;
-            case section_type_Continuous : strSectionBreak = " Section Break (Continuous) "; break;
-            case section_type_EvenPage   : strSectionBreak = " Section Break (Even Page) "; break;
-            case section_type_NextPage   : strSectionBreak = " Section Break (Next Page) "; break;
-            case section_type_OddPage    : strSectionBreak = " Section Break (Odd Page) "; break;
+            case c_oAscSectionBreakType.Column     : strSectionBreak = " End of Section "; break;
+            case c_oAscSectionBreakType.Continuous : strSectionBreak = " Section Break (Continuous) "; break;
+            case c_oAscSectionBreakType.EvenPage   : strSectionBreak = " Section Break (Even Page) "; break;
+            case c_oAscSectionBreakType.NextPage   : strSectionBreak = " Section Break (Next Page) "; break;
+            case c_oAscSectionBreakType.OddPage    : strSectionBreak = " Section Break (Odd Page) "; break;
         }
 
         g_oTextMeasurer.SetFont( {FontFamily: { Name : "Courier New", Index : -1 }, FontSize: 8, Italic: false, Bold : false} );
@@ -4553,24 +4556,11 @@ ParaDrawing.prototype =
         if (undefined != Props.AllowOverlap)
             this.Set_AllowOverlap(Props.AllowOverlap);
 
-        var bNeedUpdateWH = false, newW = this.Extent.W, newH = this.Extent.H;
         if (undefined != Props.PositionH) {
             this.Set_PositionH(Props.PositionH.RelativeFrom, Props.PositionH.UseAlign, ( true === Props.PositionH.UseAlign ? Props.PositionH.Align : Props.PositionH.Value ), Props.PositionH.Percent);
-            if (Props.PositionH.UseAlign) {
-                bNeedUpdateWH = true;
-                if (isRealObject(this.GraphicObj.bounds) && AscFormat.isRealNumber(this.GraphicObj.bounds.w)) {
-                    newW = this.GraphicObj.bounds.w;
-                }
-            }
         }
         if (undefined != Props.PositionV) {
             this.Set_PositionV(Props.PositionV.RelativeFrom, Props.PositionV.UseAlign, ( true === Props.PositionV.UseAlign ? Props.PositionV.Align : Props.PositionV.Value ), Props.PositionV.Percent);
-            if (this.PositionV.UseAlign) {
-                bNeedUpdateWH = true;
-                if (isRealObject(this.GraphicObj.bounds) && AscFormat.isRealNumber(this.GraphicObj.bounds.h)) {
-                    newH = this.GraphicObj.bounds.h;
-                }
-            }
         }
         if (undefined != Props.SizeRelH) {
             this.SetSizeRelH({
@@ -4596,10 +4586,6 @@ ParaDrawing.prototype =
             this.SetSizeRelH({RelativeFrom: AscCommon.c_oAscSizeRelFromH.sizerelfromhPage, Percent: 0})
         }
 
-        if(bNeedUpdateWH)
-        {
-            this.setExtent(newW, newH);
-        }
         if(bCheckWrapPolygon)
         {
             this.Check_WrapPolygon();
@@ -4611,27 +4597,32 @@ ParaDrawing.prototype =
         if(!this.GraphicObj)
             return;
         var dW, dH, bInline = this.Is_Inline();
-        if(this.PositionH.UseAlign || this.PositionV.UseAlign || bInline)
-        {
-            this.GraphicObj.recalculate();
-        }
-        if(this.PositionH.UseAlign || bInline)
-        {
-            dW = this.GraphicObj.bounds.w;
-        }
-        else
+        this.GraphicObj.recalculate();
+        this.setExtent(this.GraphicObj.spPr.xfrm.extX, this.GraphicObj.spPr.xfrm.extY);
+        if(AscFormat.checkNormalRotate(AscFormat.isRealNumber(this.GraphicObj.rot) ? this.GraphicObj.rot : 0))
         {
             dW = this.GraphicObj.spPr.xfrm.extX;
-        }
-        if(this.PositionV.UseAlign || bInline)
-        {
-            dH = this.GraphicObj.bounds.h;
+            dH = this.GraphicObj.spPr.xfrm.extY;
         }
         else
         {
-            dH = this.GraphicObj.spPr.xfrm.extY;
+            dH = this.GraphicObj.spPr.xfrm.extX;
+            dW = this.GraphicObj.spPr.xfrm.extY;
         }
-        this.setExtent(dW, dH);
+        var xc = this.GraphicObj.localTransform.TransformPointX(this.GraphicObj.extX/2, this.GraphicObj.extY/2);
+        var yc = this.GraphicObj.localTransform.TransformPointY(this.GraphicObj.extX/2, this.GraphicObj.extY/2);
+        var oBounds = this.GraphicObj.bounds;
+        var LineCorrect = 0;
+        if(this.GraphicObj.pen)
+        {
+            LineCorrect = (this.GraphicObj.pen.w == null) ? 12700 : parseInt(this.GraphicObj.pen.w);
+            LineCorrect /= 72000.0;
+        }
+        var EEL = (xc - dW/2) - oBounds.l - LineCorrect;
+        var EET = (yc - dH/2) - oBounds.t - LineCorrect;
+        var EER = oBounds.r + LineCorrect - (xc + dW/2);
+        var EEB = oBounds.b + LineCorrect - (yc + dH/2);
+        this.setEffectExtent(EEL > 0 ? EEL : 0, EET > 0 ? EET : 0, EER > 0 ? EER : 0, EEB > 0 ? EEB : 0);
         this.Check_WrapPolygon();
     },
 
@@ -4673,9 +4664,22 @@ ParaDrawing.prototype =
         }
         if(AscFormat.isRealNumber(this.Extent.W) && AscFormat.isRealNumber(this.Extent.H) && (!this.GraphicObj.checkAutofit || !this.GraphicObj.checkAutofit()) && !this.SizeRelH && !this.SizeRelV)
         {
-            this.Width        = this.Extent.W;
-            this.Height       = this.Extent.H;
-            this.WidthVisible = this.Extent.W;
+            var oEffectExtent = this.EffectExtent;
+            var dW, dH;
+            if(AscFormat.checkNormalRotate(AscFormat.isRealNumber(this.GraphicObj.rot) ? this.GraphicObj.rot : 0))
+            {
+                dW = this.Extent.W;
+                dH = this.Extent.H;
+            }
+            else
+            {
+                dH = this.Extent.W;
+                dW = this.Extent.H;
+            }
+
+            this.Width        = dW + AscFormat.getValOrDefault(oEffectExtent.L, 0) + AscFormat.getValOrDefault(oEffectExtent.R, 0);
+            this.Height       = dH + AscFormat.getValOrDefault(oEffectExtent.T, 0) + AscFormat.getValOrDefault(oEffectExtent.B, 0);
+            this.WidthVisible = this.Width;
         }
         else
         {
@@ -4787,6 +4791,11 @@ ParaDrawing.prototype =
         if(AscFormat.isRealNumber(this.Extent.W) && AscFormat.isRealNumber(this.Extent.H))
         {
             c.setExtent(this.Extent.W, this.Extent.H);
+        }
+        var EE = this.EffectExtent;
+        if(EE.L > 0 || EE.T > 0 || EE.R > 0 || EE.B > 0)
+        {
+            c.setEffectExtent(EE.L, EE.T, EE.R, EE.B);
         }
         if (this.ParaMath)
             c.Set_ParaMath(this.ParaMath.Copy());
@@ -6607,8 +6616,8 @@ ParaDrawing.prototype =
     {
         this.GraphicObj.snapArrayX.length = 0;
         this.GraphicObj.snapArrayY.length = 0;
-        if(isRealObject(this.GraphicObj) && typeof this.GraphicObj.calculateSnapArrays === "function")
-            this.GraphicObj.calculateSnapArrays(this.GraphicObj.snapArrayX, this.GraphicObj.snapArrayY);
+        if(this.GraphicObj)
+            this.GraphicObj.recalculateSnapArrays();
 
     },
 
@@ -7073,6 +7082,8 @@ ParaDrawing.prototype =
         c.Set_AllowOverlap(this.AllowOverlap);
         c.Set_WrappingType(this.wrappingType);
         c.Set_BehindDoc(this.behindDoc);
+        var EE = this.EffectExtent;
+        c.setEffectExtent(EE.L, EE.T, EE.R, EE.B);
         return c;
     },
 
@@ -7462,6 +7473,115 @@ ParaPresentationNumbering.prototype =
     }
 };
 
+
+/**
+ * Класс представляющий ссылку на сноску.
+ * @param {CFootEndnote} Footnote - Ссылка на сноску.
+ * @constructor
+ */
+function ParaFootnoteReference(Footnote)
+{
+    this.Footnote     = Footnote;
+
+    this.Width        = 0;
+    this.WidthVisible = 0;
+    this.Number       = 1;
+}
+ParaFootnoteReference.prototype.Type             = para_FootnoteReference;
+ParaFootnoteReference.prototype.Get_Type         = function()
+{
+    return para_FootnoteReference;
+};
+ParaFootnoteReference.prototype.Draw             = function(X, Y, Context, PDSE)
+{
+    Context.SetFontSlot(fontslot_ASCII, vertalign_Koef_Size);
+    g_oTextMeasurer.SetFontSlot(fontslot_ASCII, vertalign_Koef_Size);
+
+    // TODO: Пока делаем обычный вариант с типом Decimal
+    var _X = X;
+    var T = Numbering_Number_To_String(this.Number);
+    for (var nPos = 0; nPos < T.length; ++nPos)
+    {
+        var Char = T.charAt(nPos);
+        Context.FillText(_X, Y, Char);
+        _X += g_oTextMeasurer.Measure(Char).Width;
+    }
+
+    // TODO: Надо переделать в отдельную функцию отрисовщика
+    if (editor && editor.ShowParaMarks)
+    {
+        if (Context.m_oContext && Context.m_oContext.setLineDash)
+            Context.m_oContext.setLineDash([1, 1]);
+
+        var l = X, t = PDSE.LineTop, r = X + this.Get_Width(), b = PDSE.BaseLine;
+        Context.drawHorLineExt(c_oAscLineDrawingRule.Top, t, l, r, 0, 0, 0);
+        Context.drawVerLine(c_oAscLineDrawingRule.Right, l, t, b, 0);
+        Context.drawVerLine(c_oAscLineDrawingRule.Left, r, t, b, 0);
+        Context.drawHorLineExt(c_oAscLineDrawingRule.Top, b, l, r, 0, 0, 0);
+
+        if (Context.m_oContext && Context.m_oContext.setLineDash)
+            Context.m_oContext.setLineDash([]);
+    }
+};
+ParaFootnoteReference.prototype.Measure          = function(Context, TextPr)
+{
+    Context.SetFontSlot(fontslot_ASCII, vertalign_Koef_Size);
+
+    // TODO: Пока делаем обычный вариант с типом Decimal
+    var X = 0;
+    var T = Numbering_Number_To_String(this.Number);
+    for (var nPos = 0; nPos < T.length; ++nPos)
+    {
+        var Char = T.charAt(nPos);
+        X += Context.Measure(Char).Width;
+    }
+
+    var ResultWidth   = (Math.max((X + TextPr.Spacing), 0) * TEXTWIDTH_DIVIDER) | 0;
+    this.Width        = ResultWidth;
+    this.WidthVisible = ResultWidth;
+};
+ParaFootnoteReference.prototype.Get_Width        = function()
+{
+    return (this.Width / TEXTWIDTH_DIVIDER);
+};
+ParaFootnoteReference.prototype.Get_WidthVisible = function()
+{
+    return (this.WidthVisible / TEXTWIDTH_DIVIDER);
+};
+ParaFootnoteReference.prototype.Set_WidthVisible = function(WidthVisible)
+{
+    this.WidthVisible = (WidthVisible * TEXTWIDTH_DIVIDER) | 0;
+};
+ParaFootnoteReference.prototype.Is_RealContent   = function()
+{
+    return true;
+};
+ParaFootnoteReference.prototype.Can_AddNumbering = function()
+{
+    return true;
+};
+ParaFootnoteReference.prototype.Copy             = function()
+{
+    return new ParaFootnoteReference(this.Footnote);
+};
+ParaFootnoteReference.prototype.Write_ToBinary   = function(Writer)
+{
+    // Long   : Type
+    // String : FootnoteId
+    Writer.WriteLong(this.Type);
+    Writer.WriteString2(this.FootnoteId);
+};
+ParaFootnoteReference.prototype.Read_FromBinary  = function(Reader)
+{
+    // String : FootnoteId
+    this.FootnoteId = Reader.GetString2();
+};
+ParaFootnoteReference.prototype.Get_Footnote     = function()
+{
+    return this.Footnote;
+};
+
+
 function ParagraphContent_Read_FromBinary(Reader)
 {
     var ElementType = Reader.GetLong();
@@ -7489,6 +7609,7 @@ function ParagraphContent_Read_FromBinary(Reader)
         case para_Math_BreakOperator: Element = new CMathText();		     break;
         case para_Math_Ampersand	: Element = new CMathAmp();   		   	 break;
         case para_PresentationNumbering : Element = new ParaPresentationNumbering(); break;
+        case para_FootnoteReference : Element = new ParaFootnoteReference(); break;
     }
 
     if ( null != Element )
@@ -7496,3 +7617,12 @@ function ParagraphContent_Read_FromBinary(Reader)
 
     return Element;
 }
+
+//--------------------------------------------------------export----------------------------------------------------
+window['AscCommonWord'] = window['AscCommonWord'] || {};
+window['AscCommonWord'].ParaNewLine = ParaNewLine;
+window['AscCommonWord'].ParaTextPr = ParaTextPr;
+window['AscCommonWord'].ParaDrawing = ParaDrawing;
+
+window['AscCommonWord'].break_Page = break_Page;
+window['AscCommonWord'].break_Column = break_Column;

@@ -24,13 +24,9 @@
 */
 "use strict";
 
-/**
- * Created with JetBrains WebStorm.
- * User: Sergey.Luzyanin
- * Date: 6/26/13
- * Time: 11:48 AM
- * To change this template use File | Settings | File Templates.
- */
+// Import
+var History = AscCommon.History;
+
 function SlideLayout()
 {
 
@@ -288,11 +284,11 @@ SlideLayout.prototype =
                 {
                     Fill = this.cSld.Bg.bgPr.Fill;
                 }
-                if(typeof CollaborativeEditing !== "undefined")
+                if(typeof AscCommon.CollaborativeEditing !== "undefined")
                 {
                     if(Fill && Fill.fill && Fill.fill.type === Asc.c_oAscFill.FILL_TYPE_BLIP && typeof Fill.fill.RasterImageId === "string" && Fill.fill.RasterImageId.length > 0)
                     {
-						CollaborativeEditing.Add_NewImage(AscCommon.getFullImageSrc2(Fill.fill.RasterImageId));
+                        AscCommon.CollaborativeEditing.Add_NewImage(AscCommon.getFullImageSrc2(Fill.fill.RasterImageId));
                     }
                 }
                 break;
@@ -818,9 +814,9 @@ function CLayoutThumbnailDrawer()
 
         var _ctx = this.CanvasImage.getContext('2d');
 
-        var g = new CGraphics();
+        var g = new AscCommon.CGraphics();
         g.init(_ctx, w_px, h_px, this.WidthMM, this.HeightMM);
-        g.m_oFontManager = g_fontManager;
+        g.m_oFontManager = AscCommon.g_fontManager;
 
         g.transform(1,0,0,1,0,0);
 
@@ -1037,3 +1033,7 @@ function CLayoutThumbnailDrawer()
         return "";
     }
 }
+
+//--------------------------------------------------------export----------------------------------------------------
+window['AscCommonSlide'] = window['AscCommonSlide'] || {};
+window['AscCommonSlide'].SlideLayout = SlideLayout;

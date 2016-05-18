@@ -1584,7 +1584,7 @@ CDocumentRenderer.prototype =
                 _transform.sy = sy;
                 _transform.tx = tx;
                 _transform.ty = ty;
-                global_MatrixTransformer.MultiplyAppend(_transform, this.m_oBaseTransform);
+                AscCommon.global_MatrixTransformer.MultiplyAppend(_transform, this.m_oBaseTransform);
                 this.m_arrayPages[this.m_lPagesCount - 1].transform(_transform.sx,_transform.shy,_transform.shx,_transform.sy,_transform.tx,_transform.ty);
             }
         }
@@ -2231,6 +2231,13 @@ CDocumentRenderer.prototype =
 var MATRIX_ORDER_PREPEND    = 0;
 var MATRIX_ORDER_APPEND     = 1;
 
+    function deg2rad(deg){
+        return deg * Math.PI / 180.0;
+    }
+    function rad2deg(rad){
+        return rad * 180.0 / Math.PI;
+    }
+
 function CMatrix()
 {
     this.sx     = 1.0;
@@ -2347,10 +2354,34 @@ CMatrix.prototype =
         var y1 = 0.0;
         var x2 = 1.0;
         var y2 = 0.0;
-        this.TransformPoint(x1, y1);
-        this.TransformPoint(x2, y2);
-        var a = Math.atan2(y2-y1,x2-x1);
-        return rad2deg(a);
+        var _x1 = this.TransformPointX(x1, y1);
+        var _y1 = this.TransformPointY(x1, y1);
+        var _x2 = this.TransformPointX(x2, y2);
+        var _y2 = this.TransformPointY(x2, y2);
+
+        var _y = _y2 - _y1;
+        var _x = _x2 - _x1;
+
+        if (Math.abs(_y) < 0.001)
+        {
+            if (_x > 0)
+                return 0;
+            else
+                return 180;
+        }
+        if (Math.abs(_x) < 0.001)
+        {
+            if (_y > 0)
+                return 90;
+            else
+                return 270;
+        }
+
+        var a = Math.atan2(_y,_x);
+        a = rad2deg(a);
+        if (a < 0)
+            a += 360;
+        return a;
     },
     // ������� ���������
     CreateDublicate : function(){
@@ -2390,47 +2421,436 @@ CMatrix.prototype =
     }
 };
 
-function CMatrixL()
-{
-    this.sx     = 1.0;
-    this.shx    = 0.0;
-    this.shy    = 0.0;
-    this.sy     = 1.0;
-    this.tx     = 0.0;
-    this.ty     = 0.0;
-}
+    function GradientGetAngleNoRotate(_angle, _transform)
+    {
+        var x1 = 0.0;
+        var y1 = 0.0;
+        var x2 = 1.0;
+        var y2 = 0.0;
 
-CMatrixL.prototype =
-{
-    CreateDublicate : function()
+        var _matrixRotate = new CMatrix();
+        _matrixRotate.Rotate(-_angle / 60000);
+
+        var _x11 = _matrixRotate.TransformPointX(x1, y1);
+        var _y11 = _matrixRotate.TransformPointY(x1, y1);
+        var _x22 = _matrixRotate.TransformPointX(x2, y2);
+        var _y22 = _matrixRotate.TransformPointY(x2, y2);
+
+        _matrixRotate = global_MatrixTransformer.Invert(_transform);
+
+        var _x1 = _matrixRotate.TransformPointX(_x11, _y11);
+        var _y1 = _matrixRotate.TransformPointY(_x11, _y11);
+        var _x2 = _matrixRotate.TransformPointX(_x22, _y22);
+        var _y2 = _matrixRotate.TransformPointY(_x22, _y22);
+
+        var _y = _y2 - _y1;
+        var _x = _x2 - _x1;
+
+        var a = 0;
+        if (Math.abs(_y) < 0.001)
+        {
+            if (_x > 0)
+                a = 0;
+            else
+                a = 180;
+        }
+        else if (Math.abs(_x) < 0.001)
+        {
+            if (_y > 0)
+                a = 90;
+            else
+                a = 270;
+        }
+        else
+        {
+            a = Math.atan2(_y,_x);
+            a = rad2deg(a);
+        }
+
+        if (a < 0)
+            a += 360;
+
+        console.log(a);
+        return a * 60000;
+    };
+
+var CMatrixL = CMatrix;
+
+    function CGlobalMatrixTransformer()
     {
-        var m = new CMatrixL();
-        m.sx     = this.sx;
-        m.shx    = this.shx;
-        m.shy    = this.shy;
-        m.sy     = this.sy;
-        m.tx     = this.tx;
-        m.ty     = this.ty;
-        return m;
-    },
-    Reset : function()
-    {
-        this.sx     = 1.0;
-        this.shx    = 0.0;
-        this.shy    = 0.0;
-        this.sy     = 1.0;
-        this.tx     = 0.0;
-        this.ty     = 0.0;
-    },
-    TransformPointX : function(x,y)
-    {
-        return x * this.sx  + y * this.shx + this.tx;
-    },
-    TransformPointY : function(x,y)
-    {
-        return x * this.shy + y * this.sy  + this.ty;
+        this.TranslateAppend = function(m, _tx, _ty)
+        {
+            m.tx += _tx;
+            m.ty += _ty;
+        }
+        this.ScaleAppend = function(m, _sx, _sy)
+        {
+            m.sx     *= _sx;
+            m.shx    *= _sx;
+            m.shy    *= _sy;
+            m.sy     *= _sy;
+            m.tx     *= _sx;
+            m.ty     *= _sy;
+        }
+        this.RotateRadAppend = function(m, _rad)
+        {
+            var _sx  = Math.cos(_rad);
+            var _shx = Math.sin(_rad);
+            var _shy = -Math.sin(_rad);
+            var _sy  = Math.cos(_rad);
+
+            var t0 = m.sx * _sx + m.shy * _shx;
+            var t2 = m.shx * _sx + m.sy * _shx;
+            var t4 = m.tx * _sx + m.ty * _shx;
+            m.shy = m.sx * _shy + m.shy * _sy;
+            m.sy  = m.shx * _shy + m.sy * _sy;
+            m.ty  = m.tx * _shy + m.ty * _sy;
+            m.sx  = t0;
+            m.shx = t2;
+            m.tx  = t4;
+        }
+
+        this.MultiplyAppend = function(m1, m2)
+        {
+            var t0 = m1.sx  * m2.sx + m1.shy * m2.shx;
+            var t2 = m1.shx * m2.sx + m1.sy  * m2.shx;
+            var t4 = m1.tx  * m2.sx + m1.ty  * m2.shx + m2.tx;
+            m1.shy = m1.sx * m2.shy + m1.shy * m2.sy;
+            m1.sy  = m1.shx * m2.shy + m1.sy * m2.sy;
+            m1.ty  = m1.tx  * m2.shy + m1.ty * m2.sy + m2.ty;
+            m1.sx  = t0;
+            m1.shx = t2;
+            m1.tx  = t4;
+        }
+
+        this.Invert = function(m)
+        {
+            var newM = m.CreateDublicate();
+            var det = newM.sx * newM.sy - newM.shy * newM.shx;
+            if (0.0001 > Math.abs(det))
+                return newM;
+
+            var d = 1 / det;
+
+            var t0 = newM.sy * d;
+            newM.sy =  newM.sx * d;
+            newM.shy = -newM.shy * d;
+            newM.shx = -newM.shx * d;
+
+            var t4 = -newM.tx * t0  - newM.ty * newM.shx;
+            newM.ty = -newM.tx * newM.shy - newM.ty * newM.sy;
+
+            newM.sx = t0;
+            newM.tx = t4;
+            return newM;
+        }
+
+        this.MultiplyAppendInvert = function(m1, m2)
+        {
+            var m = this.Invert(m2);
+            this.MultiplyAppend(m1, m);
+        }
+
+        this.MultiplyPrepend = function(m1, m2)
+        {
+            var m = new CMatrixL();
+            m.sx     = m2.sx;
+            m.shx    = m2.shx;
+            m.shy    = m2.shy;
+            m.sy     = m2.sy;
+            m.tx     = m2.tx;
+            m.ty     = m2.ty;
+            this.MultiplyAppend(m, m1);
+            m1.sx     = m.sx;
+            m1.shx    = m.shx;
+            m1.shy    = m.shy;
+            m1.sy     = m.sy;
+            m1.tx     = m.tx;
+            m1.ty     = m.ty;
+        }
+
+        this.CreateDublicateM = function(matrix)
+        {
+            var m = new CMatrixL();
+            m.sx     = matrix.sx;
+            m.shx    = matrix.shx;
+            m.shy    = matrix.shy;
+            m.sy     = matrix.sy;
+            m.tx     = matrix.tx;
+            m.ty     = matrix.ty;
+        }
+
+        this.IsIdentity = function(m)
+        {
+            if (m.sx == 1.0 &&
+              m.shx == 0.0 &&
+              m.shy == 0.0 &&
+              m.sy == 1.0 &&
+              m.tx == 0.0 &&
+              m.ty == 0.0)
+            {
+                return true;
+            }
+            return false;
+        }
+        this.IsIdentity2 = function(m)
+        {
+            if (m.sx == 1.0 &&
+              m.shx == 0.0 &&
+              m.shy == 0.0 &&
+              m.sy == 1.0)
+            {
+                return true;
+            }
+            return false;
+        }
     }
-};
+
+    function CClipManager()
+    {
+        this.clipRects = [];
+        this.curRect = new _rect();
+        this.BaseObject = null;
+
+        this.AddRect = function(x, y, w, h)
+        {
+            var _count = this.clipRects.length;
+            if (0 == _count)
+            {
+                this.curRect.x = x;
+                this.curRect.y = y;
+                this.curRect.w = w;
+                this.curRect.h = h;
+
+                var _r = new _rect();
+                _r.x = x;
+                _r.y = y;
+                _r.w = w;
+                _r.h = h;
+                this.clipRects[_count] = _r;
+
+                this.BaseObject.SetClip(this.curRect);
+            }
+            else
+            {
+                this.BaseObject.RemoveClip();
+                var _r = new _rect();
+                _r.x = x;
+                _r.y = y;
+                _r.w = w;
+                _r.h = h;
+
+                this.clipRects[_count] = _r;
+                this.curRect = this.IntersectRect(this.curRect, _r);
+                this.BaseObject.SetClip(this.curRect);
+            }
+        }
+        this.RemoveRect = function()
+        {
+            var _count = this.clipRects.length;
+            if (0 != _count)
+            {
+                this.clipRects.splice(_count - 1, 1);
+                --_count;
+
+                this.BaseObject.RemoveClip();
+
+                if (0 != _count)
+                {
+                    this.curRect.x = this.clipRects[0].x;
+                    this.curRect.y = this.clipRects[0].y;
+                    this.curRect.w = this.clipRects[0].w;
+                    this.curRect.h = this.clipRects[0].h;
+
+                    for (var i = 1; i < _count; i++)
+                        this.curRect = this.IntersectRect(this.curRect, this.clipRects[i]);
+
+                    this.BaseObject.SetClip(this.curRect);
+                }
+            }
+        }
+
+        this.IntersectRect = function(r1, r2)
+        {
+            var res = new _rect();
+            res.x = Math.max(r1.x, r2.x);
+            res.y = Math.max(r1.y, r2.y);
+            res.w = Math.min(r1.x + r1.w, r2.x + r2.w) - res.x;
+            res.h = Math.min(r1.y + r1.h, r2.y + r2.h) - res.y;
+
+            if (0 > res.w)
+                res.w = 0;
+            if (0 > res.h)
+                res.h = 0;
+
+            return res;
+        }
+    }
+
+    function CPen()
+    {
+        this.Color      = { R : 255, G : 255, B : 255, A : 255 };
+        this.Style      = 0;
+        this.LineCap    = 0;
+        this.LineJoin   = 0;
+
+        this.LineWidth  = 1;
+    }
+
+    function CBrush()
+    {
+        this.Color1     = { R : 255, G : 255, B : 255, A : 255 };
+        this.Color2     = { R : 255, G : 255, B : 255, A : 255 };
+        this.Type       = 0;
+    }
+
+    function CTableMarkup(Table)
+    {
+        this.Internal =
+        {
+            RowIndex  : 0,
+            CellIndex : 0,
+            PageNum   : 0
+        };
+        this.Table = Table;
+        this.X = 0; // Смещение таблицы от начала страницы до первой колонки
+
+        this.Cols    = []; // массив ширин колонок
+        this.Margins = []; // массив левых и правых маргинов
+
+        this.Rows    = []; // массив позиций, высот строк(для данной страницы)
+        // Rows = [ { Y : , H :  }, ... ]
+
+        this.CurCol = 0; // текущая колонка
+        this.CurRow = 0; // текущая строка
+
+        this.TransformX = 0;
+        this.TransformY = 0;
+    }
+
+    CTableMarkup.prototype =
+    {
+        CreateDublicate : function()
+        {
+            var obj = new CTableMarkup(this.Table);
+
+            obj.Internal = { RowIndex : this.Internal.RowIndex, CellIndex : this.Internal.CellIndex, PageNum : this.Internal.PageNum };
+            obj.X = this.X;
+
+            var len = this.Cols.length;
+            for (var i = 0; i < len; i++)
+                obj.Cols[i] = this.Cols[i];
+
+            len = this.Margins.length;
+            for (var i = 0; i < len; i++)
+                obj.Margins[i] = { Left : this.Margins[i].Left, Right : this.Margins[i].Right };
+
+            len = this.Rows.length;
+            for (var i = 0; i < len; i++)
+                obj.Rows[i] = { Y : this.Rows[i].Y, H : this.Rows[i].H };
+
+            obj.CurRow = this.CurRow;
+            obj.CurCol = this.CurCol;
+
+            return obj;
+        },
+
+        CorrectFrom : function()
+        {
+            this.X += this.TransformX;
+
+            var _len = this.Rows.length;
+            for (var i = 0; i < _len; i++)
+            {
+                this.Rows[i].Y += this.TransformY;
+            }
+        },
+
+        CorrectTo : function()
+        {
+            this.X -= this.TransformX;
+
+            var _len = this.Rows.length;
+            for (var i = 0; i < _len; i++)
+            {
+                this.Rows[i].Y -= this.TransformY;
+            }
+        },
+
+        Get_X : function()
+        {
+            return this.X;
+        },
+
+        Get_Y : function()
+        {
+            var _Y = 0;
+            if (this.Rows.length > 0)
+            {
+                _Y = this.Rows[0].Y;
+            }
+            return _Y;
+        }
+    };
+
+    function CTableOutline(Table, PageNum, X, Y, W, H)
+    {
+        this.Table = Table;
+        this.PageNum = PageNum;
+
+        this.X = X;
+        this.Y = Y;
+
+        this.W = W;
+        this.H = H;
+    }
+
+    var g_fontManager = new AscFonts.CFontManager();
+    g_fontManager.Initialize(true);
+
+    function SetHintsProps(bIsHinting, bIsSubpixHinting)
+    {
+        if (undefined === g_fontManager.m_oLibrary.tt_hint_props)
+            return;
+
+        if (bIsHinting && bIsSubpixHinting)
+        {
+            g_fontManager.m_oLibrary.tt_hint_props.TT_USE_BYTECODE_INTERPRETER = true;
+            g_fontManager.m_oLibrary.tt_hint_props.TT_CONFIG_OPTION_SUBPIXEL_HINTING = true;
+
+            g_fontManager.LOAD_MODE = 40968;
+        }
+        else if (bIsHinting)
+        {
+            g_fontManager.m_oLibrary.tt_hint_props.TT_USE_BYTECODE_INTERPRETER = true;
+            g_fontManager.m_oLibrary.tt_hint_props.TT_CONFIG_OPTION_SUBPIXEL_HINTING = false;
+
+            g_fontManager.LOAD_MODE = 40968;
+        }
+        else
+        {
+            g_fontManager.m_oLibrary.tt_hint_props.TT_USE_BYTECODE_INTERPRETER = true;
+            g_fontManager.m_oLibrary.tt_hint_props.TT_CONFIG_OPTION_SUBPIXEL_HINTING = false;
+
+            g_fontManager.LOAD_MODE = 40970;
+        }
+    }
+
+    SetHintsProps(true, true);
+
+    var g_dDpiX = 96.0;
+    var g_dDpiY = 96.0;
+
+    var g_dKoef_mm_to_pix = g_dDpiX / 25.4;
+    var g_dKoef_pix_to_mm = 25.4 / g_dDpiX;
+
+    function _rect()
+    {
+        this.x = 0;
+        this.y = 0;
+        this.w = 0;
+        this.h = 0;
+    }
 
     //--------------------------------------------------------export----------------------------------------------------
     window['AscCommon'] = window['AscCommon'] || {};
@@ -2442,6 +2862,23 @@ CMatrixL.prototype =
     window['AscCommon'].CDocumentRenderer = CDocumentRenderer;
     window['AscCommon'].MATRIX_ORDER_PREPEND = MATRIX_ORDER_PREPEND;
     window['AscCommon'].MATRIX_ORDER_APPEND = MATRIX_ORDER_APPEND;
+    window['AscCommon'].deg2rad = deg2rad;
+    window['AscCommon'].rad2deg = rad2deg;
     window['AscCommon'].CMatrix = CMatrix;
     window['AscCommon'].CMatrixL = CMatrixL;
+    window['AscCommon'].CGlobalMatrixTransformer = CGlobalMatrixTransformer;
+    window['AscCommon'].CClipManager = CClipManager;
+    window['AscCommon'].CPen = CPen;
+    window['AscCommon'].CBrush = CBrush;
+    window['AscCommon'].CTableMarkup = CTableMarkup;
+    window['AscCommon'].CTableOutline = CTableOutline;
+    window['AscCommon'].SetHintsProps = SetHintsProps;
+    window['AscCommon']._rect = _rect;
+
+    window['AscCommon'].global_MatrixTransformer = new CGlobalMatrixTransformer();
+    window['AscCommon'].g_fontManager = g_fontManager;
+    window['AscCommon'].g_dDpiX = g_dDpiX;
+    window['AscCommon'].g_dKoef_mm_to_pix = g_dKoef_mm_to_pix;
+    window['AscCommon'].g_dKoef_pix_to_mm = g_dKoef_pix_to_mm;
+    window['AscCommon'].GradientGetAngleNoRotate = GradientGetAngleNoRotate;
 })(window);

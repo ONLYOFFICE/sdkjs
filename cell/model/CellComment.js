@@ -32,6 +32,7 @@
 function (window, undefined) {
 	// Import
 	var CellAddress = AscCommon.CellAddress;
+	var History = AscCommon.History;
 	
 	var c_oAscInsertOptions = Asc.c_oAscInsertOptions;
 	var c_oAscDeleteOptions = Asc.c_oAscDeleteOptions;
@@ -428,18 +429,18 @@ CCellCommentator.prototype.isLockedComment = function(oComment, callbackFunc) {
 
 		if (false === this.worksheet.collaborativeEditing.getCollaborativeEditing()) {
 			// Пользователь редактирует один: не ждем ответа, а сразу продолжаем редактирование
-			Asc.applyFunction(callbackFunc, true);
+			AscCommonExcel.applyFunction(callbackFunc, true);
 			callbackFunc = undefined;
 		}
 		if (false !== this.worksheet.collaborativeEditing.getLockIntersection(lockInfo,
 				AscCommon.c_oAscLockTypes.kLockTypeMine, /*bCheckOnlyLockAll*/false)) {
 			// Редактируем сами
-			Asc.applyFunction(callbackFunc, true);
+			AscCommonExcel.applyFunction(callbackFunc, true);
 			return;
 		} else if (false !== this.worksheet.collaborativeEditing.getLockIntersection(lockInfo,
 				AscCommon.c_oAscLockTypes.kLockTypeOther, /*bCheckOnlyLockAll*/false)) {
 			// Уже ячейку кто-то редактирует
-			Asc.applyFunction(callbackFunc, false);
+			AscCommonExcel.applyFunction(callbackFunc, false);
 			return;
 		}
 

@@ -22,6 +22,15 @@
  * Pursuant to Section 7  3(e) we decline to grant you any rights under trademark law for use of our trademarks.
  *
 */
-CAscTableStyle.prototype['get_Id'] = CAscTableStyle.prototype.get_Id;
-CAscTableStyle.prototype['get_Image'] = CAscTableStyle.prototype.get_Image;
-CAscTableStyle.prototype['get_Type'] = CAscTableStyle.prototype.get_Type;
+"use strict";
+
+AscCommon.baseEditorsApi.prototype._onEndPermissions = function()
+{
+	if (this.isOnFirstConnectEnd && this.isOnLoadLicense)
+	{
+		var oResult = new AscCommon.asc_CAscEditorPermissions();
+		oResult.asc_setCanLicense(true);
+		oResult.asc_setCanBranding(true);
+		this.sendEvent('asc_onGetEditorPermissions', oResult);
+	}
+};

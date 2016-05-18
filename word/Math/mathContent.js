@@ -24,6 +24,9 @@
  */
 "use strict";
 
+// Import
+var History = AscCommon.History;
+
 function CRPI()
 {
     this.bDecreasedComp            = false;
@@ -2106,7 +2109,7 @@ CMathContent.prototype.Load_Changes = function(Reader)
                 {
                     this.Content.splice(Pos, 0, Element);
                     Element.Recalc_RunsCompiledPr();
-                    CollaborativeEditing.Update_DocumentPositionsOnAdd(this, Pos);
+                    AscCommon.CollaborativeEditing.Update_DocumentPositionsOnAdd(this, Pos);
                 }
             }
 
@@ -2123,7 +2126,7 @@ CMathContent.prototype.Load_Changes = function(Reader)
             {
                 var ChangesPos = Reader.GetLong();
                 this.Content.splice(ChangesPos, 1);
-                CollaborativeEditing.Update_DocumentPositionsOnRemove(this, ChangesPos, 1);
+                AscCommon.CollaborativeEditing.Update_DocumentPositionsOnRemove(this, ChangesPos, 1);
             }
 
             break;
@@ -6552,3 +6555,7 @@ var g_aMathAutoCorrectTriggerCharCodes =
     0x3F : 1, 0x40 : 1, 0x5B : 1, 0x5C : 1, 0x5D : 1, 0x5E : 1, 0x5F : 1,
     0x60 : 1, 0x7B : 1, 0x7C : 1, 0x7D : 1, 0x7E : 1
 };
+
+//--------------------------------------------------------export----------------------------------------------------
+window['AscCommonWord'] = window['AscCommonWord'] || {};
+window['AscCommonWord'].CMathContent = CMathContent;

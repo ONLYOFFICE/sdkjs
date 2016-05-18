@@ -877,8 +877,8 @@ function CTextDrawer(dWidth, dHeight, bDivByLInes, oTheme, bDivGlyphs)
     this.m_oGrFonts     = new AscCommon.CGrRFonts();
     this.m_oCurComment     = null;
 
-    this.m_oPen     = new CPen();
-    this.m_oBrush   = new CBrush();
+    this.m_oPen     = new AscCommon.CPen();
+    this.m_oBrush   = new AscCommon.CBrush();
 
     this.m_oLine = null;
     this.m_oFill = null;
@@ -2037,7 +2037,7 @@ CTextDrawer.prototype =
          return;
          */
 
-        var __rect = new _rect();
+        var __rect = new AscCommon._rect();
         __rect.x = x;
         __rect.y = y;
         __rect.w = w;
@@ -2622,4 +2622,5 @@ function GetRectContentWidth(oContent, dMaxWidth)
     window['AscFormat'].CreatePenFromParams = CreatePenFromParams;
     window['AscFormat'].CTextDrawer = CTextDrawer;
     window['AscFormat'].PolygonWrapper = PolygonWrapper;
+    window['AscFormat'].GetRectContentWidth = GetRectContentWidth;
 })(window);

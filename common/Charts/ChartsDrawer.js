@@ -103,7 +103,7 @@ CChartsDrawer.prototype =
 		{
 			this.calcProp.pathH = 1000000000;
 			this.calcProp.pathW = 1000000000;
-			this.calcProp.pxToMM = 1 / g_dKoef_pix_to_mm;
+			this.calcProp.pxToMM = 1 / AscCommon.g_dKoef_pix_to_mm;
 			this.calcProp.widthCanvas = chartSpace.extX * this.calcProp.pxToMM;
 			this.calcProp.heightCanvas = chartSpace.extY * this.calcProp.pxToMM;
 		}
@@ -495,7 +495,7 @@ CChartsDrawer.prototype =
 			standartMarginForCharts = 16;
 		
 		if(!this.calcProp.pxToMM)
-			this.calcProp.pxToMM = 1 / g_dKoef_pix_to_mm;
+			this.calcProp.pxToMM = 1 / AscCommon.g_dKoef_pix_to_mm;
 		
 		var pxToMM = this.calcProp.pxToMM;
 		
@@ -1707,7 +1707,7 @@ CChartsDrawer.prototype =
 	//****functions for UP Functions****
 	preCalculateData: function(chartProp)
 	{
-		this.calcProp.pxToMM = 1 / g_dKoef_pix_to_mm;
+		this.calcProp.pxToMM = 1 / AscCommon.g_dKoef_pix_to_mm;
 		
 		this.calcProp.pathH = 1000000000;
 		this.calcProp.pathW = 1000000000;
@@ -3373,7 +3373,7 @@ drawLineChart.prototype =
 
 		for(var i = 0; i < points.length; i++)
 		{
-			isSplineLine = this.chartProp.series[i].smooth;
+			isSplineLine = this.chartProp.series[i].smooth !== false;
 
 			if(!points[i])
 				continue;
@@ -3649,7 +3649,7 @@ drawLineChart.prototype =
 		gdLst["h"] = 1;
 
 
-		var splineCoords = this.cChartDrawer.calculate_Bezier(x, y, x1, y1, x2, y2, x3, y3, i);
+		var splineCoords = this.cChartDrawer.calculate_Bezier(x, y, x1, y1, x2, y2, x3, y3);
 
 		x = this.cChartDrawer.getYPosition(splineCoords[0].x, xPoints, true);
 		y = this.cChartDrawer.getYPosition(splineCoords[0].y, yPoints);
@@ -8273,7 +8273,7 @@ drawScatterChart.prototype =
 
 		for(var i = 0; i < points.length; i++)
 		{
-			isSplineLine = this.chartProp.series[i].smooth;
+			isSplineLine = this.chartProp.series[i].smooth !== false;
 
 			if(!points[i])
 				continue;
@@ -8541,7 +8541,7 @@ drawScatterChart.prototype =
 		var y3 = points[k + 2] ? points[k + 2].y : points[k + 1] ? points[k + 1].y : points[k].y;
 
 
-		var splineCoords = this.cChartDrawer.calculate_Bezier(x, y, x1, y1, x2, y2, x3, y3, i);
+		var splineCoords = this.cChartDrawer.calculate_Bezier(x, y, x1, y1, x2, y2, x3, y3);
 
 		x = this.cChartDrawer.getYPosition(splineCoords[0].x, xPoints, true);
 		y = this.cChartDrawer.getYPosition(splineCoords[0].y, yPoints);

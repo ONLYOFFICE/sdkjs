@@ -22,7 +22,9 @@
  * Pursuant to Section 7  3(e) we decline to grant you any rights under trademark law for use of our trademarks.
  *
 */
-﻿"use strict";
+"use strict";
+
+(function(window, undefined){
 
 var translations_map = {};
 var styles_index_map = {};
@@ -188,3 +190,8 @@ translations_map["lv"].DefaultStyles =
     "Bez atstarpes"
 ];
 translations_map["lv"].StylesText = "AaBbCcDdEeFf";
+
+    //--------------------------------------------------------export----------------------------------------------------
+    window['AscCommonWord'] = window['AscCommonWord'] || {};
+    window['AscCommonWord'].translations_map = translations_map;
+})(window);

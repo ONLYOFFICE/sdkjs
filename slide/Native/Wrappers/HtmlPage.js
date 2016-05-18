@@ -1,11 +1,5 @@
 "use strict";
 
-var g_dDpiX = 96.0;
-var g_dDpiY = 96.0;
-
-var g_dKoef_mm_to_pix = g_dDpiX / 25.4;
-var g_dKoef_pix_to_mm = 25.4 / g_dDpiX;
-
 var g_bIsMobile = AscCommon.AscBrowser.isMobile;
 
 var Page_Width     = 297;
@@ -19,12 +13,8 @@ var Y_Top_Margin    = 20;  // 2   cm
 var Y_Default_Header = 12.5; // 1.25 cm
 var Y_Default_Footer = 12.5; // 1.25 cm
 
-var X_Left_Field   = X_Left_Margin;
 var X_Right_Field  = Page_Width  - X_Right_Margin;
 var Y_Bottom_Field = Page_Height - Y_Bottom_Margin;
-var Y_Top_Field    = Y_Top_Margin;
-
-
 
 var GlobalSkinTeamlab = {
     Name : "classic",
@@ -65,6 +55,22 @@ var GlobalSkinFlat = {
 
 var GlobalSkin = GlobalSkinTeamlab;
 
+function updateGlobalSkin(newSkin) {
+    GlobalSkin.Name = newSkin.Name;
+    GlobalSkin.RulersButton = newSkin.RulersButton;
+    GlobalSkin.NavigationButtons = newSkin.NavigationButtons;
+    GlobalSkin.BackgroundColor = newSkin.BackgroundColor;
+    GlobalSkin.RulerDark = newSkin.RulerDark;
+    GlobalSkin.RulerLight = newSkin.RulerLight;
+    GlobalSkin.BackgroundScroll = newSkin.BackgroundScroll;
+    GlobalSkin.RulerOutline = newSkin.RulerOutline;
+    GlobalSkin.RulerMarkersFillColor = newSkin.RulerMarkersFillColor;
+    GlobalSkin.PageOutline = newSkin.PageOutline;
+    GlobalSkin.STYLE_THUMBNAIL_WIDTH = newSkin.STYLE_THUMBNAIL_WIDTH;
+    GlobalSkin.STYLE_THUMBNAIL_HEIGHT = newSkin.STYLE_THUMBNAIL_HEIGHT;
+    GlobalSkin.isNeedInvertOnActive = newSkin.isNeedInvertOnActive;
+}
+
 function CEditorPage(api)
 {
     // ------------------------------------------------------------------
@@ -79,7 +85,7 @@ function CEditorPage(api)
     this.Height     = 10;
 
 
-    this.m_oDrawingDocument = new CDrawingDocument();
+    this.m_oDrawingDocument = new AscCommon.CDrawingDocument();
     this.m_oLogicDocument   = null;
 
     this.m_oDrawingDocument.m_oWordControl = this;
@@ -482,7 +488,17 @@ function CEditorPage(api)
     }
 }
 
-function sendStatus(Message)
-{
-    editor.sync_StatusMessage(Message);
-}
+//------------------------------------------------------------export----------------------------------------------------
+window['AscCommon'] = window['AscCommon'] || {};
+window['AscCommonSlide'] = window['AscCommonSlide'] || {};
+window['AscCommonSlide'].GlobalSkinFlat = GlobalSkinFlat;
+window['AscCommonSlide'].GlobalSkin = GlobalSkin;
+window['AscCommonSlide'].updateGlobalSkin = updateGlobalSkin;
+window['AscCommonSlide'].CEditorPage = CEditorPage;
+
+window['AscCommon'].Page_Width = Page_Width;
+window['AscCommon'].Page_Height = Page_Height;
+window['AscCommon'].X_Left_Margin = X_Left_Margin;
+window['AscCommon'].X_Right_Margin = X_Right_Margin;
+window['AscCommon'].Y_Bottom_Margin = Y_Bottom_Margin;
+window['AscCommon'].Y_Top_Margin = Y_Top_Margin;

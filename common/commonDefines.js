@@ -798,6 +798,12 @@ var c_oAscPrintDefaultSettings = {
     PageGridLines: 0,
     PageHeadings: 0
 };
+  
+  var c_oZoomType = {
+    FitToPage   : 1,
+    FitToWidth  : 2,
+    CustomMode  : 3
+  };
 
 var c_oAscEncodings = [
     [ 0,    28596, "ISO-8859-6",       "Arabic (ISO 8859-6)" ],
@@ -1136,9 +1142,9 @@ var offlineMode = '_offline_';
   window['Asc']['c_oAscGridLinesSettings'] = window['Asc'].c_oAscGridLinesSettings = c_oAscGridLinesSettings;
   prot = c_oAscGridLinesSettings;
   prot['none'] = prot.none;
-  prot['none'] = prot.major;
-  prot['none'] = prot.minor;
-  prot['none'] = prot.majorMinor;
+  prot['major'] = prot.major;
+  prot['minor'] = prot.minor;
+  prot['majorMinor'] = prot.majorMinor;
   window['Asc']['c_oAscChartTypeSettings'] = window['Asc'].c_oAscChartTypeSettings = c_oAscChartTypeSettings;
   prot = c_oAscChartTypeSettings;
   prot['barNormal'] = prot.barNormal;
@@ -1420,6 +1426,7 @@ var offlineMode = '_offline_';
   window["AscCommon"].c_oAscUrlType = c_oAscUrlType;
   window["AscCommon"].c_oAscMouseMoveDataTypes = c_oAscMouseMoveDataTypes;
   window["AscCommon"].c_oAscPrintDefaultSettings = c_oAscPrintDefaultSettings;
+  window["AscCommon"].c_oZoomType = c_oZoomType;
   window["AscCommon"].c_oAscEncodings = c_oAscEncodings;
   window["AscCommon"].c_oAscEncodingsMap = c_oAscEncodingsMap;
   window["AscCommon"].c_oAscCodePageUtf8 = c_oAscCodePageUtf8;
@@ -1467,4 +1474,60 @@ var offlineMode = '_offline_';
   window["AscCommon"].contentchanges_Remove = contentchanges_Remove;
 
   window["AscCommon"].offlineMode = offlineMode;
+
+  // ----------------------------- plugins ------------------------------- //
+  var EPluginDataType =
+  {
+    none : 0,
+    text : 1,
+    ole : 2
+  };
+
+  window["Asc"]["EPluginDataType"] = EPluginDataType;
+  prot = EPluginDataType;
+  prot['none'] = prot.none;
+  prot['text'] = prot.text;
+  prot['ole'] = prot.ole;
+
+  function CPlugin()
+  {
+	this.name   = "";
+	this.guid   = "";
+	this.url    = "";
+
+	this.icons  = ["1x", "2x"];
+
+	this.isVisual   = false;
+
+	this.initDataType           = EPluginDataType.none;
+	this.initData               = "";
+
+	this.isUpdateOleOnResize    = false;
+
+	this.buttons            	= [{"text":"Ok","primary":true},{"text":"Cancel","primary":false}];
+  }
+  CPlugin.prototype["get_Name"] = function() 		{ return this.name; };
+  CPlugin.prototype["set_Name"] = function(value) 	{ this.name = value; } ;
+  CPlugin.prototype["get_Guid"] = function() 		{ return this.guid; };
+  CPlugin.prototype["set_Guid"] = function(value) 	{ this.guid = value; };
+  CPlugin.prototype["get_Url"] = function() 		{ return this.url; };
+  CPlugin.prototype["set_Url"] = function(value) 	{ this.url = value; };
+  
+  CPlugin.prototype["get_Icons"] = function() 		{ return this.icons; };
+  CPlugin.prototype["set_Icons"] = function(value) 	{ this.icons = value; };
+  
+  CPlugin.prototype["get_Visual"] = function() 				{ return this.isVisual; };
+  CPlugin.prototype["set_Visual"] = function(value) 		{ this.isVisual = value; };
+  CPlugin.prototype["get_InitDataType"] = function() 		{ return this.initDataType; };
+  CPlugin.prototype["set_InitDataType"] = function(value) 	{ this.initDataType = value; };
+  CPlugin.prototype["get_InitData"] = function() 			{ return this.initData; };
+  CPlugin.prototype["set_InitData"] = function(value) 		{ this.initData = value; };
+  
+  CPlugin.prototype["get_UpdateOleOnResize"] = function() 			{ return this.isUpdateOleOnResize; };
+  CPlugin.prototype["set_UpdateOleOnResize"] = function(value) 		{ this.isUpdateOleOnResize = value; };
+  CPlugin.prototype["get_Buttons"] = function() 					{ return this.buttons; };
+  CPlugin.prototype["set_Buttons"] = function(value) 				{ this.buttons = value; };
+
+  window["Asc"]["CPlugin"] = CPlugin;
+  // --------------------------------------------------------------------- //
 })(window);

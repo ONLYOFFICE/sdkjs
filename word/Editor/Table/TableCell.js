@@ -23,11 +23,10 @@
  *
 */
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 28.12.2015
- * Time: 12:11
- */
+
+// Import
+var History = AscCommon.History;
+var global_MatrixTransformer = AscCommon.global_MatrixTransformer;
 
 //----------------------------------------------------------------------------------------------------------------------
 // Класс CTableCell
@@ -2577,7 +2576,7 @@ CTableCell.prototype =
 
         this.Content = AscCommon.g_oTableId.Get_ById( Reader.GetString2() );
 
-        CollaborativeEditing.Add_NewObject( this );
+        AscCommon.CollaborativeEditing.Add_NewObject( this );
     },
 
     Load_LinkData : function(LinkData)
@@ -2674,3 +2673,7 @@ CTableCellRecalculateObject.prototype =
     }
 
 };
+
+//--------------------------------------------------------export----------------------------------------------------
+window['AscCommonWord'] = window['AscCommonWord'] || {};
+window['AscCommonWord'].CTableCell = CTableCell;

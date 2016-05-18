@@ -28,6 +28,7 @@
 var CShape = AscFormat.CShape;
 
 var isRealObject = AscCommon.isRealObject;
+var global_MatrixTransformer = AscCommon.global_MatrixTransformer;
 
 CShape.prototype.setRecalculateInfo = function()
 {
@@ -60,8 +61,6 @@ CShape.prototype.setRecalculateInfo = function()
     this.bounds = {l: 0, t: 0, r: 0, b:0, w: 0, h:0};
     this.posX = null;
     this.posY = null;
-    this.snapArrayX = [];
-    this.snapArrayY = [];
 
     this.localTransform = new AscCommon.CMatrix();
     this.localTransformText = new AscCommon.CMatrix();
@@ -525,6 +524,9 @@ CShape.prototype.recalculateShapeStyleForParagraph = function()
     this.textStyleForParagraph = {TextPr: styles.Default.TextPr.Copy(), ParaPr: styles.Default.ParaPr.Copy()};
     var DefId = styles.Default.Paragraph;
     var DefaultStyle = styles.Style[DefId];
+
+    this.textStyleForParagraph.ParaPr.Merge( g_oDocumentDefaultParaPr );
+    this.textStyleForParagraph.TextPr.Merge( g_oDocumentDefaultTextPr );
     if(DefaultStyle)
     {
         this.textStyleForParagraph.ParaPr.Merge( DefaultStyle.ParaPr );

@@ -17,8 +17,6 @@ window.IS_NATIVE_EDITOR = true;
 var document = {};
 window.document = document;
 
-var History = {};
-
 window["Asc"] = {};
 var Asc = window["Asc"];
 
@@ -40,43 +38,11 @@ var AscCH = window["AscCH"];
 window["AscCommonExcel"] = {};
 var AscCommonExcel = window["AscCommonExcel"];
 
-//-------------------------------------------------------------------------------------------------
-aStandartNumFormats = [];
-aStandartNumFormats[0] = "General";
-aStandartNumFormats[1] = "0";
-aStandartNumFormats[2] = "0.00";
-aStandartNumFormats[3] = "#,##0";
-aStandartNumFormats[4] = "#,##0.00";
-aStandartNumFormats[9] = "0%";
-aStandartNumFormats[10] = "0.00%";
-aStandartNumFormats[11] = "0.00E+00";
-aStandartNumFormats[12] = "# ?/?";
-aStandartNumFormats[13] = "# ??/??";
-aStandartNumFormats[14] = "m/d/yyyy";
-aStandartNumFormats[15] = "d-mmm-yy";
-aStandartNumFormats[16] = "d-mmm";
-aStandartNumFormats[17] = "mmm-yy";
-aStandartNumFormats[18] = "h:mm AM/PM";
-aStandartNumFormats[19] = "h:mm:ss AM/PM";
-aStandartNumFormats[20] = "h:mm";
-aStandartNumFormats[21] = "h:mm:ss";
-aStandartNumFormats[22] = "m/d/yyyy h:mm";
-aStandartNumFormats[37] = "#,##0_);(#,##0)";
-aStandartNumFormats[38] = "#,##0_);[Red](#,##0)";
-aStandartNumFormats[39] = "#,##0.00_);(#,##0.00)";
-aStandartNumFormats[40] = "#,##0.00_);[Red](#,##0.00)";
-aStandartNumFormats[45] = "mm:ss";
-aStandartNumFormats[46] = "[h]:mm:ss";
-aStandartNumFormats[47] = "mm:ss.0";
-aStandartNumFormats[48] = "##0.0E+0";
-aStandartNumFormats[49] = "@";
-aStandartNumFormatsId = {};
+window["AscCommonWord"] = {};
+var AscCommonWord = window["AscCommonWord"];
 
-for(var i in aStandartNumFormats) {
-    aStandartNumFormatsId[aStandartNumFormats[i]] = i - 0;
-}
-
-//-------------------------------------------------------------------------------------------------
+window["AscCommonSlide"] = {};
+var AscCommonSlide = window["AscCommonSlide"];
 
 function Image() {
     this.src = "";

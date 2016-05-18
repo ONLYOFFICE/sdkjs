@@ -24,11 +24,6 @@
 */
 "use strict";
 
-/* WorkbookView.js
- *
- * Author: Dmitry.Sokolov@avsmedia.net
- * Date:   Jan 27, 2012
- */
 (/**
  * @param {jQuery} $
  * @param {Window} window
@@ -46,9 +41,10 @@
   var AscBrowser = AscCommon.AscBrowser;
   var CColor = AscCommon.CColor;
   var cBoolLocal = AscCommon.cBoolLocal;
+  var History = AscCommon.History;
 
   var asc = window["Asc"];
-  var asc_applyFunction = asc.applyFunction;
+  var asc_applyFunction = AscCommonExcel.applyFunction;
   var asc_round = asc.round;
   var asc_typeof = asc.typeOf;
   var asc_CMM = AscCommonExcel.asc_CMouseMoveData;
@@ -127,8 +123,8 @@
   /**
    * Widget for displaying and editing Workbook object
    * -----------------------------------------------------------------------------
-   * @param {Workbook} model                        Workbook
-   * @param {asc_CEventsController} controller          Events controller
+   * @param {AscCommonExcel.Workbook} model                        Workbook
+   * @param {AscCommonExcel.asc_CEventsController} controller          Events controller
    * @param {HandlersList} handlers                  Events handlers for WorkbookView events
    * @param {Element} elem                          Container element
    * @param {Element} inputElem                      Input element for top line editor
@@ -189,10 +185,10 @@
 
     // Теперь у нас 2 FontManager-а на весь документ + 1 для автофигур (а не на каждом листе свой)
     this.fmgrGraphics = [];						// FontManager for draw (1 для обычного + 1 для поворотного текста)
-    this.fmgrGraphics.push(new AscFonts.CFontManager());	// Для обычного
-    this.fmgrGraphics.push(new AscFonts.CFontManager());	// Для поворотного
+    this.fmgrGraphics.push(new AscFonts.CFontManager({mode:"cell"}));	// Для обычного
+    this.fmgrGraphics.push(new AscFonts.CFontManager({mode:"cell"}));	// Для поворотного
     this.fmgrGraphics.push(new AscFonts.CFontManager());	// Для автофигур
-    this.fmgrGraphics.push(new AscFonts.CFontManager());	// Для измерений
+    this.fmgrGraphics.push(new AscFonts.CFontManager({mode:"cell"}));	// Для измерений
 
     this.fmgrGraphics[0].Initialize(true); // IE memory enable
     this.fmgrGraphics[1].Initialize(true); // IE memory enable
@@ -301,18 +297,18 @@
 
     var canvasWidth = this.drawingGraphicCtx.canvas.width;
     var canvasHeight = this.drawingGraphicCtx.canvas.height;
-    this.buffers.shapeCtx = new CGraphics();
+    this.buffers.shapeCtx = new AscCommon.CGraphics();
     this.buffers.shapeCtx.init(this.drawingGraphicCtx.ctx, canvasWidth, canvasHeight, (canvasWidth * 25.4 / this.drawingGraphicCtx.ppiX), (canvasHeight * 25.4 / this.drawingGraphicCtx.ppiY));
     this.buffers.shapeCtx.m_oFontManager = this.fmgrGraphics[2];
 
 
     var overlayWidth = this.overlayGraphicCtx.canvas.width;
     var overlayHeight = this.overlayGraphicCtx.canvas.height;
-    this.buffers.shapeOverlayCtx = new CGraphics();
+    this.buffers.shapeOverlayCtx = new AscCommon.CGraphics();
     this.buffers.shapeOverlayCtx.init(this.overlayGraphicCtx.ctx, overlayWidth, overlayHeight, (overlayWidth * 25.4 / this.overlayGraphicCtx.ppiX), (overlayHeight * 25.4 / this.overlayGraphicCtx.ppiY));
     this.buffers.shapeOverlayCtx.m_oFontManager = this.fmgrGraphics[2];
 
-    this.stringRender = new asc.StringRender(this.buffers.main);
+    this.stringRender = new AscCommonExcel.StringRender(this.buffers.main);
     this.stringRender.setDefaultFont(this.defaultFont);
 
     // Мерить нужно только со 100% и один раз для всего документа
@@ -483,7 +479,7 @@
         }, false);
       }
     }
-      this.cellEditor = new asc.CellEditor(this.element, this.input, this.fmgrGraphics, this.m_oFont, /*handlers*/{
+      this.cellEditor = new AscCommonExcel.CellEditor(this.element, this.input, this.fmgrGraphics, this.m_oFont, /*handlers*/{
         "closed": function() {
           self._onCloseCellEditor.apply(self, arguments);
         }, "updated": function() {
@@ -556,7 +552,7 @@
       });
 
 
-    this.wsViewHandlers = new asc.asc_CHandlersList(/*handlers*/{
+    this.wsViewHandlers = new AscCommonExcel.asc_CHandlersList(/*handlers*/{
       "getViewerMode": function() {
         return self.controller.getViewerMode ? self.controller.getViewerMode() : true;
       }, "reinitializeScroll": function() {
@@ -746,7 +742,7 @@
   };
 
   WorkbookView.prototype._createWorksheetView = function(wsModel) {
-    return new asc.WorksheetView(wsModel, this.wsViewHandlers, this.buffers, this.stringRender, this.maxDigitWidth, this.collaborativeEditing, this.defaults.worksheetView);
+    return new AscCommonExcel.WorksheetView(wsModel, this.wsViewHandlers, this.buffers, this.stringRender, this.maxDigitWidth, this.collaborativeEditing, this.defaults.worksheetView);
   };
 
   WorkbookView.prototype._onSelectionNameChanged = function(name) {
@@ -1441,7 +1437,7 @@
 
   /**
    * @param {Number} [index]
-   * @return {WorksheetView}
+   * @return {AscCommonExcel.WorksheetView}
    */
   WorkbookView.prototype.getWorksheet = function(index) {
     var wb = this.model;
@@ -2042,8 +2038,9 @@
   };
 
   WorkbookView.prototype.undo = function() {
-	gFormulaLocaleParse = false;
-	gFormulaLocaleDigetSep = false;
+    var oFormulaLocaleInfo = AscCommonExcel.oFormulaLocaleInfo;
+    oFormulaLocaleInfo.Parse = false;
+    oFormulaLocaleInfo.DigitSep = false;
     if (!this.getCellEditMode()) {
       if (!History.Undo() && this.collaborativeEditing.getFast() && this.collaborativeEditing.getCollaborativeEditing()) {
         this.Api.sync_TryUndoInFastCollaborative();
@@ -2051,8 +2048,8 @@
     } else {
       this.cellEditor.undo();
     }
-	gFormulaLocaleParse = true;
-	gFormulaLocaleDigetSep = true;
+    oFormulaLocaleInfo.Parse = true;
+    oFormulaLocaleInfo.DigitSep = true;
   };
 
   WorkbookView.prototype.redo = function() {
@@ -3035,9 +3032,7 @@
         return canvas.toDataURL("image/png");
     };
 
-  /*
-   * Export
-   * -----------------------------------------------------------------------------
-   */
-  window["Asc"].WorkbookView = WorkbookView;
+  //------------------------------------------------------------export---------------------------------------------------
+  window['AscCommonExcel'] = window['AscCommonExcel'] || {};
+  window["AscCommonExcel"].WorkbookView = WorkbookView;
 })(jQuery, window);

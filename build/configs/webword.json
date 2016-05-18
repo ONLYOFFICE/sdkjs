@@ -1,22 +1,29 @@
 {
   "compile": {
     "sdk": {
-      "common": [
-        "../common/Build/License.js",
+      "min": [
         "../common/browser.js",
-        "../common/commonDefines.js",
-        "../common/downloaderfiles.js",
-        "../common/docscoapicommon.js",
+		"../common/commonDefines.js",
+		"../common/docscoapicommon.js",
         "../common/docscoapi.js",
-        "../common/spellcheckapi.js",
+		"../common/spellcheckapi.js",
         "../common/spellCheckLanguage.js",
         "../common/spellCheckLanguagesAll.js",
-        "../common/apiCommon.js",
+		"../common/apiCommon.js",
 		"../common/SerializeCommonWordExcel.js",
         "../common/editorscommon.js",
+		"../common/AdvancedOptions.js",
+		"../word/apiDefines.js",
+		"../common/CollaborativeEditingBase.js",
+		"../word/Editor/CollaborativeEditing.js",
+		"../common/apiBase.js",
+		"../common/Private/license.js",
+		"../word/api.js"
+	  ],
+	  "common": [
+		"../common/downloaderfiles.js",
         "../common/NumFormat.js",
 		"../common/SerializeChart.js",
-		"../common/AdvancedOptions.js",
 		
 		"../common/FontsFreeType/font_engine.js",
         "../common/FontsFreeType/FontFile.js",
@@ -26,6 +33,8 @@
 		"../common/Drawings/Metafile.js",
 		"../common/FontsFreeType/TextMeasurer.js",
 		"../common/Drawings/WorkEvents.js",
+		
+		"../word/Editor/History.js",
 		
 		"../common/Shapes/EditorSettings.js",
 		"../common/Shapes/Serialize.js",
@@ -41,6 +50,7 @@
 		"../common/Drawings/Format/CreateGeometry.js",
 		"../common/Drawings/Format/Geometry.js",
 		"../common/Drawings/Format/Format.js",
+		"../common/Drawings/Format/GraphicObjectBase.js",
 		"../common/Drawings/Format/Shape.js",
 		"../common/Drawings/Format/Path.js",
 		"../common/Drawings/Format/Image.js",
@@ -48,6 +58,7 @@
 		"../common/Drawings/Format/ChartSpace.js",
 		"../common/Drawings/Format/ChartFormat.js",
 		"../common/Drawings/Format/TextBody.js",
+		"../common/Drawings/Format/GraphicFrame.js",
         "../common/Charts/charts.js",
 		"../common/Charts/DrawingArea.js",
 		"../common/Charts/DrawingObjects.js",
@@ -65,7 +76,6 @@
 		
 		"../common/Drawings/Externals.js",
 		"../common/GlobalLoaders.js",
-		"../common/CollaborativeEditingBase.js",
 		"../common/Controls.js",
 		"../common/Overlay.js",
 		"../common/Drawings/HatchPattern.js",
@@ -74,23 +84,22 @@
 		"../common/Scrolls/iscroll.js",
 
         "../common/wordcopypaste.js",
-
-        "../word/apiDefines.js",
 		
 		"../cell/utils/utils.js",
+		"../cell/model/WorkbookElems.js",
+		"../cell/model/Workbook.js",
+		"../cell/model/Serialize.js",
+		"../cell/model/CellInfo.js",
 		
         "../word/Drawing/translations.js",
         "../word/Editor/GraphicObjects/Format/ShapePrototype.js",
         "../word/Editor/GraphicObjects/Format/ImagePrototype.js",
         "../word/Editor/GraphicObjects/Format/GroupPrototype.js",
         "../word/Editor/GraphicObjects/Format/ChartSpacePrototype.js",
-        "../slide/Editor/Format/GraphicFrame.js",
         "../word/Editor/GraphicObjects/GraphicObjects.js",
         "../word/Editor/GraphicObjects/GraphicPage.js",
         "../word/Editor/GraphicObjects/WrapManager.js",
-        "../word/Editor/CollaborativeEditing.js",
         "../word/Editor/Comments.js",
-        "../word/Editor/History.js",
         "../word/Editor/Styles.js",
         "../word/Editor/FlowObjects.js",
         "../word/Editor/ParagraphContent.js",
@@ -104,9 +113,10 @@
         "../word/Editor/Sections.js",
         "../word/Editor/Numbering.js",
         "../word/Editor/HeaderFooter.js",
+		"../word/Editor/DocumentContentBase.js",
         "../word/Editor/Document.js",
-        "../word/Editor/Common.js",
         "../word/Editor/DocumentContent.js",
+        "../word/Editor/Common.js",
         "../word/Editor/Table.js",
         "../word/Editor/Table/TableRecalculate.js",
         "../word/Editor/Table/TableDraw.js",
@@ -116,18 +126,16 @@
         "../word/Editor/Search.js",
         "../word/Editor/FontClassification.js",
         "../word/Editor/Spelling.js",
+		
         "../word/Drawing/Graphics.js",
         "../word/Drawing/ShapeDrawer.js",
+		
         "../word/Drawing/DrawingDocument.js",
         "../word/Drawing/GraphicsEvents.js",
         "../word/Drawing/Rulers.js",
         "../word/Drawing/HtmlPage.js",
         "../word/Drawing/documentrenderer.js",
-        "../word/Editor/SerializeCommon.js",
-        "../common/apiBase.js",
-        "../word/api.js",
         "../word/apiCommon.js",
-        "../word/apiExport.js",
         "../word/document/empty.js",
         "../word/Math/mathTypes.js",
         "../word/Math/mathText.js",
@@ -142,14 +150,14 @@
         "../word/Math/operators.js",
         "../word/Math/accent.js",
         "../word/Math/borderBox.js",
-        "../cell/model/CellComment.js",
-        "../cell/model/Serialize.js",
-        "../cell/model/WorkbookElems.js",
-        "../cell/model/Workbook.js",
-        "../cell/model/CellInfo.js"
+		
+		"../word/apiBuilder.js",
+		
+		"../common/clipboard_base.js",
+		"../common/Drawings/Format/OleObject.js",
+		"../common/plugins.js"
       ],
       "private": [
-        "../common/Private/license.js",
         "../common/Private/versionHistory.js",
         "../word/Private/comments.js",
         "../word/Private/StyleManager.js",
@@ -157,16 +165,22 @@
         "../word/Private/TrackRevisions.js",
         "../common/Private/Locks.js"
       ],
-      "builder": [
-        "../word/apiBuilder.js"
-      ],
-      "desktop": [
-        "../common/Local/common.js",
-        "../word/Local/api.js"
-      ],
-	  "mobile_banners": [],
+      "desktop": {
+        "min": [
+		  "../common/Local/license.js"
+		],
+		"common": [
+          "../common/Local/common.js",
+		  "../word/Local/documentrenderer.js",
+          "../word/Local/api.js"
+		]
+      },
+	  "mobile_banners": {
+		  "min": [],
+		  "common": []
+	  },
       "exclude_mobile": [],
-      "dst": "../word/sdk-all.js",
+      "dst": "../word",
       "externs": [
         "../common/Build/Externs.js",
         "../../web-apps/vendor/jquery/jquery.min.js",

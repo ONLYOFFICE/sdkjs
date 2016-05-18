@@ -293,18 +293,15 @@ ChartPreviewManager.prototype.getChartByType = function(type)
 		var chartSeries = {series: this.getAscChartSeriesDefault(type), parsedHeaders: {bLeft: true, bTop: true}};
 		var chart_space = AscFormat.DrawingObjectsController.prototype._getChartSpace(chartSeries, settings, true);
         chart_space.bPreview = true;
-		if(window["Asc"]["editor"])
-		{
-			var api_sheet = window["Asc"]["editor"];
+		if (Asc['editor'] && AscCommon.c_oEditorId.Spreadsheet === Asc['editor'].getEditorId()) {
+			var api_sheet = Asc['editor'];
 			chart_space.setWorksheet(api_sheet.wb.getWorksheet().model);
+		} else {
+			if (editor && editor.WordControl && editor.WordControl.m_oLogicDocument.Slides &&
+				editor.WordControl.m_oLogicDocument.Slides[editor.WordControl.m_oLogicDocument.CurPage]) {
+				chart_space.setParent(editor.WordControl.m_oLogicDocument.Slides[editor.WordControl.m_oLogicDocument.CurPage]);
+			}
 		}
-        else
-        {
-            if(editor && editor.WordControl && editor.WordControl.m_oLogicDocument.Slides && editor.WordControl.m_oLogicDocument.Slides[editor.WordControl.m_oLogicDocument.CurPage])
-            {
-                chart_space.setParent(editor.WordControl.m_oLogicDocument.Slides[editor.WordControl.m_oLogicDocument.CurPage]);
-            }
-        }
 		AscFormat.CheckSpPrXfrm(chart_space);
 		chart_space.spPr.xfrm.setOffX(0);
 		chart_space.spPr.xfrm.setOffY(0);
@@ -462,9 +459,9 @@ ChartPreviewManager.prototype.createChartPreview = function(type, styleIndex) {
 
         var _canvas = this._canvas_charts;
         var ctx = _canvas.getContext('2d');
-        var graphics = new CGraphics();
+        var graphics = new AscCommon.CGraphics();
         graphics.init(ctx, _canvas.width, _canvas.height, 50, 50);
-        graphics.m_oFontManager = g_fontManager;
+        graphics.m_oFontManager = AscCommon.g_fontManager;
         graphics.transform(1,0,0,1,0,0);
         chart_space.draw(graphics);
         return _canvas.toDataURL("image/png");
@@ -852,27 +849,20 @@ TextArtPreviewManager.prototype.getShape =  function()
 	var oShape = new AscFormat.CShape();
 	var oParent = null, oWorkSheet = null;
 	var bWord = true;
-	if(window["Asc"]["editor"])
-	{
-		var api_sheet = window["Asc"]["editor"];
+	if (Asc['editor'] && AscCommon.c_oEditorId.Spreadsheet === Asc['editor'].getEditorId()) {
+		var api_sheet = Asc['editor'];
 		oShape.setWorksheet(api_sheet.wb.getWorksheet().model);
 		oWorkSheet = api_sheet.wb.getWorksheet().model;
 		bWord = false;
-	}
-	else
-	{
-		if(editor && editor.WordControl && Array.isArray(editor.WordControl.m_oLogicDocument.Slides))
-		{
-            if(editor.WordControl.m_oLogicDocument.Slides[editor.WordControl.m_oLogicDocument.CurPage])
-            {
-                oShape.setParent(editor.WordControl.m_oLogicDocument.Slides[editor.WordControl.m_oLogicDocument.CurPage]);
-                oParent = editor.WordControl.m_oLogicDocument.Slides[editor.WordControl.m_oLogicDocument.CurPage];
-                bWord = false;
-            }
-            else
-            {
-                return null;
-            }
+	} else {
+		if (editor && editor.WordControl && Array.isArray(editor.WordControl.m_oLogicDocument.Slides)) {
+			if (editor.WordControl.m_oLogicDocument.Slides[editor.WordControl.m_oLogicDocument.CurPage]) {
+				oShape.setParent(editor.WordControl.m_oLogicDocument.Slides[editor.WordControl.m_oLogicDocument.CurPage]);
+				oParent = editor.WordControl.m_oLogicDocument.Slides[editor.WordControl.m_oLogicDocument.CurPage];
+				bWord = false;
+			} else {
+				return null;
+			}
 		}
 	}
 	var oParentObjects = oShape.getParentObjects();
@@ -941,14 +931,14 @@ TextArtPreviewManager.prototype.getWordArtPreview = function(prst)
 {
 	var _canvas = this.getCanvas();
 	var ctx = _canvas.getContext('2d');
-	var graphics = new CGraphics();
+	var graphics = new AscCommon.CGraphics();
 	var oShape = this.getShapeByPrst(prst);
     if(!oShape)
     {
         return "";
     }
 	graphics.init(ctx, _canvas.width, _canvas.height, oShape.extX, oShape.extY);
-	graphics.m_oFontManager = g_fontManager;
+	graphics.m_oFontManager = AscCommon.g_fontManager;
 	graphics.transform(1,0,0,1,0,0);
 
 	var oldShowParaMarks;
@@ -976,7 +966,7 @@ TextArtPreviewManager.prototype.generateTextArtStyles = function()
         }
         var _canvas = this.getCanvas();
         var ctx = _canvas.getContext('2d');
-        var graphics = new CGraphics();
+        var graphics = new AscCommon.CGraphics();
         var oShape = this.getTAShape();
         if(!oShape)
         {
@@ -985,7 +975,7 @@ TextArtPreviewManager.prototype.generateTextArtStyles = function()
         }
         oShape.recalculate();
 
-        graphics.m_oFontManager = g_fontManager;
+        graphics.m_oFontManager = AscCommon.g_fontManager;
 
         var oldShowParaMarks;
         if(editor)

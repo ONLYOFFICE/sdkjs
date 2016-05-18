@@ -1,19 +1,27 @@
 {
   "compile": {
     "sdk": {
-      "common": [
-        "../common/Build/License.js",
-        "../common/browser.js",
-        "../common/commonDefines.js",
-        "../common/downloaderfiles.js",
-        "../common/docscoapicommon.js",
+      "min": [
+		"../common/browser.js",
+		"../common/commonDefines.js",
+		"../common/docscoapicommon.js",
         "../common/docscoapi.js",
-        "../common/apiCommon.js",
+		"../common/apiCommon.js",
 		"../common/SerializeCommonWordExcel.js",
-        "../common/editorscommon.js",
+		"../common/editorscommon.js",
+		"../common/AdvancedOptions.js",
+		"../cell/apiDefines.js",
+		"../cell/utils/utils.js",
+		"../cell/view/HandlerList.js",
+		"../cell/model/CollaborativeEditing.js",
+		"../common/apiBase.js",
+		"../common/Private/license.js",
+		"../cell/api.js"
+	  ],
+	  "common": [		
+        "../common/downloaderfiles.js",
         "../common/NumFormat.js",
 		"../common/SerializeChart.js",
-		"../common/AdvancedOptions.js",
 		
 		"../common/FontsFreeType/font_engine.js",
         "../common/FontsFreeType/FontFile.js",
@@ -23,6 +31,8 @@
 		"../common/Drawings/Metafile.js",
 		"../common/FontsFreeType/TextMeasurer.js",
 		"../common/Drawings/WorkEvents.js",
+		
+		"../cell/model/History.js",
 		
 		"../common/Shapes/EditorSettings.js",
 		"../common/Shapes/Serialize.js",
@@ -38,6 +48,7 @@
 		"../common/Drawings/Format/CreateGeometry.js",
 		"../common/Drawings/Format/Geometry.js",
 		"../common/Drawings/Format/Format.js",
+		"../common/Drawings/Format/GraphicObjectBase.js",
 		"../common/Drawings/Format/Shape.js",
 		"../common/Drawings/Format/Path.js",
 		"../common/Drawings/Format/Image.js",
@@ -45,6 +56,7 @@
 		"../common/Drawings/Format/ChartSpace.js",
 		"../common/Drawings/Format/ChartFormat.js",
 		"../common/Drawings/Format/TextBody.js",
+		"../common/Drawings/Format/GraphicFrame.js",
         "../common/Charts/charts.js",
 		"../common/Charts/DrawingArea.js",
 		"../common/Charts/DrawingObjects.js",
@@ -72,17 +84,13 @@
 
         "../common/wordcopypaste.js",
 
-        "../cell/apiDefines.js",
         "../cell/document/empty-workbook.js",
-        "../cell/utils/utils.js",
         "../cell/model/UndoRedo.js",
         "../cell/model/clipboard.js",
         "../cell/model/autofilters.js",
         "../cell/graphics/DrawingContext.js",
         "../cell/graphics/pdfprinter.js",
-        "../cell/model/CollaborativeEditing.js",
         "../cell/model/ConditionalFormatting.js",
-		
         "../cell/model/FormulaObjects/parserFormula.js",
         "../cell/model/FormulaObjects/_xlfnFunctions.js",
         "../cell/model/FormulaObjects/dateandtimeFunctions.js",
@@ -96,30 +104,28 @@
         "../cell/model/FormulaObjects/lookupandreferenceFunctions.js",
         "../cell/model/FormulaObjects/informationFunctions.js",
         "../cell/model/FormulaObjects/logicalFunctions.js",
-        "../cell/model/Serialize.js",
+		"../cell/model/CellComment.js",
         "../cell/model/WorkbookElems.js",
-        "../cell/model/Workbook.js",
-        "../cell/model/CellInfo.js",
-        "../cell/model/History.js",
-        "../cell/model/CellComment.js",
+		"../cell/model/Workbook.js",
+		"../cell/model/Serialize.js",
+		"../cell/model/CellInfo.js",
         "../cell/view/mobileTouch.js",
         "../cell/view/StringRender.js",
         "../cell/view/CellTextRender.js",
         "../cell/view/CellEditorView.js",
-        "../cell/view/WorksheetView.js",
-        "../cell/view/HandlerList.js",
         "../cell/view/EventsController.js",
-        "../cell/view/WorkbookView.js",
-        "../word/Editor/SerializeCommon.js",
+		"../cell/view/WorkbookView.js",
+		"../cell/view/WorksheetView.js",
         "../cell/view/DrawingObjectsController.js",
         "../cell/model/DrawingObjects/Graphics.js",
         "../cell/model/DrawingObjects/ShapeDrawer.js",
         "../cell/model/DrawingObjects/DrawingDocument.js",
+		"../cell/model/DrawingObjects/GlobalCounters.js",
         "../cell/model/DrawingObjects/Format/ShapePrototype.js",
         "../cell/model/DrawingObjects/Format/ImagePrototype.js",
         "../cell/model/DrawingObjects/Format/GroupPrototype.js",
         "../cell/model/DrawingObjects/Format/ChartSpacePrototype.js",
-        "../slide/Editor/Format/GraphicFrame.js",
+		
         "../word/Editor/Comments.js",
         "../word/Editor/Styles.js",
         "../word/Editor/FlowObjects.js",
@@ -134,6 +140,7 @@
         "../word/Editor/Sections.js",
         "../word/Editor/Numbering.js",
         "../word/Editor/HeaderFooter.js",
+		"../word/Editor/DocumentContentBase.js",
         "../word/Editor/Document.js",
         "../word/Editor/DocumentContent.js",
         "../word/Editor/Table.js",
@@ -159,30 +166,38 @@
         "../word/Math/operators.js",
         "../word/Math/accent.js",
         "../word/Math/borderBox.js",
-        "../cell/model/DrawingObjects/GlobalCounters.js",
         "../word/apiCommon.js",
-        "../cell/apiCommonExport.js",
-        "../common/apiBase.js",
-        "../cell/api.js"
+		
+		"../common/clipboard_base.js",
+		"../common/Drawings/Format/OleObject.js",
+		"../common/plugins.js"
       ],
       "private": [
-        "../common/Private/license.js",
         "../cell/Private/comments.js"
       ],
       "builder": [
       ],
-      "desktop": [
-        "../common/Local/common.js",
-        "../cell/Local/api.js"
-      ],
-	  "mobile_banners": [
-	    "../../web-apps/vendor/xregexp/xregexp-all-min.js",
-		"../../web-apps/vendor/underscore/underscore-min.js",
-		"../cell/native/common.js",
-		"../common/Native/Wrappers/memory.js",
-		"../common/Native/jquery_native.js",
-		"../cell/native/DrawingContext.js"
+      "desktop": {
+        "min": [
+		  "../common/Local/license.js"
 		],
+		"common": [
+		  "../common/Local/common.js",
+          "../cell/Local/api.js"
+		]
+	  },
+	  "mobile_banners": {
+        "min": [
+	      "../../web-apps/vendor/xregexp/xregexp-all-min.js",
+		  "../../web-apps/vendor/underscore/underscore-min.js",
+		  "../cell/native/common.js",
+		  "../common/Native/Wrappers/memory.js",
+		  "../common/Native/jquery_native.js"
+		],
+		"common": [
+		  "../cell/native/DrawingContext.js"
+		]
+	  },
 	  "mobile": [	 
         "../common/Native/Wrappers/TextMeasurerWrapper.js",
         "../common/Native/Wrappers/DrawingStream.js",
@@ -205,7 +220,7 @@
 		"../cell/model/DrawingObjects/Graphics.js",
 		"../cell/view/iscroll.js"
 	  ],
-      "dst": "../cell/sdk-all.js",
+      "dst": "../cell",
       "externs": [
         "../common/Build/Externs.js",
         "../../web-apps/vendor/jquery/jquery.min.js",

@@ -1,19 +1,26 @@
 {
   "compile": {
     "sdk": {
-      "common": [
-        "../common/Build/License.js",
+      "min": [
         "../common/browser.js",
         "../common/commonDefines.js",
-        "../common/downloaderfiles.js",
-        "../common/docscoapicommon.js",
+		"../common/docscoapicommon.js",
         "../common/docscoapi.js",
-        "../common/apiCommon.js",
+		"../common/apiCommon.js",
 		"../common/SerializeCommonWordExcel.js",
         "../common/editorscommon.js",
+		"../common/AdvancedOptions.js",
+		"../slide/apiDefines.js",
+		"../common/CollaborativeEditingBase.js",
+		"../slide/Editor/CollaborativeEditing.js",
+		"../common/apiBase.js",
+		"../common/Private/license.js",
+        "../slide/api.js"
+	  ],
+	  "common": [
+        "../common/downloaderfiles.js",
         "../common/NumFormat.js",
 		"../common/SerializeChart.js",
-		"../common/AdvancedOptions.js",
 		
 		"../common/FontsFreeType/font_engine.js",
         "../common/FontsFreeType/FontFile.js",
@@ -23,6 +30,8 @@
 		"../common/Drawings/Metafile.js",
 		"../common/FontsFreeType/TextMeasurer.js",
 		"../common/Drawings/WorkEvents.js",
+		
+		"../word/Editor/History.js",
 		
 		"../common/Shapes/EditorSettings.js",
 		"../common/Shapes/Serialize.js",
@@ -38,13 +47,17 @@
 		"../common/Drawings/Format/CreateGeometry.js",
 		"../common/Drawings/Format/Geometry.js",
 		"../common/Drawings/Format/Format.js",
+		"../common/Drawings/Format/GraphicObjectBase.js",
 		"../common/Drawings/Format/Shape.js",
+		"../slide/Editor/Format/ShapePrototype.js",
 		"../common/Drawings/Format/Path.js",
 		"../common/Drawings/Format/Image.js",
 		"../common/Drawings/Format/GroupShape.js",
 		"../common/Drawings/Format/ChartSpace.js",
 		"../common/Drawings/Format/ChartFormat.js",
 		"../common/Drawings/Format/TextBody.js",
+		"../slide/Editor/Format/TextBodyPrototype.js",
+		"../common/Drawings/Format/GraphicFrame.js",
         "../common/Charts/charts.js",
 		"../common/Charts/DrawingArea.js",
 		"../common/Charts/DrawingObjects.js",
@@ -62,7 +75,6 @@
 		
 		"../common/Drawings/Externals.js",
 		"../common/GlobalLoaders.js",
-		"../common/CollaborativeEditingBase.js",
 		"../common/Controls.js",
 		"../common/Overlay.js",
 		"../common/Drawings/HatchPattern.js",
@@ -71,16 +83,20 @@
 
         "../common/wordcopypaste.js",
 
-        "../slide/apiDefines.js",
 		"../slide/themes/Themes.js",
 		
 		"../cell/utils/utils.js",
+		"../cell/model/WorkbookElems.js",
+		"../cell/model/Workbook.js",
+		"../cell/model/Serialize.js",
+		"../cell/model/CellInfo.js",
+		"../cell/view/DrawingObjectsController.js",
 		
         "../slide/Drawing/ThemeLoader.js",
         "../word/Editor/Serialize2.js",
         "../word/Editor/Styles.js",
+		"../slide/Editor/Format/StylesPrototype.js",
         "../word/Editor/Numbering.js",
-        "../slide/Editor/CollaborativeEditing.js",
         "../word/Drawing/GraphicsEvents.js",
         "../word/Drawing/Rulers.js",
         "../word/Editor/Table.js",
@@ -90,15 +106,14 @@
         "../word/Editor/Table/TableCell.js",
         "../word/Editor/Common.js",
         "../word/Editor/Sections.js",
-        "../word/Editor/History.js",
+		
         "../word/Drawing/Graphics.js",
         "../word/Drawing/ShapeDrawer.js",
+		
         "../slide/Drawing/Transitions.js",
         "../slide/Drawing/DrawingDocument.js",
         "../slide/Drawing/HtmlPage.js",
-        "../word/Editor/SerializeCommon.js",
         "../slide/Editor/Format/Presentation.js",
-        "../cell/view/DrawingObjectsController.js",
         "../slide/Editor/DrawingObjectsController.js",
         "../slide/Editor/Format/Slide.js",
         "../slide/Editor/Format/SlideMaster.js",
@@ -127,6 +142,7 @@
         "../word/Editor/FlowObjects.js",
         "../word/Editor/Paragraph.js",
         "../word/Editor/Paragraph_Recalculate.js",
+		"../word/Editor/DocumentContentBase.js",
         "../word/Editor/Document.js",
         "../word/Editor/DocumentContent.js",
         "../word/Editor/HeaderFooter.js",
@@ -134,37 +150,40 @@
         "../word/Editor/Spelling.js",
         "../word/Editor/Search.js",
         "../word/Editor/FontClassification.js",
-        "../slide/Editor/Format/ShapePrototype.js",
+        
         "../slide/Editor/Format/ImagePrototype.js",
         "../slide/Editor/Format/GroupPrototype.js",
         "../slide/Editor/Format/ChartSpacePrototype.js",
-        "../slide/Editor/Format/GraphicFrame.js",
-        "../common/apiBase.js",
-        "../slide/api.js",
         "../slide/apiCommon.js",
         "../word/apiCommon.js",
-        "../slide/apiExport.js",
-        "../cell/model/Serialize.js",
-        "../cell/model/WorkbookElems.js",
-        "../cell/model/Workbook.js",
-        "../cell/model/CellInfo.js"
+		
+		"../common/clipboard_base.js",
+		"../common/Drawings/Format/OleObject.js",
+		"../common/plugins.js"
       ],
       "private": [
-        "../common/Private/license.js",
         "../slide/Private/comments.js",
         "../common/Private/Locks.js"
       ],
       "builder": [
       ],
-      "desktop": [
-        "../common/Local/common.js",
-        "../slide/Local/api.js"
-      ],
-	  "mobile_banners": [
-		"../common/Native/native.js",
-		"../common/Native/jquery_native.js",
-		"../../web-apps/vendor/xregexp/xregexp-all-min.js"
-	  ],
+      "desktop": {
+        "min": [
+		  "../common/Local/license.js"
+		],
+		"common": [
+          "../common/Local/common.js",
+          "../slide/Local/api.js"
+		]
+      },
+	  "mobile_banners": {
+		  "min": [
+		    "../common/Native/native.js",
+		    "../common/Native/jquery_native.js",
+		    "../../web-apps/vendor/xregexp/xregexp-all-min.js"
+	    ],
+		"common": []
+	  },
       "mobile": [        
         "../common/Native/Wrappers/memory.js",
         "../common/Native/Wrappers/TextMeasurerWrapper.js",
@@ -187,7 +206,7 @@
         "../common/FontsFreeType/TextMeasurer.js",
 		"../common/Drawings/TextDrawer.js"
       ],
-      "dst": "../slide/sdk-all.js",
+      "dst": "../slide",
       "externs": [
         "../common/Build/Externs.js",
         "../../web-apps/vendor/jquery/jquery.min.js",

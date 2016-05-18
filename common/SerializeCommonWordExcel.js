@@ -91,6 +91,12 @@ var c_oSerShdType = {
     Color: 1,
 	ColorTheme: 2
 };
+  var c_oSer_ColorThemeType = {
+    Auto: 0,
+    Color: 1,
+    Tint: 2,
+    Shade: 3
+  };
 
 function BinaryCommonWriter(memory)
 {
@@ -144,7 +150,7 @@ BinaryCommonWriter.prototype.WriteBorder = function(border)
             var doc = editor.WordControl.m_oLogicDocument;
             border.Unifill.check(doc.Get_Theme(), doc.Get_ColorMap());
             var RGBA = border.Unifill.getRGBAColor();
-            color = new CDocumentColor(RGBA.R, RGBA.G, RGBA.B);
+            color = new AscCommonWord.CDocumentColor(RGBA.R, RGBA.G, RGBA.B);
         }
         if (null != color && !color.Auto)
             this.WriteColor(c_oSerBorderType.Color, color);
@@ -220,7 +226,7 @@ BinaryCommonWriter.prototype.WriteShd = function(Shd)
         var doc = editor.WordControl.m_oLogicDocument;
         Shd.Unifill.check(doc.Get_Theme(), doc.Get_ColorMap());
         var RGBA = Shd.Unifill.getRGBAColor();
-        color = new CDocumentColor(RGBA.R, RGBA.G, RGBA.B);
+        color = new AscCommonWord.CDocumentColor(RGBA.R, RGBA.G, RGBA.B);
     }
     if (null != color && !color.Auto)
         this.WriteColor(c_oSerShdType.Color, color);
@@ -264,7 +270,7 @@ BinaryCommonWriter.prototype.WritePaddings = function(Paddings)
 };
 BinaryCommonWriter.prototype.WriteColorSpreadsheet = function(color)
 {
-	if(color instanceof ThemeColor)
+	if(color instanceof AscCommonExcel.ThemeColor)
 	{
 		if(null != color.theme)
 		{
@@ -295,6 +301,7 @@ BinaryCommonWriter.prototype.WriteColorTheme = function(unifill, color)
 	if (null != unifill && null != unifill.fill && null != unifill.fill.color && unifill.fill.color.color instanceof AscFormat.CSchemeColor) {
 		var uniColor = unifill.fill.color;
 		if(null != uniColor.color){
+      var EThemeColor = AscCommonWord.EThemeColor;
 			var nFormatId = EThemeColor.themecolorNone;
 			switch(uniColor.color.id){
 				case 0: nFormatId = EThemeColor.themecolorAccent1;break;
@@ -470,8 +477,8 @@ Binary_CommonReader.prototype.ReadColor = function()
 {
     var r = this.stream.GetUChar();
     var g = this.stream.GetUChar();
-    var b = this.stream.GetUChar()
-    return new CDocumentColor(r, g, b);
+    var b = this.stream.GetUChar();
+    return new AscCommonWord.CDocumentColor(r, g, b);
 };
 Binary_CommonReader.prototype.ReadShd = function(type, length, Shd, themeColor)
 {

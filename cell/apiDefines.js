@@ -33,12 +33,12 @@ function (window, undefined) {
 // Используем [] вместо new Array() для ускорения (http://jsperf.com/creation-array)
 // Используем {} вместо new Object() для ускорения (http://jsperf.com/creation-object)
 
-
   // Import
   var CColor = AscCommon.CColor;
 
 var c_oAscConfirm = {
-  ConfirmReplaceRange: 0
+  ConfirmReplaceRange: 0,
+  ConfirmPutMergeRange: 1
 };
 
 var c_oAscAlignType = {
@@ -338,6 +338,12 @@ var c_oAscPopUpSelectorType = {
   Table: 3
 };
 
+  /** @enum */
+  var c_oSerFormat = {
+    Version		: 2, //1.0.0.2
+    Signature	: "XLSY"
+  };
+
   //----------------------------------------------------------export----------------------------------------------------
   window['AscCommonExcel'] = window['AscCommonExcel'] || {};
   window['AscCommonExcel'].c_oAscAlignType = c_oAscAlignType;
@@ -359,12 +365,17 @@ var c_oAscPopUpSelectorType = {
   window['AscCommonExcel'].c_oAscLockNameFrozenPane = c_oAscLockNameFrozenPane;
   window['AscCommonExcel'].c_oAscLockNameTabColor = c_oAscLockNameTabColor;
 
+  window['AscCommon'] = window['AscCommon'] || {};
+  window['AscCommon'].c_oSerFormat = c_oSerFormat;
+  window['AscCommon'].CurFileVersion = c_oSerFormat.Version;
+
   var prot;
   window['Asc'] = window['Asc'] || {};
   window['Asc']['c_oAscSortOptions'] = window['Asc'].c_oAscSortOptions = c_oAscSortOptions;
   window['Asc']['c_oAscConfirm'] = window['Asc'].c_oAscConfirm = c_oAscConfirm;
   prot = c_oAscConfirm;
   prot['ConfirmReplaceRange'] = prot.ConfirmReplaceRange;
+  prot['ConfirmPutMergeRange'] = prot.ConfirmPutMergeRange;
   window['Asc']['c_oAscMergeOptions'] = window['Asc'].c_oAscMergeOptions = c_oAscMergeOptions;
   prot = c_oAscMergeOptions;
   prot['Unmerge'] = prot.Unmerge;

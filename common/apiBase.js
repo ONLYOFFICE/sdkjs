@@ -24,6 +24,7 @@
 */
 "use strict";
 
+(function(window, undefined){
 // Import
 var offlineMode = AscCommon.offlineMode;
 var c_oEditorId = AscCommon.c_oEditorId;
@@ -35,21 +36,20 @@ var c_oAscAsyncActionType = Asc.c_oAscAsyncActionType;
 var ASC_DOCS_API_USE_EMBEDDED_FONTS = "@@ASC_DOCS_API_USE_EMBEDDED_FONTS";
 
 /** @constructor */
-function baseEditorsApi(name) {
-  AscFonts.g_fontApplication.Init();
+function baseEditorsApi(config, editorId) {
+  this.editorId = editorId;
+  this.isLoadFullApi = false;
+  this.openResult = null;
 
-  this.editorId = null;
-
-  this.HtmlElementName = name;
+  this.HtmlElementName = config['id-view'] || '';
   this.HtmlElement = null;
 
-  this.isMobileVersion = false;
+  this.isMobileVersion = (config['mobile'] === true) ? true : false;
+  
+  this.isViewMode = false;
 
-  this.FontLoader = AscCommon.g_font_loader;
-  this.ImageLoader = AscCommon.g_image_loader;
-  this.FontLoader.put_Api(this);
-  this.ImageLoader.put_Api(this);
-  this.FontLoader.SetStandartFonts();
+  this.FontLoader = null;
+  this.ImageLoader = null;
 
   this.LoadedObject = null;
   this.DocumentType = 0; // 0 - empty, 1 - test, 2 - document (from json)
@@ -89,10 +89,11 @@ function baseEditorsApi(name) {
   this.isDocumentCanSave = false;			// Флаг, говорит о возможности сохранять документ (активна кнопка save или нет)
 
   // Chart
-  this.chartTranslate = new Asc.asc_CChartTranslate();
-  this.textArtTranslate = new Asc.asc_TextArtTranslate();
-  this.chartPreviewManager = new AscCommon.ChartPreviewManager();
-  this.textArtPreviewManager = new AscCommon.TextArtPreviewManager();
+  this.chartTranslate = null;
+  this.textArtTranslate = null;
+  this.chartPreviewManager = null;
+  this.textArtPreviewManager = null;
+  this.shapeElementId = null;
   // Режим вставки диаграмм в редакторе документов
   this.isChartEditor = false;
   this.isOpenedChartFrame = false;
@@ -132,13 +133,17 @@ function baseEditorsApi(name) {
   // Использовать ли обрезанные шрифты
   this.isUseEmbeddedCutFonts = ("true" == ASC_DOCS_API_USE_EMBEDDED_FONTS.toLowerCase());
 
+  this.tmpFocus = null;
+
   this.fCurCallback = null;
 
-  this._baseInit();
+  this.pluginsManager = null;
+
   return this;
 }
-baseEditorsApi.prototype._baseInit = function() {
+baseEditorsApi.prototype._init = function() {
   var t = this;
+  //Asc.editor = Asc['editor'] = AscCommon['editor'] = AscCommon.editor = this; // ToDo сделать это!
   this.HtmlElement = document.getElementById(this.HtmlElementName);
 
   // init OnMessage
@@ -156,22 +161,34 @@ baseEditorsApi.prototype._baseInit = function() {
     t._uploadCallback(error, files);
   });
 
-  AscFormat.CHART_STYLE_MANAGER.init();
+  AscCommon.loadSdk(this._editorNameById(), function() {
+    t.isLoadFullApi = true;
+
+    if (t.DocInfo && t.DocInfo.get_OfflineApp()) {
+      t._OfflineAppDocumentStartLoad();
+    }
+
+    t._onEndLoadSdk();
+    t.onEndLoadFile(null);
+  });
 };
 baseEditorsApi.prototype._editorNameById = function() {
   var res = '';
   switch (this.editorId) {
     case c_oEditorId.Word:
-      res = 'Word';
+      res = 'word';
       break;
     case c_oEditorId.Spreadsheet:
-      res = 'Excel';
+      res = 'cell';
       break;
     case c_oEditorId.Presentation:
-      res = 'PowerPoint';
+      res = 'slide';
       break;
   }
   return res;
+};
+baseEditorsApi.prototype.getEditorId = function() {
+  return this.editorId;
 };
 baseEditorsApi.prototype.asc_GetFontThumbnailsPath = function() {
   return '../Common/Images/';
@@ -207,9 +224,6 @@ baseEditorsApi.prototype.asc_setDocInfo = function(oDocInfo) {
     window["AscDesktopEditor"]["SetDocumentName"](this.documentTitle);
   }
 };
-baseEditorsApi.prototype.asc_SetFontsPath = function(path) {
-  this.FontLoader.fontFilesPath = path;
-};
 baseEditorsApi.prototype.asc_enableKeyEvents = function(isEnabled) {
 };
 // Copy/Past/Cut
@@ -244,10 +258,10 @@ baseEditorsApi.prototype.sync_EndAction = function(type, id) {
     this.decrementCounterLongAction();
   }
 };
-baseEditorsApi.prototype.sync_TryUndoInFastCollaborative = function()
-{
+baseEditorsApi.prototype.sync_TryUndoInFastCollaborative = function() {
   this.sendEvent("asc_OnTryUndoInFastCollaborative");
 };
+baseEditorsApi.prototype.asc_enableKeyEvents = function(val) {};
 baseEditorsApi.prototype.asc_setViewMode = function() {
 };
 baseEditorsApi.prototype.getViewMode = function() {
@@ -307,7 +321,7 @@ baseEditorsApi.prototype.asc_LoadDocument = function(isVersionHistory) {
   this.advancedOptionsAction = AscCommon.c_oAscAdvancedOptionsAction.Open;
   var rData = null;
   if (offlineMode !== this.documentUrl) {
-	  var rData = {
+	  rData = {
       "c": 'open',
       "id": this.documentId,
       "userid": this.documentUserId,
@@ -328,10 +342,8 @@ baseEditorsApi.prototype.asc_LoadDocument = function(isVersionHistory) {
   this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.Open);
 
   if (offlineMode === this.documentUrl) {
-    // ToDo убрать зависимость от this.FontLoader.fontFilesPath
-    this.documentUrl = this.FontLoader.fontFilesPath + '../' + this._editorNameById() + '/document/';
+    this.documentUrl = '/sdkjs/' + this._editorNameById() + '/document/';
     this.DocInfo.asc_putOfflineApp(true);
-    this._OfflineAppDocumentStartLoad();
   }
 };
 baseEditorsApi.prototype._OfflineAppDocumentStartLoad = function() {
@@ -433,8 +445,12 @@ baseEditorsApi.prototype._coAuthoringInit = function() {
     t.asyncServerIdEndLoaded();
   };
   this.CoAuthoringApi.onFirstConnect = function() {
-    t.isOnFirstConnectEnd = true;
-    t._onEndPermissions();
+    if (t.isOnFirstConnectEnd) {
+      t.CoAuthoringApi.auth(t.getViewMode());
+    } else {
+      t.isOnFirstConnectEnd = true;
+      t._onEndPermissions();
+    }
   };
   this.CoAuthoringApi.onLicense = function(res) {
     t.licenseResult = res;
@@ -490,6 +506,9 @@ baseEditorsApi.prototype._coAuthoringInit = function() {
               break;
             case "needparams":
               t._onNeedParams(input["data"]);
+              break;
+            case "needpassword":
+              t.sendEvent("asc_onError", Asc.c_oAscError.ID.ConvertationPassword, c_oAscError.Level.Critical);
               break;
             case "err":
               t.sendEvent("asc_onError", AscCommon.mapAscServerErrorToAscError(parseInt(input["data"])), c_oAscError.Level.Critical);
@@ -549,6 +568,15 @@ baseEditorsApi.prototype.asc_onOpenChartFrame = function() {
 baseEditorsApi.prototype.asc_onCloseChartFrame = function() {
     this.isOpenedChartFrame = false;
 };
+baseEditorsApi.prototype.asc_setInterfaceDrawImagePlaceShape = function(elementId) {
+  this.shapeElementId = elementId;
+};
+baseEditorsApi.prototype.asc_getPropertyEditorShapes = function() {
+  return [AscCommon.g_oAutoShapesGroups, AscCommon.g_oAutoShapesTypes];
+};
+baseEditorsApi.prototype.asc_getPropertyEditorTextArts = function() {
+  return [AscCommon.g_oPresetTxWarpGroups, AscCommon.g_PresetTxWarpTypes];
+};
 // Add image
 baseEditorsApi.prototype._addImageUrl = function() {
 };
@@ -579,6 +607,39 @@ baseEditorsApi.prototype._uploadCallback = function(error, files) {
     });
   }
 };
+
+    //метод, который подменяет callback загрузки в каждом редакторе, TODO: переделать, сделать одинаково в о всех редакторах
+    baseEditorsApi.prototype.asc_replaceLoadImageCallback = function(fCallback){
+    };
+
+    baseEditorsApi.prototype.asc_loadLocalImageAndAction = function(sLocalImage, fCallback){
+        this.ImageLoader.LoadImage(AscCommon.getFullImageSrc2(sLocalImage), 1);
+        this.asc_replaceLoadImageCallback(fCallback);
+    };
+
+    baseEditorsApi.prototype.asc_checkImageUrlAndAction = function(sImageUrl, fCallback){
+        var sLocalImage = AscCommon.g_oDocumentUrls.getImageLocal(sImageUrl);
+        if(sLocalImage){
+            this.asc_loadLocalImageAndAction(sLocalImage, fCallback);
+            return;
+        }
+        var oThis = this;
+        AscCommon.sendImgUrls(oThis, [sImageUrl], function(data){
+            if(data[0] && data[0].path != null){
+                oThis.asc_loadLocalImageAndAction(AscCommon.g_oDocumentUrls.imagePath2Local(data[0].path), fCallback);
+            }
+        }, this.editorId === c_oEditorId.Spreadsheet);
+    };
+
+    baseEditorsApi.prototype.asc_addOleObject = function(sImageUrl, sData, sApplicationId){
+        var oThis = this;
+        this.asc_checkImageUrlAndAction(sImageUrl, function(oImage){oThis.asc_addOleObjectAction(AscCommon.g_oDocumentUrls.getImageLocal(oImage.src), sData, sApplicationId);});
+    };
+
+    baseEditorsApi.prototype.asc_addOleObjectAction = function(sLocalUrl, sData, sApplicationId)
+    {
+    };
+
 // Version History
 baseEditorsApi.prototype.asc_showRevision = function(newObj) {
 };
@@ -597,3 +658,70 @@ baseEditorsApi.prototype.asc_isOffline = function() {
 baseEditorsApi.prototype.asc_getUrlType = function(url) {
 	return AscCommon.getUrlType(url);
 };
+
+  baseEditorsApi.prototype.openDocument = function() {
+  };
+  baseEditorsApi.prototype.onEndLoadFile = function(result) {
+    if (result) {
+      this.openResult = result;
+    }
+    if (this.isLoadFullApi && this.openResult) {
+      this.openDocument(this.openResult);
+    }
+
+  };
+  baseEditorsApi.prototype._onEndLoadSdk = function() {
+    AscFonts.g_fontApplication.Init();
+
+    this.FontLoader = AscCommon.g_font_loader;
+    this.ImageLoader = AscCommon.g_image_loader;
+    this.FontLoader.put_Api(this);
+    this.ImageLoader.put_Api(this);
+    this.FontLoader.SetStandartFonts();
+
+    this.chartTranslate = this.chartTranslate ? this.chartTranslate : new Asc.asc_CChartTranslate();
+    this.textArtTranslate = this.textArtTranslate ? this.textArtTranslate : new Asc.asc_TextArtTranslate();
+    this.chartPreviewManager = new AscCommon.ChartPreviewManager();
+    this.textArtPreviewManager = new AscCommon.TextArtPreviewManager();
+
+    AscFormat.initStyleManager();
+
+    if (null !== this.tmpFocus) {
+      this.asc_enableKeyEvents(this.tmpFocus);
+    }
+  };
+
+  baseEditorsApi.prototype.sendStandartTextures = function() {
+    var _count = AscCommon.g_oUserTexturePresets.length;
+    var arr = new Array(_count);
+    for (var i = 0; i < _count; ++i) {
+      arr[i] = new AscCommon.asc_CTexture();
+      arr[i].Id = i;
+      arr[i].Image = AscCommon.g_oUserTexturePresets[i];
+      this.ImageLoader.LoadImage(AscCommon.g_oUserTexturePresets[i], 1);
+    }
+
+    this.sendEvent('asc_onInitStandartTextures', arr);
+  };
+
+// plugins
+baseEditorsApi.prototype.asc_pluginsRegister = function(basePath, plugins)
+{
+  if (null != this.pluginsManager)
+    this.pluginsManager.register(basePath, plugins);
+};
+baseEditorsApi.prototype.asc_pluginRun = function(guid, data)
+{
+  if (null != this.pluginsManager)
+    this.pluginsManager.run(guid, data);
+};
+baseEditorsApi.prototype.asc_pluginResize = function(guid, data, width, height)
+{
+  if (null != this.pluginsManager)
+    this.pluginsManager.runResize(guid, data, width, height);
+};
+
+  //----------------------------------------------------------export----------------------------------------------------
+  window['AscCommon'] = window['AscCommon'] || {};
+  window['AscCommon'].baseEditorsApi = baseEditorsApi;
+})(window);

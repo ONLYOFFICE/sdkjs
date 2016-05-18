@@ -26,6 +26,7 @@
 
 // Import
 var g_oTextMeasurer = AscCommon.g_oTextMeasurer;
+var History = AscCommon.History;
 
 function CGlyphOperator()
 {
@@ -4489,6 +4490,11 @@ AscCommon.extendClass(CMathMenuGroupCharacter, CMathMenuBase);
 CMathMenuGroupCharacter.prototype.get_Pos         = function(){return this.Pos;};
 CMathMenuGroupCharacter.prototype.put_Pos         = function(Pos){this.Pos = Pos;};
 CMathMenuGroupCharacter.prototype.can_ChangePos   = function(){return this.bCanChangePos;};
+
+//--------------------------------------------------------export----------------------------------------------------
+window['AscCommonWord'] = window['AscCommonWord'] || {};
+window['AscCommonWord'].CDelimiter = CDelimiter;
+window['AscCommonWord'].CGroupCharacter = CGroupCharacter;
 
 window["CMathMenuGroupCharacter"] = CMathMenuGroupCharacter;
 CMathMenuGroupCharacter.prototype["get_Pos"]         = CMathMenuGroupCharacter.prototype.get_Pos;

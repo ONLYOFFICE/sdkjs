@@ -27,6 +27,7 @@
 (function(window, undefined){
     // Import
     var CMatrix = AscCommon.CMatrix;
+    var global_MatrixTransformer = AscCommon.global_MatrixTransformer;
 
 function MoveShapeImageTrack(originalObject)
 {
@@ -39,7 +40,15 @@ function MoveShapeImageTrack(originalObject)
 
     if(!originalObject.isChart())
     {
-        this.brush = originalObject.brush;
+        if(originalObject.blipFill)
+        {
+            this.brush = new AscFormat.CUniFill();
+            this.brush.fill = originalObject.blipFill;
+        }
+        else
+        {
+            this.brush = originalObject.brush;
+        }
         this.pen = originalObject.pen;
     }
     else

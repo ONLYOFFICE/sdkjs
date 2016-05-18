@@ -2709,7 +2709,7 @@ function OfflineEditor () {
 
         var kNone = "none";
 
-        window["Asc"].WorksheetView.prototype.__drawColumnHeaders = function (drawingCtx, start, end, style, offsetXForDraw, offsetYForDraw) {
+        AscCommonExcel.WorksheetView.prototype.__drawColumnHeaders = function (drawingCtx, start, end, style, offsetXForDraw, offsetYForDraw) {
             if (undefined === drawingCtx && false === this.model.sheetViews[0].asc_getShowRowColHeaders())
                 return;
 
@@ -2746,7 +2746,7 @@ function OfflineEditor () {
             }
         };
 
-        window["Asc"].WorksheetView.prototype.__drawHeader = function (drawingCtx, x, y, w, h, style, isColHeader, index) {
+        AscCommonExcel.WorksheetView.prototype.__drawHeader = function (drawingCtx, x, y, w, h, style, isColHeader, index) {
             // Для отрисовки невидимого столбца/строки
             var isZeroHeader = false;
             if (-1 !== index) {
@@ -2845,7 +2845,7 @@ function OfflineEditor () {
             }
         };
 
-        window["Asc"].WorksheetView.prototype.__drawRowHeaders = function (drawingCtx, start, end, style, offsetXForDraw, offsetYForDraw) {
+        AscCommonExcel.WorksheetView.prototype.__drawRowHeaders = function (drawingCtx, start, end, style, offsetXForDraw, offsetYForDraw) {
             if (undefined === drawingCtx && false === this.model.sheetViews[0].asc_getShowRowColHeaders())
                 return;
 
@@ -2882,17 +2882,18 @@ function OfflineEditor () {
             }
         };
 
-        window["Asc"].WorksheetView.prototype.__drawGrid = function (drawingCtx, c1, r1, c2, r2, leftFieldInPt, topFieldInPt, width, height) {
+        AscCommonExcel.WorksheetView.prototype.__drawGrid = function (drawingCtx, c1, r1, c2, r2, leftFieldInPt, topFieldInPt, width, height) {
             var range = new asc_Range(c1, r1, c2, r2);
             this._prepareCellTextMetricsCache(range);
             this._drawGrid(drawingCtx, range, leftFieldInPt, topFieldInPt, width, height);
         };
 
-        window["Asc"].WorksheetView.prototype.__drawCellsAndBorders = function (drawingCtx,  c1, r1, c2, r2, offsetXForDraw, offsetYForDraw, istoplayer) {
+        AscCommonExcel.WorksheetView.prototype.__drawCellsAndBorders = function (drawingCtx,  c1, r1, c2, r2, offsetXForDraw, offsetYForDraw, istoplayer) {
             var range = new asc_Range(c1, r1, c2, r2);
 
             if (false === istoplayer) {
                 this._drawCellsAndBorders(drawingCtx, range, offsetXForDraw, offsetYForDraw);
+                this._drawAutoF(range, offsetXForDraw, offsetYForDraw);
             }
 
             var oldrange = this.visibleRange;
@@ -2922,7 +2923,7 @@ function OfflineEditor () {
             this.visibleRange = oldrange;
         };
 
-        window["Asc"].WorksheetView.prototype.__selection = function (c1, r1, c2, r2, isFrozen) {
+        AscCommonExcel.WorksheetView.prototype.__selection = function (c1, r1, c2, r2, isFrozen) {
 
             var native_selection = [];
 
@@ -3291,7 +3292,7 @@ function OfflineEditor () {
             //}
         };
 
-        window["Asc"].WorksheetView.prototype.__changeSelectionTopLeft = function (x, y, isCoord, isSelectMode, isTopLeft) {
+        AscCommonExcel.WorksheetView.prototype.__changeSelectionTopLeft = function (x, y, isCoord, isSelectMode, isTopLeft) {
             //var ar = (this.isFormulaEditMode) ? this.arrActiveFormulaRanges[this.arrActiveFormulaRanges.length - 1] : this.activeRange;
 
             var isMoveActiveCellToLeftTop = false;
@@ -3358,7 +3359,7 @@ function OfflineEditor () {
             return this._calcActiveRangeOffset(x,y);
         };
 
-        window["Asc"].WorksheetView.prototype.__chartsRanges = function(ranges) {
+        AscCommonExcel.WorksheetView.prototype.__chartsRanges = function(ranges) {
 
             if (ranges) {
                 return this.__drawFormulaRanges(ranges, 0, 0, Asc.c_oAscSelectionType.RangeChart);
@@ -3373,11 +3374,12 @@ function OfflineEditor () {
             return null;
         };
 
-        window["Asc"].WorksheetView.prototype.__drawFormulaRanges = function (arrRanges, offsetX, offsetY, rangetype) {
+        AscCommonExcel.WorksheetView.prototype.__drawFormulaRanges = function (arrRanges, offsetX, offsetY, rangetype) {
             var ranges = [],i = 0, type = 0, left = 0, right  = 0, top = 0, bottom = 0;
             var addt, addl, addr, addb, colsCount = this.cols.length - 1, rowsCount = this.rows.length - 1;
             var defaultWidth = this.model.getDefaultWidth();
             defaultWidth = (typeof defaultWidth === "number" && defaultWidth >= 0) ? defaultWidth : -1;
+            var defaultRowHeight = AscCommonExcel.oDefaultMetrics.RowHeight;
 
             for (i = 0; i < arrRanges.length; ++i) {
                 ranges.push(undefined !== rangetype ? rangetype : arrRanges[i].type);
@@ -3400,7 +3402,7 @@ function OfflineEditor () {
                         left = this.cols[arrRanges[i].c1].left - offsetX;
 
                     if (addt > 0)
-                        top = this.rows[rowsCount - 1].top + addt * gc_dDefaultRowHeightAttribute - offsetY;
+                        top = this.rows[rowsCount - 1].top + addt * defaultRowHeight - offsetY;
                     else
                         top = this.rows[arrRanges[i].r1].top - offsetY;
 
@@ -3410,7 +3412,7 @@ function OfflineEditor () {
                         right = this.cols[arrRanges[i].c2].left + this.cols[arrRanges[i].c2].width - offsetX;
 
                     if (addb > 0)
-                        bottom = this.rows[rowsCount - 1].top + addb * gc_dDefaultRowHeightAttribute - offsetY;
+                        bottom = this.rows[rowsCount - 1].top + addb * defaultRowHeight - offsetY;
                     else
                         bottom = this.rows[arrRanges[i].r2].top + this.rows[arrRanges[i].r2].height - offsetY;
                 }
@@ -3421,7 +3423,7 @@ function OfflineEditor () {
                         left = this.cols[arrRanges[i].c1].left - offsetX;
 
                     if (addt > 0)
-                        top = this.rows[rowsCount - 1].top + addt * gc_dDefaultRowHeightAttribute - offsetY;
+                        top = this.rows[rowsCount - 1].top + addt * defaultRowHeight - offsetY;
                     else
                         top = this.rows[arrRanges[i].r1].top - offsetY;
 
@@ -3439,14 +3441,14 @@ function OfflineEditor () {
                         left = this.cols[arrRanges[i].c1].left - offsetX;
 
                     if (addt > 0)
-                        top = this.rows[rowsCount - 1].top + addt * gc_dDefaultRowHeightAttribute - offsetY;
+                        top = this.rows[rowsCount - 1].top + addt * defaultRowHeight - offsetY;
                     else
                         top = this.rows[arrRanges[i].r1].top - offsetY;
 
                     right = 0;
 
                     if (addb > 0)
-                        bottom = this.rows[rowsCount - 1].top + addb * gc_dDefaultRowHeightAttribute - offsetY;
+                        bottom = this.rows[rowsCount - 1].top + addb * defaultRowHeight - offsetY;
                     else
                         bottom  = this.rows[arrRanges[i].r2].top + this.rows[arrRanges[i].r2].height - offsetY;
                 }
@@ -3457,7 +3459,7 @@ function OfflineEditor () {
                         left = this.cols[arrRanges[i].c1].left - offsetX;
 
                     if (addt > 0)
-                        top = this.rows[rowsCount - 1].top + addt * gc_dDefaultRowHeightAttribute - offsetY;
+                        top = this.rows[rowsCount - 1].top + addt * defaultRowHeight - offsetY;
                     else
                         top = this.rows[arrRanges[i].r1].top - offsetY;
 
@@ -3470,7 +3472,7 @@ function OfflineEditor () {
                         left = this.cols[Math.max(0,arrRanges[i].c1)].left - offsetX;
 
                     if (addt > 0)
-                        top = this.rows[rowsCount - 1].top + addt * gc_dDefaultRowHeightAttribute - offsetY;
+                        top = this.rows[rowsCount - 1].top + addt * defaultRowHeight - offsetY;
                     else
                         top = this.rows[Math.max(0,arrRanges[i].r1)].top - offsetY;
 
@@ -3480,7 +3482,7 @@ function OfflineEditor () {
                         right = this.cols[Math.max(0,arrRanges[i].c2)].left + this.cols[Math.max(0,arrRanges[i].c2)].width - offsetX;
 
                     if (addb > 0)
-                        bottom = this.rows[rowsCount - 1].top + addb * gc_dDefaultRowHeightAttribute - offsetY;
+                        bottom = this.rows[rowsCount - 1].top + addb * defaultRowHeight - offsetY;
                     else
                         bottom = this.rows[Math.max(0,arrRanges[i].r2)].top + this.rows[Math.max(0,arrRanges[i].r2)].height - offsetY;
                 }
@@ -3510,7 +3512,7 @@ function OfflineEditor () {
 
         window.g_file_path = "native_open_file";
         window.NATIVE_DOCUMENT_TYPE = window.native.GetEditorType();
-        _api = new window["Asc"]["spreadsheet_api"]();
+        _api = new window["Asc"]["spreadsheet_api"]({});
 
         var userInfo = new Asc.asc_CUserInfo();
         userInfo.asc_putId('ios');
@@ -4422,10 +4424,10 @@ function OfflineEditor () {
         var styleThumbnailWidth  = Math.floor(92.0 * pxToMM);
         var styleThumbnailHeight = Math.floor(48.0 * pxToMM);
 
-        window["Asc"].WorkbookView.prototype = Object.create (window["Asc"].WorkbookView.prototype);
-        window["Asc"].WorkbookView.prototype.constructor = window["Asc"].WorkbookView;
+        AscCommonExcel.WorkbookView.prototype = Object.create (AscCommonExcel.WorkbookView.prototype);
+        AscCommonExcel.WorkbookView.prototype.constructor = AscCommonExcel.WorkbookView;
 
-        window["Asc"].WorkbookView.prototype.af_getTablePictures =  function(wb, fmgrGraphics, oFont) {
+        AscCommonExcel.WorkbookView.prototype.af_getTablePictures =  function(wb, fmgrGraphics, oFont) {
 
             window['native'].SetStylesType(1);
 
@@ -4491,7 +4493,7 @@ function OfflineEditor () {
             }
             return result;
         };
-        window["Asc"].WorkbookView.prototype.af_getSmallIconTable = function(canvas, style, fmgrGraphics, oFont) {
+        AscCommonExcel.WorkbookView.prototype.af_getSmallIconTable = function(canvas, style, fmgrGraphics, oFont) {
 
             var ctx = new Asc.DrawingContext({canvas: canvas, units: 0/*pt*/, fmgrGraphics: fmgrGraphics, font: oFont});
             var styleOptions = style;
@@ -4897,7 +4899,7 @@ function OfflineEditor () {
 
                 //window["native"]["DD_StartNativeDraw"](_width_px, _height_px, 50, 50);
 
-                var dKoefToMM = g_dKoef_pix_to_mm;
+                var dKoefToMM = AscCommon.g_dKoef_pix_to_mm;
                 if (this.IsRetinaEnabled)
                     dKoefToMM /= 2;
 
@@ -4965,9 +4967,7 @@ function OfflineEditor () {
 }
 var _s = new OfflineEditor();
 
-function offline_of() {
-    console.log('offline_open_file');
-    _s.openFile();}
+function offline_of() {_s.openFile();}
 function offline_stz(v) {_s.zoom = v; _api.asc_setZoom(v);}
 function offline_ds(x, y, width, height, ratio, istoplayer) {_s.drawSheet(x, y, width, height, ratio, istoplayer);}
 function offline_dh(x, y, width, height, type, ratio) {_s.drawHeader(x, y, width, height, type, ratio);}

@@ -69,7 +69,6 @@ CChartSpace.prototype.getNumByCardDirection = CShape.prototype.getNumByCardDirec
 CChartSpace.prototype.getCardDirectionByNum = CShape.prototype.getCardDirectionByNum;
 CChartSpace.prototype.getResizeCoefficients = CShape.prototype.getResizeCoefficients;
 CChartSpace.prototype.check_bounds = CShape.prototype.check_bounds;
-CChartSpace.prototype.normalize = CShape.prototype.normalize;
 CChartSpace.prototype.getFullFlipH = CShape.prototype.getFullFlipH;
 CChartSpace.prototype.getFullFlipV = CShape.prototype.getFullFlipV;
 CChartSpace.prototype.Get_Theme = CShape.prototype.Get_Theme;
@@ -125,9 +124,6 @@ CChartSpace.prototype.setRecalculateInfo = function()
     this.baseColors = [];
 
     this.chartObj = null;
-    this.localTransform = new AscCommon.CMatrix();
-    this.snapArrayX = [];
-    this.snapArrayY = [];
     this.rectGeometry = AscFormat.ExecuteNoHistory(function(){return  AscFormat.CreateGeometry("rect");},  this, []);
     this.bNeedUpdatePosition = true;
 };
@@ -589,7 +585,7 @@ CChartSpace.prototype.updateTransformMatrix  = function()
     var posY = this.localTransform.ty + this.posY;
 
     this.transform = this.localTransform.CreateDublicate();
-    global_MatrixTransformer.TranslateAppend(this.transform, this.posX, this.posY);
+    AscCommon.global_MatrixTransformer.TranslateAppend(this.transform, this.posX, this.posY);
 
     var oParentTransform = null;
     if(this.parent && this.parent.Get_ParentParagraph)
@@ -601,12 +597,12 @@ CChartSpace.prototype.updateTransformMatrix  = function()
 
             if(oParentTransform)
             {
-                global_MatrixTransformer.MultiplyAppend(this.transform, oParentTransform);
+                AscCommon.global_MatrixTransformer.MultiplyAppend(this.transform, oParentTransform);
             }
         }
     }
 
-    this.invertTransform = global_MatrixTransformer.Invert(this.transform);
+    this.invertTransform = AscCommon.global_MatrixTransformer.Invert(this.transform);
     this.updateChildLabelsTransform(posX,posY);
     this.checkShapeChildTransform(oParentTransform);
 };
@@ -645,3 +641,4 @@ function CreateNoFillUniFill()
 window['AscFormat'].CreateUnifillSolidFillSchemeColor = CreateUnifillSolidFillSchemeColor;
 window['AscFormat'].CreateNoFillLine = CreateNoFillLine;
 window['AscFormat'].CreateNoFillUniFill = CreateNoFillUniFill;
+window['AscFormat'].getChartTranslateManager = getChartTranslateManager;

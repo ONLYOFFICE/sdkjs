@@ -32,6 +32,7 @@
 
 // Import
 var g_oTableId = AscCommon.g_oTableId;
+var History = AscCommon.History;
 
 var comments_NoComment        = 0;
 var comments_NonActiveComment = 1;
@@ -859,7 +860,7 @@ function CComment(Parent, Data)
     if ( false === AscCommon.g_oIdCounter.m_bLoad )
     {
         this.Lock.Set_Type( AscCommon.locktype_Mine, false );
-        CollaborativeEditing.Add_Unlock2( this );
+        AscCommon.CollaborativeEditing.Add_Unlock2( this );
     }
 
     // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
@@ -1301,3 +1302,9 @@ CComment.prototype =
             editor.WordControl.m_oLogicDocument.Remove_Comment( this.Id, true );
     }
 };
+
+//--------------------------------------------------------export----------------------------------------------------
+window['AscCommon'] = window['AscCommon'] || {};
+window['AscCommon'].CCommentData = CCommentData;
+window['AscCommon'].CComment = CComment;
+window['AscCommon'].ParaComment = ParaComment;

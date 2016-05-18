@@ -24,11 +24,6 @@
 */
 "use strict";
 
-/* StringRender.js
- *
- * Author: Dmitry.Sokolov@avsmedia.net
- * Date:   Dec 12, 2011
- */
 (
 	/**
 	 * @param {Window} window
@@ -1137,12 +1132,8 @@
 		};
 
 
-		/*
-		 * Export
-		 * -----------------------------------------------------------------------------
-		 */
-		window["Asc"].StringRender = StringRender;
-
-
+		//------------------------------------------------------------export---------------------------------------------------
+		window['AscCommonExcel'] = window['AscCommonExcel'] || {};
+		window["AscCommonExcel"].StringRender = StringRender;
 	}
 )(window);

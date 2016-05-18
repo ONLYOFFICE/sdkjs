@@ -169,7 +169,7 @@ CImageShape.prototype.recalculate = function ()
         }
         if (this.recalcInfo.recalculateTransform) {
             this.recalculateTransform();
-            this.calculateSnapArrays();
+            this.recalculateSnapArrays();
             this.recalcInfo.recalculateTransform = false;
         }
 
@@ -193,4 +193,3 @@ CImageShape.prototype.getNumByCardDirection = CShape.prototype.getNumByCardDirec
 CImageShape.prototype.getCardDirectionByNum = CShape.prototype.getCardDirectionByNum;
 CImageShape.prototype.getResizeCoefficients = CShape.prototype.getResizeCoefficients;
 CImageShape.prototype.check_bounds = CShape.prototype.check_bounds;
-CImageShape.prototype.normalize = CShape.prototype.normalize;

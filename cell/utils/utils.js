@@ -29,7 +29,6 @@
 	 * @param {undefined} undefined
 	 */
 	function (window, undefined) {
-
 		// Import
 		var c_oAscPrintDefaultSettings = AscCommon.c_oAscPrintDefaultSettings;
 		var gc_nMaxRow0 = AscCommon.gc_nMaxRow0;
@@ -472,6 +471,44 @@
 			}
 		};
 
+		/**
+		 *
+     * @constructor
+		 * @extends {Range}
+     */
+		function Range3D() {
+			this.sheet = '';
+
+			if (2 == arguments.length) {
+				var range = arguments[0];
+				Range3D.superclass.constructor.call(this, range.c1, range.r1, range.c2, range.r2);
+				// ToDo стоит пересмотреть конструкторы.
+				this.r1Abs = range.r1Abs;
+				this.c1Abs = range.c1Abs;
+				this.r2Abs = range.r2Abs;
+				this.c2Abs = range.c2Abs;
+
+				this.sheet = arguments[1];
+			} else if (arguments.length > 1) {
+				ActiveRange.superclass.constructor.apply(this, arguments);
+			} else {
+				ActiveRange.superclass.constructor.call(this, 0, 0, 0, 0);
+      }
+		}
+		AscCommon.extendClass(Range3D, Range);
+		Range3D.prototype.isIntersect = function () {
+			var oRes = true;
+			
+			if (2 == arguments.length) {
+				oRes = this.sheet === arguments[1];
+			}
+			return oRes && Range3D.superclass.isIntersect.apply(this, arguments);
+		};
+		Range3D.prototype.clone = function(){
+			var oRes = new Range3D(ActiveRange.superclass.clone.apply(this, arguments), this.sheet);
+			return oRes;
+		};
+
     /**
      *
      * @constructor
@@ -690,6 +727,18 @@
 			return sRes;
 		};
 
+		function MultiplyRange(ranges) {
+			this.ranges = ranges;
+		}
+		MultiplyRange.prototype.isIntersect = function(range) {
+			for (var i = 0; i < this.ranges.length; ++i) {
+				if (range.isIntersect(this.ranges[i])) {
+					return true;
+				}
+			}
+			return false;
+		};
+
 		function VisibleRange(visibleRange, offsetX, offsetY) {
 			this.visibleRange = visibleRange;
 			this.offsetX = offsetX;
@@ -704,6 +753,15 @@
 			getAscRange : function(sRange)
 			{
 				return this._getRange(sRange, 1);
+			},
+			getRange3D : function(sRange)
+			{
+				var res = AscCommon.parserHelp.parse3DRef(sRange);
+				if (!res) {
+					return null;
+				}
+				var range = this._getRange(res.range, 1);
+				return range ? new Range3D(range, res.sheet) : null;
 			},
 			getActiveRange : function(sRange)
 			{
@@ -1003,7 +1061,7 @@
 			}
 
 			// Класс Hyperlink из модели
-			this.hyperlinkModel = null != obj ? obj : new Hyperlink();
+			this.hyperlinkModel = null != obj ? obj : new AscCommonExcel.Hyperlink();
 			// Используется только для выдачи наружу и выставлении обратно
 			this.text = null;
 
@@ -1237,7 +1295,7 @@
 			asc_setShowGridLines: function (val) { this.showGridLines = val; },
 			asc_setShowRowColHeaders: function (val) { this.showRowColHeaders = val; },
 			getType : function () {
-				return UndoRedoDataTypes.SheetViewSettings;
+				return AscCommonExcel.UndoRedoDataTypes.SheetViewSettings;
 			},
 			getProperties : function () {
 				return this.Properties;
@@ -1566,7 +1624,7 @@
 		var prot;
 		window['Asc'] = window['Asc'] || {};
 		window['AscCommonExcel'] = window['AscCommonExcel'] || {};
-		window["Asc"].applyFunction = applyFunction;
+		window["AscCommonExcel"].applyFunction = applyFunction;
 		window["Asc"].typeOf = typeOf;
 		window["Asc"].lastIndexOf = lastIndexOf;
 		window["Asc"].search = search;
@@ -1586,8 +1644,10 @@
 		window["Asc"].getEndValueRange = getEndValueRange;
 
 		window["Asc"].Range = Range;
+		window["AscCommonExcel"].Range3D = Range3D;
 		window["AscCommonExcel"].ActiveRange = ActiveRange;
 		window["AscCommonExcel"].FormulaRange = FormulaRange;
+		window["AscCommonExcel"].MultiplyRange = MultiplyRange;
 		window["AscCommonExcel"].VisibleRange = VisibleRange;
 		window["AscCommonExcel"].g_oRangeCache = g_oRangeCache;
 
@@ -1716,5 +1776,4 @@
 		prot = asc_CCompleteMenu.prototype;
 		prot["asc_getName"] = prot.asc_getName;
 		prot["asc_getType"] = prot.asc_getType;
-}
-)(window);
+})(window);
