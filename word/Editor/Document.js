@@ -879,8 +879,10 @@ function CDocumentRecalcInfo()
     this.KeepNextParagraph         = null;    // Параграф, который надо пересчитать из-за того, что следующий начался с новой страницы
     this.KeepNextEndParagraph      = null;    // Параграф, на котором определилось, что нужно делать пересчет предыдущих
 
-    this.FrameRecalc               = false;  // Пересчитываем ли рамку
+    this.FrameRecalc               = false;   // Пересчитываем ли рамку
     this.ParaMath                  = null;
+
+    this.FootnoteReference         = null;    // Ссылка на сноску, которую мы пересчитываем
 
     this.AdditionalInfo            = null;
 }
@@ -903,11 +905,13 @@ CDocumentRecalcInfo.prototype =
         this.KeepNextEndParagraph      = null;
 
         this.ParaMath                  = null;
+
+        this.FootnoteReference         = null;
     },
 
     Can_RecalcObject : function()
     {
-        if (null === this.FlowObject && null === this.WidowControlParagraph && null === this.KeepNextParagraph && null == this.ParaMath)
+        if (null === this.FlowObject && null === this.WidowControlParagraph && null === this.KeepNextParagraph && null == this.ParaMath && null === this.FootnoteReference)
             return true;
 
         return false;
@@ -1014,6 +1018,24 @@ CDocumentRecalcInfo.prototype =
     Set_FrameRecalc  : function(Value)
     {
         this.FrameRecalc = Value;
+    },
+
+    Set_FootnoteReference : function(FootnoteReference, PageIndex)
+    {
+        this.FootnoteReference = FootnoteReference;
+        this.FlowObjectPage    = PageIndex;
+    },
+
+    Check_FootnoteReference : function(FootnoteReference)
+    {
+        return (this.FootnoteReference === FootnoteReference ? true : false);
+    },
+
+    Reset_FootnoteReference : function()
+    {
+        this.FootnoteReference         = null;
+        this.FlowObjectPage            = 0;
+        this.FlowObjectPageBreakBefore = false;
     }
 };
 
@@ -1364,6 +1386,9 @@ function CDocument(DrawingDocument, isMainLogicDocument)
     // Класс для работы с колонтитулами
     this.HdrFtr = new CHeaderFooterController(this, this.DrawingDocument);
 
+    // Класс для работы со сносками
+    this.Footnotes = new CFootnotesController(this);
+
     // Класс для работы с поиском
     this.SearchInfo =
     {
@@ -1595,13 +1620,15 @@ CDocument.prototype.Get_PageContentStartPos        = function(PageIndex, Element
 };
 CDocument.prototype.Get_PageContentStartPos2       = function(StartPageIndex, StartColumnIndex, ElementPageIndex, ElementIndex)
 {
-    if (undefined === ElementIndex && undefined !== this.Pages[PageIndex])
-        ElementIndex = this.Pages[PageIndex].Pos;
+    if (undefined === ElementIndex && undefined !== this.Pages[StartPageIndex])
+        ElementIndex = this.Pages[StartPageIndex].Pos;
 
     var SectPr = this.SectionsInfo.Get_SectPr(ElementIndex).SectPr;
 
+    var FootnotesHeight = this.Footnotes.Get_Height(StartPageIndex);
+
     var Y      = SectPr.Get_PageMargin_Top();
-    var YLimit = SectPr.Get_PageHeight() - SectPr.Get_PageMargin_Bottom();
+    var YLimit = SectPr.Get_PageHeight() - SectPr.Get_PageMargin_Bottom() - FootnotesHeight;
     var X      = SectPr.Get_PageMargin_Left();
     var XLimit = SectPr.Get_PageWidth() - SectPr.Get_PageMargin_Right();
 
@@ -1706,17 +1733,16 @@ CDocument.prototype.Get_AllBoundsRectOnPageForMath = function(nPageIndex)
     return this.DrawingObjects.getAllBoundsRectOnPageForMath(nPageIndex);
 };
 /**
- * Данная функция предназначена для отключения пересчета. Это может быть полезно, т.к. редактор всегда запускает пересчет после каждого действия.
- *
+ * Данная функция предназначена для отключения пересчета. Это может быть полезно, т.к. редактор всегда запускает
+ * пересчет после каждого действия.
  */
 CDocument.prototype.TurnOff_Recalculate = function()
 {
     this.TurnOffRecalc++;
 };
 /**
- * Включаем пересчет, если он был отключен
- *
- * @param {bool} bRecalculate Запускать ли пересчет
+ * Включаем пересчет, если он был отключен.
+ * @param {boolean} bRecalculate Запускать ли пересчет
  */
 CDocument.prototype.TurnOn_Recalculate = function(bRecalculate)
 {
@@ -1725,6 +1751,10 @@ CDocument.prototype.TurnOn_Recalculate = function(bRecalculate)
     if (bRecalculate)
         this.Recalculate();
 };
+/**
+ * Проверяем включен ли пересчет.
+ * @returns {boolean}
+ */
 CDocument.prototype.Is_OnRecalculate = function()
 {
     if (0 === this.TurnOffRecalc)
@@ -1733,7 +1763,7 @@ CDocument.prototype.Is_OnRecalculate = function()
     return false;
 };
 /**
- * Пересчет содержимого Документа
+ * Запускаем пересчет документа.
  * @param bOneParagraph
  * @param bRecalcContentLast
  * @param _RecalcData
@@ -2058,7 +2088,7 @@ CDocument.prototype.Recalculate = function(bOneParagraph, bRecalcContentLast, _R
 };
 CDocument.prototype.Recalculate_Page                         = function()
 {
-    var SectionIndex = this.FullRecalc.SectionIndex
+    var SectionIndex = this.FullRecalc.SectionIndex;
     var PageIndex    = this.FullRecalc.PageIndex;
     var ColumnIndex  = this.FullRecalc.ColumnIndex;
     var bStart       = this.FullRecalc.Start;        // флаг, который говорит о том, рассчитываем мы эту страницу первый раз или нет (за один общий пересчет)
@@ -2183,6 +2213,7 @@ CDocument.prototype.Recalculate_Page                         = function()
         //console.log( "Regular Recalc " + PageIndex );
 
         var StartPos = this.Get_PageContentStartPos(PageIndex, StartIndex);
+        this.Recalculate_PageFootnotes(PageIndex);
 
         this.Pages[PageIndex].ResetStartElement = this.FullRecalc.ResetStartElement;
         this.Pages[PageIndex].X                 = StartPos.X;
@@ -2699,6 +2730,10 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
             this.Recalculate_Page();
         }
     }
+};
+CDocument.prototype.Recalculate_PageFootnotes                = function(PageIndex)
+{
+    //this.Footnotes.Recalculate(PageIndex, 0, 0, 0, 10000);
 };
 CDocument.prototype.private_RecalculateFlowTable             = function(RecalcInfo)
 {
@@ -4449,6 +4484,7 @@ CDocument.prototype.Paragraph_Add              = function(ParaItem, bRecalculate
                 case para_Tab:
                 case para_PageNum:
                 case para_Field:
+                case para_FootnoteReference:
                 {
                     // Если у нас что-то заселекчено и мы вводим текст или пробел
                     // и т.д., тогда сначала удаляем весь селект.
@@ -11482,6 +11518,14 @@ CDocument.prototype.OnKeyDown               = function(e)
         bUpdateSelection = false;
         bRetValue        = keydownresult_PreventAll;
     }
+    // --> TEST
+    // else if (113 === e.KeyCode)
+    // {
+    //     var oFootnote = this.Footnotes.Create_Footnote();
+    //     this.Paragraph_Add(new ParaFootnoteReference(oFootnote));
+    //     bRetValue = keydownresult_PreventAll;
+    // }
+    // TEST <--
     else if (e.KeyCode == 121 && true === e.ShiftKey) // Shift + F10 - контекстное меню
     {
         var X_abs, Y_abs, oPosition, ConvertedPos;
@@ -16235,6 +16279,14 @@ CDocument.prototype.Get_DrawingDocument = function()
 CDocument.prototype.Get_Api = function()
 {
     return this.Api;
+};
+CDocument.prototype.Get_IdCounter = function()
+{
+    return this.IdCounter;
+};
+CDocument.prototype.Get_TableId = function()
+{
+    return this.TableId;
 };
 CDocument.prototype.Get_CollaborativeEditing = function()
 {
