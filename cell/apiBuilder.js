@@ -69,7 +69,7 @@
 
 	/**
 	 * This type specifies the types, create charts
-	 * @typedef {("bar" | "barStacked" | "barStackedPercent" | "bar3D" | "barStacked3D" | "barStackedPercent3D" | "barStackedPercent3DPerspective" | "horizontalBar" | "horizontalBarStacked" | "horizontalBarStackedPercent" | "horizontalBar3D" | "horizontalBarStacked3D" | "horizontalBarStackedPercent3D" | "lineNormal" | "lineStacked" | "lineStackedPercent" | "line3D" | "pie" | "pie3D" | "doughnut" | "scatter" | "stock")} ChartType
+	 * @typedef {("bar" | "barStacked" | "barStackedPercent" | "bar3D" | "barStacked3D" | "barStackedPercent3D" | "barStackedPercent3DPerspective" | "horizontalBar" | "horizontalBarStacked" | "horizontalBarStackedPercent" | "horizontalBar3D" | "horizontalBarStacked3D" | "horizontalBarStackedPercent3D" | "lineNormal" | "lineStacked" | "lineStackedPercent" | "line3D" | "pie" | "pie3D" | "doughnut" | "scatter" | "stock"  | "area" | "areaStacked" | "areaStackedPercent")} ChartType
 	 */
 
 	/**
@@ -282,11 +282,27 @@
 					settings.type = Asc.c_oAscChartTypeSettings.stock;
 					break;
 				}
+				case "area":
+				{
+					settings.type = Asc.c_oAscChartTypeSettings.areaNormal;
+					break;
+				}
+				case "areaStacked":
+				{
+					settings.type = Asc.c_oAscChartTypeSettings.areaStacked;
+					break;
+				}
+				case "areaStackedPercent":
+				{
+					settings.type = Asc.c_oAscChartTypeSettings.areaStackedPer;
+					break;
+				}
 			}
 			settings.style = nStyleIndex;
 			settings.inColumns = !bInRows;
 			settings.range = sDataRange;
 			var oChart = AscFormat.DrawingObjectsController.prototype.getChartSpace(this.worksheet, settings);
+			oChart.setBDeleted(false);
 			oChart.setWorksheet(this.worksheet);
 			oChart.setBFromSerialize(true);
 			oChart.addToDrawingObjects();
