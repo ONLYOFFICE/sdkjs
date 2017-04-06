@@ -4,6 +4,7 @@ node_js:
   - '6'
 before_install:
   - npm install -g grunt-cli
+  - cat /home/travis/.nvm/versions/node/v6.10.2/bin/grunt
 before_script:
   - git clone https://github.com/ONLYOFFICE/web-apps.git ../web-apps
   - git clone https://github.com/kjur/jsrsasign.git ../jsrsasign
