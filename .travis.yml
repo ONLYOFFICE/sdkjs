@@ -11,4 +11,4 @@ before_script:
   - cd build
 script:
   - npm install
-  - grunt --level=ADVANCED --verbose --max-stack-size=10000
+  - grunt --level=ADVANCED --verbose --max-stackda4r-size=10000
