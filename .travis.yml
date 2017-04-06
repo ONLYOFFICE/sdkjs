@@ -4,10 +4,6 @@ node_js:
   - '6'
 before_install:
   - npm install -g grunt-cli
-  - which node
-  - cat /home/travis/.nvm/versions/node/v6.10.2/bin/grunt
-  - sed -i "1 s|$| --max-old-space-size=4096|" /home/travis/.nvm/versions/node/v6.10.2/bin/grunt
-  - cat /home/travis/.nvm/versions/node/v6.10.2/bin/grunt
 before_script:
   - git clone https://github.com/ONLYOFFICE/web-apps.git ../web-apps
   - git clone https://github.com/kjur/jsrsasign.git ../jsrsasign
