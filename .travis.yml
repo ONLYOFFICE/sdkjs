@@ -2,7 +2,10 @@ dist: trusty
 language: node_js
 node_js:
   - '6'
-before_install: npm install -g grunt-cli
+before_install:
+  - npm install -g grunt-cli
+  - java -version
+  - python -V
 before_script:
   - git clone https://github.com/ONLYOFFICE/web-apps.git ../web-apps
   - cd build
