@@ -175,7 +175,6 @@ module.exports = function(grunt) {
 		var sdkOpt = {
 			compilation_level: level,
 			warning_level: 'QUIET',
-	                output_info: 'errors',
 			externs: packageFile['compile']['sdk']['externs']
 		};
 		if (formatting) {
