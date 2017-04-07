@@ -174,7 +174,8 @@ module.exports = function(grunt) {
 		var sdkAllCashe = sdkDstFolder + '/*.cache'
 		var sdkOpt = {
 			compilation_level: level,
-			warning_level: 'DEFAULT',
+			warning_level: 'QUITE',
+	                output_info: 'errors',
 			externs: packageFile['compile']['sdk']['externs']
 		};
 		if (formatting) {
