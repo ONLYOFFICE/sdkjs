@@ -9,3 +9,4 @@ before_script:
 script:
   - npm install
   - grunt --level=ADVANCED
+  - cat ../slide/sdk-all-minundefined
