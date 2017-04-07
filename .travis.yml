@@ -8,4 +8,4 @@ before_script:
   - cd build
 script:
   - npm install
-  - node --max-old-space-size=8192 /home/travis/.nvm/versions/node/v6.10.2/bin/grunt --level=ADVANCED
+  - grunt --level=ADVANCED
