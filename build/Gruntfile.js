@@ -174,9 +174,8 @@ module.exports = function(grunt) {
 		var sdkAllCashe = sdkDstFolder + '/*.cache'
 		var sdkOpt = {
 			compilation_level: level,
-			warning_level: 'DEFAULT',
-			externs: packageFile['compile']['sdk']['externs'],
-			hide_warnings_for: ['jquery']
+			warning_level: 'QUIET',
+			externs: packageFile['compile']['sdk']['externs']
 		};
 		if (formatting) {
 			sdkOpt['formatting'] = formatting;
@@ -187,26 +186,21 @@ module.exports = function(grunt) {
 			splitLine = ('PRETTY_PRINT' === formatting) ? 'window["split"] = "split";' : 'window["split"]="split";';
 		}
 		
+		var argsTmp = ['--js', sdkTmp, '--compilation_level', level, '--warning_level', 'QUIET', '--js_output_file', tmp_sdk_path];
+		var ext = packageFile['compile']['sdk']['externs'];
+		for (var jj = 0; jj < ext.length; ++jj) {
+			argsTmp.push('--externs', ext[jj]);
+		}
+		
 		grunt.initConfig({
 			'closure-compiler': {
 				sdk: {
 					options: {
-                        args: [
-                            '--compilation_level', 'ADVANCED',
-                            '--warning_level', 'VERBOSE',
-                            '--externs', packageFile['compile']['sdk']['externs'][0],
-                            '--externs', packageFile['compile']['sdk']['externs'][1],
-                            '--externs', packageFile['compile']['sdk']['externs'][2],
-                            '--externs', packageFile['compile']['sdk']['externs'][3],
-                            '--externs', packageFile['compile']['sdk']['externs'][4],
-                            '--externs', packageFile['compile']['sdk']['externs'][5],
-                            '--externs', packageFile['compile']['sdk']['externs'][6],
-                            '--externs', packageFile['compile']['sdk']['externs'][7],
-							'--hide_warnings_for', 'vendor'
-                        ]
-					},
-					dest: tmp_sdk_path,
-					src: [sdkTmp]
+						args: argsTmp
+					}
+//					options: sdkOpt,
+//					dest: tmp_sdk_path,
+//					src: [sdkTmp]
 				}
 			},
 			splitfile: {

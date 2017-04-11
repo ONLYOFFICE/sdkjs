@@ -5,7 +5,6 @@ before_install:
   - npm install -g grunt-cli
 before_script:
   - git clone https://github.com/ONLYOFFICE/web-apps.git ../web-apps
-  - wget -O ../web-apps/vendor/jsrsasign/jsrsasign-latest-all-min.js https://raw.githubusercontent.com/kjur/jsrsasign/master/jsrsasign-latest-all-min.js
   - cd build
 script:
   - npm install
