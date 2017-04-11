@@ -175,7 +175,8 @@ module.exports = function(grunt) {
 		var sdkOpt = {
 			compilation_level: level,
 			warning_level: 'DEFAULT',
-			externs: packageFile['compile']['sdk']['externs']
+			externs: packageFile['compile']['sdk']['externs'],
+			hide_warnings_for: ['jquery']
 		};
 		if (formatting) {
 			sdkOpt['formatting'] = formatting;
@@ -189,7 +190,21 @@ module.exports = function(grunt) {
 		grunt.initConfig({
 			'closure-compiler': {
 				sdk: {
-					options: sdkOpt,
+					options: {
+                        args: [
+                            '--compilation_level', 'ADVANCED',
+                            '--warning_level', 'VERBOSE',
+                            '--externs', packageFile['compile']['sdk']['externs'][0],
+                            '--externs', packageFile['compile']['sdk']['externs'][1],
+                            '--externs', packageFile['compile']['sdk']['externs'][2],
+                            '--externs', packageFile['compile']['sdk']['externs'][3],
+                            '--externs', packageFile['compile']['sdk']['externs'][4],
+                            '--externs', packageFile['compile']['sdk']['externs'][5],
+                            '--externs', packageFile['compile']['sdk']['externs'][6],
+                            '--externs', packageFile['compile']['sdk']['externs'][7],
+							'--hide_warnings_for', 'vendor'
+                        ]
+					},
 					dest: tmp_sdk_path,
 					src: [sdkTmp]
 				}
