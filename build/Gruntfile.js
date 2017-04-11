@@ -186,7 +186,7 @@ module.exports = function(grunt) {
 			splitLine = ('PRETTY_PRINT' === formatting) ? 'window["split"] = "split";' : 'window["split"]="split";';
 		}
 		
-		var argsTmp = ['--js', sdkTmp, '--compilation_level', level, '--warning_level', 'DEFAULT', '--js_output_file', tmp_sdk_path, '--hide_warnings_for', 'vendor'];
+		var argsTmp = ['--js', sdkTmp, '--compilation_level', level, '--warning_level', 'DEFAULT', '--js_output_file', tmp_sdk_path, '--hide_warnings_for', 'vendor', '--jscomp_off', 'es5Strict'];
 		var ext = packageFile['compile']['sdk']['externs'];
 		for (var jj = 0; jj < ext.length; ++jj) {
 			argsTmp.push('--externs', ext[jj]);
