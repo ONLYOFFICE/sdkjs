@@ -5,7 +5,8 @@ before_install:
   - npm install -g grunt-cli
 before_script:
   - git clone https://github.com/ONLYOFFICE/web-apps.git ../web-apps
+  - wget -O ../web-apps/vendor/jquery/jquery.min.js https://raw.githubusercontent.com/components/jquery/master/jquery.min.js
   - cd build
 script:
   - npm install
-  - grunt --level=SIMPLE
+  - node --max-old-space-size=8192 /home/travis/.nvm/versions/node/v6.10.2/bin/grunt --level=ADVANCED
