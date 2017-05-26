@@ -4,7 +4,7 @@ node_js:
 before_install:
   - npm install -g grunt-cli node-qunit-phantomjs
 before_script:
-  - git clone https://github.com/ONLYOFFICE/web-apps.git ../web-apps
+  - git clone -b develop https://github.com/ONLYOFFICE/web-apps.git ../web-apps
   - wget --content-disposition "https://nct.onlyoffice.com/products/files/httphandlers/filehandler.ashx?action=view&fileid=60973&version=0&doc=bXVnUkRneHE1bk54VG1rd0lTTkFvbjFDM2hiOU9GakNUV2Z1QTFDNlI0Zz0_IjYwOTczIg2"
   - tar xvf sdkjs-requirements.tar.gz
   - chmod +x AllFontsGen
