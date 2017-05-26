@@ -2,14 +2,13 @@ language: node_js
 node_js:
   - '6'
 before_install:
-  - npm install -g grunt-cli
+  - npm install -g grunt-cli node-qunit-phantomjs
 before_script:
   - git clone https://github.com/ONLYOFFICE/web-apps.git ../web-apps
   - wget --content-disposition "https://nct.onlyoffice.com/products/files/httphandlers/filehandler.ashx?action=view&fileid=60973&version=0&doc=bXVnUkRneHE1bk54VG1rd0lTTkFvbjFDM2hiOU9GakNUV2Z1QTFDNlI0Zz0_IjYwOTczIg2"
   - tar xvf sdkjs-requirements.tar.gz
   - chmod +x AllFontsGen
   - LD_LIBRARY_PATH=./ ./AllFontsGen /usr/share/fonts sdkjs/common/AllFonts.js
-  - npm install -g node-qunit-phantomjs
 script:
   - node-qunit-phantomjs sdkjs/cell/.unit-tests/FormulaTests.html
   - set -e
