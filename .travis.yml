@@ -12,6 +12,7 @@ before_script:
   - npm install -g node-qunit-phantomjs
 script:
   - node-qunit-phantomjs sdkjs/cell/.unit-tests/FormulaTests.html
+  - set -e
   - cd build
   - npm install
   - grunt --level=WHITESPACE_ONLY
