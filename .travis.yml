@@ -9,8 +9,8 @@ before_script:
   - tar xvf sdkjs-requirements.tar.gz
   - chmod +x AllFontsGen
   - find /usr/share/fonts -type f
-  - LD_LIBRARY_PATH=./ ./AllFontsGen /usr/share/fonts sdkjs/common/AllFonts.js
-  - cat sdkjs/common/AllFonts.js
+  - LD_LIBRARY_PATH=./ ./AllFontsGen /usr/share/fonts /tmp/AllFonts.js
+  - cat /tmp/AllFonts.js
 script:
   - cd ../
   - node-qunit-phantomjs sdkjs/cell/.unit-tests/FormulaTests.html
