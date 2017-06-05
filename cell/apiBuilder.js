@@ -151,6 +151,7 @@
 	 * @returns {ApiWorksheet}
 	 */
 	Api.prototype.GetActiveSheet = function () {
+		return true;
 		var index = this.wbModel.getActive();
 		return new ApiWorksheet(this.wbModel.getWorksheet(index));
 	};
