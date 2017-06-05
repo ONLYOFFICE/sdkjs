@@ -10,8 +10,7 @@ before_script:
   - chmod +x AllFontsGen
   - LD_LIBRARY_PATH=./ ./AllFontsGen /usr/share/fonts common/AllFonts.js
 script:
-  - cd ../
-  - node-qunit-phantomjs sdkjs/cell/.unit-tests/FormulaTests.html
-  - cd sdkjs/build
+  - node-qunit-phantomjs cell/.unit-tests/FormulaTests.html
+  - cd build
   - npm install
   - grunt --level=WHITESPACE_ONLY
