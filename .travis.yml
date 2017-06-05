@@ -8,7 +8,6 @@ before_script:
   - wget --content-disposition "https://nct.onlyoffice.com/products/files/httphandlers/filehandler.ashx?action=view&fileid=60973&version=0&doc=bXVnUkRneHE1bk54VG1rd0lTTkFvbjFDM2hiOU9GakNUV2Z1QTFDNlI0Zz0_IjYwOTczIg2"
   - tar xvf sdkjs-requirements.tar.gz
   - chmod +x AllFontsGen
-  - find /usr/share/fonts -type f
   - LD_LIBRARY_PATH=./ ./AllFontsGen /usr/share/fonts common/AllFonts.js
   - cat common/AllFonts.js
 script:
