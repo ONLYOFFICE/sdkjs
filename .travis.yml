@@ -18,6 +18,7 @@ jobs:
         - npm install
         - grunt --level=WHITESPACE_ONLY
         - cd ../
-        - ls -la word
+        - ls -la cell
+        - cat cell/sdk-all.js
         - docker pull onlyofficetestingrobot/doc-builder-testing
         - docker run -v word:/opt/onlyoffice/documentbuilder/sdkjs/word -v cell:/opt/onlyoffice/documentbuilder/sdkjs/cell -v slide:/opt/onlyoffice/documentbuilder/sdkjs/slide onlyofficetestingrobot/doc-builder-testing cat /opt/onlyoffice/documentbuilder/sdkjs/cell/sdk-all.js
