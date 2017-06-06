@@ -586,7 +586,7 @@
 
     Api.prototype.GetDocument = function()
     {
-        return new ApiDocument(this.WordControl.m_oLogicDocument);
+        return 'ababab';
     };
     /**
      * Create a new paragraph.
