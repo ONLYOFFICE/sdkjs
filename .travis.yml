@@ -20,4 +20,4 @@ jobs:
         - cd ../
         - ls -la word
         - docker pull onlyofficetestingrobot/doc-builder-testing
-        - docker run -v word:/opt/onlyoffice/documentbuilder/sdkjs/word -v cell:/opt/onlyoffice/documentbuilder/sdkjs/cell -v slide:/opt/onlyoffice/documentbuilder/sdkjs/slide onlyofficetestingrobot/doc-builder-testing
+        - docker run -v word:/opt/onlyoffice/documentbuilder/sdkjs/word -v cell:/opt/onlyoffice/documentbuilder/sdkjs/cell -v slide:/opt/onlyoffice/documentbuilder/sdkjs/slide onlyofficetestingrobot/doc-builder-testing cat /opt/onlyoffice/documentbuilder/sdkjs/cell/sdk-all.js
