@@ -12,12 +12,12 @@ jobs:
   include:
     - stage: Formulas tests
       script: node-qunit-phantomjs cell/.unit-tests/FormulaTests.html
-    - stage: Building SDK
+    - stage: Building SDK and test it by `onlyofficetestingrobot/doc-builder-testing`
       script:
         - cd build
         - npm install
         - grunt --level=WHITESPACE_ONLY
-    - stage: Testing SDK using `doc-builder-testing`
-      script:
+        - cd ../
+        - ls -la word
         - docker pull onlyofficetestingrobot/doc-builder-testing
         - docker run -v word:/opt/onlyoffice/documentbuilder/sdkjs/word -v cell:/opt/onlyoffice/documentbuilder/sdkjs/cell -v slide:/opt/onlyoffice/documentbuilder/sdkjs/slide onlyofficetestingrobot/doc-builder-testing
