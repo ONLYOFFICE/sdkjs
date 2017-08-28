@@ -7936,8 +7936,25 @@ function Binary_rPrReader(doc, oReadResult, stream)
                 if ( undefined === rPr.RFonts )
                     rPr.RFonts = {};
                 rPr.RFonts.EastAsia = { Name : this.stream.GetString2LE(length), Index : -1 };
-                if (rPr.RFonts.EastAsia.Name != "宋体")
+                let originalFontName = rPr.RFonts.EastAsia.Name;
+                let needFallBack = true;
+                for(let list = AscFonts.g_fontApplication.g_fontSelections.List,
+                        length = AscFonts.g_fontApplication.g_fontSelections.List.length,
+                        i = 0; i < length; i++)
+                {
+                    if (list[i].m_wsFontName === originalFontName)
+                    {
+                        if (!!(list[i].m_ulCodePageRange1 & 262144))
+                        {
+                            needFallBack = false;
+                        }
+                        break;
+                    }
+                }
+                if(needFallBack)
+                {
                     rPr.RFonts.EastAsia.Name = "宋体";
+                }
                 break;
             case c_oSerProp_rPrType.FontCS:
                 if ( undefined === rPr.RFonts )
