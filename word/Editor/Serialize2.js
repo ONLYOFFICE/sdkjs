@@ -7936,6 +7936,8 @@ function Binary_rPrReader(doc, oReadResult, stream)
                 if ( undefined === rPr.RFonts )
                     rPr.RFonts = {};
                 rPr.RFonts.EastAsia = { Name : this.stream.GetString2LE(length), Index : -1 };
+                if (rPr.RFonts.EastAsia.Name != "宋体")
+                    rPr.RFonts.EastAsia.Name = "宋体";
                 break;
             case c_oSerProp_rPrType.FontCS:
                 if ( undefined === rPr.RFonts )

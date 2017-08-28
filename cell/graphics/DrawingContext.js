@@ -890,6 +890,46 @@
 	DrawingContext.prototype.measureText = function (text, units) {
 		var code;
 		var fm = this.fmgrGraphics[3];
+
+        //check if chinese
+        let is_chinese = false;
+        for(let i = 0, length = text.length; i < length; i++)
+        {
+            let unicode = text.charCodeAt(i);
+            if (unicode <= 0xFe4F && unicode >= 0x2E80)
+            {
+                is_chinese = true;
+                break;
+            }
+        }
+        if (is_chinese)
+        {
+            let font = this.getFont();
+            let originalFontName = font.FontFamily.Name;
+            let needFallBack = true;
+            for(let list = AscFonts.g_fontApplication.g_fontSelections.List,
+                    length = AscFonts.g_fontApplication.g_fontSelections.List.length,
+                    i = 0; i < length; i++)
+            {
+                if (list[i].m_wsFontName === originalFontName)
+                {
+                    if (!!(list[i].m_ulCodePageRange1 & 262144))
+                    {
+                        needFallBack = false;
+                    }
+                    break;
+                }
+            }
+            if(needFallBack)
+            {
+                let fontProperty = new asc.FontProperties();
+                fontProperty.copyFrom(font);
+                fontProperty.FontFamily.Name = "SimSun";
+                this.setFont(fontProperty)
+            }
+        }
+        //end
+
 		var r  = getCvtRatio(0/*px*/, units >= 0 && units <=3 ? units : this.units, this.ppiX);
 		for (var tmp, w = 0, w2 = 0, i = 0; i < text.length; ++i) {
 			code = text.charCodeAt(i);
@@ -920,6 +960,44 @@
 
 	DrawingContext.prototype.fillText = function (text, x, y, maxWidth, charWidths, angle) {
 		var code;
+        //check if chinese
+        let is_chinese = false;
+        for(let i = 0, length = text.length; i < length; i++)
+        {
+            let unicode = text.charCodeAt(i);
+            if (unicode <= 0xFe4F && unicode >= 0x2E80)
+            {
+                is_chinese = true;
+                break;
+            }
+        }
+        if (is_chinese)
+        {
+        	let font = this.getFont();
+        	let originalFontName = font.FontFamily.Name;
+        	let needFallBack = true;
+			for(let list = AscFonts.g_fontApplication.g_fontSelections.List,
+					length = AscFonts.g_fontApplication.g_fontSelections.List.length,
+					i = 0; i < length; i++)
+			{
+				if (list[i].m_wsFontName === originalFontName)
+				{
+                    if (!!(list[i].m_ulCodePageRange1 & 262144))
+                    {
+                        needFallBack = false;
+                    }
+                    break;
+                }
+			}
+        	if(needFallBack)
+        	{
+                let fontProperty = new asc.FontProperties();
+                fontProperty.copyFrom(font);
+                fontProperty.FontFamily.Name  = "SimSun";
+                this.setFont(fontProperty, angle)
+            }
+        }
+        //end
 		var manager = angle ? this.fmgrGraphics[1] : this.fmgrGraphics[0];
 
 		var _x = this._mift.transformPointX(x, y);
