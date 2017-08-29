@@ -33,7 +33,7 @@
 module.exports = function(grunt) {
 	var defaultConfig, packageFile;
 	var path = grunt.option('src') || './configs';
-	var level = grunt.option('level') || 'WHITESPACE_ONLY';
+	var level = grunt.option('level') || 'ADVANCED';
 	var formatting = grunt.option('formatting') || '';
 
 	require('google-closure-compiler').grunt(grunt, ['ADVANCED' === level ? '-Xms2048m' : '-Xms1024m']);

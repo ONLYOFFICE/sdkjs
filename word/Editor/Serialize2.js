@@ -7938,17 +7938,13 @@ function Binary_rPrReader(doc, oReadResult, stream)
                 rPr.RFonts.EastAsia = { Name : this.stream.GetString2LE(length), Index : -1 };
                 let originalFontName = rPr.RFonts.EastAsia.Name;
                 let needFallBack = true;
-                for(let list = AscFonts.g_fontApplication.g_fontSelections.List,
-                        length = AscFonts.g_fontApplication.g_fontSelections.List.length,
-                        i = 0; i < length; i++)
+                let list = AscFonts.g_fontApplication.g_fontSelections.List,
+                    listNameMap = AscFonts.g_fontApplication.g_fontSelections.ListNameMap;
+                if (originalFontName in listNameMap)
                 {
-                    if (list[i].m_wsFontName === originalFontName)
-                    {
-                        if (!!(list[i].m_ulCodePageRange1 & 262144))
-                        {
-                            needFallBack = false;
-                        }
-                        break;
+                    let existedFont = list[listNameMap[originalFontName]];
+                    if (!!(existedFont.m_ulCodePageRange1 & 262144)){
+                        needFallBack = false;
                     }
                 }
                 if(needFallBack)

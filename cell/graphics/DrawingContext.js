@@ -893,11 +893,11 @@
 
         //check if chinese
         let is_chinese = false;
+        let chineseLanguageSelector = AscFonts.g_fontApplication.g_fontSelections.Languages[3];
         for(let i = 0, length = text.length; i < length; i++)
         {
             let unicode = text.charCodeAt(i);
-            if (unicode <= 0xFe4F && unicode >= 0x2E80)
-            {
+            if (chineseLanguageSelector.checkChar(unicode)){
                 is_chinese = true;
                 break;
             }
@@ -907,25 +907,21 @@
             let font = this.getFont();
             let originalFontName = font.FontFamily.Name;
             let needFallBack = true;
-            for(let list = AscFonts.g_fontApplication.g_fontSelections.List,
-                    length = AscFonts.g_fontApplication.g_fontSelections.List.length,
-                    i = 0; i < length; i++)
+            let list = AscFonts.g_fontApplication.g_fontSelections.List,
+                listNameMap = AscFonts.g_fontApplication.g_fontSelections.ListNameMap;
+            if (originalFontName in listNameMap)
             {
-                if (list[i].m_wsFontName === originalFontName)
-                {
-                    if (!!(list[i].m_ulCodePageRange1 & 262144))
-                    {
-                        needFallBack = false;
-                    }
-                    break;
+                let existedFont = list[listNameMap[originalFontName]];
+                if (!!(existedFont.m_ulCodePageRange1 & 262144)){
+                    needFallBack = false;
                 }
             }
             if(needFallBack)
             {
                 let fontProperty = new asc.FontProperties();
                 fontProperty.copyFrom(font);
-                fontProperty.FontFamily.Name = "SimSun";
-                this.setFont(fontProperty)
+                fontProperty.FontFamily.Name  = "SimSun";
+                this.setFont(fontProperty, angle)
             }
         }
         //end
@@ -960,34 +956,31 @@
 
 	DrawingContext.prototype.fillText = function (text, x, y, maxWidth, charWidths, angle) {
 		var code;
+
         //check if chinese
         let is_chinese = false;
+        let chineseLanguageSelector = AscFonts.g_fontApplication.g_fontSelections.Languages[3];
         for(let i = 0, length = text.length; i < length; i++)
         {
             let unicode = text.charCodeAt(i);
-            if (unicode <= 0xFe4F && unicode >= 0x2E80)
-            {
-                is_chinese = true;
-                break;
-            }
+            if (chineseLanguageSelector.checkChar(unicode)){
+            	is_chinese = true;
+            	break;
+			}
         }
         if (is_chinese)
         {
         	let font = this.getFont();
         	let originalFontName = font.FontFamily.Name;
         	let needFallBack = true;
-			for(let list = AscFonts.g_fontApplication.g_fontSelections.List,
-					length = AscFonts.g_fontApplication.g_fontSelections.List.length,
-					i = 0; i < length; i++)
+        	let list = AscFonts.g_fontApplication.g_fontSelections.List,
+				listNameMap = AscFonts.g_fontApplication.g_fontSelections.ListNameMap;
+        	if (originalFontName in listNameMap)
 			{
-				if (list[i].m_wsFontName === originalFontName)
-				{
-                    if (!!(list[i].m_ulCodePageRange1 & 262144))
-                    {
-                        needFallBack = false;
-                    }
-                    break;
-                }
+				let existedFont = list[listNameMap[originalFontName]];
+				if (!!(existedFont.m_ulCodePageRange1 & 262144)){
+					needFallBack = false;
+				}
 			}
         	if(needFallBack)
         	{
@@ -998,6 +991,7 @@
             }
         }
         //end
+
 		var manager = angle ? this.fmgrGraphics[1] : this.fmgrGraphics[0];
 
 		var _x = this._mift.transformPointX(x, y);

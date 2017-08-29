@@ -1420,6 +1420,7 @@ function CFontSelectList()
 {
     this.List = [];
     this.ListMap = {};
+    this.ListNameMap = {};
 
     this.Languages = [];
 
@@ -1467,6 +1468,7 @@ CFontSelectList.prototype =
 						
 				this.List.push(_fs);
 				this.ListMap[_fs.m_wsFontPath] = this.List.length - 1;
+				this.ListNameMap[_fs.m_wsFontName] = this.List.length - 1;
 			}
 		}
 
