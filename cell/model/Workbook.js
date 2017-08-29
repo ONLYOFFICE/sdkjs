@@ -1746,7 +1746,8 @@
 	};
 	Workbook.prototype._generateFontMap=function(){
 		var oFontMap = {
-			"Arial"		: 1
+			"Arial"		: 1,
+			"SimSun"    : 1
 		};
 
 		oFontMap[g_oDefaultFormat.Font.getName()] = 1;
