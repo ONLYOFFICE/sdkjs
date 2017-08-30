@@ -167,6 +167,8 @@
 			/** @type RegExp */
 			this.reHyphen = /[\u002D\u00AD\u2010\u2012\u2013\u2014]/;
 
+			// For chinese
+			this.reChinese = /[\u2E80-\uFE4F]/;
 			return this;
 		}
 
@@ -816,7 +818,7 @@
 			var tw = 0, nlPos = 0, hpPos = undefined, isSP_ = true, delta = 0;
 
 			function measureFragment(s) {
-				var j, ch, chw, chPos, isNL, isSP, isHP, tm;
+				var j, ch, chw, chPos, isNL, isSP, isChinese, isHP, tm;
 
 				for (chPos = self.chars.length, j = 0; j < s.length; ++j, ++chPos) {
 					ch  = s.charAt(j);
@@ -825,10 +827,10 @@
 
 					isNL = self.reHypNL.test(ch);
 					isSP = !isNL ? self.reHypSp.test(ch) : false;
-
+					isChinese = !isNL && !isSP ? self.reChinese.test(ch) : false;
 					// if 'wrap flag' is set
 					if (wrap || wrapNL) {
-						isHP = !isSP && !isNL ? self.reHyphen.test(ch) : false;
+						isHP = !isSP && !isNL && !isChinese ? self.reHyphen.test(ch) : false;
 
 						if (isNL) {
 							// add new line marker
@@ -842,6 +844,8 @@
 						} else if (isSP || isHP) {
 							// move hyphenation position
 							hpPos = chPos + 1;
+						} else if (isChinese) {
+							hpPos = chPos;
 						}
 
 						if (wrap && tw + chw > maxWidth && chPos !== nlPos && !isSP) {
@@ -854,7 +858,7 @@
 						}
 					}
 
-					if (isSP_ && !isSP && !isNL) {
+					if ((isSP_ && !isSP && !isNL) || isChinese) {
 						// add word beginning marker
 						self._getCharPropAt(chPos).wrd = true;
 					}
