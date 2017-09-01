@@ -96,6 +96,7 @@
 			this.va = undefined;
 			this.nl = undefined;
 			this.hp = undefined;
+			this.chinese = undefined;
 			this.delta = undefined;
 			this.skip = undefined;
 			this.repeat = undefined;
@@ -692,7 +693,7 @@
 					}
 
 					// process 'new line' marker
-					if (p && (p.nl || p.hp)) {
+					if (p && (p.nl || p.hp || p.chinese)) {
 						addLine(beg, i);
 						beg = i + (p.nl ? 1 : 0);
 						lm = this._calcLineMetrics(p_.fsz !== undefined ? p_.fsz : p_.font.FontSize, p_.va, p_.fm);
@@ -844,21 +845,27 @@
 						} else if (isSP || isHP) {
 							// move hyphenation position
 							hpPos = chPos + 1;
-						} else if (isChinese) {
+						} else if (isChinese || isSP_) {
 							hpPos = chPos;
 						}
 
 						if (wrap && tw + chw > maxWidth && chPos !== nlPos && !isSP) {
-							// add hyphenation marker
+							// add hyphenation marker or chinese marker
 							nlPos = hpPos !== undefined ? hpPos : chPos;
-							self._getCharPropAt(nlPos).hp = true;
+							if (isChinese)
+							{
+                                self._getCharPropAt(nlPos).chinese = true;
+                            }
+                            else {
+                                self._getCharPropAt(nlPos).hp = true;
+							}
 							self._getCharPropAt(nlPos).delta = delta;
 							tw = self._calcCharsWidth(nlPos, chPos - 1);
 							hpPos = undefined;
 						}
 					}
 
-					if ((isSP_ && !isSP && !isNL) || isChinese) {
+					if (isSP_ && !isSP && !isNL && !isChinese || isChinese) {
 						// add word beginning marker
 						self._getCharPropAt(chPos).wrd = true;
 					}
@@ -866,7 +873,7 @@
 					tw += chw;
 					self.charWidths.push(chw);
 					self.chars += ch;
-					isSP_ = isSP || isNL;
+					isSP_ = isSP || isNL || isChinese;
 					delta = tm.widthBB - tm.width;
 				}
 			}
@@ -1070,7 +1077,7 @@
 			for (i = 0, strBeg = 0, f_ = ctx.getFont(); i < this.chars.length; ++i) {
 				p = this.charProps[i];
 
-				if (p && (p.font || p.nl || p.hp || p.skip > 0)) {
+				if (p && (p.font || p.nl || p.hp || p.chinese || p.skip > 0)) {
 					if (strBeg < i) {
 						// render fragment
 						x1 += renderFragment(strBeg, i, p_, this.angle);
@@ -1100,7 +1107,7 @@
 						i = j;
 						continue;
 					}
-					if (p.nl || p.hp) {
+					if (p.nl || p.hp || p.chinese) {
 						// begin new line
 						y1 += l.th;
 						l = self.lines[++n];

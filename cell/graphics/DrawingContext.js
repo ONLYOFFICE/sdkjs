@@ -891,49 +891,22 @@
 		var code;
 		var fm = this.fmgrGraphics[3];
 
-        //check if chinese
-        var is_chinese = false;
-        var chineseLanguageSelector = AscFonts.g_fontApplication.g_fontSelections.Languages[3];
-        for(var i = 0, length = text.length; i < length; i++)
-        {
-            var unicode = text.charCodeAt(i);
-            if (chineseLanguageSelector.checkChar(unicode)){
-                is_chinese = true;
-                break;
-            }
-        }
-        if (is_chinese)
-        {
-            var font = this.getFont();
-            var originalFontName = font.FontFamily.Name;
-            var needFallBack = true;
-            var list = AscFonts.g_fontApplication.g_fontSelections.List,
-                listNameMap = AscFonts.g_fontApplication.g_fontSelections.ListNameMap;
-            if (originalFontName in listNameMap)
-            {
-                var existedFont = list[listNameMap[originalFontName]];
-                if (!!(existedFont.m_ulCodePageRange1 & 262144)){
-                    needFallBack = false;
-                }
-            }
-            if(needFallBack)
-            {
-                var fontProperty = new asc.FontProperties();
-                fontProperty.copyFrom(font);
-                fontProperty.FontFamily.Name  = "SimSun";
-                this.setFont(fontProperty, angle)
-            }
-        }
-        //end
+        var originalFont = this.getFont();
+        var chineseFont = new asc.FontProperties();
+        chineseFont.copyFrom(originalFont);
+        chineseFont.FontFamily.Name  = "SimSun";
 
 		var r  = getCvtRatio(0/*px*/, units >= 0 && units <=3 ? units : this.units, this.ppiX);
 		for (var tmp, w = 0, w2 = 0, i = 0; i < text.length; ++i) {
+            this.setFontIfChinese(text[i], originalFont, chineseFont);
 			code = text.charCodeAt(i);
 			// Replace Non-breaking space(0xA0) with White-space(0x20)
 			tmp = fm.MeasureChar(0xA0 === code ? 0x20 : code);
 			w += asc_round(tmp.fAdvanceX); // ToDo скачет при wrap в ячейке и zoom
 		}
 		w2 = w - tmp.fAdvanceX + tmp.oBBox.fMaxX - tmp.oBBox.fMinX + 1;
+		// restore font
+        this.setFont(originalFont);
 		return this._calcTextMetrics(w * r, w2 * r, fm, r);
 	};
 
@@ -954,43 +927,44 @@
 		pGlyph.oBitmap.draw(this.ctx, nX, nY);
 	};
 
+    DrawingContext.prototype.setFontIfChinese = function (char, originalFont, chineseFont, angle) {
+        var _originalFont = new asc.FontProperties(),
+            _chineseFont = new asc.FontProperties();
+        _originalFont.copyFrom(originalFont);
+        _chineseFont.copyFrom(chineseFont);
+        var unicode = char.charCodeAt(0);
+        var chineseLanguageSelector = AscFonts.g_fontApplication.g_fontSelections.Languages[3];
+        var is_chinese = chineseLanguageSelector.checkChar(unicode);
+        if (is_chinese)
+        {
+            var originalFontName = _originalFont.FontFamily.Name;
+            var needFallBack = true;
+            var list = AscFonts.g_fontApplication.g_fontSelections.List,
+                listNameMap = AscFonts.g_fontApplication.g_fontSelections.ListNameMap;
+            if (originalFontName in listNameMap)
+            {
+                var existedFont = list[listNameMap[originalFontName]];
+                if (!!(existedFont.m_ulCodePageRange1 & 262144)){
+                    needFallBack = false;
+                }
+            }
+            if(needFallBack)
+            {
+                this.setFont(_chineseFont, angle)
+            }
+        }
+        else{
+        	this.setFont(_originalFont, angle)
+		}
+    };
+
 	DrawingContext.prototype.fillText = function (text, x, y, maxWidth, charWidths, angle) {
 		var code;
 
-        //check if chinese
-        var is_chinese = false;
-        var chineseLanguageSelector = AscFonts.g_fontApplication.g_fontSelections.Languages[3];
-        for(var i = 0, length = text.length; i < length; i++)
-        {
-            var unicode = text.charCodeAt(i);
-            if (chineseLanguageSelector.checkChar(unicode)){
-            	is_chinese = true;
-            	break;
-			}
-        }
-        if (is_chinese)
-        {
-        	var font = this.getFont();
-        	var originalFontName = font.FontFamily.Name;
-        	var needFallBack = true;
-        	var list = AscFonts.g_fontApplication.g_fontSelections.List,
-				listNameMap = AscFonts.g_fontApplication.g_fontSelections.ListNameMap;
-        	if (originalFontName in listNameMap)
-			{
-				var existedFont = list[listNameMap[originalFontName]];
-				if (!!(existedFont.m_ulCodePageRange1 & 262144)){
-					needFallBack = false;
-				}
-			}
-        	if(needFallBack)
-        	{
-                var fontProperty = new asc.FontProperties();
-                fontProperty.copyFrom(font);
-                fontProperty.FontFamily.Name  = "SimSun";
-                this.setFont(fontProperty, angle)
-            }
-        }
-        //end
+		var originalFont = this.getFont();
+		var chineseFont = new asc.FontProperties();
+		chineseFont.copyFrom(originalFont);
+		chineseFont.FontFamily.Name  = "SimSun";
 
 		var manager = angle ? this.fmgrGraphics[1] : this.fmgrGraphics[0];
 
@@ -999,6 +973,7 @@
 
 		var length = text.length;
 		for (var i = 0; i < length; ++i) {
+			this.setFontIfChinese(text[i], originalFont, chineseFont, angle);
 			try {
 				code = text.charCodeAt(i);
 				// Replace Non-breaking space(0xA0) with White-space(0x20)
@@ -1011,7 +986,8 @@
 
 			this.fillGlyph(pGlyph, manager);
 		}
-
+        // restore font
+        this.setFont(originalFont, angle);
 		return this;
 	};
 

@@ -1535,6 +1535,8 @@ CFontSelectList.prototype =
         // 4) chinese http://stackoverflow.com/questions/1366068/whats-the-complete-range-for-chinese-characters-in-unicode
         var _chinese_lang = new CLanguageFontSelect();
         _chinese_lang.Type = LanguagesFontSelectTypes.Chinese;
+        _chinese_lang.Ranges.push(0x3000); //CJK标点符号
+        _chinese_lang.Ranges.push(0x303F);
         _chinese_lang.Ranges.push(0x4E00);
         _chinese_lang.Ranges.push(0x9FFF);
         _chinese_lang.Ranges.push(0x3400);
@@ -1545,7 +1547,7 @@ CFontSelectList.prototype =
         _chinese_lang.Ranges.push(0xFAFF);
         _chinese_lang.Ranges.push(0x2F800);
         _chinese_lang.Ranges.push(0x2FA1F);
-        _chinese_lang.Ranges.push(0xFF00);
+        _chinese_lang.Ranges.push(0xFF00); // 全角ASCII、全角中英文标点、半宽片假名、半宽平假名、半宽韩文字母
         _chinese_lang.Ranges.push(0xFFEF);
         _chinese_lang.CodePage1Mask = (1 << 18) | (1 << 20);
         _chinese_lang.CodePage2Mask = 0;
