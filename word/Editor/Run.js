@@ -2481,32 +2481,18 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                     var chineseLanguageSelector = AscFonts.g_fontApplication.g_fontSelections.Languages[3];
                     var is_chinese = chineseLanguageSelector.checkChar(Item.Value);
                     if (is_chinese) {
-                        if (Word === true){
-                            X += SpaceLen + WordLen;
-                            FirstItemOnLine = false;
-                            EmptyLine = false;
-                            SpaceLen = 0;
-                            WordLen = 0;
-                            Word = false;
-
-                            if (X + SpaceLen + LetterLen > XEnd)
-                            {
-                                RangeEndPos = Pos;
-                                NewRange = true;
-                            }
+                        X += SpaceLen + WordLen;
+                        SpaceLen = 0;
+                        WordLen = 0;
+                        FirstItemOnLine = false;
+                        EmptyLine = false;
+                        if (X + LetterLen > XEnd)
+                        {
+                            NewRange = true;
+                            RangeEndPos = Pos;
                         }
-                        else {
-                            X += SpaceLen + WordLen;
-                            SpaceLen = 0;
-                            WordLen = 0;
-                            if (true !== FirstItemOnLine || false === Para.Internal_Check_Ranges(ParaLine, ParaRange))
-                            {
-                                if (X + SpaceLen + LetterLen > XEnd)
-                                {
-                                    NewRange = true;
-                                    RangeEndPos = Pos;
-                                }
-                            }
+                        if (Word === true){
+                            Word = false;
                         }
                         X += LetterLen;
                     }

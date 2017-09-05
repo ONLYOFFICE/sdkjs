@@ -238,6 +238,5 @@ module.exports = function(grunt) {
 	
 	grunt.registerTask('concat_sdk', ['concat_sdk_init', 'concat', 'clean']);
 	grunt.registerTask('build_sdk', ['concat_sdk', 'compile_sdk_init', 'closure-compiler', 'splitfile', 'concat', 'replace', 'clean']);
-    // grunt.registerTask('build_sdk', ['concat_sdk', 'compile_sdk_init', 'splitfile', 'concat', 'replace', 'clean']);
 	grunt.registerTask('default', ['build_all']);
 };
