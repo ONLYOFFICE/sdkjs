@@ -1882,7 +1882,8 @@
 	};
 	Workbook.prototype._generateFontMap=function(){
 		var oFontMap = {
-			"Arial"		: 1
+			"Arial"		: 1,
+			"SimSun"    : 1
 		};
 		var i;
 

@@ -2517,106 +2517,128 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                     // При проверке, убирается ли слово, мы должны учитывать ширину предшествующих пробелов.
                     var LetterLen = Item.Width / TEXTWIDTH_DIVIDER;//var LetterLen = Item.Get_Width();
 
-                    if (true !== Word)
-                    {
-                        // Слово только началось. Делаем следующее:
-                        // 1) Если до него на строке ничего не было и данная строка не
-                        //    имеет разрывов, тогда не надо проверять убирается ли слово в строке.
-                        // 2) В противном случае, проверяем убирается ли слово в промежутке.
+                    // Special progress for chinese word
 
-                        // Если слово только началось, и до него на строке ничего не было, и в строке нет разрывов, тогда не надо проверять убирается ли оно на строке.
-                        if (true !== FirstItemOnLine || false === Para.Internal_Check_Ranges(ParaLine, ParaRange))
+                    var chineseLanguageSelector = AscFonts.g_fontApplication.g_fontSelections.Languages[3];
+                    var is_chinese = chineseLanguageSelector.checkChar(Item.Value);
+                    if (is_chinese) {
+                        X += SpaceLen + WordLen;
+                        SpaceLen = 0;
+                        WordLen = 0;
+                        FirstItemOnLine = false;
+                        EmptyLine = false;
+                        if (X + LetterLen > XEnd)
                         {
-                            if (X + SpaceLen + LetterLen > XEnd)
-                            {
-                                NewRange = true;
-                                RangeEndPos = Pos;
-                            }
+                            NewRange = true;
+                            RangeEndPos = Pos;
                         }
-
-                        if (true !== NewRange)
-                        {
-                            // Отмечаем начало нового слова
-                            PRS.Set_LineBreakPos(Pos);
-
-                            // Если текущий символ с переносом, например, дефис, тогда на нем заканчивается слово
-                            if (Item.Flags & PARATEXT_FLAGS_SPACEAFTER)//if ( true === Item.Is_SpaceAfter() )
-                            {
-                                // Добавляем длину пробелов до слова и ширину самого слова.
-                                X += SpaceLen + LetterLen;
-
-                                Word = false;
-                                FirstItemOnLine = false;
-                                EmptyLine = false;
-                                SpaceLen = 0;
-                                WordLen = 0;
-                            }
-                            else
-                            {
-                                Word = true;
-                                WordLen = LetterLen;
-                            }
+                        if (Word === true){
+                            Word = false;
                         }
-
+                        X += LetterLen;
                     }
-                    else
-                    {
-                        if(X + SpaceLen + WordLen + LetterLen > XEnd)
+                    else {
+                        if (true !== Word)
                         {
-                            if(true === FirstItemOnLine)
-                            {
-                                // Слово оказалось единственным элементом в промежутке, и, все равно,
-                                // не умещается целиком. Делаем следующее:
-                                //
-                                //
-                                // 1) Если у нас строка без вырезов, тогда ставим перенос строки на
-                                //    текущей позиции.
-                                // 2) Если у нас строка с вырезом, и данный вырез не последний, тогда
-                                //    ставим перенос внутри строки в начале слова.
-                                // 3) Если у нас строка с вырезом и вырез последний, тогда ставим перенос
-                                //    строки в начале слова.
+                            // Слово только началось. Делаем следующее:
+                            // 1) Если до него на строке ничего не было и данная строка не
+                            //    имеет разрывов, тогда не надо проверять убирается ли слово в строке.
+                            // 2) В противном случае, проверяем убирается ли слово в промежутке.
 
-                                if (false === Para.Internal_Check_Ranges(ParaLine, ParaRange))
+                            // Если слово только началось, и до него на строке ничего не было, и в строке нет разрывов, тогда не надо проверять убирается ли оно на строке.
+                            if (true !== FirstItemOnLine || false === Para.Internal_Check_Ranges(ParaLine, ParaRange))
+                            {
+                                if (X + SpaceLen + LetterLen > XEnd)
+                                {
+                                    NewRange = true;
+                                    RangeEndPos = Pos;
+                                }
+                            }
+
+                            if (true !== NewRange)
+                            {
+                                // Отмечаем начало нового слова
+                                PRS.Set_LineBreakPos(Pos);
+
+                                // Если текущий символ с переносом, например, дефис, тогда на нем заканчивается слово
+                                if (Item.Flags & PARATEXT_FLAGS_SPACEAFTER)//if ( true === Item.Is_SpaceAfter() )
+                                {
+                                    // Добавляем длину пробелов до слова и ширину самого слова.
+                                    X += SpaceLen + LetterLen;
+
+                                    Word = false;
+                                    FirstItemOnLine = false;
+                                    EmptyLine = false;
+                                    SpaceLen = 0;
+                                    WordLen = 0;
+                                }
+                                else
+                                {
+                                    Word = true;
+                                    WordLen = LetterLen;
+                                }
+                            }
+
+                        }
+                        else
+                        {
+                            if(X + SpaceLen + WordLen + LetterLen > XEnd)
+                            {
+                                if(true === FirstItemOnLine)
+                                {
+                                    // Слово оказалось единственным элементом в промежутке, и, все равно,
+                                    // не умещается целиком. Делаем следующее:
+                                    //
+                                    //
+                                    // 1) Если у нас строка без вырезов, тогда ставим перенос строки на
+                                    //    текущей позиции.
+                                    // 2) Если у нас строка с вырезом, и данный вырез не последний, тогда
+                                    //    ставим перенос внутри строки в начале слова.
+                                    // 3) Если у нас строка с вырезом и вырез последний, тогда ставим перенос
+                                    //    строки в начале слова.
+
+                                    if (false === Para.Internal_Check_Ranges(ParaLine, ParaRange))
+                                    {
+                                        // Слово не убирается в отрезке. Переносим слово в следующий отрезок
+                                        MoveToLBP = true;
+                                        NewRange = true;
+                                    }
+                                    else
+                                    {
+                                        EmptyLine = false;
+                                        X += WordLen;
+
+                                        // Слово не убирается в отрезке, но, поскольку, слово 1 на строке и отрезок тоже 1,
+                                        // делим слово в данном месте
+                                        NewRange = true;
+                                        RangeEndPos = Pos;
+                                    }
+                                }
+                                else
                                 {
                                     // Слово не убирается в отрезке. Переносим слово в следующий отрезок
                                     MoveToLBP = true;
                                     NewRange = true;
                                 }
-                                else
+                            }
+
+                            if (true !== NewRange)
+                            {
+                                // Мы убираемся в пределах данной строки. Прибавляем ширину буквы к ширине слова
+                                WordLen += LetterLen;
+
+                                // Если текущий символ с переносом, например, дефис, тогда на нем заканчивается слово
+                                if (Item.Flags & PARATEXT_FLAGS_SPACEAFTER)//if ( true === Item.Is_SpaceAfter() )
                                 {
+                                    // Добавляем длину пробелов до слова и ширину самого слова.
+                                    X += SpaceLen + WordLen;
+
+                                    Word = false;
+                                    FirstItemOnLine = false;
                                     EmptyLine = false;
-                                    X += WordLen;
-
-                                    // Слово не убирается в отрезке, но, поскольку, слово 1 на строке и отрезок тоже 1,
-                                    // делим слово в данном месте
-                                    NewRange = true;
-                                    RangeEndPos = Pos;
+                                    SpaceLen = 0;
+                                    WordLen = 0;
                                 }
-                            }
-                            else
-                            {
-                                // Слово не убирается в отрезке. Переносим слово в следующий отрезок
-                                MoveToLBP = true;
-                                NewRange = true;
-                            }
-                        }
-
-                        if (true !== NewRange)
-                        {
-                            // Мы убираемся в пределах данной строки. Прибавляем ширину буквы к ширине слова
-                            WordLen += LetterLen;
-
-                            // Если текущий символ с переносом, например, дефис, тогда на нем заканчивается слово
-                            if (Item.Flags & PARATEXT_FLAGS_SPACEAFTER)//if ( true === Item.Is_SpaceAfter() )
-                            {
-                                // Добавляем длину пробелов до слова и ширину самого слова.
-                                X += SpaceLen + WordLen;
-
-                                Word = false;
-                                FirstItemOnLine = false;
-                                EmptyLine = false;
-                                SpaceLen = 0;
-                                WordLen = 0;
                             }
                         }
                     }

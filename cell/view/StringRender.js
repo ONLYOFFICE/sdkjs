@@ -96,6 +96,7 @@
 			this.va = undefined;
 			this.nl = undefined;
 			this.hp = undefined;
+			this.chinese = undefined;
 			this.delta = undefined;
 			this.skip = undefined;
 			this.repeat = undefined;
@@ -167,6 +168,8 @@
 			/** @type RegExp */
 			this.reHyphen = /[\u002D\u00AD\u2010\u2012\u2013\u2014]/;
 
+			// For chinese
+			this.reChinese = /[\u2E80-\uFE4F]/;
 			return this;
 		}
 
@@ -677,7 +680,7 @@
 					}
 
 					// process 'new line' marker
-					if (p && (p.nl || p.hp)) {
+					if (p && (p.nl || p.hp || p.chinese)) {
 						addLine(beg, i);
 						beg = i + (p.nl ? 1 : 0);
 						lm = this._calcLineMetrics(p_.fsz !== undefined ? p_.fsz : p_.font.FontSize, p_.va, p_.fm);
@@ -803,7 +806,7 @@
 			var tw = 0, nlPos = 0, hpPos = undefined, isSP_ = true, delta = 0;
 
 			function measureFragment(s) {
-				var j, ch, chw, chPos, isNL, isSP, isHP, tm;
+				var j, ch, chw, chPos, isNL, isSP, isChinese, isHP, tm;
 
 				for (chPos = self.chars.length, j = 0; j < s.length; ++j, ++chPos) {
 					ch  = s.charAt(j);
@@ -812,10 +815,10 @@
 
 					isNL = self.reHypNL.test(ch);
 					isSP = !isNL ? self.reHypSp.test(ch) : false;
-
+					isChinese = !isNL && !isSP ? self.reChinese.test(ch) : false;
 					// if 'wrap flag' is set
 					if (wrap || wrapNL) {
-						isHP = !isSP && !isNL ? self.reHyphen.test(ch) : false;
+						isHP = !isSP && !isNL && !isChinese ? self.reHyphen.test(ch) : false;
 
 						if (isNL) {
 							// add new line marker
@@ -829,19 +832,27 @@
 						} else if (isSP || isHP) {
 							// move hyphenation position
 							hpPos = chPos + 1;
+						} else if (isChinese || isSP_) {
+							hpPos = chPos;
 						}
 
 						if (wrap && tw + chw > maxWidth && chPos !== nlPos && !isSP) {
-							// add hyphenation marker
+							// add hyphenation marker or chinese marker
 							nlPos = hpPos !== undefined ? hpPos : chPos;
-							self._getCharPropAt(nlPos).hp = true;
+							if (isChinese)
+							{
+                                self._getCharPropAt(nlPos).chinese = true;
+                            }
+                            else {
+                                self._getCharPropAt(nlPos).hp = true;
+							}
 							self._getCharPropAt(nlPos).delta = delta;
 							tw = self._calcCharsWidth(nlPos, chPos - 1);
 							hpPos = undefined;
 						}
 					}
 
-					if (isSP_ && !isSP && !isNL) {
+					if (isSP_ && !isSP && !isNL && !isChinese || isChinese) {
 						// add word beginning marker
 						self._getCharPropAt(chPos).wrd = true;
 					}
@@ -849,7 +860,7 @@
 					tw += chw;
 					self.charWidths.push(chw);
 					self.chars += ch;
-					isSP_ = isSP || isNL;
+					isSP_ = isSP || isNL || isChinese;
 					delta = tm.widthBB - tm.width;
 				}
 			}
@@ -1053,7 +1064,7 @@
 			for (i = 0, strBeg = 0, f_ = ctx.getFont(); i < this.chars.length; ++i) {
 				p = this.charProps[i];
 
-				if (p && (p.font || p.nl || p.hp || p.skip > 0)) {
+				if (p && (p.font || p.nl || p.hp || p.chinese || p.skip > 0)) {
 					if (strBeg < i) {
 						// render fragment
 						x1 += renderFragment(strBeg, i, p_, this.angle);
@@ -1083,7 +1094,7 @@
 						i = j;
 						continue;
 					}
-					if (p.nl || p.hp) {
+					if (p.nl || p.hp || p.chinese) {
 						// begin new line
 						y1 += l.th;
 						l = self.lines[++n];
