@@ -3540,7 +3540,7 @@ function CEditorPage(api)
 	{
 		var _c = oThis;
 		_c.m_nCurrentTimeClearCache++;
-		if (_c.m_nCurrentTimeClearCache > 750) // 30 ������. �������������� ��� ����� ��������� �������� �������!!!
+		if (_c.m_nCurrentTimeClearCache > 750)
 		{
 			_c.m_nCurrentTimeClearCache = 0;
 			_c.m_oDrawingDocument.CheckFontCache();
