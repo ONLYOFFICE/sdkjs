@@ -9,7 +9,9 @@ before_script:
 addons:
   sonarcloud:
     organization: "onlyoffice"
-    branches:
+    token:
+      secure: "ymFyYCItmqlNIhSIaI9FYrI2tlSTI8l09o7HLoJ56+BE6GNPiR/6MnCki/hMi3KXFUwGtmArL8jN2nFfVyQ8joeIEcrY/ZtIty5UtSzqzzLQPnTo9V2eNqRAKaHUEmU3OapTBt2E7XULR9U0XEjLRbCjRTOunSTrInhzTWxmAzVvDo3PPw++B1wgwdxKbUdFSooXW1iXieNP9KruKNhCWNf9jpnb4XEWqTjnsM7ICwNgLAyyEOjcNgOTVEze6E6Rg16P/wyqDsatKL+xX/dWkxCiyzTUjD0BYXyvocse0vGpr08NKFEs9OVbRdv4iwNTQSTgAoCfuEvdkmpAUNJfurxklqJsXLoG3YFjPJnxuery2VR2sFPbx7CZ5Lq78sqc9msgo0I2w/KOnHjAh6yviQffoc3gw6dm21vruz+0spnAXu5/cP/7PFc17bCTPWaM4IIBmb7Fz9HlwRBalwcUyx1dlqRJPrKEle8QmiRkNCEI4G/otT24K7lWFCpXYF2UH/vAwNsa6keypLFZrsj+Q1SZtPI42UjZH/dGgxb0eZbdkfSWQCqtxXCUszdBoAcD8AEYwV0ft69Ecs+yHmSVataI9YUzZ8lxuBM4vGLxuzQR4YnS0LBZ1/P4qwVR2Iw7iPXxvNVtnA5Cj8GI7fVyHOcO4K8HzHHtMuzrS/OajqA="
+      branches:
           - develop
 jobs:
   include:
