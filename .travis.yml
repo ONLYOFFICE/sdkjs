@@ -12,7 +12,7 @@ jobs:
       script:
         - wget https://sonarsource.bintray.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-3.0.3.778-linux.zip
         - unzip sonar-scanner-cli-3.0.3.778-linux.zip
-        - ~/sonar-scanner-3.0.3.778-linux/sonar-scanner -Dsonar.host.url=https://sonarcloud.io
+        - ~/bin/sonar-scanner-3.0.3.778-linux/sonar-scanner -Dsonar.host.url=https://sonarcloud.io
                                                             -Dsonar.login=$SONAR_TOKEN
     - stage: Formulas tests
       script:
