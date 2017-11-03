@@ -879,7 +879,7 @@
 				this.m_nMaxY = parseInt((1.2 * dSize));
 			}
 
-			// �������� ������� �������������� (FontMatrix)
+			// Вычислим матрицу преобразования (FontMatrix)
 			var fm = this.m_oFontMatrix;
 			fm.xx = Math.floor((m[0] * 65536));
 			fm.yx = Math.floor((m[1] * 65536));
