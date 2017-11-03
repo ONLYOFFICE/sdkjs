@@ -722,7 +722,6 @@ function CCacheManager()
 
 		_cache_image.image_locked = 0;
 		_cache_image.image_unusedCount = 0;
-		// ����� ����� �������� ������ � ���� (_cache_image = null) <- ��� ����������� !!!!!!!
 	}
 
 	this.Lock = function (_w, _h)

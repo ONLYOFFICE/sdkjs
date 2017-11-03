@@ -4201,7 +4201,6 @@
 						if(Asc.linerule_Exact === Item_pPr.Spacing.LineRule)
 							apPr.push("mso-line-height-rule:exactly");
 					}
-					//��� ������� � word ����� ����� ��� �������� ������������ ������
 					//if(Def_pPr.Spacing.Before != Item_pPr.Spacing.Before)
 					apPr.push("margin-top:" + (Item_pPr.Spacing.Before * g_dKoef_mm_to_pt) + "pt");
 					//if(Def_pPr.Spacing.After != Item_pPr.Spacing.After)

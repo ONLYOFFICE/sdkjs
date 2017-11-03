@@ -1663,7 +1663,6 @@ function CHorRuler()
         {
             if (y >= _top && y <= _bottom)
             {
-                // ������ �������
                 if (Math.abs(x - this.m_dMarginLeft) < 1)
                 {
                     return 1;
