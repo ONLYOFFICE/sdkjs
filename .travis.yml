@@ -6,17 +6,14 @@ node_js:
   - '6'
 before_script:
   - git clone -b develop https://github.com/ONLYOFFICE/web-apps.git ../web-apps
-addons:
-  sonarcloud:
-    organization: "onlyoffice"
-    branches:
-      - develop
 jobs:
   include:
     - stage: SonarQube Scanner
       script:
-        - sonar-scanner -Dsonar.host.url=https://sonarcloud.io
-                        -Dsonar.login=$SONAR_TOKEN
+        - wget https://sonarsource.bintray.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-3.0.3.778-linux.zip
+        - unzip sonar-scanner-cli-3.0.3.778-linux.zip
+        - ~/sonar-scanner-cli-3.0.3.778-linux/sonar-scanner -Dsonar.host.url=https://sonarcloud.io
+                                                            -Dsonar.login=$SONAR_TOKEN
     - stage: Formulas tests
       script:
         - npm install -g node-qunit-phantomjs
