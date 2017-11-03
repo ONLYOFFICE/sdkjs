@@ -12,9 +12,7 @@ jobs:
       script:
         - wget https://sonarsource.bintray.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-3.0.3.778-linux.zip
         - unzip sonar-scanner-cli-3.0.3.778-linux.zip
-        - ls -la
-        - pwd
-        - sonar-scanner-3.0.3.778-linux/bin/sonar-scanner -Dsonar.login=$SONAR_TOKEN
+        - sonar-scanner-3.0.3.778-linux/bin/sonar-scanner
     - stage: Formulas tests
       script:
         - npm install -g node-qunit-phantomjs
