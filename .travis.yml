@@ -9,6 +9,7 @@ before_script:
 jobs:
   include:
     - stage: SonarQube Scanner
+      if: branch = develop
       script:
         - wget https://sonarsource.bintray.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-3.0.3.778-linux.zip
         - unzip sonar-scanner-cli-3.0.3.778-linux.zip
