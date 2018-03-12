@@ -16,7 +16,7 @@ jobs:
         - /tmp/sonar-scanner-3.0.3.778-linux/bin/sonar-scanner -Dsonar.login=$SONAR_TOKEN
     - stage: Formulas tests
       script:
-        - npm install --prefix cell/.unit-tests
+        - npm install -g --prefix cell/.unit-tests
         - node-qunit-phantomjs cell/.unit-tests/FormulaTests.html
     - stage: Building SDK and test it by `onlyofficetestingrobot/doc-builder-testing`
       script:
