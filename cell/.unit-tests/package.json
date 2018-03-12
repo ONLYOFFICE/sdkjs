@@ -1,0 +1,10 @@
+{
+  "name": "OnlyofficeCellsUnitTests",
+  "version": "0.0.0",
+  "homepage": "http://www.onlyoffice.com",
+  "private": true,
+  "dependencies": {
+    "phantomjs-prebuilt": "2.1.14",
+    "node-qunit-phantomjs": "^2.0.0"
+  }
+}
