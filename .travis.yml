@@ -17,7 +17,7 @@ jobs:
     - stage: Formulas tests
       script:
         - npm install -g phantomjs-prebuilt@2.1.14
-        - npm install -g --no-optional node-qunit-phantomjs
+        - npm install -g node-qunit-phantomjs
         - node-qunit-phantomjs cell/.unit-tests/FormulaTests.html
     - stage: Building SDK and test it by `onlyofficetestingrobot/doc-builder-testing`
       script:
