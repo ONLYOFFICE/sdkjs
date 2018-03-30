@@ -398,11 +398,8 @@
 	 */
 	ApiWorksheet.prototype.GetCols = function (sRange) {
 		if (sRange.indexOf(':') == -1) {
-			sRange += '1:' + sRange + AscCommon.gc_nMaxRow0;
-		} else {
-			sRange = sRange.split(':');
-			sRange = sRange[0] + '1:' + sRange[1] + AscCommon.gc_nMaxRow0;
-		}	
+			sRange += ':' + sRange;
+		}
 		return new ApiRange(this.worksheet.getRange2(sRange));
 	};
 	Object.defineProperty(ApiWorksheet.prototype, "Cols", {
