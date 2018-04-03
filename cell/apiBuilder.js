@@ -870,7 +870,7 @@
 		var	count;
 		switch (range.getType()) {
 			case 1:
-				count = (range.c2 - range.c1 + 1) * (range.r2 - range.r1 +1);
+				count = (range.c2 - range.c1 + 1) * (range.r2 - range.r1 + 1);
 				break;
 
 			case 2:		
@@ -929,6 +929,52 @@
 	Object.defineProperty(ApiRange.prototype, "FontColor", {
 		set: function (color) {
 			return this.SetFontColor(color);
+		}
+	});
+
+	/**
+	 * Get hidden value
+	 * @memberof ApiRange
+	 * @returns {boolean}
+	 */
+	ApiRange.prototype.GetHidden = function () {
+		var range = this.range;
+		var worksheet = range.worksheet;
+		var bbox = range.bbox;
+		switch (bbox.getType()) {
+			case 2:		
+				return range.worksheet.getColHidden(bbox.c1);	
+
+			case 3:
+				return range.worksheet.getRowHidden(bbox.r1);				
+
+			default:
+				return null;
+		}
+	};
+	/**
+	 * Set hidden value
+	 * @memberof ApiRange
+	 * @param {boolean} bhidden
+	 */
+	ApiRange.prototype.SetHidden = function (bhidden) {
+		var range = this.range;
+		var worksheet = range.worksheet;
+		var bbox = range.bbox;
+		switch (bbox.getType()) {
+			case 2:		
+				range.worksheet.setColHidden(bhidden, bbox.c1, bbox.c2);	
+
+			case 3:
+				range.worksheet.setRowHidden(bhidden, bbox.r1, bbox.r2);				
+		}
+	};
+	Object.defineProperty(ApiRange.prototype, "Hidden", {
+		get: function () {
+			return this.GetHidden();
+		},
+		set: function (bhidden) {
+			this.SetHidden(bhidden);
 		}
 	});
 
@@ -1616,6 +1662,7 @@
 	ApiWorksheet.prototype["SetVisible"] = ApiWorksheet.prototype.SetVisible;
 	ApiWorksheet.prototype["GetActiveCell"] = ApiWorksheet.prototype.GetActiveCell;
 	ApiWorksheet.prototype["GetCells"] = ApiWorksheet.prototype.GetCells;
+	ApiWorksheet.prototype["GetCols"] = ApiWorksheet.prototype.GetCols;
 	ApiWorksheet.prototype["GetRows"] = ApiWorksheet.prototype.GetRows;
 	ApiWorksheet.prototype["GetUsedRange"] = ApiWorksheet.prototype.GetUsedRange;
 	ApiWorksheet.prototype["GetName"] = ApiWorksheet.prototype.GetName;
@@ -1635,9 +1682,12 @@
 
 	ApiRange.prototype["GetRow"] = ApiRange.prototype.GetRow;
 	ApiRange.prototype["GetCol"] = ApiRange.prototype.GetCol;
+	ApiRange.prototype["GetCount"] = ApiRange.prototype.GetCount;
 	ApiRange.prototype["GetValue"] = ApiRange.prototype.GetValue;
 	ApiRange.prototype["SetValue"] = ApiRange.prototype.SetValue;
 	ApiRange.prototype["SetFontColor"] = ApiRange.prototype.SetFontColor;
+	ApiRange.prototype["GetHidden"] = ApiRange.prototype.GetHidden;
+	ApiRange.prototype["SetHidden"] = ApiRange.prototype.SetHidden;	
 	ApiRange.prototype["SetFontSize"] = ApiRange.prototype.SetFontSize;
 	ApiRange.prototype["SetFontName"] = ApiRange.prototype.SetFontName;
 	ApiRange.prototype["SetAlignVertical"] = ApiRange.prototype.SetAlignVertical;
