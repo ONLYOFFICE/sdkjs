@@ -955,26 +955,26 @@
 	/**
 	 * Set hidden value
 	 * @memberof ApiRange
-	 * @param {boolean} bhidden
+	 * @param {boolean} value
 	 */
-	ApiRange.prototype.SetHidden = function (bhidden) {
+	ApiRange.prototype.SetHidden = function (value) {
 		var range = this.range;
 		var worksheet = range.worksheet;
 		var bbox = range.bbox;
 		switch (bbox.getType()) {
 			case 2:		
-				worksheet.setColHidden(bhidden, bbox.c1, bbox.c2);	
+				worksheet.setColHidden(value, bbox.c1, bbox.c2);	
 
 			case 3:
-				worksheet.setRowHidden(bhidden, bbox.r1, bbox.r2);				
+				worksheet.setRowHidden(value, bbox.r1, bbox.r2);				
 		}
 	};
 	Object.defineProperty(ApiRange.prototype, "Hidden", {
 		get: function () {
 			return this.GetHidden();
 		},
-		set: function (bhidden) {
-			this.SetHidden(bhidden);
+		set: function (value) {
+			this.SetHidden(value);
 		}
 	});
 
