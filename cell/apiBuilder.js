@@ -943,10 +943,10 @@
 		var bbox = range.bbox;
 		switch (bbox.getType()) {
 			case 2:		
-				return range.worksheet.getColHidden(bbox.c1);	
+				return worksheet.getColHidden(bbox.c1);	
 
 			case 3:
-				return range.worksheet.getRowHidden(bbox.r1);				
+				return worksheet.getRowHidden(bbox.r1);				
 
 			default:
 				return null;
@@ -963,10 +963,10 @@
 		var bbox = range.bbox;
 		switch (bbox.getType()) {
 			case 2:		
-				range.worksheet.setColHidden(bhidden, bbox.c1, bbox.c2);	
+				worksheet.setColHidden(bhidden, bbox.c1, bbox.c2);	
 
 			case 3:
-				range.worksheet.setRowHidden(bhidden, bbox.r1, bbox.r2);				
+				worksheet.setRowHidden(bhidden, bbox.r1, bbox.r2);				
 		}
 	};
 	Object.defineProperty(ApiRange.prototype, "Hidden", {
