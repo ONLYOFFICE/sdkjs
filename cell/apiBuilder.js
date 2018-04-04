@@ -964,6 +964,7 @@
 		switch (bbox.getType()) {
 			case 2:		
 				worksheet.setColHidden(value, bbox.c1, bbox.c2);	
+				break;
 
 			case 3:
 				worksheet.setRowHidden(value, bbox.r1, bbox.r2);				
@@ -975,6 +976,46 @@
 		},
 		set: function (value) {
 			this.SetHidden(value);
+		}
+	});
+
+/**
+	 * Get columns width value
+	 * @memberof ApiRange
+	 * @returns {number}
+	 */
+	ApiRange.prototype.GetColumnWidth = function () {
+		var ws = this.range.worksheet;
+		var width = ws.colWidthToCharCount(ws.modelColWidthToColWidth(ws.getColWidth(this.range.bbox.c1)));
+		return (width < 0) ? ws.colWidthToCharCount(ws.modelColWidthToColWidth(AscCommonExcel.oDefaultMetrics.ColWidthChars)) : width;
+	};
+	/**
+	 * Set columns width value
+	 * @memberof ApiRange
+	 * @param {number} width
+	 */
+	ApiRange.prototype.SetColumnWidth = function (width) {
+		this.range.worksheet.setColWidth(width, this.range.bbox.c1, this.range.bbox.c2);
+	};
+	Object.defineProperty(ApiRange.prototype, "ColumnWidth", {
+		get: function () {
+			return this.GetColumnWidth();
+		},
+		set: function (width) {
+			this.SetColumnWidth(width);
+		}
+	});
+	Object.defineProperty(ApiRange.prototype, "Width", {
+		get: function () {
+			var max = this.range.bbox.c2 - this.range.bbox.c1;
+			var ws = this.range.worksheet;
+			var sum = 0;
+			var width;
+			for (var i = 0; i <= max; i++) {
+				width = ws.modelColWidthToColWidth(ws.getColWidth(i));
+				sum += (width < 0) ? ws.modelColWidthToColWidth(AscCommonExcel.oDefaultMetrics.ColWidthChars) : width;
+			}
+			return sum;
 		}
 	});
 
@@ -1688,6 +1729,8 @@
 	ApiRange.prototype["SetFontColor"] = ApiRange.prototype.SetFontColor;
 	ApiRange.prototype["GetHidden"] = ApiRange.prototype.GetHidden;
 	ApiRange.prototype["SetHidden"] = ApiRange.prototype.SetHidden;	
+	ApiRange.prototype["GetColumnWidth"] = ApiRange.prototype.GetColumnWidth;	
+	ApiRange.prototype["SetColumnWidth"] = ApiRange.prototype.SetColumnWidth;	
 	ApiRange.prototype["SetFontSize"] = ApiRange.prototype.SetFontSize;
 	ApiRange.prototype["SetFontName"] = ApiRange.prototype.SetFontName;
 	ApiRange.prototype["SetAlignVertical"] = ApiRange.prototype.SetAlignVertical;
