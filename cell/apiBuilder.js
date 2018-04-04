@@ -1026,34 +1026,33 @@
 	 */
 	ApiRange.prototype.GetRowHeight = function () {
 		return this.range.worksheet.getRowHeight(this.range.bbox.r1);
-   };
-   /**
+   	};
+   	/**
 	* Set rows height value
 	* @memberof ApiRange
 	* @param {number} height
-	*/
-   ApiRange.prototype.SetRowHeight = function (height) {
-	   this.range.worksheet.setRowHeight(height, this.range.bbox.r1, this.range.bbox.r2, false);
-   };
-   Object.defineProperty(ApiRange.prototype, "RowHeight", {
-	   get: function () {
-		   return this.GetRowHeight();
-	   },
-	   set: function (height) {
-		   this.SetRowHeight(height);
-	   }
-   });
-   Object.defineProperty(ApiRange.prototype, "Height", {
-	   get: function () {
-		   var max = this.range.bbox.r2 - this.range.bbox.r1;
-		   var sum = 0;
-		   for (var i = 0; i <= max; i++) {
-
-			   sum += this.range.worksheet.getRowHeight(i);
-		   }
-		   return sum;
-	   }
-   });
+	 */
+   	ApiRange.prototype.SetRowHeight = function (height) {
+		this.range.worksheet.setRowHeight(height, this.range.bbox.r1, this.range.bbox.r2, false);
+   	};
+   	Object.defineProperty(ApiRange.prototype, "RowHeight", {
+	   	get: function () {
+			return this.GetRowHeight();
+	   	},
+	   	set: function (height) {
+			this.SetRowHeight(height);
+	   	}
+  	});
+   	Object.defineProperty(ApiRange.prototype, "Height", {
+	   	get: function () {
+			var max = this.range.bbox.r2 - this.range.bbox.r1;
+			var sum = 0;
+			for (var i = 0; i <= max; i++) {
+				sum += this.range.worksheet.getRowHeight(i);
+		   	}
+		   	return sum;
+	   	}
+   	});
 
 	/**
 	 * Set font size
