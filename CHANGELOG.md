@@ -9,8 +9,8 @@ Ability to add/change hyperlinks anchored to bookmarks/headings
 * 
 
 ### Spreadsheet Editor
-* The following functions are added: GetRows, GetCols, GetCount, GetHidden, SetHidden, GetColumnWidth, SetColumnWidth
-* The following properties are added: Rows, Cols, Count, Hidden, ColumnWidth, Width
+* The following functions are added: GetRows, GetCols, GetCount, GetHidden, SetHidden, GetColumnWidth, SetColumnWidth, GetRowHeight, SetRowHeight
+* The following properties are added: Rows, Cols, Count, Hidden, ColumnWidth, Width, RowHeight, Height
 
 ### Presentation Editor
 * 
