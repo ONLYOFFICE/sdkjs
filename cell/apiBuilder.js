@@ -967,7 +967,8 @@
 				break;
 
 			case 3:
-				worksheet.setRowHidden(value, bbox.r1, bbox.r2);				
+				worksheet.setRowHidden(value, bbox.r1, bbox.r2);
+				break;				
 		}
 	};
 	Object.defineProperty(ApiRange.prototype, "Hidden", {
@@ -986,8 +987,9 @@
 	 */
 	ApiRange.prototype.GetColumnWidth = function () {
 		var ws = this.range.worksheet;
-		var width = ws.colWidthToCharCount(ws.modelColWidthToColWidth(ws.getColWidth(this.range.bbox.c1)));
-		return (width < 0) ? ws.colWidthToCharCount(ws.modelColWidthToColWidth(AscCommonExcel.oDefaultMetrics.ColWidthChars)) : width;
+		var width = ws.getColWidth(this.range.bbox.c1);
+		width = (width < 0) ? AscCommonExcel.oDefaultMetrics.ColWidthChars : width; 
+		return ws.colWidthToCharCount(ws.modelColWidthToColWidth(width));
 	};
 	/**
 	 * Set columns width value
@@ -1012,8 +1014,9 @@
 			var sum = 0;
 			var width;
 			for (var i = 0; i <= max; i++) {
-				width = ws.modelColWidthToColWidth(ws.getColWidth(i));
-				sum += (width < 0) ? ws.modelColWidthToColWidth(AscCommonExcel.oDefaultMetrics.ColWidthChars) : width;
+				width = ws.getColWidth(i);
+				width = (width < 0) ? AscCommonExcel.oDefaultMetrics.ColWidthChars : width;
+				sum += ws.modelColWidthToColWidth(width);
 			}
 			return sum;
 		}
