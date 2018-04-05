@@ -1336,7 +1336,7 @@
 	Object.defineProperty(ApiRange.prototype, "MergeArea", {
 		get: function () {
 			var bb = this.range.bbox;
-			if (bb.r1 === bb.r2 && bb.c1 === bb.c2) {
+			if (this.range.isOneCell()) {
 				return this.range.worksheet.getMergedByCell(bb.r1, bb.c1) || this.range;
 			} else {
 				return null;
