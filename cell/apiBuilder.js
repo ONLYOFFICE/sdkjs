@@ -1337,7 +1337,7 @@
 		get: function () {
 			if (this.range.isOneCell()) {
 				var bb = this.range.hasMerged();
-				return (bb) ? AscCommonExcel.Range.prototype.createFromBBox(this.range.worksheet, bb) : this.range;
+				return new ApiRange((bb) ? AscCommonExcel.Range.prototype.createFromBBox(this.range.worksheet, bb) : this.range);
 			} else {
 				return null;
 			}
