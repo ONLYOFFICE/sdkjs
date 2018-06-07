@@ -2936,8 +2936,15 @@ function CDemonstrationManager(htmlpage)
         this.Mode = true;
         this.Canvas = document.createElement('canvas');
         this.Canvas.setAttribute("style", "position:absolute;margin:0;padding:0;left:0px;top:0px;width:100%;height:100%;zIndex:2;background-color:#000000;");
-        this.Canvas.width = _width;
-        this.Canvas.height = _height;
+
+        var context = this.Canvas.getContext("2d");       
+        var devicePixelRatio = window.devicePixelRatio || 1,
+            backingStoreRatio = context.webkitBackingStorePixelRatio || 1,
+            myRatio = devicePixelRatio / backingStoreRatio;
+        context.scale(myRatio,myRatio); 
+
+        this.Canvas.width = _width * myRatio;
+        this.Canvas.height = _height * myRatio;	    
 
         this.SlideNum = start_slide_num;
 
