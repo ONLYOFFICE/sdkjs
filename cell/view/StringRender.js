@@ -800,7 +800,7 @@
 			var wrapNL = this.flags && this.flags.wrapOnlyNL;
 			var hasRepeats = false;
 			var i, j, fr, fmt, text, p, p_ = {}, pIndex, f, f_, eq, startCh;
-			var tw = 0, nlPos = 0, hpPos = undefined, isSP_ = true, delta = 0;
+			var tw = 0, nlPos = 0, isEastAsian, hpPos = undefined, isSP_ = true, delta = 0;
 
 			function measureFragment(s) {
 				var j, ch, chw, chPos, isNL, isSP, isHP, tm;
@@ -816,7 +816,7 @@
 					// if 'wrap flag' is set
 					if (wrap || wrapNL) {
 						isHP = !isSP && !isNL ? self.reHyphen.test(ch) : false;
-
+						isEastAsian = AscCommon.isEastAsianScript(s.charCodeAt(j));
 						if (isNL) {
 							// add new line marker
 							nlPos = chPos;
@@ -829,7 +829,7 @@
 						} else if (isSP || isHP) {
 							// move hyphenation position
 							hpPos = chPos + 1;
-						} else if (AscCommon.isEastAsianScript(s.charCodeAt(j))) {
+						} else if (isEastAsian) {
 							// move hyphenation position
 							hpPos = chPos;
 						}
@@ -841,6 +841,11 @@
 							self._getCharPropAt(nlPos).delta = delta;
 							tw = self._calcCharsWidth(nlPos, chPos - 1);
 							hpPos = undefined;
+						}
+
+						if (isEastAsian) {
+							// move hyphenation position
+							hpPos = chPos + 1;
 						}
 					}
 
