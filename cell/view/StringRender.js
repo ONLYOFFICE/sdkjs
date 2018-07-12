@@ -830,8 +830,10 @@
 							// move hyphenation position
 							hpPos = chPos + 1;
 						} else if (isEastAsian) {
-							// move hyphenation position
-							hpPos = chPos;
+							if (0 !== j && !(AscCommon.g_aPunctuation[s.charCodeAt(j - 1)] & AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_END_E)) {
+								// move hyphenation position
+								hpPos = chPos;
+							}
 						}
 
 						if (wrap && tw + chw > maxWidth && chPos !== nlPos && !isSP) {
@@ -845,7 +847,9 @@
 
 						if (isEastAsian) {
 							// move hyphenation position
-							hpPos = chPos + 1;
+							if (j !== s.length && !(AscCommon.g_aPunctuation[s.charCodeAt(j + 1)] & AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_BEGIN_E)) {
+								hpPos = chPos + 1;
+							}
 						}
 					}
 
