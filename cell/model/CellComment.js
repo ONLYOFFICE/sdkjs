@@ -386,45 +386,30 @@ CCellCommentator.prototype.isLockedComment = function(oComment, callbackFunc) {
 				res.push(comment.clone());
 			}
 		}
+		return res;
 	};
 
-	CCellCommentator.prototype.moveRangeComments = function (rangeFrom, rangeTo, copy) {
-		if (rangeFrom && rangeTo) {
-			var colOffset = rangeTo.c1 - rangeFrom.c1;
-			var rowOffset = rangeTo.r1 - rangeFrom.r1;
+	CCellCommentator.prototype.moveRangeComments = function (from, to, copy) {
+		if (from && to) {
+			var colOffset = to.c1 - from.c1;
+			var rowOffset = to.r1 - from.r1;
 
 			this.model.workbook.handlers.trigger("asc_onHideComment");
-			var removeComment, aComments = this.model.aComments;
 
-			for (var i = 0; i < aComments.length; i++) {
-				var comment = aComments[i];
-				if (rangeFrom.contains(comment.nCol, comment.nRow)) {
-					if (copy) {
-						var newComment = comment.clone();
-						newComment.nCol += colOffset;
-						newComment.nRow += rowOffset;
-						removeComment = this.getComment(newComment.nCol, newComment.nRow);
-						if (removeComment) {
-							this._removeComment(removeComment, false, false);
-						}
-						newComment.setId();
-						this.addComment(newComment, true);
-					} else {
-						var from = comment.clone();
-						comment.nCol += colOffset;
-						comment.nRow += rowOffset;
-						removeComment = this.getComment(comment.nCol, comment.nRow);
-						if (removeComment) {
-							this._removeComment(removeComment, false, false);
-						}
-						this.model.workbook.handlers.trigger("asc_onChangeCommentData", comment.asc_getId(), comment);
+			var comments = this.getCommentsRange(from);
+			if (!copy) {
+				this._deleteCommentsRange(comments);
+			}
+			this.deleteCommentsRange(to);
 
-						History.Create_NewPoint();
-						History.Add(AscCommonExcel.g_oUndoRedoComment, AscCH.historyitem_Comment_Change, this.model.getId(),
-							null, new AscCommonExcel.UndoRedoData_FromTo(from, comment.clone()));
-						this.updateAreaComment(comment);
-					}
+			for (var i = 0; i < comments.length; ++i) {
+				var newComment = comments[i];
+				newComment.nCol += colOffset;
+				newComment.nRow += rowOffset;
+				if (copy) {
+					newComment.setId();
 				}
+				this.addComment(newComment, true);
 			}
 		}
 	};
