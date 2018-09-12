@@ -418,23 +418,23 @@ CCellCommentator.prototype.isLockedComment = function(oComment, callbackFunc) {
 		}
 	};
 
-CCellCommentator.prototype.deleteCommentsRange = function(range) {
-	if ( range ) {
-		var aCommentId = [], i;
-		var aComments = this.model.aComments;
-		for (i = 0; i < aComments.length; ++i) {
-			var comment = aComments[i];
-			if (range.contains(comment.nCol, comment.nRow)) {
-				aCommentId.push(comment.asc_getId());
+	CCellCommentator.prototype.deleteCommentsRange = function (range) {
+		if (range) {
+			var aCommentId = [], i;
+			var aComments = this.model.aComments;
+			for (i = 0; i < aComments.length; ++i) {
+				var comment = aComments[i];
+				if (range.contains(comment.nCol, comment.nRow)) {
+					aCommentId.push(comment.asc_getId());
+				}
 			}
+			History.StartTransaction();
+			for (i = 0; i < aCommentId.length; i++) {
+				this.removeComment(aCommentId[i]);
+			}
+			History.EndTransaction();
 		}
-		History.StartTransaction();
-		for (i = 0; i < aCommentId.length; i++) {
-			this.removeComment(aCommentId[i]);
-		}
-		History.EndTransaction();
-	}
-};
+	};
 
 	CCellCommentator.prototype.getCommentByXY = function (x, y) {
 		var findCol = this.worksheet._findColUnderCursor(x, true);
