@@ -98,7 +98,6 @@
     var c_oAscChangeTableStyleInfo = asc.c_oAscChangeTableStyleInfo;
     var c_oAscChangeSelectionFormatTable = asc.c_oAscChangeSelectionFormatTable;
     var asc_CSelectionMathInfo = AscCommonExcel.asc_CSelectionMathInfo;
-    var vector_koef = AscCommonExcel.vector_koef;
 
     var pageBreakPreviewMode = false;
 
@@ -1582,6 +1581,10 @@
 			// Ничего нет
             return;
         }
+
+        var vector_koef = AscCommonExcel.vector_koef / this.getZoom();
+        if (AscCommon.AscBrowser.isRetina)
+            vector_koef /= AscCommon.AscBrowser.retinaPixelRatio;
 
 		var bFitToWidth = false;
 		var bFitToHeight = false;
