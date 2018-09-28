@@ -390,7 +390,7 @@
 		this.value = function(param)
 		{
 			var _map = this.map;
-			if (window["AscDesktopEditor"] && AscCommon.AscBrowser.isRetina)
+			if ((window["AscDesktopEditor"] && !AscCommon.AscBrowser.isMacOs) && AscCommon.AscBrowser.isRetina)
 				_map = this.mapRetina;
 
 			return _map[param] ? _map[param] : param;
@@ -2403,10 +2403,13 @@
 		var sDataRange = dataRange, sheetModel;
 		if (Asc.c_oAscSelectionDialogType.Chart === dialogType)
 		{
-			dataRange = parserHelp.parse3DRef(dataRange);
-			if (dataRange)
+			if(dataRange)
 			{
-				sheetModel = model.getWorksheetByName(dataRange.sheet);
+				dataRange = parserHelp.parse3DRef(dataRange);
+				if (dataRange)
+				{
+					sheetModel = model.getWorksheetByName(dataRange.sheet);
+				}
 			}
 			if (null === dataRange || !sheetModel)
 				return Asc.c_oAscError.ID.DataRangeError;
@@ -4256,7 +4259,7 @@ window["asc_IsNeedBuildCryptedFile"] = function()
         }
     }
 
-    window["AscDesktopEditor"]["js_message"]("IsNeedBuildCryptedFile", "" + _returnValue);
+    window["AscDesktopEditor"]["execCommand"]("encrypt:isneedbuild", "" + _returnValue);
     return _returnValue;
 };
 

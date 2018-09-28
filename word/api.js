@@ -9079,12 +9079,6 @@ background-repeat: no-repeat;\
 
 	window["asc_docs_api"].prototype["pluginMethod_InsertAndReplaceContentControls"] = function(arrDocuments)
 	{
-		if (!this._checkLicenseApiFunctions())
-		{
-			this.sendEvent('asc_onLicenseError');
-			return;
-		}
-
 		var _worker = new CContentControlPluginWorker(this, arrDocuments);
 		return _worker.start();
 	};
@@ -9095,12 +9089,6 @@ background-repeat: no-repeat;\
 	};
 	window["asc_docs_api"].prototype["pluginMethod_GetAllContentControls"] = function()
 	{
-		if (!this._checkLicenseApiFunctions())
-		{
-			this.sendEvent('asc_onLicenseError');
-			return [];
-		}
-
 		var _blocks = this.WordControl.m_oLogicDocument.GetAllContentControls();
 		var _ret = [];
 		var _obj = null;
@@ -9137,12 +9125,6 @@ background-repeat: no-repeat;\
 	};
 	window["asc_docs_api"].prototype["pluginMethod_SelectContentControl"] = function(id)
 	{
-		if (!this._checkLicenseApiFunctions())
-		{
-			this.sendEvent('asc_onLicenseError');
-			return [];
-		}
-
 		var oLogicDocument = this.private_GetLogicDocument();
 		if (!oLogicDocument)
 			return;

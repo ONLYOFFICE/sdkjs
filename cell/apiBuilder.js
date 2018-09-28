@@ -1156,11 +1156,15 @@
 	 * @param {string} value - The general value for the cell or cell range in string format.
 	 */
 	ApiRange.prototype.SetValue = function (value) {
+
 		if (value.getTime) {
 			this.range.setValue(checkFormat(value));
 		} else {
 			this.range.setValue(checkFormat(value).getValue());
 		}
+		// ToDo update range in setValue
+		var worksheet = this.range.worksheet;
+		worksheet.workbook.handlers.trigger("cleanCellCache", worksheet.getId(), [this.range.bbox], true);
 	};
 	Object.defineProperty(ApiRange.prototype, "Value", {
 		get: function () {

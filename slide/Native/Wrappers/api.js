@@ -2976,9 +2976,9 @@ function NativeOpenFileP(_params, documentInfo){
 
         var aTimings = [];
         var slides = _presentation.Slides;
-        for(var i = 0; i < slides.length; ++i){
-            aTimings.push(slides[i].timing.ToArray());
-        }
+        // for(var i = 0; i < slides.length; ++i){
+        //     aTimings.push(slides[i].timing.ToArray());
+        // }
 
         _api.asc_GetDefaultTableStyles();
         _presentation.Document_UpdateInterfaceState();
@@ -3197,7 +3197,6 @@ window["asc_docs_api"].prototype["asc_nativeOpenFile2"] = function(base64File, v
 
     _loader.Load(base64File, this.WordControl.m_oLogicDocument);
     _loader.Check_TextFit();
-
     this.LoadedObject = 1;
     AscCommon.g_oIdCounter.Set_Load(false);
 };
@@ -3215,9 +3214,9 @@ Asc['asc_docs_api'].prototype.openDocument = function(sData)
 
     var aTimings = [];
     var slides = _presentation.Slides;
-    for(var i = 0; i < slides.length; ++i){
-        aTimings.push(slides[i].timing.ToArray());
-    }
+    // for(var i = 0; i < slides.length; ++i){
+    //     aTimings.push(slides[i].timing.ToArray());
+    // }
     var _result =  [nSlidesCount, dPresentationWidth, dPresentationHeight, aTimings];
     var oTheme = null;
 
@@ -3225,9 +3224,11 @@ Asc['asc_docs_api'].prototype.openDocument = function(sData)
     {
         oTheme = slides[0].getTheme();
     }
-    if (!sdkCheck) {
+    if (false) {
 
         this.WordControl.m_oDrawingDocument.AfterLoad();
+
+        
         this.ImageLoader.bIsLoadDocumentFirst = true;
 
         if (oTheme)
@@ -3236,13 +3237,12 @@ Asc['asc_docs_api'].prototype.openDocument = function(sData)
         }
 
         window["native"]["onEndLoadingFile"](_result);
+        this.asc_nativeCalculateFile();
 
         return;
     }
 
     this.WordControl.m_oDrawingDocument.AfterLoad();
-   
-    _api.asc_nativeCalculateFile();
 
     //console.log("ImageMap : " + JSON.stringify(this.WordControl.m_oLogicDocument));
 
@@ -3259,6 +3259,7 @@ Asc['asc_docs_api'].prototype.openDocument = function(sData)
     // }
 
     window["native"]["onEndLoadingFile"](_result);
+    this.asc_nativeCalculateFile();
 
     this.WordControl.m_oDrawingDocument.Collaborative_TargetsUpdate(true);
 
@@ -3279,6 +3280,15 @@ Asc['asc_docs_api'].prototype.Internal_Update_Ind_Left = function(Left)
 };
 
 Asc['asc_docs_api'].prototype.Internal_Update_Ind_Right = function(Right)
+{
+};
+
+Asc['asc_docs_api'].prototype.IsAsyncOpenDocumentImages = function()
+{
+    return true;
+};
+
+Asc['asc_docs_api'].prototype.asyncImageEndLoadedBackground = function(_image)
 {
 };
 

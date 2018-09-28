@@ -799,6 +799,152 @@ function (window, undefined) {
 	 * @constructor
 	 * @extends {AscCommonExcel.cBaseFunction}
 	 */
+	/*function cMATCH() {
+	}
+
+	cMATCH.prototype = Object.create(cBaseFunction.prototype);
+	cMATCH.prototype.constructor = cMATCH;
+	cMATCH.prototype.name = 'MATCH';
+	cMATCH.prototype.argumentsMin = 2;
+	cMATCH.prototype.argumentsMax = 3;
+	cMATCH.prototype.Calculate = function (arg) {
+		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2] ? arg[2] : new cNumber(1);
+
+
+		var binarySearch = function (val, type, array, a2Value) {
+
+			var bArray = false;
+			if (cElementType.array === array.type) {
+				array = array.array;
+				bArray = true;
+			} else if(cElementType.cellsRange === array.type) {
+				array = array.range;
+			} else if (cElementType.cellsRange3D === array.type && array.isSingleSheet()) {
+				array = array.getRanges()[0];
+			} else if (cElementType.cell === array.type || cElementType.cell3D === array.type) {
+				array = array.range;
+			} else {
+				return new cError(cErrorType.not_available);
+			}
+
+			//TODO ограничить макимум строк
+			var a1RowCount = bArray ? array.length : array.bbox.r2 - array.bbox.r1 + 1;
+			var a1ColumnCount = bArray ? array[0].length : array.bbox.c2 - array.bbox.c1 + 1;
+
+			if (a1RowCount > 1 && a1ColumnCount > 1) {
+				return new cError(cErrorType.not_available);
+			}
+
+			var getArrayValue = function(n) {
+				var res;
+				if(bArray) {
+					res = a1ColumnCount === 1 ? array[0][n] : array[n][0];
+				} else {
+					if(a1ColumnCount === 1) {
+						res = array.worksheet.getCell3(n + array.bbox.r1, array.bbox.c1).getValue();
+					} else {
+						res = array.worksheet.getCell3(array.bbox.r1, n + array.bbox.c1).getValue();
+					}
+				}
+				if (!isNaN(parseFloat(res))) {
+					res = parseFloat(res);
+				}
+				return res;
+			};
+
+			var j = a1ColumnCount;
+			if(a1ColumnCount === 1) {
+				j = a1RowCount;
+			}
+			var i = 0, k, item;
+			if (1 === a2Value) {
+				while (i <= j) {
+					k = Math.floor((i + j) / 2);
+
+					item = getArrayValue(k);
+
+					if (item <= val) {
+						return (-1 < k) ? new cNumber(k + 1) : new cError(cErrorType.not_available);
+					} else if (val < item) {
+						j = k - 1;
+					} else {
+						i = k + 1;
+					}
+				}
+			} else if(-1 === a2Value) {
+				while (i <= j) {
+					k = Math.floor((i + j) / 2);
+
+					item = getArrayValue(k);
+
+					if (item >= val) {
+						return (-1 < k) ? new cNumber(k + 1) : new cError(cErrorType.not_available);
+					} else if (val > item) {
+						j = k - 1;
+					} else {
+						i = k + 1;
+					}
+				}
+			} else if(0 === a2Value) {
+				while (i <= j) {
+
+					item = getArrayValue(i);
+
+					if (cElementType.string === type && AscCommonExcel.searchRegExp2(item.toString(), val)) {
+						return (-1 < i) ? new cNumber(i + 1) : new cError(cErrorType.not_available);
+					} else if(item == val) {
+						return (-1 < i) ? new cNumber(i + 1) : new cError(cErrorType.not_available);
+					} else {
+						i++;
+					}
+				}
+			}
+
+			return new cError(cErrorType.not_available);
+		};
+
+		function findMatch(a0, a1, a2) {
+			var i, item, a2Value = a2.getValue(), arr, index = -1;
+
+			var a0Type = a0.type;
+			var a0Value = a0.getValue();
+			if (!(cElementType.number === a0Type || cElementType.string === a0Type || cElementType.bool === a0Type ||
+				cElementType.error === a0Type || cElementType.empty === a0Type)) {
+				a0Type = a0Value.type;
+				a0Value = a0Value.getValue();
+			}
+
+			if (!(-1 === a2Value || 0 === a2Value || 1 === a2Value)) {
+				return new cError(cErrorType.not_numeric);
+			}
+
+			return binarySearch(a0Value, a0Type, a1, a2Value);
+		}
+
+
+		if (cElementType.cellsRange3D === arg0.type || cElementType.array === arg0.type ||
+			cElementType.cellsRange === arg0.type) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+
+
+		if (cElementType.number === arg2.type || cElementType.bool === arg2.type) {
+		} else if (cElementType.error === arg2.type) {
+			return arg2;
+		} else {
+			return new cError(cErrorType.not_available);
+		}
+
+		return findMatch(arg0, arg1, arg2)
+
+	};*/
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
 	function cOFFSET() {
 	}
 

@@ -114,9 +114,13 @@ function CEditorPage(api)
     this.m_oDrawingDocument = new AscCommon.CDrawingDocument();
     this.m_oLogicDocument   = null;
 
+
+    this.SlideDrawer = new CSlideDrawer();
+
     this.m_oDrawingDocument.m_oWordControl = this;
     this.m_oDrawingDocument.m_oLogicDocument = this.m_oLogicDocument;
     this.m_oApi = api;
+
     this.Native = window["native"];
 }
 
@@ -426,6 +430,7 @@ CEditorPage.prototype.OnUpdateOverlay = function()
             drDoc.AutoShapesTrack.CorrectOverlayBounds();
         }
     }
+    drDoc.Collaborative_TargetsUpdate();
     this.Native["DD_Overlay_UpdateEnd"]();
     return true;
 };
