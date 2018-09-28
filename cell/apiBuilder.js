@@ -34,8 +34,11 @@
 
 (function (window, builder) {
 	function checkFormat(value) {
-		//TODO Date не обрабатывается. в будущем нужно реализовать.
-		return new AscCommonExcel.cString(value + '');
+		if (value.getTime){
+			return new cDate(value.getTime()).getExcelDate();
+		} else {
+			return new AscCommonExcel.cString(value + '');
+		}
 	}
 
 	/**
@@ -192,6 +195,44 @@
 			return this.GetSheets();
 		}
 	});
+
+	/**
+	 * Set locale for document.
+	 * @memberof Api
+	 * @param {number} LCID
+	 */
+	Api.prototype.SetLocale = function(LCID) {
+		if (!this.isLoadFullApi) {
+		  this.tmpLocale = LCID;
+		  return;
+		}
+		if (null === LCID) {
+		  return;
+		}
+		if (AscCommon.setCurrentCultureInfo(LCID)) {
+			AscCommon.parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSeparator);
+		  if (this.wbModel) {
+			AscCommon.oGeneralEditFormatCache.cleanCache();
+			AscCommon.oNumFormatCache.cleanCache();
+			this.wbModel.rebuildColors();
+			if (this.isDocumentLoadComplete) {
+			  AscCommon.checkCultureInfoFontPicker();
+			  this._loadFonts([], function() {
+				this._onUpdateAfterApplyChanges();
+			  });
+			}
+		  }
+		}
+	};
+	
+	/**
+	 * Returns current locale id.
+	 * @memberof Api
+	 * @returns {number}
+	 */
+	Api.prototype.GetLocale = function() {
+		return AscCommon.g_oDefaultCultureInfo.LCID;
+	};
 
 	/**
 	 * Get the object that represents the active sheet.
@@ -1115,7 +1156,11 @@
 	 * @param {string} value - The general value for the cell or cell range in string format.
 	 */
 	ApiRange.prototype.SetValue = function (value) {
-		this.range.setValue(checkFormat(value).getValue());
+		if (value.getTime) {
+			this.range.setValue(checkFormat(value));
+		} else {
+			this.range.setValue(checkFormat(value).getValue());
+		}
 	};
 	Object.defineProperty(ApiRange.prototype, "Value", {
 		get: function () {
@@ -1998,6 +2043,8 @@
 	Api.prototype["AddSheet"] = Api.prototype.AddSheet;
 	Api.prototype["GetSheets"] = Api.prototype.GetSheets;
 	Api.prototype["GetActiveSheet"] = Api.prototype.GetActiveSheet;
+	Api.prototype["GetLocale"] = Api.prototype.GetLocale;
+	Api.prototype["SetLocale"] = Api.prototype.SetLocale;
 	Api.prototype["GetSheet"] = Api.prototype.GetSheet;
 	Api.prototype["GetThemesColors"] = Api.prototype.GetThemesColors;
 	Api.prototype["SetThemeColors"] = Api.prototype.SetThemeColors;

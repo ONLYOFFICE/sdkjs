@@ -3759,6 +3759,8 @@
 				}
 			}
 			this.workbook.dependencyFormulas.calcTree();
+		} else {
+			console.log(new Error('The sheet name must be less than 31 characters.'));
 		}
 	};
 	Worksheet.prototype.getTabColor=function(){
@@ -8326,11 +8328,18 @@
 	Range.prototype.setValue=function(val,callback, isCopyPaste){
 		History.Create_NewPoint();
 		History.StartTransaction();
-		this._foreach(function(cell){
-			cell.setValue(val,callback, isCopyPaste);
-			// if(cell.isEmpty())
-			// cell.Remove();
-		});
+		if (typeof val === "number") {
+			this._foreach(function(cell){
+				cell.setValueData({value:{number:val}});
+			});
+			this.setNumFormat(AscCommon.getShortDateFormat());
+		} else {
+			this._foreach(function(cell){
+				cell.setValue(val,callback, isCopyPaste);
+				// if(cell.isEmpty())
+				// cell.Remove();
+			});
+		}
 		History.EndTransaction();
 	};
 	Range.prototype.setValue2=function(array){

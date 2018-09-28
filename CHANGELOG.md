@@ -21,6 +21,8 @@ GetSelection
 Selection
 * Fix change active cell in selection across merge. Previously, passing through the first cell of the merge range, we fell into the merge range, even if it was not selected (through the selection of a row / column)
 * Fix selection when selecting row/col/all
+* Changed function SetValue (added work with Date format)
+* Changed function SetName (added exception when the sheet name is greater than 31 characters)
 
 ### Presentation Editor
 * 
@@ -29,6 +31,7 @@ Selection
 * 
 
 ### Document Builder
+* Add new function: SetLocale and GetLocale
 * 
 ## 5.1.1
 ### All Editors
