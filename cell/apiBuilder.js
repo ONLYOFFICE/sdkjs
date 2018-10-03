@@ -34,8 +34,11 @@
 
 (function (window, builder) {
 	function checkFormat(value) {
-		//TODO Date не обрабатывается. в будущем нужно реализовать.
-		return new AscCommonExcel.cString(value + '');
+		if (value.getTime){
+			return new AscCommonExcel.cNumber(new cDate(value.getTime()).getExcelDate());
+		} else {
+			return new AscCommonExcel.cString(value + '');
+		}
 	}
 
 	/**
@@ -192,6 +195,24 @@
 			return this.GetSheets();
 		}
 	});
+
+	/**
+	 * Set locale for document.
+	 * @memberof Api
+	 * @param {number} LCID
+	 */
+	Api.prototype.SetLocale = function(LCID) {
+		this.asc_setLocale(LCID);
+	};
+	
+	/**
+	 * Returns current locale id.
+	 * @memberof Api
+	 * @returns {number}
+	 */
+	Api.prototype.GetLocale = function() {
+		return this.asc_getLocale();
+	};
 
 	/**
 	 * Get the object that represents the active sheet.
@@ -2001,6 +2022,8 @@
 	Api.prototype["AddSheet"] = Api.prototype.AddSheet;
 	Api.prototype["GetSheets"] = Api.prototype.GetSheets;
 	Api.prototype["GetActiveSheet"] = Api.prototype.GetActiveSheet;
+	Api.prototype["GetLocale"] = Api.prototype.GetLocale;
+	Api.prototype["SetLocale"] = Api.prototype.SetLocale;
 	Api.prototype["GetSheet"] = Api.prototype.GetSheet;
 	Api.prototype["GetThemesColors"] = Api.prototype.GetThemesColors;
 	Api.prototype["SetThemeColors"] = Api.prototype.SetThemeColors;
