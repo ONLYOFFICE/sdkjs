@@ -1138,7 +1138,7 @@
 	ApiRange.prototype.SetValue = function (value) {
 		value = checkFormat(value);
 		this.range.setValue(value.toString());
-		if (typeof value.getValue() === 'number') {
+		if (typeof value.type === 0) {
 			this.SetNumberFormat(AscCommon.getShortDateFormat());
 		}
 		// ToDo update range in setValue
