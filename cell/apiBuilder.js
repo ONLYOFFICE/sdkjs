@@ -1136,7 +1136,11 @@
 	 * @param {string} value - The general value for the cell or cell range in string format.
 	 */
 	ApiRange.prototype.SetValue = function (value) {
-		this.range.setValue(checkFormat(value).getValue());
+		value = checkFormat(value);
+		this.range.setValue(value.toString());
+		if (typeof value.getValue() === 'number') {
+			this.SetNumberFormat(AscCommon.getShortDateFormat());
+		}
 		// ToDo update range in setValue
 		var worksheet = this.range.worksheet;
 		worksheet.workbook.handlers.trigger("cleanCellCache", worksheet.getId(), [this.range.bbox], true);
