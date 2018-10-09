@@ -11,7 +11,7 @@ jobs:
     - stage: SonarQube Scanner
       if: branch = develop
       script:
-        - wget -P /tmp https://sonarsource.bintray.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-3.0.3.778-linux.zip
+        - wget -P /tmp https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-3.0.3.778-linux.zip
         - unzip -d /tmp /tmp/sonar-scanner-cli-3.0.3.778-linux.zip
         - /tmp/sonar-scanner-3.0.3.778-linux/bin/sonar-scanner -Dsonar.login=$SONAR_TOKEN
     - stage: Formulas tests
