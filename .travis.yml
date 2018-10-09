@@ -28,6 +28,8 @@ jobs:
                                     -v $PWD/cell:/opt/onlyoffice/documentbuilder/sdkjs/cell
                                     -v $PWD/slide:/opt/onlyoffice/documentbuilder/sdkjs/slide
                                     onlyofficetestingrobot/doc-builder-testing:develop-latest
+  allow_failures:
+    - stage: SonarQube Scanner                                    
 notifications:
   email:
     recipients:
