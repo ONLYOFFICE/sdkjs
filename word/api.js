@@ -7159,6 +7159,8 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype._downloadAs    = function(command, filetype, actionType, options, fCallbackRequest)
 	{
         var isCloudCrypto = (window["AscDesktopEditor"] && (0 < window["AscDesktopEditor"]["CryptoMode"])) ? true : false;
+        if (isCloudCrypto)
+            window.isCloudCryptoDownloadAs = true;
 
 		if (this.WordControl && this.WordControl.m_oDrawingDocument && (c_oAscFileType.PDF == filetype || c_oAscFileType.PDFA == filetype))
 		{
@@ -7177,7 +7179,7 @@ background-repeat: no-repeat;\
 		}
 		// Меняем тип состояния (на сохранение)
 		this.advancedOptionsAction = c_oAscAdvancedOptionsAction.Save;
-		var isNoBase64 = typeof ArrayBuffer !== 'undefined';
+		var isNoBase64 = (typeof ArrayBuffer !== 'undefined') && !isCloudCrypto;
 		var _fCallbackRequest = fCallbackRequest;
 
 		var dataContainer               = {data : null, part : null, index : 0, count : 0};

@@ -773,6 +773,9 @@ var editor;
 
   spreadsheet_api.prototype._asc_downloadAs = function(sFormat, actionType, options) { //fCallback({returnCode:"", ...})
     var isCloudCrypto = (window["AscDesktopEditor"] && (0 < window["AscDesktopEditor"]["CryptoMode"])) ? true : false;
+    if (isCloudCrypto)
+      window.isCloudCryptoDownloadAs = true;
+
     var t = this;
     if (!options) {
       options = {};
@@ -780,7 +783,7 @@ var editor;
     if (actionType) {
       this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, actionType);
     }
-    var isNoBase64 = typeof ArrayBuffer !== 'undefined';
+    var isNoBase64 = (typeof ArrayBuffer !== 'undefined') && !isCloudCrypto;
     //sFormat: xlsx, xls, ods, csv, html
     var dataContainer = {data: null, part: null, index: 0, count: 0};
     var command = "save";

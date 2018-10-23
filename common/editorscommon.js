@@ -3957,6 +3957,8 @@
                 window["AscDesktopEditor"]["NativeViewerOpen"](option.asc_getPassword());
                 return;
             }
+            if (window.isCloudCryptoDownloadAs)
+            	return false;
 
 			if (!this.isNeedCrypt())
 				return false;
@@ -4465,4 +4467,12 @@ window["NativeFileOpen_error"] = function(error)
         _api.sendEvent("asc_onError", c_oAscError.ID.ConvertationOpenError, c_oAscError.Level.Critical);
         return;
     }
+};
+
+window["CryptoDownloadAsEnd"] = function()
+{
+    var _editor = window.Asc.editor ? window.Asc.editor : window.editor;
+    _editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.DownloadAs);
+
+    window.isCloudCryptoDownloadAs = undefined;
 };

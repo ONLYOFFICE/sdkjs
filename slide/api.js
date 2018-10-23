@@ -6741,7 +6741,7 @@ background-repeat: no-repeat;\
 		{
 			this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, actionType);
 		}
-		var isNoBase64 = (typeof ArrayBuffer !== 'undefined') || !isCloudCrypto;
+		var isNoBase64 = (typeof ArrayBuffer !== 'undefined') && !isCloudCrypto;
 
 		var dataContainer               = {data : null, part : null, index : 0, count : 0};
 		var command                     = "save";
