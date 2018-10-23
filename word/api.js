@@ -1160,6 +1160,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.InitViewer = function()
 	{
 		this.WordControl.m_oDrawingDocument.m_oDocumentRenderer = new AscCommonWord.CDocMeta();
+        this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.Init();
 		this.WordControl.m_oDrawingDocument.showTarget(false);
 		this.WordControl.HideRulers();
 	};
@@ -7157,6 +7158,8 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype._downloadAs    = function(command, filetype, actionType, options, fCallbackRequest)
 	{
+        var isCloudCrypto = (window["AscDesktopEditor"] && (0 < window["AscDesktopEditor"]["CryptoMode"])) ? true : false;
+
 		if (this.WordControl && this.WordControl.m_oDrawingDocument && (c_oAscFileType.PDF == filetype || c_oAscFileType.PDFA == filetype))
 		{
 			if (this.WordControl.m_oDrawingDocument.CheckPrint([command, filetype, actionType, options, fCallbackRequest]))
@@ -7299,6 +7302,14 @@ background-repeat: no-repeat;\
 				}, fCallback, fCallbackRequest, oAdditionalData, dataContainer);
 			}
 		}
+
+        if (isCloudCrypto)
+        {
+            var sParamXml = ("<m_nCsvTxtEncoding>" + oAdditionalData["codepage"] + "</m_nCsvTxtEncoding>");
+            window["AscDesktopEditor"]["CryptoDownloadAs"](dataContainer.data, filetype, sParamXml);
+            return;
+        }
+
 		var fCallback = null;
 		if (!options.isNoCallback)
 		{

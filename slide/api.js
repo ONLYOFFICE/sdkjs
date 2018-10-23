@@ -6731,6 +6731,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype._downloadAs = function(filetype, actionType, options)
 	{
+		var isCloudCrypto = (window["AscDesktopEditor"] && (0 < window["AscDesktopEditor"]["CryptoMode"])) ? true : false;
 		var t = this;
 		if (!options)
 		{
@@ -6740,7 +6741,7 @@ background-repeat: no-repeat;\
 		{
 			this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, actionType);
 		}
-		var isNoBase64 = typeof ArrayBuffer !== 'undefined';
+		var isNoBase64 = (typeof ArrayBuffer !== 'undefined') || !isCloudCrypto;
 
 		var dataContainer               = {data : null, part : null, index : 0, count : 0};
 		var command                     = "save";
@@ -6764,6 +6765,13 @@ background-repeat: no-repeat;\
 		}
 		else
 			dataContainer.data = this.WordControl.SaveDocument(isNoBase64);
+
+        if (isCloudCrypto)
+        {
+        	window["AscDesktopEditor"]["CryptoDownloadAs"](dataContainer.data, filetype);
+            return;
+        }
+
 		var fCallback     = function(input)
 		{
 			var error = c_oAscError.ID.Unknown;

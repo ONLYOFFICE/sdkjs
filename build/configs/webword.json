@@ -225,7 +225,6 @@
 		],
 		"common": [
           "../common/Local/common.js",
-		  "../word/Local/documentrenderer.js",
           "../word/Local/api.js"
 		]
       },

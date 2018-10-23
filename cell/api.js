@@ -772,6 +772,7 @@ var editor;
   };
 
   spreadsheet_api.prototype._asc_downloadAs = function(sFormat, actionType, options) { //fCallback({returnCode:"", ...})
+    var isCloudCrypto = (window["AscDesktopEditor"] && (0 < window["AscDesktopEditor"]["CryptoMode"])) ? true : false;
     var t = this;
     if (!options) {
       options = {};
@@ -820,6 +821,15 @@ var editor;
     }
     // Меняем тип состояния (на сохранение)
     this.advancedOptionsAction = c_oAscAdvancedOptionsAction.Save;
+
+    if (isCloudCrypto)
+    {
+      var sParamXml = ("<m_nCsvTxtEncoding>" + oAdditionalData["codepage"] + "</m_nCsvTxtEncoding>");
+      sParamXml += ("<m_nCsvDelimiter>" + oAdditionalData["delimiter"] + "</m_nCsvDelimiter>");
+      window["AscDesktopEditor"]["CryptoDownloadAs"](dataContainer.data, sFormat, sParamXml);
+      return;
+    }
+
     var fCallback = function(input) {
       var error = c_oAscError.ID.Unknown;
       if (null != input && command == input["type"]) {
