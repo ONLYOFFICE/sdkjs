@@ -955,6 +955,8 @@
 			}
 		};
 		this.CoAuthoringApi.onDocumentOpen = function (inputWrap) {
+			if (AscCommon.EncryptionWorker.isNeedCrypt())
+				return;
 			if (inputWrap["data"]) {
 				var input = inputWrap["data"];
 				switch (input["type"]) {
