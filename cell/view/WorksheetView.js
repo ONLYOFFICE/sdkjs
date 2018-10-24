@@ -1277,13 +1277,11 @@
         // calculate rows heights and visible rows
 		this._calcHeaderRowHeight();
 		this._calcHeightRows(type);
-        this.visibleRange.r2 = 0;
         this._updateVisibleRowsCount(/*skipScrolReinit*/true);
 
         // calculate columns widths and visible columns
 		this._calcHeaderColumnWidth();
 		this._calcWidthColumns(type);
-        this.visibleRange.c2 = 0;
         this._updateVisibleColsCount(/*skipScrolReinit*/true);
     };
 
