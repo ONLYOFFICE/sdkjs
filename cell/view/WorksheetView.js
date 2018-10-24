@@ -3630,9 +3630,7 @@
         this.visibleRange.c1 = col;
         this.visibleRange.r1 = row;
 
-        this.visibleRange.r2 = 0;
         this._calcVisibleRows();
-        this.visibleRange.c2 = 0;
         this._calcVisibleColumns();
         this.handlers.trigger("reinitializeScroll", AscCommonExcel.c_oAscScrollType.ScrollVertical | AscCommonExcel.c_oAscScrollType.ScrollHorizontal);
 
