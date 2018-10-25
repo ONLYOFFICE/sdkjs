@@ -1292,6 +1292,7 @@
 					this.CoAuthoringApi.askSaveChanges(function (e) {
 						t._onSaveCallback(e);
 					});
+					res = true;
 				}
 			} else if (this.isForceSaveOnUserSave && this.IsUserSave) {
 				this.forceSave();

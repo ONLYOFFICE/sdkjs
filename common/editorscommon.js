@@ -4476,3 +4476,13 @@ window["CryptoDownloadAsEnd"] = function()
 
     window.isCloudCryptoDownloadAs = undefined;
 };
+
+window["AscDesktopEditor_Save"] = function()
+{
+    var _editor = window.Asc.editor ? window.Asc.editor : window.editor;
+    if (!_editor.asc_Save(false))
+    {
+    	// сейва не будет. сами посылаем callback
+        window["AscDesktopEditor"]["OnSave"]();
+    }
+};

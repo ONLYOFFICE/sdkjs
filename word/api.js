@@ -9254,11 +9254,6 @@ background-repeat: no-repeat;\
 		return defaultSize;
 	};
 
-	window["AscDesktopEditor_Save"] = function()
-	{
-		return editor.asc_Save(false);
-	};
-
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                       = window['Asc'] || {};
 	CAscSection.prototype['get_PageWidth']                              = CAscSection.prototype.get_PageWidth;

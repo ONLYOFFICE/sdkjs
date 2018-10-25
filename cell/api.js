@@ -680,7 +680,7 @@ var editor;
 		} else {
 			t.handlers.trigger("asc_onError", c_oAscError.ID.ConvertationPassword, c_oAscError.Level.Critical);
 		}
-	} else if (data) {
+	} else {
 		if (t.handlers.hasTrigger("asc_onAdvancedOptions")) {
 			// ToDo разделитель пока только "," http://bugzilla.onlyoffice.com/show_bug.cgi?id=31009
 			var cp = {
@@ -688,7 +688,7 @@ var editor;
 				'encodings': AscCommon.getEncodingParams()
 			};
 			var options;
-			if (typeof Blob !== 'undefined' && typeof FileReader !== 'undefined') {
+			if (data && typeof Blob !== 'undefined' && typeof FileReader !== 'undefined') {
 				AscCommon.getJSZipUtils().getBinaryContent(data, function(err, data) {
 					if (err) {
 						t.handlers.trigger("asc_onError", c_oAscError.ID.Unknown, c_oAscError.Level.Critical);
@@ -711,8 +711,6 @@ var editor;
 		} else {
 			this.asc_setAdvancedOptions(c_oAscAdvancedOptionsID.CSV, new asc.asc_CCSVAdvancedOptions(AscCommon.c_oAscCodePageUtf8, AscCommon.c_oAscCsvDelimiter.Comma));
 		}
-    } else {
-      t.handlers.trigger("asc_onError", c_oAscError.ID.Unknown, c_oAscError.Level.Critical);
     }
   };
   spreadsheet_api.prototype._onOpenCommand = function(data) {
@@ -3460,10 +3458,6 @@ var editor;
    * Export
    * -----------------------------------------------------------------------------
    */
-
-  window["AscDesktopEditor_Save"] = function() {
-    return window["Asc"]["editor"].asc_Save(false);
-  };
 
   asc["spreadsheet_api"] = spreadsheet_api;
   prot = spreadsheet_api.prototype;

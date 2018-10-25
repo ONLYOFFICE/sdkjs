@@ -7172,11 +7172,6 @@ background-repeat: no-repeat;\
 		return defaultSize;
 	};
 
-	window["AscDesktopEditor_Save"] = function()
-	{
-		return editor.asc_Save(false);
-	};
-
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                 = window['Asc'] || {};
 	window['AscCommonSlide']                                      = window['AscCommonSlide'] || {};
