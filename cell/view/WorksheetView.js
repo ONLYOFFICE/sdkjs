@@ -551,7 +551,7 @@
         var ctxW = this.drawingCtx.getWidth() - offsetFrozen.offsetX - this.cellsLeft;
         for (var w = 0, i = this.nColsCount - 1; i >= 0; --i) {
             w += this._getColumnWidth(i);
-            if (w > ctxW) {
+            if (w >= ctxW) {
                 break;
             }
         }
@@ -570,7 +570,7 @@
         var ctxH = this.drawingCtx.getHeight() - offsetFrozen.offsetY - this.cellsTop;
         for (var h = 0, i = this.nRowsCount - 1; i >= 0; --i) {
             h += this._getRowHeight(i);
-            if (h > ctxH) {
+            if (h >= ctxH) {
                 break;
             }
         }
