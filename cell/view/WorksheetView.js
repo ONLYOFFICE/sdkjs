@@ -5445,8 +5445,9 @@
 			return this;
 		}
 
-        var oldDec = Math.max(AscCommonExcel.calcDecades(oldEnd + 1), 3);
-        var oldW, x, dx;
+		var type = 0;
+        var oldW, dx;
+		var x = this.cellsLeft;
         var topOldStart = this._getRowTop(oldStart);
         var dy = this._getRowTop(start) - topOldStart;
         var oldH = ctxH - this.cellsTop - Math.abs(dy) - diffHeight;
@@ -5460,10 +5461,9 @@
               this.cellsTop + diffHeight, ctxW, ctxH);
         }
 
-        var widthChanged = Math.max(AscCommonExcel.calcDecades(vr.r2 + 1), 3) !== oldDec;
-        if (widthChanged) {
-            x = this.cellsLeft;
-            this._calcHeaderColumnWidth();
+		this._calcHeaderColumnWidth();
+        if (x !== this.cellsLeft) {
+			type |= AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
 			this._updateVisibleColsCount(true);
             this._drawCorner();
             this._cleanColumnHeadersRect();
@@ -5575,10 +5575,6 @@
         this._fixSelectionOfMergedCells();
         this._drawSelection();
 
-        var type = 0;
-        if (widthChanged) {
-        	type |= AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
-        }
         if (reinitScrollY || (0 > delta && initRowsCount && this._initRowsCount())) {
         	type |= AscCommonExcel.c_oAscScrollType.ScrollVertical;
         }
