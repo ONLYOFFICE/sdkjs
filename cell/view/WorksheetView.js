@@ -3627,9 +3627,8 @@
         }
         this.visibleRange.c1 = col;
         this.visibleRange.r1 = row;
-
-        this._calcVisibleRows();
-        this._calcVisibleColumns();
+		this._updateVisibleRowsCount(true);
+        this._updateVisibleColsCount(true);
         this.handlers.trigger("reinitializeScroll", AscCommonExcel.c_oAscScrollType.ScrollVertical | AscCommonExcel.c_oAscScrollType.ScrollHorizontal);
 
         if (this.objectRender && this.objectRender.drawingArea) {
