@@ -3608,6 +3608,8 @@
 
         this.nextChangesTimeoutId = -1;
 
+        this.isPasswordCryptoPresent = false;
+
         this.isNeedCrypt = function()
 		{
 			if (!window.g_asc_plugins)
@@ -3633,7 +3635,7 @@
 
 		this.isCryptoImages = function()
 		{
-            return this.isNeedCrypt();
+            return (this.isNeedCrypt() && this.isPasswordCryptoPresent);
 		};
 
         this.addCryproImagesFromDialog = function(callback)
@@ -3812,7 +3814,13 @@
             	if (obj.options && obj.options.isImageCrypt)
 				{
                     for (var i = 0; i < data.length; i++)
-                        data[i] = "ENCRYPTED;" + obj.options.ext[i] + ";" + data[i];
+					{
+						if (this.cryptoPrefix == data[i].substr(0, this.cryptoPrefixLen))
+						{
+							// дописываем extension
+                            data[i] = this.cryptoPrefix + obj.options.ext[i] + ";" + data[i].substr(this.cryptoPrefixLen);
+						}
+					}
 
 					if (!obj.options.isUrls)
 						obj.options.callback(Asc.c_oAscError.ID.No, data);

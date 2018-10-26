@@ -956,7 +956,13 @@
 		};
 		this.CoAuthoringApi.onDocumentOpen = function (inputWrap) {
 			if (AscCommon.EncryptionWorker.isNeedCrypt())
+			{
+                if (t.fCurCallback) {
+                	t.fCurCallback(inputWrap ? inputWrap["data"] : undefined);
+                	t.fCurCallback = null;
+                }
 				return;
+			}
 			if (inputWrap["data"]) {
 				var input = inputWrap["data"];
 				switch (input["type"]) {
@@ -1664,6 +1670,7 @@
                 }
 
                 var _ret = _editor.asc_nativeGetFile3();
+                AscCommon.EncryptionWorker.isPasswordCryptoPresent = true;
                 window["AscDesktopEditor"]["buildCryptedStart"](_ret.data, _ret.header, obj["password"], obj["docinfo"] ? obj["docinfo"] : "");
                 break;
             }
@@ -1674,6 +1681,7 @@
                     var _param = ("<m_sPassword>" + AscCommon.CopyPasteCorrectString(obj["password"]) + "</m_sPassword>");
                     _editor.currentPassword = obj["password"];
 
+                    AscCommon.EncryptionWorker.isPasswordCryptoPresent = true;
                     window["AscDesktopEditor"]["SetAdvancedOptions"](_param);
                 }
                 else
