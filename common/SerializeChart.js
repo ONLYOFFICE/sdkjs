@@ -7782,7 +7782,7 @@ BinaryChartReader.prototype.ReadCT_PictureStackUnit = function (type, length, va
 }
 
     BinaryChartReader.prototype.CorrectDlbls = function(oLbls){
-        if(oLbls){
+        if(oLbls && oLbls.bDelete !== true){
             if(null === oLbls.showLegendKey){
                 oLbls.setShowLegendKey(false);
             }
