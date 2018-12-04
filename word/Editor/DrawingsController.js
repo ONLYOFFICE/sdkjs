@@ -119,14 +119,26 @@ CDrawingsController.prototype.MoveCursorToEndPos = function(AddToSelect)
 };
 CDrawingsController.prototype.MoveCursorLeft = function(AddToSelect, Word)
 {
+	// Заглушка от передвижения автофигур внутри больщих таблиц
+	if (!this.LogicDocument.Pages[this.LogicDocument.CurPage])
+		return true;
+
 	return this.DrawingObjects.cursorMoveLeft(AddToSelect, Word);
 };
 CDrawingsController.prototype.MoveCursorRight = function(AddToSelect, Word, FromPaste)
 {
+	// Заглушка от передвижения автофигур внутри больщих таблиц
+	if (!this.LogicDocument.Pages[this.LogicDocument.CurPage])
+		return true;
+
 	return this.DrawingObjects.cursorMoveRight(AddToSelect, Word, FromPaste);
 };
 CDrawingsController.prototype.MoveCursorUp = function(AddToSelect, CtrlKey)
 {
+	// Заглушка от передвижения автофигур внутри больщих таблиц
+	if (!this.LogicDocument.Pages[this.LogicDocument.CurPage])
+		return true;
+
 	var RetValue = this.DrawingObjects.cursorMoveUp(AddToSelect, CtrlKey);
 	this.LogicDocument.Document_UpdateInterfaceState();
 	this.LogicDocument.Document_UpdateSelectionState();
@@ -134,6 +146,10 @@ CDrawingsController.prototype.MoveCursorUp = function(AddToSelect, CtrlKey)
 };
 CDrawingsController.prototype.MoveCursorDown = function(AddToSelect, CtrlKey)
 {
+	// Заглушка от передвижения автофигур внутри больщих таблиц
+	if (!this.LogicDocument.Pages[this.LogicDocument.CurPage])
+		return true;
+
 	var RetValue = this.DrawingObjects.cursorMoveDown(AddToSelect, CtrlKey);
 	this.LogicDocument.Document_UpdateInterfaceState();
 	this.LogicDocument.Document_UpdateSelectionState();

@@ -6045,16 +6045,21 @@ CDocument.prototype.Interface_Update_HdrFtrPr = function()
 		this.Api.sync_HeadersAndFootersPropCallback(this.HdrFtr.Get_Props());
 	}
 };
-CDocument.prototype.Internal_GetContentPosByXY = function(X, Y, PageNum, ColumnsInfo)
+CDocument.prototype.Internal_GetContentPosByXY = function(X, Y, nCurPage, ColumnsInfo)
 {
     if (!ColumnsInfo)
         ColumnsInfo = {Column : 0, ColumnsCount : 1};
 
-    if (undefined === PageNum || null === PageNum)
-        PageNum = this.CurPage;
+    if (undefined === nCurPage || null === nCurPage)
+		nCurPage = this.CurPage;
+
+    if (nCurPage >= this.Pages.length)
+    	nCurPage = this.Pages.length - 1;
+    else if (nCurPage < 0)
+    	nCurPage = 0;
 
     // Сначала проверим Flow-таблицы
-    var FlowTable = this.DrawingObjects.getTableByXY(X, Y, PageNum, this);
+    var FlowTable = this.DrawingObjects.getTableByXY(X, Y, nCurPage, this);
     if (null != FlowTable)
     {
         var ElementPos;
@@ -6087,10 +6092,10 @@ CDocument.prototype.Internal_GetContentPosByXY = function(X, Y, PageNum, Columns
     }
 
     // Теперь проверим пустые параграфы с окончанием секций
-    var SectCount = this.Pages[PageNum].EndSectionParas.length;
+    var SectCount = this.Pages[nCurPage].EndSectionParas.length;
     for (var Index = 0; Index < SectCount; ++Index)
     {
-        var Item   = this.Pages[PageNum].EndSectionParas[Index];
+        var Item   = this.Pages[nCurPage].EndSectionParas[Index];
         var Bounds = Item.Pages[0].Bounds;
 
         if (Y < Bounds.Bottom && Y > Bounds.Top && X > Bounds.Left && X < Bounds.Right)
@@ -6103,7 +6108,7 @@ CDocument.prototype.Internal_GetContentPosByXY = function(X, Y, PageNum, Columns
     }
 
     // Сначала мы определим секцию и колонку, в которую попали
-    var Page = this.Pages[PageNum];
+    var Page = this.Pages[nCurPage];
 
     var SectionIndex = 0;
     for (var SectionsCount = Page.Sections.length; SectionIndex < SectionsCount - 1; ++SectionIndex)
@@ -6112,7 +6117,7 @@ CDocument.prototype.Internal_GetContentPosByXY = function(X, Y, PageNum, Columns
             break;
     }
 
-    var PageSection  = this.Pages[PageNum].Sections[SectionIndex];
+    var PageSection  = this.Pages[nCurPage].Sections[SectionIndex];
     var ColumnsCount = PageSection.Columns.length;
     var ColumnIndex  = 0;
     for (; ColumnIndex < ColumnsCount - 1; ++ColumnIndex)
