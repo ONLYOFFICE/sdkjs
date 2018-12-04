@@ -1626,6 +1626,23 @@
 		}
 	};
 
+	/**
+	 * Adds a comment to the range.
+	 * @typeofeditors ["CSE"]
+	 * @memberof ApiRange
+	 * @param {string} text - The comment text.
+	 */
+	ApiRange.prototype.AddComment = function (text) {
+		var ws = Asc['editor'].wb.getWorksheet(this.range.getWorksheet().getIndex());
+		if (ws) {
+			var comment = new Asc.asc_CCommentData();
+			comment.sText = text;
+			comment.nCol = this.range.c1;
+			comment.nRow = this.range.r1;
+			ws.addComment(comment);
+		}
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiDrawing
@@ -2099,6 +2116,7 @@
 	ApiRange.prototype["Merge"] = ApiRange.prototype.Merge;
 	ApiRange.prototype["UnMerge"] = ApiRange.prototype.UnMerge;
 	ApiRange.prototype["ForEach"] = ApiRange.prototype.ForEach;
+	ApiRange.prototype["AddComment"] = ApiRange.prototype.AddComment;
 
 
 	ApiDrawing.prototype["GetClassType"]               =  ApiDrawing.prototype.GetClassType;
