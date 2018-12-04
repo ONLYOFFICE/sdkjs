@@ -1637,9 +1637,10 @@
 		if (ws) {
 			var comment = new Asc.asc_CCommentData();
 			comment.sText = text;
-			comment.nCol = this.range.c1;
-			comment.nRow = this.range.r1;
-			ws.addComment(comment);
+			comment.nCol = this.range.bbox.c1;
+			comment.nRow = this.range.bbox.r1;
+			comment.bDocument = false;
+			ws.cellCommentator.addComment(comment, true);
 		}
 	};
 
