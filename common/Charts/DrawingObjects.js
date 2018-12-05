@@ -3646,9 +3646,17 @@ function DrawingObjects() {
     };
 
     _this.getDrawingBase = function(graphicId) {
-        for (var i = 0; i < aObjects.length; i++) {
-            if ( aObjects[i].graphicObject.Id == graphicId )
-                return aObjects[i];
+        var oDrawing = AscCommon.g_oTableId.Get_ById(graphicId);
+        if(oDrawing){
+            while(oDrawing.group){
+                oDrawing = oDrawing.group;
+            }
+        }
+        if(oDrawing.drawingBase){
+            for (var i = 0; i < aObjects.length; i++) {
+                if ( aObjects[i] === oDrawing.drawingBase )
+                    return aObjects[i];
+            }
         }
         return null;
     };
@@ -4162,11 +4170,15 @@ function DrawingObjects() {
             var graphicObjectInfo = _this.controller.isPointInDrawingObjects( pxToMm(x - offsets.x), pxToMm(y - offsets.y) );
            // console.log('isPointInDrawingObjects: ' + pxToMm(x - offsets.x) + ':' + pxToMm(y - offsets.y));
             if ( graphicObjectInfo && graphicObjectInfo.objectId ) {
-                objectInfo.id = graphicObjectInfo.objectId;
                 objectInfo.object = _this.getDrawingBase(graphicObjectInfo.objectId);
-                objectInfo.cursor = graphicObjectInfo.cursorType;
-                objectInfo.hyperlink = graphicObjectInfo.hyperlink;
-
+                if(objectInfo.object){
+                    objectInfo.id = graphicObjectInfo.objectId;
+                    objectInfo.cursor = graphicObjectInfo.cursorType;
+                    objectInfo.hyperlink = graphicObjectInfo.hyperlink;
+                }
+                else{
+                    return null;
+                }
                 return objectInfo;
             }
         }
