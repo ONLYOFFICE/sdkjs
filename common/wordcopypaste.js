@@ -2874,18 +2874,19 @@ PasteProcessor.prototype =
 		return obj;
 	},
 
-	_checkNumberingText: function(paragraph, NumInfo, numbering)
+	_checkNumberingText: function(paragraph, oNumInfo, oNumPr)
 	{
-		if (numbering)
+		if (oNumPr)
 		{
-			var oNum = this.oLogicDocument.GetNumbering().GetNum(paragraph.Pr.NumPr.NumId);
-			var NumTextPr = paragraph.Get_CompiledPr2(false).TextPr.Copy();
-			var lvl = oNum.GetLvl(paragraph.Pr.NumPr.Lvl);
-			var numberingText = this._getNumberingText(lvl, NumInfo, NumTextPr, lvl);
+			var oNum = this.oLogicDocument.GetNumbering().GetNum(oNumPr.NumId);
+			if (oNum)
+			{
+				var sNumberingText = oNum.GetText(oNumPr.Lvl, oNumInfo);
 
-			var newParaRun = new ParaRun();
-			addTextIntoRun(newParaRun, numberingText, false, true, true);
-			paragraph.Internal_Content_Add(0, newParaRun, false);
+				var newParaRun = new ParaRun();
+				addTextIntoRun(newParaRun, sNumberingText, false, true, true);
+				paragraph.Internal_Content_Add(0, newParaRun, false);
+			}
 		}
 	},
 
