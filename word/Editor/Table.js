@@ -12301,6 +12301,9 @@ CTable.prototype.SetContentSelection = function(StartDocPos, EndDocPos, Depth, S
 };
 CTable.prototype.SetContentPosition = function(DocPos, Depth, Flag)
 {
+	if (this.GetRowsCount() <= 0)
+		return;
+
     if (0 === Flag && (!DocPos[Depth] || this !== DocPos[Depth].Class))
         return;
 
@@ -12333,18 +12336,35 @@ CTable.prototype.SetContentPosition = function(DocPos, Depth, Flag)
         }
     }
 
+    if (CurRow >= this.GetRowsCount())
+	{
+		CurRow  = this.GetRowsCount() - 1;
+		_DocPos = null;
+		_Flag   = -1;
+	}
+	else if (CurRow < 0)
+	{
+		CurRow  = 0;
+		_DocPos = null;
+		_Flag   = 1;
+	}
+
+	var Row = this.GetRow(CurRow);
+    if (!Row)
+    	return;
+
     var CurCell = 0;
     switch (_Flag)
     {
         case 0 : CurCell = _DocPos[Depth + 1].Position; break;
         case 1 : CurCell = 0; break;
-        case -1: CurCell = this.Content[CurRow].Get_CellsCount() - 1; break;
+        case -1: CurCell = Row.GetCellsCount() - 1; break;
     }
 
     var __DocPos = _DocPos, __Flag = _Flag;
     if (null !== _DocPos && true === _DocPos[Depth + 1].Deleted)
     {
-        if (CurCell < this.Content[CurRow].Get_CellsCount())
+        if (CurCell < Row.GetCellsCount())
         {
             __DocPos = null;
             __Flag = 1;
@@ -12362,11 +12382,20 @@ CTable.prototype.SetContentPosition = function(DocPos, Depth, Flag)
         }
     }
 
-    var Row  = this.Get_Row(CurRow);
-    if (!Row)
-        return;
+    if (CurCell >= Row.GetCellsCount())
+	{
+		CurCell  = Row.GetCellsCount() - 1;
+		__DocPos = null;
+		__Flag   = -1;
+	}
+	else if (CurCell < 0)
+	{
+		CurCell  = 0;
+		__DocPos = null;
+		__Flag   = 1;
+	}
 
-    var Cell = Row.Get_Cell(CurCell);
+    var Cell = Row.GetCell(CurCell);
     if (!Cell)
         return;
 
