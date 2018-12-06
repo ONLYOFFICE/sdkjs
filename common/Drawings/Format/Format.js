@@ -3779,7 +3779,14 @@ CUniFill.prototype =
         {
             if (this.fill.type == c_oAscFill.FILL_TYPE_SOLID)
             {
-                return this.fill.color.RGBA;
+                if(this.fill.color)
+                {
+                    return this.fill.color.RGBA;
+                }
+                else
+                {
+                    return new FormatRGBAColor();
+                }
             }
             if (this.fill.type == c_oAscFill.FILL_TYPE_GRAD)
             {
