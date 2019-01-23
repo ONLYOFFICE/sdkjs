@@ -307,6 +307,66 @@
 	};
 
 	/**
+	 * Returns a ApiRange object that represents the rectangular intersection of two or more ranges. If one or more ranges from a different worksheet are specified, an error will be returned.
+	 * @memberof Api
+	 * @param {ApiRange} Range1 The intersecting ranges. At least two Range objects must be specified.
+	 * @param {ApiRange} Range2 The intersecting ranges. At least two Range objects must be specified.
+	 * @returns {ApiRange | Error}
+	 */
+	Api.prototype.Intersect  = function (Range1, Range2) {
+		if (Range1.Worksheet.Id === Range2.Worksheet.Id) {
+			var bb1 = {
+				a : {c : Range1.range.bbox.c1, r : Range1.range.bbox.r1},
+				b : {c : Range1.range.bbox.c2, r : Range1.range.bbox.r1},
+				c : {c : Range1.range.bbox.c2, r : Range1.range.bbox.r2},
+				d : {c : Range1.range.bbox.c1, r : Range1.range.bbox.r2}
+			};
+			var bb2 = {
+				e : {c : Range2.range.bbox.c1, r : Range2.range.bbox.r1},
+				f : {c : Range2.range.bbox.c2, r : Range2.range.bbox.r1},
+				g : {c : Range2.range.bbox.c2, r : Range2.range.bbox.r2},
+				h : {c : Range2.range.bbox.c1, r : Range2.range.bbox.r2}
+			};
+
+			if ( ((bb2.e.c >= bb1.a.c) && (bb2.e.c <= bb1.c.c)) && ((bb2.e.r >= bb1.a.r) && (bb2.e.r <= bb1.c.r)) ) {	//есле левая верхняя 2 находится внутри 1
+				if ( ((bb2.g.c >= bb1.a.c) && (bb2.g.c <= bb1.c.c)) && ((bb2.g.r >= bb1.a.r) && (bb2.g.r <= bb1.c.r)) ) { //2 лежит внутри 1 -> пересечение = 2
+					return Range2;
+				} else if ( ((bb1.c.c >= bb2.e.c) && (bb1.c.c <= bb2.g.c)) && ((bb1.c.r >= bb2.e.r) && (bb1.c.r <= bb2.g.r))  ) { //область персечения между точками "е" и "с"
+					return new ApiRange(this.ActiveSheet.worksheet.getRange3(bb2.e.r, bb2.e.c, bb1.c.r, bb1.c.c))
+				} else if ( ((bb2.f.c >= bb1.a.c) && (bb2.f.c <= bb1.c.c)) && ((bb2.f.r >= bb1.a.r) && (bb2.f.r <= bb1.c.r)) ) { //левая верхняя и правая верхняя 2 лежат в 1
+					return new ApiRange(this.ActiveSheet.worksheet.getRange3(bb2.e.r, bb2.e.c, bb1.c.r, bb2.f.c))
+				}
+			} else if ( ((bb2.g.c >= bb1.a.c) && (bb2.g.c <= bb1.c.c)) && ((bb2.g.r >= bb1.a.r) && (bb2.g.r <= bb1.c.r)) ) { //правая нижняя 2 лежит в 1, а левая рерхняя нет
+				if ( ((bb1.a.c >= bb2.e.c) && (bb1.a.c <= bb2.g.c)) && ((bb1.a.r >= bb2.e.r) && (bb1.a.r <= bb2.g.r)) ) { //левая верхняя 1 лежит во 2, область пересечения между "a" и "g"
+					return new ApiRange(this.ActiveSheet.worksheet.getRange3(bb1.a.r, bb1.a.c, bb2.g.r, bb2.g.c))
+				} else if ( ((bb2.f.c >= bb1.a.c) && (bb2.f.c <= bb1.c.c)) && ((bb2.f.r >= bb1.a.r) && (bb2.f.r <= bb1.c.r)) ) { //верхняя и нижняя правые 2 лежат в 1
+					return new ApiRange(this.ActiveSheet.worksheet.getRange3(bb2.f.r, bb1.a.c, bb2.g.r, bb2.g.c))
+				} else if ( ((bb2.h.c >= bb1.a.c) && (bb2.h.c <= bb1.c.c)) && ((bb2.h.r >= bb1.a.r) && (bb2.h.r <= bb1.c.r)) ) { //левая нижняя и правая нижняя 2 лежат в 1
+					return new ApiRange(this.ActiveSheet.worksheet.getRange3(bb1.a.r, bb2.h.c, bb2.g.r, bb2.g.c))
+				}
+			} else if ( ((bb1.d.c >= bb2.e.c) && (bb1.d.c <= bb2.g.c)) && ((bb1.d.r >= bb2.e.r) && (bb1.d.r <= bb2.g.r)) ) { // левая нижняя 1 лежит в 2, а левая верхнаяя и правая нижняя 2 не лежат в 1
+				if ( (bb1.b.c >= bb2.e.c) && (bb1.b.c <= bb2.g.c) && ((bb1.b.r >= bb2.e.r) && (bb1.b.r <= bb2.g.r)) ) { //1 лежин внутри 2 -> пересечение = 1
+					return Range1;
+				} else if ( ((bb2.f.c >= bb1.a.c) && (bb2.f.c <= bb1.c.c)) && ((bb2.f.r >= bb1.a.r) && (bb2.f.r <= bb1.c.r)) ) { //левая нижняя 1 лежит в 2 и правая вержняя 2 лежит в 1 -> пкресенение между "d" и "f"
+					return new ApiRange(this.ActiveSheet.worksheet.getRange3(bb2.f.r, bb1.d.c, bb1.d.r, bb2.f.c))
+				} else if ( ((bb1.c.c >= bb2.e.c) && (bb1.c.c <= bb2.g.c)) && ((bb1.c.r >= bb2.e.r) && (bb1.c.r <= bb2.g.r)) ) { //левая и правая нижние 1 лежат в 2
+					return new ApiRange(this.ActiveSheet.worksheet.getRange3(bb2.e.r, bb1.d.c, bb1.c.r, bb1.c.c))
+				}
+			} else if ( ((bb1.b.c >= bb2.e.c) && (bb1.b.c <= bb2.g.c)) && ((bb1.b.r >= bb2.e.r) && (bb1.b.r <= bb2.g.r)) ) { // правая верхняя 1 лежит в 2, а лев верх 2 не в 1 и прав ниж 2 не в 1 и лев ниж 1 не в 2
+				if ( ((bb2.h.c >= bb1.a.c) && (bb2.h.c <= bb1.c.c)) && ((bb2.h.r >= bb1.a.r) && (bb2.h.r <= bb1.c.r)) ) { //лев ниж 2 в 1 => пересенчение между "h" и "b"
+					return new ApiRange(this.ActiveSheet.worksheet.getRange3(bb1.b.r, bb2.h.c, bb2.h.r, bb1.b.c));
+				} else if ( ((bb1.c.c >= bb2.e.c) && (bb1.c.c <= bb2.g.c)) && ((bb1.c.r >= bb2.e.r) && (bb1.c.r <= bb2.g.r)) ) { // верхняя и нижняя правые 1 лежат в 2
+					return new ApiRange(this.ActiveSheet.worksheet.getRange3(bb1.b.r, bb2.e.c, bb1.c.r, bb1.c.c));
+				}
+			} else {
+				console.log("Ranges do not intersect.");
+			}
+		} else {
+			return new Error('Ranges should be from one worksheet.');
+		}
+	};
+
+	/**
 	 * Returns Visible of sheet
 	 * @memberof ApiWorksheet
 	 * @returns {bool}
@@ -1676,6 +1736,20 @@
 		}
 	};
 
+	/**
+	 * Returns a Worksheet object that represents the worksheet containing the specified range. Read-only.
+	 * @typeofeditors ["CSE"]
+	 * @memberof ApiRange
+	 */
+	ApiRange.prototype.GetWorksheet = function () {
+		return this.range.worksheet;
+	};
+	Object.defineProperty(ApiRange.prototype, "Worksheet", {
+		get: function () {
+			return this.GetWorksheet();
+		}
+	});
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiDrawing
@@ -2084,6 +2158,7 @@
 	Api.prototype["CreateNewHistoryPoint"] = Api.prototype.CreateNewHistoryPoint;
 	Api.prototype["CreateColorFromRGB"] = Api.prototype.CreateColorFromRGB;
 	Api.prototype["CreateColorByName"] = Api.prototype.CreateColorByName;
+	Api.prototype["Intersect"] = Api.prototype.Intersect;
 
 	ApiWorksheet.prototype["GetVisible"] = ApiWorksheet.prototype.GetVisible;
 	ApiWorksheet.prototype["SetVisible"] = ApiWorksheet.prototype.SetVisible;
@@ -2151,6 +2226,7 @@
 	ApiRange.prototype["UnMerge"] = ApiRange.prototype.UnMerge;
 	ApiRange.prototype["ForEach"] = ApiRange.prototype.ForEach;
 	ApiRange.prototype["AddComment"] = ApiRange.prototype.AddComment;
+	ApiRange.prototype["GetWorksheet"] = ApiRange.prototype.GetWorksheet;
 
 
 	ApiDrawing.prototype["GetClassType"]               =  ApiDrawing.prototype.GetClassType;
