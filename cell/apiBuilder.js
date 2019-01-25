@@ -393,6 +393,19 @@
 	});
 
 	/**
+	 * Makes the current sheet the active sheet.
+	 * @memberof ApiWorksheet
+	 */
+	ApiWorksheet.prototype.SetActive = function () {
+		this.worksheet.workbook.setActive(this.worksheet.index);
+	};
+	Object.defineProperty(ApiWorksheet.prototype, "Active", {
+		get: function () {
+			this.SetActive();
+		}
+	});
+
+	/**
 	 * Returns an object that represents the active cell
 	 * @memberof ApiWorksheet
 	 * @returns {ApiRange}
@@ -448,7 +461,9 @@
 	 * @param {string | number} value
 	 */
 	ApiWorksheet.prototype.GetRows = function (value) {
-		if (typeof value == "number" || value.indexOf(':') == -1) {
+		if (typeof  value === "undefined") {
+			return this.Rows;
+		} else if (typeof value == "number" || value.indexOf(':') == -1) {
 			value = parseInt(value);
 			if (value > 0) {
 				value --;
@@ -1136,6 +1151,41 @@
 	Object.defineProperty(ApiRange.prototype, "Col", {
 		get: function () {
 			return this.GetCol();
+		}
+	});
+
+	/**
+	 * Clears the entire object.
+	 * @typeofeditors ["CSE"]
+	 * @memberof ApiRange
+	 */
+	ApiRange.prototype.Clear = function () {
+		this.range.cleanAll();
+	};
+
+	/**
+	 * Returns a Range object that represents the rows in the specified range.
+	 * @typeofeditors ["CSE"]
+	 * @memberof ApiRange
+	 * @param {number} number - The number of the row. * 
+	 * @returns {ApiRange}
+	 */
+	ApiRange.prototype.GetRows = function (number) {
+		if (typeof number === "undefined") {
+			var r1 = this.range.bbox.r1;
+			var r2 = this.range.bbox.r2;
+			return new ApiWorksheet(this.range.worksheet).GetRows(r1 + ":" + r2);
+			// return new ApiWorksheet(this.range.worksheet).Rows;	// return all rows from current sheet
+		} else if ( (number >= this.range.bbox.r1) && (number <= this.range.bbox.r2) ) {
+			return new ApiWorksheet(this.range.worksheet).GetRows(number);
+		} else {
+			var bbox = this.range.bbox;
+			return new ApiRange(this.range.worksheet.getRange3(number, bbox.c1, number, bbox.c2));
+		}
+	};
+	Object.defineProperty(ApiRange.prototype, "Rows", {
+		get: function () {
+			return this.GetRows();
 		}
 	});
 
@@ -2162,6 +2212,7 @@
 
 	ApiWorksheet.prototype["GetVisible"] = ApiWorksheet.prototype.GetVisible;
 	ApiWorksheet.prototype["SetVisible"] = ApiWorksheet.prototype.SetVisible;
+	ApiWorksheet.prototype["SetActive"] = ApiWorksheet.prototype.SetActive;		
 	ApiWorksheet.prototype["GetActiveCell"] = ApiWorksheet.prototype.GetActiveCell;
 	ApiWorksheet.prototype["GetSelection"] = ApiWorksheet.prototype.GetSelection;
 	ApiWorksheet.prototype["GetCells"] = ApiWorksheet.prototype.GetCells;
@@ -2196,6 +2247,8 @@
 
 	ApiRange.prototype["GetRow"] = ApiRange.prototype.GetRow;
 	ApiRange.prototype["GetCol"] = ApiRange.prototype.GetCol;
+	ApiRange.prototype["Clear"] = ApiRange.prototype.Clear;
+	ApiRange.prototype["GetRows"] = ApiRange.prototype.GetRows;
 	ApiRange.prototype["SetOffset"] = ApiRange.prototype.SetOffset;
 	ApiRange.prototype["GetAddress"] = ApiRange.prototype.GetAddress;	
 	ApiRange.prototype["GetCount"] = ApiRange.prototype.GetCount;
