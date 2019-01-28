@@ -1716,6 +1716,7 @@
 
                 var _ret = _editor.asc_nativeGetFile3();
                 AscCommon.EncryptionWorker.isPasswordCryptoPresent = true;
+				_editor.currentDocumentInfoNext = obj["docinfo"];
                 window["AscDesktopEditor"]["buildCryptedStart"](_ret.data, _ret.header, obj["password"], obj["docinfo"] ? obj["docinfo"] : "");
                 break;
             }

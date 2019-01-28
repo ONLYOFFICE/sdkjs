@@ -4668,8 +4668,10 @@ window["buildCryptoFile_End"] = function(url, error, hash, password)
 						"accounts": httpRequest.responseText ? JSON.parse(httpRequest.responseText) : undefined,
 						"hash": hash,
 						"password" : password,
-						"type": "share"
+						"type": "share",
+						"docinfo" : _editor.currentDocumentInfoNext
 					};
+					_editor.currentDocumentInfoNext = undefined;
 
 					window["AscDesktopEditor"]["sendSystemMessage"](data);
 					window["AscDesktopEditor"]["CallInAllWindows"]("function(){ if (window.DesktopUpdateFile) { window.DesktopUpdateFile(undefined); } }");
