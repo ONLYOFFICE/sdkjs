@@ -481,6 +481,7 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 		}
 		if (oRedoObjectParam.bChangeActive && null != oRedoObjectParam.activeSheet) {
 			this.workbook.setActiveById(oRedoObjectParam.activeSheet);
+			this.workbook.handlers.trigger("updateWorksheetByModel");
 		}
 	}
 
