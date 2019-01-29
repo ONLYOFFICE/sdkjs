@@ -6620,37 +6620,42 @@ ParaRun.prototype.IsSelectedAll = function(Props)
     return true;
 };
 
-ParaRun.prototype.Selection_CorrectLeftPos = function(Direction)
+ParaRun.prototype.SkipAnchorsAtSelectionStart = function(Direction)
 {
-    if ( false === this.Selection.Use || true === this.Is_Empty( { SkipAnchor : true } ) )
-        return true;
+	if (false === this.Selection.Use || true === this.IsEmpty({SkipAnchor : true}))
+		return true;
 
-    var Selection = this.State.Selection;
-    var StartPos = Math.min( Selection.StartPos, Selection.EndPos );
-    var EndPos   = Math.max( Selection.StartPos, Selection.EndPos );
+	var oSelection = this.State.Selection;
+	var nStartPos  = Math.min(oSelection.StartPos, oSelection.EndPos);
+	var nEndPos    = Math.max(oSelection.StartPos, oSelection.EndPos);
 
-    for ( var Pos = 0; Pos < StartPos; Pos++ )
-    {
-        var Item = this.Content[Pos];
-        if ( para_Drawing !== Item.Type || true === Item.Is_Inline() )
-            return false;
-    }
+	for (var nPos = 0; nPos < nStartPos; ++nPos)
+	{
+		var oItem = this.Content[nPos];
+		if (para_Drawing !== oItem.Type || true === oItem.Is_Inline())
+			return false;
+	}
 
-    for ( var Pos = StartPos; Pos < EndPos; Pos++ )
-    {
-        var Item = this.Content[Pos];
-        if ( para_Drawing === Item.Type && true !== Item.Is_Inline() )
-        {
-            if ( 1 === Direction )
-                Selection.StartPos = Pos + 1;
-            else
-                Selection.EndPos   = Pos + 1;
-        }
-        else
-            return false;
-    }
+	for (var nPos = nStartPos; nPos < nEndPos; ++nPos)
+	{
+		var oItem = this.Content[nPos];
+		if (para_Drawing === oItem.Type && true !== oItem.Is_Inline())
+		{
+			if (1 === Direction)
+				oSelection.StartPos = nPos + 1;
+			else
+				oSelection.EndPos = nPos + 1;
+		}
+		else
+		{
+			return false;
+		}
+	}
 
-    return true;
+	if (nEndPos < this.Content.length)
+		return false;
+
+	return true;
 };
 
 ParaRun.prototype.RemoveSelection = function()

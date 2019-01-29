@@ -4098,9 +4098,10 @@ Paragraph.prototype.Set_SelectionContentPos = function(StartContentPos, EndConte
 				}
 			}
 		}
-		else if (true !== this.IsSelectionEmpty(true) && ( ( 1 === Direction && true === this.Selection.StartManually ) || ( 1 !== Direction && true === this.Selection.EndManually ) ))
+		else if (true !== this.IsSelectionEmpty(true)
+			&& ((1 === Direction && true === this.Selection.StartManually) || (1 !== Direction && true === this.Selection.EndManually)))
 		{
-			// Эта ветка нужна для снятие выделения с плавающих объектов, стоящих в начале параграфа, когда параграф
+			// Эта ветка нужна для снятия выделения с плавающих объектов, стоящих в начале параграфа, когда параграф
 			// выделен не весь. Заметим, что это ветка имеет смысл, только при direction = 1, поэтому выделен весь
 			// параграф или нет, проверяется попаданием para_End в селект. Кроме того, ничего не делаем с селектом,
 			// если он пустой.
@@ -4108,9 +4109,9 @@ Paragraph.prototype.Set_SelectionContentPos = function(StartContentPos, EndConte
 			var bNeedCorrectLeftPos = true;
 			var _StartPos           = Math.min(StartPos, EndPos);
 			var _EndPos             = Math.max(StartPos, EndPos);
-			for (var Pos = 0; Pos < StartPos; Pos++)
+			for (var Pos = 0; Pos < _StartPos; Pos++)
 			{
-				if (true !== this.Content[Pos].Is_Empty({SkipAnchor : true}))
+				if (true !== this.Content[Pos].IsEmpty({SkipAnchor : true}))
 				{
 					bNeedCorrectLeftPos = false;
 					break;
@@ -4119,32 +4120,33 @@ Paragraph.prototype.Set_SelectionContentPos = function(StartContentPos, EndConte
 
 			if (true === bNeedCorrectLeftPos)
 			{
-				for (var Pos = _StartPos; Pos <= EndPos; Pos++)
+				for (var nPos = _StartPos; nPos <= _EndPos; ++nPos)
 				{
-					if (true === this.Content[Pos].Selection_CorrectLeftPos(Direction))
+					if (true === this.Content[nPos].SkipAnchorsAtSelectionStart(Direction))
 					{
 						if (1 === Direction)
 						{
-							if (Pos + 1 > this.Selection.EndPos)
+							if (nPos + 1 > this.Selection.EndPos)
 								break;
 
-							this.Selection.StartPos = Pos + 1;
+							this.Selection.StartPos = nPos + 1;
 						}
 						else
 						{
-							if (Pos + 1 > this.Selection.StartPos)
+							if (nPos + 1 > this.Selection.StartPos)
 								break;
 
-							this.Selection.EndPos = Pos + 1;
+							this.Selection.EndPos = nPos + 1;
 						}
 
-						this.Content[Pos].RemoveSelection();
+						this.Content[nPos].RemoveSelection();
 					}
 					else
+					{
 						break;
+					}
 				}
 			}
-
 		}
 	}
 };

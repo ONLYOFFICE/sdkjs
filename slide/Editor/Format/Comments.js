@@ -460,7 +460,7 @@ ParaComment.prototype =
         return true;
     },
 
-    Selection_CorrectLeftPos : function(Direction)
+	SkipAnchorsAtSelectionStart : function(nDirection)
     {
         return true;
     },
