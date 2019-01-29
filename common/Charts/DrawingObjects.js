@@ -2421,6 +2421,7 @@ function DrawingObjects() {
             if (bLock !== true)
                 return;
             _this.controller.resetSelection();
+            History.Create_NewPoint();
             var dLeft = worksheet.getCellLeft(worksheet.model.selectionRange.activeCell.col, 3);
             var dTop = worksheet.getCellTop(worksheet.model.selectionRange.activeCell.row, 3);
             var oSignatureLine = AscFormat.fCreateSignatureShape(sGuid, sSigner, sSigner2, sEmail, false, worksheet.model, Width, Height, sImgUrl);
