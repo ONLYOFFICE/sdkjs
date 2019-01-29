@@ -670,6 +670,13 @@
 
                 if (plugin && plugin.variations[runObject.currentVariation].eventsMap[name])
                 {
+                	if (!runObject.isInitReceive)
+					{
+						if (!runObject.waitEvents)
+							runObject.waitEvents = [];
+						runObject.waitEvents.push({ n : name, d : data });
+						continue;
+					}
                     var pluginData = new CPluginData();
                     pluginData.setAttribute("guid", plugin.guid);
                     pluginData.setAttribute("type", "onEvent");
@@ -827,6 +834,26 @@
 		if ("initialize_internal" == name)
 		{
 			window.g_asc_plugins.init(guid);
+
+			runObject.isInitReceive = true;
+
+			setTimeout(function() {
+				if (runObject.waitEvents)
+				{
+					for (var i = 0; i < runObject.waitEvents.length; i++)
+					{
+						var pluginData = new CPluginData();
+						pluginData.setAttribute("guid", guid);
+						pluginData.setAttribute("type", "onEvent");
+						pluginData.setAttribute("eventName", runObject.waitEvents[i].n);
+						pluginData.setAttribute("eventData", runObject.waitEvents[i].d);
+						var _iframe = document.getElementById(runObject.frameId);
+						if (_iframe)
+							_iframe.contentWindow.postMessage(pluginData.serialize(), "*");
+					}
+					runObject.waitEvents = null;
+				}
+			}, 100);
 		}
 		else if ("initialize" == name)
 		{
