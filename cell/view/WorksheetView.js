@@ -6744,7 +6744,7 @@
 			if (scroll > arn.r1) {
 				scroll = arn.r1;
 			}
-			scroll -= vr.r1;
+			scroll -= vr.r1 - (this.topLeftFrozenCell ? this.topLeftFrozenCell.getRow0() : 0);
 			this.nRowsCount = nRowsCount;
 		}
 		if (scroll) {
@@ -6760,7 +6760,7 @@
 			if (scroll > arn.c1) {
 				scroll = arn.c1;
 			}
-			scroll -= vr.c1;
+			scroll -= vr.c1 - (this.topLeftFrozenCell ? this.topLeftFrozenCell.getCol0() : 0);
 			this.nColsCount = nColsCount;
 		}
 		if (scroll) {
