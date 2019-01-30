@@ -207,6 +207,9 @@ function CreateFontData4(szSrc)
     index++;
     var dstLen = parseInt(dst_len);
 
+    if (dstLen <= 0)
+        return null;
+
     var pointer = g_memory.Alloc(dstLen);
     var stream = new FT_Stream(pointer.data, dstLen);
     stream.obj = pointer.obj;
