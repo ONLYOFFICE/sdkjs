@@ -157,6 +157,15 @@
 	}
 
 	/**
+	 * Class representing a names
+	 * @constructor
+	 */
+	function ApiName(DefName, range) {
+		this.DefName = DefName;
+		this.Range = range;
+	}
+
+	/**
 	 * Returns a class formatted according to instructions contained in a format expression
 	 * @memberof Api
 	 * @param {string} expression Any valid expression.
@@ -1800,6 +1809,28 @@
 		}
 	});
 
+	/**
+	 * Returns a ApiName.
+	 * @typeofeditors ["CSE"]
+	 * @memberof ApiRange
+	 * @returns {ApiName}
+	 */
+	ApiRange.prototype.GetDefName = function () {
+		var defName = this.range.worksheet.getName() + "!" + this.range.bbox.getAbsName();
+		var SheetId = this.range.worksheet.getId();
+		defName = this.range.worksheet.workbook.findDefinesNames(defName, SheetId);
+		if (defName) {
+			// defName = this.range.worksheet.workbook.getDefinedName({Name : defName});
+			defName = this.range.worksheet.workbook.getDefinesNames(defName, SheetId);
+		}
+		return new ApiName(defName, this);
+	};
+	Object.defineProperty(ApiRange.prototype, "DefName", {
+		get: function () {
+			return this.GetDefName();
+		}
+	});
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiDrawing
@@ -2194,7 +2225,88 @@
 	ApiColor.prototype.GetClassType = function () {
 		return "color";
 	};
+	
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiName
+	//
+	//------------------------------------------------------------------------------------------------------------------
 
+	/**
+	 * Returns a String value representing the name of the object.
+	 * @typeofeditors ["CSE"]
+	 * @memberof ApiName
+	 * @returns {string} 
+	 */
+	ApiName.prototype.GetName = function () {
+		if (this.DefName) {
+			return this.DefName.name
+		} else {
+			return this.DefName;
+		}
+	};
+
+	/**
+	 * Sets a String value representing the name of the object.
+	 * @typeofeditors ["CSE"]
+	 * @param {string} Name
+	 * @memberof ApiName
+	 */
+	ApiName.prototype.SetName = function (Name) {
+		if (!Name || typeof Name !== 'string' || !this.DefName) {
+			return;
+		}
+			var OldDefName = new Asc.asc_CDefName(this.DefName.name, this.DefName.ref, null, this.DefName.isTable, null);
+			var NewDefName = new Asc.asc_CDefName(Name, this.DefName.ref, null, this.DefName.isTable, null);
+			this.DefName.wb.oApi.asc_editDefinedNames(OldDefName, NewDefName);
+	};
+
+	Object.defineProperty(ApiName.prototype, "Name", {
+		get: function () {
+			return this.GetName();
+		}, 
+		set: function (Name) {
+			return this.SetName(Name);
+		}
+	});
+
+	/**
+	 * Deletes the DefName object.
+	 * @typeofeditors ["CSE"]
+	 * @memberof ApiName
+	 */
+	ApiName.prototype.Delete = function () {
+		var OldDefName = new Asc.asc_CDefName(this.DefName.name, this.DefName.ref, this.DefName.sheetId, this.DefName.isTable, null);
+		this.DefName.wb.oApi.asc_delDefinedNames(OldDefName);
+	};
+
+	/**
+	 * Defines a new name for a range of cells.
+	 * @typeofeditors ["CSE"]
+	 * @memberof ApiName
+	 */
+	ApiName.prototype.Add = function (name, ref, sheetId, hidden) {
+		// to do if range already exist
+		// var res = this.DefName.wb.oApi.asc_checkDefinedName(name);
+		var res = this.Range.range.worksheet.workbook.oApi.asc_checkDefinedName(name);
+
+		if (!res.status) {
+			return; // invalid name
+		}
+		// res = this.DefName.wb.oApi.asc_checkDataRange(Asc.c_oAscSelectionDialogType.Char, ref, false);
+		var res = this.Range.range.worksheet.workbook.oApi.asc_checkDataRange(Asc.c_oAscSelectionDialogType.Chart, ref, false);
+		if (res === Asc.c_oAscError.ID.DataRangeError) {
+			return; // invalid range
+		}
+		if (sheetId) {
+			sheetId = (this.Range.range.worksheet.workbook.getWorksheet(sheetId)) ? sheetId : undefined;
+		}
+		var OldDefName = new Asc.asc_CDefName(name, ref, sheetId, false, hidden);
+		console.log(OldDefName);
+		// this.DefName.wb.oApi.asc_setDefinedNames(OldDefName);
+		var res = this.Range.range.worksheet.workbook.oApi.asc_setDefinedNames(OldDefName);
+
+	};
 
 	Api.prototype["Format"] = Api.prototype.Format;
 	Api.prototype["AddSheet"] = Api.prototype.AddSheet;
@@ -2280,6 +2392,7 @@
 	ApiRange.prototype["ForEach"] = ApiRange.prototype.ForEach;
 	ApiRange.prototype["AddComment"] = ApiRange.prototype.AddComment;
 	ApiRange.prototype["GetWorksheet"] = ApiRange.prototype.GetWorksheet;
+	ApiRange.prototype["GetDefName"] = ApiRange.prototype.GetDefName;
 
 
 	ApiDrawing.prototype["GetClassType"]               =  ApiDrawing.prototype.GetClassType;
@@ -2322,6 +2435,12 @@
 
 
 	ApiColor.prototype["GetClassType"]                 =  ApiColor.prototype.GetClassType;
+
+
+	ApiName.prototype["GetName"]                 =  ApiName.prototype.GetName;
+	ApiName.prototype["SetName"]                 =  ApiName.prototype.SetName;
+	ApiName.prototype["Delete"]                  =  ApiName.prototype.Delete;
+	ApiName.prototype["Add"]                 	 =  ApiName.prototype.Add;
 
 
 	function private_SetCoords(oDrawing, oWorksheet, nExtX, nExtY, nFromCol, nColOffset,  nFromRow, nRowOffset, pos){
