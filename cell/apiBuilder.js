@@ -160,9 +160,9 @@
 	 * Class representing a names
 	 * @constructor
 	 */
-	function ApiName(DefName, range) {
+	function ApiName(DefName, wb) {
 		this.DefName = DefName;
-		this.Range = range;
+		this.wb = wb;
 	}
 
 	/**
@@ -790,6 +790,29 @@
 		set: function (value) {
 			value = (typeof value === 'boolean') ? value : false;
 			this.worksheet.PagePrintOptions.asc_setGridLines(value);
+		}
+	});
+
+	/**
+	 * Returns array a ApiName.
+	 * @typeofeditors ["CSE"]
+	 * @memberof ApiWorksheet
+	 * @returns {ApiName}
+	 */
+	ApiWorksheet.prototype.GetDefNames = function () {
+		var res =  this.worksheet.workbook.getDefinedNamesWS(Asc.c_oAscGetDefinedNamesList.WorksheetWorkbook, this.worksheet.getId());
+		var name = [];
+		if (!res.length) {
+			return [new ApiName(undefined, this.worksheet.workbook)]
+		}
+		for (var key in res) {
+			name.push(new ApiName(res[key]));
+		}
+		return name;
+	};
+	Object.defineProperty(ApiWorksheet.prototype, "DefNames", {
+		get: function () {
+			return this.GetDefNames();
 		}
 	});
 
@@ -1823,7 +1846,7 @@
 			// defName = this.range.worksheet.workbook.getDefinedName({Name : defName});
 			defName = this.range.worksheet.workbook.getDefinesNames(defName, SheetId);
 		}
-		return new ApiName(defName, this);
+		return new ApiName(defName, this.range.worksheet.workbook);
 	};
 	Object.defineProperty(ApiRange.prototype, "DefName", {
 		get: function () {
@@ -2251,14 +2274,20 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} Name
 	 * @memberof ApiName
+	 * @returns {Error}
 	 */
 	ApiName.prototype.SetName = function (Name) {
 		if (!Name || typeof Name !== 'string' || !this.DefName) {
-			return;
+			return new Error('Invalid name or Defname is undefined.');
 		}
-			var OldDefName = new Asc.asc_CDefName(this.DefName.name, this.DefName.ref, null, this.DefName.isTable, null);
-			var NewDefName = new Asc.asc_CDefName(Name, this.DefName.ref, null, this.DefName.isTable, null);
-			this.DefName.wb.oApi.asc_editDefinedNames(OldDefName, NewDefName);
+		var res = this.DefName.wb.checkDefName(Name);
+		if (!res.status) {
+			return new Error('Invalid name.'); // invalid name
+		}
+		var oldName = this.DefName.getAscCDefName(false);
+		var newName = this.DefName.getAscCDefName(false);
+		newName.Name = Name;
+		this.DefName.wb.editDefinesNames(oldName, newName);
 	};
 
 	Object.defineProperty(ApiName.prototype, "Name", {
@@ -2276,37 +2305,59 @@
 	 * @memberof ApiName
 	 */
 	ApiName.prototype.Delete = function () {
-		var OldDefName = new Asc.asc_CDefName(this.DefName.name, this.DefName.ref, this.DefName.sheetId, this.DefName.isTable, null);
-		this.DefName.wb.oApi.asc_delDefinedNames(OldDefName);
+		this.DefName.wb.delDefinesNames(this.DefName.getAscCDefName(false));
 	};
 
 	/**
 	 * Defines a new name for a range of cells.
 	 * @typeofeditors ["CSE"]
 	 * @memberof ApiName
+	 * @returns {Error}
 	 */
 	ApiName.prototype.Add = function (name, ref, sheetId, hidden) {
-		// to do if range already exist
-		// var res = this.DefName.wb.oApi.asc_checkDefinedName(name);
-		var res = this.Range.range.worksheet.workbook.oApi.asc_checkDefinedName(name);
-
+		var wb = (this.DefName) ? this.DefName.wb : this.wb;
+		var res = wb.checkDefName(name);
 		if (!res.status) {
-			return; // invalid name
+			return new Error('Invalid name.'); // invalid name
 		}
-		// res = this.DefName.wb.oApi.asc_checkDataRange(Asc.c_oAscSelectionDialogType.Char, ref, false);
-		var res = this.Range.range.worksheet.workbook.oApi.asc_checkDataRange(Asc.c_oAscSelectionDialogType.Chart, ref, false);
+		var res = wb.oApi.asc_checkDataRange(Asc.c_oAscSelectionDialogType.Chart, ref, false);
 		if (res === Asc.c_oAscError.ID.DataRangeError) {
-			return; // invalid range
+			return new Error('Invalid range.'); // invalid range
 		}
 		if (sheetId) {
-			sheetId = (this.Range.range.worksheet.workbook.getWorksheet(sheetId)) ? sheetId : undefined;
+			sheetId = (wb.getWorksheetById(sheetId)) ? sheetId : undefined;
 		}
-		var OldDefName = new Asc.asc_CDefName(name, ref, sheetId, false, hidden);
-		console.log(OldDefName);
-		// this.DefName.wb.oApi.asc_setDefinedNames(OldDefName);
-		var res = this.Range.range.worksheet.workbook.oApi.asc_setDefinedNames(OldDefName);
-
+		wb.addDefName(name, ref, sheetId, hidden, false)
 	};
+
+	/**
+	 * Sets the formula that the name is defined to refer to.
+	 * @typeofeditors ["CSE"]
+	 * @param {string} Ref
+	 * @memberof ApiName
+	 */
+	ApiName.prototype.SetRefersTo = function (Ref) {
+		this.DefName.setRef(Ref);
+	};
+
+	/**
+	 * Returns the formula that the name is defined to refer to.
+	 * @typeofeditors ["CSE"]
+	 * @memberof ApiName
+	 * @returns {string} 
+	 */
+	ApiName.prototype.GetRefersTo = function () {
+		return (this.DefName) ? this.DefName.ref : this.DefName;
+	};
+
+	Object.defineProperty(ApiName.prototype, "RefersTo", {
+		get: function () {
+			return this.GetRefersTo();
+		}, 
+		set: function (Ref) {
+			return this.SetRefersTo(Ref);
+		}
+	});
 
 	Api.prototype["Format"] = Api.prototype.Format;
 	Api.prototype["AddSheet"] = Api.prototype.AddSheet;
@@ -2351,6 +2402,7 @@
 	ApiWorksheet.prototype["GetBottomMargin"] = ApiWorksheet.prototype.GetBottomMargin;		
 	ApiWorksheet.prototype["SetPageOrientation"] = ApiWorksheet.prototype.SetPageOrientation;
 	ApiWorksheet.prototype["GetPageOrientation"] = ApiWorksheet.prototype.GetPageOrientation;
+	ApiWorksheet.prototype["GetDefNames"] = ApiWorksheet.prototype.GetDefNames;
 	ApiWorksheet.prototype["SetHyperlink"] = ApiWorksheet.prototype.SetHyperlink;
 	ApiWorksheet.prototype["AddChart"] = ApiWorksheet.prototype.AddChart;
 	ApiWorksheet.prototype["AddShape"] = ApiWorksheet.prototype.AddShape;
@@ -2441,7 +2493,8 @@
 	ApiName.prototype["SetName"]                 =  ApiName.prototype.SetName;
 	ApiName.prototype["Delete"]                  =  ApiName.prototype.Delete;
 	ApiName.prototype["Add"]                 	 =  ApiName.prototype.Add;
-
+	ApiName.prototype["GetRefersTo"]             =  ApiName.prototype.GetRefersTo;
+	ApiName.prototype["SetRefersTo"]             =  ApiName.prototype.SetRefersTo;
 
 	function private_SetCoords(oDrawing, oWorksheet, nExtX, nExtY, nFromCol, nColOffset,  nFromRow, nRowOffset, pos){
 		oDrawing.x = 0;

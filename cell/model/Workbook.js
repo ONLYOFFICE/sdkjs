@@ -698,6 +698,42 @@
 			}
 			return names.sort(sort);
 		},
+		getDefinedNamesWS: function(type, sheetId) {
+			var names = [];
+
+			function getNames(defName) {
+				if (defName.ref && !defName.hidden && (defName.name.indexOf("_xlnm") < 0)) {
+					names.push(defName);
+				}
+			}
+
+			function sort(a, b) {
+				if (a.name > b.name) {
+					return 1;
+				} else if (a.name < b.name) {
+					return -1;
+				} else {
+					return 0;
+				}
+			}
+
+			switch (type) {
+				case c_oAscGetDefinedNamesList.Worksheet:
+					this._foreachDefNameSheet(sheetId, getNames);
+					break;
+				case c_oAscGetDefinedNamesList.WorksheetWorkbook:
+					this._foreachDefNameSheet(sheetId, getNames);
+					if (c_oAscGetDefinedNamesList.WorksheetWorkbook) {
+						this._foreachDefNameBook(getNames);
+					}
+					break;
+				case c_oAscGetDefinedNamesList.All:
+				default:
+					this._foreachDefName(getNames);
+					break;
+			}
+			return names.sort(sort);
+		},
 		addDefNameOpen: function(name, ref, sheetIndex, hidden, isTable) {
 			var sheetId = this.wb.getSheetIdByIndex(sheetIndex);
 			var isXLNM = null;
@@ -2404,6 +2440,12 @@
 	};
 	Workbook.prototype.getDefinedNamesWB = function (defNameListId, bLocale) {
 		return this.dependencyFormulas.getDefinedNamesWB(defNameListId, bLocale);
+	};
+	Workbook.prototype.getDefinedNamesWS = function (defNameListId, sheetId) {
+		return this.dependencyFormulas.getDefinedNamesWS(defNameListId, sheetId);
+	};
+	Workbook.prototype.addDefName = function (name, ref, sheetId, hidden, isTable) {
+		return this.dependencyFormulas.addDefName(name, ref, sheetId, hidden, isTable);
 	};
 	Workbook.prototype.getDefinesNames = function ( name, sheetId ) {
 		return this.dependencyFormulas.getDefNameByName( name, sheetId );
