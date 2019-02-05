@@ -698,7 +698,7 @@
 			}
 			return names.sort(sort);
 		},
-		getDefinedNamesWS: function(type, sheetId) {
+		getDefinedNamesWS: function(sheetId) {
 			var names = [];
 
 			function getNames(defName) {
@@ -717,21 +717,7 @@
 				}
 			}
 
-			switch (type) {
-				case c_oAscGetDefinedNamesList.Worksheet:
-					this._foreachDefNameSheet(sheetId, getNames);
-					break;
-				case c_oAscGetDefinedNamesList.WorksheetWorkbook:
-					this._foreachDefNameSheet(sheetId, getNames);
-					if (c_oAscGetDefinedNamesList.WorksheetWorkbook) {
-						this._foreachDefNameBook(getNames);
-					}
-					break;
-				case c_oAscGetDefinedNamesList.All:
-				default:
-					this._foreachDefName(getNames);
-					break;
-			}
+			this._foreachDefNameSheet(sheetId, getNames);
 			return names.sort(sort);
 		},
 		addDefNameOpen: function(name, ref, sheetIndex, hidden, isTable) {
@@ -2441,8 +2427,8 @@
 	Workbook.prototype.getDefinedNamesWB = function (defNameListId, bLocale) {
 		return this.dependencyFormulas.getDefinedNamesWB(defNameListId, bLocale);
 	};
-	Workbook.prototype.getDefinedNamesWS = function (defNameListId, sheetId) {
-		return this.dependencyFormulas.getDefinedNamesWS(defNameListId, sheetId);
+	Workbook.prototype.getDefinedNamesWS = function (sheetId) {
+		return this.dependencyFormulas.getDefinedNamesWS(sheetId);
 	};
 	Workbook.prototype.addDefName = function (name, ref, sheetId, hidden, isTable) {
 		return this.dependencyFormulas.addDefName(name, ref, sheetId, hidden, isTable);

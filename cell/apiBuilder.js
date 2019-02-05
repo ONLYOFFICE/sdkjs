@@ -324,51 +324,11 @@
 	 */
 	Api.prototype.Intersect  = function (Range1, Range2) {
 		if (Range1.Worksheet.Id === Range2.Worksheet.Id) {
-			var bb1 = {
-				a : {c : Range1.range.bbox.c1, r : Range1.range.bbox.r1},
-				b : {c : Range1.range.bbox.c2, r : Range1.range.bbox.r1},
-				c : {c : Range1.range.bbox.c2, r : Range1.range.bbox.r2},
-				d : {c : Range1.range.bbox.c1, r : Range1.range.bbox.r2}
-			};
-			var bb2 = {
-				e : {c : Range2.range.bbox.c1, r : Range2.range.bbox.r1},
-				f : {c : Range2.range.bbox.c2, r : Range2.range.bbox.r1},
-				g : {c : Range2.range.bbox.c2, r : Range2.range.bbox.r2},
-				h : {c : Range2.range.bbox.c1, r : Range2.range.bbox.r2}
-			};
-
-			if ( ((bb2.e.c >= bb1.a.c) && (bb2.e.c <= bb1.c.c)) && ((bb2.e.r >= bb1.a.r) && (bb2.e.r <= bb1.c.r)) ) {
-				if ( ((bb2.g.c >= bb1.a.c) && (bb2.g.c <= bb1.c.c)) && ((bb2.g.r >= bb1.a.r) && (bb2.g.r <= bb1.c.r)) ) {
-					return Range2;
-				} else if ( ((bb1.c.c >= bb2.e.c) && (bb1.c.c <= bb2.g.c)) && ((bb1.c.r >= bb2.e.r) && (bb1.c.r <= bb2.g.r))  ) {
-					return new ApiRange(this.ActiveSheet.worksheet.getRange3(bb2.e.r, bb2.e.c, bb1.c.r, bb1.c.c))
-				} else if ( ((bb2.f.c >= bb1.a.c) && (bb2.f.c <= bb1.c.c)) && ((bb2.f.r >= bb1.a.r) && (bb2.f.r <= bb1.c.r)) ) {
-					return new ApiRange(this.ActiveSheet.worksheet.getRange3(bb2.e.r, bb2.e.c, bb1.c.r, bb2.f.c))
-				}
-			} else if ( ((bb2.g.c >= bb1.a.c) && (bb2.g.c <= bb1.c.c)) && ((bb2.g.r >= bb1.a.r) && (bb2.g.r <= bb1.c.r)) ) {
-				if ( ((bb1.a.c >= bb2.e.c) && (bb1.a.c <= bb2.g.c)) && ((bb1.a.r >= bb2.e.r) && (bb1.a.r <= bb2.g.r)) ) {
-					return new ApiRange(this.ActiveSheet.worksheet.getRange3(bb1.a.r, bb1.a.c, bb2.g.r, bb2.g.c))
-				} else if ( ((bb2.f.c >= bb1.a.c) && (bb2.f.c <= bb1.c.c)) && ((bb2.f.r >= bb1.a.r) && (bb2.f.r <= bb1.c.r)) ) {
-					return new ApiRange(this.ActiveSheet.worksheet.getRange3(bb2.f.r, bb1.a.c, bb2.g.r, bb2.g.c))
-				} else if ( ((bb2.h.c >= bb1.a.c) && (bb2.h.c <= bb1.c.c)) && ((bb2.h.r >= bb1.a.r) && (bb2.h.r <= bb1.c.r)) ) {
-					return new ApiRange(this.ActiveSheet.worksheet.getRange3(bb1.a.r, bb2.h.c, bb2.g.r, bb2.g.c))
-				}
-			} else if ( ((bb1.d.c >= bb2.e.c) && (bb1.d.c <= bb2.g.c)) && ((bb1.d.r >= bb2.e.r) && (bb1.d.r <= bb2.g.r)) ) {
-				if ( (bb1.b.c >= bb2.e.c) && (bb1.b.c <= bb2.g.c) && ((bb1.b.r >= bb2.e.r) && (bb1.b.r <= bb2.g.r)) ) {
-					return Range1;
-				} else if ( ((bb2.f.c >= bb1.a.c) && (bb2.f.c <= bb1.c.c)) && ((bb2.f.r >= bb1.a.r) && (bb2.f.r <= bb1.c.r)) ) {
-					return new ApiRange(this.ActiveSheet.worksheet.getRange3(bb2.f.r, bb1.d.c, bb1.d.r, bb2.f.c))
-				} else if ( ((bb1.c.c >= bb2.e.c) && (bb1.c.c <= bb2.g.c)) && ((bb1.c.r >= bb2.e.r) && (bb1.c.r <= bb2.g.r)) ) {
-					return new ApiRange(this.ActiveSheet.worksheet.getRange3(bb2.e.r, bb1.d.c, bb1.c.r, bb1.c.c))
-				}
-			} else if ( ((bb1.b.c >= bb2.e.c) && (bb1.b.c <= bb2.g.c)) && ((bb1.b.r >= bb2.e.r) && (bb1.b.r <= bb2.g.r)) ) {
-				if ( ((bb2.h.c >= bb1.a.c) && (bb2.h.c <= bb1.c.c)) && ((bb2.h.r >= bb1.a.r) && (bb2.h.r <= bb1.c.r)) ) {
-					return new ApiRange(this.ActiveSheet.worksheet.getRange3(bb1.b.r, bb2.h.c, bb2.h.r, bb1.b.c));
-				} else if ( ((bb1.c.c >= bb2.e.c) && (bb1.c.c <= bb2.g.c)) && ((bb1.c.r >= bb2.e.r) && (bb1.c.r <= bb2.g.r)) ) {
-					return new ApiRange(this.ActiveSheet.worksheet.getRange3(bb1.b.r, bb2.e.c, bb1.c.r, bb1.c.c));
-				}
+			var res = Range1.range.bbox.intersection(Range2.range.bbox);
+			if (!res) {
+				return "Ranges do not intersect.";
 			} else {
-				console.log("Ranges do not intersect.");
+				return new ApiRange(this.ActiveSheet.worksheet.getRange3(res.r1, res.c1, res.r2, res.c2));
 			}
 		} else {
 			return new Error('Ranges should be from one worksheet.');
@@ -800,7 +760,7 @@
 	 * @returns {ApiName}
 	 */
 	ApiWorksheet.prototype.GetDefNames = function () {
-		var res =  this.worksheet.workbook.getDefinedNamesWS(Asc.c_oAscGetDefinedNamesList.WorksheetWorkbook, this.worksheet.getId());
+		var res =  this.worksheet.workbook.getDefinedNamesWS(this.worksheet.getId());
 		var name = [];
 		if (!res.length) {
 			return [new ApiName(undefined, this.worksheet.workbook)]
@@ -1824,7 +1784,7 @@
 	 * @memberof ApiRange
 	 */
 	ApiRange.prototype.GetWorksheet = function () {
-		return this.range.worksheet;
+		return new ApiWorksheet(this.range.worksheet);
 	};
 	Object.defineProperty(ApiRange.prototype, "Worksheet", {
 		get: function () {
