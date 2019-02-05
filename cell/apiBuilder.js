@@ -337,34 +337,34 @@
 				h : {c : Range2.range.bbox.c1, r : Range2.range.bbox.r2}
 			};
 
-			if ( ((bb2.e.c >= bb1.a.c) && (bb2.e.c <= bb1.c.c)) && ((bb2.e.r >= bb1.a.r) && (bb2.e.r <= bb1.c.r)) ) {	//есле левая верхняя 2 находится внутри 1
-				if ( ((bb2.g.c >= bb1.a.c) && (bb2.g.c <= bb1.c.c)) && ((bb2.g.r >= bb1.a.r) && (bb2.g.r <= bb1.c.r)) ) { //2 лежит внутри 1 -> пересечение = 2
+			if ( ((bb2.e.c >= bb1.a.c) && (bb2.e.c <= bb1.c.c)) && ((bb2.e.r >= bb1.a.r) && (bb2.e.r <= bb1.c.r)) ) {
+				if ( ((bb2.g.c >= bb1.a.c) && (bb2.g.c <= bb1.c.c)) && ((bb2.g.r >= bb1.a.r) && (bb2.g.r <= bb1.c.r)) ) {
 					return Range2;
-				} else if ( ((bb1.c.c >= bb2.e.c) && (bb1.c.c <= bb2.g.c)) && ((bb1.c.r >= bb2.e.r) && (bb1.c.r <= bb2.g.r))  ) { //область персечения между точками "е" и "с"
+				} else if ( ((bb1.c.c >= bb2.e.c) && (bb1.c.c <= bb2.g.c)) && ((bb1.c.r >= bb2.e.r) && (bb1.c.r <= bb2.g.r))  ) {
 					return new ApiRange(this.ActiveSheet.worksheet.getRange3(bb2.e.r, bb2.e.c, bb1.c.r, bb1.c.c))
-				} else if ( ((bb2.f.c >= bb1.a.c) && (bb2.f.c <= bb1.c.c)) && ((bb2.f.r >= bb1.a.r) && (bb2.f.r <= bb1.c.r)) ) { //левая верхняя и правая верхняя 2 лежат в 1
+				} else if ( ((bb2.f.c >= bb1.a.c) && (bb2.f.c <= bb1.c.c)) && ((bb2.f.r >= bb1.a.r) && (bb2.f.r <= bb1.c.r)) ) {
 					return new ApiRange(this.ActiveSheet.worksheet.getRange3(bb2.e.r, bb2.e.c, bb1.c.r, bb2.f.c))
 				}
-			} else if ( ((bb2.g.c >= bb1.a.c) && (bb2.g.c <= bb1.c.c)) && ((bb2.g.r >= bb1.a.r) && (bb2.g.r <= bb1.c.r)) ) { //правая нижняя 2 лежит в 1, а левая рерхняя нет
-				if ( ((bb1.a.c >= bb2.e.c) && (bb1.a.c <= bb2.g.c)) && ((bb1.a.r >= bb2.e.r) && (bb1.a.r <= bb2.g.r)) ) { //левая верхняя 1 лежит во 2, область пересечения между "a" и "g"
+			} else if ( ((bb2.g.c >= bb1.a.c) && (bb2.g.c <= bb1.c.c)) && ((bb2.g.r >= bb1.a.r) && (bb2.g.r <= bb1.c.r)) ) {
+				if ( ((bb1.a.c >= bb2.e.c) && (bb1.a.c <= bb2.g.c)) && ((bb1.a.r >= bb2.e.r) && (bb1.a.r <= bb2.g.r)) ) {
 					return new ApiRange(this.ActiveSheet.worksheet.getRange3(bb1.a.r, bb1.a.c, bb2.g.r, bb2.g.c))
-				} else if ( ((bb2.f.c >= bb1.a.c) && (bb2.f.c <= bb1.c.c)) && ((bb2.f.r >= bb1.a.r) && (bb2.f.r <= bb1.c.r)) ) { //верхняя и нижняя правые 2 лежат в 1
+				} else if ( ((bb2.f.c >= bb1.a.c) && (bb2.f.c <= bb1.c.c)) && ((bb2.f.r >= bb1.a.r) && (bb2.f.r <= bb1.c.r)) ) {
 					return new ApiRange(this.ActiveSheet.worksheet.getRange3(bb2.f.r, bb1.a.c, bb2.g.r, bb2.g.c))
-				} else if ( ((bb2.h.c >= bb1.a.c) && (bb2.h.c <= bb1.c.c)) && ((bb2.h.r >= bb1.a.r) && (bb2.h.r <= bb1.c.r)) ) { //левая нижняя и правая нижняя 2 лежат в 1
+				} else if ( ((bb2.h.c >= bb1.a.c) && (bb2.h.c <= bb1.c.c)) && ((bb2.h.r >= bb1.a.r) && (bb2.h.r <= bb1.c.r)) ) {
 					return new ApiRange(this.ActiveSheet.worksheet.getRange3(bb1.a.r, bb2.h.c, bb2.g.r, bb2.g.c))
 				}
-			} else if ( ((bb1.d.c >= bb2.e.c) && (bb1.d.c <= bb2.g.c)) && ((bb1.d.r >= bb2.e.r) && (bb1.d.r <= bb2.g.r)) ) { // левая нижняя 1 лежит в 2, а левая верхнаяя и правая нижняя 2 не лежат в 1
-				if ( (bb1.b.c >= bb2.e.c) && (bb1.b.c <= bb2.g.c) && ((bb1.b.r >= bb2.e.r) && (bb1.b.r <= bb2.g.r)) ) { //1 лежин внутри 2 -> пересечение = 1
+			} else if ( ((bb1.d.c >= bb2.e.c) && (bb1.d.c <= bb2.g.c)) && ((bb1.d.r >= bb2.e.r) && (bb1.d.r <= bb2.g.r)) ) {
+				if ( (bb1.b.c >= bb2.e.c) && (bb1.b.c <= bb2.g.c) && ((bb1.b.r >= bb2.e.r) && (bb1.b.r <= bb2.g.r)) ) {
 					return Range1;
-				} else if ( ((bb2.f.c >= bb1.a.c) && (bb2.f.c <= bb1.c.c)) && ((bb2.f.r >= bb1.a.r) && (bb2.f.r <= bb1.c.r)) ) { //левая нижняя 1 лежит в 2 и правая вержняя 2 лежит в 1 -> пкресенение между "d" и "f"
+				} else if ( ((bb2.f.c >= bb1.a.c) && (bb2.f.c <= bb1.c.c)) && ((bb2.f.r >= bb1.a.r) && (bb2.f.r <= bb1.c.r)) ) {
 					return new ApiRange(this.ActiveSheet.worksheet.getRange3(bb2.f.r, bb1.d.c, bb1.d.r, bb2.f.c))
-				} else if ( ((bb1.c.c >= bb2.e.c) && (bb1.c.c <= bb2.g.c)) && ((bb1.c.r >= bb2.e.r) && (bb1.c.r <= bb2.g.r)) ) { //левая и правая нижние 1 лежат в 2
+				} else if ( ((bb1.c.c >= bb2.e.c) && (bb1.c.c <= bb2.g.c)) && ((bb1.c.r >= bb2.e.r) && (bb1.c.r <= bb2.g.r)) ) {
 					return new ApiRange(this.ActiveSheet.worksheet.getRange3(bb2.e.r, bb1.d.c, bb1.c.r, bb1.c.c))
 				}
-			} else if ( ((bb1.b.c >= bb2.e.c) && (bb1.b.c <= bb2.g.c)) && ((bb1.b.r >= bb2.e.r) && (bb1.b.r <= bb2.g.r)) ) { // правая верхняя 1 лежит в 2, а лев верх 2 не в 1 и прав ниж 2 не в 1 и лев ниж 1 не в 2
-				if ( ((bb2.h.c >= bb1.a.c) && (bb2.h.c <= bb1.c.c)) && ((bb2.h.r >= bb1.a.r) && (bb2.h.r <= bb1.c.r)) ) { //лев ниж 2 в 1 => пересенчение между "h" и "b"
+			} else if ( ((bb1.b.c >= bb2.e.c) && (bb1.b.c <= bb2.g.c)) && ((bb1.b.r >= bb2.e.r) && (bb1.b.r <= bb2.g.r)) ) {
+				if ( ((bb2.h.c >= bb1.a.c) && (bb2.h.c <= bb1.c.c)) && ((bb2.h.r >= bb1.a.r) && (bb2.h.r <= bb1.c.r)) ) {
 					return new ApiRange(this.ActiveSheet.worksheet.getRange3(bb1.b.r, bb2.h.c, bb2.h.r, bb1.b.c));
-				} else if ( ((bb1.c.c >= bb2.e.c) && (bb1.c.c <= bb2.g.c)) && ((bb1.c.r >= bb2.e.r) && (bb1.c.r <= bb2.g.r)) ) { // верхняя и нижняя правые 1 лежат в 2
+				} else if ( ((bb1.c.c >= bb2.e.c) && (bb1.c.c <= bb2.g.c)) && ((bb1.c.r >= bb2.e.r) && (bb1.c.r <= bb2.g.r)) ) {
 					return new ApiRange(this.ActiveSheet.worksheet.getRange3(bb1.b.r, bb2.e.c, bb1.c.r, bb1.c.c));
 				}
 			} else {
@@ -2272,7 +2272,7 @@
 	/**
 	 * Sets a String value representing the name of the object.
 	 * @typeofeditors ["CSE"]
-	 * @param {string} Name
+	 * @param {string} Name	// new name for range
 	 * @memberof ApiName
 	 * @returns {Error}
 	 */
@@ -2318,11 +2318,11 @@
 		var wb = (this.DefName) ? this.DefName.wb : this.wb;
 		var res = wb.checkDefName(name);
 		if (!res.status) {
-			return new Error('Invalid name.'); // invalid name
+			return new Error('Invalid name.');
 		}
-		var res = wb.oApi.asc_checkDataRange(Asc.c_oAscSelectionDialogType.Chart, ref, false);
+		res = wb.oApi.asc_checkDataRange(Asc.c_oAscSelectionDialogType.Chart, ref, false);
 		if (res === Asc.c_oAscError.ID.DataRangeError) {
-			return new Error('Invalid range.'); // invalid range
+			return new Error('Invalid range.');
 		}
 		if (sheetId) {
 			sheetId = (wb.getWorksheetById(sheetId)) ? sheetId : undefined;
@@ -2333,7 +2333,7 @@
 	/**
 	 * Sets the formula that the name is defined to refer to.
 	 * @typeofeditors ["CSE"]
-	 * @param {string} Ref
+	 * @param {string} Ref	// new refers to defined name
 	 * @memberof ApiName
 	 */
 	ApiName.prototype.SetRefersTo = function (Ref) {
