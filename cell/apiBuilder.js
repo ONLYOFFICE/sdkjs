@@ -765,8 +765,8 @@
 		if (!res.length) {
 			return [new ApiName(undefined, this.worksheet.workbook)]
 		}
-		for (var key in res) {
-			name.push(new ApiName(res[key]));
+		for (var i = 0; i < res.length; i++) {
+			name.push(new ApiName(res[i]));
 		}
 		return name;
 	};

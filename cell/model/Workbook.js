@@ -702,23 +702,13 @@
 			var names = [];
 
 			function getNames(defName) {
-				if (defName.ref && !defName.hidden && (defName.name.indexOf("_xlnm") < 0)) {
+				if (defName.ref) {
 					names.push(defName);
 				}
 			}
 
-			function sort(a, b) {
-				if (a.name > b.name) {
-					return 1;
-				} else if (a.name < b.name) {
-					return -1;
-				} else {
-					return 0;
-				}
-			}
-
 			this._foreachDefNameSheet(sheetId, getNames);
-			return names.sort(sort);
+			return names;
 		},
 		addDefNameOpen: function(name, ref, sheetIndex, hidden, isTable) {
 			var sheetId = this.wb.getSheetIdByIndex(sheetIndex);
