@@ -5,7 +5,7 @@ language: node_js
 node_js:
   - '6'
 before_script:
-  - git clone -b develop https://github.com/ONLYOFFICE/web-apps.git ../web-apps
+  - git clone -b develop https://github.com/ONLYOFFICE/web-apps-pro.git ../web-apps-pro
 jobs:
   include:
     - stage: SonarQube Scanner
