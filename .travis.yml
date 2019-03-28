@@ -5,7 +5,9 @@ language: node_js
 node_js:
   - '6'
 before_script:
+  - export BRANCH=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
   - git clone -b develop https://github.com/ONLYOFFICE/web-apps-pro.git ../web-apps-pro
+  - cd ../web-apps-pro && git checkout -B $BRANCH
 jobs:
   include:
     - stage: SonarQube Scanner
@@ -24,7 +26,9 @@ jobs:
         - npm install --prefix build
         - grunt --level=WHITESPACE_ONLY --base build --gruntfile build/Gruntfile.js
         - docker pull onlyofficetestingrobot/doc-builder-testing:develop-latest
-        - travis_wait 30 docker run -v $PWD:/opt/onlyoffice/documentbuilder/sdkjs
+        - travis_wait 30 docker run -v $PWD/word:/opt/onlyoffice/documentbuilder/sdkjs/word
+                                    -v $PWD/cell:/opt/onlyoffice/documentbuilder/sdkjs/cell
+                                    -v $PWD/slide:/opt/onlyoffice/documentbuilder/sdkjs/slide
                                     onlyofficetestingrobot/doc-builder-testing:develop-latest
   allow_failures:
     - stage: SonarQube Scanner                                    
