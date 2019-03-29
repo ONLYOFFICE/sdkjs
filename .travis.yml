@@ -3,7 +3,7 @@ services:
   - docker
 language: node_js
 node_js:
-  - '6'
+  - '8'
 before_script:
   - export BRANCH=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
   - git clone -b develop https://github.com/ONLYOFFICE/web-apps-pro.git ../web-apps-pro
