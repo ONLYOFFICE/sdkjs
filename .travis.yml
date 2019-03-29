@@ -9,6 +9,7 @@ before_script:
   - echo "Project branch $BRANCH"
   - git clone -b develop https://github.com/ONLYOFFICE/web-apps-pro.git ../web-apps-pro
   - cd ../web-apps-pro && git checkout -B $BRANCH
+  - git checkout release/v5.3.0 # TEMP
 jobs:
   include:
     - stage: SonarQube Scanner
