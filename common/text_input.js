@@ -238,10 +238,22 @@
                     else
                         oThis.IsDisableKeyPress = false;
                 }
+				if (AscCommon.AscBrowser.isSafari
+					&& AscCommon.AscBrowser.isMobile
+					&& e.key !== "Backspace"
+					&& e.key !== "Enter") {
+					return;
+				}
 				return oThis.onKeyDown(e);
 			};
 			this.HtmlArea["onkeypress"] = function(e)
 			{
+				if (AscCommon.AscBrowser.isSafari
+					&& AscCommon.AscBrowser.isMobile
+					&& e.key !== "Backspace"
+					&& e.key !== "Enter") {
+					return;
+				}
 			    if (oThis.IsDisableKeyPress == true)
 			    {
 			        // macOS Sierra send keypress before copy event
@@ -254,6 +266,12 @@
 			};
 			this.HtmlArea["onkeyup"]    = function(e)
 			{
+				if (AscCommon.AscBrowser.isSafari
+					&& AscCommon.AscBrowser.isMobile
+					&& e.key !== "Backspace"
+					&& e.key !== "Enter") {
+					return;
+				}
 			    oThis.IsDisableKeyPress = false;
 				return oThis.onKeyUp(e);
 			};
