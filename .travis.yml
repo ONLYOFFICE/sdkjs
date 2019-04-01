@@ -11,6 +11,8 @@ before_script:
   - cd ../web-apps-pro && git checkout -B $BRANCH && cd -
 jobs:
   include:
+    - stage: Check all files contains Copyright
+      script: grep -L -R --include='*.js' 'Copyright Ascensio System'
     - stage: SonarQube Scanner
       if: branch = develop
       script:
