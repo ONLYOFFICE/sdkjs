@@ -12,7 +12,7 @@ before_script:
 jobs:
   include:
     - stage: Check all files contains Copyright
-      script: "! grep -L -R --include='*.js' 'Copyright Ascensio System'"
+      script: "! grep -L -R --include='*.js' --exclude-dir={/\*vendor,externs/\*} 'Copyright Ascensio System'"
     - stage: SonarQube Scanner
       if: branch = develop
       script:
