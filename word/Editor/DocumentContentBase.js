@@ -1571,6 +1571,10 @@ CDocumentContentBase.prototype.private_UpdateSelectionPosOnRemove = function(nPo
 			this.Selection.EndPos   = 0;
 		}
 	}
+
+	this.Selection.StartPos = Math.max(0, Math.min(this.Content.length - 1, this.Selection.StartPos));
+	this.Selection.EndPos   = Math.max(0, Math.min(this.Content.length - 1, this.Selection.EndPos));
+	this.CurPos.ContentPos  = Math.max(0, Math.min(this.Content.length - 1, this.CurPos.ContentPos));
 };
 /**
  * Соединяем параграф со следующим в заданной позиции

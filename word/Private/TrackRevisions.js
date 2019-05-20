@@ -823,15 +823,19 @@ CDocumentContentBase.prototype.private_AcceptRevisionChanges = function(nType, b
 			EndPos   = this.Selection.StartPos;
 		}
 
-		var LastElement = this.Content[EndPos];
-		var LastParaEnd = (!LastElement.IsParagraph() || true === LastElement.Selection_CheckParaEnd());
-
+		var LastParaEnd;
 		if (true === bAll)
 		{
 			StartPos    = 0;
 			EndPos      = this.Content.length - 1;
 			LastParaEnd = true;
 		}
+		else
+		{
+			var LastElement = this.Content[EndPos];
+			LastParaEnd = (!LastElement.IsParagraph() || true === LastElement.Selection_CheckParaEnd());
+		}
+
 
 		if (undefined === nType || c_oAscRevisionsChangeType.ParaPr === nType)
 		{
@@ -921,14 +925,17 @@ CDocumentContentBase.prototype.private_RejectRevisionChanges = function(nType, b
 			EndPos   = this.Selection.StartPos;
 		}
 
-		var LastElement = this.Content[EndPos];
-		var LastParaEnd = (!LastElement.IsParagraph() || true === LastElement.Selection_CheckParaEnd());
-
+		var LastParaEnd;
 		if (true === bAll)
 		{
 			StartPos    = 0;
 			EndPos      = this.Content.length - 1;
 			LastParaEnd = true;
+		}
+		else
+		{
+			var LastElement = this.Content[EndPos];
+			LastParaEnd = (!LastElement.IsParagraph() || true === LastElement.Selection_CheckParaEnd());
 		}
 
 		if (undefined === nType || c_oAscRevisionsChangeType.ParaPr === nType)
