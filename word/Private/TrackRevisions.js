@@ -842,7 +842,7 @@ CDocumentContentBase.prototype.private_AcceptRevisionChanges = function(nType, b
 			for (var CurPos = StartPos; CurPos <= EndPos; CurPos++)
 			{
 				var Element = this.Content[CurPos];
-				if (type_Paragraph === Element.Get_Type() && (true === Element.IsSelectedAll() || true == bAll) && true === Element.HavePrChange())
+				if (type_Paragraph === Element.Get_Type() && (true === bAll || true === Element.IsSelectedAll()) && true === Element.HavePrChange())
 				{
 					Element.AcceptPrChange();
 				}
@@ -943,7 +943,7 @@ CDocumentContentBase.prototype.private_RejectRevisionChanges = function(nType, b
 			for (var CurPos = StartPos; CurPos <= EndPos; CurPos++)
 			{
 				var Element = this.Content[CurPos];
-				if (type_Paragraph === Element.Get_Type() && (true === Element.IsSelectedAll() || true === bAll) && true === Element.HavePrChange())
+				if (type_Paragraph === Element.Get_Type() && (true === bAll || true === Element.IsSelectedAll()) && true === Element.HavePrChange())
 				{
 					Element.RejectPrChange();
 				}
