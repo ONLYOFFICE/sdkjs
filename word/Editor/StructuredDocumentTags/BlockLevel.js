@@ -115,6 +115,8 @@ CBlockLevelSdt.prototype.Reset = function(X, Y, XLimit, YLimit, PageAbs, ColumnA
 };
 CBlockLevelSdt.prototype.Recalculate_Page = function(CurPage)
 {
+	this.SetIsRecalculated(true);
+
 	this.Content.RecalcInfo = this.Parent.RecalcInfo;
 
 	var RecalcResult = this.Content.Recalculate_Page(CurPage, true);
@@ -784,6 +786,9 @@ CBlockLevelSdt.prototype.GetSelectionAnchorPos = function()
 };
 CBlockLevelSdt.prototype.DrawContentControlsTrack = function(isHover)
 {
+	if (!this.IsRecalculated())
+		return;
+
 	var oDrawingDocument = this.LogicDocument.Get_DrawingDocument();
 	var arrRects = [];
 
