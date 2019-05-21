@@ -313,7 +313,7 @@
 				if (AscCommon.c_oAscClipboardDataFormat.Html & _formats) {
 					_data = this.copyProcessor.getHtml(activeRange, ws);
 
-					if (null !== _data) {
+					if (null !== _data && "" !== _data.html) {
 						_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, _data.html)
 					}
 				}
@@ -567,6 +567,10 @@
 					isIntoShape.GetSelectedContent(selectedContent);
 				}, this, []);
 
+
+				if(!selectedContent || !selectedContent.Elements || !selectedContent.Elements.length) {
+					return null;
+				}
 
 				var oPresentationWriter = new AscCommon.CBinaryFileWriter();
 
@@ -1018,13 +1022,16 @@
 			},
 
 			_getTextFromShape: function (documentContent) {
-				var res = "";
+				var res = null;
 
 				if (documentContent && documentContent.Content && documentContent.Content.length) {
 					for (var i = 0; i < documentContent.Content.length; i++) {
 						if (documentContent.Content[i]) {
 							var paraText = documentContent.Content[i].GetSelectedText();
 							if (paraText) {
+								if(null === res) {
+									res = "";
+								}
 								if (i !== 0) {
 									res += '\r\n';
 								}

@@ -8077,6 +8077,11 @@ CDocumentContent.prototype.GetAllFields = function(isUseSelection, arrFields)
 
 	return arrFields;
 };
+CDocumentContent.prototype.SetIsRecalculated = function(isRecalculated)
+{
+	if (this.Parent && this.Parent.SetIsRecalculated)
+		this.Parent.SetIsRecalculated(isRecalculated);
+};
 
 function CDocumentContentStartState(DocContent)
 {

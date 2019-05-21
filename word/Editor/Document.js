@@ -10421,6 +10421,8 @@ CDocument.prototype.GetSelectionState = function()
 };
 CDocument.prototype.SetSelectionState = function(State)
 {
+	this.RemoveSelection();
+
 	if (docpostype_DrawingObjects === this.GetDocPosType())
 		this.DrawingObjects.resetSelection();
 

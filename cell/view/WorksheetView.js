@@ -12809,6 +12809,11 @@
 
     WorksheetView.prototype._updateRange = function (range, skipHeight) {
 		this._cleanCache(range);
+		if (c_oAscSelectionType.RangeMax === range.getType()) {
+			// ToDo refactoring. Clean this only delete/insert/update info rows/column
+			this.rows = [];
+			this.cols = [];
+		}
 		if (skipHeight) {
 			this.arrRecalcRanges.push(range);
 		} else {
