@@ -646,23 +646,24 @@ CTable.prototype.Document_Is_SelectionLocked = function(CheckType, bCheckInner)
         case AscCommon.changestype_Delete:
         case AscCommon.changestype_Image_Properties:
         {
-            if ( true === this.ApplyToAll || (true === this.Selection.Use && table_Selection_Cell === this.Selection.Type) )
-            {
-                var Cells_array = this.Internal_Get_SelectionArray();
+			if (this.IsCellSelection())
+			{
+				var arrCells = this.GetSelectionArray();
+				var Count = arrCells.length;
+				for (var Index = 0; Index < Count; Index++)
+				{
+					var Pos  = arrCells[Index];
+					var Cell = this.Content[Pos.Row].Get_Cell(Pos.Cell);
 
-                var Count = Cells_array.length;
-                for ( var Index = 0; Index < Count; Index++ )
-                {
-                    var Pos  = Cells_array[Index];
-                    var Cell = this.Content[Pos.Row].Get_Cell( Pos.Cell );
-
-                    Cell.Content.Set_ApplyToAll( true );
-                    Cell.Content.Document_Is_SelectionLocked( CheckType );
-                    Cell.Content.Set_ApplyToAll( false );
-                }
-            }
-            else
-                this.CurCell.Content.Document_Is_SelectionLocked( CheckType );
+					Cell.Content.Set_ApplyToAll(true);
+					Cell.Content.Document_Is_SelectionLocked(CheckType);
+					Cell.Content.Set_ApplyToAll(false);
+				}
+			}
+			else if (this.CurCell)
+			{
+				this.CurCell.Content.Document_Is_SelectionLocked(CheckType);
+			}
 
             bCheckContentControl = true;
             break;
