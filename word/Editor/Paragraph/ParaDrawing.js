@@ -151,8 +151,6 @@ function ParaDrawing(W, H, GraphicObj, DrawingDocument, DocumentContent, Parent)
 
 	// Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
 	//--------------------------------------------------------
-	this.selectX      = 0;
-	this.selectY      = 0;
 	this.wrappingType = WRAPPING_TYPE_THROUGH;
 	this.useWrap      = true;
 
@@ -1301,8 +1299,6 @@ ParaDrawing.prototype.updatePosition3 = function(pageIndex, x, y, oldPageNum)
 	if (this.GraphicObj.bNeedUpdatePosition || !(AscFormat.isRealNumber(this.wrappingPolygon.posX) && AscFormat.isRealNumber(this.wrappingPolygon.posY)) || !(Math.abs(this.wrappingPolygon.posX - _x) < MOVE_DELTA && Math.abs(this.wrappingPolygon.posY - _y) < MOVE_DELTA))
 		this.wrappingPolygon.updatePosition(_x, _y);
 
-    this.selectX = this.GraphicObj.bounds.l + _x;
-    this.selectY = this.GraphicObj.bounds.t + _y;
 	this.calculateSnapArrays();
 };
 ParaDrawing.prototype.calculateAfterChangeTheme = function()
@@ -1466,7 +1462,20 @@ ParaDrawing.prototype.Use_TextWrap = function()
 ParaDrawing.prototype.Draw_Selection = function()
 {
 	var Padding = this.DrawingDocument.GetMMPerDot(6);
-	this.DrawingDocument.AddPageSelection(this.PageNum, this.selectX - Padding, this.selectY - Padding, this.Width + 2 * Padding, this.Height + 2 * Padding);
+	var extX = this.getXfrmExtX();
+	var extY = this.getXfrmExtY();
+	var rot = this.getXfrmRot();
+	var X, Y, W, H;
+	if(AscFormat.checkNormalRotate(rot))
+	{
+		this.DrawingDocument.AddPageSelection(this.PageNum, this.X - this.EffectExtent.L - Padding, this.Y - this.EffectExtent.T - Padding, this.EffectExtent.L + extX + this.EffectExtent.R + 2 * Padding, this.EffectExtent.T + extY + this.EffectExtent.B + 2 * Padding);
+	}
+	else
+	{
+
+		this.DrawingDocument.AddPageSelection(this.PageNum, this.X + extX / 2.0 - extY / 2.0 - this.EffectExtent.L - Padding, this.Y + extY / 2.0 - extX / 2.0 - this.EffectExtent.T - Padding, this.EffectExtent.L + extY + this.EffectExtent.R + 2 * Padding, this.EffectExtent.T + extX + this.EffectExtent.B + 2 * Padding);
+	}
+
 };
 ParaDrawing.prototype.OnEnd_MoveInline = function(NearPos)
 {
