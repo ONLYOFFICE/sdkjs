@@ -1752,6 +1752,16 @@ ParaDrawing.prototype.Refresh_RecalcData = function(Data)
 		return this.Parent.Refresh_RecalcData2();
 	}
 };
+
+
+ParaDrawing.prototype.Refresh_RecalcData2 = function(Data)
+{
+
+	if(this.Parent && this.Parent.Refresh_RecalcData2)
+	{
+		return this.Parent.Refresh_RecalcData2(this.PageNum);
+	}
+};
 //----------------------------------------------------------------------------------------------------------------------
 // Функции для совместного редактирования
 //----------------------------------------------------------------------------------------------------------------------

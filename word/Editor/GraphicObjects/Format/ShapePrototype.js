@@ -722,6 +722,22 @@ CShape.prototype.Refresh_RecalcData2 = function()
     var HdrFtr = this.IsHdrFtr(true);
     if (HdrFtr)
         HdrFtr.Refresh_RecalcData2();
+    else
+    {
+        if(!this.group)
+        {
+            if(isRealObject(this.parent) && this.parent.Refresh_RecalcData2)
+                this.parent.Refresh_RecalcData2({Type: AscDFH.historyitem_Drawing_SetExtent});
+        }
+        else
+        {
+            var cur_group = this.group;
+            while(cur_group.group)
+                cur_group = cur_group.group;
+            if(isRealObject(cur_group.parent) && cur_group.parent.Refresh_RecalcData2)
+                cur_group.parent.Refresh_RecalcData2({Type: AscDFH.historyitem_Drawing_SetExtent});
+        }
+    }
 };
 
 CShape.prototype.Get_StartPage_Absolute = function()
