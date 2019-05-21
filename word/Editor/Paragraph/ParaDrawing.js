@@ -895,8 +895,8 @@ ParaDrawing.prototype.CheckWH = function()
 	var EEL = 0.0, EET = 0.0, EER = 0.0, EEB = 0.0;
 	//if(this.Is_Inline())
 	{
-		var xc          = this.GraphicObj.localTransform.TransformPointX(this.GraphicObj.extX / 2, this.GraphicObj.extY / 2);
-		var yc          = this.GraphicObj.localTransform.TransformPointY(this.GraphicObj.extX / 2, this.GraphicObj.extY / 2);
+		var xc          = this.GraphicObj.localTransform.TransformPointX(this.GraphicObj.extX / 2.0, this.GraphicObj.extY / 2.0);
+		var yc          = this.GraphicObj.localTransform.TransformPointY(this.GraphicObj.extX / 2.0, this.GraphicObj.extY / 2.0);
 		var oBounds     = this.GraphicObj.bounds;
 		var LineCorrect = 0;
 		if (this.GraphicObj.pen && this.GraphicObj.pen.Fill && this.GraphicObj.pen.Fill.fill)
@@ -913,9 +913,9 @@ ParaDrawing.prototype.CheckWH = function()
 
 		var startX, startY;
 		if(!AscFormat.checkNormalRotate(rot)){
-			var t = extX;
+			var t1 = extX;
 			extX = extY;
-			extY = t;
+			extY = t1;
 		}
 
 
@@ -1181,6 +1181,12 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 	this.Internal_Position.Set(this.getXfrmExtX(), this.getXfrmExtY(), this.getXfrmRot(), this.GraphicObj.bounds, this.EffectExtent, this.YOffset, ParaLayout, PageLimits);
 	this.Internal_Position.Calculate_X(bInline, this.PositionH.RelativeFrom, this.PositionH.Align, this.PositionH.Value, this.PositionH.Percent);
 	this.Internal_Position.Calculate_Y(bInline, this.PositionV.RelativeFrom, this.PositionV.Align, this.PositionV.Value, this.PositionV.Percent);
+	this.GraphicObj.bounds.l += this.Internal_Position.CalcX;
+	this.GraphicObj.bounds.r += this.Internal_Position.CalcX;
+	this.GraphicObj.bounds.x += this.Internal_Position.CalcX;
+	this.GraphicObj.bounds.y += this.Internal_Position.CalcY;
+	this.GraphicObj.bounds.t += this.Internal_Position.CalcY;
+	this.GraphicObj.bounds.b += this.Internal_Position.CalcY;
 	this.Internal_Position.Correct_Values(bInline, PageLimits, this.AllowOverlap, this.Use_TextWrap(), OtherFlowObjects);
 
 	var OldPageNum = this.PageNum;
@@ -2822,7 +2828,7 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 					}
 				}
 				else
-					this.CalcX = this.ColumnStartX + Shift + Value;
+					this.CalcX = this.ColumnStartX + Value;
 
 				break;
 			}
@@ -3190,7 +3196,7 @@ CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, 
 				if (true === bAlign)
 					this.CalcY = _Y + Shift;
 				else
-					this.CalcY = _Y + Value + Shift;
+					this.CalcY = _Y + Value;
 
 				break;
 			}
