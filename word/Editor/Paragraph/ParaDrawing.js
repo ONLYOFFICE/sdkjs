@@ -695,7 +695,7 @@ ParaDrawing.prototype.SetSizeRelV  = function(oSize)
 };
 ParaDrawing.prototype.getXfrmExtX = function()
 {
-	if (isRealObject(this.GraphicObj) && isRealObject(this.GraphicObj.spPr) && isRealObject(this.GraphicObj.spPr.xfrm))
+	if (isRealObject(this.GraphicObj) && isRealObject(this.GraphicObj.spPr) && isRealObject(this.GraphicObj.spPr.xfrm) && AscFormat.isRealNumber(this.GraphicObj.spPr.xfrm.extX))
 		return this.GraphicObj.spPr.xfrm.extX;
 	if (AscFormat.isRealNumber(this.Extent.W))
 		return this.Extent.W;
@@ -703,15 +703,20 @@ ParaDrawing.prototype.getXfrmExtX = function()
 };
 ParaDrawing.prototype.getXfrmExtY = function()
 {
-	if (isRealObject(this.GraphicObj) && isRealObject(this.GraphicObj.spPr) && isRealObject(this.GraphicObj.spPr.xfrm))
+	if (isRealObject(this.GraphicObj) && isRealObject(this.GraphicObj.spPr) && isRealObject(this.GraphicObj.spPr.xfrm) && AscFormat.isRealNumber(this.GraphicObj.spPr.xfrm.extY))
 		return this.GraphicObj.spPr.xfrm.extY;
 	if (AscFormat.isRealNumber(this.Extent.H))
 		return this.Extent.H;
 	return 0;
 };
+ParaDrawing.prototype.getXfrmRot = function()
+{
+	if (isRealObject(this.GraphicObj) && isRealObject(this.GraphicObj.spPr) && isRealObject(this.GraphicObj.spPr.xfrm) && AscFormat.isRealNumber(this.GraphicObj.spPr.xfrm.rot))
+		return this.GraphicObj.spPr.xfrm.rot;
+	return 0;
+};
 ParaDrawing.prototype.Get_Bounds = function()
 {
-	var oCorrection = this.GetPosCorrection();
 	var InsL, InsT, InsR, InsB;
 	InsL = 0.0;
 	InsT = 0.0;
@@ -728,7 +733,7 @@ ParaDrawing.prototype.Get_Bounds = function()
 			InsB = oDistance.B;
 		}
 	}
-    return {Left : this.X + oCorrection.DiffX - InsL, Top : this.Y - oCorrection.DiffY - InsT, Bottom : this.Y + this.GraphicObj.bounds.h + this.EffectExtent.B +  InsB, Right : this.X  + this.GraphicObj.bounds.w + this.EffectExtent.R  + InsR};
+    return {Left : this.X - InsL, Top : this.Y - InsT, Bottom : this.Y + this.GraphicObj.bounds.h + this.EffectExtent.B +  InsB, Right : this.X + this.GraphicObj.bounds.w + this.EffectExtent.R + InsR};
 };
 ParaDrawing.prototype.Search = function(Str, Props, SearchEngine, Type)
 {
@@ -1175,25 +1180,7 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 
 	var OtherFlowObjects = editor.WordControl.m_oLogicDocument.DrawingObjects.getAllFloatObjectsOnPage(PageNum, this.Parent.Parent);
 	var bInline          = this.Is_Inline();
-	var W, H;
-	if (bInline)
-	{
-		W = this.GraphicObj.bounds.w;
-		H = this.GraphicObj.bounds.h;
-	}
-	else
-	{
-		if (this.PositionH.Align)
-			W = this.GraphicObj.bounds.w;
-		else
-			W = this.getXfrmExtX();
-
-		if (this.PositionV.Align)
-			H = this.GraphicObj.bounds.h;
-		else
-			H = this.getXfrmExtY();
-	}
-	this.Internal_Position.Set(W, H, this.YOffset, ParaLayout, PageLimitsOrigin, this.GraphicObj.bounds.l, this.GraphicObj.bounds.t, this.GraphicObj.bounds.w, this.GraphicObj.bounds.h);
+	this.Internal_Position.Set(this.getXfrmExtX(), this.getXfrmExtY(), this.getXfrmRot(), this.GraphicObj.bounds, this.EffectExtent, this.YOffset, ParaLayout, PageLimits);
 	this.Internal_Position.Calculate_X(bInline, this.PositionH.RelativeFrom, this.PositionH.Align, this.PositionH.Value, this.PositionH.Percent);
 	this.Internal_Position.Calculate_Y(bInline, this.PositionV.RelativeFrom, this.PositionV.Align, this.PositionV.Value, this.PositionV.Percent);
 	this.Internal_Position.Correct_Values(bInline, PageLimits, this.AllowOverlap, this.Use_TextWrap(), OtherFlowObjects);
@@ -1282,77 +1269,9 @@ ParaDrawing.prototype.deselect = function()
 		this.GraphicObj.deselect();
 };
 
-ParaDrawing.prototype.GetPosCorrection = function()
-{
-
-	var DiffX = 0.0, DiffY = 0.0;
-	var bCell;
-
-	var oEffectExtent = this.EffectExtent;
-	if(this.Is_Inline() || this.PositionH.Align || this.PositionV.Align || (bCell = (this.Use_TextWrap() && this.IsLayoutInCell() && this.DocumentContent && this.DocumentContent.IsTableCellContent(false))))
-	{
-		var extX, extY, rot;
-		if (this.GraphicObj.spPr && this.GraphicObj.spPr.xfrm )
-		{
-			if(AscFormat.isRealNumber(this.GraphicObj.spPr.xfrm.extX) && AscFormat.isRealNumber(this.GraphicObj.spPr.xfrm.extY))
-			{
-				extX = this.GraphicObj.spPr.xfrm.extX;
-				extY = this.GraphicObj.spPr.xfrm.extY;
-			}
-			else
-			{
-				extX = 5;
-				extY = 5;
-			}
-			if(AscFormat.isRealNumber(this.GraphicObj.spPr.xfrm.rot))
-			{
-				rot = this.GraphicObj.spPr.xfrm.rot;
-			}
-			else
-			{
-				rot = 0;
-			}
-		}
-		else
-		{
-			extX = 5;
-			extY = 5;
-			rot = 0;
-		}
-		var xc          = this.GraphicObj.localTransform.TransformPointX(extX / 2, extY / 2);
-		var yc          = this.GraphicObj.localTransform.TransformPointY(extX / 2, extY / 2);
-		var oBounds     = this.GraphicObj.bounds;
-		if(!AscFormat.checkNormalRotate(rot)){
-			var t = extX;
-			extX = extY;
-			extY = t;
-		}
-		if(this.PositionH.Align)
-		{
-			DiffX = AscFormat.getValOrDefault(oEffectExtent.L, 0.0);
-		}
-		else if(bCell || this.Is_Inline())
-		{
-			DiffX = AscFormat.getValOrDefault(oEffectExtent.L, 0.0) - (xc - extX / 2) + oBounds.l;
-		}
-		if(this.PositionV.Align)
-		{
-			DiffY = AscFormat.getValOrDefault(oEffectExtent.T, 0.0);
-		}
-		else if(/*bCell ||*/ this.Is_Inline())
-		{
-			DiffY = AscFormat.getValOrDefault(oEffectExtent.T, 0.0) - (yc - extY / 2) + oBounds.t;
-		}
-	}
-	return {DiffX: DiffX, DiffY: DiffY, ExtX: extX, ExtY: extY, Rot: rot};
-};
-
 ParaDrawing.prototype.updatePosition3 = function(pageIndex, x, y, oldPageNum)
 {
 	var _x = x, _y = y;
-	var oPosCorrection = this.GetPosCorrection();
-	_x += oPosCorrection.DiffX;
-	_y -= oPosCorrection.DiffY;
 
 	this.graphicObjects.removeById(pageIndex, this.Get_Id());
 	if (AscFormat.isRealNumber(oldPageNum))
@@ -1498,10 +1417,7 @@ ParaDrawing.prototype.private_SetXYByLayout = function(X, Y, PageNum, Layout, bC
 {
 	this.PageNum = PageNum;
 
-	var _W = (this.PositionH.Align ? this.Extent.W : this.getXfrmExtX() );
-	var _H = (this.PositionV.Align ? this.Extent.H : this.getXfrmExtY() );
-
-	this.Internal_Position.Set(_W, _H, this.YOffset, Layout.ParagraphLayout, Layout.PageLimitsOrigin, this.GraphicObj.bounds.l, this.GraphicObj.bounds.t, this.GraphicObj.bounds.w, this.GraphicObj.bounds.h);
+	this.Internal_Position.Set(this.getXfrmExtX(), this.getXfrmExtY(), this.getXfrmRot(), this.GraphicObj.bounds, this.EffectExtent, this.YOffset, Layout.ParagraphLayout, Layout.PageLimitsOrigin);
 	this.Internal_Position.Calculate_X(false, c_oAscRelativeFromH.Page, false, X - Layout.PageLimitsOrigin.X, false);
 	this.Internal_Position.Calculate_Y(false, c_oAscRelativeFromV.Page, false, Y - Layout.PageLimitsOrigin.Y, false);
 	this.Internal_Position.Correct_Values(false, Layout.PageLimits, this.AllowOverlap, this.Use_TextWrap(), []);
@@ -2775,14 +2691,19 @@ function CAnchorPosition()
 	this.Page_X        = 0;
 	this.Page_Y        = 0;
 }
-CAnchorPosition.prototype.Set = function(W, H, YOffset, ParaLayout, PageLimits, BoundsL, BoundsT, BoundsW, BoundsH)
+CAnchorPosition.prototype.Set = function(W, H, Rot, Bounds, EffectExtent, YOffset, ParaLayout, PageLimits)
 {
 	this.W = W;
 	this.H = H;
-	this.BoundsL = BoundsL;
-	this.BoundsT = BoundsT;
-	this.BoundsW = BoundsW;
-	this.BoundsH = BoundsH;
+	this.Rot = Rot;
+	this.BoundsL = Bounds.l;
+	this.BoundsT = Bounds.t;
+	this.BoundsW = Bounds.w;
+	this.BoundsH = Bounds.h;
+	this.EffectExtentL = EffectExtent.L;
+	this.EffectExtentT = EffectExtent.T;
+	this.EffectExtentR = EffectExtent.R;
+	this.EffectExtentB = EffectExtent.B;
 
 	this.YOffset = YOffset;
 
@@ -2804,12 +2725,24 @@ CAnchorPosition.prototype.Set = function(W, H, YOffset, ParaLayout, PageLimits, 
 	this.ParagraphTop  = ParaLayout.ParagraphTop;
 	this.Page_X        = PageLimits.X;
 	this.Page_Y        = PageLimits.Y;
+
 };
 CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, Value, bPercent)
 {
+	var _W;
+	if(AscFormat.checkNormalRotate(this.Rot))
+	{
+		_W = this.W;
+	}
+	else
+	{
+		_W = this.H;
+	}
+	var Width = _W + this.EffectExtentL + this.EffectExtentR;
+	var Shift = this.EffectExtentL + _W / 2.0 - this.W / 2.0;
 	if (true === bInline)
 	{
-		this.CalcX = this.X;
+			this.CalcX = this.X + Shift;
 	}
 	else
 	{
@@ -2838,20 +2771,20 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 						case c_oAscAlignH.Outside:
 						case c_oAscAlignH.Left:
 						{
-							this.CalcX = _X;
+							this.CalcX = _X + Shift;
 							break;
 						}
-
 						case c_oAscAlignH.Right:
 						{
-							this.CalcX = _X - this.W;
+							this.CalcX = _X - this.EffectExtentR - _W / 2.0 - this.W / 2.0;
 							break;
 						}
 					}
 				}
 				else
-					this.CalcX = _X + Value;
-
+				{
+					this.CalcX = _X + Value + Shift;
+				}
 				break;
 			}
 
@@ -2863,7 +2796,7 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 					{
 						case c_oAscAlignH.Center:
 						{
-							this.CalcX = (this.ColumnEndX + this.ColumnStartX - this.W) / 2;
+							this.CalcX = (this.ColumnEndX + this.ColumnStartX - Width) / 2.0 + this.EffectExtentL + _W / 2.0 - this.W /2.0;
 							break;
 						}
 
@@ -2871,19 +2804,20 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 						case c_oAscAlignH.Outside:
 						case c_oAscAlignH.Left:
 						{
-							this.CalcX = this.ColumnStartX;
+
+							this.CalcX = this.ColumnStartX + this.EffectExtentL + _W / 2.0 - this.W / 2.0;
 							break;
 						}
 
 						case c_oAscAlignH.Right:
 						{
-							this.CalcX = this.ColumnEndX - this.W;
+							this.CalcX = this.ColumnEndX - this.EffectExtentR - _W / 2.0 - this.W / 2.0;
 							break;
 						}
 					}
 				}
 				else
-					this.CalcX = this.ColumnStartX + Value;
+					this.CalcX = this.ColumnStartX + Shift + Value;
 
 				break;
 			}
@@ -2898,7 +2832,7 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 					{
 						case c_oAscAlignH.Center:
 						{
-							this.CalcX = (this.Left_Margin - this.W) / 2;
+							this.CalcX = (this.Left_Margin - Width) / 2 + this.EffectExtentL + _W / 2.0 - this.W / 2.0;
 							break;
 						}
 
@@ -2906,24 +2840,24 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 						case c_oAscAlignH.Outside:
 						case c_oAscAlignH.Left:
 						{
-							this.CalcX = 0;
+							this.CalcX = this.EffectExtentL + _W / 2.0 - this.W / 2.0;
 							break;
 						}
 
 						case c_oAscAlignH.Right:
 						{
-							this.CalcX = this.Left_Margin - this.W;
+							this.CalcX = this.Left_Margin - (_W / 2.0 + this.EffectExtentR) - this.W / 2.0;
 							break;
 						}
 					}
 				}
 				else if (true === bPercent)
 				{
-					this.CalcX = this.Page_X + this.Left_Margin * Value / 100;
+					this.CalcX = this.Page_X + this.Left_Margin * Value / 100 + Shift;
 				}
 				else
 				{
-					this.CalcX = Value;
+					this.CalcX = Value + Shift;
 				}
 
 				break;
@@ -2940,7 +2874,7 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 					{
 						case c_oAscAlignH.Center:
 						{
-							this.CalcX = (X_e + X_s - this.W) / 2;
+							this.CalcX = (X_e + X_s - Width) / 2 + Shift;
 							break;
 						}
 
@@ -2948,24 +2882,24 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 						case c_oAscAlignH.Outside:
 						case c_oAscAlignH.Left:
 						{
-							this.CalcX = X_s;
+							this.CalcX = X_s + Shift;
 							break;
 						}
 
 						case c_oAscAlignH.Right:
 						{
-							this.CalcX = X_e - this.W;
+							this.CalcX = X_e - (_W / 2.0 + this.EffectExtentR) - this.W / 2.0;
 							break;
 						}
 					}
 				}
 				else if (true === bPercent)
 				{
-					this.CalcX = X_s + (X_e - X_s) * Value / 100;
+					this.CalcX = X_s + (X_e - X_s) * Value / 100 + Shift;
 				}
 				else
 				{
-					this.CalcX = this.Margin_H + Value;
+					this.CalcX = this.Margin_H + Value + Shift;
 				}
 
 				break;
@@ -2979,7 +2913,7 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 					{
 						case c_oAscAlignH.Center:
 						{
-							this.CalcX = (this.Page_W - this.W) / 2;
+							this.CalcX = (this.Page_W - Width) / 2 + Shift;
 							break;
 						}
 
@@ -2987,24 +2921,24 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 						case c_oAscAlignH.Outside:
 						case c_oAscAlignH.Left:
 						{
-							this.CalcX = 0;
+							this.CalcX = Shift;
 							break;
 						}
 
 						case c_oAscAlignH.Right:
 						{
-							this.CalcX = this.Page_W - this.W;
+							this.CalcX = this.Page_W - Width + Shift;
 							break;
 						}
 					}
 				}
 				else if (true === bPercent)
 				{
-					this.CalcX = this.Page_X + this.Page_W * Value / 100;
+					this.CalcX = this.Page_X + this.Page_W * Value / 100 + Shift;
 				}
 				else
 				{
-					this.CalcX = Value + this.Page_X;
+					this.CalcX = Value + this.Page_X + Shift;
 				}
 
 				break;
@@ -3021,7 +2955,7 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 					{
 						case c_oAscAlignH.Center:
 						{
-							this.CalcX = (X_e + X_s - this.W) / 2;
+							this.CalcX = (X_e + X_s - Width) / 2 + Shift;
 							break;
 						}
 
@@ -3029,24 +2963,24 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 						case c_oAscAlignH.Outside:
 						case c_oAscAlignH.Left:
 						{
-							this.CalcX = X_s;
+							this.CalcX = X_s + Shift;
 							break;
 						}
 
 						case c_oAscAlignH.Right:
 						{
-							this.CalcX = X_e - this.W;
+							this.CalcX = X_e - Width + Shift;
 							break;
 						}
 					}
 				}
 				else if (true === bPercent)
 				{
-					this.CalcX = X_s + (X_e - X_s) * Value / 100;
+					this.CalcX = X_s + (X_e - X_s) * Value / 100 + Shift;
 				}
 				else
 				{
-					this.CalcX = X_s + Value;
+					this.CalcX = X_s + Value + Shift;
 				}
 
 				break;
@@ -3058,9 +2992,20 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 };
 CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, Value, bPercent)
 {
+	var _H;
+	if(AscFormat.checkNormalRotate(this.Rot))
+	{
+		_H = this.H;
+	}
+	else
+	{
+		_H = this.W;
+	}
+	var Height = this.EffectExtentB + _H + this.EffectExtentT;
+	var Shift = this.EffectExtentT + _H / 2.0 - this.H / 2.0;
 	if (true === bInline)
 	{
-		this.CalcY = this.Y - this.H - this.YOffset;
+		this.CalcY = this.Y - this.YOffset - Height + Shift;
 	}
 	else
 	{
@@ -3080,19 +3025,19 @@ CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, 
 						case c_oAscAlignV.Bottom:
 						case c_oAscAlignV.Outside:
 						{
-							this.CalcY = this.Page_H - this.H;
+							this.CalcY = this.Page_H - Height + Shift;
 							break;
 						}
 						case c_oAscAlignV.Center:
 						{
-							this.CalcY = (_Y + this.Page_H - this.H) / 2;
+							this.CalcY = (_Y + this.Page_H - Height) / 2 + Shift;
 							break;
 						}
 
 						case c_oAscAlignV.Inside:
 						case c_oAscAlignV.Top:
 						{
-							this.CalcY = _Y;
+							this.CalcY = _Y + Shift;
 							break;
 						}
 					}
@@ -3100,13 +3045,13 @@ CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, 
 				else if (true === bPercent)
 				{
 					if (Math.abs(this.Page_Y) > 0.001)
-						this.CalcY = this.Margin_V;
+						this.CalcY = this.Margin_V + Shift;
 					else
-						this.CalcY = _Y + this.Bottom_Margin * Value / 100;
+						this.CalcY = _Y + this.Bottom_Margin * Value / 100 + Shift;
 				}
 				else
 				{
-					this.CalcY = _Y + Value;
+					this.CalcY = _Y + Value + Shift
 				}
 
 				break;
@@ -3123,25 +3068,25 @@ CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, 
 						case c_oAscAlignV.Bottom:
 						case c_oAscAlignV.Outside:
 						{
-							this.CalcY = _Y - this.H;
+							this.CalcY = _Y - this.EffectExtentB - Height + Shift;
 							break;
 						}
 						case c_oAscAlignV.Center:
 						{
-							this.CalcY = _Y - this.H / 2;
+							this.CalcY = _Y - Height / 2 + Shift;
 							break;
 						}
 
 						case c_oAscAlignV.Inside:
 						case c_oAscAlignV.Top:
 						{
-							this.CalcY = _Y;
+							this.CalcY = _Y + Shift;
 							break;
 						}
 					}
 				}
 				else
-					this.CalcY = _Y + Value;
+					this.CalcY = _Y + Value + Shift;
 
 				break;
 			}
@@ -3158,19 +3103,19 @@ CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, 
 						case c_oAscAlignV.Bottom:
 						case c_oAscAlignV.Outside:
 						{
-							this.CalcY = Y_e - this.H;
+							this.CalcY = Y_e - Height + Shift;
 							break;
 						}
 						case c_oAscAlignV.Center:
 						{
-							this.CalcY = (Y_s + Y_e - this.H) / 2;
+							this.CalcY = (Y_s + Y_e - Height) / 2 + Shift;
 							break;
 						}
 
 						case c_oAscAlignV.Inside:
 						case c_oAscAlignV.Top:
 						{
-							this.CalcY = Y_s;
+							this.CalcY = Y_s + Shift;
 							break;
 						}
 					}
@@ -3178,13 +3123,13 @@ CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, 
 				else if (true === bPercent)
 				{
 					if (Math.abs(this.Page_Y) > 0.001)
-						this.CalcY = this.Margin_V;
+						this.CalcY = this.Margin_V + Shift;
 					else
-						this.CalcY = Y_s + (Y_e - Y_s) * Value / 100;
+						this.CalcY = Y_s + (Y_e - Y_s) * Value / 100 + Shift;
 				}
 				else
 				{
-					this.CalcY = this.Margin_V + Value;
+					this.CalcY = this.Margin_V + Value + Shift;
 				}
 
 				break;
@@ -3199,19 +3144,19 @@ CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, 
 						case c_oAscAlignV.Bottom:
 						case c_oAscAlignV.Outside:
 						{
-							this.CalcY = this.Page_H - this.H;
+							this.CalcY = this.Page_H - Height + Shift;
 							break;
 						}
 						case c_oAscAlignV.Center:
 						{
-							this.CalcY = (this.Page_H - this.H) / 2;
+							this.CalcY = (this.Page_H - Height) / 2 + Shift;
 							break;
 						}
 
 						case c_oAscAlignV.Inside:
 						case c_oAscAlignV.Top:
 						{
-							this.CalcY = 0;
+							this.CalcY = Shift;
 							break;
 						}
 					}
@@ -3219,13 +3164,13 @@ CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, 
 				else if (true === bPercent)
 				{
 					if (Math.abs(this.Page_Y) > 0.001)
-						this.CalcY = this.Margin_V;
+						this.CalcY = this.Margin_V + Shift;
 					else
-						this.CalcY = this.Page_H * Value / 100;
+						this.CalcY = this.Page_H * Value / 100 + Shift;
 				}
 				else
 				{
-					this.CalcY = Value + this.Page_Y;
+					this.CalcY = Value + this.Page_Y + Shift;
 				}
 
 				break;
@@ -3238,9 +3183,9 @@ CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, 
 				var _Y = this.ParagraphTop;
 
 				if (true === bAlign)
-					this.CalcY = _Y;
+					this.CalcY = _Y + Shift;
 				else
-					this.CalcY = _Y + Value;
+					this.CalcY = _Y + Value + Shift;
 
 				break;
 			}
@@ -3257,19 +3202,19 @@ CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, 
 						case c_oAscAlignV.Bottom:
 						case c_oAscAlignV.Outside:
 						{
-							this.CalcY = Y_e - this.H;
+							this.CalcY = Y_e - Height + Shift;
 							break;
 						}
 						case c_oAscAlignV.Center:
 						{
-							this.CalcY = (Y_s + Y_e - this.H) / 2;
+							this.CalcY = (Y_s + Y_e - Height) / 2 + Shift;
 							break;
 						}
 
 						case c_oAscAlignV.Inside:
 						case c_oAscAlignV.Top:
 						{
-							this.CalcY = Y_s;
+							this.CalcY = Y_s + Shift;
 							break;
 						}
 					}
@@ -3277,12 +3222,12 @@ CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, 
 				else if (true === bPercent)
 				{
 					if (Math.abs(this.Page_Y) > 0.001)
-						this.CalcY = this.Margin_V;
+						this.CalcY = this.Margin_V + Shift;
 					else
-						this.CalcY = this.Top_Margin * Value / 100;
+						this.CalcY = this.Top_Margin * Value / 100 + Shift;
 				}
 				else
-					this.CalcY = Y_s + Value;
+					this.CalcY = Y_s + Value + Shift;
 
 				break;
 			}
@@ -3362,6 +3307,16 @@ CAnchorPosition.prototype.Correct_Values = function(bInline, PageLimits, AllowOv
 };
 CAnchorPosition.prototype.Calculate_X_Value = function(RelativeFrom)
 {
+	var _W;
+	if(AscFormat.checkNormalRotate(this.Rot))
+	{
+		_W = this.W;
+	}
+	else
+	{
+		_W = this.H;
+	}
+	var Shift = this.EffectExtentL + _W / 2.0 - this.W / 2.0;
 	var Value = 0;
 	switch (RelativeFrom)
 	{
@@ -3370,15 +3325,14 @@ CAnchorPosition.prototype.Calculate_X_Value = function(RelativeFrom)
 			// Почему то Word при позиционировании относительно символа использует не
 			// текущуюю позицию, а позицию предыдущего элемента (именно для этого мы
 			// храним параметр LastItemW).
-
-			Value = this.CalcX - this.X + this.LastItemW;
+			Value = this.CalcX - this.X + this.LastItemW - Shift;
 
 			break;
 		}
 
 		case c_oAscRelativeFromH.Column:
 		{
-			Value = this.CalcX - this.ColumnStartX;
+			Value = this.CalcX - this.ColumnStartX - Shift;
 
 			break;
 		}
@@ -3387,28 +3341,28 @@ CAnchorPosition.prototype.Calculate_X_Value = function(RelativeFrom)
 		case c_oAscRelativeFromH.LeftMargin:
 		case c_oAscRelativeFromH.OutsideMargin:
 		{
-			Value = this.CalcX;
+			Value = this.CalcX - Shift;
 
 			break;
 		}
 
 		case c_oAscRelativeFromH.Margin:
 		{
-			Value = this.CalcX - this.Margin_H;
+			Value = this.CalcX - this.Margin_H - Shift;
 
 			break;
 		}
 
 		case c_oAscRelativeFromH.Page:
 		{
-			Value = this.CalcX - this.Page_X;
+			Value = this.CalcX - this.Page_X - Shift;
 
 			break;
 		}
 
 		case c_oAscRelativeFromH.RightMargin:
 		{
-			Value = this.CalcX - this.Page_W + this.Right_Margin;
+			Value = this.CalcX - this.Page_W + this.Right_Margin - Shift;
 
 			break;
 		}
@@ -3418,6 +3372,16 @@ CAnchorPosition.prototype.Calculate_X_Value = function(RelativeFrom)
 };
 CAnchorPosition.prototype.Calculate_Y_Value = function(RelativeFrom)
 {
+	var _H;
+	if(AscFormat.checkNormalRotate(this.Rot))
+	{
+		_H = this.H;
+	}
+	else
+	{
+		_H = this.W;
+	}
+	var Shift = this.EffectExtentT + _H / 2.0 - this.H / 2.0;
 	var Value = 0;
 
 	switch (RelativeFrom)
@@ -3426,42 +3390,42 @@ CAnchorPosition.prototype.Calculate_Y_Value = function(RelativeFrom)
 		case c_oAscRelativeFromV.InsideMargin:
 		case c_oAscRelativeFromV.OutsideMargin:
 		{
-			Value = this.CalcY - this.Page_H + this.Bottom_Margin;
+			Value = this.CalcY - this.Page_H + this.Bottom_Margin - Shift;
 
 			break;
 		}
 
 		case c_oAscRelativeFromV.Line:
 		{
-			Value = this.CalcY - this.LineTop;
+			Value = this.CalcY - this.LineTop - Shift;
 
 			break;
 		}
 
 		case c_oAscRelativeFromV.Margin:
 		{
-			Value = this.CalcY - this.Margin_V;
+			Value = this.CalcY - this.Margin_V - Shift;
 
 			break;
 		}
 
 		case c_oAscRelativeFromV.Page:
 		{
-			Value = this.CalcY - this.Page_Y;
+			Value = this.CalcY - this.Page_Y - Shift;
 
 			break;
 		}
 
 		case c_oAscRelativeFromV.Paragraph:
 		{
-			Value = this.CalcY - this.ParagraphTop;
+			Value = this.CalcY - this.ParagraphTop - Shift;
 
 			break;
 		}
 
 		case c_oAscRelativeFromV.TopMargin:
 		{
-			Value = this.CalcY;
+			Value = this.CalcY - Shift;
 
 			break;
 		}

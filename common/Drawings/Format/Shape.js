@@ -4369,7 +4369,7 @@ CShape.prototype.check_bounds = function (checker) {
 
 CShape.prototype.getBase64Img = function ()
 {
-    if(typeof this.cachedImage === "string")
+    if(typeof this.cachedImage === "string" && this.cachedImage.length > 0)
     {
         return this.cachedImage;
     }
