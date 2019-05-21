@@ -1920,7 +1920,6 @@ function CopyPasteCorrectString(str)
 function Editor_Paste_Exec(api, _format, data1, data2, text_data, specialPasteProps)
 {
     var oPasteProcessor = new PasteProcessor(api, true, true, false);
-	window['AscCommon'].g_specialPasteHelper.endRecalcDocument = false;
 
 	if(undefined === specialPasteProps)
 	{
@@ -2533,18 +2532,6 @@ PasteProcessor.prototype =
 			{
 				window['AscCommon'].g_specialPasteHelper.showButtonIdParagraph = null;
 				window['AscCommon'].g_specialPasteHelper.CleanButtonInfo();
-			}
-		}
-
-		if(specialPasteShowOptions)
-		{
-			//SpecialPasteButtonById_Show вызываю здесь, если пересчет документа завершился раньше, чем мы попали сюда и сгенерировали параметры вставки
-			//в противном случае вызываю SpecialPasteButtonById_Show в drawingDocument->OnEndRecalculate
-			//TODO пересмотреть проверку на CDrawingDocContent и CShape
-			if (window['AscCommon'].g_specialPasteHelper.endRecalcDocument || (this.oDocument.Parent &&
-				(this.oDocument.Parent instanceof CShape || this.oDocument.Parent instanceof CHeaderFooter)) ||
-				(this.oDocument instanceof AscFormat.CDrawingDocContent)) {
-				window['AscCommon'].g_specialPasteHelper.SpecialPasteButtonById_Show();
 			}
 		}
 	},

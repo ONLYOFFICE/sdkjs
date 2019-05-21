@@ -3517,15 +3517,6 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
 					this.private_RecalculateHdrFtrPageCountUpdate();
 				}
 			}
-
-			//TODO функция не должна вызываться здесь! необходимо перенести(DrawingDocument.UpdateTarget)
-			//TODO проверить баг 35764 -> убрал проверку на showSpecialPasteButton
-			var specialPasteHelper = window['AscCommon'].g_specialPasteHelper;
-			if(specialPasteHelper && specialPasteHelper.showButtonIdParagraph && !specialPasteHelper.pasteStart)
-			{
-				specialPasteHelper.SpecialPasteButtonById_Show();
-			}
-			specialPasteHelper.endRecalcDocument = true;
 		}
     }
 

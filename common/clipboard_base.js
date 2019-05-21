@@ -1022,7 +1022,6 @@
 		this.bIsEndTransaction = false;//временный флаг для excel. TODO пересмотреть!
 
 		this.showButtonIdParagraph = null;
-		this.endRecalcDocument = false;//для документов, закончен ли пересчет документа. нужно, чтобы грамотно рассчитать позицию иконки с/в
 		this.doNotShowButton = false;
 	}
 
@@ -1134,6 +1133,10 @@
 
 		SpecialPasteButtonById_Show: function()
 		{
+			if(!this.showButtonIdParagraph || this.pasteStart) {
+				return;
+			}
+
 			if(!this.Api || !this.Api.asc_specialPasteShowButton || this.doNotShowButton)
 			{
 				if(this.doNotShowButton) {
