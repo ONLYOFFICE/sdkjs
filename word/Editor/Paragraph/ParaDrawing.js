@@ -1178,7 +1178,7 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 
 	var OtherFlowObjects = editor.WordControl.m_oLogicDocument.DrawingObjects.getAllFloatObjectsOnPage(PageNum, this.Parent.Parent);
 	var bInline          = this.Is_Inline();
-	this.Internal_Position.Set(this.getXfrmExtX(), this.getXfrmExtY(), this.getXfrmRot(), this.GraphicObj.bounds, this.EffectExtent, this.YOffset, ParaLayout, PageLimits);
+	this.Internal_Position.Set(this.GraphicObj.extX, this.GraphicObj.extY, this.getXfrmRot(), this.GraphicObj.bounds, this.EffectExtent, this.YOffset, ParaLayout, PageLimits);
 	this.Internal_Position.Calculate_X(bInline, this.PositionH.RelativeFrom, this.PositionH.Align, this.PositionH.Value, this.PositionH.Percent);
 	this.Internal_Position.Calculate_Y(bInline, this.PositionV.RelativeFrom, this.PositionV.Align, this.PositionV.Value, this.PositionV.Percent);
 	this.GraphicObj.bounds.l += this.Internal_Position.CalcX;
@@ -1413,7 +1413,7 @@ ParaDrawing.prototype.private_SetXYByLayout = function(X, Y, PageNum, Layout, bC
 {
 	this.PageNum = PageNum;
 
-	this.Internal_Position.Set(this.getXfrmExtX(), this.getXfrmExtY(), this.getXfrmRot(), this.GraphicObj.bounds, this.EffectExtent, this.YOffset, Layout.ParagraphLayout, Layout.PageLimitsOrigin);
+	this.Internal_Position.Set(this.GraphicObj.extX, this.GraphicObj.extY, this.getXfrmRot(), this.GraphicObj.bounds, this.EffectExtent, this.YOffset, Layout.ParagraphLayout, Layout.PageLimitsOrigin);
 	this.Internal_Position.Calculate_X(false, c_oAscRelativeFromH.Page, false, X - Layout.PageLimitsOrigin.X, false);
 	this.Internal_Position.Calculate_Y(false, c_oAscRelativeFromV.Page, false, Y - Layout.PageLimitsOrigin.Y, false);
 	this.Internal_Position.Correct_Values(false, Layout.PageLimits, this.AllowOverlap, this.Use_TextWrap(), [], true);
