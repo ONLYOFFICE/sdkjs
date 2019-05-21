@@ -1187,7 +1187,7 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 	this.GraphicObj.bounds.y += this.Internal_Position.CalcY;
 	this.GraphicObj.bounds.t += this.Internal_Position.CalcY;
 	this.GraphicObj.bounds.b += this.Internal_Position.CalcY;
-	this.Internal_Position.Correct_Values(bInline, PageLimits, this.AllowOverlap, this.Use_TextWrap(), OtherFlowObjects);
+	this.Internal_Position.Correct_Values(bInline, PageLimits, this.AllowOverlap, this.Use_TextWrap(), OtherFlowObjects, false);
 
 	var OldPageNum = this.PageNum;
 	this.PageNum   = PageNum;
@@ -1418,7 +1418,7 @@ ParaDrawing.prototype.private_SetXYByLayout = function(X, Y, PageNum, Layout, bC
 	this.Internal_Position.Set(this.getXfrmExtX(), this.getXfrmExtY(), this.getXfrmRot(), this.GraphicObj.bounds, this.EffectExtent, this.YOffset, Layout.ParagraphLayout, Layout.PageLimitsOrigin);
 	this.Internal_Position.Calculate_X(false, c_oAscRelativeFromH.Page, false, X - Layout.PageLimitsOrigin.X, false);
 	this.Internal_Position.Calculate_Y(false, c_oAscRelativeFromV.Page, false, Y - Layout.PageLimitsOrigin.Y, false);
-	this.Internal_Position.Correct_Values(false, Layout.PageLimits, this.AllowOverlap, this.Use_TextWrap(), []);
+	this.Internal_Position.Correct_Values(false, Layout.PageLimits, this.AllowOverlap, this.Use_TextWrap(), [], true);
 
 	if (true === bChangeX)
 	{
@@ -2794,7 +2794,7 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 				}
 				else
 				{
-					this.CalcX = _X + Value + Shift;
+					this.CalcX = _X + Value;
 				}
 				break;
 			}
@@ -2828,7 +2828,7 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 					}
 				}
 				else
-					this.CalcX = this.ColumnStartX + Value;
+					this.CalcX = this.ColumnStartX;
 
 				break;
 			}
@@ -2864,11 +2864,11 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 				}
 				else if (true === bPercent)
 				{
-					this.CalcX = this.Page_X + this.Left_Margin * Value / 100 + Shift;
+					this.CalcX = this.Page_X + this.Left_Margin * Value / 100;
 				}
 				else
 				{
-					this.CalcX = Value + Shift;
+					this.CalcX = Value;
 				}
 
 				break;
@@ -2906,11 +2906,11 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 				}
 				else if (true === bPercent)
 				{
-					this.CalcX = X_s + (X_e - X_s) * Value / 100 + Shift;
+					this.CalcX = X_s + (X_e - X_s) * Value / 100;
 				}
 				else
 				{
-					this.CalcX = this.Margin_H + Value + Shift;
+					this.CalcX = this.Margin_H + Value;
 				}
 
 				break;
@@ -2945,11 +2945,11 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 				}
 				else if (true === bPercent)
 				{
-					this.CalcX = this.Page_X + this.Page_W * Value / 100 + Shift;
+					this.CalcX = this.Page_X + this.Page_W * Value / 100;
 				}
 				else
 				{
-					this.CalcX = Value + this.Page_X + Shift;
+					this.CalcX = Value + this.Page_X;
 				}
 
 				break;
@@ -2987,11 +2987,11 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 				}
 				else if (true === bPercent)
 				{
-					this.CalcX = X_s + (X_e - X_s) * Value / 100 + Shift;
+					this.CalcX = X_s + (X_e - X_s) * Value / 100;
 				}
 				else
 				{
-					this.CalcX = X_s + Value + Shift;
+					this.CalcX = X_s + Value;
 				}
 
 				break;
@@ -3056,13 +3056,13 @@ CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, 
 				else if (true === bPercent)
 				{
 					if (Math.abs(this.Page_Y) > 0.001)
-						this.CalcY = this.Margin_V + Shift;
+						this.CalcY = this.Margin_V;
 					else
-						this.CalcY = _Y + this.Bottom_Margin * Value / 100 + Shift;
+						this.CalcY = _Y + this.Bottom_Margin * Value / 100;
 				}
 				else
 				{
-					this.CalcY = _Y + Value + Shift
+					this.CalcY = _Y + Value;
 				}
 
 				break;
@@ -3097,7 +3097,7 @@ CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, 
 					}
 				}
 				else
-					this.CalcY = _Y + Value + Shift;
+					this.CalcY = _Y + Value;
 
 				break;
 			}
@@ -3136,11 +3136,11 @@ CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, 
 					if (Math.abs(this.Page_Y) > 0.001)
 						this.CalcY = this.Margin_V + Shift;
 					else
-						this.CalcY = Y_s + (Y_e - Y_s) * Value / 100 + Shift;
+						this.CalcY = Y_s + (Y_e - Y_s) * Value / 100;
 				}
 				else
 				{
-					this.CalcY = this.Margin_V + Value + Shift;
+					this.CalcY = this.Margin_V + Value;
 				}
 
 				break;
@@ -3175,13 +3175,13 @@ CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, 
 				else if (true === bPercent)
 				{
 					if (Math.abs(this.Page_Y) > 0.001)
-						this.CalcY = this.Margin_V + Shift;
+						this.CalcY = this.Margin_V;
 					else
-						this.CalcY = this.Page_H * Value / 100 + Shift;
+						this.CalcY = this.Page_H * Value / 100;
 				}
 				else
 				{
-					this.CalcY = Value + this.Page_Y + Shift;
+					this.CalcY = Value + this.Page_Y;
 				}
 
 				break;
@@ -3194,7 +3194,7 @@ CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, 
 				var _Y = this.ParagraphTop;
 
 				if (true === bAlign)
-					this.CalcY = _Y + Shift;
+					this.CalcY = _Y;
 				else
 					this.CalcY = _Y + Value;
 
@@ -3233,12 +3233,12 @@ CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, 
 				else if (true === bPercent)
 				{
 					if (Math.abs(this.Page_Y) > 0.001)
-						this.CalcY = this.Margin_V + Shift;
+						this.CalcY = this.Margin_V;
 					else
-						this.CalcY = this.Top_Margin * Value / 100 + Shift;
+						this.CalcY = this.Top_Margin * Value / 100;
 				}
 				else
-					this.CalcY = Y_s + Value + Shift;
+					this.CalcY = Y_s + Value;
 
 				break;
 			}
@@ -3256,7 +3256,7 @@ CAnchorPosition.prototype.Update_PositionYHeaderFooter = function(TopMarginY, Bo
 	this.Top_Margin    = TopY;
 	this.Bottom_Margin = this.Page_H - BottomY;
 };
-CAnchorPosition.prototype.Correct_Values = function(bInline, PageLimits, AllowOverlap, UseTextWrap, OtherFlowObjects)
+CAnchorPosition.prototype.Correct_Values = function(bInline, PageLimits, AllowOverlap, UseTextWrap, OtherFlowObjects, bCorrectPos)
 {
 	if (true != bInline)
 	{
@@ -3295,7 +3295,7 @@ CAnchorPosition.prototype.Correct_Values = function(bInline, PageLimits, AllowOv
 		}
 
 		// Автофигуры с обтеканием за/перед текстом могут лежать где угодно
-		if (true === UseTextWrap)
+		if (true === UseTextWrap && bCorrectPos)
 		{
 			// Скорректируем рассчитанную позицию, так чтобы объект не выходил за заданные пределы
 			if (CurX + this.BoundsL + this.BoundsW > X_max)
