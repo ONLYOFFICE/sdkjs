@@ -1284,10 +1284,6 @@ ParaDrawing.prototype.updatePosition3 = function(pageIndex, x, y, oldPageNum)
 		var bIsHfdFtr = this.DocumentContent && this.DocumentContent.IsHdrFtr();
 		this.GraphicObj.setStartPage(pageIndex, bIsHfdFtr, bIsHfdFtr);
 	}
-	var bInline = this.Is_Inline();
-	_x      = (this.PositionH.Align || bInline) ? _x - this.GraphicObj.bounds.x : _x;
-	_y      = (this.PositionV.Align || bInline) ? _y - this.GraphicObj.bounds.y : _y;
-
 	if (!(this.DocumentContent && this.DocumentContent.IsHdrFtr() && this.DocumentContent.Get_StartPage_Absolute() !== pageIndex))
 	{
 		this.graphicObjects.addObjectOnPage(pageIndex, this.GraphicObj);
