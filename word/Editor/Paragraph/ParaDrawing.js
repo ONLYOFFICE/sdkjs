@@ -3192,7 +3192,7 @@ CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, 
 				var _Y = this.ParagraphTop;
 
 				if (true === bAlign)
-					this.CalcY = _Y;
+					this.CalcY = _Y + Shift;
 				else
 					this.CalcY = _Y + Value;
 
@@ -3316,16 +3316,6 @@ CAnchorPosition.prototype.Correct_Values = function(bInline, PageLimits, AllowOv
 };
 CAnchorPosition.prototype.Calculate_X_Value = function(RelativeFrom)
 {
-	var _W;
-	if(AscFormat.checkNormalRotate(this.Rot))
-	{
-		_W = this.W;
-	}
-	else
-	{
-		_W = this.H;
-	}
-	var Shift = this.EffectExtentL + _W / 2.0 - this.W / 2.0;
 	var Value = 0;
 	switch (RelativeFrom)
 	{
@@ -3334,14 +3324,14 @@ CAnchorPosition.prototype.Calculate_X_Value = function(RelativeFrom)
 			// Почему то Word при позиционировании относительно символа использует не
 			// текущуюю позицию, а позицию предыдущего элемента (именно для этого мы
 			// храним параметр LastItemW).
-			Value = this.CalcX - this.X + this.LastItemW - Shift;
+			Value = this.CalcX - this.X + this.LastItemW;
 
 			break;
 		}
 
 		case c_oAscRelativeFromH.Column:
 		{
-			Value = this.CalcX - this.ColumnStartX - Shift;
+			Value = this.CalcX - this.ColumnStartX;
 
 			break;
 		}
@@ -3350,28 +3340,28 @@ CAnchorPosition.prototype.Calculate_X_Value = function(RelativeFrom)
 		case c_oAscRelativeFromH.LeftMargin:
 		case c_oAscRelativeFromH.OutsideMargin:
 		{
-			Value = this.CalcX - Shift;
+			Value = this.CalcX;
 
 			break;
 		}
 
 		case c_oAscRelativeFromH.Margin:
 		{
-			Value = this.CalcX - this.Margin_H - Shift;
+			Value = this.CalcX - this.Margin_H;
 
 			break;
 		}
 
 		case c_oAscRelativeFromH.Page:
 		{
-			Value = this.CalcX - this.Page_X - Shift;
+			Value = this.CalcX - this.Page_X;
 
 			break;
 		}
 
 		case c_oAscRelativeFromH.RightMargin:
 		{
-			Value = this.CalcX - this.Page_W + this.Right_Margin - Shift;
+			Value = this.CalcX - this.Page_W + this.Right_Margin;
 
 			break;
 		}
@@ -3381,16 +3371,6 @@ CAnchorPosition.prototype.Calculate_X_Value = function(RelativeFrom)
 };
 CAnchorPosition.prototype.Calculate_Y_Value = function(RelativeFrom)
 {
-	var _H;
-	if(AscFormat.checkNormalRotate(this.Rot))
-	{
-		_H = this.H;
-	}
-	else
-	{
-		_H = this.W;
-	}
-	var Shift = this.EffectExtentT + _H / 2.0 - this.H / 2.0;
 	var Value = 0;
 
 	switch (RelativeFrom)
@@ -3399,42 +3379,42 @@ CAnchorPosition.prototype.Calculate_Y_Value = function(RelativeFrom)
 		case c_oAscRelativeFromV.InsideMargin:
 		case c_oAscRelativeFromV.OutsideMargin:
 		{
-			Value = this.CalcY - this.Page_H + this.Bottom_Margin - Shift;
+			Value = this.CalcY - this.Page_H + this.Bottom_Margin;
 
 			break;
 		}
 
 		case c_oAscRelativeFromV.Line:
 		{
-			Value = this.CalcY - this.LineTop - Shift;
+			Value = this.CalcY - this.LineTop;
 
 			break;
 		}
 
 		case c_oAscRelativeFromV.Margin:
 		{
-			Value = this.CalcY - this.Margin_V - Shift;
+			Value = this.CalcY - this.Margin_V;
 
 			break;
 		}
 
 		case c_oAscRelativeFromV.Page:
 		{
-			Value = this.CalcY - this.Page_Y - Shift;
+			Value = this.CalcY - this.Page_Y;
 
 			break;
 		}
 
 		case c_oAscRelativeFromV.Paragraph:
 		{
-			Value = this.CalcY - this.ParagraphTop - Shift;
+			Value = this.CalcY - this.ParagraphTop;
 
 			break;
 		}
 
 		case c_oAscRelativeFromV.TopMargin:
 		{
-			Value = this.CalcY - Shift;
+			Value = this.CalcY;
 
 			break;
 		}
