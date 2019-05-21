@@ -529,6 +529,17 @@ ParaDrawing.prototype.Set_AllowOverlap = function(AllowOverlap)
 };
 ParaDrawing.prototype.Set_PositionH = function(RelativeFrom, Align, Value, Percent)
 {
+    var _Value, _Percent;
+    if(AscFormat.isRealNumber(Value) && AscFormat.fApproxEqual(Value, 0.0) && true === Percent)
+    {
+        _Value        = 0;
+        _Percent      = false;
+    }
+    else
+    {
+        _Value        = Value;
+        _Percent      = Percent;
+    }
 	History.Add(new CChangesParaDrawingPositionH(this,
 		{
 			RelativeFrom : this.PositionH.RelativeFrom,
@@ -539,16 +550,27 @@ ParaDrawing.prototype.Set_PositionH = function(RelativeFrom, Align, Value, Perce
 		{
 			RelativeFrom : RelativeFrom,
 			Align        : Align,
-			Value        : Value,
-			Percent      : Percent
+			Value        : _Value,
+			Percent      : _Percent
 		}));
 	this.PositionH.RelativeFrom = RelativeFrom;
 	this.PositionH.Align        = Align;
-	this.PositionH.Value        = Value;
-	this.PositionH.Percent      = Percent;
+    this.PositionH.Value        = _Value;
+    this.PositionH.Percent      = _Percent;
 };
 ParaDrawing.prototype.Set_PositionV = function(RelativeFrom, Align, Value, Percent)
 {
+    var _Value, _Percent;
+    if(AscFormat.isRealNumber(Value) && AscFormat.fApproxEqual(Value, 0.0) && true === Percent)
+    {
+        _Value        = 0;
+        _Percent      = false;
+    }
+    else
+    {
+        _Value        = Value;
+        _Percent      = Percent;
+    }
 	History.Add(new CChangesParaDrawingPositionV(this,
 		{
 			RelativeFrom : this.PositionV.RelativeFrom,
@@ -559,14 +581,14 @@ ParaDrawing.prototype.Set_PositionV = function(RelativeFrom, Align, Value, Perce
 		{
 			RelativeFrom : RelativeFrom,
 			Align        : Align,
-			Value        : Value,
-			Percent      : Percent
+			Value        : _Value,
+			Percent      : _Percent
 		}));
 
 	this.PositionV.RelativeFrom = RelativeFrom;
 	this.PositionV.Align        = Align;
-	this.PositionV.Value        = Value;
-	this.PositionV.Percent      = Percent;
+    this.PositionV.Value        = _Value;
+    this.PositionV.Percent      = _Percent;
 };
 ParaDrawing.prototype.Set_BehindDoc = function(BehindDoc)
 {
@@ -906,10 +928,10 @@ ParaDrawing.prototype.CheckWH = function()
 		}
 
 
-		var l = oBounds.l;
-		var r = oBounds.r;
-		var t = oBounds.t;
-		var b = oBounds.b;
+		var l = oBounds.x;
+		var r = l + oBounds.w;
+		var t = oBounds.y;
+		var b = t + oBounds.h;
 
 		var startX, startY;
 		if(!AscFormat.checkNormalRotate(rot)){
@@ -2814,7 +2836,7 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 						case c_oAscAlignH.Left:
 						{
 
-							this.CalcX = this.ColumnStartX + this.EffectExtentL + _W / 2.0 - this.W / 2.0;
+							this.CalcX = this.ColumnStartX + Shift;
 							break;
 						}
 
@@ -2841,7 +2863,7 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 					{
 						case c_oAscAlignH.Center:
 						{
-							this.CalcX = (this.Left_Margin - Width) / 2 + this.EffectExtentL + _W / 2.0 - this.W / 2.0;
+							this.CalcX = (this.Left_Margin - Width) / 2 + Shift;
 							break;
 						}
 
@@ -2849,7 +2871,7 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 						case c_oAscAlignH.Outside:
 						case c_oAscAlignH.Left:
 						{
-							this.CalcX = this.EffectExtentL + _W / 2.0 - this.W / 2.0;
+							this.CalcX = Shift;
 							break;
 						}
 
@@ -2862,7 +2884,7 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 				}
 				else if (true === bPercent)
 				{
-					this.CalcX = this.Page_X + this.Left_Margin * Value / 100;
+					this.CalcX = this.Page_X + this.Left_Margin * Value / 100 + Shift;
 				}
 				else
 				{
@@ -2904,7 +2926,7 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 				}
 				else if (true === bPercent)
 				{
-					this.CalcX = X_s + (X_e - X_s) * Value / 100;
+					this.CalcX = X_s + (X_e - X_s) * Value / 100 + Shift;
 				}
 				else
 				{
@@ -2943,7 +2965,7 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 				}
 				else if (true === bPercent)
 				{
-					this.CalcX = this.Page_X + this.Page_W * Value / 100;
+					this.CalcX = this.Page_X + this.Page_W * Value / 100 + Shift;
 				}
 				else
 				{
@@ -2985,7 +3007,7 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 				}
 				else if (true === bPercent)
 				{
-					this.CalcX = X_s + (X_e - X_s) * Value / 100;
+					this.CalcX = X_s + (X_e - X_s) * Value / 100 + Shift;
 				}
 				else
 				{
@@ -3054,9 +3076,9 @@ CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, 
 				else if (true === bPercent)
 				{
 					if (Math.abs(this.Page_Y) > 0.001)
-						this.CalcY = this.Margin_V;
+						this.CalcY = this.Margin_V + Shift;
 					else
-						this.CalcY = _Y + this.Bottom_Margin * Value / 100;
+						this.CalcY = _Y + this.Bottom_Margin * Value / 100 + Shift;
 				}
 				else
 				{
@@ -3134,7 +3156,7 @@ CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, 
 					if (Math.abs(this.Page_Y) > 0.001)
 						this.CalcY = this.Margin_V + Shift;
 					else
-						this.CalcY = Y_s + (Y_e - Y_s) * Value / 100;
+						this.CalcY = Y_s + (Y_e - Y_s) * Value / 100 + Shift;
 				}
 				else
 				{
@@ -3173,9 +3195,9 @@ CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, 
 				else if (true === bPercent)
 				{
 					if (Math.abs(this.Page_Y) > 0.001)
-						this.CalcY = this.Margin_V;
+						this.CalcY = this.Margin_V + Shift;
 					else
-						this.CalcY = this.Page_H * Value / 100;
+						this.CalcY = this.Page_H * Value / 100 + Shift;
 				}
 				else
 				{
@@ -3231,9 +3253,9 @@ CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, 
 				else if (true === bPercent)
 				{
 					if (Math.abs(this.Page_Y) > 0.001)
-						this.CalcY = this.Margin_V;
+						this.CalcY = this.Margin_V + Shift;
 					else
-						this.CalcY = this.Top_Margin * Value / 100;
+						this.CalcY = this.Top_Margin * Value / 100 + Shift;
 				}
 				else
 					this.CalcY = Y_s + Value;
