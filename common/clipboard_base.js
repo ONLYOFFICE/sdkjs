@@ -1022,6 +1022,7 @@
 		this.bIsEndTransaction = false;//временный флаг для excel. TODO пересмотреть!
 
 		this.showButtonIdParagraph = null;
+		this.endRecalcDocument = false;//для документов, закончен ли пересчет документа. нужно, чтобы грамотно рассчитать позицию иконки с/в
 		this.doNotShowButton = false;
 	}
 
@@ -1067,7 +1068,7 @@
 			this.doNotShowButton = true;
 		},
 
-		Paste_Process_End : function()
+		Paste_Process_End : function(checkEnd)
 		{
 			AscFonts.IsCheckSymbols             = false;
 			//todo возможно стоит добавить проверку
@@ -1093,7 +1094,9 @@
 				this.SpecialPasteButton_Show();
 			}
 
-			this.doNotShowButton = false;
+			if(!checkEnd || (checkEnd && this.endRecalcDocument)) {
+				this.doNotShowButton = false;
+			}
 
 			//TODO для excel заглушка. пересмотреть!
 			if(this.bIsEndTransaction)
@@ -1133,6 +1136,8 @@
 
 		SpecialPasteButtonById_Show: function()
 		{
+			this.endRecalcDocument = true;
+
 			if(!this.showButtonIdParagraph || this.pasteStart) {
 				return;
 			}
@@ -1142,6 +1147,7 @@
 				if(this.doNotShowButton) {
 					this.showButtonIdParagraph = null;
 				}
+				this.doNotShowButton = false;
 				return;
 			}
 

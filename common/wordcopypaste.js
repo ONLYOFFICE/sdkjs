@@ -1920,6 +1920,7 @@ function CopyPasteCorrectString(str)
 function Editor_Paste_Exec(api, _format, data1, data2, text_data, specialPasteProps)
 {
     var oPasteProcessor = new PasteProcessor(api, true, true, false);
+	window['AscCommon'].g_specialPasteHelper.endRecalcDocument = false;
 
 	if(undefined === specialPasteProps)
 	{
@@ -2238,7 +2239,7 @@ PasteProcessor.prototype =
 			this._specialPasteSetShowOptions();
 		}
 		
-		window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
+		window['AscCommon'].g_specialPasteHelper.Paste_Process_End(true);
     },
     InsertInPlace : function(oDoc, aNewContent)
     {
@@ -2532,6 +2533,15 @@ PasteProcessor.prototype =
 			{
 				window['AscCommon'].g_specialPasteHelper.showButtonIdParagraph = null;
 				window['AscCommon'].g_specialPasteHelper.CleanButtonInfo();
+			}
+		}
+
+		if(specialPasteShowOptions)
+		{
+			//SpecialPasteButtonById_Show вызываю здесь, если пересчет документа завершился раньше, чем мы попали сюда и сгенерировали параметры вставки
+			//в противном случае вызываю SpecialPasteButtonById_Show в drawingDocument->OnEndRecalculate
+			if (window['AscCommon'].g_specialPasteHelper.endRecalcDocument) {
+				window['AscCommon'].g_specialPasteHelper.SpecialPasteButtonById_Show();
 			}
 		}
 	},
