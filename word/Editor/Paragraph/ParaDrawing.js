@@ -1183,8 +1183,6 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 	this.Internal_Position.Calculate_Y(bInline, this.PositionV.RelativeFrom, this.PositionV.Align, this.PositionV.Value, this.PositionV.Percent);
 	this.GraphicObj.bounds.l += this.Internal_Position.CalcX;
 	this.GraphicObj.bounds.r += this.Internal_Position.CalcX;
-	this.GraphicObj.bounds.x += this.Internal_Position.CalcX;
-	this.GraphicObj.bounds.y += this.Internal_Position.CalcY;
 	this.GraphicObj.bounds.t += this.Internal_Position.CalcY;
 	this.GraphicObj.bounds.b += this.Internal_Position.CalcY;
 	this.Internal_Position.Correct_Values(bInline, PageLimits, this.AllowOverlap, this.Use_TextWrap(), OtherFlowObjects, false);
@@ -2828,7 +2826,7 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 					}
 				}
 				else
-					this.CalcX = this.ColumnStartX;
+					this.CalcX = this.ColumnStartX + Value;
 
 				break;
 			}
