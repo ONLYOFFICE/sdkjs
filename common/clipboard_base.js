@@ -1136,7 +1136,9 @@
 
 		SpecialPasteButtonById_Show: function()
 		{
-			this.endRecalcDocument = true;
+			if(!this.pasteStart) {
+				this.endRecalcDocument = true;
+			}
 
 			if(!this.showButtonIdParagraph || this.pasteStart) {
 				return;
