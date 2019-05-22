@@ -910,9 +910,9 @@ ParaDrawing.prototype.CheckWH = function()
 
 		var startX, startY;
 		if(!AscFormat.checkNormalRotate(rot)){
-			var t = extX;
+			var temp = extX;
 			extX = extY;
-			extY = t;
+			extY = temp;
 		}
 
 
