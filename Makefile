@@ -24,11 +24,7 @@ GRUNT_ENV += BUILD_NUMBER=$(BUILD_NUMBER)
 GRUNT_ENV += APP_COPYRIGHT="$(APP_COPYRIGHT)"
 GRUNT_ENV += PUBLISHER_URL="$(PUBLISHER_URL)"
 
-WEBAPPS_DIR ?= web-apps
-
-ifeq ($(PRODUCT_NAME_LOW),$(filter $(PRODUCT_NAME_LOW),documentserver-de documentserver-ie))
 WEBAPPS_DIR := web-apps-pro
-endif
 
 WEBAPPS = $(OUTPUT)/$(WEBAPPS_DIR)
 NODE_MODULES = build/node_modules ../$(WEBAPPS_DIR)/build/node_modules
@@ -56,7 +52,6 @@ $(SDKJS_FILES): $(NODE_MODULES)
 		$(GRUNT_ENV) $(GRUNT) $(GRUNT_FLAGS)
 
 desktop: GRUNT_FLAGS += --desktop=true
-desktop: WEBAPPS_DIR = web-apps-pro
 desktop: all
 	
 clean:
