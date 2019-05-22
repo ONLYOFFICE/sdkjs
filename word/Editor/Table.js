@@ -13356,7 +13356,7 @@ CTable.prototype.CanUpdateTarget = function(nCurPage)
 CTable.prototype.IsCellSelection = function()
 {
 	if (true === this.ApplyToAll
-		|| (this.IsSelectionUse()
+		|| (true === this.Selection.Use
 		&& table_Selection_Cell === this.Selection.Type
 		&& this.Selection.Data.length > 0))
 		return true;
