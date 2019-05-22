@@ -13889,8 +13889,9 @@ CDocument.prototype.controller_AddNewParagraph = function(bRecalculate, bForceAd
 			NewParagraph.Correct_Content();
 			NewParagraph.MoveCursorToStartPos();
 
-			this.Internal_Content_Add(this.CurPos.ContentPos + 1, NewParagraph);
-			this.CurPos.ContentPos++;
+			var nContentPos = this.CurPos.ContentPos + 1;
+			this.AddToContent(nContentPos, NewParagraph);
+			this.CurPos.ContentPos = nContentPos;
 
 			if (true === this.IsTrackRevisions())
 			{
@@ -14307,7 +14308,9 @@ CDocument.prototype.controller_AddToParagraph = function(ParaItem, bRecalculate)
 		}
 	}
 
-	var Item     = this.Content[this.CurPos.ContentPos];
+	var nContentPos = this.CurPos.ContentPos;
+
+	var Item     = this.Content[nContentPos];
 	var ItemType = Item.GetType();
 
 	if (para_NewLine === ParaItem.Type && true === ParaItem.IsPageOrColumnBreak())
@@ -14323,10 +14326,14 @@ CDocument.prototype.controller_AddToParagraph = function(ParaItem, bRecalculate)
 				else
 				{
 					this.AddNewParagraph(undefined, true);
-					var CurPos = this.CurPos.ContentPos - 1;
-					this.Content[CurPos].MoveCursorToStartPos(false);
-					this.Content[CurPos].AddToParagraph(ParaItem);
-					this.Content[CurPos].Clear_Formatting();
+
+					if (this.Content[nContentPos] && this.Content[nContentPos].IsParagraph())
+					{
+						this.Content[nContentPos].AddToParagraph(ParaItem);
+						this.Content[nContentPos].Clear_Formatting();
+					}
+
+					this.CurPos.ContentPos = nContentPos + 1;
 				}
 			}
 			else
@@ -14334,7 +14341,6 @@ CDocument.prototype.controller_AddToParagraph = function(ParaItem, bRecalculate)
 				if (ParaItem.IsColumnBreak())
 				{
 					var oCurElement = this.Content[this.CurPos.ContentPos];
-					var CurPos = this.CurPos.ContentPos;
 					if (oCurElement && type_Paragraph === oCurElement.Get_Type() && oCurElement.IsColumnBreakOnLeft())
 					{
 						oCurElement.AddToParagraph(ParaItem);
@@ -14342,20 +14348,30 @@ CDocument.prototype.controller_AddToParagraph = function(ParaItem, bRecalculate)
 					else
 					{
 						this.AddNewParagraph(undefined, true);
-						CurPos = this.CurPos.ContentPos;
 
-						this.Content[CurPos].MoveCursorToStartPos(false);
-						this.Content[CurPos].AddToParagraph(ParaItem);
+						nContentPos = this.CurPos.ContentPos;
+						if (this.Content[nContentPos] && this.Content[nContentPos].IsParagraph())
+						{
+							this.Content[nContentPos].MoveCursorToStartPos(false);
+							this.Content[nContentPos].AddToParagraph(ParaItem);
+						}
 					}
 				}
 				else
 				{
 					this.AddNewParagraph(undefined, true);
+					this.CurPos.ContentPos = nContentPos + 1;
+					this.Content[nContentPos + 1].MoveCursorToStartPos();
 					this.AddNewParagraph(undefined, true);
-					var CurPos = this.CurPos.ContentPos - 1;
-					this.Content[CurPos].MoveCursorToStartPos(false);
-					this.Content[CurPos].AddToParagraph(ParaItem);
-					this.Content[CurPos].Clear_Formatting();
+
+					if (this.Content[nContentPos + 1] && this.Content[nContentPos + 1].IsParagraph())
+					{
+						this.Content[nContentPos + 1].AddToParagraph(ParaItem);
+						this.Content[nContentPos + 1].Clear_Formatting();
+					}
+
+					this.CurPos.ContentPos = nContentPos + 2;
+					this.Content[nContentPos + 1].MoveCursorToStartPos();
 				}
 			}
 
