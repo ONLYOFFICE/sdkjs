@@ -1207,7 +1207,13 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 	this.GraphicObj.bounds.r += this.Internal_Position.CalcX;
 	this.GraphicObj.bounds.t += this.Internal_Position.CalcY;
 	this.GraphicObj.bounds.b += this.Internal_Position.CalcY;
-	this.Internal_Position.Correct_Values(bInline, PageLimits, this.AllowOverlap, this.Use_TextWrap(), OtherFlowObjects, false);
+
+	var bTable = false;
+	if(oDocumentContent && oDocumentContent.IsTableCellContent(false))
+	{
+		bTable = true;
+	}
+	this.Internal_Position.Correct_Values(bInline, PageLimits, this.AllowOverlap, this.Use_TextWrap(), OtherFlowObjects, bTable);
 
 	var OldPageNum = this.PageNum;
 	this.PageNum   = PageNum;
@@ -3318,11 +3324,24 @@ CAnchorPosition.prototype.Correct_Values = function(bInline, PageLimits, AllowOv
 		if (true === UseTextWrap && bCorrectPos)
 		{
 			// Скорректируем рассчитанную позицию, так чтобы объект не выходил за заданные пределы
-			if (CurX + this.BoundsL + this.BoundsW > X_max)
-				CurX = X_max - this.BoundsL - this.BoundsW;
+			var _W;
+			if(AscFormat.checkNormalRotate(this.Rot))
+			{
+				_W = this.W;
+			}
+			else
+			{
+				_W = this.H;
+			}
+			var Right = CurX + this.W / 2.0 + _W / 2.0 + this.EffectExtentR;
+			if (Right > X_max)
+			{
+				CurX -= (Right - X_max);
+			}
 
-			if (CurX + this.BoundsL < X_min)
-				CurX = X_min - this.BoundsL;
+			var Left =  CurX + this.W / 2.0 - _W / 2.0 - this.EffectExtentR;
+			if (Left < X_min)
+				CurX += (X_min - Left);
 
 			// Скорректируем рассчитанную позицию, так чтобы объект не выходил за заданные пределы
 			if (CurY + this.BoundsT + this.BoundsH > Y_max)
