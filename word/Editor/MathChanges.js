@@ -1849,7 +1849,3 @@ CChangesMathDegreeSubSupType.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_SetType(Value);
 };
-
-
-
-

@@ -584,6 +584,8 @@ CTableRow.prototype =
 		this.CellsInfo.splice(Index, 1);
 
 		this.Internal_ReIndexing(Index);
+
+		this.private_CheckCurCell();
 	},
 
 	Add_Cell : function(Index, Row, Cell, bReIndexing)
@@ -618,6 +620,8 @@ CTableRow.prototype =
 			else
 				Cell.Next = null;
 		}
+
+		this.private_CheckCurCell();
 
 		return Cell;
 	},
@@ -1100,6 +1104,11 @@ CTableRow.prototype.RejectPrChange = function()
 		this.Set_Pr(this.Pr.PrChange);
 		this.RemovePrChange();
 	}
+};
+CTableRow.prototype.private_CheckCurCell = function()
+{
+	if (this.GetTable())
+		this.GetTable().private_CheckCurCell();
 };
 
 

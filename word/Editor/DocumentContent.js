@@ -2353,8 +2353,9 @@ CDocumentContent.prototype.AddNewParagraph = function()
 				NewParagraph.Correct_Content();
                 NewParagraph.MoveCursorToStartPos();
 
-                this.Internal_Content_Add(this.CurPos.ContentPos + 1, NewParagraph);
-                this.CurPos.ContentPos++;
+                var nContentPos = this.CurPos.ContentPos + 1;
+                this.AddToContent(nContentPos, NewParagraph);
+                this.CurPos.ContentPos = nContentPos;
 
                 if (true === this.IsTrackRevisions())
                 {
@@ -2727,26 +2728,23 @@ CDocumentContent.prototype.AddInlineTable = function(Cols, Rows)
 			var NewTable = new CTable(this.DrawingDocument, this, true, Rows, Cols, Grid);
 			NewTable.Set_ParagraphPrOnAdd(Item);
 
-			// Проверим позицию в текущем параграфе
+			var nContentPos = this.CurPos.ContentPos;
 			if (true === Item.IsCursorAtBegin())
 			{
 				NewTable.MoveCursorToStartPos(false);
-				this.Internal_Content_Add(this.CurPos.ContentPos, NewTable);
+				this.AddToContent(nContentPos, NewTable);
+				this.CurPos.ContentPos = nContentPos;
 			}
 			else
 			{
-				// Создаем новый параграф
 				var NewParagraph = new Paragraph(this.DrawingDocument, this, this.bPresentation === true);
 				Item.Split(NewParagraph);
 
-				// Добавляем новый параграф
-				this.Internal_Content_Add(this.CurPos.ContentPos + 1, NewParagraph);
+				this.AddToContent(nContentPos + 1, NewParagraph);
 
-				// Выставляем курсор в начало таблицы
 				NewTable.MoveCursorToStartPos();
-				this.Internal_Content_Add(this.CurPos.ContentPos + 1, NewTable);
-
-				this.CurPos.ContentPos++;
+				this.AddToContent(nContentPos + 1, NewTable);
+				this.CurPos.ContentPos = nContentPos + 1;
 			}
 		}
 		else
@@ -2886,7 +2884,9 @@ CDocumentContent.prototype.AddToParagraph = function(ParaItem, bRecalculate)
 			}
 		}
 
-		var Item     = this.Content[this.CurPos.ContentPos];
+		var nContentPos = this.CurPos.ContentPos;
+
+		var Item     = this.Content[nContentPos];
 		var ItemType = Item.GetType();
 
 		if (para_NewLine === ParaItem.Type && true === ParaItem.IsPageOrColumnBreak())
@@ -2896,15 +2896,30 @@ CDocumentContent.prototype.AddToParagraph = function(ParaItem, bRecalculate)
 				if (true === Item.IsCursorAtBegin())
 				{
 					this.AddNewParagraph();
-					this.Content[this.CurPos.ContentPos - 1].AddToParagraph(ParaItem);
-					this.Content[this.CurPos.ContentPos - 1].Clear_Formatting();
+
+					if (this.Content[nContentPos] && this.Content[nContentPos].IsParagraph())
+					{
+						this.Content[nContentPos].AddToParagraph(ParaItem);
+						this.Content[nContentPos].Clear_Formatting();
+					}
+
+					this.CurPos.ContentPos = nContentPos + 1;
 				}
 				else
 				{
 					this.AddNewParagraph();
+					this.CurPos.ContentPos = nContentPos + 1;
+					this.Content[nContentPos + 1].MoveCursorToStartPos();
 					this.AddNewParagraph();
-					this.Content[this.CurPos.ContentPos - 1].AddToParagraph(ParaItem);
-					this.Content[this.CurPos.ContentPos - 1].Clear_Formatting();
+
+					if (this.Content[nContentPos + 1] && this.Content[nContentPos + 1].IsParagraph())
+					{
+						this.Content[nContentPos + 1].AddToParagraph(ParaItem);
+						this.Content[nContentPos + 1].Clear_Formatting();
+					}
+
+					this.CurPos.ContentPos = nContentPos + 2;
+					this.Content[nContentPos + 1].MoveCursorToStartPos();
 				}
 
 				if (false != bRecalculate)

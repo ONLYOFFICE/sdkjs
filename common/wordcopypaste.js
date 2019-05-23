@@ -2239,7 +2239,7 @@ PasteProcessor.prototype =
 			this._specialPasteSetShowOptions();
 		}
 		
-		window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
+		window['AscCommon'].g_specialPasteHelper.Paste_Process_End(true);
     },
     InsertInPlace : function(oDoc, aNewContent)
     {
@@ -2540,10 +2540,7 @@ PasteProcessor.prototype =
 		{
 			//SpecialPasteButtonById_Show вызываю здесь, если пересчет документа завершился раньше, чем мы попали сюда и сгенерировали параметры вставки
 			//в противном случае вызываю SpecialPasteButtonById_Show в drawingDocument->OnEndRecalculate
-			//TODO пересмотреть проверку на CDrawingDocContent и CShape
-			if (window['AscCommon'].g_specialPasteHelper.endRecalcDocument || (this.oDocument.Parent &&
-				(this.oDocument.Parent instanceof CShape || this.oDocument.Parent instanceof CHeaderFooter)) ||
-				(this.oDocument instanceof AscFormat.CDrawingDocContent)) {
+			if (window['AscCommon'].g_specialPasteHelper.endRecalcDocument) {
 				window['AscCommon'].g_specialPasteHelper.SpecialPasteButtonById_Show();
 			}
 		}

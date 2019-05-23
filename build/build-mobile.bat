@@ -5,7 +5,7 @@ rem call grunt --level=WHITESPACE_ONLY --mobile=true --formatting=PRETTY_PRINT
 call grunt --level=WHITESPACE_ONLY --mobile=true --noclosure=true --formatting=PRETTY_PRINT
 
 echo.> tmp_newline.txt
-copy /b/y ..\..\web-apps\vendor\xregexp\xregexp-all-min.js + tmp_newline.txt + ..\..\web-apps\vendor\underscore\underscore-min.js + tmp_newline.txt + ..\common\Native\Wrappers\common.js + tmp_newline.txt + ..\common\Native\jquery_native.js + tmp_newline.txt ..\mobile_banners.js
+copy /b/y ..\..\web-apps-pro\vendor\xregexp\xregexp-all-min.js + tmp_newline.txt + ..\..\web-apps\vendor\underscore\underscore-min.js + tmp_newline.txt + ..\common\Native\Wrappers\common.js + tmp_newline.txt + ..\common\Native\jquery_native.js + tmp_newline.txt ..\mobile_banners.js
 
 copy /b/y ..\mobile_banners.js + ..\word\sdk-all-min.js + ..\word\sdk-all.js ..\..\core\build\jsnative\word\script.bin
 copy /b/y ..\mobile_banners.js + ..\cell\sdk-all-min.js + ..\cell\sdk-all.js ..\..\core\build\jsnative\cell\script.bin

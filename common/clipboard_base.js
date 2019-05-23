@@ -1068,7 +1068,7 @@
 			this.doNotShowButton = true;
 		},
 
-		Paste_Process_End : function()
+		Paste_Process_End : function(checkEnd)
 		{
 			AscFonts.IsCheckSymbols             = false;
 			//todo возможно стоит добавить проверку
@@ -1094,7 +1094,9 @@
 				this.SpecialPasteButton_Show();
 			}
 
-			this.doNotShowButton = false;
+			if(!checkEnd || (checkEnd && this.endRecalcDocument)) {
+				this.doNotShowButton = false;
+			}
 
 			//TODO для excel заглушка. пересмотреть!
 			if(this.bIsEndTransaction)
@@ -1134,11 +1136,20 @@
 
 		SpecialPasteButtonById_Show: function()
 		{
+			if(!this.pasteStart) {
+				this.endRecalcDocument = true;
+			}
+
+			if(!this.showButtonIdParagraph || this.pasteStart) {
+				return;
+			}
+
 			if(!this.Api || !this.Api.asc_specialPasteShowButton || this.doNotShowButton)
 			{
 				if(this.doNotShowButton) {
 					this.showButtonIdParagraph = null;
 				}
+				this.doNotShowButton = false;
 				return;
 			}
 

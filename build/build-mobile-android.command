@@ -34,19 +34,19 @@ echo grunt --level=ADVANCED --mobile=true  --noclosure=true
 
 printf $'\r' > temp.txt
 
-cat "../../web-apps/vendor/xregexp/xregexp-all-min.js" "temp.txt" "../../web-apps/vendor/underscore/underscore-min.js" "temp.txt" "../common/Native/Wrappers/common.js" "temp.txt" "../common/Native/jquery_native.js" "temp.txt" > "banners.js"
+cat "../../web-apps-pro/vendor/xregexp/xregexp-all-min.js" "temp.txt" "../../web-apps/vendor/underscore/underscore-min.js" "temp.txt" "../common/Native/Wrappers/common.js" "temp.txt" "../common/Native/jquery_native.js" "temp.txt" > "banners.js"
 
 cat "banners.js" "../word/sdk-all-min.js" "../word/sdk-all.js" > "$1/documents/script.bin"
 
 rm -f -r "banners.js"
 
-cat "../../web-apps/vendor/xregexp/xregexp-all-min.js" "temp.txt" "../../web-apps/vendor/underscore/underscore-min.js" "temp.txt" "../cell/native/common.js" "temp.txt" "../common/Native/jquery_native.js" "temp.txt" > "banners.js"
+cat "../../web-apps-pro/vendor/xregexp/xregexp-all-min.js" "temp.txt" "../../web-apps/vendor/underscore/underscore-min.js" "temp.txt" "../cell/native/common.js" "temp.txt" "../common/Native/jquery_native.js" "temp.txt" > "banners.js"
 
 cat "banners.js" "../cell/sdk-all-min.js" "../cell/sdk-all.js" > "$1/spreadsheets/script.bin"
 
 rm -f -r "banners.js"
 
-cat "../../web-apps/vendor/xregexp/xregexp-all-min.js" "temp.txt" "../../web-apps/vendor/underscore/underscore-min.js" "temp.txt" "../common/Native/Wrappers/common.js" "temp.txt" "../common/Native/jquery_native.js" "temp.txt" > "banners.js"
+cat "../../web-apps-pro/vendor/xregexp/xregexp-all-min.js" "temp.txt" "../../web-apps/vendor/underscore/underscore-min.js" "temp.txt" "../common/Native/Wrappers/common.js" "temp.txt" "../common/Native/jquery_native.js" "temp.txt" > "banners.js"
 
 cat "banners.js" "../slide/sdk-all-min.js" "../slide/sdk-all.js" > "$1/presentations/script.bin"
 

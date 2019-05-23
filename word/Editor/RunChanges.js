@@ -2520,5 +2520,3 @@ CChangesRunMathForcedBreak.prototype.Merge = function(oChange)
 
 	return true;
 };
-
-

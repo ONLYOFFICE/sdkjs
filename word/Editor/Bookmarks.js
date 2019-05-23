@@ -478,5 +478,3 @@ CBookmarksManager.prototype['asc_IsHiddenBookmark']      = CBookmarksManager.pro
 CBookmarksManager.prototype['asc_IsInternalUseBookmark'] = CBookmarksManager.prototype.IsInternalUseBookmark;
 CBookmarksManager.prototype['asc_CheckNewBookmarkName']  = CBookmarksManager.prototype.CheckNewBookmarkName;
 CBookmarksManager.prototype['asc_SelectBookmark']        = CBookmarksManager.prototype.SelectBookmark;
-
-

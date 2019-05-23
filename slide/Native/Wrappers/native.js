@@ -252,7 +252,7 @@ window["AscCommon"].getFullImageSrc2 = function (src) {
         }
     }
     return src;
-}
+};
 
 Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
 {
@@ -1494,4 +1494,4 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
     }
 
     return _return;
-}
+};
