@@ -11117,57 +11117,55 @@ CDocument.prototype.Add_SectionBreak = function(SectionBreakType)
 		this.MoveCursorLeft(false, false);
 	}
 
-	var Element = this.Content[this.CurPos.ContentPos];
-
-	var CurSectPr = this.SectionsInfo.Get_SectPr(this.CurPos.ContentPos).SectPr;
-
-	if (type_Paragraph === Element.GetType())
+	var nContentPos = this.CurPos.ContentPos;
+	var oElement    = this.Content[nContentPos];
+	var oCurSectPr  = this.SectionsInfo.Get_SectPr(nContentPos).SectPr;
+	if (oElement.IsParagraph())
 	{
 		// Если мы стоим в параграфе, тогда делим данный параграф на 2 в текущей точке(даже если мы стоим в начале
-		// или в конце параграфа) и к первому параграфу приписываем конец секкции.
+		// или в конце параграфа) и к первому параграфу приписываем конец секции
 
-		var NewParagraph = Element.Split();
+		var oNewParagraph = oElement.Split();
+		oNewParagraph.MoveCursorToStartPos(false);
 
-		this.CurPos.ContentPos++;
-		NewParagraph.MoveCursorToStartPos(false);
-
-		this.Internal_Content_Add(this.CurPos.ContentPos, NewParagraph);
+		this.AddToContent(nContentPos + 1, oNewParagraph);
+		this.CurPos.ContentPos = nContentPos + 1;
 
 		// Заметим, что после функции Split, у параграфа Element не может быть окончания секции, т.к. если она
 		// была в нем изначально, тогда после функции Split, окончание секции перенеслось в новый параграф.
 	}
-	else if (type_Table === Element.GetType())
+	else if (oElement.IsTable())
 	{
 		// Если мы стоим в таблице, тогда делим данную таблицу на 2 по текущему ряду(текущий ряд попадает во
 		// вторую таблицу). Вставляем между таблицами параграф, и к этому параграфу приписываем окончание
 		// секции. Если мы стоим в первой строке таблицы, таблицу делить не надо, достаточно добавить новый
 		// параграф перед ней.
 
-		var NewParagraph = new Paragraph(this.DrawingDocument, this);
-		var NewTable     = Element.Split();
+		var oNewParagraph = new Paragraph(this.DrawingDocument, this);
+		var oNewTable     = oElement.Split();
 
-		if (null === NewTable)
+		if (null === oNewTable)
 		{
-			this.Internal_Content_Add(this.CurPos.ContentPos, NewParagraph);
-			this.CurPos.ContentPos++;
+			this.AddToContent(nContentPos, oNewParagraph);
+			this.CurPos.ContentPos = nContentPos + 1;
 		}
 		else
 		{
-			this.Internal_Content_Add(this.CurPos.ContentPos + 1, NewParagraph);
-			this.Internal_Content_Add(this.CurPos.ContentPos + 2, NewTable);
-			this.CurPos.ContentPos += 2;
+			this.AddToContent(nContentPos + 1, oNewParagraph);
+			this.AddToContent(nContentPos + 2, oNewTable);
+			this.CurPos.ContentPos = nContentPos + 2;
 		}
 
 		this.Content[this.CurPos.ContentPos].MoveCursorToStartPos(false);
 
-		Element = NewParagraph;
+		oElement = oNewParagraph;
 	}
 	else
 	{
 		return false;
 	}
 
-	var SectPr = new CSectionPr(this);
+	var oSectPr = new CSectionPr(this);
 
 	// В данном месте мы ставим разрыв секции. Чтобы до текущего места ничего не изменилось, мы у новой
 	// для новой секции копируем все настройки из старой, а в старую секцию выставляем приходящий тип
@@ -11177,19 +11175,19 @@ CDocument.prototype.Add_SectionBreak = function(SectionBreakType)
 
 	this.History.MinorChanges = true;
 
-	SectPr.Copy(CurSectPr);
-	CurSectPr.Set_Type(SectionBreakType);
-	CurSectPr.Set_PageNum_Start(-1);
-	CurSectPr.Clear_AllHdrFtr();
+	oSectPr.Copy(oCurSectPr);
+	oCurSectPr.Set_Type(SectionBreakType);
+	oCurSectPr.Set_PageNum_Start(-1);
+	oCurSectPr.Clear_AllHdrFtr();
 
 	this.History.MinorChanges = false;
 
-	Element.Set_SectionPr(SectPr);
-	Element.Refresh_RecalcData2(0, 0);
+	oElement.Set_SectionPr(oSectPr);
+	oElement.Refresh_RecalcData2(0, 0);
 
 	this.Recalculate();
-	this.Document_UpdateInterfaceState();
-	this.Document_UpdateSelectionState();
+	this.UpdateInterface();
+	this.UpdateSelection();
 
 	return true;
 };
