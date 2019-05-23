@@ -1500,18 +1500,17 @@ CDocumentContentBase.prototype.private_UpdateSelectionPosOnAdd = function(nPosit
 		nCount = 1;
 
 	if (this.CurPos.ContentPos >= nPosition)
-	{
-		if (this.CurPos.ContentPos + nCount >= this.Content.length)
-			this.CurPos.ContentPos = this.Content.length - 1;
-		else
-			this.CurPos.ContentPos += nCount;
-	}
+		this.CurPos.ContentPos += nCount;
 
 	if (this.Selection.StartPos >= nPosition)
 		this.Selection.StartPos += nCount;
 
 	if (this.Selection.EndPos >= nPosition)
 		this.Selection.EndPos += nCount;
+
+	this.Selection.StartPos = Math.max(0, Math.min(this.Content.length - 1, this.Selection.StartPos));
+	this.Selection.EndPos   = Math.max(0, Math.min(this.Content.length - 1, this.Selection.EndPos));
+	this.CurPos.ContentPos  = Math.max(0, Math.min(this.Content.length - 1, this.CurPos.ContentPos));
 };
 /**
  * Обновляем позиции курсора и селекта во время удаления элементов

@@ -8995,6 +8995,8 @@ CTable.prototype.MergeTableCells = function(isClearMerge)
 
 	this.CurCell = Cell_tl;
 
+	this.CurCell.GetContent().SelectAll();
+
 	if (true !== isClearMerge)
 	{
 		// Запускаем пересчет
