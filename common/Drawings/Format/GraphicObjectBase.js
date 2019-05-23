@@ -502,6 +502,16 @@
         if(this.parent && (this.parent.Get_ParentTextTransform  && this.parent.Get_ParentTextTransform())) {
             return true;
         }
+        var oClipRect;
+        if(this.getClipRect){
+            oClipRect = this.getClipRect();
+        }
+        if(oClipRect){
+            if(x < oClipRect.x || x > oClipRect.x + oClipRect.w
+            || y < oClipRect.y || y > oClipRect.y + oClipRect.h){
+                return false;
+            }
+        }
         var _x, _y;
         if(AscFormat.isRealNumber(this.posX) && AscFormat.isRealNumber(this.posY)){
             _x = x - this.posX - this.bounds.x;

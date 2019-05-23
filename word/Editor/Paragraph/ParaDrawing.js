@@ -1203,10 +1203,7 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 	this.Internal_Position.Set(this.GraphicObj.extX, this.GraphicObj.extY, this.getXfrmRot(), this.GraphicObj.bounds, this.EffectExtent, this.YOffset, ParaLayout, PageLimits);
 	this.Internal_Position.Calculate_X(bInline, this.PositionH.RelativeFrom, this.PositionH.Align, this.PositionH.Value, this.PositionH.Percent);
 	this.Internal_Position.Calculate_Y(bInline, this.PositionV.RelativeFrom, this.PositionV.Align, this.PositionV.Value, this.PositionV.Percent);
-	this.GraphicObj.bounds.l += this.Internal_Position.CalcX;
-	this.GraphicObj.bounds.r += this.Internal_Position.CalcX;
-	this.GraphicObj.bounds.t += this.Internal_Position.CalcY;
-	this.GraphicObj.bounds.b += this.Internal_Position.CalcY;
+
 
 	var bTable = false;
 	if(oDocumentContent && oDocumentContent.IsTableCellContent(false))
@@ -1214,6 +1211,10 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 		bTable = true;
 	}
 	this.Internal_Position.Correct_Values(bInline, PageLimits, this.AllowOverlap, this.Use_TextWrap(), OtherFlowObjects, bTable);
+	this.GraphicObj.bounds.l += this.Internal_Position.CalcX;
+	this.GraphicObj.bounds.r += this.Internal_Position.CalcX;
+	this.GraphicObj.bounds.t += this.Internal_Position.CalcY;
+	this.GraphicObj.bounds.b += this.Internal_Position.CalcY;
 
 	var OldPageNum = this.PageNum;
 	this.PageNum   = PageNum;
