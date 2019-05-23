@@ -12099,15 +12099,21 @@
 		options.countFind = 0;
 		options.countReplace = 0;
 
-		var cell;
+		var cell, tmp;
 		var aReplaceCells = [];
 		if (options.isReplaceAll) {
 			this.model._findAllCells(options);
 			var findResult = this.model.lastFindOptions.findResults.values;
 			for (var row in findResult) {
 				for (var col in findResult[row]) {
-					cell = findResult[row][col];
-					aReplaceCells.push(new Asc.Range(cell.nCol, cell.nRow, cell.nCol, cell.nRow));
+					if (!this.model.lastFindOptions.scanByRows) {
+						tmp = col;
+						col = row;
+						row = tmp;
+					}
+					col |= 0;
+					row |= 0;
+					aReplaceCells.push(new Asc.Range(col, row, col, row));
 				}
 			}
 		} else {
