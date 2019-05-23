@@ -2263,7 +2263,7 @@ CDocumentContent.prototype.UpdateCursorType = function(X, Y, CurPage)
 //-----------------------------------------------------------------------------------
 // Функции для работы с контентом
 //-----------------------------------------------------------------------------------
-CDocumentContent.prototype.AddNewParagraph = function()
+CDocumentContent.prototype.AddNewParagraph = function(bForceAdd)
 {
     if (docpostype_DrawingObjects === this.CurPos.Type)
     {
@@ -2295,7 +2295,7 @@ CDocumentContent.prototype.AddNewParagraph = function()
         if (type_Paragraph === Item.GetType())
         {
             // Если текущий параграф пустой и с нумерацией, тогда удаляем нумерацию и отступы левый и первой строки
-            if (undefined != Item.GetNumPr() && true === Item.IsEmpty({SkipNewLine : true}) && true === Item.IsCursorAtBegin())
+            if (true !== bForceAdd && undefined != Item.GetNumPr() && true === Item.IsEmpty({SkipNewLine : true}) && true === Item.IsCursorAtBegin())
             {
                 Item.RemoveNumPr();
                 Item.Set_Ind({FirstLine : undefined, Left : undefined, Right : Item.Pr.Ind.Right}, true);
@@ -2895,7 +2895,7 @@ CDocumentContent.prototype.AddToParagraph = function(ParaItem, bRecalculate)
 			{
 				if (true === Item.IsCursorAtBegin())
 				{
-					this.AddNewParagraph();
+					this.AddNewParagraph(true);
 
 					if (this.Content[nContentPos] && this.Content[nContentPos].IsParagraph())
 					{
@@ -2907,10 +2907,10 @@ CDocumentContent.prototype.AddToParagraph = function(ParaItem, bRecalculate)
 				}
 				else
 				{
-					this.AddNewParagraph();
+					this.AddNewParagraph(true);
 					this.CurPos.ContentPos = nContentPos + 1;
 					this.Content[nContentPos + 1].MoveCursorToStartPos();
-					this.AddNewParagraph();
+					this.AddNewParagraph(true);
 
 					if (this.Content[nContentPos + 1] && this.Content[nContentPos + 1].IsParagraph())
 					{
