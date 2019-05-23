@@ -2968,6 +2968,9 @@ Paragraph.prototype.Remove = function(nCount, bOnlyText, bRemoveOnlySelection, b
 				this.CurPos.ContentPos  = StartPos;
 				this.Selection.StartPos = StartPos;
 				this.Selection.EndPos   = StartPos;
+
+				if (!this.Content[StartPos] || !this.Content[StartPos].IsCursorPlaceable())
+					this.Correct_ContentPos2();
 			}
 
 			this.DeleteCommentOnRemove = true;
