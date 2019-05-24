@@ -1205,12 +1205,7 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 	this.Internal_Position.Calculate_Y(bInline, this.PositionV.RelativeFrom, this.PositionV.Align, this.PositionV.Value, this.PositionV.Percent);
 
 
-	var bTable = false;
-	if(oDocumentContent && oDocumentContent.IsTableCellContent(false))
-	{
-		bTable = true;
-	}
-	this.Internal_Position.Correct_Values(bInline, PageLimits, this.AllowOverlap, this.Use_TextWrap(), OtherFlowObjects, bTable);
+	this.Internal_Position.Correct_Values(bInline, PageLimits, this.AllowOverlap, this.Use_TextWrap(), OtherFlowObjects);
 	this.GraphicObj.bounds.l += this.Internal_Position.CalcX;
 	this.GraphicObj.bounds.r += this.Internal_Position.CalcX;
 	this.GraphicObj.bounds.t += this.Internal_Position.CalcY;
@@ -1445,7 +1440,7 @@ ParaDrawing.prototype.private_SetXYByLayout = function(X, Y, PageNum, Layout, bC
 	this.Internal_Position.Set(this.GraphicObj.extX, this.GraphicObj.extY, this.getXfrmRot(), this.GraphicObj.bounds, this.EffectExtent, this.YOffset, Layout.ParagraphLayout, Layout.PageLimitsOrigin);
 	this.Internal_Position.Calculate_X(false, c_oAscRelativeFromH.Page, false, X - Layout.PageLimitsOrigin.X, false);
 	this.Internal_Position.Calculate_Y(false, c_oAscRelativeFromV.Page, false, Y - Layout.PageLimitsOrigin.Y, false);
-	this.Internal_Position.Correct_Values(false, Layout.PageLimits, this.AllowOverlap, this.Use_TextWrap(), [], true);
+	this.Internal_Position.Correct_Values(false, Layout.PageLimits, this.AllowOverlap, this.Use_TextWrap(), []);
 
 	if (true === bChangeX)
 	{
@@ -3293,14 +3288,14 @@ CAnchorPosition.prototype.Update_PositionYHeaderFooter = function(TopMarginY, Bo
 	this.Top_Margin    = TopY;
 	this.Bottom_Margin = this.Page_H - BottomY;
 };
-CAnchorPosition.prototype.Correct_Values = function(bInline, PageLimits, AllowOverlap, UseTextWrap, OtherFlowObjects, bCorrectPos)
+CAnchorPosition.prototype.Correct_Values = function(bInline, PageLimits, AllowOverlap, UseTextWrap, OtherFlowObjects)
 {
 	if (true != bInline)
 	{
 		var X_min = PageLimits.X;
-		var Y_min = PageLimits.Y;
+		var Y_min = this.Top_Margin;
 		var X_max = PageLimits.XLimit;
-		var Y_max = PageLimits.YLimit;
+		var Y_max = this.Page_H - this.Bottom_Margin;
 
 		var W = this.W;
 		var H = this.H;
@@ -3332,17 +3327,19 @@ CAnchorPosition.prototype.Correct_Values = function(bInline, PageLimits, AllowOv
 		}
 
 		// Автофигуры с обтеканием за/перед текстом могут лежать где угодно
-		if (true === UseTextWrap && bCorrectPos)
+		if (true === UseTextWrap)
 		{
 			// Скорректируем рассчитанную позицию, так чтобы объект не выходил за заданные пределы
-			var _W;
+			var _W, _H;
 			if(AscFormat.checkNormalRotate(this.Rot))
 			{
 				_W = this.W;
+				_H = this.H;
 			}
 			else
 			{
 				_W = this.H;
+				_H = this.W;
 			}
 			var Right = CurX + this.W / 2.0 + _W / 2.0 + this.EffectExtentR;
 			if (Right > X_max)
@@ -3352,14 +3349,22 @@ CAnchorPosition.prototype.Correct_Values = function(bInline, PageLimits, AllowOv
 
 			var Left =  CurX + this.W / 2.0 - _W / 2.0 - this.EffectExtentR;
 			if (Left < X_min)
+			{
 				CurX += (X_min - Left);
+			}
 
 			// Скорректируем рассчитанную позицию, так чтобы объект не выходил за заданные пределы
-			if (CurY + this.BoundsT + this.BoundsH > Y_max)
-				CurY = Y_max - this.BoundsT - this.BoundsH;
+			var Bottom = CurY + this.H / 2.0 + _H / 2.0 + this.EffectExtentB;
+			if (Bottom > Y_max)
+			{
+				CurY -= (Bottom - Y_max);
+			}
 
-			if (CurY + this.BoundsT < Y_min)
-				CurY = Y_min - this.BoundsT;
+			var Top = CurY + this.H / 2.0 - _H / 2.0 - this.EffectExtentT;
+			if (Top < Y_min)
+			{
+				CurY += (Y_min - Top);
+			}
 		}
 
 		this.CalcX = CurX;
