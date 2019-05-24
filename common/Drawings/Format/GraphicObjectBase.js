@@ -502,27 +502,31 @@
         if(this.parent && (this.parent.Get_ParentTextTransform  && this.parent.Get_ParentTextTransform())) {
             return true;
         }
-        var oClipRect;
-        if(this.getClipRect){
-            oClipRect = this.getClipRect();
-        }
-        if(oClipRect){
-            if(x < oClipRect.x || x > oClipRect.x + oClipRect.w
-            || y < oClipRect.y || y > oClipRect.y + oClipRect.h){
-                return false;
-            }
-        }
+
         var _x, _y;
-        if(AscFormat.isRealNumber(this.posX) && AscFormat.isRealNumber(this.posY)){
+        if(AscFormat.isRealNumber(this.posX) && AscFormat.isRealNumber(this.posY)) {
             _x = x - this.posX - this.bounds.x;
             _y = y - this.posY - this.bounds.y;
         }
-        else{
+        else {
             _x = x - this.bounds.x;
             _y = y - this.bounds.y;
         }
         var delta = 3 + (this.pen && AscFormat.isRealNumber(this.pen.w) ? this.pen.w/36000 : 0);
-        return _x >= -delta && _x <= this.bounds.w + delta && _y >= -delta && _y <= this.bounds.h + delta;
+        if(_x >= -delta && _x <= this.bounds.w + delta && _y >= -delta && _y <= this.bounds.h + delta) {
+            var oClipRect;
+            if(this.getClipRect) {
+                oClipRect = this.getClipRect();
+            }
+            if(oClipRect) {
+                if(x < oClipRect.x || x > oClipRect.x + oClipRect.w
+                    || y < oClipRect.y || y > oClipRect.y + oClipRect.h) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
     };
 
     /**
