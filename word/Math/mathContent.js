@@ -5406,11 +5406,15 @@ CMathContent.prototype.Process_AutoCorrect = function(ActionElement) {
 
     var oParagraph = this.GetParagraph();
     var oLogicDocument = oParagraph ? oParagraph.LogicDocument : null;
-    if (!oLogicDocument)
-    	return;
+
 
     // Создаем новую точку здесь, потому что если автозамену можно будет сделать классы сразу будут создаваться
-	oLogicDocument.StartAction(AscDFH.historydescription_Document_MathAutoCorrect);
+    if(oLogicDocument) {
+        oLogicDocument.StartAction(AscDFH.historydescription_Document_MathAutoCorrect);
+    }
+    else {
+        History.Create_NewPoint(AscDFH.historydescription_Document_MathAutoCorrect);
+    }
 
     var bCursorStepRight = false;
 
@@ -5425,7 +5429,12 @@ CMathContent.prototype.Process_AutoCorrect = function(ActionElement) {
         // var bFindFunction = oAutoCorrectControl.FindFunction(false);
         if (false === bFindFunction)
 		{
-			oLogicDocument.FinalizeAction();
+            if(oLogicDocument) {
+                oLogicDocument.FinalizeAction();
+            }
+            else {
+                History.Remove_LastPoint();
+            }
 			return false;
 		}
         if (oAutoCorrectControl.Type === MATH_DELIMITER && oAutoCorrectControl.BrAccount.LBracket === 0x28 && oAutoCorrectControl.BrAccount.RBracket === 0x29)
@@ -5524,8 +5533,14 @@ CMathContent.prototype.Process_AutoCorrect = function(ActionElement) {
             }
         }
     }
-
-	oLogicDocument.FinalizeAction();
+    else {
+        if(!oLogicDocument) {
+            History.Remove_LastPoint();
+        }
+    }
+    if(oLogicDocument) {
+        oLogicDocument.FinalizeAction();
+    }
 };
 CMathContent.prototype.private_NeedAutoCorrect = function(ActionElement) {
     var CharCode;
