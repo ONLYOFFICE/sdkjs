@@ -17,7 +17,7 @@ jobs:
   include:
     - stage: Check all files contains Copyright
       script:
-        - FILES_WITHOUT_LICENSE=$(grep -L -R --include='*.js' --exclude-dir={\*vendor,externs\*} --exclude='jquery_native.js' 'Copyright Ascensio System')
+        - FILES_WITHOUT_LICENSE=$(grep -L -R --include='*.js' --exclude-dir={\*vendor,externs\*} --exclude='jquery_native.js' 'Copyright Ascensio System')  || true
         - echo $FILES_WITHOUT_LICENSE
         - if [[ $(echo -n $SPELLCHECK_OUT | wc -c) -ne 0 ]]; then exit 1 ; fi
     - stage: Check all files use Linux Line Ending (LF)
