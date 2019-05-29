@@ -27,7 +27,7 @@ jobs:
         - if [[ $(echo -n $FILES_WITHOUT_LF | wc -c) -ne 0 ]]; then exit 1 ; fi
     - stage: Check all files has trailing newline
       script:
-        - FILES_WITHOUT_TRAILING_NEWLINE=$(pcregrep --buffer-size=64M --include='.*\.js$' -LMr '\n\Z' .)
+        - FILES_WITHOUT_TRAILING_NEWLINE=$(pcregrep --buffer-size=64M --include='.*\.js$' -LMr '\n\Z' .) || true
         - echo $FILES_WITHOUT_TRAILING_NEWLINE
         - if [[ $(echo -n $FILES_WITHOUT_TRAILING_NEWLINE | wc -c) -ne 0 ]]; then exit 1 ; fi
     - stage: SonarQube Scanner
