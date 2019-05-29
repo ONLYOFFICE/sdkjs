@@ -1813,8 +1813,10 @@
 		}
     };
 
-	WorksheetView.prototype._checkPrintRange = function (range) {
-		this._prepareCellTextMetricsCache(range);
+	WorksheetView.prototype._checkPrintRange = function (range, doNotRecalc) {
+		if(!doNotRecalc) {
+			this._prepareCellTextMetricsCache(range);
+		}
 
 		var maxCol = -1;
 		var maxRow = -1;
@@ -1851,7 +1853,7 @@
 		return new AscCommon.CellBase(maxRow, maxCol);
 	};
 
-    WorksheetView.prototype.calcPagesPrint = function (pageOptions, printOnlySelection, indexWorksheet, arrPages, arrRanges, ignorePrintArea) {
+    WorksheetView.prototype.calcPagesPrint = function (pageOptions, printOnlySelection, indexWorksheet, arrPages, arrRanges, ignorePrintArea, doNotRecalc) {
 		var range, maxCell, t = this;
 		var printArea = !ignorePrintArea && this.model.workbook.getDefinesNames("Print_Area", this.model.getId());
 
@@ -1868,9 +1870,11 @@
 			for (var i = 0; i < this.model.selectionRange.ranges.length; ++i) {
 				range = this.model.selectionRange.ranges[i];
 				if (c_oAscSelectionType.RangeCells === range.getType()) {
-					this._prepareCellTextMetricsCache(range);
+					if(!doNotRecalc) {
+						this._prepareCellTextMetricsCache(range);
+					}
 				} else {
-					maxCell = this._checkPrintRange(range);
+					maxCell = this._checkPrintRange(range, doNotRecalc);
 					range = new asc_Range(0, 0, maxCell.col, maxCell.row);
 				}
 				this._calcPagesPrint(range, pageOptions, indexWorksheet, arrPages);
@@ -1892,12 +1896,14 @@
 					arrRanges.push(range);
 				}
 
-				this._prepareCellTextMetricsCache(range);
+				if(!doNotRecalc) {
+					this._prepareCellTextMetricsCache(range);
+				}
 				this._calcPagesPrint(range, pageOptions, indexWorksheet, arrPages);
 			}
 		} else {
 			range = new asc_Range(0, 0, this.model.getColsCount() - 1, this.model.getRowsCount() - 1);
-			maxCell = this._checkPrintRange(range);
+			maxCell = this._checkPrintRange(range, doNotRecalc);
 			var maxCol = maxCell.col;
 			var maxRow = maxCell.row;
 
@@ -3418,10 +3424,10 @@
 		var printArea = this.model.workbook.getDefinesNames("Print_Area", this.model.getId());
 		var printPages = [];
 		if(printArea) {
-			this.calcPagesPrint(printOptions, null, null, printPages);
+			this.calcPagesPrint(printOptions, null, null, printPages, null, null, true);
 		} else {
 			var range = new asc_Range(0, 0, this.visibleRange.c2, this.visibleRange.r2);
-			this._calcPagesPrint(range, printOptions, null, printPages);
+			this._calcPagesPrint(range, printOptions, null, printPages, null, null, true);
 		}
 
 		for (var i = 0, l = printPages.length; i < l; ++i) {
