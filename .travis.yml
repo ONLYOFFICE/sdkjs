@@ -22,7 +22,7 @@ jobs:
         - if [[ $(echo -n $SPELLCHECK_OUT | wc -c) -ne 0 ]]; then exit 1 ; fi
     - stage: Check all files use Linux Line Ending (LF)
       script:
-        - FILES_WITHOUT_LF=$(find . -not -type d -exec file '{}' ';' | grep CRLF)
+        - FILES_WITHOUT_LF=$(find . -not -type d -exec file '{}' ';' | grep CRLF) || true
         - echo $FILES_WITHOUT_LF
         - if [[ $(echo -n $FILES_WITHOUT_LF | wc -c) -ne 0 ]]; then exit 1 ; fi
     - stage: Check all files has trailing newline
