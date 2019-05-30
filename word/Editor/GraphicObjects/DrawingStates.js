@@ -156,6 +156,7 @@ StartAddNewShape.prototype =
 
                 drawing.Set_XYForAdd(shape.x, shape.y, nearest_pos, this.pageIndex);
                 drawing.Add_ToDocument(nearest_pos, false);
+                drawing.CheckWH();
                 this.drawingObjects.resetSelection();
                 shape.select(this.drawingObjects, this.pageIndex);
                 this.drawingObjects.document.Recalculate();
