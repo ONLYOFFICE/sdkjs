@@ -3330,9 +3330,9 @@ CAnchorPosition.prototype.Correct_Values = function(bInline, PageLimits, AllowOv
 	if (true != bInline)
 	{
 		var X_min = PageLimits.X;
-		var Y_min = PageLimits.Y + this.Top_Margin;
+		var Y_min = PageLimits.Y;
 		var X_max = PageLimits.XLimit;
-		var Y_max = PageLimits.YLimit - this.Bottom_Margin;
+		var Y_max = PageLimits.YLimit;
 
 		var W = this.W;
 		var H = this.H;
