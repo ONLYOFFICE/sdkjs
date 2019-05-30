@@ -753,7 +753,26 @@ ParaDrawing.prototype.Get_Bounds = function()
 			InsB = oDistance.B;
 		}
 	}
-    return {Left : this.X - InsL, Top : this.Y - InsT, Bottom : this.Y + this.GraphicObj.bounds.h + this.EffectExtent.B +  InsB, Right : this.X + this.GraphicObj.bounds.w + this.EffectExtent.R + InsR};
+	var ExtX = this.getXfrmExtX();
+	var ExtY = this.getXfrmExtY();
+	var Rot = this.getXfrmRot();
+	var X, Y, W, H;
+	if(AscFormat.checkNormalRotate(Rot))
+	{
+		X = this.X;
+		Y = this.Y;
+		W = ExtX;
+		H = ExtY;
+	}
+	else
+	{
+		X = this.X + ExtX / 2.0 - ExtY / 2.0;
+		Y = this.Y + ExtY / 2.0 - ExtX / 2.0;
+		W = ExtY;
+		H = ExtX;
+	}
+	return {Left : X - this.EffectExtent.L - InsL, Top : Y - this.EffectExtent.T - InsT, Bottom : Y + H + this.EffectExtent.B +  InsB, Right : X + W + this.EffectExtent.R + InsR};
+
 };
 ParaDrawing.prototype.Search = function(Str, Props, SearchEngine, Type)
 {
@@ -3293,9 +3312,9 @@ CAnchorPosition.prototype.Correct_Values = function(bInline, PageLimits, AllowOv
 	if (true != bInline)
 	{
 		var X_min = PageLimits.X;
-		var Y_min = this.Top_Margin;
+		var Y_min = PageLimits.Y + this.Top_Margin;
 		var X_max = PageLimits.XLimit;
-		var Y_max = this.Page_H - this.Bottom_Margin;
+		var Y_max = PageLimits.YLimit - this.Bottom_Margin;
 
 		var W = this.W;
 		var H = this.H;
