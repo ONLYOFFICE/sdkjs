@@ -1224,7 +1224,12 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 	this.Internal_Position.Calculate_Y(bInline, this.PositionV.RelativeFrom, this.PositionV.Align, this.PositionV.Value, this.PositionV.Percent);
 
 
-	this.Internal_Position.Correct_Values(bInline, PageLimits, this.AllowOverlap, this.Use_TextWrap(), OtherFlowObjects);
+	var bTable = false;
+	if(oDocumentContent && oDocumentContent.IsTableCellContent && oDocumentContent.IsTableCellContent(false))
+	{
+		bTable = true;
+	}
+	this.Internal_Position.Correct_Values(bInline, PageLimits, this.AllowOverlap, this.Use_TextWrap(), OtherFlowObjects, bTable);
 	this.GraphicObj.bounds.l += this.Internal_Position.CalcX;
 	this.GraphicObj.bounds.r += this.Internal_Position.CalcX;
 	this.GraphicObj.bounds.t += this.Internal_Position.CalcY;
@@ -1459,7 +1464,12 @@ ParaDrawing.prototype.private_SetXYByLayout = function(X, Y, PageNum, Layout, bC
 	this.Internal_Position.Set(this.GraphicObj.extX, this.GraphicObj.extY, this.getXfrmRot(), this.GraphicObj.bounds, this.EffectExtent, this.YOffset, Layout.ParagraphLayout, Layout.PageLimitsOrigin);
 	this.Internal_Position.Calculate_X(false, c_oAscRelativeFromH.Page, false, X - Layout.PageLimitsOrigin.X, false);
 	this.Internal_Position.Calculate_Y(false, c_oAscRelativeFromV.Page, false, Y - Layout.PageLimitsOrigin.Y, false);
-	this.Internal_Position.Correct_Values(false, Layout.PageLimits, this.AllowOverlap, this.Use_TextWrap(), []);
+	var bTable = false;
+	if(this.DocumentContent && this.DocumentContent.IsTableCellContent && this.DocumentContent.IsTableCellContent(false))
+	{
+		bTable = true;
+	}
+	this.Internal_Position.Correct_Values(false, Layout.PageLimits, this.AllowOverlap, this.Use_TextWrap(), [], bTable);
 
 	if (true === bChangeX)
 	{
@@ -3307,7 +3317,7 @@ CAnchorPosition.prototype.Update_PositionYHeaderFooter = function(TopMarginY, Bo
 	this.Top_Margin    = TopY;
 	this.Bottom_Margin = this.Page_H - BottomY;
 };
-CAnchorPosition.prototype.Correct_Values = function(bInline, PageLimits, AllowOverlap, UseTextWrap, OtherFlowObjects)
+CAnchorPosition.prototype.Correct_Values = function(bInline, PageLimits, AllowOverlap, UseTextWrap, OtherFlowObjects, bTable)
 {
 	if (true != bInline)
 	{
@@ -3346,7 +3356,7 @@ CAnchorPosition.prototype.Correct_Values = function(bInline, PageLimits, AllowOv
 		}
 
 		// Автофигуры с обтеканием за/перед текстом могут лежать где угодно
-		if (true === UseTextWrap)
+		if (true === UseTextWrap && true === bTable)
 		{
 			// Скорректируем рассчитанную позицию, так чтобы объект не выходил за заданные пределы
 			var _W, _H;
