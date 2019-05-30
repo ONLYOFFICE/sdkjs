@@ -409,20 +409,22 @@
 	 */
 
 	/**
+     * Any valid element which can be added to the document structure.
 	 * @typedef {(ApiParagraph | ApiTable | ApiBlockLvlSdt)} DocumentElement
 	 */
 
 	/**
+     * The style type used for the document element.
 	 * @typedef {("paragraph" | "table" | "run" | "numbering")} StyleType
 	 */
 
 	/**
-	 * A 240ths of a line.
+	 * 240ths of a line.
 	 * @typedef {number} line240
 	 */
 
 	/**
-	 * Half-points.
+	 * Half-points (2 half-points = 1 point).
 	 * @typedef {number} hps
 	 */
 
@@ -432,89 +434,96 @@
 	 */
 
 	/**
-	 *  A numeric value from 0 to 359.
+	 * A 60000th of a degree (5400000 = 90 degrees).
 	 * @typedef {number} PositiveFixedAngle
 	 * */
 
 	/**
-	 * A border type
+	 * A border type which will be added to the document element.
+     * * **"none"** - no border will be added to the created element or the selected element side.
+     * * **"single"** - a single border will be added to the created element or the selected element side.
 	 * @typedef {("none" | "single")} BorderType
 	 */
 
 	/**
-	 * A shade type
+	 * A shade type which can be added to the document element.
 	 * @typedef {("nil" | "clear")} ShdType
 	 */
 
 	/**
-	 * Types of custom tab
+	 * Types of custom tab.
 	 * @typedef {("clear" | "left" | "right" | "center")} TabJc
 	 */
 
 	/**
-	 * Eighths of a point (24 eighths of a point = 3 points)
+	 * Eighths of a point (24 eighths of a point = 3 points).
 	 * @typedef {number} pt_8
 	 */
 
 	/**
-	 * point
+	 * A point.
 	 * @typedef {number} pt
 	 */
 
 	/**
-	 * Header and footer types
+	 * Header and footer types which can be applied to the document sections.
+     * * **"default"** - a header or footer which can be applied to any default page.
+     * * **"title"** - a header or footer which is applied to the title page.
+     * * **"even"** - a header or footer which can be applied to even pages to distinguish them from the odd ones (which will be considered default).
 	 * @typedef {("default" | "title" | "even")} HdrFtrType
 	 */
 
 	/**
-	 * The possible values for the units of the width property being defined by a specific table width property.
+	 * The possible values for the units of the width property are defined by a specific table or table cell width property.
+     * * **"auto"** - set the table or table cell width to auto width.
+     * * **"twips"** - set the table or table cell width to be measured in twentieths of a point.
+     * * **"nul"** - set the table or table cell width to be of a zero value.
+     * * **"percent"** - set the table or table cell width to be measured in percent to the parent container.
 	 * @typedef {("auto" | "twips" | "nul" | "percent")} TableWidth
 	 */
 
 	/**
-	 * This simple type specifies possible values for the sections of the table to which the current conditional
-	 * formatting properties shall be applied when this table style is used.
-	 * <b>"topLeftCell"</b> - Specifies that the table formatting applies to the top left cell. <br/>
-	 * <b>"topRightCell"</b> - Specifies that the table formatting applies to the top right cell. <br/>
-	 * <b>"bottomLeftCell"</b> - Specifies that the table formatting applies to the bottom left cell.<br/>
-	 * <b>"bottomRightCell"</b> - Specifies that the table formatting applies to the bottom right cell.<br/>
-	 * <b>"firstRow"</b> - Specifies that the table formatting applies to the first row. <br/>
-	 * <b>"lastRow"</b> - Specifies that the table formatting applies to the last row. <br/>
-	 * <b>"firstColumn"</b> - Specifies that the table formatting applies to the first column. Any subsequent row which
-	 * is in <i>table header</i>{@link ApiTableRowPr#SetTableHeader} shall also use this conditional format.<br/>
-	 * <b>"lastColumn"</b> - Specifies that the table formatting applies to the last column. <br/>
-	 * <b>"bandedColumn"</b> - Specifies that the table formatting applies to odd numbered groupings of rows.<br/>
-	 * <b>"bandedColumnEven"</b> - Specifies that the table formatting applies to even numbered groupings of rows.<br/>
-	 * <b>"bandedRow"</b> - Specifies that the table formatting applies to odd numbered groupings of columns.<br/>
-	 * <b>"bandedRowEven"</b> - Specifies that the table formatting applies to even numbered groupings of columns.<br/>
-	 * <b>"wholeTable"</b> - Specifies that the conditional formatting applies to the whole table.<br/>
+	 * This simple type specifies possible values for the table sections to which the current conditional formatting properties will be applied when this selected table style is used.
+	 * * **"topLeftCell"** - specifies that the table formatting applies to the top left cell.
+	 * * **"topRightCell"** - specifies that the table formatting applies to the top right cell.
+	 * * **"bottomLeftCell"** - specifies that the table formatting applies to the bottom left cell.
+	 * * **"bottomRightCell"** - specifies that the table formatting applies to the bottom right cell.
+	 * * **"firstRow"** - specifies that the table formatting applies to the first row.
+	 * * **"lastRow"** - specifies that the table formatting applies to the last row.
+	 * * **"firstColumn"** - specifies that the table formatting applies to the first column. Any subsequent row which is in *table header* ({@link ApiTableRowPr#SetTableHeader}) will also use this conditional format.
+	 * * **"lastColumn"** - specifies that the table formatting applies to the last column.
+	 * * **"bandedColumn"** - specifies that the table formatting applies to odd numbered groupings of rows.
+	 * * **"bandedColumnEven"** - specifies that the table formatting applies to even numbered groupings of rows.
+	 * * **"bandedRow"** - specifies that the table formatting applies to odd numbered groupings of columns.
+	 * * **"bandedRowEven"** - specifies that the table formatting applies to even numbered groupings of columns.
+	 * * **"wholeTable"** - specifies that the conditional formatting applies to the whole table.
 	 * @typedef {("topLeftCell" | "topRightCell" | "bottomLeftCell" | "bottomRightCell" | "firstRow" | "lastRow" |
 	 *     "firstColumn" | "lastColumn" | "bandedColumn" | "bandedColumnEven" | "bandedRow" | "bandedRowEven" |
 	 *     "wholeTable")} TableStyleOverrideType
 	 */
 
 	/**
-	 * The types of elements that can be in the paragraph
+	 * The types of elements that can be added to the paragraph structure.
 	 * @typedef {(ApiUnsupported | ApiRun | ApiInlineLvlSdt)} ParagraphContent
 	 */
 
 	/**
-	 * The possible values for the base from which the relative horizontal positioning of an object shall be calculated.
+	 * The possible values for the base which the relative horizontal positioning of an object will be calculated from.
 	 * @typedef {("character" | "column" | "leftMargin" | "rightMargin" | "margin" | "page")} RelFromH
 	 */
 
 	/**
-	 * The possible values for the base from which the relative vertical positioning of an object shall be calculated.
+	 * The possible values for the base which the relative vertical positioning of an object will be calculated from.
 	 * @typedef {("bottomMargin" | "topMargin" | "margin" | "page" | "line" | "paragraph")} RelFromV
 	 */
 
 	/**
-	 * English measure unit. 1mm = 36000EMUs, 1inch = 914400EMUs
+	 * English measure unit. 1 mm = 36000 EMUs, 1 inch = 914400 EMUs.
 	 * @typedef {number} EMU
 	 */
 
 	/**
-	 * This type specifies the preset shape geometry that is to be used for a shape
+	 * This type specifies the preset shape geometry that will be used for a shape.
 	 * @typedef {("accentBorderCallout1" | "accentBorderCallout2" | "accentBorderCallout3" | "accentCallout1" |
 	 *     "accentCallout2" | "accentCallout3" | "actionButtonBackPrevious" | "actionButtonBeginning" |
 	 *     "actionButtonBlank" | "actionButtonDocument" | "actionButtonEnd" | "actionButtonForwardNext" |
@@ -529,7 +538,7 @@
 	 */
 
 	/**
-	 * This type specifies the types, create charts
+	 * This type specifies the available chart types which can be used to create a new chart.
 	 * @typedef {("bar" | "barStacked" | "barStackedPercent" | "bar3D" | "barStacked3D" | "barStackedPercent3D" |
 	 *     "barStackedPercent3DPerspective" | "horizontalBar" | "horizontalBarStacked" | "horizontalBarStackedPercent"
 	 *     | "horizontalBar3D" | "horizontalBarStacked3D" | "horizontalBarStackedPercent3D" | "lineNormal" |
@@ -538,15 +547,18 @@
 	 */
 
 	/**
+     * The available text vertical alignment (used to align text in a shape with a placement for text inside it).
 	 * @typedef {("top" | "center" | "bottom")} VerticalTextAlign
 	 * */
 
 	/**
+     * The available color scheme identifiers.
 	 * @typedef {("accent1" | "accent2" | "accent3" | "accent4" | "accent5" | "accent6" | "bg1" | "bg2" | "dk1" | "dk2"
 	 *     | "lt1" | "lt2" | "tx1" | "tx2")} SchemeColorId
 	 * */
 
 	/**
+     * The available preset color names.
 	 * @typedef {("aliceBlue" | "antiqueWhite" | "aqua" | "aquamarine" | "azure" | "beige" | "bisque" | "black" |
 	 *     "blanchedAlmond" | "blue" | "blueViolet" | "brown" | "burlyWood" | "cadetBlue" | "chartreuse" | "chocolate"
 	 *     | "coral" | "cornflowerBlue" | "cornsilk" | "crimson" | "cyan" | "darkBlue" | "darkCyan" | "darkGoldenrod" |
@@ -562,15 +574,23 @@
 
 
 	/**
-	 *
+     * Possible values for the position of chart tick labels (either horizontal or vertical).
+     * * **"none"** - not display the selected tick labels.
+     * * **"nextTo"** - set the position of the selected tick labels next to the main label.
+     * * **"low"** - set the position of the selected tick labels in the part of the chart with lower values.
+     * * **"high"** - set the position of the selected tick labels in the part of the chart with higher values.
 	 * @typedef {("none" | "nextTo" | "low" | "high")} TickLabelPosition
 	 * **/
 
 	/**
+     * The type of a fill which uses an image as a background.
+     * * **"tile"** - if the image is smaller than the shaped which is filled, the image will be tiled all over the created shape surface.
+     * * **"stretch"** - if the image is smaller than the shape which is filled, the image will be stretched to fit the created shape surface.
 	 * @typedef {"tile" | "stretch"} BlipFillType
 	 * */
 
 	/**
+     * The available preset patterns which can be used for the fill.
 	 * @typedef {"cross" | "dashDnDiag" | "dashHorz" | "dashUpDiag" | "dashVert" | "diagBrick" | "diagCross" | "divot"
 	 *     | "dkDnDiag" | "dkHorz" | "dkUpDiag" | "dkVert" | "dnDiag" | "dotDmnd" | "dotGrid" | "horz" | "horzBrick" |
 	 *     "lgCheck" | "lgConfetti" | "lgGrid" | "ltDnDiag" | "ltHorz" | "ltUpDiag" | "ltVert" | "narHorz" | "narVert"
@@ -591,6 +611,7 @@
 	//------------------------------------------------------------------------------------------------------------------
 
 	/**
+     * The 1000th of a percent (100000 = 100%).
 	 * @typedef {number} PositivePercentage
 	 * */
 
@@ -957,7 +978,7 @@
 	 * Create a linear gradient fill which allows to fill the object using a selected linear gradient as the object background.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {Array} aGradientStop - The angle measured in 60000th of a degree that will define the gradient direction.
+	 * @param {Array} aGradientStop - The array of gradient color stops measured in 1000th of percent.
 	 * @param {PositiveFixedAngle} Angle - The angle measured in 60000th of a degree that will define the gradient direction.
 	 * @returns {ApiFill}
 	 */
@@ -1173,7 +1194,7 @@
 	//------------------------------------------------------------------------------------------------------------------
 
 	/**
-	 * Get the type of this class.
+	 * Get the type of the current class. 
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {"documentContent"}
 	 */
@@ -1241,7 +1262,7 @@
 	/**
 	 * Remove all elements from the current document or from the current document element.
 	 * <note>When all elements are removed, a new empty paragraph is automatically created. If you want to add
-	 * content to this paragraph, use the ApiDocumentContent.GetElement method.</note>
+	 * content to this paragraph, use the {@link ApiDocumentContent#GetElement} method.</note>
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 */
 	ApiDocumentContent.prototype.RemoveAllElements = function()
@@ -1297,7 +1318,6 @@
 	};
 	/**
 	 * Create a new style with the specified type and name. If there is a style with the same name it will be replaced with a new one.
-	 * with a new one.
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sStyleName - The name of the style which will be created.
 	 * @param {StyleType} [sType="paragraph"] - The document element which the style will be applied to.
@@ -1375,7 +1395,7 @@
 		return new ApiParaPr(this, oStyles.Get_DefaultParaPr().Copy());
 	};
 	/**
-	 * Get document final section
+	 * Get the document final section
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiSection}
 	 */
@@ -1750,8 +1770,8 @@
 	};
 	/**
 	 * Insert the number of the current document page into the paragraph.
-	 * @typeofeditors ["CDE"]
 	 * <note>This method works for the paragraphs in the document header/footer only.</note>
+	 * @typeofeditors ["CDE"]
 	 * @returns {ApiRun}
 	 */
 	ApiParagraph.prototype.AddPageNumber = function()
@@ -1763,8 +1783,8 @@
 	};
 	/**
 	 * Insert the number of pages in the current document into the paragraph.
-	 * @typeofeditors ["CDE"]
 	 * <note>This method works for the paragraphs in the document header/footer only.</note>
+	 * @typeofeditors ["CDE"]
 	 * @returns {ApiRun}
 	 */
 	ApiParagraph.prototype.AddPagesCount = function()
@@ -1813,10 +1833,10 @@
 		return new ApiNumberingLevel(oNum, oNumPr.Lvl);
 	};
 	/**
-	 * Specifies that the current paragraph references a numbering definition instance in the current document.
+	 * Specify that the current paragraph references a numbering definition instance in the current document.
 	 * @typeofeditors ["CDE"]
 	 * @see Same as {@link ApiParagraph#SetNumPr}
-	 * @param {ApiNumberingLevel} oNumberingLevel
+	 * @param {ApiNumberingLevel} oNumberingLevel - The numbering level which will be used for assigning the numbers to the paragraph.
 	 */
 	ApiParagraph.prototype.SetNumbering = function(oNumberingLevel)
 	{
@@ -1850,8 +1870,10 @@
 		return private_GetSupportedParaElement(this.Paragraph.Content[nPos]);
 	};
 	/**
-	 * Remove the element using the position specified. Since we don't make an invalid document an empty run will
-	 * be added to the paragraph if we have deleted the last element.
+	 * Remove the element using the position specified.
+	 * <note>If the element you remove is the last paragraph element (i.e. all elements are removed from the paragraph),
+     * a new empty run is automatically created. If you want to add
+	 * content to this run, use the {@link ApiParagraph#GetElement} method.</note>
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {number} nPos - The position of the element which we want to remove in the paragraph.
 	 */
@@ -1864,8 +1886,9 @@
 		this.Paragraph.CorrectContent();
 	};
 	/**
-	 * Remove all elements from the current paragraph. Since we don't make an invalid document an empty run will
-	 * be added to the paragraph.
+	 * Remove all elements from the current paragraph.
+	 * <note>When all elements are removed from the paragraph, a new empty run is automatically created. If you want to add
+	 * content to this run, use the {@link ApiParagraph#GetElement} method.</note>
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 */
 	ApiParagraph.prototype.RemoveAllElements = function()
@@ -2088,17 +2111,17 @@
 		return "section";
 	};
 	/**
-	 * Specify the section type of the current section. The section type specifies how the contents of the current
-	 * section shall be placed relative to the previous section.<br/>
-	 * WordprocessingML supports five distinct types of section breaks:<br/>
+	 * Specify the type of the current section. The section type defines how the contents of the current 
+	 * section are placed relative to the previous section.<br/>
+	 * WordprocessingML supports five distinct types of section breaks:
 	 *   * <b>Next page</b> section breaks (the default if type is not specified), which begin the new section on the
-	 *   following page.<br/>
-	 *   * <b>Odd</b> page section breaks, which begin the new section on the next odd-numbered page.<br/>
-	 *   * <b>Even</b> page section breaks, which begin the new section on the next even-numbered page.<br/>
+	 *   following page.
+	 *   * <b>Odd</b> page section breaks, which begin the new section on the next odd-numbered page.
+	 *   * <b>Even</b> page section breaks, which begin the new section on the next even-numbered page.
 	 *   * <b>Continuous</b> section breaks, which begin the new section on the following paragraph. This means that
 	 *   continuous section breaks might not specify certain page-level section properties, since they shall be
 	 *   inherited from the following section. These breaks, however, can specify other section properties, such
-	 *   as line numbering and footnote/endnote settings.<br/>
+	 *   as line numbering and footnote/endnote settings.
 	 *   * <b>Column</b> section breaks, which begin the new section on the next column on the page.
 	 *   @typeofeditors ["CDE"]
 	 * @param {("nextPage" | "oddPage" | "evenPage" | "continuous" | "nextColumn")} sType - Type of the section break
@@ -2129,9 +2152,8 @@
 		this.Section.Set_Columns_Space(private_Twips2MM(nSpace));
 	};
 	/**
-	 * Set all columns of this section are of different widths. Count of columns are equal length of
-	 * <code>aWidth</code> array. The length of <code>aSpaces</code> array <b>MUST BE</b> (<code>aWidth.length -
-	 * 1</code>).
+	 * Specify that all columns in the current section are of a different width. Number of columns is equal 
+	 * to the length of the aWidth array. The length of the aSpaces array MUST BE equal to (aWidth.length - 1).
 	 * @typeofeditors ["CDE"]
 	 * @param {twips[]} aWidths - An array of column width values measured in twentieths of a point (1/1440 of an inch).
 	 * @param {twips[]} aSpaces - An array of distances values between the columns measured in twentieths of a point (1/1440 of an inch).
@@ -2189,7 +2211,6 @@
 	};
 	/**
 	 * Specify the distance from the bottom edge of the page to the bottom edge of the footer.
-	 * footer.
 	 * @typeofeditors ["CDE"]
 	 * @param {twips} nDistance - The distance from the bottom edge of the page to the bottom edge of the footer measured
 	 * in twentieths of a point (1/1440 of an inch).
@@ -2286,9 +2307,8 @@
 		return new ApiDocumentContent(oFooter.Get_DocumentContent());
 	};
 	/**
-	 * Remove a footer of the specified type from the current section. After removing the footer will be inherited from
-	 * the previous section or, if this is the first section in the document, there won't be no footer of the specified
-	 * type.
+	 * Remove the footer of the specified type from the current section. After removal the footer will be inherited from 
+	 * the previous section or, if this is the first section in the document, no footer of the specified type will be present.
 	 * @typeofeditors ["CDE"]
 	 * @param {HdrFtrType} sType - Type of footer.
 	 */
@@ -2336,7 +2356,7 @@
 	};
 	/**
 	 * Get the table row by its position in the table.
-	 * @param {number} nPos - The row position within the tabl
+	 * @param {number} nPos - The row position within the table.
 	 * @returns {ApiTableRow}
 	 */
 	ApiTable.prototype.GetRow = function(nPos)
@@ -2347,10 +2367,10 @@
 		return new ApiTableRow(this.Table.Content[nPos]);
 	};
 	/**
-	 * Merge array of cells. If merge was done successfully it will return merged cell, otherwise "null".
+	 * Merge an array of cells. If the merge is done successfully it will return the resulting merged cell, otherwise the result will be "null".
 	 * <note><b>Please note</b>: the number of cells in any row and the number of rows in the current table may be changed.</note>
 	 * @typeofeditors ["CDE"]
-	 * @param {ApiTableCell[]} aCells
+	 * @param {ApiTableCell[]} aCells - The array of cells to be merged.
 	 * @returns {?ApiTableCell}
 	 */
 	ApiTable.prototype.MergeCells = function(aCells)
@@ -2405,9 +2425,9 @@
 		return null;
 	};
 	/**
-	 * Set table style.
+	 * Set the style for the current table.
 	 * @typeofeditors ["CDE"]
-	 * @param {ApiStyle} oStyle
+	 * @param {ApiStyle} oStyle - The style which will be applied to the current table.
 	 */
 	ApiTable.prototype.SetStyle = function(oStyle)
 	{
@@ -2417,12 +2437,12 @@
 		this.Table.Set_TableStyle(oStyle.Style.Get_Id(), true);
 	};
 	/**
-	 * Specify the components of the conditional formatting of the referenced table style (if one exists)
-	 * which shall be applied to the set of table rows with the current table-level property exceptions. A table style
-	 * can specify up to six different optional conditional formats [Example: Different formatting for first column.
-	 * end example], which then can be applied or omitted from individual table rows in the parent table.
-	 *
-	 * The default setting is to apply the row and column banding formatting, but not the first row, last row, first
+	 * Specify the components of the conditional formatting of the referenced table style (if one exists) 
+	 * which will be applied to the set of table rows with the current table-level property exceptions. A table style 
+	 * can specify up to six different optional conditional formats, for example, different formatting for first column, 
+	 * which then can be applied or omitted from individual table rows in the parent table.
+	 * 
+	 * The default setting is to apply the row and column banding formatting, but not the first row, last row, first 
 	 * column, or last column formatting.
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} isFirstColumn - Specifies that the first column conditional formatting will be applied to the table.
@@ -2612,7 +2632,7 @@
 		return "tableCell";
 	};
 	/**
-	 * Get cell content.
+	 * Get the cell content.
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiDocumentContent}
 	 */
@@ -2719,7 +2739,7 @@
 		return new ApiTableRowPr(this, this.Style.TableRowPr.Copy());
 	};
 	/**
-	 * Get the table cell properties of the current style.
+	 * Get the table cell properties for the current style.
 	 * @typeofeditors ["CDE"]
 	 * @returns {?ApiTableCellPr}
 	 */
@@ -2743,8 +2763,8 @@
 		this.Style.Set_BasedOn(oStyle.Style.Get_Id());
 	};
 	/**
-	 * Get a set of formatting properties which shall be conditionally applied to the parts of a table which match the
-	 * requirement specified on the <code>sType</code> parameter.
+	 * Get a set of formatting properties which will be conditionally applied to the parts of a table that match the 
+	 * requirement specified in the sType parameter.
 	 * @typeofeditors ["CDE"]
 	 * @param {TableStyleOverrideType} [sType="wholeTable"] - The part of the table which the formatting properties must be applied to.
 	 * @returns {ApiTableStylePr}
@@ -2799,7 +2819,7 @@
 	};
 	/**
 	 * The text style base method.
-	 * <note>This method is not used by itself, as it only forms the basis for the ApiRun.SetStyle method which sets
+	 * <note>This method is not used by itself, as it only forms the basis for the {@link ApiRun#SetStyle} method which sets
 	 * the selected or created style for the text.</note>
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiStyle} oStyle - The style which must be applied to the text character.
@@ -3051,8 +3071,8 @@
 		this.private_OnChange();
 	};
 	/**
-	 * Specifies that any space specified before or after this paragraph, specified using the spacing element
-	 * {@link ApiParaPr#SetSpacingBefore}{@link ApiParaPr#SetSpacingAfter}, should not be applied when the preceding and
+	 * Specify that any space before or after this paragraph set using the 
+	 * {@link ApiParaPr#SetSpacingBefore} or {@link ApiParaPr#SetSpacingAfter} spacing element, should not be applied when the preceding and 
 	 * following paragraphs are of the same paragraph style, affecting the top and bottom spacing respectively.
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} isContextualSpacing - The true value will enable the paragraph contextual spacing.
@@ -3138,11 +3158,10 @@
 		this.private_OnChange();
 	};
 	/**
-	 * Set paragraph line spacing. If the value of the <code>sLineRule</code> parameter is either
-	 * <code>"atLeast"</code>
-	 * or <code>"exact"</code>, then the value of <code>nLine</code> shall be interpreted as twentieths of a point. If
-	 * the value of the <code>sLineRule</code> parameter is <code>"auto"</code>, then the value of the
-	 * <code>nLine</code> attribute shall be interpreted as 240ths of a line.
+	 * Set the paragraph line spacing. If the value of the sLineRule parameter is either 
+	 * "atLeast" or "exact", then the value of nLine will be interpreted as twentieths of a point. If 
+	 * the value of the sLineRule parameter is "auto", then the value of the 
+	 * nLine parameter will be interpreted as 240ths of a line.
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {(twips | line240)} nLine - The line spacing value measured either in twentieths of a point (1/1440 of an inch) or in 240ths of a line.
 	 * @param {("auto" | "atLeast" | "exact")} sLineRule - The rule that determines the measuring units of the nLine parameter.
@@ -3172,9 +3191,9 @@
 		this.private_OnChange();
 	};
 	/**
-	 * Set paragraph spacing before. If the value of the <code>isBeforeAuto</code> parameter is <code>true</code>, then
-	 * any value of the <code>nBefore</code> is ignored. If <code>isBeforeAuto</code> parameter is not specified, then
-	 * it will be interpreted as <code>false</code>.
+	 * Set the spacing before the current paragraph. If the value of the isBeforeAuto parameter is true, then 
+	 * any value of the nBefore is ignored. If isBeforeAuto parameter is not specified, then 
+	 * it will be interpreted as false.
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {twips} nBefore - The value of the spacing before the current paragraph measured in twentieths of a point (1/1440 of an inch).
 	 * @param {boolean} [isBeforeAuto=false] - The true value will disable the nBefore parameter.
@@ -3190,9 +3209,9 @@
 		this.private_OnChange();
 	};
 	/**
-	 * Set paragraph spacing after. If the value of the <code>isAfterAuto</code> parameter is <code>true</code>, then
-	 * any value of the <code>nAfter</code> is ignored. If <code>isAfterAuto</code> parameter is not specified, then it
-	 * will be interpreted as <code>false</code>.
+	 * Set the spacing after the current paragraph. If the value of the isAfterAuto parameter is true, then 
+	 * any value of the nAfter is ignored. If isAfterAuto parameter is not specified, then it 
+	 * will be interpreted as false.
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {twips} nAfter - The value of the spacing after the current paragraph measured in twentieths of a point (1/1440 of an inch).
 	 * @param {boolean} [isAfterAuto=false] - The true value will disable the nAfter parameter.
@@ -3241,7 +3260,7 @@
 	/**
 	 * Specify the border which will be displayed at the left side of the page around the specified paragraph.
 	 * @typeofeditors ["CDE"]
-	 * @param {BorderType} sType - The style of border.
+	 * @param {BorderType} sType - The border style.
 	 * @param {pt_8} nSize - The width of the current left border measured in eighths of a point.
 	 * @param {pt} nSpace - The spacing offset to the left of the paragraph measured in points used to place this border.
 	 * @param {byte} r - Red color component value.
@@ -3310,8 +3329,8 @@
 		this.private_OnChange();
 	};
 	/**
-	 * Specifies a sequence of custom tab stops which shall be used for any tab characters in the current paragraph.
-	 * <b>Warning</b>: The lengths of aPos array and aVal array <b>MUST BE</b> equal.
+	 * Specify a sequence of custom tab stops which will be used for any tab characters in the current paragraph.
+	 * <b>Warning</b>: The lengths of aPos array and aVal array <b>MUST BE</b> equal to each other.
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {twips[]} aPos - An array of the positions of custom tab stops with respect to the current page margins
 	 * measured in twentieths of a point (1/1440 of an inch).
@@ -3423,7 +3442,7 @@
 		return new ApiNumbering(this.Num);
 	};
 	/**
-	 * Get level index.
+	 * Get the level index.
 	 * @typeofeditors ["CDE"]
 	 * @returns {number}
 	 */
@@ -3433,7 +3452,7 @@
 	};
 	/**
 	 * Specify the text properties which will be applied to the text in the current numbering level itself, not to the text in the subsequent paragraph.
-	 * <note>To change the text style for the paragraph, a style must be applied to it using the ApiRun.SetStyle method.</note>
+	 * <note>To change the text style for the paragraph, a style must be applied to it using the {@link ApiRun#SetStyle} method.</note>
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiTextPr}
 	 */
@@ -3495,7 +3514,6 @@
 	 * @param {("none" | "bullet" | "decimal" | "lowerRoman" | "upperRoman" | "lowerLetter" | "upperLetter" |
 	 *     "decimalZero")} sType - The custom numbering type used for the current numbering definition.
 	 * @param {string} sTextFormatString - Any text in this parameter will be taken as literal text to be repeated in each instance of this numbering level, except for any use of the percent symbol (%) followed by a number, which will be used to indicate the one-based index of the number to be used at this level. Any number of a level higher than this level will be ignored.
-	 * higher than this level shall be ignored.
 	 * @param {("left" | "right" | "center")} sAlign - Type of justification applied to the text run in the current numbering level.
 	 */
 	ApiNumberingLevel.prototype.SetCustomType = function(sType, sTextFormatString, sAlign)
@@ -3540,7 +3558,7 @@
 	/**
 	 * Specify the starting value for the numbering used by the parent numbering level within a given numbering level definition. By default this value is 1.
 	 * @typeofeditors ["CDE"]
-	 * @param {number} nStart -
+	 * @param {number} nStart - The starting value for the numbering used by the parent numbering level.
 	 */
 	ApiNumberingLevel.prototype.SetStart = function(nStart)
 	{
@@ -3789,7 +3807,7 @@
 	};
 	/**
 	 * Set the preferred width for this table.
-	 * <note>Tables are created with the ApiTable.SetWidth method properties set by default, which always override the {@link ApiTablePr#SetWidth} method properties. That is why there is no use to try and apply ApiTablePr.SetWidth, we recommend that you use the  {@link ApiTablePr#SetWidth}  method instead.</node>
+	 * <note>Tables are created with the {@link ApiTable#SetWidth} method properties set by default, which always override the {@link ApiTablePr#SetWidth} method properties. That is why there is no use to try and apply {@link ApiTablePr#SetWidth}, we recommend that you use the  {@link ApiTablePr#SetWidth}  method instead.</note>
 	 * @typeofeditors ["CDE"]
 	 * @param {TableWidth} sType - Type of the width value from one of the available width values types.
 	 * @param {number} [nValue] - The table width value measured in positive integers.
@@ -3830,6 +3848,7 @@
 		return "tableRowPr";
 	};
 	/**
+     * Set the height of the current table row within the current table.
 	 * @typeofeditors ["CDE"]
 	 * @param {("auto" | "atLeast")} sHRule - The rule to either apply or ignore the height value to the current table row. Use the <code>"atLeast"</code> value to enable the <code>SetHeight</code> method use.
 	 * @param {twips} [nValue] - The height for the current table row measured in twentieths of a point (1/1440 of an inch). This value will be ignored if <code>sHRule="auto"<code>.
@@ -3844,7 +3863,10 @@
 		this.private_OnChange();
 	};
 	/**
-	 * Specify that all the current table rows will be styled as its header row.
+	 * Specify that the current table row will be repeated at the top of each new page 
+     * wherever this table is displayed. This gives this table row the behavior of a 'header' row on 
+     * each of these pages. This element can be applied to any number of rows at the top of the 
+     * table structure in order to generate multi-row table headers.
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} isHeader - The true value will enable the SetTableHeader method use.
 	 */
@@ -3911,8 +3933,8 @@
 		this.private_OnChange();
 	};
 	/**
-	 * Specifies the amount of space which shall be left between the right extent of the current cell contents and the
-	 * right edge border of a specific individual table cell within a table.
+	 * Specify the amount of space which will be left between the left extent of the cell contents and 
+	 * the border of a specific table cell within a table.
 	 * @typeofeditors ["CDE"]
 	 * @param {?twips} nValue - The value for the amount of space to the left extent of the cell measured in twentieths
 	 * of a point (1/1440 of an inch). If this value is <code>null<c/ode>, then default table cell left margin will be used, otherwise
@@ -4220,7 +4242,7 @@
 	 * * <b>"behind"</b> - the text overlaps the object.
 	 * * <b>"inFront"</b> - the object overlaps the text.
 	 * @typeofeditors ["CDE"]
-	 * @param {"inline" | "square" | "tight" | "through" | "topAndBottom" | "behind" | "inFront"} sType
+	 * @param {"inline" | "square" | "tight" | "through" | "topAndBottom" | "behind" | "inFront"} sType - The wrapping style type available for the object.
 	 */
 	ApiDrawing.prototype.SetWrappingStyle = function(sType)
 	{
@@ -4315,7 +4337,7 @@
 	/**
 	 * Set an absolute measurement for the vertical positioning of the floating object.
 	 * @typeofeditors ["CDE"]
-	 * @param {RelFromH} sRelativeFrom - The document element which will be taken as a countdown point for the object vertical alignment.
+	 * @param {RelFromV} sRelativeFrom - The document element which will be taken as a countdown point for the object vertical alignment.
 	 * @param {EMU} nDistance - The distance from the bottom part of the document element to the floating object measured in English measure units.
 	 */
 	ApiDrawing.prototype.SetVerPosition = function(sRelativeFrom, nDistance)
@@ -4480,11 +4502,11 @@
 
 
 	/**
-	 *  Specifies a chart title
+	 *  Specify the chart title.
 	 *  @typeofeditors ["CDE"]
 	 *  @param {string} sTitle - The title which will be displayed for the current chart.
-	 *  @param {hps} nFontSize - The text size value measured in points.
-	 *  @param {?bool} bIsBold
+	 *  @param {pt} nFontSize - The text size value measured in points.
+	 *  @param {?bool} bIsBold - Specifies if the chart title is written in bold font or not.
 	 */
 	ApiChart.prototype.SetTitle = function (sTitle, nFontSize, bIsBold)
 	{
@@ -4492,11 +4514,11 @@
 	};
 
 	/**
-	 *  Specifies a horizontal axis title
+	 *  Specify the chart horizontal axis title.
 	 *  @typeofeditors ["CDE"]
 	 *  @param {string} sTitle - The title which will be displayed for the horizontal axis of the current chart.
-	 *  @param {hps} nFontSize - The text size value measured in points.
-	 *  @param {?bool} bIsBold
+	 *  @param {pt} nFontSize - The text size value measured in points.
+	 *  @param {?bool} bIsBold - Specifies if the horizontal axis title is written in bold font or not.
 	 * */
 	ApiChart.prototype.SetHorAxisTitle = function (sTitle, nFontSize, bIsBold)
 	{
@@ -4504,11 +4526,11 @@
 	};
 
 	/**
-	 *  Specifies a vertical axis title
+	 *  Specify the chart vertical axis title.
 	 *  @typeofeditors ["CDE"]
 	 *  @param {string} sTitle - The title which will be displayed for the vertical axis of the current chart.
-	 *  @param {hps} nFontSize - The text size value measured in points.
-	 *  @param {?bool} bIsBold
+	 *  @param {pt} nFontSize - The text size value measured in points.
+	 *  @param {?bool} bIsBold - Specifies if the vertical axis title is written in bold font or not.
 	 * */
 	ApiChart.prototype.SetVerAxisTitle = function (sTitle, nFontSize, bIsBold)
 	{
@@ -4532,7 +4554,7 @@
 	};
 
 	/**
-	 * Specifies a legend position
+	 * Specify the chart legend position.
 	 * @typeofeditors ["CDE"]
 	 * @param {"left" | "top" | "right" | "bottom" | "none"} sLegendPos - The position of the chart legend inside the chart window.
 	 * */
@@ -4864,8 +4886,8 @@
 		return "inlineLvlSdt";
 	};
 	/**
-	 * Set the lock type of this container
-	 * @param {SdtLock} sLockType
+	 * Set the lock to the current inline text content control: either locks the content from editing, or from deleting the control, or both.
+	 * @param {SdtLock} sLockType - The type of the lock applied to the inline text content control.
 	 */
 	ApiInlineLvlSdt.prototype.SetLock = function(sLockType)
 	{
@@ -4899,8 +4921,8 @@
 		return sResult;
 	};
 	/**
-	 * Set the tag attribute for this container
-	 * @param {string} sTag
+	 * Add a string tag to the current inline text content control.
+	 * @param {string} sTag - The tag which will be added to the current inline text content control.
 	 */
 	ApiInlineLvlSdt.prototype.SetTag = function(sTag)
 	{
@@ -4915,8 +4937,8 @@
 		return this.Sdt.GetTag();
 	};
 	/**
-	 * Set the label attribute for this container
-	 * @param {string} sLabel
+	 * Add a string label to the current inline text content control.
+	 * @param {string} sLabel - The label which will be added to the current inline text content control. Can be a positive or negative integer from **-2147483647** to **2147483647**.
 	 */
 	ApiInlineLvlSdt.prototype.SetLabel = function(sLabel)
 	{
@@ -4947,7 +4969,9 @@
 		return this.Sdt.GetAlias();
 	};
 	/**
-	 * Get the number of elements in the current container.
+	 * Get the number of elements in the current inline text content control. The text content 
+     * control is created with one text run present in it by default, so any even without any 
+     * element added this method will return the value of '1'.
 	 * @returns {number}
 	 */
 	ApiInlineLvlSdt.prototype.GetElementsCount = function()
@@ -4955,8 +4979,8 @@
 		return this.Sdt.Content.length;
 	};
 	/**
-	 * Get the element of the container content by specified position.
-	 * @param {number} nPos
+	 * Get the element of the current inline text content control using the position specified.
+	 * @param {number} nPos - The position where the element which content we want to get must be located.
 	 * @returns {?ParagraphContent}
 	 */
 	ApiInlineLvlSdt.prototype.GetElement = function(nPos)
@@ -4967,8 +4991,8 @@
 		return private_GetSupportedParaElement(this.Sdt.Content[nPos]);
 	};
 	/**
-	 * Remove element by specified position.
-	 * @param {number} nPos
+	 * Remove the element using the position specified from the current inline text content control.
+	 * @param {number} nPos - The position of the element which we want to remove from the current inline text content control.
 	 */
 	ApiInlineLvlSdt.prototype.RemoveElement = function(nPos)
 	{
@@ -4979,7 +5003,7 @@
 		this.Sdt.CorrectContent();
 	};
 	/**
-	 * Remove all elements.
+	 * Remove all the elements from the current inline text content control.
 	 */
 	ApiInlineLvlSdt.prototype.RemoveAllElements = function()
 	{
@@ -4990,11 +5014,10 @@
 		}
 	};
 	/**
-	 * Add an element to inline container.
-	 * @param {ParagraphContent} oElement
-	 * @param {number} [nPos] If this value is not specified then element will be added to the end of this container.
-	 * @returns {boolean} Returns <code>false</code> if the type of <code>oElement</code> is not supported.
-	 * content.
+	 * Add an element to the inline text content control.
+	 * @param {ParagraphContent} oElement - The document element which will be added at the position specified. Returns **false** if the type of *oElement* is not supported by an inline text content control.
+	 * @param {number} [nPos] - The position of the element where it will be added to the current inline text content control. If this value is not specified then the element will be added to the end of the current inline text content control.
+	 * @returns {boolean}
 	 */
 	ApiInlineLvlSdt.prototype.AddElement = function(oElement, nPos)
 	{

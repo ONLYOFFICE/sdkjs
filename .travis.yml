@@ -16,11 +16,20 @@ before_script:
 jobs:
   include:
     - stage: Check all files contains Copyright
-      script: if [[ $(grep -L -R --include='*.js' --exclude-dir={\*vendor,externs\*} --exclude='jquery_native.js' 'Copyright Ascensio System' | wc -l) -ne 0 ]]; then exit 1 ; fi
+      script:
+        - FILES_WITHOUT_LICENSE=$(grep -L -R --include='*.js' --exclude-dir={\*vendor,externs\*} --exclude='jquery_native.js' 'Copyright Ascensio System')  || true
+        - echo $FILES_WITHOUT_LICENSE
+        - if [[ $(echo -n $SPELLCHECK_OUT | wc -c) -ne 0 ]]; then exit 1 ; fi
     - stage: Check all files use Linux Line Ending (LF)
-      script: if [[ $(find . -not -type d -exec file '{}' ';' | grep CRLF | wc -l) -ne 0 ]]; then exit 1 ; fi
+      script:
+        - FILES_WITHOUT_LF=$(find . -not -type d -exec file '{}' ';' | grep CRLF) || true
+        - echo $FILES_WITHOUT_LF
+        - if [[ $(echo -n $FILES_WITHOUT_LF | wc -c) -ne 0 ]]; then exit 1 ; fi
     - stage: Check all files has trailing newline
-      script: if [[ $(pcregrep --buffer-size=64M --include='.*\.js$' -LMr '\n\Z' . | wc -l) -ne 0 ]]; then exit 1 ; fi
+      script:
+        - FILES_WITHOUT_TRAILING_NEWLINE=$(pcregrep --buffer-size=64M --include='.*\.js$' -LMr '\n\Z' .) || true
+        - echo $FILES_WITHOUT_TRAILING_NEWLINE
+        - if [[ $(echo -n $FILES_WITHOUT_TRAILING_NEWLINE | wc -c) -ne 0 ]]; then exit 1 ; fi
     - stage: SonarQube Scanner
       if: branch = develop
       script:

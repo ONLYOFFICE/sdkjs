@@ -12101,15 +12101,21 @@
 		options.countFind = 0;
 		options.countReplace = 0;
 
-		var cell;
+		var cell, tmp;
 		var aReplaceCells = [];
 		if (options.isReplaceAll) {
 			this.model._findAllCells(options);
 			var findResult = this.model.lastFindOptions.findResults.values;
 			for (var row in findResult) {
 				for (var col in findResult[row]) {
-					cell = findResult[row][col];
-					aReplaceCells.push(new Asc.Range(cell.nCol, cell.nRow, cell.nCol, cell.nRow));
+					if (!this.model.lastFindOptions.scanByRows) {
+						tmp = col;
+						col = row;
+						row = tmp;
+					}
+					col |= 0;
+					row |= 0;
+					aReplaceCells.push(new Asc.Range(col, row, col, row));
 				}
 			}
 		} else {
@@ -12774,14 +12780,13 @@
 					return {l: arrLeftS, r: arrRightS, b: arrBottomS, cellX: cellX, cellY: cellY, ri: ri, bi: bi};
 				}
 			});
-			return true;
+			this.model.workbook.handlers.trigger("asc_onEditCell", Asc.c_oAscCellEditorState.editStart);
 		};
 
     WorksheetView.prototype.openCellEditorWithText = function (editor, text, cursorPos, isFocus, selectionRange) {
-        var t = this;
         selectionRange = (selectionRange) ? selectionRange : this.model.selectionRange;
         var activeCell = selectionRange.activeCell;
-        var c = t._getVisibleCell(activeCell.col, activeCell.row);
+        var c = this._getVisibleCell(activeCell.col, activeCell.row);
         var v, copyValue;
         // get first fragment and change its text
         v = c.getValueForEdit2().slice(0, 1);
@@ -12789,12 +12794,9 @@
         copyValue = [];
         copyValue[0] = new AscCommonExcel.Fragment({text: text, format: v[0].format.clone()});
 
-        var bSuccess = t.openCellEditor(editor, /*cursorPos*/undefined, isFocus, /*isClearCell*/
-          true, /*isHideCursor*/false, /*isQuickInput*/false, selectionRange);
-        if (bSuccess) {
-            editor.paste(copyValue, cursorPos);
-        }
-        return bSuccess;
+        this.openCellEditor(editor, /*cursorPos*/undefined, isFocus, /*isClearCell*/true,
+			/*isHideCursor*/false, /*isQuickInput*/false, selectionRange);
+		editor.paste(copyValue, cursorPos);
     };
 
     WorksheetView.prototype.getFormulaRanges = function () {

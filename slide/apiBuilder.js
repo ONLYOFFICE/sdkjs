@@ -151,12 +151,12 @@
      */
 
     /**
-     * A 240ths of a line.
+     * 240ths of a line.
      * @typedef {number} line240
      */
 
     /**
-     * Half-points.
+     * Half-points (2 half-points = 1 point).
      * @typedef {number} hps
      */
 
@@ -166,7 +166,7 @@
      */
 
     /**
-     *  A numeric value from 0 to 359.
+     * A 60000th of a degree (5400000 = 90 degrees).
      * @typedef {number} PositiveFixedAngle
      * */
 
@@ -176,65 +176,76 @@
      */
 
     /**
-     * Types of custom tab
+     * Types of custom tab.
      * @typedef {("clear" | "left" | "right" | "center")} TabJc
      */
 
     /**
-     * Eighths of a point (24 eighths of a point = 3 points)
+     * Eighths of a point (24 eighths of a point = 3 points).
      * @typedef {number} pt_8
      */
 
     /**
-     * point
+     * A point.
      * @typedef {number} pt
      */
 
 
     /**
-     * English measure unit. 1mm = 36000EMUs, 1inch = 914400EMUs
+     * English measure unit. 1 mm = 36000 EMUs, 1 inch = 914400 EMUs.
      * @typedef {number} EMU
      */
 
     /**
-     * This type specifies the preset shape geometry that is to be used for a shape
+     * This type specifies the preset shape geometry that will be used for a shape.
      * @typedef {("accentBorderCallout1" | "accentBorderCallout2" | "accentBorderCallout3" | "accentCallout1" | "accentCallout2" | "accentCallout3" | "actionButtonBackPrevious" | "actionButtonBeginning" | "actionButtonBlank" | "actionButtonDocument" | "actionButtonEnd" | "actionButtonForwardNext" | "actionButtonHelp" | "actionButtonHome" | "actionButtonInformation" | "actionButtonMovie" | "actionButtonReturn" | "actionButtonSound" | "arc" | "bentArrow" | "bentConnector2" | "bentConnector3" | "bentConnector4" | "bentConnector5" | "bentUpArrow" | "bevel" | "blockArc" | "borderCallout1" | "borderCallout2" | "borderCallout3" | "bracePair" | "bracketPair" | "callout1" | "callout2" | "callout3" | "can" | "chartPlus" | "chartStar" | "chartX" | "chevron" | "chord" | "circularArrow" | "cloud" | "cloudCallout" | "corner" | "cornerTabs" | "cube" | "curvedConnector2" | "curvedConnector3" | "curvedConnector4" | "curvedConnector5" | "curvedDownArrow" | "curvedLeftArrow" | "curvedRightArrow" | "curvedUpArrow" | "decagon" | "diagStripe" | "diamond" | "dodecagon" | "donut" | "doubleWave" | "downArrow" | "downArrowCallout" | "ellipse" | "ellipseRibbon" | "ellipseRibbon2" | "flowChartAlternateProcess" | "flowChartCollate" | "flowChartConnector" | "flowChartDecision" | "flowChartDelay" | "flowChartDisplay" | "flowChartDocument" | "flowChartExtract" | "flowChartInputOutput" | "flowChartInternalStorage" | "flowChartMagneticDisk" | "flowChartMagneticDrum" | "flowChartMagneticTape" | "flowChartManualInput" | "flowChartManualOperation" | "flowChartMerge" | "flowChartMultidocument" | "flowChartOfflineStorage" | "flowChartOffpageConnector" | "flowChartOnlineStorage" | "flowChartOr" | "flowChartPredefinedProcess" | "flowChartPreparation" | "flowChartProcess" | "flowChartPunchedCard" | "flowChartPunchedTape" | "flowChartSort" | "flowChartSummingJunction" | "flowChartTerminator" | "foldedCorner" | "frame" | "funnel" | "gear6" | "gear9" | "halfFrame" | "heart" | "heptagon" | "hexagon" | "homePlate" | "horizontalScroll" | "irregularSeal1" | "irregularSeal2" | "leftArrow" | "leftArrowCallout" | "leftBrace" | "leftBracket" | "leftCircularArrow" | "leftRightArrow" | "leftRightArrowCallout" | "leftRightCircularArrow" | "leftRightRibbon" | "leftRightUpArrow" | "leftUpArrow" | "lightningBolt" | "line" | "lineInv" | "mathDivide" | "mathEqual" | "mathMinus" | "mathMultiply" | "mathNotEqual" | "mathPlus" | "moon" | "nonIsoscelesTrapezoid" | "noSmoking" | "notchedRightArrow" | "octagon" | "parallelogram" | "pentagon" | "pie" | "pieWedge" | "plaque" | "plaqueTabs" | "plus" | "quadArrow" | "quadArrowCallout" | "rect" | "ribbon" | "ribbon2" | "rightArrow" | "rightArrowCallout" | "rightBrace" | "rightBracket" | "round1Rect" | "round2DiagRect" | "round2SameRect" | "roundRect" | "rtTriangle" | "smileyFace" | "snip1Rect" | "snip2DiagRect" | "snip2SameRect" | "snipRoundRect" | "squareTabs" | "star10" | "star12" | "star16" | "star24" | "star32" | "star4" | "star5" | "star6" | "star7" | "star8" | "straightConnector1" | "stripedRightArrow" | "sun" | "swooshArrow" | "teardrop" | "trapezoid" | "triangle" | "upArrowCallout" | "upDownArrow" | "upDownArrow" | "upDownArrowCallout" | "uturnArrow" | "verticalScroll" | "wave" | "wedgeEllipseCallout" | "wedgeRectCallout" | "wedgeRoundRectCallout")} ShapeType
      */
 
     /**
-    * This type specifies the bullet type
+    * A bullet type which will be added to the paragraph in spreadsheet or presentation.
     * @typedef {("None" | "ArabicPeriod"  | "ArabicParenR"  | "RomanUcPeriod" | "RomanLcPeriod" | "AlphaLcParenR" | "AlphaLcPeriod" | "AlphaUcParenR" | "AlphaUcPeriod")} BulletType
     */
 
 
     /**
-     * This type specifies the types, create charts
+     * This type specifies the available chart types which can be used to create a new chart.
      * @typedef {("bar" | "barStacked" | "barStackedPercent" | "bar3D" | "barStacked3D" | "barStackedPercent3D" | "barStackedPercent3DPerspective" | "horizontalBar" | "horizontalBarStacked" | "horizontalBarStackedPercent" | "horizontalBar3D" | "horizontalBarStacked3D" | "horizontalBarStackedPercent3D" | "lineNormal" | "lineStacked" | "lineStackedPercent" | "line3D" | "pie" | "pie3D" | "doughnut" | "scatter" | "stock" | "area" | "areaStacked" | "areaStackedPercent")} ChartType
      */
 
     /**
+     * The available text vertical alignment (used to align text in a shape with a placement for text inside it).
      * @typedef {("top" | "center" | "bottom")} VerticalTextAlign
      * */
 
     /**
+     * The available color scheme identifiers.
      * @typedef {("accent1" | "accent2" | "accent3" | "accent4" | "accent5" | "accent6" | "bg1" | "bg2" | "dk1" | "dk2" | "lt1" | "lt2" | "tx1" | "tx2")} SchemeColorId
      * */
 
     /**
+     * The available preset color names.
      * @typedef {("aliceBlue" | "antiqueWhite" | "aqua" | "aquamarine" | "azure" | "beige" | "bisque" | "black" | "blanchedAlmond" | "blue" | "blueViolet" | "brown" | "burlyWood" | "cadetBlue" | "chartreuse" | "chocolate" | "coral" | "cornflowerBlue" | "cornsilk" | "crimson" | "cyan" | "darkBlue" | "darkCyan" | "darkGoldenrod" | "darkGray" | "darkGreen" | "darkGrey" | "darkKhaki" | "darkMagenta" | "darkOliveGreen" | "darkOrange" | "darkOrchid" | "darkRed" | "darkSalmon" | "darkSeaGreen" | "darkSlateBlue" | "darkSlateGray" | "darkSlateGrey" | "darkTurquoise" | "darkViolet" | "deepPink" | "deepSkyBlue" | "dimGray" | "dimGrey" | "dkBlue" | "dkCyan" | "dkGoldenrod" | "dkGray" | "dkGreen" | "dkGrey" | "dkKhaki" | "dkMagenta" | "dkOliveGreen" | "dkOrange" | "dkOrchid" | "dkRed" | "dkSalmon" | "dkSeaGreen" | "dkSlateBlue" | "dkSlateGray" | "dkSlateGrey" | "dkTurquoise" | "dkViolet" | "dodgerBlue" | "firebrick" | "floralWhite" | "forestGreen" | "fuchsia" | "gainsboro" | "ghostWhite" | "gold" | "goldenrod" | "gray" | "green" | "greenYellow" | "grey" | "honeydew" | "hotPink" | "indianRed" | "indigo" | "ivory" | "khaki" | "lavender" | "lavenderBlush" | "lawnGreen" | "lemonChiffon" | "lightBlue" | "lightCoral" | "lightCyan" | "lightGoldenrodYellow" | "lightGray" | "lightGreen" | "lightGrey" | "lightPink" | "lightSalmon" | "lightSeaGreen" | "lightSkyBlue" | "lightSlateGray" | "lightSlateGrey" | "lightSteelBlue" | "lightYellow" | "lime" | "limeGreen" | "linen" | "ltBlue" | "ltCoral" | "ltCyan" | "ltGoldenrodYellow" | "ltGray" | "ltGreen" | "ltGrey" | "ltPink" | "ltSalmon" | "ltSeaGreen" | "ltSkyBlue" | "ltSlateGray" | "ltSlateGrey" | "ltSteelBlue" | "ltYellow" | "magenta" | "maroon" | "medAquamarine" | "medBlue" | "mediumAquamarine" | "mediumBlue" | "mediumOrchid" | "mediumPurple" | "mediumSeaGreen" | "mediumSlateBlue" | "mediumSpringGreen" | "mediumTurquoise" | "mediumVioletRed" | "medOrchid" | "medPurple" | "medSeaGreen" | "medSlateBlue" | "medSpringGreen" | "medTurquoise" | "medVioletRed" | "midnightBlue" | "mintCream" | "mistyRose" | "moccasin" | "navajoWhite" | "navy" | "oldLace" | "olive" | "oliveDrab" | "orange" | "orangeRed" | "orchid" | "paleGoldenrod" | "paleGreen" | "paleTurquoise" | "paleVioletRed" | "papayaWhip" | "peachPuff" | "peru" | "pink" | "plum" | "powderBlue" | "purple" | "red" | "rosyBrown" | "royalBlue" | "saddleBrown" | "salmon" | "sandyBrown" | "seaGreen" | "seaShell" | "sienna" | "silver" | "skyBlue" | "slateBlue" | "slateGray" | "slateGrey" | "snow" | "springGreen" | "steelBlue" | "tan" | "teal" | "thistle" | "tomato" | "turquoise" | "violet" | "wheat" | "white" | "whiteSmoke" | "yellow" | "yellowGreen")} PresetColor
      * */
 
 
     /**
-     *
+     * Possible values for the position of chart tick labels (either horizontal or vertical).
+     * * **"none"** - not display the selected tick labels.
+     * * **"nextTo"** - set the position of the selected tick labels next to the main label.
+     * * **"low"** - set the position of the selected tick labels in the part of the chart with lower values.
+     * * **"high"** - set the position of the selected tick labels in the part of the chart with higher values.
      * @typedef {("none" | "nextTo" | "low" | "high")} TickLabelPosition
      * **/
 
     /**
+     * The type of a fill which uses an image as a background.
+     * * **"tile"** - if the image is smaller than the shaped which is filled, the image will be tiled all over the created shape surface.
+     * * **"stretch"** - if the image is smaller than the shape which is filled, the image will be stretched to fit the created shape surface.
      * @typedef {"tile" | "stretch"} BlipFillType
      * */
 
     /**
+     * The available preset patterns which can be used for the fill.
      * @typedef {"cross" | "dashDnDiag" | "dashHorz" | "dashUpDiag" | "dashVert" | "diagBrick" | "diagCross" | "divot" | "dkDnDiag" | "dkHorz" | "dkUpDiag" | "dkVert" | "dnDiag" | "dotDmnd" | "dotGrid" | "horz" | "horzBrick" | "lgCheck" | "lgConfetti" | "lgGrid" | "ltDnDiag" | "ltHorz" | "ltUpDiag" | "ltVert" | "narHorz" | "narVert" | "openDmnd" | "pct10" | "pct20" | "pct25" | "pct30" | "pct40" | "pct5" | "pct50" | "pct60" | "pct70" | "pct75" | "pct80" | "pct90" | "plaid" | "shingle" | "smCheck" | "smConfetti" | "smGrid" | "solidDmnd" | "sphere" | "trellis" | "upDiag" | "vert" | "wave" | "wdDnDiag" | "wdUpDiag" | "weave" | "zigZag"} PatternType
      * */
 
@@ -251,6 +262,7 @@
     //------------------------------------------------------------------------------------------------------------------
 
     /**
+     * The 1000th of a percent (100000 = 100%).
      * @typedef {number} PositivePercentage
      * */
 
@@ -572,7 +584,6 @@
     };
 
 
-    /**
 
     //------------------------------------------------------------------------------------------------------------------
     //
@@ -589,7 +600,6 @@
     {
         return "slide";
     };
-    /**
 
 
     /**
@@ -667,7 +677,7 @@
     //------------------------------------------------------------------------------------------------------------------
 
     /**
-     * Get the type of this class.
+     * Get the type of the class based on this base class.
      * @returns {"drawing"}
      */
     ApiDrawing.prototype.GetClassType = function()
@@ -740,7 +750,7 @@
 
 
     /**
-     * Get content of this shape.
+     * Get the shape inner contents where a paragraph or text runs can be inserted. 
      * @typeofeditors ["CPE"]
      * @returns {?ApiDocumentContent}
      */
@@ -755,9 +765,9 @@
     };
 
     /**
-     * Set shape's content vertical align
+     * Set the vertical alignment for the shape content where a paragraph or text runs can be inserted.
      * @typeofeditors ["CPE"]
-     * @param {VerticalTextAlign} VerticalAlign
+     * @param {VerticalTextAlign} VerticalAlign - The type of the vertical alignment for the shape inner contents.
      */
     ApiShape.prototype.SetVerticalTextAlign = function(VerticalAlign)
     {
@@ -800,11 +810,11 @@
     };
 
     /**
-     *  Specifies a chart title
+     *  Specify the chart title.
      *  @typeofeditors ["CPE"]
      *  @param {string} sTitle - The title which will be displayed for the current chart.
-     *  @param {hps} nFontSize - 	The text size value measured in points.
-     *  @param {?bool} bIsBold
+     *  @param {pt} nFontSize - The text size value measured in points.
+     *  @param {?bool} bIsBold - Specifies if the chart title is written in bold font or not.
      */
     ApiChart.prototype.SetTitle = function (sTitle, nFontSize, bIsBold)
     {
@@ -812,11 +822,11 @@
     };
 
     /**
-     *  Specifies a horizontal axis title
+     *  Specify the chart horizontal axis title.
      *  @typeofeditors ["CPE"]
      *  @param {string} sTitle - The title which will be displayed for the horizontal axis of the current chart.
-     *  @param {hps} nFontSize - The text size value measured in points.
-     *  @param {?bool} bIsBold
+     *  @param {pt} nFontSize - The text size value measured in points.
+     *  @param {?bool} bIsBold - Specifies if the horizontal axis title is written in bold font or not.
      * */
     ApiChart.prototype.SetHorAxisTitle = function (sTitle, nFontSize, bIsBold)
     {
@@ -824,11 +834,11 @@
     };
 
     /**
-     *  Specifies a vertical axis title
+     *  Specify the chart vertical axis title.
      *  @typeofeditors ["CPE"]
      *  @param {string} sTitle - The title which will be displayed for the vertical axis of the current chart.
-     *  @param {hps} nFontSize - The text size value measured in points.
-     *  @param {?bool} bIsBold
+     *  @param {pt} nFontSize - The text size value measured in points.
+     *  @param {?bool} bIsBold - Specifies if the vertical axis title is written in bold font or not.
      * */
     ApiChart.prototype.SetVerAxisTitle = function (sTitle, nFontSize, bIsBold)
     {
@@ -836,7 +846,7 @@
     };
 
     /**
-     * Specifies a legend position
+     * Specify the chart legend position.
      * @typeofeditors ["CPE"]
      * @param {"left" | "top" | "right" | "bottom" | "none"} sLegendPos - The position of the chart legend inside the chart window.
      * */
@@ -871,7 +881,7 @@
     };
 
     /**
-     * Spicifies a show options for data labels
+     *  Specifies which chart data labels are shown for the chart.
      * @typeofeditors ["CPE"]
      * @param {boolean} bShowSerName - Whether to show or hide the source table column names used for the data which the chart will be build from.
      * @param {boolean} bShowCatName - Whether to show or hide the source table row names used for the data which the chart will be build from.

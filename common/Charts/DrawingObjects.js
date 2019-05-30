@@ -1635,6 +1635,7 @@ function DrawingObjects() {
                     var oShape = oTrack.getShape(false, _this.drawingDocument, null);
                     oShape.setWorksheet(worksheet.model);
                     oShape.addToDrawingObjects();
+                    oShape.checkDrawingBaseCoords();
                     oShape.select(_this.controller, 0);
                     _this.controller.startRecalculate();
                     worksheet.setSelectionShape(true);

@@ -77,6 +77,9 @@ module.exports = function(grunt) {
 		}
 		return result;
 	}
+	function getSdkPath(min, name) {
+		return path.join(name, min ? 'sdk-all-min.js' : 'sdk-all.js');
+	}
 
 	var path = require('path');
 	var pathConfigs = grunt.option('src') || './configs';
@@ -90,6 +93,7 @@ module.exports = function(grunt) {
 
 	grunt.loadNpmTasks('grunt-contrib-clean');
 	grunt.loadNpmTasks('grunt-contrib-concat');
+	grunt.loadNpmTasks('grunt-contrib-copy');
 	grunt.loadNpmTasks('grunt-replace');
 	grunt.loadNpmTasks('grunt-split-file');
 
@@ -240,9 +244,9 @@ module.exports = function(grunt) {
 		var wordJs = 'word.js';
 		var cellJs = 'cell.js';
 		var slideJs = 'slide.js';
-		var sdkAllMin = 'sdk-all-min.js';
-		var sdkAll = 'sdk-all.js';
 		var license = 'license.header';
+		var deploy = '../deploy/sdkjs/';
+		var sdkjspattern = 'sdk-*.js';
 		var splitLine;
 		if ('ADVANCED' === level) {
 			splitLine = ('PRETTY_PRINT' === formatting) ? 'window.split = "split";' : 'window.split="split";';
@@ -258,12 +262,12 @@ module.exports = function(grunt) {
 		var concatSdkFiles = concatSdk['files'];
 		concatSdkFiles[fontsWasm] = [license, fontsWasm];
 		concatSdkFiles[fontsJs] = [license, fontsJs];
-		concatSdkFiles[path.join(word + sdkAllMin)] = [license, polyfill, path.join(word + sdkAllMin)];
-		concatSdkFiles[path.join(word + sdkAll)] = [license, path.join(word + sdkAll)];
-		concatSdkFiles[path.join(cell + sdkAllMin)] = [license, polyfill, path.join(cell + sdkAllMin)];
-		concatSdkFiles[path.join(cell + sdkAll)] = [license, path.join(cell + sdkAll)];
-		concatSdkFiles[path.join(slide + sdkAllMin)] = [license, polyfill, path.join(slide + sdkAllMin)];
-		concatSdkFiles[path.join(slide + sdkAll)] = [license, path.join(slide + sdkAll)];
+		concatSdkFiles[getSdkPath(true, word)] = [license, polyfill, getSdkPath(true, word)];
+		concatSdkFiles[getSdkPath(false, word)] = [license, getSdkPath(false, word)];
+		concatSdkFiles[getSdkPath(true, cell)] = [license, polyfill, getSdkPath(true, cell)];
+		concatSdkFiles[getSdkPath(false, cell)] = [license, getSdkPath(false, cell)];
+		concatSdkFiles[getSdkPath(true, slide)] = [license, polyfill, getSdkPath(true, slide)];
+		concatSdkFiles[getSdkPath(false, slide)] = [license, getSdkPath(false, slide)];
 
 		grunt.initConfig({
 			splitfile: {
@@ -303,9 +307,9 @@ module.exports = function(grunt) {
 					files: [
 						{src: [fontsWasm], dest: path.join(fonts, 'wasm', fontFile)},
 						{src: [fontsJs], dest: path.join(fonts, 'js', fontFile)},
-						{src: [path.join(word + sdkAllMin), path.join(word + sdkAll)], dest: word},
-						{src: [path.join(cell + sdkAllMin), path.join(cell + sdkAll)], dest: cell},
-						{src: [path.join(slide + sdkAllMin), path.join(slide + sdkAll)], dest: slide}
+						{src: [getSdkPath(true, word), getSdkPath(false, word)], dest: word},
+						{src: [getSdkPath(true, cell), getSdkPath(false, cell)], dest: cell},
+						{src: [getSdkPath(true, slide), getSdkPath(false, slide)], dest: slide}
 					]
 				}
 			},
@@ -326,8 +330,52 @@ module.exports = function(grunt) {
 						slide + cache
 					]
 				}
+			},
+			copy: {
+				sdkjs: {
+					files: [
+						{
+							expand: true,
+							cwd: '../common/',
+							src: [
+								'Images/*',
+								'Native/*.js',
+								'libfont/js/fonts.*',
+								'libfont/wasm/fonts.*'
+							],
+							dest: path.join(deploy, 'common')
+						},
+						{
+							expand: true,
+							src: path.join(word, sdkjspattern),
+							dest: path.join(deploy, 'word')
+						},
+						{
+							expand: true,
+							cwd: path.join(cell, 'css'),
+							src: '*.css',
+							dest: path.join(deploy, 'cell', 'css')
+						},
+						{
+							expand: true,
+							src: path.join(cell, sdkjspattern),
+							dest: path.join(deploy, 'cell')
+						},
+						{
+							expand: true,
+							cwd: path.join(slide, 'themes'),
+							src: '**/**',
+							dest: path.join(deploy, 'slide', 'themes')
+						},
+						{
+							expand: true,
+							src: path.join(slide, sdkjspattern),
+							dest: path.join(deploy, 'slide')
+						}
+					]
+				}
 			}
 		})
 	});
-	grunt.registerTask('default', ['build-sdk', 'concat', 'closure-compiler', 'clean', 'license', 'splitfile', 'concat', 'replace', 'clean']);
+	grunt.registerTask('default', ['build-sdk', 'concat', 'closure-compiler', 'clean', 'license', 'splitfile', 'concat', 'replace', 'clean', 'copy']);
 };

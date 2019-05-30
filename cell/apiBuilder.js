@@ -107,6 +107,7 @@
 	ApiChart.prototype.constructor = ApiChart;
 
 	/**
+     * The available preset color names.
 	 * @typedef {("aliceBlue" | "antiqueWhite" | "aqua" | "aquamarine" | "azure" | "beige" | "bisque" | "black" |
 	 *     "blanchedAlmond" | "blue" | "blueViolet" | "brown" | "burlyWood" | "cadetBlue" | "chartreuse" | "chocolate"
 	 *     | "coral" | "cornflowerBlue" | "cornsilk" | "crimson" | "cyan" | "darkBlue" | "darkCyan" | "darkGoldenrod" |
@@ -137,6 +138,11 @@
 	 * */
 
 	/**
+     * Possible values for the position of chart tick labels (either horizontal or vertical).
+     * * **"none"** - not display the selected tick labels.
+     * * **"nextTo"** - set the position of the selected tick labels next to the main label.
+     * * **"low"** - set the position of the selected tick labels in the part of the chart with lower values.
+     * * **"high"** - set the position of the selected tick labels in the part of the chart with higher values.
 	 * @typedef {("none" | "nextTo" | "low" | "high")} TickLabelPosition
 	 * **/
 	
@@ -912,10 +918,10 @@
 
 	/**
 	 * Create a chart of the set type from the selected data range of the current sheet.
-	 * @memberof ApiWorksheet
-	 * @typeofeditors ["CSE"]
 	 * <note>Please note, that the horizontal nColOffset and vertical nRowOffset offsets are calculated within the limits of the specified nFromCol column and nFromRow
 	 * row cell only. If this value exceeds the cell width or height, another vertical/horizontal position will be set.</note>
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
 	 * @param {string} sDataRange - The selected cell range which will be used to get the data for the chart, formed specifically and including the sheet name.
 	 * @param {bool} bInRows - Specifies whether to take the data from the rows or from the columns. If true the data from the rows will be used.
 	 * @param {ChartType} sType - The chart type used for the chart display.
@@ -1208,12 +1214,12 @@
 	};
 
 	/**
-	 * Specifies the border to be retrieved.
+	 * Specifies the cell border position.
 	 * @typedef {("DiagonalDown" | "DiagonalUp" | "Bottom" | "Left" | "Right" | "Top" | "InsideHorizontal" | "InsideVertical")} BordersIndex
 	 */
 
 	/**
-	 * Specifies the line style for the border.
+	 * Specifies the line style used to form the cell border.
 	 * @typedef {("None" | "Double" | "Hair" | "DashDotDot" | "DashDot" | "Dotted" | "Dashed" | "Thin" | "MediumDashDotDot" | "SlantDashDot" | "MediumDashDot" | "MediumDashed" | "Medium" | "Thick")} LineStyle
 	 */
 
@@ -2044,7 +2050,7 @@
 
 
 	/**
-	 * Get content of this shape.
+	 * Get the shape inner contents where a paragraph or text runs can be inserted. 
 	 * @returns {?ApiDocumentContent}
 	 */
 	ApiShape.prototype.GetDocContent = function()
@@ -2058,8 +2064,8 @@
 	};
 
 	/**
-	 * Set shape's content vertical align
-	 * @param {VerticalTextAlign} VerticalAlign
+	 * Set the vertical alignment for the shape content where a paragraph or text runs can be inserted.
+	 * @param {VerticalTextAlign} VerticalAlign - The type of the vertical alignment for the shape inner contents.
 	 */
 	ApiShape.prototype.SetVerticalTextAlign = function(VerticalAlign)
 	{
@@ -2102,11 +2108,11 @@
 	};
 
 	/**
-	 *  Specifies a chart title
+	 *  Specify the chart title.
 	 *  @typeofeditors ["CSE"]
 	 *  @param {string} sTitle - The title which will be displayed for the current chart.
-	 *  @param {hps} nFontSize - The text size value measured in points.
-	 *  @param {?bool} bIsBold
+	 *  @param {pt} nFontSize - The text size value measured in points.
+	 *  @param {?bool} bIsBold - Specifies if the chart title is written in bold font or not.
 	 */
 	ApiChart.prototype.SetTitle = function (sTitle, nFontSize, bIsBold)
 	{
@@ -2114,11 +2120,11 @@
 	};
 
 	/**
-	 *  Specify the horizontal axis chart title.
+	 *  Specify the chart horizontal axis title.
 	 *  @typeofeditors ["CSE"]
 	 *  @param {string} sTitle - The title which will be displayed for the horizontal axis of the current chart.
-	 *  @param {hps} nFontSize - The text size value measured in points.
-	 *  @param {?bool} bIsBold
+	 *  @param {pt} nFontSize - The text size value measured in points.
+	 *  @param {?bool} bIsBold - Specifies if the horizontal axis title is written in bold font or not.
 	 * */
 	ApiChart.prototype.SetHorAxisTitle = function (sTitle, nFontSize, bIsBold)
 	{
@@ -2126,11 +2132,11 @@
 	};
 
 	/**
-	 *  Specify the vertical axis chart title.
+	 *  Specify the chart vertical axis title.
 	 *  @typeofeditors ["CSE"]
 	 *  @param {string} sTitle - The title which will be displayed for the vertical axis of the current chart.
-	 *  @param {hps} nFontSize - The text size value measured in points.
-	 *  @param {?bool} bIsBold
+	 *  @param {pt} nFontSize - The text size value measured in points.
+	 *  @param {?bool} bIsBold - Specifies if the vertical axis title is written in bold font or not.
 	 * */
 	ApiChart.prototype.SetVerAxisTitle = function (sTitle, nFontSize, bIsBold)
 	{
@@ -2193,7 +2199,7 @@
 	};
 
 	/**
-	 * Specifies a legend position
+	 * Specify the chart legend position.
 	 * @typeofeditors ["CSE"]
 	 * @param {"left" | "top" | "right" | "bottom" | "none"} sLegendPos - The position of the chart legend inside the chart window.
 	 * */
