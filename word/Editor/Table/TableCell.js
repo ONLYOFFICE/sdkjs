@@ -2206,12 +2206,15 @@ CTableCell.prototype.GetPageBounds = function(nCurPage)
 
 	var oCellInfo = oRow.GetCellInfo(this.GetIndex());
 
+	var nVMergeCountOnPage = oTable.private_GetVertMergeCountOnPage(nCurPage, oRow.GetIndex(), oCellInfo.StartGridCol, this.GetGridSpan());
+	if (nVMergeCountOnPage <= 0)
+		return new CDocumentBounds(0, 0, 0, 0);
 
 	var nL = oPage.X + oCellInfo.X_cell_start;
 	var nR = oPage.X + oCellInfo.X_cell_end;
 
 	var nT = oTable.RowsInfo[nCurRow].Y[nCurPage];
-	var nB = oTable.RowsInfo[nCurRow].Y[nCurPage] + oTable.RowsInfo[nCurRow].H[nCurPage];
+	var nB = oTable.RowsInfo[nCurRow + nVMergeCountOnPage - 1].Y[nCurPage] + oTable.RowsInfo[nCurRow + nVMergeCountOnPage - 1].H[nCurPage];
 
 	return new CDocumentBounds(nL, nT, nR, nB);
 };
