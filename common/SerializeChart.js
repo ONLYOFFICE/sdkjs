@@ -9857,7 +9857,7 @@ BinaryChartReader.prototype.ReadCT_ScatterChart = function (type, length, val, a
         });
         val.addSer(oNewVal);
         if(oNewVal.smooth === null){
-           // oNewVal.setSmooth(false);
+           oNewVal.setSmooth(false);
         }
     }
     else if (c_oserct_scatterchartDLBLS === type) {
@@ -10275,7 +10275,7 @@ BinaryChartReader.prototype.ReadCT_Line3DChart = function (type, length, val, aC
             return oThis.ReadCT_LineSer(t, l, oNewVal);
         });
         if(oNewVal.smooth === null){
-            //oNewVal.setSmooth(false);
+            oNewVal.setSmooth(false);
         }
         val.addSer(oNewVal);
     }
@@ -10364,7 +10364,7 @@ BinaryChartReader.prototype.ReadCT_LineChart = function (type, length, val, aCha
         });
         val.addSer(oNewVal);
         if(oNewVal.smooth === null){
-           // oNewVal.setSmooth(false);
+           oNewVal.setSmooth(false);
         }
     }
     else if (c_oserct_linechartDLBLS === type) {
@@ -10751,7 +10751,7 @@ BinaryChartReader.prototype.ReadCT_PlotArea = function (type, length, val, oIdTo
         });
         val.addChart(oNewVal);
         if(oNewVal.smooth === null){
-            //oNewVal.setSmooth(false);
+            oNewVal.setSmooth(false);
         }
     }
     else if (c_oserct_plotareaOFPIECHART === type) {

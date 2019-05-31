@@ -9708,7 +9708,7 @@ CChartSpace.prototype.hitInTextRect = function()
                 if(ser1.getObjectType() === AscDFH.historyitem_type_PieSeries && ser2.getObjectType() !== AscDFH.historyitem_type_PieSeries){
                     return -1;
                 }
-                return ser1.idx - ser2.idx;
+                return 0;
             });
 
 
@@ -10280,7 +10280,7 @@ CChartSpace.prototype.hitInTextRect = function()
                     }
                     var fMarkerWidth;
                     if(b_line_series){
-                        fMarkerWidth = line_marker_width
+                        fMarkerWidth = line_marker_width;
                     }
                     else{
                         fMarkerWidth = marker_size;
@@ -10335,37 +10335,6 @@ CChartSpace.prototype.hitInTextRect = function()
                             fCurPosX += fDistanceBetweenLabels;
                             oCurEntry = calc_entryes[i];
                             this.layoutLegendEntry(oCurEntry, fCurPosX + distance_to_text, Math.max(0, fLegendHeight/2.0 - aHeights[i]/2.0), distance_to_text);
-                            // oUnionMarker = oCurEntry.calcMarkerUnion;
-                            // oLineMarker = oUnionMarker.lineMarker;
-                            // oMarker = oUnionMarker.marker;
-                            //
-                            // if(oLineMarker){
-                            //     oLineMarker.localX = fCurPosX + distance_to_text;
-                            //     if(oLineMarker.pen){
-                            //         if(AscFormat.isRealNumber(oLineMarker.pen.w)){
-                            //             fPenWidth = oLineMarker.pen.w/36000.0;
-                            //         }
-                            //         else{
-                            //             fPenWidth = 12700.0/36000.0;
-                            //         }
-                            //     }
-                            //     else{
-                            //         fPenWidth = 0.0;
-                            //     }
-                            //     oLineMarker.localY = Math.max(0.0, fLegendHeight/2.0 - fPenWidth/2.0);
-                            //     if(oMarker){
-                            //         oMarker.localX = oLineMarker.localX + line_marker_width/2.0 - marker_size/2.0;
-                            //         oMarker.localY = Math.max(0.0, fLegendHeight/2.0 - marker_size/2.0);
-                            //     }
-                            // }
-                            // else{
-                            //     if(oMarker){
-                            //         oMarker.localX = fCurPosX + distance_to_text;
-                            //         oMarker.localY = Math.max(0.0, fLegendHeight/2.0 - marker_size/2.0);
-                            //     }
-                            // }
-                            // oCurEntry.localX = fCurPosX + distance_to_text + fMarkerWidth + distance_to_text;
-                            // oCurEntry.localY = Math.max(0, fLegendHeight/2.0 - aHeights[i]/2.0);
                             fCurPosX += distance_to_text + fMarkerWidth + distance_to_text + aWidths[i];
                         }
 
