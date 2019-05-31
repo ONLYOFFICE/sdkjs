@@ -1234,10 +1234,10 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 		bCorrect = true;
 	}
 	this.Internal_Position.Correct_Values(bInline, PageLimits, this.AllowOverlap, this.Use_TextWrap(), OtherFlowObjects, bCorrect);
-	this.GraphicObj.bounds.l += this.Internal_Position.CalcX;
-	this.GraphicObj.bounds.r += this.Internal_Position.CalcX;
-	this.GraphicObj.bounds.t += this.Internal_Position.CalcY;
-	this.GraphicObj.bounds.b += this.Internal_Position.CalcY;
+	this.GraphicObj.bounds.l = this.GraphicObj.bounds.x + this.Internal_Position.CalcX;
+	this.GraphicObj.bounds.r =  this.GraphicObj.bounds.x  + this.GraphicObj.bounds.w + this.Internal_Position.CalcX;
+	this.GraphicObj.bounds.t = this.GraphicObj.bounds.y + this.Internal_Position.CalcY;
+	this.GraphicObj.bounds.b = this.GraphicObj.bounds.y + this.GraphicObj.bounds.h + this.Internal_Position.CalcY;
 
 	var OldPageNum = this.PageNum;
 	this.PageNum   = PageNum;
