@@ -12444,6 +12444,7 @@
 		var oldMode = this.isFormulaEditMode;
 		this.isFormulaEditMode = false;
 
+		var applyByArray = flags && flags.bApplyByArray;
 		//t.model.workbook.dependencyFormulas.lockRecal();
 
 		if (!isNotHistory) {
@@ -12453,7 +12454,7 @@
 
 		//***array-formula***
 		var changeRangesIfArrayFormula = function() {
-			if(flags && flags.bApplyByArray) {
+			if(applyByArray) {
 				c = t.getSelectedRange();
 				if(c.bbox.isOneCell()) {
 					//проверяем, есть ли формула массива в этой ячейке
@@ -12479,16 +12480,16 @@
 			//***array-formula***
 			var ret = true;
 			changeRangesIfArrayFormula();
-			if(flags.bApplyByArray) {
+			if(applyByArray) {
 				this.model.workbook.dependencyFormulas.lockRecal();
 			}
 
 			c.setValue(ftext, function (r) {
 				ret = r;
-			}, null, flags.bApplyByArray ? bbox : null);
+			}, null, applyByArray ? bbox : null);
 
 			//***array-formula***
-			if(flags.bApplyByArray) {
+			if(applyByArray) {
 				this.model.workbook.dependencyFormulas.unlockRecal();
 			}
 
@@ -12500,7 +12501,7 @@
 			}
 
 			//***array-formula***
-			if(flags.bApplyByArray) {
+			if(applyByArray) {
 				History.Add(AscCommonExcel.g_oUndoRedoArrayFormula, AscCH.historyitem_ArrayFromula_AddFormula, this.model.getId(),
 					new Asc.Range(c.bbox.c1, c.bbox.r1, c.bbox.c2, c.bbox.r2), new AscCommonExcel.UndoRedoData_ArrayFormula(c.bbox, ftext));
 			}
