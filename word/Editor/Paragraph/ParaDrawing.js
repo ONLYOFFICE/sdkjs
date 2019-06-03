@@ -1757,7 +1757,7 @@ ParaDrawing.prototype.Refresh_RecalcData2 = function(Data)
 
 	if(this.Parent && this.Parent.Refresh_RecalcData2)
 	{
-		return this.Parent.Refresh_RecalcData2(this.PageNum);
+		return this.Parent.Refresh_RecalcData2();
 	}
 };
 //----------------------------------------------------------------------------------------------------------------------
