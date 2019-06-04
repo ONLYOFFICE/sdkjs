@@ -1373,7 +1373,7 @@
                 indexBottom++;
             }
         }
-        if (wb.oApi && wb.oApi.CoAuthoringApi) {
+        if (error && wb.oApi && wb.oApi.CoAuthoringApi) {
             var msg = 'Error: intersection of merged areas';
             wb.oApi.CoAuthoringApi.sendChangesError(msg);
         }
