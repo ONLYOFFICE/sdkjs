@@ -13646,6 +13646,7 @@
         }
         History.TurnOn();
         this._updateRange(oAllRange.bbox); // ToDo Стоит обновить nRowsCount и nColsCount
+		this.draw();
     };
     WorksheetView.prototype.getData = function () {
         var arrResult, arrCells = [], c, r, row, lastC = -1, lastR = -1, val;
