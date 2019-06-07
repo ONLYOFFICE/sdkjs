@@ -37,12 +37,11 @@
     var FS = undefined;
     var print = undefined;
 
+    var fetch = window.fetch;
     var getBinaryPromise = null;
     if (window["AscDesktopEditor"] && document.currentScript && 0 == document.currentScript.src.indexOf("file:///"))
     {
-        // fetch not support file:/// scheme
-        window.fetch = undefined;
-
+        fetch = undefined; // fetch not support file:/// scheme
         getBinaryPromise = function() {
 
             var wasmPath = "ascdesktop://fonts/" + wasmBinaryFile.substr(8);
