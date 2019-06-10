@@ -549,8 +549,9 @@ CopyProcessor.prototype =
 					oImg.oAttributes["src"] = sSrc.ImageUrl;
 					oTarget.addChild(oImg);
 				}
-			}
-			else if(para_Field === item.Type)
+			} else if(para_InlineLevelSdt === item.Type) {
+				this.CopyRunContent(item, oTarget);
+			} else if(para_Field === item.Type)
 				this.CopyRunContent(item, oTarget);
         }
     },
