@@ -204,12 +204,12 @@ PresentationSelectedContent.prototype.getContentType = function(){
 
 function CreatePresentationTableStyles(Styles, IdMap)
 {
-    function CreateMiddleStyle1(schemeId) {
+    function CreateMediumStyle1(schemeId) {
     
         if(schemeId == 8)
-        var style = new CStyle("Middle Style 1", null, null, styletype_Table); 
+        var style = new CStyle("Medium Style 1", null, null, styletype_Table); 
         else
-        var style = new CStyle("Middle Style 1 - accent " + (schemeId + 1), null, null, styletype_Table);  
+        var style = new CStyle("Medium Style 1 - accent " + (schemeId + 1), null, null, styletype_Table);  
 
         style.TablePr.Set_FromObject(
             {
@@ -345,12 +345,12 @@ function CreatePresentationTableStyles(Styles, IdMap)
         style.TableFirstRow.Set_FromObject(styleObject);
         return style;
     }
-    function CreateMiddleStyle2(schemeId)
+    function CreateMediumStyle2(schemeId)
     {
         if(schemeId == 8)
-        var style = new CStyle("Middle Style 2", null, null, styletype_Table); 
+        var style = new CStyle("Medium Style 2", null, null, styletype_Table); 
         else
-        var style = new CStyle("Middle Style 2 - accent " + (schemeId + 1), null, null, styletype_Table);
+        var style = new CStyle("Medium Style 2 - accent " + (schemeId + 1), null, null, styletype_Table);
         //style.Id = "{" + GUID() + "}";
         style.TablePr.Set_FromObject(
             {
@@ -490,11 +490,11 @@ function CreatePresentationTableStyles(Styles, IdMap)
         style.TableFirstRow.Set_FromObject(styleObject);
         return style;
     } 
-    function CreateMiddleStyle3(schemeId) {
+    function CreateMediumStyle3(schemeId) {
         if(schemeId == 8)
-        var style = new CStyle("Middle Style 3", null, null, styletype_Table); 
+        var style = new CStyle("Medium Style 3", null, null, styletype_Table); 
         else
-        var style = new CStyle("Middle Style 3 - accent " + (schemeId + 1), null, null, styletype_Table);  
+        var style = new CStyle("Medium Style 3 - accent " + (schemeId + 1), null, null, styletype_Table);  
         style.TablePr.Set_FromObject(
             {
                 TableBorders:
@@ -633,11 +633,11 @@ function CreatePresentationTableStyles(Styles, IdMap)
         style.TableFirstRow.Set_FromObject(styleObject);
         return style;
     }
-    function CreateMiddleStyle4(schemeId) {
+    function CreateMediumStyle4(schemeId) {
         if(schemeId == 8)
-        var style = new CStyle("Middle Style 4", null, null, styletype_Table); 
+        var style = new CStyle("Medium Style 4", null, null, styletype_Table); 
         else
-        var style = new CStyle("Middle Style 4 - accent " + (schemeId + 1), null, null, styletype_Table);  
+        var style = new CStyle("Medium Style 4 - accent " + (schemeId + 1), null, null, styletype_Table);  
         style.TablePr.Set_FromObject(
             {
                 TableBorders:
@@ -2057,47 +2057,47 @@ function CreatePresentationTableStyles(Styles, IdMap)
     }
     var def, style;
 
-    style = CreateMiddleStyle1(8);
+    style = CreateMediumStyle1(8);
     Styles.Add(style);
     IdMap[style.Id] = true;
 
     for(var i = 0; i < 6; ++i)
     {
-        style = CreateMiddleStyle1(i);
+        style = CreateMediumStyle1(i);
         Styles.Add(style);
         IdMap[style.Id] = true;
     }
-    style = CreateMiddleStyle2(8);
+    style = CreateMediumStyle2(8);
     Styles.Add(style);
     IdMap[style.Id] = true;
 
-    def = CreateMiddleStyle2(0);
+    def = CreateMediumStyle2(0);
     Styles.Add(def);
     IdMap[def.Id] = true;
 
     for(var i = 1; i < 6; ++i)
     {
-        style = CreateMiddleStyle2(i);
+        style = CreateMediumStyle2(i);
         Styles.Add(style);
         IdMap[style.Id] = true;
     }
-    style = CreateMiddleStyle3(8);
+    style = CreateMediumStyle3(8);
     Styles.Add(style);
     IdMap[style.Id] = true;
 
     for(var i = 0; i < 6; ++i)
     {
-        style = CreateMiddleStyle3(i);
+        style = CreateMediumStyle3(i);
         Styles.Add(style);
         IdMap[style.Id] = true;
     }
-    style = CreateMiddleStyle4(8);
+    style = CreateMediumStyle4(8);
     Styles.Add(style);
     IdMap[style.Id] = true;
 
     for(var i = 0; i < 6; ++i)
     {
-        style = CreateMiddleStyle4(i);
+        style = CreateMediumStyle4(i);
         Styles.Add(style);
         IdMap[style.Id] = true;
     }
