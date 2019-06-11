@@ -1561,7 +1561,7 @@ function CreatePresentationTableStyles(Styles, IdMap)
                 TextPr:
                 {
                     FontRef: AscFormat.CreateFontRef(AscFormat.fntStyleInd_minor, AscFormat.CreatePresetColor("black")),
-                    Unifill:  CreateUnifillSolidFillSchemeColor(8, 0)
+                    Unifill:  CreateUnifillSolidFillSchemeColor(12, 0)
                 },
                 TableCellPr:
                 {
@@ -1589,7 +1589,7 @@ function CreatePresentationTableStyles(Styles, IdMap)
             {
                 Bold: true,
                 FontRef: AscFormat.CreateFontRef(AscFormat.fntStyleInd_minor, AscFormat.CreatePresetColor("black")),
-                Unifill:  CreateUnifillSolidFillSchemeColor(8, 0)
+                Unifill:  CreateUnifillSolidFillSchemeColor(12, 0)
             },
             TableCellPr:
             {
