@@ -63,7 +63,7 @@ call emcc -o fonts.js^
  
 echo "finalize..."
 
-call powershell -Command "(Get-Content ./fonts.js) -replace 'removeRunDependency\(\"wasm-instantiate\"\)', 'removeRunDependency(\"wasm-instantiate\");window[\"AscFonts\"].onLoadModule();' | Set-Content ./fonts.js"
+call powershell -Command "(Get-Content ./fonts.js) -replace '__ATPOSTRUN__=\[\];', '__ATPOSTRUN__=[function(){window[\"AscFonts\"].onLoadModule();}];' | Set-Content ./fonts.js"
 call powershell -Command "(Get-Content ./fonts.js) -replace 'function getBinaryPromise\(\){', 'function getBinaryPromise2(){' | Set-Content ./fonts.js"
 
 call powershell -Command "(Get-Content ./../engine_base.js) -replace '//module', (Get-Content ./fonts.js) | Set-Content ./../engine.js"
