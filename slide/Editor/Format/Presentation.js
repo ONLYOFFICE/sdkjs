@@ -2055,7 +2055,199 @@ function CreatePresentationTableStyles(Styles, IdMap)
         style.TableFirstRow.Set_FromObject(styleObject);
         return style;
     }
+    function CreateDarkStyle2(schemeId) {
+        var style = new CStyle("Dark Style 2 - Accent " + (schemeId + 1) + "/" +"Accent " + (schemeId + 2), null, null, styletype_Table);  
+        style.TablePr.Set_FromObject(
+            {
+                TableBorders:
+                {
+                    Left:
+                    {
+                        Color : { r : 0, g : 0, b : 0 },
+                        Unifill : CreateUnifillSolidFillSchemeColor(schemeId, 0),
+                        Space : 0,
+                        Size  : 12700/36000,
+                        Value : border_None
+                    },
+
+                    Right:
+                    {
+                        Color : { r : 0, g : 0, b : 0 },
+                        Unifill : CreateUnifillSolidFillSchemeColor(schemeId, 0),
+                        Space : 0,
+                        Size  : 12700/36000,
+                        Value : border_None
+                    },
+
+                    Top:
+                    {
+                        Color : { r : 0, g : 0, b : 0 },
+                        Unifill : CreateUnifillSolidFillSchemeColor(schemeId, 0),
+                        Space : 0,
+                        Size  : 12700/36000,
+                        Value : border_None
+                    },
+
+                    Bottom:
+                    {
+                        Color : { r : 0, g : 0, b : 0 },
+                        Unifill : CreateUnifillSolidFillSchemeColor(schemeId, 0),
+                        Space : 0,
+                        Size  : 12700/36000,
+                        Value : border_None
+                    },
+
+                    InsideH:
+                    {
+                        Color : { r : 0, g : 0, b : 0 },
+                        Unifill : CreateUnifillSolidFillSchemeColor(schemeId, 0),
+                        Space : 0,
+                        Size  : 12700/36000,
+                        Value : border_None
+                    },
+
+                    InsideV:
+                    {
+                        Color : { r : 0, g : 0, b : 0 },
+                        Unifill : CreateUnifillSolidFillSchemeColor(schemeId, 0),
+                        Space : 0,
+                        Size  : 12700/36000,
+                        Value : border_None
+                    }
+                }
+            }
+        );
+        style.TableWholeTable.Set_FromObject(
+            {
+                TextPr:
+                {
+                    FontRef: AscFormat.CreateFontRef(AscFormat.fntStyleInd_minor, AscFormat.CreatePresetColor("black")),
+                    Unifill:  CreateUnifillSolidFillSchemeColor(12, 0)
+                },
+                TableCellPr:
+                {
+                    Shd:
+                    {
+                        Unifill: CreateUnifillSolidFillSchemeColor(schemeId, 0.2)
+                    }
+                }
+            }
+        );
+        var styleObject =    {
+            TableCellPr:
+            {
+                Shd:
+                {
+                    Unifill: CreateUnifillSolidFillSchemeColor(schemeId, 0.4)
+                }
+            }
+        };
+        style.TableBand1Horz.Set_FromObject(styleObject);
+        style.TableBand1Vert.Set_FromObject(styleObject);
+
+        styleObject = {
+            TextPr:
+            {
+                Bold: true,
+                FontRef: AscFormat.CreateFontRef(AscFormat.fntStyleInd_minor, AscFormat.CreatePresetColor("black")),
+                Unifill:  CreateUnifillSolidFillSchemeColor(12, 0)
+            },
+            TableCellPr:
+            {
+                Shd:
+                {
+                    Unifill: CreateUnifillSolidFillSchemeColor(schemeId+1, 0)
+                }
+            }
+        };
+        style.TableLastCol.Set_FromObject(styleObject);
+        style.TableFirstCol.Set_FromObject(styleObject);
+
+        styleObject.TableCellPr.TableCellBorders =
+        {
+            Top:
+            {
+                Color : { r : 0, g : 0, b : 0 },
+                Unifill : CreateUnifillSolidFillSchemeColor(schemeId, 0),
+                Space : 0,
+                Size  : 12700/36000,
+                Value : border_None
+            }
+        };
+        style.TableLastRow.Set_FromObject(styleObject);
+        styleObject.TableCellPr.TableCellBorders =
+        {
+            Bottom:
+            {
+                Color : { r : 0, g : 0, b : 0 },
+                Unifill : CreateUnifillSolidFillSchemeColor(12, 0),
+                Space : 0,
+                Size  : 12700/36000,
+                Value : border_None
+            }
+        };
+        styleObject.TextPr =
+        {
+            Bold: true,
+            FontRef: AscFormat.CreateFontRef(AscFormat.fntStyleInd_minor, AscFormat.CreatePresetColor("black")),
+            Unifill:  CreateUnifillSolidFillSchemeColor(12, 0)
+        };
+        style.TableFirstRow.Set_FromObject(styleObject);
+        return style;
+    }
     var def, style;
+
+    style = CreateNoStyle1(8);
+    Styles.Add(style);
+    IdMap[style.Id] = true;
+
+    for(var i = 0; i < 6; ++i)
+    {
+        style = CreateThemedStyle1(i);
+        Styles.Add(style);
+        IdMap[style.Id] = true;
+    }
+    style = CreateNoStyle2(8);
+    Styles.Add(style);
+    IdMap[style.Id] = true;
+
+    for(var i = 0; i < 6; ++i)
+    {
+        style = CreateThemedStyle2(i);
+        Styles.Add(style);
+        IdMap[style.Id] = true;
+    }
+
+    style = CreateLightStyle1(8);
+    Styles.Add(style);
+    IdMap[style.Id] = true;
+
+    for(var i = 0; i < 6; ++i)
+    {
+        style = CreateLightStyle1(i);
+        Styles.Add(style);
+        IdMap[style.Id] = true;
+    }
+    style = CreateLightStyle2(8);
+    Styles.Add(style);
+    IdMap[style.Id] = true;
+
+    for(var i = 0; i < 6; ++i)
+    {
+        style = CreateLightStyle2(i);
+        Styles.Add(style);
+        IdMap[style.Id] = true;
+    }
+    style = CreateLightStyle3(8);
+    Styles.Add(style);
+    IdMap[style.Id] = true;
+
+    for(var i = 0; i < 6; ++i)
+    {
+        style = CreateLightStyle3(i);
+        Styles.Add(style);
+        IdMap[style.Id] = true;
+    }
 
     style = CreateMediumStyle1(8);
     Styles.Add(style);
@@ -2101,56 +2293,7 @@ function CreatePresentationTableStyles(Styles, IdMap)
         Styles.Add(style);
         IdMap[style.Id] = true;
     }
-    style = CreateLightStyle1(8);
-    Styles.Add(style);
-    IdMap[style.Id] = true;
 
-    for(var i = 0; i < 6; ++i)
-    {
-        style = CreateLightStyle1(i);
-        Styles.Add(style);
-        IdMap[style.Id] = true;
-    }
-    style = CreateLightStyle2(8);
-    Styles.Add(style);
-    IdMap[style.Id] = true;
-
-    for(var i = 0; i < 6; ++i)
-    {
-        style = CreateLightStyle2(i);
-        Styles.Add(style);
-        IdMap[style.Id] = true;
-    }
-    style = CreateLightStyle3(8);
-    Styles.Add(style);
-    IdMap[style.Id] = true;
-
-    for(var i = 0; i < 6; ++i)
-    {
-        style = CreateLightStyle3(i);
-        Styles.Add(style);
-        IdMap[style.Id] = true;
-    }
-    style = CreateNoStyle1(8);
-    Styles.Add(style);
-    IdMap[style.Id] = true;
-
-    for(var i = 0; i < 6; ++i)
-    {
-        style = CreateThemedStyle1(i);
-        Styles.Add(style);
-        IdMap[style.Id] = true;
-    }
-    style = CreateNoStyle2(8);
-    Styles.Add(style);
-    IdMap[style.Id] = true;
-
-    for(var i = 0; i < 6; ++i)
-    {
-        style = CreateThemedStyle2(i);
-        Styles.Add(style);
-        IdMap[style.Id] = true;
-    }
     style = CreateBlackStyle(2);
     Styles.Add(style);
     IdMap[style.Id] = true;
@@ -2158,6 +2301,13 @@ function CreatePresentationTableStyles(Styles, IdMap)
     for(var i = 0; i < 6; ++i)
     {
         style = CreateDarkStyle1(i);
+        Styles.Add(style);
+        IdMap[style.Id] = true;
+    }
+
+    for(var i = 0; i < 3; i++)
+    {
+        style = CreateDarkStyle2(2*i);
         Styles.Add(style);
         IdMap[style.Id] = true;
     }
