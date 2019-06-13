@@ -209,7 +209,7 @@ function CreatePresentationTableStyles(Styles, IdMap)
         if(schemeId == 8)
         var style = new CStyle("Medium Style 1", null, null, styletype_Table); 
         else
-        var style = new CStyle("Medium Style 1 - accent " + (schemeId + 1), null, null, styletype_Table);  
+        var style = new CStyle("Medium Style 1 - Accent " + (schemeId + 1), null, null, styletype_Table);  
 
         style.TablePr.Set_FromObject(
             {
@@ -350,7 +350,7 @@ function CreatePresentationTableStyles(Styles, IdMap)
         if(schemeId == 8)
         var style = new CStyle("Medium Style 2", null, null, styletype_Table); 
         else
-        var style = new CStyle("Medium Style 2 - accent " + (schemeId + 1), null, null, styletype_Table);
+        var style = new CStyle("Medium Style 2 - Accent " + (schemeId + 1), null, null, styletype_Table);
         //style.Id = "{" + GUID() + "}";
         style.TablePr.Set_FromObject(
             {
@@ -494,7 +494,7 @@ function CreatePresentationTableStyles(Styles, IdMap)
         if(schemeId == 8)
         var style = new CStyle("Medium Style 3", null, null, styletype_Table); 
         else
-        var style = new CStyle("Medium Style 3 - accent " + (schemeId + 1), null, null, styletype_Table);  
+        var style = new CStyle("Medium Style 3 - Accent " + (schemeId + 1), null, null, styletype_Table);  
         style.TablePr.Set_FromObject(
             {
                 TableBorders:
@@ -637,7 +637,7 @@ function CreatePresentationTableStyles(Styles, IdMap)
         if(schemeId == 8)
         var style = new CStyle("Medium Style 4", null, null, styletype_Table); 
         else
-        var style = new CStyle("Medium Style 4 - accent " + (schemeId + 1), null, null, styletype_Table);  
+        var style = new CStyle("Medium Style 4 - Accent " + (schemeId + 1), null, null, styletype_Table);  
         style.TablePr.Set_FromObject(
             {
                 TableBorders:
@@ -780,7 +780,7 @@ function CreatePresentationTableStyles(Styles, IdMap)
         if(schemeId == 8)
         var style = new CStyle("Light Style 1", null, null, styletype_Table); 
         else
-        var style = new CStyle("Light Style 1 - accent " + (schemeId + 1), null, null, styletype_Table);  
+        var style = new CStyle("Light Style 1 - Accent " + (schemeId + 1), null, null, styletype_Table);  
         style.TablePr.Set_FromObject(
             {
                 TableBorders:
@@ -1066,7 +1066,7 @@ function CreatePresentationTableStyles(Styles, IdMap)
         if(schemeId == 8)
         var style = new CStyle("Light Style 3", null, null, styletype_Table); 
         else
-        var style = new CStyle("Light Style 3 - accent " + (schemeId + 1), null, null, styletype_Table);  
+        var style = new CStyle("Light Style 3 - Accent " + (schemeId + 1), null, null, styletype_Table);  
         style.TablePr.Set_FromObject(
             {
                 TableBorders:
@@ -1352,7 +1352,7 @@ function CreatePresentationTableStyles(Styles, IdMap)
         if(schemeId == 8)
         var style = new CStyle("Themed Style 2", null, null, styletype_Table); 
         else
-        var style = new CStyle("Themed Style 2 - accent " + (schemeId + 1), null, null, styletype_Table);  
+        var style = new CStyle("Themed Style 2 - Accent " + (schemeId + 1), null, null, styletype_Table);  
         style.TablePr.Set_FromObject(
             {
                 TableBorders:
@@ -1495,7 +1495,7 @@ function CreatePresentationTableStyles(Styles, IdMap)
         if(schemeId == 8)
         var style = new CStyle("Dark Style 1", null, null, styletype_Table); 
         else
-        var style = new CStyle("Dark Style 1 - accent " + (schemeId + 1), null, null, styletype_Table);  
+        var style = new CStyle("Dark Style 1 - Accent " + (schemeId + 1), null, null, styletype_Table);  
         style.TablePr.Set_FromObject(
             {
                 TableBorders:
@@ -1636,7 +1636,7 @@ function CreatePresentationTableStyles(Styles, IdMap)
     }
     function CreateNoStyle1(schemeId) {
         
-        var style = new CStyle("No Style 1", null, null, styletype_Table);  
+        var style = new CStyle("No Style, No Grid", null, null, styletype_Table);  
         style.TablePr.Set_FromObject(
             {
                 TableBorders:
@@ -1776,7 +1776,7 @@ function CreatePresentationTableStyles(Styles, IdMap)
         return style;
     }
     function CreateNoStyle2(schemeId) {
-        var style = new CStyle("No Style 2", null, null, styletype_Table);  
+        var style = new CStyle("No Style, Table Grid", null, null, styletype_Table);  
         style.TablePr.Set_FromObject(
             {
                 TableBorders:
@@ -1963,7 +1963,7 @@ function CreatePresentationTableStyles(Styles, IdMap)
                         Unifill : CreateUnifillSolidFillSchemeColor(schemeId, 0),
                         Space : 0,
                         Size  : 12700/36000,
-                        Value : border_Single
+                        Value : border_None
                     },
 
                     InsideV:
@@ -1988,7 +1988,7 @@ function CreatePresentationTableStyles(Styles, IdMap)
                 {
                     Shd:
                     {
-                        Unifill: CreateUnifillSolidFillSchemeColor(2, 0.2)
+                        Unifill: CreateUnifillSolidFillSchemeColor(8, 0.2)
                     }
                 }
             }
@@ -1998,7 +1998,7 @@ function CreatePresentationTableStyles(Styles, IdMap)
             {
                 Shd:
                 {
-                    Unifill: CreateUnifillSolidFillSchemeColor(2, 0.8)
+                    Unifill: CreateUnifillSolidFillSchemeColor(8, 0.4)
                 }
             }
         };
@@ -2031,7 +2031,7 @@ function CreatePresentationTableStyles(Styles, IdMap)
                 Unifill : CreateUnifillSolidFillSchemeColor(schemeId, 0),
                 Space : 0,
                 Size  : 12700/36000,
-                Value : border_Single
+                Value : border_None
             }
         };
         style.TableLastRow.Set_FromObject(styleObject);
