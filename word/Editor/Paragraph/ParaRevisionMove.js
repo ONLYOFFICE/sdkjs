@@ -184,6 +184,10 @@ CParaRevisionMove.prototype.GetReviewChange = function()
 
 	return null;
 };
+CParaRevisionMove.prototype.Is_Empty = function()
+{
+	return false;
+};
 
 
 /**
