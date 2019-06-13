@@ -82,6 +82,7 @@ CChangesDocumentAddItem.prototype.Undo = function()
 		var Pos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
 		var Elements = oDocument.Content.splice(Pos, 1);
 		oDocument.private_RecalculateNumbering(Elements);
+		oDocument.private_ReindexContent(Pos);
 		if (oDocument.SectionsInfo)
 		{
 			oDocument.SectionsInfo.Update_OnRemove(Pos, 1);
@@ -115,6 +116,7 @@ CChangesDocumentAddItem.prototype.Redo = function()
 
 		oDocument.Content.splice(Pos, 0, Element);
 		oDocument.private_RecalculateNumbering([Element]);
+		oDocument.private_ReindexContent(Pos);
 		if (oDocument.SectionsInfo)
 		{
 			oDocument.SectionsInfo.Update_OnAdd(Pos, [Element]);
@@ -227,6 +229,7 @@ CChangesDocumentRemoveItem.prototype.Undo = function()
 	var Array_end   = oDocument.Content.slice(this.Pos);
 
 	oDocument.private_RecalculateNumbering(this.Items);
+	oDocument.private_ReindexContent(this.Pos);
 	oDocument.Content = Array_start.concat(this.Items, Array_end);
 
 	if(oDocument.SectionsInfo)
@@ -258,6 +261,7 @@ CChangesDocumentRemoveItem.prototype.Redo = function()
 	var oDocument = this.Class;
 	var Elements = oDocument.Content.splice(this.Pos, this.Items.length);
 	oDocument.private_RecalculateNumbering(Elements);
+	oDocument.private_ReindexContent(this.Pos);
 	if(oDocument.SectionsInfo)
 	{
         oDocument.SectionsInfo.Update_OnRemove(this.Pos, this.Items.length);
