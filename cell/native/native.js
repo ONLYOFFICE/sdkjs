@@ -7203,7 +7203,7 @@ function testLockedObjects () {
     var overlay = objectRender.getDrawingCanvas().autoShapeTrack;
     if (!overlay)
         return;
-    
+    var drawingArea = objectRender.drawingArea;
     overlay.Native["PD_DrawLockedObjectsBegin"]();
     
     for (var i = 0; i < aObjects.length; i++) {
