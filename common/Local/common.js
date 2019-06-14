@@ -316,7 +316,7 @@ window["UpdateInstallPlugins"] = function()
 	}
 
 	_editor.sendEvent("asc_onPluginsReset");
-	_editor.sendEvent("asc_onPluginsInit", _plugins["pluginsData"]);
+	_editor.sendEvent("asc_onPluginsInit", _plugins);
 };
 
 AscCommon.InitDragAndDrop = function(oHtmlElement, callback) {
