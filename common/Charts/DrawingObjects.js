@@ -2936,7 +2936,9 @@ function DrawingObjects() {
             if(oSparklineGroup.type !== Asc.c_oAscSparklineType.Stacked &&
                 (Asc.c_oAscSparklineAxisMinMax.Group === oSparklineGroup.minAxisType || Asc.c_oAscSparklineAxisMinMax.Group === oSparklineGroup.maxAxisType))
             {
-                _this.checkSparklineGroupMinMaxVal(oSparklineGroup);
+                AscFormat.ExecuteNoHistory(function(){
+                    _this.checkSparklineGroupMinMaxVal(oSparklineGroup);
+                }, _this, []);
             }
             for(j = 0; j < oSparklineGroup.arrSparklines.length; ++j) {
 				sparkline = oSparklineGroup.arrSparklines[j];
