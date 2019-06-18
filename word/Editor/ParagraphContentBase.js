@@ -1024,12 +1024,12 @@ CParagraphContentWithParagraphLikeContent.prototype.Is_CheckingNearestPos = func
 
     return false;
 };
-CParagraphContentWithParagraphLikeContent.prototype.Is_StartFromNewLine = function()
+CParagraphContentWithParagraphLikeContent.prototype.IsStartFromNewLine = function()
 {
     if (this.Content.length < 0)
         return false;
 
-    return this.Content[0].Is_StartFromNewLine();
+    return this.Content[0].IsStartFromNewLine();
 };
 CParagraphContentWithParagraphLikeContent.prototype.GetSelectedElementsInfo = function(Info, ContentPos, Depth)
 {

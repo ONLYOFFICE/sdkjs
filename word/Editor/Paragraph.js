@@ -4091,7 +4091,7 @@ Paragraph.prototype.Correct_ContentPos = function(CorrectEndLinePos)
 		while (_CurPos < Count && true === this.Content[_CurPos].Is_Empty({SkipAnchor : true}))
 			_CurPos++;
 
-		if (_CurPos < Count && true === this.Content[_CurPos].Is_StartFromNewLine())
+		if (_CurPos < Count && true === this.Content[_CurPos].IsStartFromNewLine())
 		{
 			CurPos = _CurPos;
 			this.Content[CurPos].MoveCursorToStartPos();

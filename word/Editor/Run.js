@@ -454,7 +454,7 @@ ParaRun.prototype.Is_CheckingNearestPos = function()
 };
 
 // Начинается ли данный ран с новой строки
-ParaRun.prototype.Is_StartFromNewLine = function()
+ParaRun.prototype.IsStartFromNewLine = function()
 {
     if (this.protected_GetLinesCount() < 2 || 0 !== this.protected_GetRangeStartPos(1, 0))
         return false;

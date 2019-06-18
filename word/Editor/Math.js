@@ -1127,7 +1127,7 @@ ParaMath.prototype.Is_CheckingNearestPos = function()
     return this.Root.Is_CheckingNearestPos();
 };
 
-ParaMath.prototype.Is_StartFromNewLine = function()
+ParaMath.prototype.IsStartFromNewLine = function()
 {
     return false;
 };
