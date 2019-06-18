@@ -450,6 +450,10 @@ CDocument.prototype.AcceptRevisionChange = function(oChange)
 		{
 			this.StartAction(AscDFH.historydescription_Document_AcceptRevisionChange);
 
+			var isTrackRevision = this.IsTrackRevisions();
+			if (isTrackRevision)
+				this.SetTrackRevisions(false);
+
 			if (oChange.IsComplexChange())
 			{
 				if (oChange.IsMove())
@@ -460,6 +464,9 @@ CDocument.prototype.AcceptRevisionChange = function(oChange)
 				this.private_SelectRevisionChange(oChange);
 				this.AcceptRevisionChanges(oChange.GetType(), false);
 			}
+
+			if (isTrackRevision)
+				this.SetTrackRevisions(isTrackRevision);
 
 			this.FinalizeAction();
 		}
@@ -520,6 +527,10 @@ CDocument.prototype.RejectRevisionChange = function(oChange)
 		{
 			this.StartAction(AscDFH.historydescription_Document_RejectRevisionChange);
 
+			var isTrackRevision = this.IsTrackRevisions();
+			if (isTrackRevision)
+				this.SetTrackRevisions(false);
+
 			if (oChange.IsComplexChange())
 			{
 				if (oChange.IsMove())
@@ -530,6 +541,9 @@ CDocument.prototype.RejectRevisionChange = function(oChange)
 				this.private_SelectRevisionChange(oChange);
 				this.RejectRevisionChanges(oChange.GetType(), false);
 			}
+
+			if (isTrackRevision)
+				this.SetTrackRevisions(isTrackRevision);
 
 			this.FinalizeAction();
 		}
@@ -549,7 +563,16 @@ CDocument.prototype.AcceptRevisionChangesBySelection = function()
         if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_None, { Type : changestype_2_ElementsArray_and_Type, Elements : RelatedParas, CheckType : AscCommon.changestype_Paragraph_Content}))
         {
             this.StartAction(AscDFH.historydescription_Document_AcceptRevisionChangesBySelection);
+
+			var isTrackRevision = this.IsTrackRevisions();
+			if (isTrackRevision)
+				this.SetTrackRevisions(false);
+
             this.AcceptRevisionChanges(undefined, false);
+
+			if (isTrackRevision)
+				this.SetTrackRevisions(isTrackRevision);
+
             this.FinalizeAction();
         }
     }
@@ -571,7 +594,16 @@ CDocument.prototype.RejectRevisionChangesBySelection = function()
         if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_None, { Type : changestype_2_ElementsArray_and_Type, Elements : RelatedParas, CheckType : AscCommon.changestype_Paragraph_Content}))
         {
             this.StartAction(AscDFH.historydescription_Document_AcceptRevisionChangesBySelection);
+
+			var isTrackRevision = this.IsTrackRevisions();
+			if (isTrackRevision)
+				this.SetTrackRevisions(false);
+
             this.RejectRevisionChanges(undefined, false);
+
+			if (isTrackRevision)
+				this.SetTrackRevisions(isTrackRevision);
+
             this.FinalizeAction();
         }
     }
@@ -585,7 +617,12 @@ CDocument.prototype.AcceptAllRevisionChanges = function(isSkipCheckLock)
     if (true === isSkipCheckLock || false === this.Document_Is_SelectionLocked(AscCommon.changestype_None, { Type : changestype_2_ElementsArray_and_Type, Elements : RelatedParas, CheckType : AscCommon.changestype_Paragraph_Content}))
     {
         this.StartAction(AscDFH.historydescription_Document_AcceptAllRevisionChanges);
-        var LogicDocuments = this.TrackRevisionsManager.Get_AllChangesLogicDocuments();
+
+		var isTrackRevision = this.IsTrackRevisions();
+		if (isTrackRevision)
+			this.SetTrackRevisions(false);
+
+		var LogicDocuments = this.TrackRevisionsManager.Get_AllChangesLogicDocuments();
         for (var LogicDocId in LogicDocuments)
         {
             var LogicDoc = AscCommon.g_oTableId.Get_ById(LogicDocId);
@@ -594,6 +631,9 @@ CDocument.prototype.AcceptAllRevisionChanges = function(isSkipCheckLock)
                 LogicDoc.AcceptRevisionChanges(undefined, true);
             }
         }
+
+		if (isTrackRevision)
+			this.SetTrackRevisions(isTrackRevision);
 
         if (true !== isSkipCheckLock && true === this.History.Is_LastPointEmpty())
         {
@@ -616,7 +656,14 @@ CDocument.prototype.RejectAllRevisionChanges = function(isSkipCheckLock)
     {
         this.StartAction(AscDFH.historydescription_Document_RejectAllRevisionChanges);
 
+		var isTrackRevision = this.IsTrackRevisions();
+		if (isTrackRevision)
+			this.SetTrackRevisions(false);
+
         this.private_RejectAllRevisionChanges();
+
+		if (isTrackRevision)
+			this.SetTrackRevisions(isTrackRevision);
 
         if (true !== isSkipCheckLock && true === this.History.Is_LastPointEmpty())
         {
