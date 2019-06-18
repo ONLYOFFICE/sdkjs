@@ -659,6 +659,14 @@ CParagraphContentBase.prototype.IsSelectionUse = function()
 {
 	return false;
 };
+/**
+ * Начинается ли элемент с новой строки
+ * @returns {boolean}
+ */
+CParagraphContentBase.prototype.IsStartFromNewLine = function()
+{
+	return false;
+};
 
 /**
  * Это базовый класс для элементов содержимого(контент) параграфа, у которых есть свое содержимое.
