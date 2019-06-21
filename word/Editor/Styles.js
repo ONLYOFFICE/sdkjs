@@ -34,6 +34,7 @@
 
 // Import
 var align_Left = AscCommon.align_Left;
+var align_Right = AscCommon.align_Right;
 var g_oTableId = AscCommon.g_oTableId;
 var History = AscCommon.History;
 
@@ -736,101 +737,99 @@ CStyle.prototype =
         this.Set_TablePr( TablePr );
     },
 
-    Create_TableGrid : function()
-    {
+    Create_TableGrid: function () {
         var ParaPr =
         {
-            Spacing :
+            Spacing:
             {
-                After    : 0,
-                Line     : 1,
-                LineRule : linerule_Auto
+                After: 0,
+                Line: 1,
+                LineRule: linerule_Auto
             }
         };
 
         var TablePr =
         {
-            TableInd : 0,
-
-            TableBorders :
+            TableInd: 0,
+            TableBorders:
             {
-                Top :
+                Top:
                 {
-                    Color : { r : 0, g : 0, b : 0 },
-                    Space : 0,
-                    Size  : 0.5 * g_dKoef_pt_to_mm,
-                    Value : border_Single
+                    Color: { r: 0, g: 0, b: 0 },
+                    Space: 0,
+                    Size: 0.5 * g_dKoef_pt_to_mm,
+                    Value: border_Single
                 },
 
-                Left :
+                Left:
                 {
-                    Color : { r : 0, g : 0, b : 0 },
-                    Space : 0,
-                    Size  : 0.5 * g_dKoef_pt_to_mm,
-                    Value : border_Single
+                    Color: { r: 0, g: 0, b: 0 },
+                    Space: 0,
+                    Size: 0.5 * g_dKoef_pt_to_mm,
+                    Value: border_Single
                 },
 
-                Bottom :
+                Bottom:
                 {
-                    Color : { r : 0, g : 0, b : 0 },
-                    Space : 0,
-                    Size  : 0.5 * g_dKoef_pt_to_mm,
-                    Value : border_Single
+                    Color: { r: 0, g: 0, b: 0 },
+                    Space: 0,
+                    Size: 0.5 * g_dKoef_pt_to_mm,
+                    Value: border_Single
                 },
 
-                Right :
+                Right:
                 {
-                    Color : { r : 0, g : 0, b : 0 },
-                    Space : 0,
-                    Size  : 0.5 * g_dKoef_pt_to_mm,
-                    Value : border_Single
+                    Color: { r: 0, g: 0, b: 0 },
+                    Space: 0,
+                    Size: 0.5 * g_dKoef_pt_to_mm,
+                    Value: border_Single
                 },
 
-                InsideH :
+                InsideH:
                 {
-                    Color : { r : 0, g : 0, b : 0 },
-                    Space : 0,
-                    Size  : 0.5 * g_dKoef_pt_to_mm,
-                    Value : border_Single
+                    Color: { r: 0, g: 0, b: 0 },
+                    Space: 0,
+                    Size: 0.5 * g_dKoef_pt_to_mm,
+                    Value: border_Single
                 },
 
-                InsideV :
+                InsideV:
                 {
-                    Color : { r : 0, g : 0, b : 0 },
-                    Space : 0,
-                    Size  : 0.5 * g_dKoef_pt_to_mm,
-                    Value : border_Single
+                    Color: { r: 0, g: 0, b: 0 },
+                    Space: 0,
+                    Size: 0.5 * g_dKoef_pt_to_mm,
+                    Value: border_Single
                 }
             },
 
-            TableCellMar :
+            TableCellMar:
             {
-                Top :
+                Top:
                 {
-                    W    : 0,
-                    Type : tblwidth_Mm
+                    W: 0,
+                    Type: tblwidth_Mm
                 },
 
-                Left :
+                Left:
                 {
-                    W    : 1.9,
-                    Type : tblwidth_Mm
+                    W: 1.9,
+                    Type: tblwidth_Mm
                 },
 
-                Bottom :
+                Bottom:
                 {
-                    W    : 0,
-                    Type : tblwidth_Mm
+                    W: 0,
+                    Type: tblwidth_Mm
                 },
 
-                Right :
+                Right:
                 {
-                    W    : 1.9,
-                    Type : tblwidth_Mm
+                    W: 1.9,
+                    Type: tblwidth_Mm
                 }
             }
         };
-
+  
         this.Set_UiPriority(59);
         this.Set_TablePr(TablePr);
         this.Set_ParaPr(ParaPr);
@@ -1267,7 +1266,7 @@ CStyle.prototype =
                         Size  : 18 / 8 * g_dKoef_pt_to_mm,
                         Value : border_Single
                     }
-                }          ,
+                },
 
                 Shd :
                 {
@@ -1377,7 +1376,7 @@ CStyle.prototype =
                         Space : 0,
                         Size  : 12 / 8 * g_dKoef_pt_to_mm,
                         Value : border_Single
-                    }
+					},
                 },
 
                 Shd :
@@ -1459,6 +1458,15 @@ CStyle.prototype =
         {
             TableCellPr :
             {
+				TableCellBorders :
+                {
+                    Top     : { Value : border_None },
+                    Left    : { Value : border_None },
+                    Bottom  : { Value : border_None },
+                    Right   : { Value : border_None },
+                    InsideH : { Value : border_None },
+                    InsideV : { Value : border_None }
+                },
                 Shd :
                 {
                     Value : c_oAscShdClear,
@@ -1572,13 +1580,13 @@ CStyle.prototype =
             TableStyleRowBandSize : 1,
             TableInd : 0,
 
-            TableCellMar :
-            {
-                Top    : new CTableMeasurement(tblwidth_Mm, 4.8 * g_dKoef_pt_to_mm),
-                Left   : new CTableMeasurement(tblwidth_Mm, 8.5 * g_dKoef_pt_to_mm),
-                Bottom : new CTableMeasurement(tblwidth_Mm, 4.8 * g_dKoef_pt_to_mm),
-                Right  : new CTableMeasurement(tblwidth_Mm, 8.5 * g_dKoef_pt_to_mm)
-            }
+            // TableCellMar :
+            // {
+            //     Top    : new CTableMeasurement(tblwidth_Mm, 4.8 * g_dKoef_pt_to_mm),
+            //     Left   : new CTableMeasurement(tblwidth_Mm, 8.5 * g_dKoef_pt_to_mm),
+            //     Bottom : new CTableMeasurement(tblwidth_Mm, 4.8 * g_dKoef_pt_to_mm),
+            //     Right  : new CTableMeasurement(tblwidth_Mm, 8.5 * g_dKoef_pt_to_mm)
+            // }
         };
 
         var TableStylePrBand1 =
@@ -1622,191 +1630,2133 @@ CStyle.prototype =
 
         this.Set_TableBand2Horz(TableStylePrBand2);
         this.Set_TableBand2Vert(TableStylePrBand2);
-    },
-
-    Create_Table_Bordered : function(unifill1, unifill2)
-    {
-		var TextColor1 = new CDocumentColor(0xF2, 0xF2, 0xF2, false);
-		var TextFont1  = { Name : "Arial", Index : -1 };
-		var TextSize1  = 11;
-
-		var CellShd1   = new CDocumentShd();
-		CellShd1.Value = c_oAscShdClear;
-		CellShd1.Unifill = unifill1;
-		var CellShd2   = new CDocumentShd();
-		CellShd2.Value = c_oAscShdClear;
-		CellShd2.Unifill = unifill2;
-        var TableTextPr =
-        {
-            RFonts   : {Ascii : {Name : "Arial", Index : -1}, HAnsi : {Name : "Arial", Index : -1}},
-            Color    : { r : 0x40, g : 0x40, b : 0x40 },
-            FontSize : 11
-        };
+	},
+    
+    Create_TableGrid_Light: function (oBorderUnifill) {
+        var CellShd1 = new CDocumentShd();
+        CellShd1.Value = c_oAscShdClear;
+        CellShd1.Unifill = oBorderUnifill;
 
         var ParaPr =
         {
-            Spacing :
+            Spacing:
             {
-                After    : 0,
-                Line     : 1,
-                LineRule : linerule_Auto
-            },
-
-            Borders :
-            {
-                Top :
-                {
-                    Color : { r : 0, g : 0, b : 0, Auto : true },
-                    Space : 0,
-                    Size  : 0,
-                    Value : border_None
-                },
-
-                Left :
-                {
-                    Color : { r : 0, g : 0, b : 0, Auto : true },
-                    Space : 0,
-                    Size  : 0,
-                    Value : border_None
-                },
-
-                Bottom :
-                {
-                    Color : { r : 0, g : 0, b : 0, Auto : true },
-                    Space : 0,
-                    Size  : 0,
-                    Value : border_None
-                },
-
-                Right :
-                {
-                    Color : { r : 0, g : 0, b : 0, Auto : true },
-                    Space : 0,
-                    Size  : 0,
-                    Value : border_None
-                },
-
-                Between :
-                {
-                    Color : { r : 0, g : 0, b : 0, Auto : true },
-                    Space : 0,
-                    Size  : 0,
-                    Value : border_None
-                }
+                After: 0,
+                Line: 1,
+                LineRule: linerule_Auto
             }
-        };
-
-        var TextPr =
-        {
-            Color : { r : 0x40, g : 0x40, b : 0x40 }
-        };
-
-        var TableBorder1 =
-        {
-			Color : { r : 0, g : 0, b : 0 },
-            Value : border_Single,
-            Size  : 0.5 * g_dKoef_pt_to_mm,
-            Space : 0,
-			Unifill: CellShd2.Unifill
-        };
-
-        var TableBorder2 =
-        {
-			Color : { r : 0, g : 0, b : 0 },
-            Value : border_Single,
-            Size  : 1.5 * g_dKoef_pt_to_mm,
-            Space : 0,
-			Unifill: CellShd1.Unifill
         };
 
         var TablePr =
         {
-            TableStyleColBandSize : 1,
-            TableStyleRowBandSize : 1,
-            TableInd : 0,
+            TableInd: 0,
 
-            TableBorders :
+            TableBorders:
             {
-                Top     : TableBorder1,
-                Left    : TableBorder1,
-                Bottom  : TableBorder1,
-                Right   : TableBorder1,
-                InsideH : TableBorder1,
-                InsideV : TableBorder1
+                Top:
+                {
+                    Color: { r: 0, g: 0, b: 0 },
+                    Space: 0,
+                    Size: 0.5 * g_dKoef_pt_to_mm,
+                    Value: border_Single,
+                    Unifill: CellShd1.Unifill
+                },
+
+                Left:
+                {
+                    Color: { r: 0, g: 0, b: 0 },
+                    Space: 0,
+                    Size: 0.5 * g_dKoef_pt_to_mm,
+                    Value: border_Single,
+                    Unifill: CellShd1.Unifill
+                },
+
+                Bottom:
+                {
+                    Color: { r: 0, g: 0, b: 0 },
+                    Space: 0,
+                    Size: 0.5 * g_dKoef_pt_to_mm,
+                    Value: border_Single,
+                    Unifill: CellShd1.Unifill
+                },
+
+                Right:
+                {
+                    Color: { r: 0, g: 0, b: 0 },
+                    Space: 0,
+                    Size: 0.5 * g_dKoef_pt_to_mm,
+                    Value: border_Single,
+                    Unifill: CellShd1.Unifill
+                },
+
+                InsideH:
+                {
+                    Color: { r: 0, g: 0, b: 0 },
+                    Space: 0,
+                    Size: 0.5 * g_dKoef_pt_to_mm,
+                    Value: border_Single,
+                    Unifill: CellShd1.Unifill
+                },
+
+                InsideV:
+                {
+                    Color: { r: 0, g: 0, b: 0 },
+                    Space: 0,
+                    Size: 0.5 * g_dKoef_pt_to_mm,
+                    Value: border_Single,
+                    Unifill: CellShd1.Unifill
+                }
             },
 
-            TableCellMar :
+            TableCellMar:
             {
-                Top    : new CTableMeasurement(tblwidth_Mm, 4.8 * g_dKoef_pt_to_mm),
-                Left   : new CTableMeasurement(tblwidth_Mm, 8.5 * g_dKoef_pt_to_mm),
-                Bottom : new CTableMeasurement(tblwidth_Mm, 4.8 * g_dKoef_pt_to_mm),
-                Right  : new CTableMeasurement(tblwidth_Mm, 8.5 * g_dKoef_pt_to_mm)
-            }
-        };
-
-        var TableFirstRow =
-        {
-            TextPr : TableTextPr,
-
-            TableCellPr :
-            {
-                TableCellBorders :
+                Top:
                 {
-                    Bottom : TableBorder2
+                    W: 0,
+                    Type: tblwidth_Mm
+                },
+
+                Left:
+                {
+                    W: 1.9,
+                    Type: tblwidth_Mm
+                },
+
+                Bottom:
+                {
+                    W: 0,
+                    Type: tblwidth_Mm
+                },
+
+                Right:
+                {
+                    W: 1.9,
+                    Type: tblwidth_Mm
                 }
             }
         };
 
-        var TableLastRow =
+        this.Set_UiPriority(59);
+        this.Set_TablePr(TablePr);
+        this.Set_ParaPr(ParaPr);
+    },
+
+    Create_Table_Plain_1: function (oBorderUnifill, oBandUnifill) {
+        var CellShd1 = new CDocumentShd();
+        CellShd1.Value = c_oAscShdClear;
+        CellShd1.Unifill = oBorderUnifill;
+        var CellShd2 = new CDocumentShd();
+        CellShd2.Value = c_oAscShdClear;
+        CellShd2.Unifill = oBandUnifill;
+
+        var ParaPr =
         {
-            TextPr      : TableTextPr,
-            TableCellPr :
+            Spacing:
             {
-                TableCellBorders :
+                After: 0,
+                Line: 1,
+                LineRule: linerule_Auto
+            }
+        };
+        var TableTextPr =
+        {
+            RFonts: { Ascii: { Name: "Arial", Index: -1 }, HAnsi: { Name: "Arial", Index: -1 } },
+            Color: { r: 0x40, g: 0x40, b: 0x40 },
+            FontSize: 11,
+            Bold: true
+        }
+        var TablePr =
+        {
+            TableInd: 0,
+
+            TableBorders:
+            {
+                Top:
                 {
-                    Top : TableBorder2
+                    Color: { r: 0, g: 0, b: 0 },
+                    Space: 0,
+                    Size: 0.5 * g_dKoef_pt_to_mm,
+                    Value: border_Single,
+                    Unifill: CellShd1.Unifill
+                },
+
+                Left:
+                {
+                    Color: { r: 0, g: 0, b: 0 },
+                    Space: 0,
+                    Size: 0.5 * g_dKoef_pt_to_mm,
+                    Value: border_Single,
+                    Unifill: CellShd1.Unifill
+                },
+
+                Bottom:
+                {
+                    Color: { r: 0, g: 0, b: 0 },
+                    Space: 0,
+                    Size: 0.5 * g_dKoef_pt_to_mm,
+                    Value: border_Single,
+                    Unifill: CellShd1.Unifill
+                },
+
+                Right:
+                {
+                    Color: { r: 0, g: 0, b: 0 },
+                    Space: 0,
+                    Size: 0.5 * g_dKoef_pt_to_mm,
+                    Value: border_Single,
+                    Unifill: CellShd1.Unifill
+                },
+
+                InsideH:
+                {
+                    Color: { r: 0, g: 0, b: 0 },
+                    Space: 0,
+                    Size: 0.5 * g_dKoef_pt_to_mm,
+                    Value: border_Single,
+                    Unifill: CellShd1.Unifill
+                },
+
+                InsideV:
+                {
+                    Color: { r: 0, g: 0, b: 0 },
+                    Space: 0,
+                    Size: 0.5 * g_dKoef_pt_to_mm,
+                    Value: border_Single,
+                    Unifill: CellShd1.Unifill
+                }
+            },
+
+            TableCellMar:
+            {
+                Top:
+                {
+                    W: 0,
+                    Type: tblwidth_Mm
+                },
+
+                Left:
+                {
+                    W: 1.9,
+                    Type: tblwidth_Mm
+                },
+
+                Bottom:
+                {
+                    W: 0,
+                    Type: tblwidth_Mm
+                },
+
+                Right:
+                {
+                    W: 1.9,
+                    Type: tblwidth_Mm
                 }
             }
         };
-
-        var TableFirstCol =
+        var TableBand1 =
         {
-            TextPr      : TableTextPr,
-            TableCellPr :
+            TableCellPr:
             {
-                TableCellBorders :
-                {
-                    Right : TableBorder2
-                }
+                Shd: CellShd2
             }
         };
 
-        var TableLastCol =
+        var TableText =
         {
-            TextPr      : TableTextPr,
-            TableCellPr :
+            TextPr: TableTextPr
+        };
+
+        this.Set_UiPriority(59);
+        this.Set_TablePr(TablePr);
+        this.Set_ParaPr(ParaPr);
+        this.Set_TableBand1Horz(TableBand1);
+        this.Set_TableBand1Vert(TableBand1);
+        this.Set_TableFirstRow(TableText);
+        this.Set_TableLastRow(TableText);
+        this.Set_TableFirstCol(TableText);
+        this.Set_TableLastCol(TableText);
+    },
+
+    Create_Table_Plain_2: function (oBorderUnifill) {
+        var CellShd1 = new CDocumentShd();
+        CellShd1.Value = c_oAscShdClear;
+        CellShd1.Unifill = oBorderUnifill;
+
+        var ParaPr =
+        {
+            Spacing:
             {
-                TableCellBorders :
+                After: 0,
+                Line: 1,
+                LineRule: linerule_Auto
+            }
+        };
+
+        var TableBorder1 =
+        {
+            Color: { r: 0, g: 0, b: 0 },
+            Value: border_Single,
+            Size: 0.5 * g_dKoef_pt_to_mm,
+            Space: 0,
+            Unifill: CellShd1.Unifill
+        };
+
+        var TableTextPr =
+        {
+            RFonts: { Ascii: { Name: "Arial", Index: -1 }, HAnsi: { Name: "Arial", Index: -1 } },
+            Color: { r: 0x40, g: 0x40, b: 0x40 },
+            FontSize: 11,
+            Bold: true
+        }
+        var TablePr =
+        {
+            TableInd: 0,
+
+            TableBorders:
+            {
+                Top:
                 {
-                    Left : TableBorder2
+                    Color: { r: 0, g: 0, b: 0 },
+                    Space: 0,
+                    Size: 0.5 * g_dKoef_pt_to_mm,
+                    Value: border_Single,
+                    Unifill: CellShd1.Unifill
+                },
+
+                Left:
+                {
+                    Color: { r: 0, g: 0, b: 0 },
+                    Space: 0,
+                    Size: 0.5 * g_dKoef_pt_to_mm,
+                    Value: border_None,
+                    Unifill: CellShd1.Unifill
+                },
+
+                Bottom:
+                {
+                    Color: { r: 0, g: 0, b: 0 },
+                    Space: 0,
+                    Size: 0.5 * g_dKoef_pt_to_mm,
+                    Value: border_Single,
+                    Unifill: CellShd1.Unifill
+                },
+
+                Right:
+                {
+                    Color: { r: 0, g: 0, b: 0 },
+                    Space: 0,
+                    Size: 0.5 * g_dKoef_pt_to_mm,
+                    Value: border_None,
+                    Unifill: CellShd1.Unifill
+                }
+            },
+
+            TableCellMar:
+            {
+                Top:
+                {
+                    W: 0,
+                    Type: tblwidth_Mm
+                },
+
+                Left:
+                {
+                    W: 1.9,
+                    Type: tblwidth_Mm
+                },
+
+                Bottom:
+                {
+                    W: 0,
+                    Type: tblwidth_Mm
+                },
+
+                Right:
+                {
+                    W: 1.9,
+                    Type: tblwidth_Mm
                 }
             }
         };
 
         var TableBand1Horz =
         {
-            TextPr : TableTextPr,
-            TableCellPr :
+            TableCellPr:
             {
-                TableCellBorders :
+                TableCellBorders:
                 {
-                    Top     : TableBorder1,
-                    Left    : TableBorder1,
-                    Bottom  : TableBorder1,
-                    Right   : TableBorder1,
-                    InsideH : TableBorder1,
-                    InsideV : TableBorder1
+                    Top: TableBorder1,
+                    Bottom: TableBorder1
                 }
+            }
+        };
+
+        var TableBand1Vert =
+        {
+            TableCellPr:
+            {
+                TableCellBorders:
+                {
+                    Left: TableBorder1,
+                    Right: TableBorder1
+                }
+            }
+        };
+
+        var TableCol =
+        {
+            TextPr: TableTextPr
+        }
+
+        var TableFirstRow =
+        {
+            TextPr: TableTextPr,
+            TableCellPr:
+            {
+                TableCellBorders:
+                {
+                    Top: TableBorder1,
+                    Bottom: TableBorder1
+                }
+            }
+        }
+        var TableLastRow =
+        {
+            TextPr: TableTextPr,
+            TableCellBorders:
+            {
+                Top: TableBorder1
+            }
+        }
+        this.Set_UiPriority(59);
+        this.Set_TablePr(TablePr);
+        this.Set_ParaPr(ParaPr);
+        this.Set_TableBand1Horz(TableBand1Horz);
+        this.Set_TableBand1Vert(TableBand1Vert);
+        this.Set_TableBand2Vert(TableBand1Vert);
+        this.Set_TableFirstRow(TableFirstRow);
+        this.Set_TableLastRow(TableLastRow);
+        this.Set_TableFirstCol(TableCol);
+        this.Set_TableLastCol(TableCol);
+    },
+
+    Create_Table_Plain_3: function (oBorderUnifill, oBandUnifill) {
+        var CellShd1 = new CDocumentShd();
+        CellShd1.Value = c_oAscShdClear;
+        CellShd1.Unifill = oBorderUnifill;
+        var CellShd2 = new CDocumentShd();
+        CellShd2.Value = c_oAscShdClear;
+        CellShd2.Unifill = oBandUnifill;
+
+        var TableTextPr =
+        {
+            RFonts: { Ascii: { Name: "Arial", Index: -1 }, HAnsi: { Name: "Arial", Index: -1 } },
+            Color: { r: 0x40, g: 0x40, b: 0x40 },
+            FontSize: 11
+        };
+
+        var TableTextPr1 =
+        {
+            Color: { r: 0x40, g: 0x40, b: 0x40 },
+            Bold: true,
+            Caps: true
+        };
+
+        var ParaPr =
+        {
+            Spacing:
+            {
+                After: 0,
+                Line: 1,
+                LineRule: linerule_Auto
+            },
+
+            Borders:
+            {
+                Top:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Left:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Bottom:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Right:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Between:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                }
+            }
+        };
+
+        var TableBorder1 =
+        {
+            Color: { r: 0x40, g: 0x40, b: 0x40 },
+            Value: border_Single,
+            Size: 0.5 * g_dKoef_pt_to_mm,
+            Space: 0
+        };
+        var TableBorder2 =
+        {
+            Color: { r: 0, g: 0, b: 0 },
+            Value: border_None,
+            Size: 0.5 * g_dKoef_pt_to_mm,
+            Space: 0
+        };
+
+        var TablePr =
+        {
+            TableStyleColBandSize: 1,
+            TableStyleRowBandSize: 1,
+            TableInd: 0
+        };
+
+        var TableFirstRow =
+        {
+            TextPr: TableTextPr1,
+            TableCellPr:
+            {
+                TableCellBorders:
+                {
+                    Right: TableBorder2,
+                    Top: TableBorder2,
+                    Bottom: TableBorder1,
+                    Left: TableBorder2
+                }
+            }
+        };
+
+        var TableLastRow =
+        {
+            TextPr: TableTextPr1,
+            TableCellPr:
+            {
+            }
+        };
+
+        var TableFirstCol =
+        {
+            TextPr: TableTextPr1,
+            TableCellPr:
+            {
+                TableCellBorders:
+                {
+                    Left: TableBorder2,
+                    Right: TableBorder1,
+                    Top: TableBorder2,
+                    Bottom: TableBorder2
+                }
+            }
+        };
+
+        var TableLastCol =
+        {
+            TextPr: TableTextPr1,
+            TableCellPr:
+            {
+            }
+        };
+
+        var TableBand1 =
+        {
+            TextPr: TableTextPr,
+            TableCellPr:
+            {
+                Shd: CellShd2
+            }
+        };
+
+        this.Set_UiPriority(99);
+        this.Set_ParaPr(ParaPr);
+        this.Set_TablePr(TablePr);
+        this.Set_TableFirstRow(TableFirstRow);
+        this.Set_TableLastRow(TableLastRow);
+        this.Set_TableFirstCol(TableFirstCol);
+        this.Set_TableLastCol(TableLastCol);
+        this.Set_TableBand1Horz(TableBand1);
+        this.Set_TableBand1Vert(TableBand1);
+    },
+
+    Create_Table_Plain_4: function (oBandUnifill) {
+       
+        var CellShd1 = new CDocumentShd();
+        CellShd1.Value = c_oAscShdClear;
+        CellShd1.Unifill = oBandUnifill;
+
+        var TableTextPr =
+        {
+            RFonts: { Ascii: { Name: "Arial", Index: -1 }, HAnsi: { Name: "Arial", Index: -1 } },
+            Color: { r: 0x40, g: 0x40, b: 0x40 },
+            FontSize: 11
+        };
+
+        var TableTextPr1 =
+        {
+            Color: { r: 0x40, g: 0x40, b: 0x40 },
+            Bold: true
+        };
+
+        var ParaPr =
+        {
+            Spacing:
+            {
+                After: 0,
+                Line: 1,
+                LineRule: linerule_Auto
+            },
+
+            Borders:
+            {
+                Top:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Left:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Bottom:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Right:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Between:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                }
+            }
+        };
+
+        var TablePr =
+        {
+            TableStyleColBandSize: 1,
+            TableStyleRowBandSize: 1,
+            TableInd: 0
+        };
+
+        var TableStyle =
+        {
+            TextPr: TableTextPr1,
+        };
+
+        var TableBand1 =
+        {
+            TextPr: TableTextPr,
+            TableCellPr:
+            {
+                Shd: CellShd1
+            }
+        };
+
+        this.Set_UiPriority(99);
+        this.Set_ParaPr(ParaPr);
+        this.Set_TablePr(TablePr);
+        this.Set_TableFirstRow(TableStyle);
+        this.Set_TableLastRow(TableStyle);
+        this.Set_TableFirstCol(TableStyle);
+        this.Set_TableLastCol(TableStyle);
+        this.Set_TableBand1Horz(TableBand1);
+        this.Set_TableBand1Vert(TableBand1);
+    },
+
+    Create_Table_Plain_5: function (oTableCellUnifill, oBandUnifill) {
+        var CellShd1 = new CDocumentShd();
+        CellShd1.Value = c_oAscShdClear;
+        CellShd1.Unifill = oTableCellUnifill;
+        var CellShd2 = new CDocumentShd();
+        CellShd2.Value = c_oAscShdClear;
+        CellShd2.Unifill = oBandUnifill;
+        var TableTextPr =
+        {
+            RFonts: { Ascii: { Name: "Arial", Index: -1 }, HAnsi: { Name: "Arial", Index: -1 } },
+            Color: { r: 0x40, g: 0x40, b: 0x40 },
+            FontSize: 11
+        };
+
+        var TableTextPr1 =
+        {
+            Color: { r: 0x40, g: 0x40, b: 0x40 },
+            Italic: true,
+        };
+
+        var ParaPr =
+        {
+            Spacing:
+            {
+                After: 0,
+                Line: 1,
+                LineRule: linerule_Auto
+            },
+
+            Borders:
+            {
+                Top:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Left:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Bottom:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Right:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Between:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                }
+            }
+        };
+
+        var TableBorder1 =
+        {
+            Color: { r: 0x40, g: 0x40, b: 0x40 },
+            Value: border_Single,
+            Size: 0.5 * g_dKoef_pt_to_mm,
+            Space: 0
+        };
+        var TableBorder2 =
+        {
+            Color: { r: 0, g: 0, b: 0 },
+            Value: border_None,
+            Size: 0.5 * g_dKoef_pt_to_mm,
+            Space: 0
+        };
+
+        var TablePr =
+        {
+            TableStyleColBandSize: 1,
+            TableStyleRowBandSize: 1,
+            TableInd: 0
+        };
+
+        var TableFirstRow =
+        {
+            TextPr: TableTextPr1,
+            TableCellPr:
+            {
+                TableCellBorders:
+                {
+                    Right: TableBorder2,
+                    Bottom: TableBorder1,
+                    Left: TableBorder2
+                },
+                Shd: CellShd1
+            }
+        };
+
+        var TableLastRow =
+        {
+            TextPr: TableTextPr1,
+            TableCellPr:
+            {
+                TableCellBorders:
+                {
+                    Top: TableBorder1,
+                    Right: TableBorder2,
+                    Left: TableBorder2
+                },
+                Shd: CellShd1
+            }
+        };
+
+        var TableFirstCol =
+        {
+            TextPr: TableTextPr1,
+            TableCellPr:
+            {
+                TableCellBorders:
+                {
+                    Right: TableBorder1
+                },
+                Shd: CellShd1
+            },
+            ParaPr:
+            {
+                Jc: align_Right
+            }
+        };
+
+        var TableLastCol =
+        {
+            TextPr: TableTextPr1,
+            TableCellPr:
+            {
+                TableCellBorders:
+                {
+                    Left: TableBorder1
+                },
+                Shd: CellShd1
+            }
+        };
+
+        var TableBand1 =
+        {
+            TextPr: TableTextPr,
+            TableCellPr:
+            {
+                Shd: CellShd2
+            }
+        };
+
+        this.Set_UiPriority(99);
+        this.Set_ParaPr(ParaPr);
+        this.Set_TablePr(TablePr);
+        this.Set_TableFirstRow(TableFirstRow);
+        this.Set_TableLastRow(TableLastRow);
+        this.Set_TableFirstCol(TableFirstCol);
+        this.Set_TableLastCol(TableLastCol);
+        this.Set_TableBand1Horz(TableBand1);
+        this.Set_TableBand1Vert(TableBand1);
+    },
+
+    Create_Table_Grid_1: function (oFirstRowBottomBorderUnifill, oBorderUnifill) {
+        var CellShd1 = new CDocumentShd();
+        CellShd1.Value = c_oAscShdClear;
+        CellShd1.Unifill = oFirstRowBottomBorderUnifill;
+        var CellShd2 = new CDocumentShd();
+        CellShd2.Value = c_oAscShdClear;
+        CellShd2.Unifill = oBorderUnifill;
+        var TableTextPr =
+        {
+            RFonts: { Ascii: { Name: "Arial", Index: -1 }, HAnsi: { Name: "Arial", Index: -1 } },
+            Color: { r: 0x40, g: 0x40, b: 0x40 },
+            FontSize: 11
+        };
+
+        var TableTextPr1 =
+        {
+            Color: { r: 0x40, g: 0x40, b: 0x40 },
+            Bold: true
+        };
+
+        var ParaPr =
+        {
+            Spacing:
+            {
+                After: 0,
+                Line: 1,
+                LineRule: linerule_Auto
+            },
+
+            Borders:
+            {
+                Top:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Left:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Bottom:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Right:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Between:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                }
+            }
+        };
+
+        var TableBorder1 =
+        {
+            Color: { r: 0, g: 0, b: 0 },
+            Value: border_Single,
+            Size: 1.5 * g_dKoef_pt_to_mm,
+            Space: 0,
+            Unifill: CellShd1.Unifill
+        };
+        
+        var TableBorder2 =
+        {
+            Color: { r: 0, g: 0, b: 0 },
+            Value: border_Single,
+            Size: 0.5 * g_dKoef_pt_to_mm,
+            Space: 0,
+            Unifill: CellShd2.Unifill
+        }; 
+
+        var TablePr =
+        {
+            TableStyleColBandSize: 1,
+            TableStyleRowBandSize: 1,
+            TableInd: 0,
+
+            TableBorders:
+            {
+                Top: TableBorder2,
+                Left: TableBorder2,
+                Bottom: TableBorder2,
+                Right: TableBorder2,
+                InsideH: TableBorder2,
+                InsideV: TableBorder2
+            }
+        };
+
+        var TableLastRow =
+        {
+            //TODO: Реализовать двойную линию
+            TextPr: TableTextPr1
+        };
+
+        var TableFirstRow =
+        {
+            TextPr: TableTextPr1,
+            TableCellPr:
+            {
+                TableCellBorders:
+                {
+                    Bottom: TableBorder1
+                }
+            }
+        };
+
+
+        var TableStyle =
+        {
+            TextPr: TableTextPr1
+        };
+
+        var TableBand1Horz =
+        {
+            TextPr: TableTextPr,
+            TableCellPr:
+            {
+                TableCellBorders:
+                {
+                    Top: TableBorder2,
+                    Left: TableBorder2,
+                    Bottom: TableBorder2,
+                    Right: TableBorder2,
+                    InsideH: TableBorder2,
+                    InsideV: TableBorder2
+                }
+            }
+        };
+
+        this.Set_UiPriority(99);
+        this.Set_ParaPr(ParaPr);
+        this.Set_TablePr(TablePr);
+        this.Set_TableFirstRow(TableFirstRow);
+        this.Set_TableLastRow(TableLastRow);
+        this.Set_TableFirstCol(TableStyle);
+        this.Set_TableLastCol(TableStyle);
+        this.Set_TableBand1Horz(TableBand1Horz);
+    },
+
+    Create_Table_Grid_2: function (oBorderUnifill, oBandUniFill, oTableCellUnifill) {
+        var CellShd1 = new CDocumentShd();
+        CellShd1.Value = c_oAscShdClear;
+        CellShd1.Unifill = oBorderUnifill;
+        var CellShd2 = new CDocumentShd();
+        CellShd2.Value = c_oAscShdClear;
+        CellShd2.Unifill = oBandUniFill;
+        var CellShd3 = new CDocumentShd();
+        CellShd3.Value = c_oAscShdClear;
+        CellShd3.Unifill = oTableCellUnifill;
+        var TableTextPr =
+        {
+            RFonts: { Ascii: { Name: "Arial", Index: -1 }, HAnsi: { Name: "Arial", Index: -1 } },
+            Color: { r: 0x40, g: 0x40, b: 0x40 },
+            FontSize: 11
+        };
+        var TableTextPr1 =
+        {
+            Color: { r: 0x40, g: 0x40, b: 0x40 },
+            Bold: true
+        };
+
+        var ParaPr =
+        {
+            Spacing:
+            {
+                After: 0,
+                Line: 1,
+                LineRule: linerule_Auto
+            },
+
+            Borders:
+            {
+                Top:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Left:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Bottom:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Right:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Between:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                }
+            }
+        };
+
+        var TableBorder1 =
+        {
+            Color: { r: 0, g: 0, b: 0 },
+            Value: border_Single,
+            Size: 0.5 * g_dKoef_pt_to_mm,
+            Space: 0,
+            Unifill: CellShd1.Unifill
+        };
+
+        var TableBorder2 =
+        {
+            Color: { r: 0, g: 0, b: 0 },
+            Value: border_Single,
+            Size: 1.5 * g_dKoef_pt_to_mm,
+            Space: 0,
+            Unifill: CellShd1.Unifill
+        };
+        var TableBorder3 =
+        {
+            Color: { r: 0, g: 0, b: 0 },
+            Value: border_None,
+            Size: 0.5 * g_dKoef_pt_to_mm,
+            Space: 0,
+
+        };
+
+        var TablePr =
+        {
+            TableStyleColBandSize: 1,
+            TableStyleRowBandSize: 1,
+            TableInd: 0,
+
+            TableBorders:
+            {
+                Bottom: TableBorder1,
+                InsideH: TableBorder1,
+                InsideV: TableBorder1
+            }
+        };
+
+        var TableFirstRow =
+        {
+            TextPr: TableTextPr1,
+            TableCellPr:
+            {
+                TableCellBorders:
+                {
+                    Right: TableBorder3,
+                    Top: TableBorder3,
+                    Bottom: TableBorder2,
+                    Left: TableBorder3
+                },
+                Shd: CellShd3
+            }
+        };
+
+        var TableLastRow =
+        {
+            TextPr: TableTextPr1,
+            TableCellPr:
+            {
+                TableCellBorders:
+                {
+                    Right: TableBorder3,
+                    Top: TableBorder1,
+                    Bottom: TableBorder3,
+                    Left: TableBorder3
+                },
+                Shd: CellShd3
+            }
+        };
+
+        var TableCol =
+        {
+            TextPr: TableTextPr1
+        };
+
+        var TableBand1 =
+        {
+            TextPr: TableTextPr,
+            TableCellPr:
+            {
+                Shd: CellShd2
+            }
+        };
+
+        this.Set_UiPriority(99);
+        this.Set_ParaPr(ParaPr);
+        this.Set_TablePr(TablePr);
+        this.Set_TableFirstRow(TableFirstRow);
+        this.Set_TableLastRow(TableLastRow);
+        this.Set_TableFirstCol(TableCol);
+        this.Set_TableLastCol(TableCol);
+        this.Set_TableBand1Horz(TableBand1);
+        this.Set_TableBand1Vert(TableBand1);
+    },
+
+    Create_Table_Grid_3: function (oBorderUnifill, oBandUnifill, oTableCellUnifill) {
+        var CellShd1 = new CDocumentShd();
+        CellShd1.Value = c_oAscShdClear;
+        CellShd1.Unifill = oBorderUnifill;
+        var CellShd2 = new CDocumentShd();
+        CellShd2.Value = c_oAscShdClear;
+        CellShd2.Unifill = oBandUnifill;
+        var CellShd3 = new CDocumentShd();
+        CellShd3.Value = c_oAscShdClear;
+        CellShd3.Unifill = oTableCellUnifill;
+
+        var TableTextPr =
+        {
+            RFonts: { Ascii: { Name: "Arial", Index: -1 }, HAnsi: { Name: "Arial", Index: -1 } },
+            Color: { r: 0x40, g: 0x40, b: 0x40 },
+            FontSize: 11
+        };
+
+        var TableTextPr1 =
+        {
+            Color: { r: 0x40, g: 0x40, b: 0x40 },
+            Bold: true
+        };
+
+        var ParaPr =
+        {
+            Spacing:
+            {
+                After: 0,
+                Line: 1,
+                LineRule: linerule_Auto
+            },
+
+            Borders:
+            {
+                Top:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Left:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Bottom:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Right:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Between:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                }
+            }
+        };
+
+        var TextColumnPr =
+        {
+            Color: { r: 0x40, g: 0x40, b: 0x40 },
+            Italic: true
+        };
+
+        var TableBorder1 =
+        {
+            Color: { r: 0, g: 0, b: 0 },
+            Value: border_Single,
+            Size: 0.5 * g_dKoef_pt_to_mm,
+            Space: 0,
+            Unifill: CellShd1.Unifill
+        };
+
+        var TableBorder2 =
+        {
+            Color: { r: 0, g: 0, b: 0 },
+            Value: border_None,
+            Size: 0.5 * g_dKoef_pt_to_mm,
+            Space: 0
+        };
+
+        var TablePr =
+        {
+            TableStyleColBandSize: 1,
+            TableStyleRowBandSize: 1,
+            TableInd: 0,
+
+            TableBorders:
+            {
+                Bottom: TableBorder1,
+                InsideH: TableBorder1,
+                InsideV: TableBorder1
+            }
+        };
+
+        var TableRow =
+        {
+            TextPr: TableTextPr1,
+            TableCellPr:
+            {
+                TableCellBorders:
+                {
+                    Right: TableBorder2,
+                    Top: TableBorder2,
+                    Bottom: TableBorder2,
+                    Left: TableBorder2
+                },
+                Shd: CellShd3
+            }
+        };
+
+   
+        var TableFirstCol =
+        {
+            TextPr: TextColumnPr,
+            TableCellPr:
+            {
+                Shd:
+                {
+                    Color:
+                    {
+                        r: 255,
+                        g: 255,
+                        b: 255
+                    }
+                },
+                TableCellBorders:
+                {
+                    Left: TableBorder2,
+                    Right: TableBorder2,
+                    Top: TableBorder2,
+                    Bottom: TableBorder2
+                }
+            },
+            ParaPr:
+            {
+                Jc: align_Right
+            }
+        };
+
+        var TableLastCol =
+        {
+            TextPr: TextColumnPr,
+            TableCellPr:
+            {
+                Shd:
+                {
+                    Color:
+                    {
+                        r: 255,
+                        g: 255,
+                        b: 255
+                    }
+                },
+                TableCellBorders:
+                {
+                    Left: TableBorder2,
+                    Right: TableBorder2,
+                    Top: TableBorder2,
+                    Bottom: TableBorder2
+                }
+            }
+        };
+
+        var TableBand1 =
+        {
+            TextPr: TableTextPr,
+            TableCellPr:
+            {
+                Shd: CellShd2
+            }
+        };
+
+        this.Set_UiPriority(99);
+        this.Set_ParaPr(ParaPr);
+        this.Set_TablePr(TablePr);
+        this.Set_TableFirstRow(TableRow);
+        this.Set_TableLastRow(TableRow);
+        this.Set_TableFirstCol(TableFirstCol);
+        this.Set_TableLastCol(TableLastCol);
+        this.Set_TableBand1Horz(TableBand1);
+        this.Set_TableBand1Vert(TableBand1);
+    },
+
+    Create_Table_Grid_4: function (oHeaderUnifill, oBandUnifill, oBorderUnifill) {
+        var CellShd1 = new CDocumentShd();
+        CellShd1.Value = c_oAscShdClear;
+        CellShd1.Unifill = oHeaderUnifill;
+        var CellShd2 = new CDocumentShd();
+        CellShd2.Value = c_oAscShdClear;
+        CellShd2.Unifill = oBandUnifill;
+        var CellShd3 = new CDocumentShd();
+        CellShd3.Value = c_oAscShdClear;
+        CellShd3.Unifill = oBorderUnifill;
+
+        var TableTextPr =
+        {
+            RFonts: { Ascii: { Name: "Arial", Index: -1 }, HAnsi: { Name: "Arial", Index: -1 } },
+            Color: { r: 0x40, g: 0x40, b: 0x40 },
+            FontSize: 11
+        };
+
+        var TableTextPr1 =
+        {
+            Color: { r: 0x40, g: 0x40, b: 0x40 },
+            Bold: true
+        };
+
+        var TableTextPr2 =
+        {
+            RFonts: { Ascii: { Name: "Arial", Index: -1 }, HAnsi: { Name: "Arial", Index: -1 } },
+            Color: { r: 255, g: 255, b: 255 },
+            FontSize: 11,
+            Bold: true
+        };
+
+        var ParaPr =
+        {
+            Spacing:
+            {
+                After: 0,
+                Line: 1,
+                LineRule: linerule_Auto
+            },
+
+            Borders:
+            {
+                Top:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Left:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Bottom:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Right:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Between:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                }
+            }
+        };
+
+        var TableBorder1 =
+        {
+            Color: { r: 0, g: 0, b: 0 },
+            Value: border_Single,
+            Size: 0.5 * g_dKoef_pt_to_mm,
+            Space: 0,
+            Unifill: CellShd3.Unifill
+        };
+
+        var TableBorder2 =
+        {
+            Color: { r: 0, g: 0, b: 0 },
+            Value: border_Single,
+            Size: 0.5 * g_dKoef_pt_to_mm,
+            Space: 0,
+            Unifill: CellShd1.Unifill
+        };
+
+        var TableBorder3 =
+        {
+            Color: { r: 0, g: 0, b: 0 },
+            Value: border_Single,
+            Size: 0.5001 * g_dKoef_pt_to_mm,
+            Space: 0,
+            Unifill: CellShd1.Unifill
+        };
+
+        var TablePr =
+        {
+            TableStyleColBandSize: 1,
+            TableStyleRowBandSize: 1,
+            TableInd: 0,
+
+            TableBorders:
+            {
+                Left: TableBorder1,
+                Right: TableBorder1,
+                Top: TableBorder1,
+                Bottom: TableBorder1,
+                InsideH: TableBorder1,
+                InsideV: TableBorder1
+            }
+        };
+
+        var TableFirstRow =
+        {
+            TextPr: TableTextPr2,
+            TableCellPr:
+            {
+                Shd: CellShd1,
+                TableCellBorders:
+                {
+                    Right: TableBorder2,
+                    Left: TableBorder2,
+                    Bottom: TableBorder2,
+                    Top: TableBorder2
+                }
+            }
+        };
+
+        var TableLastRow =
+        {
+             //TODO: Реализовать двойную линию
+            TextPr: TableTextPr1,
+            TableCellPr:
+            {
+                TableCellBorders:
+                {
+                    Top: TableBorder3
+                }
+            }
+        };
+
+        var TableCol =
+        {
+            TextPr: TableTextPr1
+        };
+
+        var TableBand1 =
+        {
+            TextPr: TableTextPr,
+            TableCellPr:
+            {
+                Shd: CellShd2
+            }
+        };
+
+        this.Set_UiPriority(59);
+        this.Set_ParaPr(ParaPr);
+        this.Set_TablePr(TablePr);
+        this.Set_TableFirstRow(TableFirstRow);
+        this.Set_TableLastRow(TableLastRow);
+        this.Set_TableFirstCol(TableCol);
+        this.Set_TableLastCol(TableCol);
+        this.Set_TableBand1Horz(TableBand1);
+        this.Set_TableBand1Vert(TableBand1);
+    },
+
+    Create_Table_Grid_5: function (oHeaderUnifill, oTableCellUnifill, oBorderUnifill, oBandUnifill) {
+        var CellShd1 = new CDocumentShd();
+        CellShd1.Value = c_oAscShdClear;
+        CellShd1.Unifill = oHeaderUnifill;
+        var CellShd2 = new CDocumentShd();
+        CellShd2.Value = c_oAscShdClear;
+        CellShd2.Unifill = oTableCellUnifill;
+        var CellShd3 = new CDocumentShd();
+        CellShd3.Value = c_oAscShdClear;
+        CellShd3.Unifill = oBorderUnifill;
+        var CellShd4 = new CDocumentShd();
+        CellShd4.Value = c_oAscShdClear;
+        CellShd4.Unifill = oBandUnifill;
+        var TableTextPr =
+        {
+            RFonts: { Ascii: { Name: "Arial", Index: -1 }, HAnsi: { Name: "Arial", Index: -1 } },
+            Color: { r: 0x40, g: 0x40, b: 0x40 },
+            FontSize: 11
+        };
+        var TableTextPr1 =
+        {
+            RFonts: { Ascii: { Name: "Arial", Index: -1 }, HAnsi: { Name: "Arial", Index: -1 } },
+            Color: { r: 255, g: 255, b: 255 },
+            Bold: true,
+            FontSize: 11
+        };
+
+        var ParaPr =
+        {
+            Spacing:
+            {
+                After: 0,
+                Line: 1,
+                LineRule: linerule_Auto
+            },
+
+            Borders:
+            {
+                Top:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Left:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Bottom:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Right:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Between:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                }
+            }
+        };
+
+        var TableBorder1 =
+        {
+            Color: { r: 0, g: 0, b: 0 },
+            Value: border_Single,
+            Size: 0.5 * g_dKoef_pt_to_mm,
+            Space: 0,
+            Unifill: CellShd3.Unifill
+        };
+
+        var TablePr =
+        {
+            TextPr: TableTextPr,
+            TableStyleColBandSize: 1,
+            TableStyleRowBandSize: 1,
+            TableInd: 0,
+            Shd: CellShd2,
+            TableBorders:
+            {
+                Left: TableBorder1,
+                Right: TableBorder1,
+                Top: TableBorder1,
+                Bottom: TableBorder1,
+                InsideH: TableBorder1,
+                InsideV: TableBorder1
+            }
+        };
+
+        var TableFirstRow =
+        {
+            TextPr: TableTextPr1,
+            TableCellPr:
+            {
+                Shd: CellShd1,
+            }
+        };
+
+        var TableCol =
+        {
+            TextPr: TableTextPr1,
+            TableCellPr:
+            {
+                Shd: CellShd1
+            }
+        };
+
+        var TableLastRow =
+        {
+            TextPr: TableTextPr1,
+            TableCellPr:
+            {
+                Shd: CellShd1,
+                TableCellBorders:
+                {
+                    Top: TableBorder1
+                }
+            }
+        };
+
+        var TableBand1Horz =
+        {
+            TableCellPr:
+            {
+                Shd: CellShd4
+            }
+        };
+
+        var TableBand1Vert =
+        {
+            TableCellPr:
+            {
+                Shd: CellShd4
+            }
+        };
+
+        this.Set_UiPriority(99);
+        this.Set_ParaPr(ParaPr);
+        this.Set_TablePr(TablePr);
+        this.Set_TableFirstRow(TableFirstRow);
+        this.Set_TableFirstCol(TableCol);
+        this.Set_TableLastRow(TableLastRow);
+        this.Set_TableLastCol(TableCol);
+        this.Set_TableBand1Horz(TableBand1Horz);
+        this.Set_TableBand1Vert(TableBand1Vert);
+    },
+
+    Create_Table_Grid_6: function (oBorderUnifill, oBandUnifill, oTextUnifill) {
+        var CellShd1 = new CDocumentShd();
+        CellShd1.Value = c_oAscShdClear;
+        CellShd1.Unifill = oBorderUnifill;
+        var CellShd2 = new CDocumentShd();
+        CellShd2.Value = c_oAscShdClear;
+        CellShd2.Unifill = oBandUnifill;
+        var CellShd3 = new CDocumentShd();
+        CellShd3.Value = c_oAscShdClear;
+        CellShd3.Unifill = oTextUnifill;
+        var TableTextPr =
+        {
+            RFonts: { Ascii: { Name: "Arial", Index: -1 }, HAnsi: { Name: "Arial", Index: -1 } },
+            Color: { r: 0x40, g: 0x40, b: 0x40 },
+            FontSize: 11,
+            Unifill: CellShd3.Unifill
+        };
+
+        var TableTextPr1 =
+        {
+            Unifill: CellShd3.Unifill,
+            Bold: true
+        };
+
+        var ParaPr =
+        {
+            Spacing:
+            {
+                After: 0,
+                Line: 1,
+                LineRule: linerule_Auto
+            },
+
+            Borders:
+            {
+                Top:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Left:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Bottom:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Right:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Between:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                }
+            }
+        };
+
+        var TableBorder1 =
+        {
+            Color: { r: 0, g: 0, b: 0 },
+            Value: border_Single,
+            Size: 0.5 * g_dKoef_pt_to_mm,
+            Space: 0,
+            Unifill: CellShd1.Unifill
+        };
+
+        var TableBorder2 =
+        {
+            Color: { r: 0, g: 0, b: 0 },
+            Value: border_Single,
+            Size: 1.5 * g_dKoef_pt_to_mm,
+            Space: 0,
+            Unifill: CellShd1.Unifill
+        };
+
+        var TablePr =
+        {
+            TableStyleColBandSize: 1,
+            TableStyleRowBandSize: 1,
+            TableInd: 0,
+
+            TableBorders:
+            {
+                Bottom: TableBorder1,
+                InsideH: TableBorder1,
+                InsideV: TableBorder1,
+                Top: TableBorder1,
+                Left: TableBorder1,
+                Right: TableBorder1
+            }
+        };
+
+        var TableFirstRow =
+        {
+            TextPr: TableTextPr1,
+            TableCellPr:
+            {
+                TableCellBorders:
+                {
+                    Bottom: TableBorder2
+                }
+            }
+        };
+
+        var TableLastRow =
+        {
+            TextPr: TableTextPr1
+        };
+
+        var TableCol =
+        {
+            TextPr: TableTextPr1,
+        };
+
+        var TableBand1Horz =
+        {
+            TextPr: TableTextPr,
+            TableCellPr:
+            {
+                Shd: CellShd2
+            }
+        };
+        var TableBand1Vert =
+        {
+            TableCellPr:
+            {
+                Shd: CellShd2
+            }
+        };
+        var TableBand2Horz =
+        {
+            TextPr: TableTextPr
+        };
+        var TableWholeTable = 
+        {
+            TextPr: TableTextPr
+        };
+
+        this.Set_UiPriority(99);
+        this.Set_ParaPr(ParaPr);
+        this.Set_TablePr(TablePr);
+        this.Set_TableFirstRow(TableFirstRow);
+        this.Set_TableLastRow(TableLastRow);
+        this.Set_TableFirstCol(TableCol);
+        this.Set_TableLastCol(TableCol);
+        this.Set_TableBand1Horz(TableBand1Horz);
+        this.Set_TableBand2Horz(TableBand2Horz);
+        this.Set_TableBand1Vert(TableBand1Vert);
+        this.Set_TableWholeTable(TableWholeTable);
+    },
+
+    Create_Table_Grid_7: function (oBorderUnifill, oBandUnifill, oTableCellUnifill, oTextUnifill) {
+        var CellShd1 = new CDocumentShd();
+        CellShd1.Value = c_oAscShdClear;
+        CellShd1.Unifill = oBorderUnifill;
+        var CellShd2 = new CDocumentShd();
+        CellShd2.Value = c_oAscShdClear;
+        CellShd2.Unifill = oBandUnifill;
+        var CellShd3 = new CDocumentShd();
+        CellShd3.Value = c_oAscShdClear;
+        CellShd3.Unifill = oTableCellUnifill;
+        var CellShd4 = new CDocumentShd();
+        CellShd4.Value = c_oAscShdClear;
+        CellShd4.Unifill = oTextUnifill;
+
+        var TableTextPr =
+        {
+            RFonts: { Ascii: { Name: "Arial", Index: -1 }, HAnsi: { Name: "Arial", Index: -1 } },
+            Unifill: CellShd4.Unifill,
+            Bold: true,
+            FontSize: 11
+        };
+
+        var TableTextPr1 =
+        {
+            RFonts: { Ascii: { Name: "Arial", Index: -1 }, HAnsi: { Name: "Arial", Index: -1 } },
+            Unifill: CellShd4.Unifill,
+            Italic: true,
+            FontSize: 11
+        };
+        var TableTextPr2 =
+        {
+            RFonts: { Ascii: { Name: "Arial", Index: -1 }, HAnsi: { Name: "Arial", Index: -1 } },
+            Unifill: CellShd4.Unifill,
+            FontSize: 11
+        };
+
+        var ParaPr =
+        {
+            Spacing:
+            {
+                After: 0,
+                Line: 1,
+                LineRule: linerule_Auto
+            },
+
+            Borders:
+            {
+                Top:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Left:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Bottom:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Right:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Between:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                }
+            }
+        };
+
+        var TableBorder1 =
+        {
+            Color: { r: 0, g: 0, b: 0 },
+            Value: border_Single,
+            Size: 0.5 * g_dKoef_pt_to_mm,
+            Space: 0,
+            Unifill: CellShd1.Unifill
+        };
+
+        var TableBorder2 =
+        {
+            Value: border_None
+        };
+
+        var TablePr =
+        {
+            TableStyleColBandSize: 1,
+            TableStyleRowBandSize: 1,
+            TableInd: 0,
+
+            TableBorders:
+            {
+                Bottom: TableBorder1,
+                InsideH: TableBorder1,
+                InsideV: TableBorder1,
+                Right: TableBorder1
+            },
+        };
+
+        var TableFirstRow =
+        {
+            TextPr: TableTextPr,
+
+            TableCellPr:
+            {
+                TableCellBorders:
+                {
+                    Right: TableBorder2,
+                    Top: TableBorder2,
+                    Bottom: TableBorder1,
+                    Left: TableBorder2
+                },
+                Shd: CellShd3
+            }
+        };
+
+        var TableLastRow =
+        {
+            TextPr: TableTextPr,
+            TableCellPr:
+            {
+                TableCellBorders:
+                {
+                    Top: TableBorder1,
+                    Bottom: TableBorder2,
+                    Right: TableBorder2,
+                    Left: TableBorder2
+                },
+                Shd: CellShd3
+            }
+        };
+
+        var TableFirstCol =
+        {
+            TextPr: TableTextPr1,
+            TableCellPr:
+            {
+                Shd:
+                {
+                    Color:
+                    {
+                        r: 255,
+                        g: 255,
+                        b: 255
+                    }
+                },
+                TableCellBorders:
+                {
+                    Left: TableBorder2,
+                    Right: TableBorder1,
+                    Top: TableBorder2,
+                    Bottom: TableBorder2
+                }
+            },
+            ParaPr:
+            {
+                Jc: align_Right
+            }
+        };
+
+        var TableLastCol =
+        {
+            TextPr: TableTextPr1,
+            TableCellPr:
+            {
+                Shd:
+                {
+                    Color:
+                    {
+                        r: 255,
+                        g: 255,
+                        b: 255
+                    }
+                },
+                TableCellBorders:
+                {
+                    Left: TableBorder1,
+                    Right: TableBorder2,
+                    Top: TableBorder2,
+                    Bottom: TableBorder2
+                }
+            }
+        };
+
+        var TableBand1Horz =
+        {
+            TextPr: TableTextPr2,
+            TableCellPr:
+            {
+                Shd: CellShd2
+            }
+        };
+
+        var TableBand2Horz =
+        {
+            TextPr: TableTextPr2
+        };
+
+        var TableBand1Vert =
+        {
+            TableCellPr:
+            {
+                Shd: CellShd2
             }
         };
 
@@ -1818,9 +3768,1278 @@ CStyle.prototype =
         this.Set_TableFirstCol(TableFirstCol);
         this.Set_TableLastCol(TableLastCol);
         this.Set_TableBand1Horz(TableBand1Horz);
-
+        this.Set_TableBand2Horz(TableBand2Horz);
+        this.Set_TableBand1Vert(TableBand1Vert);
     },
 
+    Create_Table_List_1: function (oBorderUnifill, oBandUnifill, oTableCellUnifill) {
+        var CellShd1 = new CDocumentShd();
+        CellShd1.Value = c_oAscShdClear;
+        CellShd1.Unifill = oBorderUnifill;
+        var CellShd2 = new CDocumentShd();
+        CellShd2.Value = c_oAscShdClear;
+        CellShd2.Unifill = oBandUnifill;
+        var CellShd3 = new CDocumentShd();
+        CellShd3.Value = c_oAscShdClear;
+        CellShd3.Unifill = oTableCellUnifill;
+        var TableTextPr =
+        {
+            RFonts: { Ascii: { Name: "Arial", Index: -1 }, HAnsi: { Name: "Arial", Index: -1 } },
+            Color: { r: 0x40, g: 0x40, b: 0x40 },
+            FontSize: 11
+        };
+
+        var TableTextPr1 =
+        {
+            Color: { r: 0x40, g: 0x40, b: 0x40 },
+            Bold: true
+        };
+
+        var ParaPr =
+        {
+            Spacing:
+            {
+                After: 0,
+                Line: 1,
+                LineRule: linerule_Auto
+            },
+
+            Borders:
+            {
+                Top:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Left:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Bottom:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Right:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Between:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                }
+            }
+        };
+
+        var TableBorder1 =
+        {
+            Color: { r: 0, g: 0, b: 0 },
+            Value: border_Single,
+            Size: 0.5 * g_dKoef_pt_to_mm,
+            Space: 0,
+            Unifill: CellShd1.Unifill
+        };
+
+        var TableBorder2 =
+        {
+            Color: { r: 0, g: 0, b: 0 },
+            Value: border_None,
+            Size: 0.5 * g_dKoef_pt_to_mm,
+            Space: 0
+        };
+
+        var TablePr =
+        {
+            TableStyleColBandSize: 1,
+            TableStyleRowBandSize: 1,
+            TableInd: 0
+        };
+
+        var TableFirstRow =
+        {
+            TextPr: TableTextPr1,
+
+            TableCellPr:
+            {
+                TableCellBorders:
+                {
+                    Right: TableBorder2,
+                    Top: TableBorder2,
+                    Bottom: TableBorder1,
+                    Left: TableBorder2
+                }
+            }
+        };
+
+        var TableLastRow =
+        {
+            TextPr: TableTextPr1,
+            TableCellPr:
+            {
+                TableCellBorders:
+                {
+                    Right: TableBorder2,
+                    Top: TableBorder1,
+                    Bottom: TableBorder2,
+                    Left: TableBorder2
+                }
+            }
+        };
+
+        var TableCol =
+        {
+            TextPr: TableTextPr1
+        };
+
+        var TableBand1 =
+        {
+            TableCellPr:
+            {
+                Shd: CellShd2
+            }
+        };
+
+        this.Set_UiPriority(99);
+        this.Set_ParaPr(ParaPr);
+        this.Set_TablePr(TablePr);
+        this.Set_TableFirstRow(TableFirstRow);
+        this.Set_TableLastRow(TableLastRow);
+        this.Set_TableFirstCol(TableCol);
+        this.Set_TableLastCol(TableCol);
+        this.Set_TableBand1Horz(TableBand1);
+        this.Set_TableBand1Vert(TableBand1);
+    },
+
+    Create_Table_List_2: function (unifill1, oBandUnifill) {
+        var CellShd1 = new CDocumentShd();
+        CellShd1.Value = c_oAscShdClear;
+        CellShd1.Unifill = unifill1;
+        var CellShd2 = new CDocumentShd();
+        CellShd2.Value = c_oAscShdClear;
+        CellShd2.Unifill = oBandUnifill;
+        var TableTextPr =
+        {
+            RFonts: { Ascii: { Name: "Arial", Index: -1 }, HAnsi: { Name: "Arial", Index: -1 } },
+            Color: { r: 0x40, g: 0x40, b: 0x40 },
+            FontSize: 11
+        };
+
+        var TableTextPr1 =
+        {
+            RFonts: { Ascii: { Name: "Arial", Index: -1 }, HAnsi: { Name: "Arial", Index: -1 } },
+            Color: { r: 0x40, g: 0x40, b: 0x40 },
+            FontSize: 11,
+            Bold: true
+        };
+
+        var ParaPr =
+        {
+            Spacing:
+            {
+                After: 0,
+                Line: 1,
+                LineRule: linerule_Auto
+            },
+
+            Borders:
+            {
+                Top:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Left:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Bottom:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Right:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Between:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                }
+            }
+        };
+
+        var TableBorder1 =
+        {
+            Color: { r: 0, g: 0, b: 0 },
+            Value: border_Single,
+            Size: 0.5 * g_dKoef_pt_to_mm,
+            Space: 0,
+            Unifill: CellShd1.Unifill
+        };
+
+        var TableBorder2 =
+        {
+            Color: { r: 0, g: 0, b: 0 },
+            Value: border_None,
+            Size: 0.5 * g_dKoef_pt_to_mm,
+            Space: 0,
+
+        };
+
+        var TablePr =
+        {
+            TextPr: TableTextPr,
+            TableStyleColBandSize: 1,
+            TableStyleRowBandSize: 1,
+            TableInd: 0,
+
+            TableBorders:
+            {
+                InsideH: TableBorder1,
+                Bottom: TableBorder1,
+                Top: TableBorder1
+            }
+        };
+
+        var TableFirstRow =
+        {
+            TextPr: TableTextPr1,
+
+            TableCellPr:
+            {
+                TableCellBorders:
+                {
+                    Right: TableBorder2,
+                    Top: TableBorder1,
+                    Bottom: TableBorder1,
+                    Left: TableBorder2
+                }
+            }
+        };
+
+        var TableLastRow =
+        {
+            TextPr: TableTextPr1,
+            TableCellPr:
+            {
+                TableCellBorders:
+                {
+                    Right: TableBorder2,
+                    Bottom: TableBorder1,
+                    Top: TableBorder1,
+                    Left: TableBorder2
+                }
+            }
+        };
+
+        var TableCol =
+        {
+            TextPr: TableTextPr1
+
+        };
+
+        var TableBand1 =
+        {
+            TextPr: TableTextPr,
+            TableCellPr:
+            {
+                Shd: CellShd2
+            }
+        };
+
+        this.Set_UiPriority(99);
+        this.Set_ParaPr(ParaPr);
+        this.Set_TablePr(TablePr);
+        this.Set_TableFirstRow(TableFirstRow);
+        this.Set_TableLastRow(TableLastRow);
+        this.Set_TableFirstCol(TableCol);
+        this.Set_TableLastCol(TableCol);
+        this.Set_TableBand1Horz(TableBand1);
+        this.Set_TableBand1Vert(TableBand1);
+    },
+
+    Create_Table_List_3: function (oHeaderUnifill, oBorderUnifill) {
+        var CellShd1 = new CDocumentShd();
+        CellShd1.Value = c_oAscShdClear;
+        CellShd1.Unifill = oHeaderUnifill;
+        var CellShd2 = new CDocumentShd();
+        CellShd2.Value = c_oAscShdClear;
+        CellShd2.Unifill = oBorderUnifill;
+
+        var TableTextPr =
+        {
+            RFonts: { Ascii: { Name: "Arial", Index: -1 }, HAnsi: { Name: "Arial", Index: -1 } },
+            Color: { r: 0x40, g: 0x40, b: 0x40 },
+            FontSize: 11
+        };
+
+        var TableTextPr1 =
+        {
+            Color: { r: 0x40, g: 0x40, b: 0x40 },
+            Bold: true
+        };
+
+        var TextFirstRowPr =
+        {
+            RFonts: { Ascii: { Name: "Arial", Index: -1 }, HAnsi: { Name: "Arial", Index: -1 } },
+            Color: { r: 255, g: 255, b: 255 },
+            FontSize: 11,
+            Bold: true
+        };
+
+        var ParaPr =
+        {
+            Spacing:
+            {
+                After: 0,
+                Line: 1,
+                LineRule: linerule_Auto
+            },
+
+            Borders:
+            {
+                Top:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Left:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Bottom:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Right:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Between:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                }
+            }
+        };
+
+        var TableBorder1 =
+        {
+            Color: { r: 0, g: 0, b: 0 },
+            Value: border_Single,
+            Size: 0.5 * g_dKoef_pt_to_mm,
+            Space: 0,
+            Unifill: CellShd1.Unifill
+        };
+
+        var TablePr =
+        {
+            TableStyleColBandSize: 1,
+            TableStyleRowBandSize: 1,
+            TableInd: 0,
+
+            TableBorders:
+            {
+                Left: TableBorder1,
+                Right: TableBorder1,
+                Top: TableBorder1,
+                Bottom: TableBorder1
+            }
+        };
+
+        var TableFirstRow =
+        {
+            TextPr: TextFirstRowPr,
+            TableCellPr:
+            {
+                Shd: CellShd1
+            }
+        };
+
+        var TableLastRow =
+        {
+            TextPr: TableTextPr1
+        };
+
+        var TableCol =
+        {
+            TextPr: TableTextPr1
+        };
+
+        var TableBand1Vert =
+        {
+            TextPr: TableTextPr,
+            TableCellPr:
+            {
+                TableCellBorders:
+                {
+                    Left: TableBorder1,
+                    Right: TableBorder1
+                }
+            }
+        };
+
+        var TableBand1Horz =
+        {
+            TextPr: TableTextPr,
+            TableCellPr:
+            {
+                TableCellBorders:
+                {
+                    Top: TableBorder1,
+                    Bottom: TableBorder1
+                }
+            }
+        };
+
+        this.Set_UiPriority(99);
+        this.Set_ParaPr(ParaPr);
+        this.Set_TablePr(TablePr);
+        this.Set_TableFirstRow(TableFirstRow);
+        this.Set_TableLastRow(TableLastRow);
+        this.Set_TableFirstCol(TableCol);
+        this.Set_TableLastCol(TableCol);
+        this.Set_TableBand1Horz(TableBand1Horz);
+        this.Set_TableBand1Vert(TableBand1Vert);
+    },
+
+    Create_Table_List_4: function (oHeaderUnifill, oBandUnifill, oBorderUnifill) {
+        var CellShd1 = new CDocumentShd();
+        CellShd1.Value = c_oAscShdClear;
+        CellShd1.Unifill = oHeaderUnifill;
+        var CellShd2 = new CDocumentShd();
+        CellShd2.Value = c_oAscShdClear;
+        CellShd2.Unifill = oBandUnifill;
+        var CellShd3 = new CDocumentShd();
+        CellShd3.Value = c_oAscShdClear;
+        CellShd3.Unifill = oBorderUnifill;
+
+        var TableTextPr =
+        {
+            RFonts: { Ascii: { Name: "Arial", Index: -1 }, HAnsi: { Name: "Arial", Index: -1 } },
+            Color: { r: 0x40, g: 0x40, b: 0x40 },
+            FontSize: 11
+        };
+
+        var TableTextPr1 =
+        {
+            Color: { r: 0x40, g: 0x40, b: 0x40 },
+            Bold: true
+        };
+
+        var TextFirstRowPr =
+        {
+            RFonts: { Ascii: { Name: "Arial", Index: -1 }, HAnsi: { Name: "Arial", Index: -1 } },
+            Color: { r: 255, g: 255, b: 255 },
+            FontSize: 11,
+            Bold: true
+        };
+
+        var ParaPr =
+        {
+            Spacing:
+            {
+                After: 0,
+                Line: 1,
+                LineRule: linerule_Auto
+            },
+
+            Borders:
+            {
+                Top:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Left:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Bottom:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Right:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Between:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                }
+            }
+        };
+
+        var TableBorder1 =
+        {
+            Color: { r: 0, g: 0, b: 0 },
+            Value: border_Single,
+            Size: 0.5 * g_dKoef_pt_to_mm,
+            Space: 0,
+            Unifill: CellShd1.Unifill
+        };
+
+        var TableBorder2 =
+        {
+            Color: { r: 0, g: 0, b: 0 },
+            Value: border_Single,
+            Size: 0.5 * g_dKoef_pt_to_mm,
+            Space: 0,
+            Unifill: CellShd3.Unifill
+        };
+
+        var TablePr =
+        {  
+            TextPr: TableTextPr,
+            TableStyleColBandSize: 1,
+            TableStyleRowBandSize: 1,
+            TableInd: 0,
+
+            TableBorders:
+            {
+                Left: TableBorder2,
+                Right: TableBorder2,
+                Top: TableBorder2,
+                Bottom: TableBorder2,
+                InsideH: TableBorder2
+            }
+        };
+
+        var TableFirstRow =
+        {
+            TextPr: TextFirstRowPr,
+            TableCellPr:
+            {
+                Shd: CellShd1
+            }
+        };
+
+        var TableLastRow =
+        {
+            TextPr: TableTextPr1
+        };
+
+        var TableCol =
+        {
+            TextPr: TableTextPr1
+        };
+
+        var TableBand1 =
+        {
+            TextPr: TableTextPr,
+            TableCellPr:
+            {
+                Shd: CellShd2
+            }
+        };
+
+        this.Set_UiPriority(99);
+        this.Set_ParaPr(ParaPr);
+        this.Set_TablePr(TablePr);
+        this.Set_TableFirstRow(TableFirstRow);
+        this.Set_TableLastRow(TableLastRow);
+        this.Set_TableFirstCol(TableCol);
+        this.Set_TableLastCol(TableCol);
+        this.Set_TableBand1Horz(TableBand1);
+        this.Set_TableBand1Vert(TableBand1);
+    },
+
+    Create_Table_List_5: function (oTableCellUnifill, oBorderUnifill) {
+        var CellShd1 = new CDocumentShd();
+        CellShd1.Value = c_oAscShdClear;
+        CellShd1.Unifill = oTableCellUnifill;
+        var CellShd2 = new CDocumentShd();
+        CellShd2.Value = c_oAscShdClear;
+        CellShd2.Unifill = oBorderUnifill;
+
+        var TableTextPr =
+        {
+            RFonts: { Ascii: { Name: "Arial", Index: -1 }, HAnsi: { Name: "Arial", Index: -1 } },
+            Unifill: CellShd2.Unifill,
+            FontSize: 11
+        };
+
+        var TableTextPr1 =
+        {
+            RFonts: { Ascii: { Name: "Arial", Index: -1 }, HAnsi: { Name: "Arial", Index: -1 } },
+            FontSize: 11,
+            Bold: true,
+            Unifill: CellShd2.Unifill
+        };
+
+        var ParaPr =
+        {
+            Spacing:
+            {
+                After: 0,
+                Line: 1,
+                LineRule: linerule_Auto
+            },
+
+            Borders:
+            {
+                Top:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Left:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Unifill: CellShd1.Unifill,
+                    Space: 0,
+                    Size: 0,
+                    Value: border_Single
+                },
+
+                Bottom:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Unifill: CellShd1.Unifill,
+                    Space: 0,
+                    Size: 0,
+                    Value: border_Single
+                },
+
+                Right:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_Single
+                },
+
+                Between:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                }
+            }
+        };
+
+        var TableBorder1 =
+        {
+            Color: { r: 0, g: 0, b: 0 },
+            Value: border_Single,
+            Size: 4 * g_dKoef_pt_to_mm,
+            Space: 0,
+            Unifill: CellShd1.Unifill
+        };
+
+        var TableBorder2 =
+        {
+            Color: { r: 0, g: 0, b: 0 },
+            Value: border_Single,
+            Size: 1.5 * g_dKoef_pt_to_mm,
+            Space: 0,
+            Unifill: CellShd2.Unifill
+        };
+        var TableBorder3 =
+        {
+            Color: { r: 0, g: 0, b: 0 },
+            Value: border_Single,
+            Size: 0.5 * g_dKoef_pt_to_mm,
+            Space: 0,
+            Unifill: CellShd2.Unifill
+        };
+
+        var TablePr =
+        {
+            TextPr: TableTextPr,
+            Shd: CellShd1,
+            TableStyleColBandSize: 1,
+            TableStyleRowBandSize: 1,
+            TableInd: 0,
+           
+            TableBorders:
+            {
+                Left: TableBorder1,
+                Right: TableBorder1,
+                Top: TableBorder1,
+                Bottom: TableBorder1
+            }
+        };
+
+        var TableFirstRow =
+        {
+            TextPr: TableTextPr1,
+            TableCellPr:
+            {
+                Shd: CellShd1,
+                TableCellBorders:
+                {
+                    Bottom: TableBorder2,
+                    Top: TableBorder1
+                }
+            }
+        };
+
+        var TableLastRow =
+        {
+            TextPr: TableTextPr1
+        };
+
+        var TableFirstCol =
+        {
+            TextPr: TableTextPr1,
+            TableCellPr:
+            {
+                TableCellBorders:
+                {
+                    Right: TableBorder3,
+                    Left: TableBorder1
+                }
+            }
+        };
+        var TableLastCol =
+        {
+            TableCellPr:
+            {
+                TableCellBorders:
+                {
+                    Left: TableBorder3,
+                    Right: TableBorder1
+                }
+            }
+        };
+
+        var TableBand1Horz =
+        {
+            TableCellPr:
+            {
+                Shd: CellShd1,
+                TableCellBorders:
+                {
+                    Top: TableBorder3,
+                    Bottom: TableBorder3
+                }
+            }
+        };
+
+        var TableBand2Horz =
+        {
+            TableCellPr:
+            {
+                Shd: CellShd1,
+                TableCellBorders:
+                {
+                    Top: TableBorder3,
+                    Bottom: TableBorder3
+                }
+            }
+        };
+
+        var TableBand1Vert =
+        {
+            TableCellPr:
+            {
+                Shd: CellShd1,
+                TableCellBorders:
+                {
+                    Left: TableBorder3,
+                    Right: TableBorder3
+                }
+            }
+        };
+
+        var TableBand2Vert =
+        {
+            Shd: CellShd1,
+            TableCellPr:
+            {
+                TableCellBorders:
+                {
+                    Left: TableBorder3,
+                    Right: TableBorder3
+                }
+            }
+        };
+        var TableWholeTable = 
+        {
+            TextPr: TableTextPr
+        };
+
+        this.Set_UiPriority(99);
+        this.Set_ParaPr(ParaPr);
+        this.Set_TablePr(TablePr);
+        this.Set_TableFirstRow(TableFirstRow);
+        this.Set_TableLastRow(TableLastRow);
+        this.Set_TableFirstCol(TableFirstCol);
+        this.Set_TableLastCol(TableLastCol);
+        this.Set_TableBand1Horz(TableBand1Horz);
+        this.Set_TableBand2Horz(TableBand2Horz);
+        this.Set_TableBand1Vert(TableBand1Vert);
+        this.Set_TableBand2Vert(TableBand2Vert);
+        this.Set_TableWholeTable(TableWholeTable);
+    },
+
+    Create_Table_List_6: function (oBorderUnifill, oBandUnifill, oTextUnifill) {
+        var CellShd1 = new CDocumentShd();
+        CellShd1.Value = c_oAscShdClear;
+        CellShd1.Unifill = oBorderUnifill;
+        var CellShd2 = new CDocumentShd();
+        CellShd2.Value = c_oAscShdClear;
+        CellShd2.Unifill = oBandUnifill;
+        var CellShd3 = new CDocumentShd();
+        CellShd3.Value = c_oAscShdClear;
+        CellShd3.Unifill = oTextUnifill;
+
+        var TableTextPr =
+        {
+            RFonts: { Ascii: { Name: "Arial", Index: -1 }, HAnsi: { Name: "Arial", Index: -1 } },
+            Color: { r: 0x40, g: 0x40, b: 0x40 },
+            FontSize: 11,
+            Unifill: CellShd3.Unifill
+        };
+
+        var TableTextPr1 =
+        {
+            Unifill: CellShd3.Unifill,
+            Bold: true
+        };
+
+        var ParaPr =
+        {
+            Spacing:
+            {
+                After: 0,
+                Line: 1,
+                LineRule: linerule_Auto
+            },
+
+            Borders:
+            {
+                Top:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Left:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Bottom:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Right:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Between:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                }
+            }
+        };
+
+        var TableBorder1 =
+        {
+            Color: { r: 0, g: 0, b: 0 },
+            Value: border_Single,
+            Size: 0.5 * g_dKoef_pt_to_mm,
+            Space: 0,
+            Unifill: CellShd1.Unifill
+        };
+
+        var TablePr =
+        {
+            TableStyleColBandSize: 1,
+            TableStyleRowBandSize: 1,
+            TableInd: 0,
+
+            TableBorders:
+            {
+                Bottom: TableBorder1,
+                Top: TableBorder1
+            }
+        };
+
+        var TableFirstRow =
+        {
+            TextPr: TableTextPr1,
+
+            TableCellPr:
+            {
+                TableCellBorders:
+                {
+                    Bottom: TableBorder1
+                }
+            }
+        };
+
+        var TableLastRow =
+        {
+            TextPr: TableTextPr1,
+            TableCellPr:
+            {
+                TableCellBorders:
+                {
+                    Top: TableBorder1
+                }
+            }
+        };
+
+        var TableCol =
+        {
+            TextPr: TableTextPr1
+        };
+
+        var TableBand1Horz =
+        {
+            TextPr: TableTextPr,
+            TableCellPr:
+            {
+                Shd: CellShd2
+            }
+        };
+
+        var TableBand1Vert =
+        {
+            TableCellPr:
+            {
+                Shd: CellShd2
+            }
+        };
+
+        var TableBand2Horz =
+        {
+            TextPr: TableTextPr
+        };
+
+        this.Set_UiPriority(99);
+        this.Set_ParaPr(ParaPr);
+        this.Set_TablePr(TablePr);
+        this.Set_TableFirstRow(TableFirstRow);
+        this.Set_TableLastRow(TableLastRow);
+        this.Set_TableFirstCol(TableCol);
+        this.Set_TableLastCol(TableCol);
+        this.Set_TableBand1Horz(TableBand1Horz);
+        this.Set_TableBand2Horz(TableBand2Horz);
+        this.Set_TableBand1Vert(TableBand1Vert);
+    },
+
+    Create_Table_List_7: function (oBorderUnifill, oBandUnifill, oTableTextUnifill, oTextUnifill) {
+        var CellShd1 = new CDocumentShd();
+        CellShd1.Value = c_oAscShdClear;
+        CellShd1.Unifill = oBorderUnifill;
+        var CellShd2 = new CDocumentShd();
+        CellShd2.Value = c_oAscShdClear;
+        CellShd2.Unifill = oBandUnifill;
+        var CellShd3 = new CDocumentShd();
+        CellShd3.Value = c_oAscShdClear;
+        CellShd3.Unifill = oTableTextUnifill;
+        var CellShd4 = new CDocumentShd();
+        CellShd4.Value = c_oAscShdClear;
+        CellShd4.Unifill = oTextUnifill;
+
+        var TableTextPr =
+        {
+            RFonts: { Ascii: { Name: "Arial", Index: -1 }, HAnsi: { Name: "Arial", Index: -1 } },
+            Unifill: CellShd4.Unifill,
+            Italic: true,
+            FontSize: 11
+        };
+        var TableTextPr1 =
+        {
+            RFonts: { Ascii: { Name: "Arial", Index: -1 }, HAnsi: { Name: "Arial", Index: -1 } },
+            Unifill: CellShd4.Unifill,
+            FontSize: 11
+        };
+
+        var ParaPr =
+        {
+            Spacing:
+            {
+                After: 0,
+                Line: 1,
+                LineRule: linerule_Auto
+            },
+
+            Borders:
+            {
+                Top:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Left:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Bottom:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Right:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                },
+
+                Between:
+                {
+                    Color: { r: 0, g: 0, b: 0, Auto: true },
+                    Space: 0,
+                    Size: 0,
+                    Value: border_None
+                }
+            }
+        };
+
+        var TableBorder1 =
+        {
+            Color: { r: 0, g: 0, b: 0 },
+            Value: border_Single,
+            Size: 0.5 * g_dKoef_pt_to_mm,
+            Space: 0,
+            Unifill: CellShd1.Unifill
+        };
+
+        var TableBorder2 =
+        {
+            Value: border_None
+        };
+
+        var TablePr =
+        {
+            TableStyleColBandSize: 1,
+            TableStyleRowBandSize: 1,
+            TableInd: 0,
+
+            TableBorders:
+            {
+                Right: TableBorder1
+            }
+        };
+
+        var TableFirstRow =
+        {
+            TextPr: TableTextPr,
+            TableCellPr:
+            {
+                TableCellBorders:
+                {
+                    Right: TableBorder2,
+                    Top: TableBorder2,
+                    Bottom: TableBorder1,
+                    Left: TableBorder2
+                },
+                Shd: CellShd3
+            }
+        };
+
+        var TableLastRow =
+        {
+            TextPr: TableTextPr,
+            TableCellPr:
+            {
+                TableCellBorders:
+                {
+                    Top: TableBorder1,
+                    Bottom: TableBorder2,
+                    Right: TableBorder2,
+                    Left: TableBorder2
+                },
+                Shd: CellShd3
+            }
+        };
+
+        var TableFirstCol =
+        {
+            TextPr: TableTextPr,
+            TableCellPr:
+            {
+                Shd:
+                {
+                    Color:
+                    {
+                        r: 255,
+                        g: 255,
+                        b: 255
+                    }
+                },
+                TableCellBorders:
+                {
+                    Left: TableBorder2,
+                    Right: TableBorder1,
+                    Top: TableBorder2,
+                    Bottom: TableBorder2
+                }
+            },
+            ParaPr:
+            {
+                Jc: align_Right
+            }
+        };
+
+        var TableLastCol =
+        {
+            TextPr: TableTextPr,
+            TableCellPr:
+            {
+                Shd:
+                {
+                    Color:
+                    {
+                        r: 255,
+                        g: 255,
+                        b: 255
+                    }
+                },
+                TableCellBorders:
+                {
+                    Left: TableBorder1,
+                    Right: TableBorder2,
+                    Top: TableBorder2,
+                    Bottom: TableBorder2
+                }
+            }
+        };
+
+        var TableBand1Horz =
+        {
+            TextPr: TableTextPr1,
+            TableCellPr:
+            {
+                Shd: CellShd2
+            }
+        };
+        var TableBand1Vert =
+        {
+            TableCellPr:
+            {
+                Shd: CellShd2
+            }
+        };
+        var TableBand2Horz =
+        {
+            TextPr: TableTextPr1
+        };
+
+        var TableWholeTable =
+        {
+            TextPr: TableTextPr1
+        };
+
+        this.Set_UiPriority(99);
+        this.Set_ParaPr(ParaPr);
+        this.Set_TablePr(TablePr);
+        this.Set_TableFirstRow(TableFirstRow);
+        this.Set_TableLastRow(TableLastRow);
+        this.Set_TableFirstCol(TableFirstCol);
+        this.Set_TableLastCol(TableLastCol);
+        this.Set_TableBand1Horz(TableBand1Horz);
+        this.Set_TableBand2Horz(TableBand2Horz);
+        this.Set_TableBand1Vert(TableBand1Vert);
+        this.Set_TableWholeTable(TableWholeTable);
+    },
+    
     Create_Table_BorderedAndLined : function(oBorderFillUnifill, oHorBandUniFill, oVertBandUnifill,  oBorderUnifill)
     {
 		var CellShd1   = new CDocumentShd();
@@ -1934,13 +5153,13 @@ CStyle.prototype =
             TableStyleRowBandSize : 1,
             TableInd : 0,
 
-            TableCellMar :
-            {
-                Top    : new CTableMeasurement(tblwidth_Mm, 4.8 * g_dKoef_pt_to_mm),
-                Left   : new CTableMeasurement(tblwidth_Mm, 8.5 * g_dKoef_pt_to_mm),
-                Bottom : new CTableMeasurement(tblwidth_Mm, 4.8 * g_dKoef_pt_to_mm),
-                Right  : new CTableMeasurement(tblwidth_Mm, 8.5 * g_dKoef_pt_to_mm)
-            },
+            // TableCellMar :
+            // {
+            //     Top    : new CTableMeasurement(tblwidth_Mm, 4.8 * g_dKoef_pt_to_mm),
+            //     Left   : new CTableMeasurement(tblwidth_Mm, 8.5 * g_dKoef_pt_to_mm),
+            //     Bottom : new CTableMeasurement(tblwidth_Mm, 4.8 * g_dKoef_pt_to_mm),
+            //     Right  : new CTableMeasurement(tblwidth_Mm, 8.5 * g_dKoef_pt_to_mm)
+            // },
 
             TableBorders :
             {
@@ -2012,8 +5231,395 @@ CStyle.prototype =
         this.Set_TableBand2Horz(TableBand2Horz);
         this.Set_TableBand2Vert(TableBand2Vert);
 
-    },
+	},
+	
+	Create_Grid_Table_Light : function(unifill1, unifill2)
+    {
+		var CellShd1   = new CDocumentShd();
+		CellShd1.Value = c_oAscShdClear;
+		CellShd1.Unifill = unifill1;
+		var CellShd2   = new CDocumentShd();
+		CellShd2.Value = c_oAscShdClear;
+		CellShd2.Unifill = unifill2;
+        var TableTextPr =
+        {
+            RFonts   : {Ascii : {Name : "Arial", Index : -1}, HAnsi : {Name : "Arial", Index : -1}},
+            Color    : { r : 0x40, g : 0x40, b : 0x40 },
+            FontSize : 11
+        };
 
+        var ParaPr =
+        {
+            Spacing :
+            {
+                After    : 0,
+                Line     : 1,
+                LineRule : linerule_Auto
+            },
+
+            Borders :
+            {
+                Top :
+                {
+                    Color : { r : 0, g : 0, b : 0, Auto : true },
+                    Space : 0,
+                    Size  : 0,
+                    Value : border_None
+                },
+
+                Left :
+                {
+                    Color : { r : 0, g : 0, b : 0, Auto : true },
+                    Space : 0,
+                    Size  : 0,
+                    Value : border_None
+                },
+
+                Bottom :
+                {
+                    Color : { r : 0, g : 0, b : 0, Auto : true },
+                    Space : 0,
+                    Size  : 0,
+                    Value : border_None
+                },
+
+                Right :
+                {
+                    Color : { r : 0, g : 0, b : 0, Auto : true },
+                    Space : 0,
+                    Size  : 0,
+                    Value : border_None
+                },
+
+                Between :
+                {
+                    Color : { r : 0, g : 0, b : 0, Auto : true },
+                    Space : 0,
+                    Size  : 0,
+                    Value : border_None
+                }
+            }
+        };
+
+        var TextPr =
+        {
+            Color : { r : 0x40, g : 0x40, b : 0x40 }
+        };
+
+        var TableBorder1 =
+        {
+			Color : { r : 0, g : 0, b : 0 },
+            Value : border_Single,
+            Size  : 0.5 * g_dKoef_pt_to_mm,
+            Space : 0,
+			Unifill: CellShd2.Unifill
+        };
+
+        var TableBorder2 =
+        {
+			Color : { r : 0, g : 0, b : 0 },
+            Value : border_Single,
+            Size  : 1.5 * g_dKoef_pt_to_mm,
+            Space : 0,
+			Unifill: CellShd1.Unifill
+        };
+
+        var TablePr =
+        {
+            TableStyleColBandSize : 1,
+            TableStyleRowBandSize : 1,
+            TableInd : 0,
+
+            TableBorders :
+            {
+                Top     : TableBorder1,
+                Left    : TableBorder1,
+                Bottom  : TableBorder1,
+                Right   : TableBorder1,
+                InsideH : TableBorder1,
+                InsideV : TableBorder1
+            },
+
+            // TableCellMar :
+            // {
+            //     Top    : new CTableMeasurement(tblwidth_Mm, 4.8 * g_dKoef_pt_to_mm),
+            //     Left   : new CTableMeasurement(tblwidth_Mm, 8.5 * g_dKoef_pt_to_mm),
+            //     Bottom : new CTableMeasurement(tblwidth_Mm, 4.8 * g_dKoef_pt_to_mm),
+            //     Right  : new CTableMeasurement(tblwidth_Mm, 8.5 * g_dKoef_pt_to_mm)
+            // }
+        };
+
+        var TableFirstRow =
+        {
+            TextPr : TableTextPr,
+
+            TableCellPr :
+            {
+                TableCellBorders :
+                {
+                    Bottom : TableBorder2
+                }
+            }
+        };
+
+        var TableLastRow =
+        {
+            TextPr      : TableTextPr,
+            TableCellPr :
+            {
+                TableCellBorders :
+                {
+                    Top : TableBorder2
+                }
+            }
+        };
+
+        var TableFirstCol =
+        {
+            TextPr      : TableTextPr,
+            TableCellPr :
+            {
+                
+            }
+        };
+
+        var TableLastCol =
+        {
+            TextPr      : TableTextPr,
+            TableCellPr :
+            {
+                TableCellBorders :
+                {
+                    Left : TableBorder2
+                }
+            }
+        };
+
+        var TableBand1Horz =
+        {
+            TextPr : TableTextPr,
+            TableCellPr :
+            {
+                TableCellBorders :
+                {
+                    Top     : TableBorder1,
+                    Left    : TableBorder1,
+                    Bottom  : TableBorder1,
+                    Right   : TableBorder1,
+                    InsideH : TableBorder1,
+                    InsideV : TableBorder1
+                }
+            }
+        };
+
+        this.Set_UiPriority(99);
+        this.Set_ParaPr(ParaPr);
+        this.Set_TablePr(TablePr);
+        this.Set_TableFirstRow(TableFirstRow);
+        this.Set_TableLastRow(TableLastRow);
+        this.Set_TableFirstCol(TableFirstCol);
+        this.Set_TableLastCol(TableLastCol);
+        this.Set_TableBand1Horz(TableBand1Horz);
+
+	},
+	
+	Create_Grid_Table : function(unifill1, unifill2)
+    {
+		var TextColor1 = new CDocumentColor(0xF2, 0xF2, 0xF2, false);
+		var TextFont1  = { Name : "Arial", Index : -1 };
+		var TextSize1  = 11;
+
+		var CellShd1   = new CDocumentShd();
+		CellShd1.Value = c_oAscShdClear;
+		CellShd1.Unifill = unifill1;
+		var CellShd2   = new CDocumentShd();
+		CellShd2.Value = c_oAscShdClear;
+		CellShd2.Unifill = unifill2;
+        var TableTextPr =
+        {
+            RFonts   : {Ascii : {Name : "Arial", Index : -1}, HAnsi : {Name : "Arial", Index : -1}},
+            Color    : { r : 0x40, g : 0x40, b : 0x40 },
+            FontSize : 11
+        };
+
+        var ParaPr =
+        {
+            Spacing :
+            {
+                After    : 0,
+                Line     : 1,
+                LineRule : linerule_Auto
+            },
+
+            Borders :
+            {
+                Top :
+                {
+                    Color : { r : 0, g : 0, b : 0, Auto : true },
+                    Space : 0,
+                    Size  : 0,
+                    Value : border_None
+                },
+
+                Left :
+                {
+                    Color : { r : 0, g : 0, b : 0, Auto : true },
+                    Space : 0,
+                    Size  : 0,
+                    Value : border_None
+                },
+
+                Bottom :
+                {
+                    Color : { r : 0, g : 0, b : 0, Auto : true },
+                    Space : 0,
+                    Size  : 0,
+                    Value : border_None
+                },
+
+                Right :
+                {
+                    Color : { r : 0, g : 0, b : 0, Auto : true },
+                    Space : 0,
+                    Size  : 0,
+                    Value : border_None
+                },
+
+                Between :
+                {
+                    Color : { r : 0, g : 0, b : 0, Auto : true },
+                    Space : 0,
+                    Size  : 0,
+                    Value : border_None
+                }
+            }
+        };
+
+        var TextPr =
+        {
+            Color : { r : 0x40, g : 0x40, b : 0x40 }
+        };
+
+        var TableBorder1 =
+        {
+			Color : { r : 0, g : 0, b : 0 },
+            Value : border_Single,
+            Size  : 0.5 * g_dKoef_pt_to_mm,
+            Space : 0,
+			Unifill: CellShd2.Unifill
+        };
+
+        var TableBorder2 =
+        {
+			Color : { r : 0, g : 0, b : 0 },
+            Value : border_Single,
+            Size  : 1.5 * g_dKoef_pt_to_mm,
+            Space : 0,
+			Unifill: CellShd1.Unifill
+        };
+
+        var TablePr =
+        {
+            TableStyleColBandSize : 1,
+            TableStyleRowBandSize : 1,
+            TableInd : 0,
+
+            TableBorders :
+            {
+                // Top     : TableBorder1,
+                // Left    : TableBorder1,
+                // Bottom  : TableBorder1,
+                // Right   : TableBorder1,
+                // InsideH : TableBorder1,
+                // InsideV : TableBorder1
+            },
+
+            TableCellMar :
+            {
+                Top    : new CTableMeasurement(tblwidth_Mm, 4.8 * g_dKoef_pt_to_mm),
+                Left   : new CTableMeasurement(tblwidth_Mm, 8.5 * g_dKoef_pt_to_mm),
+                Bottom : new CTableMeasurement(tblwidth_Mm, 4.8 * g_dKoef_pt_to_mm),
+                Right  : new CTableMeasurement(tblwidth_Mm, 8.5 * g_dKoef_pt_to_mm)
+            }
+        };
+
+        var TableFirstRow =
+        {
+            TextPr : TableTextPr,
+
+            TableCellPr :
+            {
+                TableCellBorders :
+                {
+                    Bottom : TableBorder2
+                }
+            }
+        };
+
+        var TableLastRow =
+        {
+            TextPr      : TableTextPr,
+            TableCellPr :
+            {
+                TableCellBorders :
+                {
+                    Top : TableBorder2
+                }
+            }
+        };
+
+        var TableFirstCol =
+        {
+            TextPr      : TableTextPr,
+            TableCellPr :
+            {
+                TableCellBorders :
+                {
+                    Right : TableBorder2
+                }
+            }
+        };
+
+        var TableLastCol =
+        {
+            TextPr      : TableTextPr,
+            TableCellPr :
+            {
+                TableCellBorders :
+                {
+                    Left : TableBorder2
+                }
+            }
+        };
+
+        var TableBand1Horz =
+        {
+            TextPr : TableTextPr,
+            TableCellPr :
+            {
+                TableCellBorders :
+                {
+                    Top     : TableBorder1,
+                    Left    : TableBorder1,
+                    Bottom  : TableBorder1,
+                    Right   : TableBorder1,
+                    InsideH : TableBorder1,
+                    InsideV : TableBorder1
+                }
+            }
+        };
+
+        this.Set_UiPriority(99);
+        this.Set_ParaPr(ParaPr);
+        this.Set_TablePr(TablePr);
+        this.Set_TableFirstRow(TableFirstRow);
+        this.Set_TableLastRow(TableLastRow);
+        this.Set_TableFirstCol(TableFirstCol);
+        this.Set_TableLastCol(TableLastCol);
+        this.Set_TableBand1Horz(TableBand1Horz);
+
+    },
+    
     isEqual: function(cStyles)
     {
         var result = false;
@@ -3663,10 +7269,36 @@ function CStyles(bCreateDefault)
 		this.Default.Footer = this.Add(oFooter);
 		this.Add(oFooter.CreateLinkedCharacterStyle("Footer Char", this.Default.Character));
 
+        var fUF = AscCommonWord.CreateThemeUnifill;
+
 		// Создаем стиль для таблиц, который будет применяться к новым таблицам
 		var Style_TableGrid = new CStyle("Table Grid", this.Default.Table, null, styletype_Table);
 		Style_TableGrid.Create_TableGrid();
 		this.Default.TableGrid = this.Add(Style_TableGrid);
+
+        var Style_TableGrid = new CStyle("Table Grid", this.Default.Table, null, styletype_Table);
+		Style_TableGrid.Create_TableGrid_Light(fUF(EThemeColor.themecolorText1, 0x50, null));
+        this.Add(Style_TableGrid);
+
+        var Style_Plain_Table_1 = new CStyle("Plain Table 1", this.Default.Table, null, styletype_Table);
+		Style_Plain_Table_1.Create_Table_Plain_1(fUF(EThemeColor.themecolorText1, 0x50, null), fUF(EThemeColor.themecolorText1, 0x0D, null));
+        this.Add(Style_Plain_Table_1);
+      
+        var Style_Plain_Table_2 = new CStyle("Plain Table 2", this.Default.Table, null, styletype_Table);
+		Style_Plain_Table_2.Create_Table_Plain_2( fUF(EThemeColor.themecolorText1, null, null));
+        this.Add(Style_Plain_Table_2);
+
+        var Style_Plain_Table_3 = new CStyle("Plain Table 3", this.Default.Table, null, styletype_Table);
+		Style_Plain_Table_3.Create_Table_Plain_3(fUF(EThemeColor.themecolorText1, null, null), fUF(EThemeColor.themecolorText1, 0x0D, null));
+        this.Add(Style_Plain_Table_3);
+
+        var Style_Plain_Table_4 = new CStyle("Plain Table 4", this.Default.Table, null, styletype_Table);
+		Style_Plain_Table_4.Create_Table_Plain_4( fUF(EThemeColor.themecolorText1, 0x0D, null));
+        this.Add(Style_Plain_Table_4);
+        
+        var Style_Plain_Table_5 = new CStyle("Plain Table 5", this.Default.Table, null, styletype_Table);
+		Style_Plain_Table_5.Create_Table_Plain_5(fUF(EThemeColor.themecolorNone, null, null), fUF(EThemeColor.themecolorText1, 0x0D, null));
+        this.Add(Style_Plain_Table_5);
 
         /*
          // Создаем стандартный стиль для таблиц
@@ -3679,9 +7311,401 @@ function CStyles(bCreateDefault)
          Style_Table.Create_Table_ColorfulListAccent6();
          this.Add( Style_Table );
          */
+        
 
-        var fUF = AscCommonWord.CreateThemeUnifill;
-        // Стандартные стили таблиц
+        var Style_Table_Grid_1_Accent = new CStyle("Grid Table 1 Light", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_1_Accent.Create_Table_Grid_1(fUF(EThemeColor.themecolorText1, 0x95, null),  fUF(EThemeColor.themecolorText1, 0x67, null));
+		this.Add( Style_Table_Grid_1_Accent );
+
+		var Style_Table_Grid_1_Accent_1 = new CStyle("Grid Table 1 Light - Accent 1", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_1_Accent_1.Create_Table_Grid_1(fUF(EThemeColor.themecolorAccent1, 0x95, null), fUF(EThemeColor.themecolorAccent1, 0x67, null));
+		this.Add( Style_Table_Grid_1_Accent_1 );
+
+		var Style_Table_Grid_1_Accent_2 = new CStyle("Grid Table 1 Light - Accent 2", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_1_Accent_2.Create_Table_Grid_1(fUF(EThemeColor.themecolorAccent2, 0x95, null), fUF(EThemeColor.themecolorAccent2, 0x67, null));
+		this.Add( Style_Table_Grid_1_Accent_2 );
+
+		var Style_Table_Grid_1_Accent_3 = new CStyle("Grid Table 1 Light - Accent 3", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_1_Accent_3.Create_Table_Grid_1(fUF(EThemeColor.themecolorAccent3, 0x95, null), fUF(EThemeColor.themecolorAccent3, 0x67, null));
+		this.Add( Style_Table_Grid_1_Accent_3 );
+
+		var Style_Table_Grid_1_Accent_4 = new CStyle("Grid Table 1 Light - Accent 4", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_1_Accent_4.Create_Table_Grid_1(fUF(EThemeColor.themecolorAccent4, 0x95, null), fUF(EThemeColor.themecolorAccent4, 0x67, null));
+		this.Add( Style_Table_Grid_1_Accent_4 );
+
+		var Style_Table_Grid_1_Accent_5 = new CStyle("Grid Table 1 Light - Accent 5", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_1_Accent_5.Create_Table_Grid_1(fUF(EThemeColor.themecolorAccent5, 0x95, null), fUF(EThemeColor.themecolorAccent5, 0x67, null));
+		this.Add( Style_Table_Grid_1_Accent_5 );
+
+		var Style_Table_Grid_1_Accent_6 = new CStyle("Grid Table 1 Light - Accent 6", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_1_Accent_6.Create_Table_Grid_1(fUF(EThemeColor.themecolorAccent6, 0x95, null), fUF(EThemeColor.themecolorAccent6, 0x67, null));
+        this.Add( Style_Table_Grid_1_Accent_6 );
+
+		var Style_Table_Grid_Accent = new CStyle("Grid Table 2", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent.Create_Table_Grid_2(fUF(EThemeColor.themecolorText1, 0x95, null), fUF(EThemeColor.themecolorText1, 0x34, null));
+		this.Add( Style_Table_Grid_Accent);
+
+		var Style_Table_Grid_Accent_1 = new CStyle("Grid Table 2 - Accent 1", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_1.Create_Table_Grid_2(fUF(EThemeColor.themecolorAccent1, 0xEA, null), fUF(EThemeColor.themecolorAccent1, 0x34, null), fUF(EThemeColor.themecolorNone, null, null));
+		this.Add( Style_Table_Grid_Accent_1 );
+
+		var Style_Table_Grid_Accent_2 = new CStyle("Grid Table 2 - Accent 2", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_2.Create_Table_Grid_2(fUF(EThemeColor.themecolorAccent2, 0x97, null), fUF(EThemeColor.themecolorAccent2, 0x32, null),fUF(EThemeColor.themecolorNone, null, null));
+		this.Add( Style_Table_Grid_Accent_2 );
+
+		var Style_Table_Grid_Accent_3 = new CStyle("Grid Table 2 - Accent 3", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_3.Create_Table_Grid_2(fUF(EThemeColor.themecolorAccent3, 0xFE, null), fUF(EThemeColor.themecolorAccent3, 0x34, null), fUF(EThemeColor.themecolorNone, null, null));
+		this.Add( Style_Table_Grid_Accent_3 );
+
+		var Style_Table_Grid_Accent_4 = new CStyle("Grid Table 2 - Accent 4", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_4.Create_Table_Grid_2(fUF(EThemeColor.themecolorAccent4, 0x9A, null), fUF(EThemeColor.themecolorAccent4, 0x34, null), fUF(EThemeColor.themecolorNone, null, null));
+		this.Add( Style_Table_Grid_Accent_4 );
+
+		var Style_Table_Grid_Accent_5 = new CStyle("Grid Table 2 - Accent 5", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_5.Create_Table_Grid_2(fUF(EThemeColor.themecolorAccent5, null, null), fUF(EThemeColor.themecolorAccent5, 0x34, null), fUF(EThemeColor.themecolorNone, null, null));
+		this.Add( Style_Table_Grid_Accent_5 );
+
+		var Style_Table_Grid_Accent_6 = new CStyle("Grid Table 2 - Accent 6", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_6.Create_Table_Grid_2(fUF(EThemeColor.themecolorAccent6, null, null), fUF(EThemeColor.themecolorAccent6, 0x34, null), fUF(EThemeColor.themecolorNone, null, null));
+		this.Add( Style_Table_Grid_Accent_6 );
+
+		var Style_Table_Grid_Accent = new CStyle("Grid Table 3", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent.Create_Table_Grid_3(fUF(EThemeColor.themecolorText1, 0x95, null), fUF(EThemeColor.themecolorText1, 0x34, null), fUF(EThemeColor.themecolorNone, null, null));
+		this.Add( Style_Table_Grid_Accent);
+
+		var Style_Table_Grid_Accent_1 = new CStyle("Grid Table 3 - Accent 1", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_1.Create_Table_Grid_3(fUF(EThemeColor.themecolorAccent1, 0xEA, null), fUF(EThemeColor.themecolorAccent1, 0x34, null), fUF(EThemeColor.themecolorNone, null, null));
+		this.Add( Style_Table_Grid_Accent_1 );
+
+		var Style_Table_Grid_Accent_2 = new CStyle("Grid Table 3 - Accent 2", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_2.Create_Table_Grid_3(fUF(EThemeColor.themecolorAccent2, 0x97, null), fUF(EThemeColor.themecolorAccent2, 0x32, null), fUF(EThemeColor.themecolorNone, null, null));
+		this.Add( Style_Table_Grid_Accent_2 );
+
+		var Style_Table_Grid_Accent_3 = new CStyle("Grid Table 3 - Accent 3", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_3.Create_Table_Grid_3(fUF(EThemeColor.themecolorAccent3, 0xFE, null), fUF(EThemeColor.themecolorAccent3, 0x34, null), fUF(EThemeColor.themecolorNone, null, null));
+		this.Add( Style_Table_Grid_Accent_3 );
+
+		var Style_Table_Grid_Accent_4 = new CStyle("Grid Table 3 - Accent 4", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_4.Create_Table_Grid_3(fUF(EThemeColor.themecolorAccent4, 0x9A, null), fUF(EThemeColor.themecolorAccent4, 0x34, null), fUF(EThemeColor.themecolorNone, null, null));
+		this.Add( Style_Table_Grid_Accent_4 );
+
+		var Style_Table_Grid_Accent_5 = new CStyle("Grid Table 3 - Accent 5", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_5.Create_Table_Grid_3(fUF(EThemeColor.themecolorAccent5, null, null), fUF(EThemeColor.themecolorAccent5, 0x34, null), fUF(EThemeColor.themecolorNone, null, null));
+		this.Add( Style_Table_Grid_Accent_5 );
+
+		var Style_Table_Grid_Accent_6 = new CStyle("Grid Table 3 - Accent 6", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_6.Create_Table_Grid_3(fUF(EThemeColor.themecolorAccent6, null, null), fUF(EThemeColor.themecolorAccent6, 0x34, null), fUF(EThemeColor.themecolorNone, null, null));
+		this.Add( Style_Table_Grid_Accent_6 );
+
+		var Style_Table_Grid_Accent = new CStyle("Grid Table 4", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent.Create_Table_Grid_4(fUF(EThemeColor.themecolorText1, null, null), fUF(EThemeColor.themecolorText1, 0x34, null), fUF(EThemeColor.themecolorText1, 0x90, null));
+		this.Add( Style_Table_Grid_Accent);
+
+		var Style_Table_Grid_Accent_1 = new CStyle("Grid Table 4 - Accent 1", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_1.Create_Table_Grid_4(fUF(EThemeColor.themecolorAccent1, 0xEA, null), fUF(EThemeColor.themecolorAccent1, 0x32, null), fUF(EThemeColor.themecolorAccent1, 0x90, null));
+		this.Add( Style_Table_Grid_Accent_1 );
+
+		var Style_Table_Grid_Accent_2 = new CStyle("Grid Table 4 - Accent 2", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_2.Create_Table_Grid_4(fUF(EThemeColor.themecolorAccent2, 0x97, null), fUF(EThemeColor.themecolorAccent2, 0x32, null), fUF(EThemeColor.themecolorAccent2, 0x90, null));
+		this.Add( Style_Table_Grid_Accent_2 );
+
+		var Style_Table_Grid_Accent_3 = new CStyle("Grid Table 4 - Accent 3", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_3.Create_Table_Grid_4(fUF(EThemeColor.themecolorAccent3, 0xFE, null), fUF(EThemeColor.themecolorAccent3, 0x34, null), fUF(EThemeColor.themecolorAccent3, 0x90, null));
+		this.Add( Style_Table_Grid_Accent_3 );
+
+		var Style_Table_Grid_Accent_4 = new CStyle("Grid Table 4 - Accent 4", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_4.Create_Table_Grid_4(fUF(EThemeColor.themecolorAccent4, 0x9A, null), fUF(EThemeColor.themecolorAccent4, 0x34, null), fUF(EThemeColor.themecolorAccent4, 0x90, null));
+		this.Add( Style_Table_Grid_Accent_4 );
+
+		var Style_Table_Grid_Accent_5 = new CStyle("Grid Table 4 - Accent 5", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_5.Create_Table_Grid_4(fUF(EThemeColor.themecolorAccent5, null, null), fUF(EThemeColor.themecolorAccent5, 0x34, null), fUF(EThemeColor.themecolorAccent5, 0x90, null));
+		this.Add( Style_Table_Grid_Accent_5 );
+
+		var Style_Table_Grid_Accent_6 = new CStyle("Grid Table 4 - Accent 6", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_6.Create_Table_Grid_4(fUF(EThemeColor.themecolorAccent6, null, null), fUF(EThemeColor.themecolorAccent6, 0x34, null), fUF(EThemeColor.themecolorAccent6, 0x90, null));
+		this.Add( Style_Table_Grid_Accent_6 );
+        
+		var Style_Table_Grid_Accent = new CStyle("Grid Table 5 Dark", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent.Create_Table_Grid_5(fUF(EThemeColor.themecolorText1, null, null), fUF(EThemeColor.themecolorText1, 0x40, null), fUF(EThemeColor.themecolorLight1, null, null), fUF(EThemeColor.themecolorText1, 0x75, null));
+		this.Add( Style_Table_Grid_Accent);
+
+		var Style_Table_Grid_Accent_1 = new CStyle("Grid Table 5 Dark- Accent 1", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_1.Create_Table_Grid_5(fUF(EThemeColor.themecolorAccent1, null, null), fUF(EThemeColor.themecolorAccent1, 0x34, null), fUF(EThemeColor.themecolorLight1, null, null), fUF(EThemeColor.themecolorAccent1, 0x75, null));
+		this.Add( Style_Table_Grid_Accent_1 );
+
+		var Style_Table_Grid_Accent_2 = new CStyle("Grid Table 5 Dark - Accent 2", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_2.Create_Table_Grid_5(fUF(EThemeColor.themecolorAccent2, null, null), fUF(EThemeColor.themecolorAccent2, 0x32, null), fUF(EThemeColor.themecolorLight1, null, null), fUF(EThemeColor.themecolorAccent2, 0x75, null));
+		this.Add( Style_Table_Grid_Accent_2 );
+
+		var Style_Table_Grid_Accent_3 = new CStyle("Grid Table 5 Dark - Accent 3", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_3.Create_Table_Grid_5(fUF(EThemeColor.themecolorAccent3, null, null), fUF(EThemeColor.themecolorAccent3, 0x34, null), fUF(EThemeColor.themecolorLight1, null, null), fUF(EThemeColor.themecolorAccent3, 0x75, null));
+		this.Add( Style_Table_Grid_Accent_3 );
+
+		var Style_Table_Grid_Accent_4 = new CStyle("Grid Table 5 Dark- Accent 4", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_4.Create_Table_Grid_5(fUF(EThemeColor.themecolorAccent4, null, null), fUF(EThemeColor.themecolorAccent4, 0x34, null), fUF(EThemeColor.themecolorLight1, null, null), fUF(EThemeColor.themecolorAccent4, 0x75, null));
+		this.Add( Style_Table_Grid_Accent_4 );
+
+		var Style_Table_Grid_Accent_5 = new CStyle("Grid Table 5 Dark - Accent 5", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_5.Create_Table_Grid_5(fUF(EThemeColor.themecolorAccent5, null, null), fUF(EThemeColor.themecolorAccent5, 0x34, null), fUF(EThemeColor.themecolorLight1, null, null), fUF(EThemeColor.themecolorAccent5, 0x75, null));
+		this.Add( Style_Table_Grid_Accent_5 );
+
+		var Style_Table_Grid_Accent_6 = new CStyle("Grid Table 5 Dark - Accent 6", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_6.Create_Table_Grid_5(fUF(EThemeColor.themecolorAccent6, null, null), fUF(EThemeColor.themecolorAccent6, 0x34, null), fUF(EThemeColor.themecolorLight1, null, null), fUF(EThemeColor.themecolorAccent6, 0x75, null));
+		this.Add( Style_Table_Grid_Accent_6 );
+
+		var Style_Table_Grid_Accent = new CStyle("Grid Table 6 Colorful", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent.Create_Table_Grid_6(fUF(EThemeColor.themecolorText1, 0x80, null), fUF(EThemeColor.themecolorText1, 0x34, null), fUF(EThemeColor.themecolorText1, 0x80, 0x95));
+		this.Add( Style_Table_Grid_Accent);
+
+		var Style_Table_Grid_Accent_1 = new CStyle("Grid Table 6 Colorful - Accent 1", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_1.Create_Table_Grid_6(fUF(EThemeColor.themecolorAccent1, 0x80, null), fUF(EThemeColor.themecolorAccent1, 0x34, null), fUF(EThemeColor.themecolorAccent1, 0x80, 0x95));
+		this.Add( Style_Table_Grid_Accent_1 );
+
+		var Style_Table_Grid_Accent_2 = new CStyle("Grid Table 6 Colorful - Accent 2", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_2.Create_Table_Grid_6(fUF(EThemeColor.themecolorAccent2, 0x97, null), fUF(EThemeColor.themecolorAccent2, 0x32, null), fUF(EThemeColor.themecolorAccent2, 0x97, 0x95));
+		this.Add( Style_Table_Grid_Accent_2 );
+
+		var Style_Table_Grid_Accent_3 = new CStyle("Grid Table 6 Colorful - Accent 3", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_3.Create_Table_Grid_6(fUF(EThemeColor.themecolorAccent3, 0xFE, null), fUF(EThemeColor.themecolorAccent3, 0x34, null), fUF(EThemeColor.themecolorAccent3, 0xFE, 0x95));
+		this.Add( Style_Table_Grid_Accent_3 );
+
+		var Style_Table_Grid_Accent_4 = new CStyle("Grid Table 6 Colorful - Accent 4", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_4.Create_Table_Grid_6(fUF(EThemeColor.themecolorAccent4, 0x9A, null), fUF(EThemeColor.themecolorAccent4, 0x34, null), fUF(EThemeColor.themecolorAccent4, 0x9A, 0x95));
+		this.Add( Style_Table_Grid_Accent_4 );
+
+		var Style_Table_Grid_Accent_5 = new CStyle("Grid Table 6 Colorful - Accent 5", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_5.Create_Table_Grid_6(fUF(EThemeColor.themecolorAccent5, null, null), fUF(EThemeColor.themecolorAccent5, 0x34, null), fUF(EThemeColor.themecolorAccent5, null, 0x95));
+		this.Add( Style_Table_Grid_Accent_5 );
+
+		var Style_Table_Grid_Accent_6 = new CStyle("Grid Table 6 Colorful - Accent 6", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_6.Create_Table_Grid_6(fUF(EThemeColor.themecolorAccent6, null, null), fUF(EThemeColor.themecolorAccent6, 0x34, null),  fUF(EThemeColor.themecolorAccent5, null, 0x95));
+		this.Add( Style_Table_Grid_Accent_6 );
+
+		var Style_Table_Grid_Accent = new CStyle("Grid Table 7 Colorful", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent.Create_Table_Grid_7(fUF(EThemeColor.themecolorText1, 0x80, null), fUF(EThemeColor.themecolorText1, 0x0D, null), fUF(EThemeColor.themecolorLight1, null, null), fUF(EThemeColor.themecolorText1, 0x80, 0x95));
+		this.Add( Style_Table_Grid_Accent);
+
+		var Style_Table_Grid_Accent_1 = new CStyle("Grid Table 7 Colorful - Accent 1", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_1.Create_Table_Grid_7(fUF(EThemeColor.themecolorAccent1, 0x80, null), fUF(EThemeColor.themecolorAccent1, 0x34, null), fUF(EThemeColor.themecolorLight1, null, null), fUF(EThemeColor.themecolorAccent1, 0x80, 0x95));
+		this.Add( Style_Table_Grid_Accent_1 );
+
+		var Style_Table_Grid_Accent_2 = new CStyle("Grid Table 7 Colorful - Accent 2", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_2.Create_Table_Grid_7(fUF(EThemeColor.themecolorAccent2, 0x97, null), fUF(EThemeColor.themecolorAccent2, 0x32, null), fUF(EThemeColor.themecolorLight1, null, null), fUF(EThemeColor.themecolorAccent2, 0x97, 0x95));
+		this.Add( Style_Table_Grid_Accent_2 );
+
+		var Style_Table_Grid_Accent_3 = new CStyle("Grid Table 7 Colorful - Accent 3", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_3.Create_Table_Grid_7(fUF(EThemeColor.themecolorAccent3, 0xFE, null), fUF(EThemeColor.themecolorAccent3, 0x34, null), fUF(EThemeColor.themecolorLight1, null, null), fUF(EThemeColor.themecolorAccent3, 0xFE, 0x95));
+		this.Add( Style_Table_Grid_Accent_3 );
+
+		var Style_Table_Grid_Accent_4 = new CStyle("Grid Table 7 Colorful - Accent 4", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_4.Create_Table_Grid_7(fUF(EThemeColor.themecolorAccent4, 0x9A, null), fUF(EThemeColor.themecolorAccent4, 0x34, null), fUF(EThemeColor.themecolorLight1, null, null), fUF(EThemeColor.themecolorAccent4, 0x9A, 0x95));
+		this.Add( Style_Table_Grid_Accent_4 );
+
+		var Style_Table_Grid_Accent_5 = new CStyle("Grid Table 7 Colorful - Accent 5", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_5.Create_Table_Grid_7(fUF(EThemeColor.themecolorAccent5, 0x90, null), fUF(EThemeColor.themecolorAccent5, 0x34, null), fUF(EThemeColor.themecolorLight1, null, null), fUF(EThemeColor.themecolorAccent5, null, 0x95));
+		this.Add( Style_Table_Grid_Accent_5 );
+
+		var Style_Table_Grid_Accent_6 = new CStyle("Grid Table 7 Colorful - Accent 6", this.Default.Table, null, styletype_Table );
+		Style_Table_Grid_Accent_6.Create_Table_Grid_7(fUF(EThemeColor.themecolorAccent6, 0x90, null), fUF(EThemeColor.themecolorAccent6, 0x34, null), fUF(EThemeColor.themecolorLight1, null, null), fUF(EThemeColor.themecolorAccent6, null, 0x95));
+        this.Add( Style_Table_Grid_Accent_6 );
+
+        var Style_Table_List_1_Accent = new CStyle("List Table 1 Light", this.Default.Table, null, styletype_Table );
+		Style_Table_List_1_Accent.Create_Table_List_1(fUF(EThemeColor.themecolorText1, null, null),  fUF(EThemeColor.themecolorText1, 0x40, null), fUF(EThemeColor.themecolorNone, null, null));
+		this.Add( Style_Table_List_1_Accent );
+
+		var Style_Table_List_1_Accent_1 = new CStyle("List Table 1 Light - Accent 1", this.Default.Table, null, styletype_Table );
+		Style_Table_List_1_Accent_1.Create_Table_List_1(fUF(EThemeColor.themecolorAccent1, null, null), fUF(EThemeColor.themecolorAccent1, 0x40, null), fUF(EThemeColor.themecolorNone, null, null));
+		this.Add( Style_Table_List_1_Accent_1 );
+
+		var Style_Table_List_1_Accent_2 = new CStyle("List Table 1 Light - Accent 2", this.Default.Table, null, styletype_Table );
+		Style_Table_List_1_Accent_2.Create_Table_List_1(fUF(EThemeColor.themecolorAccent2, null, null), fUF(EThemeColor.themecolorAccent2, 0x40, null), fUF(EThemeColor.themecolorNone, null, null));
+		this.Add( Style_Table_List_1_Accent_2 );
+
+		var Style_Table_List_1_Accent_3 = new CStyle("List Table 1 Light - Accent 3", this.Default.Table, null, styletype_Table );
+		Style_Table_List_1_Accent_3.Create_Table_List_1(fUF(EThemeColor.themecolorAccent3, null, null), fUF(EThemeColor.themecolorAccent3, 0x40, null), fUF(EThemeColor.themecolorNone, null, null));
+		this.Add( Style_Table_List_1_Accent_3 );
+
+		var Style_Table_List_1_Accent_4 = new CStyle("List Table 1 Light - Accent 4", this.Default.Table, null, styletype_Table );
+		Style_Table_List_1_Accent_4.Create_Table_List_1(fUF(EThemeColor.themecolorAccent4, null, null), fUF(EThemeColor.themecolorAccent4, 0x40, null), fUF(EThemeColor.themecolorNone, null, null));
+		this.Add( Style_Table_List_1_Accent_4 );
+
+		var Style_Table_List_1_Accent_5 = new CStyle("List Table 1 Light - Accent 5", this.Default.Table, null, styletype_Table );
+		Style_Table_List_1_Accent_5.Create_Table_List_1(fUF(EThemeColor.themecolorAccent5, null, null), fUF(EThemeColor.themecolorAccent5, 0x40, null), fUF(EThemeColor.themecolorNone, null, null));
+		this.Add( Style_Table_List_1_Accent_5 );
+
+		var Style_Table_List_1_Accent_6 = new CStyle("List Table 1 Light - Accent 6", this.Default.Table, null, styletype_Table );
+		Style_Table_List_1_Accent_6.Create_Table_List_1(fUF(EThemeColor.themecolorAccent6, null, null), fUF(EThemeColor.themecolorAccent6, 0x40, null), fUF(EThemeColor.themecolorNone, null, null));
+        this.Add( Style_Table_List_1_Accent_6 );
+
+        var Style_Table_List_2_Accent = new CStyle("List Table 2", this.Default.Table, null, styletype_Table );
+		Style_Table_List_2_Accent.Create_Table_List_2(fUF(EThemeColor.themecolorText1, 0x90, null),  fUF(EThemeColor.themecolorText1, 0x40, null));
+		this.Add( Style_Table_List_2_Accent );
+
+		var Style_Table_List_2_Accent_1 = new CStyle("List Table 2 - Accent 1", this.Default.Table, null, styletype_Table );
+		Style_Table_List_2_Accent_1.Create_Table_List_2(fUF(EThemeColor.themecolorAccent1, 0x90, null), fUF(EThemeColor.themecolorAccent1, 0x40, null));
+		this.Add( Style_Table_List_2_Accent_1 );
+
+		var Style_Table_List_2_Accent_2 = new CStyle("List Table 2 - Accent 2", this.Default.Table, null, styletype_Table );
+		Style_Table_List_2_Accent_2.Create_Table_List_2(fUF(EThemeColor.themecolorAccent2, 0x90, null), fUF(EThemeColor.themecolorAccent2, 0x40, null));
+		this.Add( Style_Table_List_2_Accent_2 );
+
+		var Style_Table_List_2_Accent_3 = new CStyle("List Table 2 - Accent 3", this.Default.Table, null, styletype_Table );
+		Style_Table_List_2_Accent_3.Create_Table_List_2(fUF(EThemeColor.themecolorAccent3, 0x90, null), fUF(EThemeColor.themecolorAccent3, 0x40, null));
+		this.Add( Style_Table_List_2_Accent_3 );
+
+		var Style_Table_List_2_Accent_4 = new CStyle("List Table 2 - Accent 4", this.Default.Table, null, styletype_Table );
+		Style_Table_List_2_Accent_4.Create_Table_List_2(fUF(EThemeColor.themecolorAccent4, 0x90, null), fUF(EThemeColor.themecolorAccent4, 0x40, null));
+		this.Add( Style_Table_List_2_Accent_4 );
+
+		var Style_Table_List_2_Accent_5 = new CStyle("List Table 2 - Accent 5", this.Default.Table, null, styletype_Table );
+		Style_Table_List_2_Accent_5.Create_Table_List_2(fUF(EThemeColor.themecolorAccent5, 0x90, null), fUF(EThemeColor.themecolorAccent5, 0x40, null));
+		this.Add( Style_Table_List_2_Accent_5 );
+
+		var Style_Table_List_2_Accent_6 = new CStyle("List Table 2 - Accent 6", this.Default.Table, null, styletype_Table );
+		Style_Table_List_2_Accent_6.Create_Table_List_2(fUF(EThemeColor.themecolorAccent6, 0x90, null), fUF(EThemeColor.themecolorAccent6, 0x40, null));
+        this.Add( Style_Table_List_2_Accent_6 );
+
+        var Style_Table_List_3_Accent = new CStyle("List Table 3", this.Default.Table, null, styletype_Table );
+		Style_Table_List_3_Accent.Create_Table_List_3(fUF(EThemeColor.themecolorText1, null, null),  fUF(EThemeColor.themecolorText1, 0x26, null));
+		this.Add( Style_Table_List_3_Accent );
+
+		var Style_Table_List_3_Accent_1 = new CStyle("List Table 3 - Accent 1", this.Default.Table, null, styletype_Table );
+		Style_Table_List_3_Accent_1.Create_Table_List_3(fUF(EThemeColor.themecolorAccent1, null, null), fUF(EThemeColor.themecolorAccent1, 0x67, null));
+		this.Add( Style_Table_List_3_Accent_1 );
+
+		var Style_Table_List_3_Accent_2 = new CStyle("List Table 3 - Accent 2", this.Default.Table, null, styletype_Table );
+		Style_Table_List_3_Accent_2.Create_Table_List_3(fUF(EThemeColor.themecolorAccent2, 0x97, null), fUF(EThemeColor.themecolorAccent2, 0x67, null));
+		this.Add( Style_Table_List_3_Accent_2 );
+
+		var Style_Table_List_3_Accent_3 = new CStyle("List Table 3 - Accent 3", this.Default.Table, null, styletype_Table );
+		Style_Table_List_3_Accent_3.Create_Table_List_3(fUF(EThemeColor.themecolorAccent3, 0x98, null), fUF(EThemeColor.themecolorAccent3, 0x67, null));
+		this.Add( Style_Table_List_3_Accent_3 );
+
+		var Style_Table_List_3_Accent_4 = new CStyle("List Table 3 - Accent 4", this.Default.Table, null, styletype_Table );
+		Style_Table_List_3_Accent_4.Create_Table_List_3(fUF(EThemeColor.themecolorAccent4, 0x9A, null), fUF(EThemeColor.themecolorAccent4, 0x67, null));
+		this.Add( Style_Table_List_3_Accent_4 );
+
+		var Style_Table_List_3_Accent_5 = new CStyle("List Table 3 - Accent 5", this.Default.Table, null, styletype_Table );
+		Style_Table_List_3_Accent_5.Create_Table_List_3(fUF(EThemeColor.themecolorAccent5, 0x9A, null), fUF(EThemeColor.themecolorAccent5, 0x67, null));
+		this.Add( Style_Table_List_3_Accent_5 );
+
+		var Style_Table_List_3_Accent_6 = new CStyle("List Table 3 - Accent 6", this.Default.Table, null, styletype_Table );
+		Style_Table_List_3_Accent_6.Create_Table_List_3(fUF(EThemeColor.themecolorAccent6, 0x98, null), fUF(EThemeColor.themecolorAccent6, 0x67, null));
+        this.Add( Style_Table_List_3_Accent_6 );
+
+        var Style_Table_List_4_Accent = new CStyle("List Table 4", this.Default.Table, null, styletype_Table );
+		Style_Table_List_4_Accent.Create_Table_List_4(fUF(EThemeColor.themecolorText1, null, null),  fUF(EThemeColor.themecolorText1, 0x40, null), fUF(EThemeColor.themecolorText1, null, null));
+		this.Add( Style_Table_List_4_Accent );
+
+		var Style_Table_List_4_Accent_1 = new CStyle("List Table 4 - Accent 1", this.Default.Table, null, styletype_Table );
+		Style_Table_List_4_Accent_1.Create_Table_List_4(fUF(EThemeColor.themecolorAccent1, null, null), fUF(EThemeColor.themecolorAccent1, 0x40, null), fUF(EThemeColor.themecolorAccent1, 0x90, null));
+		this.Add( Style_Table_List_4_Accent_1 );
+
+		var Style_Table_List_4_Accent_2 = new CStyle("List Table 4 - Accent 2", this.Default.Table, null, styletype_Table );
+		Style_Table_List_4_Accent_2.Create_Table_List_4(fUF(EThemeColor.themecolorAccent2, null, null), fUF(EThemeColor.themecolorAccent2, 0x40, null), fUF(EThemeColor.themecolorAccent2, 0x90, null));
+		this.Add( Style_Table_List_4_Accent_2 );
+
+		var Style_Table_List_4_Accent_3 = new CStyle("List Table 4 - Accent 3", this.Default.Table, null, styletype_Table );
+		Style_Table_List_4_Accent_3.Create_Table_List_4(fUF(EThemeColor.themecolorAccent3, null, null), fUF(EThemeColor.themecolorAccent3, 0x40, null), fUF(EThemeColor.themecolorAccent3, 0x90, null));
+		this.Add( Style_Table_List_4_Accent_3 );
+
+		var Style_Table_List_4_Accent_4 = new CStyle("List Table 4 - Accent 4", this.Default.Table, null, styletype_Table );
+		Style_Table_List_4_Accent_4.Create_Table_List_4(fUF(EThemeColor.themecolorAccent4, null, null), fUF(EThemeColor.themecolorAccent4, 0x40, null), fUF(EThemeColor.themecolorAccent4, 0x90, null));
+		this.Add( Style_Table_List_4_Accent_4 );
+
+		var Style_Table_List_4_Accent_5 = new CStyle("List Table 4 - Accent 5", this.Default.Table, null, styletype_Table );
+		Style_Table_List_4_Accent_5.Create_Table_List_4(fUF(EThemeColor.themecolorAccent5, null, null), fUF(EThemeColor.themecolorAccent5, 0x40, null), fUF(EThemeColor.themecolorAccent5, 0x90, null));
+		this.Add( Style_Table_List_4_Accent_5 );
+
+		var Style_Table_List_4_Accent_6 = new CStyle("List Table 4 - Accent 6", this.Default.Table, null, styletype_Table );
+		Style_Table_List_4_Accent_6.Create_Table_List_4(fUF(EThemeColor.themecolorAccent6, null, null), fUF(EThemeColor.themecolorAccent6, 0x40, null), fUF(EThemeColor.themecolorAccent6, 0x90, null));
+        this.Add( Style_Table_List_4_Accent_6 );
+
+        var Style_Table_List_5_Accent = new CStyle("List Table 5 Dark", this.Default.Table, null, styletype_Table );
+		Style_Table_List_5_Accent.Create_Table_List_5(fUF(EThemeColor.themecolorText1, 0x80, null), fUF(EThemeColor.themecolorLight1, null, null));
+		this.Add( Style_Table_List_5_Accent );
+
+		var Style_Table_List_5_Accent_1 = new CStyle("List Table 5 Dark - Accent 1", this.Default.Table, null, styletype_Table );
+		Style_Table_List_5_Accent_1.Create_Table_List_5(fUF(EThemeColor.themecolorAccent1, null, null), fUF(EThemeColor.themecolorLight1, null, null));
+		this.Add( Style_Table_List_5_Accent_1 );
+
+		var Style_Table_List_5_Accent_2 = new CStyle("List Table 5 Dark - Accent 2", this.Default.Table, null, styletype_Table );
+		Style_Table_List_5_Accent_2.Create_Table_List_5(fUF(EThemeColor.themecolorAccent2, 0x97, null), fUF(EThemeColor.themecolorLight1, null, null));
+		this.Add( Style_Table_List_5_Accent_2 );
+
+		var Style_Table_List_5_Accent_3 = new CStyle("List Table 5 Dark - Accent 3", this.Default.Table, null, styletype_Table );
+		Style_Table_List_5_Accent_3.Create_Table_List_5(fUF(EThemeColor.themecolorAccent3, 0x98, null), fUF(EThemeColor.themecolorLight1, null, null));
+		this.Add( Style_Table_List_5_Accent_3 );
+
+		var Style_Table_List_5_Accent_4 = new CStyle("List Table 5 Dark - Accent 4", this.Default.Table, null, styletype_Table );
+		Style_Table_List_5_Accent_4.Create_Table_List_5(fUF(EThemeColor.themecolorAccent4, 0x9A, null), fUF(EThemeColor.themecolorLight1, null, null));
+		this.Add( Style_Table_List_5_Accent_4 );
+
+		var Style_Table_List_5_Accent_5 = new CStyle("List Table 5 Dark - Accent 5", this.Default.Table, null, styletype_Table );
+		Style_Table_List_5_Accent_5.Create_Table_List_5(fUF(EThemeColor.themecolorAccent5, 0x9A, null), fUF(EThemeColor.themecolorLight1, null, null));
+		this.Add( Style_Table_List_5_Accent_5 );
+
+		var Style_Table_List_5_Accent_6 = new CStyle("List Table 5 Dark - Accent 6", this.Default.Table, null, styletype_Table );
+		Style_Table_List_5_Accent_6.Create_Table_List_5(fUF(EThemeColor.themecolorAccent6, 0x98, null), fUF(EThemeColor.themecolorLight1, null, null));
+        this.Add( Style_Table_List_5_Accent_6 );
+
+        var Style_Table_List_6_Accent = new CStyle("List Table 6 Colorful", this.Default.Table, null, styletype_Table );
+		Style_Table_List_6_Accent.Create_Table_List_6(fUF(EThemeColor.themecolorText1, 0x80, null),  fUF(EThemeColor.themecolorText1, 0x40, null), fUF(EThemeColor.themecolorText1, null, null));
+		this.Add( Style_Table_List_6_Accent );
+
+		var Style_Table_List_6_Accent_1 = new CStyle("List Table 6 Colorful - Accent 1", this.Default.Table, null, styletype_Table );
+		Style_Table_List_6_Accent_1.Create_Table_List_6(fUF(EThemeColor.themecolorAccent1, null, null), fUF(EThemeColor.themecolorAccent1, 0x40, null), fUF(EThemeColor.themecolorAccent1, null, 0x95));
+		this.Add( Style_Table_List_6_Accent_1 );
+
+		var Style_Table_List_6_Accent_2 = new CStyle("List Table 6 Colorful - Accent 2", this.Default.Table, null, styletype_Table );
+		Style_Table_List_6_Accent_2.Create_Table_List_6(fUF(EThemeColor.themecolorAccent2, 0x97, null), fUF(EThemeColor.themecolorAccent2, 0x40, null), fUF(EThemeColor.themecolorAccent2, 0x97, 0x95));
+		this.Add( Style_Table_List_6_Accent_2 );
+
+		var Style_Table_List_6_Accent_3 = new CStyle("List Table 6 Colorful - Accent 3", this.Default.Table, null, styletype_Table );
+		Style_Table_List_6_Accent_3.Create_Table_List_6(fUF(EThemeColor.themecolorAccent3, 0x98, null), fUF(EThemeColor.themecolorAccent3, 0x40, null), fUF(EThemeColor.themecolorAccent3, 0x98, 0x95));
+		this.Add( Style_Table_List_6_Accent_3 );
+
+		var Style_Table_List_6_Accent_4 = new CStyle("List Table 6 Colorful - Accent 4", this.Default.Table, null, styletype_Table );
+		Style_Table_List_6_Accent_4.Create_Table_List_6(fUF(EThemeColor.themecolorAccent4, 0x9A, null), fUF(EThemeColor.themecolorAccent4, 0x40, null), fUF(EThemeColor.themecolorAccent4, 0x9A, 0x95));
+		this.Add( Style_Table_List_6_Accent_4 );
+
+		var Style_Table_List_6_Accent_5 = new CStyle("List Table 6 Colorful - Accent 5", this.Default.Table, null, styletype_Table );
+		Style_Table_List_6_Accent_5.Create_Table_List_6(fUF(EThemeColor.themecolorAccent5, 0x9A, null), fUF(EThemeColor.themecolorAccent5, 0x40, null), fUF(EThemeColor.themecolorAccent5, 0x9A, 0x95));
+		this.Add( Style_Table_List_6_Accent_5 );
+
+		var Style_Table_List_6_Accent_6 = new CStyle("List Table 6 Colorful - Accent 6", this.Default.Table, null, styletype_Table );
+		Style_Table_List_6_Accent_6.Create_Table_List_6(fUF(EThemeColor.themecolorAccent6, 0x98, null), fUF(EThemeColor.themecolorAccent6, 0x40, null), fUF(EThemeColor.themecolorAccent6, 0x98, 0x95));
+        this.Add( Style_Table_List_6_Accent_6 );
+
+        var Style_Table_List_7_Accent = new CStyle("List Table 7 Colorful", this.Default.Table, null, styletype_Table );
+		Style_Table_List_7_Accent.Create_Table_List_7(fUF(EThemeColor.themecolorText1, 0x80, null),  fUF(EThemeColor.themecolorText1, 0x40, null), fUF(EThemeColor.themecolorLight1, null, null), fUF(EThemeColor.themecolorText1, 0x80, 0x95));
+		this.Add( Style_Table_List_7_Accent );
+
+		var Style_Table_List_7_Accent_1 = new CStyle("List Table 7 Colorful - Accent 1", this.Default.Table, null, styletype_Table );
+		Style_Table_List_7_Accent_1.Create_Table_List_7(fUF(EThemeColor.themecolorAccent1, null, null), fUF(EThemeColor.themecolorAccent1, 0x40, null), fUF(EThemeColor.themecolorLight1, null, null), fUF(EThemeColor.themecolorAccent1, null, 0x95));
+		this.Add( Style_Table_List_7_Accent_1 );
+
+		var Style_Table_List_7_Accent_2 = new CStyle("List Table 7 Colorful - Accent 2", this.Default.Table, null, styletype_Table );
+		Style_Table_List_7_Accent_2.Create_Table_List_7(fUF(EThemeColor.themecolorAccent2, 0x97, null), fUF(EThemeColor.themecolorAccent2, 0x40, null), fUF(EThemeColor.themecolorLight1, null, null), fUF(EThemeColor.themecolorAccent2, 0x97, 0x95));
+		this.Add( Style_Table_List_7_Accent_2 );
+
+		var Style_Table_List_7_Accent_3 = new CStyle("List Table 7 Colorful - Accent 3", this.Default.Table, null, styletype_Table );
+		Style_Table_List_7_Accent_3.Create_Table_List_7(fUF(EThemeColor.themecolorAccent3, 0x98, null), fUF(EThemeColor.themecolorAccent3, 0x40, null), fUF(EThemeColor.themecolorLight1, null, null), fUF(EThemeColor.themecolorAccent3, 0x98, 0x95));
+		this.Add( Style_Table_List_7_Accent_3 );
+
+		var Style_Table_List_7_Accent_4 = new CStyle("List Table 7 Colorful - Accent 4", this.Default.Table, null, styletype_Table );
+		Style_Table_List_7_Accent_4.Create_Table_List_7(fUF(EThemeColor.themecolorAccent4, 0x9A, null), fUF(EThemeColor.themecolorAccent4, 0x40, null), fUF(EThemeColor.themecolorLight1, null, null), fUF(EThemeColor.themecolorAccent4, 0x9A, 0x95));
+		this.Add( Style_Table_List_7_Accent_4 );
+
+		var Style_Table_List_7_Accent_5 = new CStyle("List Table 7 Colorful - Accent 5", this.Default.Table, null, styletype_Table );
+		Style_Table_List_7_Accent_5.Create_Table_List_7(fUF(EThemeColor.themecolorAccent5, 0x9A, null), fUF(EThemeColor.themecolorAccent5, 0x40, null), fUF(EThemeColor.themecolorLight1, null, null), fUF(EThemeColor.themecolorAccent5, 0x9A, 0x95));
+		this.Add( Style_Table_List_7_Accent_5 );
+
+		var Style_Table_List_7_Accent_6 = new CStyle("List Table 7 Colorful - Accent 6", this.Default.Table, null, styletype_Table );
+		Style_Table_List_7_Accent_6.Create_Table_List_7(fUF(EThemeColor.themecolorAccent6, 0x98, null), fUF(EThemeColor.themecolorAccent6, 0x40, null), fUF(EThemeColor.themecolorLight1, null, null), fUF(EThemeColor.themecolorAccent6, 0x98, 0x95));
+        this.Add( Style_Table_List_7_Accent_6 );
+
+         // Стандартные стили таблиц
 		var Style_Table_Lined_Accent = new CStyle("Lined - Accent", this.Default.Table, null, styletype_Table );
 		Style_Table_Lined_Accent.Create_Table_Lined(fUF(EThemeColor.themecolorText1, 0x80, null), fUF(EThemeColor.themecolorText1, 0x0D, null));
 		this.Add( Style_Table_Lined_Accent );
@@ -3710,38 +7734,7 @@ function CStyles(bCreateDefault)
 		Style_Table_Lined_Accent6.Create_Table_Lined(fUF(EThemeColor.themecolorAccent6, null, null), fUF(EThemeColor.themecolorAccent6, 0x34, null));
 		this.Add( Style_Table_Lined_Accent6 );
 
-
-
-		var Style_Table_Bordered_Accent = new CStyle("Bordered - Accent", this.Default.Table, null, styletype_Table );
-		Style_Table_Bordered_Accent.Create_Table_Bordered(fUF(EThemeColor.themecolorText1, 0x80, null),  fUF(EThemeColor.themecolorText1, 0x26, null));
-		this.Add( Style_Table_Bordered_Accent );
-
-		var Style_Table_Bordered_Accent_1 = new CStyle("Bordered - Accent 1", this.Default.Table, null, styletype_Table );
-		Style_Table_Bordered_Accent_1.Create_Table_Bordered(fUF(EThemeColor.themecolorAccent1, null, null), fUF(EThemeColor.themecolorAccent1, 0x67, null));
-		this.Add( Style_Table_Bordered_Accent_1 );
-
-		var Style_Table_Bordered_Accent_2 = new CStyle("Bordered - Accent 2", this.Default.Table, null, styletype_Table );
-		Style_Table_Bordered_Accent_2.Create_Table_Bordered(fUF(EThemeColor.themecolorAccent2, 0x97, null), fUF(EThemeColor.themecolorAccent2, 0x67, null));
-		this.Add( Style_Table_Bordered_Accent_2 );
-
-		var Style_Table_Bordered_Accent_3 = new CStyle("Bordered - Accent 3", this.Default.Table, null, styletype_Table );
-		Style_Table_Bordered_Accent_3.Create_Table_Bordered(fUF(EThemeColor.themecolorAccent3, 0x98, null), fUF(EThemeColor.themecolorAccent3, 0x67, null));
-		this.Add( Style_Table_Bordered_Accent_3 );
-
-		var Style_Table_Bordered_Accent_4 = new CStyle("Bordered - Accent 4", this.Default.Table, null, styletype_Table );
-		Style_Table_Bordered_Accent_4.Create_Table_Bordered(fUF(EThemeColor.themecolorAccent4, 0x9A, null), fUF(EThemeColor.themecolorAccent4, 0x67, null));
-		this.Add( Style_Table_Bordered_Accent_4 );
-
-		var Style_Table_Bordered_Accent_5 = new CStyle("Bordered - Accent 5", this.Default.Table, null, styletype_Table );
-		Style_Table_Bordered_Accent_5.Create_Table_Bordered(fUF(EThemeColor.themecolorAccent5, 0x9A, null), fUF(EThemeColor.themecolorAccent5, 0x67, null));
-		this.Add( Style_Table_Bordered_Accent_5 );
-
-		var Style_Table_Bordered_Accent_6 = new CStyle("Bordered - Accent 6", this.Default.Table, null, styletype_Table );
-		Style_Table_Bordered_Accent_6.Create_Table_Bordered(fUF(EThemeColor.themecolorAccent6, 0x98, null), fUF(EThemeColor.themecolorAccent6, 0x67, null));
-		this.Add( Style_Table_Bordered_Accent_6 );
-
-
-		var Style_Table_BorderedLined_Accent0 = new CStyle("Bordered & Lined - Accent", this.Default.Table, null, styletype_Table );
+        var Style_Table_BorderedLined_Accent0 = new CStyle("Bordered & Lined - Accent", this.Default.Table, null, styletype_Table );
 		Style_Table_BorderedLined_Accent0.Create_Table_BorderedAndLined(fUF(EThemeColor.themecolorText1, 0x80, null), fUF(EThemeColor.themecolorText1, 0x0D, null), fUF(EThemeColor.themecolorText1, 0x0D, null), fUF(EThemeColor.themecolorText1, 0xA6, null));
 		this.Add( Style_Table_BorderedLined_Accent0 );
 
@@ -3767,8 +7760,35 @@ function CStyles(bCreateDefault)
 
         var Style_Table_BorderedLined_Accent6 = new CStyle("Bordered & Lined - Accent 6", this.Default.Table, null, styletype_Table );
         Style_Table_BorderedLined_Accent6.Create_Table_BorderedAndLined(fUF(EThemeColor.themecolorAccent6, null, null), fUF(EThemeColor.themecolorAccent6, 0x34, null), fUF(EThemeColor.themecolorAccent6, 0x34, null), fUF(EThemeColor.themecolorAccent6, null, 0x95));
-        this.Add( Style_Table_BorderedLined_Accent6 );
+		this.Add( Style_Table_BorderedLined_Accent6 );
+		
+		var Style_Table_Bordered_Accent = new CStyle("Bordered", this.Default.Table, null, styletype_Table );
+		Style_Table_Bordered_Accent.Create_Grid_Table_Light(fUF(EThemeColor.themecolorText1, 0x80, null),  fUF(EThemeColor.themecolorText1, 0x26, null));
+		this.Add( Style_Table_Bordered_Accent );
 
+		var Style_Table_Bordered_Accent_1 = new CStyle("Bordered - Accent 1", this.Default.Table, null, styletype_Table );
+		Style_Table_Bordered_Accent_1.Create_Grid_Table_Light(fUF(EThemeColor.themecolorAccent1, null, null), fUF(EThemeColor.themecolorAccent1, 0x67, null));
+		this.Add( Style_Table_Bordered_Accent_1 );
+
+		var Style_Table_Bordered_Accent_2 = new CStyle("Bordered - Accent 2", this.Default.Table, null, styletype_Table );
+		Style_Table_Bordered_Accent_2.Create_Grid_Table_Light(fUF(EThemeColor.themecolorAccent2, 0x97, null), fUF(EThemeColor.themecolorAccent2, 0x67, null));
+		this.Add( Style_Table_Bordered_Accent_2 );
+
+		var Style_Table_Bordered_Accent_3 = new CStyle("Bordered - Accent 3", this.Default.Table, null, styletype_Table );
+		Style_Table_Bordered_Accent_3.Create_Grid_Table_Light(fUF(EThemeColor.themecolorAccent3, 0x98, null), fUF(EThemeColor.themecolorAccent3, 0x67, null));
+		this.Add( Style_Table_Bordered_Accent_3 );
+
+		var Style_Table_Bordered_Accent_4 = new CStyle("Bordered - Accent 4", this.Default.Table, null, styletype_Table );
+		Style_Table_Bordered_Accent_4.Create_Grid_Table_Light(fUF(EThemeColor.themecolorAccent4, 0x9A, null), fUF(EThemeColor.themecolorAccent4, 0x67, null));
+		this.Add( Style_Table_Bordered_Accent_4 );
+
+		var Style_Table_Bordered_Accent_5 = new CStyle("Bordered - Accent 5", this.Default.Table, null, styletype_Table );
+		Style_Table_Bordered_Accent_5.Create_Grid_Table_Light(fUF(EThemeColor.themecolorAccent5, 0x9A, null), fUF(EThemeColor.themecolorAccent5, 0x67, null));
+		this.Add( Style_Table_Bordered_Accent_5 );
+
+		var Style_Table_Bordered_Accent_6 = new CStyle("Bordered - Accent 6", this.Default.Table, null, styletype_Table );
+		Style_Table_Bordered_Accent_6.Create_Grid_Table_Light(fUF(EThemeColor.themecolorAccent6, 0x98, null), fUF(EThemeColor.themecolorAccent6, 0x67, null));
+		this.Add( Style_Table_Bordered_Accent_6 );
 
         // Создаем стиль гиперссылки
         var oHyperlink = new CStyle("Hyperlink", null, null, styletype_Character );
@@ -4581,7 +8601,7 @@ CStyles.prototype =
         if (null != this.LogicDocument && undefined !== this.LogicDocument)
         {
             // Данный стиль может быть базовым для других стилей, поэтому нам нужно пересчитать все параграфы, не только у
-            // которых выставлен данный стиль, но и у которых выставлен стиль, для которого данный будет базовым (в любом поколении).
+            // которых выставлен данный стиль, но и у которых выставлен стиль, для которого данный будет базовым (в любом поколе��ии).
 
             this.LogicDocument.Add_ChangedStyle(this.private_GetAllBasedStylesId(StyleId));
         }
