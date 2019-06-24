@@ -7276,9 +7276,9 @@ function CStyles(bCreateDefault)
 		Style_TableGrid.Create_TableGrid();
 		this.Default.TableGrid = this.Add(Style_TableGrid);
 
-        var Style_TableGrid = new CStyle("Table Grid", this.Default.Table, null, styletype_Table);
-		Style_TableGrid.Create_TableGrid_Light(fUF(EThemeColor.themecolorText1, 0x50, null));
-        this.Add(Style_TableGrid);
+        var Style_TableGridLight = new CStyle("Table Grid Light", this.Default.Table, null, styletype_Table);
+		Style_TableGridLight.Create_TableGrid_Light(fUF(EThemeColor.themecolorText1, 0x50, null));
+        this.Add(Style_TableGridLight);
 
         var Style_Plain_Table_1 = new CStyle("Plain Table 1", this.Default.Table, null, styletype_Table);
 		Style_Plain_Table_1.Create_Table_Plain_1(fUF(EThemeColor.themecolorText1, 0x50, null), fUF(EThemeColor.themecolorText1, 0x0D, null));
