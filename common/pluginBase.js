@@ -121,6 +121,7 @@
 							}
 							catch (err)
 							{
+                                window.Asc.plugin.translateManager = {};
 							}
 						}
 					};
