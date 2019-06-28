@@ -8436,7 +8436,8 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.asc_AddTableOfContents = function(sHeading, oPr)
 	{
-		AscFonts.FontPickerByCharacter.checkText(sHeading, this, function() {
+        var sReplacementText = AscCommon.translateManager.getValue("No table of contents entries found.");
+		AscFonts.FontPickerByCharacter.checkText(sHeading + sReplacementText, this, function() {
 
 			var oLogicDocument = this.WordControl.m_oLogicDocument;
 			if (!oLogicDocument)
