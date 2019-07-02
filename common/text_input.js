@@ -776,7 +776,10 @@
 					codes.push(iter.value());
 				}
 
-				this.apiInputText(codes);
+				if (codes.length > 0)
+				{
+                    this.apiInputText(codes);
+                }
 				this.TextBeforeComposition = this.Text;
 			}
 
