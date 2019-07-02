@@ -7467,9 +7467,17 @@ CDocumentContent.prototype.CanAddComment = function()
 	if (true === this.ApplyToAll)
 	{
 		if (this.Content.length > 1)
+		{
 			return true;
+		}
 		else
-			return this.Content[0].CanAddComment();
+		{
+			var oElement = this.Content[0];
+			oElement.Set_ApplyToAll(true);
+			var isCanAdd = oElement.CanAddComment();
+			oElement.Set_ApplyToAll(false);
+			return isCanAdd;
+		}
 	}
 	else
 	{

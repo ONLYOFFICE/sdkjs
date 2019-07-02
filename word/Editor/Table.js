@@ -4489,12 +4489,20 @@ CTable.prototype.CanAddComment = function()
 		if (true === this.Selection.Use && table_Selection_Cell === this.Selection.Type)
 		{
 			if (this.Selection.Data.length > 1)
+			{
 				return true;
+			}
 			else
 			{
-				var Pos  = this.Selection.Data[0];
-				var Cell = this.Content[Pos.Row].Get_Cell(Pos.Cell);
-				return Cell.Content.CanAddComment();
+				var oPos  = this.Selection.Data[0];
+				var oCell = this.GetRow(oPos.Row).GetCell(oPos.Cell);
+
+				var oCellContent = oCell.GetContent();
+				oCellContent.Set_ApplyToAll(true);
+				var isCanAdd = oCellContent.CanAddComment();
+				oCellContent.Set_ApplyToAll(false);
+
+				return isCanAdd;
 			}
 		}
 		else

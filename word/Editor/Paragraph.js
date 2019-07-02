@@ -11602,6 +11602,17 @@ Paragraph.prototype.AddCommentToObject = function(Comment, ObjectId)
 };
 Paragraph.prototype.CanAddComment = function()
 {
+	if (this.ApplyToAll)
+	{
+		var oState = this.Get_SelectionState2();
+		this.Set_ApplyToAll(false);
+		this.SelectAll(1);
+		var isCanAdd = this.CanAddComment();
+		this.Set_SelectionState2(oState);
+		this.Set_ApplyToAll(true);
+		return isCanAdd;
+	}
+
 	if (true === this.Selection.Use && true != this.IsSelectionEmpty())
 	{
 		var nStartPos = this.Selection.StartPos <= this.Selection.EndPos ? this.Selection.StartPos : this.Selection.EndPos;
