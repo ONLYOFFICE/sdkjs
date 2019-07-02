@@ -3535,6 +3535,18 @@ CMathContent.prototype.Add_MatrixWithBrackets = function(begChr, endChr, ctrPr, 
 };
 CMathContent.prototype.Recalculate_CurPos = function(_X, _Y, CurrentRun, _CurRange, _CurLine, _CurPage, UpdateCurPos, UpdateTarget, ReturnTarget)
 {
+	if (-1 === this.StartLine)
+	{
+		return {
+			X         : 0,
+			Y         : 0,
+			Height    : 0,
+			PageNum   : 0,
+			Internal  : {Line : 0, Page : 0, Range : 0},
+			Transform : null
+		};
+	}
+
     var CurLine  = _CurLine - this.StartLine;
     var CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
     var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
