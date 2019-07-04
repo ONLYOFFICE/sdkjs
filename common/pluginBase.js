@@ -116,13 +116,14 @@
 							try
 							{
 								window.Asc.plugin.translateManager = JSON.parse(_client.responseText);
-								if (window.Asc.plugin.onTranslate)
-									window.Asc.plugin.onTranslate();
 							}
 							catch (err)
 							{
                                 window.Asc.plugin.translateManager = {};
 							}
+
+                            if (window.Asc.plugin.onTranslate)
+                                window.Asc.plugin.onTranslate();
 						}
 					};
 					_client.send();
