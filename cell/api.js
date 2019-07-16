@@ -118,6 +118,9 @@ var editor;
     this.isTextArtChangeUrl = false;
     this.textureType = null;
 
+      // Spell Checking
+      this.SpellCheckApi      = new AscCommon.CSpellCheckApi();
+      this.isSpellCheckEnable = true;
 
 	  // Styles sizes
       this.styleThumbnailWidth = 112;
@@ -988,6 +991,89 @@ var editor;
    * asc_onLockPrintArea/asc_onUnLockPrintArea            - эвент о локе в меню опции print area во вкладке layout
    */
 
+  spreadsheet_api.prototype._coSpellCheckInit = function()
+  {
+      if (!this.SpellCheckApi)
+      {
+          return; // Error
+      }
+
+      var t = this;
+      if (window["AscDesktopEditor"]) {
+
+        window["asc_nativeOnSpellCheck"] = function(response) {
+              var _editor = window["Asc"]["editor"] ? window["Asc"]["editor"] : window.editor;
+              if (_editor.SpellCheckApi)
+                  _editor.SpellCheckApi.onSpellCheck(response);
+          };
+
+    this.SpellCheckApi.spellCheck = function (spellData) {
+              window["AscDesktopEditor"]["SpellCheck"](JSON.stringify(spellData));
+          };
+          this.SpellCheckApi.disconnect = function () {
+          };
+    if (window["AscDesktopEditor"]["IsLocalFile"] && !window["AscDesktopEditor"]["IsLocalFile"]())
+    {
+      this.sendEvent('asc_onSpellCheckInit', [
+                  "1026",
+                  "1027",
+                  "1029",
+                  "1030",
+                  "1031",
+                  "1032",
+                  "1033",
+                  "1036",
+                  "1038",
+                  "1040",
+                  "1042",
+                  "1043",
+                  "1044",
+                  "1045",
+                  "1046",
+                  "1048",
+                  "1049",
+                  "1050",
+                  "1051",
+                  "1053",
+                  "1055",
+                  "1057",
+                  "1058",
+                  "1060",
+                  "1062",
+                  "1063",
+                  "1066",
+                  "1068",
+                  "1069",
+                  "1087",
+                  "1104",
+                  "1110",
+                  "1134",
+                  "2051",
+                  "2055",
+                  "2057",
+                  "2068",
+                  "2070",
+                  "3079",
+                  "3081",
+                  "3082",
+                  "4105",
+                  "7177",
+                  "9242",
+                  "10266"
+      ]);
+    }
+      } else {
+          if (this.SpellCheckUrl && this.isSpellCheckEnable) {
+              this.SpellCheckApi.set_url(this.SpellCheckUrl);
+          }
+      }
+      this.SpellCheckApi.onInit = function (e) {
+          t.sendEvent('asc_onSpellCheckInit', e);
+      };
+      
+      this.SpellCheckApi.init(this.documentId);
+    };
+    
   spreadsheet_api.prototype.asc_registerCallback = function(name, callback, replaceOldCallback) {
     this.handlers.add(name, callback, replaceOldCallback);
     return;
@@ -3053,6 +3139,189 @@ var editor;
     }
   };
 
+    spreadsheet_api.prototype.asc_spellChecking = function (options) {
+
+      spreadsheet_api.prototype.WordSplitting = function (str) {
+        var trueLetter = false;
+        var index = 0;
+        var wordsArray = [];
+        for (var i = 0; i < str.length; i++) {
+          var nCharCode = str.charCodeAt(i);
+          if (AscCommon.g_aPunctuation[nCharCode] != undefined || str[i] == " ") {
+            if (trueLetter == true) {
+              trueLetter = false;
+              index++;
+            }
+          }
+          else {
+            trueLetter = true;
+            wordsArray[index] == undefined ? wordsArray[index] = "" : wordsArray[index] == wordsArray[index];
+            wordsArray[index] = wordsArray[index] + str[i];
+          }
+        }
+        return wordsArray;
+      }
+
+      var ws = this.wb.getWorksheet();
+      var t = this;
+      var minC, minR, maxC, maxR;
+      var selectionRange = options.selectionRange || ws.model.selectionRange;
+      var lastRange = selectionRange.getLast();
+      var ar = selectionRange.activeCell;
+      var c = ar.col;
+      var r = ar.row;
+      var merge = ws.model.getMergedByCell(r, c);
+      var goTopCount = 0;
+      var inc = options.scanForward ? +1 : -1;
+      t.SpellCheckApi = new AscCommon.CSpellCheckApi();
+      t._coSpellCheckInit();
+      var lang = this.asc_getLocale();
+
+      // lang == 9 ? lang = 1033 : lang = lang;
+      // lang == 7 ? lang = 1031 : lang = lang;
+      // lang == 10 ? lang = 3082 : lang = lang;
+      // lang == 12 ? lang = 1036 : lang = lang;
+      // lang == 16 ? lang = 1040 : lang = lang;
+      // lang == 22 ? lang = 1046 : lang = lang;
+      // lang == 25 ? lang = 1049 : lang = lang;
+      // lang == 36 ? lang = 1060 : lang = lang;
+
+      options.findInSelection = options.scanOnOnlySheet && !(selectionRange.isSingleRange() && (lastRange.isOneCell() || lastRange.isEqual(merge)));
+
+      if (options.findInSelection) {
+        minC = lastRange.c1;
+        minR = lastRange.r1;
+        maxC = lastRange.c2;
+        maxR = lastRange.r2;
+      } else {
+        minC = 0;
+        minR = 0;
+        maxC = ws.cols.length - 1;
+        maxR = ws.rows.length - 1;
+      }
+
+      var wordsArray = [];
+      var activeCellText = ws._getCellTextCache(c, r);
+      var cellChanges = false;
+
+      if (activeCellText != undefined) {
+        wordsArray = t.WordSplitting(activeCellText.state.chars);
+      }
+      var langArray = [];
+      for (var i = 0; i < wordsArray.length; i++) {
+        langArray.push(lang);
+      }
+      // посылаем запрос о корректности слов серверу
+      t.SpellCheckApi.spellCheck({ "type": "spell", "usrWords": wordsArray, "usrLang": langArray });
+
+      //получаем ответ сервера на запрос
+      t.SpellCheckApi.onSpellCheck = function (e) {
+        if (e.type == "spell") {
+          var changedWords = [];
+          var wordsArray = e.usrWords;
+
+          for (var i = 0; i < e.usrCorrect.length; i++) {
+            if (e.usrCorrect[i] == false) {
+              cellChanges = true;
+              changedWords[i] = wordsArray[i];
+            }
+          }
+          if (cellChanges == true) {
+            var langArray = [];
+            for (var i = 0; i < wordsArray.length; i++) {
+              langArray.push(lang);
+            }
+            t.SpellCheckApi.spellCheck({ "type": "suggest", "usrWords": changedWords, "usrLang": langArray });
+          }
+          else
+            if (cellChanges == false) {
+              var cellNoEmpty = undefined;
+              do {
+                if (options.scanByRows) {
+                  c += inc;
+                  if (c < minC || c > maxC) {
+                    c = options.scanForward ? minC : maxC;
+                    r += inc;
+                  }
+                } else {
+                  r += inc;
+                  if (r < minR || r > maxR) {
+                    r = options.scanForward ? minR : maxR;
+                    c += inc;
+                  }
+                }
+                // если перешли в начало листа
+                if (c < minC || c > maxC || r < minR || r > maxR) {
+                  goTopCount++;
+                //если начали во второй раз обходить лист
+                  if (goTopCount >= 2) {
+                    alert("Завершено");
+                    return undefined;
+                  }
+                  if (options.scanForward) {
+                    if (options.scanByRows) {
+                      c = minC - 1;
+                      r = minR;
+                      maxR = ar.row;
+                    } else {
+                      c = minC;
+                      r = minR - 1;
+                      maxC = ar.col;
+                    }
+                  } else {
+                    c = maxC;
+                    r = maxR;
+                    if (options.scanByRows) {
+                      c = maxC + 1;
+                      r = maxR;
+                      minR = ar.row;
+                    } else {
+                      c = maxC;
+                      r = maxR + 1;
+                      minC = ar.col;
+                    }
+                  }
+                }
+                ws.model._getCellNoEmpty(r, c, function (cell) {
+                  if (cell && !cell.isNullTextString()) {
+                    cellNoEmpty = true;
+                  }
+                });
+              } while (!cellNoEmpty);
+
+              var activeCellText = ws._getCellTextCache(c, r);
+              var wordsArray = [];
+              if (activeCellText != undefined)
+                wordsArray = t.WordSplitting(activeCellText.state.chars);
+
+              var langArray = [];
+              for (var i = 0; i < wordsArray.length; i++) {
+                langArray.push(lang);
+              }
+              t.SpellCheckApi.spellCheck({ "type": "spell", "usrWords": wordsArray, "usrLang": langArray });
+            }
+        }
+        else if (e.type == "suggest") {
+          if (e.usrWords != null) {
+            console.log(e.usrSuggest);
+            var ac = ws.model.selectionRange.activeCell;
+            var dc = c - ac.col;
+            var dr = r - ac.row;
+            options.findInSelection ? ws.changeSelectionActivePoint(dc, dr) : ws.changeSelectionStartPoint(dc, dr);
+
+            var i = 0;
+            while (e.usrWords[i] == null)
+              i++;
+            var firstWord = e.usrSuggest[i];
+
+            options.findWhat = e.usrWords[i];
+            options.replaceWith = firstWord[0];
+            var replaceText = ws.replaceCellText(options, false, t.wb.fReplaceCallback);
+          }
+        }
+      };
+    };
+  
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
     var ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
@@ -3869,7 +4138,7 @@ var editor;
   prot["asc_getSheetViewSettings"] = prot.asc_getSheetViewSettings;
   prot["asc_setDisplayGridlines"] = prot.asc_setDisplayGridlines;
   prot["asc_setDisplayHeadings"] = prot.asc_setDisplayHeadings;
-
+  prot["asc_spellChecking"] = prot.asc_spellChecking;
   // Defined Names
   prot["asc_getDefinedNames"] = prot.asc_getDefinedNames;
   prot["asc_setDefinedNames"] = prot.asc_setDefinedNames;
