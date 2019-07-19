@@ -3276,8 +3276,8 @@ var editor;
             }
         } else if (e.type === "suggest") {
           if (e.usrWords !== null) {
-            var dc = c - ws.model.selectionRange.activeCel.col;
-            var dr = r - ws.model.selectionRange.activeCel.row;
+            var dc = c - ws.model.selectionRange.activeCell.col;
+            var dr = r - ws.model.selectionRange.activeCell.row;
             options.findInSelection ? ws.changeSelectionActivePoint(dc, dr) : ws.changeSelectionStartPoint(dc, dr);
             var i = 0;
             while (e.usrWords[i] == null)
