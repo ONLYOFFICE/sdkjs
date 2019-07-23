@@ -43,12 +43,14 @@
 			this.fileType = fileType;
 			this.isDownloadEvent = false;
 			this.advancedOptions = null;
+			this.adjustPrint = null;
 			this.isNaturalDownload = false;
 		}
 
 		asc_CDownloadOptions.prototype.asc_setFileType = function (fileType) {this.fileType = fileType;};
 		asc_CDownloadOptions.prototype.asc_setIsDownloadEvent = function (isDownloadEvent) {this.isDownloadEvent = isDownloadEvent;};
 		asc_CDownloadOptions.prototype.asc_setAdvancedOptions = function (advancedOptions) {this.advancedOptions = advancedOptions;};
+		asc_CDownloadOptions.prototype.asc_setAdjustPrint = function (adjustPrint) {this.adjustPrint = adjustPrint;};
 
 		/** @constructor */
 		function asc_CAdvancedOptions(id,opt){
@@ -194,6 +196,7 @@
 		prot["asc_setFileType"] = prot.asc_setFileType;
 		prot["asc_setIsDownloadEvent"] = prot.asc_setIsDownloadEvent;
 		prot["asc_setAdvancedOptions"] = prot.asc_setAdvancedOptions;
+		prot["asc_setAdjustPrint"] = prot.asc_setAdjustPrint;
 
 		window["AscCommon"].asc_CAdvancedOptions = asc_CAdvancedOptions;
 		prot = asc_CAdvancedOptions.prototype;
