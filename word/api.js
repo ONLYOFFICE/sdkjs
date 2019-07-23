@@ -2045,24 +2045,28 @@ background-repeat: no-repeat;\
 
 	/*----------------------------------------------------------------*/
 	/*functions for working with clipboard, document*/
-	/*TODO: Print,Undo,Redo,Copy,Cut,Paste,Share,Save,DownloadAs,ReturnToDocuments(вернуться на предыдущую страницу) & callbacks for these functions*/
-	asc_docs_api.prototype.asc_Print      = function(bIsDownloadEvent)
+	asc_docs_api.prototype._printDesktop = function ()
 	{
-		if (window["AscDesktopEditor"])
+		if (null != this.WordControl.m_oDrawingDocument.m_oDocumentRenderer)
 		{
-			if (null != this.WordControl.m_oDrawingDocument.m_oDocumentRenderer)
-			{
-				if (window["AscDesktopEditor"]["IsSupportNativePrint"](this.DocumentUrl) === true)
-				{
-					window["AscDesktopEditor"]["Print"]();
-					return;
-				}
-			}
-			else
+			if (window["AscDesktopEditor"]["IsSupportNativePrint"](this.DocumentUrl) === true)
 			{
 				window["AscDesktopEditor"]["Print"]();
 				return;
 			}
+		}
+		else
+		{
+			window["AscDesktopEditor"]["Print"]();
+			return;
+		}
+		return true;
+	};
+	asc_docs_api.prototype.asc_Print      = function(bIsDownloadEvent)
+	{
+		if (window["AscDesktopEditor"] && this._printDesktop())
+		{
+			return;
 		}
 		this._print(c_oAscAsyncAction.Print, bIsDownloadEvent ? DownloadType.Print : DownloadType.None);
 	};

@@ -368,10 +368,13 @@ var editor;
 		return true;
     };
 
+  asc_docs_api.prototype._printDesktop = function (adjustPrint) {
+    window.AscDesktopEditor_PrintData = adjustPrint;
+    window["AscDesktopEditor"]["Print"]();
+    return true;
+  };
   spreadsheet_api.prototype.asc_Print = function(adjustPrint, bIsDownloadEvent) {
-    if (window["AscDesktopEditor"]) {
-      window.AscDesktopEditor_PrintData = adjustPrint;
-      window["AscDesktopEditor"]["Print"]();
+    if (window["AscDesktopEditor"] && this._printDesktop(adjustPrint)) {
       return;
     }
 
@@ -843,7 +846,7 @@ var editor;
     this.onEndLoadFile(AscCommonExcel.getEmptyWorkbook());
   };
 
-  spreadsheet_api.prototype._asc_downloadAs = function(sFormat, actionType, options) { //fCallback({returnCode:"", ...})
+  spreadsheet_api.prototype._asc_downloadAs = function(sFormat, actionType, options) {
     var isCloudCrypto = (window["AscDesktopEditor"] && (0 < window["AscDesktopEditor"]["CryptoMode"])) ? true : false;
     if (isCloudCrypto)
       window.isCloudCryptoDownloadAs = true;

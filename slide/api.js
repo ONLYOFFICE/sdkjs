@@ -1757,17 +1757,18 @@ background-repeat: no-repeat;\
 	};
 	/*----------------------------------------------------------------*/
 	/*functions for working with clipboard, document*/
-	/*TODO: Print,Undo,Redo,Copy,Cut,Paste,Share,Save,DownloadAs,ReturnToDocuments(вернуться на предыдущую страницу) & callbacks for these functions*/
+	asc_docs_api.prototype._printDesktop = function ()
+	{
+		window["AscDesktopEditor"]["Print"]();
+		return true;
+	};
 	asc_docs_api.prototype.asc_Print      = function(bIsDownloadEvent)
 	{
-
-		if (window["AscDesktopEditor"])
+		if (window["AscDesktopEditor"] && this._printDesktop())
 		{
-			window["AscDesktopEditor"]["Print"]();
 			return;
 		}
-		var options = {downloadType : bIsDownloadEvent ? DownloadType.Print : DownloadType.None};
-		this._downloadAs(c_oAscFileType.PDF, c_oAscAsyncAction.Print, options);
+		this._downloadAs(c_oAscFileType.PDF, c_oAscAsyncAction.Print, {downloadType : bIsDownloadEvent ? DownloadType.Print : DownloadType.None});
 	};
 	asc_docs_api.prototype.Undo           = function()
 	{
