@@ -7715,7 +7715,7 @@ background-repeat: no-repeat;\
 		{
 			sendCommand(t, fCallback1, oAdditionalData1, dataContainer1);
 		}, fCallback, _fCallbackRequest, oAdditionalData, dataContainer);
-	}
+	};
 
 	// Вставка диаграмм
 	asc_docs_api.prototype.asc_getChartObject = function(type)
