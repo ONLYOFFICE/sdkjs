@@ -81,8 +81,6 @@ var editor;
     this.controller = null;
 
     this.handlers = new AscCommonExcel.asc_CHandlersList();
-    // Вид печати
-    this.adjustPrint = null;
 
     this.fontRenderingMode = Asc.c_oAscFontRenderingModeType.hintingAndSubpixeling;
     this.wb = null;
@@ -332,10 +330,7 @@ var editor;
       return;
     }
 
-    if (c_oAscFileType.PDF === options.fileType || c_oAscFileType.PDFA === options.fileType) {
-      this.adjustPrint = options.advancedOptions || new Asc.asc_CAdjustPrint();
-    }
-    this._downloadAs(options.fileType, c_oAscAsyncAction.DownloadAs, {downloadType: options.isDownloadEvent ? DownloadType.Download: DownloadType.None});
+    this._downloadAs(options.fileType, c_oAscAsyncAction.DownloadAs, options);
   };
 	spreadsheet_api.prototype._saveCheck = function() {
 		return !this.isChartEditor && c_oAscAdvancedOptionsAction.None === this.advancedOptionsAction &&
@@ -368,18 +363,10 @@ var editor;
 		return true;
     };
 
-  spreadsheet_api.prototype._printDesktop = function (adjustPrint) {
-    window.AscDesktopEditor_PrintData = adjustPrint;
+  spreadsheet_api.prototype._printDesktop = function (options) {
+    window.AscDesktopEditor_PrintOptions = options;
     window["AscDesktopEditor"]["Print"]();
     return true;
-  };
-  spreadsheet_api.prototype.asc_Print = function(adjustPrint, bIsDownloadEvent) {
-    if (window["AscDesktopEditor"] && this._printDesktop(adjustPrint)) {
-      return;
-    }
-
-    this.adjustPrint = adjustPrint ? adjustPrint : new Asc.asc_CAdjustPrint();
-    this._downloadAs(c_oAscFileType.PDF, c_oAscAsyncAction.Print, {downloadType: bIsDownloadEvent ? DownloadType.Print: DownloadType.None});
   };
 
   spreadsheet_api.prototype.asc_ChangePrintArea = function(type) {
@@ -855,6 +842,12 @@ var editor;
     if (!options) {
       options = {};
     }
+    var downloadType;
+    if (options.isDownloadEvent) {
+      downloadType = actionType === c_oAscAsyncAction.Print ? DownloadType.Print : DownloadType.Download;
+    } else {
+      downloadType = DownloadType.None;
+    }
     if (actionType) {
       this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, actionType);
     }
@@ -870,11 +863,11 @@ var editor;
     oAdditionalData["outputformat"] = sFormat;
     oAdditionalData["title"] = AscCommon.changeFileExtention(this.documentTitle, AscCommon.getExtentionByFormat(sFormat), Asc.c_nMaxDownloadTitleLen);
     oAdditionalData["nobase64"] = isNoBase64;
-    if (DownloadType.Print === options.downloadType) {
+    if (DownloadType.Print === downloadType) {
       oAdditionalData["inline"] = 1;
     }
     if (c_oAscFileType.PDF === sFormat || c_oAscFileType.PDFA === sFormat) {
-      var printPagesData = this.wb.calcPagesPrint(this.adjustPrint);
+      var printPagesData = this.wb.calcPagesPrint(options.adjustPrint);
       var pdfPrinterMemory = this.wb.printSheets(printPagesData).DocumentRenderer.Memory;
       dataContainer.data = isNoBase64 ? pdfPrinterMemory.GetData() : pdfPrinterMemory.GetBase64Memory();
     } else if (c_oAscFileType.CSV === sFormat && !options.CSVOptions) {
@@ -883,7 +876,7 @@ var editor;
         this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, actionType);
       }
       var cp = {'delimiter': AscCommon.c_oAscCsvDelimiter.Comma, 'codepage': AscCommon.c_oAscCodePageUtf8, 'encodings': AscCommon.getEncodingParams()};
-      this.downloadType = options.downloadType;
+      this.downloadType = downloadType;
       this.handlers.trigger("asc_onAdvancedOptions", new AscCommon.asc_CAdvancedOptions(c_oAscAdvancedOptionsID.CSV, cp), c_oAscAdvancedOptionsAction.Save);
       return;
     } else {
@@ -915,7 +908,7 @@ var editor;
           var url = input["data"];
           if (url) {
             error = c_oAscError.ID.No;
-            t.processSavedFile(url, options.downloadType);
+            t.processSavedFile(url, downloadType);
           }
         } else {
           error = mapAscServerErrorToAscError(parseInt(input["data"]), AscCommon.c_oAscAdvancedOptionsAction.Save);
@@ -3560,8 +3553,8 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_nativePrint = function (_printer, _page, _param) {
-    var _adjustPrint = window.AscDesktopEditor_PrintData || new Asc.asc_CAdjustPrint();
-    window.AscDesktopEditor_PrintData = undefined;
+    var _adjustPrint = (window.AscDesktopEditor_PrintOptions && window.AscDesktopEditor_PrintOptions.adjustPrint) || new Asc.asc_CAdjustPrint();
+    window.AscDesktopEditor_PrintOptions = undefined;
 
     var isOnePage = ((_param & 0x0100) == 0x0100);
     _param &= 0xFF;
@@ -3781,7 +3774,6 @@ var editor;
   prot["asc_Save"] = prot.asc_Save;
   prot["forceSave"] = prot.forceSave;
   prot["asc_setIsForceSaveOnUserSave"] = prot.asc_setIsForceSaveOnUserSave;
-  prot["asc_Print"] = prot.asc_Print;
   prot["asc_Resize"] = prot.asc_Resize;
   prot["asc_Copy"] = prot.asc_Copy;
   prot["asc_Paste"] = prot.asc_Paste;

@@ -1149,6 +1149,10 @@
 	baseEditorsApi.prototype._coSpellCheckInit                   = function()
 	{
 	};
+	// Print Desktop
+	baseEditorsApi.prototype._printDesktop                       = function ()
+	{
+	};
 	// Images & Charts & TextArts
 	baseEditorsApi.prototype.asc_getChartPreviews                = function(chartType)
 	{
@@ -1361,6 +1365,13 @@
 	};
 	baseEditorsApi.prototype.asc_undoAllChanges = function()
 	{
+	};
+	baseEditorsApi.prototype.asc_Print = function (options) {
+		if (window["AscDesktopEditor"] && this._printDesktop(options)) {
+			return;
+		}
+
+		this._downloadAs(c_oAscFileType.PDF, c_oAscAsyncAction.Print, options);
 	};
 	baseEditorsApi.prototype.asc_Save = function (isAutoSave, isIdle) {
 		var t = this;
@@ -2706,4 +2717,6 @@
 
 	prot = baseEditorsApi.prototype;
 	prot['asc_selectSearchingResults'] = prot.asc_selectSearchingResults;
+	prot['asc_Print'] = prot.asc_Print;
+
 })(window);

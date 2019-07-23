@@ -175,10 +175,13 @@ Asc['asc_docs_api'].prototype.asc_DownloadAsMailMerge = function(typeFile, Start
     if (null != oDocumentMailMerge)
     {
         var actionType = null;
-        var options = {oDocumentMailMerge: oDocumentMailMerge, downloadType: AscCommon.DownloadType.MailMerge, errorDirect: c_oAscError.ID.MailMergeSaveFile};
+        var options = new Asc.asc_CDownloadOptions(typeFile);
+        options.oDocumentMailMerge = oDocumentMailMerge;
+        options.errorDirect = c_oAscError.ID.MailMergeSaveFile;
+        options.isDownloadEvent = true;
         if (bIsDownload) {
             actionType = Asc.c_oAscAsyncAction.DownloadMerge;
-            options.downloadType = AscCommon.DownloadType.None;
+            options.isDownloadEvent = false;
         }
         this._downloadAs(typeFile, actionType, options, null);
     }

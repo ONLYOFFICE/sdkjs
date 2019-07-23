@@ -2062,14 +2062,6 @@ background-repeat: no-repeat;\
 		}
 		return true;
 	};
-	asc_docs_api.prototype.asc_Print      = function(bIsDownloadEvent)
-	{
-		if (window["AscDesktopEditor"] && this._printDesktop())
-		{
-			return;
-		}
-		this._downloadAs(c_oAscFileType.PDF, c_oAscAsyncAction.Print, {downloadType: bIsDownloadEvent ? DownloadType.Print : DownloadType.None}, null);
-	};
 	asc_docs_api.prototype.Undo           = function()
 	{
 		this.WordControl.m_oLogicDocument.Document_Undo();
@@ -2535,7 +2527,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.asc_DownloadAs     = function(options)
 	{
 		var actionType = this.mailMergeFileData ? c_oAscAsyncAction.MailMergeLoadFile : c_oAscAsyncAction.DownloadAs;
-		this._downloadAs(options.fileType, actionType, {downloadType : options.isDownloadEvent ? DownloadType.Download : DownloadType.None}, null);
+		this._downloadAs(options.fileType, actionType, options, null);
 	};
 	asc_docs_api.prototype.Resize             = function()
 	{
@@ -7521,7 +7513,7 @@ background-repeat: no-repeat;\
 		}
 
 		var command;
-		if (Asc.c_oAscAsyncAction.SendMailMerge === actionType)
+		if (c_oAscAsyncAction.SendMailMerge === actionType)
 		{
 			command = 'sendmm';
 		}
@@ -7532,6 +7524,12 @@ background-repeat: no-repeat;\
 		else
 		{
 			command = 'save';
+		}
+		var downloadType;
+		if (options.isDownloadEvent) {
+			downloadType = options.oDocumentMailMerge ? DownloadType.MailMerge : (actionType === c_oAscAsyncAction.Print ? DownloadType.Print : DownloadType.Download);
+		} else {
+			downloadType = DownloadType.None;
 		}
 
 
@@ -7550,7 +7548,7 @@ background-repeat: no-repeat;\
 		oAdditionalData["title"]        = AscCommon.changeFileExtention(this.documentTitle, AscCommon.getExtentionByFormat(filetype), Asc.c_nMaxDownloadTitleLen);
 		oAdditionalData["savetype"]     = AscCommon.c_oAscSaveTypes.CompleteAll;
 		oAdditionalData["nobase64"]     = isNoBase64;
-		if (DownloadType.Print === options.downloadType)
+		if (DownloadType.Print === downloadType)
 		{
 			oAdditionalData["inline"] = 1;
 		}
@@ -7590,7 +7588,7 @@ background-repeat: no-repeat;\
 				'codepage'  : AscCommon.c_oAscCodePageUtf8,
 				'encodings' : AscCommon.getEncodingParams()
 			};
-			this.downloadType = options.downloadType;
+			this.downloadType = downloadType;
 			this.sendEvent("asc_onAdvancedOptions", new AscCommon.asc_CAdvancedOptions(c_oAscAdvancedOptionsID.TXT, cp), this.advancedOptionsAction);
 			return;
 		}
@@ -7687,7 +7685,7 @@ background-repeat: no-repeat;\
 							if (url)
 							{
 								error = c_oAscError.ID.No;
-								t.processSavedFile(url, options.downloadType);
+								t.processSavedFile(url, downloadType);
 							}
 						}
 					}
@@ -9830,7 +9828,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['select_Element']                            = asc_docs_api.prototype.select_Element;
 	asc_docs_api.prototype['UpdateTextPr']                              = asc_docs_api.prototype.UpdateTextPr;
 	asc_docs_api.prototype['UpdateParagraphProp']                       = asc_docs_api.prototype.UpdateParagraphProp;
-	asc_docs_api.prototype['asc_Print']                                 = asc_docs_api.prototype.asc_Print;
 	asc_docs_api.prototype['Undo']                                      = asc_docs_api.prototype.Undo;
 	asc_docs_api.prototype['Redo']                                      = asc_docs_api.prototype.Redo;
 	asc_docs_api.prototype['Copy']                                      = asc_docs_api.prototype.Copy;

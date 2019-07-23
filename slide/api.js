@@ -1762,14 +1762,6 @@ background-repeat: no-repeat;\
 		window["AscDesktopEditor"]["Print"]();
 		return true;
 	};
-	asc_docs_api.prototype.asc_Print      = function(bIsDownloadEvent)
-	{
-		if (window["AscDesktopEditor"] && this._printDesktop())
-		{
-			return;
-		}
-		this._downloadAs(c_oAscFileType.PDF, c_oAscAsyncAction.Print, {downloadType : bIsDownloadEvent ? DownloadType.Print : DownloadType.None});
-	};
 	asc_docs_api.prototype.Undo           = function()
 	{
 		this.WordControl.m_oLogicDocument.Document_Undo();
@@ -2169,7 +2161,7 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asc_DownloadAs = function(options)
 	{
-		this._downloadAs(options.fileType, c_oAscAsyncAction.DownloadAs, {downloadType : options.isDownloadEvent ? DownloadType.Download : DownloadType.None});
+		this._downloadAs(options.fileType, c_oAscAsyncAction.DownloadAs, options);
 	};
 	asc_docs_api.prototype.Resize                       = function()
 	{
@@ -7066,6 +7058,12 @@ background-repeat: no-repeat;\
 		{
 			options = {};
 		}
+		var downloadType;
+		if (options.isDownloadEvent) {
+			downloadType = actionType === c_oAscAsyncAction.Print ? DownloadType.Print : DownloadType.Download;
+		} else {
+			downloadType = DownloadType.None;
+		}
 		if (actionType)
 		{
 			this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, actionType);
@@ -7083,7 +7081,7 @@ background-repeat: no-repeat;\
 		oAdditionalData["title"]        = AscCommon.changeFileExtention(this.documentTitle, AscCommon.getExtentionByFormat(filetype), Asc.c_nMaxDownloadTitleLen);
 		oAdditionalData["savetype"]     = AscCommon.c_oAscSaveTypes.CompleteAll;
 		oAdditionalData["nobase64"]     = isNoBase64;
-		if (DownloadType.Print === options.downloadType)
+		if (DownloadType.Print === downloadType)
 		{
 			oAdditionalData["inline"] = 1;
 		}
@@ -7112,7 +7110,7 @@ background-repeat: no-repeat;\
 					if (url)
 					{
 						error = c_oAscError.ID.No;
-						t.processSavedFile(url, options.downloadType);
+						t.processSavedFile(url, downloadType);
 					}
 				}
 				else
@@ -7651,7 +7649,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['sync_VerticalTextAlign']              = asc_docs_api.prototype.sync_VerticalTextAlign;
 	asc_docs_api.prototype['sync_Vert']                           = asc_docs_api.prototype.sync_Vert;
 	asc_docs_api.prototype['UpdateParagraphProp']                 = asc_docs_api.prototype.UpdateParagraphProp;
-	asc_docs_api.prototype['asc_Print']                           = asc_docs_api.prototype.asc_Print;
 	asc_docs_api.prototype['Undo']                                = asc_docs_api.prototype.Undo;
 	asc_docs_api.prototype['Redo']                                = asc_docs_api.prototype.Redo;
 	asc_docs_api.prototype['Copy']                                = asc_docs_api.prototype.Copy;

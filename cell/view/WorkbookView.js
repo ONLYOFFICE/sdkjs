@@ -2631,6 +2631,9 @@
   	}
   };
   WorkbookView.prototype.calcPagesPrint = function (adjustPrint) {
+  	if (!adjustPrint) {
+  		adjustPrint = new Asc.asc_CAdjustPrint();
+	}
     var printPagesData = new asc_CPrintPagesData();
     var printType = adjustPrint.asc_getPrintType();
     if (printType === Asc.c_oAscPrintType.ActiveSheets) {
