@@ -38,6 +38,17 @@
 	 * @param {undefined} undefined
 	 */
 	function ( window, undefined) {
+		/** @constructor */
+		function asc_CDownloadOptions(fileType) {
+			this.fileType = fileType;
+			this.isDownloadEvent = false;
+			this.advancedOptions = null;
+			this.isNaturalDownload = false;
+		}
+
+		asc_CDownloadOptions.prototype.asc_setFileType = function (fileType) {this.fileType = fileType;};
+		asc_CDownloadOptions.prototype.asc_setIsDownloadEvent = function (isDownloadEvent) {this.isDownloadEvent = isDownloadEvent;};
+		asc_CDownloadOptions.prototype.asc_setAdvancedOptions = function (advancedOptions) {this.advancedOptions = advancedOptions;};
 
 		/** @constructor */
 		function asc_CAdvancedOptions(id,opt){
@@ -177,6 +188,13 @@
 		var prot;
 		window['Asc'] = window['Asc'] || {};
 		window['AscCommon'] = window['AscCommon'] || {};
+
+		window["Asc"].asc_CDownloadOptions = asc_CDownloadOptions;
+		prot = asc_CDownloadOptions.prototype;
+		prot["asc_setFileType"] = prot.asc_setFileType;
+		prot["asc_setIsDownloadEvent"] = prot.asc_setIsDownloadEvent;
+		prot["asc_setAdvancedOptions"] = prot.asc_setAdvancedOptions;
+
 		window["AscCommon"].asc_CAdvancedOptions = asc_CAdvancedOptions;
 		prot = asc_CAdvancedOptions.prototype;
 		prot["asc_getOptionId"]			= prot.asc_getOptionId;

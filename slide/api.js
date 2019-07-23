@@ -2166,10 +2166,9 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype._haveOtherChanges = function () {
 		return AscCommon.CollaborativeEditing.Have_OtherChanges();
 	};
-	asc_docs_api.prototype.asc_DownloadAs               = function(typeFile, bIsDownloadEvent)
-	{//передаем число соответствующее своему формату.
-		var options = {downloadType : bIsDownloadEvent ? DownloadType.Download : DownloadType.None};
-		this._downloadAs(typeFile, c_oAscAsyncAction.DownloadAs, options);
+	asc_docs_api.prototype.asc_DownloadAs = function(options)
+	{
+		this._downloadAs(options.fileType, c_oAscAsyncAction.DownloadAs, {downloadType : options.isDownloadEvent ? DownloadType.Download : DownloadType.None});
 	};
 	asc_docs_api.prototype.Resize                       = function()
 	{

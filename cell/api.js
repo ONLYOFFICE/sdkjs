@@ -327,15 +327,15 @@ var editor;
     AscCommonExcel.g_oUndoRedoArrayFormula = new AscCommonExcel.UndoRedoArrayFormula(wbModel);
   };
 
-  spreadsheet_api.prototype.asc_DownloadAs = function(typeFile, bIsDownloadEvent, adjustPrint) {//передаем число соответствующее своему формату. например  c_oAscFileType.XLSX
+  spreadsheet_api.prototype.asc_DownloadAs = function (options) {
     if (!this.canSave || this.isChartEditor || c_oAscAdvancedOptionsAction.None !== this.advancedOptionsAction) {
       return;
     }
 
-    if (c_oAscFileType.PDF === typeFile || c_oAscFileType.PDFA === typeFile) {
-      this.adjustPrint = adjustPrint ? adjustPrint : new Asc.asc_CAdjustPrint();
+    if (c_oAscFileType.PDF === options.fileType || c_oAscFileType.PDFA === options.fileType) {
+      this.adjustPrint = options.advancedOptions || new Asc.asc_CAdjustPrint();
     }
-    this._asc_downloadAs(typeFile, c_oAscAsyncAction.DownloadAs, {downloadType: bIsDownloadEvent ? DownloadType.Download: DownloadType.None});
+    this._asc_downloadAs(options.fileType, c_oAscAsyncAction.DownloadAs, {downloadType: options.isDownloadEvent ? DownloadType.Download: DownloadType.None});
   };
 	spreadsheet_api.prototype._saveCheck = function() {
 		return !this.isChartEditor && c_oAscAdvancedOptionsAction.None === this.advancedOptionsAction &&

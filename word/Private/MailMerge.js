@@ -41,7 +41,7 @@ var c_oAscError = Asc.c_oAscError;
 Asc['asc_docs_api'].prototype.asc_StartMailMerge = function(oData)
 {
     this.mailMergeFileData = oData;
-    this.asc_DownloadAs(Asc.c_oAscFileType.JSON);
+    this.asc_DownloadAs(new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.JSON));
 };
 Asc['asc_docs_api'].prototype.asc_StartMailMergeByList = function(aList)
 {

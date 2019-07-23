@@ -545,7 +545,10 @@
 								window.g_asc_plugins.api.__content_control_worker.run();
 							}, 1);
 						}};
-						this.api.asc_DownloadAs(Asc.c_oAscFileType.CANVAS_WORD, undefined, true);
+						var options = new Asc.asc_CDownloadOptions();
+						options.fileType = Asc.c_oAscFileType.CANVAS_WORD;
+						options.isNaturalDownload = true;
+						this.api.asc_DownloadAs(options);
 						return;
 					}
 					else if (_current["Script"] !== undefined)
@@ -2540,11 +2543,10 @@ background-repeat: no-repeat;\
 		};
 		sendCommand(this, null, rData);
 	};
-	asc_docs_api.prototype.asc_DownloadAs     = function(typeFile, bIsDownloadEvent)
-	{//передаем число соответствующее своему формату.
+	asc_docs_api.prototype.asc_DownloadAs     = function(options)
+	{
 		var actionType = this.mailMergeFileData ? c_oAscAsyncAction.MailMergeLoadFile : c_oAscAsyncAction.DownloadAs;
-		var options    = {downloadType : bIsDownloadEvent ? DownloadType.Download : DownloadType.None};
-		this._downloadAs("save", typeFile, actionType, options, null);
+		this._downloadAs("save", options.fileType, actionType, {downloadType : options.isDownloadEvent ? DownloadType.Download : DownloadType.None}, null);
 	};
 	asc_docs_api.prototype.Resize             = function()
 	{
@@ -2686,7 +2688,10 @@ background-repeat: no-repeat;\
 			this.WordControl.m_oLogicDocument.Recalculate();
 		}
 		if (this.insertDocumentUrlsData && this.insertDocumentUrlsData.documents.length > 0) {
-			this.asc_DownloadAs(Asc.c_oAscFileType.CANVAS_WORD, undefined, true);
+			var options = new Asc.asc_CDownloadOptions();
+			options.fileType = Asc.c_oAscFileType.CANVAS_WORD;
+			options.isNaturalDownload = true;
+			this.asc_DownloadAs(options);
 		} else {
 			this.endInsertDocumentUrls();
 		}
