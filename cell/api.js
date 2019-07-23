@@ -335,7 +335,7 @@ var editor;
     if (c_oAscFileType.PDF === options.fileType || c_oAscFileType.PDFA === options.fileType) {
       this.adjustPrint = options.advancedOptions || new Asc.asc_CAdjustPrint();
     }
-    this._asc_downloadAs(options.fileType, c_oAscAsyncAction.DownloadAs, {downloadType: options.isDownloadEvent ? DownloadType.Download: DownloadType.None});
+    this._downloadAs(options.fileType, c_oAscAsyncAction.DownloadAs, {downloadType: options.isDownloadEvent ? DownloadType.Download: DownloadType.None});
   };
 	spreadsheet_api.prototype._saveCheck = function() {
 		return !this.isChartEditor && c_oAscAdvancedOptionsAction.None === this.advancedOptionsAction &&
@@ -379,7 +379,7 @@ var editor;
     }
 
     this.adjustPrint = adjustPrint ? adjustPrint : new Asc.asc_CAdjustPrint();
-    this._asc_downloadAs(c_oAscFileType.PDF, c_oAscAsyncAction.Print, {downloadType: bIsDownloadEvent ? DownloadType.Print: DownloadType.None});
+    this._downloadAs(c_oAscFileType.PDF, c_oAscAsyncAction.Print, {downloadType: bIsDownloadEvent ? DownloadType.Print: DownloadType.None});
   };
 
   spreadsheet_api.prototype.asc_ChangePrintArea = function(type) {
@@ -663,7 +663,7 @@ var editor;
         } else {
           var options = {CSVOptions: option, downloadType: this.downloadType};
           this.downloadType = DownloadType.None;
-          this._asc_downloadAs(c_oAscFileType.CSV, c_oAscAsyncAction.DownloadAs, options);
+          this._downloadAs(c_oAscFileType.CSV, c_oAscAsyncAction.DownloadAs, options);
         }
         break;
       case c_oAscAdvancedOptionsID.DRM:
@@ -846,7 +846,7 @@ var editor;
     this.onEndLoadFile(AscCommonExcel.getEmptyWorkbook());
   };
 
-  spreadsheet_api.prototype._asc_downloadAs = function(sFormat, actionType, options) {
+  spreadsheet_api.prototype._downloadAs = function(sFormat, actionType, options) {
     var isCloudCrypto = (window["AscDesktopEditor"] && (0 < window["AscDesktopEditor"]["CryptoMode"])) ? true : false;
     if (isCloudCrypto)
       window.isCloudCryptoDownloadAs = true;
