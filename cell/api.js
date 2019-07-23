@@ -368,7 +368,7 @@ var editor;
 		return true;
     };
 
-  asc_docs_api.prototype._printDesktop = function (adjustPrint) {
+  spreadsheet_api.prototype._printDesktop = function (adjustPrint) {
     window.AscDesktopEditor_PrintData = adjustPrint;
     window["AscDesktopEditor"]["Print"]();
     return true;
