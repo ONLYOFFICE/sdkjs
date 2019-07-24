@@ -1371,7 +1371,8 @@
 			'codepage'  : AscCommon.c_oAscCodePageUtf8,
 			'encodings' : AscCommon.getEncodingParams()
 		};
-		return new AscCommon.asc_CAdvancedOptions(c_oEditorId.Word === this.getEditorId() ? c_oAscAdvancedOptionsID.TXT : c_oAscAdvancedOptionsID.CSV, cp);
+		return new AscCommon.asc_CAdvancedOptions(c_oEditorId.Word === this.getEditorId() ?
+			Asc.c_oAscAdvancedOptionsID.TXT : Asc.c_oAscAdvancedOptionsID.CSV, cp);
 	};
 	baseEditorsApi.prototype.asc_Print = function (options) {
 		if (window["AscDesktopEditor"] && this._printDesktop(options)) {
