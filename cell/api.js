@@ -3307,12 +3307,13 @@ var editor;
     spreadsheet_api.prototype.asc_findNextWord = function (options) {
       var ws = this.wb.getWorksheet();
 
+      if (options.scanForward === true) {
+        findNextWord = true;
+      } else {
+        findPreviousWord = true;
+      }
+
       if (previousCell === null) {
-        if (options.scanForward === true) {
-          findNextWord = true;
-        } else {
-          findPreviousWord = true;
-        }
         this.asc_spellChecking(options);
       } else {
         if (previousCell.col === ws.model.selectionRange.activeCell.col && previousCell.row === ws.model.selectionRange.activeCell.row) {
@@ -3320,7 +3321,6 @@ var editor;
             ws.model.lastFindOptions.indexInArray++;
             if (ws.model.lastFindOptions.indexInArray > correctList.length - 1) {
               ws.model.lastFindOptions.startWithNextCell = true;
-              findNextWord = true;
               this.asc_spellChecking(options);
             } else {
               console.log(correctList[ws.model.lastFindOptions.indexInArray]);
@@ -3330,18 +3330,12 @@ var editor;
 
             if (ws.model.lastFindOptions.indexInArray < 0) {
               ws.model.lastFindOptions.startWithNextCell = true;
-              findPreviousWord = true;
               this.asc_spellChecking(options);
             } else {
               console.log(correctList[ws.model.lastFindOptions.indexInArray]);
             }
           }
         } else {
-          if (options.scanForward === true) {
-            findNextWord = true;
-          } else {
-            findPreviousWord = true;
-          }
           this.asc_spellChecking(options);
         }
       }
@@ -3349,32 +3343,39 @@ var editor;
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
     var ws = this.wb.getWorksheet();
-    if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
-      ws.objectRender.controller.setCellBold(isBold);
-    } else {
-      this.wb.setFontAttributes("b", isBold);
-      this.wb.restoreFocus();
-    }
+    // if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
+    //   ws.objectRender.controller.setCellBold(isBold);
+    // } else {
+    //   this.wb.setFontAttributes("b", isBold);
+    //   this.wb.restoreFocus();
+    var options = new Asc.asc_CFindOptions();
+    this.asc_spellChecking(options);
+    // }
   };
 
   spreadsheet_api.prototype.asc_setCellItalic = function(isItalic) {
     var ws = this.wb.getWorksheet();
-    if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellItalic) {
-      ws.objectRender.controller.setCellItalic(isItalic);
-    } else {
-      this.wb.setFontAttributes("i", isItalic);
-      this.wb.restoreFocus();
-    }
+    // if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellItalic) {
+    //   ws.objectRender.controller.setCellItalic(isItalic);
+    // } else {
+    //   this.wb.setFontAttributes("i", isItalic);
+    //   this.wb.restoreFocus();
+    // }
+    var options = new Asc.asc_CFindOptions();
+    this.asc_findNextWord(options);
   };
 
   spreadsheet_api.prototype.asc_setCellUnderline = function(isUnderline) {
     var ws = this.wb.getWorksheet();
-    if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellUnderline) {
-      ws.objectRender.controller.setCellUnderline(isUnderline);
-    } else {
-      this.wb.setFontAttributes("u", isUnderline ? Asc.EUnderline.underlineSingle : Asc.EUnderline.underlineNone);
-      this.wb.restoreFocus();
-    }
+    // if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellUnderline) {
+    //   ws.objectRender.controller.setCellUnderline(isUnderline);
+    // } else {
+    //   this.wb.setFontAttributes("u", isUnderline ? Asc.EUnderline.underlineSingle : Asc.EUnderline.underlineNone);
+    //   this.wb.restoreFocus();
+    // }
+    var options = new Asc.asc_CFindOptions();
+    options.scanForward = false;
+    this.asc_findNextWord(options);
   };
 
   spreadsheet_api.prototype.asc_setCellStrikeout = function(isStrikeout) {
