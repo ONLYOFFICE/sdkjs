@@ -61,11 +61,10 @@ var editor;
   var c_oAscAsyncActionType = asc.c_oAscAsyncActionType;
 
   var History = null;
-  var wordList = [];
   var correctList = [];
-  var previousState = {};
   var findNextWord = false;
   var findPreviousWord = false;
+  var previousCell = null;
   /**
    *
    * @param config
@@ -3055,29 +3054,8 @@ var editor;
     }
   };
 
-  spreadsheet_api.prototype.WordSplitting = function (str) {
-    var trueLetter = false;
-    var index = 0;
-    var wordsArray = [];
-    for (var i = 0; i < str.length; i++) {
-      var nCharCode = str.charCodeAt(i);
-      if (AscCommon.g_aPunctuation[nCharCode] != undefined || str[i] == " ") {
-        if (trueLetter == true) {
-          trueLetter = false;
-          index++;
-        }
-      }
-      else {
-        trueLetter = true;
-        wordsArray[index] == undefined ? wordsArray[index] = "" : wordsArray[index] == wordsArray[index];
-        wordsArray[index] = wordsArray[index] + str[i];
-      }
-    }
-    return wordsArray;
-  };
-
     spreadsheet_api.prototype.asc_spellChecking = function (options) {
-
+     
       var ws = this.wb.getWorksheet();
       var t = this;
       var minC, minR, maxC, maxR;
@@ -3133,52 +3111,52 @@ var editor;
               c += inc;
             }
           }
-        // если перешли в начало листа
-        if (c < minC || c > maxC || r < minR || r > maxR) {
-          goTopCount++;
-        //если начали во второй раз обходить лист
-          if (goTopCount >= 2) {
-            alert("Завершено");
-            return undefined;
-          }
-          if (options.scanForward) {
-            if (options.scanByRows) {
-              c = minC - 1;
-              r = minR;
-              maxR = ar.row;
-            } else {
-              c = minC;
-              r = minR - 1;
-              maxC = ar.col;
+          // если перешли в начало листа
+          if (c < minC || c > maxC || r < minR || r > maxR) {
+            goTopCount++;
+            //если начали во второй раз обходить лист
+            if (goTopCount >= 2) {
+              alert("Завершено");
+              return undefined;
             }
-          } else {
-            c = maxC;
-            r = maxR;
-            if (options.scanByRows) {
-              c = maxC + 1;
-              r = maxR;
-              minR = ar.row;
+            if (options.scanForward) {
+              if (options.scanByRows) {
+                c = minC - 1;
+                r = minR;
+                maxR = ar.row;
+              } else {
+                c = minC;
+                r = minR - 1;
+                maxC = ar.col;
+              }
             } else {
               c = maxC;
-              r = maxR + 1;
-              minC = ar.col;
+              r = maxR;
+              if (options.scanByRows) {
+                c = maxC + 1;
+                r = maxR;
+                minR = ar.row;
+              } else {
+                c = maxC;
+                r = maxR + 1;
+                minC = ar.col;
+              }
             }
           }
-        }
-        ws.model._getCellNoEmpty(r, c, function (cell) {
-          if (cell && !cell.isNullTextString()) {
-            cellNoEmpty = true;
-          }
-        });
-      } while (!cellNoEmpty);
-      ws.model.lastFindOptions.startWithNextCell = false;
-    } 
+          ws.model._getCellNoEmpty(r, c, function (cell) {
+            if (cell && !cell.isNullTextString()) {
+              cellNoEmpty = true;
+            }
+          });
+        } while (!cellNoEmpty);
+        ws.model.lastFindOptions.startWithNextCell = false;
+      } 
       var wordsArray = [];
       var activeCellText = ws._getCellTextCache(c, r);
       var cellChanges = false;
 
       if (activeCellText !== undefined) {
-        wordsArray = t.WordSplitting(activeCellText.state.chars);
+        wordsArray = AscCommonExcel.WordSplitting(activeCellText.state.chars);
       }
 
       var langArray = [];
@@ -3195,7 +3173,7 @@ var editor;
           var wordsArray = e.usrWords;
 
           for (var i = 0; i < e.usrCorrect.length; i++) {
-            if (e.usrCorrect[i] == false) {
+            if (e.usrCorrect[i] === false) {
               cellChanges = true;
               changedWords[i] = wordsArray[i];
             }
@@ -3210,63 +3188,80 @@ var editor;
           } else if (cellChanges === false) {
               ws.model.lastFindOptions.indexInArray = 0;
               var cellNoEmpty = undefined;
-              do {
-                if (options.scanByRows) {
-                  c += inc;
-                  if (c < minC || c > maxC) {
-                    c = options.scanForward ? minC : maxC;
+
+              if (options.findInSelection) {
+                minC = lastRange.c1;
+                minR = lastRange.r1;
+                maxC = lastRange.c2;
+                maxR = lastRange.r2;
+              } else {
+                minC = 0;
+                minR = 0;
+                maxC = ws.cols.length - 1;
+                maxR = ws.rows.length - 1;
+              }
+              
+            do {
+              if (options.scanByRows) {
+                c += inc;
+                if (c < minC || c > maxC) {
+                  var c_new = c;
+                  c = options.scanForward ? minC : maxC;
+                  if (!(c_new >= maxC) || c === minC)
                     r += inc;
+                }
+              } else {
+                r += inc;
+                if (r < minR || r > maxR) {
+                  var r_new = r;
+                  r = options.scanForward ? minR : maxR;
+                  if (!(r_new >= maxR) || r === minR)
+                    c += inc;
+                }
+              }
+
+              if (((c < minC || r < minR) && options.scanForward === false) || ((c > maxC || r > maxR) && options.scanForward === true)) {
+                goTopCount++;
+                //если начали во второй раз обходить лист
+                if (goTopCount >= 2) {
+                  alert("Завершено");
+                  return undefined;
+                }
+                if (options.scanForward) {
+                  if (options.scanByRows) {
+                    c = minC - 1;
+                    r = minR;
+                    maxR = ar.row;
+                  } else {
+                    c = minC;
+                    r = minR - 1;
+                    maxC = ar.col;
                   }
                 } else {
-                  r += inc;
-                  if (r < minR || r > maxR) {
-                    r = options.scanForward ? minR : maxR;
-                    c += inc;
-                  }
-                }
-                // если перешли в начало листа
-                if (c < minC || c > maxC || r < minR || r > maxR) {
-                  goTopCount++;
-                //если начали во второй раз обходить лист
-                  if (goTopCount >= 2) {
-                    alert("Завершено");
-                    return undefined;
-                  }
-                  if (options.scanForward) {
-                    if (options.scanByRows) {
-                      c = minC - 1;
-                      r = minR;
-                      maxR = ar.row;
-                    } else {
-                      c = minC;
-                      r = minR - 1;
-                      maxC = ar.col;
-                    }
+                  c = maxC;
+                  r = maxR;
+                  if (options.scanByRows) {
+                    c = maxC + 1;
+                    r = maxR;
+                    minR = ar.row;
                   } else {
                     c = maxC;
-                    r = maxR;
-                    if (options.scanByRows) {
-                      c = maxC + 1;
-                      r = maxR;
-                      minR = ar.row;
-                    } else {
-                      c = maxC;
-                      r = maxR + 1;
-                      minC = ar.col;
-                    }
+                    r = maxR + 1;
+                    minC = ar.col;
                   }
                 }
-                ws.model._getCellNoEmpty(r, c, function (cell) {
-                  if (cell && !cell.isNullTextString()) {
-                    cellNoEmpty = true;
-                  }
-                });
-              } while (!cellNoEmpty);
+              }
+              ws.model._getCellNoEmpty(r, c, function (cell) {
+                if (cell && !cell.isNullTextString()) {
+                  cellNoEmpty = true;
+                }
+              });
+            } while (!cellNoEmpty);
 
               var activeCellText = ws._getCellTextCache(c, r);
               var wordsArray = [];
               if (activeCellText !== undefined)
-                wordsArray = t.WordSplitting(activeCellText.state.chars);
+                wordsArray = AscCommonExcel.WordSplitting(activeCellText.state.chars);
 
               var langArray = [];
               for (var i = 0; i < wordsArray.length; i++) {
@@ -3279,9 +3274,9 @@ var editor;
             var dc = c - ws.model.selectionRange.activeCell.col;
             var dr = r - ws.model.selectionRange.activeCell.row;
             options.findInSelection ? ws.changeSelectionActivePoint(dc, dr) : ws.changeSelectionStartPoint(dc, dr);
-            var i = 0;
-            while (e.usrWords[i] == null)
-              i++;
+            // var i = 0;
+            // while (e.usrWords[i] === null)
+            //   i++;
 
             correctList = e.usrSuggest.filter(function (element) {
               return element !== null;
@@ -3296,12 +3291,14 @@ var editor;
               console.log(correctList[ws.model.lastFindOptions.indexInArray]);
               findPreviousWord = false;
             } else {
-              console.log(correctList);
+              console.log(correctList[0]);
             }
             // var firstWord = e.usrSuggest[i];
             // options.findWhat = e.usrWords[i];
             // options.replaceWith = firstWord[0];
             // var replaceText = ws.replaceCellText(options, false, t.wb.fReplaceCallback);
+         
+            previousCell = selectionRange.activeCell.clone();
           }
         }
       };
@@ -3309,27 +3306,43 @@ var editor;
 
     spreadsheet_api.prototype.asc_findNextWord = function (options) {
       var ws = this.wb.getWorksheet();
-      if (ws.model.lastFindOptions !== null) {
-        if (options.scanForward === true) {
-          ws.model.lastFindOptions.indexInArray++;
-          if (ws.model.lastFindOptions.indexInArray > correctList.length - 1) {
-            ws.model.lastFindOptions.startWithNextCell = true;
-            findNextWord = true;
-            this.asc_spellChecking(options);
-          } else {
-            console.log(correctList[ws.model.lastFindOptions.indexInArray]);
-          }
-        }
-        else if (options.scanForward === false) {
-          ws.model.lastFindOptions.indexInArray--;
 
-          if (ws.model.lastFindOptions.indexInArray < 0) {
-            ws.model.lastFindOptions.startWithNextCell = true;
-            findPreviousWord = true;
-            this.asc_spellChecking(options);
-          } else {
-            console.log(correctList[ws.model.lastFindOptions.indexInArray]);
+      if (previousCell === null) {
+        if (options.scanForward === true) {
+          findNextWord = true;
+        } else {
+          findPreviousWord = true;
+        }
+        this.asc_spellChecking(options);
+      } else {
+        if (previousCell.col === ws.model.selectionRange.activeCell.col && previousCell.row === ws.model.selectionRange.activeCell.row) {
+          if (options.scanForward === true) {
+            ws.model.lastFindOptions.indexInArray++;
+            if (ws.model.lastFindOptions.indexInArray > correctList.length - 1) {
+              ws.model.lastFindOptions.startWithNextCell = true;
+              findNextWord = true;
+              this.asc_spellChecking(options);
+            } else {
+              console.log(correctList[ws.model.lastFindOptions.indexInArray]);
+            }
+          } else if (options.scanForward === false) {
+            ws.model.lastFindOptions.indexInArray--;
+
+            if (ws.model.lastFindOptions.indexInArray < 0) {
+              ws.model.lastFindOptions.startWithNextCell = true;
+              findPreviousWord = true;
+              this.asc_spellChecking(options);
+            } else {
+              console.log(correctList[ws.model.lastFindOptions.indexInArray]);
+            }
           }
+        } else {
+          if (options.scanForward === true) {
+            findNextWord = true;
+          } else {
+            findPreviousWord = true;
+          }
+          this.asc_spellChecking(options);
         }
       }
     }
