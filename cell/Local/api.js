@@ -80,15 +80,17 @@ var c_oAscError = Asc.c_oAscError;
 	};
 	spreadsheet_api.prototype._onNeedParams = function(data, opt_isPassword)
 	{
+		var type;
 		var options;
-		if(opt_isPassword){
-			options = new AscCommon.asc_CAdvancedOptions(Asc.c_oAscAdvancedOptionsID.DRM);
+		if (opt_isPassword) {
+			type = Asc.c_oAscAdvancedOptionsID.DRM;
 		} else {
+			type = Asc.c_oAscAdvancedOptionsID.CSV;
 			var cp = JSON.parse("{\"codepage\":46,\"delimiter\":1}");
 			cp['encodings'] = AscCommon.getEncodingParams();
 			options = new AscCommon.asc_CAdvancedOptions(Asc.c_oAscAdvancedOptionsID.CSV, cp);
 		}
-		this.handlers.trigger("asc_onAdvancedOptions", options, AscCommon.c_oAscAdvancedOptionsAction.Open);
+		this.handlers.trigger("asc_onAdvancedOptions", type, options);
 	};
 	spreadsheet_api.prototype.asc_addImageDrawingObject = function(url, imgProp, withAuthorization)
 	{

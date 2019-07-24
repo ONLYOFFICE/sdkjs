@@ -7441,8 +7441,7 @@ background-repeat: no-repeat;\
 		var options;
 		if (opt_isPassword) {
 			if (this.asc_checkNeedCallback("asc_onAdvancedOptions")) {
-				options = new AscCommon.asc_CAdvancedOptions(c_oAscAdvancedOptionsID.DRM);
-				t.sendEvent("asc_onAdvancedOptions", options, t.advancedOptionsAction);
+				t.sendEvent("asc_onAdvancedOptions", c_oAscAdvancedOptionsID.DRM);
 			} else {
 				t.sendEvent("asc_onError", c_oAscError.ID.ConvertationPassword, c_oAscError.Level.Critical);
 			}
@@ -7456,12 +7455,12 @@ background-repeat: no-repeat;\
 						} else {
 							cp['data'] = data;
 							options = new AscCommon.asc_CAdvancedOptions(c_oAscAdvancedOptionsID.TXT, cp);
-							t.sendEvent("asc_onAdvancedOptions", options, t.advancedOptionsAction);
+							t.sendEvent("asc_onAdvancedOptions", c_oAscAdvancedOptionsID.TXT, options);
 						}
 					});
 				} else {
 					options = new AscCommon.asc_CAdvancedOptions(c_oAscAdvancedOptionsID.TXT, cp);
-					t.sendEvent("asc_onAdvancedOptions", options, t.advancedOptionsAction);
+					t.sendEvent("asc_onAdvancedOptions", c_oAscAdvancedOptionsID.TXT, options);
 				}
 			} else {
 				this.asc_setAdvancedOptions(c_oAscAdvancedOptionsID.TXT, new Asc.asc_CTXTAdvancedOptions(AscCommon.c_oAscCodePageUtf8));
