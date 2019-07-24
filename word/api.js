@@ -545,8 +545,7 @@
 								window.g_asc_plugins.api.__content_control_worker.run();
 							}, 1);
 						}};
-						var options = new Asc.asc_CDownloadOptions();
-						options.fileType = Asc.c_oAscFileType.CANVAS_WORD;
+						var options = new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.CANVAS_WORD);
 						options.isNaturalDownload = true;
 						this.api.asc_DownloadAs(options);
 						return;
@@ -2669,8 +2668,7 @@ background-repeat: no-repeat;\
 			this.WordControl.m_oLogicDocument.Recalculate();
 		}
 		if (this.insertDocumentUrlsData && this.insertDocumentUrlsData.documents.length > 0) {
-			var options = new Asc.asc_CDownloadOptions();
-			options.fileType = Asc.c_oAscFileType.CANVAS_WORD;
+			var options = new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.CANVAS_WORD);
 			options.isNaturalDownload = true;
 			this.asc_DownloadAs(options);
 		} else {

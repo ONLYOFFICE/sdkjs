@@ -39,9 +39,9 @@
 	 */
 	function ( window, undefined) {
 		/** @constructor */
-		function asc_CDownloadOptions(fileType) {
+		function asc_CDownloadOptions(fileType, isDownloadEvent) {
 			this.fileType = fileType;
-			this.isDownloadEvent = false;
+			this.isDownloadEvent = isDownloadEvent;
 			this.adjustPrint = null;
 			this.isNaturalDownload = false;
 			this.errorDirect = null;
