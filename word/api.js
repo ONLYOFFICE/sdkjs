@@ -2570,12 +2570,6 @@ background-repeat: no-repeat;\
 					};
 					sendCommand(this, null, rData);
 				}
-				else if (this.advancedOptionsAction === c_oAscAdvancedOptionsAction.Save)
-				{
-					var options       = {txtOptions : option, downloadType : this.downloadType, fileType: c_oAscFileType.TXT};
-					this.downloadType = DownloadType.None;
-					this._downloadAs(c_oAscAsyncAction.DownloadAs, options, null);
-				}
 				break;
 			case c_oAscAdvancedOptionsID.DRM:
 				if (this.advancedOptionsAction === c_oAscAdvancedOptionsAction.Open) {
@@ -7571,21 +7565,6 @@ background-repeat: no-repeat;\
 			oAdditionalData['url']       = last['url'];
 			oAdditionalData['format']    = last['format'];
 			oAdditionalData['outputurls']= true;
-		}
-		else if (c_oAscFileType.TXT === fileType && !options.txtOptions && null == options.oDocumentMailMerge && null == options.oMailMergeSendData)
-		{
-			// Мы открывали команду, надо ее закрыть.
-			if (actionType)
-			{
-				this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, actionType);
-			}
-			var cp            = {
-				'codepage'  : AscCommon.c_oAscCodePageUtf8,
-				'encodings' : AscCommon.getEncodingParams()
-			};
-			this.downloadType = downloadType;
-			this.sendEvent("asc_onAdvancedOptions", new AscCommon.asc_CAdvancedOptions(c_oAscAdvancedOptionsID.TXT, cp), this.advancedOptionsAction);
-			return;
 		}
 		else if (c_oAscFileType.HTML === fileType && null == options.oDocumentMailMerge && null == options.oMailMergeSendData)
 		{
