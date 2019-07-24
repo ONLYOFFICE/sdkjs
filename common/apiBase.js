@@ -83,8 +83,6 @@
 
 		// Тип состояния на данный момент (сохранение, открытие или никакое)
 		this.advancedOptionsAction = AscCommon.c_oAscAdvancedOptionsAction.None;
-		// Тип скачивания файлы(download или event).нужен для txt, csv. запоминаем на asc_DownloadAs используем asc_setAdvancedOptions
-		this.downloadType          = AscCommon.DownloadType.None;
 		this.OpenDocumentProgress  = new AscCommon.COpenProgress();
 		var sProtocol              = window.location.protocol;
 		this.documentOrigin        = ((sProtocol && '' !== sProtocol) ? sProtocol + '//' : '') + window.location.host; // for presentation theme url
