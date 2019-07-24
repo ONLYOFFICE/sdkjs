@@ -1371,7 +1371,7 @@
 			return;
 		}
 
-		this._downloadAs(c_oAscFileType.PDF, c_oAscAsyncAction.Print, options);
+		this._downloadAs(Asc.c_oAscFileType.PDF, c_oAscAsyncAction.Print, options);
 	};
 	baseEditorsApi.prototype.asc_Save = function (isAutoSave, isIdle) {
 		var t = this;
