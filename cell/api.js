@@ -647,10 +647,6 @@ var editor;
           };
 
           sendCommand(this, null, v);
-        } else {
-          var options = {CSVOptions: option, downloadType: this.downloadType, fileType: c_oAscFileType.CSV};
-          this.downloadType = DownloadType.None;
-          this._downloadAs(c_oAscAsyncAction.DownloadAs, options);
         }
         break;
       case c_oAscAdvancedOptionsID.DRM:
@@ -867,15 +863,6 @@ var editor;
       var printPagesData = this.wb.calcPagesPrint(options.adjustPrint);
       var pdfPrinterMemory = this.wb.printSheets(printPagesData).DocumentRenderer.Memory;
       dataContainer.data = isNoBase64 ? pdfPrinterMemory.GetData() : pdfPrinterMemory.GetBase64Memory();
-    } else if (c_oAscFileType.CSV === fileType && !options.CSVOptions) {
-      // Мы открывали команду, надо ее закрыть.
-      if (actionType) {
-        this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, actionType);
-      }
-      var cp = {'delimiter': AscCommon.c_oAscCsvDelimiter.Comma, 'codepage': AscCommon.c_oAscCodePageUtf8, 'encodings': AscCommon.getEncodingParams()};
-      this.downloadType = downloadType;
-      this.handlers.trigger("asc_onAdvancedOptions", new AscCommon.asc_CAdvancedOptions(c_oAscAdvancedOptionsID.CSV, cp), c_oAscAdvancedOptionsAction.Save);
-      return;
     } else {
       var oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(this.wbModel);
       if (c_oAscFileType.CSV === fileType) {
