@@ -1366,6 +1366,13 @@
 	baseEditorsApi.prototype.asc_undoAllChanges = function()
 	{
 	};
+	baseEditorsApi.prototype.asc_getAdvancedOptions = function () {
+		var cp            = {
+			'codepage'  : AscCommon.c_oAscCodePageUtf8,
+			'encodings' : AscCommon.getEncodingParams()
+		};
+		return new AscCommon.asc_CAdvancedOptions(c_oEditorId.Word === this.getEditorId() ? c_oAscAdvancedOptionsID.TXT : c_oAscAdvancedOptionsID.CSV, cp);
+	};
 	baseEditorsApi.prototype.asc_Print = function (options) {
 		if (window["AscDesktopEditor"] && this._printDesktop(options)) {
 			return;
@@ -2721,6 +2728,7 @@
 
 	prot = baseEditorsApi.prototype;
 	prot['asc_selectSearchingResults'] = prot.asc_selectSearchingResults;
+	prot['asc_getAdvancedOptions'] = prot.asc_getAdvancedOptions;
 	prot['asc_Print'] = prot.asc_Print;
 
 })(window);
