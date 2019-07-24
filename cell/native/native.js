@@ -6844,7 +6844,7 @@ window["native"]["offline_apply_event"] = function(type,params) {
             _api.advancedOptionsAction = AscCommon.c_oAscAdvancedOptionsAction.Open;
             _api.documentFormat = "csv";
             
-            _api.asc_setAdvancedOptions(type, new Asc.asc_CCSVAdvancedOptions(encoding, delimiter, null));
+            _api.asc_setAdvancedOptions(type, new Asc.asc_CTextOptions(encoding, delimiter, null));
             
             break;
         }

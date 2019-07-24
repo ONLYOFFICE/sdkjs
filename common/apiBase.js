@@ -1369,8 +1369,7 @@
 			'codepage'  : AscCommon.c_oAscCodePageUtf8,
 			'encodings' : AscCommon.getEncodingParams()
 		};
-		return new AscCommon.asc_CAdvancedOptions(c_oEditorId.Word === this.getEditorId() ?
-			Asc.c_oAscAdvancedOptionsID.TXT : Asc.c_oAscAdvancedOptionsID.CSV, cp);
+		return new AscCommon.asc_CAdvancedOptions(cp);
 	};
 	baseEditorsApi.prototype.asc_Print = function (options) {
 		if (window["AscDesktopEditor"] && this._printDesktop(options)) {
@@ -2699,7 +2698,7 @@
 		//todo onerror
 		reader.onload = reader.onerror = function(e) {
 			var text = e.target.result ? e.target.result : "";
-			if (options instanceof Asc.asc_CCSVAdvancedOptions) {
+			if (options instanceof Asc.asc_CTextOptions) {
 				callback(AscCommon.parseText(text, options));
 			} else {
 				callback(text.match(/[^\r\n]+/g));

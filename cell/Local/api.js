@@ -88,7 +88,7 @@ var c_oAscError = Asc.c_oAscError;
 			type = Asc.c_oAscAdvancedOptionsID.CSV;
 			var cp = JSON.parse("{\"codepage\":46,\"delimiter\":1}");
 			cp['encodings'] = AscCommon.getEncodingParams();
-			options = new AscCommon.asc_CAdvancedOptions(Asc.c_oAscAdvancedOptionsID.CSV, cp);
+			options = new AscCommon.asc_CAdvancedOptions(cp);
 		}
 		this.handlers.trigger("asc_onAdvancedOptions", type, options);
 	};

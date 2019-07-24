@@ -60,82 +60,35 @@
 		asc_CDownloadOptions.prototype.asc_setCompatible = function (compatible) {this.compatible = compatible;};
 
 		/** @constructor */
-		function asc_CAdvancedOptions(id,opt){
-			this.optionId = null;
-			this.options = null;
-
-			switch(id){
-				case Asc.c_oAscAdvancedOptionsID.CSV:
-					this.optionId = id;
-					this.options = new asc_CCSVOptions(opt);
-					break;
-				case Asc.c_oAscAdvancedOptionsID.TXT:
-					this.optionId = id;
-					this.options = new asc_CTXTOptions(opt);
-					break;
-				case Asc.c_oAscAdvancedOptionsID.DRM:
-					this.optionId = id;
-					break;
-			}
-		}
-		asc_CAdvancedOptions.prototype.asc_getOptionId = function(){ return this.optionId; };
-		asc_CAdvancedOptions.prototype.asc_getOptions = function(){ return this.options; };
-
-		/** @constructor */
-		function asc_CCSVOptions(opt){
-			this.codePages = function(){
+		function asc_CAdvancedOptions(opt) {
+			this.codePages = function () {
 				var arr = [], c, encodings = opt["encodings"];
-				for(var i = 0; i < encodings.length; i++ ){
+				for (var i = 0; i < encodings.length; i++) {
 					c = new asc_CCodePage();
 					c.init(encodings[i]);
 					arr.push(c);
 				}
 				return arr;
 			}();
-			this.recommendedSettings = new asc_CCSVAdvancedOptions (opt["codepage"], opt["delimiter"]);
+			this.recommendedSettings = new asc_CTextOptions(opt["codepage"], opt["delimiter"]);
 			this.data = opt["data"];
 		}
-		asc_CCSVOptions.prototype.asc_getCodePages = function(){ return this.codePages;};
-		asc_CCSVOptions.prototype.asc_getRecommendedSettings = function () { return this.recommendedSettings; };
-		asc_CCSVOptions.prototype.asc_getData = function () { return this.data; };
+		asc_CAdvancedOptions.prototype.asc_getCodePages = function () {return this.codePages;};
+		asc_CAdvancedOptions.prototype.asc_getRecommendedSettings = function () {return this.recommendedSettings;};
+		asc_CAdvancedOptions.prototype.asc_getData = function () {return this.data;};
 
 		/** @constructor */
-		function asc_CTXTOptions(opt){
-			this.codePages = function(){
-				var arr = [], c, encodings = opt["encodings"];
-				for(var i = 0; i < encodings.length; i++ ){
-					c = new asc_CCodePage();
-					c.init(encodings[i]);
-					arr.push(c);
-				}
-				return arr;
-			}();
-			this.recommendedSettings = new asc_CTXTAdvancedOptions (opt["codepage"]);
-			this.data = opt["data"];
-		}
-		asc_CTXTOptions.prototype.asc_getCodePages = function(){ return this.codePages;};
-		asc_CTXTOptions.prototype.asc_getRecommendedSettings = function () { return this.recommendedSettings; };
-		asc_CTXTOptions.prototype.asc_getData = function () { return this.data; };
-
-		/** @constructor */
-		function asc_CCSVAdvancedOptions(codepage, delimiter, delimiterChar){
+		function asc_CTextOptions(codepage, delimiter, delimiterChar) {
 			this.codePage = codepage;
 			this.delimiter = delimiter;
 			this.delimiterChar = delimiterChar;
 		}
-		asc_CCSVAdvancedOptions.prototype.asc_getDelimiter = function(){return this.delimiter;};
-		asc_CCSVAdvancedOptions.prototype.asc_setDelimiter = function(v){this.delimiter = v;};
-		asc_CCSVAdvancedOptions.prototype.asc_getDelimiterChar = function(){return this.delimiterChar;};
-		asc_CCSVAdvancedOptions.prototype.asc_setDelimiterChar = function(v){this.delimiterChar = v;};
-		asc_CCSVAdvancedOptions.prototype.asc_getCodePage = function(){return this.codePage;};
-		asc_CCSVAdvancedOptions.prototype.asc_setCodePage = function(v){this.codePage = v;};
-		
-		/** @constructor */
-		function asc_CTXTAdvancedOptions(codepage){
-			this.codePage = codepage;
-		}
-		asc_CTXTAdvancedOptions.prototype.asc_getCodePage = function(){return this.codePage;};
-		asc_CTXTAdvancedOptions.prototype.asc_setCodePage = function(v){this.codePage = v;};
+		asc_CTextOptions.prototype.asc_getDelimiter = function(){return this.delimiter;};
+		asc_CTextOptions.prototype.asc_setDelimiter = function(v){this.delimiter = v;};
+		asc_CTextOptions.prototype.asc_getDelimiterChar = function(){return this.delimiterChar;};
+		asc_CTextOptions.prototype.asc_setDelimiterChar = function(v){this.delimiterChar = v;};
+		asc_CTextOptions.prototype.asc_getCodePage = function(){return this.codePage;};
+		asc_CTextOptions.prototype.asc_setCodePage = function(v){this.codePage = v;};
 
 		/** @constructor */
 		function asc_CDRMAdvancedOptions(password){
@@ -208,30 +161,16 @@
 
 		window["AscCommon"].asc_CAdvancedOptions = asc_CAdvancedOptions;
 		prot = asc_CAdvancedOptions.prototype;
-		prot["asc_getOptionId"]			= prot.asc_getOptionId;
-		prot["asc_getOptions"]			= prot.asc_getOptions;
-
-		prot = asc_CCSVOptions.prototype;
-		prot["asc_getCodePages"]			= prot.asc_getCodePages;
-		prot["asc_getRecommendedSettings"]	= prot.asc_getRecommendedSettings;
+		prot["asc_getCodePages"] = prot.asc_getCodePages;
+		prot["asc_getRecommendedSettings"] = prot.asc_getRecommendedSettings;
 		prot["asc_getData"]	= prot.asc_getData;
 
-		prot = asc_CTXTOptions.prototype;
-		prot["asc_getCodePages"]			= prot.asc_getCodePages;
-		prot["asc_getRecommendedSettings"]	= prot.asc_getRecommendedSettings;
-		prot["asc_getData"]	= prot.asc_getData;
-
-		window["Asc"].asc_CCSVAdvancedOptions = window["Asc"]["asc_CCSVAdvancedOptions"] = asc_CCSVAdvancedOptions;
-		prot = asc_CCSVAdvancedOptions.prototype;
+		window["Asc"].asc_CTextOptions = window["Asc"]["asc_CTextOptions"] = asc_CTextOptions;
+		prot = asc_CTextOptions.prototype;
 		prot["asc_getDelimiter"] = prot.asc_getDelimiter;
 		prot["asc_setDelimiter"] = prot.asc_setDelimiter;
 		prot["asc_getDelimiterChar"] = prot.asc_getDelimiterChar;
 		prot["asc_setDelimiterChar"] = prot.asc_setDelimiterChar;
-		prot["asc_getCodePage"] = prot.asc_getCodePage;
-		prot["asc_setCodePage"] = prot.asc_setCodePage;
-
-		window["Asc"].asc_CTXTAdvancedOptions = window["Asc"]["asc_CTXTAdvancedOptions"] = asc_CTXTAdvancedOptions;
-		prot = asc_CTXTAdvancedOptions.prototype;
 		prot["asc_getCodePage"] = prot.asc_getCodePage;
 		prot["asc_setCodePage"] = prot.asc_setCodePage;
 

@@ -621,8 +621,8 @@ var editor;
 
   /*
    idOption идентификатор дополнительного параметра, пока c_oAscAdvancedOptionsID.CSV.
-   option - какие свойства применить, пока массив. для CSV объект asc_CCSVAdvancedOptions(codepage, delimiter)
-   exp:	asc_setAdvancedOptions(c_oAscAdvancedOptionsID.CSV, new Asc.asc_CCSVAdvancedOptions(1200, c_oAscCsvDelimiter.Comma) );
+   option - какие свойства применить, пока массив. для CSV объект asc_CTextOptions(codepage, delimiter)
+   exp:	asc_setAdvancedOptions(c_oAscAdvancedOptionsID.CSV, new Asc.asc_CTextOptions(1200, c_oAscCsvDelimiter.Comma) );
    */
   spreadsheet_api.prototype.asc_setAdvancedOptions = function(idOption, option) {
     var v;
@@ -718,7 +718,7 @@ var editor;
       var codePageCsv = AscCommon.c_oAscEncodingsMap[this.documentOpenOptions["codePage"]] || AscCommon.c_oAscCodePageUtf8, delimiterCsv = this.documentOpenOptions["delimiter"],
 		  delimiterCharCsv = this.documentOpenOptions["delimiterChar"];
       if (null != codePageCsv && (null != delimiterCsv || null != delimiterCharCsv)) {
-        this.asc_setAdvancedOptions(c_oAscAdvancedOptionsID.CSV, new asc.asc_CCSVAdvancedOptions(codePageCsv, delimiterCsv, delimiterCharCsv));
+        this.asc_setAdvancedOptions(c_oAscAdvancedOptionsID.CSV, new asc.asc_CTextOptions(codePageCsv, delimiterCsv, delimiterCharCsv));
         return;
       }
     }
@@ -735,7 +735,6 @@ var editor;
 				'codepage': AscCommon.c_oAscCodePageUtf8, "delimiter": AscCommon.c_oAscCsvDelimiter.Comma,
 				'encodings': AscCommon.getEncodingParams()
 			};
-			var options;
 			if (data && typeof Blob !== 'undefined' && typeof FileReader !== 'undefined') {
 				AscCommon.getJSZipUtils().getBinaryContent(data, function(err, data) {
 					if (err) {
@@ -748,16 +747,14 @@ var editor;
 							data = dataUint.subarray(bom.size);
 						}
 						cp['data'] = data;
-						options = new AscCommon.asc_CAdvancedOptions(c_oAscAdvancedOptionsID.CSV, cp);
-						t.handlers.trigger("asc_onAdvancedOptions", c_oAscAdvancedOptionsID.CSV, options);
+						t.handlers.trigger("asc_onAdvancedOptions", c_oAscAdvancedOptionsID.CSV, new AscCommon.asc_CAdvancedOptions(cp));
 					}
 				});
 			} else {
-				options = new AscCommon.asc_CAdvancedOptions(c_oAscAdvancedOptionsID.CSV, cp);
-				t.handlers.trigger("asc_onAdvancedOptions", c_oAscAdvancedOptionsID.CSV, options);
+				t.handlers.trigger("asc_onAdvancedOptions", c_oAscAdvancedOptionsID.CSV, new AscCommon.asc_CAdvancedOptions(cp));
 			}
 		} else {
-			this.asc_setAdvancedOptions(c_oAscAdvancedOptionsID.CSV, new asc.asc_CCSVAdvancedOptions(AscCommon.c_oAscCodePageUtf8, AscCommon.c_oAscCsvDelimiter.Comma));
+			this.asc_setAdvancedOptions(c_oAscAdvancedOptionsID.CSV, new asc.asc_CTextOptions(AscCommon.c_oAscCodePageUtf8, AscCommon.c_oAscCsvDelimiter.Comma));
 		}
     }
   };
@@ -866,10 +863,10 @@ var editor;
     } else {
       var oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(this.wbModel);
       if (c_oAscFileType.CSV === fileType) {
-        if (options.CSVOptions instanceof asc.asc_CCSVAdvancedOptions) {
-          oAdditionalData["codepage"] = options.CSVOptions.asc_getCodePage();
-          oAdditionalData["delimiter"] = options.CSVOptions.asc_getDelimiter();
-          oAdditionalData["delimiterChar"] = options.CSVOptions.asc_getDelimiterChar();
+        if (options.advancedOptions instanceof asc.asc_CTextOptions) {
+          oAdditionalData["codepage"] = options.advancedOptions.asc_getCodePage();
+          oAdditionalData["delimiter"] = options.advancedOptions.asc_getDelimiter();
+          oAdditionalData["delimiterChar"] = options.advancedOptions.asc_getDelimiterChar();
         }
       }
       dataContainer.data = oBinaryFileWriter.Write(isNoBase64);
@@ -931,8 +928,8 @@ var editor;
    * asc_onInitEditorFonts		(gui_fonts)
    * asc_onInitEditorStyles		(gui_styles)
    * asc_onOpenDocumentProgress	(AscCommon.COpenProgress)
-   * asc_onAdvancedOptions		(asc_CAdvancedOptions, ascAdvancedOptionsAction)	- эвент на получение дополнительных опций (открытие/сохранение CSV)
-   * asc_onError					(c_oAscError.ID, c_oAscError.Level)					- эвент об ошибке
+   * asc_onAdvancedOptions		(c_oAscAdvancedOptionsID, asc_CAdvancedOptions)			- эвент на получение дополнительных опций (открытие/сохранение CSV)
+   * asc_onError				(c_oAscError.ID, c_oAscError.Level)						- эвент об ошибке
    * asc_onEditCell				(Asc.c_oAscCellEditorState)								- эвент на редактирование ячейки с состоянием (переходами из формулы и обратно)
    * asc_onEditorSelectionChanged	(asc_CFont)											- эвент на смену информации о выделении в редакторе ячейки
    * asc_onSelectionChanged		(asc_CCellInfo)										- эвент на смену информации о выделении

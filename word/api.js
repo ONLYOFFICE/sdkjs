@@ -2544,8 +2544,8 @@ background-repeat: no-repeat;\
 	};
 	/*
 	 idOption идентификатор дополнительного параметра, c_oAscAdvancedOptionsID.TXT.
-	 option - какие свойства применить, пока массив. для TXT объект asc_CTXTAdvancedOptions(codepage)
-	 exp:	asc_setAdvancedOptions(c_oAscAdvancedOptionsID.TXT, new Asc.asc_CCSVAdvancedOptions(1200) );
+	 option - какие свойства применить, пока массив. для TXT объект asc_CTextOptions(codepage)
+	 exp:	asc_setAdvancedOptions(c_oAscAdvancedOptionsID.TXT, new Asc.asc_CTextOptions(1200) );
 	 */
 	asc_docs_api.prototype.asc_setAdvancedOptions       = function(idOption, option)
 	{
@@ -7438,7 +7438,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype._onNeedParams  = function(data, opt_isPassword)
 	{
 		var t = this;
-		var options;
 		if (opt_isPassword) {
 			if (this.asc_checkNeedCallback("asc_onAdvancedOptions")) {
 				t.sendEvent("asc_onAdvancedOptions", c_oAscAdvancedOptionsID.DRM);
@@ -7454,16 +7453,14 @@ background-repeat: no-repeat;\
 							t.sendEvent("asc_onError", c_oAscError.ID.Unknown, c_oAscError.Level.Critical);
 						} else {
 							cp['data'] = data;
-							options = new AscCommon.asc_CAdvancedOptions(c_oAscAdvancedOptionsID.TXT, cp);
-							t.sendEvent("asc_onAdvancedOptions", c_oAscAdvancedOptionsID.TXT, options);
+							t.sendEvent("asc_onAdvancedOptions", c_oAscAdvancedOptionsID.TXT, new AscCommon.asc_CAdvancedOptions(cp));
 						}
 					});
 				} else {
-					options = new AscCommon.asc_CAdvancedOptions(c_oAscAdvancedOptionsID.TXT, cp);
-					t.sendEvent("asc_onAdvancedOptions", c_oAscAdvancedOptionsID.TXT, options);
+					t.sendEvent("asc_onAdvancedOptions", c_oAscAdvancedOptionsID.TXT, new AscCommon.asc_CAdvancedOptions(cp));
 				}
 			} else {
-				this.asc_setAdvancedOptions(c_oAscAdvancedOptionsID.TXT, new Asc.asc_CTXTAdvancedOptions(AscCommon.c_oAscCodePageUtf8));
+				this.asc_setAdvancedOptions(c_oAscAdvancedOptionsID.TXT, new Asc.asc_CTextOptions(AscCommon.c_oAscCodePageUtf8));
 			}
 		}
 	};
@@ -7577,9 +7574,9 @@ background-repeat: no-repeat;\
 		}
 		else
 		{
-			if (options.txtOptions instanceof Asc.asc_CTXTAdvancedOptions)
+			if (options.advancedOptions instanceof Asc.asc_CTextOptions)
 			{
-				oAdditionalData["codepage"] = options.txtOptions.asc_getCodePage();
+				oAdditionalData["codepage"] = options.advancedOptions.asc_getCodePage();
 			}
 			var oLogicDocument;
 			if (null != options.oDocumentMailMerge)

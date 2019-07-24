@@ -2365,7 +2365,7 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
             _api.advancedOptionsAction = AscCommon.c_oAscAdvancedOptionsAction.Open;
             _api.documentFormat = "txt";
            
-            _api.asc_setAdvancedOptions(type, new Asc.asc_CTXTAdvancedOptions(encoding));
+            _api.asc_setAdvancedOptions(type, new Asc.asc_CTextOptions(encoding));
             
             break;
         } 
