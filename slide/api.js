@@ -2161,7 +2161,7 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asc_DownloadAs = function(options)
 	{
-		this._downloadAs(options.fileType, c_oAscAsyncAction.DownloadAs, options);
+		this._downloadAs(c_oAscAsyncAction.DownloadAs, options);
 	};
 	asc_docs_api.prototype.Resize                       = function()
 	{
@@ -7050,14 +7050,10 @@ background-repeat: no-repeat;\
         }
 	};
 
-	asc_docs_api.prototype._downloadAs = function(filetype, actionType, options)
+	asc_docs_api.prototype._downloadAs = function(actionType, options)
 	{
 		var isCloudCrypto = (window["AscDesktopEditor"] && (0 < window["AscDesktopEditor"]["CryptoMode"])) ? true : false;
 		var t = this;
-		if (!options)
-		{
-			options = {};
-		}
 		var downloadType;
 		if (options.isDownloadEvent) {
 			downloadType = actionType === c_oAscAsyncAction.Print ? DownloadType.Print : DownloadType.Download;
@@ -7068,6 +7064,7 @@ background-repeat: no-repeat;\
 		{
 			this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, actionType);
 		}
+		var fileType = options.fileType;
 		var isNoBase64 = (typeof ArrayBuffer !== 'undefined') && !isCloudCrypto;
 
 		var dataContainer               = {data : null, part : null, index : 0, count : 0};
@@ -7077,15 +7074,15 @@ background-repeat: no-repeat;\
 		oAdditionalData["id"]           = this.documentId;
 		oAdditionalData["userid"]       = this.documentUserId;
 		oAdditionalData["jwt"]         = this.CoAuthoringApi.get_jwt();
-		oAdditionalData["outputformat"] = filetype;
-		oAdditionalData["title"]        = AscCommon.changeFileExtention(this.documentTitle, AscCommon.getExtentionByFormat(filetype), Asc.c_nMaxDownloadTitleLen);
+		oAdditionalData["outputformat"] = fileType;
+		oAdditionalData["title"]        = AscCommon.changeFileExtention(this.documentTitle, AscCommon.getExtentionByFormat(fileType), Asc.c_nMaxDownloadTitleLen);
 		oAdditionalData["savetype"]     = AscCommon.c_oAscSaveTypes.CompleteAll;
 		oAdditionalData["nobase64"]     = isNoBase64;
 		if (DownloadType.Print === downloadType)
 		{
 			oAdditionalData["inline"] = 1;
 		}
-		if (c_oAscFileType.PDF == filetype || c_oAscFileType.PDFA == filetype)
+		if (c_oAscFileType.PDF === fileType || c_oAscFileType.PDFA === fileType)
 		{
 			var dd             = this.WordControl.m_oDrawingDocument;
 			dataContainer.data = dd.ToRendererPart(isNoBase64);
@@ -7095,7 +7092,7 @@ background-repeat: no-repeat;\
 
         if (isCloudCrypto)
         {
-        	window["AscDesktopEditor"]["CryptoDownloadAs"](dataContainer.data, filetype);
+        	window["AscDesktopEditor"]["CryptoDownloadAs"](dataContainer.data, fileType);
             return;
         }
 

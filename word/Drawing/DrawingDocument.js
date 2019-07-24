@@ -3172,7 +3172,7 @@ function CDrawingDocument()
 		var ret = Renderer.Memory.GetBase64Memory();
 		//console.log(ret);
 		return ret;
-	}
+	};
 
 	this.CheckPrint = function(params)
 	{
@@ -3181,7 +3181,7 @@ function CDrawingDocument()
 
 		if (this.m_arPrintingWaitEndRecalculate)
 		{
-			this.m_oWordControl.m_oApi.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, params[2]);
+			this.m_oWordControl.m_oApi.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, params[0]);
 			this.m_arPrintingWaitEndRecalculate = null;
 			return false;
 		}
@@ -3190,9 +3190,9 @@ function CDrawingDocument()
 			return false;
 
 		this.m_arPrintingWaitEndRecalculate = params;
-		this.m_oWordControl.m_oApi.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, params[2]);
+		this.m_oWordControl.m_oApi.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, params[0]);
 		return true;
-	}
+	};
 
 	this.ToRenderer2 = function ()
 	{
@@ -3217,7 +3217,7 @@ function CDrawingDocument()
 		this.m_oWordControl.m_oApi.ShowParaMarks = old_marks;
 		//console.log(ret);
 		return ret;
-	}
+	};
 	this.ToRendererPart = function (noBase64)
 	{
 		var watermark = this.m_oWordControl.m_oApi.watermarkDraw;
@@ -3273,7 +3273,7 @@ function CDrawingDocument()
 		} else {
 			return renderer.Memory.GetBase64Memory();
 		}
-	}
+	};
 
 	this.StopRenderingPage = function (pageIndex)
 	{
@@ -3281,7 +3281,7 @@ function CDrawingDocument()
 			this.m_oDocumentRenderer.stopRenderingPage(pageIndex);
 
 		this.m_arrPages[pageIndex].drawingPage.UnLock(this.m_oCacheManager);
-	}
+	};
 
 	this.ClearCachePages = function ()
 	{
@@ -3291,7 +3291,7 @@ function CDrawingDocument()
 			if (page)
 				page.drawingPage.SetRepaint(this.m_oCacheManager);
 		}
-	}
+	};
 
 	this.CloseFile = function ()
 	{
@@ -3302,7 +3302,7 @@ function CDrawingDocument()
 		this.m_lDrawingFirst = -1;
 		this.m_lDrawingEnd = -1;
 		this.m_lCurrentPage = -1;
-	}
+	};
 
 	this.CheckRasterImageOnScreen = function (src)
 	{
@@ -3332,12 +3332,12 @@ function CDrawingDocument()
 
 		if (bIsRaster)
 			this.m_oWordControl.OnScroll();
-	}
+	};
 
 	this.FirePaint = function ()
 	{
 		this.m_oWordControl.OnScroll();
-	}
+	};
 
 	this.ConvertCoordsFromCursor = function (x, y, bIsRul)
 	{
@@ -3377,7 +3377,7 @@ function CDrawingDocument()
 		}
 
 		return {X: 0, Y: 0, Page: -1, DrawPage: -1};
-	}
+	};
 
 	this.ConvertCoordsFromCursorPage = function (x, y, page, bIsRul)
 	{
@@ -3411,7 +3411,7 @@ function CDrawingDocument()
 		var y_mm = (_y - rect.top) * dKoef;
 
 		return {X: x_mm, Y: y_mm, Page: rect.pageIndex, DrawPage: page};
-	}
+	};
 
 	this.ConvertCoordsToAnotherPage = function (x, y, pageCoord, pageNeed)
 	{
@@ -3431,7 +3431,7 @@ function CDrawingDocument()
 		var _y = (yCursor - page2.top) * dKoef2;
 
 		return {X: _x, Y: _y, Error: false};
-	}
+	};
 
 	this.ConvertCoordsFromCursor2 = function (x, y, bIsRul, bIsNoNormalize, _zoomVal)
 	{
@@ -3528,7 +3528,7 @@ function CDrawingDocument()
 		}
 
 		return {X: 0, Y: 0, Page: -1, DrawPage: -1};
-	}
+	};
 
 	this.ConvetToPageCoords = function (x, y, pageIndex)
 	{
@@ -3543,7 +3543,7 @@ function CDrawingDocument()
 		var _y = (y - rect.top) * dKoef;
 
 		return {X: _x, Y: _y, Page: pageIndex, Error: false};
-	}
+	};
 
 	this.IsCursorInTableCur = function (x, y, page)
 	{

@@ -2526,7 +2526,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.asc_DownloadAs     = function(options)
 	{
 		var actionType = this.mailMergeFileData ? c_oAscAsyncAction.MailMergeLoadFile : c_oAscAsyncAction.DownloadAs;
-		this._downloadAs(options.fileType, actionType, options, null);
+		this._downloadAs(actionType, options, null);
 	};
 	asc_docs_api.prototype.Resize             = function()
 	{
@@ -2572,9 +2572,9 @@ background-repeat: no-repeat;\
 				}
 				else if (this.advancedOptionsAction === c_oAscAdvancedOptionsAction.Save)
 				{
-					var options       = {txtOptions : option, downloadType : this.downloadType};
+					var options       = {txtOptions : option, downloadType : this.downloadType, fileType: c_oAscFileType.TXT};
 					this.downloadType = DownloadType.None;
-					this._downloadAs(c_oAscFileType.TXT, c_oAscAsyncAction.DownloadAs, options, null);
+					this._downloadAs(c_oAscAsyncAction.DownloadAs, options, null);
 				}
 				break;
 			case c_oAscAdvancedOptionsID.DRM:
@@ -7488,23 +7488,20 @@ background-repeat: no-repeat;\
 			t.onEndLoadFile(result);
 		});
 	};
-	asc_docs_api.prototype._downloadAs    = function(filetype, actionType, options, fCallbackRequest)
+	asc_docs_api.prototype._downloadAs    = function(actionType, options, fCallbackRequest)
 	{
+		var fileType = options.fileType;
         var isCloudCrypto = (window["AscDesktopEditor"] && (0 < window["AscDesktopEditor"]["CryptoMode"])) ? true : false;
         if (isCloudCrypto)
             window.isCloudCryptoDownloadAs = true;
 
-		if (this.WordControl && this.WordControl.m_oDrawingDocument && (c_oAscFileType.PDF === filetype || c_oAscFileType.PDFA === filetype))
+		if (this.WordControl && this.WordControl.m_oDrawingDocument && (c_oAscFileType.PDF === fileType || c_oAscFileType.PDFA === fileType))
 		{
-			if (this.WordControl.m_oDrawingDocument.CheckPrint([filetype, actionType, options, fCallbackRequest]))
+			if (this.WordControl.m_oDrawingDocument.CheckPrint([actionType, options, fCallbackRequest]))
 				return;
 		}
 
 		var t = this;
-		if (!options)
-		{
-			options = {};
-		}
 		if (actionType)
 		{
 			this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, actionType);
@@ -7542,8 +7539,8 @@ background-repeat: no-repeat;\
 		oAdditionalData["id"]           = this.documentId;
 		oAdditionalData["userid"]       = this.documentUserId;
 		oAdditionalData["jwt"]         = this.CoAuthoringApi.get_jwt();
-		oAdditionalData["outputformat"] = filetype;
-		oAdditionalData["title"]        = AscCommon.changeFileExtention(this.documentTitle, AscCommon.getExtentionByFormat(filetype), Asc.c_nMaxDownloadTitleLen);
+		oAdditionalData["outputformat"] = fileType;
+		oAdditionalData["title"]        = AscCommon.changeFileExtention(this.documentTitle, AscCommon.getExtentionByFormat(fileType), Asc.c_nMaxDownloadTitleLen);
 		oAdditionalData["savetype"]     = AscCommon.c_oAscSaveTypes.CompleteAll;
 		oAdditionalData["nobase64"]     = isNoBase64;
 		if (DownloadType.Print === downloadType)
@@ -7554,13 +7551,13 @@ background-repeat: no-repeat;\
 		{
 			oAdditionalData["format"] = this.documentFormat;
 		}
-		else if (null == options.oDocumentMailMerge && (c_oAscFileType.PDF === filetype || c_oAscFileType.PDFA === filetype))
+		else if (null == options.oDocumentMailMerge && (c_oAscFileType.PDF === fileType || c_oAscFileType.PDFA === fileType))
 		{
 			var dd             = this.WordControl.m_oDrawingDocument;
 			dataContainer.data = dd.ToRendererPart(isNoBase64);
 			//console.log(oAdditionalData["data"]);
 		}
-		else if (c_oAscFileType.JSON === filetype)
+		else if (c_oAscFileType.JSON === fileType)
 		{
 			oAdditionalData['url']       = this.mailMergeFileData['url'];
 			oAdditionalData['format']    = this.mailMergeFileData['fileType'];
@@ -7575,7 +7572,7 @@ background-repeat: no-repeat;\
 			oAdditionalData['format']    = last['format'];
 			oAdditionalData['outputurls']= true;
 		}
-		else if (c_oAscFileType.TXT === filetype && !options.txtOptions && null == options.oDocumentMailMerge && null == options.oMailMergeSendData)
+		else if (c_oAscFileType.TXT === fileType && !options.txtOptions && null == options.oDocumentMailMerge && null == options.oMailMergeSendData)
 		{
 			// Мы открывали команду, надо ее закрыть.
 			if (actionType)
@@ -7590,7 +7587,7 @@ background-repeat: no-repeat;\
 			this.sendEvent("asc_onAdvancedOptions", new AscCommon.asc_CAdvancedOptions(c_oAscAdvancedOptionsID.TXT, cp), this.advancedOptionsAction);
 			return;
 		}
-		else if (c_oAscFileType.HTML === filetype && null == options.oDocumentMailMerge && null == options.oMailMergeSendData)
+		else if (c_oAscFileType.HTML === fileType && null == options.oDocumentMailMerge && null == options.oMailMergeSendData)
 		{
 			//в asc_nativeGetHtml будет вызван select all, чтобы выделился документ должны выйти из колонтитулов и автофигур
 			var _e     = new AscCommon.CKeyboardEvent();
@@ -7658,7 +7655,7 @@ background-repeat: no-repeat;\
         if (isCloudCrypto)
         {
             var sParamXml = ("<m_nCsvTxtEncoding>" + oAdditionalData["codepage"] + "</m_nCsvTxtEncoding>");
-            window["AscDesktopEditor"]["CryptoDownloadAs"](dataContainer.data, filetype, sParamXml);
+            window["AscDesktopEditor"]["CryptoDownloadAs"](dataContainer.data, fileType, sParamXml);
             return;
         }
 

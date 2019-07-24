@@ -147,9 +147,11 @@ Asc['asc_docs_api'].prototype.asc_sendMailMergeData = function(oData)
     var actionType = Asc.c_oAscAsyncAction.SendMailMerge;
     oData.put_UserId(this.documentUserId);
     oData.put_RecordCount(oData.get_RecordTo() - oData.get_RecordFrom() + 1);
-    var options = {oMailMergeSendData: oData, isNoCallback: true};
+    var options = new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.TXT);
+    options.oMailMergeSendData = oData;
+    options.isNoCallback = true;
     var t = this;
-    this._downloadAs(Asc.c_oAscFileType.TXT, actionType, options, function(input) {
+    this._downloadAs(actionType, options, function(input) {
         if (null != input && "sendmm" === input["type"])
         {
             if ("ok" != input["status"])
@@ -182,7 +184,7 @@ Asc['asc_docs_api'].prototype.asc_DownloadAsMailMerge = function(typeFile, Start
             actionType = Asc.c_oAscAsyncAction.DownloadMerge;
             options.isDownloadEvent = false;
         }
-        this._downloadAs(typeFile, actionType, options, null);
+        this._downloadAs(actionType, options, null);
     }
     return null != oDocumentMailMerge ? true : false;
 };

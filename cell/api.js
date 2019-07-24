@@ -330,7 +330,7 @@ var editor;
       return;
     }
 
-    this._downloadAs(options.fileType, c_oAscAsyncAction.DownloadAs, options);
+    this._downloadAs(c_oAscAsyncAction.DownloadAs, options);
   };
 	spreadsheet_api.prototype._saveCheck = function() {
 		return !this.isChartEditor && c_oAscAdvancedOptionsAction.None === this.advancedOptionsAction &&
@@ -648,9 +648,9 @@ var editor;
 
           sendCommand(this, null, v);
         } else {
-          var options = {CSVOptions: option, downloadType: this.downloadType};
+          var options = {CSVOptions: option, downloadType: this.downloadType, fileType: c_oAscFileType.CSV};
           this.downloadType = DownloadType.None;
-          this._downloadAs(c_oAscFileType.CSV, c_oAscAsyncAction.DownloadAs, options);
+          this._downloadAs(c_oAscAsyncAction.DownloadAs, options);
         }
         break;
       case c_oAscAdvancedOptionsID.DRM:
@@ -833,15 +833,12 @@ var editor;
     this.onEndLoadFile(AscCommonExcel.getEmptyWorkbook());
   };
 
-  spreadsheet_api.prototype._downloadAs = function(sFormat, actionType, options) {
+  spreadsheet_api.prototype._downloadAs = function(actionType, options) {
     var isCloudCrypto = (window["AscDesktopEditor"] && (0 < window["AscDesktopEditor"]["CryptoMode"])) ? true : false;
     if (isCloudCrypto)
       window.isCloudCryptoDownloadAs = true;
 
     var t = this;
-    if (!options) {
-      options = {};
-    }
     var downloadType;
     if (options.isDownloadEvent) {
       downloadType = actionType === c_oAscAsyncAction.Print ? DownloadType.Print : DownloadType.Download;
@@ -851,8 +848,8 @@ var editor;
     if (actionType) {
       this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, actionType);
     }
+    var fileType = options.fileType;
     var isNoBase64 = (typeof ArrayBuffer !== 'undefined') && !isCloudCrypto;
-    //sFormat: xlsx, xls, ods, csv, html
     var dataContainer = {data: null, part: null, index: 0, count: 0};
     var command = "save";
     var oAdditionalData = {};
@@ -860,17 +857,17 @@ var editor;
     oAdditionalData["id"] = this.documentId;
     oAdditionalData["userid"] = this.documentUserId;
     oAdditionalData["jwt"] = this.CoAuthoringApi.get_jwt();
-    oAdditionalData["outputformat"] = sFormat;
-    oAdditionalData["title"] = AscCommon.changeFileExtention(this.documentTitle, AscCommon.getExtentionByFormat(sFormat), Asc.c_nMaxDownloadTitleLen);
+    oAdditionalData["outputformat"] = fileType;
+    oAdditionalData["title"] = AscCommon.changeFileExtention(this.documentTitle, AscCommon.getExtentionByFormat(fileType), Asc.c_nMaxDownloadTitleLen);
     oAdditionalData["nobase64"] = isNoBase64;
     if (DownloadType.Print === downloadType) {
       oAdditionalData["inline"] = 1;
     }
-    if (c_oAscFileType.PDF === sFormat || c_oAscFileType.PDFA === sFormat) {
+    if (c_oAscFileType.PDF === fileType || c_oAscFileType.PDFA === fileType) {
       var printPagesData = this.wb.calcPagesPrint(options.adjustPrint);
       var pdfPrinterMemory = this.wb.printSheets(printPagesData).DocumentRenderer.Memory;
       dataContainer.data = isNoBase64 ? pdfPrinterMemory.GetData() : pdfPrinterMemory.GetBase64Memory();
-    } else if (c_oAscFileType.CSV === sFormat && !options.CSVOptions) {
+    } else if (c_oAscFileType.CSV === fileType && !options.CSVOptions) {
       // Мы открывали команду, надо ее закрыть.
       if (actionType) {
         this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, actionType);
@@ -881,7 +878,7 @@ var editor;
       return;
     } else {
       var oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(this.wbModel);
-      if (c_oAscFileType.CSV === sFormat) {
+      if (c_oAscFileType.CSV === fileType) {
         if (options.CSVOptions instanceof asc.asc_CCSVAdvancedOptions) {
           oAdditionalData["codepage"] = options.CSVOptions.asc_getCodePage();
           oAdditionalData["delimiter"] = options.CSVOptions.asc_getDelimiter();
@@ -897,7 +894,7 @@ var editor;
     {
       var sParamXml = ("<m_nCsvTxtEncoding>" + oAdditionalData["codepage"] + "</m_nCsvTxtEncoding>");
       sParamXml += ("<m_nCsvDelimiter>" + oAdditionalData["delimiter"] + "</m_nCsvDelimiter>");
-      window["AscDesktopEditor"]["CryptoDownloadAs"](dataContainer.data, sFormat, sParamXml);
+      window["AscDesktopEditor"]["CryptoDownloadAs"](dataContainer.data, fileType, sParamXml);
       return;
     }
 

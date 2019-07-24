@@ -46,6 +46,8 @@
 			this.isNaturalDownload = false;
 			this.errorDirect = null;
 			this.oDocumentMailMerge = null;
+			this.oMailMergeSendData = null;
+			this.isNoCallback = false;
 		}
 
 		asc_CDownloadOptions.prototype.asc_setFileType = function (fileType) {this.fileType = fileType;};
