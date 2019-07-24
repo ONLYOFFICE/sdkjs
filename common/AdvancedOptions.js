@@ -43,6 +43,8 @@
 			this.fileType = fileType;
 			this.isDownloadEvent = !!isDownloadEvent;
 			this.adjustPrint = null;
+			this.compatible = false;
+
 			this.isNaturalDownload = false;
 			this.errorDirect = null;
 			this.oDocumentMailMerge = null;
@@ -53,6 +55,7 @@
 		asc_CDownloadOptions.prototype.asc_setFileType = function (fileType) {this.fileType = fileType;};
 		asc_CDownloadOptions.prototype.asc_setIsDownloadEvent = function (isDownloadEvent) {this.isDownloadEvent = isDownloadEvent;};
 		asc_CDownloadOptions.prototype.asc_setAdjustPrint = function (adjustPrint) {this.adjustPrint = adjustPrint;};
+		asc_CDownloadOptions.prototype.asc_setCompatible = function (compatible) {this.compatible = compatible;};
 
 		/** @constructor */
 		function asc_CAdvancedOptions(id,opt){
@@ -198,6 +201,7 @@
 		prot["asc_setFileType"] = prot.asc_setFileType;
 		prot["asc_setIsDownloadEvent"] = prot.asc_setIsDownloadEvent;
 		prot["asc_setAdjustPrint"] = prot.asc_setAdjustPrint;
+		prot["asc_setCompatible"] = prot.asc_setCompatible;
 
 		window["AscCommon"].asc_CAdvancedOptions = asc_CAdvancedOptions;
 		prot = asc_CAdvancedOptions.prototype;
