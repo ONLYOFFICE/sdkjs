@@ -42,7 +42,6 @@
 		function asc_CDownloadOptions(fileType, isDownloadEvent) {
 			this.fileType = fileType;
 			this.isDownloadEvent = !!isDownloadEvent;
-			this.adjustPrint = null;
 			this.advancedOptions = null;
 			this.compatible = false;
 
@@ -55,7 +54,6 @@
 
 		asc_CDownloadOptions.prototype.asc_setFileType = function (fileType) {this.fileType = fileType;};
 		asc_CDownloadOptions.prototype.asc_setIsDownloadEvent = function (isDownloadEvent) {this.isDownloadEvent = isDownloadEvent;};
-		asc_CDownloadOptions.prototype.asc_setAdjustPrint = function (adjustPrint) {this.adjustPrint = adjustPrint;};
 		asc_CDownloadOptions.prototype.asc_setAdvancedOptions = function (advancedOptions) {this.advancedOptions = advancedOptions;};
 		asc_CDownloadOptions.prototype.asc_setCompatible = function (compatible) {this.compatible = compatible;};
 
@@ -155,7 +153,6 @@
 		prot = asc_CDownloadOptions.prototype;
 		prot["asc_setFileType"] = prot.asc_setFileType;
 		prot["asc_setIsDownloadEvent"] = prot.asc_setIsDownloadEvent;
-		prot["asc_setAdjustPrint"] = prot.asc_setAdjustPrint;
 		prot["asc_setAdvancedOptions"] = prot.asc_setAdvancedOptions;
 		prot["asc_setCompatible"] = prot.asc_setCompatible;
 
