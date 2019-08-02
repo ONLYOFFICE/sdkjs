@@ -794,10 +794,6 @@
 		this.tmpViewRulers  = null;
 		this.tmpZoomType    = null;
 
-		// Spell Checking
-		this.SpellCheckApi      = new AscCommon.CSpellCheckApi();
-		this.isSpellCheckEnable = true;
-
 		// это чтобы сразу показать ридер, без возможности вернуться в редактор/вьюер
 		this.isOnlyReaderMode = false;
 
@@ -1599,95 +1595,6 @@ background-repeat: no-repeat;\
 		this.asc_setDrawCollaborationMarks(false);
 		};
 
-	/////////////////////////////////////////////////////////////////////////
-	//////////////////////////SpellChecking api//////////////////////////////
-	/////////////////////////////////////////////////////////////////////////
-	// Init SpellCheck
-	asc_docs_api.prototype._coSpellCheckInit = function()
-	{
-		if (!this.SpellCheckApi)
-		{
-			return; // Error
-		}
-
-		var t = this;
-		if (window["AscDesktopEditor"]) {
-
-            window["asc_nativeOnSpellCheck"] = function(response) {
-                var _editor = window["Asc"]["editor"] ? window["Asc"]["editor"] : window.editor;
-                if (_editor.SpellCheckApi)
-                    _editor.SpellCheckApi.onSpellCheck(response);
-            };
-
-			this.SpellCheckApi.spellCheck = function (spellData) {
-				window["AscDesktopEditor"]["SpellCheck"](JSON.stringify(spellData));
-			};
-			this.SpellCheckApi.disconnect = function () {
-			};
-			if (window["AscDesktopEditor"]["IsLocalFile"] && !window["AscDesktopEditor"]["IsLocalFile"]())
-			{
-				this.sendEvent('asc_onSpellCheckInit', [
-                    "1026",
-                    "1027",
-                    "1029",
-                    "1030",
-                    "1031",
-                    "1032",
-                    "1033",
-                    "1036",
-                    "1038",
-                    "1040",
-                    "1042",
-                    "1043",
-                    "1044",
-                    "1045",
-                    "1046",
-                    "1048",
-                    "1049",
-                    "1050",
-                    "1051",
-                    "1053",
-                    "1055",
-                    "1057",
-                    "1058",
-                    "1060",
-                    "1062",
-                    "1063",
-                    "1066",
-                    "1068",
-                    "1069",
-                    "1087",
-                    "1104",
-                    "1110",
-                    "1134",
-                    "2051",
-                    "2055",
-                    "2057",
-                    "2068",
-                    "2070",
-                    "3079",
-                    "3081",
-                    "3082",
-                    "4105",
-                    "7177",
-                    "9242",
-                    "10266"
-				]);
-			}
-		} else {
-			if (this.SpellCheckUrl && this.isSpellCheckEnable) {
-				this.SpellCheckApi.set_url(this.SpellCheckUrl);
-			}
-		}
-
-		this.SpellCheckApi.onInit = function (e) {
-			t.sendEvent('asc_onSpellCheckInit', e);
-		};
-		this.SpellCheckApi.onSpellCheck = function (e) {
-			t.SpellCheck_CallBack(e);
-		};
-		this.SpellCheckApi.init(this.documentId);
-	};
 	//----------------------------------------------------------------------------------------------------------------------
 	// SpellCheck_CallBack
 	//          Функция ответа от сервера.
