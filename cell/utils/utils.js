@@ -2202,6 +2202,25 @@
 			this.max = null;
 		}
 
+		function WordSplitting(str) {
+            var trueLetter = false;
+            var index = 0;
+            var wordsArray = [];
+            for (var i = 0; i < str.length; i++) {
+              var nCharCode = str.charCodeAt(i);
+              if (AscCommon.g_aPunctuation[nCharCode] !== undefined || nCharCode === 32) {
+                if (trueLetter === true) {
+                  trueLetter = false;
+                  index++;
+                }
+              } else {
+                trueLetter = true;
+                wordsArray[index] = wordsArray[index] || "";
+                wordsArray[index] = wordsArray[index] + str[i];
+              }
+            }
+            return wordsArray;
+          };
 		asc_CSelectionMathInfo.prototype = {
 			constructor: asc_CSelectionMathInfo,
 			asc_getCount: function () { return this.count; },
@@ -2724,6 +2743,7 @@
 		prot["asc_setLookIn"] = prot.asc_setLookIn;
 		prot["asc_setReplaceWith"] = prot.asc_setReplaceWith;
 		prot["asc_setIsReplaceAll"] = prot.asc_setIsReplaceAll;
+		window["AscCommonExcel"].WordSplitting = WordSplitting;
 
 		window["AscCommonExcel"].findResults = findResults;
 
