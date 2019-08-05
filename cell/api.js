@@ -2855,7 +2855,8 @@ var editor;
 
   // spellCheck
   spreadsheet_api.prototype.SpellCheck_CallBack = function (e) {
-    if (e.type === "spell") {
+    var type = e["type"];
+    if (type === "spell") {
       var usrCorrect = e["usrCorrect"];
       this.spellcheckState.lastSpellInfo = e;
       var lastIndex = e.lastIndex || 0;
@@ -2876,7 +2877,7 @@ var editor;
         "usrLang": [e["usrLang"][lastIndex]],
         "cellInfo": e["cellsInfo"][lastIndex]
       });
-    } else if (e.type === "suggest") {
+    } else if (type === "suggest") {
       this.handlers.trigger("asc_onSpellCheckVariantsFound", new AscCommon.asc_CSpellCheckProperty(e["usrWords"][0], null, e["usrSuggest"][0], null, null));
       var cellInfo = e["cellInfo"];
 
