@@ -2974,16 +2974,7 @@ var editor;
     t.SpellCheckApi = new AscCommon.CSpellCheckApi();
     t._coSpellCheckInit();
     ws.model.lastFindOptions = ws.model.lastFindOptions || new Asc.asc_CFindOptions();
-    var lang = this.asc_getLocale();
-
-    lang == 9 ? lang = 1033 : lang = lang;
-    lang == 7 ? lang = 1031 : lang = lang;
-    lang == 10 ? lang = 3082 : lang = lang;
-    lang == 12 ? lang = 1036 : lang = lang;
-    lang == 16 ? lang = 1040 : lang = lang;
-    lang == 22 ? lang = 1046 : lang = lang;
-    lang == 25 ? lang = 1049 : lang = lang;
-    lang == 36 ? lang = 1060 : lang = lang;
+    var lang = this.defaultLanguage;
 
     options.findInSelection = options.scanOnOnlySheet && !(selectionRange.isSingleRange() && (lastRange.isOneCell() || lastRange.isEqual(merge)));
 
