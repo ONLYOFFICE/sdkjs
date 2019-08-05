@@ -92,7 +92,7 @@ var editor;
     this.defaultLanguage = 1033;
     this.spellcheckState = {
       lastCell: null,
-      wordIndex: null
+      lastSpellInfo: null
     };
 
     this.documentFormatSave = c_oAscFileType.XLSX;
@@ -2854,14 +2854,49 @@ var editor;
   };
 
   // spellCheck
-  spreadsheet_api.prototype.SpellCheck_CallBack = function () {
-    // ToDo add code here
+  spreadsheet_api.prototype.SpellCheck_CallBack = function (e) {
+    if (e.type === "spell") {
+      var usrCorrect = e["usrCorrect"];
+      this.spellcheckState.lastSpellInfo = e;
+      var lastIndex = e.lastIndex || 0;
+      while (usrCorrect[lastIndex]) {
+        ++lastIndex;
+      }
+      e.lastIndex = lastIndex;
+      if (false !== usrCorrect[lastIndex]) {
+        // ToDo this.asc_nextWord()
+        console.log('ToDo this.asc_nextWord()');
+        return;
+      }
+
+      ++e.lastIndex;
+      this.SpellCheckApi.spellCheck({
+        "type": "suggest",
+        "usrWords": [e["usrWords"][lastIndex]],
+        "usrLang": [e["usrLang"][lastIndex]],
+        "cellInfo": e["cellsInfo"][lastIndex]
+      });
+    } else if (e.type === "suggest") {
+      this.handlers.trigger("asc_onSpellCheckVariantsFound", new AscCommon.asc_CSpellCheckProperty(e["usrWords"][0], null, e["usrSuggest"][0], null, null));
+      var cellInfo = e["cellInfo"];
+
+      var ws = this.wb.getWorksheet();
+      var dc = cellInfo.col - ws.model.selectionRange.activeCell.col;
+      var dr = cellInfo.row - ws.model.selectionRange.activeCell.row;
+      ws.changeSelectionStartPoint(dc, dr);
+      this.spellcheckState.lastCell = ws.model.selectionRange.activeCell.clone();
+    }
   };
   spreadsheet_api.prototype.asc_setDefaultLanguage = function (val) {
     this.defaultLanguage = val;
     // ToDo check start spell to restart
   };
-  spreadsheet_api.prototype.asc_nextWord = function() {
+  spreadsheet_api.prototype.asc_nextWord = function () {
+    if (this.spellcheckState.lastSpellInfo) {
+      this.SpellCheck_CallBack(this.spellcheckState.lastSpellInfo);
+      return;
+    }
+
     var options = new Asc.asc_CFindOptions();
     var ws = this.wb.getWorksheet();
     var t = this;
@@ -2890,23 +2925,17 @@ var editor;
       maxC = ws.cols.length - 1;
       maxR = ws.rows.length - 1;
     }
-    var rowWords = {};
-    rowWords.words = [];
-    rowWords.cellCoord = [];
-    rowWords.typeOfWord = [];
-    var countOfWords = [];
+    var langArray = [];
     var wordsArray = [];
+    var cellsInfo = [];
     var ct = undefined;
     var numberOfPasses = 0;
     var lastCellRow = lastRange.r1;
     var lastCellCol = lastRange.c1;
-    if(startNextCell === true) {
+    if (startNextCell === true) {
       lastCellCol += 1;
       startNextCell = false;
     }
-    var cellNumber = 0;
-    var firstWrongWord;
-    var incorrectWords = [];
 
     if (this.spellcheckState.lastCell) {
       if (this.spellcheckState.lastCell.isEqual(ws.model.selectionRange.activeCell)) {
@@ -2918,9 +2947,17 @@ var editor;
 
     do {
       ws.model.getRange3(lastCellRow, lastCellCol, lastCellRow, maxC + 1)._foreachNoEmpty(function (cell, r, c) {
-        if(cell.text !== null) {
+        if (cell.text !== null) {
+          var cellInfo = new AscCommon.CellBase(r, c);
+          var words = AscCommonExcel.WordSplitting(cell.text);
+          for (var i = 0; i < words.length; ++i) {
+            wordsArray.push(words[i]);
+            langArray.push(lang);
+            cellsInfo.push(cellInfo);
+          }
+          /*wordsArray.concat(AscCommonExcel.WordSplitting(cell.text));
           rowWords.cellCoord.push(new AscCommon.CellBase(r, c));
-          rowWords.words.push(cell.clone());
+          rowWords.words.push(cell.clone());*/
           ct = true;
         }
       });
@@ -2940,133 +2977,12 @@ var editor;
       }
     } while (!ct);
 
-    for (var i = 0; i < rowWords.words.length; i++) {
-      rowWords.words[i] = AscCommonExcel.WordSplitting(rowWords.words[i].text);
-    }
-
-    var langArray = [];
-    var wordsArray = [].concat(rowWords.words);
-
-    for (var i = 0; i < wordsArray.length; i++) {
-      langArray.push(lang);
-    }
-    var count = 0;
-    for (var i = 0; i < rowWords.words.length; i++) {
-      count += rowWords.words[i].length;
-      countOfWords.push(count);
-    }
-    t.SpellCheckApi.spellCheck({ "type": "spell", "usrWords": wordsArray, "usrLang": langArray });
-
-    t.SpellCheckApi.onSpellCheck = function (e) {
-      if (e.type === "spell") {
-        var wordIndex = 0;
-        while (e.usrCorrect[wordIndex] === true) {
-          wordIndex++;
-        }
-        if (e.usrCorrect[wordIndex] === false) {
-          firstWrongWord = wordIndex;
-          while (countOfWords[cellNumber] <= wordIndex) {
-            firstWrongWord = wordIndex - countOfWords[cellNumber];
-            cellNumber++;
-          }
-        }
-        var index = 0;
-        rowWords.typeOfWord = [];
-        for (var i = 0; i < rowWords.words.length; i++) {
-          var j = 0;
-          var incorrectWordInCell = [];
-          while (rowWords.words[i][j] !== undefined) {
-            incorrectWordInCell.push(e.usrCorrect[index])
-            index++;
-            j++;
-          }
-          rowWords.typeOfWord.push(incorrectWordInCell);
-        }
-
-        //если предыдущая строка содержит текст, но он весь правильный
-        if (e.usrCorrect[wordIndex] === undefined) {
-          rowWords = {};
-          rowWords.words = [];
-          rowWords.cellCoord = [];
-          wordsArray = [];
-          var ct = undefined;
-          wordIndex = 0;
-          lastCellRow += 1;
-          lastCellCol = minC;
-          do {
-            ws.model.getRange3(lastCellRow, lastCellCol, lastCellRow, maxC + 1)._foreachNoEmpty(function (cell, r, c) {
-              if (cell.text !== null) {
-                rowWords.cellCoord.push(new AscCommon.CellBase(r, c));
-                rowWords.words.push(cell.clone());
-                ct = true;
-              }
-            });
-            if (ct !== true) {
-              lastCellRow++;
-              lastCellCol = 0;
-            }
-            if (lastCellRow > maxR) {
-              numberOfPasses++;
-              lastCellRow = minR;
-              lastCellCol = minC;
-              if (numberOfPasses >= 2) {
-                return false;
-              }
-              lastCellRow = minR;
-            }
-          } while (!ct);
-
-          for (var i = 0; i < rowWords.words.length; i++) {
-            rowWords.words[i] = AscCommonExcel.WordSplitting(rowWords.words[i].text);
-          }
-
-          var langArray = [];
-          var wordsArray = [].concat(rowWords.words);
-          countOfWords = [];
-
-          for (var i = 0; i < wordsArray.length; i++) {
-            langArray.push(lang);
-          }
-          var count = 0;
-          for (var i = 0; i < rowWords.words.length; i++) {
-            count += rowWords.words[i].length;
-            countOfWords.push(count);
-          }
-          t.SpellCheckApi.spellCheck({ "type": "spell", "usrWords": wordsArray, "usrLang": langArray });
-        } else {
-          var langArray = [];
-
-          for (var i = 0; i < rowWords.words[cellNumber].length; i++) {
-
-            if (rowWords.typeOfWord[cellNumber][i] === false)
-              incorrectWords.push(e.usrWords[i]);
-          }
-          for (var i = 0; i < rowWords.words[cellNumber].length; i++) {
-            langArray.push(lang);
-          }
-
-          t.SpellCheckApi.spellCheck({ "type": "suggest", "usrWords": incorrectWords, "usrLang": langArray });
-        }
-      } else if (e.type === "suggest") {
-
-        if (e.usrWords[incorrectWordIndex] === undefined) {
-          startNextCell = true;
-          incorrectWordIndex = 0;
-          t.spellcheckState.lastCell.col += 1;
-          t.asc_spellChecking(options);
-        } else {
-          console.log(e.usrWords[incorrectWordIndex]);
-          console.log(e.usrSuggest[incorrectWordIndex]);
-          t.handlers.trigger("asc_onSpellCheckVariantsFound", new AscCommon.asc_CSpellCheckProperty(e.usrWords[incorrectWordIndex], null, e.usrSuggest[incorrectWordIndex], null, null));
-        }
-
-        var dc = rowWords.cellCoord[cellNumber].col - ws.model.selectionRange.activeCell.col;
-        var dr = rowWords.cellCoord[cellNumber].row - ws.model.selectionRange.activeCell.row;
-        options.findInSelection ? ws.changeSelectionActivePoint(dc, dr) : ws.changeSelectionStartPoint(dc, dr);
-        t.spellcheckState.lastCell = ws.model.selectionRange.activeCell.clone();
-        t.spellcheckState.wordIndex = firstWrongWord;
-      }
-    }
+    this.SpellCheckApi.spellCheck({
+      "type": "spell",
+      "usrWords": wordsArray,
+      "usrLang": langArray,
+      "cellsInfo": cellsInfo
+    });
   };
 
   // Frozen pane
