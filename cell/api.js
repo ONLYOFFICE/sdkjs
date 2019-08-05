@@ -2915,61 +2915,37 @@ var editor;
         incorrectWordIndex = 0;
       }
     }
-    if(options.scanForward === true) {
-      do {
-        ws.model.getRange3(lastCellRow, lastCellCol, lastCellRow, maxC + 1)._foreachNoEmpty(function (cell, r, c) {
-          if(cell.text !== null) {
-            rowWords.cellCoord.push([r, c]);
-            rowWords.words.push(cell.clone());
-            ct = true;
-          }
-        });
-        if (ct !== true) {
-          lastCellRow++;
-          lastCellCol = 0;
+
+    do {
+      ws.model.getRange3(lastCellRow, lastCellCol, lastCellRow, maxC + 1)._foreachNoEmpty(function (cell, r, c) {
+        if(cell.text !== null) {
+          rowWords.cellCoord.push(new AscCommon.CellBase(r, c));
+          rowWords.words.push(cell.clone());
+          ct = true;
         }
-        if (lastCellRow > maxR) {
-          numberOfPasses++;
-          lastCellRow = minR;
-          lastCellCol = minC;
-          if (numberOfPasses >= 2) {
-            alert("empty spreadsheet");
-            return false;
-          }
-          lastCellRow = minR;
+      });
+      if (ct !== true) {
+        lastCellRow++;
+        lastCellCol = 0;
+      }
+      if (lastCellRow > maxR) {
+        numberOfPasses++;
+        lastCellRow = minR;
+        lastCellCol = minC;
+        if (numberOfPasses >= 2) {
+          alert("empty spreadsheet");
+          return false;
         }
-      } while (!ct);
-    } else {
-      do {
-        ws.model.getRange3(lastCellRow, lastCellCol, lastCellRow, minC - 1)._foreachNoEmpty(function (cell, r, c) {
-          if(cell.text !== null) {
-            rowWords.cellCoord.push([r, c]);
-            rowWords.words.push(cell.clone());
-            ct = true;
-          }
-        });
-        if (ct !== true) {
-          lastCellRow--;
-          lastCellCol = maxC;
-        }
-        if (lastCellRow < minR) {
-          numberOfPasses++;
-          lastCellRow = maxR;
-          lastCellCol = maxC;
-          if (numberOfPasses >= 2) {
-            return false;
-          }
-          lastCellRow = maxR;
-        }
-      } while (!ct);
-    }
+        lastCellRow = minR;
+      }
+    } while (!ct);
 
     for (var i = 0; i < rowWords.words.length; i++) {
       rowWords.words[i] = AscCommonExcel.WordSplitting(rowWords.words[i].text);
     }
 
     var langArray = [];
-    var wordsArray = [].concat(...rowWords.words);
+    var wordsArray = [].concat(rowWords.words);
 
     for (var i = 0; i < wordsArray.length; i++) {
       langArray.push(lang);
@@ -3020,7 +2996,7 @@ var editor;
           do {
             ws.model.getRange3(lastCellRow, lastCellCol, lastCellRow, maxC + 1)._foreachNoEmpty(function (cell, r, c) {
               if (cell.text !== null) {
-                rowWords.cellCoord.push([r, c]);
+                rowWords.cellCoord.push(new AscCommon.CellBase(r, c));
                 rowWords.words.push(cell.clone());
                 ct = true;
               }
@@ -3045,7 +3021,7 @@ var editor;
           }
 
           var langArray = [];
-          var wordsArray = [].concat(...rowWords.words);
+          var wordsArray = [].concat(rowWords.words);
           countOfWords = [];
 
           for (var i = 0; i < wordsArray.length; i++) {
@@ -3084,8 +3060,8 @@ var editor;
           t.handlers.trigger("asc_onSpellCheckVariantsFound", new AscCommon.asc_CSpellCheckProperty(e.usrWords[incorrectWordIndex], null, e.usrSuggest[incorrectWordIndex], null, null));
         }
 
-        var dc = rowWords.cellCoord[cellNumber][1] - ws.model.selectionRange.activeCell.col;
-        var dr = rowWords.cellCoord[cellNumber][0] - ws.model.selectionRange.activeCell.row;
+        var dc = rowWords.cellCoord[cellNumber].col - ws.model.selectionRange.activeCell.col;
+        var dr = rowWords.cellCoord[cellNumber].row - ws.model.selectionRange.activeCell.row;
         options.findInSelection ? ws.changeSelectionActivePoint(dc, dr) : ws.changeSelectionStartPoint(dc, dr);
         t.spellcheckState.lastCell = ws.model.selectionRange.activeCell.clone();
         t.spellcheckState.wordIndex = firstWrongWord;
