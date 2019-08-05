@@ -124,7 +124,6 @@
 			return null === val2 ? val1 : (null === val1 ? val2 : Math.min(val1, val2));
 		}
 
-
 		function round(x) {
 			var y = x + (x >= 0 ? .5 : -.5);
 			return y | y;
@@ -191,7 +190,6 @@
 			return value;
 		}
 
-
 		// Определяет времени работы функции
 		function profileTime(fn/*[, arguments]*/) {
 			var start, end, arg = [], i;
@@ -255,6 +253,26 @@
 
 			// borders equal
 			return border1;
+		}
+
+		function WordSplitting(str) {
+			var trueLetter = false;
+			var index = 0;
+			var wordsArray = [];
+			for (var i = 0; i < str.length; i++) {
+				var nCharCode = str.charCodeAt(i);
+				if (AscCommon.g_aPunctuation[nCharCode] !== undefined || nCharCode === 32) {
+					if (trueLetter === true) {
+						trueLetter = false;
+						index++;
+					}
+				} else {
+					trueLetter = true;
+					wordsArray[index] = wordsArray[index] || "";
+					wordsArray[index] = wordsArray[index] + str[i];
+				}
+			}
+			return wordsArray;
 		}
 
 		var referenceType = {
@@ -2202,25 +2220,6 @@
 			this.max = null;
 		}
 
-		function WordSplitting(str) {
-            var trueLetter = false;
-            var index = 0;
-            var wordsArray = [];
-            for (var i = 0; i < str.length; i++) {
-              var nCharCode = str.charCodeAt(i);
-              if (AscCommon.g_aPunctuation[nCharCode] !== undefined || nCharCode === 32) {
-                if (trueLetter === true) {
-                  trueLetter = false;
-                  index++;
-                }
-              } else {
-                trueLetter = true;
-                wordsArray[index] = wordsArray[index] || "";
-                wordsArray[index] = wordsArray[index] + str[i];
-              }
-            }
-            return wordsArray;
-          };
 		asc_CSelectionMathInfo.prototype = {
 			constructor: asc_CSelectionMathInfo,
 			asc_getCount: function () { return this.count; },
@@ -2635,9 +2634,10 @@
 		window["AscCommonExcel"].calcDecades = calcDecades;
 		window["AscCommonExcel"].convertPtToPx = convertPtToPx;
 		window["AscCommonExcel"].convertPxToPt = convertPxToPt;
-		window["Asc"].outputDebugStr = outputDebugStr;
 		window["Asc"].profileTime = profileTime;
 		window["AscCommonExcel"].getMatchingBorder = getMatchingBorder;
+		window["AscCommonExcel"].WordSplitting = WordSplitting;
+		window["Asc"].outputDebugStr = outputDebugStr;
 		window["Asc"].isNumberInfinity = isNumberInfinity;
 		window["Asc"].trim = trim;
 		window["Asc"].arrayToLowerCase = arrayToLowerCase;
@@ -2743,7 +2743,6 @@
 		prot["asc_setLookIn"] = prot.asc_setLookIn;
 		prot["asc_setReplaceWith"] = prot.asc_setReplaceWith;
 		prot["asc_setIsReplaceAll"] = prot.asc_setIsReplaceAll;
-		window["AscCommonExcel"].WordSplitting = WordSplitting;
 
 		window["AscCommonExcel"].findResults = findResults;
 
