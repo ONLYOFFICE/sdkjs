@@ -2966,7 +2966,6 @@ var editor;
     var c = ar.col;
     var r = ar.row;
     var merge = ws.model.getMergedByCell(r, c);
-    var inc = options.scanForward ? +1 : -1;
     t.SpellCheckApi = new AscCommon.CSpellCheckApi();
     t._coSpellCheckInit();
     ws.model.lastFindOptions = ws.model.lastFindOptions || new Asc.asc_CFindOptions();
@@ -3005,7 +3004,7 @@ var editor;
     var lastCellRow = lastRange.r1;
     var lastCellCol = lastRange.c1;
     if(startNextCell === true) {
-      lastCellCol += inc;
+      lastCellCol += 1;
       startNextCell = false;
     }
     var cellNumber = 0;
@@ -3014,7 +3013,7 @@ var editor;
 
     if (previousState.cellCoord != undefined) {
       if (previousState.cellCoord.row === ws.model.selectionRange.activeCell.row && previousState.cellCoord.col === ws.model.selectionRange.activeCell.col) {
-          incorrectWordIndex += inc;
+          incorrectWordIndex += 1;
       } else incorrectWordIndex = 0;
     }
    if(options.scanForward === true) {
@@ -3059,7 +3058,6 @@ var editor;
         lastCellRow = maxR;
         lastCellCol = maxC;
         if (numberOfPasses >= 2) {
-          alert("empty spreadsheet");
           return false;
         }
         lastCellRow = maxR;
@@ -3118,7 +3116,7 @@ var editor;
           wordsArray = [];
           var ct = undefined;
           wordIndex = 0;
-          lastCellRow += inc;
+          lastCellRow += 1;
           lastCellCol = minC;
           do {
             ws.model.getRange3(lastCellRow, lastCellCol, lastCellRow, maxC + 1)._foreachNoEmpty(function (cell, r, c) {
@@ -3137,7 +3135,6 @@ var editor;
               lastCellRow = minR;
               lastCellCol = minC;
               if (numberOfPasses >= 2) {
-                alert("empty spreadsheet");
                 return false;
               }
               lastCellRow = minR;
@@ -3185,6 +3182,7 @@ var editor;
         } else {
           console.log(e.usrWords[incorrectWordIndex]);
           console.log(e.usrSuggest[incorrectWordIndex]);
+          t.handlers.trigger("asc_onSpellCheckVariantsFound", new AscCommon.asc_CSpellCheckProperty(e.usrWords[incorrectWordIndex], null, e.usrSuggest[incorrectWordIndex], null, null));
         }
        
         var dc = rowWords.cellCoord[cellNumber][1] - ws.model.selectionRange.activeCell.col;
@@ -3995,8 +3993,6 @@ var editor;
   prot["asc_closeCellEditor"] = prot.asc_closeCellEditor;
   prot["asc_startSpellCheck"] = prot.asc_startSpellCheck;
   prot["asc_nextWord"] = prot.asc_nextWord;
-  prot["asc_previousWord"] = prot.asc_previousWord;
-  
 
   prot["asc_setR1C1Mode"] = prot.asc_setR1C1Mode;
 
