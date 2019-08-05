@@ -90,6 +90,7 @@ var editor;
     this.wbModel = null;
     this.tmpLocale = null;
     this.tmpLocalization = null;
+    this.defaultLanguage = 1033;
 
     this.documentFormatSave = c_oAscFileType.XLSX;
 
@@ -271,6 +272,10 @@ var editor;
       return new AscCommon.asc_CListType(AscFormat.fGetListTypeFromBullet(oParaPr && oParaPr.Bullet));
   };
 
+  spreadsheet_api.prototype.asc_setDefaultLanguage = function (val) {
+    this.defaultLanguage = val;
+    // ToDo check start spell to restart
+  };
     spreadsheet_api.prototype.asc_setLocale = function(val) {
     if (!this.isLoadFullApi) {
       this.tmpLocale = val;
@@ -3900,6 +3905,7 @@ var editor;
   prot['asc_getLocaleExample'] = prot.asc_getLocaleExample;
   prot['asc_getFormatCells'] = prot.asc_getFormatCells;
   prot["asc_getLocaleCurrency"] = prot.asc_getLocaleCurrency;
+  prot["asc_setDefaultLanguage"] = prot.asc_setDefaultLanguage;
   prot["asc_setLocale"] = prot.asc_setLocale;
   prot["asc_getLocale"] = prot.asc_getLocale;
   prot["asc_getEditorPermissions"] = prot.asc_getEditorPermissions;
