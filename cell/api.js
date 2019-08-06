@@ -2968,6 +2968,14 @@ var editor;
     });
   };
 
+  spreadsheet_api.prototype.asc_replaceMisspelledWord = function(newWord, oldWord) {
+    var ws = this.wb.getWorksheet();
+    var options = new Asc.asc_CFindOptions();
+    options.findWhat = oldWord.Word;
+    options.replaceWith = newWord;
+    ws.replaceCellText(options, false, (this.asc_nextWord).bind(this));
+  };
+
   // Frozen pane
   spreadsheet_api.prototype.asc_freezePane = function () {
     this.wb.getWorksheet().freezePane();
@@ -4001,6 +4009,7 @@ var editor;
   // Spellcheck
   prot["asc_setDefaultLanguage"] = prot.asc_setDefaultLanguage;
   prot["asc_nextWord"] = prot.asc_nextWord;
+  prot["asc_replaceMisspelledWord"]= prot.asc_replaceMisspelledWord;
 
   // Frozen pane
   prot["asc_freezePane"] = prot.asc_freezePane;
