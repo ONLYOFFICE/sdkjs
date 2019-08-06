@@ -2905,7 +2905,6 @@ var editor;
 
     var options = new Asc.asc_CFindOptions();
     var ws = this.wb.getWorksheet();
-    var t = this;
     var minC, minR, maxC, maxR;
     var selectionRange = options.selectionRange || ws.model.selectionRange;
     var lastRange = selectionRange.getLast();
