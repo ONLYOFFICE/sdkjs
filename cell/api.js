@@ -2977,11 +2977,16 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_replaceMisspelledWord = function(newWord, variantsFound) {
+    var t = this;
     var ws = this.wb.getWorksheet();
     var options = new Asc.asc_CFindOptions();
     options.findWhat = variantsFound.Word;
     options.replaceWith = newWord;
-    ws.replaceCellText(options, false, (this.asc_nextWord).bind(this));
+    this.spellcheckState.lockSpell = true;
+    ws.replaceCellText(options, false, function () {
+      t.spellcheckState.lockSpell = false;
+      t.asc_nextWord();
+    });
   };
 
   // Frozen pane
