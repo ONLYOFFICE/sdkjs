@@ -88,13 +88,7 @@ var editor;
 
     // spellcheck
     this.defaultLanguage = 1033;
-    this.spellcheckState = {
-      lastSpellInfo: null,
-      lockSpell: false,
-      startCell: null,
-      currentCell: null,
-      iteration: false
-    };
+    this.spellcheckState = new AscCommonExcel.CSpellcheckState();
 
     this.documentFormatSave = c_oAscFileType.XLSX;
 
@@ -2858,10 +2852,7 @@ var editor;
   spreadsheet_api.prototype.cleanSpelling = function () {
     if (!this.spellcheckState.lockSpell) {
       this.handlers.trigger("asc_onSpellCheckVariantsFound", null);
-      this.spellcheckState.lastSpellInfo = null;
-      this.spellcheckState.startCell = null;
-      this.spellcheckState.currentCell = null;
-      this.spellcheckState.iteration = false;
+      this.spellcheckState.clean();
     }
   };
   spreadsheet_api.prototype.SpellCheck_CallBack = function (e) {
@@ -2876,9 +2867,7 @@ var editor;
       }
       e.lastIndex = lastIndex;
       if (false !== usrCorrect[lastIndex]) {
-        this.spellcheckState.lastSpellInfo = null;
-        this.spellcheckState.currentCell.row += 1;
-        this.spellcheckState.currentCell.col = 0;
+        this.spellcheckState.nextRow();
         this.asc_nextWord();
         return;
       }
@@ -2917,10 +2906,7 @@ var editor;
     }
 
     var ws = this.wb.getWorksheet();
-    if (null === this.spellcheckState.startCell) {
-      this.spellcheckState.startCell = ws.model.selectionRange.activeCell.clone();
-      this.spellcheckState.currentCell = ws.model.selectionRange.activeCell.clone();
-    }
+    this.spellcheckState.init(ws.model.selectionRange.activeCell);
 
     var startCell = this.spellcheckState.startCell;
     var currentCell = this.spellcheckState.currentCell;
@@ -2951,8 +2937,7 @@ var editor;
         maxC = startCell.col - 1;
       }
       if (currentCell.col > maxC) {
-        currentCell.row += 1;
-        currentCell.col = 0;
+        this.spellcheckState.nextRow();
         continue;
       }
       ws.model.getRange3(currentCell.row, currentCell.col, currentCell.row, maxC)._foreachNoEmpty(function (cell, r, c) {
@@ -2970,8 +2955,7 @@ var editor;
       if (isEnd) {
         break;
       }
-      currentCell.row += 1;
-      currentCell.col = 0;
+      this.spellcheckState.nextRow();
     } while (true);
 
     if (0 < wordsArray.length) {

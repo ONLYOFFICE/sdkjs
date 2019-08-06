@@ -2385,6 +2385,33 @@
 			return -2;
 		};
 
+		function CSpellcheckState() {
+			this.lastSpellInfo = null;
+			this.lockSpell = false;
+			this.startCell = null;
+			this.currentCell = null;
+			this.iteration = false;
+		}
+
+		CSpellcheckState.prototype.init = function (startCell) {
+			if (!this.startCell) {
+				this.startCell = startCell.clone();
+				this.currentCell = startCell.clone();
+			}
+		};
+		CSpellcheckState.prototype.clean = function () {
+			this.lastSpellInfo = null;
+			this.lockSpell = false;
+			this.startCell = null;
+			this.currentCell = null;
+			this.iteration = false;
+		};
+		CSpellcheckState.prototype.nextRow = function () {
+			this.lastSpellInfo = null;
+			this.currentCell.row += 1;
+			this.currentCell.col = 0;
+		};
+
 		/** @constructor */
 		function asc_CCompleteMenu(name, type) {
 			this.name = name;
@@ -2463,8 +2490,7 @@
 		asc_CAutoCorrectOptions.prototype.asc_getOptions = function () {return this.options;};
 		asc_CAutoCorrectOptions.prototype.asc_getCellCoord = function () {return this.cellCoord;};
 
-
-
+		/** @constructor */
 		function cDate() {
 			var bind = Function.bind;
 			var unbind = bind.bind(bind);
@@ -2492,9 +2518,9 @@
 			return this.isLeapYear() ? this.getDaysInMonth.L[this.getUTCMonth()] : this.getDaysInMonth.R[this.getUTCMonth()];
 		};
 
-// durations of months for the regular year
+		// durations of months for the regular year
 		cDate.prototype.getDaysInMonth.R = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-// durations of months for the leap year
+		// durations of months for the leap year
 		cDate.prototype.getDaysInMonth.L = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
 		cDate.prototype.truncate = function () {
@@ -2745,6 +2771,8 @@
 		prot["asc_setIsReplaceAll"] = prot.asc_setIsReplaceAll;
 
 		window["AscCommonExcel"].findResults = findResults;
+
+		window["AscCommonExcel"].CSpellcheckState = CSpellcheckState;
 
 		window["AscCommonExcel"].asc_CCompleteMenu = asc_CCompleteMenu;
 		prot = asc_CCompleteMenu.prototype;
