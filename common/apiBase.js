@@ -1195,6 +1195,17 @@
 		this.decrementCounterLongAction();
 	};
 	// SpellCheck
+	baseEditorsApi.prototype.asc_SpellCheckDisconnect            = function()
+	{
+		if (!this.SpellCheckApi)
+			return; // Error
+		this.SpellCheckApi.disconnect();
+		this.isSpellCheckEnable = false;
+		this._spellCheckDisconnect();
+	};
+	baseEditorsApi.prototype._spellCheckDisconnect               = function()
+	{
+	};
 	baseEditorsApi.prototype._coSpellCheckInit                   = function()
 	{
 		if (!this.SpellCheckApi)

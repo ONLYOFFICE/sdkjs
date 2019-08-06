@@ -1047,12 +1047,8 @@
         }
     };
 
-    asc_docs_api.prototype.asc_SpellCheckDisconnect   = function()
+    asc_docs_api.prototype._spellCheckDisconnect   = function()
     {
-        if (!this.SpellCheckApi)
-            return; // Error
-        this.SpellCheckApi.disconnect();
-        this.isSpellCheckEnable = false;
         if (this.WordControl.m_oLogicDocument)
             this.WordControl.m_oLogicDocument.TurnOff_CheckSpelling();
     };

@@ -2892,6 +2892,9 @@ var editor;
       this.spellcheckState.lockSpell = false;
     }
   };
+  spreadsheet_api.prototype._spellCheckDisconnect = function () {
+    this.cleanSpelling();
+  };
   spreadsheet_api.prototype.asc_setDefaultLanguage = function (val) {
     if (this.spellcheckState.lockSpell) {
       return;
