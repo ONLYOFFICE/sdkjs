@@ -2387,6 +2387,8 @@
 
 		function CSpellcheckState() {
 			this.lastSpellInfo = null;
+			this.lastIndex = -1;
+
 			this.lockSpell = false;
 			this.startCell = null;
 			this.currentCell = null;
@@ -2401,6 +2403,8 @@
 		};
 		CSpellcheckState.prototype.clean = function () {
 			this.lastSpellInfo = null;
+			this.lastIndex = -1;
+
 			this.lockSpell = false;
 			this.startCell = null;
 			this.currentCell = null;
@@ -2408,6 +2412,8 @@
 		};
 		CSpellcheckState.prototype.nextRow = function () {
 			this.lastSpellInfo = null;
+			this.lastIndex = -1;
+
 			this.currentCell.row += 1;
 			this.currentCell.col = 0;
 		};

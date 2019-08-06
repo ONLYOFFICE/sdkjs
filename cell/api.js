@@ -2861,18 +2861,18 @@ var editor;
     if (type === "spell") {
       var usrCorrect = e["usrCorrect"];
       this.spellcheckState.lastSpellInfo = e;
-      var lastIndex = e.lastIndex || 0;
+      this.spellcheckState.lastIndex += 1;
+      var lastIndex = this.spellcheckState.lastIndex;
       while (usrCorrect[lastIndex]) {
         ++lastIndex;
       }
-      e.lastIndex = lastIndex;
+      this.spellcheckState.lastIndex = lastIndex;
       if (false !== usrCorrect[lastIndex]) {
         this.spellcheckState.nextRow();
         this.asc_nextWord();
         return;
       }
 
-      ++e.lastIndex;
       this.spellcheckState.lockSpell = true;
       this.SpellCheckApi.spellCheck({
         "type": "suggest",
