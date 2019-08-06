@@ -2855,6 +2855,15 @@ var editor;
   };
 
   // spellCheck
+  spreadsheet_api.prototype.cleanSpelling = function () {
+    if (!this.spellcheckState.lockSpell) {
+      this.handlers.trigger("asc_onSpellCheckVariantsFound", null);
+      this.spellcheckState.lastSpellInfo = null;
+      this.spellcheckState.startCell = null;
+      this.spellcheckState.currentCell = null;
+      this.spellcheckState.iteration = false;
+    }
+  };
   spreadsheet_api.prototype.SpellCheck_CallBack = function (e) {
     this.spellcheckState.lockSpell = false;
     var type = e["type"];
@@ -2889,7 +2898,9 @@ var editor;
       var ws = this.wb.getWorksheet();
       var dc = cellInfo.col - ws.model.selectionRange.activeCell.col;
       var dr = cellInfo.row - ws.model.selectionRange.activeCell.row;
+      this.spellcheckState.lockSpell = true;
       ws.changeSelectionStartPoint(dc, dr);
+      this.spellcheckState.lockSpell = false;
     }
   };
   spreadsheet_api.prototype.asc_setDefaultLanguage = function (val) {

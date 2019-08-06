@@ -1103,6 +1103,7 @@
 
     // Нужно очистить поиск
     this.model.cleanFindResults();
+    this.Api.cleanSpelling();
 
     var ct = ws.getCursorTypeFromXY(x, y);
 
@@ -1498,6 +1499,8 @@
       ws.openCellEditor(t.cellEditor, /*cursorPos*/undefined, isFocus, isClearCell,
         /*isHideCursor*/isHideCursor, /*isQuickInput*/isQuickInput, selectionRange);
       t.input.disabled = false;
+
+      t.Api.cleanSpelling();
 
       // Эвент на обновление состояния редактора
       t.cellEditor._updateEditorState();

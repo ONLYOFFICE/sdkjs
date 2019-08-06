@@ -5261,6 +5261,8 @@ window["native"]["offline_cell_editor_open"] = function(x, y, width, height, rat
         ws.openCellEditor(t.cellEditor, /*cursorPos*/undefined, isFocus, isClearCell,
                           /*isHideCursor*/isHideCursor, /*isQuickInput*/isQuickInput, selectionRange);
         //t.input.disabled = false;
+
+        t.Api.cleanSpelling();
         
         // Эвент на обновление состояния редактора
         t.cellEditor._updateEditorState();
