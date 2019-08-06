@@ -2968,10 +2968,10 @@ var editor;
     });
   };
 
-  spreadsheet_api.prototype.asc_replaceMisspelledWord = function(newWord, oldWord) {
+  spreadsheet_api.prototype.asc_replaceMisspelledWord = function(newWord, variantsFound) {
     var ws = this.wb.getWorksheet();
     var options = new Asc.asc_CFindOptions();
-    options.findWhat = oldWord.Word;
+    options.findWhat = variantsFound.Word;
     options.replaceWith = newWord;
     ws.replaceCellText(options, false, (this.asc_nextWord).bind(this));
   };
