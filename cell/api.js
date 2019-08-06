@@ -2909,8 +2909,6 @@ var editor;
     var minC, minR, maxC, maxR;
     var selectionRange = options.selectionRange || ws.model.selectionRange;
     var lastRange = selectionRange.getLast();
-    t.SpellCheckApi = new AscCommon.CSpellCheckApi();
-    t._coSpellCheckInit();
     ws.model.lastFindOptions = ws.model.lastFindOptions || new Asc.asc_CFindOptions();
     var lang = this.defaultLanguage;
 
