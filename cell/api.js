@@ -2989,6 +2989,11 @@ var editor;
     });
   };
 
+  spreadsheet_api.prototype.asc_ignoreMisspelledWord = function() {
+    //Todo: запоминать пропущенное слово
+    this.asc_nextWord();
+  };
+
   // Frozen pane
   spreadsheet_api.prototype.asc_freezePane = function () {
     this.wb.getWorksheet().freezePane();
@@ -4023,6 +4028,7 @@ var editor;
   prot["asc_setDefaultLanguage"] = prot.asc_setDefaultLanguage;
   prot["asc_nextWord"] = prot.asc_nextWord;
   prot["asc_replaceMisspelledWord"]= prot.asc_replaceMisspelledWord;
+  prot["asc_ignoreMisspelledWord"] = prot.asc_ignoreMisspelledWord;
 
   // Frozen pane
   prot["asc_freezePane"] = prot.asc_freezePane;
