@@ -2893,8 +2893,28 @@ var editor;
     }
   };
   spreadsheet_api.prototype.asc_setDefaultLanguage = function (val) {
+    if (this.spellcheckState.lockSpell) {
+      return;
+    }
     this.defaultLanguage = val;
-    // ToDo check start spell to restart
+    var lastSpellInfo;
+    if ((lastSpellInfo = this.spellcheckState.lastSpellInfo)) {
+      var lastIndex = this.spellcheckState.lastIndex;
+      this.spellcheckState.lastIndex = -1;
+
+      var usrLang = [];
+      for (var i = lastIndex; i < lastSpellInfo["usrWords"].length; ++i) {
+        usrLang.push(val);
+      }
+
+      this.spellcheckState.lockSpell = true;
+      this.SpellCheckApi.spellCheck({
+        "type": "spell",
+        "usrWords": lastSpellInfo["usrWords"].slice(lastIndex),
+        "usrLang": usrLang,
+        "cellsInfo": lastSpellInfo["cellsInfo"].slice(lastIndex)
+      });
+    }
   };
   spreadsheet_api.prototype.asc_nextWord = function () {
     if (this.spellcheckState.lockSpell) {
