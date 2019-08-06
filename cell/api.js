@@ -59,7 +59,6 @@ var editor;
   var c_oAscAsyncActionType = asc.c_oAscAsyncActionType;
 
   var History = null;
-  var incorrectWordIndex = 0;
   var startNextCell = false;
 
 
@@ -91,8 +90,8 @@ var editor;
     // spellcheck
     this.defaultLanguage = 1033;
     this.spellcheckState = {
-      lastCell: null,
-      lastSpellInfo: null
+      lastSpellInfo: null,
+      lockSpell: false
     };
 
     this.documentFormatSave = c_oAscFileType.XLSX;
@@ -2855,6 +2854,7 @@ var editor;
 
   // spellCheck
   spreadsheet_api.prototype.SpellCheck_CallBack = function (e) {
+    this.spellcheckState.lockSpell = false;
     var type = e["type"];
     if (type === "spell") {
       var usrCorrect = e["usrCorrect"];
@@ -2865,12 +2865,14 @@ var editor;
       }
       e.lastIndex = lastIndex;
       if (false !== usrCorrect[lastIndex]) {
+        this.spellcheckState.lastSpellInfo = null;
         // ToDo this.asc_nextWord()
         console.log('ToDo this.asc_nextWord()');
         return;
       }
 
       ++e.lastIndex;
+      this.spellcheckState.lockSpell = true;
       this.SpellCheckApi.spellCheck({
         "type": "suggest",
         "usrWords": [e["usrWords"][lastIndex]],
@@ -2885,7 +2887,6 @@ var editor;
       var dc = cellInfo.col - ws.model.selectionRange.activeCell.col;
       var dr = cellInfo.row - ws.model.selectionRange.activeCell.row;
       ws.changeSelectionStartPoint(dc, dr);
-      this.spellcheckState.lastCell = ws.model.selectionRange.activeCell.clone();
     }
   };
   spreadsheet_api.prototype.asc_setDefaultLanguage = function (val) {
@@ -2893,6 +2894,10 @@ var editor;
     // ToDo check start spell to restart
   };
   spreadsheet_api.prototype.asc_nextWord = function () {
+    if (this.spellcheckState.lockSpell) {
+      return;
+    }
+    this.spellcheckState.lockSpell = true;
     if (this.spellcheckState.lastSpellInfo) {
       this.SpellCheck_CallBack(this.spellcheckState.lastSpellInfo);
       return;
@@ -2904,28 +2909,16 @@ var editor;
     var minC, minR, maxC, maxR;
     var selectionRange = options.selectionRange || ws.model.selectionRange;
     var lastRange = selectionRange.getLast();
-    var ar = selectionRange.activeCell;
-    var c = ar.col;
-    var r = ar.row;
-    var merge = ws.model.getMergedByCell(r, c);
     t.SpellCheckApi = new AscCommon.CSpellCheckApi();
     t._coSpellCheckInit();
     ws.model.lastFindOptions = ws.model.lastFindOptions || new Asc.asc_CFindOptions();
     var lang = this.defaultLanguage;
 
-    options.findInSelection = options.scanOnOnlySheet && !(selectionRange.isSingleRange() && (lastRange.isOneCell() || lastRange.isEqual(merge)));
+    minC = 0;
+    minR = 0;
+    maxC = ws.cols.length - 1;
+    maxR = ws.rows.length - 1;
 
-    if (options.findInSelection) {
-      minC = lastRange.c1;
-      minR = lastRange.r1;
-      maxC = lastRange.c2;
-      maxR = lastRange.r2;
-    } else {
-      minC = 0;
-      minR = 0;
-      maxC = ws.cols.length - 1;
-      maxR = ws.rows.length - 1;
-    }
     var langArray = [];
     var wordsArray = [];
     var cellsInfo = [];
@@ -2938,16 +2931,8 @@ var editor;
       startNextCell = false;
     }
 
-    if (this.spellcheckState.lastCell) {
-      if (this.spellcheckState.lastCell.isEqual(ws.model.selectionRange.activeCell)) {
-        incorrectWordIndex += 1;
-      } else {
-        incorrectWordIndex = 0;
-      }
-    }
-
     do {
-      ws.model.getRange3(lastCellRow, lastCellCol, lastCellRow, maxC + 1)._foreachNoEmpty(function (cell, r, c) {
+      ws.model.getRange3(lastCellRow, lastCellCol, lastCellRow, maxC)._foreachNoEmpty(function (cell, r, c) {
         if (cell.text !== null) {
           var cellInfo = new AscCommon.CellBase(r, c);
           var words = AscCommonExcel.WordSplitting(cell.text);
