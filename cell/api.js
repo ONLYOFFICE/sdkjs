@@ -2850,7 +2850,7 @@ var editor;
 
   // spellCheck
   spreadsheet_api.prototype.cleanSpelling = function () {
-    if (!this.spellcheckState.lockSpell) {
+    if (!this.spellcheckState.lockSpell && this.spellcheckState.startCell) {
       this.handlers.trigger("asc_onSpellCheckVariantsFound", null);
       this.spellcheckState.clean();
     }

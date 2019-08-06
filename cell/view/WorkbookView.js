@@ -967,6 +967,7 @@
     this.handlers.trigger("asc_onSelectionChanged", this.oSelectionInfo);
     this.handlers.trigger("asc_onSelectionEnd");
     this._onInputMessage();
+    this.Api.cleanSpelling();
   };
 
   WorkbookView.prototype._onInputMessage = function () {
@@ -1103,7 +1104,6 @@
 
     // Нужно очистить поиск
     this.model.cleanFindResults();
-    this.Api.cleanSpelling();
 
     var ct = ws.getCursorTypeFromXY(x, y);
 
