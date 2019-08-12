@@ -259,20 +259,27 @@
 			var trueLetter = false;
 			var index = 0;
 			var wordsArray = [];
+			var wordsIndexArray = [];
 			for (var i = 0; i < str.length; i++) {
 				var nCharCode = str.charCodeAt(i);
 				if (AscCommon.g_aPunctuation[nCharCode] !== undefined || nCharCode === 32) {
-					if (trueLetter === true) {
+					if (trueLetter) {
 						trueLetter = false;
 						index++;
 					}
 				} else {
+					if(trueLetter === false) {
+					  wordsIndexArray.push(i);
+					}
 					trueLetter = true;
 					wordsArray[index] = wordsArray[index] || "";
 					wordsArray[index] = wordsArray[index] + str[i];
 				}
 			}
-			return wordsArray;
+			return {
+				wordsArray: wordsArray,
+				wordsIndex: wordsIndexArray
+			};
 		}
 
 		var referenceType = {
@@ -2237,10 +2244,12 @@
 		/** @constructor */
 		function asc_CFindOptions() {
 			this.findWhat = "";							// текст, который ищем
+			this.wordIndex = 0;                         // индекс текущего слова
 			this.scanByRows = true;						// просмотр по строкам/столбцам
 			this.scanForward = true;					// поиск вперед/назад
 			this.isMatchCase = false;					// учитывать регистр
-			this.isWholeCell = false;					// ячейка целиком
+			this.isWholeCell = false;	                // ячейка целиком
+			this.isChangeSingleWord = false;		    // изменение только одного слова	
 			this.scanOnOnlySheet = true;				// искать только на листе/в книге
 			this.lookIn = Asc.c_oAscFindLookIn.Formulas;	// искать в формулах/значениях/примечаниях
 
@@ -2262,12 +2271,14 @@
 		}
 		asc_CFindOptions.prototype.clone = function () {
 			var result = new asc_CFindOptions();
+			result.wordIndex = this.wordIndex;
 			result.findWhat = this.findWhat;
 			result.scanByRows = this.scanByRows;
 			result.scanForward = this.scanForward;
 			result.isMatchCase = this.isMatchCase;
 			result.isWholeCell = this.isWholeCell;
-			result.scanOnOnlySheet = this.scanOnOnlySheet;
+			result.isChangeSingleWord = 	this.isChangeSingleWord;	
+			result.scanOnOnlySheet = this.scanOnOnlySheet;		
 			result.lookIn = this.lookIn;
 
 			result.replaceWith = this.replaceWith;
@@ -2309,6 +2320,7 @@
 		asc_CFindOptions.prototype.asc_setScanForward = function (val) {this.scanForward = val;};
 		asc_CFindOptions.prototype.asc_setIsMatchCase = function (val) {this.isMatchCase = val;};
 		asc_CFindOptions.prototype.asc_setIsWholeCell = function (val) {this.isWholeCell = val;};
+		asc_CFindOptions.prototype.asc_changeSingleWord = 	function (val) {this.isChangeSingleWord = val;};	
 		asc_CFindOptions.prototype.asc_setScanOnOnlySheet = function (val) {this.scanOnOnlySheet = val;};
 		asc_CFindOptions.prototype.asc_setLookIn = function (val) {this.lookIn = val;};
 		asc_CFindOptions.prototype.asc_setReplaceWith = function (val) {this.replaceWith = val;};

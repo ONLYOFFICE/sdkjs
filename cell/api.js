@@ -89,6 +89,7 @@ var editor;
     // spellcheck
     this.defaultLanguage = 1033;
     this.spellcheckState = new AscCommonExcel.CSpellcheckState();
+    this.wordsIndex = null;
 
     this.documentFormatSave = c_oAscFileType.XLSX;
 
@@ -2861,6 +2862,7 @@ var editor;
     if (type === "spell") {
       var usrCorrect = e["usrCorrect"];
       this.spellcheckState.lastSpellInfo = e;
+      this.wordsIndex = e["wordsIndex"];
       this.spellcheckState.lastIndex += 1;
       var lastIndex = this.spellcheckState.lastIndex;
       while (usrCorrect[lastIndex]) {
@@ -2878,7 +2880,8 @@ var editor;
         "type": "suggest",
         "usrWords": [e["usrWords"][lastIndex]],
         "usrLang": [e["usrLang"][lastIndex]],
-        "cellInfo": e["cellsInfo"][lastIndex]
+        "cellInfo": e["cellsInfo"][lastIndex],
+        "wordsIndex": e["wordsIndex"][lastIndex]
       });
     } else if (type === "suggest") {
       this.handlers.trigger("asc_onSpellCheckVariantsFound", new AscCommon.asc_CSpellCheckProperty(e["usrWords"][0], null, e["usrSuggest"][0], null, null));
@@ -2890,6 +2893,7 @@ var editor;
       this.spellcheckState.lockSpell = true;
       ws.changeSelectionStartPoint(dc, dr);
       this.spellcheckState.lockSpell = false;
+      this.wordsIndex = e["wordsIndex"];
     }
   };
   spreadsheet_api.prototype._spellCheckDisconnect = function () {
@@ -2911,7 +2915,8 @@ var editor;
         "type": "spell",
         "usrWords": lastSpellInfo["usrWords"].slice(lastIndex),
         "usrLang": usrLang,
-        "cellsInfo": lastSpellInfo["cellsInfo"].slice(lastIndex)
+        "cellsInfo": lastSpellInfo["cellsInfo"].slice(lastIndex),
+        "wordsIndex": lastSpellInfo["wordsIndex"].slice(lastIndex)
       });
     }
   };
@@ -2932,7 +2937,6 @@ var editor;
     }
 
     var ws = this.wb.getWorksheet();
-
     var maxC = ws.model.getColsCount() - 1;
     var maxR = ws.model.getRowsCount() - 1;
     if (-1 === maxC || -1 === maxR) {
@@ -2961,6 +2965,7 @@ var editor;
     var langArray = [];
     var wordsArray = [];
     var cellsInfo = [];
+    var wordsIndexArray = [];
     var isEnd = false;
 
     do {
@@ -2982,9 +2987,11 @@ var editor;
       ws.model.getRange3(currentCell.row, currentCell.col, currentCell.row, maxC)._foreachNoEmpty(function (cell, r, c) {
         if (cell.text !== null) {
           var cellInfo = new AscCommon.CellBase(r, c);
-          var words = AscCommonExcel.WordSplitting(cell.text);
+          var words = AscCommonExcel.WordSplitting(cell.text).wordsArray;
+          var wordsIndex = AscCommonExcel.WordSplitting(cell.text).wordsIndex;
           for (var i = 0; i < words.length; ++i) {
             wordsArray.push(words[i]);
+            wordsIndexArray.push(wordsIndex[i]);
             langArray.push(lang);
             cellsInfo.push(cellInfo);
           }
@@ -3003,7 +3010,8 @@ var editor;
         "type": "spell",
         "usrWords": wordsArray,
         "usrLang": langArray,
-        "cellsInfo": cellsInfo
+        "cellsInfo": cellsInfo,
+        "wordsIndex": wordsIndexArray
       });
     } else {
       this.handlers.trigger("asc_onSpellCheckVariantsFound", new AscCommon.asc_CSpellCheckProperty());
@@ -3016,7 +3024,9 @@ var editor;
     var options = new Asc.asc_CFindOptions();
     options.findWhat = variantsFound.Word;
     options.replaceWith = newWord;
+    options.isChangeSingleWord = true;
     this.spellcheckState.lockSpell = true;
+    options.wordsIndex = this.wordsIndex;
 
     if (replaceAll === true) {
       options.isReplaceAll = true;
