@@ -2320,7 +2320,7 @@
 		asc_CFindOptions.prototype.asc_setScanForward = function (val) {this.scanForward = val;};
 		asc_CFindOptions.prototype.asc_setIsMatchCase = function (val) {this.isMatchCase = val;};
 		asc_CFindOptions.prototype.asc_setIsWholeCell = function (val) {this.isWholeCell = val;};
-		asc_CFindOptions.prototype.asc_changeSingleWord = 	function (val) {this.isChangeSingleWord = val;};	
+		asc_CFindOptions.prototype.asc_changeSingleWord = function (val) { this.isChangeSingleWord = val; };	
 		asc_CFindOptions.prototype.asc_setScanOnOnlySheet = function (val) {this.scanOnOnlySheet = val;};
 		asc_CFindOptions.prototype.asc_setLookIn = function (val) {this.lookIn = val;};
 		asc_CFindOptions.prototype.asc_setReplaceWith = function (val) {this.replaceWith = val;};
@@ -2409,6 +2409,7 @@
 			this.startCell = null;
 			this.currentCell = null;
 			this.iteration = false;
+			this.wordIndex = null;
 		}
 
 		CSpellcheckState.prototype.init = function (startCell) {

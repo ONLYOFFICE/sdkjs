@@ -89,7 +89,6 @@ var editor;
     // spellcheck
     this.defaultLanguage = 1033;
     this.spellcheckState = new AscCommonExcel.CSpellcheckState();
-    this.wordsIndex = null;
 
     this.documentFormatSave = c_oAscFileType.XLSX;
 
@@ -2862,7 +2861,7 @@ var editor;
     if (type === "spell") {
       var usrCorrect = e["usrCorrect"];
       this.spellcheckState.lastSpellInfo = e;
-      this.wordsIndex = e["wordsIndex"];
+      this.spellcheckState.wordsIndex = e["wordsIndex"];
       this.spellcheckState.lastIndex += 1;
       var lastIndex = this.spellcheckState.lastIndex;
       while (usrCorrect[lastIndex]) {
@@ -2893,7 +2892,7 @@ var editor;
       this.spellcheckState.lockSpell = true;
       ws.changeSelectionStartPoint(dc, dr);
       this.spellcheckState.lockSpell = false;
-      this.wordsIndex = e["wordsIndex"];
+      this.spellcheckState.wordsIndex = e["wordsIndex"];
     }
   };
   spreadsheet_api.prototype._spellCheckDisconnect = function () {
@@ -2987,8 +2986,9 @@ var editor;
       ws.model.getRange3(currentCell.row, currentCell.col, currentCell.row, maxC)._foreachNoEmpty(function (cell, r, c) {
         if (cell.text !== null) {
           var cellInfo = new AscCommon.CellBase(r, c);
-          var words = AscCommonExcel.WordSplitting(cell.text).wordsArray;
-          var wordsIndex = AscCommonExcel.WordSplitting(cell.text).wordsIndex;
+          var wordsObject = AscCommonExcel.WordSplitting(cell.text);
+          var words = wordsObject.wordsArray;
+          var wordsIndex = wordsObject.wordsIndex;
           for (var i = 0; i < words.length; ++i) {
             wordsArray.push(words[i]);
             wordsIndexArray.push(wordsIndex[i]);
@@ -3026,7 +3026,7 @@ var editor;
     options.replaceWith = newWord;
     options.isChangeSingleWord = true;
     this.spellcheckState.lockSpell = true;
-    options.wordsIndex = this.wordsIndex;
+    options.wordsIndex = this.spellcheckState.wordsIndex;
 
     if (replaceAll === true) {
       options.isReplaceAll = true;

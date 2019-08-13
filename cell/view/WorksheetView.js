@@ -12473,11 +12473,11 @@
 					var c = t._getVisibleCell(cell.c1, cell.r1);
                     var cellValue = c.getValueForEdit();
                    
-                    if(options.isChangeSingleWord) {
-                    valueForSearching.lastIndex = options.wordsIndex;
-                    var lastIndex = valueForSearching.exec(cellValue);
-                    valueForSearching = new RegExp(valueForSearching, "y");
-                    valueForSearching.lastIndex = lastIndex.index;
+                    if (options.isChangeSingleWord) {
+                        valueForSearching.lastIndex = options.wordsIndex;
+                        var lastIndex = valueForSearching.exec(cellValue);
+                        valueForSearching = new RegExp(valueForSearching, "y");
+                        valueForSearching.lastIndex = lastIndex.index;
                     }
 
 					cellValue = cellValue.replace(valueForSearching, function() {
