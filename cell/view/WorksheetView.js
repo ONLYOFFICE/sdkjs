@@ -1970,6 +1970,14 @@
 			//draw header/footer
 			this._drawHeaderFooter(drawingCtx, printPagesData, indexPrintPage, countPrintPages);
 
+            if(window['Asc']['editor'].watermarkDraw)
+            {
+                window['Asc']['editor'].watermarkDraw.zoom = 1;//this.worksheet.objectRender.zoom.current;
+                window['Asc']['editor'].watermarkDraw.Generate();
+                window['Asc']['editor'].watermarkDraw.StartRenderer();
+                window['Asc']['editor'].watermarkDraw.DrawOnRenderer(drawingCtx.DocumentRenderer, c_oAscPrintDefaultSettings.PageWidth, c_oAscPrintDefaultSettings.PageHeight);
+                window['Asc']['editor'].watermarkDraw.EndRenderer();
+            }
             drawingCtx.EndPage();
         } else {
             drawingCtx.BeginPage(printPagesData.pageWidth, printPagesData.pageHeight);
@@ -2033,6 +2041,16 @@
 			}
 
             drawingCtx.RemoveClipRect();
+
+            if(window['Asc']['editor'].watermarkDraw)
+            {
+                window['Asc']['editor'].watermarkDraw.zoom = 1;//this.worksheet.objectRender.zoom.current;
+                window['Asc']['editor'].watermarkDraw.Generate();
+                window['Asc']['editor'].watermarkDraw.StartRenderer();
+                window['Asc']['editor'].watermarkDraw.DrawOnRenderer(drawingCtx.DocumentRenderer, printPagesData.pageWidth,
+                    printPagesData.pageHeight);
+                window['Asc']['editor'].watermarkDraw.EndRenderer();
+            }
             drawingCtx.EndPage();
         }
     };
