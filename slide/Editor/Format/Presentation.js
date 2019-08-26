@@ -8285,12 +8285,16 @@ CPresentation.prototype =
 
 	GetPresentationField: function()
 	{
-		var oDocContent = this.Get_TargetDocContent();
-		if (oDocContent)
-		{
-			return oDocContent.GetPresentationField();
-		}
-
+        var oController = this.GetCurrentController();
+        var oDocContent;
+        if(oController)
+        {
+            oDocContent = oController.getTargetDocContent();
+            if (oDocContent)
+            {
+                return oDocContent.GetPresentationField();
+            }
+        }
 		return null;
 	},
 
