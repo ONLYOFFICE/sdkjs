@@ -3692,6 +3692,8 @@ CPresentation.prototype =
             oContent = oController.getTargetDocContent(true, false);
             if(oContent)
             {
+                if (true === oContent.IsSelectionUse())
+                    oContent.Remove(1, true, false, true);
                 var oParagraph = oContent.Content[oContent.CurPos.ContentPos];
                 if(oParagraph)
                 {

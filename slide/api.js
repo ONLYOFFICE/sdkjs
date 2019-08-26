@@ -3896,7 +3896,31 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asc_addDateTime = function(oPr)
 	{
-		this.WordControl.m_oLogicDocument.addDateTime(oPr);
+
+		var sCheck = oPr.get_DateTimeExamples()[oPr.get_DateTime()], sTextForCheck = "";
+		if(typeof sCheck === "string" && sCheck.length > 0)
+		{
+			sTextForCheck += sCheck;
+		}
+		else
+		{
+			sCheck = oPr.get_CustomDateTime();
+			if(typeof sCheck === "string" && sCheck.length > 0)
+			{
+				sTextForCheck += sCheck;
+			}
+		}
+
+		if(sTextForCheck.length > 0)
+		{
+			AscFonts.FontPickerByCharacter.checkText(sTextForCheck, this, function() {
+				this.WordControl.m_oLogicDocument.addDateTime(oPr);
+			});
+		}
+		else
+		{
+			this.WordControl.m_oLogicDocument.addDateTime(oPr);
+		}
 	};
 	asc_docs_api.prototype.asc_setDefaultDateTimeFormat = function(aFormat)
 	{
