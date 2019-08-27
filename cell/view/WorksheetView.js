@@ -5413,7 +5413,7 @@
 		var isNumberFormat = !cell.isEmptyTextString() && (null === cellType || CellValueType.String !== cellType);
 		if (angle || isNumberFormat || align.getWrap()) {
 			this._addCellTextToCache(cell.nCol, cell.nRow);
-			return;
+			return rowInfo.height;
 		}
 
 		// ToDo with angle and wrap
