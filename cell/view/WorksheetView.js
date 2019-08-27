@@ -2765,7 +2765,7 @@
 			return;
 		}
 
-		var dependentCells = {}, i;
+		var drawCells = {}, i;
 		var aRules = this.model.aConditionalFormattingRules.sort(function (v1, v2) {
 			return v2.priority - v1.priority;
 		});
@@ -2884,28 +2884,23 @@
 
 			var showValue = this._drawCellCF(ctx, aRules, c, row, col, top, width + mwidth, height + mheight, offsetX, offsetY);
 			if (showValue) {
-				this._drawCellText(drawingCtx, col, row, colStart, colEnd, offsetX, offsetY);
-
-				if (!mc) {
-					// check if long text overlaps this cell
-					i = this._findSourceOfCellText(col, row);
-					if (i >= 0) {
-						dependentCells[i] = (dependentCells[i] || []);
-						dependentCells[i].push(col);
-					}
-				}
+				drawCells[col] = 1;
 			}
         }
-		// draw long text that overlaps own cell's borders
-		for (i in dependentCells) {
-			var arr = dependentCells[i], j = arr.length - 1;
-			col = i >> 0;
-			// if source cell belongs to cells range then skip it (text has been drawn already)
-			if (col >= arr[0] && col <= arr[j]) {
-				continue;
+		// Check overlaps start and end
+		i = this._findSourceOfCellText(colStart, row);
+		if (-1 !== i) {
+			drawCells[i] = 1;
+		}
+		if (colStart !== colEnd) {
+			i = this._findSourceOfCellText(colEnd, row);
+			if (-1 !== i) {
+				drawCells[i] = 1;
 			}
-			// draw long text fragment
-			this._drawCellText(drawingCtx, col, row, arr[0], arr[j], offsetX, offsetY);
+		}
+		// draw text
+		for (i in drawCells) {
+			this._drawCellText(drawingCtx, i >> 0, row, colStart, colEnd, offsetX, offsetY);
 		}
     };
 
@@ -5610,7 +5605,7 @@
         return res;
     };
 
-    // Ищет текст в строке (columnsWithText - это колонки, в которых есть текст)
+    // If this cell with overlap or text return index of column
     WorksheetView.prototype._findSourceOfCellText = function (col, row) {
         var r = this._getRowCache(row);
         if (r) {
