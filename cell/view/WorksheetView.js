@@ -1638,7 +1638,7 @@
             pageOrientation = pageSetup.asc_getOrientation();
             bFitToWidth = pageSetup.asc_getFitToWidth();
             bFitToHeight = pageSetup.asc_getFitToHeight();
-			scale = pageSetup.asc_getScale() / 100;
+			scale = 1/*pageSetup.asc_getScale() / 100*/;
         }
 
         var pageLeftField, pageRightField, pageTopField, pageBottomField;
