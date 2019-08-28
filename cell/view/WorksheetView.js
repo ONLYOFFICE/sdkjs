@@ -17996,7 +17996,7 @@
 			}
 			case asc.c_oAscHeaderFooterField.time: {
 				curDate = new cDate();
-				curDateNum = curDate.getExcelDateWithTime(true);
+				curDateNum = curDate.getExcelDateWithTime(true) - curDate.getTimezoneOffset()/(60*24);
 				res = api.asc_getLocaleExample(AscCommon.getShortTimeFormat(), curDateNum);
 				break;
 			}
