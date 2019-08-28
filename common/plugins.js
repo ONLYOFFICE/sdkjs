@@ -940,7 +940,13 @@
 
                         AscFonts.IsCheckSymbols = true;
 						var _script = "(function(){ var Api = window.g_asc_plugins.api;\n" + value + "\n})();";
-						eval(_script);
+						try
+						{
+							eval(_script);
+						}
+						catch (err)
+						{
+						}
                         AscFonts.IsCheckSymbols = false;
 
 						if (pluginData.getAttribute("recalculate") == true)
