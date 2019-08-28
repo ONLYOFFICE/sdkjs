@@ -1291,7 +1291,7 @@ function checkPointInMap(map, worksheet, row, col)
 
     this.bbox = null;
     this.ptsCount = 0;
-
+    this.isSparkline = false;
     this.selection =
     {
         title:         null,
@@ -14163,7 +14163,7 @@ CChartSpace.prototype.updateLinks = function()
 
     CChartSpace.prototype.checkDrawingCache = function(graphics)
     {
-        if(window["NATIVE_EDITOR_ENJINE"] || graphics.RENDERER_PDF_FLAG)
+        if(window["NATIVE_EDITOR_ENJINE"] || graphics.RENDERER_PDF_FLAG || this.isSparkline)
         {
             return false;
         }

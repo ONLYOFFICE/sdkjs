@@ -646,6 +646,7 @@ CSparklineView.prototype.initFromSparkline = function(oSparkline, oSparklineGrou
         }
         var chartSeries = {series: [ser], parsedHeaders: {bLeft: false, bTop: false}};
         var chart_space = AscFormat.DrawingObjectsController.prototype._getChartSpace(chartSeries, settings, true);
+        chart_space.isSparkline = true;
         chart_space.setBDeleted(false);
         if(worksheetView){
             chart_space.setWorksheet(worksheetView.model);
