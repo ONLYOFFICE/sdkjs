@@ -17111,7 +17111,7 @@
 			}
 		}
 
-		if((target.row < 1 && !bCol) || (target.col < 1 && bCol)) {
+		if((target.row < 0 && !bCol) || (target.col < 0 && bCol)) {
 			//проверяем, возможно мы попали в одну из кнопок управления уровнями
 			return this._groupRowMenuClick(x, y, target, type, bCol);
 		}
