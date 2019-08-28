@@ -1792,7 +1792,7 @@ function (window, undefined) {
 		if (arg0 instanceof cString || arg0 instanceof cError) {
 			return arg[0];
 		} else {
-			return new AscCommonExcel.cEmpty();
+			return new cString("");
 		}
 	};
 
