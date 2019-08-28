@@ -5408,7 +5408,7 @@
 		var isNumberFormat = !cell.isEmptyTextString() && (null === cellType || CellValueType.String !== cellType);
 		if (angle || isNumberFormat || align.getWrap()) {
 			this._addCellTextToCache(cell.nCol, cell.nRow);
-			return rowInfo.height;
+			return AscCommonExcel.convertPtToPx(this._getRowHeightReal(cell.nRow));
 		}
 
 		// ToDo with angle and wrap
