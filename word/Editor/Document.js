@@ -1505,6 +1505,7 @@ function CSelectedElementsInfo(oPr)
 	this.m_bReviewRemove      = false; // Удаленный контент в режиме рецензирования
 	this.m_bReviewNormal      = false; // Обычный контент
 	this.m_oPresentationField = null;
+	this.m_arrMoveMarks       = [];
 
     this.Reset = function()
     {
@@ -1699,6 +1700,14 @@ CSelectedElementsInfo.prototype.SetPresentationField = function(oField)
 CSelectedElementsInfo.prototype.GetPresentationField = function()
 {
 	return this.m_oPresentationField;
+};
+CSelectedElementsInfo.prototype.RegisterTrackMoveMark = function(oMoveMark)
+{
+	this.m_arrMoveMarks.push(oMoveMark);
+};
+CSelectedElementsInfo.prototype.GetTrackMoveMarks = function()
+{
+	return this.m_arrMoveMarks;
 };
 
 var document_compatibility_mode_Word11  = 11;
@@ -18865,6 +18874,40 @@ CDocument.prototype.private_CheckTrackMoveSelection = function(oSelectedInfo)
 	var sMarkE = arrParagraphs[arrParagraphs.length - 1].CheckTrackMoveMarkInSelection(false);
 
 	if (sMarkS === sMarkE)
+		return sMarkS;
+
+	return null;
+};
+/**
+ * Проверяем попадает ли в выделение какой-нибудь перенос
+ * @returns {string | null} id переноса
+ */
+CDocument.prototype.CheckTrackMoveInSelection = function()
+{
+	var oSelectedInfo = this.GetSelectedElementsInfo({CheckAllSelection : true});
+
+	var arrMoveMarks = oSelectedInfo.GetTrackMoveMarks();
+	if (arrMoveMarks.length > 0)
+		return arrMoveMarks[0].GetMarkId();
+
+	if (!oSelectedInfo.HaveRemovedInReview() && !oSelectedInfo.HaveAddedInReview())
+		return null;
+
+	var arrParagraphs = this.GetSelectedParagraphs();
+
+	if (arrParagraphs.length <= 0)
+		return null;
+
+	var sMarkS = arrParagraphs[0].CheckTrackMoveMarkInSelection(true);
+	var sMarkE = arrParagraphs[arrParagraphs.length - 1].CheckTrackMoveMarkInSelection(false);
+
+	if (sMarkS && sMarkS === sMarkE)
+		return sMarkS;
+
+	sMarkS = arrParagraphs[0].CheckTrackMoveMarkInSelection(true, false);
+	sMarkE = arrParagraphs[arrParagraphs.length - 1].CheckTrackMoveMarkInSelection(false, false);
+
+	if (sMarkS && sMarkS === sMarkE)
 		return sMarkS;
 
 	return null;

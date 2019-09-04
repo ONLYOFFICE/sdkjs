@@ -11262,6 +11262,14 @@ ParaRun.prototype.GetSelectedElementsInfo = function(oInfo)
 	if (oInfo && oInfo.IsCheckAllSelection() && !this.IsSelectionEmpty(true))
 	{
 		oInfo.RegisterRunWithReviewType(this.GetReviewType());
+
+		for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
+		{
+			if (para_RevisionMove === this.Content[nPos].Type)
+			{
+				oInfo.RegisterTrackMoveMark(this.Content[nPos].Type);
+			}
+		}
 	}
 };
 ParaRun.prototype.GetLastTrackMoveMark = function()

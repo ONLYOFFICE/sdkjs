@@ -558,7 +558,7 @@ CDocument.prototype.AcceptRevisionChangesBySelection = function()
 	}
 	else
 	{
-		var sMoveId = this.private_CheckTrackMoveSelection();
+		var sMoveId = this.CheckTrackMoveInSelection();
 		if (sMoveId)
 		{
 			var oChange = this.TrackRevisionsManager.GetMoveMarkChange(sMoveId, true, false);
@@ -604,7 +604,7 @@ CDocument.prototype.RejectRevisionChangesBySelection = function()
 	}
 	else
 	{
-		var sMoveId = this.private_CheckTrackMoveSelection();
+		var sMoveId = this.CheckTrackMoveInSelection();
 		if (sMoveId)
 		{
 			var oChange = this.TrackRevisionsManager.GetMoveMarkChange(sMoveId, true, false);

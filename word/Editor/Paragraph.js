@@ -14160,10 +14160,24 @@ Paragraph.prototype.GetStartPageForRecalculate = function(nPageAbs)
 
 	return this.GetAbsolutePage(nCurPage);
 };
-Paragraph.prototype.CheckTrackMoveMarkInSelection = function(isStart)
+/**
+ * Проверяем попадание в селект метки переноса
+ * @param isStart {boolean}
+ * @param [isCheckTo=true] {boolean} проверять ли перенесенный текст или удаленный
+ * @returns {string | null}
+ */
+Paragraph.prototype.CheckTrackMoveMarkInSelection = function(isStart, isCheckTo)
 {
+	if (undefined === isCheckTo)
+		isCheckTo = true;
+
 	if (!this.IsSelectionUse())
 		return null;
+
+	function private_CheckMarkDirection(oMark)
+	{
+		return ((isCheckTo && !oMark.IsFrom()) || (!isCheckTo && oMark.IsFrom()));
+	}
 
 	var nStartPos = this.Selection.StartPos < this.Selection.EndPos ? this.Selection.StartPos : this.Selection.EndPos;
 	var nEndPos   = this.Selection.StartPos < this.Selection.EndPos ? this.Selection.EndPos : this.Selection.StartPos;
@@ -14172,7 +14186,7 @@ Paragraph.prototype.CheckTrackMoveMarkInSelection = function(isStart)
 	{
 		if (para_RevisionMove === this.Content[nStartPos].GetType())
 		{
-			if (!this.Content[nStartPos].IsFrom() && this.Content[nStartPos].IsStart())
+			if (private_CheckMarkDirection(this.Content[nStartPos]) && this.Content[nStartPos].IsStart())
 				return this.Content[nStartPos].GetMarkId();
 			else
 				return null;
@@ -14188,7 +14202,7 @@ Paragraph.prototype.CheckTrackMoveMarkInSelection = function(isStart)
 
 			if (para_RevisionMove === this.Content[nPos].GetType())
 			{
-				if (!this.Content[nPos].IsFrom() && this.Content[nPos].IsStart())
+				if (private_CheckMarkDirection(this.Content[nPos]) && this.Content[nPos].IsStart())
 					return this.Content[nPos].GetMarkId();
 				else
 					return null;
@@ -14211,11 +14225,11 @@ Paragraph.prototype.CheckTrackMoveMarkInSelection = function(isStart)
 				{
 					var oLastRun = oPrevElement.GetParaEndRun();
 					var oMark    = oLastRun.GetLastTrackMoveMark();
-					if (oMark && !oMark.IsFrom() && oMark.IsStart())
+					if (oMark && private_CheckMarkDirection(oMark) && oMark.IsStart())
 						return oMark.GetMarkId();
 				}
 			}
-			else if (para_RevisionMove === this.Content[nPos].GetType() && !this.Content[nPos].IsFrom() && this.Content[nPos].IsStart())
+			else if (para_RevisionMove === this.Content[nPos].GetType() && private_CheckMarkDirection(this.Content[nPos]) && this.Content[nPos].IsStart())
 			{
 				return this.Content[nPos].GetMarkId();
 			}
@@ -14225,7 +14239,7 @@ Paragraph.prototype.CheckTrackMoveMarkInSelection = function(isStart)
 	{
 		if (para_RevisionMove === this.Content[nEndPos].GetType())
 		{
-			if (!this.Content[nEndPos].IsFrom() && !this.Content[nEndPos].IsStart())
+			if (private_CheckMarkDirection(this.Content[nEndPos]) && !this.Content[nEndPos].IsStart())
 				return this.Content[nEndPos].GetMarkId();
 			else
 				return null;
@@ -14241,7 +14255,7 @@ Paragraph.prototype.CheckTrackMoveMarkInSelection = function(isStart)
 
 			if (para_RevisionMove === this.Content[nPos].GetType())
 			{
-				if (!this.Content[nPos].IsFrom() && !this.Content[nPos].IsStart())
+				if (private_CheckMarkDirection(this.Content[nPos]) && !this.Content[nPos].IsStart())
 					return this.Content[nPos].GetMarkId();
 				else
 					return null;
@@ -14256,7 +14270,7 @@ Paragraph.prototype.CheckTrackMoveMarkInSelection = function(isStart)
 				nPos++;
 			}
 
-			if (nPos < this.Content.length && para_RevisionMove === this.Content[nPos].GetType() && !this.Content[nPos].IsFrom() && !this.Content[nPos].IsStart())
+			if (nPos < this.Content.length && para_RevisionMove === this.Content[nPos].GetType() && private_CheckMarkDirection(this.Content[nPos]) && !this.Content[nPos].IsStart())
 			{
 				return this.Content[nPos].GetMarkId();
 			}
@@ -14264,7 +14278,7 @@ Paragraph.prototype.CheckTrackMoveMarkInSelection = function(isStart)
 			{
 				var oLastRun = this.GetParaEndRun();
 				var oMark    = oLastRun.GetLastTrackMoveMark();
-				if (oMark && !oMark.IsFrom() && !oMark.IsStart())
+				if (oMark && private_CheckMarkDirection(oMark) && !oMark.IsStart())
 					return oMark.GetMarkId();
 			}
 		}
