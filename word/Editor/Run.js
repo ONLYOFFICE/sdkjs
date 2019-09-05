@@ -776,7 +776,7 @@ ParaRun.prototype.Remove = function(Direction, bOnAddText)
 
     var ReviewType  = this.GetReviewType();
     var oReviewInfo = this.GetReviewInfo();
-    if (true === TrackRevisions && (reviewtype_Add !== ReviewType || !oReviewInfo.IsCurrentUser() || !oReviewInfo.IsMovedTo() || !this.Paragraph.LogicDocument.TrackMoveRelocation) && (reviewtype_Remove !== ReviewType || !oReviewInfo.IsPrevAddedByCurrentUser()))
+    if (true === TrackRevisions && (reviewtype_Add !== ReviewType || !oReviewInfo.IsCurrentUser() || (oReviewInfo.IsMovedTo() && !this.Paragraph.LogicDocument.TrackMoveRelocation)) && (reviewtype_Remove !== ReviewType || !oReviewInfo.IsPrevAddedByCurrentUser()))
     {
     	if (reviewtype_Remove === ReviewType)
 		{
