@@ -616,17 +616,15 @@
 	 * */
 
 	/**
-	 * Get main document
+	 * @typedef {("cross" | "in" | "none" | "out")} TickMark
+	 * */
+
+	/**
+	 * Get the main document
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiDocument}
 	 */
-
-
-	/**
-	 * @typedef {("cross" | "in" | "none" | "out")} TickMark
-	 * */
-
 	Api.prototype.GetDocument = function()
 	{
 		return new ApiDocument(this.WordControl.m_oLogicDocument);
