@@ -11033,8 +11033,12 @@
 				if (isLargeRange) {
 					t.handlers.trigger("slowOperation", false);
 				}
-
+				var oldCanChangeColWidth = t.canChangeColWidth;
+				if(specialPasteProps && specialPasteProps.width) {
+					t.canChangeColWidth = c_oAscCanChangeColWidth.all;
+				}
 				t._updateRange(arn);
+				t.canChangeColWidth = oldCanChangeColWidth;
 			}
 
 			if(val.needDraw) {
