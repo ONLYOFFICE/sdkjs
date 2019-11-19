@@ -10769,7 +10769,7 @@
 
 		if(specialPasteData.activeRange && !isIntoShape)
 		{
-			this._isLockedCells(specialPasteData.activeRange.ranges, /*subType*/null, onSelectionCallback);
+			this._isLockedCells(specialPasteData.activeRange.ranges, /*subType*/null, props && props.width ? t._isLockedAll(onSelectionCallback) : onSelectionCallback);
 		}
 		else
 		{
@@ -11018,6 +11018,7 @@
 		var specialPasteHelper = window['AscCommon'].g_specialPasteHelper;
 		var specialPasteProps = specialPasteHelper.specialPasteProps;
 		var selectData;
+		var specialPasteChangeColWidth = specialPasteProps && specialPasteProps.width;
 
 		var callbackLoadFonts = function() {
 			_doPaste();
@@ -11033,12 +11034,12 @@
 				if (isLargeRange) {
 					t.handlers.trigger("slowOperation", false);
 				}
-				var oldCanChangeColWidth = t.canChangeColWidth;
-				if(specialPasteProps && specialPasteProps.width) {
-					t.canChangeColWidth = c_oAscCanChangeColWidth.all;
+
+				if(specialPasteChangeColWidth) {
+					t.changeWorksheet("update");
+				} else {
+					t._updateRange(arn);
 				}
-				t._updateRange(arn);
-				t.canChangeColWidth = oldCanChangeColWidth;
 			}
 
 			if(val.needDraw) {
