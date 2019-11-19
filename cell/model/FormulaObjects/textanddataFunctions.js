@@ -1071,21 +1071,19 @@ function (window, undefined) {
 	cLOWER.prototype.argumentsMax = 1;
 	cLOWER.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
-
 		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
 			arg0 = arg0.cross(arguments[1]);
 		}
-
-		arg0 = arg0.tocString();
 		if (arg0 instanceof cArray) {
 			arg0 = arg0.getElementRowCol(0, 0);
 		}
 
-		if (arg0 instanceof cError) {
-			return arg0;
+		var tryString = arg0.tocString();
+		if (tryString instanceof cError) {
+			return tryString;
 		}
-
-		return new cString(arg0.getValue().toLowerCase());
+		arg0 = arg0.getValue();
+		return new cString(arg0.toLocaleString().toLowerCase());
 	};
 
 	/**
@@ -2087,12 +2085,12 @@ function (window, undefined) {
 			arg0 = arg0.getElementRowCol(0, 0);
 		}
 
-		arg0 = arg0.tocString();
-
-		if (arg0 instanceof cError) {
-			return arg0;
+		var tryString = arg0.tocString();
+		if (tryString instanceof cError) {
+			return tryString;
 		}
-		return new cString(arg0.getValue().toUpperCase());
+		arg0 = arg0.getValue();
+		return new cString(arg0.toLocaleString().toUpperCase());
 	};
 
 	/**
