@@ -5312,7 +5312,10 @@ PasteProcessor.prototype =
 					
 					tempParaRun = new ParaRun();
 					tempParaRun.Paragraph = null;
-					tempParaRun.Add_ToContent( 0, new ParaDrawing(), false );
+
+					var newParaDrawing = new ParaDrawing();
+					//newParaDrawing.Set_DrawingType(drawing_Anchor);
+					tempParaRun.Add_ToContent( 0, newParaDrawing, false );
 					
 					tempParaRun.Content[0].Set_GraphicObject(graphicObj);
 					tempParaRun.Content[0].GraphicObj.setParent(tempParaRun.Content[0]);
