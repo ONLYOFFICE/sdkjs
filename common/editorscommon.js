@@ -4162,6 +4162,9 @@
                 if (!Array.isArray(files)) // string detect
                     files = [files];
 
+                if (0 == files.length)
+                	return;
+
 				var _files = [];
 
 				var _options = { isImageCrypt: true, callback: callback, ext : [] };
