@@ -43,10 +43,37 @@
 
     /**
      * @typedef {Object} ContentControl
-     * @property {string} Tag
-     * @property {string} Id
-     * @property {number} Lock
+     * @property {string} Tag - is a tag assigned to the content control. One and the same tag can be assigned to several content controls so that you can make reference to them in your code.
+     * @property {string} Id - is a unique identifier of the content control. It can be used to search for a certain content control and make reference to it in your code.
+     * @property {ContentControlLock} Lock - is a value that defines if it is possible to delete and/or edit the content control or not. 0 - only deleting, 1 - no deleting or editing, 2 - only editing, 3 - full access
      * @property {string} InternalId
+     *
+     * @typedef {Object} ContentControlLock
+     * Is a value that defines if it is possible to delete and/or edit the content control or not
+     * * **0** - only deleting
+     * * **1** - disable deleting or editing
+     * * **2** - only editing
+     * * **3** - full access
+     * @property {(0 | 1 | 2 | 3)} Lock
+     *
+     * @typedef {Object} ContentControlType
+     * Is a numeric value that specifies the content control type.
+     * * **1** - block content control (Rich Text Content Control)
+     * * **2** - inline content control
+     * * **3** - row content control
+     * * **4** - cell content control
+     * @property  {(1 | 2 | 3 | 4)} type
+     *
+     * @typedef {Object} ContentControlProperties
+     * @property {string} Id Id - is a unique identifier of the content control. It can be used to search for a certain content control and make reference to it in your code.
+     * @property {string} Tag - is a tag assigned to the content control. One and the same tag can be assigned to several content controls so that you can make reference to them in your code.
+     * @property {string} pr.Lock Lock
+     * @property {string} pr.Alias Alias
+     * @property {string} pr.Appearance Appearance
+     * @property {object} pr.Color Color
+     * @property {number} pr.Color.R R
+     * @property {number} pr.Color.G G
+     * @property {number} pr.Color.B B
      */
 
     var Api = window["asc_docs_api"];
@@ -128,22 +155,13 @@
         return _ret;
     };
     /**
-     * Add content control
+     * This method allows to add an empty content control to the document.
      * @memberof Api
      * @typeofeditors ["CDE"]
      * @alias AddContentControl
-     * @param {number} type Type: 1 = Block, 2 = Inline, 3 = Row, 4 = Cell
-     * @param {object} pr Properties
-     * @param {string} pr.Id Id
-     * @param {string} pr.Tag Tag
-     * @param {string} pr.Lock Lock
-     * @param {string} pr.Alias Alias
-     * @param {string} pr.Appearance Appearance
-     * @param {object} pr.Color Color
-     * @param {number} pr.Color.R R
-     * @param {number} pr.Color.G G
-     * @param {number} pr.Color.B B
-     * @returns {ContentControl}
+     * @param {ContentControlType} type is a numeric value that specifies the content control type
+     * @param {ContentControlProperties} pr [{}] is property of content control
+     * @returns {{InternalId: (*|string), Tag: *, Id: *, Lock: *}}
      */
     window["asc_docs_api"].prototype["pluginMethod_AddContentControl"] = function(type, pr)
     {
