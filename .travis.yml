@@ -46,10 +46,10 @@ jobs:
         - npm install --prefix build
         - grunt --level=WHITESPACE_ONLY --base build --gruntfile build/Gruntfile.js
         - docker pull onlyofficetestingrobot/doc-builder-testing:develop-latest
-        - travis_wait 30 docker run -v $PWD/common:/opt/onlyoffice/documentbuilder/sdkjs/common
-                                    -v $PWD/word:/opt/onlyoffice/documentbuilder/sdkjs/word
-                                    -v $PWD/cell:/opt/onlyoffice/documentbuilder/sdkjs/cell
-                                    -v $PWD/slide:/opt/onlyoffice/documentbuilder/sdkjs/slide
+        - travis_wait 30 docker run -v $PWD/deploy/sdkjs/common:/opt/onlyoffice/documentbuilder/sdkjs/common
+                                    -v $PWD/deploy/sdkjs/word:/opt/onlyoffice/documentbuilder/sdkjs/word
+                                    -v $PWD/deploy/sdkjs/cell:/opt/onlyoffice/documentbuilder/sdkjs/cell
+                                    -v $PWD/deploy/sdkjs/slide:/opt/onlyoffice/documentbuilder/sdkjs/slide
                                     onlyofficetestingrobot/doc-builder-testing:develop-latest
   allow_failures:
     - stage: SonarQube Scanner                                    
