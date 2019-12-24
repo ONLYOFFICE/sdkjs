@@ -10720,6 +10720,9 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 			if (isSelected)
 				click = true;
 			
+			if (this.Selection.Data === null)
+				return;
+				
 			if (this.Selection.Data.length === 1)
 			{
 				var border = new CDocumentBorder();
@@ -14178,32 +14181,23 @@ CTable.prototype.GetDrawLine = function(X1, Y1, X2, Y2, CurPageStart, CurPageEnd
 	X1_origin += X1; 
 	X2_origin += X2;
 
+	var Y1_origin = 0;
+	var Y2_origin = 0;
+	Y1_origin += Y1; 
+	Y2_origin += Y2;
+
 	var curColumn = CurPageStart;
 	// Приводим к координатам таблицы
 	X1 					= X1 - this.Pages[curColumn].X; 
 	X2 					= X2 - this.Pages[curColumn].X;
 
-	if (X1 < 0 )
-		X1 = 0;
-	if (X2 < 0)
-		X2 = 0;
-	if (Y1 < 0)
-		Y1 = 0;
-	if (Y2 < 0)
-		Y2 = 0;
+	
 
 	var Y_Under = false;
 	var Y_Over 	= false;
 	
 	
-	//если рисуем линию снизу вверх
-	// if (Y1 > Y2) 
-	// {
-	// 	var cache;
-	// 	cache = Y2;
-	// 	Y2 = Y1;
-	// 	Y1 = cache;
-	// }
+	
 	if (X1 > X2)
 	{
 		var cache; 
@@ -14216,6 +14210,15 @@ CTable.prototype.GetDrawLine = function(X1, Y1, X2, Y2, CurPageStart, CurPageEnd
 
 	if (drawMode === true)
 	{
+		if (X1 < 0 )
+			X1 = 0;
+		if (X2 < 0)
+			X2 = 0;
+		if (Y1 < 0)
+			Y1 = 0;
+		if (Y2 < 0)
+			Y2 = 0;
+			
 		// Пока что при рисовании вне таблицы не создается новая ячейка, поэтому пока лучше просто возвращать линию
 		if (Y1 <= this.RowsInfo[this.Pages[curColumn].FirstRow].Y[curColumn] || Y1 >= this.RowsInfo[this.Pages[curColumn].LastRow].Y[curColumn] + this.RowsInfo[this.Pages[curColumn].LastRow].H[curColumn])
 		{
@@ -14281,8 +14284,8 @@ CTable.prototype.GetDrawLine = function(X1, Y1, X2, Y2, CurPageStart, CurPageEnd
 				{
 					X1  : X1_origin,
 					X2  : X2_origin,
-					Y1 : Y1,
-					Y2 : Y2,
+					Y1 : Y1_origin,
+					Y2 : Y2_origin,
 					Color : "Red",
 					Bold  : false
 				};
@@ -14465,8 +14468,8 @@ CTable.prototype.GetDrawLine = function(X1, Y1, X2, Y2, CurPageStart, CurPageEnd
 					{
 						Y1 : this.RowsInfo[RowNumb[0]].Y[curColumn] + this.RowsInfo[RowNumb[0]].H[curColumn],
 						Y2 : this.RowsInfo[RowNumb[0]].Y[curColumn] + this.RowsInfo[RowNumb[0]].H[curColumn],
-						X1 : X1_origin,
-						X2 : X2_origin,
+						X1 : this.Content[RowNumb[0]].Get_Cell(CellsNumb[0]).Metrics.X_cell_start + this.Pages[curColumn].X,
+						X2 : this.Content[RowNumb[0]].Get_Cell(CellsNumb[CellsNumb.length - 1]).Metrics.X_cell_end + this.Pages[curColumn].X,
 						Color : "Grey",
 						Bold  : true
 					};
@@ -14505,8 +14508,8 @@ CTable.prototype.GetDrawLine = function(X1, Y1, X2, Y2, CurPageStart, CurPageEnd
 					{
 						Y1 : this.RowsInfo[RowNumb[0]].Y[curColumn] + this.RowsInfo[RowNumb[0]].H[curColumn],
 						Y2 : this.RowsInfo[RowNumb[0]].Y[curColumn] + this.RowsInfo[RowNumb[0]].H[curColumn],
-						X1 : X1_origin,
-						X2 : X2_origin,
+						X1 : this.Content[RowNumb[0]].Get_Cell(CellsNumb[0]).Metrics.X_cell_start + this.Pages[curColumn].X,
+						X2 : this.Content[RowNumb[0]].Get_Cell(CellsNumb[CellsNumb.length - 1]).Metrics.X_cell_end + this.Pages[curColumn].X,
 						Color : "Grey",
 						Bold  : true
 					};
