@@ -12819,7 +12819,17 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 						var VMerge_count = this.Internal_GetVertMergeCount(this.Selection.Data[0].Row, Grid_start, Grid_span);
 						if (VMerge_count > 1)
 						{
-							Cell_1 = this.Content[this.Selection.Data[0].Row + VMerge_count -1].Get_Cell(this.Selection.Data[0].Cell);
+							for (var Index = 0; Index < this.Content[this.Selection.Data[0].Row + VMerge_count -1].Content.length; Index++)
+							{
+								var TempRow  = this.Content[this.Selection.Data[0].Row + VMerge_count -1];
+								var TempCell = TempRow.Get_Cell(Index);
+								var Temp_Grid_start = TempRow.Get_CellInfo(Index).StartGridCol;
+								if (Grid_start === Temp_Grid_start)
+								{
+									Cell_1 = TempCell;
+								}
+							}
+							
 						}
 						var Cell_2 = this.Content[this.Selection.Data[1].Row].Get_Cell(this.Selection.Data[1].Cell);
 						
@@ -13153,6 +13163,8 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 									var TempRow  =  this.Content[curRow];
 									var TempCell = this.Content[curRow].Get_Cell(Cell.Index);
 									
+									if (TempCell === null)
+										continue
 									if (TempCell.GetVMerge() === 2)
 									{
 										Cells.push(TempCell);
