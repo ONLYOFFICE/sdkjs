@@ -1189,7 +1189,169 @@
 	{
 		return "unsupported";
 	};
+	Api.prototype.AddComment = function(oElement, Comment, Autor)
+	{
+		var CommentData = new AscCommon.CCommentData();
+		CommentData.SetText(Comment);
+		CommentData.SetUserName(Autor);
 
+		// Если oElement не является массивом, определяем параграф это или документ
+		if (!Array.isArray(oElement))
+		{
+			// Проверка на параграф
+			if (oElement instanceof ApiParagraph)
+			{
+				var oTempDocument = this.GetDocument().Document;
+
+				var StartPos = oElement.Paragraph.GetDocumentPositionFromObject();
+				var EndPos   = oElement.Paragraph.GetDocumentPositionFromObject();
+
+				var StartParaPos = 
+				{
+					Class : oElement.Paragraph,
+					Position : 0,
+				};
+				var EndParaPos = 
+				{
+					Class : oElement.Paragraph,
+					Position : oElement.GetElementsCount() - 1,
+				}
+				var StartRunPos = 
+				{
+					Class : oElement.Paragraph.Content[0],
+					Position : 0,
+				};
+			
+				var EndRunPos = 
+				{
+					Class : oElement.Paragraph.Content[0],
+					Position : oElement.Paragraph.Content[oElement.GetElementsCount() - 1].Content.length,
+				};
+				StartPos.push(StartParaPos, StartRunPos);
+				EndPos.push(EndParaPos, EndRunPos);
+
+				var COMENT = oTempDocument.AddComment(CommentData, false);
+				if (null != COMENT)
+				{
+					editor.sync_AddComment(COMENT.Get_Id(), CommentData);
+				}
+				
+			}
+			// Проверка на документ
+			else if (oElement instanceof ApiDocument)
+			{
+				var COMENT = oElement.Document.AddComment(CommentData, true);
+				if (null != COMENT)
+				{
+					editor.sync_AddComment(COMENT.Get_Id(), CommentData);
+				}
+			
+ 			}
+		}
+		// Проверка на массив с ранами
+		else if (Array.isArray(oElement))
+		{
+			// Если хотя бы один элемент массива не является раном, или хотя бы один ран не принадлежит 
+			// ни одному параграфу - не добавляем комментарий
+			for (var Index = 0; Index < oElement.length; Index++)
+			{
+				if (!(oElement[Index] instanceof ApiRun))
+					return false;					
+			}
+			
+			var StartPos = [];
+			var EndPos  = [];
+			
+			// Если раны из принципиально разных контектов (из тела и хедера(или футера) то комментарий не добавляем)
+			for (var Index = 1; Index < oElement.length; Index++)
+			{
+				if (oElement[0].Run.GetDocumentPositionFromObject()[0].Class !== oElement[Index].Run.GetDocumentPositionFromObject()[0].Class)
+					return false;
+			}
+			
+			var oDocument = editor.WordControl.m_oLogicDocument;
+			
+			var min_pos_Index = 0; // Индекс рана в массиве, с которого начнется выделение
+			var max_pos_Index = 0; // -//- на котором закончится
+
+			var MinPos = oElement[0].Run.GetDocumentPositionFromObject();
+			var MaxPos = oElement[0].Run.GetDocumentPositionFromObject();
+
+			for (var Index = 1; Index < oElement.length; Index++)
+			{
+				var TempPos = oElement[Index].Run.GetDocumentPositionFromObject();
+
+				var MinPosLength = MinPos.length;
+				var UsedLength1  = 0;
+
+				var MaxPosLength = MaxPos.length;
+				var UsedLength2  = 0;
+
+				if (MinPosLength <= TempPos.length)
+					UsedLength1 = MinPosLength;
+				else 
+					UsedLength1 = TempPos.length;
+
+				if (MaxPosLength <= TempPos.length)
+					UsedLength2 = MaxPosLength;
+				else 
+					UsedLength2 = TempPos.length;
+				
+				for (var Pos = 0; Pos < UsedLength1; Pos++)
+				{
+					if (TempPos[Pos].Position < MinPos[Pos].Position)
+					{
+						MinPos = TempPos;
+						min_pos_Index = Index;
+						break;
+					}
+					else if (TempPos[Pos].Position === MinPos[Pos].Position)
+						continue;
+					else if (TempPos[Pos].Position > MinPos[Pos].Position)
+						break;
+				}
+				for (var Pos = 0; Pos < UsedLength2; Pos++)
+				{
+					if (TempPos[Pos].Position > MaxPos[Pos].Position)
+					{
+						MaxPos = TempPos;
+						max_pos_Index = Index;
+						break;
+					}
+					else if (TempPos[Pos].Position === MaxPos[Pos].Position)
+						continue;
+					else if (TempPos[Pos].Position < MaxPos[Pos].Position)
+						break;
+				}
+			}
+		
+			var StartRunPos = 
+			{
+				Class : oElement[min_pos_Index].Run,
+				Position : 0,
+			};
+			
+			var EndRunPos = 
+			{
+				Class : oElement[max_pos_Index].Run,
+				Position : oElement[max_pos_Index].Run.Content.length,
+			};
+			
+			StartPos = oElement[min_pos_Index].Run.GetDocumentPositionFromObject();
+			EndPos = oElement[max_pos_Index].Run.GetDocumentPositionFromObject();
+
+			StartPos.push(StartRunPos);
+			EndPos.push(EndRunPos);
+
+			StartPos[0].Class.SetSelectionByContentPositions(StartPos, EndPos);
+			var COMENT = oDocument.AddComment(CommentData, false);
+			if (null != COMENT)
+			{
+				editor.sync_AddComment(COMENT.Get_Id(), CommentData);
+			}
+			
+		}
+	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiDocumentContent
