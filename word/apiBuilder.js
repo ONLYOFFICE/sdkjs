@@ -1189,8 +1189,17 @@
 	{
 		return "unsupported";
 	};
+	/**
+	 *  Adds a comment to the desired element or array of elements.
+	 * @param oElement - may be Document, Paragraph or Run[]
+	 * @param Comment - string 
+	 * @param Autor - sting (not obligatory)
+	 */
 	Api.prototype.AddComment = function(oElement, Comment, Autor)
 	{
+		if (!Comment)
+			return;
+		
 		var CommentData = new AscCommon.CCommentData();
 		CommentData.SetText(Comment);
 		CommentData.SetUserName(Autor);
@@ -1203,32 +1212,8 @@
 			{
 				var oTempDocument = this.GetDocument().Document;
 
-				var StartPos = oElement.Paragraph.GetDocumentPositionFromObject();
-				var EndPos   = oElement.Paragraph.GetDocumentPositionFromObject();
-
-				var StartParaPos = 
-				{
-					Class : oElement.Paragraph,
-					Position : 0,
-				};
-				var EndParaPos = 
-				{
-					Class : oElement.Paragraph,
-					Position : oElement.GetElementsCount() - 1,
-				}
-				var StartRunPos = 
-				{
-					Class : oElement.Paragraph.Content[0],
-					Position : 0,
-				};
-			
-				var EndRunPos = 
-				{
-					Class : oElement.Paragraph.Content[0],
-					Position : oElement.Paragraph.Content[oElement.GetElementsCount() - 1].Content.length,
-				};
-				StartPos.push(StartParaPos, StartRunPos);
-				EndPos.push(EndParaPos, EndRunPos);
+				var StartPos = GetAbsStartPosition(oElement);
+				var EndPos   = GetAbsEndPosition(oElement);
 
 				var COMENT = oTempDocument.AddComment(CommentData, false);
 				if (null != COMENT)
@@ -1259,9 +1244,6 @@
 					return false;					
 			}
 			
-			var StartPos = [];
-			var EndPos  = [];
-			
 			// Если раны из принципиально разных контектов (из тела и хедера(или футера) то комментарий не добавляем)
 			for (var Index = 1; Index < oElement.length; Index++)
 			{
@@ -1271,80 +1253,13 @@
 			
 			var oDocument = editor.WordControl.m_oLogicDocument;
 			
-			var min_pos_Index = 0; // Индекс рана в массиве, с которого начнется выделение
-			var max_pos_Index = 0; // -//- на котором закончится
-
-			var MinPos = oElement[0].Run.GetDocumentPositionFromObject();
-			var MaxPos = oElement[0].Run.GetDocumentPositionFromObject();
-
-			for (var Index = 1; Index < oElement.length; Index++)
-			{
-				var TempPos = oElement[Index].Run.GetDocumentPositionFromObject();
-
-				var MinPosLength = MinPos.length;
-				var UsedLength1  = 0;
-
-				var MaxPosLength = MaxPos.length;
-				var UsedLength2  = 0;
-
-				if (MinPosLength <= TempPos.length)
-					UsedLength1 = MinPosLength;
-				else 
-					UsedLength1 = TempPos.length;
-
-				if (MaxPosLength <= TempPos.length)
-					UsedLength2 = MaxPosLength;
-				else 
-					UsedLength2 = TempPos.length;
-				
-				for (var Pos = 0; Pos < UsedLength1; Pos++)
-				{
-					if (TempPos[Pos].Position < MinPos[Pos].Position)
-					{
-						MinPos = TempPos;
-						min_pos_Index = Index;
-						break;
-					}
-					else if (TempPos[Pos].Position === MinPos[Pos].Position)
-						continue;
-					else if (TempPos[Pos].Position > MinPos[Pos].Position)
-						break;
-				}
-				for (var Pos = 0; Pos < UsedLength2; Pos++)
-				{
-					if (TempPos[Pos].Position > MaxPos[Pos].Position)
-					{
-						MaxPos = TempPos;
-						max_pos_Index = Index;
-						break;
-					}
-					else if (TempPos[Pos].Position === MaxPos[Pos].Position)
-						continue;
-					else if (TempPos[Pos].Position < MaxPos[Pos].Position)
-						break;
-				}
-			}
-		
-			var StartRunPos = 
-			{
-				Class : oElement[min_pos_Index].Run,
-				Position : 0,
-			};
-			
-			var EndRunPos = 
-			{
-				Class : oElement[max_pos_Index].Run,
-				Position : oElement[max_pos_Index].Run.Content.length,
-			};
-			
-			StartPos = oElement[min_pos_Index].Run.GetDocumentPositionFromObject();
-			EndPos = oElement[max_pos_Index].Run.GetDocumentPositionFromObject();
-
-			StartPos.push(StartRunPos);
-			EndPos.push(EndRunPos);
+			var StartPos = this.GetAbsStartPosition(this.GetFirstRunInArray(oElement));
+			var EndPos   = this.GetAbsEndPosition(this.GetLastRunInArray(oElement));
 
 			StartPos[0].Class.SetSelectionByContentPositions(StartPos, EndPos);
+
 			var COMENT = oDocument.AddComment(CommentData, false);
+
 			if (null != COMENT)
 			{
 				editor.sync_AddComment(COMENT.Get_Id(), CommentData);
@@ -1352,6 +1267,193 @@
 			
 		}
 	};
+
+	/**
+	 * Get the Run that is first in position
+	 * @param Runs - Array of Runs
+	 */
+	Api.prototype.GetFirstRunInArray = function(Runs)
+	{
+		if (!Array.isArray(Runs))
+			return false;
+			
+		var min_pos_Index = 0; // Индекс рана в массиве, с которого начнется выделение
+
+		var MinPos = Runs[0].Run.GetDocumentPositionFromObject();
+
+		for (var Index = 1; Index < Runs.length; Index++)
+		{
+			var TempPos = Runs[Index].Run.GetDocumentPositionFromObject();
+
+			var MinPosLength = MinPos.length;
+			var UsedLength1  = 0;
+
+
+			if (MinPosLength <= TempPos.length)
+				UsedLength1 = MinPosLength;
+			else 
+				UsedLength1 = TempPos.length;
+
+			for (var Pos = 0; Pos < UsedLength1; Pos++)
+			{
+				if (TempPos[Pos].Position < MinPos[Pos].Position)
+				{
+					MinPos = TempPos;
+					min_pos_Index = Index;
+					break;
+				}
+				else if (TempPos[Pos].Position === MinPos[Pos].Position)
+					continue;
+				else if (TempPos[Pos].Position > MinPos[Pos].Position)
+					break;
+			}
+		}
+		
+		return Runs[min_pos_Index];
+	};
+	
+	/**
+	 * Get the Run that is last in position
+	 * @param Runs - Array of Runs
+	 */
+	Api.prototype.GetLastRunInArray = function(Runs)
+	{
+		if (!Array.isArray(Runs))
+			return false;
+			
+		var max_pos_Index = 0; // Индекс рана в массиве, на котором закончится
+
+		var MaxPos = Runs[0].Run.GetDocumentPositionFromObject();
+
+		for (var Index = 1; Index < Runs.length; Index++)
+		{
+			var TempPos = Runs[Index].Run.GetDocumentPositionFromObject();
+
+			var MaxPosLength = MaxPos.length;
+			var UsedLength2  = 0;
+
+			if (MaxPosLength <= TempPos.length)
+				UsedLength2 = MaxPosLength;
+			else 
+				UsedLength2 = TempPos.length;
+			
+			for (var Pos = 0; Pos < UsedLength2; Pos++)
+			{
+				if (TempPos[Pos].Position > MaxPos[Pos].Position)
+				{
+					MaxPos = TempPos;
+					max_pos_Index = Index;
+					break;
+				}
+				else if (TempPos[Pos].Position === MaxPos[Pos].Position)
+					continue;
+				else if (TempPos[Pos].Position < MaxPos[Pos].Position)
+					break;
+			}
+		}
+		return Runs[max_pos_Index];
+	};
+
+	/**
+	 * Gets an array of the element's start location hierarchy.
+	 * @param oElement - Paragraph or Run
+	 */
+	Api.prototype.GetAbsStartPosition = function(oElement)
+	{
+		var StartPos = [];
+
+		// Если oElement не является массивом, определяем параграф это или документ
+		if (!Array.isArray(oElement))
+		{
+			// Проверка на параграф
+			if (oElement instanceof ApiParagraph)
+			{
+				StartPos = oElement.Paragraph.GetDocumentPositionFromObject();
+
+				var StartParaPos = 
+				{
+					Class : oElement.Paragraph,
+					Position : 0,
+				};
+				
+				var StartRunPos = 
+				{
+					Class : oElement.Paragraph.Content[0],
+					Position : 0,
+				};
+			
+				StartPos.push(StartParaPos, StartRunPos);
+
+				return StartPos;
+			}
+			else if (oElement instanceof ApiRun)
+			{
+				var StartRunPos = 
+				{
+					Class : oElement.Run,
+					Position : 0,
+				};
+				
+				StartPos = oElement.Run.GetDocumentPositionFromObject();
+
+				StartPos.push(StartRunPos);
+
+				return StartPos;
+			}
+		}
+		
+	};
+
+	/**
+	 * Gets an array of the element's end location hierarchy.
+	 * @param oElement - Paragraph or Run
+	 */
+	Api.prototype.GetAbsEndPosition = function(oElement)
+	{
+		var EndPos  = [];
+
+		// Если oElement не является массивом, определяем параграф это или ран
+		if (!Array.isArray(oElement))
+		{
+			// Проверка на параграф
+			if (oElement instanceof ApiParagraph)
+			{
+				EndPos   = oElement.Paragraph.GetDocumentPositionFromObject();
+
+				var EndParaPos = 
+				{
+					Class : oElement.Paragraph,
+					Position : oElement.GetElementsCount() - 1,
+				}
+			
+				var EndRunPos = 
+				{
+					Class : oElement.Paragraph.Content[0],
+					Position : oElement.Paragraph.Content[oElement.GetElementsCount() - 1].Content.length,
+				};
+				
+				EndPos.push(EndParaPos, EndRunPos);
+				
+				return EndPos;
+			}
+			else if (oElement instanceof ApiRun)
+			{
+				var EndRunPos = 
+				{
+					Class : oElement.Run,
+					Position : oElement.Run.Content.length,
+				};
+				
+				EndPos = oElement.Run.GetDocumentPositionFromObject();
+
+				EndPos.push(EndRunPos);
+
+				return EndPos;
+			}
+		}
+		
+	}
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiDocumentContent
@@ -6173,3 +6275,20 @@
 		return new ApiDocumentContent(oDocContent);
 	};
 }(window, null));
+function Test()
+{
+    var Api = editor;
+    var oDocument = Api.GetDocument();
+    oDocument.Document.StartAction();
+    var oParagraph = oDocument.GetElement(0);
+    var oRun = oParagraph.GetElement(1);
+
+    var oParagraph1 = oDocument.GetElement(2);
+    var oRun1 = oParagraph1.GetElement(1);
+
+    var oParagraph2 = oDocument.GetElement(5);
+    var oRun2 = oParagraph2.GetElement(1);
+    var Runs = [oRun, oRun1, oRun2];
+    Api.AddComment(Runs, "УУУУ");
+    oDocument.Document.FinalizeAction();
+}
