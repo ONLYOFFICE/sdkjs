@@ -235,9 +235,14 @@ Paragraph.prototype.Set_Pr = function(oNewPr)
  */
 Paragraph.prototype.SetDirectParaPr = function(oParaPr)
 {
-	History.Add(new CChangesParagraphPr(this, this.Pr, oParaPr));
+	if (!oParaPr)
+		return;
 
-	this.Pr = oParaPr;
+	var oNewPr = oParaPr.Copy();
+
+	History.Add(new CChangesParagraphPr(this, this.Pr, oNewPr));
+
+	this.Pr = oNewPr;
 
 	this.Recalc_CompiledPr();
 	this.private_UpdateTrackRevisionOnChangeParaPr(true);
