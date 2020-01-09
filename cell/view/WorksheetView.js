@@ -13320,7 +13320,10 @@
         WorksheetView.prototype._replaceCellsText = function (aReplaceCells, options, lockDraw, callback) {
             var t = this;
             if (this.model.inPivotTable(aReplaceCells)) {
+				this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot,
+					c_oAscError.Level.NoCritical);
                 options.error = true;
+				this.draw(lockDraw);
                 return callback(options);
             }
 
