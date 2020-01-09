@@ -11351,7 +11351,7 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 							{
 								curRow += VMerge_count - 1;
 							}
-							CellAdded = true;
+							break;
 						}
 					}
 				}
@@ -12437,10 +12437,10 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 
 				if (Cell.Get_Border(0).Value === 0 && Cell.Get_Border(3).Value === 0)
 				{
-					for (var curRow = Cell.Row.Index; curRow < this.Content.length; curRow++)
+					for (var viewRow = Cell.Row.Index; viewRow < this.Content.length; viewRow++)
 					{
-						var TempRow  =  this.Content[curRow];
-						var TempCell = this.Content[curRow].Get_Cell(0);
+						var TempRow  =  this.Content[viewRow];
+						var TempCell = this.Content[viewRow].Get_Cell(0);
 						
 						// т.к. ячейка может иметь верт. объединение необходимо это учитывать 
 						// и добавить в Cells все ячейки входящие в это объединение
@@ -12591,13 +12591,13 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 				}
 				else if (Cell.Get_Border(2).Value === 0 && Cell.Row.Index === rowNumber)
 				{
-					for (var curRow = Cell.Row.Index; curRow >= 0; curRow-- )
+					for (var viewRow = Cell.Row.Index; viewRow >= 0; viewRow-- )
 					{
 						if (this.Content.length === 0)
 							return;
 							
-						var TempRow  =  this.Content[curRow];
-						var TempCell = this.Content[curRow].Get_Cell(0);
+						var TempRow  =  this.Content[viewRow];
+						var TempCell = this.Content[viewRow].Get_Cell(0);
 						
 						if (TempCell.GetVMerge() === 2)
 						{
@@ -12887,10 +12887,10 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 
 							if (Cell.Get_Border(0).Value === 0 && Cell.Get_Border(3).Value === 0)
 							{
-								for (var curRow = Cell.Row.Index; curRow < this.Content.length; curRow++)
+								for (var viewRow = Cell.Row.Index; viewRow < this.Content.length; viewRow++)
 								{
-									var TempRow  =  this.Content[curRow];
-									var TempCell = this.Content[curRow].Get_Cell(0);
+									var TempRow  =  this.Content[viewRow];
+									var TempCell = this.Content[viewRow].Get_Cell(0);
 									
 									// т.к. ячейка может иметь верт. объединение необходимо это учитывать 
 									// и добавить в Cells все ячейки входящие в это объединение
@@ -13041,10 +13041,10 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 							}
 							else if (Cell.Get_Border(2).Value === 0 && Cell.Row.Index === rowNumber)
 							{
-								for (var curRow = Cell.Row.Index; curRow >= 0; curRow-- )
+								for (var viewRow = Cell.Row.Index; viewRow >= 0; viewRow-- )
 								{
-									var TempRow  =  this.Content[curRow];
-									var TempCell = this.Content[curRow].Get_Cell(0);
+									var TempRow  =  this.Content[viewRow];
+									var TempCell = this.Content[viewRow].Get_Cell(0);
 									
 									if (TempCell.GetVMerge() === 2)
 									{
@@ -14044,8 +14044,8 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 							else if (ViewCell.Id === cur_cell.Id && cur_cell.Index === cur_cell.Row.Content.length - 1)
 							{
 								this.CurCell = cur_cell;
-								this.RemoveTableCells();
-								
+								//this.RemoveTableCells();
+								cur_cell.Row.RemoveCell(cur_cell.Index);
 								isContinue = true;
 							}
 						}
@@ -14290,14 +14290,16 @@ CTable.prototype.GetDrawLine = function(X1, Y1, X2, Y2, CurPageStart, CurPageEnd
 			var StartRow = Rows[0]; // строка, с которой стартует линия
 			var EndRow 	 = Rows[Rows.length - 1]; // строка на которой должна заканчиватся линия (может отличаться от физического конца)
 
-			if (CellsNumb[Rows[0]]) // если ячейка не выступ
+			if (CellsNumb[Rows[0]] !== undefined) // если ячейка не выступ
 			{
 				label1 : for (var Index = Rows[0]; Index >= 0; Index--)
 				{
 					var CurStartRow = this.Content[Rows[Rows.length - 1]]; // Строка, на которой физически заканчиваем линию
-					if (!CellsNumb[Rows[Rows.length - 1]])
+					if (CellsNumb[Rows[Rows.length - 1]] === undefined)
 						continue;
+
 					var StartRowCellGridStart = CurStartRow.Get_CellInfo(CellsNumb[Rows[Rows.length - 1]]).StartGridCol;
+
 					for (var Index2 = 0; Index2 < this.Content[Index].Content.length; Index2++)
 					{
 						var TempCell = this.Content[Index].Get_Cell(Index2);
@@ -14323,7 +14325,7 @@ CTable.prototype.GetDrawLine = function(X1, Y1, X2, Y2, CurPageStart, CurPageEnd
 			{
 				var CurEndRow = this.Content[Rows[Rows.length - 1]]; // Строка, на которой физически заканчиваем линию
 
-				if (!CellsNumb[Rows[Rows.length - 1]])
+				if (CellsNumb[Rows[Rows.length - 1]] === undefined)
 				{
 					EndRow = Index;
 					break;
