@@ -789,6 +789,17 @@ CSelectedContent.prototype.ConvertToText = function()
 	this.Elements.length = 0;
 	this.Elements.push(new CSelectedElement(oParagraph, false));
 };
+CSelectedContent.prototype.CreateNewCommentsGuid = function(DocumentComments)
+{
+	for (var Index = 0; Index < this.Comments.length; Index++)
+	{
+		var comment = DocumentComments.Get_ById(this.Comments[Index].Comment.CommentId);
+		if (comment)
+		{
+			comment.CreateNewCommentsGuid();
+		}
+	}
+};
 
 
 function CDocumentRecalculateState()
@@ -7789,6 +7800,10 @@ CDocument.prototype.OnEndTextDrag = function(NearPos, bCopy)
 			{
 				NearPos = oTempNearPos;
 				Para    = NearPos.Paragraph;
+			}
+			if(bCopy)
+			{
+				DocContent.CreateNewCommentsGuid(this.Comments);
 			}
 
 			// Выделение выставляется внутри функции InsertContent

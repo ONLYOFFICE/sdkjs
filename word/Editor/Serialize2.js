@@ -1719,8 +1719,9 @@ function BinaryFileWriter(doc, bMailMergeDocx, bMailMergeHtml, isCompatible)
 		
 		//Write Comments
 		var oMapCommentId = {};
-		this.WriteTable(c_oSerTableTypes.Comments, new BinaryCommentsTableWriter(this.memory, this.Document, oMapCommentId, false));
-		this.WriteTable(c_oSerTableTypes.DocumentComments, new BinaryCommentsTableWriter(this.memory, this.Document, oMapCommentId, true));
+		var commentUniqueGuids = {};
+		this.WriteTable(c_oSerTableTypes.Comments, new BinaryCommentsTableWriter(this.memory, this.Document, oMapCommentId, commentUniqueGuids, false));
+		this.WriteTable(c_oSerTableTypes.DocumentComments, new BinaryCommentsTableWriter(this.memory, this.Document, oMapCommentId, commentUniqueGuids, true));
         //Write Numbering
 		var oNumIdMap = {};
         this.WriteTable(c_oSerTableTypes.Numbering, new BinaryNumberingTableWriter(this.memory, this.Document, oNumIdMap, null, this.saveParams));
@@ -1769,8 +1770,9 @@ function BinaryFileWriter(doc, bMailMergeDocx, bMailMergeHtml, isCompatible)
 		this.WriteMainTableStart();
 		
 		var oMapCommentId = {};
-		this.WriteTable(c_oSerTableTypes.Comments, new BinaryCommentsTableWriter(this.memory, this.Document, oMapCommentId, false));
-		this.WriteTable(c_oSerTableTypes.DocumentComments, new BinaryCommentsTableWriter(this.memory, this.Document, oMapCommentId, true));
+		var commentUniqueGuids = {};
+		this.WriteTable(c_oSerTableTypes.Comments, new BinaryCommentsTableWriter(this.memory, this.Document, oMapCommentId, commentUniqueGuids, false));
+		this.WriteTable(c_oSerTableTypes.DocumentComments, new BinaryCommentsTableWriter(this.memory, this.Document, oMapCommentId, commentUniqueGuids, true));
 		this.copyParams.bdtw.oMapCommentId = oMapCommentId;
 		
 		this.copyParams.nDocumentWriterTablePos = this.WriteTableStart(c_oSerTableTypes.Document);
@@ -6287,11 +6289,12 @@ function BinaryOtherTableWriter(memory, doc)
 		this.bs.WriteItem(c_oSerOtherTableTypes.DocxTheme, function(){pptx_content_writer.WriteTheme(oThis.memory, oThis.Document.theme);});
     };
 };
-function BinaryCommentsTableWriter(memory, doc, oMapCommentId, isDocument)
+function BinaryCommentsTableWriter(memory, doc, oMapCommentId, commentUniqueGuids, isDocument)
 {
     this.memory = memory;
     this.Document = doc;
     this.oMapCommentId = oMapCommentId;
+	this.commentUniqueGuids = commentUniqueGuids;
 	this.isDocument = isDocument;
     this.bs = new BinaryCommonWriter(this.memory);
     this.Write = function()
@@ -6350,6 +6353,10 @@ function BinaryCommentsTableWriter(memory, doc, oMapCommentId, isDocument)
 		}
 		if(null != comment.m_nDurableId)
 		{
+			while (this.commentUniqueGuids[comment.m_nDurableId]) {
+				comment.m_nDurableId = AscCommon.CreateUInt32();
+			}
+			this.commentUniqueGuids[comment.m_nDurableId] = 1;
 			this.bs.WriteItem(c_oSer_CommentsType.DurableId, function(){oThis.memory.WriteULong(comment.m_nDurableId);});
 		}
 		if(null != comment.m_sText && "" != comment.m_sText)
@@ -7491,6 +7498,7 @@ function BinaryFileReader(doc, openParams)
 		for(var i in oCommentsNewId)
 		{
 			var oNewComment = oCommentsNewId[i];
+			oNewComment.CreateNewCommentsGuid();
 			this.Document.DrawingDocument.m_oWordControl.m_oApi.sync_AddComment( oNewComment.Id, oNewComment.Data );
 		}
 		//remove bookmarks without end
@@ -7853,6 +7861,7 @@ function BinaryFileReader(doc, openParams)
 			for(var i in oCommentsNewId)
 			{
 				var oNewComment = oCommentsNewId[i];
+				oNewComment.CreateNewCommentsGuid();
 				api.sync_AddComment( oNewComment.Id, oNewComment.Data );
 			}
 		}

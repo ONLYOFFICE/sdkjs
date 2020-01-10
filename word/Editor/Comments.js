@@ -290,6 +290,14 @@ CCommentData.prototype.IsSolved = function()
 {
 	return this.m_bSolved;
 };
+CCommentData.prototype.CreateNewCommentsGuid = function()
+{
+	this.m_nDurableId = AscCommon.CreateUInt32();
+	for (var Pos = 0; Pos < this.m_aReplies.length; Pos++)
+	{
+		this.m_aReplies[Pos].CreateNewCommentsGuid();
+	}
+};
 
 function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 {
@@ -538,6 +546,9 @@ CComment.prototype.GetDurableId = function()
 		return this.Data.m_nDurableId;
 
 	return -1;
+};
+CComment.prototype.CreateNewCommentsGuid = function() {
+	this.Data && this.Data.CreateNewCommentsGuid();
 };
 /**
  * Является ли текущий пользователем автором комментария
