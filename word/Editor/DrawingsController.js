@@ -48,6 +48,36 @@ function CDrawingsController(LogicDocument, DrawingsObjects)
 CDrawingsController.prototype = Object.create(CDocumentControllerBase.prototype);
 CDrawingsController.prototype.constructor = CDrawingsController;
 
+/**
+ * Получаем контент контрол, внутри которого лежит текущая автофигура
+ * @returns {CInlineLevelSdt|CBlockLevelSdt}
+ */
+CDrawingsController.prototype.private_GetParentContentControl = function()
+{
+	var oDrawing = this.DrawingObjects.getMajorParaDrawing();
+	if (oDrawing)
+	{
+		var oRun = oDrawing.GetRun();
+		if (oRun)
+		{
+			var arrDocPos = oRun.GetDocumentPositionFromObject();
+			for (var nIndex = arrDocPos.length - 1; nIndex >= 0; --nIndex)
+			{
+				var oClass = arrDocPos[nIndex].Class;
+				if (oClass instanceof CDocumentContent && oClass.Parent instanceof CBlockLevelSdt)
+				{
+					return oClass.Parent;
+				}
+				else if (oClass instanceof CInlineLevelSdt)
+				{
+					return oClass;
+				}
+			}
+		}
+	}
+
+	return null;
+};
 CDrawingsController.prototype.CanUpdateTarget = function()
 {
 	return true;
@@ -401,28 +431,16 @@ CDrawingsController.prototype.GetCurrentParagraph = function(bIgnoreSelection, a
 };
 CDrawingsController.prototype.GetSelectedElementsInfo = function(oInfo)
 {
-	var oDrawing = this.DrawingObjects.getMajorParaDrawing();
-	if (!oInfo.GetBlockLevelSdt() && !oInfo.GetInlineLevelSdt() && oDrawing)
+	var oContentControl = this.private_GetParentContentControl();
+	if (oContentControl)
 	{
-		var oRun = oDrawing.Get_Run();
-
-		if (oRun)
+		if (oContentControl.IsBlockLevel())
 		{
-			var arrDocPos = oRun.GetDocumentPositionFromObject();
-			for (var nIndex = arrDocPos.length - 1; nIndex >= 0; --nIndex)
-			{
-				var oClass = arrDocPos[nIndex].Class;
-				if (oClass instanceof CDocumentContent && oClass.Parent instanceof CBlockLevelSdt)
-				{
-					oInfo.SetBlockLevelSdt(oClass.Parent);
-					break;
-				}
-				else if (oClass instanceof CInlineLevelSdt)
-				{
-					oInfo.SetInlineLevelSdt(oClass);
-					break;
-				}
-			}
+			oInfo.SetBlockLevelSdt(oContentControl);
+		}
+		else if (oContentControl.IsInlineLevel())
+		{
+			oInfo.SetInlineLevelSdt(oContentControl);
 		}
 	}
 
@@ -638,7 +656,11 @@ CDrawingsController.prototype.IsTableCellSelection = function()
 
 	return false;
 };
-CDrawingsController.prototype.IsSelectionLocked = function(CheckType)
+CDrawingsController.prototype.IsSelectionLocked = function(nCheckType)
 {
-	this.DrawingObjects.documentIsSelectionLocked(CheckType);
+	this.DrawingObjects.documentIsSelectionLocked(nCheckType);
+
+	var oContentControl = this.private_GetParentContentControl();
+	if (oContentControl)
+		oContentControl.Document_Is_SelectionLocked(nCheckType);
 };

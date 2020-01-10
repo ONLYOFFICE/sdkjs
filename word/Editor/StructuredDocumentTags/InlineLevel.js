@@ -1469,7 +1469,8 @@ CInlineLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType)
 		|| AscCommon.changestype_Delete === CheckType
 		|| AscCommon.changestype_Document_Content === CheckType
 		|| AscCommon.changestype_Document_Content_Add === CheckType
-		|| AscCommon.changestype_Image_Properties === CheckType)
+		|| AscCommon.changestype_Image_Properties === CheckType
+		|| AscCommon.changestype_Drawing_Props === CheckType)
 		&& !this.CanBeEdited())
 	{
 		return AscCommon.CollaborativeEditing.Add_CheckLock(true);
