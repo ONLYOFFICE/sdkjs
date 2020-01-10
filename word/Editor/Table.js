@@ -10833,7 +10833,7 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 			{
 				for (var curRow = 0; curRow < this.Content.length; curRow++) 
 				{
-					for (var curCell = 0; curCell < this.Content[curRow].CellsInfo.length; curCell++) 
+					for (var curCell = 0; curCell < this.Content[curRow].Content.length; curCell++) 
 					{
 						var Cell 		 = this.Content[curRow].Get_Cell(curCell);
 						var Row 		 = this.Content[curRow];
