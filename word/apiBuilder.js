@@ -1191,9 +1191,9 @@
 	};
 	/**
 	 *  Adds a comment to the desired element or array of elements.
-	 * @param oElement - may be Document, Paragraph or Run[]
-	 * @param Comment - string 
-	 * @param Autor - sting (not obligatory)
+	 * @param {Array, ApiParagraph, ApiDocument} oElement - may be Document, Paragraph or Run[]
+	 * @param {string} Comment - comment
+	 * @param {string} Autor - autor's name (not obligatory)
 	 */
 	Api.prototype.AddComment = function(oElement, Comment, Autor)
 	{
@@ -1212,8 +1212,8 @@
 			{
 				var oTempDocument = this.GetDocument().Document;
 
-				var StartPos = GetAbsStartPosition(oElement);
-				var EndPos   = GetAbsEndPosition(oElement);
+				var StartPos = oElement.GetStartPosition();
+				var EndPos   = oElement.GetEndPosition();
 
 				var COMENT = oTempDocument.AddComment(CommentData, false);
 				if (null != COMENT)
@@ -1244,7 +1244,7 @@
 					return false;					
 			}
 			
-			// Если раны из принципиально разных контектов (из тела и хедера(или футера) то комментарий не добавляем)
+			// Если раны из принципиально разных контекcтов (из тела и хедера(или футера) то комментарий не добавляем)
 			for (var Index = 1; Index < oElement.length; Index++)
 			{
 				if (oElement[0].Run.GetDocumentPositionFromObject()[0].Class !== oElement[Index].Run.GetDocumentPositionFromObject()[0].Class)
@@ -1253,8 +1253,8 @@
 			
 			var oDocument = editor.WordControl.m_oLogicDocument;
 			
-			var StartPos = this.GetAbsStartPosition(this.GetFirstRunInArray(oElement));
-			var EndPos   = this.GetAbsEndPosition(this.GetLastRunInArray(oElement));
+			var StartPos = this.GetFirstRunInArray(oElement).GetStartPosition();
+			var EndPos   = this.GetLastRunInArray(oElement).GetEndPosition();
 
 			StartPos[0].Class.SetSelectionByContentPositions(StartPos, EndPos);
 
@@ -1270,7 +1270,8 @@
 
 	/**
 	 * Get the Run that is first in position
-	 * @param Runs - Array of Runs
+	 * @param {Array} Runs - Array of Runs
+	 * @return {ApiRun} 
 	 */
 	Api.prototype.GetFirstRunInArray = function(Runs)
 	{
@@ -1314,7 +1315,8 @@
 	
 	/**
 	 * Get the Run that is last in position
-	 * @param Runs - Array of Runs
+	 * @param {Array} Runs - Array of Runs
+	 * @return {ApiRun} 
 	 */
 	Api.prototype.GetLastRunInArray = function(Runs)
 	{
@@ -1353,106 +1355,6 @@
 		}
 		return Runs[max_pos_Index];
 	};
-
-	/**
-	 * Gets an array of the element's start location hierarchy.
-	 * @param oElement - Paragraph or Run
-	 */
-	Api.prototype.GetAbsStartPosition = function(oElement)
-	{
-		var StartPos = [];
-
-		// Если oElement не является массивом, определяем параграф это или документ
-		if (!Array.isArray(oElement))
-		{
-			// Проверка на параграф
-			if (oElement instanceof ApiParagraph)
-			{
-				StartPos = oElement.Paragraph.GetDocumentPositionFromObject();
-
-				var StartParaPos = 
-				{
-					Class : oElement.Paragraph,
-					Position : 0,
-				};
-				
-				var StartRunPos = 
-				{
-					Class : oElement.Paragraph.Content[0],
-					Position : 0,
-				};
-			
-				StartPos.push(StartParaPos, StartRunPos);
-
-				return StartPos;
-			}
-			else if (oElement instanceof ApiRun)
-			{
-				var StartRunPos = 
-				{
-					Class : oElement.Run,
-					Position : 0,
-				};
-				
-				StartPos = oElement.Run.GetDocumentPositionFromObject();
-
-				StartPos.push(StartRunPos);
-
-				return StartPos;
-			}
-		}
-		
-	};
-
-	/**
-	 * Gets an array of the element's end location hierarchy.
-	 * @param oElement - Paragraph or Run
-	 */
-	Api.prototype.GetAbsEndPosition = function(oElement)
-	{
-		var EndPos  = [];
-
-		// Если oElement не является массивом, определяем параграф это или ран
-		if (!Array.isArray(oElement))
-		{
-			// Проверка на параграф
-			if (oElement instanceof ApiParagraph)
-			{
-				EndPos   = oElement.Paragraph.GetDocumentPositionFromObject();
-
-				var EndParaPos = 
-				{
-					Class : oElement.Paragraph,
-					Position : oElement.GetElementsCount() - 1,
-				}
-			
-				var EndRunPos = 
-				{
-					Class : oElement.Paragraph.Content[0],
-					Position : oElement.Paragraph.Content[oElement.GetElementsCount() - 1].Content.length,
-				};
-				
-				EndPos.push(EndParaPos, EndRunPos);
-				
-				return EndPos;
-			}
-			else if (oElement instanceof ApiRun)
-			{
-				var EndRunPos = 
-				{
-					Class : oElement.Run,
-					Position : oElement.Run.Content.length,
-				};
-				
-				EndPos = oElement.Run.GetDocumentPositionFromObject();
-
-				EndPos.push(EndRunPos);
-
-				return EndPos;
-			}
-		}
-		
-	}
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -2273,6 +2175,59 @@
 		private_PushElementToParagraph(this.Paragraph, oSdt.Sdt);
 		return oSdt;
 	};
+
+	/**
+	 * Get paragraph start position hierarchy
+	 * @this {ApiParagraph}
+	 * @return {Array} - Array with hierarchy
+	 */
+	ApiParagraph.prototype.GetStartPosition = function()
+	{
+		var StartPos = [];
+
+		StartPos = this.Paragraph.GetDocumentPositionFromObject();
+
+		var StartParaPos = {
+			Class : this.Paragraph,
+			Position : 0
+		};
+		
+		var StartRunPos = {
+			Class : this.Paragraph.Content[0],
+			Position : 0
+		};
+	
+		StartPos.push(StartParaPos, StartRunPos);
+
+		return StartPos;
+	};
+
+	/**
+	 * Get paragraph end position hierarchy
+	 * @this {ApiParagraph}
+	 * @return {Array} - Array with hierarchy
+	 */
+	ApiParagraph.prototype.GetEndPosition = function()
+	{
+		var EndPos  = [];
+			
+		EndPos   = this.Paragraph.GetDocumentPositionFromObject();
+
+		var EndParaPos = {
+			Class : this.Paragraph,
+			Position : this.GetElementsCount() - 1
+		};
+	
+		var EndRunPos = {
+			Class : this.Paragraph.Content[0],
+			Position : this.Paragraph.Content[this.GetElementsCount() - 1].Content.length
+		};
+		
+		EndPos.push(EndParaPos, EndRunPos);
+		
+		return EndPos;
+	};
+	
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiRun
@@ -2376,6 +2331,48 @@
 		});
 
 		return new ApiRun(oRun);
+	};
+
+	/**
+	 * Get Run start position hierarchy
+	 * @this {ApiRun}
+	 * @return {Array} - Array with hierarchy
+	 */
+	ApiRun.prototype.GetStartPosition = function()
+	{
+		var StartPos = [];
+			
+		var StartRunPos = {
+			Class : this.Run,
+			Position : 0
+		};
+		
+		StartPos = this.Run.GetDocumentPositionFromObject();
+
+		StartPos.push(StartRunPos);
+
+		return StartPos;
+	};
+
+	/**
+	 * Get Run end position hierarchy
+	 * @this {ApiRun}
+	 * @return {Array} - Array with hierarchy
+	 */
+	ApiRun.prototype.GetEndPosition = function()
+	{
+		var EndPos  = [];
+
+		var EndRunPos = {
+			Class : this.Run,
+			Position : this.Run.Content.length
+		};
+		
+		EndPos = this.Run.GetDocumentPositionFromObject();
+
+		EndPos.push(EndRunPos);
+
+		return EndPos;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
