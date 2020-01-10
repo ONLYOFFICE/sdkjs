@@ -10658,19 +10658,19 @@
 
 			t.model.workbook.handlers.trigger("cleanCutData", true, true);
 
-            if (hasUpdates) {
-				t.draw();
-            }
-            if (callTrigger) {
-                t.handlers.trigger("slowOperation", false);
-            }
-
 			//в случае, если вставляем из глобального буфера, транзакцию закрываем внутри функции _loadDataBeforePaste на callbacks от загрузки шрифтов и картинок
 			if (prop !== "paste"/* || (prop === "paste" && val.fromBinary)*/) {
 				History.EndTransaction();
 				/*if(prop === "paste") {
 					window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
 				}*/
+			}
+
+			if (hasUpdates) {
+				t.draw();
+			}
+			if (callTrigger) {
+				t.handlers.trigger("slowOperation", false);
 			}
 
 			if(prop === "paste") {
