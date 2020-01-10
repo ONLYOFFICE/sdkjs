@@ -1142,6 +1142,18 @@
 			case AscDFH.historydescription_Document_AddTextWithProperties:
 				sString = "Document_AddTextWithProperties";
 				break;
+			case AscDFH.historydescription_Document_AddCaption:
+				sString = "Document_AddCaption";
+				break;
+			case AscDFH.historydescription_Document_CompareDocuments:
+				sString = "Document_CompareDocuments";
+				break;
+			case AscDFH.historydescription_Document_DrawNewTable:
+				sString = "Document_DrawNewTable";
+				break;
+			case AscDFH.historydescription_Document_DrawTable:
+				sString = "Document_DrawTable";
+				break;
 		}
 		return sString;
 	}
@@ -3192,7 +3204,9 @@
 	window['AscDFH'].historydescription_Presentation_FitImagesToSlide               = 0x0170;
 	window['AscDFH'].historydescription_Document_AddTextWithProperties              = 0x0171;
 	window['AscDFH'].historydescription_Document_AddCaption                         = 0x0172;
-	window['AscDFH'].historydescription_Document_CompareDocuments                   = 0x0172;
+	window['AscDFH'].historydescription_Document_CompareDocuments                   = 0x0173;
+	window['AscDFH'].historydescription_Document_DrawNewTable                       = 0x0174;
+	window['AscDFH'].historydescription_Document_DrawTable                          = 0x0175;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

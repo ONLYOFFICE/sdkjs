@@ -529,10 +529,10 @@ CBlockLevelSdt.prototype.AddTextArt = function(nStyle)
 	this.private_ReplacePlaceHolderWithContent();
 	this.Content.AddTextArt(nStyle);
 };
-CBlockLevelSdt.prototype.AddInlineTable = function(nCols, nRows)
+CBlockLevelSdt.prototype.AddInlineTable = function(nCols, nRows, nMode)
 {
 	this.private_ReplacePlaceHolderWithContent();
-	this.Content.AddInlineTable(nCols, nRows);
+	return this.Content.AddInlineTable(nCols, nRows, nMode);
 };
 CBlockLevelSdt.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlySelection, bOnAddText, isWord)
 {

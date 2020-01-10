@@ -95,9 +95,9 @@ CHdrFtrController.prototype.EditChart = function(Chart)
 {
 	this.HdrFtr.EditChart(Chart);
 };
-CHdrFtrController.prototype.AddInlineTable = function(Cols, Rows)
+CHdrFtrController.prototype.AddInlineTable = function(nCols, nRows, nMode)
 {
-	this.HdrFtr.AddInlineTable(Cols, Rows);
+	return this.HdrFtr.AddInlineTable(nCols, nRows, nMode);
 };
 CHdrFtrController.prototype.ClearParagraphFormatting = function(isClearParaPr, isClearTextPr)
 {

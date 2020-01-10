@@ -1599,14 +1599,16 @@ CGraphicObjects.prototype =
         }
     },
 
-    addInlineTable: function( Cols, Rows )
-    {
-        var content = this.getTargetDocContent();
-        if(content)
-        {
-            content.AddInlineTable(Cols, Rows);
-        }
-    },
+	addInlineTable : function(nCols, nRows, nMode)
+	{
+		var content = this.getTargetDocContent();
+		if (content)
+		{
+			return content.AddInlineTable(nCols, nRows, nMode);
+		}
+
+		return null;
+	},
 
     addImages: function( aImages )
     {

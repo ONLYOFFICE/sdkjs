@@ -338,11 +338,13 @@ CDocumentControllerBase.prototype.AddSignatureLine = function(oSignatureDrawing)
  */
 CDocumentControllerBase.prototype.EditChart = function(Chart){};
 /**
- * Добавляем инлайн таблицу.
+ * Добавляем инлайн таблицу
  * @param nCols
  * @param nRows
+ * @param {number} [nMode=0] режим добавления таблицы внутрь параграфа
+ * @returns {?CTable}
  */
-CDocumentControllerBase.prototype.AddInlineTable = function(nCols, nRows){};
+CDocumentControllerBase.prototype.AddInlineTable = function(nCols, nRows, nMode){return null;};
 /**
  * Очищаем форматирование внутри селекта
  * {boolean} [isClearParaPr=true] Очищать ли настройки параграфа

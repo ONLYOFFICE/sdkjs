@@ -431,8 +431,9 @@ CDocumentContentElementBase.prototype.AddSignatureLine = function(oSignatureDraw
 CDocumentContentElementBase.prototype.AddTextArt = function(nStyle)
 {
 };
-CDocumentContentElementBase.prototype.AddInlineTable = function(nCols, nRows)
+CDocumentContentElementBase.prototype.AddInlineTable = function(nCols, nRows, nMode)
 {
+	return null;
 };
 CDocumentContentElementBase.prototype.Remove = function(nCount, bOnlyText, bRemoveOnlySelection, bOnAddText, isWord)
 {

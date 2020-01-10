@@ -2749,16 +2749,16 @@ CDocumentContent.prototype.EditChart = function(Chart)
 		return this.LogicDocument.DrawingObjects.editChart(Chart);
 	}
 };
-CDocumentContent.prototype.AddInlineTable = function(Cols, Rows)
+CDocumentContent.prototype.AddInlineTable = function(nCols, nRows, nMode)
 {
 	if (docpostype_DrawingObjects === this.CurPos.Type)
 	{
-		return this.LogicDocument.DrawingObjects.addInlineTable(Cols, Rows);
+		return this.LogicDocument.DrawingObjects.addInlineTable(nCols, nRows, nMode);
 	}
 	else //if ( docpostype_Content === this.CurPos.Type )
 	{
 		if (this.CurPos.ContentPos < 0)
-			return false;
+			return null;
 
 		if (true === this.Selection.Use)
 			this.Remove(1, true);
@@ -2768,8 +2768,10 @@ CDocumentContent.prototype.AddInlineTable = function(Cols, Rows)
 
 		// Если мы внутри параграфа, тогда разрываем его и на месте разрыва добавляем таблицу.
 		// А если мы внутри таблицы, тогда добавляем таблицу внутрь текущей таблицы.
-		if (type_Paragraph === Item.GetType())
+		if (Item.IsParagraph())
 		{
+			var oPage = this.Pages[this.CurPage];
+
 			// Создаем новую таблицу
 			var W = 0;
 			if (true === this.IsTableCellContent())
@@ -2777,14 +2779,14 @@ CDocumentContent.prototype.AddInlineTable = function(Cols, Rows)
 			else
 				W = ( this.XLimit - this.X + 2 * 1.9 );
 
-			W = Math.max(W, Cols * 2 * 1.9);
+			W = Math.max(W, nCols * 2 * 1.9);
 
 			var Grid = [];
 
-			for (var Index = 0; Index < Cols; Index++)
-				Grid[Index] = W / Cols;
+			for (var Index = 0; Index < nCols; Index++)
+				Grid[Index] = W / nCols;
 
-			var NewTable = new CTable(this.DrawingDocument, this, true, Rows, Cols, Grid);
+			var NewTable = new CTable(this.DrawingDocument, this, true, nRows, nCols, Grid);
 			NewTable.SetParagraphPrOnAdd(Item);
 
 			var nContentPos = this.CurPos.ContentPos;
@@ -2796,21 +2798,49 @@ CDocumentContent.prototype.AddInlineTable = function(Cols, Rows)
 			}
 			else
 			{
-				var NewParagraph = new Paragraph(this.DrawingDocument, this, this.bPresentation === true);
-				Item.Split(NewParagraph);
+				if (nMode < 0)
+				{
+					NewTable.MoveCursorToStartPos(false);
 
-				this.AddToContent(nContentPos + 1, NewParagraph);
+					if (Item.GetCurrentParaPos().Page > 0 && oPage && nContentPos === oPage.Pos)
+					{
+						this.AddToContent(nContentPos + 1, NewTable);
+						this.CurPos.ContentPos = nContentPos + 1;
+					}
+					else
+					{
+						this.AddToContent(nContentPos, NewTable);
+						this.CurPos.ContentPos = nContentPos;
+					}
+				}
+				else if (nMode > 0)
+				{
+					NewTable.MoveCursorToStartPos(false);
+					this.AddToContent(nContentPos + 1, NewTable);
+					this.CurPos.ContentPos = nContentPos + 1;
+				}
+				else
+				{
+					var NewParagraph = new Paragraph(this.DrawingDocument, this, this.bPresentation === true);
+					Item.Split(NewParagraph);
 
-				NewTable.MoveCursorToStartPos();
-				this.AddToContent(nContentPos + 1, NewTable);
-				this.CurPos.ContentPos = nContentPos + 1;
+					this.AddToContent(nContentPos + 1, NewParagraph);
+
+					NewTable.MoveCursorToStartPos();
+					this.AddToContent(nContentPos + 1, NewTable);
+					this.CurPos.ContentPos = nContentPos + 1;
+				}
 			}
+
+			return NewTable;
 		}
 		else
 		{
-			Item.AddInlineTable(Cols, Rows);
+			return Item.AddInlineTable(nCols, nRows, nMode);
 		}
 	}
+
+	return null;
 };
 CDocumentContent.prototype.AddToParagraph = function(ParaItem, bRecalculate)
 {

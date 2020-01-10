@@ -706,10 +706,10 @@ CHeaderFooter.prototype =
         this.Content.EditChart( Chart );
     },
 
-	AddInlineTable : function(Cols, Rows)
-    {
-        this.Content.AddInlineTable( Cols, Rows );
-    },
+	AddInlineTable : function(nCols, nRows, nMode)
+	{
+		return this.Content.AddInlineTable(nCols, nRows, nMode);
+	},
 
 	AddToParagraph : function(ParaItem, bRecalculate)
 	{
@@ -1940,11 +1940,13 @@ CHeaderFooterController.prototype =
             return this.CurHdrFtr.EditChart( Chart );
     },
 
-	AddInlineTable : function(Cols, Rows)
-    {
-        if ( null != this.CurHdrFtr )
-            return this.CurHdrFtr.AddInlineTable( Cols, Rows );
-    },
+	AddInlineTable : function(nCols, nRows, nMode)
+	{
+		if (this.CurHdrFtr)
+			return this.CurHdrFtr.AddInlineTable(nCols, nRows, nMode);
+
+		return null;
+	},
 
 	AddToParagraph : function(ParaItem, bRecalculate)
 	{

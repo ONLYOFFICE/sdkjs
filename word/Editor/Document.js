@@ -5160,18 +5160,26 @@ CDocument.prototype.GetChartObject = function(type)
     return this.DrawingObjects.getChartObject(type, W, H);
 
 };
-CDocument.prototype.AddInlineTable = function(Cols, Rows)
+/**
+ * Добавляем таблицу в текущую позицию курсора
+ * @param {number} nCols
+ * @param {number} nRows
+ * @param {number} [nMode=0] 0 - делим параграф в текущей точке, -1 добавляем до текущего параграфа, 1 - добавляем после текущего параграфа
+ * @returns {?CTable}
+ */
+CDocument.prototype.AddInlineTable = function(nCols, nRows, nMode)
 {
-	if (Cols <= 0 || Rows <= 0)
-		return;
+	if (nCols <= 0 || nRows <= 0)
+		return null;
 
-	this.Controller.AddInlineTable(Cols, Rows);
+	var oTable = this.Controller.AddInlineTable(nCols, nRows, nMode);
 
 	this.Recalculate();
+	this.UpdateSelection();
+	this.UpdateInterface();
+	this.UpdateRulers();
 
-	this.Document_UpdateSelectionState();
-	this.Document_UpdateInterfaceState();
-	this.Document_UpdateRulersState();
+	return oTable;
 };
 CDocument.prototype.AddDropCap = function(bInText)
 {
@@ -9642,6 +9650,7 @@ CDocument.prototype.OnMouseMove = function(e, X, Y, PageIndex)
 	{
 	    if (this.DrawTableMode.Start)
             this.DrawingDocument.OnUpdateOverlay();
+
 		return;
 	}
 
@@ -16151,10 +16160,10 @@ CDocument.prototype.controller_AddSignatureLine = function(oSignatureDrawing)
 		Item.AddSignatureLine(oSignatureDrawing);
 	}
 };
-CDocument.prototype.controller_AddInlineTable = function(Cols, Rows)
+CDocument.prototype.controller_AddInlineTable = function(nCols, nRows, nMode)
 {
 	if (this.CurPos.ContentPos < 0)
-		return false;
+		return null;
 
 	// Сначала удаляем заселекченую часть
 	if (true === this.Selection.Use)
@@ -16167,10 +16176,10 @@ CDocument.prototype.controller_AddInlineTable = function(Cols, Rows)
 
 	// Если мы внутри параграфа, тогда разрываем его и на месте разрыва добавляем таблицу.
 	// А если мы внутри таблицы, тогда добавляем таблицу внутрь текущей таблицы.
-	if (type_Paragraph === Item.GetType())
+	if (Item.IsParagraph())
 	{
 		// Ширину таблицы делаем по минимальной ширине колонки.
-		var Page   = this.Pages[this.CurPage];
+		var oPage  = this.Pages[this.CurPage];
 		var SectPr = this.SectionsInfo.Get_SectPr(this.CurPos.ContentPos).SectPr;
 
 		var PageFields = this.Get_PageFields(this.CurPage);
@@ -16191,12 +16200,12 @@ CDocument.prototype.controller_AddInlineTable = function(Cols, Rows)
 			W += 2 * 1.9;
 		}
 
-		W = Math.max(W, Cols * 2 * 1.9);
+		W = Math.max(W, nCols * 2 * 1.9);
 
-		for (var Index = 0; Index < Cols; Index++)
-			Grid[Index] = W / Cols;
+		for (var Index = 0; Index < nCols; Index++)
+			Grid[Index] = W / nCols;
 
-		var NewTable = new CTable(this.DrawingDocument, this, true, Rows, Cols, Grid);
+		var NewTable = new CTable(this.DrawingDocument, this, true, nRows, nCols, Grid);
 		NewTable.SetParagraphPrOnAdd(Item);
 
 		var nContentPos = this.CurPos.ContentPos;
@@ -16208,22 +16217,50 @@ CDocument.prototype.controller_AddInlineTable = function(Cols, Rows)
 		}
 		else
 		{
-			var NewParagraph = new Paragraph(this.DrawingDocument, this);
-			Item.Split(NewParagraph);
+			if (nMode < 0)
+			{
+				NewTable.MoveCursorToStartPos(false);
 
-			this.AddToContent(nContentPos + 1, NewParagraph);
+				if (Item.GetCurrentParaPos().Page > 0 && oPage && nContentPos === oPage.Pos)
+				{
+					this.AddToContent(nContentPos + 1, NewTable);
+					this.CurPos.ContentPos = nContentPos + 1;
+				}
+				else
+				{
+					this.AddToContent(nContentPos, NewTable);
+					this.CurPos.ContentPos = nContentPos;
+				}
+			}
+			else if (nMode > 0)
+			{
+				NewTable.MoveCursorToStartPos(false);
+				this.AddToContent(nContentPos + 1, NewTable);
+				this.CurPos.ContentPos = nContentPos + 1;
+			}
+			else
+			{
+				var NewParagraph = new Paragraph(this.DrawingDocument, this);
+				Item.Split(NewParagraph);
 
-			NewTable.MoveCursorToStartPos(false);
-			this.AddToContent(nContentPos + 1, NewTable);
-			this.CurPos.ContentPos = nContentPos + 1;
+				this.AddToContent(nContentPos + 1, NewParagraph);
+
+				NewTable.MoveCursorToStartPos(false);
+				this.AddToContent(nContentPos + 1, NewTable);
+				this.CurPos.ContentPos = nContentPos + 1;
+			}
 		}
+
+		return NewTable;
 	}
 	else
 	{
-		Item.AddInlineTable(Cols, Rows);
+		return Item.AddInlineTable(nCols, nRows, nMode);
 	}
 
 	this.Recalculate();
+
+	return null;
 };
 CDocument.prototype.controller_ClearParagraphFormatting = function(isClearParaPr, isClearTextPr)
 {
@@ -20988,11 +21025,38 @@ CDocument.prototype.DrawTable = function()
 	if (!this.DrawTableMode.Draw && !this.DrawTableMode.Erase)
 		return;
 
-	// TODO: Случай когда таблицы нет
 	if (!this.DrawTableMode.Table)
-		return;
+	{
+		if (Math.abs(this.DrawTableMode.StartX - this.DrawTableMode.EndX) < 1 && Math.abs(this.DrawTableMode.StartY - this.DrawTableMode.EndY) < 1)
+			return;
 
-	if (!this.Document_Is_SelectionLocked(changestype_None, {
+		this.RemoveSelection();
+
+		this.CurPage = this.DrawTableMode.Page;
+		this.MoveCursorToXY(this.DrawTableMode.StartX, this.DrawTableMode.StartY, false);
+
+		if (!this.IsSelectionLocked(AscCommon.changestype_Document_Content_Add))
+		{
+			this.StartAction(AscDFH.historydescription_Document_DrawNewTable);
+
+			var oTable = this.AddInlineTable(1, 1, -1);
+			if (oTable && oTable.GetRowsCount() > 0)
+			{
+				oTable.Set_Inline(false);
+				oTable.Set_Distance(3.2, 0, 3.2, 0);
+				oTable.Set_PositionH(c_oAscHAnchor.Page, false, Math.min(this.DrawTableMode.StartX, this.DrawTableMode.EndX));
+				oTable.Set_PositionV(c_oAscVAnchor.Page, false, Math.min(this.DrawTableMode.StartY, this.DrawTableMode.EndY));
+				oTable.Set_TableW(tblwidth_Mm, Math.abs(this.DrawTableMode.EndX - this.DrawTableMode.StartX));
+				oTable.GetRow(0).SetHeight(Math.abs(this.DrawTableMode.EndY - this.DrawTableMode.StartY), Asc.linerule_AtLeast);
+			}
+
+			this.FinalizeAction();
+		}
+
+		return;
+	}
+
+	if (!this.IsSelectionLocked(changestype_None, {
 			Type      : changestype_2_ElementsArray_and_Type,
 			Elements  : [this.DrawTableMode.Table],
 			CheckType : AscCommon.changestype_Table_Properties
@@ -21000,7 +21064,7 @@ CDocument.prototype.DrawTable = function()
 	{
 		var oTable = this.DrawTableMode.Table;
 
-		this.StartAction();
+		this.StartAction(AscDFH.historydescription_Document_DrawTable);
 		oTable.DrawTableCells(this.DrawTableMode.StartX, this.DrawTableMode.StartY, this.DrawTableMode.EndX, this.DrawTableMode.EndY, this.DrawTableMode.TablePageStart, this.DrawTableMode.TablePageEnd, this.DrawTableMode.Draw);
 
 		if (oTable.GetRowsCount() <= 0 && oTable.GetParent())

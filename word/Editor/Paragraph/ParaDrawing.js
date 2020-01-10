@@ -2324,7 +2324,7 @@ ParaDrawing.prototype.getArrayWrapIntervals = function(x0, y0, x1, y1, Y0Sp, Y1S
 };
 ParaDrawing.prototype.setAllParagraphNumbering = function(numInfo)
 {
-	if (AscCommon.isRealObject(this.GraphicObj) && typeof this.GraphicObj.addInlineTable === "function")
+	if (AscCommon.isRealObject(this.GraphicObj) && typeof this.GraphicObj.setAllParagraphNumbering === "function")
 		this.GraphicObj.setAllParagraphNumbering(numInfo);
 };
 ParaDrawing.prototype.addNewParagraph = function(bRecalculate)
@@ -2332,10 +2332,12 @@ ParaDrawing.prototype.addNewParagraph = function(bRecalculate)
 	if (AscCommon.isRealObject(this.GraphicObj) && typeof this.GraphicObj.addNewParagraph === "function")
 		this.GraphicObj.addNewParagraph(bRecalculate);
 };
-ParaDrawing.prototype.addInlineTable = function(cols, rows)
+ParaDrawing.prototype.addInlineTable = function(nCols, nRows, nMode)
 {
 	if (AscCommon.isRealObject(this.GraphicObj) && typeof this.GraphicObj.addInlineTable === "function")
-		this.GraphicObj.addInlineTable(cols, rows);
+		return this.GraphicObj.addInlineTable(nCols, nRows, nMode);
+
+	return null;
 };
 ParaDrawing.prototype.applyTextPr = function(paraItem, bRecalculate)
 {

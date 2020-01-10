@@ -97,9 +97,9 @@ CDrawingsController.prototype.EditChart = function(Chart)
 {
 	this.DrawingObjects.editChart(Chart);
 };
-CDrawingsController.prototype.AddInlineTable = function(Cols, Rows)
+CDrawingsController.prototype.AddInlineTable = function(nCols, nRows, nMode)
 {
-	this.DrawingObjects.addInlineTable(Cols, Rows);
+	return this.DrawingObjects.addInlineTable(nCols, nRows, nMode);
 };
 CDrawingsController.prototype.ClearParagraphFormatting = function(isClearParaPr, isClearTextPr)
 {

@@ -5829,12 +5829,12 @@ CTable.prototype.AddTextArt = function(nStyle)
 	this.Selection.Type = table_Selection_Text;
 	this.CurCell.Content.AddTextArt(nStyle);
 };
-CTable.prototype.AddInlineTable = function(Cols, Rows)
+CTable.prototype.AddInlineTable = function(nCols, nRows, nMode)
 {
 	if (true === this.Selection.Use && table_Selection_Cell === this.Selection.Type)
-		return;
+		return null;
 
-	this.CurCell.Content.AddInlineTable(Cols, Rows);
+	return this.CurCell.Content.AddInlineTable(nCols, nRows, nMode);
 };
 CTable.prototype.Add = function(ParaItem, bRecalculate)
 {
@@ -8290,17 +8290,15 @@ CTable.prototype.Get_AllowOverlap = function()
 };
 CTable.prototype.Set_PositionH = function(RelativeFrom, Align, Value)
 {
-	History.Add(new CChangesTablePositionH(this,
-		{
-			RelativeFrom : this.PositionH.RelativeFrom,
-			Align        : this.PositionH.Align,
-			Value        : this.PositionH.Value
-		},
-		{
-			RelativeFrom : RelativeFrom,
-			Align        : Align,
-			Value        : Value
-		}));
+	History.Add(new CChangesTablePositionH(this, {
+		RelativeFrom : this.PositionH.RelativeFrom,
+		Align        : this.PositionH.Align,
+		Value        : this.PositionH.Value
+	}, {
+		RelativeFrom : RelativeFrom,
+		Align        : Align,
+		Value        : Value
+	}));
 
 	this.PositionH.RelativeFrom = RelativeFrom;
 	this.PositionH.Align        = Align;
