@@ -6272,20 +6272,3 @@
 		return new ApiDocumentContent(oDocContent);
 	};
 }(window, null));
-function Test()
-{
-    var Api = editor;
-    var oDocument = Api.GetDocument();
-    oDocument.Document.StartAction();
-    var oParagraph = oDocument.GetElement(0);
-    var oRun = oParagraph.GetElement(1);
-
-    var oParagraph1 = oDocument.GetElement(2);
-    var oRun1 = oParagraph1.GetElement(1);
-
-    var oParagraph2 = oDocument.GetElement(5);
-    var oRun2 = oParagraph2.GetElement(1);
-    var Runs = [oRun, oRun1, oRun2];
-    Api.AddComment(Runs, "УУУУ");
-    oDocument.Document.FinalizeAction();
-}
