@@ -786,7 +786,7 @@
 			this.options.fragments), t = this, ret = false, range, wsOPEN = this.handlers.trigger(
 			"getCellFormulaEnterWSOpen"), ws = wsOPEN ? wsOPEN.model : this.handlers.trigger("getActiveWS");
 
-		if (Asc.c_oAscNumFormatType.Text === this.options.cellNumFormat || s.length < 1 || s.charAt(0) !== "=") {
+		if (s.length < 1 || s.charAt(0) !== "=") {
 			return ret;
 		}
 
