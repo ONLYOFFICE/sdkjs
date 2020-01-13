@@ -7445,6 +7445,24 @@ function CDrawingDocument()
 
         var x1, y1, x2, y2;
 
+        if (!logicObj.Table)
+		{
+            ctx.strokeStyle = "rgba(0, 0, 0, 0.75)";
+            ctx.lineWidth = 1;
+
+            x1 = ((drawingPage.left + koefX * logicObj.StartX) >> 0);
+            y1 = ((drawingPage.top + koefY * logicObj.StartY) >> 0);
+            x2 = ((drawingPage.left + koefX * logicObj.EndX) >> 0);
+            y2 = ((drawingPage.top + koefY * logicObj.EndY) >> 0);
+
+            overlay.CheckPoint(x1, y1);
+            overlay.CheckPoint(x2, y2);
+
+            this.AutoShapesTrack.AddRectDashClever(ctx, x1, y1, x2, y2, 2, 2, true);
+            ctx.beginPath();
+			return;
+		}
+
 		if (isPen)
 		{
 			ctx.strokeStyle = (drawObj.Color === "Red") ? "#FF7B7B" : "#000000";
