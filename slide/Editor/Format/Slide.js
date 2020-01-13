@@ -297,7 +297,7 @@ Slide.prototype =
             }
             var aComments = this.slideComments.comments;
             for(i = 0; i < aComments.length; ++i){
-                copy.slideComments.addComment(aComments[i].createDuplicate(copy.slideComments));
+                copy.slideComments.addComment(aComments[i].createDuplicate(copy.slideComments, true));
             }
         }
 
