@@ -1299,6 +1299,7 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
                                         {
                                             drawing.selection.dataLbl = j;
                                             drawing.selection.textSelection = oDLbl;
+                                            oDLbl.selectionSetStart(e, x, y, pageIndex);
                                             drawingObjectsController.changeCurrentState(new AscFormat.TextAddState(drawingObjectsController, oDLbl, x, y));
                                             if(e.ClickCount <= 1)
                                             {

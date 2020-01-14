@@ -622,41 +622,7 @@ function MoveChartObjectTrack(oObject, oChartSpace)
         var oObjectToSet = null;
         if(this.originalObject instanceof AscFormat.CDLbl)
         {
-            if(this.originalObject.series && this.originalObject.pt)
-            {
-                var oSeries = this.originalObject.series;
-                if(oSeries)
-                {
-                    var oDlbls;
-                    if(!oSeries.dLbls)
-                    {
-                        var oChart = oSeries.parent;
-                        if(oChart && oChart.dLbls)
-                        {
-                            oDlbls = oChart.dLbls.createDuplicate();
-                        }
-                        else
-                        {
-                            oDlbls = new AscFormat.CDLbls();
-                        }
-                        oSeries.setDLbls(oDlbls);
-                    }
-                    else
-                    {
-                        oDlbls = oSeries.dLbls;
-                    }
-                    var dLbl  = oDlbls.findDLblByIdx(this.originalObject.pt.idx);
-                    if(!dLbl)
-                    {
-                        dLbl = this.originalObject.createDuplicate();
-                        dLbl.setDelete(undefined);
-                        dLbl.setIdx(this.originalObject.pt.idx);
-                        oSeries.dLbls.addDLbl(dLbl);
-                        dLbl.series  = oSeries;
-                    }
-                    oObjectToSet = dLbl;
-                }
-            }
+            oObjectToSet = this.originalObject.checkDlbl();
         }
         else
         {

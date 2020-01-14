@@ -1222,6 +1222,77 @@ CDLbl.prototype =
         return this.chart && this.chart.convertPixToMM(pix);
     },
 
+
+
+    selectionSetStart: CShape.prototype.selectionSetStart,
+
+    selectionSetEnd: CShape.prototype.selectionSetEnd,
+
+
+    checkDlbl: function()
+    {
+        if(this.series && this.pt)
+        {
+            var oSeries = this.series;
+            if(oSeries)
+            {
+                var oDlbls;
+                if(!oSeries.dLbls)
+                {
+                    var oChart = oSeries.parent;
+                    if(oChart && oChart.dLbls)
+                    {
+                        oDlbls = oChart.dLbls.createDuplicate();
+                    }
+                    else
+                    {
+                        oDlbls = new AscFormat.CDLbls();
+                    }
+                    oSeries.setDLbls(oDlbls);
+                }
+                else
+                {
+                    oDlbls = oSeries.dLbls;
+                }
+                var dLbl  = oDlbls.findDLblByIdx(this.pt.idx);
+                if(!dLbl)
+                {
+                    dLbl = this.createDuplicate();
+                    dLbl.setDelete(undefined);
+                    dLbl.setIdx(this.pt.idx);
+                    oSeries.dLbls.addDLbl(dLbl);
+                    dLbl.series  = oSeries;
+                }
+                return dLbl;
+            }
+        }
+        return null;
+    },
+
+    checkDocContent: function()
+    {
+        var oDlbl = this.checkDlbl();
+        if(oDlbl)
+        {
+            oDlbl.txBody = this.txBody;
+            CTitle.prototype.checkDocContent.call(oDlbl);
+        }
+    },
+
+    applyTextFunction: function(docContentFunction, tableFunction, args)
+    {
+        var oDlbl = this.checkDlbl();
+        if(!oDlbl)
+        {
+            return;
+        }
+
+        if(oDlbl.tx && oDlbl.tx.rich && oDlbl.tx.rich.content)
+        {
+            docContentFunction.apply(oDlbl.tx.rich.content, args);
+        }
+    },
+
     hit: function(x, y)
     {
         var tx = this.invertTransform.TransformPointX(x, y);
