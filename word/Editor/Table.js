@@ -12487,71 +12487,7 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 			X_Front 		  = false;
 			X_After  		  = false;
 
-			for (var Index = 0; Index < this.Get_RowsCount(); Index++)
-			{
-				curRows.push(this.Content[Index]);
-			}
-			for (var curRow = 0; curRow < this.Get_RowsCount(); curRow++)
-			{
-				curCells[curRow] = [];
-				for (var curCell = 0; curCell < this.Content[curRow].Get_CellsCount(); curCell++)
-				{
-					curCells[curRow].push(this.Content[curRow].Get_Cell(curCell));
-				}
-			}
-			// Если количество строк уменьшилось, мы должны изменить координаты ячеек в следующих объединениях
-			for (var Index = 0; Index < curRows.length; Index++)
-			{
-				if (oldRows[Index].Id != curRows[Index].Id)
-				{
-					for (var newIndex = Selection; newIndex < newSelectionData.length; newIndex++)
-					{
-						for (var Index2 = 0; Index2 < newSelectionData[newIndex].length; Index2++)
-						{
-							if (newSelectionData[newIndex][Index2].Row > Index) 
-								newSelectionData[newIndex][Index2].Row -= 1;
-						}
-
-					}
-					
-					for (var Index2 = 0; Index2 < newTempSelectionData.length; Index2++)
-					{
-						if (newTempSelectionData[Index2].Row > Index)
-							newTempSelectionData[Index2].Row -= 1;
-					}
-					oldRows.splice(Index, 1);
-					oldCells.splice(Index, 1);
-					Index = -1;
-				}
-			}
-			for (var Index = 0; Index < curCells.length; Index++)
-			{
-				for (var Index2 = 0; Index2 < curCells[Index].length; Index2++)
-				{
-					if (oldCells[Index][Index2] != curCells[Index][Index2])
-					{
-						for (var newIndex = Selection; newIndex < newSelectionData.length; newIndex++)
-						{
-
-							for (var Index3 = 0; Index3 < newSelectionData[newIndex].length; Index3++)
-							{
-								if (newSelectionData[newIndex][Index3].Row === Index && newSelectionData[newIndex][Index3].Cell > Index2)
-									newSelectionData[newIndex][Index3].Cell -= 1;
-							}
-
-						}
-						
-						for (var Index3 = 0; Index3 < newTempSelectionData.length; Index3++)
-						{
-							if (newTempSelectionData[Index3].Row === Index && newTempSelectionData[Index3].Cell > Index2)
-							newTempSelectionData[Index3].Cell -= 1;
-						}
-						oldCells[Index].splice(Index2, 1);
-						Index2 = -1;
-					}
-
-				}
-			}
+			
 			
 			this.Selection.Data = newSelectionData[Selection];
 
@@ -12703,11 +12639,75 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 			if (Selection === 0 && X_Front && X_After)
 				canDel = true;
 
-			if (canDel)
-				if (X_Front && X_After)
-					if (this.Content[Pos_tl.Row].Get_CellsCount() === 1)
-						this.RemoveTableRow(Pos_tl.Row);
+			if (canDel && X_Front && X_After && this.Content[Pos_tl.Row].Get_CellsCount() === 1)
+				this.RemoveTableRow(Pos_tl.Row);
 			
+			
+			for (var Index = 0; Index < this.Get_RowsCount(); Index++)
+			{
+				curRows.push(this.Content[Index]);
+			}
+			for (var curRow = 0; curRow < this.Get_RowsCount(); curRow++)
+			{
+				curCells[curRow] = [];
+				for (var curCell = 0; curCell < this.Content[curRow].Get_CellsCount(); curCell++)
+				{
+					curCells[curRow].push(this.Content[curRow].Get_Cell(curCell));
+				}
+			}
+			// Если количество строк уменьшилось, мы должны изменить координаты ячеек в следующих объединениях
+			for (var Index = 0; Index < curRows.length; Index++)
+			{
+				if (oldRows[Index].Id != curRows[Index].Id)
+				{
+					for (var newIndex = Selection; newIndex < newSelectionData.length; newIndex++)
+					{
+						for (var Index2 = 0; Index2 < newSelectionData[newIndex].length; Index2++)
+						{
+							if (newSelectionData[newIndex][Index2].Row > Index) 
+								newSelectionData[newIndex][Index2].Row -= 1;
+						}
+
+					}
+					
+					for (var Index2 = 0; Index2 < newTempSelectionData.length; Index2++)
+					{
+						if (newTempSelectionData[Index2].Row > Index)
+							newTempSelectionData[Index2].Row -= 1;
+					}
+					oldRows.splice(Index, 1);
+					oldCells.splice(Index, 1);
+					Index = -1;
+				}
+			}
+			for (var Index = 0; Index < curCells.length; Index++)
+			{
+				for (var Index2 = 0; Index2 < curCells[Index].length; Index2++)
+				{
+					if (oldCells[Index][Index2] != curCells[Index][Index2])
+					{
+						for (var newIndex = Selection; newIndex < newSelectionData.length; newIndex++)
+						{
+
+							for (var Index3 = 0; Index3 < newSelectionData[newIndex].length; Index3++)
+							{
+								if (newSelectionData[newIndex][Index3].Row === Index && newSelectionData[newIndex][Index3].Cell > Index2)
+									newSelectionData[newIndex][Index3].Cell -= 1;
+							}
+
+						}
+						
+						for (var Index3 = 0; Index3 < newTempSelectionData.length; Index3++)
+						{
+							if (newTempSelectionData[Index3].Row === Index && newTempSelectionData[Index3].Cell > Index2)
+							newTempSelectionData[Index3].Cell -= 1;
+						}
+						oldCells[Index].splice(Index2, 1);
+						Index2 = -1;
+					}
+
+				}
+			}
 		}
 		
 		if (newSelectionData.length >= 1)
