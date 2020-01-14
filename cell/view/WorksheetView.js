@@ -15732,8 +15732,8 @@
                     History.SetSelectionRedo(newActiveRange);
                 }
 
+				History.EndTransaction();
                 t._onUpdateFormatTable(updateRange, false, true);
-                History.EndTransaction();
             };
 
             lockRange = lockRange ? lockRange : t.af_getLockRangeTableInfo(tablePart, optionType, val);
