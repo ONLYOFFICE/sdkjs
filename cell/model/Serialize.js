@@ -4174,77 +4174,92 @@
         {
             var oThis = this;
             this.checkCommentGuid(comment);
-            this.memory.WriteByte(c_oSer_Comments.Row);
-            this.memory.WriteByte(c_oSerPropLenType.Long);
-            this.memory.WriteLong(comment.coords.nRow);
-
-            this.memory.WriteByte(c_oSer_Comments.Col);
-            this.memory.WriteByte(c_oSerPropLenType.Long);
-            this.memory.WriteLong(comment.coords.nCol);
+            var coords = comment.coords;
+            if (null != coords.nRow) {
+                this.memory.WriteByte(c_oSer_Comments.Row);
+                this.memory.WriteByte(c_oSerPropLenType.Long);
+                this.memory.WriteLong(coords.nRow);
+            }
+            if (null != coords.nCol) {
+                this.memory.WriteByte(c_oSer_Comments.Col);
+                this.memory.WriteByte(c_oSerPropLenType.Long);
+                this.memory.WriteLong(coords.nCol);
+            }
 
             this.memory.WriteByte(c_oSer_Comments.CommentDatas);
             this.memory.WriteByte(c_oSerPropLenType.Variable);
             this.bs.WriteItemWithLength(function(){oThis.WriteCommentDatas(comment);});
 
-            this.memory.WriteByte(c_oSer_Comments.Left);
-            this.memory.WriteByte(c_oSerPropLenType.Long);
-            this.memory.WriteLong(comment.coords.nLeft);
-
-            this.memory.WriteByte(c_oSer_Comments.Top);
-            this.memory.WriteByte(c_oSerPropLenType.Long);
-            this.memory.WriteLong(comment.coords.nTop);
-
-            this.memory.WriteByte(c_oSer_Comments.Right);
-            this.memory.WriteByte(c_oSerPropLenType.Long);
-            this.memory.WriteLong(comment.coords.nRight);
-
-            this.memory.WriteByte(c_oSer_Comments.Bottom);
-            this.memory.WriteByte(c_oSerPropLenType.Long);
-            this.memory.WriteLong(comment.coords.nBottom);
-
-            this.memory.WriteByte(c_oSer_Comments.LeftOffset);
-            this.memory.WriteByte(c_oSerPropLenType.Long);
-            this.memory.WriteLong(comment.coords.nLeftOffset);
-
-            this.memory.WriteByte(c_oSer_Comments.TopOffset);
-            this.memory.WriteByte(c_oSerPropLenType.Long);
-            this.memory.WriteLong(comment.coords.nTopOffset);
-
-            this.memory.WriteByte(c_oSer_Comments.RightOffset);
-            this.memory.WriteByte(c_oSerPropLenType.Long);
-            this.memory.WriteLong(comment.coords.nRightOffset);
-
-            this.memory.WriteByte(c_oSer_Comments.BottomOffset);
-            this.memory.WriteByte(c_oSerPropLenType.Long);
-            this.memory.WriteLong(comment.coords.nBottomOffset);
-
-            if(comment.coords.dLeftMM) {
+            if (null != coords.nLeft) {
+                this.memory.WriteByte(c_oSer_Comments.Left);
+                this.memory.WriteByte(c_oSerPropLenType.Long);
+                this.memory.WriteLong(coords.nLeft);
+            }
+            if (null != coords.nTop) {
+                this.memory.WriteByte(c_oSer_Comments.Top);
+                this.memory.WriteByte(c_oSerPropLenType.Long);
+                this.memory.WriteLong(coords.nTop);
+            }
+            if (null != coords.nRight) {
+                this.memory.WriteByte(c_oSer_Comments.Right);
+                this.memory.WriteByte(c_oSerPropLenType.Long);
+                this.memory.WriteLong(coords.nRight);
+            }
+            if (null != coords.nBottom) {
+                this.memory.WriteByte(c_oSer_Comments.Bottom);
+                this.memory.WriteByte(c_oSerPropLenType.Long);
+                this.memory.WriteLong(coords.nBottom);
+            }
+            if (null != coords.nLeftOffset) {
+                this.memory.WriteByte(c_oSer_Comments.LeftOffset);
+                this.memory.WriteByte(c_oSerPropLenType.Long);
+                this.memory.WriteLong(coords.nLeftOffset);
+            }
+            if (null != coords.nTopOffset) {
+                this.memory.WriteByte(c_oSer_Comments.TopOffset);
+                this.memory.WriteByte(c_oSerPropLenType.Long);
+                this.memory.WriteLong(coords.nTopOffset);
+            }
+            if (null != coords.nRightOffset) {
+                this.memory.WriteByte(c_oSer_Comments.RightOffset);
+                this.memory.WriteByte(c_oSerPropLenType.Long);
+                this.memory.WriteLong(coords.nRightOffset);
+            }
+            if (null != coords.nBottomOffset) {
+                this.memory.WriteByte(c_oSer_Comments.BottomOffset);
+                this.memory.WriteByte(c_oSerPropLenType.Long);
+                this.memory.WriteLong(coords.nBottomOffset);
+            }
+            if(null != coords.dLeftMM) {
                 this.memory.WriteByte(c_oSer_Comments.LeftMM);
                 this.memory.WriteByte(c_oSerPropLenType.Double);
-                this.memory.WriteDouble2(comment.coords.dLeftMM);
+                this.memory.WriteDouble2(coords.dLeftMM);
             }
-            if(comment.coords.dTopMM) {
+            if(null != coords.dTopMM) {
                 this.memory.WriteByte(c_oSer_Comments.TopMM);
                 this.memory.WriteByte(c_oSerPropLenType.Double);
-                this.memory.WriteDouble2(comment.coords.dTopMM);
+                this.memory.WriteDouble2(coords.dTopMM);
             }
-
-            this.memory.WriteByte(c_oSer_Comments.WidthMM);
-            this.memory.WriteByte(c_oSerPropLenType.Double);
-            this.memory.WriteDouble2(comment.coords.dWidthMM);
-
-            this.memory.WriteByte(c_oSer_Comments.HeightMM);
-            this.memory.WriteByte(c_oSerPropLenType.Double);
-            this.memory.WriteDouble2(comment.coords.dHeightMM);
-
-            this.memory.WriteByte(c_oSer_Comments.MoveWithCells);
-            this.memory.WriteByte(c_oSerPropLenType.Byte);
-            this.memory.WriteBool(comment.coords.bMoveWithCells);
-
-            this.memory.WriteByte(c_oSer_Comments.SizeWithCells);
-            this.memory.WriteByte(c_oSerPropLenType.Byte);
-            this.memory.WriteBool(comment.coords.bSizeWithCells);
-
+            if (null != coords.dWidthMM) {
+                this.memory.WriteByte(c_oSer_Comments.WidthMM);
+                this.memory.WriteByte(c_oSerPropLenType.Double);
+                this.memory.WriteDouble2(coords.dWidthMM);
+            }
+            if (null != coords.dHeightMM) {
+                this.memory.WriteByte(c_oSer_Comments.HeightMM);
+                this.memory.WriteByte(c_oSerPropLenType.Double);
+                this.memory.WriteDouble2(coords.dHeightMM);
+            }
+            if (null != coords.bMoveWithCells) {
+                this.memory.WriteByte(c_oSer_Comments.MoveWithCells);
+                this.memory.WriteByte(c_oSerPropLenType.Byte);
+                this.memory.WriteBool(coords.bMoveWithCells);
+            }
+            if (null != coords.bSizeWithCells) {
+                this.memory.WriteByte(c_oSer_Comments.SizeWithCells);
+                this.memory.WriteByte(c_oSerPropLenType.Byte);
+                this.memory.WriteBool(coords.bSizeWithCells);
+            }
             if (this.saveThreadedComments) {
                 this.memory.WriteByte(c_oSer_Comments.ThreadedComment);
                 this.memory.WriteByte(c_oSerPropLenType.Variable);

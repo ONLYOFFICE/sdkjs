@@ -103,9 +103,7 @@ function (window, undefined) {
 		return AscCommonExcel.UndoRedoDataTypes.CommentCoords;
 	};
 	asc_CCommentCoords.prototype.isValid = function() {
-		return null !== this.nLeft && null !== this.nTop && null !== this.nRight && null !== this.nBottom &&
-			null !== this.nLeftOffset && null !== this.nTopOffset && null !== this.nRightOffset && null !== this.nBottomOffset &&
-			null !== this.dWidthMM && null !== this.dHeightMM;
+		return null !== this.nRow && null !== this.nCol;
 	};
 	asc_CCommentCoords.prototype.Read_FromBinary2 = function(r) {
 		this.nRow = r.GetLong();
