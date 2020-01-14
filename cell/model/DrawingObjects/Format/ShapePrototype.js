@@ -174,7 +174,8 @@ function addToDrawings(worksheet, graphic, position, lockByDefault, anchor)
      worksheet.setSelectionShape(true);  */
     if(oldDrawingBase)
     {
-        drawingObject.Type = oldDrawingBase.Type;
+        graphic.setDrawingBaseType(oldDrawingBase.Type);
+        graphic.setDrawingBaseEditAs(oldDrawingBase.editAs);
         drawingObject.from.col = oldDrawingBase.from.col;
         drawingObject.from.colOff = oldDrawingBase.from.colOff;
         drawingObject.from.row = oldDrawingBase.from.row;
@@ -434,12 +435,20 @@ CShape.prototype.addToDrawingObjects =  function(pos, type)
     var position = addToDrawings(this.worksheet, this, pos, /*lockByDefault*/undefined, type);
     //var data = {Type: AscDFH.historyitem_AutoShapes_AddToDrawingObjects, Pos: position};
     History.Add(new CChangesDrawingObjectsAddToDrawingObjects(this, position));
-    if(AscFormat.isRealNumber(type) && this.setDrawingBaseType)
+    if(this.setDrawingBaseType)
     {
-        this.setDrawingBaseType(type);
-        if(type === AscCommon.c_oAscCellAnchorType.cellanchorTwoCell)
+        if(this.drawingBase)
         {
-            this.setDrawingBaseEditAs(AscCommon.c_oAscCellAnchorType.cellanchorTwoCell);
+            this.setDrawingBaseType && this.setDrawingBaseType(this.drawingBase.Type);
+            this.setDrawingBaseEditAs && this.setDrawingBaseEditAs(this.drawingBase.editAs);
+        }
+        if(AscFormat.isRealNumber(type))
+        {
+            this.setDrawingBaseType(type);
+            if(type === AscCommon.c_oAscCellAnchorType.cellanchorTwoCell)
+            {
+                this.setDrawingBaseEditAs(AscCommon.c_oAscCellAnchorType.cellanchorTwoCell);
+            }
         }
     }
     //this.worksheet.addContentChanges(new AscCommon.CContentChangesElement(AscCommon.contentchanges_Add, position, 1, data));
