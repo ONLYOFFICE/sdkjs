@@ -11095,6 +11095,9 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 			
 			Rows = this.GetAffectedRows(X1, Y1, X2, Y2, curColumn, 2);
 
+			if (Rows.length === 0)
+				return;
+				
 			if (Y2 >= this.RowsInfo[this.Pages[curColumn].LastRow].Y[curColumn] + this.RowsInfo[this.Pages[curColumn].LastRow].H[curColumn])
 				Y_Under = true;
 			if (Y1 <= this.RowsInfo[this.Pages[curColumn].FirstRow].Y[curColumn])
@@ -12486,8 +12489,6 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 			var curCells 	  = [];
 			X_Front 		  = false;
 			X_After  		  = false;
-
-			
 			
 			this.Selection.Data = newSelectionData[Selection];
 
@@ -13275,8 +13276,22 @@ CTable.prototype.GetDrawLine = function(X1, Y1, X2, Y2, CurPageStart, CurPageEnd
 		if (Y2 < 0)
 			Y2 = 0;
 			
-		// Пока что при рисовании вне таблицы не создается новая ячейка, поэтому пока лучше просто возвращать линию
-		if (Y1 <= this.RowsInfo[this.Pages[curColumn].FirstRow].Y[curColumn] || Y1 >= this.RowsInfo[this.Pages[curColumn].LastRow].Y[curColumn] + this.RowsInfo[this.Pages[curColumn].LastRow].H[curColumn])
+		// // Пока что при рисовании вне таблицы не создается новая ячейка, поэтому пока лучше просто возвращать линию
+		// if (Y1 <= this.RowsInfo[this.Pages[curColumn].FirstRow].Y[curColumn] || Y1 >= this.RowsInfo[this.Pages[curColumn].LastRow].Y[curColumn] + this.RowsInfo[this.Pages[curColumn].LastRow].H[curColumn])
+		// {
+		// 	var Line = 
+		// 	{
+		// 		X1  : X1_origin,
+		// 		X2  : X2_origin,
+		// 		Y1 : Y1,
+		// 		Y2 : Y2,
+		// 		Color : "Red",
+		// 		Bold  : false
+		// 	};
+		// 	return Line;
+		// }
+
+		if (Y1 > this.Pages[curColumn].Bounds.Bottom || Y1 < this.Pages[curColumn].Bounds.Top)
 		{
 			var Line = 
 			{
@@ -13287,6 +13302,7 @@ CTable.prototype.GetDrawLine = function(X1, Y1, X2, Y2, CurPageStart, CurPageEnd
 				Color : "Red",
 				Bold  : false
 			};
+
 			return Line;
 		}
 		// Рисуем вертикальную линию
