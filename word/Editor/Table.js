@@ -11444,6 +11444,7 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 					if (Cell.Get_Border(1).Value === 0 && Cell.Get_Border(3).Value === 0 && X_Front && X_After)
 					{
 						this.RemoveTableRow(curRow);
+						break;
 					}
 
 					if (curRow === 0)
@@ -12512,8 +12513,11 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 			}
 			if (Y_Under)
 			{
-				var Cell_pos_ 		 = this.Selection.Data[this.Selection.Data.length - 1];
-				Cell_pos_.Cell = this.Selection.Data[0].Cell;
+				var Cell_pos_ = {
+					Cell : this.Selection.Data[this.Selection.Data.length - 1].Cell,
+					Row  : this.Selection.Data[this.Selection.Data.length - 1].Row
+				};
+				Cell_pos_.Cell 		 = 0 + this.Selection.Data[0].Cell;
 				var Cell_ 			 = this.Content[Cell_pos_.Row].Get_Cell(Cell_pos_.Cell);
 				var Row_ 			 = this.Content[Cell_pos_.Row];
 				var Grid_start_      = Row_.Get_CellInfo(Cell_pos_.Cell).StartGridCol;
