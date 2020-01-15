@@ -1333,6 +1333,11 @@ CHeaderFooter.prototype.FindWatermark = function()
     }
     return oCandidate;
 };
+CHeaderFooter.prototype.GetAllTablesOnPage = function(nPageAbs, arrTables)
+{
+	this.Set_Page(nPageAbs);
+	return this.Content.GetAllTablesOnPage(nPageAbs, arrTables);
+};
 
 //-----------------------------------------------------------------------------------
 // Класс для работы с колонтитулами
@@ -2733,6 +2738,20 @@ CHeaderFooterController.prototype.Document_Is_SelectionLocked = function(nCheckT
     // Нужно запускать проверку дальше, чтобы проверить залоченность Sdt
     if (this.CurHdrFtr)
         this.CurHdrFtr.GetContent().Document_Is_SelectionLocked(nCheckType);
+};
+CHeaderFooterController.prototype.GetAllTablesOnPage = function(nPageAbs, arrTables)
+{
+	var oPage = this.Pages[nPageAbs];
+	if (!oPage)
+		return arrTables;
+
+	if (oPage.Header)
+		oPage.Header.GetAllTablesOnPage(nPageAbs, arrTables);
+
+	if (oPage.Footer)
+		oPage.Footer.GetAllTablesOnPage(nPageAbs, arrTables);
+
+	return arrTables;
 };
 
 

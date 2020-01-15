@@ -1126,6 +1126,13 @@ CDocumentContentElementBase.prototype.GetPresentationField = function()
 {
 	return null;
 };
+/**
+ * Получаем список таблицы на заданной абсолютной странице
+ * @param {number} nPageAbs
+ * @param {Array} arrTables
+ * @returns {Array}
+ */
+CDocumentContentElementBase.prototype.GetAllTablesOnPage = function(nPageAbs, arrTables){return arrTables ? arrTables : [];};
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

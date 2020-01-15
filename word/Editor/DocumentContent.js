@@ -7192,6 +7192,14 @@ CDocumentContent.prototype.private_GetColumnIndex = function(CurPage)
 
 	return (this.StartColumn + CurPage) - (((this.StartColumn + CurPage) / this.ColumnsCount | 0) * this.ColumnsCount);
 };
+CDocumentContent.prototype.GetAbsolutePage = function(nCurPage)
+{
+	return this.Get_AbsolutePage(nCurPage);
+};
+CDocumentContent.prototype.GetAbsoluteColumn = function(nCurPage)
+{
+	return this.Get_AbsoluteColumn(nCurPage);
+};
 //-----------------------------------------------------------------------------------
 // Undo/Redo функции
 //-----------------------------------------------------------------------------------
@@ -8200,6 +8208,53 @@ CDocumentContent.prototype.private_GetElementPageIndexByXY = function(ElementPos
 {
     return this.private_GetElementPageIndex(ElementPos, PageIndex, 0, 1);
 };
+/**
+ * Получаем относительную страницу по заданным координатам и абсолютной странице
+ * @param X
+ * @param Y
+ * @param nPageAbs
+ * @returns {number}
+ */
+CDocumentContent.prototype.GetPageIndexByXYAndPageAbs = function(X, Y, nPageAbs)
+{
+	 var nResultPage  = 0;
+	 var nMinDistance = null;
+
+	 for (var nCurPage = 0, nPagesCount = this.Pages.length; nCurPage < nPagesCount; ++nCurPage)
+	 {
+	 	var nTempPageAbs = this.GetAbsolutePage(nCurPage);
+	 	if (nTempPageAbs === nPageAbs)
+		{
+			var oBounds = this.Pages[nCurPage].Bounds;
+			if (oBounds.Left < X && X < oBounds.Right && oBounds.Top < Y && Y < oBounds.Bottom)
+			{
+				return nCurPage;
+			}
+			else
+			{
+				var nTempDistance;
+				if (oBounds.Left < X && X < oBounds.Right)
+					nTempDistance = Math.min(Math.abs(oBounds.Top - Y), Math.abs(oBounds.Bottom - Y));
+				else if (oBounds.Top < Y && Y < oBounds.Bottom)
+					nTempDistance = Math.min(Math.abs(oBounds.Left - X), Math.abs(oBounds.Right - X));
+				else
+					nTempDistance = Math.max(Math.min(Math.abs(oBounds.Top - Y), Math.abs(oBounds.Bottom - Y)), Math.min(Math.abs(oBounds.Left - X), Math.abs(oBounds.Right - X)));
+
+				if (null === nMinDistance || nTempDistance < nMinDistance)
+				{
+					nResultPage  = nCurPage;
+					nMinDistance = nTempDistance;
+				}
+			}
+		}
+		else if (nTempPageAbs > nPageAbs)
+		{
+			break;
+		}
+	 }
+
+	 return nResultPage;
+};
 CDocumentContent.prototype.GetTopDocumentContent = function()
 {
     var TopDocument = null;
@@ -8607,6 +8662,39 @@ CDocumentContent.prototype.GetRevisionsChangeElement = function(SearchEngine)
 
 		this.Content[Pos].GetRevisionsChangeElement(SearchEngine);
 	}
+};
+CDocumentContent.prototype.GetAllTablesOnPage = function(nPageAbs, arrTables)
+{
+	if (!arrTables)
+		arrTables = [];
+
+	var nStartPos = -1;
+	var nEndPos   = -2;
+	for (var nCurPage = 0, nPagesCount = this.Pages.length; nCurPage < nPagesCount; ++nCurPage)
+	{
+		var nTempPageAbs = this.GetAbsolutePage(nCurPage);
+
+		if (nPageAbs === nTempPageAbs)
+		{
+			if (-1 === nStartPos)
+			{
+				nStartPos = this.Pages[nCurPage].Pos;
+			}
+
+			nEndPos = this.Pages[nCurPage].EndPos;
+		}
+		else if (nTempPageAbs > nPageAbs)
+		{
+			break;
+		}
+	}
+
+	for (var nCurPos = nStartPos; nCurPos <= nEndPos; ++nCurPos)
+	{
+		this.Content[nCurPos].GetAllTablesOnPage(nPageAbs, arrTables);
+	}
+
+	return arrTables;
 };
 
 

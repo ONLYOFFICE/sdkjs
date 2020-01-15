@@ -19907,6 +19907,48 @@ CTable.prototype.Document_Is_SelectionLocked = function(CheckType, bCheckInner)
 	if (bCheckContentControl && this.Parent && this.Parent.CheckContentControlEditingLock)
 		this.Parent.CheckContentControlEditingLock();
 };
+CTable.prototype.GetAllTablesOnPage = function(nPageAbs, arrTables)
+{
+	if (!arrTables)
+		return arrTables = [];
+
+	var nFirstRow = -1;
+	var nLastRow  = -2;
+	for (var nCurPage = 0, nPagesCount = this.Pages.length; nCurPage < nPagesCount; ++nCurPage)
+	{
+		var nTempPageAbs = this.GetAbsolutePage(nCurPage);
+
+		if (nPageAbs === nTempPageAbs)
+		{
+			if (-1 === nFirstRow)
+			{
+				nFirstRow = this.Pages[nCurPage].FirstRow;
+			}
+
+			nLastRow = this.Pages[nCurPage].LastRow;
+
+			arrTables.push({Table : this, Page : nCurPage});
+		}
+		else if (nTempPageAbs > nPageAbs)
+		{
+			break;
+		}
+	}
+
+	for (var nCurRow = nFirstRow; nCurRow <= nLastRow; ++nCurRow)
+	{
+		var oRow = this.GetRow(nCurRow);
+		if (oRow)
+		{
+			for (var nCurCell = 0, nCellsCount = oRow.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
+			{
+				oRow.GetCell(nCurCell).GetContent().GetAllTablesOnPage(nPageAbs, arrTables);
+			}
+		}
+	}
+
+	return arrTables;
+};
 
 //----------------------------------------------------------------------------------------------------------------------
 // Класс  CTableLook

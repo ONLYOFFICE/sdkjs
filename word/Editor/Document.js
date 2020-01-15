@@ -2103,8 +2103,17 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 		{
 			if (this.Table)
 			{
-				this.TablePageStart = this.Table.Parent.private_GetElementPageIndexByXY(this.Table.GetIndex(), this.StartX, this.StartY, this.Page);
-				this.TablePageEnd   = this.Table.Parent.private_GetElementPageIndexByXY(this.Table.GetIndex(), this.EndX, this.EndY, this.Page);
+				var nPageStart = this.Page;
+				var nPageEnd   = this.Page;
+
+				if (!(this.Table.Parent instanceof CDocument))
+				{
+					nPageStart = this.Table.Parent.GetPageIndexByXYAndPageAbs(this.StartX, this.StartY, this.Page);
+					nPageEnd   = this.Table.Parent.GetPageIndexByXYAndPageAbs(this.EndX, this.EndY, this.Page);
+				}
+
+				this.TablePageStart = this.Table.Parent.private_GetElementPageIndexByXY(this.Table.GetIndex(), this.StartX, this.StartY, nPageStart);
+				this.TablePageEnd   = this.Table.Parent.private_GetElementPageIndexByXY(this.Table.GetIndex(), this.EndX, this.EndY, nPageEnd);
 			}
 			else
 			{
@@ -9290,26 +9299,57 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 		this.DrawTableMode.StartY = Y;
 		this.DrawTableMode.Page   = PageIndex;
 
-		var nContentPos = this.Internal_GetContentPosByXY(X, Y, PageIndex);
-		var oElement    = this.Content[nContentPos];
 
-		if (oElement)
+		var arrTables = this.GetAllTablesOnPage(PageIndex);
+
+		var oElement     = null;
+		var nMinDistance = null;
+		var isInside     = false;
+		for (var nTableIndex = 0, nTablesCount = arrTables.length; nTableIndex < nTablesCount; ++nTableIndex)
 		{
-			if (oElement.IsTable())
-			{
-				this.DrawTableMode.Table = oElement;
-			}
-			else if (oElement.IsParagraph())
-			{
-				var oNext = oElement.Get_DocumentNext();
-				var oPrev = oElement.Get_DocumentPrev();
+			var oBounds = arrTables[nTableIndex].Table.GetPageBounds(arrTables[nTableIndex].Page);
 
-				if (oNext && oNext.IsTable())
-					this.DrawTableMode.Table = oNext;
-				else if (oPrev && oPrev.IsTable())
-					this.DrawTableMode.Table = oPrev;
+			var nTempMin;
+			var isTempInside = false;
+			if (oBounds.Left < X && X < oBounds.Right)
+			{
+				if (oBounds.Top < Y && Y < oBounds.Bottom)
+				{
+					nTempMin     = Math.min(Math.abs(oBounds.Left - X), Math.abs(X - oBounds.Right), Math.abs(oBounds.Top - Y), Math.abs(Y - oBounds.Bottom));
+					isTempInside = true;
+				}
+				else
+				{
+					nTempMin = Math.min(Math.abs(oBounds.Top - Y), Math.abs(Y - oBounds.Bottom));
+				}
+			}
+			else
+			{
+				if (oBounds.Top < Y && Y < oBounds.Bottom)
+				{
+					nTempMin = Math.min(Math.abs(oBounds.Left - X), Math.abs(X - oBounds.Right));
+				}
+				else
+				{
+					nTempMin = Math.max(Math.min(Math.abs(oBounds.Top - Y), Math.abs(Y - oBounds.Bottom)), Math.min(Math.abs(oBounds.Left - X), Math.abs(X - oBounds.Right)));
+				}
+			}
+
+			if (null == nMinDistance || (nTempMin < nMinDistance && (!isInside || isTempInside)))
+			{
+				oElement     = arrTables[nTableIndex].Table;
+				nMinDistance = nTempMin;
+
+				if (isTempInside)
+					isInside = true;
 			}
 		}
+
+		if (!isInside && nMinDistance > 5)
+			oElement = null;
+
+		if (oElement)
+			this.DrawTableMode.Table = oElement;
 
 		this.DrawTableMode.UpdateTablePages();
 
@@ -21258,6 +21298,35 @@ CDocument.prototype.AnchorPositionToDocumentPosition = function(oAnchorPos)
 CDocument.prototype.IsDrawingSelected = function()
 {
 	return (docpostype_DrawingObjects === this.GetDocPosType() || (docpostype_HdrFtr === this.CurPos.Type && null != this.HdrFtr.CurHdrFtr && docpostype_DrawingObjects === this.HdrFtr.CurHdrFtr.Content.CurPos.Type));
+};
+/**
+ * Получаем список таблицы на заданной абсолютной странице
+ * @param {number} nPageAbs
+ * @returns {Array}
+ */
+CDocument.prototype.GetAllTablesOnPage = function(nPageAbs)
+{
+	var arrTables = [];
+
+	if (!this.Pages[nPageAbs])
+		return [];
+
+	if (docpostype_HdrFtr === this.GetDocPosType())
+	{
+		this.HdrFtr.GetAllTablesOnPage(nPageAbs, arrTables);
+	}
+	else
+	{
+		var nStartPos = this.Pages[nPageAbs].Pos;
+		var nEndPos   = this.Pages[nPageAbs].EndPos;
+
+		for (var nPos = nStartPos; nPos <= nEndPos; ++nPos)
+		{
+			this.Content[nPos].GetAllTablesOnPage(nPageAbs, arrTables);
+		}
+	}
+
+	return arrTables;
 };
 
 function CDocumentSelectionState()

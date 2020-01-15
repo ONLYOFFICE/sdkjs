@@ -2258,6 +2258,10 @@ CBlockLevelSdt.prototype.GetSpecificType = function()
 
 	return Asc.c_oAscContentControlSpecificType.None;
 };
+CBlockLevelSdt.prototype.GetAllTablesOnPage = function(nPageAbs, arrTables)
+{
+	return this.Content.GetAllTablesOnPage(nPageAbs, arrTables);
+};
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CBlockLevelSdt = CBlockLevelSdt;
