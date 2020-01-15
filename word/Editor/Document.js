@@ -21082,7 +21082,7 @@ CDocument.prototype.DrawTable = function()
 
 	if (!this.DrawTableMode.Table)
 	{
-		if (Math.abs(this.DrawTableMode.StartX - this.DrawTableMode.EndX) < 1 && Math.abs(this.DrawTableMode.StartY - this.DrawTableMode.EndY) < 1)
+		if (!this.DrawTableMode.Draw || Math.abs(this.DrawTableMode.StartX - this.DrawTableMode.EndX) < 1 || Math.abs(this.DrawTableMode.StartY - this.DrawTableMode.EndY) < 1)
 			return;
 
 		this.RemoveSelection();
