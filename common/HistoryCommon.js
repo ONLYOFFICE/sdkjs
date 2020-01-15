@@ -2064,6 +2064,7 @@
 	window['AscDFH'].historyitem_DLbl_SetSpPr           = window['AscDFH'].historyitem_type_DLbl | 13;
 	window['AscDFH'].historyitem_DLbl_SetTx             = window['AscDFH'].historyitem_type_DLbl | 14;
 	window['AscDFH'].historyitem_DLbl_SetTxPr           = window['AscDFH'].historyitem_type_DLbl | 15;
+	window['AscDFH'].historyitem_DLbl_SetParent         = window['AscDFH'].historyitem_type_DLbl | 16;
 
 	window['AscDFH'].historyitem_Marker_SetSize   = window['AscDFH'].historyitem_type_Marker | 1;
 	window['AscDFH'].historyitem_Marker_SetSpPr   = window['AscDFH'].historyitem_type_Marker | 2;

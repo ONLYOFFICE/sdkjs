@@ -1241,7 +1241,7 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
         }
 
 
-        if(bClickFlag){
+        if(/*bClickFlag*/true){
 
             var aCharts = drawing.chart.plotArea.charts;
             var series = drawing.getAllSeries();
@@ -1639,7 +1639,7 @@ function handleInlineHitNoText(drawing, drawingObjects, e, x, y, pageIndex, bInS
             {
                 if (drawing.getObjectType() === AscDFH.historyitem_type_ChartSpace && drawingObjects.handleChartDoubleClick)
                     drawingObjects.handleChartDoubleClick(drawing.parent, drawing, e, x, y, pageIndex);
-                else if (drawing.getObjectType() === AscDFH.historyitem_type_OleObject && drawingObjects.handleChartDoubleClick){
+                else if (drawing.getObjectType() === AscDFH.historyitem_type_OleObject && drawingObjects.handleOleObjectDoubleClick){
                     drawingObjects.handleOleObjectDoubleClick(drawing.parent, drawing, e, x, y, pageIndex);
                 }
                 else if (drawing.signatureLine && drawingObjects.handleSignatureDblClick){

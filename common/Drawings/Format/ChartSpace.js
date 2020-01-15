@@ -4686,19 +4686,35 @@ CChartSpace.prototype.recalcTitles2 = function()
         }
     }
 };
+
+
+    CChartSpace.prototype.refreshRecalcData2 = function(pageIndex, object)
+    {
+        var nObjectType = null;
+        if(object && object.getObjectType)
+        {
+            nObjectType = object.getObjectType();
+        }
+        if(nObjectType === AscDFH.historyitem_type_Title && this.selection.title === object)
+        {
+            this.recalcInfo.recalcTitle = object;
+        }
+        else if(nObjectType === AscDFH.historyitem_type_DLbl && this.selection.textSelection === object)
+        {
+            this.recalcInfo.recalcTitle = object;
+        }
+        else
+        {
+            var bOldRecalculateRef = this.recalcInfo.recalculateReferences;
+            this.setRecalculateInfo();
+            this.recalcInfo.recalculateReferences = bOldRecalculateRef;
+        }
+        this.addToRecalculate();
+    };
+
 CChartSpace.prototype.Refresh_RecalcData2 = function(pageIndex, object)
 {
-    if(object && object.getObjectType && object.getObjectType() === AscDFH.historyitem_type_Title && this.selection.title === object)
-    {
-        this.recalcInfo.recalcTitle = object;
-    }
-    else
-    {
-        var bOldRecalculateRef = this.recalcInfo.recalculateReferences;
-        this.setRecalculateInfo();
-        this.recalcInfo.recalculateReferences = bOldRecalculateRef;
-    }
-    this.addToRecalculate();
+    this.refreshRecalcData2(pageIndex, object);
 };
 CChartSpace.prototype.Refresh_RecalcData = function(data)
 {
@@ -13464,7 +13480,18 @@ CChartSpace.prototype.recalculateDLbls = function()
                             compiled_dlb.merge(aCharts[t].dLbls.findDLblByIdx(pt.idx), false);
                         compiled_dlb.merge(ser.dLbls);
                         if(ser.dLbls)
-                            compiled_dlb.merge(ser.dLbls.findDLblByIdx(pt.idx));
+                        {
+                            var oSeriesDLbl = ser.dLbls.findDLblByIdx(pt.idx);
+                            if(oSeriesDLbl)
+                            {
+                                oSeriesDLbl.chart = this;
+                                compiled_dlb.merge(oSeriesDLbl);
+                                if(oSeriesDLbl.tx)
+                                {
+                                    compiled_dlb.tx = oSeriesDLbl.tx;
+                                }
+                            }
+                        }
 
                         if(compiled_dlb.checkNoLbl())
                         {
