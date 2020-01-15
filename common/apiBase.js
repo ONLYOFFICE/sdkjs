@@ -695,6 +695,9 @@
 			this["pluginMethod_SetProperties"](this.DocInfo.asc_getOptions());
 
 		this.macros && !this.disableAutostartMacros && this.macros.runAuto();
+
+		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["onDocumentContentReady"])
+            window["AscDesktopEditor"]["onDocumentContentReady"]();
 	};
 	// Save
 	baseEditorsApi.prototype.processSavedFile                    = function(url, downloadType)
