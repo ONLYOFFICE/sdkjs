@@ -6563,7 +6563,6 @@ CDocument.prototype.Paragraph_SetHighlight = function(IsColor, r, g, b)
 
 			this.UpdateInterface();
 			this.FinalizeAction();
-			editor.sync_MarkerFormatCallback(false);
 		}
 	}
 	else
@@ -8350,7 +8349,7 @@ CDocument.prototype.OnKeyDown = function(e)
 
     // Если мы только что расширяли документ двойным щелчком, то сохраняем это действие
     if (true === this.History.Is_ExtendDocumentToPos())
-        this.History.Clear_Additional();
+        this.History.ClearAdditional();
 
     // Сбрасываем текущий элемент в поиске
     if (this.SearchEngine.Count > 0)
@@ -9653,7 +9652,7 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 
 				this.FinalizeAction();
 
-				editor.sync_MarkerFormatCallback(true);
+				this.Api.sync_MarkerFormatCallback(true);
 			}
 		}
 	}
@@ -21106,6 +21105,7 @@ CDocument.prototype.DrawTable = function()
 			}
 
 			this.FinalizeAction();
+			this.Api.sync_TableDrawModeCallback(true);
 		}
 
 		return;
@@ -21117,10 +21117,13 @@ CDocument.prototype.DrawTable = function()
 			CheckType : AscCommon.changestype_Table_Properties
 		}))
 	{
+		var isDraw  = this.DrawTableMode.Draw;
+		var isErase = this.DrawTableMode.Erase;
+
 		var oTable = this.DrawTableMode.Table;
 
 		this.StartAction(AscDFH.historydescription_Document_DrawTable);
-		oTable.DrawTableCells(this.DrawTableMode.StartX, this.DrawTableMode.StartY, this.DrawTableMode.EndX, this.DrawTableMode.EndY, this.DrawTableMode.TablePageStart, this.DrawTableMode.TablePageEnd, this.DrawTableMode.Draw);
+		oTable.DrawTableCells(this.DrawTableMode.StartX, this.DrawTableMode.StartY, this.DrawTableMode.EndX, this.DrawTableMode.EndY, this.DrawTableMode.TablePageStart, this.DrawTableMode.TablePageEnd, isDraw);
 
 		if (oTable.GetRowsCount() <= 0 && oTable.GetParent())
 		{
@@ -21151,6 +21154,11 @@ CDocument.prototype.DrawTable = function()
 
 		this.Recalculate();
 		this.FinalizeAction();
+
+		if (isDraw)
+			this.Api.sync_TableDrawModeCallback(true);
+		else if (isErase)
+			this.Api.sync_TableEraseModeCallback(true);
 	}
 };
 /**

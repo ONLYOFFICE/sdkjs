@@ -343,7 +343,7 @@ CHistory.prototype =
 		if (null !== this.SavedIndex && this.Index < this.SavedIndex)
             this.Set_SavedIndex(this.Index);
 
-        this.Clear_Additional();
+        this.ClearAdditional();
 
         this.CheckUnionLastPoints();
         
@@ -958,17 +958,6 @@ CHistory.prototype =
         return true;
     },
 
-    Clear_Additional : function()
-    {
-        if ( this.Index >= 0 )
-        {
-            this.Points[this.Index].Additional = {};
-        }
-
-        if (this.Api && true === this.Api.isMarkerFormat)
-            this.Api.sync_MarkerFormatCallback(false);
-    },
-
     Get_EditingTime : function(dTime)
     {
         var Count = this.Points.length;
@@ -1027,6 +1016,20 @@ CHistory.prototype =
         } catch (e) {
         }
     }
+};
+CHistory.prototype.ClearAdditional = function()
+{
+	if (this.Index >= 0)
+		this.Points[this.Index].Additional = {};
+
+	if (this.Api && true === this.Api.isMarkerFormat)
+		this.Api.sync_MarkerFormatCallback(false);
+
+	if (this.Api && true === this.Api.isDrawTablePen)
+		this.Api.sync_TableDrawModeCallback(false);
+
+	if (this.Api && true === this.Api.isDrawTableErase)
+		this.Api.sync_TableEraseModeCallback(false);
 };
 CHistory.prototype.private_UpdateContentChangesOnUndo = function(Item)
 {
