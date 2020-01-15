@@ -12724,11 +12724,18 @@ CTitle.prototype =
             }
             this.tx.setRich(this.txBody.createDuplicate2());
             this.tx.rich.setParent(this);
-            if(this.txPr && this.txPr.content && this.txPr.content.Content[0] && this.txPr.content.Content[0].Pr.DefaultRunPr)
+            if(this.txPr)
             {
-                for(var i = 0; i < this.tx.rich.content.Content.length; ++i)
+                if(this.txPr.content && this.txPr.content.Content[0] && this.txPr.content.Content[0].Pr.DefaultRunPr)
                 {
-                    AscFormat.CheckParagraphTextPr(this.tx.rich.content.Content[i], this.txPr.content.Content[0].Pr.DefaultRunPr);
+                    for(var i = 0; i < this.tx.rich.content.Content.length; ++i)
+                    {
+                        AscFormat.CheckParagraphTextPr(this.tx.rich.content.Content[i], this.txPr.content.Content[0].Pr.DefaultRunPr);
+                    }
+                }
+                if(this.txPr.bodyPr)
+                {
+                    this.tx.rich.setBodyPr(this.txPr.bodyPr.createDuplicate());
                 }
             }
             var selection_state = this.txBody.content.GetSelectionState();
