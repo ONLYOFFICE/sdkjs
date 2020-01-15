@@ -1196,7 +1196,29 @@ CDLbl.prototype =
     check_bounds: CShape.prototype.check_bounds,
     getInvertTransform: CShape.prototype.getInvertTransform,
     getDocContent: CShape.prototype.getDocContent,
-    updateSelectionState: CShape.prototype.updateSelectionState,
+    updateSelectionState: function(){
+        if(this.txBody && this.txBody.content)
+        {
+            if(!this.txBody.content.DrawingDocument)
+            {
+                if(this.chart)
+                {
+                    var oDrawingDocument = this.chart.getDrawingDocument();
+                    if(oDrawingDocument)
+                    {
+                        this.txBody.content.DrawingDocument = oDrawingDocument;
+                        var aContent = this.txBody.content.Content;
+                        for(var i = 0; i < aContent.length; ++i)
+                        {
+                            aContent[i].DrawingDocument = oDrawingDocument;
+                        }
+                    }
+                }
+
+            }
+        }
+        CShape.prototype.updateSelectionState.call(this);
+    },
     selectionSetStart: CShape.prototype.selectionSetStart,
     selectionSetEnd: CShape.prototype.selectionSetEnd,
     getDrawingDocument: function () {
