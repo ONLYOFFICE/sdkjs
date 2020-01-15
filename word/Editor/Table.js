@@ -12517,6 +12517,7 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 					Cell : this.Selection.Data[this.Selection.Data.length - 1].Cell,
 					Row  : this.Selection.Data[this.Selection.Data.length - 1].Row
 				};
+
 				Cell_pos_.Cell 		 = 0 + this.Selection.Data[0].Cell;
 				var Cell_ 			 = this.Content[Cell_pos_.Row].Get_Cell(Cell_pos_.Cell);
 				var Row_ 			 = this.Content[Cell_pos_.Row];
@@ -12738,8 +12739,14 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 				X_Front = false;
 				X_After = false;
 				var Cell_pos_1     = newTempSelectionData[Index];
-				var Cell_1         = this.Content[Cell_pos_1.Row].Get_Cell(Cell_pos_1.Cell);
 				var Row_1          = this.Content[Cell_pos_1.Row];
+				if (Row_1 === undefined || Row_1 === null)
+					continue;
+
+				var Cell_1         = Row_1.Get_Cell(Cell_pos_1.Cell);
+				if (Cell_1 === undefined || Cell_1 === null)
+					continue;
+
 				var Grid_start_1   = Row_1.Get_CellInfo(Cell_pos_1.Cell).StartGridCol;
 				var Grid_span_1    = Cell_1.Get_GridSpan();
 				var Grid_end_1     = Grid_start_1 + Grid_span_1 - 1;
@@ -12807,8 +12814,13 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 						continue;
 
 					var Cell_pos_2     = newTempSelectionData[Index2];
-					var Cell_2         = this.Content[Cell_pos_2.Row].Get_Cell(Cell_pos_2.Cell);
 					var Row_2          = this.Content[Cell_pos_2.Row];
+					if (Row_2 === undefined || Row_2 === null)
+						continue;
+
+					var Cell_2         = Row_2.Get_Cell(Cell_pos_2.Cell);
+					if (Cell_2 === undefined || Cell_2 === null)
+						continue;
 					var Grid_start_2   = Row_2.Get_CellInfo(Cell_pos_2.Cell).StartGridCol;
 					var Grid_span_2    = Cell_2.Get_GridSpan();
 					var Grid_end_2     = Grid_start_2 + Grid_span_2 - 1;
@@ -12843,8 +12855,13 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 			for (var nTempIndex = 0, nTempLen = newTempSelectionData.length; nTempIndex < nTempLen; ++nTempIndex)
 			{
 				var cur_pos = newTempSelectionData[nTempIndex];
-				var Cell = this.Content[cur_pos.Row].Get_Cell(cur_pos.Cell);
-				var Row 		 = this.Content[cur_pos.Row];
+				var Row          = this.Content[cur_pos.Row];
+				if (Row === undefined || Row === null)
+					continue;
+
+				var Cell         = Row.Get_Cell(cur_pos.Cell);
+				if (Cell === undefined || Cell === null)
+					continue;
 				var Grid_start 	 = Row.Get_CellInfo(cur_pos.Cell).StartGridCol;
 				var Grid_span 	 = Cell.Get_GridSpan();
 				var VMerge_Count = this.Internal_GetVertMergeCount(cur_pos.Row, Grid_start, Grid_span);
