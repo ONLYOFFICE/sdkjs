@@ -45,6 +45,17 @@ function CSdtPr()
 	this.Label = undefined;
 	this.Lock  = undefined;
 
+	// section property
+	this.SectionType = undefined;
+	this.PageSize	 = undefined;
+	this.Orient 	 = undefined;
+
+	// Margins 
+	this.MT	 		 = undefined;
+	this.ML	 		 = undefined;
+	this.MR	 		 = undefined;
+	this.MB	 		 = undefined;
+
 	this.DocPartObj = {
 		Gallery  : undefined,
 		Category : undefined,
@@ -282,6 +293,18 @@ function CContentControlPr(nType)
 	this.InternalId = undefined;
 	this.CCType     = undefined !== nType ? nType : c_oAscSdtLevelType.Inline;
 
+    // section property
+	this.SectionType = undefined;
+	this.PageSize	 = undefined;
+	this.Orient 	 = undefined;
+
+	// Margins 
+	this.MT	 		 = undefined;
+	this.ML	 		 = undefined;
+	this.MR	 		 = undefined;
+	this.MB	 		 = undefined;
+	
+	
 	this.Appearance = Asc.c_oAscSdtAppearance.Frame;
 	this.Color      = undefined;
 
