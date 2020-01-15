@@ -3552,6 +3552,18 @@ function BinaryPPTYLoader()
                         }
                     }
 
+                    if(uni_fill.fill.fgClr && uni_fill.fill.bgClr)
+                    {
+                        var fAlphaVal = uni_fill.fill.fgClr.getModValue("alpha");
+                        if(fAlphaVal !== null)
+                        {
+                            if(fAlphaVal === uni_fill.fill.bgClr.getModValue("alpha"))
+                            {
+                                uni_fill.setTransparent(255 * fAlphaVal / 100000)
+                            }
+                        }
+                    }
+
                     break;
                 }
                 case c_oAscFill.FILL_TYPE_SOLID:

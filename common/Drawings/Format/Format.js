@@ -970,6 +970,20 @@ CColorModifiers.prototype =
 
     },
 
+    getModValue: function(sName)
+    {
+        if(Array.isArray(this.Mods))
+        {
+            for(var i = 0; i < this.Mods.length; ++i)
+            {
+                if(this.Mods[i] && this.Mods[i].name === sName)
+                {
+                    return this.Mods[i].val;
+                }
+            }
+        }
+        return null;
+    },
 
 
     Write_ToBinary: function(w)
@@ -1849,6 +1863,15 @@ CUniColor.prototype =
         }
     },
 
+    getModValue: function(sModName)
+    {
+        if(this.Mods && this.Mods.getModValue)
+        {
+            return  this.Mods.getModValue(sModName);
+        }
+        return null;
+    },
+
     checkWordMods: function()
     {
         return this.Mods && this.Mods.Mods.length === 1
@@ -2506,6 +2529,17 @@ CBlipFill.prototype =
             duplicate.srcRect = this.srcRect.createDublicate();
 
         duplicate.rotWithShape = this.rotWithShape;
+
+        if(Array.isArray(this.Effects))
+        {
+            for(var i = 0; i < this.Effects.length; ++i)
+            {
+                if(this.Effects[i] && this.Effects[i].createDuplicate)
+                {
+                    duplicate.Effects.push(this.Effects[i].createDuplicate());
+                }
+            }
+        }
         return duplicate;
     },
 
