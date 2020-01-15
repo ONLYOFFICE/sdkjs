@@ -5506,7 +5506,39 @@ PasteProcessor.prototype =
 					}
 				}
 
+				var align = range.getAlign();
+				var textAngle = align ? align.getAngle() : null;
+				if (textAngle === 90) {
+					oCurCell.Pr.TextDirection = c_oAscCellTextDirection.BTLR;
+				} else if (textAngle === -90) {
+					oCurCell.Pr.TextDirection = c_oAscCellTextDirection.TBRL;
+				}
+
+				var vAlign = align ? align.getAlignVertical() : null;
+				switch (vAlign) {
+					case Asc.c_oAscVAlign.Bottom:
+						oCurCell.Pr.VAlign = vertalignjc_Bottom;
+						break;
+					case Asc.c_oAscVAlign.Center:
+					case Asc.c_oAscVAlign.Dist:
+					case Asc.c_oAscVAlign.Just:
+						oCurCell.Pr.VAlign = vertalignjc_Center;
+						break;
+					case Asc.c_oAscVAlign.Top:
+						oCurCell.Pr.VAlign = vertalignjc_Top;
+						break;
+				}
+
+
 				var oCurPar = oCurCell.Content.Content[0];
+				if(align) {
+					var type = range.getType();
+					if(null != align.hor) {
+						oCurPar.Pr.Jc = align.hor;
+					} else if(null === type|| AscCommon.CellValueType.Number === type) {
+						oCurPar.Pr.Jc = AscCommon.align_Right;
+					}
+				}
 
 				var hyperLink = range.getHyperlink();
 				var oCurHyperlink = null;
@@ -5547,23 +5579,28 @@ PasteProcessor.prototype =
 					oCurRun.Pr.Italic = format.getItalic();
 					oCurRun.Pr.Strikeout = format.getStrikeout();
 					oCurRun.Pr.Underline = format.getUnderline() !== 2;
+					oCurRun.Pr.VertAlign = format.va;
 
 					//text
-					var value = value2[n].text;
-					for (var oIterator = value.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
-						var nUnicode = oIterator.value();
+					if(true === format.skip || true === format.repeat) {
+						oCurRun.AddToContent(-1, new ParaSpace(), false);
+					} else {
+						var value = value2[n].text;
+						for (var oIterator = value.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
+							var nUnicode = oIterator.value();
 
-						var Item;
-						if(0x0A === nUnicode || 0x0D === nUnicode) {
-							Item = new ParaNewLine(break_Line);
-						} else if (0x20 !== nUnicode && 0xA0 !== nUnicode && 0x2009 !== nUnicode) {
-							Item = new ParaText(nUnicode);
-						} else {
-							Item = new ParaSpace();
+							var Item;
+							if(0x0A === nUnicode || 0x0D === nUnicode) {
+								Item = new ParaNewLine(break_Line);
+							} else if (0x20 !== nUnicode && 0xA0 !== nUnicode && 0x2009 !== nUnicode) {
+								Item = new ParaText(nUnicode);
+							} else {
+								Item = new ParaSpace();
+							}
+
+							//add text
+							oCurRun.AddToContent(-1, Item, false);
 						}
-
-						//add text
-						oCurRun.AddToContent(-1, Item, false);
 					}
 
 					//add run

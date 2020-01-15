@@ -280,7 +280,8 @@
                     else if (isHorzRight) {
                         dx = w - posv + 2;
                         offsetX = - (w - posv) - angleSin * tm.height - 2;
-                    }
+					}
+					dy -= 1.5;
                 } else {
                     if (isHorzLeft) {
 
@@ -292,20 +293,23 @@
                     else if (isHorzRight) {
                         dx = w  - posv + 1 + 1 - tm.height * angleSin;
                         offsetX = - w  - posv + 1 + 1 - tm.height * angleSin;
-                    }
+					}
+					dy -= 1.5;
                 }
 
                 if (posh < h) {
                     if (angle < 0) {
-                        dy = h - (posh + angleCos * tm.height);
+                        dy = h - (posh + angleCos * tm.height) - 1.5;
                     }
                     else {
-                        dy = h - angleCos * tm.height;
+                        dy = h - angleCos * tm.height - 1.5;
                     }
                 } else {
                     if (angle > 0) {
-                        dy = h - angleCos * tm.height;
-                    }
+                        dy = h - angleCos * tm.height - 1.5;
+                    } else {
+						dy += 1.5;
+					}
                 }
             }
             else if (isVertCenter) {
@@ -364,7 +368,7 @@
                     else if (isHorzRight) {
                         dx = w - posv + 2;
                         offsetX = - (w - posv) - angleSin * tm.height - 2;
-                    }
+					}
                 } else {
                     if (isHorzLeft) {
                     }
@@ -378,7 +382,8 @@
                     }
 
                     dy = Math.min(h + tm.height * angleCos, posh);
-                }
+				}
+				dy += 1.5;
             }
 
             var bound = { dx: dx, dy: dy, height: 0, width: 0, offsetX: offsetX};

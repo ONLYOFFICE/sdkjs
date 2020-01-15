@@ -5990,6 +5990,8 @@
         var pad = this.settings.cells.padding * 2 + 1;
         var sstr, sfl, stm;
         var isCustomWidth = this.model.getColCustomWidth(col);
+        var angleSin = Math.sin(angle * Math.PI / 180.0);
+        var angleCos = Math.cos(angle * Math.PI / 180.0);
 
         if (!isCustomWidth && fl.isNumberFormat && !(mergeType & c_oAscMergeType.cols) &&
           (c_oAscCanChangeColWidth.numbers === this.canChangeColWidth ||
@@ -6005,9 +6007,10 @@
             sfl = fl.clone();
             sfl.wrapText = false;
             stm = this._roundTextMetrics(this.stringRender.measureString(sstr, sfl, colWidth));
+            var stmPrj = Math.abs(angleCos * stm.width) + Math.abs(angleSin * stm.height);
             // Если целая часть числа не убирается в ячейку, то расширяем столбец
-            if (stm.width > colWidth) {
-                this._changeColWidth(col, stm.width);
+            if (stmPrj > colWidth) {
+                this._changeColWidth(col, stmPrj);
             }
             // Обновленная ячейка
             dDigitsCount = this.getColumnWidthInSymbols(col);
@@ -6023,8 +6026,9 @@
                     return true;
                 });
                 stm = this._roundTextMetrics(this.stringRender.measureString(sstr, fl, colWidth));
-                if (stm.width > colWidth) {
-                    this._changeColWidth(col, stm.width);
+                var stmPrj = Math.abs(angleCos * stm.width) + Math.abs(angleSin * stm.height);
+                if (stmPrj > colWidth) {
+                    this._changeColWidth(col, stmPrj);
                     // Обновленная ячейка
                     dDigitsCount = this.getColumnWidthInSymbols(col);
                     colWidth = this._getColumnWidthInner(col);
@@ -6040,9 +6044,13 @@
         }
 
         var rowHeight = this._getRowHeight(row);
-
+        
         // ToDo dDigitsCount нужно рассчитывать исходя не из дефалтового шрифта и размера, а исходя из текущего шрифта и размера ячейки
-        str = c.getValue2(dDigitsCount, makeFnIsGoodNumFormat(fl, colWidth));
+        if (angle === 0) {
+            str = c.getValue2(dDigitsCount, makeFnIsGoodNumFormat(fl, colWidth));
+        } else {
+            str = c.getValue2();
+        }
         var ha = c.getAlignHorizontalByValue(align.getAlignHorizontal());
         var maxW = fl.wrapText || fl.shrinkToFit || mergeType || asc.isFixedWidthCell(str) ?
           this._calcMaxWidth(col, row, mc) : undefined;
@@ -6084,21 +6092,32 @@
 
 //  NOTE: если проекция строчки на Y больше высоты ячейки подставлять # и рисовать все по центру
 
-//                    if (fl.isNumberFormat) {
-//                        var prj = Math.abs(Math.sin(angle * Math.PI / 180.0) * tm.width);
-//                        if (prj > rowHeight) {
-//                            //if (maxW === undefined) {}
-//                            maxW = rowHeight / Math.abs(Math.cos(angle * Math.PI / 180.0));
-//                            str  =  c.getValue2(gc_nMaxDigCountView, makeFnIsGoodNumFormat(fl, maxW));
-//
-//                            for (i = 0; i < str.length; ++i) {
-//                                var f = str[i].format;
-//                                if (f) f.repeat = true;
-//                            }
-//
-//                            tm   =  this._roundTextMetrics(this.stringRender.measureString(str, fl, maxW));
-//                        }
-//                    }
+            if (fl.isNumberFormat) {
+                var textMetricWidth  = textW;
+                if (textBound.width > textW) {
+                    textMetricWidth = textBound.width;
+                }
+                if (textBound.height > textW) {
+                    textMetricWidth = textBound.height;
+                }
+                var prj = Math.ceil(Math.abs(Math.sin(angle * Math.PI / 180.0) * textMetricWidth));
+                if (prj >= rowHeight) {
+                    maxW = rowHeight;
+                    str = c.getValue2(dDigitsCount, makeFnIsGoodNumFormat(fl, rowHeight));
+                    tm = this._roundTextMetrics(this.stringRender.measureString(str, fl, maxW));
+                    if (str[0].format.repeat) {
+                        var angleSin = Math.sin(angle * Math.PI / 180.0);
+                        if (angle > 0) {
+                            textBound.dx = (colWidth - tm.height) / 2;
+                        } 
+                        if (angle < 0) {
+                            textBound.dx = (colWidth - tm.height * angleSin) / 2;
+                            textBound.dy = (rowHeight - tm.width) / 2;
+                        } 
+                        ha = 0;
+                    }
+                }
+            }
         }
 
         var cache = this._fetchCellCache(col, row);
@@ -6201,7 +6220,10 @@
 			newHeight = Math.min(this.maxRowHeightPx, Math.max(oldHeight, newHeight));
 			if (newHeight !== oldHeight) {
 				if (this.updateRowHeightValuePx) {
-					this.updateRowHeightValuePx = newHeight;
+                    if(cache.angle !== 0) {
+                        newHeight += 5;
+                    }
+                    this.updateRowHeightValuePx = newHeight;
 				}
 				rowInfo.height = Asc.round(newHeight * this.getZoom());
 				History.TurnOff();
@@ -11113,13 +11135,26 @@
 		//for special paste
 		if(!window['AscCommon'].g_specialPasteHelper.specialPasteStart)
 		{
+			var checkTablesPaste = function() {
+				var _res = false;
+				if(val.TableParts && val.TableParts.length && activeCellsPasteFragment) {
+					for(var i = 0; i < val.TableParts.length; i++) {
+						if(activeCellsPasteFragment.containsRange(val.TableParts[i].Ref)) {
+							_res = true;
+							break;
+						}
+					}
+				}
+				return _res;
+			};
+
 			//var specialPasteShowOptions = new Asc.SpecialPasteShowOptions();
 			var allowedSpecialPasteProps;
 			var sProps = Asc.c_oSpecialPasteProps;
 			if(fromBinary)
 			{
 				allowedSpecialPasteProps = [sProps.paste, sProps.pasteOnlyFormula, sProps.formulaNumberFormat, sProps.formulaAllFormatting, sProps.formulaWithoutBorders, sProps.formulaColumnWidth,  sProps.pasteOnlyValues, sProps.valueNumberFormat, sProps.valueAllFormating, sProps.pasteOnlyFormating/*, sProps.link*/];
-				if(!(val.TableParts && val.TableParts.length))
+				if(!checkTablesPaste())
 				{
 					//add transpose property
 					allowedSpecialPasteProps.push(sProps.transpose);
@@ -13128,6 +13163,11 @@
                 }
             }
 
+            var align = this._getCell(col, row).getAlign();
+            var angle = align.getAngle();
+            var angleSin = Math.sin(angle * Math.PI / 180.0);
+            var angleCos = Math.cos(angle * Math.PI / 180.0);
+
             if (ct.metrics.height > this.maxRowHeightPx) {
                 if (isMerged) {
                     continue;
@@ -13153,13 +13193,13 @@
                     maxW += this.maxDigitWidth;
                 }
                 width = Math.max(width, tm.width);
+                width = Math.abs(Math.max(width, tm.width) * angleCos) +  Math.abs(ct.metrics.height * angleSin);
             } else {
+                width = Math.abs(Math.max(width, ct.metrics.width) * angleCos) +  Math.abs(ct.metrics.height * angleSin);
                 filterButton = this.af_getSizeButton(col, row);
                 if (null !== filterButton && CellValueType.String === ct.cellType) {
-                    width = Math.max(width, ct.metrics.width + filterButton.width);
-                } else {
-                    width = Math.max(width, ct.metrics.width);
-                }
+                    width += filterButton.width;
+                } 
             }
         }
         this.canChangeColWidth = c_oAscCanChangeColWidth.none;
