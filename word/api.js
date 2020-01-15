@@ -509,10 +509,10 @@
 						
 
 						// Margins
-						_content_control_pr.MT	 		 = _current["Props"]["MT"];;
-						_content_control_pr.ML	 		 = _current["Props"]["ML"];;
-						_content_control_pr.MR	 		 = _current["Props"]["MR"];;
-						_content_control_pr.MB	 		 = _current["Props"]["MB"];;
+						_content_control_pr.MarginT	 		 = _current["Props"]["MarginT"];;
+						_content_control_pr.MarginL	 		 = _current["Props"]["MarginL"];;
+						_content_control_pr.MarginR	 		 = _current["Props"]["MarginR"];;
+						_content_control_pr.MarginB	 		 = _current["Props"]["MarginB"];;
 
 						_content_control_pr.Orient 		= _current["Props"]["Orient"];
 
@@ -551,7 +551,7 @@
 						}
 
 						// Margins
-						if (undefined !== _current["Props"]["MT"] || undefined !== _current["Props"]["ML"] || undefined !== _current["Props"]["MR"] || undefined !== _current["Props"]["MB"])
+						if (undefined !== _current["Props"]["MarginT"] || undefined !== _current["Props"]["MarginL"] || undefined !== _current["Props"]["MarginR"] || undefined !== _current["Props"]["MarginB"])
 						{
 							var oMargins = {
 								Left: _content_control_pr.ML,

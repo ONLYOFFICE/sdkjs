@@ -47,14 +47,15 @@ function CSdtPr()
 
 	// section property
 	this.SectionType = undefined;
-	this.PageSize	 = undefined;
+	this.PageSizeW	 = undefined;
+	this.PageSizeH	 = undefined;
 	this.Orient 	 = undefined;
 
 	// Margins 
-	this.MT	 		 = undefined;
-	this.ML	 		 = undefined;
-	this.MR	 		 = undefined;
-	this.MB	 		 = undefined;
+	this.MarginT	 		 = undefined;
+	this.MarginL	 		 = undefined;
+	this.MarginR	 		 = undefined;
+	this.MarginB	 		 = undefined;
 
 	this.DocPartObj = {
 		Gallery  : undefined,
@@ -295,14 +296,15 @@ function CContentControlPr(nType)
 
     // section property
 	this.SectionType = undefined;
-	this.PageSize	 = undefined;
+	this.PageSizeW	 = undefined;
+	this.PageSizeH	 = undefined;
 	this.Orient 	 = undefined;
 
 	// Margins 
-	this.MT	 		 = undefined;
-	this.ML	 		 = undefined;
-	this.MR	 		 = undefined;
-	this.MB	 		 = undefined;
+	this.MarginT	 		 = undefined;
+	this.MarginL	 		 = undefined;
+	this.MarginR	 		 = undefined;
+	this.MarginB	 		 = undefined;
 	
 	
 	this.Appearance = Asc.c_oAscSdtAppearance.Frame;
