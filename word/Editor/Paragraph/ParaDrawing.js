@@ -845,7 +845,24 @@ ParaDrawing.prototype.Search = function(Str, Props, SearchEngine, Type)
 ParaDrawing.prototype.Set_Props = function(Props)
 {
 	var bCheckWrapPolygon = false;
-	if (undefined != Props.WrappingStyle)
+
+	var isPictureCC = false;
+
+	var oRun = this.GetRun();
+	if (oRun)
+	{
+		var arrContentControls = oRun.GetParentContentControls();
+		for (var nIndex = 0, nCount = arrContentControls.length; nIndex < nCount; ++nIndex)
+		{
+			if (arrContentControls[nIndex].IsPicture())
+			{
+				isPictureCC = true;
+				break;
+			}
+		}
+	}
+
+	if (undefined != Props.WrappingStyle && !isPictureCC)
 	{
 		if (drawing_Inline === this.DrawingType && c_oAscWrapStyle2.Inline != Props.WrappingStyle && undefined === Props.Paddings)
 		{
