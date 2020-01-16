@@ -1226,10 +1226,11 @@
                 History.StartTransaction();
 
                 asc_applyFunction(functionAction);
-                t.handlers.trigger("selectionMathInfoChanged", t.getSelectionMathInfo());
-                t.draw();
 
                 History.EndTransaction();
+
+				t.handlers.trigger("selectionMathInfoChanged", t.getSelectionMathInfo());
+				t.draw();
             };
 
             // Можно ли применять автоформулу
