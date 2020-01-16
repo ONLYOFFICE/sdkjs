@@ -2095,6 +2095,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 		EndY   : -1,
 		Page   : -1,
 
+		TablesOnPage   : [],
 		Table          : null,
 		TablePageStart : -1,
 		TablePageEnd   : -1,
@@ -2119,6 +2120,51 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 			{
 				this.TablePageStart = -1;
 				this.TablePageEnd   = -1;
+			}
+		},
+
+		CheckSelectedTable : function()
+		{
+			var nStartX = this.StartX;
+			var nEndX   = this.EndX;
+
+			if (nEndX < nStartX)
+			{
+				nStartX = this.EndX;
+				nEndX   = this.StartX;
+			}
+
+			var nStartY = this.StartY;
+			var nEndY   = this.EndY;
+
+			if (nEndY < nStartY)
+			{
+				nStartY = this.EndY;
+				nEndY   = this.StartY;
+			}
+
+			if (this.Erase)
+			{
+				this.Table = null;
+
+				var arrTables = this.TablesOnPage;
+				for (var nTableIndex = 0, nTablesCount = arrTables.length; nTableIndex < nTablesCount; ++nTableIndex)
+				{
+					var oBounds = arrTables[nTableIndex].Table.GetPageBounds(arrTables[nTableIndex].Page);
+
+					if (((nStartX < oBounds.Left && oBounds.Left < nEndX) || (nStartX < oBounds.Right && oBounds.Right < nEndX))
+						&& ((nStartY < oBounds.Top && oBounds.Top < nEndY) || (nStartY < oBounds.Bottom && oBounds.Bottom < nEndY)))
+					{
+						this.Table = arrTables[nTableIndex].Table;
+						return;
+					}
+
+					if (((oBounds.Left < nStartX && nStartX < oBounds.Right) || (oBounds.Left < nEndX && nEndX < oBounds.Right))
+						&& ((oBounds.Top < nStartY && nStartY < oBounds.Bottom) || (oBounds.Top < nEndY && nEndY < oBounds.Bottom)))
+					{
+						this.Table = arrTables[nTableIndex].Table;
+					}
+				}
 			}
 		}
 	};
@@ -9301,6 +9347,8 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 
 		var arrTables = this.GetAllTablesOnPage(PageIndex);
 
+		this.DrawTableMode.TablesOnPage = arrTables;
+
 		var oElement     = null;
 		var nMinDistance = null;
 		var isInside     = false;
@@ -9344,7 +9392,7 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 			}
 		}
 
-		if (!isInside && nMinDistance > 5)
+		if (this.DrawTableMode.Draw && !isInside && nMinDistance > 5)
 			oElement = null;
 
 		if (oElement)
@@ -9690,6 +9738,7 @@ CDocument.prototype.OnMouseMove = function(e, X, Y, PageIndex)
 	{
 		this.DrawTableMode.EndX = X;
 		this.DrawTableMode.EndY = Y;
+		this.DrawTableMode.CheckSelectedTable();
 		this.DrawTableMode.UpdateTablePages();
 	}
 
@@ -21105,7 +21154,7 @@ CDocument.prototype.DrawTable = function()
 			}
 
 			this.FinalizeAction();
-			this.Api.sync_TableDrawModeCallback(true);
+			this.Api.SetTableDrawMode(true);
 		}
 
 		return;
@@ -21156,9 +21205,9 @@ CDocument.prototype.DrawTable = function()
 		this.FinalizeAction();
 
 		if (isDraw)
-			this.Api.sync_TableDrawModeCallback(true);
+			this.Api.SetTableDrawMode(true);
 		else if (isErase)
-			this.Api.sync_TableEraseModeCallback(true);
+			this.Api.SetTableEraseMode(true);
 	}
 };
 /**
