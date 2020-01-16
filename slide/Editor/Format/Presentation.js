@@ -6310,7 +6310,7 @@ CPresentation.prototype.OnKeyDown = function (e) {
             this.Document_Undo();
         }
         bRetValue = keydownresult_PreventAll;
-    } else if (e.KeyCode == 93 || 57351 == e.KeyCode /*в Opera такой код*/ || (e.KeyCode == 121 && true === e.ShiftKey /*shift + f10*/)) // контекстное меню
+    } else if ((AscCommon.AscBrowser.isOpera && (e.KeyCode == 93 || 57351 == e.KeyCode /*в Opera такой код*/)) || (e.KeyCode == 121 && true === e.ShiftKey /*shift + f10*/)) // контекстное меню
     {
         if (this.GetFocusObjType() === FOCUS_OBJECT_MAIN) {
             if (oController) {

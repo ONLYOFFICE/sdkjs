@@ -9008,7 +9008,8 @@ CDocument.prototype.OnKeyDown = function(e)
        	this.Document_Undo();
         bRetValue = keydownresult_PreventAll;
     }
-    else if (e.KeyCode == 93 || 57351 == e.KeyCode /*в Opera такой код*/) // контекстное меню
+    else if ((/*в Opera такой код*/AscCommon.AscBrowser.isOpera && (e.KeyCode == 93 || 57351 == e.KeyCode)) ||
+             (e.KeyCode == 121 && true === e.ShiftKey)) // // Shift + F10 - контекстное меню
     {
         var X_abs, Y_abs, oPosition, ConvertedPos;
         if (this.DrawingObjects.selectedObjects.length > 0)
@@ -9035,26 +9036,6 @@ CDocument.prototype.OnKeyDown = function(e)
 		bUpdateSelection = false;
 		bRetValue        = keydownresult_PreventAll;
 	}
-	else if (e.KeyCode == 121 && true === e.ShiftKey) // Shift + F10 - контекстное меню
-    {
-        var X_abs, Y_abs, oPosition, ConvertedPos;
-        if (this.DrawingObjects.selectedObjects.length > 0)
-        {
-            oPosition    = this.DrawingObjects.getContextMenuPosition(this.CurPage);
-            ConvertedPos = this.DrawingDocument.ConvertCoordsToCursorWR(oPosition.X, oPosition.Y, oPosition.PageIndex);
-        }
-        else
-        {
-            ConvertedPos = this.DrawingDocument.ConvertCoordsToCursorWR(this.TargetPos.X, this.TargetPos.Y, this.TargetPos.PageNum);
-        }
-        X_abs = ConvertedPos.X;
-        Y_abs = ConvertedPos.Y;
-
-        editor.sync_ContextMenuCallback({Type : Asc.c_oAscContextMenuTypes.Common, X_abs : X_abs, Y_abs : Y_abs});
-
-        bUpdateSelection = false;
-        bRetValue        = keydownresult_PreventAll;
-    }
     else if (e.KeyCode == 144) // Num Lock
     {
         // Ничего не делаем

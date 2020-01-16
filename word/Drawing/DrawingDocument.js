@@ -7435,7 +7435,7 @@ function CDrawingDocument()
 	{
 		var ctx = overlay.m_oContext;
 
-        var page = this.m_arrPages[logicObj.Page];
+		var page = this.m_arrPages[logicObj.Page];
         if (!page)
             return false;
 
@@ -7466,12 +7466,20 @@ function CDrawingDocument()
 		if (isPen)
 		{
 			ctx.strokeStyle = (drawObj.Color === "Red") ? "#FF7B7B" : "#000000";
-			ctx.lineWidth = 1;
+			ctx.lineWidth = drawObj.Bold ? 2 : 1;
 
-            x1 = ((drawingPage.left + koefX * drawObj.X1) >> 0) + 0.5;
-            y1 = ((drawingPage.top + koefY * drawObj.Y1) >> 0) + 0.5;
-            x2 = ((drawingPage.left + koefX * drawObj.X2) >> 0) + 0.5;
-            y2 = ((drawingPage.top + koefY * drawObj.Y2) >> 0) + 0.5;
+            x1 = (drawingPage.left + koefX * drawObj.X1) >> 0;
+            y1 = (drawingPage.top + koefY * drawObj.Y1) >> 0;
+            x2 = (drawingPage.left + koefX * drawObj.X2) >> 0;
+            y2 = (drawingPage.top + koefY * drawObj.Y2) >> 0;
+
+            if (!drawObj.Bold)
+			{
+				x1 += 0.5;
+                y1 += 0.5;
+                x2 += 0.5;
+                y2 += 0.5;
+			}
 
             overlay.CheckPoint(x1, y1);
             overlay.CheckPoint(x2, y2);
