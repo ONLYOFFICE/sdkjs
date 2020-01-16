@@ -1976,7 +1976,10 @@ function sendImgUrls(api, images, callback, bExcel, bNotShowError, token) {
     for (var i = 0; i < images.length; i++)
     {
       var _url = window["native"]["getImageUrl"](images[i]);
-      _data[i] = { url: images[i], path : AscCommon.g_oDocumentUrls.getImageUrl(_url) };
+      var _full_path = window["native"]["getImagesDirectory"]() + "/" + _url;
+      var _local_url = "media/" + _url;
+      AscCommon.g_oDocumentUrls.addUrls({_local_url:_full_path});
+      _data[i] = {url:_full_path, path:_local_url};
     }
     callback(_data);
     return;
