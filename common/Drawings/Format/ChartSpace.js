@@ -2246,6 +2246,17 @@ CChartSpace.prototype.paragraphAdd = function(paraItem, bRecalculate)
             this.selection.textSelection.txBody.content.SelectAll();
             this.selection.textSelection.paragraphAdd(paraItem, bRecalculate);
         }
+        else if(AscFormat.isRealNumber(this.selection.dataLbl))
+        {
+            var oDlbl = this.getCompiledDlblBySelect();
+            if(oDlbl)
+            {
+                this.selection.textSelection = oDlbl;
+                this.selection.textSelection.checkDocContent();
+                this.selection.textSelection.txBody.content.SelectAll();
+                this.selection.textSelection.applyTextFunction(CDocumentContent.prototype.AddToParagraph, CTable.prototype.AddToParagraph, [paraItem, bRecalculate]);
+            }
+        }
     }
 };
 CChartSpace.prototype.applyTextFunction = function(docContentFunction, tableFunction, args)

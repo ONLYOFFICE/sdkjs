@@ -1299,6 +1299,7 @@ CDLbl.prototype =
         {
             oDlbl.txBody = this.txBody;
             CTitle.prototype.checkDocContent.call(oDlbl);
+            this.txBody = oDlbl.tx.rich;
             if(oDlbl.tx && oDlbl.tx.rich && oDlbl.tx.rich.content)
             {
                 if(!oDlbl.tx.rich.content.DrawingDocument)
