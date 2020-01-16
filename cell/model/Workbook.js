@@ -7145,7 +7145,7 @@
 		var tablePart;
 		for (var i = 0; i < tableParts.length; i++) {
 			tablePart = tableParts[i];
-			if (tablePart && tablePart.isApplyAutoFilter() && start >= tablePart.Ref.r1 && stop <= tablePart.Ref.r2) {
+			if (tablePart && tablePart.Ref && start >= tablePart.Ref.r1 && stop <= tablePart.Ref.r2) {
 				res = true;
 				break;
 			}
