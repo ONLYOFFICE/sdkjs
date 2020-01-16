@@ -2449,17 +2449,17 @@ CDLbl.prototype =
         this.Refresh_RecalcData2();
     },
 
-    Refresh_RecalcData2: function()
+    Refresh_RecalcData2: function(pageIndex)
     {
         if(this.parent && this.parent.Refresh_RecalcData2)
         {
-            this.parent.Refresh_RecalcData2();
+            this.parent.Refresh_RecalcData2(pageIndex, this);
         }
         else
         {
             if(this.chart)
             {
-                this.chart.Refresh_RecalcData2(this);
+                this.chart.Refresh_RecalcData2(pageIndex, this);
             }
         }
     }

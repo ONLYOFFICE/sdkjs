@@ -2361,6 +2361,26 @@ CChartSpace.prototype.changeSize = CShape.prototype.changeSize;
         return  null;
     };
 
+    CChartSpace.prototype.getCompiledDlblBySelect = function()
+    {
+        var ser = this.getAllSeries()[this.selection.dataLbls];
+        if(ser)
+        {
+            var oDlbls = ser.dLbls;
+            if(AscFormat.isRealNumber(this.selection.dataLbl))
+            {
+
+                var pts = AscFormat.getPtsFromSeries(ser);
+                var pt = pts[this.selection.dataLbl];
+                if(pt)
+                {
+                    return pt.compiledDlb;
+                }
+            }
+        }
+        return null;
+    };
+
     CChartSpace.prototype.getFill = function()
     {
         var ret = null;
@@ -4699,9 +4719,15 @@ CChartSpace.prototype.recalcTitles2 = function()
         {
             this.recalcInfo.recalcTitle = object;
         }
-        else if(nObjectType === AscDFH.historyitem_type_DLbl && this.selection.textSelection === object)
+        else if(nObjectType === AscDFH.historyitem_type_DLbl)
         {
-            this.recalcInfo.recalcTitle = object;
+            var oSelectedDLbl = this.getCompiledDlblBySelect();
+
+            if(this.selection.textSelection)
+            {
+                this.selection.textSelection = oSelectedDLbl;
+            }
+            this.recalcInfo.recalcTitle = oSelectedDLbl;
         }
         else
         {
@@ -14212,6 +14238,12 @@ CChartSpace.prototype.recalculateChartTitleEditMode = function(bWord)
     old_pos_cy = this.recalcInfo.recalcTitle.y + this.recalcInfo.recalcTitle.extY/2;
     this.cachedCanvas = null;
     this.recalculateAxisLabels();
+    this.recalculateDLbls();
+    var oDlbl = this.getCompiledDlblBySelect();
+    if(oDlbl && this.selection.textSelection  instanceof AscFormat.CDLbl)
+    {
+        this.selection.textSelection = oDlbl;
+    }
     if(checkVerticalTitle(this.recalcInfo.recalcTitle))
     {
         pos_x = old_pos_x;
