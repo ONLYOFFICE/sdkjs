@@ -8577,6 +8577,76 @@ CDocument.prototype.OnKeyDown = function(e)
 
         bRetValue = keydownresult_PreventAll;
     }
+	else if (e.KeyCode == 32) // Space
+	{
+		var bFillingForm = false;
+		if (this.IsFormFieldEditing() && ((true === e.ShiftKey && true === e.CtrlKey) || true !== e.CtrlKey))
+			bFillingForm = true;
+
+		var oSelectedInfo = this.GetSelectedElementsInfo();
+		var oMath         = oSelectedInfo.Get_Math();
+		var oInlineSdt    = oSelectedInfo.GetInlineLevelSdt();
+		var oBlockSdt     = oSelectedInfo.GetBlockLevelSdt();
+
+		var oCheckBox;
+
+		if (oInlineSdt && oInlineSdt.IsCheckBox())
+			oCheckBox = oInlineSdt;
+		else if (oBlockSdt && oBlockSdt.IsCheckBox())
+			oCheckBox = oBlockSdt;
+
+		if (oCheckBox)
+		{
+			oCheckBox.SkipSpecialContentControlLock(true);
+			if (!this.IsSelectionLocked(changestype_Paragraph_Content, null, true, bFillingForm))
+			{
+				this.StartAction(AscDFH.historydescription_Document_SpaceButton);
+				oCheckBox.ToggleCheckBox();
+				this.Recalculate();
+				this.FinalizeAction();
+			}
+			oCheckBox.SkipSpecialContentControlLock(false);
+		}
+		else
+		{
+			if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content, null, true, bFillingForm))
+			{
+				this.StartAction(AscDFH.historydescription_Document_SpaceButton);
+
+				// Если мы находимся в формуле, тогда пытаемся выполнить автозамену
+				if (null !== oMath && true === oMath.Make_AutoCorrect())
+				{
+					// Ничего тут не делаем. Все делается в автозамене
+				}
+				else
+				{
+					if (true === e.ShiftKey && true === e.CtrlKey)
+					{
+						this.DrawingDocument.TargetStart();
+						this.DrawingDocument.TargetShow();
+
+						this.AddToParagraph(new ParaText(0x00A0));
+					}
+					else if (true === e.CtrlKey)
+					{
+						this.ClearParagraphFormatting(false, true);
+					}
+					else
+					{
+						this.DrawingDocument.TargetStart();
+						this.DrawingDocument.TargetShow();
+
+						this.CheckLanguageOnTextAdd = true;
+						this.AddToParagraph(new ParaSpace());
+						this.CheckLanguageOnTextAdd = false;
+					}
+				}
+				this.FinalizeAction();
+			}
+		}
+
+		bRetValue = keydownresult_PreventAll;
+	}
     else if (e.KeyCode == 33) // PgUp
     {
         if (true === e.AltKey)
@@ -9177,8 +9247,6 @@ CDocument.prototype.OnKeyPress = function(e)
 	else
 		Code = 0;//special char
 
-	var bRetValue = false;
-
 	if (Code > 0x20)
 	{
 		if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_AddText, null, true, this.IsFormFieldEditing()))
@@ -9194,83 +9262,12 @@ CDocument.prototype.OnKeyPress = function(e)
 
 			this.FinalizeAction();
 		}
-		bRetValue = true;
+
+		this.UpdateSelection();
+		return true;
 	}
-    else if (Code == 32) // Space
-    {
-        var bFillingForm = false;
-        if (this.IsFormFieldEditing() && ((true === e.ShiftKey && true === e.CtrlKey) || true !== e.CtrlKey))
-            bFillingForm = true;
 
-		var oSelectedInfo = this.GetSelectedElementsInfo();
-		var oMath         = oSelectedInfo.Get_Math();
-		var oInlineSdt    = oSelectedInfo.GetInlineLevelSdt();
-		var oBlockSdt     = oSelectedInfo.GetBlockLevelSdt();
-
-		var oCheckBox;
-
-		if (oInlineSdt && oInlineSdt.IsCheckBox())
-			oCheckBox = oInlineSdt;
-		else if (oBlockSdt && oBlockSdt.IsCheckBox())
-			oCheckBox = oBlockSdt;
-
-		if (oCheckBox)
-		{
-			oCheckBox.SkipSpecialContentControlLock(true);
-			if (!this.IsSelectionLocked(changestype_Paragraph_Content, null, true, bFillingForm))
-			{
-				this.StartAction(AscDFH.historydescription_Document_SpaceButton);
-				oCheckBox.ToggleCheckBox();
-				this.Recalculate();
-				this.FinalizeAction();
-			}
-			oCheckBox.SkipSpecialContentControlLock(false);
-		}
-		else
-		{
-			if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content, null, true, bFillingForm))
-			{
-				this.StartAction(AscDFH.historydescription_Document_SpaceButton);
-
-				// Если мы находимся в формуле, тогда пытаемся выполнить автозамену
-				if (null !== oMath && true === oMath.Make_AutoCorrect())
-				{
-					// Ничего тут не делаем. Все делается в автозамене
-				}
-				else
-				{
-					if (true === e.ShiftKey && true === e.CtrlKey)
-					{
-						this.DrawingDocument.TargetStart();
-						this.DrawingDocument.TargetShow();
-
-						this.AddToParagraph(new ParaText(0x00A0));
-					}
-					else if (true === e.CtrlKey)
-					{
-						this.ClearParagraphFormatting(false, true);
-					}
-					else
-					{
-						this.DrawingDocument.TargetStart();
-						this.DrawingDocument.TargetShow();
-
-						this.CheckLanguageOnTextAdd = true;
-						this.AddToParagraph(new ParaSpace());
-						this.CheckLanguageOnTextAdd = false;
-					}
-				}
-				this.FinalizeAction();
-			}
-		}
-
-		bRetValue = true;
-    }
-
-	if (true == bRetValue)
-		this.Document_UpdateSelectionState();
-
-	return bRetValue;
+	return false;
 };
 CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 {
