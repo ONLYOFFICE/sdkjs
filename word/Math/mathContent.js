@@ -5568,13 +5568,8 @@ CMathAutoCorrectEngine.prototype.private_AutoCorrectText = function(Elements) {
         if (true === Found) {
             var Start = ElCount - nStringPos;
             Elements.splice(Start + 1, CheckStringLen);
-            // var MathRun = new ParaRun(this.Paragraph, true);
-            // MathRun.Set_Pr(this.TextPr.Copy());
-            // MathRun.Set_MathPr(this.MathPr);
             var ReplaceText = new CMathText();
             ReplaceText.add(AutoCorrectElement[1]);
-            // MathRun.Add(ReplaceText, true);
-            // Elements[Start] = MathRun;
             Elements[Start] = ReplaceText;
             return;
         }
@@ -6230,18 +6225,9 @@ CMathAutoCorrectEngine.prototype.private_AutoCorrectEquation = function(Elements
                 Elements.splice(End, 0, tmp[0]);
             }
             if (!Brackets[0]) {
-                // var tmp = [Elements.splice(CurPos+1,(End-CurPos)),Elements.splice(CurPos,1)];
                 Param.Type = MATH_LIMIT;
                 ElPos[0] = CurPos;
                 Param.Props = (Elem.value === 0x2534) ? {type : LIMIT_UP} : {type : LIMIT_LOW};
-                // Param.Bracket[0][0] -= (CurPos + 1);
-                // Param.Bracket[1][0] -= (CurPos + 1);
-                // this.private_CorrectEquation(Param,tmp);
-                // End = CurPos;
-                // Elements.splice(End,0,tmp[0]);  
-                // Param.Type = null;
-                // Param.Props = {};
-                // Param.Kind = null;
             }
             CurPos--;
             continue;
@@ -6816,8 +6802,6 @@ CMathContent.prototype.private_CanAutoCorrectTextFunc = function(AutoCorrectEngi
             MathRun.Set_MathPr(AutoCorrectEngine.MathPr);
             AutoCorrectEngine.Remove.unshift({Count:RemoveCount, Start:Start});
             AutoCorrectEngine.ReplaceContent.unshift(MathRun);
-            // if (AutoCorrectEngine.ActionElement.value !== 0x20 && AutoCorrectEngine.ActionElement.value !== 0x29)
-                // AutoCorrectEngine.Elements[Start].ContPos++;
         }
         Result = true;
     }
@@ -7134,9 +7118,6 @@ CMathAutoCorrectEngine.prototype.private_AutoCorrectCNary = function(buff, bOff)
     this.ReplaceContent.unshift(oNary);
 };
 CMathAutoCorrectEngine.prototype.private_AutoCorrectCRadical = function(buff) {
-    // if (g_aMathAutoCorrectDoNotRadical[this.ActionElementCode]) {
-    //     return false;
-    // }
     var props = new CMathRadicalPr();
     var RemoveCount = buff[0].length;
     props.degHide = this.private_CorrectBuffForRadical(buff, false);
@@ -7590,6 +7571,7 @@ CMathAutoCorrectEngine.prototype.private_CanAutoCorrectEquation = function(CanMa
     var lvBrackets = 1;
     var bBrackOpen = false;
     var bOff = false;
+    var bSecSpace = false;
     while (this.CurPos >= 0) {
         var Elem = this.Elements[this.CurPos].Element;
         if (Elem.value === undefined) {
@@ -7605,7 +7587,6 @@ CMathAutoCorrectEngine.prototype.private_CanAutoCorrectEquation = function(CanMa
             }
             if (g_aMathAutoCorrectNotDoFraction[this.ActionElement.value]) {
                 //дробь не закончена и рано еще делать автозамену
-                // return false;
                 this.CurPos--;
                 buffer[CurLvBuf].splice(0, 0, Elem);
                 continue;
@@ -7648,7 +7629,6 @@ CMathAutoCorrectEngine.prototype.private_CanAutoCorrectEquation = function(CanMa
             }
             if (g_aMathAutoCorrectNotDoFraction[this.ActionElement.value]) {
                 //дробь не закончена и рано еще делать автозамену
-                // return false;
                 this.CurPos--;
                 buffer[CurLvBuf].splice(0, 0, Elem);
                 continue;
@@ -7668,7 +7648,6 @@ CMathAutoCorrectEngine.prototype.private_CanAutoCorrectEquation = function(CanMa
             }
             if (g_aMathAutoCorrectNotDoFraction[this.ActionElement.value]) {
                 //дробь не закончена и рано еще делать автозамену
-                // return false;
                 this.CurPos--;
                 buffer[CurLvBuf].splice(0, 0, Elem);
                 continue;
@@ -7722,22 +7701,10 @@ CMathAutoCorrectEngine.prototype.private_CanAutoCorrectEquation = function(CanMa
                 }
                 buffer[CurLvBuf].splice(0, 0, Elem);
                 this.CurPos--;
-                // CurLvBuf++;
-                // buffer["lv" + CurLvBuf] = [];
             }
             continue;  
         } else if  (Elem.value === 0x005E) { // ^
-            //если степень будет отноститься к nary то пропускать её и _ тоже самое
-            // var bSkip = false;
-            // var tmpPos = this.CurPos - 1;
-            // while (tmpPos >= 0) {
-            //     var tmpElem = this.Elements[tmpPos].Element;
-            // }
-
-
-
-
-            if ((this.Type == MATH_DEGREE && (buffer[CurLvBuf-1] && buffer[CurLvBuf-1].Type == DEGREE_SUPERSCRIPT)) ) {// || bOff) {
+            if ((this.Type == MATH_DEGREE && (buffer[CurLvBuf-1] && buffer[CurLvBuf-1].Type == DEGREE_SUPERSCRIPT)) ) {
                 break;
                 //remove this if you need work with ^^^...
             }
@@ -7785,8 +7752,7 @@ CMathAutoCorrectEngine.prototype.private_CanAutoCorrectEquation = function(CanMa
             }
             continue;
         } else if (Elem.value === 0x005F) { // _
-            if ((this.Type == MATH_DEGREE && (buffer[CurLvBuf-1] && buffer[CurLvBuf-1].Type == DEGREE_SUBSCRIPT))) { // || bOff) {
-                break;
+            if ((this.Type == MATH_DEGREE && (buffer[CurLvBuf-1] && buffer[CurLvBuf-1].Type == DEGREE_SUBSCRIPT))) {
                 //remove this if you need work with ___...
             }
             if (Elem === this.ActionElement) {
@@ -7948,9 +7914,6 @@ CMathAutoCorrectEngine.prototype.private_CanAutoCorrectEquation = function(CanMa
             this.CurPos--;
             continue;
         } else if (q_aMathAutoCorrectAccentCharCodes[Elem.value]) { // accent
-            // if(this.Type == MATH_ACCENT && !bBrackOpen) {
-            //     break;
-            // }
             if (((this.Type == MATH_DEGREE || this.Type == MATH_DEGREESubSup) && !bBrackOpen) || bOff) {
                 break;
             }
@@ -8008,7 +7971,6 @@ CMathAutoCorrectEngine.prototype.private_CanAutoCorrectEquation = function(CanMa
                 CurLvBuf++;
                 buffer[CurLvBuf] = [];
                 this.props = (Elem.value === 0x2534) ? {type : LIMIT_UP} : {type : LIMIT_LOW};
-                // buffer[CurLvBuf].splice(0, 0, Elem);
                 this.Type = MATH_LIMIT;
             }
             this.CurPos--;
@@ -8058,7 +8020,6 @@ CMathAutoCorrectEngine.prototype.private_CanAutoCorrectEquation = function(CanMa
                 bOff = true;
             }
             buffer[CurLvBuf].splice(0, 0, Elem);
-            // this.CurPos--;
             continue;
 
         // } else if (Elem.value === 0x27E1) { // phantom
@@ -8086,19 +8047,26 @@ CMathAutoCorrectEngine.prototype.private_CanAutoCorrectEquation = function(CanMa
         //     continue;
         // } 
         } else if (g_aMathAutoCorrectFracCharCodes[Elem.value]) { // space + - # @ and another
-        //  else if (Elem.value === 0x0020 && !bBrackOpen) { // space
             if (Elem === this.ActionElement) {
                 if (Elem.value !== 0x0020) {
                     this.Shift = 1;
+                } else if ((this.CurPos -1 > 0) && this.Elements[this.CurPos-1].Element.value == 0x20) {
+                    break;
                 }
                 this.CurPos--;
                 continue;
             }
-            // buffer[CurLvBuf].splice(0, 0, Elem); //maybe delete
-            if (bBrackOpen) {
+            if (bBrackOpen || (!bSecSpace && this.Type == null)) {
                 buffer[CurLvBuf].splice(0, 0, Elem);
                 this.CurPos--;
-                continue
+                if (!bBrackOpen) {
+                    this.Shift += buffer[CurLvBuf].length;
+                    bSecSpace = true;
+                    buffer = [];
+                    CurLvBuf = 0;
+                    buffer[CurLvBuf] = [];
+                }
+                continue;
             }
             break;
         }
