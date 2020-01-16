@@ -10079,11 +10079,12 @@ Paragraph.prototype.Get_DrawingObjectContentPos = function(Id)
 };
 Paragraph.prototype.Internal_CorrectAnchorPos = function(Result, Drawing)
 {
+	if (!this.IsRecalculated())
+		return;
+
 	// Поправляем позицию
 	var RelH = Drawing.PositionH.RelativeFrom;
 	var RelV = Drawing.PositionV.RelativeFrom;
-
-	var ContentPos = 0;
 
 	if (Asc.c_oAscRelativeFromH.Character != RelH || c_oAscRelativeFromV.Line != RelV)
 	{
@@ -10233,6 +10234,9 @@ Paragraph.prototype.Get_Layout = function(ContentPos, Drawing)
 	var CurLine  = LinePos.Line;
 	var CurRange = LinePos.Range;
 	var CurPage  = LinePos.Page;
+
+	if (!this.IsRecalculated())
+		return null;
 
 	var X = this.Lines[CurLine].Ranges[CurRange].XVisible;
 	var Y = this.Pages[CurPage].Y + this.Lines[CurLine].Y;
