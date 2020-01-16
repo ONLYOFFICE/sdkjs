@@ -41,6 +41,7 @@
 	var cNumber = AscCommonExcel.cNumber;
 	var cString = AscCommonExcel.cString;
 	var cBool = AscCommonExcel.cBool;
+	var cEmpty = AscCommonExcel.cEmpty;
 	var cError = AscCommonExcel.cError;
 	var cArea = AscCommonExcel.cArea;
 	var cArea3D = AscCommonExcel.cArea3D;
