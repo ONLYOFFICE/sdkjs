@@ -46,10 +46,10 @@ function CSdtPr()
 	this.Lock  = undefined;
 
 	// section property
-	this.SectionType = undefined;
-	this.PageSizeW	 = undefined;
-	this.PageSizeH	 = undefined;
-	this.Orient 	 = undefined;
+	this.SectionBreak = undefined;
+	this.PageSizeW	  = undefined;
+	this.PageSizeH	  = undefined;
+	this.Orient 	  = undefined;
 
 	// Margins 
 	this.MarginT	 		 = undefined;
@@ -295,10 +295,10 @@ function CContentControlPr(nType)
 	this.CCType     = undefined !== nType ? nType : c_oAscSdtLevelType.Inline;
 
     // section property
-	this.SectionType = undefined;
-	this.PageSizeW	 = undefined;
-	this.PageSizeH	 = undefined;
-	this.Orient 	 = undefined;
+	this.SectionBreak = undefined;
+	this.PageSizeW	  = undefined;
+	this.PageSizeH	  = undefined;
+	this.Orient 	  = undefined;
 
 	// Margins 
 	this.MarginT	 		 = undefined;

@@ -503,7 +503,7 @@
 						_content_control_pr.InternalId = _current["Props"]["InternalId"];
 						_content_control_pr.Alias = _current["Props"]["Alias"];
 						
-						_content_control_pr.SectionType = _current["Props"]["SectionType"];
+						_content_control_pr.SectionBreak = _current["Props"]["SectionBreak"];
 						_content_control_pr.PageSizeW 	= _current["Props"]["PageSizeW"];
 						_content_control_pr.PageSizeH 	= _current["Props"]["PageSizeH"];
 						
@@ -517,12 +517,12 @@
 						_content_control_pr.Orient 		= _current["Props"]["Orient"];
 
 						// Page break 
-                        if (undefined !== _current["Props"]["SectionType"])
+                        if (undefined !== _current["Props"]["SectionBreak"])
                         {
 							var oCurPara = LogicDocument.GetCurrentParagraph(); 
                             LogicDocument.Content[oCurPara.Index].Document_SetThisElementCurrent();
-							LogicDocument.Add_SectionBreak(_content_control_pr.SectionType);
-							LogicDocument.Add_SectionBreak(_content_control_pr.SectionType);
+							LogicDocument.Add_SectionBreak(_content_control_pr.SectionBreak);
+							LogicDocument.Add_SectionBreak(_content_control_pr.SectionBreak);
 							LogicDocument.Content[oCurPara.Index + 1].Document_SetThisElementCurrent();
 						}
 
