@@ -9477,7 +9477,7 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 		this.DrawTableMode.Page   = -1;
 		this.DrawTableMode.Table  = null;
 
-        this.DrawingDocument.OnUpdateOverlay();
+		this.DrawingDocument.OnUpdateOverlay();
 		return;
 	}
 
