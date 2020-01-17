@@ -1212,7 +1212,9 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
                         if(drawingObjectsController.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
                         {
                             drawingObjectsController.arrPreTrackObjects.length = 0;
-                            drawingObjectsController.arrPreTrackObjects.push(new AscFormat.ResizeTrackShapeImage(legend, legend.getCardDirectionByNum(hit_to_handles), drawingObjectsController));
+                            var oTrack = new AscFormat.ResizeTrackShapeImage(legend, legend.getCardDirectionByNum(hit_to_handles), drawingObjectsController);
+                            oTrack.chartSpace = drawing;
+                            drawingObjectsController.arrPreTrackObjects.push(oTrack);
                             drawingObjectsController.changeCurrentState(new AscFormat.PreResizeState(drawingObjectsController, legend, legend.getCardDirectionByNum(hit_to_handles)));
                             drawingObjectsController.updateSelectionState();
                             drawingObjectsController.updateOverlay();

@@ -1152,6 +1152,30 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
             if(!this.bIsTracked){
                 return;
             }
+            if(this.chartSpace)
+            {
+                var oObjectToSet = this.originalObject;
+                if(!oObjectToSet.layout)
+                {
+                    oObjectToSet.setLayout(new AscFormat.CLayout());
+                }
+                var pos = this.chartSpace.chartObj.recalculatePositionText(this.originalObject);
+                var fLayoutX = this.chartSpace.calculateLayoutByPos(pos.x, oObjectToSet.layout.xMode, this.resizedPosX, this.chartSpace.extX);
+                var fLayoutY = this.chartSpace.calculateLayoutByPos(pos.y, oObjectToSet.layout.yMode, this.resizedPosY, this.chartSpace.extY);
+
+                var fLayoutW = this.chartSpace.calculateLayoutBySize(pos.x, oObjectToSet.layout.wMode, this.chartSpace.extX, this.resizedExtX);
+                var fLayoutH = this.chartSpace.calculateLayoutBySize(pos.y, oObjectToSet.layout.hMode, this.chartSpace.extY, this.resizedExtY);
+
+                oObjectToSet.layout.setX(fLayoutX);
+                oObjectToSet.layout.setY(fLayoutY);
+                oObjectToSet.layout.setW(fLayoutW);
+                oObjectToSet.layout.setH(fLayoutH);
+                this.chartSpace.handleUpdateExtents();
+                this.chartSpace.recalculate();
+                editor.WordControl.m_oLogicDocument.Recalculate();
+                editor.WordControl.m_oDrawingDocument.OnRecalculatePage(0, editor.WordControl.m_oLogicDocument.Slides[0]);
+                return;
+            }
             if(!this.bConnector || !this.oSpPr){
                 var scale_coefficients, ch_off_x, ch_off_y;
                 if(this.originalObject.group)
