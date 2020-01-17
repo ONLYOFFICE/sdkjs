@@ -7433,7 +7433,10 @@ background-repeat: no-repeat;\
         this.isDrawTablePen = value;
         this.WordControl.m_oLogicDocument.DrawTableMode.Draw = value;
         if (!this.isDrawTablePen)
-            this.WordControl.m_oDrawingDocument.UnlockCursorType();
+		{
+			this.WordControl.m_oLogicDocument.DrawTableMode.Start = false;
+			this.WordControl.m_oDrawingDocument.UnlockCursorType();
+		}
 
         return this.sendEvent("asc_onTableDrawModeChanged", value);
     };
@@ -7457,7 +7460,10 @@ background-repeat: no-repeat;\
         this.isDrawTableErase = value;
         this.WordControl.m_oLogicDocument.DrawTableMode.Erase = value;
         if (!this.isDrawTableErase)
-            this.WordControl.m_oDrawingDocument.UnlockCursorType();
+		{
+			this.WordControl.m_oLogicDocument.DrawTableMode.Start = false;
+			this.WordControl.m_oDrawingDocument.UnlockCursorType();
+		}
 
         return this.sendEvent("asc_onTableEraseModeChanged", value);
     };
