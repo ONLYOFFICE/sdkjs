@@ -13750,8 +13750,8 @@ CTable.prototype.GetDrawLine = function(X1, Y1, X2, Y2, CurPageStart, CurPageEnd
 											{
 												X1 : TempCell.Metrics.X_cell_start + SizeOfIndent,
 												X2 : TempCell.Metrics.X_cell_start + SizeOfIndent,
-												Y1 : TempCell.Temp.Y,
-												Y2 : TempCell.Temp.Y + rowHsum,
+												Y1 : this.RowsInfo[TempCell.Row.Index].Y[curColumn],
+												Y2 : this.RowsInfo[TempCell.Row.Index].Y[curColumn] + rowHsum,
 												Color : "Red",
 												Bold  : false
 											};
@@ -13763,34 +13763,34 @@ CTable.prototype.GetDrawLine = function(X1, Y1, X2, Y2, CurPageStart, CurPageEnd
 											{
 												X1 : TempCell.Metrics.X_cell_end + SizeOfIndent,
 												X2 : TempCell.Metrics.X_cell_end + SizeOfIndent,
-												Y1 : TempCell.Temp.Y,
-												Y2 : TempCell.Temp.Y + rowHsum,
+												Y1 : this.RowsInfo[TempCell.Row.Index].Y[curColumn],
+												Y2 : this.RowsInfo[TempCell.Row.Index].Y[curColumn] + rowHsum,
 												Color : "Red",
 												Bold  : false
 											};
 											Borders.push(Line);
 										}
-										if (Y1 <= TempCell.Temp.Y && Y2 > TempCell.Temp.Y)
+										if (Y1 <= this.RowsInfo[TempCell.Row.Index].Y[curColumn] + rowHsum && Y2 > this.RowsInfo[TempCell.Row.Index].Y[curColumn] + rowHsum)
 										{
 											var Line = 
 											{
 												X1 : TempCell.Metrics.X_cell_start + SizeOfIndent,
 												X2 : TempCell.Metrics.X_cell_end + SizeOfIndent,
-												Y1 : TempCell.Temp.Y,
-												Y2 : TempCell.Temp.Y,
+												Y1 : this.RowsInfo[TempCell.Row.Index].Y[curColumn],
+												Y2 : this.RowsInfo[TempCell.Row.Index].Y[curColumn],
 												Color : "Red",
 												Bold  : false
 											};
 											Borders.push(Line);
 										}
-										if (Y2 >= TempCell.Temp.Y + rowHsum && Y1 < TempCell.Temp.Y + rowHsum)
+										if (Y2 >= this.RowsInfo[TempCell.Row.Index].Y[curColumn] + rowHsum && Y1 < this.RowsInfo[TempCell.Row.Index].Y[curColumn] + rowHsum)
 										{
 											var Line = 
 											{
 												X1 : TempCell.Metrics.X_cell_start + SizeOfIndent,
 												X2 : TempCell.Metrics.X_cell_end + SizeOfIndent,
-												Y1 : TempCell.Temp.Y + rowHsum,
-												Y2 : TempCell.Temp.Y + rowHsum,
+												Y1 : this.RowsInfo[TempCell.Row.Index].Y[curColumn] + rowHsum,
+												Y2 : this.RowsInfo[TempCell.Row.Index].Y[curColumn] + rowHsum,
 												Color : "Red",
 												Bold  : false
 											};
