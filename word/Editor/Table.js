@@ -10364,7 +10364,7 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 			{
 				Y1 = this.Pages[curColumn].Bounds.Top;
 			}
-			
+
 			var CellAdded = false;
 			var Rows = [];        // массив строк подлежащих делению (которые мы режем)
 			var rowsInfo = []; // масив строк с ширинами ячеейк (используется для создания новой сетки таблицы)
@@ -10968,8 +10968,10 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 					SumRowH += this.RowsInfo[RowNumb[0]].H[Index];
 
 				}
-				var rowHeight_1 = Y1 - this.RowsInfo[Cell_pos.Row].Y[curColumn];
-				var rowHeight_2 = this.RowsInfo[Cell_pos.Row].Y[curColumn] + this.RowsInfo[Cell_pos.Row].H[curColumn] - Y1;
+
+				var Border_Height = this.GetBottomTableBorder().Size;
+				var rowHeight_1 = Y1 - this.RowsInfo[Cell_pos.Row].Y[curColumn] - Border_Height;
+				var rowHeight_2 = this.RowsInfo[Cell_pos.Row].Y[curColumn] + this.RowsInfo[Cell_pos.Row].H[curColumn] - Y1 - Border_Height;
 			
 				var CellsCount = Row.Get_CellsCount();
 
