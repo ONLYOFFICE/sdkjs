@@ -136,8 +136,6 @@
 
 		// Результат получения лицензии
 		this.licenseResult       = null;
-		// Подключились ли уже к серверу
-		this.isOnFirstConnectEnd = false;
 		// Получили ли лицензию
 		this.isOnLoadLicense     = false;
 		// Переменная, которая отвечает, послали ли мы окончание открытия документа
@@ -866,7 +864,7 @@
 	};
 	baseEditorsApi.prototype._onEndPermissions                   = function()
 	{
-		if (this.isOnFirstConnectEnd && this.isOnLoadLicense) {
+		if (this.isOnLoadLicense) {
 			var oResult = new AscCommon.asc_CAscEditorPermissions();
 			if (null !== this.licenseResult) {
 				var type = this.licenseResult['type'];
@@ -934,19 +932,15 @@
 		};
 		this.CoAuthoringApi.onFirstConnect            = function()
 		{
-			if (t.isOnFirstConnectEnd)
-			{
+			if (!t.isOnLoadLicense) {
+				t._onEndPermissions();
+			} else {
 				if (t.CoAuthoringApi.get_isAuth()) {
 					t.CoAuthoringApi.auth(t.getViewMode(), undefined, t.isIdle());
 				} else {
 					//первый запрос или ответ не дошел надо повторить открытие
 					t.asc_LoadDocument(undefined, true);
 				}
-			}
-			else
-			{
-				t.isOnFirstConnectEnd = true;
-				t._onEndPermissions();
 			}
 		};
 		this.CoAuthoringApi.onLicense                 = function(res)
