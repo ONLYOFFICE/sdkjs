@@ -64,7 +64,8 @@
 			e.stopPropagation();
 	};
 
-	var isUsePointerEvents = (AscBrowser.isChrome && (AscBrowser.chromeVersion > 70) || AscBrowser.isMozilla) ? true : false;
+	// для мозиллы пока отключаем, так как браузер не распознает это как "юзерское действие". (window.open, input[file].click)
+	var isUsePointerEvents = (AscBrowser.isChrome && (AscBrowser.chromeVersion > 70)/* || AscBrowser.isMozilla*/) ? true : false;
 
 	AscCommon.addMouseEvent = function(elem, type, handler)
 	{
