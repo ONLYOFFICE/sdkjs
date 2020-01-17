@@ -10360,6 +10360,11 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 				Y1 = cache;
 			}
 
+			if (Y2 < this.Pages[curColumn].Bounds.Bottom && Y2 > this.Pages[curColumn].Bounds.Top && Y1 < this.Pages[curColumn].Bounds.Top)
+			{
+				Y1 = this.Pages[curColumn].Bounds.Top;
+			}
+			
 			var CellAdded = false;
 			var Rows = [];        // массив строк подлежащих делению (которые мы режем)
 			var rowsInfo = []; // масив строк с ширинами ячеейк (используется для создания новой сетки таблицы)
