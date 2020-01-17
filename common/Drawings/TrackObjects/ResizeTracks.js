@@ -1008,6 +1008,11 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                 }
 
             }
+
+            if(this.originalObject.chart instanceof AscFormat.CChartSpace)
+            {
+                global_MatrixTransformer.MultiplyAppend(_transform, this.originalObject.chart.transform);
+            }
             if(this.originalObject.cropObject)
             {
                 var oShapeDrawer = new AscCommon.CShapeDrawer();

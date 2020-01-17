@@ -8002,6 +8002,9 @@ function CLegend()
     this.spPr = null;
     this.txPr = null;
 
+    this.rot = 0;
+    this.flipH = false;
+    this.flipV = false;
     this.x = null;
     this.y = null;
     this.extX = null;
@@ -8035,10 +8038,6 @@ CLegend.prototype =
 
     convertPixToMM: function(pix){
         return this.parent && this.parent.parent && this.parent.parent.convertPixToMM && this.parent.parent.convertPixToMM(pix);
-    },
-
-    hitToHandles: function(x, y){
-        return AscFormat.hitToHandles(x, y, this);
     },
 
     getContentChangesByType: function(type){
@@ -8147,6 +8146,25 @@ CLegend.prototype =
     getCompiledFill: CShape.prototype.getCompiledFill,
     getCompiledTransparent: CShape.prototype.getCompiledTransparent,
     check_bounds: CShape.prototype.check_bounds,
+    getCardDirectionByNum: CShape.prototype.getCardDirectionByNum,
+    getNumByCardDirection: CShape.prototype.getNumByCardDirection,
+    getResizeCoefficients: CShape.prototype.getResizeCoefficients,
+    getInvertTransform: CShape.prototype.getInvertTransform,
+    getTransformMatrix: CShape.prototype.getTransformMatrix,
+    hitToHandles: CShape.prototype.hitToHandles,
+    getFullFlipH: CShape.prototype.getFullFlipH,
+    getFullFlipV: CShape.prototype.getFullFlipV,
+    getAspect: CShape.prototype.getAspect,
+    getGeom: CShape.prototype.getGeom,
+    getNoChangeAspect: function () {
+        return false;
+    },
+    isChart: function()
+    {
+        return false;
+    },
+
+
     canMove: function()
     {
         return true;

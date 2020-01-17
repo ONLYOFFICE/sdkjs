@@ -1171,7 +1171,7 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
     if(e.CtrlKey || (e.Button === AscCommon.g_mouse_button_right && drawingObjectsController.selectedObjects.length > 1)){
         return false;
     }
-    var ret = false, i, title;
+    var ret = false, i, title, hit_to_handles;
     var bIsMobileVersion = oApi && oApi.isMobileVersion;
     if(drawing.hit(x, y))
     {
@@ -1200,6 +1200,32 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
             }
             else
             {
+
+
+
+                if(!AscFormat.isRealNumber(drawing.selection.legendEntry))
+                {
+                    //check hit in resize handles
+                    hit_to_handles = legend.hitToHandles(x, y);
+                    if(hit_to_handles > -1)
+                    {
+                        if(drawingObjectsController.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
+                        {
+                            drawingObjectsController.arrPreTrackObjects.length = 0;
+                            drawingObjectsController.arrPreTrackObjects.push(new AscFormat.ResizeTrackShapeImage(legend, legend.getCardDirectionByNum(hit_to_handles), drawingObjectsController));
+                            drawingObjectsController.changeCurrentState(new AscFormat.PreResizeState(drawingObjectsController, legend, legend.getCardDirectionByNum(hit_to_handles)));
+                            drawingObjectsController.updateSelectionState();
+                            drawingObjectsController.updateOverlay();
+                            return true;
+                        }
+                        else
+                        {
+                            var card_direction = legend.getCardDirectionByNum(hit_to_handles);
+                            return {objectId: drawing.Get_Id(), cursorType: AscFormat.CURSOR_TYPES_BY_CARD_DIRECTION[card_direction], bMarker: true};
+                        }
+                    }
+                }
+
                 var aCalcEntries = legend.calcEntryes;
                 for(var i = 0; i < aCalcEntries.length; ++i)
                 {
