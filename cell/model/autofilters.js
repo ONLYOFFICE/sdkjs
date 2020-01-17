@@ -2676,7 +2676,9 @@
 
 				if (cellId !== undefined) {
 					var curCellId = cellId.split('af')[0];
-					activeRange = AscCommonExcel.g_oRangeCache.getAscRange(curCellId).clone();
+					AscCommonExcel.executeInR1C1Mode(false, function () {
+						activeRange = AscCommonExcel.g_oRangeCache.getAscRange(curCellId).clone();
+					});
 				}
 
 				var ColId = null;
