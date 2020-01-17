@@ -392,7 +392,7 @@
     }
 
     CDivisionOperatorNode.prototype = Object.create(COperatorNode.prototype);
-    CDivisionOperatorNode.prototype.precedence = 10;
+    CDivisionOperatorNode.prototype.precedence = 11;
     CDivisionOperatorNode.prototype._calculate = function (aArgs) {
         this.checkCellInFunction(aArgs);
         if(this.error){
