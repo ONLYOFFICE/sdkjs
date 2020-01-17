@@ -123,6 +123,7 @@
 			UplImageFileCount    : -11,
 			NoSupportClipdoard   : -12,
 			UplImageUrl          : -13,
+			DirectUrl            : -14,
 
 
 			MaxDataPointsError    : -16,
@@ -2069,6 +2070,7 @@
 	prot['UplImageFileCount']                = prot.UplImageFileCount;
 	prot['NoSupportClipdoard']               = prot.NoSupportClipdoard;
 	prot['UplImageUrl']                      = prot.UplImageUrl;
+	prot['DirectUrl']                        = prot.DirectUrl;
 	prot['MaxDataPointsError']               = prot.MaxDataPointsError;
 	prot['StockChartError']                  = prot.StockChartError;
 	prot['CoAuthoringDisconnect']            = prot.CoAuthoringDisconnect;

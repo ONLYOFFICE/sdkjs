@@ -533,7 +533,7 @@
 								var stream;
 								if (null === httpRequest || !(stream = AscCommon.initStreamFromResponse(httpRequest))) {
 									_api.endInsertDocumentUrls();
-									_api.sendEvent("asc_onError", c_oAscError.ID.MailMergeLoadFile,
+									_api.sendEvent("asc_onError", c_oAscError.ID.DirectUrl,
 										c_oAscError.Level.NoCritical);
 									return;
 								}
