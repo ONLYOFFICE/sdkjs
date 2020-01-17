@@ -10403,11 +10403,15 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 								return;
 							
 							
-							if (Math.abs(this.TableSumGrid[Grid_start + Grid_span - 2] - X1) < 1.5)
+							for (var Index = 0; Index < this.TableSumGrid.length; Index++)
 							{
-								X1 = this.TableSumGrid[Grid_start + Grid_span - 2];
-								Grid_width_1 = X1 - this.TableSumGrid[Grid_start - 1];
-								Grid_width_2 = this.TableSumGrid[Grid_start + Grid_span - 2] - X1;
+								if (Math.abs(this.TableSumGrid[Index] - X1) < 1.5)
+								{
+									X1 = this.TableSumGrid[Index];
+									Grid_width_1 = X1 - this.TableSumGrid[Grid_start - 1];
+									Grid_width_2 = this.TableSumGrid[Grid_start + Grid_span - 1] - X1;
+									break;
+								}
 							}
 
 							// В этих условиях мы проверяем допустимая ли ширина ячеек нами нарисована, 
