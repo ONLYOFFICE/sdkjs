@@ -14217,7 +14217,7 @@ CDocument.prototype.Set_SectionProps = function(Props)
 			this.SetMirrorMargins(Props.get_MirrorMargins());
 
 		if (undefined !== Props.get_Orientation())
-			SectPr.SetOrientation(Props.get_Orientation(), true);
+			SectPr.SetOrientation(Props.get_Orientation(), false);
 
 		this.Recalculate();
 		this.UpdateSelection();
