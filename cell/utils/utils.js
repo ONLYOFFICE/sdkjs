@@ -2203,6 +2203,7 @@
 			this.oOnUpdateTabColor = {};
 			this.oOnUpdateSheetViewSettings = {};
 			this.bAddRemoveRowCol = false;
+			this.bChangeColorScheme = false;
 			this.bChangeActive = false;
 			this.activeSheet = null;
 		}

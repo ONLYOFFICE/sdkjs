@@ -427,6 +427,11 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 	});
 
 	if (null != Point) {
+		if (oRedoObjectParam.bChangeColorScheme) {
+			t.workbook.rebuildColors();
+			t.workbook.oApi.asc_AfterChangeColorScheme();
+		}
+
 		//синхронизация index и id worksheet
 		if (oRedoObjectParam.bUpdateWorksheetByModel)
 			this.workbook.handlers.trigger("updateWorksheetByModel");
@@ -576,6 +581,8 @@ CHistory.prototype._addRedoObjectParam = function (oRedoObjectParam, Point) {
 		oRedoObjectParam.bAddRemoveRowCol = true;
 	else if(AscCommonExcel.g_oUndoRedoAutoFilters === Point.Class && AscCH.historyitem_AutoFilter_ChangeTableInfo === Point.Type)
 		oRedoObjectParam.oChangeWorksheetUpdate[Point.SheetId] = Point.SheetId;
+	else if(AscCommonExcel.g_oUndoRedoWorkbook === Point.Class && AscCH.historyitem_Workbook_ChangeColorScheme === Point.Type)
+		oRedoObjectParam.bChangeColorScheme = true;
 
 	if (null != Point.SheetId) {
 		oRedoObjectParam.activeSheet = Point.SheetId;
