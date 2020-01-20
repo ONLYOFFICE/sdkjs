@@ -1372,7 +1372,7 @@ CChartSpace.prototype.drawSelect = function(drawingDocument, nPageIndex)
                 }
                 else
                 {
-                    drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, this.selection.legend.transform, 0, 0, this.selection.legend.extX, this.selection.legend.extY, false, false);
+                    drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.SHAPE, this.selection.legend.transform, 0, 0, this.selection.legend.extX, this.selection.legend.extY, false, false);
                 }
             }
             else if(this.selection.axisLbls)
@@ -1455,7 +1455,7 @@ CChartSpace.prototype.drawSelect = function(drawingDocument, nPageIndex)
             {
 
                 var oChartSize = this.getChartSizes(true);
-                drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, this.transform, oChartSize.startX, oChartSize.startY, oChartSize.w, oChartSize.h, false, false);
+                drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.SHAPE, this.transform, oChartSize.startX, oChartSize.startY, oChartSize.w, oChartSize.h, false, false);
                 /*if(!this.selection.rotatePlotArea)
                 {
                     drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, this.transform, oChartSize.startX, oChartSize.startY, oChartSize.w, oChartSize.h, false, false);
@@ -4615,6 +4615,7 @@ CChartSpace.prototype.updateChildLabelsTransform = function(posX, posY)
     {
         if(this.chart.plotArea)
         {
+            this.chart.plotArea.updatePosition(posX, posY);
             var aCharts = this.chart.plotArea.charts;
             for(var t = 0; t < aCharts.length; ++t){
                 var oChart = aCharts[t];
@@ -7029,12 +7030,14 @@ CChartSpace.prototype.getValAxisCrossType = function()
         return null;
     };
 
-    CChartSpace.prototype.recalculateAxes = function(){
+
+    CChartSpace.prototype.recalculateAxes = function()
+    {
         this.cachedCanvas = null;
         this.plotAreaRect = null;
         this.bEmptySeries = this.checkEmptySeries();
-        if(this.chart && this.chart.plotArea){
-
+        if(this.chart && this.chart.plotArea)
+        {
             var oPlotArea = this.chart.plotArea;
             for(i = 0; i < oPlotArea.axId.length; ++i){
                 oCurAxis = oPlotArea.axId[i];
@@ -7212,6 +7215,14 @@ CChartSpace.prototype.getValAxisCrossType = function()
                     }
                 }
             }
+
+            var oChartSize = this.getChartSizes(true);
+            this.chart.plotArea.x = oChartSize.startX;
+            this.chart.plotArea.y = oChartSize.startY;
+            this.chart.plotArea.extX = oChartSize.w;
+            this.chart.plotArea.extY = oChartSize.h;
+            this.chart.plotArea.localTransform.Reset();
+            AscCommon.global_MatrixTransformer.TranslateAppend(this.chart.plotArea.localTransform, oChartSize.startX, oChartSize.startY);
         }
     };
     
@@ -13205,6 +13216,8 @@ CChartSpace.prototype.getCopyWithSourceFormatting = function(oIdMap)
     }
     return oCopy;
 };
+
+
 
 CChartSpace.prototype.getChartSizes = function(bNotRecalculate)
 {

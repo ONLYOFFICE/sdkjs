@@ -1423,7 +1423,7 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
             var hit_in_inner_area = title.hitInInnerArea(x, y);
             var hit_in_path = title.hitInPath(x, y);
             var hit_in_text_rect = title.hitInTextRect(x, y);
-            if((hit_in_inner_area && (!hit_in_text_rect || drawing.selection.title !== title) || (hit_in_path && bIsMobileVersion !== true)) && !window["NATIVE_EDITOR_ENJINE"])
+            if((hit_in_inner_area && (!hit_in_text_rect || drawing.selection.title !== title) || (hit_in_path && bIsMobileVersion !== true)) || (drawing.selection.title === title && title.hitInBoundingRect(x, y) )&& !window["NATIVE_EDITOR_ENJINE"])
             {
                 return drawingObjectsController.handleChartTitleMoveHit(title, e, x, y, drawing, group, pageIndex);
             }
@@ -1468,6 +1468,7 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
         }
 
         //todo gridlines
+
 
         //plotArea
         if(bClickFlag){

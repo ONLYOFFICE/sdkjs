@@ -2490,6 +2490,17 @@ function CPlotArea()
     this.m_oAxIdContentChanges = new AscCommon.CContentChanges();
     //
 
+    this.posX = 0;
+    this.posY = 0;
+    this.x = 0;
+    this.y = 0;
+    this.extX = 5;
+    this.extY = 5;
+
+    this.localTransform = new AscCommon.CMatrix();
+    this.transform = new AscCommon.CMatrix();
+    this.invertTransform = new AscCommon.CMatrix();
+    
     this.Id = g_oIdCounter.Get_NewId();
     g_oTableId.Add(this, this.Id);
 }
@@ -2557,6 +2568,31 @@ CPlotArea.prototype =
                 break;
             }
         }
+    },
+
+
+
+    checkShapeChildTransform: function(t)
+    {
+        this.transform = this.localTransform.CreateDublicate();
+        global_MatrixTransformer.MultiplyAppend(this.transform, t);
+        this.invertTransform = global_MatrixTransformer.Invert(this.transform);
+    },
+
+    updatePosition: function(x, y)
+    {
+        this.posX = x;
+        this.posY = y;
+        this.transform = this.localTransform.CreateDublicate();
+        global_MatrixTransformer.TranslateAppend(this.transform, x, y);
+
+        this.transformText = this.localTransformText.CreateDublicate();
+        global_MatrixTransformer.TranslateAppend(this.transformText, x, y);
+
+
+        this.invertTransform = global_MatrixTransformer.Invert(this.transform);
+        this.invertTransformText = global_MatrixTransformer.Invert(this.transformText);
+
     },
 
     getContentChangesByType: function(type){
