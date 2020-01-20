@@ -15289,8 +15289,7 @@ CTable.prototype.Internal_GetVertMergeCount2 = function(StartRow, StartGridCol, 
  * Проверяем, нужно ли удалить ненужные строки из нашей таблицы.
  * Такое может произойти после объединения ячеек или после изменения сетки
  * таблицы.
- * True  - в таблице произошли изменения
- * False - ничего не изменилось
+ * @returns {boolean} произошли ли изменения в таблице
  */
 CTable.prototype.Internal_Check_TableRows = function(bSaveHeight)
 {
@@ -15381,10 +15380,26 @@ CTable.prototype.Internal_Check_TableRows = function(bSaveHeight)
 	if (true === bSaveHeight)
 	{
 		// Сначала разберемся со строками, у которых надо проставить минимальную высоту
-		for (var Index = 0; Index < Rows_to_CalcH.length; Index++)
+		for (var nIndex = 0, nCount = Rows_to_CalcH.length; nIndex < nCount; ++nIndex)
 		{
-			var RowIndex = Rows_to_CalcH[Index];
-			this.Content[RowIndex].Set_Height(this.RowsInfo[RowIndex].H, linerule_AtLeast);
+			var nCurRow = Rows_to_CalcH[nIndex];
+
+			var nHeightValue = null;
+			for (var nCurPage in this.RowsInfo[nCurRow].H)
+			{
+				if (null === nHeightValue)
+				{
+					nHeightValue = this.RowsInfo[nCurRow].H[nCurPage];
+				}
+				else
+				{
+					nHeightValue = null;
+					break;
+				}
+			}
+
+			if (null !== nHeightValue)
+				this.GetRow(nCurRow).SetHeight(nHeightValue, linerule_AtLeast);
 		}
 
 		// Рассчитаем высоты строк, так чтобы после удаления, общий вид таблицы не менялся
