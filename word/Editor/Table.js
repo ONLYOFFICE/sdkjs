@@ -11460,11 +11460,27 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 
 					if (curRow === 0)
 					{
-						if (Cell.Get_Border(1).Value === 0 && Cell.Get_Border(3).Value === 0 && Cell.Get_Border(0).Value === 0)
+						if (Cell.Get_Border(0).Value === 0 && Cell.Get_Border(1).Value === 0 && Cell.Get_Border(2).Value === 0)
 						{
 							this.RemoveTableRow(curRow);
 							break;
 						}
+						if (Cell.Get_Border(0).Value === 0 && Cell.Get_Border(1).Value === 0 && Cell.Get_Border(3).Value === 0)
+						{
+							this.RemoveTableRow(curRow);
+							break;
+						}
+						if (Cell.Get_Border(0).Value === 0 && Cell.Get_Border(2).Value === 0 && Cell.Get_Border(3).Value === 0)
+						{
+							this.RemoveTableRow(curRow);
+							break;
+						}
+						if (Cell.Get_Border(2).Value === 0 && Cell.Get_Border(1).Value === 0 && Cell.Get_Border(3).Value === 0)
+						{
+							this.RemoveTableRow(curRow);
+							break;
+						}
+						
 					}
 					else if (curRow === this.Get_RowsCount() - 1)
 					{
