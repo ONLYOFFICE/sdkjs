@@ -8202,6 +8202,16 @@ CLegend.prototype =
 
     hitInBoundingRect: CShape.prototype.hitInBoundingRect,
     hitInInnerArea: CShape.prototype.hitInInnerArea,
+    hitInPath: CShape.prototype.hitInPath,
+    checkHitToBounds: function (x, y)
+    {
+        CDLbl.prototype.checkHitToBounds.call(this, x, y);
+    },
+    getCanvasContext: function()
+    {
+        return  CDLbl.prototype.getCanvasContext.call(this);
+    },
+
     canRotate: function()
     {
         return false;

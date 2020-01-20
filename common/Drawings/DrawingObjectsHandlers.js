@@ -1189,6 +1189,9 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
                     selector.selectObject(drawing, pageIndex);
                     selector.selection.chartSelection = drawing;
                     drawing.selection.legend = legend;
+                    drawingObjectsController.arrPreTrackObjects.length = 0;
+                    drawingObjectsController.arrPreTrackObjects.push(new AscFormat.MoveChartObjectTrack(legend, drawing));
+                    drawingObjectsController.changeCurrentState(new AscFormat.PreMoveState(drawingObjectsController, x, y, false, false, drawing, true, true));
                     drawingObjectsController.updateSelectionState();
                     drawingObjectsController.updateOverlay();
                     return true;
@@ -1200,9 +1203,6 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
             }
             else
             {
-
-
-
                 if(!AscFormat.isRealNumber(drawing.selection.legendEntry))
                 {
                     //check hit in resize handles
@@ -1224,6 +1224,28 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
                         {
                             var card_direction = legend.getCardDirectionByNum(hit_to_handles);
                             return {objectId: drawing.Get_Id(), cursorType: AscFormat.CURSOR_TYPES_BY_CARD_DIRECTION[card_direction], bMarker: true};
+                        }
+                    }
+
+                    if(legend.hitInBoundingRect(x, y))
+                    {
+                        if(drawingObjectsController.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
+                        {
+                            drawingObjectsController.checkChartTextSelection();
+                            selector.resetSelection();
+                            selector.selectObject(drawing, pageIndex);
+                            selector.selection.chartSelection = drawing;
+                            drawing.selection.legend = legend;
+                            drawingObjectsController.arrPreTrackObjects.length = 0;
+                            drawingObjectsController.arrPreTrackObjects.push(new AscFormat.MoveChartObjectTrack(legend, drawing));
+                            drawingObjectsController.changeCurrentState(new AscFormat.PreMoveState(drawingObjectsController, x, y, false, false, drawing, true, true));
+                            drawingObjectsController.updateSelectionState();
+                            drawingObjectsController.updateOverlay();
+                            return true;
+                        }
+                        else
+                        {
+                            return {objectId: drawing.Get_Id(), cursorType: "move", title: null};
                         }
                     }
                 }
@@ -1253,17 +1275,21 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
                 }
                 if(drawingObjectsController.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
                 {
-                    if(AscFormat.isRealNumber(drawing.selection.legendEntry))
-                    {
-                        drawing.selection.legendEntry = null;
-                        drawingObjectsController.updateSelectionState();
-                        drawingObjectsController.updateOverlay();
-                    }
+                    drawingObjectsController.checkChartTextSelection();
+                    selector.resetSelection();
+                    selector.selectObject(drawing, pageIndex);
+                    selector.selection.chartSelection = drawing;
+                    drawing.selection.legend = legend;
+                    drawingObjectsController.arrPreTrackObjects.length = 0;
+                    drawingObjectsController.arrPreTrackObjects.push(new AscFormat.MoveChartObjectTrack(legend, drawing));
+                    drawingObjectsController.changeCurrentState(new AscFormat.PreMoveState(drawingObjectsController, x, y, false, false, drawing, true, true));
+                    drawingObjectsController.updateSelectionState();
+                    drawingObjectsController.updateOverlay();
                     return true;
                 }
                 else
                 {
-                    return {objectId: drawing.Get_Id(), cursorType: "move", bMarker: false};
+                    return {objectId: drawing.Get_Id(), cursorType: "move", title: null};
                 }
             }
         }
@@ -1318,7 +1344,7 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
                                         }
                                         else
                                         {
-                                            return {objectId: drawing.Get_Id(), cursorType: "move", title: title};
+                                            return {objectId: drawing.Get_Id(), cursorType: "move", title: null};
                                         }
                                     }
                                     else if(hit_in_text_rect)
