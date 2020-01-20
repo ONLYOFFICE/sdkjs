@@ -11690,7 +11690,12 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 							return;
 							
 						var TempRow  =  this.Content[viewRow];
+						if (TempRow === undefined || TempRow === null)
+							continue;
+
 						var TempCell = this.Content[viewRow].Get_Cell(0);
+						if (TempCell === undefined || TempCell === null)
+							continue;
 						
 						if (TempCell.GetVMerge() === 2)
 						{
