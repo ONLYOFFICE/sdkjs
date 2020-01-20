@@ -2586,13 +2586,7 @@ CPlotArea.prototype =
         this.transform = this.localTransform.CreateDublicate();
         global_MatrixTransformer.TranslateAppend(this.transform, x, y);
 
-        this.transformText = this.localTransformText.CreateDublicate();
-        global_MatrixTransformer.TranslateAppend(this.transformText, x, y);
-
-
         this.invertTransform = global_MatrixTransformer.Invert(this.transform);
-        this.invertTransformText = global_MatrixTransformer.Invert(this.transformText);
-
     },
 
     getContentChangesByType: function(type){
@@ -2931,6 +2925,54 @@ CPlotArea.prototype =
         {
             this.parent.handleUpdateLn();
         }
+    },
+
+
+    getCompiledLine: CShape.prototype.getCompiledLine,
+    getCompiledFill: CShape.prototype.getCompiledFill,
+    getCompiledTransparent: CShape.prototype.getCompiledTransparent,
+    check_bounds: CShape.prototype.check_bounds,
+    getCardDirectionByNum: CShape.prototype.getCardDirectionByNum,
+    getNumByCardDirection: CShape.prototype.getNumByCardDirection,
+    getResizeCoefficients: CShape.prototype.getResizeCoefficients,
+    getInvertTransform: CShape.prototype.getInvertTransform,
+    getTransformMatrix: CShape.prototype.getTransformMatrix,
+    hitToHandles: CShape.prototype.hitToHandles,
+    getFullFlipH: CShape.prototype.getFullFlipH,
+    getFullFlipV: CShape.prototype.getFullFlipV,
+    getAspect: CShape.prototype.getAspect,
+    getGeom: CShape.prototype.getGeom,
+
+
+    hitInBoundingRect: CShape.prototype.hitInBoundingRect,
+    hitInInnerArea: CShape.prototype.hitInInnerArea,
+    hitInPath: CShape.prototype.hitInPath,
+    checkHitToBounds: function (x, y)
+    {
+        CDLbl.prototype.checkHitToBounds.call(this, x, y);
+    },
+    getCanvasContext: function()
+    {
+        return  CDLbl.prototype.getCanvasContext.call(this);
+    },
+
+    canRotate: function()
+    {
+        return false;
+    },
+
+    getNoChangeAspect: function () {
+        return false;
+    },
+    isChart: function()
+    {
+        return false;
+    },
+
+
+    canMove: function()
+    {
+        return true;
     }
 };
 
@@ -8192,6 +8234,25 @@ CLegend.prototype =
     getFullFlipV: CShape.prototype.getFullFlipV,
     getAspect: CShape.prototype.getAspect,
     getGeom: CShape.prototype.getGeom,
+
+
+    hitInBoundingRect: CShape.prototype.hitInBoundingRect,
+    hitInInnerArea: CShape.prototype.hitInInnerArea,
+    hitInPath: CShape.prototype.hitInPath,
+    checkHitToBounds: function (x, y)
+    {
+        CDLbl.prototype.checkHitToBounds.call(this, x, y);
+    },
+    getCanvasContext: function()
+    {
+        return  CDLbl.prototype.getCanvasContext.call(this);
+    },
+
+    canRotate: function()
+    {
+        return false;
+    },
+
     getNoChangeAspect: function () {
         return false;
     },
@@ -8236,22 +8297,6 @@ CLegend.prototype =
         return t_x >= 0 && t_y >= 0 && t_x <= this.extX && t_y <=this.extY;
     },
 
-    hitInBoundingRect: CShape.prototype.hitInBoundingRect,
-    hitInInnerArea: CShape.prototype.hitInInnerArea,
-    hitInPath: CShape.prototype.hitInPath,
-    checkHitToBounds: function (x, y)
-    {
-        CDLbl.prototype.checkHitToBounds.call(this, x, y);
-    },
-    getCanvasContext: function()
-    {
-        return  CDLbl.prototype.getCanvasContext.call(this);
-    },
-
-    canRotate: function()
-    {
-        return false;
-    },
 
     setPosition: function(x, y)
     {
