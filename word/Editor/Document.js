@@ -11300,10 +11300,8 @@ CDocument.prototype.Get_ParentObject_or_DocumentPos = function(Index)
 };
 CDocument.prototype.Refresh_RecalcData = function(Data)
 {
-	var ChangePos         = -1;
-	var bNeedRecalcHdrFtr = false;
-
-	var Type = Data.Type;
+	var ChangePos = -1;
+	var Type      = Data.Type;
 
 	switch (Type)
 	{
@@ -11317,6 +11315,8 @@ CDocument.prototype.Refresh_RecalcData = function(Data)
 		case AscDFH.historyitem_Document_DefaultTab:
 		case AscDFH.historyitem_Document_EvenAndOddHeaders:
 		case AscDFH.historyitem_Document_MathSettings:
+		case AscDFH.historyitem_Document_Settings_GutterAtTop:
+		case AscDFH.historyitem_Document_Settings_MirrorMargins:
 		{
 			ChangePos = 0;
 			break;
