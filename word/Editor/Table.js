@@ -11577,6 +11577,11 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 													Grid_span : 1
 												};
 												cellsInfo[cellsInfo.length] = cell;
+												
+												
+												if (curCell === this.Content[curRow].Get_CellsCount() - 1)
+													this.RemoveTableRow(curRow);
+
 												continue;
 											}
 											var X_start = this.Content[curRow].CellsInfo[curCell].X_cell_start;
@@ -12550,9 +12555,16 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 					Row  : this.Selection.Data[this.Selection.Data.length - 1].Row
 				};
 
-				Cell_pos_.Cell 		 = 0 + this.Selection.Data[0].Cell;
-				var Cell_ 			 = this.Content[Cell_pos_.Row].Get_Cell(Cell_pos_.Cell);
-				var Row_ 			 = this.Content[Cell_pos_.Row];
+				for (var Index = 0; Index < this.GetRow(Cell_pos_.Row).Get_CellsCount(); Index++)
+				{
+					var ViewCell 		 	  = this.GetRow(Cell_pos_.Row).Get_Cell(Index);
+					var View_Grid_start_      = this.GetRow(Cell_pos_.Row).Get_CellInfo(ViewCell.Index).StartGridCol;
+					if (Grid_start === View_Grid_start_)
+						Cell_pos_.Cell 		 = ViewCell.Index;
+				}
+
+				var Row_ 			 = this.GetRow(Cell_pos_.Row);
+				var Cell_ 			 = Row_.Get_Cell(Cell_pos_.Cell);
 				var Grid_start_      = Row_.Get_CellInfo(Cell_pos_.Cell).StartGridCol;
 				var Grid_span_ 	     = Cell_.Get_GridSpan();
 				var VMerge_Count_    = this.Internal_GetVertMergeCount(Cell_pos_.Row, Grid_start_, Grid_span_);
