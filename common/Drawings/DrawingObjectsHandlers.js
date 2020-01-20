@@ -1178,7 +1178,7 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
         var bClickFlag =  !window["IS_NATIVE_EDITOR"] && (drawingObjectsController.handleEventMode === AscFormat.HANDLE_EVENT_MODE_CURSOR || e.ClickCount < 2);
         var selector = group ? group : drawingObjectsController;
         var legend = drawing.getLegend();
-        if(legend && legend.hit(x, y) && bClickFlag)
+        if(legend && (legend.hit(x, y) || (drawing.selection.legend === legend && !AscFormat.isRealNumber(drawing.selection.legendEntry) && (legend.hitInBoundingRect(x, y) || legend.hitToHandles(x, y) > -1)) )  && bClickFlag)
         {
             if(drawing.selection.legend !== legend)
             {
