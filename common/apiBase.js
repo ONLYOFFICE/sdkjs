@@ -1484,6 +1484,8 @@
 	baseEditorsApi.prototype.asc_addImage                        = function(obj)
 	{
 		var t = this;
+        if (this.WordControl) // после показа диалога может не прийти mouseUp
+        	this.WordControl.m_bIsMouseLock = false;
 		AscCommon.ShowImageFileDialog(this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), function(error, files)
 		{
 			t._uploadCallback(error, files, obj);

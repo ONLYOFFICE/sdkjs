@@ -522,6 +522,8 @@
 	{
 		var content;
 		var ext = GetFileExtension(name);
+		if ("svg" === ext)
+			ext += "+xml";
 		if (null !== ext && oZipImages && (content = oZipImages[name]))
 		{
 			return 'data:image/' + ext + ';base64,' + AscCommon.Base64Encode(content, content.length, 0);

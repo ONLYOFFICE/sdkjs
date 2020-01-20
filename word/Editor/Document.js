@@ -3344,7 +3344,7 @@ CDocument.prototype.Recalculate_Page = function()
                 {
                     if (PageIndex + 1 > this.FullRecalc.StartPage + 2)
                     {
-                        if (window["native"]["WC_CheckSuspendRecalculate"] !== undefined)
+                        if (window["native"] && window["native"]["WC_CheckSuspendRecalculate"] !== undefined)
                         {
                             //if (window["native"]["WC_CheckSuspendRecalculate"]())
                             //    return;
@@ -3961,7 +3961,7 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
         {
             if (_PageIndex > this.FullRecalc.StartPage + 2)
             {
-                if (window["native"]["WC_CheckSuspendRecalculate"] !== undefined)
+                if (window["native"] && window["native"]["WC_CheckSuspendRecalculate"] !== undefined)
                 {
                     //if (window["native"]["WC_CheckSuspendRecalculate"]())
                     //    return;
