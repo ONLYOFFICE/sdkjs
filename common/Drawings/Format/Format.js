@@ -268,7 +268,7 @@ var asc_CShapeProperty = Asc.asc_CShapeProperty;
 
     drawingContentChanges[AscDFH.historyitem_ClrMap_SetClr] = function(oClass){return oClass.color_map};
     drawingContentChanges[AscDFH.historyitem_ThemeAddExtraClrScheme] =  function(oClass){return oClass.extraClrSchemeLst;};
-    drawingContentChanges[AscDFH.historyitem_ThemeAddRemoveClrScheme] =  function(oClass){return oClass.extraClrSchemeLst;};
+    drawingContentChanges[AscDFH.historyitem_ThemeRemoveExtraClrScheme] =  function(oClass){return oClass.extraClrSchemeLst;};
 
 
     drawingConstructorsMap[AscDFH.historyitem_ClrMap_SetClr] =  CUniColor;

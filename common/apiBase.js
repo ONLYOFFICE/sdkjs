@@ -1928,7 +1928,17 @@
 				aCustomSchemes.push(asc_color_scheme);
 			}
 			aCustomSchemes.sort(function (a, b) {
-				return a.name > b.name;
+				if(a.name === "" || a.name === null) return -1;
+				if(b.name === "" || b.name === null) return 1;
+				if(a.name > b.name)
+				{
+					return 1;
+				}
+				if(a.name < b.name)
+				{
+					return -1;
+				}
+				return 0;
 			});
 
 			result = result.concat(aCustomSchemes);
