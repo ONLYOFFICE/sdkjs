@@ -17,3 +17,15 @@ task :check_file_without_license do
     raise("Files without license: #{files_without_license}")
   end
 end
+
+desc 'Find files without LF ending'
+task :check_file_without_lf_ending do
+  all_files = Dir['./**/*.js']
+  files_without_ending = []
+  all_files.each do |file|
+    files_without_ending << file if File.read(file).include?("\r")
+  end
+  unless files_without_ending.empty?
+    raise("Files without LF ending: #{files_without_ending}")
+  end
+end
