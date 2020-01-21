@@ -8,9 +8,6 @@ services:
 language: node_js
 node_js:
   - '12'
-before_script:
-  - export BRANCH=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
-  - echo "Project branch $BRANCH"
 jobs:
   include:
     - stage: Check all files contains Copyright
