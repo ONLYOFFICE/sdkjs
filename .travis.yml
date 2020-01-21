@@ -41,6 +41,7 @@ jobs:
         - npm install -g grunt-cli node-qunit-phantomjs
         - npm install --prefix build
         - grunt --level=WHITESPACE_ONLY --gruntfile build/Gruntfile.js
+        - grunt develop --gruntfile build/Gruntfile.js
         - node-qunit-phantomjs cell/.unit-tests/FormulaTests.html
     - stage: Building SDK and test it by `onlyofficetestingrobot/doc-builder-testing`
       script:
