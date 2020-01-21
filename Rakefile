@@ -46,7 +46,7 @@ end
 
 desc 'Perform check on source files'
 task :check_source_files do
-  Rake::Task["check_file_without_license"].invoke
-  Rake::Task["check_file_without_lf_ending"].invoke
-  Rake::Task["check_file_trailing_newline"].invoke
+  Rake::Task['check_file_without_license'].invoke
+  Rake::Task['check_file_without_lf_ending'].invoke
+  Rake::Task['check_file_trailing_newline'].invoke
 end
