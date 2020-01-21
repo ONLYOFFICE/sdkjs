@@ -10105,6 +10105,132 @@ background-repeat: no-repeat;\
         if (this.WordControl.m_oDrawingDocument)
             this.WordControl.m_oDrawingDocument.SetDrawImagePreviewMargins(id, props);
     };
+	window["asc_docs_api"].prototype["pluginMethod_SelectContentControl"] = function(id)
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument)
+			return;
+
+		oLogicDocument.SelectContentControl(id);
+	};
+	window["asc_docs_api"].prototype["pluginMethod_MoveCursorToContentControl"] = function(id, isBegin)
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument)
+			return;
+
+		oLogicDocument.MoveCursorToContentControl(id, isBegin);
+	};
+	window["asc_docs_api"].prototype["pluginMethod_GetSelectedText"] = function()
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument)
+			return;
+
+		return oLogicDocument.GetSelectedText(false, {NewLine : true, NewLineParagraph : true});
+	};
+	window["asc_docs_api"].prototype["pluginMethod_RemoveSelectedContent"] = function()
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument || !oLogicDocument.IsSelectionUse())
+			return;
+
+		if (false === oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Remove, null, true, oLogicDocument.IsFormFieldEditing()))
+		{
+			oLogicDocument.StartAction(AscDFH.historydescription_Document_BackSpaceButton);
+			oLogicDocument.Remove(-1, true);
+			oLogicDocument.FinalizeAction();
+		}
+	};
+	window["asc_docs_api"].prototype["pluginMethod_AddComment"] = function(sMessage, sAuthorName)
+	{
+		var oData = new asc_CCommentDataWord();
+
+		if (sMessage)
+			oData.asc_putText(sMessage);
+
+		if (sAuthorName)
+			oData.asc_putUserName(sAuthorName);
+
+		this.asc_addComment(oData);
+	};
+	window["asc_docs_api"].prototype["pluginMethod_MoveCursorToStart"] = function(isMoveToMainContent)
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		if (oLogicDocument)
+		{
+			if (isMoveToMainContent)
+				oLogicDocument.MoveCursorToStartOfDocument();
+			else
+				oLogicDocument.MoveCursorToStartPos(false);
+		}
+	};
+	window["asc_docs_api"].prototype["pluginMethod_MoveCursorToEnd"] = function(isMoveToMainContent)
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		if (oLogicDocument)
+		{
+			if (isMoveToMainContent)
+				oLogicDocument.MoveCursorToStartOfDocument();
+
+			oLogicDocument.MoveCursorToEndPos(false);
+		}
+	};
+	/**
+	 * Find and replace text.
+	 * @param {Object} oProperties The properties for find and replace.
+	 * @param {string} oProperties.searchString Search string.
+	 * @param {string} oProperties.replaceString Replacement string.
+	 * @param {string} [oProperties.matchCase=true]
+	 *
+	 */
+	window["asc_docs_api"].prototype["pluginMethod_SearchAndReplace"] = function(oProperties)
+	{
+		var sSearch     = oProperties["searchString"];
+		var sReplace    = oProperties["replaceString"];
+		var isMatchCase = undefined !== oProperties["matchCase"] ? oProperties.matchCase : true;
+
+		var oSearchEngine = this.WordControl.m_oLogicDocument.Search(sSearch, {MatchCase : isMatchCase});
+		if (!oSearchEngine)
+			return;
+
+		this.WordControl.m_oLogicDocument.Search_Replace(sReplace, true, null, false);
+	};
+
+	window["asc_docs_api"].prototype["pluginMethod_GetFileHTML"] = function()
+	{
+		return this.ContentToHTML(true);
+	};
+
+	window["asc_docs_api"].prototype["pluginMethod_GetAllContentControlBounds"] = function()
+	{
+		var controls = this.WordControl.m_oLogicDocument.GetAllContentControls();
+		var _wordControl = this.WordControl;
+		var results = controls.filter(function(control){
+			if(control["GetBoundingPolygon"]==undefined){
+				return false;
+			}
+			//TODO: Figure out why some content controls do not have bounds and remove this if required.
+			var _bound = control.GetBoundingPolygon()[0];
+			return _bound != undefined;
+		}).map(function(control){
+			var _props = control.GetContentControlPr();
+			var _bound = control.GetBoundingPolygon()[0];
+			var _rect = _bound.Points[0];
+			var pos = _wordControl.m_oDrawingDocument.ConvertCoordsToCursor2(_rect.X, _rect.Y, _bound.Page);
+			var _pageBounds = _wordControl.m_oDrawingDocument.m_arrPages[_bound.Page];
+			var result = {
+				Tag: _props.Tag,
+				Id: _props.Id,
+				Bounds: {x:pos.X, y:pos.Y},
+				PageBounds: _pageBounds?_pageBounds.drawingPage:undefined
+			};
+			return result;
+		});
+		return results;
+	};
+
+	/********************************************************************/
 
 	asc_docs_api.prototype.asc_OnHideContextMenu = function()
 	{
