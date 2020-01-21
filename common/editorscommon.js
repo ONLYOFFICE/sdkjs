@@ -2854,7 +2854,10 @@
 		var result, range, sheetModel, checkChangeRange;
 		if (Asc.c_oAscSelectionDialogType.Chart === dialogType)
 		{
-			result = parserHelp.parse3DRef(dataRange);
+			if(dataRange)
+			{
+				result = parserHelp.parse3DRef(dataRange);
+			}
 			if (result)
 			{
 				sheetModel = model.getWorksheetByName(result.sheet);
