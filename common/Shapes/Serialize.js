@@ -164,7 +164,6 @@ function BinaryPPTYLoader()
     this.textBodyTextFit = [];
     this.aSlideLayouts = [];
     this.aThemes = [];
-	this.DocReadResult = null;
 
 	this.arr_connectors = [];
 	this.map_shapes_by_id = {};
@@ -10072,10 +10071,8 @@ function BinaryPPTYLoader()
 
 								var oParStruct = new OpenParStruct(par, par);
                                 oParStruct.cur.pos = par.Content.length - 1;
-								if (!this.DocReadResult) {
-									this.DocReadResult = new AscCommonWord.DocReadResult(null);
-								}
-								var boMathr = new Binary_oMathReader(_stream, this.DocReadResult, null);
+								var oReadResult = new AscCommonWord.DocReadResult(null);
+								var boMathr = new Binary_oMathReader(_stream, oReadResult, null);
 								var nDocLength = _stream.GetULongLE();
 								if (AscFormat.PARRUN_TYPE_MATHPARA == _type) {
 									var props = {};
@@ -11675,15 +11672,13 @@ function CPres()
                                     _stream.pos = s.pos;
                                     _stream.cur = s.cur;
                                     _stream.size = s.size;
-                                    var boMathr = new Binary_oMathReader(_stream, this.DocReadResult, null);
+                                    var oReadResult = this.BaseReader ? this.BaseReader.oReadResult : new AscCommonWord.DocReadResult(null);
+                                    var boMathr = new Binary_oMathReader(_stream, oReadResult, null);
                                     var oMathPara = new ParaMath();
                                     ole.parent.ParaMath = oMathPara;
                                     var par = ole.parent.Parent;
                                     var oParStruct = new OpenParStruct(par, par);
                                     oParStruct.cur.pos = par.Content.length - 1;
-                                    if (!this.DocReadResult) {
-                                        this.DocReadResult = new AscCommonWord.DocReadResult(null);
-                                    }
                                     boMathr.bcr.Read1(length2, function(t, l){
                                         return boMathr.ReadMathArg(t,l,oMathPara.Root,oParStruct);
                                     });
