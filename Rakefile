@@ -43,3 +43,10 @@ task :check_file_trailing_newline do
     raise("Files without newline at end: #{files_without_trailing_line}")
   end
 end
+
+desc 'Perform check on source files'
+task :check_source_files do
+  Rake::Task["check_file_without_license"].invoke
+  Rake::Task["check_file_without_lf_ending"].invoke
+  Rake::Task["check_file_trailing_newline"].invoke
+end
