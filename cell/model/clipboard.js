@@ -2861,8 +2861,11 @@
 							var allowedSpecialPasteProps = [sProps.sourceformatting, sProps.destinationFormatting];
 						}
 					};
-					
-					worksheet.objectRender.controller.checkSelectedObjectsAndCallback2(callback);
+					//check text
+					AscFonts.FontPickerByCharacter.getFontsByString(text);
+					worksheet._loadFonts([], function () {
+						worksheet.objectRender.controller.checkSelectedObjectsAndCallback2(callback);
+					});
 					return;
 				}
 
@@ -2993,6 +2996,9 @@
 
 				var addTextIntoCell = function (row, col, sText) {
 					var cell = aResult.getCell(rowCounter, colCounter);
+
+					//check text
+					AscFonts.FontPickerByCharacter.getFontsByString(sText);
 					cell.content[0] = {text: sText, format: new AscCommonExcel.Font()};
 
 					return cell;
