@@ -509,10 +509,10 @@
 						
 
 						// Margins
-						_content_control_pr.MarginT	 		 = _current["Props"]["MarginT"];;
-						_content_control_pr.MarginL	 		 = _current["Props"]["MarginL"];;
-						_content_control_pr.MarginR	 		 = _current["Props"]["MarginR"];;
-						_content_control_pr.MarginB	 		 = _current["Props"]["MarginB"];;
+						_content_control_pr.MarginT	 		 = _current["Props"]["MarginT"];
+						_content_control_pr.MarginL	 		 = _current["Props"]["MarginL"];
+						_content_control_pr.MarginR	 		 = _current["Props"]["MarginR"];
+						_content_control_pr.MarginB	 		 = _current["Props"]["MarginB"];
 
 						_content_control_pr.Orient 		= _current["Props"]["Orient"];
 
@@ -531,15 +531,24 @@
 						{
 							var Width  = _content_control_pr.PageSizeW;
 							if (Width === undefined)
+							{
 								Width = LogicDocument.Get_DocumentPageSize().W;
+							}
 							if (Width < 58)
+							{
 								Width = 58;
-							
+							}
+								
 							var Height = _content_control_pr.PageSizeH;
 							if (Height === undefined)
+							{
 								Height = LogicDocument.Get_DocumentPageSize().H;
+							}
 							if (Height < 43)
+							{
 								Height = 43;
+							}
+								
 							LogicDocument.Set_DocumentPageSize(Width, Height);
 						}
 						
@@ -547,7 +556,9 @@
 						if (undefined !== _current["Props"]["Orient"])
 						{
 							if (_content_control_pr.Orient === 0 || _content_control_pr.Orient === 1)
+							{	
 								LogicDocument.Set_DocumentOrientation(_content_control_pr.Orient);
+							}
 						}
 
 						// Margins
