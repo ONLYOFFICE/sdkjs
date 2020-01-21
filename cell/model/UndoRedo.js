@@ -1923,6 +1923,10 @@ function (window, undefined) {
 					wb.handlers.trigger("asc_onEditDefName", oldName, newName);
 				}
 			}
+		} else if(AscCH.historyitem_Workbook_Calculate === Type) {
+			if (!bUndo) {
+				wb.calculate(Data.elem, nSheetId);
+			}
 		}
 	};
 	UndoRedoWorkbook.prototype.forwardTransformationIsAffect = function (Type) {

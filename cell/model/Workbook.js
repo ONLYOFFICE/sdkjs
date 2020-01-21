@@ -2410,7 +2410,7 @@
 			ws.reassignImageUrls(oImages);
 		});
 	};
-	Workbook.prototype.calculate = function (type) {
+	Workbook.prototype.calculate = function (type, sheetId) {
 		var formulas;
 		if (type === Asc.c_oAscCalculateType.All) {
 			formulas = this.getAllFormulas();
@@ -2423,13 +2423,19 @@
 			}
 		} else if (type === Asc.c_oAscCalculateType.ActiveSheet) {
 			formulas = [];
-			var ws = this.getActiveWs();
+			var ws = sheetId !== undefined ? this.getWorksheetById(sheetId) : this.getActiveWs();
 			ws.getAllFormulas(formulas);
+			sheetId = ws.getId();
 		} else {
 			formulas = this.getAllFormulas();
 		}
 		this.dependencyFormulas.notifyChanged(formulas);
 		this.dependencyFormulas.calcTree();
+		History.Create_NewPoint();
+		History.StartTransaction();
+		History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_Calculate, sheetId,
+			null, new AscCommonExcel.UndoRedoData_SingleProperty(type));
+		History.EndTransaction();
 	};
 	Workbook.prototype.checkDefName = function (checkName, scope) {
 		return this.dependencyFormulas.checkDefName(checkName, scope);
