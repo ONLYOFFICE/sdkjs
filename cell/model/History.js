@@ -64,6 +64,7 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Worksheet_MoveRange = 13;
 	window['AscCH'].historyitem_Worksheet_Rename = 18;
 	window['AscCH'].historyitem_Worksheet_Hide = 19;
+	window['AscCH'].historyitem_Worksheet_Null = 20;
 
 	window['AscCH'].historyitem_Worksheet_ChangeMerge = 25;
 	window['AscCH'].historyitem_Worksheet_ChangeHyperlink = 26;
@@ -1002,23 +1003,6 @@ CHistory.prototype.GetSerializeArray = function()
 			if (this.SavedIndex < 0) {
 				this.SavedIndex = null;
 			}
-		}
-	};
-
-	CHistory.prototype.AddToUpdatesRegions = function(range, sheetId) {
-		if (0 !== this.TurnOffHistory || this.Index < 0) {
-			return;
-		}
-
-		var curPoint = this.Points[this.Index];
-		if (null != range && null != sheetId) {
-			var updateRange = curPoint.UpdateRigions[sheetId];
-			if (null != updateRange) {
-				updateRange.union2(range);
-			} else {
-				updateRange = range.clone();
-			}
-			curPoint.UpdateRigions[sheetId] = updateRange;
 		}
 	};
 

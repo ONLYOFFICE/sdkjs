@@ -5606,7 +5606,9 @@
 			this.getId(), new Asc.Range(0, 0, gc_nMaxCol0, gc_nMaxRow0),
 			new UndoRedoData_FromTo(new UndoRedoData_BBox(oBBoxFrom), new UndoRedoData_BBox(oBBoxTo), copyRange, wsTo.getId()));
 		if(moveToOtherSheet) {
-			History.AddToUpdatesRegions(oBBoxTo, wsTo.getId());
+			//сделано для того, чтобы происходил пересчет/обновление данных на другом листе
+			//таким образом заносим диапазон обновления в UpdateRigions
+			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_Null, wsTo.getId(), oBBoxTo, new UndoRedoData_FromTo(null, null));
 		}
 
 		var shiftedArrayFormula = {};
