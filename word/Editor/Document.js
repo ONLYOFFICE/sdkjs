@@ -6648,26 +6648,35 @@ CDocument.prototype.ShapeApply = function(shapeProps)
 {
 	this.DrawingObjects.shapeApply(shapeProps);
 };
-CDocument.prototype.Select_Drawings = function(DrawingArray, TargetContent)
+CDocument.prototype.SelectDrawings = function(arrDrawings, oTargetContent)
 {
 	this.private_UpdateTargetForCollaboration();
 
-	if (DrawingArray.length > 1 && DrawingArray[0].Is_Inline())
+	var nCount = arrDrawings.length;
+	if (nCount > 1 && arrDrawings[0].IsInline())
 		return;
-	this.DrawingObjects.resetSelection();
-	var hdr_ftr = TargetContent.IsHdrFtr(true);
-	if (hdr_ftr)
+
+	for (var nIndex = 0; nIndex < nCount; ++nIndex)
 	{
-		hdr_ftr.Content.SetDocPosType(docpostype_DrawingObjects);
-		hdr_ftr.Set_CurrentElement(false);
+		if (!arrDrawings[nIndex].IsUseInDocument())
+			return;
+	}
+
+	this.DrawingObjects.resetSelection();
+	var oHdrFtr = oTargetContent.IsHdrFtr(true);
+	if (oHdrFtr)
+	{
+		oHdrFtr.Content.SetDocPosType(docpostype_DrawingObjects);
+		oHdrFtr.Set_CurrentElement(false);
 	}
 	else
 	{
 		this.SetDocPosType(docpostype_DrawingObjects);
 	}
-	for (var i = 0; i < DrawingArray.length; ++i)
+
+	for (var i = 0; i < nCount; ++i)
 	{
-		this.DrawingObjects.selectObject(DrawingArray[i].GraphicObj, 0);
+		this.DrawingObjects.selectObject(arrDrawings[i].GraphicObj, 0);
 	}
 };
 CDocument.prototype.SetTableProps = function(Props)

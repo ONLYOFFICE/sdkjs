@@ -5903,9 +5903,9 @@ PasteProcessor.prototype =
 				allDrawingObj[allDrawingObj.length] = drawingObj[n];
 			}
 		}
-		
-		if(allDrawingObj && allDrawingObj.length)
-            this.oLogicDocument.Select_Drawings(allDrawingObj, oDoc);
+
+		if (allDrawingObj && allDrawingObj.length)
+			this.oLogicDocument.SelectDrawings(allDrawingObj, oDoc);
 	},
 	
 	_readFromBinaryExcel: function(base64)

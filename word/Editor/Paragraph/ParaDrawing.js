@@ -473,6 +473,10 @@ ParaDrawing.prototype.Is_UseInDocument = function()
 	}
 	return false;
 };
+ParaDrawing.prototype.IsUseInDocument = function()
+{
+	return this.Is_UseInDocument();
+};
 ParaDrawing.prototype.CheckGroupSizes = function()
 {
 	if (this.GraphicObj && this.GraphicObj.CheckGroupSizes)
@@ -1602,6 +1606,10 @@ ParaDrawing.prototype.Is_Inline = function()
 		return true;
 
 	return ( drawing_Inline === this.DrawingType ? true : false );
+};
+ParaDrawing.prototype.IsInline = function()
+{
+	return this.Is_Inline();
 };
 ParaDrawing.prototype.Use_TextWrap = function()
 {
