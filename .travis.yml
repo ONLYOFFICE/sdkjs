@@ -38,7 +38,9 @@ jobs:
         - /tmp/sonar-scanner-4.0.0.1744-linux/bin/sonar-scanner -Dsonar.login=$SONAR_TOKEN
     - stage: Formulas tests
       script:
-        - npm install -g node-qunit-phantomjs
+        - npm install -g grunt-cli node-qunit-phantomjs
+        - npm install --prefix build
+        - grunt --level=WHITESPACE_ONLY --base build --gruntfile build/Gruntfile.js
         - node-qunit-phantomjs cell/.unit-tests/FormulaTests.html
     - stage: Building SDK and test it by `onlyofficetestingrobot/doc-builder-testing`
       script:
