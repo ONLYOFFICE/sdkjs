@@ -11,8 +11,6 @@ node_js:
 before_script:
   - export BRANCH=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
   - echo "Project branch $BRANCH"
-  - git clone -b develop https://github.com/ONLYOFFICE/web-apps.git ../web-apps
-  - cd ../web-apps && git checkout -B $BRANCH && cd -
 jobs:
   include:
     - stage: Check all files contains Copyright
