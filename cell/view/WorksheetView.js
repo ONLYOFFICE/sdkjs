@@ -15909,12 +15909,12 @@
 				History.StartTransaction();
 				var shiftCells = type === c_oAscInsertOptions.InsertCellsAndShiftRight ?
 					range.addCellsShiftRight(displayName) : range.addCellsShiftBottom(displayName);
+				History.EndTransaction();
 				if (shiftCells) {
 					t.cellCommentator.updateCommentsDependencies(true, type, arn);
 					t.objectRender.updateDrawingObject(true, type, arn);
 					t._onUpdateFormatTable(range, false, true);
 				}
-				History.EndTransaction();
 			};
 
 			var r2 = type === c_oAscInsertOptions.InsertCellsAndShiftRight ? tablePart.Ref.r2 : gc_nMaxRow0;
