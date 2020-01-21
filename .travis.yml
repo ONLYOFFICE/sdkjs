@@ -14,7 +14,7 @@ jobs:
         - wget -P /tmp https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.0.0.1744-linux.zip
         - unzip -d /tmp /tmp/sonar-scanner-cli-4.0.0.1744-linux.zip
         - /tmp/sonar-scanner-4.0.0.1744-linux/bin/sonar-scanner -Dsonar.login=$SONAR_TOKEN
-    - stage: Formulas testsg
+    - stage: Formulas tests
       script:
         - npm install -g grunt-cli node-qunit-phantomjs
         - npm install --prefix build
