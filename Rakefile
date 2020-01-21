@@ -29,3 +29,17 @@ task :check_file_without_lf_ending do
     raise("Files without LF ending: #{files_without_ending}")
   end
 end
+
+desc 'Check files for trailing newline'
+task :check_file_trailing_newline do
+  all_files = Dir['./**/*.js']
+  files_without_trailing_line = []
+  all_files.each do |file|
+    unless IO.readlines(file)[-1].end_with?("\n")
+      files_without_trailing_line << file
+    end
+  end
+  unless files_without_trailing_line.empty?
+    raise("Files without newline at end: #{files_without_trailing_line}")
+  end
+end
