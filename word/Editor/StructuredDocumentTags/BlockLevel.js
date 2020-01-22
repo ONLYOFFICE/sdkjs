@@ -864,14 +864,20 @@ CBlockLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCur
 		return;
 	}
 
+	var oHdrFtr     = this.IsHdrFtr(true);
+	var nHdrFtrPage = oHdrFtr ? oHdrFtr.GetContent().GetAbsolutePage(0) : null;
+
 	for (var nPageIndex = 0, nPagesCount = this.GetPagesCount(); nPageIndex < nPagesCount; ++nPageIndex)
 	{
 		if (this.IsEmptyPage(nPageIndex))
 			continue;
 
 		var nPageAbs = this.GetAbsolutePage(nPageIndex);
-		var oBounds = this.Content.GetContentBounds(nPageIndex);
-		arrRects.push({X : oBounds.Left, Y : oBounds.Top, R : oBounds.Right, B : oBounds.Bottom, Page : nPageAbs});
+		if (null === nHdrFtrPage || nHdrFtrPage === nPageAbs)
+		{
+			var oBounds = this.Content.GetContentBounds(nPageIndex);
+			arrRects.push({X : oBounds.Left, Y : oBounds.Top, R : oBounds.Right, B : oBounds.Bottom, Page : nPageAbs});
+		}
 	}
 
 	if (undefined !== X && undefined !== Y && undefined !== nCurPage)

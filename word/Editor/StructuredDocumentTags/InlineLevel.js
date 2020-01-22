@@ -391,19 +391,25 @@ CInlineLevelSdt.prototype.Get_WordEndPos = function(SearchPos, ContentPos, Depth
 };
 CInlineLevelSdt.prototype.GetBoundingPolygon = function()
 {
+	var oHdrFtr     = this.Paragraph.Parent.IsHdrFtr(true);
+	var nHdrFtrPage = oHdrFtr ? oHdrFtr.GetContent().GetAbsolutePage(0) : null;
+
 	var StartPage = this.Paragraph.Get_StartPage_Absolute();
 	if (null === this.BoundsPaths || StartPage !== this.BoundsPathsStartPage)
 	{
 		var arrBounds = [], arrRects = [], CurPage = -1;
 		for (var Key in this.Bounds)
 		{
+			if (null !== nHdrFtrPage && nHdrFtrPage !== this.Paragraph.GetAbsolutePage(this.Bounds[Key].PageInternal))
+				continue;
+
 			if (CurPage !== this.Bounds[Key].PageInternal)
 			{
 				arrRects = [];
 				arrBounds.push(arrRects);
 				CurPage  = this.Bounds[Key].PageInternal;
 			}
-			this.Bounds[Key].Page = this.Paragraph.Get_AbsolutePage(this.Bounds[Key].PageInternal);
+			this.Bounds[Key].Page = this.Paragraph.GetAbsolutePage(this.Bounds[Key].PageInternal);
 			arrRects.push(this.Bounds[Key]);
 		}
 
