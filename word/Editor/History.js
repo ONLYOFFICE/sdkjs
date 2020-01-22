@@ -329,7 +329,13 @@ CHistory.prototype =
         return this.RecalculateData;
     },
 
-    Create_NewPoint : function(Description)
+	/**
+	 * Создаем новую точку в истории
+	 * @param {number} nDescription - идентификатор производимого действия
+	 * @param {object} [oSelectionState=undefined] - сохраненное состояние редактора до начала действия (если не задано используем состояние на текущий момент)
+	 * @returns {boolean}
+	 */
+    Create_NewPoint : function(nDescription, oSelectionState)
     {
 		if ( 0 !== this.TurnOffHistory )
 			return false;
@@ -347,7 +353,7 @@ CHistory.prototype =
 
         this.CheckUnionLastPoints();
         
-        var State = this.Document.GetSelectionState();
+        var State = oSelectionState ? oSelectionState : this.Document.GetSelectionState();
         var Items = [];
         var Time  = new Date().getTime();
 
@@ -358,7 +364,7 @@ CHistory.prototype =
             Items      : Items, // Массив изменений, начиная с текущего момента
             Time       : Time,  // Текущее время
             Additional : {},    // Дополнительная информация
-            Description: Description
+            Description: nDescription
         };
 
         // Удаляем ненужные точки

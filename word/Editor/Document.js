@@ -2530,10 +2530,11 @@ CDocument.prototype.GetColorMap = function()
 /**
  * Начинаем новое действие, связанное с изменением документа
  * @param {number} nDescription
+ * @param {object} [oSelectionState=null] - начальное состояние селекта, до начала действия
  */
-CDocument.prototype.StartAction = function(nDescription)
+CDocument.prototype.StartAction = function(nDescription, oSelectionState)
 {
-	var isNewPoint = this.History.Create_NewPoint(nDescription);
+	var isNewPoint = this.History.Create_NewPoint(nDescription, oSelectionState);
 
 	if (true === this.Action.Start)
 	{
@@ -11156,9 +11157,9 @@ CDocument.prototype.Get_CurPage = function()
 //----------------------------------------------------------------------------------------------------------------------
 // Undo/Redo функции
 //----------------------------------------------------------------------------------------------------------------------
-CDocument.prototype.Create_NewHistoryPoint = function(nDescription)
+CDocument.prototype.Create_NewHistoryPoint = function(nDescription, oSelectionState)
 {
-	this.History.Create_NewPoint(nDescription);
+	this.History.Create_NewPoint(nDescription, oSelectionState);
 };
 CDocument.prototype.Document_Undo = function(Options)
 {
@@ -21123,6 +21124,8 @@ CDocument.prototype.DrawTable = function()
 		if (!this.DrawTableMode.Draw || Math.abs(this.DrawTableMode.StartX - this.DrawTableMode.EndX) < 1 || Math.abs(this.DrawTableMode.StartY - this.DrawTableMode.EndY) < 1)
 			return;
 
+		var oSelectionState = this.GetSelectionState();
+
 		this.RemoveSelection();
 
 		this.CurPage = this.DrawTableMode.Page;
@@ -21130,7 +21133,7 @@ CDocument.prototype.DrawTable = function()
 
 		if (!this.IsSelectionLocked(AscCommon.changestype_Document_Content_Add))
 		{
-			this.StartAction(AscDFH.historydescription_Document_DrawNewTable);
+			this.StartAction(AscDFH.historydescription_Document_DrawNewTable, oSelectionState);
 
 			var oTable = this.AddInlineTable(1, 1, -1);
 			if (oTable && oTable.GetRowsCount() > 0)
