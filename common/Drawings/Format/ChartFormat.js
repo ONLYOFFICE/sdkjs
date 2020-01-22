@@ -2943,7 +2943,10 @@ CPlotArea.prototype =
     getAspect: CShape.prototype.getAspect,
     getGeom: CShape.prototype.getGeom,
 
-
+    convertPixToMM: function(pix)
+    {
+        return this.parent && this.parent.parent && this.parent.parent.convertPixToMM(pix);
+    },
     hitInBoundingRect: CShape.prototype.hitInBoundingRect,
     hitInInnerArea: CShape.prototype.hitInInnerArea,
     hitInPath: CShape.prototype.hitInPath,
@@ -2953,7 +2956,7 @@ CPlotArea.prototype =
     },
     getCanvasContext: function()
     {
-        return  CDLbl.prototype.getCanvasContext.call(this);
+        return this.parent && this.parent.parent && this.parent.parent.getCanvasContext();
     },
 
     canRotate: function()

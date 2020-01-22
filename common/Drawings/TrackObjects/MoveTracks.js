@@ -636,6 +636,11 @@ function MoveChartObjectTrack(oObject, oChartSpace)
         {
             oObjectToSet.setLayout(new AscFormat.CLayout());
         }
+        if(oObjectToSet.getObjectType() === AscDFH.historyitem_type_PlotArea)
+        {
+            oObjectToSet.layout.setXMode(AscFormat.LAYOUT_MODE_EDGE);
+            oObjectToSet.layout.setYMode(AscFormat.LAYOUT_MODE_EDGE);
+        }
         var pos = this.chartSpace.chartObj.recalculatePositionText(this.originalObject);
         var fLayoutX = this.chartSpace.calculateLayoutByPos(pos.x, oObjectToSet.layout.xMode, this.x, this.chartSpace.extX);
         var fLayoutY = this.chartSpace.calculateLayoutByPos(pos.y, oObjectToSet.layout.yMode, this.y, this.chartSpace.extY);
