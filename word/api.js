@@ -8998,7 +8998,7 @@ background-repeat: no-repeat;\
 			isLocked = oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_None, {
 				Type      : AscCommon.changestype_2_ElementsArray_and_Type,
 				Elements  : [oContentControl],
-				CheckType : AscCommon.changestype_ContentControl_Remove
+				CheckType : AscCommon.changestype_Paragraph_AddText
 			}, false, oLogicDocument.IsFormFieldEditing());
 		}
 		else if (c_oAscSdtLevelType.Inline === oContentControl.GetContentControlType())
@@ -9012,7 +9012,7 @@ background-repeat: no-repeat;\
 				isLocked = oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_None, {
 					Type      : AscCommon.changestype_2_ElementsArray_and_Type,
 					Elements  : [oParagraph],
-					CheckType : AscCommon.changestype_Remove
+					CheckType : AscCommon.changestype_Paragraph_AddText
 				}, false, oLogicDocument.IsFormFieldEditing());
 
 				oLogicDocument.LoadDocumentState(oState);
