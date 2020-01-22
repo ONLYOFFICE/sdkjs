@@ -194,7 +194,19 @@ ParaRun.prototype.Copy = function(Selected, oPr)
 
     var NewRun = new ParaRun(this.Paragraph, bMath);
 
-    NewRun.Set_Pr( this.Pr.Copy() );
+	var oCopyPr = this.Pr.Copy();
+	if(oPr.Comparison)
+	{
+		if(oCopyPr.RStyle)
+		{
+			var oStyle = oPr.Comparison.getRevisedStyle(oCopyPr.RStyle);
+			if(oStyle)
+			{
+				oCopyPr.RStyle = oPr.Comparison.copyStyle(oStyle);
+			}
+		}
+	}
+	NewRun.Set_Pr(oCopyPr);
 
     var oLogicDocument = this.GetLogicDocument();
     if (true === isCopyReviewPr || (oLogicDocument && (oLogicDocument.RecalcTableHeader || oLogicDocument.MoveDrawing)))
