@@ -458,6 +458,8 @@ CSelectedContent.prototype =
 
 			if (type_Paragraph !== nElementType)
 				isNonParagraph = true;
+
+			Element.MoveCursorToEndPos(false);
         }
 
         this.HaveMath = (this.Maths.length > 0 ? true : false);
