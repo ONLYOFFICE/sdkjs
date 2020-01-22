@@ -638,6 +638,7 @@ function MoveChartObjectTrack(oObject, oChartSpace)
         }
         if(oObjectToSet.getObjectType() === AscDFH.historyitem_type_PlotArea)
         {
+            oObjectToSet.layout.setLayoutTarget(AscFormat.LAYOUT_TARGET_INNER);
             oObjectToSet.layout.setXMode(AscFormat.LAYOUT_MODE_EDGE);
             oObjectToSet.layout.setYMode(AscFormat.LAYOUT_MODE_EDGE);
         }

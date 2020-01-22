@@ -2494,6 +2494,7 @@ function CPlotArea()
     this.posY = 0;
     this.x = 0;
     this.y = 0;
+    this.rot = 0;
     this.extX = 5;
     this.extY = 5;
 

@@ -15611,6 +15611,15 @@ CChartSpace.prototype.recalculateChart = function()
     if(this.chartObj == null)
         this.chartObj =  new AscFormat.CChartsDrawer();
     this.chartObj.recalculate(this);
+
+
+    var oChartSize = this.getChartSizes(true);
+    this.chart.plotArea.x = oChartSize.startX;
+    this.chart.plotArea.y = oChartSize.startY;
+    this.chart.plotArea.extX = oChartSize.w;
+    this.chart.plotArea.extY = oChartSize.h;
+    this.chart.plotArea.localTransform.Reset();
+    AscCommon.global_MatrixTransformer.TranslateAppend(this.chart.plotArea.localTransform, oChartSize.startX, oChartSize.startY);
 };
 
 

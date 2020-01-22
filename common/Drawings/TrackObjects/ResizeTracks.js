@@ -1009,9 +1009,9 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
 
             }
 
-            if(this.originalObject.chart instanceof AscFormat.CChartSpace)
+            if(this.chartSpace)
             {
-                global_MatrixTransformer.MultiplyAppend(_transform, this.originalObject.chart.transform);
+                global_MatrixTransformer.MultiplyAppend(_transform, this.chartSpace.transform);
             }
             if(this.originalObject.cropObject)
             {
@@ -1162,6 +1162,10 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                 var pos = this.chartSpace.chartObj.recalculatePositionText(this.originalObject);
                 oObjectToSet.layout.setXMode(AscFormat.LAYOUT_MODE_EDGE);
                 oObjectToSet.layout.setYMode(AscFormat.LAYOUT_MODE_EDGE);
+                if(oObjectToSet instanceof AscFormat.CPlotArea)
+                {
+                    oObjectToSet.layout.setLayoutTarget(AscFormat.LAYOUT_TARGET_INNER);
+                }
                 var fLayoutX = this.chartSpace.calculateLayoutByPos(pos.x, oObjectToSet.layout.xMode, this.resizedPosX, this.chartSpace.extX);
                 var fLayoutY = this.chartSpace.calculateLayoutByPos(pos.y, oObjectToSet.layout.yMode, this.resizedPosY, this.chartSpace.extY);
                 var fLayoutW = this.chartSpace.calculateLayoutBySize(this.resizedPosX, oObjectToSet.layout.wMode, this.chartSpace.extX, this.resizedExtX);
