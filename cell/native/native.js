@@ -5800,6 +5800,18 @@ window["native"]["offline_calculate_complete_range"] = function(x, y, w, h) {
             ws._getRowTop(range.r2)  + ws._getRowHeight(range.r1)];
 }
 
+window["Asc"]["spreadsheet_api"].prototype.asc_nativeGetFileData = function() {
+    var oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(this.wbModel);
+
+    oBinaryFileWriter.Write(true);
+
+    window["native"]["GetFileData"](
+        oBinaryFileWriter.Memory.ImData.data, 
+        oBinaryFileWriter.Memory.GetCurPosition());
+
+    return true;
+};
+
 window["native"]["offline_apply_event"] = function(type,params) {
     var _borderOptions = Asc.c_oAscBorderOptions;
     var _stream = null;
@@ -6066,7 +6078,7 @@ window["native"]["offline_apply_event"] = function(type,params) {
         {
             _stream = global_memory_stream_menu;
             _stream["ClearNoAttack"]();
-            _stream["WriteStringA"](_api.asc_nativeGetFile());
+            _stream["WriteStringA"](_api.asc_nativeGetFileData());
             _return = _stream;
             break;
         }

@@ -3609,6 +3609,16 @@ Asc['asc_docs_api'].prototype.asc_setDocumentPassword = function(password)
     AscCommon.sendCommand(this, null, v);
 };
 
+Asc["asc_docs_api"].prototype["asc_nativeGetFileData"] = function()
+{
+    var oBinaryFileWriter = new AscCommon.CBinaryFileWriter();
+    this.WordControl.m_oLogicDocument.CalculateComments();
+    oBinaryFileWriter.WriteDocument3(this.WordControl.m_oLogicDocument);
+
+    window["native"]["GetFileData"](oBinaryFileWriter.ImData.data, oBinaryFileWriter.GetCurPosition());
+
+    return true;
+};
 
 Asc['asc_docs_api'].prototype.asc_setSpellCheck = function(isOn)
 {

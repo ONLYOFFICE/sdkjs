@@ -2142,7 +2142,7 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
         {
             var _stream = global_memory_stream_menu;
             _stream["ClearNoAttack"]();
-            _stream["WriteStringA"](this["asc_nativeGetFile"]());
+            _stream["WriteStringA"](this["asc_nativeGetFileData"]());
             _return = _stream;
             break;
         }
@@ -6305,6 +6305,18 @@ Asc['asc_docs_api'].prototype.openDocument = function(file)
     setInterval(function() {
                 t._autoSave();
                 }, 40);
+};
+
+window["asc_docs_api"].prototype["asc_nativeGetFileData"] = function()
+{
+    var oBinaryFileWriter = new AscCommonWord.BinaryFileWriter(this.WordControl.m_oLogicDocument);
+    var memory = oBinaryFileWriter.memory;
+
+    oBinaryFileWriter.Write(true);
+
+    window["native"]["GetFileData"](memory.ImData.data, memory.GetCurPosition());
+
+    return true;
 };
 
 Asc['asc_docs_api'].prototype.asc_setSpellCheck = function(isOn)

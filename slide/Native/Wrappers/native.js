@@ -1163,7 +1163,7 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
         {
             var _stream = global_memory_stream_menu;
             _stream["ClearNoAttack"]();
-            _stream["WriteStringA"](this["asc_nativeGetFile"]());
+            _stream["WriteStringA"](this["asc_nativeGetFileData"]());
             _return = _stream;
             break;
         }
