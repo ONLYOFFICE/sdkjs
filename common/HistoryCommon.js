@@ -2038,6 +2038,7 @@
 	window['AscDFH'].historyitem_Layout_SetXMode        = window['AscDFH'].historyitem_type_Layout | 7;
 	window['AscDFH'].historyitem_Layout_SetY            = window['AscDFH'].historyitem_type_Layout | 8;
 	window['AscDFH'].historyitem_Layout_SetYMode        = window['AscDFH'].historyitem_type_Layout | 9;
+	window['AscDFH'].historyitem_Layout_SetParent       = window['AscDFH'].historyitem_type_Layout | 10;
 
 	window['AscDFH'].historyitem_LegendEntry_SetDelete = window['AscDFH'].historyitem_type_LegendEntry | 1;
 	window['AscDFH'].historyitem_LegendEntry_SetIdx    = window['AscDFH'].historyitem_type_LegendEntry | 2;

@@ -264,6 +264,7 @@ function (window, undefined) {
     drawingsChangesMap[AscDFH.historyitem_Layout_SetXMode]                    = function(oClass, value){oClass.xMode        = value;};
     drawingsChangesMap[AscDFH.historyitem_Layout_SetY]                        = function(oClass, value){oClass.y            = value;};
     drawingsChangesMap[AscDFH.historyitem_Layout_SetYMode]                    = function(oClass, value){oClass.yMode        = value;};
+    drawingsChangesMap[AscDFH.historyitem_Layout_SetParent]                    = function(oClass, value){oClass.parent        = value;};
     drawingsChangesMap[AscDFH.historyitem_Legend_SetLayout]                   = function(oClass, value){oClass.layout       = value;};
     drawingsChangesMap[AscDFH.historyitem_Legend_SetLegendPos]                = function(oClass, value){oClass.legendPos  = value;};
     drawingsChangesMap[AscDFH.historyitem_Legend_SetOverlay]                  = function(oClass, value){oClass.overlay   = value;};
@@ -619,6 +620,7 @@ function (window, undefined) {
     AscDFH.changesFactory[AscDFH.historyitem_Layout_SetW                       ] = window['AscDFH'].CChangesDrawingsDouble;
     AscDFH.changesFactory[AscDFH.historyitem_Layout_SetX                       ] = window['AscDFH'].CChangesDrawingsDouble;
     AscDFH.changesFactory[AscDFH.historyitem_Layout_SetY                       ] = window['AscDFH'].CChangesDrawingsDouble;
+    AscDFH.changesFactory[AscDFH.historyitem_Layout_SetParent                  ] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_OfPieChart_SetSplitPos            ] = window['AscDFH'].CChangesDrawingsDouble;
     AscDFH.changesFactory[AscDFH.historyitem_PictureOptions_SetPictureStackUnit] = window['AscDFH'].CChangesDrawingsDouble;
     AscDFH.changesFactory[AscDFH.historyitem_Scaling_SetLogBase                ] = window['AscDFH'].CChangesDrawingsDouble2;
@@ -2376,6 +2378,10 @@ CDLbl.prototype =
     {
         (false === AscCommon.g_oIdCounter.m_bLoad && true === History.Is_On()) && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_DLbl_SetLayout, this.layout, pr));
         this.layout = pr;
+        if(this.layout)
+        {
+            this.layout.setParent(this);
+        }
     },
     setNumFmt: function(pr)
     {
@@ -2828,6 +2834,10 @@ CPlotArea.prototype =
     {
         History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_PlotArea_SetLayout, this.layout, pr));
         this.layout = pr;
+        if(this.layout)
+        {
+            this.layout.setParent(this);
+        }
     },
 
 
@@ -7975,6 +7985,7 @@ function CLayout()
     this.xMode = null;
     this.y = null;
     this.yMode = null;
+    this.parent = null;
 
     this.Id = g_oIdCounter.Get_NewId();
     g_oTableId.Add(this, this.Id);
@@ -7986,8 +7997,13 @@ CLayout.prototype =
     {
         return this.Id;
     },
-    Refresh_RecalcData: function()
-    {},
+    Refresh_RecalcData: function(Data)
+    {
+        if(this.parent && this.parent.Refresh_RecalcData2)
+        {
+            this.parent.Refresh_RecalcData2();
+        }
+    },
 
     Write_ToBinary2: function (w)
     {
@@ -8018,6 +8034,12 @@ CLayout.prototype =
     getObjectType: function()
     {
         return AscDFH.historyitem_type_Layout;
+    },
+
+    setParent: function(pr)
+    {
+        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_Layout_SetParent, this.parent, pr));
+        this.parent = pr;
     },
 
     setH: function(pr)
@@ -8072,7 +8094,7 @@ CLayout.prototype =
     {
         History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_Layout_SetYMode, this.yMode, pr));
         this.yMode = pr;
-            }
+    }
 };
 
 function CLegend()
@@ -8428,6 +8450,10 @@ CLegend.prototype =
     {
         History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_Legend_SetLayout, this.layout, layout));
         this.layout = layout;
+        if(this.layout)
+        {
+            this.layout.setParent(this);
+        }
     },
     addLegendEntry: function(legendEntry)
     {
@@ -13134,6 +13160,10 @@ CTitle.prototype =
     {
         History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_Title_SetLayout, this.layout, pr));
         this.layout = pr;
+        if(this.layout)
+        {
+            this.layout.setParent(this);
+        }
     },
 
     setOverlay: function(pr)
