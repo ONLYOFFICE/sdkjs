@@ -8301,6 +8301,7 @@
 				var activeCellRange = new Asc.Range(activeCell.col, activeCell.row, activeCell.col, activeCell.row);
 
 				var expandRange = this.model.autoFilters.expandRange(activeCellRange, true);
+				expandRange = this.model.autoFilters.checkExpandRangeForSort(expandRange);
 
 				//если диапазон не расширяется за счет близлежащих ячеек - не выдаем сообщение и не расширяем
 				if(arn.isEqual(expandRange) || activeCellRange.isEqual(expandRange))
@@ -14667,6 +14668,7 @@
 			//expand selectionRange
 			if (bIsExpandRange) {
 				expandRange = t.model.autoFilters.expandRange(activeRange);
+				expandRange = t.model.autoFilters.checkExpandRangeForSort(expandRange);
 
 				var bIgnoreFirstRow = window['AscCommonExcel'].ignoreFirstRowSort(t.model, expandRange);
 				if (bIgnoreFirstRow) {
@@ -18757,6 +18759,9 @@
 				selection = tryExpandRange ? tryExpandRange : t.model.autoFilters.expandRange(selection, true);
 			}
 			selection =  t.model.autoFilters.cutRangeByDefinedCells(selection);
+			if(bExpand) {
+				selection = t.model.autoFilters.checkExpandRangeForSort(selection);
+			}
 
 			//в модели лежит флаг columnSort - если он true значит сортируем по строке(те перемещаем колонки)
 			//в настройках флаг columnSort - означает, что сортируем по колонке

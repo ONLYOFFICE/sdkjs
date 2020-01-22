@@ -3893,6 +3893,35 @@
 				return range;
 			},
 
+			checkExpandRangeForSort: function(range) {
+				//пока добавляю только исколючение для именованного диапазона
+				//TODO так же необходимо рассмотреть все возможные ситуации при расширении именованного диапазона в случае сортировки
+				var ws = this.worksheet;
+				var filterDefName = ws.workbook.getDefinesNames("_xlnm._filterdatabase", ws.getId());
+				if(filterDefName) {
+					var filterDefNameRef = false;
+					AscCommonExcel.executeInR1C1Mode(false, function () {
+						filterDefNameRef = AscCommonExcel.getRangeByRef(filterDefName.ref, ws, true, true)
+					});
+					if(filterDefNameRef && filterDefNameRef.length) {
+						filterDefNameRef = filterDefNameRef[0];
+						if(filterDefNameRef && filterDefNameRef.bbox) {
+							filterDefNameRef = filterDefNameRef.bbox;
+							if(range.intersection(filterDefNameRef)) {
+								if(range.containsRange(filterDefNameRef)) {
+									//обрезаем диапазон по первой строке именованного диапазона
+									range = new Asc.Range(range.c1, filterDefNameRef.r1, range.c2, range.r2);
+								} else {
+									range = range.union(filterDefNameRef);
+									range = new Asc.Range(range.c1, filterDefNameRef.r1, range.c2, range.r2);
+								}
+							}
+						}
+					}
+				}
+				return range;
+			},
+
 			cutRangeByDefinedCells: function(range) {
 				var worksheet = this.worksheet;
 				if(!range) {
