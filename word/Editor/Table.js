@@ -10240,6 +10240,8 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 			// Проверка, были ли выбраны начало и конец выделения
 			// *Необходимо для случаев, когда у ячейки VMerge_count > 1*
 			var SelectedCells = this.GetCellAndBorderByClick(X1, Y1, curColumn, drawMode);
+			if (SelectedCells === undefined)
+				return;
 			var isVSelect  = SelectedCells.isVSelect;  // Была ли выбрана вертикальная граница
 			var isHSelect  = SelectedCells.isHSelect;   // Была ли выбрана горизонтальная граница
 
@@ -11065,6 +11067,9 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 		if (X1 === X2 && Y1 === Y2)
 		{
 			var SelectedCells = this.GetCellAndBorderByClick(X1, Y1, curColumn, drawMode);
+			if (SelectedCells === undefined)
+				return;
+
 			var isVSelect  = SelectedCells.isVSelect;  // Была ли выбрана вертикальная граница
 			var isHSelect  = SelectedCells.isHSelect;   // Была ли выбрана горизонтальная граница
 
@@ -11513,7 +11518,7 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 					if (VMerge_count_1  === this.Get_RowsCount() || VMerge_count_2 === this.Get_RowsCount())
 					{
 						var TempCell_1 = this.Content[VMerge_count_1 - 1].Get_Cell(0);
-						var TempCell_2 = this.Content[VMerge_count_2 - 1].Get_Cell(this.Content[0].Get_CellsCount() - 1);
+						var TempCell_2 = this.Content[VMerge_count_2 - 1].Get_Cell(this.Content[VMerge_count_2 - 1].Get_CellsCount() - 1);
 						if (Cell_1.Get_Border(3).Value === 0 && Cell_1.Get_Border(0).Value === 0 && TempCell_1.Get_Border(2).Value === 0)
 						{
 							this.CurCell = Cell_1;
@@ -14485,11 +14490,19 @@ CTable.prototype.GetCellAndBorderByClick = function(X, Y, curColumn, drawMode)
 							// до последней строки включительно, добавляем в Selection.Data
 							if (curRow + VMerge_count - 1 === this.Get_RowsCount() - 1)
 							{
-								var cell_pos = 
+								var ViewRow = this.GetRow(curRow + VMerge_count - 1);
+
+								for (var Index = 0; Index < ViewRow.GetCellsCount(); Index++)
 								{
-									Cell: curCell,
-									Row : curRow + VMerge_count - 1
-								};
+									var View_Grid_start = ViewRow.Get_CellInfo(Index).StartGridCol;
+									if (Grid_start === View_Grid_start)
+									{
+										var cell_pos = {
+											Cell: Index,
+											Row : curRow + VMerge_count - 1
+										};
+									}
+								}
 								
 								if (Cell.GetVMerge() === 2)
 									return;
