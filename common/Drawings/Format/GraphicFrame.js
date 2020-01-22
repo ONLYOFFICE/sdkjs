@@ -410,6 +410,7 @@ CGraphicFrame.prototype.recalculate = function()
                 this.transformText = this.transform;
                 this.invertTransformText = this.invertTransform;
                 this.cachedImage = null;
+                this.recalcInfo.recalculateSizes = true;
             }
             if(this.recalcInfo.recalculateTable)
             {
