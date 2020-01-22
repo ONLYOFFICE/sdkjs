@@ -13900,6 +13900,8 @@ CChartSpace.prototype.getChartSizes = function(bNotRecalculate)
             if(AscFormat.isRealNumber(fSize2) && fSize2 > 0){
                 oChartSize.w = fSize;
                 oChartSize.h = fSize2;
+                oChartSize.startX = this.calculatePosByLayout(oChartSize.startX, oLayout.xMode, oLayout.x, oChartSize.w, this.extX);
+                oChartSize.startY = this.calculatePosByLayout(oChartSize.startY, oLayout.yMode, oLayout.y, oChartSize.h, this.extY);
                 var aCharts = this.chart.plotArea.charts;
                 for(var i = 0; i < aCharts.length; ++i){
                     var nChartType = aCharts[i].getObjectType();
