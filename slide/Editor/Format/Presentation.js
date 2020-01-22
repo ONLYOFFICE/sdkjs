@@ -4782,7 +4782,6 @@ CPresentation.prototype.addImages = function (aImages, placeholder) {
                     var Image = oController.createImage(_image.src, oPh.x + oPh.extX / 2.0 - _w / 2.0, oPh.y + oPh.extY / 2.0 - _h / 2.0, _w, _h, _image.videoUrl, _image.audioUrl);
                     this.Slides[this.CurPage].replaceSp(oPh, Image);
                     Image.setParent(this.Slides[this.CurPage]);
-                    Image.addToDrawingObjects();
                     oController.selectObject(Image, 0);
                     this.Recalculate();
                     this.Document_UpdateInterfaceState();
