@@ -1062,7 +1062,7 @@ CDocumentContent.prototype.Recalculate_Page               = function(PageIndex, 
                 var FrameBounds = this.Content[Index].Get_FrameBounds(FrameX, FrameY, FrameW, FrameH);
                 var FrameX2     = FrameBounds.X, FrameY2 = FrameBounds.Y, FrameW2 = FrameBounds.W, FrameH2 = FrameBounds.H;
 
-                if ((FrameY2 + FrameH2 > YLimit || Y > YLimit - 0.001 ) && Index != StartIndex)
+                if ((FrameY2 + FrameH2 > Page_Field_B || Y > Page_Field_B - 0.001 ) && Index != StartIndex)
                 {
                     this.RecalcInfo.Set_FrameRecalc(true);
                     this.Content[Index].StartFromNewPage();

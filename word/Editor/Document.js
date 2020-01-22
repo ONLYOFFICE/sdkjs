@@ -4405,7 +4405,7 @@ CDocument.prototype.private_RecalculateFlowParagraph         = function(RecalcIn
 
             // TODO: Если мы заново пересчитываем текущую страницу, проверить надо ли обнулять параметр RecalcInfo.FrameRecalc
         }
-        else if ((FrameY2 + FrameH2 > YLimit || Y > YLimit - 0.001) && Index != StartIndex)
+        else if ((FrameY2 + FrameH2 > Page_H || Y > Page_H - 0.001) && Index != StartIndex)
         {
             this.RecalcInfo.Set_FrameRecalc(true);
             RecalcResult = recalcresult_NextPage | recalcresultflags_LastFromNewColumn;
