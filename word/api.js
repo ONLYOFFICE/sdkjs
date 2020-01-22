@@ -8838,11 +8838,17 @@ background-repeat: no-repeat;\
 			return;
 
 		var oCC = oLogicDocument.GetContentControl(sId);
-		if (!oCC || !oCC.IsPicture() || !oCC.SelectPicture())
+		oCC.SkipSpecialContentControlLock(true);
+		if (!oCC || !oCC.IsPicture() || !oCC.SelectPicture() || !oCC.CanBeEdited())
+		{
+			oCC.SkipSpecialContentControlLock(false);
 			return;
+		}
 
 		if (!oLogicDocument.IsSelectionLocked(AscCommon.changestype_Image_Properties, undefined, false, oLogicDocument.IsFormFieldEditing()))
 		{
+			oCC.SkipSpecialContentControlLock(false);
+
 			var oImagePr = {
 				ImageUrl : sUrl
 			};
@@ -8906,6 +8912,10 @@ background-repeat: no-repeat;\
 			{
 				fApplyCallback();
 			}
+		}
+		else
+		{
+			oCC.SkipSpecialContentControlLock(false);
 		}
 	};
 	asc_docs_api.prototype.asc_AddContentControlList = function(isComboBox, oPr)
