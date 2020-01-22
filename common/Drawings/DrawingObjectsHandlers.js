@@ -1499,27 +1499,27 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
                         return {objectId: drawing.Get_Id(), cursorType: AscFormat.CURSOR_TYPES_BY_CARD_DIRECTION[card_direction], bMarker: true};
                     }
                 }
+            }
 
-                if(oPlotArea.hitInBoundingRect(x, y))
+            if(oPlotArea.hitInBoundingRect(x, y))
+            {
+                if(drawingObjectsController.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
                 {
-                    if(drawingObjectsController.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
-                    {
-                        drawingObjectsController.checkChartTextSelection();
-                        selector.resetSelection();
-                        selector.selectObject(drawing, pageIndex);
-                        selector.selection.chartSelection = drawing;
-                        drawing.selection.plotArea = oPlotArea;
-                        drawingObjectsController.arrPreTrackObjects.length = 0;
-                        drawingObjectsController.arrPreTrackObjects.push(new AscFormat.MoveChartObjectTrack(oPlotArea, drawing));
-                        drawingObjectsController.changeCurrentState(new AscFormat.PreMoveState(drawingObjectsController, x, y, false, false, drawing, true, true));
-                        drawingObjectsController.updateSelectionState();
-                        drawingObjectsController.updateOverlay();
-                        return true;
-                    }
-                    else
-                    {
-                        return {objectId: drawing.Get_Id(), cursorType: "move", title: null};
-                    }
+                    drawingObjectsController.checkChartTextSelection();
+                    selector.resetSelection();
+                    selector.selectObject(drawing, pageIndex);
+                    selector.selection.chartSelection = drawing;
+                    drawing.selection.plotArea = oPlotArea;
+                    drawingObjectsController.arrPreTrackObjects.length = 0;
+                    drawingObjectsController.arrPreTrackObjects.push(new AscFormat.MoveChartObjectTrack(oPlotArea, drawing));
+                    drawingObjectsController.changeCurrentState(new AscFormat.PreMoveState(drawingObjectsController, x, y, false, false, drawing, true, true));
+                    drawingObjectsController.updateSelectionState();
+                    drawingObjectsController.updateOverlay();
+                    return true;
+                }
+                else
+                {
+                    return {objectId: drawing.Get_Id(), cursorType: "move", title: null};
                 }
             }
 
