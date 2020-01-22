@@ -14693,12 +14693,12 @@
                 var rgbColor = color ? new AscCommonExcel.RgbColor((color.asc_getR() << 16) + (color.asc_getG() << 8) + color.asc_getB()) : null;
 
 
-                var sort = t._doSort(sortProps.sortRange, type, sortProps.startCol, rgbColor)
+                var sort = t._doSort(sortProps.sortRange, type, sortProps.startCol, rgbColor);
                 t.cellCommentator.sortComments(sort);
                 t.model.autoFilters.sortColFilter(type, cellId, ar, sortProps, displayName, rgbColor);
 
+				History.EndTransaction();
                 t._onUpdateFormatTable(sortProps.sortRange.bbox, false);
-                History.EndTransaction();
             };
 
 			if (null === sortProps) {
