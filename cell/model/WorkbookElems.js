@@ -8748,8 +8748,8 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 	asc_CPageOptions.prototype.clone = function (ws) {
 		var res = new asc_CPageOptions(ws);
 
-		res.pageMargins = this.pageMargins.clone();
-		res.pageSetup = this.pageSetup.clone();
+		res.pageMargins = this.pageMargins.clone(ws);
+		res.pageSetup = this.pageSetup.clone(ws);
 		res.gridLines = this.gridLines;
 		res.headings = this.headings;
 
