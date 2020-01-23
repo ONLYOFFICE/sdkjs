@@ -3923,12 +3923,11 @@
 			},
 
 			cutRangeByDefinedCells: function(range) {
-				var worksheet = this.worksheet;
 				if(!range) {
 					return range;
 				}
 
-				range = range.clone();
+				var res = range.clone();
 
 				var minRow, maxRow, minCol, maxCol;
 				this.worksheet.getRange3(0, 0, AscCommon.gc_nMaxRow0, AscCommon.gc_nMaxCol0)._foreachNoEmptyByCol(function (cell, row, col) {
@@ -3953,20 +3952,20 @@
 
 				});
 
-				if(range.r1 < minRow) {
-					range.r1 = minRow;
+				if(res.r1 < minRow && minRow <= res.r2) {
+					res.r1 = minRow;
 				}
-				if(range.r2 > maxRow && maxRow >= range.r1) {
-					range.r2 = maxRow;
+				if(res.r2 > maxRow && maxRow >= res.r1) {
+					res.r2 = maxRow;
 				}
-				if(range.c1 < minCol) {
-					range.c1 = minCol;
+				if(res.c1 < minCol && minCol <= res.c2) {
+					res.c1 = minCol;
 				}
-				if(range.c2 > maxCol && maxCol >= range.c1) {
-					range.c2 = maxCol;
+				if(res.c2 > maxCol && maxCol >= res.c1) {
+					res.c2 = maxCol;
 				}
 
-				return range;
+				return res;
 			},
 
 			_addNewFilter: function(ref, style, bWithoutFilter, tablePartDisplayName, tablePart, offset)
