@@ -12417,7 +12417,7 @@ CTextPr.prototype.Set_FromObject = function(TextPr, isUndefinedToNull)
 	}
 	else
 	{
-		this.Shd = undefined;
+		this.Shd = isUndefinedToNull ? null : undefined;
 	}
 
 	this.Vanish         = CheckUndefinedToNull(isUndefinedToNull, TextPr.Vanish);

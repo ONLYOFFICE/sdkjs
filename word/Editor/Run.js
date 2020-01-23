@@ -8085,7 +8085,7 @@ ParaRun.prototype.Apply_Pr = function(TextPr)
 		this.Set_Lang2(TextPr.Lang);
 
 	if (undefined !== TextPr.Shd)
-		this.Set_Shd(TextPr.Shd);
+		this.Set_Shd(null === TextPr.Shd ? undefined : TextPr.Shd);
 
 	for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
 	{
