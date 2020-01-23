@@ -1898,10 +1898,10 @@
 			}
 			if(!hiddenRow && 0 < t._getColumnWidth(c)){
 				var style = cell.getStyle();
-				//if (style && ((style.fill && style.fill.notEmpty()) || (style.border && style.border.notEmpty()))) {
+				if (style && ((style.fill && style.fill.notEmpty()) || (style.border && style.border.notEmpty()))) {
 					maxCol = Math.max(maxCol, c);
 					maxRow = Math.max(maxRow, r);
-				//}
+				}
 				var ct = t._getCellTextCache(c, r);
 				if (ct !== undefined) {
 					rightSide = 0;
