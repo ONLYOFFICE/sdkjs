@@ -130,32 +130,32 @@ CSectionPr.prototype =
         if (true === CopyHdrFtr)
         {
             if (Other.HeaderFirst)
-                this.Set_Header_First(Other.HeaderFirst.Copy());
+                this.Set_Header_First(Other.HeaderFirst.Copy(this.LogicDocument));
             else
                 this.Set_Header_First(null);
 
             if (Other.HeaderEven)
-                this.Set_Header_Even(Other.HeaderEven.Copy());
+                this.Set_Header_Even(Other.HeaderEven.Copy(this.LogicDocument));
             else
                 this.Set_Header_Even(null);
 
             if (Other.HeaderDefault)
-                this.Set_Header_Default(Other.HeaderDefault.Copy());
+                this.Set_Header_Default(Other.HeaderDefault.Copy(this.LogicDocument));
             else
                 this.Set_Header_Default(null);
 
             if (Other.FooterFirst)
-                this.Set_Footer_First(Other.FooterFirst.Copy());
+                this.Set_Footer_First(Other.FooterFirst.Copy(this.LogicDocument));
             else
                 this.Set_Footer_First(null);
 
             if (Other.FooterEven)
-                this.Set_Footer_Even(Other.FooterEven.Copy());
+                this.Set_Footer_Even(Other.FooterEven.Copy(this.LogicDocument));
             else
                 this.Set_Footer_Even(null);
 
             if (Other.FooterDefault)
-                this.Set_Footer_Default(Other.FooterDefault.Copy());
+                this.Set_Footer_Default(Other.FooterDefault.Copy(this.LogicDocument));
             else
                 this.Set_Footer_Default(null);
         }

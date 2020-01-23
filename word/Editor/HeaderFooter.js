@@ -100,12 +100,15 @@ CHeaderFooter.prototype =
         return this.LogicDocument.Get_ColorMap();
     },
     
-    Copy : function()
-    {
-        var NewHdrFtr = new CHeaderFooter(this.Parent, this.LogicDocument, this.DrawingDocument, this.Type);
-        NewHdrFtr.Content.Copy2( this.Content );
-        return NewHdrFtr;
-    },
+    Copy : function(oLogicDocument)
+	{
+		if (!oLogicDocument)
+			oLogicDocument = this.LogicDocument;
+
+		var oNewHdrFtr = new CHeaderFooter(oLogicDocument.GetHdrFtr(), oLogicDocument, oLogicDocument.GetDrawingDocument(), this.Type);
+		oNewHdrFtr.Content.Copy2(this.Content);
+		return oNewHdrFtr;
+	},
 
     Set_Page : function(Page_abs)
     {
