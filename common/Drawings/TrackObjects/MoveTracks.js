@@ -648,10 +648,6 @@ function MoveChartObjectTrack(oObject, oChartSpace)
 
         oObjectToSet.layout.setX(fLayoutX);
         oObjectToSet.layout.setY(fLayoutY);
-        this.chartSpace.handleUpdateExtents();
-        this.chartSpace.recalculate();
-        editor.WordControl.m_oLogicDocument.Recalculate();
-        editor.WordControl.m_oDrawingDocument.OnRecalculatePage(0, editor.WordControl.m_oLogicDocument.Slides[0]);
     };
 }
 

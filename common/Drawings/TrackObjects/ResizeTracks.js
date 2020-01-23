@@ -1174,13 +1174,6 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                 oObjectToSet.layout.setY(fLayoutY);
                 oObjectToSet.layout.setW(fLayoutW);
                 oObjectToSet.layout.setH(fLayoutH);
-
-
-
-                this.chartSpace.handleUpdateExtents();
-                this.chartSpace.recalculate();
-                editor.WordControl.m_oLogicDocument.Recalculate();
-                editor.WordControl.m_oDrawingDocument.OnRecalculatePage(0, editor.WordControl.m_oLogicDocument.Slides[0]);
                 return;
             }
             if(!this.bConnector || !this.oSpPr){

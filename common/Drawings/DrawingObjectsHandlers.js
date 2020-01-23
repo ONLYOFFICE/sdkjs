@@ -1297,6 +1297,57 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
 
         if(/*bClickFlag*/true){
 
+
+            var oPlotArea = drawing.chart.plotArea;
+            if(drawing.selection.plotArea)
+            {
+
+
+                //check hit in resize handles
+                hit_to_handles = oPlotArea.hitToHandles(x, y);
+                if(hit_to_handles > -1)
+                {
+                    if(drawingObjectsController.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
+                    {
+                        drawingObjectsController.arrPreTrackObjects.length = 0;
+                        var oTrack = new AscFormat.ResizeTrackShapeImage(oPlotArea, oPlotArea.getCardDirectionByNum(hit_to_handles), drawingObjectsController);
+                        oTrack.chartSpace = drawing;
+                        drawingObjectsController.arrPreTrackObjects.push(oTrack);
+                        drawingObjectsController.changeCurrentState(new AscFormat.PreResizeState(drawingObjectsController, oPlotArea, oPlotArea.getCardDirectionByNum(hit_to_handles)));
+                        drawingObjectsController.updateSelectionState();
+                        drawingObjectsController.updateOverlay();
+                        return true;
+                    }
+                    else
+                    {
+                        var card_direction = oPlotArea.getCardDirectionByNum(hit_to_handles);
+                        return {objectId: drawing.Get_Id(), cursorType: AscFormat.CURSOR_TYPES_BY_CARD_DIRECTION[card_direction], bMarker: true};
+                    }
+                }
+
+                if(oPlotArea.hitInBoundingRect(x, y))
+                {
+                    if(drawingObjectsController.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
+                    {
+                        drawingObjectsController.checkChartTextSelection();
+                        selector.resetSelection();
+                        selector.selectObject(drawing, pageIndex);
+                        selector.selection.chartSelection = drawing;
+                        drawing.selection.plotArea = oPlotArea;
+                        drawingObjectsController.arrPreTrackObjects.length = 0;
+                        drawingObjectsController.arrPreTrackObjects.push(new AscFormat.MoveChartObjectTrack(oPlotArea, drawing));
+                        drawingObjectsController.changeCurrentState(new AscFormat.PreMoveState(drawingObjectsController, x, y, false, false, drawing, true, true));
+                        drawingObjectsController.updateSelectionState();
+                        drawingObjectsController.updateOverlay();
+                        return true;
+                    }
+                    else
+                    {
+                        return {objectId: drawing.Get_Id(), cursorType: "move", title: null};
+                    }
+                }
+            }
+
             var aCharts = drawing.chart.plotArea.charts;
             var series = drawing.getAllSeries();
             var _len = aCharts.length === 1 && aCharts[0].getObjectType() === AscDFH.historyitem_type_PieChart ? 1 : series.length;
@@ -1474,33 +1525,6 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
         if(bClickFlag){
 
             var oPlotArea = drawing.chart.plotArea;
-            if(drawing.selection.plotArea)
-            {
-
-
-                //check hit in resize handles
-                hit_to_handles = oPlotArea.hitToHandles(x, y);
-                if(hit_to_handles > -1)
-                {
-                    if(drawingObjectsController.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
-                    {
-                        drawingObjectsController.arrPreTrackObjects.length = 0;
-                        var oTrack = new AscFormat.ResizeTrackShapeImage(oPlotArea, oPlotArea.getCardDirectionByNum(hit_to_handles), drawingObjectsController);
-                        oTrack.chartSpace = drawing;
-                        drawingObjectsController.arrPreTrackObjects.push(oTrack);
-                        drawingObjectsController.changeCurrentState(new AscFormat.PreResizeState(drawingObjectsController, oPlotArea, oPlotArea.getCardDirectionByNum(hit_to_handles)));
-                        drawingObjectsController.updateSelectionState();
-                        drawingObjectsController.updateOverlay();
-                        return true;
-                    }
-                    else
-                    {
-                        var card_direction = oPlotArea.getCardDirectionByNum(hit_to_handles);
-                        return {objectId: drawing.Get_Id(), cursorType: AscFormat.CURSOR_TYPES_BY_CARD_DIRECTION[card_direction], bMarker: true};
-                    }
-                }
-            }
-
             if(oPlotArea.hitInBoundingRect(x, y))
             {
                 if(drawingObjectsController.handleEventMode === HANDLE_EVENT_MODE_HANDLE)

@@ -2578,6 +2578,13 @@ CPlotArea.prototype =
     },
 
 
+    Refresh_RecalcData2: function(data)
+    {
+        if(this.parent && this.parent.Refresh_RecalcData2)
+        {
+            this.parent.Refresh_RecalcData2(data);
+        }
+    },
 
     checkShapeChildTransform: function(t)
     {
