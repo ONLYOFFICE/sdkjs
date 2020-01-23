@@ -8307,7 +8307,7 @@ function Binary_pPrReader(doc, oReadResult, stream)
 			case c_oSerProp_pPrType.SectPr:
 				if(null != this.paragraph && (!this.oReadResult.bCopyPaste || this.oReadResult.isDocumentPasting()))
 				{
-					var oNewSectionPr = new CSectionPr(this.Document);
+					var oNewSectionPr = new CSectionPr(this.oReadResult.logicDocument);
 					var oAdditional = {EvenAndOddHeaders: null};
 					res = this.bcr.Read1(length, function(t, l){
 							return oThis.Read_SecPr(t, l, oNewSectionPr, oAdditional);
@@ -15872,7 +15872,7 @@ function Binary_NotesTableReader(doc, oReadResult, openParams, stream)
 		} else if (c_oSerNotes.NoteId === type) {
 			note.id = this.stream.GetULongLE();
 		} else if (c_oSerNotes.NoteContent === type) {
-			var footnote = new CFootEndnote(this.Document.Footnotes);
+			var footnote = new CFootEndnote(this.oReadResult.logicDocument.Footnotes);
 			var footnoteContent = [];
 			var bdtr = new Binary_DocumentTableReader(footnote, this.oReadResult, this.openParams, this.stream, footnote, this.oReadResult.oCommentsPlaces);
 			bdtr.Read(length, footnoteContent);
