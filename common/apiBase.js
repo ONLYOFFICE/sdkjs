@@ -1061,10 +1061,16 @@
                 }
             }
         };
-		this.CoAuthoringApi.onExpiredToken = function() {
+		this.CoAuthoringApi.onExpiredToken = function(data) {
 			t.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.Open);
-			t.VersionHistory = null;
-			t.sendEvent('asc_onExpiredToken');
+			if (t.VersionHistory && t.VersionHistory.isRequested) {
+				var error = AscCommon.getDisconnectErrorCode(t.isDocumentLoadComplete, data["code"]);
+				var level = t.isDocumentLoadComplete ? Asc.c_oAscError.Level.NoCritical : Asc.c_oAscError.Level.Critical;
+				t.sendEvent('asc_onError', error, level);
+			} else {
+				t.VersionHistory = null;
+				t.sendEvent('asc_onExpiredToken');
+			}
 		};
 		this.CoAuthoringApi.onHasForgotten = function() {
 			//todo very bad way, need rewrite
@@ -1080,24 +1086,22 @@
 		/**
 		 * Event об отсоединении от сервера
 		 * @param {jQuery} e  event об отсоединении с причиной
-		 * @param {Bool} isDisconnectAtAll  окончательно ли отсоединяемся(true) или будем пробовать сделать reconnect(false) + сами отключились
-		 * @param {Bool} isCloseCoAuthoring
+		 * @param {opt_closeCode: AscCommon.c_oCloseCode.drop} opt_closeCode
 		 */
-		this.CoAuthoringApi.onDisconnect = function(e, error)
+		this.CoAuthoringApi.onDisconnect = function(e, opt_closeCode)
 		{
 			if (AscCommon.ConnectionState.None === t.CoAuthoringApi.get_state())
 			{
 				t.asyncServerIdEndLoaded();
 			}
-			if (null != error)
-			{
-				t.setViewModeDisconnect();
-				if (Asc.c_oAscError.ID.UpdateVersion === error.code) {
-					t.sendEvent("asc_onDocumentUpdateVersion", function() {
-					});
-				} else {
-					t.sendEvent('asc_onError', error.code, error.level);
-				}
+			var error = AscCommon.getDisconnectErrorCode(t.isDocumentLoadComplete, opt_closeCode);
+			var level = t.isDocumentLoadComplete ? Asc.c_oAscError.Level.NoCritical : Asc.c_oAscError.Level.Critical;
+			t.setViewModeDisconnect();
+			if (Asc.c_oAscError.ID.UpdateVersion === error) {
+				t.sendEvent("asc_onDocumentUpdateVersion", function() {
+				});
+			} else {
+				t.sendEvent('asc_onError', error, level);
 			}
 		};
 		this.CoAuthoringApi.onDocumentOpen = function (inputWrap) {
