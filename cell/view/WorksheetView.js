@@ -14212,9 +14212,10 @@
 					History.StartTransaction();
 
 					t.model.autoFilters.changeAutoFilterToTablePart(styleName, ar, addFormatTableOptionsObj);
-					t._onUpdateFormatTable(filterRange, !!(styleName), true);
 
 					History.EndTransaction();
+
+					t._onUpdateFormatTable(filterRange, !!(styleName), true);
 				};
 				if(ar.containsRange(filterRange)) {
 					filterRange = ar.clone();
@@ -14252,13 +14253,13 @@
 						if (styleName && addNameColumn) {
 							t.setSelection(filterRange);
 						}
+
+						History.EndTransaction();
 						t._onUpdateFormatTable(filterRange, !!(styleName), true);
 
 						if (isSlowOperation) {
 							t.handlers.trigger("slowOperation", false);
 						}
-
-						History.EndTransaction();
 					};
 
 					if(isSlowOperation) {
@@ -14365,9 +14366,9 @@
 							History.StartTransaction();
 
 							t.model.autoFilters.addAutoFilter(null, ar);
-							t._onUpdateFormatTable(filterRange, false, true);
-
 							History.EndTransaction();
+
+							t._onUpdateFormatTable(filterRange, false, true);
 						};
 
 						var filterInfo = t.model.autoFilters._getFilterInfoByAddTableProps(ar);
@@ -14386,9 +14387,9 @@
 
 						//TODO внутри вызывается _isTablePartsContainsRange
 						t.model.autoFilters.changeTableStyleInfo(val, ar, tableName);
-						t._onUpdateFormatTable(filterRange, false, true);
-
 						History.EndTransaction();
+
+						t._onUpdateFormatTable(filterRange, false, true);
 					};
 
 					var filterRange;
@@ -14608,16 +14609,17 @@
                 var minChangeRow = applyFilterProps.minChangeRow;
                 var rangeOldFilter = applyFilterProps.rangeOldFilter;
 
+				History.EndTransaction();
+
                 if (null !== rangeOldFilter && !t.model.workbook.bUndoChanges && !t.model.workbook.bRedoChanges) {
                     t._onUpdateFormatTable(rangeOldFilter, false, true);
                 }
-
                 if (null !== minChangeRow) {
                     t.objectRender.updateSizeDrawingObjects({target: c_oTargetType.RowResize, row: minChangeRow}, true);
                 }
-            }
-
-            History.EndTransaction();
+            } else {
+				History.EndTransaction();
+			}
         };
 
         if (null === isAddAutoFilter)//do not add autoFilter
@@ -16014,12 +16016,11 @@
                     res = range.deleteCellsShiftUp(preDeleteAction);
                 }
 
+				History.EndTransaction();
                 if (res) {
                     t.objectRender.updateDrawingObject(true, type, arn);
                     t._onUpdateFormatTable(range, false, true);
                 }
-
-                History.EndTransaction();
             };
 
 			var r2 = type === c_oAscDeleteOptions.DeleteCellsAndShiftLeft ? tablePart.Ref.r2 : gc_nMaxRow0;
@@ -16047,9 +16048,8 @@
                 cleanRange.cleanAll();
                 t.cellCommentator.deleteCommentsRange(cleanRange.bbox);
 
+				History.EndTransaction();
                 t._onUpdateFormatTable(ref, false, true);
-
-                History.EndTransaction();
             };
 
             t._isLockedCells(ref, null, callback);
@@ -16312,14 +16312,10 @@
             History.Create_NewPoint();
             History.StartTransaction();
 
-			t.model.workbook.dependencyFormulas.lockRecal();
-
             t.model.autoFilters.convertTableToRange(tableName);
+			History.EndTransaction();
+
             t._onUpdateFormatTable(lockRange, false, true);
-
-			t.model.workbook.dependencyFormulas.unlockRecal();
-
-            History.EndTransaction();
         };
 
         var table = t.model.autoFilters._getFilterByDisplayName(tableName);
@@ -16360,9 +16356,9 @@
 
             t.model.autoFilters.changeTableRange(tableName, range);
 
+			History.EndTransaction();
             t._onUpdateFormatTable(range, false, true);
             //TODO добавить перерисовку таблицы и перерисовку шаблонов
-            History.EndTransaction();
 			if(callbackAfterChange){
 				callbackAfterChange();
             }
