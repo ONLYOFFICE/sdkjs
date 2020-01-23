@@ -541,13 +541,15 @@ MoveInlineObject.prototype =
 				this.drawingObjects.document.StartAction(AscDFH.historydescription_Document_CopyAndMoveInlineObject);
                 var new_para_drawing = new ParaDrawing(this.majorObject.parent.Extent.W, this.majorObject.parent.Extent.H, null, this.drawingObjects.drawingDocument, null, null);
                 var drawing = this.majorObject.copy(undefined);
+
+                var oRunPr = this.majorObject.parent && this.majorObject.parent.GetRun() ? this.majorObject.parent.GetRun().GetDirectTextPr() : null;
                 if(drawing.copyComments)
                 {
                     drawing.copyComments(this.drawingObjects.document);
                 }
                 drawing.setParent(new_para_drawing);
                 new_para_drawing.Set_GraphicObject(drawing);
-                new_para_drawing.Add_ToDocument(this.InlinePos, false);
+                new_para_drawing.Add_ToDocument(this.InlinePos, false, oRunPr);
                 this.drawingObjects.resetSelection();
                 this.drawingObjects.selectObject(drawing, pageIndex);
                 this.drawingObjects.document.Recalculate();
