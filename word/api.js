@@ -8391,59 +8391,6 @@ background-repeat: no-repeat;\
 	//----------------------------------------------------------------------------------------------------------------------
 	// Работаем с ContentControl
 	//----------------------------------------------------------------------------------------------------------------------
-	asc_docs_api.prototype.asc_AddContentControl = function(nType, oContentControlPr)
-	{
-		var oLogicDocument = this.WordControl.m_oLogicDocument;
-		if (!oLogicDocument)
-			return null;
-
-		var oResult = null;
-		if (c_oAscSdtLevelType.Block === nType)
-		{
-			if (false === oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_ContentControl_Add, null))
-			{
-				oLogicDocument.StartAction(AscDFH.historydescription_Document_AddBlockLevelContentControl);
-
-				var oContentControl = oLogicDocument.AddContentControl(c_oAscSdtLevelType.Block);
-				if (oContentControl)
-				{
-					if (oContentControlPr)
-						oContentControl.SetContentControlPr(oContentControlPr);
-
-					oLogicDocument.Recalculate();
-					oLogicDocument.UpdateInterface();
-					oLogicDocument.UpdateSelection();
-
-					oResult = oContentControl.GetContentControlPr();
-				}
-
-				oLogicDocument.FinalizeAction();
-			}
-		}
-		else if (c_oAscSdtLevelType.Inline === nType)
-		{
-			if (false === oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_ContentControl_Add, null))
-			{
-				oLogicDocument.StartAction(AscDFH.historydescription_Document_AddInlineLevelContentControl);
-
-				var oContentControl = oLogicDocument.AddContentControl(c_oAscSdtLevelType.Inline);
-				if (oContentControl)
-				{
-					if (oContentControlPr)
-						oContentControl.SetContentControlPr(oContentControlPr);
-
-					oLogicDocument.Recalculate();
-					oLogicDocument.UpdateInterface();
-					oLogicDocument.UpdateSelection();
-
-					oResult = oContentControl.GetContentControlPr();
-				}
-
-				oLogicDocument.FinalizeAction();
-			}
-		}
-		return oResult;
-	};
 	asc_docs_api.prototype.asc_RemoveContentControl = function(Id)
 	{
 		var oLogicDocument = this.WordControl.m_oLogicDocument;
@@ -8737,45 +8684,6 @@ background-repeat: no-repeat;\
 
 		return oLogicDocument.GetSdtGlobalShowHighlight();
 	};
-	asc_docs_api.prototype.asc_AddContentControlCheckBox = function(oPr)
-	{
-		var oLogicDocument = this.private_GetLogicDocument();
-		if (!oLogicDocument)
-			return;
-
-		if (oPr && oPr.CheckedSymbol)
-			AscFonts.FontPickerByCharacter.getFontBySymbol(oPr.CheckedSymbol);
-		else
-			AscFonts.FontPickerByCharacter.getFontBySymbol(Asc.c_oAscSdtCheckBoxDefaults.CheckedSymbol);
-
-		if (oPr && oPr.UncheckedSymbol)
-			AscFonts.FontPickerByCharacter.getFontBySymbol(oPr.UncheckedSymbol);
-		else
-			AscFonts.FontPickerByCharacter.getFontBySymbol(Asc.c_oAscSdtCheckBoxDefaults.UncheckedSymbol);
-
-		var oFonts = {};
-		if (oPr && oPr.CheckedFont)
-			oFonts[oPr.CheckedFont] = true;
-		else
-			oFonts[Asc.c_oAscSdtCheckBoxDefaults.CheckedFont] = true;
-
-		if (oPr && oPr.UncheckedFont)
-			oFonts[oPr.UncheckedFont] = true;
-		else
-			oFonts[Asc.c_oAscSdtCheckBoxDefaults.UncheckedFont] = true;
-
-		AscCommon.Check_LoadingDataBeforePrepaste(this, oFonts, {}, function()
-		{
-			oLogicDocument.RemoveTextSelection();
-			if (!oLogicDocument.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
-			{
-				oLogicDocument.StartAction(AscDFH.historydescription_Document_AddContentControlCheckBox);
-				oLogicDocument.AddContentControlCheckBox(oPr);
-				oLogicDocument.Recalculate();
-				oLogicDocument.FinalizeAction();
-			}
-		});
-	};
 	asc_docs_api.prototype.asc_SetContentControlCheckBoxPr = function(oPr)
 	{
 		var oLogicDocument = this.private_GetLogicDocument();
@@ -8815,21 +8723,6 @@ background-repeat: no-repeat;\
 				oLogicDocument.FinalizeAction();
 			}
 		});
-	};
-	asc_docs_api.prototype.asc_AddContentControlPicture = function()
-	{
-		var oLogicDocument = this.private_GetLogicDocument();
-		if (!oLogicDocument)
-			return;
-
-		oLogicDocument.RemoveTextSelection();
-		if (!oLogicDocument.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
-		{
-			oLogicDocument.StartAction(AscDFH.historydescription_Document_AddContentControlPicture);
-			oLogicDocument.AddContentControlPicture();
-			oLogicDocument.Recalculate();
-			oLogicDocument.FinalizeAction();
-		}
 	};
 	asc_docs_api.prototype.asc_SetContentControlPictureUrl = function(sUrl, sId)
 	{
@@ -8916,27 +8809,6 @@ background-repeat: no-repeat;\
 		else
 		{
 			oCC.SkipSpecialContentControlLock(false);
-		}
-	};
-	asc_docs_api.prototype.asc_AddContentControlList = function(isComboBox, oPr)
-	{
-		var oLogicDocument = this.private_GetLogicDocument();
-		if (!oLogicDocument)
-			return;
-
-		oLogicDocument.RemoveTextSelection();
-		if (!oLogicDocument.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
-		{
-			oLogicDocument.StartAction(AscDFH.historydescription_Document_AddContentControlList);
-
-			if (isComboBox)
-				oLogicDocument.AddContentControlComboBox(oPr);
-			else
-				oLogicDocument.AddContentControlDropDownList(oPr);
-
-			oLogicDocument.Recalculate();
-			oLogicDocument.UpdateSelection();
-			oLogicDocument.FinalizeAction();
 		}
 	};
 	asc_docs_api.prototype.asc_SetContentControlListPr = function(oPr, sId)
@@ -9039,22 +8911,6 @@ background-repeat: no-repeat;\
 			oLogicDocument.Recalculate();
 			oLogicDocument.UpdateInterface();
 			oLogicDocument.UpdateTracks();
-			oLogicDocument.FinalizeAction();
-		}
-	};
-	asc_docs_api.prototype.asc_AddContentControlDatePicker = function(oPr)
-	{
-		var oLogicDocument = this.private_GetLogicDocument();
-		if (!oLogicDocument)
-			return;
-
-		oLogicDocument.RemoveTextSelection();
-		if (!oLogicDocument.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
-		{
-			oLogicDocument.StartAction(AscDFH.historydescription_Document_AddContentControlList);
-			oLogicDocument.AddContentControlDatePicker(oPr);
-			oLogicDocument.Recalculate();
-			oLogicDocument.UpdateSelection();
 			oLogicDocument.FinalizeAction();
 		}
 	};
@@ -10747,7 +10603,6 @@ background-repeat: no-repeat;\
     asc_docs_api.prototype["SetDrawImagePreviewMargins"]				= asc_docs_api.prototype.SetDrawImagePreviewMargins;
     asc_docs_api.prototype["SetDrawImagePreviewBullet"]					= asc_docs_api.prototype.SetDrawImagePreviewBullet;
 
-	asc_docs_api.prototype["asc_AddContentControl"]                     = asc_docs_api.prototype.asc_AddContentControl;
 	asc_docs_api.prototype["asc_RemoveContentControl"]                  = asc_docs_api.prototype.asc_RemoveContentControl;
 	asc_docs_api.prototype["asc_RemoveContentControlWrapper"]           = asc_docs_api.prototype.asc_RemoveContentControlWrapper;
 	asc_docs_api.prototype["asc_SetContentControlProperties"]           = asc_docs_api.prototype.asc_SetContentControlProperties;
@@ -10759,14 +10614,10 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_GetGlobalContentControlHighlightColor'] = asc_docs_api.prototype.asc_GetGlobalContentControlHighlightColor;
 	asc_docs_api.prototype['asc_SetGlobalContentControlShowHighlight']  = asc_docs_api.prototype.asc_SetGlobalContentControlShowHighlight;
 	asc_docs_api.prototype['asc_GetGlobalContentControlShowHighlight']  = asc_docs_api.prototype.asc_GetGlobalContentControlShowHighlight;
-	asc_docs_api.prototype['asc_AddContentControlCheckBox']             = asc_docs_api.prototype.asc_AddContentControlCheckBox;
 	asc_docs_api.prototype['asc_SetContentControlCheckBoxPr']           = asc_docs_api.prototype.asc_SetContentControlCheckBoxPr;
-	asc_docs_api.prototype['asc_AddContentControlPicture']              = asc_docs_api.prototype.asc_AddContentControlPicture;
 	asc_docs_api.prototype['asc_SetContentControlPictureUrl']           = asc_docs_api.prototype.asc_SetContentControlPictureUrl;
-	asc_docs_api.prototype['asc_AddContentControlList']                 = asc_docs_api.prototype.asc_AddContentControlList;
 	asc_docs_api.prototype['asc_SetContentControlListPr']               = asc_docs_api.prototype.asc_SetContentControlListPr;
 	asc_docs_api.prototype['asc_SelectContentControlListItem']          = asc_docs_api.prototype.asc_SelectContentControlListItem;
-	asc_docs_api.prototype['asc_AddContentControlDatePicker']           = asc_docs_api.prototype.asc_AddContentControlDatePicker;
 	asc_docs_api.prototype['asc_SetContentControlDatePickerPr']         = asc_docs_api.prototype.asc_SetContentControlDatePickerPr;
 	asc_docs_api.prototype['asc_SetContentControlDatePickerDate']       = asc_docs_api.prototype.asc_SetContentControlDatePickerDate;
 
