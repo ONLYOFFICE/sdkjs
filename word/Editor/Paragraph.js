@@ -326,8 +326,15 @@ Paragraph.prototype.Copy = function(Parent, DrawingDocument, oPr)
 	// Добавляем секцию в конце
 	if (undefined !== this.SectPr)
 	{
-		var SectPr = new CSectionPr(this.SectPr.LogicDocument);
-		SectPr.Copy(this.SectPr);
+		var oLogicDocument = this.SectPr.LogicDocument;
+		var bCopyHdrFtr = undefined;
+		if(oPr.Comparison)
+		{
+			oLogicDocument = oPr.Comparison.originalDocument;
+			bCopyHdrFtr = true;
+		}
+		var SectPr = new CSectionPr(oLogicDocument);
+		SectPr.Copy(this.SectPr, bCopyHdrFtr, oPr);
 		Para.Set_SectionPr(SectPr);
 	}
 

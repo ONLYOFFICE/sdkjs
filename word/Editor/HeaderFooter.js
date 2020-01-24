@@ -100,13 +100,13 @@ CHeaderFooter.prototype =
         return this.LogicDocument.Get_ColorMap();
     },
     
-    Copy : function(oLogicDocument)
+    Copy : function(oLogicDocument, oCopyPr)
 	{
 		if (!oLogicDocument)
 			oLogicDocument = this.LogicDocument;
 
 		var oNewHdrFtr = new CHeaderFooter(oLogicDocument.GetHdrFtr(), oLogicDocument, oLogicDocument.GetDrawingDocument(), this.Type);
-		oNewHdrFtr.Content.Copy2(this.Content);
+		oNewHdrFtr.Content.Copy2(this.Content, oCopyPr);
 		return oNewHdrFtr;
 	},
 
