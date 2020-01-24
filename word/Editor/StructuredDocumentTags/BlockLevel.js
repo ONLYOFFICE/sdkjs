@@ -1612,6 +1612,13 @@ CBlockLevelSdt.prototype.SkipSpecialContentControlLock = function(isSkip)
 	this.SkipSpecialLock = isSkip;
 };
 /**
+ * @retuns {boolean}
+ */
+CBlockLevelSdt.prototype.IsSkipSpecialContentControlLock = function()
+{
+	return this.SkipSpecialLock;
+};
+/**
  * Применяем заданные настройки для чекобокса
  * @param {CSdtCheckBoxPr} oCheckBoxPr
  * @param {CTextPr} oTextPr
@@ -2158,13 +2165,14 @@ CBlockLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType, bChec
 
 	var isCheckContentControlLock = this.LogicDocument ? this.LogicDocument.IsCheckContentControlsLock() : true;
 
-	if (CheckType === AscCommon.changestype_Paragraph_TextProperties)
+	if (AscCommon.changestype_Paragraph_TextProperties === CheckType
+		|| (AscCommon.changestype_Drawing_Props === CheckType
+		&& this.IsPicture()))
 	{
 		this.SkipSpecialContentControlLock(true);
 		if (!this.CanBeEdited())
-			this.Lock.Check(this.GetId());
+			AscCommon.CollaborativeEditing.Add_CheckLock(true);
 		this.SkipSpecialContentControlLock(false);
-
 
 		isCheckContentControlLock = false;
 	}

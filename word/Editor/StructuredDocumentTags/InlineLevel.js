@@ -1010,6 +1010,13 @@ CInlineLevelSdt.prototype.SkipSpecialContentControlLock = function(isSkip)
 {
 	this.SkipSpecialLock = isSkip;
 };
+/**
+ * @retuns {boolean}
+ */
+CInlineLevelSdt.prototype.IsSkipSpecialContentControlLock = function()
+{
+	return this.SkipSpecialLock;
+};
 CInlineLevelSdt.prototype.private_UpdateCheckBoxContent = function()
 {
 	var isChecked = this.Pr.CheckBox.Checked;
@@ -1425,7 +1432,9 @@ CInlineLevelSdt.prototype.private_UpdateDatePickerContent = function()
 };
 CInlineLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType)
 {
-	if (CheckType === AscCommon.changestype_Paragraph_TextProperties)
+	if (AscCommon.changestype_Paragraph_TextProperties === CheckType
+		|| (AscCommon.changestype_Drawing_Props === CheckType
+		&& this.IsPicture()))
 	{
 		this.SkipSpecialContentControlLock(true);
 		if (!this.CanBeEdited())
