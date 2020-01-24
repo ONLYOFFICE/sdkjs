@@ -8154,7 +8154,7 @@ CDocument.prototype.InsertContent = function(SelectedContent, NearPos)
 			var bAddEmptyPara          = false;
 			var bDoNotIncreaseDstIndex = false;
 
-			if (true === Para.IsCursorAtEnd())
+			if (true === Para.IsCursorAtEnd() && !Para.IsEmpty())
 			{
 				bConcatE = false;
 
