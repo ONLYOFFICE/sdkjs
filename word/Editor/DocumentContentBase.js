@@ -1891,3 +1891,16 @@ CDocumentContentBase.prototype.private_CheckSelectedContentBeforePaste = functio
 		}
 	}
 };
+/**
+ * Проверяем, начинается ли заданная страница с заданного элемента
+ * @param nCurPage
+ * @param nElementIndex
+ * @returns {boolean}
+ */
+CDocumentContentBase.prototype.IsFirstElementOnPage = function(nCurPage, nElementIndex)
+{
+	if (!this.Pages[nCurPage])
+		return false;
+
+	return (this.Pages[nCurPage].Pos === nElementIndex);
+};
