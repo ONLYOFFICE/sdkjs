@@ -12105,7 +12105,7 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curFoo
 	this.ReadSdt = function(type, length, oSdt, typeContainer, container) {
 		var res = c_oSerConstants.ReadOk;
 		var oThis = this;
-		if (c_oSerSdt.Pr === type) {
+		if (c_oSerSdt.Pr === type && (!this.oReadResult.bCopyPaste || this.oReadResult.isDocumentPasting())) {
 			if (oSdt) {
 				var sdtPr = new AscCommonWord.CSdtPr();
 				res = this.bcr.Read1(length, function(t, l) {
