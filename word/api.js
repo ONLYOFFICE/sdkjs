@@ -8763,20 +8763,38 @@ background-repeat: no-repeat;\
 			var oApi = this;
 			var fApplyCallback = function()
 			{
-				var _img = oApi.ImageLoader.LoadImage(sImageToDownLoad, 1);
-				if (null != _img)
+				var fPropsCallback = function(_img)
 				{
+					if(_img && _img.Image && oImagePr)
+					{
+						var oDrawingObjects = oApi.WordControl.m_oLogicDocument.DrawingObjects;
+						if(oDrawingObjects && oDrawingObjects.selectedObjects[0])
+						{
+							var dWidth = oDrawingObjects.selectedObjects[0].extX;
+							var dHeight = oDrawingObjects.selectedObjects[0].extY;
+							var __w = Math.max((_img.Image.width * AscCommon.g_dKoef_pix_to_mm), 1);
+							var __h = Math.max((_img.Image.height * AscCommon.g_dKoef_pix_to_mm), 1);
+							var fKoeff = 1.0/Math.max(__w/dWidth, __h/dHeight);
+							var _w      = Math.max(5, __w*fKoeff);
+							var _h      = Math.max(5, __h*fKoeff);
+							oImagePr.Width = _w;
+							oImagePr.Height = _h;
+						}
+					}
 					oApi.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_ApplyImagePrWithUrl);
 					oApi.WordControl.m_oLogicDocument.SetImageProps(oImagePr);
 					oApi.WordControl.m_oLogicDocument.FinalizeAction();
+				};
+				var _img = oApi.ImageLoader.LoadImage(sImageToDownLoad, 1);
+				if (null != _img)
+				{
+					fPropsCallback(_img);
 				}
 				else
 				{
-					oApi.asyncImageEndLoaded2 = function(_image)
+					oApi.asyncImageEndLoaded2 = function(_img)
 					{
-						oApi.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_ApplyImagePrWithUrlLong);
-						oApi.WordControl.m_oLogicDocument.SetImageProps(oImagePr);
-						oApi.WordControl.m_oLogicDocument.FinalizeAction();
+						fPropsCallback(_img);
 					}
 				}
 			};
