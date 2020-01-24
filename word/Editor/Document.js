@@ -1749,8 +1749,15 @@ CSelectedElementsInfo.prototype.CanEditBlockSdts = function()
 {
 	for (var nIndex = 0, nCount = this.m_arrSdts.length; nIndex < nCount; ++nIndex)
 	{
+		this.m_arrSdts[nIndex].SkipSpecialContentControlLock(true);
+
 		if (this.m_arrSdts[nIndex].IsBlockLevel() && !this.m_arrSdts[nIndex].CanBeEdited())
+		{
+			this.m_arrSdts[nIndex].SkipSpecialContentControlLock(false);
 			return false;
+		}
+
+		this.m_arrSdts[nIndex].SkipSpecialContentControlLock(false);
 	}
 
 	return true;
@@ -1769,8 +1776,15 @@ CSelectedElementsInfo.prototype.CanEditInlineSdts = function()
 {
 	for (var nIndex = 0, nCount = this.m_arrSdts.length; nIndex < nCount; ++nIndex)
 	{
+		this.m_arrSdts[nIndex].SkipSpecialContentControlLock(true);
+
 		if (this.m_arrSdts[nIndex].IsInlineLevel() && !this.m_arrSdts[nIndex].CanBeEdited())
+		{
+			this.m_arrSdts[nIndex].SkipSpecialContentControlLock(false);
 			return false;
+		}
+
+		this.m_arrSdts[nIndex].SkipSpecialContentControlLock(false);
 	}
 
 	return true;
