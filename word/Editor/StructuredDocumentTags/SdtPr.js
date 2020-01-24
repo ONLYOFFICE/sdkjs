@@ -361,7 +361,10 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 		oContentControl.SetColor(this.Color);
 
 	if (undefined !== this.CheckBoxPr)
+	{
 		oContentControl.SetCheckBoxPr(this.CheckBoxPr);
+		oContentControl.private_UpdateCheckBoxContent();
+	}
 
 	if (undefined !== this.ComboBoxPr)
 		oContentControl.SetComboBoxPr(this.ComboBoxPr);
