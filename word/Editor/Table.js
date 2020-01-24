@@ -11125,7 +11125,7 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 			// Если вся таблица внутри выделения - удаляем её 
 			if (X_Front && X_After && Y_Over && Y_Under)
 			{
-				this.LogicDocument.MoveCursorToXY(this.TableSumGrid[0] + this.Pages[curColumn].X + 0.01, this.RowsInfo[this.Pages[curColumn].FirstRow].Y[curColumn] + 0.01);
+				this.MoveCursorToXY(this.TableSumGrid[-1] + this.Pages[curColumn].X + 0.01, this.RowsInfo[this.Pages[curColumn].FirstRow].Y[curColumn] + 0.01, false, false, curColumn);
 				this.LogicDocument.RemoveTable();
 				return true;
 			}
@@ -11304,6 +11304,7 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 			
 			if (click)
 			{
+				// удаление строки
 				if (Cell.Row.Get_CellsCount() === 1 && Cell.Row.Index === 0)
 				{	
 					if (Cell.Get_Border(0).Value === 0 && Cell.Get_Border(1).Value === 0 && Cell.Get_Border(2).Value === 0)
@@ -11333,15 +11334,6 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 						
 						return;
 					}
-					// if (Cell.Get_Border(2).Value === 0 && Cell.Get_Border(1).Value === 0 && Cell.Get_Border(3).Value === 0)
-					// {
-					// 	for (var curRow = Cell.Row.Index; curRow < Cell.Row.Index + VMerge_Count; curRow++)
-					// 	{
-					// 		this.RemoveTableRow(curRow);
-					// 	}
-						
-					// 	return;
-					// }
 				}
 				else if (Cell.Row.Get_CellsCount() === 1 && Cell.Row.Index === this.Get_RowsCount() - 1)
 				{	
@@ -11383,6 +11375,40 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 						}
 						
 						return;
+					}
+				}
+				// Столбца. Удаляем столбец, если в нем только 1 ячейка, 
+				// объединяющая все строки и отсутсвуют внешние границы
+				else 
+				{
+					var Row 		   = this.GetRow(0);
+					var Cell_1 		   = Row.Get_Cell(0);
+					var Cell_2	       = Row.Get_Cell(Row.Get_CellsCount() - 1);
+					
+					var Grid_start_1   = Row.Get_CellInfo(0).StartGridCol;
+					var Grid_start_2   = Row.Get_CellInfo(Row.Get_CellsCount() - 1).StartGridCol;
+					var Grid_span_1    = Cell_1.Get_GridSpan();
+					var Grid_span_2    = Cell_2.Get_GridSpan();
+					var VMerge_count_1 = this.Internal_GetVertMergeCount(0, Grid_start_1, Grid_span_1);
+					var VMerge_count_2 = this.Internal_GetVertMergeCount(0, Grid_start_2, Grid_span_2);
+
+					if (VMerge_count_1  === this.Get_RowsCount() || VMerge_count_2 === this.Get_RowsCount())
+					{
+						var TempCell_1 = this.GetRow(VMerge_count_1 - 1).Get_Cell(0);
+						var TempCell_2 = this.GetRow(VMerge_count_2 - 1).Get_Cell(this.GetRow(VMerge_count_2 - 1).Get_CellsCount() - 1);
+
+						if (Cell_1.Get_Border(3).Value === 0 && Cell_1.Get_Border(0).Value === 0 && TempCell_1.Get_Border(2).Value === 0)
+						{
+							this.CurCell = Cell_1;
+							this.RemoveTableColumn();
+							return;
+						}
+						else if (Cell_2.Get_Border(1).Value === 0 && Cell_2.Get_Border(0).Value === 0 && TempCell_2.Get_Border(2).Value === 0)
+						{
+							this.CurCell = Cell_2;
+							this.RemoveTableColumn();
+							return;
+						}
 					}
 				}
 			}
