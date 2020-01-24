@@ -4357,6 +4357,8 @@
 			f.excludeHiddenRows = oldExcludeHiddenRows;
 			f.excludeNestedStAg = oldIgnoreNestedStAg;
 			f.checkExclude = oldCheckExclude;
+		} else {
+			res = new cError(cErrorType.wrong_value_type);
 		}
 
 		return res;
@@ -4489,6 +4491,66 @@
 
 	/**
 	 * @constructor
+	 */
+	function SUMIFSCache() {
+		this.cacheRanges = {};
+		this.cacheId = {};
+	}
+	SUMIFSCache.prototype._get = function (range, arg, valueForSearching, parent) {
+		var res, _this = this, wsId = range.getWorksheet().getId();
+		var sRangeName;
+		AscCommonExcel.executeInR1C1Mode(false, function () {
+			sRangeName = wsId + AscCommon.g_cCharDelimiter + range.getName();
+		});
+		var sInputKey = valueForSearching.getValue() + AscCommon.g_cCharDelimiter + sRangeName /*+ g_cCharDelimiter + valueForSearching.type*/;
+		var cacheElem;
+		if(parent) {
+			if(!parent.cacheId) {
+				parent.cacheId = [];
+			}
+			cacheElem = parent.cacheId[sInputKey];
+		} else {
+			cacheElem = this.cacheId[sInputKey];
+		}
+
+		if (!cacheElem) {
+			cacheElem = {elems: null, cacheId: null};
+
+			if(parent && parent.cacheId) {
+				parent.cacheId[sInputKey] = cacheElem;
+			} else {
+				this.cacheId[sInputKey] = cacheElem;
+			}
+
+			var cacheRange = this.cacheRanges[wsId];
+			if (!cacheRange) {
+				cacheRange = new AscCommonExcel.RangeDataManager(null);
+				this.cacheRanges[wsId] = cacheRange;
+			}
+			cacheRange.add(range.getBBox0(), cacheElem);
+		}
+
+		return cacheElem;
+	};
+	SUMIFSCache.prototype.clean = function () {
+		this.cacheRanges = {};
+		this.cacheId = {};
+	};
+	SUMIFSCache.prototype.remove = function (cell) {
+		var wsId = cell.ws.getId();
+		var cacheRange = this.cacheRanges[wsId];
+		if (cacheRange) {
+			var oGetRes = cacheRange.get(new Asc.Range(cell.nCol, cell.nRow, cell.nCol, cell.nRow));
+			for (var i = 0, length = oGetRes.all.length; i < length; ++i) {
+				var elem = oGetRes.all[i];
+				elem.data.cacheId = null;
+				elem.data.elems = null;
+			}
+		}
+	};
+
+	/**
+	 * @constructor
 	 * @extends {AscCommonExcel.cBaseFunction}
 	 */
 	function cSUMIFS() {
@@ -4503,8 +4565,7 @@
 	cSUMIFS.prototype.arrayIndexes = {0: 1, 1: 1, 3: 1, 5: 1, 7: 1};
 	cSUMIFS.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
-		if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&
-			cElementType.cellsRange !== arg0.type) {
+		if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type && cElementType.cellsRange !== arg0.type) {
 			if (cElementType.cellsRange3D === arg0.type) {
 				arg0 = arg0.tocArea();
 				if (!arg0) {
@@ -4525,79 +4586,117 @@
 			return res;
 		};
 
-		var arg0Range = getRange(arg0);
-		var c_colType = Asc.c_oAscSelectionType.RangeCol;
+		var getMatrixFromCache = function(area, searchVal, parent) {
+			var range = area.getRange();
+			var ws = area.getWS();
+			var bb = range.getBBox0();
+			var oSearchRange = ws.getRange3(bb.r1, bb.c1, bb.r2, bb.c2);
+			return g_oSUMIFSCache._get(oSearchRange, range, searchVal, parent);
+		};
 
-		var arg0Matrix = arg0.getMatrix();
-		var i, j, arg1, arg2, matchingInfo, bSelectRangeCol, arg1Range;
+		var getElems = function(a1, a2, p, calcSum) {
+			var matchingInfo = AscCommonExcel.matchingValue(a2);
+
+			var arg1Matrix = a1.getMatrix(), enterMatrix;
+			if(p && p.length) {
+				enterMatrix = p;
+			} else {
+				enterMatrix = arg1Matrix;
+			}
+
+			var res = undefined;
+			for (var i = 0; i < enterMatrix.length; ++i) {
+				if(!arg1Matrix[i]) {
+					continue;
+				}
+				if(!enterMatrix[i]) {
+					continue;
+				}
+
+				for (var j = 0; j < enterMatrix[i].length; ++j) {
+					if(!enterMatrix[i][j] || !arg1Matrix[i][j]) {
+						continue;
+					}
+
+					if (AscCommonExcel.matching(arg1Matrix[i][j], matchingInfo)) {
+						if(!res) {
+							res = [];
+						}
+						if(!res[i]) {
+							res[i] = [];
+						}
+						res[i][j] = arg1Matrix[i][j];
+						if(calcSum) {
+							var arg0Val = arg0.getValueByRowCol(i, j);
+							if (arg0Val && cElementType.number === arg0Val.type) {
+								_sum += arg0Val.getValue();
+							}
+						}
+					}
+				}
+			}
+
+			return res;
+		};
+
+		var _sum = 0;
+		var arg0Range = getRange(arg0);
+		var arg0C = arg0Range.c2 - arg0Range.c1 + 1;
+		var arg0R = arg0Range.r2 - arg0Range.r1 + 1;
+		var cacheElem, parent;
+		var arg1, arg2, arg1Range;
 		for (var k = 1; k < arg.length; k += 2) {
 			arg1 = arg[k];
 			arg2 = arg[k + 1];
 
-			//добавляю флаг bSelectRangeCol - для случая когда нулевой и первый аргумент это area/area3d с диапазоном весь столбец
-			//в этом случае нет ошибки при разных размерах полученных массивов - arg0Matrix/arg1Matrix
-			bSelectRangeCol = false;
+
 			arg1Range = getRange(arg1);
-			if(arg1Range && arg1Range.getType() === c_colType && arg0Range && arg0Range.getType() === c_colType) {
-				if(arg0Range.c1 === arg0Range.c1 && arg0Range.c2 === arg0Range.c2) {
-					bSelectRangeCol = true;
-				}
+
+			var arg1C = arg1Range.c2 - arg1Range.c1 + 1;
+			var arg1R = arg1Range.r2 - arg1Range.r1 + 1;
+			if (arg0R !== arg1R || arg0C !== arg1C) {
+				return new cError(cErrorType.wrong_value_type);
 			}
 
-			if (cElementType.cell !== arg1.type && cElementType.cell3D !== arg1.type &&
-				cElementType.cellsRange !== arg1.type) {
-				if (cElementType.cellsRange3D === arg1.type) {
-					arg1 = arg1.tocArea();
-					if (!arg1) {
+			parent = cacheElem;
+			cacheElem = getMatrixFromCache(arg1, arg2, cacheElem);
+
+			if(null === cacheElem.elems) {
+				if (cElementType.cell !== arg1.type && cElementType.cell3D !== arg1.type &&
+					cElementType.cellsRange !== arg1.type) {
+					if (cElementType.cellsRange3D === arg1.type) {
+						arg1 = arg1.tocArea();
+						if (!arg1) {
+							return new cError(cErrorType.wrong_value_type);
+						}
+					} else {
 						return new cError(cErrorType.wrong_value_type);
 					}
-				} else {
+				}
+
+				if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
+					arg2 = arg2.cross(arguments[1]);
+				} else if (cElementType.array === arg2.type) {
+					arg2 = arg2.getElementRowCol(0, 0);
+				}
+
+				arg2 = arg2.tocString();
+
+				if (cElementType.string !== arg2.type) {
 					return new cError(cErrorType.wrong_value_type);
 				}
+
+				cacheElem.elems = getElems(arg1, arg2, parent ? parent.elems : null, k + 1 === arg.length - 1);
 			}
 
-			if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
-				arg2 = arg2.cross(arguments[1]);
-			} else if (cElementType.array === arg2.type) {
-				arg2 = arg2.getElementRowCol(0, 0);
+			if(undefined === cacheElem.elems) {
+				return new cNumber(0);
 			}
-
-			arg2 = arg2.tocString();
-
-			if (cElementType.string !== arg2.type) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-
-			matchingInfo = AscCommonExcel.matchingValue(arg2);
-
-			var arg1Matrix = arg1.getMatrix();
-			if (!bSelectRangeCol && arg0Matrix.length !== arg1Matrix.length) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-			for (i = 0; i < arg1Matrix.length; ++i) {
-				if(bSelectRangeCol && (!arg0Matrix[i] || !arg1Matrix[i])) {
-					continue;
-				}
-				if (arg0Matrix[i].length !== arg1Matrix[i].length) {
-					return new cError(cErrorType.wrong_value_type);
-				}
-				for (j = 0; j < arg1Matrix[i].length; ++j) {
-					if (arg0Matrix[i][j] && !AscCommonExcel.matching(arg1Matrix[i][j], matchingInfo)) {
-						arg0Matrix[i][j] = null;
-					}
-				}
+			if(cElementType.error === cacheElem.elems.type) {
+				return cacheElem.elems;
 			}
 		}
 
-		var _sum = 0;
-		var valMatrix0;
-		for (i = 0; i < arg0Matrix.length; ++i) {
-			for (j = 0; j < arg0Matrix[i].length; ++j) {
-				if ((valMatrix0 = arg0Matrix[i][j]) && cElementType.number === valMatrix0.type) {
-					_sum += valMatrix0.getValue();
-				}
-			}
-		}
 		return new cNumber(_sum);
 	};
 	cSUMIFS.prototype.checkArguments = function (countArguments) {
@@ -5177,10 +5276,13 @@
 		return truncHelper(arg0.getValue(), arg1.getValue());
 	};
 
+	var g_oSUMIFSCache = new SUMIFSCache();
+
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 	window['AscCommonExcel'].cAGGREGATE = cAGGREGATE;
 	window['AscCommonExcel'].cPRODUCT = cPRODUCT;
 	window['AscCommonExcel'].cSUBTOTAL = cSUBTOTAL;
 	window['AscCommonExcel'].cSUM = cSUM;
+	window['AscCommonExcel'].g_oSUMIFSCache = g_oSUMIFSCache;
 })(window);

@@ -1312,7 +1312,7 @@ function CDrawingDocument(drawingObjects)
     this.drawingObjects = drawingObjects;
     this.IsLockObjectsEnable = false;
 
-    AscCommon.g_oHtmlCursor.register("de-markerformat", "marker_format", ["marker_format", 14, 8], "pointer");
+    AscCommon.g_oHtmlCursor.register("de-markerformat", "marker_format", "14 8", "pointer");
 
     this.m_oWordControl     = null;
     this.m_oLogicDocument   = null;

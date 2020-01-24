@@ -7,12 +7,12 @@ services:
   - docker
 language: node_js
 node_js:
-  - '6'
+  - '12'
 before_script:
   - export BRANCH=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
   - echo "Project branch $BRANCH"
-  - git clone -b develop https://github.com/ONLYOFFICE/web-apps-pro.git ../web-apps-pro
-  - cd ../web-apps-pro && git checkout -B $BRANCH && cd -
+  - git clone -b develop https://github.com/ONLYOFFICE/web-apps.git ../web-apps
+  - cd ../web-apps && git checkout -B $BRANCH && cd -
 jobs:
   include:
     - stage: Check all files contains Copyright
@@ -33,9 +33,9 @@ jobs:
     - stage: SonarQube Scanner
       if: branch = develop
       script:
-        - wget -P /tmp https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-3.0.3.778-linux.zip
-        - unzip -d /tmp /tmp/sonar-scanner-cli-3.0.3.778-linux.zip
-        - /tmp/sonar-scanner-3.0.3.778-linux/bin/sonar-scanner -Dsonar.login=$SONAR_TOKEN
+        - wget -P /tmp https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.0.0.1744-linux.zip
+        - unzip -d /tmp /tmp/sonar-scanner-cli-4.0.0.1744-linux.zip
+        - /tmp/sonar-scanner-4.0.0.1744-linux/bin/sonar-scanner -Dsonar.login=$SONAR_TOKEN
     - stage: Formulas tests
       script:
         - npm install -g node-qunit-phantomjs
@@ -46,10 +46,10 @@ jobs:
         - npm install --prefix build
         - grunt --level=WHITESPACE_ONLY --base build --gruntfile build/Gruntfile.js
         - docker pull onlyofficetestingrobot/doc-builder-testing:develop-latest
-        - travis_wait 30 docker run -v $PWD/common:/opt/onlyoffice/documentbuilder/sdkjs/common
-                                    -v $PWD/word:/opt/onlyoffice/documentbuilder/sdkjs/word
-                                    -v $PWD/cell:/opt/onlyoffice/documentbuilder/sdkjs/cell
-                                    -v $PWD/slide:/opt/onlyoffice/documentbuilder/sdkjs/slide
+        - travis_wait 30 docker run -v $PWD/deploy/sdkjs/common:/opt/onlyoffice/documentbuilder/sdkjs/common
+                                    -v $PWD/deploy/sdkjs/word:/opt/onlyoffice/documentbuilder/sdkjs/word
+                                    -v $PWD/deploy/sdkjs/cell:/opt/onlyoffice/documentbuilder/sdkjs/cell
+                                    -v $PWD/deploy/sdkjs/slide:/opt/onlyoffice/documentbuilder/sdkjs/slide
                                     onlyofficetestingrobot/doc-builder-testing:develop-latest
   allow_failures:
     - stage: SonarQube Scanner                                    

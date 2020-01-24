@@ -242,7 +242,7 @@ function handleSelectedObjects(drawingObjectsController, e, x, y, group, pageInd
             }
             if(!ret)
             {
-                
+
                 if(selected_objects[i].hitInBoundingRect(tx, ty))
                 {
                     if(window["IS_NATIVE_EDITOR"])
@@ -409,7 +409,15 @@ function handleShapeImage(drawing, drawingObjectsController, e, x, y, group, pag
                 return false
             }
         }
-        return drawingObjectsController.handleTextHit(drawing, e, x, y, group, pageIndex, bWord);
+        var oTextObject = AscFormat.getTargetTextObject(drawingObjectsController);
+        if(!e.CtrlKey && !e.ShiftKey || oTextObject === drawing)
+        {
+            return drawingObjectsController.handleTextHit(drawing, e, x, y, group, pageIndex, bWord);
+        }
+        else
+        {
+            return drawingObjectsController.handleMoveHit(drawing, e, x, y, group, false, pageIndex, bWord);
+        }
     }
     return false;
 }
@@ -462,7 +470,15 @@ function handleShapeImageInGroup(drawingObjectsController, drawing, shape, e, x,
                 return false
             }
         }
-        return drawingObjectsController.handleTextHit(shape, e, x, y, drawing, pageIndex, bWord);
+        var oTextObject = AscFormat.getTargetTextObject(drawingObjectsController);
+        if(!e.CtrlKey && !e.ShiftKey || oTextObject === drawing)
+        {
+            return drawingObjectsController.handleTextHit(shape, e, x, y, drawing, pageIndex, bWord);
+        }
+        else
+        {
+            return drawingObjectsController.handleMoveHit(drawing, e, x, y, null, false, pageIndex, true);
+        }
     }
 }
 
@@ -667,12 +683,24 @@ function handleChartElements(drawing, drawingObjectsController, e, dTx, dTy, gro
                                         bSeries = true;
                                         if(bPie)
                                         {
-                                            selector.resetSelection();
-                                            selector.selectObject(drawing, pageIndex);
-                                            selector.selection.chartSelection = drawing;
-                                            drawing.selection.chart = id;
-                                            drawing.selection.series = 0;
-                                            drawing.selection.datPoint = k;
+                                            if(drawing.selection.series === 0)
+                                            {
+                                                selector.resetSelection();
+                                                selector.selectObject(drawing, pageIndex);
+                                                selector.selection.chartSelection = drawing;
+                                                drawing.selection.chart = id;
+                                                drawing.selection.series = 0;
+                                                drawing.selection.datPoint = k;
+                                            }
+                                            else
+                                            {
+                                                selector.resetSelection();
+                                                selector.selectObject(drawing, pageIndex);
+                                                selector.selection.chartSelection = drawing;
+                                                drawing.selection.chart = id;
+                                                drawing.selection.series = 0;
+                                                drawing.selection.datPoint = null;
+                                            }
                                         }
                                         else
                                         {
@@ -711,12 +739,24 @@ function handleChartElements(drawing, drawingObjectsController, e, dTx, dTy, gro
                                                 bSeries = true;
                                                 if(bPie)
                                                 {
-                                                    selector.resetSelection();
-                                                    selector.selectObject(drawing, pageIndex);
-                                                    selector.selection.chartSelection = drawing;
-                                                    drawing.selection.chart = id;
-                                                    drawing.selection.series = 0;
-                                                    drawing.selection.datPoint = k;
+                                                    if(drawing.selection.series === 0)
+                                                    {
+                                                        selector.resetSelection();
+                                                        selector.selectObject(drawing, pageIndex);
+                                                        selector.selection.chartSelection = drawing;
+                                                        drawing.selection.chart = id;
+                                                        drawing.selection.series = 0;
+                                                        drawing.selection.datPoint = k;
+                                                    }
+                                                    else
+                                                    {
+                                                        selector.resetSelection();
+                                                        selector.selectObject(drawing, pageIndex);
+                                                        selector.selection.chartSelection = drawing;
+                                                        drawing.selection.chart = id;
+                                                        drawing.selection.series = 0;
+                                                        drawing.selection.datPoint = null;
+                                                    }
                                                 }
                                                 else
                                                 {
@@ -779,7 +819,7 @@ function handleChartElements(drawing, drawingObjectsController, e, dTx, dTy, gro
 											}
                                         }
                                     }
-									
+
 									aFrontPaths = aPointsPaths[l].darkPaths;
 									  if(!bSeries && Array.isArray(aFrontPaths))
                                     {
@@ -801,12 +841,24 @@ function handleChartElements(drawing, drawingObjectsController, e, dTx, dTy, gro
                                     {
                                         if(bPie)
                                         {
-                                            selector.resetSelection();
-                                            selector.selectObject(drawing, pageIndex);
-                                            selector.selection.chartSelection = drawing;
-                                            drawing.selection.chart = id;
-                                            drawing.selection.series = 0;
-                                            drawing.selection.datPoint = k;
+                                            if(drawing.selection.series === 0)
+                                            {
+                                                selector.resetSelection();
+                                                selector.selectObject(drawing, pageIndex);
+                                                selector.selection.chartSelection = drawing;
+                                                drawing.selection.chart = id;
+                                                drawing.selection.series = 0;
+                                                drawing.selection.datPoint = k;
+                                            }
+                                            else
+                                            {
+                                                selector.resetSelection();
+                                                selector.selectObject(drawing, pageIndex);
+                                                selector.selection.chartSelection = drawing;
+                                                drawing.selection.chart = id;
+                                                drawing.selection.series = 0;
+                                                drawing.selection.datPoint = null;
+                                            }
                                         }
                                         else
                                         {
@@ -848,12 +900,24 @@ function handleChartElements(drawing, drawingObjectsController, e, dTx, dTy, gro
                                     bSeries = true;
                                     if(bPie)
                                     {
-                                        selector.resetSelection();
-                                        selector.selectObject(drawing, pageIndex);
-                                        selector.selection.chartSelection = drawing;
-                                        drawing.selection.chart = id;
-                                        drawing.selection.series = 0;
-                                        drawing.selection.datPoint = k;
+                                        if(drawing.selection.series === 0)
+                                        {
+                                            selector.resetSelection();
+                                            selector.selectObject(drawing, pageIndex);
+                                            selector.selection.chartSelection = drawing;
+                                            drawing.selection.chart = id;
+                                            drawing.selection.series = 0;
+                                            drawing.selection.datPoint = k;
+                                        }
+                                        else
+                                        {
+                                            selector.resetSelection();
+                                            selector.selectObject(drawing, pageIndex);
+                                            selector.selection.chartSelection = drawing;
+                                            drawing.selection.chart = id;
+                                            drawing.selection.series = 0;
+                                            drawing.selection.datPoint = null;
+                                        }
                                     }
                                     else
                                     {
@@ -970,7 +1034,7 @@ function handleChartElements(drawing, drawingObjectsController, e, dTx, dTy, gro
                 }
                 else
                 {
-					
+
                     if(!bSeries && AscFormat.isRealNumber(t.chart.sortZIndexPaths[i].frontPaths))
                     {
                         var oPath = drawing.pathMemory.GetPath(t.chart.sortZIndexPaths[i].frontPaths);
@@ -1021,8 +1085,8 @@ function handleChartElements(drawing, drawingObjectsController, e, dTx, dTy, gro
 					var oAxObj = t.catAxisChart[j];
 					if(oAxObj && oAxObj.paths)
 					{
-						if(oAxObj.catAx.compiledMajorGridLines && oAxObj.catAx.compiledMajorGridLines.isVisible()
-							&& AscFormat.isRealNumber(oAxObj.paths.gridLines))
+						if(oAxObj.catAx && oAxObj.catAx.compiledMajorGridLines && oAxObj.catAx.compiledMajorGridLines.isVisible()
+							&& AscFormat.isRealNumber(oAxObj.paths.gridLines))//TODo Date Ax vehicle log book1.xlsx
 						{
 							var oPath = drawing.pathMemory.GetPath(oAxObj.paths.gridLines);
 							if(oPath.hitInPath(oCanvas, dTx, dTy))
@@ -1032,11 +1096,11 @@ function handleChartElements(drawing, drawingObjectsController, e, dTx, dTy, gro
 								selector.selectObject(drawing, pageIndex);
 								selector.selection.chartSelection = drawing;
 								drawing.selection.axis = oAxObj.catAx;
-								drawing.selection.majorGridlines = oAxObj.paths.gridLines;
+								drawing.selection.majorGridlines = true;
 								break;
 							}
 						}
-						if(!bSeries && oAxObj.catAx.compiledMinorGridLines && oAxObj.catAx.compiledMinorGridLines.isVisible()
+						if(!bSeries && oAxObj.catAx && oAxObj.catAx.compiledMinorGridLines && oAxObj.catAx.compiledMinorGridLines.isVisible()
 							&& AscFormat.isRealNumber(oAxObj.paths.minorGridLines))
 						{
 							var oPath = drawing.pathMemory.GetPath(oAxObj.paths.minorGridLines);
@@ -1047,7 +1111,7 @@ function handleChartElements(drawing, drawingObjectsController, e, dTx, dTy, gro
 								selector.selectObject(drawing, pageIndex);
 								selector.selection.chartSelection = drawing;
 								drawing.selection.axis = oAxObj.catAx;
-								drawing.selection.minorGridlines = oAxObj.paths.minorGridLines;
+								drawing.selection.minorGridlines = true;
 								break;
 							}
 						}
@@ -1074,7 +1138,7 @@ function handleChartElements(drawing, drawingObjectsController, e, dTx, dTy, gro
 									selector.selectObject(drawing, pageIndex);
 									selector.selection.chartSelection = drawing;
 									drawing.selection.axis = oAxObj.valAx;
-									drawing.selection.majorGridlines = oAxObj.paths.gridLines;
+									drawing.selection.majorGridlines = true;
 									break;
 								}
 							}
@@ -1089,7 +1153,7 @@ function handleChartElements(drawing, drawingObjectsController, e, dTx, dTy, gro
 									selector.selectObject(drawing, pageIndex);
 									selector.selection.chartSelection = drawing;
 									drawing.selection.axis = oAxObj.valAx;
-									drawing.selection.minorGridlines = oAxObj.paths.minorGridLines;
+									drawing.selection.minorGridlines = true;
 									break;
 								}
 							}
@@ -1110,12 +1174,12 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
     var ret = false, i, title;
     if(drawing.hit(x, y))
     {
-        var bClickFlag = drawingObjectsController.handleEventMode === AscFormat.HANDLE_EVENT_MODE_CURSOR || e.ClickCount < 2;
+        var bClickFlag =  !window["IS_NATIVE_EDITOR"] && (drawingObjectsController.handleEventMode === AscFormat.HANDLE_EVENT_MODE_CURSOR || e.ClickCount < 2);
         var selector = group ? group : drawingObjectsController;
         var legend = drawing.getLegend();
-        if(legend && !window["NATIVE_EDITOR_ENJINE"] && legend.hit(x, y) && bClickFlag)
+        if(legend && legend.hit(x, y) && bClickFlag)
         {
-            if(drawing.selection.legend != legend)
+            if(drawing.selection.legend !== legend)
             {
                 if(drawingObjectsController.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
                 {
@@ -1176,7 +1240,7 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
         }
 
 
-        if(!window["NATIVE_EDITOR_ENJINE"] && bClickFlag){
+        if(bClickFlag){
 
             var aCharts = drawing.chart.plotArea.charts;
             var series = drawing.getAllSeries();
@@ -1302,7 +1366,7 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
         //todo gridlines
 
         //plotArea
-        if(bClickFlag && !window["IS_NATIVE_EDITOR"]){
+        if(bClickFlag){
             var oChartSizes = drawing.getChartSizes(true);
             var oInvertTransform = drawing.invertTransform;
             var dTx = oInvertTransform.TransformPointX(x, y);

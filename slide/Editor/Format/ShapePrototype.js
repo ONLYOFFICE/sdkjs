@@ -138,7 +138,7 @@ CShape.prototype.deleteDrawingBase = function(bCheckPlaceholder)
             var hierarchy = this.getHierarchy();
             if(hierarchy[0])
             {
-                var copy = hierarchy[0].copy();
+                var copy = hierarchy[0].copy(undefined);
                 copy.setParent(this.parent);
                 copy.addToDrawingObjects(pos);
                 var doc_content = copy.getDocContent && copy.getDocContent();

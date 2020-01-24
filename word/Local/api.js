@@ -240,18 +240,24 @@ Asc['asc_docs_api'].prototype.asc_DownloadAs = function(options)
 	this.asc_Save(false, true);
 };
 
-Asc['asc_docs_api'].prototype.AddImageUrl = function(url, imgProp, token)
+Asc['asc_docs_api'].prototype.AddImageUrl = function(url, imgProp, token, obj)
 {
 	var _url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](url);
-	this.AddImageUrlAction(AscCommon.g_oDocumentUrls.getImageUrl(_url), imgProp);
+	this.AddImageUrlAction(AscCommon.g_oDocumentUrls.getImageUrl(_url), imgProp, obj);
 };
-Asc['asc_docs_api'].prototype.AddImage = function()
+Asc['asc_docs_api'].prototype.AddImage = Asc['asc_docs_api'].prototype.asc_addImage = function(obj)
 {
-	window["AscDesktopEditor"]["LocalFileGetImageUrlFromOpenFileDialog"]();
-};
-Asc['asc_docs_api'].prototype.asc_addImage = function()
-{
-  window["AscDesktopEditor"]["LocalFileGetImageUrlFromOpenFileDialog"]();
+	window["AscDesktopEditor"]["OpenFilenameDialog"]("images", false, function(_file) {
+		var file = _file;
+		if (Array.isArray(file))
+			file = file[0];
+
+		if (file == "")
+			return;
+
+		var _url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](file);
+		editor.AddImageUrlAction(AscCommon.g_oDocumentUrls.getImageUrl(_url), undefined, obj);
+	});
 };
 Asc['asc_docs_api'].prototype.asc_isOffline = function()
 {
@@ -268,14 +274,6 @@ Asc['asc_docs_api'].prototype["asc_DownloadAs"] = Asc['asc_docs_api'].prototype.
 Asc['asc_docs_api'].prototype["asc_isOffline"] = Asc['asc_docs_api'].prototype.asc_isOffline;
 Asc['asc_docs_api'].prototype["SetDocumentModified"] = Asc['asc_docs_api'].prototype.SetDocumentModified;
 
-
-window["DesktopOfflineAppDocumentAddImageEnd"] = function(url)
-{
-	if (url == "")
-		return;
-	var _url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](url);
-	editor.AddImageUrlAction(AscCommon.g_oDocumentUrls.getImageUrl(_url));
-};
 
 window["on_editor_native_message"] = function(sCommand, sParam)
 {

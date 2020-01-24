@@ -203,9 +203,7 @@ function (window, undefined) {
                 this.m_fDefaultSizeY = this.spPr.xfrm.extY;
             }
         }
-        if(AscFormat.CImageShape.prototype.handleUpdateExtents){
-            AscFormat.CImageShape.prototype.handleUpdateExtents.call(this, []);
-        }
+        AscFormat.CImageShape.prototype.handleUpdateExtents.call(this, []);
     };
     COleObject.prototype.checkTypeCorrect = function(){
         if(!this.m_sData){

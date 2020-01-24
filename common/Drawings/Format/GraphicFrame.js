@@ -253,7 +253,7 @@ CGraphicFrame.prototype.Search_GetId = function(bNext, bCurrent)
         return null;
 };
 
-CGraphicFrame.prototype.copy= function()
+CGraphicFrame.prototype.copy = function(oPr)
     {
         var ret = new CGraphicFrame();
         if(this.graphicObject)
@@ -1161,7 +1161,7 @@ CGraphicFrame.prototype.Is_ThisElementCurrent = function()
     };
 
     CGraphicFrame.prototype.getCopyWithSourceFormatting = function(){
-        var ret = this.copy();
+        var ret = this.copy(undefined);
         var oCopyTable = ret.graphicObject;
         var oSourceTable = this.graphicObject;
         var oTheme = this.Get_Theme();

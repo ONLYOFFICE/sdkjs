@@ -37,6 +37,7 @@ var align_Right = AscCommon.align_Right;
 var align_Left = AscCommon.align_Left;
 var align_Center = AscCommon.align_Center;
 var align_Justify = AscCommon.align_Justify;
+var c_oAscRevisionsChangeType = Asc.c_oAscRevisionsChangeType;
 var g_oTableId = AscCommon.g_oTableId;
 var History = AscCommon.History;
 
@@ -1558,14 +1559,14 @@ ParaMath.prototype.Remove = function(Direction, bOnAddText)
     }
 };
 
-ParaMath.prototype.GetSelectContent = function()
+ParaMath.prototype.GetSelectContent = function(isAll)
 {
-    return this.Root.GetSelectContent();
+    return this.Root.GetSelectContent(isAll);
 };
 
-ParaMath.prototype.Get_CurrentParaPos = function()
+ParaMath.prototype.GetCurrentParaPos = function()
 {
-    return this.Root.Get_CurrentParaPos();
+    return this.Root.GetCurrentParaPos();
 };
 
 ParaMath.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
@@ -1670,18 +1671,21 @@ ParaMath.prototype.GetSelectedElementsInfo = function(Info, ContentPos, Depth)
 
 ParaMath.prototype.GetSelectedText = function(bAll, bClearText, oPr)
 {
-	if (true === bAll || true === this.IsSelectionUse()) {
+	if (true === bAll || true === this.IsSelectionUse())
+	{
 		if (true === bClearText)
 			return null;
 
-		var res = "";
-        var selectedContent = this.GetSelectContent();
-        if (selectedContent && selectedContent.Content && selectedContent.Content.GetTextContent) {
-            var textContent = selectedContent.Content.GetTextContent(!bAll);
-            if (textContent && textContent.str) {
-                res = textContent.str;
-            }
-        }
+		var res             = "";
+		var selectedContent = this.GetSelectContent(bAll);
+		if (selectedContent && selectedContent.Content && selectedContent.Content.GetTextContent)
+		{
+			var textContent = selectedContent.Content.GetTextContent(!bAll);
+			if (textContent && textContent.str)
+			{
+				res = textContent.str;
+			}
+		}
 		return res;
 	}
 	return "";
@@ -1708,7 +1712,7 @@ ParaMath.prototype.Clear_TextFormatting = function( DefHyper )
 {
 };
 
-ParaMath.prototype.Can_AddDropCap = function()
+ParaMath.prototype.CanAddDropCap = function()
 {
     return false;
 };
@@ -2423,9 +2427,9 @@ ParaMath.prototype.Check_PageBreak = function()
     return false;
 };
 
-ParaMath.prototype.Check_BreakPageEnd = function(PBChecker)
+ParaMath.prototype.CheckSplitPageOnPageBreak = function(oPBChecker)
 {
-    return false;
+	return true;
 };
 ParaMath.prototype.Get_ParaPosByContentPos = function(ContentPos, Depth)
 {
@@ -2748,7 +2752,7 @@ ParaMath.prototype.Draw_HighLights = function(PDSH)
             var CommentsFlag  = PDSH.CommentsFlag;
 
             var Bounds = this.Root.Get_LineBound(PDSH.Line, PDSH.Range);
-            Comm.Add(Bounds.Y, Bounds.Y + Bounds.H, Bounds.X, Bounds.X + Bounds.W, 0, 0, 0, 0, { Active : CommentsFlag === comments_ActiveComment ? true : false, CommentId : CommentId } );
+            Comm.Add(Bounds.Y, Bounds.Y + Bounds.H, Bounds.X, Bounds.X + Bounds.W, 0, 0, 0, 0, { Active : CommentsFlag === AscCommon.comments_ActiveComment ? true : false, CommentId : CommentId } );
         }
 
         if (null !== CollFirst)

@@ -112,11 +112,11 @@ CChangesCommentTypeInfo.prototype.WriteToBinary = function(Writer)
 	// Variable : Old data
 
 	Writer.WriteLong(this.New.Type);
-	if (comment_type_HdrFtr === this.New.Type)
+	if (AscCommon.comment_type_HdrFtr === this.New.Type)
 		Writer.WriteString2(this.New.Data.Get_Id());
 
 	Writer.WriteLong(this.Old.Type);
-	if (comment_type_HdrFtr === this.Old.Type)
+	if (AscCommon.comment_type_HdrFtr === this.Old.Type)
 		Writer.WriteString2(this.Old.Data.Get_Id());
 };
 CChangesCommentTypeInfo.prototype.ReadFromBinary = function(Reader)
@@ -135,11 +135,11 @@ CChangesCommentTypeInfo.prototype.ReadFromBinary = function(Reader)
 	};
 
 	this.New.Type = Reader.GetLong();
-	if (comment_type_HdrFtr === this.New.Type)
+	if (AscCommon.comment_type_HdrFtr === this.New.Type)
 		this.New.Data = AscCommon.g_oTableId.Get_ById(Reader.GetString2());
 
 	this.Old.Type = Reader.GetLong();
-	if (comment_type_HdrFtr === this.Old.Type)
+	if (AscCommon.comment_type_HdrFtr === this.Old.Type)
 		this.Old.Data = AscCommon.g_oTableId.Get_ById(Reader.GetString2());
 };
 CChangesCommentTypeInfo.prototype.private_SetValue = function(Value)
@@ -280,7 +280,7 @@ CChangesParaCommentCommentId.prototype.Load = function()
 	this.Redo();
 
 	var Comment = AscCommon.g_oTableId.Get_ById(this.New);
-	if (null !== this.Class.Paragraph && null !== Comment && Comment instanceof CComment)
+	if (null !== this.Class.Paragraph && null !== Comment && Comment instanceof AscCommon.CComment)
 	{
 		if (true === this.Class.Start)
 			Comment.Set_StartId(this.Class.Paragraph.Get_Id());

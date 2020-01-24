@@ -437,6 +437,10 @@ CShape.prototype.addToDrawingObjects =  function(pos, type)
     if(AscFormat.isRealNumber(type) && this.setDrawingBaseType)
     {
         this.setDrawingBaseType(type);
+        if(type === AscCommon.c_oAscCellAnchorType.cellanchorTwoCell)
+        {
+            this.setDrawingBaseEditAs(AscCommon.c_oAscCellAnchorType.cellanchorTwoCell);
+        }
     }
     //this.worksheet.addContentChanges(new AscCommon.CContentChangesElement(AscCommon.contentchanges_Add, position, 1, data));
     var nv_sp_pr, bNeedSet = false;
@@ -484,7 +488,12 @@ CShape.prototype.deleteDrawingBase = function()
         var oExt = this.drawingBase.ext;
         if(oFrom && oTo && oPos && oExt && this.setDrawingBaseType && this.setDrawingBaseCoords)
         {
+            if(this.drawingBase.Type === AscCommon.c_oAscCellAnchorType.cellanchorTwoCell)
+            {
+                this.setDrawingBaseEditAs(AscCommon.c_oAscCellAnchorType.cellanchorTwoCell);
+            }
             this.setDrawingBaseType(this.drawingBase.Type);
+
             this.setDrawingBaseCoords(oFrom.col, oFrom.colOff, oFrom.row, oFrom.rowOff, oTo.col, oTo.colOff, oTo.row, oTo.rowOff, oPos.X, oPos.Y, oExt.cx, oExt.cy)
         }
     }

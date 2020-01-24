@@ -426,10 +426,15 @@ CShapeDrawer.prototype =
         if (this.Ln == null || this.Ln.Fill == null || this.Ln.Fill.fill == null)
         {
             this.bIsNoStrokeAttack = true;
-            if (true === graphics.IsTrack)
-                graphics.Graphics.ArrayPoints = null;
-            else
+            
+            if (true === graphics.IsTrack) {
+                if (graphics.Graphics != undefined && graphics.Graphics != null) {
+                   graphics.Graphics.ArrayPoints = null;
+                }
+            
+            } else {
                 graphics.ArrayPoints = null;
+            }
         }
         else
         {

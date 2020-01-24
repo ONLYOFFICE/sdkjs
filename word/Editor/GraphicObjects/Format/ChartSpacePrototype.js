@@ -177,7 +177,7 @@ CChartSpace.prototype.handleUpdatePosition = function()
     this.recalcBounds();
     for(var i = 0; i < this.userShapes.length; ++i)
     {
-        if(this.userShapes[i].object && this.userShapes[i].object.handleUpdateExtents)
+        if(this.userShapes[i].object)
         {
             this.userShapes[i].object.handleUpdateExtents();
         }

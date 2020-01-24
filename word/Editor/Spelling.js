@@ -156,7 +156,7 @@ CDocumentSpelling.prototype =
 			{
 				var oParagraph = this.CheckPara[sId];
 
-				if (!oParagraph.ContinueCheckSpelling(false))
+				if (oParagraph.IsUseInDocument() && !oParagraph.ContinueCheckSpelling(false))
 					break;
 
 				delete this.CheckPara[sId];
@@ -1258,21 +1258,21 @@ ParaRun.prototype.Clear_SpellingMarks = function()
     this.SpellingMarks = [];
 };
 //----------------------------------------------------------------------------------------------------------------------
-// ParaComment
+// AscCommon.ParaComment
 //----------------------------------------------------------------------------------------------------------------------
-ParaComment.prototype.Restart_CheckSpelling = function()
+AscCommon.ParaComment.prototype.Restart_CheckSpelling = function()
 {
 };
 
-ParaComment.prototype.Add_SpellCheckerElement = function(Element, Start, Depth)
+AscCommon.ParaComment.prototype.Add_SpellCheckerElement = function(Element, Start, Depth)
 {
 };
 
-ParaComment.prototype.Remove_SpellCheckerElement = function(Element)
+AscCommon.ParaComment.prototype.Remove_SpellCheckerElement = function(Element)
 {
 };
 
-ParaComment.prototype.Clear_SpellingMarks = function()
+AscCommon.ParaComment.prototype.Clear_SpellingMarks = function()
 {
 };
 //----------------------------------------------------------------------------------------------------------------------

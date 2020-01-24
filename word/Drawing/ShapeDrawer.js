@@ -568,6 +568,13 @@ CShapeDrawer.prototype =
             this.Graphics.put_TextureBounds(this.min_x, this.min_y, this.max_x - this.min_x, this.max_y - this.min_y);
         }
 
+        var _old_composite = null;
+        if (this.Graphics.ClearMode === true)
+        {
+            _old_composite = this.Graphics.m_oContext.globalCompositeOperation;
+            this.Graphics.m_oContext.globalCompositeOperation = "destination-out";
+        }
+
         if(geom)
         {
             geom.draw(this);
@@ -593,6 +600,11 @@ CShapeDrawer.prototype =
         if (this.Graphics.IsSlideBoundsCheckerType && this.Graphics.AutoCheckLineWidth)
         {
             this.Graphics.CorrectBounds2();
+        }
+
+        if (this.Graphics.ClearMode === true)
+        {
+            this.Graphics.m_oContext.globalCompositeOperation = _old_composite;
         }
 
         this.Graphics.p_dash(null);
@@ -685,6 +697,8 @@ CShapeDrawer.prototype =
         if (this.Graphics.IsSlideBoundsCheckerType === true)
             return;
 
+        var editorInfo = this.getEditorInfo();
+
         var bIsIntegerGridTRUE = false;
         if (this.bIsTexture)
         {
@@ -761,7 +775,7 @@ CShapeDrawer.prototype =
             }
             else
             {
-                var _img = editor.ImageLoader.map_image_index[getFullImageSrc2(this.UniFill.fill.RasterImageId)];
+                var _img = editorInfo.editor.ImageLoader.map_image_index[getFullImageSrc2(this.UniFill.fill.RasterImageId)];
                 var _img_native = this.UniFill.fill.canvas;
                 if ((!_img_native) && (_img == undefined || _img.Image == null || _img.Status == AscFonts.ImageLoadStatus.Loading))
                 {
@@ -804,19 +818,16 @@ CShapeDrawer.prototype =
                     var __graphics = (this.Graphics.MaxEpsLine === undefined) ? this.Graphics : this.Graphics.Graphics;
                     var bIsThumbnail = (__graphics.IsThumbnail === true) ? true : false;
 
-                    var koefX = editor.WordControl.m_nZoomValue / 100;
-                    var koefY = editor.WordControl.m_nZoomValue / 100;
+                    var koefX = editorInfo.scale;
+                    var koefY = editorInfo.scale;
 
                     if (bIsThumbnail)
                     {
                         koefX = __graphics.m_dDpiX / AscCommon.g_dDpiX;
                         koefY = __graphics.m_dDpiY / AscCommon.g_dDpiX;
 
-                        if (editor.WordControl.bIsRetinaSupport)
-                        {
-                            koefX /= AscCommon.AscBrowser.retinaPixelRatio;
-                            koefY /= AscCommon.AscBrowser.retinaPixelRatio;
-                        }
+                        koefX /= AscCommon.AscBrowser.retinaPixelRatio;
+                        koefY /= AscCommon.AscBrowser.retinaPixelRatio;
                     }
 
                     // TODO: !!!
@@ -891,8 +902,8 @@ CShapeDrawer.prototype =
 
                 _ctx.save();
 
-                var koefX = editor.WordControl.m_nZoomValue / 100;
-                var koefY = editor.WordControl.m_nZoomValue / 100;
+                var koefX = editorInfo.scale;
+                var koefY = editorInfo.scale;
                 if (this.Graphics.IsThumbnail)
                 {
                     koefX = 1;
@@ -1048,7 +1059,7 @@ CShapeDrawer.prototype =
         }
         if(rgba)
         {
-            if (this.UniFill != null && this.UniFill.transparent != null)
+            if (this.UniFill != null && this.UniFill.transparent != null && this.Graphics.ClearMode !== true)
                 rgba.A = this.UniFill.transparent;
             this.Graphics.b_color1(rgba.R, rgba.G, rgba.B, rgba.A);
         }
@@ -1389,7 +1400,7 @@ CShapeDrawer.prototype =
                         }
                         if (rgba)
                         {
-                            if (this.UniFill != null && this.UniFill.transparent != null)
+                            if (this.UniFill != null && this.UniFill.transparent != null && this.Graphics.ClearMode !== true)
                                 rgba.A = this.UniFill.transparent;
                             this.Graphics.b_color1(rgba.R, rgba.G, rgba.B, rgba.A);
                         }
@@ -1737,6 +1748,29 @@ CShapeDrawer.prototype =
 
     DrawPresentationComment : function(type, x, y, w, h)
     {
+    },
+
+    getEditorInfo: function()
+    {
+        var _ret = {};
+        _ret.editor = Asc.editor || window.editor;
+        switch (_ret.editor.editorId)
+        {
+            case AscCommon.c_oEditorId.Word:
+            case AscCommon.c_oEditorId.Presentation:
+            {
+                _ret.scale = _ret.editor.WordControl.m_nZoomValue / 100;
+                break;
+            }
+            case AscCommon.c_oEditorId.Spreadsheet:
+            {
+                _ret.scale = _ret.editor.asc_getZoom();
+                break;
+            }
+            default:
+                break;
+        }
+        return _ret;
     }
 };
 
@@ -1780,8 +1814,8 @@ function ShapeToImageConverter(shape, pageIndex)
     }*/
 
     var _canvas = document.createElement('canvas');
-    _canvas.width = _need_pix_width;
-    _canvas.height = _need_pix_height;
+    _canvas.width = _need_pix_width >> 0;
+    _canvas.height = _need_pix_height >> 0;
 
     var _ctx = _canvas.getContext('2d');
 

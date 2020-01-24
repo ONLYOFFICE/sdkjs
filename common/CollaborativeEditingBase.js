@@ -352,7 +352,7 @@ CCollaborativeEditingBase.prototype.Apply_Changes = function()
     if (true === OtherChanges)
     {
         AscFonts.IsCheckSymbols = true;
-        editor.WordControl.m_oLogicDocument.Stop_Recalculate();
+        editor.WordControl.m_oLogicDocument.StopRecalculate();
         editor.WordControl.m_oLogicDocument.EndPreview_MailMergeResult();
 
         editor.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.ApplyChanges);

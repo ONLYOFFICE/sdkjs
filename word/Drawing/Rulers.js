@@ -2375,7 +2375,7 @@ function CHorRuler()
         if ( false === this.m_oWordControl.m_oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Document_SectPr) )
         {
             this.m_oWordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_SetDocumentMargin_Hor);
-            this.m_oWordControl.m_oLogicDocument.Set_DocumentMargin( { Left : this.m_dMarginLeft, Right : this.m_dMarginRight });
+            this.m_oWordControl.m_oLogicDocument.SetDocumentMargin( { Left : this.m_dMarginLeft, Right : this.m_dMarginRight }, true);
 			this.m_oWordControl.m_oLogicDocument.FinalizeAction();
         }
         //oWordControl.m_oLogicDocument.SetParagraphIndent( { Left : this.m_dIndentLeft, Right : this.m_dIndentRight,
@@ -3802,7 +3802,7 @@ function CVerRuler()
         if ( false === this.m_oWordControl.m_oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Document_SectPr) )
         {
             this.m_oWordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_SetDocumentMargin_Ver);
-            this.m_oWordControl.m_oLogicDocument.Set_DocumentMargin( { Top : this.m_dMarginTop, Bottom : this.m_dMarginBottom });
+            this.m_oWordControl.m_oLogicDocument.SetDocumentMargin( { Top : this.m_dMarginTop, Bottom : this.m_dMarginBottom }, true);
 			this.m_oWordControl.m_oLogicDocument.FinalizeAction();
         }
     }

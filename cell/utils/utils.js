@@ -262,7 +262,7 @@
 			var wordsIndexArray = [];
 			for (var i = 0; i < str.length; i++) {
 				var nCharCode = str.charCodeAt(i);
-				if (AscCommon.g_aPunctuation[nCharCode] !== undefined || nCharCode === 32) {
+				if (AscCommon.g_aPunctuation[nCharCode] !== undefined || nCharCode === 32 || nCharCode === 10) {
 					if (trueLetter) {
 						trueLetter = false;
 						index++;
@@ -280,6 +280,47 @@
 				wordsArray: wordsArray,
 				wordsIndex: wordsIndexArray
 			};
+		}
+
+		function replaceSpellCheckWords(cellValue, options) {
+			// ToDo replace one command
+			if (1 === options.indexInArray && options.replaceWith) {
+				cellValue = options.replaceWith;
+			} else {
+				for (var i = 0; i < options.replaceWords.length; ++i) {
+					cellValue = cellValue.replace(options.replaceWords[i][0], function () {
+						return options.replaceWords[i][1];
+					});
+				}
+			}
+			return cellValue;
+		}
+
+		function getFindRegExp(value, options) {
+			var findFlags = "g"; // Заменяем все вхождения
+			// Не чувствителен к регистру
+			if (true !== options.isMatchCase) {
+				findFlags += "i";
+			}
+			value = value
+				.replace(/(\\)/g, "\\\\").replace(/(\^)/g, "\\^")
+				.replace(/(\()/g, "\\(").replace(/(\))/g, "\\)")
+				.replace(/(\+)/g, "\\+").replace(/(\[)/g, "\\[")
+				.replace(/(\])/g, "\\]").replace(/(\{)/g, "\\{")
+				.replace(/(\})/g, "\\}").replace(/(\$)/g, "\\$")
+				.replace(/(\.)/g, "\\.")
+				.replace(/(~)?\*/g, function ($0, $1) {
+					return $1 ? $0 : '(.*)';
+				})
+				.replace(/(~)?\?/g, function ($0, $1) {
+					return $1 ? $0 : '.';
+				})
+				.replace(/(~\*)/g, "\\*").replace(/(~\?)/g, "\\?");
+
+			if (options.isWholeWord)
+				value = '\\b' + value + '\\b';
+				
+			return new RegExp(value, findFlags);
 		}
 
 		var referenceType = {
@@ -2048,6 +2089,11 @@
 
 			this.scale = null;
 
+			this.titleRowRange = null;
+			this.titleColRange = null;
+			this.titleWidth = 0;
+			this.titleHeight = 0;
+
 			return this;
 		}
 		function CPrintPagesData () {
@@ -2062,6 +2108,8 @@
 			this.printType = Asc.c_oAscPrintType.ActiveSheets;
 			this.pageOptionsMap = null;
 			this.ignorePrintArea = null;
+
+			this.isOnlyFirstPage = null;
 
 			// ToDo сюда же start и end page index
 
@@ -2219,6 +2267,11 @@
 			if (this.TabColor)
 				res.TabColor = this.TabColor.clone();
 
+			res.FitToPage = this.FitToPage;
+
+			res.SummaryBelow = this.SummaryBelow;
+			res.SummaryRight = this.SummaryRight;
+
 			return res;
 		};
 
@@ -2246,15 +2299,17 @@
 		/** @constructor */
 		function asc_CFindOptions() {
 			this.findWhat = "";							// текст, который ищем
-			this.wordIndex = 0;                         // индекс текущего слова
+			this.wordsIndex = 0;                         // индекс текущего слова
 			this.scanByRows = true;						// просмотр по строкам/столбцам
 			this.scanForward = true;					// поиск вперед/назад
 			this.isMatchCase = false;					// учитывать регистр
-			this.isWholeCell = false;	                // ячейка целиком
-			this.isChangeSingleWord = false;		    // изменение только одного слова	
+			this.isWholeCell = false;	              
+			this.isWholeWord = false;                
+			this.isSpellCheck = false;		    // изменение вызванное в проверке орфографии	
 			this.scanOnOnlySheet = true;				// искать только на листе/в книге
 			this.lookIn = Asc.c_oAscFindLookIn.Formulas;	// искать в формулах/значениях/примечаниях
 
+			this.findRegExp = null;
 			this.replaceWith = "";						// текст, на который заменяем (если у нас замена)
 			this.isReplaceAll = false;					// заменить все (если у нас замена)
 
@@ -2271,15 +2326,17 @@
 			this.sheetIndex = -1;
 			this.error = false;
 		}
+
 		asc_CFindOptions.prototype.clone = function () {
 			var result = new asc_CFindOptions();
-			result.wordIndex = this.wordIndex;
+			result.wordsIndex = this.wordsIndex;
 			result.findWhat = this.findWhat;
 			result.scanByRows = this.scanByRows;
 			result.scanForward = this.scanForward;
 			result.isMatchCase = this.isMatchCase;
 			result.isWholeCell = this.isWholeCell;
-			result.isChangeSingleWord = 	this.isChangeSingleWord;	
+			result.isWholeWord = this.isWholeWord;  
+			result.isSpellCheck = this.isSpellCheck;	
 			result.scanOnOnlySheet = this.scanOnOnlySheet;		
 			result.lookIn = this.lookIn;
 
@@ -2298,6 +2355,7 @@
 			result.error = this.error;
 			return result;
 		};
+
 		asc_CFindOptions.prototype.isEqual = function (obj) {
 			return obj && this.isEqual2(obj) && this.scanForward === obj.scanForward &&
 				this.scanOnOnlySheet === obj.scanOnOnlySheet;
@@ -2322,6 +2380,7 @@
 		asc_CFindOptions.prototype.asc_setScanForward = function (val) {this.scanForward = val;};
 		asc_CFindOptions.prototype.asc_setIsMatchCase = function (val) {this.isMatchCase = val;};
 		asc_CFindOptions.prototype.asc_setIsWholeCell = function (val) {this.isWholeCell = val;};
+		asc_CFindOptions.prototype.asc_setIsWholeWord = function (val) {this.isWholeWord = val;};
 		asc_CFindOptions.prototype.asc_changeSingleWord = function (val) { this.isChangeSingleWord = val; };	
 		asc_CFindOptions.prototype.asc_setScanOnOnlySheet = function (val) {this.scanOnOnlySheet = val;};
 		asc_CFindOptions.prototype.asc_setLookIn = function (val) {this.lookIn = val;};
@@ -2405,13 +2464,22 @@
 
 		function CSpellcheckState() {
 			this.lastSpellInfo = null;
-			this.lastIndex = -1;
+			this.lastIndex = 0;
 
 			this.lockSpell = false;
 			this.startCell = null;
 			this.currentCell = null;
 			this.iteration = false;
-			this.wordIndex = null;
+			this.ignoreWords = {};
+			this.changeWords = {};
+			this.cellsChange = [];
+			this.newWord = null;
+			this.cellText = null;
+			this.newCellText = null;
+			this.isStart = false;
+			this.afterReplace = false;
+			this.isIgnoreUppercase = false;
+			this.isIgnoreNumbers = false;
 		}
 
 		CSpellcheckState.prototype.init = function (startCell) {
@@ -2422,16 +2490,23 @@
 		};
 		CSpellcheckState.prototype.clean = function () {
 			this.lastSpellInfo = null;
-			this.lastIndex = -1;
+			this.lastIndex = 0;
 
 			this.lockSpell = false;
 			this.startCell = null;
 			this.currentCell = null;
 			this.iteration = false;
+			this.ignoreWords = {};
+			this.changeWords = {};
+			this.cellsChange = [];
+			this.newWord = null;
+			this.cellText = null;
+			this.newCellText = null;
+			this.afterReplace = false;
 		};
 		CSpellcheckState.prototype.nextRow = function () {
 			this.lastSpellInfo = null;
-			this.lastIndex = -1;
+			this.lastIndex = 0;
 
 			this.currentCell.row += 1;
 			this.currentCell.col = 0;
@@ -2688,6 +2763,8 @@
 		window["Asc"].profileTime = profileTime;
 		window["AscCommonExcel"].getMatchingBorder = getMatchingBorder;
 		window["AscCommonExcel"].WordSplitting = WordSplitting;
+		window["AscCommonExcel"].getFindRegExp = getFindRegExp;
+		window["AscCommonExcel"].replaceSpellCheckWords = replaceSpellCheckWords;
 		window["Asc"].outputDebugStr = outputDebugStr;
 		window["Asc"].isNumberInfinity = isNumberInfinity;
 		window["Asc"].trim = trim;

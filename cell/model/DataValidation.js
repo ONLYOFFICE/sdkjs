@@ -191,16 +191,21 @@
 			if (EDataValidationType.List === this.type) {
 				var list = this.formula1 && this.formula1.getValue(this.type, ws, false);
 				if (list && AscCommonExcel.cElementType.error !== list.type) {
-					list = ws.getRange2(list);
-					if (list) {
-						res = false;
-						list._foreachNoEmpty(function (cell) {
-							// ToDo check cells type
-							if (!cell.isEmptyTextString() && cell.getValue() === val) {
-								res = true;
-								return null;
-							}
-						});
+					if (AscCommonExcel.cElementType.string === list.type) {
+						list = list.getValue().split(AscCommon.FormulaSeparators.functionArgumentSeparatorDef);
+						res = -1 !== list.indexOf(val);
+					} else {
+						list = list.getRange();
+						if (list) {
+							res = false;
+							list._foreachNoEmpty(function (cell) {
+								// ToDo check cells type
+								if (!cell.isEmptyTextString() && cell.getValue() === val) {
+									res = true;
+									return null;
+								}
+							});
+						}
 					}
 				}
 			} else if (EDataValidationType.Custom === this.type) {

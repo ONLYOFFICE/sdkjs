@@ -3898,6 +3898,34 @@ $( function () {
 		ok(oParser.parse());
 		strictEqual(oParser.calculate().getValue(), 2);
 
+		oParser = new parserFormula("WORKDAY({1,2,3},1.123)", "A2", ws);
+		ok(oParser.parse());
+		strictEqual(oParser.calculate().getValue(), 2);
+
+		oParser = new parserFormula("WORKDAY({1,2,3},-1.123)", "A2", ws);
+		ok(oParser.parse());
+		strictEqual(oParser.calculate().getValue(), "#NUM!");
+
+		oParser = new parserFormula("WORKDAY({1,2,3},5)", "A2", ws);
+		ok(oParser.parse());
+		strictEqual(oParser.calculate().getValue(), 6);
+
+		oParser = new parserFormula("WORKDAY(1,15)", "A2", ws);
+		ok(oParser.parse());
+		strictEqual(oParser.calculate().getValue(), 20);
+
+		/*oParser = new parserFormula("WORKDAY(1,50)", "A2", ws);
+		ok(oParser.parse());
+		strictEqual(oParser.calculate().getValue(), 69);
+
+		oParser = new parserFormula("WORKDAY(1,60)", "A2", ws);
+		ok(oParser.parse());
+		strictEqual(oParser.calculate().getValue(), 83);
+
+		oParser = new parserFormula("WORKDAY(1,61)", "A2", ws);
+		ok(oParser.parse());
+		strictEqual(oParser.calculate().getValue(), 86);*/
+
 		//todo ms выдаёт ошибки
 		/*ws.getRange2( "A101" ).setValue( "1" );
 		ws.getRange2( "B101" ).setValue( "3.123" );
@@ -12774,6 +12802,10 @@ $( function () {
 		oParser = new parserFormula( "ADDRESS(1,7,,,)", "A2", ws );
 		ok( oParser.parse(), "ADDRESS(1,7,,,)" );
 		strictEqual( oParser.calculate().getValue(), "$G$1", "ADDRESS(1,7,,,)");
+
+		oParser = new parserFormula( "ADDRESS(2.123,3.3213,2)", "A2", ws );
+		ok( oParser.parse(), "ADDRESS(2.123,3.3213,2)" );
+		strictEqual( oParser.calculate().getValue(), "C$2", "ADDRESS(2.123,3.3213,2)");
 
 		testArrayFormula2("ADDRESS", 2, 5);
 	} );

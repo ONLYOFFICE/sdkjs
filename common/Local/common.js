@@ -147,58 +147,6 @@ window["DesktopOfflineAppDocumentEndLoad"] = function(_url, _data, _len)
 	editor.sendEvent("asc_onDocumentPassword", ("" != editor.currentPassword) ? true : false);
 };
 
-window["DesktopUploadFileToUrl"] = function(url, dst, hash, pass)
-{
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', "ascdesktop://fonts/" + url, true);
-    xhr.responseType = 'arraybuffer';
-
-    if (xhr.overrideMimeType)
-        xhr.overrideMimeType('text/plain; charset=x-user-defined');
-    else
-        xhr.setRequestHeader('Accept-Charset', 'x-user-defined');
-
-    xhr.onload = function()
-    {
-        if (this.status != 200)
-        {
-            // error
-            return;
-        }
-
-        var fileData = new Uint8Array(this.response);
-
-        var req = new XMLHttpRequest();
-        req.open("PUT", dst, true);
-
-        req.onload = function()
-		{
-			if (this.response && this.status == 200)
-			{
-				try
-				{
-					var data = {
-						"accounts": this.response ? JSON.parse(this.response) : undefined,
-						"hash": hash,
-						"password" : pass,
-						"type": "share"
-					};
-
-					window["AscDesktopEditor"]["sendSystemMessage"](data);
-					window["AscDesktopEditor"]["CallInAllWindows"]("function(){ if (window.DesktopUpdateFile) { window.DesktopUpdateFile(undefined); } }");
-				}
-				catch (err)
-				{
-				}
-			}
-        };
-
-        req.send(fileData);
-    };
-
-    xhr.send(null);
-};
-
 /////////////////////////////////////////////////////////
 //////////////       IMAGES      ////////////////////////
 /////////////////////////////////////////////////////////
@@ -266,6 +214,36 @@ AscCommon.sendImgUrls = function(api, images, callback)
 		_data[i] = { url: images[i], path : AscCommon.g_oDocumentUrls.getImageUrl(_url) };
 	}
 	callback(_data);
+};
+
+window['Asc']["CAscWatermarkProperties"].prototype["showFileDialog"] = function () {
+    if(!this.Api || !this.DivId){
+        return;
+    }
+    var t = this.Api;
+    var _this = this;
+
+    window["AscDesktopEditor"]["OpenFilenameDialog"]("images", false, function(_file) {
+        var file = _file;
+        if (Array.isArray(file))
+            file = file[0];
+
+        if (!file)
+			return;
+
+        var url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](file);
+        var urls = [AscCommon.g_oDocumentUrls.getImageUrl(url)];
+
+        t.ImageLoader.LoadImagesWithCallback(urls, function(){
+            if(urls.length > 0)
+            {
+                _this.ImageUrl = urls[0];
+                _this.Type = Asc.c_oAscWatermarkType.Image;
+                _this.drawTexture();
+                t.sendEvent("asc_onWatermarkImageLoaded");
+            }
+        });
+    });
 };
 
 /////////////////////////////////////////////////////////
@@ -416,7 +394,10 @@ AscCommon.InitDragAndDrop = function(oHtmlElement, callback) {
                 {
                     if (window["AscDesktopEditor"]["IsImageFile"](_files[i]))
                     {
-                        window["DesktopOfflineAppDocumentAddImageEnd"](_files[i]);
+						if (_files[i] == "")
+							continue;
+						var _url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](_files[i]);
+						editor.AddImageUrlAction(AscCommon.g_oDocumentUrls.getImageUrl(_url));
                         break;
                     }
                 }

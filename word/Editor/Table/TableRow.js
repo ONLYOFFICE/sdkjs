@@ -115,7 +115,7 @@ CTableRow.prototype =
     },
 
 	// Создаем копию данного объекта
-	Copy : function(Table)
+	Copy : function(Table, oPr)
 	{
 		var Row = new CTableRow(Table, 0);
 
@@ -126,7 +126,7 @@ CTableRow.prototype =
 		var CellsCount = this.Content.length;
 		for (var Index = 0; Index < CellsCount; Index++)
 		{
-			Row.Content[Index] = this.Content[Index].Copy(Row);
+			Row.Content[Index] = this.Content[Index].Copy(Row, oPr);
 			History.Add(new CChangesTableRowAddCell(Row, Index, [Row.Content[Index]]));
 		}
 

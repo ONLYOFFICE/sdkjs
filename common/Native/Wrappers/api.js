@@ -30,10 +30,9 @@
  *
  */
 
-window.IS_NATIVE_EDITOR = true;
-
 var sdkCheck = true;
 var spellCheck = true;
+var _api = null;
 
 window['SockJS'] = createSockJS();
 
@@ -54,7 +53,7 @@ Asc['asc_docs_api'].prototype.Internal_Update_Ind_Right = function(Right)
 Asc['asc_docs_api'].prototype["NativeAfterLoad"] = function()
 {
     this.WordControl.m_oDrawingDocument.AfterLoad();
-    this.WordControl.m_oLogicDocument.Set_UseTextShd(false);
+    this.WordControl.m_oLogicDocument.SetUseTextShd(false);
 };
 Asc['asc_docs_api'].prototype["GetNativePageMeta"] = function(pageIndex)
 {
@@ -189,7 +188,7 @@ Asc['asc_docs_api'].prototype["Call_HR_Margins"] = function(_margin_left, _margi
     if ( false === _logic.Document_Is_SelectionLocked(AscCommon.changestype_Document_SectPr) )
     {
         _logic.StartAction();
-        _logic.Set_DocumentMargin( { Left : _margin_left, Right : _margin_right });
+        _logic.SetDocumentMargin( { Left : _margin_left, Right : _margin_right });
 		_logic.FinalizeAction();
     }
 };
@@ -217,7 +216,7 @@ Asc['asc_docs_api'].prototype["Call_VR_Margins"] = function(_top, _bottom)
     if ( false === _logic.Document_Is_SelectionLocked(AscCommon.changestype_Document_SectPr) )
     {
         _logic.StartAction();
-        _logic.Set_DocumentMargin( { Top : _top, Bottom : _bottom });
+        _logic.SetDocumentMargin( { Top : _top, Bottom : _bottom });
         _logic.FinalizeAction();
     }
 };
@@ -665,7 +664,7 @@ function asc_menu_WriteParaBorder(_type, _border, _stream)
 // PARAASCBORDERS
 function asc_menu_ReadParaBorders(_params, _cursor)
 {
-    var _border = new asc_CParagraph();
+    var _border = new Asc.asc_CParagraphBorders();
     var _continue = true;
     while (_continue)
     {
@@ -2143,7 +2142,7 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
         {
             var _stream = global_memory_stream_menu;
             _stream["ClearNoAttack"]();
-            _stream["WriteStringA"](this["asc_nativeGetFile"]());
+            _stream["WriteStringA"](this["asc_nativeGetFileData"]());
             _return = _stream;
             break;
         }
@@ -2255,16 +2254,34 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
 
             break;
         }
+
+        case 440:   // ASC_MENU_EVENT_TYPE_ADD_CHART_DATA
+        {
+            if (undefined !== _params) {
+                var chartData = _params[0];
+                if (chartData && chartData.length > 0) {
+                    var json = JSON.parse(chartData);
+                    if (json) {
+                        _api.asc_addChartDrawingObject(json);
+                    }
+                }
+            }
+            break;
+        } 
             
         case 450:   // ASC_MENU_EVENT_TYPE_GET_CHART_DATA
         {
-            var chart = _api.asc_getChartObject();
+            var index = null;
+            if (undefined !== _params) {
+                index = parseInt(_params);
+            }
+
+            var chart = _api.asc_getChartObject(index);
             
             var _stream = global_memory_stream_menu;
             _stream["ClearNoAttack"]();
             _stream["WriteStringA"](JSON.stringify(new Asc.asc_CChartBinary(chart)));
-            _return = _stream;
-            
+            _return = _stream;           
             break;
         }
         
@@ -3485,7 +3502,7 @@ function asc_menu_ReadChartPr(_params, _cursor)
             }
             case 18:
             {
-                _settings.range = _params[_cursor.pos++];
+                _settings.putRange(_params[_cursor.pos++]);
                 break;
             }
             case 19:
@@ -3612,10 +3629,11 @@ function asc_menu_WriteChartPr(_type, _chartPr, _stream)
     asc_menu_WriteAscValAxisSettings(16, _chartPr.horAxisProps, _stream);
     asc_menu_WriteAscValAxisSettings(17, _chartPr.vertAxisProps, _stream);
 
-    if (_chartPr.range !== undefined && _chartPr.range !== null)
+    var sRange = _chartPr.getRange();
+    if (sRange !== undefined && sRange !== null)
     {
         _stream["WriteByte"](18);
-        _stream["WriteString2"](_chartPr.range);
+        _stream["WriteString2"](sRange);
     }
 
     if (_chartPr.inColumns !== undefined && _chartPr.inColumns !== null)
@@ -4982,39 +5000,19 @@ Asc['asc_docs_api'].prototype.AddImageUrlActionNative = function(src, _w, _h, _p
   _w = Math.max(5, boundingWidth);
   _h = Math.max(5, boundingHeight);  
 
-  if (this.isShapeImageChangeUrl)
+  if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Paragraph_Content))
   {
-    var AscShapeProp       = new Asc.asc_CShapeProperty();
-    AscShapeProp.fill      = new Asc.asc_CShapeFill();
-    AscShapeProp.fill.type = c_oAscFill.FILL_TYPE_BLIP;
-    AscShapeProp.fill.fill = new Asc.asc_CFillBlip();
-    AscShapeProp.fill.fill.asc_putUrl(src);
-    this.ImgApply(new Asc.asc_CImgProperty({ShapeProperties : AscShapeProp}));
-    this.isShapeImageChangeUrl = false;
-  }
-  else if (this.isImageChangeUrl)
-  {
-    var AscImageProp      = new Asc.asc_CImgProperty();
-    AscImageProp.ImageUrl = src;
-    this.ImgApply(AscImageProp);
-    this.isImageChangeUrl = false;
-  }
-  else
-  {
-    if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Paragraph_Content))
+    var imageLocal = AscCommon.g_oDocumentUrls.getImageLocal(src);
+    if (imageLocal)
     {
-      var imageLocal = AscCommon.g_oDocumentUrls.getImageLocal(src);
-      if (imageLocal)
-      {
-        src = imageLocal;
-      }
-      this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_AddImageUrlLong);
-      //if (undefined === imgProp || undefined === imgProp.WrappingStyle || 0 == imgProp.WrappingStyle)
-        this.WordControl.m_oLogicDocument.AddInlineImage(_w, _h, src);
-      //else
-      //  this.WordControl.m_oLogicDocument.AddInlineImage(_w, _h, src, null, true);
-      this.WordControl.m_oLogicDocument.FinalizeAction();
+      src = imageLocal;
     }
+    this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_AddImageUrlLong);
+    //if (undefined === imgProp || undefined === imgProp.WrappingStyle || 0 == imgProp.WrappingStyle)
+      this.WordControl.m_oLogicDocument.AddInlineImage(_w, _h, src);
+    //else
+    //  this.WordControl.m_oLogicDocument.AddInlineImage(_w, _h, src, null, true);
+    this.WordControl.m_oLogicDocument.FinalizeAction();
   }
 };
 
@@ -5360,7 +5358,7 @@ function CStylesPainter()
 }
 CStylesPainter.prototype =
 {
-GenerateStyles: function(_api, ds)
+    GenerateStyles: function(_api, ds)
     {
         if (_api.WordControl.bIsRetinaSupport)
         {
@@ -5453,8 +5451,7 @@ GenerateStyles: function(_api, ds)
             var style = styles[i];
             if (true == style.qFormat)
             {
-                this.defaultStyles.push({ Name: AscCommon.translateManager.getValue(style.Name), Style: style });
-                //this.drawStyle(_graphics, style, _api);
+                this.defaultStyles.push({ Name: style.Name, Style: style });
             }
         }
     },
@@ -5482,12 +5479,11 @@ GenerateStyles: function(_api, ds)
                 var index = (res) ? res[1] - 1 : -1;
 
                 var _dr_style = __Styles.Get_Pr(i, styletype_Paragraph);
-                _dr_style.Name = AscCommon.translateManager.getValue(style.Name);
+                _dr_style.Name = style.Name;
                 _dr_style.Id = i;
 
-                //this.drawStyle(_graphics, _dr_style, _api);
-
                 var _name = _dr_style.Name;
+                
                 // алгоритм смены имени
                 if (style.Default)
                 {
@@ -5538,7 +5534,7 @@ GenerateStyles: function(_api, ds)
 
         var par = new AscCommonWord.Paragraph(_api.WordControl.m_oDrawingDocument, _dc, 0, 0, 0, 0, false);
         var run = new AscCommonWord.ParaRun(par, false);
-        run.AddText(style.Name);
+        run.AddText(AscCommon.translateManager.getValue(style.Name));
 
         _dc.Internal_Content_Add(0, par, false);
         par.Add_ToContent(0, run);
@@ -5636,7 +5632,7 @@ GenerateStyles: function(_api, ds)
         _stream["ClearNoAttack"]();
 
         _stream["WriteByte"](0);
-        _stream["WriteString2"](AscCommon.translateManager.getValue(style.Name));
+        _stream["WriteString2"](style.Name);
 
         _api.WordControl.m_oDrawingDocument.Native["DD_EndNativeDraw"](_stream);
         graphics.ClearParams();
@@ -5999,8 +5995,8 @@ function NativeOpenFile3(_params, documentInfo)
     window["CreateMainTextMeasurerWrapper"]();
 
     window.g_file_path = "native_open_file";
-    window.NATIVE_DOCUMENT_TYPE = window.native.GetEditorType();
-    var doc_bin = window.native.GetFileString(window.g_file_path);
+    window.NATIVE_DOCUMENT_TYPE = window["native"]["GetEditorType"]();
+    var doc_bin = window["native"]["GetFileString"](window.g_file_path);
     if (window.NATIVE_DOCUMENT_TYPE == "presentation" || window.NATIVE_DOCUMENT_TYPE == "document")
     {
         sdkCheck = documentInfo["sdkCheck"];
@@ -6013,13 +6009,14 @@ function NativeOpenFile3(_params, documentInfo)
             translations = "";
         }
 
-        _api = new window["Asc"]["asc_docs_api"](translations);
+        window["_api"] = window["API"] = _api = new window["Asc"]["asc_docs_api"](translations);
+        window["_editor"] = window.editor;
         
         AscCommon.g_clipboardBase.Init(_api);
 
-        if (undefined !== _api.Native_Editor_Initialize_Settings)
+        if (undefined !== _api["Native_Editor_Initialize_Settings"])
         {
-            _api.Native_Editor_Initialize_Settings(_params);
+            _api["Native_Editor_Initialize_Settings"](_params);
         }
 
         window.documentInfo = documentInfo;
@@ -6111,8 +6108,8 @@ function NativeOpenFile3(_params, documentInfo)
 
 
         } else {
-            var doc_bin = window.native.GetFileString(window.g_file_path);
-            _api.asc_nativeOpenFile(doc_bin);
+            var doc_bin = window["native"]["GetFileString"](window.g_file_path);
+            _api["asc_nativeOpenFile"](doc_bin);
 
            	if (window.documentInfo["viewmode"]) {
             	_api.ShowParaMarks = false;
@@ -6126,15 +6123,11 @@ function NativeOpenFile3(_params, documentInfo)
                 _api.sendColorThemes(_api.WordControl.m_oLogicDocument.theme);
             }
 
-            if (_api.NativeAfterLoad)
-            {
-                _api.NativeAfterLoad();
-            }
+            _api["NativeAfterLoad"]();
 
             initSpellCheckApi();
         }
     }
-    Api = _api;
 }
 
 var DocumentPageSize = new function()
@@ -6265,8 +6258,7 @@ Asc['asc_docs_api'].prototype.openDocument = function(file)
         
         console.log("OPEN FILE ONLINE READ MODE");
        
-        if (_api.NativeAfterLoad)
-            _api.NativeAfterLoad();
+        _api["NativeAfterLoad"]();
      
         this.ImageLoader.bIsLoadDocumentFirst = true;
         
@@ -6286,9 +6278,8 @@ Asc['asc_docs_api'].prototype.openDocument = function(file)
         this.VersionHistory.changes = file.changes;
         this.VersionHistory.applyChanges(this);
     }
-
-    if (_api.NativeAfterLoad)
-        _api.NativeAfterLoad();
+       
+    _api["NativeAfterLoad"]();
 
     //console.log("ImageMap : " + JSON.stringify(this.WordControl.m_oLogicDocument));
 
@@ -6314,6 +6305,18 @@ Asc['asc_docs_api'].prototype.openDocument = function(file)
     setInterval(function() {
                 t._autoSave();
                 }, 40);
+};
+
+window["asc_docs_api"].prototype["asc_nativeGetFileData"] = function()
+{
+    var oBinaryFileWriter = new AscCommonWord.BinaryFileWriter(this.WordControl.m_oLogicDocument);
+    var memory = oBinaryFileWriter.memory;
+
+    oBinaryFileWriter.Write(true);
+
+    window["native"]["GetFileData"](memory.ImData.data, memory.GetCurPosition());
+
+    return true;
 };
 
 Asc['asc_docs_api'].prototype.asc_setSpellCheck = function(isOn)
@@ -6368,3 +6371,5 @@ window["AscCommon"].sendImgUrls = function(api, images, callback)
 	var _data = [];
 	callback(_data);
 };
+
+window["native"]["offline_of"] = function(_params, documentInfo) {NativeOpenFile3(_params, documentInfo);};

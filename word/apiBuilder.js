@@ -40,6 +40,11 @@
 	 * @name Api
 	 */
 	var Api = window["Asc"]["asc_docs_api"] || window["Asc"]["spreadsheet_api"];
+	var c_oAscRevisionsChangeType = Asc.c_oAscRevisionsChangeType;
+	var c_oAscSectionBreakType    = Asc.c_oAscSectionBreakType;
+	var c_oAscSdtLockType         = Asc.c_oAscSdtLockType;
+	var c_oAscAlignH         = Asc.c_oAscAlignH;
+	var c_oAscAlignV         = Asc.c_oAscAlignV;
 
 	/**
 	 * Class representing a container for paragraphs and tables.
@@ -616,17 +621,15 @@
 	 * */
 
 	/**
-	 * Get main document
+	 * @typedef {("cross" | "in" | "none" | "out")} TickMark
+	 * */
+
+	/**
+	 * Get the main document
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiDocument}
 	 */
-
-
-	/**
-	 * @typedef {("cross" | "in" | "none" | "out")} TickMark
-	 * */
-
 	Api.prototype.GetDocument = function()
 	{
 		return new ApiDocument(this.WordControl.m_oLogicDocument);
@@ -1186,6 +1189,172 @@
 	{
 		return "unsupported";
 	};
+	/**
+	 *  Adds a comment to the desired element or array of elements.
+	 * @param {Array, ApiParagraph, ApiDocument} oElement - may be Document, Paragraph or Run[]
+	 * @param {string} Comment - comment
+	 * @param {string} Autor - autor's name (not obligatory)
+	 */
+	Api.prototype.AddComment = function(oElement, Comment, Autor)
+	{
+		if (!Comment)
+			return;
+		
+		var CommentData = new AscCommon.CCommentData();
+		CommentData.SetText(Comment);
+		CommentData.SetUserName(Autor);
+
+		// Если oElement не является массивом, определяем параграф это или документ
+		if (!Array.isArray(oElement))
+		{
+			// Проверка на параграф
+			if (oElement instanceof ApiParagraph)
+			{
+				var oTempDocument = this.GetDocument().Document;
+
+				var StartPos = oElement.GetStartPosition();
+				var EndPos   = oElement.GetEndPosition();
+
+				var COMENT = oTempDocument.AddComment(CommentData, false);
+				if (null != COMENT)
+				{
+					editor.sync_AddComment(COMENT.Get_Id(), CommentData);
+				}
+				
+			}
+			// Проверка на документ
+			else if (oElement instanceof ApiDocument)
+			{
+				var COMENT = oElement.Document.AddComment(CommentData, true);
+				if (null != COMENT)
+				{
+					editor.sync_AddComment(COMENT.Get_Id(), CommentData);
+				}
+			
+ 			}
+		}
+		// Проверка на массив с ранами
+		else if (Array.isArray(oElement))
+		{
+			// Если хотя бы один элемент массива не является раном, или хотя бы один ран не принадлежит 
+			// ни одному параграфу - не добавляем комментарий
+			for (var Index = 0; Index < oElement.length; Index++)
+			{
+				if (!(oElement[Index] instanceof ApiRun))
+					return false;					
+			}
+			
+			// Если раны из принципиально разных контекcтов (из тела и хедера(или футера) то комментарий не добавляем)
+			for (var Index = 1; Index < oElement.length; Index++)
+			{
+				if (oElement[0].Run.GetDocumentPositionFromObject()[0].Class !== oElement[Index].Run.GetDocumentPositionFromObject()[0].Class)
+					return false;
+			}
+			
+			var oDocument = editor.WordControl.m_oLogicDocument;
+			
+			var StartPos = this.GetFirstRunInArray(oElement).GetStartPosition();
+			var EndPos   = this.GetLastRunInArray(oElement).GetEndPosition();
+
+			StartPos[0].Class.SetSelectionByContentPositions(StartPos, EndPos);
+
+			var COMENT = oDocument.AddComment(CommentData, false);
+
+			if (null != COMENT)
+			{
+				editor.sync_AddComment(COMENT.Get_Id(), CommentData);
+			}
+			
+		}
+	};
+
+	/**
+	 * Get the Run that is first in position
+	 * @param {Array} Runs - Array of Runs
+	 * @return {ApiRun} 
+	 */
+	Api.prototype.GetFirstRunInArray = function(Runs)
+	{
+		if (!Array.isArray(Runs))
+			return false;
+			
+		var min_pos_Index = 0; // Индекс рана в массиве, с которого начнется выделение
+
+		var MinPos = Runs[0].Run.GetDocumentPositionFromObject();
+
+		for (var Index = 1; Index < Runs.length; Index++)
+		{
+			var TempPos = Runs[Index].Run.GetDocumentPositionFromObject();
+
+			var MinPosLength = MinPos.length;
+			var UsedLength1  = 0;
+
+
+			if (MinPosLength <= TempPos.length)
+				UsedLength1 = MinPosLength;
+			else 
+				UsedLength1 = TempPos.length;
+
+			for (var Pos = 0; Pos < UsedLength1; Pos++)
+			{
+				if (TempPos[Pos].Position < MinPos[Pos].Position)
+				{
+					MinPos = TempPos;
+					min_pos_Index = Index;
+					break;
+				}
+				else if (TempPos[Pos].Position === MinPos[Pos].Position)
+					continue;
+				else if (TempPos[Pos].Position > MinPos[Pos].Position)
+					break;
+			}
+		}
+		
+		return Runs[min_pos_Index];
+	};
+	
+	/**
+	 * Get the Run that is last in position
+	 * @param {Array} Runs - Array of Runs
+	 * @return {ApiRun} 
+	 */
+	Api.prototype.GetLastRunInArray = function(Runs)
+	{
+		if (!Array.isArray(Runs))
+			return false;
+			
+		var max_pos_Index = 0; // Индекс рана в массиве, на котором закончится
+
+		var MaxPos = Runs[0].Run.GetDocumentPositionFromObject();
+
+		for (var Index = 1; Index < Runs.length; Index++)
+		{
+			var TempPos = Runs[Index].Run.GetDocumentPositionFromObject();
+
+			var MaxPosLength = MaxPos.length;
+			var UsedLength2  = 0;
+
+			if (MaxPosLength <= TempPos.length)
+				UsedLength2 = MaxPosLength;
+			else 
+				UsedLength2 = TempPos.length;
+			
+			for (var Pos = 0; Pos < UsedLength2; Pos++)
+			{
+				if (TempPos[Pos].Position > MaxPos[Pos].Position)
+				{
+					MaxPos = TempPos;
+					max_pos_Index = Index;
+					break;
+				}
+				else if (TempPos[Pos].Position === MaxPos[Pos].Position)
+					continue;
+				else if (TempPos[Pos].Position < MaxPos[Pos].Position)
+					break;
+			}
+		}
+		return Runs[max_pos_Index];
+	};
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -1493,7 +1662,7 @@
 		if (!this.Document.Can_InsertContent(oSelectedContent, oNearestPos))
 			return false;
 
-		oParagraph.Parent.Insert_Content(oSelectedContent, oNearestPos);
+		oParagraph.Parent.InsertContent(oSelectedContent, oNearestPos);
 		oParagraph.Clear_NearestPosArray();
 		this.Document.RemoveSelection(true);
 		return true;
@@ -2006,6 +2175,59 @@
 		private_PushElementToParagraph(this.Paragraph, oSdt.Sdt);
 		return oSdt;
 	};
+
+	/**
+	 * Get paragraph start position hierarchy
+	 * @this {ApiParagraph}
+	 * @return {Array} - Array with hierarchy
+	 */
+	ApiParagraph.prototype.GetStartPosition = function()
+	{
+		var StartPos = [];
+
+		StartPos = this.Paragraph.GetDocumentPositionFromObject();
+
+		var StartParaPos = {
+			Class : this.Paragraph,
+			Position : 0
+		};
+		
+		var StartRunPos = {
+			Class : this.Paragraph.Content[0],
+			Position : 0
+		};
+	
+		StartPos.push(StartParaPos, StartRunPos);
+
+		return StartPos;
+	};
+
+	/**
+	 * Get paragraph end position hierarchy
+	 * @this {ApiParagraph}
+	 * @return {Array} - Array with hierarchy
+	 */
+	ApiParagraph.prototype.GetEndPosition = function()
+	{
+		var EndPos  = [];
+			
+		EndPos   = this.Paragraph.GetDocumentPositionFromObject();
+
+		var EndParaPos = {
+			Class : this.Paragraph,
+			Position : this.GetElementsCount() - 1
+		};
+	
+		var EndRunPos = {
+			Class : this.Paragraph.Content[0],
+			Position : this.Paragraph.Content[this.GetElementsCount() - 1].Content.length
+		};
+		
+		EndPos.push(EndParaPos, EndRunPos);
+		
+		return EndPos;
+	};
+	
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiRun
@@ -2111,6 +2333,48 @@
 		return new ApiRun(oRun);
 	};
 
+	/**
+	 * Get Run start position hierarchy
+	 * @this {ApiRun}
+	 * @return {Array} - Array with hierarchy
+	 */
+	ApiRun.prototype.GetStartPosition = function()
+	{
+		var StartPos = [];
+			
+		var StartRunPos = {
+			Class : this.Run,
+			Position : 0
+		};
+		
+		StartPos = this.Run.GetDocumentPositionFromObject();
+
+		StartPos.push(StartRunPos);
+
+		return StartPos;
+	};
+
+	/**
+	 * Get Run end position hierarchy
+	 * @this {ApiRun}
+	 * @return {Array} - Array with hierarchy
+	 */
+	ApiRun.prototype.GetEndPosition = function()
+	{
+		var EndPos  = [];
+
+		var EndRunPos = {
+			Class : this.Run,
+			Position : this.Run.Content.length
+		};
+		
+		EndPos = this.Run.GetDocumentPositionFromObject();
+
+		EndPos.push(EndRunPos);
+
+		return EndPos;
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiSection
@@ -2201,8 +2465,8 @@
 	 */
 	ApiSection.prototype.SetPageSize = function(nWidth, nHeight, isPortrait)
 	{
-		this.Section.Set_PageSize(private_Twips2MM(nWidth), private_Twips2MM(nHeight));
-		this.Section.Set_Orientation(false === isPortrait ? Asc.c_oAscPageOrientation.PageLandscape : Asc.c_oAscPageOrientation.PagePortrait, false);
+		this.Section.SetPageSize(private_Twips2MM(nWidth), private_Twips2MM(nHeight));
+		this.Section.SetOrientation(false === isPortrait ? Asc.c_oAscPageOrientation.PageLandscape : Asc.c_oAscPageOrientation.PagePortrait, false);
 	};
 	/**
 	 * Specify the page margins for all pages in this section.
@@ -2214,7 +2478,7 @@
 	 */
 	ApiSection.prototype.SetPageMargins = function(nLeft, nTop, nRight, nBottom)
 	{
-		this.Section.Set_PageMargins(private_Twips2MM(nLeft), private_Twips2MM(nTop), private_Twips2MM(nRight), private_Twips2MM(nBottom));
+		this.Section.SetPageMargins(private_Twips2MM(nLeft), private_Twips2MM(nTop), private_Twips2MM(nRight), private_Twips2MM(nBottom));
 	};
 	/**
 	 * Specify the distance from the top edge of the page to the top edge of the header.
@@ -2223,7 +2487,7 @@
 	 */
 	ApiSection.prototype.SetHeaderDistance = function(nDistance)
 	{
-		this.Section.Set_PageMargins_Header(private_Twips2MM(nDistance));
+		this.Section.SetPageMarginHeader(private_Twips2MM(nDistance));
 	};
 	/**
 	 * Specify the distance from the bottom edge of the page to the bottom edge of the footer.
@@ -2233,7 +2497,7 @@
 	 */
 	ApiSection.prototype.SetFooterDistance = function(nDistance)
 	{
-		this.Section.Set_PageMargins_Footer(private_Twips2MM(nDistance));
+		this.Section.SetPageMarginFooter(private_Twips2MM(nDistance));
 	};
 	/**
 	 * Get the content for the specified header type.
@@ -3023,7 +3287,7 @@
 	 */
 	ApiTextPr.prototype.SetLanguage = function(sLangId)
 	{
-		var nLcid = g_oLcidNameToIdMap[sLangId];
+		var nLcid = Asc.g_oLcidNameToIdMap[sLangId];
 		if (undefined !== nLcid)
 		{
 			this.TextPr.Lang.Val = nLcid;

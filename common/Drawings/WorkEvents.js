@@ -64,6 +64,14 @@
 			e.stopPropagation();
 	};
 
+	var isUsePointerEvents = (AscBrowser.isChrome && (AscBrowser.chromeVersion > 70) || AscBrowser.isMozilla) ? true : false;
+
+	AscCommon.addMouseEvent = function(elem, type, handler)
+	{
+		var _type = (isUsePointerEvents ? "onpointer" : "onmouse") + type;
+		elem[_type] = handler;
+	};
+
 	function CMouseEventHandler()
 	{
 		this.X = 0;                            // позиция курсора X
@@ -461,43 +469,25 @@
 
 	function InitCaptureEvents()
 	{
-		window.onmousemove = function(event)
-		{
-			return Window_OnMouseMove(event)
-		};
-		window.onmouseup   = function(event)
-		{
-			return Window_OnMouseUp(event)
-		};
-		/*
-		 var parent = window;
-		 while (true)
-		 {
-		 if (!parent)
-		 return;
-
-		 parent.onmousemove  = function(event){return Window_OnMouseMove(event)};
-		 parent.onmouseup    = function(event){return Window_OnMouseUp(event)};
-
-		 if (parent == parent.parent)
-		 return;
-
-		 parent = parent.parent;
-		 }
-		 */
+		AscCommon.addMouseEvent(window, "move", Window_OnMouseMove);
+        AscCommon.addMouseEvent(window, "up", Window_OnMouseUp);
 	}
 
 	function Window_OnMouseMove(e)
 	{
-		if (!global_mouseEvent.IsLocked)
+		if (!global_mouseEvent.IsLocked || !global_mouseEvent.Sender)
 			return;
 
-		if ((undefined != global_mouseEvent.Sender) && (null != global_mouseEvent.Sender) &&
-			(undefined != global_mouseEvent.Sender.onmousemove) && (null != global_mouseEvent.Sender.onmousemove))
+        var types = isUsePointerEvents ? ["onpointermove", "onmousemove"] : ["onmousemove", "onpointermove"];
+        for (var i = 0; i < 2; i++)
 		{
-			global_mouseEvent.IsLockedEvent = true;
-			global_mouseEvent.Sender.onmousemove(e);
-			global_mouseEvent.IsLockedEvent = false;
+            if (global_mouseEvent.Sender[types[i]])
+            {
+                global_mouseEvent.IsLockedEvent = true;
+                global_mouseEvent.Sender[types[i]](e);
+                global_mouseEvent.IsLockedEvent = false;
+                break;
+            }
 		}
 	}
 
@@ -506,16 +496,19 @@
 		if (false === MouseUpLock.MouseUpLockedSend)
 		{
 			MouseUpLock.MouseUpLockedSend = true;
-			if (global_mouseEvent.IsLocked)
+			if (global_mouseEvent.IsLocked && global_mouseEvent.Sender)
 			{
-				if ((undefined != global_mouseEvent.Sender) && (null != global_mouseEvent.Sender) &&
-					(undefined != global_mouseEvent.Sender.onmouseup) && (null != global_mouseEvent.Sender.onmouseup))
-				{
-					global_mouseEvent.Sender.onmouseup(e, true);
-
-					if (global_mouseEvent.IsLocked) // не все хотят пользоваться локами
-						global_mouseEvent.UnLockMouse();
-				}
+                var types = isUsePointerEvents ? ["onpointerup", "onmouseup"] : ["onmouseup", "onpointerup"];
+                for (var i = 0; i < 2; i++)
+                {
+                    if (global_mouseEvent.Sender[types[i]])
+                    {
+                        global_mouseEvent.Sender[types[i]](e, true);
+                        if (global_mouseEvent.IsLocked)
+                        	global_mouseEvent.UnLockMouse();
+                        break;
+                    }
+                }
 			}
 		}
 

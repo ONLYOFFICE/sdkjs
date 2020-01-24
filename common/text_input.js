@@ -1690,7 +1690,7 @@
 		}, true);
 
 		// send focus
-		if (!api.isMobileVersion)
+		if (!api.isMobileVersion && !api.isEmbedVersion)
 			window['AscCommon'].g_inputContext.HtmlArea.focus();
 	};
 

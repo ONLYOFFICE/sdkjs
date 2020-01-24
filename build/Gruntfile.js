@@ -31,15 +31,129 @@
  */
 
 module.exports = function(grunt) {
-	function loadConfig(name) {
-		var config = require(pathConfigs +'/' + name + '.json');
-		if (config) {
-			grunt.log.ok((name + ' config loaded successfully').green);
-			return config;
+	function loadConfig(pathConfigs, name) {
+		let config;
+		try {
+			const file = path.join(pathConfigs, name + '.json');
+			if (grunt.file.exists(file)) {
+				config = grunt.file.readJSON(file);
+				grunt.log.ok((name + ' config loaded successfully').green);
+			}
+		} catch (e) {
+			grunt.log.error().writeln(('could not load' + name + 'config file').red);
 		}
-		grunt.log.error().writeln(('could not load' + name + 'config file').red);
-		return null;
+		return config;
 	}
+	function fixPath(obj, basePath = '') {
+		function fixPathArray(arrPaths, basePath = '') {
+			arrPaths.forEach((element, index) => {
+				arrPaths[index] = path.join(basePath, element);
+			});
+		}
+		if (Array.isArray(obj))
+			return fixPathArray(obj, basePath);
+		for (let prop in obj) {
+			fixPath(obj[prop], basePath);
+		}
+	}
+	function fixUrl(arrPaths, basePath = '') {
+		const url = require('url');
+		arrPaths.forEach((element, index) => {
+			arrPaths[index] = url.resolve(basePath, element);
+		});
+	}
+	function getConfigs() {
+		const configs = new CConfig(grunt.option('src') || '../');
+
+		let addons = grunt.option('addon') || [];
+		if (!Array.isArray(addons)) {
+			addons = [addons];
+		}
+		addons.forEach(element => configs.append(grunt.file.isDir(element) ? element : path.join('../../', element)));
+
+		return configs;
+	}
+	function writeScripts(config, name) {
+		const develop = '../develop/sdkjs/';
+		const fileName = 'scripts.js';
+		const files = ['../common/applyDocumentChanges.js', '../common/AllFonts.js'].concat(getFilesMin(config), getFilesAll(config));
+		fixUrl(files, '../../../../sdkjs/build/');
+
+		grunt.file.write(path.join(develop, name, fileName), 'var sdk_scripts = [\n\t"' + files.join('",\n\t"') + '"\n];');
+	}
+
+	function CConfig(pathConfigs) {
+		this.fonts = null;
+		this.externs = null;
+		this.word = null;
+		this.cell = null;
+		this.slide = null;
+
+		this.append(pathConfigs);
+	}
+
+	CConfig.prototype.append = function (basePath = '') {
+		const pathConfigs = path.join(basePath, 'configs');
+		const fonts = loadConfig(pathConfigs, 'fonts');
+		const externs = loadConfig(pathConfigs, 'externs');
+		const word = loadConfig(pathConfigs, 'word');
+		const cell = loadConfig(pathConfigs, 'cell');
+		const slide = loadConfig(pathConfigs, 'slide');
+
+		if (fonts) {
+			fixPath(fonts, basePath);
+
+			if (this.fonts) {
+				this.fonts['js'] = this.fonts['js'].concat(fonts['js']);
+				this.fonts['wasm'] = this.fonts['wasm'].concat(fonts['wasm']);
+			} else {
+				this.fonts = fonts;
+			}
+		}
+		if (externs) {
+			fixPath(externs['externs'], basePath);
+
+			if (this.externs) {
+				this.externs['externs'] = this.externs['externs'].concat(externs['externs']);
+			} else {
+				this.externs = externs;
+			}
+		}
+		if (word) {
+			fixPath(word['sdk'], basePath);
+
+			if (this.word) {
+				this.word['sdk']['min'] = this.word['sdk']['min'].concat(word['sdk']['min']);
+				this.word['sdk']['common'] = this.word['sdk']['common'].concat(word['sdk']['common']);
+			} else {
+				this.word = word;
+			}
+		}
+		if (cell) {
+			fixPath(cell['sdk'], basePath);
+
+			if (this.cell) {
+				this.cell['sdk']['min'] = this.cell['sdk']['min'].concat(cell['sdk']['min']);
+				this.cell['sdk']['common'] = this.cell['sdk']['common'].concat(cell['sdk']['common']);
+			} else {
+				this.cell = cell;
+			}
+		}
+		if (slide) {
+			fixPath(slide['sdk'], basePath);
+
+			if (this.slide) {
+				this.slide['sdk']['min'] = this.slide['sdk']['min'].concat(slide['sdk']['min']);
+				this.slide['sdk']['common'] = this.slide['sdk']['common'].concat(slide['sdk']['common']);
+			} else {
+				this.slide = slide;
+			}
+		}
+	};
+	CConfig.prototype.valid = function () {
+		return this.fonts && this.externs && this.word && this.cell && this.slide;
+	};
+
 	function getExterns(config) {
 		var externs = config['externs'];
 		var result = [];
@@ -69,9 +183,6 @@ module.exports = function(grunt) {
 			});
 			result = result.concat(config['mobile']);
 		}
-		if (!grunt.option('noprivate')) {
-			result = result.concat(config['private']);
-		}
 		if (grunt.option('desktop')) {
 			result = result.concat(config['desktop']['common']);
 		}
@@ -81,10 +192,9 @@ module.exports = function(grunt) {
 		return path.join(name, min ? 'sdk-all-min.js' : 'sdk-all.js');
 	}
 
-	var path = require('path');
-	var pathConfigs = grunt.option('src') || './configs';
-	var level = grunt.option('level') || 'ADVANCED';
-	var formatting = grunt.option('formatting') || '';
+	const path = require('path');
+	const level = grunt.option('level') || 'ADVANCED';
+	const formatting = grunt.option('formatting') || '';
 
 	require('google-closure-compiler').grunt(grunt, {
 		platform: 'java',
@@ -98,42 +208,38 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-split-file');
 
 	grunt.registerTask('build-sdk', 'Build SDK', function () {
-		var configFonts = loadConfig('fonts');
-		var configExterns = loadConfig('externs');
-		var configWord = loadConfig('word');
-		var configCell = loadConfig('cell');
-		var configSlide = loadConfig('slide');
-		if (!configFonts || !configExterns || !configWord || !configCell || !configSlide) {
+		const configs = getConfigs();
+		if (!configs.valid()) {
 			return;
 		}
-		configWord = configWord['sdk'];
-		configCell = configCell['sdk'];
-		configSlide = configSlide['sdk'];
+
+		const configWord = configs.word['sdk'];
+		const configCell = configs.cell['sdk'];
+		const configSlide = configs.slide['sdk'];
+
+		const deploy = '../deploy/sdkjs/';
 
 		// crete empty.js for polyfills
-		var emptyJs = 'empty.js';
+		const emptyJs = 'empty.js';
 		grunt.file.write(emptyJs, '');
 
-		var optionsSdkMin ={
+		const optionsSdkMin ={
 			banner: '',
 			footer: 'window["split"]="split";'
 		};
-		var optionsSdkAll = {};
-		if (!grunt.option('noclosure')) {
-			optionsSdkAll = {
-				banner: '(function(window, undefined) {',
-				footer: '})(window);'
-			};
-		}
-		var fontsWasmTmp = 'fonts-wasm-tmp.js';
-		var fontsJsTmp = 'fonts-js-tmp.js';
-		var sdkMinTmp = 'sdk-min-tmp.js';
-		var sdkAllTmp = 'sdk-all-tmp.js';
-		var sdkWordTmp = 'sdk-word-tmp.js';
-		var sdkCellTmp = 'sdk-cell-tmp.js';
-		var sdkSlideTmp = 'sdk-slide-tmp.js';
+		const optionsSdkAll = {
+			banner: '(function(window, undefined) {',
+			footer: '})(window);'
+		};
+		const fontsWasmTmp = 'fonts-wasm-tmp.js';
+		const fontsJsTmp = 'fonts-js-tmp.js';
+		const sdkMinTmp = 'sdk-min-tmp.js';
+		const sdkAllTmp = 'sdk-all-tmp.js';
+		const sdkWordTmp = 'sdk-word-tmp.js';
+		const sdkCellTmp = 'sdk-cell-tmp.js';
+		const sdkSlideTmp = 'sdk-slide-tmp.js';
 
-		var compilerArgs = getExterns(configExterns);
+		const compilerArgs = getExterns(configs.externs);
 		if (grunt.option('map')) {
 			compilerArgs.push('--property_renaming_report=sdk-all.props.js.map');
 			compilerArgs.push('--variable_renaming_report=sdk-all.vars.js.map');
@@ -145,11 +251,11 @@ module.exports = function(grunt) {
 		grunt.initConfig({
 			concat: {
 				wasm: {
-					src: configFonts['wasm'],
+					src: configs.fonts['wasm'],
 					dest: fontsWasmTmp
 				},
 				js: {
-					src: configFonts['js'],
+					src: configs.fonts['js'],
 					dest: fontsJsTmp
 				},
 				wordsdkmin: {
@@ -223,7 +329,8 @@ module.exports = function(grunt) {
 						sdkAllTmp,
 						sdkWordTmp,
 						sdkCellTmp,
-						sdkSlideTmp
+						sdkSlideTmp,
+						deploy
 					]
 				}
 			}
@@ -232,34 +339,32 @@ module.exports = function(grunt) {
 	grunt.registerTask('license', 'Add license', function () {
 		const appCopyright = "Copyright (C) Ascensio System SIA 2012-" + grunt.template.today('yyyy') +". All rights reserved";
 		const publisherUrl = "https://www.onlyoffice.com/";
-		var cache = '*.cache';
-		var fonts = '../common/libfont/';
-		var word = '../word/';
-		var cell = '../cell/';
-		var slide = '../slide/';
-		var polyfill = 'polyfill.js';
-		var fontsWasm = 'fontswasm.js';
-		var fontsJs = 'fontsjs.js';
-		var fontFile = 'fonts.js';
-		var wordJs = 'word.js';
-		var cellJs = 'cell.js';
-		var slideJs = 'slide.js';
-		var license = 'license.header';
-		var deploy = '../deploy/sdkjs/';
-		var sdkjspattern = 'sdk-*.js';
-		var splitLine;
+		const fonts = '../common/libfont/';
+		const deploy = '../deploy/sdkjs/';
+		const word = path.join(deploy, 'word');
+		const cell = path.join(deploy, 'cell');
+		const slide = path.join(deploy, 'slide');
+		const polyfill = 'polyfill.js';
+		const fontsWasm = 'fontswasm.js';
+		const fontsJs = 'fontsjs.js';
+		const fontFile = 'fonts.js';
+		const wordJs = 'word.js';
+		const cellJs = 'cell.js';
+		const slideJs = 'slide.js';
+		const license = 'license.header';
+		let splitLine;
 		if ('ADVANCED' === level) {
 			splitLine = ('PRETTY_PRINT' === formatting) ? 'window.split = "split";' : 'window.split="split";';
 		} else {
 			splitLine = ('PRETTY_PRINT' === formatting) ? 'window["split"] = "split";' : 'window["split"]="split";';
 		}
-		var splitOptions = {
+		const splitOptions = {
 			separator: splitLine,
 			prefix: ["sdk-all-min", "sdk-all"]
 		};
 
-		var concatSdk = {files:{}};
-		var concatSdkFiles = concatSdk['files'];
+		const concatSdk = {files:{}};
+		const concatSdkFiles = concatSdk['files'];
 		concatSdkFiles[fontsWasm] = [license, fontsWasm];
 		concatSdkFiles[fontsJs] = [license, fontsJs];
 		concatSdkFiles[getSdkPath(true, word)] = [license, polyfill, getSdkPath(true, word)];
@@ -307,9 +412,9 @@ module.exports = function(grunt) {
 					files: [
 						{src: [fontsWasm], dest: path.join(fonts, 'wasm', fontFile)},
 						{src: [fontsJs], dest: path.join(fonts, 'js', fontFile)},
-						{src: [getSdkPath(true, word), getSdkPath(false, word)], dest: word},
-						{src: [getSdkPath(true, cell), getSdkPath(false, cell)], dest: cell},
-						{src: [getSdkPath(true, slide), getSdkPath(false, slide)], dest: slide}
+						{expand: true, flatten: true, src: [getSdkPath(true, word), getSdkPath(false, word)], dest: word + '/'},
+						{expand: true, flatten: true, src: [getSdkPath(true, cell), getSdkPath(false, cell)], dest: cell + '/'},
+						{expand: true, flatten: true, src: [getSdkPath(true, slide), getSdkPath(false, slide)], dest: slide + '/'}
 					]
 				}
 			},
@@ -324,10 +429,7 @@ module.exports = function(grunt) {
 						fontsJs,
 						wordJs,
 						cellJs,
-						slideJs,
-						word + cache,
-						cell + cache,
-						slide + cache
+						slideJs
 					]
 				}
 			},
@@ -339,6 +441,9 @@ module.exports = function(grunt) {
 							cwd: '../common/',
 							src: [
 								'Images/*',
+								'Images/placeholders/*',
+								'Images/content_controls/*',
+								'Images/cursors/*',
 								'Native/*.js',
 								'libfont/js/fonts.*',
 								'libfont/wasm/fonts.*'
@@ -347,35 +452,43 @@ module.exports = function(grunt) {
 						},
 						{
 							expand: true,
-							src: path.join(word, sdkjspattern),
-							dest: path.join(deploy, 'word')
-						},
-						{
-							expand: true,
-							cwd: path.join(cell, 'css'),
+							cwd: '../cell/css',
 							src: '*.css',
-							dest: path.join(deploy, 'cell', 'css')
+							dest: path.join(cell, 'css')
 						},
 						{
 							expand: true,
-							src: path.join(cell, sdkjspattern),
-							dest: path.join(deploy, 'cell')
-						},
-						{
-							expand: true,
-							cwd: path.join(slide, 'themes'),
+							cwd: '../slide/themes',
 							src: '**/**',
-							dest: path.join(deploy, 'slide', 'themes')
-						},
-						{
-							expand: true,
-							src: path.join(slide, sdkjspattern),
-							dest: path.join(deploy, 'slide')
+							dest: path.join(slide, 'themes')
 						}
 					]
 				}
 			}
 		})
 	});
+	grunt.registerTask('clean-develop', 'Clean develop scripts', function () {
+		const develop = '../develop/sdkjs/';
+		grunt.initConfig({
+			clean: {
+				tmp: {
+					options: {
+						force: true
+					}, src: [develop]
+				}
+			}
+		});
+	});
+	grunt.registerTask('build-develop', 'Build develop scripts', function () {
+		const configs = getConfigs();
+		if (!configs.valid()) {
+			return;
+		}
+
+		writeScripts(configs.word['sdk'], 'word');
+		writeScripts(configs.cell['sdk'], 'cell');
+		writeScripts(configs.slide['sdk'], 'slide');
+	});
 	grunt.registerTask('default', ['build-sdk', 'concat', 'closure-compiler', 'clean', 'license', 'splitfile', 'concat', 'replace', 'clean', 'copy']);
+	grunt.registerTask('develop', ['clean-develop', 'clean', 'build-develop']);
 };

@@ -3,8 +3,8 @@
 BASEDIR="$(cd "$(dirname "$0")" && pwd)"
 cd $BASEDIR
 
-PRODUCT_VERSION="5.3.4"
-BUILD_NUMBER="7"
+PRODUCT_VERSION="5.4.1"
+BUILD_NUMBER="1"
 LAST_VERSION_TAG=$(git describe --abbrev=0 --tags)
 
 version=$(echo $LAST_VERSION_TAG | sed -e "s/v//")
@@ -16,46 +16,90 @@ build=$(echo $version | cut -d. -f4)
 PRODUCT_VERSION="$major.$minor.$maintenance"
 BUILD_NUMBER=$build
 
+
+# Helpers
+
+CreateDir() {
+    if [ ! -d $1 ]; then
+        mkdir -p $1
+    fi
+}
+
+CopyScriptTo() {
+    DOCUMENTS_PATH=$1"/documents"
+    SPREADSHEETS_PATH=$1"/spreadsheets"
+    PRESENTATIONS_PATH=$1"/presentations"
+
+    CreateDir $DOCUMENTS_PATH
+    CreateDir $SPREADSHEETS_PATH
+    CreateDir $PRESENTATIONS_PATH
+
+    printf $'\r' > temp.txt
+
+    echo "Copy: word sdk-all.js"
+    cat "../../web-apps/vendor/xregexp/xregexp-all-min.js" "temp.txt" "../../web-apps/vendor/underscore/underscore-min.js" "temp.txt" "../common/Native/native.js" "temp.txt" "../common/Native/Wrappers/common.js" "temp.txt" "../common/Native/jquery_native.js" "temp.txt" > "banners.js"
+
+    cat "banners.js" "../deploy/sdkjs/word/sdk-all-min.js" "../deploy/sdkjs/word/sdk-all.js" > $DOCUMENTS_PATH"/script.bin"
+    rm -f -r "banners.js"
+
+    echo "Copy: cell sdk-all.js"
+    cat "../../web-apps/vendor/xregexp/xregexp-all-min.js" "temp.txt" "../../web-apps/vendor/underscore/underscore-min.js" "temp.txt" "../common/Native/native.js" "temp.txt" "../cell/native/common.js" "temp.txt" "../common/Native/jquery_native.js" "temp.txt" > "banners.js"
+    cat "banners.js" "../deploy/sdkjs/cell/sdk-all-min.js" "../deploy/sdkjs/cell/sdk-all.js" > $SPREADSHEETS_PATH"/script.bin"
+    rm -f -r "banners.js"
+
+    echo "Copy: slide sdk-all.js"
+    cat "../../web-apps/vendor/xregexp/xregexp-all-min.js" "temp.txt" "../../web-apps/vendor/underscore/underscore-min.js" "temp.txt" "../common/Native/native.js" "temp.txt" "../common/Native/Wrappers/common.js" "temp.txt" "../common/Native/jquery_native.js" "temp.txt" > "banners.js"
+    cat "banners.js" "../deploy/sdkjs/slide/sdk-all-min.js" "../deploy/sdkjs/slide/sdk-all.js" > $PRESENTATIONS_PATH"/script.bin"
+    rm -f -r "banners.js"
+
+    rm -f -r "temp.txt"
+
+    echo "Copy: sdk version mark"
+    printf $PRODUCT_VERSION.$BUILD_NUMBER > $1"/documents/sdk.version"
+    printf $PRODUCT_VERSION.$BUILD_NUMBER > $1"/spreadsheets/sdk.version"
+    printf $PRODUCT_VERSION.$BUILD_NUMBER > $1"/presentations/sdk.version"
+}
+
 echo "----------------------------------------"
-echo "Building for mobile"
+echo "Prepare to compile"
 echo "----------------------------------------"
-
-# First argument is path to repository of iOS mobile. Use default if not setup
-
-MOBILE_APP_PATH="$1"
-
-if [ -z $MOBILE_APP_PATH ] ; then
-    MOBILE_APP_PATH="../../mobile-apps"
-fi
 
 npm install
 
-PRODUCT_VERSION=$PRODUCT_VERSION BUILD_NUMBER=$BUILD_NUMBER grunt --level=WHITESPACE_ONLY --mobile=true --noclosure=true --formatting=PRETTY_PRINT
-echo grunt --level=ADVANCED --mobile=true  --noclosure=true
+echo "----------------------------------------"
+echo "Compile SDKJS"
+echo "----------------------------------------"
 
-printf $'\r' > temp.txt
+PRODUCT_VERSION=$PRODUCT_VERSION BUILD_NUMBER=$BUILD_NUMBER grunt --level=WHITESPACE_ONLY --mobile=true #--level=ADVANCED | WHITESPACE_ONLY
 
-cat "../../web-apps-pro/vendor/xregexp/xregexp-all-min.js" "temp.txt" "../../web-apps-pro/vendor/underscore/underscore-min.js" "temp.txt" "../common/native/wrappers/common.js" "temp.txt" "../common/native/jquery_native.js" "temp.txt" > "banners.js"
+if [ -z "$1" ] ; then
+    # iOS
+    echo "----------------------------------------"
+    echo "Copy SDKJS for iOS app"
+    echo "----------------------------------------"
 
-cat "banners.js" "../word/sdk-all-min.js" "../word/sdk-all.js" > $MOBILE_APP_PATH"/ios/Vendor/ONLYOFFICE/SDKData/documents/script.bin"
+    IOS_PATH="../../mobile-apps/ios/Vendor/ONLYOFFICE"
 
-rm -f -r "banners.js"
+    if [ -d $IOS_PATH ]; then
+        CopyScriptTo $IOS_PATH"/SDKData"
+    fi
 
-cat "../../web-apps-pro/vendor/xregexp/xregexp-all-min.js" "temp.txt" "../../web-apps-pro/vendor/underscore/underscore-min.js" "temp.txt" "../cell/native/common.js" "temp.txt" "../common/native/jquery_native.js" "temp.txt" > "banners.js"
+    # Android
+    echo "----------------------------------------"
+    echo "Copy SDKJS for Android app"
+    echo "----------------------------------------"
 
-cat "banners.js" "../cell/sdk-all-min.js" "../cell/sdk-all.js" > $MOBILE_APP_PATH"/ios/Vendor/ONLYOFFICE/SDKData/spreadsheets/script.bin"
+    ANDROID_PATH="../../documents-android/native/src/main"
 
-rm -f -r "banners.js"
+    if [ -d $ANDROID_PATH ]; then
+        CopyScriptTo $ANDROID_PATH"/assets"
+    fi
+else
+    # Custom path
+    echo "----------------------------------------"
+    echo "Copy SDKJS to custom path - $1"
+    echo "----------------------------------------"
+    CopyScriptTo "$1"
+fi
 
-cat "../../web-apps-pro/vendor/xregexp/xregexp-all-min.js" "temp.txt" "../../web-apps-pro/vendor/underscore/underscore-min.js" "temp.txt" "../common/native/wrappers/common.js" "temp.txt" "../common/native/jquery_native.js" "temp.txt" > "banners.js"
-
-cat "banners.js" "../slide/sdk-all-min.js" "../slide/sdk-all.js" > $MOBILE_APP_PATH"/ios/Vendor/ONLYOFFICE/SDKData/presentations/script.bin"
-
-rm -f -r "banners.js"
-rm -f -r "temp.txt"
-
-printf $PRODUCT_VERSION.$BUILD_NUMBER > $MOBILE_APP_PATH"/ios/Vendor/ONLYOFFICE/SDKData/documents/sdk.version"
-
-printf $PRODUCT_VERSION.$BUILD_NUMBER > $MOBILE_APP_PATH"/ios/Vendor/ONLYOFFICE/SDKData/spreadsheets/sdk.version"
-
-printf $PRODUCT_VERSION.$BUILD_NUMBER > $MOBILE_APP_PATH"/ios/Vendor/ONLYOFFICE/SDKData/presentations/sdk.version"
+echo "Done"

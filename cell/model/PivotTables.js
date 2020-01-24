@@ -294,7 +294,6 @@ var c_oAscAllocationMethod = {
 };
 
 var st_VALUES = -2;
-var cDate = Asc.cDate;
 
 function FromXml_ST_SourceType(val) {
 	var res = -1;
@@ -3754,8 +3753,8 @@ CT_DateTime.prototype.readAttributes = function(attr, uq) {
 		var val;
 		val = vals["v"];
 		if (undefined !== val) {
-			var d = new cDate(uq(val));
-			this.v = new cDate(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(),
+			var d = new Asc.cDate(uq(val));
+			this.v = new Asc.cDate(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(),
 				d.getSeconds(),	d.getMilliseconds())).getExcelDateWithTime();
 		}
 		val = vals["u"];
@@ -3795,7 +3794,7 @@ CT_DateTime.prototype.toXml = function(writer, name) {
 CT_DateTime.prototype.toXml2 = function(writer, name, val, obj) {
 	writer.WriteXmlNodeStart(name);
 	if (null !== val) {
-		writer.WriteXmlAttributeStringEncode("v", cDate.prototype.getDateFromExcelWithTime(val).toISOString().slice(0, 19));
+		writer.WriteXmlAttributeStringEncode("v", Asc.cDate.prototype.getDateFromExcelWithTime(val).toISOString().slice(0, 19));
 	}
 	if (obj) {
 		if (null !== obj.u) {

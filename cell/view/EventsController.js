@@ -1117,7 +1117,7 @@
 							}
 
 							t.scroll(d);
-						});
+						}, t.mouseX, t.mouseY);
 				}
 			}
 
@@ -1430,7 +1430,7 @@
 					} else if (t.targetInfo.target === c_oTargetType.FilterObject && 2 === button) {
 						this.handlers.trigger('onContextMenu', null);
 						return;
-					} else if (t.targetInfo.commentIndexes && this.canEdit()) {
+					} else if (t.targetInfo.commentIndexes) {
 						t._commentCellClick(event);
 					} else if (t.targetInfo.target === c_oTargetType.MoveResizeRange && this.canEdit()) {
 						this.isMoveResizeRange = true;
@@ -1653,10 +1653,11 @@
     	/** @param event {MouseEvent} */
 		asc_CEventsController.prototype._onMouseLeave = function (event) {
 			var t = this;
+			var coord = t._getCoordinates(event);
 			this.hasCursor = false;
 			if (!this.isSelectMode && !this.isResizeMode && !this.isMoveResizeRange) {
 				this.targetInfo = undefined;
-				this.handlers.trigger("updateWorksheet");
+				this.handlers.trigger("updateWorksheet", coord.x, coord.y);
 			}
 			if (this.isMoveRangeMode) {
 				t.moveRangeTimerId = window.setTimeout(function(){t._moveRangeHandle2(event)},0);

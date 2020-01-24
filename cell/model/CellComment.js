@@ -389,9 +389,6 @@ CCellCommentator.sStartCommentId = 'comment_';
 // Public methods
 //-----------------------------------------------------------------------------------
 
-CCellCommentator.prototype.canEdit = function () {
-	return this.worksheet.handlers.trigger('canEdit');
-};
 CCellCommentator.prototype.isLockedComment = function(oComment, callbackFunc) {
 	var objectGuid = oComment.asc_getId();
 	if (objectGuid) {
@@ -406,12 +403,12 @@ CCellCommentator.prototype.isLockedComment = function(oComment, callbackFunc) {
 	}
 };
 
-	CCellCommentator.prototype.getCommentsRange = function (range) {
+	CCellCommentator.prototype.getCommentsRange = function (range, sUserId) {
 		var res = [];
 		var aComments = this.model.aComments;
 		for (var i = 0; i < aComments.length; ++i) {
 			var comment = aComments[i];
-			if (range.contains(comment.nCol, comment.nRow)) {
+			if (range.contains(comment.nCol, comment.nRow) && (!sUserId || sUserId === comment.sUserId)) {
 				res.push(comment.clone());
 			}
 		}
@@ -446,8 +443,28 @@ CCellCommentator.prototype.isLockedComment = function(oComment, callbackFunc) {
 		}
 	};
 
-	CCellCommentator.prototype.deleteCommentsRange = function (range) {
-		this._deleteCommentsRange(this.getCommentsRange(range));
+	CCellCommentator.prototype.deleteCommentsRange = function (range, sUserId) {
+		this._deleteCommentsRange(this.getCommentsRange(range, sUserId));
+		// Delete replies
+		if (sUserId) {
+			var replies, change, newComment, comments = this.getCommentsRange(range);
+			for (var i = 0; i < comments.length; ++i) {
+				change = false;
+				newComment = comments[i].clone();
+				replies = newComment.aReplies;
+				newComment.aReplies = [];
+				for (var j = 0; j < replies.length; ++j) {
+					if (replies[j].sUserId === sUserId) {
+						change = true;
+					} else {
+						newComment.aReplies.push(replies[j]);
+					}
+				}
+				if (change) {
+					this.changeComment(newComment.nId, newComment);
+				}
+			}
+		}
 	};
 	CCellCommentator.prototype._deleteCommentsRange = function (comments) {
 		History.StartTransaction();
@@ -464,9 +481,7 @@ CCellCommentator.prototype.isLockedComment = function(oComment, callbackFunc) {
 	};
 
 	CCellCommentator.prototype.drawCommentCells = function () {
-
-		if (!(this.canEdit() || this.worksheet.handlers.trigger('isRestrictionComments')) || this.hiddenComments() ||
-			window["NATIVE_EDITOR_ENJINE"]) {
+		if (this.hiddenComments() || window["NATIVE_EDITOR_ENJINE"] || null === this.model.getId()) {
 			return;
 		}
 
@@ -874,6 +889,36 @@ CCellCommentator.prototype.findComment = function(id) {
 };
 
 CCellCommentator.prototype.addComment = function(comment, bIsNotUpdate) {
+	var t = this;
+	var oComment = comment;
+	var bChange = false;
+	oComment.wsId = this.model.getId();
+	oComment.setId();
+
+	if (!oComment.bDocument) {
+		if (!bIsNotUpdate) {
+			var activeCell = this.model.selectionRange.activeCell;
+			oComment.asc_putCol(activeCell.col);
+			oComment.asc_putRow(activeCell.row);
+		}
+
+		var existComment = this.getComment(oComment.nCol, oComment.nRow, false);
+		if (existComment) {
+			oComment = existComment;
+			bChange = true;
+		}
+	}
+
+	var onAddCommentCallback = function (isSuccess) {
+		if (false === isSuccess)
+			return;
+		t._addComment(oComment, bChange, bIsNotUpdate);
+	};
+	if (bIsNotUpdate) {
+		onAddCommentCallback(true);
+	} else {
+		this.isLockedComment(oComment, onAddCommentCallback);
+	}
 };
 
 CCellCommentator.prototype.changeComment = function(id, oComment, bChangeCoords, bNoEvent, bNoAscLock, bNoDraw) {

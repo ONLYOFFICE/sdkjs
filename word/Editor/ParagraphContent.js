@@ -64,6 +64,7 @@ var MOVE_DELTA = AscFormat.MOVE_DELTA;
 
 var c_oAscRelativeFromH = Asc.c_oAscRelativeFromH;
 var c_oAscRelativeFromV = Asc.c_oAscRelativeFromV;
+var c_oAscSectionBreakType = Asc.c_oAscSectionBreakType;
 
 var para_Unknown                   = -1; //
 var para_RunBase                   = 0x0000; // Базовый элемент, он не должен использоваться как самостоятельный объект
@@ -1378,13 +1379,13 @@ ParaNumbering.prototype.GetSourceWidth = function()
 };
 
 // TODO: Реализовать табы по точке и с чертой (tab_Bar tab_Decimal)
-var tab_Bar     = 0x00;
-var tab_Center  = 0x01;
-var tab_Clear   = 0x02;
-var tab_Decimal = 0x03;
-var tab_Num     = 0x05;
-var tab_Right   = 0x07;
-var tab_Left    = 0x08;
+var tab_Bar     = Asc.c_oAscTabType.Bar;
+var tab_Center  = Asc.c_oAscTabType.Center;
+var tab_Clear   = Asc.c_oAscTabType.Clear;
+var tab_Decimal = Asc.c_oAscTabType.Decimail;
+var tab_Num     = Asc.c_oAscTabType.Num;
+var tab_Right   = Asc.c_oAscTabType.Right;
+var tab_Left    = Asc.c_oAscTabType.Left;
 
 var tab_Symbol = 0x0022;//0x2192;
 
@@ -1798,10 +1799,10 @@ ParaFootnoteReference.prototype.Measure = function(Context, TextPr, MathInfo, Ru
 	this.Run = Run;
 	this.private_Measure();
 };
-ParaFootnoteReference.prototype.Copy = function()
+ParaFootnoteReference.prototype.Copy = function(oPr)
 {
 	var oFootnote = this.Footnote.Parent.CreateFootnote();
-	oFootnote.Copy2(this.Footnote);
+	oFootnote.Copy2(this.Footnote, oPr);
 
 	var oRef = new ParaFootnoteReference(oFootnote);
 
@@ -1843,7 +1844,7 @@ ParaFootnoteReference.prototype.GetFootnote = function()
 {
 	return this.Footnote;
 };
-ParaFootnoteReference.prototype.UpdateNumber = function(PRS)
+ParaFootnoteReference.prototype.UpdateNumber = function(PRS, isKeepNumber)
 {
 	if (this.Footnote && true !== PRS.IsFastRecalculate() && PRS.TopDocument instanceof CDocument)
 	{
@@ -1856,12 +1857,15 @@ ParaFootnoteReference.prototype.UpdateNumber = function(PRS)
 		var oLogicDocument       = this.Footnote.Get_LogicDocument();
 		var oFootnotesController = oLogicDocument.GetFootnotesController();
 
-		this.NumFormat = nNumFormat;
-		this.Number    = oFootnotesController.GetFootnoteNumberOnPage(nPageAbs, nColumnAbs, oSectPr) + nAdditional;
+		if (!isKeepNumber)
+		{
+			this.NumFormat = nNumFormat;
+			this.Number    = oFootnotesController.GetFootnoteNumberOnPage(nPageAbs, nColumnAbs, oSectPr) + nAdditional;
 
-		// Если данная сноска не участвует в нумерации, просто уменьшаем ей номер на 1, для упрощения работы
-		if (this.IsCustomMarkFollows())
-			this.Number--;
+			// Если данная сноска не участвует в нумерации, просто уменьшаем ей номер на 1, для упрощения работы
+			if (this.IsCustomMarkFollows())
+				this.Number--;
+		}
 
 		this.private_Measure();
 		this.Footnote.SetNumber(this.Number, oSectPr, this.IsCustomMarkFollows());

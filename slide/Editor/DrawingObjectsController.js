@@ -45,6 +45,47 @@ DrawingObjectsController.prototype.getTheme = function()
     return this.drawingObjects.getTheme();
 };
 
+DrawingObjectsController.prototype.fitImagesToSlide = function()
+{
+    this.checkSelectedObjectsAndCallback(function () {
+        var oApi = this.getEditorApi();
+        if(!oApi)
+        {
+            return;
+        }
+        var aSelectedObjects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects;
+        var dWidth =   this.drawingObjects.Width;
+        var dHeight =   this.drawingObjects.Height;
+        for(var i = 0; i < aSelectedObjects.length; ++i)
+        {
+            var oDrawing = aSelectedObjects[i];
+            if(oDrawing.getObjectType() === AscDFH.historyitem_type_ImageShape)
+            {
+                var sImageId = oDrawing.getImageUrl();
+                if(typeof sImageId === "string")
+                {
+                    sImageId = AscCommon.getFullImageSrc2(sImageId);
+                    var _image = oApi.ImageLoader.map_image_index[sImageId];
+                    if(_image)
+                    {
+                        var __w = Math.max((_image.Image.width * AscCommon.g_dKoef_pix_to_mm), 1);
+                        var __h = Math.max((_image.Image.height * AscCommon.g_dKoef_pix_to_mm), 1);
+                        var fKoeff = 1.0/Math.max(__w/dWidth, __h/dHeight);
+                        var _w      = Math.max(5, __w*fKoeff);
+                        var _h      = Math.max(5, __h*fKoeff);
+                        AscFormat.CheckSpPrXfrm(oDrawing, true);
+                        oDrawing.spPr.xfrm.setOffX((dWidth - _w)/ 2.0);
+                        oDrawing.spPr.xfrm.setOffY((dHeight - _h)/ 2.0);
+                        oDrawing.spPr.xfrm.setExtX(_w);
+                        oDrawing.spPr.xfrm.setExtY(_h);
+                    }
+                }
+            }
+        }
+    }, [], false, AscDFH.historydescription_Presentation_FitImagesToSlide)
+};
+
+
 DrawingObjectsController.prototype.getDrawingArray = function()
 {
     return this.drawingObjects.getDrawingsForController();
@@ -124,16 +165,22 @@ DrawingObjectsController.prototype.handleOleObjectDoubleClick = function(drawing
 DrawingObjectsController.prototype.checkSelectedObjectsAndCallback = function(callback, args, bNoSendProps, nHistoryPointType, aAdditionaObjects)
 {
     var check_type = AscCommon.changestype_Drawing_Props, comment;
+    var aCommentData = undefined;
     if(this.drawingObjects.slideComments)
     {
         comment = this.drawingObjects.slideComments.getSelectedComment();
         if(comment)
         {
             check_type = AscCommon.changestype_MoveComment;
-            comment = comment.Get_Id();
+            aCommentData = [
+                {
+                    comment: comment,
+                    slide: this.drawingObjects
+                }
+            ];
         }
     }
-    if(editor.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(check_type, comment, undefined, aAdditionaObjects) === false)
+    if(editor.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(check_type, aCommentData, undefined, aAdditionaObjects) === false)
     {
         var nPointType = AscFormat.isRealNumber(nHistoryPointType) ? nHistoryPointType : AscDFH.historydescription_CommonControllerCheckSelected;
         History.Create_NewPoint(nPointType);
@@ -219,16 +266,22 @@ DrawingObjectsController.prototype.resetSelect = function()
 DrawingObjectsController.prototype.checkSelectedObjectsAndFireCallback = function(callback, args)
 {
     var check_type = AscCommon.changestype_Drawing_Props, comment;
+    var aCommentData = undefined;
     if(this.drawingObjects.slideComments)
     {
         comment = this.drawingObjects.slideComments.getSelectedComment();
         if(comment)
         {
             check_type = AscCommon.changestype_MoveComment;
-            comment = comment.Get_Id();
+            aCommentData = [
+                {
+                    comment: comment,
+                    slide: this.drawingObjects
+                }
+            ];
         }
     }
-    if(editor.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(check_type, comment) === false)
+    if(editor.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(check_type, aCommentData) === false)
     {
         callback.apply(this, args);
         this.startRecalculate();
@@ -447,7 +500,14 @@ MoveCommentState.prototype =
 
     onMouseUp: function(e, x, y, pageIndex)
     {
-        if(editor.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_MoveComment, this.comment.Get_Id(), editor.WordControl.m_oLogicDocument.IsEditCommentsMode()) === false)
+        var oPresentation = editor.WordControl.m_oLogicDocument;
+        var aCommentsData = [
+            {
+                comment: this.comment,
+                slide: this.drawingObjects.drawingObjects
+            }
+        ];
+        if(oPresentation.Document_Is_SelectionLocked(AscCommon.changestype_MoveComment, aCommentsData, oPresentation.IsEditCommentsMode()) === false)
         {
             History.Create_NewPoint(AscDFH.historydescription_Presentation_MoveComments);
             var tracks = this.drawingObjects.arrTrackObjects;

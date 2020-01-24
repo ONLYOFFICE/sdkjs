@@ -369,7 +369,7 @@ CDocument.prototype.Search_Replace = function(NewStr, bAll, Id, bInterfaceEvent)
 		this.FinalizeAction();
 	}
 
-	if (bAll && !bInterfaceEvent)
+	if (bAll && false !== bInterfaceEvent)
 		this.Api.sync_ReplaceAllCallback(nReplacedCount, nOverallCount);
 
 	if (nReplacedCount)

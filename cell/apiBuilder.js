@@ -35,7 +35,7 @@
 (function (window, builder) {
 	function checkFormat(value) {
 		if (value.getTime){
-			return new AscCommonExcel.cNumber(new cDate(value.getTime()).getExcelDate());
+			return new AscCommonExcel.cNumber(new Asc.cDate(value.getTime()).getExcelDate());
 		} else {
 			return new AscCommonExcel.cString(value + '');
 		}
@@ -224,7 +224,7 @@
 	 * @param {number} LCID
 	 */
 	Api.prototype.SetLocale = function(LCID) {
-		this.asc_setLocale(LCID);
+		this.asc_setLocale(LCID, null, null);
 	};
 	
 	/**
@@ -1058,7 +1058,7 @@
 			}
 			settings.style = nStyleIndex;
 			settings.inColumns = !bInRows;
-			settings.range = sDataRange;
+			settings.putRange(sDataRange);
 			var oChart = AscFormat.DrawingObjectsController.prototype.getChartSpace(this.worksheet, settings, true);
 			if(arguments.length === 8){//support old variant
 				oChart.setBDeleted(false);

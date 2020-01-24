@@ -447,3 +447,7 @@ CLogicDocumentController.prototype.IsTableCellSelection = function()
 {
 	return this.LogicDocument.controller_IsTableCellSelection();
 };
+CLogicDocumentController.prototype.IsSelectionLocked = function(CheckType)
+{
+	this.LogicDocument.controller_IsSelectionLocked(CheckType);
+};

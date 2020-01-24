@@ -13844,6 +13844,17 @@ function CreateDocContentFromString(str, drawingDocument, parent)
     return content;
 }
 
+function CheckContentTextAndAdd(oContent, sText)
+{
+    oContent.Set_ApplyToAll(true);
+    var sContentText = oContent.GetSelectedText(false, {NewLine: true, NewParagraph: true});
+    oContent.Set_ApplyToAll(false);
+    if(sContentText !== sText)
+    {
+        oContent.ClearContent(true);
+        AddToContentFromString(oContent, sText);
+    }
+}
 
 function AddToContentFromString(content, str)
 {
@@ -14324,6 +14335,7 @@ function CreateMarkerGeometryByType(type, src)
     window['AscFormat'].CreateTextBodyFromString = CreateTextBodyFromString;
     window['AscFormat'].CreateDocContentFromString = CreateDocContentFromString;
     window['AscFormat'].AddToContentFromString = AddToContentFromString;
+    window['AscFormat'].CheckContentTextAndAdd = CheckContentTextAndAdd;
     window['AscFormat'].CValAxisLabels = CValAxisLabels;
     window['AscFormat'].CalcLegendEntry = CalcLegendEntry;
     window['AscFormat'].CUnionMarker = CUnionMarker;

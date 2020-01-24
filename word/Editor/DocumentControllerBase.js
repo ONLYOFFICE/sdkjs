@@ -803,3 +803,6 @@ CDocumentControllerBase.prototype.GetAllFields = function(isUseSelection, arrFie
  * @returns {boolean}
  */
 CDocumentControllerBase.prototype.IsTableCellSelection = function(){return false;};
+CDocumentControllerBase.prototype.IsSelectionLocked  = function(CheckType)
+{
+};

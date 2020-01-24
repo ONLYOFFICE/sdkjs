@@ -4024,7 +4024,9 @@
 			res = -1 * ( pv + fv ) / nper;
 		}
 
-		return new cNumber(res);
+		res = new cNumber(res);
+		res.numFormat = 8;
+		return res;
 	};
 
 	/**

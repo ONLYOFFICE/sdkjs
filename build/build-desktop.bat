@@ -3,33 +3,8 @@ call npm install -g grunt-cli
 call npm install
 rem call grunt --level=WHITESPACE_ONLY --desktop=true --formatting=PRETTY_PRINT
 call grunt --level=ADVANCED --desktop=true
-copy ..\word\sdk-all.js ..\..\core\build\jsdesktop\sdkjs\word\sdk-all.js
-copy ..\slide\sdk-all.js ..\..\core\build\jsdesktop\sdkjs\slide\sdk-all.js
-copy ..\cell\sdk-all.js ..\..\core\build\jsdesktop\sdkjs\cell\sdk-all.js
 
-copy ..\word\sdk-all-min.js ..\..\core\build\jsdesktop\sdkjs\word\sdk-all-min.js
-copy ..\slide\sdk-all-min.js ..\..\core\build\jsdesktop\sdkjs\slide\sdk-all-min.js
-copy ..\cell\sdk-all-min.js ..\..\core\build\jsdesktop\sdkjs\cell\sdk-all-min.js
-
-copy ..\common\Native\native.js ..\..\core\build\jsdesktop\sdkjs\common\Native\native.js
-
-copy ..\common\libfont\js\fonts.js ..\..\core\build\jsdesktop\sdkjs\common\libfont\js\fonts.js
-copy ..\common\libfont\wasm\fonts.js ..\..\core\build\jsdesktop\sdkjs\common\libfont\wasm\fonts.js
-copy ..\common\libfont\wasm\fonts.wasm ..\..\core\build\jsdesktop\sdkjs\common\libfont\wasm\fonts.wasm
-
-
-copy ..\word\sdk-all.js ..\..\core-ext\desktop-sdk-wrapper\test\build\win_64\Debug\editors\sdkjs\word\sdk-all.js
-copy ..\slide\sdk-all.js ..\..\core-ext\desktop-sdk-wrapper\test\build\win_64\Debug\editors\sdkjs\slide\sdk-all.js
-copy ..\cell\sdk-all.js ..\..\core-ext\desktop-sdk-wrapper\test\build\win_64\Debug\editors\sdkjs\cell\sdk-all.js
-
-copy ..\word\sdk-all-min.js ..\..\core-ext\desktop-sdk-wrapper\test\build\win_64\Debug\editors\sdkjs\word\sdk-all-min.js
-copy ..\slide\sdk-all-min.js ..\..\core-ext\desktop-sdk-wrapper\test\build\win_64\Debug\editors\sdkjs\slide\sdk-all-min.js
-copy ..\cell\sdk-all-min.js ..\..\core-ext\desktop-sdk-wrapper\test\build\win_64\Debug\editors\sdkjs\cell\sdk-all-min.js
-
-copy ..\common\Native\native.js ..\..\core-ext\desktop-sdk-wrapper\test\build\win_64\Debug\editors\sdkjs\common\Native\native.js
-
-copy ..\common\libfont\js\fonts.js ..\..\core-ext\desktop-sdk-wrapper\test\build\win_64\Debug\editors\sdkjs\common\libfont\js\fonts.js
-copy ..\common\libfont\wasm\fonts.js ..\..\core-ext\desktop-sdk-wrapper\test\build\win_64\Debug\editors\sdkjs\common\libfont\wasm\fonts.js
-copy ..\common\libfont\wasm\fonts.wasm ..\..\core-ext\desktop-sdk-wrapper\test\build\win_64\Debug\editors\sdkjs\common\libfont\wasm\fonts.wasm
+rmdir "..\..\core-ext\desktop-sdk-wrapper\test\build\win_64\Debug\editors\sdkjs"
+xcopy /s/e/k/c/y/q/i "..\deploy\sdkjs" "..\..\core-ext\desktop-sdk-wrapper\test\build\win_64\debug\editors\sdkjs"
 
 pause

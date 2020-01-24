@@ -203,20 +203,14 @@ CGroupShape.prototype.handleUpdateExtents = function(bCell)
         {
             for(var i = 0; i < this.spTree.length; ++i)
             {
-                if(this.spTree[i].handleUpdateExtents)
-                {
-                    this.spTree[i].handleUpdateExtents(bCell);
-                }
+                this.spTree[i].handleUpdateExtents(bCell);
             }
         }
     }
 };
 CGroupShape.prototype.handleUpdateRot = function()
 {
-    if(this.handleUpdateExtents)
-    {
-        this.handleUpdateExtents(true);
-    }
+    this.handleUpdateExtents(true);
 };
 CGroupShape.prototype.handleUpdateFlip = CGroupShape.prototype.handleUpdatePosition;
 CGroupShape.prototype.handleUpdateChildOffset = CGroupShape.prototype.handleUpdatePosition;

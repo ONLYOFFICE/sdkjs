@@ -177,6 +177,9 @@ function (window, undefined) {
 		refType = refType.getValue();
 		A1RefType = A1RefType.toBool();
 
+		rowNumber = parseInt(rowNumber);
+		colNumber = parseInt(colNumber);
+
 		if (refType > 4 || refType < 1 || rowNumber < 1 || rowNumber > AscCommon.gc_nMaxRow || colNumber < 1 ||
 			colNumber > AscCommon.gc_nMaxCol) {
 			return new cError(cErrorType.wrong_value_type);
@@ -1851,6 +1854,17 @@ function (window, undefined) {
 			return res ? res.value : false;
 		};
 
+		var simpleSearch = function() {
+			for (; i < length; i++) {
+				elem = cacheArray[i];
+				val = elem.v;
+				if (_compareValues(valueForSearching, val, "=")) {
+					return elem.i;
+				}
+			}
+			return -1;
+		};
+
 		if (lookup) {
 			j = length - 1;
 			while (i <= j) {
@@ -1867,15 +1881,12 @@ function (window, undefined) {
 			}
 			res = Math.min(i, j);
 			res = -1 === res ? res : cacheArray[res].i;
+			if(res === -1 && cElementType.string === valueForSearching.type) {
+				res = simpleSearch();
+			}
 		} else {
 			// Exact value
-			for (; i < length; i++) {
-				elem = cacheArray[i];
-				val = elem.v;
-				if (_compareValues(valueForSearching, val, "=")) {
-					return elem.i;
-				}
-			}
+			res = simpleSearch();
 		}
 		return res;
 	};

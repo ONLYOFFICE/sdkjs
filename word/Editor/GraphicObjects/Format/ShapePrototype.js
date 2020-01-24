@@ -95,8 +95,9 @@ CShape.prototype.recalcContent = function()
 
 CShape.prototype.getDrawingDocument = function()
 {
-    return editor.WordControl.m_oLogicDocument.DrawingDocument;
+    return editor.WordControl.m_oDrawingDocument;
 };
+
 
 CShape.prototype.getTextArtPreviewManager = function()
 {
@@ -172,7 +173,11 @@ CShape.prototype.recalcWrapPolygon = function()
 
 CShape.prototype.addToRecalculate = function()
 {
-    editor.WordControl.m_oLogicDocument.DrawingObjects.addToRecalculate(this);//TODO: надо уходить от editor'а;
+    var oLogicDoc = this.getLogicDocument();
+    if(oLogicDoc && oLogicDoc.DrawingObjects)
+    {
+        oLogicDoc.DrawingObjects.addToRecalculate(this);//TODO: надо уходить от editor'а;
+    }
 };
 CShape.prototype.handleUpdatePosition = function()
 {
@@ -274,7 +279,17 @@ CShape.prototype.getHierarchy = function()
 };
 CShape.prototype.getParentObjects = function ()
 {
-    return { slide: null, layout: null, master: null, theme: editor.WordControl.m_oLogicDocument.theme};
+    var oTheme;
+    var oLogicDoc = this.getLogicDocument();
+    if(oLogicDoc)
+    {
+        oTheme = oLogicDoc.theme;
+    }
+    if(!oTheme)
+    {
+        oTheme = AscFormat.GenerateDefaultTheme(null, null);
+    }
+    return {slide: null, layout: null, master: null, theme: oTheme};
 };
 
 
@@ -653,12 +668,13 @@ CShape.prototype.applyParentTransform = function(transform)
 
 CShape.prototype.recalculateShapeStyleForParagraph = function()
 {
-    var styles = editor.WordControl.m_oLogicDocument.Styles;
-
     this.textStyleForParagraph = {TextPr: g_oDocumentDefaultTextPr.Copy(), ParaPr: g_oDocumentDefaultParaPr.Copy()};
-    this.textStyleForParagraph.ParaPr.Merge( styles.Default.ParaPr.Copy() );
-    this.textStyleForParagraph.TextPr.Merge( styles.Default.TextPr.Copy() );
-
+    var styles = this.Get_Styles();
+    if(styles)
+    {
+        this.textStyleForParagraph.ParaPr.Merge( styles.Default.ParaPr.Copy() );
+        this.textStyleForParagraph.TextPr.Merge( styles.Default.TextPr.Copy() );
+    }
     if(this.style && this.style.fontRef)
     {
         //this.textStyleForParagraph.ParaPr.Spacing.Line = 1;
@@ -774,11 +790,12 @@ CShape.prototype.Get_AbsoluteColumn = function(CurPage)
 };
 CShape.prototype.Get_Numbering = function()
 {
-    return editor.WordControl.m_oLogicDocument.Numbering;
-};
-CShape.prototype.Get_TableStyleForPara = function()
-{
-    return null;
+    var oLogicDoc = this.getLogicDocument();
+    if(oLogicDoc)
+    {
+        return oLogicDoc.Numbering;
+    }
+    return new CNumbering();
 };
 CShape.prototype.IsCell = function(isReturnCell)
 {
@@ -795,6 +812,11 @@ CShape.prototype.hitInTextRect = function(x, y)
 
 CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex)
 {
+    var oLogicDoc = this.getLogicDocument();
+    if(!oLogicDoc)
+    {
+        return;
+    }
 	var para_drawing;
 	if (this.group)
 	{
@@ -808,7 +830,7 @@ CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex)
 
 	if (para_drawing && para_drawing.DocumentContent)
 	{
-		var drawing_objects = editor.WordControl.m_oLogicDocument.DrawingObjects;
+		var drawing_objects = oLogicDoc.DrawingObjects;
 		drawing_objects.resetSelection(true);
 		if (this.group)
 		{
@@ -900,7 +922,12 @@ CShape.prototype.GetPrevElementEndInfo = function(CurElement)
 };
 CShape.prototype.Is_ThisElementCurrent = function(CurElement)
 {
-    return editor.WordControl.m_oLogicDocument.DrawingObjects.getTargetDocContent() === this.getDocContent();
+    var oLogicDoc = this.getLogicDocument();
+    if(!oLogicDoc)
+    {
+        return false;
+    }
+    return oLogicDoc.DrawingObjects.getTargetDocContent() === this.getDocContent();
 };
 CShape.prototype.Is_UseInDocument = function()
 {
@@ -1046,7 +1073,12 @@ CShape.prototype.cursorMoveAt = function( X, Y, AddToSelect )
 
 CShape.prototype.Get_Styles = function()
 {
-    return editor.WordControl.m_oLogicDocument.Styles;
+    var oLogicDoc = this.getLogicDocument();
+    if(oLogicDoc)
+    {
+        return oLogicDoc.Styles;
+    }
+    return new CStyles(true);
 };
 CShape.prototype.Is_InTable = function(bReturnTopTable)
 {
@@ -1056,14 +1088,14 @@ CShape.prototype.Is_InTable = function(bReturnTopTable)
     return false;
 };
 
-CShape.prototype.Get_Numbering = function()
-{
-    return editor.WordControl.m_oLogicDocument.Get_Numbering();
-};
-
 CShape.prototype.Get_TableStyleForPara = function()
 {
-    return editor.WordControl.m_oLogicDocument.Get_TableStyleForPara();
+    var oLogicDoc = this.getLogicDocument();
+    if(oLogicDoc)
+    {
+        return oLogicDoc.Get_TableStyleForPara();
+    }
+    return null;
 };
 
 CShape.prototype.Is_DrawingShape = function(bRetShape)
@@ -1090,7 +1122,12 @@ CShape.prototype.canChangeWrapPolygon = function(bReturnTopTable)
 
 CShape.prototype.Get_ColorMap = function()
 {
-    return editor.WordControl.m_oLogicDocument.Get_ColorMap();
+    var oLogicDoc = this.getLogicDocument();
+    if(oLogicDoc)
+    {
+        return oLogicDoc.Get_ColorMap();
+    }
+    return AscFormat.DEFAULT_COLOR_MAP;
 };
 
 CShape.prototype.Is_TopDocument = function(bReturn)
@@ -1202,6 +1239,10 @@ CShape.prototype.setStartPage = function(pageIndex, bNoResetSelectPage, bCheckCo
         {
             if(this.bWordShape && content.CheckRunContent(function(oRun)
 				{
+				    if(oRun instanceof AscCommon.ParaComment)
+                    {
+                        return true;
+                    }
 					for (var i = 0; i < oRun.Content.length; ++i)
 					{
 						var oItem = oRun.Content[i];
@@ -1243,11 +1284,26 @@ CShape.prototype.setStartPage = function(pageIndex, bNoResetSelectPage, bCheckCo
 };
 CShape.prototype.getStyles = function()
 {
-    return {styles: editor.WordControl.m_oLogicDocument.Styles, styleId: null};
+    var oLogicDoc = this.getLogicDocument();
+    var oStyles;
+    if(oLogicDoc)
+    {
+        oStyles = oLogicDoc.Styles;
+    }
+    else
+    {
+        oStyles = new CStyles(true);
+    }
+    return {styles: oStyles, styleId: null};
 };
 
 
 CShape.prototype.getDrawingObjectsController = function()
 {
-    return editor.WordControl.m_oLogicDocument.DrawingObjects;
+    var oLogicDoc = this.getLogicDocument();
+    if(oLogicDoc)
+    {
+        return oLogicDoc.DrawingObjects;
+    }
+    return null;
 };

@@ -146,7 +146,7 @@ function (window, undefined) {
 	}
 
 	function BesselI(x, n) {
-		var nMaxIteration = 20000, fXHalf = x / 2, fResult = 0, fEpsilon = 1.0E-30;
+		var nMaxIteration = 2000, fXHalf = x / 2, fResult = 0, fEpsilon = 1.0E-30;
 		if (n < 0) {
 			return new cError(cErrorType.not_numeric);
 		}
@@ -157,9 +157,9 @@ function (window, undefined) {
 		 */
 		var nK = 0, fTerm = 1;
 		// avoid overflow in Fak(n)
-		/*for ( nK = 1; nK <= n; ++nK ) {
-		 fTerm = fTerm / nK * fXHalf;
-		 }*/
+		for (nK = 1; nK <= n; ++nK) {
+			fTerm = fTerm / nK * fXHalf;
+		}
 
 		fTerm = Math.pow(fXHalf, n) / Math.fact(n);
 
@@ -4373,7 +4373,7 @@ function (window, undefined) {
 			}
 			n = Math.floor(n);
 
-			return bessi(x, n);
+			return BesselI(x, n);
 		};
 
 		return this._findArrayInNumberArguments(oArguments, calcFunc);

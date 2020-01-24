@@ -1726,12 +1726,12 @@ function _HEXTORGB_( colorHEX ) {
 
 		this.RecalcScroller();
 
-		this.canvas.onmousemove = this.evt_mousemove;
-		this.canvas.onmouseout = this.evt_mouseout;
-		this.canvas.onmouseup = this.evt_mouseup;
-		this.canvas.onmousedown = this.evt_mousedown;
-		this.canvas.onmousewheel = this.evt_mousewheel;
-		this.canvas.onmouseover = this.evt_mouseover;
+		AscCommon.addMouseEvent(this.canvas, "down", this.evt_mousedown);
+        AscCommon.addMouseEvent(this.canvas, "move", this.evt_mousemove);
+        AscCommon.addMouseEvent(this.canvas, "up", this.evt_mouseup);
+        AscCommon.addMouseEvent(this.canvas, "over", this.evt_mouseover);
+        AscCommon.addMouseEvent(this.canvas, "out", this.evt_mouseout);
+        this.canvas.onmousewheel = this.evt_mousewheel;
 
 		var _that = this;
 		this.canvas.ontouchstart = function ( e ) {

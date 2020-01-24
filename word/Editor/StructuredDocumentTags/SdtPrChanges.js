@@ -37,14 +37,21 @@
  * Time: 14:58
  */
 
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Alias]      = CChangesSdtPrAlias;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Id]         = CChangesSdtPrId;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Tag]        = CChangesSdtPrTag;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Label]      = CChangesSdtPrLabel;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Lock]       = CChangesSdtPrLock;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_DocPartObj] = CChangesSdtPrDocPartObj;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Appearance] = CChangesSdtPrAppearance;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Color]      = CChangesSdtPrColor;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Alias]            = CChangesSdtPrAlias;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Id]               = CChangesSdtPrId;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Tag]              = CChangesSdtPrTag;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Label]            = CChangesSdtPrLabel;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Lock]             = CChangesSdtPrLock;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_DocPartObj]       = CChangesSdtPrDocPartObj;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Appearance]       = CChangesSdtPrAppearance;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Color]            = CChangesSdtPrColor;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_CheckBox]         = CChangesSdtPrCheckBox;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_CheckBox_Checked] = CChangesSdtPrCheckBoxChecked;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Picture]          = CChangesSdtPrPicture;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_ComboBox]         = CChangesSdtPrComboBox;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_DropDownList]     = CChangesSdtPrDropDownList;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_DatePicker]       = CChangesSdtPrDatePicker;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_TextPr]           = CChangesSdtPrTextPr;
 
 //----------------------------------------------------------------------------------------------------------------------
 // Карта зависимости изменений
@@ -72,6 +79,29 @@ AscDFH.changesRelationMap[AscDFH.historyitem_SdtPr_Appearance] = [
 ];
 AscDFH.changesRelationMap[AscDFH.historyitem_SdtPr_Color] = [
 	AscDFH.historyitem_SdtPr_Color
+];
+AscDFH.changesRelationMap[AscDFH.historyitem_SdtPr_CheckBox] = [
+	AscDFH.historyitem_SdtPr_CheckBox,
+	AscDFH.historyitem_SdtPr_CheckBox_Checked
+];
+AscDFH.changesRelationMap[AscDFH.historyitem_SdtPr_CheckBox_Checked] = [
+	AscDFH.historyitem_SdtPr_CheckBox,
+	AscDFH.historyitem_SdtPr_CheckBox_Checked
+];
+AscDFH.changesRelationMap[AscDFH.historyitem_SdtPr_Picture] = [
+	AscDFH.historyitem_SdtPr_Picture
+];
+AscDFH.changesRelationMap[AscDFH.historyitem_SdtPr_ComboBox] = [
+	AscDFH.historyitem_SdtPr_ComboBox
+];
+AscDFH.changesRelationMap[AscDFH.historyitem_SdtPr_DropDownList] = [
+	AscDFH.historyitem_SdtPr_DropDownList
+];
+AscDFH.changesRelationMap[AscDFH.historyitem_SdtPr_DatePicker] = [
+	AscDFH.historyitem_SdtPr_DatePicker
+];
+AscDFH.changesRelationMap[AscDFH.historyitem_SdtPr_TextPr] = [
+	AscDFH.historyitem_SdtPr_TextPr
 ];
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -349,4 +379,150 @@ CChangesSdtPrColor.prototype.private_CreateObject = function()
 CChangesSdtPrColor.prototype.IsNeedRecalculate = function()
 {
 	return false;
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseObjectProperty}
+ */
+function CChangesSdtPrCheckBox(Class, Old, New)
+{
+	AscDFH.CChangesBaseObjectProperty.call(this, Class, Old, New);
+}
+CChangesSdtPrCheckBox.prototype = Object.create(AscDFH.CChangesBaseObjectProperty.prototype);
+CChangesSdtPrCheckBox.prototype.constructor = CChangesSdtPrCheckBox;
+CChangesSdtPrCheckBox.prototype.Type = AscDFH.historyitem_SdtPr_CheckBox;
+CChangesSdtPrCheckBox.prototype.private_SetValue = function(Value)
+{
+	this.Class.Pr.CheckBox = Value;
+};
+CChangesSdtPrCheckBox.prototype.private_CreateObject = function()
+{
+	return new CSdtCheckBoxPr();
+};
+CChangesSdtPrCheckBox.prototype.Merge = function(oChange)
+{
+	if (oChange.Class !== this.Class)
+		return true;
+
+	if (oChange.Type === this.Type || oChange.Type === AscDFH.historyitem_SdtPr_CheckBox_Checked)
+		return false;
+
+	return true;
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesSdtPrCheckBoxChecked(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesSdtPrCheckBoxChecked.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesSdtPrCheckBoxChecked.prototype.constructor = CChangesSdtPrCheckBoxChecked;
+CChangesSdtPrCheckBoxChecked.prototype.Type = AscDFH.historyitem_SdtPr_CheckBox_Checked;
+CChangesSdtPrCheckBoxChecked.prototype.private_SetValue = function(Value)
+{
+	if (this.Class.Pr.CheckBox)
+		this.Class.Pr.CheckBox.Checked = Value;
+};
+CChangesSdtPrCheckBoxChecked.prototype.Merge = function(oChange)
+{
+	if (oChange.Class !== this.Class)
+		return true;
+
+	if (oChange.Type === this.Type || oChange.Type === AscDFH.historyitem_SdtPr_CheckBox)
+		return false;
+
+	return true;
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesSdtPrPicture(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesSdtPrPicture.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesSdtPrPicture.prototype.constructor = CChangesSdtPrPicture;
+CChangesSdtPrPicture.prototype.Type = AscDFH.historyitem_SdtPr_Picture;
+CChangesSdtPrPicture.prototype.private_SetValue = function(Value)
+{
+	this.Class.Pr.Picture = Value;
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseObjectProperty}
+ */
+function CChangesSdtPrComboBox(Class, Old, New)
+{
+	AscDFH.CChangesBaseObjectProperty.call(this, Class, Old, New);
+}
+CChangesSdtPrComboBox.prototype = Object.create(AscDFH.CChangesBaseObjectProperty.prototype);
+CChangesSdtPrComboBox.prototype.constructor = CChangesSdtPrComboBox;
+CChangesSdtPrComboBox.prototype.Type = AscDFH.historyitem_SdtPr_ComboBox;
+CChangesSdtPrComboBox.prototype.private_SetValue = function(Value)
+{
+	this.Class.Pr.ComboBox = Value;
+};
+CChangesSdtPrComboBox.prototype.private_CreateObject = function()
+{
+	return new CSdtComboBoxPr();
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseObjectProperty}
+ */
+function CChangesSdtPrDropDownList(Class, Old, New)
+{
+	AscDFH.CChangesBaseObjectProperty.call(this, Class, Old, New);
+}
+CChangesSdtPrDropDownList.prototype = Object.create(AscDFH.CChangesBaseObjectProperty.prototype);
+CChangesSdtPrDropDownList.prototype.constructor = CChangesSdtPrDropDownList;
+CChangesSdtPrDropDownList.prototype.Type = AscDFH.historyitem_SdtPr_DropDownList;
+CChangesSdtPrDropDownList.prototype.private_SetValue = function(Value)
+{
+	this.Class.Pr.DropDown = Value;
+};
+CChangesSdtPrDropDownList.prototype.private_CreateObject = function()
+{
+	return new CSdtComboBoxPr();
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseObjectProperty}
+ */
+function CChangesSdtPrDatePicker(Class, Old, New)
+{
+	AscDFH.CChangesBaseObjectProperty.call(this, Class, Old, New);
+}
+CChangesSdtPrDatePicker.prototype = Object.create(AscDFH.CChangesBaseObjectProperty.prototype);
+CChangesSdtPrDatePicker.prototype.constructor = CChangesSdtPrDatePicker;
+CChangesSdtPrDatePicker.prototype.Type = AscDFH.historyitem_SdtPr_DatePicker;
+CChangesSdtPrDatePicker.prototype.private_SetValue = function(Value)
+{
+	this.Class.Pr.Date = Value;
+};
+CChangesSdtPrDatePicker.prototype.private_CreateObject = function()
+{
+	return new CSdtDatePickerPr();
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseObjectProperty}
+ */
+function CChangesSdtPrTextPr(Class, Old, New)
+{
+	AscDFH.CChangesBaseObjectProperty.call(this, Class, Old, New);
+}
+CChangesSdtPrTextPr.prototype = Object.create(AscDFH.CChangesBaseObjectProperty.prototype);
+CChangesSdtPrTextPr.prototype.constructor = CChangesSdtPrTextPr;
+CChangesSdtPrTextPr.prototype.Type = AscDFH.historyitem_SdtPr_TextPr;
+CChangesSdtPrTextPr.prototype.private_SetValue = function(Value)
+{
+	this.Class.Pr.TextPr = Value;
+};
+CChangesSdtPrTextPr.prototype.private_CreateObject = function()
+{
+	return new CTextPr();
 };

@@ -81,7 +81,7 @@ CNumbering.prototype.CopyAllNums = function(oNumbering)
 
 		for (var nLvl = 0; nLvl < 9; ++nLvl)
 		{
-			if (oOldNum.LvlOverride[nLvl])
+			if (oOldNum.LvlOverride[nLvl] && oOldNum.LvlOverride[nLvl].NumberingLvl)
 				oNewNum.SetLvlOverride(oOldNum.LvlOverride[nLvl].GetLvl().Copy(), nLvl, oOldNum.LvlOverride[nLvl].GetStartOverride());
 		}
 

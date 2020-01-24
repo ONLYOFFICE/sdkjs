@@ -1383,7 +1383,7 @@ function asc_menu_ReadChartPr(_params, _cursor){
             }
             case 18:
             {
-                _settings.range = _params[_cursor.pos++];
+                _settings.putRange(_params[_cursor.pos++]);
                 break;
             }
             case 19:
@@ -1528,11 +1528,11 @@ function asc_menu_WriteChartPr(_type, _chartPr, _stream){
         && _chartPr.vertAxisProps.getAxisType() == Asc.c_oAscAxisType.val) {
         asc_menu_WriteAscValAxisSettings(17, _chartPr.vertAxisProps, _stream);
     }
-    
-    if (_chartPr.range !== undefined && _chartPr.range !== null)
+    var sRange = _chartPr.getRange();
+    if (sRange !== undefined && sRange !== null)
     {
         _stream["WriteByte"](18);
-        _stream["WriteString2"](_chartPr.range);
+        _stream["WriteString2"](sRange);
     }
     
     if (_chartPr.inColumns !== undefined && _chartPr.inColumns !== null)
@@ -2128,7 +2128,14 @@ function asc_ReadCBorder(s, p) {
         {
             case 0:
             {
-                style = s[p.pos++];
+                var type = s[p.pos++];
+                if (type == "thin") {
+                    style = Asc.c_oAscBorderStyles.Thin;
+                } else if (type == "medium") {
+                    style = Asc.c_oAscBorderStyles.Medium; 
+                } else if (type == "thick") {
+                    style = Asc.c_oAscBorderStyles.Thick; 
+                }
                 break;
             }
             case 1:
@@ -3138,6 +3145,7 @@ var sdkCheck = true;
 // OfflineEditor
 //--------------------------------------------------------------------------------
 
+var _api = null;
 function OfflineEditor () {
     
     this.zoom = 1.0;
@@ -3887,7 +3895,7 @@ function OfflineEditor () {
             translations = "";
         }
 
-        _api = new window["Asc"]["spreadsheet_api"](translations);
+        window["_api"] = window["API"] = _api = new window["Asc"]["spreadsheet_api"](translations);
         
         AscCommon.g_clipboardBase.Init(_api);
         
@@ -5792,6 +5800,18 @@ window["native"]["offline_calculate_complete_range"] = function(x, y, w, h) {
             ws._getRowTop(range.r2)  + ws._getRowHeight(range.r1)];
 }
 
+window["Asc"]["spreadsheet_api"].prototype.asc_nativeGetFileData = function() {
+    var oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(this.wbModel);
+
+    oBinaryFileWriter.Write(true);
+
+    window["native"]["GetFileData"](
+        oBinaryFileWriter.Memory.ImData.data, 
+        oBinaryFileWriter.Memory.GetCurPosition());
+
+    return true;
+};
+
 window["native"]["offline_apply_event"] = function(type,params) {
     var _borderOptions = Asc.c_oAscBorderOptions;
     var _stream = null;
@@ -6058,7 +6078,7 @@ window["native"]["offline_apply_event"] = function(type,params) {
         {
             _stream = global_memory_stream_menu;
             _stream["ClearNoAttack"]();
-            _stream["WriteStringA"](_api.asc_nativeGetFile());
+            _stream["WriteStringA"](_api.asc_nativeGetFileData());
             _return = _stream;
             break;
         }

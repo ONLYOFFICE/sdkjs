@@ -276,7 +276,7 @@
         }
         else
         {
-            var sFormat = AscCommonWord.oDefaultDateTimeFormat[this.Get_CompiledPr().Lang.Val]
+            var sFormat = AscCommonWord.oDefaultDateTimeFormat[this.Get_CompiledPr().Lang.Val];
             if(sFormat && oDateTimeFormats[sFormat])
             {
                 oFormat = AscCommon.oNumFormatCache.get(oDateTimeFormats[sFormat]);
