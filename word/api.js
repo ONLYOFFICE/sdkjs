@@ -8783,6 +8783,7 @@ background-repeat: no-repeat;\
 					}
 					oApi.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_ApplyImagePrWithUrl);
 					oApi.WordControl.m_oLogicDocument.SetImageProps(oImagePr);
+					oApi.WordControl.m_oLogicDocument.UpdateTracks();
 					oApi.WordControl.m_oLogicDocument.FinalizeAction();
 				};
 				var _img = oApi.ImageLoader.LoadImage(sImageToDownLoad, 1);
