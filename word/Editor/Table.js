@@ -10651,7 +10651,7 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 						if (Rows.indexOf(curRow) != -1) 
 						{
 							CellAdded   = true;
-							var Row 	= this.GetRow(Cell_pos.Row);					//строка текущей ячейки
+							var Row 	= this.GetRow(curRow);					//строка текущей ячейки
 							var Cell    = Row.Get_Cell(curCell);  //текущая ячейка
 							var X_start = Row.CellsInfo[curCell].X_grid_start;
 							var X_end   = Row.CellsInfo[curCell].X_grid_end;
