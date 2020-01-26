@@ -285,7 +285,7 @@ Paragraph.prototype.Copy = function(Parent, DrawingDocument, oPr)
 	oPr.Paragraph = Para;
 
 	// Копируем настройки
-	Para.Set_Pr(this.Pr.Copy(true));
+	Para.Set_Pr(this.Pr.Copy(true, oPr));
 
 	if (this.LogicDocument && null !== this.LogicDocument.CopyNumberingMap && undefined !== Para.Pr.NumPr && undefined !== Para.Pr.NumPr.NumId)
 	{
@@ -294,7 +294,7 @@ Paragraph.prototype.Copy = function(Parent, DrawingDocument, oPr)
 			Para.SetNumPr(NewId, Para.Pr.NumPr.Lvl);
 	}
 
-	Para.TextPr.Set_Value(this.TextPr.Value.Copy());
+	Para.TextPr.Set_Value(this.TextPr.Value.Copy(undefined, oPr));
 
 	// Удаляем содержимое нового параграфа
 	Para.Internal_Content_Remove2(0, Para.Content.length);
@@ -318,7 +318,7 @@ Paragraph.prototype.Copy = function(Parent, DrawingDocument, oPr)
 	EndRun.Add_ToContent(0, new ParaEnd());
 	Para.Internal_Content_Add(Para.Content.length, EndRun, false);
 
-	EndRun.Set_Pr(this.TextPr.Value.Copy());
+	EndRun.Set_Pr(this.TextPr.Value.Copy(undefined, oPr));
 
 	if (oPr.CopyReviewPr)
 		EndRun.SetReviewTypeWithInfo(this.GetReviewType(), this.GetReviewInfo().Copy(), false);

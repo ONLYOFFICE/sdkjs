@@ -2591,7 +2591,12 @@ CTable.prototype.Copy = function(Parent, DrawingDocument, oPr)
 	Table.Set_PositionV(this.PositionV.RelativeFrom, this.PositionV.Align, this.PositionV.Value);
 
 	// Копируем настройки
-	Table.Set_TableStyle(this.TableStyle);
+	var sStyle = this.TableStyle;
+	if(oPr && oPr.Comparison)
+	{
+		sStyle = oPr.Comparison.copyStyleById(sStyle);
+	}
+	Table.Set_TableStyle(sStyle);
 	Table.Set_TableLook(this.TableLook.Copy());
 	Table.SetPr(this.Pr.Copy());
 

@@ -144,11 +144,11 @@ CTableStylePr.prototype =
         this.TableCellPr.Merge( TableStylePr.TableCellPr );
     },
 
-    Copy : function()
+    Copy : function(oPr)
     {
         var TableStylePr = new CTableStylePr();
-        TableStylePr.TextPr      = this.TextPr.Copy();
-        TableStylePr.ParaPr      = this.ParaPr.Copy();
+        TableStylePr.TextPr      = this.TextPr.Copy(undefined, oPr);
+        TableStylePr.ParaPr      = this.ParaPr.Copy(undefined, oPr);
         TableStylePr.TablePr     = this.TablePr.Copy();
         TableStylePr.TableRowPr  = this.TableRowPr.Copy();
         TableStylePr.TableCellPr = this.TableCellPr.Copy();
@@ -12130,7 +12130,7 @@ CTextPr.prototype.Clear = function()
 	this.PrChange   = undefined;
 	this.ReviewInfo = undefined;
 };
-CTextPr.prototype.Copy = function(bCopyPrChange)
+CTextPr.prototype.Copy = function(bCopyPrChange, oPr)
 {
 	var TextPr       = new CTextPr();
 	TextPr.Bold      = this.Bold;
@@ -12154,6 +12154,10 @@ CTextPr.prototype.Copy = function(bCopyPrChange)
 	TextPr.HighLight = this.Copy_HighLight();
 
 	TextPr.RStyle     = this.RStyle;
+	if(oPr && oPr.Comparison && TextPr.RStyle)
+	{
+		TextPr.RStyle = oPr.Comparison.copyStyleById(TextPr.RStyle);
+	}
 	TextPr.Spacing    = this.Spacing;
 	TextPr.DStrikeout = this.DStrikeout;
 	TextPr.Caps       = this.Caps;
@@ -14746,7 +14750,7 @@ function CParaPr()
 	this.ReviewInfo        = undefined;
 }
 
-CParaPr.prototype.Copy = function(bCopyPrChange)
+CParaPr.prototype.Copy = function(bCopyPrChange, oPr)
 {
 	var ParaPr = new CParaPr();
 
@@ -14790,10 +14794,22 @@ CParaPr.prototype.Copy = function(bCopyPrChange)
 		ParaPr.Tabs = this.Tabs.Copy();
 
 	if (undefined != this.NumPr)
+	{
 		ParaPr.NumPr = this.NumPr.Copy();
+		if(oPr && oPr.Comparison)
+		{
+			ParaPr.NumPr.NumId = oPr.Comparison.getCopyNumId(ParaPr.NumPr.NumId);
+		}
+	}
 
 	if (undefined != this.PStyle)
+	{
 		ParaPr.PStyle = this.PStyle;
+		if(oPr && oPr.Comparison)
+		{
+			ParaPr.PStyle = oPr.Comparison.copyStyleById(ParaPr.PStyle);
+		}
+	}
 
 	if (undefined != this.FramePr)
 		ParaPr.FramePr = this.FramePr.Copy();
