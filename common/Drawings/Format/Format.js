@@ -10699,6 +10699,8 @@ CBulletType.prototype =
         if(r.GetBool())
         {
             (this.Char) = r.GetString2();
+            if (AscFonts.IsCheckSymbols)
+                AscFonts.FontPickerByCharacter.getFontsByString(this.Char);
         }
 
         if(r.GetBool())

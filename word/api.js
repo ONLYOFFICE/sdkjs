@@ -7470,6 +7470,15 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.StartAddShape = function(sPreset, is_apply)
 	{
+		if (this.isDrawTablePen)
+		{
+			this.sync_TableDrawModeCallback(false);
+        }
+        if (this.isDrawTableErase)
+		{
+            this.sync_TableEraseModeCallback(false);
+        }
+
 		this.isStartAddShape = true;
 		this.addShapePreset  = sPreset;
 		if (is_apply)
