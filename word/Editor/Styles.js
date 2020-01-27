@@ -16114,6 +16114,7 @@ window["AscCommonWord"].CStyle = CStyle;
 window["AscCommonWord"].CTextPr = CTextPr;
 window["AscCommonWord"].CParaPr = CParaPr;
 window["AscCommonWord"].CParaTabs = CParaTabs;
+window["AscCommonWord"].CDocumentShd = CDocumentShd;
 window["AscCommonWord"].g_dKoef_pt_to_mm = g_dKoef_pt_to_mm;
 window["AscCommonWord"].g_dKoef_pc_to_mm = g_dKoef_pc_to_mm;
 window["AscCommonWord"].g_dKoef_in_to_mm = g_dKoef_in_to_mm;

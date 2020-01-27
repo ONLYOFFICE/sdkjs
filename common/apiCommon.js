@@ -4008,7 +4008,7 @@
 						oNewParagraph.Set_Align(oCurParS['align'])
 					}
 					if(Array.isArray(oCurParS['fill']) && oCurParS['fill'].length === 3){
-						var oShd = new CDocumentShd();
+						var oShd = new AscCommonWord.CDocumentShd();
 						oShd.Value = Asc.c_oAscShdClear;
 						oShd.Color.r = oCurParS['fill'][0];
 						oShd.Color.g = oCurParS['fill'][1];
