@@ -9184,8 +9184,7 @@ CPresentation.prototype.deleteSlides = function (array) {
         }
         editor.sync_HideComment();
         this.Document_UpdateUndoRedoState();
-        this.DrawingDocument.OnStartRecalculate(this.Slides.length);
-        this.DrawingDocument.OnEndRecalculate();
+        this.Recalculate();
         this.DrawingDocument.UpdateThumbnailsAttack();
     }
 };
