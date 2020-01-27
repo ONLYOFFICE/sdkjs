@@ -641,6 +641,10 @@ function MoveChartObjectTrack(oObject, oChartSpace)
             oObjectToSet.layout.setLayoutTarget(AscFormat.LAYOUT_TARGET_INNER);
             oObjectToSet.layout.setXMode(AscFormat.LAYOUT_MODE_EDGE);
             oObjectToSet.layout.setYMode(AscFormat.LAYOUT_MODE_EDGE);
+            var fLayoutW = this.chartSpace.calculateLayoutBySize(this.resizedPosX, oObjectToSet.layout.wMode, this.chartSpace.extX, oObjectToSet.extX);
+            var fLayoutH = this.chartSpace.calculateLayoutBySize(this.resizedPosY, oObjectToSet.layout.hMode, this.chartSpace.extY, oObjectToSet.extY);
+            oObjectToSet.layout.setW(fLayoutW);
+            oObjectToSet.layout.setH(fLayoutH);
         }
         var pos = this.chartSpace.chartObj.recalculatePositionText(this.originalObject);
         var fLayoutX = this.chartSpace.calculateLayoutByPos(pos.x, oObjectToSet.layout.xMode, this.x, this.chartSpace.extX);
