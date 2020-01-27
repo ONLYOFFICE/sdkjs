@@ -7089,7 +7089,11 @@ function CDrawingDocument()
             if (undefined === yPos)
                 yPos = e.clientY;
             yPos = (yPos * AscCommon.AscBrowser.zoom);
-            yPos -= this.getBoundingClientRect().y;
+            var clientRect = this.getBoundingClientRect();
+            if (undefined != clientRect.y)
+            	yPos -= clientRect.y;
+            else if (undefined != clientRect.top)
+            	yPos -= clientRect.top;
 
             var level = 8;
             var y = offset + 2;
