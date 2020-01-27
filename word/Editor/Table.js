@@ -11125,9 +11125,12 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 			// Если вся таблица внутри выделения - удаляем её 
 			if (X_Front && X_After && Y_Over && Y_Under)
 			{
-				this.MoveCursorToXY(this.TableSumGrid[-1] + this.Pages[curColumn].X + 0.01, this.RowsInfo[this.Pages[curColumn].FirstRow].Y[curColumn] + 0.01, false, false, curColumn);
-				this.LogicDocument.RemoveTable();
-				return true;
+				for (var Index = 0, rowsCount = this.GetRowsCount(); Index < rowsCount; Index++)
+				{
+					this.RemoveTableRow(0);
+				}
+
+				return;
 			}
 		}
 
@@ -13245,21 +13248,6 @@ CTable.prototype.GetDrawLine = function(X1, Y1, X2, Y2, CurPageStart, CurPageEnd
 		if (Y2 < 0)
 			Y2 = 0;
 			
-		// // Пока что при рисовании вне таблицы не создается новая ячейка, поэтому пока лучше просто возвращать линию
-		// if (Y1 <= this.RowsInfo[this.Pages[curColumn].FirstRow].Y[curColumn] || Y1 >= this.RowsInfo[this.Pages[curColumn].LastRow].Y[curColumn] + this.RowsInfo[this.Pages[curColumn].LastRow].H[curColumn])
-		// {
-		// 	var Line = 
-		// 	{
-		// 		X1  : X1_origin,
-		// 		X2  : X2_origin,
-		// 		Y1 : Y1,
-		// 		Y2 : Y2,
-		// 		Color : "Red",
-		// 		Bold  : false
-		// 	};
-		// 	return Line;
-		// }
-
 		if (Y1 > this.Pages[curColumn].Bounds.Bottom || Y1 < this.Pages[curColumn].Bounds.Top)
 		{
 			var Line = 
@@ -13334,7 +13322,17 @@ CTable.prototype.GetDrawLine = function(X1, Y1, X2, Y2, CurPageStart, CurPageEnd
 			var firstRowHeight = 0;
 			
 			var Row 	 = this.GetRow(Rows[0]);
-			var Cell 	 = Row.Get_Cell(CellsNumb[Rows[0]]);
+			var Cell     = null;
+
+			for (var Index = 0; Index < CellsNumb.length; Index++)
+			{
+				if (CellsNumb[Index] !== undefined)
+				{
+					Cell = this.GetRow(Index).Get_Cell(CellsNumb[Index]);
+					break;
+				}
+			}
+			
 			
 			var StartRow = Rows[0]; // строка, с которой стартует линия
 			var EndRow 	 = Rows[Rows.length - 1]; // строка на которой должна заканчиватся линия (может отличаться от физического конца)
@@ -13404,16 +13402,43 @@ CTable.prototype.GetDrawLine = function(X1, Y1, X2, Y2, CurPageStart, CurPageEnd
 
 			if (Y2 - Y1 >= this.RowsInfo[Rows[0]].H[curColumn]/2)
 			{
-				var Vline = 
+				if (Math.abs(Cell.Metrics.X_cell_start - X1)<= 1.5)
 				{
-					X1  : X1_origin,
-					X2  : X1_origin,
-					Y1 : this.RowsInfo[StartRow].Y[curColumn],
-					Y2 : this.RowsInfo[EndRow].Y[curColumn] + this.RowsInfo[EndRow].H[curColumn],
-					Color : "Grey",
-					Bold  : false
-					
-				};
+					var Vline = 
+					{
+						X1  : Cell.Metrics.X_cell_start + this.Pages[curColumn].X,
+						X2  : Cell.Metrics.X_cell_start + this.Pages[curColumn].X,
+						Y1 : this.RowsInfo[StartRow].Y[curColumn],
+						Y2 : this.RowsInfo[EndRow].Y[curColumn] + this.RowsInfo[EndRow].H[curColumn],
+						Color : "Grey",
+						Bold  : true
+					};
+				}
+				else if (Math.abs(Cell.Metrics.X_cell_end - X1) <= 1.5)
+				{
+					var Vline = 
+					{
+						X1  : Cell.Metrics.X_cell_end + this.Pages[curColumn].X,
+						X2  : Cell.Metrics.X_cell_end + this.Pages[curColumn].X,
+						Y1 : this.RowsInfo[StartRow].Y[curColumn],
+						Y2 : this.RowsInfo[EndRow].Y[curColumn] + this.RowsInfo[EndRow].H[curColumn],
+						Color : "Grey",
+						Bold  : true
+					};
+				}
+				else 
+				{
+					var Vline = 
+					{
+						X1  : X1_origin,
+						X2  : X1_origin,
+						Y1 : this.RowsInfo[StartRow].Y[curColumn],
+						Y2 : this.RowsInfo[EndRow].Y[curColumn] + this.RowsInfo[EndRow].H[curColumn],
+						Color : "Grey",
+						Bold  : false
+					};
+				}
+				
 			}
 			else if (Y2 - Y1 < this.RowsInfo[Rows[0]].H[curColumn]/2)
 			{
@@ -13487,27 +13512,71 @@ CTable.prototype.GetDrawLine = function(X1, Y1, X2, Y2, CurPageStart, CurPageEnd
 			{
 				if (Math.abs(this.RowsInfo[RowNumb[0]].Y[curColumn] - Y1) < 2)
 				{
-					var Hline = 
+					var Row 	  = this.GetRow(RowNumb[0]);
+					var startCell = Row.Get_Cell(CellsNumb[0]);
+					var endCell   = Row.Get_Cell(CellsNumb[CellsNumb.length - 1]);
+
+					if (startCell.GetVMerge() === 2)
 					{
-						Y1 : this.RowsInfo[RowNumb[0]].Y[curColumn],
-						Y2 : this.RowsInfo[RowNumb[0]].Y[curColumn],
-						X1 : this.GetRow(RowNumb[0]).Get_Cell(CellsNumb[0]).Metrics.X_cell_start + this.Pages[curColumn].X,
-						X2 : this.GetRow(RowNumb[0]).Get_Cell(CellsNumb[CellsNumb.length - 1]).Metrics.X_cell_end + this.Pages[curColumn].X,
-						Color : "Grey",
-						Bold  : true
-					};
+						var Hline = 
+						{
+							Y1 : this.RowsInfo[RowNumb[0]].Y[curColumn],
+							Y2 : this.RowsInfo[RowNumb[0]].Y[curColumn],
+							X1 : startCell.Metrics.X_cell_start + this.Pages[curColumn].X,
+							X2 : endCell.Metrics.X_cell_end + this.Pages[curColumn].X,
+							Color : "Grey",
+							Bold  : false
+						};
+					}
+					else 
+					{
+						var Hline = 
+						{
+							Y1 : this.RowsInfo[RowNumb[0]].Y[curColumn],
+							Y2 : this.RowsInfo[RowNumb[0]].Y[curColumn],
+							X1 : startCell.Metrics.X_cell_start + this.Pages[curColumn].X,
+							X2 : endCell.Metrics.X_cell_end + this.Pages[curColumn].X,
+							Color : "Grey",
+							Bold  : true
+						};
+					}
+					
 				}
 				else if (Math.abs(this.RowsInfo[RowNumb[0]].Y[curColumn] + this.RowsInfo[RowNumb[0]].H[curColumn] - Y1) < 2)
 				{
-					var Hline = 
+					var Row 	  = this.GetRow(RowNumb[0]);
+					var startCell = Row.Get_Cell(CellsNumb[0]);
+					var endCell   = Row.Get_Cell(CellsNumb[CellsNumb.length - 1]);
+					
+					var Grid_start   = Row.Get_CellInfo(startCell.Index).StartGridCol;
+					var Grid_span    = startCell.Get_GridSpan();
+					var VMerge_count = this.Internal_GetVertMergeCount(Row.Index, Grid_start, Grid_span);
+
+					if (VMerge_count > 1)
 					{
-						Y1 : this.RowsInfo[RowNumb[0]].Y[curColumn] + this.RowsInfo[RowNumb[0]].H[curColumn],
-						Y2 : this.RowsInfo[RowNumb[0]].Y[curColumn] + this.RowsInfo[RowNumb[0]].H[curColumn],
-						X1 : this.GetRow(RowNumb[0]).Get_Cell(CellsNumb[0]).Metrics.X_cell_start + this.Pages[curColumn].X,
-						X2 : this.GetRow(RowNumb[0]).Get_Cell(CellsNumb[CellsNumb.length - 1]).Metrics.X_cell_end + this.Pages[curColumn].X,
-						Color : "Grey",
-						Bold  : true
-					};
+						var Hline = 
+						{
+							Y1 : this.RowsInfo[RowNumb[0]].Y[curColumn] + this.RowsInfo[RowNumb[0]].H[curColumn],
+							Y2 : this.RowsInfo[RowNumb[0]].Y[curColumn] + this.RowsInfo[RowNumb[0]].H[curColumn],
+							X1 : startCell.Metrics.X_cell_start + this.Pages[curColumn].X,
+							X2 : endCell.Metrics.X_cell_end + this.Pages[curColumn].X,
+							Color : "Grey",
+							Bold  : false
+						};
+					}
+					else 
+					{
+						var Hline = 
+						{
+							Y1 : this.RowsInfo[RowNumb[0]].Y[curColumn] + this.RowsInfo[RowNumb[0]].H[curColumn],
+							Y2 : this.RowsInfo[RowNumb[0]].Y[curColumn] + this.RowsInfo[RowNumb[0]].H[curColumn],
+							X1 : startCell.Metrics.X_cell_start + this.Pages[curColumn].X,
+							X2 : endCell.Metrics.X_cell_end + this.Pages[curColumn].X,
+							Color : "Grey",
+							Bold  : true
+						};
+					}
+					
 				}
 				else 
 				{
@@ -13527,27 +13596,71 @@ CTable.prototype.GetDrawLine = function(X1, Y1, X2, Y2, CurPageStart, CurPageEnd
 			{
 				if (Math.abs(this.RowsInfo[RowNumb[0]].Y[curColumn] - Y1) < 2)
 				{
-					var Hline = 
+					var Row 	  = this.GetRow(RowNumb[0]);
+					var startCell = Row.Get_Cell(CellsNumb[0]);
+					var endCell   = Row.Get_Cell(CellsNumb[CellsNumb.length - 1]);
+
+					if (startCell.GetVMerge() === 2)
 					{
-						Y1 : this.RowsInfo[RowNumb[0]].Y[curColumn],
-						Y2 : this.RowsInfo[RowNumb[0]].Y[curColumn],
-						X1 : this.GetRow(RowNumb[0]).Get_Cell(CellsNumb[0]).Metrics.X_cell_start + this.Pages[curColumn].X,
-						X2 : this.GetRow(RowNumb[0]).Get_Cell(CellsNumb[CellsNumb.length - 1]).Metrics.X_cell_end + this.Pages[curColumn].X,
-						Color : "Grey",
-						Bold  : true
-					};
+						var Hline = 
+						{
+							Y1 : this.RowsInfo[RowNumb[0]].Y[curColumn],
+							Y2 : this.RowsInfo[RowNumb[0]].Y[curColumn],
+							X1 : startCell.Metrics.X_cell_start + this.Pages[curColumn].X,
+							X2 : endCell.Metrics.X_cell_end + this.Pages[curColumn].X,
+							Color : "Grey",
+							Bold  : false
+						};
+					}
+					else 
+					{
+						var Hline = 
+						{
+							Y1 : this.RowsInfo[RowNumb[0]].Y[curColumn],
+							Y2 : this.RowsInfo[RowNumb[0]].Y[curColumn],
+							X1 : startCell.Metrics.X_cell_start + this.Pages[curColumn].X,
+							X2 : endCell.Metrics.X_cell_end + this.Pages[curColumn].X,
+							Color : "Grey",
+							Bold  : true
+						};
+					}
+					
 				}
 				else if (Math.abs(this.RowsInfo[RowNumb[0]].Y[curColumn] + this.RowsInfo[RowNumb[0]].H[curColumn] - Y1) < 2)
 				{
-					var Hline = 
+					
+					var Row 	  = this.GetRow(RowNumb[0]);
+					var startCell = Row.Get_Cell(CellsNumb[0]);
+					var endCell   = Row.Get_Cell(CellsNumb[CellsNumb.length - 1]);
+					
+					var Grid_start   = Row.Get_CellInfo(startCell.Index).StartGridCol;
+					var Grid_span    = startCell.Get_GridSpan();
+					var VMerge_count = this.Internal_GetVertMergeCount(Row.Index, Grid_start, Grid_span);
+
+					if (VMerge_count > 1)
 					{
-						Y1 : this.RowsInfo[RowNumb[0]].Y[curColumn] + this.RowsInfo[RowNumb[0]].H[curColumn],
-						Y2 : this.RowsInfo[RowNumb[0]].Y[curColumn] + this.RowsInfo[RowNumb[0]].H[curColumn],
-						X1 : this.GetRow(RowNumb[0]).Get_Cell(CellsNumb[0]).Metrics.X_cell_start + this.Pages[curColumn].X,
-						X2 : this.GetRow(RowNumb[0]).Get_Cell(CellsNumb[CellsNumb.length - 1]).Metrics.X_cell_end + this.Pages[curColumn].X,
-						Color : "Grey",
-						Bold  : true
-					};
+						var Hline = 
+						{
+							Y1 : this.RowsInfo[RowNumb[0]].Y[curColumn] + this.RowsInfo[RowNumb[0]].H[curColumn],
+							Y2 : this.RowsInfo[RowNumb[0]].Y[curColumn] + this.RowsInfo[RowNumb[0]].H[curColumn],
+							X1 : startCell.Metrics.X_cell_start + this.Pages[curColumn].X,
+							X2 : endCell.Metrics.X_cell_end + this.Pages[curColumn].X,
+							Color : "Grey",
+							Bold  : false
+						};
+					}
+					else 
+					{
+						var Hline = 
+						{
+							Y1 : this.RowsInfo[RowNumb[0]].Y[curColumn] + this.RowsInfo[RowNumb[0]].H[curColumn],
+							Y2 : this.RowsInfo[RowNumb[0]].Y[curColumn] + this.RowsInfo[RowNumb[0]].H[curColumn],
+							X1 : startCell.Metrics.X_cell_start + this.Pages[curColumn].X,
+							X2 : endCell.Metrics.X_cell_end + this.Pages[curColumn].X,
+							Color : "Grey",
+							Bold  : true
+						};
+					}
 				}
 				else 
 				{
@@ -13561,7 +13674,6 @@ CTable.prototype.GetDrawLine = function(X1, Y1, X2, Y2, CurPageStart, CurPageEnd
 						Bold  : false
 					};
 				}
-				
 			}
 			
 			return Hline;
@@ -13577,6 +13689,7 @@ CTable.prototype.GetDrawLine = function(X1, Y1, X2, Y2, CurPageStart, CurPageEnd
 				Color : "Red", 
 				Bold  : false
 			};
+
 			return Line;
 		}
 	}
@@ -13601,8 +13714,6 @@ CTable.prototype.GetDrawLine = function(X1, Y1, X2, Y2, CurPageStart, CurPageEnd
 		var Borders	 	    = [];
 		this.Selection.Data = [];
 		var SizeOfIndent	= this.Pages[0].X;
-
- 		
 
 		SizeOfIndent += (this.Pages[curColumn].X - this.Pages[curColumn].X - (this.Pages[0].X - this.Pages[curColumn].X));
 
@@ -13692,6 +13803,7 @@ CTable.prototype.GetDrawLine = function(X1, Y1, X2, Y2, CurPageStart, CurPageEnd
 												Color : "Red",
 												Bold  : false
 											};
+
 											Borders.push(Line);
 										}
 										if (X2 >= TempCell.Metrics.X_cell_end)
@@ -13705,6 +13817,7 @@ CTable.prototype.GetDrawLine = function(X1, Y1, X2, Y2, CurPageStart, CurPageEnd
 												Color : "Red",
 												Bold  : false
 											};
+
 											Borders.push(Line);
 										}
 										if (Y1 <= this.RowsInfo[TempCell.Row.Index].Y[curColumn]  && Y2 > this.RowsInfo[TempCell.Row.Index].Y[curColumn] )
@@ -13718,6 +13831,7 @@ CTable.prototype.GetDrawLine = function(X1, Y1, X2, Y2, CurPageStart, CurPageEnd
 												Color : "Red",
 												Bold  : false
 											};
+
 											Borders.push(Line);
 										}
 										if (Y2 >= this.RowsInfo[TempCell.Row.Index].Y[curColumn] + rowHsum && Y1 < this.RowsInfo[TempCell.Row.Index].Y[curColumn] + rowHsum)
@@ -13731,6 +13845,7 @@ CTable.prototype.GetDrawLine = function(X1, Y1, X2, Y2, CurPageStart, CurPageEnd
 												Color : "Red",
 												Bold  : false
 											};
+
 											Borders.push(Line);
 										}
 											
@@ -13961,10 +14076,10 @@ CTable.prototype.GetDrawLine = function(X1, Y1, X2, Y2, CurPageStart, CurPageEnd
 							}
 						}
 					}
-					
 				}
 			}
 		}
+
 		return Borders;
 	}
 };
