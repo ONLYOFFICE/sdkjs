@@ -20926,7 +20926,10 @@ CDocument.prototype.AddCaption = function(oPr)
                 this.StartAction(AscDFH.historydescription_Document_UpdateFields);
                 for(i = 0; i < aFields.length; ++i)
                 {
-                    aFields[i].Update(false, false);
+                    if(aFields[i].Update)
+                    {
+                        aFields[i].Update(false, false);
+                    }
                 }
                 this.FinalizeAction();
             }
