@@ -13483,7 +13483,19 @@ CTable.prototype.GetDrawLine = function(X1, Y1, X2, Y2, CurPageStart, CurPageEnd
 
 			// Заполнение Cells 
 			if (RowNumb.length === 0)
-				return;
+			{
+				var Line = 
+				{
+					X1  : X1_origin,
+					X2  : X2_origin,
+					Y1 : Y1,
+					Y2 : Y2,
+					Color : "Red",
+					Bold  : false
+				};
+				return Line;
+			}
+				
 			for (var curCell = 0; curCell < this.GetRow(RowNumb[0]).Get_CellsCount(); curCell++)
 			{
 				if (X1 >= this.GetRow(RowNumb[0]).CellsInfo[curCell].X_cell_start && X1 <= this.GetRow(RowNumb[0]).CellsInfo[curCell].X_cell_end)
