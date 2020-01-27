@@ -1215,6 +1215,7 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
                             var oTrack = new AscFormat.ResizeTrackShapeImage(legend, legend.getCardDirectionByNum(hit_to_handles), drawingObjectsController);
                             oTrack.chartSpace = drawing;
                             drawingObjectsController.arrPreTrackObjects.push(oTrack);
+                            legend.selectStartPage = drawing.selectStartPage;
                             drawingObjectsController.changeCurrentState(new AscFormat.PreResizeState(drawingObjectsController, legend, legend.getCardDirectionByNum(hit_to_handles)));
                             drawingObjectsController.updateSelectionState();
                             drawingObjectsController.updateOverlay();
@@ -1313,6 +1314,7 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
                         var oTrack = new AscFormat.ResizeTrackShapeImage(oPlotArea, oPlotArea.getCardDirectionByNum(hit_to_handles), drawingObjectsController);
                         oTrack.chartSpace = drawing;
                         drawingObjectsController.arrPreTrackObjects.push(oTrack);
+                        oPlotArea.selectStartPage = drawing.selectStartPage;
                         drawingObjectsController.changeCurrentState(new AscFormat.PreResizeState(drawingObjectsController, oPlotArea, oPlotArea.getCardDirectionByNum(hit_to_handles)));
                         drawingObjectsController.updateSelectionState();
                         drawingObjectsController.updateOverlay();
@@ -1476,7 +1478,42 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
             var hit_in_text_rect = title.hitInTextRect(x, y);
             if((hit_in_inner_area && (!hit_in_text_rect || drawing.selection.title !== title) || (hit_in_path && bIsMobileVersion !== true)) || (drawing.selection.title === title && title.hitInBoundingRect(x, y) )&& !window["NATIVE_EDITOR_ENJINE"])
             {
-                return drawingObjectsController.handleChartTitleMoveHit(title, e, x, y, drawing, group, pageIndex);
+
+                var selector = group ? group : drawingObjectsController;
+                if(drawingObjectsController.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
+                {
+                    drawingObjectsController.checkChartTextSelection();
+                    selector.resetSelection();
+                    selector.selectObject(drawing, pageIndex);
+                    selector.selection.chartSelection = drawing;
+                    if(title.select)
+                    {
+                        drawing.selectTitle(title, pageIndex);
+                    }
+
+                    drawingObjectsController.arrPreTrackObjects.length = 0;
+                    drawingObjectsController.arrPreTrackObjects.push(new AscFormat.MoveChartObjectTrack(title, drawing));
+                    drawingObjectsController.changeCurrentState(new AscFormat.PreMoveState(drawingObjectsController, x, y, false, false, drawing, true, true));
+                    drawingObjectsController.updateSelectionState();
+                    drawingObjectsController.updateOverlay();
+
+                    if(Asc["editor"] && Asc["editor"].wb)
+                    {
+                        var ws = Asc["editor"].wb.getWorksheet();
+                        if(ws){
+                            var ct = ws.getCursorTypeFromXY(ws.objectRender.lastX, ws.objectRender.lastY);
+                            if(ct){
+                                Asc["editor"].wb._onUpdateCursor(ct.cursor);
+                            }
+                        }
+                    }
+                    return true;
+                }
+                else
+                {
+                    return {objectId: drawing.Get_Id(), cursorType: "move", bMarker: false};
+                }
+
             }
             else if(hit_in_text_rect)
             {

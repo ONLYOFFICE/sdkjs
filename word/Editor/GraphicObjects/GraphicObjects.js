@@ -3163,7 +3163,18 @@ CGraphicObjects.prototype =
 
                 if(isRealObject(object) && isRealObject(object.parent))
                 {
-                    return ret.bMarker ?  DRAWING_ARRAY_TYPE_BEFORE : object.parent.getDrawingArrayType();
+                    if(ret.bMarker)
+                    {
+                        return DRAWING_ARRAY_TYPE_BEFORE;
+                    }
+                    else
+                    {
+                        if(object.parent.getDrawingArrayType)
+                        {
+                            return object.parent.getDrawingArrayType();
+                        }
+                        return DRAWING_ARRAY_TYPE_BEFORE;
+                    }
                 }
             }
             else

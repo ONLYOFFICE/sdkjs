@@ -1155,16 +1155,6 @@
 
 
 
-    CGraphicObjectBase.prototype.getRectGeometry = function(){
-        return AscFormat.ExecuteNoHistory(
-            function(){
-                var _ret = AscFormat.CreateGeometry("rect");
-                _ret.Recalculate(this.extX, this.extY);
-                return _ret;
-            }, this, []
-        );
-    };
-
     CGraphicObjectBase.prototype.getGeom = function () {
 
         var _geom;
@@ -1178,7 +1168,13 @@
             _geom = this.spPr.geometry;
         }
         else{
-            _geom = this.getRectGeometry();
+            _geom = AscFormat.ExecuteNoHistory(
+                function(){
+                    var _ret = AscFormat.CreateGeometry("rect");
+                    _ret.Recalculate(this.extX, this.extY);
+                    return _ret;
+                }, this, []
+            );
         }
         return _geom;
     };

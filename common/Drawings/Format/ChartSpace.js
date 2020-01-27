@@ -5389,7 +5389,7 @@ CChartSpace.prototype.recalcTitles2 = function()
         {
             nObjectType = object.getObjectType();
         }
-        if(nObjectType === AscDFH.historyitem_type_Title && this.selection.title === object)
+        if(nObjectType === AscDFH.historyitem_type_Title && this.selection.title === object && this.selection.textSelection === object)
         {
             this.recalcInfo.recalcTitle = object;
         }

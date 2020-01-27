@@ -573,7 +573,7 @@ PreRotateState.prototype =
         }
 
         if(this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_CURSOR)
-            return {cursorType: "default", objectId: this.majorObject.Get_Id()};
+            return {cursorType: "default", objectId: this.majorObject.Get_Id(), bMarker: true};
     },
 
     onMouseMove: function(e, x, y, pageIndex)
@@ -611,7 +611,7 @@ RotateState.prototype =
         }
 
         if(this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_CURSOR)
-            return {cursorType: "crosshair", objectId: this.majorObject.Get_Id()};
+            return {cursorType: "crosshair", objectId: this.majorObject.Get_Id(), bMarker: true};
     },
 
     onMouseMove: function(e, x, y, pageIndex)
@@ -628,7 +628,7 @@ RotateState.prototype =
     onMouseUp: function(e, x, y, pageIndex)
     {
         var bounds;
-        if(this.majorObject.parent.Is_Inline())
+        if(this.majorObject.parent.Is_Inline && this.majorObject.parent.Is_Inline())
         {
             if(this.drawingObjects.document.Document_Is_SelectionLocked(changestype_Drawing_Props) === false)
             {
@@ -834,7 +834,7 @@ PreResizeState.prototype =
             this.drawingObjects.OnMouseDown(e, x, y, pageIndex);
         }
         if(this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_CURSOR)
-            return {cursorType: "default", objectId: this.majorObject.Get_Id()};
+            return {cursorType: "default", objectId: this.majorObject.Get_Id(), bMarker: true};
     },
 
     onMouseMove: function(e, x, y, pageIndex)
@@ -1451,6 +1451,11 @@ PreChangeAdjInGroupState.prototype =
             this.onMouseUp(e, x, y, pageIndex);
             this.drawingObjects.OnMouseDown(e, x, y, pageIndex);
         }
+        else
+        {
+            return {objectId: this.majorObject && this.majorObject.Get_Id(), bMarker: true, cursorType: "crosshair"};
+        }
+
     },
 
     onMouseMove: function(e, x, y, pageIndex)
