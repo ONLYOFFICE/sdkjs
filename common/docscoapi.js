@@ -1756,11 +1756,13 @@
 		this._state = ConnectionState.Reconnect;
 		var bIsDisconnectAtAll = ((c_oCloseCode.serverShutdown <= evt.code && evt.code <= c_oCloseCode.drop) ||
 			this.attemptCount >= this.maxAttemptCount);
+		var code = null;
 		if (bIsDisconnectAtAll) {
 			this._state = ConnectionState.ClosedAll;
+			code = evt.code;
 		}
 		if (this.onDisconnect) {
-			this.onDisconnect(evt.reason, evt.code);
+			this.onDisconnect(evt.reason, code);
 		}
 		//Try reconect
 		if (!bIsDisconnectAtAll) {
