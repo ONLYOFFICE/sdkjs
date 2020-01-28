@@ -360,8 +360,9 @@ function CopyRunToPPTX(Run, Paragraph, bHyper)
     for ( var CurPos = 0; CurPos < Run.Content.length; CurPos++ )
     {
         var Item = Run.Content[CurPos];
-        if ( para_End !== Item.Type && Item.Type !== para_Drawing && Item.Type !== para_Comment &&
-            Item.Type !== para_PageCount && Item.Type !== para_FootnoteRef && Item.Type !== para_FootnoteReference && Item.Type !== para_PageNum)
+        if (   Item.Type !== para_End       && Item.Type !== para_Drawing     && Item.Type !== para_Comment
+            && Item.Type !== para_PageCount && Item.Type !== para_FootnoteRef && Item.Type !== para_FootnoteReference
+            && Item.Type !== para_PageNum   && Item.Type !== para_FieldChar   && Item.Type !== para_Bookmark && Item.Type !== para_RevisionMove)
         {
             NewRun.Add_ToContent( PosToAdd, Item.Copy(), false );
             ++PosToAdd;
