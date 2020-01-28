@@ -627,150 +627,165 @@ RotateState.prototype =
 
     onMouseUp: function(e, x, y, pageIndex)
     {
-        var bounds;
-        if(this.majorObject.parent.Is_Inline && this.majorObject.parent.Is_Inline())
+        var aTracks = this.drawingObjects.arrTrackObjects;
+        if(aTracks[0] && aTracks[0].chartSpace)
         {
-            if(this.drawingObjects.document.Document_Is_SelectionLocked(changestype_Drawing_Props) === false)
+
+            if(false === this.drawingObjects.document.Document_Is_SelectionLocked(changestype_Drawing_Props, {Type : changestype_2_ElementsArray_and_Type , Elements : [], CheckType : AscCommon.changestype_Paragraph_Content}, true))
             {
-				this.drawingObjects.document.StartAction(AscDFH.historydescription_Document_RotateInlineDrawing);
-                this.drawingObjects.arrTrackObjects[0].trackEnd(true);
-                if(!this.drawingObjects.arrTrackObjects[0].view3D)
-                {
-                    this.majorObject.parent.CheckWH();
-                }
+                this.drawingObjects.document.StartAction(AscDFH.historydescription_Document_RotateFlowDrawingNoCtrl);
+                aTracks[0].trackEnd();
                 this.drawingObjects.document.Recalculate();
-				this.drawingObjects.document.FinalizeAction();
+                this.drawingObjects.document.FinalizeAction();
             }
         }
         else
         {
-            if(this.bSamePos !== true)
+            var bounds;
+            if(this.majorObject.parent.Is_Inline && this.majorObject.parent.Is_Inline())
             {
-                var aCheckParagraphs = [], aNearestPos = [], aParentParagraphs = [], aBounds = [], aDrawings = [], bMoveState = (this instanceof MoveState), nearest_pos;
-                var i, j, page_index, para_drawing;
-                for(i = 0; i < this.drawingObjects.arrTrackObjects.length; ++i)
+                if(this.drawingObjects.document.Document_Is_SelectionLocked(changestype_Drawing_Props) === false)
                 {
-                    aDrawings[i] = this.drawingObjects.arrTrackObjects[i].originalObject.parent;
-                    bounds = this.drawingObjects.arrTrackObjects[i].getBounds();
-                    aBounds.push(bounds);
-                    page_index = AscFormat.isRealNumber(this.drawingObjects.arrTrackObjects[i].pageIndex) ? this.drawingObjects.arrTrackObjects[i].pageIndex : this.drawingObjects.arrTrackObjects[i].originalObject.parent.pageIndex;
-                    nearest_pos = this.drawingObjects.document.Get_NearestPos(page_index, bounds.min_x, bounds.min_y, true, this.drawingObjects.arrTrackObjects[i].originalObject.parent);
-                    aNearestPos.push(nearest_pos);
-                    aParentParagraphs.push(aDrawings[i].Get_ParentParagraph());
-                }
-                if(bMoveState && e.CtrlKey)
-                {
-                    for(i = 0; i < aNearestPos.length; ++i)
+                    this.drawingObjects.document.StartAction(AscDFH.historydescription_Document_RotateInlineDrawing);
+                    this.drawingObjects.arrTrackObjects[0].trackEnd(true);
+                    if(!this.drawingObjects.arrTrackObjects[0].view3D)
                     {
-                        if(aDrawings[i].Locked !== true)
-                            AscFormat.checkObjectInArray(aCheckParagraphs, aNearestPos[i].Paragraph);
-                        else
-                            AscFormat.checkObjectInArray(aCheckParagraphs, aParentParagraphs[i]);
+                        this.majorObject.parent.CheckWH();
                     }
-                    if(false === this.drawingObjects.document.Document_Is_SelectionLocked(changestype_Drawing_Props, {Type : changestype_2_ElementsArray_and_Type , Elements : aCheckParagraphs, CheckType : AscCommon.changestype_Paragraph_Content}))
-                    {
-                        this.drawingObjects.resetSelection();
-                        this.drawingObjects.document.StartAction(AscDFH.historydescription_Document_RotateFlowDrawingCtrl);
-                        for(i = 0; i < this.drawingObjects.arrTrackObjects.length; ++i)
-                        {
-                            bounds = aBounds[i];
-                            para_drawing = aDrawings[i].Copy();
-                            para_drawing.Set_RelativeHeight(this.drawingObjects.getZIndex());
-                            if(aDrawings[i].Locked !== true)
-                            {
-                                aNearestPos[i].Paragraph.Check_NearestPos(aNearestPos[i]);
-                                para_drawing.Set_XYForAdd(bounds.posX, bounds.posY, aNearestPos[i], pageIndex);
-                                para_drawing.Add_ToDocument(aNearestPos[i], false);
-                            }
-                            else
-                            {
-                                para_drawing.Set_XY(bounds.posX, bounds.posY, aDrawings[i].Get_ParentParagraph(), pageIndex, true);
-                                para_drawing.Add_ToDocument2(aDrawings[i].Get_ParentParagraph());
-                            }
-                            this.drawingObjects.selectObject(para_drawing.GraphicObj, pageIndex);
-                        }
-                        this.drawingObjects.document.Recalculate();
-                        this.drawingObjects.document.FinalizeAction();
-                    }
+                    this.drawingObjects.document.Recalculate();
+                    this.drawingObjects.document.FinalizeAction();
                 }
-                else
+            }
+            else
+            {
+                if(this.bSamePos !== true)
                 {
-                    var bNoNeedCheck = false;
-                    if(bMoveState)
+                    var aCheckParagraphs = [], aNearestPos = [], aParentParagraphs = [], aBounds = [], aDrawings = [], bMoveState = (this instanceof MoveState), nearest_pos;
+                    var i, j, page_index, para_drawing;
+                    for(i = 0; i < this.drawingObjects.arrTrackObjects.length; ++i)
                     {
-                        bNoNeedCheck = true;
+                        aDrawings[i] = this.drawingObjects.arrTrackObjects[i].originalObject.parent;
+                        bounds = this.drawingObjects.arrTrackObjects[i].getBounds();
+                        aBounds.push(bounds);
+                        page_index = AscFormat.isRealNumber(this.drawingObjects.arrTrackObjects[i].pageIndex) ? this.drawingObjects.arrTrackObjects[i].pageIndex : this.drawingObjects.arrTrackObjects[i].originalObject.parent.pageIndex;
+                        nearest_pos = this.drawingObjects.document.Get_NearestPos(page_index, bounds.min_x, bounds.min_y, true, this.drawingObjects.arrTrackObjects[i].originalObject.parent);
+                        aNearestPos.push(nearest_pos);
+                        aParentParagraphs.push(aDrawings[i].Get_ParentParagraph());
+                    }
+                    if(bMoveState && e.CtrlKey)
+                    {
                         for(i = 0; i < aNearestPos.length; ++i)
                         {
-                            if(aNearestPos[i].Paragraph !== aParentParagraphs[i] && aDrawings[i].Locked !== true)
-                            {
+                            if(aDrawings[i].Locked !== true)
                                 AscFormat.checkObjectInArray(aCheckParagraphs, aNearestPos[i].Paragraph);
-                                AscFormat.checkObjectInArray(aCheckParagraphs, aParentParagraphs[i]);
-                            }
-                            else{
-                                bNoNeedCheck = false;
-                            }
-                        }
-                    }
-                    if(false === this.drawingObjects.document.Document_Is_SelectionLocked(changestype_Drawing_Props, {Type : changestype_2_ElementsArray_and_Type , Elements : aCheckParagraphs, CheckType : AscCommon.changestype_Paragraph_Content}, bNoNeedCheck))
-                    {
-                        this.drawingObjects.document.StartAction(AscDFH.historydescription_Document_RotateFlowDrawingNoCtrl);
-                        if(bMoveState && !this.drawingObjects.selection.cropSelection){
-                            this.drawingObjects.resetSelection();
-                        }
-                        for(i = 0; i < aDrawings.length; ++i)
-                        {
-                            bounds = aBounds[i];
-                            var oTrack = this.drawingObjects.arrTrackObjects[i];
-                            oTrack.trackEnd(true);
-                            var original = aDrawings[i];
-                            if(!bMoveState && !oTrack.view3D && !(oTrack.originalObject && oTrack.originalObject.isCrop))
-                            {
-                                original.CheckWH();
-                            }
-                            if(bMoveState && aNearestPos[i].Paragraph !== aParentParagraphs[i] && aDrawings[i].Locked !== true)
-                            {
-                                // На удалении включаем пересчет из-за бага (28015), чтобы во время добавления автофигуры на эту же страницу
-                                // расположение всех элементов было рассчитано с уже удаленной автофигурой.
-
-                                // Автофигуры мы переносим так, как будто это происходит не в режиме рецензирования, но
-                                // при этом мы должны сохранить их начальные настройки рецензирования.
-                                var bTrackRevisions = this.drawingObjects.document.IsTrackRevisions();
-                                if (bTrackRevisions)
-                                    this.drawingObjects.document.SetTrackRevisions(false);
-
-                                this.drawingObjects.document.MoveDrawing = true;
-
-                                var oOriginalRun = original.Parent.Get_DrawingObjectRun(original.Id);
-
-                                // Всегда создаем копию при переносе, чтобы не было проблем при совместном редактировании
-                                var originalCopy = original.Copy();
-                                originalCopy.CopyComments();
-                                original.Remove_FromDocument(false);
-                                aNearestPos[i].Paragraph.Check_NearestPos(aNearestPos[i]);
-
-                                originalCopy.Set_XYForAdd(bounds.posX, bounds.posY, aNearestPos[i], pageIndex);
-                                originalCopy.Add_ToDocument(aNearestPos[i], false, null, oOriginalRun);
-
-                                this.drawingObjects.document.MoveDrawing = false;
-
-                                if (bTrackRevisions)
-                                    this.drawingObjects.document.SetTrackRevisions(true);
-
-                                this.drawingObjects.selectObject(originalCopy.GraphicObj, pageIndex);
-                            }
                             else
+                                AscFormat.checkObjectInArray(aCheckParagraphs, aParentParagraphs[i]);
+                        }
+                        if(false === this.drawingObjects.document.Document_Is_SelectionLocked(changestype_Drawing_Props, {Type : changestype_2_ElementsArray_and_Type , Elements : aCheckParagraphs, CheckType : AscCommon.changestype_Paragraph_Content}))
+                        {
+                            this.drawingObjects.resetSelection();
+                            this.drawingObjects.document.StartAction(AscDFH.historydescription_Document_RotateFlowDrawingCtrl);
+                            for(i = 0; i < this.drawingObjects.arrTrackObjects.length; ++i)
                             {
-                                if(true !== oTrack.bTextWarp && !(oTrack.originalObject && oTrack.originalObject.isCrop))
+                                bounds = aBounds[i];
+                                para_drawing = aDrawings[i].Copy();
+                                para_drawing.Set_RelativeHeight(this.drawingObjects.getZIndex());
+                                if(aDrawings[i].Locked !== true)
                                 {
-                                    original.Set_XY(bounds.posX, bounds.posY, aParentParagraphs[i], original.GraphicObj.selectStartPage, bMoveState)
+                                    aNearestPos[i].Paragraph.Check_NearestPos(aNearestPos[i]);
+                                    para_drawing.Set_XYForAdd(bounds.posX, bounds.posY, aNearestPos[i], pageIndex);
+                                    para_drawing.Add_ToDocument(aNearestPos[i], false);
                                 }
-                                if(bMoveState){
-                                    this.drawingObjects.selectObject(original.GraphicObj, pageIndex);
+                                else
+                                {
+                                    para_drawing.Set_XY(bounds.posX, bounds.posY, aDrawings[i].Get_ParentParagraph(), pageIndex, true);
+                                    para_drawing.Add_ToDocument2(aDrawings[i].Get_ParentParagraph());
                                 }
+                                this.drawingObjects.selectObject(para_drawing.GraphicObj, pageIndex);
                             }
                             this.drawingObjects.document.Recalculate();
+                            this.drawingObjects.document.FinalizeAction();
                         }
-                        this.drawingObjects.document.FinalizeAction();
+                    }
+                    else
+                    {
+                        var bNoNeedCheck = false;
+                        if(bMoveState)
+                        {
+                            bNoNeedCheck = true;
+                            for(i = 0; i < aNearestPos.length; ++i)
+                            {
+                                if(aNearestPos[i].Paragraph !== aParentParagraphs[i] && aDrawings[i].Locked !== true)
+                                {
+                                    AscFormat.checkObjectInArray(aCheckParagraphs, aNearestPos[i].Paragraph);
+                                    AscFormat.checkObjectInArray(aCheckParagraphs, aParentParagraphs[i]);
+                                }
+                                else{
+                                    bNoNeedCheck = false;
+                                }
+                            }
+                        }
+                        if(false === this.drawingObjects.document.Document_Is_SelectionLocked(changestype_Drawing_Props, {Type : changestype_2_ElementsArray_and_Type , Elements : aCheckParagraphs, CheckType : AscCommon.changestype_Paragraph_Content}, bNoNeedCheck))
+                        {
+                            this.drawingObjects.document.StartAction(AscDFH.historydescription_Document_RotateFlowDrawingNoCtrl);
+                            if(bMoveState && !this.drawingObjects.selection.cropSelection){
+                                this.drawingObjects.resetSelection();
+                            }
+                            for(i = 0; i < aDrawings.length; ++i)
+                            {
+                                bounds = aBounds[i];
+                                var oTrack = this.drawingObjects.arrTrackObjects[i];
+                                oTrack.trackEnd(true);
+                                var original = aDrawings[i];
+                                if(!bMoveState && !oTrack.view3D && !(oTrack.originalObject && oTrack.originalObject.isCrop))
+                                {
+                                    original.CheckWH();
+                                }
+                                if(bMoveState && aNearestPos[i].Paragraph !== aParentParagraphs[i] && aDrawings[i].Locked !== true)
+                                {
+                                    // На удалении включаем пересчет из-за бага (28015), чтобы во время добавления автофигуры на эту же страницу
+                                    // расположение всех элементов было рассчитано с уже удаленной автофигурой.
+
+                                    // Автофигуры мы переносим так, как будто это происходит не в режиме рецензирования, но
+                                    // при этом мы должны сохранить их начальные настройки рецензирования.
+                                    var bTrackRevisions = this.drawingObjects.document.IsTrackRevisions();
+                                    if (bTrackRevisions)
+                                        this.drawingObjects.document.SetTrackRevisions(false);
+
+                                    this.drawingObjects.document.MoveDrawing = true;
+
+                                    var oOriginalRun = original.Parent.Get_DrawingObjectRun(original.Id);
+
+                                    // Всегда создаем копию при переносе, чтобы не было проблем при совместном редактировании
+                                    var originalCopy = original.Copy();
+                                    originalCopy.CopyComments();
+                                    original.Remove_FromDocument(false);
+                                    aNearestPos[i].Paragraph.Check_NearestPos(aNearestPos[i]);
+
+                                    originalCopy.Set_XYForAdd(bounds.posX, bounds.posY, aNearestPos[i], pageIndex);
+                                    originalCopy.Add_ToDocument(aNearestPos[i], false, null, oOriginalRun);
+
+                                    this.drawingObjects.document.MoveDrawing = false;
+
+                                    if (bTrackRevisions)
+                                        this.drawingObjects.document.SetTrackRevisions(true);
+
+                                    this.drawingObjects.selectObject(originalCopy.GraphicObj, pageIndex);
+                                }
+                                else
+                                {
+                                    if(true !== oTrack.bTextWarp && !(oTrack.originalObject && oTrack.originalObject.isCrop))
+                                    {
+                                        original.Set_XY(bounds.posX, bounds.posY, aParentParagraphs[i], original.GraphicObj.selectStartPage, bMoveState)
+                                    }
+                                    if(bMoveState){
+                                        this.drawingObjects.selectObject(original.GraphicObj, pageIndex);
+                                    }
+                                }
+                                this.drawingObjects.document.Recalculate();
+                            }
+                            this.drawingObjects.document.FinalizeAction();
+                        }
                     }
                 }
             }

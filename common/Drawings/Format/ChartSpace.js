@@ -14129,6 +14129,7 @@ CChartSpace.prototype.recalculateDLbls = function()
 {
     if(this.chart && this.chart.plotArea)
     {
+        this.cachedCanvas = null;
         var aCharts = this.chart.plotArea.charts;
         for(var t = 0; t < aCharts.length; ++t){
 
