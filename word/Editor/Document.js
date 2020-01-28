@@ -804,6 +804,9 @@ function CDocumentRecalculateState()
 
     this.ResetStartElement = false;
     this.MainStartPos      = -1;
+
+    this.UseRecursion = true;
+    this.Continue     = false; // параметр сигнализирующий, о том что нужно продолжить пересчет (для нерекурсивного метода)
 }
 
 function CDocumentRecalculateHdrFtrPageCountState()
@@ -2792,6 +2795,42 @@ CDocument.prototype.Is_OnRecalculate = function()
     return false;
 };
 /**
+ * Пересчитываем весь документ без включения таймеров
+ * @param {boolean} isFromStart
+ */
+CDocument.prototype.RecalculateAllAtOnce = function(isFromStart)
+{
+	//var nStartTime = new Date().getTime();
+
+	this.FullRecalc.UseRecursion = false;
+	this.FullRecalc.Continue     = false;
+
+	if (isFromStart)
+	{
+		this.Reset_RecalculateCache();
+		this.RecalculateWithParams({
+			Inline   : {Pos : 0, PageNum : 0},
+			Flow     : [],
+			HdrFtr   : [],
+			Drawings : {All : true, Map : {}}
+		}, true);
+	}
+	else
+	{
+		this.private_Recalculate(undefined, true);
+	}
+
+	while (this.FullRecalc.Continue)
+	{
+		this.FullRecalc.Continue = false;
+		this.Recalculate_Page();
+	}
+
+	this.FullRecalc.UseRecursion = false;
+
+	//console.log("RecalcTime: " + ((new Date().getTime() - nStartTime) / 1000));
+};
+/**
  * Запускаем пересчет документа.
  * @param _RecalcData
  * @param [isForceStrictRecalc=false] {boolean} Запускать ли пересчет первый раз без таймера
@@ -3265,30 +3304,39 @@ CDocument.prototype.Recalculate_Page = function()
                 if (PrevSectInfo !== CurSectInfo)
                     this.FullRecalc.ResetStartElement = true;
 
-                if (window["NATIVE_EDITOR_ENJINE_SYNC_RECALC"] === true)
-                {
-                    if (PageIndex + 1 > this.FullRecalc.StartPage + 2)
-                    {
-                        if (window["native"]["WC_CheckSuspendRecalculate"] !== undefined)
-                        {
-                            //if (window["native"]["WC_CheckSuspendRecalculate"]())
-                            //    return;
+				if (this.FullRecalc.UseRecursion)
+				{
+					if (window["NATIVE_EDITOR_ENJINE_SYNC_RECALC"] === true)
+					{
+						if (PageIndex + 1 > this.FullRecalc.StartPage + 2)
+						{
+							if (window["native"]["WC_CheckSuspendRecalculate"] !== undefined)
+							{
+								//if (window["native"]["WC_CheckSuspendRecalculate"]())
+								//    return;
 
-                            this.FullRecalc.Id = setTimeout(Document_Recalculate_Page, 10);
-                            return;
-                        }
-                    }
+								this.FullRecalc.Id = setTimeout(Document_Recalculate_Page, 10);
+								return;
+							}
+						}
 
-                    this.Recalculate_Page();
-                    return;
-                }
+						this.Recalculate_Page();
+						return;
+					}
 
-                if (PageIndex + 1 > this.FullRecalc.StartPage + 2)
-                {
-                    this.FullRecalc.Id = setTimeout(Document_Recalculate_Page, 20);
-                }
-                else
-                    this.Recalculate_Page();
+					if (PageIndex + 1 > this.FullRecalc.StartPage + 2)
+					{
+						this.FullRecalc.Id = setTimeout(Document_Recalculate_Page, 20);
+					}
+					else
+					{
+						this.Recalculate_Page();
+					}
+				}
+				else
+				{
+					this.FullRecalc.Continue = true;
+				}
 
                 return;
             }
@@ -3882,32 +3930,39 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
         this.FullRecalc.ResetStartElement = _bResetStartElement;
         this.FullRecalc.MainStartPos      = _StartIndex;
 
-        if (window["NATIVE_EDITOR_ENJINE_SYNC_RECALC"] === true)
-        {
-            if (_PageIndex > this.FullRecalc.StartPage + 2)
-            {
-                if (window["native"]["WC_CheckSuspendRecalculate"] !== undefined)
-                {
-                    //if (window["native"]["WC_CheckSuspendRecalculate"]())
-                    //    return;
+        if (this.FullRecalc.UseRecursion)
+		{
+			if (window["NATIVE_EDITOR_ENJINE_SYNC_RECALC"] === true)
+			{
+				if (_PageIndex > this.FullRecalc.StartPage + 2)
+				{
+					if (window["native"]["WC_CheckSuspendRecalculate"] !== undefined)
+					{
+						//if (window["native"]["WC_CheckSuspendRecalculate"]())
+						//    return;
 
-                    this.FullRecalc.Id = setTimeout(Document_Recalculate_Page, 10);
-                    return;
-                }
-            }
+						this.FullRecalc.Id = setTimeout(Document_Recalculate_Page, 10);
+						return;
+					}
+				}
 
-            this.Recalculate_Page();
-            return;
-        }
+				this.Recalculate_Page();
+				return;
+			}
 
-        if (_PageIndex > this.FullRecalc.StartPage + 2)
-        {
-            this.FullRecalc.Id = setTimeout(Document_Recalculate_Page, 20);
-        }
-        else
-        {
-            this.Recalculate_Page();
-        }
+			if (_PageIndex > this.FullRecalc.StartPage + 2)
+			{
+				this.FullRecalc.Id = setTimeout(Document_Recalculate_Page, 20);
+			}
+			else
+			{
+				this.Recalculate_Page();
+			}
+		}
+		else
+		{
+			this.FullRecalc.Continue = true;
+		}
     }
 };
 CDocument.prototype.private_RecalculateIsNewSection = function(nPageAbs, nContentIndex)

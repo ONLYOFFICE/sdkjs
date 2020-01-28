@@ -282,6 +282,20 @@
 			};
 		}
 
+		function replaceSpellCheckWords(cellValue, options) {
+			// ToDo replace one command
+			if (1 === options.indexInArray && options.replaceWith) {
+				cellValue = options.replaceWith;
+			} else {
+				for (var i = 0; i < options.replaceWords.length; ++i) {
+					cellValue = cellValue.replace(options.replaceWords[i][0], function () {
+						return options.replaceWords[i][1];
+					});
+				}
+			}
+			return cellValue;
+		}
+
 		function getFindRegExp(value, options) {
 			var findFlags = "g"; // Заменяем все вхождения
 			// Не чувствителен к регистру
@@ -2075,6 +2089,11 @@
 
 			this.scale = null;
 
+			this.titleRowRange = null;
+			this.titleColRange = null;
+			this.titleWidth = 0;
+			this.titleHeight = 0;
+
 			return this;
 		}
 		function CPrintPagesData () {
@@ -2745,6 +2764,7 @@
 		window["AscCommonExcel"].getMatchingBorder = getMatchingBorder;
 		window["AscCommonExcel"].WordSplitting = WordSplitting;
 		window["AscCommonExcel"].getFindRegExp = getFindRegExp;
+		window["AscCommonExcel"].replaceSpellCheckWords = replaceSpellCheckWords;
 		window["Asc"].outputDebugStr = outputDebugStr;
 		window["Asc"].isNumberInfinity = isNumberInfinity;
 		window["Asc"].trim = trim;

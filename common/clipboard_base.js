@@ -56,7 +56,13 @@
 		Internal    : 4,
 		HtmlElement : 8
 	};
+	var c_oClipboardPastedFrom       = {
+		Word        : 0,
+		Excel       : 1,
+		PowerPoint  : 2
+	};
 	AscCommon.c_oAscClipboardDataFormat = c_oAscClipboardDataFormat;
+	AscCommon.c_oClipboardPastedFrom = c_oClipboardPastedFrom;
 
 	function CClipboardBase()
 	{
@@ -99,6 +105,8 @@
 
 		this.bSaveFormat = false; //для вставки, допустим, из плагина необходимо чтобы при добавлении текста в шейп сохранялось форматирование
 		this.bCut = false;
+
+		this.pastedFrom = null;
 
 		this.clearBufferTimerId = -1;
 
@@ -217,6 +225,7 @@
 
 			this.PasteFlag = true;
 			this.Api.incrementCounterLongAction();
+			this.pastedFrom = null;
 
 			if (this.IsNeedDivOnPaste)
 			{
@@ -815,7 +824,7 @@
 				if (null != frameWindow.document && null != frameWindow.document.body)
 				{
 					ifr.style.display = "block";
-
+					this.pastedFrom = definePastedFrom(frameWindow.document);
 					this.Api.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.HtmlElement, frameWindow.document.body, ifr, text_data);
 				}
 			}
@@ -1017,6 +1026,39 @@
 			return true;
 		}
 	};
+
+	function definePastedFrom(doc)
+	{
+		if(!doc)
+		{
+			return null;
+		}
+		var res = null;
+		var metaTags = doc.getElementsByTagName("meta");
+		for (var i = 0; i < metaTags.length; i++)
+		{
+			if ("ProgId" === metaTags[i].getAttribute("name"))
+			{
+				var content = metaTags[i].getAttribute("content");
+				if(null !== content)
+				{
+					if(content.startsWith("Word"))
+					{
+						res = c_oClipboardPastedFrom.Word;
+					}
+					else if(content.startsWith("Excel"))
+					{
+						res = c_oClipboardPastedFrom.Excel;
+					}
+					else if(content.startsWith("PowerPoint"))
+					{
+						res = c_oClipboardPastedFrom.PowerPoint;
+					}
+				}
+			}
+		}
+		return res;
+	}
 
 	function CSpecialPasteHelper()
 	{

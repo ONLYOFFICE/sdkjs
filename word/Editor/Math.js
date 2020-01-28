@@ -1559,9 +1559,9 @@ ParaMath.prototype.Remove = function(Direction, bOnAddText)
     }
 };
 
-ParaMath.prototype.GetSelectContent = function()
+ParaMath.prototype.GetSelectContent = function(isAll)
 {
-    return this.Root.GetSelectContent();
+    return this.Root.GetSelectContent(isAll);
 };
 
 ParaMath.prototype.GetCurrentParaPos = function()
@@ -1671,18 +1671,21 @@ ParaMath.prototype.GetSelectedElementsInfo = function(Info, ContentPos, Depth)
 
 ParaMath.prototype.GetSelectedText = function(bAll, bClearText, oPr)
 {
-	if (true === bAll || true === this.IsSelectionUse()) {
+	if (true === bAll || true === this.IsSelectionUse())
+	{
 		if (true === bClearText)
 			return null;
 
-		var res = "";
-        var selectedContent = this.GetSelectContent();
-        if (selectedContent && selectedContent.Content && selectedContent.Content.GetTextContent) {
-            var textContent = selectedContent.Content.GetTextContent(!bAll);
-            if (textContent && textContent.str) {
-                res = textContent.str;
-            }
-        }
+		var res             = "";
+		var selectedContent = this.GetSelectContent(bAll);
+		if (selectedContent && selectedContent.Content && selectedContent.Content.GetTextContent)
+		{
+			var textContent = selectedContent.Content.GetTextContent(!bAll);
+			if (textContent && textContent.str)
+			{
+				res = textContent.str;
+			}
+		}
 		return res;
 	}
 	return "";

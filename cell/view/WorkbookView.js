@@ -617,6 +617,7 @@
 
 
       AscCommon.InitBrowserInputContext(this.Api, "id_target_cursor");
+      this.model.dependencyFormulas.calcTree();
     }
 
 	  this.cellEditor =
@@ -930,7 +931,7 @@
     this.lastSendInfoRange = ws.model.selectionRange.clone();
     this.lastSendInfoRangeIsSelectOnShape = ws.getSelectionShape();
   };
-  WorkbookView.prototype._onWSSelectionChanged = function() {
+  WorkbookView.prototype._onWSSelectionChanged = function(isSaving) {
     this._updateSelectionInfo();
 
     // При редактировании ячейки не нужно пересылать изменения
@@ -947,7 +948,9 @@
     this.handlers.trigger("asc_onSelectionChanged", this.oSelectionInfo);
     this.handlers.trigger("asc_onSelectionEnd");
     this._onInputMessage();
-    this.Api.cleanSpelling();
+    if (!isSaving) {
+      this.Api.cleanSpelling();
+    }
   };
 
   WorkbookView.prototype._onInputMessage = function () {
@@ -1038,7 +1041,7 @@
     }
   };
 
-  WorkbookView.prototype._onChangeSelection = function (isStartPoint, dc, dr, isCoord, isCtrl, callback) {
+  WorkbookView.prototype._onChangeSelection = function (isStartPoint, dc, dr, isCoord, isCtrl, callback, x, y) {
     var ws = this.getWorksheet();
     var t = this;
     var d = isStartPoint ? ws.changeSelectionStartPoint(dc, dr, isCoord, isCtrl) :
@@ -1058,6 +1061,7 @@
     		t.timerEnd = true;
     		},1000);
     }
+    t._onUpdateWorksheet(x, y, isCtrl);
     asc_applyFunction(callback, d);
   };
 
@@ -1151,7 +1155,10 @@
 		}
     } else {
       ct = ws.getCursorTypeFromXY(x, y);
-
+      if (t.controller) {
+        t.controller.mouseX = x;
+        t.controller.mouseY = y;
+      }
       if (this.timerId !== null) {
       	clearTimeout(this.timerId);
       	this.timerId = null;

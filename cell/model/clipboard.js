@@ -3640,6 +3640,24 @@
 							allParaFont = null;
 							break;
 						}
+						case para_InlineLevelSdt://*InlineLevelSdt*
+						{
+							//TODO allParaFont ? 
+							for (h = 0; h < content[n].Content.length; h++) {
+								switch (content[n].Content[h].Type) {
+									case para_Run://*paraRun*
+									{
+										paraRunObj = this._parseParaRun(content[n].Content[h], oNewItem, paraPr, innerCol, row, col, text);
+
+										oNewItem = paraRunObj.oNewItem;
+										innerCol = paraRunObj.col;
+										row = paraRunObj.row;
+										break;
+									}
+								}
+							}
+							break;
+						}
 					}
 				}
 
@@ -3657,6 +3675,7 @@
 				var aResult = this.aResult;
 				var paragraphFontFamily = paraPr.TextPr.FontFamily.Name;
 				var cloneNewItem, formatText;
+				var newLine = "\n";
 
 				var cTextPr = prevTextPr ? prevTextPr : paraRun.Get_CompiledPr();
 				if (cTextPr && !(paraRunContent.length === 1 && paraRunContent[0] instanceof ParaEnd))//settings for text
@@ -3701,9 +3720,13 @@
 							break;
 						}
 						case para_NewLine: {
-							pushData();
-							row++;
-							innerCol = 0;
+							if(AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Excel) {
+								text += newLine;
+							} else {
+								pushData();
+								row++;
+								innerCol = 0;
+							}
 
 							break;
 						}

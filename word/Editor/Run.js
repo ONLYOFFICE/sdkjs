@@ -9876,35 +9876,6 @@ ParaRun.prototype.ApplyPoints = function(PointsInfo)
         }
     }
 };
-ParaRun.prototype.Get_TextForAutoCorrect = function(AutoCorrectEngine, RunPos)
-{
-    var ActionElement = AutoCorrectEngine.Get_ActionElement();
-    var nCount = this.Content.length;
-    for (var nPos = 0; nPos < nCount; nPos++)
-    {
-        var Item = this.Content[nPos];
-        if (para_Math_Text === Item.Type || para_Math_BreakOperator === Item.Type)
-        {
-            AutoCorrectEngine.Add_Text(String.fromCharCode(Item.value), this, nPos, RunPos, Item.Pos);
-        }
-		else if (para_Math_Ampersand === Item.Type)
-		{
-			 AutoCorrectEngine.Add_Text('&', this, nPos, RunPos, Item.Pos);
-		}
-
-        if (Item === ActionElement)
-        {
-            AutoCorrectEngine.Stop_CollectText();
-            break;
-        }
-    }
-
-    if (null === AutoCorrectEngine.TextPr)
-        AutoCorrectEngine.TextPr = this.Pr.Copy();
-
-    if (null == AutoCorrectEngine.MathPr)
-        AutoCorrectEngine.MathPr = this.MathPrp.Copy();
-};
 ParaRun.prototype.IsShade = function()
 {
     var oShd = this.Get_CompiledPr(false).Shd;
