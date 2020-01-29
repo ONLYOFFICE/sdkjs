@@ -8525,16 +8525,16 @@ background-repeat: no-repeat;\
 			return;
 
 		function preSetup() {
-            oLogicDocument.StartAction(AscDFH.historydescription_Document_ChangeContentControlProperties);
-            AscFonts.IsCheckSymbols = true;
+			oLogicDocument.StartAction(AscDFH.historydescription_Document_ChangeContentControlProperties);
+			AscFonts.IsCheckSymbols = true;
 		}
 		function postSetup() {
-            AscFonts.IsCheckSymbols = false;
-            AscFonts.FontPickerByCharacter.checkText("", oLogicDocument, function() {
-                this.Recalculate();
-                this.UpdateInterface();
-                this.UpdateSelection();
-                this.FinalizeAction();
+			AscFonts.IsCheckSymbols = false;
+			AscFonts.FontPickerByCharacter.checkText("", oLogicDocument, function() {
+				this.Recalculate();
+				this.UpdateInterface();
+				this.UpdateSelection();
+				this.FinalizeAction();
             }, false, false, false);
 		}
 
