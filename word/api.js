@@ -8524,6 +8524,20 @@ background-repeat: no-repeat;\
 		if (!oLogicDocument)
 			return;
 
+		function preSetup() {
+            oLogicDocument.StartAction(AscDFH.historydescription_Document_ChangeContentControlProperties);
+            AscFonts.IsCheckSymbols = true;
+		}
+		function postSetup() {
+            AscFonts.IsCheckSymbols = false;
+            AscFonts.FontPickerByCharacter.checkText("", oLogicDocument, function() {
+                this.Recalculate();
+                this.UpdateInterface();
+                this.UpdateSelection();
+                this.FinalizeAction();
+            }, false, false, false);
+		}
+
 		if (true === isApplyToAll)
 		{
 			var arrContentControls = oLogicDocument.GetAllContentControls();
@@ -8554,16 +8568,14 @@ background-repeat: no-repeat;\
 				CheckTypes : arrCheckTypes
 			}))
 			{
-				oLogicDocument.StartAction(AscDFH.historydescription_Document_ChangeContentControlProperties);
+				preSetup();
 
 				for (var nIndex = 0, nCount = arrContentControls.length; nIndex < nCount; ++nIndex)
 				{
 					arrContentControls[nIndex].SetContentControlPr(oContentControlPr);
 				}
 
-				oLogicDocument.UpdateInterface();
-				oLogicDocument.UpdateSelection();
-				oLogicDocument.FinalizeAction();
+				postSetup();
 			}
 		}
 		else
@@ -8597,12 +8609,9 @@ background-repeat: no-repeat;\
 
 			if (false === isLocked)
 			{
-				oLogicDocument.StartAction(AscDFH.historydescription_Document_ChangeContentControlProperties);
+				preSetup();
 				oContentControl.SetContentControlPr(oContentControlPr);
-				oLogicDocument.Recalculate();
-				oLogicDocument.UpdateInterface();
-				oLogicDocument.UpdateSelection();
-				oLogicDocument.FinalizeAction();
+				postSetup();
 			}
 		}
 	};
