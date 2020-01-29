@@ -11027,6 +11027,9 @@ ParaRun.prototype.ProcessAutoCorrect = function(nPos)
 	if (!oParagraph)
 		return false;
 
+	if(false === oParagraph.bFromDocument)
+		return false;
+
 	var oDocument = oParagraph.LogicDocument;
 	if (!oDocument || !(oDocument instanceof CDocument))
 		return false;
