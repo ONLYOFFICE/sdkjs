@@ -3302,7 +3302,7 @@
 					return false;
 				}
 			}
-			return true;
+			return this.name === oColorScheme.name;
 		}
 		return false;
 	};
