@@ -11063,9 +11063,8 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
             var X_start      = Row.CellsInfo[Cell_pos.Cell].X_cell_start;
             var X_end        = Row.CellsInfo[Cell_pos.Cell].X_cell_end;
 			var Cell_width   = X_end - X_start;
+
 			
-			if (X2 > X_end)
-				return;
 
             var Grid_start   = Row.Get_CellInfo(Cell_pos.Cell).StartGridCol;
             var Grid_span    = Cell.Get_GridSpan();
@@ -11083,7 +11082,11 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
                 {
                     rowHSum += this.RowsInfo[Index].H[curColumn]
                 }
-            }
+			}
+			
+			// Если выходим за пределы ячейки, не создаем новую
+			if (Y1 < this.RowsInfo[Cell_pos.Row].Y[curColumn] || Y2 > this.RowsInfo[Cell_pos.Row].Y[curColumn] + rowHSum || X2 > X_end || X1 < X_start)
+				return;
 
             if (Cell_width >= MinW * 1.5 && X2 - X1 > MinW * 1.5 && rowHSum >= 4.63864881727431 * 1.5 && Y2 - Y1 >= 4.63864881727431 * 1.5)
             {
