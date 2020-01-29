@@ -481,26 +481,6 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
             }
         }
 
-        if (bUndo) {
-            if (Point.SelectionState) {
-                this.workbook.handlers.trigger("setSelectionState", Point.SelectionState);
-            } else {
-                this.workbook.handlers.trigger("setSelection", Point.SelectRange.clone());
-            }
-        } else {
-            if (null !== oState && oState[0] && oState[0].focus) {
-                this.workbook.handlers.trigger("setSelectionState", oState);
-            } else {
-                var oSelectRange = null;
-                if (null != Point.SelectRangeRedo)
-                    oSelectRange = Point.SelectRangeRedo;
-                else if (null != Point.SelectRange)
-                    oSelectRange = Point.SelectRange;
-                if (null != oSelectRange)
-                    this.workbook.handlers.trigger("setSelection", oSelectRange.clone());
-            }
-        }
-
 		if (oRedoObjectParam.oOnUpdateSheetViewSettings[this.workbook.getWorksheet(this.workbook.getActive()).getId()])
 			this.workbook.handlers.trigger("asc_onUpdateSheetViewSettings");
 
@@ -514,6 +494,27 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 		//TODO вызывать только в случае, если были изменения строк/столбцов и отдельно для строк и столбцов
 		this.workbook.handlers.trigger("updateGroupData");
 		this.workbook.handlers.trigger("drawWS");
+
+		if (bUndo) {
+			if (Point.SelectionState) {
+				this.workbook.handlers.trigger("setSelectionState", Point.SelectionState);
+			} else {
+				this.workbook.handlers.trigger("setSelection", Point.SelectRange.clone());
+			}
+		} else {
+			if (null !== oState && oState[0] && oState[0].focus) {
+				this.workbook.handlers.trigger("setSelectionState", oState);
+			} else {
+				var oSelectRange = null;
+				if (null != Point.SelectRangeRedo)
+					oSelectRange = Point.SelectRangeRedo;
+				else if (null != Point.SelectRange)
+					oSelectRange = Point.SelectRange;
+				if (null != oSelectRange)
+					this.workbook.handlers.trigger("setSelection", oSelectRange.clone());
+			}
+		}
+
 		if (bUndo) {
 			if (AscCommon.isRealObject(this.lastDrawingObjects)) {
 				this.lastDrawingObjects.sendGraphicObjectProps();
