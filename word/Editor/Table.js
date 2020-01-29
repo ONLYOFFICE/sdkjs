@@ -11064,8 +11064,7 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
             var X_end        = Row.CellsInfo[Cell_pos.Cell].X_cell_end;
 			var Cell_width   = X_end - X_start;
 			
-			if (X2 > X_end)
-				return;
+			
 
             var Grid_start   = Row.Get_CellInfo(Cell_pos.Cell).StartGridCol;
             var Grid_span    = Cell.Get_GridSpan();
@@ -11083,8 +11082,14 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
                 {
                     rowHSum += this.RowsInfo[Index].H[curColumn]
                 }
-            }
-
+			}
+			
+			// Если выходим за пределы текущей ячейки, не создаем новую 
+			if (X2 > X_end || X1 < X_start || Y1 < this.RowsInfo[Cell_pos.Row].Y[curColumn] || Y2 > this.RowsInfo[Cell_pos.Row].Y[curColumn] + rowHSum)
+			{
+				return;
+			}
+			
             if (Cell_width >= MinW * 1.5 && X2 - X1 > MinW * 1.5 && rowHSum >= 4.63864881727431 * 1.5 && Y2 - Y1 >= 4.63864881727431 * 1.5)
             {
                 var oTable = Cell.GetContent().AddInlineTable(1,1);
@@ -13847,7 +13852,7 @@ CTable.prototype.GetDrawLine = function(X1, Y1, X2, Y2, CurPageStart, CurPageEnd
 			}
 			
 			// Если рисуемая ячейка соответствует минимальным размерам и не выходит за границы ячейки, в котором рисуем, тогда отрисовываем контуры новой ячейки
-			if (Cell_width >= MinW * 1.5 && X2 - X1 > MinW * 1.5 && rowHSum >= 4.63864881727431 * 1.5 && Y2 - Y1 >= 4.63864881727431 * 1.5 && !(X2 > X_end && Y2 < this.RowsInfo[Cell_pos.Row].Y[curColumn] && Y2 > this.RowsInfo[Cell_pos.Row].Y[curColumn] + rowHSum))
+			if (Cell_width >= MinW * 1.5 && X2 - X1 > MinW * 1.5 && rowHSum >= 4.63864881727431 * 1.5 && Math.abs(Y2 - Y1) >= 4.63864881727431 * 1.5 && !(X2 > X_end || Y2 < this.RowsInfo[Cell_pos.Row].Y[curColumn] || Y2 > this.RowsInfo[Cell_pos.Row].Y[curColumn] + rowHSum))
 			{
 				var tLine = 
 				{
