@@ -8535,7 +8535,7 @@ background-repeat: no-repeat;\
 				this.UpdateInterface();
 				this.UpdateSelection();
 				this.FinalizeAction();
-            }, false, false, false);
+			}, false, false, false);
 		}
 
 		if (true === isApplyToAll)
