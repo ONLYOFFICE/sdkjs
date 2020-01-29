@@ -2293,6 +2293,18 @@ Paragraph.prototype.Internal_Draw_4 = function(CurPage, pGraphics, Pr, BgColor, 
 						oNumTextPr.Merge(oTextPrTemp);
 						oNumTextPr.Merge(oNumLvl.GetTextPr());
 
+						var oPrevNumTextPr = oPrevNumPr ? this.Get_CompiledPr2(false).TextPr.Copy() : null;
+						if (oPrevNumTextPr && (oPrevNumPr
+							&& undefined !== oPrevNumPr.NumId
+							&& undefined !== oPrevNumPr.Lvl
+							&& 0 !== oPrevNumPr.NumId
+							&& "0" !== oPrevNumPr.NumId))
+						{
+							var oPrevNumLvl = oNumbering.GetNum(oPrevNumPr.NumId).GetLvl(oPrevNumPr.Lvl);
+							oPrevNumTextPr.Merge(oTextPrTemp);
+							oPrevNumTextPr.Merge(oPrevNumLvl.GetTextPr());
+						}
+
 						var X_start = X;
 
 						if (align_Right === nNumJc)
@@ -2334,16 +2346,16 @@ Paragraph.prototype.Internal_Draw_4 = function(CurPage, pGraphics, Pr, BgColor, 
 						switch (nNumJc)
 						{
 							case align_Right:
-								NumberingItem.Draw(X - NumberingItem.WidthNum, Y, pGraphics, oNumbering, oNumTextPr, PDSE.Theme);
+								NumberingItem.Draw(X - NumberingItem.WidthNum, Y, pGraphics, oNumbering, oNumTextPr, PDSE.Theme, oPrevNumTextPr);
 								break;
 
 							case align_Center:
-								NumberingItem.Draw(X - NumberingItem.WidthNum / 2, Y, pGraphics, oNumbering, oNumTextPr, PDSE.Theme);
+								NumberingItem.Draw(X - NumberingItem.WidthNum / 2, Y, pGraphics, oNumbering, oNumTextPr, PDSE.Theme, oPrevNumTextPr);
 								break;
 
 							case align_Left:
 							default:
-								NumberingItem.Draw(X, Y, pGraphics, oNumbering, oNumTextPr, PDSE.Theme);
+								NumberingItem.Draw(X, Y, pGraphics, oNumbering, oNumTextPr, PDSE.Theme, oPrevNumTextPr);
 								break;
 						}
 
@@ -8362,6 +8374,8 @@ Paragraph.prototype.IndDecNumberingLevel = function(bIncrease)
 	var NumPr = this.GetNumPr();
 	if (undefined != NumPr)
 	{
+		this.private_AddPrChange();
+
 		var oNumPrOld = this.Pr.NumPr;
 
 		var NewLvl;
@@ -8373,7 +8387,6 @@ Paragraph.prototype.IndDecNumberingLevel = function(bIncrease)
 		this.Pr.NumPr = new CNumPr();
 		this.Pr.NumPr.Set(NumPr.NumId, NewLvl);
 
-		this.private_AddPrChange();
 		History.Add(new CChangesParagraphNumbering(this, oNumPrOld, this.Pr.NumPr));
 		this.private_RefreshNumbering(NumPr);
 		this.private_RefreshNumbering(this.Pr.NumPr);
