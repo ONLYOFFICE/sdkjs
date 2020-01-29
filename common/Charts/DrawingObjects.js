@@ -3440,7 +3440,7 @@ function DrawingObjects() {
                                     }
                                 }
                                 if(bRecalculate){
-                                    oGraphicObject.handleUpdateExtents(true);
+                                    oGraphicObject.handleUpdateExtents();
                                     oGraphicObject.recalculate();
                                 }
                             }
@@ -3457,7 +3457,7 @@ function DrawingObjects() {
                     var i;
                     if (bLock !== true) {
                         for(i = 0; i < aObjectsForCheck.length; ++i) {
-                            aObjectsForCheck[i].object.handleUpdateExtents(true);
+                            aObjectsForCheck[i].object.handleUpdateExtents();
                         }
                     }
                     else {
