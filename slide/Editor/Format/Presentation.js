@@ -8507,7 +8507,7 @@ CPresentation.prototype.InsertContent = function (Content) {
                 PresentSelContent.DocContent = oSelectedContent;
                 this.InsertContent(PresentSelContent);
                 this.Check_CursorMoveRight();
-                return;
+                return true;
             } else {
                 this.FocusOnNotes = false;
                 this.Slides[this.CurPage].graphicObjects.resetSelection();
@@ -8610,14 +8610,14 @@ CPresentation.prototype.InsertContent = function (Content) {
 
                         var ParaNearPos = NearPos.Paragraph.Get_ParaNearestPos(NearPos);
                         if (null === ParaNearPos || ParaNearPos.Classes.length < 2)
-                            return;
+                            return false;
 
                         var LastClass = ParaNearPos.Classes[ParaNearPos.Classes.length - 1];
                         if (para_Math_Run === LastClass.Type) {
                             // Проверяем, что вставляемый контент тоже формула
                             var Element = Content.DocContent.Elements[0].Element;
                             if (1 !== Content.DocContent.Elements.length || type_Paragraph !== Element.Get_Type() || null === LastClass.Parent)
-                                return;
+                                return false;
                             if (!Content.DocContent.CanConvertToMath) {
                                 var Math = null;
                                 var Count = Element.Content.length;
@@ -8626,14 +8626,14 @@ CPresentation.prototype.InsertContent = function (Content) {
                                     if (para_Math === Item.Type && null === Math)
                                         Math = Element.Content[Index];
                                     else if (true !== Item.Is_Empty({SkipEnd: true}))
-                                        return;
+                                        return false;
                                 }
                             }
                         } else if (para_Run !== LastClass.Type)
-                            return;
+                            return false;
 
                         if (null === paragraph.Parent || undefined === paragraph.Parent)
-                            return;
+                            return false;
 
 
                         var Para = NearPos.Paragraph;
