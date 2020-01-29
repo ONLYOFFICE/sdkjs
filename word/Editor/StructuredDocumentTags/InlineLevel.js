@@ -245,7 +245,7 @@ CInlineLevelSdt.prototype.CanSplit = function()
 CInlineLevelSdt.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange, _CurPage)
 {
 	var CurLine  = _CurLine - this.StartLine;
-	var CurRange = (0 === _CurLine ? _CurRange - this.StartRange : _CurRange);
+	var CurRange = (0 === CurLine ? _CurRange - this.StartRange : _CurRange);
 
 	if (0 === CurLine && 0 === CurRange && true !== PRSA.RecalcFast)
 		this.Bounds = {};
@@ -278,7 +278,7 @@ CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 CInlineLevelSdt.prototype.GetRangeBounds = function(_CurLine, _CurRange)
 {
 	var CurLine  = _CurLine - this.StartLine;
-	var CurRange = (0 === _CurLine ? _CurRange - this.StartRange : _CurRange);
+	var CurRange = (0 === CurLine ? _CurRange - this.StartRange : _CurRange);
 
 	return this.Bounds[((CurLine << 16) & 0xFFFF0000) | (CurRange & 0x0000FFFF)];
 };
