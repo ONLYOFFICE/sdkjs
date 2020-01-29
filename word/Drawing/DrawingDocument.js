@@ -7465,29 +7465,32 @@ function CDrawingDocument()
 
 		if (isPen)
 		{
-			ctx.strokeStyle = (drawObj.Color === "Red") ? "#FF7B7B" : "#000000";
-			ctx.lineWidth = drawObj.Bold ? 2 : 1;
-
-            x1 = (drawingPage.left + koefX * drawObj.X1) >> 0;
-            y1 = (drawingPage.top + koefY * drawObj.Y1) >> 0;
-            x2 = (drawingPage.left + koefX * drawObj.X2) >> 0;
-            y2 = (drawingPage.top + koefY * drawObj.Y2) >> 0;
-
-            if (!drawObj.Bold)
+			for (var i = 0; i < drawObj.length; i++)
 			{
-				x1 += 0.5;
-                y1 += 0.5;
-                x2 += 0.5;
-                y2 += 0.5;
-			}
+				var elem = drawObj[i];
+                ctx.strokeStyle = (elem.Color === "Red") ? "#FF7B7B" : "#000000";
+                ctx.lineWidth = elem.Bold ? 2 : 1;
 
-            overlay.CheckPoint(x1, y1);
-            overlay.CheckPoint(x2, y2);
+                x1 = (drawingPage.left + koefX * elem.X1) >> 0;
+                y1 = (drawingPage.top + koefY * elem.Y1) >> 0;
+                x2 = (drawingPage.left + koefX * elem.X2) >> 0;
+                y2 = (drawingPage.top + koefY * elem.Y2) >> 0;
 
-            ctx.moveTo(x1, y1);
-            ctx.lineTo(x2, y2);
-            ctx.stroke();
-            ctx.beginPath();
+                if (!elem.Bold) {
+                    x1 += 0.5;
+                    y1 += 0.5;
+                    x2 += 0.5;
+                    y2 += 0.5;
+                }
+
+                overlay.CheckPoint(x1, y1);
+                overlay.CheckPoint(x2, y2);
+
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+                ctx.beginPath();
+            }
 		}
 		else
 		{
