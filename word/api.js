@@ -497,15 +497,15 @@
 						}
 
 						_content_control_pr = new AscCommon.CContentControlPr();
-						_content_control_pr.Id = _current["Props"]["Id"];
-						_content_control_pr.Tag = _current["Props"]["Tag"];
-						_content_control_pr.Lock = c_oAscSdtLockType.Unlocked;
+						_content_control_pr.Id         = _current["Props"]["Id"];
+						_content_control_pr.Tag 	   = _current["Props"]["Tag"];
+						_content_control_pr.Lock 	   = c_oAscSdtLockType.Unlocked;
 						_content_control_pr.InternalId = _current["Props"]["InternalId"];
-						_content_control_pr.Alias = _current["Props"]["Alias"];
+						_content_control_pr.Alias 	   = _current["Props"]["Alias"];
 						
 						_content_control_pr.SectionBreak = _current["Props"]["SectionBreak"];
-						_content_control_pr.PageSizeW 	= _current["Props"]["PageSizeW"];
-						_content_control_pr.PageSizeH 	= _current["Props"]["PageSizeH"];
+						_content_control_pr.PageSizeW 	 = _current["Props"]["PageSizeW"];
+						_content_control_pr.PageSizeH    = _current["Props"]["PageSizeH"];
 						
 
 						// Margins
@@ -514,7 +514,7 @@
 						_content_control_pr.MarginR	 		 = _current["Props"]["MarginR"];
 						_content_control_pr.MarginB	 		 = _current["Props"]["MarginB"];
 
-						_content_control_pr.Orient 		= _current["Props"]["Orient"];
+						_content_control_pr.Orient 		     = _current["Props"]["Orient"];
 
 						// Page break 
                         if (undefined !== _current["Props"]["SectionBreak"])
