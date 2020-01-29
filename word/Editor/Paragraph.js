@@ -13625,6 +13625,46 @@ Paragraph.prototype.IsTableBorder = function(X, Y, CurPage)
 {
 	return null;
 };
+Paragraph.prototype.GetStartPosition = function() 
+{
+	var StartPos = [];
+
+	StartPos = this.GetDocumentPositionFromObject();
+
+	var StartParaPos = {
+		Class : this,
+		Position : 0
+	};
+	
+	var StartRunPos = {
+		Class : this.Content[0],
+		Position : 0
+	};
+
+	StartPos.push(StartParaPos, StartRunPos);
+
+	return StartPos;
+};
+Paragraph.prototype.GetEndPosition = function() 
+{
+	var EndPos  = [];
+			
+	EndPos   = this.GetDocumentPositionFromObject();
+
+	var EndParaPos = {
+		Class : this,
+		Position : this.GetElementsCount()
+	};
+
+	var EndRunPos = {
+		Class : this.Content[0],
+		Position : this.Content[this.GetElementsCount()].Content.length
+	};
+	
+	EndPos.push(EndParaPos, EndRunPos);
+	
+	return EndPos;
+};
 Paragraph.prototype.GetNumberingInfo = function(oNumberingEngine)
 {
 	if (!oNumberingEngine || oNumberingEngine.IsStop())
