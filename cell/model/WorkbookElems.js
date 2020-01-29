@@ -3108,6 +3108,10 @@ StyleManager.prototype =
 	},
 	setNum : function(oItemWithXfs, val)
 	{
+		if (val && val.f) {
+			var numFormat = AscCommon.oNumFormatCache.get(val.f);
+			numFormat.checkCultureInfoFontPicker();
+		}
 		return this._setProperty(oItemWithXfs, val, "num", CellXfs.prototype.getNum, CellXfs.prototype.setNum, g_StyleCache.addNum);
 	},
 	setFont : function(oItemWithXfs, val)

@@ -3698,6 +3698,7 @@ var editor;
 
   spreadsheet_api.prototype.asc_setCellFormat = function(format) {
     var t = this;
+    //todo split setCellFormat into set->_loadFonts->draw and remove checkCultureInfoFontPicker(checkCultureInfoFontPicker is called inside StyleManager.setNum)
     var numFormat = AscCommon.oNumFormatCache.get(format);
     numFormat.checkCultureInfoFontPicker();
     this._loadFonts([], function () {
