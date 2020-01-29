@@ -5315,7 +5315,7 @@ background-repeat: no-repeat;\
 		}
 
 
-		if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Image_Properties))
+		if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Drawing_Props))
 		{
 			if (ImagePr.ShapeProperties)
 				ImagePr.ImageUrl = "";
@@ -5362,6 +5362,8 @@ background-repeat: no-repeat;\
 					{
 						oApi.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_ApplyImagePrWithUrl);
 						oApi.WordControl.m_oLogicDocument.SetImageProps(ImagePr);
+						oApi.WordControl.m_oLogicDocument.UpdateInterface();
+						oApi.WordControl.m_oLogicDocument.UpdateSelection();
 						oApi.WordControl.m_oLogicDocument.FinalizeAction();
 					}
 					else
@@ -5370,6 +5372,8 @@ background-repeat: no-repeat;\
 						{
 							oApi.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_ApplyImagePrWithUrlLong);
 							oApi.WordControl.m_oLogicDocument.SetImageProps(ImagePr);
+							oApi.WordControl.m_oLogicDocument.UpdateInterface();
+							oApi.WordControl.m_oLogicDocument.UpdateSelection();
 							oApi.WordControl.m_oLogicDocument.FinalizeAction();
 						}
 					}
@@ -5425,6 +5429,8 @@ background-repeat: no-repeat;\
 					{
 						this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_ApplyImagePr);
 						this.WordControl.m_oLogicDocument.SetImageProps(ImagePr);
+						this.WordControl.m_oLogicDocument.UpdateInterface();
+						this.WordControl.m_oLogicDocument.UpdateSelection();
 						this.WordControl.m_oLogicDocument.FinalizeAction();
 					}
 					if (this.exucuteHistory)
