@@ -6668,13 +6668,6 @@ function CDrawingDocument()
         var page_width_mm = props.W;
         var page_height_mm = props.H;
 
-        if (Asc.c_oAscPageOrientation.PageLandscape == props.Orient)
-		{
-			var tmp = page_width_mm;
-            page_width_mm = page_height_mm;
-            page_height_mm = tmp;
-		}
-
 		var isMirror = props.MirrorMargins;
         var pageRects = [];
 
