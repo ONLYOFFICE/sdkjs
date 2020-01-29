@@ -612,7 +612,7 @@ CCellCommentator.prototype.updateCommentsDependencies = function(bInsert, operTy
 			case c_oAscDeleteOptions.DeleteCellsAndShiftTop:
 				for (i = 0; i < aComments.length; i++) {
 					comment = aComments[i].clone();
-					if ((comment.nRow > updateRange.r1) && (comment.nCol >= updateRange.c1) && (comment.nCol <= updateRange.c2)) {
+					if ((comment.nRow > updateRange.r2) && (comment.nCol >= updateRange.c1) && (comment.nCol <= updateRange.c2)) {
 						comment.nRow -= updateRange.r2 - updateRange.r1 + 1;
 						aChangedComments.push(new UpdatePair(comment, true));
 					} else if (updateRange.contains(comment.nCol, comment.nRow)) {
