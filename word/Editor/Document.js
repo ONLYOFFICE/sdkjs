@@ -8722,7 +8722,7 @@ CDocument.prototype.OnKeyDown = function(e)
 			}
 		}
 
-		bRetValue = keydownresult_PreventAll;
+		bRetValue = keydownresult_PreventNothing;
 	}
     else if (e.KeyCode == 33) // PgUp
     {

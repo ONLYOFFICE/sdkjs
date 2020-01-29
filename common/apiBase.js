@@ -2442,6 +2442,130 @@
 			AscCommon.g_inputContext.nativeFocusElement = null;
 	};
 
+	// drop emulation
+    baseEditorsApi.prototype.privateDropEvent = function(obj)
+    {
+        if (!obj || !obj.type)
+            return;
+
+        var e = {
+            pageX : obj["x"],
+            pageY : obj["y"]
+        };
+
+        switch (obj.type)
+        {
+            case "onbeforedrop":
+            {
+                this.beginInlineDropTarget(e);
+                break;
+            }
+            case "ondrop":
+            {
+                this.endInlineDropTarget(e);
+
+                if (obj["html"])
+                    this["pluginMethod_PasteHtml"](obj["html"]);
+                else if (obj["text"])
+                    this["pluginMethod_PasteText"](obj["text"]);
+
+                break;
+            }
+            default:
+                break;
+        }
+    };
+
+    // input helper
+    baseEditorsApi.prototype.getTargetOnBodyCoords = function()
+    {
+        var ret = { X : 0, Y : 0, W : 0, H : 0, TargetH : 0 };
+        ret.W = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+        ret.H = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+
+        switch (this.editorId)
+        {
+            case c_oEditorId.Word:
+            {
+                ret.X += this.WordControl.X;
+                ret.Y += this.WordControl.Y;
+                ret.X += (this.WordControl.m_oMainView.AbsolutePosition.L * AscCommon.g_dKoef_mm_to_pix);
+                ret.Y += (this.WordControl.m_oMainView.AbsolutePosition.T * AscCommon.g_dKoef_mm_to_pix);
+                ret.X += (this.WordControl.m_oDrawingDocument.TargetHtmlElementLeft);
+                ret.Y += (this.WordControl.m_oDrawingDocument.TargetHtmlElementTop);
+
+                ret.X >>= 0;
+                ret.Y >>= 0;
+
+                ret.TargetH = (this.WordControl.m_oDrawingDocument.m_dTargetSize * this.WordControl.m_nZoomValue * AscCommon.g_dKoef_mm_to_pix / 100) >> 0;
+                break;
+            }
+            case c_oEditorId.Presentation:
+            {
+                ret.X += this.WordControl.X;
+                ret.Y += this.WordControl.Y;
+
+                ret.X += (this.WordControl.m_oMainParent.AbsolutePosition.L * AscCommon.g_dKoef_mm_to_pix);
+
+                if (!this.WordControl.m_oLogicDocument.IsFocusOnNotes())
+                {
+                    ret.Y += (this.WordControl.m_oMainView.AbsolutePosition.T * AscCommon.g_dKoef_mm_to_pix);
+                }
+                else
+                {
+                    ret.Y += (this.WordControl.m_oNotesContainer.AbsolutePosition.T * AscCommon.g_dKoef_mm_to_pix);
+                }
+
+                ret.X += (this.WordControl.m_oDrawingDocument.TargetHtmlElementLeft);
+                ret.Y += (this.WordControl.m_oDrawingDocument.TargetHtmlElementTop);
+
+                ret.X >>= 0;
+                ret.Y >>= 0;
+
+                ret.TargetH = (this.WordControl.m_oDrawingDocument.m_dTargetSize * this.WordControl.m_nZoomValue * AscCommon.g_dKoef_mm_to_pix / 100) >> 0;
+                break;
+            }
+            case c_oEditorId.Spreadsheet:
+            {
+                var off, selectionType = this.asc_getCellInfo().asc_getFlags().asc_getSelectionType();
+                if (this.asc_getCellEditMode())
+                {
+                    // cell edit
+                    var cellEditor = this.wb.cellEditor;
+                    ret.X = cellEditor.curLeft;
+                    ret.Y = cellEditor.curTop;
+                    ret.TargetH = cellEditor.curHeight;
+                    off = cellEditor.cursor;
+                }
+                else if (Asc.c_oAscSelectionType.RangeShapeText === selectionType ||
+                    Asc.c_oAscSelectionType.RangeChartText === selectionType)
+                {
+                    // shape target
+                    var drDoc = this.wb.getWorksheet().objectRender.controller.drawingDocument;
+                    ret.X = drDoc.TargetHtmlElementLeft;
+                    ret.Y = drDoc.TargetHtmlElementTop;
+                    ret.TargetH = drDoc.m_dTargetSize * this.asc_getZoom() * AscCommon.g_dKoef_mm_to_pix;
+                    off = this.HtmlElement;
+                }
+
+                if (off) {
+                    off = jQuery(off).offset();
+                    if (off)
+                    {
+                        ret.X += off.left;
+                        ret.Y += off.top;
+                    }
+                }
+
+                ret.X >>= 0;
+                ret.Y >>= 0;
+                ret.TargetH >>= 0;
+                break;
+            }
+        }
+        return ret;
+    };
+
 	baseEditorsApi.prototype.onKeyDown = function(e)
 	{
 	};
