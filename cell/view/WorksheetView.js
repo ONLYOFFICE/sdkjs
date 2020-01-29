@@ -14218,9 +14218,8 @@
 
 					t.model.autoFilters.changeAutoFilterToTablePart(styleName, ar, addFormatTableOptionsObj);
 
-					History.EndTransaction();
-
 					t._onUpdateFormatTable(filterRange, !!(styleName), true);
+					History.EndTransaction();
 				};
 				if(ar.containsRange(filterRange)) {
 					filterRange = ar.clone();
@@ -14259,8 +14258,8 @@
 							t.setSelection(filterRange);
 						}
 
-						History.EndTransaction();
 						t._onUpdateFormatTable(filterRange, !!(styleName), true);
+						History.EndTransaction();
 
 						if (isSlowOperation) {
 							t.handlers.trigger("slowOperation", false);
