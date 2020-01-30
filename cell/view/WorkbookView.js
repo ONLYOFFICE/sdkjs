@@ -1564,9 +1564,9 @@
     }
 
     // Обновляем состояние Undo/Redo
-	  if(!(this.cellEditor.options && this.cellEditor.options.menuEditor)) {
-		  History._sendCanUndoRedo();
-	  }
+    if (!this.cellEditor.getMenuEditorMode()) {
+    	History._sendCanUndoRedo();
+    }
 
     // Обновляем состояние информации
     this._onWSSelectionChanged();
