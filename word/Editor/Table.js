@@ -4564,14 +4564,17 @@ CTable.prototype.Can_IncreaseParagraphLevel = function(bIncrease)
 		this.CurCell.Content.Can_IncreaseParagraphLevel(bIncrease);
 	}
 };
-CTable.prototype.GetSelectionBounds = function()
+CTable.prototype.GetSelectionBounds = function(isForceCellSelection)
 {
-	if (true === this.ApplyToAll || ( true === this.Selection.Use && table_Selection_Cell === this.Selection.Type && this.Selection.Data.length > 0 ))
-	{
-		var Cells_array = this.GetSelectionArray();
+	var isUseSelection = (true === this.ApplyToAll || ( true === this.Selection.Use && table_Selection_Cell === this.Selection.Type && this.Selection.Data.length > 0));
 
-		var StartPos = Cells_array[0];
-		var EndPos   = Cells_array[Cells_array.length - 1];
+	var arrCells = (isUseSelection ? this.GetSelectionArray() : (isForceCellSelection ? [this.CurCell] : null));
+	if (arrCells)
+	{
+		var arrCells = this.GetSelectionArray();
+
+		var StartPos = arrCells[0];
+		var EndPos   = arrCells[arrCells.length - 1];
 
 		var Row  = this.Content[StartPos.Row];
 		var Cell = Row.Get_Cell(StartPos.Cell);

@@ -2211,7 +2211,7 @@ background-repeat: no-repeat;\
 			var _X       = elem.X;
 			var _Y       = elem.Y;
 			var _PageNum = elem.GetCurrentPageAbsolute();
-			var oBounds  = elem.GetSelectionBounds();
+			var oBounds  = elem.GetSelectionBounds(true);
 			if (oBounds && oBounds.End)
 			{
 				_X       = oBounds.End.X + oBounds.End.W;
