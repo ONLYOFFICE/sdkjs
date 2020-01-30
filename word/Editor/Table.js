@@ -11022,93 +11022,93 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 			this.private_RecalculateGrid();
 			this.Internal_Recalculate_1();
 		}
-		else 
+		else
 		{
-			if (Y1 > Y2) 
-            {
-                var cache;
-                cache = Y2;
-                Y2 	  = Y1;
-                Y1 	  = cache;
-            }
-            if (X1 > X2)
-            {
-                var cache; 
-                cache = X2;
-                X2 	  = X1;
-                X1 	  = cache;
-            }
+			if (Y1 > Y2)
+			{
+				var cache = Y2;
 
-            var Cell_pos = this.Internal_GetCellByXY(X1 + this.Pages[curColumn].X, Y1, curColumn);
-            
-            var Row              = this.GetRow(Cell_pos.Row);
-			var Cell         	 = Row.Get_Cell(Cell_pos.Cell);  //текущая ячейка
-			
-			this.Set_CurCell(Cell);
-
-			// Устанавливаем курсор в ту ячейку, в которой рисуем 
-            for (var Index = 0; Index < this.CurCell.Content.Content.length; Index++)
-            {
-                if (this.CurCell.Content.Content[Index] instanceof Paragraph)
-                {
-					var Para 	  = this.CurCell.Content.Content[Index]; 
-					var CursorPos = Para.GetStartPosition();
-					this.LogicDocument.RemoveSelection();
-					CursorPos[0].Class.SetSelectionByContentPositions(CursorPos, CursorPos);
-					this.LogicDocument.UpdateSelection();
-					break;
-                }    
-            }
-
-            var X_start      = Row.CellsInfo[Cell_pos.Cell].X_cell_start;
-            var X_end        = Row.CellsInfo[Cell_pos.Cell].X_cell_end;
-			var Cell_width   = X_end - X_start;
-			
-			
-
-            var Grid_start   = Row.Get_CellInfo(Cell_pos.Cell).StartGridCol;
-            var Grid_span    = Cell.Get_GridSpan();
-            var VMerge_count = this.Internal_GetVertMergeCount(Cell_pos.Row, Grid_start, Grid_span);
-            var rowHSum      = 0;
-
-            var CellSpacing  = Row.Get_CellSpacing();
-            
-            var CellMar = Cell.GetMargins();
-            var MinW 	= CellSpacing + CellMar.Right.W + CellMar.Left.W;
-
-            if (VMerge_count >= 1)
-            {
-                for (Index = Cell_pos.Row; Index < Cell_pos.Row + VMerge_count; Index++)
-                {
-                    rowHSum += this.RowsInfo[Index].H[curColumn]
-                }
+				Y2 = Y1;
+				Y1 = cache;
 			}
-			
+
+			if (X1 > X2)
+			{
+				var cache = X2;
+
+				X2 = X1;
+				X1 = cache;
+			}
+
+			var Cell_pos = this.Internal_GetCellByXY(X1 + this.Pages[curColumn].X, Y1, curColumn);
+
+			var oRow  = this.GetRow(Cell_pos.Row);
+			var oCell = oRow.GetCell(Cell_pos.Cell);  //текущая ячейка
+
+			var oCellContent = oCell.GetContent();
+			var nInnerPos    = oCellContent.Internal_GetContentPosByXY(X1 + this.Pages[curColumn].X, Y1, CurPageStart - oCellContent.Get_StartPage_Relative());
+			var nInnerCount  = oCellContent.GetElementsCount();
+			while (!oCellContent.GetElement(nInnerPos).IsParagraph())
+			{
+				nInnerPos++;
+
+				if (nInnerPos >= nInnerCount)
+				{
+					// Такого не должно происходить, последний элемент всегда должен быть параграф
+					return;
+				}
+			}
+
+			var oParagraph = oCellContent.GetElement(nInnerPos);
+			if (!oParagraph || !oParagraph.IsParagraph())
+				return;
+
+			oCellContent.CurPos.ContentPos = nInnerPos;
+			oParagraph.MoveCursorToStartPos();
+
+			var oCellInfo = oRow.GetCellInfo(Cell_pos.Cell);
+			if (!oCellInfo)
+				return;
+
+			var X_start      = oCellInfo.X_cell_start;
+			var X_end        = oCellInfo.X_cell_end;
+			var Cell_width   = X_end - X_start;
+			var Grid_start   = oCellInfo.StartGridCol;
+			var Grid_span    = oCell.GetGridSpan();
+			var VMerge_count = this.Internal_GetVertMergeCount(Cell_pos.Row, Grid_start, Grid_span);
+			var CellMar      = oCell.GetMargins();
+			var MinW         = oRow.GetCellSpacing() + CellMar.Right.W + CellMar.Left.W;
+
+			var rowHSum = 0;
+			if (VMerge_count >= 1)
+			{
+				for (Index = Cell_pos.Row; Index < Cell_pos.Row + VMerge_count; Index++)
+				{
+					rowHSum += this.RowsInfo[Index].H[curColumn]
+				}
+			}
+
 			// Если выходим за пределы текущей ячейки, не создаем новую 
 			if (X2 > X_end || X1 < X_start || Y1 < this.RowsInfo[Cell_pos.Row].Y[curColumn] || Y2 > this.RowsInfo[Cell_pos.Row].Y[curColumn] + rowHSum)
 			{
 				return;
 			}
-			
-            if (Cell_width >= MinW * 1.5 && X2 - X1 > MinW * 1.5 && rowHSum >= 4.63864881727431 * 1.5 && Y2 - Y1 >= 4.63864881727431 * 1.5)
-            {
-                var oTable = Cell.GetContent().AddInlineTable(1,1);
 
+			if (Cell_width >= MinW * 1.5 && X2 - X1 > MinW * 1.5 && rowHSum >= 4.63864881727431 * 1.5 && Y2 - Y1 >= 4.63864881727431 * 1.5)
+			{
+				var oTable = oCellContent.AddInlineTable(1, 1);
 				if (oTable && oTable.GetRowsCount() > 0)
-                {
-                    oTable.Set_Inline(false);
-                    
-                    oTable.Set_PositionH(c_oAscHAnchor.Page, false, X1 - this.CurCell.Metrics.X_cell_start);
+				{
+					oTable.Set_Inline(false);
+					oTable.Set_PositionH(c_oAscHAnchor.Page, false, X1 - X_start);
 					oTable.Set_PositionV(c_oAscVAnchor.Page, false, Y1 - this.RowsInfo[Cell_pos.Row].Y[curColumn]);
-
 					oTable.GetRow(0).SetHeight(Math.abs(this.LogicDocument.DrawTableMode.EndY - this.LogicDocument.DrawTableMode.StartY), Asc.linerule_AtLeast);
 					oTable.Set_TableW(tblwidth_Mm, Math.abs(this.LogicDocument.DrawTableMode.EndX - this.LogicDocument.DrawTableMode.StartX - new CDocumentBorder().Size * 2));
-					
 					oTable.Set_Distance(3.2, undefined, 3.2, undefined);
-
-                    oTable.GetRow(0).Get_Cell(0).Content_MoveCursorToStartPos();
-                }
-            }
+					oTable.MoveCursorToStartPos();
+					oTable.Document_SetThisElementCurrent();
+				}
+			}
 		}
 	}
 	// Если стираем (ctrl + F2)
