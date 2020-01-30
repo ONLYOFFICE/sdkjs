@@ -937,7 +937,7 @@
 								self.handlers.trigger("asc_resizeEditorHeight");
 							}
 						}, AscCommon.AscBrowser.isRetina ? AscCommon.AscBrowser.convertToRetinaValue(2, true) :
-							2, /*settings*/{menuEditor: true});
+							2, true);
 
 					//временно меняем cellEditor у wb
 					wb.cellEditor = t.cellEditor;

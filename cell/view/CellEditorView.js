@@ -99,13 +99,15 @@
 	 * @param {AscCommonExcel.Font} oFont
 	 * @param {HandlersList} handlers
 	 * @param {Number} padding
+	 * @param {Boolean} menuEditor
 	 */
-	function CellEditor( elem, input, fmgrGraphics, oFont, handlers, padding, settings ) {
+	function CellEditor( elem, input, fmgrGraphics, oFont, handlers, padding, menuEditor ) {
 		this.element = elem;
 		this.input = input;
 		this.handlers = new asc_HL( handlers );
 		this.options = {};
 		this.sides = undefined;
+		this.menuEditor = menuEditor;
 
 		//---declaration---
 		this.canvasOuter = undefined;
@@ -175,19 +177,18 @@
 		// Обработчик кликов
 		this.clickCounter = new AscFormat.ClickCounter();
 
-		//TODO сейчас setting нужен только для того, чтобы передать в init флаг menuEditor. пересмотреть!
-		this._init(settings);
+		this._init();
 
 		return this;
 	}
 
-	CellEditor.prototype._init = function (settings) {
+	CellEditor.prototype._init = function () {
 		var t = this;
 		var z = t.defaults.canvasZIndex;
 		this.sAutoComplete = null;
 
 		if (null != this.element) {
-			var ceMenuEditor = (settings && settings.menuEditor) ? '-menu' : '';
+			var ceMenuEditor = this.getMenuEditorMode() ? '-menu' : '';
 			var ceCanvasOuterId = "ce-canvas-outer" + ceMenuEditor;
 			var ceCanvasId = "ce-canvas" + ceMenuEditor;
 			var ceCanvasOverlay = "ce-canvas-overlay" + ceMenuEditor;
@@ -2957,7 +2958,7 @@
 		return this.compositeLength;
 	};
 	CellEditor.prototype.getMenuEditorMode = function () {
-		return this.options && this.options.menuEditor;
+		return this.menuEditor;
 	};
 
 
