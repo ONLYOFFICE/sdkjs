@@ -383,7 +383,7 @@
 								//из-за этого enableKeyEvents остаётся выставленным в false
 								//поэтому приходится вызывать здесь, после того, как пройдет загрузка шрифтов
 
-								if(cellEditor.options && cellEditor.options.menuEditor) {
+								if (cellEditor.getMenuEditorMode()) {
 									window["Asc"]["editor"].asc_enableKeyEvents(true);
 								}
 							});
@@ -446,7 +446,7 @@
 				AscCommon.g_specialPasteHelper.Paste_Process_End();
 				editor.wb.skipHelpSelector = false;
 
-				if(editor.wb.cellEditor.options && editor.wb.cellEditor.options.menuEditor) {
+				if (editor.wb.cellEditor.getMenuEditorMode()) {
 					editor.asc_enableKeyEvents(true);
 				}
 			});
