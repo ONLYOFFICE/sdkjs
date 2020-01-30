@@ -10999,6 +10999,9 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 				// Копируем настройки всех ячеек исходной строки в новую строку
 				for (var CurCell = 0; CurCell < CellsCount; CurCell++)
 				{
+					var border   = new CDocumentBorder();
+					border.Value = 0x0001;
+
 					var New_Cell = NewRow.Get_Cell(CurCell);
 					var Old_Cell = Row.Get_Cell(CurCell);
 
@@ -11019,6 +11022,9 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 						if (CurCell != CellsNumb[0])
 							New_Cell.SetVMerge(vmerge_Restart);
 					}
+					
+					Old_Cell.Set_Border(border, 2);
+					New_Cell.Set_Border(border, 0);
 				}
 			}
 
