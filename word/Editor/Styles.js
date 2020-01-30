@@ -12284,40 +12284,33 @@ CTextPr.prototype.Merge = function(TextPr)
 	if (undefined != TextPr.RTL)
 		this.RTL = TextPr.RTL;
 
-	this.Lang.Merge(TextPr.Lang);
+	if (TextPr.Lang)
+		this.Lang.Merge(TextPr.Lang);
 
-	if (undefined != TextPr.Unifill)
+	if (TextPr.Unifill)
 		this.Unifill = TextPr.Unifill.createDuplicate();
-	else
-	{
-		if (undefined != TextPr.Color)
-		{
-			this.Unifill = undefined;
-		}
-	}
+	else if (undefined != TextPr.Color)
+		this.Unifill = undefined;
+
 	if (undefined != TextPr.FontRef)
 	{
 		this.FontRef = TextPr.FontRef.createDuplicate();
 	}
 
-	if (undefined !== TextPr.Shd)
+	if (TextPr.Shd)
 		this.Shd = TextPr.Shd.Copy();
 
 	if (undefined !== TextPr.Vanish)
 		this.Vanish = TextPr.Vanish;
 
-	if (undefined != TextPr.TextOutline)
-	{
+	if (TextPr.TextOutline)
 		this.TextOutline = TextPr.TextOutline.createDuplicate();
-	}
-	if (undefined != TextPr.TextFill)
-	{
+
+	if (TextPr.TextFill)
 		this.TextFill = TextPr.TextFill.createDuplicate();
-	}
-	if (undefined !== TextPr.HighlightColor)
-	{
+
+	if (TextPr.HighlightColor)
 		this.HighlightColor = TextPr.HighlightColor.createDuplicate();
-	}
 };
 CTextPr.prototype.Init_Default = function()
 {
