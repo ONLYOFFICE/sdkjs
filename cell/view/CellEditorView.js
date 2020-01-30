@@ -187,10 +187,11 @@
 		this.sAutoComplete = null;
 
 		if (null != this.element) {
-			var ceCanvasOuterId = settings && settings.menuEditor ? "ce-canvas-outer-menu" : "ce-canvas-outer";
-			var ceCanvasId = settings && settings.menuEditor ? "ce-canvas-menu" : "ce-canvas";
-			var ceCanvasOverlay = settings && settings.menuEditor ? "ce-canvas-overlay-menu" : "ce-canvas-overlay";
-			var ceCursor = settings && settings.menuEditor ? "ce-cursor-menu" : "ce-cursor";
+			var ceMenuEditor = (settings && settings.menuEditor) ? '-menu' : '';
+			var ceCanvasOuterId = "ce-canvas-outer" + ceMenuEditor;
+			var ceCanvasId = "ce-canvas" + ceMenuEditor;
+			var ceCanvasOverlay = "ce-canvas-overlay" + ceMenuEditor;
+			var ceCursor = "ce-cursor" + ceMenuEditor;
 
 			t.canvasOuter = document.createElement('div');
 			t.canvasOuter.id = ceCanvasOuterId;
