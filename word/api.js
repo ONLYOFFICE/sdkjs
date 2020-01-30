@@ -7582,7 +7582,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.ClearFormating = function()
 	{
-		if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Paragraph_Content))
+		if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_TextProperties))
 		{
 			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_ClearFormatting);
 			this.WordControl.m_oLogicDocument.ClearParagraphFormatting();
