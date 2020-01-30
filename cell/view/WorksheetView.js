@@ -11025,6 +11025,7 @@
 
 			selectData = selectData ? selectData.selectData : null;
 			if(!selectData) {
+				window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
 				return;
 			}
 
@@ -11041,6 +11042,7 @@
 					t._updateRange(arn);
 				}
 			}
+			window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
 
 			if(val.needDraw) {
 				t.draw();
@@ -11068,7 +11070,6 @@
 				});
 
 				History.EndTransaction();
-				window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
 			}
 			else
 			{
@@ -11136,7 +11137,6 @@
 				}
 
 				History.EndTransaction();
-				window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
 			}
 
 		};
