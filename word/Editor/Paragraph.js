@@ -323,6 +323,11 @@ Paragraph.prototype.Copy = function(Parent, DrawingDocument, oPr)
 	if (oPr.CopyReviewPr)
 		EndRun.SetReviewTypeWithInfo(this.GetReviewType(), this.GetReviewInfo().Copy(), false);
 
+	if(oPr.Comparison)
+	{
+		oPr.Comparison.updateReviewInfo(EndRun, reviewtype_Add, true);
+	}
+
 	// Добавляем секцию в конце
 	if (undefined !== this.SectPr)
 	{

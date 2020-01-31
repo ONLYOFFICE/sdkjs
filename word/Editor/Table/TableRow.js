@@ -131,7 +131,10 @@ CTableRow.prototype =
 		}
 
 		Row.Internal_ReIndexing();
-
+        if(oPr && oPr.Comparison)
+        {
+            oPr.Comparison.updateReviewInfo(Row, reviewtype_Add, true);
+        }
 		return Row;
 	},
 
