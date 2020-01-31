@@ -1433,7 +1433,7 @@ CInlineLevelSdt.prototype.private_UpdateDatePickerContent = function()
 CInlineLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType)
 {
 	if (AscCommon.changestype_Paragraph_TextProperties === CheckType
-		|| (AscCommon.changestype_Drawing_Props === CheckType
+		|| ((AscCommon.changestype_Drawing_Props === CheckType || AscCommon.changestype_Image_Properties === CheckType)
 		&& this.IsPicture()))
 	{
 		this.SkipSpecialContentControlLock(true);

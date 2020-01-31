@@ -8557,15 +8557,20 @@ CDocument.prototype.OnKeyDown = function(e)
 			if ((oSelectedInfo.GetInlineLevelSdt() && !oSelectedInfo.IsSdtOverDrawing() && (!e.ShiftKey || e.CtrlKey)) || (oSelectedInfo.Get_Field() && oSelectedInfo.Get_Field().IsFillingForm()))
 				bCanPerform = false;
 
-            if (bCanPerform && (docpostype_DrawingObjects === this.CurPos.Type ||
-                (docpostype_HdrFtr === this.CurPos.Type && null != this.HdrFtr.CurHdrFtr && docpostype_DrawingObjects === this.HdrFtr.CurHdrFtr.Content.CurPos.Type )))
-            {
-                var oTargetDocContent = this.DrawingObjects.getTargetDocContent();
-                if(!oTargetDocContent){
-                    var nRet = this.DrawingObjects.handleEnter();
-                    bCanPerform = (nRet === 0);
-                }
-            }
+			if (bCanPerform && (docpostype_DrawingObjects === this.CurPos.Type ||
+				(docpostype_HdrFtr === this.CurPos.Type && null != this.HdrFtr.CurHdrFtr && docpostype_DrawingObjects === this.HdrFtr.CurHdrFtr.Content.CurPos.Type )))
+			{
+				var oTargetDocContent = this.DrawingObjects.getTargetDocContent();
+				if (!oTargetDocContent)
+				{
+					var nRet    = this.DrawingObjects.handleEnter();
+					bCanPerform = (nRet === 0);
+				}
+
+				if (this.DrawingObjects.selection && null !== this.DrawingObjects.selection.cropSelection)
+					CheckType = AscCommon.changestype_Drawing_Props;
+			}
+
 			if (bCanPerform && false === this.Document_Is_SelectionLocked(CheckType, null, false, true !== e.CtrlKey && this.IsFormFieldEditing()))
 			{
 				this.StartAction(AscDFH.historydescription_Document_EnterButton);
