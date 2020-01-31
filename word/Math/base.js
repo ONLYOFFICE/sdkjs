@@ -298,6 +298,13 @@ CMathBase.prototype.SetPlaceholder = function()
 		}
 	}
 };
+CMathBase.prototype.CheckRunContent = function(fCheck)
+{
+    for(var i = 0; i < this.Content.length; ++i)
+    {
+        this.Content[i].CheckRunContent(fCheck);
+    }
+};
 CMathBase.prototype.addMCToContent = function(elements)
 {
     if(elements.length == this.nRow*this.nCol)

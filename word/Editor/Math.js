@@ -1744,6 +1744,12 @@ ParaMath.prototype.Set_MenuProps = function(Props)
     if(Props != undefined)
         this.Root.Set_MenuProps(Props);
 };
+
+ParaMath.prototype.CheckRunContent = function(fCheck)
+{
+    this.Root.CheckRunContent(fCheck);
+};
+
 //-----------------------------------------------------------------------------------
 // Функции пересчета
 //-----------------------------------------------------------------------------------

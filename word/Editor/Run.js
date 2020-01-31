@@ -218,6 +218,10 @@ ParaRun.prototype.Copy = function(Selected, oPr)
     if(true === bMath)
         NewRun.Set_MathPr(this.MathPrp.Copy());
 
+
+
+
+
     var StartPos = 0;
     var EndPos   = this.Content.length;
 
@@ -237,33 +241,71 @@ ParaRun.prototype.Copy = function(Selected, oPr)
 		EndPos = -1;
 	}
 
-	for (var CurPos = StartPos, AddedPos = 0; CurPos < EndPos; CurPos++)
-	{
-		var Item = this.Content[CurPos];
+	var CurPos, AddedPos, Item;
 
-		if (para_NewLine === Item.Type
-			&& oPr
-			&& ((oPr.SkipLineBreak && Item.IsLineBreak())
-			|| (oPr.SkipPageBreak && Item.IsPageBreak())
-			|| (oPr.SkipColumnBreak && Item.IsColumnBreak())))
+	if(oPr.Comparison)
+	{
+		var aCopyContent = [];
+		for (CurPos = StartPos; CurPos < EndPos; CurPos++)
 		{
-			if (oPr.Paragraph && true !== oPr.Paragraph.IsEmpty())
+			Item = this.Content[CurPos];
+
+			if (para_NewLine === Item.Type
+				&& oPr
+				&& ((oPr.SkipLineBreak && Item.IsLineBreak())
+				|| (oPr.SkipPageBreak && Item.IsPageBreak())
+				|| (oPr.SkipColumnBreak && Item.IsColumnBreak())))
 			{
-				NewRun.Add_ToContent(AddedPos, new ParaSpace(), false);
-				AddedPos++;
+				if (oPr.Paragraph && true !== oPr.Paragraph.IsEmpty())
+				{
+					aCopyContent.push( new ParaSpace());
+				}
+			}
+			else
+			{
+				// TODO: Как только перенесем para_End в сам параграф (как и нумерацию) убрать здесь
+				if (para_End !== Item.Type
+					&& para_RevisionMove !== Item.Type
+					&& (para_Drawing !== Item.Type || Item.Is_Inline() || true !== oPr.SkipAnchors)
+					&& (para_FootnoteReference !== Item.Type || true !== oPr.SkipFootnoteReference)
+					&& ((para_FieldChar !== Item.Type && para_InstrText !== Item.Type) || true !== oPr.SkipComplexFields))
+				{
+					aCopyContent.push(Item.Copy(oPr));
+				}
 			}
 		}
-		else
+		NewRun.ConcatToContent(aCopyContent);
+	}
+	else
+	{
+		for (CurPos = StartPos, AddedPos = 0; CurPos < EndPos; CurPos++)
 		{
-			// TODO: Как только перенесем para_End в сам параграф (как и нумерацию) убрать здесь
-			if (para_End !== Item.Type
-				&& para_RevisionMove !== Item.Type
-				&& (para_Drawing !== Item.Type || Item.Is_Inline() || true !== oPr.SkipAnchors)
-				&& (para_FootnoteReference !== Item.Type || true !== oPr.SkipFootnoteReference)
-				&& ((para_FieldChar !== Item.Type && para_InstrText !== Item.Type) || true !== oPr.SkipComplexFields))
+			Item = this.Content[CurPos];
+
+			if (para_NewLine === Item.Type
+				&& oPr
+				&& ((oPr.SkipLineBreak && Item.IsLineBreak())
+				|| (oPr.SkipPageBreak && Item.IsPageBreak())
+				|| (oPr.SkipColumnBreak && Item.IsColumnBreak())))
 			{
-				NewRun.Add_ToContent(AddedPos, Item.Copy(oPr), false);
-				AddedPos++;
+				if (oPr.Paragraph && true !== oPr.Paragraph.IsEmpty())
+				{
+					NewRun.Add_ToContent(AddedPos, new ParaSpace(), false);
+					AddedPos++;
+				}
+			}
+			else
+			{
+				// TODO: Как только перенесем para_End в сам параграф (как и нумерацию) убрать здесь
+				if (para_End !== Item.Type
+					&& para_RevisionMove !== Item.Type
+					&& (para_Drawing !== Item.Type || Item.Is_Inline() || true !== oPr.SkipAnchors)
+					&& (para_FootnoteReference !== Item.Type || true !== oPr.SkipFootnoteReference)
+					&& ((para_FieldChar !== Item.Type && para_InstrText !== Item.Type) || true !== oPr.SkipComplexFields))
+				{
+					NewRun.Add_ToContent(AddedPos, Item.Copy(oPr), false);
+					AddedPos++;
+				}
 			}
 		}
 	}
@@ -282,12 +324,24 @@ ParaRun.prototype.Copy2 = function(oPr)
 	}
     var StartPos = 0;
     var EndPos   = this.Content.length;
-
-    for ( var CurPos = StartPos; CurPos < EndPos; CurPos++ )
-    {
-        var Item = this.Content[CurPos];
-        NewRun.Add_ToContent( CurPos - StartPos, Item.Copy(oPr), false );
-    }
+	var CurPos;
+	if(oPr.Comparison)
+	{
+		var aContentToInsert = [];
+		for (CurPos = StartPos; CurPos < EndPos; CurPos++ )
+		{
+			aContentToInsert.push(this.Content[CurPos].Copy(oPr));
+		}
+		NewRun.ConcatToContent(aContentToInsert);
+	}
+	else
+	{
+		for (CurPos = StartPos; CurPos < EndPos; CurPos++ )
+		{
+			var Item = this.Content[CurPos];
+			NewRun.Add_ToContent( CurPos - StartPos, Item.Copy(oPr), false );
+		}
+	}
     return NewRun;
 };
 

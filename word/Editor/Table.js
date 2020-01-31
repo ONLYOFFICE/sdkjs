@@ -2605,12 +2605,12 @@ CTable.prototype.Copy = function(Parent, DrawingDocument, oPr)
 
 	// Копируем строки
 	var Rows = this.Content.length;
-	for (var Index = 0; Index < Rows; Index++)
+	var Index;
+	for (Index = 0; Index < Rows; Index++)
 	{
 		Table.Content[Index] = this.Content[Index].Copy(Table, oPr);
 		History.Add(new CChangesTableAddRow(Table, Index, [Table.Content[Index]]));
 	}
-
 	Table.Internal_ReIndexing(0);
 
 	if (Table.Content.length > 0 && Table.Content[0].Get_CellsCount() > 0)
