@@ -11698,22 +11698,22 @@ CRFonts.prototype =
     },
 
     Merge : function(RFonts)
-    {
-        if ( undefined !== RFonts.Ascii )
-            this.Ascii = RFonts.Ascii;
+	{
+		if (RFonts.Ascii)
+			this.Ascii = RFonts.Ascii;
 
-        if ( undefined != RFonts.EastAsia )
-            this.EastAsia = RFonts.EastAsia;
+		if (RFonts.EastAsia)
+			this.EastAsia = RFonts.EastAsia;
 
-        if ( undefined != RFonts.HAnsi )
-            this.HAnsi = RFonts.HAnsi;
+		if (RFonts.HAnsi)
+			this.HAnsi = RFonts.HAnsi;
 
-        if ( undefined != RFonts.CS )
-            this.CS = RFonts.CS;
+		if (RFonts.CS)
+			this.CS = RFonts.CS;
 
-        if ( undefined != RFonts.Hint )
-            this.Hint = RFonts.Hint;
-    },
+		if (RFonts.Hint)
+			this.Hint = RFonts.Hint;
+	},
 
     Init_Default : function()
     {
