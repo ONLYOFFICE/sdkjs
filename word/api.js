@@ -8585,6 +8585,18 @@ background-repeat: no-repeat;\
 
 			if (oContentControl && oContentControl.GetContentControlType)
 			{
+				if ((Asc.c_oAscSdtLockType.ContentLocked === oContentControl.GetContentControlLock()
+					|| Asc.c_oAscSdtLockType.SdtContentLocked === oContentControl.GetContentControlLock())
+					&& oContentControlPr
+					&& Asc.c_oAscSdtLockType.Unlocked !== oContentControlPr.GetLock()
+					&& Asc.c_oAscSdtLockType.SdtLocked !== oContentControlPr.GetLock())
+				{
+					if (oContentControl.IsDatePicker() && !oContentControl.GetDatePickerPr().IsEqual(oContentControlPr.DateTimePr))
+					{
+						oContentControlPr.DateTimePr = oContentControl.GetDatePickerPr().Copy();
+					}
+				}
+
 				if (c_oAscSdtLevelType.Block === oContentControl.GetContentControlType())
 				{
 					isLocked = oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_None, {
