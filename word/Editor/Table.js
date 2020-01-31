@@ -20208,7 +20208,11 @@ CTable.prototype.GetAllTablesOnPage = function(nPageAbs, arrTables)
 		{
 			for (var nCurCell = 0, nCellsCount = oRow.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
 			{
-				oRow.GetCell(nCurCell).GetContent().GetAllTablesOnPage(nPageAbs, arrTables);
+				var oCell = oRow.GetCell(nCurCell);
+				if (oCell.IsMergedCell())
+					continue;
+
+				oCell.GetContent().GetAllTablesOnPage(nPageAbs, arrTables);
 			}
 		}
 	}
