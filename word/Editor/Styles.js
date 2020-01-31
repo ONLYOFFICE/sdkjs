@@ -9172,7 +9172,8 @@ CStyles.prototype.Is_StyleDefault = function(sStyleName)
 		|| StyleId == this.Default.Title
 		|| StyleId == this.Default.Subtitle
 		|| StyleId == this.Default.Quote
-		|| StyleId == this.Default.IntenseQuote)
+		|| StyleId == this.Default.IntenseQuote
+		|| StyleId == this.Default.Caption)
 	{
 		return true;
 	}
