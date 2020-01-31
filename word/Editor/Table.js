@@ -13486,8 +13486,8 @@ CTable.prototype.GetDrawLine = function(X1, Y1, X2, Y2, CurPageStart, CurPageEnd
 				{
 					X1  : X1_origin,
 					X2  : X2_origin,
-					Y1 : Y1,
-					Y2 : Y2,
+					Y1 : Y1_origin,
+					Y2 : Y2_origin,
 					Color : "Red",
 					Bold  : false
 				};
@@ -13749,7 +13749,7 @@ CTable.prototype.GetDrawLine = function(X1, Y1, X2, Y2, CurPageStart, CurPageEnd
 						Y2 : Y2,
 						X1 : X1_origin,
 						X2 : X2_origin,
-						Color : "Grey",
+						Color : "Red",
 						Bold  : false
 					};
 
