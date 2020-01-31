@@ -3784,11 +3784,20 @@
 				return;
 		}
 
+		var backoff = new AscCommon.Backoff(AscCommon.g_oBackoffDefaults);
+		loadScriptWithBackoff(backoff, url, onSuccess, onError);
+	}
+
+	function loadScriptWithBackoff(backoff, url, onSuccess, onError){
 		var script = document.createElement('script');
 		script.type = 'text/javascript';
 		script.src = url;
 		script.onload = onSuccess;
-		script.onerror = onError;
+		script.onerror = function() {
+			backoff.attempt(onError, function() {
+				loadScriptBackoff(backoff, url, onSuccess, onError);
+			});
+		};
 
 		// Fire the loading
 		document.head.appendChild(script);
@@ -4976,6 +4985,75 @@
 		return null;
 	}
 
+	var g_oBackoffDefaults = {
+		retries: 2,
+		factor: 2,
+		minTimeout: 100,
+		maxTimeout: 2000,
+		randomize: true
+	};
+
+	function Backoff(opts) {
+		this.attempts = 0;
+		this.opts = opts;
+	}
+
+	Backoff.prototype.attempt = function(fError, fRetry) {
+		var timeout = this.nextTimeout();
+		if (timeout > 0) {
+			setTimeout(function() {
+				fRetry();
+			}, timeout);
+		} else {
+			fError();
+		}
+	};
+	Backoff.prototype.nextTimeout = function() {
+		var timeout = -1;
+		if (this.attempts < this.opts.retries) {
+			timeout = this.createTimeout(this.attempts, this.opts);
+			this.attempts++;
+		}
+		return timeout;
+	};
+	Backoff.prototype.createTimeout = function(attempt, opts) {
+		//like npm retry
+		var random = (opts.randomize)
+			? (Math.random() + 1)
+			: 1;
+
+		var timeout = Math.round(random * opts.minTimeout * Math.pow(opts.factor, attempt));
+		timeout = Math.min(timeout, opts.maxTimeout);
+
+		return timeout;
+	};
+	function backoffOnError(obj, onError, onRetry) {
+		if (!onRetry) {
+			return onError;
+		}
+		var backoff = new Backoff(g_oBackoffDefaults);
+		return function() {
+			var timeout = backoff.nextTimeout();
+			if (timeout > 0) {
+				setTimeout(function() {
+					onRetry.apply(obj, arguments);
+				}, timeout);
+			} else if (onError) {
+				onError.apply(obj, arguments);
+			}
+		};
+	}
+	function backoffOnErrorImg(img, onRetry) {
+		//$self.attr("src", $self.attr("src"));
+		//https://github.com/doomhz/jQuery-Image-Reloader/blob/dd1f626b25628ede498ae2489a0c2963f1c3cf61/jquery.imageReloader.js#L56
+		if (!onRetry) {
+			onRetry = function() {
+				img.setAttribute('src', img.getAttribute('src'));
+			};
+		}
+		img.onerror = backoffOnError(img, img.onerror, onRetry);
+	}
+
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].getSockJs = getSockJs;
@@ -5063,6 +5141,10 @@
 	window["AscCommon"].g_oIdCounter = g_oIdCounter;
 
 	window["AscCommon"].g_oHtmlCursor = g_oHtmlCursor;
+
+	window["AscCommon"].g_oBackoffDefaults = g_oBackoffDefaults;
+	window["AscCommon"].Backoff = Backoff;
+	window["AscCommon"].backoffOnErrorImg = backoffOnErrorImg;
 
 	window["AscCommon"].CSignatureDrawer = window["AscCommon"]["CSignatureDrawer"] = CSignatureDrawer;
 	var prot = CSignatureDrawer.prototype;

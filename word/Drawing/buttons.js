@@ -77,20 +77,24 @@
                 this.images[0] = new Image();
                 this.images[0].onload = function() { this.asc_complete = true; };
                 this.images[0].src = "../../../../sdkjs/common/Images/placeholders/" + url + ".png";
+                AscCommon.backoffOnErrorImg(this.images[0]);
 
                 this.images[1] = new Image();
                 this.images[1].onload = function() { this.asc_complete = true; };
                 this.images[1].src = "../../../../sdkjs/common/Images/placeholders/" + url + "@2x.png";
+                AscCommon.backoffOnErrorImg(this.images[1]);
             };
             this.loadActive = function(url)
             {
                 this.images[2] = new Image();
                 this.images[2].onload = function() { this.asc_complete = true; };
                 this.images[2].src = "../../../../sdkjs/common/Images/placeholders/" + url + "_active.png";
+                AscCommon.backoffOnErrorImg(this.images[2]);
 
                 this.images[3] = new Image();
                 this.images[3].onload = function() { this.asc_complete = true; };
                 this.images[3].src = "../../../../sdkjs/common/Images/placeholders/" + url + "_active@2x.png";
+                AscCommon.backoffOnErrorImg(this.images[3]);
             };
             this.get = function()
             {
@@ -632,18 +636,22 @@
                 this.images[0] = new Image();
                 this.images[0].onload = function() { this.asc_complete = true; };
                 this.images[0].src = "../../../../sdkjs/common/Images/content_controls/" + url + ".png";
+                AscCommon.backoffOnErrorImg(this.images[0]);
 
                 this.images[1] = new Image();
                 this.images[1].onload = function() { this.asc_complete = true; };
                 this.images[1].src = "../../../../sdkjs/common/Images/content_controls/" + url + "_active.png";
+                AscCommon.backoffOnErrorImg(this.images[1]);
 
                 this.images[2] = new Image();
                 this.images[2].onload = function() { this.asc_complete = true; };
                 this.images[2].src = "../../../../sdkjs/common/Images/content_controls/" + url + "@2x.png";
+                AscCommon.backoffOnErrorImg(this.images[2]);
 
                 this.images[3] = new Image();
                 this.images[3].onload = function() { this.asc_complete = true; };
                 this.images[3].src = "../../../../sdkjs/common/Images/content_controls/" + url + "_active@2x.png";
+                AscCommon.backoffOnErrorImg(this.images[3]);
             };
 
             this.get = function(isActive)
