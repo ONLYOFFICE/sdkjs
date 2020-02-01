@@ -825,6 +825,15 @@ CDocumentContentElementBase.prototype.GetStartPageRelative = function()
 	return this.PageNum;
 };
 /**
+ * Получаем номер страницы, относительно родительского класса
+ * @param {number} nCurPage
+ * @returns {number}
+ */
+CDocumentContentElementBase.prototype.GetRelativePage = function(nCurPage)
+{
+	return this.private_GetRelativePageIndex(nCurPage);
+};
+/**
  * Получаем обсолютный начальный номер страницы данного элемента
  * @returns {number}
  */

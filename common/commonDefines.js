@@ -547,9 +547,7 @@
 	var c_oAscHAnchor = {
 		Margin : 0x00,
 		Page   : 0x01,
-		Text   : 0x02,
-
-		PageInternal : 0xFF // только для внутреннего использования
+		Text   : 0x02
 	};
 
 	var c_oAscXAlign = {
@@ -2351,7 +2349,6 @@
 	prot['Margin']                = prot.Margin;
 	prot['Page']                  = prot.Page;
 	prot['Text']                  = prot.Text;
-	prot['PageInternal']          = prot.PageInternal;
 	window['Asc']['c_oAscXAlign'] = window['Asc'].c_oAscXAlign = c_oAscXAlign;
 	prot                          = c_oAscXAlign;
 	prot['Center']                = prot.Center;
