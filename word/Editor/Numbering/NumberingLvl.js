@@ -1051,6 +1051,9 @@ function CNumberingLvlTextString(Val)
 	else
 		this.Value = "";
 
+	if (AscFonts.IsCheckSymbols)
+		AscFonts.FontPickerByCharacter.getFontsByString(this.Value);
+
 	this.Type = numbering_lvltext_Text;
 }
 CNumberingLvlTextString.prototype.IsLvl = function()
@@ -1080,6 +1083,9 @@ CNumberingLvlTextString.prototype.WriteToBinary = function(Writer)
 CNumberingLvlTextString.prototype.ReadFromBinary = function(Reader)
 {
 	this.Value = Reader.GetString2();
+
+	if (AscFonts.IsCheckSymbols)
+		AscFonts.FontPickerByCharacter.getFontsByString(this.Value);
 };
 
 function CNumberingLvlTextNum(Lvl)
