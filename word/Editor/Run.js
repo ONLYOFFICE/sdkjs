@@ -1321,8 +1321,20 @@ ParaRun.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
 	if (Item.SetParent)
 		Item.SetParent(this);
 
-	History.Add(new CChangesRunAddItem(this, Pos, [Item], true));
-    this.Content.splice( Pos, 0, Item );
+	// Здесь проверка на возвожность добавления в историю стоит заранее для ускорения открытия файлов, чтобы
+	// не создавалось лишних классов
+	if (History.CanAddChanges())
+		History.Add(new CChangesRunAddItem(this, Pos, [Item], true));
+
+	if (Pos >= this.Content.length)
+	{
+		this.Content.push(Item);
+		Pos = this.Content.length;
+	}
+	else
+	{
+		this.Content.splice(Pos, 0, Item);
+	}
 
     if (true === UpdatePosition)
         this.private_UpdatePositionsOnAdd(Pos);
@@ -1375,17 +1387,19 @@ ParaRun.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
 
 ParaRun.prototype.Remove_FromContent = function(Pos, Count, UpdatePosition)
 {
-    // Получим массив удаляемых элементов
-    var DeletedItems = this.Content.slice( Pos, Pos + Count );
-	History.Add(new CChangesRunRemoveItem(this, Pos, DeletedItems));
-
-	for (var nIndex = 0, nCount = DeletedItems.length; nIndex < nCount; ++nIndex)
+	for (var nIndex = Pos, nCount = Math.min(Pos + Count, this.Content.length); nIndex < nCount; ++nIndex)
 	{
-		if (DeletedItems[nIndex].PreDelete)
-			DeletedItems[nIndex].PreDelete();
+		if (this.Content[nIndex].PreDelete)
+			this.Content[nIndex].PreDelete();
 	}
 
-    this.Content.splice( Pos, Count );
+	if (History.CanAddChanges())
+	{
+		var DeletedItems = this.Content.slice(Pos, Pos + Count);
+		History.Add(new CChangesRunRemoveItem(this, Pos, DeletedItems));
+	}
+
+	this.Content.splice(Pos, Count);
 
     if (true === UpdatePosition)
         this.private_UpdatePositionsOnRemove(Pos, Count);
@@ -8944,6 +8958,9 @@ CParaRunRecalcInfo.prototype.IsMeasureNeed = function()
  */
 CParaRunRecalcInfo.prototype.OnAdd = function(nPos)
 {
+	if (this.Measure)
+		return;
+
 	for (var nIndex = 0, nCount = this.MeasurePositions.length; nIndex < nCount; ++nIndex)
 	{
 		if (this.MeasurePositions[nIndex] >= nPos)
@@ -8959,6 +8976,9 @@ CParaRunRecalcInfo.prototype.OnAdd = function(nPos)
  */
 CParaRunRecalcInfo.prototype.OnRemove = function(nPos, nCount)
 {
+	if (this.Measure)
+		return;
+
 	for (var nIndex = 0, nLen = this.MeasurePositions.length; nIndex < nLen; ++nIndex)
 	{
 		if (nPos <= this.MeasurePositions[nIndex] && this.MeasurePositions[nIndex] <= nPos + nCount - 1)

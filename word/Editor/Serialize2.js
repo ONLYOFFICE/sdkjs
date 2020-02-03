@@ -6866,6 +6866,7 @@ function BinaryFileReader(doc, openParams)
     };
     this.Read = function(data)
     {
+		var OpenTime = new Date().getTime();
 		try{
 			this.stream = this.getbase64DecodedData(data);
 			this.PreLoadPrepare();
@@ -6879,6 +6880,9 @@ function BinaryFileReader(doc, openParams)
 			else
 				throw e;
 		}
+
+		console.log("Open time: " + ((new Date().getTime() - OpenTime) / 1000));
+
 		return true;
     };
 	this.PreLoadPrepare = function()
