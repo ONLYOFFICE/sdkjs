@@ -13794,6 +13794,10 @@ CDocument.prototype.Get_TableId = function()
 {
 	return this.TableId;
 };
+CDocument.prototype.GetTableId = function()
+{
+	return this.TableId;
+};
 CDocument.prototype.Get_History = function()
 {
 	return this.History;
@@ -22172,15 +22176,26 @@ CTrackRevisionsManager.prototype.private_GetPrevChange = function()
 	this.CurElement = null;
 	return null;
 };
+/**
+ * Проверяем есть ли непримененные изменения в документе
+ * @returns {boolean}
+ */
 CTrackRevisionsManager.prototype.Have_Changes = function()
 {
-    for (var ParaId in this.Changes)
-    {
-        if (this.Changes[ParaId].length > 0)
-            return true;
-    }
+	var oTableId = this.LogicDocument ? this.LogicDocument.GetTableId() : null;
 
-    return false;
+	for (var sElementId in this.Changes)
+	{
+		var oElement = oTableId ? oTableId.Get_ById(sElementId) : null;
+
+		if (!oElement || !oElement.Is_UseInDocument || !oElement.Is_UseInDocument())
+			continue;
+
+		if (this.Changes[sElementId].length > 0)
+			return true;
+	}
+
+	return false;
 };
 /**
  * Проверяем есть ли изменения, сделанные другими пользователями
