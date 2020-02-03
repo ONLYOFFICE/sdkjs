@@ -1305,9 +1305,9 @@
   };
 
   // Обработка автозаполнения
-  WorkbookView.prototype._onChangeFillHandle = function(x, y, callback) {
+  WorkbookView.prototype._onChangeFillHandle = function(x, y, callback, tableIndex) {
     var ws = this.getWorksheet();
-    var d = ws.changeSelectionFillHandle(x, y);
+    var d = ws.changeSelectionFillHandle(x, y, tableIndex);
     asc_applyFunction(callback, d);
   };
 

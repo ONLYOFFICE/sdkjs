@@ -554,7 +554,7 @@
 		 * @param event {MouseEvent}
 		 * @param callback {Function}
 		 */
-		asc_CEventsController.prototype._changeFillHandle = function (event, callback) {
+		asc_CEventsController.prototype._changeFillHandle = function (event, callback, tableIndex) {
 			var t = this;
 			// Обновляемся в режиме автозаполнения
 			var coord = this._getCoordinates(event);
@@ -563,7 +563,7 @@
 					if (!d) return;
 					t.scroll(d);
 					asc_applyFunction(callback);
-				});
+				}, tableIndex);
 		};
 
 		/** @param event {MouseEvent} */
@@ -1511,8 +1511,8 @@
 						return;
 					} else if (t.targetInfo.target === c_oTargetType.ResizeTableHandle && this.canEdit()) {
 						// В режиме автозаполнения
-						this.isResizeTableHandleMode = true;
-						t._resizeTableHandle(event);
+						this.isFillHandleMode = true;
+						t._changeFillHandle(event, null, t.targetInfo.tableIndex);
 						return;
 					}
 				}
