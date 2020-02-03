@@ -7621,7 +7621,7 @@
 		}
 		return res ? {
 				cursor: res.cursor,
-				target: c_oTargetType.ResizeTableHandle,
+				target: c_oTargetType.FillHandle,
 				col: res.col,
 				row: res.row,
 				tableIndex: i

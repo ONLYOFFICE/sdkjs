@@ -93,7 +93,6 @@
 			this.isFillHandleMode = false;
 			this.isMoveRangeMode = false;
 			this.isMoveResizeRange = false;
-			this.isResizeTableHandleMode = false;
 			// Режим select-а для диалогов
 			this.isSelectionDialogMode = false;
 			// Режим формулы
@@ -720,7 +719,7 @@
 			this.showCellEditorCursor();
 
 			while (t.getCellEditMode() && !t.hasFocus || !t.enableKeyEvents || t.isSelectMode ||
-			t.isFillHandleMode || t.isMoveRangeMode || t.isMoveResizeRange || t.isResizeTableHandleMode) {
+			t.isFillHandleMode || t.isMoveRangeMode || t.isMoveResizeRange) {
 
 				if (t.getCellEditMode() && !t.strictClose && t.enableKeyEvents && event.which >= 37 &&
 					event.which <= 40) {
@@ -1418,7 +1417,7 @@
 					} else if (t.targetInfo.target === c_oTargetType.FillHandle && this.canEdit()) {
 						// В режиме автозаполнения
 						this.isFillHandleMode = true;
-						t._changeFillHandle(event);
+						t._changeFillHandle(event, null, t.targetInfo.tableIndex);
 						return;
 					} else if (t.targetInfo.target === c_oTargetType.MoveRange && this.canEdit()) {
 						// В режиме перемещения диапазона
@@ -1455,11 +1454,6 @@
 						return;
 					} else if ((t.targetInfo.target === c_oTargetType.GroupCol || t.targetInfo.target === c_oTargetType.GroupRow) && 2 === button) {
 						this.handlers.trigger('onContextMenu', null);
-						return;
-					} else if (t.targetInfo.target === c_oTargetType.ResizeTableHandle && this.canEdit()) {
-						// В режиме автозаполнения
-						this.isFillHandleMode = true;
-						t._changeFillHandle(event, null, t.targetInfo.tableIndex);
 						return;
 					}
 				}
@@ -1511,10 +1505,10 @@
 				this.handlers.trigger("changeSelectionRightClick", coord.x, coord.y, this.targetInfo && this.targetInfo.target);
 				this.handlers.trigger('onContextMenu', event);
 			} else {
-				if (this.targetInfo && this.canEdit() && (this.targetInfo.target === c_oTargetType.FillHandle || this.targetInfo.target === c_oTargetType.ResizeTableHandle)) {
+				if (this.targetInfo && this.targetInfo.target === c_oTargetType.FillHandle && this.canEdit()) {
 					// В режиме автозаполнения
 					this.isFillHandleMode = true;
-					this._changeFillHandle(event);
+					this._changeFillHandle(event, null, t.targetInfo.tableIndex);
 				} else {
 					this.isSelectMode = true;
 					this.handlers.trigger("changeSelection", /*isStartPoint*/true, coord.x, coord.y, /*isCoord*/true,
@@ -1689,7 +1683,7 @@
 
 				return false;
 			}
-			if (this.isFillHandleMode || this.isMoveRangeMode || this.isMoveResizeRange || this.isResizeTableHandleMode) {
+			if (this.isFillHandleMode || this.isMoveRangeMode || this.isMoveResizeRange) {
 				return true;
 			}
 
