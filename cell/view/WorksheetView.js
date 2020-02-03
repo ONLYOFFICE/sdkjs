@@ -405,7 +405,7 @@
 		this.dragAndDropRange = null;
         // Range fillHandle
         this.activeFillHandle = null;
-        this.resizeTableRange = null;
+        this.resizeTableIndex = null;
         // Горизонтальное (0) или вертикальное (1) направление автозаполнения
         this.fillHandleDirection = -1;
         // Зона автозаполнения
@@ -9838,7 +9838,6 @@
 				// Сбрасываем параметры автозаполнения
 				this.activeFillHandle = null;
 				this.fillHandleDirection = -1;
-				this.resizeTableRange = null;
 				// Перерисовываем
 				this._drawSelection();
 
@@ -9852,7 +9851,6 @@
 				// Сбрасываем параметры автозаполнения
 				this.activeFillHandle = null;
 				this.fillHandleDirection = -1;
-				this.resizeTableRange = null;
 				// Перерисовываем
 				this._drawSelection();
 
@@ -9869,7 +9867,6 @@
             // Сбрасываем параметры автозаполнения
             this.activeFillHandle = null;
             this.fillHandleDirection = -1;
-			this.resizeTableRange = null;
             // Перерисовываем
             this._drawSelection();
         }

@@ -600,52 +600,6 @@
 		 * @param event {MouseEvent}
 		 * @param callback {Function}
 		 */
-		asc_CEventsController.prototype._resizeTableHandle = function (event, callback) {
-			var t = this;
-			// Обновляемся в режиме автозаполнения
-			var coord = this._getCoordinates(event);
-			this.handlers.trigger("resizeTableHandle", coord.x, coord.y,
-				function (d) {
-					if (!d) return;
-					t.scroll(d);
-					asc_applyFunction(callback);
-				});
-		};
-
-		/** @param event {MouseEvent} */
-		asc_CEventsController.prototype._resizeTableHandle2 = function (event) {
-			var t = this;
-
-			var fn = function () {
-				t._resizeTableHandle2(event);
-			};
-
-			var callback = function () {
-				if (t.isResizeTableHandleMode && !t.hasCursor) {
-					t.resizeTableHandleModeTimerId  = window.setTimeout(fn, t.settings.scrollTimeout);
-				}
-			};
-
-			window.clearTimeout(t.resizeTableHandleModeTimerId);
-			t.resizeTableHandleModeTimerId = window.setTimeout(function () {
-				if (t.isResizeTableHandleMode && !t.hasCursor) {
-					t._resizeTableHandle(event, callback);
-				}
-			}, 0);
-		};
-
-		/** @param event {MouseEvent} */
-		asc_CEventsController.prototype._resizeTableHandleDone = function (event) {
-			// Закончили автозаполнение, пересчитаем
-			var coord = this._getCoordinates(event);
-			var ctrlKey = !AscCommon.getAltGr(event) && (event.metaKey || event.ctrlKey);
-			this.handlers.trigger("resizeTableHandleDone", coord.x, coord.y, ctrlKey);
-		};
-
-		/**
-		 * @param event {MouseEvent}
-		 * @param callback {Function}
-		 */
 		asc_CEventsController.prototype._moveRangeHandle = function (event, callback) {
 			var t = this;
 			// Обновляемся в режиме перемещения диапазона
@@ -1312,13 +1266,6 @@
 				this._moveRangeHandleDone(event);
 			}
 
-			// Режим перемещения диапазона
-			if (this.isResizeTableHandleMode) {
-				// Закончили перемещение диапазона
-				this.isResizeTableHandleMode = false;
-				this._resizeTableHandleDone(event);
-			}
-
 			if (this.isMoveResizeRange) {
 				this.isMoveResizeRange = false;
 				this.handlers.trigger("moveResizeRangeHandleDone", this.targetInfo);
@@ -1564,14 +1511,10 @@
 				this.handlers.trigger("changeSelectionRightClick", coord.x, coord.y, this.targetInfo && this.targetInfo.target);
 				this.handlers.trigger('onContextMenu', event);
 			} else {
-				if (this.targetInfo && this.targetInfo.target === c_oTargetType.FillHandle && this.canEdit()) {
+				if (this.targetInfo && this.canEdit() && (this.targetInfo.target === c_oTargetType.FillHandle || this.targetInfo.target === c_oTargetType.ResizeTableHandle)) {
 					// В режиме автозаполнения
 					this.isFillHandleMode = true;
 					this._changeFillHandle(event);
-				} else if (this.targetInfo && this.targetInfo.target === c_oTargetType.ResizeTableHandle && this.canEdit()) {
-					// В режиме автозаполнения
-					this.isResizeTableHandleMode = true;
-					this._resizeTableHandle(event);
 				} else {
 					this.isSelectMode = true;
 					this.handlers.trigger("changeSelection", /*isStartPoint*/true, coord.x, coord.y, /*isCoord*/true,
@@ -1632,12 +1575,6 @@
 			if (this.isMoveRangeMode) {
 				this.isMoveRangeMode = false;
 				this._moveRangeHandleDone(event);
-			}
-
-			if (this.isResizeTableHandleMode) {
-				// Закончили автозаполнение
-				this.isResizeTableHandleMode = false;
-				this._resizeTableHandleDone(event);
 			}
 
 			if (this.isMoveResizeRange) {
@@ -1715,11 +1652,6 @@
 				return true;
 			}
 
-			if (t.isResizeTableHandleMode) {
-				t._resizeTableHandle(event);
-				return true;
-			}
-
 			t.handlers.trigger("updateWorksheet", coord.x, coord.y, ctrlKey, function(info){t.targetInfo = info;});
 			return true;
 		};
@@ -1741,9 +1673,6 @@
 			}
 			if (this.isFillHandleMode) {
 				t.fillHandleModeTimerId = window.setTimeout(function(){t._changeFillHandle2(event)},0);
-			}
-			if (this.isResizeTableHandleMode) {
-				t.resizeTableHandleModeTimerId = window.setTimeout(function(){t._resizeTableHandle2(event)},0);
 			}
 			return true;
 		};
