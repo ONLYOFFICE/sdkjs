@@ -7625,7 +7625,6 @@
 				col: res.col,
 				row: res.row,
 				tableIndex: i
-				//targetArr: targetArr
 			} : null;
 	};
 
@@ -9324,19 +9323,19 @@
 			return t.model.TableParts && t.model.TableParts[index] ? t.model.TableParts[index] : null;
 		};
 
-        // Если мы только первый раз попали сюда, то копируем выделенную область
-        if (null === this.activeFillHandle) {
-        	if(undefined !== tableIndex) {
-        		table = _getTableByIndex(tableIndex);
+		// Если мы только первый раз попали сюда, то копируем выделенную область
+		if (null === this.activeFillHandle) {
+			if (undefined !== tableIndex) {
+				table = _getTableByIndex(tableIndex);
 				this.activeFillHandle = table ? table.Ref.clone() : null;
 				this.resizeTableIndex = tableIndex;
 			} else {
 				this.activeFillHandle = this.model.selectionRange.getLast().clone();
 			}
-            // Для первого раза нормализуем (т.е. первая точка - это левый верхний угол)
-            this.activeFillHandle.normalize();
-            return ret;
-        }
+			// Для первого раза нормализуем (т.е. первая точка - это левый верхний угол)
+			this.activeFillHandle.normalize();
+			return ret;
+		}
 
         // Очищаем выделение, будем рисовать заново
         this.cleanSelection();
@@ -9528,7 +9527,7 @@
              |						|
              |						|
              */
-			if(table) {
+			if (table) {
 				this.fillHandleArea = 3;
 			} else if (dXR <= 0) {
                 // Область (1) или (2)
@@ -9585,7 +9584,7 @@
                     break;
             }
 
-            if(table) {
+            if (table) {
 				_checkTableRange();
 			}
 
@@ -9605,7 +9604,7 @@
 
              (3)
              */
-			if(table) {
+			if (table) {
 				this.fillHandleArea = 3;
 			} else if (dYR <= 0) {
                 // Область (1) или (2)
@@ -9662,7 +9661,7 @@
                     break;
             }
 
-			if(table) {
+			if (table) {
 				_checkTableRange();
 			}
 
