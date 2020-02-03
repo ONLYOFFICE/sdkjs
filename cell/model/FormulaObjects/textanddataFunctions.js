@@ -1078,12 +1078,23 @@ function (window, undefined) {
 			arg0 = arg0.getElementRowCol(0, 0);
 		}
 
-		var tryString = arg0.tocString();
-		if (tryString instanceof cError) {
-			return tryString;
+		if (arg0 instanceof cRef || arg0 instanceof cRef3D) {
+			arg0 = arg0.getValue();
+			if (arg0 instanceof cError) {
+				return arg0;
+			} else {
+				arg0 = arg0.toLocaleString();
+			}
+		} else {
+			arg0 = arg0.toLocaleString();
 		}
-		arg0 = arg0.getValue();
-		return new cString(arg0.toLocaleString().toLowerCase());
+
+		if (arg0 instanceof cError) {
+			return arg0;
+		}
+
+		return new cString(arg0.toLowerCase());
+
 	};
 
 	/**
@@ -2085,12 +2096,22 @@ function (window, undefined) {
 			arg0 = arg0.getElementRowCol(0, 0);
 		}
 
-		var tryString = arg0.tocString();
-		if (tryString instanceof cError) {
-			return tryString;
+		if (arg0 instanceof cRef || arg0 instanceof cRef3D) {
+			arg0 = arg0.getValue();
+			if (arg0 instanceof cError) {
+				return arg0;
+			} else {
+				arg0 = arg0.toLocaleString();
+			}
+		} else {
+			arg0 = arg0.toLocaleString();
 		}
-		arg0 = arg0.getValue();
-		return new cString(arg0.toLocaleString().toUpperCase());
+
+		if (arg0 instanceof cError) {
+			return arg0;
+		}
+
+		return new cString(arg0.toUpperCase());
 	};
 
 	/**

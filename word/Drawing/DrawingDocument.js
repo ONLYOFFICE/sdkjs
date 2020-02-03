@@ -131,10 +131,12 @@ function CTableOutlineDr()
 	this.image = new Image();
 	this.image.src = "../../../../sdkjs/common/Images/table_move.png";
 	this.image.onload = function() { this.asc_complete = true; };
+	AscCommon.backoffOnErrorImg(this.image);
 
 	this.image2 = new Image();
 	this.image2.src = "../../../../sdkjs/common/Images/table_move_2x.png";
 	this.image2.onload = function() { this.asc_complete = true; };
+	AscCommon.backoffOnErrorImg(this.image2);
 
 	this.TableOutline = null;
 	this.Counter = 0;

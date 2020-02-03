@@ -4564,14 +4564,17 @@ CTable.prototype.Can_IncreaseParagraphLevel = function(bIncrease)
 		this.CurCell.Content.Can_IncreaseParagraphLevel(bIncrease);
 	}
 };
-CTable.prototype.GetSelectionBounds = function()
+CTable.prototype.GetSelectionBounds = function(isForceCellSelection)
 {
-	if (true === this.ApplyToAll || ( true === this.Selection.Use && table_Selection_Cell === this.Selection.Type && this.Selection.Data.length > 0 ))
-	{
-		var Cells_array = this.GetSelectionArray();
+	var isUseSelection = (true === this.ApplyToAll || ( true === this.Selection.Use && table_Selection_Cell === this.Selection.Type && this.Selection.Data.length > 0));
 
-		var StartPos = Cells_array[0];
-		var EndPos   = Cells_array[Cells_array.length - 1];
+	var arrCells = (isUseSelection ? this.GetSelectionArray() : (isForceCellSelection ? [this.CurCell] : null));
+	if (arrCells)
+	{
+		var arrCells = this.GetSelectionArray();
+
+		var StartPos = arrCells[0];
+		var EndPos   = arrCells[arrCells.length - 1];
 
 		var Row  = this.Content[StartPos.Row];
 		var Cell = Row.Get_Cell(StartPos.Cell);
@@ -10999,6 +11002,9 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 				// Копируем настройки всех ячеек исходной строки в новую строку
 				for (var CurCell = 0; CurCell < CellsCount; CurCell++)
 				{
+					var border   = new CDocumentBorder();
+					border.Value = 0x0001;
+
 					var New_Cell = NewRow.Get_Cell(CurCell);
 					var Old_Cell = Row.Get_Cell(CurCell);
 
@@ -11019,6 +11025,9 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 						if (CurCell != CellsNumb[0])
 							New_Cell.SetVMerge(vmerge_Restart);
 					}
+					
+					Old_Cell.Set_Border(border, 2);
+					New_Cell.Set_Border(border, 0);
 				}
 			}
 
@@ -12925,7 +12934,7 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 				{
 					if (Cell.Get_Border(0).Value === 0 && Cell.Get_Border(3).Value === 0)
 					{
-						for (var curRow = Cell.Row.Index; curRow < this.Get_RowsCount(); curRow++)
+						for (var curRow = Cell.Row.Index; curRow < Cell.Row.Index + VMerge_Count; curRow++)
 						{
 							var TempRow  =  this.GetRow(curRow);
 							var TempCell = null;
@@ -13037,7 +13046,7 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 				{
 					if (Cell.Get_Border(0).Value === 0 && Cell.Get_Border(1).Value === 0)
 					{
-						for (var curRow = Cell.Row.Index; curRow < this.Get_RowsCount(); curRow++)
+						for (var curRow = Cell.Row.Index; curRow < Cell.Row.Index + VMerge_Count; curRow++)
 						{
 							var TempRow  =  this.GetRow(curRow);
 							var TempCell = null;
@@ -13222,83 +13231,6 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 				}	
 				this.SetTableGrid(this.Internal_CreateNewGrid(rowsInfo));
 			}	
-				
-		}
-
-
-		// Если отсутсвуют все границы у строки, удаляем её из таблицы
-		// для случаев когда удаляем последний Border внутри колонки
-		for (var curRow = 0; curRow < this.Get_RowsCount(); curRow++)
-		{
-			if (this.GetRow(curRow).Get_CellsCount() === 1)
-			{
-				var Cell = this.GetRow(curRow).Get_Cell(0);
-				if (curRow === 0)
-				{
-					if (Cell.Get_Border(1).Value === 0 && Cell.Get_Border(3).Value === 0 && Cell.Get_Border(0).Value === 0)
-					{
-						this.RemoveTableRow(curRow);
-						curRow--;
-					}
-					else if (Cell.Get_Border(0).Value === 0 && Cell.Get_Border(3).Value === 0 && Cell.Get_Border(2).Value === 0)
-					{
-						this.RemoveTableRow(curRow);
-						curRow--;
-					}
-					else if (Cell.Get_Border(0).Value === 0 && Cell.Get_Border(1).Value === 0 && Cell.Get_Border(2).Value === 0)
-					{
-						this.RemoveTableRow(curRow);
-						curRow--;
-					}
-				}
-				else if (curRow === this.Get_RowsCount() - 1)
-				{
-					if (Cell.Get_Border(1).Value === 0 && Cell.Get_Border(3).Value === 0 && Cell.Get_Border(2).Value === 0)
-					{
-						this.RemoveTableRow(curRow);
-						curRow--;
-					}
-				}
-				else if (Cell.Get_Border(1).Value === 0 && Cell.Get_Border(3).Value === 0 && Cell.Get_Border(0).Value === 0 && Cell.Get_Border(2).Value === 0)
-				{
-					this.RemoveTableRow(curRow);
-					curRow--;
-				}
-						
-			}
-			// Столбца. Удаляем столбец, если в нем только 1 ячейка, 
-			// объединяющая все строки и отсутсвуют внешние границы
-			else 
-			{
-				var Row 		   = this.GetRow(0);
-				var Cell_1 		   = Row.Get_Cell(0);
-				var Cell_2	       = Row.Get_Cell(Row.Get_CellsCount() - 1);
-				
-				var Grid_start_1   = Row.Get_CellInfo(0).StartGridCol;
-				var Grid_start_2   = Row.Get_CellInfo(Row.Get_CellsCount() - 1).StartGridCol;
-				var Grid_span_1    = Cell_1.Get_GridSpan();
-				var Grid_span_2    = Cell_2.Get_GridSpan();
-				var VMerge_count_1 = this.Internal_GetVertMergeCount(0, Grid_start_1, Grid_span_1);
-				var VMerge_count_2 = this.Internal_GetVertMergeCount(0, Grid_start_2, Grid_span_2);
-
-				if (VMerge_count_1  === this.Get_RowsCount() || VMerge_count_2 === this.Get_RowsCount())
-				{
-					var TempCell_1 = this.GetRow(VMerge_count_1 - 1).Get_Cell(0);
-					var TempCell_2 = this.GetRow(VMerge_count_2 - 1).Get_Cell(Row.Get_CellsCount() - 1);
-					if (Cell_1.Get_Border(3).Value === 0 && Cell_1.Get_Border(0).Value === 0 && TempCell_1.Get_Border(2).Value === 0)
-					{
-						this.CurCell = Cell_1;
-						this.RemoveTableColumn();
-						break;
-					}
-					else if (Cell_2.Get_Border(1).Value === 0 && Cell_2.Get_Border(0).Value === 0 && TempCell_2.Get_Border(2).Value === 0)
-					{
-						this.CurCell = Cell_2;
-						this.RemoveTableColumn();
-						break;
-					}
-				}
-			}
 		}
 	}
 };
@@ -13554,8 +13486,8 @@ CTable.prototype.GetDrawLine = function(X1, Y1, X2, Y2, CurPageStart, CurPageEnd
 				{
 					X1  : X1_origin,
 					X2  : X2_origin,
-					Y1 : Y1,
-					Y2 : Y2,
+					Y1 : Y1_origin,
+					Y2 : Y2_origin,
 					Color : "Red",
 					Bold  : false
 				};
@@ -13817,7 +13749,7 @@ CTable.prototype.GetDrawLine = function(X1, Y1, X2, Y2, CurPageStart, CurPageEnd
 						Y2 : Y2,
 						X1 : X1_origin,
 						X2 : X2_origin,
-						Color : "Grey",
+						Color : "Red",
 						Bold  : false
 					};
 
@@ -20199,7 +20131,11 @@ CTable.prototype.GetAllTablesOnPage = function(nPageAbs, arrTables)
 		{
 			for (var nCurCell = 0, nCellsCount = oRow.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
 			{
-				oRow.GetCell(nCurCell).GetContent().GetAllTablesOnPage(nPageAbs, arrTables);
+				var oCell = oRow.GetCell(nCurCell);
+				if (oCell.IsMergedCell())
+					continue;
+
+				oCell.GetContent().GetAllTablesOnPage(nPageAbs, arrTables);
 			}
 		}
 	}

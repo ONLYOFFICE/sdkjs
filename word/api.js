@@ -2211,7 +2211,7 @@ background-repeat: no-repeat;\
 			var _X       = elem.X;
 			var _Y       = elem.Y;
 			var _PageNum = elem.GetCurrentPageAbsolute();
-			var oBounds  = elem.GetSelectionBounds();
+			var oBounds  = elem.GetSelectionBounds(true);
 			if (oBounds && oBounds.End)
 			{
 				_X       = oBounds.End.X + oBounds.End.W;
@@ -7582,7 +7582,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.ClearFormating = function()
 	{
-		if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Paragraph_Content))
+		if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_TextProperties))
 		{
 			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_ClearFormatting);
 			this.WordControl.m_oLogicDocument.ClearParagraphFormatting();
@@ -8585,6 +8585,18 @@ background-repeat: no-repeat;\
 
 			if (oContentControl && oContentControl.GetContentControlType)
 			{
+				if ((Asc.c_oAscSdtLockType.ContentLocked === oContentControl.GetContentControlLock()
+					|| Asc.c_oAscSdtLockType.SdtContentLocked === oContentControl.GetContentControlLock())
+					&& oContentControlPr
+					&& Asc.c_oAscSdtLockType.Unlocked !== oContentControlPr.GetLock()
+					&& Asc.c_oAscSdtLockType.SdtLocked !== oContentControlPr.GetLock())
+				{
+					if (oContentControl.IsDatePicker() && !oContentControl.GetDatePickerPr().IsEqual(oContentControlPr.DateTimePr))
+					{
+						oContentControlPr.DateTimePr = oContentControl.GetDatePickerPr().Copy();
+					}
+				}
+
 				if (c_oAscSdtLevelType.Block === oContentControl.GetContentControlType())
 				{
 					isLocked = oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_None, {
