@@ -125,6 +125,8 @@ CSectionPr.prototype =
         this.Set_Borders_Display( Other.Borders.Display );
 		this.SetBordersOffsetFrom(Other.Borders.OffsetFrom);
         this.Set_Borders_ZOrder( Other.Borders.ZOrder );
+        this.Set_TitlePage(Other.TitlePage);
+        this.SetGutterRTL(Other.GutterRTL);
 
         // Колонтитулы
         if (true === CopyHdrFtr)
