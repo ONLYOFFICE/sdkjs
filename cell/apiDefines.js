@@ -300,7 +300,8 @@ var c_oTargetType = {
   FrozenAnchorH: 14,
   FrozenAnchorV: 15,
   GroupRow: 16,
-  GroupCol: 17
+  GroupCol: 17,
+  ResizeTableHandle: 18
 };
 
 var c_oAscAutoFilterTypes = {

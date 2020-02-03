@@ -7605,6 +7605,29 @@
         } : null;
     };
 
+	WorksheetView.prototype._hitCursorTableRightCorner = function (vr, x, y, offsetX, offsetY) {
+		var i, l, res, range;
+		var tables = this.model.TableParts;
+
+		for (i = 0, l = tables.length; i < l; ++i) {
+			range = new Asc.Range(tables[i].Ref.c2, tables[i].Ref.r2, tables[i].Ref.c2, tables[i].Ref.r2);
+			res = this._hitInRange(range, AscCommonExcel.selectionLineType.Selection, vr, x, y, offsetX, offsetY);
+			if (res && res.cursor === kCurSEResize) {
+				break;
+			} else {
+				res = null;
+			}
+		}
+		return res ? {
+				cursor: res.cursor,
+				target: c_oTargetType.ResizeTableHandle,
+				col: res.col,
+				row: res.row,
+				indexFormulaRange: i
+				//targetArr: targetArr
+			} : null;
+	};
+
 	WorksheetView.prototype.getCursorTypeFromXY = function (x, y) {
 	    var canEdit = this.handlers.trigger('canEdit');
 		var viewMode = this.handlers.trigger('getViewMode');
@@ -7815,6 +7838,15 @@
 				return res;
 			}
 		}
+
+
+		this._drawElements(function (_vr, _offsetX, _offsetY) {
+			return (null === (res = this._hitCursorTableRightCorner(_vr, x, y, _offsetX, _offsetY)));
+		});
+		if (res) {
+			return res;
+		}
+
 
 		isSelGraphicObject = this.objectRender.selectedGraphicObjectsExists();
 		if (canEdit && !isSelGraphicObject && this.model.selectionRange.isSingleRange() &&
@@ -9783,6 +9815,523 @@
             this._drawSelection();
         }
     };
+
+	WorksheetView.prototype.resizeTableFillHandle = function (x, y) {
+		// Возвращаемый результат
+		var ret = null;
+		// Если мы только первый раз попали сюда, то копируем выделенную область
+		if (null === this.activeFillHandle) {
+			this.activeFillHandle = this.model.selectionRange.getLast().clone();
+			// Для первого раза нормализуем (т.е. первая точка - это левый верхний угол)
+			this.activeFillHandle.normalize();
+			return ret;
+		}
+
+		// Очищаем выделение, будем рисовать заново
+		this.cleanSelection();
+		// Копируем выделенную область
+		var ar = this.model.selectionRange.getLast().clone(true);
+		// Получаем координаты левого верхнего угла выделения
+		var xL = this._getColLeft(ar.c1);
+		var yL = this._getRowTop(ar.r1);
+		// Получаем координаты правого нижнего угла выделения
+		var xR = this._getColLeft(ar.c2 + 1);
+		var yR = this._getRowTop(ar.r2 + 1);
+
+		// range для пересчета видимой области
+		var activeFillHandleCopy;
+
+		// Колонка по X и строка по Y
+		var colByX = this._findColUnderCursor(x, /*canReturnNull*/false, true).col;
+		var rowByY = this._findRowUnderCursor(y, /*canReturnNull*/false, true).row;
+		// Колонка по X и строка по Y (без половинчатого счета). Для сдвига видимой области
+		var colByXNoDX = this._findColUnderCursor(x, /*canReturnNull*/false, false).col;
+		var rowByYNoDY = this._findRowUnderCursor(y, /*canReturnNull*/false, false).row;
+		// Сдвиг в столбцах и строках от крайней точки
+		var dCol;
+		var dRow;
+
+		// Пересчитываем X и Y относительно видимой области
+		x += (this._getColLeft(this.visibleRange.c1) - this.cellsLeft);
+		y += (this._getRowTop(this.visibleRange.r1) - this.cellsTop);
+
+		// Вычисляем расстояние от (x, y) до (xL, yL)
+		var dXL = x - xL;
+		var dYL = y - yL;
+		// Вычисляем расстояние от (x, y) до (xR, yR)
+		var dXR = x - xR;
+		var dYR = y - yR;
+		var dXRMod;
+		var dYRMod;
+
+		// Определяем область попадания и точку
+		/*
+		 (1)					(2)					(3)
+
+		 ------------|-----------------------|------------
+		 |						|
+		 (4)		|			(5)			|		(6)
+		 |						|
+		 ------------|-----------------------|------------
+
+		 (7)					(8)					(9)
+		 */
+
+		// Область точки (x, y)
+		var _tmpArea = 0;
+		if (dXR <= 0) {
+			// Области (1), (2), (4), (5), (7), (8)
+			if (dXL <= 0) {
+				// Области (1), (4), (7)
+				if (dYR <= 0) {
+					// Области (1), (4)
+					if (dYL <= 0) {
+						// Область (1)
+						_tmpArea = 1;
+					} else {
+						// Область (4)
+						_tmpArea = 4;
+					}
+				} else {
+					// Область (7)
+					_tmpArea = 7;
+				}
+			} else {
+				// Области (2), (5), (8)
+				if (dYR <= 0) {
+					// Области (2), (5)
+					if (dYL <= 0) {
+						// Область (2)
+						_tmpArea = 2;
+					} else {
+						// Область (5)
+						_tmpArea = 5;
+					}
+				} else {
+					// Область (3)
+					_tmpArea = 8;
+				}
+			}
+		} else {
+			// Области (3), (6), (9)
+			if (dYR <= 0) {
+				// Области (3), (6)
+				if (dYL <= 0) {
+					// Область (3)
+					_tmpArea = 3;
+				} else {
+					// Область (6)
+					_tmpArea = 6;
+				}
+			} else {
+				// Область (9)
+				_tmpArea = 9;
+			}
+		}
+
+		// Проверяем, в каком направлении движение
+		switch (_tmpArea) {
+			case 2:
+			case 8:
+				// Двигаемся по вертикали.
+				this.fillHandleDirection = 1;
+				break;
+			case 4:
+			case 6:
+				// Двигаемся по горизонтали.
+				this.fillHandleDirection = 0;
+				break;
+			case 1:
+				// Сравниваем расстояния от точки до левого верхнего угла выделения
+				dXRMod = Math.abs(x - xL);
+				dYRMod = Math.abs(y - yL);
+				// Сдвиги по столбцам и строкам
+				dCol = Math.abs(colByX - ar.c1);
+				dRow = Math.abs(rowByY - ar.r1);
+				// Определим направление позднее
+				this.fillHandleDirection = -1;
+				break;
+			case 3:
+				// Сравниваем расстояния от точки до правого верхнего угла выделения
+				dXRMod = Math.abs(x - xR);
+				dYRMod = Math.abs(y - yL);
+				// Сдвиги по столбцам и строкам
+				dCol = Math.abs(colByX - ar.c2);
+				dRow = Math.abs(rowByY - ar.r1);
+				// Определим направление позднее
+				this.fillHandleDirection = -1;
+				break;
+			case 7:
+				// Сравниваем расстояния от точки до левого нижнего угла выделения
+				dXRMod = Math.abs(x - xL);
+				dYRMod = Math.abs(y - yR);
+				// Сдвиги по столбцам и строкам
+				dCol = Math.abs(colByX - ar.c1);
+				dRow = Math.abs(rowByY - ar.r2);
+				// Определим направление позднее
+				this.fillHandleDirection = -1;
+				break;
+			case 5:
+			case 9:
+				// Сравниваем расстояния от точки до правого нижнего угла выделения
+				dXRMod = Math.abs(dXR);
+				dYRMod = Math.abs(dYR);
+				// Сдвиги по столбцам и строкам
+				dCol = Math.abs(colByX - ar.c2);
+				dRow = Math.abs(rowByY - ar.r2);
+				// Определим направление позднее
+				this.fillHandleDirection = -1;
+				break;
+		}
+
+		//console.log(_tmpArea);
+
+		// Возможно еще не определили направление
+		if (-1 === this.fillHandleDirection) {
+			// Проверим сдвиги по столбцам и строкам, если не поможет, то рассчитываем по расстоянию
+			if (0 === dCol && 0 !== dRow) {
+				// Двигаемся по вертикали.
+				this.fillHandleDirection = 1;
+			} else if (0 !== dCol && 0 === dRow) {
+				// Двигаемся по горизонтали.
+				this.fillHandleDirection = 0;
+			} else if (dXRMod >= dYRMod) {
+				// Двигаемся по горизонтали.
+				this.fillHandleDirection = 0;
+			} else {
+				// Двигаемся по вертикали.
+				this.fillHandleDirection = 1;
+			}
+		}
+
+		// Проверяем, в каком направлении движение
+		if (0 === this.fillHandleDirection) {
+			// Определяем область попадания и точку
+			/*
+			 |						|
+			 |						|
+			 (1)		|			(2)			|		(3)
+			 |						|
+			 |						|
+			 */
+			if (dXR <= 0) {
+				// Область (1) или (2)
+				if (dXL <= 0) {
+					// Область (1)
+					this.fillHandleArea = 1;
+				} else {
+					// Область (2)
+					this.fillHandleArea = 2;
+				}
+			} else {
+				// Область (3)
+				this.fillHandleArea = 3;
+			}
+
+			// Находим колонку для точки
+			this.activeFillHandle.c2 = colByX;
+
+			switch (this.fillHandleArea) {
+				case 1:
+					// Первая точка (xR, yR), вторая точка (x, yL)
+					this.activeFillHandle.c1 = ar.c2;
+					this.activeFillHandle.r1 = ar.r2;
+
+					this.activeFillHandle.r2 = ar.r1;
+
+					// Случай, если мы еще не вышли из внутренней области
+					if (this.activeFillHandle.c2 == ar.c1) {
+						this.fillHandleArea = 2;
+					}
+					break;
+				case 2:
+					// Первая точка (xR, yR), вторая точка (x, yL)
+					this.activeFillHandle.c1 = ar.c2;
+					this.activeFillHandle.r1 = ar.r2;
+
+					this.activeFillHandle.r2 = ar.r1;
+
+					if (this.activeFillHandle.c2 > this.activeFillHandle.c1) {
+						// Ситуация половинки последнего столбца
+						this.activeFillHandle.c1 = ar.c1;
+						this.activeFillHandle.r1 = ar.r1;
+
+						this.activeFillHandle.c2 = ar.c1;
+						this.activeFillHandle.r2 = ar.r1;
+					}
+					break;
+				case 3:
+					// Первая точка (xL, yL), вторая точка (x, yR)
+					this.activeFillHandle.c1 = ar.c1;
+					this.activeFillHandle.r1 = ar.r1;
+
+					this.activeFillHandle.r2 = ar.r2;
+					break;
+			}
+
+			// Копируем в range для пересчета видимой области
+			activeFillHandleCopy = this.activeFillHandle.clone();
+			activeFillHandleCopy.c2 = colByXNoDX;
+		} else {
+			// Определяем область попадания и точку
+			/*
+			 (1)
+			 ____________________________
+
+
+			 (2)
+
+			 ____________________________
+
+			 (3)
+			 */
+			if (dYR <= 0) {
+				// Область (1) или (2)
+				if (dYL <= 0) {
+					// Область (1)
+					this.fillHandleArea = 1;
+				} else {
+					// Область (2)
+					this.fillHandleArea = 2;
+				}
+			} else {
+				// Область (3)
+				this.fillHandleArea = 3;
+			}
+
+			// Находим строку для точки
+			this.activeFillHandle.r2 = rowByY;
+
+			switch (this.fillHandleArea) {
+				case 1:
+					// Первая точка (xR, yR), вторая точка (xL, y)
+					this.activeFillHandle.c1 = ar.c2;
+					this.activeFillHandle.r1 = ar.r2;
+
+					this.activeFillHandle.c2 = ar.c1;
+
+					// Случай, если мы еще не вышли из внутренней области
+					if (this.activeFillHandle.r2 == ar.r1) {
+						this.fillHandleArea = 2;
+					}
+					break;
+				case 2:
+					// Первая точка (xR, yR), вторая точка (xL, y)
+					this.activeFillHandle.c1 = ar.c2;
+					this.activeFillHandle.r1 = ar.r2;
+
+					this.activeFillHandle.c2 = ar.c1;
+
+					if (this.activeFillHandle.r2 > this.activeFillHandle.r1) {
+						// Ситуация половинки последней строки
+						this.activeFillHandle.c1 = ar.c1;
+						this.activeFillHandle.r1 = ar.r1;
+
+						this.activeFillHandle.c2 = ar.c1;
+						this.activeFillHandle.r2 = ar.r1;
+					}
+					break;
+				case 3:
+					// Первая точка (xL, yL), вторая точка (xR, y)
+					this.activeFillHandle.c1 = ar.c1;
+					this.activeFillHandle.r1 = ar.r1;
+
+					this.activeFillHandle.c2 = ar.c2;
+					break;
+			}
+
+			// Копируем в range для пересчета видимой области
+			activeFillHandleCopy = this.activeFillHandle.clone();
+			activeFillHandleCopy.r2 = rowByYNoDY;
+		}
+
+		//console.log ("row1: " + this.activeFillHandle.r1 + " col1: " + this.activeFillHandle.c1 + " row2: " + this.activeFillHandle.r2 + " col2: " + this.activeFillHandle.c2);
+		// Перерисовываем
+		this._drawSelection();
+
+		// Смотрим, ушли ли мы за границу видимой области
+		ret = this._calcRangeOffset(activeFillHandleCopy);
+		this.model.workbook.handlers.trigger("asc_onHideComment");
+
+		return ret;
+	};
+
+	/* Функция для применения автозаполнения */
+	WorksheetView.prototype.applyResizeTableHandle = function (x, y) {
+		var t = this;
+
+		// Текущее выделение (к нему применится автозаполнение)
+		var arn = t.model.selectionRange.getLast();
+		var range = t.model.getRange3(arn.r1, arn.c1, arn.r2, arn.c2);
+
+		// Были ли изменения
+		var bIsHaveChanges = false;
+		// Вычисляем индекс сдвига
+		var nIndex = 0;
+		/*nIndex*/
+		if (0 === this.fillHandleDirection) {
+			// Горизонтальное движение
+			nIndex = this.activeFillHandle.c2 - arn.c1;
+			if (2 === this.fillHandleArea) {
+				// Для внутренности нужно вычесть 1 из значения
+				bIsHaveChanges = arn.c2 !== (this.activeFillHandle.c2 - 1);
+			} else {
+				bIsHaveChanges = arn.c2 !== this.activeFillHandle.c2;
+			}
+		} else {
+			// Вертикальное движение
+			nIndex = this.activeFillHandle.r2 - arn.r1;
+			if (2 === this.fillHandleArea) {
+				// Для внутренности нужно вычесть 1 из значения
+				bIsHaveChanges = arn.r2 !== (this.activeFillHandle.r2 - 1);
+			} else {
+				bIsHaveChanges = arn.r2 !== this.activeFillHandle.r2;
+			}
+		}
+
+		// Меняли ли что-то
+		if (bIsHaveChanges && (this.activeFillHandle.r1 !== this.activeFillHandle.r2 ||
+			this.activeFillHandle.c1 !== this.activeFillHandle.c2)) {
+			// Диапазон ячеек, который мы будем менять
+			var changedRange = arn.clone();
+
+			// Очищаем выделение
+			this.cleanSelection();
+			if (2 === this.fillHandleArea) {
+				// Мы внутри, будет удаление cбрасываем первую ячейку
+				// Проверяем, удалили ли мы все (если да, то область не меняется)
+				if (arn.c1 !== this.activeFillHandle.c2 || arn.r1 !== this.activeFillHandle.r2) {
+					// Уменьшаем диапазон (мы удалили не все)
+					if (0 === this.fillHandleDirection) {
+						// Горизонтальное движение (для внутренности необходимо вычесть 1)
+						arn.c2 = this.activeFillHandle.c2 - 1;
+
+						changedRange.c1 = changedRange.c2;
+						changedRange.c2 = this.activeFillHandle.c2;
+					} else {
+						// Вертикальное движение (для внутренности необходимо вычесть 1)
+						arn.r2 = this.activeFillHandle.r2 - 1;
+
+						changedRange.r1 = changedRange.r2;
+						changedRange.r2 = this.activeFillHandle.r2;
+					}
+				}
+			} else {
+				// Мы вне выделения. Увеличиваем диапазон
+				if (0 === this.fillHandleDirection) {
+					// Горизонтальное движение
+					if (1 === this.fillHandleArea) {
+						arn.c1 = this.activeFillHandle.c2;
+
+						changedRange.c2 = changedRange.c1 - 1;
+						changedRange.c1 = this.activeFillHandle.c2;
+					} else {
+						arn.c2 = this.activeFillHandle.c2;
+
+						changedRange.c1 = changedRange.c2 + 1;
+						changedRange.c2 = this.activeFillHandle.c2;
+					}
+				} else {
+					// Вертикальное движение
+					if (1 === this.fillHandleArea) {
+						arn.r1 = this.activeFillHandle.r2;
+
+						changedRange.r2 = changedRange.r1 - 1;
+						changedRange.r1 = this.activeFillHandle.r2;
+					} else {
+						arn.r2 = this.activeFillHandle.r2;
+
+						changedRange.r1 = changedRange.r2 + 1;
+						changedRange.r2 = this.activeFillHandle.r2;
+					}
+				}
+			}
+
+			changedRange.normalize();
+
+			var applyFillHandleCallback = function (res) {
+				if (res) {
+					// Автозаполняем ячейки
+					var oCanPromote = range.canPromote(/*bCtrl*/ctrlPress, /*bVertical*/(1 === t.fillHandleDirection),
+						nIndex);
+					if (null != oCanPromote) {
+						History.Create_NewPoint();
+						History.StartTransaction();
+
+						range.promote(/*bCtrl*/ctrlPress, /*bVertical*/(1 === t.fillHandleDirection), nIndex,
+							oCanPromote);
+
+						// Вызываем функцию пересчета для заголовков форматированной таблицы
+						t.model.autoFilters.renameTableColumn(arn);
+
+						// Сбрасываем параметры автозаполнения
+						t.activeFillHandle = null;
+						t.fillHandleDirection = -1;
+
+						History.SetSelection(range.bbox.clone());
+						History.SetSelectionRedo(oCanPromote.to.clone());
+						History.EndTransaction();
+
+						// Обновляем выделенные ячейки
+						t._updateRange(arn);
+						t.draw();
+					} else {
+						t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotFillRange,
+							c_oAscError.Level.NoCritical);
+						t.model.selectionRange.assign2(range.bbox);
+
+						// Сбрасываем параметры автозаполнения
+						t.activeFillHandle = null;
+						t.fillHandleDirection = -1;
+
+						t.updateSelection();
+					}
+				} else {
+					// Сбрасываем параметры автозаполнения
+					t.activeFillHandle = null;
+					t.fillHandleDirection = -1;
+					// Перерисовываем
+					t._drawSelection();
+				}
+			};
+
+			if (this.model.inPivotTable(changedRange)) {
+				// Сбрасываем параметры автозаполнения
+				this.activeFillHandle = null;
+				this.fillHandleDirection = -1;
+				// Перерисовываем
+				this._drawSelection();
+
+				this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot,
+					c_oAscError.Level.NoCritical);
+				return;
+			}
+
+
+			if (this.intersectionFormulaArray(changedRange)) {
+				// Сбрасываем параметры автозаполнения
+				this.activeFillHandle = null;
+				this.fillHandleDirection = -1;
+				// Перерисовываем
+				this._drawSelection();
+
+				this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray,
+					c_oAscError.Level.NoCritical);
+				return;
+			}
+
+			// Можно ли применять автозаполнение ?
+			this._isLockedCells(changedRange, /*subType*/null, applyFillHandleCallback);
+		} else {
+			// Ничего не менялось, сбрасываем выделение
+			this.cleanSelection();
+			// Сбрасываем параметры автозаполнения
+			this.activeFillHandle = null;
+			this.fillHandleDirection = -1;
+			// Перерисовываем
+			this._drawSelection();
+		}
+	};
 
     /* Функция для работы перемещения диапазона (selection). (x, y) - координаты точки мыши на области
      *  ToDo нужно переделать, чтобы moveRange появлялся только после сдвига от текущей ячейки

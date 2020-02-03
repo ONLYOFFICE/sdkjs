@@ -406,6 +406,10 @@
 				  self.enableKeyEventsHandler(true);
 			  }, "autoFiltersClick": function () {
 				  self._onAutoFiltersClick.apply(self, arguments);
+			  }, "resizeTableHandle": function () {
+				  self._onResizeTableHandle.apply(self, arguments);
+			  }, "resizeTableHandleDone": function () {
+				  self._onResizeTableHandleDone.apply(self, arguments);
 			  }, "commentCellClick": function () {
 				  self._onCommentCellClick.apply(self, arguments);
 			  }, "isGlobalLockEditCell": function () {
@@ -1347,6 +1351,19 @@
     // Закрепляем область
     var ws = this.getWorksheet();
     ws.applyFrozenAnchor(x, y, target);
+  };
+
+  //Format table
+  WorkbookView.prototype._onResizeTableHandle = function(x, y, callback) {
+		var ws = this.getWorksheet();
+		var d = ws.resizeTableFillHandle(x, y);
+		asc_applyFunction(callback, d);
+  };
+
+	// Обработка окончания автозаполнения
+  WorkbookView.prototype._onResizeTableHandleDone = function(x, y) {
+		var ws = this.getWorksheet();
+		ws.applyResizeTableHandle(x, y);
   };
 
   WorkbookView.prototype.showAutoComplete = function() {
