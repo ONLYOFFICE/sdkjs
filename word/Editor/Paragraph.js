@@ -896,23 +896,22 @@ Paragraph.prototype.RemoveFromContent = function(nPos, nCount)
 /**
  * Добавляем несколько элементов в конец параграфа
  */
-Paragraph.prototype.Internal_Content_Concat = function(Items)
+Paragraph.prototype.Internal_Content_Concat = function(arrItems)
 {
-	var StartPos = this.Content.length;
-	this.Content = this.Content.concat(Items);
-
-	History.Add(new CChangesParagraphAddItem(this, StartPos, Items));
-	this.private_UpdateTrackRevisions();
-	this.private_CheckUpdateBookmarks(Items);
-	this.UpdateDocumentOutline();
-
-	// Нам нужно сбросить рассчет всех добавленных элементов и выставить у них родительский класс и параграф
-	for (var CurPos = StartPos; CurPos < this.Content.length; CurPos++)
+	var nStartPos = this.Content.length;
+	for (var nIndex = 0, nCount = arrItems.length; nIndex < nCount; ++nIndex)
 	{
-		this.Content[CurPos].SetParagraph(this);
-		if (this.Content[CurPos].Recalc_RunsCompiledPr)
-			this.Content[CurPos].Recalc_RunsCompiledPr();
+		this.Content.push(arrItems[nIndex]);
+
+		arrItems[nIndex].SetParagraph(this);
+		if (arrItems[nIndex].Recalc_RunsCompiledPr)
+			arrItems[nIndex].Recalc_RunsCompiledPr();
 	}
+
+	History.Add(new CChangesParagraphAddItem(this, nStartPos, arrItems));
+	this.private_UpdateTrackRevisions();
+	this.private_CheckUpdateBookmarks(arrItems);
+	this.UpdateDocumentOutline();
 
 	// Обновлять позиции в NearestPos не надо, потому что мы добавляем новые элементы в конец массива
 	this.RecalcInfo.Set_Type_0_Spell(pararecalc_0_Spell_All);
@@ -987,6 +986,9 @@ Paragraph.prototype.Internal_Content_Remove = function(Pos)
  */
 Paragraph.prototype.Internal_Content_Remove2 = function(Pos, Count)
 {
+	if (0 === Pos && this.Content.length === Count)
+		return this.ClearContent();
+
 	var CommentsToDelete = [];
 	if (true === this.DeleteCommentOnRemove && null !== this.LogicDocument && null != this.LogicDocument.Comments)
 	{
@@ -1064,6 +1066,59 @@ Paragraph.prototype.Internal_Content_Remove2 = function(Pos, Count)
 
 	// Передвинем все метки слов для проверки орфографии
 	this.SpellChecker.Update_OnRemove(this, Pos, Count);
+};
+/**
+ * Очищаем полностью параграф (включая последний ран)
+ */
+Paragraph.prototype.ClearContent = function()
+{
+	var arrCommentsToDelete = [];
+	var isDeleteComments = true === this.DeleteCommentOnRemove && null !== this.LogicDocument && null != this.LogicDocument.Comments;
+
+	var oDocumentComments = this.LogicDocument.Comments;
+	for (var nPos = 0, nLen = this.Content.length; nPos < nLen; ++nPos)
+	{
+		var oItem = this.Content[nPos];
+
+		if (isDeleteComments && para_Comment === oItem.Type)
+		{
+			var sCommentId = oItem.CommentId;
+			var oComment   = oDocumentComments.Get_ById(sCommentId);
+
+			if (oComment)
+			{
+				if (true === oItem.Start)
+					oComment.Set_StartId(null);
+				else
+					oComment.Set_EndId(null);
+			}
+
+			arrCommentsToDelete.push(CommentId);
+		}
+
+		if (oItem.PreDelete)
+			oItem.PreDelete();
+	}
+
+	History.Add(new CChangesParagraphRemoveItem(this, 0, this.Content));
+
+	this.private_UpdateTrackRevisions();
+	this.private_CheckUpdateBookmarks(this.Content);
+	this.UpdateDocumentOutline();
+
+	this.Selection.StartPos = 0;
+	this.Selection.EndPos   = 0;
+	this.CurPos.ContentPos  = 0;
+
+	this.NearPosArray = [];
+
+	this.Content = [];
+
+	// Комментарии удаляем после, чтобы не нарушить позиции
+	for (var nIndex = 0, nCount = arrCommentsToDelete.length; nIndex < nCount; ++nIndex)
+	{
+		this.LogicDocument.RemoveComment(arrCommentsToDelete[nIndex], true, false);
+	}
 };
 Paragraph.prototype.Clear_ContentChanges = function()
 {
@@ -11575,11 +11630,10 @@ Paragraph.prototype.Concat = function(Para, isUseConcatedStyle)
 	}
 
 	// Добавляем содержимое второго параграфа к первому
-	var NewContent = Para.Content.slice(0); // чтобы передать новый массив, а не ссылку на старый
-	this.Internal_Content_Concat(NewContent);
+	this.Internal_Content_Concat(Para.Content);
 
-	// Удалим из параграфа все элементы (это нужно, чтобы не лежали ссылки на одинаковые объекты в разных параграфах)
-	Para.Internal_Content_Remove2(0, Para.Content.length);
+	// Очистим содержимое параграфа (это нужно, чтобы не лежали ссылки на одинаковые объекты в разных параграфах)
+	Para.ClearContent();
 
 	// Если на данном параграфе оканчивалась секция, тогда удаляем эту секцию
 	this.Set_SectionPr(undefined);

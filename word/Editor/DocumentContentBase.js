@@ -1624,6 +1624,7 @@ CDocumentContentBase.prototype.ConcatParagraphs = function(nPosition, isUseConca
 	{
 		this.Content[nPosition].Concat(this.Content[nPosition + 1], isUseConcatedStyle);
 		this.RemoveFromContent(nPosition + 1, 1);
+		this.Content[nPosition].CorrectContent();
 		return true;
 	}
 
