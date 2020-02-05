@@ -1801,7 +1801,15 @@ ParaFootnoteReference.prototype.Measure = function(Context, TextPr, MathInfo, Ru
 };
 ParaFootnoteReference.prototype.Copy = function(oPr)
 {
-	var oFootnote = this.Footnote.Parent.CreateFootnote();
+	var oFootnote;
+	if(oPr.Comparison)
+	{
+		oFootnote = oPr.Comparison.createFootNote();
+	}
+	else
+	{
+		oFootnote = this.Footnote.Parent.CreateFootnote();
+	}
 	oFootnote.Copy2(this.Footnote, oPr);
 
 	var oRef = new ParaFootnoteReference(oFootnote);
