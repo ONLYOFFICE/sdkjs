@@ -375,7 +375,16 @@ function (window, undefined) {
     drawingsChangesMap[AscDFH.historyitem_StockChart_SetUpDownBars]            = function(oClass, value){oClass.upDownBars = value;};
     drawingsChangesMap[AscDFH.historyitem_StrCache_SetPtCount]                 = function(oClass, value){oClass.ptCount = value;};
     drawingsChangesMap[AscDFH.historyitem_StrPoint_SetIdx]                     = function(oClass, value){oClass.idx =  value;};
-    drawingsChangesMap[AscDFH.historyitem_StrPoint_SetVal]                     = function(oClass, value){oClass.val =  value;};
+    drawingsChangesMap[AscDFH.historyitem_StrPoint_SetVal]                     = function(oClass, value){
+        oClass.val =  value;
+        if(AscFonts.IsCheckSymbols)
+        {
+            if(typeof value === "string" && value.length > 0)
+            {
+                AscFonts.FontPickerByCharacter.getFontsByString(value);
+            }
+        }
+    };
     drawingsChangesMap[AscDFH.historyitem_StrRef_SetF]                          = function(oClass, value){oClass.f =  value;};
     drawingsChangesMap[AscDFH.historyitem_StrRef_SetStrCache]                   = function(oClass, value){oClass.strCache =  value;};
     drawingsChangesMap[AscDFH.historyitem_SurfaceChart_SetWireframe]              = function(oClass, value){oClass.wireframe =  value;};
@@ -11845,7 +11854,14 @@ CStringPoint.prototype =
     {
         History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_StrPoint_SetVal, this.val, pr));
         this.val = pr;
+        if(AscFonts.IsCheckSymbols)
+        {
+            if(typeof pr === "string" && pr.length > 0)
+            {
+                AscFonts.FontPickerByCharacter.getFontsByString(pr);
             }
+        }
+    }
 };
 
 

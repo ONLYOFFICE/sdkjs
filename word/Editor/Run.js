@@ -197,7 +197,7 @@ ParaRun.prototype.Copy = function(Selected, oPr)
 	NewRun.Set_Pr(this.Pr.Copy(undefined, oPr));
 
     var oLogicDocument = this.GetLogicDocument();
-	if(oPr.Comparison)
+	if(oPr && oPr.Comparison)
 	{
 		oPr.Comparison.updateReviewInfo(NewRun, reviewtype_Add);
 	}
@@ -243,7 +243,7 @@ ParaRun.prototype.Copy = function(Selected, oPr)
 
 	var CurPos, AddedPos, Item;
 
-	if(oPr.Comparison)
+	if(oPr && oPr.Comparison)
 	{
 		var aCopyContent = [];
 		for (CurPos = StartPos; CurPos < EndPos; CurPos++)
@@ -318,14 +318,14 @@ ParaRun.prototype.Copy2 = function(oPr)
     var NewRun = new ParaRun(this.Paragraph);
 
     NewRun.Set_Pr( this.Pr.Copy(undefined, oPr) );
-	if(oPr.Comparison)
+	if(oPr && oPr.Comparison)
 	{
 		oPr.Comparison.updateReviewInfo(NewRun, reviewtype_Add);
 	}
     var StartPos = 0;
     var EndPos   = this.Content.length;
 	var CurPos;
-	if(oPr.Comparison)
+	if(oPr && oPr.Comparison)
 	{
 		var aContentToInsert = [];
 		for (CurPos = StartPos; CurPos < EndPos; CurPos++ )

@@ -1802,7 +1802,7 @@ ParaFootnoteReference.prototype.Measure = function(Context, TextPr, MathInfo, Ru
 ParaFootnoteReference.prototype.Copy = function(oPr)
 {
 	var oFootnote;
-	if(oPr.Comparison)
+	if(oPr && oPr.Comparison)
 	{
 		oFootnote = oPr.Comparison.createFootNote();
 	}

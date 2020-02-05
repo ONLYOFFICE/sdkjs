@@ -320,10 +320,10 @@ Paragraph.prototype.Copy = function(Parent, DrawingDocument, oPr)
 
 	EndRun.Set_Pr(this.TextPr.Value.Copy(undefined, oPr));
 
-	if (oPr.CopyReviewPr)
+	if (oPr && oPr.CopyReviewPr)
 		EndRun.SetReviewTypeWithInfo(this.GetReviewType(), this.GetReviewInfo().Copy(), false);
 
-	if(oPr.Comparison)
+	if(oPr && oPr.Comparison)
 	{
 		oPr.Comparison.updateReviewInfo(EndRun, reviewtype_Add, true);
 	}
@@ -333,7 +333,7 @@ Paragraph.prototype.Copy = function(Parent, DrawingDocument, oPr)
 	{
 		var oLogicDocument = this.SectPr.LogicDocument;
 		var bCopyHdrFtr = undefined;
-		if(oPr.Comparison)
+		if(oPr && oPr.Comparison)
 		{
 			oLogicDocument = oPr.Comparison.originalDocument;
 			bCopyHdrFtr = true;
