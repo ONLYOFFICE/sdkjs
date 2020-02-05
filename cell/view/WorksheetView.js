@@ -9321,22 +9321,22 @@
         var ret = null;
 
 		var t = this, table;
-		var _checkTableRange = function() {
+		var _checkTableRange = function () {
 			var _range = t.activeFillHandle;
-			if(table) {
+			if (table) {
 				var _tableRange = table.Ref;
-				if(_range.c2 < _tableRange.c1) {
+				if (_range.c2 < _tableRange.c1) {
 					_range.c2 = _tableRange.c1;
 					_range.c1 = _tableRange.c1;
 				}
 				var _r2 = table.isHeaderRow() ? _tableRange.r1 + 1 : _tableRange.r1;
-				if(_range.r2 < _r2) {
+				if (_range.r2 < _r2) {
 					_range.r2 = _r2;
 					_range.r1 = _tableRange.r1;
 				}
 			}
 		};
-		var _getTableByIndex = function(index) {
+		var _getTableByIndex = function (index) {
 			return t.model.TableParts && t.model.TableParts[index] ? t.model.TableParts[index] : null;
 		};
 
@@ -15189,102 +15189,100 @@
 	WorksheetView.prototype.getFilterButtonSize = function () {
 	    return AscBrowser.isRetina ? AscCommon.AscBrowser.convertToRetinaValue(filterSizeButton, true) : filterSizeButton;
 	};
-    WorksheetView.prototype.af_drawButtons = function (updatedRange, offsetX, offsetY) {
-        var i, ws = this.model;
-        var t = this;
+	WorksheetView.prototype.af_drawButtons = function (updatedRange, offsetX, offsetY) {
+		var i, ws = this.model;
+		var t = this;
 
-        if (ws.workbook.bUndoChanges || ws.workbook.bRedoChanges) {
-            return false;
-        }
+		if (ws.workbook.bUndoChanges || ws.workbook.bRedoChanges) {
+			return false;
+		}
 
-        var drawCurrentFilterButtons = function (filter) {
+		var drawCurrentFilterButtons = function (filter) {
 			var autoFilter = filter.isAutoFilter() ? filter : filter.AutoFilter;
 
-			if(!filter.Ref) {
+			if (!filter.Ref) {
 				return;
 			}
 
-            var range = new Asc.Range(filter.Ref.c1, filter.Ref.r1, filter.Ref.c2, filter.Ref.r1);
+			var range = new Asc.Range(filter.Ref.c1, filter.Ref.r1, filter.Ref.c2, filter.Ref.r1);
 
-            if (range.isIntersect(updatedRange)) {
-                var row = range.r1;
+			if (range.isIntersect(updatedRange)) {
+				var row = range.r1;
 
 				var sortConditions = filter.isApplySortConditions() ? filter.SortState.SortConditions : null;
-                for (var col = range.c1; col <= range.c2; col++) {
-                    if (col >= updatedRange.c1 && col <= updatedRange.c2) {
-                        var isSetFilter = false;
-                        var isShowButton = true;
+				for (var col = range.c1; col <= range.c2; col++) {
+					if (col >= updatedRange.c1 && col <= updatedRange.c2) {
+						var isSetFilter = false;
+						var isShowButton = true;
 						var isSortState = null;//true - ascending, false - descending
 
 						var i;
 						var colId = filter.isAutoFilter() ? t.model.autoFilters._getTrueColId(autoFilter, col - range.c1, true) : col - range.c1;
-                        if (autoFilter.FilterColumns && autoFilter.FilterColumns.length) {
-                            var filterColumn = null, filterColumnWithMerge = null;
+						if (autoFilter.FilterColumns && autoFilter.FilterColumns.length) {
+							var filterColumn = null, filterColumnWithMerge = null;
 
-                            for (i = 0; i < autoFilter.FilterColumns.length; i++) {
-                                if (autoFilter.FilterColumns[i].ColId === col - range.c1) {
-                                    filterColumn = autoFilter.FilterColumns[i];
-                                }
+							for (i = 0; i < autoFilter.FilterColumns.length; i++) {
+								if (autoFilter.FilterColumns[i].ColId === col - range.c1) {
+									filterColumn = autoFilter.FilterColumns[i];
+								}
 
-                                if (colId === col - range.c1 && filterColumn !== null) {
-                                    filterColumnWithMerge = filterColumn;
-                                    break;
-                                } else if (autoFilter.FilterColumns[i].ColId === colId) {
-                                    filterColumnWithMerge = autoFilter.FilterColumns[i];
-                                }
-                            }
+								if (colId === col - range.c1 && filterColumn !== null) {
+									filterColumnWithMerge = filterColumn;
+									break;
+								} else if (autoFilter.FilterColumns[i].ColId === colId) {
+									filterColumnWithMerge = autoFilter.FilterColumns[i];
+								}
+							}
 
-                            if (filterColumnWithMerge && filterColumnWithMerge.isApplyAutoFilter()) {
-                                isSetFilter = true;
-                            }
+							if (filterColumnWithMerge && filterColumnWithMerge.isApplyAutoFilter()) {
+								isSetFilter = true;
+							}
 
-                            if (filterColumn && filterColumn.ShowButton === false) {
-                                isShowButton = false;
-                            }
+							if (filterColumn && filterColumn.ShowButton === false) {
+								isShowButton = false;
+							}
 
-                        }
+						}
 
-						if(sortConditions && sortConditions.length)
-						{
-							for(i = 0; i < sortConditions.length; i++) {
+						if (sortConditions && sortConditions.length) {
+							for (i = 0; i < sortConditions.length; i++) {
 								var sortCondition = sortConditions[i];
-								if(colId === sortCondition.Ref.c1 - range.c1)
-								{
+								if (colId === sortCondition.Ref.c1 - range.c1) {
 									isSortState = !!(sortCondition.ConditionDescending);
 								}
 							}
 						}
 
-                        if (isShowButton === false) {
-                            continue;
-                        }
+						if (isShowButton === false) {
+							continue;
+						}
 
-                        t.af_drawCurrentButton(offsetX, offsetY, {isSortState: isSortState, isSetFilter: isSetFilter, row: row, col: col});
-                    }
-                }
-            }
-        };
+						t.af_drawCurrentButton(offsetX, offsetY, {isSortState: isSortState, isSetFilter: isSetFilter, row: row, col: col});
+					}
+				}
+			}
+		};
 
-        if (ws.AutoFilter) {
-            drawCurrentFilterButtons(ws.AutoFilter);
-        }
-        if (ws.TableParts && ws.TableParts.length) {
-            for (i = 0; i < ws.TableParts.length; i++) {
-                if (ws.TableParts[i].AutoFilter && ws.TableParts[i].HeaderRowCount !== 0) {
-                    drawCurrentFilterButtons(ws.TableParts[i], true);
-                }
-                this._drawRightDownTableCorner(ws.TableParts[i], updatedRange, offsetX, offsetY);
-            }
-        }
+		if (ws.AutoFilter) {
+			drawCurrentFilterButtons(ws.AutoFilter);
+		}
+		if (ws.TableParts && ws.TableParts.length) {
+			for (i = 0; i < ws.TableParts.length; i++) {
+				if (ws.TableParts[i].AutoFilter && ws.TableParts[i].HeaderRowCount !== 0) {
+					drawCurrentFilterButtons(ws.TableParts[i], true);
+				}
+				this._drawRightDownTableCorner(ws.TableParts[i], updatedRange, offsetX, offsetY);
+			}
+		}
 
-        var pivotButtons = this.model.getPivotTableButtons(updatedRange);
-        for (i = 0; i < pivotButtons.length; ++i) {
+		var pivotButtons = this.model.getPivotTableButtons(updatedRange);
+		for (i = 0; i < pivotButtons.length; ++i) {
 			this.af_drawCurrentButton(offsetX, offsetY,
 				{isSortState: null, isSetFilter: false, row: pivotButtons[i].row, col: pivotButtons[i].col});
-        }
+		}
 
-        return true;
-    };
+		return true;
+	};
 
 	WorksheetView.prototype.af_drawCurrentButton = function (offsetX, offsetY, props) {
 		var t = this;
@@ -15530,7 +15528,7 @@
 		var row = table.Ref.r2;
 		var col = table.Ref.c2;
 
-		if(!updatedRange.contains(col, row)) {
+		if (!updatedRange.contains(col, row)) {
 			return;
 		}
 
