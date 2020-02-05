@@ -9702,10 +9702,15 @@
     WorksheetView.prototype.applyFillHandle = function (x, y, ctrlPress) {
         var t = this;
 
-        if(null !== this.resizeTableIndex) {
+        if (null !== this.resizeTableIndex) {
 			var table = t.model.TableParts && t.model.TableParts[t.resizeTableIndex] ? t.model.TableParts[t.resizeTableIndex] : null;
-        	if(table && t.activeFillHandle) {
-				t.af_changeTableRange(table.DisplayName, t.activeFillHandle.clone());
+			if (table && t.activeFillHandle) {
+				var isError = this.af_checkChangeRange(t.activeFillHandle);
+		 		if (isError !== null) {
+					this.model.workbook.handlers.trigger("asc_onError", isError, c_oAscError.Level.NoCritical);
+				} else {
+					t.af_changeTableRange(table.DisplayName, t.activeFillHandle.clone());
+				}
 			}
         	this.cleanSelection();
         	t.activeFillHandle = null;
@@ -16726,7 +16731,7 @@
         if (0 < intersectionTables.length) {
             var tablePart = intersectionTables[0];
             if (range.r1 === range.r2) {
-                res = c_oAscError.ID.FTChangeTableRangeError
+                res = c_oAscError.ID.FTChangeTableRangeError;
             } else if (range.r1 !== tablePart.Ref.r1)//первая строка таблицы не равна первой строке выделенного диапазона
             {
                 res = c_oAscError.ID.FTChangeTableRangeError;
