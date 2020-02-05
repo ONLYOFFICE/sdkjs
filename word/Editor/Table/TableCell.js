@@ -1892,18 +1892,27 @@ CTableCell.prototype.Get_SectPr = function()
 
     return null;
 };
-CTableCell.prototype.GetDocumentPositionFromObject = function(PosArray)
+CTableCell.prototype.GetDocumentPositionFromObject = function(arrPos)
 {
-    if (!PosArray)
-        PosArray = [];
+    if (!arrPos)
+		arrPos = [];
 
-    if (this.Row)
+    var oRow = this.GetRow();
+    if (oRow)
     {
-        PosArray.splice(0, 0, {Class : this.Row, Position : this.Index});
-        this.Row.GetDocumentPositionFromObject(PosArray);
+    	if (arrPos.length > 0)
+		{
+			arrPos.splice({Class : oRow, Position : this.GetIndex()});
+			oRow.GetDocumentPositionFromObject(arrPos);
+		}
+		else
+		{
+			oRow.GetDocumentPositionFromObject(arrPos);
+			arrPos.push({Class : oRow, Position : this.GetIndex()});
+		}
     }
 
-    return PosArray;
+    return arrPos;
 };
 CTableCell.prototype.Get_Table = function()
 {

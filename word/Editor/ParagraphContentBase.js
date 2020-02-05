@@ -648,36 +648,62 @@ CParagraphContentBase.prototype.CanAddComment = function()
 };
 /**
  * Получаем позицию заданного элемента в документе
- * @param {?Array} arrPosArray
+ * @param {?Array} arrPos
  * @returns {Array}
  */
-CParagraphContentBase.prototype.GetDocumentPositionFromObject = function(arrPosArray)
+CParagraphContentBase.prototype.GetDocumentPositionFromObject = function(arrPos)
 {
-	if (!arrPosArray)
-		arrPosArray = [];
+	if (!arrPos)
+		arrPos = [];
 
-	if (this.Paragraph)
+	var oParagraph = this.GetParagraph();
+	if (oParagraph)
 	{
-		var oParaContentPos = this.Paragraph.Get_PosByElement(this);
-		if (oParaContentPos)
+		if (arrPos.length > 0)
 		{
-			var nDepth = oParaContentPos.Get_Depth();
-			while (nDepth > 0)
+			var oParaContentPos = oParagraph.Get_PosByElement(this);
+			if (oParaContentPos)
 			{
-				var Pos = oParaContentPos.Get(nDepth);
-				oParaContentPos.Decrease_Depth(1);
-				var Class = this.Paragraph.Get_ElementByPos(oParaContentPos);
-				nDepth--;
+				var nDepth = oParaContentPos.GetDepth();
+				while (nDepth > 0)
+				{
+					var Pos = oParaContentPos.Get(nDepth);
+					oParaContentPos.SetDepth(nDepth - 1);
+					var Class = oParagraph.Get_ElementByPos(oParaContentPos);
+					nDepth--;
 
-				arrPosArray.splice(0, 0, {Class : Class, Position : Pos});
+					arrPos.splice(0, 0, {Class : Class, Position : Pos});
+				}
+				arrPos.splice(0, 0, {Class : this.Paragraph, Position : oParaContentPos.Get(0)});
 			}
-			arrPosArray.splice(0, 0, {Class : this.Paragraph, Position : oParaContentPos.Get(0)});
-		}
 
-		this.Paragraph.GetDocumentPositionFromObject(arrPosArray);
+			this.Paragraph.GetDocumentPositionFromObject(arrPos);
+		}
+		else
+		{
+			this.Paragraph.GetDocumentPositionFromObject(arrPos);
+
+			var oParaContentPos = this.Paragraph.Get_PosByElement(this);
+			if (oParaContentPos)
+			{
+				arrPos.push({Class : this.Paragraph, Position : oParaContentPos.Get(0)});
+
+				var nDepth    = oParaContentPos.GetDepth();
+				var nCurDepth = 1;
+				while (nCurDepth <= nDepth)
+				{
+					var Pos = oParaContentPos.Get(nCurDepth);
+					oParaContentPos.SetDepth(nCurDepth - 1);
+					var Class = this.Paragraph.Get_ElementByPos(oParaContentPos);
+					++nCurDepth;
+
+					arrPos.push({Class : Class, Position : Pos});
+				}
+			}
+		}
 	}
 
-	return arrPosArray;
+	return arrPos;
 };
 /**
  * Получаем массив всех конент контролов, внутри которых лежит данный класс
@@ -686,7 +712,7 @@ CParagraphContentBase.prototype.GetDocumentPositionFromObject = function(arrPosA
 CParagraphContentBase.prototype.GetParentContentControls = function()
 {
 	var oDocPos = [{Class : this, Pos : 0}];
-	this.GetDocumentPositionFromObject(oDocPos);
+	oDocPos = this.GetDocumentPositionFromObject(oDocPos);
 
 	var arrContentControls = [];
 	for (var nIndex = 0, nCount = oDocPos.length; nIndex < nCount; ++nIndex)

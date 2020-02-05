@@ -9005,6 +9005,9 @@ CParaRunRecalcInfo.prototype.IsMeasureNeed = function()
  */
 CParaRunRecalcInfo.prototype.OnAdd = function(nPos)
 {
+	if (this.Measure)
+		return;
+
 	for (var nIndex = 0, nCount = this.MeasurePositions.length; nIndex < nCount; ++nIndex)
 	{
 		if (this.MeasurePositions[nIndex] >= nPos)
@@ -9020,6 +9023,9 @@ CParaRunRecalcInfo.prototype.OnAdd = function(nPos)
  */
 CParaRunRecalcInfo.prototype.OnRemove = function(nPos, nCount)
 {
+	if (this.Measure)
+		return;
+
 	for (var nIndex = 0, nLen = this.MeasurePositions.length; nIndex < nLen; ++nIndex)
 	{
 		if (nPos <= this.MeasurePositions[nIndex] && this.MeasurePositions[nIndex] <= nPos + nCount - 1)

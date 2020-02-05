@@ -13649,12 +13649,12 @@ CDocument.prototype.SetContentPosition = function(DocPos, Depth, Flag)
 	if (this.Content[Pos])
 		this.Content[Pos].SetContentPosition(_DocPos, Depth + 1, _Flag);
 };
-CDocument.prototype.GetDocumentPositionFromObject = function(PosArray)
+CDocument.prototype.GetDocumentPositionFromObject = function(arrPos)
 {
-	if (!PosArray)
-		PosArray = [];
+	if (!arrPos)
+		arrPos = [];
 
-	return PosArray;
+	return arrPos;
 };
 CDocument.prototype.Get_CursorLogicPosition = function()
 {
@@ -21894,7 +21894,7 @@ CTrackRevisionsManager.prototype.GetElementChanges = function(sElementId)
 
     return [];
 };
-CTrackRevisionsManager.prototype.ContinueTrackRevisions = function()
+CTrackRevisionsManager.prototype.ContinueTrackRevisions = function(isComplete)
 {
 	// За раз обрабатываем не больше 50 параграфов, чтобы не подвешивать клиент на открытии файлов
 	var nMaxCounter = 50,
@@ -21906,9 +21906,12 @@ CTrackRevisionsManager.prototype.ContinueTrackRevisions = function()
 		if (this.private_TrackChangesForSingleElement(sId))
 			bNeedUpdate = true;
 
-		++nCounter;
-		if (nCounter >= nMaxCounter)
-			break;
+		if (true !== isComplete)
+		{
+			++nCounter;
+			if (nCounter >= nMaxCounter)
+				break;
+		}
 	}
 
 	if (bNeedUpdate)
@@ -22734,7 +22737,7 @@ CTrackRevisionsManager.prototype.private_CheckChangeObject = function(sId)
 	if (-1 === nAddPosition)
 		nAddPosition = this.ChangesOutline.length;
 
-	if (nAddPosition === nDeletePosition)
+	if (nAddPosition === nDeletePosition || (-1 !== nAddPosition && -1 !== nDeletePosition && nDeletePosition === nAddPosition - 1))
 		return;
 
 	if (-1 !== nDeletePosition)

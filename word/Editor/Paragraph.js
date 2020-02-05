@@ -15464,6 +15464,14 @@ CParagraphContentPos.prototype.ToAnchorPos = function(oParagraph)
 	oParagraph.Check_NearestPos(oNearPos);
 	return oNearPos;
 };
+/**
+ * В данной функции мы устанавливаем глубину позиции (при этом не меняя сам массив позиции)
+ * @param {number} nDepth
+ */
+CParagraphContentPos.prototype.SetDepth = function(nDepth)
+{
+	this.Depth = Math.max(0, Math.min(nDepth + 1, this.Data.length - 1));
+};
 
 function CComplexFieldStatePos(oComplexField, isFieldCode)
 {

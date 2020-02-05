@@ -787,18 +787,27 @@ CTableRow.prototype.GetIndex = function()
 {
 	return this.Index;
 };
-CTableRow.prototype.GetDocumentPositionFromObject = function(PosArray)
+CTableRow.prototype.GetDocumentPositionFromObject = function(arrPos)
 {
-    if (!PosArray)
-        PosArray = [];
+    if (!arrPos)
+		arrPos = [];
 
-    if (this.Table)
+    var oTable = this.GetTable();
+    if (oTable)
     {
-        PosArray.splice(0, 0, {Class : this.Table, Position : this.Index});
-        this.Table.GetDocumentPositionFromObject(PosArray);
+    	if (arrPos.length > 0)
+		{
+			arrPos.splice(0, 0, {Class : oTable, Position : this.GetIndex()});
+			oTable.GetDocumentPositionFromObject(arrPos);
+		}
+		else
+		{
+			oTable.GetDocumentPositionFromObject(arrPos);
+			arrPos.push({Class : oTable, Position : this.GetIndex()});
+		}
     }
 
-    return PosArray;
+    return arrPos;
 };
 /**
  * Получаем ячейку с заданным номером в строке

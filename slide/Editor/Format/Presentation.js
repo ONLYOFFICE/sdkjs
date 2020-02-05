@@ -4343,7 +4343,7 @@ CPresentation.prototype.Update_ForeignCursor = function (CursorInfo, UserId, Sho
     }
 
     var CursorPos = [{Class: Run, Position: InRunPos}];
-    Run.GetDocumentPositionFromObject(CursorPos);
+	Run.GetDocumentPositionFromObject(CursorPos);
     AscCommon.CollaborativeEditing.Add_ForeignCursor(UserId, CursorPos, UserShortId);
 
     if (true === Show) {

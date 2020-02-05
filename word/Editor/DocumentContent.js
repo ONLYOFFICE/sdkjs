@@ -8044,15 +8044,15 @@ CDocumentContent.prototype.GetContentPosition = function(bSelection, bStart, Pos
 
     return PosArray;
 };
-CDocumentContent.prototype.GetDocumentPositionFromObject = function(PosArray)
+CDocumentContent.prototype.GetDocumentPositionFromObject = function(arrPos)
 {
-    if (!PosArray)
-        PosArray = [];
+    if (!arrPos)
+		arrPos = [];
 
     if (this.Parent && this.Parent.GetDocumentPositionFromObject)
-        this.Parent.GetDocumentPositionFromObject(PosArray);
+		this.Parent.GetDocumentPositionFromObject(arrPos);
 
-    return PosArray;
+    return arrPos;
 };
 CDocumentContent.prototype.SetContentSelection = function(StartDocPos, EndDocPos, Depth, StartFlag, EndFlag)
 {

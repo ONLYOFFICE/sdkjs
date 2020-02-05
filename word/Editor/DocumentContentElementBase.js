@@ -731,18 +731,27 @@ CDocumentContentElementBase.prototype.AcceptRevisionChanges = function(Type, bAl
 CDocumentContentElementBase.prototype.RejectRevisionChanges = function(Type, bAll)
 {
 };
-CDocumentContentElementBase.prototype.GetDocumentPositionFromObject = function(PosArray)
+CDocumentContentElementBase.prototype.GetDocumentPositionFromObject = function(arrPos)
 {
-	if (!PosArray)
-		PosArray = [];
+	if (!arrPos)
+		arrPos = [];
 
-	if (this.Parent)
+	var oParent = this.GetParent();
+	if (oParent)
 	{
-		PosArray.splice(0, 0, {Class : this.Parent, Position : this.Get_Index()});
-		this.Parent.GetDocumentPositionFromObject(PosArray);
+		if (arrPos.length > 0)
+		{
+			arrPos.splice(0, 0, {Class : oParent, Position : this.GetIndex()});
+			arrPos = oParent.GetDocumentPositionFromObject(arrPos);
+		}
+		else
+		{
+			arrPos = oParent.GetDocumentPositionFromObject(arrPos);
+			arrPos.push({Class : oParent, Position : this.GetIndex()});
+		}
 	}
 
-	return PosArray;
+	return arrPos;
 };
 CDocumentContentElementBase.prototype.Get_Index = function()
 {
