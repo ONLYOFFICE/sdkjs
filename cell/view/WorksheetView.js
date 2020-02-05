@@ -15168,10 +15168,10 @@
 	    return AscBrowser.isRetina ? AscCommon.AscBrowser.convertToRetinaValue(filterSizeButton, true) : filterSizeButton;
 	};
     WorksheetView.prototype.af_drawButtons = function (updatedRange, offsetX, offsetY) {
-        var i, aWs = this.model;
+        var i, ws = this.model;
         var t = this;
 
-        if (aWs.workbook.bUndoChanges || aWs.workbook.bRedoChanges) {
+        if (ws.workbook.bUndoChanges || ws.workbook.bRedoChanges) {
             return false;
         }
 
@@ -15194,11 +15194,12 @@
                         var isShowButton = true;
 						var isSortState = null;//true - ascending, false - descending
 
+						var i;
 						var colId = filter.isAutoFilter() ? t.model.autoFilters._getTrueColId(autoFilter, col - range.c1, true) : col - range.c1;
                         if (autoFilter.FilterColumns && autoFilter.FilterColumns.length) {
                             var filterColumn = null, filterColumnWithMerge = null;
 
-                            for (var i = 0; i < autoFilter.FilterColumns.length; i++) {
+                            for (i = 0; i < autoFilter.FilterColumns.length; i++) {
                                 if (autoFilter.FilterColumns[i].ColId === col - range.c1) {
                                     filterColumn = autoFilter.FilterColumns[i];
                                 }
@@ -15223,7 +15224,7 @@
 
 						if(sortConditions && sortConditions.length)
 						{
-							for(var i = 0; i < sortConditions.length; i++) {
+							for(i = 0; i < sortConditions.length; i++) {
 								var sortCondition = sortConditions[i];
 								if(colId === sortCondition.Ref.c1 - range.c1)
 								{
@@ -15242,14 +15243,15 @@
             }
         };
 
-        if (aWs.AutoFilter) {
-            drawCurrentFilterButtons(aWs.AutoFilter);
+        if (ws.AutoFilter) {
+            drawCurrentFilterButtons(ws.AutoFilter);
         }
-        if (aWs.TableParts && aWs.TableParts.length) {
-            for (i = 0; i < aWs.TableParts.length; i++) {
-                if (aWs.TableParts[i].AutoFilter && aWs.TableParts[i].HeaderRowCount !== 0) {
-                    drawCurrentFilterButtons(aWs.TableParts[i], true);
+        if (ws.TableParts && ws.TableParts.length) {
+            for (i = 0; i < ws.TableParts.length; i++) {
+                if (ws.TableParts[i].AutoFilter && ws.TableParts[i].HeaderRowCount !== 0) {
+                    drawCurrentFilterButtons(ws.TableParts[i], true);
                 }
+                this._drawRightDownTableCorner(ws.TableParts[i], offsetX, offsetY);
             }
         }
 
@@ -15495,6 +15497,34 @@
 		}
 
 		_drawButton(x1 + diffX, y1 + diffY);
+	};
+
+	WorksheetView.prototype._drawRightDownTableCorner = function (table, offsetX, offsetY) {
+		var t = this;
+		var ctx = t.drawingCtx;
+		var isMobileRetina = window['IS_NATIVE_EDITOR'];
+
+		var row = table.Ref.r2;
+		var col = table.Ref.c2;
+		var m_oColor = new CColor(0, 0, 0);
+		var lnW = 2;
+
+		var x1 = t._getColLeft(col) + t._getColumnWidth(col) - offsetX - 2;
+		var y1 = t._getRowTop(row) + t._getRowHeight(row) - offsetY - 1;
+
+		if (isMobileRetina) {
+			ctx.setLineWidth(AscBrowser.retinaPixelRatio * 2 * lnW);
+		} else {
+			ctx.setLineWidth(AscBrowser.retinaPixelRatio * lnW);
+		}
+
+		ctx.beginPath();
+		ctx.lineVer(x1, y1 - 4, y1);
+		ctx.lineHor(x1 - 1, y1 - 1, x1 - 3);
+
+
+		ctx.setStrokeStyle(m_oColor);
+		ctx.stroke();
 	};
 
 	WorksheetView.prototype.af_checkCursor = function (x, y, _vr, offsetX, offsetY, r, c) {
