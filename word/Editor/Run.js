@@ -1328,8 +1328,8 @@ ParaRun.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
 
 	if (Pos >= this.Content.length)
 	{
-		this.Content.push(Item);
 		Pos = this.Content.length;
+		this.Content.push(Item);
 	}
 	else
 	{
