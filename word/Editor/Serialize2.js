@@ -6879,6 +6879,7 @@ function BinaryFileReader(doc, openParams)
 			else
 				throw e;
 		}
+
 		return true;
     };
 	this.PreLoadPrepare = function()

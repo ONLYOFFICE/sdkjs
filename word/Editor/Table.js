@@ -2692,6 +2692,7 @@ CTable.prototype.Move = function(X, Y, PageNum, NearestPos)
 			var NewDocContent = NearestPos.Paragraph.Parent;
 			var OldDocContent = this.Parent;
 
+			var oPageLimits;
 			if (true != NewDocContent.CheckTableCoincidence(this))
 			{
 				var OldIndex = this.Index;
@@ -2750,6 +2751,12 @@ CTable.prototype.Move = function(X, Y, PageNum, NearestPos)
 						NewDocContent.Internal_Content_Add(NewIndex, oTargetTable);
 					}
 				}
+
+				oPageLimits = NewDocContent.Get_PageLimits(NearestPos.Paragraph.GetRelativePage(NearestPos.Internal.Page))
+			}
+			else
+			{
+				oPageLimits = OldDocContent.Get_PageLimits(this.GetRelativePage(0))
 			}
 
 			// Обновляем координаты
@@ -2770,13 +2777,13 @@ CTable.prototype.Move = function(X, Y, PageNum, NearestPos)
 				Value        : oTargetTable.PositionV.Value
 			};
 
-			oTargetTable.PositionH.RelativeFrom = c_oAscHAnchor.PageInternal;
+			oTargetTable.PositionH.RelativeFrom = c_oAscHAnchor.Page;
 			oTargetTable.PositionH.Align        = false;
-			oTargetTable.PositionH.Value        = X;
+			oTargetTable.PositionH.Value        = X - oPageLimits.X;
 
 			oTargetTable.PositionV.RelativeFrom = c_oAscVAnchor.Page;
 			oTargetTable.PositionV.Align        = false;
-			oTargetTable.PositionV.Value        = Y;
+			oTargetTable.PositionV.Value        = Y - oPageLimits.Y;
 
 			oTargetTable.PageNum = PageNum;
 
@@ -2784,7 +2791,8 @@ CTable.prototype.Move = function(X, Y, PageNum, NearestPos)
 			if (Math.abs(nTableInd) > 0.001)
 				oTargetTable.Set_TableInd(0);
 
-			editor.WordControl.m_oLogicDocument.Recalculate();
+			this.LogicDocument.Recalculate(true);
+
 			oTargetTable.StartTrackTable();
 
 			// Если так случилось, что после пересчета позиции не пересчитались, тогда нам нужно оставить привязку к
@@ -20366,39 +20374,6 @@ CTableAnchorPosition.prototype =
 
                 break;
             }
-
-            case c_oAscHAnchor.PageInternal:
-            {
-                if ( true === bAlign )
-                {
-                    switch ( Value )
-                    {
-                        case c_oAscXAlign.Center:
-                        {
-                            this.CalcX = (this.Page_W - this.W) / 2;
-                            break;
-                        }
-
-                        case c_oAscXAlign.Inside:
-                        case c_oAscXAlign.Outside:
-                        case c_oAscXAlign.Left:
-                        {
-                            this.CalcX = 0;
-                            break;
-                        }
-
-                        case c_oAscXAlign.Right:
-                        {
-                            this.CalcX = this.Page_W - this.W;
-                            break;
-                        }
-                    }
-                }
-                else
-                    this.CalcX = Value;
-
-                break;
-            }
         }
 
         return this.CalcX;
@@ -20567,12 +20542,6 @@ CTableAnchorPosition.prototype =
             {
                 Value = this.CalcX - this.X_min;
 
-                break;
-            }
-
-            case c_oAscHAnchor.PageInternal:
-            {
-                Value = this.CalcX;
                 break;
             }
         }

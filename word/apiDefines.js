@@ -167,7 +167,8 @@ var c_oAscTOCStylesType = {
 	Simple   : 1,
 	Standard : 2,
 	Modern   : 3,
-	Classic  : 4
+	Classic  : 4,
+	Web      : 5
 };
 
 var c_oAscStyleType = {
@@ -266,6 +267,7 @@ prot['Simple']   = c_oAscTOCStylesType.Simple;
 prot['Standard'] = c_oAscTOCStylesType.Standard;
 prot['Modern']   = c_oAscTOCStylesType.Modern;
 prot['Classic']  = c_oAscTOCStylesType.Classic;
+prot['Web']      = c_oAscTOCStylesType.Web;
 
 
 prot = window['Asc']['c_oAscStyleType'] = window['Asc'].c_oAscStyleType = c_oAscStyleType;

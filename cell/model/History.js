@@ -758,7 +758,7 @@ CHistory.prototype.Create_NewPoint = function()
 // Data  - сами изменения
 CHistory.prototype.Add = function(Class, Type, sheetid, range, Data, LocalChange)
 {
-	if ( 0 !== this.TurnOffHistory || this.Index < 0 )
+	if (!this.CanAddChanges())
 		return;
 
 	this._CheckCanNotAddChanges();
@@ -807,6 +807,10 @@ CHistory.prototype.Add = function(Class, Type, sheetid, range, Data, LocalChange
 			AscCommon.CollaborativeEditing.Add_NewDC(Class.Class);
 		}
 	}
+};
+CHistory.prototype.CanAddChanges = function()
+{
+	return (0 === this.TurnOffHistory && this.Index >= 0);
 };
 
 CHistory.prototype._sendCanUndoRedo = function()
@@ -909,6 +913,11 @@ CHistory.prototype.Is_On = function()
 {
 	return (0 === this.TurnOffHistory);
 };
+	/** @returns {boolean} */
+	CHistory.prototype.IsOn = function()
+	{
+		return (0 === this.TurnOffHistory);
+	};
 	CHistory.prototype.Reset_SavedIndex = function(IsUserSave) {
 		this.SavedIndex = (null === this.SavedIndex && -1 === this.Index ? null : this.Index);
 		if (this.Is_UserSaveMode()) {

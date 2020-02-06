@@ -445,7 +445,7 @@ CHistory.prototype =
     // Data  - сами изменения
 	Add : function(_Class, Data)
 	{
-		if (0 !== this.TurnOffHistory || this.Index < 0)
+		if (!this.CanAddChanges())
 			return;
 
 		this._CheckCanNotAddChanges();
@@ -809,6 +809,12 @@ CHistory.prototype =
 		return (0 === this.TurnOffHistory);
     },
 
+	/** @returns {boolean} */
+	IsOn : function()
+	{
+		return (0 === this.TurnOffHistory);
+	},
+
 	Reset_SavedIndex : function(IsUserSave)
 	{
 		this.SavedIndex = (null === this.SavedIndex && -1 === this.Index ? null : this.Index);
@@ -1022,6 +1028,14 @@ CHistory.prototype =
         } catch (e) {
         }
     }
+};
+/**
+ * Проверяем, можно ли добавить изменение
+ * @returns {boolean}
+ */
+CHistory.prototype.CanAddChanges = function()
+{
+	return (0 === this.TurnOffHistory && this.Index >= 0);
 };
 CHistory.prototype.ClearAdditional = function()
 {

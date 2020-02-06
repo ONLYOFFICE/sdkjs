@@ -6569,6 +6569,57 @@ CStyle.prototype.CreateTOC = function(nLvl, nType)
 			ParaPr.Ind.FirstLine = 1984 / 20 * g_dKoef_pt_to_mm;
 		}
 	}
+	else if (Asc.c_oAscTOCStylesType.Web === nType)
+	{
+		ParaPr.Spacing = {
+			After : 57 / 20 * g_dKoef_pt_to_mm
+		};
+
+		ParaPr.Ind = {};
+
+		TextPr.Underline = true;
+		TextPr.Color     = {r : 0x00, g : 0xC8, b : 0xC3};
+		TextPr.Unifill   = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorHyperlink, null, null);
+
+		if (0 === nLvl)
+		{
+			ParaPr.Spacing.After = 100 / 20 * g_dKoef_pt_to_mm;
+		}
+		else if (1 === nLvl)
+		{
+			ParaPr.Spacing.After = 100 / 20 * g_dKoef_pt_to_mm;
+			ParaPr.Ind.Left      = 220 / 20 * g_dKoef_pt_to_mm;
+		}
+		else if (2 === nLvl)
+		{
+			ParaPr.Spacing.After = 100 / 20 * g_dKoef_pt_to_mm;
+			ParaPr.Ind.Left      = 440 / 20 * g_dKoef_pt_to_mm;
+		}
+		else if (3 === nLvl)
+		{
+			ParaPr.Ind.Left = 850 / 20 * g_dKoef_pt_to_mm;
+		}
+		else if (4 === nLvl)
+		{
+			ParaPr.Ind.Left = 1134 / 20 * g_dKoef_pt_to_mm;
+		}
+		else if (5 === nLvl)
+		{
+			ParaPr.Ind.Left = 1417 / 20 * g_dKoef_pt_to_mm;
+		}
+		else if (6 === nLvl)
+		{
+			ParaPr.Ind.Left = 1701 / 20 * g_dKoef_pt_to_mm;
+		}
+		else if (7 === nLvl)
+		{
+			ParaPr.Ind.Left = 1984 / 20 * g_dKoef_pt_to_mm;
+		}
+		else if (8 === nLvl)
+		{
+			ParaPr.Ind.Left = 2268 / 20 * g_dKoef_pt_to_mm;
+		}
+	}
 
 	this.Set_UiPriority(39);
 	this.Set_UnhideWhenUsed(true);
@@ -9378,6 +9429,8 @@ CStyles.prototype.GetTOCStylesType = function()
 		return Asc.c_oAscTOCStylesType.Modern;
 	else if (this.private_CheckTOCStyles(Asc.c_oAscTOCStylesType.Classic))
 		return Asc.c_oAscTOCStylesType.Classic;
+	else if (this.private_CheckTOCStyles(Asc.c_oAscTOCStylesType.Web))
+		return Asc.c_oAscTOCStylesType.Web;
 
 	return Asc.c_oAscTOCStylesType.Current;
 };
