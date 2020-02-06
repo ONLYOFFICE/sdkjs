@@ -9493,9 +9493,11 @@ CPresentation.prototype.removeSlide = function (pos) {
     if (AscFormat.isRealNumber(pos) && pos > -1 && pos < this.Slides.length) {
         History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_Presentation_RemoveSlide, pos, [this.Slides[pos]], false));
         var aSlideComments = this.Slides[pos] && this.Slides[pos].slideComments && this.Slides[pos].slideComments.comments;
+        editor.sync_HideComment();
         if (Array.isArray(aSlideComments)) {
             for (var i = aSlideComments.length - 1; i > -1; --i) {
-                this.RemoveComment(aSlideComments[i].Id, true);
+                var sId = aSlideComments[i].Id;
+                this.Slides[i].removeComment(sId);
             }
         }
         return this.Slides.splice(pos, 1)[0];
@@ -9933,10 +9935,7 @@ CPresentation.prototype.RemoveComment = function (Id, bSendEvent) {
         var comments = this.Slides[i].slideComments.comments;
         for (var j = 0; j < comments.length; ++j) {
             if (comments[j].Id === Id) {
-                //this.Set_CurPage(i);
                 this.Slides[i].removeComment(Id);
-                if (true === bSendEvent)
-                    editor.sync_RemoveComment(Id);
                 this.Recalculate();
                 if (this.CurPage !== i) {
                     this.DrawingDocument.m_oWordControl.GoToPage(i);
