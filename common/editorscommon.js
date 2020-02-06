@@ -5036,7 +5036,7 @@
 			var timeout = backoff.nextTimeout();
 			if (timeout > 0) {
 				setTimeout(function() {
-					onRetry.apply(obj, arguments);
+					onRetry.call(obj, obj);
 				}, timeout);
 			} else if (onError) {
 				onError.apply(obj, arguments);
@@ -5047,7 +5047,7 @@
 		//$self.attr("src", $self.attr("src"));
 		//https://github.com/doomhz/jQuery-Image-Reloader/blob/dd1f626b25628ede498ae2489a0c2963f1c3cf61/jquery.imageReloader.js#L56
 		if (!onRetry) {
-			onRetry = function() {
+			onRetry = function(img) {
 				img.setAttribute('src', img.getAttribute('src'));
 			};
 		}
