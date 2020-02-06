@@ -2349,10 +2349,10 @@ CMathContent.prototype.Is_Empty = function()
 {
     return this.Content.length == 0;
 };
-CMathContent.prototype.Copy = function(Selected)
+CMathContent.prototype.Copy = function(Selected, oPr)
 {
     var NewContent = new CMathContent();
-    this.CopyTo(NewContent, Selected);
+    this.CopyTo(NewContent, Selected, oPr);
     return NewContent;
 };
 CMathContent.prototype.CopyTo = function(OtherContent, Selected, oPr)
