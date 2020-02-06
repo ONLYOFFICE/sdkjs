@@ -238,7 +238,7 @@ Paragraph.prototype.SetDirectParaPr = function(oParaPr)
 	if (!oParaPr)
 		return;
 
-	var oNewPr = oParaPr.Copy();
+	var oNewPr = oParaPr.Copy(true);
 
 	History.Add(new CChangesParagraphPr(this, this.Pr, oNewPr));
 
