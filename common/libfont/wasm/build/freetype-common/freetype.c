@@ -149,7 +149,7 @@ int* ASC_FT_GetFaceInfo(FT_Face face)
     //os2->ulCodePageRange1
     //os2->ulCodePageRange2
 
-    int isSymbolic = 0;
+    int isSymbolic = -1;
     if (os2 && 0xFFFF != os2->version)
     {
         FT_ULong ulCodePageRange1 = os2->ulCodePageRange1;
