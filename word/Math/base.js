@@ -1454,7 +1454,7 @@ CMathBase.prototype.Fill_LogicalContent = function(nCount)
         this.Content[nIndex].Parent        = this;
     }
 };
-CMathBase.prototype.Copy = function()
+CMathBase.prototype.Copy = function(Selected, oPr)
 {
     var oProps = this.Pr.Copy();
     oProps.ctrPrp = this.CtrPrp.Copy();
@@ -1463,9 +1463,12 @@ CMathBase.prototype.Copy = function()
 
     for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; nIndex++)
     {
-        this.Content[nIndex].CopyTo(NewElement.Content[nIndex], false);
+        this.Content[nIndex].CopyTo(NewElement.Content[nIndex], false, oPr);
     }
-
+    if(oPr && oPr.Comparison)
+    {
+        oPr.Comparison.updateReviewInfo(NewElement, reviewtype_Add);
+    }
     return NewElement;
 };
 CMathBase.prototype.Refresh_RecalcData = function(Data)

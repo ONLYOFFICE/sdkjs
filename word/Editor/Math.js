@@ -1076,7 +1076,7 @@ ParaMath.prototype.Get_Id = function()
     return this.Id;
 };
 
-ParaMath.prototype.Copy = function(Selected)
+ParaMath.prototype.Copy = function(Selected, oPr)
 {
     var NewMath = new ParaMath();
     NewMath.Root.bRoot = true;
@@ -1084,11 +1084,11 @@ ParaMath.prototype.Copy = function(Selected)
     if(Selected)
     {
         var result = this.GetSelectContent();
-        result.Content.CopyTo(NewMath.Root, Selected);
+        result.Content.CopyTo(NewMath.Root, Selected, oPr);
     }
     else
     {
-        this.Root.CopyTo(NewMath.Root, Selected);
+        this.Root.CopyTo(NewMath.Root, Selected, oPr);
     }
 
     NewMath.Root.Correct_Content(true);

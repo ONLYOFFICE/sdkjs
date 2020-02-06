@@ -2355,7 +2355,7 @@ CMathContent.prototype.Copy = function(Selected)
     this.CopyTo(NewContent, Selected);
     return NewContent;
 };
-CMathContent.prototype.CopyTo = function(OtherContent, Selected)
+CMathContent.prototype.CopyTo = function(OtherContent, Selected, oPr)
 {
     var nStartPos, nEndPos;
 
@@ -2385,11 +2385,15 @@ CMathContent.prototype.CopyTo = function(OtherContent, Selected)
     {
         var oElement;
         if(this.Content[nPos].Type == para_Math_Run)
-            oElement = this.Content[nPos].Copy(Selected);
+            oElement = this.Content[nPos].Copy(Selected, oPr);
         else
-            oElement = this.Content[nPos].Copy(false);
+            oElement = this.Content[nPos].Copy(false, oPr);
 
         OtherContent.Internal_Content_Add(OtherContent.Content.length, oElement);
+    }
+    if(oPr && oPr.Comparison)
+    {
+        oPr.Comparison.updateReviewInfo(OtherContent, reviewtype_Add);
     }
 };
 CMathContent.prototype.getElem = function(nNum)
