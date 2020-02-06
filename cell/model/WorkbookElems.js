@@ -7496,12 +7496,14 @@ CustomFilter.prototype.isHideValue = function (val) {
 		var trimFilterVal = "string" === typeof(filterVal) ? window["Asc"].trim(filterVal) : filterVal;
 
 
-		var matchingValues = function (val1, val2, op) {
-			var matchingInfo = AscCommonExcel.matchingValue(new AscCommonExcel.cString(val1));
+		var matchingValues = function (_val1, _val2, op) {
+			_val1 = _val1 + "";
+			_val2 = _val2 + "";
+			var matchingInfo = AscCommonExcel.matchingValue(new AscCommonExcel.cString(_val1));
 			if (op) {
 				matchingInfo.op = op;
 			}
-			return AscCommonExcel.matching(new AscCommonExcel.cString(val2), matchingInfo);
+			return AscCommonExcel.matching(new AscCommonExcel.cString(_val2), matchingInfo);
 		};
 
 		switch (this.Operator) {
