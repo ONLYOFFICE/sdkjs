@@ -12268,7 +12268,11 @@
 						// и их надо передвинуть)
 						this.worksheet.hyperlinkManager.removeElement(elem);
 						var oNewHyp = hyp.clone();
-						oNewHyp.Ref.setOffset(new AscCommon.CellBase(nTo - nFrom, 0));
+						if(opt_by_row) {
+							oNewHyp.Ref.setOffset(new AscCommon.CellBase(0, nTo - nFrom));
+						} else {
+							oNewHyp.Ref.setOffset(new AscCommon.CellBase(nTo - nFrom, 0));
+						}
 						aSortedHyperlinks.push(oNewHyp);
 					}
 				}
