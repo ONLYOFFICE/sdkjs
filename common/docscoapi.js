@@ -611,10 +611,13 @@
     // Мы сами отключились от совместного редактирования
     this.isCloseCoAuthoring = false;
 
-    // Максимальное число изменений, посылаемое на сервер (не может быть нечетным, т.к. пересчет обоих индексов должен быть)
-    this.maxCountSaveChanges = 20000;
+    //websocket payload size is limited by https://github.com/faye/faye-websocket-node#initialization-options (64 MiB)
+    //xhr payload size is limited by nginx param client_max_body_size (current 100MB)
+    //"1.5MB" is choosen to avoid disconnect(after 25s) while downloading/uploading oversized changes with 0.5Mbps connection
+    this.websocketMaxPayloadSize = 1572864;
     // Текущий индекс для колличества изменений
     this.currentIndex = 0;
+    this.currentIndexEnd = 0;
     // Индекс, с которого мы начинаем сохранять изменения
     this.deleteIndex = 0;
     // Массив изменений
@@ -850,8 +853,13 @@
     } else {
       this.currentIndex = currentIndex;
     }
-    var startIndex = this.currentIndex * this.maxCountSaveChanges;
-    var endIndex = Math.min(this.maxCountSaveChanges * (this.currentIndex + 1), arrayChanges.length);
+    var startIndex, endIndex;
+    startIndex = endIndex = this.currentIndex;
+    var curBytes = 0;
+    for (; endIndex < arrayChanges.length && curBytes < this.websocketMaxPayloadSize; ++endIndex) {
+      curBytes += arrayChanges[endIndex].length + 9;//9 - for JSON overhead + escape
+    }
+    this.currentIndexEnd = endIndex;
     if (endIndex === arrayChanges.length) {
       for (var key in this._locks) if (this._locks.hasOwnProperty(key)) {
         if (2 === this._locks[key].state /*lock is ours*/) {
@@ -1287,7 +1295,7 @@
       this.changesIndex = data['changesIndex'];
     }
 
-    this.saveChanges(this.arrayChanges, this.currentIndex + 1);
+    this.saveChanges(this.arrayChanges, this.currentIndexEnd);
   };
 
   DocsCoApi.prototype._onPreviousLocks = function(locks, previousLocks) {
@@ -1489,11 +1497,15 @@
       this._indexUser = data['indexUser'];
       this._userId = this._user.asc_getId() + this._indexUser;
       this._sessionTimeConnect = data['sessionTimeConnect'];
-      if (data['settings'] && data['settings']['reconnection']) {
-        this.maxAttemptCount = data['settings']['reconnection']['attempts'];
-        this.reconnectInterval = data['settings']['reconnection']['delay'];
+      if (data['settings']) {
+        if (data['settings']['reconnection']) {
+          this.maxAttemptCount = data['settings']['reconnection']['attempts'];
+          this.reconnectInterval = data['settings']['reconnection']['delay'];
+        }
+        if (data['settings']['websocketMaxPayloadSize']) {
+          this.websocketMaxPayloadSize = data['settings']['websocketMaxPayloadSize'];
+        }
       }
-
       this._onLicenseChanged(data);
       this._onAuthParticipantsChanged(data['participants']);
 
