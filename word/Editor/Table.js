@@ -16791,6 +16791,39 @@ CTable.prototype.private_UpdateSelectedCellsArray = function(bForceSelectByLines
 			if (GridCol_end < GridCol_ce_end)
 				GridCol_end = GridCol_ce_end;
 
+			// Ориентируемся не только по логическому расположению колонок, но и по визуальному:
+			// если между колонками расстояние меньше 6 твипсов (примерно 0.1мм), тогда они визуально сольются в
+			// одну колонку, поэтому нам нужно учесть эту погрешность, при учете попадания колонки в селект.
+			// Расстояние 6 твипсов получено с учетом максимального зума в 500%
+
+			var nMaxError = 0.1;
+			while (GridCol_start < this.TableSumGrid.length - 1 && GridCol_start < GridCol_end)
+			{
+				if (this.TableSumGrid[GridCol_start] - this.TableSumGrid[GridCol_start - 1] < nMaxError)
+				{
+					nMaxError -= this.TableSumGrid[GridCol_start] - this.TableSumGrid[GridCol_start - 1];
+					GridCol_start++;
+				}
+				else
+				{
+					break;
+				}
+			}
+
+			nMaxError = 0.1;
+			while (GridCol_end > 0  && GridCol_end > GridCol_start)
+			{
+				if (this.TableSumGrid[GridCol_end] - this.TableSumGrid[GridCol_end - 1] < nMaxError)
+				{
+					nMaxError -= this.TableSumGrid[GridCol_end] - this.TableSumGrid[GridCol_end - 1];
+					GridCol_end--;
+				}
+				else
+				{
+					break;
+				}
+			}
+
 			for (var CurRow = StartRow; CurRow <= EndRow; CurRow++)
 			{
 				var Row        = this.Content[CurRow];
