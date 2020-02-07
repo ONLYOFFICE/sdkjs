@@ -960,7 +960,7 @@ Paragraph.prototype.Internal_Content_Remove = function(Pos)
 	}
 
 	// Удаляем комментарий, если это необходимо
-	if (true === this.DeleteCommentOnRemove && para_Comment === Item.Type)
+	if (true === this.DeleteCommentOnRemove && para_Comment === Item.Type && this.LogicDocument)
 		this.LogicDocument.RemoveComment(Item.CommentId, true, false);
 
 	var SpellingsCount = this.SpellChecker.Elements.length;
@@ -990,7 +990,7 @@ Paragraph.prototype.Internal_Content_Remove2 = function(Pos, Count)
 		return this.ClearContent();
 
 	var CommentsToDelete = [];
-	if (true === this.DeleteCommentOnRemove && null !== this.LogicDocument && null != this.LogicDocument.Comments)
+	if (true === this.DeleteCommentOnRemove && this.LogicDocument && null != this.LogicDocument.Comments)
 	{
 		var DocumentComments = this.LogicDocument.Comments;
 		for (var Index = Pos; Index < Pos + Count; Index++)
@@ -1058,10 +1058,13 @@ Paragraph.prototype.Internal_Content_Remove2 = function(Pos, Count)
 	this.private_UpdateSelectionPosOnRemove(Pos, Count);
 
 	// Комментарии удаляем после, чтобы не нарушить позиции
-	var CountCommentsToDelete = CommentsToDelete.length;
-	for (var Index = 0; Index < CountCommentsToDelete; Index++)
+	if(this.LogicDocument)
 	{
-		this.LogicDocument.RemoveComment(CommentsToDelete[Index], true, false);
+		var CountCommentsToDelete = CommentsToDelete.length;
+		for (var Index = 0; Index < CountCommentsToDelete; Index++)
+		{
+			this.LogicDocument.RemoveComment(CommentsToDelete[Index], true, false);
+		}
 	}
 
 	// Передвинем все метки слов для проверки орфографии
@@ -1073,9 +1076,12 @@ Paragraph.prototype.Internal_Content_Remove2 = function(Pos, Count)
 Paragraph.prototype.ClearContent = function()
 {
 	var arrCommentsToDelete = [];
-	var isDeleteComments = true === this.DeleteCommentOnRemove && null !== this.LogicDocument && null != this.LogicDocument.Comments;
-
-	var oDocumentComments = this.LogicDocument.Comments;
+	var isDeleteComments = true === this.DeleteCommentOnRemove && null != this.LogicDocument && null != this.LogicDocument.Comments;
+	var oDocumentComments = null;
+	if(isDeleteComments)
+	{
+		oDocumentComments = this.LogicDocument.Comments;
+	}
 	for (var nPos = 0, nLen = this.Content.length; nPos < nLen; ++nPos)
 	{
 		var oItem = this.Content[nPos];
@@ -1115,9 +1121,12 @@ Paragraph.prototype.ClearContent = function()
 	this.Content = [];
 
 	// Комментарии удаляем после, чтобы не нарушить позиции
-	for (var nIndex = 0, nCount = arrCommentsToDelete.length; nIndex < nCount; ++nIndex)
+	if(this.LogicDocument)
 	{
-		this.LogicDocument.RemoveComment(arrCommentsToDelete[nIndex], true, false);
+		for (var nIndex = 0, nCount = arrCommentsToDelete.length; nIndex < nCount; ++nIndex)
+		{
+			this.LogicDocument.RemoveComment(arrCommentsToDelete[nIndex], true, false);
+		}
 	}
 };
 Paragraph.prototype.Clear_ContentChanges = function()
@@ -3234,9 +3243,12 @@ Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlyS
 
 			this.DeleteCommentOnRemove = true;
 
-			for (var CommentId in CommentsToDelete)
+			if(this.LogicDocument)
 			{
-				this.LogicDocument.RemoveComment(CommentId, true, false);
+				for (var CommentId in CommentsToDelete)
+				{
+					this.LogicDocument.RemoveComment(CommentId, true, false);
+				}
 			}
 		}
 
@@ -6474,9 +6486,12 @@ Paragraph.prototype.AddHyperlink = function(HyperProps)
 				CommentsToDelete[Item.CommentId] = true;
 		}
 
-		for (var CommentId in CommentsToDelete)
+		if(this.LogicDocument)
 		{
-			this.LogicDocument.RemoveComment(CommentId, true, false);
+			for (var CommentId in CommentsToDelete)
+			{
+				this.LogicDocument.RemoveComment(CommentId, true, false);
+			}
 		}
 
 		// Еще раз обновим метки
@@ -10098,11 +10113,14 @@ Paragraph.prototype.GetOutlineLvl = function()
 {
 	// TODO: Заглушка со стилями заголовков тут временная
 	var ParaPr  = this.Get_CompiledPr2(false).ParaPr;
-	var oStyles = this.LogicDocument.Get_Styles();
-	for (var nIndex = 0; nIndex < 9; ++nIndex)
+	if(this.LogicDocument)
 	{
-		if (ParaPr.PStyle === oStyles.Get_Default_Heading(nIndex))
-			return nIndex;
+		var oStyles = this.LogicDocument.Get_Styles();
+		for (var nIndex = 0; nIndex < 9; ++nIndex)
+		{
+			if (ParaPr.PStyle === oStyles.Get_Default_Heading(nIndex))
+				return nIndex;
+		}
 	}
 
 	return ParaPr.OutlineLvl;
@@ -10638,7 +10656,12 @@ Paragraph.prototype.Document_UpdateRulersState = function()
 	if (true === this.Is_Inline())
 	{
 		if (this.Parent instanceof CDocument)
-			this.LogicDocument.Document_UpdateRulersStateBySection();
+		{
+			if(this.LogicDocument)
+			{
+				this.LogicDocument.Document_UpdateRulersStateBySection();
+			}
+		}
 	}
 	else
 	{
@@ -10718,6 +10741,10 @@ Paragraph.prototype.Document_UpdateInterfaceState = function()
 
 	if (editor && this.bFromDocument)
 	{
+		if(!this.LogicDocument)
+		{
+			return;
+		}
 		var TrackManager = this.LogicDocument.GetTrackRevisionsManager();
 
 		if (this.Pages.length <= 0 && this.Lines.length <= 0)
@@ -10776,13 +10803,16 @@ Paragraph.prototype.PreDelete = function()
 		if (Item.PreDelete)
 			Item.PreDelete();
 
-		if (para_Comment === Item.Type && this.LogicDocument && true === this.LogicDocument.RemoveCommentsOnPreDelete)
+		if(this.LogicDocument)
 		{
-			this.LogicDocument.RemoveComment(Item.CommentId, true, false);
-		}
-		else if (para_Bookmark === Item.Type)
-		{
-			this.LogicDocument.GetBookmarksManager().SetNeedUpdate(true);
+			if (para_Comment === Item.Type  && true === this.LogicDocument.RemoveCommentsOnPreDelete)
+			{
+				this.LogicDocument.RemoveComment(Item.CommentId, true, false);
+			}
+			else if (para_Bookmark === Item.Type)
+			{
+				this.LogicDocument.GetBookmarksManager().SetNeedUpdate(true);
+			}
 		}
 	}
 
@@ -12317,9 +12347,12 @@ Paragraph.prototype.ReplaceMisspelledWord = function(Word, oElement)
 			CommentsToDelete[Item.CommentId] = true;
 	}
 
-	for (var CommentId in CommentsToDelete)
+	if(this.LogicDocument)
 	{
-		this.LogicDocument.RemoveComment(CommentId, true, false);
+		for (var CommentId in CommentsToDelete)
+		{
+			this.LogicDocument.RemoveComment(CommentId, true, false);
+		}
 	}
 
 	this.Set_SelectionContentPos(StartPos, EndPos);
@@ -14035,6 +14068,10 @@ Paragraph.prototype.GetOutlineParagraphs = function(arrOutline, oPr)
 	}
 	else if (oPr && oPr.Styles && oPr.Styles.length > 0)
 	{
+		if(!this.LogicDocument)
+		{
+			return;
+		}
 		var oStyle = this.LogicDocument.Get_Styles().Get(this.Style_Get());
 		if (!oStyle)
 			return;
@@ -14080,6 +14117,10 @@ Paragraph.prototype.private_CheckUpdateBookmarks = function(Items)
 	if (!Items)
 		return;
 
+	if(!this.LogicDocument)
+	{
+		return;
+	}
 	for (var nIndex = 0, nCount = Items.length; nIndex < nCount; ++nIndex)
 	{
 		var oItem = Items[nIndex];
