@@ -9281,6 +9281,26 @@ CBodyPr.prototype =
     Refresh_RecalcData: function()
     {},
 
+    getLnSpcReduction: function()
+    {
+        if(this.textFit
+            && this.textFit.type === AscFormat.text_fit_NormAuto
+            && AscFormat.isRealNumber(this.textFit.lnSpcReduction))
+        {
+            return this.textFit.lnSpcReduction / 100000.0;
+        }
+        return undefined;
+    },
+    getFontScale: function()
+    {
+        if(this.textFit
+            && this.textFit.type === AscFormat.text_fit_NormAuto
+            && AscFormat.isRealNumber(this.textFit.fontScale))
+        {
+            return this.textFit.fontScale / 100000.0;
+        }
+        return undefined;
+    },
     isNotNull: function()
     {
         return this.flatTx          !== null ||
@@ -9389,6 +9409,8 @@ CBodyPr.prototype =
             }
         }, this, []);
     },
+
+
 
     Write_ToBinary2: function(w)
     {

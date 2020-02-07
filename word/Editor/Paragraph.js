@@ -9157,6 +9157,18 @@ Paragraph.prototype.Internal_CompileParaPr2 = function()
 		else
 			Pr.ParaPr.FramePr = this.Pr.FramePr.Copy();
 
+		if(Pr.ParaPr.LnSpcReduction !== undefined && Pr.ParaPr.LnSpcReduction !== null)
+		{
+			var Spacing = Pr.ParaPr.Spacing;
+			if(Spacing.LineRule === Asc.linerule_Auto)
+			{
+				Spacing.Line = Spacing.Line - Pr.ParaPr.LnSpcReduction;
+			}
+			else
+			{
+				Spacing.Line = Spacing.Line*Pr.ParaPr.LnSpcReduction;
+			}
+		}
 		return Pr;
 	}
 	else
@@ -9191,6 +9203,19 @@ Paragraph.prototype.Internal_CompiledParaPrPresentation = function(Lvl, bNoMerge
 	}
 
 	Pr.ParaPr.StyleTabs = ( undefined != Pr.ParaPr.Tabs ? Pr.ParaPr.Tabs.Copy() : new CParaTabs() );
+
+	if(Pr.ParaPr.LnSpcReduction !== undefined && Pr.ParaPr.LnSpcReduction !== null)
+	{
+		var Spacing = Pr.ParaPr.Spacing;
+		if(Spacing.LineRule === Asc.linerule_Auto)
+		{
+			Spacing.Line = Spacing.Line - Pr.ParaPr.LnSpcReduction;
+		}
+		else
+		{
+			Spacing.Line = Spacing.Line*Pr.ParaPr.LnSpcReduction;
+		}
+	}
 
 	if(!(bNoMergeDefault === true)){
 		// Копируем прямые настройки параграфа.

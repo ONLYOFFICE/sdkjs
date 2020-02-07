@@ -12086,7 +12086,7 @@ function CTextPr()
     this.TextOutline = undefined;
     this.TextFill    = undefined;
 	this.HighlightColor = undefined;
-
+	this.FontScale      = undefined;
 	this.PrChange   = undefined;
 	this.ReviewInfo = undefined;
 }
@@ -12126,6 +12126,7 @@ CTextPr.prototype.Clear = function()
 	this.AscFill        = undefined;
 	this.AscUnifill     = undefined;
 	this.AscLine        = undefined;
+	this.FontScale      = undefined;
 
 	this.PrChange   = undefined;
 	this.ReviewInfo = undefined;
@@ -12173,6 +12174,8 @@ CTextPr.prototype.Copy = function(bCopyPrChange)
 
 	if (undefined !== this.Shd)
 		TextPr.Shd = this.Shd.Copy();
+	if (undefined !== this.FontScale)
+		TextPr.FontScale = this.FontScale;
 
 	TextPr.Vanish = this.Vanish;
 
@@ -12314,6 +12317,10 @@ CTextPr.prototype.Merge = function(TextPr)
 	{
 		this.HighlightColor = TextPr.HighlightColor.createDuplicate();
 	}
+	if (undefined !== TextPr.FontScale)
+	{
+		this.FontScale = TextPr.FontScale;
+	}
 };
 CTextPr.prototype.Init_Default = function()
 {
@@ -12350,6 +12357,7 @@ CTextPr.prototype.Init_Default = function()
 	this.TextOutline    = undefined;
 	this.TextFill       = undefined;
 	this.HighlightColor = undefined;
+	this.FontScale = undefined;
 
 	this.PrChange   = undefined;
 	this.ReviewInfo = undefined;
@@ -12429,6 +12437,7 @@ CTextPr.prototype.Set_FromObject = function(TextPr, isUndefinedToNull)
 	this.AscFill        = CheckUndefinedToNull(isUndefinedToNull, TextPr.AscFill);
 	this.AscUnifill     = CheckUndefinedToNull(isUndefinedToNull, TextPr.AscUnifill);
 	this.AscLine        = CheckUndefinedToNull(isUndefinedToNull, TextPr.AscLine);
+	this.FontScale      = CheckUndefinedToNull(isUndefinedToNull, TextPr.FontScale);
 };
 CTextPr.prototype.Check_PresentationPr = function()
 {
@@ -12561,6 +12570,8 @@ CTextPr.prototype.Compare = function(TextPr)
 	// Vanish
 	if (undefined !== this.Vanish && this.Vanish !== TextPr.Vanish)
 		this.Vanish = undefined;
+	if (undefined !== this.FontScale && this.FontScale !== TextPr.FontScale)
+		this.FontScale = undefined;
 
 	if (undefined !== this.Unifill && !this.Unifill.IsIdentical(TextPr.Unifill))
 	{
@@ -14742,6 +14753,7 @@ function CParaPr()
 	this.Bullet            = undefined;
 	this.Lvl               = undefined;
 	this.DefaultTab        = undefined;
+	this.LnSpcReduction    = undefined;
 	this.PrChange          = undefined;
 	this.ReviewInfo        = undefined;
 }
@@ -14811,6 +14823,9 @@ CParaPr.prototype.Copy = function(bCopyPrChange)
 
 	if (undefined != this.DefaultTab)
 		ParaPr.DefaultTab = this.DefaultTab;
+
+	if (undefined != this.LnSpcReduction)
+		ParaPr.LnSpcReduction = this.LnSpcReduction;
 
 	if (true === bCopyPrChange && undefined !== this.PrChange)
 	{
@@ -14964,6 +14979,9 @@ CParaPr.prototype.Merge = function(ParaPr)
 	if (undefined != ParaPr.DefaultTab)
 		this.DefaultTab = ParaPr.DefaultTab;
 
+	if (undefined != ParaPr.LnSpcReduction)
+		this.LnSpcReduction = ParaPr.LnSpcReduction;
+
 	if (undefined !== ParaPr.OutlineLvl)
 		this.OutlineLvl = ParaPr.OutlineLvl;
 };
@@ -15000,11 +15018,12 @@ CParaPr.prototype.Init_Default = function()
 	this.FramePr                   = undefined;
 	this.OutlineLvl                = undefined;
 
-	this.DefaultRunPr = undefined;
-	this.Bullet       = undefined;
-	this.DefaultTab   = undefined;
-	this.PrChange     = undefined;
-	this.ReviewInfo   = undefined
+	this.DefaultRunPr   = undefined;
+	this.Bullet         = undefined;
+	this.DefaultTab     = undefined;
+	this.LnSpcReduction = undefined;
+	this.PrChange       = undefined;
+	this.ReviewInfo     = undefined
 };
 CParaPr.prototype.Set_FromObject = function(ParaPr)
 {

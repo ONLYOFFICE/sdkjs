@@ -303,6 +303,7 @@ CTextBody.prototype =
 
     checkTextFit: function()
     {
+        return;
         if(this.parent && this.parent.parent && this.parent.parent instanceof Slide)
         {
             if(isRealObject(this.bodyPr.textFit))
@@ -764,6 +765,16 @@ CTextBody.prototype =
     }
 };
 
+
+
+function CalculateReductionParams(oBodyPrHolder, oContent) {
+    if(!oBodyPrHolder || !oContent) {
+        return;
+    }
+    var oBodyPr = oBodyPrHolder.bodyPr ? oBodyPrHolder.bodyPr.createDuplicate() : new AscFormat.CBodyPr();
+
+    return oBodyPr;
+}
     function GetContentOneStringSizes(oContent) {
         oContent.Reset(0, 0, 20000, 20000);
         oContent.Recalculate_Page(0, true);

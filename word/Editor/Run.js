@@ -7456,6 +7456,11 @@ ParaRun.prototype.Internal_Compile_Pr = function ()
 	TextPr.FontFamily.Name  = TextPr.RFonts.Ascii.Name;
 	TextPr.FontFamily.Index = TextPr.RFonts.Ascii.Index;
 
+	if(TextPr.FontScale !== null && TextPr.FontScale !== undefined)
+	{
+		TextPr.FontSize *= 	TextPr.FontScale;
+		TextPr.FontSizeCS *= TextPr.FontScale;
+	}
 	return TextPr;
 };
 

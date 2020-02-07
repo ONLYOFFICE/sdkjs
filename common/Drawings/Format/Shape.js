@@ -2662,6 +2662,12 @@ CShape.prototype.recalculateTextStyles = function (level) {
             default_style.TextPr.RFonts.CS = {Name: "+mn-cs", Index: -1};
             default_style.TextPr.RFonts.HAnsi = {Name: "+mn-lt", Index: -1};
         }
+        var oBodyPr = this.getBodyPr && this.getBodyPr();
+        if(oBodyPr)
+        {
+            default_style.ParaPr.LnSpcReduction = oBodyPr.getLnSpcReduction();
+            default_style.TextPr.FontScale = oBodyPr.getFontScale();
+        }
         if(this.getObjectType && this.getObjectType() === AscDFH.historyitem_type_GraphicFrame){
             default_style.TextPr.FontSize = 18;
         }
@@ -4004,6 +4010,37 @@ CShape.prototype.checkExtentsByDocContent = function(bForce, bNeedRecalc)
             }
         }
         return true;
+    }
+    else
+    {
+        if(bForce)
+        {
+            var oBodyPr = this.getBodyPr && this.getBodyPr();
+            if(oBodyPr)
+            {
+                var oTextFit = oBodyPr.textFit;
+                if(oTextFit && oTextFit.type === AscFormat.text_fit_NormAuto)
+                {
+                    if(this.contentHeight > this.extY)
+                    {
+
+                        this.bCheckAutoFitFlag = true;
+                        this.handleUpdateExtents();
+                        this.recalculate();
+                        this.bCheckAutoFitFlag = false;
+
+
+                        var dDelta = Math.abs(this.contentHeight - this.extY);
+                        var nIterCount = 0;
+                        var lbSpcReduction =
+                        while(dDelta > AscFormat.EPSILON_TEXT_AUTOFIT && nIterCount < AscFormat.MAX_ITER_COUNT)
+                        {
+
+                        }
+                    }
+                }
+            }
+        }
     }
     return false;
 };
