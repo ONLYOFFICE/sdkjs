@@ -1098,12 +1098,7 @@
 				var error = AscCommon.getDisconnectErrorCode(t.isDocumentLoadComplete, opt_closeCode);
 				var level = t.isDocumentLoadComplete ? Asc.c_oAscError.Level.NoCritical : Asc.c_oAscError.Level.Critical;
 				t.setViewModeDisconnect();
-				if (Asc.c_oAscError.ID.UpdateVersion === error) {
-					t.sendEvent("asc_onDocumentUpdateVersion", function() {
-					});
-				} else {
-					t.sendEvent('asc_onError', error, level);
-				}
+				t.sendEvent('asc_onError', error, level);
 			}
 		};
 		this.CoAuthoringApi.onDocumentOpen = function (inputWrap) {
