@@ -5332,7 +5332,7 @@ CChartSpace.prototype.recalcTitles = function()
     {
         this.chart.title.recalcInfo.recalculateContent = true;
         this.chart.title.recalcInfo.recalcTransform = true;
-        this.chart.title.recalcInfo.recalcTransformText = true;
+        this.chart.title.recalcInfo.recalculateTransformText = true;
     }
     if(this.chart && this.chart.plotArea)
     {
@@ -5346,7 +5346,7 @@ CChartSpace.prototype.recalcTitles = function()
                 {
                     axis.title.recalcInfo.recalculateContent = true;
                     axis.title.recalcInfo.recalcTransform = true;
-                    axis.title.recalcInfo.recalcTransformText = true;
+                    axis.title.recalcInfo.recalculateTransformText = true;
                 }
             }
         }
@@ -5358,7 +5358,7 @@ CChartSpace.prototype.recalcTitles2 = function()
     {
         this.chart.title.recalcInfo.recalculateContent = true;
         this.chart.title.recalcInfo.recalcTransform = true;
-        this.chart.title.recalcInfo.recalcTransformText = true;
+        this.chart.title.recalcInfo.recalculateTransformText = true;
         this.chart.title.recalcInfo.recalculateTxBody = true;
     }
     if(this.chart && this.chart.plotArea)
@@ -5373,7 +5373,7 @@ CChartSpace.prototype.recalcTitles2 = function()
                 {
                     axis.title.recalcInfo.recalculateContent = true;
                     axis.title.recalcInfo.recalcTransform = true;
-                    axis.title.recalcInfo.recalcTransformText = true;
+                    axis.title.recalcInfo.recalculateTransformText = true;
                     axis.title.recalcInfo.recalculateTxBody = true;
                 }
             }

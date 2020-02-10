@@ -12654,6 +12654,17 @@ CTextPr.prototype.ReplaceThemeFonts = function(oFontScheme)
 	}
 };
 
+CTextPr.prototype.CheckFontScale =  function()
+{
+	if(this.FontScale !== null && this.FontScale !== undefined)
+	{
+		this.FontSize *= 	this.FontScale;
+		this.FontSize = (this.FontSize + 0.5) >> 0;
+		this.FontSizeCS *= this.FontScale;
+		this.FontSizeCS = (this.FontSizeCS + 0.5) >> 0;
+	}
+};
+
 CTextPr.prototype.Write_ToBinary = function(Writer)
 {
 	var StartPos = Writer.GetCurPosition();

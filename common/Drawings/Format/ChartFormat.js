@@ -1016,7 +1016,7 @@ function CDLbl()
     this.recalcInfo =
     {
         recalcTransform: true,
-        recalcTransformText: true,
+        recalculateTransformText: true,
         recalcStyle: true,
         recalculateTxBody: true,
         recalculateBrush: true,
@@ -1181,7 +1181,7 @@ CDLbl.prototype =
                 this.recalculateTransform();
                 //this.recalcInfo.recalcTransform = false;
             }
-            if(this.recalcInfo.recalcTransformText)
+            if(this.recalcInfo.recalculateTransformText)
             {
                 this.recalculateTransformText();
                 //this.recalcInfo.recalcTransformText = false;
@@ -12641,8 +12641,8 @@ function CTitle()
     {
         recalculateTxBody: true,
         recalcTransform: true,
-        recalcTransformText: true,
-        recalcContent: true,
+        recalculateTransformText: true,
+        recalculateContent: true,
         recalculateBrush: true,
         recalculatePen: true,
         recalcStyle: true,
@@ -12692,8 +12692,8 @@ CTitle.prototype =
     {
         this.recalcInfo.recalculateTxBody = true;
         this.recalcInfo.recalcTransform = true;
-        this.recalcInfo.recalcTransformText = true;
-        this.recalcInfo.recalcContent = true;
+        this.recalcInfo.recalculateTransformText = true;
+        this.recalcInfo.recalculateContent = true;
         this.recalcInfo.recalculateContent = true;
         this.recalcInfo.recalculateGeometry = true;
 
@@ -12704,8 +12704,7 @@ CTitle.prototype =
     {
         this.recalcInfo.recalculateTxBody = true;
         this.recalcInfo.recalcTransform = true;
-        this.recalcInfo.recalcTransformText = true;
-        this.recalcInfo.recalcContent = true;
+        this.recalcInfo.recalculateTransformText = true;
         this.recalcInfo.recalculateContent = true;
         this.recalcInfo.recalculateGeometry = true;
         if(this.tx && this.tx.rich && this.tx.rich.content)
@@ -13152,10 +13151,10 @@ CTitle.prototype =
                 this.recalculateGeometry && this.recalculateGeometry();
                 this.recalcInfo.recalculateGeometry = false;
             }
-            if(this.recalcInfo.recalcTransformText)
+            if(this.recalcInfo.recalculateTransformText)
             {
                 this.recalculateTransformText();
-                this.recalcInfo.recalcTransformText = false;
+                this.recalcInfo.recalculateTransformText = false;
             }
             if(this.chart)
             {

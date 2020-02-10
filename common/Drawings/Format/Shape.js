@@ -58,6 +58,7 @@ var MOVE_DELTA = AscFormat.MOVE_DELTA;
 
 var c_oAscFill = Asc.c_oAscFill;
 
+    var dTextFitDelta = 3;// mm
 
 function CheckObjectLine(obj)
 {
@@ -1113,8 +1114,8 @@ CShape.prototype.setTextBoxContent = function (textBoxContent) {
 CShape.prototype.setBodyPr = function (pr) {
     History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ShapeSetBodyPr, this.bodyPr, pr));
     this.bodyPr = pr;
-    this.recalcInfo.recalcContent = true;
-    this.recalcInfo.recalcTransformText = true;
+    this.recalcInfo.recalculateContent = true;
+    this.recalcInfo.recalculateTransformText = true;
     this.addToRecalculate();
 };
 
@@ -4061,71 +4062,98 @@ CShape.prototype.checkExtentsByDocContent = function(bForce, bNeedRecalc)
                 var oTextFit = oBodyPr.textFit;
                 if(oTextFit && oTextFit.type === AscFormat.text_fit_NormAuto)
                 {
-               //     if(this.contentHeight > this.extY)
+                    var bCheckAutoFit = false;
+                    if(this.contentHeight - this.clipRect.h > 0)
                     {
-                        this.bCheckAutoFitFlag = true;
-                        this.tmpFontScale = 1;
-                        this.tmpLnSpcReduction = 0;
-                        oContent.Recalc_AllParagraphs_CompiledPr();
-                        this.handleUpdateExtents();
-                        this.recalculate();
-                        this.bCheckAutoFitFlag = false;
-
-                        if(this.contentHeight > this.extY)
+                        if(this.contentHeight - this.clipRect.h > 0)
                         {
-                            var dDelta = Math.abs(this.contentHeight - this.extY);
-                            var nIterCount = 0;
-                            this.tmpFontScale = 0.1;
-                            this.tmpLnSpcReduction = 1 - this.tmpFontScale;
-                            dDelta = 1 - this.tmpFontScale;
-                            while( dDelta > AscFormat.EPSILON_TEXT_AUTOFIT && nIterCount < AscFormat.MAX_ITER_COUNT)
-                            {
+                            bCheckAutoFit = true;
+                        }
+                    }
+                    else
+                    {
+                        if((oTextFit.fontScale !== null && oTextFit.fontScale !== 100000) ||
+                            (oTextFit.lnSpcReduction !== null && oTextFit.lnSpcReduction !== 0))
+                        {
                                 this.bCheckAutoFitFlag = true;
-                                oContent.Recalc_AllParagraphs_CompiledPr();
-                                this.handleUpdateExtents();
-                                this.recalculate();
-                                this.bCheckAutoFitFlag = false;
 
-                                dDelta /= 2;
-                                if(this.contentHeight > this.extY)
+                                this.tmpFontScale = null;
+                                this.tmpLnSpcReduction = null;
+
+                                oContent.Recalc_AllParagraphs_CompiledPr();
+                                this.recalcInfo.recalculateContent = true;
+                                this.recalcInfo.recalculateContent2 = true;
+                                this.recalcInfo.recalculateTransformText = true;
+                                this.recalculate();
+
+                                if(this.contentHeight - this.clipRect.h <= 0)
                                 {
-                                    this.tmpFontScale -= dDelta;
+                                    oBodyPr = oBodyPr.createDuplicate();
+                                    oBodyPr.textFit.lnSpcReduction = null;
+                                    oBodyPr.textFit.fontScale = null;
+                                    if (this.bWordShape) {
+                                        this.setBodyPr(oBodyPr);
+                                    }
+                                    else {
+                                        if (this.txBody) {
+                                            this.txBody.setBodyPr(oBodyPr);
+                                        }
+                                    }
                                 }
                                 else
                                 {
-                                    this.tmpFontScale += dDelta;
+                                    bCheckAutoFit = true;
                                 }
-                                this.tmpLnSpcReduction = 1 - this.tmpFontScale;
-                                ++nIterCount;
-                            }
-                            oBodyPr = oBodyPr.createDuplicate();
-                            oBodyPr.textFit.lnSpcReduction = 100000*this.tmpLnSpcReduction >> 0;
-                            oBodyPr.textFit.fontScale = 100000*this.tmpFontScale >> 0;
-                            if (this.bWordShape) {
-                                this.setBodyPr(oBodyPr);
-                            }
-                            else {
-                                if (this.txBody) {
-                                    this.txBody.setBodyPr(oBodyPr);
-                                }
-                            }
+
+                                this.bCheckAutoFitFlag = false;
                         }
-                        else
+                    }
+
+                    if(bCheckAutoFit)
+                    {
+                        this.bCheckAutoFitFlag = true;
+                        var dSpcKoeff = 0.2;
+                        this.tmpFontScale =  0.5;
+                        this.tmpLnSpcReduction = dSpcKoeff * this.tmpFontScale;
+                        var dDelta = 0.25;
+                        var nMinDelta = dDelta/6;
+                        while(dDelta > nMinDelta && this.tmpFontScale > 0.2)
                         {
-                            oBodyPr = oBodyPr.createDuplicate();
-                            oBodyPr.textFit.lnSpcReduction = 0;
-                            oBodyPr.textFit.fontScale = 100000;
-                            if (this.bWordShape) {
-                                this.setBodyPr(oBodyPr);
+                            oContent.Recalc_AllParagraphs_CompiledPr();
+                            this.recalcInfo.recalculateContent = true;
+                            this.recalcInfo.recalculateContent2 = true;
+                            this.recalcInfo.recalculateTransformText = true;
+                            this.recalculate();
+                            if(this.contentHeight <= this.clipRect.h &&  Math.abs(this.contentHeight - this.clipRect.h) <= dTextFitDelta)
+                            {
+                                break;
                             }
-                            else {
-                                if (this.txBody) {
-                                    this.txBody.setBodyPr(oBodyPr);
-                                }
+                            if(this.contentHeight - this.clipRect.h > 0)
+                            {
+                                this.tmpFontScale -= dDelta;
+                            }
+                            else
+                            {
+                                this.tmpFontScale += dDelta;
+                            }
+                            dDelta /= 2;
+                        }
+                        oBodyPr = oBodyPr.createDuplicate();
+                        oBodyPr.textFit.lnSpcReduction = 100000*this.tmpLnSpcReduction >> 0;
+                        oBodyPr.textFit.fontScale = 100000*this.tmpFontScale >> 0;
+                        if (this.bWordShape) {
+                            this.setBodyPr(oBodyPr);
+                        }
+                        else {
+                            if (this.txBody) {
+                                this.txBody.setBodyPr(oBodyPr);
                             }
                         }
+                        this.bCheckAutoFitFlag = false;
                         oContent.Recalc_AllParagraphs_CompiledPr();
-                        this.handleUpdateExtents();
+                        this.recalcInfo.recalculateContent = true;
+                        this.recalcInfo.recalculateContent2 = true;
+                        this.recalcInfo.recalculateTransformText = true;
                         this.recalculate();
                     }
                 }

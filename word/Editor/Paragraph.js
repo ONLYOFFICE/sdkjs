@@ -14231,6 +14231,7 @@ Paragraph.prototype.GetParaEndCompiledPr = function()
 	}
 
 	oTextPr.Merge(this.TextPr.Value);
+	oTextPr.CheckFontScale();
 	return oTextPr;
 };
 Paragraph.prototype.GetLastParagraph = function()

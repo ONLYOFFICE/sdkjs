@@ -9211,15 +9211,15 @@ CTextFit.prototype =
     Write_ToBinary: function(w)
     {
         writeLong(w, this.type);
-        writeDouble(w, this.fontScale);
-        writeDouble(w, this.lnSpcReduction);
+        writeLong(w, this.fontScale);
+        writeLong(w, this.lnSpcReduction);
     },
 
     Read_FromBinary: function(r)
     {
         this.type = readLong(r);
-        this.fontScale = readDouble(r);
-        this.lnSpcReduction = readDouble(r);
+        this.fontScale = readLong(r);
+        this.lnSpcReduction = readLong(r);
     },
 
     Get_Id: function()

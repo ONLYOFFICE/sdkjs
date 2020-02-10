@@ -3563,7 +3563,7 @@ DrawingObjectsController.prototype =
                 objects_by_type.groups[i].setPaddings(props.paddings);
             }
         }
-        if(isRealNumber(props.textFitType))
+        if(AscFormat.isRealNumber(props.textFitType))
         {
             for(i = 0; i < objects_by_type.shapes.length; ++i)
             {

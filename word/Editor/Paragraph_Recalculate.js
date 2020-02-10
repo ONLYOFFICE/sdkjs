@@ -1223,7 +1223,7 @@ Paragraph.prototype.private_RecalculateLineMetrics     = function(CurLine, CurPa
 			// Выставляем настройки для символа параграфа
 			var EndTextPr = this.Get_CompiledPr2(false).TextPr.Copy();
 			EndTextPr.Merge(this.TextPr.Value);
-
+            EndTextPr.CheckFontScale();
 			g_oTextMeasurer.SetTextPr(EndTextPr, this.Get_Theme());
 			g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
 
@@ -3122,6 +3122,7 @@ CParagraphRecalculateStateWrap.prototype =
 				var oNumTextPr = Para.Get_CompiledPr2(false).TextPr.Copy();
 				oNumTextPr.Merge(Para.TextPr.Value);
 				oNumTextPr.Merge(oNumLvl.GetTextPr());
+                oNumTextPr.CheckFontScale();
 				var nNumSuff   = oNumLvl.GetSuff();
 				var nNumJc     = oNumLvl.GetJc();
 
