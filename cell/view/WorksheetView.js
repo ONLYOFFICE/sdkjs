@@ -796,7 +796,7 @@
         return ret;
     };
 
-    WorksheetView.prototype.resize = function (isUpdate) {
+    WorksheetView.prototype.resize = function (isUpdate, editor) {
         if (isUpdate) {
             this._initCellsArea(AscCommonExcel.recalcType.newLines);
             this._normalizeViewRange();
@@ -804,6 +804,9 @@
             this.updateResize = false;
 
             this.objectRender.resizeCanvas();
+			if (this.isCellEditMode && editor) {
+				editor.move();
+			}
         } else {
             this.updateResize = true;
         }

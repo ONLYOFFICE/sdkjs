@@ -550,6 +550,9 @@
 			this._adjustCanvas();
 			this._showCanvas();
 			this._renderText();
+			this.topLineIndex = 0;
+			this._updateCursorPosition();
+			this._showCursor();
 			this._drawSelection();
 		} else {
 			// hide
@@ -1244,18 +1247,13 @@
 	};
 
 	CellEditor.prototype._expand = function () {
-		var bottom, tm, oldLC;
+		var bottom, tm;
 		var doAdjust = false, fragments = this._getRenderFragments();
 		if (0 < fragments.length) {
 			bottom = this.bottom;
 			this.bottom = this.sides.b[this.sides.bi];
 
-			oldLC = this.textRender.getLinesCount();
 			tm = this.textRender.measureString(fragments, this.textFlags, this._getContentWidth());
-			if (this.textRender.getLinesCount() < oldLC) {
-				// ToDo ?
-				// this.topLineIndex -= oldLC - this.textRender.getLinesCount();
-			}
 
 			if (!this.textFlags.wrapText && !this.textFlags.wrapOnlyCE) {
 				while (tm.width > this._getContentWidth()) {

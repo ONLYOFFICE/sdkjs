@@ -1771,7 +1771,7 @@
     if (ws.updateResize && ws.updateZoom) {
       ws.changeZoomResize();
     } else if (ws.updateResize) {
-      ws.resize(true);
+      ws.resize(true, this.cellEditor);
     } else if (ws.updateZoom) {
       ws.changeZoom(true);
     }
@@ -1915,7 +1915,7 @@
       for (var i in this.wsViews) {
         item = this.wsViews[i];
         // Делаем resize (для не активных сменим как только сделаем его активным)
-        item.resize(/*isDraw*/i == activeIndex);
+        item.resize(/*isDraw*/i == activeIndex, this.cellEditor);
       }
       this.drawWorksheet();
     } else {
