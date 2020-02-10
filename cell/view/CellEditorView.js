@@ -537,23 +537,23 @@
 		t._moveCursor(kEndOfText);
 	};
 
-	CellEditor.prototype.move = function (l, t, r, b) {
+	CellEditor.prototype.move = function () {
+		if (this.options.checkVisible()) {
 		this.textFlags.wrapOnlyCE = false;
 		this.sides = this.options.getSides();
 		this.left = this.sides.cellX;
 		this.top = this.sides.cellY;
 		this.right = this.sides.r[this.sides.ri];
 		this.bottom = this.sides.b[this.sides.bi];
-		this._expand();
 
-		if (this.left < l || this.top < t || this.left > r || this.top > b) {
-			// hide
-			this._hideCanvas();
-		} else {
+			this._expand();
 			this._adjustCanvas();
 			this._showCanvas();
 			this._renderText();
 			this._drawSelection();
+		} else {
+			// hide
+			this._hideCanvas();
 		}
 	};
 

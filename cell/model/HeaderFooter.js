@@ -1011,6 +1011,9 @@
 				}
 				return {l: [0], r: [t.parentWidth], b: bottomArr, cellX: 0, cellY: 0, ri: 0, bi: 0};
 			},
+			checkVisible: function () {
+				return true;
+			},
 			menuEditor: true
 		};
 

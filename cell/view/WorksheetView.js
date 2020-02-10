@@ -6847,11 +6847,6 @@
         var lastRowHeight = (scrollDown && oldVRE_isPartial) ?
         ctxH - (this._getRowTop(oldEnd) - topOldStart + this.cellsTop + diffHeight) : 0;
 
-        if (this.isCellEditMode && editor && this.model.selectionRange.activeCell.row >= rFrozen) {
-            editor.move(this.cellsLeft + (this.model.selectionRange.activeCell.col >= cFrozen ? diffWidth : 0),
-              this.cellsTop + diffHeight, ctxW, ctxH);
-        }
-
         //TODO рассмотреть все случаи, когда необходимо вычитать groupWidth
         if (x !== this.cellsLeft) {
 			this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
@@ -6977,6 +6972,10 @@
 		this._reinitializeScroll();
         this.handlers.trigger("onDocumentPlaceChanged");
 
+		if (this.isCellEditMode && editor && this.model.selectionRange.activeCell.row >= rFrozen) {
+			editor.move();
+		}
+
         //ToDo this.drawDepCells();
         this.cellCommentator.updateActiveComment();
         this.cellCommentator.drawCommentCells();
@@ -7061,11 +7060,6 @@
         var lastColWidth = (scrollRight && oldVCE_isPartial) ?
         ctxW - (this._getColLeft(oldEnd) - leftOldStart + this.cellsLeft + diffWidth) : 0;
 
-        if (this.isCellEditMode && editor && this.model.selectionRange.activeCell.col >= cFrozen) {
-            editor.move(this.cellsLeft + diffWidth,
-              this.cellsTop + (this.model.selectionRange.activeCell.row >= rFrozen ? diffHeight : 0), ctxW, ctxH);
-        }
-
         // Перемещаем область
         var moveWidth = oldW - lastColWidth;
         if (moveWidth > 0) {
@@ -7141,6 +7135,10 @@
 
 		this._reinitializeScroll();
         this.handlers.trigger("onDocumentPlaceChanged");
+
+		if (this.isCellEditMode && editor && this.model.selectionRange.activeCell.col >= cFrozen) {
+			editor.move();
+		}
 
         //ToDo this.drawDepCells();
         this.cellCommentator.updateActiveComment();
@@ -13982,6 +13980,9 @@
 						arrBottomS[arrBottomS.length - 1] = h;
 					}
 					return {l: arrLeftS, r: arrRightS, b: arrBottomS, cellX: cellX, cellY: cellY, ri: ri, bi: bi};
+				},
+				checkVisible: function () {
+					return null !== t.getCellVisibleRange(c.bbox.c1, c.bbox.r1);
 				}
 			});
 			this.model.workbook.handlers.trigger("asc_onEditCell", Asc.c_oAscCellEditorState.editStart);
