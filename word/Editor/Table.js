@@ -5082,70 +5082,94 @@ CTable.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent)
 								this.Internal_UpdateFlowPosition(Page.X, Page.Y);
 						}
 
-						for (CurRow = 0; CurRow < this.Content.length; CurRow++)
+						for (var nCurRow = 0, nRowsCount = this.GetRowsCount(); nCurRow < nRowsCount; ++nCurRow)
 						{
-							Rows_info[CurRow] = [];
-							Row               = this.Content[CurRow];
-							var Before_Info   = Row.Get_Before();
+							Rows_info[nCurRow] = [];
+							oRow               = this.GetRow(nCurRow);
 
-							var WBefore = 0;
+							var oBeforeInfo = oRow.GetBefore();
+							var WBefore     = 0;
 
 							if (null === BeforeSpace2)
 							{
-								if (Before_Info.GridBefore > 0 && Col === Before_Info.GridBefore && 1 === CellsFlag[CurRow][0])
-									WBefore = this.TableSumGrid[Before_Info.GridBefore - 1] + Dx;
+								if (oBeforeInfo.Grid > 0 && Col === oBeforeInfo.Grid && 1 === CellsFlag[nCurRow][0])
+								{
+									WBefore = this.TableSumGrid[oBeforeInfo.Grid - 1] + Dx;
+								}
 								else
 								{
 									if (null != BeforeSpace)
-										WBefore = this.TableSumGrid[Before_Info.GridBefore - 1] + BeforeSpace;
+										WBefore = this.TableSumGrid[oBeforeInfo.Grid - 1] + BeforeSpace;
 									else
-										WBefore = this.TableSumGrid[Before_Info.GridBefore - 1];
+										WBefore = this.TableSumGrid[oBeforeInfo.Grid - 1];
 								}
 							}
 							else
 							{
 								if (BeforeSpace2 > 0)
 								{
-									if (0 === Before_Info.GridBefore && 1 === CellsFlag[CurRow][0])
+									if (0 === oBeforeInfo.Grid && 1 === CellsFlag[nCurRow][0])
 										WBefore = BeforeSpace2;
-									else if (0 != Before_Info.GridBefore)
-										WBefore = this.TableSumGrid[Before_Info.GridBefore - 1];
+									else if (0 != oBeforeInfo.Grid)
+										WBefore = this.TableSumGrid[oBeforeInfo.Grid - 1];
 								}
 								else
 								{
-									if (0 === Before_Info.GridBefore && 1 != CellsFlag[CurRow][0])
+									if (0 === oBeforeInfo.Grid && 1 != CellsFlag[nCurRow][0])
 										WBefore = -BeforeSpace2;
-									else if (0 != Before_Info.GridBefore)
-										WBefore = -BeforeSpace2 + this.TableSumGrid[Before_Info.GridBefore - 1];
+									else if (0 != Before_oBeforeInfoInfo.Grid)
+										WBefore = -BeforeSpace2 + this.TableSumGrid[oBeforeInfo.Grid - 1];
 								}
 							}
 
 							if (WBefore > 0.001)
-								Rows_info[CurRow].push({W : WBefore, Type : -1, GridSpan : 1});
+								Rows_info[nCurRow].push({W : WBefore, Type : -1, GridSpan : 1});
 
-
-							var CellsCount = Row.Get_CellsCount();
-							var TempDx     = Dx;
-							for (var CurCell = 0; CurCell < CellsCount; CurCell++)
+							var TempDx = Dx;
+							var isFindLeft = true, isFindRight = false;
+							for (var nCurCell = 0, nCellsCount = oRow.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
 							{
-								var Cell           = Row.Get_Cell(CurCell);
-								var CellMargins    = Cell.GetMargins();
-								var Cur_Grid_start = Row.Get_CellInfo(CurCell).StartGridCol;
-								var Cur_Grid_end   = Cur_Grid_start + Cell.Get_GridSpan() - 1;
+								var oCell           = oRow.GetCell(nCurCell);
+								var oCellMargins    = oCell.GetMargins();
+								var nCellGridStart  = oRow.GetCellInfo(nCurCell).StartGridCol;
+								var nCellGridEnd    = nCellGridStart + oCell.GetGridSpan() - 1;
 
-								var W = 0;
-								if (Cur_Grid_end + 1 === Col && ( 1 === CellsFlag[CurRow][CurCell] || ( CurCell + 1 < CellsCount && 1 === CellsFlag[CurRow][CurCell + 1] ) ))
-									W = this.TableSumGrid[Cur_Grid_end] - this.TableSumGrid[Cur_Grid_start - 1] + Dx;
-								else if (Cur_Grid_start === Col && ( 1 === CellsFlag[CurRow][CurCell] || ( CurCell > 0 && 1 === CellsFlag[CurRow][CurCell - 1] ) ))
-									W = this.TableSumGrid[Cur_Grid_end] - this.TableSumGrid[Cur_Grid_start - 1] - TempDx;
+								var nCellW = 0;
+
+								if (isFindLeft)
+								{
+									if (((nCellGridEnd + 1 < Col && (this.TableSumGrid[Col - 1] - this.TableSumGrid[nCellGridEnd]) < 0.635)
+										|| (nCellGridEnd + 1 === Col)
+										|| (nCellGridEnd + 1 > Col && (this.TableSumGrid[nCellGridEnd] - this.TableSumGrid[Col - 1]) < 0.635))
+										&& (1 === CellsFlag[nCurRow][nCurCell] || (nCurCell + 1 < nCellsCount && 1 === CellsFlag[nCurRow][nCurCell + 1])))
+									{
+										isFindLeft = false;
+										nCellW     = this.TableSumGrid[Col - 1] - this.TableSumGrid[nCellGridStart - 1] + Dx;
+									}
+
+									if (isFindLeft)
+										nCellW = this.TableSumGrid[nCellGridEnd] - this.TableSumGrid[nCellGridStart - 1];
+
+									var _nCellW = Math.max(1, Math.max(nCellW, oCellMargins.Left.W + oCellMargins.Right.W));
+									if (!isFindLeft)
+									{
+										TempDx = _nCellW - nCellW;
+										isFindRight = true;
+									}
+								}
+								else if (isFindRight)
+								{
+									isFindRight = false;
+									nCellW = this.TableSumGrid[nCellGridEnd] - this.TableSumGrid[Col - 1] - TempDx;
+								}
 								else
-									W = this.TableSumGrid[Cur_Grid_end] - this.TableSumGrid[Cur_Grid_start - 1];
+								{
+									nCellW = this.TableSumGrid[nCellGridEnd] - this.TableSumGrid[nCellGridStart - 1];
+								}
 
-								W = Math.max(1, Math.max(W, CellMargins.Left.W + CellMargins.Right.W));
-								if (Cur_Grid_end + 1 === Col && ( 1 === CellsFlag[CurRow][CurCell] || ( CurCell + 1 < CellsCount && 1 === CellsFlag[CurRow][CurCell + 1] ) ))
-									TempDx = W - (this.TableSumGrid[Cur_Grid_end] - this.TableSumGrid[Cur_Grid_start - 1]);
+								nCellW = Math.max(1, Math.max(nCellW, oCellMargins.Left.W + oCellMargins.Right.W));
 
-								Rows_info[CurRow].push({W : W, Type : 0, GridSpan : 1});
+								Rows_info[nCurRow].push({W : nCellW, Type : 0, GridSpan : 1});
 							}
 						}
 
@@ -5218,63 +5242,85 @@ CTable.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent)
 								this.Internal_UpdateFlowPosition(Page.X, Page.Y);
 						}
 
-						for (CurRow = 0; CurRow < this.Content.length; CurRow++)
+						for (nCurRow = 0, nRowsCount = this.GetRowsCount(); nCurRow < nRowsCount; ++nCurRow)
 						{
-							Rows_info[CurRow] = [];
-							Row               = this.Content[CurRow];
-							var Before_Info   = Row.Get_Before();
+							Rows_info[nCurRow] = [];
+							oRow               = this.GetRow(nCurRow);
 
-							var WBefore = 0;
+							var oBeforeInfo = oRow.GetBefore();
+							var WBefore     = 0;
 
-							if (Before_Info.GridBefore > 0 && Col === Before_Info.GridBefore)
-								WBefore = this.TableSumGrid[Before_Info.GridBefore - 1] + Dx;
+							if (oBeforeInfo.Grid > 0 && Col === oBeforeInfo.Grid)
+								WBefore = this.TableSumGrid[oBeforeInfo.Grid - 1] + Dx;
 							else
 							{
 								if (null != BeforeSpace)
-									WBefore = this.TableSumGrid[Before_Info.GridBefore - 1] + BeforeSpace;
+									WBefore = this.TableSumGrid[oBeforeInfo.Grid - 1] + BeforeSpace;
 								else
-									WBefore = this.TableSumGrid[Before_Info.GridBefore - 1];
+									WBefore = this.TableSumGrid[oBeforeInfo.Grid - 1];
 
 								if (null != BeforeSpace2)
 								{
-									if (Before_Info.GridBefore > 0)
+									if (oBeforeInfo.Grid > 0)
 									{
 										if (true === BeforeFlag)
-											WBefore = this.TableSumGrid[Before_Info.GridBefore - 1] - this.TableSumGrid[0];
+											WBefore = this.TableSumGrid[oBeforeInfo.Grid - 1] - this.TableSumGrid[0];
 										else
-											WBefore = this.TableSumGrid[Before_Info.GridBefore - 1] + BeforeSpace2;
+											WBefore = this.TableSumGrid[oBeforeInfo.Grid - 1] + BeforeSpace2;
 
 									}
-									else if (0 === Before_Info.GridBefore && true === BeforeFlag)
+									else if (0 === oBeforeInfo.Grid && true === BeforeFlag)
 										WBefore = ( -BeforeSpace2 ) - this.TableSumGrid[0];
 								}
 							}
 
 							if (WBefore > 0.001)
-								Rows_info[CurRow].push({W : WBefore, Type : -1, GridSpan : 1});
+								Rows_info[nCurRow].push({W : WBefore, Type : -1, GridSpan : 1});
 
-							var CellsCount = Row.Get_CellsCount();
-							var TempDx     = Dx;
-							for (var CurCell = 0; CurCell < CellsCount; CurCell++)
+							var TempDx = Dx;
+							var isFindLeft = true, isFindRight = false;
+							for (var nCurCell = 0, nCellsCount = oRow.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
 							{
-								var Cell           = Row.Get_Cell(CurCell);
-								var CellMargins    = Cell.GetMargins();
-								var Cur_Grid_start = Row.Get_CellInfo(CurCell).StartGridCol;
-								var Cur_Grid_end   = Cur_Grid_start + Cell.Get_GridSpan() - 1;
+								var oCell           = oRow.GetCell(nCurCell);
+								var oCellMargins    = oCell.GetMargins();
+								var nCellGridStart  = oRow.GetCellInfo(nCurCell).StartGridCol;
+								var nCellGridEnd    = nCellGridStart + oCell.GetGridSpan() - 1;
 
-								var W = 0;
-								if (Cur_Grid_end + 1 === Col)
-									W = this.TableSumGrid[Cur_Grid_end] - this.TableSumGrid[Cur_Grid_start - 1] + Dx;
-								else if (Cur_Grid_start === Col)
-									W = this.TableSumGrid[Cur_Grid_end] - this.TableSumGrid[Cur_Grid_start - 1] - TempDx;
+								var nCellW = 0;
+
+								if (isFindLeft)
+								{
+									if ((nCellGridEnd + 1 < Col && (this.TableSumGrid[Col - 1] - this.TableSumGrid[nCellGridEnd]) < 0.635)
+										|| (nCellGridEnd + 1 === Col)
+										|| (nCellGridEnd + 1 > Col && (this.TableSumGrid[nCellGridEnd] - this.TableSumGrid[Col - 1]) < 0.635))
+									{
+										isFindLeft = false;
+										nCellW     = this.TableSumGrid[Col - 1] - this.TableSumGrid[nCellGridStart - 1] + Dx;
+									}
+
+									if (isFindLeft)
+										nCellW = this.TableSumGrid[nCellGridEnd] - this.TableSumGrid[nCellGridStart - 1];
+
+									var _nCellW = Math.max(1, Math.max(nCellW, oCellMargins.Left.W + oCellMargins.Right.W));
+									if (!isFindLeft)
+									{
+										TempDx = _nCellW - nCellW;
+										isFindRight = true;
+									}
+								}
+								else if (isFindRight)
+								{
+									isFindRight = false;
+									nCellW = this.TableSumGrid[nCellGridEnd] - this.TableSumGrid[Col - 1] - TempDx;
+								}
 								else
-									W = this.TableSumGrid[Cur_Grid_end] - this.TableSumGrid[Cur_Grid_start - 1];
+								{
+									nCellW = this.TableSumGrid[nCellGridEnd] - this.TableSumGrid[nCellGridStart - 1];
+								}
 
-								W = Math.max(1, Math.max(W, CellMargins.Left.W + CellMargins.Right.W));
-								if (Cur_Grid_end + 1 === Col)
-									TempDx = W - (this.TableSumGrid[Cur_Grid_end] - this.TableSumGrid[Cur_Grid_start - 1]);
+								nCellW = Math.max(1, Math.max(nCellW, oCellMargins.Left.W + oCellMargins.Right.W));
 
-								Rows_info[CurRow].push({W : W, Type : 0, GridSpan : 1});
+								Rows_info[nCurRow].push({W : nCellW, Type : 0, GridSpan : 1});
 							}
 						}
 					}
