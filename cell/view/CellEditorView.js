@@ -539,12 +539,12 @@
 
 	CellEditor.prototype.move = function () {
 		if (this.options.checkVisible()) {
-		this.textFlags.wrapOnlyCE = false;
-		this.sides = this.options.getSides();
-		this.left = this.sides.cellX;
-		this.top = this.sides.cellY;
-		this.right = this.sides.r[this.sides.ri];
-		this.bottom = this.sides.b[this.sides.bi];
+			this.textFlags.wrapOnlyCE = false;
+			this.sides = this.options.getSides();
+			this.left = this.sides.cellX;
+			this.top = this.sides.cellY;
+			this.right = this.sides.r[this.sides.ri];
+			this.bottom = this.sides.b[this.sides.bi];
 
 			this._expand();
 			this._adjustCanvas();
