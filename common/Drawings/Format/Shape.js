@@ -1688,6 +1688,33 @@ CShape.prototype.setVert = function (vert) {
     this.checkExtentsByDocContent && this.checkExtentsByDocContent();
 };
 
+
+CShape.prototype.setTextFitType = function(type)
+{
+    if(AscFormat.isRealNumber(type))
+    {
+        var new_body_pr = this.getBodyPr();
+        if (new_body_pr) {
+            new_body_pr = new_body_pr.createDuplicate();
+            if (!AscCommon.isRealObject(new_body_pr.textFit)) {
+                new_body_pr.textFit = new AscFormat.CTextFit();
+            }
+            new_body_pr.textFit.type = type;
+
+            if (this.bWordShape) {
+                this.setBodyPr(new_body_pr);
+            }
+            else {
+                if (this.txBody) {
+                    this.txBody.setBodyPr(new_body_pr);
+                }
+            }
+        }
+        this.checkExtentsByDocContent(true, true);
+    }
+};
+
+
 CShape.prototype.setPaddings = function (paddings) {
     if (paddings) {
 
@@ -5917,6 +5944,19 @@ CShape.prototype.getColumnNumber = function(){
             return oBodyPr.spcCol;
         }
         return 0;
+    };
+
+
+    CShape.prototype.getTextFitType = function(){
+        if(this.bWordShape){
+            return 0;
+        }
+        var oBodyPr = this.getBodyPr();
+        if(AscCommon.isRealObject(oBodyPr.textFit) && AscFormat.isRealNumber(oBodyPr.textFit.type))
+        {
+            return oBodyPr.textFit.type;
+        }
+        return AscFormat.text_fit_No;
     };
 
 
