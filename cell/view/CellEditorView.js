@@ -547,31 +547,7 @@
 		this.top = this.sides.cellY;
 		this.right = this.sides.r[this.sides.ri];
 		this.bottom = this.sides.b[this.sides.bi];
-		// ToDo вынести в отдельную функцию
-		var canExpW = true, canExpH = true, tm, expW, expH, fragments = this._getRenderFragments();
-		if (0 < fragments.length) {
-			tm = this.textRender.measureString(fragments, this.textFlags, this._getContentWidth());
-			expW = tm.width > this._getContentWidth();
-			expH = tm.height > this._getContentHeight();
-
-			while (expW && canExpW || expH && canExpH) {
-				if (expW) {
-					canExpW = this._expandWidth();
-				}
-				if (expH) {
-					canExpH = this._expandHeight();
-				}
-
-				if (!canExpW) {
-					this.textFlags.wrapOnlyCE = true;
-					tm = this.textRender.measureString(fragments, this.textFlags, this._getContentWidth());
-				} else {
-					tm = this.textRender.measure(this._getContentWidth());
-				}
-				expW = tm.width > this._getContentWidth();
-				expH = tm.height > this._getContentHeight();
-			}
-		}
+		this._expand();
 
 		if (this.left < l || this.top < t || this.left > r || this.top > b) {
 			// hide
@@ -1146,39 +1122,14 @@
 	// Rendering
 
 	CellEditor.prototype._draw = function () {
-		var canExpW = true, canExpH = true, tm, expW, expH, fragments = this._getRenderFragments();
-
-		if (0 < fragments.length) {
-			tm = this.textRender.measureString(fragments, this.textFlags, this._getContentWidth());
-			expW = tm.width > this._getContentWidth();
-			expH = tm.height > this._getContentHeight();
-
-			while (expW && canExpW || expH && canExpH) {
-				if (expW) {
-					canExpW = this._expandWidth();
-				}
-				if (expH) {
-					canExpH = this._expandHeight();
-				}
-
-				if (!canExpW) {
-					this.textFlags.wrapOnlyCE = true;
-					tm = this.textRender.measureString(fragments, this.textFlags, this._getContentWidth());
-				} else {
-					tm = this.textRender.measure(this._getContentWidth());
-				}
-				expW = tm.width > this._getContentWidth();
-				expH = tm.height > this._getContentHeight();
-			}
-		}
-
+		this._expand();
 		this._cleanText();
 		this._cleanSelection();
 		this._adjustCanvas();
 		this._showCanvas();
 		this._renderText();
 		if(!this.getMenuEditorMode()) {
-			this.input.value = AscCommonExcel.getFragmentsText(fragments);
+			this.input.value = AscCommonExcel.getFragmentsText((this.options.fragments));
 		}
 		this._updateCursorPosition();
 		this._showCursor();
@@ -1187,45 +1138,8 @@
 	CellEditor.prototype._update = function () {
 		this._updateFormulaEditMod(/*bIsOpen*/false);
 
-		var tm, canExpW, canExpH, oldLC, doAjust = false, fragments = this._getRenderFragments(), bChangedH;
-
-		if (0 < fragments.length) {
-			oldLC = this.textRender.getLinesCount();
-			tm = this.textRender.measureString(fragments, this.textFlags, this._getContentWidth());
-			if (this.textRender.getLinesCount() < oldLC) {
-				this.topLineIndex -= oldLC - this.textRender.getLinesCount();
-			}
-
-			canExpW = !(this.textFlags.wrapText || this.textFlags.wrapOnlyCE);
-			while (tm.width > this._getContentWidth() && canExpW) {
-				canExpW = this._expandWidth();
-				if (!canExpW) {
-					this.textFlags.wrapOnlyCE = true;
-					tm = this.textRender.measureString(fragments, this.textFlags, this._getContentWidth());
-				}
-				doAjust = true;
-			}
-
-			canExpH = true;
-			while (tm.height > this._getContentHeight() && canExpH) {
-				canExpH = this._expandHeight();
-				doAjust = true;
-				bChangedH = true;
-			}
-
-			//reduce editor height for interface
-			if(this.getMenuEditorMode()) {
-				if(!bChangedH && tm.height < this._getContentHeight() && this._reduceHeight(tm.height)) {
-					doAjust = true;
-					bChangedH = true;
-				}
-			}
-		}
-		if (doAjust) {
+		if (this._expand()) {
 			this._adjustCanvas();
-			if(bChangedH && this.getMenuEditorMode()) {
-				this.handlers.trigger("resizeEditorHeight");
-			}
 		}
 
 		this._renderText();  // вызов нужен для пересчета поля line.startX, которое используется в _updateCursorPosition
@@ -1332,6 +1246,42 @@
 		return {func: editableFunction, argPos: parseResult ? parseResult.argPos : null};
 	};
 
+	CellEditor.prototype._expand = function () {
+		var bottom, tm, oldLC;
+		var doAdjust = false, fragments = this._getRenderFragments();
+		if (0 < fragments.length) {
+			bottom = this.bottom;
+			this.bottom = this.sides.b[this.sides.bi];
+
+			oldLC = this.textRender.getLinesCount();
+			tm = this.textRender.measureString(fragments, this.textFlags, this._getContentWidth());
+			if (this.textRender.getLinesCount() < oldLC) {
+				// ToDo ?
+				// this.topLineIndex -= oldLC - this.textRender.getLinesCount();
+			}
+
+			if (!this.textFlags.wrapText && !this.textFlags.wrapOnlyCE) {
+				while (tm.width > this._getContentWidth()) {
+					if (!this._expandWidth()) {
+						this.textFlags.wrapOnlyCE = true;
+						tm = this.textRender.measureString(fragments, this.textFlags, this._getContentWidth());
+						break;
+					}
+					doAdjust = true;
+				}
+			}
+			while (tm.height > this._getContentHeight() && this._expandHeight()) {
+			}
+			if (bottom !== this.bottom) {
+				doAdjust = true;
+				// ToDo move this to _adjustCanvas
+				if (this.getMenuEditorMode) {
+					this.handlers.trigger("resizeEditorHeight");
+				}
+			}
+		}
+		return doAdjust;
+	};
 	CellEditor.prototype._expandWidth = function () {
 		var t = this, l = false, r = false, leftSide = this.sides.l, rightSide = this.sides.r;
 
@@ -1379,7 +1329,6 @@
 		}
 		return l || r;
 	};
-
 	CellEditor.prototype._expandHeight = function () {
 		var t = this, bottomSide = this.sides.b, i = asc_search( bottomSide, function ( v ) {
 			return v > t.bottom;
@@ -1391,18 +1340,6 @@
 		var val = bottomSide[bottomSide.length - 1];
 		if ( Math.abs( t.bottom - val ) > 0.000001 ) { // bottom !== bottomSide[len-1]
 			t.bottom = val;
-		}
-		return false;
-	};
-
-	CellEditor.prototype._reduceHeight = function (height) {
-
-		var t = this, bottomSide = this.sides.b, i = asc_search( bottomSide, function ( v ) {
-			return v > height;
-		} );
-		if ( i >= 0 ) {
-			t.bottom = bottomSide[i];
-			return true;
 		}
 		return false;
 	};
