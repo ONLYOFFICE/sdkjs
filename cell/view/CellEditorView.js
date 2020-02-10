@@ -314,7 +314,7 @@
 		 * При F2 выставляем фокус в редакторе
 		 * При dbl клике фокус выставляем в зависимости от наличия текста в ячейке
 		 */
-		this.setFocus(this.isTopLineActive ? true : (undefined !== options.focus) ? options.focus : this._haveTextInEdit() ? true : false);
+		this.setFocus(this.isTopLineActive ? true : (undefined !== options.focus) ? options.focus : this._haveTextInEdit());
 		this._updateUndoRedoChanged();
 	};
 
