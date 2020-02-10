@@ -279,36 +279,33 @@
 	 *   background
 	 *   saveValueCallback
 	 */
-	CellEditor.prototype.open = function ( options ) {
+	CellEditor.prototype.open = function (options) {
 		var b = this.input.selectionStart;
 
 		this.isOpened = true;
-		if ( window.addEventListener ) {
-			window.addEventListener( "mouseup", this.fKeyMouseUp, false );
-			window.addEventListener( "mousemove", this.fKeyMouseMove, false );
+		if (window.addEventListener) {
+			window.addEventListener("mouseup", this.fKeyMouseUp, false);
+			window.addEventListener("mousemove", this.fKeyMouseMove, false);
 		}
-		this._setOptions( options );
+		this._setOptions(options);
 		this._updateTopLineActive(true === this.input.isFocused);
 
-		this._updateFormulaEditMod( /*bIsOpen*/true );
+		this._updateFormulaEditMod( /*bIsOpen*/true);
 		this._draw();
 
-		if ( !(options.cursorPos >= 0) ) {
-			if ( this.isTopLineActive ) {
-				if ( typeof b !== "undefined" ) {
-					if ( this.cursorPos !== b ) {
-						this._moveCursor( kPosition, b );
+		if (!(options.cursorPos >= 0)) {
+			if (this.isTopLineActive) {
+				if (typeof b !== "undefined") {
+					if (this.cursorPos !== b) {
+						this._moveCursor(kPosition, b);
 					}
+				} else {
+					this._moveCursor(kEndOfText);
 				}
-				else {
-					this._moveCursor( kEndOfText );
-				}
-			}
-			else if ( options.isClearCell ) {
-				this._selectChars( kEndOfText );
-			}
-			else {
-				this._moveCursor( kEndOfText );
+			} else if (options.isClearCell) {
+				this._selectChars(kEndOfText);
+			} else {
+				this._moveCursor(kEndOfText);
 			}
 		}
 		/*
@@ -317,7 +314,7 @@
 		 * При F2 выставляем фокус в редакторе
 		 * При dbl клике фокус выставляем в зависимости от наличия текста в ячейке
 		 */
-		this.setFocus( this.isTopLineActive ? true : (undefined !== options.focus) ? options.focus : this._haveTextInEdit() ? true : false );
+		this.setFocus(this.isTopLineActive ? true : (undefined !== options.focus) ? options.focus : this._haveTextInEdit() ? true : false);
 		this._updateUndoRedoChanged();
 	};
 
