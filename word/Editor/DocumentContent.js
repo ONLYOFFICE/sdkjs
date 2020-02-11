@@ -844,13 +844,19 @@ CDocumentContent.prototype.Recalculate_Page               = function(PageIndex, 
                 for (var TempIndex = Index; TempIndex < Index + FlowCount; TempIndex++)
                 {
                     var TempElement = this.Content[TempIndex];
-                    // Получим параметры расположения рамки
                     TempElement.Set_DocumentIndex(TempIndex);
 
+                    var nElementPageIndex = 0;
                     if (Index != TempIndex || ( true != this.RecalcInfo.FrameRecalc && ( ( 0 === Index && 0 === PageIndex ) || Index != StartIndex ) ))
-                        TempElement.Reset(0, FrameH, Frame_XLimit, Frame_YLimit, PageIndex);
+					{
+						TempElement.Reset(0, FrameH, Frame_XLimit, Frame_YLimit, PageIndex);
+					}
+					else
+					{
+						nElementPageIndex = PageIndex - Element.PageNum;
+					}
 
-                    TempElement.Recalculate_Page(PageIndex);
+                    TempElement.Recalculate_Page(nElementPageIndex);
 
                     FrameH = TempElement.Get_PageBounds(PageIndex - TempElement.Get_StartPage_Relative()).Bottom;
                 }
