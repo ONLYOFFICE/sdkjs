@@ -3477,7 +3477,6 @@
 			return showValue;
 		}
 
-        var context = ctx || this.drawingCtx;
         var graphics = ctx && ctx.DocumentRenderer ? ctx.DocumentRenderer : this.handlers.trigger('getMainGraphics');
 
 		var fontSize = c.getFont().fs;
