@@ -1041,6 +1041,10 @@ CSectionPr.prototype.GetColumnSpace = function(nColIndex)
 {
 	return this.Columns.Get_ColumnSpace(nColIndex);
 };
+CSectionPr.prototype.GetColumnSep = function()
+{
+	return this.Columns.Sep;
+};
 CSectionPr.prototype.SetBordersOffsetFrom = function(nOffsetFrom)
 {
 	if (nOffsetFrom !== this.Borders.OffsetFrom)
