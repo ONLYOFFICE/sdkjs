@@ -5037,14 +5037,14 @@ CShape.prototype.getAllRasterImages = function(images)
             }
         }
         var fCallback = function(oRun)
-        {
-            var oTextPr = oRun && oRun.Pr;
-            if( (oTextPr.Unifill && oTextPr.Unifill.fill && oTextPr.Unifill.fill.type == c_oAscFill.FILL_TYPE_BLIP))
-            {
-                images.push(oTextPr.Unifill.fill.RasterImageId);
-            }
-            return false;
-        };
+		{
+			var oTextPr = oRun && oRun.Pr;
+			if (oTextPr && oTextPr.Unifill && oTextPr.Unifill.fill && oTextPr.Unifill.fill.type == c_oAscFill.FILL_TYPE_BLIP)
+			{
+				images.push(oTextPr.Unifill.fill.RasterImageId);
+			}
+			return false;
+		};
 
         oContent.CheckRunContent(fCallback);
     }

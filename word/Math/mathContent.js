@@ -1566,13 +1566,13 @@ CMathContent.prototype.SetParent = function(Parent, ParaMath)
     this.Parent   = Parent;
     this.ParaMath = ParaMath;
 };
-
 CMathContent.prototype.CheckRunContent = function(fCheck)
 {
-    for(var i = 0; i < this.Content.length; ++i)
-    {
-        fCheck(this.Content[i]);
-    }
+	for (var i = 0; i < this.Content.length; ++i)
+	{
+		if (para_Math_Run === this.Content[i].Type)
+			fCheck(this.Content[i]);
+	}
 };
 
 
