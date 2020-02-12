@@ -3453,13 +3453,14 @@
 				drawCells[col] = 1;
 			}
         }
-		// Check overlaps start and end
-		i = this._findSourceOfCellText(colStart, row);
+		// Check overlap start
+		i = this._findOverlapCell(colStart, row);
 		if (-1 !== i) {
 			drawCells[i] = 1;
 		}
+		// Check overlap end
 		if (colStart !== colEnd) {
-			i = this._findSourceOfCellText(colEnd, row);
+			i = this._findOverlapCell(colEnd, row);
 			if (-1 !== i) {
 				drawCells[i] = 1;
 			}
@@ -6208,8 +6209,8 @@
         return res;
     };
 
-    // If this cell with overlap or text return index of column
-    WorksheetView.prototype._findSourceOfCellText = function (col, row) {
+    // If this cell with overlap text return index of column
+    WorksheetView.prototype._findOverlapCell = function (col, row) {
         var r = this._getRowCache(row);
         if (r) {
             for (var i in r.columnsWithText) {
@@ -6221,6 +6222,9 @@
                     continue;
                 }
                 i >>= 0;
+                if (col === i) {
+                	continue;
+				}
                 var lc = i - ct.sideL, rc = i + ct.sideR;
                 if (col >= lc && col <= rc) {
                     return i;
