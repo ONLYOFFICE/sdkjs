@@ -16702,8 +16702,10 @@ CDocument.prototype.controller_AddToParagraph = function(ParaItem, bRecalculate)
 			}
 		}
 
-		this.Document_UpdateSelectionState();
-		this.Document_UpdateInterfaceState();
+		this.UpdateSelection();
+
+		if (ParaItem.Type !== para_Text && ParaItem.Type !== para_Space)
+			this.UpdateInterface();
 	}
 
 	// Специальная заглушка для функции TextBox_Put
@@ -22684,8 +22686,14 @@ CTrackRevisionsManager.prototype.private_TrackChangesForSingleElement = function
 		var oElement = g_oTableId.Get_ById(sId);
 		if (oElement && (oElement instanceof Paragraph || oElement instanceof CTable) && oElement.Is_UseInDocument())
 		{
+			var isHaveChanges = !!this.Changes[sId];
+
 			this.private_RemoveChangeObject(sId);
 			oElement.CheckRevisionsChanges(this);
+
+			if (!isHaveChanges && !this.Changes[sId])
+				return false;
+
 			return true;
 		}
 	}
