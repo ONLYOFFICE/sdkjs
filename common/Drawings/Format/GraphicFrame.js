@@ -815,6 +815,11 @@ CGraphicFrame.prototype.Is_TopDocument = function()
         return false;
 };
 
+CGraphicFrame.prototype.GetTopElement = function()
+    {
+        return null;
+};
+
 CGraphicFrame.prototype.drawAdjustments = function()
 {};
 
@@ -836,6 +841,10 @@ CGraphicFrame.prototype.Update_ContentIndexing = function()
 CGraphicFrame.prototype.GetTopDocumentContent = function()
 {
     return null;
+};
+CGraphicFrame.prototype.GetElement = function(nIndex)
+{
+    return this.graphicObject;
 };
 
 CGraphicFrame.prototype.draw = function(graphics)
