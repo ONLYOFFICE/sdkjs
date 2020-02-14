@@ -991,6 +991,13 @@ CDocumentPageSection.prototype.IterateBottomLineCalculation = function(isIncreas
 
 			this.CurrentY -= this.IterationStep;
 			this.IterationDirection = -1;
+
+			if (this.CurrentY < this.Y)
+			{
+				// Такое может быть, когда у нас всего одна строка в начале страницы, которую мы размещаем всегда
+				this.CurrentY    = this.Y;
+				this.CanDecrease = false;
+			}
 		}
 		else
 		{
