@@ -132,7 +132,7 @@
 
             if (is_init_raster_memory === true)
             {
-                if (AscCommon.AscBrowser.isIE && !AscCommon.AscBrowser.isArm)
+                if (AscFonts.use_map_blitting)
                 {
                     this.RasterMemory = new AscFonts.CRasterHeapTotal();
                     this.RasterMemory.CreateFirstChuck();

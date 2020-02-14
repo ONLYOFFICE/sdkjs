@@ -2728,6 +2728,11 @@
 		return (window["Asc"] && window["Asc"]["Addons"] && window["Asc"]["Addons"][type] === true) ? true : false;
 	};
 
+	baseEditorsApi.prototype["asc_setDefaultBlitMode"] = function(value)
+	{
+		AscFonts.use_map_blitting = value;
+	};
+
     // ---------------------------------------------------- internal events ----------------------------------------------
     baseEditorsApi.prototype["attachEvent"] = function(name, callback, listenerId)
     {

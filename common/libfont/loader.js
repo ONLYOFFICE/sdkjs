@@ -226,5 +226,6 @@
     }
 
     window['AscFonts'].raster_memory = new CRasterMemory();
+	window['AscFonts'].use_map_blitting = (AscCommon.AscBrowser.isIE && !AscCommon.AscBrowser.isArm) ? true : false;
 
 })(window, undefined);
