@@ -196,11 +196,35 @@
      * @memberof Api
      * @typeofeditors ["CDE"]
      * @alias GetCurrentContentControlPr
+     * @param {string} content format
      * @returns {Object}
      */
-    window["asc_docs_api"].prototype["pluginMethod_GetCurrentContentControlPr"] = function()
+    window["asc_docs_api"].prototype["pluginMethod_GetCurrentContentControlPr"] = function(contentFormat)
     {
-        return this.asc_GetContentControlProperties();
+        var prop = this.asc_GetContentControlProperties();
+        if (prop && prop.CC) delete prop.CC;
+
+        if (contentFormat)
+        {
+            // start select emulation
+
+            var copy_data = {
+                data: "",
+                pushData: function (format, value)
+                {
+                    this.data = value;
+                }
+            };
+            var copy_format = 1;
+            if (contentFormat == Asc.EPluginDataType.html)
+                copy_format = 2;
+            this.asc_CheckCopy(copy_data, copy_format);
+            prop["content"] = copy_data.data;
+
+            // end select emulation
+        }
+
+        return prop;
     };
     /**
      * Select specified content control
