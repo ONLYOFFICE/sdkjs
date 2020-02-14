@@ -5094,7 +5094,7 @@ CTable.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent)
 							{
 								if (oBeforeInfo.Grid > 0 && Col === oBeforeInfo.Grid && 1 === CellsFlag[nCurRow][0])
 								{
-									WBefore = this.TableSumGrid[oBeforeInfo.Grid - 1] + Dx;
+									WBefore     = this.TableSumGrid[oBeforeInfo.Grid - 1] + Dx;
 								}
 								else
 								{
@@ -5117,7 +5117,7 @@ CTable.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent)
 								{
 									if (0 === oBeforeInfo.Grid && 1 != CellsFlag[nCurRow][0])
 										WBefore = -BeforeSpace2;
-									else if (0 != Before_oBeforeInfoInfo.Grid)
+									else if (0 != oBeforeInfo.Grid)
 										WBefore = -BeforeSpace2 + this.TableSumGrid[oBeforeInfo.Grid - 1];
 								}
 							}
@@ -5138,23 +5138,32 @@ CTable.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent)
 
 								if (isFindLeft)
 								{
-									if (((nCellGridEnd + 1 < Col && (this.TableSumGrid[Col - 1] - this.TableSumGrid[nCellGridEnd]) < 0.635)
-										|| (nCellGridEnd + 1 === Col)
-										|| (nCellGridEnd + 1 > Col && (this.TableSumGrid[nCellGridEnd] - this.TableSumGrid[Col - 1]) < 0.635))
-										&& (1 === CellsFlag[nCurRow][nCurCell] || (nCurCell + 1 < nCellsCount && 1 === CellsFlag[nCurRow][nCurCell + 1])))
+									if (nCellGridStart === Col && 1 === CellsFlag[nCurRow][nCurCell])
 									{
-										isFindLeft = false;
-										nCellW     = this.TableSumGrid[Col - 1] - this.TableSumGrid[nCellGridStart - 1] + Dx;
+										isFindLeft  = false;
+										isFindRight = false;
+										nCellW      = this.TableSumGrid[nCellGridEnd] - this.TableSumGrid[Col - 1] - Dx;
 									}
-
-									if (isFindLeft)
-										nCellW = this.TableSumGrid[nCellGridEnd] - this.TableSumGrid[nCellGridStart - 1];
-
-									var _nCellW = Math.max(1, Math.max(nCellW, oCellMargins.Left.W + oCellMargins.Right.W));
-									if (!isFindLeft)
+									else
 									{
-										TempDx = _nCellW - nCellW;
-										isFindRight = true;
+										if (((nCellGridEnd + 1 < Col && (this.TableSumGrid[Col - 1] - this.TableSumGrid[nCellGridEnd]) < 0.635)
+											|| (nCellGridEnd + 1 === Col)
+											|| (nCellGridEnd + 1 > Col && (this.TableSumGrid[nCellGridEnd] - this.TableSumGrid[Col - 1]) < 0.635))
+											&& (1 === CellsFlag[nCurRow][nCurCell] || (nCurCell + 1 < nCellsCount && 1 === CellsFlag[nCurRow][nCurCell + 1])))
+										{
+											isFindLeft = false;
+											nCellW     = this.TableSumGrid[Col - 1] - this.TableSumGrid[nCellGridStart - 1] + Dx;
+										}
+
+										if (isFindLeft)
+											nCellW = this.TableSumGrid[nCellGridEnd] - this.TableSumGrid[nCellGridStart - 1];
+
+										var _nCellW = Math.max(1, Math.max(nCellW, oCellMargins.Left.W + oCellMargins.Right.W));
+										if (!isFindLeft)
+										{
+											TempDx      = _nCellW - (this.TableSumGrid[Col - 1] - this.TableSumGrid[nCellGridStart - 1]);
+											isFindRight = true;
+										}
 									}
 								}
 								else if (isFindRight)
@@ -5249,9 +5258,10 @@ CTable.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent)
 
 							var oBeforeInfo = oRow.GetBefore();
 							var WBefore     = 0;
-
 							if (oBeforeInfo.Grid > 0 && Col === oBeforeInfo.Grid)
-								WBefore = this.TableSumGrid[oBeforeInfo.Grid - 1] + Dx;
+							{
+								WBefore     = this.TableSumGrid[oBeforeInfo.Grid - 1] + Dx;
+							}
 							else
 							{
 								if (null != BeforeSpace)
@@ -5270,14 +5280,16 @@ CTable.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent)
 
 									}
 									else if (0 === oBeforeInfo.Grid && true === BeforeFlag)
+									{
 										WBefore = ( -BeforeSpace2 ) - this.TableSumGrid[0];
+									}
 								}
 							}
 
 							if (WBefore > 0.001)
 								Rows_info[nCurRow].push({W : WBefore, Type : -1, GridSpan : 1});
 
-							var TempDx = Dx;
+							var TempDx     = Dx;
 							var isFindLeft = true, isFindRight = false;
 							for (var nCurCell = 0, nCellsCount = oRow.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
 							{
@@ -5290,22 +5302,31 @@ CTable.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent)
 
 								if (isFindLeft)
 								{
-									if ((nCellGridEnd + 1 < Col && (this.TableSumGrid[Col - 1] - this.TableSumGrid[nCellGridEnd]) < 0.635)
-										|| (nCellGridEnd + 1 === Col)
-										|| (nCellGridEnd + 1 > Col && (this.TableSumGrid[nCellGridEnd] - this.TableSumGrid[Col - 1]) < 0.635))
+									if (nCellGridStart === Col)
 									{
-										isFindLeft = false;
-										nCellW     = this.TableSumGrid[Col - 1] - this.TableSumGrid[nCellGridStart - 1] + Dx;
+										isFindLeft  = false;
+										isFindRight = false;
+										nCellW      = this.TableSumGrid[nCellGridEnd] - this.TableSumGrid[Col - 1] - Dx;
 									}
-
-									if (isFindLeft)
-										nCellW = this.TableSumGrid[nCellGridEnd] - this.TableSumGrid[nCellGridStart - 1];
-
-									var _nCellW = Math.max(1, Math.max(nCellW, oCellMargins.Left.W + oCellMargins.Right.W));
-									if (!isFindLeft)
+									else
 									{
-										TempDx = _nCellW - nCellW;
-										isFindRight = true;
+										if ((nCellGridEnd + 1 < Col && (this.TableSumGrid[Col - 1] - this.TableSumGrid[nCellGridEnd]) < 0.635)
+											|| (nCellGridEnd + 1 === Col)
+											|| (nCellGridEnd + 1 > Col && (this.TableSumGrid[nCellGridEnd] - this.TableSumGrid[Col - 1]) < 0.635))
+										{
+											isFindLeft = false;
+											nCellW     = this.TableSumGrid[Col - 1] - this.TableSumGrid[nCellGridStart - 1] + Dx;
+										}
+
+										if (isFindLeft)
+											nCellW = this.TableSumGrid[nCellGridEnd] - this.TableSumGrid[nCellGridStart - 1];
+
+										var _nCellW = Math.max(1, Math.max(nCellW, oCellMargins.Left.W + oCellMargins.Right.W));
+										if (!isFindLeft)
+										{
+											TempDx      = _nCellW - (this.TableSumGrid[Col - 1] - this.TableSumGrid[nCellGridStart - 1]);
+											isFindRight = true;
+										}
 									}
 								}
 								else if (isFindRight)
