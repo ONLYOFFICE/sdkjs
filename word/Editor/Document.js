@@ -3272,7 +3272,11 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
 		if (ChangedElement.GetPagesCount() > 0 && -1 !== ChangedElement.GetIndex() && ChangedElement.Get_StartPage_Absolute() < RecalcData.Inline.PageNum - 1)
 		{
 			StartPage  = ChangedElement.GetStartPageForRecalculate(RecalcData.Inline.PageNum - 1);
-			StartIndex = this.Pages[StartPage].Pos;
+
+			if (!this.FullRecalc.Id || StartPage < this.FullRecalc.PageIndex)
+				StartIndex = this.Pages[StartPage].Pos;
+			else
+				StartIndex = this.FullRecalc.StartIndex;
 		}
 		else
 		{
