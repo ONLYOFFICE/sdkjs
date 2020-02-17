@@ -2730,7 +2730,7 @@
 
 	baseEditorsApi.prototype["asc_setDefaultBlitMode"] = function(value)
 	{
-		AscFonts.use_map_blitting = value;
+		AscFonts.setDefaultBlitting(value);
 	};
 
     // ---------------------------------------------------- internal events ----------------------------------------------

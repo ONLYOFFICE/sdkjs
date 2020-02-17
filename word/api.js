@@ -9888,8 +9888,8 @@ background-repeat: no-repeat;\
 				this.WordControl.m_oLogicDocument.StartAction();
 				this.asc_SetSilentMode(true);
 				AscCommon.Editor_Paste_Exec(this, AscCommon.c_oAscClipboardDataFormat.HtmlElement, frameWindow.document.body, ifr);
-				this.asc_SetSilentMode(false);
 				this.WordControl.m_oLogicDocument.FinalizeAction();
+				this.asc_SetSilentMode(false);
 			}
 		}
 
