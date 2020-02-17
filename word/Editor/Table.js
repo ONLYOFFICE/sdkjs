@@ -12006,9 +12006,9 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 
 						if (VMerge_count_1 > 1)
 						{
-							for (var Index = 0; Index < GetRow(Cell_1_pos.Row + VMerge_count_1 - 1).Get_CellsCount(); Index++)
+							for (var Index = 0; Index < this.GetRow(Cell_1_pos.Row + VMerge_count_1 - 1).Get_CellsCount(); Index++)
 							{
-								var TempRow  		= GetRow(Cell_1_pos.Row + VMerge_count_1 -1);
+								var TempRow  		= this.GetRow(Cell_1_pos.Row + VMerge_count_1 -1);
 								var TempCell 		= TempRow.Get_Cell(Index);
 								var Temp_Grid_start = TempRow.Get_CellInfo(Index).StartGridCol;
 
