@@ -19972,20 +19972,37 @@ CDocument.prototype.private_RemoveBookmark = function(sName)
 };
 CDocument.prototype.AddTableOfContents = function(sHeading, oPr, oSdt)
 {
-	if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Document_Content))
+	var oStyles     = this.GetStyles();
+	var nStylesType = oPr ? oPr.get_StylesType() : Asc.c_oAscTOCStylesType.Current;
+
+	var isNeedChangeStyles = (Asc.c_oAscTOCStylesType.Current !== nStylesType && nStylesType !== oStyles.GetTOCStylesType());
+
+	var isLocked = true;
+	if (isNeedChangeStyles)
+	{
+		isLocked = this.IsSelectionLocked(AscCommon.changestype_Document_Content, {
+			Type : AscCommon.changestype_2_AdditionalTypes, Types : [AscCommon.changestype_Document_Styles]
+		});
+	}
+	else
+	{
+		isLocked = this.IsSelectionLocked(AscCommon.changestype_Document_Content)
+	}
+
+	if (!isLocked)
 	{
 		this.StartAction(AscDFH.historydescription_Document_AddTableOfContents);
 
-        if(this.DrawingObjects.selectedObjects.length > 0)
-        {
-            var oContent = this.DrawingObjects.getTargetDocContent();
-            if(!oContent || oContent.bPresentation)
-            {
-                this.DrawingObjects.resetInternalSelection();
-            }
-        }
+		if (this.DrawingObjects.selectedObjects.length > 0)
+		{
+			var oContent = this.DrawingObjects.getTargetDocContent();
+			if (!oContent || oContent.bPresentation)
+			{
+				this.DrawingObjects.resetInternalSelection();
+			}
+		}
 
-        if (oSdt instanceof CBlockLevelSdt)
+		if (oSdt instanceof CBlockLevelSdt)
 		{
 			oSdt.ClearContentControl();
 		}
@@ -20017,6 +20034,9 @@ CDocument.prototype.AddTableOfContents = function(sHeading, oPr, oSdt)
 
 		if (oPr)
 		{
+			if (isNeedChangeStyles)
+				oStyles.SetTOCStylesType(nStylesType);
+
 			oComplexField.SetPr(oPr);
 			oComplexField.Update();
 		}
