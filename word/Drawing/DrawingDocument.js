@@ -6472,6 +6472,12 @@ function CDrawingDocument()
 		if (undefined === nTabLeader || null === nTabLeader)
 			nTabLeader = Asc.c_oAscTabLeader.Dot;
 
+		if (-1 === nOutlineEnd && -1 === nOutlineStart)
+		{
+			nOutlineStart = 1;
+			nOutlineEnd   = 9;
+		}
+
 		var arrLevels         = [];
 		var arrStylesToDelete = [];
 
