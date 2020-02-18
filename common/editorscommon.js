@@ -3795,7 +3795,7 @@
 		script.onload = onSuccess;
 		script.onerror = function() {
 			backoff.attempt(onError, function() {
-				loadScriptBackoff(backoff, url, onSuccess, onError);
+				loadScriptWithBackoff(backoff, url, onSuccess, onError);
 			});
 		};
 
