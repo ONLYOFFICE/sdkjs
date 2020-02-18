@@ -297,6 +297,14 @@
 	{
 		return this.editorId;
 	};
+	baseEditorsApi.prototype.asc_loadFontsFromServer             = function (fonts)
+	{
+		if (!fonts)
+		{
+			fonts = ["Arial", "Symbol", "Wingdings", "Courier New", "Times New Roman"];
+		}
+		this.FontLoader.LoadFontsFromServer(fonts);
+	};
 	baseEditorsApi.prototype.asc_GetFontThumbnailsPath       = function()
 	{
 		return '../Common/Images/';
@@ -2770,6 +2778,7 @@
 	window['AscCommon'].baseEditorsApi = baseEditorsApi;
 
 	prot = baseEditorsApi.prototype;
+	prot['asc_loadFontsFromServer'] = prot.asc_loadFontsFromServer;
 	prot['asc_selectSearchingResults'] = prot.asc_selectSearchingResults;
 	prot['asc_showRevision'] = prot.asc_showRevision;
 	prot['asc_getAdvancedOptions'] = prot.asc_getAdvancedOptions;

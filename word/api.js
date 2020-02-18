@@ -903,12 +903,6 @@
 	{
 		return (null === this.WordControl.m_oLogicDocument);
 	};
-	asc_docs_api.prototype.LoadFontsFromServer = function(_fonts)
-	{
-		if (undefined === _fonts)
-			_fonts = ["Arial", "Symbol", "Wingdings", "Courier New", "Times New Roman"];
-		this.FontLoader.LoadFontsFromServer(_fonts);
-	};
 
 	asc_docs_api.prototype.SetCollaborativeMarksShowType = function(Type)
 	{
@@ -10167,7 +10161,6 @@ background-repeat: no-repeat;\
 	CAscFootnotePr.prototype['get_NumRestart']                          = CAscFootnotePr.prototype.get_NumRestart;
 	CAscFootnotePr.prototype['put_NumRestart']                          = CAscFootnotePr.prototype.put_NumRestart;
 	window['Asc']['asc_docs_api']                                       = asc_docs_api;
-	asc_docs_api.prototype['LoadFontsFromServer']                       = asc_docs_api.prototype.LoadFontsFromServer;
 	asc_docs_api.prototype['SetCollaborativeMarksShowType']             = asc_docs_api.prototype.SetCollaborativeMarksShowType;
 	asc_docs_api.prototype['GetCollaborativeMarksShowType']             = asc_docs_api.prototype.GetCollaborativeMarksShowType;
 	asc_docs_api.prototype['Clear_CollaborativeMarks']                  = asc_docs_api.prototype.Clear_CollaborativeMarks;
