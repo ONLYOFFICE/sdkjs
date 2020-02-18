@@ -16710,9 +16710,7 @@ CDocument.prototype.controller_AddToParagraph = function(ParaItem, bRecalculate)
 		}
 
 		this.UpdateSelection();
-
-		if (ParaItem.Type !== para_Text && ParaItem.Type !== para_Space)
-			this.UpdateInterface();
+		this.UpdateInterface();
 	}
 
 	// Специальная заглушка для функции TextBox_Put
