@@ -35,7 +35,7 @@ window.IS_NATIVE_EDITOR = true;
 window.NativeSupportTimeouts = true;
 window.NativeTimeoutObject = {};
 
-function setTimeout(func, interval) {
+setTimeout = window.setTimeout = function(func, interval) {
     if (!window.NativeSupportTimeouts)
         return;
 
@@ -45,7 +45,7 @@ function setTimeout(func, interval) {
     return id;
 }
 
-function clearTimeout(id) {
+clearTimeout = window.clearTimeout = function(id) {
     if (!window.NativeSupportTimeouts)
         return;
 
@@ -53,7 +53,7 @@ function clearTimeout(id) {
     window["native"]["ClearTimeout"](id);
 }
 
-function setInterval(func, interval) {
+setInterval = window.setInterval = function(func, interval) {
     if (!window.NativeSupportTimeouts)
         return;
 
@@ -62,9 +62,10 @@ function setInterval(func, interval) {
 
     return id;
 }
-function clearInterval(id) {
+clearInterval = window.clearInterval = function(id) {
     if (!window.NativeSupportTimeouts)
         return;
+    
 
     window.NativeTimeoutObject["" + id] = undefined;
     window["native"]["ClearTimeout"](id);
@@ -98,10 +99,6 @@ function offline_timeoutFire(id) {
     func = null;
 }
 
-window.clearTimeout = clearTimeout;
-window.setTimeout = setTimeout;
-window.clearInterval = clearInterval;
-window.setInterval = setInterval;
 
 var console = {
     log : function(param) { window["native"]["consoleLog"](param); },

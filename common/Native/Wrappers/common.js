@@ -47,70 +47,72 @@ function GetNativePageMeta(pageIndex)
 	return window["API"].GetNativePageMeta(pageIndex);
 }
 
-// для работы с таймерами
 window.NativeSupportTimeouts = true;
 window.NativeTimeoutObject = {};
 
-function clearTimeout(id)
-{
-	if (!window.NativeSupportTimeouts)
-		return;
+clearTimeout = window.clearTimeout = function(id) {
+    if (!window.NativeSupportTimeouts)
+        return;
 
-	window.NativeTimeoutObject["" + id] = undefined;
-	window["native"]["ClearTimeout"](id);
-}
-function setTimeout(func, interval)
-{
-	if (!window.NativeSupportTimeouts)
-		return;
-
-	var id = window["native"]["GenerateTimeoutId"](interval);
-	window.NativeTimeoutObject["" + id] = {"func": func, repeat: false};
-	return id;
+    window.NativeTimeoutObject["" + id] = undefined;
+    window["native"]["ClearTimeout"](id);
 }
 
-function clearInterval(id)
-{
-	if (!window.NativeSupportTimeouts)
-		return;
+setTimeout = window.setTimeout = function(func, interval) {
+    if (!window.NativeSupportTimeouts)
+        return;
 
-	window.NativeTimeoutObject["" + id] = undefined;
-	window["native"]["ClearTimeout"](id);
-}
-function setInterval(func, interval)
-{
-	if (!window.NativeSupportTimeouts)
-		return;
+    var id = window["native"]["GenerateTimeoutId"](interval);
+    window.NativeTimeoutObject["" + id] = {"func": func, repeat: false};
 
-	var id = window["native"]["GenerateTimeoutId"](interval);
-	window.NativeTimeoutObject["" + id] = {func: func, repeat: true, interval: interval};
-	return id;
+    return id;
 }
 
-window.native.Call_TimeoutFire = function (id)
-{
-	if (!window.NativeSupportTimeouts)
-		return;
+clearInterval = window.clearInterval = function(id) {
+    if (!window.NativeSupportTimeouts)
+        return;
+    
 
-	var prop = "" + id;
+    window.NativeTimeoutObject["" + id] = undefined;
+    window["native"]["ClearTimeout"](id);
+}
 
-	var timeoutObject = window.NativeTimeoutObject[prop];
-	if (!timeoutObject) {
-		return;
-	}
+setInterval = window.setInterval = function(func, interval) {
+    if (!window.NativeSupportTimeouts)
+        return;
 
-	window.NativeTimeoutObject[prop] = undefined;
+    var id = window["native"]["GenerateTimeoutId"](interval);
+    window.NativeTimeoutObject["" + id] = {func: func, repeat: true, interval: interval};
 
-	if (!timeoutObject.func)
-		return;
+    return id;
+}
 
-	timeoutObject.func.call(null);
+window.native.Call_TimeoutFire = function(id) {
+    if (!window.NativeSupportTimeouts)
+        return;
 
-	if (timeoutObject.repeat) {
-		setInterval(timeoutObject.func, timeoutObject.interval);
-	}
+    var prop = "" + id;
 
-	timeoutObject.func = null;
+    if (undefined === window.NativeTimeoutObject[prop]) {
+        return;
+    }
+
+    var func = window.NativeTimeoutObject[prop].func;
+    var repeat = window.NativeTimeoutObject[prop].repeat;
+    var interval = window.NativeTimeoutObject[prop].interval;
+
+    window.NativeTimeoutObject[prop] = undefined;
+
+    if (!func)
+        return;
+
+    func.call(null);
+
+    if (repeat) {
+        setInterval(func, interval);
+    }
+
+    func = null;
 };
 
 window.clearTimeout = clearTimeout;
