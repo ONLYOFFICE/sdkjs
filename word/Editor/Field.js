@@ -95,13 +95,18 @@ ParaField.prototype.GetSelectedElementsInfo = function(Info, ContentPos, Depth)
 };
 ParaField.prototype.Get_Bounds = function()
 {
-    var aBounds = [];
-    for (var Place in this.Bounds)
-    {
-        aBounds.push(this.Bounds[Place]);
-    }
+	var oParagraph = this.GetParagraph();
+	if (!oParagraph)
+		return [];
 
-    return aBounds;
+	var arrBounds = [];
+	for (var Place in this.Bounds)
+	{
+		this.Bounds[Place].PageIndex = oParagraph.GetAbsolutePage(this.Bounds[Place].PageInternal);
+		arrBounds.push(this.Bounds[Place]);
+	}
+
+	return arrBounds;
 };
 ParaField.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
 {
@@ -157,26 +162,27 @@ ParaField.prototype.CanSplit = function()
 };
 ParaField.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange, _CurPage)
 {
-    var CurLine  = _CurLine - this.StartLine;
-    var CurRange = (0 === _CurLine ? _CurRange - this.StartRange : _CurRange);
+	var CurLine  = _CurLine - this.StartLine;
+	var CurRange = (0 === _CurLine ? _CurRange - this.StartRange : _CurRange);
 
-    if (0 === CurLine && 0 === CurRange && true !== PRSA.RecalcFast)
-        this.Bounds = {};
+	if (0 === CurLine && 0 === CurRange && true !== PRSA.RecalcFast)
+		this.Bounds = {};
 
-    var X0 = PRSA.X;
-    var Y0 = PRSA.Y0;
-    var Y1 = PRSA.Y1;
+	var X0 = PRSA.X;
+	var Y0 = PRSA.Y0;
+	var Y1 = PRSA.Y1;
 
-    CParagraphContentWithParagraphLikeContent.prototype.Recalculate_Range_Spaces.apply(this, arguments);
+	CParagraphContentWithParagraphLikeContent.prototype.Recalculate_Range_Spaces.apply(this, arguments);
 
 	var X1 = PRSA.X;
 
 	this.Bounds[((CurLine << 16) & 0xFFFF0000) | (CurRange & 0x0000FFFF)] = {
-		X0        : X0,
-		X1        : X1,
-		Y0        : Y0,
-		Y1        : Y1,
-		PageIndex : PRSA.Paragraph.Get_AbsolutePage(_CurPage)
+		X0           : X0,
+		X1           : X1,
+		Y0           : Y0,
+		Y1           : Y1,
+		PageIndex    : PRSA.Paragraph.Get_AbsolutePage(_CurPage),
+		PageInternal : _CurPage
 	};
 };
 ParaField.prototype.Draw_HighLights = function(PDSH)
