@@ -1983,11 +1983,13 @@ background-repeat: no-repeat;\
 		}
 		else
 		{
-            var opt = 0;
-            if (options && options.advancedOptions && options.advancedOptions && (Asc.c_oAscPrintType.Selection === options.advancedOptions.asc_getPrintType()))
-                opt |= 1;
+			var opt = {};
+			if (options && options.advancedOptions && options.advancedOptions && (Asc.c_oAscPrintType.Selection === options.advancedOptions.asc_getPrintType()))
+			{
+				opt["printOptions"] = { "selection" : 1 };
+			}
 
-			window["AscDesktopEditor"]["Print"](opt);
+			window["AscDesktopEditor"]["Print"](JSON.stringify(opt));
 			return true;
 		}
 		return true;

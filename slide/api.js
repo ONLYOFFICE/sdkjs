@@ -1647,7 +1647,7 @@ background-repeat: no-repeat;\
 	{
 		var opt = {};
         if (options && options.advancedOptions && options.advancedOptions && (Asc.c_oAscPrintType.Selection === options.advancedOptions.asc_getPrintType()))
-            opt["selection"] = 1;
+			opt["printOptions"] = { "selection" : 1 };
 
 		window["AscDesktopEditor"]["Print"](JSON.stringify(opt));
 		return true;
@@ -5327,7 +5327,7 @@ background-repeat: no-repeat;\
 			oImageObject.Image.width = _image.Image.width;
 			oImageObject.Image.height = _image.Image.height;
 			oImageObject.videoUrl = sVideoUrl;
-			oApi.WordControl.m_oLogicDocument.addImages([oImageObject]);
+			oApi.WordControl.m_oLogicDocument.addImages([oImageObject], obj);
 		});
 	};
 	asc_docs_api.prototype.asc_AddAudioCallback = function(sImageUrlLocal, sAudioUrl, obj)
@@ -5345,7 +5345,7 @@ background-repeat: no-repeat;\
 			oImageObject.Image.width = 50;
 			oImageObject.Image.height = 50;
 			oImageObject.audioUrl = sAudioUrl;
-			oApi.WordControl.m_oLogicDocument.addImages([oImageObject]);
+			oApi.WordControl.m_oLogicDocument.addImages([oImageObject], obj);
 		});
 	};
 
