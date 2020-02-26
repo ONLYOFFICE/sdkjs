@@ -5312,7 +5312,7 @@ background-repeat: no-repeat;\
 	};
 
 
-	asc_docs_api.prototype.asc_AddVideo = function(sImageUrlLocal, sVideoUrl)
+	asc_docs_api.prototype.asc_AddVideoCallback = function(sImageUrlLocal, sVideoUrl, obj)
 	{
 		var oApi = this;
 		var sImageUrl = AscCommon.g_oDocumentUrls.getImageUrl(sImageUrlLocal);
@@ -5330,7 +5330,7 @@ background-repeat: no-repeat;\
 			oApi.WordControl.m_oLogicDocument.addImages([oImageObject]);
 		});
 	};
-	asc_docs_api.prototype.asc_AddAudio = function(sImageUrlLocal, sAudioUrl)
+	asc_docs_api.prototype.asc_AddAudioCallback = function(sImageUrlLocal, sAudioUrl, obj)
 	{
 		var oApi = this;
         var sImageUrl = AscCommon.g_oDocumentUrls.getImageUrl(sImageUrlLocal);
@@ -8054,9 +8054,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_getCurrentFocusObject"]           = asc_docs_api.prototype.asc_getCurrentFocusObject;
 	asc_docs_api.prototype["asc_AddMath"]           			  = asc_docs_api.prototype.asc_AddMath;
 	asc_docs_api.prototype["asc_SetMathProps"]           		  = asc_docs_api.prototype.asc_SetMathProps;
-
-	asc_docs_api.prototype["asc_AddVideo"]           		  = asc_docs_api.prototype.asc_AddVideo;
-	asc_docs_api.prototype["asc_AddAudio"]           		  = asc_docs_api.prototype.asc_AddAudio;
 
     asc_docs_api.prototype['sendEvent']								= asc_docs_api.prototype.sendEvent;
 

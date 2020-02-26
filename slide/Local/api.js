@@ -245,6 +245,41 @@ Asc['asc_docs_api'].prototype["asc_isOffline"] = Asc['asc_docs_api'].prototype.a
 Asc['asc_docs_api'].prototype["SetDocumentModified"] = Asc['asc_docs_api'].prototype.SetDocumentModified;
 Asc['asc_docs_api'].prototype["SetThemesPath"] = Asc['asc_docs_api'].prototype.SetThemesPath;
 
+Asc['asc_docs_api'].prototype["pluginMethod_AddVideo"] = Asc['asc_docs_api'].prototype["asc_AddVideo"] = function(obj)
+{
+	window["AscDesktopEditor"]["OpenFilenameDialog"]("video", false, function(_file) {
+		var file = _file;
+		if (Array.isArray(file))
+			file = file[0];
+
+		if (!file)
+			return;
+
+		this.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Waiting);
+		window["AscDesktopEditor"]["AddVideo"](file, function(local_url, file_url) {
+			this.asc_AddVideoCallback(local_url, file_url, obj);
+		});
+		this.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Waiting);
+	});
+};
+Asc['asc_docs_api'].prototype["pluginMethod_AddAudio"] = Asc['asc_docs_api'].prototype["asc_AddAudio"] = function(obj)
+{
+	window["AscDesktopEditor"]["OpenFilenameDialog"]("audio", false, function(_file) {
+		var file = _file;
+		if (Array.isArray(file))
+			file = file[0];
+
+		if (!file)
+			return;
+
+		this.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Waiting);
+		window["AscDesktopEditor"]["AddAudio"](file, function(local_url, file_url) {
+			this.asc_AddAudioCallback(local_url, file_url, obj);
+		});
+		this.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Waiting);
+	});
+};
+
 window["on_editor_native_message"] = function(sCommand, sParam)
 {
 	if (!window.editor)
