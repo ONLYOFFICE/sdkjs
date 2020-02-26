@@ -255,11 +255,15 @@ Asc['asc_docs_api'].prototype["pluginMethod_AddVideo"] = Asc['asc_docs_api'].pro
 		if (!file)
 			return;
 
-		this.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Waiting);
-		window["AscDesktopEditor"]["AddVideo"](file, function(local_url, file_url) {
-			this.asc_AddVideoCallback(local_url, file_url, obj);
-		});
-		this.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Waiting);
+		var _api = window.editor;
+		_api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Waiting);
+
+		setTimeout(function(){
+			window["AscDesktopEditor"]["AddVideo"](file, function(local_url, file_url) {
+				_api.asc_AddVideoCallback(local_url, file_url, obj);
+			});
+			_api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Waiting);
+		}, 100);
 	});
 };
 Asc['asc_docs_api'].prototype["pluginMethod_AddAudio"] = Asc['asc_docs_api'].prototype["asc_AddAudio"] = function(obj)
@@ -272,11 +276,15 @@ Asc['asc_docs_api'].prototype["pluginMethod_AddAudio"] = Asc['asc_docs_api'].pro
 		if (!file)
 			return;
 
-		this.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Waiting);
-		window["AscDesktopEditor"]["AddAudio"](file, function(local_url, file_url) {
-			this.asc_AddAudioCallback(local_url, file_url, obj);
-		});
-		this.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Waiting);
+		var _api = window.editor;
+		_api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Waiting);
+
+		setTimeout(function(){
+			window["AscDesktopEditor"]["AddAudio"](file, function(local_url, file_url) {
+				_api.asc_AddAudioCallback(local_url, file_url, obj);
+			});
+			_api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Waiting);
+		}, 100);
 	});
 };
 
