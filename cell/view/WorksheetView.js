@@ -5822,7 +5822,7 @@
         var angle = align.getAngle();
         var va = align.getAlignVertical();
         if (c.isEmptyTextString()) {
-            if (!angle && c.isNotDefaultFont()) {
+            if (!angle && c.isNotDefaultFont() && !(mergeType & c_oAscMergeType.rows)) {
                 // Пустая ячейка с измененной гарнитурой или размером, учитвается в высоте
                 str = c.getValue2();
                 if (0 < str.length) {
