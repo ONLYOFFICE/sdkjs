@@ -292,6 +292,9 @@
 			},
 			asc_setSkipBlanks: function (val) {
 				this.skipBlanks = val;
+			},
+			asc_getTableAllowed: function () {
+				return this.formatTable;
 			}
 		};
 
@@ -4653,6 +4656,7 @@
 		prot["asc_getOperation"]		    	 = prot.asc_getOperation;
 		prot["asc_setTranspose"]		    	 = prot.asc_setTranspose;
 		prot["asc_setSkipBlanks"]		    	 = prot.asc_setSkipBlanks;
+		prot["asc_getTableAllowed"]		    	 = prot.asc_getTableAllowed;
 
 	}
 )(jQuery, window);

@@ -11265,6 +11265,7 @@
 			};
 
 			//var specialPasteShowOptions = new Asc.SpecialPasteShowOptions();
+			var isTablePasted = checkTablesPaste();
 			var allowedSpecialPasteProps;
 			var sProps = Asc.c_oSpecialPasteProps;
 			if (fromBinary) {
@@ -11273,7 +11274,7 @@
 						sProps.formulaWithoutBorders, sProps.formulaColumnWidth, sProps.pasteOnlyValues,
 						sProps.valueNumberFormat, sProps.valueAllFormating, sProps.pasteOnlyFormating, sProps.comments,
 						sProps.columnWidth/*, sProps.link*/];
-				if (!checkTablesPaste()) {
+				if (!isTablePasted) {
 					//add transpose property
 					allowedSpecialPasteProps.push(sProps.transpose);
 				}
@@ -11287,8 +11288,11 @@
 			}
 			window['AscCommon'].g_specialPasteHelper.CleanButtonInfo();
 			window['AscCommon'].g_specialPasteHelper.buttonInfo.asc_setOptions(allowedSpecialPasteProps);
-			if(fromBinary) {
+			if (fromBinary) {
 				window['AscCommon'].g_specialPasteHelper.buttonInfo.asc_setShowPasteSpecial(true);
+			}
+			if (isTablePasted) {
+				window['AscCommon'].g_specialPasteHelper.buttonInfo.asc_setContainTables(true);
 			}
 			window['AscCommon'].g_specialPasteHelper.buttonInfo.setRange(selectData[0]);
 		}
