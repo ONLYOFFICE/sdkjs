@@ -9743,7 +9743,7 @@ SpecialPasteShowOptions.prototype = {
 	asc_getCellCoord: function () {
 		return this.cellCoord;
 	},
-	asc_getOptions: function (val) {
+	asc_getOptions: function () {
 		return this.options;
 	},
 	asc_getShowPasteSpecial: function () {
