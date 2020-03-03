@@ -12189,9 +12189,10 @@
 
 			var res = null;
 			if (_typePasted === CellValueType.Number && _typeModel === CellValueType.Number) {
-				_pastedVal.value.number = _calculateSpecialOperation(_pastedVal.value.number, _modelVal.value.number, _operation);
+				_pastedVal.value.number = _calculateSpecialOperation(_modelVal.value.number, _pastedVal.value.number, _operation);
 				res = _pastedVal;
 			} else if (_typePasted === CellValueType.Number && isEmptyModel) {
+				_pastedVal.value.number = _calculateSpecialOperation(0, _pastedVal.value.number, _operation);
 				res = _pastedVal;
 			} else {
 				res = _modelVal;
