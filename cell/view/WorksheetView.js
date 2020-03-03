@@ -12171,7 +12171,7 @@
 			var _typePasted = _pastedVal && _pastedVal.value && !isEmptyPasted ? _pastedVal.value.type : null;
 			var _typeModel = _modelVal && _modelVal.value && !isEmptyModel ? _modelVal.value.type : null;
 
-			var res;
+			var res = null;
 			if (_typePasted === CellValueType.Number && _typeModel === CellValueType.Number) {
 				_pastedVal.value.number = _calculateSpecialOperation(_pastedVal.value.number, _modelVal.value.number, _operation);
 				res = _pastedVal;
@@ -12228,7 +12228,7 @@
 
 			//operation special paste
 			var needOperation = specialPasteProps && specialPasteProps.operation;
-			if(needOperation === window['Asc'].c_oSpecialPasteOperation.none) {
+			if (needOperation === window['Asc'].c_oSpecialPasteOperation.none) {
 				needOperation = null;
 			}
 			var modelVal, modelFormula;
@@ -12241,8 +12241,11 @@
 			var isEmptyModel = firstRange ? firstRange.isNullText() : range.isNullText();
 			var isEmptyPasted = newVal.isNullText();
 			var cellValueData = specialPasteProps.cellStyle ? newVal.getValueData() : null;
-			if(cellValueData) {
-				cellValueData = applySpecialOperation(cellValueData, modelVal, needOperation, isEmptyPasted, isEmptyModel);
+			if (cellValueData) {
+				var _setOperationVal = applySpecialOperation(cellValueData, modelVal, needOperation, isEmptyPasted, isEmptyModel);
+				if(null !== _setOperationVal) {
+					cellValueData = _setOperationVal;
+				}
 			}
 			var cellValueDataDup = newVal.getValueData();
 
