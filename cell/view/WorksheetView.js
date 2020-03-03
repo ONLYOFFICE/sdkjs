@@ -12228,6 +12228,9 @@
 
 			//operation special paste
 			var needOperation = specialPasteProps && specialPasteProps.operation;
+			if(needOperation === window['Asc'].c_oSpecialPasteOperation.none) {
+				needOperation = null;
+			}
 			var modelVal, modelFormula;
 			if (null !== needOperation) {
 				var _modelData = getModelData();
