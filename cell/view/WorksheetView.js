@@ -12205,7 +12205,7 @@
 				part1 = "(" + _modelFormula + ")";
 				res = _calculateSpecialOperation(part1, part2, _operation, true);
 			} else if (_pastedFormula) {
-				res = _pastedFormula;
+				res = null;
 			} else {
 				res = _modelFormula;
 			}
@@ -12337,12 +12337,15 @@
 						if(needOperation !== null) {
 							assemb = applySpecialOperationFormula(cellValueDataDup, modelVal, assemb, modelFormula, needOperation, isEmptyPasted, isEmptyModel);
 						}
-
-						rangeStyle.formula = {range: range, val: "=" + assemb, arrayRef: arrayFormulaRef};
+						if(assemb !== null) {
+							rangeStyle.formula = {range: range, val: "=" + assemb, arrayRef: arrayFormulaRef};
+						}
 					}
 				} else if(modelFormula && needOperation !== null) {
 					assemb = applySpecialOperationFormula(cellValueDataDup, modelVal, null, modelFormula, needOperation, isEmptyPasted, isEmptyModel);
-					rangeStyle.formula = {range: range, val: "=" + assemb, arrayRef: arrayFormulaRef};
+					if(assemb !== null) {
+						rangeStyle.formula = {range: range, val: "=" + assemb, arrayRef: arrayFormulaRef};
+					}
 				}
 			}
 		};
