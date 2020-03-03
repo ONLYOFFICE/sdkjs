@@ -172,8 +172,8 @@
 				this.skipBlanks = null;
 			},
 			asc_setProps: function (props) {
-				this.property = props;
 				this.setBaseOptions(true);
+				this.property = props;
 				switch (props) {
 					case c_oSpecialPasteProps.paste: {
 						break;
