@@ -11889,7 +11889,23 @@
 			return {dxf: dxf, blocalArea: blocalArea};
 		};
 
+		var findFormulaArrayFirstCell = function(_arr, _cell) {
+			var res = null;
+
+			if (_arr && _cell) {
+				for(var n = 0; n < _arr.length; n++) {
+					if(_arr[n].ref && _arr[n].ref.contains(_cell.nCol, _cell.nRow)) {
+						res = _arr[n].newVal;
+						break;
+					}
+				}
+			}
+
+			return res;
+		};
+
 		var colsWidth = {};
+		var pastedFormulaArray = [];
 		var putInsertedCellIntoRange = function (nRow, nCol, pasteRow, pasteCol, rowDiff, colDiff, range, newVal, curMerge, transposeRange) {
 			var pastedRangeProps = {};
 			//range может далее изменится в связи с наличием мерженных ячеек, firstRange - не меняется(ему делаем setValue, как первой ячейке в диапазоне мерженных)
@@ -11976,7 +11992,16 @@
 			var fromCell;
 			val._getCell(pasteRow, pasteCol, function (cell) {
 				fromCell = cell;
+				var _formulaArrayRef = cell.formulaParsed && cell.formulaParsed.getArrayFormulaRef();
+				if(_formulaArrayRef) {
+					//для ситуаций, когда нужно при вставке преобразовать формулу массива в набор формул
+					//это случается, когда при специальной вставке выбираешь арифметическую операцию, а во
+					//фрагменте вставке находится формула массива
+					pastedFormulaArray.push({ref: _formulaArrayRef, newVal: newVal});
+				}
 			});
+
+
 
 			//apply props by cell
 			var formulaProps = {
@@ -11990,7 +12015,8 @@
 				transposeRange: transposeRange,
 				cell: fromCell,
 				fromRange: activeCellsPasteFragment,
-				fromBinary: true
+				fromBinary: true,
+				formulaArrayFirstCell: findFormulaArrayFirstCell(pastedFormulaArray, fromCell)
 			};
 			t._setPastedDataByCurrentRange(range, pastedRangeProps, formulaProps, specialPasteProps);
 		};
@@ -12006,16 +12032,6 @@
 			maxARow = 1;
 			maxACol = 1;
 		}
-
-		/*var cells;
-		 if(Asc.c_oAscSelectionType.RangeMax === fromSelectionRangeType) {
-		 cells = this.model.getRange3(0, 0, gc_nMaxRow0, gc_nMaxCol0);
-		 cells.cleanAll();
-		 } else if(Asc.c_oAscSelectionType.RangeRow === fromSelectionRangeType) {
-
-		 } else if(Asc.c_oAscSelectionType.RangeCol === fromSelectionRangeType) {
-
-		 }*/
 
 		var getNextNoHiddenRow = function(index) {
 			var startIndex = index;
@@ -12276,15 +12292,19 @@
 				}
 			}
 
-			var pastedFormula = newVal.getFormula();
-			var sId = newVal.getName();
+			var _newVal = newVal;
+			if (null !== needOperation && formulaProps.formulaArrayFirstCell) {
+				_newVal = formulaProps.formulaArrayFirstCell;
+			}
+			var pastedFormula = _newVal.getFormula();
+			var sId = _newVal.getName();
 
 			if (pastedFormula || modelFormula) {
 				//formula
 				if (pastedFormula && !isOneMerge) {
 
 					var offset, arrayOffset;
-					var arrayFormulaRef = formulaProps.cell && formulaProps.cell.formulaParsed ? formulaProps.cell.formulaParsed.getArrayFormulaRef() : null;
+					var arrayFormulaRef = needOperation === null && formulaProps.cell && formulaProps.cell.formulaParsed ? formulaProps.cell.formulaParsed.getArrayFormulaRef() : null;
 					var cellAddress = new AscCommon.CellAddress(sId);
 					if (specialPasteProps.transpose && transposeRange) {
 						//для transpose необходимо брать offset перевернутого range
