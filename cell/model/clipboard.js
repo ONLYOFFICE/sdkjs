@@ -103,7 +103,7 @@
 				this.setBaseOptions();
 			},
 
-			setBaseOptions: function () {
+			setBaseOptions: function (onlyMain) {
 				this.cellStyle = true;
 				this.val = true;
 				this.numFormat = true;
@@ -133,8 +133,10 @@
 
 				this.advancedOptions = null;
 
-				this.operation = null;
-				this.skipBlanks = null;
+				if(!onlyMain) {
+					this.operation = null;
+					this.skipBlanks = null;
+				}
 			},
 			_clean: function () {
 				this.cellStyle = null;
@@ -171,6 +173,7 @@
 			},
 			asc_setProps: function (props) {
 				this.property = props;
+				this.setBaseOptions(true);
 				switch (props) {
 					case c_oSpecialPasteProps.paste: {
 						break;
