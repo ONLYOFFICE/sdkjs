@@ -6391,9 +6391,12 @@ parserFormula.prototype.clone = function(formula, parent, ws) {
 
 	/* Для обратной сборки функции иногда необходимо поменять ссылки на ячейки */
 	parserFormula.prototype.changeOffset = function (offset, canResize, nChangeTable) {//offset = AscCommon.CellBase
-		for (var i = 0; i < this.outStack.length; i++) {
-			this._changeOffsetElem(this.outStack[i], this.outStack, i, offset, canResize, nChangeTable);
-		}
+		var t = this;
+		AscCommonExcel.executeInR1C1Mode(false, function () {
+			for (var i = 0; i < t.outStack.length; i++) {
+				t._changeOffsetElem(t.outStack[i], t.outStack, i, offset, canResize, nChangeTable);
+			}
+		});
 		return this;
 	};
 	parserFormula.prototype._changeOffsetElem = function(elem, container, index, offset, canResize, nChangeTable) {//offset =
