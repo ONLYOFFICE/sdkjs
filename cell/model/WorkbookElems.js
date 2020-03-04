@@ -1612,7 +1612,7 @@ var g_oFontProperties = {
 		return ((this.patternFill && c_oAscPatternType.None !== this.patternFill.patternType) || this.gradientFill);
 	};
 	Fill.prototype.getSolidFill = function () {
-		return (this.patternFill && c_oAscPatternType.Solid === this.patternFill.patternType) ? this.patternFill.fgColor : null;
+		return (this.patternFill && c_oAscPatternType.Solid === this.patternFill.patternType) ? (this.patternFill.fgColor || createRgbColor(255, 255, 255)) : null;
 	};
 	Fill.prototype.bg = function () {
 		var res = null;
