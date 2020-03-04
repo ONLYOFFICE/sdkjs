@@ -18035,6 +18035,8 @@
 			return;
 		}
 
+		var viewMode = this.handlers.trigger('getViewMode');
+
 		//при закрытии группы всем внутренним строкам проставляется hidden
 		//при открытии группы проходимся по всем строкам и открываем только те, которые не закрыты внутренними группами
 		//а для тех что закрыты внутренними группами - ещё раз скрыаем их
@@ -18053,7 +18055,13 @@
 				return;
 			}
 
+			if (viewMode) {
+				History.TurnOff();
+			}
 			asc_applyFunction(functionModelAction);
+			if (viewMode) {
+				History.TurnOn();
+			}
 
 			if(bCol) {
 				t._updateAfterChangeGroup(undefined, null, true);
@@ -18137,11 +18145,17 @@
 				t.model.workbook.dependencyFormulas.unlockRecal();
 			}
 		};
-		this._isLockedAll(onChangeWorksheetCallback);
+		if(viewMode) {
+			onChangeWorksheetCallback();
+		} else {
+			this._isLockedAll(onChangeWorksheetCallback);
+		}
+
 	};
 
 	WorksheetView.prototype.hideGroupLevel = function (level, bCol) {
 
+		var viewMode = this.handlers.trigger('getViewMode');
 		var t = this, groupArr;
 		if(bCol) {
 			groupArr = this.arrColGroups ? this.arrColGroups.groupArr : null;
@@ -18164,7 +18178,13 @@
 				return;
 			}
 
+			if (viewMode) {
+				History.TurnOff();
+			}
 			asc_applyFunction(callback);
+			if (viewMode) {
+				History.TurnOn();
+			}
 
 			if(bCol) {
 				t._updateAfterChangeGroup(undefined, null);
@@ -18235,7 +18255,11 @@
 			}
 		};
 
-		this._isLockedAll(onChangeWorksheetCallback);
+		if(viewMode) {
+			onChangeWorksheetCallback();
+		} else {
+			this._isLockedAll(onChangeWorksheetCallback);
+		}
 	};
 
 	WorksheetView.prototype.changeGroupDetails = function (bExpand) {
