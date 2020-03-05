@@ -906,11 +906,12 @@ Paragraph.prototype.private_RecalculatePageBreak       = function(CurLine, CurPa
 			while (PrevElement && (PrevElement instanceof CBlockLevelSdt))
 				PrevElement = PrevElement.GetLastElement();
 
-            if (null !== PrevElement && type_Paragraph === PrevElement.Get_Type() && true === PrevElement.Is_Empty() && undefined !== PrevElement.Get_SectionPr())
+			var oFootnotes = this.LogicDocument ? this.LogicDocument.Footnotes : null;
+			if (null !== PrevElement && type_Paragraph === PrevElement.Get_Type() && true === PrevElement.Is_Empty() && undefined !== PrevElement.Get_SectionPr())
 			{
 				var PrevSectPr = PrevElement.Get_SectionPr();
 				var CurSectPr  = this.LogicDocument.SectionsInfo.Get_SectPr(this.Index).SectPr;
-				if (c_oAscSectionBreakType.Continuous === CurSectPr.Get_Type() && true === CurSectPr.Compare_PageSize(PrevSectPr))
+				if (c_oAscSectionBreakType.Continuous === CurSectPr.Get_Type() && true === CurSectPr.Compare_PageSize(PrevSectPr) && oFootnotes && oFootnotes.IsEmptyPage(PrevElement.GetAbsolutePage(PrevElement.GetPagesCount() - 1)))
 					PrevElement = PrevElement.Get_DocumentPrev();
 			}
 
@@ -927,7 +928,7 @@ Paragraph.prototype.private_RecalculatePageBreak       = function(CurLine, CurPa
 				{
 					var PrevSectPr = PrevElement.Get_SectionPr();
 					var CurSectPr  = this.LogicDocument.SectionsInfo.Get_SectPr(this.Index).SectPr;
-					if (c_oAscSectionBreakType.Continuous !== CurSectPr.Get_Type() || true !== CurSectPr.Compare_PageSize(PrevSectPr))
+					if (c_oAscSectionBreakType.Continuous !== CurSectPr.Get_Type() || true !== CurSectPr.Compare_PageSize(PrevSectPr) || (oFootnotes && !oFootnotes.IsEmptyPage(PrevElement.GetAbsolutePage(PrevElement.GetPagesCount() - 1))))
 						bNeedPageBreak = false;
 				}
 
@@ -1223,7 +1224,7 @@ Paragraph.prototype.private_RecalculateLineMetrics     = function(CurLine, CurPa
 			// Выставляем настройки для символа параграфа
 			var EndTextPr = this.Get_CompiledPr2(false).TextPr.Copy();
 			EndTextPr.Merge(this.TextPr.Value);
-
+            EndTextPr.CheckFontScale();
 			g_oTextMeasurer.SetTextPr(EndTextPr, this.Get_Theme());
 			g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
 
@@ -1531,7 +1532,7 @@ Paragraph.prototype.private_RecalculateLineBottomBound = function(CurLine, CurPa
 		&& (Top > YLimit || Bottom2 > YLimit)
 		&& (CurLine != this.Pages[CurPage].FirstLine
 		|| false === bNoFootnotes
-		|| (0 === RealCurPage && (null != this.Get_DocumentPrev()
+		|| (0 === RealCurPage && ((null != this.Get_DocumentPrev() && !this.Parent.IsElementStartOnNewPage(this.GetIndex()))
 		|| (true === this.Parent.IsTableCellContent() && true !== this.Parent.IsTableFirstRowOnNewPage())
 		|| (true === this.Parent.IsBlockLevelSdtContent() && true !== this.Parent.IsBlockLevelSdtFirstOnNewPage()))))
 		&& false === BreakPageLineEmpty)
@@ -3122,6 +3123,7 @@ CParagraphRecalculateStateWrap.prototype =
 				var oNumTextPr = Para.Get_CompiledPr2(false).TextPr.Copy();
 				oNumTextPr.Merge(Para.TextPr.Value);
 				oNumTextPr.Merge(oNumLvl.GetTextPr());
+                oNumTextPr.CheckFontScale();
 				var nNumSuff   = oNumLvl.GetSuff();
 				var nNumJc     = oNumLvl.GetJc();
 
@@ -3324,16 +3326,16 @@ CParagraphRecalculateStateWrap.prototype =
             var FirstTextPr = Para.Get_FirstTextPr2();
 
 
-            if(BulletNum > 32767)
-            {
-                BulletNum = (BulletNum % 32767);
-            }
             if (Bullet.Get_Type() >= numbering_presentationnumfrmt_AlphaLcParenR)
             {
                 if(BulletNum > 780)
                 {
                     BulletNum = (BulletNum % 780);
                 }
+            }
+            if(BulletNum > 32767)
+            {
+                BulletNum = (BulletNum % 32767);
             }
 
 
@@ -3567,8 +3569,16 @@ CParagraphRecalculateStateInfo.prototype.Reset = function(PrevInfo)
 {
 	if (null !== PrevInfo && undefined !== PrevInfo)
 	{
-		this.Comments      = PrevInfo.Comments;
+		this.Comments      = [];
 		this.ComplexFields = [];
+
+		if (PrevInfo.Comments)
+		{
+			for (var nIndex = 0, nCount = PrevInfo.Comments.length; nIndex < nCount; ++nIndex)
+			{
+				this.Comments[nIndex] = PrevInfo.Comments[nIndex];
+			}
+		}
 
 		if (PrevInfo.ComplexFields)
 		{

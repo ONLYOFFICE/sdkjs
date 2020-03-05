@@ -130,6 +130,7 @@ var editor;
   spreadsheet_api.prototype = Object.create(AscCommon.baseEditorsApi.prototype);
   spreadsheet_api.prototype.constructor = spreadsheet_api;
   spreadsheet_api.prototype.sendEvent = function() {
+    this.sendInternalEvent.apply(this, arguments);
     this.handlers.trigger.apply(this.handlers, arguments);
   };
 
@@ -3397,7 +3398,7 @@ var editor;
         continue;
       }
       ws.model.getRange3(currentCell.row, currentCell.col, currentCell.row, maxC)._foreachNoEmpty(function (cell, r, c) {
-        if (cell.text !== null) {
+        if (cell.text !== null && !cell.isFormula()) {
           var cellInfo = new AscCommon.CellBase(r, c);
           var wordsObject = AscCommonExcel.WordSplitting(cell.text);
           var words = wordsObject.wordsArray;
@@ -3785,6 +3786,7 @@ var editor;
 
   spreadsheet_api.prototype.asc_setCellFormat = function(format) {
     var t = this;
+    //todo split setCellFormat into set->_loadFonts->draw and remove checkCultureInfoFontPicker(checkCultureInfoFontPicker is called inside StyleManager.setNum)
     var numFormat = AscCommon.oNumFormatCache.get(format);
     numFormat.checkCultureInfoFontPicker();
     this._loadFonts([], function () {
@@ -4489,10 +4491,14 @@ var editor;
 		}
 	};
 
-	spreadsheet_api.prototype.asc_setSortProps = function (props) {
+	spreadsheet_api.prototype.asc_setSortProps = function (props, bCancel) {
 		var ws = this.wb && this.wb.getWorksheet();
 		if(ws) {
-			ws.setSelectionInfo("customSort", props);
+		  if(bCancel) {
+		    ws.setSortProps(props, null, true);
+          }	else {
+		    ws.setSelectionInfo("customSort", props);
+          }
 		}
 	};
 

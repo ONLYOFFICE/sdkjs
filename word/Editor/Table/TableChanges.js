@@ -230,6 +230,7 @@ CChangesTableTableW.prototype.private_SetValue = function(Value)
 	var oTable = this.Class;
 	oTable.Pr.TableW = Value;
 	oTable.Recalc_CompiledPr();
+	oTable.private_UpdateTableGrid();
 };
 CChangesTableTableW.prototype.Merge = private_TableChangesOnMergePr;
 /**
@@ -415,6 +416,7 @@ CChangesTableTableCellMar.prototype.private_SetValue = function(Value)
 	oTable.Pr.TableCellMar.Bottom = Value.Bottom;
 
 	oTable.Recalc_CompiledPr();
+	oTable.private_UpdateTableGrid();
 };
 CChangesTableTableCellMar.prototype.Merge = private_TableChangesOnMergePr;
 /**
@@ -638,7 +640,7 @@ CChangesTableAddRow.prototype.Undo = function()
 {
 	var oTable = this.Class;
 
-	oTable.Content[this.Pos].Set_Index(-1);
+	oTable.Content[this.Pos].SetIndex(-1);
 	oTable.Content.splice(this.Pos, 1);
 	oTable.TableRowsBottom.splice(this.Pos, 1);
 	oTable.RowsInfo.splice(this.Pos, 1);
@@ -646,6 +648,7 @@ CChangesTableAddRow.prototype.Undo = function()
 	oTable.Internal_ReIndexing(this.Pos);
 	oTable.Recalc_CompiledPr2();
 	oTable.private_CheckCurCell();
+	oTable.private_UpdateTableGrid();
 };
 CChangesTableAddRow.prototype.Redo = function()
 {
@@ -661,6 +664,7 @@ CChangesTableAddRow.prototype.Redo = function()
 	oTable.Internal_ReIndexing(this.Pos);
 	oTable.Recalc_CompiledPr2();
 	oTable.private_CheckCurCell();
+	oTable.private_UpdateTableGrid();
 };
 CChangesTableAddRow.prototype.private_WriteItem = function(Writer, Item)
 {
@@ -689,6 +693,7 @@ CChangesTableAddRow.prototype.Load = function(Color)
 	oTable.Internal_ReIndexing();
 	oTable.Recalc_CompiledPr2();
 	oTable.private_CheckCurCell();
+	oTable.private_UpdateTableGrid();
 };
 CChangesTableAddRow.prototype.IsRelated = function(oChanges)
 {
@@ -726,6 +731,7 @@ CChangesTableRemoveRow.prototype.Undo = function()
 	oTable.Internal_ReIndexing(this.Pos);
 	oTable.Recalc_CompiledPr2();
 	oTable.private_CheckCurCell();
+	oTable.private_UpdateTableGrid();
 };
 CChangesTableRemoveRow.prototype.Redo = function()
 {
@@ -734,7 +740,7 @@ CChangesTableRemoveRow.prototype.Redo = function()
 
 	var oTable = this.Class;
 
-	oTable.Content[this.Pos].Set_Index(-1);
+	oTable.Content[this.Pos].SetIndex(-1);
 	oTable.Content.splice(this.Pos, 1);
 	oTable.TableRowsBottom.splice(this.Pos, 1);
 	oTable.RowsInfo.splice(this.Pos, 1);
@@ -742,6 +748,7 @@ CChangesTableRemoveRow.prototype.Redo = function()
 	oTable.Internal_ReIndexing(this.Pos);
 	oTable.Recalc_CompiledPr2();
 	oTable.private_CheckCurCell();
+	oTable.private_UpdateTableGrid();
 };
 CChangesTableRemoveRow.prototype.private_WriteItem = function(Writer, Item)
 {
@@ -762,13 +769,14 @@ CChangesTableRemoveRow.prototype.Load = function(Color)
 	if (false === Pos)
 		return;
 
-	oTable.Content[Pos].Set_Index(-1);
+	oTable.Content[Pos].SetIndex(-1);
 	oTable.Content.splice(Pos, 1);
 	AscCommon.CollaborativeEditing.Update_DocumentPositionsOnRemove(oTable, Pos, 1);
 
 	oTable.Internal_ReIndexing();
 	oTable.Recalc_CompiledPr2();
 	oTable.private_CheckCurCell();
+	oTable.private_UpdateTableGrid();
 };
 CChangesTableRemoveRow.prototype.IsRelated = function(oChanges)
 {
@@ -830,6 +838,7 @@ CChangesTableTableGrid.prototype.private_SetValue = function(Value)
 {
 	var oTable = this.Class;
 	oTable.TableGrid = Value;
+	oTable.private_UpdateTableGrid();
 };
 /**
  * @constructor
@@ -1205,6 +1214,7 @@ CChangesTablePr.prototype.private_SetValue = function(Value)
 	var oTable = this.Class;
 	oTable.Pr = Value;
 	oTable.Recalc_CompiledPr2();
+	oTable.private_UpdateTableGrid();
 };
 CChangesTablePr.prototype.Merge = function(oChange)
 {

@@ -431,8 +431,9 @@ CDocumentContentElementBase.prototype.AddSignatureLine = function(oSignatureDraw
 CDocumentContentElementBase.prototype.AddTextArt = function(nStyle)
 {
 };
-CDocumentContentElementBase.prototype.AddInlineTable = function(nCols, nRows)
+CDocumentContentElementBase.prototype.AddInlineTable = function(nCols, nRows, nMode)
 {
+	return null;
 };
 CDocumentContentElementBase.prototype.Remove = function(nCount, bOnlyText, bRemoveOnlySelection, bOnAddText, isWord)
 {
@@ -730,18 +731,27 @@ CDocumentContentElementBase.prototype.AcceptRevisionChanges = function(Type, bAl
 CDocumentContentElementBase.prototype.RejectRevisionChanges = function(Type, bAll)
 {
 };
-CDocumentContentElementBase.prototype.GetDocumentPositionFromObject = function(PosArray)
+CDocumentContentElementBase.prototype.GetDocumentPositionFromObject = function(arrPos)
 {
-	if (!PosArray)
-		PosArray = [];
+	if (!arrPos)
+		arrPos = [];
 
-	if (this.Parent)
+	var oParent = this.GetParent();
+	if (oParent)
 	{
-		PosArray.splice(0, 0, {Class : this.Parent, Position : this.Get_Index()});
-		this.Parent.GetDocumentPositionFromObject(PosArray);
+		if (arrPos.length > 0)
+		{
+			arrPos.splice(0, 0, {Class : oParent, Position : this.GetIndex()});
+			arrPos = oParent.GetDocumentPositionFromObject(arrPos);
+		}
+		else
+		{
+			arrPos = oParent.GetDocumentPositionFromObject(arrPos);
+			arrPos.push({Class : oParent, Position : this.GetIndex()});
+		}
 	}
 
-	return PosArray;
+	return arrPos;
 };
 CDocumentContentElementBase.prototype.Get_Index = function()
 {
@@ -822,6 +832,15 @@ CDocumentContentElementBase.prototype.GetAbsoluteColumn = function(CurPage)
 CDocumentContentElementBase.prototype.GetStartPageRelative = function()
 {
 	return this.PageNum;
+};
+/**
+ * Получаем номер страницы, относительно родительского класса
+ * @param {number} nCurPage
+ * @returns {number}
+ */
+CDocumentContentElementBase.prototype.GetRelativePage = function(nCurPage)
+{
+	return this.private_GetRelativePageIndex(nCurPage);
 };
 /**
  * Получаем обсолютный начальный номер страницы данного элемента
@@ -1125,6 +1144,17 @@ CDocumentContentElementBase.prototype.GetPresentationField = function()
 {
 	return null;
 };
+/**
+ * Получаем список таблицы на заданной абсолютной странице
+ * @param {number} nPageAbs
+ * @param {Array} arrTables
+ * @returns {Array}
+ */
+CDocumentContentElementBase.prototype.GetAllTablesOnPage = function(nPageAbs, arrTables){return arrTables ? arrTables : [];};
+/**
+ * Обрабатываем сложные поля
+ */
+CDocumentContentElementBase.prototype.ProcessComplexFields = function() {};
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

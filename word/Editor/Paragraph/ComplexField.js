@@ -421,6 +421,9 @@ CComplexField.prototype.Update = function(isCreateHistoryPoint, isNeedRecalculat
 		case fieldtype_STYLEREF:
 			this.private_UpdateSTYLEREF();
 			break;
+		case fieldtype_TIME:
+			this.private_UpdateTIME();
+			break;
 
 	}
 
@@ -466,7 +469,9 @@ CComplexField.prototype.CalculateValue = function()
 		case fieldtype_STYLEREF:
 			sResult = this.private_CalculateSTYLEREF();
 			break;
-
+		case fieldtype_TIME:
+			sResult = this.private_CalculateTIME();
+			break;
 	}
 
 	return sResult;
@@ -840,6 +845,36 @@ CComplexField.prototype.private_UpdateNUMPAGES = function()
 CComplexField.prototype.private_CalculateNUMPAGES = function()
 {
 	return this.LogicDocument.GetPagesCount();
+};
+CComplexField.prototype.private_UpdateTIME = function()
+{
+	var sDate = this.private_CalculateTIME();
+
+	if (sDate)
+		this.LogicDocument.AddText(sDate);
+};
+CComplexField.prototype.private_CalculateTIME = function()
+{
+	var nLangId = 1033;
+	var oSepChar = this.GetSeparateChar();
+	if (oSepChar && oSepChar.GetRun())
+	{
+		var oCompiledTextPr = oSepChar.GetRun().Get_CompiledPr(false);
+		nLangId = oCompiledTextPr.Lang.Val;
+	}
+
+	var sFormat = this.Instruction.GetFormat();
+	var oFormat = AscCommon.oNumFormatCache.get(sFormat);
+	var sDate   = "";
+	if (oFormat)
+	{
+		var oCultureInfo = AscCommon.g_aCultureInfos[nLangId];
+
+		var oDateTime = new Asc.cDate();
+		sDate = oFormat.formatToWord(oDateTime.getExcelDate() + (oDateTime.getHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
+	}
+
+	return sDate;
 };
 CComplexField.prototype.SelectFieldValue = function()
 {

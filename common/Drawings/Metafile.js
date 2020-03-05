@@ -1764,7 +1764,7 @@
 		},
 		FillText     : function(x, y, text)
 		{
-			if (null != this.LastFontOriginInfo.Replace && 1 == text.length)
+			if (1 == text.length)
 				return this.FillTextCode(x, y, text.charCodeAt(0));
 
 			this.Memory.WriteByte(CommandType.ctDrawText);

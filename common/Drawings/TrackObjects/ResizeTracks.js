@@ -1213,6 +1213,10 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                         xfrm.setOffY(this.resizedPosY/scale_coefficients.cy + ch_off_y);
                         xfrm.setExtX(this.resizedExtX/scale_coefficients.cx);
                         xfrm.setExtY(this.resizedExtY/scale_coefficients.cy);
+                        if(this.originalObject.checkExtentsByDocContent)
+                        {
+                            this.originalObject.checkExtentsByDocContent(true, true);
+                        }
                     }
                     else
                     {

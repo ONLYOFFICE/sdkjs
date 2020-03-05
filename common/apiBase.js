@@ -136,8 +136,6 @@
 
 		// Результат получения лицензии
 		this.licenseResult       = null;
-		// Подключились ли уже к серверу
-		this.isOnFirstConnectEnd = false;
 		// Получили ли лицензию
 		this.isOnLoadLicense     = false;
 		// Переменная, которая отвечает, послали ли мы окончание открытия документа
@@ -181,6 +179,7 @@
 
 		this.currentPassword = "";
 
+		this.disableAutostartMacros = false;
 		this.macros = null;
 
         this.openFileCryptBinary = null;
@@ -194,6 +193,10 @@
 		// Spell Checking
 		this.SpellCheckApi = new AscCommon.CSpellCheckApi();
 		this.isSpellCheckEnable = true;
+
+		// macros & plugins events
+		this.internalEvents = {};
+
 		return this;
 	}
 
@@ -293,6 +296,14 @@
 	baseEditorsApi.prototype.getEditorId                     = function()
 	{
 		return this.editorId;
+	};
+	baseEditorsApi.prototype.asc_loadFontsFromServer             = function (fonts)
+	{
+		if (!fonts)
+		{
+			fonts = ["Arial", "Symbol", "Wingdings", "Courier New", "Times New Roman"];
+		}
+		this.FontLoader.LoadFontsFromServer(fonts);
 	};
 	baseEditorsApi.prototype.asc_GetFontThumbnailsPath       = function()
 	{
@@ -688,6 +699,11 @@
 
 		if (this.DocInfo)
 			this["pluginMethod_SetProperties"](this.DocInfo.asc_getOptions());
+
+		this.macros && !this.disableAutostartMacros && this.macros.runAuto();
+
+		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["onDocumentContentReady"])
+            window["AscDesktopEditor"]["onDocumentContentReady"]();
 	};
 	// Save
 	baseEditorsApi.prototype.processSavedFile                    = function(url, downloadType)
@@ -856,7 +872,7 @@
 	};
 	baseEditorsApi.prototype._onEndPermissions                   = function()
 	{
-		if (this.isOnFirstConnectEnd && this.isOnLoadLicense) {
+		if (this.isOnLoadLicense) {
 			var oResult = new AscCommon.asc_CAscEditorPermissions();
 			if (null !== this.licenseResult) {
 				var type = this.licenseResult['type'];
@@ -924,19 +940,15 @@
 		};
 		this.CoAuthoringApi.onFirstConnect            = function()
 		{
-			if (t.isOnFirstConnectEnd)
-			{
+			if (!t.isOnLoadLicense) {
+				t._onEndPermissions();
+			} else {
 				if (t.CoAuthoringApi.get_isAuth()) {
 					t.CoAuthoringApi.auth(t.getViewMode(), undefined, t.isIdle());
 				} else {
 					//первый запрос или ответ не дошел надо повторить открытие
 					t.asc_LoadDocument(undefined, true);
 				}
-			}
-			else
-			{
-				t.isOnFirstConnectEnd = true;
-				t._onEndPermissions();
 			}
 		};
 		this.CoAuthoringApi.onLicense                 = function(res)
@@ -1057,10 +1069,16 @@
                 }
             }
         };
-		this.CoAuthoringApi.onExpiredToken = function() {
+		this.CoAuthoringApi.onExpiredToken = function(data) {
 			t.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.Open);
-			t.VersionHistory = null;
-			t.sendEvent('asc_onExpiredToken');
+			if (t.VersionHistory && t.VersionHistory.isRequested) {
+				var error = AscCommon.getDisconnectErrorCode(t.isDocumentLoadComplete, data["code"]);
+				var level = t.isDocumentLoadComplete ? Asc.c_oAscError.Level.NoCritical : Asc.c_oAscError.Level.Critical;
+				t.sendEvent('asc_onError', error, level);
+			} else {
+				t.VersionHistory = null;
+				t.sendEvent('asc_onExpiredToken');
+			}
 		};
 		this.CoAuthoringApi.onHasForgotten = function() {
 			//todo very bad way, need rewrite
@@ -1076,24 +1094,19 @@
 		/**
 		 * Event об отсоединении от сервера
 		 * @param {jQuery} e  event об отсоединении с причиной
-		 * @param {Bool} isDisconnectAtAll  окончательно ли отсоединяемся(true) или будем пробовать сделать reconnect(false) + сами отключились
-		 * @param {Bool} isCloseCoAuthoring
+		 * @param {opt_closeCode: AscCommon.c_oCloseCode.drop} opt_closeCode
 		 */
-		this.CoAuthoringApi.onDisconnect = function(e, error)
+		this.CoAuthoringApi.onDisconnect = function(e, opt_closeCode)
 		{
 			if (AscCommon.ConnectionState.None === t.CoAuthoringApi.get_state())
 			{
 				t.asyncServerIdEndLoaded();
 			}
-			if (null != error)
-			{
+			if (null != opt_closeCode) {
+				var error = AscCommon.getDisconnectErrorCode(t.isDocumentLoadComplete, opt_closeCode);
+				var level = t.isDocumentLoadComplete ? Asc.c_oAscError.Level.NoCritical : Asc.c_oAscError.Level.Critical;
 				t.setViewModeDisconnect();
-				if (Asc.c_oAscError.ID.UpdateVersion === error.code) {
-					t.sendEvent("asc_onDocumentUpdateVersion", function() {
-					});
-				} else {
-					t.sendEvent('asc_onError', error.code, error.level);
-				}
+				t.sendEvent('asc_onError', error, level);
 			}
 		};
 		this.CoAuthoringApi.onDocumentOpen = function (inputWrap) {
@@ -1480,6 +1493,8 @@
 	baseEditorsApi.prototype.asc_addImage                        = function(obj)
 	{
 		var t = this;
+        if (this.WordControl) // после показа диалога может не прийти mouseUp
+        	this.WordControl.m_bIsMouseLock = false;
 		AscCommon.ShowImageFileDialog(this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), function(error, files)
 		{
 			t._uploadCallback(error, files, obj);
@@ -1922,7 +1937,17 @@
 				aCustomSchemes.push(asc_color_scheme);
 			}
 			aCustomSchemes.sort(function (a, b) {
-				return a.name > b.name;
+				if(a.name === "" || a.name === null) return -1;
+				if(b.name === "" || b.name === null) return 1;
+				if(a.name > b.name)
+				{
+					return 1;
+				}
+				if(a.name < b.name)
+				{
+					return -1;
+				}
+				return 0;
 			});
 
 			result = result.concat(aCustomSchemes);
@@ -2069,24 +2094,39 @@
 
     baseEditorsApi.prototype["asc_insertSymbol"] = function(familyName, code)
     {
-        AscFonts.FontPickerByCharacter.checkTextLight([code], true);
+		var arrCharCodes = [code];
+        AscFonts.FontPickerByCharacter.checkTextLight(arrCharCodes, true);
 
         var fonts = [new AscFonts.CFont(AscFonts.g_fontApplication.GetFontInfoName(familyName), 0, "", 0, null)];
         AscFonts.FontPickerByCharacter.extendFonts(fonts);
 
+        this.asyncMethodCallback = function() {
+
+            switch (this.editorId)
+            {
+                case c_oEditorId.Word:
+                case c_oEditorId.Presentation:
+                {
+					var textPr = new AscCommonWord.CTextPr();
+					textPr.SetFontFamily(familyName);
+                	this.WordControl.m_oLogicDocument.AddTextWithPr(new AscCommon.CUnicodeStringEmulator(arrCharCodes), textPr, true);
+                    break;
+                }
+                case c_oEditorId.Spreadsheet:
+                {
+                	this.AddTextWithPr(familyName, arrCharCodes);
+                    break;
+                }
+            }
+        };
+
         if (false === AscCommon.g_font_loader.CheckFontsNeedLoading(fonts))
         {
-            this.Begin_CompositeInput();
-            this.Replace_CompositeText([code]);
-            this.End_CompositeInput();
+            this.asyncMethodCallback();
+            this.asyncMethodCallback = undefined;
             return;
         }
 
-        this.asyncMethodCallback = function() {
-            this.Begin_CompositeInput();
-            this.Replace_CompositeText([code]);
-            this.End_CompositeInput();
-        };
         AscCommon.g_font_loader.LoadDocumentFonts2(fonts);
     };
 
@@ -2405,6 +2445,130 @@
 			AscCommon.g_inputContext.nativeFocusElement = null;
 	};
 
+	// drop emulation
+    baseEditorsApi.prototype.privateDropEvent = function(obj)
+    {
+        if (!obj || !obj.type)
+            return;
+
+        var e = {
+            pageX : obj["x"],
+            pageY : obj["y"]
+        };
+
+        switch (obj.type)
+        {
+            case "onbeforedrop":
+            {
+                this.beginInlineDropTarget(e);
+                break;
+            }
+            case "ondrop":
+            {
+                this.endInlineDropTarget(e);
+
+                if (obj["html"])
+                    this["pluginMethod_PasteHtml"](obj["html"]);
+                else if (obj["text"])
+                    this["pluginMethod_PasteText"](obj["text"]);
+
+                break;
+            }
+            default:
+                break;
+        }
+    };
+
+    // input helper
+    baseEditorsApi.prototype.getTargetOnBodyCoords = function()
+    {
+        var ret = { X : 0, Y : 0, W : 0, H : 0, TargetH : 0 };
+        ret.W = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+        ret.H = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+
+        switch (this.editorId)
+        {
+            case c_oEditorId.Word:
+            {
+                ret.X += this.WordControl.X;
+                ret.Y += this.WordControl.Y;
+                ret.X += (this.WordControl.m_oMainView.AbsolutePosition.L * AscCommon.g_dKoef_mm_to_pix);
+                ret.Y += (this.WordControl.m_oMainView.AbsolutePosition.T * AscCommon.g_dKoef_mm_to_pix);
+                ret.X += (this.WordControl.m_oDrawingDocument.TargetHtmlElementLeft);
+                ret.Y += (this.WordControl.m_oDrawingDocument.TargetHtmlElementTop);
+
+                ret.X >>= 0;
+                ret.Y >>= 0;
+
+                ret.TargetH = (this.WordControl.m_oDrawingDocument.m_dTargetSize * this.WordControl.m_nZoomValue * AscCommon.g_dKoef_mm_to_pix / 100) >> 0;
+                break;
+            }
+            case c_oEditorId.Presentation:
+            {
+                ret.X += this.WordControl.X;
+                ret.Y += this.WordControl.Y;
+
+                ret.X += (this.WordControl.m_oMainParent.AbsolutePosition.L * AscCommon.g_dKoef_mm_to_pix);
+
+                if (!this.WordControl.m_oLogicDocument.IsFocusOnNotes())
+                {
+                    ret.Y += (this.WordControl.m_oMainView.AbsolutePosition.T * AscCommon.g_dKoef_mm_to_pix);
+                }
+                else
+                {
+                    ret.Y += (this.WordControl.m_oNotesContainer.AbsolutePosition.T * AscCommon.g_dKoef_mm_to_pix);
+                }
+
+                ret.X += (this.WordControl.m_oDrawingDocument.TargetHtmlElementLeft);
+                ret.Y += (this.WordControl.m_oDrawingDocument.TargetHtmlElementTop);
+
+                ret.X >>= 0;
+                ret.Y >>= 0;
+
+                ret.TargetH = (this.WordControl.m_oDrawingDocument.m_dTargetSize * this.WordControl.m_nZoomValue * AscCommon.g_dKoef_mm_to_pix / 100) >> 0;
+                break;
+            }
+            case c_oEditorId.Spreadsheet:
+            {
+                var off, selectionType = this.asc_getCellInfo().asc_getFlags().asc_getSelectionType();
+                if (this.asc_getCellEditMode())
+                {
+                    // cell edit
+                    var cellEditor = this.wb.cellEditor;
+                    ret.X = cellEditor.curLeft;
+                    ret.Y = cellEditor.curTop;
+                    ret.TargetH = cellEditor.curHeight;
+                    off = cellEditor.cursor;
+                }
+                else if (Asc.c_oAscSelectionType.RangeShapeText === selectionType ||
+                    Asc.c_oAscSelectionType.RangeChartText === selectionType)
+                {
+                    // shape target
+                    var drDoc = this.wb.getWorksheet().objectRender.controller.drawingDocument;
+                    ret.X = drDoc.TargetHtmlElementLeft;
+                    ret.Y = drDoc.TargetHtmlElementTop;
+                    ret.TargetH = drDoc.m_dTargetSize * this.asc_getZoom() * AscCommon.g_dKoef_mm_to_pix;
+                    off = this.HtmlElement;
+                }
+
+                if (off) {
+                    off = jQuery(off).offset();
+                    if (off)
+                    {
+                        ret.X += off.left;
+                        ret.Y += off.top;
+                    }
+                }
+
+                ret.X >>= 0;
+                ret.Y >>= 0;
+                ret.TargetH >>= 0;
+                break;
+            }
+        }
+        return ret;
+    };
+
 	baseEditorsApi.prototype.onKeyDown = function(e)
 	{
 	};
@@ -2572,11 +2736,49 @@
 		return (window["Asc"] && window["Asc"]["Addons"] && window["Asc"]["Addons"][type] === true) ? true : false;
 	};
 
+	baseEditorsApi.prototype["asc_setDefaultBlitMode"] = function(value)
+	{
+		AscFonts.setDefaultBlitting(value);
+	};
+
+    // ---------------------------------------------------- internal events ----------------------------------------------
+    baseEditorsApi.prototype["attachEvent"] = function(name, callback, listenerId)
+    {
+    	if (!this.internalEvents.hasOwnProperty(name))
+            this.internalEvents[name] = {};
+        this.internalEvents[name]["" + ((undefined === listenerId) ? 0 : listenerId)] = callback;
+    };
+    baseEditorsApi.prototype["detachEvent"] = function(name, listenerId)
+    {
+        if (!this.internalEvents.hasOwnProperty(name))
+        	return;
+        var obj = this.internalEvents[name];
+        var prop = "" + ((undefined === listenerId) ? 0 : listenerId);
+        if (obj[prop])
+        	delete obj[prop];
+        if (0 === Object.getOwnPropertyNames(obj).length)
+        	delete this.internalEvents[name];
+    };
+    baseEditorsApi.prototype.sendInternalEvent = function()
+	{
+        var name = arguments[0];
+        if (this.internalEvents.hasOwnProperty(name))
+        {
+            var obj = this.internalEvents[name];
+            for (var prop in obj)
+			{
+				obj[prop].apply(this || window, Array.prototype.slice.call(arguments, 1));
+			}
+        }
+        return false;
+	};
+
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                = window['AscCommon'] || {};
 	window['AscCommon'].baseEditorsApi = baseEditorsApi;
 
 	prot = baseEditorsApi.prototype;
+	prot['asc_loadFontsFromServer'] = prot.asc_loadFontsFromServer;
 	prot['asc_selectSearchingResults'] = prot.asc_selectSearchingResults;
 	prot['asc_showRevision'] = prot.asc_showRevision;
 	prot['asc_getAdvancedOptions'] = prot.asc_getAdvancedOptions;

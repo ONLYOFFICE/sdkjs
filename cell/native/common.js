@@ -65,6 +65,7 @@ setInterval = window.setInterval = function(func, interval) {
 clearInterval = window.clearInterval = function(id) {
     if (!window.NativeSupportTimeouts)
         return;
+    
 
     window.NativeTimeoutObject["" + id] = undefined;
     window["native"]["ClearTimeout"](id);

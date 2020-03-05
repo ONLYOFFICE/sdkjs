@@ -101,6 +101,9 @@ function Paragraph(DrawingDocument, Parent, bFromPresentation)
     this.Pages = []; // Массив страниц (CParaPage)
     this.Lines = []; // Массив строк (CParaLine)
 
+	this.EndInfo         = new CParagraphPageEndInfo();
+	this.EndInfoRecalcId = -1;
+
     if(!(bFromPresentation === true))
     {
         this.Numbering = new ParaNumbering();
@@ -235,9 +238,14 @@ Paragraph.prototype.Set_Pr = function(oNewPr)
  */
 Paragraph.prototype.SetDirectParaPr = function(oParaPr)
 {
-	History.Add(new CChangesParagraphPr(this, this.Pr, oParaPr));
+	if (!oParaPr)
+		return;
 
-	this.Pr = oParaPr;
+	var oNewPr = oParaPr.Copy(true);
+
+	History.Add(new CChangesParagraphPr(this, this.Pr, oNewPr));
+
+	this.Pr = oNewPr;
 
 	this.Recalc_CompiledPr();
 	this.private_UpdateTrackRevisionOnChangeParaPr(true);
@@ -280,7 +288,7 @@ Paragraph.prototype.Copy = function(Parent, DrawingDocument, oPr)
 	oPr.Paragraph = Para;
 
 	// Копируем настройки
-	Para.Set_Pr(this.Pr.Copy(true));
+	Para.Set_Pr(this.Pr.Copy(true, oPr));
 
 	if (this.LogicDocument && null !== this.LogicDocument.CopyNumberingMap && undefined !== Para.Pr.NumPr && undefined !== Para.Pr.NumPr.NumId)
 	{
@@ -289,7 +297,7 @@ Paragraph.prototype.Copy = function(Parent, DrawingDocument, oPr)
 			Para.SetNumPr(NewId, Para.Pr.NumPr.Lvl);
 	}
 
-	Para.TextPr.Set_Value(this.TextPr.Value.Copy());
+	Para.TextPr.Set_Value(this.TextPr.Value.Copy(undefined, oPr));
 
 	// Удаляем содержимое нового параграфа
 	Para.Internal_Content_Remove2(0, Para.Content.length);
@@ -313,16 +321,28 @@ Paragraph.prototype.Copy = function(Parent, DrawingDocument, oPr)
 	EndRun.Add_ToContent(0, new ParaEnd());
 	Para.Internal_Content_Add(Para.Content.length, EndRun, false);
 
-	EndRun.Set_Pr(this.TextPr.Value.Copy());
+	EndRun.Set_Pr(this.TextPr.Value.Copy(undefined, oPr));
 
-	if (oPr.CopyReviewPr)
+	if (oPr && oPr.CopyReviewPr)
 		EndRun.SetReviewTypeWithInfo(this.GetReviewType(), this.GetReviewInfo().Copy(), false);
+
+	if(oPr && oPr.Comparison)
+	{
+		oPr.Comparison.updateReviewInfo(EndRun, reviewtype_Add, true);
+	}
 
 	// Добавляем секцию в конце
 	if (undefined !== this.SectPr)
 	{
-		var SectPr = new CSectionPr(this.SectPr.LogicDocument);
-		SectPr.Copy(this.SectPr);
+		var oLogicDocument = this.SectPr.LogicDocument;
+		var bCopyHdrFtr = undefined;
+		if(oPr && oPr.Comparison)
+		{
+			oLogicDocument = oPr.Comparison.originalDocument;
+			bCopyHdrFtr = true;
+		}
+		var SectPr = new CSectionPr(oLogicDocument);
+		SectPr.Copy(this.SectPr, bCopyHdrFtr, oPr);
 		Para.Set_SectionPr(SectPr);
 	}
 
@@ -879,23 +899,22 @@ Paragraph.prototype.RemoveFromContent = function(nPos, nCount)
 /**
  * Добавляем несколько элементов в конец параграфа
  */
-Paragraph.prototype.Internal_Content_Concat = function(Items)
+Paragraph.prototype.Internal_Content_Concat = function(arrItems)
 {
-	var StartPos = this.Content.length;
-	this.Content = this.Content.concat(Items);
-
-	History.Add(new CChangesParagraphAddItem(this, StartPos, Items));
-	this.private_UpdateTrackRevisions();
-	this.private_CheckUpdateBookmarks(Items);
-	this.UpdateDocumentOutline();
-
-	// Нам нужно сбросить рассчет всех добавленных элементов и выставить у них родительский класс и параграф
-	for (var CurPos = StartPos; CurPos < this.Content.length; CurPos++)
+	var nStartPos = this.Content.length;
+	for (var nIndex = 0, nCount = arrItems.length; nIndex < nCount; ++nIndex)
 	{
-		this.Content[CurPos].SetParagraph(this);
-		if (this.Content[CurPos].Recalc_RunsCompiledPr)
-			this.Content[CurPos].Recalc_RunsCompiledPr();
+		this.Content.push(arrItems[nIndex]);
+
+		arrItems[nIndex].SetParagraph(this);
+		if (arrItems[nIndex].Recalc_RunsCompiledPr)
+			arrItems[nIndex].Recalc_RunsCompiledPr();
 	}
+
+	History.Add(new CChangesParagraphAddItem(this, nStartPos, arrItems));
+	this.private_UpdateTrackRevisions();
+	this.private_CheckUpdateBookmarks(arrItems);
+	this.UpdateDocumentOutline();
 
 	// Обновлять позиции в NearestPos не надо, потому что мы добавляем новые элементы в конец массива
 	this.RecalcInfo.Set_Type_0_Spell(pararecalc_0_Spell_All);
@@ -944,7 +963,7 @@ Paragraph.prototype.Internal_Content_Remove = function(Pos)
 	}
 
 	// Удаляем комментарий, если это необходимо
-	if (true === this.DeleteCommentOnRemove && para_Comment === Item.Type)
+	if (true === this.DeleteCommentOnRemove && para_Comment === Item.Type && this.LogicDocument)
 		this.LogicDocument.RemoveComment(Item.CommentId, true, false);
 
 	var SpellingsCount = this.SpellChecker.Elements.length;
@@ -970,8 +989,11 @@ Paragraph.prototype.Internal_Content_Remove = function(Pos)
  */
 Paragraph.prototype.Internal_Content_Remove2 = function(Pos, Count)
 {
+	if (0 === Pos && this.Content.length === Count)
+		return this.ClearContent();
+
 	var CommentsToDelete = [];
-	if (true === this.DeleteCommentOnRemove && null !== this.LogicDocument && null != this.LogicDocument.Comments)
+	if (true === this.DeleteCommentOnRemove && this.LogicDocument && null != this.LogicDocument.Comments)
 	{
 		var DocumentComments = this.LogicDocument.Comments;
 		for (var Index = Pos; Index < Pos + Count; Index++)
@@ -1039,14 +1061,76 @@ Paragraph.prototype.Internal_Content_Remove2 = function(Pos, Count)
 	this.private_UpdateSelectionPosOnRemove(Pos, Count);
 
 	// Комментарии удаляем после, чтобы не нарушить позиции
-	var CountCommentsToDelete = CommentsToDelete.length;
-	for (var Index = 0; Index < CountCommentsToDelete; Index++)
+	if(this.LogicDocument)
 	{
-		this.LogicDocument.RemoveComment(CommentsToDelete[Index], true, false);
+		var CountCommentsToDelete = CommentsToDelete.length;
+		for (var Index = 0; Index < CountCommentsToDelete; Index++)
+		{
+			this.LogicDocument.RemoveComment(CommentsToDelete[Index], true, false);
+		}
 	}
 
 	// Передвинем все метки слов для проверки орфографии
 	this.SpellChecker.Update_OnRemove(this, Pos, Count);
+};
+/**
+ * Очищаем полностью параграф (включая последний ран)
+ */
+Paragraph.prototype.ClearContent = function()
+{
+	var arrCommentsToDelete = [];
+	var isDeleteComments = true === this.DeleteCommentOnRemove && null != this.LogicDocument && null != this.LogicDocument.Comments;
+	var oDocumentComments = null;
+	if(isDeleteComments)
+	{
+		oDocumentComments = this.LogicDocument.Comments;
+	}
+	for (var nPos = 0, nLen = this.Content.length; nPos < nLen; ++nPos)
+	{
+		var oItem = this.Content[nPos];
+
+		if (isDeleteComments && para_Comment === oItem.Type)
+		{
+			var sCommentId = oItem.CommentId;
+			var oComment   = oDocumentComments.Get_ById(sCommentId);
+
+			if (oComment)
+			{
+				if (true === oItem.Start)
+					oComment.Set_StartId(null);
+				else
+					oComment.Set_EndId(null);
+			}
+
+			arrCommentsToDelete.push(CommentId);
+		}
+
+		if (oItem.PreDelete)
+			oItem.PreDelete();
+	}
+
+	History.Add(new CChangesParagraphRemoveItem(this, 0, this.Content));
+
+	this.private_UpdateTrackRevisions();
+	this.private_CheckUpdateBookmarks(this.Content);
+	this.UpdateDocumentOutline();
+
+	this.Selection.StartPos = 0;
+	this.Selection.EndPos   = 0;
+	this.CurPos.ContentPos  = 0;
+
+	this.NearPosArray = [];
+
+	this.Content = [];
+
+	// Комментарии удаляем после, чтобы не нарушить позиции
+	if(this.LogicDocument)
+	{
+		for (var nIndex = 0, nCount = arrCommentsToDelete.length; nIndex < nCount; ++nIndex)
+		{
+			this.LogicDocument.RemoveComment(arrCommentsToDelete[nIndex], true, false);
+		}
+	}
 };
 Paragraph.prototype.Clear_ContentChanges = function()
 {
@@ -1193,12 +1277,25 @@ Paragraph.prototype.Check_MathPara = function(MathPos)
 };
 Paragraph.prototype.GetEndInfo = function()
 {
-	var PagesCount = this.Pages.length;
+	var oLogicDocument = this.GetLogicDocument();
+	if (oLogicDocument && this.EndInfoRecalcId === oLogicDocument.GetRecalcId())
+		return this.EndInfo;
 
-	if (PagesCount > 0)
-		return this.Pages[PagesCount - 1].EndInfo.Copy();
-	else
-		return null;
+	var oPRSI     = this.m_oPRSI;
+	var oPrevInfo = this.Parent.GetPrevElementEndInfo(this);
+	oPRSI.Reset(oPrevInfo);
+
+	for (var nCurPos = 0, nCount = this.Content.length; nCurPos < nCount; ++nCurPos)
+	{
+		this.Content[nCurPos].RecalculateEndInfo(oPRSI);
+	}
+
+	this.EndInfo.SetFromPRSI(oPRSI);
+
+	if (oLogicDocument)
+		this.EndInfoRecalcId = oLogicDocument.GetRecalcId();
+
+	return this.EndInfo;
 };
 Paragraph.prototype.GetEndInfoByPage = function(CurPage)
 {
@@ -1575,8 +1672,11 @@ Paragraph.prototype.RecalculateMinMaxContentWidth = function(isRotated)
 	var ParaPr = this.Get_CompiledPr2(false).ParaPr;
 	var MinInd = ParaPr.Ind.Left + ParaPr.Ind.Right + ParaPr.Ind.FirstLine;
 
-	MinMax.nMinWidth += MinInd;
-	MinMax.nMaxWidth += MinInd;
+	if (MinMax.nMinWidth > 0.001 || MinMax.nMaxWidth > 0.001)
+	{
+		MinMax.nMinWidth += MinInd;
+		MinMax.nMaxWidth += MinInd;
+	}
 
 	if (true === isRotated)
 	{
@@ -2281,6 +2381,18 @@ Paragraph.prototype.Internal_Draw_4 = function(CurPage, pGraphics, Pr, BgColor, 
 						oNumTextPr.Merge(oTextPrTemp);
 						oNumTextPr.Merge(oNumLvl.GetTextPr());
 
+						var oPrevNumTextPr = oPrevNumPr ? this.Get_CompiledPr2(false).TextPr.Copy() : null;
+						if (oPrevNumTextPr && (oPrevNumPr
+							&& undefined !== oPrevNumPr.NumId
+							&& undefined !== oPrevNumPr.Lvl
+							&& 0 !== oPrevNumPr.NumId
+							&& "0" !== oPrevNumPr.NumId))
+						{
+							var oPrevNumLvl = oNumbering.GetNum(oPrevNumPr.NumId).GetLvl(oPrevNumPr.Lvl);
+							oPrevNumTextPr.Merge(oTextPrTemp);
+							oPrevNumTextPr.Merge(oPrevNumLvl.GetTextPr());
+						}
+
 						var X_start = X;
 
 						if (align_Right === nNumJc)
@@ -2322,16 +2434,16 @@ Paragraph.prototype.Internal_Draw_4 = function(CurPage, pGraphics, Pr, BgColor, 
 						switch (nNumJc)
 						{
 							case align_Right:
-								NumberingItem.Draw(X - NumberingItem.WidthNum, Y, pGraphics, oNumbering, oNumTextPr, PDSE.Theme);
+								NumberingItem.Draw(X - NumberingItem.WidthNum, Y, pGraphics, oNumbering, oNumTextPr, PDSE.Theme, oPrevNumTextPr);
 								break;
 
 							case align_Center:
-								NumberingItem.Draw(X - NumberingItem.WidthNum / 2, Y, pGraphics, oNumbering, oNumTextPr, PDSE.Theme);
+								NumberingItem.Draw(X - NumberingItem.WidthNum / 2, Y, pGraphics, oNumbering, oNumTextPr, PDSE.Theme, oPrevNumTextPr);
 								break;
 
 							case align_Left:
 							default:
-								NumberingItem.Draw(X, Y, pGraphics, oNumbering, oNumTextPr, PDSE.Theme);
+								NumberingItem.Draw(X, Y, pGraphics, oNumbering, oNumTextPr, PDSE.Theme, oPrevNumTextPr);
 								break;
 						}
 
@@ -3150,9 +3262,12 @@ Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlyS
 
 			this.DeleteCommentOnRemove = true;
 
-			for (var CommentId in CommentsToDelete)
+			if(this.LogicDocument)
 			{
-				this.LogicDocument.RemoveComment(CommentId, true, false);
+				for (var CommentId in CommentsToDelete)
+				{
+					this.LogicDocument.RemoveComment(CommentId, true, false);
+				}
 			}
 		}
 
@@ -5966,7 +6081,7 @@ Paragraph.prototype.MoveCursorDownToFirstRow = function(X, Y, AddToSelect)
 		}
 	}
 };
-Paragraph.prototype.Cursor_MoveTo_Drawing = function(Id, bBefore)
+Paragraph.prototype.MoveCursorToDrawing = function(Id, bBefore)
 {
 	if (undefined === bBefore)
 		bBefore = true;
@@ -6390,9 +6505,12 @@ Paragraph.prototype.AddHyperlink = function(HyperProps)
 				CommentsToDelete[Item.CommentId] = true;
 		}
 
-		for (var CommentId in CommentsToDelete)
+		if(this.LogicDocument)
 		{
-			this.LogicDocument.RemoveComment(CommentId, true, false);
+			for (var CommentId in CommentsToDelete)
+			{
+				this.LogicDocument.RemoveComment(CommentId, true, false);
+			}
 		}
 
 		// Еще раз обновим метки
@@ -8350,6 +8468,8 @@ Paragraph.prototype.IndDecNumberingLevel = function(bIncrease)
 	var NumPr = this.GetNumPr();
 	if (undefined != NumPr)
 	{
+		this.private_AddPrChange();
+
 		var oNumPrOld = this.Pr.NumPr;
 
 		var NewLvl;
@@ -8361,7 +8481,6 @@ Paragraph.prototype.IndDecNumberingLevel = function(bIncrease)
 		this.Pr.NumPr = new CNumPr();
 		this.Pr.NumPr.Set(NumPr.NumId, NewLvl);
 
-		this.private_AddPrChange();
 		History.Add(new CChangesParagraphNumbering(this, oNumPrOld, this.Pr.NumPr));
 		this.private_RefreshNumbering(NumPr);
 		this.private_RefreshNumbering(this.Pr.NumPr);
@@ -8563,6 +8682,11 @@ Paragraph.prototype.Add_PresentationNumbering = function(_Bullet, Pr)
 				if(_OldBullet.bulletColor && !oBullet2.bulletColor)
 				{
 					oBullet2.bulletColor = _OldBullet.bulletColor.createDuplicate();
+				}
+				if(_OldBullet.bulletType && AscFormat.isRealNumber(_OldBullet.bulletType.startAt)
+					&& (oBullet2.bulletType && !AscFormat.isRealNumber(oBullet2.bulletType.startAt)))
+				{
+					oBullet2.bulletType.startAt = _OldBullet.bulletType.startAt;
 				}
 			}
 			this.Set_Bullet(oBullet2.createDuplicate());
@@ -9157,6 +9281,18 @@ Paragraph.prototype.Internal_CompileParaPr2 = function()
 		else
 			Pr.ParaPr.FramePr = this.Pr.FramePr.Copy();
 
+		if(Pr.ParaPr.LnSpcReduction !== undefined && Pr.ParaPr.LnSpcReduction !== null)
+		{
+			var Spacing = Pr.ParaPr.Spacing;
+			if(Spacing.LineRule === Asc.linerule_Auto)
+			{
+				Spacing.Line = Spacing.Line - Pr.ParaPr.LnSpcReduction;
+			}
+			else
+			{
+				Spacing.Line = Spacing.Line*Pr.ParaPr.LnSpcReduction;
+			}
+		}
 		return Pr;
 	}
 	else
@@ -9191,6 +9327,19 @@ Paragraph.prototype.Internal_CompiledParaPrPresentation = function(Lvl, bNoMerge
 	}
 
 	Pr.ParaPr.StyleTabs = ( undefined != Pr.ParaPr.Tabs ? Pr.ParaPr.Tabs.Copy() : new CParaTabs() );
+
+	if(Pr.ParaPr.LnSpcReduction !== undefined && Pr.ParaPr.LnSpcReduction !== null)
+	{
+		var Spacing = Pr.ParaPr.Spacing;
+		if(Spacing.LineRule === Asc.linerule_Auto)
+		{
+			Spacing.Line = Spacing.Line - Pr.ParaPr.LnSpcReduction;
+		}
+		else
+		{
+			Spacing.Line = Spacing.Line*Pr.ParaPr.LnSpcReduction;
+		}
+	}
 
 	if(!(bNoMergeDefault === true)){
 		// Копируем прямые настройки параграфа.
@@ -10008,11 +10157,14 @@ Paragraph.prototype.GetOutlineLvl = function()
 {
 	// TODO: Заглушка со стилями заголовков тут временная
 	var ParaPr  = this.Get_CompiledPr2(false).ParaPr;
-	var oStyles = this.LogicDocument.Get_Styles();
-	for (var nIndex = 0; nIndex < 9; ++nIndex)
+	if(this.LogicDocument)
 	{
-		if (ParaPr.PStyle === oStyles.Get_Default_Heading(nIndex))
-			return nIndex;
+		var oStyles = this.LogicDocument.Get_Styles();
+		for (var nIndex = 0; nIndex < 9; ++nIndex)
+		{
+			if (ParaPr.PStyle === oStyles.Get_Default_Heading(nIndex))
+				return nIndex;
+		}
 	}
 
 	return ParaPr.OutlineLvl;
@@ -10069,11 +10221,12 @@ Paragraph.prototype.Get_DrawingObjectContentPos = function(Id)
 };
 Paragraph.prototype.Internal_CorrectAnchorPos = function(Result, Drawing)
 {
+	if (!this.IsRecalculated())
+		return;
+
 	// Поправляем позицию
 	var RelH = Drawing.PositionH.RelativeFrom;
 	var RelV = Drawing.PositionV.RelativeFrom;
-
-	var ContentPos = 0;
 
 	if (Asc.c_oAscRelativeFromH.Character != RelH || c_oAscRelativeFromV.Line != RelV)
 	{
@@ -10223,6 +10376,9 @@ Paragraph.prototype.Get_Layout = function(ContentPos, Drawing)
 	var CurLine  = LinePos.Line;
 	var CurRange = LinePos.Range;
 	var CurPage  = LinePos.Page;
+
+	if (!this.IsRecalculated())
+		return null;
 
 	var X = this.Lines[CurLine].Ranges[CurRange].XVisible;
 	var Y = this.Pages[CurPage].Y + this.Lines[CurLine].Y;
@@ -10544,7 +10700,12 @@ Paragraph.prototype.Document_UpdateRulersState = function()
 	if (true === this.Is_Inline())
 	{
 		if (this.Parent instanceof CDocument)
-			this.LogicDocument.Document_UpdateRulersStateBySection();
+		{
+			if(this.LogicDocument)
+			{
+				this.LogicDocument.Document_UpdateRulersStateBySection();
+			}
+		}
 	}
 	else
 	{
@@ -10624,6 +10785,10 @@ Paragraph.prototype.Document_UpdateInterfaceState = function()
 
 	if (editor && this.bFromDocument)
 	{
+		if(!this.LogicDocument)
+		{
+			return;
+		}
 		var TrackManager = this.LogicDocument.GetTrackRevisionsManager();
 
 		if (this.Pages.length <= 0 && this.Lines.length <= 0)
@@ -10682,13 +10847,16 @@ Paragraph.prototype.PreDelete = function()
 		if (Item.PreDelete)
 			Item.PreDelete();
 
-		if (para_Comment === Item.Type && this.LogicDocument && true === this.LogicDocument.RemoveCommentsOnPreDelete)
+		if(this.LogicDocument)
 		{
-			this.LogicDocument.RemoveComment(Item.CommentId, true, false);
-		}
-		else if (para_Bookmark === Item.Type)
-		{
-			this.LogicDocument.GetBookmarksManager().SetNeedUpdate(true);
+			if (para_Comment === Item.Type  && true === this.LogicDocument.RemoveCommentsOnPreDelete)
+			{
+				this.LogicDocument.RemoveComment(Item.CommentId, true, false);
+			}
+			else if (para_Bookmark === Item.Type)
+			{
+				this.LogicDocument.GetBookmarksManager().SetNeedUpdate(true);
+			}
 		}
 	}
 
@@ -11536,11 +11704,10 @@ Paragraph.prototype.Concat = function(Para, isUseConcatedStyle)
 	}
 
 	// Добавляем содержимое второго параграфа к первому
-	var NewContent = Para.Content.slice(0); // чтобы передать новый массив, а не ссылку на старый
-	this.Internal_Content_Concat(NewContent);
+	this.Internal_Content_Concat(Para.Content);
 
-	// Удалим из параграфа все элементы (это нужно, чтобы не лежали ссылки на одинаковые объекты в разных параграфах)
-	Para.Internal_Content_Remove2(0, Para.Content.length);
+	// Очистим содержимое параграфа (это нужно, чтобы не лежали ссылки на одинаковые объекты в разных параграфах)
+	Para.ClearContent();
 
 	// Если на данном параграфе оканчивалась секция, тогда удаляем эту секцию
 	this.Set_SectionPr(undefined);
@@ -12224,9 +12391,12 @@ Paragraph.prototype.ReplaceMisspelledWord = function(Word, oElement)
 			CommentsToDelete[Item.CommentId] = true;
 	}
 
-	for (var CommentId in CommentsToDelete)
+	if(this.LogicDocument)
 	{
-		this.LogicDocument.RemoveComment(CommentId, true, false);
+		for (var CommentId in CommentsToDelete)
+		{
+			this.LogicDocument.RemoveComment(CommentId, true, false);
+		}
 	}
 
 	this.Set_SelectionContentPos(StartPos, EndPos);
@@ -13942,6 +14112,10 @@ Paragraph.prototype.GetOutlineParagraphs = function(arrOutline, oPr)
 	}
 	else if (oPr && oPr.Styles && oPr.Styles.length > 0)
 	{
+		if(!this.LogicDocument)
+		{
+			return;
+		}
 		var oStyle = this.LogicDocument.Get_Styles().Get(this.Style_Get());
 		if (!oStyle)
 			return;
@@ -13987,6 +14161,10 @@ Paragraph.prototype.private_CheckUpdateBookmarks = function(Items)
 	if (!Items)
 		return;
 
+	if(!this.LogicDocument)
+	{
+		return;
+	}
 	for (var nIndex = 0, nCount = Items.length; nIndex < nCount; ++nIndex)
 	{
 		var oItem = Items[nIndex];
@@ -14206,6 +14384,7 @@ Paragraph.prototype.GetParaEndCompiledPr = function()
 	}
 
 	oTextPr.Merge(this.TextPr.Value);
+	oTextPr.CheckFontScale();
 	return oTextPr;
 };
 Paragraph.prototype.GetLastParagraph = function()
@@ -15424,6 +15603,14 @@ CParagraphContentPos.prototype.ToAnchorPos = function(oParagraph)
 
 	oParagraph.Check_NearestPos(oNearPos);
 	return oNearPos;
+};
+/**
+ * В данной функции мы устанавливаем глубину позиции (при этом не меняя сам массив позиции)
+ * @param {number} nDepth
+ */
+CParagraphContentPos.prototype.SetDepth = function(nDepth)
+{
+	this.Depth = Math.max(0, Math.min(nDepth + 1, this.Data.length - 1));
 };
 
 function CComplexFieldStatePos(oComplexField, isFieldCode)

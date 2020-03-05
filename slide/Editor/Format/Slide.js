@@ -297,7 +297,7 @@ Slide.prototype =
             }
             var aComments = this.slideComments.comments;
             for(i = 0; i < aComments.length; ++i){
-                copy.slideComments.addComment(aComments[i].createDuplicate(copy.slideComments));
+                copy.slideComments.addComment(aComments[i].createDuplicate(copy.slideComments, true));
             }
         }
 
@@ -897,13 +897,26 @@ Slide.prototype =
     replaceSp: function(oPh, oObject)
     {
         var aSpTree = this.cSld.spTree;
-        for(var i = aSpTree.length - 1; i > -1; --i)
+        for(var i = 0; i < aSpTree.length; ++i)
         {
             if(aSpTree[i] === oPh)
             {
-                this.removeFromSpTreeByPos(i);
-                this.addToSpTreeToPos(i, oObject);
                 break;
+            }
+        }
+        this.removeFromSpTreeByPos(i);
+        this.addToSpTreeToPos(i, oObject);
+        var oNvProps = oObject.getNvProps && oObject.getNvProps();
+        if(oNvProps)
+        {
+            if(oPh)
+            {
+                var oNvPropsPh = oPh.getNvProps && oPh.getNvProps();
+                var oPhPr = oNvPropsPh.ph;
+                if(oPhPr)
+                {
+                    oNvProps.setPh(oPhPr.createDuplicate());
+                }
             }
         }
     },

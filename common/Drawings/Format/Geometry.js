@@ -1650,6 +1650,7 @@ function ComparisonEdgeByTopPoint(graphEdge1, graphEdge2)
     window['AscFormat'].PathAccumulator = PathAccumulator;
 
     window['AscFormat'].EPSILON_TEXT_AUTOFIT = EPSILON_TEXT_AUTOFIT;
+    window['AscFormat'].MAX_ITER_COUNT = MAX_ITER_COUNT;
     window['AscFormat'].APPROXIMATE_EPSILON = 1;
     window['AscFormat'].APPROXIMATE_EPSILON2 = 3;
     window['AscFormat'].APPROXIMATE_EPSILON3 = 5;

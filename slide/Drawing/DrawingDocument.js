@@ -3439,15 +3439,24 @@ function CDrawingDocument()
 	// mouse events
 	this.checkMouseDown_Drawing = function (pos)
 	{
+        var oWordControl = this.m_oWordControl;
+		var bIsReturn = false;
+		
         if (this.placeholders.onPointerDown(pos, this.SlideCurrectRect, this.m_oLogicDocument.Width, this.m_oLogicDocument.Height))
-            return true;
+            bIsReturn = true;
 
-		return false;
+        if (bIsReturn)
+		{
+            oWordControl.OnUpdateOverlay();
+            oWordControl.EndUpdateOverlay();
+		}
+		return bIsReturn;
 	};
 
 	this.checkMouseMove_Drawing = function (pos)
 	{
 		var oWordControl = this.m_oWordControl;
+        var bIsReturn = false;
 
 		if (this.InlineTextTrackEnabled)
 		{
@@ -3461,21 +3470,27 @@ function CDrawingDocument()
 			this.InlineTextTrackPage = pos.Page;
 			this.InlineTextInNotes = pos.isNotes ? true : false;
 
-			oWordControl.ShowOverlay();
-			oWordControl.OnUpdateOverlay();
-			oWordControl.EndUpdateOverlay();
-			return true;
+            bIsReturn = true;
 		}
+		else if (this.placeholders.onPointerMove(pos, this.SlideCurrectRect, this.m_oLogicDocument.Width, this.m_oLogicDocument.Height))
+		{
+            oWordControl.OnUpdateOverlay();
+            oWordControl.EndUpdateOverlay();
+            bIsReturn = true;
+        }
 
-		if (this.placeholders.onPointerMove(pos, this.SlideCurrectRect, this.m_oLogicDocument.Width, this.m_oLogicDocument.Height))
-            return true;
-
-		return false;
+        if (bIsReturn)
+        {
+            oWordControl.OnUpdateOverlay();
+            oWordControl.EndUpdateOverlay();
+        }
+        return bIsReturn;
 	};
 
 	this.checkMouseUp_Drawing = function (pos)
 	{
 		var oWordControl = this.m_oWordControl;
+        var bIsReturn = false;
 
 		if (this.InlineTextTrackEnabled)
 		{
@@ -3484,16 +3499,17 @@ function CDrawingDocument()
 			this.InlineTextInNotes = pos.isNotes ? true : false;
 			this.EndTrackText();
 
-			oWordControl.ShowOverlay();
-			oWordControl.OnUpdateOverlay();
-			oWordControl.EndUpdateOverlay();
-			return true;
+            bIsReturn = true;
 		}
+        else if (this.placeholders.onPointerUp(pos, this.SlideCurrectRect, this.m_oLogicDocument.Width, this.m_oLogicDocument.Height))
+            bIsReturn = true;
 
-        if (this.placeholders.onPointerUp(pos, this.SlideCurrectRect, this.m_oLogicDocument.Width, this.m_oLogicDocument.Height))
-            return true;
-
-		return false;
+        if (bIsReturn)
+        {
+            oWordControl.OnUpdateOverlay();
+            oWordControl.EndUpdateOverlay();
+        }
+        return bIsReturn;
 	};
 
 	// track text (inline)

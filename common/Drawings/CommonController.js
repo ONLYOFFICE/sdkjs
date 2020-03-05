@@ -300,6 +300,10 @@ function CheckShapeBodyAutoFitReset(oShape, bNoResetRelSize)
         else
         {
             oShape.txBody.setBodyPr(oPropsToSet);
+            if(oShape.checkExtentsByDocContent)
+            {
+                oShape.checkExtentsByDocContent(true, true);
+            }
         }
     }
 }
@@ -3372,7 +3376,7 @@ DrawingObjectsController.prototype =
 			{
 				var oParaDrawing = this.selectedObjects[0].parent;
 				var oParagraph   = oParaDrawing.Parent;
-				oParagraph.Cursor_MoveTo_Drawing(oParaDrawing.Get_Id(), true);
+				oParagraph.MoveCursorToDrawing(oParaDrawing.Get_Id(), true);
 				result = oParagraph.GetCalculatedTextPr();
 			}
             else
@@ -3561,6 +3565,28 @@ DrawingObjectsController.prototype =
             for(i = 0; i < objects_by_type.groups.length; ++i)
             {
                 objects_by_type.groups[i].setPaddings(props.paddings);
+            }
+        }
+        if(AscFormat.isRealNumber(props.textFitType))
+        {
+            for(i = 0; i < objects_by_type.shapes.length; ++i)
+            {
+                objects_by_type.shapes[i].setTextFitType(props.textFitType);
+            }
+            for(i = 0; i < objects_by_type.groups.length; ++i)
+            {
+                objects_by_type.groups[i].setTextFitType(props.textFitType);
+            }
+        }
+        if(AscFormat.isRealNumber(props.vertOverflowType))
+        {
+            for(i = 0; i < objects_by_type.shapes.length; ++i)
+            {
+                objects_by_type.shapes[i].setVertOverflowType(props.vertOverflowType);
+            }
+            for(i = 0; i < objects_by_type.groups.length; ++i)
+            {
+                objects_by_type.groups[i].setVertOverflowType(props.vertOverflowType);
             }
         }
         if(typeof(props.type) === "string")
@@ -7375,6 +7401,66 @@ DrawingObjectsController.prototype =
         this.changeCurrentState(new AscFormat.NullState(this, this.drawingObjects));
     },
 
+    addTextWithPr: function(sText, oTextPr, isMoveCursorOutside)
+    {
+
+        this.checkSelectedObjectsAndCallback(function(){
+            var oTargetDocContent = this.getTargetDocContent(true, false);
+            if(oTargetDocContent) {
+                oTargetDocContent.Remove(-1, true, true, true, undefined);
+                var oCurrentTextPr = oTargetDocContent.GetDirectTextPr();
+                var oParagraph = oTargetDocContent.GetCurrentParagraph();
+                if (oParagraph && oParagraph.GetParent())
+                {
+                    var oTempPara = new Paragraph(this.drawingObjects.getDrawingDocument(), oParagraph.GetParent());
+                    var oRun      = new ParaRun(oTempPara, false);
+                    oRun.AddText(sText);
+                    oTempPara.AddToContent(0, oRun);
+
+                    oRun.SetPr(oCurrentTextPr.Copy());
+                    if (oTextPr)
+                        oRun.ApplyPr(oTextPr);
+
+                    var oAnchorPos = oParagraph.GetCurrentAnchorPosition();
+
+                    var oSelectedContent = new CSelectedContent();
+                    var oSelectedElement = new CSelectedElement();
+
+                    oSelectedElement.Element     = oTempPara;
+                    oSelectedElement.SelectedAll = false;
+                    oSelectedContent.Add(oSelectedElement);
+
+                    oSelectedContent.On_EndCollectElements(oTargetDocContent, false);
+
+                    oParagraph.GetParent().InsertContent(oSelectedContent, oAnchorPos);
+
+                    if (oTargetDocContent.IsSelectionUse())
+                    {
+                        if (isMoveCursorOutside)
+                        {
+                            oTargetDocContent.RemoveSelection();
+                            oRun.MoveCursorOutsideElement(false);
+                        }
+                        else
+                        {
+                            oTargetDocContent.MoveCursorRight(false, false, true);
+                        }
+                    }
+                    else if (isMoveCursorOutside)
+                    {
+                        oRun.MoveCursorOutsideElement(false);
+                    }
+                    var oTargetTextObject = getTargetTextObject(this);
+                    if(oTargetTextObject && oTargetTextObject.checkExtentsByDocContent)
+                    {
+                        oTargetTextObject.checkExtentsByDocContent();
+                    }
+                }
+
+            }
+        }, [], false, AscDFH.historydescription_Document_AddTextWithProperties);
+    },
+
     getColorMapOverride: function()
     {
         return null;
@@ -7813,7 +7899,7 @@ DrawingObjectsController.prototype =
 
     unGroup: function()
     {
-        this.checkSelectedObjectsAndCallback(this.unGroupCallback, null, false, AscDFH.historydescription_CommonControllerUnGroup)
+        this.checkSelectedObjectsAndCallback(this.unGroupCallback, null, false, AscDFH.historydescription_CommonControllerUnGroup);
     },
 
     getSelectedObjectsBounds: function(isTextSelectionUse)
@@ -8423,6 +8509,8 @@ DrawingObjectsController.prototype =
                         description: drawing.getDescription(),
                         columnNumber: drawing.getColumnNumber(),
                         columnSpace: drawing.getColumnSpace(),
+                        textFitType: drawing.getTextFitType(),
+                        vertOverflowType: drawing.getVertOverflowType(),
                         signatureId: drawing.getSignatureLineGuid(),
                         shadow: drawing.getOuterShdw(),
                         anchor: drawing.getDrawingBaseType()
@@ -8512,6 +8600,8 @@ DrawingObjectsController.prototype =
                         description: drawing.getDescription(),
                         columnNumber: null,
                         columnSpace: null,
+                        textFitType: null,
+                        vertOverflowType: null,
                         signatureId: null,
                         shadow: drawing.getOuterShdw(),
                         anchor: drawing.getDrawingBaseType()
@@ -9013,6 +9103,8 @@ DrawingObjectsController.prototype =
 
             shape_props.ShapeProperties.columnNumber = props.shapeProps.columnNumber;
             shape_props.ShapeProperties.columnSpace = props.shapeProps.columnSpace;
+            shape_props.ShapeProperties.textFitType = props.shapeProps.textFitType;
+            shape_props.ShapeProperties.vertOverflowType = props.shapeProps.vertOverflowType;
             shape_props.ShapeProperties.shadow = props.shapeProps.shadow;
             if(props.shapeProps.textArtProperties && oDrawingDocument)
             {
@@ -9560,6 +9652,8 @@ DrawingObjectsController.prototype =
             this.checkSelectedObjectsAndCallback(this.paraApplyCallback, [props], false, AscDFH.historydescription_Spreadsheet_ParaApply);
         }
     },
+
+
 
     checkSelectedObjectsAndCallback: function(callback, args, bNoSendProps, nHistoryPointType, aAdditionalObjects, bNoCheckLock)
     {

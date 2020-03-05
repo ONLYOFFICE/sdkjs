@@ -826,7 +826,7 @@
     CGraphicObjectBase.prototype.checkTypeCorrect = function(){
         return true;
     };
-    CGraphicObjectBase.prototype.handleUpdateExtents = function(){
+    CGraphicObjectBase.prototype.handleUpdateExtents = function(bExtX){
     };
     CGraphicObjectBase.prototype.handleUpdatePosition = function(){
     };
@@ -1767,7 +1767,7 @@
     {
         var phType = this.getPhType();
         var aButtons = [];
-        var isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"] && window["AscDesktopEditor"]["IsLocalFile"]();
+        var isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsSupportMedia"] && window["AscDesktopEditor"]["IsSupportMedia"]();
         switch (phType)
         {
             case null:

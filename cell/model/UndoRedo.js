@@ -1920,10 +1920,6 @@ function (window, undefined) {
 				wb.replaceWorksheet(Data.from, Data.to);
 			}
 			wb.handlers.trigger("updateWorksheetByModel");
-		} else if (AscCH.historyitem_Workbook_ChangeColorScheme == Type) {
-			bNeedTrigger = false;
-			wb.rebuildColors();
-			wb.oApi.asc_AfterChangeColorScheme();
 		} else if (AscCH.historyitem_Workbook_DefinedNamesChange === Type ||
 			AscCH.historyitem_Workbook_DefinedNamesChangeUndo === Type) {
 			var oldName, newName;
@@ -1945,6 +1941,10 @@ function (window, undefined) {
 					wb.editDefinesNamesUndoRedo(oldName, newName);
 					wb.handlers.trigger("asc_onEditDefName", oldName, newName);
 				}
+			}
+		} else if(AscCH.historyitem_Workbook_Calculate === Type) {
+			if (!bUndo) {
+				wb.calculate(Data.elem, nSheetId);
 			}
 		}
 	};

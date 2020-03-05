@@ -100,12 +100,15 @@ CHeaderFooter.prototype =
         return this.LogicDocument.Get_ColorMap();
     },
     
-    Copy : function()
-    {
-        var NewHdrFtr = new CHeaderFooter(this.Parent, this.LogicDocument, this.DrawingDocument, this.Type);
-        NewHdrFtr.Content.Copy2( this.Content );
-        return NewHdrFtr;
-    },
+    Copy : function(oLogicDocument, oCopyPr)
+	{
+		if (!oLogicDocument)
+			oLogicDocument = this.LogicDocument;
+
+		var oNewHdrFtr = new CHeaderFooter(oLogicDocument.GetHdrFtr(), oLogicDocument, oLogicDocument.GetDrawingDocument(), this.Type);
+		oNewHdrFtr.Content.Copy2(this.Content, oCopyPr);
+		return oNewHdrFtr;
+	},
 
     Set_Page : function(Page_abs)
     {
@@ -706,10 +709,10 @@ CHeaderFooter.prototype =
         this.Content.EditChart( Chart );
     },
 
-	AddInlineTable : function(Cols, Rows)
-    {
-        this.Content.AddInlineTable( Cols, Rows );
-    },
+	AddInlineTable : function(nCols, nRows, nMode)
+	{
+		return this.Content.AddInlineTable(nCols, nRows, nMode);
+	},
 
 	AddToParagraph : function(ParaItem, bRecalculate)
 	{
@@ -1333,6 +1336,11 @@ CHeaderFooter.prototype.FindWatermark = function()
     }
     return oCandidate;
 };
+CHeaderFooter.prototype.GetAllTablesOnPage = function(nPageAbs, arrTables)
+{
+	this.Set_Page(nPageAbs);
+	return this.Content.GetAllTablesOnPage(nPageAbs, arrTables);
+};
 
 //-----------------------------------------------------------------------------------
 // Класс для работы с колонтитулами
@@ -1940,11 +1948,13 @@ CHeaderFooterController.prototype =
             return this.CurHdrFtr.EditChart( Chart );
     },
 
-	AddInlineTable : function(Cols, Rows)
-    {
-        if ( null != this.CurHdrFtr )
-            return this.CurHdrFtr.AddInlineTable( Cols, Rows );
-    },
+	AddInlineTable : function(nCols, nRows, nMode)
+	{
+		if (this.CurHdrFtr)
+			return this.CurHdrFtr.AddInlineTable(nCols, nRows, nMode);
+
+		return null;
+	},
 
 	AddToParagraph : function(ParaItem, bRecalculate)
 	{
@@ -2731,6 +2741,20 @@ CHeaderFooterController.prototype.Document_Is_SelectionLocked = function(nCheckT
     // Нужно запускать проверку дальше, чтобы проверить залоченность Sdt
     if (this.CurHdrFtr)
         this.CurHdrFtr.GetContent().Document_Is_SelectionLocked(nCheckType);
+};
+CHeaderFooterController.prototype.GetAllTablesOnPage = function(nPageAbs, arrTables)
+{
+	var oPage = this.Pages[nPageAbs];
+	if (!oPage)
+		return arrTables;
+
+	if (oPage.Header)
+		oPage.Header.GetAllTablesOnPage(nPageAbs, arrTables);
+
+	if (oPage.Footer)
+		oPage.Footer.GetAllTablesOnPage(nPageAbs, arrTables);
+
+	return arrTables;
 };
 
 

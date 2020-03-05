@@ -377,7 +377,16 @@ function (window, undefined) {
     drawingsChangesMap[AscDFH.historyitem_StockChart_SetUpDownBars]            = function(oClass, value){oClass.upDownBars = value;};
     drawingsChangesMap[AscDFH.historyitem_StrCache_SetPtCount]                 = function(oClass, value){oClass.ptCount = value;};
     drawingsChangesMap[AscDFH.historyitem_StrPoint_SetIdx]                     = function(oClass, value){oClass.idx =  value;};
-    drawingsChangesMap[AscDFH.historyitem_StrPoint_SetVal]                     = function(oClass, value){oClass.val =  value;};
+    drawingsChangesMap[AscDFH.historyitem_StrPoint_SetVal]                     = function(oClass, value){
+        oClass.val =  value;
+        if(AscFonts.IsCheckSymbols)
+        {
+            if(typeof value === "string" && value.length > 0)
+            {
+                AscFonts.FontPickerByCharacter.getFontsByString(value);
+            }
+        }
+    };
     drawingsChangesMap[AscDFH.historyitem_StrRef_SetF]                          = function(oClass, value){oClass.f =  value;};
     drawingsChangesMap[AscDFH.historyitem_StrRef_SetStrCache]                   = function(oClass, value){oClass.strCache =  value;};
     drawingsChangesMap[AscDFH.historyitem_SurfaceChart_SetWireframe]              = function(oClass, value){oClass.wireframe =  value;};
@@ -625,7 +634,7 @@ function (window, undefined) {
     AscDFH.changesFactory[AscDFH.historyitem_PictureOptions_SetPictureStackUnit] = window['AscDFH'].CChangesDrawingsDouble;
     AscDFH.changesFactory[AscDFH.historyitem_Scaling_SetLogBase                ] = window['AscDFH'].CChangesDrawingsDouble2;
     AscDFH.changesFactory[AscDFH.historyitem_Scaling_SetMax                    ] = window['AscDFH'].CChangesDrawingsDouble2;
-    AscDFH.changesFactory[AscDFH.historyitem_Scaling_SetMin                    ] = window['AscDFH'].CChangesDrawingsDouble;
+    AscDFH.changesFactory[AscDFH.historyitem_Scaling_SetMin                    ] = window['AscDFH'].CChangesDrawingsDouble2;
     AscDFH.changesFactory[AscDFH.historyitem_Trendline_SetBackward             ] = window['AscDFH'].CChangesDrawingsDouble;
     AscDFH.changesFactory[AscDFH.historyitem_Trendline_SetForward              ] = window['AscDFH'].CChangesDrawingsDouble;
     AscDFH.changesFactory[AscDFH.historyitem_Trendline_SetIntercept            ] = window['AscDFH'].CChangesDrawingsDouble;
@@ -1016,7 +1025,7 @@ function CDLbl()
     this.recalcInfo =
     {
         recalcTransform: true,
-        recalcTransformText: true,
+        recalculateTransformText: true,
         recalcStyle: true,
         recalculateTxBody: true,
         recalculateBrush: true,
@@ -1181,7 +1190,7 @@ CDLbl.prototype =
                 this.recalculateTransform();
                 //this.recalcInfo.recalcTransform = false;
             }
-            if(this.recalcInfo.recalcTransformText)
+            if(this.recalcInfo.recalculateTransformText)
             {
                 this.recalculateTransformText();
                 //this.recalcInfo.recalcTransformText = false;
@@ -2048,7 +2057,22 @@ CDLbl.prototype =
             var max_content_width = max_box_width - 2*SCALE_INSET_COEFF;
 
             var content = this.txBody.content;
+
+
+
+
+            var sParPasteId = null;
+            if(window['AscCommon'].g_specialPasteHelper && window['AscCommon'].g_specialPasteHelper.showButtonIdParagraph)
+            {
+                sParPasteId = window['AscCommon'].g_specialPasteHelper.showButtonIdParagraph;
+                window['AscCommon'].g_specialPasteHelper.showButtonIdParagraph = null;
+            }
+
             content.RecalculateContent(max_content_width, 20000, 0);
+            if(sParPasteId)
+            {
+                window['AscCommon'].g_specialPasteHelper.showButtonIdParagraph = sParPasteId;
+            }
             // content.Reset(0, 0, max_content_width, 20000);
             //
             // content.Recalculate_Page(0, true);
@@ -11181,7 +11205,7 @@ CScaling.prototype =
 
     setLogBase: function(pr)
     {
-        History.Add(new CChangesDrawingsDouble(this, AscDFH.historyitem_Scaling_SetLogBase, this.logBase, pr));
+        History.Add(new CChangesDrawingsDouble2(this, AscDFH.historyitem_Scaling_SetLogBase, this.logBase, pr));
         this.logBase = pr;
         if(this.parent && this.parent.parent && this.parent.parent.parent && this.parent.parent.parent.parent && this.parent.parent.parent.parent.handleUpdateInternalChart)
         {
@@ -12179,7 +12203,14 @@ CStringPoint.prototype =
     {
         History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_StrPoint_SetVal, this.val, pr));
         this.val = pr;
+        if(AscFonts.IsCheckSymbols)
+        {
+            if(typeof pr === "string" && pr.length > 0)
+            {
+                AscFonts.FontPickerByCharacter.getFontsByString(pr);
             }
+        }
+    }
 };
 
 
@@ -12641,12 +12672,11 @@ function CTitle()
     {
         recalculateTxBody: true,
         recalcTransform: true,
-        recalcTransformText: true,
-        recalcContent: true,
+        recalculateTransformText: true,
+        recalculateContent: true,
         recalculateBrush: true,
         recalculatePen: true,
         recalcStyle: true,
-        recalculateContent: true,
         recalculateGeometry: true
     };
 
@@ -12692,8 +12722,8 @@ CTitle.prototype =
     {
         this.recalcInfo.recalculateTxBody = true;
         this.recalcInfo.recalcTransform = true;
-        this.recalcInfo.recalcTransformText = true;
-        this.recalcInfo.recalcContent = true;
+        this.recalcInfo.recalculateTransformText = true;
+        this.recalcInfo.recalculateContent = true;
         this.recalcInfo.recalculateContent = true;
         this.recalcInfo.recalculateGeometry = true;
 
@@ -12704,8 +12734,7 @@ CTitle.prototype =
     {
         this.recalcInfo.recalculateTxBody = true;
         this.recalcInfo.recalcTransform = true;
-        this.recalcInfo.recalcTransformText = true;
-        this.recalcInfo.recalcContent = true;
+        this.recalcInfo.recalculateTransformText = true;
         this.recalcInfo.recalculateContent = true;
         this.recalcInfo.recalculateGeometry = true;
         if(this.tx && this.tx.rich && this.tx.rich.content)
@@ -13152,10 +13181,10 @@ CTitle.prototype =
                 this.recalculateGeometry && this.recalculateGeometry();
                 this.recalcInfo.recalculateGeometry = false;
             }
-            if(this.recalcInfo.recalcTransformText)
+            if(this.recalcInfo.recalculateTransformText)
             {
                 this.recalculateTransformText();
-                this.recalcInfo.recalcTransformText = false;
+                this.recalcInfo.recalculateTransformText = false;
             }
             if(this.chart)
             {

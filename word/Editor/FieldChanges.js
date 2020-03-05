@@ -100,6 +100,14 @@ CChangesParaFieldAddItem.prototype.Load = function(Color)
 
 		if (null != Element)
 		{
+			if (Element.SetParagraph)
+			{
+				if (oField.GetParagraph)
+					Element.SetParagraph(oField.GetParagraph());
+				else
+					Element.SetParagraph(null);
+			}
+
 			oField.Content.splice(Pos, 0, Element);
 			AscCommon.CollaborativeEditing.Update_DocumentPositionsOnAdd(oField, Pos);
 		}

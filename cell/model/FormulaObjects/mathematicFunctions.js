@@ -102,6 +102,84 @@
 		}
 	};
 
+	function sumxCalc(arg, func) {
+
+		function sumX(a, b, _3d) {
+			var sum = 0, i, j;
+
+			if (!_3d) {
+				if (a.length == b.length && a[0] && b[0] && a[0].length == b[0].length) {
+					for (i = 0; i < a.length; i++) {
+						for (j = 0; j < a[0].length; j++) {
+							if (a[i][j] instanceof cNumber && b[i][j] instanceof cNumber) {
+								sum += func(a[i][j].getValue(), b[i][j].getValue())
+							} else {
+								return new cError(cErrorType.wrong_value_type);
+							}
+						}
+					}
+					return new cNumber(sum);
+				} else {
+					return new cError(cErrorType.wrong_value_type);
+				}
+			} else {
+				if (a.length == b.length && a[0] && b[0] && a[0].length == b[0].length && a[0][0] && b[0][0] && a[0][0].length == b[0][0].length) {
+					for (i = 0; i < a.length; i++) {
+						for (j = 0; j < a[0].length; j++) {
+							for (var k = 0; k < a[0][0].length; k++) {
+								if (a[i][j][k] instanceof cNumber && b[i][j][k] instanceof cNumber) {
+									sum += func(a[i][j][k].getValue(), b[i][j][k].getValue())
+								} else {
+									return new cError(cErrorType.wrong_value_type);
+								}
+							}
+						}
+					}
+					return new cNumber(sum);
+				} else {
+					return new cError(cErrorType.wrong_value_type);
+				}
+			}
+		}
+
+		var arg0 = arg[0], arg1 = arg[1];
+
+		if (arg0 instanceof cArea3D && arg1 instanceof cArea3D) {
+			return sumX(arg0.getMatrix(), arg1.getMatrix(), true);
+		}
+
+		if(arg0 instanceof cRef || arg0 instanceof cRef3D) {
+			arg0 = arg0.getValue();
+		}
+
+		if (arg0 instanceof cArea || arg0 instanceof cArray) {
+			arg0 = arg0.getMatrix();
+		} else if (arg0 instanceof cError) {
+			return arg0;
+		} else if (arg0 instanceof cNumber) {
+			arg0 = [[arg0]];
+		} else {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		if(arg1 instanceof cRef || arg1 instanceof cRef3D) {
+			arg1 = arg1.getValue();
+		}
+
+		if (arg1 instanceof cArea || arg1 instanceof cArray || arg1 instanceof cArea3D) {
+			arg1 = arg1.getMatrix();
+		} else if (arg1 instanceof cError) {
+			return arg1;
+		} else if (arg1 instanceof cNumber) {
+			arg1 = [[arg1]];
+		} else {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		return sumX(arg0, arg1, false);
+	};
+
+
 	/**
 	 * @constructor
 	 * @extends {AscCommonExcel.cBaseFunction}
@@ -4856,84 +4934,11 @@
 	cSUMX2MY2.prototype.argumentsMax = 2;
 	cSUMX2MY2.prototype.arrayIndexes = {0: 1, 1: 1};
 	cSUMX2MY2.prototype.Calculate = function (arg) {
+		var func = function(a, b) {
+			return a * a - b * b;
+		};
 
-		function sumX2MY2(a, b, _3d) {
-			var sum = 0, i, j;
-
-			function a2Mb2(a, b) {
-				return a * a - b * b;
-			}
-
-			if (!_3d) {
-				if (a.length == b.length && a[0] && b[0] && a[0].length == b[0].length) {
-					for (i = 0; i < a.length; i++) {
-						for (j = 0; j < a[0].length; j++) {
-							if (a[i][j] instanceof cNumber && b[i][j] instanceof cNumber) {
-								sum += a2Mb2(a[i][j].getValue(), b[i][j].getValue())
-							} else {
-								return new cError(cErrorType.wrong_value_type);
-							}
-						}
-					}
-					return new cNumber(sum);
-				} else {
-					return new cError(cErrorType.wrong_value_type);
-				}
-			} else {
-				if (a.length == b.length && a[0] && b[0] && a[0].length == b[0].length && a[0][0] && b[0][0] && a[0][0].length == b[0][0].length) {
-					for (i = 0; i < a.length; i++) {
-						for (j = 0; j < a[0].length; j++) {
-							for (var k = 0; k < a[0][0].length; k++) {
-								if (a[i][j][k] instanceof cNumber && b[i][j][k] instanceof cNumber) {
-									sum += a2Mb2(a[i][j][k].getValue(), b[i][j][k].getValue())
-								} else {
-									return new cError(cErrorType.wrong_value_type);
-								}
-							}
-						}
-					}
-					return new cNumber(sum);
-				} else {
-					return new cError(cErrorType.wrong_value_type);
-				}
-			}
-		}
-
-		var arg0 = arg[0], arg1 = arg[1];
-
-		if (arg0 instanceof cArea3D && arg1 instanceof cArea3D) {
-			return sumX2MY2(arg0.getMatrix(), arg1.getMatrix(), true);
-		}
-
-		if(arg0 instanceof cRef || arg0 instanceof cRef3D) {
-			arg0 = arg0.getValue();
-		}
-
-		if (arg0 instanceof cArea || arg0 instanceof cArray) {
-			arg0 = arg0.getMatrix();
-		} else if (arg0 instanceof cError) {
-			return arg0;
-		} else if(arg0 instanceof cNumber) {
-			arg0 = [[arg0]];
-		} else {
-			return new cError(cErrorType.wrong_value_type);
-		}
-
-		if(arg1 instanceof cRef || arg1 instanceof cRef3D) {
-			arg1 = arg1.getValue();
-		}
-
-		if (arg1 instanceof cArea || arg1 instanceof cArray || arg1 instanceof cArea3D) {
-			arg1 = arg1.getMatrix();
-		} else if (arg1 instanceof cError) {
-			return arg1;
-		} else if(arg1 instanceof cNumber) {
-			arg1 = [[arg1]];
-		} else {
-			return new cError(cErrorType.wrong_value_type);
-		}
-
-		return sumX2MY2(arg0, arg1, false);
+		return sumxCalc(arg, func);
 	};
 
 	/**
@@ -4951,71 +4956,11 @@
 	cSUMX2PY2.prototype.arrayIndexes = {0: 1, 1: 1};
 	cSUMX2PY2.prototype.Calculate = function (arg) {
 
-		function sumX2MY2(a, b, _3d) {
-			var sum = 0, i, j;
+		var func = function(a, b) {
+			return a * a + b * b;
+		};
 
-			function a2Mb2(a, b) {
-				return a * a + b * b;
-			}
-
-			if (!_3d) {
-				if (a.length == b.length && a[0].length == b[0].length) {
-					for (i = 0; i < a.length; i++) {
-						for (j = 0; j < a[0].length; j++) {
-							if (a[i][j] instanceof cNumber && b[i][j] instanceof cNumber) {
-								sum += a2Mb2(a[i][j].getValue(), b[i][j].getValue())
-							} else {
-								return new cError(cErrorType.wrong_value_type);
-							}
-						}
-					}
-					return new cNumber(sum);
-				} else {
-					return new cError(cErrorType.wrong_value_type);
-				}
-			} else {
-				if (a.length == b.length && a[0].length == b[0].length && a[0][0].length == b[0][0].length) {
-					for (i = 0; i < a.length; i++) {
-						for (j = 0; j < a[0].length; j++) {
-							for (var k = 0; k < a[0][0].length; k++) {
-								if (a[i][j][k] instanceof cNumber && b[i][j][k] instanceof cNumber) {
-									sum += a2Mb2(a[i][j][k].getValue(), b[i][j][k].getValue())
-								} else {
-									return new cError(cErrorType.wrong_value_type);
-								}
-							}
-						}
-					}
-					return new cNumber(sum);
-				} else {
-					return new cError(cErrorType.wrong_value_type);
-				}
-			}
-		}
-
-		var arg0 = arg[0], arg1 = arg[1];
-
-		if (arg0 instanceof cArea3D && arg1 instanceof cArea3D) {
-			return sumX2MY2(arg0.getMatrix(), arg1.getMatrix(), true);
-		}
-
-		if (arg0 instanceof cArea || arg0 instanceof cArray) {
-			arg0 = arg0.getMatrix();
-		} else if (arg0 instanceof cError) {
-			return arg0;
-		} else {
-			return new cError(cErrorType.wrong_value_type);
-		}
-
-		if (arg1 instanceof cArea || arg1 instanceof cArray || arg1 instanceof cArea3D) {
-			arg1 = arg1.getMatrix();
-		} else if (arg1 instanceof cError) {
-			return arg1;
-		} else {
-			return new cError(cErrorType.wrong_value_type);
-		}
-
-		return sumX2MY2(arg0, arg1, false);
+		return sumxCalc(arg, func);
 	};
 
 	/**
@@ -5033,71 +4978,11 @@
 	cSUMXMY2.prototype.arrayIndexes = {0: 1, 1: 1};
 	cSUMXMY2.prototype.Calculate = function (arg) {
 
-		function sumX2MY2(a, b, _3d) {
-			var sum = 0, i, j;
+		var func = function(a, b) {
+			return ( a - b ) * ( a - b );
+		};
 
-			function a2Mb2(a, b) {
-				return ( a - b ) * ( a - b );
-			}
-
-			if (!_3d) {
-				if (a.length == b.length && a[0].length == b[0].length) {
-					for (i = 0; i < a.length; i++) {
-						for (j = 0; j < a[0].length; j++) {
-							if (a[i][j] instanceof cNumber && b[i][j] instanceof cNumber) {
-								sum += a2Mb2(a[i][j].getValue(), b[i][j].getValue())
-							} else {
-								return new cError(cErrorType.wrong_value_type);
-							}
-						}
-					}
-					return new cNumber(sum);
-				} else {
-					return new cError(cErrorType.wrong_value_type);
-				}
-			} else {
-				if (a.length == b.length && a[0].length == b[0].length && a[0][0].length == b[0][0].length) {
-					for (i = 0; i < a.length; i++) {
-						for (j = 0; j < a[0].length; j++) {
-							for (var k = 0; k < a[0][0].length; k++) {
-								if (a[i][j][k] instanceof cNumber && b[i][j][k] instanceof cNumber) {
-									sum += a2Mb2(a[i][j][k].getValue(), b[i][j][k].getValue())
-								} else {
-									return new cError(cErrorType.wrong_value_type);
-								}
-							}
-						}
-					}
-					return new cNumber(sum);
-				} else {
-					return new cError(cErrorType.wrong_value_type);
-				}
-			}
-		}
-
-		var arg0 = arg[0], arg1 = arg[1];
-
-		if (arg0 instanceof cArea3D && arg1 instanceof cArea3D) {
-			return sumX2MY2(arg0.getMatrix(), arg1.getMatrix(), true);
-		}
-
-		if (arg0 instanceof cArea || arg0 instanceof cArray) {
-			arg0 = arg0.getMatrix();
-		} else if (arg0 instanceof cError) {
-			return arg0;
-		} else {
-			return new cError(cErrorType.wrong_value_type);
-		}
-
-		if (arg1 instanceof cArea || arg1 instanceof cArray || arg1 instanceof cArea3D) {
-			arg1 = arg1.getMatrix();
-		} else if (arg1 instanceof cError) {
-			return arg1;
-		} else {
-			return new cError(cErrorType.wrong_value_type);
-		}
-
-		return sumX2MY2(arg0, arg1, false);
+		return sumxCalc(arg, func);
 	};
 
 	/**

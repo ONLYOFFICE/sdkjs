@@ -10181,34 +10181,47 @@ function (window, undefined) {
 		}
 
 		var element, arr0 = [];
-
+		var error;
 		for (var j = 0; j < arg.length; j++) {
 			element = arg[j];
 			if (cElementType.cellsRange === element.type || cElementType.cellsRange3D === element.type) {
-				var _arrVal = element.getValue(this.checkExclude, this.excludeHiddenRows, this.excludeErrorsVal,
-					this.excludeNestedStAg);
+				var _arrVal = element.getValue(this.checkExclude, this.excludeHiddenRows, this.excludeErrorsVal, this.excludeNestedStAg);
 				_arrVal.forEach(function (elem) {
-					if (cElementType.number === elem.type || cElementType.error === elem.type) {
+					if (cElementType.number === elem.type) {
 						arr0.push(elem);
+					} else if ( cElementType.error === elem.type && !error ) {
+						error = elem;
 					}
 				});
+				if(error) {
+					return error;
+				}
 			} else if (cElementType.cell === element.type || cElementType.cell3D === element.type) {
 				if (!this.checkExclude || !element.isHidden(this.excludeHiddenRows)) {
 					var a = element.getValue();
-					if (cElementType.number === a.type || cElementType.error === a.type) {
+					if (cElementType.number === a.type) {
 						arr0.push(a);
+					} else if(cElementType.error === a.type) {
+						return a;
 					}
 				}
 			} else if (cElementType.array === element.type) {
 				element.foreach(function (elem) {
-					if (cElementType.number === elem.type || cElementType.error === elem.type) {
+					if (cElementType.number === elem.type) {
 						arr0.push(elem);
+					}  else if ( cElementType.error === elem.type && !error ) {
+						error = elem;
 					}
 				});
+				if(error) {
+					return error;
+				}
 			} else if (cElementType.number === element.type || cElementType.bool === element.type) {
 				arr0.push(element.tocNumber());
 			} else if (cElementType.string === element.type || cElementType.empty === element.type) {
 				arr0.push(new cNumber(0));
+			} else if (cElementType.error === element.type) {
+				return element;
 			} else {
 				return new cError(cErrorType.wrong_value_type);
 			}
@@ -10913,29 +10926,41 @@ function (window, undefined) {
 
 		var element, arr0 = [];
 
+		var error;
 		for (var j = 0; j < arg.length; j++) {
 			element = arg[j];
 			if (cElementType.cellsRange === element.type || cElementType.cellsRange3D === element.type) {
-				var _arrVal = element.getValue(this.checkExclude, this.excludeHiddenRows, this.excludeErrorsVal,
-					this.excludeNestedStAg);
+				var _arrVal = element.getValue(this.checkExclude, this.excludeHiddenRows, this.excludeErrorsVal, this.excludeNestedStAg);
 				_arrVal.forEach(function (elem) {
-					if (cElementType.number === elem.type || cElementType.error === elem.type) {
+					if (cElementType.number === elem.type) {
 						arr0.push(elem);
+					} else if ( cElementType.error === elem.type && !error ) {
+						error = elem;
 					}
 				});
+				if(error) {
+					return error;
+				}
 			} else if (cElementType.cell === element.type || cElementType.cell3D === element.type) {
 				if (!this.checkExclude || !element.isHidden(this.excludeHiddenRows)) {
 					var a = element.getValue();
-					if (cElementType.number === a.type || cElementType.error === a.type) {
+					if (cElementType.number === a.type) {
 						arr0.push(a);
+					} else if(cElementType.error === a.type) {
+						return a;
 					}
 				}
 			} else if (cElementType.array === element.type) {
 				element.foreach(function (elem) {
-					if (cElementType.number === elem.type || cElementType.error === elem.type) {
+					if (cElementType.number === elem.type) {
 						arr0.push(elem);
+					}  else if ( cElementType.error === elem.type && !error ) {
+						error = elem;
 					}
 				});
+				if(error) {
+					return error;
+				}
 			} else if (cElementType.number === element.type || cElementType.bool === element.type) {
 				arr0.push(element.tocNumber());
 			} else if (cElementType.string === element.type || cElementType.empty === element.type) {
@@ -11085,34 +11110,47 @@ function (window, undefined) {
 		}
 
 		var element, arr0 = [];
-
+		var error;
 		for (var j = 0; j < arg.length; j++) {
 			element = arg[j];
 			if (cElementType.cellsRange === element.type || cElementType.cellsRange3D === element.type) {
-				var _arrVal = element.getValue(this.checkExclude, this.excludeHiddenRows, this.excludeErrorsVal,
-					this.excludeNestedStAg);
+				var _arrVal = element.getValue(this.checkExclude, this.excludeHiddenRows, this.excludeErrorsVal, this.excludeNestedStAg);
 				_arrVal.forEach(function (elem) {
-					if (cElementType.number === elem.type || cElementType.error === elem.type) {
+					if (cElementType.number === elem.type) {
 						arr0.push(elem);
+					} else if ( cElementType.error === elem.type && !error ) {
+						error = elem;
 					}
 				});
+				if(error) {
+					return error;
+				}
 			} else if (cElementType.cell === element.type || cElementType.cell3D === element.type) {
 				if (!this.checkExclude || !element.isHidden(this.excludeHiddenRows)) {
 					var a = element.getValue();
-					if (cElementType.number === a.type || cElementType.error === a.type) {
+					if (cElementType.number === a.type) {
 						arr0.push(a);
+					} else if(cElementType.error === a.type) {
+						return a;
 					}
 				}
 			} else if (cElementType.array === element.type) {
 				element.foreach(function (elem) {
-					if (cElementType.number === elem.type || cElementType.error === elem.type) {
+					if (cElementType.number === elem.type) {
 						arr0.push(elem);
+					}  else if ( cElementType.error === elem.type && !error ) {
+						error = elem;
 					}
 				});
+				if(error) {
+					return error;
+				}
 			} else if (cElementType.number === element.type || cElementType.bool === element.type) {
 				arr0.push(element.tocNumber());
 			} else if (cElementType.string === element.type || cElementType.empty === element.type) {
 				arr0.push(new cNumber(0));
+			} else if (cElementType.error === element.type) {
+				return element;
 			} else {
 				return new cError(cErrorType.wrong_value_type);
 			}
@@ -11177,34 +11215,47 @@ function (window, undefined) {
 		}
 
 		var element, arr0 = [];
-
+		var error;
 		for (var j = 0; j < arg.length; j++) {
 			element = arg[j];
 			if (cElementType.cellsRange === element.type || cElementType.cellsRange3D === element.type) {
-				var _arrVal = element.getValue(this.checkExclude, this.excludeHiddenRows, this.excludeErrorsVal,
-					this.excludeNestedStAg);
+				var _arrVal = element.getValue(this.checkExclude, this.excludeHiddenRows, this.excludeErrorsVal, this.excludeNestedStAg);
 				_arrVal.forEach(function (elem) {
-					if (cElementType.number === elem.type || cElementType.error === elem.type) {
+					if (cElementType.number === elem.type) {
 						arr0.push(elem);
+					} else if ( cElementType.error === elem.type && !error ) {
+						error = elem;
 					}
 				});
+				if(error) {
+					return error;
+				}
 			} else if (cElementType.cell === element.type || cElementType.cell3D === element.type) {
 				if (!this.checkExclude || !element.isHidden(this.excludeHiddenRows)) {
 					var a = element.getValue();
-					if (cElementType.number === a.type || cElementType.error === a.type) {
+					if (cElementType.number === a.type) {
 						arr0.push(a);
+					} else if(cElementType.error === a.type) {
+						return a;
 					}
 				}
 			} else if (cElementType.array === element.type) {
 				element.foreach(function (elem) {
-					if (cElementType.number === elem.type || cElementType.error === elem.type) {
+					if (cElementType.number === elem.type) {
 						arr0.push(elem);
+					}  else if ( cElementType.error === elem.type && !error ) {
+						error = elem;
 					}
 				});
+				if(error) {
+					return error;
+				}
 			} else if (cElementType.number === element.type || cElementType.bool === element.type) {
 				arr0.push(element.tocNumber());
 			} else if (cElementType.string === element.type || cElementType.empty === element.type) {
 				arr0.push(new cNumber(0));
+			} else if (cElementType.error === element.type) {
+				return element;
 			} else {
 				return new cError(cErrorType.wrong_value_type);
 			}

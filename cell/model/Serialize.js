@@ -3040,7 +3040,7 @@
             }
         };
     }
-	function BinaryWorksheetsTableWriter(memory, wb, oSharedStrings, aDxfs, personList, isCopyPaste, bsw)
+	function BinaryWorksheetsTableWriter(memory, wb, oSharedStrings, aDxfs, personList, isCopyPaste, bsw, saveThreadedComments, commentUniqueGuids)
     {
         this.memory = memory;
         this.bs = new BinaryCommonWriter(this.memory);
@@ -3051,8 +3051,10 @@
         this.personList = personList;
 		this.stylesForWrite = bsw.stylesForWrite;
         this.isCopyPaste = isCopyPaste;
+        this.saveThreadedComments = saveThreadedComments;
         this.sharedFormulas = {};
 		this.sharedFormulasIndex = 0;
+        this.commentUniqueGuids = commentUniqueGuids;
         this._getCrc32FromObjWithProperty = function(val)
         {
             return Asc.crc32(this._getStringFromObjWithProperty(val));
@@ -4155,83 +4157,114 @@
 				}
             }
         };
+        this.checkCommentGuid = function(comment) {
+            var sGuid = comment.asc_getGuid();
+            while (!sGuid || this.commentUniqueGuids[sGuid]) {
+                sGuid = AscCommon.CreateGUID();
+                comment.asc_putGuid(sGuid);
+            }
+            this.commentUniqueGuids[sGuid] = 1;
+            if (comment.aReplies) {
+                for (var i = 0; i < comment.aReplies.length; ++i) {
+                    this.checkCommentGuid(comment.aReplies[i]);
+                }
+            }
+        };
         this.WriteComment = function(comment)
         {
             var oThis = this;
-            this.memory.WriteByte(c_oSer_Comments.Row);
-            this.memory.WriteByte(c_oSerPropLenType.Long);
-            this.memory.WriteLong(comment.coords.nRow);
-
-            this.memory.WriteByte(c_oSer_Comments.Col);
-            this.memory.WriteByte(c_oSerPropLenType.Long);
-            this.memory.WriteLong(comment.coords.nCol);
+            this.checkCommentGuid(comment);
+            var coords = comment.coords;
+            if (null != coords.nRow) {
+                this.memory.WriteByte(c_oSer_Comments.Row);
+                this.memory.WriteByte(c_oSerPropLenType.Long);
+                this.memory.WriteLong(coords.nRow);
+            }
+            if (null != coords.nCol) {
+                this.memory.WriteByte(c_oSer_Comments.Col);
+                this.memory.WriteByte(c_oSerPropLenType.Long);
+                this.memory.WriteLong(coords.nCol);
+            }
 
             this.memory.WriteByte(c_oSer_Comments.CommentDatas);
             this.memory.WriteByte(c_oSerPropLenType.Variable);
             this.bs.WriteItemWithLength(function(){oThis.WriteCommentDatas(comment);});
 
-            this.memory.WriteByte(c_oSer_Comments.Left);
-            this.memory.WriteByte(c_oSerPropLenType.Long);
-            this.memory.WriteLong(comment.coords.nLeft);
-
-            this.memory.WriteByte(c_oSer_Comments.Top);
-            this.memory.WriteByte(c_oSerPropLenType.Long);
-            this.memory.WriteLong(comment.coords.nTop);
-
-            this.memory.WriteByte(c_oSer_Comments.Right);
-            this.memory.WriteByte(c_oSerPropLenType.Long);
-            this.memory.WriteLong(comment.coords.nRight);
-
-            this.memory.WriteByte(c_oSer_Comments.Bottom);
-            this.memory.WriteByte(c_oSerPropLenType.Long);
-            this.memory.WriteLong(comment.coords.nBottom);
-
-            this.memory.WriteByte(c_oSer_Comments.LeftOffset);
-            this.memory.WriteByte(c_oSerPropLenType.Long);
-            this.memory.WriteLong(comment.coords.nLeftOffset);
-
-            this.memory.WriteByte(c_oSer_Comments.TopOffset);
-            this.memory.WriteByte(c_oSerPropLenType.Long);
-            this.memory.WriteLong(comment.coords.nTopOffset);
-
-            this.memory.WriteByte(c_oSer_Comments.RightOffset);
-            this.memory.WriteByte(c_oSerPropLenType.Long);
-            this.memory.WriteLong(comment.coords.nRightOffset);
-
-            this.memory.WriteByte(c_oSer_Comments.BottomOffset);
-            this.memory.WriteByte(c_oSerPropLenType.Long);
-            this.memory.WriteLong(comment.coords.nBottomOffset);
-
-            if(comment.coords.dLeftMM) {
+            if (null != coords.nLeft) {
+                this.memory.WriteByte(c_oSer_Comments.Left);
+                this.memory.WriteByte(c_oSerPropLenType.Long);
+                this.memory.WriteLong(coords.nLeft);
+            }
+            if (null != coords.nTop) {
+                this.memory.WriteByte(c_oSer_Comments.Top);
+                this.memory.WriteByte(c_oSerPropLenType.Long);
+                this.memory.WriteLong(coords.nTop);
+            }
+            if (null != coords.nRight) {
+                this.memory.WriteByte(c_oSer_Comments.Right);
+                this.memory.WriteByte(c_oSerPropLenType.Long);
+                this.memory.WriteLong(coords.nRight);
+            }
+            if (null != coords.nBottom) {
+                this.memory.WriteByte(c_oSer_Comments.Bottom);
+                this.memory.WriteByte(c_oSerPropLenType.Long);
+                this.memory.WriteLong(coords.nBottom);
+            }
+            if (null != coords.nLeftOffset) {
+                this.memory.WriteByte(c_oSer_Comments.LeftOffset);
+                this.memory.WriteByte(c_oSerPropLenType.Long);
+                this.memory.WriteLong(coords.nLeftOffset);
+            }
+            if (null != coords.nTopOffset) {
+                this.memory.WriteByte(c_oSer_Comments.TopOffset);
+                this.memory.WriteByte(c_oSerPropLenType.Long);
+                this.memory.WriteLong(coords.nTopOffset);
+            }
+            if (null != coords.nRightOffset) {
+                this.memory.WriteByte(c_oSer_Comments.RightOffset);
+                this.memory.WriteByte(c_oSerPropLenType.Long);
+                this.memory.WriteLong(coords.nRightOffset);
+            }
+            if (null != coords.nBottomOffset) {
+                this.memory.WriteByte(c_oSer_Comments.BottomOffset);
+                this.memory.WriteByte(c_oSerPropLenType.Long);
+                this.memory.WriteLong(coords.nBottomOffset);
+            }
+            if(null != coords.dLeftMM) {
                 this.memory.WriteByte(c_oSer_Comments.LeftMM);
                 this.memory.WriteByte(c_oSerPropLenType.Double);
-                this.memory.WriteDouble2(comment.coords.dLeftMM);
+                this.memory.WriteDouble2(coords.dLeftMM);
             }
-            if(comment.coords.dTopMM) {
+            if(null != coords.dTopMM) {
                 this.memory.WriteByte(c_oSer_Comments.TopMM);
                 this.memory.WriteByte(c_oSerPropLenType.Double);
-                this.memory.WriteDouble2(comment.coords.dTopMM);
+                this.memory.WriteDouble2(coords.dTopMM);
             }
-
-            this.memory.WriteByte(c_oSer_Comments.WidthMM);
-            this.memory.WriteByte(c_oSerPropLenType.Double);
-            this.memory.WriteDouble2(comment.coords.dWidthMM);
-
-            this.memory.WriteByte(c_oSer_Comments.HeightMM);
-            this.memory.WriteByte(c_oSerPropLenType.Double);
-            this.memory.WriteDouble2(comment.coords.dHeightMM);
-
-            this.memory.WriteByte(c_oSer_Comments.MoveWithCells);
-            this.memory.WriteByte(c_oSerPropLenType.Byte);
-            this.memory.WriteBool(comment.coords.bMoveWithCells);
-
-            this.memory.WriteByte(c_oSer_Comments.SizeWithCells);
-            this.memory.WriteByte(c_oSerPropLenType.Byte);
-            this.memory.WriteBool(comment.coords.bSizeWithCells);
-
-            this.memory.WriteByte(c_oSer_Comments.ThreadedComment);
-            this.memory.WriteByte(c_oSerPropLenType.Variable);
-            this.bs.WriteItemWithLength(function(){oThis.WriteThreadedComment(comment);});
+            if (null != coords.dWidthMM) {
+                this.memory.WriteByte(c_oSer_Comments.WidthMM);
+                this.memory.WriteByte(c_oSerPropLenType.Double);
+                this.memory.WriteDouble2(coords.dWidthMM);
+            }
+            if (null != coords.dHeightMM) {
+                this.memory.WriteByte(c_oSer_Comments.HeightMM);
+                this.memory.WriteByte(c_oSerPropLenType.Double);
+                this.memory.WriteDouble2(coords.dHeightMM);
+            }
+            if (null != coords.bMoveWithCells) {
+                this.memory.WriteByte(c_oSer_Comments.MoveWithCells);
+                this.memory.WriteByte(c_oSerPropLenType.Byte);
+                this.memory.WriteBool(coords.bMoveWithCells);
+            }
+            if (null != coords.bSizeWithCells) {
+                this.memory.WriteByte(c_oSer_Comments.SizeWithCells);
+                this.memory.WriteByte(c_oSerPropLenType.Byte);
+                this.memory.WriteBool(coords.bSizeWithCells);
+            }
+            if (this.saveThreadedComments) {
+                this.memory.WriteByte(c_oSer_Comments.ThreadedComment);
+                this.memory.WriteByte(c_oSerPropLenType.Variable);
+                this.bs.WriteItemWithLength(function(){oThis.WriteThreadedComment(comment);});
+            }
         };
         this.WriteCommentDatas = function(data)
         {
@@ -4841,11 +4874,12 @@
         };
     }
     /** @constructor */
-    function BinaryFileWriter(wb, isCopyPaste)
+    function BinaryFileWriter(wb, isCopyPaste, saveThreadedComments)
     {
         this.Memory = new AscCommon.CMemory();
         this.wb = wb;
         this.isCopyPaste = isCopyPaste;
+        this.saveThreadedComments = saveThreadedComments;
         this.nLastFilePos = 0;
         this.nRealTableCount = 0;
         this.bs = new BinaryCommonWriter(this.Memory);
@@ -4912,8 +4946,9 @@
             //Workbook
             var aDxfs = [];
             var personList = [];
+            var commentUniqueGuids = {};
 			var oBinaryStylesTableWriter = new BinaryStylesTableWriter(this.Memory, this.wb, aDxfs);
-			var oBinaryWorksheetsTableWriter = new BinaryWorksheetsTableWriter(this.Memory, this.wb, oSharedStrings, aDxfs, personList, this.isCopyPaste, oBinaryStylesTableWriter);
+			var oBinaryWorksheetsTableWriter = new BinaryWorksheetsTableWriter(this.Memory, this.wb, oSharedStrings, aDxfs, personList, this.isCopyPaste, oBinaryStylesTableWriter, this.saveThreadedComments, commentUniqueGuids);
             this.WriteTable(c_oSerTableTypes.Workbook, new BinaryWorkbookTableWriter(this.Memory, this.wb, oBinaryWorksheetsTableWriter, this.isCopyPaste));
             //Worksheets
             this.WriteTable(c_oSerTableTypes.Worksheets, oBinaryWorksheetsTableWriter);

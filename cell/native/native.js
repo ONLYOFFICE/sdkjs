@@ -2887,11 +2887,6 @@ function asc_WriteFormatTableInfo(i, c, s) {
 function asc_WriteCCellInfo(c, s) {
     if (!c) return;
     
-    if (null != c.asc_getFormula()) {
-        s['WriteByte'](1);
-        s['WriteString2'](c.asc_getFormula());
-    }
-    
     if (null !== c.asc_getText()) {
         s['WriteByte'](2);
         s['WriteString2'](c.asc_getText());
@@ -3540,9 +3535,6 @@ function OfflineEditor () {
             var newRange = isCoord ? this._calcSelectionEndPointByXY(x, y) :
             this._calcSelectionEndPointByOffset(x, y);
             var isEqual = newRange.isEqual(ar);
-            if (isEqual && !isCoord) {
-                // При движении стрелками можем попасть на замерженную ячейку
-            }
             if (!isEqual || isChangeSelectionShape) {
                 
                 if (newRange.c1 > col || newRange.c2 < col)  {

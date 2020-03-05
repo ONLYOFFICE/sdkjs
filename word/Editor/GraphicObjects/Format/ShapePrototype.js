@@ -714,6 +714,17 @@ CShape.prototype.Refresh_RecalcData = function(data)
 {
     this.recalcTxBoxContent();
     this.recalcTransformText();
+    if(AscCommon.isRealObject(data))
+    {
+        switch (data.Type)
+        {
+            case AscDFH.historyitem_ShapeSetBodyPr:
+            {
+                this.handleUpdateExtents();
+                break;
+            }
+        }
+    }
     this.Refresh_RecalcData2();
 };
 

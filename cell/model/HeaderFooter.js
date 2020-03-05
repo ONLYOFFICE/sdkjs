@@ -937,7 +937,7 @@
 								self.handlers.trigger("asc_resizeEditorHeight");
 							}
 						}, AscCommon.AscBrowser.isRetina ? AscCommon.AscBrowser.convertToRetinaValue(2, true) :
-							2, /*settings*/{menuEditor: true});
+							2, true);
 
 					//временно меняем cellEditor у wb
 					wb.cellEditor = t.cellEditor;
@@ -1010,6 +1010,9 @@
 					bottomArr.push(t.parentHeight + i * 19);
 				}
 				return {l: [0], r: [t.parentWidth], b: bottomArr, cellX: 0, cellY: 0, ri: 0, bi: 0};
+			},
+			checkVisible: function () {
+				return true;
 			},
 			menuEditor: true
 		};
@@ -1866,6 +1869,6 @@
 
 	prot["getPageType"] = prot.getPageType;
 
-	window['AscCommonExcel']['c_oPortionPosition'] = c_oPortionPosition;
+	window['AscCommonExcel'].c_oPortionPosition = c_oPortionPosition;
 
 })(window);

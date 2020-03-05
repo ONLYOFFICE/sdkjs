@@ -1420,13 +1420,15 @@ CFootnotesController.prototype.EditChart = function(Chart)
 
 	this.CurFootnote.EditChart(Chart);
 };
-CFootnotesController.prototype.AddInlineTable = function(Cols, Rows)
+CFootnotesController.prototype.AddInlineTable = function(nCols, nRows, nMode)
 {
 	if (false === this.private_CheckFootnotesSelectionBeforeAction())
-		return;
+		return null;
 
 	if (null !== this.CurFootnote)
-		this.CurFootnote.AddInlineTable(Cols, Rows);
+		return this.CurFootnote.AddInlineTable(nCols, nRows, nMode);
+
+	return null;
 };
 CFootnotesController.prototype.ClearParagraphFormatting = function(isClearParaPr, isClearTextPr)
 {

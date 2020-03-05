@@ -34,7 +34,7 @@
 
 AscCommon.baseEditorsApi.prototype._onEndPermissions = function()
 {
-	if (this.isOnFirstConnectEnd && this.isOnLoadLicense)
+	if (this.isOnLoadLicense)
 	{
 		var oResult = new AscCommon.asc_CAscEditorPermissions();
 		oResult.setLicenseType(Asc.c_oLicenseResult.Success);

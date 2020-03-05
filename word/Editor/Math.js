@@ -1076,7 +1076,7 @@ ParaMath.prototype.Get_Id = function()
     return this.Id;
 };
 
-ParaMath.prototype.Copy = function(Selected)
+ParaMath.prototype.Copy = function(Selected, oPr)
 {
     var NewMath = new ParaMath();
     NewMath.Root.bRoot = true;
@@ -1084,11 +1084,11 @@ ParaMath.prototype.Copy = function(Selected)
     if(Selected)
     {
         var result = this.GetSelectContent();
-        result.Content.CopyTo(NewMath.Root, Selected);
+        result.Content.CopyTo(NewMath.Root, Selected, oPr);
     }
     else
     {
-        this.Root.CopyTo(NewMath.Root, Selected);
+        this.Root.CopyTo(NewMath.Root, Selected, oPr);
     }
 
     NewMath.Root.Correct_Content(true);
@@ -1747,6 +1747,12 @@ ParaMath.prototype.Set_MenuProps = function(Props)
     if(Props != undefined)
         this.Root.Set_MenuProps(Props);
 };
+
+ParaMath.prototype.CheckRunContent = function(fCheck)
+{
+    this.Root.CheckRunContent(fCheck);
+};
+
 //-----------------------------------------------------------------------------------
 // Функции пересчета
 //-----------------------------------------------------------------------------------
@@ -2384,6 +2390,9 @@ ParaMath.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange
 ParaMath.prototype.Recalculate_PageEndInfo = function(PRSI, _CurLine, _CurRange)
 {
 
+};
+ParaMath.prototype.RecalculateEndInfo = function(oPRSI)
+{
 };
 ParaMath.prototype.SaveRecalculateObject = function(Copy)
 {

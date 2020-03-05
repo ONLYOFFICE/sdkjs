@@ -4833,7 +4833,7 @@ Asc['asc_docs_api'].prototype.ImgApply = function(obj)
         return;
     }
 
-    if ( false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Image_Properties, AdditionalData) )
+    if ( false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Drawing_Props, AdditionalData) )
     {
 
         if (ImagePr.ShapeProperties)

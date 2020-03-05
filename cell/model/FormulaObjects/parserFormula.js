@@ -2742,7 +2742,12 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cBaseFunction.prototype.toLocaleString = function (/*locale*/) {
 		var name = this.toString();
-		return AscCommonExcel.cFormulaFunctionToLocale ? AscCommonExcel.cFormulaFunctionToLocale[name] : name;
+		//для cUnknownFunction делаем проверку
+		if(AscCommonExcel.cFormulaFunctionToLocale && undefined !== AscCommonExcel.cFormulaFunctionToLocale[name]) {
+			return AscCommonExcel.cFormulaFunctionToLocale[name];
+		} else {
+			return name;
+		}
 	};
 	cBaseFunction.prototype.setCalcValue = function (arg, numFormat) {
 		if (numFormat !== null && numFormat !== undefined) {

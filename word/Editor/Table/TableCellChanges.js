@@ -162,6 +162,7 @@ CChangesTableCellGridSpan.prototype.private_SetValue = function(Value)
 	var oCell = this.Class;
 	oCell.Pr.GridSpan = Value;
 	oCell.Recalc_CompiledPr();
+	oCell.private_UpdateTableGrid();
 };
 CChangesTableCellGridSpan.prototype.Merge = private_TableCellChangesOnMergePr;
 /**
@@ -391,6 +392,7 @@ CChangesTableCellMargins.prototype.private_SetValue = function(Value)
 	var oCell = this.Class;
 	oCell.Pr.TableCellMar = Value;
 	oCell.Recalc_CompiledPr();
+	oCell.private_UpdateTableGrid();
 };
 CChangesTableCellMargins.prototype.Merge = private_TableCellChangesOnMergePr;
 /**
@@ -827,6 +829,7 @@ CChangesTableCellW.prototype.private_SetValue = function(Value)
 	var oCell = this.Class;
 	oCell.Pr.TableCellW = Value;
 	oCell.Recalc_CompiledPr();
+	oCell.private_UpdateTableGrid();
 };
 CChangesTableCellW.prototype.Merge = private_TableCellChangesOnMergePr;
 /**
@@ -849,6 +852,7 @@ CChangesTableCellPr.prototype.private_SetValue = function(Value)
 	var oCell = this.Class;
 	oCell.Pr = Value;
 	oCell.Recalc_CompiledPr();
+	oCell.private_UpdateTableGrid();
 };
 CChangesTableCellPr.prototype.Merge = function(oChange)
 {

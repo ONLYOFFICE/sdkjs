@@ -87,9 +87,9 @@ CLogicDocumentController.prototype.AddSignatureLine = function(oSignatureDrawing
 };
 
 
-CLogicDocumentController.prototype.AddInlineTable = function(nCols, nRows)
+CLogicDocumentController.prototype.AddInlineTable = function(nCols, nRows, nMode)
 {
-	this.LogicDocument.controller_AddInlineTable(nCols, nRows);
+	return this.LogicDocument.controller_AddInlineTable(nCols, nRows, nMode);
 };
 CLogicDocumentController.prototype.ClearParagraphFormatting = function(isClearParaPr, isClearTextPr)
 {

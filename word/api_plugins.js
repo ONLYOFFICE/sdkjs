@@ -157,7 +157,7 @@
      */
     window["asc_docs_api"].prototype["pluginMethod_InsertAndReplaceContentControls"] = function(arrDocuments)
     {
-        var _worker = new AscCommonWord.CContentControlPluginWorker(this, arrDocuments);
+        var _worker = new AscCommon.CContentControlPluginWorker(this, arrDocuments);
         return _worker.start();
     };
     /**
@@ -172,7 +172,7 @@
      */
     window["asc_docs_api"].prototype["pluginMethod_RemoveContentControls"] = function(arrDocuments)
     {
-        var _worker = new AscCommonWord.CContentControlPluginWorker(this, arrDocuments);
+        var _worker = new AscCommon.CContentControlPluginWorker(this, arrDocuments);
         return _worker.delete();
     };
     /**
@@ -269,10 +269,47 @@
      * @example
      * window.Asc.plugin.executeMethod("GetCurrentContentControlPr")
      */
-    window["asc_docs_api"].prototype["pluginMethod_GetCurrentContentControlPr"] = function()
-    {
-        return this.asc_GetContentControlProperties();
-    };
+	window["asc_docs_api"].prototype["pluginMethod_GetCurrentContentControlPr"] = function(contentFormat)
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+
+		var oState;
+		var prop = this.asc_GetContentControlProperties();
+		if (!prop)
+			return null;
+
+		if (oLogicDocument && prop.CC)
+		{
+			oState = oLogicDocument.SaveDocumentState();
+			prop.CC.SelectContentControl();
+		}
+
+		if (prop && prop.CC) delete prop.CC;
+
+		if (contentFormat)
+		{
+			var copy_data = {
+				data     : "",
+				pushData : function(format, value)
+				{
+					this.data = value;
+				}
+			};
+			var copy_format = 1;
+			if (contentFormat == Asc.EPluginDataType.html)
+				copy_format = 2;
+			this.asc_CheckCopy(copy_data, copy_format);
+			prop["content"] = copy_data.data;
+		}
+
+		if (oState)
+		{
+			oLogicDocument.LoadDocumentState(oState);
+			oLogicDocument.UpdateSelection();
+		}
+
+		return prop;
+	};
     /**
      * Select specified content control
      * @memberof Api

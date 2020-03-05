@@ -564,13 +564,13 @@ CChangesDocumentSdtGlobalSettings.prototype.private_IsCreateEmptyObject = functi
 };
 /**
  * @constructor
- * @extends {AscDFH.CChangesBaseBoolValue}
+ * @extends {AscDFH.CChangesBaseBoolProperty}
  */
 function CChangesDocumentSettingsGutterAtTop(Class, Old, New)
 {
-	AscDFH.CChangesBaseBoolValue.call(this, Class, Old, New);
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New);
 }
-CChangesDocumentSettingsGutterAtTop.prototype = Object.create(AscDFH.CChangesBaseBoolValue.prototype);
+CChangesDocumentSettingsGutterAtTop.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
 CChangesDocumentSettingsGutterAtTop.prototype.constructor = CChangesDocumentSettingsGutterAtTop;
 CChangesDocumentSettingsGutterAtTop.prototype.Type = AscDFH.historyitem_Document_Settings_GutterAtTop;
 CChangesDocumentSettingsGutterAtTop.prototype.private_SetValue = function(Value)
@@ -579,13 +579,13 @@ CChangesDocumentSettingsGutterAtTop.prototype.private_SetValue = function(Value)
 };
 /**
  * @constructor
- * @extends {AscDFH.CChangesBaseBoolValue}
+ * @extends {AscDFH.CChangesBaseBoolProperty}
  */
 function CChangesDocumentSettingsMirrorMargins(Class, Old, New)
 {
-	AscDFH.CChangesBaseBoolValue.call(this, Class, Old, New);
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New);
 }
-CChangesDocumentSettingsMirrorMargins.prototype = Object.create(AscDFH.CChangesBaseBoolValue.prototype);
+CChangesDocumentSettingsMirrorMargins.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
 CChangesDocumentSettingsMirrorMargins.prototype.constructor = CChangesDocumentSettingsMirrorMargins;
 CChangesDocumentSettingsMirrorMargins.prototype.Type = AscDFH.historyitem_Document_Settings_MirrorMargins;
 CChangesDocumentSettingsMirrorMargins.prototype.private_SetValue = function(Value)

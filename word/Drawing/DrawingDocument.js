@@ -131,10 +131,12 @@ function CTableOutlineDr()
 	this.image = new Image();
 	this.image.src = "../../../../sdkjs/common/Images/table_move.png";
 	this.image.onload = function() { this.asc_complete = true; };
+	AscCommon.backoffOnErrorImg(this.image);
 
 	this.image2 = new Image();
 	this.image2.src = "../../../../sdkjs/common/Images/table_move_2x.png";
 	this.image2.onload = function() { this.asc_complete = true; };
+	AscCommon.backoffOnErrorImg(this.image2);
 
 	this.TableOutline = null;
 	this.Counter = 0;
@@ -6470,6 +6472,12 @@ function CDrawingDocument()
 		if (undefined === nTabLeader || null === nTabLeader)
 			nTabLeader = Asc.c_oAscTabLeader.Dot;
 
+		if (-1 === nOutlineEnd && -1 === nOutlineStart)
+		{
+			nOutlineStart = 1;
+			nOutlineEnd   = 9;
+		}
+
 		var arrLevels         = [];
 		var arrStylesToDelete = [];
 
@@ -6637,7 +6645,7 @@ function CDrawingDocument()
 		editor.isViewMode = _oldTurn;
 	}
 
-    this.SetDrawImagePreviewMargins = function(id, props)
+	this.SetDrawImagePreviewMargins = function(id, props)
 	{
         var parent =  document.getElementById(id);
         if (!parent)
@@ -6667,13 +6675,6 @@ function CDrawingDocument()
         var offset = 10;
         var page_width_mm = props.W;
         var page_height_mm = props.H;
-
-        if (Asc.c_oAscPageOrientation.PageLandscape == props.Orient)
-		{
-			var tmp = page_width_mm;
-            page_width_mm = page_height_mm;
-            page_height_mm = tmp;
-		}
 
 		var isMirror = props.MirrorMargins;
         var pageRects = [];
@@ -6874,6 +6875,334 @@ function CDrawingDocument()
 
             gutterPos = 0;
 		}
+	}
+
+    this.privateGetParagraphByString = function(level, levelNum, counterCurrent, x, y, lineHeight, ctx, w, h)
+    {
+        var text = "";
+        for (var i = 0; i < level.Text.length; i++)
+        {
+            switch (level.Text[i].Type)
+            {
+                case Asc.c_oAscNumberingLvlTextType.Text:
+                    text += level.Text[i].Value;
+                    break;
+                case Asc.c_oAscNumberingLvlTextType.Num:
+                    var correctNum = 1;
+                    if (levelNum === level.Text[i].Value)
+                        correctNum = counterCurrent;
+                    text += AscCommon.IntToNumberFormat(correctNum, level.Format);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        var api = this.m_oWordControl.m_oApi;
+
+        History.TurnOff();
+        var oldViewMode = api.isViewMode;
+        var oldMarks = api.ShowParaMarks;
+
+        api.isViewMode = true;
+        api.ShowParaMarks = false;
+
+        var par = new Paragraph(this, this.m_oWordControl.m_oLogicDocument);
+        par.MoveCursorToStartPos();
+
+        //par.Pr = level.ParaPr.Copy();
+		par.Pr = new CParaPr();
+        var textPr = level.TextPr.Copy();
+        textPr.FontSize = textPr.FontSizeCS = ((2 * lineHeight * 72 / 96) >> 0) / 2;
+
+        var parRun = new ParaRun(par);
+        parRun.Set_Pr(textPr);
+        parRun.AddText(text);
+        par.AddToContent(0, parRun);
+
+        par.Reset(0, 0, 1000, 1000, 0, 0, 1);
+        par.Recalculate_Page(0);
+
+        var baseLineOffset = par.Lines[0].Y;
+        var bounds = par.Get_PageBounds(0);
+
+        var parW = par.Lines[0].Ranges[0].W * AscCommon.g_dKoef_mm_to_pix;
+        var parH = (bounds.Bottom - bounds.Top) * AscCommon.g_dKoef_mm_to_pix;
+
+        var yOffset = y - ((baseLineOffset * g_dKoef_mm_to_pix) >> 0);
+        var xOffset = x;
+        switch (level.Align)
+        {
+            case AscCommon.align_Right:
+                xOffset -= parW;
+                break;
+            case AscCommon.align_Center:
+                xOffset -= (parW >> 1);
+                break;
+            default:
+                break;
+        }
+
+        // debug: text rect:
+        //ctx.beginPath();
+        //ctx.fillStyle = "#FFFF00";
+        //ctx.fillRect(xOffset, y, parW, parH);
+        //ctx.beginPath();
+
+		var backTextWidth = parW + 4; // 4 - чтобы линия никогде не была 'совсем рядом'
+		switch (level.Suff)
+		{
+			case Asc.c_oAscNumberingSuff.Space:
+			case Asc.c_oAscNumberingSuff.None:
+				backTextWidth += 4;
+				break;
+			case Asc.c_oAscNumberingSuff.Tab:
+				break;
+			default:
+				break;
+		}
+
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(xOffset, y - lineHeight, parW, lineHeight + (lineHeight >> 1));
+        ctx.beginPath();
+
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+        var graphics = new AscCommon.CGraphics();
+        graphics.init(ctx,
+			AscCommon.AscBrowser.convertToRetinaValue(w, true),
+			AscCommon.AscBrowser.convertToRetinaValue(h, true),
+			w * AscCommon.g_dKoef_pix_to_mm, h * AscCommon.g_dKoef_pix_to_mm);
+        graphics.m_oFontManager = AscCommon.g_fontManager;
+
+        graphics.m_oCoordTransform.tx = AscCommon.AscBrowser.convertToRetinaValue(xOffset, true);
+        graphics.m_oCoordTransform.ty = AscCommon.AscBrowser.convertToRetinaValue(yOffset, true);
+
+        graphics.transform(1, 0, 0, 1, 0, 0);
+
+        par.Draw(0, graphics);
+
+        ctx.restore();
+        ctx.restore();
+
+        History.TurnOn();
+        api.isViewMode = oldViewMode;
+        api.ShowParaMarks = oldMarks;
+    };
+
+	this.SetDrawImagePreviewBullet = function(id, props, level, is_multi_level, isNoCheckFonts)
+	{
+		if (!isNoCheckFonts)
+		{
+            // check need load fonts
+            var fontsDict = {};
+            for (var i = 0, count = props.Lvl.length; i < count; i++)
+            {
+                var curLvl = props.Lvl[i];
+                var text = "";
+                for (var j = 0; j < curLvl.Text.length; j++)
+                {
+                    switch (curLvl.Text[j].Type)
+					{
+                        case Asc.c_oAscNumberingLvlTextType.Text:
+                            text += curLvl.Text[j].Value;
+                            break;
+                        case Asc.c_oAscNumberingLvlTextType.Num:
+                            text += AscCommon.IntToNumberFormat(1, curLvl.Format);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                AscFonts.FontPickerByCharacter.checkTextLight(text);
+
+                if (curLvl.TextPr && curLvl.TextPr.RFonts)
+                {
+                    if (curLvl.TextPr.RFonts.Ascii) fontsDict[curLvl.TextPr.RFonts.Ascii.Name] = true;
+                    if (curLvl.TextPr.RFonts.EastAsia) fontsDict[curLvl.TextPr.RFonts.EastAsia.Name] = true;
+                    if (curLvl.TextPr.RFonts.HAnsi) fontsDict[curLvl.TextPr.RFonts.HAnsi.Name] = true;
+                    if (curLvl.TextPr.RFonts.CS) fontsDict[curLvl.TextPr.RFonts.CS.Name] = true;
+                }
+            }
+
+            var fonts = [];
+            for (var familyName in fontsDict)
+            {
+                fonts.push(new AscFonts.CFont(AscFonts.g_fontApplication.GetFontInfoName(familyName), 0, "", 0, null));
+            }
+            AscFonts.FontPickerByCharacter.extendFonts(fonts);
+
+            if (false === AscCommon.g_font_loader.CheckFontsNeedLoading(fonts))
+            {
+                return this.SetDrawImagePreviewBullet(id, props, level, is_multi_level, true);
+            }
+
+            this.m_oWordControl.m_oApi.asyncMethodCallback = function()
+			{
+                this.WordControl.m_oDrawingDocument.SetDrawImagePreviewBullet(id, props, level, is_multi_level, true);
+            };
+            AscCommon.g_font_loader.LoadDocumentFonts2(fonts);
+            return;
+        }
+
+        var parent =  document.getElementById(id);
+        if (!parent)
+            return;
+
+        var width_px = parent.clientWidth;
+        var height_px = parent.clientHeight;
+
+        var canvas = parent.firstChild;
+        if (!canvas)
+        {
+            canvas = document.createElement('canvas');
+            canvas.style.cssText = "padding:0;margin:0;user-select:none;";
+            canvas.style.width = width_px + "px";
+            canvas.style.height = height_px + "px";
+            parent.appendChild(canvas);
+        }
+
+        canvas.width = AscCommon.AscBrowser.convertToRetinaValue(width_px, true);
+        canvas.height = AscCommon.AscBrowser.convertToRetinaValue(height_px, true);
+
+        var ctx = canvas.getContext("2d");
+
+        if (AscCommon.AscBrowser.retinaPixelRatio >= 2)
+            ctx.setTransform(2, 0, 0, 2, 0, 0);
+
+        canvas.is_multi_level = is_multi_level;
+        canvas.level = level;
+
+        AscCommon.addMouseEvent(canvas, "down", function(e) {
+        	AscCommon.stopEvent(e);
+        	if (true !== this.is_multi_level)
+        		return;
+
+            var offsetBase = 10;
+            var line_w = 4;
+            var height = parseInt(this.style.height);
+            var line_distance = (((height - (offsetBase << 1)) - line_w * 10) / 9) >> 0;
+            var offset = (height - (line_w * 10 + line_distance * 9)) >> 1;
+            var current = this.currentLevel;
+
+            var yPos = e.pageY;
+            if (undefined === yPos)
+                yPos = e.clientY;
+            yPos = (yPos * AscCommon.AscBrowser.zoom);
+            var clientRect = this.getBoundingClientRect();
+            if (undefined != clientRect.y)
+            	yPos -= clientRect.y;
+            else if (undefined != clientRect.top)
+            	yPos -= clientRect.top;
+
+            var level = 8;
+            var y = offset + 2;
+            for (var i = 0; i < 9; i++)
+            {
+                y += (line_w + line_distance);
+                if (i == current)
+                    y += (line_w + line_distance);
+
+                if (yPos < (y - ((line_w + line_distance) >> 1)))
+                {
+                    level = i;
+                    break;
+                }
+            }
+            editor.sendEvent("asc_onPreviewLevelChange", level);
+        });
+
+        if (!is_multi_level)
+        {
+            var offsetBase = 10;
+            var line_w = 4;
+            // считаем расстояние между линиями
+            var line_distance = (((height_px - (offsetBase << 1)) - line_w * 10) / 9) >> 0;
+            // убираем погрешность в offset
+            var offset = (height_px - (line_w * 10 + line_distance * 9)) >> 1;
+
+            var textYs = [];
+
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = "#CBCBCB";
+            var y = offset + 2;
+            ctx.moveTo(offsetBase, y); ctx.lineTo(width_px - offsetBase, y); y += (line_w + line_distance);
+            ctx.moveTo(offsetBase, y); ctx.lineTo(width_px - offsetBase, y); y += (line_w + line_distance);
+            ctx.stroke();
+            ctx.beginPath();
+            var text_base_offset_x = offset + (6.25 + (6.25 * (level + 1) * AscCommon.g_dKoef_mm_to_pix)) >> 0;
+            if (text_base_offset_x > (width_px - offsetBase - 20))
+            	text_base_offset_x = width_px - offsetBase - 20;
+            ctx.strokeStyle = "#000000";
+            textYs.push(y + line_w);
+            ctx.moveTo(text_base_offset_x, y); ctx.lineTo(width_px - offsetBase, y); y += (line_w + line_distance);
+            ctx.moveTo(text_base_offset_x, y); ctx.lineTo(width_px - offsetBase, y); y += (line_w + line_distance);
+            textYs.push(y + line_w);
+            ctx.moveTo(text_base_offset_x, y); ctx.lineTo(width_px - offsetBase, y); y += (line_w + line_distance);
+            ctx.moveTo(text_base_offset_x, y); ctx.lineTo(width_px - offsetBase, y); y += (line_w + line_distance);
+            textYs.push(y + line_w);
+            ctx.moveTo(text_base_offset_x, y); ctx.lineTo(width_px - offsetBase, y); y += (line_w + line_distance);
+            ctx.moveTo(text_base_offset_x, y); ctx.lineTo(width_px - offsetBase, y); y += (line_w + line_distance);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.strokeStyle = "#CBCBCB";
+            ctx.moveTo(offsetBase, y); ctx.lineTo(width_px - offsetBase, y); y += (line_w + line_distance);
+            ctx.moveTo(offsetBase, y); ctx.lineTo(width_px - offsetBase, y); y += (line_w + line_distance);
+            ctx.stroke();
+            ctx.beginPath();
+
+            for (var i = 0; i < textYs.length; i++)
+			{
+				this.privateGetParagraphByString(props.Lvl[level], level, i + 1, text_base_offset_x - ((6.25 * AscCommon.g_dKoef_mm_to_pix) >> 0),
+                    textYs[i], line_distance, ctx, width_px, height_px);
+            }
+        }
+        else
+        {
+            var offsetBase = 10;
+            var line_w = 4;
+            // считаем расстояние между линиями
+            var line_distance = (((height_px - (offsetBase << 1)) - line_w * 10) / 9) >> 0;
+            // убираем погрешность в offset
+            var offset = (height_px - (line_w * 10 + line_distance * 9)) >> 1;
+            var current = level;
+            canvas.currentLevel = level;
+
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = "#CBCBCB";
+            var y = offset + 2;
+            var text_base_offset_x = offset + ((6.25 * AscCommon.g_dKoef_mm_to_pix) >> 0);
+            var text_base_offset_dist = (6.25 * AscCommon.g_dKoef_mm_to_pix) >> 0;
+
+            var textYs = [];
+            for (var i = 0; i < 9; i++)
+			{
+                textYs.push({x: text_base_offset_x - ((6.25 * AscCommon.g_dKoef_mm_to_pix) >> 0), y: y + line_w});
+				if (i == current)
+				{
+					ctx.strokeStyle = "#000000";
+                    ctx.moveTo(text_base_offset_x, y); ctx.lineTo(width_px - offsetBase, y); y += (line_w + line_distance);
+                    ctx.moveTo(text_base_offset_x, y); ctx.lineTo(width_px - offsetBase, y);
+                    ctx.stroke();
+                    ctx.strokeStyle = "#CBCBCB";
+				}
+				else
+				{
+                    ctx.moveTo(text_base_offset_x, y); ctx.lineTo(width_px - offsetBase, y);
+                    ctx.stroke();
+				}
+				ctx.beginPath();
+
+                text_base_offset_x += text_base_offset_dist;
+                y += (line_w + line_distance);
+			}
+
+			for (var i = 0; i < 9; i++)
+			{
+                this.privateGetParagraphByString(props.Lvl[i], level, 1, textYs[i].x, textYs[i].y, line_distance, ctx, width_px, height_px);
+            }
+        }
 	}
 
 	this.StartTableStylesCheck = function ()
@@ -7111,7 +7440,7 @@ function CDrawingDocument()
 	{
 		var ctx = overlay.m_oContext;
 
-        var page = this.m_arrPages[logicObj.Page];
+		var page = this.m_arrPages[logicObj.Page];
         if (!page)
             return false;
 
@@ -7121,23 +7450,52 @@ function CDrawingDocument()
 
         var x1, y1, x2, y2;
 
-		if (isPen)
+        if (!logicObj.Table)
 		{
-			ctx.strokeStyle = (drawObj.Color === "Red") ? "#FF7B7B" : "#000000";
-			ctx.lineWidth = 1;
+            ctx.strokeStyle = "rgba(0, 0, 0, 0.75)";
+            ctx.lineWidth = 1;
 
-            x1 = ((drawingPage.left + koefX * drawObj.X1) >> 0) + 0.5;
-            y1 = ((drawingPage.top + koefY * drawObj.Y1) >> 0) + 0.5;
-            x2 = ((drawingPage.left + koefX * drawObj.X2) >> 0) + 0.5;
-            y2 = ((drawingPage.top + koefY * drawObj.Y2) >> 0) + 0.5;
+            x1 = ((drawingPage.left + koefX * logicObj.StartX) >> 0);
+            y1 = ((drawingPage.top + koefY * logicObj.StartY) >> 0);
+            x2 = ((drawingPage.left + koefX * logicObj.EndX) >> 0);
+            y2 = ((drawingPage.top + koefY * logicObj.EndY) >> 0);
 
             overlay.CheckPoint(x1, y1);
             overlay.CheckPoint(x2, y2);
 
-            ctx.moveTo(x1, y1);
-            ctx.lineTo(x2, y2);
-            ctx.stroke();
+            this.AutoShapesTrack.AddRectDashClever(ctx, x1, y1, x2, y2, 2, 2, true);
             ctx.beginPath();
+			return;
+		}
+
+		if (isPen)
+		{
+			for (var i = 0; i < drawObj.length; i++)
+			{
+				var elem = drawObj[i];
+                ctx.strokeStyle = (elem.Color === "Red") ? "#FF7B7B" : "#000000";
+                ctx.lineWidth = elem.Bold ? 2 : 1;
+
+                x1 = (drawingPage.left + koefX * elem.X1) >> 0;
+                y1 = (drawingPage.top + koefY * elem.Y1) >> 0;
+                x2 = (drawingPage.left + koefX * elem.X2) >> 0;
+                y2 = (drawingPage.top + koefY * elem.Y2) >> 0;
+
+                if (!elem.Bold) {
+                    x1 += 0.5;
+                    y1 += 0.5;
+                    x2 += 0.5;
+                    y2 += 0.5;
+                }
+
+                overlay.CheckPoint(x1, y1);
+                overlay.CheckPoint(x2, y2);
+
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+                ctx.beginPath();
+            }
 		}
 		else
 		{

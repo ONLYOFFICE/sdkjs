@@ -245,7 +245,7 @@ CInlineLevelSdt.prototype.CanSplit = function()
 CInlineLevelSdt.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange, _CurPage)
 {
 	var CurLine  = _CurLine - this.StartLine;
-	var CurRange = (0 === _CurLine ? _CurRange - this.StartRange : _CurRange);
+	var CurRange = (0 === CurLine ? _CurRange - this.StartRange : _CurRange);
 
 	if (0 === CurLine && 0 === CurRange && true !== PRSA.RecalcFast)
 		this.Bounds = {};
@@ -278,7 +278,7 @@ CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 CInlineLevelSdt.prototype.GetRangeBounds = function(_CurLine, _CurRange)
 {
 	var CurLine  = _CurLine - this.StartLine;
-	var CurRange = (0 === _CurLine ? _CurRange - this.StartRange : _CurRange);
+	var CurRange = (0 === CurLine ? _CurRange - this.StartRange : _CurRange);
 
 	return this.Bounds[((CurLine << 16) & 0xFFFF0000) | (CurRange & 0x0000FFFF)];
 };
@@ -331,7 +331,9 @@ CInlineLevelSdt.prototype.Remove = function(nDirection, bOnAddText)
 {
 	if (this.IsPlaceHolder())
 	{
-		this.private_ReplacePlaceHolderWithContent();
+		if (bOnAddText || !this.Paragraph.LogicDocument.IsFillingFormMode())
+			this.private_ReplacePlaceHolderWithContent();
+
 		return;
 	}
 
@@ -391,19 +393,25 @@ CInlineLevelSdt.prototype.Get_WordEndPos = function(SearchPos, ContentPos, Depth
 };
 CInlineLevelSdt.prototype.GetBoundingPolygon = function()
 {
+	var oHdrFtr     = this.Paragraph.Parent.IsHdrFtr(true);
+	var nHdrFtrPage = oHdrFtr ? oHdrFtr.GetContent().GetAbsolutePage(0) : null;
+
 	var StartPage = this.Paragraph.Get_StartPage_Absolute();
 	if (null === this.BoundsPaths || StartPage !== this.BoundsPathsStartPage)
 	{
 		var arrBounds = [], arrRects = [], CurPage = -1;
 		for (var Key in this.Bounds)
 		{
+			if (null !== nHdrFtrPage && nHdrFtrPage !== this.Paragraph.GetAbsolutePage(this.Bounds[Key].PageInternal))
+				continue;
+
 			if (CurPage !== this.Bounds[Key].PageInternal)
 			{
 				arrRects = [];
 				arrBounds.push(arrRects);
 				CurPage  = this.Bounds[Key].PageInternal;
 			}
-			this.Bounds[Key].Page = this.Paragraph.Get_AbsolutePage(this.Bounds[Key].PageInternal);
+			this.Bounds[Key].Page = this.Paragraph.GetAbsolutePage(this.Bounds[Key].PageInternal);
 			arrRects.push(this.Bounds[Key]);
 		}
 
@@ -578,7 +586,7 @@ CInlineLevelSdt.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAl
 		}
 	}
 
-	if (this.IsDropDownList() || this.IsComboBox())
+	if (this.IsDropDownList() || this.IsComboBox() || this.IsCheckBox() || this.IsDatePicker())
 		CParagraphContentWithParagraphLikeContent.prototype.Apply_TextPr.call(this, TextPr, IncFontSize, true);
 	else
 		CParagraphContentWithParagraphLikeContent.prototype.Apply_TextPr.call(this, TextPr, IncFontSize, ApplyToAll);
@@ -607,6 +615,8 @@ CInlineLevelSdt.prototype.private_ReplacePlaceHolderWithContent = function(bMath
 	if (!this.IsPlaceHolder())
 		return;
 
+	var isUseSelection = this.IsSelectionUse();
+
 	this.RemoveSelection();
 	this.MoveCursorToStartPos();
 
@@ -618,15 +628,23 @@ CInlineLevelSdt.prototype.private_ReplacePlaceHolderWithContent = function(bMath
 	this.AddToContent(0, oRun);
 	this.RemoveSelection();
 	this.MoveCursorToStartPos();
+
+	if (isUseSelection)
+		this.SelectAll();
 };
 CInlineLevelSdt.prototype.private_ReplaceContentWithPlaceHolder = function()
 {
 	if (this.IsPlaceHolder())
 		return;
 
+	var isUseSelection = this.IsSelectionUse();
+
 	this.RemoveFromContent(0, this.GetElementsCount());
 	this.AddToContent(0, this.PlaceHolder);
 	this.SelectContentControl();
+
+	if (isUseSelection)
+		this.SelectAll();
 };
 CInlineLevelSdt.prototype.Set_SelectionContentPos = function(StartContentPos, EndContentPos, Depth, StartFlag, EndFlag)
 {
@@ -993,6 +1011,13 @@ CInlineLevelSdt.prototype.ToggleCheckBox = function()
 CInlineLevelSdt.prototype.SkipSpecialContentControlLock = function(isSkip)
 {
 	this.SkipSpecialLock = isSkip;
+};
+/**
+ * @retuns {boolean}
+ */
+CInlineLevelSdt.prototype.IsSkipSpecialContentControlLock = function()
+{
+	return this.SkipSpecialLock;
 };
 CInlineLevelSdt.prototype.private_UpdateCheckBoxContent = function()
 {
@@ -1409,7 +1434,9 @@ CInlineLevelSdt.prototype.private_UpdateDatePickerContent = function()
 };
 CInlineLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType)
 {
-	if (CheckType === AscCommon.changestype_Paragraph_TextProperties)
+	if (AscCommon.changestype_Paragraph_TextProperties === CheckType
+		|| ((AscCommon.changestype_Drawing_Props === CheckType || AscCommon.changestype_Image_Properties === CheckType)
+		&& this.IsPicture()))
 	{
 		this.SkipSpecialContentControlLock(true);
 		if (!this.CanBeEdited())

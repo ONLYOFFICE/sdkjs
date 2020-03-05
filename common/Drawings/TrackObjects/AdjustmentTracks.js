@@ -273,6 +273,10 @@ XYAdjustmentTrack.prototype.trackEnd = function()
         {
             oGeometryToSet.setAdjValue(this.refY, this.geometry.gdLst[this.adjastment.gdRefY]+"");
         }
+        if(this.originalShape.checkExtentsByDocContent)
+        {
+            this.originalShape.checkExtentsByDocContent(true, true);
+        }
     }
     else
     {
@@ -489,6 +493,10 @@ function PolarAdjustmentTrack(originalShape, adjIndex, bTextWarp)
                 oGeometryToSet.setAdjValue(this.adjastment.gdRefAng, this.geometry.gdLst[this.adjastment.gdRefAng]+"");
             }
 
+            if(this.originalShape.checkExtentsByDocContent)
+            {
+                this.originalShape.checkExtentsByDocContent(true, true);
+            }
         }
         else
         {

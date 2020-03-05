@@ -730,6 +730,8 @@ _proto.prototype["pluginMethod_OnEncryption"] = function(obj)
         }
 	}
 };
+
+AscCommon.getBinaryArray = getBinaryArray;
 // -------------------------------------------
 
 // меняем среду

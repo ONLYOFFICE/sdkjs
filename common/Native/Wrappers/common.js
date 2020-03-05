@@ -47,9 +47,16 @@ function GetNativePageMeta(pageIndex)
 	return window["API"].GetNativePageMeta(pageIndex);
 }
 
-// для работы с таймерами
 window.NativeSupportTimeouts = true;
 window.NativeTimeoutObject = {};
+
+clearTimeout = window.clearTimeout = function(id) {
+    if (!window.NativeSupportTimeouts)
+        return;
+
+    window.NativeTimeoutObject["" + id] = undefined;
+    window["native"]["ClearTimeout"](id);
+}
 
 setTimeout = window.setTimeout = function(func, interval) {
     if (!window.NativeSupportTimeouts)
@@ -61,9 +68,10 @@ setTimeout = window.setTimeout = function(func, interval) {
     return id;
 }
 
-clearTimeout = window.clearTimeout = function(id) {
+clearInterval = window.clearInterval = function(id) {
     if (!window.NativeSupportTimeouts)
         return;
+    
 
     window.NativeTimeoutObject["" + id] = undefined;
     window["native"]["ClearTimeout"](id);
@@ -79,39 +87,38 @@ setInterval = window.setInterval = function(func, interval) {
     return id;
 }
 
-clearInterval = window.clearInterval = function(id) {
+window.native.Call_TimeoutFire = function(id) {
     if (!window.NativeSupportTimeouts)
         return;
 
-    window.NativeTimeoutObject["" + id] = undefined;
-    window["native"]["ClearTimeout"](id);
-}
+    var prop = "" + id;
 
-window.native.Call_TimeoutFire = function (id)
-{
-	if (!window.NativeSupportTimeouts)
-		return;
+    if (undefined === window.NativeTimeoutObject[prop]) {
+        return;
+    }
 
-	var prop = "" + id;
+    var func = window.NativeTimeoutObject[prop].func;
+    var repeat = window.NativeTimeoutObject[prop].repeat;
+    var interval = window.NativeTimeoutObject[prop].interval;
 
-	var timeoutObject = window.NativeTimeoutObject[prop];
-	if (!timeoutObject) {
-		return;
-	}
+    window.NativeTimeoutObject[prop] = undefined;
 
-	window.NativeTimeoutObject[prop] = undefined;
+    if (!func)
+        return;
 
-	if (!timeoutObject.func)
-		return;
+    func.call(null);
 
-	timeoutObject.func.call(null);
+    if (repeat) {
+        setInterval(func, interval);
+    }
 
-	if (timeoutObject.repeat) {
-		setInterval(timeoutObject.func, timeoutObject.interval);
-	}
-
-	timeoutObject.func = null;
+    func = null;
 };
+
+window.clearTimeout = clearTimeout;
+window.setTimeout = setTimeout;
+window.clearInterval = clearInterval;
+window.setInterval = setInterval;
 
 var console = {
 	log: function (param)

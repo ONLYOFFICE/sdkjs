@@ -3092,10 +3092,14 @@ function CEditorPage(api)
 			if (this.m_oApi.isDrawTablePen || this.m_oApi.isDrawTableErase)
 			{
 				var logicObj = this.m_oLogicDocument.DrawTableMode;
-				if (logicObj.Start && logicObj.Table)
+				if (logicObj.Start)
 				{
-					drDoc.DrawCustomTableMode(overlay, logicObj.Table.GetDrawLine(logicObj.StartX, logicObj.StartY, logicObj.EndX, logicObj.EndY,
-						logicObj.TablePageStart, logicObj.TablePageEnd, this.m_oApi.isDrawTablePen), logicObj, this.m_oApi.isDrawTablePen);
+					var drObject = null;
+					if (logicObj.Table)
+						drObject = logicObj.Table.GetDrawLine(logicObj.StartX, logicObj.StartY,
+							logicObj.EndX, logicObj.EndY,
+							logicObj.TablePageStart, logicObj.TablePageEnd, this.m_oApi.isDrawTablePen);
+					drDoc.DrawCustomTableMode(overlay, drObject, logicObj, this.m_oApi.isDrawTablePen);
 				}
 			}
 

@@ -64,13 +64,20 @@
 			e.stopPropagation();
 	};
 
-	var isUsePointerEvents = (AscBrowser.isChrome && (AscBrowser.chromeVersion > 70) || AscBrowser.isMozilla) ? true : false;
+	// для мозиллы пока отключаем, так как браузер не распознает это как "юзерское действие". (window.open, input[file].click)
+	var isUsePointerEvents = (AscBrowser.isChrome && (AscBrowser.chromeVersion > 70)/* || AscBrowser.isMozilla*/) ? true : false;
 
 	AscCommon.addMouseEvent = function(elem, type, handler)
 	{
 		var _type = (isUsePointerEvents ? "onpointer" : "onmouse") + type;
 		elem[_type] = handler;
 	};
+    AscCommon.removeMouseEvent = function(elem, type)
+    {
+        var _type = (isUsePointerEvents ? "onpointer" : "onmouse") + type;
+        if (elem[_type])
+        	delete elem[_type];
+    };
 
 	function CMouseEventHandler()
 	{
@@ -178,6 +185,7 @@
 		this.AltKey   = false;                        // нажата ли кнопка alt
 		this.CtrlKey  = false;                        // нажата ли кнопка ctrl
 		this.ShiftKey = false;                        // нажата ли кнопка shift
+		this.MacCmdKey = false;
 		this.AltGr    = false;
 
 		this.Sender = null;                         // от какого html элемента пришел евент
@@ -192,6 +200,7 @@
 		this.CtrlKey  = false;
 		this.ShiftKey = false;
 		this.AltGr    = false;
+        this.MacCmdKey = false;
 	};
 
 	var global_mouseEvent    = new CMouseEventHandler();
@@ -202,6 +211,7 @@
 		global_keyboardEvent.AltKey = e.altKey;
 		global_keyboardEvent.AltGr = AscCommon.getAltGr(e);
 		global_keyboardEvent.CtrlKey = !global_keyboardEvent.AltGr && (e.metaKey || e.ctrlKey);
+        global_keyboardEvent.MacCmdKey = AscCommon.AscBrowser.isMacOs && e.metaKey;
 
 		global_keyboardEvent.ShiftKey = e.shiftKey;
 
@@ -220,6 +230,8 @@
 			global_keyboardEvent.CtrlKey = e.ctrlKey || e.metaKey;
 		else
 			global_keyboardEvent.CtrlKey = e.ctrlKey;
+
+        global_keyboardEvent.MacCmdKey = AscCommon.AscBrowser.isMacOs && e.metaKey;
 
 		global_keyboardEvent.ShiftKey = e.shiftKey;
 

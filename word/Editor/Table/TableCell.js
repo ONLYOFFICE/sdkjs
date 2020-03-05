@@ -167,15 +167,6 @@ CTableCell.prototype =
         return Cell;
     },
 
-    Set_Index : function(Index)
-    {
-        if ( Index != this.Index )
-        {
-            this.Index = Index;
-            this.Recalc_CompiledPr();
-        }
-    },
-
     Set_Metrics : function(StartGridCol, X_grid_start, X_grid_end, X_cell_start, X_cell_end, X_content_start, X_content_end )
     {
         this.Metrics.StartGridCol    = StartGridCol;
@@ -1023,6 +1014,7 @@ CTableCell.prototype =
 		History.Add(new CChangesTableCellPr(this, this.Pr, CellPr));
 		this.Pr = CellPr;
 		this.Recalc_CompiledPr();
+		this.private_UpdateTableGrid();
 	},
 
     Copy_Pr : function(OtherPr, bCopyOnlyVisualProps)
@@ -1168,6 +1160,7 @@ CTableCell.prototype =
 		History.Add(new CChangesTableCellW(this, this.Pr.TableCellW, CellW));
 		this.Pr.TableCellW = CellW;
 		this.Recalc_CompiledPr();
+		this.private_UpdateTableGrid();
 	},
 
     Get_GridSpan : function()
@@ -1185,6 +1178,7 @@ CTableCell.prototype =
 		History.Add(new CChangesTableCellGridSpan(this, this.Pr.GridSpan, Value));
 		this.Pr.GridSpan = Value;
 		this.Recalc_CompiledPr();
+		this.private_UpdateTableGrid();
 	},
 
 	GetMargins : function()
@@ -1232,16 +1226,17 @@ CTableCell.prototype =
 				History.Add(new CChangesTableCellMargins(this, OldValue, Margin));
 				this.Pr.TableCellMar = undefined;
 				this.Recalc_CompiledPr();
+				this.private_UpdateTableGrid();
 			}
 
 			return;
 		}
 
-		var Margins_new = this.Pr.TableCellMar;
+		var Margins_new;
 
 		var bNeedChange  = false;
 		var TableMargins = this.Row.Table.Get_TableCellMar();
-		if (null === Margins_new || undefined === Margins_new)
+		if (!this.Pr.TableCellMar)
 		{
 			Margins_new = {
 				Left   : TableMargins.Left.Copy(),
@@ -1251,6 +1246,15 @@ CTableCell.prototype =
 			};
 
 			bNeedChange = true;
+		}
+		else
+		{
+			Margins_new = {
+				Left   : this.Pr.TableCellMar.Left ? this.Pr.TableCellMar.Left.Copy() : TableMargins.Left.Copy(),
+				Right  : this.Pr.TableCellMar.Right ? this.Pr.TableCellMar.Right.Copy() : TableMargins.Right.Copy(),
+				Bottom : this.Pr.TableCellMar.Bottom ? this.Pr.TableCellMar.Bottom.Copy() : TableMargins.Bottom.Copy(),
+				Top    : this.Pr.TableCellMar.Top ? this.Pr.TableCellMar.Top.Copy() : TableMargins.Top.Copy()
+			};
 		}
 
 		switch (Type)
@@ -1329,6 +1333,7 @@ CTableCell.prototype =
 			History.Add(new CChangesTableCellMargins(this, OldValue, Margins_new));
 			this.Pr.TableCellMar = Margins_new;
 			this.Recalc_CompiledPr();
+			this.private_UpdateTableGrid();
 		}
 	},
 
@@ -1856,6 +1861,18 @@ CTableCell.prototype.GetIndex = function()
 {
 	return this.Index;
 };
+/**
+ * Выставляем номер данной ячейки в родительской строке
+ * @param {number} nIndex
+ */
+CTableCell.prototype.SetIndex = function(nIndex)
+{
+	if (nIndex != this.Index)
+	{
+		this.Index = nIndex;
+		this.Recalc_CompiledPr();
+	}
+};
 CTableCell.prototype.private_TransformXY = function(X, Y)
 {
 	// TODO: Везде, где идет такой код заменить на данную функцию
@@ -1892,18 +1909,27 @@ CTableCell.prototype.Get_SectPr = function()
 
     return null;
 };
-CTableCell.prototype.GetDocumentPositionFromObject = function(PosArray)
+CTableCell.prototype.GetDocumentPositionFromObject = function(arrPos)
 {
-    if (!PosArray)
-        PosArray = [];
+    if (!arrPos)
+		arrPos = [];
 
-    if (this.Row)
+    var oRow = this.GetRow();
+    if (oRow)
     {
-        PosArray.splice(0, 0, {Class : this.Row, Position : this.Index});
-        this.Row.GetDocumentPositionFromObject(PosArray);
+    	if (arrPos.length > 0)
+		{
+			arrPos.splice({Class : oRow, Position : this.GetIndex()});
+			oRow.GetDocumentPositionFromObject(arrPos);
+		}
+		else
+		{
+			oRow.GetDocumentPositionFromObject(arrPos);
+			arrPos.push({Class : oRow, Position : this.GetIndex()});
+		}
     }
 
-    return PosArray;
+    return arrPos;
 };
 CTableCell.prototype.Get_Table = function()
 {
@@ -2344,6 +2370,15 @@ CTableCell.prototype.CheckContentControlEditingLock = function()
 {
     if (this.Row && this.Row.Table && this.Row.Table.Parent && this.Row.Table.Parent.CheckContentControlEditingLock)
         this.Row.Table.Parent.CheckContentControlEditingLock();
+};
+/**
+ * Запрашиваем пересчет сетки таблицы
+ */
+CTableCell.prototype.private_UpdateTableGrid = function()
+{
+	var oTable = this.GetTable();
+	if (oTable)
+		oTable.private_UpdateTableGrid();
 };
 
 function CTableCellRecalculateObject()

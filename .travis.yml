@@ -1,35 +1,13 @@
-sudo: required
-addons:
-  apt:
-    packages:
-    - pcregrep
 services:
   - docker
 language: node_js
 node_js:
   - '12'
-before_script:
-  - export BRANCH=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
-  - echo "Project branch $BRANCH"
-  - git clone -b develop https://github.com/ONLYOFFICE/web-apps.git ../web-apps
-  - cd ../web-apps && git checkout -B $BRANCH && cd -
 jobs:
   include:
-    - stage: Check all files contains Copyright
+    - stage: Check all source files with correct rules
       script:
-        - FILES_WITHOUT_LICENSE=$(grep -L -R --include='*.js' --exclude-dir={\*vendor,externs\*} --exclude='jquery_native.js' 'Copyright Ascensio System')  || true
-        - echo $FILES_WITHOUT_LICENSE
-        - if [[ $(echo -n $SPELLCHECK_OUT | wc -c) -ne 0 ]]; then exit 1 ; fi
-    - stage: Check all files use Linux Line Ending (LF)
-      script:
-        - FILES_WITHOUT_LF=$(find . -not -type d -exec file '{}' ';' | grep CRLF) || true
-        - echo $FILES_WITHOUT_LF
-        - if [[ $(echo -n $FILES_WITHOUT_LF | wc -c) -ne 0 ]]; then exit 1 ; fi
-    - stage: Check all files has trailing newline
-      script:
-        - FILES_WITHOUT_TRAILING_NEWLINE=$(pcregrep --buffer-size=64M --include='.*\.js$' -LMr '\n\Z' .) || true
-        - echo $FILES_WITHOUT_TRAILING_NEWLINE
-        - if [[ $(echo -n $FILES_WITHOUT_TRAILING_NEWLINE | wc -c) -ne 0 ]]; then exit 1 ; fi
+        - rake check_source_files
     - stage: SonarQube Scanner
       if: branch = develop
       script:
@@ -38,7 +16,9 @@ jobs:
         - /tmp/sonar-scanner-4.0.0.1744-linux/bin/sonar-scanner -Dsonar.login=$SONAR_TOKEN
     - stage: Formulas tests
       script:
-        - npm install -g node-qunit-phantomjs
+        - npm install -g grunt-cli node-qunit-phantomjs
+        - npm install --prefix build
+        - grunt --gruntfile build/Gruntfile.js develop
         - node-qunit-phantomjs cell/.unit-tests/FormulaTests.html
     - stage: Building SDK and test it by `onlyofficetestingrobot/doc-builder-testing`
       script:

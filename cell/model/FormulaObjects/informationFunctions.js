@@ -41,6 +41,7 @@
 	var cNumber = AscCommonExcel.cNumber;
 	var cString = AscCommonExcel.cString;
 	var cBool = AscCommonExcel.cBool;
+	var cEmpty = AscCommonExcel.cEmpty;
 	var cError = AscCommonExcel.cError;
 	var cArea = AscCommonExcel.cArea;
 	var cArea3D = AscCommonExcel.cArea3D;
@@ -175,7 +176,14 @@
 					break;
 				}
 				case "CONTENTS": {
-					res = arg1.getValue();
+					if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type){
+						res = arg1.getValue();
+					} else {
+						res = arg1.getValue()[0];
+						if(!res) {
+							res = new cNumber(0);
+						}
+					}
 					break;
 				}
 				case "TYPE": {
@@ -220,7 +228,9 @@
 					cell = ws.getCell3(bbox.r1, bbox.c1);
 					var align = cell.getAlign();
 					var alignHorizontal = align.getAlignHorizontal();
-					if(alignHorizontal === null || alignHorizontal === AscCommon.align_Left) {
+					if(cell.isNullTextString()) {
+						res = new cString('');
+					} else if(alignHorizontal === null || alignHorizontal === AscCommon.align_Left) {
 						res = new cString("'");
 					} else if(alignHorizontal === AscCommon.align_Right) {
 						res = new cString('"');

@@ -844,13 +844,19 @@ CDocumentContent.prototype.Recalculate_Page               = function(PageIndex, 
                 for (var TempIndex = Index; TempIndex < Index + FlowCount; TempIndex++)
                 {
                     var TempElement = this.Content[TempIndex];
-                    // Получим параметры расположения рамки
                     TempElement.Set_DocumentIndex(TempIndex);
 
+                    var nElementPageIndex = 0;
                     if (Index != TempIndex || ( true != this.RecalcInfo.FrameRecalc && ( ( 0 === Index && 0 === PageIndex ) || Index != StartIndex ) ))
-                        TempElement.Reset(0, FrameH, Frame_XLimit, Frame_YLimit, PageIndex);
+					{
+						TempElement.Reset(0, FrameH, Frame_XLimit, Frame_YLimit, PageIndex);
+					}
+					else
+					{
+						nElementPageIndex = PageIndex - Element.PageNum;
+					}
 
-                    TempElement.Recalculate_Page(PageIndex);
+                    TempElement.Recalculate_Page(nElementPageIndex);
 
                     FrameH = TempElement.Get_PageBounds(PageIndex - TempElement.Get_StartPage_Relative()).Bottom;
                 }
@@ -1062,7 +1068,7 @@ CDocumentContent.prototype.Recalculate_Page               = function(PageIndex, 
                 var FrameBounds = this.Content[Index].Get_FrameBounds(FrameX, FrameY, FrameW, FrameH);
                 var FrameX2     = FrameBounds.X, FrameY2 = FrameBounds.Y, FrameW2 = FrameBounds.W, FrameH2 = FrameBounds.H;
 
-                if ((FrameY2 + FrameH2 > YLimit || Y > YLimit - 0.001 ) && Index != StartIndex)
+                if ((FrameY2 + FrameH2 > Page_Field_B || Y > Page_Field_B - 0.001 ) && Index != StartIndex)
                 {
                     this.RecalcInfo.Set_FrameRecalc(true);
                     this.Content[Index].StartFromNewPage();
@@ -1114,7 +1120,7 @@ CDocumentContent.prototype.Recalculate_Page               = function(PageIndex, 
                 Element.Reset(X, Y, XLimit, YLimit, PageIndex, 0, 1);
             }
 
-            if (Index === Count - 1 && Index > 0 && type_Paragraph === Element.GetType() && type_Table === this.Content[Index - 1].GetType() && true === Element.IsEmpty() && true === this.IsTableCellContent())
+            if (Index === Count - 1 && Index > 0 && type_Paragraph === Element.GetType() && this.Content[Index - 1].IsTable() && this.Content[Index - 1].IsInline() && true === Element.IsEmpty() && true === this.IsTableCellContent())
             {
                 RecalcResult = recalcresult_NextElement;
 
@@ -2626,16 +2632,19 @@ CDocumentContent.prototype.AddImages = function(aImages){
                 W = Math.max(1, ColumnSize.W);
                 H = Math.max(1, ColumnSize.H);
 
-                var _image = aImages[i];
-                var __w = Math.max((_image.Image.width * AscCommon.g_dKoef_pix_to_mm), 1);
-                var __h = Math.max((_image.Image.height * AscCommon.g_dKoef_pix_to_mm), 1);
-                W      = Math.max(5, Math.min(W, __w));
-                H      = Math.max(5, Math.min((W * __h / __w)));
-                Drawing   = new ParaDrawing(W, H, null, this.DrawingDocument, this, null);
-                var Image = this.DrawingObjects.createImage(_image.src, 0, 0, W, H);
-                Image.setParent(Drawing);
-                Drawing.Set_GraphicObject(Image);
-                this.AddToParagraph(Drawing);
+				var _image = aImages[i];
+				if(_image.Image)
+				{
+					var __w = Math.max((_image.Image.width * AscCommon.g_dKoef_pix_to_mm), 1);
+					var __h = Math.max((_image.Image.height * AscCommon.g_dKoef_pix_to_mm), 1);
+					W      = Math.max(5, Math.min(W, __w));
+					H      = Math.max(5, Math.min((W * __h / __w)));
+					Drawing   = new ParaDrawing(W, H, null, this.DrawingDocument, this, null);
+					var Image = this.DrawingObjects.createImage(_image.src, 0, 0, W, H);
+					Image.setParent(Drawing);
+					Drawing.Set_GraphicObject(Image);
+					this.AddToParagraph(Drawing);
+				}
 			}
 
 			if(aImages.length === 1)
@@ -2746,16 +2755,16 @@ CDocumentContent.prototype.EditChart = function(Chart)
 		return this.LogicDocument.DrawingObjects.editChart(Chart);
 	}
 };
-CDocumentContent.prototype.AddInlineTable = function(Cols, Rows)
+CDocumentContent.prototype.AddInlineTable = function(nCols, nRows, nMode)
 {
 	if (docpostype_DrawingObjects === this.CurPos.Type)
 	{
-		return this.LogicDocument.DrawingObjects.addInlineTable(Cols, Rows);
+		return this.LogicDocument.DrawingObjects.addInlineTable(nCols, nRows, nMode);
 	}
 	else //if ( docpostype_Content === this.CurPos.Type )
 	{
 		if (this.CurPos.ContentPos < 0)
-			return false;
+			return null;
 
 		if (true === this.Selection.Use)
 			this.Remove(1, true);
@@ -2765,23 +2774,22 @@ CDocumentContent.prototype.AddInlineTable = function(Cols, Rows)
 
 		// Если мы внутри параграфа, тогда разрываем его и на месте разрыва добавляем таблицу.
 		// А если мы внутри таблицы, тогда добавляем таблицу внутрь текущей таблицы.
-		if (type_Paragraph === Item.GetType())
+		if (Item.IsParagraph())
 		{
-			// Создаем новую таблицу
-			var W = 0;
-			if (true === this.IsTableCellContent())
-				W = this.XLimit - this.X;
-			else
-				W = ( this.XLimit - this.X + 2 * 1.9 );
+			var oPage = this.Pages[this.CurPage];
 
-			W = Math.max(W, Cols * 2 * 1.9);
+			var nAdd = 0;
+			if (this.LogicDocument)
+				nAdd = this.LogicDocument.GetCompatibilityMode() <= AscCommon.document_compatibility_mode_Word14 && this.IsTableCellContent() ?  2 * 1.9 : 0;
+
+			var W = Math.max(this.XLimit - this.X + nAdd, nCols * 2 * 1.9);
 
 			var Grid = [];
 
-			for (var Index = 0; Index < Cols; Index++)
-				Grid[Index] = W / Cols;
+			for (var Index = 0; Index < nCols; Index++)
+				Grid[Index] = W / nCols;
 
-			var NewTable = new CTable(this.DrawingDocument, this, true, Rows, Cols, Grid);
+			var NewTable = new CTable(this.DrawingDocument, this, true, nRows, nCols, Grid);
 			NewTable.SetParagraphPrOnAdd(Item);
 
 			var nContentPos = this.CurPos.ContentPos;
@@ -2793,21 +2801,49 @@ CDocumentContent.prototype.AddInlineTable = function(Cols, Rows)
 			}
 			else
 			{
-				var NewParagraph = new Paragraph(this.DrawingDocument, this, this.bPresentation === true);
-				Item.Split(NewParagraph);
+				if (nMode < 0)
+				{
+					NewTable.MoveCursorToStartPos(false);
 
-				this.AddToContent(nContentPos + 1, NewParagraph);
+					if (Item.GetCurrentParaPos().Page > 0 && oPage && nContentPos === oPage.Pos)
+					{
+						this.AddToContent(nContentPos + 1, NewTable);
+						this.CurPos.ContentPos = nContentPos + 1;
+					}
+					else
+					{
+						this.AddToContent(nContentPos, NewTable);
+						this.CurPos.ContentPos = nContentPos;
+					}
+				}
+				else if (nMode > 0)
+				{
+					NewTable.MoveCursorToStartPos(false);
+					this.AddToContent(nContentPos + 1, NewTable);
+					this.CurPos.ContentPos = nContentPos + 1;
+				}
+				else
+				{
+					var NewParagraph = new Paragraph(this.DrawingDocument, this, this.bPresentation === true);
+					Item.Split(NewParagraph);
 
-				NewTable.MoveCursorToStartPos();
-				this.AddToContent(nContentPos + 1, NewTable);
-				this.CurPos.ContentPos = nContentPos + 1;
+					this.AddToContent(nContentPos + 1, NewParagraph);
+
+					NewTable.MoveCursorToStartPos();
+					this.AddToContent(nContentPos + 1, NewTable);
+					this.CurPos.ContentPos = nContentPos + 1;
+				}
 			}
+
+			return NewTable;
 		}
 		else
 		{
-			Item.AddInlineTable(Cols, Rows);
+			return Item.AddInlineTable(nCols, nRows, nMode);
 		}
 	}
+
+	return null;
 };
 CDocumentContent.prototype.AddToParagraph = function(ParaItem, bRecalculate)
 {
@@ -4278,7 +4314,7 @@ CDocumentContent.prototype.InsertContent = function(SelectedContent, NearPos)
 
             var bAddEmptyPara = false;
 
-            if (true === Para.IsCursorAtEnd())
+            if (true === Para.IsCursorAtEnd() && !Para.IsEmpty())
             {
                 bConcatE = false;
 
@@ -7159,6 +7195,14 @@ CDocumentContent.prototype.private_GetColumnIndex = function(CurPage)
 
 	return (this.StartColumn + CurPage) - (((this.StartColumn + CurPage) / this.ColumnsCount | 0) * this.ColumnsCount);
 };
+CDocumentContent.prototype.GetAbsolutePage = function(nCurPage)
+{
+	return this.Get_AbsolutePage(nCurPage);
+};
+CDocumentContent.prototype.GetAbsoluteColumn = function(nCurPage)
+{
+	return this.Get_AbsoluteColumn(nCurPage);
+};
 //-----------------------------------------------------------------------------------
 // Undo/Redo функции
 //-----------------------------------------------------------------------------------
@@ -8003,15 +8047,15 @@ CDocumentContent.prototype.GetContentPosition = function(bSelection, bStart, Pos
 
     return PosArray;
 };
-CDocumentContent.prototype.GetDocumentPositionFromObject = function(PosArray)
+CDocumentContent.prototype.GetDocumentPositionFromObject = function(arrPos)
 {
-    if (!PosArray)
-        PosArray = [];
+    if (!arrPos)
+		arrPos = [];
 
     if (this.Parent && this.Parent.GetDocumentPositionFromObject)
-        this.Parent.GetDocumentPositionFromObject(PosArray);
+		this.Parent.GetDocumentPositionFromObject(arrPos);
 
-    return PosArray;
+    return arrPos;
 };
 CDocumentContent.prototype.SetContentSelection = function(StartDocPos, EndDocPos, Depth, StartFlag, EndFlag)
 {
@@ -8166,6 +8210,53 @@ CDocumentContent.prototype.private_GetElementPageIndex = function(ElementPos, Pa
 CDocumentContent.prototype.private_GetElementPageIndexByXY = function(ElementPos, X, Y, PageIndex)
 {
     return this.private_GetElementPageIndex(ElementPos, PageIndex, 0, 1);
+};
+/**
+ * Получаем относительную страницу по заданным координатам и абсолютной странице
+ * @param X
+ * @param Y
+ * @param nPageAbs
+ * @returns {number}
+ */
+CDocumentContent.prototype.GetPageIndexByXYAndPageAbs = function(X, Y, nPageAbs)
+{
+	 var nResultPage  = 0;
+	 var nMinDistance = null;
+
+	 for (var nCurPage = 0, nPagesCount = this.Pages.length; nCurPage < nPagesCount; ++nCurPage)
+	 {
+	 	var nTempPageAbs = this.GetAbsolutePage(nCurPage);
+	 	if (nTempPageAbs === nPageAbs)
+		{
+			var oBounds = this.Pages[nCurPage].Bounds;
+			if (oBounds.Left < X && X < oBounds.Right && oBounds.Top < Y && Y < oBounds.Bottom)
+			{
+				return nCurPage;
+			}
+			else
+			{
+				var nTempDistance;
+				if (oBounds.Left < X && X < oBounds.Right)
+					nTempDistance = Math.min(Math.abs(oBounds.Top - Y), Math.abs(oBounds.Bottom - Y));
+				else if (oBounds.Top < Y && Y < oBounds.Bottom)
+					nTempDistance = Math.min(Math.abs(oBounds.Left - X), Math.abs(oBounds.Right - X));
+				else
+					nTempDistance = Math.max(Math.min(Math.abs(oBounds.Top - Y), Math.abs(oBounds.Bottom - Y)), Math.min(Math.abs(oBounds.Left - X), Math.abs(oBounds.Right - X)));
+
+				if (null === nMinDistance || nTempDistance < nMinDistance)
+				{
+					nResultPage  = nCurPage;
+					nMinDistance = nTempDistance;
+				}
+			}
+		}
+		else if (nTempPageAbs > nPageAbs)
+		{
+			break;
+		}
+	 }
+
+	 return nResultPage;
 };
 CDocumentContent.prototype.GetTopDocumentContent = function()
 {
@@ -8573,6 +8664,46 @@ CDocumentContent.prototype.GetRevisionsChangeElement = function(SearchEngine)
 			break;
 
 		this.Content[Pos].GetRevisionsChangeElement(SearchEngine);
+	}
+};
+CDocumentContent.prototype.GetAllTablesOnPage = function(nPageAbs, arrTables)
+{
+	if (!arrTables)
+		arrTables = [];
+
+	var nStartPos = -1;
+	var nEndPos   = -2;
+	for (var nCurPage = 0, nPagesCount = this.Pages.length; nCurPage < nPagesCount; ++nCurPage)
+	{
+		var nTempPageAbs = this.GetAbsolutePage(nCurPage);
+
+		if (nPageAbs === nTempPageAbs)
+		{
+			if (-1 === nStartPos)
+			{
+				nStartPos = this.Pages[nCurPage].Pos;
+			}
+
+			nEndPos = this.Pages[nCurPage].EndPos;
+		}
+		else if (nTempPageAbs > nPageAbs)
+		{
+			break;
+		}
+	}
+
+	for (var nCurPos = nStartPos; nCurPos <= nEndPos; ++nCurPos)
+	{
+		this.Content[nCurPos].GetAllTablesOnPage(nPageAbs, arrTables);
+	}
+
+	return arrTables;
+};
+CDocumentContent.prototype.ProcessComplexFields = function()
+{
+	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
+	{
+		this.Content[nIndex].ProcessComplexFields();
 	}
 };
 

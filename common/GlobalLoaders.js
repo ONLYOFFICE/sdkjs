@@ -609,6 +609,9 @@
 						oThis._LoadImages();
 					}
 				};
+				AscCommon.backoffOnErrorImg(oImage.Image, function(img) {
+					oThis.loadImageByUrl(img, img.src);
+				});
 				//oImage.Image.crossOrigin = 'anonymous';
 				oThis.loadImageByUrl(oImage.Image, oImage.src);
 
@@ -640,6 +643,9 @@
                 oImage.Status = ImageLoadStatus.Complete;
                 oThis.Api.asyncImageEndLoaded(oImage);
             };
+            AscCommon.backoffOnErrorImg(oImage.Image, function(img) {
+                oThis.loadImageByUrl(img, img.src);
+            });
             //oImage.Image.crossOrigin = 'anonymous';
             this.loadImageByUrl(oImage.Image, oImage.src);
             return null;
@@ -661,6 +667,9 @@
                 oImage.Image = null;
                 oThis.Api.asyncImageEndLoadedBackground(oImage);
             };
+            AscCommon.backoffOnErrorImg(oImage.Image, function(img) {
+                oThis.loadImageByUrl(img, img.src);
+            });
             //oImage.Image.crossOrigin = 'anonymous';
             oThis.loadImageByUrl(oImage.Image, oImage.src);
         };
@@ -711,6 +720,9 @@
 					if (oThis.loadImageCallBackCounter == oThis.loadImageCallBackCounterMax)
 						oThis.LoadImagesWithCallbackEnd();
 				};
+				AscCommon.backoffOnErrorImg(oImage.Image, function(img) {
+					oThis.loadImageByUrl(img, img.src);
+				});
 				//oImage.Image.crossOrigin = 'anonymous';
                 this.loadImageByUrl(oImage.Image, oImage.src);
 			}

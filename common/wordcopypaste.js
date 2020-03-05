@@ -1976,7 +1976,10 @@ function sendImgUrls(api, images, callback, bExcel, bNotShowError, token) {
     for (var i = 0; i < images.length; i++)
     {
       var _url = window["native"]["getImageUrl"](images[i]);
-      _data[i] = { url: images[i], path : AscCommon.g_oDocumentUrls.getImageUrl(_url) };
+      var _full_path = window["native"]["getImagesDirectory"]() + "/" + _url;
+      var _local_url = "media/" + _url;
+      AscCommon.g_oDocumentUrls.addUrls({_local_url:_full_path});
+      _data[i] = {url:_full_path, path:_local_url};
     }
     callback(_data);
     return;
@@ -2926,177 +2929,6 @@ PasteProcessor.prototype =
 				paragraph.Internal_Content_Add(0, newParaRun, false);
 			}
 		}
-	},
-
-	_getNumberingText: function(Lvl, NumInfo, NumTextPr, LvlPr/*, bAddTabBetween*/)
-	{
-		var Text = LvlPr.LvlText;
-
-		var Char = "";
-		//Context.SetTextPr( NumTextPr, Theme );
-		//Context.SetFontSlot( fontslot_ASCII );
-		//g_oTextMeasurer.SetTextPr( NumTextPr, Theme );
-		//g_oTextMeasurer.SetFontSlot( fontslot_ASCII );
-
-		for ( var Index = 0; Index < Text.length; Index++ )
-		{
-			switch( Text[Index].Type )
-			{
-				case numbering_lvltext_Text:
-				{
-					var Hint = NumTextPr.RFonts.Hint;
-					var bCS  = NumTextPr.CS;
-					var bRTL = NumTextPr.RTL;
-					var lcid = NumTextPr.Lang.EastAsia;
-
-					var FontSlot = g_font_detector.Get_FontClass( Text[Index].Value.charCodeAt(0), Hint, lcid, bCS, bRTL );
-
-					Char += Text[Index].Value;
-					//Context.SetFontSlot( FontSlot );
-					//g_oTextMeasurer.SetFontSlot( FontSlot );
-
-					//Context.FillText( X, Y, Text[Index].Value );
-					//X += g_oTextMeasurer.Measure( Text[Index].Value ).Width;
-
-					break;
-				}
-				case numbering_lvltext_Num:
-				{
-					//Context.SetFontSlot( fontslot_ASCII );
-					//g_oTextMeasurer.SetFontSlot( fontslot_ASCII );
-
-					var CurLvl = Text[Index].Value;
-					switch( LvlPr.Format )
-					{
-						case Asc.c_oAscNumberingFormat.Bullet:
-						{
-							break;
-						}
-
-						case Asc.c_oAscNumberingFormat.Decimal:
-						{
-							if ( CurLvl < NumInfo.length )
-							{
-								var T = "" + ( LvlPr.Start - 1 + NumInfo[CurLvl] );
-								for ( var Index2 = 0; Index2 < T.length; Index2++ )
-								{
-									Char += T.charAt(Index2);
-									//Context.FillText( X, Y, Char );
-									//X += g_oTextMeasurer.Measure( Char ).Width;
-								}
-							}
-							break;
-						}
-
-						case Asc.c_oAscNumberingFormat.DecimalZero:
-						{
-							if ( CurLvl < NumInfo.length )
-							{
-								var T = "" + ( LvlPr.Start - 1 + NumInfo[CurLvl] );
-
-								if ( 1 === T.length )
-								{
-									//Context.FillText( X, Y, '0' );
-									//X += g_oTextMeasurer.Measure( '0' ).Width;
-
-									var Char = T.charAt(0);
-									//Context.FillText( X, Y, Char );
-									//X += g_oTextMeasurer.Measure( Char ).Width;
-								}
-								else
-								{
-									for ( var Index2 = 0; Index2 < T.length; Index2++ )
-									{
-										Char += T.charAt(Index2);
-										//Context.FillText( X, Y, Char );
-										//X += g_oTextMeasurer.Measure( Char ).Width;
-									}
-								}
-							}
-							break;
-						}
-
-						case Asc.c_oAscNumberingFormat.LowerLetter:
-						case Asc.c_oAscNumberingFormat.UpperLetter:
-						{
-							if ( CurLvl < NumInfo.length )
-							{
-								// Формат: a,..,z,aa,..,zz,aaa,...,zzz,...
-								var Num = LvlPr.Start - 1 + NumInfo[CurLvl] - 1;
-
-								var Count = (Num - Num % 26) / 26;
-								var Ost   = Num % 26;
-
-								var T = "";
-
-								var Letter;
-								if ( Asc.c_oAscNumberingFormat.LowerLetter === LvlPr.Format )
-									Letter = String.fromCharCode( Ost + 97 );
-								else
-									Letter = String.fromCharCode( Ost + 65 );
-
-								for ( var Index2 = 0; Index2 < Count + 1; Index2++ )
-									T += Letter;
-
-								for ( var Index2 = 0; Index2 < T.length; Index2++ )
-								{
-									Char += T.charAt(Index2);
-									//Context.FillText( X, Y, Char );
-									//X += g_oTextMeasurer.Measure( Char ).Width;
-								}
-							}
-							break;
-						}
-
-						case Asc.c_oAscNumberingFormat.LowerRoman:
-						case Asc.c_oAscNumberingFormat.UpperRoman:
-						{
-							if ( CurLvl < NumInfo.length )
-							{
-								var Num = LvlPr.Start - 1 + NumInfo[CurLvl];
-
-								// Переводим число Num в римскую систему исчисления
-								var Rims;
-
-								if ( Asc.c_oAscNumberingFormat.LowerRoman === LvlPr.Format )
-									Rims = [  'm', 'cm', 'd', 'cd', 'c', 'xc', 'l', 'xl', 'x', 'ix', 'v', 'iv', 'i', ' '];
-								else
-									Rims = [  'M', 'CM', 'D', 'CD', 'C', 'XC', 'L', 'XL', 'X', 'IX', 'V', 'IV', 'I', ' '];
-
-								var Vals = [ 1000,  900, 500,  400, 100,   90,  50,   40,  10,    9,   5,    4,   1,   0];
-
-								var T = "";
-								var Index2 = 0;
-								while ( Num > 0 )
-								{
-									while ( Vals[Index2] <= Num )
-									{
-										T   += Rims[Index2];
-										Num -= Vals[Index2];
-									}
-
-									Index2++;
-
-									if ( Index2 >= Rims.length )
-										break;
-								}
-
-								for ( var Index2 = 0; Index2 < T.length; Index2++ )
-								{
-									Char += T.charAt(Index2);
-									//Context.FillText( X, Y, Char );
-									//X += g_oTextMeasurer.Measure( T.charAt(Index2) ).Width;
-								}
-							}
-							break;
-						}
-					}
-
-					break;
-				}
-			}
-		}
-		return Char;
 	},
 
 	//***end special paste***
@@ -5309,7 +5141,10 @@ PasteProcessor.prototype =
 					
 					tempParaRun = new ParaRun();
 					tempParaRun.Paragraph = null;
-					tempParaRun.Add_ToContent( 0, new ParaDrawing(), false );
+
+					var newParaDrawing = new ParaDrawing();
+					//newParaDrawing.Set_DrawingType(drawing_Anchor);
+					tempParaRun.Add_ToContent( 0, newParaDrawing, false );
 					
 					tempParaRun.Content[0].Set_GraphicObject(graphicObj);
 					tempParaRun.Content[0].GraphicObj.setParent(tempParaRun.Content[0]);
@@ -5339,7 +5174,7 @@ PasteProcessor.prototype =
 		    if(!this.oDocument.bPresentation)
             {
                 fonts = this._convertTableFromExcel(aContentExcel);
-				if(this.aContent && this.aContent.length === 1 && 1 === this.aContent[0].Rows && this.aContent[0].Content[0]) {
+				if(PasteElementsId.g_bIsDocumentCopyPaste && this.aContent && this.aContent.length === 1 && 1 === this.aContent[0].Rows && this.aContent[0].Content[0]) {
 					var _content = this.aContent[0].Content[0];
 					if (_content && _content.Content && 1 === _content.Content.length && _content.Content[0].Content &&
 						_content.Content[0].Content.Content[0]) {
@@ -5937,9 +5772,9 @@ PasteProcessor.prototype =
 				allDrawingObj[allDrawingObj.length] = drawingObj[n];
 			}
 		}
-		
-		if(allDrawingObj && allDrawingObj.length)
-            this.oLogicDocument.Select_Drawings(allDrawingObj, oDoc);
+
+		if (allDrawingObj && allDrawingObj.length)
+			this.oLogicDocument.SelectDrawings(allDrawingObj, oDoc);
 	},
 	
 	_readFromBinaryExcel: function(base64)
@@ -9857,6 +9692,11 @@ function SpecialPasteShowOptions()
 	this.shapeId = null;
 	this.fixPosition = null;
 	this.position = null;
+
+	//для электронных таблиц
+	//показывать или нет дополнительный пункт специальной вставки
+	this.showPasteSpecial = null;
+	this.containTables = null;
 }
 
 SpecialPasteShowOptions.prototype = {
@@ -9878,6 +9718,9 @@ SpecialPasteShowOptions.prototype = {
 		this.shapeId = null;
 		this.fixPosition = null;
 		this.position = null;
+
+		this.showPasteSpecial = null;
+		this.containTables = null;
 	},
 
 	setRange: function(val) {
@@ -9906,8 +9749,20 @@ SpecialPasteShowOptions.prototype = {
 	asc_getCellCoord: function () {
 		return this.cellCoord;
 	},
-	asc_getOptions: function (val) {
+	asc_getOptions: function () {
 		return this.options;
+	},
+	asc_getShowPasteSpecial: function () {
+		return this.showPasteSpecial;
+	},
+	asc_setShowPasteSpecial: function (val) {
+		this.showPasteSpecial = val;
+	},
+	asc_getContainTables: function () {
+		return this.containTables;
+	},
+	asc_setContainTables: function (val) {
+		this.containTables = val;
 	}
 };
 
@@ -9932,6 +9787,9 @@ SpecialPasteShowOptions.prototype = {
   
   window["Asc"]["SpecialPasteShowOptions"] = window["Asc"].SpecialPasteShowOptions = SpecialPasteShowOptions;
   prot									 = SpecialPasteShowOptions.prototype;
-  prot["asc_getCellCoord"]				 	= prot.asc_getCellCoord;
+  prot["asc_getCellCoord"]					= prot.asc_getCellCoord;
   prot["asc_getOptions"]					= prot.asc_getOptions;
+  prot["asc_getShowPasteSpecial"]			= prot.asc_getShowPasteSpecial;
+  prot["asc_getContainTables"]			    = prot.asc_getContainTables;
+
 })(window);

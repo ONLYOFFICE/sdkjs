@@ -132,6 +132,14 @@ CNumberingLvl.prototype.GetLvlText = function()
 	return this.LvlText;
 };
 /**
+ * Выставляем содержимое нумерации
+ * @constructor
+ */
+CNumberingLvl.prototype.SetLvlText = function(arrLvlText)
+{
+	this.LvlText = arrLvlText;
+};
+/**
  * Проверяем совместимость с устаревшей нумерацией
  * @returns {boolean}
  */
@@ -1051,6 +1059,9 @@ function CNumberingLvlTextString(Val)
 	else
 		this.Value = "";
 
+	if (AscFonts.IsCheckSymbols)
+		AscFonts.FontPickerByCharacter.getFontsByString(this.Value);
+
 	this.Type = numbering_lvltext_Text;
 }
 CNumberingLvlTextString.prototype.IsLvl = function()
@@ -1080,6 +1091,9 @@ CNumberingLvlTextString.prototype.WriteToBinary = function(Writer)
 CNumberingLvlTextString.prototype.ReadFromBinary = function(Reader)
 {
 	this.Value = Reader.GetString2();
+
+	if (AscFonts.IsCheckSymbols)
+		AscFonts.FontPickerByCharacter.getFontsByString(this.Value);
 };
 
 function CNumberingLvlTextNum(Lvl)

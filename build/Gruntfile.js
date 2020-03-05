@@ -94,61 +94,40 @@ module.exports = function(grunt) {
 
 	CConfig.prototype.append = function (basePath = '') {
 		const pathConfigs = path.join(basePath, 'configs');
-		const fonts = loadConfig(pathConfigs, 'fonts');
-		const externs = loadConfig(pathConfigs, 'externs');
-		const word = loadConfig(pathConfigs, 'word');
-		const cell = loadConfig(pathConfigs, 'cell');
-		const slide = loadConfig(pathConfigs, 'slide');
-
-		if (fonts) {
-			fixPath(fonts, basePath);
-
-			if (this.fonts) {
-				this.fonts['js'] = this.fonts['js'].concat(fonts['js']);
-				this.fonts['wasm'] = this.fonts['wasm'].concat(fonts['wasm']);
-			} else {
-				this.fonts = fonts;
+		
+		function appendOption(name) {
+			const option = loadConfig(pathConfigs, name);
+			if (!option)
+				return;
+			
+			fixPath(option, basePath);
+			
+			if (!this[name]) {
+				this[name] = option;
+				return;
 			}
-		}
-		if (externs) {
-			fixPath(externs['externs'], basePath);
-
-			if (this.externs) {
-				this.externs['externs'] = this.externs['externs'].concat(externs['externs']);
-			} else {
-				this.externs = externs;
+			
+			function mergeProps(base, addon) {
+				for (let prop in addon)
+				{
+					if (Array.isArray(addon[prop])) {
+						base[prop] = Array.isArray(base[prop]) ? base[prop].concat(addon[prop]) : addon[prop];
+					} else {
+						if (!base[prop]) 
+							base[prop] = {};
+						mergeProps(base[prop], addon[prop]);						
+					}
+				}
 			}
+			
+			mergeProps(this[name], option);			
 		}
-		if (word) {
-			fixPath(word['sdk'], basePath);
-
-			if (this.word) {
-				this.word['sdk']['min'] = this.word['sdk']['min'].concat(word['sdk']['min']);
-				this.word['sdk']['common'] = this.word['sdk']['common'].concat(word['sdk']['common']);
-			} else {
-				this.word = word;
-			}
-		}
-		if (cell) {
-			fixPath(cell['sdk'], basePath);
-
-			if (this.cell) {
-				this.cell['sdk']['min'] = this.cell['sdk']['min'].concat(cell['sdk']['min']);
-				this.cell['sdk']['common'] = this.cell['sdk']['common'].concat(cell['sdk']['common']);
-			} else {
-				this.cell = cell;
-			}
-		}
-		if (slide) {
-			fixPath(slide['sdk'], basePath);
-
-			if (this.slide) {
-				this.slide['sdk']['min'] = this.slide['sdk']['min'].concat(slide['sdk']['min']);
-				this.slide['sdk']['common'] = this.slide['sdk']['common'].concat(slide['sdk']['common']);
-			} else {
-				this.slide = slide;
-			}
-		}
+		
+		appendOption.call(this, 'fonts');
+		appendOption.call(this, 'externs');
+		appendOption.call(this, 'word');
+		appendOption.call(this, 'cell');
+		appendOption.call(this, 'slide');
 	};
 	CConfig.prototype.valid = function () {
 		return this.fonts && this.externs && this.word && this.cell && this.slide;

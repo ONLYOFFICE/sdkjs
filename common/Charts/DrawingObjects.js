@@ -3060,9 +3060,6 @@ function DrawingObjects() {
 
         var metrics = null;
 		var count, bNeedRedraw = false, offset;
-       //this.controller.checkObjectsAndCallback(
-       //    function()
-       //    {
             for (var i = 0; i < aObjects.length; i++)
             {
                 var obj = aObjects[i];
@@ -3072,119 +3069,211 @@ function DrawingObjects() {
                     metrics.from.row = obj.from.row; metrics.to.row = obj.to.row;
                     metrics.from.rowOff = obj.from.rowOff; metrics.to.rowOff = obj.to.rowOff;
 
-                    if (bInsert)
-                    {		// Insert
-                        switch (operType)
+                var bCanMove = false;
+                var bCanResize = false;
+                var nDrawingBaseType = obj.graphicObject.getDrawingBaseType();
+                switch (nDrawingBaseType)
+                {
+                    case AscCommon.c_oAscCellAnchorType.cellanchorTwoCell:
+                    {
+                        bCanMove = true;
+                        bCanResize = true;
+                        break;
+                    }
+                    case AscCommon.c_oAscCellAnchorType.cellanchorOneCell:
+                    {
+                        bCanMove = true;
+                        break;
+                    }
+                }
+                if (bInsert)
+                {		// Insert
+                    switch (operType)
+                    {
+                        case c_oAscInsertOptions.InsertColumns:
                         {
-                            case c_oAscInsertOptions.InsertColumns:
+                            count = updateRange.c2 - updateRange.c1 + 1;
+                            // Position
+                            if (updateRange.c1 <= obj.from.col)
                             {
-                                count = updateRange.c2 - updateRange.c1 + 1;
-                                // Position
-                                if (updateRange.c1 <= obj.from.col) {
+                                if(bCanMove)
+                                {
                                     metrics.from.col += count;
                                     metrics.to.col += count;
                                 }
-                                else if ((updateRange.c1 > obj.from.col) && (updateRange.c1 <= obj.to.col)) {
+                                else
+                                {
+                                    metrics = null;
+                                }
+                            }
+                            else if ((updateRange.c1 > obj.from.col) && (updateRange.c1 <= obj.to.col))
+                            {
+                                if(bCanResize)
+                                {
                                     metrics.to.col += count;
                                 }
                                 else
+                                {
                                     metrics = null;
-
+                                }
                             }
-                                break;
-                            case c_oAscInsertOptions.InsertCellsAndShiftRight:
-
-                                break;
-
-                            case c_oAscInsertOptions.InsertRows:
+                            else
                             {
-                                // Position
-                                count = updateRange.r2 - updateRange.r1 + 1;
+                                metrics = null;
+                            }
+                            break;
+                        }
+                        case c_oAscInsertOptions.InsertCellsAndShiftRight:
+                        {
+                            break;
+                        }
+                        case c_oAscInsertOptions.InsertRows:
+                        {
+                            // Position
+                            count = updateRange.r2 - updateRange.r1 + 1;
 
-                                if (updateRange.r1 <= obj.from.row) {
+                            if (updateRange.r1 <= obj.from.row)
+                            {
+                                if(bCanMove)
+                                {
                                     metrics.from.row += count;
                                     metrics.to.row += count;
                                 }
-                                else if ((updateRange.r1 > obj.from.row) && (updateRange.r1 <= obj.to.row)) {
+                                else
+                                {
+                                    metrics = null;
+                                }
+                            }
+                            else if ((updateRange.r1 > obj.from.row) && (updateRange.r1 <= obj.to.row))
+                            {
+                                if(bCanResize)
+                                {
                                     metrics.to.row += count;
                                 }
                                 else
+                                {
                                     metrics = null;
+                                }
                             }
-                                break;
-                            case c_oAscInsertOptions.InsertCellsAndShiftDown:
-
-                                break;
+                            else
+                            {
+                                metrics = null;
+                            }
+                            break;
+                        }
+                        case c_oAscInsertOptions.InsertCellsAndShiftDown:
+                        {
+                            break;
                         }
                     }
-                    else {				// Delete
-                        switch (operType)
+                }
+                else
+                {				// Delete
+                    switch (operType)
+                    {
+                        case c_oAscDeleteOptions.DeleteColumns:
                         {
-                            case c_oAscDeleteOptions.DeleteColumns:
+
+                            // Position
+                            count = updateRange.c2 - updateRange.c1 + 1;
+
+                            if (updateRange.c1 <= obj.from.col)
                             {
-
-                                // Position
-                                count = updateRange.c2 - updateRange.c1 + 1;
-
-                                if (updateRange.c1 <= obj.from.col) {
-
-                                    // outside
-                                    if (updateRange.c2 < obj.from.col) {
+                                // outside
+                                if (updateRange.c2 < obj.from.col)
+                                {
+                                    if(bCanMove)
+                                    {
                                         metrics.from.col -= count;
                                         metrics.to.col -= count;
                                     }
-                                    // inside
-                                    else {
+                                    else
+                                    {
+                                        metrics = null;
+                                    }
+                                }
+                                // inside
+                                else
+                                {
+                                    if(bCanResize)
+                                    {
                                         metrics.from.col = updateRange.c1;
                                         metrics.from.colOff = 0;
 
                                         offset = 0;
                                         if (obj.to.col - updateRange.c2 - 1 > 0)
+                                        {
                                             offset = obj.to.col - updateRange.c2 - 1;
-                                        else {
+                                        }
+                                        else
+                                        {
                                             offset = 1;
                                             metrics.to.colOff = 0;
                                         }
                                         metrics.to.col = metrics.from.col + offset;
                                     }
+                                    else
+                                    {
+                                        metrics = null;
+                                    }
                                 }
-
-                                else if ((updateRange.c1 > obj.from.col) && (updateRange.c1 <= obj.to.col)) {
-
+                            }
+                            else if ((updateRange.c1 > obj.from.col) && (updateRange.c1 <= obj.to.col))
+                            {
+                                if(bCanResize)
+                                {
                                     // outside
-                                    if (updateRange.c2 >= obj.to.col) {
+                                    if (updateRange.c2 >= obj.to.col)
+                                    {
                                         metrics.to.col = updateRange.c1;
                                         metrics.to.colOff = 0;
                                     }
                                     else
+                                    {
                                         metrics.to.col -= count;
+                                    }
                                 }
                                 else
+                                {
                                     metrics = null;
-
-
+                                }
                             }
-                                break;
-                            case c_oAscDeleteOptions.DeleteCellsAndShiftLeft:
-                                // Range
-
-                                break;
-
-                            case c_oAscDeleteOptions.DeleteRows:
+                            else
                             {
+                                metrics = null;
+                            }
+                            break;
+                        }
+                        case c_oAscDeleteOptions.DeleteCellsAndShiftLeft:
+                        {
+                            // Range
+                            break;
+                        }
+                        case c_oAscDeleteOptions.DeleteRows:
+                        {
+                            // Position
+                            count = updateRange.r2 - updateRange.r1 + 1;
 
-                                // Position
-                                count = updateRange.r2 - updateRange.r1 + 1;
-
-                                if (updateRange.r1 <= obj.from.row) {
-
-                                    // outside
-                                    if (updateRange.r2 < obj.from.row) {
+                            if (updateRange.r1 <= obj.from.row)
+                            {
+                                // outside
+                                if (updateRange.r2 < obj.from.row)
+                                {
+                                    if(bCanMove)
+                                    {
                                         metrics.from.row -= count;
                                         metrics.to.row -= count;
                                     }
-                                    // inside
-                                    else {
+                                    else
+                                    {
+                                        metrics = null;
+                                    }
+                                }
+                                // inside
+                                else
+                                {
+                                    if(bCanResize)
+                                    {
                                         metrics.from.row = updateRange.r1;
                                         metrics.from.colOff = 0;
 
@@ -3197,98 +3286,105 @@ function DrawingObjects() {
                                         }
                                         metrics.to.row = metrics.from.row + offset;
                                     }
+                                    else
+                                    {
+                                        metrics = null;
+                                    }
                                 }
-
-                                else if ((updateRange.r1 > obj.from.row) && (updateRange.r1 <= obj.to.row)) {
-
+                            }
+                            else if ((updateRange.r1 > obj.from.row) && (updateRange.r1 <= obj.to.row))
+                            {
+                                if(bCanResize)
+                                {
                                     // outside
-                                    if (updateRange.r2 >= obj.to.row) {
+                                    if (updateRange.r2 >= obj.to.row)
+                                    {
                                         metrics.to.row = updateRange.r1;
                                         metrics.to.colOff = 0;
                                     }
                                     else
+                                    {
                                         metrics.to.row -= count;
+                                    }
                                 }
                                 else
+                                {
                                     metrics = null;
-
-                            }
-                                break;
-                            case c_oAscDeleteOptions.DeleteCellsAndShiftTop:
-                                // Range
-
-                                break;
-                        }
-                    }
-
-                    // Normalize position
-                    if (metrics)
-                    {
-                        if (metrics.from.col < 0)
-                        {
-                            metrics.from.col = 0;
-                            metrics.from.colOff = 0;
-                        }
-
-                        if (metrics.to.col <= 0) {
-                            metrics.to.col = 1;
-                            metrics.to.colOff = 0;
-                        }
-
-                        if (metrics.from.row < 0) {
-                            metrics.from.row = 0;
-                            metrics.from.rowOff = 0;
-                        }
-
-                        if (metrics.to.row <= 0) {
-                            metrics.to.row = 1;
-                            metrics.to.rowOff = 0;
-                        }
-
-                        if (metrics.from.col == metrics.to.col) {
-                            metrics.to.col++;
-                            metrics.to.colOff = 0;
-                        }
-                        if (metrics.from.row == metrics.to.row) {
-                            metrics.to.row++;
-                            metrics.to.rowOff = 0;
-                        }
-
-                        /*obj.from.col = metrics.from.col;
-                        obj.from.colOff = metrics.from.colOff;
-                        obj.from.row = metrics.from.row;
-                        obj.from.rowOff = metrics.from.rowOff;
-
-                        obj.to.col = metrics.to.col;
-                        obj.to.colOff = metrics.to.colOff;
-                        obj.to.row = metrics.to.row;
-                        obj.to.rowOff = metrics.to.rowOff;
-                        */
-
-                        var coords = _this.calculateCoords(metrics.from);
-
-
-                        if(obj.graphicObject.spPr && obj.graphicObject.spPr.xfrm){
-                            var rot = AscFormat.isRealNumber(obj.graphicObject.spPr.xfrm.rot) ? obj.graphicObject.spPr.xfrm.rot : 0;
-                            rot = AscFormat.normalizeRotate(rot);
-                            if (AscFormat.checkNormalRotate(rot))
-                            {
-                                obj.graphicObject.spPr.xfrm.setOffX(pxToMm(coords.x));
-                                obj.graphicObject.spPr.xfrm.setOffY(pxToMm(coords.y));
+                                }
                             }
                             else
                             {
-                                obj.graphicObject.spPr.xfrm.setOffX(pxToMm(coords.x) - obj.graphicObject.spPr.xfrm.extX/2 + obj.graphicObject.spPr.xfrm.extY/2);
-                                obj.graphicObject.spPr.xfrm.setOffY(pxToMm(coords.y) - obj.graphicObject.spPr.xfrm.extY/2 + obj.graphicObject.spPr.xfrm.extX/2);
+                                metrics = null;
                             }
-                            obj.graphicObject.checkDrawingBaseCoords();
+                            break;
                         }
-                        obj.graphicObject.recalculate();
-                        bNeedRedraw = true;
+                        case c_oAscDeleteOptions.DeleteCellsAndShiftTop:
+                        {
+                            // Range
+                            break;
+                        }
                     }
                 }
 
-        //    },  []);
+                // Normalize position
+                if (metrics)
+                {
+                    if (metrics.from.col < 0)
+                    {
+                        metrics.from.col = 0;
+                        metrics.from.colOff = 0;
+                    }
+
+                    if (metrics.to.col <= 0) {
+                        metrics.to.col = 1;
+                        metrics.to.colOff = 0;
+                    }
+
+                    if (metrics.from.row < 0) {
+                        metrics.from.row = 0;
+                        metrics.from.rowOff = 0;
+                    }
+
+                    if (metrics.to.row <= 0) {
+                        metrics.to.row = 1;
+                        metrics.to.rowOff = 0;
+                    }
+
+                    if (metrics.from.col == metrics.to.col) {
+                        metrics.to.col++;
+                        metrics.to.colOff = 0;
+                    }
+                    if (metrics.from.row == metrics.to.row) {
+                        metrics.to.row++;
+                        metrics.to.rowOff = 0;
+                    }
+
+                    /*obj.from.col = metrics.from.col;
+                    obj.from.colOff = metrics.from.colOff;
+                    obj.from.row = metrics.from.row;
+                    obj.from.rowOff = metrics.from.rowOff;
+
+                    obj.to.col = metrics.to.col;
+                    obj.to.colOff = metrics.to.colOff;
+                    obj.to.row = metrics.to.row;
+                    obj.to.rowOff = metrics.to.rowOff;
+                    */
+
+
+                    obj.graphicObject.setDrawingBaseCoords(metrics.from.col, metrics.from.colOff, metrics.from.row, metrics.from.rowOff,
+                        metrics.to.col, metrics.to.colOff, metrics.to.row, metrics.to.rowOff, obj.Pos.X, obj.Pos.Y, obj.ext.cx, obj.ext.cy);
+                    obj.graphicObject.recalculate();
+
+                    if(obj.graphicObject.spPr && obj.graphicObject.spPr.xfrm){
+                        obj.graphicObject.spPr.xfrm.setOffX(obj.graphicObject.x);
+                        obj.graphicObject.spPr.xfrm.setOffY(obj.graphicObject.y);
+                        obj.graphicObject.spPr.xfrm.setExtX(obj.graphicObject.extX);
+                        obj.graphicObject.spPr.xfrm.setExtY(obj.graphicObject.extY);
+                    }
+                    obj.graphicObject.recalculate();
+                    bNeedRedraw = true;
+                }
+            }
         bNeedRedraw && _this.showDrawingObjects(true);
     };
 
@@ -3348,7 +3444,7 @@ function DrawingObjects() {
                                     }
                                 }
                                 if(bRecalculate){
-                                    oGraphicObject.handleUpdateExtents(true);
+                                    oGraphicObject.handleUpdateExtents();
                                     oGraphicObject.recalculate();
                                 }
                             }
@@ -3365,7 +3461,7 @@ function DrawingObjects() {
                     var i;
                     if (bLock !== true) {
                         for(i = 0; i < aObjectsForCheck.length; ++i) {
-                            aObjectsForCheck[i].object.handleUpdateExtents(true);
+                            aObjectsForCheck[i].object.handleUpdateExtents();
                         }
                     }
                     else {
@@ -4361,7 +4457,7 @@ function DrawingObjects() {
     };
 
     _this.beginCompositeInput = function(){
-        History.Create_NewPoint(AscDFH.historydescription_Document_CompositeInput);
+
         _this.controller.CreateDocContent();
         _this.drawingDocument.TargetStart();
         _this.drawingDocument.TargetShow();
@@ -4389,13 +4485,12 @@ function DrawingObjects() {
         oRun.Set_CompositeInput(_this.CompositeInput);
         _this.controller.startRecalculate();
         _this.sendGraphicObjectProps();
-        return true;
     };
 
     _this.Begin_CompositeInput = function(){
-        if(_this.controller){
-            _this.controller.checkSelectedObjectsAndCallback(_this.beginCompositeInput, [], false, AscDFH.historydescription_Document_CompositeInput);
-        }
+
+        History.Create_NewPoint(AscDFH.historydescription_Document_CompositeInput);
+        _this.beginCompositeInput();
     };
 
 
@@ -4643,6 +4738,12 @@ ClickCounter.prototype.mouseDownEvent = function(x, y, button) {
         button = 0;
 
 	var _eps = 3 * global_mouseEvent.KoefPixToMM;
+
+    var oApi = Asc && Asc.editor;
+    if(oApi && oApi.isMobileVersion && (!window["NATIVE_EDITOR_ENJINE"]))
+    {
+        _eps *= 2;
+    }
 	if ((Math.abs(global_mouseEvent.X - global_mouseEvent.LastX) > _eps) || (Math.abs(global_mouseEvent.Y - global_mouseEvent.LastY) > _eps))
 	{
 		// not only move!!! (touch - fast click in different places)

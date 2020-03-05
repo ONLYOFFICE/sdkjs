@@ -100,17 +100,17 @@ CGraphicFrame.prototype.Is_UseInDocument = CShape.prototype.Is_UseInDocument;
 CGraphicFrame.prototype.convertPixToMM = CShape.prototype.convertPixToMM;
 CGraphicFrame.prototype.hit = CShape.prototype.hit;
 
-CGraphicFrame.prototype.GetDocumentPositionFromObject= function(PosArray)
+CGraphicFrame.prototype.GetDocumentPositionFromObject = function(arrPos)
 {
-	if (!PosArray)
-		PosArray = [];
+	if (!arrPos)
+		arrPos = [];
 
 	// TODO: Судя по тому как записывается позиция и как она читается
 	//       класс CGraphicFrame не должен попадать в позицию
-	if (PosArray && PosArray.length > 0 && PosArray[0].Class === this)
-		PosArray.splice(0, 1);
+	if (arrPos && arrPos.length > 0 && arrPos[0].Class === this)
+		arrPos.splice(0, 1);
 
-	return PosArray;
+	return arrPos;
 };
 
 CGraphicFrame.prototype.Is_DrawingShape = function(bRetShape)
@@ -410,6 +410,7 @@ CGraphicFrame.prototype.recalculate = function()
                 this.transformText = this.transform;
                 this.invertTransformText = this.invertTransform;
                 this.cachedImage = null;
+                this.recalcInfo.recalculateSizes = true;
             }
             if(this.recalcInfo.recalculateTable)
             {
@@ -814,6 +815,11 @@ CGraphicFrame.prototype.Is_TopDocument = function()
         return false;
 };
 
+CGraphicFrame.prototype.GetTopElement = function()
+    {
+        return null;
+};
+
 CGraphicFrame.prototype.drawAdjustments = function()
 {};
 
@@ -835,6 +841,10 @@ CGraphicFrame.prototype.Update_ContentIndexing = function()
 CGraphicFrame.prototype.GetTopDocumentContent = function()
 {
     return null;
+};
+CGraphicFrame.prototype.GetElement = function(nIndex)
+{
+    return this.graphicObject;
 };
 
 CGraphicFrame.prototype.draw = function(graphics)
@@ -1158,6 +1168,9 @@ CGraphicFrame.prototype.Is_ThisElementCurrent = function()
        if(this.graphicObject){
            this.graphicObject.GetAllContentControls(arrContentControls);
        }
+    };
+    CGraphicFrame.prototype.IsElementStartOnNewPage = function(){
+      return true;
     };
 
     CGraphicFrame.prototype.getCopyWithSourceFormatting = function(){

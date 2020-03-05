@@ -123,8 +123,8 @@
       this._CoAuthoringApi.onLocksReleasedEnd = function() {
         t.callback_OnLocksReleasedEnd();
       };
-      this._CoAuthoringApi.onDisconnect = function(e, error) {
-        t.callback_OnDisconnect(e, error);
+      this._CoAuthoringApi.onDisconnect = function(e, code) {
+        t.callback_OnDisconnect(e, code);
       };
       this._CoAuthoringApi.onWarning = function(e) {
         t.callback_OnWarning(e);
@@ -463,11 +463,11 @@
   /**
    * Event об отсоединении от сервера
    * @param {jQuery} e  event об отсоединении с причиной
-   * @param {code: Asc.c_oAscError.ID, level: Asc.c_oAscError.Level} error
+   * @param {code: AscCommon.c_oCloseCode.drop} code
    */
-  CDocsCoApi.prototype.callback_OnDisconnect = function(e, error) {
+  CDocsCoApi.prototype.callback_OnDisconnect = function(e, code) {
     if (this.onDisconnect) {
-      this.onDisconnect(e, error);
+      this.onDisconnect(e, code);
     }
   };
 
@@ -611,10 +611,13 @@
     // Мы сами отключились от совместного редактирования
     this.isCloseCoAuthoring = false;
 
-    // Максимальное число изменений, посылаемое на сервер (не может быть нечетным, т.к. пересчет обоих индексов должен быть)
-    this.maxCountSaveChanges = 20000;
+    //websocket payload size is limited by https://github.com/faye/faye-websocket-node#initialization-options (64 MiB)
+    //xhr payload size is limited by nginx param client_max_body_size (current 100MB)
+    //"1.5MB" is choosen to avoid disconnect(after 25s) while downloading/uploading oversized changes with 0.5Mbps connection
+    this.websocketMaxPayloadSize = 1572864;
     // Текущий индекс для колличества изменений
     this.currentIndex = 0;
+    this.currentIndexEnd = 0;
     // Индекс, с которого мы начинаем сохранять изменения
     this.deleteIndex = 0;
     // Массив изменений
@@ -850,8 +853,13 @@
     } else {
       this.currentIndex = currentIndex;
     }
-    var startIndex = this.currentIndex * this.maxCountSaveChanges;
-    var endIndex = Math.min(this.maxCountSaveChanges * (this.currentIndex + 1), arrayChanges.length);
+    var startIndex, endIndex;
+    startIndex = endIndex = this.currentIndex;
+    var curBytes = 0;
+    for (; endIndex < arrayChanges.length && curBytes < this.websocketMaxPayloadSize; ++endIndex) {
+      curBytes += arrayChanges[endIndex].length + 9;//9 - for JSON overhead + escape
+    }
+    this.currentIndexEnd = endIndex;
     if (endIndex === arrayChanges.length) {
       for (var key in this._locks) if (this._locks.hasOwnProperty(key)) {
         if (2 === this._locks[key].state /*lock is ours*/) {
@@ -1021,7 +1029,7 @@
 
   DocsCoApi.prototype._onExpiredToken = function(data) {
     if (this.onExpiredToken) {
-      this.onExpiredToken();
+      this.onExpiredToken(data);
     }
   };
 
@@ -1287,7 +1295,7 @@
       this.changesIndex = data['changesIndex'];
     }
 
-    this.saveChanges(this.arrayChanges, this.currentIndex + 1);
+    this.saveChanges(this.arrayChanges, this.currentIndexEnd);
   };
 
   DocsCoApi.prototype._onPreviousLocks = function(locks, previousLocks) {
@@ -1423,7 +1431,8 @@
 
   DocsCoApi.prototype._onDrop = function(data) {
     this.disconnect();
-    this.onDisconnect(data ? data['description'] : '', this._getDisconnectErrorCode(data && data['code']));
+    var code = data && data['code'] || c_oCloseCode.drop;
+    this.onDisconnect(data ? data['description'] : '', code);
   };
 
   DocsCoApi.prototype._onWarning = function(data) {
@@ -1488,11 +1497,15 @@
       this._indexUser = data['indexUser'];
       this._userId = this._user.asc_getId() + this._indexUser;
       this._sessionTimeConnect = data['sessionTimeConnect'];
-      if (data['settings'] && data['settings']['reconnection']) {
-        this.maxAttemptCount = data['settings']['reconnection']['attempts'];
-        this.reconnectInterval = data['settings']['reconnection']['delay'];
+      if (data['settings']) {
+        if (data['settings']['reconnection']) {
+          this.maxAttemptCount = data['settings']['reconnection']['attempts'];
+          this.reconnectInterval = data['settings']['reconnection']['delay'];
+        }
+        if (data['settings']['websocketMaxPayloadSize']) {
+          this.websocketMaxPayloadSize = data['settings']['websocketMaxPayloadSize'];
+        }
       }
-
       this._onLicenseChanged(data);
       this._onAuthParticipantsChanged(data['participants']);
 
@@ -1732,7 +1745,7 @@
 				this._onRefreshToken(dataObject["messages"]);
 				break;
 			case 'expiredToken' :
-				this._onExpiredToken();
+				this._onExpiredToken(dataObject);
 				break;
 			case 'forceSaveStart' :
 				this._onForceSaveStart(dataObject["messages"]);
@@ -1755,13 +1768,13 @@
 		this._state = ConnectionState.Reconnect;
 		var bIsDisconnectAtAll = ((c_oCloseCode.serverShutdown <= evt.code && evt.code <= c_oCloseCode.drop) ||
 			this.attemptCount >= this.maxAttemptCount);
-		var error = null;
+		var code = null;
 		if (bIsDisconnectAtAll) {
 			this._state = ConnectionState.ClosedAll;
-			error = this._getDisconnectErrorCode(evt.code);
+			code = evt.code;
 		}
 		if (this.onDisconnect) {
-			this.onDisconnect(evt.reason, error);
+			this.onDisconnect(evt.reason, code);
 		}
 		//Try reconect
 		if (!bIsDisconnectAtAll) {
@@ -1782,35 +1795,6 @@
 		this.reconnectTimeout = setTimeout(function () {
 			t._reconnect();
 		}, this.reconnectInterval);
-	};
-
-	DocsCoApi.prototype._getDisconnectErrorCode = function(opt_closeCode) {
-		var code = this.isCloseCoAuthoring ? Asc.c_oAscError.ID.UserDrop : Asc.c_oAscError.ID.CoAuthoringDisconnect;
-		var level = Asc.c_oAscError.Level.NoCritical;
-		if (c_oCloseCode.serverShutdown === opt_closeCode) {
-			code = Asc.c_oAscError.ID.CoAuthoringDisconnect;
-		} else if (c_oCloseCode.sessionIdle === opt_closeCode) {
-			code = Asc.c_oAscError.ID.SessionIdle;
-		} else if (c_oCloseCode.sessionAbsolute === opt_closeCode) {
-			code = Asc.c_oAscError.ID.SessionAbsolute;
-		} else if (c_oCloseCode.accessDeny === opt_closeCode) {
-			code = Asc.c_oAscError.ID.AccessDeny;
-		} else if (c_oCloseCode.jwtExpired === opt_closeCode) {
-			if (this.jwtSession) {
-				code = Asc.c_oAscError.ID.SessionToken;
-			} else {
-				code = Asc.c_oAscError.ID.KeyExpire;
-				level = Asc.c_oAscError.Level.Critical;
-			}
-		} else if (c_oCloseCode.jwtError === opt_closeCode) {
-			code = Asc.c_oAscError.ID.VKeyEncrypt;
-			level = Asc.c_oAscError.Level.Critical;
-		} else if (c_oCloseCode.drop === opt_closeCode) {
-			code = Asc.c_oAscError.ID.UserDrop;
-		} else if (c_oCloseCode.updateVersion === opt_closeCode) {
-			code = Asc.c_oAscError.ID.UpdateVersion;
-		}
-		return {code: code, level: level};
 	};
 
   //----------------------------------------------------------export----------------------------------------------------

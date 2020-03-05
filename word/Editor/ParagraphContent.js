@@ -1254,12 +1254,12 @@ ParaNumbering.prototype = Object.create(CRunElementBase.prototype);
 ParaNumbering.prototype.constructor = ParaNumbering;
 
 ParaNumbering.prototype.Type = para_Numbering;
-ParaNumbering.prototype.Draw = function(X, Y, oContext, oNumbering, oTextPr, oTheme)
+ParaNumbering.prototype.Draw = function(X, Y, oContext, oNumbering, oTextPr, oTheme, oPrevNumTextPr)
 {
 	var _X = X;
 	if (this.Internal.SourceNumInfo)
 	{
-		oNumbering.Draw(this.Internal.SourceNumId,this.Internal.SourceNumLvl, _X, Y, oContext, this.Internal.SourceNumInfo, oTextPr, oTheme);
+		oNumbering.Draw(this.Internal.SourceNumId,this.Internal.SourceNumLvl, _X, Y, oContext, this.Internal.SourceNumInfo, oPrevNumTextPr ? oPrevNumTextPr : oTextPr, oTheme);
 		_X += this.Internal.SourceWidth;
 	}
 
@@ -1801,7 +1801,15 @@ ParaFootnoteReference.prototype.Measure = function(Context, TextPr, MathInfo, Ru
 };
 ParaFootnoteReference.prototype.Copy = function(oPr)
 {
-	var oFootnote = this.Footnote.Parent.CreateFootnote();
+	var oFootnote;
+	if(oPr && oPr.Comparison)
+	{
+		oFootnote = oPr.Comparison.createFootNote();
+	}
+	else
+	{
+		oFootnote = this.Footnote.Parent.CreateFootnote();
+	}
 	oFootnote.Copy2(this.Footnote, oPr);
 
 	var oRef = new ParaFootnoteReference(oFootnote);

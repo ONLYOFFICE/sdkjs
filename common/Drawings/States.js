@@ -636,6 +636,7 @@ RotateState.prototype =
                         var drawingObject = tracks[i].originalObject.drawingBase;
                         var metrics = drawingObject.getGraphicObjectMetrics();
                         AscFormat.SetXfrmFromMetrics(copy, metrics);
+                        copy.drawingBase = drawingObject;
                     }
                     copy.addToDrawingObjects();
                     aCopies.push(copy);

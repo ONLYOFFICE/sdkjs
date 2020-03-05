@@ -66,7 +66,7 @@ DrawingObjectsController.prototype.fitImagesToSlide = function()
                 {
                     sImageId = AscCommon.getFullImageSrc2(sImageId);
                     var _image = oApi.ImageLoader.map_image_index[sImageId];
-                    if(_image)
+                    if(_image && _image.Image)
                     {
                         var __w = Math.max((_image.Image.width * AscCommon.g_dKoef_pix_to_mm), 1);
                         var __h = Math.max((_image.Image.height * AscCommon.g_dKoef_pix_to_mm), 1);

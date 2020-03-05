@@ -45,6 +45,18 @@ function CSdtPr()
 	this.Label = undefined;
 	this.Lock  = undefined;
 
+	// section property
+	this.SectionBreak = undefined;
+	this.PageSizeW	  = undefined;
+	this.PageSizeH	  = undefined;
+	this.Orient 	  = undefined;
+
+	// Margins 
+	this.MarginT	 		 = undefined;
+	this.MarginL	 		 = undefined;
+	this.MarginR	 		 = undefined;
+	this.MarginB	 		 = undefined;
+
 	this.DocPartObj = {
 		Gallery  : undefined,
 		Category : undefined,
@@ -282,6 +294,19 @@ function CContentControlPr(nType)
 	this.InternalId = undefined;
 	this.CCType     = undefined !== nType ? nType : c_oAscSdtLevelType.Inline;
 
+    // section property
+	this.SectionBreak = undefined;
+	this.PageSizeW	  = undefined;
+	this.PageSizeH	  = undefined;
+	this.Orient 	  = undefined;
+
+	// Margins 
+	this.MarginT	 		 = undefined;
+	this.MarginL	 		 = undefined;
+	this.MarginR	 		 = undefined;
+	this.MarginB	 		 = undefined;
+	
+	
 	this.Appearance = Asc.c_oAscSdtAppearance.Frame;
 	this.Color      = undefined;
 
@@ -361,7 +386,10 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 		oContentControl.SetColor(this.Color);
 
 	if (undefined !== this.CheckBoxPr)
+	{
 		oContentControl.SetCheckBoxPr(this.CheckBoxPr);
+		oContentControl.private_UpdateCheckBoxContent();
+	}
 
 	if (undefined !== this.ComboBoxPr)
 		oContentControl.SetComboBoxPr(this.ComboBoxPr);
@@ -810,7 +838,7 @@ CSdtDatePickerPr.prototype.ToString = function(sFormat, sFullDate, nLangId)
 	if (undefined === nLangId)
 		nLangId = this.LangId;
 
-	var oFormat = AscCommon.oNumFormatCache.get(sFormat);
+	var oFormat = AscCommon.oNumFormatCache.get(sFormat, AscCommon.NumFormatType.WordFieldDate);
 	if (oFormat)
 	{
 		var oCultureInfo = AscCommon.g_aCultureInfos[nLangId];

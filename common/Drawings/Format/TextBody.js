@@ -83,7 +83,20 @@ field_months[0][11] = "декабря";
 
 
 AscDFH.drawingsChangesMap[AscDFH.historyitem_TextBodySetParent] =   function(oClass, value){oClass.parent = value;};
-AscDFH.drawingsChangesMap[AscDFH.historyitem_TextBodySetBodyPr] =   function(oClass, value){oClass.bodyPr = value;};
+AscDFH.drawingsChangesMap[AscDFH.historyitem_TextBodySetBodyPr] =   function(oClass, value){
+    if(CheckNeedRecalcAutoFit(oClass.bodyPr, value))
+        if(oClass.parent)
+        {
+            oClass.parent.recalcInfo.recalculateContent = true;
+            oClass.parent.recalcInfo.recalculateContent2 = true;
+            oClass.parent.recalcInfo.recalculateTransformText = true;
+        }
+    if(oClass.content)
+    {
+        oClass.content.Recalc_AllParagraphs_CompiledPr();
+    }
+    oClass.bodyPr = value;
+};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_TextBodySetContent] =  function(oClass, value){oClass.content = value;};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_TextBodySetLstStyle] = function(oClass, value){oClass.lstStyle = value;};
 
@@ -193,10 +206,13 @@ CTextBody.prototype =
         this.bodyPr = pr;
         if(this.parent && this.parent.recalcInfo)
         {
-            this.parent.recalcInfo.recalcContent = true;
             this.parent.recalcInfo.recalculateContent = true;
             this.parent.recalcInfo.recalculateContent2 = true;
-            this.parent.recalcInfo.recalcTransformText = true;
+            this.parent.recalcInfo.recalculateTransformText = true;
+            if(this.content)
+            {
+                this.content.Recalc_AllParagraphs_CompiledPr();
+            }
             if(this.parent.addToRecalculate)
             {
                 this.parent.addToRecalculate();
@@ -303,6 +319,7 @@ CTextBody.prototype =
 
     checkTextFit: function()
     {
+        return;
         if(this.parent && this.parent.parent && this.parent.parent instanceof Slide)
         {
             if(isRealObject(this.bodyPr.textFit))
@@ -413,9 +430,6 @@ CTextBody.prototype =
     {
         if(this.parent && this.parent.recalcInfo)
         {
-            this.parent.recalcInfo.recalcContent = true;
-            this.parent.recalcInfo.recalcTransformText = true;
-
             this.parent.recalcInfo.recalculateContent = true;
             this.parent.recalcInfo.recalculateContent2 = true;
             this.parent.recalcInfo.recalculateTransformText = true;
@@ -764,13 +778,42 @@ CTextBody.prototype =
     }
 };
 
+
+
+function CalculateReductionParams(oBodyPrHolder, oContent) {
+    if(!oBodyPrHolder || !oContent) {
+        return;
+    }
+    var oBodyPr = oBodyPrHolder.bodyPr ? oBodyPrHolder.bodyPr.createDuplicate() : new AscFormat.CBodyPr();
+
+    return oBodyPr;
+}
     function GetContentOneStringSizes(oContent) {
         oContent.Reset(0, 0, 20000, 20000);
         oContent.Recalculate_Page(0, true);
         return {w: oContent.Content[0].Lines[0].Ranges[0].W+0.1, h: oContent.GetSummaryHeight() + 0.1};
     }
+
+
+    function CheckNeedRecalcAutoFit(oBP1, oBP2)
+    {
+        if(window["NATIVE_EDITOR_ENJINE"] === true && window["IS_NATIVE_EDITOR"] !== true)
+        {
+            return false;
+        }
+        var oTF1 = oBP1 && oBP1.textFit;
+        var oTF2 = oBP2 && oBP2.textFit;
+        var oTFType1 = oTF1 && oTF1.type || 0;
+        var oTFType2 = oTF2 && oTF2.type || 0;
+        if(oTFType1 === AscFormat.text_fit_NormAuto && oTFType2 === AscFormat.text_fit_NormAuto)
+        {
+            return oTF1.lnSpcReduction !== oTF2.lnSpcReduction || oTF1.fontScale !== oTF2.fontScale;
+        }
+        return oTFType1 === AscFormat.text_fit_NormAuto || oTFType2 === AscFormat.text_fit_NormAuto;
+    }
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].GetContentOneStringSizes = GetContentOneStringSizes;
     window['AscFormat'].CTextBody = CTextBody;
+    window['AscFormat'].CheckNeedRecalcAutoFit = CheckNeedRecalcAutoFit;
 })(window);

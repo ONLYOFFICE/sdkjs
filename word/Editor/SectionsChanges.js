@@ -882,7 +882,7 @@ function CChangesSectionPageMarginsGutter(Class, Old, New)
 }
 CChangesSectionPageMarginsGutter.prototype = Object.create(AscDFH.CChangesBaseDoubleValue.prototype);
 CChangesSectionPageMarginsGutter.prototype.constructor = CChangesSectionPageMarginsGutter;
-CChangesSectionPageMarginsGutter.prototype.Type = AscDFH.historyitem_Section_PageMargins_Header;
+CChangesSectionPageMarginsGutter.prototype.Type = AscDFH.historyitem_Section_PageMargins_Gutter;
 CChangesSectionPageMarginsGutter.prototype.private_SetValue = function(Value)
 {
 	this.Class.PageMargins.Gutter = Value;

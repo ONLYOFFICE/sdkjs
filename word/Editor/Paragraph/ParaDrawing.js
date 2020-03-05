@@ -473,6 +473,10 @@ ParaDrawing.prototype.Is_UseInDocument = function()
 	}
 	return false;
 };
+ParaDrawing.prototype.IsUseInDocument = function()
+{
+	return this.Is_UseInDocument();
+};
 ParaDrawing.prototype.CheckGroupSizes = function()
 {
 	if (this.GraphicObj && this.GraphicObj.CheckGroupSizes)
@@ -845,7 +849,24 @@ ParaDrawing.prototype.Search = function(Str, Props, SearchEngine, Type)
 ParaDrawing.prototype.Set_Props = function(Props)
 {
 	var bCheckWrapPolygon = false;
-	if (undefined != Props.WrappingStyle)
+
+	var isPictureCC = false;
+
+	var oRun = this.GetRun();
+	if (oRun)
+	{
+		var arrContentControls = oRun.GetParentContentControls();
+		for (var nIndex = 0, nCount = arrContentControls.length; nIndex < nCount; ++nIndex)
+		{
+			if (arrContentControls[nIndex].IsPicture())
+			{
+				isPictureCC = true;
+				break;
+			}
+		}
+	}
+
+	if (undefined != Props.WrappingStyle && !isPictureCC)
 	{
 		if (drawing_Inline === this.DrawingType && c_oAscWrapStyle2.Inline != Props.WrappingStyle && undefined === Props.Paddings)
 		{
@@ -1586,6 +1607,10 @@ ParaDrawing.prototype.Is_Inline = function()
 
 	return ( drawing_Inline === this.DrawingType ? true : false );
 };
+ParaDrawing.prototype.IsInline = function()
+{
+	return this.Is_Inline();
+};
 ParaDrawing.prototype.Use_TextWrap = function()
 {
 	// Если автофигура привязана к параграфу с рамкой, обтекание не делается
@@ -1626,13 +1651,27 @@ ParaDrawing.prototype.OnEnd_MoveInline = function(NearPos)
 {
 	NearPos.Paragraph.Check_NearestPos(NearPos);
 
+	var oRun        = this.Parent.Get_DrawingObjectRun(this.Id);
+	var isPictureCC = false;
+	if (oRun)
+	{
+		var arrContentControls = oRun.GetParentContentControls();
+		for (var nIndex = arrContentControls.length - 1; nIndex >= 0; --nIndex)
+		{
+			if (arrContentControls[nIndex].IsPicture())
+			{
+				isPictureCC = true;
+				break;
+			}
+		}
+	}
+
 	var RunPr = this.Remove_FromDocument(false);
 
 	// При переносе всегда создаем копию, чтобы в совместном редактировании не было проблем
 	var NewParaDrawing = this.Copy();
-    this.DocumentContent.Select_DrawingObject(NewParaDrawing.Get_Id());
-	NewParaDrawing.Add_ToDocument(NearPos, true, RunPr);
-
+	this.DocumentContent.Select_DrawingObject(NewParaDrawing.Get_Id());
+	NewParaDrawing.Add_ToDocument(NearPos, true, RunPr, undefined, isPictureCC);
 };
 ParaDrawing.prototype.Get_ParentTextTransform = function()
 {
@@ -1647,29 +1686,42 @@ ParaDrawing.prototype.GoTo_Text = function(bBefore, bUpdateStates)
 	var Paragraph = this.Get_ParentParagraph();
 	if (Paragraph)
 	{
-		Paragraph.Cursor_MoveTo_Drawing(this.Id, bBefore);
+		Paragraph.MoveCursorToDrawing(this.Id, bBefore);
 		Paragraph.Document_SetThisElementCurrent(undefined === bUpdateStates ? true : bUpdateStates);
 	}
 };
 ParaDrawing.prototype.Remove_FromDocument = function(bRecalculate)
 {
-	var Result = null;
-	var Run    = this.Parent.Get_DrawingObjectRun(this.Id);
+	var oResult = null;
 
-	if (null !== Run)
+	var oRun = this.Parent.Get_DrawingObjectRun(this.Id);
+	if (oRun)
 	{
-		Run.Remove_DrawingObject(this.Id);
+		var oPictureCC         = null;
+		var arrContentControls = oRun.GetParentContentControls();
+		for (var nIndex = arrContentControls.length - 1; nIndex >= 0; --nIndex)
+		{
+			if (arrContentControls[nIndex].IsPicture())
+			{
+				oPictureCC = arrContentControls[nIndex];
+				break;
+			}
+		}
 
-		if (true === Run.Is_InHyperlink())
-			Result = new CTextPr();
+		if (oPictureCC)
+			oPictureCC.RemoveContentControlWrapper();
+
+		oRun.Remove_DrawingObject(this.Id);
+		if (oRun.IsInHyperlink())
+			oResult = new CTextPr();
 		else
-			Result = Run.Get_TextPr();
+			oResult = oRun.GetTextPr();
 	}
 
 	if (false != bRecalculate)
 		editor.WordControl.m_oLogicDocument.Recalculate();
 
-	return Result;
+	return oResult;
 };
 ParaDrawing.prototype.Get_ParentParagraph = function()
 {
@@ -1702,7 +1754,7 @@ ParaDrawing.prototype.SelectAsText = function()
 	oDocument.RemoveSelection();
 	oDocument.SetSelectionByContentPositions(oStartPos, oEndPos);
 };
-ParaDrawing.prototype.Add_ToDocument = function(NearPos, bRecalculate, RunPr, Run)
+ParaDrawing.prototype.Add_ToDocument = function(NearPos, bRecalculate, RunPr, Run, isPictureCC)
 {
 	NearPos.Paragraph.Check_NearestPos(NearPos);
 
@@ -1718,12 +1770,23 @@ ParaDrawing.prototype.Add_ToDocument = function(NearPos, bRecalculate, RunPr, Ru
 	if (Run)
 		DrawingRun.SetReviewTypeWithInfo(Run.GetReviewType(), Run.GetReviewInfo());
 
-	Para.Add_ToContent(0, DrawingRun);
+	if (isPictureCC)
+	{
+		var oSdt = new CInlineLevelSdt();
+		oSdt.SetPicturePr(true);
+		oSdt.ReplacePlaceHolderWithContent();
+		oSdt.AddToContent(0, DrawingRun);
+		Para.Add_ToContent(0, oSdt);
+	}
+	else
+	{
+		Para.Add_ToContent(0, DrawingRun);
+	}
 
 	var SelectedElement = new CSelectedElement(Para, false);
 	var SelectedContent = new CSelectedContent();
 	SelectedContent.Add(SelectedElement);
-	SelectedContent.Set_MoveDrawing(true);
+	SelectedContent.SetMoveDrawing(true);
 
 	NearPos.Paragraph.Parent.InsertContent(SelectedContent, NearPos);
 	NearPos.Paragraph.Clear_NearestPosArray();
@@ -2332,7 +2395,7 @@ ParaDrawing.prototype.getArrayWrapIntervals = function(x0, y0, x1, y1, Y0Sp, Y1S
 };
 ParaDrawing.prototype.setAllParagraphNumbering = function(numInfo)
 {
-	if (AscCommon.isRealObject(this.GraphicObj) && typeof this.GraphicObj.addInlineTable === "function")
+	if (AscCommon.isRealObject(this.GraphicObj) && typeof this.GraphicObj.setAllParagraphNumbering === "function")
 		this.GraphicObj.setAllParagraphNumbering(numInfo);
 };
 ParaDrawing.prototype.addNewParagraph = function(bRecalculate)
@@ -2340,10 +2403,12 @@ ParaDrawing.prototype.addNewParagraph = function(bRecalculate)
 	if (AscCommon.isRealObject(this.GraphicObj) && typeof this.GraphicObj.addNewParagraph === "function")
 		this.GraphicObj.addNewParagraph(bRecalculate);
 };
-ParaDrawing.prototype.addInlineTable = function(cols, rows)
+ParaDrawing.prototype.addInlineTable = function(nCols, nRows, nMode)
 {
 	if (AscCommon.isRealObject(this.GraphicObj) && typeof this.GraphicObj.addInlineTable === "function")
-		this.GraphicObj.addInlineTable(cols, rows);
+		return this.GraphicObj.addInlineTable(nCols, nRows, nMode);
+
+	return null;
 };
 ParaDrawing.prototype.applyTextPr = function(paraItem, bRecalculate)
 {

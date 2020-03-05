@@ -246,18 +246,19 @@ ParaHyperlink.prototype.SetToolTip = function(ToolTip)
 };
 ParaHyperlink.prototype.GetToolTip = function()
 {
-	if (this.Anchor)
-		return AscCommon.translateManager.getValue("Current Document");
-
-	if ( null === this.ToolTip )
+	if (!this.ToolTip)
 	{
-		if ( "string" === typeof(this.Value) )
+		if (this.Anchor)
+			return AscCommon.translateManager.getValue("Current Document");
+		else if ("string" === typeof(this.Value))
 			return this.Value;
 		else
 			return "";
 	}
 	else
+	{
 		return this.ToolTip;
+	}
 };
 ParaHyperlink.prototype.Set_Value = function(Value)
 {

@@ -534,6 +534,10 @@
 
                     break;
                 }
+                case "disableAutostartMacros":
+                {
+                    this.disableAutostartMacros = true;
+                }
                 default:
                     break;
             }
@@ -634,7 +638,7 @@
      * @alias UnShowInputHelper
      * @param {string} guid Guid helper
      */
-    Api.prototype["pluginMethod_UnShowInputHelper"] = function(guid)
+    Api.prototype["pluginMethod_UnShowInputHelper"] = function(guid, isclear)
     {
         var _frame = document.getElementById("iframe_" + guid);
         if (!_frame)

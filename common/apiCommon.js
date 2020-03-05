@@ -2277,6 +2277,8 @@
 
         this.columnNumber = null;
         this.columnSpace = null;
+        this.textFitType = null;
+		this.vertOverflowType = null;
         this.signatureId = null;
 
 		this.rot = null;
@@ -2370,9 +2372,23 @@
 		asc_getColumnSpace: function(){
 			return this.columnSpace;
 		},
+		asc_getTextFitType: function(){
+			return this.textFitType;
+		},
+
+		asc_getVertOverflowType: function(){
+			return this.vertOverflowType;
+		},
 
 		asc_putColumnSpace: function(v){
 			this.columnSpace = v;
+		},
+
+		asc_putTextFitType: function(v){
+			this.textFitType = v;
+		},
+		asc_putVertOverflowType: function(v){
+			this.vertOverflowType = v;
 		},
 
 		asc_getSignatureId: function(){
@@ -2659,6 +2675,8 @@
 
             this.columnNumber =  obj.columnNumber != undefined ? obj.columnNumber : undefined;
             this.columnSpace =  obj.columnSpace != undefined ? obj.columnSpace : undefined;
+            this.textFitType =  obj.textFitType != undefined ? obj.textFitType : undefined;
+            this.vertOverflowType =  obj.vertOverflowType != undefined ? obj.vertOverflowType : undefined;
             this.shadow =  obj.shadow != undefined ? obj.shadow : undefined;
 
 			this.rot = obj.rot != undefined ? obj.rot : undefined;
@@ -2707,6 +2725,8 @@
 
             this.columnNumber = undefined;
             this.columnSpace =  undefined;
+            this.textFitType =  undefined;
+            this.vertOverflowType =  undefined;
 
 
 			this.rot = undefined;
@@ -2942,8 +2962,21 @@
 			return this.columnSpace;
 		},
 
+		asc_getTextFitType: function(){
+			return this.textFitType;
+		},
+		asc_getVertOverflowType: function(){
+			return this.vertOverflowType;
+		},
+
 		asc_putColumnSpace: function(v){
 			this.columnSpace = v;
+		},
+		asc_putTextFitType: function(v){
+			this.textFitType = v;
+		},
+		asc_putVertOverflowType: function(v){
+			this.vertOverflowType = v;
 		},
 
 		asc_getSignatureId : function() {
@@ -3302,7 +3335,7 @@
 					return false;
 				}
 			}
-			return true;
+			return this.name === oColorScheme.name;
 		}
 		return false;
 	};
@@ -3954,7 +3987,7 @@
                 if(oApi.WordControl && !oApi.WordControl.m_oLogicDocument)
 				{
 					bRemoveDocument = true;
-					oApi.WordControl.m_oLogicDocument = new CDocument();
+					oApi.WordControl.m_oLogicDocument = new AscCommonWord.CDocument();
 					oApi.WordControl.m_oDrawingDocument.m_oLogicDocument = oApi.WordControl.m_oLogicDocument;
 				}
                 oShape.setBDeleted(false);
@@ -4008,7 +4041,7 @@
 						oNewParagraph.Set_Align(oCurParS['align'])
 					}
 					if(Array.isArray(oCurParS['fill']) && oCurParS['fill'].length === 3){
-						var oShd = new CDocumentShd();
+						var oShd = new AscCommonWord.CDocumentShd();
 						oShd.Value = Asc.c_oAscShdClear;
 						oShd.Color.r = oCurParS['fill'][0];
 						oShd.Color.g = oCurParS['fill'][1];
@@ -4190,14 +4223,15 @@
                 var runs = pars[i]['runs'];
                 for (j = 0; j < runs.length; j++)
                 {
-                    if (undefined !== runs[j]["font-family"])
-                        fonts.push(runs[j]["font-family"]);
+                	if (undefined === runs[j]["font-family"])
+                        runs[j]["font-family"] = "Arial";
+                	fonts.push(runs[j]["font-family"]);
                 }
             }
 
             for (i = 0; i < fonts.length; i++)
             {
-                fonts[i] = new AscFonts.CFont(g_fontApplication.GetFontInfoName(fonts[i]), 0, "", 0, null);
+                fonts[i] = new AscFonts.CFont(AscFonts.g_fontApplication.GetFontInfoName(fonts[i]), 0, "", 0, null);
             }
 
 			if (false === AscCommon.g_font_loader.CheckFontsNeedLoading(fonts))
@@ -5020,7 +5054,11 @@
 	prot["get_ColumnNumber"] = prot["asc_getColumnNumber"] = prot.asc_getColumnNumber;
 	prot["put_ColumnNumber"] = prot["asc_putColumnNumber"] = prot.asc_putColumnNumber;
 	prot["get_ColumnSpace"] = prot["asc_getColumnSpace"] = prot.asc_getColumnSpace;
+	prot["get_TextFitType"] = prot["asc_getTextFitType"] = prot.asc_getTextFitType;
+	prot["get_VertOverflowType"] = prot["asc_getVertOverflowType"] = prot.asc_getVertOverflowType;
 	prot["put_ColumnSpace"] = prot["asc_putColumnSpace"] = prot.asc_putColumnSpace;
+	prot["put_TextFitType"] = prot["asc_putTextFitType"] = prot.asc_putTextFitType;
+	prot["put_VertOverflowType"] = prot["asc_putVertOverflowType"] = prot.asc_putVertOverflowType;
 	prot["get_SignatureId"] = prot["asc_getSignatureId"] = prot.asc_getSignatureId;
 	prot["put_SignatureId"] = prot["asc_putSignatureId"] = prot.asc_putSignatureId;
 	prot["get_FromImage"] = prot["asc_getFromImage"] = prot.asc_getFromImage;
@@ -5164,7 +5202,11 @@
 	prot["get_ColumnNumber"] = prot["asc_getColumnNumber"] = prot.asc_getColumnNumber;
 	prot["put_ColumnNumber"] = prot["asc_putColumnNumber"] = prot.asc_putColumnNumber;
 	prot["get_ColumnSpace"] = prot["asc_getColumnSpace"] = prot.asc_getColumnSpace;
+	prot["get_TextFitType"] = prot["asc_getTextFitType"] = prot.asc_getTextFitType;
+	prot["get_VertOverflowType"] = prot["asc_getVertOverflowType"] = prot.asc_getVertOverflowType;
 	prot["put_ColumnSpace"] = prot["asc_putColumnSpace"] = prot.asc_putColumnSpace;
+	prot["put_TextFitType"] = prot["asc_putTextFitType"] = prot.asc_putTextFitType;
+	prot["put_VertOverflowType"] = prot["asc_putVertOverflowType"] = prot.asc_putVertOverflowType;
 	prot["asc_getSignatureId"] = prot["asc_getSignatureId"] = prot.asc_getSignatureId;
 
 	prot["put_Shadow"] = prot.put_Shadow = prot["put_shadow"] = prot.put_shadow = prot["asc_putShadow"] = prot.asc_putShadow;
