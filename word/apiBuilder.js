@@ -56,6 +56,14 @@
 		this.Document = Document;
 	}
 
+	/**
+	 * Class represents a continuous region in a document. 
+	 * Each Range object is determined by the position of the start and end characters
+	 * @param oElement - may be Document, Table, Paragraph, Run, Hyperlink
+	 * @param {Number} Start - start element of Range into Element
+	 * @param {Number} End - end element of Range into Element
+	 * @constructor
+	 */
 	function ApiRange(oElement, Start, End)
 	{
 		if (oElement == null || oElement == undefined)
@@ -96,7 +104,7 @@
 		else 
 			this.isEmpty = false;
 
-		this.Text 		= this.GetText();
+		this.Text 		= this.private_GetText();
 		this.paragraphs = this.GetAllParagraphs();
 	};
 
@@ -465,14 +473,19 @@
 			}
 		}
 	};
-	ApiRange.prototype.GetParagraph = function(Index)
+	/**
+	 * Get a paragraph from all paragraphs that are in the range
+	 * @param {Number} nPos - position 
+	 * @return {ApiParagraph}
+	 */	
+	ApiRange.prototype.GetParagraph = function(nPos)
 	{
-		if (Index > this.paragraphs.length - 1 || Index < 0)
+		if (nPos > this.paragraphs.length - 1 || nPos < 0)
 			return false;
 		
-		return this.paragraphs[Index];
+		return this.paragraphs[nPos];
 	};
-	ApiRange.prototype.GetText = function()
+	ApiRange.prototype.private_GetText = function()
 	{
 		var Api = editor;
 		var ApiDocument = Api.GetDocument();
@@ -496,6 +509,18 @@
 
 		return Text;
 	};
+	/**
+	 * Get text in the specified range
+	 * @return {String}
+	 */	
+	ApiRange.prototype.GetText = function()
+	{
+		return this.Text;
+	};
+	/**
+	 * Gets a collection of paragraphs that represents all paragraphs in the specified range.
+	 * @return {Array}
+	 */	
 	ApiRange.prototype.GetAllParagraphs = function()
 	{
 		var done = false;
@@ -586,6 +611,10 @@
 
 		return RangeParagraphsList;
 	};
+	/**
+	 * Set the selection to the specified range.
+	 * @return {Array}
+	 */	
 	ApiRange.prototype.SetSelection = function(notUpdate)
 	{
 		if (this.isEmpty || this.isEmpty === undefined)
@@ -603,6 +632,11 @@
 			this.StartPos[0].Class.UpdateSelection();
 		}
 	};
+	/**
+	 * Set the bold property to the text character.
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {boolean} isBold - Specifies that the contents of this Range are displayed bold.
+	 */
 	ApiRange.prototype.SetBold = function(isBold)
 	{
 		if (this.isEmpty || this.isEmpty === undefined)
@@ -634,6 +668,11 @@
 
 		return this;
 	};
+	/**
+	 * Specify that any lowercase characters in this text Range are formatted for display only as their capital letter character equivalents.
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {boolean} isCaps - Specifies that the contents of the current Range are displayed capitalized.
+	 */
 	ApiRange.prototype.SetCaps = function(isCaps)
 	{
 		if (this.isEmpty || this.isEmpty === undefined)
@@ -664,6 +703,14 @@
 
 		return this;
 	};
+	/**
+	 * Set the text color for the current text Range in the RGB format.
+	 * @typeofeditors ["CDE"]
+	 * @param {byte} r - Red color component value.
+	 * @param {byte} g - Green color component value.
+	 * @param {byte} b - Blue color component value.
+	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then r,g,b parameters will be ignored.
+	 */
 	ApiRange.prototype.SetColor = function(r, g, b, isAuto)
 	{
 		if (this.isEmpty || this.isEmpty === undefined)
@@ -719,6 +766,11 @@
 
 		return this;
 	};
+	/**
+	 * Specify that the contents of this Range is displayed with two horizontal lines through each character displayed on the line.
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {boolean} isDoubleStrikeout - Specifies that the contents of the current Range are displayed double struck through.
+	 */
 	ApiRange.prototype.SetDoubleStrikeout = function(isDoubleStrikeout)
 	{
 		if (this.isEmpty || this.isEmpty === undefined)
@@ -750,6 +802,14 @@
 
 		return this;
 	};
+	/**
+	 * Specify a highlighting color in the RGB format which is applied as a background for the contents of the current Range.
+	 * @typeofeditors ["CDE"]
+	 * @param {byte} r - Red color component value.
+	 * @param {byte} g - Green color component value.
+	 * @param {byte} b - Blue color component value.
+	 * @param {boolean} [isNone=false] If this parameter is set to "true", then r,g,b parameters will be ignored.
+	 */
 	ApiRange.prototype.SetHighlight = function(r, g, b, isNone)
 	{
 		if (this.isEmpty || this.isEmpty === undefined)
@@ -790,6 +850,14 @@
 
 		return this;
 	};
+	/**
+	 * Specify the shading applied to the contents of the current text Range.
+	 * @typeofeditors ["CDE"]
+	 * @param {ShdType} sType - The shading type applied to the contents of the current text Range.
+	 * @param {byte} r - Red color component value.
+	 * @param {byte} g - Green color component value.
+	 * @param {byte} b - Blue color component value.
+	 */
 	ApiRange.prototype.SetShd = function(sType, r, g, b)
 	{
 		if (this.isEmpty || this.isEmpty === undefined)
@@ -853,6 +921,11 @@
 
 		return this;
 	};
+	/**
+	 * Set the italic property to the text character.
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {boolean} isItalic - Specifies that the contents of the current Range are displayed italicized.
+	 */
 	ApiRange.prototype.SetItalic = function(isItalic)
 	{
 		if (this.isEmpty || this.isEmpty === undefined)
@@ -884,6 +957,11 @@
 
 		return this;
 	};
+	/**
+	 * Specify that the contents of this Range are displayed with a single horizontal line through the center of the line.
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {boolean} isStrikeout - Specifies that the contents of the current Range are displayed struck through.
+	 */
 	ApiRange.prototype.SetStrikeout = function(isStrikeout)
 	{
 		if (this.isEmpty || this.isEmpty === undefined)
@@ -919,6 +997,12 @@
 
 		return this;
 	};
+	/**
+	 * Specify that all small letter characters in this text Range are formatted for display only as their capital
+	 * letter character equivalents in a font size two points smaller than the actual font size specified for this text.
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {boolean} isSmallCaps - Specifies that the contents of the current Range are displayed capitalized two points smaller.
+	 */
 	ApiRange.prototype.SetSmallCaps = function(isSmallCaps)
 	{
 		if (this.isEmpty || this.isEmpty === undefined)
@@ -953,6 +1037,11 @@
 
 		return this;
 	};
+	/**
+	 * Set text spacing measured in twentieths of a point.
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {twips} nSpacing - The value of the text spacing measured in twentieths of a point (1/1440 of an inch).
+	 */
 	ApiRange.prototype.SetSpacing = function(nSpacing)
 	{
 		if (this.isEmpty || this.isEmpty === undefined)
@@ -985,6 +1074,12 @@
 
 		return this;
 	};
+	/**
+	 * Specify that the contents of this Range are displayed along with a line appearing directly below the character
+	 * (less than all the spacing above and below the characters on the line).
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {boolean} isUnderline - Specifies that the contents of the current Range are displayed underlined.
+	 */
 	ApiRange.prototype.SetUnderline = function(isUnderline)
 	{
 		if (this.isEmpty || this.isEmpty === undefined)
@@ -1015,6 +1110,14 @@
 
 		return this;
 	};
+	/**
+	 * Specify the alignment which will be applied to the contents of this Range in relation to the default appearance of the Range text:
+	 * * <b>"baseline"</b> - the characters in the current text Range will be aligned by the default text baseline.
+	 * * <b>"subscript"</b> - the characters in the current text Range will be aligned below the default text baseline.
+	 * * <b>"superscript"</b> - the characters in the current text Range will be aligned above the default text baseline.
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {("baseline" | "subscript" | "superscript")} sType - The vertical alignment type applied to the text contents.
+	 */
 	ApiRange.prototype.SetVertAlign = function(sType)
 	{
 		if (this.isEmpty || this.isEmpty === undefined)
@@ -1057,6 +1160,13 @@
 
 		return this;
 	};
+	/**
+	 * Specify the amount by which text is raised or lowered for this Range in relation to the default
+	 * baseline of the surrounding non-positioned text.
+	 * @typeofeditors ["CDE"]
+	 * @param {hps} nPosition - Specifies a positive (raised text) or negative (lowered text)
+	 * measurement in half-points (1/144 of an inch).
+	 */
 	ApiRange.prototype.SetPosition = function(nPosition)
 	{
 		if (this.isEmpty || this.isEmpty === undefined)
@@ -1091,6 +1201,11 @@
 
 		return this;
 	};
+	/**
+	 * Set the font size for the characters of the current text Range.
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {hps} nSize - The text size value measured in half-points (1/144 of an inch).
+	 */
 	ApiRange.prototype.SetFontSize = function(FontSize)
 	{
 		if (this.isEmpty || this.isEmpty === undefined)
@@ -1122,6 +1237,11 @@
 
 		return this;
 	};
+	/**
+	 * Set all 4 font slots with the specified font family.
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} sFontFamily - The font family or families used for the current text Range.
+	 */
 	ApiRange.prototype.SetFontFamily = function(FontFamily)
 	{
 		if (this.isEmpty || this.isEmpty === undefined)
@@ -1169,6 +1289,11 @@
 		}
 		
 	};
+	/**
+	 * Set the style for the current Range
+	 * @typeofeditors ["CDE"]
+	 * @param {ApiStyle} oStyle - The style which must be applied to the text character.
+	 */
 	ApiRange.prototype.SetStyle = function(oStyle)
 	{
 		if (this.isEmpty || this.isEmpty === undefined)
@@ -1206,6 +1331,10 @@
 
 		return this;
 	};
+	/**
+	 * Delete all contents of the current range
+	 * @typeofeditors ["CDE"]
+	 */
 	ApiRange.prototype.Delete = function()
 	{
 		if (this.isEmpty || this.isEmpty === undefined)
