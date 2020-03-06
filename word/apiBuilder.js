@@ -60,8 +60,8 @@
 	 * Class represents a continuous region in a document. 
 	 * Each Range object is determined by the position of the start and end characters
 	 * @param oElement - may be Document, Table, Paragraph, Run, Hyperlink
-	 * @param {Number} Start - start element of Range into Element
-	 * @param {Number} End - end element of Range into Element
+	 * @param {Number} Start - start element of Range in current Element
+	 * @param {Number} End - end element of Range in current Element
 	 * @constructor
 	 */
 	function ApiRange(oElement, Start, End)
@@ -634,7 +634,7 @@
 	};
 	/**
 	 * Set the bold property to the text character.
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {boolean} isBold - Specifies that the contents of this Range are displayed bold.
 	 */
 	ApiRange.prototype.SetBold = function(isBold)
@@ -670,7 +670,7 @@
 	};
 	/**
 	 * Specify that any lowercase characters in this text Range are formatted for display only as their capital letter character equivalents.
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {boolean} isCaps - Specifies that the contents of the current Range are displayed capitalized.
 	 */
 	ApiRange.prototype.SetCaps = function(isCaps)
@@ -768,7 +768,7 @@
 	};
 	/**
 	 * Specify that the contents of this Range is displayed with two horizontal lines through each character displayed on the line.
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {boolean} isDoubleStrikeout - Specifies that the contents of the current Range are displayed double struck through.
 	 */
 	ApiRange.prototype.SetDoubleStrikeout = function(isDoubleStrikeout)
@@ -923,7 +923,7 @@
 	};
 	/**
 	 * Set the italic property to the text character.
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {boolean} isItalic - Specifies that the contents of the current Range are displayed italicized.
 	 */
 	ApiRange.prototype.SetItalic = function(isItalic)
@@ -959,7 +959,7 @@
 	};
 	/**
 	 * Specify that the contents of this Range are displayed with a single horizontal line through the center of the line.
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {boolean} isStrikeout - Specifies that the contents of the current Range are displayed struck through.
 	 */
 	ApiRange.prototype.SetStrikeout = function(isStrikeout)
@@ -1000,7 +1000,7 @@
 	/**
 	 * Specify that all small letter characters in this text Range are formatted for display only as their capital
 	 * letter character equivalents in a font size two points smaller than the actual font size specified for this text.
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {boolean} isSmallCaps - Specifies that the contents of the current Range are displayed capitalized two points smaller.
 	 */
 	ApiRange.prototype.SetSmallCaps = function(isSmallCaps)
@@ -1039,7 +1039,7 @@
 	};
 	/**
 	 * Set text spacing measured in twentieths of a point.
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {twips} nSpacing - The value of the text spacing measured in twentieths of a point (1/1440 of an inch).
 	 */
 	ApiRange.prototype.SetSpacing = function(nSpacing)
@@ -1077,7 +1077,7 @@
 	/**
 	 * Specify that the contents of this Range are displayed along with a line appearing directly below the character
 	 * (less than all the spacing above and below the characters on the line).
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {boolean} isUnderline - Specifies that the contents of the current Range are displayed underlined.
 	 */
 	ApiRange.prototype.SetUnderline = function(isUnderline)
@@ -1115,7 +1115,7 @@
 	 * * <b>"baseline"</b> - the characters in the current text Range will be aligned by the default text baseline.
 	 * * <b>"subscript"</b> - the characters in the current text Range will be aligned below the default text baseline.
 	 * * <b>"superscript"</b> - the characters in the current text Range will be aligned above the default text baseline.
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {("baseline" | "subscript" | "superscript")} sType - The vertical alignment type applied to the text contents.
 	 */
 	ApiRange.prototype.SetVertAlign = function(sType)
@@ -1203,7 +1203,7 @@
 	};
 	/**
 	 * Set the font size for the characters of the current text Range.
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {hps} nSize - The text size value measured in half-points (1/144 of an inch).
 	 */
 	ApiRange.prototype.SetFontSize = function(FontSize)
@@ -1239,7 +1239,7 @@
 	};
 	/**
 	 * Set all 4 font slots with the specified font family.
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {string} sFontFamily - The font family or families used for the current text Range.
 	 */
 	ApiRange.prototype.SetFontFamily = function(FontFamily)
@@ -1457,6 +1457,13 @@
 			return new ApiRun(this.ParaHyperlink.Content[nPos]);
 		}
 	};
+	/**
+	 * Returns a Range object that represents the part of the document contained in the specified hyperlink.
+	 * @typeofeditors ["CDE"]
+	 * @param {Number} Start - start character in current element
+	 * @param {Number} End - end character in current element
+	 * @returns {ApiRange} 
+	 * */
 	ApiParaHyperlink.prototype.GetRange = function(Start, End)
 	{
 		var Range = new ApiRange(this.ParaHyperlink, Start, End);
@@ -3850,6 +3857,13 @@
 		Document.SetSelectionByContentPositions(OldStartSelection, OldEndSelection);
 		Document.UpdateSelection();
 	};
+	/**
+	 * Returns a Range object that represents the part of the document contained in the specified document.
+	 * @typeofeditors ["CDE"]
+	 * @param {Number} Start - start character in current element
+	 * @param {Number} End - end character in current element
+	 * @returns {ApiRange} 
+	 * */
 	ApiDocument.prototype.GetRange = function(Start, End)
 	{
 		var Range = new ApiRange(this.Document, Start, End);
@@ -4420,7 +4434,13 @@
 		
 		return EndPos;
 	};
-
+	/**
+	 * Returns a Range object that represents the part of the document contained in the specified paragraph.
+	 * @typeofeditors ["CDE"]
+	 * @param {Number} Start - start character in current element
+	 * @param {Number} End - end character in current element
+	 * @returns {ApiRange} 
+	 * */
 	ApiParagraph.prototype.GetRange = function(Start, End)
 	{
 		var Range = new ApiRange(this.Paragraph, Start, End);
@@ -4576,8 +4596,12 @@
 	};
 
 	/**
-	 * Get range of text by start and end position into element 
-	 */
+	 * Returns a Range object that represents the part of the document contained in the specified run.
+	 * @typeofeditors ["CDE"]
+	 * @param {Number} Start - start character in current element
+	 * @param {Number} End - end character in current element
+	 * @returns {ApiRange} 
+	 * */
 	ApiRun.prototype.GetRange = function(Start, End)
 	{
 		var Range = new ApiRange(this.Run, Start, End);
@@ -5067,7 +5091,13 @@
 		var oTable = this.Table.Copy();
 		return new ApiTable(oTable);
 	};
-
+	/**
+	 * Returns a Range object that represents the part of the document contained in the specified table.
+	 * @typeofeditors ["CDE"]
+	 * @param {Number} Start - start character in current element
+	 * @param {Number} End - end character in current element
+	 * @returns {ApiRange} 
+	 * */
 	ApiTable.prototype.GetRange = function(Start, End)
 	{
 		var Range = new ApiRange(this.Table, Start, End)
