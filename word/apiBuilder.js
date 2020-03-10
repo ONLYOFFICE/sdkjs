@@ -613,7 +613,7 @@
 	};
 	/**
 	 * Set the selection to the specified range.
-	 * @return {Array}
+	 * @typeofeditors ["CDE"]
 	 */	
 	ApiRange.prototype.SetSelection = function(notUpdate)
 	{
