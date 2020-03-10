@@ -17412,6 +17412,72 @@
 		return res;
 	};
 
+	WorksheetView.prototype.changePrintTitles = function (width, height) {
+		var t = this;
+		var wb = window["Asc"]["editor"].wb;
+
+		var _convertRangeStr = function(_val) {
+			var _res;
+
+			//из интерфейса приходит в виду g_R1C1Mode
+			AscCommonExcel.executeInR1C1Mode(AscCommonExcel.g_R1C1Mode, function () {
+				_res = AscCommonExcel.g_oRangeCache.getAscRange(_val);
+			});
+			//в модель ->в виде A1B1
+			AscCommonExcel.executeInR1C1Mode(false, function () {
+				_res = parserHelp.get3DRef(t.model.getName(), _res.getAbsName());
+			});
+
+			return _res;
+		};
+
+		var onChangePrintTitles = function (isSuccess) {
+			if (false === isSuccess) {
+				return;
+			}
+
+			History.Create_NewPoint();
+			History.StartTransaction();
+
+
+			var t = this;
+			var printTitles = this.model.workbook.getDefinesNames("Print_Titles", this.model.getId());
+
+			var oldDefName = printTitles ? printTitles.getAscCDefName() : null;
+			var oldScope = oldDefName ? oldDefName.asc_getScope() : t.model.index;
+
+			var newRef;
+			if(width) {
+				newRef = _convertRangeStr(width);
+			}
+			if(height) {
+				if(newRef) {
+					newRef = newRef + ",";
+				} else {
+					newRef = "";
+				}
+				newRef += _convertRangeStr(width);
+			}
+
+			var newDefName = new Asc.asc_CDefName("Print_Titles", newRef, oldScope, false, null, null, true);
+			wb.editDefinedNames(oldDefName, newDefName);
+
+
+			History.EndTransaction();
+
+			t.recalcPrintScale();
+			t.changeViewPrintLines(true);
+
+			if(t.viewPrintLines) {
+				t.updateSelection();
+			}
+			window["Asc"]["editor"]._onUpdateLayoutMenu(t.model.Id);
+		};
+
+		//TODO нужно ли _isLockedLayoutOptions ?
+		return onChangePrintTitles()/*this._isLockedLayoutOptions(onChangePrintTitles)*/;
+	};
+
 	WorksheetView.prototype.changeViewPrintLines = function (val) {
 		this.viewPrintLines = val;
 	};

@@ -720,6 +720,12 @@ var editor;
       }
   };
 
+  spreadsheet_api.prototype.asc_changePrintTitles = function (width, height) {
+	  var sheetIndex = (undefined !== index && null !== index) ? index : this.wbModel.getActive();
+	  var ws = this.wb.getWorksheet(sheetIndex);
+	  ws.changePrintTitles(width, height);
+  };
+
   spreadsheet_api.prototype._onNeedParams = function(data, opt_isPassword) {
     var t = this;
     // Проверяем, возможно нам пришли опции для CSV
