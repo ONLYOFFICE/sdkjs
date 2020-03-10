@@ -17284,6 +17284,7 @@
 			}
 
 			pageOptions.asc_setOptions(obj);
+			t._changePrintTitles(obj.printTitlesWidth, obj.printTitlesHeight);
 
 			t.recalcPrintScale();
 			t.changeViewPrintLines(true);
@@ -17414,7 +17415,33 @@
 
 	WorksheetView.prototype.changePrintTitles = function (width, height) {
 		var t = this;
+
+		var onChangePrintTitles = function (isSuccess) {
+			if (false === isSuccess) {
+				return;
+			}
+
+			History.Create_NewPoint();
+			History.StartTransaction();
+
+			t._changePrintTitles(width, height);
+			t.changeViewPrintLines(true);
+
+			if(t.viewPrintLines) {
+				t.updateSelection();
+			}
+			window["Asc"]["editor"]._onUpdateLayoutMenu(t.model.Id);
+
+			History.EndTransaction();
+		};
+
+		//TODO нужно ли _isLockedLayoutOptions ?
+		return onChangePrintTitles()/*this._isLockedLayoutOptions(onChangePrintTitles)*/;
+	};
+
+	WorksheetView.prototype._changePrintTitles = function (width, height) {
 		var wb = window["Asc"]["editor"].wb;
+		var t = this;
 
 		var _convertRangeStr = function(_val) {
 			var _res;
@@ -17431,51 +17458,31 @@
 			return _res;
 		};
 
-		var onChangePrintTitles = function (isSuccess) {
-			if (false === isSuccess) {
-				return;
+		History.Create_NewPoint();
+		History.StartTransaction();
+
+		var printTitles = this.model.workbook.getDefinesNames("Print_Titles", this.model.getId());
+
+		var oldDefName = printTitles ? printTitles.getAscCDefName() : null;
+		var oldScope = oldDefName ? oldDefName.asc_getScope() : t.model.index;
+
+		var newRef;
+		if(width) {
+			newRef = _convertRangeStr(width);
+		}
+		if(height) {
+			if(newRef) {
+				newRef = newRef + ",";
+			} else {
+				newRef = "";
 			}
+			newRef += _convertRangeStr(width);
+		}
 
-			History.Create_NewPoint();
-			History.StartTransaction();
+		var newDefName = new Asc.asc_CDefName("Print_Titles", newRef, oldScope, false, null, null, true);
+		wb.editDefinedNames(oldDefName, newDefName);
 
-
-			var t = this;
-			var printTitles = this.model.workbook.getDefinesNames("Print_Titles", this.model.getId());
-
-			var oldDefName = printTitles ? printTitles.getAscCDefName() : null;
-			var oldScope = oldDefName ? oldDefName.asc_getScope() : t.model.index;
-
-			var newRef;
-			if(width) {
-				newRef = _convertRangeStr(width);
-			}
-			if(height) {
-				if(newRef) {
-					newRef = newRef + ",";
-				} else {
-					newRef = "";
-				}
-				newRef += _convertRangeStr(width);
-			}
-
-			var newDefName = new Asc.asc_CDefName("Print_Titles", newRef, oldScope, false, null, null, true);
-			wb.editDefinedNames(oldDefName, newDefName);
-
-
-			History.EndTransaction();
-
-			t.recalcPrintScale();
-			t.changeViewPrintLines(true);
-
-			if(t.viewPrintLines) {
-				t.updateSelection();
-			}
-			window["Asc"]["editor"]._onUpdateLayoutMenu(t.model.Id);
-		};
-
-		//TODO нужно ли _isLockedLayoutOptions ?
-		return onChangePrintTitles()/*this._isLockedLayoutOptions(onChangePrintTitles)*/;
+		History.EndTransaction();
 	};
 
 	WorksheetView.prototype.changeViewPrintLines = function (val) {

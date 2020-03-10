@@ -8741,6 +8741,10 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 		this.headings = null;
 		this.ws = ws;
 
+		//только для передачи из интефейса
+		this.printTitlesWidth = null;
+		this.printTitlesHeight = null;
+
 		return this;
 	}
 	asc_CPageOptions.prototype.init = function () {
@@ -8797,6 +8801,12 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 
 		this.asc_getPageMargins().asc_setOptions(obj.asc_getPageMargins());
 		this.asc_getPageSetup().asc_setOptions(obj.asc_getPageSetup());
+	};
+	asc_CPageOptions.prototype.asc_setPrintTitlesWidth = function (newVal) {
+		this.printTitlesWidth = newVal;
+	};
+	asc_CPageOptions.prototype.asc_setPrintTitlesHeight = function (newVal) {
+		this.printTitlesHeight = newVal;
 	};
 
 
@@ -9597,6 +9607,8 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 	prot["asc_setPageSetup"] = prot.asc_setPageSetup;
 	prot["asc_setGridLines"] = prot.asc_setGridLines;
 	prot["asc_setHeadings"] = prot.asc_setHeadings;
+	prot["asc_setPrintTitlesWidth"] = prot.asc_setPrintTitlesWidth;
+	prot["asc_setPrintTitlesHeight"] = prot.asc_setPrintTitlesHeight;
 
 	window["Asc"]["CHeaderFooter"] = window["Asc"].CHeaderFooter = CHeaderFooter;
 	window["Asc"]["CHeaderFooterData"] = window["Asc"].CHeaderFooterData = CHeaderFooterData;
