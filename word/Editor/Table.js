@@ -10670,26 +10670,7 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 						var Row  = this.GetRow(curRow);
 						var Cell = Row.Get_Cell(curCell);  //текущая ячейка
 
-						if (Math.abs(X1 - this.GetRow(curRow).CellsInfo[curCell].X_cell_start) < 1.5)
-						{
-							if (Cell.Get_Border(3).Value === 0)
-							{
-								var border   = new CDocumentBorder();
-								border.Value = 0x0001;
-
-								Cell.Set_Border(border, 3);
-							}
-						}
-						else if (Math.abs(this.GetRow(curRow).CellsInfo[curCell].X_cell_end - X1) < 1.5)
-						{
-							if (Cell.Get_Border(1).Value === 0)
-							{
-								var border  = new CDocumentBorder();
-								border.Value = 0x0001;
-
-								Cell.Set_Border(border, 1);
-							}
-						}
+						
 						
 						//Проверяем есть ли отступ у строки перед первой ячейкой,  если да, то учитываем это в сетке
 						//GridBefore строки должен совпадать с Grid_Start ячейки(перед которой отступ), чтобы условие выполнилось ровно один раз
@@ -10912,7 +10893,7 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 									{
 										var border = new CDocumentBorder();
 										border.Value = 0x0001;
-										
+
 										TempCell.Set_Border(border, 1);
 										NewCell.Set_Border(border, 3);
 									}
@@ -10924,6 +10905,35 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 							}
 							break;
 						}
+					}
+					else 
+					{
+						if (Rows.indexOf(curRow) != -1)
+						{
+							var Cell = this.GetRow(curRow).Get_Cell(curCell);
+							
+							if (Math.abs(X1 - this.GetRow(curRow).CellsInfo[curCell].X_cell_start) < 1.5)
+							{
+								if (Cell.Get_Border(3).Value === 0)
+								{
+									var border   = new CDocumentBorder();
+									border.Value = 0x0001;
+
+									Cell.Set_Border(border, 3);
+								}
+							}
+							else if (Math.abs(this.GetRow(curRow).CellsInfo[curCell].X_cell_end - X1) < 1.5)
+							{
+								if (Cell.Get_Border(1).Value === 0)
+								{
+									var border  = new CDocumentBorder();
+									border.Value = 0x0001;
+
+									Cell.Set_Border(border, 1);
+								}
+							}
+						}
+					
 					}
 				}
 			}
