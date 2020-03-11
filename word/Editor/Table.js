@@ -10908,6 +10908,14 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 									NewCell.Set_GridSpan(Grid_Info_new[1]);
 									NewCell.Set_W(new CTableMeasurement(tblwidth_Mm, Grid_width_2));
 
+									if (TempCell.GetBorder(3).Value === 0 && NewCell.GetBorder(1).Value === 0)
+									{
+										var border = new CDocumentBorder();
+										border.Value = 0x0001;
+										
+										TempCell.Set_Border(border, 1);
+										NewCell.Set_Border(border, 3);
+									}
 								}
 							}
 							if (VMerge_count > 1) 
