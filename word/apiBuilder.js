@@ -5035,14 +5035,15 @@
 	 */
 	ApiParagraph.prototype.SetStyle = function(oStyle)
 	{
-		
 		if (!(oStyle instanceof ApiStyle))
 			return false;
 
 		var Api = editor; 
 		var ApiDocument = Api.GetDocument();
 		var Document = private_GetLogicDocument();
-		
+
+		var styleName = oStyle.GetName();
+
 		var StartPos = this.GetStartPosition();
 		var EndPos   = this.GetEndPosition();
 
@@ -5050,7 +5051,7 @@
 
 		if (Document.IsSelectionUse())
 			oldSelectionInfo = ApiDocument.SaveSelectionInfo();
-		
+
 		Document.SetSelectionByContentPositions(StartPos, EndPos);
 		Document.SetParagraphStyle(styleName, true);
 		Document.RemoveSelection();
