@@ -447,6 +447,11 @@ var c_oAscPopUpSelectorType = {
       custom: 14
   };
 
+  var c_oAscPrintTitlesRangeType = {
+      first: 0,
+      frozen: 1,
+      current: 2
+  };
 
   var c_kMaxPrintPages = 1500;
 
@@ -706,5 +711,11 @@ var c_oAscPopUpSelectorType = {
   prot['userPageDate'] = prot.userPageDate;
   prot['preparedUserDatePage'] = prot.preparedUserDatePage;
   prot['custom'] = prot.custom;
+
+  window['Asc']['c_oAscPrintTitlesRangeType'] = window['Asc'].c_oAscPrintTitlesRangeType = c_oAscPrintTitlesRangeType;
+  prot = c_oAscPrintTitlesRangeType;
+  prot['first'] = prot.first;
+  prot['frozen'] = prot.frozen;
+  prot['current'] = prot.current;
 
 })(window);

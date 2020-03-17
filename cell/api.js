@@ -720,10 +720,16 @@ var editor;
       }
   };
 
-  spreadsheet_api.prototype.asc_changePrintTitles = function (width, height) {
+  spreadsheet_api.prototype.asc_changePrintTitles = function (width, height, index) {
 	  var sheetIndex = (undefined !== index && null !== index) ? index : this.wbModel.getActive();
 	  var ws = this.wb.getWorksheet(sheetIndex);
 	  ws.changePrintTitles(width, height);
+  };
+
+  spreadsheet_api.prototype.asc_getPrintTitlesRange = function (prop, byCol, index) {
+      var sheetIndex = (undefined !== index && null !== index) ? index : this.wbModel.getActive();
+      var ws = this.wb.getWorksheet(sheetIndex);
+      return ws.getPrintTitlesRange(prop, byCol);
   };
 
   spreadsheet_api.prototype._onNeedParams = function(data, opt_isPassword) {

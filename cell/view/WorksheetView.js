@@ -17439,6 +17439,63 @@
 		return onChangePrintTitles()/*this._isLockedLayoutOptions(onChangePrintTitles)*/;
 	};
 
+	WorksheetView.prototype.getPrintTitlesRange = function (prop, byCol) {
+		var res = null;
+		switch (prop) {
+			case Asc.c_oAscPrintTitlesRangeType.first: {
+				if(byCol) {
+					res = new Asc.Range(0, 0, 0, gc_nMaxRow0);
+				} else {
+					res = new Asc.Range(0, 0, gc_nMaxCol0, 0);
+				}
+				break;
+			}
+			case Asc.c_oAscPrintTitlesRangeType.frozen: {
+				if(this.topLeftFrozenCell) {
+					if(byCol) {
+						var cFrozen = this.topLeftFrozenCell.getCol0();
+						res = new Asc.Range(0, 0, cFrozen, gc_nMaxRow0);
+					} else {
+						var rFrozen = this.topLeftFrozenCell.getRow0();
+						res = new Asc.Range(0, 0, gc_nMaxCol0, rFrozen);
+					}
+				}
+				break;
+			}
+			case Asc.c_oAscPrintTitlesRangeType.current: {
+				var printTitles = this.model.workbook.getDefinesNames("Print_Titles", this.model.getId());
+				var c1, c2, r1, r2;
+				if (printTitles) {
+					var printTitleRefs;
+					AscCommonExcel.executeInR1C1Mode(false, function () {
+						printTitleRefs = AscCommonExcel.getRangeByRef(printTitles.ref, t.model, true, true)
+					});
+					if (printTitleRefs && printTitleRefs.length) {
+						for (var i = 0; i < printTitleRefs.length; i++) {
+							var bbox = printTitleRefs[i].bbox;
+							if (bbox) {
+								if (c_oAscSelectionType.RangeCol === bbox.getType()) {
+									c1 = bbox.c1;
+									c2 = bbox.c2;
+								} else if(c_oAscSelectionType.RangeRow === bbox.getType()) {
+									r1 = bbox.r1;
+									r2 = bbox.r2;
+								}
+							}
+						}
+					}
+				}
+				if (byCol && c1 !== undefined) {
+					res = new Asc.Range(c1, 0, c2, gc_nMaxRow0);
+				} else if(r1 !== undefined) {
+					res = new Asc.Range(0, r1, gc_nMaxCol0, r2);
+				}
+				break;
+			}
+		}
+		return res ? res.getAbsName() : null;
+	};
+
 	WorksheetView.prototype._changePrintTitles = function (width, height) {
 		var wb = window["Asc"]["editor"].wb;
 		var t = this;
