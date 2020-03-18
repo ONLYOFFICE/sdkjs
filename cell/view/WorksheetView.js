@@ -17414,7 +17414,7 @@
 		return res;
 	};
 
-	WorksheetView.prototype.changePrintTitles = function (width, height) {
+	WorksheetView.prototype.changePrintTitles = function (cols, rows) {
 		var t = this;
 
 		var onChangePrintTitles = function (isSuccess) {
@@ -17425,7 +17425,7 @@
 			History.Create_NewPoint();
 			History.StartTransaction();
 
-			t._changePrintTitles(width, height);
+			t._changePrintTitles(cols, rows);
 			t.changeViewPrintLines(true);
 
 			if(t.viewPrintLines) {
@@ -17498,11 +17498,11 @@
 		return res ? res.getAbsName() : null;
 	};
 
-	WorksheetView.prototype._changePrintTitles = function (width, height) {
+	WorksheetView.prototype._changePrintTitles = function (cols, rows) {
 		var wb = window["Asc"]["editor"].wb;
 		var t = this;
 
-		var _convertRangeStr = function(_val, _isHeight) {
+		var _convertRangeStr = function(_val, _byCols) {
 			var _res;
 
 			//из интерфейса приходит в виду g_R1C1Mode
@@ -17510,10 +17510,10 @@
 				_res = AscCommonExcel.g_oRangeCache.getAscRange(_val);
 			});
 
-			var c1 = _isHeight ? _res.c1 : 0;
-			var r1 = _isHeight ? 0 : _res.r1;
-			var c2 = _isHeight ? _res.c2 : gc_nMaxCol0;
-			var r2 = _isHeight ? gc_nMaxRow0 : _res.r2;
+			var c1 = _byCols ? _res.c1 : 0;
+			var r1 = _byCols ? 0 : _res.r1;
+			var c2 = _byCols ? _res.c2 : gc_nMaxCol0;
+			var r2 = _byCols ? gc_nMaxRow0 : _res.r2;
 			_res = Asc.Range(c1, r1, c2, r2);
 
 			//в модель ->в виде A1B1
@@ -17533,16 +17533,16 @@
 		var oldScope = oldDefName ? oldDefName.asc_getScope() : t.model.index;
 
 		var newRef;
-		if(width) {
-			newRef = _convertRangeStr(width);
+		if(cols) {
+			newRef = _convertRangeStr(cols, true);
 		}
-		if(height) {
+		if(rows) {
 			if(newRef) {
 				newRef = newRef + ",";
 			} else {
 				newRef = "";
 			}
-			newRef += _convertRangeStr(height, true);
+			newRef += _convertRangeStr(rows);
 		}
 
 		var newDefName = new Asc.asc_CDefName("Print_Titles", newRef, oldScope, false, null, null, true);

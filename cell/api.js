@@ -724,10 +724,10 @@ var editor;
       }
   };
 
-  spreadsheet_api.prototype.asc_changePrintTitles = function (width, height, index) {
+  spreadsheet_api.prototype.asc_changePrintTitles = function (cols, rows, index) {
 	  var sheetIndex = (undefined !== index && null !== index) ? index : this.wbModel.getActive();
 	  var ws = this.wb.getWorksheet(sheetIndex);
-	  ws.changePrintTitles(width, height);
+	  ws.changePrintTitles(cols, rows);
   };
 
   spreadsheet_api.prototype.asc_getPrintTitlesRange = function (prop, byHeight, index) {
