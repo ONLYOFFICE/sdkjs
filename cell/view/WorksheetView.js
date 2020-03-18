@@ -8681,7 +8681,8 @@
         // ToDo проблема с выбором целого столбца/строки
         var sAbsName = ar.getAbsName();
 		var sName = (c_oAscSelectionDialogType.FormatTable === this.selectionDialogType ||
-		c_oAscSelectionDialogType.CustomSort === this.selectionDialogType) ? sAbsName :
+		c_oAscSelectionDialogType.CustomSort === this.selectionDialogType ||
+		c_oAscSelectionDialogType.PrintTitles === this.selectionDialogType) ? sAbsName :
 			parserHelp.get3DRef(this.model.getName(), sAbsName);
         var type = ar.type;
         var selectionRangeValueObj = new AscCommonExcel.asc_CSelectionRangeValue();

@@ -107,7 +107,8 @@ var c_oAscSelectionDialogType = {
   FormatTable: 1,
   Chart: 2,
   FormatTableChangeRange: 4,
-  CustomSort: 5
+  CustomSort: 5,
+  PrintTitles: 6
 };
 
 var c_oAscScrollType = {
@@ -543,6 +544,7 @@ var c_oAscPopUpSelectorType = {
   prot['Chart'] = prot.Chart;
   prot['FormatTableChangeRange'] = prot.FormatTableChangeRange;
   prot['CustomSort'] = prot.CustomSort;
+  prot['PrintTitles'] = prot.PrintTitles;
   window['Asc']['c_oAscHyperlinkType'] = window['Asc'].c_oAscHyperlinkType = c_oAscHyperlinkType;
   prot = c_oAscHyperlinkType;
   prot['WebLink'] = prot.WebLink;
