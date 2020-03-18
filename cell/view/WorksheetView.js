@@ -17441,6 +17441,7 @@
 
 	WorksheetView.prototype.getPrintTitlesRange = function (prop, byCol) {
 		var res = null;
+		var t = this;
 		switch (prop) {
 			case Asc.c_oAscPrintTitlesRangeType.first: {
 				if(byCol) {
