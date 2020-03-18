@@ -17436,8 +17436,8 @@
 			History.EndTransaction();
 		};
 
-		//TODO нужно ли _isLockedLayoutOptions ?
-		return onChangePrintTitles()/*this._isLockedLayoutOptions(onChangePrintTitles)*/;
+		//лочу по аналогии со всеми опциями из print settings
+		this._isLockedLayoutOptions(onChangePrintTitles);
 	};
 
 	WorksheetView.prototype.getPrintTitlesRange = function (prop, byCol) {
