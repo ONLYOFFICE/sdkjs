@@ -687,9 +687,13 @@ var editor;
       this.wb.savePagePrintOptions(arrPagesPrint);
   };
 
-  spreadsheet_api.prototype.asc_getPageOptions = function(index) {
+  spreadsheet_api.prototype.asc_getPageOptions = function(index, initPrintTitles) {
     var sheetIndex = (undefined !== index && null !== index) ? index : this.wbModel.getActive();
-    return this.wbModel.getWorksheet(sheetIndex).PagePrintOptions;
+    var ws = this.wbModel.getWorksheet(sheetIndex);
+    if(initPrintTitles && ws.PagePrintOptions) {
+		ws.PagePrintOptions.initPrintTitles();
+    }
+    return ws.PagePrintOptions;
   };
 
   spreadsheet_api.prototype.asc_setPageOption = function (func, val, index) {
