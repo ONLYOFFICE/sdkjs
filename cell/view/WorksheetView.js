@@ -17500,13 +17500,20 @@
 		var wb = window["Asc"]["editor"].wb;
 		var t = this;
 
-		var _convertRangeStr = function(_val) {
+		var _convertRangeStr = function(_val, _isHeight) {
 			var _res;
 
 			//из интерфейса приходит в виду g_R1C1Mode
 			AscCommonExcel.executeInR1C1Mode(AscCommonExcel.g_R1C1Mode, function () {
 				_res = AscCommonExcel.g_oRangeCache.getAscRange(_val);
 			});
+
+			var c1 = _isHeight ? _res.c1 : 0;
+			var r1 = _isHeight ? 0 : _res.r1;
+			var c2 = _isHeight ? _res.c2 : gc_nMaxCol0;
+			var r2 = _isHeight ? gc_nMaxRow0 : _res.r2;
+			_res = Asc.Range(c1, r1, c2, r2);
+
 			//в модель ->в виде A1B1
 			AscCommonExcel.executeInR1C1Mode(false, function () {
 				_res = parserHelp.get3DRef(t.model.getName(), _res.getAbsName());
@@ -17533,7 +17540,7 @@
 			} else {
 				newRef = "";
 			}
-			newRef += _convertRangeStr(width);
+			newRef += _convertRangeStr(height, true);
 		}
 
 		var newDefName = new Asc.asc_CDefName("Print_Titles", newRef, oldScope, false, null, null, true);

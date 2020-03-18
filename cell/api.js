@@ -726,10 +726,10 @@ var editor;
 	  ws.changePrintTitles(width, height);
   };
 
-  spreadsheet_api.prototype.asc_getPrintTitlesRange = function (prop, byCol, index) {
+  spreadsheet_api.prototype.asc_getPrintTitlesRange = function (prop, byHeight, index) {
       var sheetIndex = (undefined !== index && null !== index) ? index : this.wbModel.getActive();
       var ws = this.wb.getWorksheet(sheetIndex);
-      return ws.getPrintTitlesRange(prop, byCol);
+      return ws.getPrintTitlesRange(prop, byHeight);
   };
 
   spreadsheet_api.prototype._onNeedParams = function(data, opt_isPassword) {
