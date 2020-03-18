@@ -8808,6 +8808,12 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 	asc_CPageOptions.prototype.asc_setPrintTitlesHeight = function (newVal) {
 		this.printTitlesHeight = newVal;
 	};
+	asc_CPageOptions.prototype.asc_getPrintTitlesWidth = function () {
+		return this.printTitlesWidth;
+	};
+	asc_CPageOptions.prototype.asc_getPrintTitlesHeight = function () {
+		return this.printTitlesHeight;
+	};
 
 
 	function CHeaderFooter(ws) {
@@ -9609,6 +9615,8 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 	prot["asc_setHeadings"] = prot.asc_setHeadings;
 	prot["asc_setPrintTitlesWidth"] = prot.asc_setPrintTitlesWidth;
 	prot["asc_setPrintTitlesHeight"] = prot.asc_setPrintTitlesHeight;
+	prot["asc_getPrintTitlesWidth"] = prot.asc_getPrintTitlesWidth;
+	prot["asc_getPrintTitlesHeight"] = prot.asc_getPrintTitlesHeight;
 
 	window["Asc"]["CHeaderFooter"] = window["Asc"].CHeaderFooter = CHeaderFooter;
 	window["Asc"]["CHeaderFooterData"] = window["Asc"].CHeaderFooterData = CHeaderFooterData;
