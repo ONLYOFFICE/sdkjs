@@ -17489,7 +17489,7 @@
 				}
 				if (byCol && c1 !== undefined) {
 					res = new Asc.Range(c1, 0, c2, gc_nMaxRow0);
-				} else if(r1 !== undefined) {
+				} else if(r1 !== undefined && !byCol) {
 					res = new Asc.Range(0, r1, gc_nMaxCol0, r2);
 				}
 				break;
@@ -17545,8 +17545,14 @@
 			newRef += _convertRangeStr(rows);
 		}
 
-		var newDefName = new Asc.asc_CDefName("Print_Titles", newRef, oldScope, false, null, null, true);
-		wb.editDefinedNames(oldDefName, newDefName);
+		if(!newRef) {
+			if(printTitles) {
+				wb.delDefinedNames(printTitles.getAscCDefName());
+			}
+		} else {
+			var newDefName = new Asc.asc_CDefName("Print_Titles", newRef, oldScope, false, null, null, true);
+			wb.editDefinedNames(oldDefName, newDefName);
+		}
 
 		History.EndTransaction();
 	};
