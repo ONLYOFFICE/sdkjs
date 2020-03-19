@@ -10787,7 +10787,7 @@ CTable.prototype.DrawVertLine = function(X1, Y1, X2, Y2, CurPageStart)
 							TempCell.Set_W(new CTableMeasurement(tblwidth_Mm, Grid_width_1));
 
 							var NewCell = TempRow.Add_Cell(TempCell_pos.Cell + 1, TempRow, null, false);
-							NewCell.Copy_Pr(TempCell.Pr);
+							NewCell.CopyParaPrAndTextPr(TempCell);
 							NewCell.Set_GridSpan(Grid_Info_new[1]);
 							NewCell.Set_W(new CTableMeasurement(tblwidth_Mm, Grid_width_2));
 
@@ -11023,7 +11023,7 @@ CTable.prototype.DrawHorLine = function(X1, Y1, X2, Y2, CurPageStart)
 			var New_Cell = NewRow.Get_Cell(CurCell);
 			var Old_Cell = Row.Get_Cell(CurCell);
 
-			New_Cell.Copy_Pr(Old_Cell.Pr);
+			New_Cell.CopyParaPrAndTextPr(Old_Cell);
 
 			if (CurCell === Cell_pos.Cell)
 			{
