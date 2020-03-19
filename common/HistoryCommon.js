@@ -2774,8 +2774,6 @@
     window['AscDFH'].historyitem_Sparkline_RemoveData = window['AscDFH'].historyitem_type_Sparkline | 28;
     window['AscDFH'].historyitem_Sparkline_RemoveSparkline = window['AscDFH'].historyitem_type_Sparkline | 29;
 
-	window['AscDFH'].historyitem_PivotTableDefinitionDelete = window['AscDFH'].historyitem_type_PivotTableDefinition | 1;
-
 
     window['AscDFH'].historyitem_NotesMasterSetHF          = window['AscDFH'].historyitem_type_NotesMaster | 1;
     window['AscDFH'].historyitem_NotesMasterSetNotesStyle  = window['AscDFH'].historyitem_type_NotesMaster | 2;

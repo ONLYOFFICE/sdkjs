@@ -661,9 +661,36 @@ Paragraph.prototype.Reset = function(X, Y, XLimit, YLimit, PageNum, ColumnNum, C
 	// уже нет Кроме случая, когда параграф меняет свое местоположение на страницах и колонках
 	if (true === this.Parent.RecalcInfo.Can_RecalcObject() || ColumnNumOld !== this.ColumnNum || PageNumOld !== this.PageNum)
 	{
+		this.private_RecalculateColumnLimits();
+	}
+};
+Paragraph.prototype.private_RecalculateColumnLimits = function()
+{
+	var X      = this.X;
+	var Y      = this.Y;
+	var XLimit = this.XLimit;
+	var YLimit = this.Y;
+
+	this.X_ColumnStart = X;
+	this.X_ColumnEnd   = XLimit;
+
+	if (this.bFromDocument && this.LogicDocument && this.LogicDocument.GetCompatibilityMode() <= document_compatibility_mode_Word14)
+	{
+		// Тут работает не совсем так как в MSWord версии 14 и раньше. Мы берем первые текстовые настройки и по ним
+		// оцениваем высоту первой строки. В MSWord идет расчет первой строки и берутся ее точные параметры.
+		// Временно отказался от такой схемы, чтобы не нагружать расчет лишними действиями, которые придется делать
+		// каждый раз ради вырожденной ситуации. В подавляющем большинстве случаев текущий вариант даст такой же
+		// результат как и в Ворде.
+
+		var oParaPr      = this.Get_CompiledPr2(false).ParaPr;
+		var oFirstTextPr = this.Get_FirstTextPr();
+		g_oTextMeasurer.SetTextPr(oFirstTextPr, this.Get_Theme());
+		g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
+		YLimit = Y + g_oTextMeasurer.GetHeight() + oParaPr.Spacing.Before + oParaPr.Spacing.After;
+
 		// Эти значения нужны для правильного рассчета положения картинок, смотри баг #34392
-		var Ranges = this.Parent.CheckRange(X, Y, XLimit, Y, Y, Y, X, XLimit, this.PageNum, true);
-		if (Ranges.length > 0 && this.bFromDocument && this.LogicDocument && this.LogicDocument.GetCompatibilityMode() <= document_compatibility_mode_Word14)
+		var Ranges = this.Parent.CheckRange(X, Y, XLimit, YLimit, Y, YLimit, X, XLimit, this.PageNum, true);
+		if (Ranges.length > 0)
 		{
 			if (Math.abs(Ranges[0].X0 - X) < 0.001)
 				this.X_ColumnStart = Ranges[0].X1;
@@ -681,11 +708,6 @@ Paragraph.prototype.Reset = function(X, Y, XLimit, YLimit, PageNum, ColumnNum, C
 				this.X_ColumnStart = X;
 				this.X_ColumnEnd   = XLimit;
 			}
-		}
-		else
-		{
-			this.X_ColumnStart = X;
-			this.X_ColumnEnd   = XLimit;
 		}
 	}
 };
@@ -1275,11 +1297,14 @@ Paragraph.prototype.Check_MathPara = function(MathPos)
 
 	return true;
 };
-Paragraph.prototype.GetEndInfo = function()
+Paragraph.prototype.RecalculateEndInfo = function()
 {
+	if (this.m_oPRSW.IsFastRecalculate())
+		return;
+
 	var oLogicDocument = this.GetLogicDocument();
 	if (oLogicDocument && this.EndInfoRecalcId === oLogicDocument.GetRecalcId())
-		return this.EndInfo;
+		return;
 
 	var oPRSI     = this.m_oPRSI;
 	var oPrevInfo = this.Parent.GetPrevElementEndInfo(this);
@@ -1294,7 +1319,9 @@ Paragraph.prototype.GetEndInfo = function()
 
 	if (oLogicDocument)
 		this.EndInfoRecalcId = oLogicDocument.GetRecalcId();
-
+};
+Paragraph.prototype.GetEndInfo = function()
+{
 	return this.EndInfo;
 };
 Paragraph.prototype.GetEndInfoByPage = function(CurPage)

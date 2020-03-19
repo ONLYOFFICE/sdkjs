@@ -137,7 +137,7 @@ CDrawingsController.prototype.ClearParagraphFormatting = function(isClearParaPr,
 };
 CDrawingsController.prototype.AddToParagraph = function(oItem, bRecalculate)
 {
-	if (para_NewLine === oItem.Type && true === oItem.IsPageOrColumnBreak())
+	if (para_NewLine === oItem.Type && true === oItem.IsPageBreak())
 		return;
 
 	this.DrawingObjects.paragraphAdd(oItem, bRecalculate);

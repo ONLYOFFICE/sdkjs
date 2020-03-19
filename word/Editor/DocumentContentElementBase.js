@@ -1155,6 +1155,10 @@ CDocumentContentElementBase.prototype.GetAllTablesOnPage = function(nPageAbs, ar
  * Обрабатываем сложные поля
  */
 CDocumentContentElementBase.prototype.ProcessComplexFields = function() {};
+/**
+ * Вычисляем EndInfo для всех параграфаов
+ */
+CDocumentContentElementBase.prototype.RecalculateEndInfo = function() {};
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

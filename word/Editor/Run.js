@@ -3094,9 +3094,12 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                             }
                             else
                             {
-                                // Слово не убирается в отрезке. Переносим слово в следующий отрезок
-                                MoveToLBP = true;
-                                NewRange = true;
+								if (!PRS.TryCondenseSpaces(SpaceLen + WordLen + LetterLen, WordLen + LetterLen, X, XEnd))
+								{
+									// Слово не убирается в отрезке. Переносим слово в следующий отрезок
+									MoveToLBP = true;
+									NewRange  = true;
+								}
                             }
                         }
 
@@ -3192,7 +3195,10 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                 }
                 case para_Space:
                 {
-					Item.CheckCondensedWidth(PRS.IsCondensedSpaces());
+					if (PRS.IsCondensedSpaces())
+						PRS.AddCondensedSpaceToRange(Item);
+					else
+						Item.ResetCondensedWidth();
 
 					if (Word && PRS.LastItem && para_Text === PRS.LastItem.Type && !PRS.LastItem.CanBeAtEndOfLine())
 					{
@@ -4458,8 +4464,22 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
 				if (0 !== PageAbs && CurPage > ColumnAbs)
 					_CurPage = CurPage - ColumnAbs;
 
-				var ColumnStartX = (0 === CurPage ? Para.X_ColumnStart : Para.Pages[_CurPage].X     );
-				var ColumnEndX   = (0 === CurPage ? Para.X_ColumnEnd   : Para.Pages[_CurPage].XLimit);
+				var ColumnStartX, ColumnEndX;
+				if (0 === CurPage)
+				{
+					// Нужно обновлять, т.к. картинка могла быть внутри данного параграфа и она могла изменить
+					// позицию привязки, а при этом в функцию Para.Reset мы не зашли (баг #44739)
+					if (Para.Parent.RecalcInfo.Can_RecalcObject() && 0 === CurLine)
+						Para.private_RecalculateColumnLimits();
+
+					ColumnStartX = Para.X_ColumnStart;
+					ColumnEndX   = Para.X_ColumnEnd;
+				}
+				else
+				{
+					ColumnStartX = Para.Pages[_CurPage].X;
+					ColumnEndX   = Para.Pages[_CurPage].XLimit;
+				}
 
                 var Top_Margin    = Y_Top_Margin;
                 var Bottom_Margin = Y_Bottom_Margin;
@@ -4702,12 +4722,19 @@ ParaRun.prototype.Recalculate_PageEndInfo = function(PRSI, _CurLine, _CurRange)
 };
 ParaRun.prototype.RecalculateEndInfo = function(oPRSI)
 {
+	if (this.Paragraph && this.Paragraph.m_oPRSW.IsFastRecalculate())
+		return;
+
 	for (var nCurPos = 0, nCount = this.Content.length; nCurPos < nCount; ++nCurPos)
 	{
 		var oItem = this.Content[nCurPos];
 		if (para_FieldChar === oItem.Type)
 		{
-			oPRSI.ProcessFieldChar(oItem);
+			oPRSI.ProcessFieldCharAndCollectComplexField(oItem);
+		}
+		else if (para_InstrText === oItem.Type)
+		{
+			oPRSI.ProcessInstruction(oItem);
 		}
 	}
 };

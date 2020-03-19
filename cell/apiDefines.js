@@ -108,7 +108,9 @@ var c_oAscSelectionDialogType = {
   Chart: 2,
   FormatTableChangeRange: 4,
   CustomSort: 5,
-  PrintTitles: 6
+  PivotTableData: 6,
+  PivotTableReport: 7
+  PrintTitles: 8
 };
 
 var c_oAscScrollType = {

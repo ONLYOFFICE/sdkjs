@@ -3627,7 +3627,7 @@
 
         var graphics = ctx && ctx.DocumentRenderer ? ctx.DocumentRenderer : this.handlers.trigger('getMainGraphics');
 
-		var fontSize = c.getFont().fs;
+		var fontSize = c.getFont().getSize();
 		var cellValue = c.getNumberValue();
 		width -= 2; // indent
 
@@ -6147,8 +6147,8 @@
                     }
                 }
             }
-            textBound.height += 3 * this.getZoom();
-            textBound.dy -= 1.5 * this.getZoom();
+            textBound.height += 3;
+            textBound.dy -= 1.5;
         }
 
         var cache = this._fetchCellCache(col, row);
@@ -6170,9 +6170,7 @@
         if (!angle && (cto.leftSide !== 0 || cto.rightSide !== 0)) {
             this._addErasedBordersToCache(col - cto.leftSide, col + cto.rightSide, row);
         }
-        if (!this.isZooming) {
             this._updateRowHeight(cache, row, maxW, colWidth);
-        }
 
         return mc ? mc.c2 : col;
     };
@@ -8712,7 +8710,6 @@
         var isNumberFormat = (!cellType || CellValueType.Number === cellType);
 
         var cell_info = new asc_CCellInfo();
-        cell_info.formula = c.getFormula();
 
 		AscCommonExcel.g_ActiveCell = new Asc.Range(c1, r1, c1, r1);
         cell_info.text = c.getValueForEdit(true);
@@ -10448,9 +10445,10 @@
             this._cleanSelectionMoveRange();
             return;
         }
-		if (this.model.inPivotTable([arnFrom, arnTo])) {
+		var errorPivot = this.model.checkMovePivotTable(arnFrom, arnTo, ctrlKey);
+		if (c_oAscError.ID.No !== errorPivot) {
 			this._cleanSelectionMoveRange();
-			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot, c_oAscError.Level.NoCritical);
+			this.model.workbook.handlers.trigger("asc_onError", errorPivot, c_oAscError.Level.NoCritical);
 			return;
 		}
 
@@ -10930,7 +10928,7 @@
                         if (val && val.hyperlinkModel) {
                             if (Asc.c_oAscHyperlinkType.RangeLink === val.asc_getType()) {
 								val.hyperlinkModel._updateLocation();
-                                if (null === val.hyperlinkModel.LocationRangeBbox) {
+                                if (null === val.hyperlinkModel.LocationRangeBbox && null !== val.hyperlinkModel.LocationSheet) {
                                     bIsUpdate = false;
                                     break;
                                 }
@@ -11007,6 +11005,19 @@
 					t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
 					return false;
 				}
+				if (val.data && val.data.pivotTables && val.data.pivotTables.length > 0) {
+					var intersectionTableParts = this.model.autoFilters.getTableIntersectionRange(newRange);
+					for (var i = 0; i < intersectionTableParts.length; i++) {
+						if(intersectionTableParts[i] && intersectionTableParts[i].Ref && !newRange.containsRange(intersectionTableParts[i].Ref)) {
+							t.handlers.trigger("onErrorEvent", c_oAscError.ID.PivotOverlap, c_oAscError.Level.NoCritical);
+							return false;
+						}
+					}
+				}
+				if(this.model._isPivotsIntersectRangeButNotInIt(newRange)) {
+					t.handlers.trigger("onErrorEvent", c_oAscError.ID.LockedCellPivot, c_oAscError.Level.NoCritical);
+					return false;
+				}
             }
         } else if (onlyActive) {
 			checkRange.push(new asc_Range(activeCell.col, activeCell.row, activeCell.col, activeCell.row));
@@ -11016,7 +11027,7 @@
 			});
 		}
 
-		if (("merge" === prop || "paste" === prop || "sort" === prop || "hyperlink" === prop || "rh" === prop ||
+		if (("merge" === prop || "sort" === prop || "hyperlink" === prop || "rh" === prop ||
 			"customSort" === prop) && this.model.inPivotTable(checkRange)) {
 			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot,
 				c_oAscError.Level.NoCritical);
@@ -11175,10 +11186,11 @@
 		var i;
 		var arnToRange = t.model.selectionRange.getLast();
 		var tablesMap = null, intersectionRangeWithTableParts;
+		var refInsertBinary;
 		if (fromBinary && val.TableParts && val.TableParts.length && specialPasteProps.formatTable) {
 			var range, tablePartRange, tables = val.TableParts, diffRow, diffCol, curTable, bIsAddTable;
 			var activeRange = AscCommonExcel.g_clipboardExcel.pasteProcessor.activeRange;
-			var refInsertBinary = AscCommonExcel.g_oRangeCache.getAscRange(activeRange);
+			refInsertBinary = AscCommonExcel.g_oRangeCache.getAscRange(activeRange);
 			for (i = 0; i < tables.length; i++) {
 				curTable = tables[i];
 				tablePartRange = curTable.Ref;
@@ -11230,6 +11242,19 @@
 			}
 		}
 
+		if (specialPasteProps.formatTable) {
+			t.model.deletePivotTables(pasteToRange);
+		}
+		if (fromBinary && refInsertBinary && val.pivotTables && val.pivotTables.length && specialPasteProps.formatTable) {
+			for (var i = 0; i < val.pivotTables.length; i++) {
+				var pivot = val.pivotTables[i];
+				pivot.setWS(t.model);
+				pivot.setOffset(new AscCommon.CellBase(arnToRange.r1 - refInsertBinary.r1, arnToRange.c1 - refInsertBinary.c1));
+				t.model.workbook.oApi._changePivotSimple(pivot, true, false, function() {
+					t.model.insertPivotTable(pivot, true, true);
+				});
+			}
+		}
 
 		//делаем unmerge ф/т
 		intersectionRangeWithTableParts = t.model.autoFilters._intersectionRangeWithTableParts(arnToRange);
@@ -13134,12 +13159,12 @@
 						};
 
 						arrChangedRanges.push(lockRange = new asc_Range(arn.c1, arn.r1, gc_nMaxCol0, arn.r2));
-						if (this.model.inPivotTable(lockRange)) {
+						count = checkRange.c2 - checkRange.c1 + 1;
+						if (this.model.checkShiftPivotTable(arn, new AscCommon.CellBase(0, count))) {
 							this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot,
 								c_oAscError.Level.NoCritical);
 							return;
 						}
-						count = checkRange.c2 - checkRange.c1 + 1;
 						if (!this.model.checkShiftArrayFormulas(arn, new AscCommon.CellBase(0, count))) {
 							this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
 							return;
@@ -13166,12 +13191,12 @@
 						};
 
 						arrChangedRanges.push(lockRange = new asc_Range(arn.c1, arn.r1, arn.c2, gc_nMaxRow0));
-						if (this.model.inPivotTable(lockRange)) {
+						count = checkRange.c2 - checkRange.c1 + 1;
+						if (this.model.checkShiftPivotTable(arn, new AscCommon.CellBase(count, 0))) {
 							this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot,
 								c_oAscError.Level.NoCritical);
 							return;
 						}
-						count = checkRange.c2 - checkRange.c1 + 1;
 						if (!this.model.checkShiftArrayFormulas(arn, new AscCommon.CellBase(count, 0))) {
 							this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
 							return;
@@ -13274,12 +13299,12 @@
 
 						arrChangedRanges.push(
 							lockRange = new asc_Range(checkRange.c1, checkRange.r1, gc_nMaxCol0, checkRange.r2));
-						if (this.model.inPivotTable(lockRange)) {
+						count = checkRange.c2 - checkRange.c1 + 1;
+						if (this.model.checkShiftPivotTable(arn, new AscCommon.CellBase(0, -count))) {
 							this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot,
 								c_oAscError.Level.NoCritical);
 							return;
 						}
-						count = checkRange.c2 - checkRange.c1 + 1;
 						if (!this.model.checkShiftArrayFormulas(arn, new AscCommon.CellBase(0, -count))) {
 							this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
 							return;
@@ -13312,12 +13337,12 @@
 
 						arrChangedRanges.push(
 							lockRange = new asc_Range(checkRange.c1, checkRange.r1, checkRange.c2, gc_nMaxRow0));
-						if (this.model.inPivotTable(lockRange)) {
+						count = checkRange.c2 - checkRange.c1 + 1;
+						if (this.model.checkShiftPivotTable(arn, new AscCommon.CellBase(-count, 0))) {
 							this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot,
 								c_oAscError.Level.NoCritical);
 							return;
 						}
-						count = checkRange.c2 - checkRange.c1 + 1;
 						if (!this.model.checkShiftArrayFormulas(arn, new AscCommon.CellBase(-count, 0))) {
 							this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
 							return;
@@ -15286,10 +15311,10 @@
 		}
     };
 
-    WorksheetView.prototype.getAddFormatTableOptions = function (range) {
+    WorksheetView.prototype.getAddFormatTableOptions = function (range, isPivot) {
         var selectionRange = this.model.selectionRange.getLast();
         //TODO возможно стоит перенести getAddFormatTableOptions во view
-        return this.model.autoFilters.getAddFormatTableOptions(selectionRange, range);
+        return this.model.autoFilters.getAddFormatTableOptions(selectionRange, range, isPivot);
     };
 
     WorksheetView.prototype.clearFilter = function () {
@@ -18772,6 +18797,8 @@
 			return;
 		}
 
+		var viewMode = this.handlers.trigger('getViewMode');
+
 		//при закрытии группы всем внутренним строкам проставляется hidden
 		//при открытии группы проходимся по всем строкам и открываем только те, которые не закрыты внутренними группами
 		//а для тех что закрыты внутренними группами - ещё раз скрыаем их
@@ -18790,7 +18817,13 @@
 				return;
 			}
 
+			if (viewMode) {
+				History.TurnOff();
+			}
 			asc_applyFunction(functionModelAction);
+			if (viewMode) {
+				History.TurnOn();
+			}
 
 			if(bCol) {
 				t._updateAfterChangeGroup(undefined, null, true);
@@ -18874,11 +18907,17 @@
 				t.model.workbook.dependencyFormulas.unlockRecal();
 			}
 		};
-		this._isLockedAll(onChangeWorksheetCallback);
+		if(viewMode) {
+			onChangeWorksheetCallback();
+		} else {
+			this._isLockedAll(onChangeWorksheetCallback);
+		}
+
 	};
 
 	WorksheetView.prototype.hideGroupLevel = function (level, bCol) {
 
+		var viewMode = this.handlers.trigger('getViewMode');
 		var t = this, groupArr;
 		if(bCol) {
 			groupArr = this.arrColGroups ? this.arrColGroups.groupArr : null;
@@ -18901,7 +18940,13 @@
 				return;
 			}
 
+			if (viewMode) {
+				History.TurnOff();
+			}
 			asc_applyFunction(callback);
+			if (viewMode) {
+				History.TurnOn();
+			}
 
 			if(bCol) {
 				t._updateAfterChangeGroup(undefined, null, true);
@@ -18972,7 +19017,11 @@
 			}
 		};
 
-		this._isLockedAll(onChangeWorksheetCallback);
+		if(viewMode) {
+			onChangeWorksheetCallback();
+		} else {
+			this._isLockedAll(onChangeWorksheetCallback);
+		}
 	};
 
 	WorksheetView.prototype.changeGroupDetails = function (bExpand) {

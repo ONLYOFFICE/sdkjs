@@ -1612,7 +1612,7 @@ var g_oFontProperties = {
 		return ((this.patternFill && c_oAscPatternType.None !== this.patternFill.patternType) || this.gradientFill);
 	};
 	Fill.prototype.getSolidFill = function () {
-		return (this.patternFill && c_oAscPatternType.Solid === this.patternFill.patternType) ? this.patternFill.fgColor : null;
+		return (this.patternFill && c_oAscPatternType.Solid === this.patternFill.patternType) ? (this.patternFill.fgColor || createRgbColor(255, 255, 255)) : null;
 	};
 	Fill.prototype.bg = function () {
 		var res = null;
@@ -3596,16 +3596,21 @@ Hyperlink.prototype = {
 		this.LocationSheet = this.LocationRange = this.LocationRangeBbox = null;
 
 		if (null !== Location) {
-			var result = parserHelp.parse3DRef(Location);
-			if (!result) {
-				// Can be in all mods. Excel bug...
-				AscCommonExcel.executeInR1C1Mode(!AscCommonExcel.g_R1C1Mode, function () {
-					result = parserHelp.parse3DRef(Location);
-				});
-			}
-			if (null !== result) {
-				this.LocationSheet = result.sheet;
-				this.LocationRange = result.range;
+			var result = parserHelp.isName(Location, 0);
+			if (result[0]) {
+				this.LocationRange = result[1];
+			} else {
+				result = parserHelp.parse3DRef(Location);
+				if (!result) {
+					// Can be in all mods. Excel bug...
+					AscCommonExcel.executeInR1C1Mode(!AscCommonExcel.g_R1C1Mode, function () {
+						result = parserHelp.parse3DRef(Location);
+					});
+				}
+				if (null !== result) {
+					this.LocationSheet = result.sheet;
+					this.LocationRange = result.range;
+				}
 			}
 		}
 		this._updateLocation();
@@ -3637,6 +3642,8 @@ Hyperlink.prototype = {
 				});
 				this.Location = parserHelp.get3DRef(this.LocationSheet, this.LocationRange);
 			}
+		} else if (null !== this.LocationRange) {
+			this.Location = this.LocationRange;
 		}
 	},
 	setVisited : function (bVisited) {
@@ -3656,10 +3663,10 @@ Hyperlink.prototype = {
 	},
 	getProperty : function (nType) {
 		switch (nType) {
-			case this.Properties.Ref: return parserHelp.get3DRef(this.Ref.worksheet.getName(), this.Ref.getName()); break;
-			case this.Properties.Location: return this.getLocation();break;
-			case this.Properties.Hyperlink: return this.Hyperlink;break;
-			case this.Properties.Tooltip: return this.Tooltip;break;
+			case this.Properties.Ref: return parserHelp.get3DRef(this.Ref.worksheet.getName(), this.Ref.getName());
+			case this.Properties.Location: return this.getLocation();
+			case this.Properties.Hyperlink: return this.Hyperlink;
+			case this.Properties.Tooltip: return this.Tooltip;
 		}
 	},
 	setProperty : function (nType, value) {

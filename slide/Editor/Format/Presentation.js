@@ -4772,41 +4772,43 @@ CPresentation.prototype.addImages = function (aImages, placeholder) {
         if (placeholder && undefined !== placeholder.id && aImages.length === 1 && aImages[0].Image) {
             var oPh = AscCommon.g_oTableId.Get_ById(placeholder.id);
             if (oPh) {
-                var oPh = AscCommon.g_oTableId.Get_ById(placeholder.id);
-                if (oPh) {
-
-                    History.Create_NewPoint(AscDFH.historydescription_Presentation_AddFlowImage);
-                    oController.resetSelection();
-                    var _w, _h;
-                    var _image = aImages[0];
-                    _w = oPh.extX;
-                    _h = oPh.extY;
-                    var __w = Math.max((_image.Image.width * AscCommon.g_dKoef_pix_to_mm), 1);
-                    var __h = Math.max((_image.Image.height * AscCommon.g_dKoef_pix_to_mm), 1);
+                History.Create_NewPoint(AscDFH.historydescription_Presentation_AddFlowImage);
+                oController.resetSelection();
+                var _w, _h;
+                var _image = aImages[0];
+                _w = oPh.extX;
+                _h = oPh.extY;
+                var __w = Math.max((_image.Image.width * AscCommon.g_dKoef_pix_to_mm), 1);
+                var __h = Math.max((_image.Image.height * AscCommon.g_dKoef_pix_to_mm), 1);
+                if(__w < _w && __h < _h) {
+                    _w = __w;
+                    _h = __h;
+                }
+                else {
                     var fKoeff = Math.min(_w / __w, _h / __h);
                     _w = Math.max(5, __w * fKoeff);
                     _h = Math.max(5, __h * fKoeff);
-                    var Image = oController.createImage(_image.src, oPh.x + oPh.extX / 2.0 - _w / 2.0, oPh.y + oPh.extY / 2.0 - _h / 2.0, _w, _h, _image.videoUrl, _image.audioUrl);
-                    if(AscFormat.isRealNumber(oPh.rot)) {
-                        if(Image.spPr && Image.spPr.xfrm) {
-                            Image.spPr.xfrm.setRot(oPh.rot);
-                        }
-                    }
-                    Image.setParent(this.Slides[this.CurPage]);
-                    if (this.Document_Is_SelectionLocked(AscCommon.changestype_Drawing_Props, undefined, undefined, [oPh])) {
-                        Image.addToDrawingObjects();
-                    }
-                    else {
-                        this.Slides[this.CurPage].replaceSp(oPh, Image);
-                    }
-                    oController.selectObject(Image, 0);
-                    this.Recalculate();
-                    this.Document_UpdateInterfaceState();
-                    this.CheckEmptyPlaceholderNotes();
-                    return;
-                } else {
-                    return;
                 }
+                var Image = oController.createImage(_image.src, oPh.x + oPh.extX / 2.0 - _w / 2.0, oPh.y + oPh.extY / 2.0 - _h / 2.0, _w, _h, _image.videoUrl, _image.audioUrl);
+                if(AscFormat.isRealNumber(oPh.rot)) {
+                    if(Image.spPr && Image.spPr.xfrm) {
+                        Image.spPr.xfrm.setRot(oPh.rot);
+                    }
+                }
+                Image.setParent(this.Slides[this.CurPage]);
+                if (this.Document_Is_SelectionLocked(AscCommon.changestype_Drawing_Props, undefined, undefined, [oPh])) {
+                    Image.addToDrawingObjects();
+                }
+                else {
+                    this.Slides[this.CurPage].replaceSp(oPh, Image);
+                }
+                oController.selectObject(Image, 0);
+                this.Recalculate();
+                this.Document_UpdateInterfaceState();
+                this.CheckEmptyPlaceholderNotes();
+                return;
+            } else {
+                return;
             }
         }
         History.Create_NewPoint(AscDFH.historydescription_Presentation_AddFlowImage);
@@ -5941,17 +5943,9 @@ CPresentation.prototype.OnKeyDown = function (e) {
     {
         if (oController && !this.FocusOnNotes) {
             var oDrawingObjects = oController;
-            if (oDrawingObjects.curState instanceof AscFormat.StartAddNewShape
-                || oDrawingObjects.curState instanceof AscFormat.SplineBezierState
-                || oDrawingObjects.curState instanceof AscFormat.PolyLineAddState
-                || oDrawingObjects.curState instanceof AscFormat.AddPolyLine2State
-                || oDrawingObjects.arrTrackObjects.length > 0) {
+            if (oDrawingObjects.checkTrackDrawings()) {
                 editor.sync_EndAddShape();
-                oDrawingObjects.changeCurrentState(new AscFormat.NullState(oDrawingObjects));
-                if (oDrawingObjects.arrTrackObjects.length > 0) {
-                    oDrawingObjects.clearTrackObjects();
-                    oDrawingObjects.updateOverlay();
-                }
+                oDrawingObjects.endTrackNewShape();
                 this.UpdateCursorType(0, 0, new AscCommon.CMouseEventHandler());
                 return;
             }
@@ -6773,17 +6767,9 @@ CPresentation.prototype.Notes_OnMouseDown = function (e, X, Y) {
     this.FocusOnNotes = true;
     var oCurSlide = this.Slides[this.CurPage];
     var oDrawingObjects = oCurSlide.graphicObjects;
-    if (oDrawingObjects.curState instanceof AscFormat.StartAddNewShape
-        || oDrawingObjects.curState instanceof AscFormat.SplineBezierState
-        || oDrawingObjects.curState instanceof AscFormat.PolyLineAddState
-        || oDrawingObjects.curState instanceof AscFormat.AddPolyLine2State
-        || oDrawingObjects.arrTrackObjects.length > 0) {
-        oDrawingObjects.changeCurrentState(new AscFormat.NullState(oDrawingObjects));
-        if (oDrawingObjects.arrTrackObjects.length > 0) {
-            oDrawingObjects.clearTrackObjects();
-            oDrawingObjects.updateOverlay();
-        }
+    if (oDrawingObjects.checkTrackDrawings()) {
         this.Api.sync_EndAddShape();
+        oDrawingObjects.endTrackNewShape();
         this.UpdateCursorType(0, 0, new AscCommon.CMouseEventHandler());
     }
     if (oCurSlide) {
@@ -8585,6 +8571,7 @@ CPresentation.prototype.InsertContent = function (Content) {
                                             }
                                         }
                                         oLstStyles.merge(oSp.txBody.lstStyle);
+                                        oBodyPr.merge(oSp.txBody.bodyPr);
                                         oSp.txBody.setLstStyle(oLstStyles);
                                         oSp.txBody.setBodyPr(oBodyPr);
                                     }
@@ -10220,16 +10207,8 @@ CPresentation.prototype.AddTextWithPr = function(sText, oTextPr, isMoveCursorOut
 CPresentation.prototype.AddTextArt = function (nStyle) {
     if (this.Slides[this.CurPage]) {
         var oDrawingObjects = this.Slides[this.CurPage].graphicObjects;
-        if (oDrawingObjects.curState instanceof AscFormat.StartAddNewShape
-            || oDrawingObjects.curState instanceof AscFormat.SplineBezierState
-            || oDrawingObjects.curState instanceof AscFormat.PolyLineAddState
-            || oDrawingObjects.curState instanceof AscFormat.AddPolyLine2State
-            || oDrawingObjects.arrTrackObjects.length > 0) {
-            oDrawingObjects.changeCurrentState(new AscFormat.NullState(oDrawingObjects));
-            if (oDrawingObjects.arrTrackObjects.length > 0) {
-                oDrawingObjects.clearTrackObjects();
-                oDrawingObjects.updateOverlay();
-            }
+        if (oDrawingObjects.checkTrackDrawings()) {
+            oDrawingObjects.endTrackNewShape();
             editor.sync_EndAddShape();
         }
 

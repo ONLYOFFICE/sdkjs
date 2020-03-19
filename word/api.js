@@ -5074,7 +5074,7 @@ background-repeat: no-repeat;\
 		    var t = this;
 			AscCommon.sendImgUrls(this, [url], function(data) {
 
-                if (data && data[0])
+                if (data && data[0] && data[0].url !== "error")
                     t.AddImageUrlAction(data[0].url, imgProp, obj);
 
             }, false, undefined, token);
@@ -5460,7 +5460,7 @@ background-repeat: no-repeat;\
 
                     AscCommon.sendImgUrls(this, [sImageToDownLoad], function(data) {
 
-                        if (data && data[0])
+                        if (data && data[0] && data[0].url !== "error")
                         {
                             fReplaceCallback(data[0].url);
                             fApplyCallback();
@@ -6084,7 +6084,7 @@ background-repeat: no-repeat;\
 			this.m_bSolved    = (undefined != obj.m_bSolved   ) ? obj.m_bSolved : false;
 			this.m_sUserName  = (undefined != obj.m_sUserName ) ? obj.m_sUserName : "";
 			this.m_sInitials  = (undefined != obj.m_sInitials ) ? obj.m_sInitials : this.asc_makeInitials(this.m_sUserName);
-			this.m_nDurableId = (undefined != obj.m_nDurableId) ? obj.m_nDurableId : AscCommon.CreateUInt32();
+			this.m_nDurableId = (undefined != obj.m_nDurableId) ? obj.m_nDurableId : AscCommon.CreateDurableId();
 			this.m_aReplies   = [];
 			if (undefined != obj.m_aReplies)
 			{
@@ -6108,7 +6108,7 @@ background-repeat: no-repeat;\
 			this.m_bSolved    = false;
 			this.m_sUserName  = "";
 			this.m_sInitials  = "";
-			this.m_nDurableId = AscCommon.CreateUInt32();
+			this.m_nDurableId = AscCommon.CreateDurableId();
 			this.m_aReplies   = [];
 		}
 	}
@@ -8916,7 +8916,7 @@ background-repeat: no-repeat;\
 
 				AscCommon.sendImgUrls(this, [sImageToDownLoad], function(data)
 				{
-					if (data && data[0])
+					if (data && data[0] && data[0].url !== "error")
 					{
 						fReplaceCallback(data[0].url);
 						fApplyCallback();

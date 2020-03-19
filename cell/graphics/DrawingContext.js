@@ -667,16 +667,10 @@
 	};
 
 	DrawingContext.prototype.AddClipRect = function (x, y, w, h) {
-		if (window["IS_NATIVE_EDITOR"]) {
-			return this;
-		}
 		return this.save().beginPath().rect(x, y, w, h).clip();
 	};
 
 	DrawingContext.prototype.RemoveClipRect = function () {
-		if (window["IS_NATIVE_EDITOR"]) {
-			return this;
-		}
 		return this.restore();
 	};
 

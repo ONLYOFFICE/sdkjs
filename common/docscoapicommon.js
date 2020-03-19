@@ -175,6 +175,10 @@
 		return code;
 	}
 
+	function getEnableDownloadByErrorCode(code) {
+		return Asc.c_oAscError.ID.UpdateVersion === code || Asc.c_oAscError.ID.SessionIdle === code || Asc.c_oAscError.ID.SessionAbsolute === code;
+	}
+
   /*
    * Export
    * -----------------------------------------------------------------------------
@@ -191,6 +195,7 @@
   prot["asc_getView"] = prot.asc_getView;
 
   window["AscCommon"].getDisconnectErrorCode = getDisconnectErrorCode;
+  window["AscCommon"].getEnableDownloadByErrorCode = getEnableDownloadByErrorCode;
 
   window["AscCommon"].ConnectionState = ConnectionState;
   window["AscCommon"].c_oEditorId = c_oEditorId;

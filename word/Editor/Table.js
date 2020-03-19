@@ -10670,26 +10670,7 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 						var Row  = this.GetRow(curRow);
 						var Cell = Row.Get_Cell(curCell);  //текущая ячейка
 
-						if (Math.abs(X1 - this.GetRow(curRow).CellsInfo[curCell].X_cell_start) < 1.5)
-						{
-							if (Cell.Get_Border(3).Value === 0)
-							{
-								var border   = new CDocumentBorder();
-								border.Value = 0x0001;
-
-								Cell.Set_Border(border, 3);
-							}
-						}
-						else if (Math.abs(this.GetRow(curRow).CellsInfo[curCell].X_cell_end - X1) < 1.5)
-						{
-							if (Cell.Get_Border(1).Value === 0)
-							{
-								var border  = new CDocumentBorder();
-								border.Value = 0x0001;
-
-								Cell.Set_Border(border, 1);
-							}
-						}
+						
 						
 						//Проверяем есть ли отступ у строки перед первой ячейкой,  если да, то учитываем это в сетке
 						//GridBefore строки должен совпадать с Grid_Start ячейки(перед которой отступ), чтобы условие выполнилось ровно один раз
@@ -10908,6 +10889,14 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 									NewCell.Set_GridSpan(Grid_Info_new[1]);
 									NewCell.Set_W(new CTableMeasurement(tblwidth_Mm, Grid_width_2));
 
+									if (TempCell.GetBorder(3).Value === 0 && NewCell.GetBorder(1).Value === 0)
+									{
+										var border = new CDocumentBorder();
+										border.Value = 0x0001;
+
+										TempCell.Set_Border(border, 1);
+										NewCell.Set_Border(border, 3);
+									}
 								}
 							}
 							if (VMerge_count > 1) 
@@ -10916,6 +10905,35 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 							}
 							break;
 						}
+					}
+					else 
+					{
+						if (Rows.indexOf(curRow) != -1)
+						{
+							var Cell = this.GetRow(curRow).Get_Cell(curCell);
+							
+							if (Math.abs(X1 - this.GetRow(curRow).CellsInfo[curCell].X_cell_start) < 1.5)
+							{
+								if (Cell.Get_Border(3).Value === 0)
+								{
+									var border   = new CDocumentBorder();
+									border.Value = 0x0001;
+
+									Cell.Set_Border(border, 3);
+								}
+							}
+							else if (Math.abs(this.GetRow(curRow).CellsInfo[curCell].X_cell_end - X1) < 1.5)
+							{
+								if (Cell.Get_Border(1).Value === 0)
+								{
+									var border  = new CDocumentBorder();
+									border.Value = 0x0001;
+
+									Cell.Set_Border(border, 1);
+								}
+							}
+						}
+					
 					}
 				}
 			}
@@ -19463,6 +19481,10 @@ CTable.prototype.GetTableOfContents = function(isUnique, isCheckFields)
  */
 CTable.prototype.DistributeColumns = function()
 {
+	if ((true != this.Selection.Use || (true === this.Selection.Use && table_Selection_Text === this.Selection.Type))
+		&& this.CurCell.Content.DistributeTableCells(true))
+		return true;
+
 	var isApplyToAll = this.ApplyToAll;
 	if (!this.Selection.Use || table_Selection_Text === this.Selection.Type)
 		this.ApplyToAll = true;
@@ -19635,6 +19657,10 @@ CTable.prototype.DistributeColumns = function()
  */
 CTable.prototype.DistributeRows = function()
 {
+	if ((true != this.Selection.Use || (true === this.Selection.Use && table_Selection_Text === this.Selection.Type))
+		&& this.CurCell.Content.DistributeTableCells(false))
+		return true;
+
 	var isApplyToAll = this.ApplyToAll;
 	if (!this.Selection.Use || table_Selection_Text === this.Selection.Type)
 		this.ApplyToAll = true;
@@ -20285,6 +20311,18 @@ CTable.prototype.ProcessComplexFields = function()
 		for (var nCurCell = 0, nCellsCount = oRow.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
 		{
 			oRow.GetCell(nCurCell).GetContent().ProcessComplexFields();
+		}
+	}
+};
+CTable.prototype.RecalculateEndInfo = function()
+{
+	for (var nCurRow = 0, nRowsCount = this.GetRowsCount(); nCurRow < nRowsCount; ++nCurRow)
+	{
+		var oRow = this.GetRow(nCurRow);
+		for (var nCurCell = 0, nCellsCount = oRow.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
+		{
+			var oCell = oRow.GetCell(nCurCell);
+			oCell.GetContent().RecalculateEndInfo();
 		}
 	}
 };

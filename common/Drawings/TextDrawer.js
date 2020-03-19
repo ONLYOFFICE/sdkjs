@@ -2183,11 +2183,6 @@ CTextDrawer.prototype =
         {
             if(oTextPr.TextFill)
             {
-                if(AscFormat.isRealNumber(oTextPr.TextFill.transparent) && oTextPr.TextFill.transparent < 254.5){
-                    var oRetFill = oTextPr.TextFill.createDuplicate();
-                    //oRetFill.transparent = 255.0 - oTextPr.TextFill.transparent;
-                    return oRetFill;
-                }
                 return oTextPr.TextFill;
             }
             if(oTextPr.Unifill)
@@ -2196,7 +2191,7 @@ CTextDrawer.prototype =
             }
             if(oTextPr.Color)
             {
-                return AscFormat.CreateUnfilFromRGB(oTextPr.Color.r, oTextPr.Color.g, oTextPr.Color.b)
+                return AscFormat.CreateUnfilFromRGB(oTextPr.Color.r, oTextPr.Color.g, oTextPr.Color.b);
             }
             return null;
         }
@@ -2205,11 +2200,11 @@ CTextDrawer.prototype =
             if(this.m_oBrush.Color1.R !== -1)
             {
                 var Color = this.m_oBrush.Color1;
-                return AscFormat.CreateUniFillByUniColor(AscFormat.CreateUniColorRGB(Color.R, Color.G, Color.B));
+                return AscFormat.CreateUnfilFromRGB(Color.R, Color.G, Color.B);
             }
             else
             {
-                return AscFormat.CreateUniFillByUniColor(AscFormat.CreateUniColorRGB(0, 0, 0));
+                return AscFormat.CreateUnfilFromRGB(0, 0, 0);
             }
         }
     },

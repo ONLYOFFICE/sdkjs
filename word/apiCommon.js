@@ -1833,10 +1833,11 @@
 			return;
 		}
 		AscCommon.sendImgUrls(_this.Api, [sUrl], function(data) {
-			if (data && data[0])
+			if (data && data[0] && data[0].url !== "error")
 			{
-				_this.Api.ImageLoader.LoadImagesWithCallback([data[0].url], function(){
-					_this.ImageUrl = data[0].url;
+				var url = AscCommon.g_oDocumentUrls.imagePath2Local(data[0].path);
+				_this.Api.ImageLoader.LoadImagesWithCallback([AscCommon.getFullImageSrc2(url)], function(){
+					_this.ImageUrl = url;
 					_this.Type = Asc.c_oAscWatermarkType.Image;
 					_this.drawTexture();
 					_this.Api.sendEvent("asc_onWatermarkImageLoaded");
@@ -1918,7 +1919,7 @@
 			return;
 		}
 		AscCommon.sendImgUrls(_this.Api, [sUrl], function(data) {
-			if (data && data[0])
+			if (data && data[0] && data[0].url !== "error")
 			{
 				_this.ImageLoader.LoadImagesWithCallback([data[0].url], function(){
 					_this.ImageUrl = data[0].url;
@@ -2044,7 +2045,7 @@
 	};
 	CAscDateTime.prototype['put_Update']  = CAscDateTime.prototype.put_Update = function(v)
 	{
-		this.put_Update = v;
+		this.Update = v;
 	};
 	CAscDateTime.prototype['get_Lang'] = CAscDateTime.prototype.get_Lang = function()
 	{
@@ -2092,7 +2093,7 @@
 			if (!oCultureInfo)
 				oCultureInfo = AscCommon.g_aCultureInfos[1033];
 
-			var oDateTime = new Asc.cDate(sDate);
+			var oDateTime = sDate ? new Asc.cDate(sDate) : new Asc.cDate();
 			return oFormat.formatToWord(oDateTime.getExcelDate() + (oDateTime.getHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
 		}
 

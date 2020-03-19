@@ -524,19 +524,61 @@ CShape.prototype.recalculateWrapPolygon = function()
 CShape.prototype.getArrayWrapPolygons = function()
 {
     var ret;
-    if(this.spPr && this.spPr.geometry)
-        ret =  this.spPr.geometry.getArrayPolygons();
-    else
+    if(this.blipFill && this.blipFill.srcRect &&
+        !(this.spPr && this.spPr.geometry && this.spPr.geometry.preset !== "rect"))
+    {
         ret = [];
-    var t = this.localTransform;
+        var oSrcRect = this.blipFill.srcRect;
+        var l = AscFormat.isRealNumber(oSrcRect.l) ? oSrcRect.l : 0;
+        var t = AscFormat.isRealNumber(oSrcRect.t) ? oSrcRect.t : 0;
+        var r = AscFormat.isRealNumber(oSrcRect.r) ? oSrcRect.r : 100;
+        var b = AscFormat.isRealNumber(oSrcRect.b) ? oSrcRect.b : 100;
+        var wpct = (r - l)/100.0;
+        var hpct = (b - t)/100.0;
+        var extX = this.extX/wpct;
+        var extY = this.extY/hpct;
+        var DX = -extX*l/100.0;
+        var DY = -extY*t/100.0;
+        var L = Math.max(0, DX);
+        var T = Math.max(0, DY);
+        var R = Math.min(this.extX, DX + extX);
+        var B = Math.min(this.extY, DY + extY);
+        var ret2 = [];
+        if(L >= this.extX || T >= this.extY || R <= 0 || B <= 0)
+        {
+            ret2.push({x: 0, y: 0});
+            ret2.push({x: this.extX, y: 0});
+            ret2.push({x: this.extX, y: this.extY});
+            ret2.push({x: 0, y: this.extY});
+            ret2.push({x: 0, y: 0});
+        }
+        else
+        {
+            ret2.push({x: L, y: T});
+            ret2.push({x: R, y: T});
+            ret2.push({x: R, y: B});
+            ret2.push({x: L, y: B});
+            ret2.push({x: L, y: T});
+        }
+        ret.push(ret2);
+    }
+    else if(this.spPr && this.spPr.geometry)
+    {
+        ret = this.spPr.geometry.getArrayPolygons();
+    }
+    else
+    {
+        ret = [];
+    }
+    var tr = this.localTransform;
     for(var i = 0; i < ret.length; ++i)
     {
         var polygon = ret[i];
         for(var j = 0; j < polygon.length; ++j)
         {
             var p = polygon[j];
-            var x = t.TransformPointX(p.x, p.y);
-            var y = t.TransformPointY(p.x, p.y);
+            var x = tr.TransformPointX(p.x, p.y);
+            var y = tr.TransformPointY(p.x, p.y);
             p.x = x;
             p.y = y;
         }
@@ -669,12 +711,6 @@ CShape.prototype.applyParentTransform = function(transform)
 CShape.prototype.recalculateShapeStyleForParagraph = function()
 {
     this.textStyleForParagraph = {TextPr: g_oDocumentDefaultTextPr.Copy(), ParaPr: g_oDocumentDefaultParaPr.Copy()};
-    var styles = this.Get_Styles();
-    if(styles)
-    {
-        this.textStyleForParagraph.ParaPr.Merge( styles.Default.ParaPr.Copy() );
-        this.textStyleForParagraph.TextPr.Merge( styles.Default.TextPr.Copy() );
-    }
     if(this.style && this.style.fontRef)
     {
         //this.textStyleForParagraph.ParaPr.Spacing.Line = 1;
@@ -698,6 +734,12 @@ CShape.prototype.recalculateShapeStyleForParagraph = function()
         }
         shape_text_pr.FontRef = this.style.fontRef.createDuplicate();
         this.textStyleForParagraph.TextPr.Merge(shape_text_pr);
+    }
+    var styles = this.Get_Styles();
+    if(styles)
+    {
+        this.textStyleForParagraph.ParaPr.Merge( styles.Default.ParaPr.Copy() );
+        this.textStyleForParagraph.TextPr.Merge( styles.Default.TextPr.Copy() );
     }
 };
 CShape.prototype.Get_ShapeStyleForPara = function()

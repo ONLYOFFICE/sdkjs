@@ -363,7 +363,8 @@ function CopyRunToPPTX(Run, Paragraph, bHyper)
         var Item = Run.Content[CurPos];
         if (   Item.Type !== para_End       && Item.Type !== para_Drawing     && Item.Type !== para_Comment
             && Item.Type !== para_PageCount && Item.Type !== para_FootnoteRef && Item.Type !== para_FootnoteReference
-            && Item.Type !== para_PageNum   && Item.Type !== para_FieldChar   && Item.Type !== para_Bookmark && Item.Type !== para_RevisionMove)
+            && Item.Type !== para_PageNum   && Item.Type !== para_FieldChar   && Item.Type !== para_Bookmark 
+            && Item.Type !== para_RevisionMove && Item.Type !== para_InstrText)
         {
             NewRun.Add_ToContent( PosToAdd, Item.Copy(), false );
             ++PosToAdd;
@@ -4344,7 +4345,6 @@ CShape.prototype.select = function (drawingObjectsController, pageIndex)
 
 CShape.prototype.deselect = function (drawingObjectsController) {
     this.selected = false;
-    this.addTextFlag = false;
     var selected_objects;
     if (!isRealObject(this.group))
         selected_objects = drawingObjectsController.selectedObjects;

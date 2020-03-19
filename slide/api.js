@@ -2914,7 +2914,7 @@ background-repeat: no-repeat;\
 
                 AscCommon.sendImgUrls(this, [sImageUrl], function(data) {
 
-                    if (data && data[0])
+                    if (data && data[0] && data[0].url !== "error")
                     {
                         image_url = data[0].url;
                         fApplyCallback();
@@ -3101,7 +3101,7 @@ background-repeat: no-repeat;\
 
                     AscCommon.sendImgUrls(this, [sImageUrl], function(data) {
 
-                        if (data && data[0])
+                        if (data && data[0] && data[0].url !== "error")
                         {
                             image_url = data[0].url;
                             fApplyCallback();
@@ -4166,7 +4166,7 @@ background-repeat: no-repeat;\
             var t = this;
             AscCommon.sendImgUrls(this, [url], function(data) {
 
-                if (data && data[0])
+                if (data && data[0] && data[0].url !== "error")
                     t.AddImageUrlAction(data[0].url, obj);
 
             }, false, undefined, token);
@@ -4359,7 +4359,7 @@ background-repeat: no-repeat;\
 
                 AscCommon.sendImgUrls(this, [sImageUrl], function(data) {
 
-                    if (data && data[0])
+                    if (data && data[0] && data[0].url !== "error")
                     {
                         ImagePr.ImageUrl = data[0].url;
                         fApplyCallback();
@@ -5760,7 +5760,7 @@ background-repeat: no-repeat;\
 		//if ( true === CollaborativeEditing.Get_GlobalLock() )
 		//    return false;
 
-		var bCanAdd = this.WordControl.m_oLogicDocument.CanAddHyperlink();
+		var bCanAdd = this.WordControl.m_oLogicDocument.CanAddHyperlink(true);
 		if (true === bCanAdd)
 			return this.WordControl.m_oLogicDocument.GetSelectedText(true);
 

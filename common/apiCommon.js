@@ -115,6 +115,16 @@
 	{
 		return Math.floor(Math.random() * 0x100000000);
 	}
+	function FixDurableId(val)
+	{
+		//numbers greater than 0x7FFFFFFE cause MS Office errors(ST_LongHexNumber by spec)
+		var res = val & 0x7FFFFFFF;
+		return (0x7FFFFFFF !== res) ? res : res - 1;
+	}
+	function CreateDurableId()
+	{
+		return FixDurableId(CreateUInt32());
+	}
 
 	var c_oLicenseResult = {
 		Error         : 1,
@@ -4568,6 +4578,8 @@
 	window["AscCommon"].CreateAscColor = CreateAscColor;
 	window["AscCommon"].CreateGUID = CreateGUID;
 	window["AscCommon"].CreateUInt32 = CreateUInt32;
+	window["AscCommon"].CreateDurableId = CreateDurableId;
+	window["AscCommon"].FixDurableId = FixDurableId;
 
 	window['Asc']['c_oLicenseResult'] = window['Asc'].c_oLicenseResult = c_oLicenseResult;
 	prot = c_oLicenseResult;

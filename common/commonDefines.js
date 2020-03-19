@@ -201,6 +201,8 @@
 			LockCreateDefName      : -311,
 
 			LockedCellPivot				: -312,
+			PivotLabledColumns			: -313,
+			PivotOverlap				: -314,
 
 			ForceSaveButton: -331,
 			ForceSaveTimeout: -332,
@@ -215,6 +217,8 @@
 			MailToClientMissing	: -452,
 
 			NoDataToParse : -601,
+
+			CannotCompareInCoEditing : 651,
 
 			CannotUngroupError : -700,
 
@@ -2148,6 +2152,7 @@
 	prot['OpenWarning']                      = prot.OpenWarning;
 	prot['DataEncrypted']                    = prot.DataEncrypted;
 	prot['NoDataToParse']                    = prot.NoDataToParse;
+	prot['CannotCompareInCoEditing']         = prot.CannotCompareInCoEditing;
 	prot['CannotUngroupError']               = prot.CannotUngroupError;
 	prot['UplDocumentSize']                  = prot.UplDocumentSize;
 	prot['UplDocumentExt']                   = prot.UplDocumentExt;

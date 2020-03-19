@@ -8816,6 +8816,7 @@ CDocument.prototype.OnKeyDown = function(e)
         {
             editor.sync_StartAddShapeCallback(false);
             editor.sync_EndAddShape();
+            this.DrawingObjects.endTrackNewShape();
             this.UpdateCursorType(this.CurPos.RealX, this.CurPos.RealY, this.CurPage, new AscCommon.CMouseEventHandler());
         }
         else if (docpostype_DrawingObjects === this.CurPos.Type || (docpostype_HdrFtr === this.CurPos.Type && null != this.HdrFtr.CurHdrFtr && docpostype_DrawingObjects === this.HdrFtr.CurHdrFtr.Content.CurPos.Type ))
@@ -12187,8 +12188,15 @@ CDocument.prototype.SelectComment = function(Id, ScrollToComment)
 		var Comment_Y       = Comment.m_oStartInfo.Y;
 		var Comment_X       = Comment.m_oStartInfo.X;
 
-		if (true === ScrollToComment)
-			this.DrawingDocument.m_oWordControl.ScrollToPosition(Comment_X, Comment_Y, Comment_PageNum);
+		if (true === ScrollToComment) {
+			if (!window["NATIVE_EDITOR_ENJINE"]) {
+				this.DrawingDocument.m_oWordControl.ScrollToPosition(Comment_X, Comment_Y, Comment_PageNum);
+			} else {
+				if (window["native"]["DD_WC_ScrollToPosition"] !== undefined) {
+					window["native"]["DD_WC_ScrollToPosition"](Comment_X, Comment_Y, Comment_PageNum);
+				}
+			}
+		}
 	}
 
 	if (OldId != Id)
@@ -16793,9 +16801,39 @@ CDocument.prototype.controller_AddToParagraph = function(ParaItem, bRecalculate)
 		{
 			Item.AddToParagraph(ParaItem);
 		}
-		else
+		else if (Item.IsTable())
 		{
-			// TODO: PageBreak в таблице не ставим
+			if (!ParaItem.IsPageBreak() && Item.IsInnerTable())
+			{
+				Item.AddToParagraph(ParaItem);
+			}
+			else
+			{
+				var oNewTable = Item.Split();
+				var oNewPara  = new Paragraph(this.DrawingDocument, this);
+
+				if (ParaItem.IsPageBreak())
+					oNewPara.AddToParagraph(new ParaNewLine(break_Page));
+
+				var nCurPos = this.CurPos.ContentPos;
+				if (oNewTable)
+				{
+					this.AddToContent(nCurPos + 1, oNewTable);
+					this.AddToContent(nCurPos + 1, oNewPara);
+					this.CurPos.ContentPos = nCurPos + 1;
+				}
+				else
+				{
+					this.AddToContent(nCurPos, oNewPara);
+					this.CurPos.ContentPos = nCurPos;
+				}
+
+				this.Content[this.CurPos.ContentPos].MoveCursorToStartPos(false);
+			}
+
+			this.Recalculate();
+			this.UpdateInterface();
+			this.UpdateSelection();
 			return;
 		}
 	}

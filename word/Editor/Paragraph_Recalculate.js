@@ -399,6 +399,7 @@ Paragraph.prototype.Recalculate_Page = function(CurPage)
     this.FontMap.NeedRecalc = true;
 
     this.Internal_CheckSpelling();
+    this.RecalculateEndInfo();
 
     var RecalcResult = this.private_RecalculatePage( CurPage );
 
@@ -1491,7 +1492,6 @@ Paragraph.prototype.private_RecalculateLinePosition    = function(CurLine, CurPa
         this.Pages[CurPage].Bounds.Top = Top;
 
     this.Pages[CurPage].Bounds.Bottom = Bottom;
-
 
     PRS.LineTop        = AscCommon.CorrectMMToTwips(Top);
     PRS.LineBottom     = AscCommon.CorrectMMToTwips(Bottom);
@@ -2832,6 +2832,7 @@ function CParagraphRecalculateStateWrap(Para)
     this.Word            = false;
     this.AddNumbering    = true;
     this.TextOnLine      = false;
+    this.RangeSpaces     = [];
 
     this.BreakPageLine      = false; // Разрыв страницы (параграфа) в данной строке
     this.UseFirstLine       = false;
@@ -3015,6 +3016,7 @@ CParagraphRecalculateStateWrap.prototype =
         this.X               = X;
         this.XEnd            = XEnd;
         this.XRange          = X;
+		this.RangeSpaces     = [];
 
 		this.MoveToLBP      = false;
 		this.LineBreakPos   = new CParagraphContentPos();
@@ -3506,6 +3508,52 @@ CParagraphRecalculateStateWrap.prototype.IsCondensedSpaces = function()
 {
 	return this.CondensedSpaces;
 };
+CParagraphRecalculateStateWrap.prototype.AddCondensedSpaceToRange = function(oSpace)
+{
+	this.RangeSpaces.push(oSpace);
+	oSpace.ResetCondensedWidth();
+};
+/**
+ * Пытаемся ужать пробелы по
+ * @param nWidth1
+ * @param nWidth2
+ * @param nX
+ * @param nXLimit
+ * @returns {boolean}
+ */
+CParagraphRecalculateStateWrap.prototype.TryCondenseSpaces = function(nWidth1, nWidth2, nX, nXLimit)
+{
+	if (!this.CondensedSpaces)
+		return false;
+
+	var nKoef = 1 - 0.25 * (Math.min(12.5, nWidth1) / 12.5);
+
+	var nSumSpaces = 0;
+	for (var nIndex = 0, nCount = this.RangeSpaces.length; nIndex < nCount; ++nIndex)
+	{
+		nSumSpaces += this.RangeSpaces[nIndex].WidthOrigin / TEXTWIDTH_DIVIDER;
+	}
+
+	var nSpace = nSumSpaces * (1 - nKoef);
+	if (nX - nSpace + nWidth1 < nXLimit)
+	{
+		for (var nIndex = 0, nCount = this.RangeSpaces.length; nIndex < nCount; ++nIndex)
+		{
+			this.RangeSpaces[nIndex].SetCondensedWidth(nKoef);
+		}
+
+		return true;
+	}
+	else
+	{
+		for (var nIndex = 0, nCount = this.RangeSpaces.length; nIndex < nCount; ++nIndex)
+		{
+			this.RangeSpaces[nIndex].ResetCondensedWidth();
+		}
+	}
+
+	return false;
+};
 CParagraphRecalculateStateWrap.prototype.CheckUpdateLBP = function(nInRunPos)
 {
 	 if (this.UpdateLBP)
@@ -3675,6 +3723,63 @@ CParagraphRecalculateStateInfo.prototype.IsComplexFieldCode = function()
 	}
 
 	return false;
+};
+CParagraphRecalculateStateInfo.prototype.ProcessFieldCharAndCollectComplexField = function(oChar)
+{
+	if (oChar.IsBegin())
+	{
+		var oComplexField = oChar.GetComplexField();
+		if (!oComplexField)
+		{
+			oChar.SetUse(false);
+		}
+		else
+		{
+			oChar.SetUse(true);
+			oComplexField.SetBeginChar(oChar);
+			this.ComplexFields.push(new CComplexFieldStatePos(oComplexField, true));
+		}
+	}
+	else if (oChar.IsEnd())
+	{
+		if (this.ComplexFields.length > 0)
+		{
+			oChar.SetUse(true);
+			var oComplexField = this.ComplexFields[this.ComplexFields.length - 1].ComplexField;
+			oComplexField.SetEndChar(oChar);
+			this.ComplexFields.splice(this.ComplexFields.length - 1, 1);
+
+			if (this.ComplexFields.length > 0 && this.ComplexFields[this.ComplexFields.length - 1].IsFieldCode())
+				this.ComplexFields[this.ComplexFields.length - 1].ComplexField.SetInstructionCF(oComplexField);
+		}
+		else
+		{
+			oChar.SetUse(false);
+		}
+	}
+	else if (oChar.IsSeparate())
+	{
+		if (this.ComplexFields.length > 0)
+		{
+			oChar.SetUse(true);
+			var oComplexField = this.ComplexFields[this.ComplexFields.length - 1].ComplexField;
+			oComplexField.SetSeparateChar(oChar);
+			this.ComplexFields[this.ComplexFields.length - 1].SetFieldCode(false);
+		}
+		else
+		{
+			oChar.SetUse(false);
+		}
+	}
+};
+CParagraphRecalculateStateInfo.prototype.ProcessInstruction = function(oInstruction)
+{
+	if (this.ComplexFields.length <= 0)
+		return;
+
+	var oComplexField = this.ComplexFields[this.ComplexFields.length - 1].ComplexField;
+	if (oComplexField && null === oComplexField.GetSeparateChar())
+		oComplexField.SetInstruction(oInstruction);
 };
 
 

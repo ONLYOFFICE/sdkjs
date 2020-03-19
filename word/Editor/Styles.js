@@ -12345,7 +12345,10 @@ CTextPr.prototype.Merge = function(TextPr)
 		this.Lang.Merge(TextPr.Lang);
 
 	if (TextPr.Unifill)
+	{
 		this.Unifill = TextPr.Unifill.createDuplicate();
+		this.TextFill = undefined;
+	}
 	else if (undefined != TextPr.Color)
 		this.Unifill = undefined;
 
@@ -12364,7 +12367,10 @@ CTextPr.prototype.Merge = function(TextPr)
 		this.TextOutline = TextPr.TextOutline.createDuplicate();
 
 	if (TextPr.TextFill)
+	{
 		this.TextFill = TextPr.TextFill.createDuplicate();
+		this.Unifill = undefined;
+	}
 
 	if (TextPr.HighlightColor)
 		this.HighlightColor = TextPr.HighlightColor.createDuplicate();

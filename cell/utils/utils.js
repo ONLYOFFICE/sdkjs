@@ -45,12 +45,6 @@
 
 		var c_oAscSelectionType = Asc.c_oAscSelectionType;
 
-		var c_oAscShiftType = {
-			None  : 0,
-			Move  : 1,
-			Change: 2
-		};
-
 
 		/** @const */
 		var kLeftLim1 = .999999999999999;
@@ -475,8 +469,7 @@
 			var isDelete = offset && (offset.col < 0 || offset.row < 0);
 			if (isHor) {
 				if (this.r1 <= range.r1 && range.r2 <= this.r2 && this.c1 <= range.c2) {
-					return (this.c1 < range.c1 || (!isDelete && this.c1 === range.c1 && this.c2 === range.c1)) ?
-						c_oAscShiftType.Move : c_oAscShiftType.Change;
+					return true;
 				} else if (isDelete && this.c1 <= range.c1 && range.c2 <= this.c2) {
 					var topIn = this.r1 <= range.r1 && range.r1 <= this.r2;
 					var bottomIn = this.r1 <= range.r2 && range.r2 <= this.r2;
@@ -484,15 +477,14 @@
 				}
 			} else {
 				if (this.c1 <= range.c1 && range.c2 <= this.c2 && this.r1 <= range.r2) {
-					return (this.r1 < range.r1 || (!isDelete && this.r1 === range.r1 && this.r2 === range.r1)) ?
-						c_oAscShiftType.Move : c_oAscShiftType.Change;
+					return true;
 				} else if (isDelete && this.r1 <= range.r1 && range.r2 <= this.r2) {
 					var leftIn = this.c1 <= range.c1 && range.c1 <= this.c2;
 					var rightIn = this.c1 <= range.c2 && range.c2 <= this.c2;
 					return leftIn || rightIn;
 				}
 			}
-			return c_oAscShiftType.None;
+			return false;
 		};
 
 		Range.prototype.difference = function(range) {
@@ -939,6 +931,12 @@
 		Range.prototype.switchReference = function () {
 			this.refType1 = (this.refType1 + 1) % 4;
 			this.refType2 = (this.refType2 + 1) % 4;
+		};
+		Range.prototype.getWidth = function() {
+			return this.c2 - this.c1 + 1;
+		};
+		Range.prototype.getHeight = function() {
+			return this.r2 - this.r1 + 1;
 		};
 
 		/**
@@ -1523,6 +1521,16 @@
 			}
 			return false;
 		};
+		MultiplyRange.prototype.getUnionRange = function() {
+			if (0 === this.ranges.length) {
+				return null;
+			}
+			var res = this.ranges[0].clone();
+			for (var i = 1; i < this.ranges.length; ++i) {
+				res.union2(this.ranges[i]);
+			}
+			return res;
+		};
 
 		function VisibleRange(visibleRange, offsetX, offsetY) {
 			this.visibleRange = visibleRange;
@@ -2028,10 +2036,6 @@
 		// Гиперссылка
 		/** @constructor */
 		function asc_CHyperlink (obj) {
-			if (!(this instanceof asc_CHyperlink)) {
-				return new asc_CHyperlink(obj);
-			}
-
 			// Класс Hyperlink из модели
 			this.hyperlinkModel = null != obj ? obj : new AscCommonExcel.Hyperlink();
 			// Используется только для выдачи наружу и выставлении обратно
@@ -2039,33 +2043,57 @@
 
 			return this;
 		}
-		asc_CHyperlink.prototype = {
-			constructor: asc_CHyperlink,
-			asc_getType: function () { return this.hyperlinkModel.getHyperlinkType(); },
-			asc_getHyperlinkUrl: function () { return this.hyperlinkModel.Hyperlink; },
-			asc_getTooltip: function () { return this.hyperlinkModel.Tooltip; },
-			asc_getLocation: function () { return this.hyperlinkModel.getLocation(); },
-			asc_getSheet: function () { return this.hyperlinkModel.LocationSheet; },
-			asc_getRange: function () {return this.hyperlinkModel.getLocationRange();},
-			asc_getText: function () { return this.text; },
 
-			asc_setType: function (val) {
-				// В принципе эта функция избыточна
-				switch (val) {
-					case Asc.c_oAscHyperlinkType.WebLink:
-						this.hyperlinkModel.setLocation(null);
-						break;
-					case Asc.c_oAscHyperlinkType.RangeLink:
-						this.hyperlinkModel.Hyperlink = null;
-						break;
-				}
-			},
-			asc_setHyperlinkUrl: function (val) { this.hyperlinkModel.Hyperlink = val; },
-			asc_setTooltip: function (val) { this.hyperlinkModel.Tooltip = val ? val.slice(0, Asc.c_oAscMaxTooltipLength) : val; },
-			asc_setLocation: function (val) { this.hyperlinkModel.setLocation(val); },
-			asc_setSheet: function (val) { this.hyperlinkModel.setLocationSheet(val); },
-			asc_setRange: function (val) { this.hyperlinkModel.setLocationRange(val); },
-			asc_setText: function (val) { this.text = val; }
+		asc_CHyperlink.prototype.asc_getType = function () {
+			return this.hyperlinkModel.getHyperlinkType();
+		};
+		asc_CHyperlink.prototype.asc_getHyperlinkUrl = function () {
+			return this.hyperlinkModel.Hyperlink;
+		};
+		asc_CHyperlink.prototype.asc_getTooltip = function () {
+			return this.hyperlinkModel.Tooltip;
+		};
+		asc_CHyperlink.prototype.asc_getLocation = function () {
+			return this.hyperlinkModel.getLocation();
+		};
+		asc_CHyperlink.prototype.asc_getSheet = function () {
+			return this.hyperlinkModel.LocationSheet;
+		};
+		asc_CHyperlink.prototype.asc_getRange = function () {
+			return this.hyperlinkModel.getLocationRange();
+		};
+		asc_CHyperlink.prototype.asc_getText = function () {
+			return this.text;
+		};
+
+		asc_CHyperlink.prototype.asc_setType = function (val) {
+			// В принципе эта функция избыточна
+			switch (val) {
+				case Asc.c_oAscHyperlinkType.WebLink:
+					this.hyperlinkModel.setLocation(null);
+					break;
+				case Asc.c_oAscHyperlinkType.RangeLink:
+					this.hyperlinkModel.Hyperlink = null;
+					break;
+			}
+		};
+		asc_CHyperlink.prototype.asc_setHyperlinkUrl = function (val) {
+			this.hyperlinkModel.Hyperlink = val;
+		};
+		asc_CHyperlink.prototype.asc_setTooltip = function (val) {
+			this.hyperlinkModel.Tooltip = val ? val.slice(0, Asc.c_oAscMaxTooltipLength) : val;
+		};
+		asc_CHyperlink.prototype.asc_setLocation = function (val) {
+			this.hyperlinkModel.setLocation(val);
+		};
+		asc_CHyperlink.prototype.asc_setSheet = function (val) {
+			this.hyperlinkModel.setLocationSheet(val);
+		};
+		asc_CHyperlink.prototype.asc_setRange = function (val) {
+			this.hyperlinkModel.setLocationRange(val);
+		};
+		asc_CHyperlink.prototype.asc_setText = function (val) {
+			this.text = val;
 		};
 
 		function CPagePrint() {
@@ -2741,7 +2769,6 @@
 		window['AscCommonExcel'].g_ActiveCell = null; // Active Cell for calculate (in R1C1 mode for relative cell)
 		window['AscCommonExcel'].g_R1C1Mode = false; // No calculate in R1C1 mode
 		window['AscCommonExcel'].kCurCells = "se-cells";
-		window["AscCommonExcel"].c_oAscShiftType = c_oAscShiftType;
 		window["AscCommonExcel"].recalcType = recalcType;
 		window["AscCommonExcel"].sizePxinPt = sizePxinPt;
 		window['AscCommonExcel'].c_sPerDay = c_sPerDay;

@@ -30,6 +30,8 @@
  *
  */
 
+var _internalStorage = {};
+
 function asc_menu_ReadColor(_params, _cursor) {
     var _color = new Asc.asc_CColor();
     var _continue = true;
@@ -3903,6 +3905,9 @@ function OfflineEditor () {
         docInfo.put_Format("xlsx");
         docInfo.put_UserInfo(userInfo);
         docInfo.put_Token(this.initSettings["token"]);
+
+        _internalStorage.externalUserInfo = userInfo;
+        _internalStorage.externalDocInfo = docInfo;
         
         var permissions = this.initSettings["permissions"];
         if (undefined != permissions && null != permissions && permissions.length > 0) {
@@ -4153,6 +4158,20 @@ function OfflineEditor () {
                                   stream["WriteString2"](JSON.stringify(options));
                                   window["native"]["OnCallMenuEvent"](22000, stream); // ASC_MENU_EVENT_TYPE_ADVANCED_OPTIONS
                                   });
+
+        // Comments
+
+        _api.asc_registerCallback("asc_onAddComment", onApiAddComment);
+        _api.asc_registerCallback("asc_onAddComments", onApiAddComments);
+        _api.asc_registerCallback("asc_onRemoveComment", onApiRemoveComment);
+        _api.asc_registerCallback("asc_onChangeComments", onApiChangeComments);
+        _api.asc_registerCallback("asc_onRemoveComments", onApiRemoveComments);
+        _api.asc_registerCallback("asc_onChangeCommentData", onApiChangeCommentData);
+        _api.asc_registerCallback("asc_onLockComment", onApiLockComment);
+        _api.asc_registerCallback("asc_onUnLockComment", onApiUnLockComment);
+        _api.asc_registerCallback("asc_onShowComment", onApiShowComment);
+        _api.asc_registerCallback("asc_onHideComment", onApiHideComment);
+        _api.asc_registerCallback("asc_onUpdateCommentPosition", onApiUpdateCommentPosition);
     };
     this.updateFrozen = function () {
         var ws = _api.wb.getWorksheet();
@@ -6504,7 +6523,7 @@ window["native"]["offline_apply_event"] = function(type,params) {
         }
         case 2160: // ASC_SPREADSHEETS_EVENT_TYPE_DELETE_WORKSHEET
         {
-            _api.asc_deleteWorksheet(params);
+            _api.asc_deleteWorksheet([params]);
             _s.asc_WriteAllWorksheets(true);
             break;
         }
@@ -6872,12 +6891,334 @@ window["native"]["offline_apply_event"] = function(type,params) {
             _api.asc_setDocumentPassword(params[0]);
             break;
         }
+
+        case 23101: // ASC_MENU_EVENT_TYPE_DO_SELECT_COMMENT
+            {
+                var json = JSON.parse(params[0]);
+                if (json && json["id"]) {
+                    var id = parseInt(json["id"]);
+                    if (_api.asc_selectComment && id) {
+                        _api.asc_selectComment(id);
+                    }
+                }
+                break;
+            }
+
+        case 23103: // ASC_MENU_EVENT_TYPE_DO_SELECT_COMMENTS
+            {
+                var json = JSON.parse(params[0]);
+                if (json) {
+                    if (_api.asc_showComments) {
+                        _api.asc_showComments(json["resolved"] === true);
+                    }
+                }
+                break;
+            }
+
+        case 23104: // ASC_MENU_EVENT_TYPE_DO_DESELECT_COMMENTS
+            {
+                if (_api.asc_hideComments) {
+                    _api.asc_hideComments();
+                }
+                break;
+            }
+
+        case 23105: // ASC_MENU_EVENT_TYPE_DO_ADD_COMMENT
+            {
+                var json = JSON.parse(params[0]);
+                if (json) {
+                    var buildCommentData = function () {
+                        if (typeof Asc.asc_CCommentDataWord !== 'undefined') {
+                            return new Asc.asc_CCommentDataWord(null);
+                        }
+                        return new Asc.asc_CCommentData(null);
+                    };
+
+                    var comment = buildCommentData();
+                    var now = new Date();
+                    var timeZoneOffsetInMs = (new Date()).getTimezoneOffset() * 60000;
+                    var currentUserId = _internalStorage.externalUserInfo.asc_getId();
+                    var currentUserName = _internalStorage.externalUserInfo.asc_getFullName();
+
+                    if (comment) {
+                        comment.asc_putText(json["text"]);
+                        comment.asc_putTime((now.getTime() - timeZoneOffsetInMs).toString());
+                        comment.asc_putOnlyOfficeTime(now.getTime().toString());
+                        comment.asc_putUserId(currentUserId);
+                        comment.asc_putUserName(currentUserName);
+                        comment.asc_putSolved(false);
+
+                        if (comment.asc_putDocumentFlag) {
+                            comment.asc_putDocumentFlag(json["unattached"]);
+                        }
+
+                        _api.asc_addComment(comment);
+                    }
+                }
+                break;
+            }
+
+        case 23106: // ASC_MENU_EVENT_TYPE_DO_REMOVE_COMMENT
+            {
+                var json = JSON.parse(params[0]);
+                if (json && json["id"]) { // id - String
+                    if (_api.asc_removeComment) {
+                        _api.asc_removeComment(json["id"]);
+                    }
+                }
+                break;
+            }
+
+        case 23107: // ASC_MENU_EVENT_TYPE_DO_REMOVE_ALL_COMMENTS
+            {
+                var json = JSON.parse(params[0]),
+                    type = json["type"],
+                    canEditComments = json["canEditComments"];
+                if (json && type) {
+                    if (_api.asc_RemoveAllComments) {
+                        _api.asc_RemoveAllComments(type == 'my' || !(canEditComments === true), type == 'current'); // 1 param = true if remove only my comments, 2 param - remove current comments
+                    }
+                }
+                break;
+            }
+
+        case 23108: // ASC_MENU_EVENT_TYPE_DO_CHANGE_COMMENT
+            {
+                var json = JSON.parse(params[0]),
+                    commentId = json["id"],
+                    comment = json["comment"];
+
+                if (json && commentId) {
+                    var timeZoneOffsetInMs = (new Date()).getTimezoneOffset() * 60000;
+                    var currentUserId = _internalStorage.externalUserInfo.asc_getId();
+                    var currentUserName = _internalStorage.externalUserInfo.asc_getFullName();
+                    var buildCommentData = function () {
+                        if (typeof Asc.asc_CCommentDataWord !== 'undefined') {
+                            return new Asc.asc_CCommentDataWord(null);
+                        }
+                        return new Asc.asc_CCommentData(null);
+                    };
+                    var ooDateToString = function (date) {
+                        if (Object.prototype.toString.call(date) === '[object Date]')
+                            return (date.getTime()).toString();
+                        return "";
+                    };
+                    var utcDateToString = function (date) {
+                        if (Object.prototype.toString.call(date) === '[object Date]')
+                            return (date.getTime() - timeZoneOffsetInMs).toString();
+                        return "";
+                    };
+                    var ascComment = buildCommentData();
+
+                    if (ascComment && comment && _api.asc_changeComment) {
+                        var sTime = new Date(parseInt(comment["date"]));
+                        ascComment.asc_putText(comment["text"]);
+                        ascComment.asc_putQuoteText(comment["quoteText"]);
+                        ascComment.asc_putTime(utcDateToString(sTime));
+                        ascComment.asc_putOnlyOfficeTime(ooDateToString(sTime));
+                        ascComment.asc_putUserId(comment["userId"]);
+                        ascComment.asc_putUserName(comment["userName"]);
+                        ascComment.asc_putSolved(comment["solved"]);
+                        ascComment.asc_putGuid(comment["id"]);
+
+                        if (ascComment.asc_putDocumentFlag !== undefined) {
+                            ascComment.asc_putDocumentFlag(comment["unattached"]);
+                        }
+
+                        var replies = comment["replies"];
+
+                        if (replies && replies.length) {
+                            replies.forEach(function (reply) {
+                                var addReply = buildCommentData();   //  new asc_CCommentData(null);
+                                if (addReply) {
+                                    var sTime = new Date(parseInt(reply["date"]));
+                                    addReply.asc_putText(reply["text"]);
+                                    addReply.asc_putTime(utcDateToString(sTime));
+                                    addReply.asc_putOnlyOfficeTime(ooDateToString(sTime));
+                                    addReply.asc_putUserId(reply["userId"]);
+                                    addReply.asc_putUserName(reply["userName"]);
+
+                                    ascComment.asc_addReply(addReply);
+                                }
+                            });
+                        }
+                        _api.asc_changeComment(commentId, ascComment);
+                    }
+                }
+                break;
+            }
             
         default:
             break;
     }
     
     return _return;
+}
+
+// Comments
+
+function postDataAsJSONString(data, eventId) {
+    var stream = global_memory_stream_menu;
+    stream["ClearNoAttack"]();
+    if (data !== undefined && data !== null) {
+        stream["WriteString2"](JSON.stringify(data));
+    }
+    window["native"]["OnCallMenuEvent"](eventId, stream);
+}
+
+function stringOOToLocalDate (date) {
+    if (typeof date === 'string')
+        return parseInt(date);
+    return 0;
+}
+
+function stringUtcToLocalDate(date) {
+    if (typeof date === 'string')
+        return parseInt(date) + (new Date()).getTimezoneOffset() * 60000;
+    return 0;
+}
+
+function readSDKComment(id, data) {
+    var date = data.asc_getOnlyOfficeTime()
+            ? new Date(stringOOToLocalDate(data.asc_getOnlyOfficeTime()))
+            : (data.asc_getTime() == '') ? new Date() : new Date(stringUtcToLocalDate(data.asc_getTime())),
+        groupname = id.substr(0, id.lastIndexOf('_') + 1).match(/^(doc|sheet[0-9_]+)_/);
+
+    return {
+        id          : id,
+        guid        : data.asc_getGuid(),
+        userId      : data.asc_getUserId(),
+        userName    : data.asc_getUserName(),
+        date        : date.getTime().toString(),
+        quoteText   : data.asc_getQuoteText(),
+        text        : data.asc_getText(),
+        solved      : data.asc_getSolved(),
+        unattached  : (data.asc_getDocumentFlag === undefined) ? false : data.asc_getDocumentFlag(),
+        groupName   : (groupname && groupname.length>1) ? groupname[1] : null,
+        replies     : readSDKReplies(data)
+    };
+}
+
+function readSDKReplies (data) {
+    var i = 0,
+        replies = [],
+        date = null;
+    var repliesCount = data.asc_getRepliesCount();
+    if (repliesCount) {
+        for (i = 0; i < repliesCount; ++i) {
+            var reply = data.asc_getReply(i);
+            date = (reply.asc_getOnlyOfficeTime()) 
+                ? new Date(stringOOToLocalDate(reply.asc_getOnlyOfficeTime()))
+                : ((reply.asc_getTime() == '') ? new Date() : new Date(stringUtcToLocalDate(reply.asc_getTime())));
+            replies.push({
+                userId      : reply.asc_getUserId(),
+                userName    : reply.asc_getUserName(),
+                text        : reply.asc_getText(),
+                date        : date.getTime().toString()
+            });
+        }
+    }
+    return replies;
+}
+
+function onApiAddComment(id, data) {
+    setTimeout(function () {
+        var comment = readSDKComment(id, data) || {};
+        postDataAsJSONString(comment, 23001); // ASC_MENU_EVENT_TYPE_ADD_COMMENT
+    }, 5);
+}
+
+function onApiAddComments(data) {
+    setTimeout(function() {
+        var comments = [];
+        for (var i = 0; i < data.length; ++i) {
+            comments.push(readSDKComment(data[i].asc_getId(), data[i]));
+        }
+        postDataAsJSONString(comments, 23002); // ASC_MENU_EVENT_TYPE_ADD_COMMENTS
+    }, 5);
+}
+
+function onApiRemoveComment(id) {
+    var data = {
+        "id": id
+    };
+    postDataAsJSONString(data, 23003); // ASC_MENU_EVENT_TYPE_REMOVE_COMMENT
+}
+
+function onApiChangeComments(data) {
+    var comments = [];
+    for (var i = 0; i < data.length; ++i) {
+        comments.push(readSDKComment(data[i].asc_getId(), data[i]));
+    }
+    postDataAsJSONString(comments, 23004); // ASC_MENU_EVENT_TYPE_CHANGE_COMMENTS
+}
+
+function onApiRemoveComments(data) {
+    var ids = [];
+    for (var i = 0; i < data.length; ++i) {
+        ids.push({
+            "id": data[i]
+        });
+    }
+    postDataAsJSONString(ids, 23005); // ASC_MENU_EVENT_TYPE_REMOVE_COMMENTS
+}
+
+function onApiChangeCommentData(id, data) {
+    var comment = readSDKComment(id, data) || {},
+        change = {
+            "id": id,
+            "comment": comment
+        };
+
+    postDataAsJSONString(change, 23006); // ASC_MENU_EVENT_TYPE_CHANGE_COMMENTDATA
+}
+
+function onApiLockComment(id, userId) {
+    var data = {
+        "id": id,
+        "userId": userId
+    };
+    postDataAsJSONString(data, 23007); // ASC_MENU_EVENT_TYPE_LOCK_COMMENT
+}
+
+function onApiUnLockComment(id) {
+    var data = {
+        "id": id
+    };
+    postDataAsJSONString(data, 23008); // ASC_MENU_EVENT_TYPE_UNLOCK_COMMENT
+}
+
+function onApiShowComment(uids, posX, posY, leftX, opts, hint) {
+    var data = {
+        "uids": uids,
+        "posX": posX,
+        "posY": posY,
+        "leftX": leftX,
+        "opts": opts,
+        "hint": hint
+    };
+    postDataAsJSONString(data, 23009); // ASC_MENU_EVENT_TYPE_SHOW_COMMENT
+}
+
+function onApiHideComment(hint) {
+    var data = {
+        "hint": hint
+    };
+    postDataAsJSONString(data, 23010); // ASC_MENU_EVENT_TYPE_HIDE_COMMENT
+}
+
+function onApiUpdateCommentPosition(uids, posX, posY, leftX) {
+    var data = {
+        "uids": uids,
+        "posX": posX,
+        "posY": posY,
+        "leftX": leftX
+    };
+    postDataAsJSONString(data, 23011); // ASC_MENU_EVENT_TYPE_UPDATE_COMMENT_POSITION
+}
+
+function onDocumentPlaceChanged() {
+    postDataAsJSONString(null, 23012); // ASC_MENU_EVENT_TYPE_DOCUMENT_PLACE_CHANGED
 }
 
 window["Asc"]["spreadsheet_api"].prototype.asc_setDocumentPassword = function(password)

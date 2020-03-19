@@ -361,7 +361,7 @@ CParaSpellChecker.prototype =
             var Element = this.Elements[Index];
             Element.CurPos = false;
 
-            if (1 >= Element.Word.length || this.private_IsAbbreviation(Element.Word))
+            if (1 >= Element.Word.length || AscCommon.private_IsAbbreviation(Element.Word))
 			{
 				Element.Checked = true;
 			}
@@ -737,28 +737,6 @@ CParaSpellChecker.prototype.ClearPausedEngine = function()
  * @param {string} sWord
  * @returns {boolean}
  */
-CParaSpellChecker.prototype.private_IsAbbreviation = function(sWord)
-{
-	if (sWord.toUpperCase() === sWord)
-	{
-		// Корейские символы считаются символами в верхнем регистре, но при этом мы не должны считать их аббревиатурой
-		for (var nPos = 0, nLen = sWord.length; nPos < nLen; ++nPos)
-		{
-			var nCharCode = sWord.charCodeAt(nPos);
-			if ((0xAC00 <= nCharCode && nCharCode <= 0xD7A3)
-				|| (0x1100 <= nCharCode && nCharCode <= 0x11FF)
-				|| (0x3130 <= nCharCode && nCharCode <= 0x318F)
-				|| (0xA960 <= nCharCode && nCharCode <= 0xA97F)
-				|| (0xD7B0 <= nCharCode && nCharCode <= 0xD7FF))
-				return false;
-		}
-
-		return true;
-	}
-
-	return false;
-};
-
 //----------------------------------------------------------------------------------------------------------------------
 // CParaSpellCheckerElement
 //----------------------------------------------------------------------------------------------------------------------

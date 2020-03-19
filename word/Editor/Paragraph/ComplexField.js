@@ -540,7 +540,7 @@ CComplexField.prototype.private_CalculateFORMULA = function()
 };
 CComplexField.prototype.private_UpdatePAGE = function()
 {
-	this.LogicDocument.AddText("" + this.private_CalculatePage());
+	this.LogicDocument.AddText("" + this.private_CalculatePAGE());
 };
 CComplexField.prototype.private_CalculatePAGE = function()
 {
@@ -761,7 +761,7 @@ CComplexField.prototype.private_UpdateTOC = function()
 				oPageRefRun.AddToContent(-1, new ParaFieldChar(fldchartype_Begin, this.LogicDocument));
 				oPageRefRun.AddInstrText("PAGEREF " + sBookmarkName + " \\h");
 				oPageRefRun.AddToContent(-1, new ParaFieldChar(fldchartype_Separate, this.LogicDocument));
-				oPageRefRun.AddText("" + (oSrcParagraph.GetFirstNonEmptyPageAbsolute() + 1));
+				oPageRefRun.AddText("" + this.LogicDocument.Get_SectionPageNumInfo2(oSrcParagraph.GetFirstNonEmptyPageAbsolute()).CurPage);
 				oPageRefRun.AddToContent(-1, new ParaFieldChar(fldchartype_End, this.LogicDocument));
 				oContainer.Add_ToContent(nContainerPos + 1, oPageRefRun);
 			}
@@ -834,7 +834,7 @@ CComplexField.prototype.private_CalculatePAGEREF = function()
 		}
 		else
 		{
-			sValue = (oStartBookmark.GetPage() + 1) + "";
+			sValue = (this.LogicDocument.Get_SectionPageNumInfo2(oStartBookmark.GetPage()).CurPage) + "";
 		}
 	}
 

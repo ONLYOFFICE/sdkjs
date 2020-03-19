@@ -1928,3 +1928,13 @@ CDocumentContentBase.prototype.IsElementStartOnNewPage = function(nElementPos)
 
 	return false;
 };
+/**
+ * Вычисляем EndInfo для всех параграфаов
+ */
+CDocumentContentBase.prototype.RecalculateEndInfo = function()
+{
+	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
+	{
+		this.Content[nIndex].RecalculateEndInfo();
+	}
+};

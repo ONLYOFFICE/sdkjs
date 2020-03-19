@@ -1932,6 +1932,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
                 Cell.Content.Set_StartPage( CurPage );
                 Cell.Content.Reset( X_content_start, Y_content_start, X_content_end, Y_content_end );
                 Cell.Content.Set_ClipInfo(0, Page.X + CellMetrics.X_cell_start, Page.X + CellMetrics.X_cell_end);
+                Cell.Content.RecalculateEndInfo();
 
                 if ( recalcresult2_NextPage === Cell.Content.Recalculate_Page( 0, true ) )
                 {
@@ -2349,6 +2350,11 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
             {
                 CurGridCol += GridSpan;
                 Merged_Cell.push( Cell );
+
+				// Приходится здесь обновлять EndInfo, т.к. мы можем начать пересчет следующей ячейки, до
+				// окончания полного пересчета предыдущей ячейки в строке
+				Cell.Content.RecalculateEndInfo();
+
                 continue;
             }
             else
@@ -2416,6 +2422,10 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
             Cell.Content.Set_ClipInfo(CellPageIndex, Page.X + CellMetrics.X_cell_start, Page.X + CellMetrics.X_cell_end);
             if ( CellPageIndex < Cell.PagesCount )
             {
+            	// Приходится здесь обновлять EndInfo, т.к. мы можем начать пересчет следующей ячейки, до
+				// окончания полного пересчета предыдущей ячейки в строке
+            	Cell.Content.RecalculateEndInfo();
+
                 if ( true === bCanShift )
                 {
                     Cell.Content.Shift( 0, ShiftDx, ShiftDy );

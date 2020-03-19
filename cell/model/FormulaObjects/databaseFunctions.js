@@ -44,6 +44,171 @@
 	var cNumber = AscCommonExcel.cNumber;
 	var cError = AscCommonExcel.cError;
 
+	function StatisticOnlineAlgorithm(){
+		this.count = 0;
+		this.countNums = 0;
+		this.min = Number.POSITIVE_INFINITY;
+		this.max = Number.NEGATIVE_INFINITY;
+		this.sum = 0;
+		this.product = 1;
+		this.mean = 0;
+		this.M2 = 0;
+		this.errorType = null;
+	}
+	StatisticOnlineAlgorithm.prototype.union = function(val) {
+		this.min = Math.min(this.min, val.min);
+		this.max = Math.max(this.max, val.max);
+		this.sum = this.sum + val.sum;
+		this.product = this.product * val.product;
+		//Parallel Welford's online algorithm
+		var delta = val.mean - this.mean;
+		if (this.countNums + val.countNums > 0) {
+			this.mean = this.mean + delta * val.countNums / (this.countNums + val.countNums);
+			this.M2 = this.M2 + val.M2 + delta * delta * this.countNums * val.countNums / (this.countNums + val.countNums);
+		}
+		this.count = this.count + val.count;
+		this.countNums = this.countNums + val.countNums;
+		this.errorType = this.errorType || val.errorType;
+	};
+	StatisticOnlineAlgorithm.prototype.add = function(val) {
+		this.count++;
+		this.countNums++;
+		this.min = Math.min(this.min, val);
+		this.max = Math.max(this.max, val);
+		this.sum += val;
+		this.product *= val;
+		//Welford's online algorithm
+		var delta = val - this.mean;
+		this.mean += delta / this.countNums;
+		this.M2 += delta * (val - this.mean);
+	};
+	StatisticOnlineAlgorithm.prototype.addCount = function() {
+		this.count++;
+	};
+	StatisticOnlineAlgorithm.prototype.addError = function(errorType) {
+		this.errorType = errorType;
+	};
+	StatisticOnlineAlgorithm.prototype.getCount = function() {
+		return this.count;
+	};
+	StatisticOnlineAlgorithm.prototype.getCountNums = function() {
+		return this.countNums;
+	};
+	StatisticOnlineAlgorithm.prototype.getMin = function() {
+		return this.min;
+	};
+	StatisticOnlineAlgorithm.prototype.getMax = function() {
+		return this.max;
+	};
+	StatisticOnlineAlgorithm.prototype.getSum = function() {
+		return this.sum;
+	};
+	StatisticOnlineAlgorithm.prototype.getMean = function() {
+		return this.mean;
+	};
+	StatisticOnlineAlgorithm.prototype.getProduct = function() {
+		return this.countNums > 0 ? this.product : 0;
+	};
+	StatisticOnlineAlgorithm.prototype.getVar = function() {
+		return this.countNums > 1 ? (this.M2 / (this.countNums - 1)) : 0;
+	};
+	StatisticOnlineAlgorithm.prototype.getVarP = function() {
+		return this.countNums > 0 ? (this.M2 / this.countNums) : 0;
+	};
+	StatisticOnlineAlgorithm.prototype.getStdDev = function() {
+		return Math.sqrt(this.getVar());
+	};
+	StatisticOnlineAlgorithm.prototype.getStdDevP = function() {
+		return Math.sqrt(this.getVarP());
+	};
+	StatisticOnlineAlgorithm.prototype.getCellValue = function(dataType, fieldType, rowType, colType) {
+		var oCellValue;
+		if (0 === this.count && 0 === this.countNums) {
+			return oCellValue;
+		}
+		oCellValue = new AscCommonExcel.CCellValue();
+		oCellValue.type = AscCommon.CellValueType.Number;
+		if (null !== this.errorType) {
+			oCellValue.type = AscCommon.CellValueType.Error;
+			oCellValue.text = AscCommonExcel.cError.prototype.getStringFromErrorType(this.errorType);
+			return oCellValue;
+		}
+		var type = dataType;
+		if (Asc.c_oAscItemType.Default !== fieldType && Asc.c_oAscItemType.Data !== fieldType && Asc.c_oAscItemType.Blank !== fieldType && Asc.c_oAscItemType.Grand !== fieldType) {
+			type = fieldType;
+		}
+		if (Asc.c_oAscItemType.Default !== rowType && Asc.c_oAscItemType.Data !== rowType && Asc.c_oAscItemType.Blank !== rowType && Asc.c_oAscItemType.Grand !== rowType) {
+			type = rowType;
+			if (Asc.c_oAscItemType.Default !== colType && Asc.c_oAscItemType.Data !== colType && Asc.c_oAscItemType.Blank !== colType && Asc.c_oAscItemType.Grand !== colType) {
+				if (rowType !== colType) {
+					type = Asc.c_oAscItemType.Blank;
+				}
+			}
+		}
+		switch (type) {
+			case Asc.c_oAscItemType.Count:
+				oCellValue.number = this.getCountNums();
+				break;
+			case Asc.c_oAscItemType.CountA:
+				oCellValue.number = this.getCount();
+				break;
+			case Asc.c_oAscItemType.Max:
+				oCellValue.number = this.countNums > 0 ? this.getMax() : 0;
+				break;
+			case Asc.c_oAscItemType.Min:
+				oCellValue.number = this.countNums > 0 ? this.getMin() : 0;
+				break;
+			case Asc.c_oAscItemType.Product:
+				oCellValue.number =  this.getProduct();
+				break;
+			case Asc.c_oAscItemType.Avg:
+				if (this.countNums > 0) {
+					oCellValue.number = this.getMean();
+				} else {
+					oCellValue.type = AscCommon.CellValueType.Error;
+					oCellValue.text = AscCommonExcel.cError.prototype.getStringFromErrorType(cErrorType.division_by_zero);
+				}
+				break;
+			case Asc.c_oAscItemType.StdDev:
+				if (this.countNums > 1) {
+					oCellValue.number = this.getStdDev();
+				} else {
+					oCellValue.type = AscCommon.CellValueType.Error;
+					oCellValue.text = AscCommonExcel.cError.prototype.getStringFromErrorType(cErrorType.division_by_zero);
+				}
+				break;
+			case Asc.c_oAscItemType.StdDevP:
+				if (this.countNums > 0) {
+					oCellValue.number = this.getStdDevP();
+				} else {
+					oCellValue.type = AscCommon.CellValueType.Error;
+					oCellValue.text = AscCommonExcel.cError.prototype.getStringFromErrorType(cErrorType.division_by_zero);
+				}
+				break;
+			case Asc.c_oAscItemType.Var:
+				if (this.countNums > 1) {
+					oCellValue.number = this.getVar();
+				} else {
+					oCellValue.type = AscCommon.CellValueType.Error;
+					oCellValue.text = AscCommonExcel.cError.prototype.getStringFromErrorType(cErrorType.division_by_zero);
+				}
+				break;
+			case Asc.c_oAscItemType.VarP:
+				if (this.countNums > 0) {
+					oCellValue.number = this.getVarP();
+				} else {
+					oCellValue.type = AscCommon.CellValueType.Error;
+					oCellValue.text = AscCommonExcel.cError.prototype.getStringFromErrorType(cErrorType.division_by_zero);
+				}
+				break;
+			case Asc.c_oAscItemType.Blank:
+				oCellValue = undefined;
+				break;
+			default: oCellValue.number = this.getSum();
+		}
+		return oCellValue;
+	};
+
 	function checkValueByCondition(condition, val){
 		var res = false;
 		condition = condition.tocString();
@@ -189,17 +354,19 @@
 
 		for(var i = 0; i < winElems.length; i++){
 			for(var j in winElems[i]){
-				if(true === usuallyAddElems[j] || cElementType.empty === needDataColumn[j].type){
-					continue;
-				}
+				if (winElems[i].hasOwnProperty(j)) {
+					if(true === usuallyAddElems[j] || cElementType.empty === needDataColumn[j].type){
+						continue;
+					}
 
-				if(bIsGetObjArray){
-					resArr.push(needDataColumn[j]);
-				}else{
-					resArr.push(needDataColumn[j].getValue());
-				}
+					if(bIsGetObjArray){
+						resArr.push(needDataColumn[j]);
+					}else{
+						resArr.push(needDataColumn[j].getValue());
+					}
 
-				usuallyAddElems[j] = true;
+					usuallyAddElems[j] = true;
+				}
 			}
 		}
 
@@ -793,4 +960,7 @@
 		return /*cElementType.error === res.type ? new cNumber(0) :*/ res;
 	};
 
+	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
+
+	window["AscCommonExcel"].StatisticOnlineAlgorithm = StatisticOnlineAlgorithm;
 })(window);

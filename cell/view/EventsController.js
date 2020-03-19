@@ -533,7 +533,7 @@
 				coord.x = -1;
 				coord.y = -1;
 			}
-			this.handlers.trigger("changeSelectionDone", coord.x, coord.y);
+			this.handlers.trigger("changeSelectionDone", coord.x, coord.y, event);
 		};
 
 		/** @param event {MouseEvent} */

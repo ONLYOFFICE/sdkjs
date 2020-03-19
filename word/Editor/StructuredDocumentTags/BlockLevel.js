@@ -2281,6 +2281,10 @@ CBlockLevelSdt.prototype.ProcessComplexFields = function()
 {
 	return this.Content.ProcessComplexFields();
 };
+CBlockLevelSdt.prototype.RecalculateEndInfo = function()
+{
+	this.Content.RecalculateEndInfo();
+};
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CBlockLevelSdt = CBlockLevelSdt;

@@ -533,7 +533,7 @@ ParaSpace.prototype.Measure = function(Context, TextPr)
 	this.Set_FontKoef_SmallCaps(true != TextPr.Caps && true === TextPr.SmallCaps ? true : false);
 
 	// Разрешенные размеры шрифта только либо целое, либо целое/2. Даже после применения FontKoef, поэтому
-	// мы должны подкрутить коэффициент так, чтобы после домножения на него, у на получался разрешенный размер.
+	// мы должны подкрутить коэффициент так, чтобы после домножения на него, у нас получался разрешенный размер
 	var FontKoef = this.Get_FontKoef();
 	var FontSize = TextPr.FontSize;
 	if (1 !== FontKoef)
@@ -541,7 +541,7 @@ ParaSpace.prototype.Measure = function(Context, TextPr)
 
 	Context.SetFontSlot(fontslot_ASCII, FontKoef);
 
-	var Temp = Context.MeasureCode(0x20);
+	var Temp  = Context.MeasureCode(0x20);
 
 	var ResultWidth  = (Math.max((Temp.Width + TextPr.Spacing), 0) * 16384) | 0;
 	this.Width       = ResultWidth;
@@ -601,15 +601,13 @@ ParaSpace.prototype.CanStartAutoCorrect = function()
 {
 	return true;
 };
-ParaSpace.prototype.CheckCondensedWidth = function(isCondensedSpaces)
+ParaSpace.prototype.SetCondensedWidth = function(nKoef)
 {
-	// TODO: Коэффициент 3/4 получен опытным путем, возможно есть параметр в шрифте соответствующий, но
-	// для шрифтов, которые я просмотрел был именно такой коэффициент
-
-	if (isCondensedSpaces)
-		this.Width = this.WidthOrigin * 0.75;
-	else
-		this.Width = this.WidthOrigin;
+	this.Width = this.WidthOrigin * nKoef;
+};
+ParaSpace.prototype.ResetCondensedWidth = function()
+{
+	this.Width = this.WidthOrigin;
 };
 
 

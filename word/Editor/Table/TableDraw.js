@@ -1697,7 +1697,7 @@ CTable.prototype.private_GetTableCellsBackgroundFrames = function(nCurPage, nSta
 				var X_cell_end   = oPage.X + oCellInfo.X_cell_end;
 
 				var nVMergeCount = this.Internal_GetVertMergeCount(nCurRow, nCurGridCol, nGridSpan);
-				var nRealHeight  = oHeaderPage.RowsInfo[nCurRow + nVMergeCount - 1].Y + HeaderPage.RowsInfo[nCurRow + nVMergeCount - 1].H - nY;
+				var nRealHeight  = oHeaderPage.RowsInfo[nCurRow + nVMergeCount - 1].Y + oHeaderPage.RowsInfo[nCurRow + nVMergeCount - 1].H - nY;
 
 				arrFrames.push({
 					X        : X_cell_start,

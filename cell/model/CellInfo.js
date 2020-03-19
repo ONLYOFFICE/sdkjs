@@ -255,7 +255,6 @@
 
 	/** @constructor */
 	function asc_CCellInfo() {
-		this.formula = "";
 		this.text = "";
 		this.halign = "left";
 		this.valign = "top";
@@ -284,9 +283,6 @@
 		this.isLockedHeaderFooter = false;
 	}
 
-	asc_CCellInfo.prototype.asc_getFormula = function () {
-		return this.formula;
-	};
 	asc_CCellInfo.prototype.asc_getText = function () {
 		return this.text;
 	};
@@ -496,7 +492,6 @@
 	window["AscCommonExcel"].asc_CCellInfo = asc_CCellInfo;
 	prot = asc_CCellInfo.prototype;
 	prot["asc_getName"] = prot.asc_getName;
-	prot["asc_getFormula"] = prot.asc_getFormula;
 	prot["asc_getText"] = prot.asc_getText;
 	prot["asc_getHorAlign"] = prot.asc_getHorAlign;
 	prot["asc_getVertAlign"] = prot.asc_getVertAlign;

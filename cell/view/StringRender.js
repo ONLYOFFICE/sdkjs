@@ -269,7 +269,6 @@
                 isVertCenter    = (Asc.c_oAscVAlign.Center === alignVertical || Asc.c_oAscVAlign.Dist === alignVertical || Asc.c_oAscVAlign.Just === alignVertical),
                 isVertTop       = (Asc.c_oAscVAlign.Top    === alignVertical);
 			
-				tm.height = tm.height * ctx.getZoom();
 				
             if (isVertBottom) {
                 if (angle < 0) {

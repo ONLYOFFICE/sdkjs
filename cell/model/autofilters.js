@@ -886,7 +886,7 @@
 				return result;
 			},
 
-			getAddFormatTableOptions: function (activeCells, userRange) {
+			getAddFormatTableOptions: function (activeCells, userRange, isPivot) {
 				var res;
 
 				if (userRange) {
@@ -904,28 +904,45 @@
 					bIsInFilter = null;
 				}
 
-				if (null === bIsInFilter) {
-					if (activeCells.r1 == activeCells.r2 && activeCells.c1 == activeCells.c2 && !userRange)//если ячейка выделенная одна
-					{
-						addRange = this.expandRange(activeCells);
-					} else {
-						addRange = activeCells;
-					}
-				} else//range внутри а/ф или ф/т
-				{
-					if (bIsInFilter.isAutoFilter()) {
-						addRange = bIsInFilter.Ref;
-					} else {
-						res = false;
-					}
-				}
-
-				if (false !== res) {
+				if (isPivot) {
 					res = new AddFormatTableOptions();
+					res.asc_setIsTitle(false);
+					if (bIsInFilter && !bIsInFilter.isAutoFilter() && bIsInFilter.Ref.containsRange(activeCells)) {
+						res.asc_setRange(bIsInFilter.DisplayName);
+					} else {
+						if (activeCells.r1 == activeCells.r2 && activeCells.c1 == activeCells.c2 && !userRange)//если ячейка выделенная одна
+						{
+							addRange = this.expandRange(activeCells);
+						} else {
+							addRange = activeCells;
+						}
+						CT_pivotTableDefinition.prototype.prepareDataRange(this.worksheet, addRange);
+						res.asc_setRange(AscCommon.parserHelp.get3DRef(this.worksheet.getName(), addRange.getAbsName()));
+					}
+				} else {
+					if (null === bIsInFilter || isPivot) {
+						if (activeCells.r1 == activeCells.r2 && activeCells.c1 == activeCells.c2 && !userRange)//если ячейка выделенная одна
+						{
+							addRange = this.expandRange(activeCells);
+						} else {
+							addRange = activeCells;
+						}
+					} else//range внутри а/ф или ф/т
+					{
+						if (bIsInFilter.isAutoFilter()) {
+							addRange = bIsInFilter.Ref;
+						} else {
+							res = false;
+						}
+					}
 
-					var bIsTitle = this._isAddNameColumn(addRange);
-					res.asc_setIsTitle(bIsTitle);
-					res.asc_setRange(addRange.getAbsName());
+					if (false !== res) {
+						res = new AddFormatTableOptions();
+
+						var bIsTitle = this._isAddNameColumn(addRange);
+						res.asc_setIsTitle(bIsTitle);
+						res.asc_setRange(addRange.getAbsName());
+					}
 				}
 
 				return res;

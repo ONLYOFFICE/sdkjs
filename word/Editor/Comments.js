@@ -292,7 +292,7 @@ CCommentData.prototype.IsSolved = function()
 };
 CCommentData.prototype.CreateNewCommentsGuid = function()
 {
-	this.m_nDurableId = AscCommon.CreateUInt32();
+	this.m_nDurableId = AscCommon.CreateDurableId();
 	for (var Pos = 0; Pos < this.m_aReplies.length; Pos++)
 	{
 		this.m_aReplies[Pos].CreateNewCommentsGuid();

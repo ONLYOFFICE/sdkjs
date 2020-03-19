@@ -3035,9 +3035,42 @@ CDocumentContent.prototype.AddToParagraph = function(ParaItem, bRecalculate)
 			{
 				Item.AddToParagraph(ParaItem);
 			}
+			else if (Item.IsTable())
+			{
+				// Разрыв страницы вне основного раздела вообще не добавляем
+				if (ParaItem.IsPageBreak())
+					return;
+
+				if (Item.IsInnerTable())
+				{
+					Item.AddToParagraph(ParaItem);
+				}
+				else
+				{
+					var oNewTable = Item.Split();
+					var oNewPara  = new Paragraph(this.DrawingDocument, this);
+
+					var nCurPos = this.CurPos.ContentPos;
+					if (oNewTable)
+					{
+						this.AddToContent(nCurPos + 1, oNewTable);
+						this.AddToContent(nCurPos + 1, oNewPara);
+						this.CurPos.ContentPos = nCurPos + 1;
+					}
+					else
+					{
+						this.AddToContent(nCurPos, oNewPara);
+						this.CurPos.ContentPos = nCurPos;
+					}
+
+					this.Content[this.CurPos.ContentPos].MoveCursorToStartPos(false);
+				}
+
+				this.Recalculate();
+				return;
+			}
 			else
 			{
-				// TODO: PageBreak в таблице не ставим
 				return;
 			}
 		}

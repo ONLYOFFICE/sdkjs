@@ -1085,7 +1085,7 @@
   };
 
   // Окончание выделения
-  WorkbookView.prototype._onChangeSelectionDone = function(x, y) {
+  WorkbookView.prototype._onChangeSelectionDone = function(x, y, event) {
   	if (this.timerId !== null) {
 		clearTimeout(this.timerId);
 		this.timerId = null;
@@ -1113,9 +1113,19 @@
     if (c_oTargetType.Hyperlink === ct.target && !this.controller.isFormulaEditMode) {
       // Проверим замерженность
       var isHyperlinkClick = false;
-      if (ar.isOneCell() || isSelectOnShape) {
-        isHyperlinkClick = true;
-      } else {
+     if(isSelectOnShape) {
+          var button = 0;
+          if(event) {
+              button = AscCommon.getMouseButton(event);
+          }
+          if(button === 0) {
+              isHyperlinkClick = true;
+          }
+     }
+     else if(ar.isOneCell()) {
+         isHyperlinkClick = true;
+     }
+     else {
         var mergedRange = ws.model.getMergedByCell(ar.r1, ar.c1);
         if (mergedRange && ar.isEqual(mergedRange)) {
           isHyperlinkClick = true;

@@ -628,7 +628,7 @@ function (window, undefined) {
 				found_operand = new cArea(o.real_str ? o.real_str.toUpperCase() : o.operand_str.toUpperCase(), ws);
 			} else if (parserHelp.isRef.call(o, o.Formula, o.pCurrPos, true)) {
 				found_operand = new cRef(o.real_str ? o.real_str.toUpperCase() : o.operand_str.toUpperCase(), ws);
-			} else if (parserHelp.isName.call(o, o.Formula, o.pCurrPos, wb)[0]) {
+			} else if (parserHelp.isName.call(o, o.Formula, o.pCurrPos)[0]) {
 				found_operand = new AscCommonExcel.cName(o.operand_str, ws);
 			}
 		}

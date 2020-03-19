@@ -1970,81 +1970,76 @@ CDLbl.prototype =
     {
         var ret = new AscFormat.CBodyPr();
         ret.setDefault();
+        ret.anchor = 1;
+        var oBaseBodyPr = new AscFormat.CBodyPr();
+        
+        if(this.txPr && this.txPr.bodyPr)
+        {
+            oBaseBodyPr.merge(this.txPr.bodyPr);
+        }
         if(this.tx && this.tx.rich)
         {
-            ret.merge(this.tx.rich.bodyPr);
+            oBaseBodyPr.merge(this.tx.rich.bodyPr);
         }
-        else
-        {
-            if(this.txPr && this.txPr.bodyPr)
-            {
-                ret.merge(this.txPr.bodyPr);
-            }
-        }
-
-        if(this.parent && AscFormat.isRealNumber(this.parent.axPos) && (this.parent.axPos === AX_POS_L || this.parent.axPos === AX_POS_R)
-            && ((this.tx && this.tx.rich && (!this.tx.rich.bodyPr ||  !AscFormat.isRealNumber(this.tx.rich.bodyPr.vert) ) ) || (!(this.tx && this.tx.rich) && (!this.txPr || !this.txPr.bodyPr || !AscFormat.isRealNumber(this.txPr.bodyPr.vert))))  )
+        if(this.parent && (this.parent.axPos === AX_POS_L || this.parent.axPos === AX_POS_R)
+        && (oBaseBodyPr.vert === null && oBaseBodyPr.rot === null) )
         {
             ret.vert = AscFormat.nVertTTvert270;
         }
-        if( (!this.txPr || !this.txPr.bodyPr || !AscFormat.isRealNumber(this.txPr.bodyPr.anchor)))
-        {
-            ret.anchor = 1;
-        }
-
-
-        //Пока не поддерживаем bodyPr.rot. Костыль под эффект_штурмовика.docx.
-        if(AscFormat.isRealNumber(ret.rot) && 0 !== ret.rot)
-        {
-            if(Math.abs(ret.rot - 5400000) < 1000)
-            {
-                if(ret.vert === AscFormat.nVertTTvert270)
-                {
-                    ret.vert = AscFormat.nVertTThorz;
-                }
-                else if(ret.vert === AscFormat.nVertTThorz)
-                {
-                    ret.vert = AscFormat.nVertTTvert;
-                }
-            }
-            else if(Math.abs(ret.rot + 5400000) < 1000)
-            {
-                if(ret.vert === AscFormat.nVertTTvert)
-                {
-                    ret.vert = AscFormat.nVertTThorz;
-                }
-                else if(ret.vert === AscFormat.nVertTThorz)
-                {
-                    ret.vert = AscFormat.nVertTTvert270;
-                }
-            }
-        }
-        //
-
-        switch (ret.vert)
-        {
-            case AscFormat.nVertTTeaVert:
-            case AscFormat.nVertTTmongolianVert:
-            case AscFormat.nVertTTvert:
-            case AscFormat.nVertTTwordArtVert:
-            case AscFormat.nVertTTwordArtVertRtl:
-            case AscFormat.nVertTTvert270:
-            {
-                ret.lIns = SCALE_INSET_COEFF;
-                ret.rIns = SCALE_INSET_COEFF;
-                ret.tIns = SCALE_INSET_COEFF*0.5;
-                ret.bIns = SCALE_INSET_COEFF*0.5;
-                break;
-            }
-            case AscFormat.nVertTThorz:
-            {
-                ret.lIns = SCALE_INSET_COEFF;
-                ret.rIns = SCALE_INSET_COEFF;
-                ret.tIns = SCALE_INSET_COEFF*0.5;
-                ret.bIns = SCALE_INSET_COEFF*0.5;
-                break;
-            }
-        }
+        ret.merge(oBaseBodyPr);
+        var nVert = ret.vert;
+         //Пока не поддерживаем bodyPr.rot. Костыль под эффект_штурмовика.docx.
+         if(AscFormat.isRealNumber(ret.rot) && 0 !== ret.rot)
+         {
+             if(Math.abs(ret.rot - 5400000) < 1000)
+             {
+                 if(ret.vert === AscFormat.nVertTTvert270)
+                 {
+                    nVert = AscFormat.nVertTThorz;
+                 }
+                 else if(ret.vert === AscFormat.nVertTThorz)
+                 {
+                    nVert = AscFormat.nVertTTvert;
+                 }
+             }
+             else if(Math.abs(ret.rot + 5400000) < 1000)
+             {
+                 if(ret.vert === AscFormat.nVertTTvert)
+                 {
+                    nVert = AscFormat.nVertTThorz;
+                 }
+                 else if(ret.vert === AscFormat.nVertTThorz)
+                 {
+                    nVert = AscFormat.nVertTTvert270;
+                 }
+             }
+         }
+         //
+ 
+         switch (nVert)
+         {
+             case AscFormat.nVertTTeaVert:
+             case AscFormat.nVertTTmongolianVert:
+             case AscFormat.nVertTTvert:
+             case AscFormat.nVertTTwordArtVert:
+             case AscFormat.nVertTTwordArtVertRtl:
+             case AscFormat.nVertTTvert270:
+             {
+                 ret.lIns = SCALE_INSET_COEFF;
+                 ret.rIns = SCALE_INSET_COEFF;
+                 ret.tIns = SCALE_INSET_COEFF*0.5;
+                 ret.bIns = SCALE_INSET_COEFF*0.5;
+                 break;
+             }
+             case AscFormat.nVertTThorz:
+             {
+                 ret.lIns = SCALE_INSET_COEFF;
+                 ret.rIns = SCALE_INSET_COEFF;
+                 ret.tIns = SCALE_INSET_COEFF*0.5;
+                 ret.bIns = SCALE_INSET_COEFF*0.5;
+                 break;
+             }
+        } 
         return ret;
     },
 
@@ -12749,6 +12744,20 @@ CTitle.prototype =
             oContent.GetRevisionsChangeElement(SearchEngine);
         }
     },
+
+    handleUpdateFill: function()
+    {
+
+        this.recalcInfo.recalculateBrush = true;
+        this.Refresh_RecalcData();
+    },
+
+    handleUpdateLn: function()
+    {
+        this.recalcInfo.recalculatePen = true;
+        this.Refresh_RecalcData();
+    },
+
 
     Search : function(Str, Props, SearchEngine, Type)
     {

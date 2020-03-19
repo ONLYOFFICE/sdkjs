@@ -203,6 +203,21 @@ function CBinaryFileWriter()
     {
         return AscCommon.Base64Encode(this.data, nLen, nPos);
     };
+    this.GetData   = function(nPos, nLen)
+    {
+        var _canvas = document.createElement('canvas');
+        var _ctx    = _canvas.getContext('2d');
+
+        var len = this.GetCurPosition();
+
+        //todo ImData.data.length multiple of 4
+        var ImData = _ctx.createImageData(Math.ceil(len / 4), 1);
+        var res = ImData.data;
+
+        for (var i = 0; i < len; i++)
+            res[i] = this.data[i];
+        return res;
+    }
     this.GetCurPosition = function()
     {
         return this.pos;

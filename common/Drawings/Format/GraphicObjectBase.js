@@ -647,22 +647,21 @@
         return this.setLockValue(LOCKS_MASKS.noChangeAspect, bValue);
     };
     CGraphicObjectBase.prototype.Reassign_ImageUrls = function(mapUrl){
+        var blip_fill;
         if(this.blipFill){
             if(mapUrl[this.blipFill.RasterImageId]){
                 if(this.setBlipFill){
-                    var blip_fill = new AscFormat.CBlipFill();
+                    blip_fill = this.blipFill.createDuplicate();
                     blip_fill.setRasterImageId(mapUrl[this.blipFill.RasterImageId]);
-                    blip_fill.setStretch(true);
                     this.setBlipFill(blip_fill);
                 }
             }
         }
         if(this.spPr && this.spPr.Fill && this.spPr.Fill.fill && this.spPr.Fill.fill.RasterImageId){
             if(mapUrl[this.spPr.Fill.fill.RasterImageId]){
-                var blip_fill = new AscFormat.CBlipFill();
+                blip_fill = this.spPr.Fill.fill.createDuplicate();
                 blip_fill.setRasterImageId(mapUrl[this.spPr.Fill.fill.RasterImageId]);
-                blip_fill.setStretch(true);
-                var oUniFill = new AscFormat.CUniFill();
+                var oUniFill = this.spPr.Fill.createDuplicate();
                 oUniFill.setFill(blip_fill);
                 this.spPr.setFill(oUniFill);
             }
@@ -1680,6 +1679,7 @@
         var oldTransform = this.transform.CreateDublicate();
         var oldExtX = this.extX;
         var oldExtY = this.extY;
+        var newExtX, newExtY;
         AscFormat.ExecuteNoHistory(function(){
             // this.cropObject.recalculateTransform();
             // this.recalculateTransform();
@@ -1689,9 +1689,20 @@
             this.recalcInfo.recalculateTransform = oldVal;
         }, this, []);
         this.transform = oldTransform;
+        newExtX = this.extX;
+        newExtY = this.extY;
         this.extX = oldExtX;
         this.extY = oldExtY;
         this.setSrcRect(this.calculateSrcRect2());
+        var oParent = this.parent;
+        if(oParent && oParent.Check_WrapPolygon)
+        {
+            this.extX = newExtX;
+            this.extY = newExtY;
+            oParent.Check_WrapPolygon();
+            this.extX = oldExtX;
+            this.extY = oldExtY;
+        }
         this.clearCropObject();
     };
 

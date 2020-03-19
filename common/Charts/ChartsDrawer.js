@@ -649,48 +649,97 @@ CChartsDrawer.prototype =
 			var widthAxisTitle = axis.title.extX;
 			var heightAxisTitle = axis.title.extY;
 
-			switch (axis.axPos) {
-				case window['AscFormat'].AX_POS_B: {
-					y = (this.calcProp.heightCanvas - standartMarginForCharts) / pxToMM - heightAxisTitle;
-					x = (this.calcProp.chartGutter._left + this.calcProp.trueWidth / 2) / pxToMM - widthAxisTitle / 2;
+			var layout = this.cChartSpace.chart.plotArea.layout;
+			if(layout) {
+				var x1 = layout.x * this.calcProp.widthCanvas;
+				var y1 = layout.y * this.calcProp.heightCanvas;
+				var w = layout.w * this.calcProp.widthCanvas;
+				var h = layout.h * this.calcProp.heightCanvas;
+				var hLabels = axis.labels ? axis.labels.extY : 0;
+				switch (axis.axPos) {
+					case window['AscFormat'].AX_POS_B: {
+						y = (y1 + h) / pxToMM + hLabels;
+						if(y + heightAxisTitle > this.calcProp.heightCanvas / pxToMM) {
+							y = this.calcProp.heightCanvas / pxToMM - heightAxisTitle;
+						}
+						x = (this.calcProp.chartGutter._left + this.calcProp.trueWidth / 2) / pxToMM - widthAxisTitle / 2;
 
-					if(legend && legend.legendPos === c_oAscChartLegendShowSettings.bottom) {
-						y -= legend.extY + (standartMarginForCharts / 2) / pxToMM;
+						break;
 					}
-					break;
+					case window['AscFormat'].AX_POS_T: {
+						y = standartMarginForCharts / pxToMM;
+						x = (this.calcProp.chartGutter._left + this.calcProp.trueWidth / 2) / pxToMM - widthAxisTitle / 2;
+
+						if(legend && legend.legendPos === c_oAscChartLegendShowSettings.top) {
+							y += legend.extY + (standartMarginForCharts / 2) / pxToMM;
+						}
+						if (title !== null && !title.overlay) {
+							y += title.extY + (standartMarginForCharts / 2) / pxToMM;
+						}
+						break;
+					}
+					case window['AscFormat'].AX_POS_L: {
+						y = (this.calcProp.chartGutter._top + this.calcProp.trueHeight / 2) / pxToMM - heightAxisTitle / 2;
+						x = standartMarginForCharts / pxToMM;
+
+						if(legend && legend.legendPos === c_oAscChartLegendShowSettings.left) {
+							x += legend.extX;
+						}
+						break;
+					}
+					case window['AscFormat'].AX_POS_R: {
+						y = (this.calcProp.chartGutter._top + this.calcProp.trueHeight / 2) / pxToMM - heightAxisTitle / 2;
+						x = (this.calcProp.widthCanvas - standartMarginForCharts) / pxToMM - widthAxisTitle;
+
+						if(legend && legend.legendPos === c_oAscChartLegendShowSettings.right) {
+							x -= legend.extX;
+						}
+						break;
+					}
 				}
-				case window['AscFormat'].AX_POS_T: {
-					y = standartMarginForCharts / pxToMM;
-					x = (this.calcProp.chartGutter._left + this.calcProp.trueWidth / 2) / pxToMM - widthAxisTitle / 2;
+			} else {
+				switch (axis.axPos) {
+					case window['AscFormat'].AX_POS_B: {
+						y = (this.calcProp.heightCanvas - standartMarginForCharts) / pxToMM - heightAxisTitle;
+						x = (this.calcProp.chartGutter._left + this.calcProp.trueWidth / 2) / pxToMM - widthAxisTitle / 2;
 
-					if(legend && legend.legendPos === c_oAscChartLegendShowSettings.top) {
-						y += legend.extY + (standartMarginForCharts / 2) / pxToMM;
+						if(legend && legend.legendPos === c_oAscChartLegendShowSettings.bottom) {
+							y -= legend.extY + (standartMarginForCharts / 2) / pxToMM;
+						}
+						break;
 					}
-					if (title !== null && !title.overlay) {
-						y += title.extY + (standartMarginForCharts / 2) / pxToMM;
-					}
-					break;
-				}
-				case window['AscFormat'].AX_POS_L: {
-					y = (this.calcProp.chartGutter._top + this.calcProp.trueHeight / 2) / pxToMM - heightAxisTitle / 2;
-					x = standartMarginForCharts / pxToMM;
+					case window['AscFormat'].AX_POS_T: {
+						y = standartMarginForCharts / pxToMM;
+						x = (this.calcProp.chartGutter._left + this.calcProp.trueWidth / 2) / pxToMM - widthAxisTitle / 2;
 
-					if(legend && legend.legendPos === c_oAscChartLegendShowSettings.left) {
-						x += legend.extX;
+						if(legend && legend.legendPos === c_oAscChartLegendShowSettings.top) {
+							y += legend.extY + (standartMarginForCharts / 2) / pxToMM;
+						}
+						if (title !== null && !title.overlay) {
+							y += title.extY + (standartMarginForCharts / 2) / pxToMM;
+						}
+						break;
 					}
-					break;
-				}
-				case window['AscFormat'].AX_POS_R: {
-					y = (this.calcProp.chartGutter._top + this.calcProp.trueHeight / 2) / pxToMM - heightAxisTitle / 2;
-					x = (this.calcProp.widthCanvas - standartMarginForCharts) / pxToMM - widthAxisTitle;
+					case window['AscFormat'].AX_POS_L: {
+						y = (this.calcProp.chartGutter._top + this.calcProp.trueHeight / 2) / pxToMM - heightAxisTitle / 2;
+						x = standartMarginForCharts / pxToMM;
 
-					if(legend && legend.legendPos === c_oAscChartLegendShowSettings.right) {
-						x -= legend.extX;
+						if(legend && legend.legendPos === c_oAscChartLegendShowSettings.left) {
+							x += legend.extX;
+						}
+						break;
 					}
-					break;
+					case window['AscFormat'].AX_POS_R: {
+						y = (this.calcProp.chartGutter._top + this.calcProp.trueHeight / 2) / pxToMM - heightAxisTitle / 2;
+						x = (this.calcProp.widthCanvas - standartMarginForCharts) / pxToMM - widthAxisTitle;
+
+						if(legend && legend.legendPos === c_oAscChartLegendShowSettings.right) {
+							x -= legend.extX;
+						}
+						break;
+					}
 				}
 			}
-
 
 			if(this.nDimensionCount === 3)
 			{
@@ -1827,7 +1876,7 @@ CChartsDrawer.prototype =
 		}
 
 		//проверка на переход в другой диапазон из-за ограничения по высоте
-		if (!bIsManualStep) {
+		if (!bIsManualStep && !chartSpace.isSparkline) {
 			var props = {
 				arrayValues: arrayValues,
 				step: step,

@@ -1958,7 +1958,7 @@ CHeaderFooterController.prototype =
 
 	AddToParagraph : function(ParaItem, bRecalculate)
 	{
-		if (para_NewLine === ParaItem.Type && true === ParaItem.IsPageOrColumnBreak())
+		if (para_NewLine === ParaItem.Type && true === ParaItem.IsPageBreak())
 			return;
 
 		if (null != this.CurHdrFtr)

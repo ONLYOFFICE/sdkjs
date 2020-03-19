@@ -122,8 +122,10 @@ StartAddNewShape.prototype =
 
     onMouseUp: function(e, x, y)
     {
-        if(this.bStart && this.drawingObjects.canEdit())
+        var bRet = false;
+        if(this.bStart && this.drawingObjects.canEdit() && this.drawingObjects.arrTrackObjects.length > 0)
         {
+            bRet = true;
             if(this.drawingObjects.drawingObjects.objectLocker)
             {
                 this.drawingObjects.drawingObjects.objectLocker.reset();
@@ -204,6 +206,7 @@ StartAddNewShape.prototype =
             }
         }
         this.drawingObjects.clearTrackObjects();
+        this.drawingObjects.clearPreTrackObjects();
         this.drawingObjects.updateOverlay();
         if(Asc["editor"])
         {
@@ -217,6 +220,7 @@ StartAddNewShape.prototype =
             editor.sync_EndAddShape();
         }
         this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));
+        return bRet;
     }
 };
 
@@ -797,6 +801,9 @@ RotateState.prototype =
 
                             for(i = 0; i < tracks.length; ++i){
                                 tracks[i].trackEnd(false, bFlag);
+                            }
+                            if(tracks.length === 1 && tracks[0].chartSpace){
+                                return;
                             }
                             var oGroupMaps = {};
                             for(i = 0; i < aConnectors.length; ++i){
@@ -1614,8 +1621,8 @@ SplineBezierState.prototype =
             return {objectId: "1", bMarker: true, cursorType: "crosshair"};
         this.drawingObjects.startTrackPos = {x: x, y: y, pageIndex: pageIndex};
         this.drawingObjects.clearTrackObjects();
-        this.drawingObjects.addTrackObject(new AscFormat.Spline(this.drawingObjects, this.drawingObjects.getTheme(), null, null, null, pageIndex));
-        this.drawingObjects.arrTrackObjects[0].path.push(new AscFormat.SplineCommandMoveTo(x, y));
+        this.drawingObjects.addPreTrackObject(new AscFormat.Spline(this.drawingObjects, this.drawingObjects.getTheme(), null, null, null, pageIndex));
+        this.drawingObjects.arrPreTrackObjects[0].path.push(new AscFormat.SplineCommandMoveTo(x, y));
         this.drawingObjects.changeCurrentState(new SplineBezierState33(this.drawingObjects, x, y,pageIndex));
         this.drawingObjects.checkChartTextSelection();
         this.drawingObjects.resetSelection();
@@ -1637,7 +1644,6 @@ SplineBezierState.prototype =
             editor.sync_EndAddShape();
         }
         this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));
-        this.drawingObjects.curState.updateAnchorPos();
     }
 };
 
@@ -1677,6 +1683,7 @@ SplineBezierState33.prototype =
             tr_x = tr_point.X;
             tr_y = tr_point.Y;
         }
+        this.drawingObjects.swapTrackObjects();
         this.drawingObjects.arrTrackObjects[0].path.push(new AscFormat.SplineCommandLineTo(tr_x, tr_y));
         this.drawingObjects.changeCurrentState(new SplineBezierState2(this.drawingObjects, this.pageIndex));
         this.drawingObjects.updateOverlay();
@@ -2214,8 +2221,8 @@ AddPolyLine2State.prototype =
         this.drawingObjects.resetSelection();
         this.drawingObjects.updateOverlay();
         this.drawingObjects.clearTrackObjects();
-        this.drawingObjects.addTrackObject(new AscFormat.PolyLine(this.drawingObjects, this.drawingObjects.getTheme(), null, null, null, pageIndex));
-        this.drawingObjects.arrTrackObjects[0].arrPoint.push({x : x, y: y});
+        this.drawingObjects.addPreTrackObject(new AscFormat.PolyLine(this.drawingObjects, this.drawingObjects.getTheme(), null, null, null, pageIndex));
+        this.drawingObjects.arrPreTrackObjects[0].arrPoint.push({x : x, y: y});
         this.drawingObjects.changeCurrentState(new AddPolyLine2State2(this.drawingObjects, x, y));
     },
 
@@ -2252,6 +2259,8 @@ AddPolyLine2State2.prototype =
             {
                 editor.sync_EndAddShape();
             }
+            this.drawingObjects.clearPreTrackObjects();
+            this.drawingObjects.clearTrackObjects();
             this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));
         }
     },
@@ -2272,7 +2281,7 @@ AddPolyLine2State2.prototype =
                 tr_x = tr_point.X;
                 tr_y = tr_point.Y;
             }
-
+            this.drawingObjects.swapTrackObjects();
             this.drawingObjects.arrTrackObjects[0].arrPoint.push({x : tr_x, y: tr_y});
             this.drawingObjects.changeCurrentState(new AddPolyLine2State3(this.drawingObjects));
         }

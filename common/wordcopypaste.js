@@ -9429,7 +9429,7 @@ PasteProcessor.prototype =
 		};
 		var fInitCommentData = function (comment) {
 			var oCommentObj = new AscCommon.CCommentData();
-			oCommentObj.m_nDurableId = AscCommon.CreateUInt32();
+			oCommentObj.m_nDurableId = AscCommon.CreateDurableId();
 			if (null != comment.UserName) {
 				oCommentObj.m_sUserName = comment.UserName;
 			}
