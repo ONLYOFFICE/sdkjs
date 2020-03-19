@@ -851,6 +851,20 @@ CTableRow.prototype.GetCellSpacing = function()
 {
 	return this.Get_CellSpacing();
 };
+CTableRow.prototype.GetCellByGridStart = function(GridStart)
+{
+    for (var curCell = 0; curCell < this.GetCellsCount(); curCell++)
+    {
+        var curGridStart   = this.Get_CellInfo(curCell).StartGridCol;
+
+        if (curGridStart === GridStart)
+        {
+            return this.GetCell(curCell);
+        }
+    }
+
+    return false;
+};
 /**
  * Получаем высоту строки
  * @returns {CTableRowHeight}
