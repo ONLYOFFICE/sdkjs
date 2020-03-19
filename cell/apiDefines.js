@@ -109,7 +109,7 @@ var c_oAscSelectionDialogType = {
   FormatTableChangeRange: 4,
   CustomSort: 5,
   PivotTableData: 6,
-  PivotTableReport: 7
+  PivotTableReport: 7,
   PrintTitles: 8
 };
 
