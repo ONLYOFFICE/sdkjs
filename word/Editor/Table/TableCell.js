@@ -495,9 +495,13 @@ CTableCell.prototype =
     	return true;
     },
 
-	IsTableFirstRowOnNewPage : function()
+    IsTableFirstRowOnNewPage : function()
     {
-        return this.Row.Table.IsTableFirstRowOnNewPage(this.Row.Index);
+        var oTable = this.GetTable();
+        if (!oTable)
+            return false;
+
+        return oTable.IsTableFirstRowOnNewPage(this.GetRow().GetIndex());
     },
 
     Check_AutoFit : function()
@@ -507,37 +511,58 @@ CTableCell.prototype =
 
     Is_DrawingShape : function(bRetShape)
     {
-        return this.Row.Table.Parent.Is_DrawingShape(bRetShape);
+        var oTableParent = this.GetTableParent();
+        if (!oTableParent)
+            return (bRetShape ? null : false);
+
+        return oTableParent.Is_DrawingShape(bRetShape);
     },
 
     IsHdrFtr : function(bReturnHdrFtr)
 	{
-		return this.Row.Table.Parent.IsHdrFtr(bReturnHdrFtr);
+        var oTableParent = this.GetTableParent();
+        if (!oTableParent)
+	        return (bReturnHdrFtr ? null : false);
+
+		return oTableParent.IsHdrFtr(bReturnHdrFtr);
 	},
 
 	IsFootnote : function(bReturnFootnote)
 	{
-		return this.Row.Table.Parent.IsFootnote(bReturnFootnote);
+        var oTableParent = this.GetTableParent();
+        if (!oTableParent)
+            return (bReturnFootnote ? null : false);
+
+		return oTableParent.IsFootnote(bReturnFootnote);
 	},
 
     Is_TopDocument : function(bReturnTopDocument)
     {
-        if ( true === bReturnTopDocument )
-            return this.Row.Table.Parent.Is_TopDocument( bReturnTopDocument );
+        if (true === bReturnTopDocument)
+        {
+            var oTableParent = this.GetTableParent();
+            if (!oTableParent)
+                return (bReturnTopDocument ? null : false);
+
+            return oTableParent.Is_TopDocument(bReturnTopDocument);
+        }
 
         return false;
     },
 
     Is_InTable : function(bReturnTopTable)
     {
-        if ( true === bReturnTopTable )
+        if (true === bReturnTopTable)
         {
-            var CurTable = this.Row.Table;
-            var TopTable = CurTable.Parent.Is_InTable(true);
-            if ( null === TopTable )
-                return CurTable;
+            var oTable = this.GetTable();
+            if (!oTable)
+                return null;
+
+            var oTopTable = oTable.Parent ? oTable.Parent.Is_InTable(true) : null;
+            if (oTopTable)
+                return oTopTable;
             else
-                return TopTable;
+                return oTable;
         }
 
         return true;
@@ -1849,6 +1874,18 @@ CTableCell.prototype.GetTable = function()
 	return oRow.GetTable();
 };
 /**
+ * Доступ к родительскому классу для родительской таблицы
+ * @returns {null|*}
+ */
+CTableCell.prototype.GetTableParent = function()
+{
+    var oTable = this.GetTable();
+    if (!oTable)
+        return null;
+
+    return oTable.GetParent();
+};
+/**
  * Получаем номер данной ячейки в родительской строке
  * @returns {number}
  */
@@ -2390,6 +2427,7 @@ CTableCellRecalculateObject.prototype =
     }
 
 };
+
 
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
