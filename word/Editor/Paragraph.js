@@ -12035,16 +12035,17 @@ Paragraph.prototype.AddComment = function(Comment, bStart, bEnd)
 				var EndPos = EndContentPos.Get(0);
 
 				// Любые другие элементы мы целиком включаем в комментарий
-				if (para_Run === this.Content[EndPos].Type)
-				{
+				if (para_Run === this.Content[EndPos].Type) {
 					var NewElement = this.Content[EndPos].Split(EndContentPos, 1);
-
-					if (null !== NewElement)
+					if (null !== NewElement) {
 						this.Internal_Content_Add(EndPos + 1, NewElement);
+					}
+				} else if (68 === this.Content[EndPos].Type) {
+					this.Content[EndPos].AddComment(Comment, false, true);
+				} else {
+					this.Internal_Content_Add(EndPos + 1, CommentEnd);
+					this.Selection.EndPos = EndPos + 1;
 				}
-
-				this.Internal_Content_Add(EndPos + 1, CommentEnd);
-				this.Selection.EndPos = EndPos + 1;
 			}
 
 			if (true === bStart)
@@ -12063,14 +12064,15 @@ Paragraph.prototype.AddComment = function(Comment, bStart, bEnd)
 						this.Internal_Content_Add(StartPos + 1, NewElement);
 						NewElement.SelectAll();
 					}
-
 					this.Internal_Content_Add(StartPos + 1, CommentStart);
 					this.Selection.StartPos = StartPos + 1;
+				} else if(68===this.Content[EndPos].Type){
+					this.Content[EndPos].AddComment(Comment, true,false);
 				}
 				else
 				{
 					this.Internal_Content_Add(StartPos, CommentStart);
-					this.Selection.StartPos = StartPos;
+					this.Selection.StartPos = StartPos+1;
 				}
 			}
 		}

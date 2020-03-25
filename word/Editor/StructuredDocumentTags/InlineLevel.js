@@ -896,6 +896,48 @@ CInlineLevelSdt.prototype.ClearContentControl = function()
 	this.Add_ToContent(0, new ParaRun(this.GetParagraph(), false));
 	this.Remove_FromContent(1, this.Content.length - 1);
 };
+CInlineLevelSdt.prototype.AddComment = function(Comment, bStart, bEnd){ 
+	if(true === this.Selection.Use){
+		var StartContentPos = new CParagraphContentPos();
+		var EndContentPos = new CParagraphContentPos();
+		this.Get_ParaContentPos(true, true, StartContentPos, false);
+		this.Get_ParaContentPos(true, false, EndContentPos, false);
+
+		if(true===bEnd){
+			var CommentEnd = new ParaComment(false, Comment.Get_Id());
+			var EndPos = EndContentPos.Get(0);
+			if(para_Run == this.Content[EndPos].Type){
+				var NewElement = this.Content[EndPos].Split(EndContentPos, 1);
+				if (null !== NewElement){
+					this.Add_ToContent(EndPos+1,NewElement, true);
+				}
+				this.Add_ToContent(EndPos + 1, CommentEnd);
+				this.Selection.EndPos = EndPos + 1;
+			}else {
+				this.Add_ToContent(EndPos+1, CommentEnd);
+			}
+		}
+
+		if(true===bStart){
+			var CommentStart = new ParaComment(true, Comment.Get_Id());
+			var StartPos = StartContentPos.Get(0);
+			if (para_Run === this.Content[StartPos].Type) {
+				var NewElement = this.Content[StartPos].Split(StartContentPos, 1);
+
+				if (null !== NewElement) {
+					this.Add_ToContent(StartPos + 1, NewElement);
+					NewElement.SelectAll();
+				}
+				this.Add_ToContent(StartPos + 1, CommentStart);
+				this.Selection.StartPos = StartPos + 1;
+			} else {
+				this.Add_ToContent(StartPos, CommentStart);
+				this.Selection.StartPos = StartPos;
+			}
+		}
+	}
+
+};
 CInlineLevelSdt.prototype.CanAddComment = function()
 {
 	if (!this.CanBeDeleted() || (!this.CanBeEdited() && (!this.IsSelectedAll() || this.IsSelectedOnlyThis())))
