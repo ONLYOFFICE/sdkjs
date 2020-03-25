@@ -12040,6 +12040,8 @@ Paragraph.prototype.AddComment = function(Comment, bStart, bEnd)
 					if (null !== NewElement) {
 						this.Internal_Content_Add(EndPos + 1, NewElement);
 					}
+					this.Internal_Content_Add(EndPos + 1, CommentEnd);
+					this.Selection.EndPos = EndPos + 1;
 				} else if (68 === this.Content[EndPos].Type) {
 					this.Content[EndPos].AddComment(Comment, false, true);
 				} else {
