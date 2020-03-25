@@ -2081,6 +2081,45 @@ CTableCell.prototype.DeleteBorder = function(nType)
     }
 };
 /**
+ * Рисуем границу ячейки
+ * @param {number} nType - 0 - Top, 1 - Right, 2- Bottom, 3- Left
+ */
+CTableCell.prototype.DrawBorder = function(nType)
+{
+    var border 	   = new CDocumentBorder();
+    border.Value = 0x0001;
+
+    if (nType === 0 || nType === 2)
+    {
+        if (this.Get_Border(nType).Value === 0)
+            this.Set_Border(border, nType);
+    }
+    // Удаляем границы для всех ячеейк, учавствующих в вертикальном объединении
+    else if (nType === 1 || nType === 3)
+    {
+        var oTable = this.GetTable();
+        var oRow   = this.GetRow();
+        var VMergeCount = oTable.GetVMergeCount(this.GetIndex(), oRow.GetIndex());
+        var nCurGridStart = oRow.GetCellInfo(this.Index).StartGridCol;
+
+        if (this.Get_Border(nType).Value === 0)
+            this.Set_Border(border, nType);
+
+        if (VMergeCount > 1)
+        {
+            for (var Index = oRow.GetIndex() + 1; Index < oRow.GetIndex() + VMergeCount; Index++)
+            {
+                var RowInVertUnion = oTable.GetRow(Index);
+                var CellInVertUnion = RowInVertUnion.GetCellByGridStart(nCurGridStart);
+
+                if (CellInVertUnion.Get_Border(nType).Value === 0)
+                    CellInVertUnion.Set_Border(border, nType);
+            } 
+        }
+        
+    }
+};
+/**
  * Получаем скомпилированную настройку ширины ячейки
  * @returns {?CTableMeasurement}
  */
