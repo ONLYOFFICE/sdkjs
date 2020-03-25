@@ -12066,11 +12066,9 @@ Paragraph.prototype.AddComment = function(Comment, bStart, bEnd)
 					}
 					this.Internal_Content_Add(StartPos + 1, CommentStart);
 					this.Selection.StartPos = StartPos + 1;
-				} else if(68===this.Content[EndPos].Type){
-					this.Content[EndPos].AddComment(Comment, true,false);
-				}
-				else
-				{
+				} else if(68 === this.Content[StartPos].Type){
+					this.Content[StartPos].AddComment(Comment, true,false);
+				} else {
 					this.Internal_Content_Add(StartPos, CommentStart);
 					this.Selection.StartPos = StartPos+1;
 				}
