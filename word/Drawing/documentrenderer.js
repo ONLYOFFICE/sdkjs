@@ -1179,6 +1179,12 @@ CDocMeta.prototype =
         // по идее удаляем только obj
         this.stopRenderingPage(obj.Page);
 
+        if (editor.watermarkDraw)
+        {
+            g.m_oContext.setTransform(1, 0, 0, 1, 0, 0);
+            editor.watermarkDraw.Draw(g.m_oContext, g.m_oContext.canvas.width, g.m_oContext.canvas.height);
+        }
+
         if (bIsFromPaint == 0)
             editor.WordControl.OnScroll();
     },

@@ -511,6 +511,12 @@ COverlay.prototype =
         this.m_oContext.arc(x,y,r,0,Math.PI*2,false);
         //this.m_oContext.closePath();
     },
+    AddEllipse2 : function(x,y,r)
+    {
+        this.m_oContext.moveTo(x+r,y);
+        this.m_oContext.arc(x,y,r,0,Math.PI*2,false);
+        //this.m_oContext.closePath();
+    },
 
 	AddDiamond : function(x,y,r)
 	{
@@ -938,7 +944,7 @@ CAutoshapeTrack.prototype =
         var x4 = dx4 >> 0;
         var y4 = dy4 >> 0;
 
-        var _eps = 0.001;
+        var _eps = 0.01;
         if (Math.abs(dx1 - dx3) < _eps &&
             Math.abs(dx2 - dx4) < _eps &&
             Math.abs(dy1 - dy2) < _eps &&
@@ -967,7 +973,7 @@ CAutoshapeTrack.prototype =
             nIsCleverWithTransform = true;
             nType = 1;
 
-            if (true)
+            if (false)
             {
                 if (x1 > x2)
                 {
@@ -2574,6 +2580,7 @@ CAutoshapeTrack.prototype =
             return;
 
         var overlay = this.m_oOverlay;
+        overlay.SetBaseTransform();
         var ctx = overlay.m_oContext;
 
         this.CurrentPageInfo = overlay.m_oHtmlPage.GetDrawingPageInfo(this.PageIndex);
@@ -2632,6 +2639,7 @@ CAutoshapeTrack.prototype =
             return;
 
         var overlay = this.m_oOverlay;
+        overlay.SetBaseTransform();
         var ctx = overlay.m_oContext;
 
         this.CurrentPageInfo = overlay.m_oHtmlPage.GetDrawingPageInfo(this.PageIndex);

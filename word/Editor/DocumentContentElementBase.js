@@ -431,8 +431,9 @@ CDocumentContentElementBase.prototype.AddSignatureLine = function(oSignatureDraw
 CDocumentContentElementBase.prototype.AddTextArt = function(nStyle)
 {
 };
-CDocumentContentElementBase.prototype.AddInlineTable = function(nCols, nRows)
+CDocumentContentElementBase.prototype.AddInlineTable = function(nCols, nRows, nMode)
 {
+	return null;
 };
 CDocumentContentElementBase.prototype.Remove = function(nCount, bOnlyText, bRemoveOnlySelection, bOnAddText, isWord)
 {
@@ -464,6 +465,9 @@ CDocumentContentElementBase.prototype.GetCursorPosXY = function()
 	return {X : 0, Y : 0};
 };
 CDocumentContentElementBase.prototype.StartSelectionFromCurPos = function()
+{
+};
+CDocumentContentElementBase.prototype.SetParagraphPr = function(oParaPr)
 {
 };
 CDocumentContentElementBase.prototype.SetParagraphAlign = function(Align)
@@ -649,6 +653,19 @@ CDocumentContentElementBase.prototype.LoadRecalculateObject = function(RecalcObj
 };
 CDocumentContentElementBase.prototype.Set_ApplyToAll = function(bValue)
 {
+	this.SetApplyToAll(bValue);
+};
+CDocumentContentElementBase.prototype.Get_ApplyToAll = function()
+{
+	return this.IsApplyToAll();
+};
+CDocumentContentElementBase.prototype.SetApplyToAll = function(isApplyAll)
+{
+	this.ApplyToAll = isApplyAll;
+};
+CDocumentContentElementBase.prototype.IsApplyToAll = function()
+{
+	return this.ApplyToAll;
 };
 CDocumentContentElementBase.prototype.RecalculateAllTables = function()
 {
@@ -689,9 +706,6 @@ CDocumentContentElementBase.prototype.IsSelectedAll = function()
 {
 	return false;
 };
-CDocumentContentElementBase.prototype.CheckContentControlDeletingLock = function()
-{
-};
 CDocumentContentElementBase.prototype.GetLastRangeVisibleBounds = function()
 {
 	return {
@@ -717,18 +731,27 @@ CDocumentContentElementBase.prototype.AcceptRevisionChanges = function(Type, bAl
 CDocumentContentElementBase.prototype.RejectRevisionChanges = function(Type, bAll)
 {
 };
-CDocumentContentElementBase.prototype.GetDocumentPositionFromObject = function(PosArray)
+CDocumentContentElementBase.prototype.GetDocumentPositionFromObject = function(arrPos)
 {
-	if (!PosArray)
-		PosArray = [];
+	if (!arrPos)
+		arrPos = [];
 
-	if (this.Parent)
+	var oParent = this.GetParent();
+	if (oParent)
 	{
-		PosArray.splice(0, 0, {Class : this.Parent, Position : this.Get_Index()});
-		this.Parent.GetDocumentPositionFromObject(PosArray);
+		if (arrPos.length > 0)
+		{
+			arrPos.splice(0, 0, {Class : oParent, Position : this.GetIndex()});
+			arrPos = oParent.GetDocumentPositionFromObject(arrPos);
+		}
+		else
+		{
+			arrPos = oParent.GetDocumentPositionFromObject(arrPos);
+			arrPos.push({Class : oParent, Position : this.GetIndex()});
+		}
 	}
 
-	return PosArray;
+	return arrPos;
 };
 CDocumentContentElementBase.prototype.Get_Index = function()
 {
@@ -790,6 +813,10 @@ CDocumentContentElementBase.prototype.Get_CurrentPage_Relative = function()
 {
 	return this.private_GetRelativePageIndex(0);
 };
+CDocumentContentElementBase.prototype.GetCurrentPageAbsolute = function()
+{
+	return this.Get_CurrentPage_Absolute();
+};
 CDocumentContentElementBase.prototype.GetAbsolutePage = function(CurPage)
 {
 	return this.private_GetAbsolutePageIndex(CurPage);
@@ -805,6 +832,15 @@ CDocumentContentElementBase.prototype.GetAbsoluteColumn = function(CurPage)
 CDocumentContentElementBase.prototype.GetStartPageRelative = function()
 {
 	return this.PageNum;
+};
+/**
+ * Получаем номер страницы, относительно родительского класса
+ * @param {number} nCurPage
+ * @returns {number}
+ */
+CDocumentContentElementBase.prototype.GetRelativePage = function(nCurPage)
+{
+	return this.private_GetRelativePageIndex(nCurPage);
 };
 /**
  * Получаем обсолютный начальный номер страницы данного элемента
@@ -883,6 +919,16 @@ CDocumentContentElementBase.prototype.GetAllComments = function(AllComments)
 CDocumentContentElementBase.prototype.GetAllMaths = function(AllMaths)
 {
 };
+
+/**
+ * Find all SEQ complex fields with specified type
+ * @param {String} sType - field type
+ * @param {Array} aFields - array which accumulates complex fields
+ */
+CDocumentContentElementBase.prototype.GetAllSeqFieldsByType = function(sType, aFields)
+{
+};
+
 CDocumentContentElementBase.prototype.UpdateBookmarks = function(oManager)
 {
 };
@@ -1001,7 +1047,7 @@ CDocumentContentElementBase.prototype.SetIsRecalculated = function(isRecalculate
 	this.Recalculated = isRecalculated;
 };
 /**
- * Узнаем рассчитан ли данный параграф
+ * Узнаем рассчитан ли данный элемент
  * @returns {boolean}
  */
 CDocumentContentElementBase.prototype.IsRecalculated = function()
@@ -1098,6 +1144,13 @@ CDocumentContentElementBase.prototype.GetPresentationField = function()
 {
 	return null;
 };
+/**
+ * Получаем список таблицы на заданной абсолютной странице
+ * @param {number} nPageAbs
+ * @param {Array} arrTables
+ * @returns {Array}
+ */
+CDocumentContentElementBase.prototype.GetAllTablesOnPage = function(nPageAbs, arrTables){return arrTables ? arrTables : [];};
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

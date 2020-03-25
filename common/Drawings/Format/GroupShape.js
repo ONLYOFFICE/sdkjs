@@ -278,13 +278,13 @@ function CGroupShape()
         }
     };
 
-    CGroupShape.prototype.copy = function(oIdMap, bSourceFormatting)
+    CGroupShape.prototype.copy = function(oPr)
     {
         var copy = new CGroupShape();
-        this.copy2(copy, oIdMap, bSourceFormatting);
+        this.copy2(copy, oPr);
         return copy;
     };
-    CGroupShape.prototype.copy2 = function(copy, oIdMap, bSourceFormatting)
+    CGroupShape.prototype.copy2 = function(copy, oPr)
     {
         if(this.nvGrpSpPr)
         {
@@ -298,20 +298,20 @@ function CGroupShape()
         for(var i = 0; i < this.spTree.length; ++i)
         {
             var _copy;
-            if(this.spTree[i].getObjectType() === AscDFH.historyitem_type_GroupShape){
-                _copy = this.spTree[i].copy(oIdMap, bSourceFormatting);
+            if(this.spTree[i].getObjectType() === AscDFH.historyitem_type_GroupShape) {
+                _copy = this.spTree[i].copy(oPr);
             }
             else{
-                if(bSourceFormatting){
+                if(oPr && oPr.bSaveSourceFormatting){
                     _copy = this.spTree[i].getCopyWithSourceFormatting();
                 }
                 else{
-                    _copy = this.spTree[i].copy();
+                    _copy = this.spTree[i].copy(oPr);
                 }
 
             }
-            if(AscCommon.isRealObject(oIdMap)){
-                oIdMap[this.spTree[i].Id] = _copy.Id;
+            if(oPr && AscCommon.isRealObject(oPr.idMap)){
+                oPr.idMap[this.spTree[i].Id] = _copy.Id;
             }
             copy.addToSpTree(copy.spTree.length, _copy);
             copy.spTree[copy.spTree.length-1].setGroup(copy);
@@ -544,28 +544,28 @@ function CGroupShape()
                                     {
                                         case c_oAscSizeRelFromH.sizerelfromhMargin:
                                         {
-                                            dExtX = oSectPr.Get_PageWidth() - oSectPr.Get_PageMargin_Left() - oSectPr.Get_PageMargin_Right();
+                                            dExtX = oSectPr.GetContentFrameWidth();
                                             break;
                                         }
                                         case c_oAscSizeRelFromH.sizerelfromhPage:
                                         {
-                                            dExtX = oSectPr.Get_PageWidth();
+                                            dExtX = oSectPr.GetPageWidth();
                                             break;
                                         }
                                         case c_oAscSizeRelFromH.sizerelfromhLeftMargin:
                                         {
-                                            dExtX = oSectPr.Get_PageMargin_Left();
+                                            dExtX = oSectPr.GetPageMarginLeft();
                                             break;
                                         }
 
                                         case c_oAscSizeRelFromH.sizerelfromhRightMargin:
                                         {
-                                            dExtX = oSectPr.Get_PageMargin_Right();
+                                            dExtX = oSectPr.GetPageMarginRight();
                                             break;
                                         }
                                         default:
                                         {
-                                            dExtX = oSectPr.Get_PageMargin_Left();
+                                            dExtX = oSectPr.GetPageMarginLeft();
                                             break;
                                         }
                                     }
@@ -577,27 +577,27 @@ function CGroupShape()
                                     {
                                         case c_oAscSizeRelFromV.sizerelfromvMargin:
                                         {
-                                            dExtY = oSectPr.Get_PageHeight() - oSectPr.Get_PageMargin_Top() - oSectPr.Get_PageMargin_Bottom();
+                                            dExtY = oSectPr.GetContentFrameHeight();
                                             break;
                                         }
                                         case c_oAscSizeRelFromV.sizerelfromvPage:
                                         {
-                                            dExtY = oSectPr.Get_PageHeight();
+                                            dExtY = oSectPr.GetPageHeight();
                                             break;
                                         }
                                         case c_oAscSizeRelFromV.sizerelfromvTopMargin:
                                         {
-                                            dExtY = oSectPr.Get_PageMargin_Top();
+                                            dExtY = oSectPr.GetPageMarginTop();
                                             break;
                                         }
                                         case c_oAscSizeRelFromV.sizerelfromvBottomMargin:
                                         {
-                                            dExtY = oSectPr.Get_PageMargin_Bottom();
+                                            dExtY = oSectPr.GetPageMarginBottom();
                                             break;
                                         }
                                         default:
                                         {
-                                            dExtY = oSectPr.Get_PageMargin_Top();
+                                            dExtY = oSectPr.GetPageMarginTop();
                                             break;
                                         }
                                     }
@@ -1823,7 +1823,10 @@ function CGroupShape()
 
 
     CGroupShape.prototype.getCopyWithSourceFormatting = function(oIdMap){
-        return this.copy(oIdMap, true);
+        var oPr = new AscFormat.CCopyObjectProperties();
+        oPr.idMap = oIdMap;
+        oPr.bSaveSourceFormatting = true;
+        return this.copy(oPr);
     };
 
     CGroupShape.prototype.GetAllFields = function(isUseSelection, arrFields){
@@ -1839,6 +1842,12 @@ function CGroupShape()
             }
         }
         return _arrFields;
+    };
+    CGroupShape.prototype.GetAllSeqFieldsByType = function(sType, aFields)
+    {
+        for(var i = 0; i < this.spTree.length; ++i){
+            this.spTree[i].GetAllSeqFieldsByType(sType, aFields)
+        }
     };
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};

@@ -614,6 +614,20 @@ CWordCollaborativeEditing.prototype.Update_ForeignCursorLabelPosition = function
     var Api = this.m_oLogicDocument.Get_Api();
     Api.sync_ShowForeignCursorLabel(UserId, X, Y, Color);
 };
+CWordCollaborativeEditing.prototype.OnEnd_ReadForeignChanges = function()
+{
+	AscCommon.CCollaborativeEditingBase.prototype.OnEnd_ReadForeignChanges.apply(this, arguments);
+
+	if (this.m_oLogicDocument && this.m_oLogicDocument.GetApi())
+	{
+		var oApi = this.m_oLogicDocument.GetApi();
+		if (this.m_oLogicDocument.GetBookmarksManager().IsNeedUpdate())
+		{
+			oApi.asc_OnBookmarksUpdate();
+		}
+	}
+
+};
 
 
 CWordCollaborativeEditing.prototype.private_RecalculateDocument = function(oRecalcData){

@@ -233,7 +233,7 @@ function CEditorPage(api)
 	this.m_nZoomType  = 2; // 0 - custom, 1 - fitToWodth, 2 - fitToPage
 
 	this.m_oBoundsController = new AscFormat.CBoundsController();
-	this.m_nTabsType         = 0;
+	this.m_nTabsType         = tab_Left;
 
 	this.m_dScrollY     = 0;
 	this.m_dScrollX     = 0;
@@ -452,6 +452,7 @@ function CEditorPage(api)
 		}
 
 		this.m_oBody = CreateControlContainer(this.Name);
+        this.m_oBody.HtmlElement.style.touchAction = "none";
 
 		this.Splitter1Pos    = 67.5;
         this.Splitter1PosSetUp = this.Splitter1Pos;
@@ -1058,18 +1059,18 @@ function CEditorPage(api)
 
 		this.m_oLeftRuler_buttonsTabs.HtmlElement.onclick = this.onButtonTabsClick;
 
-		this.m_oEditor.HtmlElement.onmousedown = this.onMouseDown;
-		this.m_oEditor.HtmlElement.onmousemove = this.onMouseMove;
-		this.m_oEditor.HtmlElement.onmouseup   = this.onMouseUp;
+        AscCommon.addMouseEvent(this.m_oEditor.HtmlElement, "down", this.onMouseDown);
+        AscCommon.addMouseEvent(this.m_oEditor.HtmlElement, "move", this.onMouseMove);
+        AscCommon.addMouseEvent(this.m_oEditor.HtmlElement, "up", this.onMouseUp);
 
-		this.m_oOverlay.HtmlElement.onmousedown = this.onMouseDown;
-		this.m_oOverlay.HtmlElement.onmousemove = this.onMouseMove;
-		this.m_oOverlay.HtmlElement.onmouseup   = this.onMouseUp;
+        AscCommon.addMouseEvent(this.m_oOverlay.HtmlElement, "down", this.onMouseDown);
+        AscCommon.addMouseEvent(this.m_oOverlay.HtmlElement, "move", this.onMouseMove);
+        AscCommon.addMouseEvent(this.m_oOverlay.HtmlElement, "up", this.onMouseUp);
 
-		var _cur         = document.getElementById('id_target_cursor');
-		_cur.onmousedown = this.onMouseDownTarget;
-		_cur.onmousemove = this.onMouseMoveTarget;
-		_cur.onmouseup   = this.onMouseUpTarget;
+        var _cur         = document.getElementById('id_target_cursor');
+        AscCommon.addMouseEvent(_cur, "down", this.onMouseDownTarget);
+        AscCommon.addMouseEvent(_cur, "move", this.onMouseMoveTarget);
+        AscCommon.addMouseEvent(_cur, "up", this.onMouseUpTarget);
 
 		this.m_oMainContent.HtmlElement.onmousewheel = this.onMouseWhell;
 		if (this.m_oMainContent.HtmlElement.addEventListener)
@@ -1081,30 +1082,23 @@ function CEditorPage(api)
 			return false;
 		};
 
-		this.m_oTopRuler_horRuler.HtmlElement.onmousedown = this.horRulerMouseDown;
-		this.m_oTopRuler_horRuler.HtmlElement.onmouseup   = this.horRulerMouseUp;
-		this.m_oTopRuler_horRuler.HtmlElement.onmousemove = this.horRulerMouseMove;
+        AscCommon.addMouseEvent(this.m_oTopRuler_horRuler.HtmlElement, "down", this.horRulerMouseDown);
+        AscCommon.addMouseEvent(this.m_oTopRuler_horRuler.HtmlElement, "move", this.horRulerMouseMove);
+        AscCommon.addMouseEvent(this.m_oTopRuler_horRuler.HtmlElement, "up", this.horRulerMouseUp);
 
-		this.m_oLeftRuler_vertRuler.HtmlElement.onmousedown = this.verRulerMouseDown;
-		this.m_oLeftRuler_vertRuler.HtmlElement.onmouseup   = this.verRulerMouseUp;
-		this.m_oLeftRuler_vertRuler.HtmlElement.onmousemove = this.verRulerMouseMove;
-
-		/*
-		 // теперь все делает AscCommon.InitBrowserSystemContext
-		window.onkeydown  = this.onKeyDown;
-		window.onkeypress = this.onKeyPress;
-		window.onkeyup    = this.onKeyUp;
-		*/
+        AscCommon.addMouseEvent(this.m_oLeftRuler_vertRuler.HtmlElement, "down", this.verRulerMouseDown);
+        AscCommon.addMouseEvent(this.m_oLeftRuler_vertRuler.HtmlElement, "move", this.verRulerMouseMove);
+        AscCommon.addMouseEvent(this.m_oLeftRuler_vertRuler.HtmlElement, "up", this.verRulerMouseUp);
 
 		if (!this.m_oApi.isMobileVersion)
 		{
-			this.m_oMainParent.HtmlElement.onmousemove = this.onBodyMouseMove;
-			this.m_oMainParent.HtmlElement.onmousedown = this.onBodyMouseDown;
-			this.m_oMainParent.HtmlElement.onmouseup = this.onBodyMouseUp;
+            AscCommon.addMouseEvent(this.m_oMainParent.HtmlElement, "down", this.onBodyMouseDown);
+            AscCommon.addMouseEvent(this.m_oMainParent.HtmlElement, "move", this.onBodyMouseMove);
+            AscCommon.addMouseEvent(this.m_oMainParent.HtmlElement, "up", this.onBodyMouseUp);
 
-			this.m_oBody.HtmlElement.onmousemove = this.onBodyMouseMove;
-			this.m_oBody.HtmlElement.onmousedown = this.onBodyMouseDown;
-			this.m_oBody.HtmlElement.onmouseup = this.onBodyMouseUp;
+            AscCommon.addMouseEvent(this.m_oBody.HtmlElement, "down", this.onBodyMouseDown);
+            AscCommon.addMouseEvent(this.m_oBody.HtmlElement, "move", this.onBodyMouseMove);
+            AscCommon.addMouseEvent(this.m_oBody.HtmlElement, "up", this.onBodyMouseUp);
 		}
 
 		this.initEvents2MobileAdvances();
@@ -1553,19 +1547,19 @@ function CEditorPage(api)
 	this.onButtonTabsClick = function()
 	{
 		var oWordControl = oThis;
-		if (oWordControl.m_nTabsType == AscCommon.g_tabtype_left)
+		if (oWordControl.m_nTabsType == tab_Left)
 		{
-			oWordControl.m_nTabsType = AscCommon.g_tabtype_center;
+			oWordControl.m_nTabsType = tab_Center;
 			oWordControl.onButtonTabsDraw();
 		}
-		else if (oWordControl.m_nTabsType == AscCommon.g_tabtype_center)
+		else if (oWordControl.m_nTabsType == tab_Center)
 		{
-			oWordControl.m_nTabsType = AscCommon.g_tabtype_right;
+			oWordControl.m_nTabsType = tab_Right;
 			oWordControl.onButtonTabsDraw();
 		}
 		else
 		{
-			oWordControl.m_nTabsType = AscCommon.g_tabtype_left;
+			oWordControl.m_nTabsType = tab_Left;
 			oWordControl
 				.onButtonTabsDraw();
 		}
@@ -1596,13 +1590,13 @@ function CEditorPage(api)
 		_ctx.strokeStyle = "#3E3E3E";
 
 		_ctx.lineWidth = 2;
-		if (this.m_nTabsType == AscCommon.g_tabtype_left)
+		if (this.m_nTabsType == tab_Left)
 		{
 			_ctx.moveTo(8, 9);
 			_ctx.lineTo(8, 14);
 			_ctx.lineTo(13, 14);
 		}
-		else if (this.m_nTabsType == AscCommon.g_tabtype_center)
+		else if (this.m_nTabsType == tab_Center)
 		{
 			_ctx.moveTo(6, 14);
 			_ctx.lineTo(14, 14);
@@ -2352,13 +2346,6 @@ function CEditorPage(api)
 		var is_drawing = oWordControl.m_oDrawingDocument.checkMouseUp_Drawing(pos);
 		if (is_drawing === true)
 			return;
-
-		var is_drawing_on_up = oWordControl.m_oDrawingDocument.checkMouseDown_DrawingOnUp(pos);
-		if (is_drawing_on_up)
-		{
-			// не посылаем в документ.
-			return;
-		}
 
 		oWordControl.m_oLogicDocument.OnMouseUp(global_mouseEvent, pos.X, pos.Y, pos.Page);
 
@@ -3395,7 +3382,12 @@ function CEditorPage(api)
 			return false;
 
 		if (this.m_oApi.isReporterMode)
-			return false;
+		{
+			this.m_oEditor.HtmlElement.style.display = 'none';
+            this.m_oOverlay.HtmlElement.style.display = 'none';
+			this.m_oScrollHor.HtmlElement.style.display = 'none';
+            return false;
+        }
 
 		this.m_bIsHorScrollVisible = this.checkNeedHorScrollValue(this.m_dDocumentWidth);
 
@@ -3576,6 +3568,11 @@ function CEditorPage(api)
 			drDoc.AutoShapesTrack.PageIndex       = _oldPage;
 			drDoc.AutoShapesTrack.CurrentPageInfo = _oldCurPageInfo;
 		}
+
+        if (drDoc.placeholders.objects.length > 0 && drDoc.SlideCurrent >= 0)
+        {
+        	drDoc.placeholders.draw(overlay, drDoc.SlideCurrent, drDoc.SlideCurrectRect, this.m_oLogicDocument.Width, this.m_oLogicDocument.Height);
+        }
 
 		drDoc.DrawHorVerAnchor();
 
@@ -4177,7 +4174,13 @@ function CEditorPage(api)
 		if (-1 != this.m_oDrawingDocument.SlideCurrent)
 			master = this.m_oLogicDocument.Slides[this.m_oDrawingDocument.SlideCurrent].Layout.Master;
 		else
-			master = this.m_oLogicDocument.slideMasters[0];
+		{
+			master = this.m_oLogicDocument.lastMaster;
+			if(!master)
+			{
+				master = this.m_oLogicDocument.slideMasters[0];
+			}
+		}
 
 		if (this.MasterLayouts != master || Math.abs(this.m_oLayoutDrawer.WidthMM - this.m_oLogicDocument.Width) > MOVE_DELTA || Math.abs(this.m_oLayoutDrawer.HeightMM - this.m_oLogicDocument.Height) > MOVE_DELTA || bIsAttack === true)
 		{

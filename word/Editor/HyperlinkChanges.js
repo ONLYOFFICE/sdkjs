@@ -139,6 +139,9 @@ CChangesHyperlinkAddItem.prototype.Load = function(Color)
 		{
 			oHyperlink.Content.splice(Pos, 0, Element);
 			AscCommon.CollaborativeEditing.Update_DocumentPositionsOnAdd(oHyperlink, Pos);
+
+			if (Element.SetParagraph && oHyperlink.GetParagraph())
+				Element.SetParagraph(oHyperlink.GetParagraph());
 		}
 	}
 

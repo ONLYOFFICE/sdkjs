@@ -259,6 +259,8 @@ function CBinaryFileWriter()
     };
     this.WriteString2 = function(text)
     {
+        if ("string" != typeof text)
+            text = text + "";
         var count = text.length & 0x7FFFFFFF;
         var countWrite = 2 * count;
         this.WriteULong(count);
@@ -2082,7 +2084,7 @@ function CBinaryFileWriter()
             oThis._WriteUChar1(4, _cap);
         }
 
-        oThis._WriteString2(10, g_oLcidIdToNameMap[rPr.Lang.Val]);
+        oThis._WriteString2(10, Asc.g_oLcidIdToNameMap[rPr.Lang.Val]);
 
         var _strike = null;
         if (rPr.DStrikeout === true)
@@ -3613,7 +3615,7 @@ function CBinaryFileWriter()
         oThis._WriteString2(7, ole.m_sObjectFile);
         oThis.WriteUChar(g_nodeAttributeEnd);
 
-        if((ole.m_nOleType === 1 || ole.m_nOleType === 2) && ole.m_aBinaryData !== null)
+        if((ole.m_nOleType === 0 || ole.m_nOleType === 1 || ole.m_nOleType === 2) && ole.m_aBinaryData !== null)
         {
             oThis.WriteRecord1(1, ole.m_nOleType, function(val){
                 oThis.WriteUChar(val);

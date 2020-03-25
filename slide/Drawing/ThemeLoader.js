@@ -191,11 +191,7 @@ function CThemeLoader()
         }
         else
         {
-            window['native']['WC_LoadTheme'](theme_src);
-            if(window["g_theme" + (oThis.CurrentLoadThemeIndex + 1)])
-            {
-                this._callback_theme_load();
-            }
+            this._callback_theme_load(window['native']['WC_LoadTheme'](theme_src));
         }
     };
 

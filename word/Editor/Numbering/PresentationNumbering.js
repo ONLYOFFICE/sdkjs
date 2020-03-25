@@ -195,7 +195,7 @@ CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, _Num, The
 	FirstTextPr_.Merge(TextPr_);
 	this.m_oTextPr = FirstTextPr_;
 
-	var Num = _Num + this.m_nStartAt - 1;
+	var Num = _Num;
 	this.m_nNum = Num;
 
 	var X = 0;

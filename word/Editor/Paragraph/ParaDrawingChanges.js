@@ -415,7 +415,7 @@ CChangesParaDrawingGraphicObject.prototype.private_SetValue = function(Value)
 	else
 		oDrawing.GraphicObj = null;
 
-	if(isRealObject(oDrawing.GraphicObj) && oDrawing.GraphicObj.handleUpdateExtents)
+	if(isRealObject(oDrawing.GraphicObj))
 		oDrawing.GraphicObj.handleUpdateExtents();
 };
 CChangesParaDrawingGraphicObject.prototype.WriteToBinary = function(Writer)

@@ -99,13 +99,15 @@
 	 * @param {AscCommonExcel.Font} oFont
 	 * @param {HandlersList} handlers
 	 * @param {Number} padding
+	 * @param {Boolean} menuEditor
 	 */
-	function CellEditor( elem, input, fmgrGraphics, oFont, handlers, padding, settings ) {
+	function CellEditor( elem, input, fmgrGraphics, oFont, handlers, padding, menuEditor ) {
 		this.element = elem;
 		this.input = input;
 		this.handlers = new asc_HL( handlers );
 		this.options = {};
 		this.sides = undefined;
+		this.menuEditor = menuEditor;
 
 		//---declaration---
 		this.canvasOuter = undefined;
@@ -175,22 +177,22 @@
 		// Обработчик кликов
 		this.clickCounter = new AscFormat.ClickCounter();
 
-		//TODO сейчас setting нужен только для того, чтобы передать в init флаг menuEditor. пересмотреть!
-		this._init(settings);
+		this._init();
 
 		return this;
 	}
 
-	CellEditor.prototype._init = function (settings) {
+	CellEditor.prototype._init = function () {
 		var t = this;
 		var z = t.defaults.canvasZIndex;
 		this.sAutoComplete = null;
 
 		if (null != this.element) {
-			var ceCanvasOuterId = settings && settings.menuEditor ? "ce-canvas-outer-menu" : "ce-canvas-outer";
-			var ceCanvasId = settings && settings.menuEditor ? "ce-canvas-menu" : "ce-canvas";
-			var ceCanvasOverlay = settings && settings.menuEditor ? "ce-canvas-overlay-menu" : "ce-canvas-overlay";
-			var ceCursor = settings && settings.menuEditor ? "ce-cursor-menu" : "ce-cursor";
+			var ceMenuEditor = this.getMenuEditorMode() ? '-menu' : '';
+			var ceCanvasOuterId = "ce-canvas-outer" + ceMenuEditor;
+			var ceCanvasId = "ce-canvas" + ceMenuEditor;
+			var ceCanvasOverlay = "ce-canvas-overlay" + ceMenuEditor;
+			var ceCursor = "ce-cursor" + ceMenuEditor;
 
 			t.canvasOuter = document.createElement('div');
 			t.canvasOuter.id = ceCanvasOuterId;
@@ -277,36 +279,33 @@
 	 *   background
 	 *   saveValueCallback
 	 */
-	CellEditor.prototype.open = function ( options ) {
+	CellEditor.prototype.open = function (options) {
 		var b = this.input.selectionStart;
 
 		this.isOpened = true;
-		if ( window.addEventListener ) {
-			window.addEventListener( "mouseup", this.fKeyMouseUp, false );
-			window.addEventListener( "mousemove", this.fKeyMouseMove, false );
+		if (window.addEventListener) {
+			window.addEventListener("mouseup", this.fKeyMouseUp, false);
+			window.addEventListener("mousemove", this.fKeyMouseMove, false);
 		}
-		this._setOptions( options );
+		this._setOptions(options);
 		this._updateTopLineActive(true === this.input.isFocused);
 
-		this._updateFormulaEditMod( /*bIsOpen*/true );
+		this._updateFormulaEditMod( /*bIsOpen*/true);
 		this._draw();
 
-		if ( !(options.cursorPos >= 0) ) {
-			if ( this.isTopLineActive ) {
-				if ( typeof b !== "undefined" ) {
-					if ( this.cursorPos !== b ) {
-						this._moveCursor( kPosition, b );
+		if (!(options.cursorPos >= 0)) {
+			if (this.isTopLineActive) {
+				if (typeof b !== "undefined") {
+					if (this.cursorPos !== b) {
+						this._moveCursor(kPosition, b);
 					}
+				} else {
+					this._moveCursor(kEndOfText);
 				}
-				else {
-					this._moveCursor( kEndOfText );
-				}
-			}
-			else if ( options.isClearCell ) {
-				this._selectChars( kEndOfText );
-			}
-			else {
-				this._moveCursor( kEndOfText );
+			} else if (options.isClearCell) {
+				this._selectChars(kEndOfText);
+			} else {
+				this._moveCursor(kEndOfText);
 			}
 		}
 		/*
@@ -315,7 +314,7 @@
 		 * При F2 выставляем фокус в редакторе
 		 * При dbl клике фокус выставляем в зависимости от наличия текста в ячейке
 		 */
-		this.setFocus( this.isTopLineActive ? true : (undefined !== options.focus) ? options.focus : this._haveTextInEdit() ? true : false );
+		this.setFocus(this.isTopLineActive ? true : (undefined !== options.focus) ? options.focus : this._haveTextInEdit());
 		this._updateUndoRedoChanged();
 	};
 
@@ -538,47 +537,26 @@
 		t._moveCursor(kEndOfText);
 	};
 
-	CellEditor.prototype.move = function (l, t, r, b) {
-		this.textFlags.wrapOnlyCE = false;
-		this.sides = this.options.getSides();
-		this.left = this.sides.cellX;
-		this.top = this.sides.cellY;
-		this.right = this.sides.r[this.sides.ri];
-		this.bottom = this.sides.b[this.sides.bi];
-		// ToDo вынести в отдельную функцию
-		var canExpW = true, canExpH = true, tm, expW, expH, fragments = this._getRenderFragments();
-		if (0 < fragments.length) {
-			tm = this.textRender.measureString(fragments, this.textFlags, this._getContentWidth());
-			expW = tm.width > this._getContentWidth();
-			expH = tm.height > this._getContentHeight();
+	CellEditor.prototype.move = function () {
+		if (this.options.checkVisible()) {
+			this.textFlags.wrapOnlyCE = false;
+			this.sides = this.options.getSides();
+			this.left = this.sides.cellX;
+			this.top = this.sides.cellY;
+			this.right = this.sides.r[this.sides.ri];
+			this.bottom = this.sides.b[this.sides.bi];
 
-			while (expW && canExpW || expH && canExpH) {
-				if (expW) {
-					canExpW = this._expandWidth();
-				}
-				if (expH) {
-					canExpH = this._expandHeight();
-				}
-
-				if (!canExpW) {
-					this.textFlags.wrapOnlyCE = true;
-					tm = this.textRender.measureString(fragments, this.textFlags, this._getContentWidth());
-				} else {
-					tm = this.textRender.measure(this._getContentWidth());
-				}
-				expW = tm.width > this._getContentWidth();
-				expH = tm.height > this._getContentHeight();
-			}
-		}
-
-		if (this.left < l || this.top < t || this.left > r || this.top > b) {
-			// hide
-			this._hideCanvas();
-		} else {
+			this._expand();
 			this._adjustCanvas();
 			this._showCanvas();
 			this._renderText();
+			this.topLineIndex = 0;
+			this._updateCursorPosition();
+			this._showCursor();
 			this._drawSelection();
+		} else {
+			// hide
+			this._hideCanvas();
 		}
 	};
 
@@ -786,7 +764,7 @@
 			this.options.fragments), t = this, ret = false, range, wsOPEN = this.handlers.trigger(
 			"getCellFormulaEnterWSOpen"), ws = wsOPEN ? wsOPEN.model : this.handlers.trigger("getActiveWS");
 
-		if (Asc.c_oAscNumFormatType.Text === this.options.cellNumFormat || s.length < 1 || s.charAt(0) !== "=") {
+		if (s.length < 1 || s.charAt(0) !== "=") {
 			return ret;
 		}
 
@@ -1044,14 +1022,14 @@
 						continue;
 				}
 
-				if (ret && t.cursorPos > _s && t.cursorPos <= _s + r.oper.value.length) {
+				if (ret && t.cursorPos > _s && t.cursorPos <= _s + refStr.length) {
 					range = t._parseRangeStr(refStr);
 					if (range) {
 						if (this.handlers.trigger("getActiveWS") && this.handlers.trigger("getActiveWS").getName() != wsName) {
 							return {index: -1, length: 0, range: null};
 						}
 						range.isName = isName;
-						return {index: _s, length: r.oper.value.length, range: range, wsName: wsName};
+						return {index: _s, length: refStr.length, range: range, wsName: wsName};
 					}
 				}
 			}
@@ -1144,39 +1122,14 @@
 	// Rendering
 
 	CellEditor.prototype._draw = function () {
-		var canExpW = true, canExpH = true, tm, expW, expH, fragments = this._getRenderFragments();
-
-		if (0 < fragments.length) {
-			tm = this.textRender.measureString(fragments, this.textFlags, this._getContentWidth());
-			expW = tm.width > this._getContentWidth();
-			expH = tm.height > this._getContentHeight();
-
-			while (expW && canExpW || expH && canExpH) {
-				if (expW) {
-					canExpW = this._expandWidth();
-				}
-				if (expH) {
-					canExpH = this._expandHeight();
-				}
-
-				if (!canExpW) {
-					this.textFlags.wrapOnlyCE = true;
-					tm = this.textRender.measureString(fragments, this.textFlags, this._getContentWidth());
-				} else {
-					tm = this.textRender.measure(this._getContentWidth());
-				}
-				expW = tm.width > this._getContentWidth();
-				expH = tm.height > this._getContentHeight();
-			}
-		}
-
+		this._expand();
 		this._cleanText();
 		this._cleanSelection();
 		this._adjustCanvas();
 		this._showCanvas();
 		this._renderText();
 		if(!this.getMenuEditorMode()) {
-			this.input.value = AscCommonExcel.getFragmentsText(fragments);
+			this.input.value = AscCommonExcel.getFragmentsText((this.options.fragments));
 		}
 		this._updateCursorPosition();
 		this._showCursor();
@@ -1185,45 +1138,8 @@
 	CellEditor.prototype._update = function () {
 		this._updateFormulaEditMod(/*bIsOpen*/false);
 
-		var tm, canExpW, canExpH, oldLC, doAjust = false, fragments = this._getRenderFragments(), bChangedH;
-
-		if (0 < fragments.length) {
-			oldLC = this.textRender.getLinesCount();
-			tm = this.textRender.measureString(fragments, this.textFlags, this._getContentWidth());
-			if (this.textRender.getLinesCount() < oldLC) {
-				this.topLineIndex -= oldLC - this.textRender.getLinesCount();
-			}
-
-			canExpW = !(this.textFlags.wrapText || this.textFlags.wrapOnlyCE);
-			while (tm.width > this._getContentWidth() && canExpW) {
-				canExpW = this._expandWidth();
-				if (!canExpW) {
-					this.textFlags.wrapOnlyCE = true;
-					tm = this.textRender.measureString(fragments, this.textFlags, this._getContentWidth());
-				}
-				doAjust = true;
-			}
-
-			canExpH = true;
-			while (tm.height > this._getContentHeight() && canExpH) {
-				canExpH = this._expandHeight();
-				doAjust = true;
-				bChangedH = true;
-			}
-
-			//reduce editor height for interface
-			if(this.getMenuEditorMode()) {
-				if(!bChangedH && tm.height < this._getContentHeight() && this._reduceHeight(tm.height)) {
-					doAjust = true;
-					bChangedH = true;
-				}
-			}
-		}
-		if (doAjust) {
+		if (this._expand()) {
 			this._adjustCanvas();
-			if(bChangedH && this.getMenuEditorMode()) {
-				this.handlers.trigger("resizeEditorHeight");
-			}
 		}
 
 		this._renderText();  // вызов нужен для пересчета поля line.startX, которое используется в _updateCursorPosition
@@ -1330,6 +1246,37 @@
 		return {func: editableFunction, argPos: parseResult ? parseResult.argPos : null};
 	};
 
+	CellEditor.prototype._expand = function () {
+		var bottom, tm;
+		var doAdjust = false, fragments = this._getRenderFragments();
+		if (0 < fragments.length) {
+			bottom = this.bottom;
+			this.bottom = this.sides.b[this.sides.bi];
+
+			tm = this.textRender.measureString(fragments, this.textFlags, this._getContentWidth());
+
+			if (!this.textFlags.wrapText && !this.textFlags.wrapOnlyCE) {
+				while (tm.width > this._getContentWidth()) {
+					if (!this._expandWidth()) {
+						this.textFlags.wrapOnlyCE = true;
+						tm = this.textRender.measureString(fragments, this.textFlags, this._getContentWidth());
+						break;
+					}
+					doAdjust = true;
+				}
+			}
+			while (tm.height > this._getContentHeight() && this._expandHeight()) {
+			}
+			if (bottom !== this.bottom) {
+				doAdjust = true;
+				// ToDo move this to _adjustCanvas
+				if (this.getMenuEditorMode) {
+					this.handlers.trigger("resizeEditorHeight");
+				}
+			}
+		}
+		return doAdjust;
+	};
 	CellEditor.prototype._expandWidth = function () {
 		var t = this, l = false, r = false, leftSide = this.sides.l, rightSide = this.sides.r;
 
@@ -1377,7 +1324,6 @@
 		}
 		return l || r;
 	};
-
 	CellEditor.prototype._expandHeight = function () {
 		var t = this, bottomSide = this.sides.b, i = asc_search( bottomSide, function ( v ) {
 			return v > t.bottom;
@@ -1389,18 +1335,6 @@
 		var val = bottomSide[bottomSide.length - 1];
 		if ( Math.abs( t.bottom - val ) > 0.000001 ) { // bottom !== bottomSide[len-1]
 			t.bottom = val;
-		}
-		return false;
-	};
-
-	CellEditor.prototype._reduceHeight = function (height) {
-
-		var t = this, bottomSide = this.sides.b, i = asc_search( bottomSide, function ( v ) {
-			return v > height;
-		} );
-		if ( i >= 0 ) {
-			t.bottom = bottomSide[i];
-			return true;
 		}
 		return false;
 	};
@@ -1729,10 +1663,13 @@
 	};
 
 	CellEditor.prototype._topLineMouseUp = function () {
-		var t = this;
 		this.callTopLineMouseup = false;
 		// при такой комбинации ctrl+a, click, ctrl+a, click не обновляется selectionStart
 		// поэтому выполняем обработку после обработчика системы
+		this._delayedUpdateCursorByTopLine();
+	};
+	CellEditor.prototype._delayedUpdateCursorByTopLine = function () {
+		var t = this;
 		setTimeout(function () {
 			t._updateCursorByTopLine();
 		});
@@ -1801,6 +1738,9 @@
 		this.textFlags.wrapOnlyNL = true;
 	};
 
+	CellEditor.prototype._addCharCodes = function (arrCharCodes) {
+		return this._addChars(this.getTextFromCharCodes(arrCharCodes));
+	};
 	CellEditor.prototype._addChars = function (str, pos, isRange) {
 		var length = str.length;
 		if (!this._checkMaxCellLength(length)) {
@@ -2413,6 +2353,7 @@
 
 			case 37:  // "left"
 				if (!this.enableKeyEvents) {
+					this._delayedUpdateCursorByTopLine();
 					break;
 				}
 
@@ -2430,6 +2371,7 @@
 
 			case 39:  // "right"
 				if (!this.enableKeyEvents) {
+					this._delayedUpdateCursorByTopLine();
 					break;
 				}
 
@@ -2447,6 +2389,7 @@
 
 			case 38:  // "up"
 				if (!this.enableKeyEvents) {
+					this._delayedUpdateCursorByTopLine();
 					break;
 				}
 
@@ -2463,6 +2406,7 @@
 
 			case 40:  // "down"
 				if (!this.enableKeyEvents) {
+					this._delayedUpdateCursorByTopLine();
 					break;
 				}
 
@@ -2872,6 +2816,19 @@
 		return {x: x, y: y};
 	};
 
+	CellEditor.prototype.getTextFromCharCodes = function (arrCharCodes) {
+		var code, codePt, newText = '';
+		for (var i = 0; i < arrCharCodes.length; ++i) {
+			code = arrCharCodes[i];
+			if (code < 0x10000) {
+				newText += String.fromCharCode(code);
+			} else {
+				codePt = code - 0x10000;
+				newText += String.fromCharCode(0xD800 + (codePt >> 10), 0xDC00 + (codePt & 0x3FF));
+			}
+		}
+		return newText;
+	};
 	CellEditor.prototype.Begin_CompositeInput = function () {
 		if (this.selectionBegin === this.selectionEnd) {
 			this.beginCompositePos = this.cursorPos;
@@ -2887,16 +2844,7 @@
 			return;
 		}
 
-		var code, codePt, newText = '';
-		for (var i = 0; i < arrCharCodes.length; ++i) {
-			code = arrCharCodes[i];
-			if (code < 0x10000) {
-				newText += String.fromCharCode(code);
-			} else {
-				codePt = code - 0x10000;
-				newText += String.fromCharCode(0xD800 + (codePt >> 10), 0xDC00 + (codePt & 0x3FF));
-			}
-		}
+		var newText = this.getTextFromCharCodes(arrCharCodes);
 		this.replaceText(this.beginCompositePos, this.compositeLength, newText);
 		this.compositeLength = newText.length;
 
@@ -2942,7 +2890,7 @@
 		return this.compositeLength;
 	};
 	CellEditor.prototype.getMenuEditorMode = function () {
-		return this.options && this.options.menuEditor;
+		return this.menuEditor;
 	};
 
 

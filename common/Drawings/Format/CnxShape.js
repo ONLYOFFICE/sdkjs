@@ -519,7 +519,7 @@
         return AscDFH.historyitem_type_Cnx;
     };
 
-    CConnectionShape.prototype.copy = function () {
+    CConnectionShape.prototype.copy = function (oPr) {
         var copy = new CConnectionShape();
         this.fillObject(copy);
         return copy;

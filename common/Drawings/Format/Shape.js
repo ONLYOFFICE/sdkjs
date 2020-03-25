@@ -67,9 +67,13 @@ function CheckObjectLine(obj)
 
 function CheckWordArtTextPr(oRun)
 {
-    var oTextPr = oRun.Get_CompiledPr();
-    if(oTextPr.TextFill || (oTextPr.TextOutline && oTextPr.TextOutline.Fill && oTextPr.TextOutline.Fill.fill && oTextPr.TextOutline.Fill.fill.type !==  Asc.c_oAscFill.FILL_TYPE_NOFILL) || (oTextPr.Unifill && oTextPr.Unifill.fill && (oTextPr.Unifill.fill.type !== c_oAscFill.FILL_TYPE_SOLID || oTextPr.Unifill.transparent != null && oTextPr.Unifill.transparent < 254.5)))
-        return true;
+    if(oRun instanceof AscCommonWord.ParaRun)
+    {
+        var oTextPr = oRun.Get_CompiledPr();
+        if(oTextPr.TextFill || (oTextPr.TextOutline && oTextPr.TextOutline.Fill && oTextPr.TextOutline.Fill.fill && oTextPr.TextOutline.Fill.fill.type !==  Asc.c_oAscFill.FILL_TYPE_NOFILL) ||
+            (oTextPr.Unifill && oTextPr.Unifill.fill && (oTextPr.Unifill.fill.type !== c_oAscFill.FILL_TYPE_SOLID || oTextPr.Unifill.transparent != null && oTextPr.Unifill.transparent < 254.5)))
+            return true;
+    }
     return false;
 }
 
@@ -356,8 +360,9 @@ function CopyRunToPPTX(Run, Paragraph, bHyper)
     for ( var CurPos = 0; CurPos < Run.Content.length; CurPos++ )
     {
         var Item = Run.Content[CurPos];
-        if ( para_End !== Item.Type && Item.Type !== para_Drawing && Item.Type !== para_Comment &&
-            Item.Type !== para_PageCount && Item.Type !== para_FootnoteRef && Item.Type !== para_FootnoteReference && Item.Type !== para_PageNum)
+        if (   Item.Type !== para_End       && Item.Type !== para_Drawing     && Item.Type !== para_Comment
+            && Item.Type !== para_PageCount && Item.Type !== para_FootnoteRef && Item.Type !== para_FootnoteReference
+            && Item.Type !== para_PageNum   && Item.Type !== para_FieldChar   && Item.Type !== para_Bookmark && Item.Type !== para_RevisionMove)
         {
             NewRun.Add_ToContent( PosToAdd, Item.Copy(), false );
             ++PosToAdd;
@@ -366,10 +371,50 @@ function CopyRunToPPTX(Run, Paragraph, bHyper)
     return NewRun;
 }
 
+
+function ConvertParagraphContentToPPTX(aOrigContent, oNewParagraph, bIsAddMath, bRemoveHyperlink )
+{
+    var Count = aOrigContent.length;
+    for ( var Index = 0; Index < Count; Index++ )
+    {
+        var Item = aOrigContent[Index];
+        if(Item.Type === para_Run)
+        {
+            oNewParagraph.Internal_Content_Add(oNewParagraph.Content.length, CopyRunToPPTX(Item, oNewParagraph), false);
+        }
+        else if(Item.Type === para_Hyperlink)
+        {
+            if(bRemoveHyperlink === true)
+            {
+                for(var j = 0; j < Item.Content.length; ++j)
+                {
+                    if(Item.Content[j].Type === para_Run)
+                    {
+                        oNewParagraph.Internal_Content_Add(oNewParagraph.Content.length, CopyRunToPPTX(Item.Content[j], oNewParagraph), false);
+                    }
+                }
+            }
+            else
+            {
+                oNewParagraph.Internal_Content_Add(oNewParagraph.Content.length, ConvertHyperlinkToPPTX(Item, oNewParagraph), false);
+            }
+
+        }
+        else if(Item.Type === para_InlineLevelSdt)
+        {
+            ConvertParagraphContentToPPTX(Item.Content, oNewParagraph, bIsAddMath, bRemoveHyperlink )
+        }
+        else if(true === bIsAddMath && Item.Type === para_Math)
+        {
+            oNewParagraph.Internal_Content_Add(oNewParagraph.Content.length, Item.Copy(), false);
+        }
+    }
+}
+
 function ConvertParagraphToPPTX(paragraph, drawingDocument, newParent, bIsAddMath, bRemoveHyperlink)
 {
     var _drawing_document = isRealObject(drawingDocument) ? drawingDocument : paragraph.DrawingDocument;
-    var _new_parent = isRealObject(newParent) ? newParent : paragraph.Parent;
+    var _new_parent = isRealObject(newParent) ? newParent : null;
 
     var new_paragraph = new Paragraph(_drawing_document, _new_parent, true);
     if(!(paragraph instanceof Paragraph))
@@ -404,41 +449,38 @@ function ConvertParagraphToPPTX(paragraph, drawingDocument, newParent, bIsAddMat
     }
     new_paragraph.TextPr.Set_Value( oNewEndPr );
     new_paragraph.Internal_Content_Remove2(0, new_paragraph.Content.length);
-    var Count = paragraph.Content.length;
-    for ( var Index = 0; Index < Count; Index++ )
-    {
-        var Item = paragraph.Content[Index];
-        if(Item.Type === para_Run)
-        {
-            new_paragraph.Internal_Content_Add(new_paragraph.Content.length, CopyRunToPPTX(Item, new_paragraph), false);
-        }
-        else if(Item.Type === para_Hyperlink)
-        {
-            if(bRemoveHyperlink === true)
-            {
-                for(var j = 0; j < Item.Content.length; ++j)
-                {
-                    if(Item.Content[j].Type === para_Run)
-                    {
-                        new_paragraph.Internal_Content_Add(new_paragraph.Content.length, CopyRunToPPTX(Item.Content[j], new_paragraph), false);
-                    }
-                }
-            }
-            else
-            {
-                new_paragraph.Internal_Content_Add(new_paragraph.Content.length, ConvertHyperlinkToPPTX(Item, new_paragraph), false);
-            }
-
-        }
-        else if(true === bIsAddMath && Item.Type === para_Math)
-        {
-            new_paragraph.Internal_Content_Add(new_paragraph.Content.length, Item.Copy(), false);
-        }
-    }
+    ConvertParagraphContentToPPTX(paragraph.Content, new_paragraph, bIsAddMath, bRemoveHyperlink);
     var EndRun = new ParaRun(new_paragraph);
     EndRun.Add_ToContent( 0, new ParaEnd() );
     new_paragraph.Internal_Content_Add( new_paragraph.Content.length, EndRun, false );
     return new_paragraph;
+}
+
+
+function ConvertElementsToPPTX(aResult, aElements, drawingDocument, newParent, bIsAddMath, bRemoveHyperlink)
+{
+    var i, j, oElement;
+    for(i = 0; i < aElements.length; ++i)
+    {
+        oElement = aElements[i];
+        if(oElement instanceof AscCommonWord.Paragraph)
+        {
+            aResult.push(ConvertParagraphToPPTX(oElement));
+        }
+        else if(oElement instanceof AscCommonWord.CTable)
+        {
+            var paragraphs = [];
+            oElement.GetAllParagraphs({All: true}, paragraphs);
+            for (j = 0; j < paragraphs.length; j++) {
+                aResult.push(AscFormat.ConvertParagraphToPPTX(paragraphs[j], drawingDocument,
+                    newParent, bIsAddMath, bRemoveHyperlink));
+            }
+        }
+        else if(oElement instanceof AscCommonWord.CBlockLevelSdt)
+        {
+            ConvertElementsToPPTX(aResult, oElement.Content.Content, drawingDocument, newParent, bIsAddMath, bRemoveHyperlink)
+        }
+    }
 }
 
 function ConvertHyperlinkToPPTX(hyperlink, paragraph)
@@ -733,7 +775,10 @@ function fHandleContent(aContent, oMax){
         }
         else if(oContentElement.Get_Type() === type_Table)
         {
-
+            if(oContentElement.Bounds.Right > oMax.max_width)
+            {
+                oMax.max_width = oContentElement.Bounds.Right;
+            }
         }
         else if(oContentElement.Get_Type() === type_BlockLevelSdt)
         {
@@ -898,7 +943,7 @@ function SetXfrmFromMetrics(oDrawing, metrics)
         this.signer2 =  AscFormat.readString(reader);
         this.email =  AscFormat.readString(reader);
     };
-    CSignatureLine.prototype.copy = function(){
+    CSignatureLine.prototype.copy = function(oPr){
         var ret = new CSignatureLine();
         ret.id =  this.id;
         ret.signer = this.signer;
@@ -996,28 +1041,6 @@ CShape.prototype.convertToWord = function (document) {
                 var cur_par = paragraphs[i];
                 var new_paragraph = ConvertParagraphToWord(cur_par, new_content);
                 new_content.Internal_Content_Add(i, new_paragraph, false);
-                /*var bullet = cur_par.Pr.Bullet;
-                 if(bullet && bullet.bulletType && bullet.bulletType.type !== AscFormat.BULLET_TYPE_BULLET_NONE)
-                 {
-                 switch(bullet.bulletType.type)
-                 {
-                 case AscFormat.BULLET_TYPE_BULLET_CHAR:
-                 case AscFormat.BULLET_TYPE_BULLET_BLIP :
-                 {
-                 _bullet.m_nType = numbering_presentationnumfrmt_Char;
-                 _bullet.m_sChar = _final_bullet.bulletType.Char[0];
-                 _cur_paragraph.Add_PresentationNumbering(_bullet, true);
-                 break;
-                 }
-                 case AscFormat.BULLET_TYPE_BULLET_AUTONUM :
-                 {
-                 _bullet.m_nType = g_NumberingArr[_final_bullet.bulletType.AutoNumType];
-                 _bullet.m_nStartAt = _final_bullet.bulletType.startAt;
-                 _cur_paragraph.Add_PresentationNumbering(_bullet, true);
-                 break;
-                 }
-                 }
-                 } */
             }
             c.setTextBoxContent(new_content);
         }
@@ -2608,7 +2631,7 @@ CShape.prototype.selectionCheck = function (X, Y, PageAbs, NearPos) {
     return false;
 };
 
-CShape.prototype.fillObject = function(copy){
+CShape.prototype.fillObject = function(copy, oPr){
     if (this.nvSpPr)
         copy.setNvSpPr(this.nvSpPr.createDuplicate());
     if (this.spPr) {
@@ -2626,7 +2649,7 @@ CShape.prototype.fillObject = function(copy){
         copy.setBodyPr(this.bodyPr.createDuplicate());
     }
     if (this.textBoxContent) {
-        copy.setTextBoxContent(this.textBoxContent.Copy(copy));
+        copy.setTextBoxContent(this.textBoxContent.Copy(copy, oPr && oPr.drawingDocument, oPr && oPr.contentCopyPr));
     }
     if(this.signatureLine && copy.setSignature){
         copy.setSignature(this.signatureLine.copy());
@@ -2639,9 +2662,9 @@ CShape.prototype.fillObject = function(copy){
     copy.cachedPixW = this.cachedPixW;
 };
 
-CShape.prototype.copy = function () {
+CShape.prototype.copy = function (oPr) {
     var copy = new CShape();
-    this.fillObject(copy);
+    this.fillObject(copy, oPr);
     return copy;
 };
 
@@ -2708,27 +2731,7 @@ CShape.prototype.recalculateTextStyles = function (level) {
             }
             else{
                 if (this.isPlaceholder() && !(this instanceof AscFormat.CGraphicFrame)) {
-                    switch (this.getPlaceholderType()) {
-                        case AscFormat.phType_ctrTitle:
-                        case AscFormat.phType_title:
-                        {
-                            master_ppt_styles = parent_objects.master.txStyles.titleStyle;
-                            break;
-                        }
-                        case AscFormat.phType_body:
-                        case AscFormat.phType_subTitle:
-                        case AscFormat.phType_obj:
-                        case null:
-                        {
-                            master_ppt_styles = parent_objects.master.txStyles.bodyStyle;
-                            break;
-                        }
-                        default:
-                        {
-                            master_ppt_styles = parent_objects.master.txStyles.otherStyle;
-                            break;
-                        }
-                    }
+                    master_ppt_styles = parent_objects.master.txStyles.getStyleByPhType(this.getPlaceholderType());
                 }
                 else {
                     master_ppt_styles = parent_objects.master.txStyles.otherStyle;
@@ -3199,28 +3202,28 @@ CShape.prototype.recalculateLocalTransform = function(transform)
                                         {
                                             case c_oAscSizeRelFromH.sizerelfromhMargin:
                                             {
-                                                this.extX = oSectPr.Get_PageWidth() - oSectPr.Get_PageMargin_Left() - oSectPr.Get_PageMargin_Right();
+                                                this.extX = oSectPr.GetContentFrameWidth();
                                                 break;
                                             }
                                             case c_oAscSizeRelFromH.sizerelfromhPage:
                                             {
-                                                this.extX = oSectPr.Get_PageWidth();
+                                                this.extX = oSectPr.GetPageWidth();
                                                 break;
                                             }
                                             case c_oAscSizeRelFromH.sizerelfromhLeftMargin:
                                             {
-                                                this.extX = oSectPr.Get_PageMargin_Left();
+                                                this.extX = oSectPr.GetPageMarginLeft();
                                                 break;
                                             }
 
                                             case c_oAscSizeRelFromH.sizerelfromhRightMargin:
                                             {
-                                                this.extX = oSectPr.Get_PageMargin_Right();
+                                                this.extX = oSectPr.GetPageMarginRight();
                                                 break;
                                             }
                                             default:
                                             {
-                                                this.extX = oSectPr.Get_PageMargin_Left();
+                                                this.extX = oSectPr.GetPageMarginLeft();
                                                 break;
                                             }
                                         }
@@ -3232,27 +3235,27 @@ CShape.prototype.recalculateLocalTransform = function(transform)
                                         {
                                             case c_oAscSizeRelFromV.sizerelfromvMargin:
                                             {
-                                                this.extY = oSectPr.Get_PageHeight() - oSectPr.Get_PageMargin_Top() - oSectPr.Get_PageMargin_Bottom();
+                                                this.extY = oSectPr.GetContentFrameHeight();
                                                 break;
                                             }
                                             case c_oAscSizeRelFromV.sizerelfromvPage:
                                             {
-                                                this.extY = oSectPr.Get_PageHeight();
+                                                this.extY = oSectPr.GetPageHeight();
                                                 break;
                                             }
                                             case c_oAscSizeRelFromV.sizerelfromvTopMargin:
                                             {
-                                                this.extY = oSectPr.Get_PageMargin_Top();
+                                                this.extY = oSectPr.GetPageMarginTop();
                                                 break;
                                             }
                                             case c_oAscSizeRelFromV.sizerelfromvBottomMargin:
                                             {
-                                                this.extY = oSectPr.Get_PageMargin_Bottom();
+                                                this.extY = oSectPr.GetPageMarginBottom();
                                                 break;
                                             }
                                             default:
                                             {
-                                                this.extY = oSectPr.Get_PageMargin_Top();
+                                                this.extY = oSectPr.GetPageMarginTop();
                                                 break;
                                             }
                                         }
@@ -3738,12 +3741,12 @@ CShape.prototype.CheckNeedRecalcAutoFit  = function(oSectPr)
             }
             else
             {
+				Width  = oSectPr.GetContentFrameWidth();
+				Height = oSectPr.GetContentFrameHeight();
 
-                Width = oSectPr.Get_PageWidth() - oSectPr.Get_PageMargin_Left() - oSectPr.Get_PageMargin_Right();
-                Height = oSectPr.Get_PageHeight() - oSectPr.Get_PageMargin_Top() - oSectPr.Get_PageMargin_Bottom();
+				Width2  = this.m_oSectPr.GetContentFrameWidth();
+				Height2 = this.m_oSectPr.GetContentFrameHeight();
 
-                Width2 = this.m_oSectPr.Get_PageWidth() - this.m_oSectPr.Get_PageMargin_Left() - this.m_oSectPr.Get_PageMargin_Right();
-                Height2 = this.m_oSectPr.Get_PageHeight() - this.m_oSectPr.Get_PageMargin_Top() - this.m_oSectPr.Get_PageMargin_Bottom();
                 bRet = (Math.abs(Width - Width2) > 0.001 || Math.abs(Height - Height2) > 0.001);
                 if(bRet)
                 {
@@ -3839,11 +3842,11 @@ CShape.prototype.recalculateDocContent = function(oDocContent, oBodyPr)
                     {
                         if(!(oBodyPr.vert === AscFormat.nVertTTvert || oBodyPr.vert === AscFormat.nVertTTvert270 || oBodyPr.vert === AscFormat.nVertTTeaVert))
                         {
-                            dMaxWidth = oSectPr.Get_PageWidth() - oSectPr.Get_PageMargin_Left() - oSectPr.Get_PageMargin_Right() - l_ins - r_ins;
+                            dMaxWidth = oSectPr.GetContentFrameWidth() - l_ins - r_ins;
                         }
                         else
                         {
-                            dMaxWidth = oSectPr.Get_PageHeight() - oSectPr.Get_PageMargin_Top() - oSectPr.Get_PageMargin_Bottom();
+                            dMaxWidth = oSectPr.GetContentFrameHeight();
                         }
                         this.m_oSectPr = new CSectionPr();
                         this.m_oSectPr.Copy(oSectPr);
@@ -4377,6 +4380,15 @@ CShape.prototype.check_bounds = function (checker) {
 
 CShape.prototype.getBase64Img = function ()
 {
+    if(this.parent)
+    {
+        if(this.parent.kind === AscFormat.TYPE_KIND.LAYOUT
+            || this.parent.kind === AscFormat.TYPE_KIND.MASTER
+            || this.parent.kind === AscFormat.TYPE_KIND.NOTES
+            || this.parent.kind === AscFormat.TYPE_KIND.NOTES_MASTER){
+            return ""
+        }
+    }
     if(typeof this.cachedImage === "string" && this.cachedImage.length > 0)
     {
         return this.cachedImage;
@@ -5024,14 +5036,15 @@ CShape.prototype.getAllRasterImages = function(images)
                 drawings[i].GraphicObj && drawings[i].GraphicObj.getAllRasterImages && drawings[i].GraphicObj.getAllRasterImages(images);
             }
         }
-        var fCallback = function(oTextPr)
-        {
-            if( (oTextPr.Unifill && oTextPr.Unifill.fill && oTextPr.Unifill.fill.type == c_oAscFill.FILL_TYPE_BLIP))
-            {
-                images.push(oTextPr.Unifill.fill.RasterImageId);
-            }
-            return false;
-        }
+        var fCallback = function(oRun)
+		{
+			var oTextPr = oRun && oRun.Pr;
+			if (oTextPr && oTextPr.Unifill && oTextPr.Unifill.fill && oTextPr.Unifill.fill.type == c_oAscFill.FILL_TYPE_BLIP)
+			{
+				images.push(oTextPr.Unifill.fill.RasterImageId);
+			}
+			return false;
+		};
 
         oContent.CheckRunContent(fCallback);
     }
@@ -5468,11 +5481,6 @@ CShape.prototype.isWatermark = function()
 CShape.prototype.getWatermarkProps = function()
 {
     var oProps = new Asc.CAscWatermarkProperties(), oTextPr, oRGBAColor, oInterfaceTextPr, oContent;
-    if(!this.isWatermark())
-    {
-        oProps.put_Type(Asc.c_oAscWatermarkType.None);
-        return oProps;
-    }
     oContent = this.getDocContent();
     oProps.put_Type(Asc.c_oAscWatermarkType.Text);
     oProps.put_IsDiagonal(!AscFormat.fApproxEqual(this.rot, 0.0));
@@ -5911,7 +5919,7 @@ CShape.prototype.getColumnNumber = function(){
     };
 
     CShape.prototype.getCopyWithSourceFormatting = function(){
-        var oCopy = this.copy();
+        var oCopy = this.copy(undefined);
         if(this.pen || this.brush){
             if(!oCopy.spPr){
                 oCopy.setSpPr(AscFormat.CSpPr());
@@ -5957,6 +5965,13 @@ CShape.prototype.getColumnNumber = function(){
             return oContent.GetAllFields(isUseSelection, arrFields)
         }
         return arrFields ? arrFields : [];
+    };
+    CShape.prototype.GetAllSeqFieldsByType = function(sType, aFields)
+    {
+        var oContent = this.getDocContent();
+        if(oContent){
+            return oContent.GetAllSeqFieldsByType(sType, aFields)
+        }
     };
 function CreateBinaryReader(szSrc, offset, srcLen)
 {
@@ -6106,20 +6121,7 @@ function checkDrawingsTransformBeforePaste(oEndContent, oSourceContent, oTempPar
 
 
 function SaveSourceFormattingTextPr(oTextPr, oTheme, oColorMap) {
-    if(oTextPr.RFonts){
-        if(oTextPr.RFonts.Ascii){
-            oTextPr.RFonts.Ascii.Name = oTheme.themeElements.fontScheme.checkFont(oTextPr.RFonts.Ascii.Name);
-        }
-        if(oTextPr.RFonts.EastAsia){
-            oTextPr.RFonts.EastAsia.Name = oTheme.themeElements.fontScheme.checkFont(oTextPr.RFonts.EastAsia.Name);
-        }
-        if(oTextPr.RFonts.HAnsi){
-            oTextPr.RFonts.HAnsi.Name = oTheme.themeElements.fontScheme.checkFont(oTextPr.RFonts.HAnsi.Name);
-        }
-        if(oTextPr.RFonts.CS){
-            oTextPr.RFonts.CS.Name = oTheme.themeElements.fontScheme.checkFont(oTextPr.RFonts.CS.Name);
-        }
-    }
+    oTextPr.ReplaceThemeFonts(oTheme.themeElements.fontScheme);
     if(oTextPr.Unifill){
         oTextPr.Unifill.check(oTheme, oColorMap);
         oTextPr.Unifill = oTextPr.Unifill.saveSourceFormatting();
@@ -6190,6 +6192,7 @@ function SaveRunsFormatting(aSourceContent, aCopyContent, oTheme, oColorMap, oPr
     window['AscFormat'].CreateUniFillByUniColorCopy = CreateUniFillByUniColorCopy;
     window['AscFormat'].CreateUniFillByUniColor = CreateUniFillByUniColor;
     window['AscFormat'].ConvertParagraphToPPTX = ConvertParagraphToPPTX;
+    window['AscFormat'].ConvertElementsToPPTX = ConvertElementsToPPTX;
     window['AscFormat'].ConvertParagraphToWord = ConvertParagraphToWord;
     window['AscFormat'].SetXfrmFromMetrics = SetXfrmFromMetrics;
     window['AscFormat'].CShape = CShape;

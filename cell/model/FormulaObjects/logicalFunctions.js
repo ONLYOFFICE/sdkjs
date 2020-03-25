@@ -153,7 +153,7 @@
 	cIF.prototype = Object.create(cBaseFunction.prototype);
 	cIF.prototype.constructor = cIF;
 	cIF.prototype.name = 'IF';
-	cIF.prototype.argumentsMin = 1;
+	cIF.prototype.argumentsMin = 2;
 	cIF.prototype.argumentsMax = 3;
 	cIF.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cIF.prototype.Calculate = function (arg) {

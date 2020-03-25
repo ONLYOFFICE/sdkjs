@@ -415,6 +415,12 @@ CComplexField.prototype.Update = function(isCreateHistoryPoint, isNeedRecalculat
 		case fieldtype_FORMULA:
 			this.private_UpdateFORMULA();
 			break;
+		case fieldtype_SEQ:
+			this.private_UpdateSEQ();
+			break;
+		case fieldtype_STYLEREF:
+			this.private_UpdateSTYLEREF();
+			break;
 
 	}
 
@@ -425,6 +431,62 @@ CComplexField.prototype.Update = function(isCreateHistoryPoint, isNeedRecalculat
 	{
 		this.LogicDocument.FinalizeAction();
 	}
+};
+CComplexField.prototype.CalculateValue = function()
+{
+	this.private_CheckNestedComplexFields();
+	this.private_UpdateInstruction();
+
+	if (!this.Instruction || !this.BeginChar || !this.EndChar || !this.SeparateChar)
+		return;
+
+	var sResult = "";
+	switch (this.Instruction.GetType())
+	{
+		case fieldtype_PAGE:
+		case fieldtype_PAGENUM:
+			sResult = this.private_CalculatePAGE();
+			break;
+		case fieldtype_TOC:
+			sResult = "";
+			break;
+		case fieldtype_PAGEREF:
+			sResult = this.private_CalculatePAGEREF();
+			break;
+		case fieldtype_NUMPAGES:
+		case fieldtype_PAGECOUNT:
+			sResult = this.private_CalculateNUMPAGES();
+			break;
+		case fieldtype_FORMULA:
+			sResult = this.private_CalculateFORMULA();
+			break;
+		case fieldtype_SEQ:
+			sResult = this.private_CalculateSEQ();
+			break;
+		case fieldtype_STYLEREF:
+			sResult = this.private_CalculateSTYLEREF();
+			break;
+
+	}
+
+	return sResult;
+};
+
+CComplexField.prototype.private_UpdateSEQ = function()
+{
+	this.LogicDocument.AddText(this.private_CalculateSEQ());
+};
+CComplexField.prototype.private_CalculateSEQ = function()
+{
+	return this.Instruction.GetText();
+};
+CComplexField.prototype.private_UpdateSTYLEREF = function()
+{
+	this.LogicDocument.AddText(this.private_CalculateSTYLEREF());
+};
+CComplexField.prototype.private_CalculateSTYLEREF = function()
+{
+	return this.Instruction.GetText();
 };
 CComplexField.prototype.private_UpdateFORMULA = function()
 {
@@ -451,7 +513,7 @@ CComplexField.prototype.private_UpdateFORMULA = function()
 		};
 		oParagraph.Check_NearestPos(oNearPos);
 		oSelectedContent.DoNotAddEmptyPara = true;
-		oParagraph.Parent.Insert_Content(oSelectedContent, oNearPos);
+		oParagraph.Parent.InsertContent(oSelectedContent, oNearPos);
 	}
 	else
 	{
@@ -461,17 +523,28 @@ CComplexField.prototype.private_UpdateFORMULA = function()
 		}
 	}
 };
+CComplexField.prototype.private_CalculateFORMULA = function()
+{
+	this.Instruction.Calculate(this.LogicDocument);
+	if (null !== this.Instruction.ErrStr)
+		return this.Instruction.ErrStr;
+
+	return this.Instruction.ResultStr;
+};
 CComplexField.prototype.private_UpdatePAGE = function()
+{
+	this.LogicDocument.AddText("" + this.private_CalculatePage());
+};
+CComplexField.prototype.private_CalculatePAGE = function()
 {
 	var oRun       = this.BeginChar.GetRun();
 	var oParagraph = oRun.GetParagraph();
-	var nInRunPos = oRun.GetElementPosition(this.BeginChar);
-	var nLine     = oRun.GetLineByPosition(nInRunPos);
-	var nPage     = oParagraph.GetPageByLine(nLine);
-	var nPageAbs  = oParagraph.Get_AbsolutePage(nPage) + 1;
-	// TODO: Тут надо рассчитывать значение исходя из настроек секции
+	var nInRunPos  = oRun.GetElementPosition(this.BeginChar);
+	var nLine      = oRun.GetLineByPosition(nInRunPos);
+	var nPage      = oParagraph.GetPageByLine(nLine);
 
-	this.LogicDocument.AddText("" + nPageAbs);
+	var oLogicDocument = oParagraph.LogicDocument;
+	return oLogicDocument.Get_SectionPageNumInfo2(oParagraph.Get_AbsolutePage(nPage)).CurPage;
 };
 CComplexField.prototype.private_UpdateTOC = function()
 {
@@ -484,11 +557,11 @@ CComplexField.prototype.private_UpdateTOC = function()
 		if (oSectPr.Get_ColumnsCount() > 1)
 		{
 			// TODO: Сейчас забирается ширина текущей колонки. По правильному надо читать поля от текущего места
-			nTabPos = Math.max(0, Math.min(oSectPr.Get_ColumnWidth(0), oSectPr.Get_PageWidth(), oSectPr.Get_PageWidth() - oSectPr.Get_PageMargin_Left() - oSectPr.Get_PageMargin_Right()));
+			nTabPos = Math.max(0, Math.min(oSectPr.GetColumnWidth(0), oSectPr.GetPageWidth(), oSectPr.GetContentFrameWidth()));
 		}
 		else
 		{
-			nTabPos = Math.max(0, Math.min(oSectPr.Get_PageWidth(), oSectPr.Get_PageWidth() - oSectPr.Get_PageMargin_Left() - oSectPr.Get_PageMargin_Right()));
+			nTabPos = Math.max(0, Math.min(oSectPr.GetPageWidth(), oSectPr.GetContentFrameWidth()));
 		}
 	}
 
@@ -717,9 +790,13 @@ CComplexField.prototype.private_UpdateTOC = function()
 
 	oSelectedContent.DoNotAddEmptyPara = true;
 
-	oParagraph.Parent.Insert_Content(oSelectedContent, oNearPos);
+	oParagraph.Parent.InsertContent(oSelectedContent, oNearPos);
 };
 CComplexField.prototype.private_UpdatePAGEREF = function()
+{
+	this.LogicDocument.AddText(this.private_CalculatePAGEREF());
+};
+CComplexField.prototype.private_CalculatePAGEREF = function()
 {
 	var oBookmarksManager = this.LogicDocument.GetBookmarksManager();
 	var oBookmark = oBookmarksManager.GetBookmarkByName(this.Instruction.GetBookmarkName());
@@ -754,11 +831,15 @@ CComplexField.prototype.private_UpdatePAGEREF = function()
 		}
 	}
 
-	this.LogicDocument.AddText(sValue);
+	return sValue;
 };
 CComplexField.prototype.private_UpdateNUMPAGES = function()
 {
-	this.LogicDocument.AddText("" + this.LogicDocument.GetPagesCount());
+	this.LogicDocument.AddText("" + this.private_CalculateNUMPAGES());
+};
+CComplexField.prototype.private_CalculateNUMPAGES = function()
+{
+	return this.LogicDocument.GetPagesCount();
 };
 CComplexField.prototype.SelectFieldValue = function()
 {
@@ -924,9 +1005,7 @@ CComplexField.prototype.private_CheckNestedComplexFields = function()
 
 		for (var nIndex = 0; nIndex < nCount; ++nIndex)
 		{
-			this.InstructionCF[nIndex].Update();
-			var sValue = this.InstructionCF[nIndex].GetFieldValueText();
-
+			var sValue = this.InstructionCF[nIndex].CalculateValue();
 			this.InstructionLine = this.InstructionLine.replace("\\&", sValue);
 		}
 	}
@@ -937,8 +1016,7 @@ CComplexField.prototype.IsHidden = function()
 		return false;
 
 	var oInstruction = this.GetInstruction();
-
-	return (oInstruction && (fieldtype_ASK === oInstruction.GetType() || (this.SeparateChar.IsNumValue() && (fieldtype_NUMPAGES === oInstruction.GetType() || fieldtype_PAGE === oInstruction.GetType())))) ? true : false;
+	return (oInstruction && (fieldtype_ASK === oInstruction.GetType() || (this.SeparateChar.IsNumValue() && (fieldtype_NUMPAGES === oInstruction.GetType() || fieldtype_PAGE === oInstruction.GetType() || fieldtype_FORMULA === oInstruction.GetType()))));
 };
 CComplexField.prototype.RemoveFieldWrap = function()
 {

@@ -153,6 +153,28 @@
 		Timeout: 2
 	};
 
+	function getDisconnectErrorCode (isDocumentLoadComplete, opt_closeCode) {
+		var code = Asc.c_oAscError.ID.CoAuthoringDisconnect;
+		if (c_oCloseCode.serverShutdown === opt_closeCode) {
+			code = Asc.c_oAscError.ID.CoAuthoringDisconnect;
+		} else if (c_oCloseCode.sessionIdle === opt_closeCode) {
+			code = Asc.c_oAscError.ID.SessionIdle;
+		} else if (c_oCloseCode.sessionAbsolute === opt_closeCode) {
+			code = Asc.c_oAscError.ID.SessionAbsolute;
+		} else if (c_oCloseCode.accessDeny === opt_closeCode) {
+			code = Asc.c_oAscError.ID.AccessDeny;
+		} else if (c_oCloseCode.jwtExpired === opt_closeCode) {
+			code = isDocumentLoadComplete ? Asc.c_oAscError.ID.SessionToken : Asc.c_oAscError.ID.KeyExpire;
+		} else if (c_oCloseCode.jwtError === opt_closeCode) {
+			code = Asc.c_oAscError.ID.VKeyEncrypt;
+		} else if (c_oCloseCode.drop === opt_closeCode) {
+			code = Asc.c_oAscError.ID.UserDrop;
+		} else if (c_oCloseCode.updateVersion === opt_closeCode) {
+			code = Asc.c_oAscError.ID.UpdateVersion;
+		}
+		return code;
+	}
+
   /*
    * Export
    * -----------------------------------------------------------------------------
@@ -167,6 +189,8 @@
   prot["asc_getState"] = prot.asc_getState;
   prot["asc_getColor"] = prot.asc_getColor;
   prot["asc_getView"] = prot.asc_getView;
+
+  window["AscCommon"].getDisconnectErrorCode = getDisconnectErrorCode;
 
   window["AscCommon"].ConnectionState = ConnectionState;
   window["AscCommon"].c_oEditorId = c_oEditorId;

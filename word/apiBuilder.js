@@ -40,6 +40,11 @@
 	 * @name Api
 	 */
 	var Api = window["Asc"]["asc_docs_api"] || window["Asc"]["spreadsheet_api"];
+	var c_oAscRevisionsChangeType = Asc.c_oAscRevisionsChangeType;
+	var c_oAscSectionBreakType    = Asc.c_oAscSectionBreakType;
+	var c_oAscSdtLockType         = Asc.c_oAscSdtLockType;
+	var c_oAscAlignH         = Asc.c_oAscAlignH;
+	var c_oAscAlignV         = Asc.c_oAscAlignV;
 
 	/**
 	 * Class representing a container for paragraphs and tables.
@@ -616,17 +621,15 @@
 	 * */
 
 	/**
-	 * Get main document
+	 * @typedef {("cross" | "in" | "none" | "out")} TickMark
+	 * */
+
+	/**
+	 * Get the main document
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiDocument}
 	 */
-
-
-	/**
-	 * @typedef {("cross" | "in" | "none" | "out")} TickMark
-	 * */
-
 	Api.prototype.GetDocument = function()
 	{
 		return new ApiDocument(this.WordControl.m_oLogicDocument);
@@ -1493,7 +1496,7 @@
 		if (!this.Document.Can_InsertContent(oSelectedContent, oNearestPos))
 			return false;
 
-		oParagraph.Parent.Insert_Content(oSelectedContent, oNearestPos);
+		oParagraph.Parent.InsertContent(oSelectedContent, oNearestPos);
 		oParagraph.Clear_NearestPosArray();
 		this.Document.RemoveSelection(true);
 		return true;
@@ -2201,8 +2204,8 @@
 	 */
 	ApiSection.prototype.SetPageSize = function(nWidth, nHeight, isPortrait)
 	{
-		this.Section.Set_PageSize(private_Twips2MM(nWidth), private_Twips2MM(nHeight));
-		this.Section.Set_Orientation(false === isPortrait ? Asc.c_oAscPageOrientation.PageLandscape : Asc.c_oAscPageOrientation.PagePortrait, false);
+		this.Section.SetPageSize(private_Twips2MM(nWidth), private_Twips2MM(nHeight));
+		this.Section.SetOrientation(false === isPortrait ? Asc.c_oAscPageOrientation.PageLandscape : Asc.c_oAscPageOrientation.PagePortrait, false);
 	};
 	/**
 	 * Specify the page margins for all pages in this section.
@@ -2214,7 +2217,7 @@
 	 */
 	ApiSection.prototype.SetPageMargins = function(nLeft, nTop, nRight, nBottom)
 	{
-		this.Section.Set_PageMargins(private_Twips2MM(nLeft), private_Twips2MM(nTop), private_Twips2MM(nRight), private_Twips2MM(nBottom));
+		this.Section.SetPageMargins(private_Twips2MM(nLeft), private_Twips2MM(nTop), private_Twips2MM(nRight), private_Twips2MM(nBottom));
 	};
 	/**
 	 * Specify the distance from the top edge of the page to the top edge of the header.
@@ -2223,7 +2226,7 @@
 	 */
 	ApiSection.prototype.SetHeaderDistance = function(nDistance)
 	{
-		this.Section.Set_PageMargins_Header(private_Twips2MM(nDistance));
+		this.Section.SetPageMarginHeader(private_Twips2MM(nDistance));
 	};
 	/**
 	 * Specify the distance from the bottom edge of the page to the bottom edge of the footer.
@@ -2233,7 +2236,7 @@
 	 */
 	ApiSection.prototype.SetFooterDistance = function(nDistance)
 	{
-		this.Section.Set_PageMargins_Footer(private_Twips2MM(nDistance));
+		this.Section.SetPageMarginFooter(private_Twips2MM(nDistance));
 	};
 	/**
 	 * Get the content for the specified header type.
@@ -3023,7 +3026,7 @@
 	 */
 	ApiTextPr.prototype.SetLanguage = function(sLangId)
 	{
-		var nLcid = g_oLcidNameToIdMap[sLangId];
+		var nLcid = Asc.g_oLcidNameToIdMap[sLangId];
 		if (undefined !== nLcid)
 		{
 			this.TextPr.Lang.Val = nLcid;

@@ -115,7 +115,7 @@ CTableRow.prototype =
     },
 
 	// Создаем копию данного объекта
-	Copy : function(Table)
+	Copy : function(Table, oPr)
 	{
 		var Row = new CTableRow(Table, 0);
 
@@ -126,12 +126,15 @@ CTableRow.prototype =
 		var CellsCount = this.Content.length;
 		for (var Index = 0; Index < CellsCount; Index++)
 		{
-			Row.Content[Index] = this.Content[Index].Copy(Row);
+			Row.Content[Index] = this.Content[Index].Copy(Row, oPr);
 			History.Add(new CChangesTableRowAddCell(Row, Index, [Row.Content[Index]]));
 		}
 
 		Row.Internal_ReIndexing();
-
+        if(oPr && oPr.Comparison)
+        {
+            oPr.Comparison.updateReviewInfo(Row, reviewtype_Add, true);
+        }
 		return Row;
 	},
 
@@ -784,18 +787,27 @@ CTableRow.prototype.GetIndex = function()
 {
 	return this.Index;
 };
-CTableRow.prototype.GetDocumentPositionFromObject = function(PosArray)
+CTableRow.prototype.GetDocumentPositionFromObject = function(arrPos)
 {
-    if (!PosArray)
-        PosArray = [];
+    if (!arrPos)
+		arrPos = [];
 
-    if (this.Table)
+    var oTable = this.GetTable();
+    if (oTable)
     {
-        PosArray.splice(0, 0, {Class : this.Table, Position : this.Index});
-        this.Table.GetDocumentPositionFromObject(PosArray);
+    	if (arrPos.length > 0)
+		{
+			arrPos.splice(0, 0, {Class : oTable, Position : this.GetIndex()});
+			oTable.GetDocumentPositionFromObject(arrPos);
+		}
+		else
+		{
+			oTable.GetDocumentPositionFromObject(arrPos);
+			arrPos.push({Class : oTable, Position : this.GetIndex()});
+		}
     }
 
-    return PosArray;
+    return arrPos;
 };
 /**
  * Получаем ячейку с заданным номером в строке
@@ -1110,9 +1122,6 @@ CTableRow.prototype.private_CheckCurCell = function()
 	if (this.GetTable())
 		this.GetTable().private_CheckCurCell();
 };
-
-
-
 
 function CTableRowRecalculateObject()
 {

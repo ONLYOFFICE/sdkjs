@@ -48,6 +48,36 @@ function CDrawingsController(LogicDocument, DrawingsObjects)
 CDrawingsController.prototype = Object.create(CDocumentControllerBase.prototype);
 CDrawingsController.prototype.constructor = CDrawingsController;
 
+/**
+ * Получаем контент контрол, внутри которого лежит текущая автофигура
+ * @returns {CInlineLevelSdt|CBlockLevelSdt}
+ */
+CDrawingsController.prototype.private_GetParentContentControl = function()
+{
+	var oDrawing = this.DrawingObjects.getMajorParaDrawing();
+	if (oDrawing)
+	{
+		var oRun = oDrawing.GetRun();
+		if (oRun)
+		{
+			var arrDocPos = oRun.GetDocumentPositionFromObject();
+			for (var nIndex = arrDocPos.length - 1; nIndex >= 0; --nIndex)
+			{
+				var oClass = arrDocPos[nIndex].Class;
+				if (oClass instanceof CDocumentContent && oClass.Parent instanceof CBlockLevelSdt)
+				{
+					return oClass.Parent;
+				}
+				else if (oClass instanceof CInlineLevelSdt)
+				{
+					return oClass;
+				}
+			}
+		}
+	}
+
+	return null;
+};
 CDrawingsController.prototype.CanUpdateTarget = function()
 {
 	return true;
@@ -86,15 +116,20 @@ CDrawingsController.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPi
 };
 CDrawingsController.prototype.AddTextArt = function(nStyle)
 {
-	// ничего не делаем
+	var ParaDrawing = this.DrawingObjects.getMajorParaDrawing();
+	if (ParaDrawing)
+	{
+		ParaDrawing.GoTo_Text(undefined, false);
+		this.LogicDocument.AddTextArt(nStyle);
+	}
 };
 CDrawingsController.prototype.EditChart = function(Chart)
 {
 	this.DrawingObjects.editChart(Chart);
 };
-CDrawingsController.prototype.AddInlineTable = function(Cols, Rows)
+CDrawingsController.prototype.AddInlineTable = function(nCols, nRows, nMode)
 {
-	this.DrawingObjects.addInlineTable(Cols, Rows);
+	return this.DrawingObjects.addInlineTable(nCols, nRows, nMode);
 };
 CDrawingsController.prototype.ClearParagraphFormatting = function(isClearParaPr, isClearTextPr)
 {
@@ -396,6 +431,19 @@ CDrawingsController.prototype.GetCurrentParagraph = function(bIgnoreSelection, a
 };
 CDrawingsController.prototype.GetSelectedElementsInfo = function(oInfo)
 {
+	var oContentControl = this.private_GetParentContentControl();
+	if (oContentControl)
+	{
+		if (oContentControl.IsBlockLevel())
+		{
+			oInfo.SetBlockLevelSdt(oContentControl);
+		}
+		else if (oContentControl.IsInlineLevel())
+		{
+			oInfo.SetInlineLevelSdt(oContentControl);
+		}
+	}
+
 	this.DrawingObjects.getSelectedElementsInfo(oInfo);
 };
 CDrawingsController.prototype.AddTableRow = function(bBefore)
@@ -599,4 +647,20 @@ CDrawingsController.prototype.GetSimilarNumbering = function(oEngine)
 CDrawingsController.prototype.GetAllFields = function(isUseSelection, arrFields)
 {
 	return this.DrawingObjects.GetAllFields(isUseSelection, arrFields);
+};
+CDrawingsController.prototype.IsTableCellSelection = function()
+{
+	var oTargetDocContent = this.DrawingObjects.getTargetDocContent();
+	if (oTargetDocContent && oTargetDocContent.IsTableCellSelection)
+		return oTargetDocContent.IsTableCellSelection();
+
+	return false;
+};
+CDrawingsController.prototype.IsSelectionLocked = function(nCheckType)
+{
+	this.DrawingObjects.documentIsSelectionLocked(nCheckType);
+
+	var oContentControl = this.private_GetParentContentControl();
+	if (oContentControl)
+		oContentControl.Document_Is_SelectionLocked(nCheckType);
 };

@@ -1174,7 +1174,7 @@
 
             var c = e.which || e.keyCode;
 
-			var isAsync = AscFonts.FontPickerByCharacter.checkTextLight([c], true);
+			var isAsync = (c >= 0x20) ? AscFonts.FontPickerByCharacter.checkTextLight([c], true) : false;
 
 			if (isAsync)
 			{
@@ -1690,7 +1690,7 @@
 		}, true);
 
 		// send focus
-		if (!api.isMobileVersion)
+		if (!api.isMobileVersion && !api.isEmbedVersion)
 			window['AscCommon'].g_inputContext.HtmlArea.focus();
 	};
 

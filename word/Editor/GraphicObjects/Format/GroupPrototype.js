@@ -103,21 +103,7 @@ CGroupShape.prototype.documentUpdateInterfaceState = function()
         var theme = this.Get_Theme();
         if(theme && theme.themeElements && theme.themeElements.fontScheme)
         {
-            if(text_pr.FontFamily)
-            {
-                text_pr.FontFamily.Name =  theme.themeElements.fontScheme.checkFont(text_pr.FontFamily.Name);
-            }
-            if(text_pr.RFonts)
-            {
-                if(text_pr.RFonts.Ascii)
-                    text_pr.RFonts.Ascii.Name     = theme.themeElements.fontScheme.checkFont(text_pr.RFonts.Ascii.Name);
-                if(text_pr.RFonts.EastAsia)
-                    text_pr.RFonts.EastAsia.Name  = theme.themeElements.fontScheme.checkFont(text_pr.RFonts.EastAsia.Name);
-                if(text_pr.RFonts.HAnsi)
-                    text_pr.RFonts.HAnsi.Name     = theme.themeElements.fontScheme.checkFont(text_pr.RFonts.HAnsi.Name);
-                if(text_pr.RFonts.CS)
-                    text_pr.RFonts.CS.Name        = theme.themeElements.fontScheme.checkFont(text_pr.RFonts.CS.Name);
-            }
+            text_pr.ReplaceThemeFonts(theme.themeElements.fontScheme);
         }
         if(text_pr.Unifill)
         {

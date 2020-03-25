@@ -90,6 +90,26 @@ CFootnotesController.prototype.Get_Id = function()
 	return this.Id;
 };
 /**
+ *
+ * @param oLogicDocument
+ * @returns {CFootnotesController}
+ */
+CFootnotesController.prototype.Copy = function(oLogicDocument)
+{
+	var oFootnotes = new CFootnotesController(oLogicDocument);
+
+	for (var sId in this.Footnote)
+	{
+		oFootnotes.AddFootnote(this.Footnote[sId].Copy(oFootnotes));
+	}
+
+	oFootnotes.SetSeparator(this.SeparatorFootnote ? this.SeparatorFootnote.Copy(oFootnotes) : null);
+	oFootnotes.SetContinuationSeparator(this.ContinuationSeparatorFootnote ? this.ContinuationSeparatorFootnote.Copy(oFootnotes) : null);
+	oFootnotes.SetContinuationNotice(this.ContinuationNoticeFootnote ? this.ContinuationNoticeFootnote.Copy(oFootnotes) : null);
+
+	return oFootnotes;
+};
+/**
  * Начальная инициализация после загрузки всех файлов.
  */
 CFootnotesController.prototype.ResetSpecialFootnotes = function()
@@ -207,20 +227,22 @@ CFootnotesController.prototype.Reset = function(nPageIndex, oSectPr)
 	var oPage = this.Pages[nPageIndex];
 	oPage.Reset();
 
-	var X      = oSectPr.Get_PageMargin_Left();
-	var XLimit = oSectPr.Get_PageWidth() - oSectPr.Get_PageMargin_Right();
+	var oFrame = oSectPr.GetContentFrame(nPageIndex);
 
-	var nColumnsCount = oSectPr.Get_ColumnsCount();
+	var X      = oFrame.Left;
+	var XLimit = oFrame.Right;
+
+	var nColumnsCount = oSectPr.GetColumnsCount();
 	for (var nColumnIndex = 0; nColumnIndex < nColumnsCount; ++nColumnIndex)
 	{
 		var _X = X;
 		for (var nTempColumnIndex = 0; nTempColumnIndex < nColumnIndex; ++nTempColumnIndex)
 		{
-			_X += oSectPr.Get_ColumnWidth(nTempColumnIndex);
-			_X += oSectPr.Get_ColumnSpace(nTempColumnIndex);
+			_X += oSectPr.GetColumnWidth(nTempColumnIndex);
+			_X += oSectPr.GetColumnSpace(nTempColumnIndex);
 		}
 
-		var _XLimit = (nColumnsCount - 1 !== nColumnIndex ? _X + oSectPr.Get_ColumnWidth(nColumnIndex) : XLimit);
+		var _XLimit = (nColumnsCount - 1 !== nColumnIndex ? _X + oSectPr.GetColumnWidth(nColumnIndex) : XLimit);
 
 		var oColumn    = new CFootEndnotePageColumn();
 		oColumn.X      = _X;
@@ -1398,13 +1420,15 @@ CFootnotesController.prototype.EditChart = function(Chart)
 
 	this.CurFootnote.EditChart(Chart);
 };
-CFootnotesController.prototype.AddInlineTable = function(Cols, Rows)
+CFootnotesController.prototype.AddInlineTable = function(nCols, nRows, nMode)
 {
 	if (false === this.private_CheckFootnotesSelectionBeforeAction())
-		return;
+		return null;
 
 	if (null !== this.CurFootnote)
-		this.CurFootnote.AddInlineTable(Cols, Rows);
+		return this.CurFootnote.AddInlineTable(nCols, nRows, nMode);
+
+	return null;
 };
 CFootnotesController.prototype.ClearParagraphFormatting = function(isClearParaPr, isClearTextPr)
 {
@@ -2792,17 +2816,14 @@ CFootnotesController.prototype.UpdateInterfaceState = function()
 };
 CFootnotesController.prototype.UpdateRulersState = function()
 {
-	var PageAbs = this.CurFootnote.Get_StartPage_Absolute();
-	if (this.LogicDocument.Pages[PageAbs])
+	var nPageAbs = this.CurFootnote.Get_StartPage_Absolute();
+	if (this.LogicDocument.Pages[nPageAbs])
 	{
-		var Pos    = this.LogicDocument.Pages[PageAbs].Pos;
-		var SectPr = this.LogicDocument.SectionsInfo.Get_SectPr(Pos).SectPr;
+		var nPos    = this.LogicDocument.Pages[nPageAbs].Pos;
+		var oSectPr = this.LogicDocument.SectionsInfo.Get_SectPr(nPos).SectPr;
+		var oFrame  = oSectPr.GetContentFrame(nPageAbs);
 
-		var L = SectPr.Get_PageMargin_Left();
-		var T = SectPr.Get_PageMargin_Top();
-		var R = SectPr.Get_PageWidth() - SectPr.Get_PageMargin_Right();
-		var B = SectPr.Get_PageHeight() - SectPr.Get_PageMargin_Bottom();
-		this.DrawingDocument.Set_RulerState_Paragraph({L : L, T : T, R : R, B : B}, true);
+		this.DrawingDocument.Set_RulerState_Paragraph({L : oFrame.Left, T : oFrame.Top, R : oFrame.Right, B : oFrame.Bottom}, true);
 	}
 
 	if (true === this.private_IsOnFootnoteSelected())
@@ -3289,6 +3310,31 @@ CFootnotesController.prototype.GetAllDrawingObjects = function(arrDrawings)
 	}
 
 	return arrDrawings;
+};
+CFootnotesController.prototype.IsTableCellSelection = function()
+{
+	if (this.CurFootnote)
+		return this.CurFootnote.IsTableCellSelection();
+
+	return false;
+};
+CFootnotesController.prototype.AcceptRevisionChanges = function(Type, bAll)
+{
+	if (null !== this.CurFootnote)
+		this.CurFootnote.AcceptRevisionChanges(Type, bAll);
+};
+CFootnotesController.prototype.RejectRevisionChanges = function(Type, bAll)
+{
+	if (null !== this.CurFootnote)
+		this.CurFootnote.RejectRevisionChanges(Type, bAll);
+};
+CFootnotesController.prototype.IsSelectionLocked = function(CheckType)
+{
+	for (var sId in this.Selection.Footnotes)
+	{
+		var oFootnote = this.Selection.Footnotes[sId];
+		oFootnote.Document_Is_SelectionLocked(CheckType);
+	}
 };
 
 

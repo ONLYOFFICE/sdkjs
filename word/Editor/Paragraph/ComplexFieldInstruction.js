@@ -51,6 +51,8 @@ var fieldtype_ASK        = 0x0007;
 var fieldtype_REF        = 0x0008;
 var fieldtype_HYPERLINK  = 0x0009;
 var fieldtype_FORMULA    = 0x0010;
+var fieldtype_SEQ        = 0x0011;
+var fieldtype_STYLEREF   = 0x0012;
 
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
@@ -68,6 +70,8 @@ window['AscCommonWord'].fieldtype_ASK        = fieldtype_ASK;
 window['AscCommonWord'].fieldtype_REF        = fieldtype_REF;
 window['AscCommonWord'].fieldtype_HYPERLINK  = fieldtype_HYPERLINK;
 window['AscCommonWord'].fieldtype_FORMULA    = fieldtype_FORMULA;
+window['AscCommonWord'].fieldtype_SEQ        = fieldtype_SEQ;
+window['AscCommonWord'].fieldtype_STYLEREF   = fieldtype_STYLEREF;
 
 
 /**
@@ -654,6 +658,423 @@ CFieldInstructionHYPERLINK.prototype.IsTopOfDocument = function()
 	return (this.GetBookmarkName() === "_top");
 };
 
+/**
+ * SEQ field
+ * @constructor
+ */
+function CFieldInstructionSEQ()
+{
+
+	CFieldInstructionBase.call(this);
+	this.Id = null;
+	this.C = false;
+	this.H = false;
+	this.N = false;
+	this.R = null;
+	this.S = null;
+	this.NumFormat = Asc.c_oAscNumberingFormat.Decimal;
+	this.GeneralSwitches = [];
+
+	this.ParentContent = null;
+}
+CFieldInstructionSEQ.prototype = Object.create(CFieldInstructionBase.prototype);
+CFieldInstructionSEQ.prototype.constructor = CFieldInstructionSEQ;
+CFieldInstructionSEQ.prototype.Type = fieldtype_SEQ;
+CFieldInstructionSEQ.prototype.ToString = function ()
+{
+	var sInstruction = " SEQ ";
+	if(this.Id)
+	{
+		sInstruction += this.Id;
+	}
+	for(var i = 0; i < this.GeneralSwitches.length; ++i)
+	{
+		sInstruction +=  " \\* " + this.GeneralSwitches[i];
+	}
+	if(this.C)
+	{
+		sInstruction += " \\c"
+	}
+	if(this.H)
+	{
+		sInstruction += " \\h";
+	}
+	if(this.R)
+	{
+		sInstruction += " \\r " + this.R;
+	}
+	if(this.S)
+	{
+		sInstruction += " \\s " + this.S;
+	}
+	return sInstruction;
+};
+CFieldInstructionSEQ.prototype.SetComplexField = function (oComplexField)
+{
+	CFieldInstructionBase.prototype.SetComplexField.call(this, oComplexField);
+	this.ParentContent = null;
+	var oBeginChar = oComplexField.BeginChar;
+	if(oBeginChar)
+	{
+		var oRun = oBeginChar.Run;
+		if(oRun)
+		{
+			var oParagraph = oRun.Paragraph;
+			if(oParagraph)
+			{
+				this.ParentContent = oParagraph.Parent;
+			}
+		}
+	}
+};
+
+CFieldInstructionSEQ.prototype.GetRestartNum = function ()
+{
+	if(typeof this.R === "string" && this.R.length > 0)
+	{
+		var aTest = /[0-9]+/.exec(this.R);
+		var nResult;
+		if(Array.isArray(aTest) && aTest.length > 0)
+		{
+			nResult = parseInt(aTest[0]);
+			if(!isNaN(nResult))
+			{
+				return nResult;
+			}
+		}
+	}
+	return null;
+};
+
+CFieldInstructionSEQ.prototype.GetText = function ()
+{
+	if(!this.ParentContent)
+	{
+		return "";
+	}
+	var oTopDocument = this.ParentContent.Is_TopDocument(true);
+	var aFields, oField, i, nIndex, nLvl, nCounter;
+	if(!oTopDocument)
+	{
+		return "";
+	}
+	if(oTopDocument.IsHdrFtr(false) || oTopDocument.IsFootnote(false))
+	{
+		return AscCommon.translateManager.getValue("Error! Main Document Only.");
+	}
+	
+	if(this.H)
+	{
+		if(this.GeneralSwitches.length === 0)
+		{
+			return "";
+		}
+	}
+	nIndex = this.GetRestartNum();
+	if(nIndex === null)
+	{
+		aFields = [];
+		oTopDocument.GetAllSeqFieldsByType(this.Id, aFields);
+		nIndex = -1;
+		if(this.S)
+		{
+			nLvl = parseInt(this.S);
+			if(!isNaN(nLvl))
+			{
+				--nLvl;
+				for(i = aFields.length - 1; i > -1; --i)
+				{
+					oField = aFields[i];
+					if(AscCommon.isRealObject(oField) && this.ComplexField === oField)
+					{
+						break;
+					}
+				}
+				if(i > -1)
+				{
+					nCounter = i;
+					for(i = i - 1; i > -1; --i)
+					{
+						oField = aFields[i];
+						if(AscFormat.isRealNumber(oField) && oField >= nLvl)
+						{
+							aFields = aFields.splice(i + 1, nCounter - i);
+							break;
+						}
+					}
+				}
+			}
+		}
+		nCounter = 1;
+		for(i = 0; i < aFields.length; ++i)
+		{
+			oField = aFields[i];
+			if(AscCommon.isRealObject(oField))
+			{
+				if(this.ComplexField === oField)
+				{
+					nIndex = nCounter;
+					break;
+				}
+				if(!(oField.Instruction && oField.Instruction.C))
+				{
+					++nCounter;
+				}
+			}
+		}
+	}
+	if(nIndex > -1)
+	{
+		return AscCommon.IntToNumberFormat(nIndex, this.NumFormat);
+	}
+	return AscCommon.translateManager.getValue("Error! Main Document Only.");
+};
+CFieldInstructionSEQ.prototype.SetId = function (sVal)
+{
+	this.Id = sVal;
+};
+CFieldInstructionSEQ.prototype.SetC = function (sVal)
+{
+	this.C = sVal;
+};
+CFieldInstructionSEQ.prototype.SetH = function (sVal)
+{
+	this.H = sVal;
+};
+CFieldInstructionSEQ.prototype.SetN = function (sVal)
+{
+	this.N = sVal;
+};
+CFieldInstructionSEQ.prototype.SetR = function (sVal)
+{
+	this.R = sVal;
+};
+CFieldInstructionSEQ.prototype.SetS = function (sVal)
+{
+	this.S = sVal;
+};
+CFieldInstructionSEQ.prototype.SetGeneralSwitches = function (aSwitches)
+{
+	this.GeneralSwitches = aSwitches;
+	for(var i = 0; i < aSwitches.length; ++i)
+	{
+		this.NumFormat = GeneralToNumFormat(aSwitches[i]);
+	}
+};
+
+function GeneralToNumFormat(sFormat)
+{
+	if(typeof sFormat === 'string')
+	{
+		if(sFormat.toLowerCase() === 'arabic')
+		{
+			return Asc.c_oAscNumberingFormat.Decimal;
+		}
+		else if(sFormat.toLowerCase() === 'alphabetic')
+		{
+			if(sFormat[0] === 'A')
+			{
+				return Asc.c_oAscNumberingFormat.UpperLetter;
+			}
+			else
+			{
+				return Asc.c_oAscNumberingFormat.LowerLetter;
+			}
+		}
+		else if(sFormat.toLowerCase() === 'roman')
+		{
+			if(sFormat[0] === 'r')
+			{
+				return Asc.c_oAscNumberingFormat.LowerRoman;
+			}
+			else
+			{
+				return Asc.c_oAscNumberingFormat.UpperRoman;
+			}
+		}
+	}
+	return Asc.c_oAscNumberingFormat.Decimal;
+}
+
+/**
+ * STYLEREF field
+ * @constructor
+ */
+
+function CFieldInstructionSTYLEREF()
+{
+
+	CFieldInstructionBase.call(this);
+	this.StyleName = null;
+	this.L = null;
+	this.N = null;
+	this.P = null;
+	this.R = null;
+	this.T = null;
+	this.W = null;
+	this.S = null;
+	this.GeneralSwitches = [];
+	this.ParentContent = null;
+	this.ParentParagraph = null;
+}
+CFieldInstructionSTYLEREF.prototype = Object.create(CFieldInstructionBase.prototype);
+CFieldInstructionSTYLEREF.prototype.constructor = CFieldInstructionSTYLEREF;
+CFieldInstructionSTYLEREF.prototype.Type = fieldtype_STYLEREF;
+CFieldInstructionSTYLEREF.prototype.SetL = function(v){this.L = v;};
+CFieldInstructionSTYLEREF.prototype.SetN = function(v){this.N = v;};
+CFieldInstructionSTYLEREF.prototype.SetP = function(v){this.P = v;};
+CFieldInstructionSTYLEREF.prototype.SetR = function(v){this.R = v;};
+CFieldInstructionSTYLEREF.prototype.SetT = function(v){this.T = v;};
+CFieldInstructionSTYLEREF.prototype.SetW = function(v){this.W = v;};
+CFieldInstructionSTYLEREF.prototype.SetS = function(v){this.S = v;};
+CFieldInstructionSTYLEREF.prototype.SetGeneralSwitches = function(v){this.GeneralSwitches = v;};
+CFieldInstructionSTYLEREF.prototype.GetText = function()
+{
+	if(this.ParentContent)
+	{
+		var oHdrFtr = this.ParentContent.IsHdrFtr(true);
+		if (oHdrFtr)
+		{
+			//TODO
+		}
+		else
+		{
+			var oFootNote = this.ParentContent.IsFootnote(true);
+			if(oFootNote)
+			{
+				//TODO
+			}
+			else
+			{
+				//TODO: Find in all document
+				if(this.ParentParagraph)
+				{
+					if(this.ParentParagraph.Pr.PStyle === this.StyleName)
+					{
+						return AscCommon.translateManager.getValue("Error! Not a valid bookmark self-reference.");
+					}
+					var nIndex, nCount;
+					var oParagraph = null;
+					var sRet = "";
+					var bAbove = true;
+					var oStyles = this.ParentContent.Styles;
+					var sId = oStyles.GetStyleIdByName(this.StyleName);
+					if(sId)
+					{
+						for(nIndex = this.ParentParagraph.Index - 1; nIndex > -1; --nIndex)
+						{
+							if(this.ParentContent.Content[nIndex].Pr.PStyle === sId)
+							{
+								oParagraph = this.ParentContent.Content[nIndex];
+								break;
+							}
+						}
+						if(!oParagraph)
+						{
+							nCount = this.ParentContent.Content.length;
+							for(nIndex = this.ParentParagraph.Index + 1; nIndex < nCount; ++nIndex)
+							{
+								if(this.ParentContent.Content[nIndex].Pr.PStyle === sId)
+								{
+									oParagraph = this.ParentContent.Content[nIndex];
+									bAbove = false;
+								}
+							}
+						}
+						if(oParagraph)
+						{
+							if(this.N || this.R || this.W || this.S)
+							{
+								if(oParagraph.IsNumberedNumbering())
+								{
+									sRet += oParagraph.GetNumberingText(true);
+								}
+								else
+								{
+									sRet += "0";
+								}
+							}
+							else
+							{
+								oParagraph.ApplyToAll = true;
+								sRet = oParagraph.GetSelectedText(true, {});
+								oParagraph.ApplyToAll = false;
+							}
+							if(this.P)
+							{
+								sRet += (" " + AscCommon.translateManager.getValue(bAbove ? "above" : "below"));
+							}
+							return sRet;
+						}
+					}
+					return AscCommon.translateManager.getValue("Error! No text of specified style in document.");
+				}
+			}
+		}
+	}
+    return AscCommon.translateManager.getValue("Error! No text of specified style in document.");
+};
+CFieldInstructionSTYLEREF.prototype.SetStyleName = function(v)
+{
+	this.StyleName = v;
+};
+CFieldInstructionSTYLEREF.prototype.ToString = function()
+{
+	var sRet = " STYLEREF ";
+
+	if(this.S)
+	{
+		sRet += " \\s"
+	}
+	if(this.StyleName)
+	{
+		sRet += this.StyleName;
+	}
+	if(this.L)
+	{
+		sRet += " \\l";
+	}
+	if(this.N)
+	{
+		sRet += " \\n"
+	}
+	if(this.P)
+	{
+		sRet += " \\p"
+	}
+	if(this.R)
+	{
+		sRet += " \\r"
+	}
+	if(this.T)
+	{
+		sRet += " \\t"
+	}
+	if(this.W)
+	{
+		sRet += " \\w"
+	}
+	return sRet;
+};
+CFieldInstructionSTYLEREF.prototype.SetComplexField = function (oComplexField)
+{
+	CFieldInstructionBase.prototype.SetComplexField.call(this, oComplexField);
+	this.ParentContent = null;
+	var oBeginChar = oComplexField.BeginChar;
+	if(oBeginChar)
+	{
+		var oRun = oBeginChar.Run;
+		if(oRun)
+		{
+			var oParagraph = oRun.Paragraph;
+			if(oParagraph)
+			{
+				this.ParentParagraph = oParagraph;
+				this.ParentContent = oParagraph.Parent;
+			}
+		}
+	}
+};
 
 /**
  * Класс для разбора строки с инструкцией
@@ -713,6 +1134,14 @@ CFieldInstructionParser.prototype.private_Parse = function()
 	else if("HYPERLINK" === sBuffer)
 	{
 		this.private_ReadHYPERLINK();
+	}
+	else if("SEQ" === sBuffer)
+	{
+		this.private_ParseSEQ();
+	}
+	else if("STYLEREF" === sBuffer)
+	{
+		this.private_ParseSTYLEREF();
 	}
 	else if(sBuffer.indexOf("=") === 0)
 	{
@@ -1075,4 +1504,104 @@ CFieldInstructionParser.prototype.private_ParseIntegerRange = function(sValue)
 		return null;
 
 	return [nValue1, nValue2];
+};
+
+CFieldInstructionParser.prototype.private_ParseSEQ = function()
+{
+	this.Result = new CFieldInstructionSEQ();
+	var arrArguments = this.private_ReadArguments();
+	if (arrArguments.length > 0)
+		this.Result.SetId(arrArguments[0]);
+
+	while (this.private_ReadNext())
+	{
+		if (this.private_IsSwitch())
+		{
+			var sType = this.private_GetSwitchLetter();
+			if ('*' === sType)
+			{
+				arrArguments = this.private_ReadArguments();
+				if (arrArguments.length > 0)
+					this.Result.SetGeneralSwitches(arrArguments);
+			}
+			else if ('c' === sType)
+			{
+				this.Result.SetC(true);
+			}
+			else if ('h' === sType)
+			{
+				this.Result.SetH(true);
+			}
+			else if ('n' === sType)
+			{
+				this.Result.SetN(true);
+			}
+			else if ('r' === sType)
+			{
+				arrArguments = this.private_ReadArguments();
+				if (arrArguments.length > 0)
+				{
+					this.Result.SetR(arrArguments[0]);
+				}
+			}
+			else if('s' === sType)
+			{
+				arrArguments = this.private_ReadArguments();
+				if (arrArguments.length > 0)
+				{
+					this.Result.SetS(arrArguments[0]);
+				}
+			}
+		}
+	}
+};
+
+CFieldInstructionParser.prototype.private_ParseSTYLEREF = function()
+{
+	this.Result = new CFieldInstructionSTYLEREF();
+	var arrArguments = this.private_ReadArguments();
+	if (arrArguments.length > 0)
+		this.Result.SetStyleName(arrArguments[0]);
+
+	while (this.private_ReadNext())
+	{
+		if (this.private_IsSwitch())
+		{
+			var sType = this.private_GetSwitchLetter();
+			if ('*' === sType)
+			{
+				arrArguments = this.private_ReadArguments();
+				if (arrArguments.length > 0)
+					this.Result.SetGeneralSwitches(arrArguments);
+			}
+			else if ('l' === sType)
+			{
+				this.Result.SetL(true);
+			}
+			else if ('n' === sType)
+			{
+				this.Result.SetN(true);
+			}
+			else if ('p' === sType)
+			{
+				this.Result.SetP(true);
+			}
+			else if ('r' === sType)
+			{
+				this.Result.SetR(true);
+			}
+			else if('t' === sType)
+			{
+				this.Result.SetT(true)
+			}
+			else if('w' === sType)
+			{
+				this.Result.SetW(true)
+			}
+			else if ('s' === sType)
+			{
+				this.Result.SetS(true);
+			}
+		}
+	}
 };

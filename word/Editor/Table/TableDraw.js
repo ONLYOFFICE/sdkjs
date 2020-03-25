@@ -161,7 +161,9 @@ CTable.prototype.private_DrawTableBackgroundAndOuterBorder = function(pGraphics,
         ShapeDrawer.draw(null);
         pGraphics.RestoreGrState();
     }
-    if ( this.HeaderInfo.Count > 0 && PNum > this.HeaderInfo.PageIndex && true === this.HeaderInfo.Pages[PNum].Draw )
+
+	var arrFrames = Asc.c_oAscShdNil !== TableShd.Value ? this.private_GetTableCellsBackgroundFrames(CurPage, Row_start, Row_last) : [];
+	if ( this.HeaderInfo.Count > 0 && PNum > this.HeaderInfo.PageIndex && true === this.HeaderInfo.Pages[PNum].Draw )
     {
         bHeader = true;
 
@@ -174,12 +176,16 @@ CTable.prototype.private_DrawTableBackgroundAndOuterBorder = function(pGraphics,
             var X_left_new  = Page.X + Row.Get_CellInfo(0).X_grid_start;
             var X_right_new = Page.X + Row.Get_CellInfo(CellsCount - 1).X_grid_end;
 
+            if (!CellSpacing)
+            	continue;
+
             Y_bottom = HeaderPage.RowsInfo[CurRow].Y + HeaderPage.RowsInfo[CurRow].H;
 
             var PrevCellSpacing = ( CurRow < this.HeaderInfo.Count - 1 ? HeaderPage.Rows[CurRow + 1].Get_CellSpacing() : this.Content[Row_start].Get_CellSpacing() );
             Y_bottom += (PrevCellSpacing + CellSpacing) / 4;
 
-            this.private_DrawRowBackgroundAndOuterBorder(pGraphics, TableShd, (null != CellSpacing ? true : false), TableBorders, X_left_new, X_left_old, X_right_new, X_right_old, Y_top, Y_bottom, ( 0 === CurRow ? true : false), false );
+            this.private_DrawRowBackground(pGraphics, TableShd, CellSpacing, Math.min(X_left_new, X_right_new), Math.min(Y_top, Y_bottom), Math.abs(X_right_new - X_left_new), Math.abs(Y_bottom - Y_top), Row, arrFrames);
+            this.private_DrawRowOuterBorder(pGraphics, TableBorders, X_left_new, X_left_old, X_right_new, X_right_old, Y_top, Y_bottom, ( 0 === CurRow ? true : false), false );
 
             X_left_old  = X_left_new;
             X_right_old = X_right_new;
@@ -190,11 +196,14 @@ CTable.prototype.private_DrawTableBackgroundAndOuterBorder = function(pGraphics,
 
     for ( var CurRow = Row_start; CurRow <= Row_last; CurRow++ )
     {
-        var Row         = this.Content[CurRow];
+        var Row         = this.GetRow(CurRow);
         var CellSpacing = Row.Get_CellSpacing();
         var CellsCount  = Row.Get_CellsCount();
         var X_left_new  = Page.X + Row.Get_CellInfo(0).X_grid_start;
         var X_right_new = Page.X + Row.Get_CellInfo(CellsCount - 1).X_grid_end;
+
+        if (null === CellSpacing)
+        	continue;
 
         Y_bottom = this.RowsInfo[CurRow].Y[PNum] + this.RowsInfo[CurRow].H[PNum];
         if ( this.Content.length - 1 === CurRow )
@@ -213,7 +222,8 @@ CTable.prototype.private_DrawTableBackgroundAndOuterBorder = function(pGraphics,
         if ( null != CellSpacing && PNum != this.Pages.length - 1 && CurRow === Row_last )
             Y_bottom += this.Pages[PNum].MaxBotBorder;
 
-        this.private_DrawRowBackgroundAndOuterBorder(pGraphics, TableShd, (null != CellSpacing ? true : false), TableBorders, X_left_new, X_left_old, X_right_new, X_right_old, Y_top, Y_bottom, ( true != bHeader && Row_start === CurRow ? true : false), (Row_last === CurRow ? true : false) );
+        this.private_DrawRowBackground(pGraphics, TableShd, CellSpacing, Math.min(X_left_new, X_right_new), Math.min(Y_top, Y_bottom), Math.abs(X_right_new - X_left_new), Math.abs(Y_bottom - Y_top), Row, arrFrames);
+        this.private_DrawRowOuterBorder(pGraphics, TableBorders, X_left_new, X_left_old, X_right_new, X_right_old, Y_top, Y_bottom, ( true != bHeader && Row_start === CurRow ? true : false), (Row_last === CurRow ? true : false) );
 
         X_left_old  = X_left_new;
         X_right_old = X_right_new;
@@ -221,179 +231,196 @@ CTable.prototype.private_DrawTableBackgroundAndOuterBorder = function(pGraphics,
         Y_top = Y_bottom;
     }
 };
-CTable.prototype.private_DrawRowBackgroundAndOuterBorder = function(pGraphics, TableShd, bBorder, TableBorders, X_left_new, X_left_old, X_right_new, X_right_old, Y_top, Y_bottom, bStartRow, bLastRow)
+CTable.prototype.private_DrawRowBackground = function(oGraphics, oTableShd, nCellsSpacing, nX, nY, nW, nH, oRow, arrFrames)
 {
-    var Theme = this.Get_Theme();
-    var ColorMap = this.Get_ColorMap();
-    var RGBA;
-    // Рисуем рамку и заливку самой таблицы
-    if ( Asc.c_oAscShdNil != TableShd.Value )
-    {
-        if(!this.bPresentation)
-        {
-            RGBA = TableShd.Get_Color2(Theme, ColorMap);
-            if(pGraphics.SetShd)
-            {
-                pGraphics.SetShd(TableShd);
+	if (!nCellsSpacing || this.bPresentation || Asc.c_oAscShdNil === oTableShd.Value)
+		return;
 
-            }
-            pGraphics.b_color1( RGBA.r, RGBA.g, RGBA.b, 255 );
-            pGraphics.TableRect(Math.min(X_left_new, X_right_new), Math.min(Y_top, Y_bottom), Math.abs(X_right_new - X_left_new), Math.abs(Y_bottom - Y_top));
-        }
-        // else
-        // {
-        //     pGraphics.SaveGrState();
-        //     pGraphics.SetIntegerGrid(false);
-        //     var ShapeDrawer = new CShapeDrawer();
-        //     TableShd.Unifill && TableShd.Unifill.check(Theme, ColorMap);
-        //     var Transform = this.Parent.transform.CreateDublicate();
-        //     global_MatrixTransformer.TranslateAppend(Transform, Math.min(X_left_new, X_right_new), Math.min(Y_top, Y_bottom));
-        //     pGraphics.transform3(Transform, false);
-        //     ShapeDrawer.fromShape2(new ObjectToDraw(TableShd.Unifill, null, Math.abs(X_right_new - X_left_new), Math.abs(Y_bottom - Y_top), null, Transform), pGraphics, null);
-        //     ShapeDrawer.draw(null);
-        //     pGraphics.RestoreGrState();
-        // }
-    }
+	var RGBA = oTableShd.Get_Color2(this.Get_Theme(), this.Get_ColorMap());
 
-    if ( true === bBorder )
-    {
-        // Левая граница
-        if ( border_Single === TableBorders.Left.Value )
-        {
-            RGBA = TableBorders.Left.Get_Color2(Theme, ColorMap);
-            pGraphics.p_color( RGBA.r, RGBA.g, RGBA.b, 255 );
-            if(pGraphics.SetBorder)
-            {
-                pGraphics.SetBorder(TableBorders.Left);
-            }
-            if ( null === X_left_old || Math.abs( X_left_new - X_left_old ) < 0.001 )
-            {
-                pGraphics.drawVerLine( c_oAscLineDrawingRule.Center, X_left_new, Y_top, Y_bottom, TableBorders.Left.Size );
-            }
-            else
-            {
-                if ( X_left_new > X_left_old )
-                {
-                    pGraphics.drawHorLineExt( c_oAscLineDrawingRule.Top,    Y_top, X_left_old, X_left_new, TableBorders.Left.Size, -TableBorders.Left.Size / 2, 0 );
-                }
-                else
-                {
-                    pGraphics.drawHorLineExt( c_oAscLineDrawingRule.Bottom, Y_top, X_left_old, X_left_new, TableBorders.Left.Size, +TableBorders.Left.Size / 2, -TableBorders.Left.Size / 2 );
-                }
+	if (oGraphics.SetShd)
+		oGraphics.SetShd(oTableShd);
 
-                pGraphics.drawVerLine( c_oAscLineDrawingRule.Center, X_left_new, Y_top, Y_bottom, TableBorders.Left.Size );
-            }
-        }
-        else //if ( border_None === TableBorders.Left.Value )
-        {
-            if ( null === X_left_old || Math.abs( X_left_new - X_left_old ) < 0.001 )
-            {
-                pGraphics.DrawEmptyTableLine( X_left_new, Y_top, X_left_new, Y_bottom );
-            }
-            else
-            {
-                pGraphics.DrawEmptyTableLine( X_left_old, Y_top, X_left_new, Y_top    );
-                pGraphics.DrawEmptyTableLine( X_left_new, Y_top, X_left_new, Y_bottom );
-            }
-        }
+	oGraphics.b_color1(RGBA.r, RGBA.g, RGBA.b, 255);
 
-        // Правая граница
-        if ( border_Single === TableBorders.Right.Value )
-        {
-            RGBA =  TableBorders.Right.Get_Color2(Theme, ColorMap);
-            pGraphics.p_color( RGBA.r, RGBA.g, RGBA.b, 255 );
-            if(pGraphics.SetBorder)
-            {
-                pGraphics.SetBorder(TableBorders.Right);
-            }
-            if ( null === X_right_old || Math.abs( X_right_new - X_right_old ) < 0.001 )
-            {
-                pGraphics.drawVerLine( c_oAscLineDrawingRule.Center, X_right_new, Y_top, Y_bottom, TableBorders.Right.Size );
-            }
-            else
-            {
-                if ( X_right_new > X_right_old )
-                {
-                    pGraphics.drawHorLineExt( c_oAscLineDrawingRule.Bottom, Y_top, X_right_old, X_right_new, TableBorders.Right.Size, - TableBorders.Right.Size / 2, +TableBorders.Right.Size / 2 );
-                }
-                else
-                {
-                    pGraphics.drawHorLineExt( c_oAscLineDrawingRule.Top, Y_top, X_right_old, X_right_new, TableBorders.Right.Size, + TableBorders.Right.Size / 2, 0 );
-                }
 
-                pGraphics.drawVerLine( c_oAscLineDrawingRule.Center, X_right_new, Y_top, Y_bottom, TableBorders.Right.Size );
-            }
-        }
-        else //if ( border_None === TableBorders.Right.Value )
-        {
-            if ( null === X_right_old || Math.abs( X_right_new - X_right_old ) < 0.001 )
-            {
-                pGraphics.DrawEmptyTableLine( X_right_new, Y_top, X_right_new, Y_bottom );
-            }
-            else
-            {
-                pGraphics.DrawEmptyTableLine( X_right_old, Y_top, X_right_new, Y_top    );
-                pGraphics.DrawEmptyTableLine( X_right_new, Y_top, X_right_new, Y_bottom );
-            }
-        }
+	var nCurGridCol = oRow.GetBefore().Grid;
+	var nEndGrid    = this.TableGrid.length - oRow.GetAfter().Grid;
 
-        if ( true === bStartRow )
-        {
-            // Верхняя граница
-            if ( border_Single === TableBorders.Top.Value )
-            {
-                RGBA =  TableBorders.Top.Get_Color2(Theme, ColorMap);
-                pGraphics.p_color( RGBA.r, RGBA.g, RGBA.b, 255 );
-                if(pGraphics.SetBorder)
-                {
-                    pGraphics.SetBorder(TableBorders.Top);
-                }
-                // Добавочные значения толщины правой и левой границ
-                var LeftMW = 0;
-                if ( border_Single === TableBorders.Left.Value )
-                    LeftMW = - TableBorders.Left.Size / 2;
+	var nCurrentX = nX;
 
-                var RightMW = 0;
-                if ( border_Single === TableBorders.Right.Value )
-                    RightMW = + TableBorders.Right.Size / 2;
+	while (nCurGridCol < nEndGrid)
+	{
+		var isFind = false;
+		for (var nIndex = 0, nCount = arrFrames.length; nIndex < nCount; ++nIndex)
+		{
+			var oFrame = arrFrames[nIndex];
 
-                pGraphics.drawHorLineExt( c_oAscLineDrawingRule.Top, Y_top, X_left_new, X_right_new, TableBorders.Top.Size, LeftMW, RightMW );
-            }
-            else //if ( border_None === TableBorders.Top.Value )
-            {
-                pGraphics.DrawEmptyTableLine( X_left_new, Y_top, X_right_new, Y_top );
-            }
-        }
+			if (oFrame.GridCol <= nCurGridCol && nCurGridCol < oFrame.GridCol + oFrame.GridSpan && oFrame.Y < nY + nH && oFrame.Y + oFrame.H > nY)
+			{
+				oGraphics.TableRect(nCurrentX, nY, oFrame.X - nCurrentX, nH);
+				nCurrentX = oFrame.X + oFrame.W;
+				nCurGridCol = oFrame.GridCol + oFrame.GridSpan;
 
-        if ( true === bLastRow )
-        {
-            // Нижняя граница
-            if ( border_Single === TableBorders.Bottom.Value )
-            {
-                RGBA =  TableBorders.Bottom.Get_Color2(Theme, ColorMap);
-                pGraphics.p_color( RGBA.r, RGBA.g, RGBA.b, 255 );
-                if(pGraphics.SetBorder)
-                {
-                    pGraphics.SetBorder(TableBorders.Bottom);
-                }
-                // Добавочные значения толщины правой и левой границ
-                var LeftMW = 0;
-                if ( border_Single === TableBorders.Left.Value )
-                    LeftMW = - TableBorders.Left.Size / 2;
+				if (oFrame.Y > nY + 0.001)
+					oGraphics.TableRect(oFrame.X, nY, oFrame.W, oFrame.Y - nY);
 
-                var RightMW = 0;
-                if ( border_Single === TableBorders.Right.Value )
-                    RightMW = + TableBorders.Right.Size / 2;
+				if (oFrame.Y + oFrame.H + 0.001 < nY + nH)
+					oGraphics.TableRect(oFrame.X, oFrame.Y + oFrame.H, oFrame.W, nY + nH - oFrame.Y - oFrame.H);
 
-                pGraphics.drawHorLineExt( c_oAscLineDrawingRule.Top, Y_bottom, X_left_new, X_right_new, TableBorders.Bottom.Size, LeftMW, RightMW );
-            }
-            else //if ( border_None === TableBorders.Bottom.Value )
-            {
-                pGraphics.DrawEmptyTableLine( X_left_new, Y_bottom, X_right_new, Y_bottom );
-            }
-        }
-    }
+				isFind = true;
+				break;
+			}
+		}
 
+		if (!isFind)
+			nCurGridCol++;
+	}
+
+	if (nCurrentX < nX + nW)
+		oGraphics.TableRect(nCurrentX, nY, nX + nW - nCurrentX, nH);
+};
+CTable.prototype.private_DrawRowOuterBorder = function(pGraphics, TableBorders, X_left_new, X_left_old, X_right_new, X_right_old, Y_top, Y_bottom, bStartRow, bLastRow)
+{
+	var Theme    = this.Get_Theme();
+	var ColorMap = this.Get_ColorMap();
+	var RGBA;
+
+	// Левая граница
+	if (border_Single === TableBorders.Left.Value)
+	{
+		RGBA = TableBorders.Left.Get_Color2(Theme, ColorMap);
+		pGraphics.p_color(RGBA.r, RGBA.g, RGBA.b, 255);
+		if (pGraphics.SetBorder)
+		{
+			pGraphics.SetBorder(TableBorders.Left);
+		}
+		if (null === X_left_old || Math.abs(X_left_new - X_left_old) < 0.001)
+		{
+			pGraphics.drawVerLine(c_oAscLineDrawingRule.Center, X_left_new, Y_top, Y_bottom, TableBorders.Left.Size);
+		}
+		else
+		{
+			if (X_left_new > X_left_old)
+			{
+				pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Top, Y_top, X_left_old, X_left_new, TableBorders.Left.Size, -TableBorders.Left.Size / 2, 0);
+			}
+			else
+			{
+				pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Bottom, Y_top, X_left_old, X_left_new, TableBorders.Left.Size, +TableBorders.Left.Size / 2, -TableBorders.Left.Size / 2);
+			}
+
+			pGraphics.drawVerLine(c_oAscLineDrawingRule.Center, X_left_new, Y_top, Y_bottom, TableBorders.Left.Size);
+		}
+	}
+	else //if ( border_None === TableBorders.Left.Value )
+	{
+		if (null === X_left_old || Math.abs(X_left_new - X_left_old) < 0.001)
+		{
+			pGraphics.DrawEmptyTableLine(X_left_new, Y_top, X_left_new, Y_bottom);
+		}
+		else
+		{
+			pGraphics.DrawEmptyTableLine(X_left_old, Y_top, X_left_new, Y_top);
+			pGraphics.DrawEmptyTableLine(X_left_new, Y_top, X_left_new, Y_bottom);
+		}
+	}
+
+	// Правая граница
+	if (border_Single === TableBorders.Right.Value)
+	{
+		RGBA = TableBorders.Right.Get_Color2(Theme, ColorMap);
+		pGraphics.p_color(RGBA.r, RGBA.g, RGBA.b, 255);
+		if (pGraphics.SetBorder)
+		{
+			pGraphics.SetBorder(TableBorders.Right);
+		}
+		if (null === X_right_old || Math.abs(X_right_new - X_right_old) < 0.001)
+		{
+			pGraphics.drawVerLine(c_oAscLineDrawingRule.Center, X_right_new, Y_top, Y_bottom, TableBorders.Right.Size);
+		}
+		else
+		{
+			if (X_right_new > X_right_old)
+			{
+				pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Bottom, Y_top, X_right_old, X_right_new, TableBorders.Right.Size, -TableBorders.Right.Size / 2, +TableBorders.Right.Size / 2);
+			}
+			else
+			{
+				pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Top, Y_top, X_right_old, X_right_new, TableBorders.Right.Size, +TableBorders.Right.Size / 2, 0);
+			}
+
+			pGraphics.drawVerLine(c_oAscLineDrawingRule.Center, X_right_new, Y_top, Y_bottom, TableBorders.Right.Size);
+		}
+	}
+	else //if ( border_None === TableBorders.Right.Value )
+	{
+		if (null === X_right_old || Math.abs(X_right_new - X_right_old) < 0.001)
+		{
+			pGraphics.DrawEmptyTableLine(X_right_new, Y_top, X_right_new, Y_bottom);
+		}
+		else
+		{
+			pGraphics.DrawEmptyTableLine(X_right_old, Y_top, X_right_new, Y_top);
+			pGraphics.DrawEmptyTableLine(X_right_new, Y_top, X_right_new, Y_bottom);
+		}
+	}
+
+	if (true === bStartRow)
+	{
+		// Верхняя граница
+		if (border_Single === TableBorders.Top.Value)
+		{
+			RGBA = TableBorders.Top.Get_Color2(Theme, ColorMap);
+			pGraphics.p_color(RGBA.r, RGBA.g, RGBA.b, 255);
+			if (pGraphics.SetBorder)
+			{
+				pGraphics.SetBorder(TableBorders.Top);
+			}
+			// Добавочные значения толщины правой и левой границ
+			var LeftMW = 0;
+			if (border_Single === TableBorders.Left.Value)
+				LeftMW = -TableBorders.Left.Size / 2;
+
+			var RightMW = 0;
+			if (border_Single === TableBorders.Right.Value)
+				RightMW = +TableBorders.Right.Size / 2;
+
+			pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Top, Y_top, X_left_new, X_right_new, TableBorders.Top.Size, LeftMW, RightMW);
+		}
+		else //if ( border_None === TableBorders.Top.Value )
+		{
+			pGraphics.DrawEmptyTableLine(X_left_new, Y_top, X_right_new, Y_top);
+		}
+	}
+
+	if (true === bLastRow)
+	{
+		// Нижняя граница
+		if (border_Single === TableBorders.Bottom.Value)
+		{
+			RGBA = TableBorders.Bottom.Get_Color2(Theme, ColorMap);
+			pGraphics.p_color(RGBA.r, RGBA.g, RGBA.b, 255);
+			if (pGraphics.SetBorder)
+			{
+				pGraphics.SetBorder(TableBorders.Bottom);
+			}
+			// Добавочные значения толщины правой и левой границ
+			var LeftMW = 0;
+			if (border_Single === TableBorders.Left.Value)
+				LeftMW = -TableBorders.Left.Size / 2;
+
+			var RightMW = 0;
+			if (border_Single === TableBorders.Right.Value)
+				RightMW = +TableBorders.Right.Size / 2;
+
+			pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Top, Y_bottom, X_left_new, X_right_new, TableBorders.Bottom.Size, LeftMW, RightMW);
+		}
+		else //if ( border_None === TableBorders.Bottom.Value )
+		{
+			pGraphics.DrawEmptyTableLine(X_left_new, Y_bottom, X_right_new, Y_bottom);
+		}
+	}
 };
 CTable.prototype.private_DrawCellsBackground = function(pGraphics, PNum, Row_start, Row_last)
 {
@@ -1103,11 +1130,11 @@ CTable.prototype.private_DrawCellsBorders = function(pGraphics, PNum, Row_start,
                     {
                         pGraphics.SetBorder(CellBorders.Left);
                     }
-                    pGraphics.drawVerLine( c_oAscLineDrawingRule.Left, X_cell_start, Y, Y + RealHeight, CellBorders.Left.Size );
+                    pGraphics.drawVerLine( c_oAscLineDrawingRule.Left, X_cell_start, Y - CellBorders.Top.Size, Y + RealHeight + CellBorders.Bottom.Size, CellBorders.Left.Size );
                 }
                 else //if ( border_None === CellBorders.Left.Value )
                 {
-                    pGraphics.DrawEmptyTableLine( X_cell_start, Y, X_cell_start, Y + RealHeight );
+                    pGraphics.DrawEmptyTableLine( X_cell_start, Y, X_cell_start, Y + RealHeight);
                 }
 
                 // Правая граница
@@ -1119,11 +1146,11 @@ CTable.prototype.private_DrawCellsBorders = function(pGraphics, PNum, Row_start,
                     {
                         pGraphics.SetBorder(CellBorders.Right);
                     }
-                    pGraphics.drawVerLine( c_oAscLineDrawingRule.Right, X_cell_end, Y, Y + RealHeight, CellBorders.Right.Size );
+                    pGraphics.drawVerLine( c_oAscLineDrawingRule.Right, X_cell_end, Y - CellBorders.Top.Size, Y + RealHeight + CellBorders.Bottom.Size, CellBorders.Right.Size );
                 }
                 else //if ( border_None === CellBorders.Right.Value )
                 {
-                    pGraphics.DrawEmptyTableLine( X_cell_end, Y, X_cell_end, Y + RealHeight );
+                    pGraphics.DrawEmptyTableLine( X_cell_end, Y, X_cell_end, Y + RealHeight);
                 }
 
                 // Верхняя граница
@@ -1635,4 +1662,107 @@ CTable.prototype.private_DrawCellsBorders = function(pGraphics, PNum, Row_start,
             }
         }
     }
+};
+CTable.prototype.private_GetTableCellsBackgroundFrames = function(nCurPage, nStartRow, nLastRow)
+{
+	var arrFrames = [];
+
+	var oPage = this.Pages[nCurPage];
+
+	if (this.HeaderInfo.Count > 0 && nCurPage > this.HeaderInfo.PageIndex && true === this.HeaderInfo.Pages[nCurPage].Draw)
+	{
+		var oHeaderPage = this.HeaderInfo.Pages[nCurPage];
+		for (var nCurRow = 0; nCurRow < this.HeaderInfo.Count; ++nCurRow)
+		{
+			var oRow        = oHeaderPage.Rows[nCurRow];
+			var nCellsCount = oRow.GetCellsCount();
+			var nY          = oHeaderPage.RowsInfo[nCurRow].Y;
+
+			for (var nCurCell = nCellsCount - 1; nCurCell >= 0; --nCurCell)
+			{
+				var oCell       = oRow.GetCell(nCurCell);
+				var nGridSpan   = oCell.GetGridSpan();
+				var nVMerge     = oCell.GetVMerge();
+				var nCurGridCol = oRow.GetCellInfo(nCurCell).StartGridCol;
+				var oBorders    = oCell.GetBorders();
+
+				var nTopBorderSize    = border_Single === oBorders.Top.Value ? oBorders.Top.Size : 0;
+				var nBottomBorderSize = border_Single === oBorders.Bottom.Value ? oBorders.Bottom.Size : 0;
+
+				if (vmerge_Continue === nVMerge)
+					continue;
+
+				var oCellInfo    = oRow.GetCellInfo(nCurCell);
+				var X_cell_start = oPage.X + oCellInfo.X_cell_start;
+				var X_cell_end   = oPage.X + oCellInfo.X_cell_end;
+
+				var nVMergeCount = this.Internal_GetVertMergeCount(nCurRow, nCurGridCol, nGridSpan);
+				var nRealHeight  = oHeaderPage.RowsInfo[nCurRow + nVMergeCount - 1].Y + HeaderPage.RowsInfo[nCurRow + nVMergeCount - 1].H - nY;
+
+				arrFrames.push({
+					X        : X_cell_start,
+					Y        : nY - nTopBorderSize,
+					W        : X_cell_end - X_cell_start,
+					H        : nRealHeight + nBottomBorderSize + nTopBorderSize,
+					GridCol  : nCurGridCol,
+					GridSpan : nGridSpan
+				});
+			}
+		}
+	}
+
+	for (var nCurRow = nStartRow; nCurRow <= nLastRow; ++nCurRow)
+	{
+		var oRow        = this.GetRow(nCurRow);
+		var nCellsCount = oRow.GetCellsCount();
+		var nY          = this.RowsInfo[nCurRow].Y[nCurPage];
+
+		for (var nCurCell = nCellsCount - 1; nCurCell >= 0; --nCurCell)
+		{
+			var oCell       = oRow.GetCell(nCurCell);
+			var nGridSpan   = oCell.GetGridSpan();
+			var nVMerge     = oCell.GetVMerge();
+			var nCurGridCol = oRow.GetCellInfo(nCurCell).StartGridCol;
+			var oBorders    = oCell.GetBorders();
+
+			var nTopBorderSize    = border_Single === oBorders.Top.Value ? oBorders.Top.Size : 0;
+			var nBottomBorderSize = border_Single === oBorders.Bottom.Value ? oBorders.Bottom.Size : 0;
+
+			if (vmerge_Continue === nVMerge)
+			{
+				if (nStartRow === nCurRow)
+				{
+					oCell = this.Internal_Get_StartMergedCell(nCurRow, nCurGridCol, nGridSpan);
+					if (null === oCell)
+						continue;
+
+					// Параметры GridSpan и CurGridCol должны остаться такими же
+				}
+				else
+				{
+					continue;
+				}
+			}
+
+			var oCellInfo    = oRow.GetCellInfo(nCurCell);
+			var X_cell_start = oPage.X + oCellInfo.X_cell_start;
+			var X_cell_end   = oPage.X + oCellInfo.X_cell_end;
+
+			var nVMergeCount = this.private_GetVertMergeCountOnPage(nCurPage, nCurRow, nCurGridCol, nGridSpan);
+			if (nVMergeCount <= 0)
+				continue;
+
+			var nRealHeight = this.RowsInfo[nCurRow + nVMergeCount - 1].Y[nCurPage] + this.RowsInfo[nCurRow + nVMergeCount - 1].H[nCurPage] - nY;
+			arrFrames.push({
+				X        : X_cell_start,
+				Y        : nY - nTopBorderSize,
+				W        : X_cell_end - X_cell_start,
+				H        : nRealHeight + nBottomBorderSize + nTopBorderSize,
+				GridCol  : nCurGridCol,
+				GridSpan : nGridSpan
+			});
+		}
+	}
+
+	return arrFrames;
 };

@@ -194,6 +194,13 @@ CParaRevisionMove.prototype.RemoveThisMarkFromDocument = function()
 	if (oParagraph)
 		oParagraph.RemoveElement(this);
 };
+CParaRevisionMove.prototype.GetSelectedElementsInfo = function(oInfo)
+{
+	if (oInfo && oInfo.IsCheckAllSelection())
+	{
+		oInfo.RegisterTrackMoveMark(this);
+	}
+};
 
 /**
  * Класс для обозначения элемента начала/конца переноса текста во время рецензирования внутри рана

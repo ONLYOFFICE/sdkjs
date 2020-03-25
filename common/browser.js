@@ -59,7 +59,8 @@ var AscBrowser = {
 	isVivaldiLinux : false,
     isSailfish : false,
     isEmulateDevicePixelRatio : false,
-    isNeedEmulateUpload : false
+    isNeedEmulateUpload : false,
+    chromeVersion : 70
 };
 
 // user agent lower case
@@ -80,6 +81,12 @@ AscBrowser.isMacOs = (AscBrowser.userAgent.indexOf('mac') > -1);
 
 // chrome detect
 AscBrowser.isChrome = !AscBrowser.isIE && (AscBrowser.userAgent.indexOf("chrome") > -1);
+if (AscBrowser.isChrome)
+{
+    var checkVersion = AscBrowser.userAgent.match(/chrom(e|ium)\/([0-9]+)\./);
+    if (checkVersion && checkVersion[2])
+        AscBrowser.chromeVersion = parseInt(checkVersion[2], 10);
+}
 
 // safari detect
 AscBrowser.isSafari = !AscBrowser.isIE && !AscBrowser.isChrome && (AscBrowser.userAgent.indexOf("safari") > -1);

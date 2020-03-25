@@ -89,6 +89,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Styles_ChangeDefaultTitleId]           
 AscDFH.changesFactory[AscDFH.historyitem_Styles_ChangeDefaultSubtitleId]          = CChangesStylesChangeDefaultSubtitleId;
 AscDFH.changesFactory[AscDFH.historyitem_Styles_ChangeDefaultQuoteId]             = CChangesStylesChangeDefaultQuoteId;
 AscDFH.changesFactory[AscDFH.historyitem_Styles_ChangeDefaultIntenseQuoteId]      = CChangesStylesChangeDefaultIntenseQuoteId;
+AscDFH.changesFactory[AscDFH.historyitem_Styles_ChangeDefaultCaption]             = CChangesStylesChangeDefaultCaption;
 
 //----------------------------------------------------------------------------------------------------------------------
 // Карта зависимости изменений
@@ -150,6 +151,7 @@ AscDFH.changesRelationMap[AscDFH.historyitem_Styles_ChangeDefaultTitleId]       
 AscDFH.changesRelationMap[AscDFH.historyitem_Styles_ChangeDefaultSubtitleId]          = [AscDFH.historyitem_Styles_ChangeDefaultSubtitleId];
 AscDFH.changesRelationMap[AscDFH.historyitem_Styles_ChangeDefaultQuoteId]             = [AscDFH.historyitem_Styles_ChangeDefaultQuoteId];
 AscDFH.changesRelationMap[AscDFH.historyitem_Styles_ChangeDefaultIntenseQuoteId]      = [AscDFH.historyitem_Styles_ChangeDefaultIntenseQuoteId];
+AscDFH.changesRelationMap[AscDFH.historyitem_Styles_ChangeDefaultCaption]             = [AscDFH.historyitem_Styles_ChangeDefaultCaption];
 //----------------------------------------------------------------------------------------------------------------------
 
 
@@ -1378,4 +1380,20 @@ CChangesStylesChangeDefaultIntenseQuoteId.prototype.Type = AscDFH.historyitem_St
 CChangesStylesChangeDefaultIntenseQuoteId.prototype.private_SetValue = function(Value)
 {
 	this.Class.Default.IntenseQuote = Value;
+};
+
+/**
+ * @constructor
+ * @extends {CChangesStyleBaseStringProperty}
+ */
+function CChangesStylesChangeDefaultCaption(Class, Old, New)
+{
+	CChangesStyleBaseStringProperty.call(this, Class, Old, New);
+}
+CChangesStylesChangeDefaultCaption.prototype = Object.create(CChangesStyleBaseStringProperty.prototype);
+CChangesStylesChangeDefaultCaption.prototype.constructor = CChangesStylesChangeDefaultIntenseQuoteId;
+CChangesStylesChangeDefaultCaption.prototype.Type = AscDFH.historyitem_Styles_ChangeDefaultCaption;
+CChangesStylesChangeDefaultCaption.prototype.private_SetValue = function(Value)
+{
+	this.Class.Default.Caption = Value;
 };

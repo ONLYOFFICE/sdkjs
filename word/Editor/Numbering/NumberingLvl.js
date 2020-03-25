@@ -797,7 +797,7 @@ CNumberingLvl.prototype.ResetNumberedText = function(nLvl)
  */
 CNumberingLvl.prototype.IsSimilar = function(oLvl)
 {
-	if (this.Format !== oLvl.Format || this.LvlText.length !== oLvl.LvlText.length)
+	if (!oLvl || this.Format !== oLvl.Format || this.LvlText.length !== oLvl.LvlText.length)
 		return false;
 
 	for (var nIndex = 0, nCount = this.LvlText.length; nIndex < nCount; ++nIndex)
@@ -1051,8 +1051,23 @@ function CNumberingLvlTextString(Val)
 	else
 		this.Value = "";
 
+	if (AscFonts.IsCheckSymbols)
+		AscFonts.FontPickerByCharacter.getFontsByString(this.Value);
+
 	this.Type = numbering_lvltext_Text;
 }
+CNumberingLvlTextString.prototype.IsLvl = function()
+{
+	return false;
+};
+CNumberingLvlTextString.prototype.IsText = function()
+{
+	return true;
+};
+CNumberingLvlTextString.prototype.GetValue = function()
+{
+	return this.Value;
+};
 CNumberingLvlTextString.prototype.Copy = function()
 {
 	return new CNumberingLvlTextString(this.Value);
@@ -1068,6 +1083,9 @@ CNumberingLvlTextString.prototype.WriteToBinary = function(Writer)
 CNumberingLvlTextString.prototype.ReadFromBinary = function(Reader)
 {
 	this.Value = Reader.GetString2();
+
+	if (AscFonts.IsCheckSymbols)
+		AscFonts.FontPickerByCharacter.getFontsByString(this.Value);
 };
 
 function CNumberingLvlTextNum(Lvl)
@@ -1079,6 +1097,18 @@ function CNumberingLvlTextNum(Lvl)
 
 	this.Type = numbering_lvltext_Num;
 }
+CNumberingLvlTextNum.prototype.IsLvl = function()
+{
+	return true;
+};
+CNumberingLvlTextNum.prototype.IsText = function()
+{
+	return false;
+};
+CNumberingLvlTextNum.prototype.GetValue = function()
+{
+	return this.Value;
+};
 CNumberingLvlTextNum.prototype.Copy = function()
 {
 	return new CNumberingLvlTextNum(this.Value);

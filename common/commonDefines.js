@@ -123,6 +123,7 @@
 			UplImageFileCount    : -11,
 			NoSupportClipdoard   : -12,
 			UplImageUrl          : -13,
+			DirectUrl            : -14,
 
 
 			MaxDataPointsError    : -16,
@@ -169,8 +170,9 @@
 			MaxDataSeriesError : -80,
 			CannotFillRange    : -81,
 
-			ConvertationOpenError : -82,
-            ConvertationSaveError : -83,
+			ConvertationOpenError      : -82,
+            ConvertationSaveError      : -83,
+			ConvertationOpenLimitError : -84,
 
 			UserDrop : -100,
 			Warning  : -101,
@@ -214,7 +216,14 @@
 
 			NoDataToParse : -601,
 
-			CannotUngroupError : -700
+			CannotUngroupError : -700,
+
+			UplDocumentSize         : -751,
+			UplDocumentExt          : -752,
+			UplDocumentFileCount    : -753,
+
+			CustomSortMoreOneSelectedError: -800,
+			CustomSortNotOriginalSelectError: -801
 		}
 	};
 
@@ -538,9 +547,7 @@
 	var c_oAscHAnchor = {
 		Margin : 0x00,
 		Page   : 0x01,
-		Text   : 0x02,
-
-		PageInternal : 0xFF // только для внутреннего использования
+		Text   : 0x02
 	};
 
 	var c_oAscXAlign = {
@@ -985,6 +992,16 @@
 		Bottom : 1
 	};
 
+	var c_oAscTabType = {
+		Bar     : 0x00,
+		Center  : 0x01,
+		Clear   : 0x02,
+		Decimal : 0x03,
+		Num     : 0x05,
+		Right   : 0x07,
+		Left    : 0x08
+	};
+
 	var c_oAscTabLeader = {
 		Dot        : 0x00,
 		Heavy      : 0x01,
@@ -1083,7 +1100,8 @@
 	var c_oAscMaxTooltipLength       = 256;
 	var c_oAscMaxCellOrCommentLength = 32767;
 	var c_oAscMaxFormulaLength       = 8192;
-	var c_oAscMaxHeaderFooterLength  = 256;
+	var c_oAscMaxHeaderFooterLength  = 255;
+	var c_oAscMaxFilterListLength  = 10000;
 
 	var locktype_None   = 1; // никто не залочил данный объект
 	var locktype_Mine   = 2; // данный объект залочен текущим пользователем
@@ -1407,14 +1425,15 @@
 
 	/** @enum {number} */
 	var c_oAscNumberingFormat = {
-		None        : 0x0000,
-		Bullet      : 0x1001,
-		Decimal     : 0x2002,
-		LowerRoman  : 0x2003,
-		UpperRoman  : 0x2004,
-		LowerLetter : 0x2005,
-		UpperLetter : 0x2006,
-		DecimalZero : 0x2007,
+		None                  : 0x0000,
+		Bullet                : 0x1001,
+		Decimal               : 0x2002,
+		LowerRoman            : 0x2003,
+		UpperRoman            : 0x2004,
+		LowerLetter           : 0x2005,
+		UpperLetter           : 0x2006,
+		DecimalZero           : 0x2007,
+		DecimalEnclosedCircle : 0x2008,
 
 
 		BulletFlag   : 0x1000,
@@ -1470,6 +1489,506 @@
 		MoveFrom : 2
 	};
 
+	/** @enum {number} */
+	var c_oAscRevisionsChangeType = {
+		Unknown : 0x00,
+		TextAdd : 0x01,
+		TextRem : 0x02,
+		ParaAdd : 0x03,
+		ParaRem : 0x04,
+		TextPr  : 0x05,
+		ParaPr  : 0x06,
+		TablePr : 0x07,
+		RowsAdd : 0x08,
+		RowsRem : 0x09,
+
+		MoveMark       : 0xFE, // специальный внутренний тип, для обозначения меток переноса
+		MoveMarkRemove : 0xFF  // внутреннний тип, для удаления отметок переноса внутри параграфов и таблиц
+	};
+
+
+	/** @enum {number} */
+	var c_oAscSectionBreakType = {
+		NextPage   : 0x00,
+		OddPage    : 0x01,
+		EvenPage   : 0x02,
+		Continuous : 0x03,
+		Column     : 0x04
+	};
+
+
+	var c_oAscSdtLockType = {
+		ContentLocked    : 0x00,
+		SdtContentLocked : 0x01,
+		SdtLocked        : 0x02,
+		Unlocked         : 0x03
+	};
+
+
+	/**
+	 * Типы горизонтального прилегания для автофигур.
+	 * @type {{Center: number, Inside: number, Left: number, Outside: number, Right: number}}
+	 * @enum {number}
+	 */
+	var c_oAscAlignH = {
+		Center  : 0x00,
+		Inside  : 0x01,
+		Left    : 0x02,
+		Outside : 0x03,
+		Right   : 0x04
+	};
+
+	/**
+	 * Типы вертикального прилегания для автофигур.
+	 * @type {{Bottom: number, Center: number, Inside: number, Outside: number, Top: number}}
+	 * @enum {number}
+	 */
+	var c_oAscAlignV = {
+		Bottom  : 0x00,
+		Center  : 0x01,
+		Inside  : 0x02,
+		Outside : 0x03,
+		Top     : 0x04
+	};
+
+
+
+	var c_oAscWatermarkType = {
+		None       : 0,
+		Text       : 1,
+		Image      : 2
+	};
+
+	var c_oAscCalendarType = {
+		Gregorian            : 0,
+		GregorianArabic      : 1,
+		GregorianMeFrench    : 2,
+		GregorianUs          : 3,
+		GregorianXlitEnglish : 4,
+		GregorianXlitFrench  : 5,
+		Hebrew               : 6,
+		Hijri                : 7,
+		Japan                : 8,
+		Korea                : 9,
+		None                 : 10,
+		Saka                 : 11,
+		Taiwan               : 12,
+		Thai                 : 13
+	};
+
+	var c_oAscContentControlSpecificType = {
+		None         : 0,
+		CheckBox     : 1,
+		Picture      : 2,
+		ComboBox     : 3,
+		DropDownList : 4,
+		DateTime     : 5,
+
+		TOC          : 10
+	};
+
+	var g_aLcidNameIdArray = [
+		"ar", 0x0001 ,
+		"bg", 0x0002 ,
+		"ca", 0x0003 ,
+		"zh-Hans", 0x0004 ,
+		"cs", 0x0005 ,
+		"da", 0x0006 ,
+		"de", 0x0007 ,
+		"el", 0x0008 ,
+		"en", 0x0009 ,
+		"es", 0x000a ,
+		"fi", 0x000b ,
+		"fr", 0x000c ,
+		"he", 0x000d ,
+		"hu", 0x000e ,
+		"is", 0x000f ,
+		"it", 0x0010 ,
+		"ja", 0x0011 ,
+		"ko", 0x0012 ,
+		"nl", 0x0013 ,
+		"no", 0x0014 ,
+		"pl", 0x0015 ,
+		"pt", 0x0016 ,
+		"rm", 0x0017 ,
+		"ro", 0x0018 ,
+		"ru", 0x0019 ,
+		"hr", 0x001a ,
+		"sk", 0x001b ,
+		"sq", 0x001c ,
+		"sv", 0x001d ,
+		"th", 0x001e ,
+		"tr", 0x001f ,
+		"ur", 0x0020 ,
+		"id", 0x0021 ,
+		"uk", 0x0022 ,
+		"be", 0x0023 ,
+		"sl", 0x0024 ,
+		"et", 0x0025 ,
+		"lv", 0x0026 ,
+		"lt", 0x0027 ,
+		"tg", 0x0028 ,
+		"fa", 0x0029 ,
+		"vi", 0x002a ,
+		"hy", 0x002b ,
+		"az", 0x002c ,
+		"eu", 0x002d ,
+		"hsb", 0x002e ,
+		"mk", 0x002f ,
+		"tn", 0x0032 ,
+		"xh", 0x0034 ,
+		"zu", 0x0035 ,
+		"af", 0x0036 ,
+		"ka", 0x0037 ,
+		"fo", 0x0038 ,
+		"hi", 0x0039 ,
+		"mt", 0x003a ,
+		"se", 0x003b ,
+		"ga", 0x003c ,
+		"ms", 0x003e ,
+		"kk", 0x003f ,
+		"ky", 0x0040 ,
+		"sw", 0x0041 ,
+		"tk", 0x0042 ,
+		"uz", 0x0043 ,
+		"tt", 0x0044 ,
+		"bn", 0x0045 ,
+		"pa", 0x0046 ,
+		"gu", 0x0047 ,
+		"or", 0x0048 ,
+		"ta", 0x0049 ,
+		"te", 0x004a ,
+		"kn", 0x004b ,
+		"ml", 0x004c ,
+		"as", 0x004d ,
+		"mr", 0x004e ,
+		"sa", 0x004f ,
+		"mn", 0x0050 ,
+		"bo", 0x0051 ,
+		"cy", 0x0052 ,
+		"km", 0x0053 ,
+		"lo", 0x0054 ,
+		"gl", 0x0056 ,
+		"kok", 0x0057 ,
+		"syr", 0x005a ,
+		"si", 0x005b ,
+		"iu", 0x005d ,
+		"am", 0x005e ,
+		"tzm", 0x005f ,
+		"ne", 0x0061 ,
+		"fy", 0x0062 ,
+		"ps", 0x0063 ,
+		"fil", 0x0064 ,
+		"dv", 0x0065 ,
+		"ha", 0x0068 ,
+		"yo", 0x006a ,
+		"quz", 0x006b ,
+		"nso", 0x006c ,
+		"ba", 0x006d ,
+		"lb", 0x006e ,
+		"kl", 0x006f ,
+		"ig", 0x0070 ,
+		"ii", 0x0078 ,
+		"arn", 0x007a ,
+		"moh", 0x007c ,
+		"br", 0x007e ,
+		"ug", 0x0080 ,
+		"mi", 0x0081 ,
+		"oc", 0x0082 ,
+		"co", 0x0083 ,
+		"gsw", 0x0084 ,
+		"sah", 0x0085 ,
+		"qut", 0x0086 ,
+		"rw", 0x0087 ,
+		"wo", 0x0088 ,
+		"prs", 0x008c ,
+		"gd", 0x0091 ,
+		"ar-SA", 0x0401 ,
+		"bg-BG", 0x0402 ,
+		"ca-ES", 0x0403 ,
+		"zh-TW", 0x0404 ,
+		"cs-CZ", 0x0405 ,
+		"da-DK", 0x0406 ,
+		"de-DE", 0x0407 ,
+		"el-GR", 0x0408 ,
+		"en-US", 0x0409 ,
+		"es-ES_tradnl", 0x040a ,
+		"fi-FI", 0x040b ,
+		"fr-FR", 0x040c ,
+		"he-IL", 0x040d ,
+		"hu-HU", 0x040e ,
+		"is-IS", 0x040f ,
+		"it-IT", 0x0410 ,
+		"ja-JP", 0x0411 ,
+		"ko-KR", 0x0412 ,
+		"nl-NL", 0x0413 ,
+		"nb-NO", 0x0414 ,
+		"pl-PL", 0x0415 ,
+		"pt-BR", 0x0416 ,
+		"rm-CH", 0x0417 ,
+		"ro-RO", 0x0418 ,
+		"ru-RU", 0x0419 ,
+		"hr-HR", 0x041a ,
+		"sk-SK", 0x041b ,
+		"sq-AL", 0x041c ,
+		"sv-SE", 0x041d ,
+		"th-TH", 0x041e ,
+		"tr-TR", 0x041f ,
+		"ur-PK", 0x0420 ,
+		"id-ID", 0x0421 ,
+		"uk-UA", 0x0422 ,
+		"be-BY", 0x0423 ,
+		"sl-SI", 0x0424 ,
+		"et-EE", 0x0425 ,
+		"lv-LV", 0x0426 ,
+		"lt-LT", 0x0427 ,
+		"tg-Cyrl-TJ", 0x0428 ,
+		"fa-IR", 0x0429 ,
+		"vi-VN", 0x042a ,
+		"hy-AM", 0x042b ,
+		"az-Latn-AZ", 0x042c ,
+		"eu-ES", 0x042d ,
+		"wen-DE", 0x042e ,
+		"mk-MK", 0x042f ,
+		"st-ZA", 0x0430 ,
+		"ts-ZA", 0x0431 ,
+		"tn-ZA", 0x0432 ,
+		"ven-ZA", 0x0433 ,
+		"xh-ZA", 0x0434 ,
+		"zu-ZA", 0x0435 ,
+		"af-ZA", 0x0436 ,
+		"ka-GE", 0x0437 ,
+		"fo-FO", 0x0438 ,
+		"hi-IN", 0x0439 ,
+		"mt-MT", 0x043a ,
+		"se-NO", 0x043b ,
+		"ms-MY", 0x043e ,
+		"kk-KZ", 0x043f ,
+		"ky-KG", 0x0440 ,
+		"sw-KE", 0x0441 ,
+		"tk-TM", 0x0442 ,
+		"uz-Latn-UZ", 0x0443 ,
+		"tt-RU", 0x0444 ,
+		"bn-IN", 0x0445 ,
+		"pa-IN", 0x0446 ,
+		"gu-IN", 0x0447 ,
+		"or-IN", 0x0448 ,
+		"ta-IN", 0x0449 ,
+		"te-IN", 0x044a ,
+		"kn-IN", 0x044b ,
+		"ml-IN", 0x044c ,
+		"as-IN", 0x044d ,
+		"mr-IN", 0x044e ,
+		"sa-IN", 0x044f ,
+		"mn-MN", 0x0450 ,
+		"bo-CN", 0x0451 ,
+		"cy-GB", 0x0452 ,
+		"km-KH", 0x0453 ,
+		"lo-LA", 0x0454 ,
+		"my-MM", 0x0455 ,
+		"gl-ES", 0x0456 ,
+		"kok-IN", 0x0457 ,
+		"mni", 0x0458 ,
+		"sd-IN", 0x0459 ,
+		"syr-SY", 0x045a ,
+		"si-LK", 0x045b ,
+		"chr-US", 0x045c ,
+		"iu-Cans-CA", 0x045d ,
+		"am-ET", 0x045e ,
+		"tmz", 0x045f ,
+		"ne-NP", 0x0461 ,
+		"fy-NL", 0x0462 ,
+		"ps-AF", 0x0463 ,
+		"fil-PH", 0x0464 ,
+		"dv-MV", 0x0465 ,
+		"bin-NG", 0x0466 ,
+		"fuv-NG", 0x0467 ,
+		"ha-Latn-NG", 0x0468 ,
+		"ibb-NG", 0x0469 ,
+		"yo-NG", 0x046a ,
+		"quz-BO", 0x046b ,
+		"nso-ZA", 0x046c ,
+		"ba-RU", 0x046d ,
+		"lb-LU", 0x046e ,
+		"kl-GL", 0x046f ,
+		"ig-NG", 0x0470 ,
+		"kr-NG", 0x0471 ,
+		"gaz-ET", 0x0472 ,
+		"ti-ER", 0x0473 ,
+		"gn-PY", 0x0474 ,
+		"haw-US", 0x0475 ,
+		"so-SO", 0x0477 ,
+		"ii-CN", 0x0478 ,
+		"pap-AN", 0x0479 ,
+		"arn-CL", 0x047a ,
+		"moh-CA", 0x047c ,
+		"br-FR", 0x047e ,
+		"ug-CN", 0x0480 ,
+		"mi-NZ", 0x0481 ,
+		"oc-FR", 0x0482 ,
+		"co-FR", 0x0483 ,
+		"gsw-FR", 0x0484 ,
+		"sah-RU", 0x0485 ,
+		"qut-GT", 0x0486 ,
+		"rw-RW", 0x0487 ,
+		"wo-SN", 0x0488 ,
+		"prs-AF", 0x048c ,
+		"plt-MG", 0x048d ,
+		"gd-GB", 0x0491 ,
+		"ar-IQ", 0x0801 ,
+		"zh-CN", 0x0804 ,
+		"de-CH", 0x0807 ,
+		"en-GB", 0x0809 ,
+		"es-MX", 0x080a ,
+		"fr-BE", 0x080c ,
+		"it-CH", 0x0810 ,
+		"nl-BE", 0x0813 ,
+		"nn-NO", 0x0814 ,
+		"pt-PT", 0x0816 ,
+		"ro-MO", 0x0818 ,
+		"ru-MO", 0x0819 ,
+		"sr-Latn-CS", 0x081a ,
+		"sv-FI", 0x081d ,
+		"ur-IN", 0x0820 ,
+		"az-Cyrl-AZ", 0x082c ,
+		"dsb-DE", 0x082e ,
+		"se-SE", 0x083b ,
+		"ga-IE", 0x083c ,
+		"ms-BN", 0x083e ,
+		"uz-Cyrl-UZ", 0x0843 ,
+		"bn-BD", 0x0845 ,
+		"pa-PK", 0x0846 ,
+		"mn-Mong-CN", 0x0850 ,
+		"bo-BT", 0x0851 ,
+		"sd-PK", 0x0859 ,
+		"iu-Latn-CA", 0x085d ,
+		"tzm-Latn-DZ", 0x085f ,
+		"ne-IN", 0x0861 ,
+		"quz-EC", 0x086b ,
+		"ti-ET", 0x0873 ,
+		"ar-EG", 0x0c01 ,
+		"zh-HK", 0x0c04 ,
+		"de-AT", 0x0c07 ,
+		"en-AU", 0x0c09 ,
+		"es-ES", 0x0c0a ,
+		"fr-CA", 0x0c0c ,
+		"sr-Cyrl-CS", 0x0c1a ,
+		"se-FI", 0x0c3b ,
+		"tmz-MA", 0x0c5f ,
+		"quz-PE", 0x0c6b ,
+		"ar-LY", 0x1001 ,
+		"zh-SG", 0x1004 ,
+		"de-LU", 0x1007 ,
+		"en-CA", 0x1009 ,
+		"es-GT", 0x100a ,
+		"fr-CH", 0x100c ,
+		"hr-BA", 0x101a ,
+		"smj-NO", 0x103b ,
+		"ar-DZ", 0x1401 ,
+		"zh-MO", 0x1404 ,
+		"de-LI", 0x1407 ,
+		"en-NZ", 0x1409 ,
+		"es-CR", 0x140a ,
+		"fr-LU", 0x140c ,
+		"bs-Latn-BA", 0x141a ,
+		"smj-SE", 0x143b ,
+		"ar-MA", 0x1801 ,
+		"en-IE", 0x1809 ,
+		"es-PA", 0x180a ,
+		"fr-MC", 0x180c ,
+		"sr-Latn-BA", 0x181a ,
+		"sma-NO", 0x183b ,
+		"ar-TN", 0x1c01 ,
+		"en-ZA", 0x1c09 ,
+		"es-DO", 0x1c0a ,
+		"fr-West", 0x1c0c ,
+		"sr-Cyrl-BA", 0x1c1a ,
+		"sma-SE", 0x1c3b ,
+		"ar-OM", 0x2001 ,
+		"en-JM", 0x2009 ,
+		"es-VE", 0x200a ,
+		"fr-RE", 0x200c ,
+		"bs-Cyrl-BA", 0x201a ,
+		"sms-FI", 0x203b ,
+		"ar-YE", 0x2401 ,
+		"en-CB", 0x2409 ,
+		"es-CO", 0x240a ,
+		"fr-CG", 0x240c ,
+		"sr-Latn-RS", 0x241a ,
+		"smn-FI", 0x243b ,
+		"ar-SY", 0x2801 ,
+		"en-BZ", 0x2809 ,
+		"es-PE", 0x280a ,
+		"fr-SN", 0x280c ,
+		"sr-Cyrl-RS", 0x281a ,
+		"ar-JO", 0x2c01 ,
+		"en-TT", 0x2c09 ,
+		"es-AR", 0x2c0a ,
+		"fr-CM", 0x2c0c ,
+		"sr-Latn-ME", 0x2c1a ,
+		"ar-LB", 0x3001 ,
+		"en-ZW", 0x3009 ,
+		"es-EC", 0x300a ,
+		"fr-CI", 0x300c ,
+		"sr-Cyrl-ME", 0x301a ,
+		"ar-KW", 0x3401 ,
+		"en-PH", 0x3409 ,
+		"es-CL", 0x340a ,
+		"fr-ML", 0x340c ,
+		"ar-AE", 0x3801 ,
+		"en-ID", 0x3809 ,
+		"es-UY", 0x380a ,
+		"fr-MA", 0x380c ,
+		"ar-BH", 0x3c01 ,
+		"en-HK", 0x3c09 ,
+		"es-PY", 0x3c0a ,
+		"fr-HT", 0x3c0c ,
+		"ar-QA", 0x4001 ,
+		"en-IN", 0x4009 ,
+		"es-BO", 0x400a ,
+		"en-MY", 0x4409 ,
+		"es-SV", 0x440a ,
+		"en-SG", 0x4809 ,
+		"es-HN", 0x480a ,
+		"es-NI", 0x4c0a ,
+		"es-PR", 0x500a ,
+		"es-US", 0x540a ,
+		"bs-Cyrl", 0x641a ,
+		"bs-Latn", 0x681a ,
+		"sr-Cyrl", 0x6c1a ,
+		"sr-Latn", 0x701a ,
+		"smn", 0x703b ,
+		"az-Cyrl", 0x742c ,
+		"sms", 0x743b ,
+		"zh", 0x7804 ,
+		"nn", 0x7814 ,
+		"bs", 0x781a ,
+		"az-Latn", 0x782c ,
+		"sma", 0x783b ,
+		"uz-Cyrl", 0x7843 ,
+		"mn-Cyrl", 0x7850 ,
+		"iu-Cans", 0x785d ,
+		"zh-Hant", 0x7c04 ,
+		"nb", 0x7c14 ,
+		"sr", 0x7c1a ,
+		"tg-Cyrl", 0x7c28 ,
+		"dsb", 0x7c2e ,
+		"smj", 0x7c3b ,
+		"uz-Latn", 0x7c43 ,
+		"mn-Mong", 0x7c50 ,
+		"iu-Latn", 0x7c5d ,
+		"tzm-Latn", 0x7c5f ,
+		"ha-Latn", 0x7c68 ];
+	var g_oLcidNameToIdMap = {};
+	var g_oLcidIdToNameMap = {};
+	for(var i = 0, length = g_aLcidNameIdArray.length; i + 1< length; i+=2)
+	{
+		var name = g_aLcidNameIdArray[i];
+		var id = g_aLcidNameIdArray[i + 1];
+		g_oLcidNameToIdMap[name] = id;
+		g_oLcidIdToNameMap[id] = name;
+	}
+
 	//------------------------------------------------------------export--------------------------------------------------
 	var prot;
 	window['Asc']                          = window['Asc'] || {};
@@ -1482,6 +2001,8 @@
 	window['Asc']['c_dMaxParaRunContentLength'] = window['Asc'].c_dMaxParaRunContentLength = c_dMaxParaRunContentLength;
 	window['Asc']['c_rUneditableTypes'] = window['Asc'].c_rUneditableTypes = c_rUneditableTypes;
 	window['Asc']['c_oAscFileType'] = window['Asc'].c_oAscFileType = c_oAscFileType;
+	window['Asc'].g_oLcidNameToIdMap = g_oLcidNameToIdMap;
+	window['Asc'].g_oLcidIdToNameMap = g_oLcidIdToNameMap;
 	prot                         = c_oAscFileType;
 	prot['UNKNOWN']              = prot.UNKNOWN;
 	prot['PDF']                  = prot.PDF;
@@ -1547,6 +2068,7 @@
 	prot['UplImageFileCount']                = prot.UplImageFileCount;
 	prot['NoSupportClipdoard']               = prot.NoSupportClipdoard;
 	prot['UplImageUrl']                      = prot.UplImageUrl;
+	prot['DirectUrl']                        = prot.DirectUrl;
 	prot['MaxDataPointsError']               = prot.MaxDataPointsError;
 	prot['StockChartError']                  = prot.StockChartError;
 	prot['CoAuthoringDisconnect']            = prot.CoAuthoringDisconnect;
@@ -1581,8 +2103,10 @@
 	prot['CannotFillRange']                  = prot.CannotFillRange;
 	prot['ConvertationOpenError']            = prot.ConvertationOpenError;
 	prot['ConvertationSaveError']            = prot.ConvertationSaveError;
+	prot['ConvertationOpenLimitError']       = prot.ConvertationOpenLimitError;
 	prot['UserDrop']                         = prot.UserDrop;
 	prot['Warning']                          = prot.Warning;
+	prot['UpdateVersion']                    = prot.UpdateVersion;
 	prot['PrintMaxPagesCount']               = prot.PrintMaxPagesCount;
 	prot['SessionAbsolute']                  = prot.SessionAbsolute;
 	prot['SessionIdle']                      = prot.SessionIdle;
@@ -1610,6 +2134,11 @@
 	prot['DataEncrypted']                    = prot.DataEncrypted;
 	prot['NoDataToParse']                    = prot.NoDataToParse;
 	prot['CannotUngroupError']               = prot.CannotUngroupError;
+	prot['UplDocumentSize']                  = prot.UplDocumentSize;
+	prot['UplDocumentExt']                   = prot.UplDocumentExt;
+	prot['UplDocumentFileCount']             = prot.UplDocumentFileCount;
+	prot['CustomSortMoreOneSelectedError']   = prot.CustomSortMoreOneSelectedError;
+	prot['CustomSortNotOriginalSelectError'] = prot.CustomSortNotOriginalSelectError;
 	window['Asc']['c_oAscAsyncAction']       = window['Asc'].c_oAscAsyncAction = c_oAscAsyncAction;
 	prot                                     = c_oAscAsyncAction;
 	prot['Open']                             = prot.Open;
@@ -1821,7 +2350,6 @@
 	prot['Margin']                = prot.Margin;
 	prot['Page']                  = prot.Page;
 	prot['Text']                  = prot.Text;
-	prot['PageInternal']          = prot.PageInternal;
 	window['Asc']['c_oAscXAlign'] = window['Asc'].c_oAscXAlign = c_oAscXAlign;
 	prot                          = c_oAscXAlign;
 	prot['Center']                = prot.Center;
@@ -1964,6 +2492,7 @@
 	window['Asc']['c_oAscMaxTooltipLength'] = window['Asc'].c_oAscMaxTooltipLength = c_oAscMaxTooltipLength;
 	window['Asc']['c_oAscMaxCellOrCommentLength'] = window['Asc'].c_oAscMaxCellOrCommentLength = c_oAscMaxCellOrCommentLength;
 	window['Asc']['c_oAscMaxHeaderFooterLength']  = window['Asc'].c_oAscMaxHeaderFooterLength  = c_oAscMaxHeaderFooterLength;
+	window['Asc']['c_oAscMaxFilterListLength']    = window['Asc'].c_oAscMaxFilterListLength  = c_oAscMaxFilterListLength;
 	window['Asc']['c_oAscSelectionType'] = window['Asc'].c_oAscSelectionType = c_oAscSelectionType;
 	prot                                 = c_oAscSelectionType;
 	prot['RangeCells']                   = prot.RangeCells;
@@ -2090,12 +2619,29 @@
 	prot["MiddleDot"]  = c_oAscTabLeader.MiddleDot;
 	prot["Underscore"] = c_oAscTabLeader.Underscore;
 
+	prot = window['Asc']['c_oAscTabType'] = window['Asc'].c_oAscTabType = c_oAscTabType;
+	prot["Bar"]     = c_oAscTabType.Bar;
+	prot["Center"]  = c_oAscTabType.Center;
+	prot["Clear"]   = c_oAscTabType.Clear;
+	prot["Decimal"] = c_oAscTabType.Decimal;
+	prot["Num"]     = c_oAscTabType.Num;
+	prot["Right"]   = c_oAscTabType.Right;
+	prot["Left"]    = c_oAscTabType.Left;
+
+
 	prot = window['Asc']['c_oAscRestrictionType'] = window['Asc'].c_oAscRestrictionType = c_oAscRestrictionType;
 	prot['None']           = c_oAscRestrictionType.None;
 	prot['OnlyForms']      = c_oAscRestrictionType.OnlyForms;
 	prot['OnlyComments']   = c_oAscRestrictionType.OnlyComments;
 	prot['OnlySignatures'] = c_oAscRestrictionType.OnlySignatures;
 	prot['View']           = c_oAscRestrictionType.View;
+
+
+	prot =  window["AscCommon"]["c_oAscCellAnchorType"] = window["AscCommon"].c_oAscCellAnchorType = c_oAscCellAnchorType;
+	prot["cellanchorAbsolute"] = prot.cellanchorAbsolute;
+	prot["cellanchorOneCell"] = prot.cellanchorOneCell;
+	prot["cellanchorTwoCell"] = prot.cellanchorTwoCell;
+
 
     window['AscCommon']                             = window['AscCommon'] || {};
 	window["AscCommon"].g_cCharDelimiter            = g_cCharDelimiter;
@@ -2104,7 +2650,6 @@
 	window["AscCommon"].c_oAscAdvancedOptionsAction = c_oAscAdvancedOptionsAction;
 	window["AscCommon"].DownloadType                = DownloadType;
 	window["AscCommon"].CellValueType               = CellValueType;
-	window["AscCommon"].c_oAscCellAnchorType        = c_oAscCellAnchorType;
 	window["AscCommon"].c_oAscChartDefines          = c_oAscChartDefines;
 	window["AscCommon"].c_oAscStyleImage            = c_oAscStyleImage;
 	window["AscCommon"].c_oAscLineDrawingRule       = c_oAscLineDrawingRule;
@@ -2254,6 +2799,7 @@
 	prot['LowerLetter'] = c_oAscNumberingFormat.LowerLetter;
 	prot['UpperLetter'] = c_oAscNumberingFormat.UpperLetter;
 	prot['DecimalZero'] = c_oAscNumberingFormat.DecimalZero;
+	prot['DecimalEnclosedCircle'] = c_oAscNumberingFormat.DecimalEnclosedCircle;
 
 	window['Asc']['c_oAscNumberingSuff'] = window['Asc'].c_oAscNumberingSuff = c_oAscNumberingSuff;
 	prot = c_oAscNumberingSuff;
@@ -2298,4 +2844,79 @@
 	prot['NoMove']   = c_oAscRevisionsMove.NoMove;
 	prot['MoveTo']   = c_oAscRevisionsMove.MoveTo;
 	prot['MoveFrom'] = c_oAscRevisionsMove.MoveFrom;
+
+
+	prot = window['Asc']['c_oAscRevisionsChangeType'] = window['Asc'].c_oAscRevisionsChangeType = c_oAscRevisionsChangeType;
+	prot['Unknown']  = c_oAscRevisionsChangeType.Unknown;
+	prot['TextAdd']  = c_oAscRevisionsChangeType.TextAdd;
+	prot['TextRem']  = c_oAscRevisionsChangeType.TextRem;
+	prot['ParaAdd']  = c_oAscRevisionsChangeType.ParaAdd;
+	prot['ParaRem']  = c_oAscRevisionsChangeType.ParaRem;
+	prot['TextPr']   = c_oAscRevisionsChangeType.TextPr;
+	prot['ParaPr']   = c_oAscRevisionsChangeType.ParaPr;
+	prot['TablePr']  = c_oAscRevisionsChangeType.TablePr;
+	prot['RowsAdd']  = c_oAscRevisionsChangeType.RowsAdd;
+	prot['RowsRem']  = c_oAscRevisionsChangeType.RowsRem;
+	prot['MoveMark'] = c_oAscRevisionsChangeType.MoveMark;
+
+	prot = window['Asc']['c_oAscSectionBreakType'] = window['Asc'].c_oAscSectionBreakType = c_oAscSectionBreakType;
+	prot['NextPage']   = c_oAscSectionBreakType.NextPage;
+	prot['OddPage']    = c_oAscSectionBreakType.OddPage;
+	prot['EvenPage']   = c_oAscSectionBreakType.EvenPage;
+	prot['Continuous'] = c_oAscSectionBreakType.Continuous;
+	prot['Column']     = c_oAscSectionBreakType.Column;
+
+
+	prot = window['Asc']['c_oAscSdtLockType'] = window['Asc'].c_oAscSdtLockType = c_oAscSdtLockType;
+	prot['ContentLocked']    = c_oAscSdtLockType.ContentLocked;
+	prot['SdtContentLocked'] = c_oAscSdtLockType.SdtContentLocked;
+	prot['SdtLocked']        = c_oAscSdtLockType.SdtLocked;
+	prot['Unlocked']         = c_oAscSdtLockType.Unlocked;
+
+
+	prot = window['Asc']['c_oAscAlignH'] = window['Asc'].c_oAscAlignH = c_oAscAlignH;
+	prot['Center']  = c_oAscAlignH.Center;
+	prot['Inside']  = c_oAscAlignH.Inside;
+	prot['Left']    = c_oAscAlignH.Left;
+	prot['Outside'] = c_oAscAlignH.Outside;
+	prot['Right']   = c_oAscAlignH.Right;
+
+
+	prot = window['Asc']['c_oAscAlignV'] = window['Asc'].c_oAscAlignV = c_oAscAlignV;
+	prot['Bottom']  = c_oAscAlignV.Bottom;
+	prot['Center']  = c_oAscAlignV.Center;
+	prot['Inside']  = c_oAscAlignV.Inside;
+	prot['Outside'] = c_oAscAlignV.Outside;
+	prot['Top']     = c_oAscAlignV.Top;
+
+	prot = window['Asc']['c_oAscWatermarkType'] = window['Asc'].c_oAscWatermarkType = c_oAscWatermarkType;
+	prot['None'] = prot.None;
+	prot['Text'] = prot.Text;
+	prot['Image'] = prot.Image;
+
+	prot = window['Asc']['c_oAscCalendarType'] = window['Asc'].c_oAscCalendarType = c_oAscCalendarType;
+	prot['Gregorian']            = c_oAscCalendarType.Gregorian;
+	prot['GregorianArabic']      = c_oAscCalendarType.GregorianArabic;
+	prot['GregorianMeFrench']    = c_oAscCalendarType.GregorianMeFrench;
+	prot['GregorianUs']          = c_oAscCalendarType.GregorianUs;
+	prot['GregorianXlitEnglish'] = c_oAscCalendarType.GregorianXlitEnglish;
+	prot['GregorianXlitFrench']  = c_oAscCalendarType.GregorianXlitFrench;
+	prot['Hebrew']               = c_oAscCalendarType.Hebrew;
+	prot['Hijri']                = c_oAscCalendarType.Hijri;
+	prot['Japan']                = c_oAscCalendarType.Japan;
+	prot['Korea']                = c_oAscCalendarType.Korea;
+	prot['None']                 = c_oAscCalendarType.None;
+	prot['Saka']                 = c_oAscCalendarType.Saka;
+	prot['Taiwan']               = c_oAscCalendarType.Taiwan;
+	prot['Thai']                 = c_oAscCalendarType.Thai;
+
+	prot = window['Asc']['c_oAscContentControlSpecificType'] = window['Asc'].c_oAscContentControlSpecificType = c_oAscContentControlSpecificType;
+	prot['None']         = c_oAscContentControlSpecificType.None;
+	prot['CheckBox']     = c_oAscContentControlSpecificType.CheckBox;
+	prot['Picture']      = c_oAscContentControlSpecificType.Picture;
+	prot['ComboBox']     = c_oAscContentControlSpecificType.ComboBox;
+	prot['DropDownList'] = c_oAscContentControlSpecificType.DropDownList;
+	prot['DateTime']     = c_oAscContentControlSpecificType.DateTime;
+	prot['TOC']          = c_oAscContentControlSpecificType.TOC;
+
 })(window);

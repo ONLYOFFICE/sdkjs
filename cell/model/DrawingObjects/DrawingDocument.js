@@ -1312,7 +1312,7 @@ function CDrawingDocument(drawingObjects)
     this.drawingObjects = drawingObjects;
     this.IsLockObjectsEnable = false;
 
-    AscCommon.g_oHtmlCursor.register("de-markerformat", "marker_format", ["marker_format", 14, 8], "pointer");
+    AscCommon.g_oHtmlCursor.register("de-markerformat", "marker_format", "14 8", "pointer");
 
     this.m_oWordControl     = null;
     this.m_oLogicDocument   = null;
@@ -2247,7 +2247,6 @@ function CDrawingDocument(drawingObjects)
             _offY = this.AutoShapesTrack.Graphics.m_oCoordTransform.ty;
         }
 
-        var _factor = AscCommon.AscBrowser.isRetina ? AscCommon.AscBrowser.retinaPixelRatio : 1;
 
         var targetPosX = 0;
         var targetPosY = 0;
@@ -2278,8 +2277,8 @@ function CDrawingDocument(drawingObjects)
             }
             else
             {
-                this.TargetHtmlElement.style.width = ((_newW / _factor) >> 0) + "px";
-                this.TargetHtmlElement.style.height = ((_newH / _factor) >> 0) + "px";
+                this.TargetHtmlElement.style.width = AscCommon.AscBrowser.convertToRetinaValue(_newW, false) + "px";
+                this.TargetHtmlElement.style.height = AscCommon.AscBrowser.convertToRetinaValue(_newH, false) + "px";
 
                 this.TargetHtmlElement.width = _newW;
                 this.TargetHtmlElement.height = _newH;
@@ -2311,8 +2310,8 @@ function CDrawingDocument(drawingObjects)
                 ctx.stroke();
             }
 
-			targetPosX = (Math.min(pos1.X, pos2.X) / _factor) >> 0;
-            targetPosY = (Math.min(pos1.Y, pos2.Y) / _factor) >> 0;
+			targetPosX =  AscCommon.AscBrowser.convertToRetinaValue(Math.min(pos1.X, pos2.X), false);
+            targetPosY =  AscCommon.AscBrowser.convertToRetinaValue(Math.min(pos1.Y, pos2.Y), false);
 
             this.TargetHtmlElementLeft = targetPosX;
             this.TargetHtmlElementTop = targetPosY;
@@ -2328,8 +2327,8 @@ function CDrawingDocument(drawingObjects)
             }
             else
             {
-                this.TargetHtmlElement.style.width = ((_newW / _factor) >> 0) + "px";
-                this.TargetHtmlElement.style.height = ((_newH / _factor) >> 0) + "px";
+                this.TargetHtmlElement.style.width =  AscCommon.AscBrowser.convertToRetinaValue(_newW, false) + "px";
+                this.TargetHtmlElement.style.height =  AscCommon.AscBrowser.convertToRetinaValue(_newH , false) + "px";
 
                 this.TargetHtmlElement.width = _newW;
                 this.TargetHtmlElement.height = _newH;
@@ -2348,8 +2347,8 @@ function CDrawingDocument(drawingObjects)
 
             var pos = { X : _offX + dKoef * x, Y : _offY + dKoef * y };
 
-			targetPosX = (pos.X / _factor) >> 0;
-			targetPosY = (pos.Y / _factor) >> 0;
+			targetPosX =  AscCommon.AscBrowser.convertToRetinaValue(pos.X, false);
+			targetPosY =  AscCommon.AscBrowser.convertToRetinaValue(pos.Y, false);
 
             this.TargetHtmlElementLeft = targetPosX;
             this.TargetHtmlElementTop = targetPosY;
@@ -3328,12 +3327,8 @@ function CDrawingDocument(drawingObjects)
 
         for (var i = 0; i < _len; i++)
         {
-            if (__tabs[i].Value == tab_Left)
-                _ar[i] = new CTab(__tabs[i].Pos, AscCommon.g_tabtype_left);
-            else if (__tabs[i].Value == tab_Center)
-                _ar[i] = new CTab(__tabs[i].Pos, AscCommon.g_tabtype_center);
-            else if (__tabs[i].Value == tab_Right)
-                _ar[i] = new CTab(__tabs[i].Pos, AscCommon.g_tabtype_right);
+            if (__tabs[i].Value == tab_Left || __tabs[i].Value == tab_Center || __tabs[i].Value == tab_Right)
+                _ar[i] = new CTab(__tabs[i].Pos, __tabs[i].Value);
         }
 
         hor_ruler.CorrectTabs();

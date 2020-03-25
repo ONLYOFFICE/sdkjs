@@ -338,11 +338,13 @@ CDocumentControllerBase.prototype.AddSignatureLine = function(oSignatureDrawing)
  */
 CDocumentControllerBase.prototype.EditChart = function(Chart){};
 /**
- * Добавляем инлайн таблицу.
+ * Добавляем инлайн таблицу
  * @param nCols
  * @param nRows
+ * @param {number} [nMode=0] режим добавления таблицы внутрь параграфа
+ * @returns {?CTable}
  */
-CDocumentControllerBase.prototype.AddInlineTable = function(nCols, nRows){};
+CDocumentControllerBase.prototype.AddInlineTable = function(nCols, nRows, nMode){return null;};
 /**
  * Очищаем форматирование внутри селекта
  * {boolean} [isClearParaPr=true] Очищать ли настройки параграфа
@@ -798,3 +800,11 @@ CDocumentControllerBase.prototype.GetPlaceHolderObject = function(){return null;
  * @returns {Array}
  */
 CDocumentControllerBase.prototype.GetAllFields = function(isUseSelection, arrFields){return arrFields ? arrFields : [];};
+/**
+ * Проверяем, происходит ли сейчас выделение по ячейкам таблицы
+ * @returns {boolean}
+ */
+CDocumentControllerBase.prototype.IsTableCellSelection = function(){return false;};
+CDocumentControllerBase.prototype.IsSelectionLocked  = function(CheckType)
+{
+};

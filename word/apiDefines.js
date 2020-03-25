@@ -89,19 +89,6 @@ var c_oAscCollaborativeMarksShowType = {
 	LastChanges : 1
 };
 
-/**
- * Типы горизонтального прилегания для автофигур.
- * @type {{Center: number, Inside: number, Left: number, Outside: number, Right: number}}
- * @enum {number}
- */
-var c_oAscAlignH = {
-	Center  : 0x00,
-	Inside  : 0x01,
-	Left    : 0x02,
-	Outside : 0x03,
-	Right   : 0x04
-};
-
 /** @enum {number} */
 var c_oAscChangeLevel = {
 	BringToFront  : 0x00,
@@ -110,18 +97,7 @@ var c_oAscChangeLevel = {
 	BringBackward : 0x03
 };
 
-/**
- * Типы вертикального прилегания для автофигур.
- * @type {{Bottom: number, Center: number, Inside: number, Outside: number, Top: number}}
- * @enum {number}
- */
-var c_oAscAlignV = {
-	Bottom  : 0x00,
-	Center  : 0x01,
-	Inside  : 0x02,
-	Outside : 0x03,
-	Top     : 0x04
-};
+
 
 /** @enum {number} */
 var c_oAscVertAlignJc = {
@@ -149,31 +125,8 @@ var c_oAscAlignShapeType = {
 var TABLE_STYLE_WIDTH_PIX  = 70;
 var TABLE_STYLE_HEIGHT_PIX = 50;
 
-/** @enum {number} */
-var c_oAscSectionBreakType = {
-	NextPage   : 0x00,
-	OddPage    : 0x01,
-	EvenPage   : 0x02,
-	Continuous : 0x03,
-	Column     : 0x04
-};
 
-/** @enum {number} */
-var c_oAscRevisionsChangeType = {
-	Unknown : 0x00,
-	TextAdd : 0x01,
-	TextRem : 0x02,
-	ParaAdd : 0x03,
-	ParaRem : 0x04,
-	TextPr  : 0x05,
-	ParaPr  : 0x06,
-	TablePr : 0x07,
-	RowsAdd : 0x08,
-	RowsRem : 0x09,
 
-	MoveMark       : 0xFE, // специальный внутренний тип, для обозначения меток переноса
-	MoveMarkRemove : 0xFF  // внутреннний тип, для удаления отметок переноса внутри параграфов и таблиц
-};
 
 /** @enum {number} */
 var c_oAscRevisionsObjectType = {
@@ -201,12 +154,6 @@ var c_oAscFootnoteRestart = {
 	EachPage   : 0x02  //section_footnote_RestartEachPage
 };
 
-var c_oAscSdtLockType = {
-	ContentLocked    : 0x00,
-	SdtContentLocked : 0x01,
-	SdtLocked        : 0x02,
-	Unlocked         : 0x03
-};
 
 var c_oAscSdtLevelType = {
 	Block  : 0x01,
@@ -220,7 +167,8 @@ var c_oAscTOCStylesType = {
 	Simple   : 1,
 	Standard : 2,
 	Modern   : 3,
-	Classic  : 4
+	Classic  : 4,
+	Web      : 5
 };
 
 var c_oAscStyleType = {
@@ -236,10 +184,11 @@ var c_oAscHyperlinkAnchor = {
 };
 
 
-var c_oAscWatermarkType = {
-	None       : 0,
-	Text       : 1,
-	Image      : 2
+var c_oAscSdtCheckBoxDefaults = {
+	CheckedSymbol   : 0x2612,
+	UncheckedSymbol : 0x2610,
+	CheckedFont     : "MS Gothic",
+	UncheckedFont   : "MS Gothic"
 };
 
 window["flat_desine"] = false;
@@ -247,6 +196,8 @@ window["flat_desine"] = false;
 //------------------------------------------------------------export---------------------------------------------------
 var prot;
 window['Asc'] = window['Asc'] || {};
+window['AscCommonWord'] = window['AscCommonWord'] || {};
+
 prot          = window['Asc']['c_oAscWrapStyle2'] = c_oAscWrapStyle2;
 prot['Inline']       = c_oAscWrapStyle2.Inline;
 prot['Square']       = c_oAscWrapStyle2.Square;
@@ -265,19 +216,6 @@ prot['None']        = c_oAscCollaborativeMarksShowType.None;
 prot['All']         = c_oAscCollaborativeMarksShowType.All;
 prot['LastChanges'] = c_oAscCollaborativeMarksShowType.LastChanges;
 
-prot = window['Asc']['c_oAscAlignH'] = c_oAscAlignH;
-prot['Center']  = c_oAscAlignH.Center;
-prot['Inside']  = c_oAscAlignH.Inside;
-prot['Left']    = c_oAscAlignH.Left;
-prot['Outside'] = c_oAscAlignH.Outside;
-prot['Right']   = c_oAscAlignH.Right;
-
-prot = window['Asc']['c_oAscAlignV'] = c_oAscAlignV;
-prot['Bottom']  = c_oAscAlignV.Bottom;
-prot['Center']  = c_oAscAlignV.Center;
-prot['Inside']  = c_oAscAlignV.Inside;
-prot['Outside'] = c_oAscAlignV.Outside;
-prot['Top']     = c_oAscAlignV.Top;
 
 prot = window['Asc']['c_oAscChangeLevel'] = c_oAscChangeLevel;
 prot['BringToFront']  = c_oAscChangeLevel.BringToFront;
@@ -302,26 +240,8 @@ prot['ALIGN_BOTTOM'] = c_oAscAlignShapeType.ALIGN_BOTTOM;
 prot['ALIGN_CENTER'] = c_oAscAlignShapeType.ALIGN_CENTER;
 prot['ALIGN_MIDDLE'] = c_oAscAlignShapeType.ALIGN_MIDDLE;
 
-prot = window['Asc']['c_oAscSectionBreakType'] = c_oAscSectionBreakType;
-prot['NextPage']   = c_oAscSectionBreakType.NextPage;
-prot['OddPage']    = c_oAscSectionBreakType.OddPage;
-prot['EvenPage']   = c_oAscSectionBreakType.EvenPage;
-prot['Continuous'] = c_oAscSectionBreakType.Continuous;
-prot['Column']     = c_oAscSectionBreakType.Column;
 
 
-prot = window['Asc']['c_oAscRevisionsChangeType'] = c_oAscRevisionsChangeType;
-prot['Unknown']  = c_oAscRevisionsChangeType.Unknown;
-prot['TextAdd']  = c_oAscRevisionsChangeType.TextAdd;
-prot['TextRem']  = c_oAscRevisionsChangeType.TextRem;
-prot['ParaAdd']  = c_oAscRevisionsChangeType.ParaAdd;
-prot['ParaRem']  = c_oAscRevisionsChangeType.ParaRem;
-prot['TextPr']   = c_oAscRevisionsChangeType.TextPr;
-prot['ParaPr']   = c_oAscRevisionsChangeType.ParaPr;
-prot['TablePr']  = c_oAscRevisionsChangeType.TablePr;
-prot['RowsAdd']  = c_oAscRevisionsChangeType.RowsAdd;
-prot['RowsRem']  = c_oAscRevisionsChangeType.RowsRem;
-prot['MoveMark'] = c_oAscRevisionsChangeType.MoveMark;
 
 prot = window['Asc']['c_oAscFootnotePos'] = c_oAscFootnotePos;
 prot['BeneathText'] = c_oAscFootnotePos.BeneathText;
@@ -334,11 +254,6 @@ prot['Continuous'] = c_oAscFootnoteRestart.Continuous;
 prot['EachSect']   = c_oAscFootnoteRestart.EachSect;
 prot['EachPage']   = c_oAscFootnoteRestart.EachPage;
 
-prot = window['Asc']['c_oAscSdtLockType'] = c_oAscSdtLockType;
-prot['ContentLocked']    = c_oAscSdtLockType.ContentLocked;
-prot['SdtContentLocked'] = c_oAscSdtLockType.SdtContentLocked;
-prot['SdtLocked']        = c_oAscSdtLockType.SdtLocked;
-prot['Unlocked']         = c_oAscSdtLockType.Unlocked;
 
 prot = window['Asc']['c_oAscSdtLevelType'] = window['Asc'].c_oAscSdtLevelType = c_oAscSdtLevelType;
 prot['Block']  = c_oAscSdtLevelType.Block;
@@ -352,6 +267,7 @@ prot['Simple']   = c_oAscTOCStylesType.Simple;
 prot['Standard'] = c_oAscTOCStylesType.Standard;
 prot['Modern']   = c_oAscTOCStylesType.Modern;
 prot['Classic']  = c_oAscTOCStylesType.Classic;
+prot['Web']      = c_oAscTOCStylesType.Web;
 
 
 prot = window['Asc']['c_oAscStyleType'] = window['Asc'].c_oAscStyleType = c_oAscStyleType;
@@ -368,8 +284,8 @@ window['AscCommon']                = window['AscCommon'] || {};
 window['AscCommon'].c_oSerFormat   = c_oSerFormat;
 window['AscCommon'].CurFileVersion = c_oSerFormat.Version;
 
-
-prot = window['Asc']['c_oAscWatermarkType'] = window['Asc'].c_oAscWatermarkType = c_oAscWatermarkType;
-prot['None'] = prot.None;
-prot['Text'] = prot.Text;
-prot['Image'] = prot.Image;
+prot = window['Asc']['c_oAscSdtCheckBoxDefaults'] = window['Asc'].c_oAscSdtCheckBoxDefaults = c_oAscSdtCheckBoxDefaults;
+prot['CheckedSymbol']   = prot.CheckedSymbol;
+prot['UncheckedSymbol'] = prot.UncheckedSymbol;
+prot['CheckedFont']     = prot.CheckedFont;
+prot['UncheckedFont']   = prot.UncheckedFont;

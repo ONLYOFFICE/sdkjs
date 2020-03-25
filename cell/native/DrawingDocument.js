@@ -97,11 +97,7 @@ function CTextMeasurer()
     {
         this.m_oTextPr = textPr.Copy();
         this.theme = theme;
-        var FontScheme = theme.themeElements.fontScheme;
-        this.m_oTextPr.RFonts.Ascii    = {Name: FontScheme.checkFont(this.m_oTextPr.RFonts.Ascii.Name), Index: -1};
-        this.m_oTextPr.RFonts.EastAsia = {Name: FontScheme.checkFont(this.m_oTextPr.RFonts.EastAsia.Name), Index: -1};
-        this.m_oTextPr.RFonts.HAnsi    = {Name: FontScheme.checkFont(this.m_oTextPr.RFonts.HAnsi.Name), Index: -1};
-        this.m_oTextPr.RFonts.CS       = {Name: FontScheme.checkFont(this.m_oTextPr.RFonts.CS.Name), Index: -1};
+        this.m_oTextPr.ReplaceThemeFonts(theme.themeElements.fontScheme);
     };
 
     this.SetFontSlot = function(slot, fontSizeKoef)
@@ -3242,11 +3238,11 @@ function CDrawingDocument(drawingObjects)
 //        for (var i = 0; i < _len; i++)
 //        {
 //            if (__tabs[i].Value == tab_Left)
-//                _ar[i] = new CTab(__tabs[i].Pos, g_tabtype_left);
+//                _ar[i] = new CTab(__tabs[i].Pos, tab_Left);
 //            else if (__tabs[i].Value == tab_Center)
-//                _ar[i] = new CTab(__tabs[i].Pos, g_tabtype_center);
+//                _ar[i] = new CTab(__tabs[i].Pos, tab_Center);
 //            else if (__tabs[i].Value == tab_Right)
-//                _ar[i] = new CTab(__tabs[i].Pos, g_tabtype_right);
+//                _ar[i] = new CTab(__tabs[i].Pos, tab_Right);
 //        }
 //
 //        hor_ruler.CorrectTabs();

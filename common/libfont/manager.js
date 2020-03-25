@@ -132,10 +132,26 @@
 
             if (is_init_raster_memory === true)
             {
-                if (AscCommon.AscBrowser.isIE && !AscCommon.AscBrowser.isArm)
+                AscFonts.registeredFontManagers.push(this);
+                this.InitializeRasterMemory();
+            }
+        },
+
+        InitializeRasterMemory : function()
+        {
+			if (AscFonts.use_map_blitting)
+			{
+			    if (!this.RasterMemory)
+			    {
+					this.RasterMemory = new AscFonts.CRasterHeapTotal();
+					this.RasterMemory.CreateFirstChuck();
+				}
+			}
+			else
+            {
+                if (this.RasterMemory)
                 {
-                    this.RasterMemory = new AscFonts.CRasterHeapTotal();
-                    this.RasterMemory.CreateFirstChuck();
+                    this.RasterMemory = null;
                 }
             }
         },

@@ -352,7 +352,7 @@ CCollaborativeEditingBase.prototype.Apply_Changes = function()
     if (true === OtherChanges)
     {
         AscFonts.IsCheckSymbols = true;
-        editor.WordControl.m_oLogicDocument.Stop_Recalculate();
+        editor.WordControl.m_oLogicDocument.StopRecalculate();
         editor.WordControl.m_oLogicDocument.EndPreview_MailMergeResult();
 
         editor.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.ApplyChanges);
@@ -1573,8 +1573,8 @@ CDocumentPositionsManager.prototype.Update_DocumentPosition = function(DocPos)
         if (AscCommonWord.CanUpdatePosition(Para, Run))
         {
             DocPos.length = 0;
-            DocPos.push({Class : Run, Position : NewDocPos[0].Position});
             Run.GetDocumentPositionFromObject(DocPos);
+			DocPos.push({Class : Run, Position : NewDocPos[0].Position});
         }
     }
     // Возможно ран с позицией переместился в другой класс
@@ -1586,9 +1586,9 @@ CDocumentPositionsManager.prototype.Update_DocumentPosition = function(DocPos)
         if (AscCommonWord.CanUpdatePosition(Para, Run))
         {
             DocPos.length = 0;
-            DocPos.push({Class : Run, Position : RunPos});
             Run.GetDocumentPositionFromObject(DocPos);
-        }
+			DocPos.push({Class : Run, Position : RunPos});
+		}
     }
 };
 CDocumentPositionsManager.prototype.Remove_DocumentPosition = function(DocPos)

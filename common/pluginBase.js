@@ -111,16 +111,24 @@
 
 					_client.onreadystatechange = function ()
 					{
-						if (_client.readyState == 4 && (_client.status == 200 || location.href.indexOf("file:") == 0))
+						if (_client.readyState == 4)
 						{
-							try
-							{
-								window.Asc.plugin.translateManager = JSON.parse(_client.responseText);
-							}
-							catch (err)
-							{
+						    if (_client.status == 200 || location.href.indexOf("file:") == 0)
+						    {
+                                try
+                                {
+                                    window.Asc.plugin.translateManager = JSON.parse(_client.responseText);
+                                }
+                                catch (err)
+                                {
+                                    window.Asc.plugin.translateManager = {};
+                                }
+                            }
+                            else
+                            {
                                 window.Asc.plugin.translateManager = {};
-							}
+                            }
+
 
                             if (window.Asc.plugin.onTranslate)
                                 window.Asc.plugin.onTranslate();
@@ -134,126 +142,7 @@
             {
                 case "init":
                 {
-                    window.Asc.plugin.executeCommand = function(type, data, callback)
-                    {
-                        window.Asc.plugin.info.type = type;
-                        window.Asc.plugin.info.data = data;
-
-                        var _message = "";
-                        try
-                        {
-                            _message = JSON.stringify(window.Asc.plugin.info);
-                        }
-                        catch(err)
-                        {
-                            _message = JSON.stringify({ type : data });
-                        }
-
-                        window.Asc.plugin.onCallCommandCallback = callback;
-                        window.plugin_sendMessage(_message);
-                    };
-
-					window.Asc.plugin.executeMethod = function(name, params, callback)
-					{
-					    if (window.Asc.plugin.isWaitMethod === true)
-                        {
-                            if (undefined === this.executeMethodStack)
-                                this.executeMethodStack = [];
-
-                            this.executeMethodStack.push({ name : name, params : params, callback : callback });
-                            return false;
-                        }
-
-					    window.Asc.plugin.isWaitMethod = true;
-					    window.Asc.plugin.methodCallback = callback;
-
-						window.Asc.plugin.info.type = "method";
-						window.Asc.plugin.info.methodName = name;
-						window.Asc.plugin.info.data = params;
-
-						var _message = "";
-						try
-						{
-							_message = JSON.stringify(window.Asc.plugin.info);
-						}
-						catch(err)
-						{
-							return false;
-						}
-						window.plugin_sendMessage(_message);
-						return true;
-					};
-
-                    window.Asc.plugin.resizeWindow = function(width, height, minW, minH, maxW, maxH)
-                    {
-                        if (undefined == minW)
-                            minW = 0;
-                        if (undefined == minH)
-                            minH = 0;
-                        if (undefined == maxW)
-                            maxW = 0;
-                        if (undefined == maxH)
-                            maxH = 0;
-
-                        var data = JSON.stringify({ width : width, height : height, minw : minW, minh : minH, maxw : maxW, maxh : maxH });
-
-                        window.Asc.plugin.info.type = "resize";
-                        window.Asc.plugin.info.data = data;
-
-                        var _message = "";
-                        try
-                        {
-                            _message = JSON.stringify(window.Asc.plugin.info);
-                        }
-                        catch(err)
-                        {
-                            _message = JSON.stringify({ type : data });
-                        }
-                        window.plugin_sendMessage(_message);
-                    };
-
-                    window.Asc.plugin.callCommand = function(func, isClose, isCalc, callback)
-					{
-						var _txtFunc = "var Asc = {}; Asc.scope = " + JSON.stringify(window.Asc.scope) + "; var scope = Asc.scope; (" + func.toString() + ")();";
-						var _type = (isClose === true) ? "close" : "command";
-						window.Asc.plugin.info.recalculate = (false === isCalc) ? false : true;
-						window.Asc.plugin.executeCommand(_type, _txtFunc, callback);
-					};
-
-                    window.Asc.plugin.callModule = function(url, callback, isClose)
-					{
-						var _isClose = isClose;
-						var _client = new XMLHttpRequest();
-						_client.open("GET", url);
-
-						_client.onreadystatechange = function() {
-							if (_client.readyState == 4 && (_client.status == 200 || location.href.indexOf("file:") == 0))
-							{
-								var _type = (_isClose === true) ? "close" : "command";
-								window.Asc.plugin.info.recalculate = true;
-								window.Asc.plugin.executeCommand(_type, _client.responseText);
-								if (callback)
-									callback(_client.responseText);
-							}
-						};
-						_client.send();
-					};
-
-					window.Asc.plugin.loadModule = function(url, callback)
-					{
-						var _client = new XMLHttpRequest();
-						_client.open("GET", url);
-
-						_client.onreadystatechange = function() {
-							if (_client.readyState == 4 && (_client.status == 200 || location.href.indexOf("file:") == 0))
-							{
-								if (callback)
-									callback(_client.responseText);
-							}
-						};
-						_client.send();
-					};
-
+                    pluginStart();
                     window.Asc.plugin.init(window.Asc.plugin.info.data);
                     break;
                 }
@@ -329,6 +218,193 @@
             }
         }
     };
+
+    function pluginStart()
+    {
+        if (window.Asc.plugin.isStarted)
+            return;
+
+        window.Asc.plugin.isStarted = true;
+        window.Asc.plugin.executeCommand = function(type, data, callback)
+        {
+            window.Asc.plugin.info.type = type;
+            window.Asc.plugin.info.data = data;
+
+            var _message = "";
+            try
+            {
+                _message = JSON.stringify(window.Asc.plugin.info);
+            }
+            catch(err)
+            {
+                _message = JSON.stringify({ type : data });
+            }
+
+            window.Asc.plugin.onCallCommandCallback = callback;
+            window.plugin_sendMessage(_message);
+        };
+
+        window.Asc.plugin.executeMethod = function(name, params, callback)
+        {
+            if (window.Asc.plugin.isWaitMethod === true)
+            {
+                if (undefined === this.executeMethodStack)
+                    this.executeMethodStack = [];
+
+                this.executeMethodStack.push({ name : name, params : params, callback : callback });
+                return false;
+            }
+
+            window.Asc.plugin.isWaitMethod = true;
+            window.Asc.plugin.methodCallback = callback;
+
+            window.Asc.plugin.info.type = "method";
+            window.Asc.plugin.info.methodName = name;
+            window.Asc.plugin.info.data = params;
+
+            var _message = "";
+            try
+            {
+                _message = JSON.stringify(window.Asc.plugin.info);
+            }
+            catch(err)
+            {
+                return false;
+            }
+            window.plugin_sendMessage(_message);
+            return true;
+        };
+
+        window.Asc.plugin.resizeWindow = function(width, height, minW, minH, maxW, maxH)
+        {
+            if (undefined == minW)
+                minW = 0;
+            if (undefined == minH)
+                minH = 0;
+            if (undefined == maxW)
+                maxW = 0;
+            if (undefined == maxH)
+                maxH = 0;
+
+            var data = JSON.stringify({ width : width, height : height, minw : minW, minh : minH, maxw : maxW, maxh : maxH });
+
+            window.Asc.plugin.info.type = "resize";
+            window.Asc.plugin.info.data = data;
+
+            var _message = "";
+            try
+            {
+                _message = JSON.stringify(window.Asc.plugin.info);
+            }
+            catch(err)
+            {
+                _message = JSON.stringify({ type : data });
+            }
+            window.plugin_sendMessage(_message);
+        };
+
+        window.Asc.plugin.callCommand = function(func, isClose, isCalc, callback)
+        {
+            var _txtFunc = "var Asc = {}; Asc.scope = " + JSON.stringify(window.Asc.scope) + "; var scope = Asc.scope; (" + func.toString() + ")();";
+            var _type = (isClose === true) ? "close" : "command";
+            window.Asc.plugin.info.recalculate = (false === isCalc) ? false : true;
+            window.Asc.plugin.executeCommand(_type, _txtFunc, callback);
+        };
+
+        window.Asc.plugin.callModule = function(url, callback, isClose)
+        {
+            var _isClose = isClose;
+            var _client = new XMLHttpRequest();
+            _client.open("GET", url);
+
+            _client.onreadystatechange = function() {
+                if (_client.readyState == 4 && (_client.status == 200 || location.href.indexOf("file:") == 0))
+                {
+                    var _type = (_isClose === true) ? "close" : "command";
+                    window.Asc.plugin.info.recalculate = true;
+                    window.Asc.plugin.executeCommand(_type, _client.responseText);
+                    if (callback)
+                        callback(_client.responseText);
+                }
+            };
+            _client.send();
+        };
+
+        window.Asc.plugin.loadModule = function(url, callback)
+        {
+            var _client = new XMLHttpRequest();
+            _client.open("GET", url);
+
+            _client.onreadystatechange = function() {
+                if (_client.readyState == 4 && (_client.status == 200 || location.href.indexOf("file:") == 0))
+                {
+                    if (callback)
+                        callback(_client.responseText);
+                }
+            };
+            _client.send();
+        };
+
+        window.Asc.plugin.checkPixelRatio = function(isAttack)
+        {
+            if (window.Asc.plugin.checkedPixelRatio && true !== isAttack)
+                return;
+
+            window.Asc.plugin.checkedPixelRatio = true;
+
+            var userAgent = navigator.userAgent.toLowerCase();
+            var isIE = (userAgent.indexOf("msie") > -1 || userAgent.indexOf("trident") > -1 || userAgent.indexOf("edge") > -1);
+            var isChrome = !isIE && (userAgent.indexOf("chrome") > -1);
+            var isMozilla = !isIE && (userAgent.indexOf("firefox") > -1);
+
+            var zoom = 1.0;
+            var isRetina = false;
+            var retinaPixelRatio = 1;
+
+            var isMobileVersion = window.Asc.plugin.info ? window.Asc.plugin.info.isMobileMode : false;
+
+            // пока отключаем мозиллу... хотя почти все работает
+            if ((/*isMozilla || */isChrome) && document && document.firstElementChild && document.body && !isMobileVersion)
+            {
+                if (window.devicePixelRatio > 0.1)
+                {
+                    if (window.devicePixelRatio < 1.99)
+                    {
+                        zoom = window.devicePixelRatio;
+                    }
+                    else
+                    {
+                        zoom = window.devicePixelRatio / 2;
+                        retinaPixelRatio = 2;
+                        isRetina = true;
+                    }
+
+                    document.firstElementChild.style.zoom = 1.0 / zoom;
+                }
+                else
+                {
+                    document.firstElementChild.style.zoom = "normal";
+                }
+            }
+            else
+            {
+                isRetina = (Math.abs(2 - window.devicePixelRatio) < 0.01);
+                if (isRetina)
+                    retinaPixelRatio = 2;
+
+                if (isMobileVersion)
+                {
+                    isRetina = (window.devicePixelRatio >= 1.9);
+                    retinaPixelRatio = window.devicePixelRatio;
+                }
+            }
+
+            window.Asc.plugin.zoom = zoom;
+            window.Asc.plugin.retinaPixelRatio = retinaPixelRatio;
+        };
+
+        window.Asc.plugin.checkPixelRatio();
+    }
 
     window.onmousemove = function(e)
     {

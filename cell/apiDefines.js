@@ -61,7 +61,9 @@ var c_oAscSortOptions = {
   Ascending: 1,
   Descending: 2,
   ByColorFill: 3,
-  ByColorFont: 4
+  ByColorFont: 4,
+  ByIcon: 5,
+  ByValue: 6
 };
 
 var c_oAscBorderOptions = {
@@ -86,6 +88,14 @@ var c_oAscCleanOptions = {
   SparklineGroups: 8
 };
 
+// ToDo Add including cells not marked as needing to be calculated
+var c_oAscCalculateType = {
+  WorkbookOnlyChanged: 1,
+  ActiveSheet: 2,
+  Workbook: 3,
+  All: 4
+};
+
 var c_oAscDrawDepOptions = {
   Master: 0,
   Slave: 1,
@@ -96,7 +106,8 @@ var c_oAscSelectionDialogType = {
   None: 0,
   FormatTable: 1,
   Chart: 2,
-  FormatTableChangeRange: 4
+  FormatTableChangeRange: 4,
+  CustomSort: 5
 };
 
 var c_oAscScrollType = {
@@ -332,6 +343,7 @@ var c_oAscFormulaRangeBorderColor = [
   var c_oAscLockAddSheet = "addSheet";
   var c_oAscLockLayoutOptions = "layoutOptions";
   var c_oAscHeaderFooterEdit = "headerFooterEdit";
+  var c_oAscLockPrintScaleOptions = "printScaleOptions";
 
 var c_oAscGetDefinedNamesList = {
   Worksheet: 0,
@@ -462,6 +474,8 @@ var c_oAscPopUpSelectorType = {
   window['AscCommonExcel'].c_oAscLockAddSheet = c_oAscLockAddSheet;
   window['AscCommonExcel'].c_oAscLockLayoutOptions = c_oAscLockLayoutOptions;
   window['AscCommonExcel'].c_oAscHeaderFooterEdit = c_oAscHeaderFooterEdit;
+  window['AscCommonExcel'].c_oAscLockPrintScaleOptions = c_oAscLockPrintScaleOptions;
+
 
   window['AscCommonExcel'].c_kMaxPrintPages = c_kMaxPrintPages;
   window['AscCommonExcel'].filteringMode = true;
@@ -478,6 +492,8 @@ var c_oAscPopUpSelectorType = {
   prot['Descending'] = prot.Descending;
   prot['ByColorFill'] = prot.ByColorFill;
   prot['ByColorFont'] = prot.ByColorFont;
+  prot['ByIcon'] = prot.ByIcon;
+  prot['ByValue'] = prot.ByValue;
   window['Asc']['c_oAscConfirm'] = window['Asc'].c_oAscConfirm = c_oAscConfirm;
   prot = c_oAscConfirm;
   prot['ConfirmReplaceRange'] = prot.ConfirmReplaceRange;
@@ -509,12 +525,19 @@ var c_oAscPopUpSelectorType = {
   prot['Hyperlinks'] = prot.Hyperlinks;
   prot['Sparklines'] = prot.Sparklines;
   prot['SparklineGroups'] = prot.SparklineGroups;
+  window['Asc']['c_oAscCalculateType'] = window['Asc'].c_oAscCalculateType = c_oAscCalculateType;
+  prot = c_oAscCalculateType;
+  prot['WorkbookOnlyChanged'] = prot.WorkbookOnlyChanged;
+  prot['ActiveSheet'] = prot.ActiveSheet;
+  prot['Workbook'] = prot.Workbook;
+  prot['All'] = prot.All;
   window['Asc']['c_oAscSelectionDialogType'] = window['Asc'].c_oAscSelectionDialogType = c_oAscSelectionDialogType;
   prot = c_oAscSelectionDialogType;
   prot['None'] = prot.None;
   prot['FormatTable'] = prot.FormatTable;
   prot['Chart'] = prot.Chart;
   prot['FormatTableChangeRange'] = prot.FormatTableChangeRange;
+  prot['CustomSort'] = prot.CustomSort;
   window['Asc']['c_oAscHyperlinkType'] = window['Asc'].c_oAscHyperlinkType = c_oAscHyperlinkType;
   prot = c_oAscHyperlinkType;
   prot['WebLink'] = prot.WebLink;

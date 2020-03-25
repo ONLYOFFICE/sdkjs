@@ -1,13 +1,4 @@
 .idea/
-cell/sdk-all-min.js
-cell/sdk-all.js
-cell/sdk-all.cache
-slide/sdk-all-min.js
-slide/sdk-all.js
-slide/sdk-all.cache
-word/sdk-all-min.js
-word/sdk-all.js
-word/sdk-all.cache
 build/node_modules
 build/$weak$.js
 common/libfont/wasm/build/emsdk
@@ -24,6 +15,7 @@ slide/themes/themes.js
 *~
 .DS_Store
 /deploy
+/develop
 cell/sdk-all.props.js.map
 cell/sdk-all.vars.js.map
 slide/sdk-all.props.js.map

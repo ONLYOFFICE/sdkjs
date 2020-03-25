@@ -601,7 +601,7 @@ RotateState.prototype =
 
     onMouseUp: function(e, x, y, pageIndex)
     {
-        if(this.drawingObjects.canEdit())
+        if(this.drawingObjects.canEdit() && this.bSamePos !== true)
         {
             var tracks = [].concat(this.drawingObjects.arrTrackObjects);
             var group = this.group;
@@ -613,18 +613,13 @@ RotateState.prototype =
                 var i, copy;
                 this.drawingObjects.resetSelection();
                 var oIdMap = {};
+                var oCopyPr = new AscFormat.CCopyObjectProperties();
+                oCopyPr.idMap = oIdMap;
                 var aCopies = [];
                 History.Create_NewPoint(AscDFH.historydescription_CommonDrawings_CopyCtrl);
                 for(i = 0; i < tracks.length; ++i)
                 {
-                    if(tracks[i].originalObject.getObjectType() === AscDFH.historyitem_type_GroupShape){
-
-                        copy = tracks[i].originalObject.copy(oIdMap);
-                    }
-                    else{
-
-                        copy = tracks[i].originalObject.copy();
-                    }
+                    copy = tracks[i].originalObject.copy(oCopyPr);
                     oIdMap[tracks[i].originalObject.Id] = copy.Id;
                     this.drawingObjects.drawingObjects.getWorksheetModel && copy.setWorksheet(this.drawingObjects.drawingObjects.getWorksheetModel());
                     if(this.drawingObjects.drawingObjects && this.drawingObjects.drawingObjects.cSld)
@@ -641,6 +636,7 @@ RotateState.prototype =
                         var drawingObject = tracks[i].originalObject.drawingBase;
                         var metrics = drawingObject.getGraphicObjectMetrics();
                         AscFormat.SetXfrmFromMetrics(copy, metrics);
+                        copy.drawingBase = drawingObject;
                     }
                     copy.addToDrawingObjects();
                     aCopies.push(copy);
@@ -668,17 +664,12 @@ RotateState.prototype =
                     this.drawingObjects.checkSelectedObjectsAndCallback(function(){
                         var oIdMap = {};
                         var aCopies = [];
+                        var oCopyPr = new AscFormat.CCopyObjectProperties();
+                        oCopyPr.idMap = oIdMap;
                         group.resetSelection();
                         for(i = 0; i < tracks.length; ++i)
                         {
-                            if(tracks[i].originalObject.getObjectType() === AscDFH.historyitem_type_GroupShape){
-
-                                copy = tracks[i].originalObject.copy(oIdMap);
-                            }
-                            else{
-
-                                copy = tracks[i].originalObject.copy();
-                            }
+                            copy = tracks[i].originalObject.copy(oCopyPr);
                             aCopies.push(copy);
                             oThis.drawingObjects.drawingObjects.getWorksheetModel && copy.setWorksheet(oThis.drawingObjects.drawingObjects.getWorksheetModel());
                             if(oThis.drawingObjects.drawingObjects && oThis.drawingObjects.drawingObjects.cSld)
@@ -1034,7 +1025,7 @@ function MoveState(drawingObjects, majorObject, startX, startY)
     this.rectY = Math.min.apply(Math, arr_y);
     this.rectW = Math.max.apply(Math, arr_x) - this.rectX;
     this.rectH = Math.max.apply(Math, arr_y) - this.rectY;
-
+    this.bSamePos = true;
 }
 
 MoveState.prototype =
@@ -1267,6 +1258,7 @@ MoveState.prototype =
         var check_position = this.drawingObjects.drawingObjects.checkGraphicObjectPosition(this.rectX + tx, this.rectY + ty, this.rectW, this.rectH);
         for(_object_index = 0; _object_index < _objects_count; ++_object_index)
             _arr_track_objects[_object_index].track(tx + check_position.x, ty + check_position.y, pageIndex);
+        this.bSamePos = (AscFormat.fApproxEqual(tx + check_position.x, 0) && AscFormat.fApproxEqual(ty + check_position.y, 0));
         this.drawingObjects.updateOverlay();
     },
 
@@ -1332,7 +1324,7 @@ function MoveInGroupState(drawingObjects, majorObject, group, startX, startY)
     this.group = group;
     this.startX = startX;
     this.startY = startY;
-
+    this.bSamePos = true;
 
     var arr_x = [], arr_y = [];
     for(var i = 0; i < this.drawingObjects.arrTrackObjects.length; ++i)

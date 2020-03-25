@@ -61,6 +61,12 @@ function CFootEndnote(DocumentController)
 CFootEndnote.prototype = Object.create(CDocumentContent.prototype);
 CFootEndnote.prototype.constructor = CFootEndnote;
 
+CFootEndnote.prototype.Copy = function(oDocumentController)
+{
+	var oNote = new CFootEndnote(oDocumentController);
+	oNote.Copy2(this);
+	return oNote;
+};
 CFootEndnote.prototype.GetElementPageIndex = function(nPageAbs, nColumnAbs)
 {
 	// Функция аналогична Document.private_GetElementPageIndex
@@ -166,10 +172,9 @@ CFootEndnote.prototype.OnFastRecalculate = function()
 {
 	this.NeedUpdateHint = true;
 };
-CFootEndnote.prototype.Get_ColumnFields = function(ElementIndex, ColumnIndex)
+CFootEndnote.prototype.Get_ColumnFields = function(nElementIndex, nColumnIndex)
 {
-	var PageAbs = this.Get_StartPage_Absolute();
-	return this.Parent.GetColumnFields(PageAbs, ColumnIndex);
+	return this.Parent.GetColumnFields(undefined, nColumnIndex, this.Get_StartPage_Absolute());
 };
 
 //--------------------------------------------------------export----------------------------------------------------

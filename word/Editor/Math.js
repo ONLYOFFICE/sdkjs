@@ -37,6 +37,7 @@ var align_Right = AscCommon.align_Right;
 var align_Left = AscCommon.align_Left;
 var align_Center = AscCommon.align_Center;
 var align_Justify = AscCommon.align_Justify;
+var c_oAscRevisionsChangeType = Asc.c_oAscRevisionsChangeType;
 var g_oTableId = AscCommon.g_oTableId;
 var History = AscCommon.History;
 
@@ -1075,7 +1076,7 @@ ParaMath.prototype.Get_Id = function()
     return this.Id;
 };
 
-ParaMath.prototype.Copy = function(Selected)
+ParaMath.prototype.Copy = function(Selected, oPr)
 {
     var NewMath = new ParaMath();
     NewMath.Root.bRoot = true;
@@ -1083,11 +1084,11 @@ ParaMath.prototype.Copy = function(Selected)
     if(Selected)
     {
         var result = this.GetSelectContent();
-        result.Content.CopyTo(NewMath.Root, Selected);
+        result.Content.CopyTo(NewMath.Root, Selected, oPr);
     }
     else
     {
-        this.Root.CopyTo(NewMath.Root, Selected);
+        this.Root.CopyTo(NewMath.Root, Selected, oPr);
     }
 
     NewMath.Root.Correct_Content(true);
@@ -1563,9 +1564,9 @@ ParaMath.prototype.GetSelectContent = function()
     return this.Root.GetSelectContent();
 };
 
-ParaMath.prototype.Get_CurrentParaPos = function()
+ParaMath.prototype.GetCurrentParaPos = function()
 {
-    return this.Root.Get_CurrentParaPos();
+    return this.Root.GetCurrentParaPos();
 };
 
 ParaMath.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
@@ -1708,7 +1709,7 @@ ParaMath.prototype.Clear_TextFormatting = function( DefHyper )
 {
 };
 
-ParaMath.prototype.Can_AddDropCap = function()
+ParaMath.prototype.CanAddDropCap = function()
 {
     return false;
 };
@@ -1743,6 +1744,12 @@ ParaMath.prototype.Set_MenuProps = function(Props)
     if(Props != undefined)
         this.Root.Set_MenuProps(Props);
 };
+
+ParaMath.prototype.CheckRunContent = function(fCheck)
+{
+    this.Root.CheckRunContent(fCheck);
+};
+
 //-----------------------------------------------------------------------------------
 // Функции пересчета
 //-----------------------------------------------------------------------------------
@@ -2423,9 +2430,9 @@ ParaMath.prototype.Check_PageBreak = function()
     return false;
 };
 
-ParaMath.prototype.Check_BreakPageEnd = function(PBChecker)
+ParaMath.prototype.CheckSplitPageOnPageBreak = function(oPBChecker)
 {
-    return false;
+	return true;
 };
 ParaMath.prototype.Get_ParaPosByContentPos = function(ContentPos, Depth)
 {
@@ -2748,7 +2755,7 @@ ParaMath.prototype.Draw_HighLights = function(PDSH)
             var CommentsFlag  = PDSH.CommentsFlag;
 
             var Bounds = this.Root.Get_LineBound(PDSH.Line, PDSH.Range);
-            Comm.Add(Bounds.Y, Bounds.Y + Bounds.H, Bounds.X, Bounds.X + Bounds.W, 0, 0, 0, 0, { Active : CommentsFlag === comments_ActiveComment ? true : false, CommentId : CommentId } );
+            Comm.Add(Bounds.Y, Bounds.Y + Bounds.H, Bounds.X, Bounds.X + Bounds.W, 0, 0, 0, 0, { Active : CommentsFlag === AscCommon.comments_ActiveComment ? true : false, CommentId : CommentId } );
         }
 
         if (null !== CollFirst)
@@ -2838,7 +2845,7 @@ ParaMath.prototype.Draw_Lines = function(PDSL)
 //-----------------------------------------------------------------------------------
 // Функции для работы с курсором
 //-----------------------------------------------------------------------------------
-ParaMath.prototype.Is_CursorPlaceable = function()
+ParaMath.prototype.IsCursorPlaceable = function()
 {
     return true;
 };

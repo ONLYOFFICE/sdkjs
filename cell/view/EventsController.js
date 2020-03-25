@@ -751,7 +751,17 @@
 					return true;
 
 				case 120: // F9
-					t.handlers.trigger("calcAll", ctrlKey, event.altKey, shiftKey);
+					var type;
+					if (ctrlKey && altKey && shiftKey) {
+						type = Asc.c_oAscCalculateType.All;
+					} else if (ctrlKey && altKey) {
+						type = Asc.c_oAscCalculateType.Workbook;
+					} else if (shiftKey) {
+						type = Asc.c_oAscCalculateType.ActiveSheet;
+					} else {
+						type = Asc.c_oAscCalculateType.WorkbookOnlyChanged;
+					}
+					t.handlers.trigger("calculate", type);
 					return result;
 
 				case 113: // F2
@@ -788,7 +798,7 @@
 					return result;
 
 				case 9: // tab
-					if (t.getCellEditMode()) {
+					if (t.getCellEditMode() || t.isSelectionDialogMode) {
 						return true;
 					}
 					// Отключим стандартную обработку браузера нажатия tab
@@ -805,7 +815,7 @@
 					break;
 
 				case 13:  // "enter"
-					if (t.getCellEditMode()) {
+					if (t.getCellEditMode() || t.isSelectionDialogMode) {
 						return true;
 					}
 					// Особый случай (возможно движение в выделенной области)
@@ -1309,8 +1319,18 @@
 
 		/** @param event {MouseEvent} */
 		asc_CEventsController.prototype._onMouseDown = function (event) {
-			// Update state for device without cursor
-			this._onMouseMove(event);
+
+
+			var t = this;
+			var ctrlKey = !AscCommon.getAltGr(event) && (event.metaKey || event.ctrlKey);
+			var coord = t._getCoordinates(event);
+			event.isLocked = t.isMousePressed = true;
+			// Shapes
+			var graphicsInfo = t.handlers.trigger("getGraphicsInfo", coord.x, coord.y);
+			if(!graphicsInfo) {
+				// Update state for device without cursor
+				this._onMouseMove(event);
+			}
 
 			if (AscCommon.g_inputContext) {
 				AscCommon.g_inputContext.externalChangeFocus();
@@ -1318,10 +1338,6 @@
 
 			AscCommon.global_mouseEvent.LockMouse();
 
-			var t = this;
-			var ctrlKey = !AscCommon.getAltGr(event) && (event.metaKey || event.ctrlKey);
-			var coord = t._getCoordinates(event);
-			event.isLocked = t.isMousePressed = true;
 
 			if (t.handlers.trigger("isGlobalLockEditCell")) {
 				return;
@@ -1333,8 +1349,6 @@
 
 			var button = AscCommon.getMouseButton(event);
 
-			// Shapes
-			var graphicsInfo = t.handlers.trigger("getGraphicsInfo", coord.x, coord.y);
 			if (asc["editor"].isStartAddShape || graphicsInfo) {
 				// При выборе диапазона не нужно выделять автофигуру
 				if (t.isSelectionDialogMode) {
@@ -1420,7 +1434,7 @@
 					} else if (t.targetInfo.target === c_oTargetType.FilterObject && 2 === button) {
 						this.handlers.trigger('onContextMenu', null);
 						return;
-					} else if (t.targetInfo.commentIndexes && this.canEdit()) {
+					} else if (t.targetInfo.commentIndexes) {
 						t._commentCellClick(event);
 					} else if (t.targetInfo.target === c_oTargetType.MoveResizeRange && this.canEdit()) {
 						this.isMoveResizeRange = true;

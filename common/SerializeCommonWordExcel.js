@@ -1375,10 +1375,6 @@ function isRealObject(obj)
   window['AscCommon'].c_oSerBorderType = c_oSerBorderType;
   window['AscCommon'].c_oSerBordersType = c_oSerBordersType;
   window['AscCommon'].c_oSerPaddingType = c_oSerPaddingType;
-  window['AscCommon'].g_tabtype_left = 0;
-  window['AscCommon'].g_tabtype_right = 1;
-  window['AscCommon'].g_tabtype_center = 2;
-  window['AscCommon'].g_tabtype_clear = 3;
   window['AscCommon'].BinaryCommonWriter = BinaryCommonWriter;
   window['AscCommon'].Binary_CommonReader = Binary_CommonReader;
   window['AscCommon'].FT_Stream2 = FT_Stream2;

@@ -41,6 +41,7 @@
 	var cNumber = AscCommonExcel.cNumber;
 	var cString = AscCommonExcel.cString;
 	var cBool = AscCommonExcel.cBool;
+	var cEmpty = AscCommonExcel.cEmpty;
 	var cError = AscCommonExcel.cError;
 	var cArea = AscCommonExcel.cArea;
 	var cArea3D = AscCommonExcel.cArea3D;
@@ -51,9 +52,234 @@
 	var cFormulaFunctionGroup = AscCommonExcel.cFormulaFunctionGroup;
 	var cElementType = AscCommonExcel.cElementType;
 
+	function getCellFormat(ws, row, col) {
+		var res = new cString("G");
+		var formatInfo, sFormat, numFormat;
+		ws.getCell3(row, col)._foreachNoEmpty(function (cell) {
+			numFormat = cell ? cell.getNumFormat() : null;
+			formatInfo = numFormat ? numFormat.getTypeInfo() : null;
+			sFormat = numFormat ? numFormat.sFormat : null;
+		});
+
+		//такие форматы как дата не поддерживаются
+		//TODO функция нуждается в доработке
+		if(formatInfo) {
+			var postfix = "";
+			if(numFormat && (numFormat.oNegativeFormat && numFormat.oNegativeFormat.Color !== -1)) {
+				postfix += "-";
+			}
+			if(numFormat && numFormat.oPositiveFormat && numFormat.oPositiveFormat.formatString.indexOf('(') != -1) {
+				postfix += "()";
+			}
+
+			var formatPart;
+			if(formatInfo.type === Asc.c_oAscNumFormatType.Number) {
+				formatPart = "F";
+			} else if(formatInfo.type === Asc.c_oAscNumFormatType.Currency || formatInfo.type === Asc.c_oAscNumFormatType.Accounting) {
+				formatPart = "С";
+			} else if(formatInfo.type === Asc.c_oAscNumFormatType.Percent) {
+				formatPart = "P";
+			} else if(formatInfo.type === Asc.c_oAscNumFormatType.Scientific) {
+				formatPart = "S";
+			}
+
+			if(formatPart) {
+				res = new cString(formatPart + formatInfo.decimalPlaces + postfix);
+			}
+		}
+
+		return res;
+	}
+
+	function getNumFormat(ws, row, col) {
+		var numFormat = null;
+
+		ws.getCell3(row, col)._foreachNoEmpty(function (cell) {
+			numFormat = cell ? cell.getNumFormat() : null;
+		});
+
+		return numFormat;
+	}
+
 	cFormulaFunctionGroup['Information'] = cFormulaFunctionGroup['Information'] || [];
-	cFormulaFunctionGroup['Information'].push(cERROR_TYPE, cISBLANK, cISERR, cISERROR, cISEVEN, cISFORMULA, cISLOGICAL,
+	cFormulaFunctionGroup['Information'].push(cCell , cERROR_TYPE, cISBLANK, cISERR, cISERROR, cISEVEN, cISFORMULA, cISLOGICAL,
 		cISNA, cISNONTEXT, cISNUMBER, cISODD, cISREF, cISTEXT, cN, cNA, cSHEET, cSHEETS, cTYPE);
+
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cCell() {
+	}
+
+	//***array-formula***
+	cCell.prototype = Object.create(cBaseFunction.prototype);
+	cCell.prototype.constructor = cCell;
+	cCell.prototype.name = 'CELL';
+	cCell.prototype.argumentsMin = 2;
+	cCell.prototype.argumentsMax = 2;
+	cCell.prototype.ca = true;
+	cCell.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.area_to_ref;
+	cCell.prototype.Calculate = function (arg, opt_bbox, opt_defName, ws) {
+		//специально ввожу ограничения - минимум 2 аргумента
+		//в случае одного аргумента необходимо следить всегда за последней измененной ячейкой
+		//так же при сборке необходимо записывать данные об последней измененной ячейке
+		//нужно дли это ?
+		var arg0 = arg[0];
+		var arg1 = arg[1];
+		arg0 = arg0.tocString();
+
+		if (arg0 instanceof cError) {
+			return arg0;
+		} else {
+			var str = arg0.toString().toUpperCase();
+
+			var cell, bbox;
+			if(arg1) {
+				if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type ||
+					cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
+					bbox = arg1.getRange();
+					bbox = bbox && bbox.bbox;
+				} else {
+					return new cError(cErrorType.wrong_name);
+				}
+			}
+
+			var res, numFormat;
+			switch (str) {
+				case "COL": {
+					res = new cNumber(bbox.c1 + 1);
+					break;
+				}
+				case "ROW": {
+					res = new cNumber(bbox.r1 + 1);
+					break;
+				}
+				case "SHEET": {
+					//нет в офф. документации
+					//ms excel returns 1?
+					res = new cNumber(1);
+					break;
+				}
+				case "ADDRESS": {
+					res = new Asc.Range(bbox.c1, bbox.r1, bbox.c1, bbox.r1);
+					res = new cString(res.getAbsName());
+					break;
+				}
+				case "FILENAME": {
+					res = new cEmpty();
+					break;
+				}
+				case "COORD": {
+					//нет в офф. документации
+					break;
+				}
+				case "CONTENTS": {
+					if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type){
+						res = arg1.getValue();
+					} else {
+						res = arg1.getValue()[0];
+						if(!res) {
+							res = new cNumber(0);
+						}
+					}
+					break;
+				}
+				case "TYPE": {
+					// b = blank; l = string (label); v = otherwise (value)
+					res = arg1.getValue();
+					if(res.type === cElementType.empty) {
+						res = new cString("b");
+					} else if(res.type === cElementType.string) {
+						res = new cString("l");
+					} else {
+						res = new cString("v");
+					}
+					break;
+				}
+				case "WIDTH": {
+					//return array
+					//{width 1 column; is default}
+					var col = ws._getCol(bbox.c1);
+					var props = col ? col.getWidthProp() : null;
+					var isDefault = !props.CustomWidth;
+					var width, colWidthPx;
+					if(isDefault) {
+						var defaultColWidthChars = ws.charCountToModelColWidth(ws.getBaseColWidth());
+						colWidthPx = ws.modelColWidthToColWidth(defaultColWidthChars);
+						colWidthPx = Asc.ceil(colWidthPx / 8) * 8;
+						width = ws.colWidthToCharCount(colWidthPx);
+					} else {
+						colWidthPx = ws.modelColWidthToColWidth(props.width);
+						width = ws.colWidthToCharCount(colWidthPx);
+					}
+
+					if(props) {
+						res = new cArray();
+						res.addElement(new cNumber(Math.round(width)));
+						res.addElement(new cBool(isDefault));
+					}
+
+					break;
+				}
+				case "PREFIX": {
+					// ' = left; " = right; ^ = centered; \ =
+					cell = ws.getCell3(bbox.r1, bbox.c1);
+					var align = cell.getAlign();
+					var alignHorizontal = align.getAlignHorizontal();
+					if(cell.isNullTextString()) {
+						res = new cString('');
+					} else if(alignHorizontal === null || alignHorizontal === AscCommon.align_Left) {
+						res = new cString("'");
+					} else if(alignHorizontal === AscCommon.align_Right) {
+						res = new cString('"');
+					} else if(alignHorizontal === AscCommon.align_Center) {
+						res = new cString('^');
+					} /*else if(alignHorizontal === AscCommon.align_Fill) {
+						res = new cString("\/");
+					}*/ else {
+						res = new cString('');
+					}
+
+					break;
+				}
+				case "PROTECT": {
+					//TODO
+					//default - protect, do not support on open
+					res = new cNumber(1);
+					break;
+				}
+				case "FORMAT": {
+					res = getCellFormat(ws, bbox.r1, bbox.c1);
+					break
+				}
+				case "COLOR": {
+					numFormat = getNumFormat(ws, bbox.r1, bbox.c1);
+					if(numFormat && (numFormat.oNegativeFormat && numFormat.oNegativeFormat.Color !== -1)) {
+						res = new cNumber(1);
+					} else {
+						res = new cNumber(0);
+					}
+					break
+				}
+				case "PARENTHESES": {
+					numFormat = getNumFormat(ws, bbox.r1, bbox.c1);
+					if(numFormat && numFormat.oPositiveFormat && numFormat.oPositiveFormat.formatString.indexOf('(') != -1) {
+						res = new cNumber(1);
+					} else {
+						res = new cNumber(0);
+					}
+					break
+				}
+				default: {
+					return new cError(cErrorType.wrong_value_type);
+				}
+			}
+
+			return res ? res : new cError(cErrorType.wrong_value_type);
+		}
+	};
 
 	/**
 	 * @constructor
@@ -557,23 +783,23 @@
 
 		var res = null;
 		if (0 === arg.length) {
-			res = new cNumber(ws.nSheetId);
+			res = new cNumber(ws.index + 1);
 		} else {
 			var arg0 = arg[0];
 			if (cElementType.error === arg0.type) {
 				res = arg0;
 			} else {
 				if (arg0.ws) {
-					res = new cNumber(arg0.ws.nSheetId);
+					res = new cNumber(arg0.ws.index + 1);
 				} else if (arg0.wsFrom) {
-					var sheet1 = arg0.wsFrom.nSheetId;
-					var sheet2 = arg0.wsTo.nSheetId;
+					var sheet1 = arg0.wsFrom.index + 1;
+					var sheet2 = arg0.wsTo.index + 1;
 					res = new cNumber(Math.min(sheet1, sheet2));
 				} else if (cElementType.string === arg0.type) {
 					var arg0Val = arg0.getValue();
 					var curWorksheet = ws.workbook.getWorksheetByName(arg0Val);
-					if (curWorksheet && undefined !== curWorksheet.nSheetId) {
-						res = new cNumber(curWorksheet.nSheetId);
+					if (curWorksheet && undefined !== curWorksheet.index) {
+						res = new cNumber(curWorksheet.index + 1);
 					}
 				}
 			}

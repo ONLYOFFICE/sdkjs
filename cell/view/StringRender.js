@@ -265,7 +265,7 @@
                 isHorzRight     = (AscCommon.align_Right  === alignHorizontal),
 
                 isVertBottom    = (Asc.c_oAscVAlign.Bottom === alignVertical),
-                isVertCenter    = (Asc.c_oAscVAlign.Center === alignVertical),
+                isVertCenter    = (Asc.c_oAscVAlign.Center === alignVertical || Asc.c_oAscVAlign.Dist === alignVertical || Asc.c_oAscVAlign.Just === alignVertical),
                 isVertTop       = (Asc.c_oAscVAlign.Top    === alignVertical);
 
             if (isVertBottom) {

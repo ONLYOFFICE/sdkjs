@@ -1071,21 +1071,30 @@ function (window, undefined) {
 	cLOWER.prototype.argumentsMax = 1;
 	cLOWER.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
-
 		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
 			arg0 = arg0.cross(arguments[1]);
 		}
-
-		arg0 = arg0.tocString();
 		if (arg0 instanceof cArray) {
 			arg0 = arg0.getElementRowCol(0, 0);
+		}
+
+		if (arg0 instanceof cRef || arg0 instanceof cRef3D) {
+			arg0 = arg0.getValue();
+			if (arg0 instanceof cError) {
+				return arg0;
+			} else {
+				arg0 = arg0.toLocaleString();
+			}
+		} else {
+			arg0 = arg0.toLocaleString();
 		}
 
 		if (arg0 instanceof cError) {
 			return arg0;
 		}
 
-		return new cString(arg0.getValue().toLowerCase());
+		return new cString(arg0.toLowerCase());
+
 	};
 
 	/**
@@ -1842,7 +1851,7 @@ function (window, undefined) {
 		}
 
 		var oFormat = oNumFormatCache.get(arg1.toString());
-		var a = g_oFormatParser.parse(arg0.getValue() + ""), aText;
+		var a = g_oFormatParser.parse(arg0.toLocaleString(true) + ""), aText;
 		aText = oFormat.format(a ? a.value : arg0.getValue(),
 			(arg0 instanceof cNumber || a) ? CellValueType.Number : CellValueType.String,
 			AscCommon.gc_nMaxDigCountView);
@@ -2087,12 +2096,22 @@ function (window, undefined) {
 			arg0 = arg0.getElementRowCol(0, 0);
 		}
 
-		arg0 = arg0.tocString();
+		if (arg0 instanceof cRef || arg0 instanceof cRef3D) {
+			arg0 = arg0.getValue();
+			if (arg0 instanceof cError) {
+				return arg0;
+			} else {
+				arg0 = arg0.toLocaleString();
+			}
+		} else {
+			arg0 = arg0.toLocaleString();
+		}
 
 		if (arg0 instanceof cError) {
 			return arg0;
 		}
-		return new cString(arg0.getValue().toUpperCase());
+
+		return new cString(arg0.toUpperCase());
 	};
 
 	/**

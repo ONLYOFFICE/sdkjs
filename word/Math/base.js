@@ -35,7 +35,7 @@
 // Import
 var g_oTextMeasurer = AscCommon.g_oTextMeasurer;
 var History = AscCommon.History;
-
+var c_oAscRevisionsChangeType = Asc.c_oAscRevisionsChangeType;
 /** @enum {number} */
 var c_oAscMathInterfaceMatrixRowRule = {
     Single     : 0x00,
@@ -297,6 +297,13 @@ CMathBase.prototype.SetPlaceholder = function()
 				this.elements[i][j].SetPlaceholder();
 		}
 	}
+};
+CMathBase.prototype.CheckRunContent = function(fCheck)
+{
+    for(var i = 0; i < this.Content.length; ++i)
+    {
+        this.Content[i].CheckRunContent(fCheck);
+    }
 };
 CMathBase.prototype.addMCToContent = function(elements)
 {
@@ -1447,7 +1454,7 @@ CMathBase.prototype.Fill_LogicalContent = function(nCount)
         this.Content[nIndex].Parent        = this;
     }
 };
-CMathBase.prototype.Copy = function()
+CMathBase.prototype.Copy = function(Selected, oPr)
 {
     var oProps = this.Pr.Copy();
     oProps.ctrPrp = this.CtrPrp.Copy();
@@ -1456,9 +1463,12 @@ CMathBase.prototype.Copy = function()
 
     for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; nIndex++)
     {
-        this.Content[nIndex].CopyTo(NewElement.Content[nIndex], false);
+        this.Content[nIndex].CopyTo(NewElement.Content[nIndex], false, oPr);
     }
-
+    if(oPr && oPr.Comparison)
+    {
+        oPr.Comparison.updateReviewInfo(NewElement, reviewtype_Add);
+    }
     return NewElement;
 };
 CMathBase.prototype.Refresh_RecalcData = function(Data)
@@ -2821,7 +2831,7 @@ CMathBase.prototype.Math_Set_EmptyRange         = CMathContent.prototype.Math_Se
 CMathBase.prototype.Set_ParaMath                = CMathContent.prototype.Set_ParaMath;
 CMathBase.prototype.Recalculate_Reset           = CMathContent.prototype.Recalculate_Reset;
 CMathBase.prototype.Set_ParaContentPos          = CMathContent.prototype.Set_ParaContentPos;
-CMathBase.prototype.Get_CurrentParaPos          = CMathContent.prototype.Get_CurrentParaPos;
+CMathBase.prototype.GetCurrentParaPos          = CMathContent.prototype.GetCurrentParaPos;
 CMathBase.prototype.private_UpdatePosOnAdd      = CMathContent.prototype.private_UpdatePosOnAdd;
 CMathBase.prototype.private_UpdatePosOnRemove   = CMathContent.prototype.private_UpdatePosOnRemove;
 CMathBase.prototype.private_CorrectSelectionPos = CMathContent.prototype.private_CorrectSelectionPos;

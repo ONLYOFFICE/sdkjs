@@ -51,6 +51,7 @@ function ParaField(FieldType, Arguments, Switches)
 
     this.Type    = para_Field;
 
+    this.Istruction = null;
     this.FieldType = (undefined === FieldType ? fieldtype_UNKNOWN : FieldType);
     this.Arguments = (undefined === Arguments ? []                : Arguments);
     this.Switches  = (undefined === Switches  ? []                : Switches);
@@ -94,13 +95,18 @@ ParaField.prototype.GetSelectedElementsInfo = function(Info, ContentPos, Depth)
 };
 ParaField.prototype.Get_Bounds = function()
 {
-    var aBounds = [];
-    for (var Place in this.Bounds)
-    {
-        aBounds.push(this.Bounds[Place]);
-    }
+	var oParagraph = this.GetParagraph();
+	if (!oParagraph)
+		return [];
 
-    return aBounds;
+	var arrBounds = [];
+	for (var Place in this.Bounds)
+	{
+		this.Bounds[Place].PageIndex = oParagraph.GetAbsolutePage(this.Bounds[Place].PageInternal);
+		arrBounds.push(this.Bounds[Place]);
+	}
+
+	return arrBounds;
 };
 ParaField.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
 {
@@ -156,26 +162,27 @@ ParaField.prototype.CanSplit = function()
 };
 ParaField.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange, _CurPage)
 {
-    var CurLine  = _CurLine - this.StartLine;
-    var CurRange = (0 === _CurLine ? _CurRange - this.StartRange : _CurRange);
+	var CurLine  = _CurLine - this.StartLine;
+	var CurRange = (0 === _CurLine ? _CurRange - this.StartRange : _CurRange);
 
-    if (0 === CurLine && 0 === CurRange && true !== PRSA.RecalcFast)
-        this.Bounds = {};
+	if (0 === CurLine && 0 === CurRange && true !== PRSA.RecalcFast)
+		this.Bounds = {};
 
-    var X0 = PRSA.X;
-    var Y0 = PRSA.Y0;
-    var Y1 = PRSA.Y1;
+	var X0 = PRSA.X;
+	var Y0 = PRSA.Y0;
+	var Y1 = PRSA.Y1;
 
-    CParagraphContentWithParagraphLikeContent.prototype.Recalculate_Range_Spaces.apply(this, arguments);
+	CParagraphContentWithParagraphLikeContent.prototype.Recalculate_Range_Spaces.apply(this, arguments);
 
 	var X1 = PRSA.X;
 
 	this.Bounds[((CurLine << 16) & 0xFFFF0000) | (CurRange & 0x0000FFFF)] = {
-		X0        : X0,
-		X1        : X1,
-		Y0        : Y0,
-		Y1        : Y1,
-		PageIndex : PRSA.Paragraph.Get_AbsolutePage(_CurPage)
+		X0           : X0,
+		X1           : X1,
+		Y0           : Y0,
+		Y1           : Y1,
+		PageIndex    : PRSA.Paragraph.Get_AbsolutePage(_CurPage),
+		PageInternal : _CurPage
 	};
 };
 ParaField.prototype.Draw_HighLights = function(PDSH)
@@ -313,6 +320,16 @@ ParaField.prototype.GetAllFields = function(isUseSelection, arrFields)
 {
 	arrFields.push(this);
 	return CParagraphContentWithParagraphLikeContent.prototype.GetAllFields.apply(this, arguments);
+};
+ParaField.prototype.GetAllSeqFieldsByType = function(sType, aFields)
+{
+	if(this.FieldType === fieldtype_SEQ)
+	{
+		if(this.Arguments[0] === sType)
+		{
+			aFields.push(this);
+		}
+	}
 };
 //----------------------------------------------------------------------------------------------------------------------
 // Работа с данными поля
@@ -486,7 +503,36 @@ ParaField.prototype.FindNextFillingForm = function(isNext, isCurrent, isStart)
 };
 ParaField.prototype.Update = function(isCreateHistoryPoint, isRecalculate)
 {
-	// TODO: Реализовать
+	var sReplaceString = null;
+	if(this.FieldType === fieldtype_SEQ)
+	{
+		if(this.Paragraph && this.Paragraph.Parent)
+		{
+			var oInstruction = new CFieldInstructionSEQ();
+			oInstruction.ComplexField = this;
+			oInstruction.ParentContent = this.Paragraph.Parent;
+			oInstruction.Id = this.Arguments[0];
+			sReplaceString = oInstruction.GetText();
+		}
+	}
+	else if(this.FieldType === fieldtype_STYLEREF)
+	{
+		if(this.Paragraph && this.Paragraph.Parent)
+		{
+			var oInstruction = new CFieldInstructionSTYLEREF();
+			oInstruction.ComplexField = this;
+			oInstruction.ParentContent = this.Paragraph.Parent;
+			oInstruction.ParentParagraph = this.Paragraph;
+			oInstruction.StyleName = this.Arguments[0];
+			sReplaceString = oInstruction.GetText();
+		}
+	}
+	if(sReplaceString)
+	{
+		var oRun = this.private_GetMappedRun(sReplaceString);
+		this.Remove_FromContent(0, this.Content.length);
+		this.Add_ToContent(0, oRun);
+	}
 };
 //----------------------------------------------------------------------------------------------------------------------
 // Функции совместного редактирования

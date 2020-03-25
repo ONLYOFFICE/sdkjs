@@ -1021,13 +1021,12 @@ Processor3D.prototype._calculateDepth = function()
 	var overlap       = AscFormat.isRealNumber(this.chartSpace.chart.plotArea.chart.overlap) ? (this.chartSpace.chart.plotArea.chart.overlap / 100) : (defaultOverlap / 100);
 	var gapWidth = this.chartSpace.chart.plotArea.chart.gapWidth != null ? (this.chartSpace.chart.plotArea.chart.gapWidth / 100) : (150 / 100);
 	var gapDepth = this.chartSpace.chart.plotArea.chart.gapDepth != null ? (this.chartSpace.chart.plotArea.chart.gapDepth / 100) : type === AscFormat.c_oChartTypes.Area && subType !== "normal" ? 1 : (150 / 100);
-	var basePercent = this.view3D && this.view3D.depthPercent ? this.view3D.depthPercent / 100 : globalBasePercent / 100;//процент от базовой глубины
 	var seriesCount = this.chartsDrawer.calcProp.seriesCount;
 	var ptCount = this.chartsDrawer.calcProp.ptCount;
 	var sinOx = Math.abs(Math.sin(-this.angleOx));
 	var sinOy = Math.sin(-this.angleOy);
 	var hPercent = type == AscFormat.c_oChartTypes.HBar ? 1 : this.hPercent;
-	var depthPercent = this.view3D.depthPercent !== null ? this.view3D.depthPercent / 100 : 1;
+	var depthPercent = this._getDepthPercent();
 	var t = this;
 	
 	var areaStackedKf = (type === AscFormat.c_oChartTypes.Area && subType !== "normal") || type === AscFormat.c_oChartTypes.Surface ?  (ptCount / (2 * (ptCount - 1))) : 1;
@@ -1071,7 +1070,7 @@ Processor3D.prototype._calculateDepth = function()
 				b = b / seriesCount;
 			
 			angleOxKf = sinOx === 0 ? 1 : sinOx;
-			a = basePercent / (t.chartsDrawer.calcProp.ptCount * b);
+			a = depthPercent / (t.chartsDrawer.calcProp.ptCount * b);
 			depth = (widthChart * a +  gapDepth * widthChart * a) / (1 / angleOxKf + (gapDepth) * a + a);
 			
 			depth = depth / angleOxKf;
@@ -1125,7 +1124,7 @@ Processor3D.prototype._calculateDepthPerspective = function()
 		baseDepth = (width / (seriesCount - (seriesCount - 1) * overlap + gapWidth)) * seriesCount;
 		
 	//РїСЂРѕС†РµРЅС‚ РѕС‚ Р±Р°Р·РѕРІРѕР№ РіР»СѓР±РёРЅС‹
-	var basePercent = this.view3D && this.view3D.depthPercent ? this.view3D.depthPercent / 100 : globalBasePercent / 100;
+	var basePercent = this._getDepthPercent();
 	var depth = baseDepth * basePercent;
 	depth = depth + depth * gapDepth;
 	
@@ -2355,7 +2354,7 @@ Processor3D.prototype._calcAspectRatio = function()
 	var heightOriginalChart = this.heightCanvas - (this.top + this.bottom);
 	//auto scale if hPercent == null
 	var hPercent = this.hPercent;
-	var depthPercent = this.view3D.depthPercent !== null ? this.view3D.depthPercent / 100 : 1;
+	var depthPercent = this._getDepthPercent();
 	
 	var aspectRatioX = 1;
 	var aspectRatioY = 1;
@@ -2388,6 +2387,13 @@ Processor3D.prototype._calcAspectRatio = function()
 	
 	this.aspectRatioX = aspectRatioX;
 	this.aspectRatioY = aspectRatioY;
+};
+
+Processor3D.prototype._getDepthPercent = function() {
+	if(AscFormat.c_oChartTypes.Pie === this.chartsDrawer.calcProp.type) {
+		return globalBasePercent / 100;
+	}
+	return this.view3D && this.view3D.depthPercent ? this.view3D.depthPercent / 100 : globalBasePercent / 100;
 };
 
 

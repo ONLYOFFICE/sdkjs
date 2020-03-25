@@ -195,7 +195,7 @@ function CEditorPage(api)
 
 	this.m_nZoomValue        = 100;
 	this.m_oBoundsController = new AscFormat.CBoundsController();
-	this.m_nTabsType         = 0;
+	this.m_nTabsType         = tab_Left;
 
 	this.m_dScrollY           = 0;
 	this.m_dScrollX           = 0;
@@ -557,42 +557,35 @@ function CEditorPage(api)
 		this.arrayEventHandlers[1] = new AscCommon.button_eventHandlers("", "0px 0px", "0px -16px", "0px -32px", this.m_oPanelRight_buttonPrevPage, this.onPrevPage);
 		this.arrayEventHandlers[2] = new AscCommon.button_eventHandlers("", "0px -48px", "0px -64px", "0px -80px", this.m_oPanelRight_buttonNextPage, this.onNextPage);
 
-		this.m_oLeftRuler_buttonsTabs.HtmlElement.onclick = this.onButtonTabsClick;//new Function("onButtonTabsClick();");
+		this.m_oLeftRuler_buttonsTabs.HtmlElement.onclick = this.onButtonTabsClick;
 
-		this.m_oEditor.HtmlElement.onmousedown = this.onMouseDown;//new Function("event", "return Editor_OnMouseDown(event);");
-		this.m_oEditor.HtmlElement.onmousemove = this.onMouseMove;//new Function("event", "return Editor_OnMouseMove(event);");
-		this.m_oEditor.HtmlElement.onmouseup   = this.onMouseUp;//new Function("event", "return Editor_OnMouseUp(event);");
+        AscCommon.addMouseEvent(this.m_oEditor.HtmlElement, "down", this.onMouseDown);
+        AscCommon.addMouseEvent(this.m_oEditor.HtmlElement, "move", this.onMouseMove);
+        AscCommon.addMouseEvent(this.m_oEditor.HtmlElement, "up", this.onMouseUp);
 
-		this.m_oOverlay.HtmlElement.onmousedown = this.onMouseDown;//new Function("event", "return Editor_OnMouseDown(event);");
-		this.m_oOverlay.HtmlElement.onmousemove = this.onMouseMove;//new Function("event", "return Editor_OnMouseMove(event);");
-		this.m_oOverlay.HtmlElement.onmouseup   = this.onMouseUp;//new Function("event", "return Editor_OnMouseUp(event);");
+        AscCommon.addMouseEvent(this.m_oOverlay.HtmlElement, "down", this.onMouseDown);
+        AscCommon.addMouseEvent(this.m_oOverlay.HtmlElement, "move", this.onMouseMove);
+        AscCommon.addMouseEvent(this.m_oOverlay.HtmlElement, "up", this.onMouseUp);
 
 		var _cur         = document.getElementById('id_target_cursor');
-		_cur.onmousedown = this.onMouseDown;//new Function("event", "return Editor_OnMouseDown(event);");
-		_cur.onmousemove = this.onMouseMove;//new Function("event", "return Editor_OnMouseMove(event);");
-		_cur.onmouseup   = this.onMouseUp;//new Function("event", "return Editor_OnMouseUp(event);");
+        AscCommon.addMouseEvent(_cur, "down", this.onMouseDown);
+        AscCommon.addMouseEvent(_cur, "move", this.onMouseMove);
+        AscCommon.addMouseEvent(_cur, "up", this.onMouseUp);
 
-		this.m_oMainContent.HtmlElement.onmousewheel = this.onMouseWhell;//new Function("event", "return Editor_OnMouseWhell(event);");
+		this.m_oMainContent.HtmlElement.onmousewheel = this.onMouseWhell;
 		if (this.m_oMainContent.HtmlElement.addEventListener)
 		{
 			//this.m_oMainContent.HtmlElement.addEventListener("DOMMouseScroll", new Function("event", "return Editor_OnMouseWhell(event);"), false);
 			this.m_oMainContent.HtmlElement.addEventListener("DOMMouseScroll", this.onMouseWhell, false);
 		}
 
-		this.m_oTopRuler_horRuler.HtmlElement.onmousedown = this.horRulerMouseDown;//new Function("event", "horRulerMouseDown(event);");
-		this.m_oTopRuler_horRuler.HtmlElement.onmouseup   = this.horRulerMouseUp;//new Function("event", "horRulerMouseUp(event);");
-		this.m_oTopRuler_horRuler.HtmlElement.onmousemove = this.horRulerMouseMove;//new Function("event", "horRulerMouseMove(event);");
+        AscCommon.addMouseEvent(this.m_oTopRuler_horRuler.HtmlElement, "down", this.horRulerMouseDown);
+        AscCommon.addMouseEvent(this.m_oTopRuler_horRuler.HtmlElement, "move", this.horRulerMouseMove);
+        AscCommon.addMouseEvent(this.m_oTopRuler_horRuler.HtmlElement, "up", this.horRulerMouseUp);
 
-		this.m_oLeftRuler_vertRuler.HtmlElement.onmousedown = this.verRulerMouseDown;//new Function("event", "verRulerMouseDown(event);");
-		this.m_oLeftRuler_vertRuler.HtmlElement.onmouseup   = this.verRulerMouseUp;//new Function("event", "verRulerMouseUp(event);");
-		this.m_oLeftRuler_vertRuler.HtmlElement.onmousemove = this.verRulerMouseMove;//new Function("event", "verRulerMouseMove(event);");
-
-		/*
-		 // теперь все делает AscCommon.InitBrowserSystemContext
-		 window.onkeydown = this.onKeyDown;//Editor_OnKeyDown;
-		 window.onkeypress = this.onKeyPress;//Editor_OnKeyPress;
-		 window.onkeyup = this.onKeyUp;
-		 */
+        AscCommon.addMouseEvent(this.m_oLeftRuler_vertRuler.HtmlElement, "down", this.verRulerMouseDown);
+        AscCommon.addMouseEvent(this.m_oLeftRuler_vertRuler.HtmlElement, "move", this.verRulerMouseMove);
+        AscCommon.addMouseEvent(this.m_oLeftRuler_vertRuler.HtmlElement, "up", this.verRulerMouseUp);
 
 		this.m_oBody.HtmlElement.oncontextmenu = function(e)
 		{
@@ -1273,19 +1266,19 @@ function CEditorPage(api)
 	this.onButtonTabsClick = function()
 	{
 		var oWordControl = oThis;
-		if (oWordControl.m_nTabsType == AscCommon.g_tabtype_left)
+		if (oWordControl.m_nTabsType == tab_Left)
 		{
-			oWordControl.m_nTabsType = AscCommon.g_tabtype_center;
+			oWordControl.m_nTabsType = tab_Center;
 			oWordControl.onButtonTabsDraw();
 		}
-		else if (oWordControl.m_nTabsType == AscCommon.g_tabtype_center)
+		else if (oWordControl.m_nTabsType == tab_Center)
 		{
-			oWordControl.m_nTabsType = AscCommon.g_tabtype_right;
+			oWordControl.m_nTabsType = tab_Right;
 			oWordControl.onButtonTabsDraw();
 		}
 		else
 		{
-			oWordControl.m_nTabsType = AscCommon.g_tabtype_left;
+			oWordControl.m_nTabsType = tab_Left;
 			oWordControl
 				.onButtonTabsDraw();
 		}
@@ -1316,13 +1309,13 @@ function CEditorPage(api)
 		_ctx.strokeStyle = "#3E3E3E";
 
 		_ctx.lineWidth = 2;
-		if (this.m_nTabsType == AscCommon.g_tabtype_left)
+		if (this.m_nTabsType == tab_Left)
 		{
 			_ctx.moveTo(8, 9);
 			_ctx.lineTo(8, 14);
 			_ctx.lineTo(13, 14);
 		}
-		else if (this.m_nTabsType == AscCommon.g_tabtype_center)
+		else if (this.m_nTabsType == tab_Center)
 		{
 			_ctx.moveTo(6, 14);
 			_ctx.lineTo(14, 14);
@@ -1735,7 +1728,7 @@ function CEditorPage(api)
 
 		if (!oWordControl.IsUpdateOverlayOnEndCheck)
 		{
-			if (oWordControl.m_oDrawingDocument.ContentControlsCheckLast())
+			if (oWordControl.m_oDrawingDocument.contentControls && oWordControl.m_oDrawingDocument.contentControls.ContentControlsCheckLast())
 				oWordControl.OnUpdateOverlay();
 		}
 
@@ -1774,6 +1767,14 @@ function CEditorPage(api)
 		oWordControl.m_oLogicDocument.OnMouseMove(global_mouseEvent, pos.X, pos.Y, pos.Page);
 		oWordControl.EndUpdateOverlay();
 	};
+
+	this.UnlockCursorTypeOnMouseUp = function()
+	{
+		if (this.m_oApi.isDrawTablePen || this.m_oApi.isDrawTableErase)
+			return;
+		this.m_oDrawingDocument.UnlockCursorType();
+	};
+
 	this.onMouseUp    = function(e, bIsWindow, isTouch)
 	{
 		oThis.m_oApi.checkLastWork();
@@ -1831,7 +1832,7 @@ function CEditorPage(api)
 		if (oWordControl.m_oDrawingDocument.IsFreezePage(pos.Page))
 			return;
 
-		oWordControl.m_oDrawingDocument.UnlockCursorType();
+		oWordControl.UnlockCursorTypeOnMouseUp();
 
 		oWordControl.StartUpdateOverlay();
 
@@ -1841,13 +1842,6 @@ function CEditorPage(api)
 		var is_drawing = oWordControl.m_oDrawingDocument.checkMouseUp_Drawing(pos);
 		if (is_drawing === true)
 			return;
-
-		var is_drawing_on_up = oWordControl.m_oDrawingDocument.checkMouseDown_DrawingOnUp(pos);
-		if (is_drawing_on_up)
-		{
-			// не посылаем в документ.
-			return;
-		}
 
 		if (null != oWordControl.m_oDrawingDocument.m_oDocumentRenderer)
 		{
@@ -1973,7 +1967,7 @@ function CEditorPage(api)
 		if (oWordControl.m_oDrawingDocument.IsFreezePage(pos.Page))
 			return;
 
-		oWordControl.m_oDrawingDocument.UnlockCursorType();
+		oWordControl.UnlockCursorTypeOnMouseUp();
 
 		oWordControl.StartUpdateOverlay();
 
@@ -3052,7 +3046,16 @@ function CEditorPage(api)
 				}
 			}
 
-			drDoc.DrawContentControlsTrack(overlay);
+			drDoc.contentControls && drDoc.contentControls.DrawContentControlsTrack(overlay);
+
+            if (drDoc.placeholders.objects.length > 0)
+            {
+                for (var indP = drDoc.m_lDrawingFirst; indP <= drDoc.m_lDrawingEnd; indP++)
+                {
+                    var _page = drDoc.m_arrPages[indP];
+                    drDoc.placeholders.draw(overlay, indP, _page.drawingPage, _page.width_mm, _page.height_mm);
+                }
+            }
 
 			if (drDoc.TableOutlineDr.bIsTracked)
 			{
@@ -3084,6 +3087,20 @@ function CEditorPage(api)
 
 				drDoc.AutoShapesTrack.PageIndex       = _oldPage;
 				drDoc.AutoShapesTrack.CurrentPageInfo = _oldCurPageInfo;
+			}
+			
+			if (this.m_oApi.isDrawTablePen || this.m_oApi.isDrawTableErase)
+			{
+				var logicObj = this.m_oLogicDocument.DrawTableMode;
+				if (logicObj.Start)
+				{
+					var drObject = null;
+					if (logicObj.Table)
+						drObject = logicObj.Table.GetDrawLine(logicObj.StartX, logicObj.StartY,
+							logicObj.EndX, logicObj.EndY,
+							logicObj.TablePageStart, logicObj.TablePageEnd, this.m_oApi.isDrawTablePen);
+					drDoc.DrawCustomTableMode(overlay, drObject, logicObj, this.m_oApi.isDrawTablePen);
+				}
 			}
 
 			drDoc.DrawHorVerAnchor();

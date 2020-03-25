@@ -342,7 +342,7 @@ function FD_FontDictionary()
 
     this.ChangeGlyphsMap = {
         "Symbol" : { Name : "OpenSymbol", IsSymbolSrc : true, MapSrc : [0xB7, 0xA8], MapDst : [0xE12C, 0xE442] },
-        "Wingdings" : { Name : "OpenSymbol", IsSymbolSrc : true, MapSrc : [0x76, 0xD8, 0xA7, 0xFC, 0x71], MapDst : [0xE441, 0xE25F, 0xE46F, 0xE330, 0x2751] }
+        "Wingdings" : { Name : "OpenSymbol", IsSymbolSrc : true, MapSrc : [0x76, 0x77, 0xD8, 0xA7, 0xFC, 0x71], MapDst : [0xE441, 0xE442, 0xE25F, 0xE46F, 0xE330, 0x2751] }
     };
 	
 	this.MainUnicodeRanges = {
@@ -2935,6 +2935,7 @@ function CApplicationFonts()
                 return objDst.MapDst[i];
             }
         }
+        return src;
     };
 
     this.GetFontFile = function(name, lStyle)

@@ -69,6 +69,8 @@ AscDFH.changesFactory[AscDFH.historyitem_Section_Footnote_Pos]        = CChanges
 AscDFH.changesFactory[AscDFH.historyitem_Section_Footnote_NumStart]   = CChangesSectionFootnoteNumStart;
 AscDFH.changesFactory[AscDFH.historyitem_Section_Footnote_NumRestart] = CChangesSectionFootnoteNumRestart;
 AscDFH.changesFactory[AscDFH.historyitem_Section_Footnote_NumFormat]  = CChangesSectionFootnoteNumFormat;
+AscDFH.changesFactory[AscDFH.historyitem_Section_PageMargins_Gutter]  = CChangesSectionPageMarginsGutter;
+AscDFH.changesFactory[AscDFH.historyitem_Section_Gutter_RTL]          = CChangesSectionGutterRTL;
 
 //----------------------------------------------------------------------------------------------------------------------
 // Карта зависимости изменений
@@ -104,6 +106,9 @@ AscDFH.changesRelationMap[AscDFH.historyitem_Section_Footnote_Pos]        = [Asc
 AscDFH.changesRelationMap[AscDFH.historyitem_Section_Footnote_NumStart]   = [AscDFH.historyitem_Section_Footnote_NumStart];
 AscDFH.changesRelationMap[AscDFH.historyitem_Section_Footnote_NumRestart] = [AscDFH.historyitem_Section_Footnote_NumRestart];
 AscDFH.changesRelationMap[AscDFH.historyitem_Section_Footnote_NumFormat]  = [AscDFH.historyitem_Section_Footnote_NumFormat];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_PageMargins_Gutter]  = [AscDFH.historyitem_Section_PageMargins_Gutter];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_Gutter_RTL]          = [AscDFH.historyitem_Section_Gutter_RTL];
+
 //----------------------------------------------------------------------------------------------------------------------
 
 
@@ -866,4 +871,34 @@ CChangesSectionFootnoteNumFormat.prototype.Type = AscDFH.historyitem_Section_Foo
 CChangesSectionFootnoteNumFormat.prototype.private_SetValue = function(Value)
 {
 	this.Class.FootnotePr.NumFormat = Value;
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseDoubleValue}
+ */
+function CChangesSectionPageMarginsGutter(Class, Old, New)
+{
+	AscDFH.CChangesBaseDoubleValue.call(this, Class, Old, New);
+}
+CChangesSectionPageMarginsGutter.prototype = Object.create(AscDFH.CChangesBaseDoubleValue.prototype);
+CChangesSectionPageMarginsGutter.prototype.constructor = CChangesSectionPageMarginsGutter;
+CChangesSectionPageMarginsGutter.prototype.Type = AscDFH.historyitem_Section_PageMargins_Gutter;
+CChangesSectionPageMarginsGutter.prototype.private_SetValue = function(Value)
+{
+	this.Class.PageMargins.Gutter = Value;
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolValue}
+ */
+function CChangesSectionGutterRTL(Class, Old, New)
+{
+	AscDFH.CChangesBaseBoolValue.call(this, Class, Old, New);
+}
+CChangesSectionGutterRTL.prototype = Object.create(AscDFH.CChangesBaseBoolValue.prototype);
+CChangesSectionGutterRTL.prototype.constructor = CChangesSectionGutterRTL;
+CChangesSectionGutterRTL.prototype.Type = AscDFH.historyitem_Section_Gutter_RTL;
+CChangesSectionGutterRTL.prototype.private_SetValue = function(Value)
+{
+	this.Class.GutterRTL = Value;
 };

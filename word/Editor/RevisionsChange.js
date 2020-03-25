@@ -41,6 +41,7 @@
  * Класс для отображения изменения сделанного в режиме рецензирования
  * @constructor
  */
+var c_oAscRevisionsChangeType = Asc.c_oAscRevisionsChangeType;
 function CRevisionsChange()
 {
 	this.Type      = c_oAscRevisionsChangeType.Unknown;

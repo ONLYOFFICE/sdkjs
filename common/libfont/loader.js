@@ -227,4 +227,28 @@
 
     window['AscFonts'].raster_memory = new CRasterMemory();
 
+    window['AscFonts'].registeredFontManagers = [];
+
+	window['AscFonts'].getDefaultBlitting = function()
+    {
+		return (AscCommon.AscBrowser.isIE && !AscCommon.AscBrowser.isArm) ? true : false;
+    };
+	window['AscFonts'].setDefaultBlitting = function(value)
+	{
+	    var defaultValue = window['AscFonts'].getDefaultBlitting();
+	    var newValue = value ? defaultValue : !defaultValue;
+	    if (window['AscFonts'].use_map_blitting === newValue)
+	        return;
+
+        window['AscFonts'].use_map_blitting = newValue;
+		var arrManagers = window['AscFonts'].registeredFontManagers;
+	    for (var i = 0, count = arrManagers.length; i < count; i++)
+        {
+            arrManagers[i].ClearFontsRasterCache();
+            arrManagers[i].InitializeRasterMemory();
+        }
+	};
+
+    window['AscFonts'].use_map_blitting = window['AscFonts'].getDefaultBlitting();
+
 })(window, undefined);

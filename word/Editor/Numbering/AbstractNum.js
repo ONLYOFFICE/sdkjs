@@ -328,6 +328,32 @@ CAbstractNum.prototype.Refresh_RecalcData = function(Data)
 		arrAllParagraphs[nIndex].Refresh_RecalcData({Type : AscDFH.historyitem_Paragraph_Numbering});
 	}
 };
+CAbstractNum.prototype.Document_Is_SelectionLocked = function(nCheckType)
+{
+	return this.IsSelectionLocked(nCheckType);
+};
+CAbstractNum.prototype.IsSelectionLocked = function(nCheckType)
+{
+	switch (nCheckType)
+	{
+		case AscCommon.changestype_Paragraph_Content:
+		case AscCommon.changestype_Paragraph_Properties:
+		case AscCommon.changestype_Paragraph_AddText:
+		case AscCommon.changestype_Paragraph_TextProperties:
+		case AscCommon.changestype_ContentControl_Add:
+		{
+			this.Lock.Check(this.Get_Id());
+			break;
+		}
+		case AscCommon.changestype_Document_Content:
+		case AscCommon.changestype_Document_Content_Add:
+		case AscCommon.changestype_Image_Properties:
+		{
+			AscCommon.CollaborativeEditing.Add_CheckLock(true);
+			break;
+		}
+	}
+};
 //----------------------------------------------------------------------------------------------------------------------
 // Функции для работы с совместным редактирования
 //----------------------------------------------------------------------------------------------------------------------

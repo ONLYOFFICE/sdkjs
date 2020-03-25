@@ -79,9 +79,9 @@
     CLockedCanvas.prototype.hitInPath = function () {
         return false;
     };
-    CLockedCanvas.prototype.copy = function (oIdMap, bSourceFormatting) {
+    CLockedCanvas.prototype.copy = function (oPr) {
         var copy = new CLockedCanvas();
-        return this.copy2(copy, oIdMap, bSourceFormatting);
+        return this.copy2(copy, oPr);
     };
 
     CLockedCanvas.prototype.hitInInnerArea = function (x, y) {

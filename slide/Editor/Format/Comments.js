@@ -31,6 +31,11 @@
  */
 
 "use strict";
+(/**
+ * @param {Window} window
+ * @param {undefined} undefined
+ */
+    function (window, undefined) {
 
 // Import
 var g_oTableId = AscCommon.g_oTableId;
@@ -85,7 +90,7 @@ ParaComment.prototype =
         return this.Id;
     },
 
-    Set_CommentId : function(NewCommentId)
+    SetCommentId : function(NewCommentId)
     {
     },
 
@@ -162,12 +167,17 @@ ParaComment.prototype =
     {
     },
 
-    Can_AddDropCap : function()
+    CanAddDropCap : function()
     {
         return null;
     },
 
-    Get_TextForDropCap : function(DropCapText, UseContentPos, ContentPos, Depth)
+	CheckSelectionForDropCap : function(isUsePos, oEndPos, nDepth)
+	{
+		return true;
+	},
+
+	Get_TextForDropCap : function(DropCapText, UseContentPos, ContentPos, Depth)
     {
     },
 
@@ -272,9 +282,9 @@ ParaComment.prototype =
         return false;
     },
 
-    Check_BreakPageEnd : function(PBChecker)
+    CheckSplitPageOnPageBreak : function(oPBChecker)
     {
-        return true;
+        return false;
     },
 
     Recalculate_CurPos : function(X, Y, CurrentRun, _CurRange, _CurLine, CurPage, UpdateCurPos, UpdateTarget, ReturnTarget)
@@ -311,7 +321,7 @@ ParaComment.prototype =
 //-----------------------------------------------------------------------------------
 // Функции для работы с курсором
 //-----------------------------------------------------------------------------------
-    Is_CursorPlaceable : function()
+    IsCursorPlaceable : function()
     {
         return false;
     },
@@ -487,7 +497,7 @@ ParaComment.prototype.SetParagraph = function(Paragraph)
 {
 	this.Paragraph = Paragraph;
 };
-ParaComment.prototype.Get_CurrentParaPos = function()
+ParaComment.prototype.GetCurrentParaPos = function()
 {
     return new CParaPos(this.StartRange, this.StartLine, 0, 0);
 };
@@ -666,19 +676,19 @@ function CCommentData()
 CCommentData.prototype =
 {
 
-    createDuplicate: function(){
+    createDuplicate: function(bNewGuid){
         var ret = new CCommentData();
         ret.m_sText = this.m_sText;
         ret.m_sTime = this.m_sTime;
         ret.m_sOOTime = this.m_sOOTime;
         ret.m_sUserId = this.m_sUserId;
         ret.m_sUserName = this.m_sUserName;
-        ret.m_sGuid = this.m_sGuid;
+        ret.m_sGuid =  bNewGuid ? AscCommon.CreateGUID() : this.m_sGuid;
         ret.m_sQuoteText = this.m_sQuoteText;
         ret.m_bSolved = this.m_bSolved;
         ret.m_nTimeZoneBias = this.m_nTimeZoneBias;
         for(var i = 0; i < this.m_aReplies.length; ++i){
-            ret.m_aReplies.push(this.m_aReplies[i].createDuplicate());
+            ret.m_aReplies.push(this.m_aReplies[i].createDuplicate(bNewGuid));
         }
         return ret;
     },
@@ -939,8 +949,8 @@ CComment.prototype =
         return AscDFH.historyitem_type_Comment;
     },
 
-    createDuplicate: function(Parent){
-        var oData = this.Data ? this.Data.createDuplicate() : null;
+    createDuplicate: function(Parent, bNewGuid){
+        var oData = this.Data ? this.Data.createDuplicate(bNewGuid) : null;
         var ret = new CComment(Parent, oData);
         ret.setPosition(this.x, this.y);
         return ret;
@@ -1191,6 +1201,18 @@ CComment.prototype =
 
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommon'] = window['AscCommon'] || {};
+
+window['AscCommon'].comments_NoComment = comments_NoComment;
+window['AscCommon'].comments_NonActiveComment = comments_NonActiveComment;
+window['AscCommon'].comments_ActiveComment = comments_ActiveComment;
+
+window['AscCommon'].comment_type_Common = comment_type_Common;
+window['AscCommon'].comment_type_HdrFtr = comment_type_HdrFtr;
+
 window['AscCommon'].CCommentData = CCommentData;
 window['AscCommon'].CComment = CComment;
 window['AscCommon'].ParaComment = ParaComment;
+window['AscCommon'].CCommentAuthor = CCommentAuthor;
+window['AscCommon'].CWriteCommentData = CWriteCommentData;
+
+})(window);

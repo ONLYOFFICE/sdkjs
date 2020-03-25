@@ -39,6 +39,8 @@
 
 var type_BlockLevelSdt = 0x0003;
 
+var c_oAscSdtLockType = Asc.c_oAscSdtLockType;
+
 /**
  * @param oParent - родительский класс
  * @param oLogicDocument {CDocument} - главный класс документа
@@ -64,24 +66,57 @@ function CBlockLevelSdt(oLogicDocument, oParent)
 
 	// Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
 	g_oTableId.Add(this, this.Id);
+
+	this.SkipSpecialLock = false;
 }
 
 CBlockLevelSdt.prototype = Object.create(CDocumentContentElementBase.prototype);
 CBlockLevelSdt.prototype.constructor = CBlockLevelSdt;
 
-CBlockLevelSdt.prototype.Copy = function(Parent)
+CBlockLevelSdt.prototype.IsInlineLevel = function()
+{
+	return false;
+};
+CBlockLevelSdt.prototype.IsBlockLevel = function()
+{
+	return true;
+};
+CBlockLevelSdt.prototype.Copy = function(Parent, DrawingDocument, oPr)
 {
 	var oNew = new CBlockLevelSdt(this.LogicDocument, Parent ? Parent : this.Parent);
 
 	if (!this.IsPlaceHolder())
 	{
 		oNew.private_ReplacePlaceHolderWithContent();
-		oNew.Content.Copy2(this.Content);
-		if (oNew.IsEmpty())
-			oNew.private_ReplaceContentWithPlaceHolder();
+		oNew.Content.Copy2(this.Content, oPr);
 	}
 
 	oNew.SetPr(this.Pr);
+
+	if (undefined !== this.Pr.CheckBox)
+		oNew.SetCheckBoxPr(this.Pr.CheckBox);
+
+	if (undefined !== this.Pr.Picture)
+		oNew.SetPicturePr(this.Pr.Picture);
+
+	if (undefined !== this.Pr.ComboBox)
+	{
+		oNew.SetComboBoxPr(this.Pr.ComboBox);
+		oNew.private_UpdatePlaceHolderListContent();
+	}
+
+	if (undefined !== this.Pr.DropDown)
+	{
+		oNew.SetDropDownListPr(this.Pr.DropDown);
+		oNew.private_UpdatePlaceHolderListContent();
+	}
+
+	if (undefined !== this.Pr.Date)
+		oNew.SetDatePickerPr(this.Pr.Date);
+
+	if (oNew.IsEmpty())
+		oNew.private_ReplaceContentWithPlaceHolder();
+
 	return oNew;
 };
 CBlockLevelSdt.prototype.GetType = function()
@@ -120,6 +155,9 @@ CBlockLevelSdt.prototype.Recalculate_Page = function(CurPage)
 	this.Content.RecalcInfo = this.Parent.RecalcInfo;
 
 	var RecalcResult = this.Content.Recalculate_Page(CurPage, true);
+
+	if (recalcresult2_End === RecalcResult && window['AscCommon'].g_specialPasteHelper && window['AscCommon'].g_specialPasteHelper.showButtonIdParagraph === this.GetId())
+		window['AscCommon'].g_specialPasteHelper.SpecialPasteButtonById_Show();
 
 	if (recalcresult2_End === RecalcResult)
 		return recalcresult_NextElement;
@@ -225,7 +263,7 @@ CBlockLevelSdt.prototype.UpdateCursorType = function(X, Y, CurPage)
 		this.LogicDocument.Api.sync_MouseMoveCallback(MMData);
 	}
 
-	this.DrawContentControlsTrack(true);
+	this.DrawContentControlsTrack(true, X, Y, CurPage);
 	return this.Content.UpdateCursorType(X, Y, CurPage);
 };
 CBlockLevelSdt.prototype.Selection_SetStart = function(X, Y, CurPage, MouseEvent, isTableBorder)
@@ -491,10 +529,10 @@ CBlockLevelSdt.prototype.AddTextArt = function(nStyle)
 	this.private_ReplacePlaceHolderWithContent();
 	this.Content.AddTextArt(nStyle);
 };
-CBlockLevelSdt.prototype.AddInlineTable = function(nCols, nRows)
+CBlockLevelSdt.prototype.AddInlineTable = function(nCols, nRows, nMode)
 {
 	this.private_ReplacePlaceHolderWithContent();
-	this.Content.AddInlineTable(nCols, nRows);
+	return this.Content.AddInlineTable(nCols, nRows, nMode);
 };
 CBlockLevelSdt.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlySelection, bOnAddText, isWord)
 {
@@ -527,9 +565,26 @@ CBlockLevelSdt.prototype.Is_Empty = function()
 CBlockLevelSdt.prototype.Add = function(oParaItem)
 {
 	if (oParaItem && oParaItem.Type !== para_TextPr)
+	{
 		this.private_ReplacePlaceHolderWithContent();
+	}
+	else if (oParaItem && oParaItem.Type !== para_TextPr && this.IsPlaceHolder())
+	{
+		var oTempTextPr = this.Pr.TextPr.Copy();
+		oTempTextPr.Merge(oParaItem.Value);
+		this.SetDefaultTextPr(oTempTextPr);
+	}
 
-	return this.Content.AddToParagraph(oParaItem);
+	if (oParaItem && para_TextPr === oParaItem.Type && (this.IsComboBox() || this.IsDropDownList()))
+	{
+		this.Content.SetApplyToAll(true);
+		this.Content.AddToParagraph(oParaItem);
+		this.Content.SetApplyToAll(false);
+	}
+	else
+	{
+		return this.Content.AddToParagraph(oParaItem);
+	}
 };
 CBlockLevelSdt.prototype.PreDelete = function()
 {
@@ -552,6 +607,10 @@ CBlockLevelSdt.prototype.GetCursorPosXY = function()
 CBlockLevelSdt.prototype.StartSelectionFromCurPos = function()
 {
 	this.Content.StartSelectionFromCurPos();
+};
+CBlockLevelSdt.prototype.SetParagraphPr = function(oParaPr)
+{
+	return this.Content.SetParagraphPr(oParaPr);
 };
 CBlockLevelSdt.prototype.SetParagraphAlign = function(Align)
 {
@@ -791,7 +850,7 @@ CBlockLevelSdt.prototype.GetSelectionAnchorPos = function()
 {
 	return this.Content.GetSelectionAnchorPos();
 };
-CBlockLevelSdt.prototype.DrawContentControlsTrack = function(isHover)
+CBlockLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCurPage)
 {
 	if (!this.IsRecalculated())
 		return;
@@ -801,35 +860,50 @@ CBlockLevelSdt.prototype.DrawContentControlsTrack = function(isHover)
 
 	if (Asc.c_oAscSdtAppearance.Hidden === this.GetAppearance() || (this.LogicDocument && this.LogicDocument.IsForceHideContentControlTrack()))
 	{
-		oDrawingDocument.OnDrawContentControl(null, isHover ? c_oContentControlTrack.Hover : c_oContentControlTrack.In);
+		oDrawingDocument.OnDrawContentControl(null, isHover ? AscCommon.ContentControlTrack.Hover : AscCommon.ContentControlTrack.In);
 		return;
 	}
 
-	for (var nCurPage = 0, nPagesCount = this.GetPagesCount(); nCurPage < nPagesCount; ++nCurPage)
+	var oHdrFtr     = this.IsHdrFtr(true);
+	var nHdrFtrPage = oHdrFtr ? oHdrFtr.GetContent().GetAbsolutePage(0) : null;
+
+	for (var nPageIndex = 0, nPagesCount = this.GetPagesCount(); nPageIndex < nPagesCount; ++nPageIndex)
 	{
-		if (this.IsEmptyPage(nCurPage))
+		if (this.IsEmptyPage(nPageIndex))
 			continue;
 
-		var nPageAbs = this.Get_AbsolutePage(nCurPage);
-		var oBounds = this.Content.GetContentBounds(nCurPage);
-		arrRects.push({X : oBounds.Left, Y : oBounds.Top, R : oBounds.Right, B : oBounds.Bottom, Page : nPageAbs});
+		var nPageAbs = this.GetAbsolutePage(nPageIndex);
+		if (null === nHdrFtrPage || nHdrFtrPage === nPageAbs)
+		{
+			var oBounds = this.Content.GetContentBounds(nPageIndex);
+			arrRects.push({X : oBounds.Left, Y : oBounds.Top, R : oBounds.Right, B : oBounds.Bottom, Page : nPageAbs});
+		}
 	}
 
-	var sName      = this.GetAlias();
-	var isBuiltIn  = false;
-	var arrButtons = [];
-
-	if (this.IsBuiltInTableOfContents())
+	if (undefined !== X && undefined !== Y && undefined !== nCurPage)
 	{
-		sName      = AscCommon.translateManager.getValue("Table of Contents");
-		isBuiltIn  = true;
-		arrButtons.push(1);
+		var nPageAbs = this.GetAbsolutePage(nCurPage);
+		var isHit    = false;
+
+		for (var nIndex = 0, nCount = arrRects.length; nIndex < nCount; ++nIndex)
+		{
+			var oRect = arrRects[nIndex];
+			if (nPageAbs === oRect.Page && oRect.X <= X && X <= oRect.R && oRect.Y <= Y && Y <= oRect.B)
+			{
+				isHit = true;
+				break;
+			}
+		}
+
+		if (!isHit)
+			return;
 	}
 
-	oDrawingDocument.OnDrawContentControl(this.GetId(), isHover ? c_oContentControlTrack.Hover : c_oContentControlTrack.In, arrRects, this.Get_ParentTextTransform(), sName, isBuiltIn, arrButtons, this.GetColor());
+	oDrawingDocument.OnDrawContentControl(this, isHover ? AscCommon.ContentControlTrack.Hover : AscCommon.ContentControlTrack.In, arrRects);
 };
 CBlockLevelSdt.prototype.AddContentControl = function(nContentControlType)
 {
+	this.private_ReplacePlaceHolderWithContent();
 	return this.Content.AddContentControl(nContentControlType);
 };
 CBlockLevelSdt.prototype.RecalculateMinMaxContentWidth = function(isRotated)
@@ -856,9 +930,13 @@ CBlockLevelSdt.prototype.LoadRecalculateObject = function(RecalcObj)
 {
 	return this.Content.LoadRecalculateObject(RecalcObj);
 };
-CBlockLevelSdt.prototype.Set_ApplyToAll = function(bValue)
+CBlockLevelSdt.prototype.SetApplyToAll = function(bValue)
 {
-	this.Content.Set_ApplyToAll(bValue);
+	this.Content.SetApplyToAll(bValue);
+};
+CBlockLevelSdt.prototype.IsApplyToAll = function()
+{
+	return this.Content.IsApplyToAll();
 };
 CBlockLevelSdt.prototype.RecalculateAllTables = function()
 {
@@ -896,6 +974,10 @@ CBlockLevelSdt.prototype.GetAllContentControls = function(arrContentControls)
 CBlockLevelSdt.prototype.IsSelectedAll = function()
 {
 	return this.Content.IsSelectedAll();
+};
+CBlockLevelSdt.prototype.IsApplyToAll = function()
+{
+	return this.Content.IsApplyToAll();
 };
 CBlockLevelSdt.prototype.GetLastRangeVisibleBounds = function()
 {
@@ -1103,6 +1185,11 @@ CBlockLevelSdt.prototype.GetAllMaths = function(AllMaths)
 {
 	return this.Content.GetAllMaths(AllMaths);
 };
+
+CBlockLevelSdt.prototype.GetAllSeqFieldsByType = function(sType, aFields)
+{
+	return this.Content.GetAllSeqFieldsByType(sType, aFields);
+};
 CBlockLevelSdt.prototype.Get_ParentTextTransform = function()
 {
 	return this.Parent.Get_ParentTextTransform();
@@ -1241,6 +1328,26 @@ CBlockLevelSdt.prototype.SetPr = function(oPr)
 	if (undefined !== oPr.Color)
 		this.SetColor(oPr.Color);
 };
+/**
+ * Выставляем настройки текста по умолчанию для данного контрола
+ * @param {CTextPr} oTextPr
+ */
+CBlockLevelSdt.prototype.SetDefaultTextPr = function(oTextPr)
+{
+	if (oTextPr && !this.Pr.TextPr.IsEqual(oTextPr))
+	{
+		History.Add(new CChangesSdtPrTextPr(this, this.Pr.TextPr, oTextPr));
+		this.Pr.TextPr = oTextPr;
+	}
+};
+/**
+ * Получаем настройки для текста по умолчанию
+ * @returns {CTextPr}
+ */
+CBlockLevelSdt.prototype.GetDefaultTextPr = function()
+{
+	return this.Pr.TextPr;
+};
 CBlockLevelSdt.prototype.SetAlias = function(sAlias)
 {
 	if (sAlias !== this.Pr.Alias)
@@ -1353,36 +1460,19 @@ CBlockLevelSdt.prototype.SetContentControlPr = function(oPr)
 	if (!oPr || this.IsBuiltInTableOfContents())
 		return;
 
-	if (undefined !== oPr.Tag)
-		this.SetTag(oPr.Tag);
+	if (oPr && !(oPr instanceof CContentControlPr))
+	{
+		var oTemp = new CContentControlPr(c_oAscSdtLockType.Block);
+		oTemp.FillFromObject(oPr);
+		oPr = oTemp;
+	}
 
-	if (undefined !== oPr.Id)
-		this.SetContentControlId(oPr.Id);
-
-	if (undefined !== oPr.Lock)
-		this.SetContentControlLock(oPr.Lock);
-
-	if (undefined !== oPr.Alias)
-		this.SetAlias(oPr.Alias);
-
-	if (undefined !== oPr.Appearance)
-		this.SetAppearance(oPr.Appearance);
-
-	if (undefined !== oPr.Color)
-		this.SetColor(oPr.Color);
+	oPr.SetToContentControl(this);
 };
 CBlockLevelSdt.prototype.GetContentControlPr = function()
 {
 	var oPr = new CContentControlPr(c_oAscSdtLevelType.Block);
-
-	oPr.Tag        = this.GetTag();
-	oPr.Id         = this.Pr.Id;
-	oPr.Lock       = this.Pr.Lock;
-	oPr.InternalId = this.GetId();
-	oPr.Alias      = this.GetAlias();
-	oPr.Appearance = this.GetAppearance();
-	oPr.Color      = this.GetColor();
-
+	oPr.FillFromContentControl(this);
 	return oPr;
 };
 CBlockLevelSdt.prototype.Restart_CheckSpelling = function()
@@ -1440,6 +1530,9 @@ CBlockLevelSdt.prototype.CanBeDeleted = function()
  */
 CBlockLevelSdt.prototype.CanBeEdited = function()
 {
+	if (!this.SkipSpecialLock && (this.IsCheckBox() || this.IsPicture() || this.IsDropDownList()))
+		return false;
+
 	return (undefined === this.Pr.Lock || c_oAscSdtLockType.Unlocked === this.Pr.Lock || c_oAscSdtLockType.SdtLocked === this.Pr.Lock);
 };
 /**
@@ -1455,24 +1548,14 @@ CBlockLevelSdt.prototype.private_ReplacePlaceHolderWithContent = function()
 	if (!this.IsPlaceHolder())
 		return;
 
-	var oTextPr = null;
-	if (this.Content.GetElementsCount() && this.Content.GetElement(0).IsParagraph())
-	{
-		this.Content.GetElement(0).MoveCursorToStartPos();
-		oTextPr = this.Content.GetElement(0).GetFirstRunPr();
-	}
-
 	this.Content.RemoveFromContent(0, this.Content.GetElementsCount(), false);
 
 	var oParagraph = new Paragraph(this.LogicDocument ? this.LogicDocument.GetDrawingDocument() : null, this.Content, false);
 	oParagraph.Correct_Content();
 
-	if (oTextPr)
-	{
-		oParagraph.SelectAll();
-		oParagraph.ApplyTextPr(oTextPr);
-		oParagraph.RemoveSelection();
-	}
+	oParagraph.SelectAll();
+	oParagraph.ApplyTextPr(this.Pr.TextPr);
+	oParagraph.RemoveSelection();
 
 	this.Content.AddToContent(0, oParagraph);
 	this.Content.RemoveSelection();
@@ -1508,6 +1591,691 @@ CBlockLevelSdt.prototype.ReplacePlaceHolderWithContent = function()
 CBlockLevelSdt.prototype.CheckRunContent = function(fCheck)
 {
 	return this.Content.CheckRunContent(fCheck);
+};
+CBlockLevelSdt.prototype.IsTableCellSelection = function()
+{
+	return this.Content.IsTableCellSelection();
+};
+/**
+ * Проверяем, является ли данный контейнер чекбоксом
+ * @returns {boolean}
+ */
+CBlockLevelSdt.prototype.IsCheckBox = function()
+{
+	return !!(this.Pr.CheckBox);
+};
+/**
+ * Выключаем проверку невозможности редактирования данного объекта, из-за того что это чекбокс
+ * @param isSkip {boolean}
+ */
+CBlockLevelSdt.prototype.SkipSpecialContentControlLock = function(isSkip)
+{
+	this.SkipSpecialLock = isSkip;
+};
+/**
+ * @retuns {boolean}
+ */
+CBlockLevelSdt.prototype.IsSkipSpecialContentControlLock = function()
+{
+	return this.SkipSpecialLock;
+};
+/**
+ * Применяем заданные настройки для чекобокса
+ * @param {CSdtCheckBoxPr} oCheckBoxPr
+ * @param {CTextPr} oTextPr
+ */
+CBlockLevelSdt.prototype.ApplyCheckBoxPr = function(oCheckBoxPr, oTextPr)
+{
+	if (undefined === this.Pr.CheckBox || !this.Pr.CheckBox.IsEqual(oCheckBoxPr))
+	{
+		if (this.IsPlaceHolder())
+			this.private_ReplacePlaceHolderWithContent(false);
+
+		this.SetCheckBoxPr(oCheckBoxPr);
+	}
+
+	if (this.IsCheckBox())
+	{
+		if (oTextPr)
+		{
+			if (this.Content.GetElementsCount() >= 1 && this.Content.GetElement(0).IsParagraph())
+			{
+				var oPara = this.Content.GetElement(0);
+
+				if (oPara.Content[0] && para_Run === oPara.Content[0].Type)
+					oPara.Content[0].SetPr(oTextPr);
+			}
+		}
+
+		this.private_UpdateCheckBoxContent();
+	}
+};
+/**
+ * Выставляем настройки чекбокса
+ * @param {CSdtCheckBoxPr} oCheckBoxPr
+ */
+CBlockLevelSdt.prototype.SetCheckBoxPr = function(oCheckBoxPr)
+{
+	if (undefined === this.Pr.CheckBox || !this.Pr.CheckBox.IsEqual(oCheckBoxPr))
+	{
+		History.Add(new CChangesSdtPrCheckBox(this, this.Pr.CheckBox, oCheckBoxPr));
+		this.Pr.CheckBox = oCheckBoxPr;
+	}
+};
+/**
+ * Получаем настройки для чекбокса
+ * @returns {?CSdtCheckBoxPr}
+ */
+CBlockLevelSdt.prototype.GetCheckBoxPr = function()
+{
+	return this.Pr.CheckBox;
+};
+/**
+ * Выставляем состояние чекбокса
+ */
+CBlockLevelSdt.prototype.ToggleCheckBox = function()
+{
+	if (!this.IsCheckBox())
+		return;
+
+	var isChecked = !this.Pr.CheckBox.Checked;
+	History.Add(new CChangesSdtPrCheckBoxChecked(this, this.Pr.CheckBox.Checked, isChecked));
+	this.Pr.CheckBox.Checked = isChecked;
+
+	this.private_UpdateCheckBoxContent();
+};
+CBlockLevelSdt.prototype.private_UpdateCheckBoxContent = function()
+{
+	var isChecked = this.Pr.CheckBox.Checked;
+
+	var oRun;
+	if (this.LogicDocument && this.LogicDocument.IsTrackRevisions())
+	{
+		var oFirstParagraph = this.GetFirstParagraph();
+		var oFirstRun       = oFirstParagraph ? oFirstParagraph.GetFirstRun() : null;
+		var oTextPr         = oFirstRun ? oFirstRun.GetDirectTextPr() : new CTextPr();
+
+		this.SelectAll();
+		this.Remove();
+		this.RemoveSelection();
+
+		oFirstParagraph = null;
+
+		var oDocContent = this.Content;
+		if (oDocContent.Content.length <= 0 || !oDocContent.Content[0].IsParagraph())
+		{
+			oFirstParagraph = new Paragraph(this.LogicDocument.GetDrawingDocument(), oDocContent);
+			oDocContent.AddToContent(0, oFirstParagraph);
+		}
+		else
+		{
+			oFirstParagraph = oDocContent.Content[0];
+		}
+		oFirstParagraph.SetReviewType(reviewtype_Common);
+
+		oRun = new ParaRun(oFirstParagraph, false);
+		oRun.SetPr(oTextPr);
+		oFirstParagraph.AddToContent(0, oRun);
+
+		if (3 === oFirstParagraph.Content.length
+			&& para_Run === oFirstParagraph.Content[0].Type
+			&& para_Run === oFirstParagraph.Content[1].Type
+			&& reviewtype_Add === oFirstParagraph.Content[0].GetReviewType()
+			&& reviewtype_Remove === oFirstParagraph.Content[1].GetReviewType()
+			&& oFirstParagraph.Content[0].GetReviewInfo().IsCurrentUser()
+			&& oFirstParagraph.Content[1].GetReviewInfo().IsCurrentUser()
+			&& ((isChecked
+			&& String.fromCharCode(this.Pr.CheckBox.CheckedSymbol) === oFirstParagraph.Content[1].GetText())
+			|| (!isChecked
+			&& String.fromCharCode(this.Pr.CheckBox.UncheckedSymbol) === oFirstParagraph.Content[1].GetText())))
+		{
+			oFirstParagraph.RemoveFromContent(1, 1);
+			oRun.SetReviewType(reviewtype_Common);
+		}
+	}
+	else
+	{
+		var oPara = this.Content.MakeSingleParagraphContent();
+		oRun  = oPara.MakeSingleRunParagraph();
+		oRun.ClearContent();
+	}
+
+	oRun.AddText(String.fromCharCode(isChecked ? this.Pr.CheckBox.CheckedSymbol : this.Pr.CheckBox.UncheckedSymbol));
+
+	if (isChecked && this.Pr.CheckBox.CheckedFont)
+	{
+		oRun.Set_RFonts_Ascii({Index : -1, Name : this.Pr.CheckBox.CheckedFont});
+		oRun.Set_RFonts_HAnsi({Index : -1, Name : this.Pr.CheckBox.CheckedFont});
+		oRun.Set_RFonts_CS({Index : -1, Name : this.Pr.CheckBox.CheckedFont});
+		oRun.Set_RFonts_EastAsia({Index : -1, Name : this.Pr.CheckBox.CheckedFont});
+	}
+	else if (!isChecked && this.Pr.CheckBox.UncheckedFont)
+	{
+		oRun.Set_RFonts_Ascii({Index : -1, Name : this.Pr.CheckBox.UncheckedFont});
+		oRun.Set_RFonts_HAnsi({Index : -1, Name : this.Pr.CheckBox.UncheckedFont});
+		oRun.Set_RFonts_CS({Index : -1, Name : this.Pr.CheckBox.UncheckedFont});
+		oRun.Set_RFonts_EastAsia({Index : -1, Name : this.Pr.CheckBox.UncheckedFont});
+	}
+};
+/**
+ * Проверяем, является ли данный класс специальным контейнером для картинки
+ * @returns {boolean}
+ */
+CBlockLevelSdt.prototype.IsPicture = function()
+{
+	return (!!this.Pr.Picture);
+};
+/**
+ * Выставляем настройку того, что это контент контрол с картинкой
+ * @param isPicture {boolean}
+ */
+CBlockLevelSdt.prototype.SetPicturePr = function(isPicture)
+{
+	if (this.Pr.Picture !== isPicture)
+	{
+		History.Add(new CChangesSdtPrPicture(this, this.Pr.Picture, isPicture));
+		this.Pr.Picture = isPicture;
+	}
+};
+CBlockLevelSdt.prototype.private_UpdatePictureContent = function()
+{
+	if (!this.IsPicture())
+		return;
+
+	var arrDrawings = this.GetAllDrawingObjects();
+
+	if (this.IsPlaceHolder())
+		this.ReplacePlaceHolderWithContent();
+
+	var oDrawing;
+	for (var nIndex = 0, nCount = arrDrawings.length; nIndex < nCount; ++nIndex)
+	{
+		if (arrDrawings[nIndex].IsPicture())
+		{
+			oDrawing = arrDrawings[nIndex];
+			break;
+		}
+	}
+
+	var oPara = this.Content.MakeSingleParagraphContent();
+	var oRun  = oPara.MakeSingleRunParagraph();
+
+	if (!oDrawing)
+	{
+		var oDrawingObjects = this.LogicDocument ? this.LogicDocument.DrawingObjects : null;
+		if (!oDrawingObjects)
+			return;
+
+		var nW = 50;
+		var nH = 50;
+
+		oDrawing   = new ParaDrawing(nW, nH, null, oDrawingObjects, this.LogicDocument, null);
+		var oImage = oDrawingObjects.createImage(AscCommon.g_sWordPlaceholderImage, 0, 0, nW, nH);
+		oImage.setParent(oDrawing);
+		oDrawing.Set_GraphicObject(oImage);
+	}
+
+	oRun.AddToContent(0, oDrawing);
+};
+/**
+ * Применяме к данному контейнеру настройку того, что это специальный контейнер для картинок
+ * @param isPicture {boolean}
+ */
+CBlockLevelSdt.prototype.ApplyPicturePr = function(isPicture)
+{
+	this.SetPicturePr(isPicture);
+	this.private_UpdatePictureContent();
+};
+/**
+ * Выделяем изображение, если это специальный контейнер для изображения
+ * @returns {boolean}
+ */
+CBlockLevelSdt.prototype.SelectPicture = function()
+{
+	if (!this.IsPicture())
+		return false;
+
+	var arrDrawings = this.GetAllDrawingObjects();
+	if (arrDrawings.length <= 0)
+		return false;
+
+	this.Content.Select_DrawingObject(arrDrawings[0].GetId());
+	return true;
+};
+/**
+ * Проверяем является ли данный контейнер специальным для поля со списком
+ * @returns {boolean}
+ */
+CBlockLevelSdt.prototype.IsComboBox = function()
+{
+	return (undefined !== this.Pr.ComboBox);
+};
+/**
+ * @param oPr {CSdtComboBoxPr}
+ */
+CBlockLevelSdt.prototype.SetComboBoxPr = function(oPr)
+{
+	if (undefined === this.Pr.ComboBox || !this.Pr.ComboBox.IsEqual(oPr))
+	{
+		History.Add(new CChangesSdtPrComboBox(this, this.Pr.ComboBox, oPr));
+		this.Pr.ComboBox = oPr;
+	}
+};
+/**
+ * @returns {?CSdtComboBoxPr}
+ */
+CBlockLevelSdt.prototype.GetComboBoxPr = function()
+{
+	return this.Pr.ComboBox;
+};
+/**
+ * Проверяем является ли данный контейнер специальным для выпадающего списка
+ * @returns {boolean}
+ */
+CBlockLevelSdt.prototype.IsDropDownList = function()
+{
+	return (undefined !== this.Pr.DropDown);
+};
+/**
+ * @param oPr {CSdtComboBoxPr}
+ */
+CBlockLevelSdt.prototype.SetDropDownListPr = function(oPr)
+{
+	if (undefined === this.Pr.DropDown || !this.Pr.DropDown.IsEqual(oPr))
+	{
+		History.Add(new CChangesSdtPrDropDownList(this, this.Pr.DropDown, oPr));
+		this.Pr.DropDown = oPr;
+	}
+};
+/**
+ * @returns {?CSdtComboBoxPr}
+ */
+CBlockLevelSdt.prototype.GetDropDownListPr = function()
+{
+	return this.Pr.DropDown;
+};
+/**
+ * Применяем к данному контейнеру настройки того, что это специальный контйенер для поля со списком
+ * @param oPr {CSdtComboBoxPr}
+ */
+CBlockLevelSdt.prototype.ApplyComboBoxPr = function(oPr)
+{
+	this.SetComboBoxPr(oPr);
+	this.SelectListItem();
+};
+/**
+ * Применяем к данному контейнеру настройки того, что это специальный контейнер для выпадающего списка
+ * @param oPr {CSdtComboBoxPr}
+ */
+CBlockLevelSdt.prototype.ApplyDropDownListPr = function(oPr)
+{
+	this.SetDropDownListPr(oPr);
+	this.SelectListItem();
+};
+/**
+ * Заполняем контейнер текстом в зависимости от выбранного элемента в списке
+ * @param sValue {string}
+ */
+CBlockLevelSdt.prototype.SelectListItem = function(sValue)
+{
+	var oList = null;
+	if (this.IsComboBox())
+		oList = this.Pr.ComboBox;
+	else if (this.IsDropDownList())
+		oList = this.Pr.DropDown;
+
+	if (!oList)
+		return;
+
+	var sText = oList.GetTextByValue(sValue);
+
+	if (this.LogicDocument && this.LogicDocument.IsTrackRevisions())
+	{
+		if (!sText && this.IsPlaceHolder())
+		{
+			this.private_UpdatePlaceHolderListContent();
+			return;
+		}
+
+		var oFirstParagraph = this.GetFirstParagraph();
+		var oFirstRun       = oFirstParagraph ? oFirstParagraph.GetFirstRun() : null;
+		var oTextPr         = oFirstRun ? oFirstRun.GetDirectTextPr() : new CTextPr();
+
+		if (!this.IsPlaceHolder())
+		{
+			this.SelectAll();
+			this.Remove();
+			this.RemoveSelection();
+		}
+		else
+		{
+			this.ReplacePlaceHolderWithContent();
+		}
+
+		if (!sText && this.IsEmpty())
+		{
+			this.ReplaceContentWithPlaceHolder();
+			this.private_UpdatePlaceHolderListContent();
+		}
+
+		if (sText)
+		{
+			var oRun, oParagraph;
+			if (this.IsEmpty())
+			{
+				oParagraph = this.Content.MakeSingleParagraphContent();
+				if (!oParagraph)
+					return;
+
+				oRun = oParagraph.MakeSingleRunParagraph();
+				if (!oRun)
+					return;
+
+				oRun.SetReviewType(reviewtype_Add);
+			}
+			else
+			{
+				if (this.Content.Content[this.Content.Content.length - 1].IsParagraph())
+				{
+					oParagraph = this.Content.Content[this.Content.Content.length - 1];
+				}
+				else
+				{
+					oParagraph = new Paragraph(this.LogicDocument.GetDrawingDocument(), this.Content);
+					this.Content.AddToParagraph(this.Content.length, oParagraph);
+				}
+
+				oRun = new ParaRun(oParagraph, false);
+				oParagraph.AddToContent(oParagraph.GetContentLength() - 1, oRun);
+			}
+			oParagraph.SetReviewType(reviewtype_Common);
+
+			oRun.SetPr(oTextPr);
+			oRun.AddText(sText);
+		}
+	}
+	else
+	{
+		if (null === sText)
+		{
+			this.private_ReplaceContentWithPlaceHolder();
+			this.private_UpdatePlaceHolderListContent();
+		}
+		else
+		{
+			this.private_ReplacePlaceHolderWithContent();
+			var oRun = this.private_UpdateListContent();
+			if (oRun)
+				oRun.AddText(sText);
+		}
+	}
+};
+CBlockLevelSdt.prototype.private_UpdateListContent = function()
+{
+	if (this.IsPlaceHolder())
+		return null;
+
+	var oParagraph = this.Content.MakeSingleParagraphContent();
+	if (!oParagraph)
+		return null;
+
+	var oRun = oParagraph.MakeSingleRunParagraph();
+	if (!oRun)
+		return null;
+
+	return oRun;
+};
+CBlockLevelSdt.prototype.private_UpdatePlaceHolderListContent = function()
+{
+	var oRun = this.PlaceHolder.MakeSingleRunParagraph();
+	if (!oRun)
+		return;
+
+	oRun.AddText(AscCommon.translateManager.getValue("Choose an item."));
+};
+/**
+ * Проверяем является ли данный контейнер специальным для даты
+ * @returns {boolean}
+ */
+CBlockLevelSdt.prototype.IsDatePicker = function()
+{
+	return (undefined !== this.Pr.Date);
+};
+/**
+ * @param oPr {CSdtDatePickerPr}
+ */
+CBlockLevelSdt.prototype.SetDatePickerPr = function(oPr)
+{
+	if (undefined === this.Pr.Date || !this.Pr.Date.IsEqual(oPr))
+	{
+		var _oPr = oPr ? oPr.Copy() : undefined;
+		History.Add(new CChangesSdtPrDatePicker(this, this.Pr.Date, _oPr));
+		this.Pr.Date = _oPr;
+	}
+};
+/**
+ * @returns {?CSdtDatePickerPr}
+ */
+CBlockLevelSdt.prototype.GetDatePickerPr = function()
+{
+	return this.Pr.Date;
+};
+/**
+ * Применяем к данному контейнеру настройки того, что это специальный контйенер для даты
+ * @param oPr {CSdtDatePickerPr}
+ */
+CBlockLevelSdt.prototype.ApplyDatePickerPr = function(oPr)
+{
+	this.SetDatePickerPr(oPr);
+
+	if (!this.IsDatePicker())
+		return;
+
+	this.private_UpdateDatePickerContent();
+};
+CBlockLevelSdt.prototype.private_UpdateDatePickerContent = function()
+{
+	if (!this.Pr.Date)
+		return;
+
+	if (this.IsPlaceHolder())
+		return this.ReplacePlaceHolderWithContent();
+
+	var oRun;
+	var sText = this.Pr.Date.ToString();
+
+	if (this.LogicDocument && this.LogicDocument.IsTrackRevisions())
+	{
+		if (!sText && this.IsPlaceHolder())
+			return;
+
+		var oFirstParagraph = this.GetFirstParagraph();
+		var oFirstRun       = oFirstParagraph ? oFirstParagraph.GetFirstRun() : null;
+		var oTextPr         = oFirstRun ? oFirstRun.GetDirectTextPr() : new CTextPr();
+
+		if (!this.IsPlaceHolder())
+		{
+			this.SelectAll();
+			this.Remove();
+			this.RemoveSelection();
+		}
+		else
+		{
+			this.ReplacePlaceHolderWithContent();
+		}
+
+		if (!sText && this.IsEmpty())
+		{
+			this.ReplaceContentWithPlaceHolder();
+			this.private_UpdatePlaceHolderListContent();
+		}
+
+		if (sText)
+		{
+			var oRun, oParagraph;
+			if (this.IsEmpty())
+			{
+				oParagraph = this.Content.MakeSingleParagraphContent();
+				if (!oParagraph)
+					return;
+
+				oRun = oParagraph.MakeSingleRunParagraph();
+				if (!oRun)
+					return;
+
+				oRun.SetReviewType(reviewtype_Add);
+			}
+			else
+			{
+				if (this.Content.Content[this.Content.Content.length - 1].IsParagraph())
+				{
+					oParagraph = this.Content.Content[this.Content.Content.length - 1];
+				}
+				else
+				{
+					oParagraph = new Paragraph(this.LogicDocument.GetDrawingDocument(), this.Content);
+					this.Content.AddToParagraph(this.Content.length, oParagraph);
+				}
+
+				oRun = new ParaRun(oParagraph, false);
+				oParagraph.AddToContent(oParagraph.GetContentLength() - 1, oRun);
+			}
+			oParagraph.SetReviewType(reviewtype_Common);
+
+			oRun.SetPr(oTextPr);
+		}
+	}
+	else
+	{
+		var oParagraph = this.Content.MakeSingleParagraphContent();
+		if (!oParagraph)
+			return;
+
+		oRun = oParagraph.MakeSingleRunParagraph();
+		if (!oRun)
+			return;
+	}
+
+	if (oRun)
+		oRun.AddText(sText);
+};
+CBlockLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType, bCheckInner)
+{
+	if (AscCommon.changestype_Document_Content_Add === CheckType && this.Content.IsCursorAtBegin())
+		return AscCommon.CollaborativeEditing.Add_CheckLock(false);
+
+	var isCheckContentControlLock = this.LogicDocument ? this.LogicDocument.IsCheckContentControlsLock() : true;
+
+	if (AscCommon.changestype_Paragraph_TextProperties === CheckType
+		|| ((AscCommon.changestype_Drawing_Props === CheckType || AscCommon.changestype_Image_Properties === CheckType)
+		&& this.IsPicture()))
+	{
+		this.SkipSpecialContentControlLock(true);
+		if (!this.CanBeEdited())
+			AscCommon.CollaborativeEditing.Add_CheckLock(true);
+		this.SkipSpecialContentControlLock(false);
+
+		isCheckContentControlLock = false;
+	}
+
+	var nContentControlLock = this.GetContentControlLock();
+
+	if (AscCommon.changestype_ContentControl_Properties === CheckType)
+		return this.Lock.Check(this.GetId());
+
+	if (AscCommon.changestype_ContentControl_Remove === CheckType)
+		this.Lock.Check(this.GetId());
+
+	if (isCheckContentControlLock
+		&& (AscCommon.changestype_Paragraph_Content === CheckType
+			|| AscCommon.changestype_Paragraph_AddText === CheckType
+			|| AscCommon.changestype_ContentControl_Add === CheckType
+			|| AscCommon.changestype_Remove === CheckType
+			|| AscCommon.changestype_Delete === CheckType
+			|| AscCommon.changestype_Document_Content === CheckType
+			|| AscCommon.changestype_Document_Content_Add === CheckType
+			|| AscCommon.changestype_ContentControl_Remove === CheckType)
+		&& ((this.IsSelectionUse()
+			&& this.IsSelectedAll())
+			|| this.IsApplyToAll()))
+	{
+		var bSelectedOnlyThis = false;
+		// Если это происходит на добавлении текста, тогда проверяем, что выделен только данный элемент
+
+		if (AscCommon.changestype_Remove !== CheckType && AscCommon.changestype_Delete !== CheckType)
+		{
+			var oInfo = this.LogicDocument.GetSelectedElementsInfo();
+			bSelectedOnlyThis = oInfo.GetBlockLevelSdt() === this ? true : false;
+		}
+
+		if (c_oAscSdtLockType.SdtContentLocked === nContentControlLock
+			|| (c_oAscSdtLockType.SdtLocked === nContentControlLock && true !== bSelectedOnlyThis)
+			|| (!this.CanBeEdited() && true === bSelectedOnlyThis))
+		{
+			return AscCommon.CollaborativeEditing.Add_CheckLock(true);
+		}
+		else
+		{
+			AscCommon.CollaborativeEditing.AddContentControlForSkippingOnCheckEditingLock(this);
+			this.Content.Document_Is_SelectionLocked(CheckType, bCheckInner);
+			AscCommon.CollaborativeEditing.RemoveContentControlForSkippingOnCheckEditingLock(this);
+			return;
+		}
+	}
+	else if (isCheckContentControlLock
+		&& !this.CanBeEdited())
+	{
+		return AscCommon.CollaborativeEditing.Add_CheckLock(true);
+	}
+	else
+	{
+		return this.Content.Document_Is_SelectionLocked(CheckType, bCheckInner);
+	}
+};
+CBlockLevelSdt.prototype.CheckContentControlEditingLock = function()
+{
+	var isCheckContentControlLock = this.LogicDocument ? this.LogicDocument.IsCheckContentControlsLock() : true;
+	if (!isCheckContentControlLock)
+		return;
+
+	var nContentControlLock = this.GetContentControlLock();
+
+	if (false === AscCommon.CollaborativeEditing.IsNeedToSkipContentControlOnCheckEditingLock(this)
+		&& (c_oAscSdtLockType.SdtContentLocked === nContentControlLock || c_oAscSdtLockType.ContentLocked === nContentControlLock))
+		return AscCommon.CollaborativeEditing.Add_CheckLock(true);
+
+	if (this.Parent && this.Parent.CheckContentControlEditingLock)
+		this.Parent.CheckContentControlEditingLock();
+};
+/**
+ * Получаем типа данного контейнера
+ * @returns {Asc.c_oAscContentControlSpecificType}
+ */
+CBlockLevelSdt.prototype.GetSpecificType = function()
+{
+	if (this.IsBuiltInTableOfContents())
+		return Asc.c_oAscContentControlSpecificType.TOC;
+
+	if (this.IsCheckBox())
+		return Asc.c_oAscContentControlSpecificType.CheckBox;
+
+	if (this.IsPicture())
+		return Asc.c_oAscContentControlSpecificType.Picture;
+
+	if (this.IsComboBox())
+		return Asc.c_oAscContentControlSpecificType.ComboBox;
+
+	if (this.IsDropDownList())
+		return Asc.c_oAscContentControlSpecificType.DropDownList;
+
+	if (this.IsDatePicker())
+		return Asc.c_oAscContentControlSpecificType.DateTime;
+
+	return Asc.c_oAscContentControlSpecificType.None;
+};
+CBlockLevelSdt.prototype.GetAllTablesOnPage = function(nPageAbs, arrTables)
+{
+	return this.Content.GetAllTablesOnPage(nPageAbs, arrTables);
 };
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

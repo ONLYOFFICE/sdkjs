@@ -1124,7 +1124,7 @@ CDrawingStream.prototype =
 
     DrawLockObjectRect : function(lock_type, x, y, w, h)
     {
-        if (this.IsThumbnail || lock_type == locktype_None || this.IsDemonstrationMode)
+        if (this.IsThumbnail || lock_type == AscCommon.locktype_None || this.IsDemonstrationMode)
             return;
     
         this.Native["PD_DrawLockObjectRect"](lock_type, x, y, w, h);

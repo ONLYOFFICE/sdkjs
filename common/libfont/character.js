@@ -269,6 +269,11 @@
 
 		checkText : function(text, _this, _callback, isCodes, isOnlyAsync, isCheckSymbols)
 		{
+			if(window["NATIVE_EDITOR_ENJINE"])
+			{
+				_callback.call(_this);
+				return false;
+			}
 			if (isCheckSymbols !== false)
 			{
 				if (isCodes !== true)

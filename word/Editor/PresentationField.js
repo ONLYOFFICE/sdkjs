@@ -182,7 +182,7 @@
             {
                 if(this.Paragraph && this.Paragraph.Parent)
                 {
-                    oStylesObject = this.Paragraph.Parent.Get_Styles();
+                    oStylesObject = this.Paragraph.Parent.Get_Styles(0);
                     var nFirstSlideNum = 1;
                     if(oStylesObject.presentation)
                     {
@@ -276,7 +276,7 @@
         }
         else
         {
-            var sFormat = AscCommonWord.oDefaultDateTimeFormat[this.Get_CompiledPr().Lang.Val]
+            var sFormat = AscCommonWord.oDefaultDateTimeFormat[this.Get_CompiledPr().Lang.Val];
             if(sFormat && oDateTimeFormats[sFormat])
             {
                 oFormat = AscCommon.oNumFormatCache.get(oDateTimeFormats[sFormat]);

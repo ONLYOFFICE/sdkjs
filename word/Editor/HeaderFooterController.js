@@ -95,9 +95,9 @@ CHdrFtrController.prototype.EditChart = function(Chart)
 {
 	this.HdrFtr.EditChart(Chart);
 };
-CHdrFtrController.prototype.AddInlineTable = function(Cols, Rows)
+CHdrFtrController.prototype.AddInlineTable = function(nCols, nRows, nMode)
 {
-	this.HdrFtr.AddInlineTable(Cols, Rows);
+	return this.HdrFtr.AddInlineTable(nCols, nRows, nMode);
 };
 CHdrFtrController.prototype.ClearParagraphFormatting = function(isClearParaPr, isClearTextPr)
 {
@@ -498,21 +498,19 @@ CHdrFtrController.prototype.GetColumnSize = function()
 	var CurHdrFtr = this.HdrFtr.CurHdrFtr;
 	if (null !== CurHdrFtr && -1 !== CurHdrFtr.RecalcInfo.CurPage)
 	{
-		var Page   = this.LogicDocument.Pages[CurHdrFtr.RecalcInfo.CurPage];
-		var SectPr = this.LogicDocument.Get_SectPr(Page.Pos);
-
-		var Y      = SectPr.Get_PageMargin_Top();
-		var YLimit = SectPr.Get_PageHeight() - SectPr.Get_PageMargin_Bottom();
-		var X      = SectPr.Get_PageMargin_Left();
-		var XLimit = SectPr.Get_PageWidth() - SectPr.Get_PageMargin_Right();
+		var oPage   = this.LogicDocument.Pages[CurHdrFtr.RecalcInfo.CurPage];
+		var oSectPr = this.LogicDocument.Get_SectPr(oPage.Pos);
 
 		return {
-			W : XLimit - X,
-			H : YLimit - Y
+			W : oSectPr.GetContentFrameWidth(),
+			H : oSectPr.GetContentFrameHeight()
 		};
 	}
 
-	return {W : 0, H : 0};
+	return {
+		W : 0,
+		H : 0
+	};
 };
 CHdrFtrController.prototype.GetCurrentSectionPr = function()
 {
@@ -551,4 +549,12 @@ CHdrFtrController.prototype.GetAllFields = function(isUseSelection, arrFields)
 		return arrFields ? arrFields : [];
 
 	return this.HdrFtr.GetAllFields(isUseSelection, arrFields);
+};
+CHdrFtrController.prototype.IsTableCellSelection = function()
+{
+	return this.HdrFtr.IsTableCellSelection();
+};
+CHdrFtrController.prototype.IsSelectionLocked = function(CheckType)
+{
+	this.HdrFtr.Document_Is_SelectionLocked(CheckType);
 };

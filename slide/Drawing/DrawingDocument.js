@@ -995,6 +995,9 @@ function CDrawingDocument()
 
 	this.isTabButtonShow = true;
 
+    // placeholders
+    this.placeholders = new AscCommon.DrawingPlaceholders(this);
+
 	this.MoveTargetInInputContext = function()
 	{
 		if (AscCommon.g_inputContext)
@@ -1105,6 +1108,9 @@ function CDrawingDocument()
 		{
 			this.m_oWordControl.MobileTouchManager.ClearContextMenu();
 		}
+
+        if (this.TransitionSlide && this.TransitionSlide.IsPlaying())
+			this.TransitionSlide.End(true);
 
 		editor.sendEvent("asc_onDocumentChanged");
 
@@ -1404,103 +1410,104 @@ function CDrawingDocument()
 		if (!bIsChange)
 			return;
 
-		History.TurnOff();
-		var _oldTurn      = editor.isViewMode;
-		editor.isViewMode = true;
 
-		var docContent = new CDocumentContent(this.m_oWordControl.m_oLogicDocument, this.m_oWordControl.m_oDrawingDocument, 0, 0, 1000, 1000, false, false, true);
-		var par        = docContent.Content[0];
+		AscFormat.ExecuteNoHistory(function(){
 
-		par.MoveCursorToStartPos();
+			var _oldTurn      = editor.isViewMode;
+			editor.isViewMode = true;
 
-		par.Set_Pr(new CParaPr());
-		var _textPr        = new CTextPr();
-		_textPr.FontFamily = {Name : "Arial", Index : -1};
+			var docContent = new CDocumentContent(this.m_oWordControl.m_oLogicDocument, this.m_oWordControl.m_oDrawingDocument, 0, 0, 1000, 1000, false, false, true);
+			var par        = docContent.Content[0];
 
-		_textPr.Strikeout = this.GuiLastTextProps.Strikeout;
+			par.MoveCursorToStartPos();
 
-		if (true === this.GuiLastTextProps.Subscript)
-			_textPr.VertAlign = AscCommon.vertalign_SubScript;
-		else if (true === this.GuiLastTextProps.Superscript)
-			_textPr.VertAlign = AscCommon.vertalign_SuperScript;
-		else
-			_textPr.VertAlign = AscCommon.vertalign_Baseline;
+			par.Set_Pr(new CParaPr());
+			var _textPr        = new CTextPr();
+			_textPr.FontFamily = {Name : "Arial", Index : -1};
 
-		_textPr.DStrikeout = this.GuiLastTextProps.DStrikeout;
-		_textPr.Caps       = this.GuiLastTextProps.AllCaps;
-		_textPr.SmallCaps  = this.GuiLastTextProps.SmallCaps;
+			_textPr.Strikeout = this.GuiLastTextProps.Strikeout;
 
-		_textPr.Spacing  = this.GuiLastTextProps.TextSpacing;
-		_textPr.Position = this.GuiLastTextProps.Position;
+			if (true === this.GuiLastTextProps.Subscript)
+				_textPr.VertAlign = AscCommon.vertalign_SubScript;
+			else if (true === this.GuiLastTextProps.Superscript)
+				_textPr.VertAlign = AscCommon.vertalign_SuperScript;
+			else
+				_textPr.VertAlign = AscCommon.vertalign_Baseline;
 
-		var parRun = new ParaRun(par);
-		parRun.Set_Pr(_textPr);
-		parRun.AddText("Hello World");
-		par.AddToContent(0, parRun);
+			_textPr.DStrikeout = this.GuiLastTextProps.DStrikeout;
+			_textPr.Caps       = this.GuiLastTextProps.AllCaps;
+			_textPr.SmallCaps  = this.GuiLastTextProps.SmallCaps;
 
-		docContent.Recalculate_Page(0, true);
+			_textPr.Spacing  = this.GuiLastTextProps.TextSpacing;
+			_textPr.Position = this.GuiLastTextProps.Position;
 
-		var baseLineOffset = par.Lines[0].Y;
-		var _bounds        = par.Get_PageBounds(0);
+			var parRun = new ParaRun(par);
+			parRun.Set_Pr(_textPr);
+			parRun.AddText("Hello World");
+			par.AddToContent(0, parRun);
 
-		var ctx  = this.GuiCanvasTextProps.getContext('2d');
-		var _wPx = this.GuiCanvasTextProps.width;
-		var _hPx = this.GuiCanvasTextProps.height;
+			docContent.Recalculate_Page(0, true);
 
-		var _wMm = _wPx * g_dKoef_pix_to_mm;
-		var _hMm = _hPx * g_dKoef_pix_to_mm;
+			var baseLineOffset = par.Lines[0].Y;
+			var _bounds        = par.Get_PageBounds(0);
 
-		ctx.fillStyle = "#FFFFFF";
-		ctx.fillRect(0, 0, _wPx, _hPx);
+			var ctx  = this.GuiCanvasTextProps.getContext('2d');
+			var _wPx = this.GuiCanvasTextProps.width;
+			var _hPx = this.GuiCanvasTextProps.height;
 
-		var _pxBoundsW = par.Lines[0].Ranges[0].W * g_dKoef_mm_to_pix;//(_bounds.Right - _bounds.Left) * g_dKoef_mm_to_pix;
-		var _pxBoundsH = (_bounds.Bottom - _bounds.Top) * g_dKoef_mm_to_pix;
+			var _wMm = _wPx * g_dKoef_pix_to_mm;
+			var _hMm = _hPx * g_dKoef_pix_to_mm;
 
-		if (this.GuiLastTextProps.Position !== undefined && this.GuiLastTextProps.Position != null && this.GuiLastTextProps.Position != 0)
-		{
-			// TODO: нужна высота без учета Position
-			// _pxBoundsH -= (this.GuiLastTextProps.Position * g_dKoef_mm_to_pix);
-		}
+			ctx.fillStyle = "#FFFFFF";
+			ctx.fillRect(0, 0, _wPx, _hPx);
 
-		if (_pxBoundsH < _hPx && _pxBoundsW < _wPx)
-		{
-			// рисуем линию
-			var _lineY = (((_hPx + _pxBoundsH) / 2) >> 0) + 0.5;
-			var _lineW = (((_wPx - _pxBoundsW) / 4) >> 0);
+			var _pxBoundsW = par.Lines[0].Ranges[0].W * g_dKoef_mm_to_pix;//(_bounds.Right - _bounds.Left) * g_dKoef_mm_to_pix;
+			var _pxBoundsH = (_bounds.Bottom - _bounds.Top) * g_dKoef_mm_to_pix;
 
-			ctx.strokeStyle = "#000000";
-			ctx.lineWidth   = 1;
+			if (this.GuiLastTextProps.Position !== undefined && this.GuiLastTextProps.Position != null && this.GuiLastTextProps.Position != 0)
+			{
+				// TODO: нужна высота без учета Position
+				// _pxBoundsH -= (this.GuiLastTextProps.Position * g_dKoef_mm_to_pix);
+			}
 
-			ctx.beginPath();
-			ctx.moveTo(0, _lineY);
-			ctx.lineTo(_lineW, _lineY);
+			if (_pxBoundsH < _hPx && _pxBoundsW < _wPx)
+			{
+				// рисуем линию
+				var _lineY = (((_hPx + _pxBoundsH) / 2) >> 0) + 0.5;
+				var _lineW = (((_wPx - _pxBoundsW) / 4) >> 0);
 
-			ctx.moveTo(_wPx - _lineW, _lineY);
-			ctx.lineTo(_wPx, _lineY);
+				ctx.strokeStyle = "#000000";
+				ctx.lineWidth   = 1;
 
-			ctx.stroke();
-			ctx.beginPath();
-		}
+				ctx.beginPath();
+				ctx.moveTo(0, _lineY);
+				ctx.lineTo(_lineW, _lineY);
 
-		var _yOffset = (((_hPx + _pxBoundsH) / 2) - baseLineOffset * g_dKoef_mm_to_pix) >> 0;
-		var _xOffset = ((_wPx - _pxBoundsW) / 2) >> 0;
+				ctx.moveTo(_wPx - _lineW, _lineY);
+				ctx.lineTo(_wPx, _lineY);
 
-		var graphics = new AscCommon.CGraphics();
-		graphics.init(ctx, _wPx, _hPx, _wMm, _hMm);
-		graphics.m_oFontManager = AscCommon.g_fontManager;
+				ctx.stroke();
+				ctx.beginPath();
+			}
 
-		graphics.m_oCoordTransform.tx = _xOffset;
-		graphics.m_oCoordTransform.ty = _yOffset;
+			var _yOffset = (((_hPx + _pxBoundsH) / 2) - baseLineOffset * g_dKoef_mm_to_pix) >> 0;
+			var _xOffset = ((_wPx - _pxBoundsW) / 2) >> 0;
 
-		graphics.transform(1, 0, 0, 1, 0, 0);
+			var graphics = new AscCommon.CGraphics();
+			graphics.init(ctx, _wPx, _hPx, _wMm, _hMm);
+			graphics.m_oFontManager = AscCommon.g_fontManager;
 
-		var old_marks                            = this.m_oWordControl.m_oApi.ShowParaMarks;
-		this.m_oWordControl.m_oApi.ShowParaMarks = false;
-		par.Draw(0, graphics);
-		this.m_oWordControl.m_oApi.ShowParaMarks = old_marks;
+			graphics.m_oCoordTransform.tx = _xOffset;
+			graphics.m_oCoordTransform.ty = _yOffset;
 
-		History.TurnOn();
-		editor.isViewMode = _oldTurn;
+			graphics.transform(1, 0, 0, 1, 0, 0);
+
+			var old_marks                            = this.m_oWordControl.m_oApi.ShowParaMarks;
+			this.m_oWordControl.m_oApi.ShowParaMarks = false;
+			par.Draw(0, graphics);
+			this.m_oWordControl.m_oApi.ShowParaMarks = old_marks;
+			editor.isViewMode = _oldTurn;
+		}, this, []);
 	}
 
 	this.DrawSearch = function(overlay)
@@ -2556,16 +2563,12 @@ function CDrawingDocument()
 
 		for (var i = 0; i < _len; i++)
 		{
-			if (__tabs[i].Value == tab_Left)
-				_ar[i] = new CTab(__tabs[i].Pos, AscCommon.g_tabtype_left);
-			else if (__tabs[i].Value == tab_Center)
-				_ar[i] = new CTab(__tabs[i].Pos, AscCommon.g_tabtype_center);
-			else if (__tabs[i].Value == tab_Right)
-				_ar[i] = new CTab(__tabs[i].Pos, AscCommon.g_tabtype_right);
+			if (__tabs[i].Value == tab_Left || __tabs[i].Value == tab_Center || __tabs[i].Value == tab_Right)
+				_ar[i] = new CTab(__tabs[i].Pos, __tabs[i].Value);
 			else
 			{
 				// не должно такого быть. но приходит
-				_ar[i] = new CTab(__tabs[i].Pos, AscCommon.g_tabtype_left);
+				_ar[i] = new CTab(__tabs[i].Pos, tab_Left);
 			}
 		}
 
@@ -3436,17 +3439,24 @@ function CDrawingDocument()
 	// mouse events
 	this.checkMouseDown_Drawing = function (pos)
 	{
-		return false;
-	};
+        var oWordControl = this.m_oWordControl;
+		var bIsReturn = false;
+		
+        if (this.placeholders.onPointerDown(pos, this.SlideCurrectRect, this.m_oLogicDocument.Width, this.m_oLogicDocument.Height))
+            bIsReturn = true;
 
-	this.checkMouseDown_DrawingOnUp = function (pos)
-	{
-		return false;
+        if (bIsReturn)
+		{
+            oWordControl.OnUpdateOverlay();
+            oWordControl.EndUpdateOverlay();
+		}
+		return bIsReturn;
 	};
 
 	this.checkMouseMove_Drawing = function (pos)
 	{
 		var oWordControl = this.m_oWordControl;
+        var bIsReturn = false;
 
 		if (this.InlineTextTrackEnabled)
 		{
@@ -3460,18 +3470,27 @@ function CDrawingDocument()
 			this.InlineTextTrackPage = pos.Page;
 			this.InlineTextInNotes = pos.isNotes ? true : false;
 
-			oWordControl.ShowOverlay();
-			oWordControl.OnUpdateOverlay();
-			oWordControl.EndUpdateOverlay();
-			return true;
+            bIsReturn = true;
 		}
+		else if (this.placeholders.onPointerMove(pos, this.SlideCurrectRect, this.m_oLogicDocument.Width, this.m_oLogicDocument.Height))
+		{
+            oWordControl.OnUpdateOverlay();
+            oWordControl.EndUpdateOverlay();
+            bIsReturn = true;
+        }
 
-		return false;
+        if (bIsReturn)
+        {
+            oWordControl.OnUpdateOverlay();
+            oWordControl.EndUpdateOverlay();
+        }
+        return bIsReturn;
 	};
 
 	this.checkMouseUp_Drawing = function (pos)
 	{
 		var oWordControl = this.m_oWordControl;
+        var bIsReturn = false;
 
 		if (this.InlineTextTrackEnabled)
 		{
@@ -3480,13 +3499,17 @@ function CDrawingDocument()
 			this.InlineTextInNotes = pos.isNotes ? true : false;
 			this.EndTrackText();
 
-			oWordControl.ShowOverlay();
-			oWordControl.OnUpdateOverlay();
-			oWordControl.EndUpdateOverlay();
-			return true;
+            bIsReturn = true;
 		}
+        else if (this.placeholders.onPointerUp(pos, this.SlideCurrectRect, this.m_oLogicDocument.Width, this.m_oLogicDocument.Height))
+            bIsReturn = true;
 
-		return false;
+        if (bIsReturn)
+        {
+            oWordControl.OnUpdateOverlay();
+            oWordControl.EndUpdateOverlay();
+        }
+        return bIsReturn;
 	};
 
 	// track text (inline)
@@ -5338,6 +5361,10 @@ function CThumbnailsManager()
 							this.m_oWordControl.GoToPage(_last_selected_slide_num);
 							this.m_oWordControl.m_oLogicDocument.addNextSlide();
 							return false;
+						}
+						else if(this.m_oWordControl.m_oLogicDocument.Slides.length === 0) {
+							this.m_oWordControl.m_oLogicDocument.addNextSlide();
+							this.m_oWordControl.GoToPage(0);
 						}
 					}
 				}

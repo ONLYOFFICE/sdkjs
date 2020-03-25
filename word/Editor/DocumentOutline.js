@@ -269,6 +269,7 @@ CDocumentOutline.prototype.GoTo = function(nIndex)
 	else
 	{
 		oParagraph.MoveCursorToStartPos();
+		oParagraph.SkipPageColumnBreaks();
 		oParagraph.Document_SetThisElementCurrent(true);
 	}
 };

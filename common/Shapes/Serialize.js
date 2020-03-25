@@ -164,7 +164,6 @@ function BinaryPPTYLoader()
     this.textBodyTextFit = [];
     this.aSlideLayouts = [];
     this.aThemes = [];
-	this.DocReadResult = null;
 
 	this.arr_connectors = [];
 	this.map_shapes_by_id = {};
@@ -778,6 +777,11 @@ function BinaryPPTYLoader()
                     _slide.setNotes(AscCommonSlide.CreateNotes());
                     _slide.notes.setSlide(_slide);
                     _slide.notes.setNotesMaster(this.presentation.notesMasters[0]);
+                }
+                else{
+                    if(!_slide.notes.Master){
+                        _slide.notes.setNotesMaster(this.presentation.notesMasters[0]);
+                    }
                 }
             }
             //var _editor = this.Api;
@@ -3193,7 +3197,7 @@ function BinaryPPTYLoader()
                                                 if(oEffect)
                                                 {
                                                     uni_fill.fill.Effects.push(oEffect);
-                                                    if(oEffect instanceof AscFormat.CAlphaModFix)
+                                                    if(oEffect instanceof AscFormat.CAlphaModFix && AscFormat.isRealNumber(oEffect.amt))
                                                     {
                                                         uni_fill.setTransparent(255 * oEffect.amt / 100000);
                                                     }
@@ -3543,6 +3547,18 @@ function BinaryPPTYLoader()
                             {
                                 // пока никаких настроек градиента нет
                                 s.SkipRecord();
+                            }
+                        }
+                    }
+
+                    if(uni_fill.fill.fgClr && uni_fill.fill.bgClr)
+                    {
+                        var fAlphaVal = uni_fill.fill.fgClr.getModValue("alpha");
+                        if(fAlphaVal !== null)
+                        {
+                            if(fAlphaVal === uni_fill.fill.bgClr.getModValue("alpha"))
+                            {
+                                uni_fill.setTransparent(255 * fAlphaVal / 100000)
                             }
                         }
                     }
@@ -4248,7 +4264,7 @@ function BinaryPPTYLoader()
                     {
                         s.Skip2(1);
 
-                        var _comment = new CWriteCommentData();
+                        var _comment = new AscCommon.CWriteCommentData();
 
                         var _end_rec3 = s.cur + s.GetLong() + 4;
 
@@ -5933,6 +5949,13 @@ function BinaryPPTYLoader()
                     var binary_length;
                     switch(oleType)
                     {
+                        case 0:
+                        {
+                            binary_length = s.GetULong();
+                            ole.setBinaryData(s.data.slice(s.cur, s.cur + binary_length));
+                            s.Seek2(s.cur + binary_length);
+                            break;
+                        }
                         case 1:
                         {
                             ole.setObjectFile("maskFile.docx");
@@ -8593,7 +8616,7 @@ function BinaryPPTYLoader()
                 case 10:
                 {
                     var lang = s.GetString2();
-                    var nLcid = g_oLcidNameToIdMap[lang];
+                    var nLcid = Asc.g_oLcidNameToIdMap[lang];
                     if(nLcid)
                         rPr.Lang.Val = nLcid;
                     break;
@@ -10048,10 +10071,8 @@ function BinaryPPTYLoader()
 
 								var oParStruct = new OpenParStruct(par, par);
                                 oParStruct.cur.pos = par.Content.length - 1;
-								if (!this.DocReadResult) {
-									this.DocReadResult = new AscCommonWord.DocReadResult(null);
-								}
-								var boMathr = new Binary_oMathReader(_stream, this.DocReadResult, null);
+								var oReadResult = new AscCommonWord.DocReadResult(null);
+								var boMathr = new Binary_oMathReader(_stream, oReadResult, null);
 								var nDocLength = _stream.GetULongLE();
 								if (AscFormat.PARRUN_TYPE_MATHPARA == _type) {
 									var props = {};
@@ -10785,7 +10806,7 @@ function CPres()
                                 {
                                     s.Skip2(1);
 
-                                    var _author = new CCommentAuthor();
+                                    var _author = new AscCommon.CCommentAuthor();
 
                                     var _end_rec3 = s.cur + s.GetLong() + 4;
                                     s.Skip2(1); // start attributes
@@ -11615,6 +11636,13 @@ function CPres()
                         var binary_length;
                         switch(oleType)
                         {
+                            case 0:
+                            {
+                                binary_length = s.GetULong();
+                                ole.setBinaryData(s.data.slice(s.cur, s.cur + binary_length));
+                                s.Seek2(s.cur + binary_length);
+                                break;
+                            }
                             case 1:
                             {
                                 ole.setObjectFile("maskFile.docx");
@@ -11644,15 +11672,13 @@ function CPres()
                                     _stream.pos = s.pos;
                                     _stream.cur = s.cur;
                                     _stream.size = s.size;
-                                    var boMathr = new Binary_oMathReader(_stream, this.DocReadResult, null);
+                                    var oReadResult = this.BaseReader ? this.BaseReader.oReadResult : new AscCommonWord.DocReadResult(null);
+                                    var boMathr = new Binary_oMathReader(_stream, oReadResult, null);
                                     var oMathPara = new ParaMath();
                                     ole.parent.ParaMath = oMathPara;
                                     var par = ole.parent.Parent;
                                     var oParStruct = new OpenParStruct(par, par);
                                     oParStruct.cur.pos = par.Content.length - 1;
-                                    if (!this.DocReadResult) {
-                                        this.DocReadResult = new AscCommonWord.DocReadResult(null);
-                                    }
                                     boMathr.bcr.Read1(length2, function(t, l){
                                         return boMathr.ReadMathArg(t,l,oMathPara.Root,oParStruct);
                                     });
@@ -11814,9 +11840,9 @@ function CPres()
             this.ParaDrawing = oldParaDrawing;
             s.Seek2(_end_rec);
             this.TempGroupObject = null;
-            if(shape.spTree.length === 0){
-                return null;
-            }
+            // if(shape.spTree.length === 0){
+            //     return null;
+            // }
             return shape;
         }
 

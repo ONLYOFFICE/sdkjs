@@ -582,7 +582,7 @@ CTextBody.prototype =
 
     Get_Styles: function(level)
     {
-        if(this.parent)
+        if(this.parent && this.parent.getStyles)
         {
             return this.parent.getStyles(level);
         }

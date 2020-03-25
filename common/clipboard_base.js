@@ -1185,7 +1185,7 @@
 			}
 		},
 
-		SpecialPasteButton_Hide : function()
+		SpecialPasteButton_Hide : function(needClean)
 		{
 			if (!this.Api)
 				return;
@@ -1195,6 +1195,8 @@
 				this.showSpecialPasteButton = false;
 				this.CleanButtonInfo();
 				this.Api.asc_HideSpecialPasteButton();
+			} else if(needClean) {
+				this.CleanButtonInfo();
 			}
 		},
 		

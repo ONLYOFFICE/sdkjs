@@ -632,10 +632,10 @@ CWrapPolygon.prototype =
     {
 
         var bounds = drawing.bounds, oDistance = drawing.parent.Get_Distance(), oEffectExtent = drawing.parent.EffectExtent;
-        if(this.relativeArrPoints.length === 0)
-        {
+        var nWrappingType = drawing.parent.wrappingType;
 
-            var oEffectExtent = drawing.parent.EffectExtent;
+        if(this.relativeArrPoints.length === 0 || !(nWrappingType === WRAPPING_TYPE_THROUGH || nWrappingType === WRAPPING_TYPE_TIGHT))
+        {
             var W, H;
             if(AscFormat.isRealNumber(drawing.rot)){
                 if(AscFormat.checkNormalRotate(drawing.rot))

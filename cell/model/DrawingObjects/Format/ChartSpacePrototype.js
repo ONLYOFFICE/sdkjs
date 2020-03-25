@@ -152,25 +152,12 @@ CChartSpace.prototype.handleUpdatePosition = function()
     //this.setRecalculateInfo();
     for(var i = 0; i < this.userShapes.length; ++i)
     {
-        if(this.userShapes[i].object && this.userShapes[i].object.handleUpdateExtents)
+        if(this.userShapes[i].object)
         {
             this.userShapes[i].object.handleUpdateExtents();
         }
     }
     this.addToRecalculate();
-};
-CChartSpace.prototype.handleUpdateExtents = function(bExtX)
-{
-    var oXfrm = this.spPr && this.spPr.xfrm;
-    if(undefined === bExtX ||
-        !oXfrm || bExtX && !AscFormat.fApproxEqual(this.extX, oXfrm.extX, 0.01) || false === bExtX &&!AscFormat.fApproxEqual(this.extY, oXfrm.extY, 0.01))
-    {
-        this.recalcChart();
-        this.recalcBounds();
-        this.recalcTransform();
-        this.recalcTitles();
-        this.handleUpdateInternalChart(false);
-    }
 };
 CChartSpace.prototype.handleUpdateFlip = function()
 {

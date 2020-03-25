@@ -64,6 +64,7 @@ var MOVE_DELTA = AscFormat.MOVE_DELTA;
 
 var c_oAscRelativeFromH = Asc.c_oAscRelativeFromH;
 var c_oAscRelativeFromV = Asc.c_oAscRelativeFromV;
+var c_oAscSectionBreakType = Asc.c_oAscSectionBreakType;
 
 var para_Unknown                   = -1; //
 var para_RunBase                   = 0x0000; // Базовый элемент, он не должен использоваться как самостоятельный объект
@@ -1053,7 +1054,7 @@ ParaNewLine.prototype.Update_String = function(_W)
 
 	if (break_Page === this.BreakType || break_Column === this.BreakType)
 	{
-		var W = ( false === this.Flags.NewLine ? 50 : _W );
+		var W = false === this.Flags.NewLine ? 50 : Math.max(_W, 50);
 
 		g_oTextMeasurer.SetFont({
 			FontFamily : {Name : "Courier New", Index : -1},
@@ -1253,12 +1254,12 @@ ParaNumbering.prototype = Object.create(CRunElementBase.prototype);
 ParaNumbering.prototype.constructor = ParaNumbering;
 
 ParaNumbering.prototype.Type = para_Numbering;
-ParaNumbering.prototype.Draw = function(X, Y, oContext, oNumbering, oTextPr, oTheme)
+ParaNumbering.prototype.Draw = function(X, Y, oContext, oNumbering, oTextPr, oTheme, oPrevNumTextPr)
 {
 	var _X = X;
 	if (this.Internal.SourceNumInfo)
 	{
-		oNumbering.Draw(this.Internal.SourceNumId,this.Internal.SourceNumLvl, _X, Y, oContext, this.Internal.SourceNumInfo, oTextPr, oTheme);
+		oNumbering.Draw(this.Internal.SourceNumId,this.Internal.SourceNumLvl, _X, Y, oContext, this.Internal.SourceNumInfo, oPrevNumTextPr ? oPrevNumTextPr : oTextPr, oTheme);
 		_X += this.Internal.SourceWidth;
 	}
 
@@ -1377,11 +1378,14 @@ ParaNumbering.prototype.GetSourceWidth = function()
 	return this.Internal.SourceWidth;
 };
 
-// TODO: Реализовать табы по точке и с чертой.
-var tab_Clear  = 0x00;
-var tab_Left   = 0x01;
-var tab_Right  = 0x02;
-var tab_Center = 0x03;
+// TODO: Реализовать табы по точке и с чертой (tab_Bar tab_Decimal)
+var tab_Bar     = Asc.c_oAscTabType.Bar;
+var tab_Center  = Asc.c_oAscTabType.Center;
+var tab_Clear   = Asc.c_oAscTabType.Clear;
+var tab_Decimal = Asc.c_oAscTabType.Decimail;
+var tab_Num     = Asc.c_oAscTabType.Num;
+var tab_Right   = Asc.c_oAscTabType.Right;
+var tab_Left    = Asc.c_oAscTabType.Left;
 
 var tab_Symbol = 0x0022;//0x2192;
 
@@ -1795,10 +1799,18 @@ ParaFootnoteReference.prototype.Measure = function(Context, TextPr, MathInfo, Ru
 	this.Run = Run;
 	this.private_Measure();
 };
-ParaFootnoteReference.prototype.Copy = function()
+ParaFootnoteReference.prototype.Copy = function(oPr)
 {
-	var oFootnote = this.Footnote.Parent.CreateFootnote();
-	oFootnote.Copy2(this.Footnote);
+	var oFootnote;
+	if(oPr && oPr.Comparison)
+	{
+		oFootnote = oPr.Comparison.createFootNote();
+	}
+	else
+	{
+		oFootnote = this.Footnote.Parent.CreateFootnote();
+	}
+	oFootnote.Copy2(this.Footnote, oPr);
 
 	var oRef = new ParaFootnoteReference(oFootnote);
 
@@ -1840,7 +1852,7 @@ ParaFootnoteReference.prototype.GetFootnote = function()
 {
 	return this.Footnote;
 };
-ParaFootnoteReference.prototype.UpdateNumber = function(PRS)
+ParaFootnoteReference.prototype.UpdateNumber = function(PRS, isKeepNumber)
 {
 	if (this.Footnote && true !== PRS.IsFastRecalculate() && PRS.TopDocument instanceof CDocument)
 	{
@@ -1853,12 +1865,15 @@ ParaFootnoteReference.prototype.UpdateNumber = function(PRS)
 		var oLogicDocument       = this.Footnote.Get_LogicDocument();
 		var oFootnotesController = oLogicDocument.GetFootnotesController();
 
-		this.NumFormat = nNumFormat;
-		this.Number    = oFootnotesController.GetFootnoteNumberOnPage(nPageAbs, nColumnAbs, oSectPr) + nAdditional;
+		if (!isKeepNumber)
+		{
+			this.NumFormat = nNumFormat;
+			this.Number    = oFootnotesController.GetFootnoteNumberOnPage(nPageAbs, nColumnAbs, oSectPr) + nAdditional;
 
-		// Если данная сноска не участвует в нумерации, просто уменьшаем ей номер на 1, для упрощения работы
-		if (this.IsCustomMarkFollows())
-			this.Number--;
+			// Если данная сноска не участвует в нумерации, просто уменьшаем ей номер на 1, для упрощения работы
+			if (this.IsCustomMarkFollows())
+				this.Number--;
+		}
 
 		this.private_Measure();
 		this.Footnote.SetNumber(this.Number, oSectPr, this.IsCustomMarkFollows());
