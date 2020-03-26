@@ -189,7 +189,7 @@
 		if (this.showErrorMessage) {
 			val = (this.type === EDataValidationType.TextLength) ? val.length : val;
 			if (EDataValidationType.List === this.type) {
-				var list = this._getListValues(ws);
+				var list = this._getListValues(ws, true);
 				res = (list && -1 !== list.indexOf(val));
 			} else if (EDataValidationType.Custom === this.type) {
 			} else {
@@ -228,7 +228,7 @@
 		}
 		return res;
 	};
-	CDataValidation.prototype._getListValues = function (ws) {
+	CDataValidation.prototype._getListValues = function (ws, withoutFormat) {
 		var res = null;
 		var list = this.formula1 && this.formula1.getValue(this.type, ws, false);
 		if (list && AscCommonExcel.cElementType.error !== list.type) {
@@ -241,7 +241,7 @@
 					list._foreachNoEmpty(function (cell) {
 						// ToDo check cells type
 						if (!cell.isEmptyTextString()) {
-							res.push(cell.getValue());
+							res.push(withoutFormat ? cell.getValueWithoutFormat() : cell.getValue());
 						}
 					});
 				}
@@ -253,7 +253,7 @@
 		return (this.type === EDataValidationType.List && !this.showDropDown);
 	};
 	CDataValidation.prototype.getListValues = function (ws) {
-		return this.isListValues() ?  this._getListValues(ws) : null;
+		return this.isListValues() ?  this._getListValues(ws, false) : null;
 	};
 
 	CDataValidation.prototype.getError = function () {
