@@ -1254,6 +1254,8 @@
 	window['AscDFH'].historyitem_type_PresentationField  = 64 << 16;
 	window['AscDFH'].historyitem_type_ParaRevisionMove   = 65 << 16;
 	window['AscDFH'].historyitem_type_RunRevisionMove    = 66 << 16;
+	window['AscDFH'].historyitem_type_GlossaryDocument   = 67 << 16;
+	window['AscDFH'].historyitem_type_DocPart            = 68 << 16;
 
 	window['AscDFH'].historyitem_type_CommonShape            = 1000 << 16; // Этот класс добавлен для элементов, у которых нет конкретного класса
 
@@ -1845,6 +1847,10 @@
 	window['AscDFH'].historyitem_Footnotes_SetFootnotePrNumStart    = window['AscDFH'].historyitem_type_Footnotes | 6;
 	window['AscDFH'].historyitem_Footnotes_SetFootnotePrNumRestart  = window['AscDFH'].historyitem_type_Footnotes | 7;
 	window['AscDFH'].historyitem_Footnotes_SetFootnotePrNumFormat   = window['AscDFH'].historyitem_type_Footnotes | 8;
+	//------------------------------------------------------------------------------------------------------------------
+	// Типы изменений в классе CGlossaryDocument
+	//------------------------------------------------------------------------------------------------------------------
+	windows['AscDFH'].historyitem_GlossaryDocument_AddDocPart = window['AscDFH'].historyitem_type_GlossaryDocument | 1;
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CSdtPr
 	//------------------------------------------------------------------------------------------------------------------

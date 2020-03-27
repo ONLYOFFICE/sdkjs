@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2020
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -44,7 +44,15 @@
  */
 function CGlossaryDocument(oLogicDocument)
 {
+	this.Id = oLogicDocument.GetIdCounter().Get_NewId();
+
+	// Добавляем данный класс в таблицу Id (обязател
+
 	this.LogicDocument = oLogicDocument;
+
+	this.DocParts = {};
+
+	oLogicDocument.GetTableId().Add(this, this.Id);
 }
 /**
  * @returns {CDocument}
@@ -54,23 +62,56 @@ CGlossaryDocument.prototype.GetLogicDocument = function()
 	return this.LogicDocument;
 };
 /**
+ * Создаем новый контент
+ * @returns {CDocPart}
+ */
+CGlossaryDocument.prototype.CreateDocPart = function()
+{
+	var oDocPart = new CDocPart(this);
+
+	this.DocParts[oDocPart.GetId()] = oDocPart;
+	this.LogicDocument.GetHistory().Add(new CChangesGlossaryAddDocPart(this, oDocPart.GetId()));
+
+	return oDocPart;
+};
+
+/**
  * Класс, представляющий дополнительное содержимое документа (например, для плейсхолдеров документа)
  * @param {CGlossaryDocument} oGlossary
+ * @param {string} sName
  * @constructor
  * @extends {CDocumentContent}
  */
-function CDocPart(oGlossary)
+function CDocPart(oGlossary, sName)
 {
 	var oLogicDocument = oGlossary ? oGlossary.GetLogicDocument() : null;
 
 	CDocumentContent.call(this, oLogicDocument, oLogicDocument ? oLogicDocument.GetDrawingDocument() : undefined, 0, 0, 0, 0, true, false, false);
 
 	this.Glossary = oGlossary;
-	this.Pr       = new CDocPartPr()
+	this.Pr       = new CDocPartPr(sName);
 }
 
 CDocPart.prototype = Object.create(CDocumentContent.prototype);
 CDocPart.prototype.constructor = CDocPart;
+
+CDocPart.prototype.Refresh_RecalcData2 = function(nIndex, nCurPage)
+{
+};
+CDocPart.prototype.Write_ToBinary2 = function(oWriter)
+{
+	oWriter.WriteLong(AscDFH.historyitem_type_DocPart);
+	this.Pr.WriteToBinary(oWriter);
+	CDocumentContent.prototype.Write_ToBinary2.call(this, oWriter);
+};
+CDocPart.prototype.Read_FromBinary2 = function(oReader)
+{
+	// historyitem_type_DocPart
+	// CDocPartPr
+	oReader.GetLong();
+	this.Pr.ReadFromBinary(oReader);
+	CDocumentContent.prototype.Read_FromBinary2.call(this, oReader);
+};
 
 /** @enum {number} */
 var c_oAscDocPartType = {
@@ -95,11 +136,12 @@ var c_oAscDocPartBehavior = {
 
 /**
  * Настройки для дополнительного содержимого документа
+ * @param {string} sName
  * @constructor
  */
-function CDocPartPr()
+function CDocPartPr(sName)
 {
-	this.Name        = undefined;
+	this.Name        = sName ? sName : undefined;
 	this.Style       = undefined;
 	this.Types       = c_oAscDocPartType.Undefined;
 	this.Description = undefined;
@@ -107,6 +149,86 @@ function CDocPartPr()
 	this.Category    = undefined;
 	this.Behavior    = c_oAscDocPartBehavior.Undefined;
 }
+
+CDocPartPr.prototype.WriteToBinary = function(oWriter)
+{
+	// String           : Name
+	// Long             : Types
+	// Long             : Behavior
+	// Flags            : Флаг, означающий заданы ли следующие поля
+	// String           : Style
+	// String           : Description
+	// String           : GUID
+	// CDocPartCategory : Category
+
+	oWriter.WriteString2(this.Name);
+	oWriter.WriteLong(this.Types);
+	oWriter.WriteLong(this.Behavior);
+
+	var nStartPos = oWriter.GetCurPosition();
+	oWriter.Skip(4);
+	var nFlags = 0;
+
+	if (undefined !== this.Style)
+	{
+		nFlags |= 1;
+		oWriter.WriteString2(this.Style);
+	}
+
+	if (undefined !== this.Description)
+	{
+		nFlags |= 2;
+		oWriter.WriteString2(this.Description);
+	}
+
+	if (undefined !== this.GUID)
+	{
+		nFlags |= 4;
+		oWriter.WriteString2(this.GUID);
+	}
+
+	if (undefined !== this.Category)
+	{
+		nFlags |= 8;
+		this.Category.WriteToBinary(oWriter);
+	}
+
+	var nEndPos = oWriter.GetCurPosition();
+	oWriter.Seek(nStartPos);
+	oWriter.WriteLong(nFlags);
+	oWriter.Seek(nEndPos);
+};
+CDocPartPr.prototype.ReadFromBinary = function(oReader)
+{
+	// String           : Name
+	// Long             : Types
+	// Long             : Behavior
+	// Flags            : Флаг, означающий заданы ли следующие поля
+	// String           : Style
+	// String           : Description
+	// String           : GUID
+	// CDocPartCategory : Category
+
+	this.Name     = oReader.GetString2();
+	this.Types    = oReader.GetLong();
+	this.Behavior = oReader.GetLong();
+
+	var nFlags = oReader.GetLong();
+	if (nFlags & 1)
+		this.Style = oReader.GetString2();
+
+	if (nFlags & 2)
+		this.Description = oReader.GetString2();
+
+	if (nFlags & 4)
+		this.GUID = oReader.GetString2();
+
+	if (nFlags & 8)
+	{
+		this.Category = new CDocPartCategory();
+		this.Category.ReadFromBinary(oReader);
+	}
+};
 
 /** @enum {number} */
 var c_oAscDocPartGallery = {
@@ -160,6 +282,20 @@ function CDocPartCategory()
 	this.Gallery = c_oAscDocPartGallery.Default;
 }
 
+CDocPartCategory.prototype.WriteToBinary = function(oWriter)
+{
+	// String : Name
+	// Long   : Gallery
+	oWriter.WriteString2(this.Name);
+	oWriter.WriteLong(this.Gallery);
+};
+CDocPartCategory.prototype.ReadFromBinary = function(oRedaer)
+{
+	// String : Name
+	// Long   : Gallery
+	this.Name    = oReader.GetString2();
+	this.Gallery = oRedaer.GetLong();
+};
 //------------------------------------------------------------export---------------------------------------------------
 var prot;
 window["Asc"] = window["Asc"] || {};
@@ -178,8 +314,6 @@ prot["Toolbar"]     = c_oAscDocPartType.Toolbar;
 
 
 prot = window["Asc"]["c_oAscDocPartGallery"] = c_oAscDocPartGallery;
-
-prot["Undefined"] = c_oAscDocPartType.Undefined;
 
 prot["Any"]               = c_oAscDocPartGallery.Any;
 prot["AutoTxt"]           = c_oAscDocPartGallery.AutoTxt;
@@ -219,3 +353,10 @@ prot["TblOfContents"]     = c_oAscDocPartGallery.TblOfContents;
 prot["Tbls"]              = c_oAscDocPartGallery.Tbls;
 prot["TxtBox"]            = c_oAscDocPartGallery.TxtBox;
 prot["Watermarks"]        = c_oAscDocPartGallery.Watermarks;
+
+prot = window["Asc"]["c_oAscDocPartBehavior"] = c_oAscDocPartBehavior;
+
+prot["Undefined"] = c_oAscDocPartBehavior.Undefined;
+prot["Content"]   = c_oAscDocPartBehavior.Content;
+prot["P"]         = c_oAscDocPartBehavior.P;
+prot["Pg"]        = c_oAscDocPartBehavior.Pg;

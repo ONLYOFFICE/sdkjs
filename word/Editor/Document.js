@@ -13978,6 +13978,10 @@ CDocument.prototype.Get_IdCounter = function()
 {
 	return this.IdCounter;
 };
+CDocument.prototype.GetIdCounter = function()
+{
+	return this.IdCounter;
+};
 CDocument.prototype.Get_TableId = function()
 {
 	return this.TableId;
