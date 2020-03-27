@@ -286,7 +286,7 @@
 
 	CDataValidations.prototype._init = function (ws) {
 		for (var i = 0; i < this.elems.length; ++i) {
-			this.elems._init(ws);
+			this.elems[i]._init(ws);
 		}
 	};
 	CDataValidations.prototype.clone = function() {
