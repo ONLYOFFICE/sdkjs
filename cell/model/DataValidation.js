@@ -147,6 +147,14 @@
 		return this;
 	}
 
+	CDataValidation.prototype._init = function (ws) {
+		if (this.formula1) {
+			this.formula1._init(ws, this.type);
+		}
+		if (this.formula2) {
+			this.formula2._init(ws, this.type);
+		}
+	};
 	CDataValidation.prototype.clone = function() {
 		var res = new CDataValidation();
 		if (this.ranges) {
@@ -276,13 +284,19 @@
 		return this;
 	}
 
+	CDataValidations.prototype._init = function (ws) {
+		for (var i = 0; i < this.elems.length; ++i) {
+			this.elems._init(ws);
+		}
+	};
 	CDataValidations.prototype.clone = function() {
 		var i, res = new CDataValidations();
 		res.disablePrompts = this.disablePrompts;
 		res.xWindow = this.xWindow;
 		res.yWindow = this.yWindow;
-		for (i = 0; i < this.elems.length; ++i)
+		for (i = 0; i < this.elems.length; ++i) {
 			res.elems.push(this.elems[i].clone());
+		}
 		return res;
 	};
 
