@@ -7408,12 +7408,14 @@ function BinaryFileReader(doc, openParams)
 			this.oReadResult.logicDocument.Footnotes.ResetSpecialFootnotes();
 			for (var i = 0; i < this.oReadResult.footnoteRefs.length; ++i) {
 				var footnote = this.oReadResult.footnotes[this.oReadResult.footnoteRefs[i]];
-				if (0 == footnote.type) {
-					this.oReadResult.logicDocument.Footnotes.SetContinuationNotice(footnote.content);
-				} else if (1 == footnote.type) {
-					this.oReadResult.logicDocument.Footnotes.SetContinuationSeparator(footnote.content);
-				} else if (3 == footnote.type) {
-					this.oReadResult.logicDocument.Footnotes.SetSeparator(footnote.content);
+				if (footnote) {
+					if (0 == footnote.type) {
+						this.oReadResult.logicDocument.Footnotes.SetContinuationNotice(footnote.content);
+					} else if (1 == footnote.type) {
+						this.oReadResult.logicDocument.Footnotes.SetContinuationSeparator(footnote.content);
+					} else if (3 == footnote.type) {
+						this.oReadResult.logicDocument.Footnotes.SetSeparator(footnote.content);
+					}
 				}
 			}
 		}
