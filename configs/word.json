@@ -180,6 +180,8 @@
 			"word/Editor/Footnotes.js",
 			"word/Editor/FootnotesChanges.js",
 			"word/Editor/FootEndNote.js",
+		    "word/Editor/GlossaryDocument.js",
+		    "word/Editor/GlossaryDocumentChanges.js",
 
 			"word/Drawing/Graphics.js",
 			"word/Drawing/ShapeDrawer.js",
