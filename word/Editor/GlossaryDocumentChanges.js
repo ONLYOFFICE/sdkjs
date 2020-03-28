@@ -39,12 +39,25 @@
 
 AscDFH.changesFactory[AscDFH.historyitem_GlossaryDocument_AddDocPart] = CChangesGlossaryAddDocPart;
 
-
-
+AscDFH.changesFactory[AscDFH.historyitem_DocPart_Name]        = CChangesDocPartName;
+AscDFH.changesFactory[AscDFH.historyitem_DocPart_Style]       = CChangesDocPartStyle;
+AscDFH.changesFactory[AscDFH.historyitem_DocPart_Types]       = CChangesDocPartTypes;
+AscDFH.changesFactory[AscDFH.historyitem_DocPart_Description] = CChangesDocPartDescription;
+AscDFH.changesFactory[AscDFH.historyitem_DocPart_GUID]        = CChangesDocPartGUID;
+AscDFH.changesFactory[AscDFH.historyitem_DocPart_Category]    = CChangesDocPartCategory;
+AscDFH.changesFactory[AscDFH.historyitem_DocPart_Behavior]    = CChangesDocPartBehavior;
 //----------------------------------------------------------------------------------------------------------------------
 // Карта зависимости изменений
 //----------------------------------------------------------------------------------------------------------------------
 AscDFH.changesRelationMap[AscDFH.historyitem_GlossaryDocument_AddDocPart] = [AscDFH.historyitem_GlossaryDocument_AddDocPart];
+
+AscDFH.changesRelationMap[AscDFH.historyitem_DocPart_Name]        = [AscDFH.historyitem_DocPart_Name];
+AscDFH.changesRelationMap[AscDFH.historyitem_DocPart_Style]       = [AscDFH.historyitem_DocPart_Style];
+AscDFH.changesRelationMap[AscDFH.historyitem_DocPart_Types]       = [AscDFH.historyitem_DocPart_Types];
+AscDFH.changesRelationMap[AscDFH.historyitem_DocPart_Description] = [AscDFH.historyitem_DocPart_Description];
+AscDFH.changesRelationMap[AscDFH.historyitem_DocPart_GUID]        = [AscDFH.historyitem_DocPart_GUID];
+AscDFH.changesRelationMap[AscDFH.historyitem_DocPart_Category]    = [AscDFH.historyitem_DocPart_Category];
+AscDFH.changesRelationMap[AscDFH.historyitem_DocPart_Behavior]    = [AscDFH.historyitem_DocPart_Behavior];
 //----------------------------------------------------------------------------------------------------------------------
 
 /**
@@ -92,4 +105,114 @@ CChangesGlossaryAddDocPart.prototype.Merge = function(oChange)
 	return true;
 };
 
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseStringProperty}
+ */
+function CChangesDocPartName(Class, Old, New)
+{
+	AscDFH.CChangesBaseStringProperty.call(this, Class, Old, New);
+}
+CChangesDocPartName.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
+CChangesDocPartName.prototype.constructor = CChangesDocPartName;
+CChangesDocPartName.prototype.Type = AscDFH.historyitem_DocPart_Name;
+CChangesDocPartName.prototype.private_SetValue = function(Value)
+{
+	this.Class.Pr.Name = Value;
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseStringProperty}
+ */
+function CChangesDocPartStyle(Class, Old, New)
+{
+	AscDFH.CChangesBaseStringProperty.call(this, Class, Old, New);
+}
+CChangesDocPartStyle.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
+CChangesDocPartStyle.prototype.constructor = CChangesDocPartStyle;
+CChangesDocPartStyle.prototype.Type = AscDFH.historyitem_DocPart_Style;
+CChangesDocPartStyle.prototype.private_SetValue = function(Value)
+{
+	this.Class.Pr.Style = Value;
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesDocPartTypes(Class, Old, New)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New);
+}
+CChangesDocPartTypes.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesDocPartTypes.prototype.constructor = CChangesDocPartTypes;
+CChangesDocPartTypes.prototype.Type = AscDFH.historyitem_DocPart_Types;
+CChangesDocPartTypes.prototype.private_SetValue = function(Value)
+{
+	this.Class.Pr.Types = Value;
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseStringProperty}
+ */
+function CChangesDocPartDescription(Class, Old, New)
+{
+	AscDFH.CChangesBaseStringProperty.call(this, Class, Old, New);
+}
+CChangesDocPartDescription.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
+CChangesDocPartDescription.prototype.constructor = CChangesDocPartDescription;
+CChangesDocPartDescription.prototype.Type = AscDFH.historyitem_DocPart_Description;
+CChangesDocPartDescription.prototype.private_SetValue = function(Value)
+{
+	this.Class.Pr.Description = Value;
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseStringProperty}
+ */
+function CChangesDocPartGUID(Class, Old, New)
+{
+	AscDFH.CChangesBaseStringProperty.call(this, Class, Old, New);
+}
+CChangesDocPartGUID.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
+CChangesDocPartGUID.prototype.constructor = CChangesDocPartGUID;
+CChangesDocPartGUID.prototype.Type = AscDFH.historyitem_DocPart_GUID;
+CChangesDocPartGUID.prototype.private_SetValue = function(Value)
+{
+	this.Class.Pr.GUID = Value;
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseObjectProperty}
+ */
+function CChangesDocPartCategory(Class, Old, New)
+{
+	AscDFH.CChangesBaseObjectProperty.call(this, Class, Old, New);
+}
+CChangesDocPartCategory.prototype = Object.create(AscDFH.CChangesBaseObjectProperty.prototype);
+CChangesDocPartCategory.prototype.constructor = CChangesDocPartCategory;
+CChangesDocPartCategory.prototype.Type = AscDFH.historyitem_DocPart_Category;
+CChangesDocPartCategory.prototype.private_CreateObject = function()
+{
+	return new CDocPartCategory();
+};
+CChangesDocPartCategory.prototype.private_SetValue = function(Value)
+{
+	this.Pr.Category = Value;
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesDocPartBehavior(Class, Old, New)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New);
+}
+CChangesDocPartBehavior.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesDocPartBehavior.prototype.constructor = CChangesDocPartBehavior;
+CChangesDocPartBehavior.prototype.Type = AscDFH.historyitem_DocPart_Behavior;
+CChangesDocPartBehavior.prototype.private_SetValue = function(Value)
+{
+	this.Class.Pr.Behavior = Value;
+};
 

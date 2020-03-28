@@ -112,6 +112,120 @@ CDocPart.prototype.Read_FromBinary2 = function(oReader)
 	this.Pr.ReadFromBinary(oReader);
 	CDocumentContent.prototype.Read_FromBinary2.call(this, oReader);
 };
+CDocPart.prototype.SetDocPartName = function(sName)
+{
+	if (this.Pr.Name !== sName)
+	{
+		History.Add(new CChangesDocPartName(this, this.Pr.Name, sName));
+		this.Pr.Name = sName;
+	}
+};
+CDocPart.prototype.GetDocPartName = function()
+{
+	return this.Pr.Name;
+};
+CDocPart.prototype.SetDocPartStyle = function(sStyle)
+{
+	if (this.Pr.Style !== sStyle)
+	{
+		History.Add(new CChangesDocPartStyle(this, this.Pr.Style, sStyle));
+		this.Pr.Style = sStyle;
+	}
+};
+CDocPart.prototype.GetDocPartStyle = function()
+{
+	return this.Pr.Style;
+};
+CDocPart.prototype.SetDocPartTypes = function(nTypes)
+{
+	if (this.Pr.Types !== nType)
+	{
+		History.Add(new CChangesDocPartTypes(this, this.Pr.Types, nTypes));
+		this.Pr.Types = nTypes;
+	}
+};
+/**
+ * @param {c_oAscDocPartType} nType
+ */
+CDocPart.prototype.AddDocPartType = function(nType)
+{
+	this.SetDocPartTypes(this.Pr.Types | nType);
+};
+/**
+ * @param {c_oAscDocPartType} nType
+ * @returns {boolean}
+ */
+CDocPart.prototype.CheckDocPartType = function(nType)
+{
+	if (this.Pr.Types & c_oAscDocPartType.All)
+		return true;
+
+	return !!(this.Pr.Types & nType);
+};
+CDocPart.prototype.SetDocPartDescription = function(sDescription)
+{
+	if (this.Pr.Description !== sDescription)
+	{
+		History.Add(new CChangesDocPartDescription(this, this.Pr.Description, sDescription));
+		this.Pr.Description = sDescription;
+	}
+};
+CDocPart.prototype.GetDocPartDescription = function()
+{
+	return this.Pr.Description;
+};
+CDocPart.prototype.SetDocPartGUID = function(sGUID)
+{
+	if (this.Pr.GUID !== sGUID)
+	{
+		History.Add(new CChangesDocPartGUID(this, this.Pr.GUID, sGUID));
+		this.Pr.GUID = sGUID;
+	}
+};
+CDocPart.prototype.GetDocPartGUID = function()
+{
+	return this.Pr.GUID;
+};
+CDocPart.prototype.SetDocPartCategory = function(sName, nGallery)
+{
+	var oNewCategory = undefined;
+	if (undefined !== sName)
+		oNewCategory = new CDocPartCategory(sName, nGallery);
+
+	if ((!this.Pr.Category && oNewCategory)
+		|| (this.Pr.Category && !this.Pr.Category.IsEqual(oNewCategory)))
+	{
+		History.Add(new CChangesDocPartCategory(this, this.Pr.Category, oNewCategory));
+		this.Pr.Category = oNewCategory;
+	}
+};
+CDocPart.prototype.GetDocPartCategory = function()
+{
+	return this.Pr.Category;
+};
+CDocPart.prototype.SetDocPartBehavior = function(nBehavior)
+{
+	if (this.Pr.Behavior !== nBehavior)
+	{
+		History.Add(new CChangesDocPartBehavior(this, this.Pr.Behavior, nBehavior));
+		this.Pr.Behavior = nBehavior;
+	}
+};
+/**
+ * @param {c_oAscDocPartBehavior} nType
+ */
+CDocPart.prototype.AddDocPartBehavior = function(nType)
+{
+	this.SetDocPartBehavior(this.Pr.Behavior | nType);
+};
+/**
+ * @param {c_oAscDocPartBehavior} nType
+ * @returns {boolean}
+ */
+CDocPart.prototype.CheckDocPartBehavior = function(nType)
+{
+	return !!(this.Pr.Behavior & nType);
+};
 
 /** @enum {number} */
 var c_oAscDocPartType = {
@@ -274,14 +388,15 @@ var c_oAscDocPartGallery = {
 
 /**
  * Класс для определения категории заданного специального содержимого
+ * @param {string} sName
+ * @param {number} nGallery
  * @constructor
  */
-function CDocPartCategory()
+function CDocPartCategory(sName, nGallery)
 {
-	this.Name    = "";
-	this.Gallery = c_oAscDocPartGallery.Default;
+	this.Name    = undefined !== sName ? sName : "";
+	this.Gallery = undefined !== nGallery ? nGallery : c_oAscDocPartGallery.Default;
 }
-
 CDocPartCategory.prototype.WriteToBinary = function(oWriter)
 {
 	// String : Name
@@ -289,13 +404,34 @@ CDocPartCategory.prototype.WriteToBinary = function(oWriter)
 	oWriter.WriteString2(this.Name);
 	oWriter.WriteLong(this.Gallery);
 };
-CDocPartCategory.prototype.ReadFromBinary = function(oRedaer)
+CDocPartCategory.prototype.ReadFromBinary = function(oReader)
 {
 	// String : Name
 	// Long   : Gallery
 	this.Name    = oReader.GetString2();
-	this.Gallery = oRedaer.GetLong();
+	this.Gallery = oReader.GetLong();
 };
+CDocPartCategory.prototype.Write_ToBinary = function(oWriter)
+{
+	return this.WriteToBinary(oWriter);
+};
+CDocPartCategory.prototype.Read_FromBinary = function(oReader)
+{
+	return this.ReadFromBinary(oReader);
+};
+/**
+ * Проверяем на совпадение
+ * @param {CDocPartCategory} oCategory
+ * @returns {boolean}
+ */
+CDocPartCategory.prototype.IsEqual = function(oCategory)
+{
+	if (!oCategory)
+		return false;
+
+	return (this.Name === oCategory.Name && this.Gallery === oCategory.Gallery);
+};
+
 //------------------------------------------------------------export---------------------------------------------------
 var prot;
 window["Asc"] = window["Asc"] || {};

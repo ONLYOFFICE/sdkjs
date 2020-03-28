@@ -1850,7 +1850,17 @@
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CGlossaryDocument
 	//------------------------------------------------------------------------------------------------------------------
-	windows['AscDFH'].historyitem_GlossaryDocument_AddDocPart = window['AscDFH'].historyitem_type_GlossaryDocument | 1;
+	window['AscDFH'].historyitem_GlossaryDocument_AddDocPart = window['AscDFH'].historyitem_type_GlossaryDocument | 1;
+	//------------------------------------------------------------------------------------------------------------------
+	// Типы изменений в классе CDocPart
+	//------------------------------------------------------------------------------------------------------------------
+	window["AscDFH"].historyitem_DocPart_Name        = window["AscDFH"].historyitem_type_DocPart | 1;
+	window["AscDFH"].historyitem_DocPart_Style       = window["AscDFH"].historyitem_type_DocPart | 2;
+	window["AscDFH"].historyitem_DocPart_Types       = window["AscDFH"].historyitem_type_DocPart | 3;
+	window["AscDFH"].historyitem_DocPart_Description = window["AscDFH"].historyitem_type_DocPart | 4;
+	window["AscDFH"].historyitem_DocPart_GUID        = window["AscDFH"].historyitem_type_DocPart | 5;
+	window["AscDFH"].historyitem_DocPart_Category    = window["AscDFH"].historyitem_type_DocPart | 6;
+	window["AscDFH"].historyitem_DocPart_Behavior    = window["AscDFH"].historyitem_type_DocPart | 7;
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CSdtPr
 	//------------------------------------------------------------------------------------------------------------------
