@@ -254,7 +254,7 @@
 					res = [];
 					list._foreachNoEmpty(function (cell) {
 						// ToDo check cells type
-						if (!cell.isEmptyTextString()) {
+						if (!cell.isNullTextString()) {
 							res.push(withoutFormat ? cell.getValueWithoutFormat() : cell.getValue());
 						}
 					});
