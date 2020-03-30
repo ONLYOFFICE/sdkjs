@@ -120,7 +120,6 @@
     CDataFormula.prototype.onFormulaEvent = function (type, eventData) {
         if (AscCommon.c_oNotifyParentType.ChangeFormula === type) {
             this.text = eventData.assemble;
-            this._formula = null;
         }
     };
 	CDataFormula.prototype.getValue = function(vt, ws, returnRaw) {
