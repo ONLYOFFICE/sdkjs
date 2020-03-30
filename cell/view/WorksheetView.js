@@ -9577,11 +9577,12 @@
                         History.Create_NewPoint();
                         History.StartTransaction();
 
-                        range.promote(/*bCtrl*/ctrlPress, /*bVertical*/(1 === t.fillHandleDirection), nIndex,
-                          oCanPromote);
-
-                        // Вызываем функцию пересчета для заголовков форматированной таблицы
-                        t.model.autoFilters.renameTableColumn(arn);
+						AscCommonExcel.executeInR1C1Mode(false, function () {
+							range.promote(/*bCtrl*/ctrlPress, /*bVertical*/(1 === t.fillHandleDirection), nIndex,
+								oCanPromote);
+							// Вызываем функцию пересчета для заголовков форматированной таблицы
+							t.model.autoFilters.renameTableColumn(arn);
+						});
 
                         // Сбрасываем параметры автозаполнения
                         t.activeFillHandle = null;

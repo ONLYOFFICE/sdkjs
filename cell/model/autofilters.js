@@ -2817,9 +2817,10 @@
 				}
 
 				if (worksheet.TableParts) {
+					//TODO проверить, возможно всегда стоит оборачивать в r1c1mode = false
 					worksheet.workbook.dependencyFormulas.buildDependency();
-					//without lockRecal each setValue call calculation
 					worksheet.workbook.dependencyFormulas.lockRecal();
+					
 					for (var i = 0; i < worksheet.TableParts.length; i++) {
 						var filter = worksheet.TableParts[i];
 
