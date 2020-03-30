@@ -13899,7 +13899,7 @@
 							var f = new AscCommonExcel.parserFormula(checkValue.substring(1), null, t.model);
 							f.parse();
 							checkValue = f.calculate(null, null, null);
-							checkValue = f.simplifyRefType(checkValue).getValue();
+							checkValue = f.simplifyRefType(checkValue).toString();
 						}
 						if (!dataValidation.checkValue(checkValue, t.model)) {
 							t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.DataValidate, c_oAscError.Level.NoCritical, dataValidation);
