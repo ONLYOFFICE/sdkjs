@@ -7160,7 +7160,6 @@
 				res = this.bcr.Read1(length, function(t, l) {
 					return oThis.ReadDataValidations(t, l, oWorksheet.dataValidations);
 				});
-                oWorksheet.dataValidations._init(oWorksheet);
 			} else
 				res = c_oSerConstants.ReadUnknown;
 			return res;

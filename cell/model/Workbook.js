@@ -3617,6 +3617,9 @@
 	Worksheet.prototype.initPostOpen = function (handlers) {
 		this.PagePrintOptions.init();
 		this.headerFooter.init();
+		if (this.dataValidations) {
+			this.dataValidations.init(this);
+		}
 
 		// Sheet Views
 		if (0 === this.sheetViews.length) {

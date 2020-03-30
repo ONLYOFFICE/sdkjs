@@ -149,10 +149,10 @@
 
 	CDataValidation.prototype._init = function (ws) {
 		if (this.formula1) {
-			this.formula1._init(ws, this.type);
+			this.formula1._init(this.type, ws);
 		}
 		if (this.formula2) {
-			this.formula2._init(ws, this.type);
+			this.formula2._init(this.type, ws);
 		}
 	};
 	CDataValidation.prototype.clone = function() {
@@ -284,7 +284,7 @@
 		return this;
 	}
 
-	CDataValidations.prototype._init = function (ws) {
+	CDataValidations.prototype.init = function (ws) {
 		for (var i = 0; i < this.elems.length; ++i) {
 			this.elems[i]._init(ws);
 		}
