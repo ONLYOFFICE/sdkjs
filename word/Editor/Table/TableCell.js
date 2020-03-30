@@ -2081,7 +2081,7 @@ CTableCell.prototype.DeleteBorder = function(nType)
     }
 };
 /**
- * Рисуем границу ячейки
+ * Отрисовываем границу ячейки
  * @param {number} nType - 0 - Top, 1 - Right, 2- Bottom, 3- Left
  */
 CTableCell.prototype.DrawBorder = function(nType)
