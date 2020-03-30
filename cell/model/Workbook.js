@@ -8476,7 +8476,7 @@
 			return;
 		}
 		var parsed = this.getFormulaParsed();
-		var res = parsed.simplifyRefType(parsed.value, this);
+		var res = parsed.simplifyRefType(parsed.value, this.ws, this.nRow, this.nCol);
 
 		if (res) {
 			this.cleanText();

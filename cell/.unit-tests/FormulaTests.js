@@ -8883,25 +8883,25 @@ $( function () {
         ok( oParser.parse() );
         var parent =  AscCommonExcel.g_oRangeCache.getAscRange(oParser.parent);
         parent = {nCol: parent.c1, nRow: parent.r1, ws: ws};
-        strictEqual( oParser.simplifyRefType(oParser.calculate(), parent).getValue(), "#VALUE!" );
+        strictEqual( oParser.simplifyRefType(oParser.calculate(), ws, parent.r1, parent.c1).getValue(), "#VALUE!" );
 
 		oParser = new parserFormula( "INDEX(A651:C655,,2)", "D651", ws );
 		ok( oParser.parse() );
 		parent =  AscCommonExcel.g_oRangeCache.getAscRange(oParser.parent);
 		parent = {nCol: parent.c1, nRow: parent.r1, ws: ws};
-		strictEqual( oParser.simplifyRefType(oParser.calculate(), parent).getValue(), 6 );
+		strictEqual( oParser.simplifyRefType(oParser.calculate(), ws, parent.r1, parent.c1).getValue(), 6 );
 
 		oParser = new parserFormula( "INDEX(A651:C655,,2)", "D652", ws );
 		ok( oParser.parse() );
 		parent =  AscCommonExcel.g_oRangeCache.getAscRange(oParser.parent);
 		parent = {nCol: parent.c1, nRow: parent.r1, ws: ws};
-		strictEqual( oParser.simplifyRefType(oParser.calculate(), parent).getValue(), 7 );
+		strictEqual( oParser.simplifyRefType(oParser.calculate(), ws, parent.r1, parent.c1).getValue(), 7 );
 
 		oParser = new parserFormula( "INDEX(A651:C655,,3)", "E652", ws );
 		ok( oParser.parse() );
 		parent =  AscCommonExcel.g_oRangeCache.getAscRange(oParser.parent);
 		parent = {nCol: parent.c1, nRow: parent.r1, ws: ws};
-		strictEqual( oParser.simplifyRefType(oParser.calculate(), parent).getValue(), 12 );
+		strictEqual( oParser.simplifyRefType(oParser.calculate(), ws, parent.r1, parent.c1).getValue(), 12 );
 
 		oParser = new parserFormula( "INDEX(A651:C655,,4)", "E652", ws );
 		ok( oParser.parse() );
