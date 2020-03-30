@@ -113,9 +113,16 @@
 		}
 
 		this.type = EFormulaType.Formula;
-		this._formula = new AscCommonExcel.parserFormula(this.text, null, ws);
+		this._formula = new AscCommonExcel.parserFormula(this.text, this, ws);
 		this._formula.parse();
+        this._formula.buildDependencies();
 	};
+    CDataFormula.prototype.onFormulaEvent = function (type, eventData) {
+        if (AscCommon.c_oNotifyParentType.ChangeFormula === type) {
+            this.text = eventData.assemble;
+            this._formula = null;
+        }
+    };
 	CDataFormula.prototype.getValue = function(vt, ws, returnRaw) {
 		this._init(vt, ws);
 		if (EFormulaType.Formula === this.type) {
