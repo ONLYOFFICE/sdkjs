@@ -10398,6 +10398,7 @@
             var callTrigger = false;
             var res;
             var mc, r, cell;
+            var expansionTableRange;
 
             function makeBorder(b) {
                 var border = new AscCommonExcel.BorderProp();
@@ -10477,6 +10478,7 @@
                         break;
                     case "value":
                         range.setValue(val);
+						expansionTableRange = range.bbox;
                         break;
                     case "format":
                         range.setNumFormat(val);
@@ -10691,11 +10693,11 @@
 			t.model.workbook.handlers.trigger("cleanCutData", true, true);
 
 			//в случае, если вставляем из глобального буфера, транзакцию закрываем внутри функции _loadDataBeforePaste на callbacks от загрузки шрифтов и картинок
-			if (prop !== "paste"/* || (prop === "paste" && val.fromBinary)*/) {
+			if (prop !== "paste") {
 				History.EndTransaction();
-				/*if(prop === "paste") {
-					window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
-				}*/
+				if(expansionTableRange) {
+					t.applyTableAutoExpansion(expansionTableRange);
+				}
 			}
 
 			if (hasUpdates) {
@@ -13690,7 +13692,6 @@
 			}
 		};
 
-		var oAutoExpansionTable;
 		var isFormula = this._isFormula(val);
 		if (isFormula) {
 			// ToDo - при вводе формулы в заголовок автофильтра надо писать "0"
@@ -13734,13 +13735,6 @@
 			this.model.autoFilters.renameTableColumn(bbox);
 		}
 
-		var api = window["Asc"]["editor"];
-		var bFast = api.collaborativeEditing.m_bFast;
-		var bIsSingleUser = !api.collaborativeEditing.getCollaborativeEditing();
-		if (!(bFast && !bIsSingleUser)) {
-			oAutoExpansionTable = this.model.autoFilters.checkTableAutoExpansion(bbox);
-		}
-
 		if (!isFormula) {
 			if (-1 !== AscCommonExcel.getFragmentsText(val).indexOf(kNewLine)) {
 				c.setWrap(true);
@@ -13757,19 +13751,7 @@
 			});
 		}
 
-		if (oAutoExpansionTable && !applyByArray) {
-			var callback = function () {
-				var options = {
-					props: [Asc.c_oAscAutoCorrectOptions.UndoTableAutoExpansion],
-					cell: bbox,
-					wsId: t.model.getId()
-				};
-				t.handlers.trigger("toggleAutoCorrectOptions", true, options);
-			};
-			t.af_changeTableRange(oAutoExpansionTable.name, oAutoExpansionTable.range, callback);
-		} else {
-			t.handlers.trigger("toggleAutoCorrectOptions");
-		}
+		t.applyTableAutoExpansion(bbox, applyByArray);
 
 		//t.model.workbook.dependencyFormulas.unlockRecal();
 
@@ -19175,6 +19157,31 @@
 		}
 
 		return res;
+	};
+
+	WorksheetView.prototype.applyTableAutoExpansion = function (bbox, applyByArray) {
+		var t = this;
+		var api = window["Asc"]["editor"];
+		var bFast = api.collaborativeEditing.m_bFast;
+		var bIsSingleUser = !api.collaborativeEditing.getCollaborativeEditing();
+		var oAutoExpansionTable;
+		if (!(bFast && !bIsSingleUser)) {
+			oAutoExpansionTable = t.model.autoFilters.checkTableAutoExpansion(bbox);
+		}
+
+		if (oAutoExpansionTable && !applyByArray) {
+			var callback = function () {
+				var options = {
+					props: [Asc.c_oAscAutoCorrectOptions.UndoTableAutoExpansion],
+					cell: bbox,
+					wsId: t.model.getId()
+				};
+				t.handlers.trigger("toggleAutoCorrectOptions", true, options);
+			};
+			t.af_changeTableRange(oAutoExpansionTable.name, oAutoExpansionTable.range, callback);
+		} else {
+			t.handlers.trigger("toggleAutoCorrectOptions");
+		}
 	};
 
 	//------------------------------------------------------------export---------------------------------------------------
