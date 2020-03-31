@@ -3049,7 +3049,9 @@ function CEditorPage(api)
 		if (this.MobileTouchManager)
 			this.MobileTouchManager.Resize_Before();
 
-		if (this.Splitter1Pos > 0.1)
+		var isDesktopVersion = (undefined !== window["AscDesktopEditor"]) ? true : false;
+
+		if (this.Splitter1Pos > 0.1 && !isDesktopVersion)
 		{
             var maxSplitterThMax = g_dKoef_pix_to_mm * this.Width / 3;
             if (maxSplitterThMax > 80)
@@ -3074,7 +3076,7 @@ function CEditorPage(api)
 		{
 			var _pos = this.Height - ((this.Splitter2Pos * g_dKoef_mm_to_pix) >> 0);
 			var _min = 30 * g_dKoef_mm_to_pix;
-			if (_pos < _min)
+			if (_pos < _min && !isDesktopVersion)
 			{
 				this.Splitter2Pos = (this.Height - _min) / g_dKoef_mm_to_pix;
 				if (this.Splitter2Pos < this.Splitter2PosMin)
