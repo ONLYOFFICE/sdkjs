@@ -13891,7 +13891,7 @@
 
 					//***array-formula***
 					var ref = null;
-					if(flags.bApplyByArray) {
+					if(flags.ctrlKey && flags.shiftKey) {
 						//необходимо проверить на выделение массива частично
 						var activeRange = t.getSelectedRange();
 						var doNotApply = false;
