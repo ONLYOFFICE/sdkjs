@@ -6577,7 +6577,7 @@ window["native"]["offline_apply_event"] = function(type,params) {
         {
             if (undefined !== params) {
                 var indexScheme = parseInt(params);
-                _api.asc_ChangeColorScheme(indexScheme);
+                _api.asc_ChangeColorSchemeByIdx(indexScheme);
             }
             break;
         }

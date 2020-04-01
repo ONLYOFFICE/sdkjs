@@ -1240,7 +1240,7 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
         {
             if (undefined !== _params) {
                 var indexScheme = parseInt(_params);
-                this.ChangeColorScheme(indexScheme);
+                _api.asc_ChangeColorSchemeByIdx(indexScheme);
             }
             break;
         }
