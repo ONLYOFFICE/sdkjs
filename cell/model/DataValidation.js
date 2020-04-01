@@ -207,35 +207,38 @@
 				res = (list && -1 !== list.indexOf(val));
 			} else if (EDataValidationType.Custom === this.type) {
 			} else {
+				res = false;
 				val = Number(val);
-				if (!isNaN(val)) {
-					var v1 = this.formula1 && this.formula1.getValue(this.type, ws, true);
-					var v2 = this.formula2 && this.formula2.getValue(this.type, ws, true);
-					switch (this.operator) {
-						case EDataValidationOperator.Between:
-							res = v1 <= val && val <= v2;
-							break;
-						case EDataValidationOperator.NotBetween:
-							res = !(v1 <= val && val <= v2);
-							break;
-						case EDataValidationOperator.Equal:
-							res = v1 === val;
-							break;
-						case EDataValidationOperator.NotEqual:
-							res = v1 !== val;
-							break;
-						case EDataValidationOperator.LessThan:
-							res = v1 > val;
-							break;
-						case EDataValidationOperator.LessThanOrEqual:
-							res = v1 >= val;
-							break;
-						case EDataValidationOperator.GreaterThan:
-							res = v1 < val;
-							break;
-						case EDataValidationOperator.GreaterThanOrEqual:
-							res = v1 <= val;
-							break;
+				if (!isNaN(val) ) {
+					if (EDataValidationType.Whole !== this.type || ((val >> 0) === val)) {
+						var v1 = this.formula1 && this.formula1.getValue(this.type, ws, true);
+						var v2 = this.formula2 && this.formula2.getValue(this.type, ws, true);
+						switch (this.operator) {
+							case EDataValidationOperator.Between:
+								res = v1 <= val && val <= v2;
+								break;
+							case EDataValidationOperator.NotBetween:
+								res = !(v1 <= val && val <= v2);
+								break;
+							case EDataValidationOperator.Equal:
+								res = v1 === val;
+								break;
+							case EDataValidationOperator.NotEqual:
+								res = v1 !== val;
+								break;
+							case EDataValidationOperator.LessThan:
+								res = v1 > val;
+								break;
+							case EDataValidationOperator.LessThanOrEqual:
+								res = v1 >= val;
+								break;
+							case EDataValidationOperator.GreaterThan:
+								res = v1 < val;
+								break;
+							case EDataValidationOperator.GreaterThanOrEqual:
+								res = v1 <= val;
+								break;
+						}
 					}
 				}
 			}
