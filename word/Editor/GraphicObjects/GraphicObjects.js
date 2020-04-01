@@ -1143,15 +1143,15 @@ CGraphicObjects.prototype =
             var  ret = [];
             for(var i = 0; i < arrObjects.length; ++i)
             {
-                if(arrObjects[i].GetType() === type_Paragraph)
+                if(arrObjects[i].IsParagraph())
                 {
                     var calc_frame = arrObjects[i].CalculatedFrame;
                     var FramePr = arrObjects[i].Get_FramePr();
                     var FrameDx = ( undefined === FramePr.HSpace ? 0 : FramePr.HSpace );
                     var FrameDy = ( undefined === FramePr.VSpace ? 0 : FramePr.VSpace );
-                    ret.push(new CFlowParagraph(arrObjects[i], calc_frame.L2, calc_frame.T2, calc_frame.W2, calc_frame.H2, FrameDx, FrameDy, 0, 0, FramePr.Wrap));
+                    ret.push(new CFlowParagraph(arrObjects[i], calc_frame.L2, calc_frame.T2, calc_frame.W2, calc_frame.H2, FrameDx, FrameDy, arrObjects[i].GetIndex(), 1, FramePr.Wrap));
                 }
-                else if(arrObjects[i].GetType() === type_Table)
+                else if(arrObjects[i].IsTable())
                 {
                 	if (0 === arrObjects[i].GetStartPageRelative())
                     	ret.push(new CFlowTable(arrObjects[i], 0));
