@@ -13874,16 +13874,21 @@
 						}
 					};
 
-					var dataValidation = t.model.getDataValidation(col, row);
+					var text = AscCommonExcel.getFragmentsText(val);
+					var dataValidation = 0 !== text.length && t.model.getDataValidation(col, row);
 					if (dataValidation) {
-						var checkValue = AscCommonExcel.getFragmentsText(val);
-						if (t._isFormula(val)) {
-							var f = new AscCommonExcel.parserFormula(checkValue.substring(1), null, t.model);
-							f.parse();
-							checkValue = f.calculate(null, c.bbox, null);
-							checkValue = f.simplifyRefType(checkValue, t.model, c.bbox.r1, c.bbox.c1).toString();
+						var checkCell, setValueError;
+						c._foreach(function (_cell) {
+							checkCell = _cell.cloneAndSetValue(val, t._isFormula(val) ? text : null,
+								function (_res) {
+									setValueError = !_res;
+								});
+						});
+						if (setValueError) {
+							// Error sent from another function
+							return false;
 						}
-						if (!dataValidation.checkValue(checkValue, t.model)) {
+						if (!dataValidation.checkValue(checkCell.getValueWithoutFormat(), t.model)) {
 							t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.DataValidate, c_oAscError.Level.NoCritical, dataValidation);
 							return false;
 						}
