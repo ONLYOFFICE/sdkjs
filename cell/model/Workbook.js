@@ -5249,6 +5249,13 @@
 		callback(it);
 		it.release();
 	};
+	Worksheet.prototype.getCellForValidation=function(row, col, array, formula, callback, isCopyPaste, byRef){
+		var cell = new Cell(this);
+		cell.setRowCol(row, col);
+		//todo cell.xf
+		cell.setValueForValidation(array, formula, callback, isCopyPaste, byRef);
+		return cell;
+	};
 	Worksheet.prototype._removeCell=function(nRow, nCol, cell){
 		var t = this;
 		var processCell = function(cell) {
@@ -7682,6 +7689,7 @@
 			}
 		} else if (val) {
 			this._setValue(val);
+			this._autoformatHyperlink(val);
 			wb.dependencyFormulas.addToChangedCell(this);
 		} else {
 			wb.dependencyFormulas.addToChangedCell(this);
@@ -7797,27 +7805,22 @@
 			cell.removeHyperlink();
 		}
 	};
-	Cell.prototype.cloneAndSetValue = function(array, formula, callback, isCopyPaste, byRef) {
-		var cell = new Cell(this.ws);
-		cell.nRow = this.nRow;
-		cell.nCol = this.nCol;
-		cell.xfs = this.xfs;
-		cell.setFormulaInternal(null);
-		cell.cleanText();
+	Cell.prototype.setValueForValidation = function(array, formula, callback, isCopyPaste, byRef) {
+		this.setFormulaInternal(null, true);
+		this.cleanText();
 		if (formula) {
-			var newFP = cell.setValueGetParsed(formula, callback, isCopyPaste, byRef);
+			var newFP = this.setValueGetParsed(formula, callback, isCopyPaste, byRef);
 			this.ws.formulaArrayLink = null;//todo
 			if (newFP) {
-				cell.setFormulaInternal(newFP);
+				this.setFormulaInternal(newFP, true);
 				newFP.calculate();
-				cell._updateCellValue();
+				this._updateCellValue();
 			} else if (undefined !== newFP) {
-				cell._setValue(formula);
+				this._setValue(formula);
 			}
 		} else {
-			cell._setValue2(array);
+			this._setValue2(array, true);
 		}
-		return cell;
 	};
 	Cell.prototype.setFormulaTemplate = function(bHistoryUndo, action) {
 		var DataOld = null;
@@ -8777,6 +8780,8 @@
 				}
 			}
 		}
+	};
+	Cell.prototype._autoformatHyperlink = function(val){
 		if (/(^(((http|https|ftp):\/\/)|(mailto:)|(www.)))|@/i.test(val)) {
 			// Удаляем концевые пробелы и переводы строки перед проверкой гиперссылок
 			val = val.replace(/\s+$/, '');
@@ -8790,13 +8795,16 @@
 				oNewHyperlink.Ref.setHyperlink(oNewHyperlink);
 			}
 		}
-	};
-	Cell.prototype._setValue2 = function(aVal)
+	}
+	Cell.prototype._setValue2 = function(aVal, ignoreHyperlink)
 	{
 		var sSimpleText = "";
 		for(var i = 0, length = aVal.length; i < length; ++i)
 			sSimpleText += aVal[i].text;
 		this._setValue(sSimpleText);
+		if (!ignoreHyperlink) {
+			this._autoformatHyperlink(sSimpleText);
+		}
 		var nRow = this.nRow;
 		var nCol = this.nCol;
 		if(CellValueType.String == this.type && null == this.ws.hyperlinkManager.getByCell(nRow, nCol))

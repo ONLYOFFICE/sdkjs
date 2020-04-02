@@ -13878,12 +13878,10 @@
 					var dataValidation = 0 !== text.length && t.model.getDataValidation(col, row);
 					if (dataValidation) {
 						var checkCell, setValueError;
-						c._foreach(function (_cell) {
-							checkCell = _cell.cloneAndSetValue(val, t._isFormula(val) ? text : null,
-								function (_res) {
-									setValueError = !_res;
-								});
-						});
+						checkCell = t.model.getCellForValidation(row, col, val, t._isFormula(val) ? text : null,
+													 function (_res) {
+														 setValueError = !_res;
+													 });
 						if (setValueError) {
 							// Error sent from another function
 							return false;
