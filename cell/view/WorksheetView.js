@@ -10477,7 +10477,11 @@
                         range.setShrinkToFit(val);
                         break;
                     case "value":
-                        range.setValue(val);
+                    	if (val instanceof AscCommonExcel.CCellValue) {
+							range.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, val));
+						} else {
+							range.setValue(val);
+						}
 						expansionTableRange = range.bbox;
                         break;
                     case "format":
