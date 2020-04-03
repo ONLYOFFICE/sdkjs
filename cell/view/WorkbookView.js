@@ -458,7 +458,8 @@
 			  // DataValidation
 			  "onDataValidation": function () {
 				  if (self.oSelectionInfo && self.oSelectionInfo.dataValidation) {
-					  self.handlers.trigger("asc_onValidationListMenu", self.oSelectionInfo.dataValidation.getListValues(self.model.getActiveWs()));
+					  var list = self.oSelectionInfo.dataValidation.getListValues(self.model.getActiveWs());
+					  self.handlers.trigger("asc_onValidationListMenu", list[0], list[1]);
 				  }
 			  },
 

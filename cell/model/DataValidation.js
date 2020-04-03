@@ -199,88 +199,109 @@
 		return false;
 	};
 	CDataValidation.prototype.checkValue = function (cell, ws) {
+		if (!this.showErrorMessage) {
+			return true;
+		}
+
 		var cellType = cell.getType();
 		var val = cell.getValueWithoutFormat();
-		var res = true;
-		if (this.showErrorMessage) {
-			if (EDataValidationType.List === this.type) {
-				var list = this._getListValues(ws, true);
-				res = (list && -1 !== list.indexOf(val));
-			} else if (EDataValidationType.Custom === this.type) {
-			} else {
-				if (EDataValidationType.TextLength === this.type) {
-					val = val.length;
-				} else {
-					if (AscCommon.CellValueType.Number !== cellType) {
-						return false;
-					}
-					val = Number(val);
 
-					if (isNaN(val) || (EDataValidationType.Whole === this.type && (val >> 0) !== val)) {
-						return false;
-					}
+		if (EDataValidationType.List === this.type) {
+			var list = this._getListValues(ws);
+			var values = list[0];
+			if (!values) {
+				return false;
+			}
+			var datas = list[1];
+			if (datas) {
+				for (var i = 0; i < datas.length; ++i) {
+
 				}
-
-				res = false;
-
-				var v1 = this.formula1 && this.formula1.getValue(this.type, ws, true);
-				var v2 = this.formula2 && this.formula2.getValue(this.type, ws, true);
-				switch (this.operator) {
-					case EDataValidationOperator.Between:
-						res = v1 <= val && val <= v2;
-						break;
-					case EDataValidationOperator.NotBetween:
-						res = !(v1 <= val && val <= v2);
-						break;
-					case EDataValidationOperator.Equal:
-						res = v1 === val;
-						break;
-					case EDataValidationOperator.NotEqual:
-						res = v1 !== val;
-						break;
-					case EDataValidationOperator.LessThan:
-						res = v1 > val;
-						break;
-					case EDataValidationOperator.LessThanOrEqual:
-						res = v1 >= val;
-						break;
-					case EDataValidationOperator.GreaterThan:
-						res = v1 < val;
-						break;
-					case EDataValidationOperator.GreaterThanOrEqual:
-						res = v1 <= val;
-						break;
+			} else {
+				return -1 !== datas.indexOf(val);
+			}
+			for (var i = 0; i < datas.length; ++i) {
+				if (datas[i].isEqual(cell)) {
+					return true;
 				}
 			}
+		} else if (EDataValidationType.Custom === this.type) {
+			return true;
+		} else {
+			if (EDataValidationType.TextLength === this.type) {
+				val = val.length;
+			} else {
+				if (AscCommon.CellValueType.Number !== cellType) {
+					return false;
+				}
+				val = Number(val);
+
+				if (isNaN(val) || (EDataValidationType.Whole === this.type && (val >> 0) !== val)) {
+					return false;
+				}
+			}
+
+			var res = false;
+
+			var v1 = this.formula1 && this.formula1.getValue(this.type, ws, true);
+			var v2 = this.formula2 && this.formula2.getValue(this.type, ws, true);
+			switch (this.operator) {
+				case EDataValidationOperator.Between:
+					res = v1 <= val && val <= v2;
+					break;
+				case EDataValidationOperator.NotBetween:
+					res = !(v1 <= val && val <= v2);
+					break;
+				case EDataValidationOperator.Equal:
+					res = v1 === val;
+					break;
+				case EDataValidationOperator.NotEqual:
+					res = v1 !== val;
+					break;
+				case EDataValidationOperator.LessThan:
+					res = v1 > val;
+					break;
+				case EDataValidationOperator.LessThanOrEqual:
+					res = v1 >= val;
+					break;
+				case EDataValidationOperator.GreaterThan:
+					res = v1 < val;
+					break;
+				case EDataValidationOperator.GreaterThanOrEqual:
+					res = v1 <= val;
+					break;
+			}
+			return res;
 		}
-		return res;
+		return false;
 	};
-	CDataValidation.prototype._getListValues = function (ws, withoutFormat) {
-		var res = null;
+	CDataValidation.prototype._getListValues = function (ws) {
+		var aValue, aData;
 		var list = this.formula1 && this.formula1.getValue(this.type, ws, false);
 		if (list && AscCommonExcel.cElementType.error !== list.type) {
 			if (AscCommonExcel.cElementType.string === list.type) {
-				res = list.getValue().split(AscCommon.FormulaSeparators.functionArgumentSeparatorDef);
+				aValue = list.getValue().split(AscCommon.FormulaSeparators.functionArgumentSeparatorDef);
 			} else {
 				list = list.getRange();
 				if (list) {
-					res = [];
+					aValue = [];
+					aData = [];
 					list._foreachNoEmpty(function (cell) {
-						// ToDo check cells type
 						if (!cell.isNullTextString()) {
-							res.push(withoutFormat ? cell.getValueWithoutFormat() : cell.getValue());
+							aValue.push(cell.getValue());
+							aData.push(new AscCommonExcel.CCellValue(cell));
 						}
 					});
 				}
 			}
 		}
-		return res;
+		return [aValue, aData];
 	};
 	CDataValidation.prototype.isListValues = function () {
 		return (this.type === EDataValidationType.List && !this.showDropDown);
 	};
 	CDataValidation.prototype.getListValues = function (ws) {
-		return this.isListValues() ?  this._getListValues(ws, false) : null;
+		return this.isListValues() ?  this._getListValues(ws) : null;
 	};
 
 	CDataValidation.prototype.getError = function () {
