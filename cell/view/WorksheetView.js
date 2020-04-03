@@ -13886,7 +13886,7 @@
 							// Error sent from another function
 							return false;
 						}
-						if (!dataValidation.checkValue(checkCell.getValueWithoutFormat(), t.model)) {
+						if (!dataValidation.checkValue(checkCell, t.model)) {
 							t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.DataValidate, c_oAscError.Level.NoCritical, dataValidation);
 							return false;
 						}
