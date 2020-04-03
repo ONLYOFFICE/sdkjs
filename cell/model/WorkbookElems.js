@@ -4699,6 +4699,10 @@ CCellValue.prototype =
 
 		return false;
 	},
+	isEqualCell : function(cell)
+	{
+		return this.isEqual(cell);
+	},
 	getType : function()
 	{
 		return UndoRedoDataTypes.CellValue;

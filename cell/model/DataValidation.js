@@ -221,7 +221,7 @@
 				return -1 !== datas.indexOf(val);
 			}
 			for (var i = 0; i < datas.length; ++i) {
-				if (datas[i].isEqual(cell)) {
+				if (datas[i].isEqualCell(cell)) {
 					return true;
 				}
 			}
