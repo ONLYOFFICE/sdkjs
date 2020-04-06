@@ -9347,88 +9347,6 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 		this.selection = val;
 	};
 
-	function CRemoveDuplicatesProps(ws) {
-		this.selection = null;
-		this._newSelection = null;
-		this.hasHeaders = null;
-
-		this.columnList = null;
-
-		this._ws = ws;
-
-		return this;
-	}
-	CRemoveDuplicatesProps.prototype.asc_getHasHeaders = function () {
-		return this.hasHeaders;
-	};
-	CRemoveDuplicatesProps.prototype.asc_setHasHeaders = function (val) {
-		var oldVal = !!this.hasHeaders;
-		if (this._newSelection && oldVal !== val) {
-			if(val) {
-				this._newSelection.r1++;
-			} else {
-				this._newSelection.r1--;
-			}
-			this._ws.setSelection(this._newSelection);
-		}
-		this.hasHeaders = val;
-	};
-	CRemoveDuplicatesProps.prototype.asc_updateSortList = function (saveIndexes) {
-		//TODO change selection
-		this.generateSortList(saveIndexes);
-	};
-	CRemoveDuplicatesProps.prototype.generateSortList = function () {
-		var maxCount = 500;
-		var selection = this._newSelection;
-		var j;
-
-		if(saveIndexes && this.sortList && this.sortList.length) {
-			var newSortList = [];
-			for(j in this.sortList) {
-				newSortList[j] = this.getNameColumnByIndex(parseInt(j), selection);
-			}
-			this.sortList = newSortList;
-		} else {
-			this.sortList = [];
-			if(this.columnSort) {
-				for(j = selection.c1; j <= selection.c2; j++) {
-					if(j - selection.c1 >= maxCount) {
-						break;
-					}
-					this.sortList.push(this.getNameColumnByIndex(j - selection.c1, selection));
-				}
-			}
-		}
-
-		if(this.levels) {
-			for(var i = 0; i < this.levels.length; i++) {
-				if(!this.sortList[this.levels[i].index]) {
-					this.sortList[this.levels[i].index] = this.getNameColumnByIndex(this.levels[i].index, selection);
-				}
-			}
-		}
-	};
-	CRemoveDuplicatesProps.prototype.getNameColumnByIndex = function (index) {
-		var t = this;
-		var _generateName = function(index) {
-			var base = AscCommon.translateManager.getValue("Column");
-			var text = t._ws._getColumnTitle(index);
-			text = base + " " + text;
-			return text;
-		};
-
-		var row = this._newSelection.r1;
-		var col = index + this._newSelection.c1;
-
-		if(!this.hasHeaders) {
-			return _generateName(this.columnSort ? col : row);
-		} else {
-			var cell = t._ws.model.getCell3(row, col);
-			var value = cell.getValueWithFormat();
-			return value !== "" ? value : _generateName(this.columnSort ? col : row);
-		}
-	};
-
 	function CSortPropertiesLevel() {
 		this.index = null;
 		this.name = null;
@@ -9491,6 +9409,83 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 		return this.isText;
 	};
 
+	function CRemoveDuplicatesProps(ws) {
+		this.selection = null;
+		this._newSelection = null;
+		this.hasHeaders = null;
+
+		this.columnList = null;
+
+		this._ws = ws;
+
+		return this;
+	}
+	CRemoveDuplicatesProps.prototype.asc_getHasHeaders = function () {
+		return this.hasHeaders;
+	};
+	CRemoveDuplicatesProps.prototype.asc_getColumnList = function () {
+		return this.columnList;
+	};
+	CRemoveDuplicatesProps.prototype.asc_setHasHeaders = function (val) {
+		var oldVal = !!this.hasHeaders;
+		if (this._newSelection && oldVal !== val) {
+			if(val) {
+				this._newSelection.r1++;
+			} else {
+				this._newSelection.r1--;
+			}
+			this._ws.setSelection(this._newSelection);
+		}
+		this.hasHeaders = val;
+	};
+	CRemoveDuplicatesProps.prototype.asc_updateColumnList = function (saveIndexes) {
+		//TODO change selection
+		this.generateColumnList(saveIndexes);
+	};
+	CRemoveDuplicatesProps.prototype.generateColumnList = function () {
+		var maxCount = 500;
+		var selection = this._newSelection;
+		var j, elem;
+
+		if(this.columnList && this.columnList.length) {
+			for(j in this.columnList) {
+				this.columnList[j].asc_setVal(this.getNameColumnByIndex(parseInt(j), selection));
+			}
+		} else {
+			this.columnList = [];
+			if(this.columnSort) {
+				for(j = selection.c1; j <= selection.c2; j++) {
+					if(j - selection.c1 >= maxCount) {
+						break;
+					}
+					elem = new window["AscCommonExcel"].AutoFiltersOptionsElements();
+					elem.asc_setVisible(true);
+					elem.asc_setVal(this.getNameColumnByIndex(j - selection.c1, selection));
+					this.columnList.push(elem);
+				}
+			}
+		}
+	};
+	CRemoveDuplicatesProps.prototype.getNameColumnByIndex = function (index) {
+		var t = this;
+		var _generateName = function(index) {
+			var base = AscCommon.translateManager.getValue("Column");
+			var text = t._ws._getColumnTitle(index);
+			text = base + " " + text;
+			return text;
+		};
+
+		var row = this._newSelection.r1;
+		var col = index + this._newSelection.c1;
+
+		if(!this.hasHeaders) {
+			return _generateName(this.columnSort ? col : row);
+		} else {
+			var cell = t._ws.model.getCell3(row, col);
+			var value = cell.getValueWithFormat();
+			return value !== "" ? value : _generateName(this.columnSort ? col : row);
+		}
+	};
 
 	//----------------------------------------------------------export----------------------------------------------------
 	var prot;
@@ -9784,5 +9779,12 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 	prot["asc_getColorsFill"] = prot.asc_getColorsFill;
 	prot["asc_getColorsFont"] = prot.asc_getColorsFont;
 	prot["asc_getIsTextData"] = prot.asc_getIsTextData;
+
+	window["Asc"]["CRemoveDuplicatesProps"] = window["Asc"].CRemoveDuplicatesProps = CRemoveDuplicatesProps;
+	prot = CRemoveDuplicatesProps.prototype;
+	prot["asc_getHasHeaders"] = prot.asc_getHasHeaders;
+	prot["asc_getColumnList"] = prot.asc_getColumnList;
+	prot["asc_updateColumnList"] = prot.asc_updateColumnList;
+	prot["asc_setHasHeaders"] = prot.asc_setHasHeaders;
 
 })(window);

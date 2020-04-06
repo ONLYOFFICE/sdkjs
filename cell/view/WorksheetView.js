@@ -20037,6 +20037,7 @@
 		//заголовки
 		settings.hasHeaders = dataHasHeaders;
 		settings._newSelection = selection;
+		settings.generateColumnList();
 
 		return settings;
 	};
