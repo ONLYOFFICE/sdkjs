@@ -208,22 +208,19 @@
 
 		if (EDataValidationType.List === this.type) {
 			var list = this._getListValues(ws);
-			var values = list[0];
-			if (!values) {
+			var aValue = list[0];
+			if (!aValue) {
 				return false;
 			}
-			var datas = list[1];
-			if (datas) {
-				for (var i = 0; i < datas.length; ++i) {
-
+			var aData = list[1];
+			if (aData) {
+				for (var i = 0; i < aData.length; ++i) {
+					if (aData[i].isEqualCell(cell)) {
+						return true;
+					}
 				}
 			} else {
-				return -1 !== datas.indexOf(val);
-			}
-			for (var i = 0; i < datas.length; ++i) {
-				if (datas[i].isEqualCell(cell)) {
-					return true;
-				}
+				return -1 !== aValue.indexOf(val);
 			}
 		} else if (EDataValidationType.Custom === this.type) {
 			return true;
