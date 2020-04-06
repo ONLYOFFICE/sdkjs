@@ -9347,6 +9347,88 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 		this.selection = val;
 	};
 
+	function CRemoveDuplicatesProps(ws) {
+		this.selection = null;
+		this._newSelection = null;
+		this.hasHeaders = null;
+
+		this.columnList = null;
+
+		this._ws = ws;
+
+		return this;
+	}
+	CRemoveDuplicatesProps.prototype.asc_getHasHeaders = function () {
+		return this.hasHeaders;
+	};
+	CRemoveDuplicatesProps.prototype.asc_setHasHeaders = function (val) {
+		var oldVal = !!this.hasHeaders;
+		if (this._newSelection && oldVal !== val) {
+			if(val) {
+				this._newSelection.r1++;
+			} else {
+				this._newSelection.r1--;
+			}
+			this._ws.setSelection(this._newSelection);
+		}
+		this.hasHeaders = val;
+	};
+	CRemoveDuplicatesProps.prototype.asc_updateSortList = function (saveIndexes) {
+		//TODO change selection
+		this.generateSortList(saveIndexes);
+	};
+	CRemoveDuplicatesProps.prototype.generateSortList = function () {
+		var maxCount = 500;
+		var selection = this._newSelection;
+		var j;
+
+		if(saveIndexes && this.sortList && this.sortList.length) {
+			var newSortList = [];
+			for(j in this.sortList) {
+				newSortList[j] = this.getNameColumnByIndex(parseInt(j), selection);
+			}
+			this.sortList = newSortList;
+		} else {
+			this.sortList = [];
+			if(this.columnSort) {
+				for(j = selection.c1; j <= selection.c2; j++) {
+					if(j - selection.c1 >= maxCount) {
+						break;
+					}
+					this.sortList.push(this.getNameColumnByIndex(j - selection.c1, selection));
+				}
+			}
+		}
+
+		if(this.levels) {
+			for(var i = 0; i < this.levels.length; i++) {
+				if(!this.sortList[this.levels[i].index]) {
+					this.sortList[this.levels[i].index] = this.getNameColumnByIndex(this.levels[i].index, selection);
+				}
+			}
+		}
+	};
+	CRemoveDuplicatesProps.prototype.getNameColumnByIndex = function (index) {
+		var t = this;
+		var _generateName = function(index) {
+			var base = AscCommon.translateManager.getValue("Column");
+			var text = t._ws._getColumnTitle(index);
+			text = base + " " + text;
+			return text;
+		};
+
+		var row = this._newSelection.r1;
+		var col = index + this._newSelection.c1;
+
+		if(!this.hasHeaders) {
+			return _generateName(this.columnSort ? col : row);
+		} else {
+			var cell = t._ws.model.getCell3(row, col);
+			var value = cell.getValueWithFormat();
+			return value !== "" ? value : _generateName(this.columnSort ? col : row);
+		}
+	};
+
 	function CSortPropertiesLevel() {
 		this.index = null;
 		this.name = null;
