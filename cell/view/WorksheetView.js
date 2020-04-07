@@ -20064,9 +20064,11 @@
 		var  firstLockRow;
 		var deleteIndexes = [];
 		var repeatArr = [];
+		var aSortElems = [];
 		for (var i = selection.r1; i <= selection.r2; i++) {
 			var cell = t._ws.model.getCell3(i, selection.c1);
 			var value = cell.getValueWithFormat();
+			aSortElems.push({index: i});
 			if (repeatArr.hasOwnProperty(value)) {
 				for (var j = selection.c1 + 1; j <= selection.c2; j++) {
 					var cell1 = t._ws.model.getCell3(i, j);
@@ -20098,10 +20100,10 @@
 
 				//удаляем
 				var deleteRange = t.model.getRange3(index, selection.c1, index, selection.c2);
-				range.cleanAll();
-				t.model.deletePivotTables(range.bbox);
-				t.model.removeSparklines(range.bbox);
-				t.cellCommentator.deleteCommentsRange(range.bbox);
+				deleteRange.cleanAll();
+				t.model.deletePivotTables(deleteRange.bbox);
+				t.model.removeSparklines(deleteRange.bbox);
+				t.cellCommentator.deleteCommentsRange(deleteRange.bbox);
 
 				//сдвигаем
 				var arnFrom = new Asc.Range(index + 1, selection.c1, selection.r2, selection.c2);
@@ -20118,6 +20120,54 @@
 
 			History.EndTransaction();
 		};
+
+		var _removeDuplicates2 = function() {
+			History.Create_NewPoint();
+			History.StartTransaction();
+
+			aSortElems.sort(function(a, b) {
+				if ((deleteIndexes[a.index] && deleteIndexes[b.index]) || (!deleteIndexes[a.index] && !deleteIndexes[b.index])) {
+					return 0;
+				} else if (!deleteIndexes[a.index] && deleteIndexes[b.index]) {
+					return 1;
+				} else {
+					return -1;
+				}
+			});
+
+			var aSortData = [];
+			for (var i = 0; i < aSortElems.length; i++) {
+				var oldIndex = aSortElems[i].index;
+				var newIndex = i + selection.r1;
+				if (oldIndex !== newIndex) {
+					aSortData.push(new AscCommonExcel.UndoRedoData_FromToRowCol(true, oldIndex, newIndex));
+					var deleteRange = t.model.getRange3(oldIndex, selection.c1, oldIndex, selection.c2);
+					deleteRange.cleanAll();
+					t.model.deletePivotTables(deleteRange.bbox);
+					t.model.removeSparklines(deleteRange.bbox);
+					t.cellCommentator.deleteCommentsRange(deleteRange.bbox);
+				}
+			}
+
+			if (aSortData.length) {
+				var sortRange = t.model.getRange3(selection.r1, selection.c1, selection.r2, selection.c2);
+				var oUndoRedoBBox = new UndoRedoData_BBox({r1: selection.r1, c1: selection.c1, r2: selection.r2, c2: selection.c2});
+				var _historyElem = new AscCommonExcel.UndoRedoData_SortData(oUndoRedoBBox, aSortData);
+				this._sortByArray(oUndoRedoBBox, aSortData);
+
+				var range = new Asc.Range(selection.r1, selection.c1, selection.r2, selection.c2);
+				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_Sort, this.model.worksheet.getId(), range, _historyElem)
+			}
+
+			//если находимся в ф/т или в а/ф необходимо сдвинуть их диапазон
+			//так же проверить для свобдных таблиц!
+
+			History.EndTransaction();
+		};
+
+
+		//UndoRedoData_FromToRowCol
+		//Range.prototype._sortByArray = function (oBBox, aSortData, bUndo, opt_by_row)
 
 		if (undefined !== firstLockRow) {
 			var lockRange = new Asc.Range(selection.c1, firstLockRow, selection.c2, selection.r2);
