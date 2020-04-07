@@ -4949,4 +4949,7 @@ var editor;
 
   prot["asc_validSheetName"] = prot.asc_validSheetName;
 
+  prot["asc_getRemoveDuplicates"] = prot.asc_getRemoveDuplicates;
+  prot["asc_setRemoveDuplicates"] = prot.asc_setRemoveDuplicates;
+
 })(window);
