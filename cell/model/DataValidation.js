@@ -85,7 +85,7 @@
 		this._formula = null;
 	}
 
-	CDataFormula.prototype._init = function (vt, ws) {
+	CDataFormula.prototype._init = function (ws) {
 		if (this._formula || !this.text) {
 			return;
 		}
@@ -99,9 +99,9 @@
             this.text = eventData.assemble;
         }
     };
-	CDataFormula.prototype.getValue = function(vt, ws, returnRaw) {
-		this._init(vt, ws);
-		var res = this._formula.calculate();
+	CDataFormula.prototype.getValue = function(ws, returnRaw) {
+		this._init(ws);
+		var res = this._formula.calculate(null);
 		return returnRaw ? this._formula.simplifyRefType(res) : res;
 	};
 
@@ -197,7 +197,7 @@
 				return -1 !== aValue.indexOf(val);
 			}
 		} else if (EDataValidationType.Custom === this.type) {
-			var v = this.formula1 && this.formula1.getValue(this.type, ws, true);
+			var v = this.formula1 && this.formula1.getValue(ws, true);
 			v = v && v.tocBool();
 			return !!(v && AscCommonExcel.cElementType.bool === v.type && v.toBool());
 		} else {
@@ -214,8 +214,8 @@
 				}
 			}
 
-			var v1 = this.formula1 && this.formula1.getValue(this.type, ws, true);
-			var v2 = this.formula2 && this.formula2.getValue(this.type, ws, true);
+			var v1 = this.formula1 && this.formula1.getValue(ws, true);
+			var v2 = this.formula2 && this.formula2.getValue(ws, true);
 			if (!checkIntegerType(v1)) {
 				return false;
 			}
@@ -254,7 +254,7 @@
 	};
 	CDataValidation.prototype._getListValues = function (ws) {
 		var aValue, aData;
-		var list = this.formula1 && this.formula1.getValue(this.type, ws, false);
+		var list = this.formula1 && this.formula1.getValue(ws, false);
 		if (list && AscCommonExcel.cElementType.error !== list.type) {
 			if (AscCommonExcel.cElementType.string === list.type) {
 				aValue = list.getValue().split(AscCommon.FormulaSeparators.functionArgumentSeparatorDef);
