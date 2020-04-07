@@ -20063,16 +20063,17 @@
 
 		var  firstLockRow;
 		var deleteIndexes = [];
+		var deleteIndexesMap = [];
 		var repeatArr = [];
 		var aSortElems = [];
 		for (var i = selection.r1; i <= selection.r2; i++) {
-			var cell = t._ws.model.getCell3(i, selection.c1);
+			var cell = t.model.getCell3(i, selection.c1);
 			var value = cell.getValueWithFormat();
 			aSortElems.push({index: i});
 			if (repeatArr.hasOwnProperty(value)) {
 				for (var j = selection.c1 + 1; j <= selection.c2; j++) {
-					var cell1 = t._ws.model.getCell3(i, j);
-					var cell2 = t._ws.model.getCell3(repeatArr[value], j);
+					var cell1 = t.model.getCell3(i, j);
+					var cell2 = t.model.getCell3(repeatArr[value], j);
 					var val1 = cell1.getValueWithFormat();
 					var val2 = cell2.getValueWithFormat();
 					if (val1 !== val2) {
@@ -20080,6 +20081,7 @@
 					}
 					if (j === selection.c2) {
 						deleteIndexes.push(i);
+						deleteIndexesMap[i] = 1;
 						if (undefined === firstLockRow) {
 							firstLockRow = i;
 						}
@@ -20090,7 +20092,7 @@
 			}
 		}
 
-		var _removeDuplicates = function() {
+		var _removeDuplicates2 = function() {
 			History.Create_NewPoint();
 			History.StartTransaction();
 
@@ -20121,17 +20123,17 @@
 			History.EndTransaction();
 		};
 
-		var _removeDuplicates2 = function() {
+		var _removeDuplicates = function() {
 			History.Create_NewPoint();
 			History.StartTransaction();
 
 			aSortElems.sort(function(a, b) {
-				if ((deleteIndexes[a.index] && deleteIndexes[b.index]) || (!deleteIndexes[a.index] && !deleteIndexes[b.index])) {
+				if ((deleteIndexesMap[a.index] && deleteIndexesMap[b.index]) || (!deleteIndexesMap[a.index] && !deleteIndexesMap[b.index])) {
 					return 0;
-				} else if (!deleteIndexes[a.index] && deleteIndexes[b.index]) {
-					return 1;
-				} else {
+				} else if (!deleteIndexesMap[a.index] && deleteIndexesMap[b.index]) {
 					return -1;
+				} else {
+					return 1;
 				}
 			});
 
@@ -20141,19 +20143,24 @@
 				var newIndex = i + selection.r1;
 				if (oldIndex !== newIndex) {
 					aSortData.push(new AscCommonExcel.UndoRedoData_FromToRowCol(true, oldIndex, newIndex));
-					var deleteRange = t.model.getRange3(oldIndex, selection.c1, oldIndex, selection.c2);
+				}
+			}
+
+			if (aSortData.length) {
+				//удаляем
+				for (var j = 0; j < deleteIndexes.length; j++) {
+					var deleteRange = t.model.getRange3(deleteIndexes[j], selection.c1, deleteIndexes[j], selection.c2);
 					deleteRange.cleanAll();
 					t.model.deletePivotTables(deleteRange.bbox);
 					t.model.removeSparklines(deleteRange.bbox);
 					t.cellCommentator.deleteCommentsRange(deleteRange.bbox);
 				}
-			}
 
-			if (aSortData.length) {
+				//сортируем
 				var sortRange = t.model.getRange3(selection.r1, selection.c1, selection.r2, selection.c2);
-				var oUndoRedoBBox = new UndoRedoData_BBox({r1: selection.r1, c1: selection.c1, r2: selection.r2, c2: selection.c2});
+				var oUndoRedoBBox = new AscCommonExcel.UndoRedoData_BBox({r1: selection.r1, c1: selection.c1, r2: selection.r2, c2: selection.c2});
 				var _historyElem = new AscCommonExcel.UndoRedoData_SortData(oUndoRedoBBox, aSortData);
-				this._sortByArray(oUndoRedoBBox, aSortData);
+				sortRange._sortByArray(oUndoRedoBBox, aSortData);
 
 				var range = new Asc.Range(selection.r1, selection.c1, selection.r2, selection.c2);
 				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_Sort, t.model.getId(), range, _historyElem)
@@ -20163,11 +20170,12 @@
 			//так же проверить для свобдных таблиц!
 
 			History.EndTransaction();
+
+			//t.canChangeColWidth = canChangeColWidth;
+			t._updateRange(selection)
+			t.draw();
+			//t.canChangeColWidth = c_oAscCanChangeColWidth.none;
 		};
-
-
-		//UndoRedoData_FromToRowCol
-		//Range.prototype._sortByArray = function (oBBox, aSortData, bUndo, opt_by_row)
 
 		if (undefined !== firstLockRow) {
 			var lockRange = new Asc.Range(selection.c1, firstLockRow, selection.c2, selection.r2);
