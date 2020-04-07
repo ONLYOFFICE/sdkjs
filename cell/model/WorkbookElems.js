@@ -9282,8 +9282,8 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 	CSortProperties.prototype.getNameColumnByIndex = function (index, parentRef) {
 		var t = this;
 		var _generateName = function(index) {
-			var base = AscCommon.translateManager.getValue("Column");
-			var text = t._ws._getColumnTitle(index);
+			var base = t.columnSort ? AscCommon.translateManager.getValue("Column") : AscCommon.translateManager.getValue("Row");
+			var text = t.columnSort ? t._ws._getColumnTitle(index) : t._ws._getRowTitle(index);
 			text = base + " " + text;
 			if(t.hasHeaders) {
 				text = "(" + text + ")";
