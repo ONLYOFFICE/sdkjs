@@ -20156,7 +20156,7 @@
 				this._sortByArray(oUndoRedoBBox, aSortData);
 
 				var range = new Asc.Range(selection.r1, selection.c1, selection.r2, selection.c2);
-				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_Sort, this.model.worksheet.getId(), range, _historyElem)
+				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_Sort, t.model.getId(), range, _historyElem)
 			}
 
 			//если находимся в ф/т или в а/ф необходимо сдвинуть их диапазон
