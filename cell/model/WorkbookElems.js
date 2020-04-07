@@ -9438,9 +9438,9 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 		}
 		this.hasHeaders = val;
 	};
-	CRemoveDuplicatesProps.prototype.asc_updateColumnList = function (saveIndexes) {
+	CRemoveDuplicatesProps.prototype.asc_updateColumnList = function () {
 		//TODO change selection
-		this.generateColumnList(saveIndexes);
+		this.generateColumnList();
 	};
 	CRemoveDuplicatesProps.prototype.generateColumnList = function () {
 		var maxCount = 500;
@@ -9453,16 +9453,14 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 			}
 		} else {
 			this.columnList = [];
-			if(this.columnSort) {
-				for(j = selection.c1; j <= selection.c2; j++) {
-					if(j - selection.c1 >= maxCount) {
-						break;
-					}
-					elem = new window["AscCommonExcel"].AutoFiltersOptionsElements();
-					elem.asc_setVisible(true);
-					elem.asc_setVal(this.getNameColumnByIndex(j - selection.c1, selection));
-					this.columnList.push(elem);
+			for(j = selection.c1; j <= selection.c2; j++) {
+				if(j - selection.c1 >= maxCount) {
+					break;
 				}
+				elem = new window["AscCommonExcel"].AutoFiltersOptionsElements();
+				elem.asc_setVisible(true);
+				elem.asc_setVal(this.getNameColumnByIndex(j - selection.c1, selection));
+				this.columnList.push(elem);
 			}
 		}
 	};
