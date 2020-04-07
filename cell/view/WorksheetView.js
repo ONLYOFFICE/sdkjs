@@ -20061,6 +20061,7 @@
 			return;
 		}
 
+		var  firstLockRow;
 		var deleteIndexes = [];
 		var repeatArr = [];
 		for (var i = selection.r1; i <= selection.r2; i++) {
@@ -20076,7 +20077,10 @@
 						break;
 					}
 					if (j === selection.c2) {
-						deleteIndexes[i] = 1;
+						deleteIndexes.push(i);
+						if (undefined === firstLockRow) {
+							firstLockRow = i;
+						}
 					}
 				}
 			} else {
@@ -20084,6 +20088,47 @@
 			}
 		}
 
+		var _removeDuplicates = function() {
+			History.Create_NewPoint();
+			History.StartTransaction();
+
+			var diff = 0, index;
+			for (var n = 0; n < deleteIndexes.length; n++) {
+				index = deleteIndexes[n] - diff;
+
+				//удаляем
+				var deleteRange = t.model.getRange3(index, selection.c1, index, selection.c2);
+				range.cleanAll();
+				t.model.deletePivotTables(range.bbox);
+				t.model.removeSparklines(range.bbox);
+				t.cellCommentator.deleteCommentsRange(range.bbox);
+
+				//сдвигаем
+				var arnFrom = new Asc.Range(index + 1, selection.c1, selection.r2, selection.c2);
+				var arnTo = new Asc.Range(index, selection.c1, selection.r2 - 1, selection.c2);
+				t.model._moveRange(arnFrom, arnTo);
+				t.cellCommentator.moveRangeComments(arnFrom, arnTo);
+				t.objectRender.moveRangeDrawingObject(arnFrom, arnTo);
+
+				diff++;
+			}
+
+			//если находимся в ф/т или в а/ф необходимо сдвинуть их диапазон
+			//так же проверить для свобдных таблиц!
+
+			History.EndTransaction();
+		};
+
+		if (undefined !== firstLockRow) {
+			var lockRange = new Asc.Range(selection.c1, firstLockRow, selection.c2, selection.r2);
+			if (this.intersectionFormulaArray(lockRange)) {
+				this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray,
+					c_oAscError.Level.NoCritical);
+				return;
+			}
+
+			this._isLockedCells(lockRange, /*subType*/null, _removeDuplicates);
+		}
 
 	};
 
