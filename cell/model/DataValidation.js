@@ -129,10 +129,10 @@
 
 	CDataValidation.prototype._init = function (ws) {
 		if (this.formula1) {
-			this.formula1._init(this.type, ws);
+			this.formula1._init(ws);
 		}
 		if (this.formula2) {
-			this.formula2._init(this.type, ws);
+			this.formula2._init(ws);
 		}
 	};
 	CDataValidation.prototype.clone = function() {
