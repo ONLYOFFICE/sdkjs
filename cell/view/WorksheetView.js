@@ -20042,6 +20042,51 @@
 		return settings;
 	};
 
+	WorksheetView.prototype.setRemoveDuplicates = function(props, bCancel) {
+		var t = this;
+		var selection = t.model.selectionRange.getLast();
+		var activeCell = t.model.selectionRange.activeCell.clone();
+
+		var revertSelection = function() {
+			t.cleanSelection();
+			t.model.selectionRange.getLast().assign2(props.selection.clone());
+			if(!selection.contains(activeCell.col, activeCell.row)) {
+				t.model.selectionRange.activeCell = new AscCommon.CellBase(selection.r1, selection.c1);
+			}
+			t._drawSelection();
+		};
+
+		if (bCancel) {
+			revertSelection();
+			return;
+		}
+
+		var deleteIndexes = [];
+		var repeatArr = [];
+		for (var i = selection.r1; i <= selection.r2; i++) {
+			var cell = t._ws.model.getCell3(i, selection.c1);
+			var value = cell.getValueWithFormat();
+			if (repeatArr.hasOwnProperty(value)) {
+				for (var j = selection.c1 + 1; j <= selection.c2; j++) {
+					var cell1 = t._ws.model.getCell3(i, j);
+					var cell2 = t._ws.model.getCell3(repeatArr[value], j);
+					var val1 = cell1.getValueWithFormat();
+					var val2 = cell2.getValueWithFormat();
+					if (val1 !== val2) {
+						break;
+					}
+					if (j === selection.c2) {
+						deleteIndexes[i] = 1;
+					}
+				}
+			} else {
+				repeatArr[value] = i;
+			}
+		}
+
+
+	};
+
 	//------------------------------------------------------------export---------------------------------------------------
     window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 	window["AscCommonExcel"].CellFlags = CellFlags;

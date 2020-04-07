@@ -4538,6 +4538,12 @@ var editor;
         return ws.getRemoveDuplicates(bExpand);
       }
     };
+    spreadsheet_api.prototype.asc_setRemoveDuplicates = function (props, bCancel) {
+      var ws = this.wb && this.wb.getWorksheet();
+      if(ws) {
+        return ws.setRemoveDuplicates(props, bCancel);
+      }
+    };
 
 
   /*
