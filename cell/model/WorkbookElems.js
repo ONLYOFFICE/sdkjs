@@ -9449,7 +9449,7 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 
 		if(this.columnList && this.columnList.length) {
 			for(j in this.columnList) {
-				this.columnList[j].asc_setVal(this.getNameColumnByIndex(parseInt(j), selection));
+				this.columnList[j].asc_setVal(this.getNameColumnByIndex(parseInt(j)));
 			}
 		} else {
 			this.columnList = [];
@@ -9459,7 +9459,7 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 				}
 				elem = new window["AscCommonExcel"].AutoFiltersOptionsElements();
 				elem.asc_setVisible(true);
-				elem.asc_setVal(this.getNameColumnByIndex(j - selection.c1, selection));
+				elem.asc_setVal(this.getNameColumnByIndex(j - selection.c1));
 				this.columnList.push(elem);
 			}
 		}
@@ -9477,11 +9477,11 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 		var col = index + this._newSelection.c1;
 
 		if(!this.hasHeaders) {
-			return _generateName(this.columnSort ? col : row);
+			return _generateName(col);
 		} else {
 			var cell = t._ws.model.getCell3(row, col);
 			var value = cell.getValueWithFormat();
-			return value !== "" ? value : _generateName(this.columnSort ? col : row);
+			return value !== "" ? value : _generateName(col);
 		}
 	};
 
