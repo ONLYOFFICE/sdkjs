@@ -197,7 +197,9 @@
 				return -1 !== aValue.indexOf(val);
 			}
 		} else if (EDataValidationType.Custom === this.type) {
-			return true;
+			var v = this.formula1 && this.formula1.getValue(this.type, ws, true);
+			v = v && v.tocBool();
+			return !!(v && AscCommonExcel.cElementType.bool === v.type && v.toBool());
 		} else {
 			if (EDataValidationType.TextLength === this.type) {
 				val = val.length;
@@ -212,8 +214,6 @@
 				}
 			}
 
-			var res = false;
-
 			var v1 = this.formula1 && this.formula1.getValue(this.type, ws, true);
 			var v2 = this.formula2 && this.formula2.getValue(this.type, ws, true);
 			if (!checkIntegerType(v1)) {
@@ -221,6 +221,7 @@
 			}
 			v1 = v1.toNumber();
 
+			var res = false;
 			switch (this.operator) {
 				case EDataValidationOperator.Between:
 					res = checkIntegerType(v2) && v1 <= val && val <= v2.toNumber();
