@@ -101,7 +101,8 @@
     };
 	CDataFormula.prototype.getValue = function(ws, returnRaw) {
 		this._init(ws);
-		var res = this._formula.calculate(null);
+		var activeCell = ws.selectionRange.activeCell;
+		var res = this._formula.calculate(null, new Asc.Range(activeCell.col, activeCell.row, activeCell.col, activeCell.row));
 		return returnRaw ? this._formula.simplifyRefType(res) : res;
 	};
 
