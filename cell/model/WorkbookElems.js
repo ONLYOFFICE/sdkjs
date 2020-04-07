@@ -9479,7 +9479,7 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 		if(!this.hasHeaders) {
 			return _generateName(col);
 		} else {
-			var cell = t._ws.model.getCell3(row, col);
+			var cell = t._ws.model.getCell3(row - 1, col);
 			var value = cell.getValueWithFormat();
 			return value !== "" ? value : _generateName(col);
 		}
