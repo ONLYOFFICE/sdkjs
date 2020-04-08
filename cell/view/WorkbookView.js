@@ -1673,18 +1673,15 @@
                 return;
             }
         }
-        var date = new Date();
+        var data = new asc.cDate();
+        var api = window["Asc"]["editor"];
         if (dataType === "date") {
-            var day = date.getDate();
-            var month = date.getMonth() + 1;
-            day = (day < 10) ? '0' + day : day;
-            month = (month < 10) ? '0' + month : month;
-            date = day + '.' + month + '.' + date.getFullYear();
+          data = data.getExcelDate();
+          data = api.asc_getLocaleExample(AscCommon.getShortDateFormat(), data);
         }
         if (dataType === "time") {
-            var minutes = date.getMinutes();
-            minutes = (minutes < 10) ? '0' + minutes : minutes;
-            date = date.getHours() + ':' + minutes;
+            var time = data.getExcelDateWithTime(true) - data.getTimezoneOffset()/(60*24);
+            data = api.asc_getLocaleExample(AscCommon.getShortTimeFormat(), time);
         }
 
         var t = this, ws = this.getWorksheet();
@@ -1696,7 +1693,7 @@
         }
 
         if (this.getCellEditMode()) {
-            this.cellEditor.replaceText(this.cellEditor.cursorPos, 0, date);
+            this.cellEditor.replaceText(this.cellEditor.cursorPos, 0, data);
         } else {
             if (this.collaborativeEditing.getGlobalLock()) {
                 return;
@@ -1706,9 +1703,9 @@
                 if (res) {
                     t.setCellEditMode(true);
                     t.addDateTimeLock = true;
-                    var cursorPos = date.length;
+                    var cursorPos = data.length;
                     // Открываем, с выставлением позиции курсора
-                    ws.openCellEditorWithText(t.cellEditor, date, cursorPos, /*isFocus*/ false, selectionRange);
+                    ws.openCellEditorWithText(t.cellEditor, data, cursorPos, /*isFocus*/ false, selectionRange);
                 } else {
                     t.setCellEditMode(false);
                     t.controller.setStrictClose(false);
