@@ -20067,6 +20067,13 @@
 			return;
 		}
 
+		var aMerged = this.model.mergeManager.get(selection);
+		if (aMerged.outer.length > 0 || (aMerged.inner.length > 0 && null == window['AscCommonExcel']._isSameSizeMerged(selection, aMerged.inner, true))) {
+			revertSelection();
+			t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotFillRange, c_oAscError.Level.NoCritical);
+			return;
+		}
+
 		var i, startSortCol, colMap = [];
 		for (i = 0; i < props.columnList.length; i++) {
 			if (props.columnList[i].asc_getVisible()) {
