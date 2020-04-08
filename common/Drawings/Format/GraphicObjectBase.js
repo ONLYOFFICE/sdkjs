@@ -218,27 +218,27 @@
     }
 
     CDrawingBasePosWritable.prototype.Write_ToBinary = function(Writer){
-        AscFormat.writeDouble(Writer, this.fromCol      );
-        AscFormat.writeDouble(Writer, this.fromColOff   );
-        AscFormat.writeDouble(Writer, this.fromRow      );
-        AscFormat.writeDouble(Writer, this.fromRowOff   );
-        AscFormat.writeDouble(Writer, this.toCol        );
-        AscFormat.writeDouble(Writer, this.toColOff     );
-        AscFormat.writeDouble(Writer, this.toRow        );
-        AscFormat.writeDouble(Writer, this.toRowOff     );
-        AscFormat.writeDouble(Writer, this.posX         );
-        AscFormat.writeDouble(Writer, this.posY         );
-        AscFormat.writeDouble(Writer, this.cx           );
-        AscFormat.writeDouble(Writer, this.cy           );
+        AscFormat.writeLong(Writer, this.fromCol);
+        AscFormat.writeDouble(Writer, this.fromColOff);
+        AscFormat.writeLong(Writer, this.fromRow);
+        AscFormat.writeDouble(Writer, this.fromRowOff);
+        AscFormat.writeLong(Writer, this.toCol);
+        AscFormat.writeDouble(Writer, this.toColOff);
+        AscFormat.writeLong(Writer, this.toRow);
+        AscFormat.writeDouble(Writer, this.toRowOff);
+        AscFormat.writeDouble(Writer, this.posX);
+        AscFormat.writeDouble(Writer, this.posY);
+        AscFormat.writeDouble(Writer, this.cx);
+        AscFormat.writeDouble(Writer, this.cy);
     };
     CDrawingBasePosWritable.prototype.Read_FromBinary = function(Reader){
-        this.fromCol      = AscFormat.readDouble(Reader);
+        this.fromCol      = AscFormat.readLong(Reader);
         this.fromColOff   = AscFormat.readDouble(Reader);
-        this.fromRow      = AscFormat.readDouble(Reader);
+        this.fromRow      = AscFormat.readLong(Reader);
         this.fromRowOff   = AscFormat.readDouble(Reader);
-        this.toCol        = AscFormat.readDouble(Reader);
+        this.toCol        = AscFormat.readLong(Reader);
         this.toColOff     = AscFormat.readDouble(Reader);
-        this.toRow        = AscFormat.readDouble(Reader);
+        this.toRow        = AscFormat.readLong(Reader);
         this.toRowOff     = AscFormat.readDouble(Reader);
         this.posX         = AscFormat.readDouble(Reader);
         this.posY         = AscFormat.readDouble(Reader);
@@ -417,13 +417,13 @@
         return new CGraphicBounds(Math.min.apply(Math, aCheckX), Math.min.apply(Math, aCheckY), Math.max.apply(Math, aCheckX), Math.max.apply(Math, aCheckY));
     };
 
-    
+
     /**
      * Set default recalculate info
      * @memberof CGraphicObjectBase
      */
     CGraphicObjectBase.prototype.setRecalculateInfo = function(){};
-    
+
     /**
      * Get object Id
      * @memberof CGraphicObjectBase
