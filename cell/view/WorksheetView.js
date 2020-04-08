@@ -20181,7 +20181,7 @@
 
 			if (deleteIndexes.length) {
 				props.setDuplicateValues(deleteIndexes.length);
-				props.setUniqueValues(selection.r2 - selection.r1 - deleteIndexes.length);
+				props.setUniqueValues(selection.r2 - selection.r1 - deleteIndexes.length + 1);
 			}
 
 			t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.RemoveDuplicates, c_oAscError.Level.NoCritical, props);
@@ -20196,6 +20196,8 @@
 			}
 
 			this._isLockedCells(lockRange, /*subType*/null, _removeDuplicates);
+		} else {
+			t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.RemoveDuplicates, c_oAscError.Level.NoCritical, props);
 		}
 	};
 
