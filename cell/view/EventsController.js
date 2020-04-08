@@ -950,6 +950,7 @@
 				case 73:  // make italic			Ctrl + i
 				//case 83: // save					Ctrl + s
 				case 85:  // make underline			Ctrl + u
+				case 186: // add current date or time Ctrl + (Shift) + ;
 				case 192: // set general format 	Ctrl + Shift + ~
 					if (!canEdit || t.isSelectionDialogMode) {
 						return true;
@@ -1044,6 +1045,14 @@
 							t.handlers.trigger("undo");
 							action = true;
 							break;
+						case 186:
+							if (event.ctrlKey) {
+								var dateType = "date";
+								if (event.shiftKey) { dateType = "time"; }
+								t.handlers.trigger("addCurrentDateOrTime", dateType);
+								action = true;
+							}
+								break;
 						case 192:
 							if (shiftKey) {
 								t.handlers.trigger("setCellFormat", Asc.c_oAscNumFormatType.General);

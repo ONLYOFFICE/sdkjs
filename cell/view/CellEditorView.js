@@ -2510,6 +2510,14 @@
 				event.stopPropagation();
 				event.preventDefault();
 				return false;
+
+			case 186: // ctrl + (shift) + ;
+				if (event.ctrlKey) {
+					var dateType = "date";
+					if (event.shiftKey) { dateType = "time"; }
+					t.handlers.trigger("addCurrentDateOrTime", dateType);
+				}
+				break;
 		}
 
 		t.skipKeyPress = false;
