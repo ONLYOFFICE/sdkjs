@@ -20205,7 +20205,7 @@
 			}
 			var tableContains = this.model.autoFilters.getTableIntersectionRange(selection);
 			var isStartTransaction = false;
-			if (tableContains) {
+			if (tableContains && tableContains.length) {
 				if (tableContains.length === 1) {
 					var name = tableContains[0].DisplayName;
 					var ref = tableContains[0].Ref;
