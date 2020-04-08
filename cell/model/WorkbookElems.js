@@ -9418,6 +9418,9 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 
 		this._ws = ws;
 
+		this.duplicateValues = null;
+		this.uniqueValues = null;
+
 		return this;
 	}
 	CRemoveDuplicatesProps.prototype.asc_getHasHeaders = function () {
@@ -9484,6 +9487,19 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 			return value !== "" ? value : _generateName(col);
 		}
 	};
+	CRemoveDuplicatesProps.prototype.setDuplicateValues = function (val) {
+		this.duplicateValues = val;
+	};
+	CRemoveDuplicatesProps.prototype.setUniqueValues = function (val) {
+		this.uniqueValues = val;
+	};
+	CRemoveDuplicatesProps.prototype.asc_getDuplicateValues = function (val) {
+		return this.duplicateValues;
+	};
+	CRemoveDuplicatesProps.prototype.asc_getUniqueValues = function (val) {
+		return this.uniqueValues;
+	};
+
 
 	//----------------------------------------------------------export----------------------------------------------------
 	var prot;
@@ -9784,5 +9800,7 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 	prot["asc_getColumnList"] = prot.asc_getColumnList;
 	prot["asc_updateColumnList"] = prot.asc_updateColumnList;
 	prot["asc_setHasHeaders"] = prot.asc_setHasHeaders;
+	prot["asc_getDuplicateValues"] = prot.asc_getDuplicateValues;
+	prot["asc_getUniqueValues"] = prot.asc_getUniqueValues;
 
 })(window);

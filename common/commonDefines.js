@@ -227,7 +227,10 @@
 			UplDocumentFileCount    : -753,
 
 			CustomSortMoreOneSelectedError: -800,
-			CustomSortNotOriginalSelectError: -801
+			CustomSortNotOriginalSelectError: -801,
+
+			// Data Validate
+			RemoveDuplicates : -850
 		}
 	};
 
@@ -2159,6 +2162,7 @@
 	prot['UplDocumentFileCount']             = prot.UplDocumentFileCount;
 	prot['CustomSortMoreOneSelectedError']   = prot.CustomSortMoreOneSelectedError;
 	prot['CustomSortNotOriginalSelectError'] = prot.CustomSortNotOriginalSelectError;
+	prot['RemoveDuplicates']                 = prot.RemoveDuplicates;
 	window['Asc']['c_oAscAsyncAction']       = window['Asc'].c_oAscAsyncAction = c_oAscAsyncAction;
 	prot                                     = c_oAscAsyncAction;
 	prot['Open']                             = prot.Open;

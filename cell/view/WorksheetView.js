@@ -20056,7 +20056,23 @@
 			t._drawSelection();
 		};
 
-		if (bCancel) {
+		if (bCancel || !props || !props.columnList) {
+			revertSelection();
+			return;
+		}
+
+		var i, startSortCol, colMap = [];
+		for (i = 0; i < props.columnList.length; i++) {
+			if (props.columnList[i].asc_getVisible()) {
+				var _colIndex = i + selection.c1;
+				colMap[_colIndex] = 1;
+				if(undefined === startSortCol) {
+					startSortCol = _colIndex;
+				}
+			}
+		}
+
+		if (undefined === startSortCol) {
 			revertSelection();
 			return;
 		}
@@ -20066,14 +20082,17 @@
 		var deleteIndexesMap = [];
 		var repeatArr = [];
 		var aSortElems = [];
-		for (var i = selection.r1; i <= selection.r2; i++) {
-			var cell = t.model.getCell3(i, selection.c1);
+		for (i = selection.r1; i <= selection.r2; i++) {
+			var cell = t.model.getCell3(i, startSortCol);
 			var value = cell.getValueWithFormat();
 			aSortElems.push({index: i});
 			if (repeatArr.hasOwnProperty(value)) {
 				for (var n = 0; n < repeatArr[value].length; n++) {
 					var _notEqual = false;
-					for (var j = selection.c1 + 1; j <= selection.c2; j++) {
+					for (var j = startSortCol + 1; j <= selection.c2; j++) {
+						if (!colMap[j]) {
+							continue;
+						}
 						var cell1 = t.model.getCell3(i, j);
 						var cell2 = t.model.getCell3(repeatArr[value][n], j);
 						var val1 = cell1.getValueWithFormat();
@@ -20156,9 +20175,16 @@
 			History.EndTransaction();
 
 			//t.canChangeColWidth = canChangeColWidth;
-			t._updateRange(selection)
+			t._updateRange(selection);
 			t.draw();
 			//t.canChangeColWidth = c_oAscCanChangeColWidth.none;
+
+			if (deleteIndexes.length) {
+				props.setDuplicateValues(deleteIndexes.length);
+				props.setUniqueValues(selection.r2 - selection.r1 - deleteIndexes.length);
+			}
+
+			t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.RemoveDuplicates, c_oAscError.Level.NoCritical, props);
 		};
 
 		if (undefined !== firstLockRow) {
@@ -20171,7 +20197,6 @@
 
 			this._isLockedCells(lockRange, /*subType*/null, _removeDuplicates);
 		}
-
 	};
 
 	//------------------------------------------------------------export---------------------------------------------------
