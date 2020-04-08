@@ -39,7 +39,7 @@
       var g_memory = AscFonts.g_memory;
       var DecodeBase64Char = AscFonts.DecodeBase64Char;
       var b64_decode = AscFonts.b64_decode;
-      
+
       var CellValueType = AscCommon.CellValueType;
       var c_oAscCellAnchorType = AscCommon.c_oAscCellAnchorType;
       var c_oAscBorderStyles = AscCommon.c_oAscBorderStyles;
@@ -54,7 +54,7 @@
     var pptx_content_writer = AscCommon.pptx_content_writer;
 
       var c_oAscPageOrientation = Asc.c_oAscPageOrientation;
-    
+
     var g_oDefaultFormat = AscCommonExcel.g_oDefaultFormat;
 	var g_StyleCache = AscCommonExcel.g_StyleCache;
     var g_cSharedWriteStreak = 64;//like Excel
@@ -1269,7 +1269,7 @@
 		leftToRight: 1,
 		rightToLeft: 2
 	};
-    
+
     var g_nNumsMaxId = 160;
 
     var DocumentPageSize = new function() {
@@ -1632,7 +1632,7 @@
 			var oDateGroupItem = new AscCommonExcel.DateGroupItem();
 			oDateGroupItem.convertRangeToDateGroupItem(dateGroupItem);
 			dateGroupItem = oDateGroupItem;
-			
+
 			if(null != dateGroupItem.DateTimeGrouping)
             {
                 this.memory.WriteByte(c_oSer_DateGroupItem.DateTimeGrouping);
@@ -3112,7 +3112,7 @@
 
             if(ws.aCols.length > 0 || null != ws.oAllCol)
                 this.bs.WriteItem(c_oSerWorksheetsTypes.Cols, function(){oThis.WriteWorksheetCols(ws);});
-            
+
             //if(!oThis.isCopyPaste)
                this.bs.WriteItem(c_oSerWorksheetsTypes.SheetViews, function(){oThis.WriteSheetViews(ws);});
 
@@ -3899,7 +3899,7 @@
 							oDrawing.graphicObject = curDrawing;
 
                             this.bs.WriteItem(c_oSerWorksheetsTypes.Drawing, function(){oThis.WriteDrawing(oDrawing, curDrawing);});
-							
+
 							//возвращаем graphicObject обратно
 							oDrawing.graphicObject = graphicObject;
                         }
@@ -4916,7 +4916,7 @@
             //вычисляем с какой позиции можно писать таблицы
             var nmtItemSize = 5;//5 byte
             this.nLastFilePos = nStart + nTableCount * nmtItemSize;
-            //Write mtLen 
+            //Write mtLen
             this.Memory.WriteByte(0);
             if (this.wb.App) {
                 this.WriteTable(c_oSerTableTypes.App, {Write: function(){
@@ -5185,7 +5185,7 @@
                 res = this.bcr.Read1(length, function(t,l){
                     return oThis.ReadFilters(t,l, oFilterColumn.Filters);
                 });
-				
+
 				//sort dates
 				if(oFilterColumn.Filters && oFilterColumn.Filters.Dates && oFilterColumn.Filters.Dates.length)
 				{
@@ -6963,7 +6963,7 @@
                 this.aHyperlinks = [];
                 var oNewWorksheet = new AscCommonExcel.Worksheet(this.wb, wb.aWorksheets.length);
                 oNewWorksheet.aFormulaExt = [];
-				
+
 				//TODO при copy/paste в word из excel необходимо подменить DrawingDocument из word - пересмотреть правку!
 				if(typeof editor != "undefined" && editor && editor.WordControl && editor.WordControl.m_oLogicDocument && editor.WordControl.m_oLogicDocument.DrawingDocument)
 					oNewWorksheet.DrawingDocument = editor.WordControl.m_oLogicDocument.DrawingDocument;
@@ -6971,7 +6971,7 @@
 				{
 					oNewWorksheet.DrawingDocument = window["Asc"]["editor"].wbModel.getActiveWs().DrawingDocument;
 				}
-				
+
                 this.curWorksheet = oNewWorksheet;
                 res = this.bcr.Read1(length, function(t,l){
                     return oThis.ReadWorksheet(t,l, oNewWorksheet);
@@ -7929,20 +7929,34 @@
         this.ReadFromTo = function(type, length, oFromTo)
         {
             var res = c_oSerConstants.ReadOk;
-            if ( c_oSer_DrawingFromToType.Col == type )
-            //oFromTo.Col = this.stream.GetULongLE();
+            if (c_oSer_DrawingFromToType.Col === type)
+            {
                 oFromTo.col = this.stream.GetULongLE();
-            else if ( c_oSer_DrawingFromToType.ColOff == type )
-            //oFromTo.ColOff = this.stream.GetDoubleLE();
+                if(oFromTo.col < 0)
+                {
+                    oFromTo.col = 0;
+                }
+            }
+            else if (c_oSer_DrawingFromToType.ColOff === type)
+            {
                 oFromTo.colOff = this.stream.GetDoubleLE();
-            else if ( c_oSer_DrawingFromToType.Row == type )
-            //oFromTo.Row = this.stream.GetULongLE();
+            }
+            else if (c_oSer_DrawingFromToType.Row === type)
+            {
                 oFromTo.row = this.stream.GetULongLE();
-            else if ( c_oSer_DrawingFromToType.RowOff == type )
-            //oFromTo.RowOff = this.stream.GetDoubleLE();
+                if(oFromTo.row < 0)
+                {
+                    oFromTo.row = 0;
+                }
+            }
+            else if (c_oSer_DrawingFromToType.RowOff === type)
+            {
                 oFromTo.rowOff = this.stream.GetDoubleLE();
+            }
             else
+            {
                 res = c_oSerConstants.ReadUnknown;
+            }
             return res;
         };
         this.ReadPos = function(type, length, oPos)
@@ -9071,7 +9085,7 @@
 			var isBase64 = typeof szSrc === 'string';
 			var srcLen = szSrc.length;
 			var nWritten = 0;
-			
+
             var nType = 0;
             var index = AscCommon.c_oSerFormat.Signature.length;
             var version = "";
@@ -9265,7 +9279,7 @@
 			var pasteBinaryFromExcel = false;
 			if(this.copyPasteObj && this.copyPasteObj.isCopyPaste && typeof editor != "undefined" && editor)
 				pasteBinaryFromExcel = true;
-			
+
 			this.stream = this.getbase64DecodedData(data);
 			if(!pasteBinaryFromExcel)
 				History.TurnOff();
