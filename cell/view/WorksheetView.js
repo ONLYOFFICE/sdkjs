@@ -17010,7 +17010,8 @@
 
         var callback = function (isSuccess) {
             if (false === isSuccess) {
-                return;
+            	callbackAfterChange(isSuccess);
+            	return;
             }
 
             History.Create_NewPoint();
@@ -17022,7 +17023,7 @@
             t._onUpdateFormatTable(range, false, true);
             //TODO добавить перерисовку таблицы и перерисовку шаблонов
 			if(callbackAfterChange){
-				callbackAfterChange();
+				callbackAfterChange(true);
             }
         };
 
@@ -17042,11 +17043,13 @@
 
         var callBackLockedDefNames = function (isSuccess) {
             if (false === isSuccess) {
-                return;
+				callbackAfterChange(isSuccess);
+            	return;
             }
 
 			var callbackLockAll = function(_success) {
 				if (false === _success) {
+					callbackAfterChange(_success);
 					return;
 				}
 
@@ -19956,7 +19959,10 @@
 		}
 
 		if (oAutoExpansionTable && !applyByArray) {
-			var callback = function () {
+			var callback = function (success) {
+				if (!success) {
+					return;
+				}
 				var options = {
 					props: [Asc.c_oAscAutoCorrectOptions.UndoTableAutoExpansion],
 					cell: bbox,
@@ -20124,9 +20130,17 @@
 			}
 		}
 
-		var _removeDuplicates = function() {
-			History.Create_NewPoint();
-			History.StartTransaction();
+		var _removeDuplicates = function(success) {
+			if (!success) {
+				if (isStartTransaction) {
+					History.EndTransaction();
+				}
+				return;
+			}
+			if(!isStartTransaction) {
+				History.Create_NewPoint();
+				History.StartTransaction();
+			}
 
 			aSortElems.sort(function(a, b) {
 				if ((deleteIndexesMap[a.index] && deleteIndexesMap[b.index]) || (!deleteIndexesMap[a.index] && !deleteIndexesMap[b.index])) {
@@ -20168,16 +20182,11 @@
 					History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_Sort, t.model.getId(), range, _historyElem);
 				}
 			}
-
-			//если находимся в ф/т или в а/ф необходимо сдвинуть их диапазон
-			//так же проверить для свобдных таблиц!
-
+			
 			History.EndTransaction();
 
-			//t.canChangeColWidth = canChangeColWidth;
 			t._updateRange(selection);
 			t.draw();
-			//t.canChangeColWidth = c_oAscCanChangeColWidth.none;
 
 			if (deleteIndexes.length) {
 				props.setDuplicateValues(deleteIndexes.length);
@@ -20194,8 +20203,22 @@
 					c_oAscError.Level.NoCritical);
 				return;
 			}
+			var tableContains = this.model.autoFilters.getTableIntersectionRange(selection);
+			var isStartTransaction = false;
+			if (tableContains) {
+				if (tableContains.length === 1) {
+					var name = tableContains[0].DisplayName;
+					var ref = tableContains[0].Ref;
+					var newRef = new Asc.Range(ref.c1, ref.r1, ref.c2, ref.r2 - deleteIndexes.length);
 
-			this._isLockedCells(lockRange, /*subType*/null, _removeDuplicates);
+					History.Create_NewPoint();
+					History.StartTransaction();
+					isStartTransaction = true;
+					this.af_changeTableRange(name, newRef, _removeDuplicates);
+				}
+			} else {
+				this._isLockedCells(lockRange, /*subType*/null, _removeDuplicates);
+			}
 		} else {
 			t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.RemoveDuplicates, c_oAscError.Level.NoCritical, props);
 		}
