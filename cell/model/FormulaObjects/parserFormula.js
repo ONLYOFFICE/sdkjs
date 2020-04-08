@@ -6440,14 +6440,20 @@ function parserFormula( formula, parent, _ws ) {
 	};
 
 	/* Для обратной сборки функции иногда необходимо поменять ссылки на ячейки */
-	parserFormula.prototype.changeOffset = function (offset, canResize, nChangeTable) {//offset = AscCommon.CellBase
+	parserFormula.prototype.changeOffset = function (offset, canResize, nChangeTable, notOffset3d) {//offset = AscCommon.CellBase
 		var t = this;
 		//временно комментирую из-за проблемы: при сборке формулы после обработки данной функцией в режиме R1c1
 		///мы получаем вид A1. необходимо пересмотреть все функции toString/toLocaleString где возвращается value
 		//+ парсинг на endTransaction запускается в режиме r1c1
 		//AscCommonExcel.executeInR1C1Mode(false, function () {
 			for (var i = 0; i < t.outStack.length; i++) {
-				t._changeOffsetElem(t.outStack[i], t.outStack, i, offset, canResize, nChangeTable);
+				var doOffset = true;
+				if (notOffset3d && t.outStack[i] && (t.outStack[i].type === cElementType.cell3D || t.outStack[i].type === cElementType.cellsRange3D)) {
+					doOffset = false;
+				}
+				if (doOffset) {
+					t._changeOffsetElem(t.outStack[i], t.outStack, i, offset, canResize, nChangeTable);
+				}
 			}
 		//});
 		return this;

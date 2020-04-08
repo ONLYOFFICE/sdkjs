@@ -8286,12 +8286,12 @@
 		}
 		return res;
 	};
-	Cell.prototype.changeOffset = function(offset, canResize, bHistoryUndo) {
+	Cell.prototype.changeOffset = function(offset, canResize, bHistoryUndo, notOffset3d) {
 		this.setFormulaTemplate(bHistoryUndo, function(cell){
 			cell.transformSharedFormula();
 			var parsed = cell.getFormulaParsed();
 			parsed.removeDependencies();
-			parsed.changeOffset(offset, canResize);
+			parsed.changeOffset(offset, canResize, null, notOffset3d);
 			parsed.setFormulaString(parsed.assemble(true));
 			parsed.buildDependencies();
 		});
@@ -12698,9 +12698,9 @@
 				var nTo = oSortedIndexes[nFrom];
 				if (null != nTo) {
 					if (opt_by_row) {
-						cell.changeOffset(new AscCommon.CellBase(0, nTo - nFrom), true, true);
+						cell.changeOffset(new AscCommon.CellBase(0, nTo - nFrom), true, true, true);
 					} else {
-						cell.changeOffset(new AscCommon.CellBase(nTo - nFrom, 0), true, true);
+						cell.changeOffset(new AscCommon.CellBase(nTo - nFrom, 0), true, true, true);
 					}
 					formula = cell.getFormulaParsed();
 					cellWithFormula = formula.getParent();
