@@ -1680,8 +1680,8 @@
           data = api.asc_getLocaleExample(AscCommon.getShortDateFormat(), data);
         }
         if (dataType === "time") {
-            var time = data.getExcelDateWithTime(true) - data.getTimezoneOffset()/(60*24);
-            data = api.asc_getLocaleExample(AscCommon.getShortTimeFormat(), time);
+            data = data.getExcelDateWithTime(true) - data.getTimezoneOffset()/(60*24);
+            data = api.asc_getLocaleExample(AscCommon.getShortTimeFormat(), data);
         }
 
         var t = this, ws = this.getWorksheet();
