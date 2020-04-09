@@ -37,10 +37,6 @@
     var g_isMouseSendEnabled = false;
     var g_language = "";
 
-    // должны быть методы
-    // init(data);
-    // button(id)
-
     window.plugin_sendMessage = function sendMessage(data)
     {
         window.parent.postMessage(data, "*");
@@ -207,11 +203,13 @@
                 {
 					if (window.Asc.plugin.onExternalPluginMessage && pluginData.data && pluginData.data.type)
 						window.Asc.plugin.onExternalPluginMessage(pluginData.data);
+					break;
                 }
                 case "onEvent":
                 {
                     if (window.Asc.plugin["event_" + pluginData.eventName])
                         window.Asc.plugin["event_" + pluginData.eventName](pluginData.eventData);
+                    break;
                 }
                 default:
                     break;
@@ -277,14 +275,10 @@
 
         window.Asc.plugin.resizeWindow = function(width, height, minW, minH, maxW, maxH)
         {
-            if (undefined == minW)
-                minW = 0;
-            if (undefined == minH)
-                minH = 0;
-            if (undefined == maxW)
-                maxW = 0;
-            if (undefined == maxH)
-                maxH = 0;
+            if (undefined === minW) minW = 0;
+            if (undefined === minH) minH = 0;
+            if (undefined === maxW) maxW = 0;
+            if (undefined === maxH) maxH = 0;
 
             var data = JSON.stringify({ width : width, height : height, minw : minW, minh : minH, maxw : maxW, maxh : maxH });
 
