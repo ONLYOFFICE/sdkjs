@@ -38,16 +38,33 @@
 	 * CONFIG
 	 */
 
+	/**
+	 * @typedef {Object} Config
+	 * @property {string} guid
+	 * @property {string} name
+	 */
+
+	/***********************************************************************
+	 * API
+	 */
+
+	/**
+	 * @global
+	 * @class
+	 * @name Plugin
+	 */
+	var Plugin = window["Asc"]["plugin"];
 
 	/**
 	 * executeCommand
-	 * @memberof Asc.plugin
+	 * @memberof Plugin
 	 * @alias executeCommand
+	 * @deprecated Please use callCommand method
 	 * @param {string} type "close" or "command"
      * @param {string} data Script code
      * @param {Function} callback
 	 */
-    window.Asc.plugin.executeCommand = function(type, data, callback)
+	Plugin.executeCommand = function(type, data, callback)
     {
         window.Asc.plugin.info.type = type;
         window.Asc.plugin.info.data = data;
@@ -68,13 +85,13 @@
 
 	/**
 	 * executeMethod
-	 * @memberof Asc.plugin
+	 * @memberof Plugin
 	 * @alias executeMethod
 	 * @param {string} name Name of the method
 	 * @param {Array} params Parameters of the method
 	 * @param {Function} callback Callback function
 	 */
-    window.Asc.plugin.executeMethod = function(name, params, callback)
+	Plugin.executeMethod = function(name, params, callback)
     {
         if (window.Asc.plugin.isWaitMethod === true)
         {
@@ -107,7 +124,7 @@
 
 	/**
 	 * resizeWindow (only for visual modal plugins)
-	 * @memberof Asc.plugin
+	 * @memberof Plugin
 	 * @alias resizeWindow
 	 * @param {number} width New width of the window
      * @param {number} height New height of the window
@@ -116,7 +133,7 @@
      * @param {number} maxW New max-width of the window
 	 * @param {number} maxH New max-height of the window
 	 */
-    window.Asc.plugin.resizeWindow = function(width, height, minW, minH, maxW, maxH)
+	Plugin.resizeWindow = function(width, height, minW, minH, maxW, maxH)
     {
         if (undefined === minW) minW = 0;
         if (undefined === minH) minH = 0;
@@ -142,14 +159,14 @@
 
 	/**
 	 * callCommand
-	 * @memberof Asc.plugin
+	 * @memberof Plugin
 	 * @alias callCommand
 	 * @param {Function} func Function to call
 	 * @param {boolean} isClose
      * @param {boolean} isCalc
 	 * @param {Function} callback Callback function
 	 */
-    window.Asc.plugin.callCommand = function(func, isClose, isCalc, callback)
+	Plugin.callCommand = function(func, isClose, isCalc, callback)
     {
         var _txtFunc = "var Asc = {}; Asc.scope = " + JSON.stringify(window.Asc.scope) + "; var scope = Asc.scope; (" + func.toString() + ")();";
         var _type = (isClose === true) ? "close" : "command";
@@ -159,13 +176,13 @@
 
 	/**
 	 * callModule
-	 * @memberof Asc.plugin
+	 * @memberof Plugin
 	 * @alias callModule
 	 * @param {string} url Url to resource code
 	 * @param {Function} callback Callback function
 	 * @param {boolean} isClose
 	 */
-    window.Asc.plugin.callModule = function(url, callback, isClose)
+	Plugin.callModule = function(url, callback, isClose)
     {
         var _isClose = isClose;
         var _client = new XMLHttpRequest();
@@ -186,12 +203,12 @@
 
 	/**
 	 * loadModule
-	 * @memberof Asc.plugin
+	 * @memberof Plugin
 	 * @alias loadModule
 	 * @param {string} url Url to resource code
 	 * @param {Function} callback Callback function
 	 */
-    window.Asc.plugin.loadModule = function(url, callback)
+	Plugin.loadModule = function(url, callback)
     {
         var _client = new XMLHttpRequest();
         _client.open("GET", url);
@@ -253,20 +270,20 @@
 
 	/**
 	 * createInputHelper
-	 * @memberof Asc.plugin
+	 * @memberof Plugin
 	 * @alias createInputHelper
 	 */
-	window.Asc.plugin.createInputHelper = function()
+	Plugin.createInputHelper = function()
     {
         window.Asc.plugin.ih = new window.Asc.inputHelper(window.Asc.plugin);
     };
 	/**
 	 * getInputHelper
-	 * @memberof Asc.plugin
+	 * @memberof Plugin
 	 * @alias getInputHelper
 	 * @return {InputHelper} Input helper object
 	 */
-	window.Asc.plugin.getInputHelper = function()
+	Plugin.getInputHelper = function()
 	{
 		window.Asc.plugin.ih = new window.Asc.inputHelper(window.Asc.plugin);
 	};
@@ -275,18 +292,28 @@
 	 * EVENTS
 	 */
 
-	/**
-	 * @typedef {Object} Asc.plugin
-	 * @property {event_init} init
-	 * @property {event_button} button
-	 *
-	 * @property {event_onTargetPositionChanged} event_onTargetPositionChanged
-	 * @property {event_onClick} event_onClick
-	 * @property {event_onDocumentContentReady} event_onDocumentContentReady
-	 *
-	 * @property {event_inputHelper_onSelectItem} inputHelper_onSelectItem
-	 * @property {event_onInputHelperClear} event_onInputHelperClear
-	 * @property {event_onInputHelperInput} event_onInputHelperInput
-	 */
+	function events()
+	{
+		/**
+		 * Event: init
+		 * @memberof Plugin
+		 * @alias init
+		 */
+		Plugin.init = function() {};
+
+		/**
+		 * @memberof Plugin
+		 * @property {event_init} init
+		 * @property {event_button} button
+		 *
+		 * @property {event_onTargetPositionChanged} event_onTargetPositionChanged
+		 * @property {event_onClick} event_onClick
+		 * @property {event_onDocumentContentReady} event_onDocumentContentReady
+		 *
+		 * @property {event_inputHelper_onSelectItem} inputHelper_onSelectItem
+		 * @property {event_onInputHelperClear} event_onInputHelperClear
+		 * @property {event_onInputHelperInput} event_onInputHelperInput
+		 */
+	}
 
 })(window, undefined);
