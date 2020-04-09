@@ -4136,7 +4136,7 @@
 		var arrApiSections = [];
 
 		for (var Index = 0; Index < this.Document.SectionsInfo.Elements.length; Index++)
-			arrApiSections.push(new ApiSection( this.Document.SectionsInfo.Elements[Index]))
+			arrApiSections.push(new ApiSection(this.Document.SectionsInfo.Elements[Index]))
 
 		return arrApiSections;
 	};
@@ -4167,7 +4167,54 @@
 	{
 		this.Document.RemoveSelection();
 	};
+	/**
+	 * Gets the collection of shapes objects in the document.
+	 * @typeofeditors ["CDE"]
+	 * @return {Array}  
+	 */
+	ApiDocument.prototype.GetAllShapes = function()
+	{
+		var arrAllDrawing = this.Document.GetAllDrawingObjects();
+		var arrApiShapes  = [];
 
+		for (var Index = 0; Index < arrAllDrawing.length; Index++)
+			if (arrAllDrawing[Index].GraphicObj instanceof CShape)
+				arrApiShapes.push(new ApiShape(arrAllDrawing[Index]));
+		
+		return arrApiShapes;
+	};
+	/**
+	 * Gets the collection of image objects in the document.
+	 * @typeofeditors ["CDE"]
+	 * @return {Array}  
+	 */
+	ApiDocument.prototype.GetAllImages = function()
+	{
+		var arrAllDrawing = this.Document.GetAllDrawingObjects();
+		var arrApiImages  = [];
+
+		for (var Index = 0; Index < arrAllDrawing.length; Index++)
+			if (arrAllDrawing[Index].GraphicObj instanceof CImageShape)
+				arrApiImages.push(new ApiImage(arrAllDrawing[Index]));
+		
+		return arrApiImages;
+	};
+	/**
+	 * Gets the collection of chart objects in the document.
+	 * @typeofeditors ["CDE"]
+	 * @return {Array}  
+	 */
+	ApiDocument.prototype.GetAllCharts = function()
+	{
+		var arrAllDrawing = this.Document.GetAllDrawingObjects();
+		var arrApiCharts  = [];
+
+		for (var Index = 0; Index < arrAllDrawing.length; Index++)
+			if (arrAllDrawing[Index].GraphicObj instanceof CChartSpace)
+				arrApiCharts.push(new ApiChart(arrAllDrawing[Index]));
+		
+		return arrApiCharts;
+	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiParagraph
@@ -9622,11 +9669,4 @@
 	};
 }(window, null));
 
-function Test(nPage)
-{
-	var Api = editor;
-	var oDocument = Api.GetDocument();
-	
-	
-	var Tables = oDocument.GetAllTablesOnPage(nPage);
-}
+
