@@ -45,15 +45,83 @@
 	 */
 
 	/***********************************************************************
-	 * API
+	 * EVENTS
 	 */
 
 	/**
 	 * @global
 	 * @class
 	 * @name Plugin
+	 * @hideconstructor
 	 */
+
+	/***********************************************************************
+	 * EVENTS
+	 */
+
+	/**
+	 * Event: init
+	 * @event Plugin#init
+	 * @memberof Plugin
+	 * @alias init
+	 * @param {string} text
+	 */
+
+	/**
+	 * Event: button
+	 * @event Plugin#button
+	 * @memberof Plugin
+	 * @alias button
+	 * @param {number} buttonIndex
+	 */
+
+	/**
+	 * Event: onTargetPositionChanged
+	 * @event Plugin#event_onTargetPositionChanged
+	 * @memberof Plugin
+	 * @alias event_onTargetPositionChanged
+	 */
+
+	/**
+	 * Event: onDocumentContentReady
+	 * @event Plugin#event_onDocumentContentReady
+	 * @memberof Plugin
+	 * @alias event_onDocumentContentReady
+	 */
+
+	/**
+	 * Event: onClick
+	 * @event Plugin#event_onClick
+	 * @memberof Plugin
+	 * @alias event_onClick
+	 */
+
+	/**
+	 * Event: inputHelper_onSelectItem
+	 * @event Plugin#event_inputHelper_onSelectItem
+	 * @memberof Plugin
+	 * @alias event_inputHelper_onSelectItem
+	 */
+
+	/**
+	 * Event: onInputHelperClear
+	 * @event Plugin#event_onInputHelperClear
+	 * @memberof Plugin
+	 * @alias event_onInputHelperClear
+	 */
+
+	/**
+	 * Event: onInputHelperInput
+	 * @event Plugin#event_onInputHelperInput
+	 * @memberof Plugin
+	 * @alias event_onInputHelperInput
+	 */
+
 	var Plugin = window["Asc"]["plugin"];
+
+	/***********************************************************************
+	 * METHODS
+	 */
 
 	/**
 	 * executeCommand
@@ -234,38 +302,52 @@
 	 */
 
 	/**
-	 * @typedef {Function} IH_createWindow
+	 * @global
+	 * @class
+	 * @name InputHelper
+	 * @hideconstructor
 	 */
+
 	/**
-	 * @typedef {Function} IH_getItems
-	 * @returns {InputHelperItem[]}
+	 * @function createWindow
+	 * @memberof InputHelper
+	 * @alias createWindow
 	 */
+
 	/**
-	 * @typedef {Function} IH_setItems
+	 * @function getItems
+	 * @memberof InputHelper
+	 * @alias getItems
+	 * @return {InputHelperItem[]}
+	 */
+
+	/**
+	 * @function setItems
+	 * @memberof InputHelper
+	 * @alias setItems
 	 * @param {InputHelperItem[]}
 	 */
+
 	/**
-	 * @typedef {Function} IH_show
+	 * @function show
+	 * @memberof InputHelper
+	 * @alias show
 	 * @param {number} width
 	 * @param {number} height
 	 * @param {boolean} isCaptureKeyboard
 	 */
+
 	/**
-	 * @typedef {Function} IH_unShow
-	 */
-	/**
-	 * @typedef {Function} IH_getScrollSizes
-	 * @return {number}
+	 * @function unShow
+	 * @memberof InputHelper
+	 * @alias unShow
 	 */
 
 	/**
-	 * @typedef {Object} InputHelper
-	 * @property {IH_createWindow} createWindow Create window of the input helper
-	 * @property {IH_getItems} getItems Return array of items
-	 * @property {IH_setItems} setItems Set array of items
-	 * @property {IH_show} show Show window
-	 * @property {IH_unShow} unShow Hide window
-	 * @property {IH_getScrollSizes} getScrollSizes Get full size of the input helper
+	 * @function getScrollSizes
+	 * @memberof InputHelper
+	 * @alias getScrollSizes
+	 * @return {number}
 	 */
 
 	/**
@@ -287,33 +369,5 @@
 	{
 		window.Asc.plugin.ih = new window.Asc.inputHelper(window.Asc.plugin);
 	};
-
-	/***********************************************************************
-	 * EVENTS
-	 */
-
-	function events()
-	{
-		/**
-		 * Event: init
-		 * @memberof Plugin
-		 * @alias init
-		 */
-		Plugin.init = function() {};
-
-		/**
-		 * @memberof Plugin
-		 * @property {event_init} init
-		 * @property {event_button} button
-		 *
-		 * @property {event_onTargetPositionChanged} event_onTargetPositionChanged
-		 * @property {event_onClick} event_onClick
-		 * @property {event_onDocumentContentReady} event_onDocumentContentReady
-		 *
-		 * @property {event_inputHelper_onSelectItem} inputHelper_onSelectItem
-		 * @property {event_onInputHelperClear} event_onInputHelperClear
-		 * @property {event_onInputHelperInput} event_onInputHelperInput
-		 */
-	}
 
 })(window, undefined);
