@@ -391,7 +391,7 @@
 				  self._onSetFontAttributes.apply(self, arguments);
 			  }, "setCellFormat": function () {
 				  self._onSetCellFormat.apply(self, arguments);
-              }, "selectColumnsByRange": function () {
+			  }, "selectColumnsByRange": function () {
 				  self._onSelectColumnsByRange.apply(self, arguments);
 			  }, "selectRowsByRange": function () {
 				  self._onSelectRowsByRange.apply(self, arguments);
@@ -715,7 +715,7 @@
 				  self.handlers.trigger("asc_onContextMenu", event);
 			  }, "updatedEditableFunction": function (fName) {
 				  self.handlers.trigger("asc_onFormulaInfo", fName);
-              }
+			  }
 		  }, this.defaults.worksheetView.cells.padding);
 
 	  this.wsViewHandlers = new AscCommonExcel.asc_CHandlersList(/*handlers*/{
