@@ -2512,12 +2512,13 @@
 				return false;
 
 			case 186: // ctrl + (shift) + ;
-				if (event.ctrlKey) {
-					var dateType = "date";
-					if (event.shiftKey) { dateType = "time"; }
-					t.handlers.trigger("addCurrentDateOrTime", dateType);
-				}
-				break;
+				var api = window["Asc"]["editor"];
+				var oDate = new Asc.cDate();
+				t._addChars(event.shiftKey ? oDate.getTimeString(api) : oDate.getDateString(api));
+
+				event.stopPropagation();
+				event.preventDefault();
+				return false;
 		}
 
 		t.skipKeyPress = false;

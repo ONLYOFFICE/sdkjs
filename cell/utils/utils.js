@@ -2759,6 +2759,13 @@
 			}
 		};
 
+		cDate.prototype.getDateString = function (api) {
+			return api.asc_getLocaleExample(AscCommon.getShortDateFormat(), this.getExcelDate());
+		};
+		cDate.prototype.getTimeString = function (api) {
+			return api.asc_getLocaleExample(AscCommon.getShortTimeFormat(), this.getExcelDateWithTime(true) - this.getTimezoneOffset()/(60*24));
+		};
+
 		/*
 		 * Export
 		 * -----------------------------------------------------------------------------

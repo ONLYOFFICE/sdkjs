@@ -176,7 +176,6 @@
     this.lockDraw = false;		// Lock отрисовки на некоторое время
 
     this.isCellEditMode = false;
-    this.addDateTimeLock = false;
 
 	  this.isShowComments = true;
 	  this.isShowSolved = true;
@@ -392,9 +391,7 @@
 				  self._onSetFontAttributes.apply(self, arguments);
 			  }, "setCellFormat": function () {
 				  self._onSetCellFormat.apply(self, arguments);
-              }, "addCurrentDateOrTime": function () {
-                  self._addCurrentDateOrTime.apply(self, arguments);
-			  }, "selectColumnsByRange": function () {
+              }, "selectColumnsByRange": function () {
 				  self._onSelectColumnsByRange.apply(self, arguments);
 			  }, "selectRowsByRange": function () {
 				  self._onSelectRowsByRange.apply(self, arguments);
@@ -718,8 +715,6 @@
 				  self.handlers.trigger("asc_onContextMenu", event);
 			  }, "updatedEditableFunction": function (fName) {
 				  self.handlers.trigger("asc_onFormulaInfo", fName);
-              }, "addCurrentDateOrTime": function () {
-                  self._addCurrentDateOrTime.apply(self, arguments);
               }
 		  }, this.defaults.worksheetView.cells.padding);
 
@@ -1665,55 +1660,6 @@
 	  var formats = AscCommon.getFormatCells(info);
 	  this.setCellFormat(formats[prop]);
 	};
-
-    WorkbookView.prototype._addCurrentDateOrTime = function (dataType) {
-        if (this.getCellEditMode()) {
-            if (this.addDateTimeLock === true) {
-                this.addDateTimeLock = false;
-                return;
-            }
-        }
-        var data = new asc.cDate();
-        var api = window["Asc"]["editor"];
-        if (dataType === "date") {
-          data = data.getExcelDate();
-          data = api.asc_getLocaleExample(AscCommon.getShortDateFormat(), data);
-        }
-        if (dataType === "time") {
-            data = data.getExcelDateWithTime(true) - data.getTimezoneOffset()/(60*24);
-            data = api.asc_getLocaleExample(AscCommon.getShortTimeFormat(), data);
-        }
-
-        var t = this, ws = this.getWorksheet();
-        var activeCellRange = ws.getActiveCell(0, 0, false);
-
-        if (ws.model.inPivotTable(activeCellRange)) {
-            this.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot, c_oAscError.Level.NoCritical);
-            return;
-        }
-
-        if (this.getCellEditMode()) {
-            this.cellEditor.replaceText(this.cellEditor.cursorPos, 0, data);
-        } else {
-            if (this.collaborativeEditing.getGlobalLock()) {
-                return;
-            }
-            var selectionRange = ws.model.selectionRange.clone();
-            var openEditor = function (res) {
-                if (res) {
-                    t.setCellEditMode(true);
-                    t.addDateTimeLock = true;
-                    var cursorPos = data.length;
-                    // Открываем, с выставлением позиции курсора
-                    ws.openCellEditorWithText(t.cellEditor, data, cursorPos, /*isFocus*/ false, selectionRange);
-                } else {
-                    t.setCellEditMode(false);
-                    t.controller.setStrictClose(false);
-                }
-            };
-            ws._isLockedCells(activeCellRange, /*subType*/ null, openEditor);
-        }
-    };
 
   WorkbookView.prototype._onSelectColumnsByRange = function() {
     this.getWorksheet()._selectColumnsByRange();
