@@ -32,7 +32,7 @@
 
 "use strict";
 
-(function(window, undefined){
+window.startPluginApi = function() {
 
 	/***********************************************************************
 	 * CONFIG
@@ -179,6 +179,13 @@
 	 * @event Plugin#event_onInputHelperInput
 	 * @memberof Plugin
 	 * @alias event_onInputHelperInput
+	 */
+
+	/**
+	 * Event: onTranslate
+	 * @event Plugin#onTranslate
+	 * @memberof Plugin
+	 * @alias onTranslate
 	 */
 
 	var Plugin = window["Asc"]["plugin"];
@@ -434,4 +441,4 @@
 		window.Asc.plugin.ih = new window.Asc.inputHelper(window.Asc.plugin);
 	};
 
-})(window, undefined);
+};

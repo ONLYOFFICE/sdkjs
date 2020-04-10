@@ -34,6 +34,415 @@
 
 (function(window, undefined){
 
+	function CIHelper(plugin)
+	{
+		this.plugin = plugin;
+		this.ps;
+		this.items = [];
+		this.isVisible = false;
+		this.isCurrentVisible = false;
+
+		this.plugin.getInputHelper = function() { return window.Asc.plugin.ih; }
+	};
+
+	CIHelper.prototype.createWindow = function()
+	{
+		var _body = document.body;
+		var _head = document.getElementsByTagName('head')[0];
+		if (!_body || !_head)
+			return;
+
+		var _style = document.createElement('style');
+		_style.type      = 'text/css';
+
+		var _style_body = ".ih_main { margin: 0px; padding: 0px; width: 100%; height: 100%; display: inline-block; overflow: hidden; box-sizing: border-box; user-select: none; position: fixed; border: 1px solid #cfcfcf; } ";
+		_style_body += "ul { margin: 0px; padding: 0px; width: 100%; height: 100%; list-style-type: none; outline:none; } ";
+		_style_body += "li { padding: 5px; font-family: \"Helvetica Neue\", Helvetica, Arial, sans-serif; font-size: 12px; font-weight: 400; color: #373737; } ";
+		_style_body += "li:hover { background-color: #D8DADC; } ";
+		_style_body += ".li_selected { background-color: #D8DADC; color: #373737; }";
+		_style_body += ".li_selected:hover { background-color: #D8DADC; color: #373737; }";
+		_style.innerHTML = _style_body;
+		_head.appendChild(_style);
+
+		document.body.style.background = "#FFFFFF";
+		document.body.style.width = "100%";
+		document.body.style.height = "100%";
+		document.body.style.margin = "0";
+		document.body.style.padding = "0";
+
+		document.body.innerHTML = "<div class=\"ih_main\" id=\"ih_area\"><ul id=\"ih_elements_id\" role=\"listbox\"></ul></div>";
+
+		this.ps = new PerfectScrollbar(document.getElementById("ih_area"), { minScrollbarLength: 20 });
+		this.updateScrolls();
+
+		this.createDefaultEvents();
+	};
+
+	CIHelper.prototype.setItems = function(items)
+	{
+		this.items = items;
+
+		var _data = "";
+		var _len = items.length;
+		for (var i = 0; i < _len; i++)
+		{
+			if (undefined === items[i].id)
+				items[i].id = "" + i;
+
+			_data += "<li role=\"option\"";
+			if (0 == i)
+				_data += " class=\"li_selected\"";
+
+			_data += " id=\"" + items[i].id + "\"";
+
+			_data += " onclick=\"_private_on_ih_click(event)\">";
+			_data += items[i].text;
+			_data += "</li>";
+		}
+
+		document.getElementById("ih_elements_id").innerHTML = _data;
+		this.updateScrolls();
+		this.scrollToSelected();
+	};
+
+	CIHelper.prototype.createDefaultEvents = function()
+	{
+		this.plugin.onExternalMouseUp = function()
+		{
+			var evt = document.createEvent("MouseEvents");
+			evt.initMouseEvent("mouseup", true, true, window, 1, 0, 0, 0, 0,
+				false, false, false, false, 0, null);
+
+			document.dispatchEvent(evt);
+		};
+
+		var _t = this;
+		window.onkeydown = function(e) {
+			switch (e.keyCode)
+			{
+				case 27: // Escape
+				{
+					if (_t.isVisible)
+					{
+						_t.isVisible = false;
+						_t.plugin.executeMethod("UnShowInputHelper", [_t.plugin.info.guid, true]);
+					}
+					break;
+				}
+				case 38: // Up
+				case 40: // Down
+				case 9: // Tab
+				case 36: // Home
+				case 35: // End
+				case 33: // PageUp
+				case 34: // PageDown
+				{
+					var items = document.getElementsByTagName("li");
+					var curIndex = -1;
+					for (var i = 0; i < items.length; i++)
+					{
+						if (items[i].className == "li_selected")
+						{
+							curIndex = i;
+							items[i].className = "";
+							break;
+						}
+					}
+					if (curIndex == -1)
+					{
+						curIndex = 0;
+					}
+					else
+					{
+						switch (e.keyCode)
+						{
+							case 38:
+							{
+								curIndex--;
+								if (curIndex < 0)
+									curIndex = 0;
+								break;
+							}
+							case 40:
+							{
+								curIndex++;
+								if (curIndex >= items.length)
+									curIndex = items.length - 1;
+								break;
+							}
+							case 9:
+							{
+								curIndex++;
+								if (curIndex >= items.length)
+									curIndex = 0;
+								break;
+							}
+							case 36:
+							{
+								curIndex = 0;
+								break;
+							}
+							case 35:
+							{
+								curIndex = items.length - 1;
+								break;
+							}
+							case 33:
+							case 34:
+							{
+								var _indexDif = 1;
+								var _count = (document.getElementById("ih_area").clientHeight / 24) >> 0;
+								if (_count > 1)
+									_indexDif = _count;
+
+								if (33 == e.keyCode)
+								{
+									curIndex -= _indexDif;
+									if (curIndex < 0)
+										curIndex = 0;
+								}
+								else
+								{
+									curIndex += _indexDif;
+									if (curIndex >= items.length)
+										curIndex = curIndex = items.length - 1;;
+								}
+								break;
+							}
+						}
+					}
+
+					if (curIndex < items.length)
+					{
+						items[curIndex].className = "li_selected";
+
+						var _currentOffset = items[curIndex].offsetTop;
+						var _currentHeight = items[curIndex].offsetHeight;
+
+						var container = document.getElementById("ih_area");
+						var _currentScroll = container.scrollTop;
+						if (_currentOffset < _currentScroll)
+						{
+							if (container.scrollTo)
+								container.scrollTo(0, _currentOffset);
+							else
+								container.scrollTop = _currentOffset;
+						}
+						else if ((_currentScroll + container.offsetHeight) < (_currentOffset + _currentHeight))
+						{
+							if (container.scrollTo)
+								container.scrollTo(0, _currentOffset - (container.offsetHeight - _currentHeight));
+							else
+								container.scrollTop = _currentOffset - (container.offsetHeight - _currentHeight);
+						}
+					}
+					break;
+				}
+				case 13:
+				{
+					_t.onSelectedItem();
+					break;
+				}
+			}
+
+			if (e.preventDefault)
+				e.preventDefault();
+			if (e.stopPropagation)
+				e.stopPropagation();
+			return false;
+		};
+
+		window.onresize = function(e)
+		{
+			_t.updateScrolls();
+		};
+
+		window._private_on_ih_click = function(e)
+		{
+			var items = document.getElementsByTagName("li");
+			for (var i = 0; i < items.length; i++)
+			{
+				items[i].className = "";
+			}
+			e.target.className = "li_selected";
+			var _id = e.target.getAttribute("id");
+			_t.onSelectedItem();
+		};
+
+		this.plugin.event_onKeyDown = function(data)
+		{
+			window.onkeydown({ keyCode : data.keyCode });
+		};
+	};
+
+	CIHelper.prototype.updateScrolls = function()
+	{
+		this.ps.update(); this.ps.update();
+
+		var _elemV = document.getElementsByClassName("ps__rail-y")[0];
+		var _elemH = document.getElementsByClassName("ps__rail-x")[0];
+
+		if (!_elemH || !_elemV)
+			return;
+
+		var _styleV = window.getComputedStyle(_elemV);
+		var _styleH = window.getComputedStyle(_elemH);
+
+		var _visibleV = (_styleV && _styleV.display == "none") ? false : true;
+		var _visibleH = (_styleH && _styleH.display == "none") ? false : true;
+
+		if (_visibleH && _visibleV)
+		{
+			if ("13px" != _elemV.style.marginBottom)
+				_elemV.style.marginBottom = "13px";
+			if ("13px" != _elemH.style.marginRight)
+				_elemH.style.marginRight = "13px";
+		}
+		else
+		{
+			if ("2px" != _elemV.style.marginBottom)
+				_elemV.style.marginBottom = "2px";
+			if ("2px" != _elemH.style.marginRight)
+				_elemH.style.marginRight = "2px";
+		}
+	};
+
+	CIHelper.prototype.scrollToSelected = function()
+	{
+		var items = document.getElementsByTagName("li");
+		var curIndex = -1;
+		for (var i = 0; i < items.length; i++)
+		{
+			if (items[i].className == "li_selected")
+			{
+				var container = document.getElementById("ih_area");
+				if (container.scrollTo)
+					container.scrollTo(0, items[i].offsetTop);
+				else
+					container.scrollTop = items[i].offsetTop;
+				return;
+			}
+		}
+	};
+
+	CIHelper.prototype.getSelectedItem = function()
+	{
+		var items = document.getElementsByTagName("li");
+		var curId = -1;
+		for (var i = 0; i < items.length; i++)
+		{
+			if (items[i].className == "li_selected")
+			{
+				curId = items[i].getAttribute("id");
+				break;
+			}
+		}
+
+		if (-1 == curId)
+			return null;
+
+		var len = this.items.length;
+		for (var i = 0; i < len; i++)
+		{
+			if (curId == this.items[i].id)
+				return this.items[i];
+		}
+
+		return null;
+	};
+
+	CIHelper.prototype.onSelectedItem = function()
+	{
+		if (this.plugin.inputHelper_onSelectItem)
+			this.plugin.inputHelper_onSelectItem(this.getSelectedItem());
+	};
+
+	CIHelper.prototype.show = function(w, h, isKeyboardTake)
+	{
+		this.isCurrentVisible = true;
+		this.plugin.executeMethod("ShowInputHelper", [this.plugin.info.guid, w, h, isKeyboardTake], function() { window.Asc.plugin.ih.isVisible = true; });
+	};
+
+	CIHelper.prototype.unShow = function()
+	{
+		if (!this.isCurrentVisible && !this.isVisible)
+			return;
+
+		this.isCurrentVisible = false;
+		window.Asc.plugin.executeMethod("UnShowInputHelper", [this.plugin.info.guid], function() { window.Asc.plugin.ih.isVisible = false; });
+	};
+
+	CIHelper.prototype.getItemHeight = function()
+	{
+		var _sizeItem = 24;
+		var _items = document.getElementsByTagName("li");
+		if (_items.length > 0 && _items[0].offsetHeight > 0)
+			_sizeItem = _items[0].offsetHeight;
+		return _sizeItem;
+	};
+
+	CIHelper.prototype.getItemsHeight = function(count)
+	{
+		return 2 + count * this.getItemHeight();
+	};
+
+	CIHelper.prototype.getItems = function()
+	{
+		return this.items;
+	};
+
+	CIHelper.prototype.getScrollSizes = function()
+	{
+		var _size = { w : 0, h : 0 };
+		var _sizeItem = this.getItemHeight();
+
+		var _elem = document.getElementById("ih_elements_id");
+		if (_elem)
+		{
+			_size.w = _elem.scrollWidth;
+			_size.h = 2 + this.items.length * _sizeItem;
+		}
+		return _size;
+	};
+
+	window.Asc = window.Asc || {};
+	window.Asc.inputHelper = CIHelper;
+
+})(window, undefined);
+
+(function(window, undefined){
+
+	function onReloadPage(isCtrl)
+	{
+		window.parent.postMessage(JSON.stringify({
+			type : "reload",
+			guid : window.Asc.plugin.guid,
+			ctrl : isCtrl
+		}), "*");
+	}
+	function onBaseKeyDown(e)
+	{
+		var isCtrl = (e.metaKey || e.ctrlKey) ? true : false;
+		if (e.keyCode == 116)
+		{
+			onReloadPage(isCtrl);
+			if (e.preventDefault)
+				e.preventDefault();
+			if (e.stopPropagation)
+				e.stopPropagation();
+			return false;
+		}
+	}
+
+	if (window.addEventListener)
+		window.addEventListener("keydown", onBaseKeyDown, false);
+	else
+		window.attachEvent("keydown", onBaseKeyDown);
+
+})(window, undefined);
+
+(function(window, undefined){
+
     var g_isMouseSendEnabled = false;
     var g_language = "";
 
@@ -223,121 +632,7 @@
             return;
 
         window.Asc.plugin.isStarted = true;
-        window.Asc.plugin.executeCommand = function(type, data, callback)
-        {
-            window.Asc.plugin.info.type = type;
-            window.Asc.plugin.info.data = data;
-
-            var _message = "";
-            try
-            {
-                _message = JSON.stringify(window.Asc.plugin.info);
-            }
-            catch(err)
-            {
-                _message = JSON.stringify({ type : data });
-            }
-
-            window.Asc.plugin.onCallCommandCallback = callback;
-            window.plugin_sendMessage(_message);
-        };
-
-        window.Asc.plugin.executeMethod = function(name, params, callback)
-        {
-            if (window.Asc.plugin.isWaitMethod === true)
-            {
-                if (undefined === this.executeMethodStack)
-                    this.executeMethodStack = [];
-
-                this.executeMethodStack.push({ name : name, params : params, callback : callback });
-                return false;
-            }
-
-            window.Asc.plugin.isWaitMethod = true;
-            window.Asc.plugin.methodCallback = callback;
-
-            window.Asc.plugin.info.type = "method";
-            window.Asc.plugin.info.methodName = name;
-            window.Asc.plugin.info.data = params;
-
-            var _message = "";
-            try
-            {
-                _message = JSON.stringify(window.Asc.plugin.info);
-            }
-            catch(err)
-            {
-                return false;
-            }
-            window.plugin_sendMessage(_message);
-            return true;
-        };
-
-        window.Asc.plugin.resizeWindow = function(width, height, minW, minH, maxW, maxH)
-        {
-            if (undefined === minW) minW = 0;
-            if (undefined === minH) minH = 0;
-            if (undefined === maxW) maxW = 0;
-            if (undefined === maxH) maxH = 0;
-
-            var data = JSON.stringify({ width : width, height : height, minw : minW, minh : minH, maxw : maxW, maxh : maxH });
-
-            window.Asc.plugin.info.type = "resize";
-            window.Asc.plugin.info.data = data;
-
-            var _message = "";
-            try
-            {
-                _message = JSON.stringify(window.Asc.plugin.info);
-            }
-            catch(err)
-            {
-                _message = JSON.stringify({ type : data });
-            }
-            window.plugin_sendMessage(_message);
-        };
-
-        window.Asc.plugin.callCommand = function(func, isClose, isCalc, callback)
-        {
-            var _txtFunc = "var Asc = {}; Asc.scope = " + JSON.stringify(window.Asc.scope) + "; var scope = Asc.scope; (" + func.toString() + ")();";
-            var _type = (isClose === true) ? "close" : "command";
-            window.Asc.plugin.info.recalculate = (false === isCalc) ? false : true;
-            window.Asc.plugin.executeCommand(_type, _txtFunc, callback);
-        };
-
-        window.Asc.plugin.callModule = function(url, callback, isClose)
-        {
-            var _isClose = isClose;
-            var _client = new XMLHttpRequest();
-            _client.open("GET", url);
-
-            _client.onreadystatechange = function() {
-                if (_client.readyState == 4 && (_client.status == 200 || location.href.indexOf("file:") == 0))
-                {
-                    var _type = (_isClose === true) ? "close" : "command";
-                    window.Asc.plugin.info.recalculate = true;
-                    window.Asc.plugin.executeCommand(_type, _client.responseText);
-                    if (callback)
-                        callback(_client.responseText);
-                }
-            };
-            _client.send();
-        };
-
-        window.Asc.plugin.loadModule = function(url, callback)
-        {
-            var _client = new XMLHttpRequest();
-            _client.open("GET", url);
-
-            _client.onreadystatechange = function() {
-                if (_client.readyState == 4 && (_client.status == 200 || location.href.indexOf("file:") == 0))
-                {
-                    if (callback)
-                        callback(_client.responseText);
-                }
-            };
-            _client.send();
-        };
+        window.startPluginApi();
 
         window.Asc.plugin.checkPixelRatio = function(isAttack)
         {
