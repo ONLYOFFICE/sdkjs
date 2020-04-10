@@ -39,9 +39,73 @@
 	 */
 
 	/**
+	 * Object for translations
+	 * example: { "en" : "name", "ru" : "имя" }
+	 * @typedef { Object.<string, string> } localeTranslate
+	 */
+
+	/**
+	 * EditorType
+	 * @typedef {("word" | "cell" | "slide")} editorType
+	 * */
+
+	/**
+	 * Variation init data type
+	 * @typedef {("none" | "text" | "ole" | "html")} initDataType
+	 * */
+
+	/**
+	 * @typedef { Object } variationButton
+	 * @property {string} text Label
+	 * @property {boolean} [primary] Is button use primary css style
+	 * @proverty {boolean} [isViewer] Is button shown in viewer mode
+	 * @property {localeTranslate} [textLocale] Translations for text field
+	 */
+
+	/**
+	 * @typedef { Object } variation
+	 * @description Why would one plugin might need some variations? The answer is simple enough: the plugin can not only perform some actions but also contain some settings, or 'About' window, or something like that. For example, translation plugin: the plugin itself does not need a visual window for translation as it can be done just pressing a single button, but its settings (the translation direction) and 'About' window must be visual. So we will need to have at least two plugin variations (translation itself and settings), or three, in case we want to add an 'About' window with the information about the plugin and its authors or the software used for the plugin creation.
+	 *
+	 * @property {string} description Name
+	 * @property {localeTranslate} [descriptionName] Translations for description field
+	 *
+	 * @property {string} url Plugin entry point, i.e. HTML file which connects the plugin.js (the base file needed for work with plugins) file and launches the plugin code.
+	 *
+	 * @proverty {string[]} icons Plugin icon image files used in the editors: for common screens and with doubled resolution for retina screens.
+	 *
+	 * @property {boolean} isViewer=false Specifies if the plugin is available when the document is available in viewer mode only or not.
+	 * @property {editorType[]} EditorsSupport=Array.<string>("word","cell","slide") The editors which the plugin is available for ("word" - text document editor, "cell" - spreadsheet editor, "slide" - presentation editor).
+	 *
+	 * @property {boolean} isVisual Specifies if the plugin is visual (will open a window for some action, or introduce some additions to the editor panel interface) or non-visual (will provide a button (or buttons) which is going to apply some transformations or manipulations to the document).
+	 * @property {boolean} isModal Specifies if the opened plugin window is modal, i.e. a separate modal window must be opened, or not (used for visual plugins only). The following rule must be observed at all times: isModal != isInsideMode.
+	 * @property {boolean} isInsideMode Specifies if the plugin must be displayed inside the editor panel instead of its own window (used for visual non-modal plugins only). The following rule must be observed at all times: isModal != isInsideMode.
+	 * @property {boolean} [isSystem] Specifies if the plugin is not displayed in the editor interface and is started in background with the server (or desktop editors start) not interfering with the other plugins, so that they can work simultaneously.
+	 * @property {boolean} [isDisplayedInViewer] Specifies if the plugin will be displayed in viewer mode as well as in editor mode (isDisplayedInViewer == true) or in the editor mode only (isDisplayedInViewer == false).
+	 *
+	 * @property {boolean} [initOnSelectionChanged] Specifies if the plugin watches the text selection events in the editor window.
+ 	 *
+	 * @property {boolean} [isUpdateOleOnResize] Specifies if the OLE object must be redrawn when resized in the editor using the vector object draw type or not (used for OLE objects only, i.e. initDataType == "ole").
+	 *
+	 * @property {initDataType} initDataType The data type selected in the editor and sent to the plugin: "text" - the text data, "html" - HTML formatted code, "ole" - OLE object data, "none" - no data will be send to the plugin from the editor.
+	 * @property {string} initData Is always equal to "" - this is the data which is sent from the editor to the plugin at the plugin start (e.g. if initDataType == "text", the plugin will receive the selected text when run).
+	 *
+	 * @property {number[]} [size] Size of the plugin window
+	 *
+	 * @property {variationButton[]} [buttons] Buttons
+	 *
+	 * @property {string[]} events Events
+	 */
+
+
+	/**
 	 * @typedef {Object} Config
-	 * @property {string} guid
-	 * @property {string} name
+	 * @property {string} basePath="" Path to the plugin. All the other paths are calculated relative to this path. In case the plugin is installed on the server, an additional parameter (path to the plugins) is added there. If baseUrl == "" the path to all plugins will be used.
+	 * @property {string} guid Plugin identifier. It <b>must<b> be of the asc.{UUID} type.
+	 *
+	 * @property {string} name Plugin name which will be visible at the plugin toolbar.
+	 * @property {localeTranslate} [nameLocale] Translations for name field
+	 *
+	 * @property {variation[]} variations Plugin variations or "subplugins"
 	 */
 
 	/***********************************************************************
