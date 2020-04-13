@@ -438,7 +438,7 @@ window.startPluginApi = function() {
 	 */
 	Plugin.getInputHelper = function()
 	{
-		window.Asc.plugin.ih = new window.Asc.inputHelper(window.Asc.plugin);
+		return window.Asc.plugin.ih;
 	};
 
 };
