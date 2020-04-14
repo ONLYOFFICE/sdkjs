@@ -4160,7 +4160,7 @@
 
 		for (var Index = 0; Index < arrAllDrawing.length; Index++)
 			if (arrAllDrawing[Index].GraphicObj instanceof CShape)
-				arrApiShapes.push(new ApiShape(arrAllDrawing[Index]));
+				arrApiShapes.push(new ApiShape(arrAllDrawing[Index].GraphicObj));
 		
 		return arrApiShapes;
 	};
@@ -4176,7 +4176,7 @@
 
 		for (var Index = 0; Index < arrAllDrawing.length; Index++)
 			if (arrAllDrawing[Index].GraphicObj instanceof CImageShape)
-				arrApiImages.push(new ApiImage(arrAllDrawing[Index]));
+				arrApiImages.push(new ApiImage(arrAllDrawing[Index].GraphicObj));
 		
 		return arrApiImages;
 	};
@@ -4192,7 +4192,7 @@
 
 		for (var Index = 0; Index < arrAllDrawing.length; Index++)
 			if (arrAllDrawing[Index].GraphicObj instanceof CChartSpace)
-				arrApiCharts.push(new ApiChart(arrAllDrawing[Index]));
+				arrApiCharts.push(new ApiChart(arrAllDrawing[Index].GraphicObj));
 		
 		return arrApiCharts;
 	};
