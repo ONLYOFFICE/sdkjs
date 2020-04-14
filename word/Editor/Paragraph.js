@@ -1210,6 +1210,141 @@ Paragraph.prototype.Get_ParaPosByContentPos = function(ContentPos)
 
 	return ParaPos;
 };
+Paragraph.prototype.GetStartCharByContentPos = function(contentPos)
+{
+	var localStart = 0;
+
+	for (var curRun = 0; curRun < contentPos.Data[0]; curRun++)
+	{
+		if (this.Content[curRun] instanceof ParaRun)
+		{
+			for (var curChar = 0; curChar < this.Content[curRun].Content.length; curChar++)
+			{
+				if (this.Content[curRun].Content[curChar] instanceof ParaText)
+				{
+					localStart ++;
+				}
+			}
+		}
+		else if (this.Content[curRun] instanceof ParaHyperlink)
+		{
+			for (var runInHyper = 0; runInHyper < this.Content[curRun].Content.length; runInHyper++)
+			{
+				for (var curChar = 0; curChar < this.Content[curRun].Content[runInHyper].Content.length; curChar++)
+				{
+					if (this.Content[curRun].Content[runInHyper].Content[curChar] instanceof ParaText)
+					{
+						localStart ++;
+					}
+				}
+			}
+		}
+	}
+
+	if (this.Content[contentPos.Data[0]] instanceof ParaRun)
+	{
+		for (var curElement = 0; curElement < contentPos.Data[1]; curElement++)
+		{
+			if (this.Content[contentPos.Data[0]].Content[curElement] instanceof ParaText)
+			{
+				localStart ++;
+			}
+		}
+	}
+	else if (this.Content[contentPos.Data[0]] instanceof ParaHyperlink)
+	{
+		for (var runInHyper = 0; runInHyper < contentPos.Data[1]; runInHyper++)
+		{
+			for (var curChar = 0; curChar < this.Content[curRun].Content[runInHyper].Content.length; curChar++)
+			{
+				if (this.Content[curRun].Content[runInHyper].Content[curChar] instanceof ParaText)
+				{
+					localStart ++;
+				}
+			}
+		}
+
+		for (var curChar = 0; curChar < contentPos.Data[2]; curChar++)
+		{
+			if (this.Content[contentPos.Data[0]].Content[SaveSelectionState1.Data[1]].Content[curChar] instanceof ParaText)
+			{
+				localStart ++;
+			}
+		}
+	}
+
+	return localStart;
+};
+Paragraph.prototype.GetEndCharByContentPos = function(contentPos)
+{
+	var localEnd   = 0;
+
+	for (var curRun = 0; curRun < contentPos.Data[0]; curRun++)
+	{
+		if (this.Content[curRun] instanceof ParaRun)
+		{
+			for (var curChar = 0; curChar < this.Content[curRun].Content.length; curChar++)
+			{
+				if (this.Content[curRun].Content[curChar] instanceof ParaText)
+				{
+					localEnd ++;
+				}
+			}
+		}
+		else if (this.Content[curRun] instanceof ParaHyperlink)
+		{
+			for (var runInHyper = 0; runInHyper < this.Content[curRun].Content.length; runInHyper++)
+			{
+				for (var curChar = 0; curChar < this.Content[curRun].Content[runInHyper].Content.length; curChar++)
+				{
+					if (this.Content[curRun].Content[runInHyper].Content[curChar] instanceof ParaText)
+					{
+						localEnd ++;
+					}
+				}
+			}
+		}
+	}
+
+	if (this.Content[contentPos.Data[0]] instanceof ParaRun)
+	{
+		for (var curElement = 0; curElement < contentPos.Data[1]; curElement++)
+		{
+			if (this.Content[contentPos.Data[0]].Content[curElement] instanceof ParaText)
+			{
+				localEnd ++;
+			}
+		}
+	}
+	else if (this.Content[contentPos.Data[0]] instanceof ParaHyperlink)
+	{
+		for (var runInHyper = 0; runInHyper < contentPos.Data[1]; runInHyper++)
+		{
+			for (var curChar = 0; curChar < this.Content[curRun].Content[runInHyper].Content.length; curChar++)
+			{
+				if (this.Content[curRun].Content[runInHyper].Content[curChar] instanceof ParaText)
+				{
+					localEnd ++;
+				}
+			}
+		}
+
+		for (var curChar = 0; curChar < contentPos.Data[2]; curChar++)
+		{
+			if (this.Content[contentPos.Data[0]].Content[contentPos.Data[1]].Content[curChar] instanceof ParaText)
+			{
+				localEnd ++;
+			}
+		}
+	}
+
+	if (localEnd > 0)
+	{
+		localEnd--;
+	}
+
+	return localEnd;
+};
 Paragraph.prototype.Check_Range_OnlyMath = function(CurRange, CurLine)
 {
 	var StartPos = this.Lines[CurLine].Ranges[CurRange].StartPos;
