@@ -1337,6 +1337,8 @@
 	 */
 	ApiRange.prototype.Delete = function()
 	{
+		var Document = private_GetLogicDocument();
+		
 		if (this.isEmpty || this.isEmpty === undefined)
 			return false;
 
@@ -4106,27 +4108,6 @@
 		return oRange;
 	};
 	/**
-	 * Gets the collection of content control objects in the document.
-	 * @typeofeditors ["CDE"]
-	 * @return {Array}  
-	 */
-	ApiDocument.prototype.GetContentControls = function()
-	{
-		var arrApiContentControls = [];
-
-		var ContentControls = this.Document.GetAllContentControls();
-
-		for (var Index = 0; Index < ContentControls.length; Index++)
-		{
-			if (ContentControls[Index] instanceof CBlockLevelSdt)
-				arrApiContentControls.push(new ApiBlockLvlSdt(ContentControls[Index]));
-			else if (ContentControls[Index] instanceof CInlineLevelSdt)
-				arrApiContentControls.push(new ApiInlineLvlSdt(ContentControls[Index]));
-		} 
-
-		return arrApiContentControls;
-	};
-	/**
 	 * Gets the collection of section objects in the document.
 	 * @typeofeditors ["CDE"]
 	 * @return {Array}  
@@ -4214,6 +4195,52 @@
 				arrApiCharts.push(new ApiChart(arrAllDrawing[Index]));
 		
 		return arrApiCharts;
+	};
+	/**
+	 * Searches for the scope of a document object. The search results are a collection of ApiRange objects.
+	 * @param {string} sText 
+	 * @param {bool} isMatchCase - is case sensitive. 
+	 * @typeofeditors ["CDE"]
+	 * @return {Array}  
+	 */
+	ApiDocument.prototype.Search = function(sText, isMatchCase)
+	{
+		if (isMatchCase === undefined)
+			isMatchCase	= false;
+
+		var docSearchEngine	= this.Document.Search(sText, {MatchCase : isMatchCase});
+		var foundItems 		= [];
+		var arrApiRanges	= [];
+		var docSearchEngineElementsLenght = 0;
+
+		for (var FoundId in docSearchEngine.Elements)
+			docSearchEngineElementsLenght++;
+
+		for (var Index = 1; Index <= docSearchEngineElementsLenght; Index++)
+			foundItems.push(docSearchEngine.Elements[Index]);
+
+		for (var Index1 = 0; Index1 < foundItems.length; Index1++)
+		{
+			for (var Index2 = Index1 + 1; Index2 < foundItems.length; Index2++)
+			{
+				if (foundItems[Index1].Id === foundItems[Index2].Id)
+				{
+					foundItems.splice(Index2, 1);
+					Index2--;
+				}
+			}
+		}
+
+		for (var para in foundItems)
+		{
+			var oParagraph			= new ApiParagraph(foundItems[para]);
+			var arrOfParaApiRanges	= oParagraph.Search(sText, isMatchCase);
+
+			for (var itemRange = 0; itemRange < arrOfParaApiRanges.length; itemRange++)	
+				arrApiRanges.push(arrOfParaApiRanges[itemRange]);
+		}
+
+		return arrApiRanges;
 	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -4459,6 +4486,43 @@
 			this.Paragraph.RemoveFromContent(0, this.Paragraph.Content.length - 1);
 			this.Paragraph.CorrectContent();
 		}
+	};
+	/**
+	 * Delete current paragraph.
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 */
+	ApiParagraph.prototype.Delete = function()
+	{
+		var parentOfElement = this.Paragraph.GetParent();
+
+		var PosInDocument = parentOfElement.Content.indexOf(this.Paragraph);
+
+		if (PosInDocument !== - 1)
+			parentOfElement.Remove_FromContent(PosInDocument, 1, true);
+		else 
+			return false;
+	};
+	/**
+	 * Gets the next paragraph.
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 */
+	ApiParagraph.prototype.GetNext = function()
+	{
+		if (this.Paragraph.Next !== null && this.Paragraph.Next !== undefined)
+			return new ApiParagraph(this.Paragraph.Next);
+
+		return false;
+	};
+	/**
+	 * Gets the Previous paragraph.
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 */
+	ApiParagraph.prototype.GetPrevious = function()
+	{
+		if (this.Paragraph.Prev !== null && this.Paragraph.Prev !== undefined)
+			return new ApiParagraph(this.Paragraph.Prev);
+
+		return false;
 	};
 	/**
 	 * Create a copy of the paragraph. Ingonore comments, footnote references, complex fields
@@ -5339,6 +5403,299 @@
 		}
 
 		return false;
+	};
+	/**
+	 * Gets the collection of content control objects in the Paragraph.
+	 * @typeofeditors ["CDE"]
+	 * @return {Array}  
+	 */
+	ApiParagraph.prototype.GetAllContentControls = function()
+	{
+		var arrApiContentControls = [];
+
+		var ContentControls = this.Paragraph.GetAllContentControls();
+
+		for (var Index = 0; Index < ContentControls.length; Index++)
+		{
+			if (ContentControls[Index] instanceof CBlockLevelSdt)
+				arrApiContentControls.push(new ApiBlockLvlSdt(ContentControls[Index]));
+			else if (ContentControls[Index] instanceof CInlineLevelSdt)
+				arrApiContentControls.push(new ApiInlineLvlSdt(ContentControls[Index]));
+		} 
+
+		return arrApiContentControls;
+	};
+	/**
+	 * Gets the collection of shapes objects in the Paragraph.
+	 * @typeofeditors ["CDE"]
+	 * @return {Array}  
+	 */
+	ApiParagraph.prototype.GetAllShapes = function()
+	{
+		var arrAllDrawing = this.Paragraph.GetAllDrawingObjects();
+		var arrApiShapes  = [];
+
+		for (var Index = 0; Index < arrAllDrawing.length; Index++)
+			if (arrAllDrawing[Index].GraphicObj instanceof CShape)
+				arrApiShapes.push(new ApiShape(arrAllDrawing[Index]));
+
+		return arrApiShapes;
+	};
+	/**
+	 * Gets the collection of image objects in the Paragraph.
+	 * @typeofeditors ["CDE"]
+	 * @return {Array}  
+	 */
+	ApiParagraph.prototype.GetAllImages = function()
+	{
+		var arrAllDrawing = this.Paragraph.GetAllDrawingObjects();
+		var arrApiImages  = [];
+
+		for (var Index = 0; Index < arrAllDrawing.length; Index++)
+			if (arrAllDrawing[Index].GraphicObj instanceof CImageShape)
+				arrApiImages.push(new ApiImage(arrAllDrawing[Index]));
+
+		return arrApiImages;
+	};
+	/**
+	 * Gets the collection of chart objects in the Paragraph.
+	 * @typeofeditors ["CDE"]
+	 * @return {Array}  
+	 */
+	ApiParagraph.prototype.GetAllCharts = function()
+	{
+		var arrAllDrawing = this.Paragraph.GetAllDrawingObjects();
+		var arrApiCharts  = [];
+
+		for (var Index = 0; Index < arrAllDrawing.length; Index++)
+			if (arrAllDrawing[Index].GraphicObj instanceof CChartSpace)
+				arrApiCharts.push(new ApiChart(arrAllDrawing[Index]));
+
+		return arrApiCharts;
+	};
+	/**
+	 * Gets the content control that contains the paragraph.
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiBlockLvlSdt | ApiInlineLvlSdt}  
+	 */
+	ApiParagraph.prototype.GetParentContentControl = function()
+	{
+		var ParaPosition = this.Paragraph.GetDocumentPositionFromObject();
+
+		for (var Index = ParaPosition.length - 1; Index >= 1; Index--)
+		{
+			if (ParaPosition[Index].Class.Parent)
+				if (ParaPosition[Index].Class.Parent instanceof CBlockLevelSdt)
+					return new ApiBlockLvlSdt(ParaPosition[Index].Class.Parent);
+			else if (ParaPosition[Index].Class.Parent)
+				if (ParaPosition[Index].Class.Parent instanceof CInlineLevelSdt)
+					return new ApiInlineLvlSdt(ParaPosition[Index].Class.Parent);
+		}
+
+		return false;
+	};
+	/**
+	 * Gets the table that contains the paragraph.
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiTable}  
+	 */
+	ApiParagraph.prototype.GetParentTable = function()
+	{
+		var ParaPosition = this.Paragraph.GetDocumentPositionFromObject();
+
+		for (var Index = ParaPosition.length - 1; Index >= 1; Index--)
+		{
+			if (ParaPosition[Index].Class instanceof CTable)
+				return new ApiTable(ParaPosition[Index].Class);
+		}
+
+		return false;
+	};
+	/**
+	 * Gets the table cell that contains the paragraph.
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiTableCell}  
+	 */
+	ApiParagraph.prototype.GetParentTableCell = function()
+	{
+		var ParaPosition = this.Paragraph.GetDocumentPositionFromObject();
+
+		for (var Index = ParaPosition.length - 1; Index >= 1; Index--)
+		{
+			if (ParaPosition[Index].Class.Parent && this.Paragraph.IsTableCellContent())
+				if (ParaPosition[Index].Class.Parent instanceof CTableCell)
+					return new ApiTableCell(ParaPosition[Index].Class.Parent);
+		}
+
+		return false;
+	};
+	/**
+	 * Gets text of the paragraph.
+	 * @typeofeditors ["CDE"]
+	 * @return {string}  
+	 */
+	ApiParagraph.prototype.GetText = function()
+	{
+		var ParaText = this.Paragraph.GetText();
+
+		return ParaText;
+	};
+	/**
+	 * Insert content control to the paragraph
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiParagraph}  
+	 */
+	ApiParagraph.prototype.InsertContentControl = function()
+	{
+		this.Paragraph.AddContentControl(2);
+
+		return this;
+	};
+	/**
+	 * Wraps the paragraph object with a rich text content control.
+	 * @param {number} nType - if nType === 1 -> returns ApiBlockLvlSdt  
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiParagraph | ApiBlockLvlSdt}  
+	 */
+	ApiParagraph.prototype.InsertInContentControl = function(nType)
+	{
+		var Api = editor; 
+		var oDocument = Api.GetDocument();
+
+		var Para = this.Copy();
+		var ContentControl = null;
+
+		this.RemoveAllElements();
+
+		var paraParent = this.Paragraph.GetParent();
+		var paraIndex = this.Paragraph.Index;
+
+		if (paraIndex >= 0)
+		{
+			paraParent.CurPos.ContentPos = paraIndex;
+			this.Paragraph.MoveCursorToStartPos();
+			ContentControl = new ApiBlockLvlSdt(paraParent.AddContentControl(1));
+			ContentControl.Sdt.Content.RemoveFromContent(0, ContentControl.Sdt.Content.GetElementsCount(), false);
+			ContentControl.Sdt.Content.AddToContent(0, Para.Paragraph);
+			ContentControl.Sdt.SetShowingPlcHdr(false);
+			this.Delete();
+		}
+		else 
+		{
+			ContentControl = new ApiBlockLvlSdt(new CBlockLevelSdt(oDocument.Document, oDocument.Document))
+			ContentControl.Sdt.Content.RemoveFromContent(0, ContentControl.Sdt.Content.GetElementsCount(), false);
+			ContentControl.Sdt.Content.AddToContent(0, Para.Paragraph);
+			ContentControl.Sdt.SetShowingPlcHdr(false);
+		}
+
+		if (nType === 1)
+			return ContentControl;
+		else 
+			return Para;
+	};
+	/**
+	 * Inserts a paragraph at the specified position.
+	 * @param {string | ApiParagraph} paragraph - text or paragraph
+	 * @param {string} sPosition - can be "after" or "before"
+	 * @param {bool} beRNewPara - if "true" - returns new paragraph, else returns this paragraph.
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiParagraph} 
+	 */
+	ApiParagraph.prototype.InsertParagraph = function(paragraph, sPosition, beRNewPara)
+	{
+		var paraParent = this.Paragraph.GetParent();
+		var paraIndex  = paraParent.Content.indexOf(this.Paragraph);
+		var oNewPara   = null;
+
+		if (paragraph instanceof ApiParagraph)
+		{
+			oNewPara = paragraph;
+
+			if (sPosition === "before")
+				paraParent.Internal_Content_Add(paraIndex, oNewPara.private_GetImpl());
+			else if (sPosition === "after")
+				paraParent.Internal_Content_Add(paraIndex + 1, oNewPara.private_GetImpl());
+		}
+		else if (typeof paragraph === "string")
+		{
+			var oNewPara = editor.CreateParagraph();
+				oNewPara.AddText(paragraph);
+
+			if (sPosition === "before")
+				paraParent.Internal_Content_Add(paraIndex, oNewPara.private_GetImpl());
+			else if (sPosition === "after")
+				paraParent.Internal_Content_Add(paraIndex + 1, oNewPara.private_GetImpl());
+		}
+		else 
+			return false;
+
+		if (rNewPara === true)
+			return oNewPara;
+		else 
+			return this;
+	};
+	/**
+	 * Select a paragraph.
+	 * @typeofeditors ["CDE"]
+	 * @return {bool} 
+	 */
+	ApiParagraph.prototype.SetSelection = function()
+	{
+		var Api = editor; 
+		var oDocument = Api.GetDocument();
+
+		var StartPos = this.GetStartPosition();
+		var EndPos 	 = this.GetEndPosition();
+
+		if (StartPos[0].Position !== -1)
+		{
+			oDocument.Document.SetSelectionByContentPositions(StartPos, EndPos);
+			oDocument.Document.UpdateSelection();
+			return true;
+		}
+		else 
+			return false;		
+	};
+	/**
+	 * Searches for the scope of a paragraph object. The search results are a collection of ApiRange objects.
+	 * @param {string} sText 
+	 * @param {bool} isMatchCase - is case sensitive. 
+	 * @typeofeditors ["CDE"]
+	 * @return {Array}  
+	 */
+	ApiParagraph.prototype.Search = function(sText, isMatchCase)
+	{
+		if (isMatchCase === undefined)
+			isMatchCase = false;
+
+		var arrApiRanges	= [];
+		var Api				= editor; 
+		var oDocument		= Api.GetDocument();
+		var SearchEngine	= null;
+
+		if (!oDocument.Document.SearchEngine.Compare(sText, {MatchCase: isMatchCase}))
+		{
+			SearchEngine		= new CDocumentSearch();
+			SearchEngine.Set(sText, {MatchCase: isMatchCase});
+			this.Paragraph.Search(sText, {MatchCase: isMatchCase}, SearchEngine, 0)
+		}
+		else 
+			SearchEngine = oDocument.Document.SearchEngine;
+
+		var SearchResults	= this.Paragraph.SearchResults;
+
+		for (var FoundId in SearchResults)
+		{
+			var StartSearchContentPos	= SearchResults[FoundId].StartPos;
+			var EndSearchContentPos		= SearchResults[FoundId].EndPos;
+
+			var StartChar	= this.Paragraph.GetStartCharByContentPos(StartSearchContentPos);
+			var EndChar		= this.Paragraph.GetEndCharByContentPos(EndSearchContentPos);
+
+			arrApiRanges.push(this.GetRange(StartChar, EndChar));
+		}
+
+		return arrApiRanges;
 	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -9668,5 +10025,3 @@
 		return new ApiDocumentContent(oDocContent);
 	};
 }(window, null));
-
-
