@@ -5441,6 +5441,21 @@
 		return arrApiContentControls;
 	};
 	/**
+	 * Gets the collection of drawing objects in the paragraph.
+	 * @typeofeditors ["CDE"]
+	 * @return {Array}  
+	 */
+	ApiParagraph.prototype.GetAllDrawingObjects = function()
+	{
+		var arrAllDrawing = this.Paragraph.GetAllDrawingObjects();
+		var arrApiShapes  = [];
+
+		for (var Index = 0; Index < arrAllDrawing.length; Index++)
+			arrApiShapes.push(new ApiDrawing(arrAllDrawing[Index]));
+		
+		return arrApiShapes;
+	};
+	/**
 	 * Gets the collection of shapes objects in the Paragraph.
 	 * @typeofeditors ["CDE"]
 	 * @return {Array}  
