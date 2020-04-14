@@ -4149,6 +4149,21 @@
 		this.Document.RemoveSelection();
 	};
 	/**
+	 * Gets the collection of drawing objects in the document.
+	 * @typeofeditors ["CDE"]
+	 * @return {Array}  
+	 */
+	ApiDocument.prototype.GetAllDrawingObjects = function()
+	{
+		var arrAllDrawing = this.Document.GetAllDrawingObjects();
+		var arrApiShapes  = [];
+
+		for (var Index = 0; Index < arrAllDrawing.length; Index++)
+			arrApiShapes.push(new ApiDrawing(arrAllDrawing[Index]));
+		
+		return arrApiShapes;
+	};
+	/**
 	 * Gets the collection of shapes objects in the document.
 	 * @typeofeditors ["CDE"]
 	 * @return {Array}  
