@@ -1210,6 +1210,26 @@ Paragraph.prototype.Get_ParaPosByContentPos = function(ContentPos)
 
 	return ParaPos;
 };
+/**
+ * Функция для перевода позиции внутри параграфа в специальную позицию используемую в ApiRange
+ * @param {CParagraphContentPos} oContentPos
+ * @return {number}
+ */
+Paragraph.prototype.ConvertParaContentPosToRangePos = function(oContentPos)
+{
+	var nRangePos = 0;
+
+	var nCurPos = Math.max(0, Math.min(this.Content.length - 1, oContentPos.Get(0)));
+	for (var nPos = 0; nPos < nCurPos; ++nPos)
+	{
+		nRangePos += this.Content[nPos].ConvertParaContentPosToRangePos(null);
+	}
+
+	if (this.Content[nCurPos])
+		nRangePos += this.Content[nCurPos].ConvertParaContentPosToRangePos(oContentPos, 1);
+
+	return nRangePos;
+};
 Paragraph.prototype.GetStartCharByContentPos = function(contentPos)
 {
 	var localStart = 0;
