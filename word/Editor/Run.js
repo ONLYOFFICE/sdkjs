@@ -6581,18 +6581,61 @@ ParaRun.prototype.Set_ParaContentPos = function(ContentPos, Depth)
 
     this.State.ContentPos = Pos;
 };
+/**
+ * Функция для перевода позиции внутри параграфа в специальную позицию используемую в ApiRange
+ * @param {CParagraphContentPos} oContentPos - если null -> возвращает количество символов в элементе.
+ * @param {number} nDepth
+ * @return {number}
+ */
 ParaRun.prototype.ConvertParaContentPosToRangePos = function(oContentPos, nDepth)
 {
 	var nRangePos = 0;
 
-	var nCurPos = oContentPos ? Math.max(0, Math.min(this.Content.length - 1, oContentPos.Get(nDepth))) : this.Content.length;
+	var nCurPos = oContentPos ? Math.max(0, Math.min(this.Content.length, oContentPos.Get(nDepth))) : this.Content.length;
 	for (var nPos = 0; nPos < nCurPos; ++nPos)
 	{
 		if (para_Text === this.Content[nPos].Type)
 			nRangePos++;
-	}
-	
+    }
+        
 	return nRangePos;
+};
+/**
+ * Функция для для рассчета иерархии позиции до символа под номером charNumber.
+ * @param {charNumber} charNumber - номер символа в элементе
+ * @param {number} nType - if === 0 -> starting position, else if === 1 -> ending position
+ * @return {number | Array} - если номер символа больше, чем количество символов в элементе, то возращает количество символов в элементе
+ */
+ParaRun.prototype.CalcHierarchyPos = function(charNumber, nType)
+{
+    var nRangePos = 0;
+
+	var nCurPos = this.Content.length;
+	for (var nPos = 0; nPos < nCurPos; ++nPos)
+	{
+		if (para_Text === this.Content[nPos].Type)
+            nRangePos++;
+
+        if (charNumber === nRangePos - 1)
+        {
+            var PosInRun = 
+            {
+                Class : this,
+                Position : nPos,
+            };
+
+            if (nType === 1)
+                PosInRun.Position++;
+
+            var HierarchyPos = this.GetDocumentPositionFromObject();
+
+            HierarchyPos.push(PosInRun);
+
+            return HierarchyPos;
+        }
+	}
+    
+    return nRangePos;
 };
 ParaRun.prototype.Get_PosByElement = function(Class, ContentPos, Depth, UseRange, Range, Line)
 {

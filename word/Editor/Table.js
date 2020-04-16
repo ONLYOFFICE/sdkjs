@@ -6087,6 +6087,54 @@ CTable.prototype.Remove = function(Count, bOnlyText, bRemoveOnlySelection, bOnTe
 		}
 	}
 };
+/**
+ * Функция для для рассчета иерархии позиции до символа под номером charNumber.
+ * @param {charNumber} charNumber - номер символа в элементе
+ * @param {number} nType - if === 0 -> starting position, else if === 1 -> ending position
+ * @return {number | Array} - если номер символа больше, чем количество символов в элементе, то возращает количество символов в элементе
+ */
+CTable.prototype.CalcHierarchyPos = function(charNumber, nType)
+{
+	var AllParagraphsList = [];
+	this.GetAllParagraphs({All : true}, AllParagraphsList);
+
+    var nRangePos = 0;
+
+	for (var nPos = 0; nPos < AllParagraphsList.length; ++nPos)
+	{
+		var localCharNumber = charNumber - nRangePos;
+		var Result = this.Content[nPos].CalcHierarchyPos(localCharNumber, nType);
+
+		if (typeof(Result) === "number")
+		{
+			nRangePos += Result;
+		}
+		else 
+			return Result;
+	}
+};
+/**
+ * Функция для перевода позиции внутри параграфа в специальную позицию используемую в ApiRange
+ * @param {Paragraph} oContentPos
+ * @return {number}
+ */
+CTable.prototype.ConvertParaContentPosToRangePos = function(oParagraph, oContentPos)
+{
+	var AllParagraphsList = this.GetAllParagraphs({All : true});
+	var nRangePos = 0;
+
+	for (var nPos = 0; nPos < AllParagraphsList.length; ++nPos)
+	{
+		if (this.Content[nPos].Id !== oParagraph.Id)
+			nRangePos += this.Content[nPos].ConvertParaContentPosToRangePos(null);
+		else if (this.Content[nPos].Id === oParagraph.Id)
+		{
+			nRangePos += this.Content[nPos].ConvertParaContentPosToRangePos(oContentPos);
+			return nRangePos;
+		}
+	}
+	return nRangePos;
+};
 CTable.prototype.GetCursorPosXY = function()
 {
 	if (true === this.Selection.Use && table_Selection_Cell === this.Selection.Type)

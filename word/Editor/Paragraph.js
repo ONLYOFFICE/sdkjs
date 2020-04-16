@@ -1219,7 +1219,8 @@ Paragraph.prototype.ConvertParaContentPosToRangePos = function(oContentPos)
 {
 	var nRangePos = 0;
 
-	var nCurPos = Math.max(0, Math.min(this.Content.length - 1, oContentPos.Get(0)));
+	var nCurPos = oContentPos ? Math.max(0, Math.min(this.Content.length - 1, oContentPos.Get(0))) : this.Content.length;
+	
 	for (var nPos = 0; nPos < nCurPos; ++nPos)
 	{
 		nRangePos += this.Content[nPos].ConvertParaContentPosToRangePos(null);
@@ -1230,140 +1231,29 @@ Paragraph.prototype.ConvertParaContentPosToRangePos = function(oContentPos)
 
 	return nRangePos;
 };
-Paragraph.prototype.GetStartCharByContentPos = function(contentPos)
+/**
+ * Функция для для рассчета иерархии позиции до символа под номером charNumber.
+ * @param {charNumber} charNumber - номер символа в элементе
+ * @param {number} nType - if === 0 -> starting position, else if === 1 -> ending position
+ * @return {number | Array} - если номер символа больше, чем количество символов в элементе, то возращает количество символов в элементе
+ */
+Paragraph.prototype.CalcHierarchyPos = function(charNumber, nType)
 {
-	var localStart = 0;
+    var nRangePos = 0;
 
-	for (var curRun = 0; curRun < contentPos.Data[0]; curRun++)
+	for (var nPos = 0; nPos < this.Content.length; ++nPos)
 	{
-		if (this.Content[curRun] instanceof ParaRun)
+		var localCharNumber = charNumber - nRangePos;
+		var Result = this.Content[nPos].CalcHierarchyPos(localCharNumber, nType);
+
+		if (typeof(Result) === "number")
 		{
-			for (var curChar = 0; curChar < this.Content[curRun].Content.length; curChar++)
-			{
-				if (this.Content[curRun].Content[curChar] instanceof ParaText)
-				{
-					localStart ++;
-				}
-			}
+			nRangePos += Result;
 		}
-		else if (this.Content[curRun] instanceof ParaHyperlink)
-		{
-			for (var runInHyper = 0; runInHyper < this.Content[curRun].Content.length; runInHyper++)
-			{
-				for (var curChar = 0; curChar < this.Content[curRun].Content[runInHyper].Content.length; curChar++)
-				{
-					if (this.Content[curRun].Content[runInHyper].Content[curChar] instanceof ParaText)
-					{
-						localStart ++;
-					}
-				}
-			}
-		}
+		else 
+			return Result;
 	}
-
-	if (this.Content[contentPos.Data[0]] instanceof ParaRun)
-	{
-		for (var curElement = 0; curElement < contentPos.Data[1]; curElement++)
-		{
-			if (this.Content[contentPos.Data[0]].Content[curElement] instanceof ParaText)
-			{
-				localStart ++;
-			}
-		}
-	}
-	else if (this.Content[contentPos.Data[0]] instanceof ParaHyperlink)
-	{
-		for (var runInHyper = 0; runInHyper < contentPos.Data[1]; runInHyper++)
-		{
-			for (var curChar = 0; curChar < this.Content[curRun].Content[runInHyper].Content.length; curChar++)
-			{
-				if (this.Content[curRun].Content[runInHyper].Content[curChar] instanceof ParaText)
-				{
-					localStart ++;
-				}
-			}
-		}
-
-		for (var curChar = 0; curChar < contentPos.Data[2]; curChar++)
-		{
-			if (this.Content[contentPos.Data[0]].Content[SaveSelectionState1.Data[1]].Content[curChar] instanceof ParaText)
-			{
-				localStart ++;
-			}
-		}
-	}
-
-	return localStart;
-};
-Paragraph.prototype.GetEndCharByContentPos = function(contentPos)
-{
-	var localEnd   = 0;
-
-	for (var curRun = 0; curRun < contentPos.Data[0]; curRun++)
-	{
-		if (this.Content[curRun] instanceof ParaRun)
-		{
-			for (var curChar = 0; curChar < this.Content[curRun].Content.length; curChar++)
-			{
-				if (this.Content[curRun].Content[curChar] instanceof ParaText)
-				{
-					localEnd ++;
-				}
-			}
-		}
-		else if (this.Content[curRun] instanceof ParaHyperlink)
-		{
-			for (var runInHyper = 0; runInHyper < this.Content[curRun].Content.length; runInHyper++)
-			{
-				for (var curChar = 0; curChar < this.Content[curRun].Content[runInHyper].Content.length; curChar++)
-				{
-					if (this.Content[curRun].Content[runInHyper].Content[curChar] instanceof ParaText)
-					{
-						localEnd ++;
-					}
-				}
-			}
-		}
-	}
-
-	if (this.Content[contentPos.Data[0]] instanceof ParaRun)
-	{
-		for (var curElement = 0; curElement < contentPos.Data[1]; curElement++)
-		{
-			if (this.Content[contentPos.Data[0]].Content[curElement] instanceof ParaText)
-			{
-				localEnd ++;
-			}
-		}
-	}
-	else if (this.Content[contentPos.Data[0]] instanceof ParaHyperlink)
-	{
-		for (var runInHyper = 0; runInHyper < contentPos.Data[1]; runInHyper++)
-		{
-			for (var curChar = 0; curChar < this.Content[curRun].Content[runInHyper].Content.length; curChar++)
-			{
-				if (this.Content[curRun].Content[runInHyper].Content[curChar] instanceof ParaText)
-				{
-					localEnd ++;
-				}
-			}
-		}
-
-		for (var curChar = 0; curChar < contentPos.Data[2]; curChar++)
-		{
-			if (this.Content[contentPos.Data[0]].Content[contentPos.Data[1]].Content[curChar] instanceof ParaText)
-			{
-				localEnd ++;
-			}
-		}
-	}
-
-	if (localEnd > 0)
-	{
-		localEnd--;
-	}
-
-	return localEnd;
+	return nRangePos;
 };
 Paragraph.prototype.Check_Range_OnlyMath = function(CurRange, CurLine)
 {
