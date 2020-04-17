@@ -2359,6 +2359,8 @@ CDocument.prototype.Init                           = function()
 };
 CDocument.prototype.On_EndLoad                     = function()
 {
+    this.UpdateDefaultsDependingOnCompatibility();
+
     // Обновляем информацию о секциях
     this.UpdateAllSectionsInfo();
 
@@ -2384,6 +2386,10 @@ CDocument.prototype.On_EndLoad                     = function()
     {
         this.Set_FastCollaborativeEditing(true);
     }
+};
+CDocument.prototype.UpdateDefaultsDependingOnCompatibility = function()
+{
+    this.Styles.UpdateDefaultsDependingOnCompatibility(this.GetCompatibilityMode());
 };
 CDocument.prototype.Add_TestDocument               = function()
 {

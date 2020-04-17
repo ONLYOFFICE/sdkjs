@@ -9524,6 +9524,10 @@ CStyles.prototype.Document_Is_SelectionLocked = function(CheckType)
 		}
 	}
 };
+CStyles.prototype.UpdateDefaultsDependingOnCompatibility = function(nCompatibilityMode)
+{
+	this.Default.TablePr.Init_Default(nCompatibilityMode);
+};
 
 function CDocumentColor(r,g,b, Auto)
 {
@@ -10310,8 +10314,11 @@ CTablePr.prototype.Is_Equal = function(TablePr)
 
 	return true;
 };
-CTablePr.prototype.Init_Default = function()
+CTablePr.prototype.Init_Default = function(nCompatibilityMode)
 {
+	if (undefined === nCompatibilityMode)
+		nCompatibilityMode = 12;
+
 	this.TableStyleColBandSize = 1;
 	this.TableStyleRowBandSize = 1;
 	this.Jc                    = align_Left;
@@ -10323,8 +10330,8 @@ CTablePr.prototype.Init_Default = function()
 	this.TableBorders.InsideH  = new CDocumentBorder();
 	this.TableBorders.InsideV  = new CDocumentBorder();
 	this.TableCellMar.Bottom   = new CTableMeasurement(tblwidth_Mm, 0);
-	this.TableCellMar.Left     = new CTableMeasurement(tblwidth_Mm, 1.9/*5.4 * g_dKoef_pt_to_mm*/); // 5.4pt
-	this.TableCellMar.Right    = new CTableMeasurement(tblwidth_Mm, 1.9/*5.4 * g_dKoef_pt_to_mm*/); // 5.4pt
+	this.TableCellMar.Left     = nCompatibilityMode <= 12 ? new CTableMeasurement(tblwidth_Mm, 0.5 * g_dKoef_pt_to_mm) : new CTableMeasurement(tblwidth_Mm, 1.9/*5.4 * g_dKoef_pt_to_mm*/); // 5.4pt
+	this.TableCellMar.Right    = nCompatibilityMode <= 12 ? new CTableMeasurement(tblwidth_Mm, 0.5 * g_dKoef_pt_to_mm) : new CTableMeasurement(tblwidth_Mm, 1.9/*5.4 * g_dKoef_pt_to_mm*/); // 5.4pt
 	this.TableCellMar.Top      = new CTableMeasurement(tblwidth_Mm, 0);
 	this.TableCellSpacing      = null;
 	this.TableInd              = 0;
