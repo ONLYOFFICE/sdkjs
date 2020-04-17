@@ -272,7 +272,6 @@
 		var selectionBounds = this.LogicDocument.GetSelectionBounds();
 		var eps = 0.0001;
 		if (selectionBounds && selectionBounds.Start && selectionBounds.End &&
-			(Math.abs(selectionBounds.Start.X - selectionBounds.End.X) > eps) &&
 			(Math.abs(selectionBounds.Start.W) > eps) &&
 			(Math.abs(selectionBounds.End.W) > eps))
 		{
