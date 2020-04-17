@@ -4640,6 +4640,11 @@ CDocument.prototype.private_RecalculateHdrFtrPageCountUpdate = function()
 		}
 		else
 		{
+		    for (var nCurPage = nPageAbs + 1; nCurPage < nPagesCount; ++nCurPage)
+            {
+                this.HdrFtr.UpdatePagesCount(nCurPage, nPagesCount);
+            }
+
 			this.RecalcInfo.Reset();
 			this.FullRecalc.PageIndex         = nPageAbs;
 			this.FullRecalc.SectionIndex      = 0;
