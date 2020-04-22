@@ -2496,12 +2496,12 @@ CDocument.prototype.ConvertParaContentPosToRangePos = function(oParagraph, oCont
 	return nRangePos;
 };
 /**
- * Функция для для рассчета иерархии позиции до символа под номером charNumber.
+ * Функция для рассчета позиции символа в документе под номером charNumber. 
  * @param {charNumber} charNumber - номер символа в элементе
  * @param {number} nType - if === 0 -> starting position, else if === 1 -> ending position
  * @return {number | Array} - если номер символа больше, чем количество символов в элементе, то возращает количество символов в элементе
  */
-CDocument.prototype.CalcHierarchyPos = function(charNumber, nType)
+CDocument.prototype.GetRangeDocPos = function(charNumber, nType)
 {
     var nRangePos = 0;
 
@@ -2510,7 +2510,7 @@ CDocument.prototype.CalcHierarchyPos = function(charNumber, nType)
 		if (this.Content[nPos] instanceof Paragraph || this.Content[nPos] instanceof CTable)
 		{
 			var localCharNumber = charNumber - nRangePos;
-			var Result = this.Content[nPos].CalcHierarchyPos(localCharNumber, nType);
+			var Result = this.Content[nPos].GetRangeDocPos(localCharNumber, nType);
 
 			if (typeof(Result) === "number")
 			{
@@ -2521,86 +2521,6 @@ CDocument.prototype.CalcHierarchyPos = function(charNumber, nType)
 		}
 	}
 	return nRangePos;
-};
-/**
- * Функция для сохранения текущего селекта. Возвращает объект, которые хранит стартовую и конечную позицию селекта(paragraph и contentPos). 
- * @return {Object | null} - если селекта нет -> возвращает null;
- */
-CDocument.prototype.SaveSelectionInfo = function()
-{
-	var SelectionInfo	= null;
-	var oStartPos		= this.GetContentPosition(true, true);
-	var oEndPos			= this.GetContentPosition(true, false);
-
-	// Если выделение обратно, переворачиваем для удобства
-	for (var Index = 0; Index < Math.min(oStartPos.length, oEndPos.length); Index++)
-	{
-		if (oStartPos[Index].Class.constructor.name  == oEndPos[Index].Class.constructor.name && oStartPos[Index].Position === oEndPos[Index].Position)
-			continue;
-		
-		if (oStartPos[Index].Class.constructor.name  == oEndPos[Index].Class.constructor.name && oStartPos[Index].Position > oEndPos[Index].Position)
-		{
-			var Temp = oStartPos;
-			oStartPos = oEndPos;
-			oEndPos = Temp;
-
-			break;
-		}
-		else 
-			break;
-	}
-
-	if (this.IsSelectionUse())
-	{
-		var StartParagraph	= oStartPos[oStartPos.length - 1].Class.GetParagraph();
-		var StartContentPos	= StartParagraph.SaveSelectionState().StartPos;
-		var EndParagraph	= oEndPos[oEndPos.length - 1].Class.GetParagraph();
-		var EndContentPos   = EndParagraph.SaveSelectionState().EndPos;
-		
-		var startParaSelectInfo	=	
-		{
-			Paragraph	: StartParagraph,
-			ContentPos	: StartContentPos
-		};
-		var endParaSelectIonfo	=	
-		{
-			Paragraph	: EndParagraph,
-			ContentPos	: EndContentPos
-		};
-		
-		SelectionInfo = {
-			StartPos	: startParaSelectInfo,
-			EndPos		: endParaSelectIonfo
-		};
-	}
-
-	return SelectionInfo;
-};
-/**
- * Функция для выставления селекта. Принимает результат функции SaveSelectionInfo. 
- */
-CDocument.prototype.SetSelectionBySelectionInfo = function(oldSelectionInfo)
-{
-	if (oldSelectionInfo == null)
-		return;
-
-	var StartSelectionPara	= oldSelectionInfo.StartPos.Paragraph;
-	var StartContentPos		= oldSelectionInfo.StartPos.ContentPos;
-
-	var EndSelectionPara	= oldSelectionInfo.EndPos.Paragraph;
-	var EndContentPos		= oldSelectionInfo.EndPos.ContentPos;
-
-	var StartCharInPara		= StartSelectionPara.ConvertParaContentPosToRangePos(StartContentPos);
-	var EndCharInPara		= EndSelectionPara.ConvertParaContentPosToRangePos(EndContentPos);
-
-	if (EndCharInPara > 0)
-		EndCharInPara--;
-
-	var OldStartSelectionHierarchy  = StartSelectionPara.CalcHierarchyPos(StartCharInPara, 0);
-	var OldEndSelectionHierarchy 	= EndSelectionPara.CalcHierarchyPos(EndCharInPara, 1);
-
-	this.SetSelectionByContentPositions(OldStartSelectionHierarchy, OldEndSelectionHierarchy);
-	this.UpdateSelection();
 };
 CDocument.prototype.LoadEmptyDocument              = function()
 {

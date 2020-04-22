@@ -6601,12 +6601,12 @@ ParaRun.prototype.ConvertParaContentPosToRangePos = function(oContentPos, nDepth
 	return nRangePos;
 };
 /**
- * Функция для для рассчета иерархии позиции до символа под номером charNumber.
+ * Функция для рассчета позиции символа в документе под номером charNumber. 
  * @param {charNumber} charNumber - номер символа в элементе
  * @param {number} nType - if === 0 -> starting position, else if === 1 -> ending position
  * @return {number | Array} - если номер символа больше, чем количество символов в элементе, то возращает количество символов в элементе
  */
-ParaRun.prototype.CalcHierarchyPos = function(charNumber, nType)
+ParaRun.prototype.GetRangeDocPos = function(charNumber, nType)
 {
     var nRangePos = 0;
 
@@ -6618,20 +6618,20 @@ ParaRun.prototype.CalcHierarchyPos = function(charNumber, nType)
 
         if (charNumber === nRangePos - 1)
         {
-            var PosInRun = 
+            var DocPosInRun = 
             {
                 Class : this,
                 Position : nPos,
             };
 
             if (nType === 1)
-                PosInRun.Position++;
+                DocPosInRun.Position++;
 
-            var HierarchyPos = this.GetDocumentPositionFromObject();
+            var DocPos = this.GetDocumentPositionFromObject();
 
-            HierarchyPos.push(PosInRun);
+            DocPos.push(DocPosInRun);
 
-            return HierarchyPos;
+            return DocPos;
         }
 	}
     
