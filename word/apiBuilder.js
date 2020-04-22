@@ -8842,14 +8842,3 @@
 	};
 }(window, null));
 
-function Test()
-{
-	var Api = editor;
-	var oDocument = Api.GetDocument();
-
-	
-	var Para = Api.CreateParagraph();
-	Para.AddText("This is a paragraph with the text in it aligned by both sides (justified). ");
-	Para.SetBold(true);
-	oDocument.Push(Para);
-}
