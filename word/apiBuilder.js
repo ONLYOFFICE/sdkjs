@@ -4476,8 +4476,8 @@
 		}
 		else if (typeof paragraph === "string")
 		{
-			var oNewPara = editor.CreateParagraph();
-				oNewPara.AddText(paragraph);
+			oNewPara = editor.CreateParagraph();
+			oNewPara.AddText(paragraph);
 
 			if (sPosition === "before")
 				paraParent.Internal_Content_Add(paraIndex, oNewPara.private_GetImpl());
