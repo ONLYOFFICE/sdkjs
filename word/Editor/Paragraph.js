@@ -1054,6 +1054,25 @@ Paragraph.prototype.Internal_Content_Remove2 = function(Pos, Count)
 			ParaContentPos.Data[0] = Math.max(0, Pos);
 	}
 
+	// Обновляем позиции в SearchResults
+	for (var Id in this.SearchResults)
+	{
+		var ContentPos = this.SearchResults[Id].StartPos;
+
+		// TODO: Ситуации Pos + Count > ContentPos.Data[0] > Pos быть не должно
+		if (ContentPos.Data[0] > Pos + Count)
+			ContentPos.Data[0] -= Count;
+		else if (ContentPos.Data[0] > Pos)
+			ContentPos.Data[0] = Math.max(0, Pos);
+
+		ContentPos = this.SearchResults[Id].EndPos;
+
+		if (ContentPos.Data[0] > Pos + Count)
+			ContentPos.Data[0] -= Count;
+		else if (ContentPos.Data[0] > Pos)
+			ContentPos.Data[0] = Math.max(0, Pos);
+	}
+
 	this.Content.splice(Pos, Count);
 	this.private_UpdateSelectionPosOnRemove(Pos, Count);
 
