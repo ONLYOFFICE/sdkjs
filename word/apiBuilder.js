@@ -8920,13 +8920,4 @@
 	};
 }(window, null));
 
-function Test()
-{
-	var Api = editor;
-	var oDocument = Api.GetDocument();
 
-	//var Runs = oDocument.Document.ChekContent();
-
-	var Para = oDocument.GetElement(0);
-	Para.Paragraph.ChekContent();
-}
