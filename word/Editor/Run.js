@@ -6580,7 +6580,25 @@ ParaRun.prototype.Set_ParaContentPos = function(ContentPos, Depth)
 
     this.State.ContentPos = Pos;
 };
+/**
+ * Функция для перевода позиции внутри параграфа в специальную позицию используемую в ApiRange
+ * @param {CParagraphContentPos} oContentPos - если null -> возвращает количество символов в элементе.
+ * @param {number} nDepth
+ * @return {number}
+ */
+ParaRun.prototype.ConvertParaContentPosToRangePos = function(oContentPos, nDepth)
+{
+	var nRangePos = 0;
 
+	var nCurPos = oContentPos ? Math.max(0, Math.min(this.Content.length, oContentPos.Get(nDepth))) : this.Content.length;
+	for (var nPos = 0; nPos < nCurPos; ++nPos)
+	{
+		if (para_Text === this.Content[nPos].Type)
+			nRangePos++;
+    }
+        
+	return nRangePos;
+};
 ParaRun.prototype.Get_PosByElement = function(Class, ContentPos, Depth, UseRange, Range, Line)
 {
     if ( this === Class )

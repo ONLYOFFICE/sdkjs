@@ -832,6 +832,7 @@ function CDocumentRecalculateState()
     this.Start        = true;
     this.StartIndex   = 0;
     this.StartPage    = 0;
+	this.Endnotes     = false;
 
     this.ResetStartElement = false;
     this.MainStartPos      = -1;
@@ -2475,6 +2476,29 @@ CDocument.prototype.Add_TestDocument               = function()
 
 	this.RecalculateFromStart(true);
 };
+/**
+ * Функция для перевода позиции внутри параграфа в специальную позицию используемую в ApiRange. 
+ * Если позиция не указана, возвращает ApiRange позицию последнего символа параграфа. 
+ * @param {Paragraph} oContentPos
+ * @return {number}
+ */
+CDocument.prototype.ConvertParaContentPosToRangePos = function(oParagraph, oContentPos)
+{
+	var AllParagraphsList = this.GetAllParagraphs({All : true});
+	var nRangePos = 0;
+
+	for (var nPos = 0; nPos < AllParagraphsList.length; ++nPos)
+	{
+		if (this.Content[nPos].Id !== oParagraph.Id)
+			nRangePos += this.Content[nPos].ConvertParaContentPosToRangePos(null);
+		else if (this.Content[nPos].Id === oParagraph.Id)
+		{
+			nRangePos += this.Content[nPos].ConvertParaContentPosToRangePos(oContentPos);
+			return nRangePos;
+		}
+	}
+	return nRangePos;
+};
 CDocument.prototype.LoadEmptyDocument              = function()
 {
     this.DrawingDocument.TargetStart();
@@ -2521,7 +2545,7 @@ CDocument.prototype.Is_ThisElementCurrent          = function()
     return true;
 };
 CDocument.prototype.Get_PageContentStartPos = function(PageIndex, ElementIndex)
-{
+ {
 	if (undefined === ElementIndex && undefined !== this.Pages[PageIndex])
 		ElementIndex = this.Pages[PageIndex].Pos;
 
@@ -3421,6 +3445,7 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
     this.FullRecalc.Start             = true;
     this.FullRecalc.StartPage         = StartPage;
     this.FullRecalc.ResetStartElement = this.private_RecalculateIsNewSection(StartPage, StartIndex);
+    this.FullRecalc.Endnotes          = false;
 
     // Если у нас произошли какие-либо изменения с основной частью документа, тогда начинаем его пересчитывать сразу,
     // а если изменения касались только секций, тогда пересчитываем основную часть документа только с того места, где
@@ -3655,9 +3680,27 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
     var _SectionIndex       = SectionIndex;
     var _bStart             = false;
     var _bResetStartElement = false;
+    var _bEndnotesContinue  = false;
 
     var Count = this.Content.length;
     var Index;
+
+	if (this.FullRecalc.Endnotes)
+	{
+		var nEndnoteRecalcResult = this.Endnotes.Recalculate(X, Y, XLimit, YLimit, PageIndex, ColumnIndex, ColumnsCount, SectPr, this.SectionsInfo.Find(SectPr), StartIndex >= Count);
+		if (recalcresult2_End === nEndnoteRecalcResult)
+		{
+			// Сноски закончились на данной странице
+			Y = this.Endnotes.GetPageBounds(PageIndex, ColumnIndex, this.SectionsInfo.Find(SectPr)).Bottom;
+			_bEndnotesContinue = false;
+		}
+		else
+		{
+			_bEndnotesContinue = true;
+			StartIndex = Count; // Выставляем так, чтобы ничего не пересчитывать из основной части документа
+		}
+	}
+
     for (Index = StartIndex; Index < Count; ++Index)
     {
         // Пересчитываем элемент документа
@@ -3805,7 +3848,7 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
 				var NextSectInfo = this.SectionsInfo.Get_SectPr(Index + 1);
 				if (CurSectInfo !== NextSectInfo)
 				{
-					if (this.Endnotes.HaveEndnotes(CurSectInfo.SectPr, Index >= Count - 1))
+					if (this.Endnotes.HaveEndnotes(CurSectInfo.SectPr, false))
 					{
 						this.Endnotes.Recalculate(X, Y, XLimit, YLimit, PageIndex, ColumnIndex, ColumnsCount);
 					}
@@ -3833,54 +3876,65 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
 						{
 							PageSection.IterateBottomLineCalculation(false);
 
-							bContinue = true;
-							_PageIndex = PageIndex;
-							_SectionIndex = SectionIndex;
-							_ColumnIndex = 0;
-							_StartIndex = this.Pages[_PageIndex].Sections[_SectionIndex].Columns[0].Pos;
-							_bStart = false;
+							bContinue           = true;
+							_PageIndex          = PageIndex;
+							_SectionIndex       = SectionIndex;
+							_ColumnIndex        = 0;
+							_StartIndex         = this.Pages[_PageIndex].Sections[_SectionIndex].Columns[0].Pos;
+							_bStart             = false;
 							_bResetStartElement = 0 === SectionIndex ? Page.ResetStartElement : true;
 
 							this.Pages[_PageIndex].Sections[_SectionIndex].Reset_Columns();
 
 							break;
-						} else
+						}
+						else
 						{
-							bContinue = true;
-							_PageIndex = PageIndex;
-							_SectionIndex = SectionIndex + 1;
-							_ColumnIndex = 0;
-							_StartIndex = Index + 1;
-							_bStart = false;
+							bContinue           = true;
+							_PageIndex          = PageIndex;
+							_SectionIndex       = SectionIndex + 1;
+							_ColumnIndex        = 0;
+							_StartIndex         = Index + 1;
+							_bStart             = false;
 							_bResetStartElement = true;
 
 							var NewPageSection = new CDocumentPageSection();
 							NewPageSection.Init(PageIndex, NextSectInfo.SectPr, this.SectionsInfo.Find(NextSectInfo.SectPr));
-							NewPageSection.Pos = Index;
-							NewPageSection.EndPos = Index;
-							NewPageSection.Y = SectionY + 0.001;
-							NewPageSection.YLimit = this.Pages[PageIndex].YLimit;
+							NewPageSection.Pos           = Index;
+							NewPageSection.EndPos        = Index;
+							NewPageSection.Y             = SectionY + 0.001;
+							NewPageSection.YLimit        = this.Pages[PageIndex].YLimit;
 							Page.Sections[_SectionIndex] = NewPageSection;
 							break;
 						}
-					} else
+					}
+					else
 					{
-						bContinue = true;
-						_PageIndex = PageIndex + 1;
-						_SectionIndex = 0;
-						_ColumnIndex = 0;
-						_StartIndex = Index + 1;
-						_bStart = true;
+						bContinue           = true;
+						_PageIndex          = PageIndex + 1;
+						_SectionIndex       = 0;
+						_ColumnIndex        = 0;
+						_StartIndex         = Index + 1;
+						_bStart             = true;
 						_bResetStartElement = true;
 						break;
 					}
 				}
 			}
-			else if (this.Endnotes.HaveEndnotes(CurSectInfo.SectPr, Index >= Count - 1, true))
+			else if (this.Endnotes.HaveEndnotes(CurSectInfo.SectPr, true))
 			{
 				var nSectionIndexAbs = this.SectionsInfo.Find(CurSectInfo.SectPr);
 				this.Endnotes.Reset2(PageIndex, ColumnIndex, CurSectInfo.SectPr, nSectionIndexAbs, true);
-				this.Endnotes.Recalculate(X, Y, XLimit, YLimit, PageIndex, ColumnIndex, ColumnsCount, CurSectInfo.SectPr, nSectionIndexAbs, true);
+				var nEndnoteRecalcResult = this.Endnotes.Recalculate(X, Y, XLimit, YLimit, PageIndex, ColumnIndex, ColumnsCount, CurSectInfo.SectPr, nSectionIndexAbs, true);
+				if (recalcresult2_End === nEndnoteRecalcResult)
+				{
+					// Сноски закончились на данной странице
+					Y = this.Endnotes.GetPageBounds(PageIndex, ColumnIndex, nSectionIndexAbs).Bottom;
+				}
+				else
+				{
+					_bEndnotesContinue = true;
+				}
 			}
 		}
         else if (RecalcResult & recalcresult_NextPage)
@@ -4065,7 +4119,7 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
             break;
         }
 
-        if (docpostype_Content == this.GetDocPosType() && Index === this.CurPos.ContentPos)
+        if (docpostype_Content === this.GetDocPosType() && Index === this.CurPos.ContentPos)
         {
             if (type_Paragraph === Element.GetType())
                 this.CurPage = PageIndex;
@@ -4101,7 +4155,7 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
     {
 		// Пересчет основной части документа законечен. Возможна ситуация, при которой последние сноски с данной
 		// страницы переносятся на следующую (т.е. остались непересчитанные сноски). Эти сноски нужно пересчитать
-		if (this.Footnotes.HaveContinuesFootnotes(PageIndex, ColumnIndex))
+		if (_bEndnotesContinue || this.Footnotes.HaveContinuesFootnotes(PageIndex, ColumnIndex))
 		{
 			bContinue    = true;
 			_PageIndex   = PageIndex;
@@ -4165,20 +4219,27 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
         this.FullRecalc.Start             = _bStart;
         this.FullRecalc.ResetStartElement = _bResetStartElement;
         this.FullRecalc.MainStartPos      = _StartIndex;
+        this.FullRecalc.Endnotes          = _bEndnotesContinue;
 
         if (this.FullRecalc.UseRecursion)
 		{
-			if (_PageIndex > this.FullRecalc.StartPage + 2)
-			{
-				if (window["native"] && window["native"]["WC_CheckSuspendRecalculate"] !== undefined)
-				{
-					this.FullRecalc.Id = setTimeout(Document_Recalculate_Page, 10);
-					return;
-				}
+            if (window["NATIVE_EDITOR_ENJINE_SYNC_RECALC"] === true)
+            {
+                if (PageIndex > this.FullRecalc.StartPage + 2)
+                {
+                    if (window["native"]["WC_CheckSuspendRecalculate"] !== undefined)
+                    {
+                        //if (window["native"]["WC_CheckSuspendRecalculate"]())
+                        //    return;
 
-				this.Recalculate_Page();
-				return;
-			}
+                        this.FullRecalc.Id = setTimeout(Document_Recalculate_Page, 10);
+                        return;
+                    }
+                }
+
+                this.Recalculate_Page();
+                return;
+            }
 
 			if (_PageIndex > this.FullRecalc.StartPage + 2)
 			{

@@ -1538,13 +1538,13 @@ Paragraph.prototype.private_RecalculateLineBottomBound = function(CurLine, CurPa
 		}
 	}
     else if (oTopDocument instanceof CFootEndnote)
-    {
+	{
 		// bNoFootnotes - означает, первая или нет данная сноска в колонке. Если она не первая,
 		// тогда если у нее не убирается первая строка первого параграфа, все равно надо делать перенос
-        var oLogicDocument = this.LogicDocument;
-        if (true !== oLogicDocument.Footnotes.IsEmptyPageColumn(PRS.PageAbs, PRS.ColumnAbs))
+		var oController = oTopDocument.GetParent();
+		if (!oController.IsEmptyPageColumn(PRS.PageAbs, PRS.ColumnAbs, oTopDocument.GetSectionIndex()))
 			bNoFootnotes = false;
-    }
+	}
 
     // Сначала проверяем не нужно ли сделать перенос страницы в данном месте
     // Перенос не делаем, если это первая строка на новой странице

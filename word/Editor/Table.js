@@ -6087,6 +6087,28 @@ CTable.prototype.Remove = function(Count, bOnlyText, bRemoveOnlySelection, bOnTe
 		}
 	}
 };
+/**
+ * Функция для перевода позиции внутри параграфа в специальную позицию используемую в ApiRange
+ * @param {Paragraph} oContentPos
+ * @return {number}
+ */
+CTable.prototype.ConvertParaContentPosToRangePos = function(oParagraph, oContentPos)
+{
+	var AllParagraphsList = this.GetAllParagraphs({All : true});
+	var nRangePos = 0;
+
+	for (var nPos = 0; nPos < AllParagraphsList.length; ++nPos)
+	{
+		if (this.Content[nPos].Id !== oParagraph.Id)
+			nRangePos += this.Content[nPos].ConvertParaContentPosToRangePos(null);
+		else if (this.Content[nPos].Id === oParagraph.Id)
+		{
+			nRangePos += this.Content[nPos].ConvertParaContentPosToRangePos(oContentPos);
+			return nRangePos;
+		}
+	}
+	return nRangePos;
+};
 CTable.prototype.GetCursorPosXY = function()
 {
 	if (true === this.Selection.Use && table_Selection_Cell === this.Selection.Type)

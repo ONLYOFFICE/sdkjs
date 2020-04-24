@@ -47,6 +47,7 @@ function CFootEndnote(DocumentController)
 	this.CurtomMarkFollows = false;
 	this.NeedUpdateHint    = true;
 	this.Hint              = "";
+	this.SectionIndex      = -1; // Номер секции, к которой относится данная сноска (нужно для концевых сносок)
 
 	this.PositionInfo     = {
 		Paragraph : null,
@@ -80,7 +81,7 @@ CFootEndnote.prototype.Get_PageContentStartPos = function(nCurPage)
 {
 	var nPageAbs   = this.Get_AbsolutePage(nCurPage);
 	var nColumnAbs = this.Get_AbsoluteColumn(nCurPage);
-	return this.Parent.Get_PageContentStartPos(nPageAbs, nColumnAbs);
+	return this.Parent.Get_PageContentStartPos(nPageAbs, nColumnAbs, this.GetSectionIndex());
 };
 CFootEndnote.prototype.Refresh_RecalcData2 = function(nIndex, nCurPage)
 {
@@ -194,7 +195,15 @@ CFootEndnote.prototype.OnFastRecalculate = function()
 };
 CFootEndnote.prototype.Get_ColumnFields = function(nElementIndex, nColumnIndex)
 {
-	return this.Parent.GetColumnFields(undefined, nColumnIndex, this.Get_StartPage_Absolute());
+	return this.Parent.GetColumnFields(this.Get_StartPage_Absolute(), nColumnIndex, this.GetSectionIndex());
+};
+CFootEndnote.prototype.SetSectionIndex = function(nSectionIndex)
+{
+	this.SectionIndex = nSectionIndex;
+};
+CFootEndnote.prototype.GetSectionIndex = function(nSectionIndex)
+{
+	return this.SectionIndex;
 };
 
 //--------------------------------------------------------export----------------------------------------------------
