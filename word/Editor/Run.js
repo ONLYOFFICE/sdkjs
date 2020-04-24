@@ -6600,43 +6600,6 @@ ParaRun.prototype.ConvertParaContentPosToRangePos = function(oContentPos, nDepth
         
 	return nRangePos;
 };
-/**
- * Функция для рассчета позиции символа в документе под номером charNumber. 
- * @param {charNumber} charNumber - номер символа в элементе
- * @param {number} nType - if === 0 -> starting position, else if === 1 -> ending position
- * @return {number | Array} - если номер символа больше, чем количество символов в элементе, то возращает количество символов в элементе
- */
-ParaRun.prototype.GetRangeDocPos = function(charNumber, nType)
-{
-    var nRangePos = 0;
-
-	var nCurPos = this.Content.length;
-	for (var nPos = 0; nPos < nCurPos; ++nPos)
-	{
-		if (para_Text === this.Content[nPos].Type)
-            nRangePos++;
-
-        if (charNumber === nRangePos - 1)
-        {
-            var DocPosInRun = 
-            {
-                Class : this,
-                Position : nPos,
-            };
-
-            if (nType === 1)
-                DocPosInRun.Position++;
-
-            var DocPos = this.GetDocumentPositionFromObject();
-
-            DocPos.push(DocPosInRun);
-
-            return DocPos;
-        }
-	}
-    
-    return nRangePos;
-};
 ParaRun.prototype.Get_PosByElement = function(Class, ContentPos, Depth, UseRange, Range, Line)
 {
     if ( this === Class )

@@ -66,24 +66,25 @@
 	 */
 	function ApiRange(oElement, Start, End)
 	{
-		this.Element 			  = oElement;
-		this.Start 		 		  = undefined;
-		this.End 		 		  = undefined;
-		this.isEmpty 			  = true;
-		this.Paragraphs 		  = [];
-		this.Text 				  = undefined;
-		this.oDocument		 	  = private_GetLogicDocument();
-
+		this.Element		= oElement;
+		this.Start			= undefined;
+		this.End 		 	= undefined;
+		this.isEmpty 		= true;
+		this.Paragraphs 	= [];
+		this.Text 			= undefined;
+		this.oDocument		= private_GetLogicDocument();
+		this.EndPos			= null;
+		this.StartPos		= null;
+		
 		this.TextPr = new CTextPr();
 
-		this.private_SetRangePos(this.Element, Start, End);
-		this.StartPos = oElement.GetRangeDocPos(this.Start, 0);
-		this.EndPos   = oElement.GetRangeDocPos(this.End, 1);
+		this.private_SetRangePos(Start, End);
+		this.private_CalcDocPos();
 
 		this.oDocument.CollaborativeEditing.Add_DocumentPosition(this.EndPos);
 		this.oDocument.CollaborativeEditing.Add_DocumentPosition(this.StartPos);
 
-		if (typeof(this.StartPos) === "number" || typeof(this.EndPos) === "number")
+		if (this.StartPos === null || this.EndPos === null)
 			return false;
 		else 
 			this.isEmpty = false;
@@ -93,7 +94,7 @@
 	};
 
 	ApiRange.prototype.constructor = ApiRange;
-	ApiRange.prototype.private_SetRangePos = function(oElement, Start, End)
+	ApiRange.prototype.private_SetRangePos = function(Start, End)
 	{
 		if (Start === undefined)
 			this.Start = 0;
@@ -104,13 +105,13 @@
 		{
 			this.End = 0;
 			
-			if (oElement instanceof CDocument || oElement instanceof CTable )
+			if (this.Element instanceof CDocument || this.Element instanceof CTable )
 			{
-				this.End = oElement.ConvertParaContentPosToRangePos(oElement.GetLastParagraph(), null);
+				this.End = this.Element.ConvertParaContentPosToRangePos(this.Element.GetLastParagraph(), null);
 			}
-			else if (oElement instanceof Paragraph || oElement instanceof ParaHyperlink || oElement instanceof ParaRun)
+			else if (this.Element instanceof Paragraph || this.Element instanceof ParaHyperlink || this.Element instanceof ParaRun)
 			{
-				this.End = oElement.ConvertParaContentPosToRangePos(null);
+				this.End = this.Element.ConvertParaContentPosToRangePos(null);
 			}
 			if (this.End > 0)
 				this.End--;
@@ -118,6 +119,84 @@
 		else if (typeof(End) === "number")
 			this.End = End;
 	};
+	ApiRange.prototype.private_CalcDocPos = function()
+	{
+		var isStartDocPosFinded = false;
+		var isEndDocPosFinded	= false;
+		var StartChar			= this.Start;
+		var EndChar				= this.End;
+		var StartPos			= null;
+		var EndPos				= null;
+		var charsCount 			= 0;
+
+		function callback(oRun)
+		{
+			var nRangePos = 0;
+
+			var nCurPos = oRun.Content.length;
+			for (var nPos = 0; nPos < nCurPos; ++nPos)
+			{
+				if (para_Text === oRun.Content[nPos].Type)
+					nRangePos++;
+
+				if (StartChar - charsCount === nRangePos - 1)
+				{
+					var DocPosInRun = 
+					{
+						Class : oRun,
+						Position : nPos,
+					};
+		
+					var DocPos = oRun.GetDocumentPositionFromObject();
+		
+					DocPos.push(DocPosInRun);
+		
+					StartPos = DocPos;
+				}
+				if (EndChar - charsCount === nRangePos - 1)
+				{
+					var DocPosInRun = 
+					{
+						Class : oRun,
+						Position : nPos + 1,
+					};
+		
+					var DocPos = oRun.GetDocumentPositionFromObject();
+		
+					DocPos.push(DocPosInRun);
+		
+					EndPos = DocPos;
+				}
+			}
+
+			if (nRangePos !== 0)
+				charsCount += nRangePos;
+		};
+
+		if (this.Element instanceof CDocument || this.Element instanceof CTable)
+		{
+			var allParagraphs = [];
+			this.Element.GetAllParagraphs({All : true}, allParagraphs);
+
+			for (var paraItem = 0; paraItem < allParagraphs.length; paraItem++)
+			{
+				if (!isStartDocPosFinded && !isEndDocPosFinded)
+					allParagraphs[paraItem].CheckRunContent(callback);
+				else 
+					break;
+
+				this.StartPos	= StartPos;
+				this.EndPos		= EndPos;
+			}
+		}
+		else if (this.Element instanceof Paragraph || this.Element instanceof ParaHyperlink)
+		{
+			this.Element.CheckRunContent(callback);
+			
+			this.StartPos	= StartPos;
+			this.EndPos		= EndPos;
+		}
+	}
 	/**
 	 * Get a paragraph from all paragraphs that are in the range
 	 * @param {Number} nPos - position 
@@ -925,8 +1004,7 @@
 				Document.UpdateSelection();
 			}
 
-			this.StartPos = this.Element.GetRangeDocPos(this.Start, 0);
-			this.EndPos   = this.Element.GetRangeDocPos(this.End, 1);
+			Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
 
 			return this;
 		}
@@ -8842,3 +8920,13 @@
 	};
 }(window, null));
 
+function Test()
+{
+	var Api = editor;
+	var oDocument = Api.GetDocument();
+
+	//var Runs = oDocument.Document.ChekContent();
+
+	var Para = oDocument.GetElement(0);
+	Para.Paragraph.ChekContent();
+}

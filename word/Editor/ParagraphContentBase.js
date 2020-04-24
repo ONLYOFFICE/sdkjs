@@ -2726,30 +2726,6 @@ CParagraphContentWithParagraphLikeContent.prototype.ConvertParaContentPosToRange
 
 	return nRangePos;
 };
-/**
- * Функция для рассчета позиции символа в документе под номером charNumber. 
- * @param {charNumber} charNumber - номер символа в элементе
- * @param {number} nType - if === 0 -> starting position, else if === 1 -> ending position
- * @return {number | Array} - если номер символа больше, чем количество символов в элементе, то возращает количество символов в элементе
- */
-CParagraphContentWithParagraphLikeContent.prototype.GetRangeDocPos = function(charNumber, nType)
-{
-    var nRangePos = 0;
-
-	for (var nPos = 0; nPos < this.Content.length; ++nPos)
-	{
-		var localCharNumber = charNumber - nRangePos;
-		var Result = this.Content[nPos].GetRangeDocPos(localCharNumber, nType);
-
-		if (typeof(Result) === "number")
-		{
-			nRangePos += Result;
-		}
-		else 
-			return Result;
-	}
-	return nRangePos;
-};
 CParagraphContentWithParagraphLikeContent.prototype.Get_PosByDrawing = function(Id, ContentPos, Depth)
 {
     var Count = this.Content.length;
