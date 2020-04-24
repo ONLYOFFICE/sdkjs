@@ -4179,7 +4179,7 @@
 
 		for (var Index = 0; Index < arrAllDrawing.length; Index++)
 			if (arrAllDrawing[Index].GraphicObj instanceof CShape)
-				arrApiShapes.push(new ApiShape(arrAllDrawing[Index]));
+				arrApiShapes.push(new ApiShape(arrAllDrawing[Index].GraphicObj));
 		
 		return arrApiShapes;
 	};
@@ -4195,7 +4195,7 @@
 
 		for (var Index = 0; Index < arrAllDrawing.length; Index++)
 			if (arrAllDrawing[Index].GraphicObj instanceof CImageShape)
-				arrApiImages.push(new ApiImage(arrAllDrawing[Index]));
+				arrApiImages.push(new ApiImage(arrAllDrawing[Index].GraphicObj));
 		
 		return arrApiImages;
 	};
@@ -4211,7 +4211,7 @@
 
 		for (var Index = 0; Index < arrAllDrawing.length; Index++)
 			if (arrAllDrawing[Index].GraphicObj instanceof CChartSpace)
-				arrApiCharts.push(new ApiChart(arrAllDrawing[Index]));
+				arrApiCharts.push(new ApiChart(arrAllDrawing[Index].GraphicObj));
 		
 		return arrApiCharts;
 	};
@@ -8033,8 +8033,295 @@
 	{
 		this.Drawing.Set_Distance(private_EMU2MM(nLeft), private_EMU2MM(nTop), private_EMU2MM(nRight), private_EMU2MM(nBottom));
 	};
+	/**
+	 * Gets the parent paragraph that contains the graphic object.
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiParagraph}
+	 */
+	ApiDrawing.prototype.GetParagraph = function()
+	{
+		var Paragraph = this.Drawing.GetParagraph();
 
+		if (Paragraph)
+			return new ApiParagraph(this.Drawing.GetParagraph());
+		else 
+			return false;
+	};
+	/**
+	 * Gets the parent content control that contains the graphic object.
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiBlockLvlSdt}
+	 */
+	ApiDrawing.prototype.GetParentContentControl = function()
+	{
+		var ParaParent = this.GetParagraph();
 
+		if (ParaParent)
+			return ParaParent.GetParentContentControl();
+		return 	false;
+	};
+	/**
+	 * Gets the parent table that contains the graphic object.
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiTable}
+	 */
+	ApiDrawing.prototype.GetParentTable = function()
+	{
+		var ParaParent = this.GetParagraph();
+
+		if (ParaParent)
+			return ParaParent.GetParentTable();
+		return false;
+	};
+	/**
+	 * Gets the parent table cell that contains the graphic object.
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiTable}
+	 */
+	ApiDrawing.prototype.GetParentTableCell = function()
+	{
+		var ParaParent = this.GetParagraph();
+
+		if (ParaParent)
+			return ParaParent.GetParentTableCell();
+		return false;
+	};
+	/**
+	 * Deletes the graphic object. 
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiTable}
+	 */
+	ApiDrawing.prototype.Delete = function()
+	{
+		var ParaParent = this.GetParagraph();
+
+		if (ParaParent)
+		{
+			var ApiParentRun = new ApiRun(this.Drawing.GetRun());
+			ApiParentRun.Run.RemoveElement(this.Drawing);
+		}
+		else 	 
+			return false;
+	};
+	/**
+	 * Copy the graphic object. 
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiDrawing}
+	 */
+	ApiDrawing.prototype.Copy = function()
+	{
+		var CopyParaDrawing = this.Drawing.copy();
+		return new ApiDrawing(CopyParaDrawing);
+	};
+	/**
+	 * Wraps the graphic object with a rich text content control.
+	 * @param {number} nType - if nType === 1 -> returns ApiBlockLvlSdt, else -> return ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiDrawing | ApiBlockLvlSdt}  
+	 */
+	ApiDrawing.prototype.InsertInContentControl = function(nType)
+	{
+		var Api = editor; 
+		var oDocument = Api.GetDocument();
+
+		var ContentControl			= null;
+		var paragraphInControl		= null;
+		var parentParagraph 		= this.Drawing.GetParagraph();
+
+		if (!parentParagraph)
+			return false;
+
+		var parentOfParentParagraph = parentParagraph.GetParent();
+
+		var paraIndex = parentParagraph.Index;
+
+		if (paraIndex >= 0)
+		{
+			parentOfParentParagraph.CurPos.ContentPos = paraIndex;
+			parentParagraph.MoveCursorToStartPos();
+			parentParagraph.MoveCursorToDrawing(this.Drawing.Id);
+			this.Delete();
+			ContentControl		= new ApiBlockLvlSdt(parentOfParentParagraph.AddContentControl(1));
+			paragraphInControl	= ContentControl.Sdt.GetFirstParagraph();
+
+			if (paragraphInControl.Content.length > 1)
+			{
+				paragraphInControl.RemoveFromContent(0, paragraphInControl.Content.length - 1);
+				paragraphInControl.CorrectContent();
+			}
+
+			paragraphInControl.Add(this.Drawing);
+			ContentControl.Sdt.SetShowingPlcHdr(false);
+		}
+		else 
+		{
+			ContentControl		= new ApiBlockLvlSdt(new CBlockLevelSdt(oDocument.Document, oDocument.Document))
+			paragraphInControl	= ContentControl.Sdt.GetFirstParagraph();
+
+			if (paragraphInControl.Content.length > 1)
+			{
+				paragraphInControl.RemoveFromContent(0, paragraphInControl.Content.length - 1);
+				paragraphInControl.CorrectContent();
+			}
+
+			paragraphInControl.Add(this.Drawing);
+			ContentControl.Sdt.SetShowingPlcHdr(false);
+		}
+
+		if (nType === 1)
+			return ContentControl;
+		else
+			return this;
+	};
+	/**
+	 * Inserts a paragraph at the specified position.
+	 * @param {string | ApiParagraph} paragraph - text or paragraph
+	 * @param {string} sPosition - can be "after" or "before"
+	 * @param {bool} beRNewPara - if "true" - returns new paragraph, else returns this ApiDrawing.
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiParagraph | ApiDrawing} 
+	 */
+	ApiDrawing.prototype.InsertParagraph = function(paragraph, sPosition, beRNewPara)
+	{
+		var parentParagraph = this.GetParagraph();
+
+		if (parentParagraph)
+			if (beRNewPara)
+				return parentParagraph.InsertParagraph(paragraph, sPosition, true)
+			else 
+			{
+				parentParagraph.InsertParagraph(paragraph, sPosition, true);
+				return this;
+			}
+		else 
+			return false;
+	};
+	/**
+	 * Selects the graphic object.
+	 * @typeofeditors ["CDE"]
+	 */	
+	ApiDrawing.prototype.Select = function()
+	{
+		var Api = editor;
+		var oDocument = Api.GetDocument();
+		this.Drawing.SelectAsText();
+		oDocument.Document.UpdateSelection();
+	};
+	/**
+	 * Inserts a break at the specified location in the main document.
+	 * @param {number}	breakType - 0 -> page break, 1 -> line break.
+	 * @param {string}	position  - can bet "after" or "before" 
+	 * @typeofeditors ["CDE"]
+	 */	
+	ApiDrawing.prototype.AddBreak = function(breakType, position)
+	{
+		var ParentRun	= (new ApiRun(this.Drawing.GetRun()));
+
+		if (!ParentRun)
+			return false;
+
+		if (breakType === 0)
+		{
+			if (position === "before")
+				ParentRun.Run.Add_ToContent(ParentRun.Run.Content.indexOf(this.Drawing), new ParaNewLine(break_Page));
+			else if (position === "after")
+				ParentRun.Run.Add_ToContent(ParentRun.Run.Content.indexOf(this.Drawing) + 1, new ParaNewLine(break_Page));
+		}
+		else if (breakType === 1)
+		{
+			if (position === "before")
+				ParentRun.Run.Add_ToContent(ParentRun.Run.Content.indexOf(this.Drawing), new ParaNewLine(break_Line));
+			else if (position === "after")
+				ParentRun.Run.Add_ToContent(ParentRun.Run.Content.indexOf(this.Drawing) + 1, new ParaNewLine(break_Line));
+		}
+	};
+	/**
+	 * Horizontal Reflection.
+	 * @param {bool}	bFlip 
+	 * @typeofeditors ["CDE"]
+	 */	
+	ApiDrawing.prototype.SetHFlip = function(bFlip)
+	{
+		if (this.Drawing.GraphicObj && this.Drawing.GraphicObj.spPr && this.Drawing.GraphicObj.spPr.xfrm)
+			this.Drawing.GraphicObj.spPr.xfrm.setFlipH(bFlip);
+	};
+	/**
+	 * Vertical reflection.
+	 * @param {number}	bFlip - 0 -> page break, 1 -> line break.
+	 * @typeofeditors ["CDE"]
+	 */	
+	ApiDrawing.prototype.SetVFlip = function(bFlip)
+	{
+		if (this.Drawing.GraphicObj && this.Drawing.GraphicObj.spPr && this.Drawing.GraphicObj.spPr.xfrm)
+			this.Drawing.GraphicObj.spPr.xfrm.setFlipV(bFlip);
+	};
+	/**
+	 *Scales the height of the figure using the specified coefficient.
+	 * @param {number}	coefficient 
+	 * @typeofeditors ["CDE"]
+	 */	
+	ApiDrawing.prototype.ScaleHeight = function(coefficient)
+	{
+		if (typeof(coefficient) !== "number")
+			return false;
+
+		var currentHeight = this.Drawing.getXfrmExtY();
+
+		this.Drawing.setExtent(undefined, currentHeight * coefficient);
+		if(this.Drawing.GraphicObj && this.Drawing.GraphicObj.spPr && this.Drawing.GraphicObj.spPr.xfrm)
+		{
+			this.Drawing.GraphicObj.spPr.xfrm.setExtY(currentHeight * coefficient);
+		}
+	};
+	/**
+	 * Scales the width of the graphic object using the specified ratio.
+	 * @param {number}	coefficient
+	 * @typeofeditors ["CDE"]
+	 */	
+	ApiDrawing.prototype.ScaleWidth = function(coefficient)
+	{
+		if (typeof(coefficient) !== "number")
+			return false;
+			
+		var currentWidth = this.Drawing.getXfrmExtX();
+
+		this.Drawing.setExtent(currentWidth * coefficient, undefined);
+		if(this.Drawing.GraphicObj && this.Drawing.GraphicObj.spPr && this.Drawing.GraphicObj.spPr.xfrm)
+		{
+			this.Drawing.GraphicObj.spPr.xfrm.setExtX(currentWidth * coefficient);
+		}
+	};
+	/**
+	 * Sets the fill formatting properties for the specified graphic object.
+	 * @param {ApiFill} oFill
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiDrawing} - this
+	 */	
+	ApiDrawing.prototype.Fill = function(oFill)
+	{
+		this.Drawing.GraphicObj.spPr.setFill(oFill.UniFill);
+	};
+	/**
+	 * Sets the outline properties for the specified graphic object.
+	 * @param {ApiStroke} oStroke
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiDrawing} - this
+	 */	
+	ApiDrawing.prototype.SetOutLine = function(oStroke)
+	{
+		this.Drawing.GraphicObj.spPr.setLn(oStroke.Ln);;
+	};
+	/**
+	 * Sets the shadow formatting of the specified graphic object.
+	 * @param {ApiStroke} oStroke
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiDrawing} - this
+	 */	
+	ApiDrawing.prototype.SetShadow = function(oStroke)
+	{
+		this.Drawing.GraphicObj.spPr.changeShadow(oStroke.Ln);
+	};
+	
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiImage
@@ -8066,7 +8353,6 @@
 	{
 		return "shape";
 	};
-
 
 	/**
 	 * Get the shape inner contents where a paragraph or text runs can be inserted.
@@ -9670,3 +9956,31 @@
 }(window, null));
 
 
+function Test1(ttt)
+{
+	var Api = editor;
+	var oDocument = Api.GetDocument();
+	var Shapes = oDocument.GetAllShapes();
+	
+	var Para = Shapes[0].GetParagraph();
+	var Table = Shapes[0].GetParentTable();
+	var Cell = Shapes[0].GetParentTableCell();
+	var Shape = Shapes[0].InsertInContentControl();
+	var Control = Shapes[0].GetParentContentControl();
+	
+	//oDocument.Document.UpdateSelection();
+	oDocument.Document.UpdateInterface();
+	//oDocument.Document.Recalculate();
+	//oDocument.Document.FinalizeAction();
+};
+function Test2()
+{
+	var Api = editor;
+	var oDocument = Api.GetDocument();
+	var Shapes = oDocument.GetAllImages();
+	oDocument.Document.StartAction();
+	oDocument.Document.AddContentControl(1);
+	oDocument.Document.UpdateInterface();
+	oDocument.Document.Recalculate();
+	oDocument.Document.FinalizeAction();
+};
