@@ -4543,6 +4543,9 @@
 		var paraIndex  = paraParent.Content.indexOf(this.Paragraph);
 		var oNewPara   = null;
 
+		if (sPosition !== "before" && sPosition !== "after")
+			sPosition = "after";
+
 		if (paragraph instanceof ApiParagraph)
 		{
 			oNewPara = paragraph;
@@ -4565,7 +4568,7 @@
 		else 
 			return false;
 
-		if (rNewPara === true)
+		if (beRNewPara === true)
 			return oNewPara;
 		else 
 			return this;
@@ -7498,7 +7501,7 @@
 	};
 	/**
 	 * Vertical reflection.
-	 * @param {number}	bFlip - 0 -> page break, 1 -> line break.
+	 * @param {bool}	bFlip 
 	 * @typeofeditors ["CDE"]
 	 */	
 	ApiDrawing.prototype.SetVFlip = function(bFlip)
@@ -7563,14 +7566,54 @@
 		this.Drawing.GraphicObj.spPr.setLn(oStroke.Ln);;
 	};
 	/**
-	 * Sets the shadow formatting of the specified graphic object.
-	 * @param {ApiStroke} oStroke
+	 * Gets the next inline drawing object. Throws an error if this inline drawing object is the last.
 	 * @typeofeditors ["CDE"]
-	 * @return {ApiDrawing} - this
-	 */	
-	ApiDrawing.prototype.SetShadow = function(oStroke)
+	 * @returns {ApiImage | false}
+	 */
+	ApiDrawing.prototype.GetNextDrawing = function()
 	{
-		this.Drawing.GraphicObj.spPr.changeShadow(oStroke.Ln);
+		var oDocument				= editor.GetDocument();
+		var GetAllDrawingObjects	= oDocument.GetAllDrawingObjects();
+		var drawingIndex			= null;
+
+		for (var Index = 0; Index < GetAllDrawingObjects.length; Index++)
+		{
+			if (GetAllDrawingObjects[Index].Drawing.Id === this.Drawing.Id)
+			{
+				drawingIndex = Index;
+				break;
+			}
+		}
+
+		if (drawingIndex !== null && GetAllDrawingObjects[drawingIndex + 1])
+			return GetAllDrawingObjects[drawingIndex + 1];
+		
+		return false;
+	};
+	/**
+	 * Gets the previous inline drawing object. Throws an error if this inline drawing object is the first.
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiImage | false}
+	 */
+	ApiDrawing.prototype.GetPrevDrawing = function()
+	{
+		var oDocument				= editor.GetDocument();
+		var GetAllDrawingObjects	= oDocument.GetAllDrawingObjects();
+		var drawingIndex			= null;
+
+		for (var Index = 0; Index < GetAllDrawingObjects.length; Index++)
+		{
+			if (GetAllDrawingObjects[Index].Drawing.Id === this.Drawing.Id)
+			{
+				drawingIndex = Index;
+				break;
+			}
+		}
+
+		if (drawingIndex !== null && GetAllDrawingObjects[drawingIndex - 1])
+			return GetAllDrawingObjects[drawingIndex - 1];
+		
+		return false;
 	};
 	
 	//------------------------------------------------------------------------------------------------------------------
@@ -7587,6 +7630,56 @@
 	ApiImage.prototype.GetClassType = function()
 	{
 		return "image";
+	};
+	/**
+	 * Gets the next inline image. Throws an error if this inline image is the last.
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiImage | false}
+	 */
+	ApiImage.prototype.GetNextImage	= function()
+	{
+		var oDocument	= editor.GetDocument();
+		var AllImages	= oDocument.GetAllImages();
+		var imageIndex	= null;
+
+		for (var Index = 0; Index < AllImages.length; Index++)
+		{
+			if (AllImages[Index].Image.Id === this.Image.Id)
+			{
+				imageIndex = Index;
+				break;
+			}
+		}
+
+		if (imageIndex !== null && AllImages[imageIndex + 1])
+			return AllImages[imageIndex + 1];
+		
+		return false;
+	};
+	/**
+	 * Gets the previous inline image. Throws an error if this inline image is the first.
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiImage | false}
+	 */
+	ApiImage.prototype.GetPrevImage	= function()
+	{
+		var oDocument	= editor.GetDocument();
+		var AllImages	= oDocument.GetAllImages();
+		var imageIndex	= null;
+
+		for (var Index = 0; Index < AllImages.length; Index++)
+		{
+			if (AllImages[Index].Image.Id === this.Image.Id)
+			{
+				imageIndex = Index;
+				break;
+			}
+		}
+
+		if (imageIndex !== null && AllImages[imageIndex - 1])
+			return AllImages[imageIndex - 1];
+		
+		return false;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -7671,7 +7764,56 @@
 			});
 		}
 	};
+	/**
+	 * Gets the next inline shape. Throws an error if this inline shape is the last.
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiShape | false}
+	 */
+	ApiShape.prototype.GetNextShape = function()
+	{
+		var oDocument	= editor.GetDocument();
+		var AllShapes	= oDocument.GetAllShapes();
+		var shapeIndex	= null;
 
+		for (var Index = 0; Index < AllShapes.length; Index++)
+		{
+			if (AllShapes[Index].Shape.Id === this.Shape.Id)
+			{
+				shapeIndex = Index;
+				break;
+			}
+		}
+
+		if (shapeIndex !== null && AllShapes[shapeIndex + 1])
+			return AllShapes[shapeIndex + 1];
+		
+		return false;
+	};
+	/**
+	 * Gets the previous inline shape. Throws an error if this inline shape is the first.
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiShape | false}
+	 */
+	ApiShape.prototype.GetPrevShape	= function()
+	{
+		var oDocument	= editor.GetDocument();
+		var AllShapes	= oDocument.GetAllShapes();
+		var shapeIndex	= null;
+
+		for (var Index = 0; Index < AllShapes.length; Index++)
+		{
+			if (AllShapes[Index].Shape.Id === this.Shape.Id)
+			{
+				shapeIndex = Index;
+				break;
+			}
+		}
+
+		if (shapeIndex !== null && AllShapes[shapeIndex - 1])
+			return AllShapes[shapeIndex - 1];
+		
+		return false;
+	};
 
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -7967,7 +8109,56 @@
 	ApiChart.prototype.SetVertAxisLablesFontSize = function(nFontSize){
 		AscFormat.builder_SetVerAxisFontSize(this.Chart, nFontSize);
 	};
+	/**
+	 * Gets the next inline chart. Throws an error if this inline chart is the last.
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiChart | false}
+	 */
+	ApiChart.prototype.GetNextChart = function()
+	{
+		var oDocument	= editor.GetDocument();
+		var AllCharts	= oDocument.GetAllCharts();
+		var chartIndex	= null;
 
+		for (var Index = 0; Index < AllCharts.length; Index++)
+		{
+			if (AllCharts[Index].Chart.Id === this.Chart.Id)
+			{
+				chartIndex = Index;
+				break;
+			}
+		}
+
+		if (chartIndex !== null && AllCharts[chartIndex + 1])
+			return AllCharts[chartIndex + 1];
+		
+		return false;
+	};
+	/**
+	 * Gets the previous inline chart. Throws an error if this inline chart is the first.
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiChart | false}
+	 */
+	ApiChart.prototype.GetPrevChart	= function()
+	{
+		var oDocument	= editor.GetDocument();
+		var AllCharts	= oDocument.GetAllCharts();
+		var chartIndex	= null;
+
+		for (var Index = 0; Index < AllCharts.length; Index++)
+		{
+			if (AllCharts[Index].Chart.Id === this.Chart.Id)
+			{
+				chartIndex = Index;
+				break;
+			}
+		}
+
+		if (chartIndex !== null && AllCharts[chartIndex - 1])
+			return AllCharts[chartIndex -1];
+		
+		return false;
+	};
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -9207,31 +9398,3 @@
 }(window, null));
 
 
-function Test1(ttt)
-{
-	var Api = editor;
-	var oDocument = Api.GetDocument();
-	var Shapes = oDocument.GetAllShapes();
-	
-	var Para = Shapes[0].GetParagraph();
-	var Table = Shapes[0].GetParentTable();
-	var Cell = Shapes[0].GetParentTableCell();
-	var Shape = Shapes[0].InsertInContentControl();
-	var Control = Shapes[0].GetParentContentControl();
-	
-	//oDocument.Document.UpdateSelection();
-	oDocument.Document.UpdateInterface();
-	//oDocument.Document.Recalculate();
-	//oDocument.Document.FinalizeAction();
-};
-function Test2()
-{
-	var Api = editor;
-	var oDocument = Api.GetDocument();
-	var Shapes = oDocument.GetAllImages();
-	oDocument.Document.StartAction();
-	oDocument.Document.AddContentControl(1);
-	oDocument.Document.UpdateInterface();
-	oDocument.Document.Recalculate();
-	oDocument.Document.FinalizeAction();
-};
