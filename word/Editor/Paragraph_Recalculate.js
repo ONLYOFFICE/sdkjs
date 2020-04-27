@@ -1542,7 +1542,7 @@ Paragraph.prototype.private_RecalculateLineBottomBound = function(CurLine, CurPa
 		// bNoFootnotes - означает, первая или нет данная сноска в колонке. Если она не первая,
 		// тогда если у нее не убирается первая строка первого параграфа, все равно надо делать перенос
 		var oController = oTopDocument.GetParent();
-		if (!oController.IsEmptyPageColumn(PRS.PageAbs, PRS.ColumnAbs, oTopDocument.GetSectionIndex()))
+		if (oController instanceof CEndnotesController || !oController.IsEmptyPageColumn(PRS.PageAbs, PRS.ColumnAbs, oTopDocument.GetSectionIndex()))
 			bNoFootnotes = false;
 	}
 

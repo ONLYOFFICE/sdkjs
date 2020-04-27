@@ -182,30 +182,7 @@
 			function () {
 				var geometry = new AscFormat.CreateGeometry("rect");
 				geometry.Recalculate(rect._width, rect._height, true);
-
-				var oUniFill = new AscFormat.CUniFill();
-				if (fill.patternFill) {
-					oUniFill.fill = new AscFormat.CPattFill();
-					oUniFill.fill.ftype = fill.patternFill.getHatchOffset();
-					oUniFill.fill.fgClr = AscFormat.CreateUniColorRGB2(fill.patternFill.fgColor || AscCommonExcel.createRgbColor(0, 0, 0));
-					oUniFill.fill.bgClr = AscFormat.CreateUniColorRGB2(fill.patternFill.bgColor || AscCommonExcel.createRgbColor(255, 255, 255));
-				} else if (fill.gradientFill) {
-					oUniFill.fill = new AscFormat.CGradFill();
-					if (fill.gradientFill.type === Asc.c_oAscFillGradType.GRAD_LINEAR) {
-						oUniFill.fill.lin = new AscFormat.GradLin();
-						oUniFill.fill.lin.angle = fill.gradientFill.degree * 60000;
-					} else {
-						oUniFill.fill.path = new AscFormat.GradPath();
-					}
-					for (var i = 0; i < fill.gradientFill.stop.length; ++i) {
-						var oGradStop = new AscFormat.CGs();
-						oGradStop.pos = fill.gradientFill.stop[i].position * 100000;
-						oGradStop.color = AscFormat.CreateUniColorRGB2(fill.gradientFill.stop[i].color || AscCommonExcel.createRgbColor(255, 255, 255));
-						oUniFill.fill.addColor(oGradStop);
-					}
-				} else {
-					return;
-				}
+				var oUniFill = AscCommonExcel.convertFillToUnifill(fill);
 				if (ctx instanceof AscCommonExcel.CPdfPrinter) {
 					graphics.SaveGrState();
 					var _baseTransform;
@@ -20094,7 +20071,7 @@
 		settings.hasHeaders = dataHasHeaders;
 		settings._newSelection = selection;
 		settings.generateColumnList();
-		
+
 		return settings;
 	};
 
@@ -20239,7 +20216,7 @@
 					History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_Sort, t.model.getId(), range, _historyElem);
 				}
 			}
-			
+
 			History.EndTransaction();
 
 			t._updateRange(selection);

@@ -2454,13 +2454,13 @@ function Binary_pPrWriter(memory, oNumIdMap, oBinaryHeaderFooterTableWriter, sav
 		if(null != sectPr.Borders && !sectPr.Borders.IsEmptyBorders())
 			this.bs.WriteItem(c_oSerProp_secPrType.pgBorders, function(){oThis.WritePgBorders(sectPr.Borders);});
 		if(null != sectPr.FootnotePr)
-			this.bs.WriteItem(c_oSerProp_secPrType.footnotePr, function(){oThis.WriteNotePr(sectPr.FootnotePr);});
+			this.bs.WriteItem(c_oSerProp_secPrType.footnotePr, function(){oThis.WriteNotePr(sectPr.FootnotePr, c_oSerNotes.PrFntPos);});
 		if(null != sectPr.EndnotePr)
-			this.bs.WriteItem(c_oSerProp_secPrType.endnotePr, function(){oThis.WriteNotePr(sectPr.EndnotePr);});
+			this.bs.WriteItem(c_oSerProp_secPrType.endnotePr, function(){oThis.WriteNotePr(sectPr.EndnotePr, c_oSerNotes.PrEndPos);});
 		if(sectPr.IsGutterRTL())
 			this.bs.WriteItem(c_oSerProp_secPrType.rtlGutter, function(){oThis.memory.WriteBool(true);});
     };
-	this.WriteNotePr = function(notePr)
+	this.WriteNotePr = function(notePr, posType)
 	{
 		var oThis = this;
 		if (null != notePr.NumRestart) {
@@ -2473,7 +2473,7 @@ function Binary_pPrWriter(memory, oNumIdMap, oBinaryHeaderFooterTableWriter, sav
 			this.bs.WriteItem(c_oSerNotes.PrStart, function(){oThis.memory.WriteLong(notePr.NumStart);});
 		}
 		if (null != notePr.Pos) {
-			this.bs.WriteItem(c_oSerNotes.PrFntPos, function(){oThis.memory.WriteByte(notePr.Pos);});
+			this.bs.WriteItem(posType, function(){oThis.memory.WriteByte(notePr.Pos);});
 		}
 	};
 	this.WriteNumFmt = function(fmt)
@@ -6450,13 +6450,13 @@ function BinarySettingsTableWriter(memory, doc, saveParams)
 		this.bs.WriteItem(c_oSer_SettingsType.MathPr, function(){oThis.WriteMathPr();});
 		this.bs.WriteItem(c_oSer_SettingsType.TrackRevisions, function(){oThis.memory.WriteBool(oThis.Document.IsTrackRevisions());});
 		this.bs.WriteItem(c_oSer_SettingsType.FootnotePr, function(){
-			var index = oThis.WriteNotePr(oThis.Document.Footnotes, oThis.Document.Footnotes.FootnotePr, oThis.saveParams.footnotes);
+			var index = oThis.WriteNotePr(oThis.Document.Footnotes, oThis.Document.Footnotes.FootnotePr, oThis.saveParams.footnotes, c_oSerNotes.PrFntPos);
 			if (index > oThis.saveParams.footnotesIndex) {
 				oThis.saveParams.footnotesIndex = index;
 			}
 		});
 		this.bs.WriteItem(c_oSer_SettingsType.EndnotePr, function(){
-			var index = oThis.WriteNotePr(oThis.Document.Endnotes, oThis.Document.Endnotes.EndnotePr, oThis.saveParams.endnotes);
+			var index = oThis.WriteNotePr(oThis.Document.Endnotes, oThis.Document.Endnotes.EndnotePr, oThis.saveParams.endnotes, c_oSerNotes.PrEndPos);
 			if (index > oThis.saveParams.endnotesIndex) {
 				oThis.saveParams.endnotesIndex = index;
 			}
@@ -6519,10 +6519,10 @@ function BinarySettingsTableWriter(memory, doc, saveParams)
 		this.bs.WriteItem(c_oSerCompat.CompatUri, function() {oThis.memory.WriteString3(uri);});
 		this.bs.WriteItem(c_oSerCompat.CompatValue, function() {oThis.memory.WriteString3(value);});
 	};
-	this.WriteNotePr = function(notes, notePr, notesSaveParams)
+	this.WriteNotePr = function(notes, notePr, notesSaveParams, posType)
 	{
 		var oThis = this;
-		this.bpPrs.WriteNotePr(notePr);
+		this.bpPrs.WriteNotePr(notePr, posType);
 		var index = -1;
 		if (notes.Separator) {
 			notesSaveParams[index] = {type: 3, content: notes.Separator};
@@ -8779,7 +8779,7 @@ function Binary_pPrReader(doc, oReadResult, stream)
 			});
 		}
 		else if( c_oSerProp_secPrType.footnotePr === type ) {
-			var props = {Format: null, restart: null, start: null, pos: null};
+			var props = {Format: null, restart: null, start: null, fntPos: null, endPos: null};
 			res = this.bcr.Read1(length, function(t, l) {
 				return oThis.ReadNotePr(t, l, props, oThis.oReadResult.footnoteRefs);
 			});
@@ -8792,11 +8792,11 @@ function Binary_pPrReader(doc, oReadResult, stream)
 			if (null != props.start) {
 				oSectPr.SetFootnoteNumStart(props.start);
 			}
-			if (null != props.pos) {
-				oSectPr.SetFootnotePos(props.pos);
+			if (null != props.fntPos) {
+				oSectPr.SetFootnotePos(props.fntPos);
 			}
 		} else if( c_oSerProp_secPrType.endnotePr === type ) {
-			var props = {Format: null, restart: null, start: null, pos: null};
+			var props = {Format: null, restart: null, start: null, fntPos: null, endPos: null};
 			res = this.bcr.Read1(length, function(t, l) {
 				return oThis.ReadNotePr(t, l, props, oThis.oReadResult.endnoteRefs);
 			});
@@ -8809,8 +8809,8 @@ function Binary_pPrReader(doc, oReadResult, stream)
 			if (null != props.start) {
 				oSectPr.SetEndnoteNumStart(props.start);
 			}
-			if (null != props.pos) {
-				oSectPr.SetEndnotePos(props.pos);
+			if (null != props.endPos) {
+				oSectPr.SetEndnotePos(props.endPos);
 			}
 		} else if( c_oSerProp_secPrType.rtlGutter === type ) {
 			oSectPr.SetGutterRTL(this.stream.GetBool());
@@ -8830,7 +8830,9 @@ function Binary_pPrReader(doc, oReadResult, stream)
 		} else if (c_oSerNotes.PrStart === type) {
 			props.start = this.stream.GetULongLE();
 		} else if (c_oSerNotes.PrFntPos === type) {
-			props.pos = this.stream.GetByte();
+			props.fntPos = this.stream.GetByte();
+		} else if (c_oSerNotes.PrEndPos === type) {
+			props.endPos = this.stream.GetByte();
 		} else if (c_oSerNotes.PrRef === type) {
 			refs.push(this.stream.GetULongLE());
 		} else {
@@ -15469,7 +15471,7 @@ function Binary_SettingsTableReader(doc, oReadResult, stream)
 		}
 		else if ( c_oSer_SettingsType.FootnotePr === type )
 		{
-			var props = {Format: null, restart: null, start: null, pos: null};
+			var props = {Format: null, restart: null, start: null, fntPos: null, endPos: null};
 			res = this.bcr.Read1(length, function(t, l) {
 				return oThis.bpPrr.ReadNotePr(t, l, props, oThis.oReadResult.footnoteRefs);
 			});
@@ -15484,14 +15486,14 @@ function Binary_SettingsTableReader(doc, oReadResult, stream)
 				if (null != props.start) {
 					footnotes.SetFootnotePrNumStart(props.start);
 				}
-				if (null != props.pos) {
-					footnotes.SetFootnotePrPos(props.pos);
+				if (null != props.fntPos) {
+					footnotes.SetFootnotePrPos(props.fntPos);
 				}
 			}
 		}
 		else if ( c_oSer_SettingsType.EndnotePr === type )
 		{
-			var props = {Format: null, restart: null, start: null, pos: null};
+			var props = {Format: null, restart: null, start: null, fntPos: null, endPos: null};
 			res = this.bcr.Read1(length, function(t, l) {
 				return oThis.bpPrr.ReadNotePr(t, l, props, oThis.oReadResult.endnoteRefs);
 			});
@@ -15506,8 +15508,8 @@ function Binary_SettingsTableReader(doc, oReadResult, stream)
 				if (null != props.start) {
 					endnotes.SetEndnotePrNumStart(props.start);
 				}
-				if (null != props.pos) {
-					endnotes.SetEndnotePrPos(props.pos);
+				if (null != props.endPos) {
+					endnotes.SetEndnotePrPos(props.endPos);
 				}
 			}
 		}

@@ -205,6 +205,22 @@ CFootEndnote.prototype.GetSectionIndex = function(nSectionIndex)
 {
 	return this.SectionIndex;
 };
+CFootEndnote.prototype.PrepareRecalculateObject = function()
+{
+	CDocumentContent.prototype.PrepareRecalculateObject.call(this);
+};
+CFootEndnote.prototype.SaveRecalculateObject = function()
+{
+	return {
+		SectionIndex : this.SectionIndex,
+		DocContent   : CDocumentContent.prototype.SaveRecalculateObject.call(this)
+	};
+};
+CFootEndnote.prototype.LoadRecalculateObject = function(oRecalcObj)
+{
+	this.SectionIndex = oRecalcObj.SectionIndex;
+	CDocumentContent.prototype.LoadRecalculateObject.call(this, oRecalcObj.DocContent);
+};
 
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

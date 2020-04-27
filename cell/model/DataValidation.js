@@ -76,43 +76,20 @@
 		GreaterThanOrEqual: 7
 	};
 
-	var EFormulaType = {
-		None: 0,
-		Whole: 1,
-		Decimal: 2,
-		Formula: 3
-	};
+	function checkIntegerType(val) {
+		return val && AscCommonExcel.cElementType.number === val.type;
+	}
 
 	function CDataFormula(value) {
 		this.text = value;
 		this._formula = null;
-		this.type = EFormulaType.None;
 	}
 
-	CDataFormula.prototype._init = function (vt, ws) {
+	CDataFormula.prototype._init = function (ws) {
 		if (this._formula || !this.text) {
 			return;
 		}
 
-		var value = null;
-		if (vt !== EDataValidationType.Custom && vt !== EDataValidationType.List) {
-			value = Number(this.text);
-			if (!isNaN(value)) {
-				if (vt !== EDataValidationType.Decimal && vt !== EDataValidationType.Time) {
-					if (Number.isInteger(value)) {
-						this.type = EFormulaType.Whole;
-						this._formula = value;
-						return;
-					}
-				} else {
-					this.type = EFormulaType.Decimal;
-					this._formula = value;
-					return;
-				}
-			}
-		}
-
-		this.type = EFormulaType.Formula;
 		this._formula = new AscCommonExcel.parserFormula(this.text, this, ws);
 		this._formula.parse();
         this._formula.buildDependencies();
@@ -122,13 +99,11 @@
             this.text = eventData.assemble;
         }
     };
-	CDataFormula.prototype.getValue = function(vt, ws, returnRaw) {
-		this._init(vt, ws);
-		if (EFormulaType.Formula === this.type) {
-			var res = this._formula.calculate();
-			return returnRaw ? this._formula.simplifyRefType(res).getValue() : res;
-		}
-		return this._formula;
+	CDataFormula.prototype.getValue = function(ws, returnRaw) {
+		this._init(ws);
+		var activeCell = ws.selectionRange.activeCell;
+		var res = this._formula.calculate(null, new Asc.Range(activeCell.col, activeCell.row, activeCell.col, activeCell.row));
+		return returnRaw ? this._formula.simplifyRefType(res) : res;
 	};
 
 	function CDataValidation() {
@@ -155,10 +130,10 @@
 
 	CDataValidation.prototype._init = function (ws) {
 		if (this.formula1) {
-			this.formula1._init(this.type, ws);
+			this.formula1._init(ws);
 		}
 		if (this.formula2) {
-			this.formula2._init(this.type, ws);
+			this.formula2._init(ws);
 		}
 	};
 	CDataValidation.prototype.clone = function() {
@@ -208,25 +183,24 @@
 
 		if (EDataValidationType.List === this.type) {
 			var list = this._getListValues(ws);
-			var values = list[0];
-			if (!values) {
+			var aValue = list[0];
+			if (!aValue) {
 				return false;
 			}
-			var datas = list[1];
-			if (datas) {
-				for (var i = 0; i < datas.length; ++i) {
-
+			var aData = list[1];
+			if (aData) {
+				for (var i = 0; i < aData.length; ++i) {
+					if (aData[i].isEqualCell(cell)) {
+						return true;
+					}
 				}
 			} else {
-				return -1 !== datas.indexOf(val);
-			}
-			for (var i = 0; i < datas.length; ++i) {
-				if (datas[i].isEqualCell(cell)) {
-					return true;
-				}
+				return -1 !== aValue.indexOf(val);
 			}
 		} else if (EDataValidationType.Custom === this.type) {
-			return true;
+			var v = this.formula1 && this.formula1.getValue(ws, true);
+			v = v && v.tocBool();
+			return !!(v && AscCommonExcel.cElementType.bool === v.type && v.toBool());
 		} else {
 			if (EDataValidationType.TextLength === this.type) {
 				val = val.length;
@@ -241,16 +215,20 @@
 				}
 			}
 
-			var res = false;
+			var v1 = this.formula1 && this.formula1.getValue(ws, true);
+			var v2 = this.formula2 && this.formula2.getValue(ws, true);
+			if (!checkIntegerType(v1)) {
+				return false;
+			}
+			v1 = v1.toNumber();
 
-			var v1 = this.formula1 && this.formula1.getValue(this.type, ws, true);
-			var v2 = this.formula2 && this.formula2.getValue(this.type, ws, true);
+			var res = false;
 			switch (this.operator) {
 				case EDataValidationOperator.Between:
-					res = v1 <= val && val <= v2;
+					res = checkIntegerType(v2) && v1 <= val && val <= v2.toNumber();
 					break;
 				case EDataValidationOperator.NotBetween:
-					res = !(v1 <= val && val <= v2);
+					res = checkIntegerType(v2) && !(v1 <= val && val <= v2.toNumber());
 					break;
 				case EDataValidationOperator.Equal:
 					res = v1 === val;
@@ -277,7 +255,7 @@
 	};
 	CDataValidation.prototype._getListValues = function (ws) {
 		var aValue, aData;
-		var list = this.formula1 && this.formula1.getValue(this.type, ws, false);
+		var list = this.formula1 && this.formula1.getValue(ws, false);
 		if (list && AscCommonExcel.cElementType.error !== list.type) {
 			if (AscCommonExcel.cElementType.string === list.type) {
 				aValue = list.getValue().split(AscCommon.FormulaSeparators.functionArgumentSeparatorDef);

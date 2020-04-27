@@ -313,10 +313,39 @@
 
 			if (options.isWholeWord)
 				value = '\\b' + value + '\\b';
-				
+
 			return new RegExp(value, findFlags);
 		}
 
+		function convertFillToUnifill(fill) {
+			var oUniFill = null;
+			var oSF = fill.getSolidFill();
+			if(oSF) {
+				oUniFill = new AscFormat.CreateSolidFillRGBA(oSF.getR(), oSF.getG(), oSF.getB(), oSF.getA());
+			} else if (fill.patternFill) {
+				oUniFill = new AscFormat.CUniFill();
+				oUniFill.fill = new AscFormat.CPattFill();
+				oUniFill.fill.ftype = fill.patternFill.getHatchOffset();
+				oUniFill.fill.fgClr = AscFormat.CreateUniColorRGB2(fill.patternFill.fgColor || AscCommonExcel.createRgbColor(0, 0, 0));
+				oUniFill.fill.bgClr = AscFormat.CreateUniColorRGB2(fill.patternFill.bgColor || AscCommonExcel.createRgbColor(255, 255, 255));
+			} else if (fill.gradientFill) {
+				oUniFill = new AscFormat.CUniFill();
+				oUniFill.fill = new AscFormat.CGradFill();
+				if (fill.gradientFill.type === Asc.c_oAscFillGradType.GRAD_LINEAR) {
+					oUniFill.fill.lin = new AscFormat.GradLin();
+					oUniFill.fill.lin.angle = fill.gradientFill.degree * 60000;
+				} else {
+					oUniFill.fill.path = new AscFormat.GradPath();
+				}
+				for (var i = 0; i < fill.gradientFill.stop.length; ++i) {
+					var oGradStop = new AscFormat.CGs();
+					oGradStop.pos = fill.gradientFill.stop[i].position * 100000;
+					oGradStop.color = AscFormat.CreateUniColorRGB2(fill.gradientFill.stop[i].color || AscCommonExcel.createRgbColor(255, 255, 255));
+					oUniFill.fill.addColor(oGradStop);
+				}
+			}
+			return oUniFill;
+		}
 		var referenceType = {
 			A: 0,			// Absolute
 			ARRC: 1,	// Absolute row; relative column
@@ -967,7 +996,7 @@
 		Range3D.prototype.constructor = Range3D;
 		Range3D.prototype.isIntersect = function () {
 			var oRes = true;
-			
+
 			if (2 == arguments.length) {
 				oRes = this.sheet === arguments[1];
 			}
@@ -1739,13 +1768,13 @@
 				c[channel].apply(this, Array.prototype.slice.call(arguments, 1));
 			}
 		}
-		
+
 		function trim(val)
 		{
 			if(!String.prototype.trim)
 				return val.trim();
 			else
-				return val.replace(/^\s+|\s+$/g,'');  
+				return val.replace(/^\s+|\s+$/g,'');
 		}
 
 		function isNumberInfinity(val) {
@@ -1997,7 +2026,7 @@
 			if ( !(this instanceof asc_CMouseMoveData) ) {
 				return new asc_CMouseMoveData(obj);
 			}
-			
+
 			if (obj) {
 				this.type = obj.type;
 				this.x = obj.x;
@@ -2335,9 +2364,9 @@
 			this.scanByRows = true;						// просмотр по строкам/столбцам
 			this.scanForward = true;					// поиск вперед/назад
 			this.isMatchCase = false;					// учитывать регистр
-			this.isWholeCell = false;	              
-			this.isWholeWord = false;                
-			this.isSpellCheck = false;		    // изменение вызванное в проверке орфографии	
+			this.isWholeCell = false;
+			this.isWholeWord = false;
+			this.isSpellCheck = false;		    // изменение вызванное в проверке орфографии
 			this.scanOnOnlySheet = true;				// искать только на листе/в книге
 			this.lookIn = Asc.c_oAscFindLookIn.Formulas;	// искать в формулах/значениях/примечаниях
 
@@ -2367,9 +2396,9 @@
 			result.scanForward = this.scanForward;
 			result.isMatchCase = this.isMatchCase;
 			result.isWholeCell = this.isWholeCell;
-			result.isWholeWord = this.isWholeWord;  
-			result.isSpellCheck = this.isSpellCheck;	
-			result.scanOnOnlySheet = this.scanOnOnlySheet;		
+			result.isWholeWord = this.isWholeWord;
+			result.isSpellCheck = this.isSpellCheck;
+			result.scanOnOnlySheet = this.scanOnOnlySheet;
 			result.lookIn = this.lookIn;
 
 			result.replaceWith = this.replaceWith;
@@ -2413,7 +2442,7 @@
 		asc_CFindOptions.prototype.asc_setIsMatchCase = function (val) {this.isMatchCase = val;};
 		asc_CFindOptions.prototype.asc_setIsWholeCell = function (val) {this.isWholeCell = val;};
 		asc_CFindOptions.prototype.asc_setIsWholeWord = function (val) {this.isWholeWord = val;};
-		asc_CFindOptions.prototype.asc_changeSingleWord = function (val) { this.isChangeSingleWord = val; };	
+		asc_CFindOptions.prototype.asc_changeSingleWord = function (val) { this.isChangeSingleWord = val; };
 		asc_CFindOptions.prototype.asc_setScanOnOnlySheet = function (val) {this.scanOnOnlySheet = val;};
 		asc_CFindOptions.prototype.asc_setLookIn = function (val) {this.lookIn = val;};
 		asc_CFindOptions.prototype.asc_setReplaceWith = function (val) {this.replaceWith = val;};
@@ -2802,6 +2831,7 @@
 		window["AscCommonExcel"].getMatchingBorder = getMatchingBorder;
 		window["AscCommonExcel"].WordSplitting = WordSplitting;
 		window["AscCommonExcel"].getFindRegExp = getFindRegExp;
+		window["AscCommonExcel"].convertFillToUnifill = convertFillToUnifill;
 		window["AscCommonExcel"].replaceSpellCheckWords = replaceSpellCheckWords;
 		window["Asc"].outputDebugStr = outputDebugStr;
 		window["Asc"].isNumberInfinity = isNumberInfinity;
@@ -2837,7 +2867,7 @@
 		prot["asc_getX"] = prot.asc_getX;
 		prot["asc_getReverseX"] = prot.asc_getReverseX;
 		prot["asc_getY"] = prot.asc_getY;
-		prot["asc_getHyperlink"] = prot.asc_getHyperlink;		
+		prot["asc_getHyperlink"] = prot.asc_getHyperlink;
 		prot["asc_getCommentIndexes"] = prot.asc_getCommentIndexes;
 		prot["asc_getUserId"] = prot.asc_getUserId;
 		prot["asc_getLockedObjectType"] = prot.asc_getLockedObjectType;

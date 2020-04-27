@@ -283,6 +283,7 @@ CEndnotesController.prototype.GetEndnoteNumberOnPage = function(nPageAbs, nColum
  */
 CEndnotesController.prototype.Reset = function(nPageIndex, oSectPr)
 {
+	this.Pages.length = nPageIndex;
 	if (!this.Pages[nPageIndex])
 		this.Pages[nPageIndex] = new CEndnotePage();
 
@@ -354,14 +355,19 @@ CEndnotesController.prototype.HaveEndnotes = function(oSectPr, isFinal)
 			var oPage = this.Pages[nCurPage];
 			if (oPage.Endnotes.length > 0)
 			{
-				return (oSectPr === oPage.Endnotes[oPage.Endnotes.length].GetReferenceSectPr());
+				return (oSectPr === oPage.Endnotes[oPage.Endnotes.length - 1].GetReferenceSectPr());
 			}
 		}
 	}
 
 	return false;
 };
-CEndnotesController.prototype.Reset2 = function(nPageAbs, nColumnAbs, oSectPr, nSectionIndex, isFinal)
+CEndnotesController.prototype.ClearSection = function(nSectionIndex)
+{
+	this.Sections.length = nSectionIndex;
+	this.Sections[nSectionIndex] = new CEndnoteSection();
+};
+CEndnotesController.prototype.FillSection = function(nPageAbs, nColumnAbs, oSectPr, nSectionIndex, isFinal)
 {
 	var oSection = this.private_UpdateSection(oSectPr, nSectionIndex, isFinal, nPageAbs);
 	if (oSection.Endnotes.length <= 0)
@@ -401,6 +407,13 @@ CEndnotesController.prototype.Recalculate = function(X, Y, XLimit, YLimit, nPage
 	{
 		nStartPos = oSection.Pages[nPageAbs].Columns[nColumnAbs - 1].EndPos;
 		isStart   = false;
+	}
+
+	// Случай, когда на предыдущей странице не убралось ни одной сноски и мы перенеслись сразу на следующую
+	if (-1 === nStartPos)
+	{
+		nStartPos = 0;
+		isStart   = true;
 	}
 
 	if (!oSection.Pages[nPageAbs])

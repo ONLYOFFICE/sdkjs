@@ -1165,6 +1165,10 @@ CFontSelect.prototype =
         if ( sReqName == this.m_wsFontName )
             return 0;
 
+        // check equals, inst
+        if (sReqName.replace(/[\s-,]/g, '').toLowerCase() == this.m_wsFontName.replace(/[\s-,]/g, '').toLowerCase())
+            return 100;
+
         if (-1 != sReqName.indexOf(this.m_wsFontName) || -1 != this.m_wsFontName.indexOf(sReqName))
         {
 			if (g_fontApplication.g_fontDictionary.CheckLikeFonts(this.m_wsFontName, sReqName))
