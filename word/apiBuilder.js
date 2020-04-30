@@ -9708,20 +9708,4 @@
 	};
 }(window, null));
 
-function Text(ddd)
-{
-	var Api = editor;
-	var oDocument = Api.GetDocument();
 
-	//oDocument.Document.AddContentControl(1);
-	var arr = oDocument.GetAllContentControls();
-	var TextPr = oDocument.GetElement(0).GetTextPr();
-	
-	
-	arr[2].Delete(true);
-	arr[0].Delete(true)
-
-	
-	oDocument.Document.Recalculate();
-	//oDocument.Document.FinalizeAction();
-}
