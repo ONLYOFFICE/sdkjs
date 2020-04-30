@@ -329,13 +329,13 @@ CHdrFtrController.prototype.GetSelectedElementsInfo = function(oInfo)
 {
 	this.HdrFtr.GetSelectedElementsInfo(oInfo);
 };
-CHdrFtrController.prototype.AddTableRow = function(bBefore)
+CHdrFtrController.prototype.AddTableRow = function(bBefore, nCount)
 {
-	this.HdrFtr.AddTableRow(bBefore);
+	this.HdrFtr.AddTableRow(bBefore, nCount);
 };
-CHdrFtrController.prototype.AddTableColumn = function(bBefore)
+CHdrFtrController.prototype.AddTableColumn = function(bBefore, nCount)
 {
-	this.HdrFtr.AddTableColumn(bBefore);
+	this.HdrFtr.AddTableColumn(bBefore, nCount);
 };
 CHdrFtrController.prototype.RemoveTableRow = function()
 {

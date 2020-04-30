@@ -299,13 +299,13 @@ CLogicDocumentController.prototype.GetSelectedElementsInfo = function(oInfo)
 {
 	this.LogicDocument.controller_GetSelectedElementsInfo(oInfo);
 };
-CLogicDocumentController.prototype.AddTableRow = function(bBefore)
+CLogicDocumentController.prototype.AddTableRow = function(bBefore, nCount)
 {
-	this.LogicDocument.controller_AddTableRow(bBefore);
+	this.LogicDocument.controller_AddTableRow(bBefore, nCount);
 };
-CLogicDocumentController.prototype.AddTableColumn = function(bBefore)
+CLogicDocumentController.prototype.AddTableColumn = function(bBefore, nCount)
 {
-	this.LogicDocument.controller_AddTableColumn(bBefore);
+	this.LogicDocument.controller_AddTableColumn(bBefore, nCount);
 };
 CLogicDocumentController.prototype.RemoveTableRow = function()
 {

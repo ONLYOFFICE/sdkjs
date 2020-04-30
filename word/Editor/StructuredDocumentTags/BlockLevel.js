@@ -710,19 +710,19 @@ CBlockLevelSdt.prototype.GetCurrentParagraph = function(bIgnoreSelection, arrSel
 
 	return this.Content.GetCurrentParagraph(bIgnoreSelection, arrSelectedParagraphs);
 };
-CBlockLevelSdt.prototype.AddTableRow = function(bBefore)
+CBlockLevelSdt.prototype.AddTableRow = function(bBefore, nCount)
 {
 	if (this.IsPlaceHolder())
 		return false;
 
-	return this.Content.AddTableRow(bBefore);
+	return this.Content.AddTableRow(bBefore, nCount);
 };
-CBlockLevelSdt.prototype.AddTableColumn = function(bBefore)
+CBlockLevelSdt.prototype.AddTableColumn = function(bBefore, nCount)
 {
 	if (this.IsPlaceHolder())
 		return false;
 
-	return this.Content.AddTableColumn(bBefore);
+	return this.Content.AddTableColumn(bBefore, nCount);
 };
 CBlockLevelSdt.prototype.RemoveTableRow = function(nRowIndex)
 {

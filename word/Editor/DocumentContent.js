@@ -6699,11 +6699,11 @@ CDocumentContent.prototype.Select_DrawingObject      = function(Id)
 //-----------------------------------------------------------------------------------
 // Функции для работы с таблицами
 //-----------------------------------------------------------------------------------
-CDocumentContent.prototype.AddTableRow = function(bBefore)
+CDocumentContent.prototype.AddTableRow = function(bBefore, nCount)
 {
 	if (docpostype_DrawingObjects == this.CurPos.Type)
 	{
-		return this.LogicDocument.DrawingObjects.tableAddRow(bBefore);
+		return this.LogicDocument.DrawingObjects.tableAddRow(bBefore, nCount);
 	}
 	else if (docpostype_Content == this.CurPos.Type && ( ( true === this.Selection.Use && this.Selection.StartPos == this.Selection.EndPos && type_Paragraph !== this.Content[this.Selection.StartPos].GetType() ) || ( false == this.Selection.Use && type_Paragraph !== this.Content[this.CurPos.ContentPos].GetType() ) ))
 	{
@@ -6713,7 +6713,7 @@ CDocumentContent.prototype.AddTableRow = function(bBefore)
 		else
 			Pos = this.CurPos.ContentPos;
 
-		this.Content[Pos].AddTableRow(bBefore);
+		this.Content[Pos].AddTableRow(bBefore, nCount);
 		if (false === this.Selection.Use && true === this.Content[Pos].IsSelectionUse())
 		{
 			this.Selection.Use      = true;
@@ -6726,11 +6726,11 @@ CDocumentContent.prototype.AddTableRow = function(bBefore)
 
 	return false;
 };
-CDocumentContent.prototype.AddTableColumn = function(bBefore)
+CDocumentContent.prototype.AddTableColumn = function(bBefore, nCount)
 {
 	if (docpostype_DrawingObjects == this.CurPos.Type)
 	{
-		return this.LogicDocument.DrawingObjects.tableAddCol(bBefore);
+		return this.LogicDocument.DrawingObjects.tableAddCol(bBefore, nCount);
 	}
 	else if (docpostype_Content == this.CurPos.Type && ( ( true === this.Selection.Use && this.Selection.StartPos == this.Selection.EndPos && type_Paragraph !== this.Content[this.Selection.StartPos].GetType() ) || ( false == this.Selection.Use && type_Paragraph !== this.Content[this.CurPos.ContentPos].GetType() ) ))
 	{
@@ -6740,7 +6740,7 @@ CDocumentContent.prototype.AddTableColumn = function(bBefore)
 		else
 			Pos = this.CurPos.ContentPos;
 
-		this.Content[Pos].AddTableColumn(bBefore);
+		this.Content[Pos].AddTableColumn(bBefore, nCount);
 		if (false === this.Selection.Use && true === this.Content[Pos].IsSelectionUse())
 		{
 			this.Selection.Use      = true;

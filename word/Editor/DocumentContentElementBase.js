@@ -542,11 +542,11 @@ CDocumentContentElementBase.prototype.GetCurrentParagraph = function(bIgnoreSele
 {
 	return null;
 };
-CDocumentContentElementBase.prototype.AddTableRow = function(bBefore)
+CDocumentContentElementBase.prototype.AddTableRow = function(bBefore, nCount)
 {
 	return false;
 };
-CDocumentContentElementBase.prototype.AddTableColumn = function(bBefore)
+CDocumentContentElementBase.prototype.AddTableColumn = function(bBefore, nCount)
 {
 	return false;
 };

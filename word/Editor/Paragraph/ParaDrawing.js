@@ -1959,20 +1959,20 @@ ParaDrawing.prototype.tableRemoveCol = function()
 	if (AscCommon.isRealObject(this.GraphicObj) && typeof  this.GraphicObj.tableRemoveCol === "function")
 		return this.GraphicObj.tableRemoveCol();
 };
-ParaDrawing.prototype.tableAddCol = function(bBefore)
+ParaDrawing.prototype.tableAddCol = function(bBefore, nCount)
 {
 	if (AscCommon.isRealObject(this.GraphicObj) && typeof  this.GraphicObj.tableAddCol === "function")
-		return this.GraphicObj.tableAddCol(bBefore);
+		return this.GraphicObj.tableAddCol(bBefore, nCount);
 };
 ParaDrawing.prototype.tableRemoveRow = function()
 {
 	if (AscCommon.isRealObject(this.GraphicObj) && typeof  this.GraphicObj.tableRemoveRow === "function")
 		return this.GraphicObj.tableRemoveRow();
 };
-ParaDrawing.prototype.tableAddRow = function(bBefore)
+ParaDrawing.prototype.tableAddRow = function(bBefore, nCount)
 {
 	if (AscCommon.isRealObject(this.GraphicObj) && typeof  this.GraphicObj.tableAddRow === "function")
-		return this.GraphicObj.tableAddRow(bBefore);
+		return this.GraphicObj.tableAddRow(bBefore, nCount);
 };
 ParaDrawing.prototype.getCurrentParagraph = function(bIgnoreSelection, arrSelectedParagraphs)
 {

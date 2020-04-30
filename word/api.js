@@ -4624,39 +4624,39 @@ background-repeat: no-repeat;\
 			this.WordControl.m_oLogicDocument.FinalizeAction();
 		}
 	};
-	asc_docs_api.prototype.addRowAbove             = function(count)
+	asc_docs_api.prototype.addRowAbove             = function(nCount)
 	{
 		if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Table_Properties))
 		{
 			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_TableAddRowAbove);
-			this.WordControl.m_oLogicDocument.AddTableRow(true);
+			this.WordControl.m_oLogicDocument.AddTableRow(true, nCount);
 			this.WordControl.m_oLogicDocument.FinalizeAction();
 		}
 	};
-	asc_docs_api.prototype.addRowBelow             = function(count)
+	asc_docs_api.prototype.addRowBelow             = function(nCount)
 	{
 		if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Table_Properties))
 		{
 			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_TableAddRowBelow);
-			this.WordControl.m_oLogicDocument.AddTableRow(false);
+			this.WordControl.m_oLogicDocument.AddTableRow(false, nCount);
 			this.WordControl.m_oLogicDocument.FinalizeAction();
 		}
 	};
-	asc_docs_api.prototype.addColumnLeft           = function(count)
+	asc_docs_api.prototype.addColumnLeft           = function(nCount)
 	{
 		if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Table_Properties))
 		{
 			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_TableAddColumnLeft);
-			this.WordControl.m_oLogicDocument.AddTableColumn(true);
+			this.WordControl.m_oLogicDocument.AddTableColumn(true, nCount);
 			this.WordControl.m_oLogicDocument.FinalizeAction();
 		}
 	};
-	asc_docs_api.prototype.addColumnRight          = function(count)
+	asc_docs_api.prototype.addColumnRight          = function(nCount)
 	{
 		if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Table_Properties))
 		{
 			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_TableAddColumnRight);
-			this.WordControl.m_oLogicDocument.AddTableColumn(false);
+			this.WordControl.m_oLogicDocument.AddTableColumn(false, nCount);
 			this.WordControl.m_oLogicDocument.FinalizeAction();
 		}
 	};

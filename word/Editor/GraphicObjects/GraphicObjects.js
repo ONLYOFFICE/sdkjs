@@ -2052,10 +2052,10 @@ CGraphicObjects.prototype =
     },
 
 
-    tableAddCol: function(bBefore)
+    tableAddCol: function(bBefore, nCount)
     {
         var content = this.getTargetDocContent();
-        return content && content.AddTableColumn(bBefore);
+        return content && content.AddTableColumn(bBefore, nCount);
     },
 
     tableRemoveRow: function()
@@ -2070,11 +2070,10 @@ CGraphicObjects.prototype =
 		return content && content.RemoveTableCells();
 	},
 
-    tableAddRow: function(bBefore)
+    tableAddRow: function(bBefore, nCount)
     {
-
         var content = this.getTargetDocContent();
-        return content && content.AddTableRow(bBefore);
+        return content && content.AddTableRow(bBefore, nCount);
     },
 
 	distributeTableCells : function(isHorizontally)

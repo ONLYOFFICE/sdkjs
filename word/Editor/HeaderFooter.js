@@ -1038,15 +1038,15 @@ CHeaderFooter.prototype =
 //-----------------------------------------------------------------------------------
 // Функции для работы с таблицами
 //-----------------------------------------------------------------------------------
-	AddTableRow : function(bBefore)
+	AddTableRow : function(bBefore, nCount)
 	{
-		this.Content.AddTableRow(bBefore);
+		this.Content.AddTableRow(bBefore, nCount);
 	},
 
-	AddTableColumn : function(bBefore)
-    {
-        this.Content.AddTableColumn( bBefore );
-    },
+	AddTableColumn : function(bBefore, nCount)
+	{
+		this.Content.AddTableColumn(bBefore, nCount);
+	},
 
 	RemoveTableRow : function()
 	{
@@ -2441,16 +2441,16 @@ CHeaderFooterController.prototype =
 //-----------------------------------------------------------------------------------
 // Функции для работы с таблицами
 //-----------------------------------------------------------------------------------
-	AddTableRow : function(bBefore)
+	AddTableRow : function(bBefore, nCount)
 	{
 		if (null != this.CurHdrFtr)
-			this.CurHdrFtr.AddTableRow(bBefore);
+			this.CurHdrFtr.AddTableRow(bBefore, nCount);
 	},
 
-	AddTableColumn : function(bBefore)
+	AddTableColumn : function(bBefore, nCount)
 	{
 		if (null != this.CurHdrFtr)
-			this.CurHdrFtr.AddTableColumn(bBefore);
+			this.CurHdrFtr.AddTableColumn(bBefore, nCount);
 	},
 
 	RemoveTableRow : function()
