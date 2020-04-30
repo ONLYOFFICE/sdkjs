@@ -12418,7 +12418,7 @@ CTextPr.prototype.Merge = function(TextPr)
 	if (undefined != TextPr.VertAlign)
 		this.VertAlign = TextPr.VertAlign;
 
-	if (undefined === TextPr.HighLight)
+	if (undefined == TextPr.HighLight)
 	{
 	}
 	else if (highlight_None === TextPr.HighLight)

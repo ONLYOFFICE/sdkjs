@@ -435,6 +435,13 @@
 		if (this.isEmpty || this.isEmpty === undefined)
 			return false;
 
+		if (r < 0 || g < 0 || b < 0 || 
+			r > 255 || g > 255 || b >255)
+		{
+			r = g = b = 0;
+			isAuto = true;
+		}
+
 		var Document = private_GetLogicDocument();
 		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
 
@@ -3094,12 +3101,12 @@
 	ApiDocument.prototype.GetAllDrawingObjects = function()
 	{
 		var arrAllDrawing = this.Document.GetAllDrawingObjects();
-		var arrApiShapes  = [];
+		var arrApiDrawings  = [];
 
 		for (var Index = 0; Index < arrAllDrawing.length; Index++)
-			arrApiShapes.push(new ApiDrawing(arrAllDrawing[Index]));
+			arrApiDrawings.push(new ApiDrawing(arrAllDrawing[Index]));
 		
-		return arrApiShapes;
+		return arrApiDrawings;
 	};
 	/**
 	 * Gets the collection of shapes objects in the document.
@@ -3692,8 +3699,9 @@
 			oldSelectionInfo = Document.SaveDocumentState();
 		
 		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
-		this.Paragraph.MoveCursorToStartPos();
+		this.Paragraph.Set_ApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Bold : isBold}));
+		this.Paragraph.Set_ApplyToAll(false);
 		
 		Document.RemoveSelection();
 
@@ -3723,8 +3731,9 @@
 			oldSelectionInfo = Document.SaveDocumentState();
 
 		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
-		this.Paragraph.MoveCursorToStartPos();
+		this.Paragraph.Set_ApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Caps : isCaps}));
+		this.Paragraph.Set_ApplyToAll(false);
 
 		Document.RemoveSelection();
 
@@ -3746,6 +3755,13 @@
 	 */
 	ApiParagraph.prototype.SetColor = function(r, g, b, isAuto)
 	{
+		if (r < 0 || g < 0 || b < 0 || 
+			r > 255 || g > 255 || b >255)
+		{
+			r = g = b = 0;
+			isAuto = true;
+		}
+
 		var color = new Asc.asc_CColor();
 		color.r    = r;
 		color.g    = g;
@@ -3763,7 +3779,7 @@
 			oldSelectionInfo = Document.SaveDocumentState();
 
 		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
-		this.Paragraph.MoveCursorToStartPos();
+		this.Paragraph.Set_ApplyToAll(true);
 
 		if (true === color.Auto)
 		{
@@ -3783,6 +3799,7 @@
 			Unifill.fill.color = AscFormat.CorrectUniColor(color, Unifill.fill.color, 1);
 			this.Paragraph.Add(new AscCommonWord.ParaTextPr({Unifill : Unifill}));
 		}
+		this.Paragraph.Set_ApplyToAll(false);
 
 		Document.RemoveSelection();
 
@@ -3812,8 +3829,9 @@
 			oldSelectionInfo = Document.SaveDocumentState();
 		
 		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
-		this.Paragraph.MoveCursorToStartPos();
+		this.Paragraph.Set_ApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({DStrikeout : isDoubleStrikeout}));
+		this.Paragraph.Set_ApplyToAll(false);
 		Document.RemoveSelection();
 
 		if (oldSelectionInfo)
@@ -3856,9 +3874,9 @@
 				oldSelectionInfo = Document.SaveDocumentState();
 			
 			this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
-			this.Paragraph.MoveCursorToStartPos();
-			
+			this.Paragraph.Set_ApplyToAll(true);
 			this.Paragraph.Add(new AscCommonWord.ParaTextPr({FontFamily : FontFamily}));
+			this.Paragraph.Set_ApplyToAll(false);
 			Document.RemoveSelection();
 
 			if (oldSelectionInfo)
@@ -3890,8 +3908,9 @@
 			oldSelectionInfo = Document.SaveDocumentState();
 		
 		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
-		this.Paragraph.MoveCursorToStartPos();
+		this.Paragraph.Set_ApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({FontSize : nSize}));
+		this.Paragraph.Set_ApplyToAll(false);
 		Document.RemoveSelection();
 
 		if (oldSelectionInfo)
@@ -3923,7 +3942,7 @@
 			oldSelectionInfo = Document.SaveDocumentState();
 		
 		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
-		this.Paragraph.MoveCursorToStartPos();
+		this.Paragraph.Set_ApplyToAll(true);
 
 		if (true === isNone)
 		{
@@ -3934,7 +3953,7 @@
 			var color = new CDocumentColor(r, g, b);
 			this.Paragraph.Add(new ParaTextPr({HighLight : color}));
 		}
-
+		this.Paragraph.Set_ApplyToAll(false);
 		Document.RemoveSelection();
 
 		if (oldSelectionInfo)
@@ -3963,8 +3982,9 @@
 			oldSelectionInfo = Document.SaveDocumentState();
 		
 		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
-		this.Paragraph.MoveCursorToStartPos();
+		this.Paragraph.Set_ApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Italic : isItalic}));
+		this.Paragraph.Set_ApplyToAll(false);
 		Document.RemoveSelection();
 
 		if (oldSelectionInfo)
@@ -3995,8 +4015,9 @@
 			oldSelectionInfo = Document.SaveDocumentState();
 		
 		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
-		this.Paragraph.MoveCursorToStartPos();
+		this.Paragraph.Set_ApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Position : nPosition}));
+		this.Paragraph.Set_ApplyToAll(false);
 		Document.RemoveSelection();
 
 		if (oldSelectionInfo)
@@ -4034,7 +4055,7 @@
 			oldSelectionInfo = Document.SaveDocumentState();
 		
 		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
-		this.Paragraph.MoveCursorToStartPos();
+		this.Paragraph.Set_ApplyToAll(true);
 
 		var Shd = new CDocumentShd();
 
@@ -4062,7 +4083,7 @@
 			Shd.Set_FromObject(_Shd);
 			this.Paragraph.SetParagraphShd(_Shd);
 		}
-
+		this.Paragraph.Set_ApplyToAll(false);
 		Document.RemoveSelection();
 
 		if (oldSelectionInfo)
@@ -4092,13 +4113,13 @@
 			oldSelectionInfo = Document.SaveDocumentState();
 		
 		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
-		this.Paragraph.MoveCursorToStartPos();
+		this.Paragraph.Set_ApplyToAll(true);
 
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({
 			SmallCaps : isSmallCaps,
 			Caps      : false
 		}));
-
+		this.Paragraph.Set_ApplyToAll(false);
 		Document.RemoveSelection();
 
 		if (oldSelectionInfo)
@@ -4127,8 +4148,9 @@
 			oldSelectionInfo = Document.SaveDocumentState();
 		
 		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
-		this.Paragraph.MoveCursorToStartPos();
+		this.Paragraph.Set_ApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Spacing : nSpacing}));
+		this.Paragraph.Set_ApplyToAll(false);
 		Document.RemoveSelection();
 
 		if (oldSelectionInfo)
@@ -4157,13 +4179,13 @@
 			oldSelectionInfo = Document.SaveDocumentState();
 		
 		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
-		this.Paragraph.MoveCursorToStartPos();
+		this.Paragraph.Set_ApplyToAll(true);
 
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({
 			Strikeout  : isStrikeout,
 			DStrikeout : false
 			}));
-
+		this.Paragraph.Set_ApplyToAll(false);
 		Document.RemoveSelection();
 
 		if (oldSelectionInfo)
@@ -4197,8 +4219,9 @@
 			oldSelectionInfo = Document.SaveDocumentState();
 
 		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
-		this.Paragraph.MoveCursorToStartPos();
+		this.Paragraph.Set_ApplyToAll(true);
 		this.Paragraph.SetParagraphStyle(styleName);
+		this.Paragraph.Set_ApplyToAll(false);
 		Document.RemoveSelection();
 
 		if (oldSelectionInfo)
@@ -4228,8 +4251,9 @@
 			oldSelectionInfo = Document.SaveDocumentState();
 		
 		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
-		this.Paragraph.MoveCursorToStartPos();
+		this.Paragraph.Set_ApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Underline : isUnderline}));
+		this.Paragraph.Set_ApplyToAll(false);
 		Document.RemoveSelection();
 
 		if (oldSelectionInfo)
@@ -4272,8 +4296,9 @@
 			oldSelectionInfo = Document.SaveDocumentState();
 		
 		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
-		this.Paragraph.MoveCursorToStartPos();
+		this.Paragraph.Set_ApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({VertAlign : value}));
+		this.Paragraph.Set_ApplyToAll(false);
 		Document.RemoveSelection();
 
 		if (oldSelectionInfo)
@@ -4392,7 +4417,7 @@
 	/**
 	 * Gets the content control that contains the paragraph.
 	 * @typeofeditors ["CDE"]
-	 * @return {ApiBlockLvlSdt | ApiInlineLvlSdt}  
+	 * @return {ApiBlockLvlSdt}  
 	 */
 	ApiParagraph.prototype.GetParentContentControl = function()
 	{
@@ -4438,7 +4463,7 @@
 
 		for (var Index = ParaPosition.length - 1; Index >= 1; Index--)
 		{
-			if (ParaPosition[Index].Class.Parent && this.Paragraph.IsTableCellContent())
+			if (ParaPosition[Index].Class.Parent)
 				if (ParaPosition[Index].Class.Parent instanceof CTableCell)
 					return new ApiTableCell(ParaPosition[Index].Class.Parent);
 		}
@@ -4509,7 +4534,7 @@
 		if (paraIndex >= 0)
 		{
 			paraParent.CurPos.ContentPos = paraIndex;
-			this.Paragraph.MoveCursorToStartPos();
+			paraParent.MoveCursorToStartPos();
 			ContentControl = new ApiBlockLvlSdt(paraParent.AddContentControl(1));
 			ContentControl.Sdt.Content.RemoveFromContent(0, ContentControl.Sdt.Content.GetElementsCount(), false);
 			ContentControl.Sdt.Content.AddToContent(0, Para.Paragraph);
@@ -4811,6 +4836,13 @@
 	 */
 	ApiRun.prototype.SetColor = function(r, g, b, isAuto)
 	{
+		if (r < 0 || g < 0 || b < 0 || 
+			r > 255 || g > 255 || b >255)
+		{
+			r = g = b = 0;
+			isAuto = true;
+		}
+
 		var oTextPr = this.GetTextPr();
 		oTextPr.SetColor(r, g, b, isAuto);
 		
@@ -8442,7 +8474,109 @@
 
 		return true;
 	};
+	/**
+	 * Removes content control and content. If keepContent is true, the content is not deleted.
+	 * @param {bool} keepContent
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiInlineLvlSdt.prototype.Delete = function(keepContent)
+	{
+		if (this.Sdt.Paragraph)
+		{
+			var controlIndex = this.Sdt.Paragraph.Content.indexOf(this.Sdt);
+			var savedContent = this.Sdt.Content;
 
+			this.Sdt.Paragraph.RemoveFromContent(controlIndex, 1);
+			
+			if (keepContent)
+			{
+				for (var Index = savedContent.length - 1; Index >= 0; Index--)
+				{
+					this.Sdt.Paragraph.AddToContent(controlIndex, savedContent[Index]);
+				}
+			}
+			
+			return true;
+		}
+
+		return false;
+	};
+	/**
+	 * Clears the contents of a content control. Only an empty run remains.
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiInlineLvlSdt.prototype.ClearContent = function()
+	{
+		this.Sdt.ClearContentControl();
+	};
+	/**
+	 * Applies text settings to content of content control.
+	 * @param {ApiTextPr} oTextPr
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiInlineLvlSdt.prototype.SetTextPr = function(oTextPr)
+	{
+		var Run = new ApiRun(this.Sdt.Content[0]);
+		var runTextPr = Run.GetTextPr();
+		runTextPr.TextPr.Merge(oTextPr.TextPr);
+		runTextPr.private_OnChange();
+		
+		return this;
+	};
+	/**
+	 * Gets the content control that contains the current content control.
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiBlockLvlSdt}  
+	 */
+	ApiInlineLvlSdt.prototype.GetParentContentControl = function()
+	{
+		var documentPos = this.Sdt.GetDocumentPositionFromObject();
+
+		for (var Index = documentPos.length - 1; Index >= 1; Index--)
+		{
+			if (documentPos[Index].Class.Parent)
+				if (documentPos[Index].Class.Parent instanceof CBlockLevelSdt)
+					return new ApiBlockLvlSdt(documentPos[Index].Class.Parent);
+		}
+
+		return false;
+	};
+	/**
+	 * Gets the table that contains the content control.
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiTable}  
+	 */
+	ApiInlineLvlSdt.prototype.GetParentTable = function()
+	{
+		var documentPos = this.Sdt.GetDocumentPositionFromObject();
+
+		for (var Index = documentPos.length - 1; Index >= 1; Index--)
+		{
+			if (documentPos[Index].Class)
+				if (documentPos[Index].Class instanceof CTable)
+					return new ApiTable(documentPos[Index].Class);
+		}
+
+		return false;
+	};
+	/**
+	 * Gets the table cell that contains the content control.
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiTableCell}  
+	 */
+	ApiInlineLvlSdt.prototype.GetParentTableCell = function()
+	{
+		var documentPos = this.Sdt.GetDocumentPositionFromObject();
+
+		for (var Index = documentPos.length - 1; Index >= 1; Index--)
+		{
+			if (documentPos[Index].Class.Parent)
+				if (documentPos[Index].Class.Parent instanceof CTableCell)
+					return new ApiTableCell(documentPos[Index].Class.Parent);
+		}
+
+		return false;
+	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiBlockLvlSdt
@@ -8547,6 +8681,179 @@
 	{
 		return new ApiDocumentContent(this.Sdt.GetContent());
 	};
+	/**
+	 * Gets the collection of content management objects in the content control.
+	 * @returns {Array}
+	 */
+	ApiBlockLvlSdt.prototype.GetAllContentControls = function()
+	{
+		var arrContentControls = [];
+		this.Sdt.Content.GetAllContentControls(arrContentControls);
+
+		for (var Index = 0, nCount = arrContentControls.length; Index < nCount; Index++)
+		{
+			var oControl = arrContentControls[Index];
+
+			if (oControl instanceof CBlockLevelSdt)
+				arrContentControls.push(new ApiBlockLvlSdt(oControl));
+			else if (oControl instanceof CInlineLevelSdt)
+				arrContentControls.push(new ApiInlineLvlSdt(oControl));
+		}
+
+		return arrContentControls;
+	};
+	/**
+	 * Get a collection of paragraph objects in a content control.
+	 * @returns {Array}
+	 */
+	ApiBlockLvlSdt.prototype.GetAllParagraphs = function()
+	{
+		var arrParagraphs		= [];
+		var arrApiParagraphs	= [];
+
+		this.Sdt.GetAllParagraphs({All : true}, arrParagraphs);
+
+		for (var Index = 0, nCount = arrParagraphs.length; Index < nCount; Index++)
+		{
+			arrApiParagraphs.push(new ApiParagraph(arrParagraphs[Index]));
+		}
+
+		return arrApiParagraphs;
+	};
+	/**
+	 * Get the collection of tables on a given absolute page
+	 * @param nPage - page number
+	 * @typeofeditors ["CDE"]
+	 * @return {Array}  
+	 */
+	ApiBlockLvlSdt.prototype.GetAllTablesOnPage = function(nPageAbs)
+	{
+		var arrTables		= this.Sdt.GetAllTablesOnPage(nPageAbs);
+		var arrApiTables	= [];
+
+		for (var Index = 0, nCount = arrTables.length; Index < nCount; Index++)
+		{
+			arrApiTables.push(new ApiTable(arrTables[Index].Table));
+		}
+
+		return arrApiTables;
+	};
+	/**
+	 * Clears the contents of a content control. Only an empty paragraph remains.
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiBlockLvlSdt.prototype.ClearContent = function()
+	{
+		this.Sdt.Content.ClearContent(true);
+
+		return true;
+	};
+	/**
+	 * Removes content control and content. If keepContent is true, the content is not deleted.
+	 * @param {bool} keepContent
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiBlockLvlSdt.prototype.Delete = function(keepContent)
+	{
+		if (this.Sdt.Index >= 0)
+		{
+			var savedContent = this.Sdt.Content;
+			this.Sdt.Parent.RemoveFromContent(this.Sdt.Index, 1, true);
+			
+			if (keepContent)
+			{
+				for (var Index = savedContent.Content.length - 1; Index >= 0; Index--)
+				{
+					this.Sdt.Parent.AddToContent(this.Sdt.Index, savedContent.Content[Index], true);
+				}
+			}
+			
+			return true;
+		}
+
+		return false;
+	};
+	/**
+	 * Applies text settings to content of content control.
+	 * @param {ApiTextPr} oTextPr
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiBlockLvlSdt.prototype.SetTextPr = function(oTextPr)
+	{
+		var ParaTextPr = new AscCommonWord.ParaTextPr(oTextPr.TextPr);
+		this.Sdt.Content.Set_ApplyToAll(true);
+		this.Sdt.PasteFormatting(oTextPr.TextPr, ParaTextPr, true);
+	};
+	/**
+	 * Gets the collection of drawing objects in the document.
+	 * @typeofeditors ["CDE"]
+	 * @return {Array}  
+	 */
+	ApiBlockLvlSdt.prototype.GetAllDrawingObjects = function()
+	{
+		var arrAllDrawing = this.Sdt.GetAllDrawingObjects();
+		var arrApiDrawings  = [];
+
+		for (var Index = 0; Index < arrAllDrawing.length; Index++)
+			arrApiDrawings.push(new ApiDrawing(arrAllDrawing[Index]));
+		
+		return arrApiDrawings;
+	};
+	/**
+	 * Gets the content control that contains the current content control.
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiBlockLvlSdt}  
+	 */
+	ApiBlockLvlSdt.prototype.GetParentContentControl = function()
+	{
+		var documentPos = this.Sdt.GetDocumentPositionFromObject();
+
+		for (var Index = documentPos.length - 1; Index >= 1; Index--)
+		{
+			if (documentPos[Index].Class.Parent)
+				if (documentPos[Index].Class.Parent instanceof CBlockLevelSdt)
+					return new ApiBlockLvlSdt(documentPos[Index].Class.Parent);
+		}
+
+		return false;
+	};
+	/**
+	 * Gets the table that contains the content control.
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiTable}  
+	 */
+	ApiBlockLvlSdt.prototype.GetParentTable = function()
+	{
+		var documentPos = this.Sdt.GetDocumentPositionFromObject();
+
+		for (var Index = documentPos.length - 1; Index >= 1; Index--)
+		{
+			if (documentPos[Index].Class)
+				if (documentPos[Index].Class instanceof CTable)
+					return new ApiTable(documentPos[Index].Class);
+		}
+
+		return false;
+	};
+	/**
+	 * Gets the table cell that contains the content control.
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiTableCell}  
+	 */
+	ApiBlockLvlSdt.prototype.GetParentTableCell = function()
+	{
+		var documentPos = this.Sdt.GetDocumentPositionFromObject();
+
+		for (var Index = documentPos.length - 1; Index >= 1; Index--)
+		{
+			if (documentPos[Index].Class.Parent)
+				if (documentPos[Index].Class.Parent instanceof CTableCell)
+					return new ApiTableCell(documentPos[Index].Class.Parent);
+		}
+
+		return false;
+	};
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -9401,4 +9708,20 @@
 	};
 }(window, null));
 
+function Text(ddd)
+{
+	var Api = editor;
+	var oDocument = Api.GetDocument();
 
+	//oDocument.Document.AddContentControl(1);
+	var arr = oDocument.GetAllContentControls();
+	var TextPr = oDocument.GetElement(0).GetTextPr();
+	
+	
+	arr[2].Delete(true);
+	arr[0].Delete(true)
+
+	
+	oDocument.Document.Recalculate();
+	//oDocument.Document.FinalizeAction();
+}
