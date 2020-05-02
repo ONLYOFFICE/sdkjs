@@ -8442,6 +8442,109 @@
 
 		return true;
 	};
+	/**
+	 * Removes content control and content. If keepContent is true, the content is not deleted.
+	 * @param {bool} keepContent
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiInlineLvlSdt.prototype.Delete = function(keepContent)
+	{
+		if (this.Sdt.Paragraph)
+		{
+			var controlIndex = this.Sdt.Paragraph.Content.indexOf(this.Sdt);
+			var savedContent = this.Sdt.Content;
+
+			this.Sdt.Paragraph.RemoveFromContent(controlIndex, 1);
+
+			if (keepContent)
+			{
+				for (var Index = savedContent.length - 1; Index >= 0; Index--)
+				{
+					this.Sdt.Paragraph.AddToContent(controlIndex, savedContent[Index]);
+				}
+			}
+
+			return true;
+		}
+
+		return false;
+	};
+	/**
+	 * Clears the contents of a content control.
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiInlineLvlSdt.prototype.ClearContent = function()
+	{
+		this.Sdt.ClearContentControl();
+	};
+	/**
+	 * Applies text settings to content of content control.
+	 * @param {ApiTextPr} oTextPr
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiInlineLvlSdt.prototype.SetTextPr = function(oTextPr)
+	{
+		var Run = new ApiRun(this.Sdt.Content[0]);
+		var runTextPr = Run.GetTextPr();
+		runTextPr.TextPr.Merge(oTextPr.TextPr);
+		runTextPr.private_OnChange();
+
+		return this;
+	};
+	/**
+	 * Gets the content control that contains the current content control.
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiBlockLvlSdt}  
+	 */
+	ApiInlineLvlSdt.prototype.GetParentContentControl = function()
+	{
+		var documentPos = this.Sdt.GetDocumentPositionFromObject();
+
+		for (var Index = documentPos.length - 1; Index >= 1; Index--)
+		{
+			if (documentPos[Index].Class.Parent)
+				if (documentPos[Index].Class.Parent instanceof CBlockLevelSdt)
+					return new ApiBlockLvlSdt(documentPos[Index].Class.Parent);
+		}
+
+		return false;
+	};
+	/**
+	 * Gets the table that contains the content control.
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiTable}  
+	 */
+	ApiInlineLvlSdt.prototype.GetParentTable = function()
+	{
+		var documentPos = this.Sdt.GetDocumentPositionFromObject();
+
+		for (var Index = documentPos.length - 1; Index >= 1; Index--)
+		{
+			if (documentPos[Index].Class)
+				if (documentPos[Index].Class instanceof CTable)
+					return new ApiTable(documentPos[Index].Class);
+		}
+
+		return false;
+	};
+	/**
+	 * Gets the table cell that contains the content control.
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiTableCell}  
+	 */
+	ApiInlineLvlSdt.prototype.GetParentTableCell = function()
+	{
+		var documentPos = this.Sdt.GetDocumentPositionFromObject();
+
+		for (var Index = documentPos.length - 1; Index >= 1; Index--)
+		{
+			if (documentPos[Index].Class.Parent)
+				if (documentPos[Index].Class.Parent instanceof CTableCell)
+					return new ApiTableCell(documentPos[Index].Class.Parent);
+		}
+
+		return false;
+	};
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -8546,6 +8649,179 @@
 	ApiBlockLvlSdt.prototype.GetContent = function()
 	{
 		return new ApiDocumentContent(this.Sdt.GetContent());
+	};
+	/**
+	 * Gets the collection of content management objects in the content control.
+	 * @returns {Array}
+	 */
+	ApiBlockLvlSdt.prototype.GetAllContentControls = function()
+	{
+		var arrContentControls = [];
+		this.Sdt.Content.GetAllContentControls(arrContentControls);
+
+		for (var Index = 0, nCount = arrContentControls.length; Index < nCount; Index++)
+		{
+			var oControl = arrContentControls[Index];
+
+			if (oControl instanceof CBlockLevelSdt)
+				arrContentControls.push(new ApiBlockLvlSdt(oControl));
+			else if (oControl instanceof CInlineLevelSdt)
+				arrContentControls.push(new ApiInlineLvlSdt(oControl));
+		}
+
+		return arrContentControls;
+	};
+	/**
+	 * Get a collection of paragraph objects in a content control.
+	 * @returns {Array}
+	 */
+	ApiBlockLvlSdt.prototype.GetAllParagraphs = function()
+	{
+		var arrParagraphs		= [];
+		var arrApiParagraphs	= [];
+
+		this.Sdt.GetAllParagraphs({All : true}, arrParagraphs);
+
+		for (var Index = 0, nCount = arrParagraphs.length; Index < nCount; Index++)
+		{
+			arrApiParagraphs.push(new ApiParagraph(arrParagraphs[Index]));
+		}
+
+		return arrApiParagraphs;
+	};
+	/**
+	 * Get the collection of tables on a given absolute page
+	 * @param nPage - page number
+	 * @typeofeditors ["CDE"]
+	 * @return {Array}  
+	 */
+	ApiBlockLvlSdt.prototype.GetAllTablesOnPage = function(nPageAbs)
+	{
+		var arrTables		= this.Sdt.GetAllTablesOnPage(nPageAbs);
+		var arrApiTables	= [];
+
+		for (var Index = 0, nCount = arrTables.length; Index < nCount; Index++)
+		{
+			arrApiTables.push(new ApiTable(arrTables[Index].Table));
+		}
+
+		return arrApiTables;
+	};
+	/**
+	 * Clears the contents of a content control.
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiBlockLvlSdt.prototype.ClearContent = function()
+	{
+		this.Sdt.Content.ClearContent(true);
+
+		return true;
+	};
+	/**
+	 * Removes content control and content. If keepContent is true, the content is not deleted.
+	 * @param {bool} keepContent
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiBlockLvlSdt.prototype.Delete = function(keepContent)
+	{
+		if (this.Sdt.Index >= 0)
+		{
+			var savedContent = this.Sdt.Content;
+			this.Sdt.Parent.RemoveFromContent(this.Sdt.Index, 1, true);
+
+			if (keepContent)
+			{
+				for (var Index = savedContent.Content.length - 1; Index >= 0; Index--)
+				{
+					this.Sdt.Parent.AddToContent(this.Sdt.Index, savedContent.Content[Index], true);
+				}
+			}
+
+			return true;
+		}
+
+		return false;
+	};
+	/**
+	 * Applies text settings to content of content control.
+	 * @param {ApiTextPr} oTextPr
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiBlockLvlSdt.prototype.SetTextPr = function(oTextPr)
+	{
+		var ParaTextPr = new AscCommonWord.ParaTextPr(oTextPr.TextPr);
+		this.Sdt.Content.Set_ApplyToAll(true);
+		this.Sdt.Add(ParaTextPr);
+		this.Sdt.Content.Set_ApplyToAll(false);
+	};
+	/**
+	 * Gets the collection of drawing objects in the document.
+	 * @typeofeditors ["CDE"]
+	 * @return {Array}  
+	 */
+	ApiBlockLvlSdt.prototype.GetAllDrawingObjects = function()
+	{
+		var arrAllDrawing = this.Sdt.GetAllDrawingObjects();
+		var arrApiDrawings  = [];
+
+		for (var Index = 0; Index < arrAllDrawing.length; Index++)
+			arrApiDrawings.push(new ApiDrawing(arrAllDrawing[Index]));
+
+		return arrApiDrawings;
+	};
+	/**
+	 * Gets the content control that contains the current content control.
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiBlockLvlSdt}  
+	 */
+	ApiBlockLvlSdt.prototype.GetParentContentControl = function()
+	{
+		var documentPos = this.Sdt.GetDocumentPositionFromObject();
+
+		for (var Index = documentPos.length - 1; Index >= 1; Index--)
+		{
+			if (documentPos[Index].Class.Parent)
+				if (documentPos[Index].Class.Parent instanceof CBlockLevelSdt)
+					return new ApiBlockLvlSdt(documentPos[Index].Class.Parent);
+		}
+
+		return false;
+	};
+	/**
+	 * Gets the table that contains the content control.
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiTable}  
+	 */
+	ApiBlockLvlSdt.prototype.GetParentTable = function()
+	{
+		var documentPos = this.Sdt.GetDocumentPositionFromObject();
+
+		for (var Index = documentPos.length - 1; Index >= 1; Index--)
+		{
+			if (documentPos[Index].Class)
+				if (documentPos[Index].Class instanceof CTable)
+					return new ApiTable(documentPos[Index].Class);
+		}
+
+		return false;
+	};
+	/**
+	 * Gets the table cell that contains the content control.
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiTableCell}  
+	 */
+	ApiBlockLvlSdt.prototype.GetParentTableCell = function()
+	{
+		var documentPos = this.Sdt.GetDocumentPositionFromObject();
+
+		for (var Index = documentPos.length - 1; Index >= 1; Index--)
+		{
+			if (documentPos[Index].Class.Parent)
+				if (documentPos[Index].Class.Parent instanceof CTableCell)
+					return new ApiTableCell(documentPos[Index].Class.Parent);
+		}
+
+		return false;
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export
