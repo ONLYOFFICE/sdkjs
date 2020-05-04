@@ -8451,17 +8451,14 @@
 	{
 		if (this.Sdt.Paragraph)
 		{
-			var controlIndex = this.Sdt.Paragraph.Content.indexOf(this.Sdt);
-			var savedContent = this.Sdt.Content;
-
-			this.Sdt.Paragraph.RemoveFromContent(controlIndex, 1);
-
 			if (keepContent)
 			{
-				for (var Index = savedContent.length - 1; Index >= 0; Index--)
-				{
-					this.Sdt.Paragraph.AddToContent(controlIndex, savedContent[Index]);
-				}
+				this.Sdt.RemoveContentControlWrapper();
+			}
+			else 
+			{
+				var controlIndex = this.Sdt.Paragraph.Content.indexOf(this.Sdt);
+				this.Sdt.Paragraph.RemoveFromContent(controlIndex, 1);
 			}
 
 			return true;
@@ -8498,16 +8495,19 @@
 	 */
 	ApiInlineLvlSdt.prototype.GetParentContentControl = function()
 	{
-		var documentPos = this.Sdt.GetDocumentPositionFromObject();
+		var parentContentControls = this.Sdt.GetParentContentControls();
 
-		for (var Index = documentPos.length - 1; Index >= 1; Index--)
+		if (parentContentControls[parentContentControls.length - 2])
 		{
-			if (documentPos[Index].Class.Parent)
-				if (documentPos[Index].Class.Parent instanceof CBlockLevelSdt)
-					return new ApiBlockLvlSdt(documentPos[Index].Class.Parent);
+			var ContentControl = parentContentControls[parentContentControls.length - 2];
+
+			if (ContentControl instanceof CBlockLevelSdt)
+				return new ApiBlockLvlSdt(ContentControl);
+			else if (ContentControl instanceof CInlineLevelSdt)
+				return new ApiInlineLvlSdt(ContentControl);
 		}
 
-		return false;
+		return false; 
 	};
 	/**
 	 * Gets the table that contains the content control.
@@ -8726,15 +8726,13 @@
 	{
 		if (this.Sdt.Index >= 0)
 		{
-			var savedContent = this.Sdt.Content;
-			this.Sdt.Parent.RemoveFromContent(this.Sdt.Index, 1, true);
-
 			if (keepContent)
 			{
-				for (var Index = savedContent.Content.length - 1; Index >= 0; Index--)
-				{
-					this.Sdt.Parent.AddToContent(this.Sdt.Index, savedContent.Content[Index], true);
-				}
+				this.Sdt.RemoveContentControlWrapper();
+			}
+			else 
+			{
+				this.Sdt.Parent.RemoveFromContent(this.Sdt.Index, 1, true);
 			}
 
 			return true;
