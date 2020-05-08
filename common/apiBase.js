@@ -387,15 +387,15 @@
 		{
 			if (undefined !== window["AscDesktopEditor"])
 			{
-                var obj = this.DocInfo.get_EncryptedInfo();
-                obj["userId"] = this.documentUserId;
-                window["AscDesktopEditor"]["execCommand"]("portal:cryptoinfo", JSON.stringify(obj));
+				var obj = this.DocInfo.get_EncryptedInfo();
+				obj["userId"] = this.documentUserId;
+				window["AscDesktopEditor"]["execCommand"]("portal:cryptoinfo", JSON.stringify(obj));
 			}
 		}
-        if (!this.isChartEditor && undefined !== window["AscDesktopEditor"] && undefined !== window["AscDesktopEditor"]["CryptoMode"])
-        {
-            this.DocInfo.put_Encrypted(0 < window["AscDesktopEditor"]["CryptoMode"]);
-        }
+		if (!this.isChartEditor && undefined !== window["AscDesktopEditor"] && undefined !== window["AscDesktopEditor"]["CryptoMode"])
+		{
+			this.DocInfo.put_Encrypted(0 < window["AscDesktopEditor"]["CryptoMode"]);
+		}
 
 		if (!oldInfo)
 		{
