@@ -1242,12 +1242,16 @@ Paragraph.prototype.ConvertParaContentPosToRangePos = function(oContentPos)
 	
 	for (var nPos = 0; nPos < nCurPos; ++nPos)
 	{
-		nRangePos += this.Content[nPos].ConvertParaContentPosToRangePos(null);
+		if (this.Content[nPos] instanceof CParagraphContentWithContentBase)
+			nRangePos += this.Content[nPos].ConvertParaContentPosToRangePos(null);
 	}
 
 	if (this.Content[nCurPos])
-		nRangePos += this.Content[nCurPos].ConvertParaContentPosToRangePos(oContentPos, 1);
-
+	{
+		if (this.Content[nPos] instanceof CParagraphContentWithContentBase)
+			nRangePos += this.Content[nCurPos].ConvertParaContentPosToRangePos(oContentPos, 1);
+	}
+		
 	return nRangePos;
 };
 Paragraph.prototype.Check_Range_OnlyMath = function(CurRange, CurLine)

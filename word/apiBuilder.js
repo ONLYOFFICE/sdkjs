@@ -72,7 +72,7 @@
 		this.isEmpty 		= true;
 		this.Paragraphs 	= [];
 		this.Text 			= undefined;
-		this.oDocument		= private_GetLogicDocument();
+		this.oDocument		= editor.GetDocument();
 		this.EndPos			= null;
 		this.StartPos		= null;
 		
@@ -81,8 +81,9 @@
 		this.private_SetRangePos(Start, End);
 		this.private_CalcDocPos();
 
-		this.oDocument.CollaborativeEditing.Add_DocumentPosition(this.EndPos);
-		this.oDocument.CollaborativeEditing.Add_DocumentPosition(this.StartPos);
+		this.oDocument.TrackedPositions.push(this.EndPos);
+		this.oDocument.TrackedPositions.push(this.StartPos);
+		this.oDocument.Document.TrackDocumentPositions(this.oDocument.TrackedPositions);
 
 		if (this.StartPos === null || this.EndPos === null)
 			return false;
@@ -225,17 +226,17 @@
 			sPosition = "after";
 		
 		var Document = private_GetLogicDocument();
-		
+
+		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
 
 		var oldSelectionInfo = null;
 
 		if (Document.IsSelectionUse())
 		{
 			oldSelectionInfo = Document.SaveDocumentState();
+			Document.TrackDocumentPositions(this.oDocument.TrackedPositions);
 			Document.RemoveSelection();
 		}
-
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
 
 		if (sPosition === "after")
 		{
@@ -255,19 +256,18 @@
 			firstRun.AddText(sText, firstRunPos);
 		}
 
-		Document.RemoveSelection();
-
 		if (oldSelectionInfo)
 		{
 			Document.LoadDocumentState(oldSelectionInfo);
 			Document.UpdateSelection();
 		}
 
-		this.oDocument.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-		return Text;
+		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
+
+		return this;
 	};
 	/**
-	 * Get text in the specified range
+	 * Added the bookmark to the specified range
 	 * @param {String} sName
 	 * @return {ApiRange}
 	 */	
@@ -275,10 +275,8 @@
 	{
 		if (this.isEmpty || this.isEmpty === undefined)
 			return false;
-		if (typeof(sText) !== "string")
+		if (typeof(sName) !== "string")
 			return false;
-		if (sPosition !== "after" && sPosition !== "before")
-			sPosition = "after";
 		
 		var Document = private_GetLogicDocument();
 		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
@@ -286,7 +284,10 @@
 		var oldSelectionInfo = null;
 
 		if (Document.IsSelectionUse())
+		{
 			oldSelectionInfo = Document.SaveDocumentState();
+			Document.TrackDocumentPositions(this.oDocument.TrackedPositions);
+		}
 
 		this.SetSelection(false);
 
@@ -300,7 +301,7 @@
 			Document.UpdateSelection();
 		}
 
-		return Text;
+		return this;
 	};
 	/**
 	 * Get text in the specified range
@@ -314,7 +315,10 @@
 		var oldSelectionInfo = null;
 		
 		if (Document.IsSelectionUse())
+		{
 			oldSelectionInfo = Document.SaveDocumentState();
+			Document.TrackDocumentPositions(this.oDocument.TrackedPositions);
+		}
 
 		this.SetSelection(false);
 
@@ -459,10 +463,14 @@
 
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= null;
+
 		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
 		
 		if (Document.IsSelectionUse())
+		{
 			oldSelectionInfo = Document.SaveDocumentState();
+			Document.TrackDocumentPositions(this.oDocument.TrackedPositions);
+		}
 				
 		this.SetSelection(false);
 		var ParaTextPr = new AscCommonWord.ParaTextPr({Bold : isBold});
@@ -478,7 +486,7 @@
 			Document.UpdateSelection();
 		}
 
-		this.oDocument.RefreshDocumentPositions([this.StartPos, this.EndPos]);
+		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
 		
 		return this;
 	};
@@ -498,7 +506,10 @@
 		var oldSelectionInfo = null;
 
 		if (Document.IsSelectionUse())
+		{
 			oldSelectionInfo = Document.SaveDocumentState();
+			Document.TrackDocumentPositions(this.oDocument.TrackedPositions);
+		}
 
 		this.SetSelection(false);
 		var ParaTextPr = new AscCommonWord.ParaTextPr({Caps : isCaps});
@@ -542,7 +553,10 @@
 		var oldSelectionInfo = null;
 		
 		if (Document.IsSelectionUse())
+		{
 			oldSelectionInfo = Document.SaveDocumentState();
+			Document.TrackDocumentPositions(this.oDocument.TrackedPositions);
+		}
 		
 		this.SetSelection(false);
 
@@ -598,7 +612,10 @@
 		var oldSelectionInfo = null;
 		
 		if (Document.IsSelectionUse())
+		{
 			oldSelectionInfo = Document.SaveDocumentState();
+			Document.TrackDocumentPositions(this.oDocument.TrackedPositions);
+		}
 			
 		this.SetSelection(false);
 		var ParaTextPr = new AscCommonWord.ParaTextPr({DStrikeout : isDoubleStrikeout});
@@ -637,7 +654,10 @@
 		var oldSelectionInfo = null;
 		
 		if (Document.IsSelectionUse())
+		{
 			oldSelectionInfo = Document.SaveDocumentState();
+			Document.TrackDocumentPositions(this.oDocument.TrackedPositions);
+		}
 				
 		this.SetSelection(false);
 
@@ -693,8 +713,11 @@
 		var oldSelectionInfo = null;
 		
 		if (Document.IsSelectionUse())
+		{
 			oldSelectionInfo = Document.SaveDocumentState();
-			
+			Document.TrackDocumentPositions(this.oDocument.TrackedPositions);
+		}
+		
 		this.SetSelection(false);
 
 		var Shd = new CDocumentShd();
@@ -754,7 +777,10 @@
 		var oldSelectionInfo = null;
 		
 		if (Document.IsSelectionUse())
+		{
 			oldSelectionInfo = Document.SaveDocumentState();
+			Document.TrackDocumentPositions(this.oDocument.TrackedPositions);
+		}
 				
 		this.SetSelection();
 		var ParaTextPr = new AscCommonWord.ParaTextPr({Italic : isItalic});
@@ -790,7 +816,10 @@
 		var oldSelectionInfo = null;
 		
 		if (Document.IsSelectionUse())
+		{
 			oldSelectionInfo = Document.SaveDocumentState();
+			Document.TrackDocumentPositions(this.oDocument.TrackedPositions);
+		}
 				
 		this.SetSelection(false);
 
@@ -831,7 +860,10 @@
 		var oldSelectionInfo = null;
 		
 		if (Document.IsSelectionUse())
+		{
 			oldSelectionInfo = Document.SaveDocumentState();
+			Document.TrackDocumentPositions(this.oDocument.TrackedPositions);
+		}
 				
 		this.SetSelection(false);
 		var ParaTextPr = new AscCommonWord.ParaTextPr({
@@ -870,7 +902,10 @@
 		var oldSelectionInfo = null;
 		
 		if (Document.IsSelectionUse())
+		{
 			oldSelectionInfo = Document.SaveDocumentState();
+			Document.TrackDocumentPositions(this.oDocument.TrackedPositions);
+		}
 		
 		this.SetSelection(false);
 		var ParaTextPr = new AscCommonWord.ParaTextPr({Spacing : nSpacing});
@@ -907,7 +942,10 @@
 		var oldSelectionInfo = null;
 		
 		if (Document.IsSelectionUse())
+		{
 			oldSelectionInfo = Document.SaveDocumentState();
+			Document.TrackDocumentPositions(this.oDocument.TrackedPositions);
+		}
 
 		this.SetSelection(false);
 		var ParaTextPr = new AscCommonWord.ParaTextPr({Underline : isUnderline});
@@ -956,7 +994,10 @@
 		var oldSelectionInfo = null;
 		
 		if (Document.IsSelectionUse())
+		{
 			oldSelectionInfo = Document.SaveDocumentState();
+			Document.TrackDocumentPositions(this.oDocument.TrackedPositions);
+		}
 		
 		this.SetSelection(false);
 		var ParaTextPr = new AscCommonWord.ParaTextPr({VertAlign : value});
@@ -996,7 +1037,10 @@
 		var oldSelectionInfo = null;
 		
 		if (Document.IsSelectionUse())
+		{
 			oldSelectionInfo = Document.SaveDocumentState();
+			Document.TrackDocumentPositions(this.oDocument.TrackedPositions);
+		}
 				
 		this.SetSelection(false);
 		var ParaTextPr = new AscCommonWord.ParaTextPr({Position : nPosition});
@@ -1034,7 +1078,10 @@
 		var oldSelectionInfo = null;
 		
 		if (Document.IsSelectionUse())
+		{
 			oldSelectionInfo = Document.SaveDocumentState();
+			Document.TrackDocumentPositions(this.oDocument.TrackedPositions);
+		}
 				
 		this.SetSelection(false);
 		var ParaTextPr = new AscCommonWord.ParaTextPr({FontSize : FontSize});
@@ -1067,7 +1114,7 @@
 			return false;
 
 		var Document = private_GetLogicDocument();
-		this.oDocument.RefreshDocumentPositions([this.StartPos, this.EndPos]);
+		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
 
 		var loader   = AscCommon.g_font_loader;
 		var fontinfo = g_fontApplication.GetFontInfo(sFontFamily);
@@ -1083,7 +1130,10 @@
 			var oldSelectionInfo = null;
 		
 			if (Document.IsSelectionUse())
+			{
 				oldSelectionInfo = Document.SaveDocumentState();
+				Document.TrackDocumentPositions(this.oDocument.TrackedPositions);
+			}
 			
 			this.SetSelection(false);
 			var ParaTextPr = new AscCommonWord.ParaTextPr({FontFamily : FontFamily});
@@ -1123,7 +1173,10 @@
 		var oldSelectionInfo = null;
 		
 		if (Document.IsSelectionUse())
+		{
 			oldSelectionInfo = Document.SaveDocumentState();
+			Document.TrackDocumentPositions(this.oDocument.TrackedPositions);
+		}
 				
 		this.SetSelection(false);
 		
@@ -1164,7 +1217,7 @@
 		if (this.isEmpty || this.isEmpty === undefined)
 			return false;
 
-		this.oDocument.RefreshDocumentPositions([this.StartPos, this.EndPos]);
+		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
 
 		var Document = private_GetLogicDocument();
 		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
@@ -1172,7 +1225,10 @@
 		var oldSelectionInfo = null;
 		
 		if (Document.IsSelectionUse())
+		{
 			oldSelectionInfo = Document.SaveDocumentState();
+			Document.TrackDocumentPositions(this.oDocument.TrackedPositions);
+		}
 				
 		this.SetSelection(false);
 
@@ -1223,6 +1279,8 @@
 	function ApiDocument(Document)
 	{
 		ApiDocumentContent.call(this, Document);
+		
+		this.TrackedPositions = [];
 	}
 	ApiDocument.prototype = Object.create(ApiDocumentContent.prototype);
 	ApiDocument.prototype.constructor = ApiDocument;
@@ -3134,9 +3192,22 @@
 		if (sName === undefined)
 			return false;
 
+		var oldSelectionInfo = null;
+
+		if (this.Document.IsSelectionUse())
+			oldSelectionInfo = this.Document.SaveDocumentState();
+
 		this.Document.GoToBookmark(sName, true);
 
 		var oRange = this.GetRangeBySelect();
+
+		if (oldSelectionInfo)
+		{
+			this.Document.LoadDocumentState(oldSelectionInfo);
+			this.Document.UpdateSelection();
+		}
+		else
+			this.RemoveSelection();
 
 		return oRange;
 	};
