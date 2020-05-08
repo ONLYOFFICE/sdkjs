@@ -210,6 +210,99 @@
 		return this.paragraphs[nPos];
 	};
 	/**
+	 * Added text in the specified position
+	 * @param {String} sText
+	 * @param {string} [sPosition = "after"] - can be "before" or "after"
+	 * @return {String}
+	 */	
+	ApiRange.prototype.AddText = function(sText, sPosition)
+	{
+		if (this.isEmpty || this.isEmpty === undefined)
+			return false;
+		if (typeof(sText) !== "string")
+			return false;
+		if (sPosition !== "after" && sPosition !== "before")
+			sPosition = "after";
+		
+		var Document = private_GetLogicDocument();
+		
+
+		var oldSelectionInfo = null;
+
+		if (Document.IsSelectionUse())
+		{
+			oldSelectionInfo = Document.SaveDocumentState();
+			Document.RemoveSelection();
+		}
+
+		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
+
+		if (sPosition === "after")
+		{
+			var lastRun			= this.EndPos[this.EndPos.length - 1].Class;
+			var lastRunPos		= this.EndPos[this.EndPos.length - 2].Position;
+			var lastRunParent	= lastRun.GetParent();
+			var tempRun			= editor.CreateRun();
+
+			tempRun.AddText(sText);
+			tempRun.SetTextPr(new ApiTextPr(null, this.TextPr));
+			lastRunParent.Add_ToContent(lastRunPos, tempRun.Run);
+		}
+		else if (sPosition === "before")
+		{
+			var firstRun		= this.StartPos[this.StartPos.length - 1].Class;
+			var firstRunPos		= this.StartPos[this.StartPos.length - 1].Position;
+			firstRun.AddText(sText, firstRunPos);
+		}
+
+		Document.RemoveSelection();
+
+		if (oldSelectionInfo)
+		{
+			Document.LoadDocumentState(oldSelectionInfo);
+			Document.UpdateSelection();
+		}
+
+		this.oDocument.RefreshDocumentPositions([this.StartPos, this.EndPos]);
+		return Text;
+	};
+	/**
+	 * Get text in the specified range
+	 * @param {String} sName
+	 * @return {ApiRange}
+	 */	
+	ApiRange.prototype.AddBookmark = function(sName)
+	{
+		if (this.isEmpty || this.isEmpty === undefined)
+			return false;
+		if (typeof(sText) !== "string")
+			return false;
+		if (sPosition !== "after" && sPosition !== "before")
+			sPosition = "after";
+		
+		var Document = private_GetLogicDocument();
+		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
+
+		var oldSelectionInfo = null;
+
+		if (Document.IsSelectionUse())
+			oldSelectionInfo = Document.SaveDocumentState();
+
+		this.SetSelection(false);
+
+		Document.AddBookmark(sName);
+
+		Document.RemoveSelection();
+
+		if (oldSelectionInfo)
+		{
+			Document.LoadDocumentState(oldSelectionInfo);
+			Document.UpdateSelection();
+		}
+
+		return Text;
+	};
+	/**
 	 * Get text in the specified range
 	 * @return {String}
 	 */	
@@ -223,7 +316,7 @@
 		if (Document.IsSelectionUse())
 			oldSelectionInfo = Document.SaveDocumentState();
 
-		this.SetSelection(true);
+		this.SetSelection(false);
 
 		var Text = Document.GetSelectedText(false); 
 
@@ -235,6 +328,8 @@
 			Document.UpdateSelection();
 		}
 
+		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
+		
 		return Text;
 	};
 	/**
@@ -335,19 +430,19 @@
 	 * Set the selection to the specified range.
 	 * @typeofeditors ["CDE"]
 	 */	
-	ApiRange.prototype.SetSelection = function(notUpdate)
+	ApiRange.prototype.SetSelection = function(bUpdate)
 	{
 		if (this.isEmpty || this.isEmpty === undefined)
 			return false;
-		if (notUpdate === undefined)
-			notUpdate === false;
+		if (bUpdate === undefined)
+			bUpdate === true;
 
 		var Document = private_GetLogicDocument();
 		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
 
 		Document.SetSelectionByContentPositions(this.StartPos, this.EndPos);
 
-		if (!notUpdate)
+		if (bUpdate)
 		{
 			Document.UpdateSelection();
 		}
@@ -369,7 +464,7 @@
 		if (Document.IsSelectionUse())
 			oldSelectionInfo = Document.SaveDocumentState();
 				
-		this.SetSelection(true);
+		this.SetSelection(false);
 		var ParaTextPr = new AscCommonWord.ParaTextPr({Bold : isBold});
 		Document.AddToParagraph(ParaTextPr);
 		
@@ -405,7 +500,7 @@
 		if (Document.IsSelectionUse())
 			oldSelectionInfo = Document.SaveDocumentState();
 
-		this.SetSelection(true);
+		this.SetSelection(false);
 		var ParaTextPr = new AscCommonWord.ParaTextPr({Caps : isCaps});
 		Document.AddToParagraph(ParaTextPr);
 		this.TextPr.Merge(ParaTextPr.Value);
@@ -449,7 +544,7 @@
 		if (Document.IsSelectionUse())
 			oldSelectionInfo = Document.SaveDocumentState();
 		
-		this.SetSelection(true);
+		this.SetSelection(false);
 
 		var ParaTextPr = null;
 		if (true === color.Auto)
@@ -505,7 +600,7 @@
 		if (Document.IsSelectionUse())
 			oldSelectionInfo = Document.SaveDocumentState();
 			
-		this.SetSelection(true);
+		this.SetSelection(false);
 		var ParaTextPr = new AscCommonWord.ParaTextPr({DStrikeout : isDoubleStrikeout});
 		Document.AddToParagraph(ParaTextPr);
 		
@@ -544,7 +639,7 @@
 		if (Document.IsSelectionUse())
 			oldSelectionInfo = Document.SaveDocumentState();
 				
-		this.SetSelection(true);
+		this.SetSelection(false);
 
 		var ParaTextPr = null;
 		if (true === isNone)
@@ -600,7 +695,7 @@
 		if (Document.IsSelectionUse())
 			oldSelectionInfo = Document.SaveDocumentState();
 			
-		this.SetSelection(true);
+		this.SetSelection(false);
 
 		var Shd = new CDocumentShd();
 
@@ -697,7 +792,7 @@
 		if (Document.IsSelectionUse())
 			oldSelectionInfo = Document.SaveDocumentState();
 				
-		this.SetSelection(true);
+		this.SetSelection(false);
 
 		var ParaTextPr = new AscCommonWord.ParaTextPr({
 			Strikeout  : isStrikeout,
@@ -738,7 +833,7 @@
 		if (Document.IsSelectionUse())
 			oldSelectionInfo = Document.SaveDocumentState();
 				
-		this.SetSelection(true);
+		this.SetSelection(false);
 		var ParaTextPr = new AscCommonWord.ParaTextPr({
 			SmallCaps : isSmallCaps,
 			Caps      : false
@@ -777,7 +872,7 @@
 		if (Document.IsSelectionUse())
 			oldSelectionInfo = Document.SaveDocumentState();
 		
-		this.SetSelection(true);
+		this.SetSelection(false);
 		var ParaTextPr = new AscCommonWord.ParaTextPr({Spacing : nSpacing});
 		Document.AddToParagraph(ParaTextPr);
 		
@@ -814,7 +909,7 @@
 		if (Document.IsSelectionUse())
 			oldSelectionInfo = Document.SaveDocumentState();
 
-		this.SetSelection(true);
+		this.SetSelection(false);
 		var ParaTextPr = new AscCommonWord.ParaTextPr({Underline : isUnderline});
 		Document.AddToParagraph(ParaTextPr);
 		this.TextPr.Merge(ParaTextPr.Value);
@@ -863,7 +958,7 @@
 		if (Document.IsSelectionUse())
 			oldSelectionInfo = Document.SaveDocumentState();
 		
-		this.SetSelection(true);
+		this.SetSelection(false);
 		var ParaTextPr = new AscCommonWord.ParaTextPr({VertAlign : value});
 		Document.AddToParagraph(ParaTextPr);
 		
@@ -903,7 +998,7 @@
 		if (Document.IsSelectionUse())
 			oldSelectionInfo = Document.SaveDocumentState();
 				
-		this.SetSelection(true);
+		this.SetSelection(false);
 		var ParaTextPr = new AscCommonWord.ParaTextPr({Position : nPosition});
 		Document.AddToParagraph(ParaTextPr);
 		
@@ -941,7 +1036,7 @@
 		if (Document.IsSelectionUse())
 			oldSelectionInfo = Document.SaveDocumentState();
 				
-		this.SetSelection(true);
+		this.SetSelection(false);
 		var ParaTextPr = new AscCommonWord.ParaTextPr({FontSize : FontSize});
 		Document.AddToParagraph(ParaTextPr);
 		
@@ -990,7 +1085,7 @@
 			if (Document.IsSelectionUse())
 				oldSelectionInfo = Document.SaveDocumentState();
 			
-			this.SetSelection(true);
+			this.SetSelection(false);
 			var ParaTextPr = new AscCommonWord.ParaTextPr({FontFamily : FontFamily});
 			Document.AddToParagraph(ParaTextPr);
 			
@@ -1030,7 +1125,7 @@
 		if (Document.IsSelectionUse())
 			oldSelectionInfo = Document.SaveDocumentState();
 				
-		this.SetSelection(true);
+		this.SetSelection(false);
 		
 		Document.SetParagraphStyle(styleName, true);
 		
@@ -1079,7 +1174,7 @@
 		if (Document.IsSelectionUse())
 			oldSelectionInfo = Document.SaveDocumentState();
 				
-		this.SetSelection(true);
+		this.SetSelection(false);
 
 		var ParaTextPr = new AscCommonWord.ParaTextPr(oTextPr.TextPr);
 		Document.AddToParagraph(ParaTextPr);
@@ -4471,11 +4566,13 @@
 	 * Sets text properties of the paragraph.
 	 * @param {ApiTextPr} oTextPr
 	 * @typeofeditors ["CDE"]
-	 * @return {ApiParagraph}  
+	 * @return {ApiTextPr}  
 	 */
 	ApiParagraph.prototype.SetTextPr = function(oTextPr)
 	{
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr(oTextPr.TextPr));
+
+		return this.GetTextPr();
 	};
 	/**
 	 * Insert content control to the paragraph
@@ -4685,12 +4782,59 @@
 	{
 		var parentOfElement = this.Run.Get_Parent();
 
-		var PosOfParagraph = parentOfElement.Content.indexOf(this.Run);
+		var PosInParent = parentOfElement.Content.indexOf(this.Run);
 
-		if (PosOfParagraph !== - 1)
-			parentOfElement.Remove_FromContent(PosOfParagraph, 1, true);
+		if (PosInParent !== - 1)
+			parentOfElement.Remove_FromContent(PosInParent, 1, true);
 		else 
 			return false;
+	};
+	/**
+	 * Delete current run.
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 */
+	ApiRun.prototype.GetNext = function()
+	{
+		var PosInParent		= null;
+		var parentOfElement = this.Run.Get_Parent();
+
+		if (parentOfElement)
+			PosInParent = parentOfElement.Content.indexOf(this.Run);
+
+		if (PosInParent !== null)
+		{
+			for (var Index = PosInParent + 1; Index < parentOfElement.Content.length; Index++)
+			{
+				var newElement = parentOfElement.Content[Index];
+
+				if (newElement !== undefined && newElement instanceof ParaRun)
+				{
+					if (newElement.Content.length !== 0)
+						return new ApiRun(newElement); 
+				}
+					
+			}
+		}
+	};
+	/**
+	 * Delete current run.
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 */
+	ApiRun.prototype.GetPrevious = function()
+	{
+		var PosInParent		= null;
+		var parentOfElement = this.Run.Get_Parent();
+
+		if (parentOfElement)
+			PosInParent = parentOfElement.Content.indexOf(this.Run);
+
+		if (PosInParent !== null)
+		{
+			for (var Index = PosInParent; Index < parentOfElement.Content.length; Index++)
+			{
+				
+			}
+		}
 	};
 	/**
 	 * Add some text to this run.
@@ -4776,6 +4920,20 @@
 		var Range = new ApiRange(this.Run, Start, End);
 
 		return Range;
+	};
+	/**
+	 * Sets text properties of the paragraph.
+	 * @param {ApiTextPr} oTextPr
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiTextPr}  
+	 */
+	ApiRun.prototype.SetTextPr = function(oTextPr)
+	{
+		var runTextPr = this.GetTextPr();
+		runTextPr.TextPr.Merge(oTextPr.TextPr);
+		runTextPr.private_OnChange();
+
+		return runTextPr;
 	};
 	/**
 	 * Set the bold property to the text character.
@@ -5245,6 +5403,38 @@
 	ApiSection.prototype.SetTitlePage = function(isTitlePage)
 	{
 		this.Section.Set_TitlePage(private_GetBoolean(isTitlePage));
+	};
+	/**
+	 * Gets next sections if exists.
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiSection.prototype.GetNext = function()
+	{
+		var oDocument		= editor.GetDocument();
+		var arrApiSections	= oDocument.GetSections();
+
+		var sectionIndex	= arrApiSections.indexOf(this);
+		
+		if (sectionIndex !== - 1 && arrApiSections[sectionIndex + 1])
+		{
+			return arrApiSections[sectionIndex + 1];
+		}
+	};
+	/**
+	 * Gets preious sections if exists.
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiSection.prototype.GetPrevious = function()
+	{
+		var oDocument		= editor.GetDocument();
+		var arrApiSections	= oDocument.GetSections();
+
+		var sectionIndex	= arrApiSections.indexOf(this);
+		
+		if (sectionIndex !== - 1 && arrApiSections[sectionIndex - 1])
+		{
+			return arrApiSections[sectionIndex - 1];
+		}
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
