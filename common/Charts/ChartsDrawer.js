@@ -613,13 +613,14 @@ CChartsDrawer.prototype =
 
 		var chartSpace = obj.chart;
 		var bLayout = AscCommon.isRealObject(obj.layout) && (AscFormat.isRealNumber(obj.layout.x) || AscFormat.isRealNumber(obj.layout.y));
-		var ser = obj.series.idx;
-		var val = obj.pt.idx;
+		var serIdx = obj.series.idx;
+		var valIdx = obj.pt.idx;
 
-		var chartId = this._getChartModelIdBySerIdx(chartSpace.chart.plotArea, ser);
-		if(null !== chartId && this.charts[chartId] && this.charts[chartId].chart && this.charts[chartId].chart.series ) {
-			var seriaIdx = this._getIndexByIdxSeria(this.charts[chartId].chart.series, ser);
-			res = this.charts[chartId]._calculateDLbl(chartSpace, seriaIdx, val, bLayout);
+		var chartId = this._getChartModelIdBySerIdx(chartSpace.chart.plotArea, serIdx);
+		if(null !== chartId && this.charts[chartId] && this.charts[chartId].chart && this.charts[chartId].chart.series) {
+			//TODO нужно переделать все массивы с патами по idx
+			var serIndex = this._getIndexByIdxSeria(this.charts[chartId].chart.series, serIdx);
+			res = this.charts[chartId]._calculateDLbl(chartSpace, serIndex, valIdx, bLayout, serIdx);
 		}
 
 		return res;
@@ -4899,26 +4900,26 @@ drawBarChart.prototype = {
 		return result;
 	},
 
-	_calculateDLbl: function (chartSpace, ser, val) {
+	_calculateDLbl: function (chartSpace, ser, val, bLayout, serIdx) {
 		var point = this.cChartDrawer.getIdxPoint(this.chart.series[ser], val);
-		if (!this.paths.series[ser][val] || !point || !point.compiledDlb) {
+		if (!this.paths.series[serIdx][val] || !point || !point.compiledDlb) {
 			return;
 		}
 
-		var path = this.paths.series[ser][val];
+		var path = this.paths.series[serIdx][val];
 		//ToDo пересмотреть для 3d диаграмм
 		if (this.cChartDrawer.nDimensionCount === 3) {
-			if (AscFormat.isRealNumber(this.paths.series[ser][val][0])) {
-				path = this.paths.series[ser][val][0];
-			} else if (AscFormat.isRealNumber(this.paths.series[ser][val][5])) {
-				path = this.paths.series[ser][val][5];
-			} else if (AscFormat.isRealNumber(this.paths.series[ser][val][2])) {
-				path = this.paths.series[ser][val][2];
-			} else if (AscFormat.isRealNumber(this.paths.series[ser][val][3])) {
-				path = this.paths.series[ser][val][3];
-			} else if (AscFormat.isRealNumber(this.paths.series[ser][val][1])) {
+			if (AscFormat.isRealNumber(path[0])) {
+				path = path[0];
+			} else if (AscFormat.isRealNumber(path[5])) {
+				path = path[5];
+			} else if (AscFormat.isRealNumber(path[2])) {
+				path = path[2];
+			} else if (AscFormat.isRealNumber(path[3])) {
+				path = path[3];
+			} else if (AscFormat.isRealNumber(path[1])) {
 				//TODO добавлено для случая нулевой точки. возможно в данном случае сдвиги нужно считать иначе
-				path = this.paths.series[ser][val][1];
+				path = path[1];
 			}
 		}
 
@@ -7584,7 +7585,7 @@ drawHBarChart.prototype = {
 		var path = this.cChartSpace.GetPath(pathId);
 
 		var pathH = this.chartProp.pathH;
-		var pathW = this.chartProp.pathW;showSpecialPasteOptions
+		var pathW = this.chartProp.pathW;
 
 		path.moveTo(x / pxToMm * pathW, y / pxToMm * pathH);
 		path.lnTo(x1 / pxToMm * pathW, y1 / pxToMm * pathH);
@@ -7725,16 +7726,16 @@ drawHBarChart.prototype = {
 		this.cChartDrawer.cShapeDrawer.Graphics.RestoreGrState();
 	},
 
-	_calculateDLbl: function (chartSpace, ser, val) {
+	_calculateDLbl: function (chartSpace, ser, val, bLayout, serIdx) {
 		var point = this.cChartDrawer.getIdxPoint(this.chart.series[ser], val);
-		var path = this.paths.series[ser][val];
+		var path = this.paths.series[serIdx][val];
 
 		if(!point) {
 			return;
 		}
 
-		if (this.cChartDrawer.nDimensionCount === 3 && this.paths.series[ser][val].frontPaths) {
-			var frontPaths = this.paths.series[ser][val].frontPaths;
+		if (this.cChartDrawer.nDimensionCount === 3 && path.frontPaths) {
+			var frontPaths = path.frontPaths;
 			if (this.cChartDrawer.nDimensionCount === 3) {
 				if (AscFormat.isRealNumber(frontPaths[0])) {
 					path = frontPaths[0];

@@ -631,13 +631,15 @@ CDocumentControllerBase.prototype.GetSelectedElementsInfo = function(oInfo){};
 /**
  * Добавляем строку таблицы.
  * @param bBefore
+ * @param {number} [nCount = 1]
  */
-CDocumentControllerBase.prototype.AddTableRow = function(bBefore){};
+CDocumentControllerBase.prototype.AddTableRow = function(bBefore, nCount){};
 /**
  * Добавляем столбец таблицы.
  * @param bBefore
+ * @param {number} [nCount = 1]
  */
-CDocumentControllerBase.prototype.AddTableColumn = function(bBefore){};
+CDocumentControllerBase.prototype.AddTableColumn = function(bBefore, nCount){};
 /**
  * Удаляем строку таблицы.
  */

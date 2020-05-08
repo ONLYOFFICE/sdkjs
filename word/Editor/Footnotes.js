@@ -2693,19 +2693,19 @@ CFootnotesController.prototype.GetSelectedElementsInfo = function(oInfo)
 	else
 		this.CurFootnote.GetSelectedElementsInfo(oInfo);
 };
-CFootnotesController.prototype.AddTableRow = function(bBefore)
+CFootnotesController.prototype.AddTableRow = function(bBefore, nCount)
 {
 	if (false === this.private_CheckFootnotesSelectionBeforeAction())
 		return;
 
-	this.CurFootnote.AddTableRow(bBefore);
+	this.CurFootnote.AddTableRow(bBefore, nCount);
 };
-CFootnotesController.prototype.AddTableColumn = function(bBefore)
+CFootnotesController.prototype.AddTableColumn = function(bBefore, nCount)
 {
 	if (false === this.private_CheckFootnotesSelectionBeforeAction())
 		return;
 
-	this.CurFootnote.AddTableColumn(bBefore);
+	this.CurFootnote.AddTableColumn(bBefore, nCount);
 };
 CFootnotesController.prototype.RemoveTableRow = function()
 {

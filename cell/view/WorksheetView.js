@@ -64,7 +64,6 @@
     var asc_getcvt = asc.getCvtRatio;
     var asc_floor = asc.floor;
     var asc_ceil = asc.ceil;
-    var asc_obj2Color = asc.colorObjToAscColor;
     var asc_typeof = asc.typeOf;
     var asc_incDecFonSize = asc.incDecFonSize;
     var asc_debug = asc.outputDebugStr;
@@ -72,8 +71,6 @@
     var asc_CMM = AscCommonExcel.asc_CMouseMoveData;
     var asc_VR = AscCommonExcel.VisibleRange;
 
-    var asc_CFont = AscCommonExcel.asc_CFont;
-    var asc_CFill = AscCommonExcel.asc_CFill;
     var asc_CCellInfo = AscCommonExcel.asc_CCellInfo;
     var asc_CHyperlink = asc.asc_CHyperlink;
     var asc_CPageSetup = asc.asc_CPageSetup;
@@ -1297,7 +1294,9 @@
                 // Нашли не пустую ячейку, проверим формат
                 cellType = cell.cellType;
                 isNumberFormat = (null === cellType || CellValueType.Number === cellType);
-                if (isNumberFormat) {
+                var cellRange = this.model.getCell3(r, activeCell.col);
+                var isDateFormat = cellRange.getNumFormat().isDateTimeFormat();
+                if (isNumberFormat && !isDateFormat) {
                     // Это число, мы нашли то, что искали
                     topCell = {
                         c: activeCell.col, r: r, isFormula: cell.isFormula
@@ -1321,7 +1320,9 @@
                     // Нашли не пустую ячейку, проверим формат
                     cellType = cell.cellType;
                     isNumberFormat = (null === cellType || CellValueType.Number === cellType);
-                    if (isNumberFormat) {
+                    var cellRange = this.model.getCell3(activeCell.row, c);
+                    var isDateFormat = cellRange.getNumFormat().isDateTimeFormat();
+                    if (isNumberFormat && !isDateFormat) {
                         // Это число, мы нашли то, что искали
                         leftCell = {
                             r: activeCell.row, c: c
@@ -2800,7 +2801,7 @@
         this._fixSelectionOfMergedCells();
         this._drawElements(this.af_drawButtons);
         this.cellCommentator.drawCommentCells();
-        this.objectRender.showDrawingObjectsEx(true);
+        this.objectRender.showDrawingObjectsEx();
         if (this.overlayCtx) {
             this._drawSelection();
         }
@@ -7180,8 +7181,7 @@
 
             this._drawCellsAndBorders(null, range);
             this.af_drawButtons(range, offsetX, offsetY);
-            this.objectRender.showDrawingObjectsEx(false,
-              new AscFormat.GraphicOption(this, AscCommonExcel.c_oAscScrollType.ScrollVertical, range, {
+            this.objectRender.showDrawingObjectsEx(new AscFormat.GraphicOption(false, range, {
                   offsetX: offsetX, offsetY: offsetY
               }));
             if (0 < cFrozen) {
@@ -7192,8 +7192,7 @@
 				this._drawGroupData(null, range, offsetX);
                 this._drawCellsAndBorders(null, range, offsetX);
                 this.af_drawButtons(range, offsetX, offsetY);
-                this.objectRender.showDrawingObjectsEx(false,
-                  new AscFormat.GraphicOption(this, AscCommonExcel.c_oAscScrollType.ScrollVertical, range, {
+                this.objectRender.showDrawingObjectsEx(new AscFormat.GraphicOption(false, range, {
                       offsetX: offsetX, offsetY: offsetY
                   }));
             }
@@ -7342,8 +7341,7 @@
 			this._drawGroupData(null, range, undefined, undefined, true);
             this._drawCellsAndBorders(null, range);
             this.af_drawButtons(range, offsetX, offsetY);
-            this.objectRender.showDrawingObjectsEx(false,
-              new AscFormat.GraphicOption(this, AscCommonExcel.c_oAscScrollType.ScrollHorizontal, range, {
+            this.objectRender.showDrawingObjectsEx(new AscFormat.GraphicOption(false, range, {
                   offsetX: offsetX, offsetY: offsetY
               }));
             if (rFrozen) {
@@ -7354,8 +7352,7 @@
 				this._drawGroupData(null, range, undefined, offsetY, true);
                 this._drawCellsAndBorders(null, range, undefined, offsetY);
                 this.af_drawButtons(range, offsetX, offsetY);
-                this.objectRender.showDrawingObjectsEx(false,
-                  new AscFormat.GraphicOption(this, AscCommonExcel.c_oAscScrollType.ScrollHorizontal, range, {
+                this.objectRender.showDrawingObjectsEx(new AscFormat.GraphicOption(false, range, {
                       offsetX: offsetX, offsetY: offsetY
                   }));
             }
@@ -8764,8 +8761,6 @@
         var r1 = mc ? mc.r1 : cell.row;
         var c = this._getVisibleCell(c1, r1);
 		var font = c.getFont(true);
-		var fa = font.getVerticalAlign();
-        var bg = c.getFillColor();
         var align = c.getAlign();
         var cellType = c.getType();
         var isNumberFormat = (!cellType || CellValueType.Number === cellType);
@@ -8830,20 +8825,9 @@
 
         cell_info.flags.lockText = ("" !== cell_info.text && (isNumberFormat || c.isFormula()));
 
-        cell_info.font = new asc_CFont();
-		cell_info.font.name = font.getName();
-		cell_info.font.size = font.getSize();
-		cell_info.font.bold = font.getBold();
-		cell_info.font.italic = font.getItalic();
-		// ToDo убрать, когда будет реализовано двойное подчеркивание
-		cell_info.font.underline = (Asc.EUnderline.underlineNone !== font.getUnderline());
-		cell_info.font.strikeout = font.getStrikeout();
-		cell_info.font.subscript = fa === AscCommon.vertalign_SubScript;
-		cell_info.font.superscript = fa === AscCommon.vertalign_SuperScript;
-        cell_info.font.color = asc_obj2Color(font.getColor());
+        cell_info.font._init(font);
 
-        cell_info.fill = new asc_CFill((null != bg) ? asc_obj2Color(bg) : bg);
-		cell_info.fill2 = c.getFill().clone();
+		cell_info.fill = c.getFill().clone();
 
 		cell_info.numFormat = c.getNumFormatStr();
         cell_info.numFormatInfo = c.getNumFormatTypeInfo();
@@ -8987,25 +8971,10 @@
             objectInfo.valign = vertAlign;
             objectInfo.angle = angle;
 
-            objectInfo.font = new asc_CFont();
-            objectInfo.font.name = textPr.FontFamily ? textPr.FontFamily.Name : null;
-            objectInfo.font.size = textPr.FontSize;
-            objectInfo.font.bold = textPr.Bold;
-            objectInfo.font.italic = textPr.Italic;
-            objectInfo.font.underline = textPr.Underline;
-            objectInfo.font.strikeout = textPr.Strikeout;
-            objectInfo.font.subscript = textPr.VertAlign == AscCommon.vertalign_SubScript;
-            objectInfo.font.superscript = textPr.VertAlign == AscCommon.vertalign_SuperScript;
-            if(textPr.Unifill){
-                if(theme){
-                    textPr.Unifill.check(theme, this.objectRender.controller.getColorMap());
-                }
-                var oColor = textPr.Unifill.getRGBAColor();
-                objectInfo.font.color = AscCommon.CreateAscColorCustom(oColor.R, oColor.G, oColor.B);
+            if (textPr.Unifill && theme) {
+                textPr.Unifill.check(theme, this.objectRender.controller.getColorMap());
             }
-            else if (textPr.Color) {
-                objectInfo.font.color = AscCommon.CreateAscColorCustom(textPr.Color.r, textPr.Color.g, textPr.Color.b);
-            }
+            objectInfo.font._initFromTextPr(textPr);
 
             var shapeHyperlink = this.objectRender.controller.getHyperlinkInfo();
             if (shapeHyperlink && (shapeHyperlink instanceof ParaHyperlink)) {
@@ -9023,15 +8992,9 @@
                 objectInfo.hyperlink = new asc_CHyperlink(hyperlink);
                 objectInfo.hyperlink.asc_setText(shapeHyperlink.GetSelectedText(true, true));
             }
-        } else {
-            // Может быть не задано текста, поэтому выставим по умолчанию
-            objectInfo.font = new asc_CFont();
-            objectInfo.font.name = null;
-            objectInfo.font.size = null;
         }
 
-        // Заливка не нужна как таковая
-        objectInfo.fill = new asc_CFill(null);
+        // ToDo Нужно выставить правильный Fill
 
         // ToDo locks
 

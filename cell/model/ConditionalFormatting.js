@@ -620,19 +620,19 @@
 		return this.aCFVOs;
 	};
 	CDataBar.prototype.asc_getColor = function () {
-		return this.Color;
+		return Asc.colorObjToAscColor(this.Color);
 	};
 	CDataBar.prototype.asc_getNegativeColor = function () {
-		return this.NegativeColor;
+		return Asc.colorObjToAscColor(this.NegativeColor);
 	};
 	CDataBar.prototype.asc_getBorderColor = function () {
-		return this.BorderColor;
+		return Asc.colorObjToAscColor(this.BorderColor);
 	};
 	CDataBar.prototype.asc_getNegativeBorderColor = function () {
-		return this.NegativeBorderColor;
+		return Asc.colorObjToAscColor(this.NegativeBorderColor);
 	};
 	CDataBar.prototype.asc_getAxisColor = function () {
-		return this.AxisColor;
+		return Asc.colorObjToAscColor(this.AxisColor);
 	};
 
 	function CFormulaCF () {

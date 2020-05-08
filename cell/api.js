@@ -882,7 +882,7 @@ var editor;
    * asc_onAdvancedOptions		(c_oAscAdvancedOptionsID, asc_CAdvancedOptions)			- эвент на получение дополнительных опций (открытие/сохранение CSV)
    * asc_onError				(c_oAscError.ID, c_oAscError.Level)						- эвент об ошибке
    * asc_onEditCell				(Asc.c_oAscCellEditorState)								- эвент на редактирование ячейки с состоянием (переходами из формулы и обратно)
-   * asc_onEditorSelectionChanged	(asc_CFont)											- эвент на смену информации о выделении в редакторе ячейки
+   * asc_onEditorSelectionChanged	(CFont)											- эвент на смену информации о выделении в редакторе ячейки
    * asc_onSelectionChanged		(asc_CCellInfo)										- эвент на смену информации о выделении
    * asc_onSelectionNameChanged	(sName)												- эвент на смену имени выделения (Id-ячейки, число выделенных столбцов/строк, имя диаграммы и др.)
    * asc_onSelection
@@ -1260,7 +1260,7 @@ var editor;
                 ws.draw();
               } else if (drawing && ws.model === drawing.worksheet) {
                 if (ws.objectRender) {
-                  ws.objectRender.showDrawingObjects(true);
+                  ws.objectRender.showDrawingObjects();
                 }
               }
             } else if (lockType === c_oAscLockTypeElem.Range || lockType === c_oAscLockTypeElem.Sheet) {
@@ -1353,7 +1353,7 @@ var editor;
         worksheet._drawSelection();
         worksheet._drawFrozenPaneLines();
         if (worksheet.objectRender) {
-          worksheet.objectRender.showDrawingObjects(true);
+          worksheet.objectRender.showDrawingObjects();
         }
       }
     };
@@ -1523,7 +1523,7 @@ var editor;
     if (this.wb) {
       var ws = this.wb.getWorksheet();
       if (ws && ws.objectRender) {
-        ws.objectRender.showDrawingObjects(true);
+        ws.objectRender.showDrawingObjects();
       }
     }
   };
@@ -1632,7 +1632,7 @@ var editor;
 		  worksheet._drawSelection();
 		  worksheet._drawFrozenPaneLines();
 		  if (worksheet.objectRender) {
-			  worksheet.objectRender.showDrawingObjects(true);
+			  worksheet.objectRender.showDrawingObjects();
 		  }
 	  }
   };
@@ -3127,7 +3127,7 @@ var editor;
   spreadsheet_api.prototype.asyncImagesDocumentEndLoaded = function() {
     if (c_oAscAdvancedOptionsAction.None === this.advancedOptionsAction && this.wb && !window["NATIVE_EDITOR_ENJINE"]) {
       var ws = this.wb.getWorksheet();
-      ws.objectRender.showDrawingObjects(true);
+      ws.objectRender.showDrawingObjects();
       ws.objectRender.controller.getGraphicObjectProps();
     }
   };
@@ -3138,7 +3138,7 @@ var editor;
       var drawing_area = worksheet.objectRender.drawingArea;
       if (drawing_area) {
         for (var i = 0; i < drawing_area.frozenPlaces.length; ++i) {
-          worksheet.objectRender.showDrawingObjects(true);
+          worksheet.objectRender.showDrawingObjects();
             worksheet.objectRender.controller && worksheet.objectRender.controller.getGraphicObjectProps();
         }
       }

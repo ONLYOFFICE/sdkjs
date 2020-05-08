@@ -3610,6 +3610,7 @@
 		this.Lang = null;
 		this.OfflineApp = false;
 		this.Encrypted;
+		this.EncryptedInfo;
 	}
 
 	prot = asc_CDocInfo.prototype;
@@ -3714,6 +3715,12 @@
 	};
 	prot.put_Encrypted = prot.asc_putEncrypted = function (v) {
 		this.Encrypted = v;
+	};
+	prot.get_EncryptedInfo = prot.asc_getEncryptedInfo = function () {
+		return this.EncryptedInfo;
+	};
+	prot.put_EncryptedInfo = prot.asc_putEncryptedInfo = function (v) {
+		this.EncryptedInfo = v;
 	};
 
 	function COpenProgress() {
@@ -5399,6 +5406,8 @@
 	prot["put_Lang"] = prot["asc_putLang"] = prot.asc_putLang;
 	prot["get_Encrypted"] = prot["asc_getEncrypted"] = prot.asc_getEncrypted;
 	prot["put_Encrypted"] = prot["asc_putEncrypted"] = prot.asc_putEncrypted;
+	prot["get_EncryptedInfo"] = prot["asc_getEncryptedInfo"] = prot.asc_getEncryptedInfo;
+	prot["put_EncryptedInfo"] = prot["asc_putEncryptedInfo"] = prot.asc_putEncryptedInfo;
 
 	window["AscCommon"].COpenProgress = COpenProgress;
 	prot = COpenProgress.prototype;

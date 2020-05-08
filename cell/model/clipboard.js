@@ -2295,7 +2295,7 @@
 					window["Asc"]["editor"].ImageLoader.LoadDocumentImages(aImagesSync);
 				}
 				ws.objectRender.controller.updateSelectionState();
-				ws.objectRender.showDrawingObjects(true);
+				ws.objectRender.showDrawingObjects();
 
 				if (needShowSpecialProps) {
 					if (!window['AscCommon'].g_specialPasteHelper.buttonInfo.options) {
@@ -2438,7 +2438,7 @@
 				api.ImageLoader.LoadDocumentImages(aImagesSync);
 				api.ImageLoader.bIsAsyncLoadDocumentImages = old_val;
 
-				ws.objectRender.showDrawingObjects(true);
+				ws.objectRender.showDrawingObjects();
 				ws.setSelectionShape(true);
 				ws.objectRender.controller.updateOverlay();
 				History.EndTransaction();

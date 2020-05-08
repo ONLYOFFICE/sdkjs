@@ -2114,26 +2114,15 @@
 
 	CellEditor.prototype._updateSelectionInfo = function () {
 		var tmp = this.cursorPos;
-		tmp = this._findFragmentToInsertInto( tmp );
-		if ( !tmp ) {
+		tmp = this._findFragmentToInsertInto(tmp);
+		if (!tmp) {
 			return;
 		}
 		tmp = this.newTextFormat || this.options.fragments[tmp.index].format;
-		var va = tmp.getVerticalAlign();
-		var fc = tmp.getColor();
-		var result = new AscCommonExcel.asc_CFont();
-		result.name = tmp.getName();
-		result.size = tmp.getSize();
-		result.bold = tmp.getBold();
-		result.italic = tmp.getItalic();
-		// ToDo убрать, когда будет реализовано двойное подчеркивание
-		result.underline = (Asc.EUnderline.underlineNone !== tmp.getUnderline());
-		result.strikeout = tmp.getStrikeout();
-		result.subscript = va === AscCommon.vertalign_SubScript;
-		result.superscript = va === AscCommon.vertalign_SuperScript;
-		result.color = (fc ? asc.colorObjToAscColor( fc ) : new Asc.asc_CColor(this.options.font.getColor()));
 
-		this.handlers.trigger( "updateEditorSelectionInfo", result );
+		var result = new AscCommonExcel.CFont();
+		result._init(tmp);
+		this.handlers.trigger("updateEditorSelectionInfo", result);
 	};
 
 	CellEditor.prototype._checkMaxCellLength = function ( length ) {

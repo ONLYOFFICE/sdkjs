@@ -9543,9 +9543,10 @@ CTable.prototype.SplitTableCells = function(Cols, Rows)
 /**
  * Добавление строки.
  * @param bBefore - true - до(сверху) первой выделенной строки, false - после(снизу) последней выделенной строки.
+ * @param {number} [nCount=undefined] форсированное количество добавляемых строк
  * @param {boolean} [isCheckInnerTable=true] Выполнять ли данную функцию для внутренней таблицы
  */
-CTable.prototype.AddTableRow = function(bBefore, isCheckInnerTable)
+CTable.prototype.AddTableRow = function(bBefore, nCount, isCheckInnerTable)
 {
 	if ("undefined" === typeof(bBefore))
 		bBefore = true;
@@ -9585,6 +9586,9 @@ CTable.prototype.AddTableRow = function(bBefore, isCheckInnerTable)
 		Cells_pos[0] = {Row : this.CurCell.Row.Index, Cell : this.CurCell.Index};
 		Count        = 1;
 	}
+
+	if (null !== nCount && undefined !== nCount && nCount > 0)
+		Count = nCount;
 
 	if (Cells_pos.length <= 0)
 		return;
@@ -10056,8 +10060,9 @@ CTable.prototype.RemoveTableColumn = function()
 /**
  * Добавление колонки.
  * @param bBefore - true - до(слева) первой выделенной колонки, false - после(справа) последней выделенной колонки.
+ * @param {number} [nCount=undefined] форсированное количество добавляемых колонок
  */
-CTable.prototype.AddTableColumn = function(bBefore)
+CTable.prototype.AddTableColumn = function(bBefore, nCount)
 {
 	if ("undefined" === typeof(bBefore))
 		bBefore = true;
@@ -10104,6 +10109,9 @@ CTable.prototype.AddTableColumn = function(bBefore)
 		Cells_pos[0] = {Row : this.CurCell.Row.Index, Cell : this.CurCell.Index};
 		Count        = 1;
 	}
+
+	if (null !== nCount && undefined !== nCount && nCount > 0)
+		Count = nCount;
 
 	if (Cells_pos.length <= 0)
 		return;
@@ -17186,7 +17194,7 @@ CTable.prototype.InsertTableContent = function(_nCellIndex, _nRowIndex, oTable)
 	{
 		this.RemoveSelection();
 		this.CurCell = this.GetRow(this.GetRowsCount() - 1).GetCell(0);
-		this.AddTableRow(false, false);
+		this.AddTableRow(false, undefined, false);
 		nAddRows--;
 
 		this.private_RecalculateGridCols();

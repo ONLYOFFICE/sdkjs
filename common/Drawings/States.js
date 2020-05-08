@@ -291,7 +291,7 @@ NullState.prototype =
                     if((start_target_doc_content || end_target_doc_content) && (start_target_doc_content !== end_target_doc_content))
                     {
                         this.drawingObjects.checkChartTextSelection(true);
-                        this.drawingObjects.drawingObjects.showDrawingObjects(true);
+                        this.drawingObjects.drawingObjects.showDrawingObjects();
                     }
                     AscCommon.CollaborativeEditing.Update_ForeignCursorsPositions();
                 }
@@ -306,7 +306,7 @@ NullState.prototype =
                     if((start_target_doc_content || end_target_doc_content) && (start_target_doc_content !== end_target_doc_content))
                     {
                         this.drawingObjects.checkChartTextSelection(true);
-                        this.drawingObjects.drawingObjects.showDrawingObjects(true);
+                        this.drawingObjects.drawingObjects.showDrawingObjects();
                     }
                     AscCommon.CollaborativeEditing.Update_ForeignCursorsPositions();
                 }
@@ -324,7 +324,7 @@ NullState.prototype =
                 if((start_target_doc_content || end_target_doc_content) && (start_target_doc_content !== end_target_doc_content))
                 {
                     this.drawingObjects.checkChartTextSelection(true);
-                    this.drawingObjects.drawingObjects.showDrawingObjects(true);
+                    this.drawingObjects.drawingObjects.showDrawingObjects();
                 }
                 AscCommon.CollaborativeEditing.Update_ForeignCursorsPositions();
             }
@@ -340,7 +340,7 @@ NullState.prototype =
                 if((start_target_doc_content || end_target_doc_content) && (start_target_doc_content !== end_target_doc_content))
                 {
                     this.drawingObjects.checkChartTextSelection(true);
-                    this.drawingObjects.drawingObjects.showDrawingObjects(true);
+                    this.drawingObjects.drawingObjects.showDrawingObjects();
                 }
                 AscCommon.CollaborativeEditing.Update_ForeignCursorsPositions();
             }
@@ -355,7 +355,7 @@ NullState.prototype =
             }
             if(start_target_doc_content || selected_comment_index > -1 || bRet)
             {
-                this.drawingObjects.drawingObjects.showDrawingObjects(true);
+                this.drawingObjects.drawingObjects.showDrawingObjects();
             }
             if(this.drawingObjects.drawingObjects && this.drawingObjects.drawingObjects.cSld)
             {
@@ -1587,7 +1587,7 @@ TextAddState.prototype =
         var cursor_type = this.drawingObjects.curState.onMouseDown(e, x, y, pageIndex);
         if(cursor_type && cursor_type.hyperlink)
         {
-            this.drawingObjects.drawingObjects.showDrawingObjects(true);
+            this.drawingObjects.drawingObjects.showDrawingObjects();
             if(this.drawingObjects.isSlideShow())
             {
                 this.drawingObjects.getEditorApi().sync_HyperlinkClickCallback(cursor_type.hyperlink.Value);

@@ -214,7 +214,7 @@ DrawingObjectsController.prototype.getTheme = function()
 DrawingObjectsController.prototype.startRecalculate = function(bCheckPoint)
 {
     this.recalculate(undefined, undefined, bCheckPoint);
-    this.drawingObjects.showDrawingObjects(true);
+    this.drawingObjects.showDrawingObjects();
     //this.updateSelectionState();
 };
 

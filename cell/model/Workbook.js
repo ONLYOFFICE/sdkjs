@@ -3177,7 +3177,7 @@
 	};
 	Workbook.prototype.getDrawingDocument = function() {
 		return this.DrawingDocument;
-	}
+	};
 //-------------------------------------------------------------------------------------------------
 	var tempHelp = new ArrayBuffer(8);
 	var tempHelpUnit = new Uint8Array(tempHelp);
@@ -11160,6 +11160,16 @@
 		});
 		return res;
 	};
+	Range.prototype.getXfs = function () {
+		var t = this;
+		var nRow = this.bbox.r1;
+		var nCol = this.bbox.c1;
+		var xfs;
+		this.worksheet._getCellNoEmpty(nRow, nCol, function (cell) {
+			xfs = cell ? cell.getCompiledStyle() : t.worksheet.getCompiledStyle(nRow, nCol);
+		});
+		return xfs || g_oDefaultFormat.xfs;
+	};
 	Range.prototype.getXfId = function () {
 		var t = this;
 		var nRow = this.bbox.r1;
@@ -11242,7 +11252,7 @@
 				font = xfs.font;
 			}
 		});
-		return font
+		return font;
 	};
 	Range.prototype.getAlignHorizontalByValue=function(align){
 		//возвращает Align в зависимости от значния в ячейке

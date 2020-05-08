@@ -1219,7 +1219,7 @@ DrawingObjectsController.prototype =
                 this.updateOverlay();
                 if(this.drawingObjects && this.drawingObjects.showDrawingObjects)
                 {
-                    this.drawingObjects.showDrawingObjects(true);
+                    this.drawingObjects.showDrawingObjects();
                 }
             }
         }
@@ -1276,7 +1276,7 @@ DrawingObjectsController.prototype =
                     this.sendCropState();
                     if(this.drawingObjects && this.drawingObjects.showDrawingObjects)
                     {
-                        this.drawingObjects.showDrawingObjects(true);
+                        this.drawingObjects.showDrawingObjects();
                     }
                     this.updateOverlay();
                 }
@@ -1332,7 +1332,7 @@ DrawingObjectsController.prototype =
                 this.sendCropState();
                 if(this.drawingObjects && this.drawingObjects.showDrawingObjects)
                 {
-                    this.drawingObjects.showDrawingObjects(true);
+                    this.drawingObjects.showDrawingObjects();
                 }
                 this.updateOverlay();
             }
@@ -1367,7 +1367,7 @@ DrawingObjectsController.prototype =
 
                 if(this.drawingObjects && this.drawingObjects.showDrawingObjects)
                 {
-                    this.drawingObjects.showDrawingObjects(true);
+                    this.drawingObjects.showDrawingObjects();
                 }
                 this.updateOverlay();
             }
@@ -6952,7 +6952,7 @@ DrawingObjectsController.prototype =
                 {
                     window["Asc"]["editor"].wb.handlers.trigger("asc_onHyperlinkClick", hyperlink.GetValue());
                     hyperlink.SetVisited(true);
-                    this.drawingObjects.showDrawingObjects(true);
+                    this.drawingObjects.showDrawingObjects();
                 }
                 else
                 {
@@ -7721,7 +7721,7 @@ DrawingObjectsController.prototype =
             }
             else
             {
-                this.drawingObjects.showDrawingObjects(true);
+                this.drawingObjects.showDrawingObjects();
             }
         }
         if(AscFormat.isRealNumber(nPageNum2) && nPageNum2 !== nPageNum1)
@@ -7743,7 +7743,7 @@ DrawingObjectsController.prototype =
             }
             else
             {
-                this.drawingObjects.showDrawingObjects(true);
+                this.drawingObjects.showDrawingObjects();
             }
         }
         return bRet;
@@ -7825,7 +7825,7 @@ DrawingObjectsController.prototype =
         for(i = 0; i < aAllConnectors.length; ++i){
             aAllConnectors[i].calculateTransform();
         }
-        this.drawingObjects.showDrawingObjects(true);
+        this.drawingObjects.showDrawingObjects();
     },
 
     canGroup: function()
@@ -10337,7 +10337,7 @@ DrawingObjectsController.prototype =
         {
             this.selection.groupSelection.bringToFront();
         }
-        this.drawingObjects.showDrawingObjects(true);
+        this.drawingObjects.showDrawingObjects();
     },
 
     bringForward : function()
@@ -10359,7 +10359,7 @@ DrawingObjectsController.prototype =
         {
             this.selection.groupSelection.bringForward();
         }
-        this.drawingObjects.showDrawingObjects(true);
+        this.drawingObjects.showDrawingObjects();
     },
 
     sendToBack : function()
@@ -10384,7 +10384,7 @@ DrawingObjectsController.prototype =
         {
             this.selection.groupSelection.sendToBack();
         }
-        this.drawingObjects.showDrawingObjects(true);
+        this.drawingObjects.showDrawingObjects();
     },
 
 
@@ -10407,7 +10407,7 @@ DrawingObjectsController.prototype =
         {
             this.selection.groupSelection.bringBackward();
         }
-        this.drawingObjects.showDrawingObjects(true);
+        this.drawingObjects.showDrawingObjects();
     }
 };
 

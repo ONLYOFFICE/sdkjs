@@ -393,7 +393,7 @@ DrawingObjectsController.prototype.handleSlideComments  =  function(e, x, y, pag
                 this.changeCurrentState(new PreMoveCommentState(this, x, y, comments[i]));
                 if(i !== index_selected)
                 {
-                    this.drawingObjects.showDrawingObjects(true);
+                    this.drawingObjects.showDrawingObjects();
                 }
                 ret.result = true;
                 ret.selectedIndex = index_selected;
@@ -413,7 +413,7 @@ DrawingObjectsController.prototype.handleSlideComments  =  function(e, x, y, pag
         ret.selectedIndex = index_selected;
         if(-1 !== index_selected)
         {
-            this.drawingObjects.showDrawingObjects(true);
+            this.drawingObjects.showDrawingObjects();
         }
         return ret;
     }
@@ -516,7 +516,7 @@ MoveCommentState.prototype =
                 tracks[i].trackEnd();
             }
             this.drawingObjects.startRecalculate();
-            this.drawingObjects.drawingObjects.showDrawingObjects(true);
+            this.drawingObjects.drawingObjects.showDrawingObjects();
         }
         this.drawingObjects.clearTrackObjects();
         this.drawingObjects.updateOverlay();

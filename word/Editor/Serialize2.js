@@ -7149,6 +7149,10 @@ function BinaryFileReader(doc, openParams)
 	};
     this.PostLoadPrepare = function(setting)
     {
+		if (null !== this.oReadResult.compatibilityMode) {
+			this.Document.Settings.CompatibilityMode = this.oReadResult.compatibilityMode;
+		}
+		this.Document.UpdateDefaultsDependingOnCompatibility();
 		//списки
 		for(var i in this.oReadResult.numToANumClass) {
 			this.Document.Numbering.AddAbstractNum(this.oReadResult.numToANumClass[i]);
@@ -7628,9 +7632,6 @@ function BinaryFileReader(doc, openParams)
 			table.ReIndexing(0);
 			table.Correct_BadTable();
 		}
-		if (null !== this.oReadResult.compatibilityMode) {
-			this.Document.Settings.CompatibilityMode = this.oReadResult.compatibilityMode;
-		}
 		if (this.oReadResult.SplitPageBreakAndParaMark) {
 			this.Document.Settings.SplitPageBreakAndParaMark = this.oReadResult.SplitPageBreakAndParaMark;
 		}
@@ -7838,7 +7839,8 @@ function BinaryFileReader(doc, openParams)
         var aPrepeareImages = [];
         for (var i in oPastedImagesUnique)
             aPrepeareImages.push(i);
-			
+
+		//todo below is not needed in copy/paste
 		if(!isCopyPaste)
 		{
 			this.Document.Content = this.oReadResult.DocumentContent;
@@ -7848,7 +7850,8 @@ function BinaryFileReader(doc, openParams)
 				var oNewParagraph = new Paragraph(this.Document.DrawingDocument, this.Document);
 				this.Document.Content.push(oNewParagraph);
 			}
-			
+
+			this.Document.UpdateDefaultsDependingOnCompatibility();
 			this.Document.On_EndLoad();
 		}
 		//split runs after styles because rPr can have a RStyle

@@ -478,7 +478,20 @@ CEndnotesController.prototype.Recalculate = function(X, Y, XLimit, YLimit, nPage
 	}
 
 	if (!oSection.Pages[nPageAbs])
+	{
 		oSection.Pages[nPageAbs] = new CEndnoteSectionPage();
+
+		for (var nColumnIndex = 0; nColumnIndex < nColumnAbs; ++nColumnIndex)
+		{
+			var oTempColumn = new CEndnoteSectionPageColumn();
+			oSection.Pages[nPageAbs].Columns[nColumnIndex] = oTempColumn;
+
+			oTempColumn.X      = X - 5;
+			oTempColumn.Y      = Y;
+			oTempColumn.XLimit = XLimit - 10;
+			oTempColumn.YLimit = YLimit;
+		}
+	}
 
 	var oColumn = new CEndnoteSectionPageColumn();
 	oSection.Pages[nPageAbs].Columns[nColumnAbs] = oColumn;
@@ -572,6 +585,17 @@ CEndnotesController.prototype.Recalculate = function(X, Y, XLimit, YLimit, nPage
 		{
 			return recalcresult2_NextPage;
 		}
+	}
+
+	for (var nColumnIndex = nColumnAbs + 1; nColumnIndex < nColumnsCount; ++nColumnIndex)
+	{
+		var oTempColumn = new CEndnoteSectionPageColumn();
+		oSection.Pages[nPageAbs].Columns[nColumnIndex] = oTempColumn;
+
+		oTempColumn.X      = XLimit + 10;
+		oTempColumn.Y      = Y;
+		oTempColumn.XLimit = XLimit + 5;
+		oTempColumn.YLimit = YLimit;
 	}
 
 	return recalcresult2_End;
@@ -1040,7 +1064,7 @@ CEndnotesController.prototype.private_GetEndnoteByXY = function(X, Y, nPageAbs)
 	if (null !== oResult)
 		return oResult;
 
-	var nCurPage = PageAbs - 1;
+	var nCurPage = nPageAbs - 1;
 	while (nCurPage >= 0)
 	{
 		oResult = this.private_GetEndnoteOnPageByXY(MEASUREMENT_MAX_MM_VALUE, MEASUREMENT_MAX_MM_VALUE, nCurPage);
@@ -1050,7 +1074,7 @@ CEndnotesController.prototype.private_GetEndnoteByXY = function(X, Y, nPageAbs)
 		nCurPage--;
 	}
 
-	nCurPage = PageAbs + 1;
+	nCurPage = nPageAbs + 1;
 	while (nCurPage < this.Pages.length)
 	{
 		oResult = this.private_GetEndnoteOnPageByXY(-MEASUREMENT_MAX_MM_VALUE, -MEASUREMENT_MAX_MM_VALUE, nCurPage);

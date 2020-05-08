@@ -2914,7 +2914,7 @@ function asc_WriteCCellInfo(c, s) {
     }
     
     asc_WriteCFont(6, c.asc_getFont(), s);
-    asc_menu_WriteColor(8, c.asc_getFill().asc_getColor(), s);
+    asc_menu_WriteColor(8, c.asc_getFillColor(), s);
     asc_WriteCBorders(9, c.asc_getBorders(), s);
     
     if (null !== c.asc_getInnerText()) {
@@ -3407,7 +3407,7 @@ function OfflineEditor () {
             
             AscCommon.g_oTextMeasurer.Flush();
             
-            this.objectRender.showDrawingObjectsEx(false);
+            this.objectRender.showDrawingObjectsEx(new AscFormat.GraphicOption(false, null, null));
             
             this.cellsLeft = cellsLeft_Local;
             this.cellsTop = cellsTop_Local;
@@ -3607,6 +3607,10 @@ function OfflineEditor () {
                 var type = 0, left = 0, right = 0, top = 0, bottom = 0;
                 var addt, addl, addr, addb, colsCount = this.nColsCount - 1, rowsCount = this.nRowsCount - 1;
                 var defaultRowHeight = AscCommonExcel.oDefaultMetrics.RowHeight;
+
+                if (colsCount < 1 || rowsCount < 1) {
+                    return [];
+                }
                 
                 for (i = 0; i < arrRanges.length; ++i) {
                     type = (arrRanges[i].getType == undefined) ? 0 : arrRanges[i].getType();
@@ -3625,12 +3629,12 @@ function OfflineEditor () {
                         if (addl > 0)
                             left = this._getColLeft(colsCount - 1) + this.defaultColWidthPx * addl - offsetX;
                         else
-                            left = this._getColLeft(Math.max(0,arrRanges[i].c1,0)) - offsetX;
+                            left = this._getColLeft(Math.max(0,arrRanges[i].c1)) - offsetX;
                         
                         if (addt > 0)
                             top = this._getRowTop(rowsCount - 1) + addt * defaultRowHeight - offsetY;
                         else
-                            top = this._getRowTop(Math.max(0,arrRanges[i].r1,0)) - offsetY;
+                            top = this._getRowTop(Math.max(0,arrRanges[i].r1)) - offsetY;
                         
                         if (addr > 0)
                             right = this._getColLeft(colsCount - 1) + this.defaultColWidthPx * addr - offsetX;
@@ -3735,6 +3739,10 @@ function OfflineEditor () {
             var type = 0, left = 0, right = 0, top = 0, bottom = 0;
             var addt, addl, addr, addb, colsCount = this.nColsCount - 1, rowsCount = this.nRowsCount - 1;
             var defaultRowHeight = AscCommonExcel.oDefaultMetrics.RowHeight;
+
+            if (colsCount < 1 || rowsCount < 1) {
+                return [];
+            }
             
             for (i = 0; i < arrRanges.length; ++i) {
                 type = (arrRanges[i].getType == undefined) ? 0 : arrRanges[i].getType();
@@ -3753,7 +3761,7 @@ function OfflineEditor () {
                     if (addl > 0)
                         left = this._getColLeft(colsCount - 1) + this.defaultColWidthPx * addl - offsetX;
                     else
-                        left = this._getColLeft(Math.max(0,arrRanges[i].c1,0)) - offsetX;
+                        left = this._getColLeft(Math.max(0,arrRanges[i].c1)) - offsetX;
                     
                     if (addt > 0)
                         top = this._getRowTop(rowsCount - 1) + addt * defaultRowHeight - offsetY;

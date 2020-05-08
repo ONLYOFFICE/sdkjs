@@ -2294,8 +2294,7 @@ ParaEndnoteReference.prototype.Copy = function(oPr)
 	var oEndnote;
 	if (oPr && oPr.Comparison)
 	{
-		// TODO:
-		//oEndnote = oPr.Comparison.createFootNote();
+		oEndnote = oPr.Comparison.createEndNote();
 	}
 	else
 	{
