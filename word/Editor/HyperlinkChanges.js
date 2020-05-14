@@ -142,6 +142,9 @@ CChangesHyperlinkAddItem.prototype.Load = function(Color)
 
 			if (Element.SetParagraph && oHyperlink.GetParagraph())
 				Element.SetParagraph(oHyperlink.GetParagraph());
+
+			if (Element.SetParent)
+				Element.SetParent(oHyperlink);
 		}
 	}
 

@@ -9106,6 +9106,22 @@ background-repeat: no-repeat;\
 
 		oLogicDocument.SetContentControlTextPlaceholder(sText, oContentControl);
 	};
+	asc_docs_api.prototype.asc_AddContentControlTextForm = function(oPr)
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument)
+			return;
+
+		oLogicDocument.RemoveTextSelection();
+		if (!oLogicDocument.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
+		{
+			oLogicDocument.StartAction(AscDFH.historydescription_Document_AddContentControlTextForm);
+			oLogicDocument.AddTextForm(oPr);
+			oLogicDocument.UpdateInterface();
+			oLogicDocument.Recalculate();
+			oLogicDocument.FinalizeAction();
+		}
+	};
 
 	asc_docs_api.prototype.asc_UncheckContentControlButtons = function()
 	{

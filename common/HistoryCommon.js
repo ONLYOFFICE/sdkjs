@@ -1160,6 +1160,12 @@
 			case AscDFH.historydescription_Document_SetContentControlTextPlaceholder:
 				sString = "Document_SetContentControlTextPlaceholder";
 				break;
+			case AscDFH.historydescription_Document_AddEndnote:
+				sString = "Document_AddEndnote";
+				break;
+			case AscDFH.historydescription_Document_AddContentControlTextForm:
+				sString = "Document_AddContentControlTextForm";
+				break;
 		}
 		return sString;
 	}
@@ -1891,6 +1897,7 @@
 	window['AscDFH'].historyitem_SdtPr_Equation         = window['AscDFH'].historyitem_type_SdtPr | 18;
 	window['AscDFH'].historyitem_SdtPr_Text             = window['AscDFH'].historyitem_type_SdtPr | 19;
 	window['AscDFH'].historyitem_SdtPr_Temporary        = window['AscDFH'].historyitem_type_SdtPr | 20;
+	window['AscDFH'].historyitem_SdtPr_TextForm         = window['AscDFH'].historyitem_type_SdtPr | 21;
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CSdtPr
 	//------------------------------------------------------------------------------------------------------------------
@@ -3245,6 +3252,7 @@
 	window['AscDFH'].historydescription_Document_AddDateTimeField                   = 0x0176;
 	window['AscDFH'].historydescription_Document_SetContentControlTextPlaceholder   = 0x0177;
 	window['AscDFH'].historydescription_Document_AddEndnote                         = 0x0178;
+	window['AscDFH'].historydescription_Document_AddContentControlTextForm          = 0x0179;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

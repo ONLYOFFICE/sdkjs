@@ -36,6 +36,7 @@ function CParagraphContentBase()
 {
 	this.Type      = para_Unknown;
 	this.Paragraph = null;
+	this.Parent    = null;
 
 	this.StartLine  = -1;
 	this.StartRange = -1;
@@ -73,6 +74,14 @@ CParagraphContentBase.prototype.PreDelete = function()
 CParagraphContentBase.prototype.SetParagraph = function(oParagraph)
 {
 	this.Paragraph = oParagraph;
+};
+/**
+ * ВЫставляем родительский класс
+ * @param oParent
+ */
+CParagraphContentBase.prototype.SetParent = function(oParent)
+{
+	this.Parent = oParent;
 };
 /**
  * Получаем параграф, в котором лежит данный элемент
@@ -223,6 +232,9 @@ CParagraphContentBase.prototype.CheckSpelling = function(oSpellCheckerEngine, nD
 };
 CParagraphContentBase.prototype.GetParent = function()
 {
+	if (this.Parent)
+		return this.Parent;
+
 	if (!this.Paragraph)
 		return null;
 
@@ -1443,6 +1455,9 @@ CParagraphContentWithParagraphLikeContent.prototype.Add_ToContent = function(Pos
         if (ContentPos.Data[Depth] >= Pos)
             ContentPos.Data[Depth]++;
     }
+
+	if (Item.SetParent)
+		Item.SetParent(this);
 
     if (Item.SetParagraph)
     	Item.SetParagraph(this.GetParagraph());
@@ -4281,7 +4296,7 @@ CParagraphContentWithParagraphLikeContent.prototype.GetFirstRun = function()
 
 	return null;
 };
-CParagraphContentWithParagraphLikeContent.prototype.MakeSingleRunElement = function()
+CParagraphContentWithParagraphLikeContent.prototype.MakeSingleRunElement = function(isClearRun)
 {
 	if (this.Content.length !== 1 || para_Run !== this.Content[0].Type)
 	{
@@ -4292,7 +4307,10 @@ CParagraphContentWithParagraphLikeContent.prototype.MakeSingleRunElement = funct
 	}
 
 	var oRun = this.Content[0];
-	oRun.ClearContent();
+
+	if (false !== isClearRun)
+		oRun.ClearContent();
+
 	return oRun;
 };
 CParagraphContentWithParagraphLikeContent.prototype.ClearContent = function()

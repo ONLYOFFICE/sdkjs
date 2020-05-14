@@ -1380,6 +1380,9 @@ ParaRun.prototype.GetLogicDocument = function()
 // Добавляем элемент в позицию с сохранием в историю
 ParaRun.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
 {
+	if (this.GetCombTextForm())
+		this.RecalcInfo.Measure = true;
+
 	if (-1 === Pos)
 		Pos = this.Content.length;
 
@@ -1452,6 +1455,9 @@ ParaRun.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
 
 ParaRun.prototype.Remove_FromContent = function(Pos, Count, UpdatePosition)
 {
+	if (this.GetCombTextForm())
+		this.RecalcInfo.Measure = true;
+
 	for (var nIndex = Pos, nCount = Math.min(Pos + Count, this.Content.length); nIndex < nCount; ++nIndex)
 	{
 		if (this.Content[nIndex].PreDelete)
@@ -2755,7 +2761,36 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 		});
 	}
 
-	if (this.RecalcInfo.Measure)
+	var nMaxComb      = -1;
+	var nCombWidth    = null;
+	var oCombTextForm = this.GetCombTextForm();
+	if (oCombTextForm)
+	{
+		nCombWidth = oCombTextForm.W;
+		nMaxComb   = oCombTextForm.Max;
+
+		if (!nCombWidth || nCombWidth < 0)
+			nCombWidth = this.TextAscent;
+	}
+
+	if (nCombWidth && nMaxComb > 0)
+	{
+		for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
+		{
+			this.private_MeasureElement(nPos, oTextPr, oTheme, oInfoMathText);
+
+			var Item = this.Content[nPos];
+			if (para_Space === this.Content[nPos].Type || para_Text === this.Content[nPos].Type)
+			{
+				if (Item.Get_Width() < nCombWidth)
+					Item.Set_Width(nCombWidth);
+
+				if (nPos === nCount - 1 && nCount < nMaxComb)
+					Item.Set_Width(Item.Get_Width() + (nMaxComb - nCount) * nCombWidth);
+			}
+		}
+	}
+	else if (this.RecalcInfo.Measure)
 	{
 		for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
 		{
@@ -10966,6 +11001,8 @@ ParaRun.prototype.GetLineByPosition = function(nPos)
  */
 ParaRun.prototype.PreDelete = function()
 {
+	this.SetParent(null);
+
 	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
 	{
 		if (this.Content[nIndex].PreDelete)
@@ -11777,6 +11814,14 @@ ParaRun.prototype.GetFirstRunElementPos = function(nType, oStartPos, oEndPos, nD
 		}
 	}
 	return false;
+};
+ParaRun.prototype.GetCombTextForm = function()
+{
+	var oTextFormPr = this.Parent instanceof CInlineLevelSdt && this.Parent.IsTextForm() ? this.Parent.GetTextFormPr() : null;
+	if (!oTextFormPr || !oTextFormPr.Comb)
+		return;
+
+	return {Max : oTextFormPr.MaxCharacters, W : oTextFormPr.Width};
 };
 
 function CParaRunStartState(Run)

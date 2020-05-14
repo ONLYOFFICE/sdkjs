@@ -205,6 +205,10 @@ CRunElementBase.prototype.Set_WidthVisible = function(WidthVisible)
 {
 	this.WidthVisible = (WidthVisible * TEXTWIDTH_DIVIDER) | 0;
 };
+CRunElementBase.prototype.Set_Width        = function(Width)
+{
+	this.Width = (Width * TEXTWIDTH_DIVIDER) | 0;
+};
 CRunElementBase.prototype.Is_RealContent   = function()
 {
 	return true;

@@ -96,6 +96,19 @@ CInlineLevelSdt.prototype.Add = function(Item)
 	}
 
 	this.private_ReplacePlaceHolderWithContent();
+
+	var oTextFormRun;
+	if (this.IsTextForm())
+	{
+		if (Item.Type !== para_Text && Item.Type !== para_Space)
+			return;
+
+		oTextFormRun = this.MakeSingleRunElement(false);
+
+		if (this.Pr.TextForm.MaxCharacters > 0 && oTextFormRun.GetElementsCount() >= this.Pr.TextForm.MaxCharacters)
+			return;
+	}
+
 	CParagraphContentWithParagraphLikeContent.prototype.Add.apply(this, arguments);
 };
 CInlineLevelSdt.prototype.Copy = function(isUseSelection, oPr)
@@ -589,7 +602,7 @@ CInlineLevelSdt.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAl
 		}
 	}
 
-	if (this.IsDropDownList() || this.IsComboBox() || this.IsCheckBox() || this.IsDatePicker())
+	if (this.IsDropDownList() || this.IsComboBox() || this.IsCheckBox() || this.IsDatePicker() || this.IsTextForm())
 		CParagraphContentWithParagraphLikeContent.prototype.Apply_TextPr.call(this, TextPr, IncFontSize, true);
 	else
 		CParagraphContentWithParagraphLikeContent.prototype.Apply_TextPr.call(this, TextPr, IncFontSize, ApplyToAll);
@@ -1496,6 +1509,56 @@ CInlineLevelSdt.prototype.private_UpdateDatePickerContent = function()
 	if (oRun)
 		oRun.AddText(sText);
 };
+/**
+ * Является ли данный контейнер специальной текстовой формой
+ * @returns {boolean}
+ */
+CInlineLevelSdt.prototype.IsTextForm = function()
+{
+	return (undefined !== this.Pr.TextForm);
+};
+CInlineLevelSdt.prototype.SetTextFormPr = function(oPr)
+{
+	if (undefined === this.Pr.TextForm || !this.Pr.TextForm.IsEqual(oPr))
+	{
+		var _oPr = oPr ? oPr.Copy() : undefined;
+		History.Add(new CChangesSdtPrTextForm(this, this.Pr.TextForm, _oPr));
+		this.Pr.TextForm = _oPr;
+	}
+};
+CInlineLevelSdt.prototype.GetTextFormPr = function()
+{
+	return this.Pr.TextForm;
+};
+/**
+ * Применяем к данному контейнеру настройки того, что это специальный контйенер для даты
+ * @param oPr {CSdtDatePickerPr}
+ */
+CInlineLevelSdt.prototype.ApplyTextFormPr = function(oPr)
+{
+	this.SetTextFormPr(oPr);
+
+	if (!this.IsTextForm())
+		return;
+
+	if (this.IsPlaceHolder())
+		this.private_FillPlaceholderContent();
+
+	this.private_UpdateDatePickerContent();
+};
+CInlineLevelSdt.prototype.private_UpdateTextFormContent = function()
+{
+	if (!this.Pr.TextForm)
+		return;
+
+	if (this.IsPlaceHolder())
+		this.ReplacePlaceHolderWithContent();
+
+	var oRun = this.MakeSingleRunElement();
+
+	// if (oRun)
+	// 	oRun.AddText(sText);
+};
 CInlineLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType)
 {
 	if (AscCommon.changestype_Paragraph_TextProperties === CheckType
@@ -1586,7 +1649,7 @@ CInlineLevelSdt.prototype.Get_ParentTextTransform = function()
 };
 CInlineLevelSdt.prototype.AcceptRevisionChanges = function(Type, bAll)
 {
-	if (this.IsCheckBox() || this.IsDropDownList() || this.IsComboBox() || this.IsPicture() || this.IsDatePicker())
+	if (this.IsCheckBox() || this.IsDropDownList() || this.IsComboBox() || this.IsPicture() || this.IsDatePicker() || this.IsTextForm())
 	{
 		Type = undefined;
 		bAll = true;
@@ -1596,7 +1659,7 @@ CInlineLevelSdt.prototype.AcceptRevisionChanges = function(Type, bAll)
 };
 CInlineLevelSdt.prototype.RejectRevisionChanges = function(Type, bAll)
 {
-	if (this.IsCheckBox() || this.IsDropDownList() || this.IsComboBox() || this.IsPicture() || this.IsDatePicker())
+	if (this.IsCheckBox() || this.IsDropDownList() || this.IsComboBox() || this.IsPicture() || this.IsDatePicker() || this.IsTextForm())
 	{
 		Type = undefined;
 		bAll = true;

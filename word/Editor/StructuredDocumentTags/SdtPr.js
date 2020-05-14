@@ -72,6 +72,7 @@ function CSdtPr()
 	this.DropDown = undefined;
 	this.Date     = undefined;
 	this.Equation = false;
+	this.TextForm = undefined;
 
 	this.TextPr = new CTextPr();
 
@@ -108,6 +109,8 @@ CSdtPr.prototype.Copy = function()
 	if (this.Date)
 		oPr.Date = this.Date.Copy();
 
+	if (this.TextForm)
+		oPr.TextForm = this.TextForm.Copy();
 
 	oPr.TextPr = this.TextPr.Copy();
 
@@ -248,6 +251,12 @@ CSdtPr.prototype.Write_ToBinary = function(Writer)
 		Flags |= 524288;
 	}
 
+	if (undefined !== this.TextForm)
+	{
+		this.TextForm.WriteToBinary(Writer);
+		Flags |= 1048576;
+	}
+
 	var EndPos = Writer.GetCurPosition();
 	Writer.Seek(StartPos);
 	Writer.WriteLong(Flags);
@@ -334,6 +343,12 @@ CSdtPr.prototype.Read_FromBinary = function(Reader)
 
 	if (Flags & 524288)
 		this.Temporary = Reader.GetBool();
+
+	if (Flags & 1048576)
+	{
+		this.TextForm = new CSdtTextFormPr();
+		this.TextForm.ReadFromBinary(oReader);
+	}
 };
 CSdtPr.prototype.IsBuiltInDocPart = function()
 {
@@ -1000,6 +1015,47 @@ CSdtDatePickerPr.prototype.GetFormatsExamples = function()
 		"hh:mm\ AM/PM",
 		"hh:mm:ss:\ AM/PM"
 	];
+};
+
+/**
+ * Клоасс с настройками для текстовой формы
+ * @constructor
+ */
+function CSdtTextFormPr()
+{
+	this.MaxCharacters = -1;
+	this.Comb          = false;
+	this.Width         = -1;
+}
+CSdtTextFormPr.prototype.Copy = function()
+{
+	var oText = new CSdtTextFormPr();
+
+	oText.MaxCharacters = this.MaxCharacters;
+	oText.Comb          = this.Comb;
+	oText.Width         = this.Width;
+
+	return oText;
+};
+CSdtTextFormPr.prototype.WriteToBinary = function(oWriter)
+{
+	oWriter.WriteLong(this.MaxCharacters);
+	oWriter.WriteBool(this.Comb);
+	oWriter.WriteLong(this.Width);
+};
+CSdtTextFormPr.prototype.ReadFromBinary = function(oReader)
+{
+	this.MaxCharacters = oReader.GetLong();
+	this.Comb          = oReader.GetBool();
+	this.Width         = oReader.GetLong();
+};
+CSdtTextFormPr.prototype.Write_ToBinary = function(oWriter)
+{
+	this.WriteToBinary(oWriter);
+};
+CSdtTextFormPr.prototype.Read_FromBinary = function(oReader)
+{
+	this.ReadFromBinary(oReader);
 };
 
 //--------------------------------------------------------export--------------------------------------------------------

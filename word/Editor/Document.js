@@ -22239,6 +22239,31 @@ CDocument.prototype.AddParaMath = function(nType)
 	this.UpdateSelection();
 	this.UpdateInterface();
 };
+/**
+ *
+ */
+CDocument.prototype.AddTextForm = function(oPr)
+{
+	if (!oPr)
+	{
+		oPr = new CSdtTextFormPr();
+		oPr.MaxCharacters = 10;
+		oPr.Comb = true;
+	}
+
+	this.RemoveSelection();
+	var oCC = this.AddContentControl(c_oAscSdtLevelType.Inline);
+	if (!oCC)
+		return;
+
+	oCC.ApplyTextFormPr(oPr);
+	oCC.MoveCursorToStartPos();
+
+	this.UpdateSelection();
+	this.UpdateTracks();
+
+	return oCC;
+};
 
 function CDocumentSelectionState()
 {
