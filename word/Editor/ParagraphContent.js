@@ -314,6 +314,9 @@ ParaText.prototype.Draw = function(X, Y, Context)
 
 	var ResultCharCode = (this.Flags & PARATEXT_FLAGS_CAPITALS ? (String.fromCharCode(CharCode).toUpperCase()).charCodeAt(0) : CharCode);
 
+	if (undefined !== this.LGap)
+		X += this.LGap;
+
 	if (true !== this.Is_NBSP())
 		Context.FillTextCode(X, Y, ResultCharCode);
 	else if (editor && editor.ShowParaMarks)
@@ -507,6 +510,14 @@ ParaText.prototype.IsDot = function()
 {
 	return !!(this.Value === 0x002E);
 };
+ParaText.prototype.SetGaps = function(nLeftGap, nRightGap)
+{
+	this.LGap = nLeftGap;
+	this.RGap = nRightGap;
+
+	this.Width += ((nLeftGap + nRightGap) * TEXTWIDTH_DIVIDER) | 0;
+};
+
 
 /**
  * Класс представляющий пробелбный символ
@@ -530,6 +541,9 @@ ParaSpace.prototype.Draw = function(X, Y, Context)
 {
 	if (undefined !== editor && editor.ShowParaMarks)
 	{
+		if (this.LGap)
+			X += this.LGap;
+
 		Context.SetFontSlot(fontslot_ASCII, this.Get_FontKoef());
 		Context.FillText(X, Y, String.fromCharCode(0x00B7));
 	}
@@ -615,6 +629,14 @@ ParaSpace.prototype.SetCondensedWidth = function(nKoef)
 ParaSpace.prototype.ResetCondensedWidth = function()
 {
 	this.Width = this.WidthOrigin;
+};
+ParaSpace.prototype.SetGaps = function(nLeftGap, nRightGap)
+{
+	this.LGap = nLeftGap;
+	this.RGap = nRightGap;
+
+	this.Width       += ((nLeftGap + nRightGap) * TEXTWIDTH_DIVIDER) | 0;
+	this.WidthOrigin += ((nLeftGap + nRightGap) * TEXTWIDTH_DIVIDER) | 0;
 };
 
 

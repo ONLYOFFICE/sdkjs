@@ -1740,6 +1740,19 @@ ParaRun.prototype.Recalculate_CurPos = function(X, Y, CurrentRun, _CurRange, _Cu
 
             X += Item.Get_WidthVisible();
         }
+
+        if (CurrentRun && this.Content.length > 0)
+		{
+			if (Pos === this.Content.length)
+			{
+				if (this.Content[Pos - 1].RGap)
+					X -= this.Content[Pos - 1].RGap;
+			}
+			else if (this.Content[Pos].LGap)
+			{
+				X += this.Content[Pos].LGap;
+			}
+		}
     }
 
 	var bNearFootnoteReference = this.IsCurPosNearFootEndnoteReference();
@@ -2782,11 +2795,23 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 			var Item = this.Content[nPos];
 			if (para_Space === this.Content[nPos].Type || para_Text === this.Content[nPos].Type)
 			{
+				var nLeftGap  = 0;
+				var nRightGap = 0;
+
+				var nWidth = Item.Get_Width();
+
 				if (Item.Get_Width() < nCombWidth)
-					Item.Set_Width(nCombWidth);
+				{
+					nLeftGap  = (nCombWidth - nWidth) / 2;
+					nRightGap = (nCombWidth - nWidth) / 2;
+				}
 
 				if (nPos === nCount - 1 && nCount < nMaxComb)
-					Item.Set_Width(Item.Get_Width() + (nMaxComb - nCount) * nCombWidth);
+				{
+					nRightGap += (nMaxComb - nCount) * nCombWidth;
+				}
+
+				Item.SetGaps(nLeftGap, nRightGap);
 			}
 		}
 	}
