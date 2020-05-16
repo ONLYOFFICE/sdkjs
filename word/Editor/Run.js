@@ -1380,7 +1380,7 @@ ParaRun.prototype.GetLogicDocument = function()
 // Добавляем элемент в позицию с сохранием в историю
 ParaRun.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
 {
-	if (this.GetCombTextForm())
+	if (this.GetTextForm() && this.GetTextForm().Comb)
 		this.RecalcInfo.Measure = true;
 
 	if (-1 === Pos)
@@ -1455,7 +1455,7 @@ ParaRun.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
 
 ParaRun.prototype.Remove_FromContent = function(Pos, Count, UpdatePosition)
 {
-	if (this.GetCombTextForm())
+	if (this.GetTextForm() && this.GetTextForm().Comb)
 		this.RecalcInfo.Measure = true;
 
 	for (var nIndex = Pos, nCount = Math.min(Pos + Count, this.Content.length); nIndex < nCount; ++nIndex)
@@ -1558,6 +1558,9 @@ ParaRun.prototype.AddText = function(sString, nPos)
 {
 	var nCharPos = undefined !== nPos && null !== nPos && -1 !== nPos ? nPos : this.Content.length;
 
+	var oTextForm = this.GetTextForm();
+	var nMax = oTextForm ? oTextForm.MaxCharacters : 0;
+
 	if (this.IsMathRun())
 	{
 		for (var oIterator = sString.getUnicodeIterator(); oIterator.check(); oIterator.next())
@@ -1568,6 +1571,44 @@ ParaRun.prototype.AddText = function(sString, nPos)
 			oMathText.add(nCharCode);
 			this.AddToContent(nCharPos++, oMathText);
 		}
+	}
+	else if (nMax > 0)
+	{
+		var nMaxLetters = nMax - nPos;
+
+		var arrLetters = [], nLettersCount = 0;
+		for (var oIterator = sString.getUnicodeIterator(); oIterator.check(); oIterator.next())
+		{
+			if (nLettersCount >= nMaxLetters)
+				break;
+
+			var nCharCode = oIterator.value();
+
+			if (9 === nCharCode) // \t
+				continue;
+			else if (10 === nCharCode) // \n
+				continue;
+			else if (13 === nCharCode) // \r
+				continue;
+			else if (32 === nCharCode) // space
+			{
+				nLettersCount++;
+				arrLetters.push(new ParaSpace());
+			}
+			else
+			{
+				nLettersCount++;
+				arrLetters.push(new ParaText(nCharCode));
+			}
+		}
+
+		for (var nIndex = 0; nIndex < arrLetters.length; ++nIndex)
+		{
+			this.AddToContent(nCharPos++, arrLetters[nIndex], true);
+		}
+
+		if (this.Content.length > nMax)
+			this.RemoveFromContent(nMax, this.Content.length - nMax, true);
 	}
 	else
 	{
@@ -2774,13 +2815,13 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 		});
 	}
 
-	var nMaxComb      = -1;
-	var nCombWidth    = null;
-	var oCombTextForm = this.GetCombTextForm();
-	if (oCombTextForm)
+	var nMaxComb   = -1;
+	var nCombWidth = null;
+	var oTextForm  = this.GetTextForm();
+	if (oTextForm && oTextForm.Comb)
 	{
-		nCombWidth = oCombTextForm.W;
-		nMaxComb   = oCombTextForm.Max;
+		nCombWidth = oTextForm.Width;
+		nMaxComb   = oTextForm.MaxCharacters;
 
 		if (!nCombWidth || nCombWidth < 0)
 			nCombWidth = this.TextAscent;
@@ -11840,13 +11881,13 @@ ParaRun.prototype.GetFirstRunElementPos = function(nType, oStartPos, oEndPos, nD
 	}
 	return false;
 };
-ParaRun.prototype.GetCombTextForm = function()
+ParaRun.prototype.GetTextForm = function()
 {
 	var oTextFormPr = this.Parent instanceof CInlineLevelSdt && this.Parent.IsTextForm() ? this.Parent.GetTextFormPr() : null;
-	if (!oTextFormPr || !oTextFormPr.Comb)
-		return;
+	if (!oTextFormPr)
+		return null;
 
-	return {Max : oTextFormPr.MaxCharacters, W : oTextFormPr.Width};
+	return oTextFormPr;
 };
 
 function CParaRunStartState(Run)

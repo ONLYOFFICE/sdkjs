@@ -803,6 +803,17 @@ CSelectedContent.prototype.CreateNewCommentsGuid = function(DocumentComments)
 		}
 	}
 };
+CSelectedContent.prototype.GetText = function()
+{
+	var sText = "";
+	for (var nIndex = 0, nCount = this.Elements.length; nIndex < nCount; ++nIndex)
+	{
+		var oElement = this.Elements[nIndex].Element;
+		if (oElement.IsParagraph())
+			sText += oElement.GetText();
+	}
+	return sText;
+};
 
 
 CSelectedContent.prototype.ConvertToPresentation = function(Parent)
@@ -8433,6 +8444,12 @@ CDocument.prototype.InsertContent = function(SelectedContent, NearPos)
 	}
 	else if (para_Run === LastClass.Type)
 	{
+		if (LastClass.GetTextForm() && LastClass.GetTextForm().MaxCharacters > 0)
+		{
+			LastClass.AddText(SelectedContent.GetText(), ParaNearPos.NearPos.ContentPos.Data[ParaNearPos.Classes.length - 1]);
+			return;
+		}
+
 		var NearContentPos = NearPos.ContentPos;
 		// Сначала найдем номер элемента, начиная с которого мы будем производить вставку
 		var DstIndex       = -1;
@@ -22253,6 +22270,10 @@ CDocument.prototype.AddTextForm = function(oPr)
 
 	this.RemoveSelection();
 	var oCC = this.AddContentControl(c_oAscSdtLevelType.Inline);
+
+	if (oPr.Comb)
+		oCC.SetPlaceholderText("_");
+
 	if (!oCC)
 		return;
 

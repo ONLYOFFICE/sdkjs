@@ -4235,6 +4235,12 @@ CDocumentContent.prototype.InsertContent = function(SelectedContent, NearPos)
     }
     else if (para_Run === LastClass.Type)
     {
+		if (LastClass.GetTextForm() && LastClass.GetTextForm().MaxCharacters > 0)
+		{
+			LastClass.AddText(SelectedContent.GetText(), ParaNearPos.NearPos.ContentPos.Data[ParaNearPos.Classes.length - 1]);
+			return;
+		}
+
         var Elements = SelectedContent.Elements;
 
         var Para     = NearPos.Paragraph;
