@@ -803,14 +803,14 @@ CSelectedContent.prototype.CreateNewCommentsGuid = function(DocumentComments)
 		}
 	}
 };
-CSelectedContent.prototype.GetText = function()
+CSelectedContent.prototype.GetText = function(oPr)
 {
 	var sText = "";
 	for (var nIndex = 0, nCount = this.Elements.length; nIndex < nCount; ++nIndex)
 	{
 		var oElement = this.Elements[nIndex].Element;
 		if (oElement.IsParagraph())
-			sText += oElement.GetText();
+			sText += oElement.GetText(oPr);
 	}
 	return sText;
 };
@@ -8446,7 +8446,7 @@ CDocument.prototype.InsertContent = function(SelectedContent, NearPos)
 	{
 		if (LastClass.GetTextForm() && LastClass.GetTextForm().MaxCharacters > 0)
 		{
-			LastClass.AddText(SelectedContent.GetText(), ParaNearPos.NearPos.ContentPos.Data[ParaNearPos.Classes.length - 1]);
+			LastClass.AddText(SelectedContent.GetText({ParaEndToSpace : false}), ParaNearPos.NearPos.ContentPos.Data[ParaNearPos.Classes.length - 1]);
 			return;
 		}
 
@@ -22264,15 +22264,17 @@ CDocument.prototype.AddTextForm = function(oPr)
 	if (!oPr)
 	{
 		oPr = new CSdtTextFormPr();
-		oPr.MaxCharacters = 10;
-		oPr.Comb = true;
+
+		oPr.MaxCharacters         = 10;
+		oPr.Comb                  = true;
+		oPr.CombPlaceholderSymbol = "#".charCodeAt(0);
 	}
 
 	this.RemoveSelection();
 	var oCC = this.AddContentControl(c_oAscSdtLevelType.Inline);
 
 	if (oPr.Comb)
-		oCC.SetPlaceholderText("_");
+		oCC.SetPlaceholderText(String.fromCharCode(oPr.CombPlaceholderSymbol));
 
 	if (!oCC)
 		return;

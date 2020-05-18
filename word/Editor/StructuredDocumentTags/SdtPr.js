@@ -1023,17 +1023,19 @@ CSdtDatePickerPr.prototype.GetFormatsExamples = function()
  */
 function CSdtTextFormPr()
 {
-	this.MaxCharacters = -1;
-	this.Comb          = false;
-	this.Width         = -1;
+	this.MaxCharacters         = -1;
+	this.Comb                  = false;
+	this.Width                 = -1;
+	this.CombPlaceholderSymbol = undefined;
 }
 CSdtTextFormPr.prototype.Copy = function()
 {
 	var oText = new CSdtTextFormPr();
 
-	oText.MaxCharacters = this.MaxCharacters;
-	oText.Comb          = this.Comb;
-	oText.Width         = this.Width;
+	oText.MaxCharacters         = this.MaxCharacters;
+	oText.Comb                  = this.Comb;
+	oText.Width                 = this.Width;
+	oText.CombPlaceholderSymbol = this.CombPlaceholderSymbol;
 
 	return oText;
 };
@@ -1042,12 +1044,25 @@ CSdtTextFormPr.prototype.WriteToBinary = function(oWriter)
 	oWriter.WriteLong(this.MaxCharacters);
 	oWriter.WriteBool(this.Comb);
 	oWriter.WriteLong(this.Width);
+
+	if (undefined !== this.CombPlaceholderSymbol)
+	{
+		oWriter.WriteBool(true);
+		oWriter.WriteLong(this.CombPlaceholderSymbol);
+	}
+	else
+	{
+		oWriter.WriteBool(false);
+	}
 };
 CSdtTextFormPr.prototype.ReadFromBinary = function(oReader)
 {
 	this.MaxCharacters = oReader.GetLong();
 	this.Comb          = oReader.GetBool();
 	this.Width         = oReader.GetLong();
+
+	if (oReader.GetBool())
+		this.CombPlaceholderSymbol = oReader.GetLong();
 };
 CSdtTextFormPr.prototype.Write_ToBinary = function(oWriter)
 {

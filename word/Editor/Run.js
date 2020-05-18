@@ -1786,8 +1786,18 @@ ParaRun.prototype.Recalculate_CurPos = function(X, Y, CurrentRun, _CurRange, _Cu
 		{
 			if (Pos === this.Content.length)
 			{
-				if (this.Content[Pos - 1].RGap)
-					X -= this.Content[Pos - 1].RGap;
+				var Item = this.Content[Pos - 1];
+				if (Item.RGap)
+				{
+					if (Item.RGapCount)
+					{
+						X -= Item.RGapCount * Item.RGapShift - (Item.RGapShift - Item.RGapCharWidth) / 2;
+					}
+					else
+					{
+						X -= Item.RGap;
+					}
+				}
 			}
 			else if (this.Content[Pos].LGap)
 			{
@@ -2847,9 +2857,12 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 					nRightGap = (nCombWidth - nWidth) / 2;
 				}
 
+				Item.ResetGapBackground();
 				if (nPos === nCount - 1 && nCount < nMaxComb)
 				{
 					nRightGap += (nMaxComb - nCount) * nCombWidth;
+					if (oTextForm.CombPlaceholderSymbol)
+						Item.SetGapBackground(nMaxComb - nCount, oTextForm.CombPlaceholderSymbol, nCombWidth, g_oTextMeasurer);
 				}
 
 				Item.SetGaps(nLeftGap, nRightGap);

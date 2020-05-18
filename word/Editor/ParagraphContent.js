@@ -315,7 +315,10 @@ ParaText.prototype.Draw = function(X, Y, Context)
 	var ResultCharCode = (this.Flags & PARATEXT_FLAGS_CAPITALS ? (String.fromCharCode(CharCode).toUpperCase()).charCodeAt(0) : CharCode);
 
 	if (undefined !== this.LGap)
+	{
+		this.private_DrawGapsBackground(X, Y, Context);
 		X += this.LGap;
+	}
 
 	if (true !== this.Is_NBSP())
 		Context.FillTextCode(X, Y, ResultCharCode);
@@ -517,6 +520,36 @@ ParaText.prototype.SetGaps = function(nLeftGap, nRightGap)
 
 	this.Width += ((nLeftGap + nRightGap) * TEXTWIDTH_DIVIDER) | 0;
 };
+ParaText.prototype.ResetGapBackground = function()
+{
+	this.RGapCount     = undefined;
+	this.RGapCharCode  = undefined;
+	this.RGapCharWidth = undefined;
+};
+ParaText.prototype.SetGapBackground = function(nCount, nCharCode, nCombWidth, oContext)
+{
+	this.RGapCount     = nCount;
+	this.RGapCharCode  = nCharCode;
+	this.RGapCharWidth = oContext.MeasureCode(nCharCode).Width;
+	this.RGapShift     = Math.max(nCombWidth, this.RGapCharWidth);
+};
+ParaText.prototype.private_DrawGapsBackground = function(X, Y, Context)
+{
+	if (this.RGap && this.RGapCount)
+	{
+		X += this.Width / TEXTWIDTH_DIVIDER;
+		var nShift = (this.RGapShift - this.RGapCharWidth) / 2;
+
+		for (var nIndex = 0; nIndex < this.RGapCount; ++nIndex)
+		{
+			X -= nShift + this.RGapCharWidth;
+
+			Context.FillTextCode(X, Y, this.RGapCharCode);
+
+			X -= nShift;
+		}
+	}
+};
 
 
 /**
@@ -541,8 +574,11 @@ ParaSpace.prototype.Draw = function(X, Y, Context)
 {
 	if (undefined !== editor && editor.ShowParaMarks)
 	{
-		if (this.LGap)
+		if (undefined !== this.LGap)
+		{
+			this.private_DrawGapsBackground(X, Y, Context);
 			X += this.LGap;
+		}
 
 		Context.SetFontSlot(fontslot_ASCII, this.Get_FontKoef());
 		Context.FillText(X, Y, String.fromCharCode(0x00B7));
@@ -638,6 +674,9 @@ ParaSpace.prototype.SetGaps = function(nLeftGap, nRightGap)
 	this.Width       += ((nLeftGap + nRightGap) * TEXTWIDTH_DIVIDER) | 0;
 	this.WidthOrigin += ((nLeftGap + nRightGap) * TEXTWIDTH_DIVIDER) | 0;
 };
+ParaSpace.prototype.ResetGapBackground = ParaText.prototype.ResetGapBackground;
+ParaSpace.prototype.SetGapBackground = ParaText.prototype.SetGapBackground;
+ParaSpace.prototype.private_DrawGapsBackground = ParaText.prototype.private_DrawGapsBackground;
 
 
 /**
