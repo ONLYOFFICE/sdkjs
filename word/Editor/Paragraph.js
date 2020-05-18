@@ -13735,18 +13735,15 @@ Paragraph.prototype.CanUpdateTarget = function(CurPage)
 	if (this.Pages.length <= CurPage)
 		return true;
 
-	if (!this.Pages[CurPage] || !this.Lines[this.Pages[CurPage].EndLine] || !this.Lines[this.Pages[CurPage].EndLine].Ranges.length <= 0)
+	if (!this.Pages[CurPage] || !this.Lines[this.Pages[CurPage].EndLine] || !this.Lines[this.Pages[CurPage].EndLine].Ranges || this.Lines[this.Pages[CurPage].EndLine].Ranges.length <= 0)
 		return false;
 
 	var nPos = (this.IsSelectionUse() ? this.Selection.EndPos : this.CurPos.ContentPos);
 
-	var oLastLine  = this.Lines[this.Pages[CurPage]];
+	var oLastLine  = this.Lines[this.Pages[CurPage].EndLine];
 	var oLastRange = oLastLine.Ranges[oLastLine.Ranges.length - 1];
 
-	if (oLastRange.EndPos > nPos)
-		return true;
-
-	return false;
+	return (oLastRange.EndPos > nPos);
 };
 Paragraph.prototype.IsInDrawing = function(X, Y, CurPage)
 {
