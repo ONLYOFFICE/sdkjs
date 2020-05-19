@@ -22267,14 +22267,31 @@ CDocument.prototype.AddTextForm = function(oPr)
 
 		oPr.MaxCharacters         = 10;
 		oPr.Comb                  = true;
-		oPr.CombPlaceholderSymbol = "#".charCodeAt(0);
+		oPr.CombPlaceholderSymbol = 0x00B7;//"#".charCodeAt(0);
+		oPr.CombPlaceholderFont   = "Symbol";
+		oPr.Width                 = 5;
 	}
 
 	this.RemoveSelection();
 	var oCC = this.AddContentControl(c_oAscSdtLevelType.Inline);
 
 	if (oPr.Comb)
-		oCC.SetPlaceholderText(String.fromCharCode(oPr.CombPlaceholderSymbol));
+	{
+		var oDocPart = oCC.SetPlaceholderText(String.fromCharCode(oPr.CombPlaceholderSymbol));
+		if (oDocPart && oPr.CombPlaceholderFont)
+		{
+			oDocPart.SelectAll();
+			oDocPart.AddToParagraph(new ParaTextPr({
+				RFonts : {
+					Ascii    : {Name : oPr.CombPlaceholderFont, Index : -1},
+					EastAsia : {Name : oPr.CombPlaceholderFont, Index : -1},
+					HAnsi    : {Name : oPr.CombPlaceholderFont, Index : -1},
+					CS       : {Name : oPr.CombPlaceholderFont, Index : -1}
+				}
+			}));
+			oDocPart.RemoveSelection();
+		}
+	}
 
 	if (!oCC)
 		return;

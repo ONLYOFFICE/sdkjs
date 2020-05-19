@@ -2860,9 +2860,15 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 				Item.ResetGapBackground();
 				if (nPos === nCount - 1 && nCount < nMaxComb)
 				{
-					nRightGap += (nMaxComb - nCount) * nCombWidth;
 					if (oTextForm.CombPlaceholderSymbol)
-						Item.SetGapBackground(nMaxComb - nCount, oTextForm.CombPlaceholderSymbol, nCombWidth, g_oTextMeasurer);
+					{
+						Item.SetGapBackground(nMaxComb - nCount, oTextForm.CombPlaceholderSymbol, nCombWidth, g_oTextMeasurer, oTextForm.CombPlaceholderFont, oTextPr, oTheme);
+						nRightGap += (nMaxComb - nCount) * Item.RGapShift;
+					}
+					else
+					{
+						nRightGap += (nMaxComb - nCount) * nCombWidth;
+					}
 				}
 
 				Item.SetGaps(nLeftGap, nRightGap);
@@ -5830,7 +5836,7 @@ ParaRun.prototype.Draw_Elements = function(PDSE)
             {
                 if (para_Drawing != ItemType || Item.Is_Inline())
                 {
-                    Item.Draw(X, Y - this.YOffset, pGraphics, PDSE);
+                    Item.Draw(X, Y - this.YOffset, pGraphics, PDSE, CurTextPr);
                     X += Item.Get_WidthVisible();
                 }
 
@@ -5867,7 +5873,7 @@ ParaRun.prototype.Draw_Elements = function(PDSE)
             }
             case para_Space:
             {
-                Item.Draw( X, Y - this.YOffset, pGraphics );
+                Item.Draw( X, Y - this.YOffset, pGraphics, PDSE, CurTextPr );
 
                 X += Item.Get_WidthVisible();
 

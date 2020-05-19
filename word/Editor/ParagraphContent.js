@@ -298,8 +298,14 @@ ParaText.prototype.Set_CharCode = function(CharCode)
 	if (AscFonts.IsCheckSymbols)
 		AscFonts.FontPickerByCharacter.getFontBySymbol(this.Value);
 };
-ParaText.prototype.Draw = function(X, Y, Context)
+ParaText.prototype.Draw = function(X, Y, Context, PDSE, oTextPr)
 {
+	if (undefined !== this.LGap)
+	{
+		this.private_DrawGapsBackground(X, Y, Context, PDSE, oTextPr);
+		X += this.LGap;
+	}
+
 	var CharCode = this.Value;
 
 	var FontKoef = 1;
@@ -313,12 +319,6 @@ ParaText.prototype.Draw = function(X, Y, Context)
 	Context.SetFontSlot(((this.Flags >> 8) & 0xFF), FontKoef);
 
 	var ResultCharCode = (this.Flags & PARATEXT_FLAGS_CAPITALS ? (String.fromCharCode(CharCode).toUpperCase()).charCodeAt(0) : CharCode);
-
-	if (undefined !== this.LGap)
-	{
-		this.private_DrawGapsBackground(X, Y, Context);
-		X += this.LGap;
-	}
 
 	if (true !== this.Is_NBSP())
 		Context.FillTextCode(X, Y, ResultCharCode);
@@ -525,16 +525,44 @@ ParaText.prototype.ResetGapBackground = function()
 	this.RGapCount     = undefined;
 	this.RGapCharCode  = undefined;
 	this.RGapCharWidth = undefined;
+	this.RGapShift     = undefined;
+	this.RGapFontSlot  = undefined;
+	this.RGapFont      = undefined;
 };
-ParaText.prototype.SetGapBackground = function(nCount, nCharCode, nCombWidth, oContext)
+ParaText.prototype.SetGapBackground = function(nCount, nCharCode, nCombWidth, oContext, sFont, oTextPr, oTheme)
 {
-	this.RGapCount     = nCount;
-	this.RGapCharCode  = nCharCode;
-	this.RGapCharWidth = oContext.MeasureCode(nCharCode).Width;
+	this.RGapCount    = nCount;
+	this.RGapCharCode = nCharCode;
+	this.RGapFontSlot = g_font_detector.Get_FontClass(nCharCode, oTextPr.RFonts.Hint, oTextPr.Lang.EastAsia, oTextPr.CS, oTextPr.RTL);
+
+	if (sFont)
+	{
+		this.RGapFont = sFont;
+
+		var oCurTextPr = oTextPr.Copy();
+		oCurTextPr.SetFontFamily(sFont);
+
+		oContext.SetTextPr(oCurTextPr, oTheme);
+		oContext.SetFontSlot(this.RGapFontSlot, oTextPr.Get_FontKoef());
+	}
+
+	this.RGapCharWidth = Math.max(oContext.MeasureCode(nCharCode).Width + oTextPr.Spacing, 0);
 	this.RGapShift     = Math.max(nCombWidth, this.RGapCharWidth);
+
+	if (sFont)
+		oContext.SetTextPr(oTextPr, oTheme);
 };
-ParaText.prototype.private_DrawGapsBackground = function(X, Y, Context)
+ParaText.prototype.private_DrawGapsBackground = function(X, Y, oContext, PDSE, oTextPr)
 {
+	if (this.RGapFont)
+	{
+		var oCurTextPr = oTextPr.Copy();
+		oCurTextPr.SetFontFamily(this.RGapFont);
+
+		oContext.SetTextPr(oCurTextPr, PDSE.Theme);
+		oContext.SetFontSlot(this.RGapFontSlot, oTextPr.Get_FontKoef());
+	}
+
 	if (this.RGap && this.RGapCount)
 	{
 		X += this.Width / TEXTWIDTH_DIVIDER;
@@ -544,11 +572,14 @@ ParaText.prototype.private_DrawGapsBackground = function(X, Y, Context)
 		{
 			X -= nShift + this.RGapCharWidth;
 
-			Context.FillTextCode(X, Y, this.RGapCharCode);
+			oContext.FillTextCode(X, Y, this.RGapCharCode);
 
 			X -= nShift;
 		}
 	}
+
+	if (this.RGapFont)
+		oContext.SetTextPr(oTextPr, PDSE.Theme);
 };
 
 
@@ -570,13 +601,13 @@ ParaSpace.prototype = Object.create(CRunElementBase.prototype);
 ParaSpace.prototype.constructor = ParaSpace;
 
 ParaSpace.prototype.Type = para_Space;
-ParaSpace.prototype.Draw = function(X, Y, Context)
+ParaSpace.prototype.Draw = function(X, Y, Context, PDSE, oTextPr)
 {
 	if (undefined !== editor && editor.ShowParaMarks)
 	{
 		if (undefined !== this.LGap)
 		{
-			this.private_DrawGapsBackground(X, Y, Context);
+			this.private_DrawGapsBackground(X, Y, Context, PDSE, oTextPr);
 			X += this.LGap;
 		}
 

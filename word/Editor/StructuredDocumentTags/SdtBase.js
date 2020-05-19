@@ -100,6 +100,8 @@ CSdtBase.prototype.SetPlaceholderText = function(sText)
 
 	if (this.IsPlaceHolder())
 		this.private_FillPlaceholderContent();
+
+	return oDocPart;
 };
 /**
  * Выставляем параметр, что данный контрол должен быть простым текстовым

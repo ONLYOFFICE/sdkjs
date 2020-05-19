@@ -1027,6 +1027,7 @@ function CSdtTextFormPr()
 	this.Comb                  = false;
 	this.Width                 = -1;
 	this.CombPlaceholderSymbol = undefined;
+	this.CombPlaceholderFont   = undefined;
 }
 CSdtTextFormPr.prototype.Copy = function()
 {
@@ -1036,6 +1037,7 @@ CSdtTextFormPr.prototype.Copy = function()
 	oText.Comb                  = this.Comb;
 	oText.Width                 = this.Width;
 	oText.CombPlaceholderSymbol = this.CombPlaceholderSymbol;
+	oText.CombPlaceholderFont   = this.CombPlaceholderFont;
 
 	return oText;
 };
@@ -1054,6 +1056,16 @@ CSdtTextFormPr.prototype.WriteToBinary = function(oWriter)
 	{
 		oWriter.WriteBool(false);
 	}
+
+	if (undefined !== this.CombPlaceholderFont)
+	{
+		oWriter.WriteBool(true);
+		oWriter.WriteString2(this.CombPlaceholderFont);
+	}
+	else
+	{
+		oWriter.WriteBool(false);
+	}
 };
 CSdtTextFormPr.prototype.ReadFromBinary = function(oReader)
 {
@@ -1063,6 +1075,9 @@ CSdtTextFormPr.prototype.ReadFromBinary = function(oReader)
 
 	if (oReader.GetBool())
 		this.CombPlaceholderSymbol = oReader.GetLong();
+
+	if (oReader.GetBool())
+		this.CombPlaceholderFont = oReader.GetString2();
 };
 CSdtTextFormPr.prototype.Write_ToBinary = function(oWriter)
 {
