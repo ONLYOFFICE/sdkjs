@@ -348,10 +348,10 @@ CInlineLevelSdt.prototype.Remove = function(nDirection, bOnAddText)
 		if (bOnAddText || !this.Paragraph.LogicDocument.IsFillingFormMode())
 			this.private_ReplacePlaceHolderWithContent();
 
-		return;
+		return true;
 	}
 
-	CParagraphContentWithParagraphLikeContent.prototype.Remove.call(this, nDirection, bOnAddText);
+	var bResult = CParagraphContentWithParagraphLikeContent.prototype.Remove.call(this, nDirection, bOnAddText);
 
 	if (this.Is_Empty()
 		&& this.Paragraph
@@ -362,7 +362,10 @@ CInlineLevelSdt.prototype.Remove = function(nDirection, bOnAddText)
 		|| (this === this.Paragraph.LogicDocument.CheckInlineSdtOnDelete)))
 	{
 		this.private_ReplaceContentWithPlaceHolder();
+		return true;
 	}
+
+	return bResult;
 };
 CInlineLevelSdt.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange)
 {

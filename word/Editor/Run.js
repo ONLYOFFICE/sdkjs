@@ -6605,12 +6605,18 @@ ParaRun.prototype.Get_ParaContentPosByXY = function(SearchPos, Depth, _CurLine, 
 				}
 			}
 
+			if (Item.RGap)
+				TempDx -= Item.RGap;
+
 			SearchPos.CurX += TempDx;
 
 			// Заглушка для знака параграфа и конца строки
 			Diff = SearchPos.X - SearchPos.CurX;
 			if ((Math.abs(Diff) < SearchPos.DiffX + 0.001 && (SearchPos.CenterMode || SearchPos.X > SearchPos.CurX)) && InMathText == false)
 			{
+				if (Item.RGap)
+					Diff = Math.min(Diff, Diff - Item.RGap);
+
 				if (para_End === ItemType)
 				{
 					SearchPos.End = true;
@@ -6630,6 +6636,10 @@ ParaRun.prototype.Get_ParaContentPosByXY = function(SearchPos, Depth, _CurLine, 
 					Result = true;
 				}
 			}
+
+			if (Item.RGap)
+				SearchPos.CurX += Item.RGap;
+
 		}
 	}
 
