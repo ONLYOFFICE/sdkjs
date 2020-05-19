@@ -2475,29 +2475,6 @@ CDocument.prototype.Add_TestDocument               = function()
 
 	this.RecalculateFromStart(true);
 };
-/**
- * Функция для перевода позиции внутри параграфа в специальную позицию используемую в ApiRange. 
- * Если позиция не указана, возвращает ApiRange позицию последнего символа параграфа. 
- * @param {Paragraph} oContentPos
- * @return {number}
- */
-CDocument.prototype.ConvertParaContentPosToRangePos = function(oParagraph, oContentPos)
-{
-	var AllParagraphsList = this.GetAllParagraphs({All : true});
-	var nRangePos = 0;
-
-	for (var nPos = 0; nPos < AllParagraphsList.length; ++nPos)
-	{
-		if (this.Content[nPos].Id !== oParagraph.Id)
-			nRangePos += this.Content[nPos].ConvertParaContentPosToRangePos(null);
-		else if (this.Content[nPos].Id === oParagraph.Id)
-		{
-			nRangePos += this.Content[nPos].ConvertParaContentPosToRangePos(oContentPos);
-			return nRangePos;
-		}
-	}
-	return nRangePos;
-};
 CDocument.prototype.LoadEmptyDocument              = function()
 {
     this.DrawingDocument.TargetStart();
