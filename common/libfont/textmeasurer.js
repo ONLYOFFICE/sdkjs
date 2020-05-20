@@ -107,7 +107,7 @@
             if (theme)
                 this.m_oGrFonts.checkFromTheme(theme.themeElements.fontScheme, this.m_oTextPr.RFonts);
             else
-                this.m_oGrFonts = this.m_oTextPr.RFonts;
+                this.m_oGrFonts.fromRFonts(this.m_oTextPr.RFonts);
         },
 
         SetFontSlot : function(slot, fontSizeKoef)

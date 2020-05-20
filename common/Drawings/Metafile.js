@@ -59,7 +59,19 @@
 			this.EastAsia.Index = -1;
 			this.HAnsi.Index    = -1;
 			this.CS.Index       = -1;
-		}
+		},
+        fromRFonts : function(rFonts)
+        {
+            this.Ascii.Name    = rFonts.Ascii.Name;
+            this.EastAsia.Name = rFonts.EastAsia.Name;
+            this.HAnsi.Name    = rFonts.HAnsi.Name;
+            this.CS.Name       = rFonts.CS.Name;
+
+            this.Ascii.Index    = -1;
+            this.EastAsia.Index = -1;
+            this.HAnsi.Index    = -1;
+            this.CS.Index       = -1;
+        }
 	};
 
 	var gr_state_pen       = 0;
