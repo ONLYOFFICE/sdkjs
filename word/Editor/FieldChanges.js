@@ -81,6 +81,21 @@ CChangesParaFieldAddItem.prototype.Redo = function()
 	oField.private_UpdateTrackRevisions();
 	oField.private_CheckUpdateBookmarks(this.Items);
 	oField.private_UpdateSpellChecking();
+
+	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+	{
+		var oItem = this.Items[nIndex];
+		if (oItem.SetParagraph)
+		{
+			if (oField.GetParagraph)
+				oItem.SetParagraph(oField.GetParagraph());
+			else
+				oItem.SetParagraph(null);
+		}
+
+		if (oItem.SetParent)
+			oItem.SetParent(oField);
+	}
 };
 CChangesParaFieldAddItem.prototype.private_WriteItem = function(Writer, Item)
 {
@@ -153,6 +168,21 @@ CChangesParaFieldRemoveItem.prototype.Undo = function()
 	oField.private_UpdateSpellChecking();
 	oField.private_CheckUpdateBookmarks(this.Items);
 	oField.private_UpdateTrackRevisions();
+
+	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+	{
+		var oItem = this.Items[nIndex];
+		if (oItem.SetParagraph)
+		{
+			if (oField.GetParagraph)
+				oItem.SetParagraph(oField.GetParagraph());
+			else
+				oItem.SetParagraph(null);
+		}
+
+		if (oItem.SetParent)
+			oItem.SetParent(oField);
+	}
 };
 CChangesParaFieldRemoveItem.prototype.Redo = function()
 {
