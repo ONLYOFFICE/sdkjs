@@ -267,7 +267,7 @@
         if (vector_worker)
             _len = Module["HEAP32"][_bufferPtr >> 2];
 
-        var _buffer = new Int32Array(Module["HEAP8"].buffer, _bufferPtr, 4 * _len);
+        var _buffer = new Int32Array(Module["HEAP8"].buffer, _bufferPtr, _len);
 
         var _info = new CGlyphMetrics();
         _info.bbox_xMin     = _buffer[1];
@@ -338,7 +338,7 @@
         if (!_bufferPtr)
             return null;
 
-        var _buffer = new Int32Array(Module["HEAP8"].buffer, _bufferPtr, 24);
+        var _buffer = new Int32Array(Module["HEAP8"].buffer, _bufferPtr, 6);
 
         var _info = new CGlyphBitmapImage();
         _info.left    = _buffer[0];
