@@ -101,6 +101,22 @@
 	ApiRange.prototype.constructor = ApiRange;
 	ApiRange.prototype.private_SetRangePos = function(Start, End)
 	{
+		function callback(oRun)
+		{
+			var nRangePos = 0;
+
+			var nCurPos = oRun.Content.length;
+			
+			for (var nPos = 0; nPos < nCurPos; ++nPos)
+			{
+				if (para_Text === oRun.Content[nPos].Type)
+					nRangePos++;
+			}
+
+			if (nRangePos !== 0)
+				charsCount += nRangePos;
+		};
+
 		if (Start > End)
 		{
 			var temp	= Start;
@@ -118,21 +134,6 @@
 		{
 			this.End 		= 0;
 			var charsCount 	= 0;
-
-			function callback(oRun)
-			{
-				var nRangePos = 0;
-
-				var nCurPos = oRun.Content.length;
-				for (var nPos = 0; nPos < nCurPos; ++nPos)
-				{
-					if (para_Text === oRun.Content[nPos].Type)
-						nRangePos++;
-				}
-
-				if (nRangePos !== 0)
-					charsCount += nRangePos;
-			};
 
 			this.Element.CheckRunContent(callback);
 			
@@ -168,7 +169,7 @@
 				if (para_Text === oRun.Content[nPos].Type)
 					nRangePos++;
 
-				if (StartChar - charsCount === nRangePos - 1 && StartChar - charsCount >= 0)
+				if (StartChar - charsCount === nRangePos - 1 && !isStartDocPosFinded)
 				{
 					var DocPosInRun = 
 					{
@@ -181,8 +182,10 @@
 					DocPos.push(DocPosInRun);
 		
 					StartPos = DocPos;
+
+					isStartDocPosFinded = true;
 				}
-				if (EndChar - charsCount === nRangePos - 1 && StartChar - charsCount >= 0)
+				if (EndChar - charsCount === nRangePos - 1 && !isEndDocPosFinded)
 				{
 					var DocPosInRun = 
 					{
@@ -195,6 +198,8 @@
 					DocPos.push(DocPosInRun);
 		
 					EndPos = DocPos;
+
+					isEndDocPosFinded = true;
 				}
 			}
 
