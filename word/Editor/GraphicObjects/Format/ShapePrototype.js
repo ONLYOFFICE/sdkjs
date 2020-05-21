@@ -757,6 +757,18 @@ CShape.prototype.Refresh_RecalcData = function(data)
     this.recalcTxBoxContent();
     this.recalcTransformText();
     this.Refresh_RecalcData2();
+    if(data && data.Type === AscDFH.historyitem_ShapeSetStyle)
+    {
+        var oContent = this.getDocContent && this.getDocContent();
+        if(oContent)
+        {
+            oContent.Recalc_AllParagraphs_CompiledPr();
+        }
+        if(this.recalcInfo)
+        {
+            this.recalcInfo.recalculateShapeStyleForParagraph = true;
+        }
+    }
 };
 
 CShape.prototype.Refresh_RecalcData2 = function()
