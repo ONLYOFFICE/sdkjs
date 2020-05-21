@@ -2830,8 +2830,14 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 	var oTextForm  = this.GetTextForm();
 	if (oTextForm && oTextForm.Comb)
 	{
-		nCombWidth = oTextForm.Width;
-		nMaxComb   = oTextForm.MaxCharacters;
+		nMaxComb = oTextForm.MaxCharacters;
+
+		if (undefined === oTextForm.Width)
+			nCombWidth = 0;
+		else if (oTextForm.Width < 0)
+			nCombWidth = this.TextAscent * (Math.abs(oTextForm.Width) / 100);
+		else
+			nCombWidth = AscCommon.TwipsToMM(oTextForm.Width);
 
 		if (!nCombWidth || nCombWidth < 0)
 			nCombWidth = this.TextAscent;

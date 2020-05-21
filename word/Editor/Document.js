@@ -22269,7 +22269,7 @@ CDocument.prototype.AddTextForm = function(oPr)
 		oPr.Comb                  = true;
 		oPr.CombPlaceholderSymbol = 0x00B7;//"#".charCodeAt(0);
 		oPr.CombPlaceholderFont   = "Symbol";
-		oPr.Width                 = 5;
+		//oPr.Width                 = 200;
 	}
 
 	this.RemoveSelection();
