@@ -4802,6 +4802,52 @@ CUniFill.prototype =
         }
     },
 
+    Get_TextBackGroundColor: function()
+    {
+        if(!this.fill)
+        {
+            return undefined;
+        }
+        var oColor = undefined, RGBA;
+        switch(this.fill.type)
+        {
+            case c_oAscFill.FILL_TYPE_SOLID:
+            {
+                if(this.fill.color)
+                {
+                    RGBA = this.fill.color.RGBA;
+                    if(RGBA)
+                    {
+                        oColor = new CDocumentColor(RGBA.R, RGBA.G, RGBA.B, false);
+                    }
+                }
+                break;
+            }
+            case c_oAscFill.FILL_TYPE_PATT:
+            {
+                var oClr;
+                if(this.fill.ftype === 38)
+                {
+                    oClr = this.fill.fgClr;
+                }
+                else
+                {
+                    oClr = this.fill.bgClr;
+                }
+                if(oClr)
+                {
+                    RGBA = oClr.RGBA;
+                    if(RGBA)
+                    {
+                        oColor = new CDocumentColor(RGBA.R, RGBA.G, RGBA.B, false);
+                    }
+                }
+                break;
+            }
+        }
+        return oColor;
+    },
+
     checkWordMods: function()
     {
         return this.fill && this.fill.checkWordMods();

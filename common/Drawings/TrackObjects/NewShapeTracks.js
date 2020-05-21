@@ -664,7 +664,10 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
             var fill, ln;
             if(!drawingObjects || !drawingObjects.cSld)
             {
-                shape.setStyle(AscFormat.CreateDefaultTextRectStyle());
+                if(!bFromWord)
+                {
+                    shape.setStyle(AscFormat.CreateDefaultTextRectStyle());
+                }
 
                 fill = new AscFormat.CUniFill();
                 fill.setFill(new AscFormat.CSolidFill());

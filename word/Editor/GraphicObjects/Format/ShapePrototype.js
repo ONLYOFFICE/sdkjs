@@ -1049,7 +1049,17 @@ CShape.prototype.OnContentReDraw = function()
 
 CShape.prototype.Get_TextBackGroundColor = function()
 {
-    return undefined;
+    if(!this.brush)
+    {
+        return undefined;
+    }
+    var oTheme = this.Get_Theme && this.Get_Theme();
+    var oColorMap = this.Get_ColorMap && this.Get_ColorMap();
+    if(oTheme && oColorMap)
+    {
+        this.brush.check(oTheme, oColorMap);
+    }
+    return this.brush.Get_TextBackGroundColor();
 };
 CShape.prototype.documentStatistics = function(stats)
 {
