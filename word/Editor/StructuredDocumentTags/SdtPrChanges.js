@@ -58,7 +58,7 @@ AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Equation]         = CChangesSdtPr
 AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Text]             = CChangesSdtPrText;
 AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Temporary]        = CChangesSdtPrTemporary;
 AscDFH.changesFactory[AscDFH.historyitem_SdtPr_TextForm]         = CChangesSdtPrTextForm;
-
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_FormPr]           = CChangesSdtPrFormPr;
 //----------------------------------------------------------------------------------------------------------------------
 // Карта зависимости изменений
 //----------------------------------------------------------------------------------------------------------------------
@@ -126,6 +126,9 @@ AscDFH.changesRelationMap[AscDFH.historyitem_SdtPr_Temporary] = [
 ];
 AscDFH.changesRelationMap[AscDFH.historyitem_SdtPr_TextForm] = [
 	AscDFH.historyitem_SdtPr_TextForm
+];
+AscDFH.changesRelationMap[AscDFH.historyitem_SdtPr_FormPr] = [
+	AscDFH.historyitem_SdtPr_FormPr
 ];
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -645,4 +648,28 @@ CChangesSdtPrTextForm.prototype.private_SetValue = function(Value)
 CChangesSdtPrTextForm.prototype.private_CreateObject = function()
 {
 	return new CSdtTextFormPr();
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseObjectProperty}
+ */
+function CChangesSdtPrFormPr(Class, Old, New)
+{
+	AscDFH.CChangesBaseObjectProperty.call(this, Class, Old, New);
+}
+CChangesSdtPrFormPr.prototype = Object.create(AscDFH.CChangesBaseObjectProperty.prototype);
+CChangesSdtPrFormPr.prototype.constructor = CChangesSdtPrFormPr;
+CChangesSdtPrFormPr.prototype.Type = AscDFH.historyitem_SdtPr_FormPr;
+CChangesSdtPrFormPr.prototype.private_SetValue = function(Value)
+{
+	this.Class.Pr.FormPr = Value;
+
+	var oLogicDocument = this.Class.GetLogicDocument();
+	if (oLogicDocument)
+		oLogicDocument.RegisterForm(this.Class);
+
+};
+CChangesSdtPrFormPr.prototype.private_CreateObject = function()
+{
+	return new CSdtFormPr();
 };

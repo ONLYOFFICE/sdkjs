@@ -2359,6 +2359,8 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 		isFastCollaboration : false
 	};
 
+	this.SpecialForms = {}; // Список специальных форм в документе
+
 	this.LastBulletList   = undefined; // Последний примененный маркированный список
 	this.LastNumberedList = undefined; // Последний примененный нумерованный список
 
@@ -22296,6 +22298,7 @@ CDocument.prototype.AddTextForm = function(oPr)
 	if (!oCC)
 		return;
 
+	oCC.SetFormPr(new CSdtFormPr());
 	oCC.ApplyTextFormPr(oPr);
 	oCC.MoveCursorToStartPos();
 
@@ -22303,6 +22306,17 @@ CDocument.prototype.AddTextForm = function(oPr)
 	this.UpdateTracks();
 
 	return oCC;
+};
+CDocument.prototype.RegisterForm = function(oForm)
+{
+	if (oForm)
+	{
+		if (oForm.IsForm())
+			this.SpecialForms[oForm.GetId()] = oForm;
+		else
+			delete this.SpecialForms[oForm.GetId()];
+
+	}
 };
 
 function CDocumentSelectionState()

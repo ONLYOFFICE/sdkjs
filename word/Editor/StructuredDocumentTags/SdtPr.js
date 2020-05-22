@@ -81,6 +81,8 @@ function CSdtPr()
 
 	this.Text      = false;
 	this.Temporary = false;
+
+	this.FormPr = undefined;
 }
 
 CSdtPr.prototype.Copy = function()
@@ -1018,7 +1020,7 @@ CSdtDatePickerPr.prototype.GetFormatsExamples = function()
 };
 
 /**
- * Клоасс с настройками для текстовой формы
+ * Клосс с настройками для текстовой формы
  * @constructor
  */
 function CSdtTextFormPr()
@@ -1084,6 +1086,88 @@ CSdtTextFormPr.prototype.Write_ToBinary = function(oWriter)
 	this.WriteToBinary(oWriter);
 };
 CSdtTextFormPr.prototype.Read_FromBinary = function(oReader)
+{
+	this.ReadFromBinary(oReader);
+};
+
+function CSdtFormPr()
+{
+	this.Key      = undefined;
+	this.Label    = undefined;
+	this.HelpText = undefined;
+	this.Required = undefined;
+}
+CSdtFormPr.prototype.Copy = function()
+{
+	var oFormPr = new CSdtFormPr();
+
+	oFormPr.Key      = this.Key;
+	oFormPr.Label    = this.Label;
+	oFormPr.HelpText = this.HelpText;
+	oFormPr.Required = this.Required;
+
+	return oFormPr;
+};
+CSdtFormPr.prototype.IsEqual = function(oOther)
+{
+	return (this.Key === oOther.Key && this.Label === oOther.Label && this.HelpText === oOther.HelpText && this.Required === oOther.Required);
+};
+CSdtFormPr.prototype.WriteToBinary = function(oWriter)
+{
+	var nStartPos = oWriter.GetCurPosition();
+	oWriter.Skip(4);
+	var nFlags = 0;
+
+	if (undefined !== this.Key)
+	{
+		oWriter.WriteString2(this.Key);
+		nFlags |= 1;
+	}
+
+	if (undefined !== this.Label)
+	{
+		oWriter.WriteString2(this.Label);
+		nFlags |= 2;
+	}
+
+	if (undefined !== this.HelpText)
+	{
+		oWriter.WriteString2(this.HelpText);
+		nFlags |= 4;
+	}
+
+	if (undefined !== this.Required)
+	{
+		Writer.WriteBool(this.Required);
+		nFlags |= 8;
+	}
+
+	var nEndPos = oWriter.GetCurPosition();
+	oWriter.Seek(nStartPos);
+	oWriter.WriteLong(nFlags);
+	oWriter.Seek(nEndPos);
+};
+CSdtFormPr.prototype.ReadFromBinary = function(oReader)
+{
+	var nFlags = oReader.GetLong();
+
+	if (nFlags & 1)
+		this.Key = oReader.GetString2();
+
+	if (nFlags & 2)
+		this.Label = oReader.GetString2();
+
+	if (nFlags & 4)
+		this.HelpText = oReader.GetString2();
+
+	if (Flags & 8)
+		this.Required = Reader.GetBool();
+};
+CSdtFormPr.prototype.Write_ToBinary = function(oWriter)
+{
+	this.WriteToBinary(oWriter);
+};
+CSdtFormPr.prototype.Read_FromBinary = function(oReader)
 {
 	this.ReadFromBinary(oReader);
 };

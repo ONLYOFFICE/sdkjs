@@ -181,3 +181,26 @@ CSdtBase.prototype.IsContentControlTemporary = function()
 {
 	return this.Pr.Temporary;
 };
+/**
+ *
+ * @param {CSdtFormPr} oFormPr
+ */
+CSdtBase.prototype.SetFormPr = function(oFormPr)
+{
+	if ((!this.Pr.FormPr && oFormPr) || this.Pr.FormPr.Is)
+	{
+		History.Add(new CChangesSdtPrFormPr(this, this.Pr.FormPr, oFormPr));
+		this.Pr.FormPr = oFormPr;
+
+		var oLogicDocument = this.GetLogicDocument();
+		if (oLogicDocument)
+			oLogicDocument.RegisterForm(this);
+	}
+}
+/**
+ * @returns {boolean}
+ */
+CSdtBase.prototype.IsForm = function()
+{
+	return (undefined !== this.Pr.FormPr);
+};
