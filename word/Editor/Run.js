@@ -1383,6 +1383,8 @@ ParaRun.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
 	if (this.GetTextForm() && this.GetTextForm().Comb)
 		this.RecalcInfo.Measure = true;
 
+	this.private_CheckParentFormKey();
+
 	if (-1 === Pos)
 		Pos = this.Content.length;
 
@@ -1451,12 +1453,16 @@ ParaRun.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
     this.CollaborativeMarks.Update_OnAdd( Pos );
 
     this.RecalcInfo.OnAdd(Pos);
+
+    //if (this.Parent && this.Parent.GetFormKey && this.Parent)
 };
 
 ParaRun.prototype.Remove_FromContent = function(Pos, Count, UpdatePosition)
 {
 	if (this.GetTextForm() && this.GetTextForm().Comb)
 		this.RecalcInfo.Measure = true;
+
+	this.private_CheckParentFormKey();
 
 	for (var nIndex = Pos, nCount = Math.min(Pos + Count, this.Content.length); nIndex < nCount; ++nIndex)
 	{
@@ -1533,6 +1539,8 @@ ParaRun.prototype.Remove_FromContent = function(Pos, Count, UpdatePosition)
  */
 ParaRun.prototype.ConcatToContent = function(arrNewItems)
 {
+	this.private_CheckParentFormKey();
+
 	for (var nIndex = 0, nCount = arrNewItems.length; nIndex < nCount; ++nIndex)
 	{
 		if (arrNewItems[nIndex].SetParent)
@@ -11923,6 +11931,17 @@ ParaRun.prototype.GetTextForm = function()
 		return null;
 
 	return oTextFormPr;
+};
+ParaRun.prototype.private_CheckParentFormKey = function()
+{
+	var sKey = this.Parent instanceof CInlineLevelSdt && this.Parent.IsForm() ? this.Parent.GetFormKey() : null;
+	var oLogicDocument = this.GetLogicDocument();
+	if (sKey && oLogicDocument)
+		oLogicDocument.OnChangeForm(sKey, this.Parent);
+};
+ParaRun.prototype.GetParentForm = function()
+{
+	return (this.Parent instanceof CInlineLevelSdt && this.Parent.IsForm() ? this.Parent : null);
 };
 
 function CParaRunStartState(Run)

@@ -238,14 +238,22 @@ CInlineLevelSdt.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
 {
 	History.Add(new CChangesParaFieldAddItem(this, Pos, [Item]));
 	CParagraphContentWithParagraphLikeContent.prototype.Add_ToContent.apply(this, arguments);
+
+	var sKey = this.GetFormKey();
+	if (sKey)
+		this.GetLogicDocument().OnChangeForm(sKey, this);
 };
 CInlineLevelSdt.prototype.Remove_FromContent = function(Pos, Count, UpdatePosition)
 {
 	// Получим массив удаляемых элементов
 	var DeletedItems = this.Content.slice(Pos, Pos + Count);
 	History.Add(new CChangesParaFieldRemoveItem(this, Pos, DeletedItems));
-
 	CParagraphContentWithParagraphLikeContent.prototype.Remove_FromContent.apply(this, arguments);
+
+	var sKey = this.GetFormKey();
+	if (sKey)
+		this.GetLogicDocument().OnChangeForm(sKey, this);
+
 };
 CInlineLevelSdt.prototype.Split = function (ContentPos, Depth)
 {
@@ -1546,8 +1554,8 @@ CInlineLevelSdt.prototype.ApplyTextFormPr = function(oPr)
 
 	if (this.IsPlaceHolder())
 		this.private_FillPlaceholderContent();
-
-	this.private_UpdateDatePickerContent();
+	else
+		this.private_UpdateTextFormContent();
 };
 CInlineLevelSdt.prototype.private_UpdateTextFormContent = function()
 {
@@ -1557,10 +1565,7 @@ CInlineLevelSdt.prototype.private_UpdateTextFormContent = function()
 	if (this.IsPlaceHolder())
 		this.ReplacePlaceHolderWithContent();
 
-	var oRun = this.MakeSingleRunElement();
-
-	// if (oRun)
-	// 	oRun.AddText(sText);
+	this.MakeSingleRunElement();
 };
 CInlineLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType)
 {

@@ -2911,6 +2911,9 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 	if (this.TrackMoveId)
 		this.private_FinalizeCheckTrackMove();
 
+	if (this.Action.Additional.FormChange)
+		this.private_FinalizeFormChange();
+
 	//------------------------------------------------------------------------------------------------------------------
 
 	var isAllPointsEmpty = true;
@@ -3034,6 +3037,31 @@ CDocument.prototype.private_FinalizeCheckTrackMove = function()
 
 		this.Action.Recalculate = true;
 	}
+};
+CDocument.prototype.private_FinalizeFormChange = function()
+{
+	this.Action.Additional.FormChangeStart = true;
+
+	for (var sKey in this.Action.Additional.FormChange)
+	{
+		var oForm = this.Action.Additional.FormChange[sKey];
+		var sText = oForm.MakeSingleRunElement(false).GetText();
+
+		for (var sId in this.SpecialForms)
+		{
+			var oTempForm = this.SpecialForms[sId];
+			if (oTempForm !== oForm && sKey === oTempForm.GetFormKey())
+			{
+				if (oTempForm.IsPlaceHolder())
+					oTempForm.ReplacePlaceHolderWithContent();
+
+				var oRun = oTempForm.MakeSingleRunElement(true);
+				oRun.AddText(sText);
+			}
+		}
+	}
+
+	delete this.Action.Additional.FormChangeStart;
 };
 /**
  * Данная функция предназначена для отключения пересчета. Это может быть полезно, т.к. редактор всегда запускает
@@ -8446,7 +8474,7 @@ CDocument.prototype.InsertContent = function(SelectedContent, NearPos)
 	}
 	else if (para_Run === LastClass.Type)
 	{
-		if (LastClass.GetTextForm() && LastClass.GetTextForm().MaxCharacters > 0)
+		if (LastClass.GetParentForm())
 		{
 			LastClass.AddText(SelectedContent.GetText({ParaEndToSpace : false}), ParaNearPos.NearPos.ContentPos.Data[ParaNearPos.Classes.length - 1]);
 			return;
@@ -22263,32 +22291,41 @@ CDocument.prototype.AddParaMath = function(nType)
  */
 CDocument.prototype.AddTextForm = function(oPr)
 {
+	var oFormPr;
+	var oTextFormPr;
 	if (!oPr)
 	{
-		oPr = new CSdtTextFormPr();
+		oTextFormPr = new CSdtTextFormPr();
 
-		oPr.MaxCharacters         = 10;
-		oPr.Comb                  = true;
-		oPr.CombPlaceholderSymbol = 0x00B7;//"#".charCodeAt(0);
-		oPr.CombPlaceholderFont   = "Symbol";
-		//oPr.Width                 = 200;
+		oTextFormPr.MaxCharacters         = 10;
+		oTextFormPr.Comb                  = true;
+		oTextFormPr.CombPlaceholderSymbol = 0x00B7;
+		oTextFormPr.CombPlaceholderFont   = "Symbol";
+		oTextFormPr.Width                 = 200;
+
+		oFormPr = new CSdtFormPr();
+	}
+	else
+	{
+		oTextFormPr = new CSdtTextFormPr(oPr.Max, oPr.Comb, oPr.Width, oPr.CombPlaceholderSymbol, oPr.CombPlaceholderFont);
+		oFormPr     = new CSdtFormPr(oPr.Key, oPr.Label, oPr.HelpText, oPr.Required);
 	}
 
 	this.RemoveSelection();
 	var oCC = this.AddContentControl(c_oAscSdtLevelType.Inline);
 
-	if (oPr.Comb)
+	if (oTextFormPr.Comb)
 	{
-		var oDocPart = oCC.SetPlaceholderText(String.fromCharCode(oPr.CombPlaceholderSymbol));
-		if (oDocPart && oPr.CombPlaceholderFont)
+		var oDocPart = oCC.SetPlaceholderText(String.fromCharCode(oTextFormPr.CombPlaceholderSymbol));
+		if (oDocPart && oTextFormPr.CombPlaceholderFont)
 		{
 			oDocPart.SelectAll();
 			oDocPart.AddToParagraph(new ParaTextPr({
 				RFonts : {
-					Ascii    : {Name : oPr.CombPlaceholderFont, Index : -1},
-					EastAsia : {Name : oPr.CombPlaceholderFont, Index : -1},
-					HAnsi    : {Name : oPr.CombPlaceholderFont, Index : -1},
-					CS       : {Name : oPr.CombPlaceholderFont, Index : -1}
+					Ascii    : {Name : oTextFormPr.CombPlaceholderFont, Index : -1},
+					EastAsia : {Name : oTextFormPr.CombPlaceholderFont, Index : -1},
+					HAnsi    : {Name : oTextFormPr.CombPlaceholderFont, Index : -1},
+					CS       : {Name : oTextFormPr.CombPlaceholderFont, Index : -1}
 				}
 			}));
 			oDocPart.RemoveSelection();
@@ -22298,8 +22335,8 @@ CDocument.prototype.AddTextForm = function(oPr)
 	if (!oCC)
 		return;
 
-	oCC.SetFormPr(new CSdtFormPr());
-	oCC.ApplyTextFormPr(oPr);
+	oCC.SetFormPr(oFormPr);
+	oCC.ApplyTextFormPr(oTextFormPr);
 	oCC.MoveCursorToStartPos();
 
 	this.UpdateSelection();
@@ -22307,6 +22344,10 @@ CDocument.prototype.AddTextForm = function(oPr)
 
 	return oCC;
 };
+/**
+ * Регистрируем специальные формы для заполнения
+ * @param oForm
+ */
 CDocument.prototype.RegisterForm = function(oForm)
 {
 	if (oForm)
@@ -22317,6 +22358,25 @@ CDocument.prototype.RegisterForm = function(oForm)
 			delete this.SpecialForms[oForm.GetId()];
 
 	}
+};
+/**
+ * Сохраняем информацию о том, что форма с заданным ключом была изменена
+ * @param {string} sKey
+ * @param {CInlineLevelSdt | CBlockLevelSdt} oForm
+ */
+CDocument.prototype.OnChangeForm = function(sKey, oForm)
+{
+	if (!this.Action.Start || (this.Action.Additional && true === this.Action.Additional.FormChangeStart))
+		return;
+
+	if (!this.Action.Additional.FormChange)
+		this.Action.Additional.FormChange = {};
+
+
+	if (this.Action.Additional.FormChange[sKey])
+		return;
+
+	this.Action.Additional.FormChange[sKey] = oForm;
 };
 
 function CDocumentSelectionState()

@@ -1023,13 +1023,13 @@ CSdtDatePickerPr.prototype.GetFormatsExamples = function()
  * Клосс с настройками для текстовой формы
  * @constructor
  */
-function CSdtTextFormPr()
+function CSdtTextFormPr(nMax, isComb, nWidth, nSymbol, sFont)
 {
-	this.MaxCharacters         = -1;
-	this.Comb                  = false;
-	this.Width                 = -1;
-	this.CombPlaceholderSymbol = undefined;
-	this.CombPlaceholderFont   = undefined;
+	this.MaxCharacters         = undefined !== nMax ? nMax : -1;
+	this.Comb                  = undefined !== isComb ? isComb : false;
+	this.Width                 = nWidth;
+	this.CombPlaceholderSymbol = nSymbol;
+	this.CombPlaceholderFont   = sFont;
 }
 CSdtTextFormPr.prototype.Copy = function()
 {
@@ -1090,12 +1090,12 @@ CSdtTextFormPr.prototype.Read_FromBinary = function(oReader)
 	this.ReadFromBinary(oReader);
 };
 
-function CSdtFormPr()
+function CSdtFormPr(sKey, sLabel, sHelpText, isRequired)
 {
-	this.Key      = undefined;
-	this.Label    = undefined;
-	this.HelpText = undefined;
-	this.Required = undefined;
+	this.Key      = sKey;
+	this.Label    = sLabel;
+	this.HelpText = sHelpText;
+	this.Required = isRequired;
 }
 CSdtFormPr.prototype.Copy = function()
 {
@@ -1160,7 +1160,7 @@ CSdtFormPr.prototype.ReadFromBinary = function(oReader)
 	if (nFlags & 4)
 		this.HelpText = oReader.GetString2();
 
-	if (Flags & 8)
+	if (nFlags & 8)
 		this.Required = Reader.GetBool();
 };
 CSdtFormPr.prototype.Write_ToBinary = function(oWriter)

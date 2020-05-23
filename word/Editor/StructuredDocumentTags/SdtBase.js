@@ -204,3 +204,14 @@ CSdtBase.prototype.IsForm = function()
 {
 	return (undefined !== this.Pr.FormPr);
 };
+/**
+ * Получаем ключ для специальной формы, если он задан
+ * @returns {?string}
+ */
+CSdtBase.prototype.GetFormKey = function()
+{
+	if (!this.IsForm())
+		return undefined;
+
+	return (this.Pr.FormPr.Key);
+};

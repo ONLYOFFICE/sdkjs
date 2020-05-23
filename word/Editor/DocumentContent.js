@@ -4235,9 +4235,9 @@ CDocumentContent.prototype.InsertContent = function(SelectedContent, NearPos)
     }
     else if (para_Run === LastClass.Type)
     {
-		if (LastClass.GetTextForm({ParaEndToSpace : false}) && LastClass.GetTextForm().MaxCharacters > 0)
+		if (LastClass.GetParentForm())
 		{
-			LastClass.AddText(SelectedContent.GetText(), ParaNearPos.NearPos.ContentPos.Data[ParaNearPos.Classes.length - 1]);
+			LastClass.AddText(SelectedContent.GetText({ParaEndToSpace : false}), ParaNearPos.NearPos.ContentPos.Data[ParaNearPos.Classes.length - 1]);
 			return;
 		}
 
