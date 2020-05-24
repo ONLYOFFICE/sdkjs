@@ -589,7 +589,7 @@ CInlineLevelSdt.prototype.SetParagraph = function(oParagraph)
 };
 CInlineLevelSdt.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
 {
-	if (this.IsPlaceHolder() || ApplyToAll || this.IsSelectedAll())
+	if (this.IsPlaceHolder() || ApplyToAll || this.IsSelectedAll() || this.IsDropDownList() || this.IsComboBox() || this.IsCheckBox() || this.IsDatePicker() || this.IsTextForm())
 	{
 		if (undefined !== IncFontSize)
 		{
@@ -674,7 +674,7 @@ CInlineLevelSdt.prototype.private_ReplacePlaceHolderWithContent = function(bMath
 	if (this.IsContentControlTemporary())
 		this.RemoveContentControlWrapper();
 };
-CInlineLevelSdt.prototype.private_ReplaceContentWithPlaceHolder = function()
+CInlineLevelSdt.prototype.private_ReplaceContentWithPlaceHolder = function(isSelect)
 {
 	if (this.IsPlaceHolder())
 		return;
@@ -684,7 +684,9 @@ CInlineLevelSdt.prototype.private_ReplaceContentWithPlaceHolder = function()
 	var isUseSelection = this.IsSelectionUse();
 
 	this.private_FillPlaceholderContent();
-	this.SelectContentControl();
+
+	if (false !== isSelect)
+		this.SelectContentControl();
 
 	if (isUseSelection)
 		this.SelectAll();
@@ -751,9 +753,9 @@ CInlineLevelSdt.prototype.ReplacePlaceHolderWithContent = function(bMathRun)
 {
 	this.private_ReplacePlaceHolderWithContent(bMathRun);
 };
-CInlineLevelSdt.prototype.ReplaceContentWithPlaceHolder = function()
+CInlineLevelSdt.prototype.ReplaceContentWithPlaceHolder = function(isSelect)
 {
-	this.private_ReplaceContentWithPlaceHolder();
+	this.private_ReplaceContentWithPlaceHolder(isSelect);
 };
 //----------------------------------------------------------------------------------------------------------------------
 // Выставление настроек

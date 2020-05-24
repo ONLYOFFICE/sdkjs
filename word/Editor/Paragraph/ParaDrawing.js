@@ -1255,6 +1255,10 @@ ParaDrawing.prototype.Copy = function(oPr)
 		c.Set_ParaMath(this.ParaMath.Copy());
 	return c;
 };
+ParaDrawing.prototype.IsEqual = function(oElement)
+{
+	return false;
+};
 ParaDrawing.prototype.Get_Id = function()
 {
 	return this.Id;

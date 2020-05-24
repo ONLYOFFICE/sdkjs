@@ -11943,6 +11943,46 @@ ParaRun.prototype.GetParentForm = function()
 {
 	return (this.Parent instanceof CInlineLevelSdt && this.Parent.IsForm() ? this.Parent : null);
 };
+ParaRun.prototype.CopyTextFormContent = function(oRun)
+{
+	var nRunLen = oRun.Content.length;
+
+	var oTextForm = this.GetTextForm();
+	if (oTextForm && undefined !== oTextForm.MaxCharacters && oTextForm.MaxCharacters > 0)
+		nRunLen = Math.min(oTextForm.MaxCharacters, nRunLen);
+
+	// Упрощенный вариант сравнения двух контентов. Сравниваем просто начало и конец
+
+	var nStart = 0;
+	var nEnd   = 0;
+
+	var nCount = Math.min(this.Content.length, oRun.Content.length);
+
+	for (var nPos = 0; nPos < nCount; ++nPos)
+	{
+		if (this.Content[nPos].IsEqual(oRun.Content[nPos]))
+			nStart = nPos + 1;
+		else
+			break;
+	}
+
+	nCount -= nStart;
+	for (var nPos = 0; nPos < nCount; ++nPos)
+	{
+		if (this.Content[this.Content.length - 1 - nPos].IsEqual(oRun.Content[nRunLen - 1 - nPos]))
+			nEnd = nPos + 1;
+		else
+			break;
+	}
+
+	if (this.Content.length - nStart - nEnd > 0)
+		this.RemoveFromContent(nStart, this.Content.length - nStart - nEnd);
+
+	for (var nPos = nStart, nEndPos = nRunLen - nEnd; nPos < nEndPos; ++nPos)
+	{
+		this.AddToContent(nPos, oRun.Content[nPos].Copy());
+	}
+};
 
 function CParaRunStartState(Run)
 {

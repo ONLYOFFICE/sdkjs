@@ -3045,18 +3045,28 @@ CDocument.prototype.private_FinalizeFormChange = function()
 	for (var sKey in this.Action.Additional.FormChange)
 	{
 		var oForm = this.Action.Additional.FormChange[sKey];
-		var sText = oForm.MakeSingleRunElement(false).GetText();
+		var isPlaceHolder = oForm.IsPlaceHolder();
+
+		var oSrcRun = !isPlaceHolder ? oForm.MakeSingleRunElement(false) : null;
 
 		for (var sId in this.SpecialForms)
 		{
 			var oTempForm = this.SpecialForms[sId];
 			if (oTempForm !== oForm && sKey === oTempForm.GetFormKey())
 			{
-				if (oTempForm.IsPlaceHolder())
-					oTempForm.ReplacePlaceHolderWithContent();
+				if (isPlaceHolder)
+				{
+					if (!oTempForm.IsPlaceHolder())
+						oTempForm.ReplaceContentWithPlaceHolder(false);
+				}
+				else
+				{
+					if (oTempForm.IsPlaceHolder())
+						oTempForm.ReplacePlaceHolderWithContent();
 
-				var oRun = oTempForm.MakeSingleRunElement(true);
-				oRun.AddText(sText);
+					var oDstRun = oTempForm.MakeSingleRunElement(false);
+					oDstRun.CopyTextFormContent(oSrcRun);
+				}
 			}
 		}
 	}

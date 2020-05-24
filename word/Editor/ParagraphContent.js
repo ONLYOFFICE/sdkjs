@@ -265,6 +265,14 @@ CRunElementBase.prototype.IsDot = function()
 {
 	return false;
 };
+/**
+ * @param {CRunElementBase} oElement
+ * @returns {boolean}
+ */
+CRunElementBase.prototype.IsEqual = function(oElement)
+{
+	return (this.Type === oElement.Type)
+};
 
 /**
  * Класс представляющий текстовый символ
@@ -398,6 +406,10 @@ ParaText.prototype.Can_AddNumbering = function()
 ParaText.prototype.Copy = function()
 {
 	return new ParaText(this.Value);
+};
+ParaText.prototype.IsEqual = function(oElement)
+{
+	return (oElement.Type === this.Type && this.Value === oElement.Value);
 };
 ParaText.prototype.Is_NBSP = function()
 {
@@ -813,6 +825,10 @@ ParaSym.prototype.Can_AddNumbering = function()
 ParaSym.prototype.Copy = function()
 {
 	return new ParaSym(this.Char, this.FontFamily);
+};
+ParaSym.prototype.IsEqual = function(oElement)
+{
+	return (this.Type === oElement.Type && this.Char === oElement.Char && this.FontFamily === oElement.FontFamily);
 };
 ParaSym.prototype.Write_ToBinary = function(Writer)
 {
@@ -1237,6 +1253,10 @@ ParaNewLine.prototype.Can_AddNumbering = function()
 ParaNewLine.prototype.Copy = function()
 {
 	return new ParaNewLine(this.BreakType);
+};
+ParaNewLine.prototype.IsEqual = function(oElement)
+{
+	return (oElement.Type === this.Type && this.BreakType === oElement.BreakType);
 };
 /**
  * Функция проверяет особый случай, когда у нас PageBreak, после которого в параграфе ничего не идет
@@ -1915,6 +1935,10 @@ ParaFootnoteReference.prototype.Copy = function(oPr)
 	oRef.NumFormat = this.NumFormat;
 
 	return oRef;
+};
+ParaFootnoteReference.prototype.IsEqual = function(oElement)
+{
+	return (oElement.Type === this.Type && this.Footnote === oElement.Footnote && oElement.CustomMark === this.CustomMark);
 };
 ParaFootnoteReference.prototype.Write_ToBinary = function(Writer)
 {
