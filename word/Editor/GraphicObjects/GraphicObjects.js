@@ -3067,14 +3067,26 @@ CGraphicObjects.prototype =
                                 this.resetInternalSelection();
                                 var new_x, new_y;
                                // var pos = cur_group.getBoundsPos();
-                                cur_group.updateCoordinatesAfterInternalResize();
+                                var oPos = cur_group.updateCoordinatesAfterInternalResize();
 
-                                new_x = cur_group.x + cur_group.spPr.xfrm.offX;
-                                new_y = cur_group.y + cur_group.spPr.xfrm.offY;
+                                var g_pos_x = 0, g_pos_y = 0;
+                                if(oPos)
+                                {
+                                    if(AscFormat.isRealNumber(oPos.posX))
+                                    {
+                                        g_pos_x = oPos.posX;
+                                    }
+                                    if(AscFormat.isRealNumber(oPos.posY))
+                                    {
+                                        g_pos_y = oPos.posY;
+                                    }
+                                }
+                                new_x = cur_group.x + g_pos_x;
+                                new_y = cur_group.y + g_pos_y;
 
                                 cur_group.spPr.xfrm.setOffX(0);
                                 cur_group.spPr.xfrm.setOffY(0);
-
+                                para_drawing.CheckWH();
                                 para_drawing.Set_XY(new_x, new_y, cur_group.parent.Get_ParentParagraph(), cur_group.selectStartPage, false);//X, Y, Paragraph, PageNum, bResetAlign
                                 this.document.Recalculate();
                                 break;
