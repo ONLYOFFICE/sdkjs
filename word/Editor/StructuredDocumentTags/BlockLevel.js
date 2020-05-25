@@ -1750,6 +1750,10 @@ CBlockLevelSdt.prototype.ToggleCheckBox = function()
 	if (!this.IsCheckBox())
 		return;
 
+	var oLogicDocument = this.GetLogicDocument();
+	if (oLogicDocument || this.IsRadioButton() || this.GetFormKey())
+		oLogicDocument.OnChangeForm(this.IsRadioButton() ? this.Pr.CheckBox.GroupKey : this.GetFormKey(), this);
+
 	var isChecked = !this.Pr.CheckBox.Checked;
 	History.Add(new CChangesSdtPrCheckBoxChecked(this, this.Pr.CheckBox.Checked, isChecked));
 	this.Pr.CheckBox.Checked = isChecked;

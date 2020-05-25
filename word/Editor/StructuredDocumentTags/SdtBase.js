@@ -215,3 +215,11 @@ CSdtBase.prototype.GetFormKey = function()
 
 	return (this.Pr.FormPr.Key);
 };
+/**
+ * Проверяем, является ли заданный контрол радио-кнопкой
+ * @returns {boolean}
+ */
+CSdtBase.prototype.IsRadioButton = function()
+{
+	return !!(this.IsCheckBox() && this.Pr.CheckBox && this.Pr.CheckBox.GroupKey);
+};

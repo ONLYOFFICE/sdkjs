@@ -668,6 +668,7 @@ function CSdtCheckBoxPr()
 	this.UncheckedSymbol = Asc.c_oAscSdtCheckBoxDefaults.UncheckedSymbol;
 	this.CheckedFont     = Asc.c_oAscSdtCheckBoxDefaults.CheckedFont;
 	this.UncheckedFont   = Asc.c_oAscSdtCheckBoxDefaults.UncheckedFont;
+	this.GroupKey        = undefined;
 }
 CSdtCheckBoxPr.prototype.Copy = function()
 {
@@ -678,6 +679,7 @@ CSdtCheckBoxPr.prototype.Copy = function()
 	oCopy.CheckedFont     = this.CheckedFont;
 	oCopy.UncheckedSymbol = this.UncheckedSymbol;
 	oCopy.UncheckedFont   = this.UncheckedFont;
+	oCopy.GroupKey        = this.GroupKey;
 
 	return oCopy;
 };
@@ -688,7 +690,8 @@ CSdtCheckBoxPr.prototype.IsEqual = function(oOther)
 		|| oOther.CheckedSymbol !== this.CheckedSymbol
 		|| oOther.CheckedFont !== this.CheckedFont
 		|| oOther.UncheckedSymbol !== this.UncheckedSymbol
-		|| oOther.UncheckedFont !== this.UncheckedFont)
+		|| oOther.UncheckedFont !== this.UncheckedFont
+		|| oOther.GroupKey !== this.GroupKey)
 		return false;
 
 	return true;
@@ -700,6 +703,16 @@ CSdtCheckBoxPr.prototype.WriteToBinary = function(oWriter)
 	oWriter.WriteLong(this.CheckedSymbol);
 	oWriter.WriteString2(this.UncheckedFont);
 	oWriter.WriteLong(this.UncheckedSymbol);
+
+	if (undefined !== this.GroupKey)
+	{
+		oWriter.WriteBool(true);
+		oWriter.WriteString2(this.GroupKey);
+	}
+	else
+	{
+		oWriter.WriteBool(false);
+	}
 };
 CSdtCheckBoxPr.prototype.ReadFromBinary = function(oReader)
 {
@@ -708,6 +721,9 @@ CSdtCheckBoxPr.prototype.ReadFromBinary = function(oReader)
 	this.CheckedSymbol   = oReader.GetLong();
 	this.UncheckedFont   = oReader.GetString2();
 	this.UncheckedSymbol = oReader.GetLong();
+
+	if (oReader.GetBool())
+		this.GroupKey = oReader.GetString2();
 };
 CSdtCheckBoxPr.prototype.Write_ToBinary = function(oWriter)
 {
@@ -748,6 +764,14 @@ CSdtCheckBoxPr.prototype.GetUncheckedFont = function()
 CSdtCheckBoxPr.prototype.SetUncheckedFont = function(sFont)
 {
 	this.UncheckedFont = sFont;
+};
+CSdtCheckBoxPr.prototype.GetGroupKey = function()
+{
+	return this.GroupKey;
+};
+CSdtCheckBoxPr.prototype.SetGroupKey = function(sKey)
+{
+	this.GroupKey = sKey;
 };
 
 /**
@@ -1171,6 +1195,39 @@ CSdtFormPr.prototype.Read_FromBinary = function(oReader)
 {
 	this.ReadFromBinary(oReader);
 };
+CSdtFormPr.prototype.GetKey = function()
+{
+	return this.Key;
+};
+CSdtFormPr.prototype.SetKey = function(sKey)
+{
+	this.Key = sKey;
+};
+CSdtFormPr.prototype.GetLabel = function()
+{
+	return this.Label;
+};
+CSdtFormPr.prototype.SetLabel = function(sLabel)
+{
+	this.Label = sLabel;
+};
+CSdtFormPr.prototype.GetHelpText = function()
+{
+	return this.HelpText;
+};
+CSdtFormPr.prototype.SetHelpText = function(sText)
+{
+	this.HelpText = sText;
+};
+CSdtFormPr.prototype.GetRequired = function()
+{
+	return this.Required;
+};
+CSdtFormPr.prototype.SetRequired = function(isRequired)
+{
+	this.Required = isRequired;
+};
+
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord']        = window['AscCommonWord'] || {};
@@ -1218,6 +1275,8 @@ CSdtCheckBoxPr.prototype['get_UncheckedSymbol'] = CSdtCheckBoxPr.prototype.GetUn
 CSdtCheckBoxPr.prototype['put_UncheckedSymbol'] = CSdtCheckBoxPr.prototype.SetUncheckedSymbol;
 CSdtCheckBoxPr.prototype['get_UncheckedFont']   = CSdtCheckBoxPr.prototype.GetUncheckedFont;
 CSdtCheckBoxPr.prototype['put_UncheckedFont']   = CSdtCheckBoxPr.prototype.SetUncheckedFont;
+CSdtCheckBoxPr.prototype['get_GroupKey']        = CSdtCheckBoxPr.prototype.GetGroupKey;
+CSdtCheckBoxPr.prototype['put_GroupKey']        = CSdtCheckBoxPr.prototype.SetGroupKey;
 
 window['AscCommon'].CSdtComboBoxPr    = CSdtComboBoxPr;
 window['AscCommon']['CSdtComboBoxPr'] = CSdtComboBoxPr;
@@ -1242,3 +1301,15 @@ CSdtDatePickerPr.prototype['get_Calendar']        = CSdtDatePickerPr.prototype.G
 CSdtDatePickerPr.prototype['put_Calendar']        = CSdtDatePickerPr.prototype.SetCalendar;
 CSdtDatePickerPr.prototype['get_FormatsExamples'] = CSdtDatePickerPr.prototype.GetFormatsExamples;
 CSdtDatePickerPr.prototype['get_String']          = CSdtDatePickerPr.prototype.ToString;
+
+window['AscCommon'].CSdtFormPr    = CSdtFormPr;
+window['AscCommon']['CSdtFormPr'] = CSdtFormPr;
+
+CSdtFormPr.prototype['get_Key']      = CSdtFormPr.prototype.GetKey;
+CSdtFormPr.prototype['put_Key']      = CSdtFormPr.prototype.SetKey;
+CSdtFormPr.prototype['get_Label']    = CSdtFormPr.prototype.GetLabel;
+CSdtFormPr.prototype['put_Label']    = CSdtFormPr.prototype.SetLabel;
+CSdtFormPr.prototype['get_HelpText'] = CSdtFormPr.prototype.GetHelpText;
+CSdtFormPr.prototype['put_HelpText'] = CSdtFormPr.prototype.SetHelpText;
+CSdtFormPr.prototype['get_Required'] = CSdtFormPr.prototype.GetRequired;
+CSdtFormPr.prototype['put_Required'] = CSdtFormPr.prototype.SetRequired;

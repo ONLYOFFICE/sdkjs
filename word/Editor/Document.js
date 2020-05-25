@@ -3045,27 +3045,59 @@ CDocument.prototype.private_FinalizeFormChange = function()
 	for (var sKey in this.Action.Additional.FormChange)
 	{
 		var oForm = this.Action.Additional.FormChange[sKey];
-		var isPlaceHolder = oForm.IsPlaceHolder();
 
-		var oSrcRun = !isPlaceHolder ? oForm.MakeSingleRunElement(false) : null;
-
-		for (var sId in this.SpecialForms)
+		if (oForm.IsCheckBox())
 		{
-			var oTempForm = this.SpecialForms[sId];
-			if (oTempForm !== oForm && sKey === oTempForm.GetFormKey())
+			var isChecked = oForm.GetCheckBoxPr().Checked;
+			if (oForm.IsRadioButton())
 			{
-				if (isPlaceHolder)
+				for (var sId in this.SpecialForms)
 				{
-					if (!oTempForm.IsPlaceHolder())
-						oTempForm.ReplaceContentWithPlaceHolder(false);
+					var oTempForm = this.SpecialForms[sId];
+					if (oTempForm !== oForm && oTempForm.IsRadioButton() && sKey === oTempForm.GetCheckBoxPr().GroupKey)
+					{
+						if (isChecked === oTempForm.GetCheckBoxPr().Checked)
+							oTempForm.ToggleCheckBox();
+					}
 				}
-				else
+			}
+			else
+			{
+				for (var sId in this.SpecialForms)
 				{
-					if (oTempForm.IsPlaceHolder())
-						oTempForm.ReplacePlaceHolderWithContent();
+					var oTempForm = this.SpecialForms[sId];
+					if (oTempForm !== oForm && oTempForm.IsCheckBox() && (!oTempForm.IsRadioButton()) && sKey === oTempForm.GetFormKey())
+					{
+						if (isChecked !== oTempForm.GetCheckBoxPr().Checked)
+							oTempForm.ToggleCheckBox();
+					}
+				}
+			}
+		}
+		else
+		{
+			var isPlaceHolder = oForm.IsPlaceHolder();
 
-					var oDstRun = oTempForm.MakeSingleRunElement(false);
-					oDstRun.CopyTextFormContent(oSrcRun);
+			var oSrcRun = !isPlaceHolder ? oForm.MakeSingleRunElement(false) : null;
+
+			for (var sId in this.SpecialForms)
+			{
+				var oTempForm = this.SpecialForms[sId];
+				if (oTempForm !== oForm && sKey === oTempForm.GetFormKey())
+				{
+					if (isPlaceHolder)
+					{
+						if (!oTempForm.IsPlaceHolder())
+							oTempForm.ReplaceContentWithPlaceHolder(false);
+					}
+					else
+					{
+						if (oTempForm.IsPlaceHolder())
+							oTempForm.ReplacePlaceHolderWithContent();
+
+						var oDstRun = oTempForm.MakeSingleRunElement(false);
+						oDstRun.CopyTextFormContent(oSrcRun);
+					}
 				}
 			}
 		}
@@ -15079,6 +15111,48 @@ CDocument.prototype.AddContentControlDatePicker = function(oPr)
 	return oCC;
 };
 /**
+ * Добавляем специальную текстовую форму
+ * @param oPr {?CSdtTextFormPr}
+ * @returns {CInlineLevelSdt | CBlockLevelSdt | null}
+ */
+CDocument.prototype.AddContentControlTextForm = function(oPr)
+{
+	if (!oPr)
+		oPr = new CSdtTextFormPr();
+
+	this.RemoveSelection();
+	var oCC = this.AddContentControl(c_oAscSdtLevelType.Inline);
+
+	if (oPr.Comb)
+	{
+		var oDocPart = oCC.SetPlaceholderText(String.fromCharCode(oPr.CombPlaceholderSymbol));
+		if (oDocPart && oPr.CombPlaceholderFont)
+		{
+			oDocPart.SelectAll();
+			oDocPart.AddToParagraph(new ParaTextPr({
+				RFonts : {
+					Ascii    : {Name : oPr.CombPlaceholderFont, Index : -1},
+					EastAsia : {Name : oPr.CombPlaceholderFont, Index : -1},
+					HAnsi    : {Name : oPr.CombPlaceholderFont, Index : -1},
+					CS       : {Name : oPr.CombPlaceholderFont, Index : -1}
+				}
+			}));
+			oDocPart.RemoveSelection();
+		}
+	}
+
+	if (!oCC)
+		return null;
+
+	oCC.ApplyTextFormPr(oPr);
+	oCC.MoveCursorToStartPos();
+
+	this.UpdateSelection();
+	this.UpdateTracks();
+
+	return oCC;
+};
+/**
  * Выставляем плейсхолдер для заданного контент контрола
  * @param {string} sText
  * @param {CBlockLevelSdt | CInlineLevelSdt} oCC
@@ -22295,64 +22369,6 @@ CDocument.prototype.AddParaMath = function(nType)
 
 	this.UpdateSelection();
 	this.UpdateInterface();
-};
-/**
- *
- */
-CDocument.prototype.AddTextForm = function(oPr)
-{
-	var oFormPr;
-	var oTextFormPr;
-	if (!oPr)
-	{
-		oTextFormPr = new CSdtTextFormPr();
-
-		oTextFormPr.MaxCharacters         = 10;
-		oTextFormPr.Comb                  = true;
-		oTextFormPr.CombPlaceholderSymbol = 0x00B7;
-		oTextFormPr.CombPlaceholderFont   = "Symbol";
-		oTextFormPr.Width                 = 200;
-
-		oFormPr = new CSdtFormPr();
-	}
-	else
-	{
-		oTextFormPr = new CSdtTextFormPr(oPr.Max, oPr.Comb, oPr.Width, oPr.CombPlaceholderSymbol, oPr.CombPlaceholderFont);
-		oFormPr     = new CSdtFormPr(oPr.Key, oPr.Label, oPr.HelpText, oPr.Required);
-	}
-
-	this.RemoveSelection();
-	var oCC = this.AddContentControl(c_oAscSdtLevelType.Inline);
-
-	if (oTextFormPr.Comb)
-	{
-		var oDocPart = oCC.SetPlaceholderText(String.fromCharCode(oTextFormPr.CombPlaceholderSymbol));
-		if (oDocPart && oTextFormPr.CombPlaceholderFont)
-		{
-			oDocPart.SelectAll();
-			oDocPart.AddToParagraph(new ParaTextPr({
-				RFonts : {
-					Ascii    : {Name : oTextFormPr.CombPlaceholderFont, Index : -1},
-					EastAsia : {Name : oTextFormPr.CombPlaceholderFont, Index : -1},
-					HAnsi    : {Name : oTextFormPr.CombPlaceholderFont, Index : -1},
-					CS       : {Name : oTextFormPr.CombPlaceholderFont, Index : -1}
-				}
-			}));
-			oDocPart.RemoveSelection();
-		}
-	}
-
-	if (!oCC)
-		return;
-
-	oCC.SetFormPr(oFormPr);
-	oCC.ApplyTextFormPr(oTextFormPr);
-	oCC.MoveCursorToStartPos();
-
-	this.UpdateSelection();
-	this.UpdateTracks();
-
-	return oCC;
 };
 /**
  * Регистрируем специальные формы для заполнения
