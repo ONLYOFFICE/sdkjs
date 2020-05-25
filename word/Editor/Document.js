@@ -3056,8 +3056,8 @@ CDocument.prototype.private_FinalizeFormChange = function()
 					var oTempForm = this.SpecialForms[sId];
 					if (oTempForm !== oForm && oTempForm.IsRadioButton() && sKey === oTempForm.GetCheckBoxPr().GroupKey)
 					{
-						if (isChecked === oTempForm.GetCheckBoxPr().Checked)
-							oTempForm.ToggleCheckBox();
+						if (oTempForm.GetCheckBoxPr().Checked)
+							oTempForm.SetCheckBoxChecked(false);
 					}
 				}
 			}
