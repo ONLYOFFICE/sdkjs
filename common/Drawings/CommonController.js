@@ -3733,9 +3733,19 @@ DrawingObjectsController.prototype =
 
         if(typeof props.ImageUrl === "string" && props.ImageUrl.length > 0)
         {
+            var oImg;
             for(i = 0; i < objects_by_type.images.length; ++i)
             {
-                objects_by_type.images[i].setBlipFill(CreateBlipFillRasterImageId(props.ImageUrl));
+                oImg = objects_by_type.images[i];
+                oImg.setBlipFill(CreateBlipFillRasterImageId(props.ImageUrl));
+                if(oImg.parent instanceof ParaDrawing)
+                {
+                    var oRun = oImg.parent.GetRun();
+                    if(oRun)
+                    {
+                        oRun.CheckParentFormKey(props.ImageUrl)
+                    }
+                }
             }
         }
         if(props.resetCrop)
