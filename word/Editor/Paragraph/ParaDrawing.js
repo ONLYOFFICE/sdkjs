@@ -2893,6 +2893,14 @@ ParaDrawing.prototype.IsPicture = function()
 {
 	return (this.GraphicObj.getObjectType() === AscDFH.historyitem_type_ImageShape);
 };
+/**
+ * Получаем объект картинки, если автофигура является картинкой
+ * @returns {?CImageShape}
+ */
+ParaDrawing.prototype.GetPicture = function()
+{
+	return this.GraphicObj.getObjectType() === AscDFH.historyitem_type_ImageShape ? this.GraphicObj : null;
+};
 
 /**
  * Класс, описывающий текущее положение параграфа при рассчете позиции автофигуры.
