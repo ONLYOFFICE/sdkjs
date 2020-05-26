@@ -8890,10 +8890,6 @@ background-repeat: no-repeat;\
 					}
 					oApi.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_ApplyImagePrWithUrl);
 					oApi.WordControl.m_oLogicDocument.SetImageProps(oImagePr);
-
-					if (oCC && oCC.GetFormKey() && oImagePr.ImageUrl)
-						oApi.WordControl.m_oLogicDocument.OnChangeForm(oCC.GetFormKey(), oCC, oImagePr.ImageUrl);
-
 					oApi.WordControl.m_oLogicDocument.UpdateTracks();
 					oApi.WordControl.m_oLogicDocument.FinalizeAction();
 				};
