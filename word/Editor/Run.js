@@ -1383,7 +1383,7 @@ ParaRun.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
 	if (this.GetTextForm() && this.GetTextForm().Comb)
 		this.RecalcInfo.Measure = true;
 
-	this.private_CheckParentFormKey();
+	this.CheckParentFormKey();
 
 	if (-1 === Pos)
 		Pos = this.Content.length;
@@ -1462,7 +1462,7 @@ ParaRun.prototype.Remove_FromContent = function(Pos, Count, UpdatePosition)
 	if (this.GetTextForm() && this.GetTextForm().Comb)
 		this.RecalcInfo.Measure = true;
 
-	this.private_CheckParentFormKey();
+	this.CheckParentFormKey();
 
 	for (var nIndex = Pos, nCount = Math.min(Pos + Count, this.Content.length); nIndex < nCount; ++nIndex)
 	{
@@ -1539,7 +1539,7 @@ ParaRun.prototype.Remove_FromContent = function(Pos, Count, UpdatePosition)
  */
 ParaRun.prototype.ConcatToContent = function(arrNewItems)
 {
-	this.private_CheckParentFormKey();
+	this.CheckParentFormKey();
 
 	for (var nIndex = 0, nCount = arrNewItems.length; nIndex < nCount; ++nIndex)
 	{
@@ -11932,12 +11932,12 @@ ParaRun.prototype.GetTextForm = function()
 
 	return oTextFormPr;
 };
-ParaRun.prototype.private_CheckParentFormKey = function()
+ParaRun.prototype.CheckParentFormKey = function(oPr)
 {
 	var sKey = this.Parent instanceof CInlineLevelSdt && this.Parent.IsForm() ? this.Parent.GetFormKey() : null;
 	var oLogicDocument = this.GetLogicDocument();
 	if (sKey && oLogicDocument)
-		oLogicDocument.OnChangeForm(sKey, this.Parent);
+		oLogicDocument.OnChangeForm(sKey, this.Parent, oPr);
 };
 ParaRun.prototype.GetParentForm = function()
 {
