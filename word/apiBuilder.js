@@ -6394,7 +6394,6 @@
 					for (var nCurCell = 0, nCellsCount = oRow.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
 					{
 						var oCell = oRow.GetCell(nCurCell);
-
 						if (oCell.IsMergedCell())
 							continue;
 
@@ -6403,7 +6402,7 @@
 				}
 			}
 
-			var viewAbsPage	= nTempPageAbs;
+			viewAbsPage	= nTempPageAbs;
 		}
 
 		for (var Index = 0; Index < arrTables.length; Index++)
