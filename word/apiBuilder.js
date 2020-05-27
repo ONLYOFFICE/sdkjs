@@ -210,17 +210,17 @@
 		if (this.Element instanceof CDocument || this.Element instanceof CTable || this.Element instanceof CBlockLevelSdt)
 		{
 			var allParagraphs	= [];
-			allParagraphs		= this.Element.GetAllParagraphs({OnlyMainDocument : true, All : true}, allParagraphs);
+			this.Element.GetAllParagraphs({OnlyMainDocument : true, All : true}, allParagraphs);
 
 			for (var paraItem = 0; paraItem < allParagraphs.length; paraItem++)
 			{
-				if (!isStartDocPosFinded && !isEndDocPosFinded)
-					allParagraphs[paraItem].CheckRunContent(callback);
-				else 
+				if (isStartDocPosFinded && isEndDocPosFinded)
 					break;
+				else 
+					allParagraphs[paraItem].CheckRunContent(callback);
 
-				this.StartPos	= StartPos;
-				this.EndPos		= EndPos;
+					this.StartPos	= StartPos;
+					this.EndPos		= EndPos;
 			}
 		}
 		else if (this.Element instanceof Paragraph || this.Element instanceof ParaHyperlink || this.Element instanceof CInlineLevelSdt)
@@ -470,6 +470,7 @@
 	};
 	/**
 	 * Set the selection to the specified range.
+	 * @param {bool} [bUpdate = true]
 	 * @typeofeditors ["CDE"]
 	 */	
 	ApiRange.prototype.SetSelection = function(bUpdate)
@@ -3589,12 +3590,12 @@
 	{
 		if (isMatchCase === undefined)
 			isMatchCase	= false;
-
-		var docSearchEngine	= this.Document.Search(sText, {MatchCase : isMatchCase});
+		
 		var foundItems 		= [];
 		var arrApiRanges	= [];
-		var docSearchEngineElementsLenght = 0;
+		var docSearchEngine	= this.Document.Search(sText, {MatchCase : isMatchCase});
 
+		var docSearchEngineElementsLenght = 0;
 		for (var FoundId in docSearchEngine.Elements)
 			docSearchEngineElementsLenght++;
 
@@ -3880,7 +3881,10 @@
 		var PosInDocument = parentOfElement.Content.indexOf(this.Paragraph);
 
 		if (PosInDocument !== - 1)
+		{
+			this.Paragraph.PreDelete();
 			parentOfElement.Remove_FromContent(PosInDocument, 1, true);
+		}
 		else 
 			return false;
 	};
@@ -4122,9 +4126,11 @@
 			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
 		}
 
-		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
+		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, false);
+		this.Paragraph.Set_ApplyToAll(true);
 		this.Paragraph.MoveCursorToStartPos();
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Bold : isBold}));
+		this.Paragraph.Set_ApplyToAll(false);
 		
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
@@ -4151,9 +4157,10 @@
 		}
 
 		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
+		this.Paragraph.Set_ApplyToAll(true);
 		this.Paragraph.MoveCursorToStartPos();
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Caps : isCaps}));
-
+		this.Paragraph.Set_ApplyToAll(false);
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
 		
@@ -4188,6 +4195,7 @@
 		}
 
 		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
+		this.Paragraph.Set_ApplyToAll(true);
 		this.Paragraph.MoveCursorToStartPos();
 
 		if (true === color.Auto)
@@ -4208,6 +4216,7 @@
 			Unifill.fill.color = AscFormat.CorrectUniColor(color, Unifill.fill.color, 1);
 			this.Paragraph.Add(new AscCommonWord.ParaTextPr({Unifill : Unifill}));
 		}
+		this.Paragraph.Set_ApplyToAll(false);
 
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
@@ -4234,8 +4243,10 @@
 		}
 
 		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
+		this.Paragraph.Set_ApplyToAll(true);
 		this.Paragraph.MoveCursorToStartPos();
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({DStrikeout : isDoubleStrikeout}));
+		this.Paragraph.Set_ApplyToAll(false);
 
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
@@ -4276,9 +4287,10 @@
 			}
 
 			this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
+			this.Paragraph.Set_ApplyToAll(true);
 			this.Paragraph.MoveCursorToStartPos();
-			
 			this.Paragraph.Add(new AscCommonWord.ParaTextPr({FontFamily : FontFamily}));
+			this.Paragraph.Set_ApplyToAll(false);
 
 			Document.LoadDocumentState(oldSelectionInfo);
 			Document.UpdateSelection();
@@ -4308,8 +4320,10 @@
 		}
 
 		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
+		this.Paragraph.Set_ApplyToAll(true);
 		this.Paragraph.MoveCursorToStartPos();
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({FontSize : nSize}));
+		this.Paragraph.Set_ApplyToAll(false);
 
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
@@ -4339,6 +4353,7 @@
 		}
 
 		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
+		this.Paragraph.Set_ApplyToAll(true);
 		this.Paragraph.MoveCursorToStartPos();
 
 		if (true === isNone)
@@ -4350,6 +4365,7 @@
 			var color = new CDocumentColor(r, g, b);
 			this.Paragraph.Add(new ParaTextPr({HighLight : color}));
 		}
+		this.Paragraph.Set_ApplyToAll(false);
 
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
@@ -4376,8 +4392,10 @@
 		}
 
 		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
+		this.Paragraph.Set_ApplyToAll(true);
 		this.Paragraph.MoveCursorToStartPos();
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Italic : isItalic}));
+		this.Paragraph.Set_ApplyToAll(false);
 
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
@@ -4406,8 +4424,10 @@
 		}
 
 		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
+		this.Paragraph.Set_ApplyToAll(true);
 		this.Paragraph.MoveCursorToStartPos();
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Position : nPosition}));
+		this.Paragraph.Set_ApplyToAll(false);
 
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
@@ -4443,6 +4463,7 @@
 		}
 
 		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
+		this.Paragraph.Set_ApplyToAll(true);
 		this.Paragraph.MoveCursorToStartPos();
 
 		var Shd = new CDocumentShd();
@@ -4471,6 +4492,7 @@
 			Shd.Set_FromObject(_Shd);
 			this.Paragraph.SetParagraphShd(_Shd);
 		}
+		this.Paragraph.Set_ApplyToAll(false);
 
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
@@ -4498,12 +4520,13 @@
 		}
 
 		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
+		this.Paragraph.Set_ApplyToAll(true);
 		this.Paragraph.MoveCursorToStartPos();
-
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({
 			SmallCaps : isSmallCaps,
 			Caps      : false
 		}));
+		this.Paragraph.Set_ApplyToAll(false);
 
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
@@ -4530,8 +4553,10 @@
 		}
 
 		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
+		this.Paragraph.Set_ApplyToAll(true);
 		this.Paragraph.MoveCursorToStartPos();
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Spacing : nSpacing}));
+		this.Paragraph.Set_ApplyToAll(false);
 
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
@@ -4558,13 +4583,14 @@
 		}
 
 		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
+		this.Paragraph.Set_ApplyToAll(true);
 		this.Paragraph.MoveCursorToStartPos();
-
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({
 			Strikeout  : isStrikeout,
 			DStrikeout : false
 			}));
-
+		this.Paragraph.Set_ApplyToAll(false);
+		
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
 		
@@ -4595,8 +4621,10 @@
 		}
 
 		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
+		this.Paragraph.Set_ApplyToAll(true);
 		this.Paragraph.MoveCursorToStartPos();
 		this.Paragraph.SetParagraphStyle(styleName);
+		this.Paragraph.Set_ApplyToAll(false);
 
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
@@ -4624,8 +4652,10 @@
 		}
 
 		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
+		this.Paragraph.Set_ApplyToAll(true);
 		this.Paragraph.MoveCursorToStartPos();
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Underline : isUnderline}));
+		this.Paragraph.Set_ApplyToAll(false);
 
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
@@ -4666,8 +4696,10 @@
 		}
 
 		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
+		this.Paragraph.Set_ApplyToAll(true);
 		this.Paragraph.MoveCursorToStartPos();
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({VertAlign : value}));
+		this.Paragraph.Set_ApplyToAll(false);
 
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
@@ -4782,7 +4814,7 @@
 	/**
 	 * Gets the content control that contains the paragraph.
 	 * @typeofeditors ["CDE"]
-	 * @return {ApiBlockLvlSdt | ApiInlineLvlSdt}  
+	 * @return {ApiBlockLvlSdt}  
 	 */
 	ApiParagraph.prototype.GetParentContentControl = function()
 	{
@@ -4793,9 +4825,6 @@
 			if (ParaPosition[Index].Class.Parent)
 				if (ParaPosition[Index].Class.Parent instanceof CBlockLevelSdt)
 					return new ApiBlockLvlSdt(ParaPosition[Index].Class.Parent);
-			else if (ParaPosition[Index].Class.Parent)
-				if (ParaPosition[Index].Class.Parent instanceof CInlineLevelSdt)
-					return new ApiInlineLvlSdt(ParaPosition[Index].Class.Parent);
 		}
 
 		return false;
@@ -4865,7 +4894,9 @@
 	 */
 	ApiParagraph.prototype.SetTextPr = function(oTextPr)
 	{
+		this.Paragraph.Set_ApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr(oTextPr.TextPr));
+		this.Paragraph.Set_ApplyToAll(false);
 
 		return this.GetTextPr();
 	};
@@ -4889,37 +4920,35 @@
 	ApiParagraph.prototype.InsertInContentControl = function(nType)
 	{
 		var Document = private_GetLogicDocument();
-
-		var Para = this.Copy();
 		var ContentControl = null;
 
-		this.RemoveAllElements();
-
-		var paraParent	= this.Paragraph.GetParent();
 		var paraIndex	= this.Paragraph.Index;
-
 		if (paraIndex >= 0)
 		{
-			paraParent.CurPos.ContentPos = paraIndex;
-			this.Paragraph.MoveCursorToStartPos();
-			ContentControl = new ApiBlockLvlSdt(paraParent.AddContentControl(1));
-			ContentControl.Sdt.Content.RemoveFromContent(0, ContentControl.Sdt.Content.GetElementsCount(), false);
-			ContentControl.Sdt.Content.AddToContent(0, Para.Paragraph);
-			ContentControl.Sdt.SetShowingPlcHdr(false);
-			this.Delete();
+			var oldSelectionInfo = Document.SaveDocumentState();
+			for (var Index = 0; Index < TrackedPositions.length; Index++)
+			{
+				Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
+			}
+			this.SetSelection(true);
+			ContentControl = new ApiBlockLvlSdt(Document.AddContentControl(1));
+
+			Document.LoadDocumentState(oldSelectionInfo);
+			Document.UpdateSelection();
 		}
 		else 
 		{
-			ContentControl = new ApiBlockLvlSdt(new CBlockLevelSdt(Document, Document))
+			ContentControl = new ApiBlockLvlSdt(new CBlockLevelSdt(Document, Document));
+			ContentControl.Sdt.SetDefaultTextPr(Document.GetDirectTextPr());
 			ContentControl.Sdt.Content.RemoveFromContent(0, ContentControl.Sdt.Content.GetElementsCount(), false);
-			ContentControl.Sdt.Content.AddToContent(0, Para.Paragraph);
+			ContentControl.Sdt.Content.AddToContent(0, this.Paragraph);
 			ContentControl.Sdt.SetShowingPlcHdr(false);
 		}
 
 		if (nType === 1)
 			return ContentControl;
 		else 
-			return Para;
+			return this;
 	};
 	/**
 	 * Inserts a paragraph at the specified position.
@@ -4974,17 +5003,42 @@
 	{
 		var Document = private_GetLogicDocument();
 		
-		var StartPos	= this.Paragraph.GetFirstRun().GetDocumentPositionFromObject();
-		var EndPos		= this.Paragraph.Content[this.Paragraph.Content.length - 2].GetDocumentPositionFromObject();
+		var StartRun	= this.Paragraph.GetFirstRun();
+		var StartPos	= StartRun.GetDocumentPositionFromObject();
+		var EndRun		= this.Paragraph.Content[this.Paragraph.Content.length - 1];
+		var EndPos		= EndRun.GetDocumentPositionFromObject();
+		
+		StartPos.push({Class: StartRun, Position: 0});
+		EndPos.push({Class: EndRun, Position: 1});
 
-		if (StartPos[0].Position !== -1)
+		if (StartPos[0].Position === - 1)
+			return false;
+
+		StartPos[0].Class.SetSelectionByContentPositions(StartPos, EndPos);
+
+		var controllerType = null;
+
+		if (StartPos[0].Class.IsHdrFtr())
 		{
-			oDocument.SetContentSelection(StartPos, EndPos, 0, 1, -1);
-			Document.UpdateSelection();
-			return true;
+			controllerType = docpostype_HdrFtr;
+		}
+		else if (StartPos[0].Class.IsFootnote())
+		{
+			controllerType = docpostype_Footnotes;
+		}
+		else if (StartPos[0].Class.Is_DrawingShape())
+		{
+			controllerType = docpostype_DrawingObjects;
 		}
 		else 
-			return false;		
+		{
+			controllerType = docpostype_Content;
+		}
+		
+		Document.SetDocPosType(controllerType);
+		Document.UpdateSelection();
+
+		return true;	
 	};
 	/**
 	 * Searches for the scope of a paragraph object. The search results are a collection of ApiRange objects.
@@ -5080,56 +5134,12 @@
 		var PosInParent = parentOfElement.Content.indexOf(this.Run);
 
 		if (PosInParent !== - 1)
+		{
+			this.Run.PreDelete();
 			parentOfElement.Remove_FromContent(PosInParent, 1, true);
+		}
 		else 
 			return false;
-	};
-	/**
-	 * Delete current run.
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 */
-	ApiRun.prototype.GetNext = function()
-	{
-		var PosInParent		= null;
-		var parentOfElement = this.Run.Get_Parent();
-
-		if (parentOfElement)
-			PosInParent = parentOfElement.Content.indexOf(this.Run);
-
-		if (PosInParent !== null)
-		{
-			for (var Index = PosInParent + 1; Index < parentOfElement.Content.length; Index++)
-			{
-				var newElement = parentOfElement.Content[Index];
-
-				if (newElement !== undefined && newElement instanceof ParaRun)
-				{
-					if (newElement.Content.length !== 0)
-						return new ApiRun(newElement); 
-				}
-					
-			}
-		}
-	};
-	/**
-	 * Delete current run.
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 */
-	ApiRun.prototype.GetPrevious = function()
-	{
-		var PosInParent		= null;
-		var parentOfElement = this.Run.Get_Parent();
-
-		if (parentOfElement)
-			PosInParent = parentOfElement.Content.indexOf(this.Run);
-
-		if (PosInParent !== null)
-		{
-			for (var Index = PosInParent; Index < parentOfElement.Content.length; Index++)
-			{
-				
-			}
-		}
 	};
 	/**
 	 * Add some text to this run.
@@ -5216,6 +5226,64 @@
 
 		return Range;
 	};
+	    /**
+     * Gets the content control that contains the run.
+     * @typeofeditors ["CDE"]
+     * @return {ApiBlockLvlSdt | ApiInlineLvlSdt}  
+     */
+    ApiRun.prototype.GetParentContentControl = function()
+    {
+        var RunPosition = this.Run.GetDocumentPositionFromObject();
+
+        for (var Index = RunPosition.length - 1; Index >= 1; Index--)
+        {
+            if (RunPosition[Index].Class.Parent)
+            {
+                if (RunPosition[Index].Class.Parent instanceof CBlockLevelSdt)
+                    return new ApiBlockLvlSdt(RunPosition[Index].Class.Parent);
+                else if (RunPosition[Index].Class.Parent instanceof CInlineLevelSdt)
+                    return new ApiInlineLvlSdt(RunPosition[Index].Class.Parent);
+            }
+        }
+
+        return false;
+    };
+    /**
+     * Gets the table that contains the run.
+     * @typeofeditors ["CDE"]
+     * @return {ApiTable}  
+     */
+    ApiRun.prototype.GetParentTable = function()
+    {
+        var documentPos = this.Run.GetDocumentPositionFromObject();
+
+        for (var Index = documentPos.length - 1; Index >= 1; Index--)
+        {
+            if (documentPos[Index].Class)
+                if (documentPos[Index].Class instanceof CTable)
+                    return new ApiTable(documentPos[Index].Class);
+        }
+
+        return false;
+    };
+    /**
+     * Gets the table cell that contains the run.
+     * @typeofeditors ["CDE"]
+     * @return {ApiTableCell}  
+     */
+    ApiRun.prototype.GetParentTableCell = function()
+    {
+        var documentPos = this.Run.GetDocumentPositionFromObject();
+
+        for (var Index = documentPos.length - 1; Index >= 1; Index--)
+        {
+            if (documentPos[Index].Class.Parent)
+                if (documentPos[Index].Class.Parent instanceof CTableCell)
+                    return new ApiTableCell(documentPos[Index].Class.Parent);
+        }
+
+        return false;
+    };
 	/**
 	 * Sets text properties of the paragraph.
 	 * @param {ApiTextPr} oTextPr
@@ -5707,13 +5775,14 @@
 	{
 		var oDocument		= editor.GetDocument();
 		var arrApiSections	= oDocument.GetSections();
-
 		var sectionIndex	= arrApiSections.indexOf(this);
 		
 		if (sectionIndex !== - 1 && arrApiSections[sectionIndex + 1])
 		{
 			return arrApiSections[sectionIndex + 1];
 		}
+
+		return null;
 	};
 	/**
 	 * Gets preious sections if exists.
@@ -5723,13 +5792,14 @@
 	{
 		var oDocument		= editor.GetDocument();
 		var arrApiSections	= oDocument.GetSections();
-
 		var sectionIndex	= arrApiSections.indexOf(this);
 		
 		if (sectionIndex !== - 1 && arrApiSections[sectionIndex - 1])
 		{
 			return arrApiSections[sectionIndex - 1];
 		}
+
+		return null;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -5766,6 +5836,24 @@
 			return null;
 
 		return new ApiTableRow(this.Table.Content[nPos]);
+	};
+	/**
+	 * Get the cell by its position.
+	 * @typeofeditors ["CDE"]
+	 * @param {number} nRow - The row position in the current table.
+	 * @param {number} Cell - The cell position in the current table.
+	 * @returns {ApiTableCell}
+	 */
+	ApiTable.prototype.GetCell = function(nRow, nCell)
+	{
+		var Row = this.Table.GetRow(nRow);
+
+		if (Row && nCell >= 0 && nCell <= Row.Content.length)
+		{
+			return new ApiTableCell(Row.GetCell(nCell));
+		}
+		else 
+			return null;
 	};
 	/**
 	 * Merge an array of cells. If the merge is done successfully it will return the resulting merged cell, otherwise the result will be "null".
@@ -5864,6 +5952,47 @@
 		this.Table.Set_TableLook(oTableLook);
 	};
 	/**
+	 * Split the cell into a given number of rows and columns.
+	 * @typeofeditors ["CDE"]
+	 * @param {ApiTableCell} [oCell] - The cell which be split.
+	 * @param {Number} [nRow=1] - count of rows which the cell will be split.
+	 * @param {Number} [nCol=1] - count of columns which the cell will be split.
+	 * @returns {ApiTable}
+	 */
+	ApiTable.prototype.Split = function(oCell, nRow, nCol)
+	{
+		if (nRow == undefined)
+			nRow = 1;
+		if (nCol == undefined)
+			nCol = 1;
+		if(!(oCell instanceof ApiTableCell) || nCol <= 0 || nRow <= 0)
+			return false;
+		var CellVMergeCount = this.Table.GetVMergeCount(oCell.Cell.GetIndex(), oCell.Cell.Row.GetIndex());
+		if(CellVMergeCount > 1 && CellVMergeCount < nRow)
+			return false;
+
+		var Grid_start = oCell.Cell.GetRow().Get_CellInfo( oCell.Cell.GetIndex()).StartGridCol;
+		var Grid_span  = oCell.Cell.Get_GridSpan();
+		var Sum_before = this.Table.TableSumGrid[Grid_start - 1];
+		var Sum_with   = this.Table.TableSumGrid[Grid_start + Grid_span - 1];
+		var Span_width = Sum_with - Sum_before;
+		var Grid_width = Span_width / nCol;
+
+		var CellSpacing = oCell.Cell.GetRow().Get_CellSpacing();
+		var CellMar     = oCell.Cell.GetMargins();
+
+		var MinW = CellSpacing + CellMar.Right.W + CellMar.Left.W;
+
+		if (Grid_width < MinW)
+			return false;
+
+		this.Table.RemoveSelection();
+		this.Table.Set_CurCell(oCell.Cell);
+		this.Table.SplitTableCells(nCol, nRow);
+
+		return this;
+	};
+	/**
 	 * Add a new row to the current table.
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiTableCell} [oCell] - The cell after which the new row will be added. If not specified the new row will
@@ -5898,6 +6027,25 @@
 		return new ApiTableRow(this.Table.Content[nRowIndex]);
 	};
 	/**
+	 * Add a new rows to the current table.
+	 * @typeofeditors ["CDE"]
+	 * @param {ApiTableCell} [oCell] - The cell after which the new rows will be added. If not specified the new rows will
+	 * be added at the end of the table.
+	 * @param {Number} nCount - count of rows to be added.
+	 * @param {boolean} [isBefore=false] - Add a new rows before or after the specified cell. If no cell is specified then
+	 * this parameter will be ignored.
+	 * @returns {ApiTable}
+	 */
+	ApiTable.prototype.AddRows = function(oCell, nCount, isBefore)
+	{
+		for (var Index = 0; Index < nCount; Index++)
+		{
+			this.AddRow(oCell, isBefore);
+		}
+
+		return this;
+	};
+	/**
 	 * Add a new column to the current table.
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiTableCell} [oCell] - The cell after which the new column will be added. If not specified the new column will be added at the end of the table.
@@ -5925,6 +6073,23 @@
 		this.Table.AddTableColumn(_isBefore);
 
 		private_EndSilentMode();
+	};
+	/**
+	 * Add a new columns to the current table.
+	 * @typeofeditors ["CDE"]
+	 * @param {ApiTableCell} [oCell] - The cell after which the new columns will be added. If not specified the new columns will be added at the end of the table.
+	 * @param {Number} nCount - count of columns to be added
+	 * @param {boolean} [isBefore=false] - Add a new columns before or after the specified cell. If no cell is specified
+	 * then this parameter will be ignored.
+	 */
+	ApiTable.prototype.AddColumns = function(oCell, nCount, isBefore)
+	{
+		for (var Index = 0; Index < nCount; Index++)
+		{
+			this.AddColumn(oCell, isBefore);
+		}
+
+		return this;
 	};
 	/**
 	 * Remove the table row with a specified cell.
@@ -5979,6 +6144,44 @@
 		return new ApiTable(oTable);
 	};
 	/**
+	 * Select a table.
+	 * @returns {bool}
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 */
+	ApiTable.prototype.SetSelection = function()
+	{
+		var Document = private_GetLogicDocument();
+		
+		var DocPos = this.Table.GetDocumentPositionFromObject();
+		
+		if (DocPos[0].Position === - 1)
+			return false;
+
+		var controllerType = null;
+
+		if (DocPos[0].Class.IsHdrFtr())
+		{
+			controllerType = docpostype_HdrFtr;
+		}
+		else if (DocPos[0].Class.IsFootnote())
+		{
+			controllerType = docpostype_Footnotes;
+		}
+		else if (DocPos[0].Class.Is_DrawingShape())
+		{
+			controllerType = docpostype_DrawingObjects;
+		}
+		else 
+		{
+			controllerType = docpostype_Content;
+		}
+		DocPos[0].Class.CurPos.ContentPos = DocPos[0].Position;
+		Document.SetDocPosType(controllerType);
+		Document.SelectTable(3);
+
+		return true;	
+	};
+	/**
 	 * Returns a Range object that represents the part of the document contained in the specified table.
 	 * @typeofeditors ["CDE"]
 	 * @param {Number} Start - start character in current element
@@ -5989,6 +6192,391 @@
 	{
 		var Range = new ApiRange(this.Table, Start, End)
 		return Range;
+	};
+	/**
+     * Sets horizontal alignment for a table.
+     * @typeofeditors ["CDE"]
+     * @param {String} sType - may be "left" or "center" or "right"
+     * @returns {bool} 
+     * */
+    ApiTable.prototype.SetHAlign = function(sType)
+    {
+		if (this.Table.IsInline())
+		{
+			if (sType == "left")
+           		this.Table.Set_TableAlign(1);
+        	else if (sType == "center")
+            	this.Table.Set_TableAlign(2);
+      			else if (sType == "right")
+           	this.Table.Set_TableAlign(0);
+      	  		else return false;
+		}
+		else if (!this.Table.IsInline())
+		{
+			if (sType == "left")
+           		this.Table.Set_PositionH(0, true, 2);
+        	else if (sType == "center")
+            	this.Table.Set_PositionH(0, true, 0);
+      			else if (sType == "right")
+           	this.Table.Set_PositionH(0, true, 4);
+      	  		else return false;
+		}
+
+        return true;
+	};
+	/**
+     * Sets vertical alignment for a table.
+     * @typeofeditors ["CDE"]
+     * @param {String} sType - may be "top" or "center" or "bottom"
+     * @returns {bool} 
+     * */
+    ApiTable.prototype.SetVAlign = function(sType)
+    {
+		if (this.Table.IsInline())
+			return false;
+
+        if (sType == "top")
+            this.Table.Set_PositionV(0, true, 5);
+        else if (sType == "center")
+            this.Table.Set_PositionV(0, true, 1);
+        else if (sType == "bottom")
+            this.Table.Set_PositionV(0, true, 0);
+        else return false;
+
+        return true;
+	};
+	/**
+     * Sets table paddings.
+	 * If table is inline -> only left padding applies.
+     * @typeofeditors ["CDE"]
+     * @param {Number} nLeft
+	 * @param {Number} nTop 
+	 * @param {Number} nRight 
+	 * @param {Number} nBottom  
+     * @returns {bool} 
+     * */
+    ApiTable.prototype.SetPaddings = function(nLeft, nTop, nRight, nBottom)
+    {
+		if (this.Table.IsInline())
+			this.Table.Set_TableInd(nLeft);
+		else if (!this.Table.IsInline())
+    		this.Table.Set_Distance(nLeft, nTop, nRight, nBottom);
+
+        return true;
+	};
+	/**
+     * Set table wrapping style
+     * @typeofeditors ["CDE"]
+     * @param {bool} isFlow
+	 * @returns {bool} 
+     * */
+    ApiTable.prototype.SetWrappingStyle = function(isFlow)
+    {
+		if (isFlow === true)
+		{
+			this.Table.Set_Inline(isFlow);
+			this.Table.Set_PositionH(0,false,0);
+			this.Table.Set_PositionV(0,false,0);
+		}
+		else if (isFlow === false)
+		{
+			this.Table.Set_Inline(isFlow);
+		}
+		else 
+			return false;
+
+        return true;
+	};
+    /**
+     * Gets the content control that contains the table.
+     * @typeofeditors ["CDE"]
+     * @return {ApiBlockLvlSdt}  
+     */
+    ApiTable.prototype.GetParentContentControl = function()
+    {
+        var TablePosition = this.Table.GetDocumentPositionFromObject();
+
+        for (var Index = TablePosition.length - 1; Index >= 1; Index--)
+        {
+            if (TablePosition[Index].Class.Parent)
+                if (TablePosition[Index].Class.Parent instanceof CBlockLevelSdt)
+                    return new ApiBlockLvlSdt(TablePosition[Index].Class.Parent);
+        }
+
+        return false;
+	};
+	/**
+	 * Wraps the table object with a content control.
+	 * @param {number} nType - if nType === 1 -> returns ApiBlockLvlSdt, else return ApiTable 
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiTable | ApiBlockLvlSdt}  
+	 */
+	ApiTable.prototype.InsertInContentControl = function(nType)
+	{
+		var Document = private_GetLogicDocument();
+
+		var ContentControl = null;
+
+		var tableIndex	= this.Table.Index;
+
+		if (tableIndex >= 0)
+		{
+			var oldSelectionInfo = Document.SaveDocumentState();
+			for (var Index = 0; Index < TrackedPositions.length; Index++)
+			{
+				Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
+			}
+			this.SetSelection();
+			ContentControl = new ApiBlockLvlSdt(Document.AddContentControl(1));
+			Document.LoadDocumentState(oldSelectionInfo);
+			Document.UpdateSelection();
+		}
+		else 
+		{
+			ContentControl = new ApiBlockLvlSdt(new CBlockLevelSdt(Document, Document))
+			ContentControl.Sdt.SetDefaultTextPr(Document.GetDirectTextPr());
+			ContentControl.Sdt.Content.RemoveFromContent(0, ContentControl.Sdt.Content.GetElementsCount(), false);
+			ContentControl.Sdt.Content.AddToContent(0, this.Table);
+			ContentControl.Sdt.SetShowingPlcHdr(false);
+		}
+
+		if (nType === 1)
+			return ContentControl;
+		else 
+			return this;
+	};
+    /**
+     * Gets the table that contains the table.
+     * @typeofeditors ["CDE"]
+     * @return {ApiTable}  
+     */
+    ApiTable.prototype.GetParentTable = function()
+    {
+        var documentPos = this.Table.GetDocumentPositionFromObject();
+
+        for (var Index = documentPos.length - 1; Index >= 1; Index--)
+        {
+            if (documentPos[Index].Class)
+                if (documentPos[Index].Class instanceof CTable)
+                    return new ApiTable(documentPos[Index].Class);
+        }
+
+        return false;
+	};
+	/**
+     * Gets the tables that contains the table.
+     * @typeofeditors ["CDE"]
+     * @return {Array}  
+     */
+    ApiTable.prototype.GetTables = function()
+    {
+        var arrTables = [];
+
+		var viewRow 	= undefined; // будем запоминать последнюю просмотренную строку, т.к. возможны случаи, когда она разбита на несколько Table Pages, такие просматривать повторно не нужно 
+		var viewAbsPage = undefined; // будем запоминать последний абсолютный номер страницы, т.к. возможно случаи, когда строка разбита на несколько страниц, такие строки нужно просматривать повторно на каждой новой странице
+		for (var nCurPage = 0, nPagesCount = this.Table.Pages.length; nCurPage < nPagesCount; ++nCurPage)
+		{
+			if (this.Table.Pages[nCurPage].FirtRow < 0 || this.Table.Pages[nCurPage].LastRow < 0)
+				continue;
+
+			var nTempPageAbs 	= this.Table.GetAbsolutePage(nCurPage);
+			
+			for (var nCurRow = this.Table.Pages[nCurPage].FirstRow; nCurRow <= this.Table.Pages[nCurPage].LastRow; ++nCurRow)
+			{
+				if (nCurRow === viewRow && viewAbsPage === nTempPageAbs)
+					continue;
+
+				viewRow = nCurRow;
+				var oRow = this.Table.GetRow(nCurRow);
+
+				if (oRow)
+				{
+					for (var nCurCell = 0, nCellsCount = oRow.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
+					{
+						var oCell = oRow.GetCell(nCurCell);
+
+						if (oCell.IsMergedCell())
+							continue;
+
+						oCell.GetContent().GetAllTablesOnPage(nTempPageAbs, arrTables);
+					}
+				}
+			}
+
+			var viewAbsPage	= nTempPageAbs;
+		}
+
+		for (var Index = 0; Index < arrTables.length; Index++)
+		{
+			arrTables[Index] = new ApiTable(arrTables[Index].Table);
+		}
+		return arrTables;
+	};
+	/**
+     * Gets the next table.
+     * @typeofeditors ["CDE"]
+     * @return {ApiTable}  
+     */
+    ApiTable.prototype.GetNext = function()
+    {
+		var oDocument = editor.GetDocument();
+
+		var absEndPage = this.Table.GetAbsolutePage(this.Table.Pages.length - 1); // страница, на которой заканчивается таблица
+        
+		for (var curPage = absEndPage; curPage < oDocument.Document.Pages.length; curPage++)
+		{
+			var curPageTables = oDocument.Document.GetAllTablesOnPage(curPage); // все таблицы на странице 
+			for (var Index = 0; Index < curPageTables.length; Index++)
+			{
+				if (curPageTables[Index].Table.Id === this.Table.Id)
+				{
+					if (curPageTables[Index + 1])
+					{
+						return new ApiTable(curPageTables[Index + 1].Table)
+					}
+					else 
+						continue;
+				}
+				else 
+					return new ApiTable(curPageTables[Index].Table);
+			}
+		}
+		
+		return null; 
+	};
+	/**
+     * Gets the previous table.
+     * @typeofeditors ["CDE"]
+     * @return {ApiTable}  
+     */
+    ApiTable.prototype.GetPrevious = function()
+    {
+		var oDocument = editor.GetDocument();
+
+		var absEndPage = this.Table.GetAbsolutePage(0); // страница, на которой заканчивается таблица
+        
+		for (var curPage = absEndPage; curPage >= 0; curPage--)
+		{
+			var curPageTables = oDocument.Document.GetAllTablesOnPage(curPage); // все таблицы на странице 
+			for (var Index = curPageTables.length - 1; Index >= 0; Index--)
+			{
+				if (curPageTables[Index].Table.Id === this.Table.Id)
+				{
+					if (curPageTables[Index - 1])
+					{
+						return new ApiTable(curPageTables[Index - 1].Table)
+					}
+					else 
+						continue;
+				}
+				else 
+					return new ApiTable(curPageTables[Index].Table);
+			}
+		}
+		
+		return null; 
+    };
+    /**
+     * Gets the table cell that contains the table.
+     * @typeofeditors ["CDE"]
+     * @return {ApiTableCell}  
+     */
+    ApiTable.prototype.GetParentTableCell = function()
+    {
+        var documentPos = this.Table.GetDocumentPositionFromObject();
+
+        for (var Index = documentPos.length - 1; Index >= 1; Index--)
+        {
+            if (documentPos[Index].Class.Parent)
+                if (documentPos[Index].Class.Parent instanceof CTableCell)
+                    return new ApiTableCell(documentPos[Index].Class.Parent);
+        }
+
+        return null;
+	};
+	/**
+	 * Deletes the table. 
+	 * @typeofeditors ["CDE"]
+	 * @return {bool}
+	 */
+	ApiTable.prototype.Delete = function()
+	{
+		var tableParent = this.Table.Parent;
+
+		if (tableParent)
+		{
+			this.Table.PreDelete();
+			tableParent.Remove_FromContent(this.Table.Index, 1, true);
+
+			return true;
+		}
+		else 	 
+			return false;
+	};
+	/**
+	 * Clears the content of the table.
+	 * @typeofeditors ["CDE"]
+	 * @return {bool}
+	 */
+	ApiTable.prototype.Clear = function()
+	{
+		for (var curRow = 0, rowsCount = this.Table.GetRowsCount(); curRow < rowsCount; curRow++)
+		{
+			var Row = this.Table.GetRow(curRow);
+			for (var curCell = 0, cellsCount = Row.GetCellsCount(); curCell < cellsCount; curCell++)
+			{
+				Row.GetCell(curCell).GetContent().Clear_Content();
+			}
+		}
+
+		return true;
+	};
+	/**
+	 * Searches for the scope of a table object. The search results are a collection of ApiRange objects.
+	 * @param {string} sText 
+	 * @param {bool} isMatchCase - is case sensitive. 
+	 * @typeofeditors ["CDE"]
+	 * @return {Array}  
+	 */
+	ApiTable.prototype.Search = function(sText, isMatchCase)
+	{
+		if (isMatchCase === undefined)
+			isMatchCase	= false;
+		
+		var arrApiRanges	= [];
+		var allParagraphs	= [];
+		this.Table.GetAllParagraphs({All : true}, allParagraphs);
+
+		for (var para in allParagraphs)
+		{
+			var oParagraph			= new ApiParagraph(allParagraphs[para]);
+			var arrOfParaApiRanges	= oParagraph.Search(sText, isMatchCase);
+
+			for (var itemRange = 0; itemRange < arrOfParaApiRanges.length; itemRange++)	
+				arrApiRanges.push(arrOfParaApiRanges[itemRange]);
+		}
+
+		return arrApiRanges;
+	};
+	/**
+	 * Applies text settings to the entire contents of the table.
+	 * @param {ApiTextPr} oTextPr
+	 * @typeofeditors ["CDE"]
+	 * @return {bool}  
+	 */
+	ApiTable.prototype.SetTextPr = function(oTextPr)
+	{
+		var allParagraphs	= [];
+		this.Table.GetAllParagraphs({All : true}, allParagraphs);
+
+		for (var curPara = 0; curPara < allParagraphs.length; curPara++)
+		{
+			allParagraphs[curPara].Set_ApplyToAll(true);
+			allParagraphs[curPara].Add(new AscCommonWord.ParaTextPr(oTextPr.TextPr));
+			allParagraphs[curPara].Set_ApplyToAll(false);
+		}
+		
+		return true;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -7836,6 +8424,7 @@
 
 		if (ParaParent)
 		{
+			this.Drawing.PreDelete();
 			var ApiParentRun = new ApiRun(this.Drawing.GetRun());
 			ApiParentRun.Run.RemoveElement(this.Drawing);
 		}
@@ -7860,49 +8449,38 @@
 	 */
 	ApiDrawing.prototype.InsertInContentControl = function(nType)
 	{
-		var Api = editor; 
-		var oDocument = Api.GetDocument();
+		var Document = editor.private_GetLogicDocument();
+		var ContentControl = null;
 
-		var ContentControl			= null;
-		var paragraphInControl		= null;
-		var parentParagraph 		= this.Drawing.GetParagraph();
-
+		var parentParagraph = this.Drawing.GetParagraph();
 		if (!parentParagraph)
 			return false;
 
-		var parentOfParentParagraph = parentParagraph.GetParent();
-
 		var paraIndex = parentParagraph.Index;
-
 		if (paraIndex >= 0)
 		{
-			parentOfParentParagraph.CurPos.ContentPos = paraIndex;
-			parentParagraph.MoveCursorToStartPos();
-			parentParagraph.MoveCursorToDrawing(this.Drawing.Id);
-			this.Delete();
-			ContentControl		= new ApiBlockLvlSdt(parentOfParentParagraph.AddContentControl(1));
-			paragraphInControl	= ContentControl.Sdt.GetFirstParagraph();
-
-			if (paragraphInControl.Content.length > 1)
+			var oldSelectionInfo = Document.SaveDocumentState();
+			for (var Index = 0; Index < TrackedPositions.length; Index++)
 			{
-				paragraphInControl.RemoveFromContent(0, paragraphInControl.Content.length - 1);
-				paragraphInControl.CorrectContent();
+				Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
 			}
 
-			paragraphInControl.Add(this.Drawing);
-			ContentControl.Sdt.SetShowingPlcHdr(false);
+			this.SetSelection();
+			ContentControl = new ApiBlockLvlSdt(Document.AddContentControl(1));
+
+			Document.LoadDocumentState(oldSelectionInfo);
+			Document.UpdateSelection();
 		}
 		else 
 		{
-			ContentControl		= new ApiBlockLvlSdt(new CBlockLevelSdt(oDocument.Document, oDocument.Document))
+			ContentControl		= new ApiBlockLvlSdt(new CBlockLevelSdt(Document, Document))
+			ContentControl.Sdt.SetDefaultTextPr(Document.GetDirectTextPr());
 			paragraphInControl	= ContentControl.Sdt.GetFirstParagraph();
-
 			if (paragraphInControl.Content.length > 1)
 			{
 				paragraphInControl.RemoveFromContent(0, paragraphInControl.Content.length - 1);
 				paragraphInControl.CorrectContent();
 			}
-
 			paragraphInControl.Add(this.Drawing);
 			ContentControl.Sdt.SetShowingPlcHdr(false);
 		}
@@ -7939,7 +8517,7 @@
 	 * Selects the graphic object.
 	 * @typeofeditors ["CDE"]
 	 */	
-	ApiDrawing.prototype.Select = function()
+	ApiDrawing.prototype.SetSelection = function()
 	{
 		var Api = editor;
 		var oDocument = Api.GetDocument();
@@ -8984,6 +9562,7 @@
 			}
 			else 
 			{
+				this.Sdt.PreDelete();
 				var controlIndex = this.Sdt.Paragraph.Content.indexOf(this.Sdt);
 				this.Sdt.Paragraph.RemoveFromContent(controlIndex, 1);
 			}
@@ -9267,6 +9846,7 @@
 			}
 			else 
 			{
+				this.Sdt.PreDelete();
 				this.Sdt.Parent.RemoveFromContent(this.Sdt.Index, 1, true);
 			}
 
