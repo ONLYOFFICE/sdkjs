@@ -9086,7 +9086,8 @@
             shrink : false,
             angle : 0,
             ver : Asc.c_oAscVAlign.Bottom,
-            wrap : false
+            wrap : false,
+            verticalText : false
         });
     }
 

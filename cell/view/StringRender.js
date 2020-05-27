@@ -749,6 +749,7 @@
 			var font = ctx.font;
 			var wrap = this.flags && (this.flags.wrapText || this.flags.wrapOnlyCE) && !this.flags.isNumberFormat;
 			var wrapNL = this.flags && this.flags.wrapOnlyNL;
+			var verticalText = this.flags && this.flags.verticalText;
 			var hasRepeats = false;
 			var i, j, fr, fmt, text, p, p_ = {}, pIndex, startCh;
 			var tw = 0, nlPos = 0, isEastAsian, hpPos = undefined, isSP_ = true, delta = 0;
@@ -765,7 +766,7 @@
 					isSP = !isNL ? self.reHypSp.test(ch) : false;
 
 					// if 'wrap flag' is set
-					if (wrap || wrapNL) {
+					if (wrap || wrapNL || verticalText) {
 						isHP = !isSP && !isNL ? self.reHyphen.test(ch) : false;
 						chc = s.charCodeAt(j);
 						isEastAsian = AscCommon.isEastAsianScript(chc);
@@ -790,7 +791,7 @@
 							}
 						}
 
-						if (wrap && tw + chw > maxWidth && chPos !== nlPos && !isSP) {
+						if ((verticalText || wrap) && tw + chw > maxWidth && chPos !== nlPos && (!isSP || verticalText)) {
 							// add hyphenation marker
 							nlPos = hpPos !== undefined ? hpPos : chPos;
 							self._getCharPropAt(nlPos).hp = true;

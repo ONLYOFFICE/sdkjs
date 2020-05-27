@@ -3823,11 +3823,17 @@ var editor;
   spreadsheet_api.prototype.asc_setCellAngle = function(angle) {
 
     var ws = this.wb.getWorksheet();
-    if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellAngle) {
-      ws.objectRender.controller.setCellAngle(angle);
-    } else {
-      this.wb.getWorksheet().setSelectionInfo("angle", angle);
-      this.wb.restoreFocus();
+      if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellAngle) {
+        ws.objectRender.controller.setCellAngle(angle);
+      } else {
+        if (angle === AscCommonExcel.g_nVerticalTextAngle) {
+          this.wb.getWorksheet().setSelectionInfo("verticalText", true);
+          this.wb.getWorksheet().setSelectionInfo("angle", 0);
+        } else {
+          this.wb.getWorksheet().setSelectionInfo("verticalText", false);
+          this.wb.getWorksheet().setSelectionInfo("angle", angle);
+          this.wb.restoreFocus();
+      }
     }
   };
 

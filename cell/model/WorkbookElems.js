@@ -2731,6 +2731,9 @@ var g_oBorderProperties = {
 	CellXfs.prototype.asc_getShrinkToFit = function () {
 		return this.getAlign2().getShrinkToFit();
 	};
+	CellXfs.prototype.asc_getVerticalText = function () {
+		return this.getAlign2().getVerticalText();
+	};
 
 	function FromXml_ST_HorizontalAlignment(val) {
 		var res = -1;
@@ -2777,7 +2780,8 @@ var g_oBorderProperties = {
 		shrink: 3,
 		angle: 4,
 		ver: 5,
-		wrap: 6
+		wrap: 6,
+		verticalText: 7
 	};
 
 	/** @constructor */
@@ -2791,6 +2795,7 @@ var g_oBorderProperties = {
 		this.angle = val.angle;
 		this.ver = val.ver;
 		this.wrap = val.wrap;
+		this.verticalText = val.verticalText;
 
 		this._hash;
 		this._index;
@@ -2800,7 +2805,7 @@ var g_oBorderProperties = {
 	Align.prototype.getHash = function () {
 		if (!this._hash) {
 			this._hash = this.hor + '|' + this.indent + '|' + this.RelativeIndent + '|' + this.shrink + '|' +
-				this.angle + '|' + this.ver + '|' + this.wrap;
+				this.angle + '|' + this.ver + '|' + this.wrap + '|' + this.verticalText;
 		}
 		return this._hash;
 	};
@@ -2826,6 +2831,7 @@ var g_oBorderProperties = {
 		oRes.angle = this._mergeProperty(this.angle, align.angle, defaultAlign.angle);
 		oRes.ver = this._mergeProperty(this.ver, align.ver, defaultAlign.ver);
 		oRes.wrap = this._mergeProperty(this.wrap, align.wrap, defaultAlign.wrap);
+		oRes.verticalText = this._mergeProperty(this.verticalText, align.verticalText, defaultAlign.verticalText);
 		return oRes;
 	};
 	Align.prototype.getDif = function (val) {
@@ -2859,13 +2865,17 @@ var g_oBorderProperties = {
 			oRes.wrap = null;
 		else
 			bEmpty = false;
+		if (this.verticalText == val.verticalText)
+			oRes.verticalText = null;
+		else
+			bEmpty = false;
 		if (bEmpty)
 			oRes = null;
 		return oRes;
 	};
 	Align.prototype.isEqual = function (val) {
 		return this.hor == val.hor && this.indent == val.indent && this.RelativeIndent == val.RelativeIndent && this.shrink == val.shrink &&
-			this.angle == val.angle && this.ver == val.ver && this.wrap == val.wrap;
+			this.angle == val.angle && this.ver == val.ver && this.wrap == val.wrap && this.verticalText == val.verticalText;
 	};
 	Align.prototype.clone = function () {
 		return new Align(this);
@@ -2899,6 +2909,9 @@ var g_oBorderProperties = {
 			case this.Properties.wrap:
 				return this.wrap;
 				break;
+			case this.Properties.verticalText:
+				return this.verticalText;
+				break;
 		}
 	};
 	Align.prototype.setProperty = function (nType, value) {
@@ -2924,6 +2937,9 @@ var g_oBorderProperties = {
 			case this.Properties.wrap:
 				this.wrap = value;
 				break;
+			case this.Properties.verticalText:
+				this.verticalText = value;
+				break;
 		}
 	};
 	Align.prototype.getAngle = function () {
@@ -2942,6 +2958,12 @@ var g_oBorderProperties = {
 	};
 	Align.prototype.setWrap = function (val) {
 		this.wrap = val;
+	};
+	Align.prototype.getVerticalText = function () {
+		return this.verticalText;
+	};
+	Align.prototype.setVerticalText = function (val) {
+		this.verticalText = val;
 	};
 	Align.prototype.getShrinkToFit = function () {
 		return this.shrink;
@@ -2998,6 +3020,10 @@ var g_oBorderProperties = {
 			val = vals["shrinkToFit"];
 			if (undefined !== val) {
 				this.shrink = AscCommon.getBoolFromXml(val);
+			}
+			val = vals["verticalText"];
+			if (undefined !== val) {
+				this.verticalText = AscCommon.getBoolFromXml(val);
 			}
 		}
 	};
@@ -3314,10 +3340,11 @@ StyleManager.prototype =
     },
 	setVerticalText : function(oItemWithXfs, val)
     {
-		if(true == val)
+		return this._setAlignProperty(oItemWithXfs, val, "verticalText", Align.prototype.getVerticalText, Align.prototype.setVerticalText);
+		/*if(true == val)
 			return this.setAngle(oItemWithXfs, AscCommonExcel.g_nVerticalTextAngle);
 		else
-			return this.setAngle(oItemWithXfs, 0);
+			return this.setAngle(oItemWithXfs, 0);*/
     },
 	_initXf: function(oItemWithXfs){
 		var xfs = oItemWithXfs.xfs;

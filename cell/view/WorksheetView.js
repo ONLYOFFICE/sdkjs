@@ -246,10 +246,10 @@
 
     function CellFlags() {
         this.wrapText = false;
+        this.verticalText = false;
         this.shrinkToFit = false;
         this.merged = null;
         this.textAlign = null;
-
         this.ctrlKey = null;
         this.shiftKey = null;
     }
@@ -260,6 +260,7 @@
         oRes.shrinkToFit = this.shrinkToFit;
         oRes.merged = this.merged ? this.merged.clone() : null;
         oRes.textAlign = this.textAlign;
+        oRes.verticalText = this.verticalText;
         return oRes;
     };
     CellFlags.prototype.isMerged = function () {
@@ -5994,6 +5995,7 @@
 		var mergeType = fl.getMergeType();
         var align = c.getAlign();
         var angle = align.getAngle();
+        var verticalText = align.getVerticalText();
         var va = align.getAlignVertical();
         if (c.isEmptyTextString()) {
             if (!angle && c.isNotDefaultFont() && !(mergeType & c_oAscMergeType.rows)) {
@@ -6086,9 +6088,18 @@
         } else {
             str = c.getValue2();
         }
-        var ha = c.getAlignHorizontalByValue(align.getAlignHorizontal());
+        var alignH = align.getAlignHorizontal();
+        var ha = c.getAlignHorizontalByValue(alignH);
         var maxW = fl.wrapText || fl.shrinkToFit || mergeType || asc.isFixedWidthCell(str) ?
           this._calcMaxWidth(col, row, mc) : undefined;
+
+        if(verticalText) {
+            var measure = this.stringRender.measureString(str, fl);
+            maxW = Math.min.apply(Math, this.stringRender.charWidths);
+            ha = alignH === null ? 2 : ha;
+            fl.textAlign = ha;
+        }
+
         tm = this._roundTextMetrics(this.stringRender.measureString(str, fl, maxW));
         var cto = (mergeType || fl.wrapText || fl.shrinkToFit) ? {
             maxWidth: maxW - this._getColumnWidthInner(col) + this._getColumnWidth(col), leftSide: 0, rightSide: 0
@@ -6200,7 +6211,7 @@
 		var cellType = cell.getType();
 		// Автоподбор делается по любому типу (кроме строки)
 		var isNumberFormat = !cell.isEmptyTextString() && (null === cellType || CellValueType.String !== cellType);
-		if (angle || isNumberFormat || align.getWrap()) {
+		if (angle || isNumberFormat || align.getWrap() || align.getVerticalText()) {
 			this._addCellTextToCache(cell.nCol, cell.nRow);
 			th = this.updateRowHeightValuePx || AscCommonExcel.convertPtToPx(this._getRowHeightReal(cell.nRow));
 		} else {
@@ -6503,6 +6514,7 @@
             fl.shrinkToFit = fl.wrapText ? false : align.getShrinkToFit();
             fl.merged = c.hasMerged();
             fl.textAlign = c.getAlignHorizontalByValue(align.getAlignHorizontal());
+            fl.verticalText = align.getVerticalText();
         }
         return fl;
     };
@@ -10686,6 +10698,9 @@
                         break;
                     case "angle":
                         range.setAngle(val);
+                        break;
+                    case "verticalText":
+                        range.setVerticalText(val);
                         break;
                     case "rh":
                         range.removeHyperlink(null, true);
