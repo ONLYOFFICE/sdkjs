@@ -5994,9 +5994,10 @@
         }
 		var mergeType = fl.getMergeType();
         var align = c.getAlign();
-        var angle = align.getAngle();
-        var verticalText = align.getVerticalText();
         var va = align.getAlignVertical();
+        var angle = align.getAngle();
+        var verticalText = angle === AscCommonExcel.g_nVerticalTextAngle ? true : false;
+        angle = verticalText ? 0 : angle;
         if (c.isEmptyTextString()) {
             if (!angle && c.isNotDefaultFont() && !(mergeType & c_oAscMergeType.rows)) {
                 // Пустая ячейка с измененной гарнитурой или размером, учитвается в высоте
@@ -6094,6 +6095,7 @@
           this._calcMaxWidth(col, row, mc) : undefined;
 
         if(verticalText) {
+            fl.verticalText = true;
             var measure = this.stringRender.measureString(str, fl);
             maxW = Math.min.apply(Math, this.stringRender.charWidths);
             ha = alignH === null ? 2 : ha;
@@ -6211,7 +6213,7 @@
 		var cellType = cell.getType();
 		// Автоподбор делается по любому типу (кроме строки)
 		var isNumberFormat = !cell.isEmptyTextString() && (null === cellType || CellValueType.String !== cellType);
-		if (angle || isNumberFormat || align.getWrap() || align.getVerticalText()) {
+		if (angle || isNumberFormat || align.getWrap()) {
 			this._addCellTextToCache(cell.nCol, cell.nRow);
 			th = this.updateRowHeightValuePx || AscCommonExcel.convertPtToPx(this._getRowHeightReal(cell.nRow));
 		} else {
@@ -6514,7 +6516,6 @@
             fl.shrinkToFit = fl.wrapText ? false : align.getShrinkToFit();
             fl.merged = c.hasMerged();
             fl.textAlign = c.getAlignHorizontalByValue(align.getAlignHorizontal());
-            fl.verticalText = align.getVerticalText();
         }
         return fl;
     };

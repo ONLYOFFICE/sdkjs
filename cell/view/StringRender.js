@@ -770,7 +770,9 @@
 						isHP = !isSP && !isNL ? self.reHyphen.test(ch) : false;
 						chc = s.charCodeAt(j);
 						isEastAsian = AscCommon.isEastAsianScript(chc);
-						if (isNL) {
+						if(verticalText) {
+
+						} else if (isNL) {
 							// add new line marker
 							nlPos = chPos;
 							self._getCharPropAt(nlPos).nl = true;

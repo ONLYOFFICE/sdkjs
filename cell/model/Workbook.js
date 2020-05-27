@@ -8704,7 +8704,6 @@
 	Cell.prototype.setVerticalText=function(val){
 		var oRes = this.ws.workbook.oStyleManager.setVerticalText(this, val);
 		if(History.Is_On() && oRes.oldVal != oRes.newVal)
-			//Дописать аргумент AscCH_Cell_VerticalText
 			History.Add(AscCommonExcel.g_oUndoRedoCell, AscCH.historyitem_Cell_Angle, this.ws.getId(), new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new UndoRedoData_CellSimpleData(this.nRow, this.nCol, oRes.oldVal, oRes.newVal));
 	};
 	Cell.prototype.setQuotePrefix=function(val){
