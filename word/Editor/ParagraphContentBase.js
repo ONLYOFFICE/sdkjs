@@ -1010,6 +1010,10 @@ CParagraphContentWithContentBase.prototype.Is_UseInDocument = function(Id)
     }
     return false;
 };
+CParagraphContentWithContentBase.prototype.IsUseInDocument = function(sId)
+{
+	return this.Is_UseInDocument(sId);
+};
 CParagraphContentWithContentBase.prototype.protected_GetPrevRangeEndPos = function(LineIndex, RangeIndex)
 {
     var RangeCount  = this.protected_GetRangesCount(LineIndex - 1);
