@@ -3830,8 +3830,8 @@ var editor;
           this.wb.getWorksheet().setSelectionInfo("verticalText", true);
         } else {
           this.wb.getWorksheet().setSelectionInfo("angle", angle);
+        }
           this.wb.restoreFocus();
-      }
     }
   };
 
