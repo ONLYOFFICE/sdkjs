@@ -2930,8 +2930,7 @@ var g_oBorderProperties = {
 		var nRes = 0;
 		if (0 <= this.angle && this.angle <= 180) {
 			nRes = this.angle <= 90 ? this.angle : 90 - this.angle;
-		}
-		if(this.angle === AscCommonExcel.g_nVerticalTextAngle) {
+		} else if (this.angle === AscCommonExcel.g_nVerticalTextAngle) {
 			nRes = this.angle;
 		}
 		return nRes;
