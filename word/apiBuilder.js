@@ -6830,6 +6830,24 @@
 		return true;
 	};
 	/**
+	 * Clears the content of the cell.
+	 * @typeofeditors ["CDE"]
+	 * @return {bool}
+	 */
+	ApiTableCell.prototype.Clear = function()
+	{
+		var oRow = this.GetParentRow();
+		if (!oRow)
+			return false;
+
+		for (var curCell = 0, cellsCount = oRow.GetCellsCount(); curCell < cellsCount; curCell++)
+		{
+			oRow.Row.GetCell(curCell).GetContent().Clear_Content();
+		}
+
+		return true;
+	};
+	/**
 	 * Add a paragraph or a table or a blockLvl content control using its position in the cell.
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {number} nPos - The position where the current element will be added.
