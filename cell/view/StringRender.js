@@ -770,8 +770,8 @@
 						isHP = !isSP && !isNL ? self.reHyphen.test(ch) : false;
 						chc = s.charCodeAt(j);
 						isEastAsian = AscCommon.isEastAsianScript(chc);
-						if(verticalText) {
-
+						if (verticalText) {
+							// ToDo verticalText and new line or space
 						} else if (isNL) {
 							// add new line marker
 							nlPos = chPos;
@@ -793,7 +793,7 @@
 							}
 						}
 
-						if ((verticalText || wrap) && tw + chw > maxWidth && chPos !== nlPos && (!isSP || verticalText)) {
+						if (chPos !== nlPos && ((wrap && !isSP && tw + chw > maxWidth) || verticalText)) {
 							// add hyphenation marker
 							nlPos = hpPos !== undefined ? hpPos : chPos;
 							self._getCharPropAt(nlPos).hp = true;
