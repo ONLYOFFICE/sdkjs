@@ -3314,13 +3314,6 @@ StyleManager.prototype =
 			return AscCommonExcel.angleFormatToInterface2(this.angle);
 		}, Align.prototype.setAngle);
     },
-	setVerticalText : function(oItemWithXfs, val)
-    {
-		if(true == val)
-			return this.setAngle(oItemWithXfs, AscCommonExcel.g_nVerticalTextAngle);
-		else
-			return this.setAngle(oItemWithXfs, 0);
-    },
 	_initXf: function(oItemWithXfs){
 		var xfs = oItemWithXfs.xfs;
 		if (!xfs) {
@@ -4141,13 +4134,6 @@ StyleManager.prototype =
 				this._getUpdateRange(), new UndoRedoData_IndexSimpleProp(this.index, false, oRes.oldVal, oRes.newVal));
 		}
 	};
-	Col.prototype.setVerticalText = function (val) {
-		var oRes = this.ws.workbook.oStyleManager.setVerticalText(this, val);
-		if (History.Is_On() && oRes.oldVal != oRes.newVal) {
-			History.Add(AscCommonExcel.g_oUndoRedoCol, AscCH.historyitem_RowCol_Angle, this.ws.getId(),
-				this._getUpdateRange(), new UndoRedoData_IndexSimpleProp(this.index, false, oRes.oldVal, oRes.newVal));
-		}
-	};
 	Col.prototype.setHidden = function (val) {
 		if (this.index >= 0 && (!this.hd !== !val)) {
 			this.ws.hiddenManager.addHidden(false, this.index);
@@ -4520,13 +4506,6 @@ StyleManager.prototype =
 	};
 	Row.prototype.setAngle = function (val) {
 		var oRes = this.ws.workbook.oStyleManager.setAngle(this, val);
-		if (History.Is_On() && oRes.oldVal != oRes.newVal) {
-			History.Add(AscCommonExcel.g_oUndoRedoRow, AscCH.historyitem_RowCol_Angle, this.ws.getId(),
-				this._getUpdateRange(), new UndoRedoData_IndexSimpleProp(this.index, true, oRes.oldVal, oRes.newVal));
-		}
-	};
-	Row.prototype.setVerticalText = function (val) {
-		var oRes = this.ws.workbook.oStyleManager.setVerticalText(this, val);
 		if (History.Is_On() && oRes.oldVal != oRes.newVal) {
 			History.Add(AscCommonExcel.g_oUndoRedoRow, AscCH.historyitem_RowCol_Angle, this.ws.getId(),
 				this._getUpdateRange(), new UndoRedoData_IndexSimpleProp(this.index, true, oRes.oldVal, oRes.newVal));

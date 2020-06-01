@@ -3826,11 +3826,7 @@ var editor;
       if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellAngle) {
         ws.objectRender.controller.setCellAngle(angle);
       } else {
-        if (angle === AscCommonExcel.g_nVerticalTextAngle) {
-          this.wb.getWorksheet().setSelectionInfo("verticalText", true);
-        } else {
           this.wb.getWorksheet().setSelectionInfo("angle", angle);
-        }
           this.wb.restoreFocus();
     }
   };
