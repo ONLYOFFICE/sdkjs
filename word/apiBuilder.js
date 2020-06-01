@@ -6640,7 +6640,215 @@
 	{
 		return new ApiDocumentContent(this.Cell.Content);
 	};
+	/**
+	 * Get the cell index.
+	 * @typeofeditors ["CDE"]
+	 * @returns {Number}
+	 */
+	ApiTableCell.prototype.GetIndex = function()
+	{
+		return this.Cell.GetIndex();
+	};
+	/**
+	 * Gets the index of the parent row.
+	 * @typeofeditors ["CDE"]
+	 * @returns {Number}
+	 */
+	ApiTableCell.prototype.GetRowIndex = function()
+	{
+		var Row = this.Cell.GetRow();
+		if(!Row)
+			return null;
 
+		return Row.GetIndex();
+	};
+	/**
+	 * Gets the parent row of the cell.
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiTableRow}
+	 */
+	ApiTableCell.prototype.GetParentRow = function()
+	{
+		var Row = this.Cell.GetRow();
+		if(!Row)
+			return null;
+
+		return new ApiTableRow(Row);
+	};
+	/**
+	 * Gets the parent table of the cell.
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiTable}
+	 */
+	ApiTableCell.prototype.GetParentTable = function()
+	{
+		var oTable = this.Cell.GetTable();
+		if(!oTable)
+			return null;
+
+		return new ApiTable(oTable);
+	};
+	/**
+	 * Add a new rows to the current table.
+	 * @typeofeditors ["CDE"]
+	 * @param {Number} nCount - count of rows to be added.
+	 * @param {boolean} [isBefore=false] - Add a new rows before or after the cell. 
+	 * @returns {ApiTable}
+	 */
+	ApiTableCell.prototype.AddRows = function(nCount, isBefore)
+	{
+		var oTable = this.GetParentTable();
+		if(!oTable)
+			return false;
+
+		oTable.AddRows(this, nCount, isBefore);
+
+		return oTable;
+	};
+	/**
+	 * Add a new columns to the current table.
+	 * @typeofeditors ["CDE"]
+	 * @param {Number} nCount - count of columns to be added
+	 * @param {boolean} [isBefore=false] - Add a new columns before or after the cell. 
+	 * @returns {ApiTable}
+	 */
+	ApiTableCell.prototype.AddColumns = function(nCount, isBefore)
+	{
+		var oTable = this.GetParentTable();
+		if(!oTable)
+			return false;
+			
+		oTable.AddColumns(this, nCount, isBefore);
+
+		return oTable;
+	};
+	/**
+	 * Remove the column containing the cell.
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean} Is the table empty after removing.
+	 */
+	ApiTableCell.prototype.RemoveColumn = function()
+	{
+		var oTable = this.GetParentTable();
+		if (!oTable)
+			return false;
+
+		return oTable.RemoveColumn(this);
+	};
+	/**
+	 * Remove the row containing the cell.
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean} Is the table empty after removing.
+	 */
+	ApiTableCell.prototype.RemoveRow = function()
+	{
+		var oTable = this.GetParentTable();
+		if (!oTable)
+			return false;
+
+		return oTable.RemoveRow(this);
+	};
+	/**
+	 * Get the next cell.
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiTableCell} 
+	 */
+	ApiTableCell.prototype.GetNext = function()
+	{
+		var nextCell = this.Cell.Next;
+		if(!nextCell)
+			return null;
+		
+		return new ApiTableCell(nextCell);
+	};
+	/**
+	 * Get the previous cell.
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiTableCell} 
+	 */
+	ApiTableCell.prototype.GetPrevious = function()
+	{
+		var prevCell = this.Cell.Prev;
+		if(!prevCell)
+			return null;
+		
+		return new ApiTableCell(prevCell);
+	};
+	/**
+	 * Split the cell into a given number of rows and columns.
+	 * @typeofeditors ["CDE"]
+	 * @param {Number} [nRow=1] - count of rows which the cell will be split.
+	 * @param {Number} [nCol=1] - count of columns which the cell will be split.
+	 * @returns {ApiTable}
+	 */
+	ApiTableCell.prototype.Split = function(nRow, nCol)
+	{
+		var oTable = this.GetParentTable();
+		if (!oTable)
+			return false;
+
+		return oTable.Split(this, nRow, nCol);
+	};
+	/**
+	 * Sets properties of the cell.
+	 * @typeofeditors ["CDE"]
+	 * @param {ApiTableCellPr} oApiTableCellPr 
+	 * @returns {ApiTableCellPr}
+	 */
+	ApiTableCell.prototype.SetCellPr = function(oApiTableCellPr)
+	{
+		if (!(oApiTableCellPr instanceof ApiTableCellPr))
+			return false;
+
+		this.CellPr.Merge(oApiTableCellPr.CellPr);
+		this.private_OnChange();
+
+		return true;
+	};
+	/**
+	 * Applies text settings to the entire contents of the cell.
+	 * @param {ApiTextPr} oTextPr
+	 * @typeofeditors ["CDE"]
+	 * @return {bool}  
+	 */
+	ApiTableCell.prototype.SetTextPr = function(oTextPr)
+	{
+		if (!(oTextPr instanceof ApiTextPr))
+			return false;
+
+		var cellContent		= this.Cell.GetContent();
+		var allParagraphs	= [];
+
+		cellContent.GetAllParagraphs({All : true}, allParagraphs);
+		for (var curPara = 0; curPara < allParagraphs.length; curPara++)
+		{
+			allParagraphs[curPara].Set_ApplyToAll(true);
+			allParagraphs[curPara].Add(new AscCommonWord.ParaTextPr(oTextPr.TextPr));
+			allParagraphs[curPara].Set_ApplyToAll(false);
+		}
+		
+		return true;
+	};
+	/**
+	 * Add a paragraph or a table or a blockLvl content control using its position in the cell.
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {number} nPos - The position where the current element will be added.
+	 * @param {DocumentElement} oElement - The document element which will be added at the current position.
+	 */
+	ApiTableCell.prototype.AddElement = function(nPos, oElement)
+	{
+		var apiCellContent = this.GetContent();
+
+		if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || oElement instanceof ApiBlockLvlSdt)
+		{
+			apiCellContent.Document.Internal_Content_Add(nPos, oElement.private_GetImpl());
+
+			return true;
+		}
+
+		return false;
+	};
+	
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiStyle
