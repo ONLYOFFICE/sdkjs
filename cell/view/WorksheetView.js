@@ -5996,8 +5996,6 @@
         var align = c.getAlign();
         var va = align.getAlignVertical();
         var angle = align.getAngle();
-        var verticalText = angle === AscCommonExcel.g_nVerticalTextAngle ? true : false;
-        angle = verticalText ? 0 : angle;
         if (c.isEmptyTextString()) {
             if (!angle && c.isNotDefaultFont() && !(mergeType & c_oAscMergeType.rows)) {
                 // Пустая ячейка с измененной гарнитурой или размером, учитвается в высоте
@@ -6020,6 +6018,7 @@
             return mc ? mc.c2 : col;
         }
 
+        var verticalText = fl.verticalText = angle === AscCommonExcel.g_nVerticalTextAngle;
         var dDigitsCount = 0;
         var colWidth = 0;
         var cellType = c.getType();
@@ -6027,7 +6026,7 @@
         var numFormatStr = c.getNumFormatStr();
         var pad = this.settings.cells.padding * 2 + 1;
         var sstr, sfl, stm;
-        var isCustomWidth = this.model.getColCustomWidth(col);
+        var isCustomWidth = this.model.getColCustomWidth(col) || verticalText;
         var angleSin = Math.sin(angle * Math.PI / 180.0);
         var angleCos = Math.cos(angle * Math.PI / 180.0);
 
@@ -6094,12 +6093,12 @@
         var maxW = fl.wrapText || fl.shrinkToFit || mergeType || asc.isFixedWidthCell(str) ?
           this._calcMaxWidth(col, row, mc) : undefined;
 
-        if(verticalText) {
-            fl.verticalText = true;
-            var measure = this.stringRender.measureString(str, fl);
-            maxW = Math.min.apply(Math, this.stringRender.charWidths);
-            ha = alignH === null ? 2 : ha;
-            fl.textAlign = ha;
+        if (verticalText) {
+            //fl.verticalText = true;
+            //var measure = this.stringRender.measureString(str, fl);
+            //maxW = Math.min.apply(Math, this.stringRender.charWidths);
+            fl.textAlign = ha = alignH === null ? AscCommon.align_Center : alignH;
+            angle = 0;
         }
 
         tm = this._roundTextMetrics(this.stringRender.measureString(str, fl, maxW));
@@ -6186,7 +6185,7 @@
 
         this._fetchCellCacheText(col, row);
 
-        if (!angle && (cto.leftSide !== 0 || cto.rightSide !== 0)) {
+        if (!angle && !verticalText && (cto.leftSide !== 0 || cto.rightSide !== 0)) {
             this._addErasedBordersToCache(col - cto.leftSide, col + cto.rightSide, row);
         }
             this._updateRowHeight(cache, row, maxW, colWidth);
