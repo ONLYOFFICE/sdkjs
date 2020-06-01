@@ -6094,9 +6094,6 @@
           this._calcMaxWidth(col, row, mc) : undefined;
 
         if (verticalText) {
-            //fl.verticalText = true;
-            //var measure = this.stringRender.measureString(str, fl);
-            //maxW = Math.min.apply(Math, this.stringRender.charWidths);
             fl.textAlign = ha = alignH === null ? AscCommon.align_Center : alignH;
             angle = 0;
         }
