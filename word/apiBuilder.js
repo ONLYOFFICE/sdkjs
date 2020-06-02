@@ -6615,6 +6615,186 @@
 
 		return new ApiTableCell(this.Row.Content[nPos]);
 	};
+	/**
+	 * Get the row index.
+	 * @typeofeditors ["CDE"]
+	 * @returns {Number}
+	 */
+	ApiTableRow.prototype.GetIndex = function()
+	{
+		return this.Row.GetIndex();
+	};
+	/**
+	 * Get the row index.
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiTable | null}
+	 */
+	ApiTableRow.prototype.GetParentTable = function()
+	{
+		var Table = this.Row.GetTable();
+		if (!Table)
+			return null;
+
+		return new ApiTable(Table);
+	};
+	/**
+	 * Get the next row.
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiTableRow | null}
+	 */
+	ApiTableRow.prototype.GetNext = function()
+	{
+		var Next = this.Row.Next;
+		if (!Next)
+			return null;
+
+		return new ApiTableRow(Next);
+	};
+	/**
+	 * Get the previous row.
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiTableRow | null}
+	 */
+	ApiTableRow.prototype.GetPrevious = function()
+	{
+		var Prev = this.Row.Prev;
+		if (!Prev)
+			return null;
+
+		return new ApiTableRow(Prev);
+	};
+	/**
+	 * Add a new rows to the current table.
+	 * @typeofeditors ["CDE"]
+	 * @param {Number} nCount - count of rows to be added.
+	 * @param {boolean} [isBefore=false] - Add a new rows before or after the row. 
+	 * @returns {ApiTable | false}
+	 */
+	ApiTableRow.prototype.AddRows = function(nCount, isBefore)
+	{
+		var oTable = this.GetParentTable();
+		if(!oTable)
+			return false;
+		var oCell = this.GetCell(0);
+		if (!oCell)
+			return false;
+			
+		oTable.AddRows(oCell, nCount, isBefore);
+
+		return oTable;
+	};
+	/**
+	 * Merge cells in the row. 
+	 * @typeofeditors ["CDE"]
+	 * @param {Number} nCount - count of rows to be added.
+	 * @param {boolean} [isBefore=false] - Add a new rows before or after the row. 
+	 * @returns {ApiTableCell | false} - return false if can't merge.
+	 */
+	ApiTableRow.prototype.MergeCells = function()
+	{
+		var oTable = this.GetParentTable();
+		if(!oTable)
+			return false;
+		var cellsArr = [];
+		for (var curCell = 0, cellsCount = this.Row.GetCellsCount(); curCell < cellsCount; curCell++)
+		{
+			cellsArr.push(this.GetCell(curCell));
+		}
+			
+		return oTable.MergeCells(cellsArr);
+	};
+	/**
+	 * Clears the content of row.
+	 * @typeofeditors ["CDE"]
+	 * @returns {bool}
+	 */
+	ApiTableRow.prototype.Clear = function()
+	{
+		for (var curCell = 0, cellsCount = this.Row.GetCellsCount(); curCell < cellsCount; curCell++)
+		{
+			this.Row.GetCell(curCell).GetContent().Clear_Content();
+		}
+
+		return true;
+	};
+	/**
+	 * Remove the table row.
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 */
+	ApiTableRow.prototype.Remove = function()
+	{
+		var oTable = this.GetTable();
+		if (!oTable)
+			return false;
+		
+		var oCell = this.GetCell(0);
+		oTable.RemoveRow(oCell);
+
+		return true;
+	};
+	/**
+	 * Sets text properties for the row.
+	 * @typeofeditors ["CDE"]
+	 * @param {ApiTextPr} oTextPr
+	 * @returns {boolean}
+	 */
+	ApiTableRow.prototype.SetTextPr = function(oTextPr)
+	{
+		if (this.GetCellsCount() <= 0)
+			return false;
+
+		for (var curCell = 0, cellsCount = this.GetCellsCount(); curCell < cellsCount; curCell++)
+		{
+			this.GetCell(curCell).SetTextPr(oTextPr);
+		}
+
+		return true;
+	};
+	/**
+	 * Searches for the scope of a table row object. The search results are a collection of ApiRange objects.
+	 * @param {string} sText 
+	 * @param {bool} isMatchCase - is case sensitive. 
+	 * @typeofeditors ["CDE"]
+	 * @return {Array}  
+	 */
+	ApiTableRow.prototype.Search = function(sText, isMatchCase)
+	{
+		if (isMatchCase === undefined)
+			isMatchCase	= false;
+		var oTable = this.GetParentTable();
+		if (!oTable)
+			return false;
+
+		var arrApiRanges		= [];
+		var tempResult			= [];
+		var tempCell			= null;
+		var tempGridSpan		= undefined;
+		var tempStartGridCol	= undefined;
+		var tempVMergeCount		= undefined;
+
+		for (var curCell = 0, cellsCount = this.GetCellsCount(); curCell < cellsCount; curCell++)
+		{
+			tempCell 			= this.GetCell(curCell);
+			tempStartGridCol	= this.Row.GetCellInfo(curCell).StartGridCol;
+			tempGridSpan		= tempCell.Cell.GetGridSpan();
+			tempVMergeCount		= oTable.Table.Internal_GetVertMergeCount2(this.GetIndex(), tempStartGridCol, tempGridSpan);
+
+			if (tempVMergeCount > 1)
+			{
+				tempCell = new ApiTableCell(oTable.Table.GetCellByStartGridCol(this.GetIndex() - (tempVMergeCount - 1), tempStartGridCol));
+			}
+
+			tempResult = tempCell.Search(sText, isMatchCase);
+			for (var nRange = 0; nRange < tempResult.length; nRange++)
+			{
+				arrApiRanges.push(tempResult[nRange]);
+			}
+		}
+
+		return arrApiRanges;
+	};
+	
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -10405,6 +10585,16 @@
 	ApiTableRow.prototype["GetClassType"]            = ApiTableRow.prototype.GetClassType;
 	ApiTableRow.prototype["GetCellsCount"]           = ApiTableRow.prototype.GetCellsCount;
 	ApiTableRow.prototype["GetCell"]                 = ApiTableRow.prototype.GetCell;
+	ApiTableRow.prototype["GetIndex"]           	 = ApiTableRow.prototype.GetIndex;
+	ApiTableRow.prototype["GetParentTable"]          = ApiTableRow.prototype.GetParentTable;
+	ApiTableRow.prototype["GetNext"]           		 = ApiTableRow.prototype.GetNext;
+	ApiTableRow.prototype["GetPrevious"]             = ApiTableRow.prototype.GetPrevious;
+	ApiTableRow.prototype["AddRows"]           		 = ApiTableRow.prototype.AddRows;
+	ApiTableRow.prototype["MergeCells"]          	 = ApiTableRow.prototype.MergeCells;
+	ApiTableRow.prototype["Clear"]           		 = ApiTableRow.prototype.Clear;
+	ApiTableRow.prototype["Remove"]           		 = ApiTableRow.prototype.Remove;
+	ApiTableRow.prototype["SetTextPr"]          	 = ApiTableRow.prototype.SetTextPr;
+	ApiTableRow.prototype["Search"]          		 = ApiTableRow.prototype.Search;
 
 	ApiTableCell.prototype["GetClassType"]           = ApiTableCell.prototype.GetClassType;
 	ApiTableCell.prototype["GetContent"]             = ApiTableCell.prototype.GetContent;
