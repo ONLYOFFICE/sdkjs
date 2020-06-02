@@ -6749,6 +6749,34 @@
 		return oTable.RemoveRow(this);
 	};
 	/**
+	 * Searches for the scope of a cell object. The search results are a collection of ApiRange objects.
+	 * @param {string} sText 
+	 * @param {bool} isMatchCase - is case sensitive. 
+	 * @typeofeditors ["CDE"]
+	 * @return {Array}  
+	 */
+	ApiTableCell.prototype.Search = function(sText, isMatchCase)
+	{
+		if (isMatchCase === undefined)
+			isMatchCase	= false;
+		
+		var arrApiRanges	= [];
+		var allParagraphs	= [];
+		var cellContent		= this.Cell.GetContent();
+		cellContent.GetAllParagraphs({All : true}, allParagraphs);
+
+		for (var para in allParagraphs)
+		{
+			var oParagraph			= new ApiParagraph(allParagraphs[para]);
+			var arrOfParaApiRanges	= oParagraph.Search(sText, isMatchCase);
+
+			for (var itemRange = 0; itemRange < arrOfParaApiRanges.length; itemRange++)	
+				arrApiRanges.push(arrOfParaApiRanges[itemRange]);
+		}
+
+		return arrApiRanges;
+	};
+	/**
 	 * Get the next cell.
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiTableCell} 
@@ -10352,6 +10380,27 @@
 	ApiTable.prototype["RemoveRow"]                  = ApiTable.prototype.RemoveRow;
 	ApiTable.prototype["RemoveColumn"]               = ApiTable.prototype.RemoveColumn;
 	ApiTable.prototype["Copy"]                       = ApiTable.prototype.Copy;
+	ApiTable.prototype["GetCell"]    				 = ApiTable.prototype.GetCell;
+	ApiTable.prototype["Split"]    					 = ApiTable.prototype.Split;
+	ApiTable.prototype["AddRows"]    				 = ApiTable.prototype.AddRows;
+	ApiTable.prototype["AddColumns"]   				 = ApiTable.prototype.AddColumns;
+	ApiTable.prototype["SetSelection"]    			 = ApiTable.prototype.SetSelection;
+	ApiTable.prototype["GetRange"]    				 = ApiTable.prototype.GetRange;
+	ApiTable.prototype["SetHAlign"]    				 = ApiTable.prototype.SetHAlign;
+	ApiTable.prototype["SetVAlign"]    				 = ApiTable.prototype.SetVAlign;
+	ApiTable.prototype["SetPaddings"]    			 = ApiTable.prototype.SetPaddings;
+	ApiTable.prototype["SetWrappingStyle"]    		 = ApiTable.prototype.SetWrappingStyle;
+	ApiTable.prototype["GetParentContentControl"]    = ApiTable.prototype.GetParentContentControl;
+	ApiTable.prototype["InsertInContentControl"]     = ApiTable.prototype.InsertInContentControl;
+	ApiTable.prototype["GetParentTable"]    		 = ApiTable.prototype.GetParentTable;
+	ApiTable.prototype["GetTables"]     			 = ApiTable.prototype.GetTables;
+	ApiTable.prototype["GetNext"]    				 = ApiTable.prototype.GetNext;
+	ApiTable.prototype["GetPrevious"]    			 = ApiTable.prototype.GetPrevious;
+	ApiTable.prototype["GetParentTableCell"]   	 	 = ApiTable.prototype.GetParentTableCell;
+	ApiTable.prototype["Delete"]    				 = ApiTable.prototype.Delete;
+	ApiTable.prototype["Clear"]    					 = ApiTable.prototype.Clear;
+	ApiTable.prototype["Search"]    				 = ApiTable.prototype.Search;
+	ApiTable.prototype["SetTextPr"]    				 = ApiTable.prototype.SetTextPr;
 
 	ApiTableRow.prototype["GetClassType"]            = ApiTableRow.prototype.GetClassType;
 	ApiTableRow.prototype["GetCellsCount"]           = ApiTableRow.prototype.GetCellsCount;
@@ -10359,6 +10408,22 @@
 
 	ApiTableCell.prototype["GetClassType"]           = ApiTableCell.prototype.GetClassType;
 	ApiTableCell.prototype["GetContent"]             = ApiTableCell.prototype.GetContent;
+	ApiTableCell.prototype["GetIndex"]    			 = ApiTableCell.prototype.GetIndex;
+	ApiTableCell.prototype["GetRowIndex"]    		 = ApiTableCell.prototype.GetRowIndex;
+	ApiTableCell.prototype["GetParentRow"]    		 = ApiTableCell.prototype.GetParentRow;
+	ApiTableCell.prototype["GetParentTable"]    	 = ApiTableCell.prototype.GetParentTable;
+	ApiTableCell.prototype["AddRows"]    			 = ApiTableCell.prototype.AddRows;
+	ApiTableCell.prototype["AddColumns"]    		 = ApiTableCell.prototype.AddColumns;
+	ApiTableCell.prototype["RemoveColumn"]    		 = ApiTableCell.prototype.RemoveColumn;
+	ApiTableCell.prototype["RemoveRow"]    			 = ApiTableCell.prototype.RemoveRow;
+	ApiTableCell.prototype["Search"]    			 = ApiTableCell.prototype.Search;
+	ApiTableCell.prototype["GetNext"]    			 = ApiTableCell.prototype.GetNext;
+	ApiTableCell.prototype["GetPrevious"]    		 = ApiTableCell.prototype.GetPrevious;
+	ApiTableCell.prototype["Split"]    				 = ApiTableCell.prototype.Split;
+	ApiTableCell.prototype["SetCellPr"]    			 = ApiTableCell.prototype.SetCellPr;
+	ApiTableCell.prototype["SetTextPr"]    			 = ApiTableCell.prototype.SetTextPr;
+	ApiTableCell.prototype["Clear"]    		         = ApiTableCell.prototype.Clear;
+	ApiTableCell.prototype["AddElement"]    		 = ApiTableCell.prototype.AddElement;
 
 	ApiStyle.prototype["GetClassType"]               = ApiStyle.prototype.GetClassType;
 	ApiStyle.prototype["GetName"]                    = ApiStyle.prototype.GetName;
