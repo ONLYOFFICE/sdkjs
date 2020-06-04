@@ -209,8 +209,7 @@
 
 		if (this.Element instanceof CDocument || this.Element instanceof CTable || this.Element instanceof CBlockLevelSdt)
 		{
-			var allParagraphs	= [];
-			this.Element.GetAllParagraphs({OnlyMainDocument : true, All : true}, allParagraphs);
+			var allParagraphs	= this.Element.GetAllParagraphs({OnlyMainDocument : true, All : true});
 
 			for (var paraItem = 0; paraItem < allParagraphs.length; paraItem++)
 			{
@@ -475,7 +474,9 @@
 	 */	
 	ApiRange.prototype.SetSelection = function(bUpdate)
 	{
-		if (this.isEmpty || this.isEmpty === undefined || this.StartPos[this.StartPos.length - 1].Deleted || this.EndPos[this.EndPos.length - 1].Deleted)
+		// if (this.isEmpty || this.isEmpty === undefined || this.StartPos[this.StartPos.length - 1].Deleted || this.EndPos[this.EndPos.length - 1].Deleted)
+		// 	return false;
+		if (this.isEmpty || this.isEmpty === undefined)
 			return false;
 		if (bUpdate === undefined)
 			bUpdate = true;
@@ -483,6 +484,7 @@
 		var Document = private_GetLogicDocument();
 		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
 
+		this.StartPos[0].Class.SetContentPosition(this.StartPos, 0, 0);
 		this.StartPos[0].Class.SetSelectionByContentPositions(this.StartPos, this.EndPos);
 
 		if (bUpdate)
@@ -653,7 +655,9 @@
 	 */
 	ApiRange.prototype.SetBold = function(isBold)
 	{
-		if (this.isEmpty || this.isEmpty === undefined || this.StartPos[this.StartPos.length - 1].Deleted || this.EndPos[this.EndPos.length - 1].Deleted)
+		// if (this.isEmpty || this.isEmpty === undefined || this.StartPos[this.StartPos.length - 1].Deleted || this.EndPos[this.EndPos.length - 1].Deleted)
+		// 	return false;
+		if (this.isEmpty || this.isEmpty === undefined)
 			return false;
 
 		var Document			= private_GetLogicDocument();
@@ -1515,12 +1519,13 @@
 		}
 
 		this.SetSelection(false);
-		this.Controller.Remove(-1, true, false, false, false);
+		this.Controller.Remove(1, true, false, false, false);
 
 		this.isEmpty = true;
-
+		
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
+		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
 
 		return true;
 	};
@@ -3143,6 +3148,7 @@
 		{
 			this.Document.Start_SilentMode();
 			this.Document.Remove(1, false, false, false);
+			this.Document.RefreshDocumentPositions(TrackedPositions);
 			this.Document.End_SilentMode();
 			this.Document.RemoveSelection(true);
 		}
@@ -11396,4 +11402,35 @@
 	};
 }(window, null));
 
-
+function Test()
+{
+	var Api = editor;
+	var oDocument = Api.GetDocument();
+	var aRanges = oDocument.Search("text");
+	var oRange;
+	var aContent, oParagraph, oDrawing;
+	for(var nRange = 0; nRange < aRanges.length; ++nRange) {
+		oRange = aRanges[nRange];
+		oRange.SetSelection();
+		//oRange.Delete();
+		aContent = [];
+		oParagraph = Api.CreateParagraph();
+		oDrawing = Api.CreateImage("path/to/image", 100 *3600, 100 * 3600);
+		oDrawing.SetWrappingStyle("inline");
+		oParagraph.AddDrawing(oDrawing);
+		oDocument.InsertContent([oParagraph], true);
+	}
+}
+function Test1()
+{
+	var Api = editor;
+	var oDocument = Api.GetDocument();
+	var aRanges = oDocument.Search("text");
+	var oRange;
+	var aContent, oParagraph, oDrawing;
+	for(var nRange = 0; nRange < aRanges.length; ++nRange) {
+		oRange = aRanges[nRange];
+		oRange.SetSelection(false);
+		oRange.Delete();
+	}
+}
