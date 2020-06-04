@@ -47,7 +47,22 @@
 	var c_oAscAlignV         = Asc.c_oAscAlignV;
 
 	var TrackedPositions	= [];
+	function private_RemoveEmptyTrackedPositions()
+	{
+		for (var nPos = 0; nPos < TrackedPositions.length; nPos++)
+		{
+			var startPos	= TrackedPositions[nPos];
+			var secondPos	= TrackedPositions[nPos + 1];
 
+			if (startPos[startPos.length - 2].Deleted && secondPos[secondPos.length - 2].Deleted)
+			{
+				TrackedPositions.splice(nPos, 2);
+				nPos--;
+			}
+			else 
+				nPos++;
+		}
+	}
 	/**
 	 * Class representing a container for paragraphs and tables.
 	 * @param Document
@@ -229,7 +244,7 @@
 			this.StartPos	= StartPos;
 			this.EndPos		= EndPos;
 		}
-	}
+	};
 	ApiRange.prototype.private_SetController = function()
 	{
 		if (this.StartPos[0].Class.IsHdrFtr())
@@ -272,17 +287,20 @@
 	 */	
 	ApiRange.prototype.AddText = function(sText, sPosition)
 	{
-		if (this.isEmpty || this.isEmpty === undefined || this.StartPos[this.StartPos.length - 1].Deleted || this.EndPos[this.EndPos.length - 1].Deleted)
+		if (this.isEmpty || this.isEmpty === undefined)
+			return false;
+
+		var Document = private_GetLogicDocument();
+		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
+		Document.RefreshDocumentPositions(TrackedPositions);
+		private_RemoveEmptyTrackedPositions();
+		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
 			return false;
 		if (typeof(sText) !== "string")
 			return false;
 		if (sPosition !== "after" && sPosition !== "before")
 			sPosition = "after";
 		
-		var Document = private_GetLogicDocument();
-
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-
 		var oldSelectionInfo = Document.SaveDocumentState();
 		
 		for (var Index = 0; Index < TrackedPositions.length; Index++)
@@ -311,8 +329,6 @@
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
 
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-
 		return this;
 	};
 	/**
@@ -322,14 +338,19 @@
 	 */	
 	ApiRange.prototype.AddBookmark = function(sName)
 	{
-		if (this.isEmpty || this.isEmpty === undefined || this.StartPos[this.StartPos.length - 1].Deleted || this.EndPos[this.EndPos.length - 1].Deleted)
+		if (this.isEmpty || this.isEmpty === undefined)
+			return false;
+
+		var Document = private_GetLogicDocument();
+		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
+		Document.RefreshDocumentPositions(TrackedPositions);
+		private_RemoveEmptyTrackedPositions();
+		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
 			return false;
 		if (typeof(sName) !== "string")
 			return false;
 
-		var Document = private_GetLogicDocument();
 		Document.RemoveBookmark(sName);
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
 
 		var oldSelectionInfo = Document.SaveDocumentState();
 		
@@ -353,8 +374,15 @@
 	 */	
 	ApiRange.prototype.GetText = function()
 	{
+		if (this.isEmpty || this.isEmpty === undefined)
+			return false;
+
 		var Document = private_GetLogicDocument();
 		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
+		Document.RefreshDocumentPositions(TrackedPositions);
+		private_RemoveEmptyTrackedPositions();
+		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
+			return false;
 
 		var oldSelectionInfo = Document.SaveDocumentState();
 		
@@ -369,8 +397,6 @@
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
 
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-		
 		return Text;
 	};
 	/**
@@ -379,6 +405,16 @@
 	 */	
 	ApiRange.prototype.GetAllParagraphs = function()
 	{
+		if (this.isEmpty || this.isEmpty === undefined)
+			return false;
+
+		var Document = private_GetLogicDocument();
+		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
+		Document.RefreshDocumentPositions(TrackedPositions);
+		private_RemoveEmptyTrackedPositions();
+		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
+			return false;
+
 		var done = false;
 
 		var AllParagraphsListOfElement = [];
@@ -474,8 +510,6 @@
 	 */	
 	ApiRange.prototype.SetSelection = function(bUpdate)
 	{
-		// if (this.isEmpty || this.isEmpty === undefined || this.StartPos[this.StartPos.length - 1].Deleted || this.EndPos[this.EndPos.length - 1].Deleted)
-		// 	return false;
 		if (this.isEmpty || this.isEmpty === undefined)
 			return false;
 		if (bUpdate === undefined)
@@ -483,6 +517,10 @@
 
 		var Document = private_GetLogicDocument();
 		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
+		Document.RefreshDocumentPositions(TrackedPositions);
+		private_RemoveEmptyTrackedPositions();
+		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
+			return false;
 
 		this.StartPos[0].Class.SetContentPosition(this.StartPos, 0, 0);
 		this.StartPos[0].Class.SetSelectionByContentPositions(this.StartPos, this.EndPos);
@@ -519,14 +557,16 @@
 	 */	
 	ApiRange.prototype.ExpandTo = function(oRange)
 	{
-		if (this.isEmpty || this.isEmpty === undefined || this.StartPos[this.StartPos.length - 1].Deleted || this.EndPos[this.EndPos.length - 1].Deleted)
-			return false;
-		if (!oRange || oRange.isEmpty || oRange.isEmpty === undefined)
+		if (!(oRange instanceof ApiRange) || this.isEmpty || this.isEmpty === undefined || oRange.isEmpty || oRange.isEmpty === undefined)
 			return false;
 
 		var Document = private_GetLogicDocument();
 		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
 		Document.RefreshDocumentPositions([oRange.StartPos, oRange.EndPos]);
+		Document.RefreshDocumentPositions(TrackedPositions);
+		private_RemoveEmptyTrackedPositions();
+		if ((this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted) || (oRange.StartPos[this.StartPos.length - 2].Deleted && oRange.EndPos[this.EndPos.length - 2].Deleted))
+			return false;
 
 		var firstStartPos 		= this.StartPos;
 		var firstEndPos			= this.EndPos;
@@ -575,14 +615,16 @@
 	 */	
 	ApiRange.prototype.IntersectWith = function(oRange)
 	{
-		if (this.isEmpty || this.isEmpty === undefined || this.StartPos[this.StartPos.length - 1].Deleted || this.EndPos[this.EndPos.length - 1].Deleted)
-			return false;
-		if (!oRange || oRange.isEmpty || oRange.isEmpty === undefined)
+		if (!(oRange instanceof ApiRange) || this.isEmpty || this.isEmpty === undefined || oRange.isEmpty || oRange.isEmpty === undefined)
 			return false;
 
 		var Document = private_GetLogicDocument();
 		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
 		Document.RefreshDocumentPositions([oRange.StartPos, oRange.EndPos]);
+		Document.RefreshDocumentPositions(TrackedPositions);
+		private_RemoveEmptyTrackedPositions();
+		if ((this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted) || (oRange.StartPos[this.StartPos.length - 2].Deleted && oRange.EndPos[this.EndPos.length - 2].Deleted))
+			return false;
 
 		var firstStartPos 		= this.StartPos;
 		var firstEndPos			= this.EndPos;
@@ -655,15 +697,15 @@
 	 */
 	ApiRange.prototype.SetBold = function(isBold)
 	{
-		// if (this.isEmpty || this.isEmpty === undefined || this.StartPos[this.StartPos.length - 1].Deleted || this.EndPos[this.EndPos.length - 1].Deleted)
-		// 	return false;
 		if (this.isEmpty || this.isEmpty === undefined)
 			return false;
 
-		var Document			= private_GetLogicDocument();
-		var oldSelectionInfo	= null;
-
+		var Document = private_GetLogicDocument();
 		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
+		Document.RefreshDocumentPositions(TrackedPositions);
+		private_RemoveEmptyTrackedPositions();
+		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
+			return false;
 
 		var oldSelectionInfo = Document.SaveDocumentState();
 
@@ -691,8 +733,6 @@
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
 
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-		
 		return this;
 	};
 	/**
@@ -702,11 +742,15 @@
 	 */
 	ApiRange.prototype.SetCaps = function(isCaps)
 	{
-		if (this.isEmpty || this.isEmpty === undefined || this.StartPos[this.StartPos.length - 1].Deleted || this.EndPos[this.EndPos.length - 1].Deleted)
+		if (this.isEmpty || this.isEmpty === undefined)
 			return false;
 
 		var Document = private_GetLogicDocument();
 		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
+		Document.RefreshDocumentPositions(TrackedPositions);
+		private_RemoveEmptyTrackedPositions();
+		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
+			return false;
 
 		var oldSelectionInfo = Document.SaveDocumentState();
 
@@ -733,8 +777,6 @@
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
 
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-
 		return this;
 	};
 	/**
@@ -747,11 +789,15 @@
 	 */
 	ApiRange.prototype.SetColor = function(r, g, b, isAuto)
 	{
-		if (this.isEmpty || this.isEmpty === undefined || this.StartPos[this.StartPos.length - 1].Deleted || this.EndPos[this.EndPos.length - 1].Deleted)
+		if (this.isEmpty || this.isEmpty === undefined)
 			return false;
 
 		var Document = private_GetLogicDocument();
 		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
+		Document.RefreshDocumentPositions(TrackedPositions);
+		private_RemoveEmptyTrackedPositions();
+		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
+			return false;
 
 		var color = new Asc.asc_CColor();
 		color.r    = r;
@@ -804,8 +850,6 @@
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
 
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-
 		return this;
 	};
 	/**
@@ -815,11 +859,15 @@
 	 */
 	ApiRange.prototype.SetDoubleStrikeout = function(isDoubleStrikeout)
 	{
-		if (this.isEmpty || this.isEmpty === undefined || this.StartPos[this.StartPos.length - 1].Deleted || this.EndPos[this.EndPos.length - 1].Deleted)
+		if (this.isEmpty || this.isEmpty === undefined)
 			return false;
 
 		var Document = private_GetLogicDocument();
 		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
+		Document.RefreshDocumentPositions(TrackedPositions);
+		private_RemoveEmptyTrackedPositions();
+		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
+			return false;
 		
 		var oldSelectionInfo = Document.SaveDocumentState();
 		
@@ -847,8 +895,6 @@
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
 
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-
 		return this;
 	};
 	/**
@@ -861,11 +907,15 @@
 	 */
 	ApiRange.prototype.SetHighlight = function(r, g, b, isNone)
 	{
-		if (this.isEmpty || this.isEmpty === undefined || this.StartPos[this.StartPos.length - 1].Deleted || this.EndPos[this.EndPos.length - 1].Deleted)
+		if (this.isEmpty || this.isEmpty === undefined)
 			return false;
 
 		var Document = private_GetLogicDocument();
 		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
+		Document.RefreshDocumentPositions(TrackedPositions);
+		private_RemoveEmptyTrackedPositions();
+		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
+			return false;
 
 		var oldSelectionInfo = Document.SaveDocumentState();
 		
@@ -904,8 +954,6 @@
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
 
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-
 		return this;
 	};
 	/**
@@ -918,11 +966,15 @@
 	 */
 	ApiRange.prototype.SetShd = function(sType, r, g, b)
 	{
-		if (this.isEmpty || this.isEmpty === undefined || this.StartPos[this.StartPos.length - 1].Deleted || this.EndPos[this.EndPos.length - 1].Deleted)
+		if (this.isEmpty || this.isEmpty === undefined)
 			return false;
 
 		var Document = private_GetLogicDocument();
 		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
+		Document.RefreshDocumentPositions(TrackedPositions);
+		private_RemoveEmptyTrackedPositions();
+		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
+			return false;
 
 		var color = new Asc.asc_CColor();
 		color.r    = r;
@@ -980,8 +1032,6 @@
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
 
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-
 		return this;
 	};
 	/**
@@ -991,11 +1041,15 @@
 	 */
 	ApiRange.prototype.SetItalic = function(isItalic)
 	{
-		if (this.isEmpty || this.isEmpty === undefined || this.StartPos[this.StartPos.length - 1].Deleted || this.EndPos[this.EndPos.length - 1].Deleted)
+		if (this.isEmpty || this.isEmpty === undefined)
 			return false;
 
 		var Document = private_GetLogicDocument();
 		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
+		Document.RefreshDocumentPositions(TrackedPositions);
+		private_RemoveEmptyTrackedPositions();
+		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
+			return false;
 
 		var oldSelectionInfo = Document.SaveDocumentState();
 		
@@ -1013,8 +1067,6 @@
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
 
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-
 		return this;
 	};
 	/**
@@ -1024,11 +1076,15 @@
 	 */
 	ApiRange.prototype.SetStrikeout = function(isStrikeout)
 	{
-		if (this.isEmpty || this.isEmpty === undefined || this.StartPos[this.StartPos.length - 1].Deleted || this.EndPos[this.EndPos.length - 1].Deleted)
+		if (this.isEmpty || this.isEmpty === undefined)
 			return false;
 
 		var Document = private_GetLogicDocument();
 		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
+		Document.RefreshDocumentPositions(TrackedPositions);
+		private_RemoveEmptyTrackedPositions();
+		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
+			return false;
 		
 		var oldSelectionInfo = Document.SaveDocumentState();
 		
@@ -1059,8 +1115,6 @@
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
 
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-
 		return this;
 	};
 	/**
@@ -1071,11 +1125,15 @@
 	 */
 	ApiRange.prototype.SetSmallCaps = function(isSmallCaps)
 	{
-		if (this.isEmpty || this.isEmpty === undefined || this.StartPos[this.StartPos.length - 1].Deleted || this.EndPos[this.EndPos.length - 1].Deleted)
+		if (this.isEmpty || this.isEmpty === undefined)
 			return false;
 
 		var Document = private_GetLogicDocument();
 		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
+		Document.RefreshDocumentPositions(TrackedPositions);
+		private_RemoveEmptyTrackedPositions();
+		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
+			return false;
 		
 		var oldSelectionInfo = Document.SaveDocumentState();
 		
@@ -1106,8 +1164,6 @@
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
 
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-
 		return this;
 	};
 	/**
@@ -1117,11 +1173,15 @@
 	 */
 	ApiRange.prototype.SetSpacing = function(nSpacing)
 	{
-		if (this.isEmpty || this.isEmpty === undefined || this.StartPos[this.StartPos.length - 1].Deleted || this.EndPos[this.EndPos.length - 1].Deleted)
+		if (this.isEmpty || this.isEmpty === undefined)
 			return false;
 
 		var Document = private_GetLogicDocument();
 		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
+		Document.RefreshDocumentPositions(TrackedPositions);
+		private_RemoveEmptyTrackedPositions();
+		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
+			return false;
 		
 		var oldSelectionInfo = Document.SaveDocumentState();
 		
@@ -1149,8 +1209,6 @@
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
 
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-
 		return this;
 	};
 	/**
@@ -1161,11 +1219,15 @@
 	 */
 	ApiRange.prototype.SetUnderline = function(isUnderline)
 	{
-		if (this.isEmpty || this.isEmpty === undefined || this.StartPos[this.StartPos.length - 1].Deleted || this.EndPos[this.EndPos.length - 1].Deleted)
+		if (this.isEmpty || this.isEmpty === undefined)
 			return false;
 
 		var Document = private_GetLogicDocument();
 		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
+		Document.RefreshDocumentPositions(TrackedPositions);
+		private_RemoveEmptyTrackedPositions();
+		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
+			return false;
 
 		var oldSelectionInfo = Document.SaveDocumentState();
 		
@@ -1193,8 +1255,6 @@
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
 
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-
 		return this;
 	};
 	/**
@@ -1207,7 +1267,14 @@
 	 */
 	ApiRange.prototype.SetVertAlign = function(sType)
 	{
-		if (this.isEmpty || this.isEmpty === undefined || this.StartPos[this.StartPos.length - 1].Deleted || this.EndPos[this.EndPos.length - 1].Deleted)
+		if (this.isEmpty || this.isEmpty === undefined)
+			return false;
+
+		var Document = private_GetLogicDocument();
+		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
+		Document.RefreshDocumentPositions(TrackedPositions);
+		private_RemoveEmptyTrackedPositions();
+		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
 			return false;
 
 		var value = undefined;
@@ -1220,9 +1287,6 @@
 			value = 1;
 		else 
 			return false;
-
-		var Document = private_GetLogicDocument();
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
 
 		var oldSelectionInfo = Document.SaveDocumentState();
 		
@@ -1250,7 +1314,6 @@
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
 
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
 		return this;
 	};
 	/**
@@ -1262,15 +1325,19 @@
 	 */
 	ApiRange.prototype.SetPosition = function(nPosition)
 	{
-		if (this.isEmpty || this.isEmpty === undefined || this.StartPos[this.StartPos.length - 1].Deleted || this.EndPos[this.EndPos.length - 1].Deleted)
+		if (this.isEmpty || this.isEmpty === undefined)
+			return false;
+
+		var Document = private_GetLogicDocument();
+		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
+		Document.RefreshDocumentPositions(TrackedPositions);
+		private_RemoveEmptyTrackedPositions();
+		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
 			return false;
 
 		if (typeof nPosition !== "number")
 			return false;
 
-		var Document = private_GetLogicDocument();
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-		
 		var oldSelectionInfo = Document.SaveDocumentState();
 		
 		for (var Index = 0; Index < TrackedPositions.length; Index++)
@@ -1297,8 +1364,6 @@
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
 
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-
 		return this;
 	};
 	/**
@@ -1308,11 +1373,15 @@
 	 */
 	ApiRange.prototype.SetFontSize = function(FontSize)
 	{
-		if (this.isEmpty || this.isEmpty === undefined || this.StartPos[this.StartPos.length - 1].Deleted || this.EndPos[this.EndPos.length - 1].Deleted)
+		if (this.isEmpty || this.isEmpty === undefined)
 			return false;
 
 		var Document = private_GetLogicDocument();
 		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
+		Document.RefreshDocumentPositions(TrackedPositions);
+		private_RemoveEmptyTrackedPositions();
+		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
+			return false;
 		
 		var oldSelectionInfo = Document.SaveDocumentState();
 		
@@ -1340,8 +1409,6 @@
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
 
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-
 		return this;
 	};
 	/**
@@ -1351,13 +1418,17 @@
 	 */
 	ApiRange.prototype.SetFontFamily = function(sFontFamily)
 	{
-		if (this.isEmpty || this.isEmpty === undefined || this.StartPos[this.StartPos.length - 1].Deleted || this.EndPos[this.EndPos.length - 1].Deleted)
-			return false;
-		if (typeof sFontFamily !== "string")
+		if (this.isEmpty || this.isEmpty === undefined)
 			return false;
 
 		var Document = private_GetLogicDocument();
 		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
+		Document.RefreshDocumentPositions(TrackedPositions);
+		private_RemoveEmptyTrackedPositions();
+		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
+			return false;
+		if (typeof sFontFamily !== "string")
+			return false;
 
 		var loader   = AscCommon.g_font_loader;
 		var fontinfo = g_fontApplication.GetFontInfo(sFontFamily);
@@ -1396,8 +1467,6 @@
 			Document.LoadDocumentState(oldSelectionInfo);
 			Document.UpdateSelection();
 
-			Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-
 			return this;
 		}
 	};
@@ -1408,15 +1477,19 @@
 	 */
 	ApiRange.prototype.SetStyle = function(oStyle)
 	{
-		if (this.isEmpty || this.isEmpty === undefined || this.StartPos[this.StartPos.length - 1].Deleted || this.EndPos[this.EndPos.length - 1].Deleted)
+		if (this.isEmpty || this.isEmpty === undefined)
+			return false;
+
+		var Document = private_GetLogicDocument();
+		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
+		Document.RefreshDocumentPositions(TrackedPositions);
+		private_RemoveEmptyTrackedPositions();
+		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
 			return false;
 
 		if (!(oStyle instanceof ApiStyle))
 			return false;
 
-		var Document = private_GetLogicDocument();
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-		
 		var oldSelectionInfo = Document.SaveDocumentState();
 		
 		for (var Index = 0; Index < TrackedPositions.length; Index++)
@@ -1440,21 +1513,7 @@
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
 
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-
 		return this;
-	};
-	/**
-	 * Get the text properties of the current Range.
-	 * @typeofeditors ["CDE"]
-	 * @return {ApiTextPr} 
-	 */
-	ApiRange.prototype.GetTextPr = function()
-	{
-		if (this.isEmpty || this.isEmpty === undefined || this.StartPos[this.StartPos.length - 1].Deleted || this.EndPos[this.EndPos.length - 1].Deleted)
-			return false;
-		
-		return new ApiTextPr(this, this.TextPr);
 	};
 	/**
 	 * Sets the text properties of the current Range.
@@ -1464,11 +1523,15 @@
 	 */
 	ApiRange.prototype.SetTextPr = function(oTextPr)
 	{
-		if (this.isEmpty || this.isEmpty === undefined || this.StartPos[this.StartPos.length - 1].Deleted || this.EndPos[this.EndPos.length - 1].Deleted)
+		if (this.isEmpty || this.isEmpty === undefined)
 			return false;
 
 		var Document = private_GetLogicDocument();
 		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
+		Document.RefreshDocumentPositions(TrackedPositions);
+		private_RemoveEmptyTrackedPositions();
+		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
+			return false;
 		
 		var oldSelectionInfo = Document.SaveDocumentState();
 		
@@ -1495,8 +1558,6 @@
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
 
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-
 		return this;
 	};
 	/**
@@ -1505,11 +1566,15 @@
 	 */
 	ApiRange.prototype.Delete = function()
 	{
-		if (this.isEmpty || this.isEmpty === undefined || this.StartPos[this.StartPos.length - 1].Deleted || this.EndPos[this.EndPos.length - 1].Deleted)
+		if (this.isEmpty || this.isEmpty === undefined)
 			return false;
 
 		var Document = private_GetLogicDocument();
 		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
+		Document.RefreshDocumentPositions(TrackedPositions);
+		private_RemoveEmptyTrackedPositions();
+		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
+			return false;
 		
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
@@ -1525,8 +1590,7 @@
 		
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-
+		
 		return true;
 	};
 	/**
@@ -3148,7 +3212,6 @@
 		{
 			this.Document.Start_SilentMode();
 			this.Document.Remove(1, false, false, false);
-			this.Document.RefreshDocumentPositions(TrackedPositions);
 			this.Document.End_SilentMode();
 			this.Document.RemoveSelection(true);
 		}
@@ -10537,6 +10600,33 @@
 	ApiDocumentContent.prototype["Push"]             = ApiDocumentContent.prototype.Push;
 	ApiDocumentContent.prototype["RemoveAllElements"]= ApiDocumentContent.prototype.RemoveAllElements;
 	ApiDocumentContent.prototype["RemoveElement"]    = ApiDocumentContent.prototype.RemoveElement;
+
+	ApiRange.prototype["GetParagraph"]               = ApiRange.prototype.GetParagraph;
+	ApiRange.prototype["AddText"]                    = ApiRange.prototype.AddText;
+	ApiRange.prototype["AddBookmark"]                = ApiRange.prototype.AddBookmark;
+	ApiRange.prototype["GetText"]                    = ApiRange.prototype.GetText;
+	ApiRange.prototype["GetAllParagraphs"]           = ApiRange.prototype.GetAllParagraphs;
+	ApiRange.prototype["SetSelection"]               = ApiRange.prototype.SetSelection;
+	ApiRange.prototype["ExpandTo"]                   = ApiRange.prototype.ExpandTo;
+	ApiRange.prototype["IntersectWith"]              = ApiRange.prototype.IntersectWith;
+	ApiRange.prototype["SetBold"]                    = ApiRange.prototype.SetBold;
+	ApiRange.prototype["SetCaps"]                    = ApiRange.prototype.SetCaps;
+	ApiRange.prototype["SetColor"]                   = ApiRange.prototype.SetColor;
+	ApiRange.prototype["SetDoubleStrikeout"]         = ApiRange.prototype.SetDoubleStrikeout;
+	ApiRange.prototype["SetHighlight"]               = ApiRange.prototype.SetHighlight;
+	ApiRange.prototype["SetShd"]                     = ApiRange.prototype.SetShd;
+	ApiRange.prototype["SetItalic"]                  = ApiRange.prototype.SetItalic;
+	ApiRange.prototype["SetStrikeout"]               = ApiRange.prototype.SetStrikeout;
+	ApiRange.prototype["SetSmallCaps"]               = ApiRange.prototype.SetSmallCaps;
+	ApiRange.prototype["SetSpacing"]                 = ApiRange.prototype.SetSpacing;
+	ApiRange.prototype["SetUnderline"]               = ApiRange.prototype.SetUnderline;
+	ApiRange.prototype["SetVertAlign"]               = ApiRange.prototype.SetVertAlign;
+	ApiRange.prototype["SetPosition"]                = ApiRange.prototype.SetPosition;
+	ApiRange.prototype["SetFontSize"]                = ApiRange.prototype.SetFontSize;
+	ApiRange.prototype["SetFontFamily"]              = ApiRange.prototype.SetFontFamily;
+	ApiRange.prototype["SetStyle"]                   = ApiRange.prototype.SetStyle;
+	ApiRange.prototype["SetTextPr"]                  = ApiRange.prototype.SetTextPr;
+	ApiRange.prototype["Delete"]                     = ApiRange.prototype.Delete;
 
 	ApiDocument.prototype["GetClassType"]            = ApiDocument.prototype.GetClassType;
 	ApiDocument.prototype["CreateNewHistoryPoint"]   = ApiDocument.prototype.CreateNewHistoryPoint;
