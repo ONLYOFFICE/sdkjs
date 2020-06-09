@@ -6696,9 +6696,24 @@
 		if(!oTable)
 			return false;
 		var cellsArr = [];
-		for (var curCell = 0, cellsCount = this.Row.GetCellsCount(); curCell < cellsCount; curCell++)
+		var tempCell			= null;
+		var tempGridSpan		= undefined;
+		var tempStartGridCol	= undefined;
+		var tempVMergeCount		= undefined;
+
+		for (var curCell = 0, cellsCount = this.GetCellsCount(); curCell < cellsCount; curCell++)
 		{
-			cellsArr.push(this.GetCell(curCell));
+			tempCell 			= this.GetCell(curCell);
+			tempStartGridCol	= this.Row.GetCellInfo(curCell).StartGridCol;
+			tempGridSpan		= tempCell.Cell.GetGridSpan();
+			tempVMergeCount		= oTable.Table.Internal_GetVertMergeCount2(this.GetIndex(), tempStartGridCol, tempGridSpan);
+
+			if (tempVMergeCount > 1)
+			{
+				tempCell = new ApiTableCell(oTable.Table.GetCellByStartGridCol(this.GetIndex() - (tempVMergeCount - 1), tempStartGridCol));
+			}
+
+			cellsArr.push(tempCell);
 		}
 			
 		return oTable.MergeCells(cellsArr);
@@ -6710,9 +6725,28 @@
 	 */
 	ApiTableRow.prototype.Clear = function()
 	{
+		var oTable = this.GetParentTable();
+		if(!oTable)
+			return false;
+
+		var tempCell			= null;
+		var tempGridSpan		= undefined;
+		var tempStartGridCol	= undefined;
+		var tempVMergeCount		= undefined;
+
 		for (var curCell = 0, cellsCount = this.Row.GetCellsCount(); curCell < cellsCount; curCell++)
 		{
-			this.Row.GetCell(curCell).GetContent().Clear_Content();
+			tempCell 			= this.Row.GetCell(curCell);
+			tempStartGridCol	= this.Row.GetCellInfo(curCell).StartGridCol;
+			tempGridSpan		= tempCell.GetGridSpan();
+			tempVMergeCount		= oTable.Table.Internal_GetVertMergeCount2(this.GetIndex(), tempStartGridCol, tempGridSpan);
+
+			if (tempVMergeCount > 1)
+			{
+				tempCell = oTable.Table.GetCellByStartGridCol(this.GetIndex() - (tempVMergeCount - 1), tempStartGridCol);
+			}
+
+			tempCell.GetContent().Clear_Content();
 		}
 
 		return true;
@@ -6741,12 +6775,28 @@
 	 */
 	ApiTableRow.prototype.SetTextPr = function(oTextPr)
 	{
-		if (this.GetCellsCount() <= 0)
+		var oTable = this.GetParentTable();
+		if(!oTable)
 			return false;
 
-		for (var curCell = 0, cellsCount = this.GetCellsCount(); curCell < cellsCount; curCell++)
+		var tempCell			= null;
+		var tempGridSpan		= undefined;
+		var tempStartGridCol	= undefined;
+		var tempVMergeCount		= undefined;
+
+		for (var curCell = 0, cellsCount = this.Row.GetCellsCount(); curCell < cellsCount; curCell++)
 		{
-			this.GetCell(curCell).SetTextPr(oTextPr);
+			tempCell 			= this.GetCell(curCell);
+			tempStartGridCol	= this.Row.GetCellInfo(curCell).StartGridCol;
+			tempGridSpan		= tempCell.Cell.GetGridSpan();
+			tempVMergeCount		= oTable.Table.Internal_GetVertMergeCount2(this.GetIndex(), tempStartGridCol, tempGridSpan);
+
+			if (tempVMergeCount > 1)
+			{
+				tempCell = new ApiTableCell(oTable.Table.GetCellByStartGridCol(this.GetIndex() - (tempVMergeCount - 1), tempStartGridCol));
+			}
+
+			tempCell.SetTextPr(oTextPr);
 		}
 
 		return true;
