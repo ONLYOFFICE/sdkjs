@@ -46,21 +46,61 @@
 	var c_oAscAlignH         = Asc.c_oAscAlignH;
 	var c_oAscAlignV         = Asc.c_oAscAlignV;
 
-	var TrackedPositions	= [];
-	function private_RemoveEmptyTrackedPositions()
+	var arrApiRanges		 = [];
+	function private_RemoveEmptyRanges()
 	{
-		for (var nPos = 0; nPos < TrackedPositions.length; nPos++)
+		function ckeck_equal(firstDocPos, secondDocPos)
 		{
-			var startPos	= TrackedPositions[nPos];
-			var secondPos	= TrackedPositions[nPos + 1];
-
-			if (startPos[startPos.length - 2].Deleted && secondPos[secondPos.length - 2].Deleted)
+			if (firstDocPos.length === secondDocPos.length)
 			{
-				TrackedPositions.splice(nPos, 2);
-				nPos--;
+				for (var nPos = 0; nPos < firstDocPos.length; nPos++)
+				{
+					if (firstDocPos[nPos].Class === secondDocPos[nPos].Class && firstDocPos[nPos].Position === secondDocPos[nPos].Position)
+						continue;
+					else 
+						return false;
+				}
+				return true;
 			}
-			else 
-				nPos++;
+			return false;
+		};
+
+		var Range = null;
+		for (var nRange = 0; nRange < arrApiRanges.length; nRange++)
+		{
+			Range = arrApiRanges[nRange];
+			if (ckeck_equal(Range.StartPos, Range.EndPos))
+			{
+				Range.isEmpty = true;
+				arrApiRanges.splice(nRange, 1);
+				nRange--;
+			}
+		}
+	}
+	function private_TrackRangesPositions(bClearTrackedPosition)
+	{
+		var Document  = private_GetLogicDocument();
+		var Range     = null;
+
+		if (bClearTrackedPosition)
+			Document.CollaborativeEditing.Clear_DocumentPositions();
+
+		for (var nRange = 0; nRange < arrApiRanges.length; nRange++)
+		{
+			Range = arrApiRanges[nRange];
+			Document.CollaborativeEditing.Add_DocumentPosition(Range.StartPos);
+			Document.CollaborativeEditing.Add_DocumentPosition(Range.EndPos);
+		}
+	}
+	function private_RefreshRangesPosition()
+	{
+		var Document  = private_GetLogicDocument();
+		var Range     = null;
+
+		for (var nRange = 0; nRange < arrApiRanges.length; nRange++)
+		{
+			Range = arrApiRanges[nRange];
+			Document.RefreshDocumentPositions([Range.StartPos, Range.EndPos]);
 		}
 	}
 	/**
@@ -104,13 +144,14 @@
 			this.isEmpty = false;
 
 		this.private_SetController();
-		TrackedPositions.push(this.EndPos);
-		TrackedPositions.push(this.StartPos);
 		
-		this.oDocument.Document.TrackDocumentPositions(TrackedPositions);
-
 		this.Text 		= this.GetText();
 		this.Paragraphs = this.GetAllParagraphs();
+
+		private_RefreshRangesPosition();
+		arrApiRanges.push(this);
+		this.private_RemoveEqual();
+		private_TrackRangesPositions(true);
 	};
 
 	ApiRange.prototype.constructor = ApiRange;
@@ -222,7 +263,7 @@
 				charsCount += nRangePos;
 		};
 
-		if (this.Element instanceof CDocument || this.Element instanceof CTable || this.Element instanceof CBlockLevelSdt)
+		if (this.Element instanceof CDocument || this.Element instanceof CDocumentContent || this.Element instanceof CTable || this.Element instanceof CBlockLevelSdt)
 		{
 			var allParagraphs	= this.Element.GetAllParagraphs({OnlyMainDocument : true, All : true});
 
@@ -237,7 +278,7 @@
 					this.EndPos		= EndPos;
 			}
 		}
-		else if (this.Element instanceof Paragraph || this.Element instanceof ParaHyperlink || this.Element instanceof CInlineLevelSdt)
+		else if (this.Element instanceof Paragraph || this.Element instanceof ParaHyperlink || this.Element instanceof CInlineLevelSdt || this.Element instanceof ParaRun)
 		{
 			this.Element.CheckRunContent(callback);
 			
@@ -264,6 +305,35 @@
 			this.Controller = this.oDocument.Document.LogicDocumentController;
 		}
 	};
+	ApiRange.prototype.private_RemoveEqual = function()
+	{
+		function ckeck_equal(firstDocPos, secondDocPos)
+		{
+			if (firstDocPos.length === secondDocPos.length)
+			{
+				for (var nPos = 0; nPos < firstDocPos.length; nPos++)
+				{
+					if (firstDocPos[nPos].Class === secondDocPos[nPos].Class && firstDocPos[nPos].Position === secondDocPos[nPos].Position)
+						continue;
+					else 
+						return false;
+				}
+				return true;
+			}
+			return false;
+		};
+
+		var Range = null;
+		for (var nRange = 0; nRange < arrApiRanges.length - 1; nRange++)
+		{
+			Range = arrApiRanges[nRange];
+			if (ckeck_equal(this.StartPos, Range.StartPos) && ckeck_equal(this.EndPos, Range.EndPos))
+			{
+				arrApiRanges.splice(nRange, 1);
+				nRange--;
+			}
+		}
+	};
 	/**
 	 * Get a paragraph from all paragraphs that are in the range
 	 * @param {Number} nPos - position 
@@ -271,6 +341,8 @@
 	 */	
 	ApiRange.prototype.GetParagraph = function(nPos)
 	{
+		this.GetAllParagraphs();
+
 		if (nPos > this.Paragraphs.length - 1 || nPos < 0)
 			return false;
 		
@@ -287,27 +359,18 @@
 	 */	
 	ApiRange.prototype.AddText = function(sText, sPosition)
 	{
-		if (this.isEmpty || this.isEmpty === undefined)
-			return false;
+		private_RefreshRangesPosition();
+		private_RemoveEmptyRanges();
 
 		var Document = private_GetLogicDocument();
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-		Document.RefreshDocumentPositions(TrackedPositions);
-		private_RemoveEmptyTrackedPositions();
-		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
+		Document.RemoveSelection();
+
+		if (this.isEmpty || this.isEmpty === undefined || typeof(sText) !== "string")
 			return false;
-		if (typeof(sText) !== "string")
-			return false;
+
 		if (sPosition !== "after" && sPosition !== "before")
 			sPosition = "after";
 		
-		var oldSelectionInfo = Document.SaveDocumentState();
-		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
-
 		if (sPosition === "after")
 		{
 			var lastRun			= this.EndPos[this.EndPos.length - 1].Class;
@@ -326,9 +389,6 @@
 			firstRun.AddText(sText, firstRunPos);
 		}
 
-		Document.LoadDocumentState(oldSelectionInfo);
-		Document.UpdateSelection();
-
 		return this;
 	};
 	/**
@@ -338,29 +398,18 @@
 	 */	
 	ApiRange.prototype.AddBookmark = function(sName)
 	{
-		if (this.isEmpty || this.isEmpty === undefined)
-			return false;
-
-		var Document = private_GetLogicDocument();
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-		Document.RefreshDocumentPositions(TrackedPositions);
-		private_RemoveEmptyTrackedPositions();
-		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
-			return false;
-		if (typeof(sName) !== "string")
-			return false;
-
-		Document.RemoveBookmark(sName);
-
-		var oldSelectionInfo = Document.SaveDocumentState();
-		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
+		var Document			= private_GetLogicDocument();
+		var oldSelectionInfo	= Document.SaveDocumentState();
 
 		this.SetSelection(false);
-		
+		if (this.isEmpty || this.isEmpty === undefined || typeof(sName) !== "string")
+		{
+			Document.LoadDocumentState(oldSelectionInfo);
+			return false;
+		}
+		private_TrackRangesPositions();
+
+		Document.RemoveBookmark(sName);
 		Document.AddBookmark(sName);
 
 		Document.LoadDocumentState(oldSelectionInfo);
@@ -374,24 +423,16 @@
 	 */	
 	ApiRange.prototype.GetText = function()
 	{
-		if (this.isEmpty || this.isEmpty === undefined)
-			return false;
-
-		var Document = private_GetLogicDocument();
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-		Document.RefreshDocumentPositions(TrackedPositions);
-		private_RemoveEmptyTrackedPositions();
-		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
-			return false;
-
-		var oldSelectionInfo = Document.SaveDocumentState();
-		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
+		var Document			= private_GetLogicDocument();
+		var oldSelectionInfo	= Document.SaveDocumentState();
 
 		this.SetSelection(false);
+		if (this.isEmpty || this.isEmpty === undefined)
+		{
+			Document.LoadDocumentState(oldSelectionInfo);
+			return false;
+		}
+		private_TrackRangesPositions();
 
 		var Text = this.Controller.GetSelectedText(false); 
 		Document.LoadDocumentState(oldSelectionInfo);
@@ -405,14 +446,10 @@
 	 */	
 	ApiRange.prototype.GetAllParagraphs = function()
 	{
-		if (this.isEmpty || this.isEmpty === undefined)
-			return false;
+		private_RefreshRangesPosition();
+		private_RemoveEmptyRanges();
 
-		var Document = private_GetLogicDocument();
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-		Document.RefreshDocumentPositions(TrackedPositions);
-		private_RemoveEmptyTrackedPositions();
-		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
+		if (this.isEmpty || this.isEmpty === undefined)
 			return false;
 
 		var done = false;
@@ -439,40 +476,9 @@
 			return RangeParagraphsList;
 		}
 
-		if (this.Element instanceof CDocument)
+		if (this.Element instanceof CDocument || this.Element instanceof CTable || this.Element instanceof CBlockLevelSdt)
 		{
 			AllParagraphsListOfElement = this.Element.GetAllParagraphs({All : true});
-
-			for (var Index1 = 0; Index1 < AllParagraphsListOfElement.length; Index1++)
-			{
-				if (done)
-					break;
-
-				if (AllParagraphsListOfElement[Index1].Id === startPara.Id)
-				{
-					RangeParagraphsList.push(new ApiParagraph(AllParagraphsListOfElement[Index1]));
-
-					for (var Index2 = Index1 + 1; Index2 < AllParagraphsListOfElement.length; Index2++)
-					{
-						if (AllParagraphsListOfElement[Index2].Id !== endPara.Id)
-						{
-							RangeParagraphsList.push(new ApiParagraph(AllParagraphsListOfElement[Index2]));
-						}
-						else 
-						{
-							RangeParagraphsList.push(new ApiParagraph(endPara));
-
-							done = true;
-							break;
-						}
-					}
-				}
-			}
-		}
-		else if (this.Element instanceof CTable)
-		{
-			AllParagraphsListOfElement = [];
-			this.Element.GetAllParagraphs({All : true}, AllParagraphsListOfElement);
 
 			for (var Index1 = 0; Index1 < AllParagraphsListOfElement.length; Index1++)
 			{
@@ -510,17 +516,15 @@
 	 */	
 	ApiRange.prototype.SetSelection = function(bUpdate)
 	{
+		var Document = private_GetLogicDocument();
+		private_RefreshRangesPosition();
+		private_RemoveEmptyRanges();
+
 		if (this.isEmpty || this.isEmpty === undefined)
 			return false;
+
 		if (bUpdate === undefined)
 			bUpdate = true;
-
-		var Document = private_GetLogicDocument();
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-		Document.RefreshDocumentPositions(TrackedPositions);
-		private_RemoveEmptyTrackedPositions();
-		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
-			return false;
 
 		this.StartPos[0].Class.SetContentPosition(this.StartPos, 0, 0);
 		this.StartPos[0].Class.SetSelectionByContentPositions(this.StartPos, this.EndPos);
@@ -557,15 +561,10 @@
 	 */	
 	ApiRange.prototype.ExpandTo = function(oRange)
 	{
-		if (!(oRange instanceof ApiRange) || this.isEmpty || this.isEmpty === undefined || oRange.isEmpty || oRange.isEmpty === undefined)
-			return false;
+		private_RefreshRangesPosition();
+		private_RemoveEmptyRanges();
 
-		var Document = private_GetLogicDocument();
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-		Document.RefreshDocumentPositions([oRange.StartPos, oRange.EndPos]);
-		Document.RefreshDocumentPositions(TrackedPositions);
-		private_RemoveEmptyTrackedPositions();
-		if ((this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted) || (oRange.StartPos[this.StartPos.length - 2].Deleted && oRange.EndPos[this.EndPos.length - 2].Deleted))
+		if (!(oRange instanceof ApiRange) || this.isEmpty || this.isEmpty === undefined || oRange.isEmpty || oRange.isEmpty === undefined)
 			return false;
 
 		var firstStartPos 		= this.StartPos;
@@ -615,15 +614,10 @@
 	 */	
 	ApiRange.prototype.IntersectWith = function(oRange)
 	{
-		if (!(oRange instanceof ApiRange) || this.isEmpty || this.isEmpty === undefined || oRange.isEmpty || oRange.isEmpty === undefined)
-			return false;
+		private_RefreshRangesPosition();
+		private_RemoveEmptyRanges();
 
-		var Document = private_GetLogicDocument();
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-		Document.RefreshDocumentPositions([oRange.StartPos, oRange.EndPos]);
-		Document.RefreshDocumentPositions(TrackedPositions);
-		private_RemoveEmptyTrackedPositions();
-		if ((this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted) || (oRange.StartPos[this.StartPos.length - 2].Deleted && oRange.EndPos[this.EndPos.length - 2].Deleted))
+		if (!(oRange instanceof ApiRange) || this.isEmpty || this.isEmpty === undefined || oRange.isEmpty || oRange.isEmpty === undefined)
 			return false;
 
 		var firstStartPos 		= this.StartPos;
@@ -697,24 +691,17 @@
 	 */
 	ApiRange.prototype.SetBold = function(isBold)
 	{
-		if (this.isEmpty || this.isEmpty === undefined)
-			return false;
+		var Document			= private_GetLogicDocument();
+		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		var Document = private_GetLogicDocument();
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-		Document.RefreshDocumentPositions(TrackedPositions);
-		private_RemoveEmptyTrackedPositions();
-		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
-			return false;
-
-		var oldSelectionInfo = Document.SaveDocumentState();
-
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
-				
 		this.SetSelection(false);
+		if (this.isEmpty || this.isEmpty === undefined)
+		{
+			Document.LoadDocumentState(oldSelectionInfo);
+			return false;
+		}
+
+		private_TrackRangesPositions();
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
 		if (!SelectedContent.CanEditBlockSdts() || !SelectedContent.CanDeleteInlineSdts())
@@ -742,24 +729,17 @@
 	 */
 	ApiRange.prototype.SetCaps = function(isCaps)
 	{
-		if (this.isEmpty || this.isEmpty === undefined)
-			return false;
-
-		var Document = private_GetLogicDocument();
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-		Document.RefreshDocumentPositions(TrackedPositions);
-		private_RemoveEmptyTrackedPositions();
-		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
-			return false;
-
-		var oldSelectionInfo = Document.SaveDocumentState();
-
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
+		var Document			= private_GetLogicDocument();
+		var oldSelectionInfo	= Document.SaveDocumentState();
 
 		this.SetSelection(false);
+		if (this.isEmpty || this.isEmpty === undefined)
+		{
+			Document.LoadDocumentState(oldSelectionInfo);
+			return false;
+		}
+
+		private_TrackRangesPositions();
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
 		if (!SelectedContent.CanEditBlockSdts() || !SelectedContent.CanDeleteInlineSdts())
@@ -789,30 +769,23 @@
 	 */
 	ApiRange.prototype.SetColor = function(r, g, b, isAuto)
 	{
-		if (this.isEmpty || this.isEmpty === undefined)
-			return false;
+		var Document			= private_GetLogicDocument();
+		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		var Document = private_GetLogicDocument();
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-		Document.RefreshDocumentPositions(TrackedPositions);
-		private_RemoveEmptyTrackedPositions();
-		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
+		this.SetSelection(false);
+		if (this.isEmpty || this.isEmpty === undefined)
+		{
+			Document.LoadDocumentState(oldSelectionInfo);
 			return false;
+		}
+
+		private_TrackRangesPositions();
 
 		var color = new Asc.asc_CColor();
 		color.r    = r;
 		color.g    = g;
 		color.b    = b;
 		color.Auto = isAuto;
-
-		var oldSelectionInfo = Document.SaveDocumentState();
-
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
-		
-		this.SetSelection(false);
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
 		if (!SelectedContent.CanEditBlockSdts() || !SelectedContent.CanDeleteInlineSdts())
@@ -859,24 +832,17 @@
 	 */
 	ApiRange.prototype.SetDoubleStrikeout = function(isDoubleStrikeout)
 	{
-		if (this.isEmpty || this.isEmpty === undefined)
-			return false;
+		var Document			= private_GetLogicDocument();
+		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		var Document = private_GetLogicDocument();
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-		Document.RefreshDocumentPositions(TrackedPositions);
-		private_RemoveEmptyTrackedPositions();
-		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
-			return false;
-		
-		var oldSelectionInfo = Document.SaveDocumentState();
-		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
-			
 		this.SetSelection(false);
+		if (this.isEmpty || this.isEmpty === undefined)
+		{
+			Document.LoadDocumentState(oldSelectionInfo);
+			return false;
+		}
+
+		private_TrackRangesPositions();
 		
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
 		if (!SelectedContent.CanEditBlockSdts() || !SelectedContent.CanDeleteInlineSdts())
@@ -907,24 +873,17 @@
 	 */
 	ApiRange.prototype.SetHighlight = function(r, g, b, isNone)
 	{
-		if (this.isEmpty || this.isEmpty === undefined)
-			return false;
+		var Document			= private_GetLogicDocument();
+		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		var Document = private_GetLogicDocument();
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-		Document.RefreshDocumentPositions(TrackedPositions);
-		private_RemoveEmptyTrackedPositions();
-		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
-			return false;
-
-		var oldSelectionInfo = Document.SaveDocumentState();
-		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
-				
 		this.SetSelection(false);
+		if (this.isEmpty || this.isEmpty === undefined)
+		{
+			Document.LoadDocumentState(oldSelectionInfo);
+			return false;
+		}
+
+		private_TrackRangesPositions();
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
 		if (!SelectedContent.CanEditBlockSdts() || !SelectedContent.CanDeleteInlineSdts())
@@ -966,30 +925,23 @@
 	 */
 	ApiRange.prototype.SetShd = function(sType, r, g, b)
 	{
-		if (this.isEmpty || this.isEmpty === undefined)
-			return false;
+		var Document			= private_GetLogicDocument();
+		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		var Document = private_GetLogicDocument();
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-		Document.RefreshDocumentPositions(TrackedPositions);
-		private_RemoveEmptyTrackedPositions();
-		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
+		this.SetSelection(false);
+		if (this.isEmpty || this.isEmpty === undefined)
+		{
+			Document.LoadDocumentState(oldSelectionInfo);
 			return false;
+		}
+
+		private_TrackRangesPositions();
 
 		var color = new Asc.asc_CColor();
 		color.r    = r;
 		color.g    = g;
 		color.b    = b;
 		color.Auto = false;
-
-		var oldSelectionInfo = Document.SaveDocumentState();
-		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
-		
-		this.SetSelection(false);
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
 		if (!SelectedContent.CanEditBlockSdts() || !SelectedContent.CanDeleteInlineSdts())
@@ -1041,22 +993,17 @@
 	 */
 	ApiRange.prototype.SetItalic = function(isItalic)
 	{
+		var Document			= private_GetLogicDocument();
+		var oldSelectionInfo	= Document.SaveDocumentState();
+
+		this.SetSelection(false);
 		if (this.isEmpty || this.isEmpty === undefined)
-			return false;
-
-		var Document = private_GetLogicDocument();
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-		Document.RefreshDocumentPositions(TrackedPositions);
-		private_RemoveEmptyTrackedPositions();
-		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
-			return false;
-
-		var oldSelectionInfo = Document.SaveDocumentState();
-		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
 		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
+			Document.LoadDocumentState(oldSelectionInfo);
+			return false;
 		}
+
+		private_TrackRangesPositions();
 				
 		this.SetSelection();
 		var ParaTextPr = new AscCommonWord.ParaTextPr({Italic : isItalic});
@@ -1076,24 +1023,17 @@
 	 */
 	ApiRange.prototype.SetStrikeout = function(isStrikeout)
 	{
-		if (this.isEmpty || this.isEmpty === undefined)
-			return false;
+		var Document			= private_GetLogicDocument();
+		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		var Document = private_GetLogicDocument();
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-		Document.RefreshDocumentPositions(TrackedPositions);
-		private_RemoveEmptyTrackedPositions();
-		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
-			return false;
-		
-		var oldSelectionInfo = Document.SaveDocumentState();
-		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
-				
 		this.SetSelection(false);
+		if (this.isEmpty || this.isEmpty === undefined)
+		{
+			Document.LoadDocumentState(oldSelectionInfo);
+			return false;
+		}
+
+		private_TrackRangesPositions();
 		
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
 		if (!SelectedContent.CanEditBlockSdts() || !SelectedContent.CanDeleteInlineSdts())
@@ -1125,24 +1065,17 @@
 	 */
 	ApiRange.prototype.SetSmallCaps = function(isSmallCaps)
 	{
-		if (this.isEmpty || this.isEmpty === undefined)
-			return false;
+		var Document			= private_GetLogicDocument();
+		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		var Document = private_GetLogicDocument();
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-		Document.RefreshDocumentPositions(TrackedPositions);
-		private_RemoveEmptyTrackedPositions();
-		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
-			return false;
-		
-		var oldSelectionInfo = Document.SaveDocumentState();
-		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
-				
 		this.SetSelection(false);
+		if (this.isEmpty || this.isEmpty === undefined)
+		{
+			Document.LoadDocumentState(oldSelectionInfo);
+			return false;
+		}
+
+		private_TrackRangesPositions();
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
 		if (!SelectedContent.CanEditBlockSdts() || !SelectedContent.CanDeleteInlineSdts())
@@ -1173,24 +1106,17 @@
 	 */
 	ApiRange.prototype.SetSpacing = function(nSpacing)
 	{
-		if (this.isEmpty || this.isEmpty === undefined)
-			return false;
+		var Document			= private_GetLogicDocument();
+		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		var Document = private_GetLogicDocument();
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-		Document.RefreshDocumentPositions(TrackedPositions);
-		private_RemoveEmptyTrackedPositions();
-		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
-			return false;
-		
-		var oldSelectionInfo = Document.SaveDocumentState();
-		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
-		
 		this.SetSelection(false);
+		if (this.isEmpty || this.isEmpty === undefined)
+		{
+			Document.LoadDocumentState(oldSelectionInfo);
+			return false;
+		}
+
+		private_TrackRangesPositions();
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
 		if (!SelectedContent.CanEditBlockSdts() || !SelectedContent.CanDeleteInlineSdts())
@@ -1219,24 +1145,17 @@
 	 */
 	ApiRange.prototype.SetUnderline = function(isUnderline)
 	{
-		if (this.isEmpty || this.isEmpty === undefined)
-			return false;
-
-		var Document = private_GetLogicDocument();
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-		Document.RefreshDocumentPositions(TrackedPositions);
-		private_RemoveEmptyTrackedPositions();
-		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
-			return false;
-
-		var oldSelectionInfo = Document.SaveDocumentState();
-		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
+		var Document			= private_GetLogicDocument();
+		var oldSelectionInfo	= Document.SaveDocumentState();
 
 		this.SetSelection(false);
+		if (this.isEmpty || this.isEmpty === undefined)
+		{
+			Document.LoadDocumentState(oldSelectionInfo);
+			return false;
+		}
+
+		private_TrackRangesPositions();
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
 		if (!SelectedContent.CanEditBlockSdts() || !SelectedContent.CanDeleteInlineSdts())
@@ -1267,15 +1186,17 @@
 	 */
 	ApiRange.prototype.SetVertAlign = function(sType)
 	{
-		if (this.isEmpty || this.isEmpty === undefined)
-			return false;
+		var Document			= private_GetLogicDocument();
+		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		var Document = private_GetLogicDocument();
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-		Document.RefreshDocumentPositions(TrackedPositions);
-		private_RemoveEmptyTrackedPositions();
-		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
+		this.SetSelection(false);
+		if (this.isEmpty || this.isEmpty === undefined)
+		{
+			Document.LoadDocumentState(oldSelectionInfo);
 			return false;
+		}
+
+		private_TrackRangesPositions();
 
 		var value = undefined;
 
@@ -1287,15 +1208,6 @@
 			value = 1;
 		else 
 			return false;
-
-		var oldSelectionInfo = Document.SaveDocumentState();
-		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
-		
-		this.SetSelection(false);
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
 		if (!SelectedContent.CanEditBlockSdts() || !SelectedContent.CanDeleteInlineSdts())
@@ -1325,27 +1237,20 @@
 	 */
 	ApiRange.prototype.SetPosition = function(nPosition)
 	{
-		if (this.isEmpty || this.isEmpty === undefined)
-			return false;
+		var Document			= private_GetLogicDocument();
+		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		var Document = private_GetLogicDocument();
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-		Document.RefreshDocumentPositions(TrackedPositions);
-		private_RemoveEmptyTrackedPositions();
-		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
+		this.SetSelection(false);
+		if (this.isEmpty || this.isEmpty === undefined)
+		{
+			Document.LoadDocumentState(oldSelectionInfo);
 			return false;
+		}
+
+		private_TrackRangesPositions();
 
 		if (typeof nPosition !== "number")
 			return false;
-
-		var oldSelectionInfo = Document.SaveDocumentState();
-		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
-				
-		this.SetSelection(false);
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
 		if (!SelectedContent.CanEditBlockSdts() || !SelectedContent.CanDeleteInlineSdts())
@@ -1373,24 +1278,17 @@
 	 */
 	ApiRange.prototype.SetFontSize = function(FontSize)
 	{
-		if (this.isEmpty || this.isEmpty === undefined)
-			return false;
+		var Document			= private_GetLogicDocument();
+		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		var Document = private_GetLogicDocument();
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-		Document.RefreshDocumentPositions(TrackedPositions);
-		private_RemoveEmptyTrackedPositions();
-		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
-			return false;
-		
-		var oldSelectionInfo = Document.SaveDocumentState();
-		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
-				
 		this.SetSelection(false);
+		if (this.isEmpty || this.isEmpty === undefined)
+		{
+			Document.LoadDocumentState(oldSelectionInfo);
+			return false;
+		}
+
+		private_TrackRangesPositions();
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
 		if (!SelectedContent.CanEditBlockSdts() || !SelectedContent.CanDeleteInlineSdts())
@@ -1418,37 +1316,33 @@
 	 */
 	ApiRange.prototype.SetFontFamily = function(sFontFamily)
 	{
-		if (this.isEmpty || this.isEmpty === undefined)
-			return false;
-
-		var Document = private_GetLogicDocument();
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-		Document.RefreshDocumentPositions(TrackedPositions);
-		private_RemoveEmptyTrackedPositions();
-		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
-			return false;
 		if (typeof sFontFamily !== "string")
 			return false;
 
-		var loader   = AscCommon.g_font_loader;
-		var fontinfo = g_fontApplication.GetFontInfo(sFontFamily);
-		var isasync  = loader.LoadFont(fontinfo);
+		var loader				= AscCommon.g_font_loader;
+		var fontinfo			= g_fontApplication.GetFontInfo(sFontFamily);
+		var isasync				= loader.LoadFont(fontinfo);
+		var Document			= null;
+		var oldSelectionInfo	= undefined;
 
 		if (isasync === false)
 		{
+			Document			= private_GetLogicDocument();
+			oldSelectionInfo	= Document.SaveDocumentState();
+
+			this.SetSelection(false);
+			if (this.isEmpty || this.isEmpty === undefined)
+			{
+				Document.LoadDocumentState(oldSelectionInfo);
+				return false;
+			}
+
+			private_TrackRangesPositions();
+
 			var FontFamily = {
 				Name : sFontFamily,
 				Index : -1
 			};
-
-			var oldSelectionInfo = Document.SaveDocumentState();
-		
-			for (var Index = 0; Index < TrackedPositions.length; Index++)
-			{
-				Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-			}
-			
-			this.SetSelection(false);
 
 			var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
 			if (!SelectedContent.CanEditBlockSdts() || !SelectedContent.CanDeleteInlineSdts())
@@ -1477,27 +1371,17 @@
 	 */
 	ApiRange.prototype.SetStyle = function(oStyle)
 	{
-		if (this.isEmpty || this.isEmpty === undefined)
-			return false;
+		var Document			= private_GetLogicDocument();
+		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		var Document = private_GetLogicDocument();
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-		Document.RefreshDocumentPositions(TrackedPositions);
-		private_RemoveEmptyTrackedPositions();
-		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
-			return false;
-
-		if (!(oStyle instanceof ApiStyle))
-			return false;
-
-		var oldSelectionInfo = Document.SaveDocumentState();
-		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
-				
 		this.SetSelection(false);
+		if (this.isEmpty || this.isEmpty === undefined || !(oStyle instanceof ApiStyle))
+		{
+			Document.LoadDocumentState(oldSelectionInfo);
+			return false;
+		}
+
+		private_TrackRangesPositions();
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
 		if (!SelectedContent.CanEditBlockSdts() || !SelectedContent.CanDeleteInlineSdts())
@@ -1523,24 +1407,17 @@
 	 */
 	ApiRange.prototype.SetTextPr = function(oTextPr)
 	{
-		if (this.isEmpty || this.isEmpty === undefined)
-			return false;
+		var Document			= private_GetLogicDocument();
+		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		var Document = private_GetLogicDocument();
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-		Document.RefreshDocumentPositions(TrackedPositions);
-		private_RemoveEmptyTrackedPositions();
-		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
-			return false;
-		
-		var oldSelectionInfo = Document.SaveDocumentState();
-		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
-				
 		this.SetSelection(false);
+		if (this.isEmpty || this.isEmpty === undefined || !(oTextPr instanceof ApiTextPr))
+		{
+			Document.LoadDocumentState(oldSelectionInfo);
+			return false;
+		}
+
+		private_TrackRangesPositions();
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
 		if (!SelectedContent.CanEditBlockSdts() || !SelectedContent.CanDeleteInlineSdts())
@@ -1566,24 +1443,18 @@
 	 */
 	ApiRange.prototype.Delete = function()
 	{
-		if (this.isEmpty || this.isEmpty === undefined)
-			return false;
-
-		var Document = private_GetLogicDocument();
-		Document.RefreshDocumentPositions([this.StartPos, this.EndPos]);
-		Document.RefreshDocumentPositions(TrackedPositions);
-		private_RemoveEmptyTrackedPositions();
-		if (this.StartPos[this.StartPos.length - 2].Deleted && this.EndPos[this.EndPos.length - 2].Deleted)
-			return false;
-		
+		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
+		this.SetSelection(false);
+		if (this.isEmpty || this.isEmpty === undefined)
 		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
+			Document.LoadDocumentState(oldSelectionInfo);
+			return false;
 		}
 
-		this.SetSelection(false);
+		private_TrackRangesPositions();
+
 		this.Controller.Remove(1, true, false, false, false);
 
 		this.isEmpty = true;
@@ -1693,6 +1564,11 @@
 		this.ParaHyperlink = ParaHyperlink;
 	}
 	ApiParaHyperlink.prototype.constructor = ApiParaHyperlink;
+
+	ApiParaHyperlink.prototype.GetClassType = function()
+	{
+		return "parahyperlink";
+	};
 
 	ApiParaHyperlink.prototype.GetElement = function(nPos)
 	{
@@ -3018,6 +2894,19 @@
 
 		this.Document.Internal_Content_Remove(nPos, 1, true);
 	};
+	/**
+	 * Returns a Range object that represents the part of the document contained in the document content.
+	 * @typeofeditors ["CDE"]
+	 * @param {Number} Start - start character in current element
+	 * @param {Number} End - end character in current element
+	 * @returns {ApiRange} 
+	 * */
+	ApiDocumentContent.prototype.GetRange = function(Start, End)
+	{
+		var Range = new ApiRange(this.Document, Start, End);
+
+		return Range;
+	};
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -3425,14 +3314,14 @@
 		if (!this.Document.IsSelectionUse())
 			return false;
 
+		private_RefreshRangesPosition();
+			
 		var selectDirection	= this.Document.GetSelectDirection();
 		var documentState	= this.Document.SaveDocumentState();
 		var StartPos		= null;
 		var EndPos			= null;
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			this.Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
+
+		private_TrackRangesPositions();
 
 		if (selectDirection === 1)
 		{
@@ -3446,6 +3335,7 @@
 		}
 
 		this.Document.LoadDocumentState(documentState);
+		private_RemoveEmptyRanges();
 		return new ApiRange(StartPos[0].Class, StartPos, EndPos);
 	};
 	/**
@@ -3527,13 +3417,10 @@
 			return false;
 
 		var Document = private_GetLogicDocument();
-
+		private_RefreshRangesPosition();
 		var oldSelectionInfo = Document.SaveDocumentState();
 		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
+		private_TrackRangesPositions();
 
 		this.Document.GoToBookmark(sName, true);
 
@@ -3547,7 +3434,7 @@
 	/**
 	 * Gets the collection of section objects in the document.
 	 * @typeofeditors ["CDE"]
-	 * @return {Array}  
+	 * @return {ApiSection[]}  
 	 */
 	ApiDocument.prototype.GetSections = function()
 	{
@@ -3562,7 +3449,7 @@
 	 * Get the collection of tables on a given absolute page
 	 * @param nPage - page number
 	 * @typeofeditors ["CDE"]
-	 * @return {Array}  
+	 * @return {ApiTable[]}  
 	 */
 	ApiDocument.prototype.GetAllTablesOnPage = function(nPage)
 	{
@@ -3588,7 +3475,7 @@
 	/**
 	 * Gets the collection of drawing objects in the document.
 	 * @typeofeditors ["CDE"]
-	 * @return {Array}  
+	 * @return {ApiDrawing[]}  
 	 */
 	ApiDocument.prototype.GetAllDrawingObjects = function()
 	{
@@ -3603,7 +3490,7 @@
 	/**
 	 * Gets the collection of shapes objects in the document.
 	 * @typeofeditors ["CDE"]
-	 * @return {Array}  
+	 * @return {ApiShape[]}  
 	 */
 	ApiDocument.prototype.GetAllShapes = function()
 	{
@@ -3619,7 +3506,7 @@
 	/**
 	 * Gets the collection of image objects in the document.
 	 * @typeofeditors ["CDE"]
-	 * @return {Array}  
+	 * @return {ApiImage[]}  
 	 */
 	ApiDocument.prototype.GetAllImages = function()
 	{
@@ -3635,7 +3522,7 @@
 	/**
 	 * Gets the collection of chart objects in the document.
 	 * @typeofeditors ["CDE"]
-	 * @return {Array}  
+	 * @return {ApiChart[]}  
 	 */
 	ApiDocument.prototype.GetAllCharts = function()
 	{
@@ -3653,7 +3540,7 @@
 	 * @param {string} sText 
 	 * @param {bool} isMatchCase - is case sensitive. 
 	 * @typeofeditors ["CDE"]
-	 * @return {Array}  
+	 * @return {ApiRange[]}  
 	 */
 	ApiDocument.prototype.Search = function(sText, isMatchCase)
 	{
@@ -4183,26 +4070,9 @@
 	 */
 	ApiParagraph.prototype.SetBold = function(isBold)
 	{
-		var Document = private_GetLogicDocument();
-		
-		var StartPos	= this.Paragraph.GetStartPos();
-		var EndPos		= this.Paragraph.Get_EndPos();
-
-		var oldSelectionInfo = Document.SaveDocumentState();
-		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
-
-		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, false);
 		this.Paragraph.Set_ApplyToAll(true);
-		this.Paragraph.MoveCursorToStartPos();
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Bold : isBold}));
 		this.Paragraph.Set_ApplyToAll(false);
-		
-		Document.LoadDocumentState(oldSelectionInfo);
-		Document.UpdateSelection();
 		
 		return this;
 	};
@@ -4213,25 +4083,9 @@
 	 */
 	ApiParagraph.prototype.SetCaps = function(isCaps)
 	{
-		var Document = private_GetLogicDocument();
-		
-		var StartPos	= this.Paragraph.GetStartPos();
-		var EndPos		= this.Paragraph.Get_EndPos();
-
-		var oldSelectionInfo = Document.SaveDocumentState();
-		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
-
-		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
 		this.Paragraph.Set_ApplyToAll(true);
-		this.Paragraph.MoveCursorToStartPos();
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Caps : isCaps}));
 		this.Paragraph.Set_ApplyToAll(false);
-		Document.LoadDocumentState(oldSelectionInfo);
-		Document.UpdateSelection();
 		
 		return this;
 	};
@@ -4251,22 +4105,7 @@
 		color.b    = b;
 		color.Auto = isAuto;
 
-		var Document = private_GetLogicDocument();
-		
-		var StartPos	= this.Paragraph.GetStartPos();
-		var EndPos		= this.Paragraph.Get_EndPos();
-
-		var oldSelectionInfo = Document.SaveDocumentState();
-		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
-
-		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
 		this.Paragraph.Set_ApplyToAll(true);
-		this.Paragraph.MoveCursorToStartPos();
-
 		if (true === color.Auto)
 		{
 			this.Paragraph.Add(new AscCommonWord.ParaTextPr({
@@ -4286,9 +4125,6 @@
 			this.Paragraph.Add(new AscCommonWord.ParaTextPr({Unifill : Unifill}));
 		}
 		this.Paragraph.Set_ApplyToAll(false);
-
-		Document.LoadDocumentState(oldSelectionInfo);
-		Document.UpdateSelection();
 		
 		return this;
 	};
@@ -4299,26 +4135,9 @@
 	 */
 	ApiParagraph.prototype.SetDoubleStrikeout = function(isDoubleStrikeout)
 	{
-		var Document = private_GetLogicDocument();
-		
-		var StartPos	= this.Paragraph.GetStartPos();
-		var EndPos		= this.Paragraph.Get_EndPos();
-
-		var oldSelectionInfo = Document.SaveDocumentState();
-		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
-
-		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
 		this.Paragraph.Set_ApplyToAll(true);
-		this.Paragraph.MoveCursorToStartPos();
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({DStrikeout : isDoubleStrikeout}));
 		this.Paragraph.Set_ApplyToAll(false);
-
-		Document.LoadDocumentState(oldSelectionInfo);
-		Document.UpdateSelection();
 		
 		return this;
 	};
@@ -4336,8 +4155,6 @@
 		var fontinfo = g_fontApplication.GetFontInfo(sFontFamily);
 		var isasync  = loader.LoadFont(fontinfo);
 
-		var Document = private_GetLogicDocument();
-		
 		if (isasync === false)
 		{
 			var FontFamily = {
@@ -4345,24 +4162,9 @@
 				Index : -1
 			};
 
-			var StartPos	= this.Paragraph.GetStartPos();
-			var EndPos		= this.Paragraph.Get_EndPos();
-
-			var oldSelectionInfo = Document.SaveDocumentState();
-		
-			for (var Index = 0; Index < TrackedPositions.length; Index++)
-			{
-				Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-			}
-
-			this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
 			this.Paragraph.Set_ApplyToAll(true);
-			this.Paragraph.MoveCursorToStartPos();
 			this.Paragraph.Add(new AscCommonWord.ParaTextPr({FontFamily : FontFamily}));
 			this.Paragraph.Set_ApplyToAll(false);
-
-			Document.LoadDocumentState(oldSelectionInfo);
-			Document.UpdateSelection();
 			
 			return this;
 		}
@@ -4376,26 +4178,9 @@
 	 */
 	ApiParagraph.prototype.SetFontSize = function(nSize)
 	{
-		var Document = private_GetLogicDocument();
-		
-		var StartPos	= this.Paragraph.GetStartPos();
-		var EndPos		= this.Paragraph.Get_EndPos();
-
-		var oldSelectionInfo = Document.SaveDocumentState();
-		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
-
-		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
 		this.Paragraph.Set_ApplyToAll(true);
-		this.Paragraph.MoveCursorToStartPos();
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({FontSize : nSize}));
 		this.Paragraph.Set_ApplyToAll(false);
-
-		Document.LoadDocumentState(oldSelectionInfo);
-		Document.UpdateSelection();
 		
 		return this;
 	};
@@ -4409,22 +4194,7 @@
 	 */
 	ApiParagraph.prototype.SetHighlight = function(r, g, b, isNone)
 	{
-		var Document = private_GetLogicDocument();
-		
-		var StartPos	= this.Paragraph.GetStartPos();
-		var EndPos		= this.Paragraph.Get_EndPos();
-
-		var oldSelectionInfo = Document.SaveDocumentState();
-		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
-
-		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
 		this.Paragraph.Set_ApplyToAll(true);
-		this.Paragraph.MoveCursorToStartPos();
-
 		if (true === isNone)
 		{
 			this.Paragraph.Add(new ParaTextPr({HighLight : highlight_None}));
@@ -4435,9 +4205,6 @@
 			this.Paragraph.Add(new ParaTextPr({HighLight : color}));
 		}
 		this.Paragraph.Set_ApplyToAll(false);
-
-		Document.LoadDocumentState(oldSelectionInfo);
-		Document.UpdateSelection();
 		
 		return this;
 	};
@@ -4448,26 +4215,9 @@
 	 */
 	ApiParagraph.prototype.SetItalic = function(isItalic)
 	{
-		var Document = private_GetLogicDocument();
-		
-		var StartPos	= this.Paragraph.GetStartPos();
-		var EndPos		= this.Paragraph.Get_EndPos();
-
-		var oldSelectionInfo = Document.SaveDocumentState();
-		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
-
-		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
 		this.Paragraph.Set_ApplyToAll(true);
-		this.Paragraph.MoveCursorToStartPos();
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Italic : isItalic}));
 		this.Paragraph.Set_ApplyToAll(false);
-
-		Document.LoadDocumentState(oldSelectionInfo);
-		Document.UpdateSelection();
 		
 		return this;
 	};
@@ -4480,26 +4230,9 @@
 	 */
 	ApiParagraph.prototype.SetPosition = function(nPosition)
 	{
-		var Document = private_GetLogicDocument();
-		
-		var StartPos	= this.Paragraph.GetStartPos();
-		var EndPos		= this.Paragraph.Get_EndPos();
-
-		var oldSelectionInfo = Document.SaveDocumentState();
-		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
-
-		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
 		this.Paragraph.Set_ApplyToAll(true);
-		this.Paragraph.MoveCursorToStartPos();
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Position : nPosition}));
 		this.Paragraph.Set_ApplyToAll(false);
-
-		Document.LoadDocumentState(oldSelectionInfo);
-		Document.UpdateSelection();
 		
 		return this;
 	};
@@ -4519,21 +4252,7 @@
 		color.b    = b;
 		color.Auto = false;
 
-		var Document = private_GetLogicDocument();
-		
-		var StartPos	= this.Paragraph.GetStartPos();
-		var EndPos		= this.Paragraph.Get_EndPos();
-
-		var oldSelectionInfo = Document.SaveDocumentState();
-		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
-
-		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
 		this.Paragraph.Set_ApplyToAll(true);
-		this.Paragraph.MoveCursorToStartPos();
 
 		var Shd = new CDocumentShd();
 
@@ -4562,9 +4281,6 @@
 			this.Paragraph.SetParagraphShd(_Shd);
 		}
 		this.Paragraph.Set_ApplyToAll(false);
-
-		Document.LoadDocumentState(oldSelectionInfo);
-		Document.UpdateSelection();
 		
 		return this;
 	};
@@ -4576,29 +4292,12 @@
 	 */
 	ApiParagraph.prototype.SetSmallCaps = function(isSmallCaps)
 	{
-		var Document = private_GetLogicDocument();
-		
-		var StartPos	= this.Paragraph.GetStartPos();
-		var EndPos		= this.Paragraph.Get_EndPos();
-
-		var oldSelectionInfo = Document.SaveDocumentState();
-		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
-
-		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
 		this.Paragraph.Set_ApplyToAll(true);
-		this.Paragraph.MoveCursorToStartPos();
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({
 			SmallCaps : isSmallCaps,
 			Caps      : false
 		}));
 		this.Paragraph.Set_ApplyToAll(false);
-
-		Document.LoadDocumentState(oldSelectionInfo);
-		Document.UpdateSelection();
 		
 		return this;
 	};
@@ -4609,26 +4308,9 @@
 	 */
 	ApiParagraph.prototype.SetSpacing = function(nSpacing)
 	{
-		var Document = private_GetLogicDocument();
-		
-		var StartPos	= this.Paragraph.GetStartPos();
-		var EndPos		= this.Paragraph.Get_EndPos();
-
-		var oldSelectionInfo = Document.SaveDocumentState();
-		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
-
-		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
 		this.Paragraph.Set_ApplyToAll(true);
-		this.Paragraph.MoveCursorToStartPos();
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Spacing : nSpacing}));
 		this.Paragraph.Set_ApplyToAll(false);
-
-		Document.LoadDocumentState(oldSelectionInfo);
-		Document.UpdateSelection();
 		
 		return this;
 	};
@@ -4639,64 +4321,12 @@
 	 */
 	ApiParagraph.prototype.SetStrikeout = function(isStrikeout)
 	{
-		var Document = private_GetLogicDocument();
-		
-		var StartPos	= this.Paragraph.GetStartPos();
-		var EndPos		= this.Paragraph.Get_EndPos();
-
-		var oldSelectionInfo = Document.SaveDocumentState();
-		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
-
-		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
 		this.Paragraph.Set_ApplyToAll(true);
-		this.Paragraph.MoveCursorToStartPos();
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({
 			Strikeout  : isStrikeout,
 			DStrikeout : false
 			}));
 		this.Paragraph.Set_ApplyToAll(false);
-		
-		Document.LoadDocumentState(oldSelectionInfo);
-		Document.UpdateSelection();
-		
-		return this;
-	};
-	/**
-	 * Set style for the current Paragraph.
-	 * @typeofeditors ["CDE"]
-	 * @param {ApiStyle} oStyle - The style which must be applied to the text character.
-	 */
-	ApiParagraph.prototype.SetStyle = function(oStyle)
-	{
-		if (!(oStyle instanceof ApiStyle))
-			return false;
-
-		var Document = private_GetLogicDocument();
-
-		var styleName = oStyle.GetName();
-
-		var StartPos	= this.Paragraph.GetStartPos();
-		var EndPos		= this.Paragraph.Get_EndPos();
-
-		var oldSelectionInfo = Document.SaveDocumentState();
-		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
-
-		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
-		this.Paragraph.Set_ApplyToAll(true);
-		this.Paragraph.MoveCursorToStartPos();
-		this.Paragraph.SetParagraphStyle(styleName);
-		this.Paragraph.Set_ApplyToAll(false);
-
-		Document.LoadDocumentState(oldSelectionInfo);
-		Document.UpdateSelection();
 		
 		return this;
 	};
@@ -4708,26 +4338,9 @@
 	 */
 	ApiParagraph.prototype.SetUnderline = function(isUnderline)
 	{
-		var Document = private_GetLogicDocument();
-		
-		var StartPos	= this.Paragraph.GetStartPos();
-		var EndPos		= this.Paragraph.Get_EndPos();
-
-		var oldSelectionInfo = Document.SaveDocumentState();
-		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
-
-		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
 		this.Paragraph.Set_ApplyToAll(true);
-		this.Paragraph.MoveCursorToStartPos();
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Underline : isUnderline}));
 		this.Paragraph.Set_ApplyToAll(false);
-
-		Document.LoadDocumentState(oldSelectionInfo);
-		Document.UpdateSelection();
 		
 		return this;
 	};
@@ -4741,8 +4354,6 @@
 	 */
 	ApiParagraph.prototype.SetVertAlign = function(sType)
 	{
-		var Document = private_GetLogicDocument();
-		
 		var value = undefined;
 
 		if (sType === "baseline")
@@ -4754,24 +4365,9 @@
 		else 
 			return false;
 
-		var StartPos	= this.Paragraph.GetStartPos();
-		var EndPos		= this.Paragraph.Get_EndPos();
-
-		var oldSelectionInfo = Document.SaveDocumentState();
-		
-		for (var Index = 0; Index < TrackedPositions.length; Index++)
-		{
-			Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-		}
-
-		this.Paragraph.SetSelectionContentPos(StartPos, EndPos, true);
 		this.Paragraph.Set_ApplyToAll(true);
-		this.Paragraph.MoveCursorToStartPos();
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({VertAlign : value}));
 		this.Paragraph.Set_ApplyToAll(false);
-
-		Document.LoadDocumentState(oldSelectionInfo);
-		Document.UpdateSelection();
 		
 		return this;
 	};
@@ -4799,7 +4395,7 @@
 	/**
 	 * Gets the collection of content control objects in the Paragraph.
 	 * @typeofeditors ["CDE"]
-	 * @return {Array}  
+	 * @return {ApiInlineLvlSdt[]}   
 	 */
 	ApiParagraph.prototype.GetAllContentControls = function()
 	{
@@ -4809,9 +4405,7 @@
 
 		for (var Index = 0; Index < ContentControls.length; Index++)
 		{
-			if (ContentControls[Index] instanceof CBlockLevelSdt)
-				arrApiContentControls.push(new ApiBlockLvlSdt(ContentControls[Index]));
-			else if (ContentControls[Index] instanceof CInlineLevelSdt)
+			if (ContentControls[Index] instanceof CInlineLevelSdt)
 				arrApiContentControls.push(new ApiInlineLvlSdt(ContentControls[Index]));
 		} 
 
@@ -4820,7 +4414,7 @@
 	/**
 	 * Gets the collection of drawing objects in the paragraph.
 	 * @typeofeditors ["CDE"]
-	 * @return {Array}  
+	 * @return {ApiDrawing[]}  
 	 */
 	ApiParagraph.prototype.GetAllDrawingObjects = function()
 	{
@@ -4835,7 +4429,7 @@
 	/**
 	 * Gets the collection of shapes objects in the Paragraph.
 	 * @typeofeditors ["CDE"]
-	 * @return {Array}  
+	 * @return {ApiShape[]}  
 	 */
 	ApiParagraph.prototype.GetAllShapes = function()
 	{
@@ -4851,7 +4445,7 @@
 	/**
 	 * Gets the collection of image objects in the Paragraph.
 	 * @typeofeditors ["CDE"]
-	 * @return {Array}  
+	 * @return {ApiImage[]}  
 	 */
 	ApiParagraph.prototype.GetAllImages = function()
 	{
@@ -4867,7 +4461,7 @@
 	/**
 	 * Gets the collection of chart objects in the Paragraph.
 	 * @typeofeditors ["CDE"]
-	 * @return {Array}  
+	 * @return {ApiChart[]}  
 	 */
 	ApiParagraph.prototype.GetAllCharts = function()
 	{
@@ -4896,7 +4490,7 @@
 					return new ApiBlockLvlSdt(ParaPosition[Index].Class.Parent);
 		}
 
-		return false;
+		return null;
 	};
 	/**
 	 * Gets the table that contains the paragraph.
@@ -4913,7 +4507,7 @@
 				return new ApiTable(ParaPosition[Index].Class);
 		}
 
-		return false;
+		return null;
 	};
 	/**
 	 * Gets the table cell that contains the paragraph.
@@ -4931,7 +4525,7 @@
 					return new ApiTableCell(ParaPosition[Index].Class.Parent);
 		}
 
-		return false;
+		return null;
 	};
 	/**
 	 * Gets text of the paragraph.
@@ -4959,26 +4553,18 @@
 	 * Sets text properties of the paragraph.
 	 * @param {ApiTextPr} oTextPr
 	 * @typeofeditors ["CDE"]
-	 * @return {ApiTextPr}  
+	 * @return {bool}  
 	 */
 	ApiParagraph.prototype.SetTextPr = function(oTextPr)
 	{
+		if (!(oTextPr instanceof ApiTextPr))
+			return false;
+
 		this.Paragraph.Set_ApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr(oTextPr.TextPr));
 		this.Paragraph.Set_ApplyToAll(false);
 
-		return this.GetTextPr();
-	};
-	/**
-	 * Insert content control to the paragraph
-	 * @typeofeditors ["CDE"]
-	 * @return {ApiParagraph}  
-	 */
-	ApiParagraph.prototype.InsertContentControl = function()
-	{
-		this.Paragraph.AddContentControl(2);
-
-		return this;
+		return true;
 	};
 	/**
 	 * Wraps the paragraph object with a rich text content control.
@@ -4994,16 +4580,9 @@
 		var paraIndex	= this.Paragraph.Index;
 		if (paraIndex >= 0)
 		{
-			var oldSelectionInfo = Document.SaveDocumentState();
-			for (var Index = 0; Index < TrackedPositions.length; Index++)
-			{
-				Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-			}
-			this.SetSelection(true);
+			this.SetSelection(false);
 			ContentControl = new ApiBlockLvlSdt(Document.AddContentControl(1));
-
-			Document.LoadDocumentState(oldSelectionInfo);
-			Document.UpdateSelection();
+			Document.RemoveSelection();
 		}
 		else 
 		{
@@ -6390,15 +5969,9 @@
 
 		if (tableIndex >= 0)
 		{
-			var oldSelectionInfo = Document.SaveDocumentState();
-			for (var Index = 0; Index < TrackedPositions.length; Index++)
-			{
-				Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-			}
 			this.SetSelection();
 			ContentControl = new ApiBlockLvlSdt(Document.AddContentControl(1));
-			Document.LoadDocumentState(oldSelectionInfo);
-			Document.UpdateSelection();
+			Document.RemoveSelection();
 		}
 		else 
 		{
@@ -8850,7 +8423,6 @@
 			}
 		}
 	};
-
 	/**
 	 * Specify how the floating object will be horizontally aligned.
 	 * @typeofeditors ["CDE"]
@@ -8917,7 +8489,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiParagraph}
 	 */
-	ApiDrawing.prototype.GetParagraph = function()
+	ApiDrawing.prototype.GetParentParagraph = function()
 	{
 		var Paragraph = this.Drawing.GetParagraph();
 
@@ -9011,17 +8583,10 @@
 		var paraIndex = parentParagraph.Index;
 		if (paraIndex >= 0)
 		{
-			var oldSelectionInfo = Document.SaveDocumentState();
-			for (var Index = 0; Index < TrackedPositions.length; Index++)
-			{
-				Document.CollaborativeEditing.Add_DocumentPosition(TrackedPositions[Index]);
-			}
-
 			this.SetSelection();
 			ContentControl = new ApiBlockLvlSdt(Document.AddContentControl(1));
 
-			Document.LoadDocumentState(oldSelectionInfo);
-			Document.UpdateSelection();
+			Document.RemoveSelection();
 		}
 		else 
 		{
@@ -9109,7 +8674,7 @@
 	 * @param {bool}	bFlip 
 	 * @typeofeditors ["CDE"]
 	 */	
-	ApiDrawing.prototype.SetHFlip = function(bFlip)
+	ApiDrawing.prototype.SetHorFlip = function(bFlip)
 	{
 		if (this.Drawing.GraphicObj && this.Drawing.GraphicObj.spPr && this.Drawing.GraphicObj.spPr.xfrm)
 			this.Drawing.GraphicObj.spPr.xfrm.setFlipH(bFlip);
@@ -9119,7 +8684,7 @@
 	 * @param {bool}	bFlip 
 	 * @typeofeditors ["CDE"]
 	 */	
-	ApiDrawing.prototype.SetVFlip = function(bFlip)
+	ApiDrawing.prototype.SetVertFlip = function(bFlip)
 	{
 		if (this.Drawing.GraphicObj && this.Drawing.GraphicObj.spPr && this.Drawing.GraphicObj.spPr.xfrm)
 			this.Drawing.GraphicObj.spPr.xfrm.setFlipV(bFlip);
@@ -9247,7 +8812,6 @@
 	{
 		return "image";
 	};
-
 	/**
 	 * Gets the next inline image. Throws an error if this inline image is the last.
 	 * @typeofeditors ["CDE"]
@@ -9314,8 +8878,6 @@
 	{
 		return "shape";
 	};
-
-
 	/**
 	 * Get the shape inner contents where a paragraph or text runs can be inserted.
 	 * @typeofeditors ["CDE", "CSE"]
@@ -9329,7 +8891,6 @@
 		}
 		return null;
 	};
-
 	/**
 	 * Set the vertical alignment for the shape content where a paragraph or text runs can be inserted.
 	 * @typeofeditors ["CDE", "CSE"]
@@ -9359,10 +8920,6 @@
 			}
 		}
 	};
-
-
-
-
 	/**
 	 * Set text paddings
 	 * @param {?EMU} nLeft
@@ -9382,7 +8939,6 @@
 			});
 		}
 	};
-
 	/**
 	 * Gets the next inline shape. Throws an error if this inline shape is the last.
 	 * @typeofeditors ["CDE"]
@@ -10317,7 +9873,7 @@
 		return new ApiDocumentContent(this.Sdt.GetContent());
 	};
 	/**
-	 * Gets the collection of content management objects in the content control.
+	 * Gets the collection of content control objects in the content control.
 	 * @returns {Array}
 	 */
 	ApiBlockLvlSdt.prototype.GetAllContentControls = function()
@@ -10339,7 +9895,7 @@
 	};
 	/**
 	 * Get a collection of paragraph objects in a content control.
-	 * @returns {Array}
+	 * @returns {ApiParagraph[]}
 	 */
 	ApiBlockLvlSdt.prototype.GetAllParagraphs = function()
 	{
@@ -10359,7 +9915,7 @@
 	 * Get the collection of tables on a given absolute page
 	 * @param nPage - page number
 	 * @typeofeditors ["CDE"]
-	 * @return {Array}  
+	 * @return {ApiTable[]}  
 	 */
 	ApiBlockLvlSdt.prototype.GetAllTablesOnPage = function(nPageAbs)
 	{
@@ -10422,7 +9978,7 @@
 	/**
 	 * Gets the collection of drawing objects in the document.
 	 * @typeofeditors ["CDE"]
-	 * @return {Array}  
+	 * @return {ApiDrawing[]}  
 	 */
 	ApiBlockLvlSdt.prototype.GetAllDrawingObjects = function()
 	{
@@ -10600,6 +10156,7 @@
 	ApiDocumentContent.prototype["Push"]             = ApiDocumentContent.prototype.Push;
 	ApiDocumentContent.prototype["RemoveAllElements"]= ApiDocumentContent.prototype.RemoveAllElements;
 	ApiDocumentContent.prototype["RemoveElement"]    = ApiDocumentContent.prototype.RemoveElement;
+	ApiDocumentContent.prototype["GetRange"]         = ApiDocumentContent.prototype.GetRange;
 
 	ApiRange.prototype["GetParagraph"]               = ApiRange.prototype.GetParagraph;
 	ApiRange.prototype["AddText"]                    = ApiRange.prototype.AddText;
@@ -10647,6 +10204,21 @@
 	ApiDocument.prototype["GetAllContentControls"]   = ApiDocument.prototype.GetAllContentControls;
 	ApiDocument.prototype["SetTrackRevisions"]       = ApiDocument.prototype.SetTrackRevisions;
 	ApiDocument.prototype["IsTrackRevisions"]        = ApiDocument.prototype.IsTrackRevisions;
+	ApiDocument.prototype["GetRange"]                = ApiDocument.prototype.GetRange;
+	ApiDocument.prototype["GetRangeBySelect"]        = ApiDocument.prototype.GetRangeBySelect;
+	ApiDocument.prototype["Last"]                    = ApiDocument.prototype.Last;
+	ApiDocument.prototype["Push"]                    = ApiDocument.prototype.Push;
+	ApiDocument.prototype["DeleteBookmark"]          = ApiDocument.prototype.DeleteBookmark;
+	ApiDocument.prototype["AddComment"]              = ApiDocument.prototype.AddComment;
+	ApiDocument.prototype["GetBookmarkRange"]        = ApiDocument.prototype.GetBookmarkRange;
+	ApiDocument.prototype["GetSections"]             = ApiDocument.prototype.GetSections;
+	ApiDocument.prototype["GetAllTablesOnPage"]      = ApiDocument.prototype.GetAllTablesOnPage;
+	ApiDocument.prototype["RemoveSelection"]         = ApiDocument.prototype.RemoveSelection;
+	ApiDocument.prototype["GetAllDrawingObjects"]    = ApiDocument.prototype.GetAllDrawingObjects;
+	ApiDocument.prototype["GetAllShapes"]            = ApiDocument.prototype.GetAllShapes;
+	ApiDocument.prototype["GetAllImages"]            = ApiDocument.prototype.GetAllImages;
+	ApiDocument.prototype["GetAllCharts"]            = ApiDocument.prototype.GetAllCharts;
+	ApiDocument.prototype["Search"]                  = ApiDocument.prototype.Search;
 
 	ApiParagraph.prototype["GetClassType"]           = ApiParagraph.prototype.GetClassType;
 	ApiParagraph.prototype["AddText"]                = ApiParagraph.prototype.AddText;
@@ -10662,12 +10234,50 @@
 	ApiParagraph.prototype["GetElementsCount"]       = ApiParagraph.prototype.GetElementsCount;
 	ApiParagraph.prototype["GetElement"]             = ApiParagraph.prototype.GetElement;
 	ApiParagraph.prototype["RemoveElement"]          = ApiParagraph.prototype.RemoveElement;
+	ApiParagraph.prototype["Delete"]                 = ApiParagraph.prototype.Delete;
+	ApiParagraph.prototype["GetNext"]                = ApiParagraph.prototype.GetNext;
+	ApiParagraph.prototype["GetPrevious"]            = ApiParagraph.prototype.GetPrevious;
 	ApiParagraph.prototype["RemoveAllElements"]      = ApiParagraph.prototype.RemoveAllElements;
 	ApiParagraph.prototype["AddElement"]             = ApiParagraph.prototype.AddElement;
 	ApiParagraph.prototype["AddTabStop"]             = ApiParagraph.prototype.AddTabStop;
 	ApiParagraph.prototype["AddDrawing"]             = ApiParagraph.prototype.AddDrawing;
 	ApiParagraph.prototype["AddInlineLvlSdt"]        = ApiParagraph.prototype.AddInlineLvlSdt;
 	ApiParagraph.prototype["Copy"]                   = ApiParagraph.prototype.Copy;
+	ApiParagraph.prototype["AddComment"]             = ApiParagraph.prototype.AddComment;
+	ApiParagraph.prototype["GetRange"]               = ApiParagraph.prototype.GetRange;
+	ApiParagraph.prototype["Push"]                   = ApiParagraph.prototype.Push;
+	ApiParagraph.prototype["GetLastRunWithText"]     = ApiParagraph.prototype.GetLastRunWithText;
+	ApiParagraph.prototype["SetBold"]                = ApiParagraph.prototype.SetBold;
+	ApiParagraph.prototype["SetCaps"]                = ApiParagraph.prototype.SetCaps;
+	ApiParagraph.prototype["SetColor"]               = ApiParagraph.prototype.SetColor;
+	ApiParagraph.prototype["SetDoubleStrikeout"]     = ApiParagraph.prototype.SetDoubleStrikeout;
+	ApiParagraph.prototype["SetFontFamily"]          = ApiParagraph.prototype.SetFontFamily;
+	ApiParagraph.prototype["SetFontSize"]            = ApiParagraph.prototype.SetFontSize;
+	ApiParagraph.prototype["SetHighlight"]           = ApiParagraph.prototype.SetHighlight;
+	ApiParagraph.prototype["SetItalic"]              = ApiParagraph.prototype.SetItalic;
+	ApiParagraph.prototype["SetPosition"]            = ApiParagraph.prototype.SetPosition;
+	ApiParagraph.prototype["SetShd"]                 = ApiParagraph.prototype.SetShd;
+	ApiParagraph.prototype["SetSmallCaps"]           = ApiParagraph.prototype.SetSmallCaps;
+	ApiParagraph.prototype["SetSpacing"]             = ApiParagraph.prototype.SetSpacing;
+	ApiParagraph.prototype["SetStrikeout"]           = ApiParagraph.prototype.SetStrikeout;
+	ApiParagraph.prototype["SetUnderline"]           = ApiParagraph.prototype.SetUnderline;
+	ApiParagraph.prototype["SetVertAlign"]           = ApiParagraph.prototype.SetVertAlign;
+	ApiParagraph.prototype["Last"]                   = ApiParagraph.prototype.Last;
+	ApiParagraph.prototype["GetAllContentControls"]  = ApiParagraph.prototype.GetAllContentControls;
+	ApiParagraph.prototype["GetAllDrawingObjects"]   = ApiParagraph.prototype.GetAllDrawingObjects;
+	ApiParagraph.prototype["GetAllShapes"]           = ApiParagraph.prototype.GetAllShapes;
+	ApiParagraph.prototype["GetAllImages"]           = ApiParagraph.prototype.GetAllImages;
+	ApiParagraph.prototype["GetAllCharts"]           = ApiParagraph.prototype.GetAllCharts;
+	ApiParagraph.prototype["GetParentContentControl"]= ApiParagraph.prototype.GetParentContentControl;
+	ApiParagraph.prototype["GetParentTable"]         = ApiParagraph.prototype.GetParentTable;
+	ApiParagraph.prototype["GetParentTableCell"]     = ApiParagraph.prototype.GetParentTableCell;
+	ApiParagraph.prototype["GetText"]                = ApiParagraph.prototype.GetText;
+	ApiParagraph.prototype["GetTextPr"]              = ApiParagraph.prototype.GetTextPr;
+	ApiParagraph.prototype["SetTextPr"]              = ApiParagraph.prototype.SetTextPr;
+	ApiParagraph.prototype["InsertInContentControl"] = ApiParagraph.prototype.InsertInContentControl;
+	ApiParagraph.prototype["InsertParagraph"]        = ApiParagraph.prototype.InsertParagraph;
+	ApiParagraph.prototype["SetSelection"]           = ApiParagraph.prototype.SetSelection;
+	ApiParagraph.prototype["Search"]                 = ApiParagraph.prototype.Search;
 
 	ApiRun.prototype["GetClassType"]                 = ApiRun.prototype.GetClassType;
 	ApiRun.prototype["GetTextPr"]                    = ApiRun.prototype.GetTextPr;
@@ -10679,6 +10289,34 @@
 	ApiRun.prototype["AddTabStop"]                   = ApiRun.prototype.AddTabStop;
 	ApiRun.prototype["AddDrawing"]                   = ApiRun.prototype.AddDrawing;
 	ApiRun.prototype["Copy"]                         = ApiRun.prototype.Copy;
+	ApiRun.prototype["RemoveAllElements"]            = ApiRun.prototype.RemoveAllElements;
+	ApiRun.prototype["Delete"]                       = ApiRun.prototype.Delete;
+	ApiRun.prototype["GetRange"]                     = ApiRun.prototype.GetRange;
+	ApiRun.prototype["GetParentContentControl"]      = ApiRun.prototype.GetParentContentControl;
+	ApiRun.prototype["GetParentTable"]               = ApiRun.prototype.GetParentTable;
+	ApiRun.prototype["GetParentTableCell"]           = ApiRun.prototype.GetParentTableCell;
+	ApiRun.prototype["SetTextPr"]                    = ApiRun.prototype.SetTextPr;
+	ApiRun.prototype["SetBold"]                      = ApiRun.prototype.SetBold;
+	ApiRun.prototype["SetCaps"]                      = ApiRun.prototype.SetCaps;
+	ApiRun.prototype["SetColor"]                     = ApiRun.prototype.SetColor;
+	ApiRun.prototype["SetDoubleStrikeout"]           = ApiRun.prototype.SetDoubleStrikeout;
+	ApiRun.prototype["SetFill"]                      = ApiRun.prototype.SetFill;
+	ApiRun.prototype["SetFontFamily"]                = ApiRun.prototype.SetFontFamily;
+	ApiRun.prototype["SetFontSize"]                  = ApiRun.prototype.SetFontSize;
+	ApiRun.prototype["SetHighlight"]                 = ApiRun.prototype.SetHighlight;
+	ApiRun.prototype["SetItalic"]                    = ApiRun.prototype.SetItalic;
+	ApiRun.prototype["SetLanguage"]                  = ApiRun.prototype.SetLanguage;
+	ApiRun.prototype["SetPosition"]                  = ApiRun.prototype.SetPosition;
+	ApiRun.prototype["SetShd"]                       = ApiRun.prototype.SetShd;
+	ApiRun.prototype["SetSmallCaps"]                 = ApiRun.prototype.SetSmallCaps;
+	ApiRun.prototype["SetSpacing"]                   = ApiRun.prototype.SetSpacing;
+	ApiRun.prototype["SetStrikeout"]                 = ApiRun.prototype.SetStrikeout;
+	ApiRun.prototype["SetUnderline"]                 = ApiRun.prototype.SetUnderline;
+	ApiRun.prototype["SetVertAlign"]                 = ApiRun.prototype.SetVertAlign;
+
+	ApiParaHyperlink.prototype["GetClassType"]       = ApiParaHyperlink.prototype.GetClassType;
+	ApiParaHyperlink.prototype["GetElement"]         = ApiParaHyperlink.prototype.GetElement;
+	ApiParaHyperlink.prototype["GetRange"]           = ApiParaHyperlink.prototype.GetRange;
 
 	ApiSection.prototype["GetClassType"]             = ApiSection.prototype.GetClassType;
 	ApiSection.prototype["SetType"]                  = ApiSection.prototype.SetType;
@@ -10693,6 +10331,8 @@
 	ApiSection.prototype["GetFooter"]                = ApiSection.prototype.GetFooter;
 	ApiSection.prototype["RemoveFooter"]             = ApiSection.prototype.RemoveFooter;
 	ApiSection.prototype["SetTitlePage"]             = ApiSection.prototype.SetTitlePage;
+	ApiSection.prototype["GetNext"]                  = ApiSection.prototype.GetNext;
+	ApiSection.prototype["GetPrevious"]              = ApiSection.prototype.GetPrevious;
 
 	ApiTable.prototype["GetClassType"]               = ApiTable.prototype.GetClassType;
 	ApiTable.prototype["SetJc"]                      = ApiTable.prototype.SetJc;
@@ -10886,13 +10526,35 @@
 	ApiDrawing.prototype["SetHorPosition"]           = ApiDrawing.prototype.SetHorPosition;
 	ApiDrawing.prototype["SetVerPosition"]           = ApiDrawing.prototype.SetVerPosition;
 	ApiDrawing.prototype["SetDistances"]             = ApiDrawing.prototype.SetDistances;
+	ApiDrawing.prototype["GetParentParagraph"]       = ApiDrawing.prototype.GetParentParagraph;
+	ApiDrawing.prototype["GetParentContentControl"]  = ApiDrawing.prototype.GetParentContentControl;
+	ApiDrawing.prototype["GetParentTable"]           = ApiDrawing.prototype.GetParentTable;
+	ApiDrawing.prototype["GetParentTableCell"]       = ApiDrawing.prototype.GetParentTableCell;
+	ApiDrawing.prototype["Delete"]                   = ApiDrawing.prototype.Delete;
+	ApiDrawing.prototype["Copy"]                     = ApiDrawing.prototype.Copy;
+	ApiDrawing.prototype["InsertInContentControl"]   = ApiDrawing.prototype.InsertInContentControl;
+	ApiDrawing.prototype["InsertParagraph"]          = ApiDrawing.prototype.InsertParagraph;
+	ApiDrawing.prototype["SetSelection"]             = ApiDrawing.prototype.SetSelection;
+	ApiDrawing.prototype["AddBreak"]                 = ApiDrawing.prototype.AddBreak;
+	ApiDrawing.prototype["SetHorFlip"]               = ApiDrawing.prototype.SetHorFlip;
+	ApiDrawing.prototype["SetVertFlip"]              = ApiDrawing.prototype.SetVertFlip;
+	ApiDrawing.prototype["ScaleHeight"]              = ApiDrawing.prototype.ScaleHeight;
+	ApiDrawing.prototype["ScaleWidth"]               = ApiDrawing.prototype.ScaleWidth;
+	ApiDrawing.prototype["Fill"]                     = ApiDrawing.prototype.Fill;
+	ApiDrawing.prototype["SetOutLine"]               = ApiDrawing.prototype.SetOutLine;
+	ApiDrawing.prototype["GetNextDrawing"]           = ApiDrawing.prototype.GetNextDrawing;
+	ApiDrawing.prototype["GetPrevDrawing"]           = ApiDrawing.prototype.GetPrevDrawing;
 
 	ApiImage.prototype["GetClassType"]               = ApiImage.prototype.GetClassType;
-
+	ApiImage.prototype["GetNextImage"]               = ApiImage.prototype.GetNextImage;
+	ApiImage.prototype["GetPrevImage"]               = ApiImage.prototype.GetPrevImage;
+	
 	ApiShape.prototype["GetClassType"]               = ApiShape.prototype.GetClassType;
 	ApiShape.prototype["GetDocContent"]              = ApiShape.prototype.GetDocContent;
 	ApiShape.prototype["SetVerticalTextAlign"]       = ApiShape.prototype.SetVerticalTextAlign;
 	ApiShape.prototype["SetPaddings"]                = ApiShape.prototype.SetPaddings;
+	ApiShape.prototype["GetNextShape"]               = ApiShape.prototype.GetNextShape;
+	ApiShape.prototype["GetPrevShape"]               = ApiShape.prototype.GetPrevShape;
 
 	ApiChart.prototype["GetClassType"]                 = ApiChart.prototype.GetClassType;
 	ApiChart.prototype["SetTitle"]                     = ApiChart.prototype.SetTitle;
@@ -10907,16 +10569,18 @@
 	ApiChart.prototype["SetVertAxisTickLabelPosition"] = ApiChart.prototype.SetVertAxisTickLabelPosition;
 	ApiChart.prototype["SetHorAxisTickLabelPosition"]  = ApiChart.prototype.SetHorAxisTickLabelPosition;
 
-	ApiChart.prototype["SetHorAxisMajorTickMark"]  =  ApiChart.prototype.SetHorAxisMajorTickMark;
-	ApiChart.prototype["SetHorAxisMinorTickMark"]  =  ApiChart.prototype.SetHorAxisMinorTickMark;
-	ApiChart.prototype["SetVertAxisMajorTickMark"]  =  ApiChart.prototype.SetVertAxisMajorTickMark;
-	ApiChart.prototype["SetVertAxisMinorTickMark"]  =  ApiChart.prototype.SetVertAxisMinorTickMark;
-	ApiChart.prototype["SetMajorVerticalGridlines"]  =  ApiChart.prototype.SetMajorVerticalGridlines;
-	ApiChart.prototype["SetMinorVerticalGridlines"]  =  ApiChart.prototype.SetMinorVerticalGridlines;
+	ApiChart.prototype["SetHorAxisMajorTickMark"]      =  ApiChart.prototype.SetHorAxisMajorTickMark;
+	ApiChart.prototype["SetHorAxisMinorTickMark"]      =  ApiChart.prototype.SetHorAxisMinorTickMark;
+	ApiChart.prototype["SetVertAxisMajorTickMark"]     =  ApiChart.prototype.SetVertAxisMajorTickMark;
+	ApiChart.prototype["SetVertAxisMinorTickMark"]     =  ApiChart.prototype.SetVertAxisMinorTickMark;
+	ApiChart.prototype["SetMajorVerticalGridlines"]    =  ApiChart.prototype.SetMajorVerticalGridlines;
+	ApiChart.prototype["SetMinorVerticalGridlines"]    =  ApiChart.prototype.SetMinorVerticalGridlines;
 	ApiChart.prototype["SetMajorHorizontalGridlines"]  =  ApiChart.prototype.SetMajorHorizontalGridlines;
 	ApiChart.prototype["SetMinorHorizontalGridlines"]  =  ApiChart.prototype.SetMinorHorizontalGridlines;
-	ApiChart.prototype["SetHorAxisLablesFontSize"]  =  ApiChart.prototype.SetHorAxisLablesFontSize;
-	ApiChart.prototype["SetVertAxisLablesFontSize"]  =  ApiChart.prototype.SetVertAxisLablesFontSize;
+	ApiChart.prototype["SetHorAxisLablesFontSize"]     =  ApiChart.prototype.SetHorAxisLablesFontSize;
+	ApiChart.prototype["SetVertAxisLablesFontSize"]    =  ApiChart.prototype.SetVertAxisLablesFontSize;
+	ApiChart.prototype["GetNextChart"]                 = ApiChart.prototype.GetNextChart;
+    ApiChart.prototype["GetPrevChart"]                 = ApiChart.prototype.GetPrevChart;
 
 	ApiFill.prototype["GetClassType"]                = ApiFill.prototype.GetClassType;
 
@@ -10934,32 +10598,52 @@
 
 	ApiBullet.prototype["GetClassType"]              = ApiBullet.prototype.GetClassType;
 
-	ApiInlineLvlSdt.prototype["GetClassType"]      = ApiInlineLvlSdt.prototype.GetClassType;
-	ApiInlineLvlSdt.prototype["SetLock"]           = ApiInlineLvlSdt.prototype.SetLock;
-	ApiInlineLvlSdt.prototype["GetLock"]           = ApiInlineLvlSdt.prototype.GetLock;
-	ApiInlineLvlSdt.prototype["SetTag"]            = ApiInlineLvlSdt.prototype.SetTag;
-	ApiInlineLvlSdt.prototype["GetTag"]            = ApiInlineLvlSdt.prototype.GetTag;
-	ApiInlineLvlSdt.prototype["SetLabel"]          = ApiInlineLvlSdt.prototype.SetLabel;
-	ApiInlineLvlSdt.prototype["GetLabel"]          = ApiInlineLvlSdt.prototype.GetLabel;
-	ApiInlineLvlSdt.prototype["SetAlias"]          = ApiInlineLvlSdt.prototype.SetAlias;
-	ApiInlineLvlSdt.prototype["GetAlias"]          = ApiInlineLvlSdt.prototype.GetAlias;
-	ApiInlineLvlSdt.prototype["GetElementsCount"]  = ApiInlineLvlSdt.prototype.GetElementsCount;
-	ApiInlineLvlSdt.prototype["GetElement"]        = ApiInlineLvlSdt.prototype.GetElement;
-	ApiInlineLvlSdt.prototype["RemoveElement"]     = ApiInlineLvlSdt.prototype.RemoveElement;
-	ApiInlineLvlSdt.prototype["RemoveAllElements"] = ApiInlineLvlSdt.prototype.RemoveAllElements;
-	ApiInlineLvlSdt.prototype["AddElement"]        = ApiInlineLvlSdt.prototype.AddElement;
+	ApiInlineLvlSdt.prototype["GetClassType"]           = ApiInlineLvlSdt.prototype.GetClassType;
+	ApiInlineLvlSdt.prototype["SetLock"]                = ApiInlineLvlSdt.prototype.SetLock;
+	ApiInlineLvlSdt.prototype["GetLock"]                = ApiInlineLvlSdt.prototype.GetLock;
+	ApiInlineLvlSdt.prototype["SetTag"]                 = ApiInlineLvlSdt.prototype.SetTag;
+	ApiInlineLvlSdt.prototype["GetTag"]                 = ApiInlineLvlSdt.prototype.GetTag;
+	ApiInlineLvlSdt.prototype["SetLabel"]               = ApiInlineLvlSdt.prototype.SetLabel;
+	ApiInlineLvlSdt.prototype["GetLabel"]               = ApiInlineLvlSdt.prototype.GetLabel;
+	ApiInlineLvlSdt.prototype["SetAlias"]               = ApiInlineLvlSdt.prototype.SetAlias;
+	ApiInlineLvlSdt.prototype["GetAlias"]               = ApiInlineLvlSdt.prototype.GetAlias;
+	ApiInlineLvlSdt.prototype["GetElementsCount"]       = ApiInlineLvlSdt.prototype.GetElementsCount;
+	ApiInlineLvlSdt.prototype["GetElement"]             = ApiInlineLvlSdt.prototype.GetElement;
+	ApiInlineLvlSdt.prototype["RemoveElement"]          = ApiInlineLvlSdt.prototype.RemoveElement;
+	ApiInlineLvlSdt.prototype["RemoveAllElements"]      = ApiInlineLvlSdt.prototype.RemoveAllElements;
+	ApiInlineLvlSdt.prototype["AddElement"]             = ApiInlineLvlSdt.prototype.AddElement;
+	ApiInlineLvlSdt.prototype["Push"]                   = ApiInlineLvlSdt.prototype.Push;
+	ApiInlineLvlSdt.prototype["AddText"]                = ApiInlineLvlSdt.prototype.AddText;
+	ApiInlineLvlSdt.prototype["Delete"]                 = ApiInlineLvlSdt.prototype.Delete;
+	ApiInlineLvlSdt.prototype["SetTextPr"]              = ApiInlineLvlSdt.prototype.SetTextPr;
+	ApiInlineLvlSdt.prototype["GetParentContentControl"]= ApiInlineLvlSdt.prototype.GetParentContentControl;
+	ApiInlineLvlSdt.prototype["GetParentTable"]         = ApiInlineLvlSdt.prototype.GetParentTable;
+	ApiInlineLvlSdt.prototype["GetParentTableCell"]     = ApiInlineLvlSdt.prototype.GetParentTableCell;
+	ApiInlineLvlSdt.prototype["GetRange"]               = ApiInlineLvlSdt.prototype.GetRange;
 
-
-	ApiBlockLvlSdt.prototype["GetClassType"] = ApiBlockLvlSdt.prototype.GetClassType;
-	ApiBlockLvlSdt.prototype["SetLock"]      = ApiBlockLvlSdt.prototype.SetLock;
-	ApiBlockLvlSdt.prototype["GetLock"]      = ApiBlockLvlSdt.prototype.GetLock;
-	ApiBlockLvlSdt.prototype["SetTag"]       = ApiBlockLvlSdt.prototype.SetTag;
-	ApiBlockLvlSdt.prototype["GetTag"]       = ApiBlockLvlSdt.prototype.GetTag;
-	ApiBlockLvlSdt.prototype["SetLabel"]     = ApiBlockLvlSdt.prototype.SetLabel;
-	ApiBlockLvlSdt.prototype["GetLabel"]     = ApiBlockLvlSdt.prototype.GetLabel;
-	ApiBlockLvlSdt.prototype["SetAlias"]     = ApiBlockLvlSdt.prototype.SetAlias;
-	ApiBlockLvlSdt.prototype["GetAlias"]     = ApiBlockLvlSdt.prototype.GetAlias;
-	ApiBlockLvlSdt.prototype["GetContent"]   = ApiBlockLvlSdt.prototype.GetContent;
+	ApiBlockLvlSdt.prototype["GetClassType"]            = ApiBlockLvlSdt.prototype.GetClassType;
+	ApiBlockLvlSdt.prototype["SetLock"]                 = ApiBlockLvlSdt.prototype.SetLock;
+	ApiBlockLvlSdt.prototype["GetLock"]                 = ApiBlockLvlSdt.prototype.GetLock;
+	ApiBlockLvlSdt.prototype["SetTag"]                  = ApiBlockLvlSdt.prototype.SetTag;
+	ApiBlockLvlSdt.prototype["GetTag"]                  = ApiBlockLvlSdt.prototype.GetTag;
+	ApiBlockLvlSdt.prototype["SetLabel"]                = ApiBlockLvlSdt.prototype.SetLabel;
+	ApiBlockLvlSdt.prototype["GetLabel"]                = ApiBlockLvlSdt.prototype.GetLabel;
+	ApiBlockLvlSdt.prototype["SetAlias"]                = ApiBlockLvlSdt.prototype.SetAlias;
+	ApiBlockLvlSdt.prototype["GetAlias"]                = ApiBlockLvlSdt.prototype.GetAlias;
+	ApiBlockLvlSdt.prototype["GetContent"]              = ApiBlockLvlSdt.prototype.GetContent;
+	ApiBlockLvlSdt.prototype["GetAllContentControls"]   = ApiBlockLvlSdt.prototype.GetAllContentControls;
+	ApiBlockLvlSdt.prototype["GetAllParagraphs"]        = ApiBlockLvlSdt.prototype.GetAllParagraphs;
+	ApiBlockLvlSdt.prototype["GetAllTablesOnPage"]      = ApiBlockLvlSdt.prototype.GetAllTablesOnPage;
+	ApiBlockLvlSdt.prototype["RemoveAllElements"]       = ApiBlockLvlSdt.prototype.RemoveAllElements;
+	ApiBlockLvlSdt.prototype["Delete"]                  = ApiBlockLvlSdt.prototype.Delete;
+	ApiBlockLvlSdt.prototype["SetTextPr"]               = ApiBlockLvlSdt.prototype.SetTextPr;
+	ApiBlockLvlSdt.prototype["GetAllDrawingObjects"]    = ApiBlockLvlSdt.prototype.GetAllDrawingObjects;
+	ApiBlockLvlSdt.prototype["GetParentContentControl"] = ApiBlockLvlSdt.prototype.GetParentContentControl;
+	ApiBlockLvlSdt.prototype["GetParentTable"]          = ApiBlockLvlSdt.prototype.GetParentTable;
+	ApiBlockLvlSdt.prototype["GetParentTableCell"]      = ApiBlockLvlSdt.prototype.GetParentTableCell;
+	ApiBlockLvlSdt.prototype["Push"]                    = ApiBlockLvlSdt.prototype.Push;
+	ApiBlockLvlSdt.prototype["AddElement"]              = ApiBlockLvlSdt.prototype.AddElement;
+	ApiBlockLvlSdt.prototype["GetRange"]                = ApiBlockLvlSdt.prototype.GetRange;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
