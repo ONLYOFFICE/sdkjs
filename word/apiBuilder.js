@@ -6758,7 +6758,7 @@
 	 */
 	ApiTableRow.prototype.Remove = function()
 	{
-		var oTable = this.GetTable();
+		var oTable = this.GetParentTable();
 		if (!oTable)
 			return false;
 		
