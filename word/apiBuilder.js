@@ -1569,7 +1569,6 @@
 	{
 		return "parahyperlink";
 	};
-
 	ApiParaHyperlink.prototype.GetElement = function(nPos)
 	{
 		if (nPos < 0 || nPos >= this.ParaHyperlink.Content.length)
@@ -1579,6 +1578,10 @@
 		{
 			return new ApiRun(this.ParaHyperlink.Content[nPos]);
 		}
+	};
+	ApiParaHyperlink.prototype.GetElementsCount = function()
+	{
+		return this.ParaHyperlink.GetElementsCount();
 	};
 	/**
 	 * Returns a Range object that represents the part of the document contained in the specified hyperlink.
@@ -4067,6 +4070,7 @@
 	 * Set the bold property to the text character.
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} isBold - Specifies that the contents of this paragraph are displayed bold.
+	 * @returns {ApiParagraph} this
 	 */
 	ApiParagraph.prototype.SetBold = function(isBold)
 	{
@@ -4080,6 +4084,7 @@
 	 * Specify that any lowercase characters in this paragraph are formatted for display only as their capital letter character equivalents.
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} isCaps - Specifies that the contents of the current paragraph are displayed capitalized.
+	 * @returns {ApiParagraph} this
 	 */
 	ApiParagraph.prototype.SetCaps = function(isCaps)
 	{
@@ -4096,6 +4101,7 @@
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then r,g,b parameters will be ignored.
+	 * @returns {ApiParagraph} this
 	 */
 	ApiParagraph.prototype.SetColor = function(r, g, b, isAuto)
 	{
@@ -4132,6 +4138,7 @@
 	 * Specify that the contents of this paragraph is displayed with two horizontal lines through each character displayed on the line.
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} isDoubleStrikeout - Specifies that the contents of the current paragraph are displayed double struck through.
+	 * @returns {ApiParagraph} this
 	 */
 	ApiParagraph.prototype.SetDoubleStrikeout = function(isDoubleStrikeout)
 	{
@@ -4145,6 +4152,7 @@
 	 * Set all 4 font slots with the specified font family.
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sFontFamily - The font family or families used for the current paragraph.
+	 * @returns {ApiParagraph | false} 
 	 */
 	ApiParagraph.prototype.SetFontFamily = function(sFontFamily)
 	{
@@ -4175,6 +4183,7 @@
 	 * Set the font size for the characters of the current paragraph.
 	 * @typeofeditors ["CDE"]
 	 * @param {hps} nSize - The text size value measured in half-points (1/144 of an inch).
+	 * @returns {ApiParagraph} this
 	 */
 	ApiParagraph.prototype.SetFontSize = function(nSize)
 	{
@@ -4191,6 +4200,7 @@
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} [isNone=false] If this parameter is set to "true", then r,g,b parameters will be ignored.
+	 * @returns {ApiParagraph} this
 	 */
 	ApiParagraph.prototype.SetHighlight = function(r, g, b, isNone)
 	{
@@ -4212,6 +4222,7 @@
 	 * Set the italic property to the text character.
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} isItalic - Specifies that the contents of the current paragraph are displayed italicized.
+	 * @returns {ApiParagraph} this
 	 */
 	ApiParagraph.prototype.SetItalic = function(isItalic)
 	{
@@ -4227,6 +4238,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {hps} nPosition - Specifies a positive (raised text) or negative (lowered text)
 	 * measurement in half-points (1/144 of an inch).
+	 * @returns {ApiParagraph} this
 	 */
 	ApiParagraph.prototype.SetPosition = function(nPosition)
 	{
@@ -4243,6 +4255,7 @@
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
+	 * @returns {ApiParagraph} this
 	 */
 	ApiParagraph.prototype.SetShd = function(sType, r, g, b)
 	{
@@ -4289,6 +4302,7 @@
 	 * letter character equivalents in a font size two points smaller than the actual font size specified for this text.
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} isSmallCaps - Specifies that the contents of the current paragraph are displayed capitalized two points smaller.
+	 * @returns {ApiParagraph} this
 	 */
 	ApiParagraph.prototype.SetSmallCaps = function(isSmallCaps)
 	{
@@ -4305,6 +4319,7 @@
 	 * Set text spacing measured in twentieths of a point.
 	 * @typeofeditors ["CDE"]
 	 * @param {twips} nSpacing - The value of the text spacing measured in twentieths of a point (1/1440 of an inch).
+	 * @returns {ApiParagraph} this
 	 */
 	ApiParagraph.prototype.SetSpacing = function(nSpacing)
 	{
@@ -4318,6 +4333,7 @@
 	 * Specify that the contents of this paragraph are displayed with a single horizontal line through the center of the line.
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} isStrikeout - Specifies that the contents of the current paragraph are displayed struck through.
+	 * @returns {ApiParagraph} this
 	 */
 	ApiParagraph.prototype.SetStrikeout = function(isStrikeout)
 	{
@@ -4335,6 +4351,7 @@
 	 * (less than all the spacing above and below the characters on the line).
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} isUnderline - Specifies that the contents of the current paragraph are displayed underlined.
+	 * @returns {ApiParagraph} this
 	 */
 	ApiParagraph.prototype.SetUnderline = function(isUnderline)
 	{
@@ -4351,6 +4368,7 @@
 	 * * <b>"superscript"</b> - the characters in the current paragraph will be aligned above the default text baseline.
 	 * @typeofeditors ["CDE"]
 	 * @param {("baseline" | "subscript" | "superscript")} sType - The vertical alignment type applied to the text contents.
+	 * @returns {ApiParagraph | false} 
 	 */
 	ApiParagraph.prototype.SetVertAlign = function(sType)
 	{
@@ -4378,19 +4396,22 @@
 	 */
 	ApiParagraph.prototype.Last = function()
 	{
-		var LastNoEmptyRun = null;
+		var LastNoEmptyElement = null;
 
 		for (var Index = this.GetElementsCount() - 1; Index >= 0; Index--)
 		{
-			LastNoEmptyRun = this.GetElement(Index);
+			LastNoEmptyElement = this.GetElement(Index);
+			
+			if (!LastNoEmptyElement || LastNoEmptyElement instanceof ApiUnsupported)
+				continue;
 
-			if (LastNoEmptyRun.Run.Content.length !== 0)
+			if (LastNoEmptyRun.GetElementsCount() !== 0)
 			{
-				return LastNoEmptyRun;
+				return LastNoEmptyElement;
 			}
 		}
 
-		return false;
+		return null;
 	};
 	/**
 	 * Gets the collection of content control objects in the Paragraph.
@@ -11176,35 +11197,5 @@
 	};
 }(window, null));
 
-function Test()
-{
-	var Api = editor;
-	var oDocument = Api.GetDocument();
-	var aRanges = oDocument.Search("text");
-	var oRange;
-	var aContent, oParagraph, oDrawing;
-	for(var nRange = 0; nRange < aRanges.length; ++nRange) {
-		oRange = aRanges[nRange];
-		oRange.SetSelection();
-		//oRange.Delete();
-		aContent = [];
-		oParagraph = Api.CreateParagraph();
-		oDrawing = Api.CreateImage("path/to/image", 100 *3600, 100 * 3600);
-		oDrawing.SetWrappingStyle("inline");
-		oParagraph.AddDrawing(oDrawing);
-		oDocument.InsertContent([oParagraph], true);
-	}
-}
-function Test1()
-{
-	var Api = editor;
-	var oDocument = Api.GetDocument();
-	var aRanges = oDocument.Search("text");
-	var oRange;
-	var aContent, oParagraph, oDrawing;
-	for(var nRange = 0; nRange < aRanges.length; ++nRange) {
-		oRange = aRanges[nRange];
-		oRange.SetSelection(false);
-		oRange.Delete();
-	}
-}
+
+
