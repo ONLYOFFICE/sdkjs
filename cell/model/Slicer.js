@@ -755,12 +755,12 @@
 
 		//TODO ws?
 		if (!opt_moveSheet) {
-			var slicers = this.ws.getSlicersByCacheName(this.cacheDefinition.name);
-			if (slicers) {
-				for (var i = 0; i < slicers.length; i++) {
-					this.ws.workbook.onSlicerUpdate(slicers[i].name);
-				}
+		var slicers = this.ws.getSlicersByCacheName(this.cacheDefinition.name);
+		if (slicers) {
+			for (var i = 0; i < slicers.length; i++) {
+				this.ws.workbook.onSlicerUpdate(slicers[i].name);
 			}
+		}
 		}
 	};
 
@@ -1007,7 +1007,7 @@
 
 		return this;
 	}
-	CT_slicerCacheDefinition.prototype.init = function (name, obj_name, type) {
+	CT_slicerCacheDefinition.prototype.init = function (name, obj_name, type, pivotTable) {
 		switch (type) {
 			case insertSlicerType.table: {
 				this.sourceName = name;
@@ -1019,26 +1019,38 @@
 				break;
 			}
 			case insertSlicerType.pivotTable: {
-				var pivot = new CT_slicerCachePivotTable();
-				pivot.name = obj_name;
-				//pivot.tabId = obj.name;
-				this.pivotTables.push(pivot);
+				var cacheFields = cacheDefinition.getFields();
+				var cacheField;
+				if (cacheFields) {
+					for(var i = 0; i < cacheFields.length; ++i){
+						if(cacheFields[i].name === name){
+							cacheField = cacheFields[i];
+							break;
+						}
+					}
+				}
+				if(cacheField && cacheField.sharedItems){
+					var tabular = new CT_tabularSlicerCache();
+					for(var i = 0; i < cacheField.sharedItems.length; ++i){
+						var item = new CT_tabularSlicerCacheItem();
+						item.x = 0;
+						item.s = true;
+						tabular.items.push(item);
+					}
 
-				//TODO data?
+					var table = new CT_slicerCachePivotTable();
+					table.name = obj_name;
+					//table.tabId = obj.name;
+					this.pivotTables.push(table);
 
-				/*
-					<pivotTables>
-					<pivotTable tabId="2" name="PivotTable1"/>
-					</pivotTables>
-					<data>
-					<tabular pivotCacheId="1">
-					<items count="2">
-					<i x="0" s="1"/>
-					<i x="1" s="1"/>
-					</items>
-					</tabular>
-					</data>
-				*/
+					var cacheDefinition = pivotTable.cacheDefinition;
+					tabular.pivotCacheId = cacheDefinition.getPivotCacheId();
+
+					tabular.sortItems(tabular.sortOrder, cacheField.sharedItems);
+					this.data = new CT_slicerCacheData();
+					this.data.tabular = tabular;
+				}
+
 				break;
 			}
 		}
@@ -2370,6 +2382,12 @@
 			}
 		}
 		s.Seek2(_end_pos);
+	};
+	CT_tabularSlicerCache.prototype.sortItems = function(type, sharedItems) {
+		var sign = ST_tabularSlicerCacheSortOrder.Ascending == type ? 1 : -1;
+		this.items.sort(function(a, b) {
+			return sign * AscCommonExcel.cmpPivotItems(sharedItems, a, b);
+		});
 	};
 
 	function CT_slicerCacheOlapLevelName() {
