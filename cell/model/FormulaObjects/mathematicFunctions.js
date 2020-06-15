@@ -4732,9 +4732,9 @@
 
 		var getRange = function(curArg) {
 			var res = null;
-			if(cElementType.cellsRange === curArg.type) {
+			if(cElementType.cellsRange === curArg.type || cElementType.cell === curArg.type) {
 				res = curArg.range && curArg.range.bbox ? curArg.range.bbox : null;
-			} else if(cElementType.cellsRange3D === curArg.type) {
+			} else if(cElementType.cellsRange3D === curArg.type || cElementType.cell3D === curArg.type) {
 				res = curArg.bbox ? curArg.bbox : null;
 			}
 			return res;
@@ -4791,7 +4791,7 @@
 		};
 
 		var _calcSum = function (i, j) {
-			var arg0Val = arg0.getValueByRowCol(i, j);
+			var arg0Val = arg0.getValueByRowCol ? arg0.getValueByRowCol(i, j) : arg0.tocNumber();
 			if (arg0Val && cElementType.number === arg0Val.type) {
 				_sum += arg0Val.getValue();
 			}
