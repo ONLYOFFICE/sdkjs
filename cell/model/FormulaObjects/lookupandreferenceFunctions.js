@@ -544,7 +544,13 @@ function (window, undefined) {
 			var i;
 			if (undefined !== row) {
 				if (_rowCount < row) {
-					return null;
+					if (col === undefined && _rowCount === 1 && _from.array[0] && _from.array[0][row - 1]) {
+						ret = new cArray();
+						ret.addElement(_from.array[0][row - 1]);
+						return ret;
+					} else {
+						return null;
+					}
 				}
 				ret = new cArray();
 				for (i = 0; i < _colCount; i++) {
@@ -552,7 +558,13 @@ function (window, undefined) {
 				}
 			} else if (undefined !== col) {
 				if (_colCount < col) {
-					return null;
+					if (row === undefined && _colCount === 1 && _from.array[col - 1] && _from.array[col - 1][0]) {
+						ret = new cArray();
+						ret.addElement(_from.array[col - 1][0]);
+						return ret;
+					} else {
+						return null;
+					}
 				}
 
 				ret = new cArray();
