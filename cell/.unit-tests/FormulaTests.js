@@ -6855,7 +6855,7 @@ $( function () {
 
 		oParser = new parserFormula( "FORMULATEXT(S101:S102)", "A1", ws );
 		ok( oParser.parse() );
-		strictEqual( oParser.calculate().getValue(), "=TODAY()" );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), "=TODAY()" );
 
 		oParser = new parserFormula( "FORMULATEXT(S102)", "A1", ws );
 		ok( oParser.parse() );
@@ -12513,11 +12513,11 @@ $( function () {
 
 		oParser = new parserFormula( "TREND(A101:A112,B101:B112)", "A2", ws );
 		ok( oParser.parse() );
-		strictEqual( oParser.calculate().getValue().toFixed(9) - 0, 0.947729865);
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue().toFixed(9) - 0, 0.947729865);
 
 		oParser = new parserFormula( "TREND(B101:B112,A101:A112,A115:A119)", "A2", ws );
 		ok( oParser.parse() );
-		strictEqual( oParser.calculate().getValue().toFixed(4) - 0, 146171.5152);
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue().toFixed(4) - 0, 146171.5152);
 	} );
 
 	test( "Test: \"PDURATION\"", function () {

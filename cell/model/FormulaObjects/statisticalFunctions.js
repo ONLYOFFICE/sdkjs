@@ -10849,6 +10849,7 @@ function (window, undefined) {
 	cTREND.prototype.name = 'TREND';
 	cTREND.prototype.argumentsMin = 1;
 	cTREND.prototype.argumentsMax = 4;
+	cTREND.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1};
 	cTREND.prototype.argumentsType = [argType.reference, argType.reference, argType.reference, argType.logical];
 	cTREND.prototype.Calculate = function (arg) {
 
@@ -10863,7 +10864,7 @@ function (window, undefined) {
 		var res = CalculateTrendGrowth(pMatY, pMatX, pMatNewX, bConstant);
 
 		if (res && res[0] && res[0][0]) {
-			return new cNumber(res[0][0]);
+			return res;
 		} else {
 			return new cError(cErrorType.wrong_value_type);
 		}

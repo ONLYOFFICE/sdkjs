@@ -6071,7 +6071,7 @@ function parserFormula( formula, parent, _ws ) {
 				//проверяем, вдруг данная функция может принимать в качестве данного аргумента массив
 				var _curFunc = levelFuncMap[currentFuncLevel].func;
 				var _curArg = argPosArrMap[currentFuncLevel].length;
-				if ( Asc.c_oAscFormulaArgumentType.reference === _curFunc.argumentsType[_curArg]) {
+				if (_curFunc.argumentsType && Asc.c_oAscFormulaArgumentType.reference === _curFunc.argumentsType[_curArg]) {
 					if (null === startArrayArg || startArrayArg > currentFuncLevel) {
 						startArrayArg = currentFuncLevel;
 					}
@@ -6378,7 +6378,7 @@ function parserFormula( formula, parent, _ws ) {
 					}
 					levelFuncMap[currentFuncLevel] = {func: found_operator, startPos: ph.pCurrPos - ph.operand_str.length};
 
-					if ( Asc.c_oAscFormulaArgumentType.reference === found_operator.argumentsType[0]) {
+					if (found_operator.argumentsType && Asc.c_oAscFormulaArgumentType.reference === found_operator.argumentsType[0]) {
 						if (null === startArrayArg || startArrayArg > currentFuncLevel) {
 							startArrayArg = currentFuncLevel;
 						}
