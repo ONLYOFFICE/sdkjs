@@ -608,7 +608,7 @@
 			this._foreachDefNameSheet(sheetId, function(defName){
 				if (!defName.type !== Asc.c_oAscDefNameType.table) {
 					t._removeDefName(sheetId, defName.name, AscCH.historyitem_Workbook_DefinedNamesChangeUndo);
-				}
+					}
 			});
 			//tables
 			var tableNamesMap = {};
@@ -899,8 +899,8 @@
 			this._foreachDefName(function(defName) {
 				if (defName.type !== Asc.c_oAscDefNameType.table && defName.ref) {
 					if (!isCopySheet || t._checkDefNamesCopySheet(defName)) {
-						list.push(defName.getAscCDefName());
-					}
+					list.push(defName.getAscCDefName());
+				}
 				}
 			});
 			return list;
@@ -2099,7 +2099,7 @@
 		//временно добавляю новый вставляемый лист, чтобы не передавать параметры через большое количество функций
 		this.addingWorksheet = null;
 	}
-	Workbook.prototype.init=function(tableCustomFunc, tableIds, bNoBuildDep, bSnapshot){
+	Workbook.prototype.init=function(tableCustomFunc, tableIds, sheetIds, bNoBuildDep, bSnapshot){
 		if(this.nActive < 0)
 			this.nActive = 0;
 		if(this.nActive >= this.aWorksheets.length)
@@ -2130,7 +2130,7 @@
 		}
 		//ws
 		this.forEach(function (ws) {
-			ws.initPostOpen(self.wsHandlers, tableIds);
+			ws.initPostOpen(self.wsHandlers, tableIds, sheetIds);
 		});
 		//show active if it hidden
 		var wsActive = this.getActiveWs();
@@ -2282,7 +2282,7 @@
 			//copyFrom after sheet add because formula assemble dependce on sheet structure
 			renameParams = newSheet.copyFrom(wsFrom, sName, tableNames);
 			
-			newSheet.copyFromFormulas(renameParams);
+				newSheet.copyFromFormulas(renameParams);
 
 			newSheet.initPostOpen(this.wsHandlers, {});
 			History.TurnOn();
@@ -2696,7 +2696,7 @@
 			wb.aWorksheetsById[ws.getId()] = ws;
 		});
 		//init trigger
-		wb.init({}, {}, true, false);
+		wb.init({}, {}, {}, true, false);
 		return wb;
 	};
 	Workbook.prototype.getAllFormulas = function() {
@@ -4062,7 +4062,7 @@
 		this.initColumn(this.oAllCol);
 		this.aCols.forEach(this.initColumn, this);
 	};
-	Worksheet.prototype.initPostOpen = function (handlers, tableIds) {
+	Worksheet.prototype.initPostOpen = function (handlers, tableIds, sheetIds) {
 		var t = this;
 		this.PagePrintOptions.init();
 		this.headerFooter.init();
@@ -4082,7 +4082,7 @@
 		this.handlers = handlers;
 		this._setHandlersTablePart();
 		this.aSlicers.forEach(function(elem){
-			elem.initPostOpen(tableIds);
+			elem.initPostOpen(tableIds, sheetIds);
 		});
 		this.aNamedSheetViews.forEach(function(elem){
 			elem.initPostOpen(tableIds, t);
@@ -5517,70 +5517,70 @@
 
 		var doHide = function (_start, _stop, localChange) {
 			var i;
-			var startIndex = null, endIndex = null, updateRange, outlineLevel;
+		var startIndex = null, endIndex = null, updateRange, outlineLevel;
 			var bNotAddCollapsed = true == oThis.workbook.bUndoChanges || true == oThis.workbook.bRedoChanges || oThis.bExcludeCollapsed;
 			var _summaryBelow = oThis.sheetPr ? oThis.sheetPr.SummaryBelow : true;
-			var fProcessRow = function(row){
-				if(row && !bNotAddCollapsed && outlineLevel !== undefined && outlineLevel !== row.getOutlineLevel()) {
-					if(!_summaryBelow) {
-						oThis.setCollapsedRow(bHidden, row.index - 1);
-					} else {
-						oThis.setCollapsedRow(bHidden, null, row);
-					}
+		var fProcessRow = function(row){
+			if(row && !bNotAddCollapsed && outlineLevel !== undefined && outlineLevel !== row.getOutlineLevel()) {
+				if(!_summaryBelow) {
+					oThis.setCollapsedRow(bHidden, row.index - 1);
+				} else {
+					oThis.setCollapsedRow(bHidden, null, row);
 				}
-				outlineLevel = row ? row.getOutlineLevel() : null;
+			}
+			outlineLevel = row ? row.getOutlineLevel() : null;
 
-				if(row && bHidden != row.getHidden())
-				{
+			if(row && bHidden != row.getHidden())
+			{
 					row.setHidden(bHidden, localChange);
 
-					if(row.index === endIndex + 1 && startIndex !== null)
-						endIndex++;
-					else
+				if(row.index === endIndex + 1 && startIndex !== null)
+					endIndex++;
+				else
+				{
+					if(startIndex !== null)
 					{
-						if(startIndex !== null)
-						{
-							updateRange = new Asc.Range(0, startIndex, gc_nMaxCol0, endIndex);
-							History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_RowHide, oThis.getId(), updateRange, new UndoRedoData_FromToRowCol(bHidden, startIndex, endIndex));
-						}
-
-						startIndex = row.index;
-						endIndex = row.index;
+						updateRange = new Asc.Range(0, startIndex, gc_nMaxCol0, endIndex);
+						History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_RowHide, oThis.getId(), updateRange, new UndoRedoData_FromToRowCol(bHidden, startIndex, endIndex));
 					}
+
+					startIndex = row.index;
+					endIndex = row.index;
 				}
-			};
-			if(0 == _start && gc_nMaxRow0 == _stop)
-			{
-				// ToDo реализовать скрытие всех строк!
 			}
-			else
-			{
+		};
+			if(0 == _start && gc_nMaxRow0 == _stop)
+		{
+			// ToDo реализовать скрытие всех строк!
+		}
+		else
+		{
 				if(!_summaryBelow && _start > 0 && !bNotAddCollapsed) {
 					oThis._getRow(_start - 1, function(row) {
-						if(row) {
-							outlineLevel = row.getOutlineLevel();
-						}
-					});
-				}
+					if(row) {
+						outlineLevel = row.getOutlineLevel();
+					}
+				});
+			}
 
 				for (i = _start; i <= _stop; ++i) {
 					false == bHidden ? oThis._getRowNoEmpty(i, fProcessRow) : oThis._getRow(i, fProcessRow);
-				}
-
-				if(_summaryBelow && outlineLevel && !bNotAddCollapsed) {
-					oThis._getRow(_stop + 1, function(row) {
-						if(row && outlineLevel !== row.getOutlineLevel()) {
-							oThis.setCollapsedRow(bHidden, null, row);
-						}
-					});
-				}
-
-				if(startIndex !== null)//заносим последние строки
-				{
-					updateRange = new Asc.Range(0, startIndex, gc_nMaxCol0, endIndex);
-					History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_RowHide, oThis.getId(),updateRange, new UndoRedoData_FromToRowCol(bHidden, startIndex, endIndex));
-				}
 			}
+
+			if(_summaryBelow && outlineLevel && !bNotAddCollapsed) {
+					oThis._getRow(_stop + 1, function(row) {
+					if(row && outlineLevel !== row.getOutlineLevel()) {
+						oThis.setCollapsedRow(bHidden, null, row);
+					}
+				});
+			}
+
+			if(startIndex !== null)//заносим последние строки
+			{
+				updateRange = new Asc.Range(0, startIndex, gc_nMaxCol0, endIndex);
+				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_RowHide, oThis.getId(),updateRange, new UndoRedoData_FromToRowCol(bHidden, startIndex, endIndex));
+			}
+		}
 		};
 
 		var bCollaborativeChanges = !this.autoFilters.useViewLocalChange && this.workbook.bCollaborativeChanges
@@ -5995,13 +5995,13 @@
 				this.copyPivotTable(oBBoxFrom, offset, wsTo);
 			} else {
 				if (this === wsTo) {
-					this.deletePivotTablesOnMove(oBBoxFrom, oBBoxTo);
-					this.movePivotOffset(oBBoxFrom, offset);
+				this.deletePivotTablesOnMove(oBBoxFrom, oBBoxTo);
+				this.movePivotOffset(oBBoxFrom, offset);
 				} else {
 					this.copyPivotTable(oBBoxFrom, offset, wsTo);
 					this.deletePivotTables(oBBoxFrom, true);
-				}
 			}
+		}
 		}
 	};
 	Worksheet.prototype._moveMergedAndHyperlinksPrepare = function(oBBoxFrom, oBBoxTo, copyRange, wsTo, offset) {
@@ -6924,11 +6924,11 @@
 				var num = pivotTable.getPivotFieldNum(pos.pageField.fld);
 				if (num) {
 					cells.setNum(num);
-				}
+			}
 				var oCellValue = pivotTable.getPageFieldCellValue(i);
 				if (oCellValue.type !== AscCommon.CellValueType.String) {
 					cells.setAlignHorizontal(AscCommon.align_Left);
-				}
+		}
 				cells.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
 			}
 		}
@@ -7071,7 +7071,7 @@
 					var num = pivotTable.getPivotFieldNum(fieldIndex);
 					if (num) {
 						cells.setNum(num);
-					}
+				}
 				}
 				if (hasLeftAlignInRowLables) {
 					cells.setAlignHorizontal(AscCommon.align_Left);
@@ -8656,7 +8656,7 @@
 			activeNamedSheetViewId = viewId;
 		} else {
 			activeNamedSheetViewId = opt_name ? this.getIdNamedSheetViewByName(opt_name) : this.getActiveNamedSheetViewId();
-		}
+			}
 
 		if (activeNamedSheetViewId === null) {
 			return;

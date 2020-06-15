@@ -1577,7 +1577,7 @@ CT_PivotCacheDefinition.prototype.onEndNode = function(prevContext, elem) {
 	if ("extLst" === elem) {
 		for (var i = 0; i < prevContext.ext.length; ++i) {
 			var ext = prevContext.ext[i];
-			if ('{725AE2AE-9491-48be-B2B4-4EB974FC3084}' == ext.uri) {
+			if ('{725AE2AE-9491-48be-B2B4-4EB974FC3084}' === ext.uri) {
 				this.pivotCacheDefinitionX14 = ext.elem;
 			}
 		}
@@ -2926,7 +2926,7 @@ CT_pivotTableDefinition.prototype.onEndNode = function(prevContext, elem) {
 	if ("extLst" === elem) {
 		for (var i = 0; i < prevContext.ext.length; ++i) {
 			var ext = prevContext.ext[i];
-			if ('{962EF5D1-5CA2-4c93-8EF4-DBF5C05439D2}' == ext.uri) {
+			if ('{962EF5D1-5CA2-4c93-8EF4-DBF5C05439D2}' === ext.uri) {
 				this.pivotTableDefinitionX14 = ext.elem;
 			}
 		}
@@ -9028,16 +9028,22 @@ CT_Extension.prototype.onStartNode = function(elem, attr, uq) {
 	return newContext;
 };
 CT_Extension.prototype.toXml = function(writer, name) {
-  if ("{962EF5D1-5CA2-4c93-8EF4-DBF5C05439D2}" === this.uri && this.elem) {
-    writer.WriteXmlNodeStart(name);
-    if (null !== this.uri) {
-      writer.WriteXmlAttributeStringEncode("uri", this.uri);
-      writer.WriteXmlString(" xmlns:x14=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/main\"");
-    }
-    writer.WriteXmlNodeEnd(name, true);
-    this.elem.toXml(writer, "x14:pivotTableDefinition");
-    writer.WriteXmlNodeEnd(name);
-  }
+	if (!this.elem) {
+		return;
+	}
+
+	writer.WriteXmlNodeStart(name);
+	if (null !== this.uri) {
+		writer.WriteXmlAttributeStringEncode("uri", this.uri);
+	}
+	writer.WriteXmlString(" xmlns:x14=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/main\"");
+	writer.WriteXmlNodeEnd(name, true);
+	if ("{962EF5D1-5CA2-4c93-8EF4-DBF5C05439D2}" === this.uri) {
+		this.elem.toXml(writer, "x14:pivotTableDefinition");
+	} else if ("{725AE2AE-9491-48be-B2B4-4EB974FC3084}" === this.uri) {
+		this.elem.toXml(writer, "x14:pivotCacheDefinition");
+	}
+	writer.WriteXmlNodeEnd(name);
 };
 function CT_X() {
 //Attributes

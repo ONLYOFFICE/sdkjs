@@ -465,7 +465,7 @@
 		}
 
 	};
-	CT_slicer.prototype.initPostOpen = function (tableIds) {
+	CT_slicer.prototype.initPostOpen = function (tableIds, sheetIds) {
 		if (this.cacheDefinition) {
 			this.cacheDefinition.wb = this.ws.workbook;
 			var tableCache = this.cacheDefinition.tableSlicerCache;
@@ -474,6 +474,12 @@
 				if (_obj) {
 					this.cacheDefinition._type = insertSlicerType.table;
 				}
+			}
+			if (this.cacheDefinition.data) {
+				this.cacheDefinition._type = insertSlicerType.pivotTable;
+			}
+			for (var i = 0; i < this.cacheDefinition.pivotTables.length; ++i) {
+				this.cacheDefinition.pivotTables[i].initPostOpen(sheetIds);
 			}
 		}
 	};
@@ -1119,14 +1125,24 @@
 		return newName;
 	};
 
-	CT_slicerCacheDefinition.prototype.toStream = function (s, tableIds, historySerialize) {
+	CT_slicerCacheDefinition.prototype.toStream = function (s, tableIds, sheetIds, historySerialize) {
 		s.WriteUChar(AscCommon.g_nodeAttributeStart);
 		s._WriteString2(0, this.name);
 		s._WriteString2(1, this.uid);
 		s._WriteString2(2, this.sourceName);
 		s.WriteUChar(AscCommon.g_nodeAttributeEnd);
 
-		s.WriteRecordArray4(0, 0, this.pivotTables);
+		if (this.pivotTables.length > 0)
+		{
+			s.StartRecord(0);
+			s.WriteULong(this.pivotTables.length);
+			for (var i = 0; i < this.pivotTables.length; i++){
+				s.StartRecord(0);
+				this.pivotTables[i].toStream(s, sheetIds);
+				s.EndRecord();
+			}
+			s.EndRecord();
+		}
 		s.WriteRecord4(1, this.data);
 		if (null != this.tableSlicerCache)
 		{
@@ -1141,7 +1157,7 @@
 			s.WriteRecord4(4, hideNoData);
 		}
 	};
-	CT_slicerCacheDefinition.prototype.fromStream = function (s, historySerialize) {
+	CT_slicerCacheDefinition.prototype.fromStream = function (s, historySerialize, sheetIds) {
 		var _type;
 		var _len = s.GetULong();
 		var _start_pos = s.cur;
@@ -1181,7 +1197,7 @@
 					{
 						s.Skip2(1); // type
 						var tmp = new CT_slicerCachePivotTable();
-						tmp.fromStream(s);
+						tmp.fromStream(s, sheetIds);
 						this.pivotTables.push(tmp);
 					}
 					break;
@@ -1527,20 +1543,32 @@
 	};
 
 	function CT_slicerCachePivotTable() {
-		this.tabId = null;
+		this.sheetId = null;
+		this.tabIdOpen = null;
 		this.name = null;
 	}
+	CT_slicerCachePivotTable.prototype.initPostOpen = function (sheetIds) {
+		var ws = null;
+		if (null != this.tabIdOpen) {
+			ws = sheetIds[this.tabIdOpen];
+			if (ws) {
+				this.sheetId = ws.getId();
+			}
+		}
+		return ws;
+	};
 	CT_slicerCachePivotTable.prototype.clone = function () {
 		var res = new CT_slicerCachePivotTable();
 
-		res.tabId = this.tabId;
+		res.sheetId = this.sheetId;
+		res.tabIdOpen = this.tabIdOpen;
 		res.name = this.name;
 
 		return res;
 	};
-	CT_slicerCachePivotTable.prototype.toStream = function (s) {
+	CT_slicerCachePivotTable.prototype.toStream = function (s, sheetIds) {
 		s.WriteUChar(AscCommon.g_nodeAttributeStart);
-		s._WriteUInt2(0, this.tabId);
+		s._WriteUInt2(0, sheetIds[this.sheetId] || 1);
 		s._WriteString2(1, this.name);
 		s.WriteUChar(AscCommon.g_nodeAttributeEnd);
 
@@ -1559,7 +1587,10 @@
 				break;
 			switch (_at)
 			{
-				case 0: { this.tabId = s.GetULong(); break; }
+				case 0: {
+					this.tabIdOpen = s.GetULong();
+					break;
+				}
 				case 1: { this.name = s.GetString2(); break; }
 				default:
 					s.Seek2(_end_pos);
