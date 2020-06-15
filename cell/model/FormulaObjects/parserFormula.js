@@ -5794,7 +5794,7 @@ function parserFormula( formula, parent, _ws ) {
 
 		//позиция курсора при открытой ячейке на редактирование
 		//если activePos - undefined - ищем первую функцию
-		var needCalcArgPos = /*ignoreErrors*/true;
+		var needCalcArgPos = ignoreErrors;
 		var activePos = parseResult.cursorPos;
 		var needAddCursorPos = activePos === undefined;
 		var needFuncLevel = 0;
@@ -6374,8 +6374,8 @@ function parserFormula( formula, parent, _ws ) {
 						} else if (needFuncLevel > 0) {
 							needFuncLevel++;
 						}
-						currentFuncLevel++;
 					}
+					currentFuncLevel++;
 					levelFuncMap[currentFuncLevel] = {func: found_operator, startPos: ph.pCurrPos - ph.operand_str.length};
 
 					if (found_operator.argumentsType && Asc.c_oAscFormulaArgumentType.reference === found_operator.argumentsType[0]) {
