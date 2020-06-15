@@ -10864,7 +10864,14 @@ function (window, undefined) {
 		var res = CalculateTrendGrowth(pMatY, pMatX, pMatNewX, bConstant);
 
 		if (res && res[0] && res[0][0]) {
-			return res;
+			var array = new cArray();
+			for(var i = 0; i < res.length; i++) {
+				array.addRow();
+				for(var j = 0; j < res.length; j++) {
+					array.addElement(new cNumber(res[i][j]));
+				}
+			}
+			return array;
 		} else {
 			return new cError(cErrorType.wrong_value_type);
 		}
