@@ -1744,7 +1744,7 @@
       var nCanvasW, nCanvasH;
       var r = function (nPix) {
           return AscCommon.AscBrowser.convertToRetinaValue(nPix, true);
-      }
+      };
       nCanvasW = r(nW);
       nCanvasH = r(nH);
       var oCanvas = document.createElement("canvas");
@@ -1820,8 +1820,7 @@
           var findFillColor = oFill.getSolidFill();
           if (findFillColor) {
               oDrawingContext.setFillStyle(findFillColor).fillRect(x0, y0, x1 - x0, y1 - y0);
-          }
-          else {
+          } else {
               var oGraphics = new AscCommon.CGraphics();
               oGraphics.init(oDrawingContext.ctx, oDrawingContext.getWidth(0), oDrawingContext.getHeight(0),
                   oDrawingContext.getWidth(3), oDrawingContext.getHeight(3));

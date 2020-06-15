@@ -2038,6 +2038,11 @@
 		}
 		
 		function drawFillCell(ctx, graphics, fill, rect) {
+			var solid = fill.getSolidFill();
+			if (solid) {
+				ctx.setFillStyle(solid).fillRect(rect._x, rect._y, rect._width, rect._height);
+				return;
+			}
 			var dScale = Asc.getCvtRatio(0, 3, ctx.getPPIX());
 			rect._x *= dScale;
 			rect._y *= dScale;
@@ -2614,6 +2619,7 @@
 			}
 		};
 		CSpellcheckState.prototype.clean = function () {
+			this.isStart = false;
 			this.lastSpellInfo = null;
 			this.lastIndex = 0;
 

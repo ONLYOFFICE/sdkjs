@@ -1664,13 +1664,10 @@ var g_oFontProperties = {
 		switch (nType) {
 			case this.Properties.patternType:
 				return this.patternType;
-				break;
 			case this.Properties.fgColor:
 				return this.fgColor;
-				break;
 			case this.Properties.bgColor:
 				return this.bgColor;
-				break;
 		}
 	};
 	PatternFill.prototype.setProperty = function (nType, value) {
@@ -1918,10 +1915,8 @@ var g_oFontProperties = {
 		switch (nType) {
 			case this.Properties.patternFill:
 				return this.patternFill;
-				break;
 			case this.Properties.gradientFill:
 				return this.gradientFill;
-				break;
 		}
 	};
 	Fill.prototype.setProperty = function (nType, value) {

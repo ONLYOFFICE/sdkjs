@@ -1329,20 +1329,20 @@
 		var range = this.range.bbox;
 		var	count;
 		switch (range.getType()) {
-			case 1:
+			case Asc.c_oAscSelectionType.RangeCells:
 				count = (range.c2 - range.c1 + 1) * (range.r2 - range.r1 + 1);
 				break;
 
-			case 2:		
-				count = range.c2 - range.c1 + 1;				
+			case Asc.c_oAscSelectionType.RangeCol:
+				count = range.c2 - range.c1 + 1;
 				break;
 
-			case 3:
-				count = range.r2 - range.r1 + 1;				
+			case Asc.c_oAscSelectionType.RangeRow:
+				count = range.r2 - range.r1 + 1;
 				break;
 
-			case 4:
-				count = range.r2 * range.c2;				
+			case Asc.c_oAscSelectionType.RangeMax:
+				count = range.r2 * range.c2;
 				break;
 		}
 		return count;

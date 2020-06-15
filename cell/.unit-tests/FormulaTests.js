@@ -7253,6 +7253,57 @@ $( function () {
 		testArrayFormula("LOG10");
 	} );
 
+	test( "Test: \"LINEST\"", function () {
+
+		ws.getRange2( "A202" ).setValue( "1" );
+		ws.getRange2( "A203" ).setValue( "2" );
+		ws.getRange2( "A204" ).setValue( "3" );
+
+		ws.getRange2( "B202" ).setValue( "2" );
+		ws.getRange2( "B203" ).setValue( "3" );
+		ws.getRange2( "B204" ).setValue( "4" );
+
+
+		oParser = new parserFormula( "LINEST(A202:B204)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue().toFixed(8) - 0, 0.54285714);
+
+		oParser = new parserFormula( "LINEST(A202:B204, A202:B204)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), 1);
+
+		oParser = new parserFormula( "LINEST(A202:B204, A202:B204, 1)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), 1);
+
+		oParser = new parserFormula( "LINEST(A202:B204, A202:B204, 1, 1)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), 1);
+
+		ws.getRange2( "A202" ).setValue( "1" );
+		ws.getRange2( "A203" ).setValue( "9" );
+		ws.getRange2( "A204" ).setValue( "5" );
+		ws.getRange2( "A205" ).setValue( "7" );
+
+		ws.getRange2( "B202" ).setValue( "0" );
+		ws.getRange2( "B203" ).setValue( "4" );
+		ws.getRange2( "B204" ).setValue( "2" );
+		ws.getRange2( "B205" ).setValue( "3" );
+
+		oParser = new parserFormula( "LINEST(A202:A205,B202:B205,,FALSE)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), 2);
+
+		oParser = new parserFormula( "LINEST(A202:A205,B202:B205,FALSE,FALSE)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue().toFixed(8) - 0, 2.31034483);
+
+		oParser = new parserFormula( "LINEST(A202:A205,B202:B205,FALSE,TRUE)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue().toFixed(8) - 0, 2.31034483);
+
+	} );
+
     test( "Test: \"MEDIAN\"", function () {
 
         function median( x ) {

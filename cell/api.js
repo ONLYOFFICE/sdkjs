@@ -3167,9 +3167,10 @@ var editor;
             this.asc_replaceMisspelledWords(lastFindOptions);
           }
         }
-        this.handlers.trigger("asc_onSpellCheckVariantsFound", null);
-        this.spellcheckState.isStart = false;
-        this.spellcheckState.clean();
+        if (this.spellcheckState.isStart) {
+          this.handlers.trigger("asc_onSpellCheckVariantsFound", null);
+          this.spellcheckState.clean();
+        }
       }
     };
 

@@ -3680,6 +3680,7 @@ CT_pivotTableDefinition.prototype.updateLocation = function() {
 	var rowFields = this.asc_getRowFields();
 	var colFields = this.asc_getColumnFields();
 	var dataFields = this.asc_getDataFields();
+	var pageFields = this.asc_getPageFields();
 	if (rowFields || colFields || dataFields) {
 		location.firstHeaderRow = 1;
 		var colFieldsCount = 0;
@@ -3729,9 +3730,11 @@ CT_pivotTableDefinition.prototype.updateLocation = function() {
 		location.firstDataRow = 1;
 		location.firstDataCol = 0;
 	}
-	var pageFieldOffset = this.getPageFieldSize();
-	if (location.ref.r1 - pageFieldOffset.row - 1 < 0) {
-		location.ref.setOffset(new AscCommon.CellBase(-location.ref.r1 + pageFieldOffset.row + 1, 0));
+	if (pageFields) {
+		var pageFieldOffset = this.getPageFieldSize();
+		if (location.ref.r1 - pageFieldOffset.row - 1 < 0) {
+			location.ref.setOffset(new AscCommon.CellBase(-location.ref.r1 + pageFieldOffset.row + 1, 0));
+		}
 	}
 	this.setLocation(location, true);
 };
@@ -10889,27 +10892,27 @@ PivotRecords.prototype._toXml = function(writer, elem) {
 
 var prot;
 
-window['Asc']['c_oAscSourceType'] = window['AscCommonExcel'].c_oAscSourceType = c_oAscSourceType;
+window['Asc']['c_oAscSourceType'] = window['Asc'].c_oAscSourceType = c_oAscSourceType;
 prot = c_oAscSourceType;
 prot['Worksheet'] = prot.Worksheet;
 prot['External'] = prot.External;
 prot['Consolidation'] = prot.Consolidation;
 prot['Scenario'] = prot.Scenario;
 
-window['Asc']['c_oAscAxis'] = window['AscCommonExcel'].c_oAscAxis = c_oAscAxis;
+window['Asc']['c_oAscAxis'] = window['Asc'].c_oAscAxis = c_oAscAxis;
 prot = c_oAscAxis;
 prot['AxisRow'] = prot.AxisRow;
 prot['AxisCol'] = prot.AxisCol;
 prot['AxisPage'] = prot.AxisPage;
 prot['AxisValues'] = prot.AxisValues;
 
-window['Asc']['c_oAscFieldSortType'] = window['AscCommonExcel'].c_oAscFieldSortType = c_oAscFieldSortType;
+window['Asc']['c_oAscFieldSortType'] = window['Asc'].c_oAscFieldSortType = c_oAscFieldSortType;
 prot = c_oAscFieldSortType;
 prot['Manual'] = prot.Manual;
 prot['Ascending'] = prot.Ascending;
 prot['Descending'] = prot.Descending;
 
-window['Asc']['c_oAscDataConsolidateFunction'] = window['AscCommonExcel'].c_oAscDataConsolidateFunction = c_oAscDataConsolidateFunction;
+window['Asc']['c_oAscDataConsolidateFunction'] = window['Asc'].c_oAscDataConsolidateFunction = c_oAscDataConsolidateFunction;
 prot = c_oAscDataConsolidateFunction;
 prot['Average'] = prot.Average;
 prot['Count'] = prot.Count;
@@ -10923,7 +10926,7 @@ prot['Sum'] = prot.Sum;
 prot['Var'] = prot.Var;
 prot['Varp'] = prot.Varp;
 
-window['Asc']['c_oAscShowDataAs'] = window['AscCommonExcel'].c_oAscShowDataAs = c_oAscShowDataAs;
+window['Asc']['c_oAscShowDataAs'] = window['Asc'].c_oAscShowDataAs = c_oAscShowDataAs;
 prot = c_oAscShowDataAs;
 prot['Normal'] = prot.Normal;
 prot['Difference'] = prot.Difference;
@@ -10935,27 +10938,27 @@ prot['PercentOfCol'] = prot.PercentOfCol;
 prot['PercentOfTotal'] = prot.PercentOfTotal;
 prot['Index'] = prot.Index;
 
-window['Asc']['c_oAscFormatAction'] = window['AscCommonExcel'].c_oAscFormatAction = c_oAscFormatAction;
+window['Asc']['c_oAscFormatAction'] = window['Asc'].c_oAscFormatAction = c_oAscFormatAction;
 prot = c_oAscFormatAction;
 prot['Blank'] = prot.Blank;
 prot['Formatting'] = prot.Formatting;
 prot['Drill'] = prot.Drill;
 prot['Formula'] = prot.Formula;
 
-window['Asc']['c_oAscScope'] = window['AscCommonExcel'].c_oAscScope = c_oAscScope;
+window['Asc']['c_oAscScope'] = window['Asc'].c_oAscScope = c_oAscScope;
 prot = c_oAscScope;
 prot['Selection'] = prot.Selection;
 prot['Data'] = prot.Data;
 prot['Field'] = prot.Field;
 
-window['Asc']['c_oAscType'] = window['AscCommonExcel'].c_oAscType = c_oAscType;
+window['Asc']['c_oAscType'] = window['Asc'].c_oAscType = c_oAscType;
 prot = c_oAscType;
 prot['None'] = prot.None;
 prot['All'] = prot.All;
 prot['Row'] = prot.Row;
 prot['Column'] = prot.Column;
 
-window['Asc']['c_oAscPivotFilterType'] = window['AscCommonExcel'].c_oAscPivotFilterType = c_oAscPivotFilterType;
+window['Asc']['c_oAscPivotFilterType'] = window['Asc'].c_oAscPivotFilterType = c_oAscPivotFilterType;
 prot = c_oAscPivotFilterType;
 prot['Unknown'] = prot.Unknown;
 prot['Count'] = prot.Count;
@@ -11024,7 +11027,7 @@ prot['M10'] = prot.M10;
 prot['M11'] = prot.M11;
 prot['M12'] = prot.M12;
 
-window['Asc']['c_oAscSortType'] = window['AscCommonExcel'].c_oAscSortType = c_oAscSortType;
+window['Asc']['c_oAscSortType'] = window['Asc'].c_oAscSortType = c_oAscSortType;
 prot = c_oAscSortType;
 prot['None'] = prot.None;
 prot['Ascending'] = prot.Ascending;
@@ -11034,7 +11037,7 @@ prot['DescendingAlpha'] = prot.DescendingAlpha;
 prot['AscendingNatural'] = prot.AscendingNatural;
 prot['DescendingNatural'] = prot.DescendingNatural;
 
-window['Asc']['c_oAscPivotAreaType'] = window['AscCommonExcel'].c_oAscPivotAreaType = c_oAscPivotAreaType;
+window['Asc']['c_oAscPivotAreaType'] = window['Asc'].c_oAscPivotAreaType = c_oAscPivotAreaType;
 prot = c_oAscPivotAreaType;
 prot['None'] = prot.None;
 prot['Normal'] = prot.Normal;
@@ -11044,7 +11047,7 @@ prot['Origin'] = prot.Origin;
 prot['Button'] = prot.Button;
 prot['TopEnd'] = prot.TopEnd;
 
-window['Asc']['c_oAscGroupBy'] = window['AscCommonExcel'].c_oAscGroupBy = c_oAscGroupBy;
+window['Asc']['c_oAscGroupBy'] = window['Asc'].c_oAscGroupBy = c_oAscGroupBy;
 prot = c_oAscGroupBy;
 prot['Range'] = prot.Range;
 prot['Seconds'] = prot.Seconds;
@@ -11055,7 +11058,7 @@ prot['Months'] = prot.Months;
 prot['Quarters'] = prot.Quarters;
 prot['Years'] = prot.Years;
 
-window['Asc']['c_oAscCalendarType'] = window['AscCommonExcel'].c_oAscCalendarType = c_oAscCalendarType;
+window['Asc']['c_oAscCalendarType'] = window['Asc'].c_oAscCalendarType = c_oAscCalendarType;
 prot = c_oAscCalendarType;
 prot['Gregorian'] = prot.Gregorian;
 prot['GregorianUs'] = prot.GregorianUs;
@@ -11072,7 +11075,7 @@ prot['GregorianXlitEnglish'] = prot.GregorianXlitEnglish;
 prot['GregorianXlitFrench'] = prot.GregorianXlitFrench;
 prot['None'] = prot.None;
 
-window['Asc']['c_oAscIconSetType'] = window['AscCommonExcel'].c_oAscIconSetType = c_oAscIconSetType;
+window['Asc']['c_oAscIconSetType'] = window['Asc'].c_oAscIconSetType = c_oAscIconSetType;
 prot = c_oAscIconSetType;
 prot['ThreeArrows'] = prot.ThreeArrows;
 prot['ThreeArrowsGray'] = prot.ThreeArrowsGray;

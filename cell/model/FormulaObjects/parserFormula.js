@@ -6604,7 +6604,13 @@ function parserFormula( formula, parent, _ws ) {
 
 					//***array-formula***
 					//если данная функция не может возвращать массив, проходимся по всем элементам аргументов и формируем массив
-					var formulaArray = cBaseFunction.prototype.checkFormulaArray.call(currentElement, arg, opt_bbox, opt_defName, this, bIsSpecialFunction, argumentsCount);
+					var formulaArray = null;
+					if (currentElement.type === cElementType.func) {
+						formulaArray = cBaseFunction.prototype.checkFormulaArray.call(currentElement, arg, opt_bbox, opt_defName, this, bIsSpecialFunction, argumentsCount);
+					} else if (currentElement.type === cElementType.operator && currentElement.bArrayFormula) {
+						bIsSpecialFunction = true;
+					}
+
 					if(formulaArray) {
 						_tmp = formulaArray;
 					} else {
