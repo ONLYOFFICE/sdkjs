@@ -5989,13 +5989,15 @@ function parserFormula( formula, parent, _ws ) {
 				}
 			}
 
-			if (needCalcArgPos && func && func.type === cElementType.func) {
-				if(needFuncLevel > 0) {
-					needFuncLevel--;
-				}
-				if (!parseResult.activeFunction && levelFuncMap[currentFuncLevel] && levelFuncMap[currentFuncLevel].startPos <= activePos && activePos <= ph.pCurrPos) {
-					parseResult.activeFunction = {func: levelFuncMap[currentFuncLevel].func, start: levelFuncMap[currentFuncLevel].startPos, end: ph.pCurrPos};
-					parseResult.argPosArr = argPosArrMap[currentFuncLevel];
+			if (func && func.type === cElementType.func) {
+				if (needCalcArgPos) {
+					if(needFuncLevel > 0) {
+						needFuncLevel--;
+					}
+					if (!parseResult.activeFunction && levelFuncMap[currentFuncLevel] && levelFuncMap[currentFuncLevel].startPos <= activePos && activePos <= ph.pCurrPos) {
+						parseResult.activeFunction = {func: levelFuncMap[currentFuncLevel].func, start: levelFuncMap[currentFuncLevel].startPos, end: ph.pCurrPos};
+						parseResult.argPosArr = argPosArrMap[currentFuncLevel];
+					}
 				}
 				var _argPos = argPosArrMap[currentFuncLevel];
 				if (_argPos && _argPos[_argPos.length - 1] && undefined === _argPos[_argPos.length - 1].end) {
