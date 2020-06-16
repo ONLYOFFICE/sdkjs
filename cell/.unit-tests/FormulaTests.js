@@ -13052,13 +13052,13 @@ $( function () {
 		ws.getRange2( "B5" ).setValue( "5" );
 		ws.getRange2( "B6" ).setValue( "6" );
 
-		/*oParser = new parserFormula( 'IRR(SIN(A1:B4))', 'A2', ws );
+		oParser = new parserFormula( 'IRR(SIN(A1:B4))', 'A2', ws );
 		ok( oParser.parse(),'IRR(SIN(A1:B4))' );
-		strictEqual( oParser.calculate().getValue().toFixed(9) - 0,-0.290303641,'IRR(SIN(A1:B4))');
+		strictEqual( oParser.calculate().getValue().toFixed(9) - 0, -0.123554096,'IRR(SIN(A1:B4))');
 
 		oParser = new parserFormula( 'MIRR(SIN(A2:B4),1,1)', 'A2', ws );
 		ok( oParser.parse(),'MIRR(SIN(A2:B4),1,1)' );
-		strictEqual( oParser.calculate().getValue(),3.11187861965467,'MIRR(SIN(A2:B4),1,1)');*/
+		strictEqual( oParser.calculate().getValue().toFixed(9) - 0, 2.36894463,'MIRR(SIN(A2:B4),1,1)');
 
 		oParser = new parserFormula( 'COLUMN(INDEX(A1:B3,1,1))', 'A2', ws );
 		ok( oParser.parse(),'COLUMN(INDEX(A1:B3,1,1))' );
@@ -13112,6 +13112,7 @@ $( function () {
 		ok( oParser.parse(),'COUNTIFS(INDEX(A1:B3,1,1),INDEX(A1:B3,1,1))' );
 		strictEqual( oParser.calculate().getValue(),1,'COUNTIFS(INDEX(A1:B3,1,1),INDEX(A1:B3,1,1))');
 
+		
 	} );
 
 	wb.dependencyFormulas.unlockRecal();
