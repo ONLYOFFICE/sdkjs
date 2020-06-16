@@ -1899,21 +1899,31 @@
 			}
 		}
 
-		function generateStyles(width, height, cellStyles, wb) {
+		function getContext(w, h, wb) {
+			var oCanvas = document.createElement('canvas');
+			oCanvas.width = w;
+			oCanvas.height = h;
+			return new Asc.DrawingContext(
+				{canvas: oCanvas, units: 0/*px*/, fmgrGraphics: wb.fmgrGraphics, font: wb.m_oFont});
+		}
+		function getGraphics(ctx) {
+			var graphics = new AscCommon.CGraphics();
+			graphics.init(ctx.ctx, ctx.getWidth(0), ctx.getHeight(0), ctx.getWidth(3), ctx.getHeight(3));
+			graphics.m_oFontManager = AscCommon.g_fontManager;
+
+			return graphics;
+		}
+		function generateCellStyles(w, h, wb) {
 			var result = [];
 
-			var widthWithRetina = width;
-			var heightWithRetina = height;
 			if (AscCommon.AscBrowser.isRetina) {
-				widthWithRetina = AscCommon.AscBrowser.convertToRetinaValue(widthWithRetina, true);
-				heightWithRetina = AscCommon.AscBrowser.convertToRetinaValue(heightWithRetina, true);
+				w = AscCommon.AscBrowser.convertToRetinaValue(w, true);
+				h = AscCommon.AscBrowser.convertToRetinaValue(h, true);
 			}
 
-			var oCanvas = document.createElement('canvas');
-			oCanvas.width = widthWithRetina;
-			oCanvas.height = heightWithRetina;
-			var oGraphics = new Asc.DrawingContext(
-				{canvas: oCanvas, units: 0/*px*/, fmgrGraphics: wb.fmgrGraphics, font: wb.m_oFont});
+			var ctx = getContext(w, h, wb);
+			var oCanvas = ctx.getCanvas();
+			var graphics = getGraphics(ctx);
 
 			function addStyles(styles, type) {
 				var oStyle, name, displayName;
@@ -1934,7 +1944,7 @@
 					if (window["IS_NATIVE_EDITOR"]) {
 						window["native"]["BeginDrawStyle"](type, name);
 					}
-					drawStyle(oGraphics, wb.stringRender, oStyle, displayName, widthWithRetina, heightWithRetina);
+					drawStyle(ctx, graphics, wb.stringRender, oStyle, displayName, w, h);
 					if (window["IS_NATIVE_EDITOR"]) {
 						window["native"]["EndDrawStyle"]();
 					} else {
@@ -1943,21 +1953,21 @@
 				}
 			}
 
+			var cellStyles = wb.model.CellStyles;
 			addStyles(cellStyles.CustomStyles, AscCommon.c_oAscStyleImage.Document);
 			addStyles(cellStyles.DefaultStyles, AscCommon.c_oAscStyleImage.Default);
 
 			return result;
 		}
 
-		function drawStyle(ctx, sr, oStyle, sStyleName, width, height) {
+		function drawStyle(ctx, graphics, sr, oStyle, sStyleName, width, height) {
 			var bc = null, bs = AscCommon.c_oAscBorderStyles.None, isNotFirst = false; // cached border color
 			ctx.clear();
 			// Fill cell
 			if (oStyle.ApplyFill) {
-				var oColor = oStyle.getFillColor();
-				if (null !== oColor) {
-					ctx.setFillStyle(oColor);
-					ctx.fillRect(0, 0, width, height);
+				var fill = oStyle.getFill();
+				if (null !== fill) {
+					AscCommonExcel.drawFillCell(ctx, graphics, fill, new AscCommon.asc_CRect(0, 0, width, height));
 				}
 			}
 
@@ -2038,6 +2048,10 @@
 		}
 		
 		function drawFillCell(ctx, graphics, fill, rect) {
+			if (!fill.hasFill()) {
+				return;
+			}
+
 			var solid = fill.getSolidFill();
 			if (solid) {
 				ctx.setFillStyle(solid).fillRect(rect._x, rect._y, rect._width, rect._height);
@@ -2083,6 +2097,142 @@
 				}, this, []
 			);
 		}
+
+		function generateSlicerStyles(w, h, wb) {
+			var result = [];
+
+			if (AscCommon.AscBrowser.isRetina) {
+				w = AscCommon.AscBrowser.convertToRetinaValue(w, true);
+				h = AscCommon.AscBrowser.convertToRetinaValue(h, true);
+			}
+
+			var ctx = getContext(w, h, wb);
+			var oCanvas = ctx.getCanvas();
+			var graphics = getGraphics(ctx);
+
+			function addStyles(styles, type) {
+				for(var sStyleName in styles) {
+					if(styles.hasOwnProperty(sStyleName)) {
+						var oSlicerStyle = styles[sStyleName];
+						var oTableStyle = oAllTableStyles[sStyleName];
+						if (oSlicerStyle && oTableStyle) {
+							drawSlicerStyle(ctx, graphics, oSlicerStyle, oTableStyle, w, h);
+							result.push(new AscCommon.CStyleImage(sStyleName, type, oCanvas.toDataURL("image/png")));
+						}
+					}
+				}
+			}
+
+			var oAllTableStyles = wb.model.TableStyles.AllStyles;
+			addStyles(wb.model.SlicerStyles.CustomStyles, AscCommon.c_oAscStyleImage.Document);
+			addStyles(wb.model.SlicerStyles.DefaultStyles, AscCommon.c_oAscStyleImage.Default);
+
+			return result;
+		}
+
+		function drawSlicerStyle(ctx, graphics, oSlicerStyle, oTableStyle, width, height) {
+			ctx.clear();
+
+			var dxf, dxfWhole;
+
+			var nIns = 2;
+			var nBH = 8;
+
+			if (AscCommon.AscBrowser.isRetina) {
+				nIns = AscCommon.AscBrowser.convertToRetinaValue(nIns, true);
+				nBH = AscCommon.AscBrowser.convertToRetinaValue(nBH, true);
+			}
+
+			//whole
+			dxfWhole = oTableStyle.wholeTable && oTableStyle.wholeTable.dxf;
+			drawSlicerPreviewElement(dxfWhole, null, ctx, graphics, 0, 0, width, height);
+			dxfWhole = dxfWhole || true;
+
+			//header
+			dxf = oTableStyle.headerRow && oTableStyle.headerRow.dxf;
+			drawSlicerPreviewElement(dxf, dxfWhole, ctx, graphics, 0, 0, width, nBH);
+
+			var nPos = nBH + nIns;
+			var aBT = [
+				Asc.ST_slicerStyleType.selectedItemWithData,
+				Asc.ST_slicerStyleType.unselectedItemWithData,
+				Asc.ST_slicerStyleType.selectedItemWithNoData,
+				Asc.ST_slicerStyleType.unselectedItemWithNoData
+			];
+			for(var nType = 0; nType < aBT.length; ++nType) {
+				dxf = oSlicerStyle[aBT[nType]];
+				drawSlicerPreviewElement(dxf, dxfWhole, ctx, graphics, nIns, nPos, width - nIns, nPos + nBH);
+				nPos += nBH + nIns;
+			}
+		}
+		function drawSlicerPreviewElement(dxf, dxfWhole, ctx, graphics, x0, y0, x1, y1) {
+			var oFill = dxf && dxf.getFill();
+			if(oFill) {
+				AscCommonExcel.drawFillCell(ctx, graphics, oFill, new AscCommon.asc_CRect(x0, y0, x1 - x0, y1 - y0));
+			}
+			var oBorder = dxf && dxf.getBorder();
+			if (oBorder) {
+				var oS = oBorder.l;
+				if(oS && oS.s !== AscCommon.c_oAscBorderStyles.None && oS.c) {
+					ctx.setStrokeStyle(oS.c).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
+					ctx.lineVer(x0, y0, y1);
+					ctx.stroke();
+				}
+				oS = oBorder.t;
+				if(oS && oS.s !== AscCommon.c_oAscBorderStyles.None && oS.c) {
+					ctx.setStrokeStyle(oS.c).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
+					ctx.lineHor(x0 + 1, y0, x1 - 1);
+					ctx.stroke();
+				}
+				oS = oBorder.r;
+				if(oS && oS.s !== AscCommon.c_oAscBorderStyles.None && oS.c) {
+					ctx.setStrokeStyle(oS.c).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
+					ctx.lineVer(x1 - 1, y0, y1);
+					ctx.stroke();
+				}
+				oS = oBorder.b;
+				if(oS && oS.s !== AscCommon.c_oAscBorderStyles.None && oS.c) {
+					ctx.setStrokeStyle(oS.c).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
+					ctx.lineHor(x0 + 1, y1 - 1, x1 - 1);
+					ctx.stroke();
+				}
+			}
+			if (dxfWhole) {
+				var nTIns = 5;
+				var nTW = 8;
+				if (AscCommon.AscBrowser.isRetina) {
+					nTIns = AscCommon.AscBrowser.convertToRetinaValue(nTIns, true);
+					nTW = AscCommon.AscBrowser.convertToRetinaValue(nTW, true);
+				}
+
+				var oFont = dxf && dxf.getFont() || dxfWhole && dxfWhole.getFont && dxfWhole.getFont();
+				var oColor = oFont ? oFont.getColor() : new AscCommon.CColor(0, 0, 0);
+				ctx.setStrokeStyle(oColor);
+				ctx.setLineWidth(1);
+				ctx.setLineDash([]);
+				ctx.beginPath();
+				ctx.lineHor(nTIns, y0 + (y1 - y0) / 2.0, nTIns + nTW);
+				ctx.stroke();
+			}
+		}
+
+		function generateXfsStyle(w, h, wb, xfs, text) {
+			if (AscCommon.AscBrowser.isRetina) {
+				w = AscCommon.AscBrowser.convertToRetinaValue(w, true);
+				h = AscCommon.AscBrowser.convertToRetinaValue(h, true);
+			}
+
+			var ctx = getContext(w, h, wb);
+			var oCanvas = ctx.getCanvas();
+			var graphics = getGraphics(ctx);
+
+			var style = new AscCommonExcel.CCellStyle();
+			style.xfs = xfs;
+
+			drawStyle(ctx, graphics, wb.stringRender, oStyle, text, w, h);
+			return new AscCommon.CStyleImage(text, null, oCanvas.toDataURL("image/png"));
+		}
+
 		//-----------------------------------------------------------------
 		// События движения мыши
 		//-----------------------------------------------------------------
@@ -2919,7 +3069,9 @@
 		window['AscCommonExcel'].checkFilteringMode = checkFilteringMode;
 		window["Asc"].getEndValueRange = getEndValueRange;
 		window["AscCommonExcel"].checkStylesNames = checkStylesNames;
-		window["AscCommonExcel"].generateStyles = generateStyles;
+		window["AscCommonExcel"].generateCellStyles = generateCellStyles;
+		window["AscCommonExcel"].generateSlicerStyles = generateSlicerStyles;
+		window["AscCommonExcel"].generateXfsStyle = generateXfsStyle;
 		window["AscCommonExcel"].getIconsForLoad = getIconsForLoad;
 
 		window["AscCommonExcel"].referenceType = referenceType;

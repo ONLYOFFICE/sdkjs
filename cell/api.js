@@ -1756,7 +1756,7 @@ var editor;
 
 	spreadsheet_api.prototype.asc_setWorksheetRange = function (val) {
         this._asc_setWorksheetRange(val);
-    }
+    };
 
 	spreadsheet_api.prototype._onSaveCallbackInner = function () {
 		var t = this;

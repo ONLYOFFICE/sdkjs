@@ -2947,6 +2947,10 @@ var g_oBorderProperties = {
 		return this.getAlign2().getShrinkToFit();
 	};
 
+	CellXfs.prototype.asc_getPreview = function (api, text, width, height) {
+		return AscCommonExcel.generateXfsStyle(width, height, api.wb, this, text);
+	};
+
 	function FromXml_ST_HorizontalAlignment(val) {
 		var res = -1;
 		if ("general" === val) {
@@ -3389,9 +3393,6 @@ CCellStyle.prototype.getFill = function () {
 		return this.xfs.fill;
 
 	return g_oDefaultFormat.Fill;
-};
-CCellStyle.prototype.getFillColor = function () {
-	return this.getFill().bg();
 };
 CCellStyle.prototype.getFontColor = function () {
 	if (null != this.xfs && null != this.xfs.font)
@@ -10460,6 +10461,7 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 	prot["asc_getAngle"] = prot.asc_getAngle;
 	prot["asc_getWrapText"] = prot.asc_getWrapText;
 	prot["asc_getShrinkToFit"] = prot.asc_getShrinkToFit;
+	prot["asc_getPreview"] = prot.asc_getPreview;
 	window['AscCommonExcel'].Align = Align;
 	window['AscCommonExcel'].CCellStyles = CCellStyles;
 	window['AscCommonExcel'].CCellStyle = CCellStyle;

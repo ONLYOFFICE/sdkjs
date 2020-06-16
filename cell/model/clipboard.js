@@ -390,6 +390,8 @@
 
 		Clipboard.prototype.pasteData = function (ws, _format, data1, data2, text_data, bIsSpecialPaste, doNotShowButton, isPasteAll) {
 			var t = this;
+			var wb = window["Asc"]["editor"].wb;
+			var cellEditor = wb.cellEditor;
 			t.pasteProcessor.clean();
 
 			if (!window['AscCommon'].g_specialPasteHelper.specialPasteStart) {
@@ -397,12 +399,11 @@
 			}
 			window['AscCommon'].g_specialPasteHelper.Paste_Process_Start(doNotShowButton);
 
-			if (!bIsSpecialPaste) {
+			if (!bIsSpecialPaste && !wb.getCellEditMode()) {
 				window['AscCommon'].g_specialPasteHelper.specialPasteData.activeRange = ws.model.selectionRange.clone(ws.model);
 				window['AscCommon'].g_specialPasteHelper.specialPasteData.pasteFromWord = false;
 			}
-			var wb = window["Asc"]["editor"].wb;
-			var cellEditor = wb.cellEditor;
+
 			switch (_format) {
 				case AscCommon.c_oAscClipboardDataFormat.HtmlElement: {
 					if (wb.getCellEditMode()) {
