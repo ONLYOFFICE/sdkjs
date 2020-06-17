@@ -8594,10 +8594,10 @@
 	 */
 	ApiDrawing.prototype.InsertInContentControl = function(nType)
 	{
-		var Document = editor.private_GetLogicDocument();
-		var ContentControl = null;
-
-		var parentParagraph = this.Drawing.GetParagraph();
+		var Document			= editor.private_GetLogicDocument();
+		var ContentControl		= null;
+		var paragraphInControl	= null;
+		var parentParagraph		= this.Drawing.GetParagraph();
 		if (!parentParagraph)
 			return false;
 
@@ -8606,7 +8606,6 @@
 		{
 			this.SetSelection();
 			ContentControl = new ApiBlockLvlSdt(Document.AddContentControl(1));
-
 			Document.RemoveSelection();
 		}
 		else 
