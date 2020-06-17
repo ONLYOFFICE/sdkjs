@@ -1521,6 +1521,7 @@ function (window, undefined) {
 	cOFFSET.prototype.argumentsMin = 3;
 	cOFFSET.prototype.argumentsMax = 5;
 	cOFFSET.prototype.ca = true;
+	cOFFSET.prototype.arrayIndexes = {0: 1};
 	cOFFSET.prototype.argumentsType = [argType.reference, argType.number, argType.number, argType.number, argType.number];
 	cOFFSET.prototype.Calculate = function (arg) {
 

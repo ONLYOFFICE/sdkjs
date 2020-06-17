@@ -5418,7 +5418,7 @@ function parserFormula( formula, parent, _ws ) {
 		if (AscCommonExcel.g_ProcessShared) {
 			return this.assemble(true);
 		} else {
-		return this.Formula;
+			return this.Formula;
 		}
 	};
 	parserFormula.prototype.getFormulaRaw = function() {

@@ -13112,7 +13112,60 @@ $( function () {
 		ok( oParser.parse(),'COUNTIFS(INDEX(A1:B3,1,1),INDEX(A1:B3,1,1))' );
 		strictEqual( oParser.calculate().getValue(),1,'COUNTIFS(INDEX(A1:B3,1,1),INDEX(A1:B3,1,1))');
 
-		
+		ws.getRange2( "A2" ).setValue( "qq" );
+		ws.getRange2( "A3" ).setValue( "ww" );
+		ws.getRange2( "A4" ).setValue( "ee" );
+		ws.getRange2( "A5" ).setValue( "qq" );
+		ws.getRange2( "A6" ).setValue( "qq" );
+		ws.getRange2( "A7" ).setValue( "ww" );
+		ws.getRange2( "A8" ).setValue( "ww" );
+		ws.getRange2( "A9" ).setValue( "ww" );
+		ws.getRange2( "A10" ).setValue( "eee" );
+
+		ws.getRange2( "B1" ).setValue( "qqqq" );
+		ws.getRange2( "B2" ).setValue( "ee" );
+
+		var _f = 'IFERROR(INDEX($A$2:$A$10,MATCH(0,INDEX(COUNTIF($B$1:B1,$A$2:$A$10)+(COUNTIF($A$2:$A$10,$A$2:$A$10)<>1),0,0),0)),"")';
+		oParser = new parserFormula( _f, 'A2', ws );
+		ok( oParser.parse(), _f );
+		strictEqual( oParser.calculate().getValue().getValue(),"ee",_f);
+
+		_f = 'IFERROR(INDEX($A$2:$A$10,MATCH(0,INDEX(COUNTIF($B$1:B2,$A$2:$A$10)+(COUNTIF($A$2:$A$10,$A$2:$A$10)<>1),0,0),0)),"")';
+		oParser = new parserFormula( _f, 'A2', ws );
+		ok( oParser.parse(), _f );
+		strictEqual( oParser.calculate().getValue().getValue(),"eee",_f);
+
+		_f = 'INDEX($A$2:$A$10,MATCH(0,INDEX(COUNTIF($B$1:B1,$A$2:$A$10)+(COUNTIF($A$2:$A$10,$A$2:$A$10)<>1),0,0),0))';
+		oParser = new parserFormula( _f, 'A2', ws );
+		ok( oParser.parse(), _f );
+		strictEqual( oParser.calculate().getValue().getValue(),"ee",_f);
+
+		_f = 'MATCH(0,INDEX({1;1;0;1;1;1;1;1;0},0,0))';
+		oParser = new parserFormula( _f, 'A2', ws );
+		ok( oParser.parse(), _f );
+		strictEqual( oParser.calculate().getValue(),"#N/A",_f);
+
+		_f = 'INDEX($A$2:$A$10,MATCH(0,INDEX({1;1;0;1;1;1;1;1;0},0,0),0))';
+		oParser = new parserFormula( _f, 'A2', ws );
+		ok( oParser.parse(), _f );
+		strictEqual( oParser.calculate().getValue().getValue(),"ee",_f);
+
+		_f = 'INDEX($A$2:$A$10,3)';
+		oParser = new parserFormula( _f, 'A2', ws );
+		ok( oParser.parse(), _f );
+		strictEqual( oParser.calculate().getValue().getValue(),"ee",_f);
+
+		_f = 'INDEX($A$2:$A$10,MATCH(0,{1;1;0;1;1;1;1;1;0},0))';
+		oParser = new parserFormula( _f, 'A2', ws );
+		ok( oParser.parse(), _f );
+		strictEqual( oParser.calculate().getValue().getValue(),"ee",_f);
+
+		_f = 'MATCH(0,INDEX(COUNTIF($B$1:B1,$A$2:$A$10)+(COUNTIF($A$2:$A$10,$A$2:$A$10)<>1),0,0),0)';
+		oParser = new parserFormula( _f, 'A2', ws );
+		ok( oParser.parse(), _f );
+		strictEqual( oParser.calculate().getValue(),3,_f);
+
+
 	} );
 
 	wb.dependencyFormulas.unlockRecal();
