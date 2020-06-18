@@ -4037,11 +4037,11 @@
 			return false;
 		if (typeof(sScreenTipText) !== "string")
 			sScreenTipText = "";
-
-		var Document	= editor.private_GetLogicDocument();
+		
+		var oDocument	= editor.private_GetLogicDocument();
 		var hyperlinkPr	= new Asc.CHyperlinkProperty()
 		var urlType		= AscCommon.getUrlType(sLink);
-
+		this.Paragraph.SelectAll(1);
 		if (!/(((^https?)|(^ftp)):\/\/)|(^mailto:)/i.test(sLink))
 			sLink = (urlType === 0) ? null :(( (urlType === 2) ? 'mailto:' : 'http://' ) + sLink);
 
@@ -4049,11 +4049,9 @@
 		hyperlinkPr.put_Value(sLink);
 		hyperlinkPr.put_ToolTip(sScreenTipText);
 		hyperlinkPr.put_Bookmark(null);
-
-		this.Select();
-		Document.AddHyperlink(hyperlinkPr);
-		Document.RemoveSelection();
-
+		
+		this.Paragraph.AddHyperlink(hyperlinkPr);
+		oDocument.RemoveSelection();
 		return true;
 	};
 	/**
@@ -4939,11 +4937,15 @@
 	{
 		var Document = private_GetLogicDocument();
 
-		var StartPos	= this.Run.GetDocumentPositionFromObject();
-		var EndPos		= this.Run.GetDocumentPositionFromObject();
+		var StartPos		= this.Run.GetDocumentPositionFromObject();
+		var EndPos			= this.Run.GetDocumentPositionFromObject();
+		var parentParagraph	= this.Run.GetParagraph();
 
-		StartPos.push({Class: this, Position: 0});
-		EndPos.push({Class: this, Position: this.Run.Content.length});
+		if (!parentParagraph)
+			return false;
+
+		StartPos.push({Class: this.Run, Position: 0});
+		EndPos.push({Class: this.Run, Position: this.Run.Content.length});
 
 		if (StartPos[0].Position === - 1)
 			return false;
@@ -4989,19 +4991,40 @@
 			sScreenTipText = "";
 
 		var Document	= editor.private_GetLogicDocument();
+		var parentPara	= this.Run.GetParagraph();
+		if (!parentPara)
+			return false;
+		if (this.GetParentContentControl() instanceof ApiInlineLvlSdt)
+			return false;
+
+		function find_parentParaDepth(DocPos)
+		{
+			for (var nPos = 0; nPos < DocPos.length; nPos++)
+			{
+				if (DocPos[nPos].Class instanceof Paragraph && DocPos[nPos].Class.Id === parentPara.Id)
+				{
+					return nPos;
+				}
+			}
+		}
+		var StartPos		= this.Run.GetDocumentPositionFromObject();
+		var EndPos			= this.Run.GetDocumentPositionFromObject();
+		StartPos.push({Class: this.Run, Position: 0});
+		EndPos.push({Class: this.Run, Position: this.Run.Content.length});
+		var parentParaDepth = find_parentParaDepth(StartPos);
+		StartPos[parentParaDepth].Class.SetContentSelection(StartPos, EndPos, parentParaDepth, 0, 0);
+
 		var hyperlinkPr	= new Asc.CHyperlinkProperty()
 		var urlType		= AscCommon.getUrlType(sLink);
-
 		if (!/(((^https?)|(^ftp)):\/\/)|(^mailto:)/i.test(sLink))
 			sLink = (urlType === 0) ? null :(( (urlType === 2) ? 'mailto:' : 'http://' ) + sLink);
-
 		sLink = sLink.replace(new RegExp("%20",'g')," ");
 		hyperlinkPr.put_Value(sLink);
 		hyperlinkPr.put_ToolTip(sScreenTipText);
 		hyperlinkPr.put_Bookmark(null);
 
-		this.Select();
-		Document.AddHyperlink(hyperlinkPr);
+		parentPara.Selection.Use = true;
+		parentPara.AddHyperlink(hyperlinkPr);
 		Document.RemoveSelection();
 
 		return true;
