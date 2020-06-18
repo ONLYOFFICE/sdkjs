@@ -3866,7 +3866,7 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
 
         if (!isEndEndnoteRecalc)
 		{
-			if (true !== Element.Is_Inline())
+			if (!Element.IsInline() || (!Element.IsParagraph() && Element.GetFramePr()))
 			{
 				bFlow = true;
 
@@ -3908,26 +3908,25 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
 				}
 				else
 				{
-					var RecalcInfo =
-							{
-								Element: Element,
-								X: X,
-								Y: Y,
-								XLimit: XLimit,
-								YLimit: YLimit,
-								PageIndex: PageIndex,
-								SectionIndex: SectionIndex,
-								ColumnIndex: ColumnIndex,
-								Index: Index,
-								StartIndex: StartIndex,
-								ColumnsCount: ColumnsCount,
-								ResetStartElement: bResetStartElement,
-								RecalcResult: RecalcResult
-							};
+					var RecalcInfo = {
+						Element           : Element,
+						X                 : X,
+						Y                 : Y,
+						XLimit            : XLimit,
+						YLimit            : YLimit,
+						PageIndex         : PageIndex,
+						SectionIndex      : SectionIndex,
+						ColumnIndex       : ColumnIndex,
+						Index             : Index,
+						StartIndex        : StartIndex,
+						ColumnsCount      : ColumnsCount,
+						ResetStartElement : bResetStartElement,
+						RecalcResult      : RecalcResult
+					};
 
-					if (type_Table === Element.GetType())
+					if (Element.IsTable() && !Element.IsInline())
 						this.private_RecalculateFlowTable(RecalcInfo);
-					else if (type_Paragraph === Element.Get_Type())
+					else
 						this.private_RecalculateFlowParagraph(RecalcInfo);
 
 					Index        = RecalcInfo.Index;
@@ -4619,7 +4618,7 @@ CDocument.prototype.private_RecalculateFlowParagraph         = function(RecalcIn
 
     if (true === this.RecalcInfo.Can_RecalcObject())
     {
-        var FramePr = Element.Get_FramePr();
+        var FramePr = Element.GetFramePr();
 
         // Рассчитаем количество подряд идущих параграфов с одинаковыми FramePr
         var FlowCount = this.private_RecalculateFlowParagraphCount(Index);
@@ -4675,7 +4674,7 @@ CDocument.prototype.private_RecalculateFlowParagraph         = function(RecalcIn
             FrameH = TempElement.Get_PageBounds(0).Bottom;
         }
 
-        if (-1 === FrameW && 1 === FlowCount && 1 === Element.Lines.length && undefined === FramePr.Get_W())
+        if (Element.IsParagraph() && -1 === FrameW && 1 === FlowCount && 1 === Element.Lines.length && undefined === FramePr.Get_W())
         {
 			FrameW     = Element.GetAutoWidthForDropCap();
 			var ParaPr = Element.Get_CompiledPr2(false).ParaPr;
@@ -4692,7 +4691,22 @@ CDocument.prototype.private_RecalculateFlowParagraph         = function(RecalcIn
         }
         else if (-1 === FrameW)
         {
-            FrameW = Frame_XLimit;
+        	if (Element.IsTable())
+			{
+				var nTableGridWidth = Element.GetMaxTableGridWidth();
+				for (var nTempIndex = Index + 1; nTempIndex < Index + FlowCount; ++nTempIndex)
+				{
+					var nTempTableGridWidth = this.Content[nTempIndex].GetMaxTableGridWidth();
+					if (-1 !== nTempTableGridWidth && nTempTableGridWidth > nTableGridWidth)
+						nTableGridWidth = nTempTableGridWidth;
+				}
+
+				FrameW = nTableGridWidth;
+			}
+        	else
+			{
+				FrameW = Frame_XLimit;
+			}
         }
 
         if ((Asc.linerule_AtLeast === FrameHRule && FrameH < FramePr.H) || Asc.linerule_Exact === FrameHRule)
@@ -4772,9 +4786,6 @@ CDocument.prototype.private_RecalculateFlowParagraph         = function(RecalcIn
                     break;
             }
         }
-
-        if (FrameW + FrameX > Page_W)
-            FrameX = Page_W - FrameW;
 
         if (FrameX < 0)
             FrameX = 0;
@@ -4864,7 +4875,12 @@ CDocument.prototype.private_RecalculateFlowParagraph         = function(RecalcIn
         if (FrameY < 0)
             FrameY = 0;
 
-        var FrameBounds = this.Content[Index].Get_FrameBounds(FrameX, FrameY, FrameW, FrameH);
+        var FrameBounds;
+        if (this.Content[Index].IsParagraph())
+        	FrameBounds = this.Content[Index].Get_FrameBounds(FrameX, FrameY, FrameW, FrameH);
+        else
+        	FrameBounds = this.Content[Index].GetFirstParagraph().Get_FrameBounds(FrameX, FrameY, FrameW, FrameH);
+
         var FrameX2     = FrameBounds.X, FrameY2 = FrameBounds.Y, FrameW2 = FrameBounds.W, FrameH2 = FrameBounds.H;
 
         if (!(RecalcResult & recalcresult_NextElement))
@@ -4888,7 +4904,7 @@ CDocument.prototype.private_RecalculateFlowParagraph         = function(RecalcIn
             {
                 var TempElement = this.Content[TempIndex];
                 TempElement.Shift(TempElement.Pages.length - 1, FrameX, FrameY);
-                TempElement.Set_CalculatedFrame(FrameX, FrameY, FrameW, FrameH, FrameX2, FrameY2, FrameW2, FrameH2, PageIndex, Index, FlowCount);
+                TempElement.SetCalculatedFrame(new CCalculatedFrame(FrameX, FrameY, FrameW, FrameH, FrameX2, FrameY2, FrameW2, FrameH2, PageIndex, Index, FlowCount));
             }
 
             var FrameDx = ( undefined === FramePr.HSpace ? 0 : FramePr.HSpace );
@@ -4961,27 +4977,23 @@ CDocument.prototype.private_RecalculateFlowParagraph         = function(RecalcIn
     RecalcInfo.Index        = Index;
     RecalcInfo.RecalcResult = RecalcResult;
 };
-CDocument.prototype.private_RecalculateFlowParagraphCount    = function(Index)
+CDocument.prototype.private_RecalculateFlowParagraphCount = function(nStartIndex)
 {
-    var Element   = this.Content[Index];
-    var FramePr   = Element.Get_FramePr();
-    var FlowCount = 1;
-    for (var TempIndex = Index + 1, Count = this.Content.length; TempIndex < Count; ++TempIndex)
-    {
-        var TempElement = this.Content[TempIndex];
-        if (type_Paragraph === TempElement.GetType() && true != TempElement.Is_Inline())
-        {
-            var TempFramePr = TempElement.Get_FramePr();
-            if (true === FramePr.Compare(TempFramePr))
-                FlowCount++;
-            else
-                break;
-        }
-        else
-            break;
-    }
+	var oElement    = this.Content[nStartIndex];
+	var oFramePr    = oElement.GetFramePr();
+	var nFlowsCount = 1;
+	for (var nIndex = nStartIndex + 1, nCount = this.Content.length; nIndex < nCount; ++nIndex)
+	{
+		var oTempElement = this.Content[nIndex];
 
-    return FlowCount;
+		var oTempFramePr = oTempElement.GetFramePr();
+		if (oTempFramePr && oFramePr.IsEqual(oTempFramePr) && (!oTempElement.IsParagraph() || !oTempElement.IsInline()))
+			nFlowsCount++;
+		else
+			break;
+	}
+
+	return nFlowsCount;
 };
 CDocument.prototype.private_RecalculateHdrFtrPageCountUpdate = function()
 {

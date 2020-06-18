@@ -393,6 +393,9 @@ Paragraph.prototype.Recalculate_FastRange = function(SimpleChanges)
  */
 Paragraph.prototype.Recalculate_Page = function(CurPage)
 {
+	if (0 === CurPage)
+		this.CalculatedFrame = null;
+
     this.Clear_NearestPosArray();
 
     // Во время пересчета сбрасываем привязку курсора к строке.

@@ -1180,6 +1180,16 @@ CDocumentContentElementBase.prototype.GetLogicDocument = function()
 {
 	return this.LogicDocument;
 };
+/**
+ * Получаем настройки рамки для данного элемента
+ * @returns {?CFramePr}
+ */
+CDocumentContentElementBase.prototype.GetFramePr = function(){return null;};
+/**
+ * Получаем маскимальную ширину таблицы
+ * @returns {number}
+ */
+CDocumentContentElementBase.prototype.GetMaxTableGridWidth = function(){return -1;};
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

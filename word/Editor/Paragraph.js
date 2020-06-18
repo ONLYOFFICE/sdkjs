@@ -74,20 +74,7 @@ function Paragraph(DrawingDocument, Parent, bFromPresentation)
     this.Pr = new CParaPr();
 
     // Рассчитанное положение рамки
-    this.CalculatedFrame =
-    {
-        L : 0,       // Внутренний рект, по которому идет рассчет
-        T : 0,
-        W : 0,
-        H : 0,
-        L2 : 0,      // Внешний рект, с учетом границ
-        T2 : 0,
-        W2 : 0,
-        H2 : 0,
-        PageIndex : 0,
-		StartIndex: 0,
-		FlowCount: 0
-    };
+    this.CalculatedFrame = new CCalculatedFrame();
 
     // Данный TextPr будет относится только к символу конца параграфа
     this.TextPr = new ParaTextPr();
@@ -10774,7 +10761,19 @@ Paragraph.prototype.Document_Get_AllFontNames = function(AllFonts)
  */
 Paragraph.prototype.Document_UpdateRulersState = function()
 {
-	if (true === this.Is_Inline())
+	if (this.CalculatedFrame)
+	{
+		var oFrame = this.CalculatedFrame;
+		this.Parent.DrawingDocument.Set_RulerState_Paragraph({
+			L         : oFrame.L,
+			T         : oFrame.T,
+			R         : oFrame.L + oFrame.W,
+			B         : oFrame.T + oFrame.H,
+			PageIndex : this.GetStartPageAbsolute() + oFrame.PageIndex,
+			Frame     : this
+		}, false);
+	}
+	else
 	{
 		if (this.Parent instanceof CDocument)
 		{
@@ -10783,19 +10782,6 @@ Paragraph.prototype.Document_UpdateRulersState = function()
 				this.LogicDocument.Document_UpdateRulersStateBySection();
 			}
 		}
-	}
-	else
-	{
-		var StartPage = this.Parent.Get_AbsolutePage(0);
-		var Frame     = this.CalculatedFrame;
-		this.Parent.DrawingDocument.Set_RulerState_Paragraph({
-			L         : Frame.L,
-			T         : Frame.T,
-			R         : Frame.L + Frame.W,
-			B         : Frame.T + Frame.H,
-			PageIndex : StartPage + Frame.PageIndex,
-			Frame     : this
-		}, false);
 	}
 };
 /**
@@ -10984,6 +10970,14 @@ Paragraph.prototype.Is_Inline = function()
 		return false;
 
 	return true;
+};
+Paragraph.prototype.IsInline = function()
+{
+	return this.Is_Inline();
+};
+Paragraph.prototype.GetFramePr = function()
+{
+	return this.Pr.FramePr;
 };
 Paragraph.prototype.Get_FramePr = function()
 {
@@ -11199,19 +11193,9 @@ Paragraph.prototype.Get_FrameBounds = function(FrameX, FrameY, FrameW, FrameH)
 
 	return {X : X0, Y : Y0, W : X1 - X0, H : Y1 - Y0};
 };
-Paragraph.prototype.Set_CalculatedFrame = function(L, T, W, H, L2, T2, W2, H2, PageIndex, StartIndex, FlowCount)
+Paragraph.prototype.SetCalculatedFrame = function(oFrame)
 {
-	this.CalculatedFrame.T         = T;
-	this.CalculatedFrame.L         = L;
-	this.CalculatedFrame.W         = W;
-	this.CalculatedFrame.H         = H;
-	this.CalculatedFrame.T2        = T2;
-	this.CalculatedFrame.L2        = L2;
-	this.CalculatedFrame.W2        = W2;
-	this.CalculatedFrame.H2        = H2;
-	this.CalculatedFrame.PageIndex = PageIndex;
-	this.CalculatedFrame.StartIndex = StartIndex;
-	this.CalculatedFrame.FlowCount = FlowCount;
+	this.CalculatedFrame = oFrame;
 };
 Paragraph.prototype.Get_CalculatedFrame = function()
 {

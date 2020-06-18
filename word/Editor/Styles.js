@@ -14751,6 +14751,11 @@ CFramePr.prototype =
         return this.Compare(FramePr);
     },
 
+	IsEqual : function(oFramePr)
+	{
+		return this.Compare(oFramePr);
+	},
+
     Set_FromObject : function(FramePr)
     {
         this.DropCap = FramePr.DropCap;
@@ -14948,6 +14953,21 @@ CFramePr.prototype =
         return false;
     }
 };
+
+function CCalculatedFrame(L, T, W, H, L2, T2, W2, H2, PageIndex, Index, FlowCount)
+{
+	this.L          = undefined !== L ? L : 0; // Внутренний рект, по которому идет рассчет
+	this.T          = undefined !== T ? T : 0;
+	this.W          = undefined !== W ? W : 0;
+	this.H          = undefined !== H ? H : 0;
+	this.L2         = undefined !== L2 ? L2 : 0; // Внешний рект, с учетом границ
+	this.T2         = undefined !== T2 ? T2 : 0;
+	this.W2         = undefined !== W2 ? W2 : 0;
+	this.H2         = undefined !== H2 ? H2 : 0;
+	this.PageIndex  = undefined !== PageIndex ? PageIndex : 0;
+	this.StartIndex = undefined !== Index ? Index : 0;
+	this.FlowCount  = undefined !== FlowCount ? FlowCount : 0;
+}
 
 function CParaPr()
 {

@@ -681,7 +681,7 @@
 							}
 							else
 							{
-								if (_blockStd.Content.GetElementsCount() > 1)
+								if (_blockStd.GetElementsCount() > 1)
 								{
 									_blockStd.Remove_FromContent(_blockStd.GetElementsCount() - 1, 1);
 									_blockStd.MoveCursorToEndPos();

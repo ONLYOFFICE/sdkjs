@@ -122,6 +122,10 @@ CBlockLevelSdt.prototype.Is_Inline = function()
 {
 	return true;
 };
+CBlockLevelSdt.prototype.IsInline = function()
+{
+	return true;
+};
 CBlockLevelSdt.prototype.Reset = function(X, Y, XLimit, YLimit, PageAbs, ColumnAbs, ColumnsCount)
 {
 	this.Content.Reset(X, Y, XLimit, YLimit);
@@ -2396,6 +2400,14 @@ CBlockLevelSdt.prototype.SetShowingPlcHdr = function(isShow)
 CBlockLevelSdt.prototype.IsShowingPlcHdr = function()
 {
 	return this.Pr.ShowingPlcHdr;
+};
+CBlockLevelSdt.prototype.GetFramePr = function()
+{
+	return this.Content.GetFramePr();
+};
+CBlockLevelSdt.prototype.SetCalculatedFrame = function(oFrame)
+{
+	this.Content.SetCalculatedFrame(oFrame);
 };
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

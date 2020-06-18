@@ -1587,11 +1587,14 @@ CTable.prototype.private_RecalculatePageXY = function(CurPage)
     this.Pages.length = Math.max(CurPage, 0);
     if (0 === CurPage)
     {
+    	this.Pages.length = CurPage + 1;
         this.Pages[CurPage] = new CTablePage(this.X, this.Y, this.XLimit, this.YLimit, FirstRow, TempMaxTopBorder);
     }
     else
     {
         var StartPos = this.Parent.Get_PageContentStartPos2(this.PageNum, this.ColumnNum, CurPage, this.Index);
+
+		this.Pages.length = CurPage + 1;
         this.Pages[CurPage] = new CTablePage(StartPos.X, StartPos.Y, StartPos.XLimit, StartPos.YLimit, FirstRow, TempMaxTopBorder);
     }
 };

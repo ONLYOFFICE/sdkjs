@@ -47,6 +47,10 @@
 // TODO: Поскольку, расстояния до/после параграфа для первого и последнего параграфов 
 //       в ячейке зависит от следующей и предыдущей ячеек, надо включать их в пересчет
 
+// TODO: Расчет таблицы происходит по строкам, причем строки расчитываются независимо друг от
+//       друга, вплоть до того, что разные строки могут быть внутри разных рамок, и тогда
+//       эти строки нужно считать отдельными таблицами
+
 // Import
 var align_Left = AscCommon.align_Left;
 var CMouseMoveData = AscCommon.CMouseMoveData;
@@ -2955,9 +2959,6 @@ CTable.prototype.Reset = function(X, Y, XLimit, YLimit, PageNum, ColumnNum, Colu
 	this.ColumnNum    = ColumnNum ? ColumnNum : 0;
 	this.ColumnsCount = ColumnsCount ? ColumnsCount : 1;
 
-	this.Pages.length = 1;
-	this.Pages[0]     = new CTablePage(X, Y, XLimit, YLimit, 0, 0);
-
 	// Для плавающей таблицы, которая расположена во второй или далее колонке, текущее положение по Y - это верх
 	// текущей секции
 	if (!this.IsInline() && ColumnNum > 0 && undefined !== SectionY)
@@ -3747,6 +3748,37 @@ CTable.prototype.Is_Inline = function()
 CTable.prototype.IsInline = function()
 {
 	return this.Is_Inline();
+};
+/**
+ * Берем настройки рамки для всей таблицы
+ * @returns {?CFramePr}
+ */
+CTable.prototype.GetFramePr = function()
+{
+	// Word разные строки может записывать в разные ракми, для этого нужно сильно менять логику пересчета, поэтому мы
+	// пока будем основываться по последней строке
+
+	var nRowsCount = this.GetRowsCount();
+	if (nRowsCount <= 0)
+		return null;
+
+	var oRow = this.GetRow(nRowsCount - 1);
+	if (oRow.GetCellsCount() <= 0)
+		return null;
+
+	var oCell = oRow.GetCell(0);
+	return oCell.GetContent().GetFirstParagraph().GetFramePr();
+};
+CTable.prototype.SetCalculatedFrame = function(oFrame)
+{
+	for (var nCurRow = 0, nRowsCount = this.GetRowsCount(); nCurRow < nRowsCount; ++nCurRow)
+	{
+		var oRow = this.GetRow(nCurRow);
+		for (var nCurCell = 0, nCellsCount = oRow.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
+		{
+			oRow.GetCell(nCurCell).GetContent().SetCalculatedFrame(oFrame);
+		}
+	}
 };
 /**
  * Функция, которую нужно вызвать перед удалением данного элемента
@@ -18717,6 +18749,12 @@ CTable.prototype.RecalculateEndInfo = function()
 		}
 	}
 };
+CTable.prototype.GetMaxTableGridWidth = function()
+{
+	this.private_RecalculateGrid();
+	return this.TableSumGrid[this.TableSumGrid.length - 1];
+};
+
 //----------------------------------------------------------------------------------------------------------------------
 // Класс  CTableLook
 //----------------------------------------------------------------------------------------------------------------------

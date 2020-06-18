@@ -1090,7 +1090,7 @@ CDocumentContent.prototype.Recalculate_Page               = function(PageIndex, 
                     {
                         var TempElement = this.Content[TempIndex];
                         TempElement.Shift(TempElement.Pages.length - 1, FrameX, FrameY);
-                        TempElement.Set_CalculatedFrame(FrameX, FrameY, FrameW, FrameH, FrameX2, FrameY2, FrameW2, FrameH2, PageIndex, Index, FlowCount);
+                        TempElement.SetCalculatedFrame(new CCalculatedFrame(FrameX, FrameY, FrameW, FrameH, FrameX2, FrameY2, FrameW2, FrameH2, PageIndex, Index, FlowCount));
                     }
 
                     var FrameDx = ( undefined === FramePr.HSpace ? 0 : FramePr.HSpace );
@@ -8796,6 +8796,30 @@ CDocumentContent.prototype.ProcessComplexFields = function()
 	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
 	{
 		this.Content[nIndex].ProcessComplexFields();
+	}
+};
+CDocumentContent.prototype.GetFramePr = function()
+{
+	var oFramePr = null;
+	for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
+	{
+		var oTempFramePr = this.Content[nPos].GetFramePr();
+		if (!oTempFramePr)
+			return null;
+
+		if (!oFramePr)
+			oFramePr = oTempFramePr;
+		else if (!oFramePr.IsEqual(oTempFramePr))
+			return null;
+	}
+
+	return oFramePr;
+};
+CDocumentContent.prototype.SetCalculatedFrame = function(oFrame)
+{
+	for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
+	{
+		this.Content[nPos].SetCalculatedFrame(oFrame);
 	}
 };
 
