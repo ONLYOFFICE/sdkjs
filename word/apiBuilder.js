@@ -401,7 +401,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.SetSelection(false);
+		this.Select(false);
 		if (this.isEmpty || this.isEmpty === undefined || typeof(sName) !== "string")
 		{
 			Document.LoadDocumentState(oldSelectionInfo);
@@ -443,7 +443,7 @@
 		hyperlinkPr.put_ToolTip(sScreenTipText);
 		hyperlinkPr.put_Bookmark(null);
 
-		this.SetSelection();
+		this.Select();
 		Document.AddHyperlink(hyperlinkPr);
 		Document.RemoveSelection();
 
@@ -458,7 +458,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.SetSelection(false);
+		this.Select(false);
 		if (this.isEmpty || this.isEmpty === undefined)
 		{
 			Document.LoadDocumentState(oldSelectionInfo);
@@ -546,7 +546,7 @@
 	 * @param {bool} [bUpdate = true]
 	 * @typeofeditors ["CDE"]
 	 */	
-	ApiRange.prototype.SetSelection = function(bUpdate)
+	ApiRange.prototype.Select = function(bUpdate)
 	{
 		var Document = private_GetLogicDocument();
 		private_RefreshRangesPosition();
@@ -726,7 +726,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.SetSelection(false);
+		this.Select(false);
 		if (this.isEmpty || this.isEmpty === undefined)
 		{
 			Document.LoadDocumentState(oldSelectionInfo);
@@ -764,7 +764,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.SetSelection(false);
+		this.Select(false);
 		if (this.isEmpty || this.isEmpty === undefined)
 		{
 			Document.LoadDocumentState(oldSelectionInfo);
@@ -804,7 +804,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.SetSelection(false);
+		this.Select(false);
 		if (this.isEmpty || this.isEmpty === undefined)
 		{
 			Document.LoadDocumentState(oldSelectionInfo);
@@ -867,7 +867,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.SetSelection(false);
+		this.Select(false);
 		if (this.isEmpty || this.isEmpty === undefined)
 		{
 			Document.LoadDocumentState(oldSelectionInfo);
@@ -908,7 +908,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.SetSelection(false);
+		this.Select(false);
 		if (this.isEmpty || this.isEmpty === undefined)
 		{
 			Document.LoadDocumentState(oldSelectionInfo);
@@ -960,7 +960,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.SetSelection(false);
+		this.Select(false);
 		if (this.isEmpty || this.isEmpty === undefined)
 		{
 			Document.LoadDocumentState(oldSelectionInfo);
@@ -1028,7 +1028,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.SetSelection(false);
+		this.Select(false);
 		if (this.isEmpty || this.isEmpty === undefined)
 		{
 			Document.LoadDocumentState(oldSelectionInfo);
@@ -1037,7 +1037,7 @@
 
 		private_TrackRangesPositions();
 				
-		this.SetSelection();
+		this.Select();
 		var ParaTextPr = new AscCommonWord.ParaTextPr({Italic : isItalic});
 		Document.AddToParagraph(ParaTextPr);
 
@@ -1058,7 +1058,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.SetSelection(false);
+		this.Select(false);
 		if (this.isEmpty || this.isEmpty === undefined)
 		{
 			Document.LoadDocumentState(oldSelectionInfo);
@@ -1100,7 +1100,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.SetSelection(false);
+		this.Select(false);
 		if (this.isEmpty || this.isEmpty === undefined)
 		{
 			Document.LoadDocumentState(oldSelectionInfo);
@@ -1141,7 +1141,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.SetSelection(false);
+		this.Select(false);
 		if (this.isEmpty || this.isEmpty === undefined)
 		{
 			Document.LoadDocumentState(oldSelectionInfo);
@@ -1180,7 +1180,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.SetSelection(false);
+		this.Select(false);
 		if (this.isEmpty || this.isEmpty === undefined)
 		{
 			Document.LoadDocumentState(oldSelectionInfo);
@@ -1221,7 +1221,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.SetSelection(false);
+		this.Select(false);
 		if (this.isEmpty || this.isEmpty === undefined)
 		{
 			Document.LoadDocumentState(oldSelectionInfo);
@@ -1272,7 +1272,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.SetSelection(false);
+		this.Select(false);
 		if (this.isEmpty || this.isEmpty === undefined)
 		{
 			Document.LoadDocumentState(oldSelectionInfo);
@@ -1313,7 +1313,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.SetSelection(false);
+		this.Select(false);
 		if (this.isEmpty || this.isEmpty === undefined)
 		{
 			Document.LoadDocumentState(oldSelectionInfo);
@@ -1362,7 +1362,7 @@
 			Document			= private_GetLogicDocument();
 			oldSelectionInfo	= Document.SaveDocumentState();
 
-			this.SetSelection(false);
+			this.Select(false);
 			if (this.isEmpty || this.isEmpty === undefined)
 			{
 				Document.LoadDocumentState(oldSelectionInfo);
@@ -1406,7 +1406,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.SetSelection(false);
+		this.Select(false);
 		if (this.isEmpty || this.isEmpty === undefined || !(oStyle instanceof ApiStyle))
 		{
 			Document.LoadDocumentState(oldSelectionInfo);
@@ -1442,7 +1442,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.SetSelection(false);
+		this.Select(false);
 		if (this.isEmpty || this.isEmpty === undefined || !(oTextPr instanceof ApiTextPr))
 		{
 			Document.LoadDocumentState(oldSelectionInfo);
@@ -1478,7 +1478,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.SetSelection(false);
+		this.Select(false);
 		if (this.isEmpty || this.isEmpty === undefined)
 		{
 			Document.LoadDocumentState(oldSelectionInfo);
@@ -4050,7 +4050,7 @@
 		hyperlinkPr.put_ToolTip(sScreenTipText);
 		hyperlinkPr.put_Bookmark(null);
 
-		this.SetSelection();
+		this.Select();
 		Document.AddHyperlink(hyperlinkPr);
 		Document.RemoveSelection();
 
@@ -4665,7 +4665,7 @@
 		var paraIndex	= this.Paragraph.Index;
 		if (paraIndex >= 0)
 		{
-			this.SetSelection(false);
+			this.Select(false);
 			ContentControl = new ApiBlockLvlSdt(Document.AddContentControl(1));
 			Document.RemoveSelection();
 		}
@@ -4732,7 +4732,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @return {bool} 
 	 */
-	ApiParagraph.prototype.SetSelection = function()
+	ApiParagraph.prototype.Select = function()
 	{
 		var Document = private_GetLogicDocument();
 		
@@ -4935,7 +4935,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @return {bool} 
 	 */
-	ApiRun.prototype.SetSelection = function()
+	ApiRun.prototype.Select = function()
 	{
 		var Document = private_GetLogicDocument();
 
@@ -5000,7 +5000,7 @@
 		hyperlinkPr.put_ToolTip(sScreenTipText);
 		hyperlinkPr.put_Bookmark(null);
 
-		this.SetSelection();
+		this.Select();
 		Document.AddHyperlink(hyperlinkPr);
 		Document.RemoveSelection();
 
@@ -5979,7 +5979,7 @@
 	 * @returns {bool}
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 */
-	ApiTable.prototype.SetSelection = function()
+	ApiTable.prototype.Select = function()
 	{
 		var Document = private_GetLogicDocument();
 		
@@ -6152,7 +6152,7 @@
 
 		if (tableIndex >= 0)
 		{
-			this.SetSelection();
+			this.Select();
 			ContentControl = new ApiBlockLvlSdt(Document.AddContentControl(1));
 			Document.RemoveSelection();
 		}
@@ -8766,7 +8766,7 @@
 		var paraIndex = parentParagraph.Index;
 		if (paraIndex >= 0)
 		{
-			this.SetSelection();
+			this.Select();
 			ContentControl = new ApiBlockLvlSdt(Document.AddContentControl(1));
 			Document.RemoveSelection();
 		}
@@ -8816,7 +8816,7 @@
 	 * Selects the graphic object.
 	 * @typeofeditors ["CDE"]
 	 */	
-	ApiDrawing.prototype.SetSelection = function()
+	ApiDrawing.prototype.Select = function()
 	{
 		var Api = editor;
 		var oDocument = Api.GetDocument();
@@ -10332,7 +10332,7 @@
 	 * Select a content control.
 	 * @typeofeditors ["CDE"]
 	 */
-	ApiBlockLvlSdt.prototype.SetSelection = function()
+	ApiBlockLvlSdt.prototype.Select = function()
 	{
 		var Document = private_GetLogicDocument();
 
