@@ -8706,17 +8706,26 @@ Paragraph.prototype.GetNumberingCompiledPr = function()
 //----------------------------------------------------------------------------------------------------------------------
 // Функции для работы с нумерацией параграфов в презентациях
 //----------------------------------------------------------------------------------------------------------------------
-Paragraph.prototype.Add_PresentationNumbering = function(_Bullet, Pr)
+Paragraph.prototype.Add_PresentationNumbering = function(Bullet)
 {
 	var ParaPr                 = this.Get_CompiledPr2(false).ParaPr;
 	var _OldBullet = this.Pr.Bullet;
 	this.CompiledPr.NeedRecalc = true;
 
+	var _Bullet;
+	if(!ParaPr.Bullet)
+	{
+		_Bullet = Bullet;
+	}
+	else
+	{
+		_Bullet = ParaPr.Bullet.createDuplicate();
+		_Bullet.merge(Bullet);
+	}
 	var oBullet2;
 	if (_Bullet)
 	{
 		oBullet2 = _Bullet;
-
 		this.Pr.Bullet             = undefined;
 		var oTheme = this.Get_Theme();
 		var oColorMap = this.Get_ColorMap();
@@ -8824,54 +8833,6 @@ Paragraph.prototype.Add_PresentationNumbering = function(_Bullet, Pr)
 				{
 					this.Set_Ind({Left : undefined, FirstLine : undefined}, true);
 				}
-			}
-		}
-	}
-
-	if(AscCommon.isRealObject(Pr))
-	{
-		var Size = Pr.BulletSize;
-		var nNumStartAt = Pr.NumStartAt;
-		var AscColor = Pr.BulletColor;
-		var BulletSymbol = Pr.BulletSymbol;
-		var BulletFont = Pr.BulletFont;
-		if(AscFormat.isRealNumber(Size) || AscFormat.isRealNumber(nNumStartAt) || AscCommon.isRealObject(AscColor) ||
-			(typeof BulletSymbol === "string" && BulletSymbol.length > 0 && typeof BulletFont === "string" && BulletFont.length > 0))
-		{
-			var oBullet;
-			var oParaPr = this.Get_CompiledPr2(false).ParaPr;
-			if(oParaPr.Bullet)
-			{
-				oBullet = oParaPr.Bullet.createDuplicate();
-				if(AscFormat.isRealNumber(Size))
-				{
-					oBullet.bulletSize = new AscFormat.CBulletSize();
-					oBullet.bulletSize.type = AscFormat.BULLET_TYPE_SIZE_PCT;
-					oBullet.bulletSize.val = (Size * 1000) >> 0;
-				}
-				if(AscCommon.isRealObject(AscColor))
-				{
-					oBullet.bulletColor = new AscFormat.CBulletColor();
-					oBullet.bulletColor.type = AscFormat.BULLET_TYPE_COLOR_CLR;
-					oBullet.bulletColor.UniColor = AscFormat.CorrectUniColor(AscColor, oBullet.bulletColor.UniColor, 0);
-				}
-				if(oBullet.bulletType)
-				{
-					if(AscFormat.isRealNumber(nNumStartAt))
-					{
-						oBullet.bulletType.startAt = nNumStartAt !== 1 ? nNumStartAt : null;
-					}
-					if(typeof BulletSymbol === "string" && BulletSymbol.length > 0
-						&& typeof BulletFont === "string" && BulletFont.length > 0)
-					{
-						oBullet.bulletType.type = AscFormat.BULLET_TYPE_BULLET_CHAR;
-						oBullet.bulletType.Char = BulletSymbol;
-						oBullet.bulletTypeface = new AscFormat.CBulletTypeface();
-						oBullet.bulletTypeface.type = AscFormat.BULLET_TYPE_TYPEFACE_BUFONT;
-						oBullet.bulletTypeface.typeface = BulletFont;
-					}
-				}
-				this.Set_Bullet(oBullet);
 			}
 		}
 	}

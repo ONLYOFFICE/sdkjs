@@ -7563,7 +7563,7 @@ CTable.prototype.SetParagraphIndent = function(Ind)
 		return this.CurCell.Content.SetParagraphIndent(Ind);
 	}
 };
-CTable.prototype.Set_ParagraphPresentationNumbering = function(NumInfo, Pr)
+CTable.prototype.Set_ParagraphPresentationNumbering = function(NumInfo)
 {
 	if (true === this.ApplyToAll || ( true === this.Selection.Use && table_Selection_Cell === this.Selection.Type && this.Selection.Data.length > 0 ))
 	{
@@ -7576,7 +7576,7 @@ CTable.prototype.Set_ParagraphPresentationNumbering = function(NumInfo, Pr)
 
 			var Cell_Content = Cell.Content;
 			Cell_Content.Set_ApplyToAll(true);
-			Cell.Content.Set_ParagraphPresentationNumbering(NumInfo, Pr);
+			Cell.Content.Set_ParagraphPresentationNumbering(NumInfo);
 			Cell_Content.Set_ApplyToAll(false);
 		}
 
@@ -7588,7 +7588,7 @@ CTable.prototype.Set_ParagraphPresentationNumbering = function(NumInfo, Pr)
 		}
 	}
 	else
-		return this.CurCell.Content.Set_ParagraphPresentationNumbering(NumInfo, Pr);
+		return this.CurCell.Content.Set_ParagraphPresentationNumbering(NumInfo);
 };
 CTable.prototype.Increase_ParagraphLevel = function(bIncrease)
 {

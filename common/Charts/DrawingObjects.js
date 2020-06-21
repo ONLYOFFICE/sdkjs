@@ -1226,7 +1226,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 //-----------------------------------------------------------------------------------
 // Manager
 //-----------------------------------------------------------------------------------
-    
+
 function GraphicOption(rect) {
     this.rect = null;
     if(rect) {
@@ -2495,7 +2495,7 @@ GraphicOption.prototype.union = function(oGraphicOption) {
         _this.controller.setMathProps(MathProps);
     }
 
-    _this.setListType = function(type, subtype, size, unicolor, nNumStartAt)
+    _this.setListType = function(type, subtype)
     {
         var NumberInfo =
             {
@@ -2505,7 +2505,7 @@ GraphicOption.prototype.union = function(oGraphicOption) {
 
         NumberInfo.Type    = type;
         NumberInfo.SubType = subtype;
-        _this.controller.checkSelectedObjectsAndCallback(_this.controller.setParagraphNumbering, [AscFormat.fGetPresentationBulletByNumInfo(NumberInfo), size, unicolor, nNumStartAt], false, AscDFH.historydescription_Presentation_SetParagraphNumbering);
+        _this.controller.checkSelectedObjectsAndCallback(_this.controller.setParagraphNumbering, [AscFormat.fGetPresentationBulletByNumInfo(NumberInfo)], false, AscDFH.historydescription_Presentation_SetParagraphNumbering);
     };
 
     _this.editImageDrawingObject = function(imageUrl, obj) {
@@ -3449,7 +3449,7 @@ GraphicOption.prototype.union = function(oGraphicOption) {
         if(!AscCommon.isRealObject(target)) {
             return;
         }
-        if (target.target === AscCommonExcel.c_oTargetType.RowResize || 
+        if (target.target === AscCommonExcel.c_oTargetType.RowResize ||
             target.target === AscCommonExcel.c_oTargetType.ColumnResize) {
             for(var i = 0; i < aObjects.length; ++i) {
                 var oDrawingBase = aObjects[i];
@@ -4637,7 +4637,7 @@ GraphicOption.prototype.union = function(oGraphicOption) {
                 oTargetTextObject.recalculateContent();
             }
         }
-        
+
         _this.controller.recalculateCurPos(true, true);
         _this.sendGraphicObjectProps();
         _this.showDrawingObjects();

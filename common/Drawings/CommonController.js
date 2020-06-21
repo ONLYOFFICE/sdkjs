@@ -10214,11 +10214,10 @@ DrawingObjectsController.prototype =
                 this.setDefaultTabSize( Props.DefaultTab );
             }
 
-            if(undefined != Props.BulletSize || undefined != Props.BulletColor || undefined != Props.NumStartAt
-                || undefined != Props.BulletSymbol && undefined != Props.BulletFont)
+            if(undefined != Props.Bullet)
             {
               //  if()
-                this.setParagraphNumbering(null, Props)
+                this.setParagraphNumbering(Props.Bullet)
             }
 
             // TODO: как только разъединят настройки параграфа и текста переделать тут
@@ -13001,6 +13000,50 @@ function ApplyPresetToChartSpace(oChartSpace, aPreset, bCreate){
         return null;
     }
 
+    function getNumberingType(nType) {
+        var numberingType = 12;
+        switch(nType)
+        {
+            case 0 :
+            case 1 :
+            {
+                numberingType = 12;//numbering_numfmt_arabicPeriod;
+                break;
+            }
+            case 2:
+            {
+                numberingType = 11;//numbering_numfmt_arabicParenR;
+                break;
+            }
+            case 3 :
+            {
+                numberingType = 34;//numbering_numfmt_romanUcPeriod;
+                break;
+            }
+            case 4 :
+            {
+                numberingType = 5;//numbering_numfmt_alphaUcPeriod;
+                break;
+            }
+            case 5 :
+            {
+                numberingType = 1;
+                break;
+            }
+            case 6 :
+            {
+                numberingType = 2;
+                break;
+            }
+            case 7 :
+            {
+                numberingType = 31;//numbering_numfmt_romanLcPeriod;
+                break;
+            }
+        }
+        return numberingType;
+    }
+
     function fGetPresentationBulletByNumInfo(NumInfo){
         if(!AscFormat.isRealNumber(NumInfo.Type) && !AscFormat.isRealNumber(NumInfo.SubType))
         {
@@ -13094,48 +13137,9 @@ function ApplyPresetToChartSpace(oChartSpace, aPreset, bCreate){
                 }
                 case 1 : /*autonum*/
                 {
-                    switch(NumInfo.SubType)
-                    {
-                        case 0 :
-                        case 1 :
-                        {
-                            var numberingType = 12;//numbering_numfmt_arabicPeriod;
-                            break;
-                        }
-                        case 2:
-                        {
-                            numberingType = 11;//numbering_numfmt_arabicParenR;
-                            break;
-                        }
-                        case 3 :
-                        {
-                            numberingType = 34;//numbering_numfmt_romanUcPeriod;
-                            break;
-                        }
-                        case 4 :
-                        {
-                            numberingType = 5;//numbering_numfmt_alphaUcPeriod;
-                            break;
-                        }
-                        case 5 :
-                        {
-                            numberingType = 1;
-                            break;
-                        }
-                        case 6 :
-                        {
-                            numberingType = 2;
-                            break;
-                        }
-                        case 7 :
-                        {
-                            numberingType = 31;//numbering_numfmt_romanLcPeriod;
-                            break;
-                        }
-                    }
                     bullet.bulletType = new AscFormat.CBulletType();
                     bullet.bulletType.type = AscFormat.BULLET_TYPE_BULLET_AUTONUM;
-                    bullet.bulletType.AutoNumType = numberingType;
+                    bullet.bulletType.AutoNumType = getNumberingType(NumInfo.SubType);
                     break;
                 }
                 default :
@@ -13294,4 +13298,5 @@ function ApplyPresetToChartSpace(oChartSpace, aPreset, bCreate){
 	window['AscFormat'].fResetConnectorsIds = fResetConnectorsIds;
 	window['AscFormat'].getAbsoluteRectBoundsArr = getAbsoluteRectBoundsArr;
 	window['AscFormat'].fCheckObjectHyperlink = fCheckObjectHyperlink;
+	window['AscFormat'].getNumberingType = getNumberingType;
 })(window);

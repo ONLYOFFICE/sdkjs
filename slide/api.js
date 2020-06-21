@@ -1688,7 +1688,7 @@ background-repeat: no-repeat;\
 		    window["asc_desktop_copypaste"](this, "Paste");
 			return true;
 		}
-		
+
 		if (!this.WordControl.m_oLogicDocument)
 			return false;
 
@@ -2554,11 +2554,11 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.paraApply = function(Props)
 	{
-
 		var _presentation = editor.WordControl.m_oLogicDocument;
 		var graphicObjects = _presentation.GetCurrentController();
 		if (graphicObjects)
 		{
+			var sLoadFont = null, sLoadText = null;
 			var fCallback = function()
 			{
 
@@ -2625,26 +2625,31 @@ background-repeat: no-repeat;\
 				if (undefined != Props.Position)
 					TextPr.Position = Props.Position;
 
-				if(undefined != Props.BulletSize || undefined != Props.BulletColor || undefined != Props.NumStartAt ||
-					(typeof Props.BulletFont === "string" && Props.BulletFont.length > 0
-					&& typeof Props.BulletSymbol === "string" && Props.BulletSymbol.length > 0))
+				var oBullet = Props.asc_getBullet();
+				if(oBullet)
 				{
-					graphicObjects.setParagraphNumbering(null, Props)
+					graphicObjects.setParagraphNumbering(oBullet)
 				}
 				graphicObjects.paragraphAdd(new AscCommonWord.ParaTextPr(TextPr));
 				_presentation.Recalculate();
 				_presentation.Document_UpdateInterfaceState();
 			};
+			var oBullet = Props.asc_getBullet();
+			if(oBullet)
+			{
+				sLoadFont = oBullet.asc_getFont();
+				sLoadText = oBullet.asc_getSymbol();
+			}
 
-			if(typeof Props.BulletFont === "string" && Props.BulletFont.length > 0
-				&& typeof Props.BulletSymbol === "string" && Props.BulletSymbol.length > 0)
+			if(typeof sLoadFont === "string" && sLoadFont.length > 0
+				&& typeof sLoadText === "string" && sLoadText.length > 0)
 			{
 				var loader   = AscCommon.g_font_loader;
-				var fontinfo = AscFonts.g_fontApplication.GetFontInfo(Props.BulletFont);
+				var fontinfo = AscFonts.g_fontApplication.GetFontInfo(sLoadFont);
 				var isasync  = loader.LoadFont(fontinfo);
 				if (false === isasync)
 				{
-					AscFonts.FontPickerByCharacter.checkText(Props.BulletSymbol, this, function () {
+					AscFonts.FontPickerByCharacter.checkText(sLoadText, this, function () {
 						graphicObjects.checkSelectedObjectsAndCallback(fCallback, [], false, AscDFH.historydescription_Presentation_ParaApply);
 					});
 				}
@@ -2652,7 +2657,7 @@ background-repeat: no-repeat;\
 				{
 					this.asyncMethodCallback = function()
 					{
-						AscFonts.FontPickerByCharacter.checkText(Props.BulletSymbol, this, function () {
+						AscFonts.FontPickerByCharacter.checkText(sLoadText, this, function () {
 							graphicObjects.checkSelectedObjectsAndCallback(fCallback, [], false, AscDFH.historydescription_Presentation_ParaApply);
 						});
 					}
@@ -2662,8 +2667,6 @@ background-repeat: no-repeat;\
 			{
 				graphicObjects.checkSelectedObjectsAndCallback(fCallback, [], false, AscDFH.historydescription_Presentation_ParaApply);
 			}
-
-
 		}
 	};
 
@@ -2767,7 +2770,7 @@ background-repeat: no-repeat;\
 				Type     : type,
 				SubType  : subtype
 			};
-			oPresentation.SetParagraphNumbering(NumberInfo);
+			oPresentation.SetParagraphNumbering(AscFormat.fGetPresentationBulletByNumInfo(NumberInfo));
 		};
 		if(sBullet.length > 0)
 		{
@@ -3984,7 +3987,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.asc_setHeaderFooterProperties = function(oProps, bAll)
 	{
-		
+
 		if(oProps && this.WordControl && this.WordControl.m_oLogicDocument)
 		{
 			var sTextForCheck = "";
@@ -4032,7 +4035,7 @@ background-repeat: no-repeat;\
 			}
 			else
 			{
-				
+
 				oThis.WordControl.m_oLogicDocument.setHFProperties(oProps, bAll);
 			}
 		}
@@ -4304,7 +4307,7 @@ background-repeat: no-repeat;\
 
 		ImagePr.ImageUrl = obj.ImageUrl;
 
-		if (window["NATIVE_EDITOR_ENJINE"]) 
+		if (window["NATIVE_EDITOR_ENJINE"])
 		{
 		  this.WordControl.m_oLogicDocument.SetImageProps(ImagePr);
 		  return;
@@ -5158,7 +5161,7 @@ background-repeat: no-repeat;\
                             if (!AscCommon.EncryptionWorker.isChangesHandled)
                             	return AscCommon.EncryptionWorker.handleChanges(AscCommon.CollaborativeEditing.m_aChanges, this, this._openDocumentEndCallback);
                         }
-                        
+
 						this.isApplyChangesOnOpenEnabled = false;
 						this.bNoSendComments             = true;
 						var OtherChanges                 = AscCommon.CollaborativeEditing.m_aChanges.length > 0;
@@ -5961,7 +5964,7 @@ background-repeat: no-repeat;\
 		var aSlides = [];
 		var oPresentation = this.WordControl.m_oLogicDocument, i;
 		if(this.WordControl.Thumbnails){
-			
+
 			var oTh = editor.WordControl.Thumbnails;
 			var aSelectedArray = oTh.GetSelectedArray();
 			obj.isHidden = oTh.IsSlideHidden(aSelectedArray);

@@ -3592,23 +3592,23 @@ var editor;
 		this._isLockedSparkline(id, changeSparkline);
 	};
 
-    spreadsheet_api.prototype.asc_setListType = function (type, subtype, size, unicolor, nNumStartAt) {
+    spreadsheet_api.prototype.asc_setListType = function (type, subtype) {
       var t = this;
         var sNeedFont = AscFormat.fGetFontByNumInfo(type, subtype);
       if(typeof sNeedFont === "string" && sNeedFont.length > 0){
           var t = this, fonts = {};
           fonts[sNeedFont] = 1;
-          t._loadFonts(fonts, function() {t.asc_setListType2(type, subtype, size, unicolor, nNumStartAt);});
+          t._loadFonts(fonts, function() {t.asc_setListType2(type, subtype);});
       }
       else{
-          t.asc_setListType2(type, subtype, size, unicolor, nNumStartAt);
+          t.asc_setListType2(type, subtype);
       }
     };
-    spreadsheet_api.prototype.asc_setListType2 = function (type, subtype, size, unicolor, nNumStartAt) {
+    spreadsheet_api.prototype.asc_setListType2 = function (type, subtype) {
         var oWorksheet = this.wb.getWorksheet();
         if(oWorksheet){
             if(oWorksheet.isSelectOnShape){
-                return oWorksheet.objectRender.setListType(type, subtype, size, unicolor, nNumStartAt);
+                return oWorksheet.objectRender.setListType(type, subtype);
             }
         }
     };

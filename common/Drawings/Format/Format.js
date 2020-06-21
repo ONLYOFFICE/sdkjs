@@ -10384,6 +10384,9 @@ function CompareBullets(bullet1, bullet2)
         this.bulletTypeface = null;
         this.bulletType = null;
         this.Bullet = null;
+
+        //used to get properties for interface
+        this.FirstTextPr = null;
     }
     CBullet.prototype.Set_FromObject = function(obj)
     {
@@ -10412,6 +10415,57 @@ function CompareBullets(bullet1, bullet2)
             }
             else
                 this.bulletTypeface = null;
+        }
+    };
+    CBullet.prototype.merge = function(oBullet)
+    {
+        if(!oBullet)
+        {
+            return;
+        }
+        if(oBullet.bulletColor)
+        {
+            if(!this.bulletColor)
+            {
+                this.bulletColor = oBullet.bulletColor.createDuplicate();
+            }
+            else
+            {
+                this.bulletColor.merge(oBullet.bulletColor);
+            }
+        }
+        if(oBullet.bulletSize)
+        {
+            if(!this.bulletSize)
+            {
+                this.bulletSize = oBullet.bulletSize.createDuplicate();
+            }
+            else
+            {
+                this.bulletSize.merge(oBullet.bulletSize);
+            }
+        }
+        if(oBullet.bulletTypeface)
+        {
+            if(!this.bulletTypeface)
+            {
+                this.bulletTypeface = oBullet.bulletTypeface.createDuplicate();
+            }
+            else
+            {
+                this.bulletTypeface.merge(oBullet.bulletTypeface);
+            }
+        }
+        if(oBullet.bulletType)
+        {
+            if(!this.bulletType)
+            {
+                this.bulletType = oBullet.bulletType.createDuplicate();
+            }
+            else
+            {
+                this.bulletType.merge(oBullet.bulletType);
+            }
         }
     };
     CBullet.prototype.createDuplicate = function()
@@ -10512,33 +10566,169 @@ function CompareBullets(bullet1, bullet2)
             AllFonts[this.bulletTypeface.typeface] = true;
         }
     };
-
-function CBulletColor()
-{
-    this.type = AscFormat.BULLET_TYPE_COLOR_CLRTX;
-    this.UniColor = null;
-
-}
-
-CBulletColor.prototype =
-{
-    Get_Id: function()
-    {
-        return this.Id;
-    },
-
-    Refresh_RecalcData: function()
-    {},
-    Set_FromObject: function(o)
-    {
-        this.type = o.type;
-        if(o.UniColor)
-        {
-
+    CBullet.prototype.putNumStartAt = function(NumStartAt) {
+        if(!this.bulletType) {
+            this.bulletType = new CBulletType();
         }
-    },
+        this.bulletType.type = AscFormat.BULLET_TYPE_BULLET_AUTONUM;
+        this.bulletType.startAt = NumStartAt;
+    };
+    CBullet.prototype.getNumStartAt = function() {
+        if(this.bulletType){
+            if(AscFormat.isRealNumber(this.bulletType.startAt)) {
+                return Math.max(1, this.bulletType.startAt);
+            }
+        }
+        return undefined;
+    };
+    //interface methods
+    var prot = CBullet.prototype;
+    prot.asc_getSize = function () {
+        var nRet = 100;
+        if(this.bulletSize) {
+            switch (this.bulletSize.type) {
+                case AscFormat.BULLET_TYPE_SIZE_NONE: {
+                    break;
+                }
+                case AscFormat.BULLET_TYPE_SIZE_TX: {
+                    break;
+                }
+                case AscFormat.BULLET_TYPE_SIZE_PCT: {
+                    nRet = this.bulletSize.val / 1000.0;
+                    break;
+                }
+                case AscFormat.BULLET_TYPE_SIZE_PTS: {
+                    break;
+                }
+            }
+        }
+        return nRet;
+    };
+    prot["get_Size"] = prot["asc_getSize"] = CBullet.prototype.asc_getSize;
+    prot.asc_putSize = function(Size) {
+        if(AscFormat.isRealNumber(Size)) {
+            this.bulletSize = new AscFormat.CBulletSize();
+            this.bulletSize.type = AscFormat.BULLET_TYPE_SIZE_PCT;
+            this.bulletSize.val = (Size * 1000) >> 0;
+        }
+    };
+    prot["put_Size"] = prot["asc_putSize"] = CBullet.prototype.asc_putSize;
+    prot.asc_getColor = function() {
+        if(this.bulletColor) {
+            if(this.bulletColor.UniColor) {
+                return AscCommon.CreateAscColor(this.bulletColor.UniColor);
+            }
+        }
+        else {
+            var FirstTextPr = this.FirstTextPr;
+            if(FirstTextPr && FirstTextPr.Unifill) {
+                if(FirstTextPr.Unifill.fill instanceof AscFormat.CSolidFill && FirstTextPr.Unifill.fill.color) {
+                    return AscCommon.CreateAscColor(FirstTextPr.Unifill.fill.color);
+                }
+                else {
+                    var RGBA = FirstTextPr.Unifill.getRGBAColor();
+                    return AscCommon.CreateAscColorCustom(RGBA.R, RGBA.G, RGBA.B);
+                }
+            }
+        }
+        return AscCommon.CreateAscColorCustom(0, 0, 0);
+    };
+    prot["get_Color"] = prot["asc_getColor"] = prot.asc_getColor;
+    prot.asc_putColor = function(color) {
+        this.bulletColor = new AscFormat.CBulletColor();
+        this.bulletColor.type = AscFormat.BULLET_TYPE_COLOR_CLR;
+        this.bulletColor.UniColor = AscFormat.CorrectUniColor(color, this.bulletColor.UniColor, 0);
+    };
+    prot["put_Color"] = prot["asc_putColor"] = prot.asc_putColor;
+    prot.asc_getFont = function() {
+        var sRet = "";
+        if(this.bulletTypeface
+            && this.bulletTypeface.type === AscFormat.BULLET_TYPE_TYPEFACE_BUFONT
+            && typeof this.bulletTypeface.typeface === "string"
+            && this.bulletTypeface.typeface.length > 0) {
+            sRet = this.bulletTypeface.typeface;
+        }
+        else {
+            var FirstTextPr = this.FirstTextPr;
+            if(FirstTextPr && FirstTextPr.FontFamily && typeof FirstTextPr.FontFamily.Name === "string"
+                && FirstTextPr.FontFamily.Name.length > 0) {
+                sRet = FirstTextPr.FontFamily.Name;
+            }
+        }
+        return sRet;
+    };
+    prot["get_Font"] = prot["asc_getFont"] = prot.asc_getFont;
+    prot.asc_putFont = function(val) {
+        if(typeof val === "string" && val.length > 0) {
+            this.bulletTypeface = new AscFormat.CBulletTypeface();
+            this.bulletTypeface.type = AscFormat.BULLET_TYPE_TYPEFACE_BUFONT;
+            this.bulletTypeface.typeface = val;
+        }
+    };
+    prot["put_Font"] = prot["asc_putFont"] = prot.asc_putFont;
+    prot.asc_putNumStartAt = function(NumStartAt) {
+        this.putNumStartAt(NumStartAt);
+    };
+    prot["put_NumStartAt"] = prot["asc_putNumStartAt"] = prot.asc_putNumStartAt;
+    prot.asc_getNumStartAt = function() {
+        return this.getNumStartAt();
+    };
+    prot["get_NumStartAt"] = prot["asc_getNumStartAt"] = prot.asc_getNumStartAt;
+    prot.asc_getSymbol = function () {
+        if(this.bulletType && this.bulletType.type === AscFormat.BULLET_TYPE_BULLET_CHAR) {
+            return this.bulletType.Char;
+        }
+        return undefined;
+    }
+    prot["get_Symbol"] = prot["asc_getSymbol"] = prot.asc_getSymbol;
+    prot.asc_putSymbol = function(v) {
+        if(!this.bulletType) {
+            this.bulletType = new CBulletType();
+        }
+        this.bulletType.AutoNumType = 0;
+        this.bulletType.type = AscFormat.BULLET_TYPE_BULLET_CHAR;
+        this.bulletType.Char = v;
+    };
+    prot["put_Symbol"] = prot["asc_putSymbol"] = prot.asc_putSymbol;
+    prot.asc_putAutoNumType = function(val) {
+        if(!this.bulletType) {
+            this.bulletType = new CBulletType();
+        }
+        this.bulletType.type = AscFormat.BULLET_TYPE_BULLET_AUTONUM;
+        this.bulletType.AutoNumType = AscFormat.getNumberingType(val);
+    };
+    prot["put_AutoNumType"] = prot["asc_putAutoNumType"] = prot.asc_putAutoNumType;
+    prot.asc_getAutoNumType = function() {
+        if(this.bulletType && this.bulletType.type === AscFormat.BULLET_TYPE_BULLET_AUTONUM) {
+            return AscFormat.fGetListTypeFromBullet(this).SubType;
+        }
+        return -1;
+    };
+    prot["get_AutoNumType"] = prot["asc_getAutoNumType"] = prot.asc_getAutoNumType;
+    window["Asc"]["asc_CBullet"] = window["Asc"].asc_CBullet = CBullet;
 
-    createDuplicate: function()
+    function CBulletColor()
+    {
+        this.type = AscFormat.BULLET_TYPE_COLOR_CLRTX;
+        this.UniColor = null;
+    }
+    CBulletColor.prototype.Set_FromObject = function(o)
+    {
+        this.merge(o);
+    };
+    CBulletColor.prototype.merge = function(oBulletColor)
+    {
+        if(!oBulletColor)
+        {
+            return;
+        }
+        if(oBulletColor.UniColor)
+        {
+            this.type = oBulletColor.type;
+            this.UniColor = oBulletColor.UniColor.createDuplicate();
+        }
+    };
+    CBulletColor.prototype.createDuplicate = function()
     {
         var duplicate = new CBulletColor();
         duplicate.type = this.type;
@@ -10547,9 +10737,8 @@ CBulletColor.prototype =
             duplicate.UniColor = this.UniColor.createDuplicate();
         }
         return duplicate;
-    },
-
-    Write_ToBinary: function(w)
+    };
+    CBulletColor.prototype.Write_ToBinary = function(w)
     {
         w.WriteBool(isRealNumber(this.type));
         if(isRealNumber(this.type))
@@ -10562,9 +10751,8 @@ CBulletColor.prototype =
             this.UniColor.Write_ToBinary(w);
         }
 
-    },
-
-    Read_FromBinary: function(r)
+    };
+    CBulletColor.prototype.Read_FromBinary = function(r)
     {
         if(r.GetBool())
         {
@@ -10576,8 +10764,7 @@ CBulletColor.prototype =
             this.UniColor = new CUniColor();
             this.UniColor.Read_FromBinary(r);
         }
-    }
-};
+    };
 
 function CBulletSize()
 {
@@ -10588,13 +10775,20 @@ function CBulletSize()
 
 CBulletSize.prototype =
 {
-    Get_Id: function()
+    Set_FromObject: function(o)
     {
-        return this.Id;
+        this.merge(o);
     },
 
-    Refresh_RecalcData: function()
-    {},
+    merge: function(oBulletSize)
+    {
+        if(!oBulletSize)
+        {
+            return;
+        }
+        this.type = oBulletSize.type;
+        this.val = oBulletSize.val;
+    },
 
     createDuplicate: function()
     {
@@ -10641,13 +10835,11 @@ function CBulletTypeface()
 
 CBulletTypeface.prototype =
 {
-    Get_Id: function()
-    {
-        return this.Id;
-    },
 
-    Refresh_RecalcData: function()
-    {},
+    Set_FromObject: function(o)
+    {
+        this.merge(o);
+    },
 
     createDuplicate: function()
     {
@@ -10655,6 +10847,16 @@ CBulletTypeface.prototype =
         d.type = this.type;
         d.typeface = this.typeface;
         return d;
+    },
+
+    merge: function(oBulletTypeface)
+    {
+        if(!oBulletTypeface)
+        {
+            return;
+        }
+        this.type = oBulletTypeface.type;
+        this.typeface = oBulletTypeface.typeface;
     },
 
     Write_ToBinary: function(w)
@@ -10701,13 +10903,51 @@ function CBulletType()
 
 CBulletType.prototype =
 {
-    Get_Id: function()
+    Set_FromObject: function(o)
     {
-        return this.Id;
-    } ,
+        this.merge(o);
+    },
 
-    Refresh_RecalcData: function()
-    {},
+    merge: function(oBulletType)
+    {
+        if(!oBulletType)
+        {
+            return;
+        }
+        if(oBulletType.type !== null && this.type !== oBulletType.type)
+        {
+            this.type = oBulletType.type;
+            this.Char = oBulletType.Char;
+            this.AutoNumType = oBulletType.AutoNumType;
+            this.startAt = oBulletType.startAt;
+        }
+        else
+        {
+            if(this.type === AscFormat.BULLET_TYPE_BULLET_CHAR)
+            {
+                if(typeof oBulletType.Char === "string"
+                    && oBulletType.Char.length > 0)
+                {
+                    if(this.Char !== oBulletType.Char)
+                    {
+                        this.Char = oBulletType.Char;
+                    }
+                }
+            }
+            if(this.type === AscFormat.BULLET_TYPE_BULLET_AUTONUM)
+            {
+                if(oBulletType.AutoNumType !== null && this.AutoNumType !== oBulletType.AutoNumType)
+                {
+                    this.AutoNumType = oBulletType.AutoNumType;
+                }
+                if(oBulletType.startAt !== null && this.startAt !== oBulletType.startAt)
+                {
+                    this.startAt = oBulletType.startAt;
+                }
+            }
+
+        }
+    },
 
     createDuplicate: function()
     {

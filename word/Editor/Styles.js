@@ -15903,7 +15903,8 @@ CParaPr.prototype.Get_PresentationBullet = function(theme, colorMap)
 		}
 		if (this.Bullet.bulletTypeface)
 		{
-			if (this.Bullet.bulletTypeface.type == AscFormat.BULLET_TYPE_TYPEFACE_BUFONT)
+			if (this.Bullet.bulletTypeface.type === AscFormat.BULLET_TYPE_TYPEFACE_BUFONT
+				&& this.Bullet.bulletType.type === AscFormat.BULLET_TYPE_BULLET_CHAR)
 			{
 				Bullet.m_bFontTx = false;
 				Bullet.m_sFont   = this.Bullet.bulletTypeface.typeface;

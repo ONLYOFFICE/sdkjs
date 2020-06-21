@@ -3446,7 +3446,7 @@ CPresentation.prototype.setHFProperties = function (oProps, bAll) {
                                 oSlide.addToSpTreeToPos(undefined, oSp);
                                 oSp.setParent(oSlide);
                             }
-                        } 
+                        }
                         if(oSp) {
                             oContent = oSp.getDocContent && oSp.getDocContent();
                             if (oContent) {
@@ -5413,9 +5413,9 @@ CPresentation.prototype.SetParagraphIndent = function (Ind) {
     this.Document_UpdateInterfaceState();
 };
 
-CPresentation.prototype.SetParagraphNumbering = function (NumInfo, Size, Unicolor, nNumStartAt) {
+CPresentation.prototype.SetParagraphNumbering = function (oBullet) {
     var oController = this.GetCurrentController();
-    oController && oController.checkSelectedObjectsAndCallback(oController.setParagraphNumbering, [this.Get_PresentationBulletByNumInfo(NumInfo), Size, Unicolor, nNumStartAt], false, AscDFH.historydescription_Presentation_SetParagraphNumbering);
+    oController && oController.checkSelectedObjectsAndCallback(oController.setParagraphNumbering, [oBullet], false, AscDFH.historydescription_Presentation_SetParagraphNumbering);
     this.Document_UpdateInterfaceState();   //TODO
 };
 

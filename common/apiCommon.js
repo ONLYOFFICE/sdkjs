@@ -1921,99 +1921,9 @@
 			this.OutlineLvl = (undefined != obj.OutlineLvl) ? obj.OutlineLvl : undefined;
 			this.OutlineLvlStyle = (undefined != obj.OutlineLvlStyle) ? obj.OutlineLvlStyle : false;
 			this.Bullet = obj.Bullet;
-			this.BulletSize = undefined;
-			this.BulletColor = undefined;
-			this.NumStartAt = undefined;
-			this.BulletFont = undefined;
-			this.BulletSymbol = undefined;
 			var oBullet = obj.Bullet;
-			if(oBullet)
-			{
-				var FirstTextPr = obj.FirstTextPr;
-				this.BulletSize = 100;
-				if(oBullet.bulletSize)
-				{
-					switch (oBullet.bulletSize.type)
-					{
-						case AscFormat.BULLET_TYPE_SIZE_NONE:
-						{
-							break;
-						}
-						case AscFormat.BULLET_TYPE_SIZE_TX:
-						{
-							break;
-						}
-						case AscFormat.BULLET_TYPE_SIZE_PCT:
-						{
-							this.BulletSize = oBullet.bulletSize.val / 1000.0;
-							break;
-						}
-						case AscFormat.BULLET_TYPE_SIZE_PTS:
-						{
-							break;
-						}
-					}
-				}
-				this.BulletColor = CreateAscColorCustom(0, 0, 0);
-				if(oBullet.bulletColor)
-				{
-					if(oBullet.bulletColor.UniColor)
-					{
-						this.BulletColor = CreateAscColor(oBullet.bulletColor.UniColor);
-					}
-				}
-				else
-				{
-					if(FirstTextPr && FirstTextPr.Unifill)
-					{
-						if(FirstTextPr.Unifill.fill instanceof AscFormat.CSolidFill && FirstTextPr.Unifill.fill.color)
-						{
-							this.BulletColor = CreateAscColor(FirstTextPr.Unifill.fill.color);
-						}
-						else
-						{
-							var RGBA = FirstTextPr.Unifill.getRGBAColor();
-							this.BulletColor = CreateAscColorCustom(RGBA.R, RGBA.G, RGBA.B);
-						}
-					}
-					else
-					{
-						this.BulletColor = CreateAscColorCustom(0, 0, 0);
-					}
-				}
-
-				this.BulletFont = "";
-				if(oBullet.bulletTypeface
-					&& oBullet.bulletTypeface.type === AscFormat.BULLET_TYPE_TYPEFACE_BUFONT
-					&& typeof oBullet.bulletTypeface.typeface === "string"
-					&& oBullet.bulletTypeface.typeface.length > 0)
-				{
-					this.BulletFont = oBullet.bulletTypeface.typeface;
-				}
-				else
-				{
-					if(FirstTextPr && FirstTextPr.FontFamily && typeof FirstTextPr.FontFamily.Name === "string"
-						&& FirstTextPr.FontFamily.Name.length > 0)
-					{
-						this.BulletFont = FirstTextPr.FontFamily.Name;
-					}
-				}
-
-
-				if(oBullet.bulletType)
-				{
-					if(oBullet.bulletType.AutoNumType > 0)
-					{
-						this.NumStartAt = AscFormat.isRealNumber(oBullet.bulletType.startAt) ? Math.max(1, oBullet.bulletType.startAt) : null;
-					}
-					else
-					{
-						if(oBullet.bulletType.type === AscFormat.BULLET_TYPE_BULLET_CHAR)
-						{
-							this.BulletSymbol = oBullet.bulletType.Char;
-						}
-					}
-				}
+			if(oBullet) {
+				oBullet.FirstTextPr = obj.FirstTextPr;
 			}
 
 			this.CanDeleteBlockCC  = undefined !== obj.CanDeleteBlockCC ? obj.CanDeleteBlockCC : true;
@@ -2065,11 +1975,6 @@
 			this.OutlineLvl = undefined;
 			this.OutlineLvlStyle = false;
 			this.Bullet = undefined;
-			this.BulletSize = undefined;
-			this.BulletColor = undefined;
-			this.NumStartAt = undefined;
-			this.BulletFont = undefined;
-			this.BulletSymbol = undefined;
 
 			this.CanDeleteBlockCC  = true;
 			this.CanEditBlockCC    = true;
@@ -2185,31 +2090,59 @@
 		}, asc_getBullet: function() {
 			return this.Bullet;
 		}, asc_putBulletSize: function(size) {
-			this.BulletSize = size;
+			if(!this.Bullet) {
+				this.Bullet = new Asc.asc_CBullet();
+			}
+			this.Bullet.asc_putSize(size);
 		}, asc_getBulletSize: function() {
-			return this.BulletSize;
+			if(!this.Bullet) {
+				return undefined;
+			}
+			return this.Bullet.asc_getSize();
 		}, asc_putBulletColor: function(color) {
-			this.BulletColor = color;
+			if(!this.Bullet) {
+				this.Bullet = new Asc.asc_CBullet();
+			}
+			this.Bullet.asc_putColor(color);
 		}, asc_getBulletColor: function() {
-			return this.BulletColor;
+			if(!this.Bullet) {
+				return undefined;
+			}
+			return this.Bullet.asc_getColor();
 		}, asc_putNumStartAt: function(NumStartAt) {
-			this.NumStartAt = NumStartAt;
+			if(!this.Bullet) {
+				this.Bullet = new Asc.asc_CBullet();
+			}
+			this.Bullet.asc_putNumStartAt(NumStartAt);
 		}, asc_getNumStartAt: function() {
-			return this.NumStartAt;
+			if(!this.Bullet) {
+				return undefined;
+			}
+			return this.Bullet.asc_getNumStartAt();
 		},
-
 		asc_getBulletFont: function() {
-			return this.BulletFont;
+			if(!this.Bullet) {
+				return undefined;
+			}
+			return this.Bullet.asc_getFont();
 		},
 		asc_putBulletFont: function(v) {
-			this.BulletFont = v;
+			if(!this.Bullet) {
+				this.Bullet = new Asc.asc_CBullet();
+			}
+			this.Bullet.asc_putFont(v);
 		},
-
 		asc_getBulletSymbol: function() {
-			return this.BulletSymbol;
+			if(!this.Bullet) {
+				return undefined;
+			}
+			return this.Bullet.asc_getSymbol();
 		},
 		asc_putBulletSymbol: function(v) {
-			this.BulletSymbol = v;
+			if(!this.Bullet) {
+				this.Bullet = new Asc.asc_CBullet();
+			}
+			this.Bullet.asc_putSymbol(v);
 		},
 		asc_canDeleteBlockContentControl: function() {
 			return this.CanDeleteBlockCC;

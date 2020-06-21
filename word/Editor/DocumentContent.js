@@ -4749,7 +4749,7 @@ CDocumentContent.prototype.SetParagraphIndent = function(Ind)
 		}
 	}
 };
-CDocumentContent.prototype.Set_ParagraphPresentationNumbering = function(Bullet, Pr)
+CDocumentContent.prototype.Set_ParagraphPresentationNumbering = function(Bullet)
 {
 	var Index, StartPos, EndPos;
 	if (true === this.ApplyToAll)
@@ -4788,51 +4788,48 @@ CDocumentContent.prototype.Set_ParagraphPresentationNumbering = function(Bullet,
 	}
 	for (Index = StartPos; Index <= EndPos; Index++)
 	{
-		this.Content[Index].Add_PresentationNumbering(Bullet, Pr);
+		this.Content[Index].Add_PresentationNumbering(Bullet);
 	}
-	//if(AscCommon.isRealObject(Pr) && AscFormat.isRealNumber(Pr.NumStartAt))
+	if(oLastParagraph)
 	{
-		if(oLastParagraph)
+		if(oLastBullet)
 		{
-			if(oLastBullet)
-			{
-				var Level = AscFormat.isRealNumber(oLastParagraph.Pr.Lvl) ? oLastParagraph.Pr.Lvl : 0;
+			var Level = AscFormat.isRealNumber(oLastParagraph.Pr.Lvl) ? oLastParagraph.Pr.Lvl : 0;
 
-				var oLastBullet_ = oLastParagraph.Get_PresentationNumbering();
-				if (oLastBullet_.Get_Type() >= numbering_presentationnumfrmt_ArabicPeriod)
+			var oLastBullet_ = oLastParagraph.Get_PresentationNumbering();
+			if (oLastBullet_.Get_Type() >= numbering_presentationnumfrmt_ArabicPeriod)
+			{
+				var Next = oLastParagraph.Next;
+				while (null != Next && type_Paragraph === Next.GetType())
 				{
-					var Next = oLastParagraph.Next;
-					while (null != Next && type_Paragraph === Next.GetType())
+					var NextLevel = Next.PresentationPr.Level;
+					var NextBullet = Next.Get_PresentationNumbering();
+					if (Level < NextLevel)
 					{
-						var NextLevel = Next.PresentationPr.Level;
-						var NextBullet = Next.Get_PresentationNumbering();
-						if (Level < NextLevel)
+						Next = Next.Next;
+						continue;
+					}
+					else if (Level > NextLevel)
+						break;
+					else if (NextBullet.Get_Type() === oLastBullet.Get_Type() && NextBullet.Get_StartAt() === oLastBullet.Get_StartAt() )
+					{
+						var nNumStartAt = Bullet.getNumStartAt();
+						if(AscFormat.isRealNumber(nNumStartAt))
 						{
-							Next = Next.Next;
-							continue;
+							var oPrBullet = new AscFormat.CBullet();
+							oPrBullet.putNumStartAt(nNumStartAt);
+							Next.Add_PresentationNumbering(oPrBullet);
 						}
-						else if (Level > NextLevel)
-							break;
-						else if (NextBullet.Get_Type() === oLastBullet.Get_Type() && NextBullet.Get_StartAt() === oLastBullet.Get_StartAt() )
-						{
-							var oPr = null;
-							if(Pr)
-							{
-								oPr = {NumStartAt: Pr.NumStartAt};
-							}
-							Next.Add_PresentationNumbering(Bullet, oPr);
-							Next = Next.Next;
-						}
-						else
-						{
-							break;
-						}
+						Next = Next.Next;
+					}
+					else
+					{
+						break;
 					}
 				}
 			}
 		}
 	}
-
 };
 CDocumentContent.prototype.Can_IncreaseParagraphLevel         = function(bIncrease)
 {

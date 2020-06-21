@@ -37,7 +37,7 @@
  * @param {undefined} undefined
  */
 function (window, undefined) {
-    
+
     // Import
     var DrawingObjectsController = AscFormat.DrawingObjectsController;
 
@@ -542,9 +542,9 @@ DrawingObjectsController.prototype.convertPixToMM = function(pix)
     return _ret;
 };
 
-DrawingObjectsController.prototype.setParagraphNumbering = function(Bullet, Pr)
+DrawingObjectsController.prototype.setParagraphNumbering = function(Bullet)
 {
-    this.applyDocContentFunction(CDocumentContent.prototype.Set_ParagraphPresentationNumbering, [Bullet, Pr], CTable.prototype.Set_ParagraphPresentationNumbering);
+    this.applyDocContentFunction(CDocumentContent.prototype.Set_ParagraphPresentationNumbering, [Bullet], CTable.prototype.Set_ParagraphPresentationNumbering);
 };
 
 DrawingObjectsController.prototype.setParagraphIndent = function(Indent)
