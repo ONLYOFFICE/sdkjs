@@ -1787,23 +1787,6 @@ Paragraph.prototype.Draw = function(CurPage, pGraphics)
 
 	var Pr = this.Get_CompiledPr();
 
-	// Задаем обрезку, если данный параграф является рамкой
-	if (true !== this.Is_Inline())
-	{
-		var FramePr = this.Get_FramePr();
-		if (undefined != FramePr && this.Parent instanceof CDocument)
-		{
-			var PixelError = editor.WordControl.m_oLogicDocument.DrawingDocument.GetMMPerDot(1);
-			var BoundsL    = this.CalculatedFrame.L2 - PixelError;
-			var BoundsT    = this.CalculatedFrame.T2 - PixelError;
-			var BoundsH    = this.CalculatedFrame.H2 + 2 * PixelError;
-			var BoundsW    = this.CalculatedFrame.W2 + 2 * PixelError;
-
-			pGraphics.SaveGrState();
-			pGraphics.AddClipRect(BoundsL, BoundsT, BoundsW, BoundsH);
-		}
-	}
-
 	// Выясним какая заливка у нашего текста
 
 	var Theme    = this.Get_Theme();
@@ -1855,12 +1838,7 @@ Paragraph.prototype.Draw = function(CurPage, pGraphics)
 	// 6 часть отрисовки :
 	//    Рисуем верхнюю, нижнюю и промежуточную границы
 	this.Internal_Draw_6(CurPage, pGraphics, Pr);
-
-	// Убираем обрезку
-	if (undefined != FramePr && this.Parent instanceof CDocument)
-	{
-		pGraphics.RestoreGrState();
-	}
+	
 	if (pGraphics.End_Command)
 	{
 		pGraphics.End_Command();
@@ -11005,7 +10983,7 @@ Paragraph.prototype.Set_FramePr = function(FramePr, bDelete)
 	if (true === FramePr.FromDropCapMenu && 1 === FrameParas.length)
 	{
 		// Здесь мы смотрим только на количество строк, шрифт, тип и горизонтальный отступ от текста
-		var NewFramePr = FramePr_old.Copy();
+		var NewFramePr = FramePr_old ? FramePr_old.Copy() : new CFramePr();
 
 		if (undefined != FramePr.DropCap)
 		{
@@ -11047,7 +11025,7 @@ Paragraph.prototype.Set_FramePr = function(FramePr, bDelete)
 	}
 	else
 	{
-		var NewFramePr = FramePr_old.Copy();
+		var NewFramePr = FramePr_old ? FramePr_old.Copy() : new CFramePr();
 
 		if (undefined != FramePr.H)
 			NewFramePr.H = FramePr.H;
@@ -11196,13 +11174,19 @@ Paragraph.prototype.Get_FrameBounds = function(FrameX, FrameY, FrameW, FrameH)
 Paragraph.prototype.SetCalculatedFrame = function(oFrame)
 {
 	this.CalculatedFrame = oFrame;
+	oFrame.AddParagraph(this);
 };
-Paragraph.prototype.Get_CalculatedFrame = function()
+Paragraph.prototype.GetCalculatedFrame = function()
 {
 	return this.CalculatedFrame;
 };
 Paragraph.prototype.Internal_Get_FrameParagraphs = function()
 {
+	if (!this.CalculatedFrame)
+		return [];
+
+	return this.CalculatedFrame.GetParagraphs();
+
 	var FrameParas = [];
 
 	var FramePr = this.Get_FramePr();
@@ -11267,8 +11251,16 @@ Paragraph.prototype.Get_LineDropCapWidth = function()
 };
 Paragraph.prototype.Change_Frame = function(X, Y, W, H, PageIndex)
 {
-	var FramePr = this.Get_FramePr();
-	if (!this.LogicDocument || undefined === FramePr || ( Math.abs(Y - this.CalculatedFrame.T) < 0.001 && Math.abs(X - this.CalculatedFrame.L) < 0.001 && Math.abs(W - this.CalculatedFrame.W) < 0.001 && Math.abs(H - this.CalculatedFrame.H) < 0.001 && PageIndex === this.CalculatedFrame.PageIndex ))
+	if (!this.LogicDocument || !this.CalculatedFrame || !this.CalculatedFrame.GetFramePr())
+		return;
+
+	var FramePr = this.CalculatedFrame.GetFramePr();
+
+	if (Math.abs(Y - this.CalculatedFrame.T) < 0.001
+		&& Math.abs(X - this.CalculatedFrame.L) < 0.001
+		&& Math.abs(W - this.CalculatedFrame.W) < 0.001
+		&& Math.abs(H - this.CalculatedFrame.H) < 0.001
+		&& PageIndex === this.CalculatedFrame.PageIndex)
 		return;
 
 	var FrameParas = this.Internal_Get_FrameParagraphs();

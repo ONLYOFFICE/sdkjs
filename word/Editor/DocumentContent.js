@@ -1090,7 +1090,7 @@ CDocumentContent.prototype.Recalculate_Page               = function(PageIndex, 
                     {
                         var TempElement = this.Content[TempIndex];
                         TempElement.Shift(TempElement.Pages.length - 1, FrameX, FrameY);
-                        TempElement.SetCalculatedFrame(new CCalculatedFrame(FrameX, FrameY, FrameW, FrameH, FrameX2, FrameY2, FrameW2, FrameH2, PageIndex, Index, FlowCount));
+                        TempElement.SetCalculatedFrame(new CCalculatedFrame(FramePr, FrameX, FrameY, FrameW, FrameH, FrameX2, FrameY2, FrameW2, FrameH2, PageIndex, Index, FlowCount));
                     }
 
                     var FrameDx = ( undefined === FramePr.HSpace ? 0 : FramePr.HSpace );
@@ -1315,26 +1315,56 @@ CDocumentContent.prototype.Draw                           = function(nPageIndex,
         pGraphics.Start_Command(AscFormat.DRAW_COMMAND_CONTENT);
     }
 
-    var ClipInfo = this.ClipInfo[CurPage];
+	var nPixelError = this.DrawingDocument.GetMMPerDot(1);
+
+	var ClipInfo = this.ClipInfo[CurPage];
     if (ClipInfo)
     {
-        // TODO: При клипе, как правило, обрезается сверху и снизу по 1px, поэтому введем небольшую коррекцию
-        var Correction = 0;
-        if (null !== this.DrawingDocument)
-            Correction = this.DrawingDocument.GetMMPerDot(1);
-
         var Bounds = this.Pages[CurPage].Bounds;
         pGraphics.SaveGrState();
-        pGraphics.AddClipRect(ClipInfo.X0, Bounds.Top - Correction, Math.abs(ClipInfo.X1 - ClipInfo.X0), Bounds.Bottom - Bounds.Top + Correction);
+        pGraphics.AddClipRect(ClipInfo.X0, Bounds.Top - nPixelError, Math.abs(ClipInfo.X1 - ClipInfo.X0), Bounds.Bottom - Bounds.Top + nPixelError);
     }
 
-    var Page_StartPos = this.Pages[CurPage].Pos;
-    var Page_EndPos   = this.Pages[CurPage].EndPos;
-    for (var Index = Page_StartPos; Index <= Page_EndPos; Index++)
+    var oPage = this.Pages[CurPage];
+    for (var nIndex = oPage.Pos; nIndex <= oPage.EndPos; ++nIndex)
     {
-        var ElementPageIndex = this.private_GetElementPageIndex(Index, CurPage, 0, 1);
-        this.Content[Index].Draw(ElementPageIndex, pGraphics);
+    	var oElement = this.Content[nIndex];
+
+    	if (oPage.IsFrame(oElement) || oPage.IsFlowTable(oElement))
+    		continue;
+
+        var nElementPageIndex = this.private_GetElementPageIndex(nIndex, CurPage, 0, 1);
+		oElement.Draw(nElementPageIndex, pGraphics);
     }
+
+	for (var nFlowTableIndex = 0, nFlowTablesCount = oPage.FlowTables.length; nFlowTableIndex < nFlowTablesCount; ++nFlowTableIndex)
+	{
+		var oTable = oPage.FlowTables[nFlowTableIndex];
+
+		var nElementPageIndex = this.private_GetElementPageIndex(oTable.GetIndex(), nPageIndex, ColumnIndex, ColumnsCount);
+		oTable.Draw(nElementPageIndex, pGraphics);
+	}
+
+	for (var nFrameIndex = 0, nFramesCount = oPage.Frames.length; nFrameIndex < nFramesCount; ++nFrameIndex)
+	{
+		var oFrame = oPage.Frames[nFrameIndex];
+
+		var nL = oFrame.L2 - nPixelError;
+		var nT = oFrame.T2 - nPixelError;
+		var nH = oFrame.H2 + 2 * nPixelError;
+		var nW = oFrame.W2 + 2 * nPixelError;
+
+		pGraphics.SaveGrState();
+		pGraphics.AddClipRect(nL, nT, nW, nH);
+
+		for (var nFlowIndex = oFrame.StartIndex; nFlowIndex < oFrame.StartIndex + oFrame.FlowCount; ++nFlowIndex)
+		{
+			var nElementPageIndex = this.private_GetElementPageIndex(nFlowIndex, nPageIndex, ColumnIndex, ColumnsCount);
+			this.Content[nFlowIndex].Draw(nElementPageIndex, pGraphics);
+		}
+
+		pGraphics.RestoreGrState();
+	}
 
 
 	if (this.LogicDocument)

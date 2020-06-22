@@ -14954,8 +14954,9 @@ CFramePr.prototype =
     }
 };
 
-function CCalculatedFrame(L, T, W, H, L2, T2, W2, H2, PageIndex, Index, FlowCount)
+function CCalculatedFrame(FramePr, L, T, W, H, L2, T2, W2, H2, PageIndex, Index, FlowCount)
 {
+	this.FramePr    = FramePr;
 	this.L          = undefined !== L ? L : 0; // Внутренний рект, по которому идет рассчет
 	this.T          = undefined !== T ? T : 0;
 	this.W          = undefined !== W ? W : 0;
@@ -14967,7 +14968,21 @@ function CCalculatedFrame(L, T, W, H, L2, T2, W2, H2, PageIndex, Index, FlowCoun
 	this.PageIndex  = undefined !== PageIndex ? PageIndex : 0;
 	this.StartIndex = undefined !== Index ? Index : 0;
 	this.FlowCount  = undefined !== FlowCount ? FlowCount : 0;
+
+	this.Paragraphs = [];
 }
+CCalculatedFrame.prototype.AddParagraph = function(oPara)
+{
+	this.Paragraphs.push(oPara);
+};
+CCalculatedFrame.prototype.GetParagraphs = function()
+{
+	return this.Paragraphs;
+};
+CCalculatedFrame.prototype.GetFramePr = function()
+{
+	return this.FramePr;
+};
 
 function CParaPr()
 {
