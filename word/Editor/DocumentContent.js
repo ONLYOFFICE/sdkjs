@@ -858,7 +858,7 @@ CDocumentContent.prototype.Recalculate_Page               = function(PageIndex, 
                     var nElementPageIndex = 0;
                     if (Index != TempIndex || ( true != oRecalcInfo.FrameRecalc && ( ( 0 === Index && 0 === PageIndex ) || Index != StartIndex ) ))
 					{
-						TempElement.Reset(0, FrameH, Frame_XLimit, Frame_YLimit, PageIndex);
+						TempElement.Reset(0, FrameH, Frame_XLimit, Asc.NoYLimit, PageIndex);
 					}
 					else
 					{

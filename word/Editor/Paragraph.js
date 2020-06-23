@@ -202,12 +202,9 @@ Paragraph.prototype.Use_Wrap = function()
 
 	return true;
 };
-Paragraph.prototype.Use_YLimit = function()
+Paragraph.prototype.UseLimit = function()
 {
-	if (undefined != this.Get_FramePr() && this.Parent instanceof CDocument)
-		return false;
-
-	return true;
+	return Asc.NoYLimit !== this.YLimit;
 };
 Paragraph.prototype.Set_Pr = function(oNewPr)
 {

@@ -289,3 +289,5 @@ prot['CheckedSymbol']   = prot.CheckedSymbol;
 prot['UncheckedSymbol'] = prot.UncheckedSymbol;
 prot['CheckedFont']     = prot.CheckedFont;
 prot['UncheckedFont']   = prot.UncheckedFont;
+
+window['Asc']['NoYLimit'] = window['Asc'].NoYLimit = 0x7FFFFFFF;
