@@ -373,14 +373,29 @@
 		
 		if (sPosition === "after")
 		{
-			var lastRun			= this.EndPos[this.EndPos.length - 1].Class;
-			var lastRunPos		= this.EndPos[this.EndPos.length - 2].Position;
-			var lastRunParent	= lastRun.GetParent();
-			var tempRun			= editor.CreateRun();
+			var lastRun				= this.EndPos[this.EndPos.length - 1].Class;
+			var lastRunPos			= this.EndPos[this.EndPos.length - 1].Position;
+			var lastRunPosInParent	= this.EndPos[this.EndPos.length - 2].Position;
+			var lastRunParent		= lastRun.GetParent();
+			var newRunPos			= lastRunPos;
+			if (lastRunPos === 0)
+			{
+				if (lastRunPosInParent - 1 >= 0)
+				{
+					lastRunPosInParent--;
+					lastRun		= lastRunParent.GetElement(lastRunPosInParent);
+					lastRunPos	= lastRun.Content.length;
+				}
+			}
+			else 
+				for (var oIterator = sText.getUnicodeIterator(); oIterator.check(); oIterator.next())
+					newRunPos++;
 
-			tempRun.AddText(sText);
-			tempRun.SetTextPr(new ApiTextPr(null, this.TextPr));
-			lastRunParent.Add_ToContent(lastRunPos, tempRun.Run);
+			lastRun.AddText(sText, lastRunPos);
+			this.EndPos[this.EndPos.length - 1].Class = lastRun;
+			this.EndPos[this.EndPos.length - 1].Position = newRunPos;
+			this.EndPos[this.EndPos.length - 2].Position = lastRunPosInParent;
+			private_TrackRangesPositions(true);
 		}
 		else if (sPosition === "before")
 		{

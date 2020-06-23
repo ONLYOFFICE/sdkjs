@@ -9658,7 +9658,7 @@ CDocument.prototype.OnKeyDown = function(e)
        	this.Document_Undo();
         bRetValue = keydownresult_PreventAll;
     }
-    else if ((/*в Opera такой код*/AscCommon.AscBrowser.isOpera && (e.KeyCode == 93 || 57351 == e.KeyCode)) ||
+    else if ((e.KeyCode == 93) || (/*в Opera такой код*/AscCommon.AscBrowser.isOpera && (57351 == e.KeyCode)) ||
              (e.KeyCode == 121 && true === e.ShiftKey)) // // Shift + F10 - контекстное меню
     {
         var X_abs, Y_abs, oPosition, ConvertedPos;
@@ -10133,6 +10133,10 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 						var Comment_Y       = Comment.m_oStartInfo.Y;
 						var Comment_X       = this.Get_PageLimits(PageIndex).XLimit;
 						var Para            = this.TableId.Get_ById(Comment.StartId);
+
+                        if (window["NATIVE_EDITOR_ENJINE"]) {
+                            Comment_X       = Comment.m_oStartInfo.X;
+                        }
 
 						// Para может быть не задано, если комментарий добавлен к заголовку таблицы
 						if (Para)

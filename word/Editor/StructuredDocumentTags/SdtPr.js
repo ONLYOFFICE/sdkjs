@@ -390,8 +390,11 @@ function CContentControlPr(nType)
 	this.ComboBoxPr = undefined;
 	this.DropDownPr = undefined;
 	this.DateTimePr = undefined;
+	this.TextFormPr = undefined;
 
 	this.PlaceholderText = undefined;
+
+	this.FormPr = undefined;
 }
 CContentControlPr.prototype.FillFromObject = function(oPr)
 {
@@ -442,8 +445,13 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 		this.DropDownPr = oContentControl.GetDropDownListPr().Copy();
 	else if (oContentControl.IsDatePicker())
 		this.DateTimePr = oContentControl.GetDatePickerPr().Copy();
+	else if (oContentControl.IsTextForm())
+		this.TextFormPr = oContentControl.GetTextFormPr().Copy();
 
 	this.PlaceholderText = oContentControl.GetPlaceholderText();
+
+	if (oContentControl.IsForm())
+		this.FormPr = oContentControl.GetFormPr().Copy();
 };
 CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 {
@@ -483,8 +491,14 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 	if (undefined !== this.DateTimePr)
 		oContentControl.ApplyDatePickerPr(this.DateTimePr);
 
+	if (undefined !== this.TextFormPr && oContentControl.IsInlineLevel())
+		oContentControl.SetTextFormPr(this.TextFormPr);
+
 	if (undefined !== this.PlaceholderText)
 		oContentControl.SetPlaceholderText(this.PlaceholderText);
+
+	if (undefined !== this.FormPr)
+		oContentControl.SetFormPr(this.FormPr);
 };
 CContentControlPr.prototype.GetId = function()
 {
@@ -601,6 +615,17 @@ CContentControlPr.prototype.SetDateTimePr = function(oPr)
 {
 	this.DateTimePr = oPr;
 };
+CContentControlPr.prototype.GetTextFormPr = function()
+{
+	if (this.CC && this.CC.IsTextForm())
+		return this.TextFormPr;
+
+	return null;
+};
+CContentControlPr.prototype.SetTextFormPr = function(oPr)
+{
+	this.TextFormPr = oPr;
+};
 CContentControlPr.prototype.GetPlaceholderText = function()
 {
 	return this.PlaceholderText;
@@ -608,6 +633,17 @@ CContentControlPr.prototype.GetPlaceholderText = function()
 CContentControlPr.prototype.SetPlaceholderText = function(sText)
 {
 	this.PlaceholderText = sText;
+};
+CContentControlPr.prototype.GetFormPr = function()
+{
+	if (this.CC && this.CC.IsForm())
+		return this.FormPr;
+
+	return null;
+};
+CContentControlPr.prototype.SetFormPr = function(oPr)
+{
+	this.FormPr = oPr;
 };
 
 /**
@@ -1301,8 +1337,12 @@ CContentControlPr.prototype['get_DropDownListPr']     = CContentControlPr.protot
 CContentControlPr.prototype['put_DropDownListPr']     = CContentControlPr.prototype.SetDropDownListPr;
 CContentControlPr.prototype['get_DateTimePr']         = CContentControlPr.prototype.GetDateTimePr;
 CContentControlPr.prototype['put_DateTimePr']         = CContentControlPr.prototype.SetDateTimePr;
+CContentControlPr.prototype['get_TextFormPr']         = CContentControlPr.prototype.GetTextFormPr;
+CContentControlPr.prototype['put_TextFormPr']         = CContentControlPr.prototype.SetTextFormPr;
 CContentControlPr.prototype['get_PlaceholderText']    = CContentControlPr.prototype.GetPlaceholderText;
 CContentControlPr.prototype['put_PlaceholderText']    = CContentControlPr.prototype.SetPlaceholderText;
+CContentControlPr.prototype['get_FormPr']             = CContentControlPr.prototype.GetFormPr;
+CContentControlPr.prototype['put_FormPr']             = CContentControlPr.prototype.SetFormPr;
 
 window['AscCommon'].CSdtCheckBoxPr    = CSdtCheckBoxPr;
 window['AscCommon']['CSdtCheckBoxPr'] = CSdtCheckBoxPr;

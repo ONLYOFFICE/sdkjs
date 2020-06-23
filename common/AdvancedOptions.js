@@ -80,6 +80,9 @@
 			this.codePage = codepage;
 			this.delimiter = delimiter;
 			this.delimiterChar = delimiterChar;
+
+			this.numberDecimalSeparator = null;
+			this.numberGroupSeparator = null;
 		}
 		asc_CTextOptions.prototype.asc_getDelimiter = function(){return this.delimiter;};
 		asc_CTextOptions.prototype.asc_setDelimiter = function(v){this.delimiter = v;};
@@ -87,6 +90,30 @@
 		asc_CTextOptions.prototype.asc_setDelimiterChar = function(v){this.delimiterChar = v;};
 		asc_CTextOptions.prototype.asc_getCodePage = function(){return this.codePage;};
 		asc_CTextOptions.prototype.asc_setCodePage = function(v){this.codePage = v;};
+		asc_CTextOptions.prototype.asc_getNumberDecimalSeparator = function () {
+			return this.numberDecimalSeparator !== null ? this.numberDecimalSeparator : AscCommon.g_oDefaultCultureInfo.NumberDecimalSeparator;
+		};
+		asc_CTextOptions.prototype.asc_setNumberDecimalSeparator = function(v){this.numberDecimalSeparator = v;};
+		asc_CTextOptions.prototype.asc_getNumberDecimalSeparator = function () {
+			return this.numberGroupSeparator !== null ? this.numberGroupSeparator : AscCommon.g_oDefaultCultureInfo.NumberGroupSeparator;
+		};
+		asc_CTextOptions.prototype.asc_setNumberGroupSeparator = function(v){this.numberGroupSeparator = v;};
+		asc_CTextOptions.prototype.asc_getNumberDecimalSeparatorsArr = function () {
+			var arr = [",", "."];
+			if (arr.indexOf(AscCommon.g_oDefaultCultureInfo.NumberDecimalSeparator)) {
+				arr.push(AscCommon.g_oDefaultCultureInfo.NumberDecimalSeparator);
+			}
+
+			return arr;
+		};
+		asc_CTextOptions.prototype.asc_getNumberGroupSeparatorsArr = function () {
+			var arr = [",", ".", "'"];
+			if (arr.indexOf(AscCommon.g_oDefaultCultureInfo.NumberGroupSeparator)) {
+				arr.push(AscCommon.g_oDefaultCultureInfo.NumberGroupSeparator);
+			}
+
+			return arr;
+		};
 
 		/** @constructor */
 		function asc_CDRMAdvancedOptions(password){

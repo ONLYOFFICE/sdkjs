@@ -182,7 +182,6 @@ CSdtBase.prototype.IsContentControlTemporary = function()
 	return this.Pr.Temporary;
 };
 /**
- *
  * @param {CSdtFormPr} oFormPr
  */
 CSdtBase.prototype.SetFormPr = function(oFormPr)
@@ -197,6 +196,13 @@ CSdtBase.prototype.SetFormPr = function(oFormPr)
 			oLogicDocument.RegisterForm(this);
 	}
 }
+/**
+ * @returns {?CSdtFormPr}
+ */
+CSdtBase.prototype.GetFormPr = function()
+{
+	return this.Pr.FormPr;
+};
 /**
  * @returns {boolean}
  */
@@ -222,4 +228,12 @@ CSdtBase.prototype.GetFormKey = function()
 CSdtBase.prototype.IsRadioButton = function()
 {
 	return !!(this.IsCheckBox() && this.Pr.CheckBox && this.Pr.CheckBox.GroupKey);
+};
+/**
+ * Является ли данный контейнер специальной текстовой формой
+ * @returns {boolean}
+ */
+CSdtBase.prototype.IsTextForm = function()
+{
+	return false;
 };
