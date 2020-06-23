@@ -253,7 +253,16 @@
             asc_getColorsFont : function() { return this.colorsFont; },
             asc_getSortColor : function() { return this.sortColor; },
 			asc_getColumnName : function() { return this.columnName; },
-			asc_getSheetColumnName : function() { return this.sheetColumnName; }
+			asc_getSheetColumnName : function() { return this.sheetColumnName; },
+
+			setVisibleFromValues: function(values) {
+				if (!this.values) {
+					return;
+				}
+				for (var i = 0; i < this.values.length && i < values.length; ++i) {
+					this.values[i].visible = values[i].visible;
+				}
+			}
 		};
 		
 		var g_oAdvancedTableInfoSettings = {

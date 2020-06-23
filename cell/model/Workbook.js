@@ -3295,6 +3295,15 @@
 		}
 		return null;
 	};
+	Workbook.prototype.getPivotCacheById = function(pivotCacheId) {
+		for (var i = 0, l = this.aWorksheets.length; i < l; ++i) {
+			var cache = this.aWorksheets[i].getPivotCacheById(pivotCacheId);
+			if (cache) {
+				return cache;
+			}
+		}
+		return null;
+	};
 	Workbook.prototype.getSlicerCacheByName = function (name) {
 		for (var i = 0, l = this.aWorksheets.length; i < l; ++i) {
 			var cache = this.aWorksheets[i].getSlicerCacheByName(name);
@@ -3312,6 +3321,14 @@
 			}
 		}
 		return null;
+	};
+	Workbook.prototype.getSlicerCachesByPivotTable = function (sheetId, pivotName) {
+		var res = [];
+		for (var i = 0, l = this.aWorksheets.length; i < l; ++i) {
+			var caches = this.aWorksheets[i].getSlicerCachesByPivotTable(sheetId, pivotName);
+			res = res.concat(caches);
+		}
+		return res;
 	};
 	Workbook.prototype.getSlicerStyle = function (name) {
 		var slicer = this.getSlicerByName(name);
@@ -6869,6 +6886,21 @@
 		}
 		return c_oAscError.ID.No;
 	};
+	Worksheet.prototype.getSlicerCachesByPivotTable = function(sheetId, pivotName) {
+		var res = [];
+		for (var i = 0; i < this.aSlicers.length; i++) {
+			var cache = this.aSlicers[i].getSlicerCache();
+			if (cache) {
+				var index = cache.pivotTables.find(function(elem) {
+					return elem.sheetId === sheetId && elem.name === pivotName;
+				});
+				if (-1 !== index) {
+					res.push(cache);
+				}
+			}
+		}
+		return res;
+	};
 	Worksheet.prototype.initPivotTables = function () {
 		for (var i = 0; i < this.pivotTables.length; ++i) {
 			this.pivotTables[i].init();
@@ -7687,7 +7719,15 @@
 		var res = this.getPivotTableByDataRef(dataRef);
 		return res ? res.cacheDefinition : res;
 	};
-
+	Worksheet.prototype.getPivotCacheById = function(pivotCacheId) {
+		for (var i = 0; i < this.pivotTables.length; ++i) {
+			var cacheDefinition = this.pivotTables[i].cacheDefinition;
+			if (pivotCacheId === cacheDefinition.getPivotCacheId()) {
+				return cacheDefinition
+			}
+		}
+		return null;
+	};
 	Worksheet.prototype.insertPivotTable = function (pivotTable, addToHistory, checkCacheDefinition) {
 		pivotTable.worksheet = this;
 		pivotTable.setChanged(false, true);
@@ -8323,13 +8363,13 @@
 	};
 
 
-	Worksheet.prototype.insertSlicer = function (name, obj_name, type) {
+	Worksheet.prototype.insertSlicer = function (name, obj_name, type, pivotTable) {
 		History.Create_NewPoint();
 		History.StartTransaction();
 
 		//TODO недостаточно ли вместо всей данной длинной структуры использовать только tableId(name) и columnName?
 		var slicer = new window['Asc'].CT_slicer(this);
-		slicer.init(name, obj_name, type);
+		slicer.init(name, obj_name, type, undefined, pivotTable);
 		this.aSlicers.push(slicer);
 		var oCache = slicer.getCacheDefinition();
 
