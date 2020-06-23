@@ -3064,11 +3064,14 @@ var editor;
       }, true, undefined, sToken);
     }
     else{
-      if(undefined != props.BulletSymbol && undefined != props.BulletFont) {
+      var sBulletSymbol = props.asc_getBulletSymbol();
+      var sBulletFont = props.asc_getBulletFont();
+      if(typeof sBulletSymbol === "string" && sBulletSymbol.length > 0
+      && typeof sBulletFont === "string" && sBulletFont.length > 0) {
         var t = this;
           var fonts = {};
-          fonts[props.BulletFont] = 1;
-          AscFonts.FontPickerByCharacter.checkTextLight(props.BulletSymbol);
+          fonts[sBulletFont] = 1;
+          AscFonts.FontPickerByCharacter.checkTextLight(sBulletSymbol);
           t._loadFonts(fonts, function() {
             ws.objectRender.setGraphicObjectProps(props);
           });
@@ -3078,8 +3081,6 @@ var editor;
         ws.objectRender.setGraphicObjectProps(props);
       }
     }
-
-
   };
 
   spreadsheet_api.prototype.asc_getOriginalImageSize = function() {
