@@ -5010,7 +5010,7 @@ CDocument.prototype.private_RecalculateFlowParagraph         = function(RecalcIn
             for (var TempIndex = Index; TempIndex < Index + FlowCount; ++TempIndex)
             {
                 var TempElement = this.Content[TempIndex];
-                TempElement.Shift(TempElement.Pages.length - 1, FrameX, FrameY);
+                TempElement.Shift(TempElement.GetPagesCount() - 1, FrameX, FrameY);
                 TempElement.SetCalculatedFrame(oCalculatedFrame);
             }
 

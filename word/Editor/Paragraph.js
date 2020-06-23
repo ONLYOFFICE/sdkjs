@@ -11318,6 +11318,7 @@ Paragraph.prototype.Change_Frame = function(X, Y, W, H, PageIndex)
 		this.LogicDocument.Recalculate();
 		this.LogicDocument.UpdateInterface();
 		this.LogicDocument.UpdateRulers();
+		this.LogicDocument.UpdateTracks();
 		this.LogicDocument.FinalizeAction();
 	}
 };

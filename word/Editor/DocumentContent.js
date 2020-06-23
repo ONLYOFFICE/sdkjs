@@ -1089,7 +1089,7 @@ CDocumentContent.prototype.Recalculate_Page               = function(PageIndex, 
                     for (var TempIndex = Index; TempIndex < Index + FlowCount; TempIndex++)
                     {
                         var TempElement = this.Content[TempIndex];
-                        TempElement.Shift(TempElement.Pages.length - 1, FrameX, FrameY);
+                        TempElement.Shift(TempElement.GetPagesCount() - 1, FrameX, FrameY);
                         TempElement.SetCalculatedFrame(new CCalculatedFrame(FramePr, FrameX, FrameY, FrameW, FrameH, FrameX2, FrameY2, FrameW2, FrameH2, PageIndex, Index, FlowCount));
                     }
 
