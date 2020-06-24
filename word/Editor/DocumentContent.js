@@ -870,9 +870,29 @@ CDocumentContent.prototype.Recalculate_Page               = function(PageIndex, 
                     FrameH = TempElement.Get_PageBounds(PageIndex - TempElement.Get_StartPage_Relative()).Bottom;
                 }
 
+				var oTableInfo = Element.GetMaxTableGridWidth();
+
+				var nMaxGapLeft           = oTableInfo.GapLeft;
+				var nMaxGridWidth         = oTableInfo.GridWidth;
+				var nMaxGridWidthRightGap = oTableInfo.GridWidth + oTableInfo.GapRight;
+
+				for (var nTempIndex = Index + 1; nTempIndex < Index + FlowCount; ++nTempIndex)
+				{
+					var oTempTableInfo = this.Content[nTempIndex].GetMaxTableGridWidth();
+
+					if (oTempTableInfo.GapLeft > nMaxGapLeft)
+						nMaxGapLeft = oTempTableInfo.GapLeft;
+
+					if (oTempTableInfo.GridWidth > nMaxGridWidth)
+						nMaxGridWidth = oTempTableInfo.GridWidth;
+
+					if (oTempTableInfo.GridWidth + oTempTableInfo.GapRight > nMaxGridWidthRightGap)
+						nMaxGridWidthRightGap = oTempTableInfo.GridWidth + oTempTableInfo.GapRight;
+				}
+
                 // Обработаем "авто" ширину рамки. Ширина "авто" может быть в случае, когда значение W в FramePr
                 // отсутствует, когда, у нас ровно 1 параграф, с 1 строкой.
-                if (-1 === FrameW && 1 === FlowCount && 1 === Element.Lines.length && undefined === FramePr.Get_W())
+                if (Element.IsParagraph() && -1 === FrameW && 1 === FlowCount && 1 === Element.Lines.length && undefined === FramePr.Get_W())
                 {
                     FrameW     = Element.GetAutoWidthForDropCap();
                     var ParaPr = Element.Get_CompiledPr2(false).ParaPr;
@@ -887,10 +907,22 @@ CDocumentContent.prototype.Recalculate_Page               = function(PageIndex, 
                         FrameH = TempElement.Get_PageBounds(PageIndex - TempElement.Get_StartPage_Relative()).Bottom;
                     }
                 }
-                else if (-1 === FrameW)
-                    FrameW = Frame_XLimit;
+				else if (-1 === FrameW)
+				{
+					if (Element.IsTable() && !FramePr.Get_W())
+					{
+						FrameW = nMaxGridWidth;
+					}
+					else
+					{
+						FrameW = Frame_XLimit;
+					}
+				}
 
-                switch (FrameHRule)
+				var nGapLeft  = nMaxGapLeft;
+				var nGapRight = nMaxGridWidthRightGap > FrameW ? nMaxGridWidthRightGap - FrameW : 0;
+
+				switch (FrameHRule)
                 {
                     case Asc.linerule_Auto :
                         break;
@@ -1075,7 +1107,11 @@ CDocumentContent.prototype.Recalculate_Page               = function(PageIndex, 
                     FrameY = 0;
 
                 var FrameBounds = this.Content[Index].Get_FrameBounds(FrameX, FrameY, FrameW, FrameH);
-                var FrameX2     = FrameBounds.X, FrameY2 = FrameBounds.Y, FrameW2 = FrameBounds.W, FrameH2 = FrameBounds.H;
+
+				var FrameX2 = FrameBounds.X - nGapLeft,
+					FrameY2 = FrameBounds.Y,
+					FrameW2 = FrameBounds.W + nGapLeft + nGapRight,
+					FrameH2 = FrameBounds.H;
 
                 if ((FrameY2 + FrameH2 > Page_H || Y > Page_H - 0.001 ) && Index != StartIndex)
                 {
