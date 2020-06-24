@@ -11253,10 +11253,10 @@ Paragraph.prototype.Change_Frame = function(X, Y, W, H, PageIndex)
 
 	var FramePr = this.CalculatedFrame.GetFramePr();
 
-	if (Math.abs(Y - this.CalculatedFrame.T) < 0.001
-		&& Math.abs(X - this.CalculatedFrame.L) < 0.001
-		&& Math.abs(W - this.CalculatedFrame.W) < 0.001
-		&& Math.abs(H - this.CalculatedFrame.H) < 0.001
+	if (Math.abs(Y - this.CalculatedFrame.T2) < 0.001
+		&& Math.abs(X - this.CalculatedFrame.L2) < 0.001
+		&& Math.abs(W - this.CalculatedFrame.W2) < 0.001
+		&& Math.abs(H - this.CalculatedFrame.H2) < 0.001
 		&& PageIndex === this.CalculatedFrame.PageIndex)
 		return;
 
@@ -11270,24 +11270,26 @@ Paragraph.prototype.Change_Frame = function(X, Y, W, H, PageIndex)
 		this.LogicDocument.StartAction(AscDFH.historydescription_Document_ParagraphChangeFrame);
 		var NewFramePr = FramePr.Copy();
 
-		if (Math.abs(X - this.CalculatedFrame.L) > 0.001)
+		if (Math.abs(X - this.CalculatedFrame.L2) > 0.001)
 		{
-			NewFramePr.X       = X;
+			NewFramePr.X       = X + (this.CalculatedFrame.L - this.CalculatedFrame.L2);
 			NewFramePr.XAlign  = undefined;
 			NewFramePr.HAnchor = Asc.c_oAscHAnchor.Page;
 		}
 
-		if (Math.abs(Y - this.CalculatedFrame.T) > 0.001)
+		if (Math.abs(Y - this.CalculatedFrame.T2) > 0.001)
 		{
-			NewFramePr.Y       = Y;
+			NewFramePr.Y       = Y + (this.CalculatedFrame.T - this.CalculatedFrame.T2);
 			NewFramePr.YAlign  = undefined;
 			NewFramePr.VAnchor = Asc.c_oAscVAnchor.Page;
 		}
 
-		if (Math.abs(W - this.CalculatedFrame.W) > 0.001)
-			NewFramePr.W = W;
+		if (Math.abs(W - this.CalculatedFrame.W2) > 0.001)
+		{
+			NewFramePr.W = W - Math.abs(this.CalculatedFrame.W2 - this.CalculatedFrame.W);
+		}
 
-		if (Math.abs(H - this.CalculatedFrame.H) > 0.001)
+		if (Math.abs(H - this.CalculatedFrame.H2) > 0.001)
 		{
 			if (undefined != FramePr.DropCap && Asc.c_oAscDropCap.None != FramePr.DropCap && 1 === FrameParas.length)
 			{
@@ -11295,11 +11297,11 @@ Paragraph.prototype.Change_Frame = function(X, Y, W, H, PageIndex)
 				var _H           = Math.min(H, PageH);
 				NewFramePr.Lines = this.Update_DropCapByHeight(_H);
 				NewFramePr.HRule = linerule_Exact;
-				NewFramePr.H     = H;
+				NewFramePr.H     = H - Math.abs(this.CalculatedFrame.H2 - this.CalculatedFrame.H);
 			}
 			else
 			{
-				if (H <= this.CalculatedFrame.H)
+				if (H <= this.CalculatedFrame.H2)
 					NewFramePr.HRule = linerule_Exact;
 				else
 					NewFramePr.HRule = Asc.linerule_AtLeast;
