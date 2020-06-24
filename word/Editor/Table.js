@@ -18752,7 +18752,12 @@ CTable.prototype.RecalculateEndInfo = function()
 CTable.prototype.GetMaxTableGridWidth = function()
 {
 	this.private_RecalculateGrid();
-	return this.TableSumGrid[this.TableSumGrid.length - 1];
+
+	return {
+		GapLeft   : -this.GetTableOffsetCorrection(),
+		GapRight  : this.GetRightTableOffsetCorrection(),
+		GridWidth : this.TableSumGrid[this.TableSumGrid.length - 1]
+	};
 };
 
 //----------------------------------------------------------------------------------------------------------------------

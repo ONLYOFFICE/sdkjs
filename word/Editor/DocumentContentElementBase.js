@@ -1187,9 +1187,9 @@ CDocumentContentElementBase.prototype.GetLogicDocument = function()
 CDocumentContentElementBase.prototype.GetFramePr = function(){return null;};
 /**
  * Получаем маскимальную ширину таблицы
- * @returns {number}
+ * @returns {{GapLeft : {number}, GapRight : {number}, GridWidth : {number}}}
  */
-CDocumentContentElementBase.prototype.GetMaxTableGridWidth = function(){return -1;};
+CDocumentContentElementBase.prototype.GetMaxTableGridWidth = function(){return {GapLeft : 0, GapRight : 0, GridWidth : -1};};
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

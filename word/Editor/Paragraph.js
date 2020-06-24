@@ -10740,10 +10740,10 @@ Paragraph.prototype.Document_UpdateRulersState = function()
 	{
 		var oFrame = this.CalculatedFrame;
 		this.Parent.DrawingDocument.Set_RulerState_Paragraph({
-			L         : oFrame.L,
-			T         : oFrame.T,
-			R         : oFrame.L + oFrame.W,
-			B         : oFrame.T + oFrame.H,
+			L         : oFrame.L2,
+			T         : oFrame.T2,
+			R         : oFrame.L2 + oFrame.W2,
+			B         : oFrame.T2 + oFrame.H2,
 			PageIndex : this.GetStartPageAbsolute() + oFrame.PageIndex,
 			Frame     : this
 		}, false);

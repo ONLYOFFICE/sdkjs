@@ -4779,6 +4779,26 @@ CDocument.prototype.private_RecalculateFlowParagraph         = function(RecalcIn
             FrameH = TempElement.Get_PageBounds(0).Bottom;
         }
 
+		var oTableInfo = Element.GetMaxTableGridWidth();
+
+		var nMaxGapLeft           = oTableInfo.GapLeft;
+		var nMaxGridWidth         = oTableInfo.GridWidth;
+		var nMaxGridWidthRightGap = oTableInfo.GridWidth + oTableInfo.GapRight;
+
+		for (var nTempIndex = Index + 1; nTempIndex < Index + FlowCount; ++nTempIndex)
+		{
+			var oTempTableInfo = this.Content[nTempIndex].GetMaxTableGridWidth();
+
+			if (oTempTableInfo.GapLeft > nMaxGapLeft)
+				nMaxGapLeft = oTempTableInfo.GapLeft;
+
+			if (oTempTableInfo.GridWidth > nMaxGridWidth)
+				nMaxGridWidth = oTempTableInfo.GridWidth;
+
+			if (oTempTableInfo.GridWidth + oTempTableInfo.GapRight > nMaxGridWidthRightGap)
+				nMaxGridWidthRightGap = oTempTableInfo.GridWidth + oTempTableInfo.GapRight;
+		}
+
         if (Element.IsParagraph() && -1 === FrameW && 1 === FlowCount && 1 === Element.Lines.length && undefined === FramePr.Get_W())
         {
 			FrameW     = Element.GetAutoWidthForDropCap();
@@ -4796,25 +4816,20 @@ CDocument.prototype.private_RecalculateFlowParagraph         = function(RecalcIn
         }
         else if (-1 === FrameW)
         {
-        	if (Element.IsTable() && !FramePr.Get_W())
+			if (Element.IsTable() && !FramePr.Get_W())
 			{
-				var nTableGridWidth = Element.GetMaxTableGridWidth();
-				for (var nTempIndex = Index + 1; nTempIndex < Index + FlowCount; ++nTempIndex)
-				{
-					var nTempTableGridWidth = this.Content[nTempIndex].GetMaxTableGridWidth();
-					if (-1 !== nTempTableGridWidth && nTempTableGridWidth > nTableGridWidth)
-						nTableGridWidth = nTempTableGridWidth;
-				}
-
-				FrameW = nTableGridWidth;
+				FrameW = nMaxGridWidth;
 			}
-        	else
+			else
 			{
 				FrameW = Frame_XLimit;
 			}
         }
 
-        if ((Asc.linerule_AtLeast === FrameHRule && FrameH < FramePr.H) || Asc.linerule_Exact === FrameHRule)
+		var nGapLeft  = nMaxGapLeft;
+		var nGapRight = nMaxGridWidthRightGap > FrameW ? nMaxGridWidthRightGap - FrameW : 0;
+
+		if ((Asc.linerule_AtLeast === FrameHRule && FrameH < FramePr.H) || Asc.linerule_Exact === FrameHRule)
         {
             FrameH = FramePr.H;
         }
@@ -4986,7 +5001,10 @@ CDocument.prototype.private_RecalculateFlowParagraph         = function(RecalcIn
         else
         	FrameBounds = this.Content[Index].GetFirstParagraph().Get_FrameBounds(FrameX, FrameY, FrameW, FrameH);
 
-        var FrameX2     = FrameBounds.X, FrameY2 = FrameBounds.Y, FrameW2 = FrameBounds.W, FrameH2 = FrameBounds.H;
+        var FrameX2 = FrameBounds.X - nGapLeft,
+			FrameY2 = FrameBounds.Y,
+			FrameW2 = FrameBounds.W + nGapLeft + nGapRight,
+			FrameH2 = FrameBounds.H;
 
         if (!(RecalcResult & recalcresult_NextElement))
         {
