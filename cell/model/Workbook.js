@@ -6890,13 +6890,8 @@
 		var res = [];
 		for (var i = 0; i < this.aSlicers.length; i++) {
 			var cache = this.aSlicers[i].getSlicerCache();
-			if (cache) {
-				var index = cache.pivotTables.find(function(elem) {
-					return elem.sheetId === sheetId && elem.name === pivotName;
-				});
-				if (-1 !== index) {
-					res.push(cache);
-				}
+			if (cache && cache.containsPivotTable(sheetId, pivotName)) {
+				res.push(cache);
 			}
 		}
 		return res;
