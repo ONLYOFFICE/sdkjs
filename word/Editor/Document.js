@@ -4827,7 +4827,7 @@ CDocument.prototype.private_RecalculateFlowParagraph         = function(RecalcIn
         }
 
 		var nGapLeft  = nMaxGapLeft;
-		var nGapRight = nMaxGridWidthRightGap > FrameW && nMaxGridWidth < FrameW ? nMaxGridWidthRightGap - FrameW : 0;
+		var nGapRight = nMaxGridWidthRightGap > FrameW && nMaxGridWidth < FrameW + 0.001 ? nMaxGridWidthRightGap - FrameW : 0;
 
 		if ((Asc.linerule_AtLeast === FrameHRule && FrameH < FramePr.H) || Asc.linerule_Exact === FrameHRule)
         {

@@ -18756,7 +18756,7 @@ CTable.prototype.GetMaxTableGridWidth = function()
 	return {
 		GapLeft   : -this.GetTableOffsetCorrection(),
 		GapRight  : this.GetRightTableOffsetCorrection(),
-		GridWidth : this.TableSumGrid[this.TableSumGrid.length - 1]
+		GridWidth : this.TableSumGrid[this.TableSumGrid.length - 1] + this.GetTableOffsetCorrection() - this.GetRightTableOffsetCorrection()
 	};
 };
 
