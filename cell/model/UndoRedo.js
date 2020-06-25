@@ -609,7 +609,7 @@ function (window, undefined) {
 				case this.NamedSheetViewChange:
 					if (window['AscCommonExcel'].UndoRedoData_NamedSheetView) {
 						return new window['AscCommonExcel'].UndoRedoData_NamedSheetView();
-					}
+			}
 			}
 			return null;
 		};
@@ -1364,6 +1364,9 @@ function (window, undefined) {
 	UndoRedoData_BinaryWrapper.prototype.readData = function (data) {
 		var reader = new AscCommon.FT_Stream2(this.binary, this.len);
 		data.Read_FromBinary2(reader);
+	};	UndoRedoData_BinaryWrapper.prototype.readData = function (data) {
+		var reader = new AscCommon.FT_Stream2(this.binary, this.len);
+		data.Read_FromBinary2(reader);
 	};
 	function UndoRedoData_BinaryWrapper2(data) {
 		this.binary = null;
@@ -1391,7 +1394,6 @@ function (window, undefined) {
 		var reader = new AscCommon.FT_Stream2(this.binary, this.len);
 		data.Read_FromBinary2(reader);
 	};
-
 	function UndoRedoData_Layout(from, to) {
 		this.from = from;
 		this.to = to;
@@ -2180,7 +2182,7 @@ function (window, undefined) {
 			if (worksheetSource) {
 				wrapper.readData(worksheetSource);
 				worksheetSource.fromWorksheetSource(worksheetSource, true);
-			}
+		}
 		}
 	};
 	UndoRedoWorkbook.prototype.forwardTransformationIsAffect = function (Type) {
@@ -2889,7 +2891,7 @@ function (window, undefined) {
 
 				for (i = 0; i < ws.aNamedSheetViews.length; i++) {
 					ws.aNamedSheetViews[i]._isActive = false;
-				}
+		}
 
 				ws.setActiveNamedSheetView(activeId);
 				if (namedSheetView) {
@@ -3168,7 +3170,7 @@ function (window, undefined) {
 						var nCol = collaborativeEditing.getLockOtherColumn2(nSheetId, range.c1);
 						if (nCol !== range.c1 || nRow !== range.r1) {
 							_obj.cellId = new AscCommon.CellBase(nRow, nCol).getName();
-						}
+				}
 					}
 				}
 				autoFilters.Redo(Type, Data);
@@ -3837,6 +3839,17 @@ function (window, undefined) {
 				slicerCache = oModel.getSlicerCacheByName(Data.name);
 				if (slicerCache) {
 					slicerCache.setHideItemsWithNoData(bUndo ? Data.from : Data.to);
+					updateByCacheName = Data.name;
+				}
+				break;
+			}
+			case AscCH.historyitem_Slicer_SetCacheData: {
+				slicerCache = oModel.getSlicerCacheByName(Data.name);
+				if (slicerCache) {
+					var cache = new Asc.CT_slicerCacheDefinition();
+					var wrapper = bUndo ? Data.from : Data.to;
+					wrapper.initObject(cache);
+					slicerCache.data = cache.data;
 					updateByCacheName = Data.name;
 				}
 				break;

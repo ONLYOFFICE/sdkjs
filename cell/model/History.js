@@ -261,6 +261,7 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Slicer_SetCacheCustomListSort = 15;
 	window['AscCH'].historyitem_Slicer_SetCacheCrossFilter = 16;
 	window['AscCH'].historyitem_Slicer_SetCacheHideItemsWithNoData = 17;
+	window['AscCH'].historyitem_Slicer_SetCacheData = 18;
 	
 	window['AscCH'].historyitem_NamedSheetView_SetName = 1;
 	window['AscCH'].historyitem_NamedSheetView_DeleteFilter = 2;
@@ -553,7 +554,7 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 			this.workbook.handlers.trigger("cleanCellCache", i, [Point.UpdateRigions[i]]);
 			var curSheet = this.workbook.getWorksheetById(i);
 			if (curSheet)
-				this.workbook.getWorksheetById(i).updateSlicersByRange(Point.UpdateRigions[i]);
+			this.workbook.getWorksheetById(i).updateSlicersByRange(Point.UpdateRigions[i]);
 		}
 
 		if (oRedoObjectParam.bOnSheetsChanged)

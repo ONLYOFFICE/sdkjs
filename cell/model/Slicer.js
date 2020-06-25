@@ -1115,7 +1115,24 @@
 		}
 		return newName;
 	};
+	
+	CT_slicerCacheDefinition.prototype.Write_ToBinary2 = function(w) {
+		var old = new AscCommon.CMemory(true);
+		pptx_content_writer.BinaryFileWriter.ExportToMemory(old);
+		pptx_content_writer.BinaryFileWriter.ImportFromMemory(w);
+		pptx_content_writer.BinaryFileWriter.StartRecord(0);
+		this.toStream(pptx_content_writer.BinaryFileWriter, null, null, true);
+		pptx_content_writer.BinaryFileWriter.EndRecord();
+		pptx_content_writer.BinaryFileWriter.ExportToMemory(w);
+		pptx_content_writer.BinaryFileWriter.ImportFromMemory(old);
+	};
 
+	CT_slicerCacheDefinition.prototype.Read_FromBinary2 = function(r) {
+		var fileStream = r.ToFileStream();
+		fileStream.GetUChar();
+		this.fromStream(fileStream, true, null);
+		r.FromFileStream(fileStream);
+	};
 	CT_slicerCacheDefinition.prototype.toStream = function (s, tableIds, sheetIds, historySerialize) {
 		s.WriteUChar(AscCommon.g_nodeAttributeStart);
 		s._WriteString2(0, this.name);
@@ -1129,7 +1146,7 @@
 			s.WriteULong(this.pivotTables.length);
 			for (var i = 0; i < this.pivotTables.length; i++){
 				s.StartRecord(0);
-				this.pivotTables[i].toStream(s, sheetIds);
+				this.pivotTables[i].toStream(s, sheetIds, historySerialize);
 				s.EndRecord();
 			}
 			s.EndRecord();
@@ -1148,7 +1165,7 @@
 			s.WriteRecord4(4, hideNoData);
 		}
 	};
-	CT_slicerCacheDefinition.prototype.fromStream = function (s, historySerialize, sheetIds) {
+	CT_slicerCacheDefinition.prototype.fromStream = function (s, historySerialize) {
 		var _type;
 		var _len = s.GetULong();
 		var _start_pos = s.cur;
@@ -1188,7 +1205,7 @@
 					{
 						s.Skip2(1); // type
 						var tmp = new CT_slicerCachePivotTable();
-						tmp.fromStream(s, sheetIds);
+						tmp.fromStream(s, historySerialize);
 						this.pivotTables.push(tmp);
 					}
 					break;
@@ -1317,7 +1334,11 @@
 		var pivotTables = this.getPivotTables();
 		this._applyPivotFilter(api, fieldIndex, pivotTables, excludePivot, values, 0, 0, confirmation, function(isSuccess) {
 			if (isSuccess) {
+				var oldVal = new AscCommonExcel.UndoRedoData_BinaryWrapper2(t);
 				t.data.tabular.fromAutoFiltersOptionsElements(values);
+				var newVal = new AscCommonExcel.UndoRedoData_BinaryWrapper2(t);
+				History.Add(AscCommonExcel.g_oUndoRedoSlicer, AscCH.historyitem_Slicer_SetCacheData,
+					null, null, new AscCommonExcel.UndoRedoData_Slicer(t.name, oldVal, newVal));
 				var slicers = wb.getSlicersByCacheName(t.name);
 				if (slicers) {
 					slicers.forEach(function(slicer) {
@@ -1652,14 +1673,18 @@
 
 		return res;
 	};
-	CT_slicerCachePivotTable.prototype.toStream = function (s, sheetIds) {
+	CT_slicerCachePivotTable.prototype.toStream = function (s, sheetIds, historySerialize) {
 		s.WriteUChar(AscCommon.g_nodeAttributeStart);
-		s._WriteUInt2(0, sheetIds[this.sheetId] || 1);
+		if (historySerialize) {
+			s._WriteString2(0, this.sheetId);
+		} else {
+			s._WriteUInt2(0, sheetIds[this.sheetId] || 1);
+		}
 		s._WriteString2(1, this.name);
 		s.WriteUChar(AscCommon.g_nodeAttributeEnd);
 
 	};
-	CT_slicerCachePivotTable.prototype.fromStream = function (s) {
+	CT_slicerCachePivotTable.prototype.fromStream = function (s, historySerialize) {
 		var _len = s.GetULong();
 		var _start_pos = s.cur;
 		var _end_pos = _len + _start_pos;
@@ -1674,7 +1699,11 @@
 			switch (_at)
 			{
 				case 0: {
-					this.tabIdOpen = s.GetULong();
+					if (historySerialize) {
+						this.sheetId = s.GetString2();
+					} else {
+						this.tabIdOpen = s.GetULong();
+					}
 					break;
 				}
 				case 1: { this.name = s.GetString2(); break; }
