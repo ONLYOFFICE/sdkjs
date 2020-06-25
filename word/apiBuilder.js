@@ -948,18 +948,18 @@
 			return false;
 		}
 
-		var ParaTextPr = null;
+		var TextPr = null;
 		if (true === isNone)
 		{
-			ParaTextPr = new ParaTextPr({HighLight : highlight_None});
+			TextPr = new ParaTextPr({HighLight : highlight_None});
 			Document.AddToParagraph(ParaTextPr);
 			this.TextPr.HighlightColor = highlight_None;
 		}
 		else
 		{
 			var color = new CDocumentColor(r, g, b);
-			ParaTextPr = new ParaTextPr({HighLight : color});
-			Document.AddToParagraph(ParaTextPr);
+			TextPr = new ParaTextPr({HighLight : color});
+			Document.AddToParagraph(new ParaTextPr({HighLight : color}));
 		}
 
 		this.TextPr.Merge(ParaTextPr.Value);
@@ -1446,7 +1446,7 @@
 			return false;
 		}
 
-		Document.SetParagraphStyle(styleName, true);
+		Document.SetParagraphStyle(oStyle.GetName(), true);
 		
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
