@@ -355,7 +355,7 @@
 	 * Added text in the specified position
 	 * @param {String} sText
 	 * @param {string} [sPosition = "after"] - can be "before" or "after"
-	 * @return {String}
+	 * @return {bool}
 	 */	
 	ApiRange.prototype.AddText = function(sText, sPosition)
 	{
@@ -404,12 +404,12 @@
 			firstRun.AddText(sText, firstRunPos);
 		}
 
-		return this;
+		return true;
 	};
 	/**
 	 * Added the bookmark to the specified range
 	 * @param {String} sName
-	 * @return {ApiRange}
+	 * @return {bool}
 	 */	
 	ApiRange.prototype.AddBookmark = function(sName)
 	{
@@ -430,25 +430,30 @@
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
 
-		return this;
+		return true;
 	};
 	/**
 	 * Add a hyperlink to a range. 
 	 * @param {string} sLink - link to be add.
 	 * @param {string} sScreenTipText - ScreenTip text
 	 * @typeofeditors ["CDE"]
-	 * @return {bool} 
+	 * @return {ApiHyperlink | null} 
 	 */
 	ApiRange.prototype.AddHyperlink = function(sLink, sScreenTipText)
 	{
 		if (typeof(sLink) !== "string" || sLink === "")
-			return false;
+			return null;
 		if (typeof(sScreenTipText) !== "string")
 			sScreenTipText = "";
 
+		this.GetAllParagraphs();
+		if (this.Paragraphs.length > 1)
+			return null;
+
 		var Document	= editor.private_GetLogicDocument();
-		var hyperlinkPr	= new Asc.CHyperlinkProperty()
+		var hyperlinkPr	= new Asc.CHyperlinkProperty();
 		var urlType		= AscCommon.getUrlType(sLink);
+		var oHyperlink	= null;
 
 		if (!/(((^https?)|(^ftp)):\/\/)|(^mailto:)/i.test(sLink))
 			sLink = (urlType === 0) ? null :(( (urlType === 2) ? 'mailto:' : 'http://' ) + sLink);
@@ -458,11 +463,11 @@
 		hyperlinkPr.put_ToolTip(sScreenTipText);
 		hyperlinkPr.put_Bookmark(null);
 
-		this.Select();
-		Document.AddHyperlink(hyperlinkPr);
+		this.Select(false);
+		oHyperlink = new ApiHyperlink(this.Paragraphs[0].Paragraph.AddHyperlink(hyperlinkPr));
 		Document.RemoveSelection();
 
-		return true;
+		return oHyperlink;
 	};
 	/**
 	 * Get text in the specified range
@@ -489,7 +494,7 @@
 	};
 	/**
 	 * Gets a collection of paragraphs that represents all paragraphs in the specified range.
-	 * @return {Array}
+	 * @return {ApiParagraph[]}
 	 */	
 	ApiRange.prototype.GetAllParagraphs = function()
 	{
@@ -553,6 +558,8 @@
 				}
 			}
 		}
+
+		this.Paragraphs = RangeParagraphsList;
 
 		return RangeParagraphsList;
 	};
@@ -1606,17 +1613,153 @@
 	 * Class representing a hyperlink of Paragraph
 	 * @constructor
 	 */
-	function ApiParaHyperlink(ParaHyperlink)
+	function ApiHyperlink(ParaHyperlink)
 	{
-		this.ParaHyperlink = ParaHyperlink;
+		this.ParaHyperlink		= ParaHyperlink;
 	}
-	ApiParaHyperlink.prototype.constructor = ApiParaHyperlink;
+	ApiHyperlink.prototype.constructor = ApiHyperlink;
 
-	ApiParaHyperlink.prototype.GetClassType = function()
+	ApiHyperlink.prototype.GetClassType = function()
 	{
-		return "parahyperlink";
+		return "hyperlink";
 	};
-	ApiParaHyperlink.prototype.GetElement = function(nPos)
+	/**
+	 * Sets the hyperlink address.
+	 * @typeofeditors ["CDE"]
+	 * @param {string} sLink - start character in current element
+	 * @returns {bool} 
+	 * */
+	ApiHyperlink.prototype.SetLink = function(sLink)
+	{
+		if (typeof(sLink) !== "string")
+			return false;
+		if (sLink == undefined)
+			sLink = "";
+
+		var urlType	= undefined;
+
+		if (sLink !== "")
+		{
+			urlType		= AscCommon.getUrlType(sLink);
+			if (!/(((^https?)|(^ftp)):\/\/)|(^mailto:)/i.test(sLink))
+				sLink = (urlType === 0) ? null :(( (urlType === 2) ? 'mailto:' : 'http://' ) + sLink);
+			sLink = sLink.replace(new RegExp("%20",'g')," ");
+		}
+		
+		this.ParaHyperlink.SetValue(sLink);
+		
+		return true;
+	};
+	/**
+	 * Sets the display text of the hyperlink.
+	 * @typeofeditors ["CDE"]
+	 * @param {string} sDisplay - start character in current element
+	 * @returns {bool} 
+	 * */
+	ApiHyperlink.prototype.SetDisplayedText = function(sDisplay)
+	{
+		if (typeof(sDisplay) !== "string")
+			return false;
+		if (sDisplay == undefined)
+			sDisplay = "";
+
+		var HyperRun = null;
+		var Styles = editor.WordControl.m_oLogicDocument.Get_Styles();
+
+		if (this.ParaHyperlink.Content.length === 0)
+		{
+			HyperRun = editor.CreateRun(); 
+			HyperRun.AddText(sDisplay);
+			this.ParaHyperlink.Add_ToContent(0, HyperRun.Run, false);
+			HyperRun.Run.Set_RStyle(Styles.GetDefaultHyperlink());
+		}
+		else 
+		{
+			HyperRun = this.GetElement(0);
+
+			if (this.ParaHyperlink.Content.length > 1)
+			{
+				this.ParaHyperlink.RemoveFromContent(1, this.ParaHyperlink.Content.length - 1);
+			}
+
+			HyperRun.ClearContent();
+			HyperRun.AddText(sDisplay);
+		}
+		
+		return true;
+	};
+	/**
+	 * Sets the screen tip text of the hyperlink.
+	 * @typeofeditors ["CDE"]
+	 * @param {string} sScreenTipText - start character in current element
+	 * @returns {bool} 
+	 * */
+	ApiHyperlink.prototype.SetScreenTipText = function(sScreenTipText)
+	{
+		if (typeof(sScreenTipText) !== "string")
+			return false;
+		if (sScreenTipText == undefined)
+			sScreenTipText = "";
+
+		this.ParaHyperlink.SetToolTip(sScreenTipText);
+		
+		return true;
+	};
+	/**
+	 * Gets the link text of the hyperlink.
+	 * @typeofeditors ["CDE"]
+	 * @returns {string} 
+	 * */
+	ApiHyperlink.prototype.GetLinkedText = function()
+	{
+		var sText = null;
+
+		if (this.ParaHyperlink.Content.length !== 0)
+		{
+			sText = this.ParaHyperlink.GetValue();
+		}
+
+		return sText;
+	};
+	/**
+	 * Gets the displayed text of the hyperlink.
+	 * @typeofeditors ["CDE"]
+	 * @returns {string} 
+	 * */
+	ApiHyperlink.prototype.GetDisplayedText = function()
+	{
+		var sText = null;
+
+		if (this.ParaHyperlink.Content.length !== 0)
+		{
+			sText = this.ParaHyperlink.Get_Text();
+		}
+
+		return sText;
+	};
+	/**
+	 * Gets the ScreenTip text of the hyperlink.
+	 * @typeofeditors ["CDE"]
+	 * @returns {string} 
+	 * */
+	ApiHyperlink.prototype.GetScreenTipText = function()
+	{
+		var sText = null;
+
+		if (this.ParaHyperlink.Content.length !== 0)
+		{
+			sText = this.ParaHyperlink.GetToolTip();
+		}
+
+		return sText;
+	};
+	/**
+	 * Get the element of the hyperlink using the position specified.
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {number} nPos - The position where the element which content we want to get must be located.
+	 * @returns {?ParagraphContent}
+	 */
+	ApiHyperlink.prototype.GetElement = function(nPos)
 	{
 		if (nPos < 0 || nPos >= this.ParaHyperlink.Content.length)
 			return null;
@@ -1626,9 +1769,35 @@
 			return new ApiRun(this.ParaHyperlink.Content[nPos]);
 		}
 	};
-	ApiParaHyperlink.prototype.GetElementsCount = function()
+	/**
+	 * Get the number of elements in the current hyperlink.
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {number}
+	 */
+	ApiHyperlink.prototype.GetElementsCount = function()
 	{
 		return this.ParaHyperlink.GetElementsCount();
+	};
+	/**
+	 * Sets default hyperlink style.
+	 * @typeofeditors ["CDE"]
+	 * @returns {bool} 
+	 * */
+	ApiHyperlink.prototype.SetDefaultStyle = function()
+	{
+		var HyperRun = null;
+		var Styles = editor.WordControl.m_oLogicDocument.Get_Styles();
+
+		for (var nRun = 0; nRun < this.ParaHyperlink.Content.length; nRun++)
+		{
+			HyperRun = this.ParaHyperlink.Content[nRun];
+			if (!(HyperRun instanceof ParaRun))
+				continue;
+
+			HyperRun.Run.Set_RStyle(Styles.GetDefaultHyperlink());
+		}
+			
+		return true;
 	};
 	/**
 	 * Returns a Range object that represents the part of the document contained in the specified hyperlink.
@@ -1637,7 +1806,7 @@
 	 * @param {Number} End - end character in current element
 	 * @returns {ApiRange} 
 	 * */
-	ApiParaHyperlink.prototype.GetRange = function(Start, End)
+	ApiHyperlink.prototype.GetRange = function(Start, End)
 	{
 		var Range = new ApiRange(this.ParaHyperlink, Start, End);
 
@@ -2179,6 +2348,27 @@
 	Api.prototype.CreateRun = function()
 	{
 		return new ApiRun(new ParaRun(null, false));
+	};
+	/**
+	 * Create a new hyperlink text block to be inserted to the current paragraph or table.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @param {string} sLink - link to 
+	 * @param {string} sDisplay - display text
+	 * @param {string} sScreenTipText - ScreenTip text
+	 * @returns {ApiHyperlink}
+	 */
+	Api.prototype.CreateHyperlink = function(sLink, sDisplay, sScreenTipText)
+	{
+		// Создаем гиперссылку
+		var oHyperlink		= new ParaHyperlink();
+		var apiHyperlink	= new ApiHyperlink(oHyperlink);
+
+		apiHyperlink.SetLink(sLink);
+		apiHyperlink.SetDisplayedText(sDisplay);
+		apiHyperlink.SetScreenTipText(sScreenTipText);
+		
+		return apiHyperlink;
 	};
 
 	/**
@@ -4044,18 +4234,20 @@
 	 * @param {string} sLink - link to be add.
 	 * @param {string} sScreenTipText - ScreenTip text
 	 * @typeofeditors ["CDE"]
-	 * @return {bool} 
+	 * @return {ApiHyperlink | null} 
 	 */
 	ApiParagraph.prototype.AddHyperlink = function(sLink, sScreenTipText)
 	{
 		if (typeof(sLink) !== "string" || sLink === "")
-			return false;
+			return null;
 		if (typeof(sScreenTipText) !== "string")
 			sScreenTipText = "";
 		
 		var oDocument	= editor.private_GetLogicDocument();
 		var hyperlinkPr	= new Asc.CHyperlinkProperty()
 		var urlType		= AscCommon.getUrlType(sLink);
+		var oHyperlink	= null;
+
 		this.Paragraph.SelectAll(1);
 		if (!/(((^https?)|(^ftp)):\/\/)|(^mailto:)/i.test(sLink))
 			sLink = (urlType === 0) ? null :(( (urlType === 2) ? 'mailto:' : 'http://' ) + sLink);
@@ -4065,9 +4257,10 @@
 		hyperlinkPr.put_ToolTip(sScreenTipText);
 		hyperlinkPr.put_Bookmark(null);
 		
-		this.Paragraph.AddHyperlink(hyperlinkPr);
+		oHyperlink = new ApiHyperlink(this.Paragraph.AddHyperlink(hyperlinkPr));
 		oDocument.RemoveSelection();
-		return true;
+
+		return oHyperlink;
 	};
 	/**
 	 * Returns a Range object that represents the part of the document contained in the specified paragraph.
@@ -4996,21 +5189,21 @@
 	 * @param {string} sLink - link to be add.
 	 * @param {string} sScreenTipText - ScreenTip text
 	 * @typeofeditors ["CDE"]
-	 * @return {bool} 
+	 * @return {ApiHyperlink | null} 
 	 */
 	ApiRun.prototype.AddHyperlink = function(sLink, sScreenTipText)
 	{
 		if (typeof(sLink) !== "string" || sLink === "")
-			return false;
+			return null;
 		if (typeof(sScreenTipText) !== "string")
 			sScreenTipText = "";
 
 		var Document	= editor.private_GetLogicDocument();
 		var parentPara	= this.Run.GetParagraph();
-		if (!parentPara)
-			return false;
+		if (!parentPara | this.Run.Content.length === 0)
+			return null;
 		if (this.GetParentContentControl() instanceof ApiInlineLvlSdt)
-			return false;
+			return null;
 
 		function find_parentParaDepth(DocPos)
 		{
@@ -5022,6 +5215,7 @@
 				}
 			}
 		}
+
 		var StartPos		= this.Run.GetDocumentPositionFromObject();
 		var EndPos			= this.Run.GetDocumentPositionFromObject();
 		StartPos.push({Class: this.Run, Position: 0});
@@ -5029,6 +5223,7 @@
 		var parentParaDepth = find_parentParaDepth(StartPos);
 		StartPos[parentParaDepth].Class.SetContentSelection(StartPos, EndPos, parentParaDepth, 0, 0);
 
+		var oHyperlink	= null;
 		var hyperlinkPr	= new Asc.CHyperlinkProperty()
 		var urlType		= AscCommon.getUrlType(sLink);
 		if (!/(((^https?)|(^ftp)):\/\/)|(^mailto:)/i.test(sLink))
@@ -5039,10 +5234,10 @@
 		hyperlinkPr.put_Bookmark(null);
 
 		parentPara.Selection.Use = true;
-		parentPara.AddHyperlink(hyperlinkPr);
+		oHyperlink = new ApiHyperlink(parentPara.AddHyperlink(hyperlinkPr));
 		Document.RemoveSelection();
 
-		return true;
+		return oHyperlink;
 	};
 	/**
 	 * Create a copy of the run.
@@ -10576,9 +10771,17 @@
 	ApiRun.prototype["SetUnderline"]                 = ApiRun.prototype.SetUnderline;
 	ApiRun.prototype["SetVertAlign"]                 = ApiRun.prototype.SetVertAlign;
 
-	ApiParaHyperlink.prototype["GetClassType"]       = ApiParaHyperlink.prototype.GetClassType;
-	ApiParaHyperlink.prototype["GetElement"]         = ApiParaHyperlink.prototype.GetElement;
-	ApiParaHyperlink.prototype["GetRange"]           = ApiParaHyperlink.prototype.GetRange;
+	ApiHyperlink.prototype["GetClassType"]           = ApiHyperlink.prototype.GetClassType;
+	ApiHyperlink.prototype["SetLink"]                = ApiHyperlink.prototype.SetLink;
+	ApiHyperlink.prototype["SetDisplayedText"]       = ApiHyperlink.prototype.SetDisplayedText;
+	ApiHyperlink.prototype["SetScreenTipText"]       = ApiHyperlink.prototype.SetScreenTipText;
+	ApiHyperlink.prototype["GetLinkedText"]          = ApiHyperlink.prototype.GetLinkedText;
+	ApiHyperlink.prototype["GetDisplayedText"]       = ApiHyperlink.prototype.GetDisplayedText;
+	ApiHyperlink.prototype["GetScreenTipText"]       = ApiHyperlink.prototype.GetScreenTipText;
+	ApiHyperlink.prototype["GetElement"]             = ApiHyperlink.prototype.GetElement;
+	ApiHyperlink.prototype["GetElementsCount"]       = ApiHyperlink.prototype.GetElementsCount;
+	ApiHyperlink.prototype["SetDefaultStyle"]        = ApiHyperlink.prototype.SetDefaultStyle;
+	ApiHyperlink.prototype["GetRange"]               = ApiHyperlink.prototype.GetRange;
 
 	ApiSection.prototype["GetClassType"]             = ApiSection.prototype.GetClassType;
 	ApiSection.prototype["SetType"]                  = ApiSection.prototype.SetType;
@@ -10929,7 +11132,8 @@
 	function private_IsSupportedParaElement(oElement)
 	{
 		if (oElement instanceof ApiRun
-			|| oElement instanceof ApiInlineLvlSdt)
+			|| oElement instanceof ApiInlineLvlSdt 
+			|| oElement instanceof ApiHyperlink)
 			return true;
 
 		return false;
@@ -10942,7 +11146,7 @@
 		else if (oElement instanceof CInlineLevelSdt)
 			return new ApiInlineLvlSdt(oElement);
 		else if (oElement instanceof ParaHyperlink)
-			return new ApiParaHyperlink(oElement);
+			return new ApiHyperlink(oElement);
 		else
 			return new ApiUnsupported();
 	}
@@ -11231,6 +11435,10 @@
 	ApiRun.prototype.private_GetImpl = function()
 	{
 		return this.Run;
+	};
+	ApiHyperlink.prototype.private_GetImpl = function()
+	{
+		return this.ParaHyperlink;
 	};
 	ApiRun.prototype.OnChangeTextPr = function(oApiTextPr)
 	{
