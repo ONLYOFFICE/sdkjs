@@ -952,17 +952,16 @@
 		if (true === isNone)
 		{
 			TextPr = new ParaTextPr({HighLight : highlight_None});
-			Document.AddToParagraph(ParaTextPr);
-			this.TextPr.HighlightColor = highlight_None;
+			Document.AddToParagraph(TextPr);
 		}
 		else
 		{
 			var color = new CDocumentColor(r, g, b);
 			TextPr = new ParaTextPr({HighLight : color});
-			Document.AddToParagraph(new ParaTextPr({HighLight : color}));
+			Document.AddToParagraph(TextPr);
 		}
 
-		this.TextPr.Merge(ParaTextPr.Value);
+		this.TextPr.Merge(TextPr.Value);
 
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
