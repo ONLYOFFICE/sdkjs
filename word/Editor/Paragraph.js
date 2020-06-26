@@ -10744,7 +10744,7 @@ Paragraph.prototype.Document_UpdateRulersState = function()
 			T         : oFrame.T2,
 			R         : oFrame.L2 + oFrame.W2,
 			B         : oFrame.T2 + oFrame.H2,
-			PageIndex : this.GetStartPageAbsolute() + oFrame.PageIndex,
+			PageIndex : this.GetStartPageAbsolute(),
 			Frame     : this
 		}, false);
 	}
