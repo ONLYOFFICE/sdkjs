@@ -223,7 +223,7 @@ function CFlowParagraph(Paragraph, X, Y, W, H, Dx, Dy, StartIndex, FlowCount, Wr
     this.Paragraph = Paragraph;
     this.Id        = Paragraph.Get_Id();
 
-    this.PageNum   = Paragraph.PageNum + Paragraph.Pages.length - 1;
+    this.PageNum   = Paragraph.PageNum + Paragraph.GetPagesCount() - 1;
     this.PageController = 0;
 
     this.StartIndex = StartIndex;

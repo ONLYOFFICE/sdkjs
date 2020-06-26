@@ -694,6 +694,13 @@ CTable.prototype.private_RecalculateGrid = function()
 		if (!PageFields)
 			PageFields = this.Parent.Get_ColumnFields ? this.Parent.Get_ColumnFields(this.Get_Index(), this.Get_AbsoluteColumn(this.PageNum), this.GetAbsolutePage(this.PageNum)) : this.Parent.Get_PageFields(this.private_GetRelativePageIndex(this.PageNum));
 
+		var oFramePr = this.GetFramePr();
+		if (oFramePr && undefined !== oFramePr.Get_W())
+		{
+			PageFields.X      = 0;
+			PageFields.XLimit = oFramePr.Get_W();
+		}
+
 		var MaxTableW = PageFields.XLimit - PageFields.X - TablePr.TableInd - this.GetTableOffsetCorrection() + this.GetRightTableOffsetCorrection();
 
         // 4. Рассчитаем желаемую ширину таблицы таблицы

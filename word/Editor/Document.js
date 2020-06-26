@@ -7725,7 +7725,7 @@ CDocument.prototype.Internal_GetContentPosByXY = function(X, Y, nCurPage, Column
         var PrevItem       = Item.Get_DocumentPrev();
         var bEmptySectPara = (type_Paragraph === Item.GetType() && undefined !== Item.Get_SectionPr() && true === Item.IsEmpty() && null !== PrevItem && (type_Paragraph !== PrevItem.GetType() || undefined === PrevItem.Get_SectionPr())) ? true : false;
 
-        if (false != Item.Is_Inline() && (type_Paragraph !== Item.GetType() || false === bEmptySectPara))
+        if (!Page.IsFlowTable(Item) && !Page.IsFrame(Item) && (type_Paragraph !== Item.GetType() || false === bEmptySectPara))
             InlineElements.push(Index);
     }
 
