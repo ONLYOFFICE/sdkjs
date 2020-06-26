@@ -19058,17 +19058,20 @@ CTableAnchorPosition.prototype =
             }
 
             case c_oAscVAnchor.Text:
-            {
-                if ( true === bAlign )
-                {
-                    // Word не дает делать прилегания в данном случае
-                    this.CalcY = this.Y;
-                }
-                else
-                    this.CalcY = this.Y + Value;
+			{
+				if (true === bAlign)
+				{
+					// Word не дает делать прилегания в данном случае, но при этом почему-то наезжает на верхний
+					// параграф (см. баг #41115)
+					this.CalcY = this.Y - AscCommon.TwipsToMM(2);
+				}
+				else
+				{
+					this.CalcY = this.Y + Value;
+				}
 
-                break;
-            }
+				break;
+			}
         }
 
         return this.CalcY;
