@@ -1406,7 +1406,7 @@
 				break;
 			}
 			case window['AscCommonExcel'].insertSlicerType.pivotTable : {
-				res = this.containsPivotTable(pivotTable.GetWS().getId(), pivotTable.asc_getName());
+				res = this.indexOfPivotTable(pivotTable.GetWS().getId(), pivotTable.asc_getName()) >= 0;
 				break;
 			}
 		}
@@ -1572,11 +1572,19 @@
 		});
 		return res;
 	};
-	CT_slicerCacheDefinition.prototype.containsPivotTable = function(sheetId, pivotName) {
-		var pivotTable = this.pivotTables.find(function(elem) {
+	CT_slicerCacheDefinition.prototype.indexOfPivotTable = function(sheetId, pivotName) {
+		return this.pivotTables.findIndex(function(elem) {
 			return elem.sheetId === sheetId && elem.name === pivotName;
 		});
-		return !!pivotTable;
+	};
+	CT_slicerCacheDefinition.prototype.deletePivotTable = function (sheetId, pivotName) {
+		var index = this.indexOfPivotTable(sheetId, pivotName);
+		if (index >= 0) {
+			this.pivotTables.splice(index, 1);
+		}
+	};
+	CT_slicerCacheDefinition.prototype.getPivotTablesCount = function() {
+		return this.pivotTables.length;
 	};
 
 

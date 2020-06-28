@@ -3432,6 +3432,21 @@
 			}
 		}
 	};
+	Workbook.prototype.deleteSlicersByPivotTable = function (sheetId, pivotName) {
+		var wb = this;
+		var slicerCaches = wb.getSlicerCachesByPivotTable(sheetId, pivotName);
+		slicerCaches.forEach(function (slicerCache) {
+			slicerCache.deletePivotTable(sheetId, pivotName);
+			if (0 === slicerCache.getPivotTablesCount()) {
+				var slicers = wb.getSlicersByCacheName(slicerCache.name);
+				if (slicers) {
+					slicers.forEach(function (slicer) {
+						wb.deleteSlicer(slicer.name);
+					});
+				}
+			}
+		});
+	};
 
 	Workbook.prototype.deleteSlicersByTable = function (tableName, doDelDefName) {
 		History.Create_NewPoint();
@@ -6890,7 +6905,7 @@
 		var res = [];
 		for (var i = 0; i < this.aSlicers.length; i++) {
 			var cache = this.aSlicers[i].getSlicerCache();
-			if (cache && cache.containsPivotTable(sheetId, pivotName)) {
+			if (cache && cache.indexOfPivotTable(sheetId, pivotName) >= 0) {
 				res.push(cache);
 			}
 		}
@@ -7650,6 +7665,7 @@
 		History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_PivotDelete, this.getId(), null,
 			new AscCommonExcel.UndoRedoData_PivotTableRedo(pivotTable.Get_Id(), pivotTable, null));
 		this.pivotTables.splice(index, 1);
+		this.workbook.deleteSlicersByPivotTable(this.getId(), pivotTable.asc_getName());
 	};
 	Worksheet.prototype.deletePivotTables = function (range, withoutCells) {
 		for (var i = this.pivotTables.length - 1; i >= 0; --i) {
