@@ -7226,16 +7226,24 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	TableColumn.prototype.getTotalRowFormula = function (tablePart) {
+		var t = this;
 		var res = null;
-
+		var funcNum;
 		if (null !== this.TotalsRowFunction) {
+			var generateFunction = function (val) {
+				var _name = "SUBTOTAL";
+				var _f = AscCommonExcel.cFormulaFunctionToLocale ? AscCommonExcel.cFormulaFunctionToLocale[_name] : _name;
+				var _separator = AscCommon.FormulaSeparators.functionArgumentSeparator;
+				return _f + "(" + val + _separator + tablePart.DisplayName + "[" + t.Name + "])";
+			};
+
 			switch (this.TotalsRowFunction) {
 				case Asc.ETotalsRowFunction.totalrowfunctionAverage: {
-					res = "SUBTOTAL(101," + tablePart.DisplayName + "[" + this.Name + "])";
+					res = generateFunction(101);
 					break;
 				}
 				case Asc.ETotalsRowFunction.totalrowfunctionCount: {
-					res = "SUBTOTAL(103," + tablePart.DisplayName + "[" + this.Name + "])";
+					res = generateFunction(103);
 					break;
 				}
 				case Asc.ETotalsRowFunction.totalrowfunctionCountNums: {
@@ -7246,26 +7254,26 @@ function RangeDataManagerElem(bbox, data)
 					break;
 				}
 				case Asc.ETotalsRowFunction.totalrowfunctionMax: {
-					res = "SUBTOTAL(104," + tablePart.DisplayName + "[" + this.Name + "])";
+					res = generateFunction(104);
 					break;
 				}
 				case Asc.ETotalsRowFunction.totalrowfunctionMin: {
-					res = "SUBTOTAL(105," + tablePart.DisplayName + "[" + this.Name + "])";
+					res = generateFunction(105);
 					break;
 				}
 				case Asc.ETotalsRowFunction.totalrowfunctionNone: {
 					break;
 				}
 				case Asc.ETotalsRowFunction.totalrowfunctionStdDev: {
-					res = "SUBTOTAL(107," + tablePart.DisplayName + "[" + this.Name + "])";
+					res = generateFunction(107);
 					break;
 				}
 				case Asc.ETotalsRowFunction.totalrowfunctionSum: {
-					res = "SUBTOTAL(109," + tablePart.DisplayName + "[" + this.Name + "])";
+					res = generateFunction(109);
 					break;
 				}
 				case Asc.ETotalsRowFunction.totalrowfunctionVar: {
-					res = "SUBTOTAL(110," + tablePart.DisplayName + "[" + this.Name + "])";
+					res = generateFunction(110);
 					break;
 				}
 			}
