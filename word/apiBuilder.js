@@ -157,7 +157,7 @@
 	ApiRange.prototype.constructor = ApiRange;
 	ApiRange.prototype.private_SetRangePos = function(Start, End)
 	{
-		function callback(oRun)
+		function calcSumChars(oRun)
 		{
 			var nRangePos = 0;
 
@@ -165,7 +165,7 @@
 			
 			for (var nPos = 0; nPos < nCurPos; ++nPos)
 			{
-				if (para_Text === oRun.Content[nPos].Type)
+				if (para_Text === oRun.Content[nPos].Type || para_Space === oRun.Content[nPos].Type || para_Tab === oRun.Content[nPos].Type)
 					nRangePos++;
 			}
 
@@ -191,7 +191,7 @@
 			this.End 		= 0;
 			var charsCount 	= 0;
 
-			this.Element.CheckRunContent(callback);
+			this.Element.CheckRunContent(calcSumChars);
 			
 			this.End = charsCount;
 			if (this.End > 0)
@@ -222,7 +222,7 @@
 			var nCurPos = oRun.Content.length;
 			for (var nPos = 0; nPos < nCurPos; ++nPos)
 			{
-				if (para_Text === oRun.Content[nPos].Type)
+				if (para_Text === oRun.Content[nPos].Type || para_Space === oRun.Content[nPos].Type || para_Tab === oRun.Content[nPos].Type)
 					nRangePos++;
 
 				if (StartChar - charsCount === nRangePos - 1 && !isStartDocPosFinded)
@@ -241,6 +241,7 @@
 
 					isStartDocPosFinded = true;
 				}
+				
 				if (EndChar - charsCount === nRangePos - 1 && !isEndDocPosFinded)
 				{
 					var DocPosInRun = 
@@ -413,6 +414,9 @@
 	 */	
 	ApiRange.prototype.AddBookmark = function(sName)
 	{
+		private_RefreshRangesPosition();
+		private_RemoveEmptyRanges();
+
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
@@ -475,6 +479,9 @@
 	 */	
 	ApiRange.prototype.GetText = function()
 	{
+		private_RefreshRangesPosition();
+		private_RemoveEmptyRanges();
+
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
@@ -570,10 +577,11 @@
 	 */	
 	ApiRange.prototype.Select = function(bUpdate)
 	{
-		var Document = private_GetLogicDocument();
 		private_RefreshRangesPosition();
 		private_RemoveEmptyRanges();
 
+		var Document = private_GetLogicDocument();
+		
 		if (this.isEmpty || this.isEmpty === undefined)
 			return false;
 
@@ -745,6 +753,9 @@
 	 */
 	ApiRange.prototype.SetBold = function(isBold)
 	{
+		private_RefreshRangesPosition();
+		private_RemoveEmptyRanges();
+
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
@@ -783,6 +794,9 @@
 	 */
 	ApiRange.prototype.SetCaps = function(isCaps)
 	{
+		private_RefreshRangesPosition();
+		private_RemoveEmptyRanges();
+
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
@@ -823,6 +837,9 @@
 	 */
 	ApiRange.prototype.SetColor = function(r, g, b, isAuto)
 	{
+		private_RefreshRangesPosition();
+		private_RemoveEmptyRanges();
+
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
@@ -886,6 +903,9 @@
 	 */
 	ApiRange.prototype.SetDoubleStrikeout = function(isDoubleStrikeout)
 	{
+		private_RefreshRangesPosition();
+		private_RemoveEmptyRanges();
+
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
@@ -927,6 +947,9 @@
 	 */
 	ApiRange.prototype.SetHighlight = function(r, g, b, isNone)
 	{
+		private_RefreshRangesPosition();
+		private_RemoveEmptyRanges();
+
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
@@ -978,6 +1001,9 @@
 	 */
 	ApiRange.prototype.SetShd = function(sType, r, g, b)
 	{
+		private_RefreshRangesPosition();
+		private_RemoveEmptyRanges();
+
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
@@ -1046,6 +1072,9 @@
 	 */
 	ApiRange.prototype.SetItalic = function(isItalic)
 	{
+		private_RefreshRangesPosition();
+		private_RemoveEmptyRanges();
+
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
@@ -1076,6 +1105,9 @@
 	 */
 	ApiRange.prototype.SetStrikeout = function(isStrikeout)
 	{
+		private_RefreshRangesPosition();
+		private_RemoveEmptyRanges();
+
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
@@ -1118,6 +1150,9 @@
 	 */
 	ApiRange.prototype.SetSmallCaps = function(isSmallCaps)
 	{
+		private_RefreshRangesPosition();
+		private_RemoveEmptyRanges();
+
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
@@ -1159,6 +1194,9 @@
 	 */
 	ApiRange.prototype.SetSpacing = function(nSpacing)
 	{
+		private_RefreshRangesPosition();
+		private_RemoveEmptyRanges();
+
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
@@ -1198,6 +1236,9 @@
 	 */
 	ApiRange.prototype.SetUnderline = function(isUnderline)
 	{
+		private_RefreshRangesPosition();
+		private_RemoveEmptyRanges();
+		
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
@@ -1239,6 +1280,9 @@
 	 */
 	ApiRange.prototype.SetVertAlign = function(sType)
 	{
+		private_RefreshRangesPosition();
+		private_RemoveEmptyRanges();
+
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
@@ -1290,6 +1334,9 @@
 	 */
 	ApiRange.prototype.SetPosition = function(nPosition)
 	{
+		private_RefreshRangesPosition();
+		private_RemoveEmptyRanges();
+
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
@@ -1331,6 +1378,9 @@
 	 */
 	ApiRange.prototype.SetFontSize = function(FontSize)
 	{
+		private_RefreshRangesPosition();
+		private_RemoveEmptyRanges();
+
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
@@ -1369,6 +1419,9 @@
 	 */
 	ApiRange.prototype.SetFontFamily = function(sFontFamily)
 	{
+		private_RefreshRangesPosition();
+		private_RemoveEmptyRanges();
+
 		if (typeof sFontFamily !== "string")
 			return false;
 
@@ -1424,6 +1477,9 @@
 	 */
 	ApiRange.prototype.SetStyle = function(oStyle)
 	{
+		private_RefreshRangesPosition();
+		private_RemoveEmptyRanges();
+
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
@@ -1460,6 +1516,9 @@
 	 */
 	ApiRange.prototype.SetTextPr = function(oTextPr)
 	{
+		private_RefreshRangesPosition();
+		private_RemoveEmptyRanges();
+
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
@@ -1496,6 +1555,9 @@
 	 */
 	ApiRange.prototype.Delete = function()
 	{
+		private_RefreshRangesPosition();
+		private_RemoveEmptyRanges();
+		
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
