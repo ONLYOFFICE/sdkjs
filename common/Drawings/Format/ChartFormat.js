@@ -2487,7 +2487,7 @@ function CDLbl()
         }
     };
 
-    function fParseNumArray(sVal) {
+    function fParseArray(sVal, nType) {
         if(sVal[0] !== "{") {
             return null;
         }
@@ -2503,14 +2503,43 @@ function CDLbl()
                     result = [];
                     for(nIndex = 0; nIndex < aRow.length; ++nIndex) {
                         oToken = aRow[nIndex];
-                        if(oToken.type === AscCommonExcel.cElementType.number) {
-                            result.push(oToken.toNumber());
+                        if(nType === null) {
+                            if(oToken.type === AscCommonExcel.cElementType.number) {
+                                result.push(oToken.toNumber());
+                            }
+                            else if(oToken.type === AscCommonExcel.cElementType.string) {
+                                result.push(oToken.getValue());
+                            }
+                        }
+                        else {
+                            if(nType === AscCommonExcel.cElementType.number) {
+                                if(oToken.type === AscCommonExcel.cElementType.number) {
+                                    result.push(oToken.toNumber());
+                                }
+                                else {
+                                    result.push(0);
+                                }
+                            }
+                            else {
+                                if(nType === AscCommonExcel.cElementType.string) {
+                                    if(oToken.type === AscCommonExcel.cElementType.string) {
+                                        result.push(oToken.getValue());
+                                    }
+                                    else {
+                                        result.push(oToken.toString());
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
         }
         return result;
+    }
+
+    function fParseNumArray(sVal) {
+        return fParseArray(sVal, AscCommonExcel.cElementType.number);
     }
 
     function fParseNumLit(sVal) {
@@ -2539,7 +2568,6 @@ function CDLbl()
         }
         return result;
     }
-
     function fParseNumRef(sVal) {
         var result = null, aParsed, nIndex, oParsedRef, sRef;
         if(typeof sVal === "string" && sVal.length > 0) {
@@ -2878,29 +2906,40 @@ function CDLbl()
             this.setTx(null);
         }
     };
-    CSeriesBase.prototype.setValues = function(sValues) {
-        var bSuccess = false;
-        if(typeof sValues === "string" && sValues.length > 0) {
-            var oNumLit = fParseNumLit(sValues);
-            if(oNumLit) {
-                if(this.numCache) {
-                    this.setNumCache(null);
-                }
-                this.setNumLit(oNumLit);
-                bSuccess = true;
-            }
-            else {
-                var oNumRef = fParseNumRef(sValues);
-                if(oNumRef) {
-                    if(this.numLit) {
-                        this.setNumLit(null);
-                    }
-                    this.setNumRef(oNumRef);
-                }
-                bSuccess = true;
-            }
+
+    CSeriesBase.prototype.fillVal = function(oVal) {
+        if(!oVal) {
+            return;
         }
-        return bSuccess;
+
+    };
+    CSeriesBase.prototype.setValues = function(sValues) {
+       if(this.val === null) {
+           this.setVal(new CYVal());
+       }
+       var bRet = false;
+       if(this.val) {
+           bRet = this.val.setValues(sValues);
+       }
+       return bRet;
+    };
+    CSeriesBase.prototype.setXValues = function(sValues) {
+        if(this.xVal === null) {
+            this.setXVal(new CCat());
+        }
+        if(this.xVal) {
+            this.xVal.setValues(sValues);
+        }
+    };
+    CSeriesBase.prototype.setYValues = function(sValues) {
+        if(this.yVal === null) {
+            this.setYVal(new CYVal());
+        }
+        var bRet = false;
+        if(this.yVal) {
+            bRet = this.yVal.setValues(sValues);
+        }
+        return bRet;
     };
     CSeriesBase.prototype["asc_getIsVisible"] = CSeriesBase.prototype.isVisible;
     CSeriesBase.prototype["asc_setIsVisible"] = function(bVal) {
@@ -10549,7 +10588,7 @@ CScatterSeries.prototype.setFromOtherSeries = function(o)
             this.setYVal(o.yVal);
         if(o.cat)
         {
-            this.setXVal(new CXVal());
+            this.setXVal(new CCat());
             this.xVal.setFromOtherObject(o.cat);
         }
         if(o.val)
@@ -12354,118 +12393,6 @@ CUpDownBars.prototype =
             }
 };
 
-
-function CXVal()
-{
-    this.multiLvlStrRef = null;
-    this.numLit         = null;
-    this.numRef         = null;
-    this.strLit         = null;
-    this.strRef         = null;
-
-    this.Id = g_oIdCounter.Get_NewId();
-    g_oTableId.Add(this, this.Id);
-}
-
-CXVal.prototype =
-{
-    Get_Id: function()
-    {
-        return this.Id;
-    },
-
-    Refresh_RecalcData: function()
-    {},
-
-    getObjectType: function()
-    {
-        return AscDFH.historyitem_type_XVal;
-    },
-
-    Write_ToBinary2: function(w)
-    {
-        w.WriteLong(this.getObjectType());
-        w.WriteString2(this.Get_Id());
-    },
-
-    Read_FromBinary2: function(r)
-    {
-        this.Id = r.GetString2();
-    },
-
-    createDuplicate: function()
-    {
-        var ret = new CXVal();
-        if(this.multiLvlStrRef)
-        {
-            ret.setMultiLvlStrRef(this.multiLvlStrRef.createDuplicate());
-        }
-        if(this.numLit)
-        {
-            ret.setNumLit(this.numLit.createDuplicate());
-        }
-        if(this.numRef)
-        {
-            ret.setNumRef(this.numRef.createDuplicate());
-        }
-        if(this.strRef)
-        {
-            ret.setStrRef(this.strRef.createDuplicate());
-        }
-        if(this.strLit)
-        {
-            ret.setStrLit(this.strLit.createDuplicate());
-        }
-        return ret;
-    },
-
-    setFromOtherObject: function(o)
-    {
-        if(o.multiLvlStrRef)
-            this.setMultiLvlStrRef(o.multiLvlStrRef);
-        if(o.numLit)
-            this.setNumLit(o.numLit);
-        if(o.numRef)
-            this.setNumRef(o.numRef);
-        if(o.strLit)
-            this.setStrLit(o.strLit);
-        if(o.strRef)
-            this.setStrRef(o.strRef);
-    },
-
-    setMultiLvlStrRef: function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_XVal_SetMultiLvlStrRef, this.multiLvlStrRef, pr));
-        this.multiLvlStrRef = pr;
-    },
-
-    setNumLit: function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_XVal_SetNumLit, this.numLit, pr));
-        this.numLit = pr;
-    },
-
-    setNumRef: function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_XVal_SetNumRef, this.numRef, pr));
-        this.numRef = pr;
-    },
-
-    setStrLit: function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_XVal_SetStrLit, this.strLit, pr));
-        this.strLit = pr;
-    },
-
-    setStrRef: function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_XVal_SetStrRef, this.strRef, pr));
-        this.strRef = pr;
-            }
-};
-
-
-
 function CYVal()
 {
     this.numLit = null;
@@ -12546,6 +12473,31 @@ CYVal.prototype =
         {
             this.numRef.setParent(this);
         }
+    },
+
+    setValues: function(sValues) {
+        var bSuccess = false;
+        if(typeof sValues === "string" && sValues.length > 0) {
+            var oNumLit = fParseNumLit(sValues);
+            if(oNumLit) {
+                if(this.numRef) {
+                    this.setNumRef(null);
+                }
+                this.setNumLit(oNumLit);
+                bSuccess = true;
+            }
+            else {
+                var oNumRef = fParseNumRef(sValues);
+                if(oNumRef) {
+                    if(this.numLit) {
+                        this.setNumLit(null);
+                    }
+                    this.setNumRef(oNumRef);
+                }
+                bSuccess = true;
+            }
+        }
+        return bSuccess;
     }
 };
 
@@ -13516,7 +13468,6 @@ function CreateMarkerGeometryByType(type, src)
     window['AscFormat'].CTitle = CTitle;
     window['AscFormat'].CTrendLine = CTrendLine;
     window['AscFormat'].CUpDownBars = CUpDownBars;
-    window['AscFormat'].CXVal = CXVal;
     window['AscFormat'].CYVal = CYVal;
     window['AscFormat'].CChart = CChart;
     window['AscFormat'].CChartWall = CChartWall;

@@ -4795,12 +4795,12 @@ CChartSpace.prototype.rebuildSeriesFromAsc = function(asc_chart)
             var minus = 0;
             if(asc_series[0].xVal && asc_series[0].xVal.NumCache && typeof asc_series[0].xVal.Formula === "string" && asc_series[0].xVal.Formula.length > 0)
             {
-                oXVal = new AscFormat.CXVal();
+                oXVal = new AscFormat.CCat();
                 FillCatStr(oXVal, asc_series[0].xVal, true, false);
             }
             else if(asc_series[0].Cat && asc_series[0].Cat.NumCache && typeof asc_series[0].Cat.Formula === "string" && asc_series[0].Cat.Formula.length > 0)
             {
-                oXVal = new AscFormat.CXVal();
+                oXVal = new AscFormat.CCat();
                 FillCatStr(oXVal, asc_series[0].Cat, true, false);
             }
             for(var i = start_index; i < asc_series.length; ++i)
@@ -4935,7 +4935,7 @@ CChartSpace.prototype.rebuildSeriesData = function(oValRange, oCatRange, oTxRang
                 else {
                     if(!oSeries.xVal)
                     {
-                        oSeries.setXVal(new AscFormat.CXVal());
+                        oSeries.setXVal(new AscFormat.CCat());
                     }
                     oCat = oSeries.xVal;
                     if(!oCat.strRef)
@@ -5091,7 +5091,7 @@ CChartSpace.prototype.rebuildSeriesData = function(oValRange, oCatRange, oTxRang
                     else {
                         if(!oSeries.xVal)
                         {
-                            oSeries.setXVal(new AscFormat.CXVal());
+                            oSeries.setXVal(new AscFormat.CCat());
                         }
                         oCat = oSeries.xVal;
                         if(!oCat.strRef)
@@ -17047,7 +17047,7 @@ function CreateScatterChart(chartSeries, bUseCache, oOptions)
 
     if(first_series && first_series.xVal && typeof first_series.xVal.Formula === "string" && first_series.xVal.Formula.length > 0)
     {
-        oXVal = new AscFormat.CXVal();
+        oXVal = new AscFormat.CCat();
         FillCatStr(oXVal, first_series.xVal, bUseCache);
     }
     else
@@ -17056,7 +17056,7 @@ function CreateScatterChart(chartSeries, bUseCache, oOptions)
         minus = start_index === 1 ? 1 : 0;
         if(first_series)
         {
-            oXVal = new AscFormat.CXVal();
+            oXVal = new AscFormat.CCat();
             FillValNum(oXVal, first_series.Val, bUseCache);
         }
     }
