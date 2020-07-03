@@ -2487,8 +2487,9 @@ function CDLbl()
         }
     };
 
-    function fParseArray(sVal, nType) {
-        if(sVal[0] !== "{") {
+
+    function fParseSingleRow(sVal, fCallback) {
+        if(sVal[0] !== "{" || sVal[sVal.length - 1] !== "}") {
             return null;
         }
         var oToken, oParser, bResult, result = null, nIndex;
@@ -2499,63 +2500,65 @@ function CDLbl()
             if(oLastElem.type === AscCommonExcel.cElementType.array &&
                 oLastElem.getRowCount() === 1) {
                 var aRow =  oLastElem.getRow(0);
-                if(aRow.length > 0) {
-                    result = [];
-                    for(nIndex = 0; nIndex < aRow.length; ++nIndex) {
-                        oToken = aRow[nIndex];
-                        if(nType === null) {
-                            if(oToken.type === AscCommonExcel.cElementType.number) {
-                                result.push(oToken.toNumber());
-                            }
-                            else if(oToken.type === AscCommonExcel.cElementType.string) {
-                                result.push(oToken.getValue());
-                            }
-                        }
-                        else {
-                            if(nType === AscCommonExcel.cElementType.number) {
-                                if(oToken.type === AscCommonExcel.cElementType.number) {
-                                    result.push(oToken.toNumber());
-                                }
-                                else {
-                                    result.push(0);
-                                }
-                            }
-                            else {
-                                if(nType === AscCommonExcel.cElementType.string) {
-                                    if(oToken.type === AscCommonExcel.cElementType.string) {
-                                        result.push(oToken.getValue());
-                                    }
-                                    else {
-                                        result.push(oToken.toString());
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                result = fCallback(aRow);
             }
         }
         return result;
     }
-
-    function fParseNumArray(sVal) {
-        return fParseArray(sVal, AscCommonExcel.cElementType.number);
+    function fParseNumArray(sVal, bForce) {
+        return fParseSingleRow(sVal, (function (bForce) {
+            return function (aRow) {
+                var result = null, oToken, nIndex;
+                if(aRow.length > 0) {
+                    result = [];
+                    for(nIndex = 0; nIndex < aRow.length; ++nIndex) {
+                        oToken = aRow[nIndex];
+                        if(oToken.type === AscCommonExcel.cElementType.number) {
+                            result.push(oToken.toNumber());
+                        }
+                        else {
+                            if(bForce) {
+                                result.push(oToken.getValue());
+                            }
+                            else {
+                                return null;
+                            }
+                        }
+                    }
+                }
+                return result;
+            }
+        })(bForce));
     }
-
-    function fParseNumLit(sVal) {
+    function fParseStrArray(sVal) {
+        return fParseSingleRow(sVal, (function () {
+            return function (aRow) {
+                var result = null, oToken, nIndex;
+                if(aRow.length > 0) {
+                    result = [];
+                    for(nIndex = 0; nIndex < aRow.length; ++nIndex) {
+                        oToken = aRow[nIndex];
+                        result.push(oToken.toString());
+                    }
+                }
+                return result;
+            }
+        })());
+    }
+    function fParseNumLit(sVal, bForce) {
         var result = null;
         var sParsed, aNumbers, nIndex;
         if(typeof sVal === "string" && sVal.length > 0) {
             if(sVal[0] === "=") {
                 sParsed = sVal.slice(1);
-                aNumbers = fParseNumArray(sParsed);
+                aNumbers = fParseNumArray(sParsed, bForce);
             }
             else {
                 sParsed = sVal;
-                aNumbers = fParseNumArray(sParsed);
+                aNumbers = fParseNumArray(sParsed, bForce);
                 if(!Array.isArray(aNumbers)) {
                     sParsed = "{" + sParsed + "}";
-                    aNumbers = fParseNumArray(sParsed);
+                    aNumbers = fParseNumArray(sParsed, bForce);
                 }
             }
             if(Array.isArray(aNumbers) && aNumbers.length > 0) {
@@ -2563,6 +2566,31 @@ function CDLbl()
                 result.setFormatCode("General");
                 for(nIndex = 0; nIndex < aNumbers.length; ++nIndex) {
                     result.addNumericPoint(nIndex, aNumbers[nIndex]);
+                }
+            }
+        }
+        return result;
+    }
+    function fParseStrLit(sVal) {
+        var result = null;
+        var sParsed, aStr, nIndex;
+        if(typeof sVal === "string" && sVal.length > 0) {
+            if(sVal[0] === "=") {
+                sParsed = sVal.slice(1);
+                aStr = fParseStrArray(sParsed);
+            }
+            else {
+                sParsed = sVal;
+                aStr = fParseStrArray(sParsed);
+                if(!Array.isArray(aStr)) {
+                    sParsed = "{" + sParsed + "}";
+                    aStr = fParseStrArray(sParsed);
+                }
+            }
+            if(Array.isArray(aStr) && aStr.length > 0) {
+                result = new CStringLiteral();
+                for(nIndex = 0; nIndex < aStr.length; ++nIndex) {
+                    result.addStringPoint(nIndex, aStr[nIndex]);
                 }
             }
         }
@@ -2587,7 +2615,7 @@ function CDLbl()
                 }
                 for(nIndex = 0; nIndex < aParsed.length; ++nIndex) {
                     sRef = aParsed[nIndex];
-                    oParsedRef = AscCommon.parseHelp.parse3DRef(sRef);
+                    oParsedRef = AscCommon.parserHelp.parse3DRef(sRef);
                     if(!oParsedRef) {
                         return null;
                     }
@@ -2604,6 +2632,7 @@ function CDLbl()
         }
         return result;
     }
+
     function CSeriesBase() {
         AscFormat.CBaseObject.call(this);
         this.idx = null;
@@ -6697,7 +6726,6 @@ CCat.prototype =
             this.setStrRef(o.strRef);
     },
 
-
     setMultiLvlStrRef: function(pr)
     {
         History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_Cat_SetMultiLvlStrRef, this.multiLvlStrRef, pr));
@@ -6722,7 +6750,10 @@ CCat.prototype =
     {
         History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_Cat_SetStrRef, this.multiLvlStrRef, pr));
         this.strRef = pr;
-            }
+    },
+
+    setValues: function(sValues) {
+    }
 };
 
 
@@ -9352,6 +9383,7 @@ CNumLit.prototype =
         oPt.setIdx(idx);
         oPt.setVal(dNumber);
         this.addPt(oPt);
+        this.setPtCount(Math.max(this.pts.length, idx + 1));
     },
 
     update: function (sFormula, bVertical, displayEmptyCellsAs, ser) {
@@ -11112,7 +11144,14 @@ CStringLiteral.prototype =
     {
         (false === AscCommon.g_oIdCounter.m_bLoad && true === History.Is_On()) && History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_StringLiteral_SetPtCount, this.ptCount, pr));
         this.ptCount = pr;
-            }
+            },
+    addStringPoint: function(idx, sStr) {
+        var oPt = new CStringPoint();
+        oPt.setIdx(idx);
+        oPt.setVal(sStr);
+        this.addPt(oPt);
+        this.setPtCount(Math.max(this.pts.length, idx + 1));
+    }
 };
 
 
@@ -12478,7 +12517,7 @@ CYVal.prototype =
     setValues: function(sValues) {
         var bSuccess = false;
         if(typeof sValues === "string" && sValues.length > 0) {
-            var oNumLit = fParseNumLit(sValues);
+            var oNumLit = fParseNumLit(sValues, true);
             if(oNumLit) {
                 if(this.numRef) {
                     this.setNumRef(null);
