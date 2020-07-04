@@ -6751,6 +6751,25 @@ CChartSpace.prototype.getValAxisCrossType = function()
         }
     };
 
+    CChartSpace.prototype.getCatValues = function() {
+        var ret = [];
+        var aAllSeries = this.getAllSeries();
+        if(aAllSeries.length > 0) {
+            var oFirstSeries = aAllSeries[0];
+            if(oFirstSeries.getObjectType() !== AscDFH.historyitem_type_ScatterSer) {
+                var nCount = oFirstSeries.getValuesCount();
+                var oCat = oFirstSeries.cat, nIndex;
+                if(oCat) {
+                    ret = oCat.getValues(nCount);
+                }
+            }
+            else {
+
+            }
+            var aValuesCount = oFirstSeries
+        }
+        return ret;
+    };
 
     CChartSpace.prototype.getLabelsForAxis = function(oAxis){
         var aStrings = [];

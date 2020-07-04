@@ -3348,7 +3348,7 @@ BinaryChartWriter.prototype.WriteCT_lvl = function (oVal) {
     var oThis = this;
     if (null != oVal) {
         for (var i = 0, length = oVal.length; i < length; ++i) {
-            var oCurVal = oVal[i];
+            var oCurVal = oVal.pts[i];
             if (null != oCurVal) {
                 this.bs.WriteItem(c_oserct_lvlPT, function () {
                     oThis.WriteCT_StrVal(oCurVal);
@@ -5677,7 +5677,7 @@ BinaryChartReader.prototype.ConvertRadarToLine = function (oRadar, aChartWithAxi
             marker.setSymbol(AscFormat.SYMBOL_NONE);
             lineSer.setMarker(marker);
         }
-        
+
         for (var j = 0, length2 = radarSer.dPt.length; j < length2; ++j) {
             lineSer.addDPt(radarSer.dPt[j]);
         }
@@ -8706,7 +8706,7 @@ BinaryChartReader.prototype.ReadCT_lvl = function (type, length, val) {
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_StrVal(t, l, oNewVal);
         });
-        val.push(oNewVal);
+        val.addPt(oNewVal);
     }
     else
         res = c_oSerConstants.ReadUnknown;
@@ -8724,14 +8724,13 @@ BinaryChartReader.prototype.ReadCT_MultiLvlStrData = function (type, length, val
             val.setPtCount(oNewVal.m_val);
     }
     else if (c_oserct_multilvlstrdataLVL === type) {
-        //todo array
-        var oNewVal = [];
+        var oNewVal = new AscFormat.CStrCache();
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_lvl(t, l, oNewVal);
         });
         for(var i = 0; i < oNewVal.length; ++i)
         {
-            val.setLvl(oNewVal[i]);
+            val.addLvl(oNewVal[i]);
         }
     }
     else if (c_oserct_multilvlstrdataEXTLST === type) {
@@ -11239,7 +11238,7 @@ BinaryChartReader.prototype.ReadCT_Chart = function (type, length, val) {
         });
 
 
-        // выставляем axis в chart        
+        // выставляем axis в chart
         // TODO: 1. Диаграмм может быть больше, но мы пока работаем только с одной
         // TODO: 2. Избавиться от oIdToAxisMap, aChartWithAxis, т.к. они здесь больше не нужны
       ///  var oZeroChart = oNewVal.charts[0];
