@@ -2596,7 +2596,7 @@ function CDLbl()
         }
         return result;
     }
-    function fParseNumRef(sVal) {
+    function fParseNumRef(sVal, bForce) {
         var result = null, aParsed, nIndex, oParsedRef, sRef;
         if(typeof sVal === "string" && sVal.length > 0) {
             if(sVal[0] === "=") {
@@ -2626,6 +2626,42 @@ function CDLbl()
                         sFormula += ")";
                     }
                     result = new CNumRef();
+                    result.setF(sFormula);
+                }
+            }
+        }
+        return result;
+    }
+    function fParseStrRef(sVal, bMulty) {
+        var result = null, aParsed, nIndex, oParsedRef, sRef;
+        if(typeof sVal === "string" && sVal.length > 0) {
+            if(sVal[0] === "=") {
+                aParsed = sVal.slice(1).split(",");
+            }
+            else {
+                aParsed = sVal.split(",");
+            }
+            if(Array.isArray(aParsed) && aParsed.length > 0) {
+                var sFormula;
+                if(aParsed.length > 1) {
+                    sFormula = "(";
+                }
+                else {
+                    sFormula = "";
+                }
+                for(nIndex = 0; nIndex < aParsed.length; ++nIndex) {
+                    sRef = aParsed[nIndex];
+                    oParsedRef = AscCommon.parserHelp.parse3DRef(sRef);
+                    if(!oParsedRef) {
+                        return null;
+                    }
+                    sFormula += ("," + sRef);
+                }
+                if(nIndex === aParsed.length) {
+                    if(aParsed.length > 1) {
+                        sFormula += ")";
+                    }
+                    result = new CStrRef();
                     result.setF(sFormula);
                 }
             }
