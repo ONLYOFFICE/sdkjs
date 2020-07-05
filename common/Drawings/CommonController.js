@@ -5800,6 +5800,7 @@ DrawingObjectsController.prototype =
     {
         var chart = chart_space.chart, plot_area = chart_space.chart.plotArea;
         var ret = new Asc.asc_ChartSettings();
+        ret.chartSpace = chart_space;
         var range_obj = chart_space.getRangeObjectStr();
         if(range_obj)
         {
