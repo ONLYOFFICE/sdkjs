@@ -2619,11 +2619,11 @@ function CDLbl()
                     if(!oParsedRef) {
                         return null;
                     }
-                    oWS = Asc.editor.wbModel.getWorksheetByName(result.sheet);
+                    oWS = Asc.editor.wbModel.getWorksheetByName(oParsedRef.sheet);
                     if(!oWS) {
                         return null;
                     }
-                    oRange = oWS.getRange2(result.range);
+                    oRange = oWS.getRange2(oParsedRef.range);
                     if(!oRange) {
                         return null;
                     }
@@ -2682,11 +2682,11 @@ function CDLbl()
                     if(!oParsedRef) {
                         return null;
                     }
-                    oWS = Asc.editor.wbModel.getWorksheetByName(result.sheet);
+                    oWS = Asc.editor.wbModel.getWorksheetByName(oParsedRef.sheet);
                     if(!oWS) {
                         return null;
                     }
-                    oRange = oWS.getRange2(result.range);
+                    oRange = oWS.getRange2(oParsedRef.range);
                     if(!oRange) {
                         return null;
                     }

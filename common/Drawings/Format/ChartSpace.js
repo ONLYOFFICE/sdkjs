@@ -4692,8 +4692,7 @@ CChartSpace.prototype.rebuildSeriesFromAsc = function(asc_chart)
         var first_series = chart_type.series[0] ? chart_type.series[0] : chart_type.getSeriesConstructor();
 
         var bAccent1Background = false;
-        if(this.spPr && this.spPr.Fill && this.spPr.Fill.fill && this.spPr.Fill.fill.color && this.spPr.Fill.fill.color.color
-            && this.spPr.Fill.fill.color.color.type === window['Asc'].c_oAscColor.COLOR_TYPE_SCHEME &&  this.spPr.Fill.fill.color.color.id === 0){
+        if(this.spPr && this.spPr.Fill && this.spPr.Fill.isAccent1()){
             bAccent1Background = true;
         }
 
@@ -4853,8 +4852,7 @@ CChartSpace.prototype.rebuildSeriesData = function(oValRange, oCatRange, oTxRang
                 }
                 if(oFirstSpPrPreset)
                 {
-                    if(this.spPr && this.spPr.Fill && this.spPr.Fill.fill && this.spPr.Fill.fill.color && this.spPr.Fill.fill.color.color
-                        && this.spPr.Fill.fill.color.color.type === window['Asc'].c_oAscColor.COLOR_TYPE_SCHEME &&  this.spPr.Fill.fill.color.color.id === 0){
+                    if(this.spPr && this.spPr.Fill && this.spPr.Fill.isAccent1()){
                         bAccent1Background = true;
                     }
                     nPointCount = Math.max(oValRange.r2 - oValRange.r1 + 1, oValRange.c2 - oValRange.c1 + 1);
@@ -4961,8 +4959,7 @@ CChartSpace.prototype.rebuildSeriesData = function(oValRange, oCatRange, oTxRang
         {
 
 
-            if(!bScatter && this.spPr && this.spPr.Fill && this.spPr.Fill.fill && this.spPr.Fill.fill.color && this.spPr.Fill.fill.color.color
-                && this.spPr.Fill.fill.color.color.type === window['Asc'].c_oAscColor.COLOR_TYPE_SCHEME &&  this.spPr.Fill.fill.color.color.id === 0){
+            if(!bScatter && this.spPr && this.spPr.Fill && this.spPr.Fill.isAccent1()){
                 bAccent1Background = true;
             }
 
@@ -15470,11 +15467,50 @@ CChartSpace.prototype.addSeries = function(sName, sValues) {
     if(!oLastChart) {
         return;
     }
+    var bAccent1Background = false;
+    if(this.spPr && this.spPr.Fill && this.spPr.Fill.isAccent1()){
+        bAccent1Background = true;
+    }
+    var aAllSeries = this.getAllSeries();
+    var oFirstSeries = aAllSeries[0];
+    var oFirstSpPrPreset = 0;
+    if(oFirstSeries) {
+        if(oFirstSeries.getObjectType() === AscDFH.historyitem_type_PieSeries) {
+            if(oFirstSeries.dPt[0] && oFirstSeries.dPt[0].spPr) {
+                oFirstSpPrPreset = AscFormat.CollectSettingsSpPr(oFirstSeries.dPt[0].spPr);
+            }
+        }
+        else {
+            oFirstSpPrPreset = AscFormat.CollectSettingsSpPr(oFirstSeries.spPr);
+        }
+    }
     var oSeries;
     oSeries = oLastChart.series[0] ? oLastChart.series[0].createDuplicate() : oLastChart.getSeriesConstructor();
     oSeries.setName(sName);
+    oSeries.setValues(sValues);
+    oSeries.setIdx(aAllSeries.length);
+    oSeries.setOrder(aAllSeries.length);
     oLastChart.addSer(oSeries);
-    oSeries.setName(sName);
+
+    var oStyle, aBaseFills, aPts, nPt;
+    if(oFirstSpPrPreset) {
+        oStyle = AscFormat.CHART_STYLE_MANAGER.getStyleByIndex(this.style);
+        if(oSeries.getObjectType() === AscDFH.historyitem_type_PieSeries) {
+            aPts = AscFormat.getPtsFromSeries(oSeries);
+            aBaseFills = AscFormat.getArrayFillsFromBase(oStyle.fill2, aPts.length);
+            for(nPt = 0; nPt < aPts.length; ++nPt){
+                var oDPt = new AscFormat.CDPt();
+                oDPt.setBubble3D(false);
+                oDPt.setIdx(nPt);
+                AscFormat.ApplySpPr(oFirstSpPrPreset, oDPt, nPt, aBaseFills, bAccent1Background);
+                oSeries.addDPt(oDPt);
+            }
+        }
+        else {
+            aBaseFills = AscFormat.getArrayFillsFromBase(oStyle.fill2, aAllSeries.length + 1);
+            AscFormat.ApplySpPr(oFirstSpPrPreset, oSeries, oSeries.idx, aBaseFills, bAccent1Background);
+        }
+    }
 };
 
 function getNumLit(ser) {
