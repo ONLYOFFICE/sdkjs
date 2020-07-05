@@ -15513,6 +15513,52 @@ CChartSpace.prototype.addSeries = function(sName, sValues) {
     }
 };
 
+CChartSpace.prototype.addScatterSeries = function(sName, sXValues, sYValues) {
+    var oLastChart = this.chart.plotArea.charts[this.chart.plotArea.charts.length - 1];
+    if(!oLastChart || oLastChart.getObjectType() !== AscDFH.historyitem_type_ScatterChart) {
+        return;
+    }
+    var bAccent1Background = false;
+    if(this.spPr && this.spPr.Fill && this.spPr.Fill.isAccent1()){
+        bAccent1Background = true;
+    }
+    var aAllSeries = this.getAllSeries();
+    var oFirstSeries = aAllSeries[0];
+    var oFirstSpPrPreset = 0;
+    if(oFirstSeries) {
+        if(oFirstSeries.getObjectType() === AscDFH.historyitem_type_PieSeries) {
+            if(oFirstSeries.dPt[0] && oFirstSeries.dPt[0].spPr) {
+                oFirstSpPrPreset = AscFormat.CollectSettingsSpPr(oFirstSeries.dPt[0].spPr);
+            }
+        }
+        else {
+            oFirstSpPrPreset = AscFormat.CollectSettingsSpPr(oFirstSeries.spPr);
+        }
+    }
+    var oFirstSpPrMarkerPrst = 0;
+    if(oLastChart.series[0] && oLastChart.series[0].marker && oLastChart.series[0].marker.spPr && !oLastChart.series[0].marker.spPr.hasRGBFill()){
+        oFirstSpPrMarkerPrst = AscFormat.CollectSettingsSpPr(oLastChart.series[0].marker.spPr);
+    }
+    var oSeries;
+    oSeries = oLastChart.series[0] ? oLastChart.series[0].createDuplicate() : oLastChart.getSeriesConstructor();
+    oSeries.setName(sName);
+    oSeries.setYValues(sYValues);
+    oSeries.setXValues(sXValues);
+    oSeries.setIdx(aAllSeries.length);
+    oSeries.setOrder(aAllSeries.length);
+    oLastChart.addSer(oSeries);
+
+    var oStyle, aBaseFills;
+    oStyle = AscFormat.CHART_STYLE_MANAGER.getStyleByIndex(this.style);
+    aBaseFills = AscFormat.getArrayFillsFromBase(oStyle.fill2, aAllSeries.length + 1);
+    if(oFirstSpPrPreset) {
+        AscFormat.ApplySpPr(oFirstSpPrPreset, oSeries, oSeries.idx, aBaseFills, bAccent1Background);
+    }
+    if(oFirstSpPrMarkerPrst && oSeries.marker) {
+        AscFormat.ApplySpPr(oFirstSpPrMarkerPrst, oSeries.marker, oSeries.idx, aBaseFills, bAccent1Background);
+    }
+}
+
 function getNumLit(ser) {
     if(ser) {
         if(ser.val)
