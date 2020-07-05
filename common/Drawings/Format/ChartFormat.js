@@ -3003,14 +3003,22 @@ function CDLbl()
        }
        return bRet;
     };
-    CSeriesBase.prototype.getValues = function() {
-        if(this.val) {
-            this.val.updateCache()
+    CSeriesBase.prototype.getValues = function(nMaxValues) {
+        if(this.cat) {
+            return this.cat.getValues(nMaxValues);
         }
+        if(this.val) {
+            var ret = [];
+            for(var nIndex = 0; nIndex < nMaxValues; ++nIndex) {
+                ret.push((nIndex + 1) + "");
+            }
+            return ret;
+        }
+        return [];
     };
     CSeriesBase.prototype.getValuesCount = function() {
         if(this.val) {
-            this.val.getValuesCount()
+            return this.val.getValuesCount()
         }
         return 0;
     };
@@ -3032,6 +3040,12 @@ function CDLbl()
         }
         return bRet;
     };
+    CSeriesBase.prototype.remove = function() {
+        if(!this.parent) {
+            return;
+        }
+        this.parent.removeSeries(this.parent.getSeriesArrayIdx(this));
+    };
     CSeriesBase.prototype["asc_getIsVisible"] = CSeriesBase.prototype.isVisible;
     CSeriesBase.prototype["asc_setIsVisible"] = function(bVal) {
         AscFormat.ExecuteNoHistory(CSeriesBase.prototype.setVisible, this, [bVal]);
@@ -3040,6 +3054,9 @@ function CDLbl()
     CSeriesBase.prototype["asc_getOrder"] = CSeriesBase.prototype.getOrder;
     CSeriesBase.prototype["asc_setOrder"] = function (bVal) {
         AscFormat.ExecuteNoHistory(CSeriesBase.prototype.setOrder, this, [bVal]);
+    };
+    CSeriesBase.prototype["asc_IsScatter"] = function () {
+        return this.getObjectType() === AscDFH.historyitem_type_ScatterSer;
     };
 function CPlotArea()
 {
@@ -5657,6 +5674,7 @@ CValAx.prototype =
         {
             c.setTxPr(this.txPr.createDuplicate());
         }
+        c.scale = this.scale;
         return c;
     },
 
@@ -6881,6 +6899,18 @@ CCat.prototype =
     getValues: function(nMaxCount) {
         if(this.numLit) {
             return this.numLit.getValues(nMaxCount);
+        }
+        if(this.numRef) {
+            return this.numRef.getValues(nMaxCount);
+        }
+        if(this.strLit) {
+            return this.strLit.getValues(nMaxCount);
+        }
+        if(this.strRef) {
+            return this.strRef.getValues(nMaxCount);
+        }
+        if(this.multiLvlStrRef) {
+            return this.multiLvlStrRef.getValues(nMaxCount);
         }
     }
  };
@@ -9144,6 +9174,22 @@ CMultiLvlStrCache.prototype =
                 }
             }
         }
+    },
+
+    getValues: function (nMaxValues) {
+        var ret = [];
+        for(var nIndex = 0; nIndex < nMaxValues; ++nIndex) {
+            var sValue = "";
+            for(var nLvl = 0; nLvl < this.lvl.length; ++nLvl) {
+                var oLvl = this.lvl[nLvl];
+                var oPt = oLvl.getPtByIndex(nIndex);
+                if(oPt) {
+                    sValue += (oPt.val + " ");
+                }
+            }
+            ret.push(sValue);
+        }
+        return ret;
     }
 };
 
@@ -9208,6 +9254,10 @@ CMultiLvlStrRef.prototype =
     updateCache: function () {
         this.setMultiLvlStrCache(new CMultiLvlStrCache());
         this.multiLvlStrCache.update(this.f);
+    },
+    getValues: function (nMaxValues) {
+        this.updateCache();
+        return this.multiLvlStrCache.getValues(nMaxValues);
     }
 };
 
@@ -9772,9 +9822,9 @@ CNumLit.prototype =
     getValues: function(nMaxCount) {
         var ret = [];
         for(var nIndex = 0; nIndex < nMaxCount; ++nIndex) {
-            var oPt = this.getPtByIndex(nIdnex);
+            var oPt = this.getPtByIndex(nIndex);
             if(oPt) {
-                ret.push(oPt.val);
+                ret.push(oPt.val + "");
             }
             else {
                 ret.push("");
@@ -11292,7 +11342,7 @@ CStrCache.prototype =
         for(var nIndex = 0; nIndex < nMaxCount; ++nIndex) {
             var oPt = this.getPtByIndex(nIndex);
             if(oPt) {
-                ret.push(oPt.val);
+                ret.push(oPt.val + "");
             }
             else {
                 ret.push("");
@@ -12696,6 +12746,15 @@ CYVal.prototype =
             return this.numRef.getValuesCount();
         }
         return 0;
+    },
+
+    getValues: function (nMaxValues) {
+        if(this.numLit) {
+            return this.numLit.getValues(nMaxValues);
+        }
+        if(this.numRef) {
+            return this.numRef.getValues(nMaxValues);
+        }
     }
 };
 

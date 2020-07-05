@@ -6750,20 +6750,33 @@ CChartSpace.prototype.getValAxisCrossType = function()
 
     CChartSpace.prototype.getCatValues = function() {
         var ret = [];
-        var aAllSeries = this.getAllSeries();
+        var aAllSeries = this.getAllSeries(), oFirstSeries;
+        if(aAllSeries.length === 0) {
+            return [];
+        }
         if(aAllSeries.length > 0) {
-            var oFirstSeries = aAllSeries[0];
+            oFirstSeries = aAllSeries[0];
             if(oFirstSeries.getObjectType() !== AscDFH.historyitem_type_ScatterSer) {
-                var nCount = oFirstSeries.getValuesCount();
-                var oCat = oFirstSeries.cat, nIndex;
-                if(oCat) {
-                    ret = oCat.getValues(nCount);
-                }
+                return oFirstSeries.getValues(oFirstSeries.getValuesCount());
             }
             else {
-
+                var oAxes = this.chart.plotArea.getAxisByTypes();
+                var oValAxis = null;
+                for(var nAxis = 0; nAxis < oAxes.valAx.length; ++nAxis) {
+                    if(oAxes.valAx[nAxis].axPos === AscFormat.AX_POS_B ||
+                        oAxes.valAx[nAxis].axPos === AscFormat.AX_POS_T) {
+                        oValAxis = oAxes.valAx[nAxis];
+                        break;
+                    }
+                }
+                if(oValAxis) {
+                    if(Array.isArray(oValAxis.scale)) {
+                        for(var nVal = 0; nVal < oValAxis.scale.length; ++nVal) {
+                            ret.push(oValAxis.scale[nVal] + "");
+                        }
+                    }
+                }
             }
-            var aValuesCount = oFirstSeries
         }
         return ret;
     };
@@ -15557,7 +15570,7 @@ CChartSpace.prototype.addScatterSeries = function(sName, sXValues, sYValues) {
     if(oFirstSpPrMarkerPrst && oSeries.marker) {
         AscFormat.ApplySpPr(oFirstSpPrMarkerPrst, oSeries.marker, oSeries.idx, aBaseFills, bAccent1Background);
     }
-}
+};
 
 function getNumLit(ser) {
     if(ser) {
