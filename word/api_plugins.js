@@ -398,7 +398,7 @@
      */
     window["asc_docs_api"].prototype["pluginMethod_AddComment"] = function(sMessage, sAuthorName)
     {
-        var oData = new asc_CCommentDataWord();
+        var oData = new window['Asc']['asc_CCommentDataWord'] ();
 
         if (sMessage)
             oData.asc_putText(sMessage);
