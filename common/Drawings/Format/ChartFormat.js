@@ -3059,12 +3059,14 @@ function CDLbl()
     }
     CSeriesBase.prototype["asc_getName"] = CSeriesBase.prototype.asc_getName;
     CSeriesBase.prototype.asc_setName = function(sName) {
-        AscFormat.ExecuteNoHistory(CSeriesBase.prototype.setName, this, [sName]);
+        History.Create_NewPoint(0);
+        this.setName(sName);
     };
     CSeriesBase.prototype["asc_setName"] = CSeriesBase.prototype.asc_setName;
 
     CSeriesBase.prototype.asc_setValues = function(sValues) {
-        AscFormat.ExecuteNoHistory(CSeriesBase.prototype.setValues, this, [sValues]);
+        History.Create_NewPoint(0);
+        this.setValues(sValues);
     };
     CSeriesBase.prototype["asc_setValues"] = CSeriesBase.prototype.asc_setValues;
     CSeriesBase.prototype.asc_getValues = function() {
@@ -3074,31 +3076,38 @@ function CDLbl()
     };
     CSeriesBase.prototype["asc_getValues"] = CSeriesBase.prototype.asc_getValues;
     CSeriesBase.prototype.asc_setXValues = function(sValues) {
-        return AscFormat.ExecuteNoHistory(CSeriesBase.prototype.setXValues, this, [sValues]);
+        History.Create_NewPoint(0);
+        this.setXValues(sValues);
     };
     CSeriesBase.prototype["asc_setXValues"] = CSeriesBase.prototype.asc_setXValues;
     CSeriesBase.prototype.asc_getXValues = function() {
-        if(this.xVal) {
-            return this.xVal.getValues();
-        }
-        return [];
+        return AscFormat.ExecuteNoHistory(function() {
+            if(this.xVal) {
+                return this.xVal.getValues();
+            }
+            return [];
+        }, this, []);
     };
     CSeriesBase.prototype["asc_getXValues"] = CSeriesBase.prototype.asc_getXValues;
 
     CSeriesBase.prototype.asc_setYValues = function(sValues) {
-        return AscFormat.ExecuteNoHistory(CSeriesBase.prototype.setYValues, this, [sValues]);
+        History.Create_NewPoint(0);
+        this.setYValues(sValues);
     };
     CSeriesBase.prototype["asc_setYValues"] = CSeriesBase.prototype.asc_setYValues;
     CSeriesBase.prototype.asc_getYValues = function() {
-        if(this.yVal) {
-            return this.yVal.getValues();
-        }
-        return [];
+        return AscFormat.ExecuteNoHistory(function() {
+            if(this.yVal) {
+                return this.yVal.getValues();
+            }
+            return [];
+        }, this, []);
     };
 
     CSeriesBase.prototype["asc_getYValues"] = CSeriesBase.prototype.asc_getYValues;
     CSeriesBase.prototype.asc_Remove = function() {
-        return AscFormat.ExecuteNoHistory(CSeriesBase.prototype.remove, this, []);
+        History.Create_NewPoint(0);
+        this.remove();
     };
     CSeriesBase.prototype["asc_Remove"] = CSeriesBase.prototype.asc_Remove;
     CSeriesBase.prototype.asc_IsScatter = function () {
@@ -3107,8 +3116,9 @@ function CDLbl()
     CSeriesBase.prototype["asc_IsScatter"] = CSeriesBase.prototype.asc_IsScatter;
     CSeriesBase.prototype.asc_getOrder = CSeriesBase.prototype.getOrder;
     CSeriesBase.prototype["asc_getOrder"] = CSeriesBase.prototype.asc_getOrder;
-    CSeriesBase.prototype.asc_setOrder = function (bVal) {
-        AscFormat.ExecuteNoHistory(CSeriesBase.prototype.setOrder, this, [bVal]);
+    CSeriesBase.prototype.asc_setOrder = function (nVal) {
+        History.Create_NewPoint(0);
+        this.setOrder(nVal);
     };
     CSeriesBase.prototype["asc_setOrder"] = CSeriesBase.prototype.asc_setOrder;
     CSeriesBase.prototype.asc_getIdx = function() {

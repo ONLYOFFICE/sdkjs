@@ -15493,6 +15493,7 @@ CChartSpace.prototype.addSeries = function(sName, sValues) {
     if(!oLastChart) {
         return;
     }
+    History.Create_NewPoint(0);
     var bAccent1Background = false;
     if(this.spPr && this.spPr.Fill && this.spPr.Fill.isAccent1()){
         bAccent1Background = true;
@@ -15544,6 +15545,7 @@ CChartSpace.prototype.addScatterSeries = function(sName, sXValues, sYValues) {
     if(!oLastChart || oLastChart.getObjectType() !== AscDFH.historyitem_type_ScatterChart) {
         return;
     }
+    History.Create_NewPoint(0);
     var bAccent1Background = false;
     if(this.spPr && this.spPr.Fill && this.spPr.Fill.isAccent1()){
         bAccent1Background = true;
