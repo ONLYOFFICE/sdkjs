@@ -9113,7 +9113,7 @@ CMultiLvlStrCache.prototype =
         }
         var aParsedRef = AscFormat.fParseChartFormula(sFormula);
         if(aParsedRef.length > 0) {
-            var nPtCount = 0, nRows = 0, nRef, oRef, oBBox;
+            var nPtCount = 0, nRows = 0, nRef, oRef, oBBox, nPtIdx, nCol, oWS, oCell, sVal;
             for(nRef = 0; nRef < aParsedRef.length; ++nRef) {
                 oRef = aParsedRef[nRef];
                 oBBox = oRef.bbox;
@@ -9122,7 +9122,24 @@ CMultiLvlStrCache.prototype =
             }
             var nLvl, oLvl;
             for(nLvl = 0; nLvl < nRows; ++nLvl) {
-                oLvl = new CLvl
+                oLvl = new CStrCache();
+                nPtIdx = 0;
+                for(nRef = 0; nRef < aParsedRef.length; ++nRef) {
+                    oRef = aParsedRef[nRef];
+                    oBBox = oRef.bbox;
+                    oWS = oRef.worksheet;
+                    if(nLvl < (oBBox.r2 - oBBox.r1 + 1)) {
+                        for(nCol = oBBox.c1; nCol <= oBBox.c2; ++nCol) {
+                            oCell = oWS.getCell3(nLvl + oBBox.r1, nCol);
+                            sVal = oCell.getValueWithFormat();
+                            if(typeof sVal === "string" && sVal.length > 0)
+                            {
+                                oLvl.addStringPoint(nPtIdx, sVal);
+                            }
+                            ++nPtIdx;
+                        }
+                    }
+                }
             }
         }
     }
