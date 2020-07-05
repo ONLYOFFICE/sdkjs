@@ -706,6 +706,7 @@
 		this.smooth = null;
 		this.showHorAxis = null;
 		this.showVerAxis = null;
+		this.chartSpace = null;
 	}
 
 	asc_ChartSettings.prototype = {
@@ -1275,6 +1276,32 @@
 			this.showVerAxis = v;
 		}, getShowVerAxis: function () {
 			return this.showVerAxis;
+		},
+
+		getSeries: function() {
+			if(this.chartSpace) {
+				return this.chartSpace.getAllSeries();
+			}
+			return [];
+		},
+
+		getCatValues: function() {
+			if(this.chartSpace) {
+				return this.chartSpace.getCatValues();
+			}
+			return [];
+		},
+
+		addSeries: function(sName, sValues) {
+			if(this.chartSpace) {
+				this.chartSpace.addSeries(sName, sValues);
+			}
+		},
+
+		addScatterSeries: function(sName, sXValues, sYValues) {
+			if(this.chartSpace) {
+				this.chartSpace.addScatterSeries(sName, sXValues, sYValues);
+			}
 		}
 	};
 
@@ -4772,6 +4799,12 @@
 	prot["getShowHorAxis"] = prot.getShowHorAxis;
 	prot["putShowVerAxis"] = prot.putShowVerAxis;
 	prot["getShowVerAxis"] = prot.getShowVerAxis;
+	prot["getSeries"] = prot.getSeries;
+	prot["getCatValues"] = prot.getCatValues;
+	prot["addSeries"] = prot.addSeries;
+	prot["addScatterSeries"] = prot.addScatterSeries;
+
+
 
 	window["AscCommon"].asc_CRect = asc_CRect;
 	prot = asc_CRect.prototype;

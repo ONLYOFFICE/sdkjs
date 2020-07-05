@@ -2993,6 +2993,12 @@ function CDLbl()
             this.setTx(null);
         }
     };
+    CSeriesBase.prototype.getName = function() {
+        if(this.tx) {
+            return this.tx.getText();
+        }
+        return "";
+    }
     CSeriesBase.prototype.setValues = function(sValues) {
        if(this.val === null) {
            this.setVal(new CYVal());
@@ -3016,6 +3022,7 @@ function CDLbl()
         }
         return [];
     };
+
     CSeriesBase.prototype.getValuesCount = function() {
         if(this.val) {
             return this.val.getValuesCount()
@@ -3045,19 +3052,71 @@ function CDLbl()
             return;
         }
         this.parent.removeSeries(this.parent.getSeriesArrayIdx(this));
+        this.parent.reindexSeries();
     };
-    CSeriesBase.prototype["asc_getIsVisible"] = CSeriesBase.prototype.isVisible;
-    CSeriesBase.prototype["asc_setIsVisible"] = function(bVal) {
-        AscFormat.ExecuteNoHistory(CSeriesBase.prototype.setVisible, this, [bVal]);
+    CSeriesBase.prototype.asc_getName = function() {
+        return AscFormat.ExecuteNoHistory(CSeriesBase.prototype.getName, this, []);
+    }
+    CSeriesBase.prototype["asc_getName"] = CSeriesBase.prototype.asc_getName;
+    CSeriesBase.prototype.asc_setName = function(sName) {
+        AscFormat.ExecuteNoHistory(CSeriesBase.prototype.setName, this, [sName]);
     };
-    CSeriesBase.prototype["asc_getIsVisible"] = CSeriesBase.prototype.getVisible;
-    CSeriesBase.prototype["asc_getOrder"] = CSeriesBase.prototype.getOrder;
-    CSeriesBase.prototype["asc_setOrder"] = function (bVal) {
-        AscFormat.ExecuteNoHistory(CSeriesBase.prototype.setOrder, this, [bVal]);
+    CSeriesBase.prototype["asc_setName"] = CSeriesBase.prototype.asc_setName;
+
+    CSeriesBase.prototype.asc_setValues = function(sValues) {
+        AscFormat.ExecuteNoHistory(CSeriesBase.prototype.setValues, this, [sValues]);
     };
-    CSeriesBase.prototype["asc_IsScatter"] = function () {
+    CSeriesBase.prototype["asc_setValues"] = CSeriesBase.prototype.asc_setValues;
+    CSeriesBase.prototype.asc_getValues = function() {
+        return AscFormat.ExecuteNoHistory(function() {
+            return this.val.getValues(this.val.getValuesCount());
+        }, this, []);
+    };
+    CSeriesBase.prototype["asc_getValues"] = CSeriesBase.prototype.asc_getValues;
+    CSeriesBase.prototype.asc_setXValues = function(sValues) {
+        return AscFormat.ExecuteNoHistory(CSeriesBase.prototype.setXValues, this, [sValues]);
+    };
+    CSeriesBase.prototype["asc_setXValues"] = CSeriesBase.prototype.asc_setXValues;
+    CSeriesBase.prototype.asc_getXValues = function() {
+        if(this.xVal) {
+            return this.xVal.getValues();
+        }
+        return [];
+    };
+    CSeriesBase.prototype["asc_getXValues"] = CSeriesBase.prototype.asc_getXValues;
+
+    CSeriesBase.prototype.asc_setYValues = function(sValues) {
+        return AscFormat.ExecuteNoHistory(CSeriesBase.prototype.setYValues, this, [sValues]);
+    };
+    CSeriesBase.prototype["asc_setYValues"] = CSeriesBase.prototype.asc_setYValues;
+    CSeriesBase.prototype.asc_getYValues = function() {
+        if(this.yVal) {
+            return this.yVal.getValues();
+        }
+        return [];
+    };
+
+    CSeriesBase.prototype["asc_getYValues"] = CSeriesBase.prototype.asc_getYValues;
+    CSeriesBase.prototype.asc_Remove = function() {
+        return AscFormat.ExecuteNoHistory(CSeriesBase.prototype.remove, this, []);
+    };
+    CSeriesBase.prototype["asc_Remove"] = CSeriesBase.prototype.asc_Remove;
+    CSeriesBase.prototype.asc_IsScatter = function () {
         return this.getObjectType() === AscDFH.historyitem_type_ScatterSer;
     };
+    CSeriesBase.prototype["asc_IsScatter"] = CSeriesBase.prototype.asc_IsScatter;
+    CSeriesBase.prototype.asc_getOrder = CSeriesBase.prototype.getOrder;
+    CSeriesBase.prototype["asc_getOrder"] = CSeriesBase.prototype.asc_getOrder;
+    CSeriesBase.prototype.asc_setOrder = function (bVal) {
+        AscFormat.ExecuteNoHistory(CSeriesBase.prototype.setOrder, this, [bVal]);
+    };
+    CSeriesBase.prototype["asc_setOrder"] = CSeriesBase.prototype.asc_setOrder;
+    CSeriesBase.prototype.asc_getIdx = function() {
+        return this.idx;
+    };
+    CSeriesBase.prototype["asc_getIdx"] = CSeriesBase.prototype.asc_getIdx;
+
+
 function CPlotArea()
 {
     this.charts = [];
@@ -3561,7 +3620,14 @@ CPlotArea.prototype =
     canMove: function()
     {
         return true;
+    },
+
+    reindexSeries: function() {
+        if(this.parent) {
+            this.parent.reindexSeries();
+        }
     }
+
 };
 
 
@@ -3584,6 +3650,11 @@ CPlotArea.prototype =
         if(this.series[idx]) {
             var arrSeries = this.series.splice(idx, 1);
             History.Add(new CChangesDrawingsContent(this, AscDFH.historyitem_CommonChart_RemoveSeries, idx, arrSeries, false));
+        }
+    };
+    CChartBase.prototype.reindexSeries = function() {
+        if(this.parent) {
+            this.parent.reindexSeries();
         }
     };
     CChartBase.prototype.addSer = function(ser) {
@@ -9178,7 +9249,8 @@ CMultiLvlStrCache.prototype =
 
     getValues: function (nMaxValues) {
         var ret = [];
-        for(var nIndex = 0; nIndex < nMaxValues; ++nIndex) {
+        var nEnd = nMaxValues || this.ptCount;
+        for(var nIndex = 0; nIndex < nEnd; ++nIndex) {
             var sValue = "";
             for(var nLvl = 0; nLvl < this.lvl.length; ++nLvl) {
                 var oLvl = this.lvl[nLvl];
@@ -9821,7 +9893,9 @@ CNumLit.prototype =
 
     getValues: function(nMaxCount) {
         var ret = [];
-        for(var nIndex = 0; nIndex < nMaxCount; ++nIndex) {
+
+        var nEnd = nMaxCount || this.ptCount;
+        for(var nIndex = 0; nIndex < nEnd; ++nIndex) {
             var oPt = this.getPtByIndex(nIndex);
             if(oPt) {
                 ret.push(oPt.val + "");
@@ -11339,7 +11413,8 @@ CStrCache.prototype =
 
     getValues: function(nMaxCount) {
         var ret = [];
-        for(var nIndex = 0; nIndex < nMaxCount; ++nIndex) {
+        var nEnd = nMaxCount || this.ptCount;
+        for(var nIndex = 0; nIndex < nEnd; ++nIndex) {
             var oPt = this.getPtByIndex(nIndex);
             if(oPt) {
                 ret.push(oPt.val + "");
@@ -13050,7 +13125,12 @@ CChart.prototype =
     {
         History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CommonChartFormat_SetParent, this.parent, pr));
         this.parent = pr;
-            }
+            },
+    reindexSeries: function() {
+        if(this.parent) {
+            this.parent.reindexSeries();
+        }
+    }
 
 };
 

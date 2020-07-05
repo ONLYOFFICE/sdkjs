@@ -13683,6 +13683,19 @@ CChartSpace.prototype.getChartSizes = function(bNotRecalculate)
     return oChartSize;
 };
 
+    CChartSpace.prototype.reindexSeries = function() {
+        var aAllSeries = this.getAllSeries();
+        for(var nIndex = 0; nIndex < aAllSeries.length; ++nIndex) {
+            aAllSeries[nIndex].setIdx(nIndex);
+        }
+        aAllSeries.sort(function(a, b){
+            return a.order - b.order;
+        });
+        for(nIndex = 0; nIndex < aAllSeries.length; ++nIndex) {
+            aAllSeries[nIndex].setOrder(nIndex);
+        }
+    };
+
 CChartSpace.prototype.getAllSeries =  function()
 {
     var _ret = [];
