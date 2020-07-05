@@ -9132,12 +9132,14 @@ CMultiLvlStrCache.prototype =
                         for(nCol = oBBox.c1; nCol <= oBBox.c2; ++nCol) {
                             oCell = oWS.getCell3(nLvl + oBBox.r1, nCol);
                             sVal = oCell.getValueWithFormat();
-                            if(typeof sVal === "string" && sVal.length > 0)
-                            {
+                            if(typeof sVal === "string" && sVal.length > 0) {
                                 oLvl.addStringPoint(nPtIdx, sVal);
                             }
                             ++nPtIdx;
                         }
+                    }
+                    else {
+                        nPtIdx += (oBBox.c2 - oBBox.c1 + 1);
                     }
                 }
             }
