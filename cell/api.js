@@ -4516,7 +4516,8 @@ var editor;
 		var dataRow;
 		var pivotChanged = pivot.getAndCleanChanged();
 		if (pivotChanged.data) {
-			dataRow = pivot.updateAfterEdit();
+			var updateRes = pivot.updateAfterEdit();
+			dataRow = updateRes.dataRow;
 		}
 		this._updatePivotTable(pivot, pivotChanged, wsModel, ws, dataRow, needUpdateView, false);
 	};

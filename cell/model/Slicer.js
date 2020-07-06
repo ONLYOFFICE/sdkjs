@@ -1033,19 +1033,17 @@
 					this.sourceName = name;
 					//TODO для генерации имени нужна отдельная функция
 					this.name = this.generateSlicerCacheName(name);
-
-					pivotTable.checkPivotFieldItems(fieldIndex);
-					var pivotField = pivotTable.asc_getPivotFields()[fieldIndex];
-					var tabular = new CT_tabularSlicerCache();
-					tabular.syncWithCache(cacheField, pivotField);
-					tabular.pivotCacheId = cacheDefinition.getOrCreatePivotCacheId(pivotTable.GetWS().workbook);
 					this.data = new CT_slicerCacheData();
-					this.data.tabular = tabular;
+					this.data.tabular = new CT_tabularSlicerCache();
+					this.data.tabular.pivotCacheId = cacheDefinition.getOrCreatePivotCacheId(pivotTable.GetWS().workbook);
 
 					var table = new CT_slicerCachePivotTable();
 					table.name = pivotTable.asc_getName();
 					table.sheetId = pivotTable.GetWS().getId();
 					this.pivotTables.push(table);
+
+					var updateRes = pivotTable.updateAfterEdit();//todo
+					this.syncWithPivot(pivotTable, updateRes.cacheFieldsWithData);
 				}
 
 				break;
@@ -1292,7 +1290,7 @@
 					var fieldIndex = cacheDefinition.getFieldIndexByName(this.sourceName);
 					if(-1 !== fieldIndex){
 						var cacheField = cacheDefinition.getFields()[fieldIndex];
-						res = {values: tabular.getFilterObject(cacheField), automaticRowCount: null, ignoreCustomFilter: null};
+						res = {values: tabular.getFilterObject(cacheField, this.slicerCacheHideItemsWithNoData), automaticRowCount: null, ignoreCustomFilter: null};
 					}
 				}
 				break;
@@ -1339,14 +1337,29 @@
 				var newVal = new AscCommonExcel.UndoRedoData_BinaryWrapper2(t);
 				History.Add(AscCommonExcel.g_oUndoRedoSlicer, AscCH.historyitem_Slicer_SetCacheData,
 					null, null, new AscCommonExcel.UndoRedoData_Slicer(t.name, oldVal, newVal));
-				var slicers = wb.getSlicersByCacheName(t.name);
-				if (slicers) {
-					slicers.forEach(function(slicer) {
-						wb.onSlicerUpdate(slicer.name);
-					});
+				var slicers = t.getLinkedPivotSlicers();
+				for (var name in slicers) {
+					if (slicers.hasOwnProperty(name)) {
+						wb.onSlicerUpdate(name);
+					}
 				}
 			}
 		});
+	};
+	CT_slicerCacheDefinition.prototype.getLinkedPivotSlicers = function () {
+		var res = {};
+		var wb = this.ws.workbook;
+		var pivotTables = this.getPivotTables();
+		pivotTables.forEach(function (pivotTable) {
+			var slicerCaches = wb.getSlicerCachesByPivotTable(pivotTable.GetWS().getId(), pivotTable.asc_getName());
+			slicerCaches.forEach(function (slicerCache) {
+				var slicers = wb.getSlicersByCacheName(slicerCache.name);
+				slicers.forEach(function (slicer) {
+					res[slicer.name] = slicer;
+				});
+			});
+		});
+		return res;
 	};
 	CT_slicerCacheDefinition.prototype._applyPivotFilter = function(api, fieldIndex, pivotTables, excludePivot, values, index, indexRepeat, confirmation, onEnd) {
 		var t = this;
@@ -1365,7 +1378,7 @@
 		autoFilterObject.filter.type = Asc.c_oAscAutoFilterTypes.Filters;
 		api._changePivotWithLockExt(pivotTable, confirmation, false, function(ws) {
 			pivotTable.filterPivotItems(fieldIndex, autoFilterObject);
-		}, function(error, warn) {
+		}, function(error, warn, updateRes) {
 			if (Asc.c_oAscError.ID.No !== error) {
 				api.sendEvent('asc_onError', error, Asc.c_oAscError.Level.NoCritical);
 				onEnd(false);
@@ -1378,7 +1391,8 @@
 						onEnd(false);
 					}
 				});
-			} else {
+			} else if (updateRes) {
+				pivotTable.syncSlicersWithPivot(updateRes.cacheFieldsWithData);
 				t._applyPivotFilter(api, fieldIndex, pivotTables, excludePivot, values, index + 1, indexRepeat, confirmation, onEnd);
 			}
 		});
@@ -1585,6 +1599,21 @@
 	};
 	CT_slicerCacheDefinition.prototype.getPivotTablesCount = function() {
 		return this.pivotTables.length;
+	};
+	CT_slicerCacheDefinition.prototype.syncWithPivot = function (pivotTable, cacheFieldsWithData) {
+		var wb = this.ws.workbook;
+		var tabular = this.getTabular();
+		if (!tabular) {
+			return;
+		}
+		var cacheFields = pivotTable.cacheDefinition.getFields();
+		var fieldIndex = pivotTable.cacheDefinition.getFieldIndexByName(this.sourceName);
+		var cacheField = -1 !== fieldIndex && cacheFields[fieldIndex];
+		if (cacheField && cacheField.sharedItems) {
+			pivotTable.checkPivotFieldItems(fieldIndex);
+			var pivotField = pivotTable.asc_getPivotFields()[fieldIndex];
+			tabular.syncWithCache(cacheField, pivotField, cacheFieldsWithData[fieldIndex], this.slicerCacheHideItemsWithNoData);
+		}
 	};
 
 
@@ -2544,22 +2573,46 @@
 		}
 		s.Seek2(_end_pos);
 	};
-	CT_tabularSlicerCache.prototype.syncWithCache = function(cacheField, pivotField) {
-		for(var i = 0; i < cacheField.getSharedSize() && i < pivotField.getItemsCount(); ++i){
-			var item = new CT_tabularSlicerCacheItem();
-			item.x = i;
-			item.s = !pivotField.getItem(i).h;
-			this.items.push(item);
+	CT_tabularSlicerCache.prototype.syncWithCache = function (cacheField, pivotField, cacheFieldWithData, slicerCacheHideItemsWithNoData) {
+		var pivotItems = pivotField.getItems();
+		var count = Math.min(cacheField.getSharedSize(), pivotItems.length);
+		if (cacheFieldWithData) {
+			count = Math.min(count, cacheFieldWithData.length);
+		}
+		this.items = [];
+		for (var i = 0; i < count; ++i) {
+			var pivotItem = pivotItems[i];
+			if (Asc.c_oAscItemType.Data === pivotItem.t || Asc.c_oAscItemType.Blank === pivotItem.t) {
+				var item = new CT_tabularSlicerCacheItem();
+				item.x = pivotItem.x;
+				item.s = !pivotItem.h;
+				if (this.crossFilter !== ST_slicerCacheCrossFilter.None) {
+					item.nd = !(!cacheFieldWithData || cacheFieldWithData[item.x]);
+				}
+				if (!slicerCacheHideItemsWithNoData || !item.nd) {
+					this.items.push(item);
+				}
+			}
 		}
 		this.sortItems(this.sortOrder, cacheField.sharedItems);
 	};
 	CT_tabularSlicerCache.prototype.sortItems = function(type, sharedItems) {
-		var sign = ST_tabularSlicerCacheSortOrder.Ascending == type ? 1 : -1;
-		this.items.sort(function(a, b) {
-			return sign * AscCommonExcel.cmpPivotItems(sharedItems, a, b);
-		});
+		var sign = ST_tabularSlicerCacheSortOrder.Ascending === type ? 1 : -1;
+		if (this.crossFilter === ST_slicerCacheCrossFilter.ShowItemsWithDataAtTop) {
+			this.items.sort(function (a, b) {
+				if (a.nd === b.nd) {
+					return sign * AscCommonExcel.cmpPivotItems(sharedItems, a, b);
+				} else {
+					return a.nd - b.nd;
+				}
+			});
+		} else {
+			this.items.sort(function(a, b) {
+				return sign * AscCommonExcel.cmpPivotItems(sharedItems, a, b);
+			});
+		}
 	};
-	CT_tabularSlicerCache.prototype.getFilterObject = function(cacheField) {
+	CT_tabularSlicerCache.prototype.getFilterObject = function(cacheField, slicerCacheHideItemsWithNoData) {
 		var values = [];
 		for (var i = 0; i < this.items.length; ++i) {
 			var item = this.items[i];
@@ -2568,10 +2621,13 @@
 			var cellValue = sharedItem.getCellValue();
 			elem.val = elem.text = cellValue.getTextValue();
 			elem.visible = item.s;
+			elem.hiddenByOtherColumns = item.nd || undefined;//todo
 			elem.isDateFormat = false;
 			elem.repeats = undefined;
 			//todo isDateFormat
-			values.push(elem);
+			if (!slicerCacheHideItemsWithNoData || !elem.hiddenByOtherColumns) {
+				values.push(elem);
+			}
 		}
 		return values;
 	};
