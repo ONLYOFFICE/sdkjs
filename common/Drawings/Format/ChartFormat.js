@@ -9488,7 +9488,7 @@ CNumRef.prototype =
         if(ser) {
             ser.isHidden = true;
         }
-        this.numCNumLit(Cache.update(this.f, bVertical, displayEmptyCellsAs, ser);
+        this.numCache.update(this.f, bVertical, displayEmptyCellsAs, ser);
     },
 
     getValuesCount: function() {
