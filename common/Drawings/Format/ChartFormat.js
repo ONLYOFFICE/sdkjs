@@ -3061,7 +3061,7 @@ function CDLbl()
     CSeriesBase.prototype.asc_getNameVal = function() {
         return AscFormat.ExecuteNoHistory(function(){
             if(this.tx) {
-                retun this.tx.getText();
+                return this.tx.getText();
             }
             return "";
         }, this, []);
