@@ -3071,10 +3071,16 @@ function CDLbl()
     CSeriesBase.prototype["asc_setValues"] = CSeriesBase.prototype.asc_setValues;
     CSeriesBase.prototype.asc_getValues = function() {
         return AscFormat.ExecuteNoHistory(function() {
-            return this.val.getValues(this.val.getValuesCount());
+            return this.val.getFormula();
         }, this, []);
     };
     CSeriesBase.prototype["asc_getValues"] = CSeriesBase.prototype.asc_getValues;
+    CSeriesBase.prototype.asc_getValuesArr = function() {
+        return AscFormat.ExecuteNoHistory(function() {
+            return this.val.getValues(this.val.getValuesCount());
+        }, this, []);
+    };
+    CSeriesBase.prototype["asc_getValuesArr"] = CSeriesBase.prototype.asc_getValuesArr;
     CSeriesBase.prototype.asc_setXValues = function(sValues) {
         History.Create_NewPoint(0);
         this.setXValues(sValues);
@@ -3083,12 +3089,21 @@ function CDLbl()
     CSeriesBase.prototype.asc_getXValues = function() {
         return AscFormat.ExecuteNoHistory(function() {
             if(this.xVal) {
+                return this.xVal.getFormula();
+            }
+            return "";
+        }, this, []);
+    };
+    CSeriesBase.prototype["asc_getXValues"] = CSeriesBase.prototype.asc_getXValues;
+    CSeriesBase.prototype.asc_getXValuesArr = function() {
+        return AscFormat.ExecuteNoHistory(function() {
+            if(this.xVal) {
                 return this.xVal.getValues();
             }
             return [];
         }, this, []);
     };
-    CSeriesBase.prototype["asc_getXValues"] = CSeriesBase.prototype.asc_getXValues;
+    CSeriesBase.prototype["asc_getXValuesArr"] = CSeriesBase.prototype.asc_getXValuesArr;
 
     CSeriesBase.prototype.asc_setYValues = function(sValues) {
         History.Create_NewPoint(0);
@@ -3098,13 +3113,23 @@ function CDLbl()
     CSeriesBase.prototype.asc_getYValues = function() {
         return AscFormat.ExecuteNoHistory(function() {
             if(this.yVal) {
+                return this.yVal.getFormula();
+            }
+            return "";
+        }, this, []);
+    };
+
+    CSeriesBase.prototype["asc_getYValues"] = CSeriesBase.prototype.asc_getYValues;
+    CSeriesBase.prototype.asc_getYValuesArr = function() {
+        return AscFormat.ExecuteNoHistory(function() {
+            if(this.yVal) {
                 return this.yVal.getValues();
             }
             return [];
         }, this, []);
     };
 
-    CSeriesBase.prototype["asc_getYValues"] = CSeriesBase.prototype.asc_getYValues;
+    CSeriesBase.prototype["asc_getYValuesArr"] = CSeriesBase.prototype.asc_getYValuesArr;
     CSeriesBase.prototype.asc_Remove = function() {
         History.Create_NewPoint(0);
         this.remove();
@@ -6993,6 +7018,25 @@ CCat.prototype =
         if(this.multiLvlStrRef) {
             return this.multiLvlStrRef.getValues(nMaxCount);
         }
+    },
+
+    getFormula: function() {
+        if(this.numLit) {
+            return this.numLit.getFormula();
+        }
+        if(this.numRef) {
+            return this.numRef.getFormula();
+        }
+        if(this.strLit) {
+            return this.strLit.getFormula();
+        }
+        if(this.strRef) {
+            return this.strRef.getFormula();
+        }
+        if(this.multiLvlStrRef) {
+            return this.multiLvlStrRef.getFormula();
+        }
+        return "";
     }
  };
 
@@ -9340,6 +9384,10 @@ CMultiLvlStrRef.prototype =
     getValues: function (nMaxValues) {
         this.updateCache();
         return this.multiLvlStrCache.getValues(nMaxValues);
+    },
+
+    getFormula: function() {
+        return "=" + this.f;
     }
 };
 
@@ -9440,7 +9488,7 @@ CNumRef.prototype =
         if(ser) {
             ser.isHidden = true;
         }
-        this.numCache.update(this.f, bVertical, displayEmptyCellsAs, ser);
+        this.numCNumLit(Cache.update(this.f, bVertical, displayEmptyCellsAs, ser);
     },
 
     getValuesCount: function() {
@@ -9451,6 +9499,9 @@ CNumRef.prototype =
     getValues: function(nMaxValues) {
         this.updateCache();
         return this.numCache.getValues(nMaxValues);
+    },
+    getFormula: function() {
+        return "=" + this.f;
     }
 };
 
@@ -9915,6 +9966,18 @@ CNumLit.prototype =
             }
         }
         return ret;
+    },
+
+    getFormula: function() {
+        var sRet = "={;";
+        for(var nIndex = 0; nIndex < this.pts.length; ++nIndex) {
+            sRet += this.pts[nIndex].val;
+            if(nIndex < this.pts.length -1) {
+                sRet += ", ";
+            }
+        }
+        sRet += "}"
+        return sRet;
     }
 };
 
@@ -11434,6 +11497,17 @@ CStrCache.prototype =
             }
         }
         return ret;
+    },
+    getFormula: function() {
+        var sRet = "={;";
+        for(var nIndex = 0; nIndex < this.pts.length; ++nIndex) {
+            sRet += this.pts[nIndex].val;
+            if(nIndex < this.pts.length -1) {
+                sRet += ", ";
+            }
+        }
+        sRet += "}"
+        return sRet;
     }
 };
 
@@ -11575,6 +11649,9 @@ CStrRef.prototype =
     getValues: function (nMaxCount) {
         this.updateCache();
         return this.strCache.getValues(nMaxCount);
+    },
+    getFormula: function() {
+        return "=" + this.f;
     }
 };
 
@@ -12839,6 +12916,15 @@ CYVal.prototype =
         }
         if(this.numRef) {
             return this.numRef.getValues(nMaxValues);
+        }
+    },
+
+    getFormula: function() {
+        if(this.numLit) {
+            return this.numLit.getFormula();
+        }
+        if(this.numRef) {
+            return this.numRef.getFormula();
         }
     }
 };
