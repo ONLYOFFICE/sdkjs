@@ -872,8 +872,8 @@
 		},
 
 		getRange: function () {
-			if(this.aRanges.length > 0) {
-				return this.aRanges[0];
+			if(this.chartSpace) {
+				return this.chartSpace.getCommonRange();
 			}
 			return null;
 		},

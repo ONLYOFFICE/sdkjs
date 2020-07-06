@@ -6207,74 +6207,10 @@ CChartSpace.prototype.recalculateBBox = function()
 
 CChartSpace.prototype.getCommonBBox = function()
 {
-    if(this.recalcInfo.recalculateBBox)
-    {
-        this.recalculateBBox();
-        this.recalcInfo.recalculateBBox = false;
+    var oBBoxInfo = this.getCommonBBoxInfo();
+    if(oBBoxInfo) {
+		return oBBoxInfo.bbox;
     }
-    var oRet = null;
-    if(this.bbox && this.bbox.seriesBBox && AscFormat.isRealBool(this.bbox.seriesBBox.bVert))
-    {
-        oRet = {r1: this.bbox.seriesBBox.r1, r2: this.bbox.seriesBBox.r2, c1: this.bbox.seriesBBox.c1, c2: this.bbox.seriesBBox.c2};
-        if(this.bbox.seriesBBox.bVert)
-        {
-            if(this.bbox.catBBox )
-            {
-                if(this.bbox.catBBox.r1 === this.bbox.catBBox.r2 && this.bbox.catBBox.r1 === this.bbox.seriesBBox.r1 - 1)
-                {
-                    --oRet.r1;
-                }
-                else
-                {
-                    oRet = null;
-                }
-            }
-            if(oRet)
-            {
-                if(this.bbox.serBBox)
-                {
-                    if(this.bbox.serBBox.c1 === this.bbox.serBBox.c2 && this.bbox.serBBox.c1 === this.bbox.seriesBBox.c1 - 1)
-                    {
-                        --oRet.c1;
-                    }
-                    else
-                    {
-                        oRet = null;
-                    }
-                }
-            }
-        }
-        else
-        {
-            if(this.bbox.catBBox )
-            {
-                if(this.bbox.catBBox.c1 === this.bbox.catBBox.c2 && this.bbox.catBBox.c1 === this.bbox.seriesBBox.c1 - 1)
-                {
-                    --oRet.c1;
-                }
-                else
-                {
-                    oRet = null;
-                }
-            }
-            if(oRet)
-            {
-                if(this.bbox.serBBox)
-                {
-                    if(this.bbox.serBBox.r1 === this.bbox.serBBox.r2 && this.bbox.serBBox.r1 === this.bbox.seriesBBox.r1 - 1)
-                    {
-                        --oRet.r1;
-                    }
-                    else
-                    {
-                        oRet = null;
-                    }
-                }
-            }
-        }
-    }
-    return oRet;
-
 };
 
 CChartSpace.prototype.checkValByNumRef = function(workbook, ser, val, bVertical)
@@ -15585,6 +15521,244 @@ CChartSpace.prototype.addScatterSeries = function(sName, sXValues, sYValues) {
     if(oFirstSpPrMarkerPrst && oSeries.marker) {
         AscFormat.ApplySpPr(oFirstSpPrMarkerPrst, oSeries.marker, oSeries.idx, aBaseFills, bAccent1Background);
     }
+};
+
+CChartSpace.prototype.checkTopBottomSeriesPlacement = function(oValBB, oCatBB, oTxBB, nOrder) {
+    if(oValBB.r2 - oValBB.r1 > 0) {
+        return false;
+    }
+    if(oCatBB) {
+        if(oCatBB.r2 - oCatBB.r1 > 0) {
+            return false;
+        }
+        if(oCatBB.c1 !== oValBB.c1 || oCatBB.c2 !== oValBB.c2) {
+            return false;
+        }
+        if(oValBB.r1 - oCatBB.r1 !== nOrder + 1) {
+            return false;
+        }
+    }
+    if(oTxBB) {
+        if(oTxBB.c1 !== oTxBB.c2 || oTxBB.r1 !== oTxBB.r2) {
+            return false;
+        }
+        if(oTxBB.r1 !== oValBB.r1) {
+            return false;
+        }
+        if(oTxBB.c1 !== oValBB.c1 - 1) {
+            return false;
+        }
+    }
+    return true;
+};
+CChartSpace.prototype.checkLeftRightSeriesPlacement = function(oValBB, oCatBB, oTxBB, nOrder) {
+    if(oValBB.c2 - oValBB.c1 > 0) {
+        return false;
+    }
+    if(oCatBB) {
+        if(oCatBB.c2 - oCatBB.c1 > 0) {
+            return false;
+        }
+        if(oCatBB.r1 !== oValBB.r1 || oCatBB.r2 !== oValBB.r2) {
+            return false;
+        }
+        if(oValBB.c1 - oCatBB.c1 !== nOrder + 1) {
+            return false;
+        }
+    }
+    if(oTxBB) {
+        if(oTxBB.c1 !== oTxBB.c2 || oTxBB.r1 !== oTxBB.r2) {
+            return false;
+        }
+        if(oTxBB.c1 !== oValBB.c1) {
+            return false;
+        }
+        if(oTxBB.r1 !== oValBB.r1 - 1) {
+            return false;
+        }
+    }
+    return true;
+};
+
+CChartSpace.prototype.getCommonBBoxInfo = function() {
+    var aAllSeries = this.getAllSeries();
+    if(aAllSeries.length === 0) {
+        return null;
+    }
+    aAllSeries.sort(function(a, b) {
+        return a.order - b.order;
+    });
+    var oWorksheet, oFirstSeries, oBBox, oCatBB, oValBB, oTxBB, nSeries, oSeries;
+
+    oFirstSeries = aAllSeries[0];
+    var oBBoxInfo = oFirstSeries.getBBoxInfo();
+    if(oBBoxInfo === null) {
+        return null;
+    }
+    oValBB = oBBoxInfo.val;
+    oCatBB = oBBoxInfo.cat;
+    oTxBB = oBBoxInfo.tx;
+    oWorksheet = oBBoxInfo.ws;
+    var r1, r2, c1, c2, oRange;
+    if(!oCatBB && !oTxBB && oValBB.isOneCell()) {
+        //one cell case
+        if(aAllSeries.length === 1) {
+            return {bbox: new Asc.Range(oValBB.c1, oValBB.r1, oValBB.c2, oValBB.r2, false), worksheet: oWorksheet};
+        }
+        else {
+            var oSecondSeries = aAllSeries[1];
+            oBBoxInfo = oSecondSeries.getBBoxInfo();
+            if(oBBoxInfo === null) {
+                return null;
+            }
+            if(oBBoxInfo.ws !== oWorksheet) {
+                return null;
+            }
+            if(oBBoxInfo.cat) {
+                return null;
+            }
+            if(oBBoxInfo.tx) {
+                return null;
+            }
+            if(!oBBoxInfo.val.isOneCell()) {
+                return null;
+            }
+            if(oBBoxInfo.val.r1 === oValBB.r1 + 1) {
+                for(nSeries = 2; nSeries < aAllSeries.length; ++nSeries) {
+                    oBBoxInfo = aAllSeries[nSeries].getBBoxInfo();
+                    if(oBBoxInfo === null) {
+                        return null;
+                    }
+                    if(oBBoxInfo.ws !== oWorksheet) {
+                        return null;
+                    }
+                    if(oBBoxInfo.cat) {
+                        return null;
+                    }
+                    if(oBBoxInfo.tx) {
+                        return null;
+                    }
+                    if(!oBBoxInfo.val.isOneCell()) {
+                        return null;
+                    }
+                    if(oBBoxInfo.val.r1 !== oValBB.r1 + nSeries) {
+                        return null;
+                    }
+                }
+                return {bbox: new Asc.Range(oValBB.c1, oValBB.r1, oValBB.c2, oValBB.r2 + aAllSeries.length - 1, false), worksheet: oWorksheet};
+            }
+            else if(oBBoxInfo.val.c1 === oValBB.c1 + 1) {
+                for(nSeries = 2; nSeries < aAllSeries.length; ++nSeries) {
+                    oBBoxInfo = aAllSeries[nSeries].getBBoxInfo();
+                    if(oBBoxInfo === null) {
+                        return null;
+                    }
+                    if(oBBoxInfo.ws !== oWorksheet) {
+                        return null;
+                    }
+                    if(oBBoxInfo.cat) {
+                        return null;
+                    }
+                    if(oBBoxInfo.tx) {
+                        return null;
+                    }
+                    if(!oBBoxInfo.val.isOneCell()) {
+                        return null;
+                    }
+                    if(oBBoxInfo.val.c1 !== oValBB.c1 + nSeries) {
+                        return null;
+                    }
+                }
+                return {bbox: new Asc.Range(oValBB.c1, oValBB.r1, oValBB.c2 + aAllSeries.length - 1, oValBB.r2, false), worksheet: oWorksheet};
+            }
+            else {
+                return null;
+            }
+        }
+    }
+    else {
+        var bTB = this.checkTopBottomSeriesPlacement(oValBB, oCatBB, oTxBB, oFirstSeries.order);
+        var bLR = false;
+        if(!bTB) {
+            bLR = this.checkLeftRightSeriesPlacement(oValBB, oCatBB, oTxBB, oFirstSeries.order);
+        }
+        if(bTB || bLR) {
+            for(nSeries = 1; nSeries < aAllSeries.length; ++nSeries) {
+                oSeries = aAllSeries[nSeries];
+                oBBoxInfo = oSeries.getBBoxInfo();
+                if(!oBBoxInfo) {
+                    return null;
+                }
+                if(oWorksheet !== oBBoxInfo.ws) {
+                    return null;
+                }
+                if(oValBB && !oBBoxInfo.val || oBBoxInfo.val && !oValBB) {
+                    return null;
+                }
+                if(oCatBB && !oBBoxInfo.cat || oBBoxInfo.cat && !oCatBB) {
+                    return null;
+                }
+                if(oTxBB && !oBBoxInfo.tx || oBBoxInfo.tx && !oTxBB) {
+                    return null;
+                }
+                if(bTB) {
+                    if(!this.checkTopBottomSeriesPlacement(oBBoxInfo.val, oBBoxInfo.cat, oBBoxInfo.tx, oSeries.order)) {
+                        return null;
+                    }
+                }
+                else {
+                    if(!this.checkLeftRightSeriesPlacement(oBBoxInfo.val, oBBoxInfo.cat, oBBoxInfo.tx, oSeries.order)) {
+                        return null;
+                    }
+                }
+            }
+            if(bTB) {
+                if(oCatBB) {
+                    r1 = oCatBB.r1;
+                }
+                else {
+                    r1 = oValBB.r1;
+                }
+                r2 = oValBB.r1 + aAllSeries.length - 1;
+                if(oTxBB) {
+                    c1 = oTxBB.c1;
+                }
+                else {
+                    c1 = oValBB.c1;
+                }
+                c2 = oValBB.c2;
+            }
+            else {
+                if(oCatBB) {
+                    c1 = oCatBB.c1;
+                }
+                else {
+                    c1 = oValBB.c1;
+                }
+                c2 = oValBB.c1 + aAllSeries.length - 1;
+                if(oTxBB) {
+                    r1 = oTxBB.r1;
+                }
+                else {
+                    r1 = oValBB.r1;
+                }
+                r2 = oValBB.r2;
+            }
+            return {bbox: new Asc.Range(c1, r1, c2, r2, false), worksheet: oWorksheet};
+        }
+        else {
+            return null;
+        }
+    }
+    return null;
+};
+
+CChartSpace.prototype.getCommonRange = function() {
+    var oBBoxInfo = this.getCommonBBoxInfo();
+    if(oBBoxInfo) {
+		return parserHelp.getEscapeSheetName(oBBoxInfo.worksheet.getName()) + "!" + oBBoxInfo.bbox.getAbsName();
+    }
+    return null;
 };
 
 function getNumLit(ser) {
