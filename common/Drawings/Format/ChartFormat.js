@@ -3058,6 +3058,15 @@ function CDLbl()
         return AscFormat.ExecuteNoHistory(CSeriesBase.prototype.getName, this, []);
     }
     CSeriesBase.prototype["asc_getName"] = CSeriesBase.prototype.asc_getName;
+    CSeriesBase.prototype.asc_getNameVal = function() {
+        return AscFormat.ExecuteNoHistory(function(){
+            if(this.tx) {
+                retun this.tx.getText();
+            }
+            return "";
+        }, this, []);
+    }
+    CSeriesBase.prototype["asc_getNameVal"] = CSeriesBase.prototype.asc_getNameVal;
     CSeriesBase.prototype.asc_setName = function(sName) {
         History.Create_NewPoint(0);
         this.setName(sName);
@@ -11138,6 +11147,16 @@ CTx.prototype =
         }
         else if(this.strRef) {
             sRet = this.strRef.getText();
+        }
+        return sRet;
+    },
+    getFormula: function() {
+        var sRet = "";
+        if(typeof this.val === "string" && this.val.length > 0) {
+            sRet = "=" + this.val;
+        }
+        else if(this.strRef) {
+            sRet = this.strRef.getFormula();
         }
         return sRet;
     }
