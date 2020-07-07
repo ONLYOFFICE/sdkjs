@@ -6749,7 +6749,7 @@ ParaRun.prototype.ConvertParaContentPosToRangePos = function(oContentPos, nDepth
 	var nCurPos = oContentPos ? Math.max(0, Math.min(this.Content.length, oContentPos.Get(nDepth))) : this.Content.length;
 	for (var nPos = 0; nPos < nCurPos; ++nPos)
 	{
-		if (para_Text === this.Content[nPos].Type)
+		if (para_Text === this.Content[nPos].Type || para_Space === this.Content[nPos].Type || para_Tab === this.Content[nPos].Type)
 			nRangePos++;
     }
 

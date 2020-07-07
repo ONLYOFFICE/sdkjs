@@ -14205,19 +14205,19 @@
     };
 
     WorksheetView.prototype.getActiveCell = function (x, y, isCoord) {
-        var t = this;
         var col, row;
         if (isCoord) {
-            col = t._findColUnderCursor(x, true);
-            row = t._findRowUnderCursor(y, true);
+            col = this._findColUnderCursor(x, true);
+            row = this._findRowUnderCursor(y, true);
             if (!col || !row) {
                 return false;
             }
             col = col.col;
             row = row.row;
         } else {
-            col = t.model.selectionRange.activeCell.col;
-            row = t.model.selectionRange.activeCell.row;
+            var activeCell = this.model.getSelection().activeCell;
+            col = activeCell.col;
+            row = activeCell.row;
         }
 
         // Проверим замерженность
