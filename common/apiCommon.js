@@ -1292,6 +1292,12 @@
 			return [];
 		},
 
+		switchRowCol () {
+			if(this.chartSpace) {
+				this.chartSpace.switchRowCol();
+			}
+		},
+
 		addSeries: function(sName, sValues) {
 			if(this.chartSpace) {
 				this.chartSpace.addSeries(sName, sValues);
@@ -4801,6 +4807,7 @@
 	prot["getShowVerAxis"] = prot.getShowVerAxis;
 	prot["getSeries"] = prot.getSeries;
 	prot["getCatValues"] = prot.getCatValues;
+	prot["switchRowCol"] = prot.switchRowCol;
 	prot["addSeries"] = prot.addSeries;
 	prot["addScatterSeries"] = prot.addScatterSeries;
 

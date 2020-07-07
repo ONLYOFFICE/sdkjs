@@ -2627,13 +2627,13 @@ function CDLbl()
                     if(!oRange) {
                         return null;
                     }
-                    if(Math.abs(oRange.r2 - oRange.r1) !== 1 && Math.abs(oRange.c2 - oRange.c1) !== 1) {
+                    if(Math.abs(oRange.bbox.r2 - oRange.bbox.r1) !== 0 && Math.abs(oRange.bbox.c2 - oRange.bbox.c1) !== 0) {
                         return null;
                     }
                     if(bForce === false) {
                         //check strings in cells
-                        for(nRow = oRange.r1; nRow <= oRange.r2; ++nRow) {
-                            for(nCol = oRange.c1; nCol <= oRange.c2; ++nCol) {
+                        for(nRow = oRange.bbox.r1; nRow <= oRange.bbox.r2; ++nRow) {
+                            for(nCol = oRange.bbox.c1; nCol <= oRange.bbox.c2; ++nCol) {
                                 oCell = oWS.getCell3(nRow, nCol);
                                 var value = oCell.getNumberValue();
                                 if(!AscFormat.isRealNumber(value)){
@@ -2645,7 +2645,12 @@ function CDLbl()
                             }
                         }
                     }
-                    sFormula += ("," + sRef);
+                    if(nIndex > 0) {
+                        sFormula += ("," + sRef);
+                    }
+                    else {
+                        sFormula += sRef;
+                    }
                 }
                 if(nIndex === aParsed.length) {
                     if(aParsed.length > 1) {
@@ -2690,13 +2695,18 @@ function CDLbl()
                     if(!oRange) {
                         return null;
                     }
-                    if(Math.abs(oRange.r2 - oRange.r1) !== 1 && Math.abs(oRange.c2 - oRange.c1) !== 1) {
+                    if(Math.abs(oRange.bbox.r2 - oRange.bbox.r1) !== 0 && Math.abs(oRange.bbox.c2 - oRange.bbox.c1) !== 0) {
                         if(bMultiLvl !== true) {
                             return null;
                         }
                         bMultyRange = true;
                     }
-                    sFormula += ("," + sRef);
+                    if(nIndex > 0) {
+                        sFormula += ("," + sRef);
+                    }
+                    else {
+                        sFormula += sRef;
+                    }
                 }
                 if(nIndex === aParsed.length) {
                     if(aParsed.length > 1) {
@@ -3009,6 +3019,12 @@ function CDLbl()
        }
        return bRet;
     };
+    CSeriesBase.prototype.setCategories = function(sValues) {
+        if(!this.cat) {
+            this.setCat(new CCat());
+        }
+        this.cat.setValues(sValues);
+     };
     CSeriesBase.prototype.getValues = function(nMaxValues) {
         if(this.cat) {
             return this.cat.getValues(nMaxValues);
@@ -3079,6 +3095,26 @@ function CDLbl()
             oTxBB = oTxRef.bbox;
         }
         return {ws: oWorksheet, val: oValBB, cat: oCatBB, tx: oTxBB};
+    };
+    CSeriesBase.prototype.getSpPrPreset = function() {
+        var oFirstSpPrPreset = 0;
+        if(this.getObjectType() === AscDFH.historyitem_type_PieSeries) {
+            if(this.dPt[0] && this.dPt[0].spPr &&
+                !this.dPt[0].spPr.hasRGBFill()) {
+                oFirstSpPrPreset = AscFormat.CollectSettingsSpPr(this.dPt[0].spPr);
+            }
+        }
+        else {
+            oFirstSpPrPreset = AscFormat.CollectSettingsSpPr(this.spPr);
+        }
+        return oFirstSpPrPreset;
+    };
+    CSeriesBase.prototype.getMarkerPreset = function() {
+        var oFirstSpPrMarkerPrst = 0;
+        if(this.marker && this.marker.spPr && !this.marker.spPr.hasRGBFill()){
+            oFirstSpPrMarkerPrst = AscFormat.CollectSettingsSpPr(this.marker.spPr);
+        }
+        return oFirstSpPrMarkerPrst;
     };
     CSeriesBase.prototype.getValuesCount = function() {
         if(this.val) {
@@ -3751,6 +3787,11 @@ CPlotArea.prototype =
         if(this.series[idx]) {
             var arrSeries = this.series.splice(idx, 1);
             History.Add(new CChangesDrawingsContent(this, AscDFH.historyitem_CommonChart_RemoveSeries, idx, arrSeries, false));
+        }
+    };
+    CChartBase.prototype.removeAllSeries = function() {
+        for(var nSeries = this.series.length - 1; nSeries > -1; --nSeries) {
+            this.removeSeries(nSeries);
         }
     };
     CChartBase.prototype.reindexSeries = function() {
@@ -7006,7 +7047,7 @@ CCat.prototype =
 
     setValues: function(sValues) {
         var oNumRef, oNumLit, oStrRef, oStrLit, oMultiLvl, oRef;
-        oNumRef = fParseNumRef(sValues, true);
+        oNumRef = fParseNumRef(sValues, false);
         if(!oNumRef) {
             oRef = fParseStrRef(sValues, true);
             if(oRef) {
@@ -11375,6 +11416,12 @@ CStockChart.prototype.constructor = CStockChart;
         });
         return res;
     }
+    function fCreateRef(oBBoxInfo) {
+        if(oBBoxInfo) {
+            return AscCommon.parserHelp.getEscapeSheetName(oBBoxInfo.worksheet.getName()) + "!" + oBBoxInfo.bbox.getAbsName();
+        }
+        return null;
+    }
 
 function CStrCache()
 {
@@ -14053,4 +14100,5 @@ function CreateMarkerGeometryByType(type, src)
     window['AscFormat'].ORIENTATION_MAX_MIN = ORIENTATION_MAX_MIN;
     window['AscFormat'].ORIENTATION_MIN_MAX = ORIENTATION_MIN_MAX;
     window['AscFormat'].fParseChartFormula = fParseChartFormula;
+    window['AscFormat'].fCreateRef = fCreateRef;
 })(window);

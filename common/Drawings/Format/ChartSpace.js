@@ -4691,23 +4691,9 @@ CChartSpace.prototype.rebuildSeriesFromAsc = function(asc_chart)
         var chart_type = this.chart.plotArea.charts[0];
         var first_series = chart_type.series[0] ? chart_type.series[0] : chart_type.getSeriesConstructor();
 
-        var bAccent1Background = false;
-        if(this.spPr && this.spPr.Fill && this.spPr.Fill.isAccent1()){
-            bAccent1Background = true;
-        }
+        var bAccent1Background = this.isAccent1Background();
 
-        var oFirstSpPrPreset = 0;
-        if(chart_type.getObjectType() === AscDFH.historyitem_type_PieChart || chart_type.getObjectType() === AscDFH.historyitem_type_DoughnutChart){
-            if(chart_type.series[0] && chart_type.series[0].dPt[0] && chart_type.series[0].dPt[0].spPr){
-                oFirstSpPrPreset = AscFormat.CollectSettingsSpPr(chart_type.series[0].dPt[0].spPr);
-            }
-        }
-        else{
-            if(chart_type.series[0]){
-                oFirstSpPrPreset = AscFormat.CollectSettingsSpPr(chart_type.series[0].spPr);
-            }
-        }
-
+        var oFirstSpPrPreset = chart_type.series[0].getSpPrPreset();
         if(first_series.spPr){
             first_series.spPr.setFill(null);
             first_series.spPr.setLn(null);
@@ -4846,15 +4832,10 @@ CChartSpace.prototype.rebuildSeriesData = function(oValRange, oCatRange, oTxRang
         {
             if(oSeries.getObjectType() === AscDFH.historyitem_type_PieSeries)
             {
-                if(oSeries.dPt[0] && oSeries.dPt[0].spPr &&
-                !oSeries.dPt[0].spPr.hasRGBFill()){
-                    oFirstSpPrPreset = AscFormat.CollectSettingsSpPr(oSeries.dPt[0].spPr);
-                }
+                oFirstSpPrPreset = oSeries.getSpPrPreset();
                 if(oFirstSpPrPreset)
                 {
-                    if(this.spPr && this.spPr.Fill && this.spPr.Fill.isAccent1()){
-                        bAccent1Background = true;
-                    }
+                    bAccent1Background = this.isAccent1Background();
                     nPointCount = Math.max(oValRange.r2 - oValRange.r1 + 1, oValRange.c2 - oValRange.c1 + 1);
                     base_fills = AscFormat.getArrayFillsFromBase(style.fill2, nPointCount);
                    // AscFormat.removeDPtsFromSeries(oSeries);
@@ -4959,8 +4940,8 @@ CChartSpace.prototype.rebuildSeriesData = function(oValRange, oCatRange, oTxRang
         {
 
 
-            if(!bScatter && this.spPr && this.spPr.Fill && this.spPr.Fill.isAccent1()){
-                bAccent1Background = true;
+            if(!bScatter){
+                bAccent1Background = this.isAccent1Background();
             }
 
             if(oLastChart.getObjectType() === AscDFH.historyitem_type_PieChart || oLastChart.getObjectType() === AscDFH.historyitem_type_DoughnutChart){
@@ -15424,28 +15405,22 @@ CChartSpace.prototype.Search_GetId  = function(bNext, bCurrent)
     return null;
 };
 
+CChartSpace.prototype.isAccent1Background = function() {
+    return this.spPr && this.spPr.Fill && this.spPr.Fill.isAccent1();
+}
+
 CChartSpace.prototype.addSeries = function(sName, sValues) {
     var oLastChart = this.chart.plotArea.charts[this.chart.plotArea.charts.length - 1];
     if(!oLastChart) {
         return;
     }
     History.Create_NewPoint(0);
-    var bAccent1Background = false;
-    if(this.spPr && this.spPr.Fill && this.spPr.Fill.isAccent1()){
-        bAccent1Background = true;
-    }
+    var bAccent1Background = this.isAccent1Background();
     var aAllSeries = this.getAllSeries();
     var oFirstSeries = aAllSeries[0];
     var oFirstSpPrPreset = 0;
     if(oFirstSeries) {
-        if(oFirstSeries.getObjectType() === AscDFH.historyitem_type_PieSeries) {
-            if(oFirstSeries.dPt[0] && oFirstSeries.dPt[0].spPr) {
-                oFirstSpPrPreset = AscFormat.CollectSettingsSpPr(oFirstSeries.dPt[0].spPr);
-            }
-        }
-        else {
-            oFirstSpPrPreset = AscFormat.CollectSettingsSpPr(oFirstSeries.spPr);
-        }
+        oFirstSpPrPreset = oFirstSeries.getSpPrPreset();
     }
     var oSeries;
     oSeries = oLastChart.series[0] ? oLastChart.series[0].createDuplicate() : oLastChart.getSeriesConstructor();
@@ -15482,26 +15457,14 @@ CChartSpace.prototype.addScatterSeries = function(sName, sXValues, sYValues) {
         return;
     }
     History.Create_NewPoint(0);
-    var bAccent1Background = false;
-    if(this.spPr && this.spPr.Fill && this.spPr.Fill.isAccent1()){
-        bAccent1Background = true;
-    }
     var aAllSeries = this.getAllSeries();
     var oFirstSeries = aAllSeries[0];
+    var bAccent1Background = this.isAccent1Background();
     var oFirstSpPrPreset = 0;
-    if(oFirstSeries) {
-        if(oFirstSeries.getObjectType() === AscDFH.historyitem_type_PieSeries) {
-            if(oFirstSeries.dPt[0] && oFirstSeries.dPt[0].spPr) {
-                oFirstSpPrPreset = AscFormat.CollectSettingsSpPr(oFirstSeries.dPt[0].spPr);
-            }
-        }
-        else {
-            oFirstSpPrPreset = AscFormat.CollectSettingsSpPr(oFirstSeries.spPr);
-        }
-    }
     var oFirstSpPrMarkerPrst = 0;
-    if(oLastChart.series[0] && oLastChart.series[0].marker && oLastChart.series[0].marker.spPr && !oLastChart.series[0].marker.spPr.hasRGBFill()){
-        oFirstSpPrMarkerPrst = AscFormat.CollectSettingsSpPr(oLastChart.series[0].marker.spPr);
+    if(oFirstSeries) {
+        oFirstSpPrPreset = oFirstSeries.getSpPrPreset();
+        oFirstSpPrMarkerPrst = oFirstSeries.getMarkerPreset();
     }
     var oSeries;
     oSeries = oLastChart.series[0] ? oLastChart.series[0].createDuplicate() : oLastChart.getSeriesConstructor();
@@ -15588,7 +15551,7 @@ CChartSpace.prototype.getCommonBBoxInfo = function() {
     aAllSeries.sort(function(a, b) {
         return a.order - b.order;
     });
-    var oWorksheet, oFirstSeries, oBBox, oCatBB, oValBB, oTxBB, nSeries, oSeries;
+    var oWorksheet, oFirstSeries, oCatBB, oValBB, oTxBB, nSeries, oSeries;
 
     oFirstSeries = aAllSeries[0];
     var oBBoxInfo = oFirstSeries.getBBoxInfo();
@@ -15599,11 +15562,18 @@ CChartSpace.prototype.getCommonBBoxInfo = function() {
     oCatBB = oBBoxInfo.cat;
     oTxBB = oBBoxInfo.tx;
     oWorksheet = oBBoxInfo.ws;
-    var r1, r2, c1, c2, oRange;
+    var r1, r2, c1, c2, oCatRange = null, oTxRange = null;
     if(!oCatBB && !oTxBB && oValBB.isOneCell()) {
         //one cell case
         if(aAllSeries.length === 1) {
-            return {bbox: new Asc.Range(oValBB.c1, oValBB.r1, oValBB.c2, oValBB.r2, false), worksheet: oWorksheet};
+            return {
+                bbox: new Asc.Range(oValBB.c1, oValBB.r1, oValBB.c2, oValBB.r2, false),
+                worksheet: oWorksheet,
+                val: new Asc.Range(oValBB.c1, oValBB.r1, oValBB.c2, oValBB.r2, false),
+                cat: null,
+                tx: null,
+                tb: true
+            };
         }
         else {
             var oSecondSeries = aAllSeries[1];
@@ -15645,7 +15615,14 @@ CChartSpace.prototype.getCommonBBoxInfo = function() {
                         return null;
                     }
                 }
-                return {bbox: new Asc.Range(oValBB.c1, oValBB.r1, oValBB.c2, oValBB.r2 + aAllSeries.length - 1, false), worksheet: oWorksheet};
+                return {
+                    bbox: new Asc.Range(oValBB.c1, oValBB.r1, oValBB.c2, oValBB.r2 + aAllSeries.length - 1, false),
+                    worksheet: oWorksheet,
+                    val: new Asc.Range(oValBB.c1, oValBB.r1, oValBB.c2, oValBB.r2 + aAllSeries.length - 1, false),
+                    tx: null,
+                    cat: null,
+                    tb: true
+                };
             }
             else if(oBBoxInfo.val.c1 === oValBB.c1 + 1) {
                 for(nSeries = 2; nSeries < aAllSeries.length; ++nSeries) {
@@ -15669,7 +15646,14 @@ CChartSpace.prototype.getCommonBBoxInfo = function() {
                         return null;
                     }
                 }
-                return {bbox: new Asc.Range(oValBB.c1, oValBB.r1, oValBB.c2 + aAllSeries.length - 1, oValBB.r2, false), worksheet: oWorksheet};
+                return {
+                    bbox: new Asc.Range(oValBB.c1, oValBB.r1, oValBB.c2 + aAllSeries.length - 1, oValBB.r2, false),
+                    worksheet: oWorksheet,
+                    val: new Asc.Range(oValBB.c1, oValBB.r1, oValBB.c2 + aAllSeries.length - 1, oValBB.r2, false),
+                    tx: null,
+                    cat: null,
+                    tb: false
+                };
             }
             else {
                 return null;
@@ -15715,6 +15699,7 @@ CChartSpace.prototype.getCommonBBoxInfo = function() {
             if(bTB) {
                 if(oCatBB) {
                     r1 = oCatBB.r1;
+                    oCatRange = new Asc.Range(oCatBB.c1, oCatBB.r1, oCatBB.c2, oCatBB.r2);
                 }
                 else {
                     r1 = oValBB.r1;
@@ -15722,6 +15707,7 @@ CChartSpace.prototype.getCommonBBoxInfo = function() {
                 r2 = oValBB.r1 + aAllSeries.length - 1;
                 if(oTxBB) {
                     c1 = oTxBB.c1;
+                    oTxRange = new Asc.Range(oTxBB.c1, oTxBB.r1, oTxBB.c1, oTxBB.r1 + aAllSeries.length - 1)
                 }
                 else {
                     c1 = oValBB.c1;
@@ -15731,6 +15717,7 @@ CChartSpace.prototype.getCommonBBoxInfo = function() {
             else {
                 if(oCatBB) {
                     c1 = oCatBB.c1;
+                    oCatRange = new Asc.Range(oCatBB.c1, oCatBB.r1, oCatBB.c2, oCatBB.r2);
                 }
                 else {
                     c1 = oValBB.c1;
@@ -15738,13 +15725,21 @@ CChartSpace.prototype.getCommonBBoxInfo = function() {
                 c2 = oValBB.c1 + aAllSeries.length - 1;
                 if(oTxBB) {
                     r1 = oTxBB.r1;
+                    oTxRange = new Asc.Range(oTxBB.c1, oTxBB.r1, oTxBB.c1 + aAllSeries.length - 1, oTxBB.r1);
                 }
                 else {
                     r1 = oValBB.r1;
                 }
                 r2 = oValBB.r2;
             }
-            return {bbox: new Asc.Range(c1, r1, c2, r2, false), worksheet: oWorksheet};
+            return {
+                bbox: new Asc.Range(c1, r1, c2, r2, false),
+                val: new Asc.Range(oValBB.c1, oValBB.r1, c2, r2),
+                cat: oCatRange,
+                tx: oTxRange,
+                worksheet: oWorksheet,
+                tb: bTB
+            };
         }
         else {
             return null;
@@ -15752,13 +15747,147 @@ CChartSpace.prototype.getCommonBBoxInfo = function() {
     }
     return null;
 };
-
 CChartSpace.prototype.getCommonRange = function() {
+    return AscFormat.fCreateRef(this.getCommonBBoxInfo());
+};
+CChartSpace.prototype.switchRowCol = function() {
     var oBBoxInfo = this.getCommonBBoxInfo();
-    if(oBBoxInfo) {
-		return parserHelp.getEscapeSheetName(oBBoxInfo.worksheet.getName()) + "!" + oBBoxInfo.bbox.getAbsName();
+    if(!oBBoxInfo) {
+        return;
     }
-    return null;
+    var oPlotArea = this.chart.plotArea;
+    var oFirstChart = oPlotArea.charts[0];
+    if(!oFirstChart) {
+        return;
+    }
+    if(oPlotArea.charts.length > 1) {
+        oPlotArea.removeCharts(1, oPlotArea.charts.length - 1);
+    }
+    var oFirstSeries = oFirstChart.series[0];
+    oFirstChart.removeAllSeries();
+    var bAccent1Background = this.isAccent1Background();
+    var oFirstSpPrPreset = 0;
+    var oFirstSpPrMarkerPrst = 0;
+    if(oFirstSeries) {
+        oFirstSpPrPreset = oFirstSeries.getSpPrPreset();
+        oFirstSpPrMarkerPrst = oFirstSeries.getMarkerPreset();
+    }
+    var nSeriesCount = 0, nSeries, oSeries;
+    var oValBB = oBBoxInfo.val;
+    var oRange, r1, r2, c1, c2, sValues, sTx, sCat;
+    var oWorksheet = oBBoxInfo.worksheet;
+    if(oBBoxInfo.tb) {
+        nSeriesCount = oValBB.c2 - oValBB.c1 + 1;
+        for(nSeries = 0; nSeries < nSeriesCount; ++nSeries) {
+            oSeries = oFirstSeries ? oFirstSeries.createDuplicate() : oFirstChart.getSeriesConstructor();
+            r1 = oValBB.r1;
+            r2 = oValBB.r2;
+            c1 = oValBB.c1 + nSeries;
+            c2 = c1;
+            oRange = new Asc.Range(c1, r1, c2, r2);
+            sValues = AscFormat.fCreateRef({worksheet: oWorksheet, bbox: oRange});
+            sTx = null;
+            if(oBBoxInfo.cat) {
+                r1 = oBBoxInfo.cat.r1;
+                r2 = r1;
+                c1 = oValBB.c1 + nSeries;
+                c2 = c1;
+                oRange = new Asc.Range(c1, r1, c2, r2);
+                sTx = AscFormat.fCreateRef({worksheet: oWorksheet, bbox: oRange});
+            }
+            sCat = null;
+            if(oBBoxInfo.tx) {
+                r1 = oBBoxInfo.tx.r1;
+                r2 = oBBoxInfo.tx.r2;
+                c1 = oBBoxInfo.tx.c1;
+                c2 = oBBoxInfo.tx.c2;
+                oRange = new Asc.Range(c1, r1, c2, r2);
+                sCat = AscFormat.fCreateRef({worksheet: oWorksheet, bbox: oRange});
+            }
+            
+            if(sTx) {
+                oSeries.setName(sTx);
+            }
+            if(oSeries.getObjectType() === AscDFH.historyitem_type_ScatterSer) {
+                oSeries.setYValues(sValues);
+                if(sCat) {
+                    oSeries.setXValues(sCat);
+                }
+            }
+            else {
+                oSeries.setValues(sValues);
+                if(sCat) {
+                    oSeries.setCategories(sCat);
+                }
+            }
+            oSeries.setIdx(nSeries);
+            oSeries.setOrder(nSeries);
+            oFirstChart.addSer(oSeries);
+        }
+    }
+    else {
+        nSeriesCount = oValBB.r2 - oValBB.r1 + 1;
+        for(nSeries = 0; nSeries < nSeriesCount; ++nSeries) {
+            oSeries = oFirstSeries ? oFirstSeries.createDuplicate() : oFirstChart.getSeriesConstructor();
+            r1 = oValBB.r1 + nSeries;
+            r2 = r1;
+            c1 = oValBB.c1;
+            c2 = oValBB.c2;
+            oRange = new Asc.Range(c1, r1, c2, r2);
+            sValues = AscFormat.fCreateRef({worksheet: oWorksheet, bbox: oRange});
+            sTx = null;
+            if(oBBoxInfo.cat) {
+                r1 = oBBoxInfo.r1 + nSeries;
+                r2 = r1;
+                c1 = oBBoxInfo.cat.c1;
+                c2 = c1;
+                oRange = new Asc.Range(c1, r1, c2, r2);
+                sTx = AscFormat.fCreateRef({worksheet: oWorksheet, bbox: oRange});
+            }
+            sCat = null;
+            if(oBBoxInfo.tx) {
+                r1 = oBBoxInfo.tx.r1;
+                r2 = oBBoxInfo.tx.r2;
+                c1 = oBBoxInfo.tx.c1;
+                c2 = oBBoxInfo.tx.c2;
+                oRange = new Asc.Range(c1, r1, c2, r2);
+                sCat = AscFormat.fCreateRef({worksheet: oWorksheet, bbox: oRange});
+            }
+            
+            if(sTx) {
+                oSeries.setName(sTx);
+            }
+            if(oSeries.getObjectType() === AscDFH.historyitem_type_ScatterSer) {
+                oSeries.setYValues(sValues);
+                if(sCat) {
+                    oSeries.setXValues(sCat);
+                }
+            }
+            else {
+                oSeries.setValues(sValues);
+                if(sCat) {
+                    oSeries.setCategories(sCat);
+                }
+            }
+            oSeries.setIdx(nSeries);
+            oSeries.setOrder(nSeries);
+            oFirstChart.addSer(oSeries);
+        }
+    }
+    nSeriesCount = oFirstChart.series.length;
+    var oStyle, aBaseFills;
+    oStyle = AscFormat.CHART_STYLE_MANAGER.getStyleByIndex(this.style);
+    aBaseFills = AscFormat.getArrayFillsFromBase(oStyle.fill2, nSeriesCount);
+    for(nSeries = 0; nSeries < nSeriesCount; ++nSeries) {
+        oSeries = oFirstChart.series[nSeries];
+        if(oFirstSpPrPreset) {
+            AscFormat.ApplySpPr(oFirstSpPrPreset, oSeries, oSeries.idx, aBaseFills, bAccent1Background);
+        }
+        if(oFirstSpPrMarkerPrst && oSeries.marker) {
+            AscFormat.ApplySpPr(oFirstSpPrMarkerPrst, oSeries.marker, oSeries.idx, aBaseFills, bAccent1Background);
+        }
+    }
+    this.recalculate();
 };
 
 function getNumLit(ser) {
