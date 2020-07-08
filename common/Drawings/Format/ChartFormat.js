@@ -10092,14 +10092,14 @@ CNumLit.prototype =
     },
 
     getFormula: function() {
-        var sRet = "={;";
+        var sRet = "={";
         for(var nIndex = 0; nIndex < this.pts.length; ++nIndex) {
             sRet += this.pts[nIndex].val;
             if(nIndex < this.pts.length -1) {
                 sRet += ", ";
             }
         }
-        sRet += "}"
+        sRet += "}";
         return sRet;
     }
 };
@@ -11644,14 +11644,14 @@ CStrCache.prototype =
         return ret;
     },
     getFormula: function() {
-        var sRet = "={;";
+        var sRet = "={";
         for(var nIndex = 0; nIndex < this.pts.length; ++nIndex) {
             sRet += this.pts[nIndex].val;
             if(nIndex < this.pts.length -1) {
                 sRet += ", ";
             }
         }
-        sRet += "}"
+        sRet += "}";
         return sRet;
     }
 };
