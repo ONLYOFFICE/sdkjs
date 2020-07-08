@@ -15892,6 +15892,24 @@ CChartSpace.prototype.switchRowCol = function() {
     this.recalculate();
 };
 
+CChartSpace.prototype.getCatFormula = function() {
+    var aAllSeries = this.getAllSeries();
+    var oFirstSeries = aAllSeries[0];
+    if(oFirstSeries) {
+        if(oFirstSeries.cat) {
+            return oFirstSeries.cat.getFormula();
+        }
+    }
+    return "";
+};
+
+CChartSpace.prototype.setCatFormula = function(sFormula) {
+    var aAllSeries = this.getAllSeries();
+    for(var i = 0; i < aAllSeries.length; ++i) {
+        aAllSeries[i].setCategories(sFormula);
+    }
+};
+
 function getNumLit(ser) {
     if(ser) {
         if(ser.val)

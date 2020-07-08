@@ -1292,6 +1292,19 @@
 			return [];
 		},
 
+		getCatFormula: function() {
+			if(this.chartSpace) {
+				return this.chartSpace.getCatFormula();
+			}
+			return "";
+		},
+
+		setCatFormula: function(sFormula) {
+			if(this.chartSpace) {
+				return this.chartSpace.setCatFormula(sFormula);
+			}
+		},
+
 		switchRowCol () {
 			if(this.chartSpace) {
 				this.chartSpace.switchRowCol();
@@ -4812,6 +4825,8 @@
 	prot["switchRowCol"] = prot.switchRowCol;
 	prot["addSeries"] = prot.addSeries;
 	prot["addScatterSeries"] = prot.addScatterSeries;
+	prot["getCatFormula"] = prot.getCatFormula;
+	prot["setCatFormula"] = prot.setCatFormula;
 
 
 
