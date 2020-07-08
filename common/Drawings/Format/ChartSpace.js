@@ -13613,6 +13613,40 @@ CChartSpace.prototype.getChartSizes = function(bNotRecalculate)
         }
     };
 
+
+    
+    CChartSpace.prototype.moveSeriesUp = function(oSeries) {
+        var aAllSeries = this.getAllSeries();
+        aAllSeries.sort(function(a, b){
+            return a.order - b.order;
+        });
+        for(var i = 0; i < aAllSeries.length; ++i) {
+            if(oSeries === aAllSeries[i]) {
+                if(i < aAllSeries.length - 1) {
+                    var nOrder = oSeries.order;
+                    oSeries.setOrder(aAllSeries[i + 1].order);
+                    aAllSeries[i + 1].setOrder(nOrder);
+                }
+                break;
+            }
+        }
+    };
+    CChartSpace.prototype.moveSeriesDown = function(oSeries) {
+        var aAllSeries = this.getAllSeries();
+        aAllSeries.sort(function(a, b){
+            return a.order - b.order;
+        });
+        for(var i = 0; i < aAllSeries.length; ++i) {
+            if(oSeries === aAllSeries[i]) {
+                if(i > 0) {
+                    var nOrder = oSeries.order;
+                    oSeries.setOrder(aAllSeries[i - 1].order);
+                    aAllSeries[i - 1].setOrder(nOrder);
+                }
+                break;
+            }
+        }
+    };
 CChartSpace.prototype.getAllSeries =  function()
 {
     var _ret = [];

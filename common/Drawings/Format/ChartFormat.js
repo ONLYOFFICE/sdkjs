@@ -3256,6 +3256,20 @@ function CDLbl()
         return this.idx;
     };
     CSeriesBase.prototype["asc_getIdx"] = CSeriesBase.prototype.asc_getIdx;
+    CSeriesBase.prototype.asc_MoveUp = function() {
+        if(!this.parent) {
+            return;
+        }
+        this.parent.moveSeriesUp(this);
+    };
+    CSeriesBase.prototype["asc_MoveUp"] = CSeriesBase.prototype.asc_MoveUp;
+    CSeriesBase.prototype.asc_MoveDown = function() {
+        if(!this.parent) {
+            return;
+        }
+        this.parent.moveSeriesDown(this);
+    };
+    CSeriesBase.prototype["asc_MoveDown"] = CSeriesBase.prototype.asc_MoveDown;
 
 
 function CPlotArea()
@@ -3767,8 +3781,17 @@ CPlotArea.prototype =
         if(this.parent) {
             this.parent.reindexSeries();
         }
+    },
+    moveSeriesUp: function(oSeries) {
+        if(this.parent) {
+            this.parent.moveSeriesUp(oSeries);
+        }
+    },
+    moveSeriesDown: function(oSeries) {
+        if(this.parent) {
+            this.parent.moveSeriesDown(oSeries);
+        }
     }
-
 };
 
 
@@ -3801,6 +3824,16 @@ CPlotArea.prototype =
     CChartBase.prototype.reindexSeries = function() {
         if(this.parent) {
             this.parent.reindexSeries();
+        }
+    };    
+    CChartBase.prototype.moveSeriesUp = function(oSeries) {
+        if(this.parent) {
+            this.parent.moveSeriesUp(oSeries);
+        }
+    };
+    CChartBase.prototype.moveSeriesDown = function(oSeries) {
+        if(this.parent) {
+            this.parent.moveSeriesDown(oSeries);
         }
     };
     CChartBase.prototype.addSer = function(ser) {
@@ -13390,8 +13423,17 @@ CChart.prototype =
         if(this.parent) {
             this.parent.reindexSeries();
         }
+    },
+    moveSeriesUp: function(oSeries) {
+        if(this.parent) {
+            this.parent.moveSeriesUp(oSeries);
+        }
+    },
+    moveSeriesDown: function(oSeries) {
+        if(this.parent) {
+            this.parent.moveSeriesDown(oSeries);
+        }
     }
-
 };
 
 
