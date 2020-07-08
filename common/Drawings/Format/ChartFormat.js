@@ -3005,7 +3005,7 @@ function CDLbl()
     };
     CSeriesBase.prototype.getName = function() {
         if(this.tx) {
-            return this.tx.getText();
+            return this.tx.getFormula();
         }
         return "";
     }
@@ -3149,7 +3149,7 @@ function CDLbl()
     };
     CSeriesBase.prototype.asc_getName = function() {
         return AscFormat.ExecuteNoHistory(CSeriesBase.prototype.getName, this, []);
-    }
+    };
     CSeriesBase.prototype["asc_getName"] = CSeriesBase.prototype.asc_getName;
     CSeriesBase.prototype.asc_getNameVal = function() {
         return AscFormat.ExecuteNoHistory(function(){
@@ -3158,8 +3158,12 @@ function CDLbl()
             }
             return "";
         }, this, []);
-    }
+    };
     CSeriesBase.prototype["asc_getNameVal"] = CSeriesBase.prototype.asc_getNameVal;
+    CSeriesBase.prototype.asc_getSeriesName = function() {
+        return this.getSeriesName();
+    };
+    CSeriesBase.prototype["asc_getSeriesName"] = CSeriesBase.prototype.asc_getSeriesName;
     CSeriesBase.prototype.asc_setName = function(sName) {
         History.Create_NewPoint(0);
         this.setName(sName);
@@ -11786,7 +11790,16 @@ CStrRef.prototype =
         this.strCache.update(this.f, bVertical);
     },
     getText: function() {
-
+        this.updateCache();
+        var aValues = this.strCache.getValues(null);
+        var sRet = "";
+        for(var i = 0; i < aValues.length; ++i) {
+            if(i > 0) {
+                sRet += " ";
+            }
+            sRet += aValues[i];
+        }
+        return sRet;
     },
     getValues: function (nMaxCount) {
         this.updateCache();
