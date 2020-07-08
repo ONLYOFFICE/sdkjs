@@ -1298,16 +1298,18 @@
 			}
 		},
 
-		addSeries: function(sName, sValues) {
+		addSeries: function() {
 			if(this.chartSpace) {
-				this.chartSpace.addSeries(sName, sValues);
+				return this.chartSpace.addSeries(null, "={1}");
 			}
+			return null;
 		},
 
-		addScatterSeries: function(sName, sXValues, sYValues) {
+		addScatterSeries: function() {
 			if(this.chartSpace) {
-				this.chartSpace.addScatterSeries(sName, sXValues, sYValues);
+				this.chartSpace.addScatterSeries(null, null, "={1}");
 			}
+			return null;
 		}
 	};
 

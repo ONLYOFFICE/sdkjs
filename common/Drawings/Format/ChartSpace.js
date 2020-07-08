@@ -15412,7 +15412,7 @@ CChartSpace.prototype.isAccent1Background = function() {
 CChartSpace.prototype.addSeries = function(sName, sValues) {
     var oLastChart = this.chart.plotArea.charts[this.chart.plotArea.charts.length - 1];
     if(!oLastChart) {
-        return;
+        return null;
     }
     History.Create_NewPoint(0);
     var bAccent1Background = this.isAccent1Background();
@@ -15449,6 +15449,7 @@ CChartSpace.prototype.addSeries = function(sName, sValues) {
             AscFormat.ApplySpPr(oFirstSpPrPreset, oSeries, oSeries.idx, aBaseFills, bAccent1Background);
         }
     }
+    return oSeries;
 };
 
 CChartSpace.prototype.addScatterSeries = function(sName, sXValues, sYValues) {
@@ -15484,6 +15485,7 @@ CChartSpace.prototype.addScatterSeries = function(sName, sXValues, sYValues) {
     if(oFirstSpPrMarkerPrst && oSeries.marker) {
         AscFormat.ApplySpPr(oFirstSpPrMarkerPrst, oSeries.marker, oSeries.idx, aBaseFills, bAccent1Background);
     }
+    return oSeries;
 };
 
 CChartSpace.prototype.checkTopBottomSeriesPlacement = function(oValBB, oCatBB, oTxBB, nOrder) {
