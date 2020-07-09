@@ -15522,9 +15522,14 @@ CChartSpace.prototype.addScatterSeries = function(sName, sXValues, sYValues) {
     return oSeries;
 };
 
-CChartSpace.prototype.checkTopBottomSeriesPlacement = function(oValBB, oCatBB, oTxBB, nOrder) {
+CChartSpace.prototype.checkTopBottomSeriesPlacement = function(oValBB, oCatBB, oTxBB, nOrder, oFirstVal) {
     if(oValBB.r2 - oValBB.r1 > 0) {
         return false;
+    }
+    if(oFirstVal) {
+        if(oValBB.r1 - oFirstVal.r1 !== nOrder) {
+            return false;
+        }
     }
     if(oCatBB) {
         if(oCatBB.r2 - oCatBB.r1 > 0) {
@@ -15550,9 +15555,15 @@ CChartSpace.prototype.checkTopBottomSeriesPlacement = function(oValBB, oCatBB, o
     }
     return true;
 };
-CChartSpace.prototype.checkLeftRightSeriesPlacement = function(oValBB, oCatBB, oTxBB, nOrder) {
+CChartSpace.prototype.checkLeftRightSeriesPlacement = function(oValBB, oCatBB, oTxBB, nOrder, oFirstVal) {
     if(oValBB.c2 - oValBB.c1 > 0) {
         return false;
+    }
+    
+    if(oFirstVal) {
+        if(oValBB.c1 - oFirstVal.c1 !== nOrder) {
+            return false;
+        }
     }
     if(oCatBB) {
         if(oCatBB.c2 - oCatBB.c1 > 0) {
@@ -15697,10 +15708,10 @@ CChartSpace.prototype.getCommonBBoxInfo = function() {
         }
     }
     else {
-        var bTB = this.checkTopBottomSeriesPlacement(oValBB, oCatBB, oTxBB, oFirstSeries.order);
+        var bTB = this.checkTopBottomSeriesPlacement(oValBB, oCatBB, oTxBB, oFirstSeries.order, oValBB);
         var bLR = false;
         if(!bTB) {
-            bLR = this.checkLeftRightSeriesPlacement(oValBB, oCatBB, oTxBB, oFirstSeries.order);
+            bLR = this.checkLeftRightSeriesPlacement(oValBB, oCatBB, oTxBB, oFirstSeries.order, oValBB);
         }
         if(bTB || bLR) {
             for(nSeries = 1; nSeries < aAllSeries.length; ++nSeries) {
@@ -15722,12 +15733,12 @@ CChartSpace.prototype.getCommonBBoxInfo = function() {
                     return null;
                 }
                 if(bTB) {
-                    if(!this.checkTopBottomSeriesPlacement(oBBoxInfo.val, oBBoxInfo.cat, oBBoxInfo.tx, oSeries.order)) {
+                    if(!this.checkTopBottomSeriesPlacement(oBBoxInfo.val, oBBoxInfo.cat, oBBoxInfo.tx, oSeries.order, oValBB)) {
                         return null;
                     }
                 }
                 else {
-                    if(!this.checkLeftRightSeriesPlacement(oBBoxInfo.val, oBBoxInfo.cat, oBBoxInfo.tx, oSeries.order)) {
+                    if(!this.checkLeftRightSeriesPlacement(oBBoxInfo.val, oBBoxInfo.cat, oBBoxInfo.tx, oSeries.order, oValBB)) {
                         return null;
                     }
                 }
@@ -15942,6 +15953,54 @@ CChartSpace.prototype.setCatFormula = function(sFormula) {
     for(var i = 0; i < aAllSeries.length; ++i) {
         aAllSeries[i].setCategories(sFormula);
     }
+};
+CChartSpace.prototype.setRange = function(sRange) {
+
+    var oPlotArea = this.chart.plotArea;
+    if(sRange === "") {
+        oPlotArea.removeCharts(1, oPlotArea.charts.length);
+        oFirstChart = oPlotArea.charts[0];
+        if(oFirstChart) {
+            oFirstChart.removeAllSeries();
+        }
+    }
+    var aRanges = AscFormat.fParseChartFormula(sRange);
+    if(aRanges.length === 0) {
+        return;
+    }    
+    oPlotArea.removeCharts(1, oPlotArea.charts.length);
+    this.recalculateBBox();
+    var catHeadersBBox, serHeadersBBox;
+    if(this.bbox) {
+    if(this.bbox.catBBox) {
+        serHeadersBBox = {r1: this.bbox.catBBox.r1, r2: this.bbox.catBBox.r2,
+            c1: this.bbox.catBBox.c1, c2: this.bbox.catBBox.c2};
+    }
+    if(this.bbox.serBBox) {
+        catHeadersBBox = {r1: this.bbox.serBBox.r1, r2: this.bbox.serBBox.r2,
+            c1: this.bbox.serBBox.c1, c2: this.bbox.serBBox.c2};
+    }
+    }
+    var chartSettings = new Asc.asc_ChartSettings();
+    var aF = [];
+    for(var nRange = 0; nRange < aRanges.length; ++nRange) {
+        aF.push(AscFormat.fCreateRef(aRanges[nRange]))
+    }
+    chartSettings.aRanges = aF;
+    var range_obj = this.getRangeObjectStr();
+    if(range_obj)
+    {
+        if(typeof range_obj.range === "string" && range_obj.range.length > 0)
+        {
+            chartSettings.putInColumns(!range_obj.bVert);
+        }
+    }
+    var chartSeries = AscFormat.getChartSeries(this.worksheet, chartSettings, catHeadersBBox, serHeadersBBox);
+    this.rebuildSeriesFromAsc(chartSeries);
+    if(this.pivotSource){
+        this.setPivotSource(null);
+    }
+    this.recalculate();
 };
 
 function getNumLit(ser) {

@@ -871,6 +871,12 @@
 			this.aRanges[0] = range;
 		},
 
+		setRange: function(sRange) {
+			if(this.chartSpace) {
+				this.chartSpace.setRange(sRange);
+			}
+		},
+
 		getRange: function () {
 			if(this.chartSpace) {
 				return this.chartSpace.getCommonRange();
@@ -4835,6 +4841,7 @@
 	prot["getCatFormula"] = prot.getCatFormula;
 	prot["setCatFormula"] = prot.setCatFormula;
 	prot["isValidCatFormula"] = prot.isValidCatFormula;
+	prot["setRange"] = prot.setRange;
 
 
 
