@@ -1305,6 +1305,13 @@
 			}
 		},
 
+		isValidCatFormula: function(sFormula) {
+			return AscFormat.ExecuteNoHistory(function(){
+				var oCat = new AscFormat.CCat();
+				return oCat.setValues(sFormula);
+			}, this, []);
+		},
+
 		switchRowCol () {
 			if(this.chartSpace) {
 				this.chartSpace.switchRowCol();
@@ -4827,6 +4834,7 @@
 	prot["addScatterSeries"] = prot.addScatterSeries;
 	prot["getCatFormula"] = prot.getCatFormula;
 	prot["setCatFormula"] = prot.setCatFormula;
+	prot["isValidCatFormula"] = prot.isValidCatFormula;
 
 
 

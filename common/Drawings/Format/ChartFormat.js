@@ -2986,22 +2986,18 @@ function CDLbl()
         return this.order;
     };
     CSeriesBase.prototype.setName = function(sName) {
+        var bRet = false;
         if(typeof sName === "string" && sName.length > 0) {
             var oTx = new CTx();
-            this.setTx(oTx);
-            var oStrRef = fParseStrRef(sName, false);
-            if(oStrRef) {
-                oTx.setStrRef(oStrRef);
-                oTx.setVal(null);
-            }
-            else {
-                oTx.setVal(sName);
-                oTx.setStrRef(null);
+            bRet = oTx.setValues(sName);
+            if(bRet) {
+                this.setTx(oTx);
             }
         }
         else {
             this.setTx(null);
         }
+        return bRet;
     };
     CSeriesBase.prototype.getName = function() {
         if(this.tx) {
@@ -3169,12 +3165,25 @@ function CDLbl()
         this.setName(sName);
     };
     CSeriesBase.prototype["asc_setName"] = CSeriesBase.prototype.asc_setName;
-
+    CSeriesBase.prototype.asc_IsValidName = function(sName) {
+        return AscFormat.ExecuteNoHistory(function(){
+            var oTx = new CTx();
+            return oTx.setValues(sName);
+        }, this, [])
+    };
+    CSeriesBase.prototype["asc_IsValidName"] = CSeriesBase.prototype.asc_IsValidName;
     CSeriesBase.prototype.asc_setValues = function(sValues) {
         History.Create_NewPoint(0);
         this.setValues(sValues);
     };
     CSeriesBase.prototype["asc_setValues"] = CSeriesBase.prototype.asc_setValues;
+    CSeriesBase.prototype.asc_IsValidValues = function(sValues) {
+        return AscFormat.ExecuteNoHistory(function() {
+            var oVal = new CYVal();
+            return oVal.setValues(sValues);
+        }, this, []);
+    };
+    CSeriesBase.prototype["asc_IsValidValues"] = CSeriesBase.prototype.asc_IsValidValues;
     CSeriesBase.prototype.asc_getValues = function() {
         return AscFormat.ExecuteNoHistory(function() {
             return this.val.getFormula();
@@ -3192,6 +3201,13 @@ function CDLbl()
         this.setXValues(sValues);
     };
     CSeriesBase.prototype["asc_setXValues"] = CSeriesBase.prototype.asc_setXValues;
+    CSeriesBase.prototype.asc_IsValidXValues = function(sValues) {
+        return AscFormat.ExecuteNoHistory(function() {
+            var oCat = new CCat();
+            return oCat.setValues(sValues);
+        }, this, []);
+    };
+    CSeriesBase.prototype["asc_IsValidXValues"] = CSeriesBase.prototype.asc_IsValidXValues;
     CSeriesBase.prototype.asc_getXValues = function() {
         return AscFormat.ExecuteNoHistory(function() {
             if(this.xVal) {
@@ -3216,6 +3232,13 @@ function CDLbl()
         this.setYValues(sValues);
     };
     CSeriesBase.prototype["asc_setYValues"] = CSeriesBase.prototype.asc_setYValues;
+    CSeriesBase.prototype.asc_IsValidYValues = function(sValues) {
+        return AscFormat.ExecuteNoHistory(function() {
+            var oVal = new CYVal();
+            return oVal.setValues(sValues);
+        }, this, []);
+    };
+    CSeriesBase.prototype["asc_IsValidYValues"] = CSeriesBase.prototype.asc_IsValidYValues;
     CSeriesBase.prototype.asc_getYValues = function() {
         return AscFormat.ExecuteNoHistory(function() {
             if(this.yVal) {
@@ -3224,7 +3247,6 @@ function CDLbl()
             return "";
         }, this, []);
     };
-
     CSeriesBase.prototype["asc_getYValues"] = CSeriesBase.prototype.asc_getYValues;
     CSeriesBase.prototype.asc_getYValuesArr = function() {
         return AscFormat.ExecuteNoHistory(function() {
@@ -7143,7 +7165,9 @@ CCat.prototype =
                     this.setMultiLvlStrRef(null);
                 }
             }
+            return true;
         }
+        return false;
     },
 
     getValues: function(nMaxCount) {
@@ -11316,6 +11340,25 @@ CTx.prototype =
             return this.strRef.getParsedRefs();
         }
         return [];
+    },
+
+    setValues: function(sName) {
+        var bRet = false;
+        if(typeof sName === "string" && sName.length > 0) {
+            var oStrRef = fParseStrRef(sName, false);
+            if(oStrRef) {
+                this.setStrRef(oStrRef);
+                this.setVal(null);
+            }
+            else {
+                this.setVal(sName);
+                this.setStrRef(null);
+            }
+            bRet = true;
+        }
+        else {
+        }
+        return bRet;
     }
 };
 
@@ -13084,8 +13127,8 @@ CYVal.prototype =
                         this.setNumLit(null);
                     }
                     this.setNumRef(oNumRef);
+                    bSuccess = true;
                 }
-                bSuccess = true;
             }
         }
         return bSuccess;
