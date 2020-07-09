@@ -1312,7 +1312,7 @@
 			}, this, []);
 		},
 
-		switchRowCol () {
+		switchRowCol: function() {
 			if(this.chartSpace) {
 				this.chartSpace.switchRowCol();
 			}
