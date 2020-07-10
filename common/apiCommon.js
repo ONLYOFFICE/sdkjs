@@ -1348,6 +1348,27 @@
 				this.chartSpace.addScatterSeries(null, null, "={1}");
 			}
 			return null;
+		},
+
+		startEdit: function() {
+			History.StartTransaction();
+			History.Create_NewPoint();
+		},
+		endEdit: function() {
+			History.EndTransaction();
+		},
+		cancelEdit: function() {
+			History.EndTransaction();
+			History.Undo();
+		},
+		startEditData: function() {
+			History.SavePointIndex();
+		},
+		cancelEditData: function() {
+			History.UndoToPointIndex();
+		},
+		endEditData: function() {
+			History.ClearPointIndex();
 		}
 	};
 
@@ -4855,6 +4876,14 @@
 	prot["isValidCatFormula"] = prot.isValidCatFormula;
 	prot["setRange"] = prot.setRange;
 	prot["isValidRange"] = prot.isValidRange;
+	prot["startEdit"] = prot.startEdit;
+	prot["endEdit"] = prot.endEdit;
+	prot["cancelEdit"] = prot.cancelEdit;
+	prot["startEditData"] = prot.startEditData;
+	prot["cancelEditData"] = prot.cancelEditData;
+	prot["endEditData"] = prot.endEditData;
+
+
 
 
 

@@ -271,6 +271,8 @@ function CHistory()
   // Параметры для специального сохранения для локальной версии редактора
   this.UserSaveMode   = false;
   this.UserSavedIndex = null;  // Номер точки, на которой произошло последнее сохранение пользователем (не автосохранение)
+
+	this.PosInCurPoint = null; // position to roll back changes within the current point
 }
 CHistory.prototype.init = function(workbook) {
 	this.workbook = workbook;
@@ -1084,6 +1086,47 @@ CHistory.prototype.GetSerializeArray = function()
 				this.SavedIndex = null;
 			}
 		}
+	};
+	CHistory.prototype.SavePointIndex = function()
+	{
+		var oPoint = this.Points[this.Index];
+		if(oPoint)
+		{
+			this.PosInCurPoint = oPoint.Items.length;
+		}
+		else
+		{
+			this.PosInCurPoint = null;
+		}
+	};
+	CHistory.prototype.ClearPointIndex = function()
+	{
+		this.PosInCurPoint = null;
+	};
+	CHistory.prototype.UndoToPointIndex = function()
+	{
+		var oPoint = this.Points[this.Index];
+		if(oPoint)
+		{
+			if(this.PosInCurPoint !== null)
+			{
+				for ( var Index = oPoint.Items.length - 1; Index > this.PosInCurPoint; Index-- )
+				{
+					var Item = oPoint.Items[Index];
+					if(!Item.Class.RefreshRecalcData)
+						Item.Class.Undo( Item.Type, Item.Data, Item.SheetId );
+					else
+					{
+						if (Item.Class)
+						{
+							Item.Class.Undo();
+							Item.Class.RefreshRecalcData();
+						}
+					}
+				}
+			}
+		}
+		this.PosInCurPoint = null; 
 	};
 
 	//------------------------------------------------------------export--------------------------------------------------
