@@ -877,6 +877,18 @@
 			}
 		},
 
+		isValidRange: function(sRange) {
+			if(sRange === "") {
+				return true;
+			}
+			var sCheck = sRange;
+			if(sRange[0] === "=") {
+				sCheck = sRange.slice(1);
+			}
+			var aRanges = AscFormat.fParseChartFormula(sCheck);
+			return (aRanges.length !== 0);
+		},
+
 		getRange: function () {
 			if(this.chartSpace) {
 				return this.chartSpace.getCommonRange();
@@ -4842,6 +4854,7 @@
 	prot["setCatFormula"] = prot.setCatFormula;
 	prot["isValidCatFormula"] = prot.isValidCatFormula;
 	prot["setRange"] = prot.setRange;
+	prot["isValidRange"] = prot.isValidRange;
 
 
 
