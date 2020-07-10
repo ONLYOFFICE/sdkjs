@@ -1321,6 +1321,7 @@
 			if(this.chartSpace) {
 				return this.chartSpace.setCatFormula(sFormula);
 			}
+			this.updateChart();
 		},
 
 		isValidCatFormula: function(sFormula) {
@@ -1334,12 +1335,14 @@
 			if(this.chartSpace) {
 				this.chartSpace.switchRowCol();
 			}
+			this.updateChart();
 		},
 
 		addSeries: function() {
 			if(this.chartSpace) {
 				return this.chartSpace.addSeries(null, "={1}");
 			}
+			this.updateChart();
 			return null;
 		},
 
@@ -1347,6 +1350,7 @@
 			if(this.chartSpace) {
 				this.chartSpace.addScatterSeries(null, null, "={1}");
 			}
+			this.updateChart();
 			return null;
 		},
 
@@ -1356,19 +1360,29 @@
 		},
 		endEdit: function() {
 			History.EndTransaction();
+			this.updateChart();
 		},
 		cancelEdit: function() {
 			History.EndTransaction();
 			History.Undo();
+			this.updateChart();
 		},
 		startEditData: function() {
 			History.SavePointIndex();
 		},
 		cancelEditData: function() {
 			History.UndoToPointIndex();
+			this.updateChart();
 		},
 		endEditData: function() {
 			History.ClearPointIndex();
+			this.updateChart();
+		},
+		updateChart: function() {
+			if(this.chartSpace) {
+				this.chartSpace.recalculate();
+				this.chartSpace.onUpdate(null);
+			}
 		}
 	};
 

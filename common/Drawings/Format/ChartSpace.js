@@ -15795,7 +15795,15 @@ CChartSpace.prototype.getCommonBBoxInfo = function() {
     return null;
 };
 CChartSpace.prototype.getCommonRange = function() {
-    return AscFormat.fCreateRef(this.getCommonBBoxInfo());
+    var aAllSeries = this.getAllSeries();
+    if(aAllSeries.length === 0) {
+        return "";
+    }
+    var sRes = AscFormat.fCreateRef(this.getCommonBBoxInfo());
+    if(sRes) {
+        sRes = "=" + sRes;
+    }
+    return sRes;
 };
 CChartSpace.prototype.switchRowCol = function() {
     var oBBoxInfo = this.getCommonBBoxInfo();
@@ -15964,7 +15972,11 @@ CChartSpace.prototype.setRange = function(sRange) {
             oFirstChart.removeAllSeries();
         }
     }
-    var aRanges = AscFormat.fParseChartFormula(sRange);
+    var sCheck = sRange;
+    if(sRange[0] === "=") {
+        sCheck = sRange.slice(1);
+    }
+    var aRanges = AscFormat.fParseChartFormula(sCheck);
     if(aRanges.length === 0) {
         return;
     }    

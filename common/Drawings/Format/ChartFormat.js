@@ -3256,7 +3256,6 @@ function CDLbl()
             return [];
         }, this, []);
     };
-
     CSeriesBase.prototype["asc_getYValuesArr"] = CSeriesBase.prototype.asc_getYValuesArr;
     CSeriesBase.prototype.asc_Remove = function() {
         History.Create_NewPoint(0);
@@ -3292,7 +3291,6 @@ function CDLbl()
         this.parent.moveSeriesDown(this);
     };
     CSeriesBase.prototype["asc_MoveDown"] = CSeriesBase.prototype.asc_MoveDown;
-
 
 function CPlotArea()
 {
