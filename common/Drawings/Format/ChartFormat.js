@@ -3163,6 +3163,7 @@ function CDLbl()
     CSeriesBase.prototype.asc_setName = function(sName) {
         History.Create_NewPoint(0);
         this.setName(sName);
+        this.onDataUpdate();
     };
     CSeriesBase.prototype["asc_setName"] = CSeriesBase.prototype.asc_setName;
     CSeriesBase.prototype.asc_IsValidName = function(sName) {
@@ -3175,6 +3176,7 @@ function CDLbl()
     CSeriesBase.prototype.asc_setValues = function(sValues) {
         History.Create_NewPoint(0);
         this.setValues(sValues);
+        this.onDataUpdate();
     };
     CSeriesBase.prototype["asc_setValues"] = CSeriesBase.prototype.asc_setValues;
     CSeriesBase.prototype.asc_IsValidValues = function(sValues) {
@@ -3199,6 +3201,7 @@ function CDLbl()
     CSeriesBase.prototype.asc_setXValues = function(sValues) {
         History.Create_NewPoint(0);
         this.setXValues(sValues);
+        this.onDataUpdate();
     };
     CSeriesBase.prototype["asc_setXValues"] = CSeriesBase.prototype.asc_setXValues;
     CSeriesBase.prototype.asc_IsValidXValues = function(sValues) {
@@ -3230,6 +3233,7 @@ function CDLbl()
     CSeriesBase.prototype.asc_setYValues = function(sValues) {
         History.Create_NewPoint(0);
         this.setYValues(sValues);
+        this.onDataUpdate();
     };
     CSeriesBase.prototype["asc_setYValues"] = CSeriesBase.prototype.asc_setYValues;
     CSeriesBase.prototype.asc_IsValidYValues = function(sValues) {
@@ -3260,6 +3264,7 @@ function CDLbl()
     CSeriesBase.prototype.asc_Remove = function() {
         History.Create_NewPoint(0);
         this.remove();
+        this.onDataUpdate();
     };
     CSeriesBase.prototype["asc_Remove"] = CSeriesBase.prototype.asc_Remove;
     CSeriesBase.prototype.asc_IsScatter = function () {
@@ -3271,6 +3276,7 @@ function CDLbl()
     CSeriesBase.prototype.asc_setOrder = function (nVal) {
         History.Create_NewPoint(0);
         this.setOrder(nVal);
+        this.onDataUpdate();
     };
     CSeriesBase.prototype["asc_setOrder"] = CSeriesBase.prototype.asc_setOrder;
     CSeriesBase.prototype.asc_getIdx = function() {
@@ -3282,6 +3288,7 @@ function CDLbl()
             return;
         }
         this.parent.moveSeriesUp(this);
+        this.onDataUpdate();
     };
     CSeriesBase.prototype["asc_MoveUp"] = CSeriesBase.prototype.asc_MoveUp;
     CSeriesBase.prototype.asc_MoveDown = function() {
@@ -3289,8 +3296,15 @@ function CDLbl()
             return;
         }
         this.parent.moveSeriesDown(this);
+        this.onDataUpdate();
     };
     CSeriesBase.prototype["asc_MoveDown"] = CSeriesBase.prototype.asc_MoveDown;
+    CSeriesBase.prototype.onDataUpdate = function() {
+        if(!this.parent) {
+            return;
+        }
+        this.parent.onDataUpdate();
+    };
 
 function CPlotArea()
 {
@@ -3811,6 +3825,13 @@ CPlotArea.prototype =
         if(this.parent) {
             this.parent.moveSeriesDown(oSeries);
         }
+    },
+
+    
+    onDataUpdate: function() {
+        if(this.parent) {
+            this.parent.onDataUpdate();
+        }
     }
 };
 
@@ -3854,6 +3875,11 @@ CPlotArea.prototype =
     CChartBase.prototype.moveSeriesDown = function(oSeries) {
         if(this.parent) {
             this.parent.moveSeriesDown(oSeries);
+        }
+    };
+    CChartBase.prototype.onDataUpdate = function() {
+        if(this.parent) {
+            this.parent.onDataUpdate();
         }
     };
     CChartBase.prototype.addSer = function(ser) {
@@ -13473,6 +13499,12 @@ CChart.prototype =
     moveSeriesDown: function(oSeries) {
         if(this.parent) {
             this.parent.moveSeriesDown(oSeries);
+        }
+    },
+    
+    onDataUpdate: function() {
+        if(this.parent) {
+            this.parent.onDataUpdate();
         }
     }
 };

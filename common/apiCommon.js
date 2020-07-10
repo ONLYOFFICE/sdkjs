@@ -1339,19 +1339,21 @@
 		},
 
 		addSeries: function() {
+			var oRet = null;
 			if(this.chartSpace) {
-				return this.chartSpace.addSeries(null, "={1}");
+				oRet = this.chartSpace.addSeries(null, "={1}");
 			}
 			this.updateChart();
-			return null;
+			return oRet;
 		},
 
 		addScatterSeries: function() {
+			var oRet = null;
 			if(this.chartSpace) {
-				this.chartSpace.addScatterSeries(null, null, "={1}");
+				oRet = this.chartSpace.addScatterSeries(null, null, "={1}");
 			}
 			this.updateChart();
-			return null;
+			return oRet;
 		},
 
 		startEdit: function() {
@@ -1380,8 +1382,7 @@
 		},
 		updateChart: function() {
 			if(this.chartSpace) {
-				this.chartSpace.recalculate();
-				this.chartSpace.onUpdate(null);
+				this.chartSpace.onDataUpdate();
 			}
 		}
 	};

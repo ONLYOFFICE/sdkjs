@@ -16015,6 +16015,11 @@ CChartSpace.prototype.setRange = function(sRange) {
     this.recalculate();
 };
 
+CChartSpace.prototype.onDataUpdate = function() {
+    this.handleUpdateInternalChart();
+    this.recalculate();
+    this.onUpdate(null);
+};
 function getNumLit(ser) {
     if(ser) {
         if(ser.val)
