@@ -2005,8 +2005,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cStrucTable.prototype = Object.create(cBaseType.prototype);
 	cStrucTable.prototype.constructor = cStrucTable;
 	cStrucTable.prototype.type = cElementType.table;
-	cStrucTable.prototype.createFromVal = function (val, wb, ws) {
+	cStrucTable.prototype.createFromVal = function (val, wb, ws, tablesMap) {
 		var res = new cStrucTable(val[0], wb, ws);
+		if (tablesMap && tablesMap[val["tableName"]]) {
+			val["tableName"] = tablesMap[val["tableName"]];
+		}
 		if (res._parseVal(val)) {
 			res._updateArea(null, false);
 		}
@@ -5438,7 +5441,7 @@ function parserFormula( formula, parent, _ws ) {
 		this.isInDependencies = false;
 	};
 
-	parserFormula.prototype.parse = function (local, digitDelim, parseResult, ignoreErrors, renameSheetMap) {
+	parserFormula.prototype.parse = function (local, digitDelim, parseResult, ignoreErrors, renameSheetMap, tablesMap) {
 		var elemArr = [];
 		var ph = {operand_str: null, pCurrPos: 0};
 		var needAssemble = false;
@@ -6281,7 +6284,7 @@ function parserFormula( formula, parent, _ws ) {
 			}
 
 			else if (_tableTMP = parserHelp.isTable.call(ph, t.Formula, ph.pCurrPos, local)) {
-				found_operand = cStrucTable.prototype.createFromVal(_tableTMP, t.wb, t.ws);
+				found_operand = cStrucTable.prototype.createFromVal(_tableTMP, t.wb, t.ws, tablesMap);
 
 				//todo undo delete column
 				if (found_operand.type === cElementType.error) {

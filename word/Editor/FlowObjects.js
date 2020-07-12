@@ -165,7 +165,7 @@ CFlowBase.prototype.getArrayWrapIntervals = function(x0, y0, x1, y1, Y0Sp, Y1Sp,
 			X1 = x1;
 		}
 	}
-	ret.push({X0 : X0, X1 : X1, Y1 : Y1, typeLeft : this.WrappingType, typeRight : this.WrappingType});
+	ret.push({X0 : X0, X1 : X1, Y1 : Y1, typeLeft : this.WrappingType, typeRight : this.WrappingType, bFlowObject: true});
 	return ret;
 };
 CFlowBase.prototype.GetElement = function()

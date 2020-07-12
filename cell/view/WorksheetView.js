@@ -12477,7 +12477,7 @@
 						}
 					}
 					var assemb, _p_ = new AscCommonExcel.parserFormula(pastedFormula, null, t.model);
-					if (_p_.parse()) {
+					if (_p_.parse(null, null, null, null, null, tablesMap)) {
 
 						//array-formula
 						if (arrayFormulaRef) {

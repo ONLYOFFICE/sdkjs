@@ -3259,8 +3259,25 @@ CShape.prototype.recalculateLocalTransform = function(transform)
             else if (this.spPr && this.spPr.xfrm && this.spPr.xfrm.isNotNull())
             {
                 var xfrm = this.spPr.xfrm;
-                this.x = xfrm.offX;
-                this.y = xfrm.offY;
+                var bAlign = false;
+                if(this.parent)
+                {
+                    if(this.parent.PositionH && this.parent.PositionH.Align
+                        || this.parent.PositionV && this.parent.PositionV.Align)
+                        {
+                            bAlign = true;
+                        }
+                }
+                if(bAlign)
+                {
+                    this.x = 0;
+                    this.y = 0;
+                }
+                else
+                {
+                    this.x = xfrm.offX;
+                    this.y = xfrm.offY;
+                }
                 this.extX = xfrm.extX;
                 this.extY = xfrm.extY;
                 this.rot = AscFormat.isRealNumber(xfrm.rot) ? xfrm.rot : 0;

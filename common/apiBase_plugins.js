@@ -519,6 +519,7 @@
                 case "copyoutenabled":
                 {
                     this.copyOutEnabled = obj[prop];
+                    this.sync_CanCopyCutCallback(this.copyOutEnabled);
                     break;
                 }
                 case "watermark_on_draw":

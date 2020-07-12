@@ -2723,12 +2723,11 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.can_CopyCut = function()
 	{
+		if (!this.isCopyOutEnabled())
+		{
+			return false;
+		}
 		return this.WordControl.m_oLogicDocument.Can_CopyCut();
-	};
-
-	asc_docs_api.prototype.sync_CanCopyCutCallback = function(bCanCopyCut)
-	{
-		this.sendEvent("asc_onCanCopyCut", bCanCopyCut);
 	};
 
 	asc_docs_api.prototype.setStartPointHistory = function()
@@ -9866,7 +9865,7 @@ background-repeat: no-repeat;\
 		}
 
 		Document.MoveCursorToStartPos();
-		Document.RecalculateFromStart();
+		Document.RecalculateAllAtOnce(true);
 
 		Document.Document_UpdateInterfaceState();
 		//Document.Document_UpdateRulersState();

@@ -184,9 +184,9 @@
 
         this.openFileCryptBinary = null;
 
-        this.copyOutEnabled = (config['copyoutenabled'] !== false);
+        this.copyOutEnabled = true;
 
-		this.watermarkDraw = config['watermark_on_draw'] ? new AscCommon.CWatermarkOnDraw(config['watermark_on_draw'], this) : null;
+		this.watermarkDraw = null;
 
 		this.SaveAfterMacros = false;
 
@@ -352,6 +352,12 @@
 
 			this.documentOpenOptions = this.DocInfo.asc_getOptions();
 
+			var permissions = this.DocInfo.asc_getPermissions();
+			if (permissions && undefined !== permissions['copy'])
+			{
+				this.copyOutEnabled = permissions['copy'];
+			}
+
 			this.User = new AscCommon.asc_CUser();
 			this.User.setId(this.DocInfo.get_UserId());
 			this.User.setUserName(this.DocInfo.get_UserName());
@@ -361,8 +367,9 @@
 			//чтобы в versionHistory был один documentId для auth и open
 			this.CoAuthoringApi.setDocId(this.documentId);
 
-			if (this.watermarkDraw)
+			if (this.documentOpenOptions && this.documentOpenOptions["watermark"])
 			{
+				this.watermarkDraw = new AscCommon.CWatermarkOnDraw(this.documentOpenOptions["watermark"], this);
 				this.watermarkDraw.CheckParams(this);
 			}
 		}
@@ -417,6 +424,18 @@
 		return _ret;
 	};
 	baseEditorsApi.prototype.isCopyOutEnabled                = function()
+	{
+		return this.copyOutEnabled;
+	};
+	baseEditorsApi.prototype.sync_CanCopyCutCallback = function (bCanCopyCut)
+	{
+		if (!this.isCopyOutEnabled())
+		{
+			bCanCopyCut = false;
+		}
+		this.sendEvent("asc_onCanCopyCut", bCanCopyCut);
+	};
+	baseEditorsApi.prototype.can_CopyCut = function ()
 	{
 		return this.copyOutEnabled;
 	};

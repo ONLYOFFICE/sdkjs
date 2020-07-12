@@ -958,12 +958,20 @@ CWrapManager.prototype =
         {
             var int0 = arr_intervals[s];
             var int1 = arr_intervals[s+1];
-            var dist;
+            var dist, d;
+            var bUnion = false;
             if(int0.typeRight === WRAPPING_TYPE_SQUARE || int0.typeRight === WRAPPING_TYPE_TIGHT || int0.typeRight === WRAPPING_TYPE_THROUGH
-                || int1.typeLeft === WRAPPING_TYPE_SQUARE || int1.typeLeft === WRAPPING_TYPE_TIGHT || int1.typeLeft === WRAPPING_TYPE_THROUGH || bMathWrap === true)
+                || int1.typeLeft === WRAPPING_TYPE_SQUARE || int1.typeLeft === WRAPPING_TYPE_TIGHT || int1.typeLeft === WRAPPING_TYPE_THROUGH || bMathWrap === true || (int0.bFlowObject && int1.bFlowObject))
             {
-                dist = (int0.typeRight === WRAPPING_TYPE_TIGHT || int0.typeRight === WRAPPING_TYPE_THROUGH) || (int1.typeLeft === WRAPPING_TYPE_TIGHT || int1.typeLeft === WRAPPING_TYPE_THROUGH) ? 3.175 : 6.35;
-                var d = arr_intervals[s+1].X0 - arr_intervals[s].X1;
+                if(int0.bFlowObject && int1.bFlowObject)
+                {
+                    dist = 25.4;
+                }
+                else
+                {
+                    dist = (int0.typeRight === WRAPPING_TYPE_TIGHT || int0.typeRight === WRAPPING_TYPE_THROUGH) || (int1.typeLeft === WRAPPING_TYPE_TIGHT || int1.typeLeft === WRAPPING_TYPE_THROUGH) ? 3.175 : 6.35;
+                }
+                d = arr_intervals[s+1].X0 - arr_intervals[s].X1;
                 if(d > 0 && d < dist)
                 {
                     int0.X1 = int1.X1;
@@ -973,7 +981,6 @@ CWrapManager.prototype =
                     --s;
                 }
             }
-
         }
         for(var interval_index = 0; interval_index < arr_intervals.length; ++interval_index)
         {
