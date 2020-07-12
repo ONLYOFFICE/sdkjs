@@ -1357,8 +1357,8 @@
 		},
 
 		startEdit: function() {
-			History.StartTransaction();
 			History.Create_NewPoint();
+			History.StartTransaction();
 		},
 		endEdit: function() {
 			History.EndTransaction();

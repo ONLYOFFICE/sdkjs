@@ -4693,7 +4693,7 @@ CChartSpace.prototype.rebuildSeriesFromAsc = function(asc_chart)
 
         var bAccent1Background = this.isAccent1Background();
 
-        var oFirstSpPrPreset = chart_type.series[0].getSpPrPreset();
+        var oFirstSpPrPreset = first_series.getSpPrPreset();
         if(first_series.spPr){
             first_series.spPr.setFill(null);
             first_series.spPr.setLn(null);
