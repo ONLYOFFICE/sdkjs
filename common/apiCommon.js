@@ -874,6 +874,7 @@
 		setRange: function(sRange) {
 			if(this.chartSpace) {
 				this.chartSpace.setRange(sRange);
+				this.updateChart();
 			}
 		},
 

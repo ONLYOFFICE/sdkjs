@@ -16012,11 +16012,11 @@ CChartSpace.prototype.setRange = function(sRange) {
     if(this.pivotSource){
         this.setPivotSource(null);
     }
-    this.recalculate();
 };
 
 CChartSpace.prototype.onDataUpdate = function() {
     this.handleUpdateInternalChart();
+    this.recalcInfo.recalculateReferences = true;
     this.recalculate();
     this.onUpdate(null);
 };

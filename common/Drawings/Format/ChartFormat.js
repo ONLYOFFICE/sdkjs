@@ -9586,7 +9586,7 @@ CMultiLvlStrRef.prototype =
         this.multiLvlStrCache.update(this.f);
     },
     getValues: function (nMaxValues) {
-        this.updateCache();
+        //this.updateCache();
         return this.multiLvlStrCache.getValues(nMaxValues);
     },
 
@@ -9696,12 +9696,12 @@ CNumRef.prototype =
     },
 
     getValuesCount: function() {
-        this.updateCache();
+        //this.updateCache();
         return this.numCache.ptCount;
     },
 
     getValues: function(nMaxValues) {
-        this.updateCache();
+        //this.updateCache();
         return this.numCache.getValues(nMaxValues);
     },
     getFormula: function() {
@@ -11890,7 +11890,7 @@ CStrRef.prototype =
         this.strCache.update(this.f, bVertical);
     },
     getText: function() {
-        this.updateCache();
+        //this.updateCache();
         var aValues = this.strCache.getValues(null);
         var sRet = "";
         for(var i = 0; i < aValues.length; ++i) {
@@ -11902,7 +11902,7 @@ CStrRef.prototype =
         return sRet;
     },
     getValues: function (nMaxCount) {
-        this.updateCache();
+        //this.updateCache();
         return this.strCache.getValues(nMaxCount);
     },
     getFormula: function() {
