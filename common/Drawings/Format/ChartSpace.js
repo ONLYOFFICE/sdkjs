@@ -13622,10 +13622,10 @@ CChartSpace.prototype.getChartSizes = function(bNotRecalculate)
         });
         for(var i = 0; i < aAllSeries.length; ++i) {
             if(oSeries === aAllSeries[i]) {
-                if(i < aAllSeries.length - 1) {
+                if(i > 0) {
                     var nOrder = oSeries.order;
-                    oSeries.setOrder(aAllSeries[i + 1].order);
-                    aAllSeries[i + 1].setOrder(nOrder);
+                    oSeries.setOrder(aAllSeries[i - 1].order);
+                    aAllSeries[i - 1].setOrder(nOrder);
                 }
                 break;
             }
@@ -13638,10 +13638,10 @@ CChartSpace.prototype.getChartSizes = function(bNotRecalculate)
         });
         for(var i = 0; i < aAllSeries.length; ++i) {
             if(oSeries === aAllSeries[i]) {
-                if(i > 0) {
+                if(i < aAllSeries.length - 1) {
                     var nOrder = oSeries.order;
-                    oSeries.setOrder(aAllSeries[i - 1].order);
-                    aAllSeries[i - 1].setOrder(nOrder);
+                    oSeries.setOrder(aAllSeries[i + 1].order);
+                    aAllSeries[i + 1].setOrder(nOrder);
                 }
                 break;
             }
