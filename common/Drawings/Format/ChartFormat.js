@@ -2637,10 +2637,7 @@ function CDLbl()
                                 oCell = oWS.getCell3(nRow, nCol);
                                 var value = oCell.getNumberValue();
                                 if(!AscFormat.isRealNumber(value)){
-                                    var sVal = oCell.getValueForEdit();
-                                    if((typeof sVal === "string") && sVal.length > 0){
-                                        return null;
-                                    }
+                                    return null;
                                 }
                             }
                         }
@@ -9586,7 +9583,9 @@ CMultiLvlStrRef.prototype =
         this.multiLvlStrCache.update(this.f);
     },
     getValues: function (nMaxValues) {
-        //this.updateCache();
+        if(!this.multiLvlStrCache) {
+            this.updateCache();
+        }
         return this.multiLvlStrCache.getValues(nMaxValues);
     },
 
@@ -9696,12 +9695,16 @@ CNumRef.prototype =
     },
 
     getValuesCount: function() {
-        //this.updateCache();
+        if(!this.numCache) {
+            this.updateCache();
+        }
         return this.numCache.ptCount;
     },
 
     getValues: function(nMaxValues) {
-        //this.updateCache();
+        if(!this.numCache) {
+            this.updateCache();
+        }
         return this.numCache.getValues(nMaxValues);
     },
     getFormula: function() {
@@ -11890,7 +11893,9 @@ CStrRef.prototype =
         this.strCache.update(this.f, bVertical);
     },
     getText: function() {
-        //this.updateCache();
+        if(!this.strCache) {
+            this.updateCache();
+        }
         var aValues = this.strCache.getValues(null);
         var sRet = "";
         for(var i = 0; i < aValues.length; ++i) {
@@ -11902,7 +11907,9 @@ CStrRef.prototype =
         return sRet;
     },
     getValues: function (nMaxCount) {
-        //this.updateCache();
+        if(!this.strCache) {
+            this.updateCache();
+        }
         return this.strCache.getValues(nMaxCount);
     },
     getFormula: function() {
