@@ -15892,7 +15892,7 @@ CChartSpace.prototype.switchRowCol = function() {
             sValues = AscFormat.fCreateRef({worksheet: oWorksheet, bbox: oRange});
             sTx = null;
             if(oBBoxInfo.cat) {
-                r1 = oBBoxInfo.r1 + nSeries;
+                r1 = oBBoxInfo.cat.r1 + nSeries;
                 r2 = r1;
                 c1 = oBBoxInfo.cat.c1;
                 c2 = c1;

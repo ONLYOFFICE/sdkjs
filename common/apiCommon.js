@@ -880,14 +880,14 @@
 
 		isValidRange: function(sRange) {
 			if(sRange === "") {
-				return true;
+				return Asc.c_oAscError.ID.No;
 			}
 			var sCheck = sRange;
 			if(sRange[0] === "=") {
 				sCheck = sRange.slice(1);
 			}
 			var aRanges = AscFormat.fParseChartFormula(sCheck);
-			return (aRanges.length !== 0);
+			return (aRanges.length !== 0) ? Asc.c_oAscError.ID.No : Asc.c_oAscError.ID.DataRangeError;
 		},
 
 		getRange: function () {

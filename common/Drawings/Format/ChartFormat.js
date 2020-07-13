@@ -2486,8 +2486,28 @@ function CDLbl()
             }
         }
     };
-
-
+    
+    function fParseChartFormula(sFormula) {
+        var oWB = Asc.editor && Asc.editor.wbModel;
+        if(!oWB) {
+            return [];
+        }
+        var oWS = oWB.getWorksheet(0);
+        if(!oWS) {
+            return [];
+        }
+        var res;
+        AscCommonExcel.executeInR1C1Mode(false, function () {
+            res = AscCommonExcel.getRangeByRef(sFormula, oWS);
+        });
+        return res;
+    }
+    function fCreateRef(oBBoxInfo) {
+        if(oBBoxInfo) {
+            return AscCommon.parserHelp.getEscapeSheetName(oBBoxInfo.worksheet.getName()) + "!" + oBBoxInfo.bbox.getAbsName();
+        }
+        return null;
+    }
     function fParseSingleRow(sVal, fCallback) {
         if(sVal[0] !== "{" || sVal[sVal.length - 1] !== "}") {
             return null;
@@ -2660,7 +2680,7 @@ function CDLbl()
         }
         return result;
     }
-    function fParseStrRef(sVal, bMultiLvl) {
+    function fParseStrRef(sVal, bMultiLvl, oResult) {
         var result = null, aParsed, nIndex, oParsedRef, sRef, oWS, oRange;
         var bMultyRange = false;
         if(typeof sVal === "string" && sVal.length > 0) {
@@ -11508,27 +11528,6 @@ CStockChart.prototype.constructor = CStockChart;
     };
 
 
-    function fParseChartFormula(sFormula) {
-        var oWB = Asc.editor && Asc.editor.wbModel;
-        if(!oWB) {
-            return [];
-        }
-        var oWS = oWB.getWorksheet(0);
-        if(!oWS) {
-            return [];
-        }
-        var res;
-        AscCommonExcel.executeInR1C1Mode(false, function () {
-            res = AscCommonExcel.getRangeByRef(sFormula, oWS);
-        });
-        return res;
-    }
-    function fCreateRef(oBBoxInfo) {
-        if(oBBoxInfo) {
-            return AscCommon.parserHelp.getEscapeSheetName(oBBoxInfo.worksheet.getName()) + "!" + oBBoxInfo.bbox.getAbsName();
-        }
-        return null;
-    }
 
 function CStrCache()
 {
