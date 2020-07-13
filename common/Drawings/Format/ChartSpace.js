@@ -5837,7 +5837,7 @@ CChartSpace.prototype.getRangeObjectStr = function()
         if(Array.isArray(series) && series.length > 0)
         {
             series.sort(function(a, b){
-                return a.idx - b.idx;
+                return a.order - b.order;
             });
             var series_title_f = [], cat_title_f, series_f = [], i, range1;
             var ref;

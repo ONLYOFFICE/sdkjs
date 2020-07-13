@@ -2492,7 +2492,7 @@ function CDLbl()
         if(sVal[0] !== "{" || sVal[sVal.length - 1] !== "}") {
             return null;
         }
-        var oToken, oParser, bResult, result = null, nIndex;
+        var oParser, bResult, result = null;
         oParser = new AscCommonExcel.parserFormula(sVal, null, Asc.editor.wbModel.aWorksheets[0]);
         bResult = oParser.parse(true, true);
         if(bResult && oParser.outStack.length === 1) {
