@@ -2881,7 +2881,12 @@
 		{
 			if(dataRange)
 			{
-				result = parserHelp.parse3DRef(dataRange);
+				var sData = dataRange;
+				if(sData[0] === "=")
+				{
+					sData = sData.slice(1);
+				}
+				result = parserHelp.parse3DRef(sData);
 			}
 			if (result)
 			{
