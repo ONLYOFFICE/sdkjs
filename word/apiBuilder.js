@@ -10675,7 +10675,7 @@
 	ApiRange.prototype["AddHyperlink"]               = ApiRange.prototype.AddHyperlink;
 	ApiRange.prototype["GetText"]                    = ApiRange.prototype.GetText;
 	ApiRange.prototype["GetAllParagraphs"]           = ApiRange.prototype.GetAllParagraphs;
-	ApiRange.prototype["SetSelection"]               = ApiRange.prototype.SetSelection;
+	ApiRange.prototype["Select"]                     = ApiRange.prototype.Select;
 	ApiRange.prototype["ExpandTo"]                   = ApiRange.prototype.ExpandTo;
 	ApiRange.prototype["IntersectWith"]              = ApiRange.prototype.IntersectWith;
 	ApiRange.prototype["SetBold"]                    = ApiRange.prototype.SetBold;
@@ -10789,7 +10789,7 @@
 	ApiParagraph.prototype["SetTextPr"]              = ApiParagraph.prototype.SetTextPr;
 	ApiParagraph.prototype["InsertInContentControl"] = ApiParagraph.prototype.InsertInContentControl;
 	ApiParagraph.prototype["InsertParagraph"]        = ApiParagraph.prototype.InsertParagraph;
-	ApiParagraph.prototype["SetSelection"]           = ApiParagraph.prototype.SetSelection;
+	ApiParagraph.prototype["Select"]                 = ApiParagraph.prototype.Select;
 	ApiParagraph.prototype["Search"]                 = ApiParagraph.prototype.Search;
 
 	ApiRun.prototype["GetClassType"]                 = ApiRun.prototype.GetClassType;
@@ -10801,7 +10801,7 @@
 	ApiRun.prototype["AddColumnBreak"]               = ApiRun.prototype.AddColumnBreak;
 	ApiRun.prototype["AddTabStop"]                   = ApiRun.prototype.AddTabStop;
 	ApiRun.prototype["AddDrawing"]                   = ApiRun.prototype.AddDrawing;
-	ApiRun.prototype["SetSelection"]                 = ApiRun.prototype.SetSelection;
+	ApiRun.prototype["Select"]                       = ApiRun.prototype.Select;
 	ApiRun.prototype["AddHyperlink"]                 = ApiRun.prototype.AddHyperlink;
 	ApiRun.prototype["Copy"]                         = ApiRun.prototype.Copy;
 	ApiRun.prototype["RemoveAllElements"]            = ApiRun.prototype.RemoveAllElements;
@@ -10876,7 +10876,7 @@
 	ApiTable.prototype["Split"]    					 = ApiTable.prototype.Split;
 	ApiTable.prototype["AddRows"]    				 = ApiTable.prototype.AddRows;
 	ApiTable.prototype["AddColumns"]   				 = ApiTable.prototype.AddColumns;
-	ApiTable.prototype["SetSelection"]    			 = ApiTable.prototype.SetSelection;
+	ApiTable.prototype["Select"]    			     = ApiTable.prototype.Select;
 	ApiTable.prototype["GetRange"]    				 = ApiTable.prototype.GetRange;
 	ApiTable.prototype["SetHAlign"]    				 = ApiTable.prototype.SetHAlign;
 	ApiTable.prototype["SetVAlign"]    				 = ApiTable.prototype.SetVAlign;
@@ -11060,7 +11060,7 @@
 	ApiDrawing.prototype["Copy"]                     = ApiDrawing.prototype.Copy;
 	ApiDrawing.prototype["InsertInContentControl"]   = ApiDrawing.prototype.InsertInContentControl;
 	ApiDrawing.prototype["InsertParagraph"]          = ApiDrawing.prototype.InsertParagraph;
-	ApiDrawing.prototype["SetSelection"]             = ApiDrawing.prototype.SetSelection;
+	ApiDrawing.prototype["Select"]                   = ApiDrawing.prototype.Select;
 	ApiDrawing.prototype["AddBreak"]                 = ApiDrawing.prototype.AddBreak;
 	ApiDrawing.prototype["SetHorFlip"]               = ApiDrawing.prototype.SetHorFlip;
 	ApiDrawing.prototype["SetVertFlip"]              = ApiDrawing.prototype.SetVertFlip;
@@ -11171,7 +11171,7 @@
 	ApiBlockLvlSdt.prototype["AddElement"]              = ApiBlockLvlSdt.prototype.AddElement;
 	ApiBlockLvlSdt.prototype["GetRange"]                = ApiBlockLvlSdt.prototype.GetRange;
 	ApiBlockLvlSdt.prototype["Search"]                  = ApiBlockLvlSdt.prototype.Search;
-	ApiBlockLvlSdt.prototype["SetSelection"]            = ApiBlockLvlSdt.prototype.SetSelection;
+	ApiBlockLvlSdt.prototype["Select"]                  = ApiBlockLvlSdt.prototype.Select;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
