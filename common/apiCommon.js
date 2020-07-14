@@ -1326,9 +1326,12 @@
 		},
 
 		isValidCatFormula: function(sFormula) {
+			if(sFormula === "" || sFormula === null) {
+				return Asc.c_oAscError.ID.No;
+			}
 			return AscFormat.ExecuteNoHistory(function(){
 				var oCat = new AscFormat.CCat();
-				return oCat.setValues(sFormula);
+				return oCat.setValues(sFormula).getError();
 			}, this, []);
 		},
 
