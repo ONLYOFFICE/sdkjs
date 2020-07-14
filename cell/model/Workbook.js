@@ -3322,6 +3322,15 @@
 		}
 		return null;
 	};
+	Workbook.prototype.getSlicerCacheByPivotTableFld = function (sheetId, pivotName, fld) {
+		var slicerCaches = this.getSlicerCachesByPivotTable(sheetId, pivotName);
+		for (var i = 0; i < slicerCaches.length; ++i) {
+			if (slicerCaches[i].getPivotFieldIndex() === fld) {
+				return slicerCaches[i];
+			}
+		}
+		return null;
+	};
 	Workbook.prototype.getSlicerCachesByPivotTable = function (sheetId, pivotName) {
 		var res = [];
 		for (var i = 0, l = this.aWorksheets.length; i < l; ++i) {

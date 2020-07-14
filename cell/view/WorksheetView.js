@@ -20524,7 +20524,7 @@
 					break;
 				}
 				case window['AscCommonExcel'].insertSlicerType.pivotTable: {
-					slicerCache.applyPivotFilter(this.model.workbook.oApi, val, null, false);
+					slicerCache.applyPivotFilterWithLock(this.model.workbook.oApi, val, null, false);
 					break;
 				}
 			}

@@ -4123,15 +4123,15 @@ CT_pivotTableDefinition.prototype.updateLocation = function() {
 		var dataFieldsCount = dataFields ? dataFields.length : 0;
 		location.firstDataCol = 0;
 		location.firstHeaderRow = 1;
-		if (1 === colFieldsCount && st_VALUES === colFields[0].asc_getIndex()) {
-			location.firstHeaderRow = 0;
+			if (1 === colFieldsCount && st_VALUES === colFields[0].asc_getIndex()) {
+				location.firstHeaderRow = 0;
 			colFieldsCountWithoutValues = 0;
-		}
+			}
 		if (this.gridDropZones && (0 === colFieldsCountWithoutValues || 0 === rowFieldsCount)) {
 			location.firstHeaderRow = 1;
 			if (0 < rowFieldsCount && 0 === colFieldsCountWithoutValues && dataFieldsCount < 2) {
 				location.firstHeaderRow = 2;
-			}
+		}
 			location.firstDataCol = 1;
 		}
 		if (false === this.showHeaders && false === this.gridDropZones && (1 !== dataFieldsCount || (0 < colFieldsCountWithoutValues && 0 === rowFieldsCount))) {
@@ -4164,12 +4164,12 @@ CT_pivotTableDefinition.prototype.updateLocation = function() {
 		if (this.gridDropZones && 0 < colFieldsCount && 0 === rowFieldsCount && 0 === dataFieldsCount) {
 			location.ref.r2 = location.ref.r1 + location.firstDataRow + NEW_PIVOT_LAST_ROW_OFFSET_GRID_DROP_ZONES - 1;
 		} else {
-			location.ref.r2 = location.ref.r1 + location.firstDataRow + rowItemsCount - 1;
+		location.ref.r2 = location.ref.r1 + location.firstDataRow + rowItemsCount - 1;
 		}
 		if (this.gridDropZones && 0 < rowFieldsCount && 0 === colFieldsCount && 0 === dataFieldsCount) {
 			location.ref.c2 = location.ref.c1 + location.firstDataCol + NEW_PIVOT_LAST_COL_OFFSET_GRID_DROP_ZONES - 1;
 		} else {
-			location.ref.c2 = location.ref.c1 + location.firstDataCol + colItemsCount - 1;
+		location.ref.c2 = location.ref.c1 + location.firstDataCol + colItemsCount - 1;
 		}
 	} else if (this.asc_getPageFields()) {
 		location.ref.r2 = location.ref.r1;
@@ -5105,7 +5105,7 @@ CT_pivotTableDefinition.prototype.removeDataField = function (pivotIndex, dataIn
 		if (0 === this.dataFields.getCount()) {
 			this.dataFields = null;
 		}
-	}
+		}
 	if (addToHistory && undefined !== removed) {
 		History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_RemoveDataField,
 			this.worksheet ? this.worksheet.getId() : null, null,
@@ -5576,7 +5576,15 @@ CT_pivotTableDefinition.prototype.hasLeftAlignInRowLables = function() {
 	}
 	return false;
 };
-
+CT_pivotTableDefinition.prototype.getPivotTablesConnectedBySlicer = function(fld) {
+	var res = [];
+	var ws = this.worksheet;
+	var slicerCache = ws.workbook.getSlicerCacheByPivotTableFld(ws.getId(), this.name, fld);
+	if (slicerCache) {
+		res = res.concat(slicerCache.getPivotTables());
+	}
+	return res;
+};
 function CT_pivotTableDefinitionX14() {
 //Attributes
 	this.fillDownLabelsDefault = false;

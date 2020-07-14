@@ -1321,31 +1321,6 @@
 		}
 		return res;
 	};
-
-	CT_slicerCacheDefinition.prototype.applyPivotFilter = function(api, values, excludePivot, confirmation) {
-		var t = this;
-		var wb = this.ws.workbook;
-		var fieldIndex = this.getPivotFieldIndex();
-		if (-1 === fieldIndex) {
-			return;
-		}
-		var pivotTables = this.getPivotTables();
-		this._applyPivotFilter(api, fieldIndex, pivotTables, excludePivot, values, 0, 0, confirmation, function(isSuccess) {
-			if (isSuccess) {
-				var oldVal = new AscCommonExcel.UndoRedoData_BinaryWrapper2(t);
-				t.data.tabular.fromAutoFiltersOptionsElements(values);
-				var newVal = new AscCommonExcel.UndoRedoData_BinaryWrapper2(t);
-				History.Add(AscCommonExcel.g_oUndoRedoSlicer, AscCH.historyitem_Slicer_SetCacheData,
-					null, null, new AscCommonExcel.UndoRedoData_Slicer(t.name, oldVal, newVal));
-				var slicers = t.getLinkedPivotSlicers();
-				for (var name in slicers) {
-					if (slicers.hasOwnProperty(name)) {
-						wb.onSlicerUpdate(name);
-					}
-				}
-			}
-		});
-	};
 	CT_slicerCacheDefinition.prototype.getLinkedPivotSlicers = function () {
 		var res = {};
 		var wb = this.ws.workbook;
@@ -1361,41 +1336,71 @@
 		});
 		return res;
 	};
-	CT_slicerCacheDefinition.prototype._applyPivotFilter = function(api, fieldIndex, pivotTables, excludePivot, values, index, indexRepeat, confirmation, onEnd) {
+	CT_slicerCacheDefinition.prototype.applyPivotFilterWithLock = function(api, values, excludePivot, confirmation) {
 		var t = this;
-		if (index >= pivotTables.length) {
-			onEnd(true);
+		var fld = this.getPivotFieldIndex();
+		if (-1 === fld) {
 			return;
 		}
-		var pivotTable = pivotTables[index];
-		if (pivotTable === excludePivot) {
-			t._applyPivotFilter(api, fieldIndex, pivotTables, excludePivot, values, index + 1, indexRepeat, confirmation, onEnd);
+		var pivotTables = this.getPivotTables();
+		if (pivotTables.length === 0) {
 			return;
 		}
-		var autoFilterObject = new Asc.AutoFiltersOptions();
-		pivotTable.fillAutoFiltersOptions(autoFilterObject, fieldIndex);
-		autoFilterObject.setVisibleFromValues(values);
-		autoFilterObject.filter.type = Asc.c_oAscAutoFilterTypes.Filters;
-		api._changePivotWithLockExt(pivotTable, confirmation, false, function(ws) {
-			pivotTable.filterPivotItems(fieldIndex, autoFilterObject);
-		}, function(error, warn, updateRes) {
-			if (Asc.c_oAscError.ID.No !== error) {
-				api.sendEvent('asc_onError', error, Asc.c_oAscError.Level.NoCritical);
-				onEnd(false);
-			} else if (Asc.c_oAscError.ID.No !== warn) {
-				api.handlers.trigger("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmReplaceRange, function(can) {
-					if (can) {
-						//repeate with whole checks because of collaboration changes
-						t._applyPivotFilter(api, fieldIndex, pivotTables, excludePivot, values, 0, index, true, onEnd);
-					} else {
-						onEnd(false);
-					}
-				});
-			} else if (updateRes) {
-				pivotTable.syncSlicersWithPivot(updateRes.cacheFieldsWithData);
-				t._applyPivotFilter(api, fieldIndex, pivotTables, excludePivot, values, index + 1, indexRepeat, confirmation, onEnd);
-			}
+		api._changePivotAndConnectedBySlicerWithLock(pivotTables[0], [fld], function() {
+			History.Create_NewPoint();
+			History.StartTransaction();
+			api.wbModel.dependencyFormulas.lockRecal();
+			var changeRes = t.applyPivotFilter(api, values, excludePivot, confirmation);
+			api.wbModel.dependencyFormulas.unlockRecal();
+			History.EndTransaction();
+
+			api._changePivotEndCheckError(pivotTables[0], changeRes, function(){
+				t.applyPivotFilterWithLock(api, values, excludePivot, true);
+			});
 		});
+	};
+	CT_slicerCacheDefinition.prototype.applyPivotFilter = function(api, values, excludePivot, confirmation) {
+		var changeRes = {error: c_oAscError.ID.No, warning: c_oAscError.ID.No};
+		var fld = this.getPivotFieldIndex();
+		if (-1 === fld) {
+			return;
+		}
+		var pivotTables = this.getPivotTables();
+		if (pivotTables.length === 0) {
+			return;
+		}
+		var wb = this.ws.workbook;
+		for (var i = 0; i < pivotTables.length; ++i) {
+			var pivotTable = pivotTables[i];
+			if (pivotTable === excludePivot) {
+				continue;
+			}
+			var autoFilterObject = new Asc.AutoFiltersOptions();
+			pivotTable.fillAutoFiltersOptions(autoFilterObject, fld);
+			autoFilterObject.setVisibleFromValues(values);
+			autoFilterObject.filter.type = Asc.c_oAscAutoFilterTypes.Filters;
+			changeRes = api._changePivot(pivotTable, confirmation, false, function(ws) {
+				pivotTable.filterPivotItems(fld, autoFilterObject);
+			});
+			if (c_oAscError.ID.No !== changeRes.error || c_oAscError.ID.No !== changeRes.warning) {
+				return changeRes;
+			}
+			if (changeRes.updateRes) {
+				pivotTable.syncSlicersWithPivot(changeRes.updateRes.cacheFieldsWithData);
+			}
+		}
+		var oldVal = new AscCommonExcel.UndoRedoData_BinaryWrapper2(this);
+		this.data.tabular.fromAutoFiltersOptionsElements(values);
+		var newVal = new AscCommonExcel.UndoRedoData_BinaryWrapper2(this);
+		History.Add(AscCommonExcel.g_oUndoRedoSlicer, AscCH.historyitem_Slicer_SetCacheData,
+			null, null, new AscCommonExcel.UndoRedoData_Slicer(this.name, oldVal, newVal));
+		var slicers = this.getLinkedPivotSlicers();
+		for (var name in slicers) {
+			if (slicers.hasOwnProperty(name)) {
+				wb.onSlicerUpdate(name);
+			}
+		}
+		return changeRes;
 	};
 	CT_slicerCacheDefinition.prototype.setSourceName = function (val) {
 		this.sourceName = val;
