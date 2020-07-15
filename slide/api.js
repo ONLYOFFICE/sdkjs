@@ -4387,7 +4387,7 @@ background-repeat: no-repeat;\
         this.WordControl.m_oLogicDocument.AddShapeOnCurrentPage(sPreset);
 	}
 	asc_docs_api.prototype.can_CopyCut = function(){
-		if(!this.WordControl.m_oLogicDocument || !this.isCopyOutEnabled()){
+		if(!this.WordControl.m_oLogicDocument){
 			return false;
 		}
         return this.WordControl.m_oLogicDocument.Can_CopyCut();

@@ -429,15 +429,11 @@
 	};
 	baseEditorsApi.prototype.sync_CanCopyCutCallback = function (bCanCopyCut)
 	{
-		if (!this.isCopyOutEnabled())
-		{
-			bCanCopyCut = false;
-		}
 		this.sendEvent("asc_onCanCopyCut", bCanCopyCut);
 	};
 	baseEditorsApi.prototype.can_CopyCut = function ()
 	{
-		return this.copyOutEnabled;
+		return true;
 	};
 	// target pos
 	baseEditorsApi.prototype.asc_LockTargetUpdate		     = function(isLock)

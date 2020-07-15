@@ -4770,42 +4770,6 @@ AscCommon.asc_WriteColorSchemes = asc_WriteColorSchemes;
 
 ///////////////////////////////////////////////////////////////////////
 
-function asc_WriteUsers(c, s) {
-    if (!c) return;
-
-    var len = 0, name, user;
-    for (name in c) {
-        if (undefined !== name) {
-            len++;
-        }
-    }
-
-    s["WriteLong"](len);
-
-    for (name in c) {
-        if (undefined !== name) {
-            user = c[name];
-            if (user) {
-                s['WriteString2'](user.asc_getId());
-                s['WriteString2'](user.asc_getFirstName() === undefined ? "" : user.asc_getFirstName());
-                s['WriteString2'](user.asc_getLastName() === undefined ? "" : user.asc_getLastName());
-                s['WriteString2'](user.asc_getUserName() === undefined ? "" : user.asc_getUserName());
-                s['WriteBool'](user.asc_getView());
-
-                var color = new Asc.asc_CColor();
-
-                color.r = (user.color >> 16) & 255;
-                color.g = (user.color >> 8 ) & 255;
-                color.b = (user.color      ) & 255;
-
-                asc_menu_WriteColor(0, color, s);
-            }
-        }
-    }
-}
-
-///////////////////////////////////////////////////////////////////////
-
 Asc['asc_docs_api'].prototype.UpdateTextPr = function(TextPr)
 {
     if (!TextPr)
@@ -6396,19 +6360,8 @@ function NativeOpenFile3(_params, documentInfo)
            
             window["native"]["onTokenJWT"](_api.CoAuthoringApi.get_jwt());
 
-            _api.asc_registerCallback("asc_onAuthParticipantsChanged", function(users) {
-                                      var stream = global_memory_stream_menu;
-                                      stream["ClearNoAttack"]();
-                                      asc_WriteUsers(users, stream);
-                                      window["native"]["OnCallMenuEvent"](20101, stream); // ASC_COAUTH_EVENT_TYPE_PARTICIPANTS_CHANGED
-                                      });
-
-            _api.asc_registerCallback("asc_onParticipantsChanged", function(users) {
-                                      var stream = global_memory_stream_menu;
-                                      stream["ClearNoAttack"]();
-                                      asc_WriteUsers(users, stream);
-                                      window["native"]["OnCallMenuEvent"](20101, stream); // ASC_COAUTH_EVENT_TYPE_PARTICIPANTS_CHANGED
-                                      });
+            _api.asc_registerCallback("asc_onAuthParticipantsChanged", onApiAuthParticipantsChanged);
+            _api.asc_registerCallback("asc_onParticipantsChanged", onApiParticipantsChanged);
 
             _api.asc_registerCallback("asc_onGetEditorPermissions", function(state) {
 
@@ -6457,7 +6410,7 @@ function NativeOpenFile3(_params, documentInfo)
     }
 }
 
-// Comments
+// Common
 
 function postDataAsJSONString(data, eventId) {
     var stream = global_memory_stream_menu;
@@ -6467,6 +6420,41 @@ function postDataAsJSONString(data, eventId) {
     }
     window["native"]["OnCallMenuEvent"](eventId, stream);
 }
+
+// Users
+
+function sdkUsersToJson(users) {
+    var arrUsers = [];
+
+    for (var userId in users) {
+        if (undefined !== userId) {
+            var user = users[userId];
+            if (user) {
+                arrUsers.push({
+                    id          : user.asc_getId(),
+                    idOriginal  : user.asc_getIdOriginal(),
+                    userName    : user.asc_getUserName(),
+                    online      : true,
+                    color       : user.asc_getColor(),
+                    view        : user.asc_getView()
+                });
+            }
+        }
+    }
+    return arrUsers;
+}
+
+function onApiAuthParticipantsChanged(users) {
+    var users = sdkUsersToJson(users) || [];
+    postDataAsJSONString(users, 20101); // ASC_COAUTH_EVENT_TYPE_PARTICIPANTS_CHANGED
+}
+
+function onApiParticipantsChanged(users) {
+    var users = sdkUsersToJson(users) || [];
+    postDataAsJSONString(users, 20101); // ASC_COAUTH_EVENT_TYPE_PARTICIPANTS_CHANGED
+}
+
+// Comments
 
 function stringOOToLocalDate (date) {
     if (typeof date === 'string')
