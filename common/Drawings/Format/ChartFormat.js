@@ -3278,6 +3278,9 @@ function CDLbl()
     CSeriesBase.prototype["asc_setName"] = CSeriesBase.prototype.asc_setName;
     CSeriesBase.prototype.asc_IsValidName = function(sName) {
         return AscFormat.ExecuteNoHistory(function(){
+            if(sName === "" || sName === null) {
+                return Asc.c_oAscError.ID.No;
+            }
             var oTx = new CTx();
             return oTx.setValues(sName).getError();
         }, this, [])
