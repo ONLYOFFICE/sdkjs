@@ -15965,6 +15965,7 @@ CChartSpace.prototype.setCatFormula = function(sFormula) {
 CChartSpace.prototype.setRange = function(sRange) {
 
     var oPlotArea = this.chart.plotArea;
+    var oFirstChart;
     if(sRange === "") {
         oPlotArea.removeCharts(1, oPlotArea.charts.length);
         oFirstChart = oPlotArea.charts[0];
