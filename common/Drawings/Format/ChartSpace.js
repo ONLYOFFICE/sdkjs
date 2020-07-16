@@ -6194,19 +6194,19 @@ CChartSpace.prototype.getCommonBBox = function()
     }
 };
 
-CChartSpace.prototype.checkValByNumRef = function(workbook, ser, val, bVertical)
+CChartSpace.prototype.checkValByNumRef = function(ser, val)
 {
     if(val && val.numRef)
     {
-        val.numRef.updateCache(bVertical, this.displayEmptyCellsAs, ser);
+        val.numRef.updateCache(this.displayEmptyCellsAs, this.displayHidden, ser);
     }
 };
 
-CChartSpace.prototype.checkCatByNumRef = function(oThis, ser, cat, bVertical)
+CChartSpace.prototype.checkCatByNumRef = function(ser, cat)
 {
     if(cat && cat.strRef)
     {
-        cat.strRef.updateCache(bVertical);
+        cat.strRef.updateCache();
     }
 };
 
@@ -6253,12 +6253,12 @@ CChartSpace.prototype.recalculateReferences = function()
             {
                 ser = series[j];
                 //val
-                this.checkValByNumRef(this.worksheet.workbook, ser, ser.val);
+                this.checkValByNumRef(ser, ser.val);
                 //cat
-                this.checkValByNumRef(this.worksheet.workbook, ser, ser.cat, bVert);
-                this.checkCatByNumRef(this, ser, ser.cat, bVert);
+                this.checkValByNumRef(ser, ser.cat);
+                this.checkCatByNumRef(ser, ser.cat);
                 //tx
-                this.checkCatByNumRef(this, ser, ser.tx, AscFormat.isRealBool(bVert) ? !bVert : undefined);
+                this.checkCatByNumRef(ser, ser.tx);
 
                 if(ser.isHidden)
                 {
@@ -6276,10 +6276,10 @@ CChartSpace.prototype.recalculateReferences = function()
             for(j = 0; j < series.length; ++j)
             {
                 ser = series[j];
-                this.checkValByNumRef(this.worksheet.workbook, ser, ser.xVal, bVert);
-                this.checkValByNumRef(this.worksheet.workbook, ser, ser.yVal);
-                this.checkCatByNumRef(this, ser, ser.tx, AscFormat.isRealBool(bVert) ? !bVert : undefined);
-                this.checkCatByNumRef(this, ser, ser.xVal, bVert);
+                this.checkValByNumRef(ser, ser.xVal);
+                this.checkValByNumRef(ser, ser.yVal);
+                this.checkCatByNumRef(ser, ser.tx);
+                this.checkCatByNumRef(ser, ser.xVal);
 
                 if(ser.isHidden)
                 {
@@ -6307,7 +6307,7 @@ CChartSpace.prototype.recalculateReferences = function()
     var aTitles = this.getAllTitles();
     for(i = 0; i < aTitles.length; ++i){
         var oTitle = aTitles[i];
-        this.checkCatByNumRef(this, oTitle, oTitle.tx, undefined);
+        this.checkCatByNumRef(oTitle, oTitle.tx);
     }
     var aAxis = this.chart.plotArea.axId;
     for(i = 0; i < aAxis.length; ++i){
@@ -15963,7 +15963,6 @@ CChartSpace.prototype.setCatFormula = function(sFormula) {
     }
 };
 CChartSpace.prototype.setRange = function(sRange) {
-
     var oPlotArea = this.chart.plotArea;
     var oFirstChart;
     if(sRange === "") {
@@ -15972,6 +15971,7 @@ CChartSpace.prototype.setRange = function(sRange) {
         if(oFirstChart) {
             oFirstChart.removeAllSeries();
         }
+        return;
     }
     var sCheck = sRange;
     if(sRange[0] === "=") {
@@ -15997,7 +15997,15 @@ CChartSpace.prototype.setRange = function(sRange) {
     var chartSettings = new Asc.asc_ChartSettings();
     var aF = [];
     for(var nRange = 0; nRange < aRanges.length; ++nRange) {
-        aF.push(AscFormat.fCreateRef(aRanges[nRange]))
+        aF.push(AscFormat.fCreateRef(aRanges[nRange]));
+    }
+    if(aF.length === 0) {
+        oPlotArea.removeCharts(1, oPlotArea.charts.length);
+        oFirstChart = oPlotArea.charts[0];
+        if(oFirstChart) {
+            oFirstChart.removeAllSeries();
+        }
+        return;
     }
     chartSettings.aRanges = aF;
     var range_obj = this.getRangeObjectStr();
@@ -18222,6 +18230,20 @@ function getChartSeries (worksheet, options, catHeadersBBox, serHeadersBBox)
     var bIsScatter = (Asc.c_oAscChartTypeSettings.scatter <= options.type && options.type <= Asc.c_oAscChartTypeSettings.scatterSmoothMarker);
     var top_header_bbox, left_header_bbox, ser, startCell, endCell, formulaCell, start, end, formula, numCache, sStartCellId, sEndCellId;
     var nStartCol, nStartRow, sFormula, sCatFormula, aCatCache;
+    var aParsedRanges = [], oRange;
+    for(nRangeIndex = 0; nRangeIndex < aRanges.length; ++nRangeIndex)
+    {
+        var aParsed = AscFormat.fParseChartFormula(aRanges[nRangeIndex]);
+        if(aParsed.length > 0)
+        {
+            oRange = aParsed[0].getMinimalCellsRange();
+            if(oRange)
+            {
+                aParsedRanges.push(AscFormat.fCreateRef(oRange));
+            }
+        }
+    }
+    aRanges = aParsedRanges;
     //check special cases
     if(aRanges.length > 1)
     {

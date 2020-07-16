@@ -9796,7 +9796,7 @@ CNumRef.prototype =
         this.numCache = pr;
                 },
 
-    updateCache: function(bVertical, displayEmptyCellsAs, ser) {
+    updateCache: function(displayEmptyCellsAs, displayHidden, ser) {
         if(!this.numCache) {
             this.setNumCache(new CNumLit());
             this.numCache.setFormatCode("General");
@@ -9808,7 +9808,7 @@ CNumRef.prototype =
         if(ser) {
             ser.isHidden = true;
         }
-        this.numCache.update(this.f, bVertical, displayEmptyCellsAs, ser);
+        this.numCache.update(this.f, displayEmptyCellsAs, displayHidden, ser);
     },
 
     getValuesCount: function() {
@@ -10079,205 +10079,131 @@ CNumLit.prototype =
         this.setPtCount(Math.max(this.pts.length, idx + 1));
     },
 
-    update: function (sFormula, bVertical, displayEmptyCellsAs, ser) {
-        this.removeAllPts();
-        if(!(typeof sFormula === "string" && sFormula.length > 0)) {
-            return;
-        }
-        var aParsedRef = AscFormat.fParseChartFormula(sFormula);
-        var lit_format_code = typeof this.formatCode === "string" && this.formatCode.length > 0 ? this.formatCode : "General";
-        var pt_index = 0, i, j, cell, pt, row_hidden, col_hidden, nPtCount = 0, t;
-
-        for(i = 0; i < aParsedRef.length; ++i)
-        {
-            var oCurRef = aParsedRef[i];
-            var source_worksheet = oCurRef.worksheet;
-            if(source_worksheet)
-            {
-                var range = oCurRef.bbox;
-                var nLastNoEmptyIndex = null, dLastNoEmptyVal = null, aSpanPoints = [], nSpliceIndex = null;
-                if(range.r1 === range.r2 || bVertical === true)
-                {
-                    row_hidden = source_worksheet.getRowHidden(range.r1);
-                    j = range.c1;
-                    while(i === 0 && source_worksheet.getColHidden(j) && (this.displayHidden !== true) && j <= range.c2){
-                        ++j;
+    update: function (sFormula, displayEmptyCellsAs, displayHidden, ser) {
+        AscFormat.ExecuteNoHistory(function(){
+            this.removeAllPts();
+            if(!(typeof sFormula === "string" && sFormula.length > 0)) {
+                this.setPtCount(0);
+                return;
+            }
+            var aParsedRef = AscFormat.fParseChartFormula(sFormula);
+            var nRef, oRef, oMinRef, oWS, oBB, nPtIdx, nPtCount, nCount;
+            var oHM, nHidden, nR, nC, oMinBB, oCell, aSpanPoints = [], oStartPoint;
+            var dVal, sVal, oPt, sCellFC, nSpan, nLastNoEmptyIndex, nSpliceIndex;
+            var sFC = typeof this.formatCode === "string" && this.formatCode.length > 0 ? this.formatCode : "General";
+            nPtCount = 0;
+            nPtIdx = 0;
+            for(nRef = 0; nRef < aParsedRef.length; ++nRef) {
+                oRef = aParsedRef[nRef];
+                oWS = oRef.worksheet;
+                if(!oWS) {
+                    continue;
+                }
+                oHM = oWS.hiddenManager;
+                oBB = oRef.bbox;
+                if(!oBB) {
+                    continue;
+                }
+                if(displayHidden) {
+                    nHidden = 0;
+                }
+                else {
+                    nHidden = oHM.getHiddenRowsCount(oBB.r1, oBB.r2 + 1)*oBB.getWidth() + oHM.getHiddenColsCount(oBB.c1, oBB.c2 + 1)*oBB.getHeight();
+                }
+                if(oWS.isTableTotalRow(new Asc.Range(oBB.c1, oBB.r2, oBB.c1, oBB.r2))) {
+                    nHidden += 1;
+                }
+                nCount = Math.max(0, oBB.getHeight()*oBB.getWidth() - nHidden);
+                nPtCount += nCount;
+                oMinRef = oRef.getMinimalCellsRange();
+                if(!oMinRef) {
+                    continue;
+                }
+                oMinBB = oMinRef.bbox;
+                nPtIdx += ((oMinBB.r1 - oBB.r1)*oBB.getWidth() + (oMinBB.c1 - oBB.c1)*oMinBB.getHeight());
+                for(nR = oMinBB.r1; nR <= oMinBB.r2; ++nR) {
+                    if(!displayHidden && oWS.getRowHidden(nR)) {
+                        continue;
                     }
-                    for(;  j <= range.c2; ++j)
-                    {
-                        if(!row_hidden && !source_worksheet.getColHidden(j) || (this.displayHidden === true))
-                        {
-                            if(ser) {
-                                ser.isHidden = false;
+                    if(nR === oBB.r2 && oWS.isTableTotalRow(new Asc.Range(oBB.c1, oBB.r2, oBB.c1, oBB.r2))) {
+                        continue;
+                    }
+                    for(nC = oMinBB.c1; nC <= oMinBB.c2; ++nC) {
+                        if(!displayHidden && oWS.getColHidden(nC)) {
+                            continue;
+                        }
+                        if(ser) {
+                            ser.isHidden = false;
+                        }
+                        oCell = oWS.getCell3(nR, nC);
+                        dVal = oCell.getNumberValue();
+                        if(!AscFormat.isRealNumber(dVal) && (!AscFormat.isRealNumber(displayEmptyCellsAs) || displayEmptyCellsAs === 1)){
+                            sVal = oCell.getValueForEdit();
+                            if((typeof sVal === "string") && sVal.length > 0){
+                                dVal = 0;
                             }
-                            cell = source_worksheet.getCell3(range.r1, j);
-                            var value = cell.getNumberValue();
-                            if(!AscFormat.isRealNumber(value) && (!AscFormat.isRealNumber(displayEmptyCellsAs) || displayEmptyCellsAs === 1)){
-                                var sVal = cell.getValueForEdit();
-                                if((typeof sVal === "string") && sVal.length > 0){
-                                    value = 0;
-                                }
+                        }
+                        if(AscFormat.isRealNumber(dVal)) {
+                            oPt = new AscFormat.CNumericPoint();
+                            oPt.setIdx(nPtIdx);
+                            oPt.setVal(dVal);
+                            sCellFC = oCell.getNumFormatStr();
+                            if(sCellFC !== sFC) {
+                                oPt.setFormatCode(sCellFC)
                             }
-                            if(AscFormat.isRealNumber(value))
-                            {
-                                pt = new AscFormat.CNumericPoint();
-                                pt.setIdx(nPtCount);
-                                pt.setVal(value);
-                                var sCellFormatStr = cell.getNumFormatStr();
-                                if(sCellFormatStr !== lit_format_code)
-                                {
-                                    pt.setFormatCode(sCellFormatStr)
-                                }
-                                this.addPt(pt);
-
-                                if(aSpanPoints.length > 0 )
-                                {
-                                    if(AscFormat.isRealNumber(nLastNoEmptyIndex))
-                                    {
-                                        var oStartPoint = this.getPtByIndex(nLastNoEmptyIndex);
-                                        for(t = 0; t < aSpanPoints.length; ++t)
-                                        {
-                                            aSpanPoints[t].val = oStartPoint.val + ((pt.val - oStartPoint.val)/(aSpanPoints.length + 1))*(t+1);
-                                            this.pts.splice(nSpliceIndex + t, 0, aSpanPoints[t]);
+                            this.addPt(oPt);
+                            if(aSpanPoints.length > 0) {
+                                if(AscFormat.isRealNumber(nLastNoEmptyIndex)) {
+                                    oStartPoint = this.getPtByIndex(nLastNoEmptyIndex);
+                                    if(oStartPoint) {
+                                        for(nSpan = 0; nSpan < aSpanPoints.length; ++nSpan) {
+                                            aSpanPoints[nSpan].setVal(oStartPoint.val + ((oPt.val - oStartPoint.val)/(aSpanPoints.length + 1))*(nSpan + 1));
+                                            this.pts.splice(nSpliceIndex + nSpan, 0, aSpanPoints[nSpan]);
                                         }
                                     }
-                                    aSpanPoints.length = 0;
                                 }
-                                nLastNoEmptyIndex = nPtCount;
-                                nSpliceIndex = this.pts.length;
-                                dLastNoEmptyVal = pt.val;
+                                aSpanPoints.length = 0;
                             }
-                            else
-                            {
-                                if(AscFormat.isRealNumber(displayEmptyCellsAs) && displayEmptyCellsAs !== 1)
-                                {
-                                    var sCellValue = cell.getValue();
-                                    if(displayEmptyCellsAs === 2 || ((typeof sCellValue === "string") && sCellValue.length > 0))
-                                    {
-                                        pt = new AscFormat.CNumericPoint();
-                                        pt.setIdx(nPtCount);
-                                        pt.setVal(0);
-                                        this.addPt(pt);
-                                        if(aSpanPoints.length > 0 )
-                                        {
-                                            if(AscFormat.isRealNumber(nLastNoEmptyIndex))
-                                            {
-                                                var oStartPoint = this.getPtByIndex(nLastNoEmptyIndex);
-                                                for(t = 0; t < aSpanPoints.length; ++t)
-                                                {
-                                                    aSpanPoints[t].val = oStartPoint.val + ((pt.val - oStartPoint.val)/(aSpanPoints.length + 1))*(t+1);
-                                                    this.pts.splice(nSpliceIndex + t, 0, aSpanPoints[t]);
+                            nLastNoEmptyIndex = oPt.idx;
+                            nSpliceIndex = this.pts.length;
+                        }
+                        else {
+                            if(AscFormat.isRealNumber(displayEmptyCellsAs) && displayEmptyCellsAs !== 1) {
+                                sVal = oCell.getValue();
+                                if(displayEmptyCellsAs === 2 || ((typeof sVal === "string") && sVal.length > 0)) {
+                                    oPt = new AscFormat.CNumericPoint();
+                                    oPt.setIdx(nPtIdx);
+                                    oPt.setVal(0);
+                                    this.addPt(oPt);
+                                    if(aSpanPoints.length > 0 ) {
+                                        if(AscFormat.isRealNumber(nLastNoEmptyIndex)) {
+                                            oStartPoint = this.getPtByIndex(nLastNoEmptyIndex);
+                                            if(oStartPoint) {
+                                                for(nSpan = 0; nSpan < aSpanPoints.length; ++nSpan) {
+                                                    aSpanPoints[nSpan].setVal(oStartPoint.val + ((oPt.val - oStartPoint.val)/(aSpanPoints.length + 1))*(nSpan + 1));
+                                                    this.pts.splice(nSpliceIndex + nSpan, 0, aSpanPoints[nSpan]);
                                                 }
                                             }
-                                            aSpanPoints.length = 0;
                                         }
-                                        nLastNoEmptyIndex = nPtCount;
-                                        nSpliceIndex = this.pts.length;
-                                        dLastNoEmptyVal = pt.val;
+                                        aSpanPoints.length = 0;
                                     }
-                                    else if(displayEmptyCellsAs === 0 && ser &&  ser.getObjectType() === AscDFH.historyitem_type_LineSeries)
-                                    {
-                                        pt = new AscFormat.CNumericPoint();
-                                        pt.setIdx(nPtCount);
-                                        pt.setVal(0);
-                                        aSpanPoints.push(pt);
-                                    }
+                                    nLastNoEmptyIndex = oPt.idx;
+                                    nSpliceIndex = this.pts.length;
+                                }
+                                else if(displayEmptyCellsAs === 0 && ser &&  ser.getObjectType() === AscDFH.historyitem_type_LineSeries) {
+                                    oPt = new AscFormat.CNumericPoint();
+                                    oPt.setIdx(nPtIdx);
+                                    oPt.setVal(0);
+                                    aSpanPoints.push(oPt);
                                 }
                             }
-                            nPtCount++;
                         }
-                        pt_index++;
+                        nPtIdx++;
                     }
                 }
-                else
-                {
-                    col_hidden = source_worksheet.getColHidden(range.c1);
-                    var r2 = range.r2;
-                    if(source_worksheet.isTableTotalRow(new Asc.Range(range.c1, r2, range.c1, r2))){
-                        --r2;
-                    }
-                    j = range.r1;
-                    while(i === 0 && source_worksheet.getRowHidden(j) && (this.displayHidden !== true) && j <= r2){
-                        ++j;
-                    }
-                    for(; j <= r2; ++j)
-                    {
-                        if(!col_hidden && !source_worksheet.getRowHidden(j) || (this.displayHidden === true))
-                        {
-                            if(ser) {
-                                ser.isHidden = false;
-                            }
-                            cell = source_worksheet.getCell3(j, range.c1);
-                            var value = cell.getNumberValue();
-                            if(!AscFormat.isRealNumber(value) && !AscFormat.isRealNumber(displayEmptyCellsAs)){
-                                var sVal = cell.getValueForEdit();
-                                if((typeof sVal === "string") && sVal.length > 0){
-                                    value = 0;
-                                }
-                            }
-                            if(AscFormat.isRealNumber(value))
-                            {
-                                pt = new AscFormat.CNumericPoint();
-                                pt.setIdx(nPtCount);
-                                pt.setVal(value);
-                                var sCellFormatStr = cell.getNumFormatStr();
-                                if(sCellFormatStr !== lit_format_code)
-                                {
-                                    pt.setFormatCode(sCellFormatStr);
-                                }
-                                this.addPt(pt);
-                            }
-                            else
-                            {
-                                if(AscFormat.isRealNumber(displayEmptyCellsAs) && displayEmptyCellsAs !== 1)
-                                {
-                                    var sCellValue = cell.getValue();
-                                    if(displayEmptyCellsAs === 2 || ((typeof sCellValue === "string") && sCellValue.length > 0))
-                                    {
-                                        pt = new AscFormat.CNumericPoint();
-                                        pt.setIdx(nPtCount);
-                                        pt.setVal(0);
-                                        this.addPt(pt);
-                                        if(aSpanPoints.length > 0 )
-                                        {
-                                            if(AscFormat.isRealNumber(nLastNoEmptyIndex))
-                                            {
-                                                var oStartPoint = this.getPtByIndex(nLastNoEmptyIndex);
-                                                for(t = 0; t < aSpanPoints.length; ++t)
-                                                {
-                                                    aSpanPoints[t].val = oStartPoint.val + ((pt.val - oStartPoint.val)/(aSpanPoints.length + 1))*(t+1);
-                                                    this.pts.splice(nSpliceIndex + t, 0, aSpanPoints[t]);
-                                                }
-                                            }
-                                            aSpanPoints.length = 0;
-                                        }
-                                        nLastNoEmptyIndex = nPtCount;
-                                        nSpliceIndex = this.pts.length;
-                                        dLastNoEmptyVal = pt.val;
-                                    }
-                                    else if(displayEmptyCellsAs === 0 && ser &&  ser.getObjectType() === AscDFH.historyitem_type_LineSeries)
-                                    {
-                                        pt = new AscFormat.CNumericPoint();
-                                        pt.setIdx(nPtCount);
-                                        pt.setVal(0);
-                                        aSpanPoints.push(pt);
-                                    }
-                                }
-                            }
-                            nPtCount++;
-                        }
-                        pt_index++;
-                    }
-                }
-
             }
-            else{
-                pt_index = 0;
-            }
-        }
-        if(aParsedRef.length > 0){
             this.setPtCount(nPtCount);
-        }
+        }, this, []);
     },
 
     getValues: function(nMaxCount) {
@@ -11749,103 +11675,105 @@ CStrCache.prototype =
         this.ptCount = pr;
     },
 
-    update: function(sFormula, bVertical) {
-        if(!(typeof sFormula === "string" && sFormula.length > 0)) {
-            return;
-        }
-        var pt_index = 0, i, j, cell, pt, value_width_format, row_hidden, col_hidden, nPtCount = 0;
-        var aParsedRef = AscFormat.fParseChartFormula(sFormula);
-        var str_cache = this;
-        var fParseTableDataString = function(oRef, oCache){
-            if(Array.isArray(oRef)){
-                for(var i = 0; i < oRef.length; ++i){
-                    if(Array.isArray(oRef[i])){
-                        fParseTableDataString(oRef, oCache);
-                    }
-                    else{
-                        pt = new AscFormat.CStringPoint();
-                        pt.setIdx(pt_index);
-                        pt.setVal(oRef[i].value);
-                        str_cache.addPt(pt);
-                        ++pt_index;
-                        ++nPtCount;
+    update: function(sFormula) {
+        AscFormat.ExecuteNoHistory(function() {
+            if(!(typeof sFormula === "string" && sFormula.length > 0)) {
+                return;
+            }
+            var pt_index = 0, i, j, cell, pt, value_width_format, row_hidden, col_hidden, nPtCount = 0;
+            var aParsedRef = AscFormat.fParseChartFormula(sFormula);
+            var str_cache = this;
+            var fParseTableDataString = function(oRef, oCache){
+                if(Array.isArray(oRef)){
+                    for(var i = 0; i < oRef.length; ++i){
+                        if(Array.isArray(oRef[i])){
+                            fParseTableDataString(oRef, oCache);
+                        }
+                        else{
+                            pt = new AscFormat.CStringPoint();
+                            pt.setIdx(pt_index);
+                            pt.setVal(oRef[i].value);
+                            str_cache.addPt(pt);
+                            ++pt_index;
+                            ++nPtCount;
+                        }
                     }
                 }
-            }
-        };
-        for(i = 0; i < aParsedRef.length; ++i)
-        {
-            var oCurRef = aParsedRef[i];
-            var source_worksheet = oCurRef.worksheet;
-            if(source_worksheet)
+            };
+            for(i = 0; i < aParsedRef.length; ++i)
             {
-                var range = oCurRef.bbox;
-                if(range.r1 === range.r2 || bVertical === true)
+                var oCurRef = aParsedRef[i];
+                var source_worksheet = oCurRef.worksheet;
+                if(source_worksheet)
                 {
-                    row_hidden = source_worksheet.getRowHidden(range.r1);
-                    j = range.c1;
-                    while(i === 0 && source_worksheet.getColHidden(j) && j <= range.c2){
-                        ++j;
-                    }
-                    for(;  j <= range.c2; ++j)
+                    var range = oCurRef.bbox;
+                    if(range.r1 === range.r2)
                     {
-                        if(!row_hidden && !source_worksheet.getColHidden(j))
-                        {
-                            cell = source_worksheet.getCell3(range.r1, j);
-                            value_width_format = cell.getValueWithFormat();
-                            if(typeof value_width_format === "string" && value_width_format.length > 0)
-                            {
-                                pt = new AscFormat.CStringPoint();
-                                pt.setIdx(nPtCount);
-                                pt.setVal(value_width_format);
-
-                                if(str_cache.pts.length === 0){
-                                    pt.formatCode = cell.getNumFormatStr()
-                                }
-                                str_cache.addPt(pt);
-                                //addPointToMap(oThis.pointsMap, source_worksheet, range.r1, j, pt);
-                            }
-                            ++nPtCount;
+                        row_hidden = source_worksheet.getRowHidden(range.r1);
+                        j = range.c1;
+                        while(i === 0 && source_worksheet.getColHidden(j) && j <= range.c2){
+                            ++j;
                         }
-                        pt_index++;
+                        for(;  j <= range.c2; ++j)
+                        {
+                            if(!row_hidden && !source_worksheet.getColHidden(j))
+                            {
+                                cell = source_worksheet.getCell3(range.r1, j);
+                                value_width_format = cell.getValueWithFormat();
+                                if(typeof value_width_format === "string" && value_width_format.length > 0)
+                                {
+                                    pt = new AscFormat.CStringPoint();
+                                    pt.setIdx(nPtCount);
+                                    pt.setVal(value_width_format);
+    
+                                    if(str_cache.pts.length === 0){
+                                        pt.formatCode = cell.getNumFormatStr()
+                                    }
+                                    str_cache.addPt(pt);
+                                    //addPointToMap(oThis.pointsMap, source_worksheet, range.r1, j, pt);
+                                }
+                                ++nPtCount;
+                            }
+                            pt_index++;
+                        }
+                    }
+                    else
+                    {
+                        col_hidden = source_worksheet.getColHidden(range.c1);
+                        j = range.r1;
+                        while(i === 0 && source_worksheet.getRowHidden(j) && j <= range.r2){
+                            ++j;
+                        }
+                        for(;  j <= range.r2; ++j)
+                        {
+                            if(!col_hidden && !source_worksheet.getRowHidden(j))
+                            {
+                                cell = source_worksheet.getCell3(j, range.c1);
+                                value_width_format = cell.getValueWithFormat();
+                                if(typeof value_width_format === "string" && value_width_format.length > 0)
+                                {
+                                    pt = new AscFormat.CStringPoint();
+                                    pt.setIdx(nPtCount);
+                                    pt.setVal(cell.getValueWithFormat());
+    
+                                    if(str_cache.pts.length === 0){
+                                        pt.formatCode = cell.getNumFormatStr()
+                                    }
+                                    str_cache.addPt(pt);
+                                    //addPointToMap(oThis.pointsMap, source_worksheet, j, range.c1,  pt);
+                                }
+                                ++nPtCount;
+                            }
+                            pt_index++;
+                        }
                     }
                 }
-                else
-                {
-                    col_hidden = source_worksheet.getColHidden(range.c1);
-                    j = range.r1;
-                    while(i === 0 && source_worksheet.getRowHidden(j) && j <= range.r2){
-                        ++j;
-                    }
-                    for(;  j <= range.r2; ++j)
-                    {
-                        if(!col_hidden && !source_worksheet.getRowHidden(j))
-                        {
-                            cell = source_worksheet.getCell3(j, range.c1);
-                            value_width_format = cell.getValueWithFormat();
-                            if(typeof value_width_format === "string" && value_width_format.length > 0)
-                            {
-                                pt = new AscFormat.CStringPoint();
-                                pt.setIdx(nPtCount);
-                                pt.setVal(cell.getValueWithFormat());
-
-                                if(str_cache.pts.length === 0){
-                                    pt.formatCode = cell.getNumFormatStr()
-                                }
-                                str_cache.addPt(pt);
-                                //addPointToMap(oThis.pointsMap, source_worksheet, j, range.c1,  pt);
-                            }
-                            ++nPtCount;
-                        }
-                        pt_index++;
-                    }
+                else{
+                    fParseTableDataString(oCurRef);
                 }
             }
-            else{
-                fParseTableDataString(oCurRef);
-            }
-        }
-        this.setPtCount(nPtCount);
+            this.setPtCount(nPtCount);
+        }, this, []);
     },
 
     addStringPoint: function(idx, sStr) {
@@ -12005,12 +11933,12 @@ CStrRef.prototype =
         History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_StrRef_SetStrCache, this.strCache, pr));
         this.strCache = pr;
     },
-    updateCache: function(bVertical) {
+    updateCache: function() {
         if(!this.strCache) {
             this.setStrCache(new CStrCache());
         }
         this.strCache.removeAllPts();
-        this.strCache.update(this.f, bVertical);
+        this.strCache.update(this.f);
     },
     getText: function() {
         if(!this.strCache) {
