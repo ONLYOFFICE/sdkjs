@@ -8389,9 +8389,13 @@
 
 		//TODO недостаточно ли вместо всей данной длинной структуры использовать только tableId(name) и columnName?
 		var slicer = new window['Asc'].CT_slicer(this);
-		slicer.init(name, obj_name, type, undefined, pivotTable);
+		var isNewCache = slicer.init(name, obj_name, type, undefined, pivotTable);
 		this.aSlicers.push(slicer);
 		var oCache = slicer.getCacheDefinition();
+
+		if (isNewCache) {
+			slicer.updateItemsWithNoData();
+		}
 
 		History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_SlicerAdd, this.getId(), null,
 			new AscCommonExcel.UndoRedoData_FromTo(null, slicer));

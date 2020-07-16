@@ -429,6 +429,7 @@
 		}
 	};
 	CT_slicer.prototype.init = function (name, obj_name, type, ws, pivotTable) {
+		var isNewCache = false;
 		if (name) {
 			this.name = this.generateName(name);
 			this.caption = name;
@@ -452,6 +453,7 @@
 			if (!cache) {
 				cache = new CT_slicerCacheDefinition(this.ws.workbook);
 				cache.init(name, obj_name, type, pivotTable);
+				isNewCache = true;
 			}
 
 			this.cacheDefinition = cache;
@@ -463,7 +465,7 @@
 				this.cacheDefinition.wb = ws.workbook;
 			}
 		}
-
+		return isNewCache;
 	};
 	CT_slicer.prototype.initPostOpen = function (tableIds, sheetIds) {
 		if (this.cacheDefinition) {
@@ -744,19 +746,25 @@
 		this.lockedPosition = this.checkProperty(this.lockedPosition, val.lockedPosition, AscCH.historyitem_Slicer_SetLockedPosition);
 		this.rowHeight = this.checkProperty(this.rowHeight, val.rowHeight, AscCH.historyitem_Slicer_SetRowHeight);
 
+		var isChangedSortOrder = false;
 		if (val._ascSortOrder !== undefined) {
-			this.setSortOrder(val._ascSortOrder);
+			isChangedSortOrder = this.setSortOrder(val._ascSortOrder);
 		}
 		if (val._ascCustomListSort !== undefined) {
 			this.setCustomListSort(val._ascCustomListSort);
 		}
+		var isChangedHideItemsWithNoData = false;
 		if (val._ascHideItemsWithNoData !== undefined) {
-			this.setHideItemsWithNoData(val._ascHideItemsWithNoData);
+			isChangedHideItemsWithNoData = this.setHideItemsWithNoData(val._ascHideItemsWithNoData);
 		}
 
+		var isChangedCrossFilter = false;
 		var crossFilter = this._ascGenerateCrossFilter(val._ascHideItemsWithNoData, val._ascIndicateItemsWithNoData, val._ascShowItemsWithNoDataLast);
 		if (crossFilter !== undefined) {
-			this.setCrossFilter(crossFilter);
+			isChangedCrossFilter = this.setCrossFilter(crossFilter);
+		}
+		if (isChangedSortOrder || isChangedHideItemsWithNoData || isChangedCrossFilter) {
+			this.updateItemsWithNoData();
 		}
 
 		//TODO ws?
@@ -817,7 +825,7 @@
 	};
 
 	CT_slicer.prototype.setSortOrder = function (val) {
-		this.cacheDefinition.setSortOrder(val);
+		return this.cacheDefinition.setSortOrder(val);
 	};
 
 	CT_slicer.prototype.setCustomListSort = function (val) {
@@ -825,11 +833,15 @@
 	};
 
 	CT_slicer.prototype.setHideItemsWithNoData = function (val) {
-		this.cacheDefinition.setHideItemsWithNoData(val);
+		return this.cacheDefinition.setHideItemsWithNoData(val);
 	};
 
 	CT_slicer.prototype.setCrossFilter = function (val) {
-		this.cacheDefinition.setCrossFilter(val);
+		return this.cacheDefinition.setCrossFilter(val);
+	};
+
+	CT_slicer.prototype.updateItemsWithNoData = function () {
+		return this.cacheDefinition.updateItemsWithNoData();
 	};
 
 	CT_slicer.prototype._ascGenerateCrossFilter = function (_ascHideItemsWithNoData, _ascIndicateItemsWithNoData, _ascShowItemsWithNoDataLast) {
@@ -1041,9 +1053,6 @@
 					table.name = pivotTable.asc_getName();
 					table.sheetId = pivotTable.GetWS().getId();
 					this.pivotTables.push(table);
-
-					var updateRes = pivotTable.updateAfterEdit();//todo
-					this.syncWithPivot(pivotTable, updateRes.cacheFieldsWithData);
 				}
 
 				break;
@@ -1370,6 +1379,7 @@
 			return;
 		}
 		var wb = this.ws.workbook;
+		var oldVal = new AscCommonExcel.UndoRedoData_BinaryWrapper2(this);
 		for (var i = 0; i < pivotTables.length; ++i) {
 			var pivotTable = pivotTables[i];
 			if (pivotTable === excludePivot) {
@@ -1389,8 +1399,8 @@
 				pivotTable.syncSlicersWithPivot(changeRes.updateRes.cacheFieldsWithData);
 			}
 		}
-		var oldVal = new AscCommonExcel.UndoRedoData_BinaryWrapper2(this);
 		this.data.tabular.fromAutoFiltersOptionsElements(values);
+		//add to history for 0 connection case(usually duplicate of syncSlicersWithPivot)
 		var newVal = new AscCommonExcel.UndoRedoData_BinaryWrapper2(this);
 		History.Add(AscCommonExcel.g_oUndoRedoSlicer, AscCH.historyitem_Slicer_SetCacheData,
 			null, null, new AscCommonExcel.UndoRedoData_Slicer(this.name, oldVal, newVal));
@@ -1482,7 +1492,9 @@
 			obj.setSortOrder(val);
 			History.Add(AscCommonExcel.g_oUndoRedoSlicer, AscCH.historyitem_Slicer_SetCacheSortOrder,
 				null, null, new AscCommonExcel.UndoRedoData_Slicer(this.name, oldVal, val));
+			return true;
 		}
+		return false;
 	};
 
 	CT_slicerCacheDefinition.prototype.setCustomListSort = function (val) {
@@ -1502,7 +1514,9 @@
 			obj.setCrossFilter(val);
 			History.Add(AscCommonExcel.g_oUndoRedoSlicer, AscCH.historyitem_Slicer_SetCacheCrossFilter,
 				null, null, new AscCommonExcel.UndoRedoData_Slicer(this.name, oldVal, val));
+			return true;
 		}
+		return false;
 	};
 
 	CT_slicerCacheDefinition.prototype.setHideItemsWithNoData = function (val) {
@@ -1513,6 +1527,18 @@
 			this.slicerCacheHideItemsWithNoData = val ? [] : null;
 			History.Add(AscCommonExcel.g_oUndoRedoSlicer, AscCH.historyitem_Slicer_SetCacheHideItemsWithNoData,
 				null, null, new AscCommonExcel.UndoRedoData_Slicer(this.name, oldVal, val));
+			return true;
+		}
+		return false;
+	};
+
+	CT_slicerCacheDefinition.prototype.updateItemsWithNoData = function() {
+		var tabular = this.getTabular();
+		var pivotTables = this.getPivotTables();
+		if (tabular && pivotTables.length > 0) {
+			var pivotTable = pivotTables[pivotTables.length - 1];
+			var calculateRes = pivotTable.calculateDataRow();
+			this.syncWithPivot(pivotTable, calculateRes.cacheFieldsWithData);
 		}
 	};
 
@@ -1617,7 +1643,12 @@
 		if (cacheField && cacheField.sharedItems) {
 			pivotTable.checkPivotFieldItems(fieldIndex);
 			var pivotField = pivotTable.asc_getPivotFields()[fieldIndex];
+
+			var oldVal = new AscCommonExcel.UndoRedoData_BinaryWrapper2(this);
 			tabular.syncWithCache(cacheField, pivotField, cacheFieldsWithData[fieldIndex], this.slicerCacheHideItemsWithNoData);
+			var newVal = new AscCommonExcel.UndoRedoData_BinaryWrapper2(this);
+			History.Add(AscCommonExcel.g_oUndoRedoSlicer, AscCH.historyitem_Slicer_SetCacheData,
+				null, null, new AscCommonExcel.UndoRedoData_Slicer(this.name, oldVal, newVal));
 		}
 	};
 

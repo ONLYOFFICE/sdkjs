@@ -4358,7 +4358,7 @@ $(function() {
 			AscCommon.History.Clear();
 			pivot = checkHistoryOperation(pivot, standards["field0"], "field0", function() {
 				var pivotField = pivot.asc_getPivotFields()[0];
-				var props = new CT_PivotField();
+				var props = new Asc.CT_PivotField();
 				props.asc_setCompact(false);
 				props.asc_setOutline(true);
 				props.asc_setSubtotalTop(false);
@@ -4368,7 +4368,7 @@ $(function() {
 
 			pivot = checkHistoryOperation(pivot, standards["field4"], "field4", function() {
 				var pivotField = pivot.asc_getPivotFields()[4];
-				var props = new CT_PivotField();
+				var props = new Asc.CT_PivotField();
 				props.asc_setName("UnitsCustom");
 				props.asc_setOutline(false);
 				props.asc_setCompact(false);
@@ -4393,21 +4393,21 @@ $(function() {
 
 			pivot = checkHistoryOperation(pivot, standards["fieldSubtotalNone"], "fieldSubtotalNone", function() {
 				var pivotField = pivot.asc_getPivotFields()[0];
-				var props = new CT_PivotField();
+				var props = new Asc.CT_PivotField();
 				props.asc_setDefaultSubtotal(false);
 				pivotField.asc_set(api, pivot, 0, props);
 			});
 
 			pivot = checkHistoryOperation(pivot, standards["fieldSubtotalAuto"], "fieldSubtotalAuto", function() {
 				var pivotField = pivot.asc_getPivotFields()[0];
-				var props = new CT_PivotField();
+				var props = new Asc.CT_PivotField();
 				props.asc_setDefaultSubtotal(true);
 				pivotField.asc_set(api, pivot, 0, props);
 			});
 
 			pivot = checkHistoryOperation(pivot, standards["fieldSubtotalCustom"], "fieldSubtotalCustom", function() {
 				var pivotField = pivot.asc_getPivotFields()[0];
-				var props = new CT_PivotField();
+				var props = new Asc.CT_PivotField();
 				props.asc_setDefaultSubtotal(true);
 				props.asc_setSubtotals([Asc.c_oAscItemType.Count]);
 				pivotField.asc_set(api, pivot, 0, props);
@@ -4415,7 +4415,7 @@ $(function() {
 
 			pivot = checkHistoryOperation(pivot, standards["fieldSubtotalAll"], "fieldSubtotalAll", function() {
 				var pivotField = pivot.asc_getPivotFields()[0];
-				var props = new CT_PivotField();
+				var props = new Asc.CT_PivotField();
 				props.asc_setDefaultSubtotal(true);
 				props.asc_setSubtotals([Asc.c_oAscItemType.Sum, Asc.c_oAscItemType.Count, Asc.c_oAscItemType.Avg,
 					Asc.c_oAscItemType.Max, Asc.c_oAscItemType.Min, Asc.c_oAscItemType.Product,
@@ -4438,10 +4438,10 @@ $(function() {
 			AscCommon.History.Clear();
 			pivot = checkHistoryOperation(pivot, standards["data_values1"], "values1", function() {
 				var i;
-				var types = [c_oAscDataConsolidateFunction.Count, c_oAscDataConsolidateFunction.CountNums, c_oAscDataConsolidateFunction.Min,
-					c_oAscDataConsolidateFunction.Max, c_oAscDataConsolidateFunction.Sum, c_oAscDataConsolidateFunction.Average,
-					c_oAscDataConsolidateFunction.Product, c_oAscDataConsolidateFunction.StdDev, c_oAscDataConsolidateFunction.StdDevp,
-					c_oAscDataConsolidateFunction.Var, c_oAscDataConsolidateFunction.Varp];
+				var types = [Asc.c_oAscDataConsolidateFunction.Count, Asc.c_oAscDataConsolidateFunction.CountNums, Asc.c_oAscDataConsolidateFunction.Min,
+					Asc.c_oAscDataConsolidateFunction.Max, Asc.c_oAscDataConsolidateFunction.Sum, Asc.c_oAscDataConsolidateFunction.Average,
+					Asc.c_oAscDataConsolidateFunction.Product, Asc.c_oAscDataConsolidateFunction.StdDev, Asc.c_oAscDataConsolidateFunction.StdDevp,
+					Asc.c_oAscDataConsolidateFunction.Var, Asc.c_oAscDataConsolidateFunction.Varp];
 				for (i = 0; i < types.length; ++i) {
 					pivot.asc_addDataField(api, 5);
 				}
@@ -4717,19 +4717,19 @@ $(function() {
 			pivot.asc_addDataField(api, 6);
 
 			pivotField = pivot.asc_getPivotFields()[0];
-			props = new CT_PivotField();
+			props = new Asc.CT_PivotField();
 			props.asc_setCompact(false);
 			props.asc_setOutline(false);
 			props.asc_setSubtotals([Asc.c_oAscItemType.Avg]);
 			pivotField.asc_set(api, pivot, 0, props);
 
 			pivotField = pivot.asc_getPivotFields()[2];
-			props = new CT_PivotField();
+			props = new Asc.CT_PivotField();
 			props.asc_setDefaultSubtotal(false);
 			pivotField.asc_set(api, pivot, 2, props);
 
 			pivotField = pivot.asc_getPivotFields()[4];
-			props = new CT_PivotField();
+			props = new Asc.CT_PivotField();
 			props.asc_setName("RenamedUnits");
 			pivotField.asc_set(api, pivot, 4, props);
 
@@ -5142,7 +5142,7 @@ $(function() {
 				props.asc_setColGrandTotals(false);
 				pivot.asc_set(api, props);
 				var pivotField = pivot.asc_getPivotFields()[1];
-				props = new CT_PivotField();
+				props = new Asc.CT_PivotField();
 				props.asc_setDefaultSubtotal(false);
 				pivotField.asc_set(api, pivot, 1, props);
 			});

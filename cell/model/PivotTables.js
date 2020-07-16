@@ -3878,16 +3878,22 @@ CT_pivotTableDefinition.prototype.getPageFieldCellValue = function(index) {
 	}
 	return oCellValue;
 };
-CT_pivotTableDefinition.prototype.updateRowColItems = function () {
-	var dataRow, pivotFields, rowFields, colFields, dataFields, cacheRecords, indexValues, cacheFieldsWithData = {};
-	cacheRecords = this.getRecords();
-	if(!cacheRecords){
-		return;
+CT_pivotTableDefinition.prototype.calculateDataRow = function () {
+	var dataRow = new PivotDataElem(this.getDataFieldsCount());
+	var res = {dataRow: dataRow, cacheFieldsWithData: {}};
+	var cacheRecords = this.getRecords();
+	if (cacheRecords) {
+		var rowIndexes = this.getRowColIndexes(this.asc_getRowFields(), true);
+		var colIndexes = this.getRowColIndexes(this.asc_getColumnFields(), true);
+		var filterMaps = this.getFilterMaps(res.cacheFieldsWithData);
+		res.dataRow = cacheRecords.getDataMap(this.asc_getCacheFields(), filterMaps, res.cacheFieldsWithData, rowIndexes, colIndexes, this.asc_getDataFields() || []);
 	}
-	var rowIndexes = this.getRowColIndexes(this.asc_getRowFields(),true);
-	var colIndexes = this.getRowColIndexes(this.asc_getColumnFields(),true);
-	var filterMaps = this.getFilterMaps(cacheFieldsWithData);
-	dataRow = cacheRecords.getDataMap(this.asc_getCacheFields(), filterMaps, cacheFieldsWithData, rowIndexes, colIndexes, this.asc_getDataFields() || []);
+	return res;
+};
+CT_pivotTableDefinition.prototype.updateRowColItems = function () {
+	var res = this.calculateDataRow();
+	var dataRow = res.dataRow;
+	var pivotFields, rowFields, colFields, dataFields, cacheRecords, indexValues, cacheFieldsWithData = {};
 	pivotFields = this.asc_getPivotFields();
 	rowFields = this.asc_getRowFields();
 	colFields = this.asc_getColumnFields();
@@ -3918,7 +3924,7 @@ CT_pivotTableDefinition.prototype.updateRowColItems = function () {
 	}
 	this.setRowItems(rowItems, true);
 	this.setColItems(colItems, true);
-	return {dataRow: dataRow, cacheFieldsWithData: cacheFieldsWithData};
+	return res;
 };
 CT_pivotTableDefinition.prototype._updateRowColItemsRecursively = function(index, dataMap, parentI, items, fields, isCol, pivotFields, dataIndex, dataFields, indexValues, showAll) {
 	if (index >= fields.length) {
