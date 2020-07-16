@@ -9137,7 +9137,7 @@
 	 */
 	ApiDrawing.prototype.GetParentContentControl = function()
 	{
-		var ParaParent = this.GetParagraph();
+		var ParaParent = this.GetParentParagraph();
 
 		if (ParaParent)
 			return ParaParent.GetParentContentControl();
@@ -9150,7 +9150,7 @@
 	 */
 	ApiDrawing.prototype.GetParentTable = function()
 	{
-		var ParaParent = this.GetParagraph();
+		var ParaParent = this.GetParentParagraph();
 
 		if (ParaParent)
 			return ParaParent.GetParentTable();
@@ -9163,7 +9163,7 @@
 	 */
 	ApiDrawing.prototype.GetParentTableCell = function()
 	{
-		var ParaParent = this.GetParagraph();
+		var ParaParent = this.GetParentParagraph();
 
 		if (ParaParent)
 			return ParaParent.GetParentTableCell();
@@ -9176,7 +9176,7 @@
 	 */
 	ApiDrawing.prototype.Delete = function()
 	{
-		var ParaParent = this.GetParagraph();
+		var ParaParent = this.GetParentParagraph();
 
 		if (ParaParent)
 		{
@@ -9248,7 +9248,7 @@
 	 */
 	ApiDrawing.prototype.InsertParagraph = function(paragraph, sPosition, beRNewPara)
 	{
-		var parentParagraph = this.GetParagraph();
+		var parentParagraph = this.GetParentParagraph();
 
 		if (parentParagraph)
 			if (beRNewPara)
