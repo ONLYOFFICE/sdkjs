@@ -3056,29 +3056,11 @@
 	{
 		var oDocument        = editor.private_GetLogicDocument();
 		var mailMergeContent = oApiDocumentContent.Document.Content;
-		var parasToDelete    = []; 
 		oDocument.Remove_FromContent(0, oDocument.Content.length);
-		var docContentLenght = 1; // т.к. всегда присутсвует пустой параграф, его необходимо будет удалить
 
 		for (var nElement = 0; nElement < mailMergeContent.length; nElement++)
-		{
-			oDocument.Add_ToContent(oDocument.Content.length, mailMergeContent[nElement].Copy(oDocument, oDocument.DrawingDocument));
+			oDocument.Add_ToContent(oDocument.Content.length, mailMergeContent[nElement].Copy(oDocument, oDocument.DrawingDocument), false);
 
-			/* т.к. копируем в основном документ по 1 элементу, то увеличение элементов в контенте на 2 
-			означает, что был добавлен пустой параграф после разрыва страницы, блочного контент контрола или таблицы */
-			if (oDocument.Content.length === docContentLenght + 2)
-			{
-				parasToDelete.push(new ApiParagraph(oDocument.Content[oDocument.Content.length - 1]));
-				docContentLenght += 2;
-			}
-			else 
-				docContentLenght++;
-		}
-
-		for (var nPara = 0; nPara < parasToDelete.length; nPara++)
-			parasToDelete[nPara].Delete();
-
-		// удаление первого, пустого, параграфа
 		oDocument.Remove_FromContent(0, 1);
 	};
 
