@@ -2687,7 +2687,8 @@
 
 	/**
 	 * Loads data for the mail merge. 
-	 * @param {Array} aList - mail merge data 
+	 * @param {String[][]} aList - mail merge data. The first element of the array is the array with names of the merge fields.
+	 * The rest of the array elements are arrays with values for the merge fields.
 	 * @typeofeditors ["CDE"]
 	 * @return {bool}  
 	 */
@@ -2704,9 +2705,9 @@
 	/**
 	 * Gets the mail merge template doc.
 	 * @typeofeditors ["CDE"]
-	 * @return {ApiDocument}  
+	 * @return {ApiDocumentContent}  
 	 */
-	Api.prototype.GetMailMergeTemplateDoc = function()
+	Api.prototype.GetMailMergeTemplateDocContent = function()
 	{
 		var oDocument = editor.private_GetLogicDocument();
 
@@ -2780,7 +2781,7 @@
 		AscCommon.g_oTableId.TurnOn();
 		AscCommon.History.TurnOn();
 
-		return new ApiDocument(LogicDocument);
+		return new ApiDocumentContent(LogicDocument);
 	};
 
 	/**
@@ -2796,21 +2797,21 @@
 	};
 
 	/**
-	 * Sets the content of the main document by another document.
+	 * Replaces the content of the main document with the another document content.
+	 * @param {ApiDocumentContent} 
 	 * @typeofeditors ["CDE"]
 	 */
-	Api.prototype.SetDocumentContent = function(oApiDocument)
+	Api.prototype.ReplaceDocumentContent = function(oApiDocumentContent)
 	{
 		var oDocument        = editor.private_GetLogicDocument();
-		var mailMergeDoc     = oApiDocument.Document;
+		var mailMergeContent = oApiDocumentContent.Document.Content;
 		var parasToDelete    = []; 
-		var docContentLenght = oDocument.Content.length;
-
 		oDocument.Remove_FromContent(0, oDocument.Content.length);
+		var docContentLenght = 1; // т.к. всегда присутсвует пустой параграф
 
-		for (var nElement = 0; nElement < mailMergeDoc.Content.length; nElement++)
+		for (var nElement = 0; nElement < mailMergeContent.length; nElement++)
 		{
-			oDocument.Add_ToContent(oDocument.Content.length, mailMergeDoc.Content[nElement].Copy(oDocument, oDocument.DrawingDocument));
+			oDocument.Add_ToContent(oDocument.Content.length, mailMergeContent[nElement].Copy(oDocument, oDocument.DrawingDocument));
 
 			// удаление лишнего параграфа, который добавляется после break page
 			if (oDocument.Content.length === docContentLenght + 2)
@@ -2849,7 +2850,7 @@
 		if (!mailMergeDoc)
 			return false;
 		
-		this.SetDocumentContent(new ApiDocument(mailMergeDoc));
+		this.ReplaceDocumentContent(new ApiDocumentContent(mailMergeDoc));
 
 		return true;
 	};
@@ -10577,9 +10578,9 @@
 	Api.prototype["Save"]               			 = Api.prototype.Save;
 	Api.prototype["MailMerge"]               		 = Api.prototype.MailMerge;
 	Api.prototype["LoadMailMergeData"]               = Api.prototype.LoadMailMergeData;
-	Api.prototype["GetMailMergeTemplateDoc"]         = Api.prototype.GetMailMergeTemplateDoc;
+	Api.prototype["GetMailMergeTemplateDocContent"]  = Api.prototype.GetMailMergeTemplateDocContent;
 	Api.prototype["GetMailMergeReceptionsCount"]     = Api.prototype.GetMailMergeReceptionsCount;
-	Api.prototype["SetDocumentContent"]              = Api.prototype.SetDocumentContent;
+	Api.prototype["ReplaceDocumentContent"]          = Api.prototype.ReplaceDocumentContent;
 
 	ApiUnsupported.prototype["GetClassType"]         = ApiUnsupported.prototype.GetClassType;
 
