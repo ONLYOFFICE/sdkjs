@@ -11422,6 +11422,10 @@ CTx.prototype =
                 this.setVal(null);
             } 
             else {
+                var aParsed = AscFormat.fParseChartFormula(sName);
+                if(aParsed.length > 0) {
+                    return oResult;
+                }
                 if(sName[0] === "=") {
                     oParser = new AscCommonExcel.parserFormula(sName.slice(1), null, Asc.editor.wbModel.aWorksheets[0]);
                     bResult = oParser.parse(true, true);
