@@ -213,51 +213,26 @@ ParaHyperlink.prototype.CopyContent = function(Selected)
 //-----------------------------------------------------------------------------------
 ParaHyperlink.prototype.Draw_Elements = function(PDSE)
 {
-	var X = PDSE.X;
-
     PDSE.VisitedHyperlink = this.Visited;
-    PDSE.Hyperlink = true;
+    PDSE.Hyperlink        = true;
     CParagraphContentWithParagraphLikeContent.prototype.Draw_Elements.apply(this, arguments);
     PDSE.VisitedHyperlink = false;
-    PDSE.Hyperlink = false;
-
-   	if (PDSE.Graphics.AddHyperlink && this.GetValue())
-	{
-		var oTransform = this.GetParagraph().Get_ParentTextTransform();
-
-		var l = X;
-		var t = PDSE.LineTop;
-		var r = PDSE.X;
-		var b = PDSE.LineBottom;
-
-		if (oTransform)
-		{
-			var x1 = oTransform.TransformPointX(l, t);
-			var y1 = oTransform.TransformPointY(l, t);
-			var x2 = oTransform.TransformPointX(r, t);
-			var y2 = oTransform.TransformPointY(r, t);
-			var x3 = oTransform.TransformPointX(r, b);
-			var y3 = oTransform.TransformPointY(r, b);
-			var x4 = oTransform.TransformPointX(l, b);
-			var y4 = oTransform.TransformPointY(l, b);
-
-			l = Math.min(x1, x2, x3, x4);
-			r = Math.max(x1, x2, x3, x4);
-			t = Math.min(y1, y2, y3, y4);
-			b = Math.max(y1, y2, y3, y4);
-		}
-
-		PDSE.Graphics.AddHyperlink(l, t, r - l, b - t, this.GetValue(), this.GetToolTip());
-	}
+    PDSE.Hyperlink        = false;
 };
 
 ParaHyperlink.prototype.Draw_Lines = function(PDSL)
 {
-    PDSL.VisitedHyperlink = this.Visited;
-    PDSL.Hyperlink = true;
-    CParagraphContentWithParagraphLikeContent.prototype.Draw_Lines.apply(this, arguments);
-    PDSL.VisitedHyperlink = false;
-    PDSL.Hyperlink = false;
+	PDSL.VisitedHyperlink = this.Visited;
+	PDSL.Hyperlink        = true;
+	CParagraphContentWithParagraphLikeContent.prototype.Draw_Lines.apply(this, arguments);
+	PDSL.VisitedHyperlink = false;
+	PDSL.Hyperlink        = false;
+};
+ParaHyperlink.prototype.Draw_HighLights = function(PDSH)
+{
+	PDSH.Hyperlink = this;
+	CParagraphContentWithParagraphLikeContent.prototype.Draw_HighLights.apply(this, arguments);
+	PDSH.Hyperlink = null;
 };
 //-----------------------------------------------------------------------------------
 // Работаем со значениями

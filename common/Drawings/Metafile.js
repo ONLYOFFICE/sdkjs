@@ -1144,6 +1144,7 @@
 		this.ctCommandString2 = 155;
 
 		this.ctHyperlink = 160;
+		this.ctLink      = 161;
 
 		this.ctPageWidth  = 200;
 		this.ctPageHeight = 201;
@@ -1939,6 +1940,18 @@
 			this.Memory.WriteDouble(h);
 			this.Memory.WriteString(url);
 			this.Memory.WriteString(tooltip);
+		},
+
+		AddLink : function(x, y, w, h, dx, dy, dPage)
+		{
+			this.Memory.WriteByte(CommandType.ctLink);
+			this.Memory.WriteDouble(x);
+			this.Memory.WriteDouble(y);
+			this.Memory.WriteDouble(w);
+			this.Memory.WriteDouble(h);
+			this.Memory.WriteDouble(dx);
+			this.Memory.WriteDouble(dy);
+			this.Memory.WriteLong(dPage);
 		}
 	};
 
@@ -2702,6 +2715,12 @@
 		{
 			if (0 !== this.m_lPagesCount)
 				this.m_arrayPages[this.m_lPagesCount - 1].AddHyperlink(x, y, w, h, url, tooltip);
+		},
+
+		AddLink : function(x, y, w, h, dx, dy, dPage)
+		{
+			if (0 !== this.m_lPagesCount)
+				this.m_arrayPages[this.m_lPagesCount - 1].AddLink(x, y, w, h, dx, dy, dPage);
 		}
 	};
 
