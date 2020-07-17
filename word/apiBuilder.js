@@ -3803,28 +3803,7 @@
 	{
 		return this.GetElement(this.GetElementsCount() - 1);
 	};
-	/**
-	 * Push a paragraph or a table  or a text to actually add it to the document.
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {DocumentElement} oElement - The type of the element which will be pushed to the document.
-	 * @returns {boolean} Returns <code>false</code> if the type of <code>oElement</code> is not supported by paragraph
-	 * content.
-	 */
-	ApiDocument.prototype.Push = function(oElement)
-	{
-		if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || ApiBlockLvlSdt)
-		{
-			this.Document.Internal_Content_Add(this.Document.Content.length, oElement.private_GetImpl());
-		}
-		else if (typeof oElement === "string")
-		{
-			var oParagraph = editor.CreateParagraph();
-			oParagraph.AddText(oElement);
-			this.Document.Internal_Content_Add(this.Document.Content.length, oParagraph.private_GetImpl());
-		}
-		else 
-			return false;
-	};
+	
 	/**
 	 * Removes a bookmark from the document, if one exists.
 	 * @typeofeditors ["CDE"]
