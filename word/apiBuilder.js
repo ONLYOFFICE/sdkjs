@@ -2935,6 +2935,161 @@
 	Api.prototype.Save = function () {
 		this.SaveAfterMacros = true;
 	};
+
+	/**
+	 * Loads data for the mail merge. 
+	 * @param {String[][]} aList - mail merge data. The first element of the array is the array with names of the merge fields.
+	 * The rest of the array elements are arrays with values for the merge fields.
+	 * @typeofeditors ["CDE"]
+	 * @return {bool}  
+	 */
+	Api.prototype.LoadMailMergeData = function(aList)
+	{
+		if (!aList || aList.length === 0)
+			return false;
+
+		editor.asc_StartMailMergeByList(aList);
+
+		return true;
+	};
+
+	/**
+	 * Gets the mail merge template doc.
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiDocumentContent}  
+	 */
+	Api.prototype.GetMailMergeTemplateDocContent = function()
+	{
+		var oDocument = editor.private_GetLogicDocument();
+
+		AscCommon.History.TurnOff();
+		AscCommon.g_oTableId.TurnOff();
+
+		var LogicDocument = new CDocument(undefined, false);
+		AscCommon.History.Document = oDocument;
+
+		// Копируем стили, они все одинаковые для всех документов
+		LogicDocument.Styles = oDocument.Styles.Copy();
+
+		// Нумерацию придется повторить для каждого отдельного файла
+		LogicDocument.Numbering.Clear();
+
+		LogicDocument.DrawingDocument = oDocument.DrawingDocument;
+
+		LogicDocument.theme = oDocument.theme.createDuplicate();
+		LogicDocument.clrSchemeMap   = oDocument.clrSchemeMap.createDuplicate();
+
+		var FieldsManager = oDocument.FieldsManager;
+
+		var ContentCount = oDocument.Content.length;
+		var OverallIndex = 0;
+		oDocument.ForceCopySectPr = true;
+
+		// Подменяем ссылку на менеджер полей, чтобы скопированные поля регистрировались в новом классе
+		oDocument.FieldsManager = LogicDocument.FieldsManager;
+		var NewNumbering = oDocument.Numbering.CopyAllNums(LogicDocument.Numbering);
+
+		LogicDocument.Numbering.AppendAbstractNums(NewNumbering.AbstractNum);
+		LogicDocument.Numbering.AppendNums(NewNumbering.Num);
+
+		oDocument.CopyNumberingMap = NewNumbering.NumMap;
+
+		for (var ContentIndex = 0; ContentIndex < ContentCount; ContentIndex++)
+		{
+			LogicDocument.Content[OverallIndex++] = oDocument.Content[ContentIndex].Copy(LogicDocument, oDocument.DrawingDocument);
+
+			if (type_Paragraph === oDocument.Content[ContentIndex].Get_Type())
+			{
+				var ParaSectPr = oDocument.Content[ContentIndex].Get_SectionPr();
+				if (ParaSectPr)
+				{
+					var NewParaSectPr = new CSectionPr();
+					NewParaSectPr.Copy(ParaSectPr, true);
+					LogicDocument.Content[OverallIndex - 1].Set_SectionPr(NewParaSectPr, false);
+				}
+			}
+		}
+
+		oDocument.CopyNumberingMap = null;
+		oDocument.ForceCopySectPr  = false;
+
+		for (var Index = 0, Count = LogicDocument.Content.length; Index < Count; Index++)
+		{
+			if (0 === Index)
+				LogicDocument.Content[Index].Prev = null;
+			else
+				LogicDocument.Content[Index].Prev = LogicDocument.Content[Index - 1];
+
+			if (Count - 1 === Index)
+				LogicDocument.Content[Index].Next = null;
+			else
+				LogicDocument.Content[Index].Next = LogicDocument.Content[Index + 1];
+
+			LogicDocument.Content[Index].Parent = LogicDocument;
+		}
+
+		oDocument.FieldsManager = FieldsManager;
+		AscCommon.g_oTableId.TurnOn();
+		AscCommon.History.TurnOn();
+
+		return new ApiDocumentContent(LogicDocument);
+	};
+
+	/**
+	 * Gets the mail merge template doc.
+	 * @typeofeditors ["CDE"]
+	 * @return {number}  
+	 */
+	Api.prototype.GetMailMergeReceptionsCount = function()
+	{
+		var oDocument = editor.private_GetLogicDocument();
+
+		return oDocument.Get_MailMergeReceptionsCount();
+	};
+
+	/**
+	 * Replaces the content of the main document with the another document content.
+	 * @param {ApiDocumentContent} 
+	 * @typeofeditors ["CDE"]
+	 */
+	Api.prototype.ReplaceDocumentContent = function(oApiDocumentContent)
+	{
+		var oDocument        = editor.private_GetLogicDocument();
+		var mailMergeContent = oApiDocumentContent.Document.Content;
+		oDocument.Remove_FromContent(0, oDocument.Content.length);
+
+		for (var nElement = 0; nElement < mailMergeContent.length; nElement++)
+			oDocument.Add_ToContent(oDocument.Content.length, mailMergeContent[nElement].Copy(oDocument, oDocument.DrawingDocument), false);
+
+		oDocument.Remove_FromContent(0, 1);
+	};
+
+	/**
+	 * Starts the mail merge process
+	 * @param {number} nStartIndex
+	 * @param {number} nEndIndex
+	 * @param {bool} bAll - if true -> be mail merge all recipients 
+	 * @returns {bool}
+	 * @typeofeditors ["CDE"]
+	 */
+	Api.prototype.MailMerge = function(nStartIndex, nEndIndex)
+	{
+		var oDocument        = editor.private_GetLogicDocument();
+		var mailMergeDoc     = null;
+
+		var _nStartIndex = (undefined !== nStartIndex ? Math.max(0, nStartIndex) : 0);
+		var _nEndIndex   = (undefined !== nEndIndex   ? Math.min(nEndIndex, oDocument.MailMergeMap.length - 1) : oDocument.MailMergeMap.length - 1);
+
+		mailMergeDoc = oDocument.Get_MailMergedDocument(_nStartIndex, _nEndIndex);
+
+		if (!mailMergeDoc)
+			return false;
+		
+		this.ReplaceDocumentContent(new ApiDocumentContent(mailMergeDoc));
+
+		return true;
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiUnsupported
@@ -10657,6 +10812,11 @@
 	Api.prototype["CreateInlineLvlSdt"]              = Api.prototype.CreateInlineLvlSdt;
 	Api.prototype["CreateBlockLvlSdt"]               = Api.prototype.CreateBlockLvlSdt;
 	Api.prototype["Save"]               			 = Api.prototype.Save;
+	Api.prototype["LoadMailMergeData"]               = Api.prototype.LoadMailMergeData;
+	Api.prototype["GetMailMergeTemplateDocContent"]  = Api.prototype.GetMailMergeTemplateDocContent;
+	Api.prototype["GetMailMergeReceptionsCount"]     = Api.prototype.GetMailMergeReceptionsCount;
+	Api.prototype["ReplaceDocumentContent"]          = Api.prototype.ReplaceDocumentContent;
+	Api.prototype["MailMerge"]                       = Api.prototype.MailMerge;
 
 	ApiUnsupported.prototype["GetClassType"]         = ApiUnsupported.prototype.GetClassType;
 
