@@ -2851,11 +2851,9 @@ function CDLbl()
                 && this.tx.strRef.strCache.ptCount > 0)
 
             {
-                if(this.tx.strRef.strCache.pts.length > 0
-                    && this.tx.strRef.strCache.pts[0]
-                    && typeof this.tx.strRef.strCache.pts[0].val === "string")
+                if(this.tx.strRef.strCache.pts.length > 0)
                 {
-                    return this.tx.strRef.strCache.pts[0].val;
+                    return this.tx.getText();
                 }
                 return "";
             }
@@ -7323,7 +7321,7 @@ CCat.prototype =
             return this.strLit.getValues(nMaxCount);
         }
         if(this.strRef) {
-            return this.strRef.getValues(nMaxCount);
+            return this.strRef.getValues(nMaxCount, true);
         }
         if(this.multiLvlStrRef) {
             return this.multiLvlStrRef.getValues(nMaxCount);
@@ -11788,7 +11786,7 @@ CStrCache.prototype =
         this.setPtCount(Math.max(this.pts.length, idx + 1));
     },
 
-    getValues: function(nMaxCount) {
+    getValues: function(nMaxCount, bAddEmpty) {
         var ret = [];
         var nEnd = nMaxCount || this.ptCount;
         for(var nIndex = 0; nIndex < nEnd; ++nIndex) {
@@ -11797,7 +11795,9 @@ CStrCache.prototype =
                 ret.push(oPt.val + "");
             }
             else {
-                ret.push("");
+                if(bAddEmpty) {
+                    ret.push("");
+                }
             }
         }
         return ret;
@@ -11958,11 +11958,11 @@ CStrRef.prototype =
         }
         return sRet;
     },
-    getValues: function (nMaxCount) {
+    getValues: function (nMaxCount, bAddEmpty) {
         if(!this.strCache) {
             this.updateCache();
         }
-        return this.strCache.getValues(nMaxCount);
+        return this.strCache.getValues(nMaxCount, bAddEmpty);
     },
     getFormula: function() {
         return "=" + this.f;
