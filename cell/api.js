@@ -1117,6 +1117,8 @@ var editor;
 				//clean up
 				openXml.SaxParserDataTransfer = {};
 				return Asc.ReadDefTableStyles(wb);
+			}).then(function () {
+				wb.initPostOpenZip(pivotCaches);
 			}).then(resolve, reject);
 		});
 	};

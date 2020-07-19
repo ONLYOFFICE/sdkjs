@@ -3753,7 +3753,9 @@ function CBinaryFileWriter()
             }
             case AscDFH.historyitem_type_SlicerView:
             {
-                oThis.WriteRecord2(6, grObj, function () {
+                var slicer = grObj.getSlicer();
+                var slicerType = (slicer && slicer.isExt()) ? 6 : 5;
+                oThis.WriteRecord2(slicerType, grObj, function () {
                     grObj.toStream(oThis)
                 });
                 break;
