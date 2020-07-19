@@ -1705,7 +1705,7 @@ CT_PivotCacheDefinition.prototype.isValidCacheSource = function () {
 CT_PivotCacheDefinition.prototype.getWorksheetSource = function() {
 	return this.cacheSource && this.cacheSource.worksheetSource;
 };
-CT_PivotCacheDefinition.prototype.asc_getDataRef = function() {
+CT_PivotCacheDefinition.prototype.getDataRef = function() {
 	return this.getWorksheetSource() && this.getWorksheetSource().getDataRef() || '';
 };
 CT_PivotCacheDefinition.prototype.fromDataRef = function(dataRef) {

@@ -554,7 +554,7 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 			this.workbook.handlers.trigger("cleanCellCache", i, [Point.UpdateRigions[i]]);
 			var curSheet = this.workbook.getWorksheetById(i);
 			if (curSheet)
-			this.workbook.getWorksheetById(i).updateSlicersByRange(Point.UpdateRigions[i]);
+				this.workbook.getWorksheetById(i).updateSlicersByRange(Point.UpdateRigions[i]);
 		}
 
 		if (oRedoObjectParam.bOnSheetsChanged)
