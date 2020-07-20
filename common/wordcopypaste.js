@@ -7607,7 +7607,8 @@ PasteProcessor.prototype =
 		}
 		fParseSpans();
 	},
-	_ExecuteTableCell: function (node, cell, bUseScaleKoef, dScaleKoef, spacing) {
+
+	_ExecuteTableCell: function (node, cell, bUseScaleKoef, dScaleKoef, spacing, arrShapes, arrImages, arrTables) {
 		//Pr
 		var Pr = cell.Pr;
 		var bAddIfNull = false;
@@ -7652,40 +7653,92 @@ PasteProcessor.prototype =
 			cell.SetNoWrap(true);
 		}
 
-		//content
-		var oPasteProcessor = new PasteProcessor(this.api, false, false, true);
-		oPasteProcessor.msoComments = this.msoComments;
-		oPasteProcessor.oFonts = this.oFonts;
-		oPasteProcessor.oImages = this.oImages;
-		oPasteProcessor.oDocument = cell.Content;
-		oPasteProcessor.bIgnoreNoBlockText = true;
-		oPasteProcessor.dMaxWidth = this._CalcMaxWidthByCell(cell);
-		if (true === bUseScaleKoef) {
-			oPasteProcessor.bUseScaleKoef = bUseScaleKoef;
-			oPasteProcessor.dScaleKoef = dScaleKoef;
+		var vAlign = this._getStyle(node, computedStyle, "vertical-align");
+		switch (vAlign) {
+			case "middle":
+				cell.Set_VAlign(vertalignjc_Center);
+				break;
+			case "bottom":
+				cell.Set_VAlign(vertalignjc_Bottom);
+				break;
+			case "baseline":
+			case "top":
+				cell.Set_VAlign(vertalignjc_Top);
+				break;
 		}
-		oPasteProcessor._Execute(node, {}, true, true, false);
-		oPasteProcessor._PrepareContent();
-		oPasteProcessor._AddNextPrevToContent(cell.Content);
-		if (0 === oPasteProcessor.aContent.length) {
-			var oDocContent = cell.Content;
-			var oNewPar = new Paragraph(oDocContent.DrawingDocument, oDocContent);
-			//выставляем единичные настройки - важно для копирования из таблиц и других мест где встречаются пустые ячейки
-			var oNewSpacing = new CParaSpacing();
-			oNewSpacing.Set_FromObject({After: 0, Before: 0, Line: Asc.linerule_Auto});
-			oNewPar.Set_Spacing(oNewSpacing);
-			oPasteProcessor.aContent.push(oNewPar);
+
+		var i, length;
+		var bPresentation = !PasteElementsId.g_bIsDocumentCopyPaste;
+		if (bPresentation) {
+			var arrShapes2 = [], arrImages2 = [], arrTables2 = [];
+			var presentation = editor.WordControl.m_oLogicDocument;
+			var shape = new CShape();
+			shape.setParent(presentation.Slides[presentation.CurPage]);
+			shape.setTxBody(AscFormat.CreateTextBodyFromString("", presentation.DrawingDocument, shape));
+			arrShapes2.push(shape);
+			this._Execute(node, {}, true, true, false, arrShapes2, arrImages2, arrTables);
+			if (arrShapes2.length > 0) {
+				var first_shape = arrShapes2[0];
+				var content = first_shape.txBody.content;
+
+				//добавляем новый параграфы
+				for (i = 0, length = content.Content.length; i < length; ++i) {
+					if (i === length - 1)
+						cell.Content.Internal_Content_Add(i + 1, content.Content[i], true);
+					else
+						cell.Content.Internal_Content_Add(i + 1, content.Content[i], false);
+				}
+				//Удаляем параграф, который создается в таблице по умолчанию
+				cell.Content.Internal_Content_Remove(0, 1);
+				arrShapes2.splice(0, 1);
+			}
+			for (i = 0; i < arrShapes2.length; ++i) {
+				arrShapes.push(arrShapes2[i]);
+			}
+			for (i = 0; i < arrImages2.length; ++i) {
+				arrImages.push(arrImages2[i]);
+			}
+			for (i = 0; i < arrTables2.length; ++i) {
+				arrTables.push(arrTables2[i]);
+			}
+		} else {
+			//content
+			var oPasteProcessor = new PasteProcessor(this.api, false, false, true);
+			oPasteProcessor.msoComments = this.msoComments;
+			oPasteProcessor.oFonts = this.oFonts;
+			oPasteProcessor.oImages = this.oImages;
+			oPasteProcessor.oDocument = cell.Content;
+			oPasteProcessor.bIgnoreNoBlockText = true;
+			oPasteProcessor.dMaxWidth = this._CalcMaxWidthByCell(cell);
+			if (true === bUseScaleKoef) {
+				oPasteProcessor.bUseScaleKoef = bUseScaleKoef;
+				oPasteProcessor.dScaleKoef = dScaleKoef;
+			}
+			oPasteProcessor._Execute(node, {}, true, true, false);
+			oPasteProcessor._PrepareContent();
+			oPasteProcessor._AddNextPrevToContent(cell.Content);
+			if (0 === oPasteProcessor.aContent.length) {
+				var oDocContent = cell.Content;
+				var oNewPar = new Paragraph(oDocContent.DrawingDocument, oDocContent);
+				//выставляем единичные настройки - важно для копирования из таблиц и других мест где встречаются пустые ячейки
+				var oNewSpacing = new CParaSpacing();
+				oNewSpacing.Set_FromObject({After: 0, Before: 0, Line: Asc.linerule_Auto});
+				oNewPar.Set_Spacing(oNewSpacing);
+				oPasteProcessor.aContent.push(oNewPar);
+			}
+			//добавляем новый параграфы
+			for (i = 0, length = oPasteProcessor.aContent.length; i < length; ++i) {
+				if (i === length - 1)
+					cell.Content.Internal_Content_Add(i + 1, oPasteProcessor.aContent[i], true);
+				else
+					cell.Content.Internal_Content_Add(i + 1, oPasteProcessor.aContent[i], false);
+			}
+			//Удаляем параграф, который создается в таблице по умолчанию
+			cell.Content.Internal_Content_Remove(0, 1);
 		}
-		//добавляем новый параграфы
-		for (var i = 0, length = oPasteProcessor.aContent.length; i < length; ++i) {
-			if (i === length - 1)
-				cell.Content.Internal_Content_Add(i + 1, oPasteProcessor.aContent[i], true);
-			else
-				cell.Content.Internal_Content_Add(i + 1, oPasteProcessor.aContent[i], false);
-		}
-		//Удаляем параграф, который создается в таблице по умолчанию
-		cell.Content.Internal_Content_Remove(0, 1);
+
 	},
+
 	_CheckIsPlainText: function (node, dNotCheckFirstElem) {
 		var bIsPlainText = true;
 
@@ -8853,87 +8906,13 @@ PasteProcessor.prototype =
 						nRowSpan = 1;
 					if (nRowSpan > 1)
 						oRowSpans[nCellIndexSpan] = {row: nRowSpan - 1, col: nColSpan};
-					this._ExecuteTableCellPresentation(tc, oCurCell, bUseScaleKoef, dScaleKoef, spacing, arrShapes, arrImages, arrTables);
+					this._ExecuteTableCell(tc, oCurCell, bUseScaleKoef, dScaleKoef, spacing, arrShapes, arrImages, arrTables);
 				}
 				nCellIndexSpan += nColSpan;
 			}
 		}
 		fParseSpans();
 	},
-	_ExecuteTableCellPresentation: function (node, cell, bUseScaleKoef, dScaleKoef, spacing, arrShapes, arrImages, arrTables) {
-		//Pr
-		var Pr = cell.Pr;
-		var bAddIfNull = false;
-		if (null != spacing)
-			bAddIfNull = true;
-
-		var computedStyle = this._getComputedStyle(node);
-		var background_color = this._getStyle(node, computedStyle, "background-color");
-		if (null != background_color && (background_color = this._ParseColor(background_color))) {
-			var Shd = new CDocumentShd();
-			Shd.Value = c_oAscShdClear;
-			Shd.Unifill = AscFormat.CreteSolidFillRGB(background_color.r, background_color.g, background_color.b);
-			cell.Set_Shd(Shd);
-		}
-		var border = this._ExecuteBorder(computedStyle, node, "left", "Left", bAddIfNull, true);
-		if (null != border)
-			cell.Set_Border(border, 3);
-		border = this._ExecuteBorder(computedStyle, node, "top", "Top", bAddIfNull, true);
-		if (null != border)
-			cell.Set_Border(border, 0);
-		border = this._ExecuteBorder(computedStyle, node, "right", "Right", bAddIfNull, true);
-		if (null != border)
-			cell.Set_Border(border, 1);
-		border = this._ExecuteBorder(computedStyle, node, "bottom", "Bottom", bAddIfNull, true);
-		if (null != border)
-			cell.Set_Border(border, 2);
-
-		var top = this._getStyle(node, computedStyle, "padding-top");
-		if (null != top && null != (top = AscCommon.valueToMm(top)))
-			cell.Set_Margins({W: top, Type: tblwidth_Mm}, 0);
-		var right = this._getStyle(node, computedStyle, "padding-right");
-		if (null != right && null != (right = AscCommon.valueToMm(right)))
-			cell.Set_Margins({W: right, Type: tblwidth_Mm}, 1);
-		var bottom = this._getStyle(node, computedStyle, "padding-bottom");
-		if (null != bottom && null != (bottom = AscCommon.valueToMm(bottom)))
-			cell.Set_Margins({W: bottom, Type: tblwidth_Mm}, 2);
-		var left = this._getStyle(node, computedStyle, "padding-left");
-		if (null != left && null != (left = AscCommon.valueToMm(left)))
-			cell.Set_Margins({W: left, Type: tblwidth_Mm}, 3);
-
-		var arrShapes2 = [], arrImages2 = [], arrTables2 = [];
-		var presentation = editor.WordControl.m_oLogicDocument;
-		var shape = new CShape();
-		shape.setParent(presentation.Slides[presentation.CurPage]);
-		shape.setTxBody(AscFormat.CreateTextBodyFromString("", presentation.DrawingDocument, shape));
-		arrShapes2.push(shape);
-		this._Execute(node, {}, true, true, false, arrShapes2, arrImages2, arrTables);
-		if (arrShapes2.length > 0) {
-			var first_shape = arrShapes2[0];
-			var content = first_shape.txBody.content;
-
-			//добавляем новый параграфы
-			for (var i = 0, length = content.Content.length; i < length; ++i) {
-				if (i === length - 1)
-					cell.Content.Internal_Content_Add(i + 1, content.Content[i], true);
-				else
-					cell.Content.Internal_Content_Add(i + 1, content.Content[i], false);
-			}
-			//Удаляем параграф, который создается в таблице по умолчанию
-			cell.Content.Internal_Content_Remove(0, 1);
-			arrShapes2.splice(0, 1);
-		}
-		for (var i = 0; i < arrShapes2.length; ++i) {
-			arrShapes.push(arrShapes2[i]);
-		}
-		for (var i = 0; i < arrImages2.length; ++i) {
-			arrImages.push(arrImages2[i]);
-		}
-		for (var i = 0; i < arrTables2.length; ++i) {
-			arrTables.push(arrTables2[i]);
-		}
-	},
-
 	_applyStylesToTable: function (cTable, cStyle) {
 		if (!cTable || !cStyle || (cTable && !cTable.Content))
 			return;
