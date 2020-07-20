@@ -10070,8 +10070,11 @@
 		return "inlineLvlSdt";
 	};
 	/**
-	 * Set the lock to the current inline text content control: either locks the content from editing, or from deleting the control, or both.
-	 * @param {SdtLock} sLockType - The type of the lock applied to the inline text content control.
+	 * Set the lock to the current inline text content control.
+	 * <b>"contentLocked"</b> - content cannot be edited
+	 * <b>"sdtContentLocked"</b> - content cannot be edited and BlockLvlSdt cannot be deleted.
+	 * <b>"sdtLocked"</b> - BlockLvlSdt cannot be deleted.
+	 * @param {"contentLocked" | "sdtContentLocked" | "sdtLocked"} sLockType - The type of the lock applied to the inline text content control.
 	 */
 	ApiInlineLvlSdt.prototype.SetLock = function(sLockType)
 	{
@@ -10389,8 +10392,11 @@
 		return "blockLvlSdt";
 	};
 	/**
-	 * Set the lock type of this container
-	 * @param {SdtLock} sLockType
+	 * Set the lock to the current inline text content control.
+	 * <b>"contentLocked"</b> - content cannot be edited
+	 * <b>"sdtContentLocked"</b> - content cannot be edited and BlockLvlSdt cannot be deleted.
+	 * <b>"sdtLocked"</b> - BlockLvlSdt cannot be deleted.
+	 * @param {"contentLocked" | "sdtContentLocked" | "sdtLocked"} sLockType - The type of the lock applied to the inline text content control.
 	 */
 	ApiBlockLvlSdt.prototype.SetLock = function(sLockType)
 	{
