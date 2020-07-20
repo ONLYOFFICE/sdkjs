@@ -7612,8 +7612,10 @@ PasteProcessor.prototype =
 		//Pr
 		var Pr = cell.Pr;
 		var bAddIfNull = false;
-		if (null != spacing)
+		if (null != spacing) {
 			bAddIfNull = true;
+		}
+
 		var computedStyle = this._getComputedStyle(node);
 		var background_color = this._getStyle(node, computedStyle, "background-color");
 		if (null != background_color && (background_color = this._ParseColor(background_color))) {
@@ -7683,10 +7685,11 @@ PasteProcessor.prototype =
 
 				//добавляем новый параграфы
 				for (i = 0, length = content.Content.length; i < length; ++i) {
-					if (i === length - 1)
+					if (i === length - 1) {
 						cell.Content.Internal_Content_Add(i + 1, content.Content[i], true);
-					else
+					} else {
 						cell.Content.Internal_Content_Add(i + 1, content.Content[i], false);
+					}
 				}
 				//Удаляем параграф, который создается в таблице по умолчанию
 				cell.Content.Internal_Content_Remove(0, 1);
@@ -7728,15 +7731,15 @@ PasteProcessor.prototype =
 			}
 			//добавляем новый параграфы
 			for (i = 0, length = oPasteProcessor.aContent.length; i < length; ++i) {
-				if (i === length - 1)
+				if (i === length - 1) {
 					cell.Content.Internal_Content_Add(i + 1, oPasteProcessor.aContent[i], true);
-				else
+				} else {
 					cell.Content.Internal_Content_Add(i + 1, oPasteProcessor.aContent[i], false);
+				}
 			}
 			//Удаляем параграф, который создается в таблице по умолчанию
 			cell.Content.Internal_Content_Remove(0, 1);
 		}
-
 	},
 
 	_CheckIsPlainText: function (node, dNotCheckFirstElem) {
