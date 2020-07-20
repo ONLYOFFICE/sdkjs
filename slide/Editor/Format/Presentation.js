@@ -3511,6 +3511,7 @@ CPresentation.prototype.addFieldToContent = function (fCallback) {
                     this.Recalculate();
                     this.RecalculateCurPos();
                     this.Document_UpdateSelectionState();
+                    this.Document_UpdateInterfaceState();
                 }
             }
         }

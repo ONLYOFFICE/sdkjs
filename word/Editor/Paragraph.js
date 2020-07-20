@@ -1731,6 +1731,10 @@ Paragraph.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY)
 
 	return oCurPosInfo;
 };
+Paragraph.prototype.GetCalculatedCurPosXY = function()
+{
+	return this.Internal_Recalculate_CurPos(this.CurPos.ContentPos, false, false, true);
+};
 Paragraph.prototype.RecalculateMinMaxContentWidth = function(isRotated)
 {
 	var MinMax = new CParagraphMinMaxContentWidth();
@@ -2272,6 +2276,81 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 			{
 				pGraphics.drawSearchResult(Element.x0, Element.y0, Element.x1 - Element.x0, Element.y1 - Element.y0);
 				Element = aFind.Get_Next();
+			}
+
+			//----------------------------------------------------------------------------------------------------------
+			// Для экспорта в PDF
+			//----------------------------------------------------------------------------------------------------------
+			if (pGraphics && pGraphics.AddHyperlink && pGraphics.AddLink)
+			{
+				var aHypers = PDSH.HyperCF;
+				Element     = aHypers.Get_Next();
+				while (Element)
+				{
+					var oCF = Element.Additional.HyperlinkCF;
+
+					var sValue  = oCF.GetValue();
+					var sAnchor = oCF.GetAnchor();
+
+					var _l = Element.x0;
+					var _t = Element.y0;
+					var _r = Element.x1;
+					var _b = Element.y1;
+
+					if (Math.abs(_b - _t) < 0.001 || Math.abs(_r - _l) < 0.001)
+					{
+						Element = aHypers.Get_Next();
+						continue;
+					}
+
+					var oTransform = this.Get_ParentTextTransform();
+
+					if (oTransform)
+					{
+						var x1 = oTransform.TransformPointX(_l, _t);
+						var y1 = oTransform.TransformPointY(_l, _t);
+						var x2 = oTransform.TransformPointX(_r, _t);
+						var y2 = oTransform.TransformPointY(_r, _t);
+						var x3 = oTransform.TransformPointX(_r, _b);
+						var y3 = oTransform.TransformPointY(_r, _b);
+						var x4 = oTransform.TransformPointX(_l, _b);
+						var y4 = oTransform.TransformPointY(_l, _b);
+
+						_l = Math.min(x1, x2, x3, x4);
+						_r = Math.max(x1, x2, x3, x4);
+						_t = Math.min(y1, y2, y3, y4);
+						_b = Math.max(y1, y2, y3, y4);
+					}
+
+					if (sValue)
+					{
+						pGraphics.AddHyperlink(_l, _t, _r - _l, _b - _t, sValue, sValue);
+					}
+					else if (sAnchor)
+					{
+						var oLogicDocument = this.GetLogicDocument();
+						var oBookmark = oLogicDocument.BookmarksManager.GetBookmarkByName(sAnchor);
+						if (oBookmark)
+						{
+							var oBookmarkPos = oBookmark[0].GetDestinationXY();
+							if (oBookmarkPos)
+							{
+								var _dx = oBookmarkPos.X;
+								var _dy = oBookmarkPos.Y;
+
+								if (oBookmarkPos.Transform)
+								{
+									_dx = oBookmarkPos.Transform.TransformPointX(oBookmarkPos.X, oBookmarkPos.Y);
+									_dy = oBookmarkPos.Transform.TransformPointY(oBookmarkPos.X, oBookmarkPos.Y);
+								}
+
+								pGraphics.AddLink(_l, _t, _r - _l, _b - _t, _dx, _dy, oBookmarkPos.PageNum);
+							}
+						}
+					}
+
+					Element = aHypers.Get_Next();
+				}
 			}
 		}
 
@@ -15450,6 +15529,10 @@ CParaDrawingRangeLines.prototype =
 			{
 				return true;
 			}
+			else if (undefined !== PrevEl.Additional.HyperlinkCF)
+			{
+				return (PrevEl.Additional.HyperlinkCF === Element.Additional.HyperlinkCF);
+			}
 
 			return false;
 		}
@@ -15914,6 +15997,17 @@ CParagraphComplexFieldsInfo.prototype.PopState = function()
 		this.StoredState = null;
 	}
 };
+CParagraphComplexFieldsInfo.prototype.GetREForHYPERLINK = function()
+{
+	for (var nIndex = this.CF.length - 1; nIndex >= 0; --nIndex)
+	{
+		var oInstruction = this.CF[nIndex].ComplexField.GetInstruction();
+		if (oInstruction && (fieldtype_HYPERLINK === oInstruction.GetType() || fieldtype_REF === oInstruction.GetType()))
+			return this.CF[nIndex].ComplexField;
+	}
+
+	return null;
+};
 
 function CParagraphDrawStateHighlights()
 {
@@ -15933,6 +16027,7 @@ function CParagraphDrawStateHighlights()
     this.Shd      = new CParaDrawingRangeLines();
     this.MMFields = new CParaDrawingRangeLines();
     this.CFields  = new CParaDrawingRangeLines();
+    this.HyperCF  = new CParaDrawingRangeLines();
 
 	this.DrawComments       = true;
 	this.DrawSolvedComments = true;
@@ -15991,6 +16086,10 @@ CParagraphDrawStateHighlights.prototype.Reset_Range = function(Page, Line, Range
 	this.Coll.Clear();
 	this.Find.Clear();
 	this.Comm.Clear();
+	this.Shd.Clear();
+	this.MMFields.Clear();
+	this.CFields.Clear();
+	this.HyperCF.Clear();
 
 	this.X  = X;
 	this.Y0 = Y0;

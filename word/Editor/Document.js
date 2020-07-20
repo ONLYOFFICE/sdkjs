@@ -9656,6 +9656,18 @@ CDocument.prototype.OnKeyDown = function(e)
             this.Document_Format_Copy();
             bRetValue = keydownresult_PreventAll;
         }
+        else if (true === e.AltKey && true === e.CtrlKey) // Ctrl + Alt + C - добавляем знак (с)
+		{
+			if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
+			{
+				this.StartAction(AscDFH.historydescription_Document_AddEuroLetter);
+				this.DrawingDocument.TargetStart();
+				this.DrawingDocument.TargetShow();
+				this.AddToParagraph(new ParaText(0x00A9));
+				this.FinalizeAction();
+			}
+			bRetValue = keydownresult_PreventAll;
+		}
     }
     else if (e.KeyCode == 68 && true === e.CtrlKey) // Ctrl + D + ...
 	{
@@ -9766,16 +9778,46 @@ CDocument.prototype.OnKeyDown = function(e)
             bRetValue = keydownresult_PreventAll;
         }
     }
-    else if (e.KeyCode == 82 && true === e.CtrlKey) // Ctrl + R - переключение прилегания параграфа между right и left
+    else if (e.KeyCode == 82 && true === e.CtrlKey) // Ctrl + R
     {
-        this.private_ToggleParagraphAlignByHotkey(AscCommon.align_Right);
-        bRetValue = keydownresult_PreventAll;
+		if (true === e.AltKey && true === e.CtrlKey) // Ctrl + Alt + R - добавляем знак (R)
+		{
+			if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
+			{
+				this.StartAction(AscDFH.historydescription_Document_AddEuroLetter);
+				this.DrawingDocument.TargetStart();
+				this.DrawingDocument.TargetShow();
+				this.AddToParagraph(new ParaText(0x00AE));
+				this.FinalizeAction();
+			}
+			bRetValue = keydownresult_PreventAll;
+		}
+		else // Ctrl + R - переключение прилегания параграфа между right и left
+		{
+			this.private_ToggleParagraphAlignByHotkey(AscCommon.align_Right);
+			bRetValue = keydownresult_PreventAll;
+		}
     }
     else if (e.KeyCode == 83 && false === this.IsViewMode() && true === e.CtrlKey) // Ctrl + S - save
     {
 		this.Api.asc_Save(false);
         bRetValue = keydownresult_PreventAll;
     }
+    else if (e.KeyCode === 84 && true === e.CtrlKey) // Ctrl + T
+	{
+		if (true === e.AltKey) // Ctrl + Alt + T - добавляем знак (Tm)
+		{
+			if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
+			{
+				this.StartAction(AscDFH.historydescription_Document_AddEuroLetter);
+				this.DrawingDocument.TargetStart();
+				this.DrawingDocument.TargetShow();
+				this.AddToParagraph(new ParaText(0x2122));
+				this.FinalizeAction();
+			}
+			bRetValue = keydownresult_PreventAll;
+		}
+	}
     else if (e.KeyCode == 85 && true === e.CtrlKey) // Ctrl + U - делаем текст подчеркнутым
     {
         var TextPr = this.GetCalculatedTextPr();
@@ -9898,21 +9940,58 @@ CDocument.prototype.OnKeyDown = function(e)
 			this.FinalizeAction();
             bRetValue = keydownresult_PreventAll;
         }
+        else if (true === e.AltKey && (true === e.CtrlKey || true === e.AltGr) && false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content, null, true))
+		{
+			this.StartAction(AscDFH.historydescription_Document_MinusButton);
+
+			this.DrawingDocument.TargetStart();
+			this.DrawingDocument.TargetShow();
+
+			this.AddToParagraph(new ParaText(0x2014));
+			this.FinalizeAction();
+			bRetValue = keydownresult_PreventAll;
+		}
+        else if (true === e.AltKey && false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content, null, true))
+		{
+			this.StartAction(AscDFH.historydescription_Document_MinusButton);
+
+			this.DrawingDocument.TargetStart();
+			this.DrawingDocument.TargetShow();
+
+			this.AddToParagraph(new ParaText(0x00AD));
+			this.FinalizeAction();
+			bRetValue = keydownresult_PreventAll;
+		}
     }
     else if (e.KeyCode == 190 && true === e.CtrlKey) // Ctrl + .
     {
-        var TextPr = this.GetCalculatedTextPr();
-        if (null != TextPr)
-        {
-            if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_TextProperties))
-            {
-                this.StartAction(AscDFH.historydescription_Document_SetTextVertAlignHotKey3);
-                this.AddToParagraph(new ParaTextPr({VertAlign : TextPr.VertAlign === AscCommon.vertalign_SubScript ? AscCommon.vertalign_Baseline : AscCommon.vertalign_SubScript}));
-                this.UpdateInterface();
+		if (true === e.AltKey) // Ctrl + Alt + . - добавляем знак ...
+		{
+			if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
+			{
+				this.StartAction(AscDFH.historydescription_Document_AddEuroLetter);
+				this.DrawingDocument.TargetStart();
+				this.DrawingDocument.TargetShow();
+				this.AddToParagraph(new ParaText(0x2026));
 				this.FinalizeAction();
-            }
-            bRetValue = keydownresult_PreventAll;
-        }
+			}
+			bRetValue = keydownresult_PreventAll;
+		}
+		else
+		{
+			var TextPr = this.GetCalculatedTextPr();
+			if (null != TextPr)
+			{
+				if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_TextProperties))
+				{
+					this.StartAction(AscDFH.historydescription_Document_SetTextVertAlignHotKey3);
+					this.AddToParagraph(new ParaTextPr({VertAlign : TextPr.VertAlign === AscCommon.vertalign_SubScript ? AscCommon.vertalign_Baseline : AscCommon.vertalign_SubScript}));
+					this.UpdateInterface();
+					this.FinalizeAction();
+				}
+				bRetValue = keydownresult_PreventAll;
+			}
+		}
     }
     else if (e.KeyCode == 219 && true === e.CtrlKey) // Ctrl + [
     {
@@ -10654,7 +10733,7 @@ CDocument.prototype.Get_NearestPos = function(PageNum, X, Y, bAnchor, Drawing)
 	var ElementPageIndex = this.private_GetElementPageIndexByXY(ContentPos, X, Y, PageNum);
 	return this.Content[ContentPos].GetNearestPos(ElementPageIndex, X, Y, bAnchor, Drawing);
 };
-CDocument.prototype.Internal_Content_Add = function(Position, NewObject, bCheckLastElement)
+CDocument.prototype.Internal_Content_Add = function(Position, NewObject, isCorrectContent)
 {
 	// Position = this.Content.length  допускается
 	if (Position < 0 || Position > this.Content.length)
@@ -10680,12 +10759,15 @@ CDocument.prototype.Internal_Content_Add = function(Position, NewObject, bCheckL
 	// Обновим информацию о секциях
 	this.SectionsInfo.Update_OnAdd(Position, [NewObject]);
 
-	// Проверим последний параграф
-	this.Check_SectionLastParagraph();
+	if (false !== isCorrectContent)
+	{
+		// В последнем параграфе не должно быть разрыва секции
+		this.Check_SectionLastParagraph();
 
-	// Проверим, что последний элемент - параграф
-	if (false !== bCheckLastElement && type_Paragraph !== this.Content[this.Content.length - 1].GetType())
-		this.Internal_Content_Add(this.Content.length, new Paragraph(this.DrawingDocument, this));
+		// Проверим, что последний элемент - параграф
+		if (!this.Content[this.Content.length - 1].IsParagraph())
+			this.Internal_Content_Add(this.Content.length, new Paragraph(this.DrawingDocument, this), false);
+	}
 
 	// Запоминаем, что нам нужно произвести переиндексацию элементов
 	this.private_ReindexContent(Position);
@@ -10693,7 +10775,7 @@ CDocument.prototype.Internal_Content_Add = function(Position, NewObject, bCheckL
 	if (type_Paragraph === NewObject.GetType())
 		this.DocumentOutline.CheckParagraph(NewObject);
 };
-CDocument.prototype.Internal_Content_Remove = function(Position, Count, bCheckLastElement)
+CDocument.prototype.Internal_Content_Remove = function(Position, Count, isCorrectContent)
 {
 	var ChangePos = -1;
 
@@ -10719,15 +10801,18 @@ CDocument.prototype.Internal_Content_Remove = function(Position, Count, bCheckLa
 	if (null != NextObj)
 		NextObj.Set_DocumentPrev(PrevObj);
 
-	// Проверим, что последний элемент - параграф
-	if (false !== bCheckLastElement && (this.Content.length <= 0 || type_Paragraph !== this.Content[this.Content.length - 1].GetType()))
-		this.Internal_Content_Add(this.Content.length, new Paragraph(this.DrawingDocument, this));
+	if (false !== isCorrectContent)
+	{
+		// Проверим последний параграф
+		this.Check_SectionLastParagraph();
+
+		// Проверим, что последний элемент - параграф
+		if (this.Content.length <= 0 || !this.Content[this.Content.length - 1].IsParagraph())
+			this.Internal_Content_Add(this.Content.length, new Paragraph(this.DrawingDocument, this));
+	}
 
 	// Обновим информацию о секциях
 	this.SectionsInfo.Update_OnRemove(Position, Count, true);
-
-	// Проверим последний параграф
-	this.Check_SectionLastParagraph();
 
 	// Проверим не является ли рамкой последний параграф
 	this.private_CheckFramePrLastParagraph();
@@ -13004,7 +13089,7 @@ CDocument.prototype.Check_SectionLastParagraph = function()
 
 	var Element = this.Content[Count - 1];
 	if (type_Paragraph === Element.GetType() && undefined !== Element.Get_SectionPr())
-		this.Internal_Content_Add(Count, new Paragraph(this.DrawingDocument, this));
+		this.Internal_Content_Add(Count, new Paragraph(this.DrawingDocument, this), false);
 };
 CDocument.prototype.Add_SectionBreak = function(SectionBreakType)
 {

@@ -10311,13 +10311,12 @@ DrawingObjectsController.prototype =
 
     alignLeft : function(bSelected)
     {
-        var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects, i, boundsObject, leftPos, arrBounds;
+        var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects, i, boundsObject, leftPos;
         if(selected_objects.length > 0)
         {
-            boundsObject = getAbsoluteRectBoundsArr(selected_objects);
-            arrBounds = boundsObject.arrBounds;
             if(bSelected && selected_objects.length > 1 )
             {
+                boundsObject = getAbsoluteRectBoundsArr(selected_objects);
                 leftPos = boundsObject.minX;
             }
             else
@@ -10326,14 +10325,22 @@ DrawingObjectsController.prototype =
             }
             this.checkSelectedObjectsForMove(this.selection.groupSelection ? this.selection.groupSelection : null);
             this.swapTrackObjects();
-            var move_state;
+            var move_state, oTrack, oDrawing, oBounds;
             if(!this.selection.groupSelection)
-                move_state = new AscFormat.MoveState(this, this.selectedObjects[0], 0, 0);
+            {
+                move_state = new AscFormat.MoveState(this, selected_objects[0], 0, 0);
+            }
             else
-                move_state = new AscFormat.MoveInGroupState(this, this.selection.groupSelection.selectedObjects[0], this.selection.groupSelection, 0, 0);
-
+            {
+                move_state = new AscFormat.MoveInGroupState(this, selected_objects[0], this.selection.groupSelection, 0, 0);
+            }
             for(i = 0; i < this.arrTrackObjects.length; ++i)
-                this.arrTrackObjects[i].track(leftPos - arrBounds[i].minX, 0, this.arrTrackObjects[i].originalObject.selectStartPage);
+            {
+                oTrack = this.arrTrackObjects[i];
+                oDrawing = oTrack.originalObject;
+                oBounds = getAbsoluteRectBoundsObject(oDrawing);
+                oTrack.track(leftPos - oBounds.minX, 0, oDrawing.selectStartPage);
+            }
             move_state.bSamePos = false;
             move_state.onMouseUp({}, 0, 0, 0);
         }
@@ -10341,13 +10348,12 @@ DrawingObjectsController.prototype =
 
     alignRight : function(bSelected)
     {
-        var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects, i, boundsObject, rightPos, arrBounds;
+        var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects, i, boundsObject, rightPos;
         if(selected_objects.length > 0)
         {
-            boundsObject = getAbsoluteRectBoundsArr(selected_objects);
-            arrBounds = boundsObject.arrBounds;
             if(bSelected && selected_objects.length > 1 )
             {
+                boundsObject = getAbsoluteRectBoundsArr(selected_objects);
                 rightPos = boundsObject.maxX;
             }
             else
@@ -10356,14 +10362,22 @@ DrawingObjectsController.prototype =
             }
             this.checkSelectedObjectsForMove(this.selection.groupSelection ? this.selection.groupSelection : null);
             this.swapTrackObjects();
-            var move_state;
+            var move_state, oTrack, oDrawing, oBounds;
             if(!this.selection.groupSelection)
+            {
                 move_state = new AscFormat.MoveState(this, this.selectedObjects[0], 0, 0);
+            }
             else
+            {
                 move_state = new AscFormat.MoveInGroupState(this, this.selection.groupSelection.selectedObjects[0], this.selection.groupSelection, 0, 0);
-
+            }
             for(i = 0; i < this.arrTrackObjects.length; ++i)
-                this.arrTrackObjects[i].track(rightPos - arrBounds[i].maxX, 0, this.arrTrackObjects[i].originalObject.selectStartPage);
+            {
+                oTrack = this.arrTrackObjects[i];
+                oDrawing = oTrack.originalObject;
+                oBounds = getAbsoluteRectBoundsObject(oDrawing);
+                oTrack.track(rightPos - oBounds.maxX, 0, oDrawing.selectStartPage);
+            }
             move_state.bSamePos = false;
             move_state.onMouseUp({}, 0, 0, 0);
         }
@@ -10372,13 +10386,12 @@ DrawingObjectsController.prototype =
 
     alignTop : function(bSelected)
     {
-        var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects, i, boundsObject, topPos, arrBounds;
+        var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects, i, boundsObject, topPos;
         if(selected_objects.length > 0)
         {
-            boundsObject = getAbsoluteRectBoundsArr(selected_objects);
-            arrBounds = boundsObject.arrBounds;
             if(bSelected && selected_objects.length > 1 )
             {
+                boundsObject = getAbsoluteRectBoundsArr(selected_objects);
                 topPos = boundsObject.minY;
             }
             else
@@ -10387,14 +10400,22 @@ DrawingObjectsController.prototype =
             }
             this.checkSelectedObjectsForMove(this.selection.groupSelection ? this.selection.groupSelection : null);
             this.swapTrackObjects();
-            var move_state;
+            var move_state, oTrack, oDrawing, oBounds;
             if(!this.selection.groupSelection)
+            {
                 move_state = new AscFormat.MoveState(this, this.selectedObjects[0], 0, 0);
+            }
             else
+            {
                 move_state = new AscFormat.MoveInGroupState(this, this.selection.groupSelection.selectedObjects[0], this.selection.groupSelection, 0, 0);
-
+            }
             for(i = 0; i < this.arrTrackObjects.length; ++i)
-                this.arrTrackObjects[i].track(0, topPos - arrBounds[i].minY, this.arrTrackObjects[i].originalObject.selectStartPage);
+            {
+                oTrack = this.arrTrackObjects[i];
+                oDrawing = oTrack.originalObject;
+                oBounds = getAbsoluteRectBoundsObject(oDrawing);
+                oTrack.track(0, topPos - oBounds.minY, oDrawing.selectStartPage);
+            }
             move_state.bSamePos = false;
             move_state.onMouseUp({}, 0, 0, 0);
         }
@@ -10403,13 +10424,12 @@ DrawingObjectsController.prototype =
 
     alignBottom : function(bSelected)
     {
-        var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects, i, boundsObject, bottomPos, arrBounds;
+        var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects, i, boundsObject, bottomPos;
         if(selected_objects.length > 0)
         {
-            boundsObject = getAbsoluteRectBoundsArr(selected_objects);
-            arrBounds = boundsObject.arrBounds;
             if(bSelected && selected_objects.length > 1 )
             {
+                boundsObject = getAbsoluteRectBoundsArr(selected_objects);
                 bottomPos = boundsObject.maxY;
             }
             else
@@ -10418,14 +10438,22 @@ DrawingObjectsController.prototype =
             }
             this.checkSelectedObjectsForMove(this.selection.groupSelection ? this.selection.groupSelection : null);
             this.swapTrackObjects();
-            var move_state;
+            var move_state, oTrack, oDrawing, oBounds;
             if(!this.selection.groupSelection)
+            {
                 move_state = new AscFormat.MoveState(this, this.selectedObjects[0], 0, 0);
+            }
             else
+            {
                 move_state = new AscFormat.MoveInGroupState(this, this.selection.groupSelection.selectedObjects[0], this.selection.groupSelection, 0, 0);
-
+            }
             for(i = 0; i < this.arrTrackObjects.length; ++i)
-                this.arrTrackObjects[i].track(0, bottomPos - arrBounds[i].maxY, this.arrTrackObjects[i].originalObject.selectStartPage);
+            {
+                oTrack = this.arrTrackObjects[i];
+                oDrawing = oTrack.originalObject;
+                oBounds = getAbsoluteRectBoundsObject(oDrawing);
+                oTrack.track(0, bottomPos - oBounds.maxY, oDrawing.selectStartPage);
+            }
             move_state.bSamePos = false;
             move_state.onMouseUp({}, 0, 0, 0);
         }
@@ -10434,13 +10462,12 @@ DrawingObjectsController.prototype =
 
     alignCenter : function(bSelected)
     {
-        var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects, i, boundsObject, centerPos, arrBounds;
+        var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects, i, boundsObject, centerPos;
         if(selected_objects.length > 0)
         {
-            boundsObject = getAbsoluteRectBoundsArr(selected_objects);
-            arrBounds = boundsObject.arrBounds;
             if(bSelected && selected_objects.length > 1 )
             {
+                boundsObject = getAbsoluteRectBoundsArr(selected_objects);
                 centerPos = boundsObject.minX +(boundsObject.maxX - boundsObject.minX)/2;
             }
             else
@@ -10449,14 +10476,22 @@ DrawingObjectsController.prototype =
             }
             this.checkSelectedObjectsForMove(this.selection.groupSelection ? this.selection.groupSelection : null);
             this.swapTrackObjects();
-            var move_state;
+            var move_state, oTrack, oDrawing, oBounds;
             if(!this.selection.groupSelection)
+            {
                 move_state = new AscFormat.MoveState(this, this.selectedObjects[0], 0, 0);
+            }
             else
+            {
                 move_state = new AscFormat.MoveInGroupState(this, this.selection.groupSelection.selectedObjects[0], this.selection.groupSelection, 0, 0);
-
+            }
             for(i = 0; i < this.arrTrackObjects.length; ++i)
-                this.arrTrackObjects[i].track(centerPos - (arrBounds[i].maxX - arrBounds[i].minX)/2 - arrBounds[i].minX, 0, this.arrTrackObjects[i].originalObject.selectStartPage);
+            {
+                oTrack = this.arrTrackObjects[i];
+                oDrawing = oTrack.originalObject;
+                oBounds = getAbsoluteRectBoundsObject(oDrawing);
+                oTrack.track(centerPos - (oBounds.maxX - oBounds.minX)/2 - oBounds.minX, 0, oDrawing.selectStartPage);
+            }
             move_state.bSamePos = false;
             move_state.onMouseUp({}, 0, 0, 0);
         }
@@ -10464,13 +10499,12 @@ DrawingObjectsController.prototype =
 
     alignMiddle : function(bSelected)
     {
-        var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects, i, boundsObject, middlePos, arrBounds;
+        var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects, i, boundsObject, middlePos;
         if(selected_objects.length > 0)
         {
-            boundsObject = getAbsoluteRectBoundsArr(selected_objects);
-            arrBounds = boundsObject.arrBounds;
             if(bSelected && selected_objects.length > 1 )
             {
+                boundsObject = getAbsoluteRectBoundsArr(selected_objects);
                 middlePos = boundsObject.minY +(boundsObject.maxY - boundsObject.minY)/2;
             }
             else
@@ -10479,14 +10513,22 @@ DrawingObjectsController.prototype =
             }
             this.checkSelectedObjectsForMove(this.selection.groupSelection ? this.selection.groupSelection : null);
             this.swapTrackObjects();
-            var move_state;
+            var move_state, oTrack, oDrawing, oBounds;
             if(!this.selection.groupSelection)
+            {
                 move_state = new AscFormat.MoveState(this, this.selectedObjects[0], 0, 0);
+            }
             else
+            {
                 move_state = new AscFormat.MoveInGroupState(this, this.selection.groupSelection.selectedObjects[0], this.selection.groupSelection, 0, 0);
-
+            }
             for(i = 0; i < this.arrTrackObjects.length; ++i)
-                this.arrTrackObjects[i].track(0, middlePos - (arrBounds[i].maxY - arrBounds[i].minY)/2 - arrBounds[i].minY, this.arrTrackObjects[i].originalObject.selectStartPage);
+            {
+                oTrack = this.arrTrackObjects[i];
+                oDrawing = oTrack.originalObject;
+                oBounds = getAbsoluteRectBoundsObject(oDrawing);
+                oTrack.track(0, middlePos - (oBounds.maxY - oBounds.minY)/2 - oBounds.minY, oDrawing.selectStartPage);
+            }
             move_state.bSamePos = false;
             move_state.onMouseUp({}, 0, 0, 0);
         }
@@ -10494,23 +10536,26 @@ DrawingObjectsController.prototype =
 
     distributeHor : function(bSelected)
     {
-        var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects, i, boundsObject, arrBounds, pos1, pos2, gap, sortObjects, lastPos;
+        var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects, i, boundsObject, pos1, pos2, gap, sortObjects, lastPos;
+        var oTrack, oDrawing, oBounds, oSortObject;
         if(selected_objects.length > 0)
         {
             boundsObject = getAbsoluteRectBoundsArr(selected_objects);
-            arrBounds = boundsObject.arrBounds;
             this.checkSelectedObjectsForMove(this.selection.groupSelection ? this.selection.groupSelection : null);
             this.swapTrackObjects();
             sortObjects = [];
             for(i = 0; i < selected_objects.length; ++i)
             {
-                sortObjects.push({trackObject: this.arrTrackObjects[i], boundsObject: arrBounds[i]});
+                oTrack = this.arrTrackObjects[i];
+                oDrawing = oTrack.originalObject;
+                oBounds = getAbsoluteRectBoundsObject(oDrawing);
+                sortObjects.push({trackObject: this.arrTrackObjects[i], bounds: oBounds});
             }
-            sortObjects.sort(function(obj1, obj2){return (obj1.boundsObject.maxX + obj1.boundsObject.minX)/2 - (obj2.boundsObject.maxX + obj2.boundsObject.minX)/2});
+            sortObjects.sort(function(obj1, obj2){return (obj1.bounds.maxX + obj1.bounds.minX)/2 - (obj2.bounds.maxX + obj2.bounds.minX)/2});
             if(bSelected && selected_objects.length > 2)
             {
-                pos1 = sortObjects[0].boundsObject.minX;
-                pos2 = sortObjects[sortObjects.length - 1].boundsObject.maxX;
+                pos1 = sortObjects[0].bounds.minX;
+                pos2 = sortObjects[sortObjects.length - 1].bounds.maxX;
                 gap = (pos2 - pos1 - boundsObject.summWidth)/(sortObjects.length - 1);
             }
             else
@@ -10530,15 +10575,22 @@ DrawingObjectsController.prototype =
             }
             var move_state;
             if(!this.selection.groupSelection)
+            {
                 move_state = new AscFormat.MoveState(this, this.selectedObjects[0], 0, 0);
+            }
             else
+            {
                 move_state = new AscFormat.MoveInGroupState(this, this.selection.groupSelection.selectedObjects[0], this.selection.groupSelection, 0, 0);
-
+            }
             lastPos = pos1;
             for(i = 0; i < sortObjects.length; ++i)
             {
-                sortObjects[i].trackObject.track(lastPos -  sortObjects[i].trackObject.originalObject.x, 0, sortObjects[i].trackObject.originalObject.selectStartPage);
-                lastPos += (gap + (sortObjects[i].boundsObject.maxX - sortObjects[i].boundsObject.minX));
+                oSortObject = sortObjects[i];
+                oTrack = oSortObject.trackObject;
+                oDrawing = oTrack.originalObject;
+                oBounds = oSortObject.bounds;
+                oTrack.track(lastPos - oBounds.minX, 0, oDrawing.selectStartPage);
+                lastPos += (gap + (oBounds.maxX - oBounds.minX));
             }
             move_state.bSamePos = false;
             move_state.onMouseUp({}, 0, 0, 0);
@@ -10546,23 +10598,26 @@ DrawingObjectsController.prototype =
     },
     distributeVer : function(bSelected)
     {
-        var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects, i, boundsObject, arrBounds, pos1, pos2, gap, sortObjects, lastPos;
+        var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects, i, boundsObject, pos1, pos2, gap, sortObjects, lastPos;
+        var oTrack, oDrawing, oBounds, oSortObject;
         if(selected_objects.length > 0)
         {
             boundsObject = getAbsoluteRectBoundsArr(selected_objects);
-            arrBounds = boundsObject.arrBounds;
             this.checkSelectedObjectsForMove(this.selection.groupSelection ? this.selection.groupSelection : null);
             this.swapTrackObjects();
             sortObjects = [];
             for(i = 0; i < selected_objects.length; ++i)
             {
-                sortObjects.push({trackObject: this.arrTrackObjects[i], boundsObject: arrBounds[i]});
+                oTrack = this.arrTrackObjects[i];
+                oDrawing = oTrack.originalObject;
+                oBounds = getAbsoluteRectBoundsObject(oDrawing);
+                sortObjects.push({trackObject: this.arrTrackObjects[i], bounds: oBounds});
             }
-            sortObjects.sort(function(obj1, obj2){return (obj1.boundsObject.maxY + obj1.boundsObject.minY)/2 - (obj2.boundsObject.maxY + obj2.boundsObject.minY)/2});
+            sortObjects.sort(function(obj1, obj2){return (obj1.bounds.maxY + obj1.bounds.minY)/2 - (obj2.bounds.maxY + obj2.bounds.minY)/2});
             if(bSelected && selected_objects.length > 2)
             {
-                pos1 = sortObjects[0].boundsObject.minY;
-                pos2 = sortObjects[sortObjects.length - 1].boundsObject.maxY;
+                pos1 = sortObjects[0].bounds.minY;
+                pos2 = sortObjects[sortObjects.length - 1].bounds.maxY;
                 gap = (pos2 - pos1 - boundsObject.summHeight)/(sortObjects.length - 1);
             }
             else
@@ -10582,15 +10637,22 @@ DrawingObjectsController.prototype =
             }
             var move_state;
             if(!this.selection.groupSelection)
+            {
                 move_state = new AscFormat.MoveState(this, this.selectedObjects[0], 0, 0);
+            }
             else
+            {
                 move_state = new AscFormat.MoveInGroupState(this, this.selection.groupSelection.selectedObjects[0], this.selection.groupSelection, 0, 0);
-
+            }
             lastPos = pos1;
             for(i = 0; i < sortObjects.length; ++i)
             {
-                sortObjects[i].trackObject.track(0, lastPos -  sortObjects[i].trackObject.originalObject.y, sortObjects[i].trackObject.originalObject.selectStartPage);
-                lastPos += (gap + (sortObjects[i].boundsObject.maxY - sortObjects[i].boundsObject.minY));
+                oSortObject = sortObjects[i];
+                oTrack = oSortObject.trackObject;
+                oDrawing = oTrack.originalObject;
+                oBounds = oSortObject.bounds;
+                oTrack.track(0, lastPos - oBounds.minY, oDrawing.selectStartPage);
+                lastPos += (gap + (oBounds.maxY - oBounds.minY));
             }
             move_state.bSamePos = false;
             move_state.onMouseUp({}, 0, 0, 0);

@@ -5696,7 +5696,18 @@ ParaRun.prototype.Draw_HighLights = function(PDSH)
 
 				break;
 			}
-        }
+		}
+
+		if (PDSH.Hyperlink)
+		{
+			PDSH.HyperCF.Add(Y0, Y1, X - ItemWidthVisible, X, 0, 0, 0, 0, {HyperlinkCF : PDSH.Hyperlink});
+		}
+		else if (PDSH.ComplexFields.IsComplexField() && !PDSH.ComplexFields.IsComplexFieldCode() && PDSH.Graphics.AddHyperlink)
+		{
+			var oCF = PDSH.ComplexFields.GetREForHYPERLINK();
+			if (oCF)
+				PDSH.HyperCF.Add(Y0, Y1, X - ItemWidthVisible, X, 0, 0, 0, 0, {HyperlinkCF : oCF});
+		}
 
         for ( var SPos = 0; SPos < SearchMarksCount; SPos++)
         {

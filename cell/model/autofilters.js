@@ -4257,7 +4257,6 @@
 
 					//not apply filter by current button
 					if (!fullValues && null === currentFilterColumn && worksheet.getRowHidden(i) === true) {
-						individualCount++;
 						continue;
 					}
 

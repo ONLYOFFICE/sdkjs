@@ -7203,7 +7203,7 @@ CDocumentContent.prototype.private_CheckCurPage = function()
 		}
 	}
 };
-CDocumentContent.prototype.Internal_Content_Add = function(Position, NewObject, bCheckLastElement)
+CDocumentContent.prototype.Internal_Content_Add = function(Position, NewObject, isCorrectContent)
 {
 	// Position = this.Content.length  допускается
 	if (Position < 0 || Position > this.Content.length)
@@ -7230,14 +7230,14 @@ CDocumentContent.prototype.Internal_Content_Add = function(Position, NewObject, 
 		this.CurPos.TableMove++;
 
 	// Проверим, что последний элемент - параграф или SdtBlockLevel
-	if (false != bCheckLastElement
-		&& type_Paragraph !== this.Content[this.Content.length - 1].GetType()
-		&& type_BlockLevelSdt !== this.Content[this.Content.length - 1].GetType())
+	if (false !== isCorrectContent
+		&& !this.Content[this.Content.length - 1].IsParagraph()
+		&& !this.Content[this.Content.length - 1].IsBlockLevelSdt())
 		this.Internal_Content_Add(this.Content.length, new Paragraph(this.DrawingDocument, this, this.bPresentation === true));
 
 	this.private_ReindexContent(Position);
 };
-CDocumentContent.prototype.Internal_Content_Remove = function(Position, Count, bCheckLastElement)
+CDocumentContent.prototype.Internal_Content_Remove = function(Position, Count, isCorrectContent)
 {
 	if (Position < 0 || Position >= this.Content.length || Count <= 0)
 		return;
@@ -7260,10 +7260,10 @@ CDocumentContent.prototype.Internal_Content_Remove = function(Position, Count, b
 		NextObj.Set_DocumentPrev(PrevObj);
 
 	// Проверим, что последний элемент - параграф
-	if (false !== bCheckLastElement
+	if (false !== isCorrectContent
 		&& (this.Content.length <= 0
-		|| (type_Paragraph !== this.Content[this.Content.length - 1].GetType()
-		&& type_BlockLevelSdt !== this.Content[this.Content.length - 1].GetType())))
+			|| (!this.Content[this.Content.length - 1].IsParagraph()
+				&& !this.Content[this.Content.length - 1].IsBlockLevelSdt())))
 		this.Internal_Content_Add(this.Content.length, new Paragraph(this.DrawingDocument, this, this.bPresentation === true));
 
 	this.private_ReindexContent(Position);

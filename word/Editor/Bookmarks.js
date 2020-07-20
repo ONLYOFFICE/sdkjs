@@ -131,6 +131,27 @@ CParagraphBookmark.prototype.GoToBookmark = function()
 	oParagraph.Set_ParaContentPos(oCurPos, false, -1, -1, true); // Корректировать позицию нужно обязательно
 	oParagraph.Document_SetThisElementCurrent(true);
 };
+CParagraphBookmark.prototype.GetDestinationXY = function()
+{
+	var oParagraph = this.Paragraph;
+	if (!oParagraph)
+		return null;
+
+	var oLogicDocument = oParagraph.LogicDocument;
+	if (!oLogicDocument)
+		return null;
+
+	var oCurPos = oParagraph.Get_PosByElement(this);
+	if (!oCurPos)
+		return null;
+
+	var oState = oParagraph.SaveSelectionState();
+	oParagraph.Set_ParaContentPos(oCurPos, false, -1, -1, true); // Корректировать позицию нужно обязательно
+	var oResult = oParagraph.GetCalculatedCurPosXY();
+	oParagraph.LoadSelectionState(oState);
+
+	return oResult;
+};
 CParagraphBookmark.prototype.RemoveBookmark = function()
 {
 	var oParagraph = this.Paragraph;
