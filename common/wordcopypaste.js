@@ -6184,7 +6184,27 @@ PasteProcessor.prototype =
 					break;
 			}
 		}
+
+		var _applyTextAlign = function () {
+			var text_align = t._getStyle(node, computedStyle, "text-align")
+			if (text_align) {
+				//Может приходить -webkit-right
+				var Jc = null;
+				if (-1 !== text_align.indexOf('center'))
+					Jc = align_Center;
+				else if (-1 !== text_align.indexOf('right'))
+					Jc = align_Right;
+				else if (-1 !== text_align.indexOf('justify'))
+					Jc = align_Justify;
+				if (null != Jc)
+					Para.Set_Align(Jc, false);
+			}
+		};
+
+		var computedStyle = this._getComputedStyle(node);
 		if ("td" === sNodeName || "th" === sNodeName) {
+			_applyTextAlign();
+
 			//для случая <td>br<span></span></td> без текста в ячейке
 			var oNewSpacing = new CParaSpacing();
 			oNewSpacing.Set_FromObject({After: 0, Before: 0, Line: Asc.linerule_Auto});
@@ -6238,7 +6258,6 @@ PasteProcessor.prototype =
 			oNewBorder.Between = oNewBrd;
 		}
 
-		var computedStyle = this._getComputedStyle(node);
 		if (computedStyle) {
 			var font_family = CheckDefaultFontFamily(this._getStyle(node, computedStyle, "font-family"), this.apiEditor);
 			if (font_family && "" != font_family) {
@@ -6315,20 +6334,10 @@ PasteProcessor.prototype =
 			// pPr.Ind.FirstLine = pPr.Ind.FirstLine * this.dScaleKoef;
 			if (false === this._isEmptyProperty(Ind) && !pNoHtmlPr['mso-list'])
 				Para.Set_Ind(Ind);
+
 			//Jc
-			var text_align = this._getStyle(node, computedStyle, "text-align")
-			if (text_align) {
-				//Может приходить -webkit-right
-				var Jc = null;
-				if (-1 !== text_align.indexOf('center'))
-					Jc = align_Center;
-				else if (-1 !== text_align.indexOf('right'))
-					Jc = align_Right;
-				else if (-1 !== text_align.indexOf('justify'))
-					Jc = align_Justify;
-				if (null != Jc)
-					Para.Set_Align(Jc, false);
-			}
+			_applyTextAlign();
+
 			//Spacing
 			var Spacing = new CParaSpacing();
 			var margin_top = this._getStyle(node, computedStyle, "margin-top");
