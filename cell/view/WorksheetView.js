@@ -11640,14 +11640,15 @@
 			//value
 			if (contentCurrentObj.length === 1) {
 				var onlyOneChild = contentCurrentObj[0];
-				var valFormat = onlyOneChild.text;
-				pastedRangeProps.val = valFormat;
+				pastedRangeProps.val = onlyOneChild.text;
 				pastedRangeProps.font = onlyOneChild.format;
+
 			} else {
 				pastedRangeProps.value2 = contentCurrentObj;
-				pastedRangeProps.alignVertical = currentObj.va;
 				pastedRangeProps.val = currentObj.textVal;
 			}
+
+			pastedRangeProps.alignVertical = currentObj.alignVertical;
 
 			if (contentCurrentObj.length === 1 && contentCurrentObj[0].format) {
 				var fs = contentCurrentObj[0].format.getSize();
@@ -11663,7 +11664,7 @@
 
 			//AlignHorizontal
 			if (!isOneMerge) {
-				pastedRangeProps.alignHorizontal = currentObj.a;
+				pastedRangeProps.alignHorizontal = currentObj.alignHorizontal;
 			}
 
 			//for merge
