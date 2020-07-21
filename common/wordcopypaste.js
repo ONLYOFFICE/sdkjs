@@ -7411,7 +7411,10 @@ PasteProcessor.prototype =
 			return res;
 		}
 	},
-	_ExecuteTable: function (tableNode, node, table, aSumGrid, aColsCountByRow, pPr, bUseScaleKoef, dScaleKoef) {
+
+	_ExecuteTable: function (tableNode, node, table, aSumGrid, aColsCountByRow, pPr, bUseScaleKoef, dScaleKoef, arrShapes, arrImages, arrTables) {
+		var bPresentation = !PasteElementsId.g_bIsDocumentCopyPaste;
+
 		table.SetTableLayout(tbllayout_AutoFit);
 		//Pr
 		var Pr = table.Pr;
@@ -7419,7 +7422,7 @@ PasteProcessor.prototype =
 		var sTableAlign = null;
 		if (null != tableNode.align)
 			sTableAlign = tableNode.align;
-		else if (null != tableNode.parentNode && this.oRootNode != tableNode.parentNode) {
+		else if (null != tableNode.parentNode && this.oRootNode !== tableNode.parentNode) {
 			var computedStyleParent = this._getComputedStyle(tableNode.parentNode);
 			sTableAlign = this._getStyle(tableNode.parentNode, computedStyleParent, "text-align");
 		}
@@ -7485,16 +7488,16 @@ PasteProcessor.prototype =
 		var background_color = this._getStyle(tableNode, computedStyle, "background-color");
 		if (null != background_color && (background_color = this._ParseColor(background_color)))
 			table.Set_TableShd(c_oAscShdClear, background_color.r, background_color.g, background_color.b);
-		var oLeftBorder = this._ExecuteBorder(computedStyle, tableNode, "left", "Left", false);
+		var oLeftBorder = this._ExecuteBorder(computedStyle, tableNode, "left", "Left", bPresentation);
 		if (null != oLeftBorder)
 			table.Set_TableBorder_Left(oLeftBorder);
-		var oTopBorder = this._ExecuteBorder(computedStyle, tableNode, "top", "Top", false);
+		var oTopBorder = this._ExecuteBorder(computedStyle, tableNode, "top", "Top", bPresentation);
 		if (null != oTopBorder)
 			table.Set_TableBorder_Top(oTopBorder);
-		var oRightBorder = this._ExecuteBorder(computedStyle, tableNode, "right", "Right", false);
+		var oRightBorder = this._ExecuteBorder(computedStyle, tableNode, "right", "Right", bPresentation);
 		if (null != oRightBorder)
 			table.Set_TableBorder_Right(oRightBorder);
-		var oBottomBorder = this._ExecuteBorder(computedStyle, tableNode, "bottom", "Bottom", false);
+		var oBottomBorder = this._ExecuteBorder(computedStyle, tableNode, "bottom", "Bottom", bPresentation);
 		if (null != oBottomBorder)
 			table.Set_TableBorder_Bottom(oBottomBorder);
 
@@ -7520,11 +7523,12 @@ PasteProcessor.prototype =
 					row.Pr.TableHeader = true;
 				}
 				bFirstRow = false;
-				this._ExecuteTableRow(tr, row, aSumGrid, spacing, oRowSpans, bUseScaleKoef, dScaleKoef);
+				this._ExecuteTableRow(tr, row, aSumGrid, spacing, oRowSpans, bUseScaleKoef, dScaleKoef, arrShapes, arrImages, arrTables);
 			}
 		}
 	},
-	_ExecuteTableRow: function (node, row, aSumGrid, spacing, oRowSpans, bUseScaleKoef, dScaleKoef) {
+
+	_ExecuteTableRow: function (node, row, aSumGrid, spacing, oRowSpans, bUseScaleKoef, dScaleKoef, arrShapes, arrImages, arrTables) {
 		var oThis = this;
 		var table = row.Table;
 		var oTableSpacingMinValue = ("undefined" !== typeof tableSpacingMinValue) ? tableSpacingMinValue : 0.02;
@@ -7609,7 +7613,7 @@ PasteProcessor.prototype =
 						nRowSpan = 1;
 					if (nRowSpan > 1)
 						oRowSpans[nCellIndexSpan] = {row: nRowSpan - 1, col: nColSpan};
-					this._ExecuteTableCell(tc, oCurCell, bUseScaleKoef, dScaleKoef, spacing);
+					this._ExecuteTableCell(tc, oCurCell, bUseScaleKoef, dScaleKoef, spacing, arrShapes, arrImages, arrTables);
 				}
 				nCellIndexSpan += nColSpan;
 			}
@@ -8719,212 +8723,12 @@ PasteProcessor.prototype =
 				aSumGrid[i] = nSum;
 			}
 			//набиваем content
-			this._ExecuteTablePresentation(tableNode, node, table, aSumGrid, nMaxColCount != nMinColCount ? aColsCountByRow : null, pPr, bUseScaleKoef, dScaleKoef, arrShapes, arrImages, arrTables);
+			this._ExecuteTable(tableNode, node, table, aSumGrid, nMaxColCount != nMinColCount ? aColsCountByRow : null, pPr, bUseScaleKoef, dScaleKoef, arrShapes, arrImages, arrTables);
 			table.MoveCursorToStartPos();
 			return;
 		}
 	},
 
-	_ExecuteTablePresentation: function (tableNode, node, table, aSumGrid, aColsCountByRow, pPr, bUseScaleKoef, dScaleKoef, arrShapes, arrImages, arrTables) {
-		table.SetTableLayout(tbllayout_AutoFit);
-		//Pr
-		var Pr = table.Pr;
-		//align смотрим у parent tableNode
-		var sTableAlign = null;
-		if (null != tableNode.align)
-			sTableAlign = tableNode.align;
-		else if (null != tableNode.parentNode && this.oRootNode !== tableNode.parentNode) {
-			var computedStyleParent = this._getComputedStyle(tableNode.parentNode);
-			sTableAlign = this._getStyle(tableNode.parentNode, computedStyleParent, "text-align");
-		}
-		if (null != sTableAlign) {
-			if (-1 !== sTableAlign.indexOf('center'))
-				table.Set_TableAlign(align_Center);
-			else if (-1 !== sTableAlign.indexOf('right'))
-				table.Set_TableAlign(align_Right);
-		}
-		var spacing = null;
-		table.Set_TableBorder_InsideH(new CDocumentBorder());
-		table.Set_TableBorder_InsideV(new CDocumentBorder());
-
-		var style = tableNode.getAttribute("style");
-		if (style) {
-			var tblPrMso = {};
-			this._parseCss(style, tblPrMso);
-			var spacing = tblPrMso["mso-cellspacing"];
-			if (null != spacing && null != (spacing = AscCommon.valueToMm(spacing)))
-				;
-			var padding = tblPrMso["mso-padding-alt"];
-			if (null != padding) {
-				padding = trimString(padding);
-				var aMargins = padding.split(" ");
-				if (4 === aMargins.length) {
-					var top = aMargins[0];
-					if (null != top && null != (top = AscCommon.valueToMm(top)))
-						;
-					else
-						top = Pr.TableCellMar.Top.W;
-					var right = aMargins[1];
-					if (null != right && null != (right = AscCommon.valueToMm(right)))
-						;
-					else
-						right = Pr.TableCellMar.Right.W;
-					var bottom = aMargins[2];
-					if (null != bottom && null != (bottom = AscCommon.valueToMm(bottom)))
-						;
-					else
-						bottom = Pr.TableCellMar.Bottom.W;
-					var left = aMargins[3];
-					if (null != left && null != (left = AscCommon.valueToMm(left)))
-						;
-					else
-						left = Pr.TableCellMar.Left.W;
-					table.Set_TableCellMar(left, top, right, bottom);
-				}
-			}
-			var insideh = tblPrMso["mso-border-insideh"];
-			if (null != insideh)
-				table.Set_TableBorder_InsideH(this._ExecuteParagraphBorder(insideh));
-			var insidev = tblPrMso["mso-border-insidev"];
-			if (null != insidev)
-				table.Set_TableBorder_InsideV(this._ExecuteParagraphBorder(insidev));
-		}
-
-		var computedStyle = this._getComputedStyle(tableNode);
-		if (align_Left === table.Get_TableAlign()) {
-			var margin_left = this._getStyle(tableNode, computedStyle, "margin-left");
-			//todo возможно надо еще учесть ширину таблицы
-			if (margin_left && null != (margin_left = AscCommon.valueToMm(margin_left)) && margin_left < Page_Width - X_Left_Margin)
-				table.Set_TableInd(margin_left);
-		}
-		var background_color = this._getStyle(tableNode, computedStyle, "background-color");
-		if (null != background_color && (background_color = this._ParseColor(background_color)))
-			table.Set_TableShd(c_oAscShdClear, background_color.r, background_color.g, background_color.b);
-		var oLeftBorder = this._ExecuteBorder(computedStyle, tableNode, "left", "Left", false, true);
-		if (null != oLeftBorder)
-			table.Set_TableBorder_Left(oLeftBorder);
-		var oTopBorder = this._ExecuteBorder(computedStyle, tableNode, "top", "Top", false, true);
-		if (null != oTopBorder)
-			table.Set_TableBorder_Top(oTopBorder);
-		var oRightBorder = this._ExecuteBorder(computedStyle, tableNode, "right", "Right", false, true);
-		if (null != oRightBorder)
-			table.Set_TableBorder_Right(oRightBorder);
-		var oBottomBorder = this._ExecuteBorder(computedStyle, tableNode, "bottom", "Bottom", false, true);
-		if (null != oBottomBorder)
-			table.Set_TableBorder_Bottom(oBottomBorder);
-
-		if (null == spacing) {
-			spacing = this._getStyle(tableNode, computedStyle, "padding");
-			if (!spacing)
-				spacing = tableNode.style.padding;
-			if (!spacing)
-				spacing = null;
-			if (spacing && null != (spacing = AscCommon.valueToMm(spacing)))
-				;
-		}
-
-		//content
-		var oRowSpans = {};
-		for (var i = 0, length = node.childNodes.length; i < length; ++i) {
-			var tr = node.childNodes[i];
-			if ("tr" === tr.nodeName.toLowerCase() && tr.children.length !== 0)//в случае, если внутри строки нет ни одной ячейки, не добавляем данную строку
-			{
-				var row = table.private_AddRow(table.Content.length, 0);
-				this._ExecuteTableRowPresentation(tr, row, aSumGrid, spacing, oRowSpans, bUseScaleKoef, dScaleKoef, arrShapes, arrImages, arrTables);
-			}
-		}
-	},
-	_ExecuteTableRowPresentation: function (node, row, aSumGrid, spacing, oRowSpans, bUseScaleKoef, dScaleKoef, arrShapes, arrImages, arrTables) {
-		var oThis = this;
-		var table = row.Table;
-		if (null != spacing /*&& spacing >= tableSpacingMinValue*/)
-			row.Set_CellSpacing(spacing);
-		if (node.style.height) {
-			var height = node.style.height;
-			if (!("auto" === height || "inherit" === height || -1 !== height.indexOf("%")) && null != (height = AscCommon.valueToMm(height)))
-				row.Set_Height(height, Asc.linerule_AtLeast);
-		}
-		var bBefore = false;
-		var bAfter = false;
-		var style = node.getAttribute("style");
-		if (null != style) {
-			var tcPr = {};
-			this._parseCss(style, tcPr);
-			var margin_left = tcPr["mso-row-margin-left"];
-			if (margin_left && null != (margin_left = AscCommon.valueToMm(margin_left)))
-				bBefore = true;
-			var margin_right = tcPr["mso-row-margin-right"];
-			if (margin_right && null != (margin_right = AscCommon.valueToMm(margin_right)))
-				bAfter = true;
-		}
-
-		//content
-		var nCellIndex = 0;
-		var nCellIndexSpan = 0;
-		var fParseSpans = function () {
-			var spans = oRowSpans[nCellIndexSpan];
-			while (null != spans) {
-				var oCurCell = row.Add_Cell(row.Get_CellsCount(), row, null, false);
-				oCurCell.SetVMerge(vmerge_Continue);
-				if (spans.col > 1)
-					oCurCell.Set_GridSpan(spans.col);
-				spans.row--;
-				if (spans.row <= 0)
-					delete oRowSpans[nCellIndexSpan];
-				nCellIndexSpan += spans.col;
-				spans = oRowSpans[nCellIndexSpan];
-			}
-		};
-		var oBeforeCell = null;
-		var oAfterCell = null;
-		if (bBefore || bAfter) {
-			for (var i = 0, length = node.childNodes.length; i < length; ++i) {
-				var tc = node.childNodes[i];
-				var tcName = tc.nodeName.toLowerCase();
-				if ("td" === tcName || "th" === tcName) {
-					if (bBefore && null != oBeforeCell)
-						oBeforeCell = tc;
-					else if (bAfter)
-						oAfterCell = tc;
-				}
-			}
-		}
-		for (var i = 0, length = node.childNodes.length; i < length; ++i) {
-			//важно чтобы этот код был после определения td, потому что вертикально замерженые ячейки отсутствуют в dom
-			fParseSpans();
-
-			var tc = node.childNodes[i];
-			var tcName = tc.nodeName.toLowerCase();
-			if ("td" === tcName || "th" === tcName) {
-				var nColSpan = tc.getAttribute("colspan");
-				if (null != nColSpan)
-					nColSpan = nColSpan - 0;
-				else
-					nColSpan = 1;
-				if (tc === oBeforeCell)
-					row.Set_Before(nColSpan);
-				else if (tc === oAfterCell)
-					row.Set_After(nColSpan);
-				else {
-					var oCurCell = row.Add_Cell(row.Get_CellsCount(), row, null, false);
-					if (nColSpan > 1)
-						oCurCell.Set_GridSpan(nColSpan);
-					var width = aSumGrid[nCellIndexSpan + nColSpan - 1] - aSumGrid[nCellIndexSpan - 1];
-					oCurCell.Set_W(new CTableMeasurement(tblwidth_Mm, width));
-					var nRowSpan = tc.getAttribute("rowspan");
-					if (null != nRowSpan)
-						nRowSpan = nRowSpan - 0;
-					else
-						nRowSpan = 1;
-					if (nRowSpan > 1)
-						oRowSpans[nCellIndexSpan] = {row: nRowSpan - 1, col: nColSpan};
-					this._ExecuteTableCell(tc, oCurCell, bUseScaleKoef, dScaleKoef, spacing, arrShapes, arrImages, arrTables);
-				}
-				nCellIndexSpan += nColSpan;
-			}
-		}
-		fParseSpans();
-	},
 	_applyStylesToTable: function (cTable, cStyle) {
 		if (!cTable || !cStyle || (cTable && !cTable.Content))
 			return;
