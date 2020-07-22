@@ -2988,13 +2988,13 @@
 		}
 		return res;
 	};
-	Workbook.prototype.getTableByName = function(tableName){
+	Workbook.prototype.getTableByName = function(tableName, getSheetIndex){
 		var res = null;
 		for (var i = 0, length = this.aWorksheets.length; i < length; ++i) {
 			var ws = this.aWorksheets[i];
 			res = ws.getTableByName(tableName);
 			if (res !== null) {
-				return res;
+				return getSheetIndex ? {index: i, table: res} : res;
 			}
 		}
 		return res;

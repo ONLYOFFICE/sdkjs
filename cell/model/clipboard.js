@@ -2202,12 +2202,16 @@
 					return;
 				}
 
+				History.Create_NewPoint();
+				History.StartTransaction();
+
 				var _abortPaste = function (_error) {
 					window['AscCommon'].g_specialPasteHelper.CleanButtonInfo();
 					window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
 					if (_error) {
 						ws.handlers.trigger("onErrorEvent", Asc.c_oAscError.ID.PasteSlicerError, Asc.c_oAscError.Level.NoCritical);
 					}
+					History.EndTransaction();
 				};
 
 				var callback = function (success, slicersNames) {
@@ -2215,9 +2219,6 @@
 						_abortPaste();
 						return;
 					}
-
-					History.Create_NewPoint();
-					History.StartTransaction();
 
 					//определяем стартовую позицию, если изображений несколько вставляется
 					var graphicObject, i;

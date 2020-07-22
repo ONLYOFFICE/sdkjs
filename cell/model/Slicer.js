@@ -1173,12 +1173,15 @@
 	CT_slicerCacheDefinition.prototype.getFilterValues = function () {
 		var res = null;
 		var type = this.getType();
+		var wb = this.ws.workbook;
 		switch (type) {
 			case insertSlicerType.table: {
 				//пока беру первый элемент, поскольку не очень понятно в каких случаях их вообще может быть несколько
 				var tableCache = this.tableSlicerCache;
-				var table = this.ws.getTableByName(tableCache.tableId);
+				var tableObj = wb.getTableByName(tableCache.tableId, true);
+				var table = tableObj ? tableObj.table : null;
 				if (table) {
+					var ws = wb.aWorksheets[tableObj.index];
 					var colId = table.getColIdByName(tableCache.column);
 					if (colId !== null) {
 						var sortObj = {};
@@ -1188,7 +1191,7 @@
 						sortObj.indicateItemsWithNoData = this.getIndicateItemsWithNoData();
 						sortObj.showItemsWithNoDataLast = this.getShowItemsWithNoDataLast();
 
-						res = this.ws.autoFilters.getOpenAndClosedValues(table, colId, null, sortObj);
+						res = ws.autoFilters.getOpenAndClosedValues(table, colId, null, sortObj);
 
 					}
 				}
