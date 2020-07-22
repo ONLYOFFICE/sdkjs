@@ -356,7 +356,7 @@
 
 		if (ws) {
 			res.uid = AscCommon.CreateGUID();
-			res.cacheDefinition = this.cacheDefinition.clone(ws);
+			res.cacheDefinition = this.cacheDefinition.clone(ws.workbook);
 			return res;
 		}
 
@@ -1020,8 +1020,8 @@
 		this._type = type;
 	};
 
-	CT_slicerCacheDefinition.prototype.clone = function (ws) {
-		var res = new CT_slicerCacheDefinition(ws);
+	CT_slicerCacheDefinition.prototype.clone = function (wb) {
+		var res = new CT_slicerCacheDefinition(wb);
 
 		var i
 		for (i = 0; i < this.pivotTables.length; i++) {
