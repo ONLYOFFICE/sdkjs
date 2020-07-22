@@ -5237,6 +5237,35 @@
 
 		return arrApiRanges;
 	};
+	/**
+	 * Wrap paragraph content in a mail merge field.
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiParagraph.prototype.WrapInMailMergeField = function()
+	{
+		var oDocument = private_GetLogicDocument();
+		var fieldName = this.GetText();
+		var oField    = new ParaField(fieldtype_MERGEFIELD, [fieldName], []);
+		
+		var leftQuote  = new ParaRun();
+		var rightQuote = new ParaRun();
+
+		leftQuote.AddText("«");
+		rightQuote.AddText("»");
+
+		oField.Add_ToContent(0, leftQuote);
+
+		for (var nElement = 0; nElement < this.Paragraph.Content.length; nElement++)
+		{
+			oField.Add_ToContent(nElement + 1, this.Paragraph.Content[nElement].Copy())
+		}
+	
+		oField.Add_ToContent(oField.Content.length, rightQuote);
+		
+		this.RemoveAllElements();
+		oDocument.Register_Field(oField);
+		this.Paragraph.AddToParagraph(oField);
+	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiRun
@@ -5789,6 +5818,36 @@
 		oTextPr.SetVertAlign(sType);
 		
 		return oTextPr;
+	};
+	/**
+	 * Wrap run in a mail merge field.
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiRun.prototype.WrapInMailMergeField = function()
+	{
+		var oDocument = private_GetLogicDocument();
+		var fieldName = this.Run.GetText();
+		var oField    = new ParaField(fieldtype_MERGEFIELD, [fieldName], []);
+		var runParent = this.Run.GetParent();
+
+		var leftQuote  = new ParaRun();
+		var rightQuote = new ParaRun();
+
+		leftQuote.AddText("«");
+		rightQuote.AddText("»");
+
+		oField.Add_ToContent(0, leftQuote);
+		oField.Add_ToContent(1, this.Copy().Run);
+		oField.Add_ToContent(oField.Content.length, rightQuote);
+
+		if (runParent)
+		{
+			var indexInParent = runParent.Content.indexOf(this.Run);
+			runParent.Remove_FromContent(indexInParent, 1);
+			runParent.Add_ToContent(indexInParent, oField);
+		}
+		
+		oDocument.Register_Field(oField);
 	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
