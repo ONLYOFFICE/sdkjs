@@ -5040,7 +5040,7 @@
 	 */
 	ApiParagraph.prototype.GetText = function()
 	{
-		var ParaText = this.Paragraph.GetText();
+		var ParaText = this.Paragraph.GetText({ParaEndToSpace : false});
 
 		return ParaText;
 	};
