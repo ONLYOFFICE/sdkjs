@@ -5444,6 +5444,7 @@ CMathContent.prototype.Process_AutoCorrect = function(ActionElement) {
     if (false === bNeedAutoCorrect && ActionElement.Type === para_Math_Text) {
         return false;
     } else {
+        this.private_UpdateAutoCorrectMathSymbols();
         // Смотрим возможно ли выполнить автозамену, если нет, тогда пробуем произвести автозамену пропуская последний символ
         if (g_aMathAutoCorrectTriggerCharCodes[ActionElement.value]) {
             CanMakeAutoCorrect = this.private_CanAutoCorrectText(AutoCorrectEngine, true);
@@ -5480,6 +5481,9 @@ CMathContent.prototype.private_NeedAutoCorrect = function(ActionElement) {
         return true;
     }
     return false;
+};
+CMathContent.prototype.private_UpdateAutoCorrectMathSymbols = function(ActionElement) {
+    g_aAutoCorrectMathSymbols = window['AscCommonWord'].g_aAutoCorrectMathSymbols;
 };
 CMathContent.prototype.private_CanAutoCorrectText = function(AutoCorrectEngine, bSkipLast) {
     var IndexAdd = (true === bSkipLast ? 1 : 0);
@@ -8599,7 +8603,7 @@ var g_aAutoCorrectMathFuncSymbols =
     'def', 'dim', 'gcd', 'ker', 'log', 'Pr',
     'deg', 'erf', 'hom', 'lg', 'ln', 'max', 'sup'
 ];
-var g_aAutoCorrectMathSymbols =
+var g_DefaultAutoCorrectMathSymbolsList =
 [
     ['!!', 0x203C],
     ['...', 0x2026],
@@ -9103,6 +9107,7 @@ var g_aAutoCorrectMathSymbols =
     ['>=', 0x2265],
     ['>>', 0x226B]
 ];
+var g_aAutoCorrectMathSymbols = Object.assign([], g_DefaultAutoCorrectMathSymbolsList);
 //символы для mathfunc (интеграл, сумма...)
 var q_aMathAutoCorrectControlAggregationCodes =
 {
@@ -9254,5 +9259,6 @@ var g_aMathAutoCorrectLatinAlph = {
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CMathContent = CMathContent;
+window['AscCommonWord'].g_DefaultAutoCorrectMathSymbolsList = g_DefaultAutoCorrectMathSymbolsList;
 window['AscCommonWord'].g_aAutoCorrectMathSymbols = g_aAutoCorrectMathSymbols;
 
