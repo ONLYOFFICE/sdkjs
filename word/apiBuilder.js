@@ -11016,6 +11016,8 @@
 	ApiParagraph.prototype["InsertParagraph"]        = ApiParagraph.prototype.InsertParagraph;
 	ApiParagraph.prototype["Select"]                 = ApiParagraph.prototype.Select;
 	ApiParagraph.prototype["Search"]                 = ApiParagraph.prototype.Search;
+	ApiParagraph.prototype["WrapInMailMergeField"]   = ApiParagraph.prototype.WrapInMailMergeField;
+
 
 	ApiRun.prototype["GetClassType"]                 = ApiRun.prototype.GetClassType;
 	ApiRun.prototype["GetTextPr"]                    = ApiRun.prototype.GetTextPr;
@@ -11053,6 +11055,7 @@
 	ApiRun.prototype["SetStrikeout"]                 = ApiRun.prototype.SetStrikeout;
 	ApiRun.prototype["SetUnderline"]                 = ApiRun.prototype.SetUnderline;
 	ApiRun.prototype["SetVertAlign"]                 = ApiRun.prototype.SetVertAlign;
+	ApiRun.prototype["WrapInMailMergeField"]         = ApiRun.prototype.WrapInMailMergeField;
 
 	ApiHyperlink.prototype["GetClassType"]           = ApiHyperlink.prototype.GetClassType;
 	ApiHyperlink.prototype["SetLink"]                = ApiHyperlink.prototype.SetLink;
