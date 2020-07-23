@@ -2850,7 +2850,7 @@
 	/**
 	 * Refresh g_aAutoCorrectMathSymbols on start
 	 * @param {Array.<string>} remItems
-	 * @param {Array.<string, Array.<number> || number || string} addItems
+	 * @param {Array.<string, Array.<number> || number || string>} addItems
 	 * @param {boolean} flag
 	 */
 	baseEditorsApi.prototype.asc_refreshOnStartAutoCorrectMathSymbols = function(remItems, addItems, flag)
@@ -2863,8 +2863,8 @@
 			});
 		}
 		if (addItems) {
-			addItems.forEach(function(el) {
-				me.asc_AddOrEditFromAutoCorrectMathSymbols(true, el[0], el[1]);
+			addItems.forEach(function(val, key) {
+				me.asc_AddOrEditFromAutoCorrectMathSymbols(val, key);
 			});
 		}
 		this.asc_updateFlagAutoCorrectMathSymbols(flag);
