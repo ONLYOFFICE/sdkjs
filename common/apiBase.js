@@ -2855,15 +2855,16 @@
 	 */
 	baseEditorsApi.prototype.asc_refreshOnStartAutoCorrectMathSymbols = function(remItems, addItems, flag)
 	{
+		var me = this;
 		this.asc_resetToDefaultAutoCorrectMathSymbols();
 		if (remItems) {
 			remItems.forEach(function(el) {
-				this.asc_deleteFromAutoCorrectMathSymbols(el);
+				me.asc_deleteFromAutoCorrectMathSymbols(el);
 			});
 		}
 		if (addItems) {
 			addItems.forEach(function(el) {
-				this.asc_AddOrEditFromAutoCorrectMathSymbols(true, el[0], el[1]);
+				me.asc_AddOrEditFromAutoCorrectMathSymbols(true, el[0], el[1]);
 			});
 		}
 		this.asc_updateFlagAutoCorrectMathSymbols(flag);
