@@ -2827,33 +2827,33 @@
 	};
 	/**
 	 * Add or edit item from g_aAutoCorrectMathSymbols
-	 * @param {boolean} isAdd
 	 * @param {string} element
 	 * @param {Array.<number> || number || string} repVal
 	 */
-	baseEditorsApi.prototype.asc_AddOrEditFromAutoCorrectMathSymbols = function(isAdd, element, repVal)
+	baseEditorsApi.prototype.asc_AddOrEditFromAutoCorrectMathSymbols = function(element, repVal)
 	{
 		if (typeof repVal === 'string') {
 			var map = Array.prototype.map;
 			repVal = map.call(repVal, function(el) { return el.charCodeAt(0); });
 		}
-		if (isAdd) {
-			window['AscCommonWord'].g_aAutoCorrectMathSymbols.push([element, repVal]);
-		} else {
-			var changeInd = window['AscCommonWord'].g_aAutoCorrectMathSymbols.findIndex(function(val, index){
-				if (val[0] === element){
-					return index;
-				}
-			});
+		var changeInd = window['AscCommonWord'].g_aAutoCorrectMathSymbols.findIndex(function(val, index){
+			if (val[0] === element){
+				return index;
+			}
+		});
+		if (changeInd >= 0) {
 			window['AscCommonWord'].g_aAutoCorrectMathSymbols[changeInd][1] = repVal;
+		} else {
+			window['AscCommonWord'].g_aAutoCorrectMathSymbols.push([element, repVal]);
 		}
 	};
 	/**
 	 * Refresh g_aAutoCorrectMathSymbols on start
 	 * @param {Array.<string>} remItems
 	 * @param {Array.<string, Array.<number> || number || string} addItems
+	 * @param {boolean} flag
 	 */
-	baseEditorsApi.prototype.asc_refreshOnStartAutoCorrectMathSymbols = function(remItems, addItems)
+	baseEditorsApi.prototype.asc_refreshOnStartAutoCorrectMathSymbols = function(remItems, addItems, flag)
 	{
 		this.asc_resetToDefaultAutoCorrectMathSymbols();
 		if (remItems) {
@@ -2866,6 +2866,15 @@
 				this.asc_AddOrEditFromAutoCorrectMathSymbols(true, el[0], el[1]);
 			});
 		}
+		this.asc_updateFlagAutoCorrectMathSymbols(flag);
+	};
+	/**
+	 * Update flag about autocorrect math symbols
+	 * @param {boolean} flag
+	 */
+	baseEditorsApi.prototype.asc_updateFlagAutoCorrectMathSymbols = function(flag)
+	{
+		window['AscCommonWord'].b_DoAutoCorrectMathSymbols = flag;
 	};
 
 	//----------------------------------------------------------addons----------------------------------------------------
@@ -2935,5 +2944,6 @@
 	prot['asc_deleteFromAutoCorrectMathSymbols'] = prot.asc_deleteFromAutoCorrectMathSymbols;
 	prot['asc_AddOrEditFromAutoCorrectMathSymbols'] = prot.asc_AddOrEditFromAutoCorrectMathSymbols;
 	prot['asc_refreshOnStartAutoCorrectMathSymbols'] = prot.asc_refreshOnStartAutoCorrectMathSymbols;
+	prot['asc_updateFlagAutoCorrectMathSymbols'] = prot.asc_updateFlagAutoCorrectMathSymbols;
 
 })(window);
