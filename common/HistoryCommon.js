@@ -1864,6 +1864,7 @@
 	window['AscDFH'].historyitem_Footnotes_SetSeparator             = window['AscDFH'].historyitem_type_Footnotes | 2;
 	window['AscDFH'].historyitem_Footnotes_SetContinuationSeparator = window['AscDFH'].historyitem_type_Footnotes | 3;
 	window['AscDFH'].historyitem_Footnotes_SetContinuationNotice    = window['AscDFH'].historyitem_type_Footnotes | 4;
+	window['AscDFH'].historyitem_Footnotes_RemoveFootnote           = window['AscDFH'].historyitem_type_Footnotes | 5;
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CGlossaryDocument
 	//------------------------------------------------------------------------------------------------------------------
@@ -1906,7 +1907,8 @@
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CSdtPr
 	//------------------------------------------------------------------------------------------------------------------
-	window["AscDFH"].historyitem_Endnotes_AddEndnote = window["AscDFH"].historyitem_type_Endnotes | 1;
+	window["AscDFH"].historyitem_Endnotes_AddEndnote    = window["AscDFH"].historyitem_type_Endnotes | 1;
+	window["AscDFH"].historyitem_Endnotes_RemoveEndnote = window["AscDFH"].historyitem_type_Endnotes | 2;
 	//------------------------------------------------------------------------------------------------------------------
 	// Графические классы общего назначение (без привязки к конкретному классу)
 	//------------------------------------------------------------------------------------------------------------------

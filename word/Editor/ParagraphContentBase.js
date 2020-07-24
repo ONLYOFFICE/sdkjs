@@ -123,6 +123,10 @@ CParagraphContentBase.prototype.Get_DrawingObjectContentPos = function(Id, Conte
 {
 	return false;
 };
+CParagraphContentBase.prototype.GetRunByElement = function(oRunElement)
+{
+	return null;
+};
 CParagraphContentBase.prototype.Get_Layout = function(DrawingLayout, UseContentPos, ContentPos, Depth)
 {
 };
@@ -1888,6 +1892,17 @@ CParagraphContentWithParagraphLikeContent.prototype.Get_DrawingObjectContentPos 
     }
 
     return false;
+};
+CParagraphContentWithParagraphLikeContent.prototype.GetRunByElement = function(oRunElement)
+{
+	for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
+	{
+		var oResult = this.Content[nPos].GetRunByElement(oRunElement);
+		if (oResult)
+			return oResult;
+	}
+
+	return null;
 };
 CParagraphContentWithParagraphLikeContent.prototype.Get_Layout = function(DrawingLayout, UseContentPos, ContentPos, Depth)
 {

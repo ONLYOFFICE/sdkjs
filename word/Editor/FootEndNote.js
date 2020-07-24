@@ -221,6 +221,44 @@ CFootEndnote.prototype.LoadRecalculateObject = function(oRecalcObj)
 	this.SectionIndex = oRecalcObj.SectionIndex;
 	CDocumentContent.prototype.LoadRecalculateObject.call(this, oRecalcObj.DocContent);
 };
+/**
+ * Конвертируем содержимое сноски из концевой в обычную, или ноборот
+ * @param isToFootnote {boolean}
+ */
+CFootEndnote.prototype.ConvertFootnoteType = function(isToFootnote)
+{
+	if (!this.LogicDocument)
+		return;
+
+	var oStyles   = this.LogicDocument.GetStyles();
+	var oFootnote = this;
+
+	var arrParagraphs = this.GetAllParagraphs();
+
+	var sSrcStyle, sDstStyle;
+	if (isToFootnote)
+	{
+		sSrcStyle = oStyles.GetDefaultEndnoteText();
+		sDstStyle = oStyles.GetDefaultFootnoteText();
+	}
+	else
+	{
+		sSrcStyle = oStyles.GetDefaultFootnoteText();
+		sDstStyle = oStyles.GetDefaultEndnoteText();
+	}
+
+	for (var nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
+	{
+		var oParagraph = arrParagraphs[nIndex];
+		if (oParagraph.Style_Get() === sSrcStyle)
+			oParagraph.Style_Add(sDstStyle, true);
+
+		oParagraph.CheckRunContent(function(oRun)
+		{
+			oRun.ConvertFootnoteType(isToFootnote, oStyles, oFootnote);
+		});
+	}
+};
 
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

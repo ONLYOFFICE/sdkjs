@@ -150,6 +150,11 @@ CEndnotesController.prototype.AddEndnote = function(oEndnote)
 	this.Endnote[oEndnote.GetId()] = oEndnote;
 	this.LogicDocument.GetHistory().Add(new CChangesEndnotesAddEndnote(this, oEndnote.GetId()));
 };
+CEndnotesController.prototype.RemoveEndnote = function(oEndnote)
+{
+	delete this.Endnote[oEndnote.GetId()];
+	this.LogicDocument.GetHistory().Add(new CChangesEndnotesRemoveEndnote(this, oEndnote.GetId()));
+};
 CEndnotesController.prototype.SetSeparator = CFootnotesController.prototype.SetSeparator;
 CEndnotesController.prototype.SetContinuationSeparator = CFootnotesController.prototype.SetContinuationSeparator;
 CEndnotesController.prototype.SetContinuationNotice = CFootnotesController.prototype.SetContinuationNotice;

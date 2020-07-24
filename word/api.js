@@ -4488,17 +4488,22 @@ background-repeat: no-repeat;\
 	{
 		return this.WordControl.m_oLogicDocument.GetEndnotePr();
 	};
-	asc_docs_api.prototype["asc_AddFootnote"]        = asc_docs_api.prototype.asc_AddFootnote;
-	asc_docs_api.prototype["asc_RemoveAllFootnotes"] = asc_docs_api.prototype.asc_RemoveAllFootnotes;
-	asc_docs_api.prototype["asc_GetFootnoteProps"]   = asc_docs_api.prototype.asc_GetFootnoteProps;
-	asc_docs_api.prototype["asc_SetFootnoteProps"]   = asc_docs_api.prototype.asc_SetFootnoteProps;
-	asc_docs_api.prototype["asc_GotoFootnote"]       = asc_docs_api.prototype.asc_GotoFootnote;
-	asc_docs_api.prototype["asc_IsCursorInFootnote"] = asc_docs_api.prototype.asc_IsCursorInFootnote;
-	asc_docs_api.prototype["asc_AddEndnote"]         = asc_docs_api.prototype.asc_AddEndnote;
-	asc_docs_api.prototype["asc_GetEndnoteProps"]    = asc_docs_api.prototype.asc_GetEndnoteProps;
-	asc_docs_api.prototype["asc_SetEndnoteProps"]    = asc_docs_api.prototype.asc_SetEndnoteProps;
-	asc_docs_api.prototype["asc_GotoEndnote"]        = asc_docs_api.prototype.asc_GotoEndnote;
-	asc_docs_api.prototype["asc_IsCursorInEndnote"]  = asc_docs_api.prototype.asc_IsCursorInEndnote;
+	asc_docs_api.prototype.asc_ConvertFootnoteType = function()
+	{
+		this.WordControl.m_oLogicDocument.ConvertFootnoteType();
+	};
+	asc_docs_api.prototype["asc_AddFootnote"]         = asc_docs_api.prototype.asc_AddFootnote;
+	asc_docs_api.prototype["asc_RemoveAllFootnotes"]  = asc_docs_api.prototype.asc_RemoveAllFootnotes;
+	asc_docs_api.prototype["asc_GetFootnoteProps"]    = asc_docs_api.prototype.asc_GetFootnoteProps;
+	asc_docs_api.prototype["asc_SetFootnoteProps"]    = asc_docs_api.prototype.asc_SetFootnoteProps;
+	asc_docs_api.prototype["asc_GotoFootnote"]        = asc_docs_api.prototype.asc_GotoFootnote;
+	asc_docs_api.prototype["asc_IsCursorInFootnote"]  = asc_docs_api.prototype.asc_IsCursorInFootnote;
+	asc_docs_api.prototype["asc_AddEndnote"]          = asc_docs_api.prototype.asc_AddEndnote;
+	asc_docs_api.prototype["asc_GetEndnoteProps"]     = asc_docs_api.prototype.asc_GetEndnoteProps;
+	asc_docs_api.prototype["asc_SetEndnoteProps"]     = asc_docs_api.prototype.asc_SetEndnoteProps;
+	asc_docs_api.prototype["asc_GotoEndnote"]         = asc_docs_api.prototype.asc_GotoEndnote;
+	asc_docs_api.prototype["asc_IsCursorInEndnote"]   = asc_docs_api.prototype.asc_IsCursorInEndnote;
+	asc_docs_api.prototype["asc_ConvertFootnoteType"] = asc_docs_api.prototype.asc_ConvertFootnoteType;
 
 
 	asc_docs_api.prototype.put_AddPageBreak              = function()

@@ -41,6 +41,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Footnotes_AddFootnote]              = C
 AscDFH.changesFactory[AscDFH.historyitem_Footnotes_SetSeparator]             = CChangesFootnotesSetSeparator;
 AscDFH.changesFactory[AscDFH.historyitem_Footnotes_SetContinuationSeparator] = CChangesFootnotesSetContinuationSeparator;
 AscDFH.changesFactory[AscDFH.historyitem_Footnotes_SetContinuationNotice]    = CChangesFootnotesSetContinuationNotice;
+AscDFH.changesFactory[AscDFH.historyitem_Footnotes_RemoveFootnote]           = CChangesFootnotesRemoveFootnote;
 
 //----------------------------------------------------------------------------------------------------------------------
 // Карта зависимости изменений
@@ -49,6 +50,7 @@ AscDFH.changesRelationMap[AscDFH.historyitem_Footnotes_AddFootnote]             
 AscDFH.changesRelationMap[AscDFH.historyitem_Footnotes_SetSeparator]             = [AscDFH.historyitem_Footnotes_SetSeparator];
 AscDFH.changesRelationMap[AscDFH.historyitem_Footnotes_SetContinuationSeparator] = [AscDFH.historyitem_Footnotes_SetContinuationSeparator];
 AscDFH.changesRelationMap[AscDFH.historyitem_Footnotes_SetContinuationNotice]    = [AscDFH.historyitem_Footnotes_SetContinuationNotice];
+AscDFH.changesRelationMap[AscDFH.historyitem_Footnotes_RemoveFootnote]           = [AscDFH.historyitem_Footnotes_RemoveFootnote];
 //----------------------------------------------------------------------------------------------------------------------
 
 /**
@@ -187,3 +189,48 @@ CChangesFootnotesSetContinuationNotice.prototype.private_SetValue = function(Val
 };
 CChangesFootnotesSetContinuationNotice.prototype.WriteToBinary = CChangesFootnotesSetSeparator.prototype.WriteToBinary;
 CChangesFootnotesSetContinuationNotice.prototype.ReadFromBinary = CChangesFootnotesSetSeparator.prototype.ReadFromBinary;
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBase}
+ */
+function CChangesFootnotesRemoveFootnote(Class, Id)
+{
+	AscDFH.CChangesBase.call(this, Class);
+
+	this.Id = Id;
+}
+CChangesFootnotesRemoveFootnote.prototype = Object.create(AscDFH.CChangesBase.prototype);
+CChangesFootnotesRemoveFootnote.prototype.constructor = CChangesFootnotesRemoveFootnote;
+CChangesFootnotesRemoveFootnote.prototype.Type = AscDFH.historyitem_Footnotes_RemoveFootnote;
+CChangesFootnotesRemoveFootnote.prototype.Undo = function()
+{
+	this.Class.Footnote[this.Id] = AscCommon.g_oTableId.Get_ById(this.Id);
+};
+CChangesFootnotesRemoveFootnote.prototype.Redo = function()
+{
+	delete this.Class.Footnote[this.Id];
+};
+CChangesFootnotesRemoveFootnote.prototype.WriteToBinary = function(Writer)
+{
+	// String : Id
+	Writer.WriteString2(this.Id);
+};
+CChangesFootnotesRemoveFootnote.prototype.ReadFromBinary = function(Reader)
+{
+	// String : Id
+	this.Id = Reader.GetString2();
+};
+CChangesFootnotesRemoveFootnote.prototype.CreateReverseChange = function()
+{
+	return new CChangesFootnotesAddFootnote(this.Class, this.Id);
+};
+CChangesFootnotesRemoveFootnote.prototype.Merge = function(oChange)
+{
+	if (this.Class !== oChange.Class)
+		return true;
+
+	if (this.Type === oChange.Type && this.Id === oChange.Id)
+		return false;
+
+	return true;
+};

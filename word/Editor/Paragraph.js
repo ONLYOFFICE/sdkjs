@@ -5271,6 +5271,18 @@ Paragraph.prototype.Get_ClassesByPos = function(ContentPos)
 
 	return Classes;
 };
+Paragraph.prototype.GetClassesByPos = function(oContentPos)
+{
+	return this.Get_ClassesByPos(oContentPos);
+};
+Paragraph.prototype.GetClassByPos = function(oContentPos)
+{
+	var arrClasses = this.GetClassesByPos(oContentPos);
+	if (arrClasses.length > 0)
+		return arrClasses[arrClasses.length - 1];
+
+	return null;
+};
 /**
  * Получаем по заданной позиции элемент текста
  */
@@ -10302,6 +10314,17 @@ Paragraph.prototype.Get_DrawingObjectContentPos = function(Id)
 
 	return null;
 };
+Paragraph.prototype.GetRunByElement = function(oRunElement)
+{
+	for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
+	{
+		var oResult = this.Content[nPos].GetRunByElement(oRunElement);
+		if (oResult)
+			return oResult;
+	}
+
+	return null;
+};
 Paragraph.prototype.Internal_CorrectAnchorPos = function(Result, Drawing)
 {
 	if (!this.IsRecalculated())
@@ -10861,7 +10884,6 @@ Paragraph.prototype.Document_UpdateInterfaceState = function()
 			oHyperProps.put_Text(this.LogicDocument ? this.LogicDocument.GetComplexFieldTextValue(arrComplexFields[nIndex]) : null);
 			oHyperProps.put_InternalHyperlink(oInstruction);
 			editor.sync_HyperlinkPropCallback(oHyperProps);
-
 		}
 	}
 
