@@ -2833,8 +2833,7 @@
 	baseEditorsApi.prototype.asc_AddOrEditFromAutoCorrectMathSymbols = function(element, repVal)
 	{
 		if (typeof repVal === 'string') {
-			var map = Array.prototype.map;
-			repVal = map.call(repVal, function(el) { return el.charCodeAt(0); });
+			repVal = AscCommon.convertUTF16toUnicode(repVal);
 		}
 		var changeInd = window['AscCommonWord'].g_aAutoCorrectMathSymbols.findIndex(function(val, index){
 			if (val[0] === element){

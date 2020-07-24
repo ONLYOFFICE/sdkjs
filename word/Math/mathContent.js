@@ -9108,7 +9108,7 @@ var g_DefaultAutoCorrectMathSymbolsList =
     ['>=', 0x2265],
     ['>>', 0x226B]
 ];
-var g_aAutoCorrectMathSymbols = Object.assign([], g_DefaultAutoCorrectMathSymbolsList);
+var g_aAutoCorrectMathSymbols = JSON.parse(JSON.stringify(g_DefaultAutoCorrectMathSymbolsList));
 //символы для mathfunc (интеграл, сумма...)
 var q_aMathAutoCorrectControlAggregationCodes =
 {
