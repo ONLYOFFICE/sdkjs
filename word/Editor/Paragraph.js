@@ -7349,7 +7349,7 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage)
 					var StartY = DrawSelection.StartY;
 					var H      = DrawSelection.H;
 
-					if (true !== bInline)
+					if (true !== bInline && this.CalculatedFrame)
 					{
 						var Frame_X_min = this.CalculatedFrame.L2;
 						var Frame_Y_min = this.CalculatedFrame.T2;

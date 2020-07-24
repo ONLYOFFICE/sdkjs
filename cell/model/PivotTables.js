@@ -3514,6 +3514,7 @@ CT_pivotTableDefinition.prototype.getFilterMaps = function() {
 			cacheField = cacheFields[pivotFilter.fld];
 			var filterColumn = pivotField && pivotFilter.getFilterColumn();
 			if (filterColumn) {
+				this.checkPivotFieldItems(pivotFilter.fld);
 				if (pivotFilter.isLabelFilter()) {
 					labelFilters.push({index: pivotFilter.fld, map: pivotField.getFilterMapByFilter(cacheField, filterColumn)});
 				} else {
@@ -7895,10 +7896,12 @@ CT_PivotField.prototype.getSubtotalType = function() {
 CT_PivotField.prototype.getVisibleIndexes = function() {
 	var res = [];
 	var items = this.getItems();
-	for (var i = 0; i < items.length; ++i) {
-		var item = items[i];
-		if ((Asc.c_oAscItemType.Data === item.t || Asc.c_oAscItemType.Blank === item.t) && false === item.h) {
-			res.push(i);
+	if (items) {
+		for (var i = 0; i < items.length; ++i) {
+			var item = items[i];
+			if ((Asc.c_oAscItemType.Data === item.t || Asc.c_oAscItemType.Blank === item.t) && false === item.h) {
+				res.push(i);
+			}
 		}
 	}
 	return res;
@@ -7943,17 +7946,19 @@ CT_PivotField.prototype.getFilterObject = function(cacheField, pageFilterItem) {
 CT_PivotField.prototype.getFilterMapByFilter = function(cacheField, filterColumn) {
 	var map = new Map();
 	var items = this.getItems();
-	for (var i = 0; i < items.length; ++i) {
-		var item = items[i];
-		if (Asc.c_oAscItemType.Data === item.t || Asc.c_oAscItemType.Blank === item.t) {
-			var val = "";
-			if (Asc.c_oAscItemType.Data === item.t) {
-				var sharedItem = cacheField.getSharedItem(item.x);
-				var cellValue = sharedItem.getCellValue();
-				val = cellValue.getTextValue();
-			}
-			if (!filterColumn.isHideValue(val)) {
-				map.set(item.x, 1);
+	if (items) {
+		for (var i = 0; i < items.length; ++i) {
+			var item = items[i];
+			if (Asc.c_oAscItemType.Data === item.t || Asc.c_oAscItemType.Blank === item.t) {
+				var val = "";
+				if (Asc.c_oAscItemType.Data === item.t) {
+					var sharedItem = cacheField.getSharedItem(item.x);
+					var cellValue = sharedItem.getCellValue();
+					val = cellValue.getTextValue();
+				}
+				if (!filterColumn.isHideValue(val)) {
+					map.set(item.x, 1);
+				}
 			}
 		}
 	}
@@ -7962,18 +7967,22 @@ CT_PivotField.prototype.getFilterMapByFilter = function(cacheField, filterColumn
 CT_PivotField.prototype.getFilterMap = function() {
 	var map = new Map();
 	var items = this.getItems();
-	for (var i = 0; i < items.length; ++i) {
-		var item = items[i];
-		if ((Asc.c_oAscItemType.Data === item.t || Asc.c_oAscItemType.Blank === item.t) && false === item.h) {
-			map.set(item.x, 1);
+	if (items) {
+		for (var i = 0; i < items.length; ++i) {
+			var item = items[i];
+			if ((Asc.c_oAscItemType.Data === item.t || Asc.c_oAscItemType.Blank === item.t) && false === item.h) {
+				map.set(item.x, 1);
+			}
 		}
 	}
 	return map;
 };
 CT_PivotField.prototype.applyFilterObject = function(values) {
 	var items = this.getItems();
-	for (var i = 0; i < values.length && i < items.length; ++i) {
-		items[i].h = !values[i].visible;
+	if (items) {
+		for (var i = 0; i < values.length && i < items.length; ++i) {
+			items[i].h = !values[i].visible;
+		}
 	}
 };
 CT_PivotField.prototype.removeFilter = function() {
