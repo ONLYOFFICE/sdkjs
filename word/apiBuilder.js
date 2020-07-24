@@ -5837,7 +5837,7 @@
 		rightQuote.AddText("»");
 
 		oField.Add_ToContent(0, leftQuote);
-		oField.Add_ToContent(1, this.Copy().Run);
+		oField.Add_ToContent(1, this.Run);
 		oField.Add_ToContent(oField.Content.length, rightQuote);
 
 		if (runParent)
