@@ -3382,7 +3382,7 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
 
 				for (var nFastPageIndex = 0, nFastPagesCount = arrFastPages.length; nFastPageIndex < nFastPagesCount; ++nFastPageIndex)
 				{
-					oFastPages[arrFastPages[nFastPageIndex]] = 1;
+					oFastPages[arrFastPages[nFastPageIndex]] = arrFastPages[nFastPageIndex];
 
 					if (!this.Pages[arrFastPages[nFastPageIndex]])
 					{
@@ -3407,7 +3407,7 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
 			{
 				for (var nPageIndex in oFastPages)
 				{
-					this.DrawingDocument.OnRecalculatePage(nPageIndex, this.Pages[nPageIndex]);
+					this.DrawingDocument.OnRecalculatePage(oFastPages[nPageIndex], this.Pages[nPageIndex]);
 				}
 
 				this.DrawingDocument.OnEndRecalculate(false, true);
