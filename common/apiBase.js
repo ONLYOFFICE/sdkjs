@@ -2810,7 +2810,7 @@
 	 */
 	baseEditorsApi.prototype.asc_resetToDefaultAutoCorrectMathSymbols = function()
 	{
-		window['AscCommonWord'].g_aAutoCorrectMathSymbols = Object.assign([],window['AscCommonWord'].g_DefaultAutoCorrectMathSymbolsList);
+		window['AscCommonWord'].g_aAutoCorrectMathSymbols = JSON.parse(JSON.stringify(window['AscCommonWord'].g_DefaultAutoCorrectMathSymbolsList));
 	};
 	/**
 	 * Delete item from g_aAutoCorrectMathSymbols
