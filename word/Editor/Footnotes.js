@@ -147,9 +147,15 @@ CFootnotesController.prototype.CreateFootnote = function()
  */
 CFootnotesController.prototype.AddFootnote = function(oFootnote)
 {
-	this.Footnote[oFootnote.Get_Id()] = oFootnote;
-	var oHistory                      = this.LogicDocument.Get_History();
-	oHistory.Add(new CChangesFootnotesAddFootnote(this, oFootnote.Get_Id()));
+	this.Footnote[oFootnote.GetId()] = oFootnote;
+	var oHistory                     = this.LogicDocument.GetHistory();
+	oHistory.Add(new CChangesFootnotesAddFootnote(this, oFootnote.GetId()));
+};
+CFootnotesController.prototype.RemoveFootnote = function(oFootnote)
+{
+	delete this.Footnote[oFootnote.GetId()];
+	var oHistory                     = this.LogicDocument.GetHistory();
+	oHistory.Add(new CChangesFootnotesRemoveFootnote(this, oFootnote.GetId()));
 };
 CFootnotesController.prototype.SetSeparator = function(oFootnote)
 {

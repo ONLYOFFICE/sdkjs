@@ -17099,6 +17099,62 @@ CDocument.prototype.SetEndnotePr = function(oEndnotePr, bApplyToAll)
 		this.FinalizeAction();
 	}
 };
+CDocument.prototype.ConvertFootnoteType = function()
+{
+	if (docpostype_Content !== this.GetDocPosType() || this.IsSelectionUse())
+		return;
+
+	var oParagraph = this.GetCurrentParagraph();
+	if (!oParagraph)
+		return;
+
+	var oNextElement = oParagraph.GetNextRunElement();
+	var oPrevElement = oParagraph.GetPrevRunElement();
+
+	var oRef = null;
+	if (oNextElement && (para_FootnoteReference === oNextElement.Type || para_EndnoteReference === oNextElement.Type))
+		oRef = oNextElement;
+	else if (oPrevElement && (para_FootnoteReference === oPrevElement.Type || para_EndnoteReference === oPrevElement.Type))
+		oRef = oPrevElement;
+
+	if (!oRef)
+		return;
+
+	var oRunInfo = oParagraph.GetRunByElement(oRef);
+	if (!oRunInfo)
+		return;
+
+	if (!this.IsSelectionLocked(changestype_None, {
+		Type      : AscCommon.changestype_2_Element_and_Type,
+		Element   : oParagraph,
+		CheckType :  AscCommon.changestype_Paragraph_Content
+	}))
+	{
+		this.StartAction();
+
+		var oFootnote = oRef.GetFootnote();
+		if (para_FootnoteReference === oRef.Type)
+		{
+			this.Footnotes.RemoveFootnote(oFootnote);
+			this.Endnotes.AddEndnote(oFootnote);
+			oFootnote.ConvertFootnoteType(false);
+			oRunInfo.Run.ConvertFootnoteType(false, this.GetStyles(), oFootnote);
+		}
+		else
+		{
+			this.Endnotes.RemoveEndnote(oFootnote);
+			this.Footnotes.AddFootnote(oFootnote);
+			oFootnote.ConvertFootnoteType(true);
+			oRunInfo.Run.ConvertFootnoteType(true, this.GetStyles(), oFootnote);
+		}
+
+		this.Recalculate();
+		this.UpdateSelection();
+		this.UpdateInterface();
+		this.FinalizeAction();
+	}
+
+};
 CDocument.prototype.TurnOffCheckChartSelection = function()
 {
 	if (this.DrawingObjects)

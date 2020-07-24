@@ -124,6 +124,11 @@ ParaComment.prototype =
         return null;
     },
 
+	GetRunByElement : function(oRunElement)
+	{
+		return null;
+	},
+
     Get_DrawingObjectContentPos : function(Id, ContentPos, Depth)
     {
         return false;

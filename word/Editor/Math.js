@@ -1630,6 +1630,11 @@ ParaMath.prototype.Get_DrawingObjectRun = function(Id)
     return null;
 };
 
+ParaMath.prototype.GetRunByElement = function(oRunElement)
+{
+	return null;
+};
+
 ParaMath.prototype.Get_DrawingObjectContentPos = function(Id, ContentPos, Depth)
 {
     return false;

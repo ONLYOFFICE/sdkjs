@@ -37,12 +37,14 @@
  * Time: 14:19
  */
 
-AscDFH.changesFactory[AscDFH.historyitem_Endnotes_AddEndnote] = CChangesEndnotesAddEndnote;
+AscDFH.changesFactory[AscDFH.historyitem_Endnotes_AddEndnote]    = CChangesEndnotesAddEndnote;
+AscDFH.changesFactory[AscDFH.historyitem_Endnotes_RemoveEndnote] = CChangesEndnotesRemoveEndnote;
 
 //----------------------------------------------------------------------------------------------------------------------
 // Карта зависимости изменений
 //----------------------------------------------------------------------------------------------------------------------
-AscDFH.changesRelationMap[AscDFH.historyitem_Endnotes_AddEndnote] = [AscDFH.historyitem_Endnotes_AddEndnote];
+AscDFH.changesRelationMap[AscDFH.historyitem_Endnotes_AddEndnote]    = [AscDFH.historyitem_Endnotes_AddEndnote];
+AscDFH.changesRelationMap[AscDFH.historyitem_Endnotes_RemoveEndnote] = [AscDFH.historyitem_Endnotes_RemoveEndnote];
 //----------------------------------------------------------------------------------------------------------------------
 
 /**
@@ -81,6 +83,51 @@ CChangesEndnotesAddEndnote.prototype.CreateReverseChange = function()
 	return null;
 };
 CChangesEndnotesAddEndnote.prototype.Merge = function(oChange)
+{
+	if (this.Class !== oChange.Class)
+		return true;
+
+	if (this.Type === oChange.Type && this.Id === oChange.Id)
+		return false;
+
+	return true;
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBase}
+ */
+function CChangesEndnotesRemoveEndnote(Class, Id)
+{
+	AscDFH.CChangesBase.call(this, Class);
+
+	this.Id = Id;
+}
+CChangesEndnotesRemoveEndnote.prototype = Object.create(AscDFH.CChangesBase.prototype);
+CChangesEndnotesRemoveEndnote.prototype.constructor = CChangesEndnotesRemoveEndnote;
+CChangesEndnotesRemoveEndnote.prototype.Type = AscDFH.historyitem_Endnotes_RemoveEndnote;
+CChangesEndnotesRemoveEndnote.prototype.Undo = function()
+{
+	this.Class.Endnote[this.Id] = AscCommon.g_oTableId.Get_ById(this.Id);
+};
+CChangesEndnotesRemoveEndnote.prototype.Redo = function()
+{
+	delete this.Class.Endnote[this.Id];
+};
+CChangesEndnotesRemoveEndnote.prototype.WriteToBinary = function(Writer)
+{
+	// String : Id
+	Writer.WriteString2(this.Id);
+};
+CChangesEndnotesRemoveEndnote.prototype.ReadFromBinary = function(Reader)
+{
+	// String : Id
+	this.Id = Reader.GetString2();
+};
+CChangesEndnotesRemoveEndnote.prototype.CreateReverseChange = function()
+{
+	return new CChangesEndnotesAddEndnote(this.Class, this.Id);
+};
+CChangesEndnotesRemoveEndnote.prototype.Merge = function(oChange)
 {
 	if (this.Class !== oChange.Class)
 		return true;
