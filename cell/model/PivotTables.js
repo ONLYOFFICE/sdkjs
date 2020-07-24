@@ -1667,6 +1667,9 @@ CT_PivotCacheRecords.prototype.onStartNode = function(elem, attr, uq) {
 	return newContext;
 };
 CT_PivotCacheRecords.prototype.onEndNode = function(prevContext, elem) {
+	if ("r" === elem) {
+		return;
+	}
 	if (this._getCol(this._curColIndex).onEndNode(prevContext, elem)) {
 		this._curColIndex++;
 	}
@@ -1685,7 +1688,7 @@ CT_PivotCacheRecords.prototype.toXml = function(writer) {
 
 	for (var i = 0; i < count; ++i) {
 		writer.WriteXmlNodeStart("r", true);
-		for (var j = 0; j < this._cols.length; ++j) {
+		for (var j = 0; j < this.getColsCount(); ++j) {
 			this._cols[j].toXml(writer, i);
 		}
 		writer.WriteXmlNodeEnd("r");
@@ -1694,6 +1697,9 @@ CT_PivotCacheRecords.prototype.toXml = function(writer) {
 		this.extLst.toXml(writer, "extLst");
 	}
 	writer.WriteXmlNodeEnd("pivotCacheRecords");
+};
+CT_PivotCacheRecords.prototype.getColsCount = function() {
+	return this._cols && this._cols.length || 0;
 };
 CT_PivotCacheRecords.prototype.getRowsCount = function() {
 	return this._cols && this._cols[0] && this._cols[0].getSize() || 0;
@@ -1791,17 +1797,19 @@ CT_PivotCacheRecords.prototype._getDataMapRowToTotal = function(cacheFields, row
 	for (i = 0; i < rowMapCur.total.length; ++i) {
 		total = rowMapCur.total[i];
 		var dataIndex = dataFields[i].fld;
-		val = this._cols[dataIndex].get(row);
-		if (c_oAscPivotRecType.Index === val.type && cacheFields) {
-			var cacheField = cacheFields[dataIndex];
-			val = cacheField && cacheField.sharedItems && cacheField.sharedItems.Items && cacheField.sharedItems.Items.get(val.val) || val;
-		}
-		if (c_oAscPivotRecType.Number === val.type || c_oAscPivotRecType.DateTime === val.type) {
-			total.add(val.val);
-		} else if (c_oAscPivotRecType.Error === val.type) {
-			total.addError(val.val);
-		} else if (c_oAscPivotRecType.Missing !== val.type) {
-			total.addCount(val.val);
+		if (dataIndex < this.getColsCount()) {
+			val = this._cols[dataIndex].get(row);
+			if (c_oAscPivotRecType.Index === val.type && cacheFields) {
+				var cacheField = cacheFields[dataIndex];
+				val = cacheField && cacheField.sharedItems && cacheField.sharedItems.Items && cacheField.sharedItems.Items.get(val.val) || val;
+			}
+			if (c_oAscPivotRecType.Number === val.type || c_oAscPivotRecType.DateTime === val.type) {
+				total.add(val.val);
+			} else if (c_oAscPivotRecType.Error === val.type) {
+				total.addError(val.val);
+			} else if (c_oAscPivotRecType.Missing !== val.type) {
+				total.addCount(val.val);
+			}
 		}
 	}
 };
