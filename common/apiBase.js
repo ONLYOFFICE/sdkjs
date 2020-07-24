@@ -2798,12 +2798,12 @@
 		}
 	};
 	/**
-	 * Return array for Math AutoCorrect for menu
+	 * Return default array for Math AutoCorrect for menu
 	 * @returns {Array.<String, Number || Array.<Number>>}
 	 */
 	baseEditorsApi.prototype.asc_getAutoCorrectMathSymbols = function()
 	{
-        return window['AscCommonWord'].g_aAutoCorrectMathSymbols;
+        return window['AscCommonWord'].g_DefaultAutoCorrectMathSymbolsList;
 	};
 	/**
 	 * Reset to defaul version list autocorrect math symbols
