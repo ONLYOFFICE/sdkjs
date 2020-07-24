@@ -4681,7 +4681,7 @@
 	ApiParagraph.prototype.SetFontSize = function(nSize)
 	{
 		this.Paragraph.Set_ApplyToAll(true);
-		this.Paragraph.Add(new AscCommonWord.ParaTextPr({FontSize : nSize}));
+		this.Paragraph.Add(new AscCommonWord.ParaTextPr({FontSize : nSize/2}));
 		this.Paragraph.Set_ApplyToAll(false);
 		
 		return this;
