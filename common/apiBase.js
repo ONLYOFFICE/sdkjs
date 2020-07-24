@@ -2862,11 +2862,9 @@
 			});
 		}
 		if (addItems) {
-			for(var key in addItems){
-				if(addItems.hasOwnProperty(key)){
-					me.asc_AddOrEditFromAutoCorrectMathSymbols(key, addItems[key]);
-				}
-			}
+			addItems.forEach(function(el) {
+				me.asc_AddOrEditFromAutoCorrectMathSymbols(el[0], el[1]);
+			});
 		}
 		this.asc_updateFlagAutoCorrectMathSymbols(flag);
 	};
