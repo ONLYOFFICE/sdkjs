@@ -2296,7 +2296,7 @@
 
         var addFunction = function (name) {
         	t.setWizardMode(true);
-        	if (doCleanCellContent) {
+        	if (doCleanCellContent || !t.cellEditor.isFormula()) {
                 t.cellEditor.selectionBegin = 0;
                 t.cellEditor.selectionEnd = t.cellEditor.textRender.getEndOfText();
             }
