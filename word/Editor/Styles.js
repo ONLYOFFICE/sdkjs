@@ -15010,7 +15010,7 @@ function CParaPr()
 	this.FramePr           = undefined;
 	this.OutlineLvl        = undefined; // Для TableOfContents
 	this.DefaultRunPr      = undefined;
-	this.Bullet      = new AscFormat.CreateNoneBullet();
+	this.Bullet            = undefined;
 	this.Lvl               = undefined;
 	this.DefaultTab        = undefined;
 	this.LnSpcReduction    = undefined;
