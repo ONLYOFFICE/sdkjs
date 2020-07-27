@@ -9387,11 +9387,6 @@ Paragraph.prototype.Internal_CompileParaPr2 = function()
 		else
 			Pr.ParaPr.NumPr = undefined;
 
-		// Настройки рамки не наследуются
-		if (undefined === this.Pr.FramePr)
-			Pr.ParaPr.FramePr = undefined;
-		else
-			Pr.ParaPr.FramePr = this.Pr.FramePr.Copy();
 		return Pr;
 	}
 	else
@@ -11018,11 +11013,11 @@ Paragraph.prototype.IsInline = function()
 };
 Paragraph.prototype.GetFramePr = function()
 {
-	return this.Pr.FramePr;
+	return this.Get_CompiledPr2(false).ParaPr.FramePr;
 };
 Paragraph.prototype.Get_FramePr = function()
 {
-	return this.Pr.FramePr;
+	return this.GetFramePr();
 };
 Paragraph.prototype.Set_FramePr = function(FramePr, bDelete)
 {

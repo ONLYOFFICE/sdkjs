@@ -14727,23 +14727,20 @@ CFramePr.prototype =
 
     Compare : function(FramePr)
     {
-        if (this.DropCap != FramePr.DropCap
-            || Math.abs(this.H - FramePr.H) > 0.001
-            || this.HAnchor != FramePr.HAnchor
-            || this.HRule != FramePr.HRule
-            || this.HSpace != FramePr.HSpace
-            || this.Lines != FramePr.Lines
-            || this.VAnchor != FramePr.VAnchor
-            || this.VSpace != FramePr.VSpace
-            || Math.abs(this.W - FramePr.W) > 0.001
-            || this.Wrap != FramePr.Wrap
-            || Math.abs(this.X - FramePr.X) > 0.001
-            || this.XAlign != FramePr.XAlign
-            || Math.abs(this.Y - FramePr.Y) > 0.001
-            || this.YAlign != FramePr.YAlign)
-            return false;
-
-        return true;
+        return !(this.DropCap !== FramePr.DropCap
+			|| !IsEqualNullableFloatNumbers(this.H, FramePr.H)
+			|| this.HAnchor !== FramePr.HAnchor
+			|| this.HRule !== FramePr.HRule
+			|| this.HSpace !== FramePr.HSpace
+			|| this.Lines !== FramePr.Lines
+			|| this.VAnchor !== FramePr.VAnchor
+			|| this.VSpace !== FramePr.VSpace
+			|| !IsEqualNullableFloatNumbers(this.W, FramePr.W)
+			|| this.Wrap !== FramePr.Wrap
+			|| !IsEqualNullableFloatNumbers(this.X, FramePr.X)
+			|| this.XAlign !== FramePr.XAlign
+			|| !IsEqualNullableFloatNumbers(this.Y, FramePr.Y)
+			|| this.YAlign !== FramePr.YAlign);
     },
 
     Is_Equal : function(FramePr)
@@ -14952,6 +14949,50 @@ CFramePr.prototype =
 
         return false;
     }
+};
+CFramePr.prototype.Merge = function(oFramePr)
+{
+	if (null !== oFramePr.DropCap && undefined !== oFramePr.DropCap)
+		this.DropCap = oFramePr.DropCap;
+
+	if (null !== oFramePr.H && undefined !== oFramePr.H)
+		this.H = oFramePr.H;
+
+	if (null !== oFramePr.HAnchor && undefined !== oFramePr.HAnchor)
+		this.HAnchor = oFramePr.HAnchor;
+
+	if (null !== oFramePr.HRule && undefined !== oFramePr.HRule)
+		this.HRule = oFramePr.HRule;
+
+	if (null !== oFramePr.HSpace && undefined !== oFramePr.HSpace)
+		this.HSpace = oFramePr.HSpace;
+
+	if (null !== oFramePr.Lines && undefined !== oFramePr.Lines)
+		this.Lines = oFramePr.Lines;
+
+	if (null !== oFramePr.VAnchor && undefined !== oFramePr.VAnchor)
+		this.VAnchor = oFramePr.VAnchor;
+
+	if (null !== oFramePr.VSpace && undefined !== oFramePr.VSpace)
+		this.VSpace = oFramePr.VSpace;
+
+	if (null !== oFramePr.W && undefined !== oFramePr.W)
+		this.W = oFramePr.W;
+
+	if (null !== oFramePr.Wrap && undefined !== oFramePr.Wrap)
+		this.Wrap = oFramePr.Wrap;
+
+	if (null !== oFramePr.X && undefined !== oFramePr.X)
+		this.X = oFramePr.X;
+
+	if (null !== oFramePr.XAlign && undefined !== oFramePr.XAlign)
+		this.XAlign = oFramePr.XAlign;
+
+	if (null !== oFramePr.Y && undefined !== oFramePr.Y)
+		this.Y = oFramePr.Y;
+
+	if (null !== oFramePr.YAlign && undefined !== oFramePr.YAlign)
+		this.YAlign = oFramePr.YAlign;
 };
 
 function CCalculatedFrame(FramePr, L, T, W, H, L2, T2, W2, H2, PageIndex, Index, FlowCount)
@@ -15188,7 +15229,13 @@ CParaPr.prototype.Merge = function(ParaPr)
 	if (undefined != ParaPr.PStyle)
 		this.PStyle = ParaPr.PStyle;
 
-	this.FramePr = undefined;
+	if (null !== ParaPr.FramePr && undefined !== ParaPr.FramePr)
+	{
+		if (!this.FramePr)
+			this.FramePr = ParaPr.FramePr.Copy();
+		else
+			this.FramePr.Merge(ParaPr.FramePr);
+	}
 
 	if (undefined != ParaPr.DefaultRunPr)
 	{
