@@ -683,10 +683,15 @@
 	 * @typeofeditors ["CSE"]
 	 * @memberof ApiWorksheet
 	 * @param {string} sRange - The range of cells from the current sheet.
-	 * @returns {ApiRange}
+	 * @returns {ApiRange | null} - returns null if such a range does not exist.
 	 */
 	ApiWorksheet.prototype.GetRange = function (sRange) {
-		return new ApiRange(this.worksheet.getRange2(sRange));
+		var Range = this.worksheet.getRange2(sRange);
+
+		if (!Range)
+			return null;
+		
+		return new ApiRange(Range);
 	};
 
 	/**
@@ -1469,9 +1474,12 @@
 	 * @typeofeditors ["CSE"]
 	 * @memberof ApiRange
 	 * @param {string} value - The general value for the cell or cell range in string format.
+	 * @return {bool} - returns false if such a range does not exist.
 	 */
 	ApiRange.prototype.SetValue = function (value) {
 		value = checkFormat(value);
+		if (!this.range)
+			return false;
 		this.range.setValue(value.toString());
 		if (value.type === AscCommonExcel.cElementType.number) {
 			this.SetNumberFormat(AscCommon.getShortDateFormat());
@@ -1479,6 +1487,8 @@
 		// ToDo update range in setValue
 		var worksheet = this.range.worksheet;
 		worksheet.workbook.handlers.trigger("cleanCellCache", worksheet.getId(), [this.range.bbox], true);
+
+		return true;
 	};
 	Object.defineProperty(ApiRange.prototype, "Value", {
 		get: function () {
