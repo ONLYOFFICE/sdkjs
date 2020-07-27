@@ -4191,7 +4191,10 @@
             }
             var bIsTablePartContainActiveRange;
             if (oThis.isCopyPaste) {
-                bIsTablePartContainActiveRange = ws.autoFilters.isTablePartContainActiveRange(ws.selectionRange.getLast());
+                var _selection = ws.getSelection();
+                if (_selection) {
+                    bIsTablePartContainActiveRange = ws.autoFilters.isTablePartContainActiveRange(_selection.getLast());
+                }
             }
 
             var curRow = -1;
