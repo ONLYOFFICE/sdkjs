@@ -1239,6 +1239,10 @@
                 if (!this.LastPickFont)
 				{
 					// такого при правильном кэше быть не должно
+                    if (window["NATIVE_EDITOR_ENJINE"] && fontId.file.Status != 0)
+                    {
+                        fontId.file.LoadFontNative();
+                    }
 					this.LastPickFont = cache.LockFont(fontId.file.stream_index, fontId.id, fontId.faceIndex, size, "", this.Manager);
 				}
 

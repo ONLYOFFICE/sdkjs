@@ -7418,14 +7418,14 @@ background-repeat: no-repeat;\
         var mmH = pxH * AscCommon.g_dKoef_pix_to_mm;
 
         _renderer.BeginPage(mmW, mmH);
-        var oldEngine = window["NATIVE_EDITOR_ENJINE"];
-        window["NATIVE_EDITOR_ENJINE"] = undefined;
+        //var oldEngine = window["NATIVE_EDITOR_ENJINE"];
+        //window["NATIVE_EDITOR_ENJINE"] = undefined;
         this.WordControl.m_oMasterDrawer.WidthMM = mmW;
         this.WordControl.m_oMasterDrawer.HeightMM = mmH;
         this.WordControl.m_oMasterDrawer.WidthPx = pxW;
         this.WordControl.m_oMasterDrawer.HeightPx = pxH;
         this.WordControl.m_oMasterDrawer.Draw2(_renderer, _master, undefined, undefined, params);
-        window["NATIVE_EDITOR_ENJINE"] = oldEngine;
+        //window["NATIVE_EDITOR_ENJINE"] = oldEngine;
         _renderer.EndPage();
 
         this.ShowParaMarks = _bOldShowMarks;
