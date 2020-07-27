@@ -2458,16 +2458,21 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @param {ShapeType} [sType="rect"] - The shape type which specifies the preset shape geometry.
-	 * @param {EMU} nWidth - The shape width in English measure units.
-	 * @param {EMU} nHeight - The shape height in English measure units.
-	 * @param {ApiFill} oFill - The color or pattern used to fill the shape.
-	 * @param {ApiStroke} oStroke - The stroke used to create the element shadow.
+	 * @param {EMU} [nWidth = 914400] - The shape width in English measure units.
+	 * @param {EMU} [nHeight = 914400] - The shape height in English measure units.
+	 * @param {ApiFill} [oFill = Api.CreateNoFill()] - The color or pattern used to fill the shape.
+	 * @param {ApiStroke} [oStroke = Api.CreateStroke(0, Api.CreateNoFill())] - The stroke used to create the element shadow.
 	 * @returns {ApiShape}
 	 * */
 	Api.prototype.CreateShape = function(sType, nWidth, nHeight, oFill, oStroke)
 	{
 		var oLogicDocument = private_GetLogicDocument();
 		var oDrawingDocuemnt = private_GetDrawingDocument();
+		sType   = sType   || "rect";
+        nWidth  = nWidth  || 914400;
+	    nHeight = nHeight || 914400;
+		oFill   = oFill   || editor.CreateNoFill();
+		oStroke = oStroke || editor.CreateStroke(0, editor.CreateNoFill());
 		var nW = private_EMU2MM(nWidth);
 		var nH = private_EMU2MM(nHeight);
 		var oDrawing = new ParaDrawing(nW, nH, null, oDrawingDocuemnt, oLogicDocument, null);
