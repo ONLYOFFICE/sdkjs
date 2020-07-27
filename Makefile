@@ -1,3 +1,4 @@
+FOO = bar
 GRUNT = grunt
 GRUNT_FLAGS = --no-color -v 
 
