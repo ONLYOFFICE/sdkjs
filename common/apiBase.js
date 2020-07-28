@@ -721,10 +721,12 @@
 		this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.Open);
 		this.sendEvent('asc_onDocumentContentReady');
 
-		if (window.g_asc_plugins)
-        {
-            window.g_asc_plugins.onPluginEvent("onDocumentContentReady");
-        }
+		// закоментировал, так как плагины ещё не загружены и евент ничего не сделает
+		// перенес его в конец asc_pluginsRegister
+		// if (window.g_asc_plugins)
+        // {
+        //     window.g_asc_plugins.onPluginEvent("onDocumentContentReady");
+        // }
 
         if (c_oEditorId.Spreadsheet === this.editorId) {
 			this.onUpdateDocumentModified(this.asc_isDocumentModified());
@@ -2111,6 +2113,7 @@
 	{
 		if (null != this.pluginsManager)
 			this.pluginsManager.register(basePath, plugins);
+		window.g_asc_plugins.onPluginEvent("onDocumentContentReady");
 	};
 	baseEditorsApi.prototype.asc_pluginRun         = function(guid, variation, pluginData)
 	{
