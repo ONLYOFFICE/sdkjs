@@ -94,6 +94,8 @@
 
 		this.isNoSystemPluginsOnlyOne = true;
 
+		this.countEventDocContOrPluginsReady = 0;
+
 		this.guidAsyncMethod = "";
 
 		this.sendsToInterface = {};
@@ -1207,6 +1209,10 @@
 				window.g_asc_plugins.loadExtensionPlugins(window["Asc"]["extensionPlugins"]);
 			}, 10);
 
+		});
+		window.g_asc_plugins.api.asc_registerCallback('asc_LoadPluginsOrDocument', function()
+		{
+			window.g_asc_plugins.countEventDocContOrPluginsReady++;
 		});
 
         if (window.location && window.location.search)
