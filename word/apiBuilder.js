@@ -9507,6 +9507,7 @@
 		return "shape";
 	};
 	/**
+	 * Deprecated in 6.2
 	 * Get the shape inner contents where a paragraph or text runs can be inserted.
 	 * @typeofeditors ["CDE", "CSE"]
 	 * @returns {?ApiDocumentContent}
@@ -9519,6 +9520,20 @@
 		}
 		return null;
 	};
+	/**
+	 * Get the shape inner contents where a paragraph or text runs can be inserted.
+	 * @typeofeditors ["CDE", "CSE"]
+	 * @returns {?ApiDocumentContent}
+	 */
+	ApiShape.prototype.GetContent = function()
+	{
+		if(this.Shape && this.Shape.textBoxContent)
+		{
+			return new ApiDocumentContent(this.Shape.textBoxContent);
+		}
+		return null;
+	};
+	
 	/**
 	 * Set the vertical alignment for the shape content where a paragraph or text runs can be inserted.
 	 * @typeofeditors ["CDE", "CSE"]
@@ -11243,6 +11258,7 @@
 	
 	ApiShape.prototype["GetClassType"]               = ApiShape.prototype.GetClassType;
 	ApiShape.prototype["GetDocContent"]              = ApiShape.prototype.GetDocContent;
+	ApiShape.prototype["GetContent"]                 = ApiShape.prototype.GetContent;
 	ApiShape.prototype["SetVerticalTextAlign"]       = ApiShape.prototype.SetVerticalTextAlign;
 	ApiShape.prototype["SetPaddings"]                = ApiShape.prototype.SetPaddings;
 	ApiShape.prototype["GetNextShape"]               = ApiShape.prototype.GetNextShape;

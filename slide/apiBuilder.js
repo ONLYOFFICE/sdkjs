@@ -740,11 +740,27 @@
 
 
     /**
+     * Deprecated in 6.2
      * Get the shape inner contents where a paragraph or text runs can be inserted. 
      * @typeofeditors ["CPE"]
      * @returns {?ApiDocumentContent}
      */
     ApiShape.prototype.GetDocContent = function()
+    {
+        var oApi = private_GetApi();
+        if(oApi && this.Drawing && this.Drawing.txBody && this.Drawing.txBody.content)
+        {
+            return oApi.private_CreateApiDocContent(this.Drawing.txBody.content);
+        }
+        return null;
+    };
+    
+    /**
+     * Get the shape inner contents where a paragraph or text runs can be inserted. 
+     * @typeofeditors ["CPE"]
+     * @returns {?ApiDocumentContent}
+     */
+    ApiShape.prototype.GetContent = function()
     {
         var oApi = private_GetApi();
         if(oApi && this.Drawing && this.Drawing.txBody && this.Drawing.txBody.content)
@@ -1574,6 +1590,7 @@
 
     ApiShape.prototype["GetClassType"]               =  ApiShape.prototype.GetClassType;
     ApiShape.prototype["GetDocContent"]              =  ApiShape.prototype.GetDocContent;
+    ApiShape.prototype["GetContent"]                 =  ApiShape.prototype.GetContent;
     ApiShape.prototype["SetVerticalTextAlign"]       =  ApiShape.prototype.SetVerticalTextAlign;
 
     ApiChart.prototype["GetClassType"]                 = ApiChart.prototype.GetClassType;
