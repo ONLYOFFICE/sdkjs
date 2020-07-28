@@ -4189,10 +4189,6 @@
             } else {
                 range = ws.getRange3(0, 0, gc_nMaxRow0, gc_nMaxCol0);
             }
-            var bIsTablePartContainActiveRange;
-            if (oThis.isCopyPaste) {
-                bIsTablePartContainActiveRange = ws.autoFilters.isTablePartContainActiveRange(ws.selectionRange.getLast());
-            }
 
             var curRow = -1;
             var allRow = ws.getAllRowNoEmpty();
@@ -4215,13 +4211,7 @@
                 //готовим ячейку к записи
                 var nXfsId;
                 var cellXfs = cell.xfs;
-                /*if (oThis.isCopyPaste && bIsTablePartContainActiveRange) {
-                 var compiledXfs = cell.getCompiledStyle();
-                 nXfsId = oThis.stylesForWrite.add(compiledXfs);
-                 cellXfs = compiledXfs;
-                 } else {*/
                 nXfsId = oThis.stylesForWrite.add(cell.xfs);
-                //}
 
                 //сохраняем как и Excel даже пустой стиль(нужно чтобы убрать стиль строки/колонки)
                 if (null != cellXfs || false == cell.isNullText()) {
