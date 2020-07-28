@@ -7307,7 +7307,7 @@ function BinaryPPTYLoader()
                         var oContent = _slicer.getDocContent();
                         if(oContent)
                         {
-                            oContent.AddText("This shape represents slicer");
+                            oContent.AddText("This shape represents a slicer.");
                         }
                     }
                     s.SkipRecord();
