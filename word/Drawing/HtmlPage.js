@@ -3743,6 +3743,7 @@ function CEditorPage(api)
 		}
 		if (oWordControl.m_bIsScroll)
 		{
+			isRepaint = true;
 			oWordControl.m_bIsScroll = false;
 			oWordControl.OnPaint();
 
