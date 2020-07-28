@@ -1686,7 +1686,7 @@
 
 			var _elem = t.nativeFocusElement;
 			t.nativeFocusElementNoRemoveOnElementFocus = true; // ie focus async
-			t.HtmlArea.focus();
+			AscCommon.AscBrowser.isMozilla ? setTimeout(function(){ t.HtmlArea.focus(); }, 0) : t.HtmlArea.focus();
 			t.nativeFocusElement = _elem;
 			t.Api.asc_enableKeyEvents(true, true);
 		}, true);
