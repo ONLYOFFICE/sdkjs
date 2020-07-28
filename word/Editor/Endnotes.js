@@ -983,6 +983,16 @@ CEndnotesController.prototype.GotoPrevEndnote = function()
 		this.private_SetCurrentEndnoteNoSelection(oPrevEndnote);
 	}
 };
+CEndnotesController.prototype.GetNumberingInfo = function(oPara, oNumPr, oEndnote)
+{
+	var arrEndnotes      = this.LogicDocument.GetEndnotesList(null, oEndnote);
+	var oNumberingEngine = new CDocumentNumberingInfoEngine(oPara, oNumPr, this.Get_Numbering());
+	for (var nIndex = 0, nCount = arrEndnotes.length; nIndex < nCount; ++nIndex)
+	{
+		arrEndnotes[nIndex].GetNumberingInfo(oNumberingEngine, oPara, oNumPr);
+	}
+	return oNumberingEngine.GetNumInfo();
+};
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Private area
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
