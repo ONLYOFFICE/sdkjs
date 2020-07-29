@@ -1205,6 +1205,10 @@
 			while (tm.height > this._getContentHeight() && this._expandHeight()) {
 			}
 			if (bottom !== this.bottom) {
+				if (bottom > this.bottom) {
+					// Clear index when reduce size
+					this.topLineIndex = 0;
+				}
 				doAdjust = true;
 				// ToDo move this to _adjustCanvas
 				if (this.getMenuEditorMode) {

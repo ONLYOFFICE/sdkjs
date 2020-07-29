@@ -4317,13 +4317,13 @@ function OfflineEditor () {
         var colRowHeaders = _api.asc_getSheetViewSettings();
         
         if (colRowHeaders.asc_getShowGridLines() && false == istoplayer) {
-            worksheet.__drawGrid(undefined,
+            worksheet.__drawGrid(null,
                                  region.columnBeg, region.rowBeg, region.columnEnd, region.rowEnd,
                                  region.columnOff, region.rowOff,
                                  width + region.columnOff, height + region.rowOff);
         }
         
-        worksheet.__drawCellsAndBorders(undefined,
+        worksheet.__drawCellsAndBorders(null,
                                         region.columnBeg, region.rowBeg, region.columnEnd, region.rowEnd,
                                         region.columnOff, region.rowOff, istoplayer);
     };

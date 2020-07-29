@@ -7921,7 +7921,20 @@ Paragraph.prototype.GetSelectionAnchorPos = function()
  */
 Paragraph.prototype.GetSelectedText = function(bClearText, oPr)
 {
-	var Str   = "";
+	var Str = "";
+
+	var oNumPr = this.GetNumPr();
+	if (oNumPr && oNumPr.IsValid())
+	{
+		Str += this.GetNumberingText(false);
+
+		var nSuff = this.Parent.GetNumbering().GetNum(oNumPr.NumId).GetLvl(oNumPr.Lvl).GetSuff();
+		if (Asc.c_oAscNumberingSuff.Tab === nSuff)
+			Str += "	";
+		else if (Asc.c_oAscNumberingSuff.Space === nSuff)
+			Str += " ";
+	}
+
 	var Count = this.Content.length;
 	for (var Pos = 0; Pos < Count; Pos++)
 	{

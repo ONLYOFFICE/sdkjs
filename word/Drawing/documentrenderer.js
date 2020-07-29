@@ -856,8 +856,12 @@ CDocMeta.prototype =
                     __x = (m4 * xDst - m2 * yDst) / det1;
                     __y = (m1 * yDst - m3 * xDst) / det1;
 
-                    if (0xFFFF == _gid)
+                    if (0xFFFF == _gid || 0 == _gid)
+                    {
+						AscFonts.IsLoadFontOnCheckSymbols = true;
                         g.FillText(__x, __y, String.fromCharCode(_char));
+						AscFonts.IsLoadFontOnCheckSymbols = false;
+					}
                     else
                         g.tg(_gid, __x, __y);
 
@@ -1165,6 +1169,11 @@ CDocMeta.prototype =
                     {
                         // clip
                         g.m_oContext.clip();
+                    }
+                    else if (33 == _command_type)
+                    {
+                        var mode = s.GetLong();
+                        g.m_oContext.clip(0 === mode ? "nonzero" : "evenodd");
                     }
                     break;
                 }

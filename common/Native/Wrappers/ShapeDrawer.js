@@ -326,8 +326,7 @@ CShapeDrawer.prototype =
             var _arr = AscCommon.DashPatternPresets[this.Ln.prstDash].slice();
             for (var indexD = 0; indexD < _arr.length; indexD++)
                 _arr[indexD] *= this.StrokeWidth;
-         
-            //  this.Graphics.p_dash(_arr);
+            // this.NativeGraphics["PD_p_dash"](_arr);
         }
     },
     
@@ -425,8 +424,7 @@ CShapeDrawer.prototype =
 
         if (this.Ln == null || this.Ln.Fill == null || this.Ln.Fill.fill == null)
         {
-            this.bIsNoStrokeAttack = true;
-            
+            this.bIsNoStrokeAttack = true;            
             if (true === graphics.IsTrack) {
                 if (graphics.Graphics != undefined && graphics.Graphics != null) {
                    graphics.Graphics.ArrayPoints = null;
@@ -499,6 +497,8 @@ CShapeDrawer.prototype =
 			
             this.p_width(1000 * this.StrokeWidth);
 
+            this.CheckDash();
+
 			if (graphics.IsSlideBoundsCheckerType && !this.bIsNoStrokeAttack)
                 graphics.LineWidth = this.StrokeWidth;
 
@@ -557,10 +557,12 @@ CShapeDrawer.prototype =
 	        {
 	            this.Graphics.CorrectBounds2();
 	        }
+
 			return;
 		}
 
         this.NativeGraphics["PD_StartShapeDraw"](this.IsRectShape);
+        
         if(geom)
         {
             geom.draw(this);
@@ -577,6 +579,7 @@ CShapeDrawer.prototype =
             this._e();
         }
         this.NativeGraphics["PD_EndShapeDraw"]();
+        // this.NativeGraphics["PD_p_dash"]([]);
     },
 
     drawPDF : function(geom)
@@ -879,6 +882,7 @@ CShapeDrawer.prototype =
         if (arr != undefined && arr != null && arr.length > 1 && this.IsCurrentPathCanArrows === true)
         {
             this.IsArrowsDrawing = true;
+            // this.NativeGraphics["PD_p_dash"]([]);
             // значит стрелки есть. теперь:
             // определяем толщину линии "как есть"
             // трансформируем точки в окончательные.
@@ -969,6 +973,7 @@ CShapeDrawer.prototype =
                 }
             }
             this.IsArrowsDrawing = false;
+            this.CheckDash();
         }
     },
 
@@ -1186,6 +1191,7 @@ CShapeDrawer.prototype =
         if (arr != null && arr.length > 1 && this.IsCurrentPathCanArrows === true)
         {
             this.IsArrowsDrawing = true;
+            // this.NativeGraphics["PD_p_dash"]([]);
             // значит стрелки есть. теперь:
             // определяем толщину линии "как есть"
             // трансформируем точки в окончательные.

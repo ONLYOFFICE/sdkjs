@@ -2722,6 +2722,16 @@ function CEditorPage(api)
 			this.m_dScrollY = this.m_dScrollY_max;
 	};
 
+	this.private_RefreshAll = function()
+	{
+		AscCommon.g_fontManager.ClearFontsRasterCache();
+
+		if (AscCommon.g_fontManager2)
+			AscCommon.g_fontManager2.ClearFontsRasterCache();
+
+		this.OnRePaintAttack();
+	};
+
 	this.OnRePaintAttack = function()
 	{
 		this.m_bIsFullRepaint = true;
@@ -3743,6 +3753,7 @@ function CEditorPage(api)
 		}
 		if (oWordControl.m_bIsScroll)
 		{
+			isRepaint = true;
 			oWordControl.m_bIsScroll = false;
 			oWordControl.OnPaint();
 

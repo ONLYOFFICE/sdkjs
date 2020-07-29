@@ -11278,17 +11278,21 @@
 
 				var offset = new AscCommon.CellBase(range.bbox.r1 - tablePartRange.r1, range.bbox.c1 -
 					tablePartRange.c1);
-				var newDisplayName = this.model.workbook.dependencyFormulas.getNextTableName();
-				var props = {
-					bWithoutFilter: bWithoutFilter, tablePart: curTable, offset: offset, displayName: newDisplayName
-				};
-				t.model.autoFilters.addAutoFilter(curTable.TableStyleInfo.Name, range.bbox, true, true, props);
-				bIsAddTable = true;
-				if (null === tablesMap) {
-					tablesMap = {};
-				}
+                var newDisplayName = this.model.workbook.dependencyFormulas.getNextTableName();
+                var props = {
+                    bWithoutFilter: bWithoutFilter,
+                    tablePart: curTable,
+                    offset: offset,
+                    displayName: newDisplayName
+                };
+                var tableStyleInfoName = curTable.TableStyleInfo ? curTable.TableStyleInfo.Name : null;
+                t.model.autoFilters.addAutoFilter(tableStyleInfoName, range.bbox, true, true, props);
+                if (null === tablesMap) {
+                    tablesMap = {};
+                }
 
 				tablesMap[curTable.DisplayName] = newDisplayName;
+				bIsAddTable = true;
 			}
 
 			if (bIsAddTable) {

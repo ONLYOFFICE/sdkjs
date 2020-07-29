@@ -1570,7 +1570,10 @@
                 this.bs.WriteItem(c_oSer_TablePart.SortState, function(){oThis.WriteSortState(table.SortState);});
             //TableColumns
             if(null != table.TableColumns) {
-				table.syncTotalLabels(ws);
+                if (ws) {
+                    //TODO пока оставляю. проверить необходим ли до сих пор вызов данной функции
+                    table.syncTotalLabels(ws);
+                }
                 this.bs.WriteItem(c_oSer_TablePart.TableColumns, function(){oThis.WriteTableColumns(table.TableColumns);});
 			}
             //TableStyleInfo

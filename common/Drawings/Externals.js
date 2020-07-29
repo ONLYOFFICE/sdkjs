@@ -1102,6 +1102,21 @@ CFontInfo.prototype =
 
         var pFontFile = fontManager.LoadFont(fontfile, faceIndex, fEmSize, bSrcBold, bSrcItalic, bNeedBold, bNeedItalic, isNoSetupToManager);
 
+        if (!pFontFile && -1 === fontfile.stream_index && true === AscFonts.IsLoadFontOnCheckSymbols && true != AscFonts.IsLoadFontOnCheckSymbolsWait)
+        {
+            // в форматах pdf/xps - не прогоняем символы через чеккер при открытии,
+            // так как там должны быть символы в встроенном шрифте. Но вдруг?
+            // тогда при отрисовке СРАЗУ грузим шрифт - и при загрузке перерисовываемся
+            // сюда попали только если символ попал в чеккер
+			AscFonts.IsLoadFontOnCheckSymbols = false;
+			AscFonts.IsLoadFontOnCheckSymbolsWait = true;
+			AscFonts.FontPickerByCharacter.loadFonts(window.editor, function ()
+			{
+				AscFonts.IsLoadFontOnCheckSymbolsWait = false;
+				this.WordControl && this.WordControl.private_RefreshAll();
+			});
+        }
+
         if (pFontFile && (true !== isNoSetupToManager))
         {
             var newEmSize = fontManager.UpdateSize(fEmSize, dVerDpi, dVerDpi);

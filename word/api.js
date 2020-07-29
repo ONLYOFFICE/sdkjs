@@ -4426,7 +4426,13 @@ background-repeat: no-repeat;\
 				}
 			}
 		}
-		return this.WordControl.m_oLogicDocument.SetWatermarkProps(oProps);
+		var sText = oProps.get_Text();
+		if(!(typeof sText === "string")) {
+			sText = "";
+		}
+		AscFonts.FontPickerByCharacter.checkText(sText, this, function () {
+			return oApi.WordControl.m_oLogicDocument.SetWatermarkProps(oProps);
+		});
 	};
 	asc_docs_api.prototype.asc_WatermarkRemove = function(oProps)
 	{
@@ -10812,6 +10818,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_setInterfaceDrawImagePlaceShape"]       = asc_docs_api.prototype.asc_setInterfaceDrawImagePlaceShape;
 	asc_docs_api.prototype["asc_pluginsRegister"]                       = asc_docs_api.prototype.asc_pluginsRegister;
 	asc_docs_api.prototype["asc_pluginRun"]                             = asc_docs_api.prototype.asc_pluginRun;
+	asc_docs_api.prototype["asc_pluginStop"]                            = asc_docs_api.prototype.asc_pluginStop;
 	asc_docs_api.prototype["asc_pluginResize"]                          = asc_docs_api.prototype.asc_pluginResize;
 	asc_docs_api.prototype["asc_pluginButtonClick"]                     = asc_docs_api.prototype.asc_pluginButtonClick;
 	asc_docs_api.prototype["asc_pluginEnableMouseEvents"]         		= asc_docs_api.prototype.asc_pluginEnableMouseEvents;

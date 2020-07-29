@@ -454,8 +454,14 @@
                     _editor.sendEvent("asc_onError", "There is no connection with the blockchain", c_oAscError.Level.Critical);
                     return;
                 }
+                if ("no_build" === obj["error"])
+				{
+					// проблемы - но такие, при которых просто не собираем файл...
+					window["AscDesktopEditor"]["buildCryptedEnd"](true);
+					return;
+				}
 
-                var _ret = _editor.asc_nativeGetFile3();
+                var _ret = _editor.getFileAsFromChanges();
                 AscCommon.EncryptionWorker.isPasswordCryptoPresent = true;
                 _editor.currentDocumentInfoNext = obj["docinfo"];
                 window["AscDesktopEditor"]["buildCryptedStart"](_ret.data, _ret.header, obj["password"], obj["docinfo"] ? obj["docinfo"] : "");

@@ -573,10 +573,13 @@ CEditorPage.prototype.CheckLayouts = function(bIsAttack)
     if (slide) {
         master = slide.Layout.Master;
     }
-    else{
-        master = this.m_oLogicDocument.slideMasters[0];
+    else {
+        master = this.m_oLogicDocument.lastMaster;
+        if(!master) {
+            master = this.m_oLogicDocument.slideMasters[0];
+        }
     }
-    if(!master){
+    if(!master) {
         return;
     }
     if(bIsAttack || this.MasterLayouts !== master){

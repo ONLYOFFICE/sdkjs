@@ -689,6 +689,12 @@ CDrawingStream.prototype =
     {
         this.Native["PD_p_width"](w / 1000);
     },
+
+    p_dash : function(params)
+    {
+        this.Native["PD_p_dash"](params ? params : []);
+    },
+
     // brush methods
     b_color1 : function(r,g,b,a)
     {

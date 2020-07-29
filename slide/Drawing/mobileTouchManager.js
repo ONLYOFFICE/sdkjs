@@ -1079,7 +1079,8 @@
 	};
 	CMobileDelegateThumbnails.prototype.ScrollTo = function(_scroll)
 	{
-		this.HtmlPage.m_oScrollThumbApi.scrollToY(-_scroll.y);
+		if (this.HtmlPage.m_oScrollThumbApi)
+			this.HtmlPage.m_oScrollThumbApi.scrollToY(-_scroll.y);
 	};
 	CMobileDelegateThumbnails.prototype.ScrollEnd = function(_scroll)
 	{

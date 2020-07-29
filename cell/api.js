@@ -5000,6 +5000,7 @@ var editor;
   // plugins
   prot["asc_pluginsRegister"]       = prot.asc_pluginsRegister;
   prot["asc_pluginRun"]             = prot.asc_pluginRun;
+  prot["asc_pluginStop"]            = prot.asc_pluginStop;
   prot["asc_pluginResize"]          = prot.asc_pluginResize;
   prot["asc_pluginButtonClick"]     = prot.asc_pluginButtonClick;
   prot["asc_startEditCurrentOleObject"]         = prot.asc_startEditCurrentOleObject;
