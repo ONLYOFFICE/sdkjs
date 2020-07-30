@@ -2891,22 +2891,12 @@
 		}
 	};
 	/**
-	 * Add or edit item from g_AutoCorrectMathFuncs
+	 * Add item from g_AutoCorrectMathFuncs
 	 * @param {string} newEl
-	 * @param {string} oldEl
 	 */
-	baseEditorsApi.prototype.asc_AddOrEditFromAutoCorrectMathFunctions = function(newEl, oldEl)
+	baseEditorsApi.prototype.asc_AddOrEditFromAutoCorrectMathFunctions = function(newEl)
 	{
-		var changeInd = window['AscCommonWord'].g_AutoCorrectMathsList.g_AutoCorrectMathFuncs.findIndex(function(val, index){
-			if (val === oldEl){
-				return index;
-			}
-		});
-		if (changeInd >= 0) {
-			window['AscCommonWord'].g_AutoCorrectMathsList.g_AutoCorrectMathFuncs[changeInd] = newEl;
-		} else {
-			window['AscCommonWord'].g_AutoCorrectMathsList.g_AutoCorrectMathSymbols.push(newEl);
-		}
+		window['AscCommonWord'].g_AutoCorrectMathsList.g_AutoCorrectMathSymbols.push(newEl);
 	};
 	/**
 	 * Refresh g_AutoCorrectMathSymbols on start
@@ -2933,7 +2923,7 @@
 	/**
 	 * Refresh g_AutoCorrectMathFuncs on start
 	 * @param {Array.<string>} remItems
-	 * @param {Array.<Array.<string>, Array.<string>>} addItems
+	 * @param {Array.<string>} addItems
 	 */
 	baseEditorsApi.prototype.asc_refreshOnStartAutoCorrectMathFunctions = function(remItems, addItems)
 	{
@@ -2946,7 +2936,7 @@
 		}
 		if (addItems) {
 			addItems.forEach(function(el) {
-				me.asc_AddOrEditFromAutoCorrectMathFunctions(el[0], el[1]);
+				me.asc_AddOrEditFromAutoCorrectMathFunctions(el);
 			});
 		}
 	};
