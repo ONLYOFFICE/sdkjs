@@ -7415,13 +7415,13 @@ function RangeDataManagerElem(bbox, data)
 		res.ShowButton = this.ShowButton;
 		return res;
 	};
-	FilterColumn.prototype.isHideValue = function (val, isDateTimeFormat, top10Length, cell) {
+	FilterColumn.prototype.isHideValue = function (val, isDateTimeFormat, top10Length, cell, isLabelFilter) {
 		var res = false;
 		if (this.Filters) {
 			this.Filters._initLowerCaseValues();
 			res = this.Filters.isHideValue(val.toLowerCase(), isDateTimeFormat);
 		} else if (this.CustomFiltersObj) {
-			res = this.CustomFiltersObj.isHideValue(val);
+			res = this.CustomFiltersObj.isHideValue(val, isLabelFilter);
 		} else if (this.Top10) {
 			res = this.Top10.isHideValue(val, top10Length);
 		} else if (this.ColorFilter) {
@@ -8045,11 +8045,11 @@ CustomFilters.prototype.init = function(obj) {
 	if(obj.filter2 != undefined)
 		this.CustomFilters[1] = new CustomFilter(obj.filter2, obj.valFilter2);
 };
-CustomFilters.prototype.isHideValue = function(val){
+CustomFilters.prototype.isHideValue = function(val, isLabelFilter){
 	
 	var res = false;
-	var filterRes1 = this.CustomFilters[0] ? this.CustomFilters[0].isHideValue(val) : null;
-	var filterRes2 = this.CustomFilters[1] ? this.CustomFilters[1].isHideValue(val) : null;
+	var filterRes1 = this.CustomFilters[0] ? this.CustomFilters[0].isHideValue(val, isLabelFilter) : null;
+	var filterRes2 = this.CustomFilters[1] ? this.CustomFilters[1].isHideValue(val, isLabelFilter) : null;
 	
 	if(!this.And && ((filterRes1 === null && filterRes2 === true || filterRes1 === true && filterRes2 === null || filterRes1 === true && filterRes2 === true)))
 		res = true;
@@ -8162,7 +8162,7 @@ CustomFilter.prototype.init = function(operator, val) {
 	this.Operator = operator;
 	this.Val = val;
 };
-CustomFilter.prototype.isHideValue = function (val) {
+CustomFilter.prototype.isHideValue = function (val, isLabelFilter) {
 
 	var result = false;
 	var isDigitValue = !isNaN(val);
@@ -8174,15 +8174,29 @@ CustomFilter.prototype.isHideValue = function (val) {
 	if (checkComplexSymbols != null) {
 		result = checkComplexSymbols;
 	} else {
-		var isNumberFilter = this.Operator == c_oAscCustomAutoFilter.isGreaterThan || this.Operator == c_oAscCustomAutoFilter.isGreaterThanOrEqualTo || this.Operator == c_oAscCustomAutoFilter.isLessThan || this.Operator == c_oAscCustomAutoFilter.isLessThanOrEqualTo;
+		var isNumberFilter = this.Operator === c_oAscCustomAutoFilter.isGreaterThan || this.Operator === c_oAscCustomAutoFilter.isGreaterThanOrEqualTo || this.Operator === c_oAscCustomAutoFilter.isLessThan || this.Operator === c_oAscCustomAutoFilter.isLessThanOrEqualTo;
 
 		if (c_oAscCustomAutoFilter.equals === this.Operator || c_oAscCustomAutoFilter.doesNotEqual === this.Operator) {
 			filterVal = isNaN(this.Val) ? this.Val.toLowerCase() : this.Val;
 		} else if (isNumberFilter) {
-			if (isNaN(this.Val) && isNaN(val)) {
-				filterVal = this.Val.toLowerCase();
+			filterVal = this.Val;
+			if (isLabelFilter) {
+				//'1'0' - число для данного случая
+				filterVal = this.Val.replace(/'/g, "");
+				if (isNaN(filterVal)) {
+					filterVal = this.Val;
+				}
+			}
+
+			if (isLabelFilter && isNaN(filterVal)) {
+				//в случае label filter - сравнивам строки
+				filterVal = filterVal.toLowerCase();
+				isDigitValue = false;
+				val = val.toLowerCase();
+			} else if (isNaN(filterVal) && isNaN(val)) {
+				filterVal = filterVal.toLowerCase();
 			} else {
-				filterVal = parseFloat(this.Val);
+				filterVal = parseFloat(filterVal);
 				val = parseFloat(val);
 			}
 		} else {
