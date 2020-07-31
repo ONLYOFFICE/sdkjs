@@ -1334,7 +1334,34 @@
      */
     ApiTableRow.prototype.SetHeight = function(nValue)
     {
-        this.Row.Set_Height(nValue/36000, Asc.linerule_AtLeast)
+        var bLoadVal = AscCommon.g_oIdCounter.m_bLoad;
+        var bRead = AscCommon.g_oIdCounter.m_bRead;
+        AscCommon.g_oIdCounter.m_bLoad = false;
+        AscCommon.g_oIdCounter.m_bRead = false;
+        var fMaxTopMargin = 0, fMaxBottomMargin = 0, fMaxTopBorder = 0, fMaxBottomBorder = 0;
+
+        for (var i = 0;  i < this.Row.Content.length; ++i){
+            var oCell = this.Row.Content[i];
+            var oMargins = oCell.GetMargins();
+            if(oMargins.Bottom.W > fMaxBottomMargin){
+                fMaxBottomMargin = oMargins.Bottom.W;
+            }
+            if(oMargins.Top.W > fMaxTopMargin){
+                fMaxTopMargin = oMargins.Top.W;
+            }
+            var oBorders = oCell.Get_Borders();
+            if(oBorders.Top.Size > fMaxTopBorder){
+                fMaxTopBorder = oBorders.Top.Size;
+            }
+            if(oBorders.Bottom.Size > fMaxBottomBorder){
+                fMaxBottomBorder = oBorders.Bottom.Size;
+            }
+        }
+        
+        AscCommon.g_oIdCounter.m_bLoad = bLoadVal;
+        AscCommon.g_oIdCounter.m_bRead = bRead;
+
+        this.Row.Set_Height(Math.max(1, nValue/36000 - fMaxTopMargin - fMaxBottomMargin - fMaxTopBorder/2 - fMaxBottomBorder/2), Asc.linerule_AtLeast);
     };
 
 
