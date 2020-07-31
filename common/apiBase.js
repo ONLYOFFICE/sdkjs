@@ -2894,7 +2894,7 @@
 	 * Add item from g_AutoCorrectMathFuncs
 	 * @param {string} newEl
 	 */
-	baseEditorsApi.prototype.asc_AddOrEditFromAutoCorrectMathFunctions = function(newEl)
+	baseEditorsApi.prototype.asc_AddFromAutoCorrectMathFunctions = function(newEl)
 	{
 		window['AscCommonWord'].g_AutoCorrectMathsList.g_AutoCorrectMathSymbols.push(newEl);
 	};
@@ -2936,7 +2936,7 @@
 		}
 		if (addItems) {
 			addItems.forEach(function(el) {
-				me.asc_AddOrEditFromAutoCorrectMathFunctions(el);
+				me.asc_AddFromAutoCorrectMathFunctions(el);
 			});
 		}
 	};
@@ -3041,7 +3041,7 @@
 	prot['asc_deleteFromAutoCorrectMathSymbols'] = prot.asc_deleteFromAutoCorrectMathSymbols;
 	prot['asc_deleteFromAutoCorrectMathFunctions'] = prot.asc_deleteFromAutoCorrectMathFunctions;
 	prot['asc_AddOrEditFromAutoCorrectMathSymbols'] = prot.asc_AddOrEditFromAutoCorrectMathSymbols;
-	prot['asc_AddOrEditFromAutoCorrectMathFunctions'] = prot.asc_AddOrEditFromAutoCorrectMathFunctions;
+	prot['asc_AddFromAutoCorrectMathFunctions'] = prot.asc_AddFromAutoCorrectMathFunctions;
 	prot['asc_refreshOnStartAutoCorrectMathSymbols'] = prot.asc_refreshOnStartAutoCorrectMathSymbols;
 	prot['asc_refreshOnStartAutoCorrectMathFunctions'] = prot.asc_refreshOnStartAutoCorrectMathFunctions;
 	prot['asc_updateFlagAutoCorrectMathSymbols'] = prot.asc_updateFlagAutoCorrectMathSymbols;
