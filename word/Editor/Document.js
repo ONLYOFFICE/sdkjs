@@ -5459,35 +5459,42 @@ CDocument.prototype.Draw                                     = function(nPageInd
                 pGraphics.RestoreGrState();
             }
 
-            for (var nFlowTableIndex = 0, nFlowTablesCount = Page.FlowTables.length; nFlowTableIndex < nFlowTablesCount; ++nFlowTableIndex)
+			for (var nFlowTableIndex = 0, nFlowTablesCount = Page.FlowTables.length; nFlowTableIndex < nFlowTablesCount; ++nFlowTableIndex)
 			{
-				var oTable = Page.FlowTables[nFlowTableIndex];
+				var oTable      = Page.FlowTables[nFlowTableIndex];
+				var nTableIndex = oTable.GetIndex();
 
-				var nElementPageIndex = this.private_GetElementPageIndex(oTable.GetIndex(), nPageIndex, ColumnIndex, ColumnsCount);
-				oTable.Draw(nElementPageIndex, pGraphics);
+				if (ColumnStartPos <= nTableIndex && nTableIndex <= ColumnEndPos)
+				{
+					var nElementPageIndex = this.private_GetElementPageIndex(oTable.GetIndex(), nPageIndex, ColumnIndex, ColumnsCount);
+					oTable.Draw(nElementPageIndex, pGraphics);
+				}
 			}
 
 			var nPixelError = this.GetDrawingDocument().GetMMPerDot(1);
-            for (var nFrameIndex = 0, nFramesCount = Page.Frames.length; nFrameIndex < nFramesCount; ++nFrameIndex)
-            {
-            	var oFrame = Page.Frames[nFrameIndex];
+			for (var nFrameIndex = 0, nFramesCount = Page.Frames.length; nFrameIndex < nFramesCount; ++nFrameIndex)
+			{
+				var oFrame = Page.Frames[nFrameIndex];
 
-				var nL = oFrame.L2 - nPixelError;
-				var nT = oFrame.T2 - nPixelError;
-				var nH = oFrame.H2 + 2 * nPixelError;
-				var nW = oFrame.W2 + 2 * nPixelError;
-
-				pGraphics.SaveGrState();
-				pGraphics.AddClipRect(nL, nT, nW, nH);
-
-            	for (var nFlowIndex = oFrame.StartIndex; nFlowIndex < oFrame.StartIndex + oFrame.FlowCount; ++nFlowIndex)
+				if (ColumnStartPos <= oFrame.StartIndex && oFrame.StartIndex <= ColumnEndPos)
 				{
-					var nElementPageIndex = this.private_GetElementPageIndex(nFlowIndex, nPageIndex, ColumnIndex, ColumnsCount);
-					this.Content[nFlowIndex].Draw(nElementPageIndex, pGraphics);
-				}
+					var nL = oFrame.L2 - nPixelError;
+					var nT = oFrame.T2 - nPixelError;
+					var nH = oFrame.H2 + 2 * nPixelError;
+					var nW = oFrame.W2 + 2 * nPixelError;
 
-				pGraphics.RestoreGrState();
-            }
+					pGraphics.SaveGrState();
+					pGraphics.AddClipRect(nL, nT, nW, nH);
+
+					for (var nFlowIndex = oFrame.StartIndex; nFlowIndex < oFrame.StartIndex + oFrame.FlowCount; ++nFlowIndex)
+					{
+						var nElementPageIndex = this.private_GetElementPageIndex(nFlowIndex, nPageIndex, ColumnIndex, ColumnsCount);
+						this.Content[nFlowIndex].Draw(nElementPageIndex, pGraphics);
+					}
+
+					pGraphics.RestoreGrState();
+				}
+			}
         }
     }
 
