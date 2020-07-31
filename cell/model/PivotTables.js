@@ -7954,7 +7954,7 @@ CT_PivotField.prototype.getFilterMapByFilter = function(cacheField, filterColumn
 					var cellValue = sharedItem.getCellValue();
 					val = cellValue.getTextValue();
 				}
-				if (!filterColumn.isHideValue(val)) {
+				if (!filterColumn.isHideValue(val, null, null, null, true)) {
 					map.set(item.x, 1);
 				}
 			}
