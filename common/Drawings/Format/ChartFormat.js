@@ -10799,6 +10799,9 @@ CStockChart.prototype.constructor = CStockChart;
 
 
     function fParseChartFormula(sFormula) {
+        if(!(typeof sFormula === "string" && sFormula.length > 0)) {
+            return [];
+        }
         var oWB = Asc.editor && Asc.editor.wbModel;
         if(!oWB) {
             return [];
