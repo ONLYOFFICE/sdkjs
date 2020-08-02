@@ -33,8 +33,8 @@
 $(function() {
 	QUnit.config.autostart = false;
 
-	// Tests completed in 2279 milliseconds.
-	// 1845 assertions of 1879 passed, 34 failed.
+	// Tests completed in 2298 milliseconds.
+	// 1893 assertions of 1915 passed, 22 failed.
 
 	// function getValues(ws, range) {
 	// 	var res = [];

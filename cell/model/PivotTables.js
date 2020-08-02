@@ -3889,6 +3889,9 @@ CT_pivotTableDefinition.prototype._prepareDataRange = function(ws, row, c1, c2) 
 	});
 	return res;
 };
+CT_pivotTableDefinition.prototype.isEmptyReport = function() {
+	return 0 === this.getColumnFieldsCount() + this.getRowFieldsCount() + this.getDataFieldsCount();
+};
 
 function CT_pivotTableDefinitionX14() {
 //Attributes
