@@ -11469,7 +11469,8 @@ ParaRun.prototype.ProcessAutoCorrect = function(nPos)
 	{
 		if (oDocument.IsAutoCorrectSmartQuotes())
 		{
-			var isOpenQuote = true;
+			var isOpenQuote   = true;
+			var isDoubleQoute = 34 === this.Content[nPos].Value;
 
 			var oRunElementsBefore = new CParagraphRunElements(oContentPos, 1, null, false);
 			oParagraph.GetPrevRunElements(oRunElementsBefore);
@@ -11485,24 +11486,125 @@ ParaRun.prototype.ProcessAutoCorrect = function(nPos)
 					isOpenQuote = false;
 			}
 
-			var nCharCode;
+			var nLang = this.Get_CompiledPr(false).Lang ? this.Get_CompiledPr(false).Lang.Val : 1033;
 
-			// Обработка русских кавычек "елочка"
-			if (34 === this.Content[nPos].Value && this.Get_CompiledPr(false).Lang && 1049 === this.Get_CompiledPr(false).Lang.Val)
-			{
-				nCharCode = isOpenQuote ? 171 : 187;
-			}
-			else
-			{
-				nCharCode = (34 === this.Content[nPos].Value ? (isOpenQuote ? 8220 : 8221) : (isOpenQuote ? 8216 : 8217));
-			}
+			if (!isDoubleQoute && (1050 === nLang || 1060 === nLang))
+				return true;
 
 			// Проверку на лок можно не делать, т.к. мы собираемся менять содержимое данного рана, а такую проверку мы уже делали
-
 			oDocument.StartAction(AscDFH.historydescription_Document_AutoCorrectSmartQuotes);
 
 			this.RemoveFromContent(nPos, 1);
-			this.AddToContent(nPos, new ParaText(nCharCode));
+
+			if (isDoubleQoute)
+			{
+				switch (nLang)
+				{
+					case 1029:
+					case 1031:
+					case 1039:
+					case 1050:
+					case 1051:
+					case 1061:
+					{
+						// „text“
+						this.AddToContent(nPos, new ParaText(isOpenQuote ? 0x201E : 0x201C));
+						break;
+					}
+					case 1038:
+					case 1045:
+					case 1048:
+					case 1062:
+					{
+						// „text”
+						this.AddToContent(nPos, new ParaText(isOpenQuote ? 0x201E : 0x201D));
+						break;
+					}
+					case 1030:
+					case 1035:
+					case 1053:
+					{
+						// ”text”
+						this.AddToContent(nPos, new ParaText(0x201D));
+						break;
+					}
+					case 1049:
+					{
+						// «text»
+						this.AddToContent(nPos, new ParaText(isOpenQuote ? 0x00AB : 0x00BB));
+						break;
+					}
+					case 1060:
+					{
+						// »text«
+						this.AddToContent(nPos, new ParaText(isOpenQuote ? 0x00BB : 0x00AB));
+						break;
+					}
+					case 1036:
+					{
+						// « text »
+						if (isOpenQuote)
+						{
+							this.AddToContent(nPos, new ParaText(0x00AB));
+							this.AddToContent(nPos + 1, new ParaText(0x00A0));
+						}
+						else
+						{
+							this.AddToContent(nPos, new ParaText(0x00A0));
+							this.AddToContent(nPos + 1, new ParaText(0x00BB));
+						}
+
+						nPos++;
+
+						break;
+					}
+
+					default:
+					{
+						// “text”
+						this.AddToContent(nPos, new ParaText(isOpenQuote ? 0x201C : 0x201D));
+						break;
+					}
+				}
+			}
+			else
+			{
+				switch (nLang)
+				{
+					case 1029:
+					case 1031:
+					case 1039:
+					case 1051:
+					{
+						// ‚text‘
+						this.AddToContent(nPos, new ParaText(isOpenQuote ? 0x201A : 0x2018));
+						break;
+					}
+					case 1048:
+					{
+						// ‚text’
+						this.AddToContent(nPos, new ParaText(isOpenQuote ? 0x201A : 0x2019));
+						break;
+					}
+					case 1030:
+					case 1035:
+					case 1038:
+					case 1053:
+					case 1061:
+					{
+						// ’text’
+						this.AddToContent(nPos, new ParaText(0x2019));
+						break;
+					}
+					default:
+					{
+						// ‘text’
+						this.AddToContent(nPos, new ParaText(isOpenQuote ? 0x2018 : 0x2019));
+						break;
+					}
+				}
+			}
+
 			this.State.ContentPos = nPos + 1;
 
 			oDocument.FinalizeAction();
