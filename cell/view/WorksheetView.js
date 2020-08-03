@@ -14054,6 +14054,11 @@
 		if (!ranges || 0 === ranges.length) {
 			ranges = AscCommonExcel.getRangeByRef(reference, this.model, true, true);
 		}
+		//добавил проверка на имя среза
+		//проверить, возможно стоит добавить проверку на ошибку в ref именованного диапазона
+		if (this.workbook.model.getSlicerCacheByCacheName(reference)) {
+			return [];
+		}
 		var t = this;
 
 		if (0 === ranges.length && this.workbook.canEdit()) {
