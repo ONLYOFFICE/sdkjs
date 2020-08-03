@@ -232,7 +232,8 @@ CPdfPrinter.prototype =
 	    for (var i = 0; i < params.length; ++i) {
 			tmp.push(params[i] * vector_koef);
         }
-		return this.DocumentRenderer.p_dash(tmp);
+		this.DocumentRenderer.p_dash(tmp);
+	    return this;
 	},
     setLineCap : function(cap)
     {
