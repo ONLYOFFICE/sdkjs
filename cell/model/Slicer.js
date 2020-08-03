@@ -1064,15 +1064,15 @@
 			return _res;
 		};
 
+		//replace not valid symbols
+		name = name.replace(/[-+*\/^&%<=>: ;//),]/g,"_");
+		//TODO дополнительная проверка - пересмотреть
+		if (!AscCommon.rx_defName.test(name)) {
+			name = name.replace(/[^a-zA-ZА-Яа-яЁё0-9]/gi,"_")
+		}
+
 		//TODO перевод - проверить на другом языке?
 		var index = 1;
-		if (!AscCommon.rx_defName.test(name)) {
-			var _newName = "";
-			for (var i = 0; i < name.length; i++) {
-				_newName += AscCommon.rx_defName.test(name[i]) ? name[i] : "_";
-			}
-			name = _newName;
-		}
 		name = "Slicer_" + name;
 		var newName = name;
 		while (checkAlreadyAdd(newName)) {
