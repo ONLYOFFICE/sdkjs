@@ -1066,6 +1066,13 @@
 
 		//TODO перевод - проверить на другом языке?
 		var index = 1;
+		if (!AscCommon.rx_defName.test(name)) {
+			var _newName = "";
+			for (var i = 0; i < name.length; i++) {
+				_newName += AscCommon.rx_defName.test(name[i]) ? name[i] : "_";
+			}
+			name = _newName;
+		}
 		name = "Slicer_" + name;
 		var newName = name;
 		while (checkAlreadyAdd(newName)) {
