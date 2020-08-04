@@ -309,12 +309,12 @@
 		getUndoDefName: function() {
 			return new UndoRedoData_DefinedNames(this.name, this.ref, this.sheetId, this.type, this.isXLNM);
 		},
-		setUndoDefName: function(newUndoName) {
+		setUndoDefName: function(newUndoName, doNotChangeRef) {
 			this.name = newUndoName.name;
 			this.sheetId = newUndoName.sheetId;
 			this.hidden = false;
 			this.type = newUndoName.type;
-			if (this.ref != newUndoName.ref) {
+			if (!doNotChangeRef && this.ref != newUndoName.ref) {
 				this.setRef(newUndoName.ref);
 			}
 			this.isXLNM = newUndoName.isXLNM;
@@ -756,8 +756,10 @@
 		},
 		editDefinesNames: function(oldUndoName, newUndoName) {
 			var res = null;
-			if (!AscCommon.rx_defName.test(getDefNameIndex(newUndoName.name)) || !newUndoName.ref ||
-				newUndoName.ref.length == 0 || newUndoName.name.length > g_nDefNameMaxLength) {
+			var isSlicer = oldUndoName && this.wb.getSlicerCacheByCacheName(oldUndoName.name);
+
+			if (!AscCommon.rx_defName.test(getDefNameIndex(newUndoName.name)) || (!newUndoName.ref && !isSlicer) ||
+				(newUndoName.ref.length === 0 && !isSlicer) || newUndoName.name.length > g_nDefNameMaxLength) {
 				return res;
 			}
 			if (oldUndoName) {
@@ -771,7 +773,7 @@
 					this.buildDependency();
 
 					res = this._delDefName(res.name, res.sheetId);
-					res.setUndoDefName(newUndoName);
+					res.setUndoDefName(newUndoName, isSlicer);
 					this._addDefName(res);
 
 					var notifyData = {type: c_oNotifyType.ChangeDefName, from: oldUndoName, to: newUndoName};
