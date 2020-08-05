@@ -3719,7 +3719,7 @@
 		if (wsFrom.sheetPr)
 			this.sheetPr = wsFrom.sheetPr.clone();
 
-		this.selectionRange = wsFrom.selectionRange.clone(this);
+		this.selectionRange = wsFrom.getSelection().clone(this);
 
 		if(wsFrom.PagePrintOptions) {
 			this.PagePrintOptions = wsFrom.PagePrintOptions.clone(this);
@@ -7451,7 +7451,7 @@
 			options.findWhat = new RegExp(options.findWhat, "g");
 			options.findWhat.length = length;
 		}
-		var selectionRange = options.selectionRange || this.selectionRange;
+		var selectionRange = options.selectionRange || this.getSelection();
 		var lastRange = selectionRange.getLast();
 		var activeCell = selectionRange.activeCell;
 		var merge = this.getMergedByCell(activeCell.row, activeCell.col);
@@ -7490,7 +7490,7 @@
 	Worksheet.prototype.findCellText = function (options) {
 		this._findAllCells(options);
 
-		var selectionRange = options.selectionRange || this.selectionRange;
+		var selectionRange = options.selectionRange || this.getSelection();
 		var activeCell = selectionRange.activeCell;
 
 		var tmp, key1 = activeCell.row, key2 = activeCell.col;
@@ -7851,7 +7851,7 @@
 
 		var _formulaParsed, _parseResult, valueForEdit;
 		if (!parser) {
-			var activeCell = this.selectionRange.activeCell;
+			var activeCell = this.getSelection().activeCell;
 			var formulaParsed;
 			this.getCell3(activeCell.row, activeCell.col)._foreachNoEmpty(function (cell) {
 				if (cell.isFormula()) {
@@ -7913,7 +7913,7 @@
 	};
 
 	Worksheet.prototype.isActiveCellFormula = function () {
-		var activeCell = this.selectionRange.activeCell;
+		var activeCell = this.getSelection().activeCell;
 		var res;
 		this.getCell3(activeCell.row, activeCell.col)._foreachNoEmpty(function (cell) {
 			if (cell.isFormula()) {
@@ -13645,7 +13645,7 @@
 		History.StartTransaction();
 
 		var oldExcludeHiddenRows = wsFrom.bExcludeHiddenRows;
-		if(wsFrom.autoFilters.bIsExcludeHiddenRows(from, wsFrom.selectionRange.activeCell)){
+		if(wsFrom.autoFilters.bIsExcludeHiddenRows(from, wsFrom.getSelection().activeCell)){
 			wsFrom.excludeHiddenRows(true);
 		}
 

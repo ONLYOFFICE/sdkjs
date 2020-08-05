@@ -897,7 +897,7 @@ CCellCommentator.prototype.addComment = function(comment, bIsNotUpdate) {
 
 	if (!oComment.bDocument) {
 		if (!bIsNotUpdate) {
-			var activeCell = this.model.selectionRange.activeCell;
+			var activeCell = this.model.getSelection().activeCell;
 			oComment.asc_putCol(activeCell.col);
 			oComment.asc_putRow(activeCell.row);
 		}
@@ -1017,7 +1017,7 @@ CCellCommentator.prototype.removeComment = function(id, bNoEvent, bNoAscLock, bN
 
 		if (0 < length) {
 			if (null == _col || null == _row) {
-				var activeCell = this.model.selectionRange.activeCell;
+				var activeCell = this.model.getSelection().activeCell;
 				_col = activeCell.col;
 				_row = activeCell.row;
 			} else {

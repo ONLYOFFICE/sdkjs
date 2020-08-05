@@ -744,7 +744,7 @@
 
     WorksheetView.prototype.getSelectedColumnWidthInSymbols = function () {
         var i, charCount, res = null;
-        var range = this.model.selectionRange.getLast();
+        var range = this.model.getSelection().getLast();
         for (i = range.c1; i <= range.c2; ++i) {
 			charCount = this.getColumnWidthInSymbols(i);
 			if (null !== res && res !== charCount) {
@@ -761,7 +761,7 @@
 
     WorksheetView.prototype.getSelectedRowHeight = function () {
         var i, hR, res = null;
-        var range = this.model.selectionRange.getLast();
+        var range = this.model.getSelection().getLast();
         for (i = range.r1; i <= range.r2; ++i) {
 			hR = this._getRowHeightReal(i);
 			if (null !== res && res !== hR) {
@@ -793,7 +793,7 @@
 
     WorksheetView.prototype.getSelectedRanges = function () {
         var ret = [];
-        var aRanges = this.model.selectionRange.ranges;
+        var aRanges = this.model.getSelection().ranges;
         var oRange;
         for(var i = 0; i < aRanges.length; ++i) {
             oRange = aRanges[i];
@@ -1028,7 +1028,7 @@
     WorksheetView.prototype._hasNumberValueInActiveRange = function () {
         var cell, cellType, exist = false, setCols = {}, setRows = {};
         // ToDo multiselect
-        var selectionRange = this.model.selectionRange.getLast();
+        var selectionRange = this.model.getSelection().getLast();
         if (selectionRange.isOneCell()) {
             // Для одной ячейки не стоит ничего делать
             return null;
@@ -1070,8 +1070,8 @@
     WorksheetView.prototype.autoCompleteFormula = function (functionName) {
         var t = this;
         // ToDo autoComplete with multiselect
-        var activeCell = this.model.selectionRange.activeCell;
-        var ar = this.model.selectionRange.getLast();
+        var activeCell = this.model.getSelection().activeCell;
+        var ar = this.model.getSelection().getLast();
         var arCopy = null;
         var arHistorySelect = ar.clone(true);
         var vr = this.visibleRange;
@@ -2059,8 +2059,8 @@
 				tempPrintScale = this.calcPrintScale(fitToWidth, fitToHeight, true);
 			}
 
-			for (var i = 0; i < this.model.selectionRange.ranges.length; ++i) {
-				range = this.model.selectionRange.ranges[i];
+			for (var i = 0; i < this.model.getSelection().ranges.length; ++i) {
+				range = this.model.getSelection().ranges[i];
 				if (c_oAscSelectionType.RangeCells === range.getType()) {
 					if(!doNotRecalc) {
 						this._prepareCellTextMetricsCache(range);
@@ -5067,7 +5067,7 @@
     /** Для api закрепленных областей */
     WorksheetView.prototype.freezePane = function () {
         var t = this;
-        var activeCell = this.model.selectionRange.activeCell.clone();
+        var activeCell = this.model.getSelection().activeCell.clone();
         var onChangeFreezePane = function (isSuccess) {
             if (false === isSuccess) {
                 return;
@@ -5477,7 +5477,7 @@
         if (!this.model.selectionRange) {
             return;
         }
-        var ranges = this.model.selectionRange.ranges;
+        var ranges = this.model.getSelection().ranges;
         for (var i = 0, l = ranges.length; i < l; ++i) {
             this._drawElements(this._drawSelectionElement, ranges[i], AscCommonExcel.selectionLineType.Dash,
               AscCommonExcel.c_oAscCoAuthoringOtherBorderColor);
@@ -5826,7 +5826,7 @@
 		var rows = this.cache.rows;
 
         if (range === undefined) {
-            range = this.model.selectionRange.getLast();
+            range = this.model.getSelection().getLast();
         }
 
         // ToDo now delete all. Change this code
@@ -6539,7 +6539,7 @@
     };
 
     WorksheetView.prototype._selectColumnsByRange = function () {
-        var ar = this.model.selectionRange.getLast();
+        var ar = this.model.getSelection().getLast();
         var type = ar.getType();
         if (c_oAscSelectionType.RangeMax !== type) {
             this.cleanSelection();
@@ -6555,7 +6555,7 @@
     };
 
     WorksheetView.prototype._selectRowsByRange = function () {
-        var ar = this.model.selectionRange.getLast();
+        var ar = this.model.getSelection().getLast();
 		var type = ar.getType();
         if (c_oAscSelectionType.RangeMax !== type) {
             this.cleanSelection();
@@ -8253,7 +8253,7 @@
     };
 
     WorksheetView.prototype._fixSelectionOfHiddenCells = function (dc, dr, range) {
-        var ar = (range) ? range : this.model.selectionRange.getLast(), c1, c2, r1, r2, mc, i, arn = ar.clone(true);
+        var ar = (range) ? range : this.model.getSelection().getLast(), c1, c2, r1, r2, mc, i, arn = ar.clone(true);
 
         if (dc === undefined) {
             dc = +1;
@@ -8365,20 +8365,20 @@
           activeCell.row;
         var p = this._calcCellPosition(c, r, dc, dr);
         ar.assign(p.col, p.row, p.col, p.row);
-        this.model.selectionRange.setActiveCell(p.row, p.col);
+        this.model.getSelection().setActiveCell(p.row, p.col);
         this._fixSelectionOfHiddenCells(dc >= 0 ? +1 : -1, dr >= 0 ? +1 : -1);
         this._fixSelectionOfMergedCells();
     };
 
     // Движение активной ячейки в выделенной области
     WorksheetView.prototype._moveActivePointInSelection = function (dc, dr) {
-        var t = this, cell = this.model.selectionRange.activeCell;
+        var t = this, cell = this.model.getSelection().activeCell;
 
         // Если мы на скрытой строке или ячейке, то двигаться в выделении нельзя (так делает и Excel)
         if (0 === this._getColumnWidth(cell.col) || 0 === this._getRowHeight(cell.row)) {
             return;
         }
-        return this.model.selectionRange.offsetCell(dr, dc, true, function (row, col) {
+        return this.model.getSelection().offsetCell(dr, dc, true, function (row, col) {
             return (0 === ((0 <= row) ? t._getRowHeight(row) : t._getColumnWidth(col)));
         });
     };
@@ -8581,8 +8581,8 @@
      */
     WorksheetView.prototype._calcActiveCellOffset = function (range) {
         var vr = this.visibleRange;
-        var activeCell = this.model.selectionRange.activeCell;
-        var ar = range ? range : this.model.selectionRange.getLast();
+        var activeCell = this.model.getSelection().activeCell;
+        var ar = range ? range : this.model.getSelection().getLast();
         var mc = this.model.getMergedByCell(activeCell.row, activeCell.col);
         var startCol = mc ? mc.c1 : activeCell.col;
         var startRow = mc ? mc.r1 : activeCell.row;
@@ -8611,7 +8611,7 @@
     WorksheetView.prototype.getSelectionMergeInfo = function (options) {
         // ToDo now check only last selection range
 		var t = this;
-		var arn = this.model.selectionRange.getLast().clone(true);
+		var arn = this.model.getSelection().getLast().clone(true);
 		var range = this.model.getRange3(arn.r1, arn.c1, arn.r2, arn.c2);
 		var lastRow = -1, res;
 
@@ -8649,7 +8649,7 @@
 	//нужно ли спрашивать пользователя о расширении диапазона
 	WorksheetView.prototype.getSelectionSortInfo = function () {
 		//в случае попытки сортировать мультиселект, необходимо выдавать ошибку
-		var arn = this.model.selectionRange.getLast().clone(true);
+		var arn = this.model.getSelection().getLast().clone(true);
 
 		//null - не выдавать сообщение и не расширять, false - не выдавать сообщение и расширЯть, true - выдавать сообщение
 		var bResult = false;
@@ -8679,7 +8679,7 @@
 			else
 			{
 				//далее проверяем есть ли смежные ячейки у startCol/startRow
-				var activeCell = this.model.selectionRange.activeCell;
+				var activeCell = this.model.getSelection().activeCell;
 				var activeCellRange = new Asc.Range(activeCell.col, activeCell.row, activeCell.col, activeCell.row);
 
 				var expandRange = this.model.autoFilters.expandRange(activeCellRange, true);
@@ -8714,7 +8714,7 @@
 		}
 
         var t = this;
-        this.model.selectionRange.ranges.forEach(function (item) {
+        this.model.getSelection().ranges.forEach(function (item) {
             var cellValue;
             var range = t.model.getRange3(item.r1, item.c1, item.r2, item.c2);
             range._setPropertyNoEmpty(null, null, function (cell, r) {
@@ -8740,7 +8740,7 @@
         // Показываем только данные для 2-х или более ячеек (http://bugzilla.onlyoffice.com/show_bug.cgi?id=24115)
         if (1 < oSelectionMathInfo.count && 0 < oSelectionMathInfo.countNumbers) {
             // Мы должны отдавать в формате активной ячейки
-			var activeCell = this.model.selectionRange.activeCell;
+			var activeCell = this.model.getSelection().activeCell;
             var numFormat = this.model.getRange3(activeCell.row, activeCell.col,
 				activeCell.row, activeCell.col).getNumFormat();
             if (Asc.c_oAscNumFormatType.Time === numFormat.getType()) {
@@ -8813,7 +8813,7 @@
         absName = absName || this.workbook.dialogAbsName;
         addSheet = addSheet || this.workbook.getDialogSheetName();
         if (this.model.selectionRange) {
-            var ranges = this.model.selectionRange.ranges;
+            var ranges = this.model.getSelection().ranges;
             for (var i = 0; i < ranges.length; ++i) {
                 // ToDo проблема с выбором целого столбца/строки
                 name = ranges[i].getName(absName ? AscCommonExcel.referenceType.A : AscCommonExcel.referenceType.R);
@@ -9162,16 +9162,16 @@
 			if (type === c_oAscSelectionType.RangeCells || type === c_oAscSelectionType.RangeCol ||
 				type === c_oAscSelectionType.RangeRow || type === c_oAscSelectionType.RangeMax) {
 				if (bFirst) {
-					this.model.selectionRange.clean();
+					this.model.getSelection().clean();
 					bFirst = false;
 				} else {
-					this.model.selectionRange.addRange();
+					this.model.getSelection().addRange();
 				}
-				this.model.selectionRange.getLast().assign2(bbox);
+				this.model.getSelection().getLast().assign2(bbox);
 			}
 		}
 		if (!bFirst) {
-			this.model.selectionRange.update();
+			this.model.getSelection().update();
 		}
 
 		this._fixSelectionOfMergedCells();
@@ -9183,7 +9183,7 @@
     WorksheetView.prototype.setActiveCell = function (cell) {
 		this.cleanSelection();
 
-		this.model.selectionRange.setActiveCell(cell.row, cell.col);
+		this.model.getSelection().setActiveCell(cell.row, cell.col);
 		var valid = !this.getFormulaEditMode() && this._getSelection().validActiveCell();
 
 		this._fixSelectionOfMergedCells(null, valid);
@@ -9199,9 +9199,9 @@
 		var activeCell = this._getSelection().activeCell.clone();
 
         if (isCtrl) {
-            this.model.selectionRange.addRange();
+            this.model.getSelection().addRange();
         } else {
-            this.model.selectionRange.clean();
+            this.model.getSelection().clean();
         }
 		var ret = {};
 		var isChangeSelectionShape = false;
@@ -9275,10 +9275,10 @@
         }
 
 		range = new asc_Range(c1, r1, c2, r2);
-        if (!this.model.selectionRange.containsRange(range)) {
+        if (!this.model.getSelection().containsRange(range)) {
             // Не попали в выделение (меняем первую точку)
             this.cleanSelection();
-            this.model.selectionRange.clean();
+            this.model.getSelection().clean();
 			this.setSelection(range);
             this._drawSelection();
 
@@ -9365,7 +9365,7 @@
 
 	WorksheetView.prototype.checkSelectionSparkline = function () {
 		if (!this.getSelectionShape() && !this.getCellEditMode()) {
-			var cell = this.model.selectionRange.activeCell;
+			var cell = this.model.getSelection().activeCell;
 			var mc = this.model.getMergedByCell(cell.row, cell.col);
 			var c1 = mc ? mc.c1 : cell.col;
 			var r1 = mc ? mc.r1 : cell.row;
@@ -9390,7 +9390,7 @@
 
     WorksheetView.prototype.applyFormatPainter = function () {
         var t = this;
-        var from = this.workbook.formatPainterRange.getLast(), to = this.model.selectionRange.getLast().clone();
+        var from = this.workbook.formatPainterRange.getLast(), to = this.model.getSelection().getLast().clone();
         var onApplyFormatPainterCallback = function (isSuccess) {
             // Очищаем выделение
             t.cleanSelection();
@@ -9454,7 +9454,7 @@
 				this.activeFillHandle = table ? table.Ref.clone() : null;
 				this.resizeTableIndex = tableIndex;
 			} else {
-				this.activeFillHandle = this.model.selectionRange.getLast().clone();
+				this.activeFillHandle = this.model.getSelection().getLast().clone();
 			}
 			// Для первого раза нормализуем (т.е. первая точка - это левый верхний угол)
 			this.activeFillHandle.normalize();
@@ -9466,7 +9466,7 @@
 
         // Копируем выделенную область
 		table = undefined !== this.resizeTableIndex ? _getTableByIndex(this.resizeTableIndex) : null;
-        var ar = table ? table.Ref.clone() : this.model.selectionRange.getLast().clone(true);
+        var ar = table ? table.Ref.clone() : this.model.getSelection().getLast().clone(true);
 
         // Получаем координаты левого верхнего угла выделения
         var xL = this._getColLeft(ar.c1);
@@ -9828,7 +9828,7 @@
 		}
 
         // Текущее выделение (к нему применится автозаполнение)
-        var arn = t.model.selectionRange.getLast();
+        var arn = t.model.getSelection().getLast();
         var range = t.model.getRange3(arn.r1, arn.c1, arn.r2, arn.c2);
 
         // Были ли изменения
@@ -9946,7 +9946,7 @@
                     } else {
                         t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotFillRange,
                           c_oAscError.Level.NoCritical);
-                        t.model.selectionRange.assign2(range.bbox);
+                        t.model.getSelection().assign2(range.bbox);
 
                 // Сбрасываем параметры автозаполнения
                 t.activeFillHandle = null;
@@ -10010,7 +10010,7 @@
 
         //если выделена ячейка заголовка ф/т, меняем выделение с ячейки на столбец ф/т
         //если выделена вся видимая часть форматированной таблицы, но не выделены последние скрытые строчки
-        var selectionRange = (this.dragAndDropRange || this.model.selectionRange.getLast()).clone();
+        var selectionRange = (this.dragAndDropRange || this.model.getSelection().getLast()).clone();
         if (null === this.startCellMoveRange) {
             this.af_changeSelectionTablePart(selectionRange);
         }
@@ -10481,7 +10481,7 @@
 
 		this.model.workbook.handlers.trigger("cleanCutData", null, true);
 
-        var arnFrom = this.model.selectionRange.getLast();
+        var arnFrom = this.model.getSelection().getLast();
         var arnTo = this.activeMoveRange.clone(true);
         if (arnFrom.isEqual(arnTo)) {
             this._cleanSelectionMoveRange();
@@ -10624,7 +10624,7 @@
 				wsTo._updateRange(arnTo);
 				t._updateRange(arnFrom);
 
-				wsTo.model.selectionRange.assign2(arnTo);
+				wsTo.model.getSelection().assign2(arnTo);
 				// Сбрасываем параметры
 				wsTo.activeMoveRange = null;
 				wsTo.startCellMoveRange = null;
@@ -10690,7 +10690,7 @@
 
 	WorksheetView.prototype.isMultiSelect = function () {
 		if(!this.objectRender.selectedGraphicObjectsExists()) {
-			return !this.model.selectionRange.isSingleRange();
+			return !this.model.getSelection().isSingleRange();
 		}
 		return null;
 	};
@@ -10703,8 +10703,8 @@
 
         var t = this;
         var checkRange = [];
-        var activeCell = this.model.selectionRange.activeCell.clone();
-        var arn = this.model.selectionRange.getLast().clone(true);
+        var activeCell = this.model.getSelection().activeCell.clone();
+        var arn = this.model.getSelection().getLast().clone(true);
 
         var onSelectionCallback = function (isSuccess) {
             if (false === isSuccess) {
@@ -11078,7 +11078,7 @@
         } else if (onlyActive) {
 			checkRange.push(new asc_Range(activeCell.col, activeCell.row, activeCell.col, activeCell.row));
 		} else {
-			this.model.selectionRange.ranges.forEach(function (item) {
+			this.model.getSelection().ranges.forEach(function (item) {
 				checkRange.push(item.clone());
 			});
 		}
@@ -11175,7 +11175,7 @@
 		}
 
 		//если вставка производится внутрь ф/т, расширяем её вниз
-		var activeTable = t.model.autoFilters.getTableContainActiveCell(t.model.selectionRange.activeCell);
+		var activeTable = t.model.autoFilters.getTableContainActiveCell(t.model.getSelection().activeCell);
 		var newRange;
 		if (pasteToRange && activeTable && specialPasteProps.formatTable) {
 			var delta = pasteToRange.r2 - activeTable.Ref.r2;
@@ -11240,7 +11240,7 @@
 
 		//добавляем форматированные таблицы
 		var i;
-		var arnToRange = t.model.selectionRange.getLast();
+		var arnToRange = t.model.getSelection().getLast();
 		var tablesMap = null, intersectionRangeWithTableParts;
 		var refInsertBinary;
 		if (fromBinary && val.TableParts && val.TableParts.length && specialPasteProps.formatTable) {
@@ -11337,7 +11337,7 @@
 			selectData = t._pasteFromHTML(val, null, specialPasteProps);
 		}
 
-		t.model.checkChangeTablesContent(t.model.selectionRange.getLast());
+		t.model.checkChangeTablesContent(t.model.getSelection().getLast());
 
 		if (!selectData) {
 			bIsUpdate = false;
@@ -11380,7 +11380,7 @@
 		t.model.workbook.dependencyFormulas.unlockRecal();
 		//добавил для случая, когда вставка формулы проиходит в заголовок таблицы
 		if (arrFormula && arrFormula.length) {
-			t.model.checkChangeTablesContent(t.model.selectionRange.getLast());
+			t.model.checkChangeTablesContent(t.model.getSelection().getLast());
 		}
 
 		//for special paste
@@ -11565,7 +11565,7 @@
 
 	WorksheetView.prototype._pasteFromHTML = function (pasteContent, isCheckSelection, specialPasteProps) {
 		var t = this;
-		var lastSelection = this.model.selectionRange.getLast();
+		var lastSelection = this.model.getSelection().getLast();
 		var arn = AscCommonExcel.g_clipboardExcel.pasteProcessor && AscCommonExcel.g_clipboardExcel.pasteProcessor.activeRange ?
 			AscCommonExcel.g_clipboardExcel.pasteProcessor.activeRange : lastSelection;
 
@@ -11766,9 +11766,9 @@
 
     WorksheetView.prototype._pasteFromBinary = function (val, isCheckSelection, tablesMap) {
         var t = this;
-		var trueActiveRange = t.model.selectionRange.getLast().clone();
-		var lastSelection = this.model.selectionRange.getLast();
-        var arn = t.model.selectionRange.getLast().clone();
+		var trueActiveRange = t.model.getSelection().getLast().clone();
+		var lastSelection = this.model.getSelection().getLast();
+        var arn = t.model.getSelection().getLast().clone();
         var arrFormula = [];
 
         var pasteRange = AscCommonExcel.g_clipboardExcel.pasteProcessor.activeRange;
@@ -11812,7 +11812,7 @@
             firstValuesRow = 0;
         }
 
-		var excludeHiddenRows = t.model.autoFilters.bIsExcludeHiddenRows(t.model.selectionRange.getLast(), t.model.selectionRange.activeCell);
+		var excludeHiddenRows = t.model.autoFilters.bIsExcludeHiddenRows(t.model.getSelection().getLast(), t.model.getSelection().activeCell);
 		var hiddenRowsArray = {};
 		var getOpenRowsCount = function(oRange) {
 			var res = oRange.r2 - oRange.r1 + 1;
@@ -12180,7 +12180,7 @@
 		};
 
 		//случай, когда при копировании был выделен целый стобец/строка
-		var fromSelectionRange = val.selectionRange.getLast();
+		var fromSelectionRange = val.getSelection().getLast();
 		var fromSelectionRangeType = fromSelectionRange.getType();
 		//MS для случая копирования полностью выделенных столбцов/строк по-разному осуществляет вставку
 		//в этот же документ вставляется вся строка/столбец, затирая все данные в строке/столбце
@@ -13028,7 +13028,7 @@
 		}
 
 		var t = this;
-		var arn = this.model.selectionRange.getLast().clone();
+		var arn = this.model.getSelection().getLast().clone();
 		var checkRange = arn.clone();
 
 		var range, count;
@@ -13494,7 +13494,7 @@
 							t.cellCommentator.updateCommentsDependencies(false, val, checkRange);
 							t.model.autoFilters.isEmptyAutoFilters(arn, c_oAscDeleteOptions.DeleteRows);
 
-							var bExcludeHiddenRows = t.model.autoFilters.bIsExcludeHiddenRows(checkRange, t.model.selectionRange.activeCell);
+							var bExcludeHiddenRows = t.model.autoFilters.bIsExcludeHiddenRows(checkRange, t.model.getSelection().activeCell);
 							t.model.removeRows(checkRange.r1, checkRange.r2, bExcludeHiddenRows);
 
 							t._updateGroups();
@@ -13701,7 +13701,7 @@
 		var viewMode = this.handlers.trigger('getViewMode');
         var t = this;
         var max = this.model.getColsCount();
-		var selectionRanges = t.model.selectionRange.clone().ranges;
+		var selectionRanges = t.model.getSelection().clone().ranges;
 
 		var onChangeCallback = function (isSuccess) {
 			if (false === isSuccess) {
@@ -13756,7 +13756,7 @@
 		var viewMode = this.handlers.trigger('getViewMode');
         var t = this;
 		if (null === r1) {
-			var lastSelection = this.model.selectionRange.getLast();
+			var lastSelection = this.model.getSelection().getLast();
 			r1 = lastSelection.r1;
 			r2 = lastSelection.r2;
 		}
@@ -13826,7 +13826,7 @@
 		if (true !== options.isMatchCase) {
 			options.findWhat = options.findWhat.toLowerCase();
 		}
-		var selectionRange = options.selectionRange || this.model.selectionRange;
+		var selectionRange = options.selectionRange || this.model.getSelection();
 		var lastRange = selectionRange.getLast();
 		var ar = selectionRange.activeCell;
 		var c = ar.col;
@@ -13947,7 +13947,7 @@
 				}
 			}
 		} else {
-			cell = this.model.selectionRange.activeCell;
+			cell = this.model.getSelection().activeCell;
 			// Попробуем сначала найти
 			var isEqual = this._isCellEqual(cell.col, cell.row, options);
 			if (isEqual) {
@@ -14080,7 +14080,7 @@
 				this._updateSelectionNameAndInfo();
 			} else {
 				// ToDo multiselect defined names
-				var selectionLast = this.model.selectionRange.getLast();
+				var selectionLast = this.model.getSelection().getLast();
 				mc = selectionLast.isOneCell() ? this.model.getMergedByCell(selectionLast.r1, selectionLast.c1) : null;
 
 				var defName;
@@ -14349,7 +14349,7 @@
 				this._drawSelection();
 			}
 
-			var cell = this.model.selectionRange.activeCell;
+			var cell = this.model.getSelection().activeCell;
 
 			function getVisibleRangeObject() {
 				var vr = t.visibleRange.clone(), offsetX = 0, offsetY = 0;
@@ -14666,7 +14666,7 @@
 		this.model.workbook.handlers.trigger("cleanCutData", true, true);
 
 		var t = this;
-		var ar = this.model.selectionRange.getLast().clone();
+		var ar = this.model.getSelection().getLast().clone();
 
 		var isChangeAutoFilterToTablePart = function (addFormatTableOptionsObj) {
 			var res = false;
@@ -14815,7 +14815,7 @@
 		this.model.workbook.handlers.trigger("cleanCutData", true, true);
 
 		var t = this;
-		var ar = this.model.selectionRange.getLast().clone();
+		var ar = this.model.getSelection().getLast().clone();
 
 		var onChangeAutoFilterCallback = function (isSuccess) {
 			if (false === isSuccess) {
@@ -14905,7 +14905,7 @@
 
     WorksheetView.prototype.applyAutoFilter = function (autoFilterObject) {
         var t = this;
-        var ar = this.model.selectionRange.getLast().clone();
+        var ar = this.model.getSelection().getLast().clone();
 		//todo filteringMode
 		//pivot
 		if (Asc.CT_pivotTableDefinition.prototype.asc_filterByCell) {
@@ -14956,7 +14956,7 @@
 
     WorksheetView.prototype.reapplyAutoFilter = function (tableName) {
         var t = this;
-        var ar = this.model.selectionRange.getLast().clone();
+        var ar = this.model.getSelection().getLast().clone();
         var onChangeAutoFilterCallback = function (isSuccess) {
             if (false === isSuccess) {
                 return;
@@ -15029,8 +15029,8 @@
 
     WorksheetView.prototype.applyAutoFilterByType = function (autoFilterObject) {
         var t = this;
-        var activeCell = this.model.selectionRange.activeCell.clone();
-        var ar = this.model.selectionRange.getLast().clone();
+        var activeCell = this.model.getSelection().activeCell.clone();
+        var ar = this.model.getSelection().getLast().clone();
 
 		//нельзя применять если столбец, где находится активная ячейка, не определен
 		if(!this.model.getColDataNoEmpty(activeCell.col)) {
@@ -15156,7 +15156,7 @@
 
     WorksheetView.prototype.sortRange = function (type, cellId, displayName, color, bIsExpandRange) {
         var t = this;
-        var ar = this.model.selectionRange.getLast().clone();
+        var ar = this.model.getSelection().getLast().clone();
 
 		if (!window['AscCommonExcel'].filteringMode) {
 			return;
@@ -15164,7 +15164,7 @@
 		//pivot
 		if (Asc.CT_pivotTableDefinition.prototype.asc_sortByCell) {
 			var activeRangeOrCellId = ar;
-			var activeCellOrCellId = this.model.selectionRange.activeCell;
+			var activeCellOrCellId = this.model.getSelection().activeCell;
 			if (cellId && typeof cellId == 'string') {
 				activeRangeOrCellId = AscCommonExcel.g_oRangeCache.getAscRange(cellId);
 				activeCellOrCellId = new AscCommon.CellBase(activeRangeOrCellId.r1, activeRangeOrCellId.c1);
@@ -15187,7 +15187,7 @@
 		}
 
 		var expandRange;
-		var selectionRange = t.model.selectionRange;
+		var selectionRange = t.model.getSelection();
 		var activeCell = selectionRange.activeCell.clone();
 		var activeRange = selectionRange.getLast();
 		if (null === sortProps) {
@@ -15266,14 +15266,14 @@
     };
 
     WorksheetView.prototype.getAddFormatTableOptions = function (range, isPivot) {
-        var selectionRange = this.model.selectionRange.getLast();
+        var selectionRange = this.model.getSelection().getLast();
         //TODO возможно стоит перенести getAddFormatTableOptions во view
         return this.model.autoFilters.getAddFormatTableOptions(selectionRange, range, isPivot);
     };
 
     WorksheetView.prototype.clearFilter = function () {
         var t = this;
-        var ar = this.model.selectionRange.getLast().clone();
+        var ar = this.model.getSelection().getLast().clone();
 		//pivot
 		if (Asc.CT_pivotTableDefinition.prototype.asc_removeFilters) {
 			var pivotTable = this.model.inPivotTable(ar);
@@ -15353,7 +15353,7 @@
             return;
         }
 
-        if (!this.model.selectionRange.getLast().isEqual(range)) {
+        if (!this.model.getSelection().getLast().isEqual(range)) {
             this.setSelection(range);
         }
 
@@ -16266,7 +16266,7 @@
 
 		var refTablePart = tablePart.Ref;
 
-		var lastSelection = this.model.selectionRange.getLast();
+		var lastSelection = this.model.getSelection().getLast();
 		var startCol = undefined !== opt_col ? opt_col : lastSelection.c1;
 		var endCol = undefined !== opt_col ? opt_col : lastSelection.c2;
 		var startRow = undefined !== opt_row ? opt_row : lastSelection.r1;
@@ -16354,7 +16354,7 @@
     WorksheetView.prototype.af_changeFormatTableInfo = function (tableName, optionType, val) {
         var tablePart = this.model.autoFilters._getFilterByDisplayName(tableName);
         var t = this;
-        var ar = this.model.selectionRange.getLast();
+        var ar = this.model.getSelection().getLast();
 
         if (!tablePart || (tablePart && !tablePart.TableStyleInfo)) {
             return false;
@@ -16577,7 +16577,7 @@
 			t._isLockedCells(changedRange, null, callback);
 		};
 
-		var newActiveRange = this.model.selectionRange.getLast().clone();
+		var newActiveRange = this.model.getSelection().getLast().clone();
 		var displayName = undefined;
 		var type = null;
 		var totalRow = tablePart.isTotalsRow();
@@ -16705,7 +16705,7 @@
             t._isLockedCells(ref, null, callback);
         };
 
-        var newActiveRange = this.model.selectionRange.getLast().clone();
+        var newActiveRange = this.model.getSelection().getLast().clone();
         var val = null;
         switch (optionType) {
             case c_oAscDeleteOptions.DeleteColumns:
@@ -16900,7 +16900,7 @@
     };
 
     WorksheetView.prototype.af_setDisableProps = function (tablePart, formatTableInfo) {
-        var selectionRange = this.model.selectionRange;
+        var selectionRange = this.model.getSelection();
         var lastRange = selectionRange.getLast();
         var activeCell = selectionRange.activeCell;
 
@@ -17374,7 +17374,7 @@
 
 			var getRangesStr = function(ranges, oldStr) {
 				var str = oldStr ? oldStr : "";
-				var selectionLast = t.model.selectionRange.getLast();
+				var selectionLast = t.model.getSelection().getLast();
 				var mc = selectionLast.isOneCell() ? t.model.getMergedByCell(selectionLast.r1, selectionLast.c1) : null;
 				for(var i = 0; i < ranges.length; i++) {
 					if(i === 0 && str !== "") {
@@ -17401,7 +17401,7 @@
 
 					oldDefName = printArea ? printArea.getAscCDefName() : null;
 					oldScope = oldDefName ? oldDefName.asc_getScope() : t.model.index;
-					newRef = getRangesStr(t.model.selectionRange.ranges);
+					newRef = getRangesStr(t.model.getSelection().ranges);
 					newDefName = new Asc.asc_CDefName("Print_Area", newRef, oldScope, null, null, null, true);
 					t.changeViewPrintLines(true);
 					wb.editDefinedNames(oldDefName, newDefName);
@@ -17420,7 +17420,7 @@
 					if(oldDefName) {
 						oldScope = oldDefName ? oldDefName.asc_getScope() : t.model.index;
 						oldRef = oldDefName.asc_getRef();
-						newRef = getRangesStr(t.model.selectionRange.ranges, oldRef);
+						newRef = getRangesStr(t.model.getSelection().ranges, oldRef);
 						newDefName = new Asc.asc_CDefName("Print_Area", newRef, oldScope, null, null, null, true);
 						t.recalcPrintScale();
 						t.changeViewPrintLines(true);
@@ -17440,7 +17440,7 @@
         var res = false, t = this;
         var printArea = this.model.workbook.getDefinesNames("Print_Area", this.model.getId());
         if(printArea && printArea.sheetId === this.model.getId()) {
-            var selection = this.model.selectionRange.ranges;
+            var selection = this.model.getSelection().ranges;
 
             var areaRefsArr;
 			AscCommonExcel.executeInR1C1Mode(false, function () {
@@ -17620,7 +17620,7 @@
 	WorksheetView.prototype.getRangeText = function (range, delimiter) {
 		var t = this;
 		if (range === undefined) {
-			range = this.model.selectionRange.getLast();
+			range = this.model.getSelection().getLast();
 		}
 		if(delimiter === undefined) {
 			delimiter = "\n";
@@ -19057,11 +19057,11 @@
 
 	WorksheetView.prototype.changeGroupDetails = function (bExpand) {
 		//multiselect
-		if(this.model.selectionRange.ranges.length > 1) {
+		if(this.model.getSelection().ranges.length > 1) {
 			return;
 		}
 
-		var ar = this.model.selectionRange.getLast().clone();
+		var ar = this.model.getSelection().getLast().clone();
 		var t = this;
 
 		//ms делает следущим образом:
@@ -19194,11 +19194,11 @@
 	//приоритет у группы с максимальным уровнем
 	WorksheetView.prototype.changeGroupDetailsSimple = function (bExpand) {
 		//multiselect
-		if (this.model.selectionRange.ranges.length > 1) {
+		if (this.model.getSelection().ranges.length > 1) {
 			return;
 		}
 
-		var ar = this.model.selectionRange.getLast().clone();
+		var ar = this.model.getSelection().getLast().clone();
 		var t = this;
 
 
@@ -19315,7 +19315,7 @@
 		var t = this;
 
 		//TODO check filtering mode
-		var ar = t.model.selectionRange;
+		var ar = t.model.getSelection();
 
 		//если активной является 1 ячейка, то сбрасываем все группы
 		var isOneCell = 1 === ar.ranges.length && ar.ranges[0].isOneCell();
@@ -19373,7 +19373,7 @@
 			History.Create_NewPoint();
 			History.StartTransaction();
 
-			var ar = t.model.selectionRange.getLast();
+			var ar = t.model.getSelection().getLast();
 			var _type = ar.getType();
 			if(_type === c_oAscSelectionType.RangeMax || _type === c_oAscSelectionType.RangeRow) {
 				if(t.model.oAllCol) {
@@ -19411,7 +19411,7 @@
 		//true - rows, false - columns, null - show dialog, undefined - error
 
 		//multiselect
-		if(this.model.selectionRange.ranges.length > 1) {
+		if(this.model.getSelection().ranges.length > 1) {
 			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CopyMultiselectAreaError, c_oAscError.Level.NoCritical);
 			return;
 		}
@@ -19421,7 +19421,7 @@
 		}
 
 		var res = null;
-		var ar = this.model.selectionRange.getLast().clone();
+		var ar = this.model.getSelection().getLast().clone();
 		var type = ar.getType();
 
 		if (c_oAscSelectionType.RangeCol === type) {
@@ -19550,8 +19550,8 @@
 		//перед этой функцией необходимо вызвать getSelectionSortInfo - необходимо ли расширять
 		//bExpand - ответ от этой функции, который протаскивается через интерфейс
 		//если мультиселект - дизейбл кнопки sort
-		var selection = t.model.selectionRange.getLast();
-		var activeCell = t.model.selectionRange.activeCell.clone();
+		var selection = t.model.getSelection().getLast();
+		var activeCell = t.model.getSelection().activeCell.clone();
 		var oldSelection = selection.clone();
 
 		var autoFilter = t.model.AutoFilter;
@@ -19625,9 +19625,9 @@
 
 		//change selection
 		t.cleanSelection();
-		t.model.selectionRange.getLast().assign2(selection);
+		t.model.getSelection().getLast().assign2(selection);
 		if(!selection.contains(activeCell.col, activeCell.row)) {
-			t.model.selectionRange.activeCell = new AscCommon.CellBase(selection.r1, selection.c1);
+			t.model.getSelection().activeCell = new AscCommon.CellBase(selection.r1, selection.c1);
 		}
 		t._drawSelection();
 
@@ -19727,14 +19727,14 @@
 
 	WorksheetView.prototype.setSortProps = function(props, doNotSortRange, bCancel) {
 		var t = this;
-		var selection = t.model.selectionRange.getLast();
-		var activeCell = t.model.selectionRange.activeCell.clone();
+		var selection = t.model.getSelection().getLast();
+		var activeCell = t.model.getSelection().activeCell.clone();
 
 		var revertSelection = function() {
 			t.cleanSelection();
-			t.model.selectionRange.getLast().assign2(props.selection.clone());
+			t.model.getSelection().getLast().assign2(props.selection.clone());
 			if(!selection.contains(activeCell.col, activeCell.row)) {
-				t.model.selectionRange.activeCell = new AscCommon.CellBase(selection.r1, selection.c1);
+				t.model.getSelection().activeCell = new AscCommon.CellBase(selection.r1, selection.c1);
 			}
 			t._drawSelection();
 		};
@@ -19972,8 +19972,8 @@
 
 		//bExpand - ответ от этой функции, который протаскивается через интерфейс
 		//если мультиселект - дизейбл кнопки
-		var selection = t.model.selectionRange.getLast();
-		var activeCell = t.model.selectionRange.activeCell.clone();
+		var selection = t.model.getSelection().getLast();
+		var activeCell = t.model.getSelection().activeCell.clone();
 		var oldSelection = selection.clone();
 
 		var autoFilter = t.model.AutoFilter;
@@ -20018,9 +20018,9 @@
 
 		//change selection
 		t.cleanSelection();
-		t.model.selectionRange.getLast().assign2(selection);
+		t.model.getSelection().getLast().assign2(selection);
 		if(!selection.contains(activeCell.col, activeCell.row)) {
-			t.model.selectionRange.activeCell = new AscCommon.CellBase(selection.r1, selection.c1);
+			t.model.getSelection().activeCell = new AscCommon.CellBase(selection.r1, selection.c1);
 		}
 		t._drawSelection();
 
@@ -20040,14 +20040,14 @@
 
 	WorksheetView.prototype.setRemoveDuplicates = function(props, bCancel) {
 		var t = this;
-		var selection = t.model.selectionRange.getLast();
-		var activeCell = t.model.selectionRange.activeCell.clone();
+		var selection = t.model.getSelection().getLast();
+		var activeCell = t.model.getSelection().activeCell.clone();
 
 		var revertSelection = function() {
 			t.cleanSelection();
-			t.model.selectionRange.getLast().assign2(props.selection.clone());
+			t.model.getSelection().getLast().assign2(props.selection.clone());
 			if(!selection.contains(activeCell.col, activeCell.row)) {
-				t.model.selectionRange.activeCell = new AscCommon.CellBase(selection.r1, selection.c1);
+				t.model.getSelection().activeCell = new AscCommon.CellBase(selection.r1, selection.c1);
 			}
 			t._drawSelection();
 		};

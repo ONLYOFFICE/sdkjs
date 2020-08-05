@@ -330,7 +330,7 @@
 				}
 			} else {
 				//если мультиселект, то запрещаем копирование
-				if (1 !== ws.model.selectionRange.ranges.length) {
+				if (1 !== ws.model.getSelection().ranges.length) {
 					var selectedDrawings = ws.objectRender.getSelectedGraphicObjects();
 					if (0 === selectedDrawings.length) {
 						ws.handlers.trigger("onErrorEvent", Asc.c_oAscError.ID.CopyMultiselectAreaError,
@@ -341,8 +341,8 @@
 
 				//ignore hidden rows
 				var activeRange = ws.getSelectedRange();
-				var selectionRange = ws.model.selectionRange.getLast();
-				var activeCell = ws.model.selectionRange.activeCell.clone();
+				var selectionRange = ws.model.getSelection().getLast();
+				var activeCell = ws.model.getSelection().activeCell.clone();
 
 				//TODO игнорировать нужно и формулы и скрытые строчки в случае, если селект их задевает + стандартные условия в bIsExcludeHiddenRows
 				if (ws.model.autoFilters.bIsExcludeHiddenRows(selectionRange, activeCell, true)) {
@@ -400,7 +400,7 @@
 			window['AscCommon'].g_specialPasteHelper.Paste_Process_Start(doNotShowButton);
 
 			if (!bIsSpecialPaste && !wb.getCellEditMode()) {
-				window['AscCommon'].g_specialPasteHelper.specialPasteData.activeRange = ws.model.selectionRange.clone(ws.model);
+				window['AscCommon'].g_specialPasteHelper.specialPasteData.activeRange = ws.model.getSelection().clone(ws.model);
 				window['AscCommon'].g_specialPasteHelper.specialPasteData.pasteFromWord = false;
 			}
 
@@ -548,7 +548,7 @@
 					}
 
 					// ToDo multiselect ?
-					var selectionRange = activeRange ? activeRange : wsModel.selectionRange.getLast();
+					var selectionRange = activeRange ? activeRange : wsModel.getSelection().getLast();
 					var maxRowCol = this._getRangeMaxRowCol(wsModel, selectionRange);
 					if (null !== maxRowCol) {
 						if (maxRowCol.col < selectionRange.c1) {
@@ -1516,7 +1516,7 @@
 					result = this._pasteFromBinaryExcel(worksheet, base64, isIntoShape, isCellEditMode, isPasteAll);
 				} else if (base64FromWord)//from word
 				{
-					this.activeRange = worksheet.model.selectionRange.getLast().clone(true);
+					this.activeRange = worksheet.model.getSelection().getLast().clone(true);
 					result = this._pasteFromBinaryWord(worksheet, base64FromWord, isIntoShape, isCellEditMode);
 					window['AscCommon'].g_specialPasteHelper.specialPasteData.pasteFromWord = true;
 				} else if (base64FromPresentation) {
@@ -1669,7 +1669,7 @@
 					var wsFrom = window["Asc"]["editor"].wb.getWorksheetById(window["Asc"]["editor"].wb.cutIdSheet);
 					var fromRange = wsFrom ? wsFrom.cutRange : null;
 					if(fromRange) {
-						var aRange = ws.model.selectionRange.getLast();
+						var aRange = ws.model.getSelection().getLast();
 						var toRange = new Asc.Range(aRange.c1, aRange.r1, aRange.c1 + (fromRange.c2 - fromRange.c1), aRange.r1 + (fromRange.r2 - fromRange.r1));
 						var wsTo = ws.model.Id !== wsFrom.model.Id ? ws : null;
 						wsFrom.applyCutRange(fromRange, toRange, wsTo);
@@ -2187,7 +2187,7 @@
 			},
 
 			_insertImagesFromBinary: function (ws, data, isIntoShape, needShowSpecialProps, savePosition, pastedWb) {
-				var activeCell = ws.model.selectionRange.activeCell;
+				var activeCell = ws.model.getSelection().activeCell;
 				var curCol, drawingObject, curRow, startCol, startRow, xfrm, aImagesSync = [], activeRow, activeCol, tempArr, offX, offY, rot;
 
 				//отдельная обработка для вставки одной таблички из презентаций
@@ -2413,7 +2413,7 @@
 			},
 
 			_insertImagesFromBinaryWord: function (ws, data, aImagesSync) {
-				var activeRange = ws.model.selectionRange.getLast().clone();
+				var activeRange = ws.model.getSelection().getLast().clone();
 				var curCol, drawingObject, curRow, startCol = 0, startRow = 0, xfrm, drawingBase, graphicObject, offX, offY, rot;
 
 				History.Create_NewPoint();
@@ -2601,7 +2601,7 @@
 
 				//****binary****
 				if (copyPasteUseBinary) {
-					this.activeRange = worksheet.model.selectionRange.getLast().clone();
+					this.activeRange = worksheet.model.getSelection().getLast().clone();
 					binaryResult = this._pasteFromBinaryClassHtml(worksheet, node, isIntoShape);
 
 					if (binaryResult === true) {
@@ -2611,7 +2611,7 @@
 					}
 				}
 
-				this.activeRange = worksheet.model.selectionRange.getLast().clone();
+				this.activeRange = worksheet.model.getSelection().getLast().clone();
 
 
 				var callBackAfterLoadImages = function () {
@@ -2995,7 +2995,7 @@
 					activeCellsPasteFragment = AscCommonExcel.g_oRangeCache.getAscRange(t.activeRange);
 				});
 
-				var lastRange = worksheet.model.selectionRange.getLast();
+				var lastRange = worksheet.model.getSelection().getLast();
 				var rMax = (activeCellsPasteFragment.r2 - activeCellsPasteFragment.r1) + lastRange.r1;
 				var cMax = (activeCellsPasteFragment.c2 - activeCellsPasteFragment.c1) + lastRange.c1;
 				var res = true;
@@ -3238,7 +3238,7 @@
 
 
 				//TODO сделать вставку текста всегда через эту функцию
-				this.activeRange = worksheet.model.selectionRange.getLast().clone(true);
+				this.activeRange = worksheet.model.getSelection().getLast().clone(true);
 
 				//если находимся внутри шейпа
 				var isIntoShape = worksheet.objectRender.controller.getTargetDocContent();
@@ -3304,7 +3304,7 @@
 				var aResult = this._getTableFromText(text, textImport);
 				if (aResult && !(aResult.onlyImages && window["Asc"]["editor"] && window["Asc"]["editor"].isChartEditor)) {
 					if (textImport) {
-						var arn = worksheet.model.selectionRange.getLast().clone();
+						var arn = worksheet.model.getSelection().getLast().clone();
 						var width = aResult.content && aResult.content[0] ? aResult.content[0].length - 1 : 0;
 						var height = aResult.content ? aResult.content.length - 1 : 0;
 						var arnTo = new Asc.Range(arn.c1, arn.r1, arn.c1 + width, arn.r1 + height);

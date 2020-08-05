@@ -4945,7 +4945,7 @@
 			},
 
 			getTableByActiveCell: function () {
-				var activeCell = this.worksheet.selectionRange.activeCell;
+				var activeCell = this.worksheet.getSelection().activeCell;
 				var res = null;
 
 				if (this.worksheet.TableParts) {

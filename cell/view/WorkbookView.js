@@ -966,7 +966,7 @@
     }
     var ws = this.getWorksheet();
     this.oSelectionInfo = ws.getSelectionInfo();
-    this.lastSendInfoRange = ws.model.selectionRange.clone();
+    this.lastSendInfoRange = ws.model.getSelection().clone();
     this.lastSendInfoRangeIsSelectOnShape = ws.getSelectionShape();
     return true;
   };
@@ -1134,9 +1134,9 @@
     ws.changeSelectionDone();
     this._onSelectionNameChanged(ws.getSelectionName(/*bRangeText*/false));
     // Проверим, нужно ли отсылать информацию о ячейке
-    var ar = ws.model.selectionRange.getLast();
+    var ar = ws.model.getSelection().getLast();
     var isSelectOnShape = ws.getSelectionShape();
-    if (!this._isEqualRange(ws.model.selectionRange, isSelectOnShape)) {
+    if (!this._isEqualRange(ws.model.getSelection(), isSelectOnShape)) {
       this._onWSSelectionChanged();
       this._onSelectionMathInfoChanged(ws.getSelectionMathInfo());
     }
@@ -1431,7 +1431,7 @@
 
   WorkbookView.prototype.showAutoComplete = function() {
     var ws = this.getWorksheet();
-    var arrValues = ws.getCellAutoCompleteValues(ws.model.selectionRange.activeCell);
+    var arrValues = ws.getCellAutoCompleteValues(ws.model.getSelection().activeCell);
     this.handlers.trigger('asc_onEntriesListMenu', arrValues);
   };
 
@@ -1599,7 +1599,7 @@
 
     var ws = t.getWorksheet();
     var activeCellRange = ws.getActiveCell(0, 0, false);
-    var selectionRange = ws.model.selectionRange.clone();
+    var selectionRange = ws.model.getSelection().clone();
 
     var activeWsModel = this.model.getActiveWs();
     if (activeWsModel.inPivotTable(activeCellRange)) {
@@ -1835,7 +1835,7 @@
       if (this.selectionDialogMode) {
           // Copy selection to set on new sheet
           if (ws.model.selectionRange) {
-              selectionRange = ws.model.selectionRange.getLast().clone(true);
+              selectionRange = ws.model.getSelection().getLast().clone(true);
           }
           ws.cloneSelection(false);
       }
@@ -2401,7 +2401,7 @@
 				//в данном случае не вырезаем, а записываем
 				if(false === this.getWorksheet().isMultiSelect()) {
 					this.cutIdSheet = this.getWorksheet().model.Id;
-					this.getWorksheet().cutRange = this.getWorksheet().model.selectionRange.getLast();
+					this.getWorksheet().cutRange = this.getWorksheet().model.getSelection().getLast();
 				}
 			}
 		}
@@ -2534,7 +2534,7 @@
 
     if (this.formatPainterState) {
       this.formatPainterSheet = this.wsActive;
-      this.formatPainterRange = ws.model.selectionRange.clone();
+      this.formatPainterRange = ws.model.getSelection().clone();
     } else {
       this.formatPainterSheet = this.formatPainterRange = null;
       this.handlers.trigger('asc_onStopFormatPainter');

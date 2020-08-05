@@ -1785,7 +1785,7 @@ GraphicOption.prototype.union = function(oGraphicOption) {
         if(this.controller){
             if (_this.canEdit()) {
                 _this.controller.resetSelection();
-                var activeCell = worksheet.model.selectionRange.activeCell;
+                var activeCell = worksheet.model.getSelection().activeCell;
                 var metrics = {};
                 metrics.col = activeCell.col;
                 metrics.colOff = 0;
@@ -2325,7 +2325,7 @@ GraphicOption.prototype.union = function(oGraphicOption) {
             var drawingObject = _this.createDrawingObject();
             drawingObject.worksheet = worksheet;
 
-            var activeCell = worksheet.model.selectionRange.activeCell;
+            var activeCell = worksheet.model.getSelection().activeCell;
             drawingObject.from.col = isOption ? options.cell.col : activeCell.col;
             drawingObject.from.row = isOption ? options.cell.row : activeCell.row;
 
@@ -2432,8 +2432,8 @@ GraphicOption.prototype.union = function(oGraphicOption) {
     {
         _this.controller.resetSelection();
         History.Create_NewPoint();
-        var dLeft = worksheet.getCellLeft(worksheet.model.selectionRange.activeCell.col, 3);
-        var dTop = worksheet.getCellTop(worksheet.model.selectionRange.activeCell.row, 3);
+        var dLeft = worksheet.getCellLeft(worksheet.model.getSelection().activeCell.col, 3);
+        var dTop = worksheet.getCellTop(worksheet.model.getSelection().activeCell.row, 3);
         var oSignatureLine = AscFormat.fCreateSignatureShape(sGuid, sSigner, sSigner2, sEmail, false, worksheet.model, Width, Height, sImgUrl);
         oSignatureLine.spPr.xfrm.setOffX(dLeft);
         oSignatureLine.spPr.xfrm.setOffY(dTop);
@@ -2461,7 +2461,7 @@ GraphicOption.prototype.union = function(oGraphicOption) {
 
             _this.controller.resetSelection();
 
-            var activeCell = worksheet.model.selectionRange.activeCell;
+            var activeCell = worksheet.model.getSelection().activeCell;
             var coordsFrom = _this.calculateCoords({col: activeCell.col, row: activeCell.row, colOff: 0, rowOff: 0});
 
             History.Create_NewPoint();
@@ -3765,7 +3765,7 @@ GraphicOption.prototype.union = function(oGraphicOption) {
         var drawingObject = _this.createDrawingObject();
         drawingObject.worksheet = worksheet;
 
-        var activeCell = worksheet.model.selectionRange.activeCell;
+        var activeCell = worksheet.model.getSelection().activeCell;
         drawingObject.from.col = activeCell.col;
         drawingObject.from.row = activeCell.row;
 

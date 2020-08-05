@@ -4618,7 +4618,7 @@ function OfflineEditor () {
                 var drawingObject = _this.createDrawingObject();
                 drawingObject.worksheet = worksheet;
                 
-                var activeCell = worksheet.model.selectionRange.activeCell;
+                var activeCell = worksheet.model.getSelection().activeCell;
                 drawingObject.from.col = activeCell.col;
                 drawingObject.from.row = activeCell.row;
                 
@@ -5173,7 +5173,7 @@ window["native"]["offline_cell_editor_open"] = function(x, y, width, height, rat
         var t = wb;
         
         var ws = t.getWorksheet();
-        var selectionRange = ws.model.selectionRange.clone();
+        var selectionRange = ws.model.getSelection().clone();
         
         t.setCellEditMode(true);
         var enterOptions = new AscCommonExcel.CEditorEnterOptions();

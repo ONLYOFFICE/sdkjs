@@ -533,7 +533,7 @@
 	 * @returns {ApiRange}
 	 */
 	ApiWorksheet.prototype.GetActiveCell = function () {
-		var cell = this.worksheet.selectionRange.activeCell;
+		var cell = this.worksheet.getSelection().activeCell;
 		return new ApiRange(this.worksheet.getCell3(cell.row, cell.col));
 	};
 	Object.defineProperty(ApiWorksheet.prototype, "ActiveCell", {
@@ -548,7 +548,7 @@
 	 * @returns {ApiRange}
 	 */
 	ApiWorksheet.prototype.GetSelection = function () {
-		var r = this.worksheet.selectionRange.getLast();
+		var r = this.worksheet.getSelection().getLast();
 		return new ApiRange(this.worksheet.getRange3(r.r1, r.c1, r.r2, r.c2));
 	};
 	Object.defineProperty(ApiWorksheet.prototype, "Selection", {
@@ -991,7 +991,7 @@
 		var range = new ApiRange(this.worksheet.getRange2(Anchor));
 		var p = /^(?:http:\/\/|https:\/\/)/;
 		if (range && range.range.isOneCell() && Address) {
-			this.worksheet.selectionRange.assign2(range.range.bbox);
+			this.worksheet.getSelection().assign2(range.range.bbox);
 			var  Hyperlink = new Asc.asc_CHyperlink();
 			if (ScreenTip) {
 				Hyperlink.asc_setText(ScreenTip);
@@ -1300,7 +1300,7 @@
 					}
 				}
 			}
-			var cell = this.worksheet.selectionRange.activeCell;
+			var cell = this.worksheet.getSelection().activeCell;
 			private_SetCoords(oImage, oWorksheet.model, Width, Height, cell ? cell.col : 0, 0,  cell ? cell.row : 0, 0, undefined);
 			oController.resetSelection();
 			oController.selectObject(oImage, 0);

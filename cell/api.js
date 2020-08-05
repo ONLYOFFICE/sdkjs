@@ -233,7 +233,7 @@ var editor;
 		var res;
 		if (null == value) {
 			var ws = this.wbModel.getActiveWs();
-			var activeCell = ws.selectionRange.activeCell;
+			var activeCell = ws.getSelection().activeCell;
 			ws._getCellNoEmpty(activeCell.row, activeCell.col, function(cell) {
               if (cell) {
                 res = cell.getValueForExample(numFormat, cultureInfo);
@@ -2461,7 +2461,7 @@ var editor;
     if (window["NATIVE_EDITOR_ENJINE"]) {
       if (this.wb.findCellText(options)) {
         var ws = this.wb.getWorksheet();
-        var activeCell = this.wbModel.getActiveWs().selectionRange.activeCell;
+        var activeCell = this.wbModel.getActiveWs().getSelection().activeCell;
         return [ws.getCellLeftRelative(activeCell.col, 0), ws.getCellTopRelative(activeCell.row, 0)];
       }
 
@@ -3197,7 +3197,7 @@ var editor;
         var usrCorrect = e["usrCorrect"];
         this.spellcheckState.wordsIndex = e["wordsIndex"];
         var lastIndex = this.spellcheckState.lastIndex;
-        var activeCell = ws.model.selectionRange.activeCell;
+        var activeCell = ws.model.getSelection().activeCell;
         var isIgnoreUppercase = this.spellcheckState.isIgnoreUppercase;
 
         for (var i = 0; i < usrWords.length; i++) {
@@ -3263,8 +3263,8 @@ var editor;
       } else if (type === "suggest") {
         this.handlers.trigger("asc_onSpellCheckVariantsFound", new AscCommon.asc_CSpellCheckProperty(e["usrWords"][0], null, e["usrSuggest"][0], null, null));
         var cellInfo = e["cellInfo"];
-        var dc = cellInfo.col - ws.model.selectionRange.activeCell.col;
-        var dr = cellInfo.row - ws.model.selectionRange.activeCell.row;
+        var dc = cellInfo.col - ws.model.getSelection().activeCell.col;
+        var dr = cellInfo.row - ws.model.getSelection().activeCell.row;
         this.spellcheckState.lockSpell = true;
 
         if ((dc !== 0 || dr !== 0) && isStart && lastOptions) {
@@ -3321,7 +3321,7 @@ var editor;
     }
 
     var ws = this.wb.getWorksheet();
-    var activeCell = ws.model.selectionRange.activeCell;
+    var activeCell = ws.model.getSelection().activeCell;
     var lastSpell = this.spellcheckState.lastSpellInfo;
     var cellsInfo;
 
@@ -3536,7 +3536,7 @@ var editor;
         if (lastSpell) {
           var lastIndex = t.spellcheckState.lastIndex;
           var cellInfo = lastSpell["cellsInfo"][lastIndex];
-          var activeCell = ws.model.selectionRange.activeCell;
+          var activeCell = ws.model.getSelection().activeCell;
           var dc = cellInfo.col - activeCell.col;
           var dr = cellInfo.row - activeCell.row;
           t.spellcheckState.lockSpell = true;
@@ -4586,7 +4586,7 @@ var editor;
         case Asc.c_oAscSelectionForCFType.selection:
           sheet = this.wbModel.getActiveWs();
           // ToDo multiselect
-          range = sheet.selectionRange.getLast();
+          range = sheet.getSelection().getLast();
           break;
         case Asc.c_oAscSelectionForCFType.worksheet:
           sheet = this.wbModel.getWorksheet(id);
