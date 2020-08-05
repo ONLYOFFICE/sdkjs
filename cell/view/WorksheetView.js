@@ -12889,7 +12889,7 @@
 
 	// Залочен ли весь лист
 	WorksheetView.prototype._isLockedAll = function (callback) {
-		var ar = this.model.selectionRange.getLast();
+		var ar = this.model.getSelection().getLast();
 
 		var lockInfo = this.collaborativeEditing.getLockInfo(c_oAscLockTypeElem.Range, /*subType*/
 			c_oAscLockTypeElemSubType.ChangeProperties, this.model.getId(),
