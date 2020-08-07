@@ -524,7 +524,7 @@
 				return {base64: sBase64, html: innerHtml};
 			},
 
-			getBinaryForCopy: function (wsModel, objectRender, activeRange, selectAll) {
+			getBinaryForCopy: function (wsModel, objectRender, activeRange, selectAll, ignoreCopyPaste) {
 				var isIntoShape = objectRender && objectRender.controller ? objectRender.controller.getTargetDocContent() : null;
 
 				var sBase64 = null;
@@ -593,7 +593,7 @@
 
 
 					//WRITE
-					var oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(wb, selectionRange);
+					var oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(wb, !ignoreCopyPaste ? selectionRange : null);
 					sBase64 = "xslData;" + oBinaryFileWriter.Write();
 					pptx_content_writer.BinaryFileWriter.ClearIdMap();
 					pptx_content_writer.End_UseFullUrl();

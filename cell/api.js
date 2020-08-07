@@ -2346,7 +2346,7 @@ var editor;
 	  for (var i = 0; i < arrSheets.length; ++i) {
 		  sheet = this.wbModel.getWorksheet(arrSheets[i]);
 		  this.wbModel.nActive = sheet.getIndex();
-		  sBinarySheet = AscCommonExcel.g_clipboardExcel.copyProcessor.getBinaryForCopy(sheet, null, null, true);
+		  sBinarySheet = AscCommonExcel.g_clipboardExcel.copyProcessor.getBinaryForCopy(sheet, null, null, true, true);
           res.push(sBinarySheet);
 	  }
 	  this.wbModel.nActive = activeIndex;
