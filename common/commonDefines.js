@@ -2795,7 +2795,7 @@
 	window['AscCommon']['align_Right'] = window['AscCommon'].align_Right = align_Right;
 	window['AscCommon']['align_Left'] = window['AscCommon'].align_Left = align_Left;
 	window['AscCommon']['align_Center'] = window['AscCommon'].align_Center = align_Center;
-	window['AscCommon']['align_Justify'] = window['AscCommon'].align_Justify = align_Justify
+	window['AscCommon']['align_Justify'] = window['AscCommon'].align_Justify = align_Justify;
 
 
 	window["AscCommon"]["c_oAscFormatPainterState"]    = c_oAscFormatPainterState;
