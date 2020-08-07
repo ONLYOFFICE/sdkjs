@@ -16986,9 +16986,9 @@
         t._isLockedDefNames(callBackLockedDefNames, defNameId);
     };
 
-    WorksheetView.prototype.af_changeTableRange = function (tableName, range, callbackAfterChange, doNotUpdate) {
-        var t = this;
-        if(typeof range === "string"){
+	WorksheetView.prototype.af_changeTableRange = function (tableName, range, callbackAfterChange, doNotUpdate) {
+		var t = this;
+		if (typeof range === "string") {
 			range = AscCommonExcel.g_oRangeCache.getAscRange(range);
 		}
 
@@ -16996,50 +16996,56 @@
 			return;
 		}
 
-        var callback = function (isSuccess) {
-            if (false === isSuccess) {
-            	callbackAfterChange(isSuccess);
-            	return;
-            }
+		var callback = function (isSuccess) {
+			if (false === isSuccess) {
+				if (callbackAfterChange) {
+					callbackAfterChange(isSuccess);
+				}
+				return;
+			}
 
-            History.Create_NewPoint();
-            History.StartTransaction();
+			History.Create_NewPoint();
+			History.StartTransaction();
 
-            t.model.autoFilters.changeTableRange(tableName, range);
+			t.model.autoFilters.changeTableRange(tableName, range);
 
 			History.EndTransaction();
 			if (!doNotUpdate) {
 				t._onUpdateFormatTable(range, false, true);
 			}
-            //TODO добавить перерисовку таблицы и перерисовку шаблонов
-			if(callbackAfterChange){
+			//TODO добавить перерисовку таблицы и перерисовку шаблонов
+			if (callbackAfterChange) {
 				callbackAfterChange(true);
-            }
-        };
+			}
+		};
 
-        //TODO возможно не стоит лочить весь диапазон. проверить: когда один ползователь меняет диапазон, другой снимает а/ф с ф/т. в этом случае в deleteAutoFilter передавать не range а имя ф/т
-        var table = t.model.autoFilters._getFilterByDisplayName(tableName);
-        var tableRange = null !== table ? table.Ref : null;
+		//TODO возможно не стоит лочить весь диапазон. проверить: когда один ползователь меняет диапазон, другой снимает а/ф с ф/т. в этом случае в deleteAutoFilter передавать не range а имя ф/т
+		var table = t.model.autoFilters._getFilterByDisplayName(tableName);
+		var tableRange = null !== table ? table.Ref : null;
 
-        var lockRange = range;
-        if (null !== tableRange) {
-            var r1 = tableRange.r1 < range.r1 ? tableRange.r1 : range.r1;
-            var r2 = tableRange.r2 > range.r2 ? tableRange.r2 : range.r2;
-            var c1 = tableRange.c1 < range.c1 ? tableRange.c1 : range.c1;
-            var c2 = tableRange.c2 > range.c2 ? tableRange.c2 : range.c2;
+		var lockRange = range;
+		if (null !== tableRange) {
+			var r1 = tableRange.r1 < range.r1 ? tableRange.r1 : range.r1;
+			var r2 = tableRange.r2 > range.r2 ? tableRange.r2 : range.r2;
+			var c1 = tableRange.c1 < range.c1 ? tableRange.c1 : range.c1;
+			var c2 = tableRange.c2 > range.c2 ? tableRange.c2 : range.c2;
 
-            lockRange = new Asc.Range(c1, r1, c2, r2);
-        }
+			lockRange = new Asc.Range(c1, r1, c2, r2);
+		}
 
-        var callBackLockedDefNames = function (isSuccess) {
-            if (false === isSuccess) {
-				callbackAfterChange(isSuccess);
-            	return;
-            }
+		var callBackLockedDefNames = function (isSuccess) {
+			if (false === isSuccess) {
+				if (callbackAfterChange) {
+					callbackAfterChange(isSuccess);
+				}
+				return;
+			}
 
-			var callbackLockAll = function(_success) {
+			var callbackLockAll = function (_success) {
 				if (false === _success) {
-					callbackAfterChange(_success);
+					if (callbackAfterChange) {
+						callbackAfterChange(_success);
+					}
 					return;
 				}
 
@@ -17049,12 +17055,12 @@
 			t._isLockedAll(callbackLockAll);
 		};
 
-        //лочим данный именованный диапазон при смене размера ф/т
-        var defNameId = t.model.workbook.dependencyFormulas.getDefNameByName(tableName, t.model.getId());
-        defNameId = defNameId ? defNameId.getNodeId() : null;
+		//лочим данный именованный диапазон при смене размера ф/т
+		var defNameId = t.model.workbook.dependencyFormulas.getDefNameByName(tableName, t.model.getId());
+		defNameId = defNameId ? defNameId.getNodeId() : null;
 
-        t._isLockedDefNames(callBackLockedDefNames, defNameId);
-    };
+		t._isLockedDefNames(callBackLockedDefNames, defNameId);
+	};
 
     WorksheetView.prototype.af_checkChangeRange = function (range) {
         var res = null;
