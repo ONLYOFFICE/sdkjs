@@ -5484,11 +5484,10 @@ CMathContent.prototype.private_NeedAutoCorrect = function(ActionElement) {
     return false;
 };
 CMathContent.prototype.private_CanAutoCorrectText = function(AutoCorrectEngine, bSkipLast) {
-    var IndexAdd = (true === bSkipLast ? 1 : 0);
-    var skip = (g_aMathAutoCorrectTriggerCharCodes[AutoCorrectEngine.ActionElement.value]) ? 1 : 0;
-    skip -= (AutoCorrectEngine.ActionElement.value == 0x20) ? 1 : 0;
+    var IndexAdd = (g_aMathAutoCorrectTriggerCharCodes[AutoCorrectEngine.ActionElement.value]) ? 1 : 0;
+    var skip = IndexAdd - (AutoCorrectEngine.ActionElement.value == 0x20) ? 1 : 0;
     var ElCount = AutoCorrectEngine.Elements.length;
-    if (ElCount < 2 + IndexAdd) {
+    if (ElCount < 1 + IndexAdd) {
         return false;
     }
     var Result = false;
@@ -5499,15 +5498,16 @@ CMathContent.prototype.private_CanAutoCorrectText = function(AutoCorrectEngine, 
     var AutoCorrectCount = g_aAutoCorrectMathSymbols.length;
     for (var nIndex = 0; nIndex < AutoCorrectCount; nIndex++) {
         var AutoCorrectElement = g_aAutoCorrectMathSymbols[nIndex];
+        var tmp = AutoCorrectElement[0].length == 2 ? 1 : 0;
         var CheckString = AutoCorrectElement[0];
         var CheckStringLen = CheckString.length;
 
-        if (ElCount < CheckStringLen + IndexAdd) {
+        if (ElCount < CheckStringLen + IndexAdd - tmp) {
             continue;
         }
         var Found = true;
         for (var nStringPos = 0; nStringPos < CheckStringLen; nStringPos++) {
-            var LastEl = AutoCorrectEngine.Elements[ElCount - nStringPos - 1 - IndexAdd];
+            var LastEl = AutoCorrectEngine.Elements[ElCount - nStringPos - 1 - IndexAdd + tmp];
             if (!LastEl.Element.IsText()) {
                 FlagEnd = true;
                 Found = false;
@@ -5520,7 +5520,7 @@ CMathContent.prototype.private_CanAutoCorrectText = function(AutoCorrectEngine, 
         }
         if (true === Found) {
             RemoveCount = CheckStringLen + IndexAdd - skip;
-            Start = ElCount - RemoveCount - skip;
+            Start = ElCount - RemoveCount - skip + tmp;
 
             if (undefined === AutoCorrectElement[1].length) {
                 ReplaceChars[0] = AutoCorrectElement[1];
