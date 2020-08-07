@@ -471,11 +471,13 @@ CNum.prototype.Draw = function(nX, nY, oContext, nLvl, oNumInfo, oNumTextPr, oTh
 {
 	var oLvl    = this.GetLvl(nLvl);
 	var arrText = oLvl.GetLvlText();
+	var dKoef   = oNumTextPr.VertAlign !== AscCommon.vertalign_Baseline ? AscCommon.vaKSize : 1;
+
 
 	oContext.SetTextPr(oNumTextPr, oTheme);
-	oContext.SetFontSlot(fontslot_ASCII);
+	oContext.SetFontSlot(fontslot_ASCII, dKoef);
 	g_oTextMeasurer.SetTextPr(oNumTextPr, oTheme);
-	g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
+	g_oTextMeasurer.SetFontSlot(fontslot_ASCII, dKoef);
 
 	for (var nTextIndex = 0, nTextLen = arrText.length; nTextIndex < nTextLen; ++nTextIndex)
 	{
@@ -490,8 +492,8 @@ CNum.prototype.Draw = function(nX, nY, oContext, nLvl, oNumInfo, oNumTextPr, oTh
 
 				var FontSlot = g_font_detector.Get_FontClass(arrText[nTextIndex].Value.charCodeAt(0), Hint, lcid, bCS, bRTL);
 
-				oContext.SetFontSlot(FontSlot);
-				g_oTextMeasurer.SetFontSlot(FontSlot);
+				oContext.SetFontSlot(FontSlot, dKoef);
+				g_oTextMeasurer.SetFontSlot(FontSlot, dKoef);
 
 				oContext.FillText(nX, nY, arrText[nTextIndex].Value);
 				nX += g_oTextMeasurer.Measure(arrText[nTextIndex].Value).Width;
@@ -500,8 +502,8 @@ CNum.prototype.Draw = function(nX, nY, oContext, nLvl, oNumInfo, oNumTextPr, oTh
 			}
 			case numbering_lvltext_Num:
 			{
-				oContext.SetFontSlot(fontslot_ASCII);
-				g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
+				oContext.SetFontSlot(fontslot_ASCII, dKoef);
+				g_oTextMeasurer.SetFontSlot(fontslot_ASCII, dKoef);
 
 				var nCurLvl = arrText[nTextIndex].Value;
 				var T = "";
@@ -536,9 +538,10 @@ CNum.prototype.Measure = function(oContext, nLvl, oNumInfo, oNumTextPr, oTheme)
 
 	var oLvl    = this.GetLvl(nLvl);
 	var arrText = oLvl.GetLvlText();
+	var dKoef   = oNumTextPr.VertAlign !== AscCommon.vertalign_Baseline ? AscCommon.vaKSize : 1;
 
 	oContext.SetTextPr(oNumTextPr, oTheme);
-	oContext.SetFontSlot(fontslot_ASCII);
+	oContext.SetFontSlot(fontslot_ASCII, dKoef);
 	var nAscent = oContext.GetAscender();
 
 	for (var nTextIndex = 0, nTextLen = arrText.length; nTextIndex < nTextLen; ++nTextIndex)
@@ -554,14 +557,14 @@ CNum.prototype.Measure = function(oContext, nLvl, oNumInfo, oNumTextPr, oTheme)
 
 				var FontSlot = g_font_detector.Get_FontClass(arrText[nTextIndex].Value.charCodeAt(0), Hint, lcid, bCS, bRTL);
 
-				oContext.SetFontSlot(FontSlot);
+				oContext.SetFontSlot(FontSlot, dKoef);
 				nX += oContext.Measure(arrText[nTextIndex].Value).Width;
 
 				break;
 			}
 			case numbering_lvltext_Num:
 			{
-				oContext.SetFontSlot(fontslot_ASCII);
+				oContext.SetFontSlot(fontslot_ASCII, dKoef);
 				var nCurLvl = arrText[nTextIndex].Value;
 
 				var T = "";

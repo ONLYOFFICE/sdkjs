@@ -860,7 +860,8 @@ function ParaEnd()
 	CRunElementBase.call(this);
 
     this.SectionPr    = null;
-    this.WidthVisible = 0x00000000 | 0; 
+    this.WidthVisible = 0x00000000 | 0;
+	this.Flags        = 0x00000000 | 0;
 }
 ParaEnd.prototype = Object.create(CRunElementBase.prototype);
 ParaEnd.prototype.constructor = ParaEnd;
@@ -870,7 +871,8 @@ ParaEnd.prototype.Draw = function(X, Y, Context, bEndCell, bForceDraw)
 {
 	if ((undefined !== editor && editor.ShowParaMarks) || true === bForceDraw)
 	{
-		Context.SetFontSlot(fontslot_ASCII);
+		var FontKoef = (this.Flags & PARATEXT_FLAGS_FONTKOEF_SCRIPT ? AscCommon.vaKSize : 1);
+		Context.SetFontSlot(fontslot_ASCII, FontKoef);
 
 		if (null !== this.SectionPr)
 		{
@@ -900,9 +902,20 @@ ParaEnd.prototype.Draw = function(X, Y, Context, bEndCell, bForceDraw)
 			Context.FillText(X, Y, String.fromCharCode(0x00B6));
 	}
 };
-ParaEnd.prototype.Measure = function(Context, bEndCell)
+ParaEnd.prototype.Measure = function(Context, oTextPr, bEndCell)
 {
-	Context.SetFontSlot(fontslot_ASCII);
+	var dFontKoef = 1;
+	if (oTextPr.VertAlign !== AscCommon.vertalign_Baseline)
+	{
+		this.Flags |= PARATEXT_FLAGS_FONTKOEF_SCRIPT;
+		dFontKoef = AscCommon.vaKSize;
+	}
+	else
+	{
+		this.Flags &= PARATEXT_FLAGS_NON_FONTKOEF_SCRIPT;
+	}
+
+	Context.SetFontSlot(fontslot_ASCII, dFontKoef);
 
 	if (true === bEndCell)
 		this.WidthVisible = (Context.Measure(String.fromCharCode(0x00A4)).Width * TEXTWIDTH_DIVIDER) | 0;

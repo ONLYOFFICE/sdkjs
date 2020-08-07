@@ -2561,6 +2561,21 @@ Paragraph.prototype.Internal_Draw_4 = function(CurPage, pGraphics, Pr, BgColor, 
 							pGraphics.b_color1(oPrReviewColor.r, oPrReviewColor.g, oPrReviewColor.b, 255);
 						}
 
+						var TempY = Y;
+						switch (oNumTextPr.VertAlign)
+						{
+							case AscCommon.vertalign_SubScript:
+							{
+								Y -= AscCommon.vaKSub * oNumTextPr.FontSize * g_dKoef_pt_to_mm;
+								break;
+							}
+							case AscCommon.vertalign_SuperScript:
+							{
+								Y -= AscCommon.vaKSuper * oNumTextPr.FontSize * g_dKoef_pt_to_mm;
+								break;
+							}
+						}
+
 						// Рисуется только сам символ нумерации
 						switch (nNumJc)
 						{
@@ -2576,42 +2591,6 @@ Paragraph.prototype.Internal_Draw_4 = function(CurPage, pGraphics, Pr, BgColor, 
 							default:
 								NumberingItem.Draw(X, Y, pGraphics, oNumbering, oNumTextPr, PDSE.Theme, oPrevNumTextPr);
 								break;
-						}
-
-						if (true === editor.ShowParaMarks && (Asc.c_oAscNumberingSuff.Tab === nNumSuff || oNumLvl.IsLegacy()))
-						{
-							var TempWidth     = NumberingItem.WidthSuff;
-							var TempRealWidth = 3.143; // ширина символа "стрелка влево" в шрифте Wingding3,10
-
-							var X1 = X;
-							switch (nNumJc)
-							{
-								case align_Right:
-									break;
-
-								case align_Center:
-									X1 += NumberingItem.WidthNum / 2;
-									break;
-
-								case align_Left:
-								default:
-									X1 += NumberingItem.WidthNum;
-									break;
-							}
-
-							var X0 = TempWidth / 2 - TempRealWidth / 2;
-
-							pGraphics.SetFont({
-								FontFamily : {Name : "ASCW3", Index : -1},
-								FontSize   : 10,
-								Italic     : false,
-								Bold       : false
-							});
-
-							if (X0 > 0)
-								pGraphics.FillText2(X1 + X0, Y, String.fromCharCode(tab_Symbol), 0, TempWidth);
-							else
-								pGraphics.FillText2(X1, Y, String.fromCharCode(tab_Symbol), TempRealWidth - TempWidth, TempWidth);
 						}
 
 						if (true === oNumTextPr.Strikeout || true === oNumTextPr.Underline)
@@ -2663,6 +2642,44 @@ Paragraph.prototype.Internal_Draw_4 = function(CurPage, pGraphics, Pr, BgColor, 
 
 							if (true === oNumTextPr.Underline)
 								pGraphics.drawHorLine(0, (Y + this.Lines[CurLine].Metrics.TextDescent * 0.4), X_start, X_start + NumberingItem.WidthNum, (oNumTextPr.FontSize / 18) * g_dKoef_pt_to_mm);
+						}
+
+						Y = TempY;
+
+						if (true === editor.ShowParaMarks && (Asc.c_oAscNumberingSuff.Tab === nNumSuff || oNumLvl.IsLegacy()))
+						{
+							var TempWidth     = NumberingItem.WidthSuff;
+							var TempRealWidth = 3.143; // ширина символа "стрелка влево" в шрифте Wingding3,10
+
+							var X1 = X;
+							switch (nNumJc)
+							{
+								case align_Right:
+									break;
+
+								case align_Center:
+									X1 += NumberingItem.WidthNum / 2;
+									break;
+
+								case align_Left:
+								default:
+									X1 += NumberingItem.WidthNum;
+									break;
+							}
+
+							var X0 = TempWidth / 2 - TempRealWidth / 2;
+
+							pGraphics.SetFont({
+								FontFamily : {Name : "ASCW3", Index : -1},
+								FontSize   : 10,
+								Italic     : false,
+								Bold       : false
+							});
+
+							if (X0 > 0)
+								pGraphics.FillText2(X1 + X0, Y, String.fromCharCode(tab_Symbol), 0, TempWidth);
+							else
+								pGraphics.FillText2(X1, Y, String.fromCharCode(tab_Symbol), TempRealWidth - TempWidth, TempWidth);
 						}
 					}
 				}

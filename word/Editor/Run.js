@@ -5988,6 +5988,21 @@ ParaRun.prototype.Draw_Elements = function(PDSE)
                         }
                     }
 
+					Y = TempY;
+					switch (oEndTextPr.VertAlign)
+					{
+						case AscCommon.vertalign_SubScript:
+						{
+							Y -= AscCommon.vaKSub * oEndTextPr.FontSize * g_dKoef_pt_to_mm;
+							break;
+						}
+						case AscCommon.vertalign_SuperScript:
+						{
+							Y -= AscCommon.vaKSuper * oEndTextPr.FontSize * g_dKoef_pt_to_mm;
+							break;
+						}
+					}
+
                     var bEndCell = false;
 
                     var oDocContent = Para.GetParent();
