@@ -5462,7 +5462,7 @@ function parserFormula( formula, parent, _ws ) {
 		 При разборе формулы важен порядок проверки очередной части выражения на принадлежность тому или иному типу.
 		 */
 
-		if (this.Formula.length > AscCommon.c_oAscMaxFormulaLength) {
+		if (this.Formula.length >= AscCommon.c_oAscMaxFormulaLength) {
 			parseResult.setError(c_oAscError.ID.FrmlMaxLength);
 			this.outStack = [];
 			return false;
