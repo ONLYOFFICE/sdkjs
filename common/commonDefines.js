@@ -186,6 +186,7 @@
 			SessionToken: -122,
 
 			/* для формул */
+			FrmlMaxLength               : -298,
 			FrmlMaxTextLength           : -299,
 			FrmlWrongCountParentheses   : -300,
 			FrmlWrongOperator           : -301,
@@ -2146,6 +2147,7 @@
 	prot['SessionIdle']                      = prot.SessionIdle;
 	prot['SessionToken']                     = prot.SessionToken;
 	prot['FrmlMaxTextLength']                = prot.FrmlMaxTextLength;
+	prot['FrmlMaxLength']                    = prot.FrmlMaxLength;
 	prot['FrmlWrongCountParentheses']        = prot.FrmlWrongCountParentheses;
 	prot['FrmlWrongOperator']                = prot.FrmlWrongOperator;
 	prot['FrmlWrongMaxArgument']             = prot.FrmlWrongMaxArgument;
@@ -2793,7 +2795,7 @@
 	window['AscCommon']['align_Right'] = window['AscCommon'].align_Right = align_Right;
 	window['AscCommon']['align_Left'] = window['AscCommon'].align_Left = align_Left;
 	window['AscCommon']['align_Center'] = window['AscCommon'].align_Center = align_Center;
-	window['AscCommon']['align_Justify'] = window['AscCommon'].align_Justify = align_Justify;
+	window['AscCommon']['align_Justify'] = window['AscCommon'].align_Justify = align_Justify
 
 
 	window["AscCommon"]["c_oAscFormatPainterState"]    = c_oAscFormatPainterState;
