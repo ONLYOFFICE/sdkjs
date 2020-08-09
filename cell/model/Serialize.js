@@ -7968,7 +7968,9 @@
 					tmp.sharedFormulas[formula.si] = curFormula;
 					tmp.siFormulas[curFormula.parsed.getListenerId()] = curFormula.parsed;
 				}
-			}
+			} else if (formula.v && !(this.copyPasteObj && this.copyPasteObj.isCopyPaste)) {
+				tmp.ws.workbook.openErrors.push(cell.getName());
+            }
 			if (curFormula) {
 				cell.setFormulaInternal(curFormula.parsed);
 				if (curFormula.parsed.ca || cell.isNullTextString()) {
