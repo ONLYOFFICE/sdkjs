@@ -1722,8 +1722,10 @@ CT_PivotCacheRecords.prototype._getCol = function(index) {
 CT_PivotCacheRecords.prototype._getDataMapFromFields = function(indexes, length, row, dataMap) {
 	var i, val;
 	for (i = 0; i < length; ++i) {
-		val = this._cols[indexes[i]].get(row);
-		dataMap = this._getDataMapAddElem(dataMap, val.val, dataMap.total.length);
+		if (indexes[i] < this.getColsCount()) {
+			val = this._cols[indexes[i]].get(row);
+			dataMap = this._getDataMapAddElem(dataMap, val.val, dataMap.total.length);
+		}
 	}
 	return dataMap;
 };
@@ -3568,7 +3570,10 @@ CT_pivotTableDefinition.prototype.getPivotFieldCellValue = function(fieldIndex, 
 	var pivotField = pivotFields[fieldIndex];
 	var pivotFieldItem = pivotField.getItem(valueIndex);
 	var sharedItem = cacheFields[fieldIndex].getSharedItem(pivotFieldItem.x);
-	return sharedItem.getCellValue();
+	if (sharedItem) {
+		return sharedItem.getCellValue();
+	}
+	return new AscCommonExcel.CCellValue();
 };
 CT_pivotTableDefinition.prototype.getPageFieldCellValue = function(index) {
 	var pageField = this.asc_getPageFields()[index];
@@ -7927,12 +7932,12 @@ CT_PivotField.prototype.getFilterObject = function(cacheField, pageFilterItem) {
 			var item = items[i];
 			if (Asc.c_oAscItemType.Data === item.t || Asc.c_oAscItemType.Blank === item.t) {
 				var elem = AscCommonExcel.AutoFiltersOptionsElements();
-				if(Asc.c_oAscItemType.Data === item.t){
+				elem.val = elem.text = "";
+				if (Asc.c_oAscItemType.Data === item.t) {
 					var sharedItem = cacheField.getSharedItem(item.x);
-					var cellValue = sharedItem.getCellValue();
-					elem.val = elem.text = cellValue.getTextValue();
-				} else {
-					elem.val = elem.text = "";
+					if (sharedItem) {
+						elem.val = elem.text = sharedItem.getCellValue().getTextValue();
+					}
 				}
 				elem.visible = !item.h && (null == pageFilterItem || i === pageFilterItem);
 				elem.isDateFormat = false;
@@ -7954,8 +7959,9 @@ CT_PivotField.prototype.getFilterMapByFilter = function(cacheField, filterColumn
 				var val = "";
 				if (Asc.c_oAscItemType.Data === item.t) {
 					var sharedItem = cacheField.getSharedItem(item.x);
-					var cellValue = sharedItem.getCellValue();
-					val = cellValue.getTextValue();
+					if (sharedItem) {
+						val = sharedItem.getCellValue().getTextValue();
+					}
 				}
 				if (!filterColumn.isHideValue(val, null, null, null, true)) {
 					map.set(item.x, 1);
