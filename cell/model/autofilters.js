@@ -3045,7 +3045,7 @@
 							tableColumn.setTotalsRowLabel(label);
 							cell.setType(CellValueType.String);
 						}
-						var _formula = tableColumn.getTotalRowFormula(tablePart);
+						var _formula = tableColumn.getTotalRowFormula(tablePart, true);
 						newFormulas.push(_formula ? "=" + _formula : "");
 
 

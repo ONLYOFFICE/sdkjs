@@ -7225,14 +7225,14 @@ function RangeDataManagerElem(bbox, data)
 		}
 	};
 
-	TableColumn.prototype.getTotalRowFormula = function (tablePart) {
+	TableColumn.prototype.getTotalRowFormula = function (tablePart, bLocale) {
 		var t = this;
 		var res = null;
 		var funcNum;
 		if (null !== this.TotalsRowFunction) {
 			var generateFunction = function (val) {
 				var _name = "SUBTOTAL";
-				var _f = AscCommonExcel.cFormulaFunctionToLocale ? AscCommonExcel.cFormulaFunctionToLocale[_name] : _name;
+				var _f = bLocale && AscCommonExcel.cFormulaFunctionToLocale ? AscCommonExcel.cFormulaFunctionToLocale[_name] : _name;
 				var _separator = AscCommon.FormulaSeparators.functionArgumentSeparator;
 				return _f + "(" + val + _separator + tablePart.DisplayName + "[" + t.Name + "])";
 			};
@@ -7320,7 +7320,7 @@ function RangeDataManagerElem(bbox, data)
 	TableColumn.prototype.checkTotalRowFormula = function (ws, tablePart) {
 		if (null !== this.TotalsRowFunction &&
 			Asc.ETotalsRowFunction.totalrowfunctionCustom !== this.TotalsRowFunction) {
-			var totalRowFormula = this.getTotalRowFormula(tablePart);
+			var totalRowFormula = this.getTotalRowFormula(tablePart, true);
 
 			if (null !== totalRowFormula) {
 				this.applyTotalRowFormula(totalRowFormula, ws, true);
