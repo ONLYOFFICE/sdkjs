@@ -676,21 +676,33 @@
 		if (!(fragments.length > 0)) {
 			return;
 		}
-		var length = AscCommonExcel.getFragmentsLength(fragments);
-		if (!this._checkMaxCellLength(length)) {
-			return;
-		}
 
-		this._cleanFragments(fragments);
+		var noUpdateMode = this.noUpdateMode;
+		this.noUpdateMode = true;
 
 		if (this.selectionBegin !== this.selectionEnd) {
 			this._removeChars();
 		}
 
+		// limit count characters
+		var length = AscCommonExcel.getFragmentsLength(fragments);
+		var excess = this._checkMaxCellLength(length);
+		if (excess) {
+			length -= excess;
+			if (0 === length) {
+				this.noUpdateMode = noUpdateMode;
+				return false;
+			}
+			this._extractFragments(0, length, fragments);
+		}
+
+		this._cleanFragments(fragments);
+
 		// save info to undo/redo
 		this.undoList.push({fn: this._removeChars, args: [this.cursorPos, length]});
 		this.redoList = [];
 
+		this.noUpdateMode = noUpdateMode;
 		this._addFragments(fragments, this.cursorPos);
 
 		// Сделано только для вставки формулы в ячейку (когда не открыт редактор)
@@ -724,7 +736,7 @@
 	CellEditor.prototype.replaceText = function (pos, len, newText) {
 		this._moveCursor(kPosition, pos);
 		this._selectChars(kPosition, pos + len);
-		this._addChars(newText);
+		return this._addChars(newText);
 	};
 
 	CellEditor.prototype.setFontRenderingMode = function () {
@@ -1692,10 +1704,6 @@
 		if (!isRange) {
 			this.cleanSelectRange();
 		}
-		var length = str.length;
-		if (!this._checkMaxCellLength(length)) {
-			return false;
-		}
 
 		var opt = this.options, f, l, s;
 
@@ -1713,7 +1721,19 @@
 			this._removeChars(undefined, undefined, isRange);
 		}
 
+		var length = str.length;
 		if (0 !== length) {
+			// limit count characters
+			var excess = this._checkMaxCellLength(length);
+			if (excess) {
+				length -= excess;
+				if (0 === length) {
+					this.noUpdateMode = noUpdateMode;
+					return length;
+				}
+				str = str.slice(0, length);
+			}
+
 			if (pos === undefined) {
 				pos = this.cursorPos;
 			}
@@ -1747,6 +1767,8 @@
 		if (!this.noUpdateMode) {
 			this._update();
 		}
+
+		return length;
 	};
 
 	CellEditor.prototype._addNewLine = function () {
@@ -2164,22 +2186,9 @@
 		this.handlers.trigger("updateEditorSelectionInfo", xfs);
 	};
 
-	CellEditor.prototype._checkMaxCellLength = function ( length ) {
-		var newLength = AscCommonExcel.getFragmentsLength( this.options.fragments ) + length;
-		var maxLength = Asc.c_oAscMaxCellOrCommentLength;
-		// Ограничение на ввод
-		if ( newLength > maxLength ) {
-			if ( this.selectionBegin === this.selectionEnd ) {
-				return false;
-			}
-
-			var b = Math.min( this.selectionBegin, this.selectionEnd );
-			var e = Math.max( this.selectionBegin, this.selectionEnd );
-			if ( newLength - AscCommonExcel.getFragmentsLength(this._getFragments( b, e - b ) ) > maxLength) {
-				return false;
-			}
-		}
-		return true;
+	CellEditor.prototype._checkMaxCellLength = function (length) {
+		var count = AscCommonExcel.getFragmentsLength(this.options.fragments) + length - Asc.c_oAscMaxCellOrCommentLength;
+		return 0 > count ? 0 : count;
 	};
 
 	// Event handlers
@@ -2707,8 +2716,13 @@
 		AscFonts.FontPickerByCharacter.checkText(this.input.value, this, function () {
 			t.loadFonts = false;
 			t.skipTLUpdate = true;
-			t.replaceText(0, t.textRender.getEndOfText(), t.input.value);
+			var length = t.replaceText(0, t.textRender.getEndOfText(), t.input.value);
 			t._updateCursorByTopLine();
+
+			if (length !== t.input.value.length) {
+				t.input.value = AscCommonExcel.getFragmentsText((t.options.fragments));
+				t._updateTopLineCurPos();
+			}
 		});
 		return true;
 	};
@@ -2760,8 +2774,7 @@
 		}
 
 		var newText = this.getTextFromCharCodes(arrCharCodes);
-		this.replaceText(this.beginCompositePos, this.compositeLength, newText);
-		this.compositeLength = newText.length;
+		this.compositeLength = this.replaceText(this.beginCompositePos, this.compositeLength, newText);
 
 		var tmpBegin = this.selectionBegin, tmpEnd = this.selectionEnd;
 
