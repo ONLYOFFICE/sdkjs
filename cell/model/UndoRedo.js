@@ -413,6 +413,8 @@ function (window, undefined) {
 		this.PivotCacheDefinition = 85;
 		this.PivotCacheRecords = 86;
 		this.BinaryWrapper = 87;
+		this.PivotFieldElem = 88;
+		this.PivotFilter = 89;
 
 		this.Layout = 90;
 
@@ -578,6 +580,10 @@ function (window, undefined) {
 					return new CT_PivotCacheDefinition();
 				case this.PivotCacheRecords:
 					return new CT_PivotCacheRecords();
+				case this.PivotFieldElem:
+					return new CT_PivotField(true);
+				case this.PivotFilter:
+					return new CT_PivotFilter();
 				case this.BinaryWrapper:
 					return new UndoRedoData_BinaryWrapper();
 				case this.Layout:

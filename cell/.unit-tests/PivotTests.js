@@ -33,8 +33,8 @@
 $(function() {
 	QUnit.config.autostart = false;
 
-	// Tests completed in 2298 milliseconds.
-	// 1893 assertions of 1915 passed, 22 failed.
+	// Tests completed in 2621 milliseconds.
+	// 2311 assertions of 2371 passed, 60 failed.
 
 	// function getValues(ws, range) {
 	// 	var res = [];
@@ -424,26 +424,38 @@ $(function() {
 		strictEqual(dataError, "", message + "_dataError");
 	}
 
+	var memory = new AscCommon.CMemory();
+	function getXml(pivot){
+		memory.Seek(0);
+		pivot.toXml(memory);
+		return new TextDecoder("utf-8").decode(memory.GetData());
+	}
+
 	function checkHistoryOperation(pivot, standards, message, action) {
 		var wb = pivot.GetWS().workbook;
 		var undoValues = getReportValues(pivot);
+		var xmlStart = getXml(pivot);
 		AscCommon.History.Create_NewPoint();
 		AscCommon.History.StartTransaction();
 		action();
 		AscCommon.History.EndTransaction();
 		pivot = wb.getPivotTableById(pivot.Get_Id());
 		checkReportValues(pivot, getReportValues(pivot), standards, message);
+		var xmlDo = getXml(pivot);
 		var changes = wb.SerializeHistory();
 		AscCommon.History.Undo();
 		pivot = wb.getPivotTableById(pivot.Get_Id());
 		checkReportValues(pivot, getReportValues(pivot), undoValues, message + "_undo");
+		strictEqual(xmlStart, getXml(pivot), message + "_undo_xml");
 		AscCommon.History.Redo();
 		pivot = wb.getPivotTableById(pivot.Get_Id());
 		checkReportValues(pivot, getReportValues(pivot), standards, message + "_redo");
+		strictEqual(xmlDo, getXml(pivot), message + "_redo_xml");
 		AscCommon.History.Undo();
 		wb.DeserializeHistory(changes);
 		pivot = wb.getPivotTableById(pivot.Get_Id());
 		checkReportValues(pivot, getReportValues(pivot), standards, message + "_changes");
+		strictEqual(xmlDo, getXml(pivot), message + "_changes_xml");
 		return pivot;
 	}
 
@@ -3845,7 +3857,7 @@ $(function() {
 				pivot.filterByFieldIndex(api, getNewFilter(20), 1, true);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["valueFilterOrder2"], "order1", function(){
+			pivot = checkHistoryOperation(pivot, standards["valueFilterOrder2"], "order2", function(){
 				pivot.asc_removeFilters(api);
 
 				pivot.filterByFieldIndex(api, getNewFilter(20), 1, true);
@@ -3920,7 +3932,6 @@ $(function() {
 				filterObj.asc_setType(Asc.c_oAscAutoFilterTypes.CustomFilters);
 				var filter = filterObj.asc_getFilter();
 				filter.asc_setAnd(true);
-				filter.asc_setCustomFilters([new Asc.CustomFilter()]);
 				var customFilters = [];
 				var customFilter;
 				customFilter= new Asc.CustomFilter();
@@ -3933,7 +3944,7 @@ $(function() {
 					customFilter.asc_setVal(val2);
 					customFilters.push(customFilter);
 				}
-				customFilter.asc_setCustomFilters(customFilters);
+				filter.asc_setCustomFilters(customFilters);
 				var autoFilterObject = new Asc.AutoFiltersOptions();
 				autoFilterObject.pivotObj = pivotFilterObj;
 				autoFilterObject.filter = filterObj;
@@ -4041,7 +4052,7 @@ $(function() {
 
 		testFiltersTop10();
 
-		//testFiltersLabel();
+		// testFiltersLabel();
 
 		testPivotMisc();
 	}

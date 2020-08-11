@@ -312,15 +312,33 @@ function setFieldProperty(pivot, index, oldVal, newVal, addToHistory, historyTyp
 		pivot.setChanged(true);
 	}
 };
-function toXmlWithLength(w, elem) {
+function toXmlWithLength(w, elem, name, val1) {
 	var StartPos = w.GetCurPosition();
 	w.WriteLong(0);
-	elem.toXml(w);
+	elem.toXml(w, name, val1);
 	var EndPos = w.GetCurPosition();
 	w.Seek(StartPos);
 	w.WriteLong(EndPos - StartPos - 4);
 	w.Seek(EndPos);
 }
+
+function XmlReaderWrapper(name, elem) {
+	this.name = name;
+	this.elem = elem;
+}
+
+XmlReaderWrapper.prototype.onStartNode = function (elem, attr, uq) {
+	var newContext = this;
+	if (this.name === elem) {
+		newContext = this.elem;
+		if (newContext.readAttributes) {
+			newContext.readAttributes(attr, uq);
+		}
+	} else {
+		newContext = null;
+	}
+	return newContext;
+};
 
 function FromXml_ST_SourceType(val) {
 	var res = -1;
@@ -5276,6 +5294,11 @@ function CT_Index() {
 //Attributes
 	this.v = null;
 }
+CT_Index.prototype.clone = function() {
+	var res = new CT_Index();
+	res.v = res.v;
+	return res;
+};
 CT_Index.prototype.readAttributes = function(attr, uq) {
 	if (attr()) {
 		var vals = attr();
@@ -7407,6 +7430,64 @@ CT_PivotField.prototype.setDefaults = function() {
 	this.showPropAsCaption = false;
 	this.defaultAttributeDrillState = false;
 };
+CT_PivotField.prototype.clone = function() {
+	var res = new CT_PivotField(true);
+	res.name = this.name;
+	res.axis = this.axis;
+	res.dataField = this.dataField;
+	res.subtotalCaption = this.subtotalCaption;
+	res.showDropDowns = this.showDropDowns;
+	res.hiddenLevel = this.hiddenLevel;
+	res.uniqueMemberProperty = this.uniqueMemberProperty;
+	res.compact = this.compact;
+	res.allDrilled = this.allDrilled;
+	res.numFmtId = this.numFmtId;
+	res.outline = this.outline;
+	res.subtotalTop = this.subtotalTop;
+	res.dragToRow = this.dragToRow;
+	res.dragToCol = this.dragToCol;
+	res.multipleItemSelectionAllowed = this.multipleItemSelectionAllowed;
+	res.dragToPage = this.dragToPage;
+	res.dragToData = this.dragToData;
+	res.dragOff = this.dragOff;
+	res.showAll = this.showAll;
+	res.insertBlankRow = this.insertBlankRow;
+	res.serverField = this.serverField;
+	res.insertPageBreak = this.insertPageBreak;
+	res.autoShow = this.autoShow;
+	res.topAutoShow = this.topAutoShow;
+	res.hideNewItems = this.hideNewItems;
+	res.measureFilter = this.measureFilter;
+	res.includeNewItemsInFilter = this.includeNewItemsInFilter;
+	res.itemPageCount = this.itemPageCount;
+	res.sortType = this.sortType;
+	res.dataSourceSort = this.dataSourceSort;
+	res.nonAutoSortDefault = this.nonAutoSortDefault;
+	res.rankBy = this.rankBy;
+	res.defaultSubtotal = this.defaultSubtotal;
+	res.sumSubtotal = this.sumSubtotal;
+	res.countASubtotal = this.countASubtotal;
+	res.avgSubtotal = this.avgSubtotal;
+	res.maxSubtotal = this.maxSubtotal;
+	res.minSubtotal = this.minSubtotal;
+	res.productSubtotal = this.productSubtotal;
+	res.countSubtotal = this.countSubtotal;
+	res.stdDevSubtotal = this.stdDevSubtotal;
+	res.stdDevPSubtotal = this.stdDevPSubtotal;
+	res.varSubtotal = this.varSubtotal;
+	res.varPSubtotal = this.varPSubtotal;
+	res.showPropCell = this.showPropCell;
+	res.showPropTip = this.showPropTip;
+	res.showPropAsCaption = this.showPropAsCaption;
+	res.defaultAttributeDrillState = this.defaultAttributeDrillState;
+	if (this.items) {
+		res.items = this.items.clone();
+	}
+	if (this.autoSortScope) {
+		res.autoSortScope = this.autoSortScope.clone();
+	}
+	return res;
+};
 CT_PivotField.prototype.readAttributes = function(attr, uq) {
 	if (attr()) {
 		var vals = attr();
@@ -7793,6 +7874,23 @@ CT_PivotField.prototype.toXml = function(writer, name) {
 		this.extLst.toXml(writer, "extLst");
 	}
 	writer.WriteXmlNodeEnd(name);
+};
+CT_PivotField.prototype.getType = function() {
+	return AscCommonExcel.UndoRedoDataTypes.PivotFieldElem;
+};
+CT_PivotField.prototype.Write_ToBinary2 = function(writer) {
+	//todo write binary
+	var t = this;
+	AscCommonExcel.executeInR1C1Mode(false, function () {
+		toXmlWithLength(writer, t, "pivotField");
+	});
+};
+CT_PivotField.prototype.Read_FromBinary2 = function(reader) {
+	var tmp = new XmlReaderWrapper("pivotFilter", this);
+	var len = reader.GetLong();
+	AscCommonExcel.executeInR1C1Mode(false, function () {
+		new AscCommon.openXml.SaxParserBase().parse(AscCommon.GetStringUtf8(reader, len), tmp);
+	});
 };
 CT_PivotField.prototype.asc_getName = function () {
 	return this.name;
@@ -8753,6 +8851,23 @@ CT_PivotFilter.prototype.toXml = function(writer, name, id) {
 	}
 	writer.WriteXmlNodeEnd(name);
 };
+CT_PivotFilter.prototype.getType = function() {
+	return AscCommonExcel.UndoRedoDataTypes.PivotFilter;
+};
+CT_PivotFilter.prototype.Write_ToBinary2 = function(writer) {
+	//todo write binary
+	var t = this;
+	AscCommonExcel.executeInR1C1Mode(false, function () {
+		toXmlWithLength(writer, t, "pivotFilter", null);
+	});
+};
+CT_PivotFilter.prototype.Read_FromBinary2 = function(reader) {
+	var tmp = new XmlReaderWrapper("pivotFilter", this);
+	var len = reader.GetLong();
+	AscCommonExcel.executeInR1C1Mode(false, function () {
+		new AscCommon.openXml.SaxParserBase().parse(AscCommon.GetStringUtf8(reader, len), tmp);
+	});
+};
 CT_PivotFilter.prototype.isLabelFilter = function() {
 	return !this.isValueFilter();
 };
@@ -8762,7 +8877,7 @@ CT_PivotFilter.prototype.isValueFilter = function() {
 };
 CT_PivotFilter.prototype.getFilterColumn = function() {
 	return this.autoFilter && this.autoFilter.FilterColumns && this.autoFilter.FilterColumns[0];
-}
+};
 function CT_HierarchyUsage() {
 //Attributes
 	this.hierarchyUsage = null;
@@ -9284,6 +9399,25 @@ function CT_PivotArea() {
 	this.references = null;
 	this.extLst = null;
 }
+CT_PivotArea.prototype.clone = function() {
+	var res = new CT_PivotArea();
+	res.field = this.field;
+	res.type = this.type;
+	res.dataOnly = this.dataOnly;
+	res.labelOnly = this.labelOnly;
+	res.grandRow = this.grandRow;
+	res.grandCol = this.grandCol;
+	res.cacheIndex = this.cacheIndex;
+	res.outline = this.outline;
+	res.offset = this.offset;
+	res.collapsedLevelsAreSubtotals = this.collapsedLevelsAreSubtotals;
+	res.axis = this.axis;
+	res.fieldPosition = this.fieldPosition;
+	if (this.references) {
+		res.references = this.references.clone()
+	}
+	return res;
+};
 CT_PivotArea.prototype.readAttributes = function(attr, uq) {
 	if (attr()) {
 		var vals = attr();
@@ -9453,6 +9587,13 @@ function CT_Items() {
 //Members
 	this.item = [];
 }
+CT_Items.prototype.clone = function() {
+	var res = new CT_Items();
+	for (var i = 0; i < this.item.length; ++i) {
+		res.item.push(this.item[i].clone());
+	}
+	return res;
+};
 CT_Items.prototype.onStartNode = function(elem, attr, uq) {
 	var newContext = this;
 	if ("item" === elem) {
@@ -9482,6 +9623,13 @@ function CT_AutoSortScope() {
 //Members
 	this.pivotArea = null;
 }
+CT_AutoSortScope.prototype.clone = function() {
+	var res = new CT_AutoSortScope();
+	if (this.pivotArea) {
+		res.pivotArea = this.pivotArea.clone()
+	}
+	return res;
+};
 CT_AutoSortScope.prototype.onStartNode = function(elem, attr, uq) {
 	var newContext = this;
 	if ("pivotArea" === elem) {
@@ -9961,6 +10109,13 @@ function CT_PivotAreaReferences() {
 //Members
 	this.reference = [];
 }
+CT_PivotAreaReferences.prototype.clone = function() {
+	var res = new CT_PivotAreaReferences();
+	for (var i = 0; i < this.reference.length; ++i) {
+		res.reference.push(this.reference[i].clone());
+	}
+	return res;
+};
 CT_PivotAreaReferences.prototype.onStartNode = function(elem, attr, uq) {
 	var newContext = this;
 	if ("reference" === elem) {
@@ -10286,6 +10441,29 @@ function CT_PivotAreaReference() {
 	this.x = [];
 	this.extLst = null;
 }
+CT_PivotAreaReference.prototype.clone = function() {
+	var res = new CT_PivotAreaReference();
+	res.field = this.field;
+	res.selected = this.selected;
+	res.byPosition = this.byPosition;
+	res.relative = this.relative;
+	res.defaultSubtotal = this.defaultSubtotal;
+	res.sumSubtotal = this.sumSubtotal;
+	res.countASubtotal = this.countASubtotal;
+	res.avgSubtotal = this.avgSubtotal;
+	res.maxSubtotal = this.maxSubtotal;
+	res.minSubtotal = this.minSubtotal;
+	res.productSubtotal = this.productSubtotal;
+	res.countSubtotal = this.countSubtotal;
+	res.stdDevSubtotal = this.stdDevSubtotal;
+	res.stdDevPSubtotal = this.stdDevPSubtotal;
+	res.varSubtotal = this.varSubtotal;
+	res.varPSubtotal = this.varPSubtotal;
+	for (var i = 0; i < this.x.length; ++i) {
+		res.x.push(this.x[i].clone());
+	}
+	return res;
+};
 CT_PivotAreaReference.prototype.readAttributes = function(attr, uq) {
 	if (attr()) {
 		var vals = attr();
