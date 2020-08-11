@@ -5800,6 +5800,7 @@ function parserFormula( formula, parent, _ws ) {
 		var wasLeftParentheses = false, wasRigthParentheses = false, found_operand = null, _3DRefTmp = null, _tableTMP = null;
 		cFormulaList = (local && AscCommonExcel.cFormulaFunctionLocalized) ? AscCommonExcel.cFormulaFunctionLocalized : cFormulaFunction;
 		var leftParentArgumentsCurrentArr = [];
+		var referenceCount = 0;
 
 		//позиция курсора при открытой ячейке на редактирование
 		//если activePos - undefined - ищем первую функцию
@@ -5814,6 +5815,18 @@ function parserFormula( formula, parent, _ws ) {
 		var startArrayArg = null;
 
 		var t = this;
+		var _checkReferenceCount = function () {
+			referenceCount++;
+			if (referenceCount > AscCommon.c_oAscMaxFormulaReferenceLength) {
+				parseResult.setError(c_oAscError.ID.FrmlMaxTextLength);
+				if(!ignoreErrors) {
+					t.outStack = [];
+					return false;
+				}
+			}
+			return true;
+		};
+
 		var parseOperators = function(){
 			wasLeftParentheses = false;
 			wasRigthParentheses = false;
@@ -6252,6 +6265,11 @@ function parserFormula( formula, parent, _ws ) {
 						return false;
 					}
 				}
+
+				if (!_checkReferenceCount()) {
+					return false;
+				}
+
 				if (parserHelp.isArea.call(ph, t.Formula, ph.pCurrPos)) {
 					if(!(wsF && wsT)) {
 						//for edit formula mode
@@ -6280,11 +6298,16 @@ function parserFormula( formula, parent, _ws ) {
 			}
 
 			/* Referens to cells area A1:A10 */ else if (parserHelp.isArea.call(ph, t.Formula, ph.pCurrPos)) {
+				if (!_checkReferenceCount()) {
+					return false;
+				}
 				found_operand = new cArea(ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase(), t.ws);
 				parseResult.addRefPos(ph.pCurrPos - ph.operand_str.length, ph.pCurrPos, t.outStack.length, found_operand);
 			}
 			/* Referens to cell A4 */ else if (parserHelp.isRef.call(ph, t.Formula, ph.pCurrPos)) {
-
+				if (!_checkReferenceCount()) {
+					return false;
+				}
 				found_operand = new cRef(ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase(), t.ws);
 				parseResult.addRefPos(ph.pCurrPos - ph.operand_str.length, ph.pCurrPos, t.outStack.length, found_operand);
 			}
@@ -6302,6 +6325,10 @@ function parserFormula( formula, parent, _ws ) {
 					}
 				}
 
+				if (!_checkReferenceCount()) {
+					return false;
+				}
+
 				if (found_operand.type !== cElementType.error) {
 					parseResult.addRefPos(ph.pCurrPos - ph.operand_str.length, ph.pCurrPos, t.outStack.length, found_operand, true);
 				}
@@ -6316,6 +6343,10 @@ function parserFormula( formula, parent, _ws ) {
 						t.outStack = [];
 						return false;
 					}
+				}
+
+				if (!_checkReferenceCount()) {
+					return false;
 				}
 
 				//проверяем вдруг это область печати
