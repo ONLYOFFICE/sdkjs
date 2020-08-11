@@ -2819,7 +2819,7 @@
 	 */
 	baseEditorsApi.prototype.asc_getAutoCorrectMathSymbols = function()
 	{
-        return window['AscCommonWord'].g_AutoCorrectMathsList.g_DefaultAutoCorrectMathSymbolsList;
+        return window['AscCommonWord'].g_AutoCorrectMathsList.DefaultAutoCorrectMathSymbolsList;
 	};
 	/**
 	 * Return default array for Math AutoCorrect functions for menu
@@ -2827,21 +2827,21 @@
 	 */
 	baseEditorsApi.prototype.asc_getAutoCorrectMathFunctions = function()
 	{
-        return window['AscCommonWord'].g_AutoCorrectMathsList.g_DefaultAutoCorrectMathFuncs;
+        return window['AscCommonWord'].g_AutoCorrectMathsList.DefaultAutoCorrectMathFuncs;
 	};
 	/**
 	 * Reset to defaul math autocorrect symbols list
 	 */
 	baseEditorsApi.prototype.asc_resetToDefaultAutoCorrectMathSymbols = function()
 	{
-		window['AscCommonWord'].g_AutoCorrectMathsList.g_AutoCorrectMathSymbols = JSON.parse(JSON.stringify(window['AscCommonWord'].g_AutoCorrectMathsList.g_DefaultAutoCorrectMathSymbolsList));
+		window['AscCommonWord'].g_AutoCorrectMathsList.AutoCorrectMathSymbols = JSON.parse(JSON.stringify(window['AscCommonWord'].g_AutoCorrectMathsList.DefaultAutoCorrectMathSymbolsList));
 	};
 	/**
 	 * Reset to default version math autocorrect functions list
 	 */
 	baseEditorsApi.prototype.asc_resetToDefaultAutoCorrectMathFunctions = function()
 	{
-		window['AscCommonWord'].g_AutoCorrectMathsList.g_AutoCorrectMathFuncs = JSON.parse(JSON.stringify(window['AscCommonWord'].g_AutoCorrectMathsList.g_DefaultAutoCorrectMathFuncs));
+		window['AscCommonWord'].g_AutoCorrectMathsList.AutoCorrectMathFuncs = JSON.parse(JSON.stringify(window['AscCommonWord'].g_AutoCorrectMathsList.DefaultAutoCorrectMathFuncs));
 	};
 	/**
 	 * Delete item from g_AutoCorrectMathSymbols
@@ -2849,12 +2849,12 @@
 	 */
 	baseEditorsApi.prototype.asc_deleteFromAutoCorrectMathSymbols = function(element)
 	{
-        var remInd = window['AscCommonWord'].g_AutoCorrectMathsList.g_AutoCorrectMathSymbols.findIndex(function(val, index){
+        var remInd = window['AscCommonWord'].g_AutoCorrectMathsList.AutoCorrectMathSymbols.findIndex(function(val, index){
 			if (val[0] === element){
 				return index;
 			}
 		});
-		window['AscCommonWord'].g_AutoCorrectMathsList.g_AutoCorrectMathSymbols.splice(remInd, 1);
+		window['AscCommonWord'].g_AutoCorrectMathsList.AutoCorrectMathSymbols.splice(remInd, 1);
 	};
 	/**
 	 * Delete item from g_AutoCorrectMathFuncs
@@ -2862,12 +2862,12 @@
 	 */
 	baseEditorsApi.prototype.asc_deleteFromAutoCorrectMathFunctions = function(element)
 	{
-        var remInd = window['AscCommonWord'].g_AutoCorrectMathsList.g_AutoCorrectMathFuncs.findIndex(function(val, index){
+        var remInd = window['AscCommonWord'].g_AutoCorrectMathsList.AutoCorrectMathFuncs.findIndex(function(val, index){
 			if (val === element){
 				return index;
 			}
 		});
-		window['AscCommonWord'].g_AutoCorrectMathsList.g_AutoCorrectMathFuncs.splice(remInd, 1);
+		window['AscCommonWord'].g_AutoCorrectMathsList.AutoCorrectMathFuncs.splice(remInd, 1);
 	};
 	/**
 	 * Add or edit item from g_AutoCorrectMathSymbols
@@ -2879,15 +2879,15 @@
 		if (typeof repVal === 'string') {
 			repVal = AscCommon.convertUTF16toUnicode(repVal);
 		}
-		var changeInd = window['AscCommonWord'].g_AutoCorrectMathsList.g_AutoCorrectMathSymbols.findIndex(function(val, index){
+		var changeInd = window['AscCommonWord'].g_AutoCorrectMathsList.AutoCorrectMathSymbols.findIndex(function(val, index){
 			if (val[0] === element){
 				return index;
 			}
 		});
 		if (changeInd >= 0) {
-			window['AscCommonWord'].g_AutoCorrectMathsList.g_AutoCorrectMathSymbols[changeInd][1] = repVal;
+			window['AscCommonWord'].g_AutoCorrectMathsList.AutoCorrectMathSymbols[changeInd][1] = repVal;
 		} else {
-			window['AscCommonWord'].g_AutoCorrectMathsList.g_AutoCorrectMathSymbols.push([element, repVal]);
+			window['AscCommonWord'].g_AutoCorrectMathsList.AutoCorrectMathSymbols.push([element, repVal]);
 		}
 	};
 	/**
