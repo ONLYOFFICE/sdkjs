@@ -9114,6 +9114,12 @@ var g_DefaultAutoCorrectMathSymbolsList =
 ];
 var g_AutoCorrectMathSymbols = JSON.parse(JSON.stringify(g_DefaultAutoCorrectMathSymbolsList));
 var g_AutoCorrectMathFuncs = JSON.parse(JSON.stringify(g_DefaultAutoCorrectMathFuncs));
+var g_AutoCorrectMathsList = {
+    g_DefaultAutoCorrectMathSymbolsList,
+    g_AutoCorrectMathSymbols,
+    g_DefaultAutoCorrectMathFuncs,
+    g_AutoCorrectMathFuncs
+};
 //символы для mathfunc (интеграл, сумма...)
 var q_aMathAutoCorrectControlAggregationCodes =
 {
@@ -9265,5 +9271,5 @@ var g_aMathAutoCorrectLatinAlph = {
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CMathContent = CMathContent;
-window['AscCommonWord'].g_AutoCorrectMathsList = {g_DefaultAutoCorrectMathSymbolsList , g_AutoCorrectMathSymbols, g_DefaultAutoCorrectMathFuncs, g_AutoCorrectMathFuncs};
+window['AscCommonWord'].g_AutoCorrectMathsList = g_AutoCorrectMathsList;
 
