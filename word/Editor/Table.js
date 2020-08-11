@@ -94,14 +94,19 @@ function CTable(DrawingDocument, Parent, Inline, Rows, Cols, TableGrid, bPresent
     this.Inline = Inline;
 
     this.Lock = new AscCommon.CLock();
-    // TODO: Когда у g_oIdCounter будет тоже проверка на TurnOff заменить здесь
-    if (false === AscCommon.g_oIdCounter.m_bLoad && true === History.Is_On())
-    {
-        this.Lock.Set_Type(AscCommon.locktype_Mine, false);
-        if (AscCommon.CollaborativeEditing)
-            AscCommon.CollaborativeEditing.Add_Unlock2(this);
-    }
-    
+
+	// TODO: Когда у g_oIdCounter будет тоже проверка на TurnOff заменить здесь
+	// Когда пользователь сидит 1, мы не лочим параграф на добавлении, т.к. лок не отсылается на сервер в такой
+	// ситуации, а лочим при любом первом действии с параграфом
+	if (false === AscCommon.g_oIdCounter.m_bLoad
+		&& true === History.Is_On()
+		&& AscCommon.CollaborativeEditing
+		&& !AscCommon.CollaborativeEditing.Is_SingleUser())
+	{
+		this.Lock.Set_Type(AscCommon.locktype_Mine, false);
+		AscCommon.CollaborativeEditing.Add_Unlock2(this);
+	}
+
     this.DrawingDocument = null;
     this.LogicDocument   = null;
     

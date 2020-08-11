@@ -128,13 +128,19 @@ function Paragraph(DrawingDocument, Parent, bFromPresentation)
     // True, если ячейка попадает в выделение по ячейкам.
 
     this.Lock = new AscCommon.CLock(); // Зажат ли данный параграф другим пользователем
-    // TODO: Когда у g_oIdCounter будет тоже проверка на TurnOff заменить здесь
-    if (this.bFromDocument && false === AscCommon.g_oIdCounter.m_bLoad && true === History.Is_On())
-    {
-        this.Lock.Set_Type(AscCommon.locktype_Mine, false);
-        if (AscCommon.CollaborativeEditing)
-            AscCommon.CollaborativeEditing.Add_Unlock2(this);
-    }
+
+	// TODO: Когда у g_oIdCounter будет тоже проверка на TurnOff заменить здесь
+	// Когда пользователь сидит 1, мы не лочим параграф на добавлении, т.к. лок не отсылается на сервер в такой
+	// ситуации, а лочим при любом первом действии с параграфом
+	if (this.bFromDocument
+		&& false === AscCommon.g_oIdCounter.m_bLoad
+		&& true === History.Is_On()
+		&& AscCommon.CollaborativeEditing
+		&& !AscCommon.CollaborativeEditing.Is_SingleUser())
+	{
+		this.Lock.Set_Type(AscCommon.locktype_Mine, false);
+		AscCommon.CollaborativeEditing.Add_Unlock2(this);
+	}
 
     this.DeleteCommentOnRemove    = true; // Удаляем ли комменты в функциях Internal_Content_Remove
 
