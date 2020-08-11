@@ -2896,7 +2896,7 @@
 	 */
 	baseEditorsApi.prototype.asc_AddFromAutoCorrectMathFunctions = function(newEl)
 	{
-		window['AscCommonWord'].g_AutoCorrectMathsList.g_AutoCorrectMathFuncs.push(newEl);
+		window['AscCommonWord'].g_AutoCorrectMathsList.AutoCorrectMathFuncs.push(newEl);
 	};
 	/**
 	 * Refresh g_AutoCorrectMathSymbols on start
