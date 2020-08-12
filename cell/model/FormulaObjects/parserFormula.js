@@ -5818,7 +5818,7 @@ function parserFormula( formula, parent, _ws ) {
 		var _checkReferenceCount = function () {
 			referenceCount++;
 			if (referenceCount > AscCommon.c_oAscMaxFormulaReferenceLength) {
-				parseResult.setError(c_oAscError.ID.FrmlMaxTextLength);
+				parseResult.setError(c_oAscError.ID.FrmlMaxReference);
 				if(!ignoreErrors) {
 					t.outStack = [];
 					return false;

@@ -186,6 +186,7 @@
 			SessionToken: -122,
 
 			/* для формул */
+			FrmlMaxReference            : -297,
 			FrmlMaxLength               : -298,
 			FrmlMaxTextLength           : -299,
 			FrmlWrongCountParentheses   : -300,
@@ -2149,6 +2150,7 @@
 	prot['SessionToken']                     = prot.SessionToken;
 	prot['FrmlMaxTextLength']                = prot.FrmlMaxTextLength;
 	prot['FrmlMaxLength']                    = prot.FrmlMaxLength;
+	prot['FrmlMaxReference']                 = prot.FrmlMaxReference;
 	prot['FrmlWrongCountParentheses']        = prot.FrmlWrongCountParentheses;
 	prot['FrmlWrongOperator']                = prot.FrmlWrongOperator;
 	prot['FrmlWrongMaxArgument']             = prot.FrmlWrongMaxArgument;
