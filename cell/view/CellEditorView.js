@@ -1231,51 +1231,45 @@
 		return doAdjust;
 	};
 	CellEditor.prototype._expandWidth = function () {
-		var t = this, l = false, r = false, leftSide = this.sides.l, rightSide = this.sides.r;
+		var i, l = -1, r = -1;
 
-		function expandLeftSide() {
-			var i = asc_search( leftSide, function ( v ) {
-				return v < t.left;
-			} );
-			if ( i >= 0 ) {
-				t.left = leftSide[i];
+		if (AscCommon.align_Left === this.textFlags.textAlign || AscCommon.align_Center === this.textFlags.textAlign) {
+			var rightSide = this.sides.r;
+			for (i = 0; i < rightSide.length; ++i) {
+				if (rightSide[i] > this.right) {
+					r = rightSide[i];
+					break;
+				}
+			}
+		}
+		if (AscCommon.align_Right === this.textFlags.textAlign || AscCommon.align_Center === this.textFlags.textAlign) {
+			var leftSide = this.sides.l;
+			for (i = 0; i < leftSide.length; ++i) {
+				if (leftSide[i] < this.left) {
+					l = leftSide[i];
+					break;
+				}
+			}
+		}
+
+		if (AscCommon.align_Center === this.textFlags.textAlign) {
+			if (-1 !== l && -1 !== r) {
+				var min = Math.min(this.left - l, r - this.right);
+				this.left -= min;
+				this.right += min;
 				return true;
 			}
-			var val = leftSide[leftSide.length - 1];
-			if ( Math.abs( t.left - val ) > 0.000001 ) { // left !== leftSide[len-1]
-				t.left = val;
-			}
-			return false;
-		}
-
-		function expandRightSide() {
-			var i = asc_search( rightSide, function ( v ) {
-				return v > t.right;
-			} );
-			if ( i >= 0 ) {
-				t.right = rightSide[i];
+		} else {
+			if (-1 !== l) {
+				this.left = l;
+				return true;
+			} else if (-1 !== r) {
+				this.right = r;
 				return true;
 			}
-			var val = rightSide[rightSide.length - 1];
-			if ( Math.abs( t.right - val ) > 0.000001 ) { // right !== rightSide[len-1]
-				t.right = val;
-			}
-			return false;
 		}
 
-		switch ( t.textFlags.textAlign ) {
-			case AscCommon.align_Right:
-				r = expandLeftSide();
-				break;
-			case AscCommon.align_Center:
-				l = expandLeftSide();
-				r = expandRightSide();
-				break;
-			case AscCommon.align_Left:
-			default:
-				r = expandRightSide();
-		}
-		return l || r;
+		return false;
 	};
 	CellEditor.prototype._expandHeight = function () {
 		var t = this, bottomSide = this.sides.b, i = asc_search( bottomSide, function ( v ) {
