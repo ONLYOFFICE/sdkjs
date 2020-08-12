@@ -5818,7 +5818,7 @@ function parserFormula( formula, parent, _ws ) {
 		var _checkReferenceCount = function (weight) {
 			//ввожу ограничение на максимальное количество операндов в формуле
 			//для этого добавляю вес каждого операнда
-			//func - 0.75, array - 2, bool - 0.5, number - 0.5
+			//func - 0.75, array - 2, bool - 0.5, number - _number >= 65536 || Number.isInteger(_number)) ? 1.25 : 0.5
 			//string - 0.5+length*0/25
 			//error - 1
 			//area - 2 или 3(в зависимости от количества листов)
@@ -6395,7 +6395,8 @@ function parserFormula( formula, parent, _ws ) {
 			/* Numbers*/ else if (parserHelp.isNumber.call(ph, t.Formula, ph.pCurrPos, digitDelim)) {
 				if (ph.operand_str !== ".") {
 					var _number = parseFloat(ph.operand_str);
-					if (!_checkReferenceCount(_number < 65536 ? 0.5 : 1)) {
+					//TODO для отрицательныз числе необходимо сделать проверку
+					if (!_checkReferenceCount((_number >= 65536 || !Number.isInteger(_number)) ? 1.25 : 0.5)) {
 						return false;
 					}
 					found_operand = new cNumber(_number);
@@ -6425,7 +6426,8 @@ function parserFormula( formula, parent, _ws ) {
 				}
 
 				if (found_operator !== null) {
-					if (!_checkReferenceCount(0.75)) {
+					var _nullArgCount = t.Formula[ph.pCurrPos + 1] === ")";
+					if (!_checkReferenceCount(_nullArgCount ? 0.6 : 0.5)) {
 						return false;
 					}
 					if (found_operator.ca) {
