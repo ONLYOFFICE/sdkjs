@@ -5516,8 +5516,9 @@ function removeFieldBase(index, array) {
 	var deleteIndex = findFieldBase(index, array);
 	if (-1 !== deleteIndex) {
 		array.splice(deleteIndex, 1);
+		return deleteIndex;
 	}
-	return deleteIndex;
+	return undefined;
 }
 function CT_RowFields() {
 //Attributes
@@ -5797,7 +5798,7 @@ CT_DataFields.prototype.remove = function(index, dataIndex) {
 	} else {
 		var res = [];
 		var deleteIndex = removeFieldBase(index, this.dataField);
-		while (-1 !== deleteIndex) {
+		while (undefined !== deleteIndex) {
 			res.push(deleteIndex);
 			deleteIndex = removeFieldBase(index, this.dataField);
 		}
