@@ -7950,6 +7950,11 @@
 					var parsed = new AscCommonExcel.parserFormula(formula.v, newFormulaParent, cell.ws);
 					parsed.ca = formula.ca;
 					parsed.parse(undefined, undefined, parseResult);
+					if (parseResult.error === Asc.c_oAscError.ID.FrmlMaxReference) {
+                        tmp.ws.workbook.openErrors.push(cell.getName());
+                        return;
+                    }
+
 					if (null !== formula.ref) {
 						if(formula.t === ECellFormulaType.cellformulatypeShared) {
 							sharedRef = AscCommonExcel.g_oRangeCache.getAscRange(formula.ref).clone();
@@ -7961,6 +7966,7 @@
 							}
 						}
 					}
+
 					curFormula = new OpenColumnFormula(cell.nRow, formula.v, parsed, parseResult.refPos, newFormulaParent);
 					tmp.prevFormulas[cell.nCol] = curFormula;
 				}

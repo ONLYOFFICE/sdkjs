@@ -5815,8 +5815,17 @@ function parserFormula( formula, parent, _ws ) {
 		var startArrayArg = null;
 
 		var t = this;
-		var _checkReferenceCount = function () {
-			referenceCount++;
+		var _checkReferenceCount = function (weight) {
+			//ввожу ограничение на максимальное количество операндов в формуле
+			//для этого добавляю вес каждого операнда
+			//func - 0.75, array - 2, bool - 0.5, number - 0.5
+			//string - 0.5+length*0/25
+			//error - 1
+			//area - 2 или 3(в зависимости от количества листов)
+			//ref - 1, table - 2, defName - 0.75
+			//array - 2
+
+			referenceCount += weight;
 			if (referenceCount > AscCommon.c_oAscMaxFormulaReferenceLength) {
 				parseResult.setError(c_oAscError.ID.FrmlMaxReference);
 				if(!ignoreErrors) {
@@ -6115,6 +6124,9 @@ function parserFormula( formula, parent, _ws ) {
 		};
 
 		var parseArray = function(){
+			if (!_checkReferenceCount(2)) {
+				return false;
+			}
 			wasLeftParentheses = false;
 			wasRigthParentheses = false;
 			var arr = new cArray(), operator = {isOperator: false, operatorName: ""};
@@ -6220,6 +6232,9 @@ function parserFormula( formula, parent, _ws ) {
 
 			/* Booleans */
 			if (parserHelp.isBoolean.call(ph, t.Formula, ph.pCurrPos, local)) {
+				if (!_checkReferenceCount(0.5)) {
+					return false;
+				}
 				found_operand = new cBool(ph.operand_str);
 			}
 
@@ -6231,10 +6246,16 @@ function parserFormula( formula, parent, _ws ) {
 						return false;
 					}
 				}
+				if (!_checkReferenceCount(ph.operand_str.length*0.25 + 0.5)) {
+					return false;
+				}
 				found_operand = new cString(ph.operand_str);
 			}
 
 			/* Errors */ else if (parserHelp.isError.call(ph, t.Formula, ph.pCurrPos, local)) {
+				if (!_checkReferenceCount(1)) {
+					return false;
+				}
 				found_operand = new cError(ph.operand_str);
 			}
 
@@ -6266,7 +6287,7 @@ function parserFormula( formula, parent, _ws ) {
 					}
 				}
 
-				if (!_checkReferenceCount()) {
+				if (!_checkReferenceCount(null !== _3DRefTmp[2] ? 3 : 2)) {
 					return false;
 				}
 
@@ -6298,14 +6319,14 @@ function parserFormula( formula, parent, _ws ) {
 			}
 
 			/* Referens to cells area A1:A10 */ else if (parserHelp.isArea.call(ph, t.Formula, ph.pCurrPos)) {
-				if (!_checkReferenceCount()) {
+				if (!_checkReferenceCount(2)) {
 					return false;
 				}
 				found_operand = new cArea(ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase(), t.ws);
 				parseResult.addRefPos(ph.pCurrPos - ph.operand_str.length, ph.pCurrPos, t.outStack.length, found_operand);
 			}
 			/* Referens to cell A4 */ else if (parserHelp.isRef.call(ph, t.Formula, ph.pCurrPos)) {
-				if (!_checkReferenceCount()) {
+				if (!_checkReferenceCount(1)) {
 					return false;
 				}
 				found_operand = new cRef(ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase(), t.ws);
@@ -6325,7 +6346,7 @@ function parserFormula( formula, parent, _ws ) {
 					}
 				}
 
-				if (!_checkReferenceCount()) {
+				if (!_checkReferenceCount(2)) {
 					return false;
 				}
 
@@ -6345,7 +6366,7 @@ function parserFormula( formula, parent, _ws ) {
 					}
 				}
 
-				if (!_checkReferenceCount()) {
+				if (!_checkReferenceCount(0.75)) {
 					return false;
 				}
 
@@ -6373,7 +6394,11 @@ function parserFormula( formula, parent, _ws ) {
 
 			/* Numbers*/ else if (parserHelp.isNumber.call(ph, t.Formula, ph.pCurrPos, digitDelim)) {
 				if (ph.operand_str !== ".") {
-					found_operand = new cNumber(parseFloat(ph.operand_str));
+					var _number = parseFloat(ph.operand_str);
+					if (!_checkReferenceCount(_number < 65536 ? 0.5 : 1)) {
+						return false;
+					}
+					found_operand = new cNumber(_number);
 				} else {
 					parseResult.setError(c_oAscError.ID.FrmlAnotherParsingError);
 					if(!ignoreErrors) {
@@ -6400,6 +6425,9 @@ function parserFormula( formula, parent, _ws ) {
 				}
 
 				if (found_operator !== null) {
+					if (!_checkReferenceCount(0.75)) {
+						return false;
+					}
 					if (found_operator.ca) {
 						t.ca = found_operator.ca;
 					}
