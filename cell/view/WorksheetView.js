@@ -1041,7 +1041,7 @@
 
         for (var c = selectionRange.c1; c <= selectionRange.c2; ++c) {
             for (var r = selectionRange.r1; r <= selectionRange.r2; ++r) {
-                cell = this._getCellTextCache(c, r);
+                cell = this._getCellTextCache(c, r, true);
                 if (cell) {
                     // Нашли не пустую ячейку, проверим формат
                     cellType = cell.cellType;
