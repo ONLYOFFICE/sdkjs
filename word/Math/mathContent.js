@@ -5461,14 +5461,38 @@ CMathContent.prototype.Process_AutoCorrect = function(ActionElement) {
     }
     if (CanMakeAutoCorrect || CanMakeAutoCorrectEquation || CanMakeAutoCorrectFunc) {
         AscFonts.FontPickerByCharacter.checkText(AutoCorrectEngine.RepCharsCode, this, function() {
-            this.private_ReplaceAutoCorrect(AutoCorrectEngine);
-            if(oLogicDocument) {
-                oLogicDocument.FinalizeAction();
-            } else {
-                History.Remove_LastPoint();
+            if (AscCommon.g_fontManager) {
+                AscCommon.g_fontManager.ClearFontsRasterCache();
+                AscCommon.g_fontManager.m_pFont = null;
             }
-            AutoCorrectEngine.StartHystory = false;
-        }, true, false, true);
+            if (AscCommon.g_fontManager2) {
+                AscCommon.g_fontManager2.ClearFontsRasterCache();
+                AscCommon.g_fontManager2.m_pFont = null;
+            }
+            if(oLogicDocument) {
+                this.private_ReplaceAutoCorrect(AutoCorrectEngine);
+                if (oLogicDocument.Api.WordControl.EditorType == "presentations")
+                    this.Paragraph.Parent.Parent.parent.checkExtentsByDocContent();
+            
+                if (AutoCorrectEngine.StartHystory) {
+                    oLogicDocument.FinalizeAction();
+                    AutoCorrectEngine.StartHystory = false;
+                }
+            } else {
+                var wb = this.Paragraph.Parent.DrawingDocument.drawingObjects.controller.selectedObjects[0].worksheet.workbook.oApi.wb;
+                for (var i = 0, length = wb.fmgrGraphics.length; i < length; ++i) 
+                    wb.fmgrGraphics[i].ClearFontsRasterCache();
+                
+                this.Paragraph.Parent.DrawingDocument.drawingObjects.controller.startRecalculate();
+            }
+        }, true, false, true); 
+        if(!oLogicDocument) {
+            this.private_ReplaceAutoCorrect(AutoCorrectEngine);
+            if (AutoCorrectEngine.StartHystory) {
+                // History.Remove_LastPoint();
+                AutoCorrectEngine.StartHystory = false;
+            }
+        }
     }
 };
 CMathContent.prototype.private_NeedAutoCorrect = function(ActionElement) {
