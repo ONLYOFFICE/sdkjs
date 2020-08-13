@@ -3016,8 +3016,9 @@
 			this.bs.WriteItem(c_oSer_PivotTypes.id, function() {
 				oThis.memory.WriteLong(id - 0);
 			});
+			var stylesForWrite = oThis.isCopyPaste ? undefined : oThis.oBinaryWorksheetsTableWriter.stylesForWrite;
 			this.bs.WriteItem(c_oSer_PivotTypes.cache, function() {
-				pivotCache.toXml(oThis.memory);
+				pivotCache.toXml(oThis.memory, stylesForWrite);
 			});
 			if (pivotCache.cacheRecords) {
 				this.bs.WriteItem(c_oSer_PivotTypes.record, function() {
@@ -4849,7 +4850,8 @@
 			if (null != pivotTable.cacheId) {
 				this.bs.WriteItem(c_oSer_PivotTypes.cacheId, function() {oThis.memory.WriteLong(pivotTable.cacheId);});
 			}
-			this.bs.WriteItem(c_oSer_PivotTypes.table, function() {pivotTable.toXml(oThis.memory);});
+			var stylesForWrite = oThis.isCopyPaste ? undefined : oThis.stylesForWrite;
+			this.bs.WriteItem(c_oSer_PivotTypes.table, function() {pivotTable.toXml(oThis.memory, stylesForWrite);});
 		}
         this.WriteHeaderFooter = function(headerFooter)
         {
@@ -9663,6 +9665,7 @@
                     var oStyleObject = this.oReadResult.stylesTableReader.Read();
                     this.oReadResult.stylesTableReader.InitStyleManager(oStyleObject);
                     aDxfs = oStyleObject.aDxfs;
+                    wb.oNumFmtsOpen = oStyleObject.oNumFmts;
                 }
 
             }

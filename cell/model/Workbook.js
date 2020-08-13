@@ -2059,6 +2059,12 @@
 			this.snapshot = this._getSnapshot();
 		}
 	};
+	Workbook.prototype.initPostOpenZip=function(pivotCaches){
+		var t = this;
+		this.forEach(function (ws) {
+			ws.initPostOpenZip(pivotCaches, t.oNumFmtsOpen);
+		});
+	};
 	Workbook.prototype.setCommonIndexObjectsFrom = function(wb) {
 		this.oStyleManager = wb.oStyleManager;
 		this.sharedStrings = wb.sharedStrings;
@@ -3548,6 +3554,8 @@
 		//во всех остальных ситуациях это делать необходимо
 		this.bExcludeCollapsed = false;
 
+		this.oNumFmtsOpen = {};
+
 		/*handlers*/
 		this.handlers = null;
 
@@ -3874,6 +3882,11 @@
 		this.aSlicers.forEach(function(elem){
 			elem.initPostOpen(tableIds);
 		})
+	};
+	Worksheet.prototype.initPostOpenZip = function (pivotCaches, oNumFmts) {
+		this.pivotTables.forEach(function(pivotTable){
+			pivotTable.initPostOpenZip(oNumFmts);
+		});
 	};
 	Worksheet.prototype._getValuesForConditionalFormatting = function(ranges, numbers) {
 		var res = [];
@@ -6711,7 +6724,7 @@
 		}
 	};
 	Worksheet.prototype._updatePivotTableCellsRowColLables = function(pivotTable, rowFieldsOffset) {
-		var items, fields, field, oCellValue, fieldIndex, sharedItem, fieldItem, cells, r1, c1, valuesIndex;
+		var items, fields, field, oCellValue, fieldIndex, cells, r1, c1, valuesIndex;
 		var pivotRange = pivotTable.getRange();
 		var location = pivotTable.location;
 		if (rowFieldsOffset) {
@@ -6730,7 +6743,6 @@
 		if (!items || !fields) {
 			return;
 		}
-		var cacheFields = pivotTable.asc_getCacheFields();
 		var pivotFields = pivotTable.asc_getPivotFields();
 
 		var totalTitleRange = [];
@@ -6746,6 +6758,7 @@
 				}
 				if (Asc.c_oAscItemType.Data === item.t) {
 					fieldIndex = fields[r + j].asc_getIndex();
+					field = pivotFields[fieldIndex];
 					if (AscCommonExcel.st_VALUES !== fieldIndex) {
 						oCellValue = pivotTable.getPivotFieldCellValue(fieldIndex, item.x[j].getV());
 					} else {
@@ -6770,8 +6783,8 @@
 					oCellValue.type = AscCommon.CellValueType.String;
 					if (r + j > valuesIndex) {
 						fieldIndex = fields[r + j].asc_getIndex();
+						field = pivotFields[fieldIndex];
 						if (AscCommonExcel.st_VALUES !== fieldIndex) {
-							field = pivotFields[fieldIndex];
 							if (field.subtotalCaption) {
 								oCellValue.text = field.subtotalCaption;
 							} else {
@@ -6784,8 +6797,8 @@
 						oCellValue.text += ' ' + pivotTable.getDataFieldName(item.i);
 					}
 				}
-				if (field && null !== field.numFmtId) {
-					cells.setNum(new AscCommonExcel.Num({id: field.numFmtId}));
+				if (field && field.num) {
+					cells.setNum(field.num);
 				}
 				cells.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
 			}
@@ -6918,6 +6931,9 @@
 						var oCellValue = total.getCellValue(dataField.subtotal, rowFieldSubtotal, rowItem.t, colItem.t);
 						if (oCellValue) {
 							var cells = this.getRange4(r1 + rowItemsIndex, c1 + colItemsIndex);
+							if (dataField && dataField.num) {
+								cells.setNum(dataField.num);
+							}
 							cells.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
 						}
 					}

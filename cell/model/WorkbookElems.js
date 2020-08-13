@@ -2549,6 +2549,32 @@ var g_oBorderProperties = {
 	Num.prototype.setIndexNumber = function (val) {
 		this._index = val;
 	};
+	Num.prototype.initFromParams = function (id, format, oNumFmts) {
+		var res = oNumFmts && oNumFmts[id];
+		if (res) {
+			return res;
+		}
+		res = new Num();
+		if (format) {
+			res.f = format;
+		} else {
+			res.f = AscCommonExcel.aStandartNumFormats[id];
+		}
+		if (!res.f) {
+			res.f = "General";
+		}
+		if (((5 <= id && id <= 8) || (14 <= id && id <= 17) || 22 == id ||
+			(27 <= id && id <= 31) || (36 <= id && id <= 44))) {
+			res.id = id;
+		}
+		var numFormat = AscCommon.oNumFormatCache.get(res.f);
+		numFormat.checkCultureInfoFontPicker();
+		res = g_StyleCache.addNum(res);
+		if (oNumFmts) {
+			oNumFmts[res.id] = res;
+		}
+		return res;
+	};
 	Num.prototype.setFormat = function (f, opt_id) {
 		this.f = f;
 		this.id = opt_id;

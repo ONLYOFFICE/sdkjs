@@ -997,12 +997,12 @@ var editor;
 				resolve();
 				return;
 			}
+			var pivotCaches = {};
 			var nextPromise;
 			if (data) {
 				var doc = new openXml.OpenXmlPackage();
 				var wbPart = null;
 				var wbXml = null;
-				var pivotCaches = {};
 				var jsZipWrapper = new AscCommon.JSZipWrapper();
 				nextPromise = jsZipWrapper.loadAsync(data).then(function (zip) {
 					return doc.openFromZip(zip);
@@ -1087,6 +1087,8 @@ var editor;
 					if (window.console && window.console.log) {
 						window.console.log(err);
 					}
+				}).then(function () {
+					wb.initPostOpenZip(pivotCaches);
 				}).then(function () {
 					jsZipWrapper.close();
 				});
