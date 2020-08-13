@@ -7887,7 +7887,7 @@ CT_PivotField.prototype.Write_ToBinary2 = function(writer) {
 	});
 };
 CT_PivotField.prototype.Read_FromBinary2 = function(reader) {
-	var tmp = new XmlReaderWrapper("pivotFilter", this);
+	var tmp = new XmlReaderWrapper("pivotField", this);
 	var len = reader.GetLong();
 	AscCommonExcel.executeInR1C1Mode(false, function () {
 		new AscCommon.openXml.SaxParserBase().parse(AscCommon.GetStringUtf8(reader, len), tmp);
@@ -11438,6 +11438,7 @@ window['AscCommonExcel'].ToName_ST_ItemType = ToName_ST_ItemType;
 window['AscCommonExcel'].ToName_ST_DataConsolidateFunction = ToName_ST_DataConsolidateFunction;
 
 window['Asc']['CT_PivotCacheDefinition'] = window['Asc'].CT_PivotCacheDefinition = CT_PivotCacheDefinition;
+window['Asc']['CT_pivotTableDefinitionX14'] = window['Asc'].CT_pivotTableDefinitionX14 = CT_pivotTableDefinitionX14;
 
 window['Asc']['CT_PivotCacheRecords'] = window['Asc'].CT_PivotCacheRecords = CT_PivotCacheRecords;
 

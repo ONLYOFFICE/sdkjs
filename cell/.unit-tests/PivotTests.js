@@ -33,8 +33,8 @@
 $(function() {
 	QUnit.config.autostart = false;
 
-	// Tests completed in 2906 milliseconds.
-	// 2310 assertions of 2371 passed, 61 failed.
+	// Tests completed in 2505 milliseconds.
+	// 2340 assertions of 2386 passed, 46 failed.
 
 	// function getValues(ws, range) {
 	// 	var res = [];
@@ -428,13 +428,18 @@ $(function() {
 	function getXml(pivot){
 		memory.Seek(0);
 		pivot.toXml(memory);
-		return new TextDecoder("utf-8").decode(memory.GetData());
+		var buffer = new Uint8Array(memory.GetCurPosition());
+		for (var i = 0; i < memory.GetCurPosition(); i++)
+		{
+			buffer[i] = memory.data[i];
+		}
+		return new TextDecoder("utf-8").decode(buffer);
 	}
 
 	function checkHistoryOperation(pivot, standards, message, action) {
 		var wb = pivot.GetWS().workbook;
 		var undoValues = getReportValues(pivot);
-		var xmlStart = getXml(pivot);
+		var xmlUndo = getXml(pivot);
 		AscCommon.History.Create_NewPoint();
 		AscCommon.History.StartTransaction();
 		action();
@@ -446,16 +451,16 @@ $(function() {
 		AscCommon.History.Undo();
 		pivot = wb.getPivotTableById(pivot.Get_Id());
 		checkReportValues(pivot, getReportValues(pivot), undoValues, message + "_undo");
-		strictEqual(xmlStart, getXml(pivot), message + "_undo_xml");
+		strictEqual(getXml(pivot), xmlUndo, message + "_undo_xml");
 		AscCommon.History.Redo();
 		pivot = wb.getPivotTableById(pivot.Get_Id());
 		checkReportValues(pivot, getReportValues(pivot), standards, message + "_redo");
-		strictEqual(xmlDo, getXml(pivot), message + "_redo_xml");
+		strictEqual(getXml(pivot), xmlDo, message + "_redo_xml");
 		AscCommon.History.Undo();
 		wb.DeserializeHistory(changes);
 		pivot = wb.getPivotTableById(pivot.Get_Id());
 		checkReportValues(pivot, getReportValues(pivot), standards, message + "_changes");
-		strictEqual(xmlDo, getXml(pivot), message + "_changes_xml");
+		strictEqual(getXml(pivot), xmlDo, message + "_changes_xml");
 		return pivot;
 	}
 
@@ -3299,6 +3304,9 @@ $(function() {
 		test("Test: InsertBlankRow", function() {
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
+			pivot.checkPivotFieldItems(0);
+			pivot.checkPivotFieldItems(1);
+			pivot.checkPivotFieldItems(2);
 			pivot.asc_addDataField(api, 5);
 			pivot.asc_addDataField(api, 6);
 			var props = new Asc.CT_pivotTableDefinition();
@@ -3453,11 +3461,11 @@ $(function() {
 		test("Test: data values", function() {
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
+			pivot.asc_addRowField(api, 0);
+			pivot.asc_addRowField(api, 1);
 
 			AscCommon.History.Clear();
 			pivot = checkHistoryOperation(pivot, standards["data_values1"], "values1", function() {
-				pivot.asc_addRowField(api, 0);
-				pivot.asc_addRowField(api, 1);
 				var i;
 				var types = [c_oAscDataConsolidateFunction.Count, c_oAscDataConsolidateFunction.CountNums, c_oAscDataConsolidateFunction.Min,
 					c_oAscDataConsolidateFunction.Max, c_oAscDataConsolidateFunction.Sum, c_oAscDataConsolidateFunction.Average,
@@ -3520,6 +3528,20 @@ $(function() {
 		test("Test: header rename", function() {
 			var pivot = api._asc_insertPivot(wb, dataRefHeader, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
+			pivot.checkPivotFieldItems(0);
+			pivot.checkPivotFieldItems(1);
+			pivot.checkPivotFieldItems(2);
+			pivot.checkPivotFieldItems(3);
+			pivot.checkPivotFieldItems(4);
+			pivot.checkPivotFieldItems(5);
+			pivot.checkPivotFieldItems(6);
+			pivot.checkPivotFieldItems(7);
+			pivot.checkPivotFieldItems(8);
+			pivot.checkPivotFieldItems(9);
+			pivot.checkPivotFieldItems(10);
+			pivot.checkPivotFieldItems(11);
+			pivot.checkPivotFieldItems(12);
+			pivot.checkPivotFieldItems(13);
 
 			AscCommon.History.Clear();
 			pivot = checkHistoryOperation(pivot, standards["headerRename"], "header rename", function(){
@@ -3550,6 +3572,13 @@ $(function() {
 		test("Test: Field Manipulation", function() {
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
+			pivot.checkPivotFieldItems(0);
+			pivot.checkPivotFieldItems(1);
+			pivot.checkPivotFieldItems(2);
+			pivot.checkPivotFieldItems(3);
+			pivot.checkPivotFieldItems(4);
+			pivot.checkPivotFieldItems(5);
+			pivot.checkPivotFieldItems(6);
 
 			AscCommon.History.Clear();
 			pivot = checkHistoryOperation(pivot, standards["addField"], "addField", function(){
@@ -3767,6 +3796,8 @@ $(function() {
 		test("Test: data source", function() {
 			var pivot = api._asc_insertPivot(wb, dataRefTable, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
+			pivot.checkPivotFieldItems(0);
+			pivot.checkPivotFieldItems(2);
 
 			AscCommon.History.Clear();
 			pivot = checkHistoryOperation(pivot, standards["compact_1row_1col_1data"], "table", function(){
@@ -3820,6 +3851,11 @@ $(function() {
 			var pivot = api._asc_insertPivot(wb, dataRefFilters, ws, reportRange);
 			setPivotLayout(pivot, 'tabular');
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
+			pivot.asc_addRowField(api, 1);
+			pivot.asc_addRowField(api, 3);
+			pivot.asc_addColField(api, 0);
+			pivot.asc_addColField(api, 4);
+			pivot.asc_addDataField(api, 5);
 
 			var getNewFilter = function(val){
 				var pivotFilterObj = new Asc.PivotFilterObj();
@@ -3845,12 +3881,6 @@ $(function() {
 
 			AscCommon.History.Clear();
 			pivot = checkHistoryOperation(pivot, standards["valueFilterOrder1"], "order1", function(){
-				pivot.asc_addRowField(api, 1);
-				pivot.asc_addRowField(api, 3);
-				pivot.asc_addColField(api, 0);
-				pivot.asc_addColField(api, 4);
-				pivot.asc_addDataField(api, 5);
-
 				pivot.filterByFieldIndex(api, getNewFilter(1), 4, true);
 				pivot.filterByFieldIndex(api, getNewFilter(2), 3, true);
 				pivot.filterByFieldIndex(api, getNewFilter(18), 0, true);
@@ -3875,6 +3905,12 @@ $(function() {
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
 			setPivotLayout(pivot, 'tabular');
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
+			pivot.asc_addRowField(api, 0);
+			pivot.asc_addRowField(api, 2);
+			pivot.asc_addRowField(api, 4);
+			pivot.asc_addColField(api, 1);
+			pivot.asc_addDataField(api, 5);
+			pivot.asc_addDataField(api, 6);
 
 			var getNewFilter = function(top, isPercent, val, isTop10Sum, dataIndex){
 				var pivotFilterObj = new Asc.PivotFilterObj();
@@ -3898,13 +3934,6 @@ $(function() {
 
 			AscCommon.History.Clear();
 			pivot = checkHistoryOperation(pivot, standards["top10"], "top10", function(){
-				pivot.asc_addRowField(api, 0);
-				pivot.asc_addRowField(api, 2);
-				pivot.asc_addRowField(api, 4);
-				pivot.asc_addColField(api, 1);
-				pivot.asc_addDataField(api, 5);
-				pivot.asc_addDataField(api, 6);
-
 				pivot.filterByFieldIndex(api, getNewFilter(true, false, 1, false, 1), 4, true);
 				pivot.filterByFieldIndex(api, getNewFilter(false, true, 2, false, 2), 2, true);
 				pivot.filterByFieldIndex(api, getNewFilter(true, false, 12, true, 1), 0, true);
@@ -3919,6 +3948,10 @@ $(function() {
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
 			setPivotLayout(pivot, 'tabular');
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
+			pivot.asc_addRowField(api, 4);
+			pivot.asc_addRowField(api, 5);
+			pivot.asc_addRowField(api, 6);
+			pivot.asc_addDataField(api, 3);
 
 			var getNewFilter = function(type1, val1, type2, val3){
 				var pivotFilterObj = new Asc.PivotFilterObj();
@@ -3953,14 +3986,9 @@ $(function() {
 
 			AscCommon.History.Clear();
 			pivot = checkHistoryOperation(pivot, standards["label1"], "label1", function(){
-				pivot.asc_addRowField(api, 4);
-				pivot.asc_addRowField(api, 5);
-				pivot.asc_addRowField(api, 6);
-				pivot.asc_addDataField(api, 3);
-
 				pivot.filterByFieldIndex(api, getNewFilter(Asc.c_oAscCustomAutoFilter.isGreaterThan, 10.6), 6, true);
-				pivot.filterByFieldIndex(api, getNewFilter(Asc.c_oAscCustomAutoFilter.doesNotEqual, 11), 4, true);
 				pivot.filterByFieldIndex(api, getNewFilter(Asc.c_oAscCustomAutoFilter.contains, 3), 5, true);
+				pivot.filterByFieldIndex(api, getNewFilter(Asc.c_oAscCustomAutoFilter.doesNotEqual, 11), 4, true);
 			});
 
 			ws.deletePivotTables(new AscCommonExcel.MultiplyRange(pivot.getReportRanges()).getUnionRange());
@@ -3971,6 +3999,10 @@ $(function() {
 		test("Test: misc", function() {
 			var pivot = api._asc_insertPivot(wb, dataRef1Row, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
+			pivot.pivotTableDefinitionX14 = new Asc.CT_pivotTableDefinitionX14();
+			pivot.checkPivotFieldItems(0);
+			pivot.checkPivotFieldItems(1);
+			pivot.checkPivotFieldItems(2);
 
 			AscCommon.History.Clear();
 			pivot = checkHistoryOperation(pivot, standards["compact_0row_0col_0data"], "misc", function(){
@@ -4052,7 +4084,7 @@ $(function() {
 
 		testFiltersTop10();
 
-		// testFiltersLabel();
+		testFiltersLabel();
 
 		testPivotMisc();
 	}
