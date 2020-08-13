@@ -692,6 +692,8 @@ CInlineLevelSdt.prototype.private_ReplaceContentWithPlaceHolder = function(isSel
 };
 CInlineLevelSdt.prototype.private_FillPlaceholderContent = function()
 {
+	var isSelection = this.IsSelectionUse();
+
 	this.RemoveFromContent(0, this.GetElementsCount());
 
 	var oParagraph     = this.GetParagraph();
@@ -733,6 +735,9 @@ CInlineLevelSdt.prototype.private_FillPlaceholderContent = function()
 			this.AddToContent(0, oRun);
 		}
 	}
+
+	if (isSelection)
+		this.SelectAll(1);
 };
 CInlineLevelSdt.prototype.Set_SelectionContentPos = function(StartContentPos, EndContentPos, Depth, StartFlag, EndFlag)
 {
