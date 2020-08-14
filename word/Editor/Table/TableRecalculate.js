@@ -1635,7 +1635,7 @@ CTable.prototype.private_RecalculatePositionX = function(CurPage)
                 var TableWidth = this.TableSumGrid[this.TableSumGrid.length - 1];
 
                 if (false === this.Parent.IsTableCellContent())
-                    Page.X = Page.XLimit - TableWidth + this.GetTableOffsetCorrection();
+                    Page.X = Page.XLimit - TableWidth + this.GetRightTableOffsetCorrection();
                 else
                     Page.X = Page.XLimit - TableWidth;
                 break;
