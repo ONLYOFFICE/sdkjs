@@ -174,7 +174,7 @@
 		return false;
 	};
 	CDataValidation.prototype.checkValue = function (cell, ws) {
-		if (!this.showErrorMessage) {
+		if (!this.showErrorMessage || EDataValidationType.None === this.type) {
 			return true;
 		}
 
