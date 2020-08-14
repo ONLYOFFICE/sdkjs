@@ -5431,7 +5431,7 @@ CMathContent.prototype.Process_AutoCorrect = function(ActionElement) {
     //добавить все элементы
     AutoCorrectEngine.private_Add_Element(this.Content);
     if (null == AutoCorrectEngine.TextPr) {
-        AutoCorrectEngine.TextPr = (this.Content[0] && this.Content[0].CompiledPr) ? this.Content[0].CompiledPr : new CTextPr();
+        AutoCorrectEngine.TextPr = new CTextPr();
     }
     if (null == AutoCorrectEngine.MathPr) {
         AutoCorrectEngine.MathPr = new CMPrp();
