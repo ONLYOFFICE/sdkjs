@@ -1948,10 +1948,11 @@ CT_PivotCacheRecords.prototype._getDataMapConvertValueFiltersIsHide = function(r
 			for (i in elems) {
 				if (elems.hasOwnProperty(i)) {
 					res = this._getDataMapConvertValueFiltersIsHide(elems[i], isRow, index + 1, indexes, valueFilter, dataFields) || res;
+					var subElems = isRow ? elems[i].vals : elems[i].subtotal;
+					if (AscCommon.isEmptyObject(subElems)) {
+						delete elems[i];
+					}
 				}
-			}
-			if (res && AscCommon.isEmptyObject(elems)) {
-				delete elems[i];
 			}
 		}
 	}

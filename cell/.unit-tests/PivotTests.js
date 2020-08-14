@@ -33,8 +33,8 @@
 $(function() {
 	QUnit.config.autostart = false;
 
-	// Tests completed in 2505 milliseconds.
-	// 2340 assertions of 2386 passed, 46 failed.
+	// Tests completed in 2597 milliseconds.
+	// 2367 assertions of 2416 passed, 49 failed.
 
 	// function getValues(ws, range) {
 	// 	var res = [];
@@ -3075,6 +3075,20 @@ $(function() {
 			["Girl Total","","","9","6","15","","","20","20","35"],
 			["Grand Total","","3","9","6","18","7","40","20","67","85"]
 		],
+		"bug-46141-row": [
+			["Region","Gender","Style","Sum of Price"],
+			["East","Girl","Fancy","13.74"],
+			["","Girl Total","","13.74"],
+			["East Total","","","13.74"],
+			["Grand Total","","","13.74"]
+		],
+		"bug-46141-col" : [
+			["","Region","Gender","Style",""],
+			["","East","","East Total","Grand Total"],
+			["","Girl","Girl Total","",""],
+			["","Fancy","","",""],
+			["Sum of Price","13.74","13.74","13.74","13.74"]
+		],
 		"top10":[
 			["","","","Gender","Values","","","",""],
 			["","","","Boy","","Girl","","Total Sum of Price","Total Sum of Cost"],
@@ -3900,6 +3914,54 @@ $(function() {
 		});
 	}
 
+	function testFiltersValueFilterBug46141() {
+		test("Test: value filter bug 46141", function() {
+			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
+			setPivotLayout(pivot, 'tabular');
+			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
+			pivot.asc_addRowField(api, 0);
+			pivot.asc_addRowField(api, 1);
+			pivot.asc_addRowField(api, 2);
+			pivot.asc_addDataField(api, 5);
+
+			var getNewFilter = function(val){
+				var pivotFilterObj = new Asc.PivotFilterObj();
+				pivotFilterObj.asc_setDataFieldIndexSorting(0);
+				pivotFilterObj.asc_setDataFieldIndexFilter(1);
+				pivotFilterObj.asc_setIsPageFilter(false);
+				pivotFilterObj.asc_setIsMultipleItemSelectionAllowed(false);
+				pivotFilterObj.asc_setIsTop10Sum(false);
+				var filterObj = new Asc.AutoFilterObj();
+				filterObj.asc_setFilter(new Asc.CustomFilters());
+				filterObj.asc_setType(Asc.c_oAscAutoFilterTypes.CustomFilters);
+				var customFilter = filterObj.asc_getFilter();
+				customFilter.asc_setCustomFilters([new Asc.CustomFilter()]);
+				customFilter.asc_setAnd(true);
+				var customFilters = customFilter.asc_getCustomFilters();
+				customFilters[0].asc_setOperator(Asc.c_oAscCustomAutoFilter.isGreaterThan);
+				customFilters[0].asc_setVal(val);
+				var autoFilterObject = new Asc.AutoFiltersOptions();
+				autoFilterObject.pivotObj = pivotFilterObj;
+				autoFilterObject.filter = filterObj;
+				return autoFilterObject;
+			};
+
+			AscCommon.History.Clear();
+			pivot = checkHistoryOperation(pivot, standards["bug-46141-row"], "rows", function(){
+				pivot.filterByFieldIndex(api, getNewFilter(13.5), 2, true);
+			});
+
+			pivot = checkHistoryOperation(pivot, standards["bug-46141-col"], "cols", function(){
+				pivot.asc_moveToColField(api, 0);
+				pivot.asc_moveToColField(api, 1);
+				pivot.asc_moveToColField(api, 2);
+			});
+
+			ws.deletePivotTables(new AscCommonExcel.MultiplyRange(pivot.getReportRanges()).getUnionRange());
+		});
+	}
+
+
 	function testFiltersTop10() {
 		test("Test: filters top10", function() {
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
@@ -4081,6 +4143,8 @@ $(function() {
 		testDataSource();
 
 		testFiltersValueFilter();
+
+		testFiltersValueFilterBug46141();
 
 		testFiltersTop10();
 
