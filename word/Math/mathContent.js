@@ -5473,26 +5473,24 @@ CMathContent.prototype.Process_AutoCorrect = function(ActionElement) {
                 this.private_ReplaceAutoCorrect(AutoCorrectEngine);
                 if (oLogicDocument.Api.WordControl.EditorType == "presentations")
                     this.Paragraph.Parent.Parent.parent.checkExtentsByDocContent();
-            
-                if (AutoCorrectEngine.StartHystory) {
-                    oLogicDocument.FinalizeAction();
-                    AutoCorrectEngine.StartHystory = false;
-                }
             } else {
-                var wb = this.Paragraph.Parent.DrawingDocument.drawingObjects.controller.selectedObjects[0].worksheet.workbook.oApi.wb;
+                var shape = this.Paragraph.Parent.DrawingDocument.drawingObjects.controller.selectedObjects[0];
+                var wb = shape.worksheet.workbook.oApi.wb;
                 for (var i = 0, length = wb.fmgrGraphics.length; i < length; ++i) 
                     wb.fmgrGraphics[i].ClearFontsRasterCache();
                 
+                this.private_ReplaceAutoCorrect(AutoCorrectEngine);
+                shape.checkExtentsByDocContent();
                 this.Paragraph.Parent.DrawingDocument.drawingObjects.controller.startRecalculate();
             }
-        }, true, false, true); 
-        if(!oLogicDocument) {
-            this.private_ReplaceAutoCorrect(AutoCorrectEngine);
             if (AutoCorrectEngine.StartHystory) {
+                if (oLogicDocument) {
+                     oLogicDocument.FinalizeAction();
+                }
                 // History.Remove_LastPoint();
                 AutoCorrectEngine.StartHystory = false;
             }
-        }
+        }, true, false, true); 
     }
 };
 CMathContent.prototype.private_NeedAutoCorrect = function(ActionElement) {
