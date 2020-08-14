@@ -723,9 +723,9 @@
 
 				case 120: // F9
 					var type;
-					if (ctrlKey && altKey && shiftKey) {
+					if (ctrlKey && event.altKey && shiftKey) {
 						type = Asc.c_oAscCalculateType.All;
-					} else if (ctrlKey && altKey) {
+					} else if (ctrlKey && event.altKey) {
 						type = Asc.c_oAscCalculateType.Workbook;
 					} else if (shiftKey) {
 						type = Asc.c_oAscCalculateType.ActiveSheet;
