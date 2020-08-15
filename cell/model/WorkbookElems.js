@@ -5075,16 +5075,22 @@ CCellValue.prototype =
 			case this.Properties.type: this.type = value;break;
 		}
 	},
-	getTextValue : function()
+	getTextValue : function(num)
 	{
+		var multiText = this.multiText;
+		var numFormat = AscCommon.oNumFormatCache.get(num && num.getFormat() || "General");
 		if (null !== this.text) {
-			return this.text;
+			multiText = numFormat.format(this.text, this.type, AscCommon.gc_nMaxDigCount, false);
 		} else if (null !== this.number) {
-			var numFormat = AscCommon.oNumFormatCache.get("General");
-			var multiText = numFormat.format(this.number, CellValueType.Number, AscCommon.gc_nMaxDigCount, false);
+			if (CellValueType.Bool === this.type) {
+				//todo Local
+				multiText = [{text: ((this.number == 1) ? AscCommon.cBoolLocal.t : AscCommon.cBoolLocal.f)}];
+			} else {
+				multiText = numFormat.format(this.number, this.type, AscCommon.gc_nMaxDigCount, false);
+			}
+		}
+		if (null !== multiText) {
 			return AscCommonExcel.getStringFromMultiText(multiText)
-		} else if(null !== this.multiText){
-			return AscCommonExcel.getStringFromMultiText(this.multiText)
 		}
 		return "";
 	}

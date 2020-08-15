@@ -6700,6 +6700,10 @@
 				this._updatePivotTableSetCellValue(cells, pivotTable.getPageFieldName(i));
 				cells = this.getRange4(pos.row, pos.col + 1);
 				//todo right align
+				var num = pivotTable.getPivotFieldNum(pos.pageField.fld);
+				if (num) {
+					cells.setNum(num);
+				}
 				cells.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, pivotTable.getPageFieldCellValue(i)));
 			}
 		}
@@ -6771,7 +6775,7 @@
 			var item = items[i];
 			var r = item.getR();
 			for (var j = 0; j < item.x.length; ++j) {
-				field = null;
+				fieldIndex = null;
 				if (rowFieldsOffset) {
 					cells = this.getRange4(r1 + i, c1 + rowFieldsOffset[r + j]);
 				} else {
@@ -6779,7 +6783,6 @@
 				}
 				if (Asc.c_oAscItemType.Data === item.t) {
 					fieldIndex = fields[r + j].asc_getIndex();
-					field = pivotFields[fieldIndex];
 					if (AscCommonExcel.st_VALUES !== fieldIndex) {
 						oCellValue = pivotTable.getPivotFieldCellValue(fieldIndex, item.x[j].getV());
 					} else {
@@ -6818,8 +6821,11 @@
 						oCellValue.text += ' ' + pivotTable.getDataFieldName(item.i);
 					}
 				}
-				if (field && field.num) {
-					cells.setNum(field.num);
+				if (null !== fieldIndex) {
+					var num = pivotTable.getPivotFieldNum(fieldIndex);
+					if (num) {
+						cells.setNum(num);
+					}
 				}
 				cells.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
 			}

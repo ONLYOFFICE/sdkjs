@@ -47,6 +47,7 @@ $(function() {
 	// 	return res;
 	// }
 	// function getReportValues(pivot) {
+	// 	pivot.init();
 	// 	return getValues(pivot.GetWS(), new AscCommonExcel.MultiplyRange(pivot.getReportRanges()).getUnionRange());
 	// }
 	//
@@ -163,6 +164,7 @@ $(function() {
 	var testDataRangeTable = AscCommonExcel.g_oRangeCache.getAscRange("B57:H68");
 	var testDataRefreshFieldSettings = AscCommonExcel.g_oRangeCache.getAscRange("B70:H81");
 	var testDataRangeFilters = AscCommonExcel.g_oRangeCache.getAscRange("B83:H94");
+	var testDataRangeNumFormat = AscCommonExcel.g_oRangeCache.getAscRange("B96:L107");
 	var testDataRangeDefName = AscCommonExcel.g_oRangeCache.getAscRange("J57:P68");
 	var testDataRangeDefNameLocal = AscCommonExcel.g_oRangeCache.getAscRange("R57:X68");
 	var testDataRefreshRecords = AscCommonExcel.g_oRangeCache.getAscRange("J70:P81");
@@ -278,6 +280,20 @@ $(function() {
 		["West","Boy","Fancy","5","5","20","11.51"],
 		["West","Girl","Tee","6","6","20","13.29"]
 	];
+	var testDataNumFormat = [
+		["Text","Date","Units","Units2","Units3","e","hasBlank","Mix","MixFormat","bool","error"],
+		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Tee"})},  {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38383})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 12})},{format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 12})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 12})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 11.04})},{format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.42})},{format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.42})},                                     {format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.42})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 1})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#DIV/0!"})}],
+		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Golf"})}, {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38384})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 12})},{format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 12})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 12})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 13})},   {format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 12.6 })},{format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 12.6 })},                                     {format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 12.6 })},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 1})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#DIV/0!"})}],
+		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Fancy"})},{format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38385})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 12})},{format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 12})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 12})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 11.96})},{format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.74})},{format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.74})},                                     {format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.74})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 1})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#DIV/0!"})}],
+		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Tee"})},  {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38386})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 10})},{format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 10})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 11.27})},{format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue()},               {format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "qwe"})}, {format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.27})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 1})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#DIV/0!"})}],
+		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Golf"})}, {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38387})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 10})},{format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 10})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 12.12})},{format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.95})},{format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.95})},                                     {format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.95})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 0})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#DIV/0!"})}],
+		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Fancy"})},{format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38388})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 10})},{format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 10})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 13.74})},{format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 13.33})},{format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 13.33})},                                     {format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 13.33})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 0})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#DIV/0!"})}],
+		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Tee"})},  {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38389})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 11})},{format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 11})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 11.44})},{format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.94})},{format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.94})},                                     {format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.94})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 0})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#DIV/0!"})}],
+		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Golf"})}, {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38390})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 11})},{format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 11})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 12.63})},{format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.73})},{format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.73})},                                     {format: "0.00%",                                                             value: new AscCommonExcel.CCellValue({number: 11.73})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 0})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#N/A"})}   ],
+		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Fancy"})},{format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38391})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 11})},{format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 11})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 12.06})},{format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.51})},{format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.51})},                                     {format: "0.00%",                                                             value: new AscCommonExcel.CCellValue({number: 11.51})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 0})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#N/A"})}   ],
+		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Tee"})},  {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38392})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 15})},{format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 15})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 15})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 13.42})},{format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 13.29})},{format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 13.29})},                                     {format: "0.00%",                                                             value: new AscCommonExcel.CCellValue({number: 13.29})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 0})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#N/A"})}   ],
+		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Golf"})}, {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38393})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 15})},{format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 15})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 15})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 11.48})},{format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.67})},{format: '_(";$";* #,##0.0_);_(";$";* \\(#,##0.0\\);_(";$";* ";-";?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.67})},                                     {format: "0.00%",                                                             value: new AscCommonExcel.CCellValue({number: 10.67})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 0})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#N/A"})}   ]
+	];
 	var multiElem1 = new AscCommonExcel.CMultiTextElem();
 	multiElem1.text = "qwe";
 	var multiElem2 = new AscCommonExcel.CMultiTextElem();
@@ -325,6 +341,7 @@ $(function() {
 	fillData(wsData, testDataHeader, testDataRangeHeader);
 	fillData(wsData, testData, testDataRangeTable);
 	fillData(wsData, testDataFilter, testDataRangeFilters);
+	fillData(wsData, testDataNumFormat, testDataRangeNumFormat);
 	var addFormatTableOptions = new AscCommonExcel.AddFormatTableOptions();
 	addFormatTableOptions.asc_setRange(testDataRangeTable.getAbsName());
 	addFormatTableOptions.asc_setIsTitle(true);
@@ -361,6 +378,7 @@ $(function() {
 	var dataRefRecords = wsData.getName() + "!" + testDataRefreshRecords.getName();
 	var dataRefStructure = wsData.getName() + "!" + testDataRefreshStructure.getName();
 	var dataRefFilters = wsData.getName() + "!" + testDataRangeFilters.getName();
+	var dataRefNumFormat = wsData.getName() + "!" + testDataRangeNumFormat.getName();
 
 
 	function fillData(ws, data, range) {
@@ -3110,6 +3128,30 @@ $(function() {
 			["","13,42 Total","","38383"],
 			["15 Total","","","38383"],
 			["Grand Total","","","115149"]
+		],
+		"numFormat" : [
+			["Units","1000.0%","","","","","","","","","","","","","","",""],
+			["","","","","","","","","","","","","","","","",""],
+			["Sum of Price","","","","Price","hasBlank","Mix","MixFormat","bool","error","","","","","","",""],
+			["","","","","$11.3","","","$11,3 Total","$12.1","","","$12,1 Total","$13.7","","","$13,7 Total","Grand Total"],
+			["","","","","(blank)","","","","11.95","","","","13.33","","","",""],
+			["","","","","qwe","","qwe Total","","11.95","","11,95 Total","","13.33","","13,33 Total","",""],
+			["","","","","11.27","11,27 Total","","","11.95","11,95 Total","","","13.33","13,33 Total","","",""],
+			["","","","","TRUE","","","","FALSE","","","","FALSE","","","",""],
+			["Text","Date","Units2","Units3","#DIV/0!","","","","#DIV/0!","","","","#DIV/0!","","","",""],
+			["Fancy","02/05/05","$ 10.0","1.0E+01","","","","","","","","","13.74","13.74","13.74","13.74","13.74"],
+			["",""," $10,0  Total","","","","","","","","","","13.74","13.74","13.74","13.74","13.74"],
+			["","02.05.05 Total","","","","","","","","","","","13.74","13.74","13.74","13.74","13.74"],
+			["Fancy Total","","","","","","","","","","","","13.74","13.74","13.74","13.74","13.74"],
+			["Golf","02/04/05","$ 10.0","1.0E+01","","","","","12.12","12.12","12.12","12.12","","","","","12.12"],
+			["",""," $10,0  Total","","","","","","12.12","12.12","12.12","12.12","","","","","12.12"],
+			["","02.04.05 Total","","","","","","","12.12","12.12","12.12","12.12","","","","","12.12"],
+			["Golf Total","","","","","","","","12.12","12.12","12.12","12.12","","","","","12.12"],
+			["Tee","02/03/05","$ 10.0","1.0E+01","11.27","11.27","11.27","11.27","","","","","","","","","11.27"],
+			["",""," $10,0  Total","","11.27","11.27","11.27","11.27","","","","","","","","","11.27"],
+			["","02.03.05 Total","","","11.27","11.27","11.27","11.27","","","","","","","","","11.27"],
+			["Tee Total","","","","11.27","11.27","11.27","11.27","","","","","","","","","11.27"],
+			["Grand Total","","","","11.27","11.27","11.27","11.27","12.12","12.12","12.12","12.12","13.74","13.74","13.74","13.74","37.13"]
 		]
 	};
 
@@ -4057,6 +4099,42 @@ $(function() {
 		});
 	}
 
+	function testNumFormat() {
+		test("Test: num format", function() {
+			var pivot = api._asc_insertPivot(wb, dataRefNumFormat, ws, reportRange);
+			setPivotLayout(pivot, 'tabular');
+			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
+			pivot.asc_addRowField(api, 0);
+			pivot.asc_addRowField(api, 1);
+			pivot.asc_addPageField(api, 2);
+			pivot.asc_addRowField(api, 3);
+			pivot.asc_addRowField(api, 4);
+			pivot.asc_addColField(api, 5);
+			pivot.asc_addColField(api, 6);
+			pivot.asc_addColField(api, 7);
+			pivot.asc_addColField(api, 8);
+			pivot.asc_addColField(api, 9);
+			pivot.asc_addColField(api, 10);
+
+			var getNewFilter = function(fld, index) {
+				var autoFilterObject = new Asc.AutoFiltersOptions();
+				pivot.fillAutoFiltersOptions(autoFilterObject, fld);
+				for (var i = 0; i < autoFilterObject.values.length; ++i) {
+					autoFilterObject.values[i].visible = i == index;
+				}
+				autoFilterObject.filter.type = Asc.c_oAscAutoFilterTypes.Filters;
+				return autoFilterObject;
+			};
+
+			AscCommon.History.Clear();
+			pivot = checkHistoryOperation(pivot, standards["numFormat"], "numFormat", function(){
+				pivot.filterByFieldIndex(api, getNewFilter(2, 0), 2, true);
+			});
+
+			ws.deletePivotTables(new AscCommonExcel.MultiplyRange(pivot.getReportRanges()).getUnionRange());
+		});
+	}
+
 	function testPivotMisc() {
 		test("Test: misc", function() {
 			var pivot = api._asc_insertPivot(wb, dataRef1Row, ws, reportRange);
@@ -4149,6 +4227,8 @@ $(function() {
 		testFiltersTop10();
 
 		testFiltersLabel();
+
+		testNumFormat();
 
 		testPivotMisc();
 	}
