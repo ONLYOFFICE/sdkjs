@@ -651,7 +651,9 @@
 
 
       AscCommon.InitBrowserInputContext(this.Api, "id_target_cursor");
-      this.model.dependencyFormulas.calcTree();
+      AscCommonExcel.executeInR1C1Mode(false, function () {
+          self.model.dependencyFormulas.calcTree();
+      });
     }
 
 	  this.cellEditor =
