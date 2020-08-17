@@ -2830,7 +2830,7 @@
             if (slicerCacheExtIndex > 0) {
                 this.bs.WriteItem(c_oSerWorkbookTypes.SlicerCachesExt, function () {oThis.WriteSlicerCaches(slicerCachesExt, oThis.tableIds);});
             }
-			if (this.wb.externalReferences.length > 0) {
+			if (!this.isCopyPaste && this.wb.externalReferences.length > 0) {
 				this.bs.WriteItem(c_oSerWorkbookTypes.ExternalReferences, function() {oThis.WriteExternalReferences();});
 			}
 			if (!this.isCopyPaste) {
