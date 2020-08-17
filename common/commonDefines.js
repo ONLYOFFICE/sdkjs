@@ -1616,6 +1616,11 @@
 		TOC          : 10
 	};
 
+	var c_oAscDefNameType = {
+		table: 1,
+		slicer: 2
+	};
+
 	var g_aLcidNameIdArray = [
 		"ar", 0x0001 ,
 		"bg", 0x0002 ,
@@ -2978,6 +2983,11 @@
 	prot['DropDownList'] = c_oAscContentControlSpecificType.DropDownList;
 	prot['DateTime']     = c_oAscContentControlSpecificType.DateTime;
 	prot['TOC']          = c_oAscContentControlSpecificType.TOC;
+
+	window['Asc']['c_oAscDefNameType'] = window['Asc'].c_oAscDefNameType = c_oAscDefNameType;
+	prot = c_oAscDefNameType;
+	prot['table'] = prot.table;
+	prot['slicer'] = prot.slicer;
 
 	window["AscCommon"].document_compatibility_mode_Word11  = document_compatibility_mode_Word11;
 	window["AscCommon"].document_compatibility_mode_Word12  = document_compatibility_mode_Word12;
