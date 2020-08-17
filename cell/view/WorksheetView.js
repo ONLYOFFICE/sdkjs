@@ -13070,7 +13070,8 @@
 		}
 
 		var t = this;
-		var arn = this.model.selectionRange.getLast().clone();
+		var selectionRange = this.model.selectionRange ? this.model.selectionRange : this.model.getSelection();
+		var arn = selectionRange.getLast().clone();
 		var checkRange = arn.clone();
 
 		var range, count;
