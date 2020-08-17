@@ -4920,6 +4920,24 @@ StyleManager.prototype =
 		}
 		return sRes;
 	}
+	function getStringFromMultiTextSkipToSpace(multiText) {
+		var sRes = "";
+		if (multiText) {
+			for (var i = 0, length = multiText.length; i < length; ++i) {
+				var elem = multiText[i];
+				if (null != elem.text) {
+					if(elem.format && elem.format.getSkip()) {
+						sRes += " ";
+					} else if(!(elem.format && elem.format.getRepeat())) {
+						sRes += elem.text;
+					} else {
+						var j = 0;
+					}
+				}
+			}
+		}
+		return sRes;
+	}
 	function isEqualMultiText(multiText1, multiText2) {
 		var sRes = "";
 		if (multiText1 && multiText2) {
@@ -5090,7 +5108,7 @@ CCellValue.prototype =
 			}
 		}
 		if (null !== multiText) {
-			return AscCommonExcel.getStringFromMultiText(multiText)
+			return AscCommonExcel.getStringFromMultiTextSkipToSpace(multiText)
 		}
 		return "";
 	}
@@ -10437,6 +10455,7 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 	window['AscCommonExcel'].g_nRowStructSize = g_nRowStructSize;
 	window['AscCommonExcel'].shiftGetBBox = shiftGetBBox;
 	window['AscCommonExcel'].getStringFromMultiText = getStringFromMultiText;
+	window['AscCommonExcel'].getStringFromMultiTextSkipToSpace = getStringFromMultiTextSkipToSpace;
 	window['AscCommonExcel'].isEqualMultiText = isEqualMultiText;
 	window['AscCommonExcel'].RgbColor = RgbColor;
 	window['AscCommonExcel'].createRgbColor = createRgbColor;

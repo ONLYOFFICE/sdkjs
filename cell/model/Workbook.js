@@ -6812,12 +6812,12 @@
 							if (field.subtotalCaption) {
 								oCellValue.text = field.subtotalCaption;
 							} else {
-								oCellValue.text = totalTitleRange[r + j].getValueWithFormat();
+								oCellValue.text = totalTitleRange[r + j].getValueWithFormatSkipToSpace();
 								oCellValue.text += ' ' + AscCommonExcel.ToName_ST_ItemType(item.t);
 							}
 						}
 					} else {
-						oCellValue.text = totalTitleRange[r + j].getValueWithFormat();
+						oCellValue.text = totalTitleRange[r + j].getValueWithFormatSkipToSpace();
 						oCellValue.text += ' ' + pivotTable.getDataFieldName(item.i);
 					}
 				}
@@ -9328,6 +9328,11 @@
 		var aTextValue2 = this.getValue2(AscCommon.gc_nMaxDigCountView, function() {return true;});
 		return AscCommonExcel.getStringFromMultiText(aTextValue2);
 	};
+	Cell.prototype.getValueSkipToSpace = function() {
+		this._checkDirty();
+		var aTextValue2 = this.getValue2(AscCommon.gc_nMaxDigCountView, function() {return true;});
+		return AscCommonExcel.getStringFromMultiTextSkipToSpace(aTextValue2);
+	};
 	Cell.prototype.getValue2 = function(dDigitsCount, fIsFitMeasurer) {
 		this._checkDirty();
 		if(null == fIsFitMeasurer)
@@ -11763,6 +11768,16 @@
 		this.worksheet._getCellNoEmpty(this.bbox.r1, this.bbox.c1, function(cell) {
 			if(null != cell)
 				value = cell.getValue();
+			else
+				value = "";
+		});
+		return value;
+	};
+	Range.prototype.getValueWithFormatSkipToSpace=function(){
+		var value;
+		this.worksheet._getCellNoEmpty(this.bbox.r1, this.bbox.c1, function(cell) {
+			if(null != cell)
+				value = cell.getValueSkipToSpace();
 			else
 				value = "";
 		});
