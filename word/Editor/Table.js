@@ -13644,21 +13644,6 @@ CTable.prototype.Update_TableMarkupFromRuler = function(NewMarkup, bCol, Index)
 		if (0 === Dx)
 			return;
 
-		// Пока сделаем так, в будущем надо будет менять ширину таблицы
-		if (0 != Index && TablePr.TableW.Type != tblwidth_Auto)
-		{
-			var nTableW = 0;
-			for (var nCurCol = 0, nColsCount = this.TableGrid.length; nCurCol < nColsCount; ++nCurCol)
-				nTableW += this.TableGrid[nCurCol];
-
-			var nMinWidth = this.private_GetTableMinWidth();
-
-			if (nTableW + Dx < nMinWidth)
-				nTableW = nMinWidth;
-
-			this.Set_TableW(tblwidth_Mm, nTableW + Dx);
-		}
-
 		if (0 === Col)
 		{
 			Dx = this.Markup.X - NewMarkup.X;
@@ -13777,6 +13762,28 @@ CTable.prototype.Update_TableMarkupFromRuler = function(NewMarkup, bCol, Index)
 			}
 
 			this.private_RecalculateGrid();
+		}
+
+		if (0 !== Index && undefined !== TablePr.TableW && TablePr.TableW.Type !== tblwidth_Auto)
+		{
+			var nTableW = 0;
+			for (var nCurCol = 0, nColsCount = this.TableGrid.length; nCurCol < nColsCount; ++nCurCol)
+				nTableW += this.TableGrid[nCurCol];
+
+			var nTableW = Math.max(this.private_GetTableMinWidth(), nTableW);
+
+			if (tblwidth_Pct === TablePr.TableW.Type)
+			{
+				var nPctWidth = this.private_RecalculatePercentWidth();
+				if (nPctWidth < 0.01)
+					this.Set_TableW(tblwidth_Auto, 0);
+				else
+					this.Set_TableW(tblwidth_Pct, nTableW / nPctWidth * 100);
+			}
+			else
+			{
+				this.Set_TableW(tblwidth_Mm, nTableW);
+			}
 		}
 	}
 	else
