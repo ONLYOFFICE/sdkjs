@@ -6918,9 +6918,7 @@
                 res = this.bcr.Read1(length, function(t,l){
                     return oThis.ReadDefinedName(t,l,oNewDefinedName);
                 });
-                if (null != oNewDefinedName.Name && null != oNewDefinedName.Ref) {
-                    this.oWorkbook.dependencyFormulas.addDefNameOpen(oNewDefinedName.Name, oNewDefinedName.Ref, oNewDefinedName.LocalSheetId, oNewDefinedName.Hidden, false);
-                }
+                this.oReadResult.defNames.push(oNewDefinedName);
             }
             else
                 res = c_oSerConstants.ReadUnknown;
@@ -9380,7 +9378,8 @@
 			pivotCacheDefinitions: {},
 			macros: null,
             slicerCaches: {},
-            tableIds: {}
+			tableIds: {},
+			defNames: []
         };
         this.getbase64DecodedData = function(szSrc)
         {
@@ -9738,6 +9737,7 @@
                         break;
                 }
             }
+			this.PostLoadPrepareDefNames(wb);
             //todo инициализация формул из-за именованных диапазонов перенесена в wb.init ее надо вызывать в любом случае(Rev: 61959)
             if(!this.copyPasteObj.isCopyPaste || this.copyPasteObj.selectAllSheet)
             {
@@ -9764,7 +9764,15 @@
 				wb.oApi.macros.SetData(this.oReadResult.macros);
 			}
 		}
-    }
+		this.PostLoadPrepareDefNames = function(wb)
+		{
+			this.oReadResult.defNames.forEach(function(defName){
+				if (null != defName.Name && null != defName.Ref) {
+					wb.dependencyFormulas.addDefNameOpen(defName.Name, defName.Ref, defName.LocalSheetId, defName.Hidden, false);
+				}
+			});
+		}
+	}
     function CSlicerStyles()
     {
         this.DefaultStyle = "SlicerStyleLight1";
