@@ -9966,15 +9966,15 @@
 								oCanPromote);
 							// Вызываем функцию пересчета для заголовков форматированной таблицы
 							t.model.checkChangeTablesContent(arn);
+
+							// Сбрасываем параметры автозаполнения
+							t.activeFillHandle = null;
+							t.fillHandleDirection = -1;
+
+							History.SetSelection(range.bbox.clone());
+							History.SetSelectionRedo(oCanPromote.to.clone());
+							History.EndTransaction();
 						});
-
-                        // Сбрасываем параметры автозаполнения
-                        t.activeFillHandle = null;
-                        t.fillHandleDirection = -1;
-
-                        History.SetSelection(range.bbox.clone());
-                        History.SetSelectionRedo(oCanPromote.to.clone());
-                        History.EndTransaction();
 
 						// Обновляем выделенные ячейки
 						t._updateRange(arn);
