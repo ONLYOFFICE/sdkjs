@@ -2074,6 +2074,7 @@ CT_PivotCacheRecords.prototype.fromWorksheetRange = function(location, cacheFiel
 			if (!cell.isNullTextString()) {
 				if (lastRowWithText + 1 < cell.nRow) {
 					records.addMissing(cell.nRow - lastRowWithText - 1);
+					si.containsBlank = true;
 				}
 				lastRowWithText = cell.nRow;
 				switch (cell.getType()) {
@@ -2115,13 +2116,12 @@ CT_PivotCacheRecords.prototype.fromWorksheetRange = function(location, cacheFiel
 						si.containsNonDate = true;
 						break;
 				}
-			} else {
-				si.containsBlank = true;
 			}
 			lastRow = cell.nRow;
 		});
 		if (lastRowWithText < bbox.r2) {
 			records.addMissing(bbox.r2 - lastRowWithText);
+			si.containsBlank = true;
 		}
 		if (lastRow < bbox.r2) {
 			cacheFieldNum = null;
