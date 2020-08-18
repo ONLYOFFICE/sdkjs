@@ -6809,7 +6809,7 @@
 			{
 				this.oWorkbook.connections = this.stream.GetBuffer(length);
 			}
-			else if (c_oSerWorkbookTypes.PivotCaches == type)
+			else if (c_oSerWorkbookTypes.PivotCaches == type && typeof Asc.CT_PivotCacheDefinition != "undefined")
 			{
 				res = this.bcr.Read1(length, function(t,l){
 					return oThis.ReadPivotCaches(t,l);
