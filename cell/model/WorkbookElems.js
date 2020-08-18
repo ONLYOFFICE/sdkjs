@@ -8894,7 +8894,7 @@ Top10.prototype.initByArray = function(arr, isSum){
 			}
 		}
 	}
-	if(null !== res)
+	if(null != res)
 	{
 		this.FilterVal = res;
 	}
