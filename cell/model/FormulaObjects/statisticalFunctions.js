@@ -6284,6 +6284,7 @@ function (window, undefined) {
 	cFORECAST_ETS_SEASONALITY.prototype.name = 'FORECAST.ETS.SEASONALITY';
 	cFORECAST_ETS_SEASONALITY.prototype.argumentsMin = 2;
 	cFORECAST_ETS_SEASONALITY.prototype.argumentsMax = 4;
+	cFORECAST_ETS_SEASONALITY.prototype.arrayIndexes = {0: 1, 1: 1};
 	cFORECAST_ETS_SEASONALITY.prototype.argumentsType = [argType.reference, argType.reference, argType.number, argType.number];
 	cFORECAST_ETS_SEASONALITY.prototype.Calculate = function (arg) {
 
