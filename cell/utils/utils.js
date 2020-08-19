@@ -567,7 +567,8 @@
 			var isNoDelete = true;
 			var isHor = 0 != offset.col;
 			var toDelete = offset.col < 0 || offset.row < 0;
-
+			var isLastRow = this.r2 === gc_nMaxRow0;
+			var isLastCol = this.c2 === gc_nMaxCol0;
 			if (isHor) {
 				if (toDelete) {
 					if (this.c1 < bbox.c1) {
@@ -600,7 +601,11 @@
 					if (this.c1 < bbox.c1) {
 						this.setOffsetLast(offset);
 					} else {
-						this.setOffset(offset);
+						if (this.c1 + offset.col <= gc_nMaxCol0) {
+							this.setOffset(offset);
+						} else {
+							isNoDelete = false;
+						}
 					}
 				}
 			} else {
@@ -635,9 +640,20 @@
 					if (this.r1 < bbox.r1) {
 						this.setOffsetLast(offset);
 					} else {
-						this.setOffset(offset);
+						if (this.r1 + offset.row <= gc_nMaxRow0) {
+							this.setOffset(offset);
+						} else {
+							isNoDelete = false;
+						}
 					}
 				}
+			}
+			//range sticks to the gc_nMaxRow0/gc_nMaxCol0(but not to 0) and cannot be shifted
+			if(isLastRow) {
+				this.r2 = gc_nMaxRow0;
+			}
+			if(isLastCol) {
+				this.c2 = gc_nMaxCol0;
 			}
 			return isNoDelete;
 		};
