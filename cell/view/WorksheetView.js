@@ -13534,6 +13534,7 @@
 							var bExcludeHiddenRows = t.model.autoFilters.bIsExcludeHiddenRows(checkRange, t.model.selectionRange.activeCell);
 							t.model.removeRows(checkRange.r1, checkRange.r2, bExcludeHiddenRows);
 
+							t._updateSlicers(arn);
 							t._updateGroups();
 							updateDrawingObjectsInfo2 = {bInsert: false, operType: val, updateRange: arn};
 							History.EndTransaction();
@@ -16707,6 +16708,7 @@
                 if (res) {
                     t.objectRender.updateDrawingObject(true, type, arn);
                     t._onUpdateFormatTable(range, false, true);
+                    t._updateSlicers(arn);
                 }
             };
 
@@ -20593,6 +20595,16 @@
 				callback(false);
 			}
 		});
+	};
+
+	WorksheetView.prototype._updateSlicers = function (range) {
+		//пока только для таблиц
+		var tables = this.model.autoFilters.getTablesIntersectionRange(range);
+		if (tables) {
+			for (var i = 0; i < tables.length; i++) {
+				this.model.autoFilters.updateSlicer(tables[i].DisplayName);
+			}
+		}
 	};
 
 	//------------------------------------------------------------export---------------------------------------------------
