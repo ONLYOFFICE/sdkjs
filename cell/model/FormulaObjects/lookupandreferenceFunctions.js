@@ -370,7 +370,7 @@ function (window, undefined) {
 			if (!formula) {
 				return new cError(cErrorType.not_available);
 			} else {
-				res = new cString(bbox.getValueForEdit());
+				res = new cString(bbox.getValueForEdit(true));
 			}
 		}
 
