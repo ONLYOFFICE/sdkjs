@@ -1909,8 +1909,8 @@ var editor;
     return this.wbModel.getWorksheet(index).getHidden();
   };
 
-  spreadsheet_api.prototype.asc_getDefinedNames = function(defNameListId) {
-    return this.wb.getDefinedNames(defNameListId);
+  spreadsheet_api.prototype.asc_getDefinedNames = function(defNameListId, excludeErrorRefNames) {
+    return this.wb.getDefinedNames(defNameListId,excludeErrorRefNames);
   };
 
   spreadsheet_api.prototype.asc_setDefinedNames = function(defName) {

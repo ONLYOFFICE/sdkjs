@@ -2610,8 +2610,8 @@
     }
   };
 
-  WorkbookView.prototype.getDefinedNames = function(defNameListId) {
-    return this.model.getDefinedNamesWB(defNameListId, true);
+  WorkbookView.prototype.getDefinedNames = function(defNameListId, excludeErrorRefNames) {
+    return this.model.getDefinedNamesWB(defNameListId, true, excludeErrorRefNames);
   };
 
   WorkbookView.prototype.setDefinedNames = function(defName) {
