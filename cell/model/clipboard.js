@@ -1562,7 +1562,7 @@
 
 				var doPasteIntoShape = function() {
 					History.TurnOff();
-					var docContent = this._convertTableFromExcelToDocument(worksheet, pasteData, isIntoShape);
+					var docContent = t._convertTableFromExcelToDocument(worksheet, pasteData, isIntoShape);
 					History.TurnOn();
 
 					var callback = function (isSuccess) {
