@@ -366,21 +366,11 @@ function (window, undefined) {
 		if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type ||
 			cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
 			var bbox = arg0.getRange();
-			var formula = bbox.getFormula();
-			if ("" === formula) {
+			var formula = bbox.isFormula();
+			if (!formula) {
 				return new cError(cErrorType.not_available);
 			} else {
-				var isArray;
-				var ws = arg0.getWS();
-				if (ws && bbox.bbox) {
-					var firstRange = ws.getCell3(bbox.bbox.r1, bbox.bbox.c1);
-					firstRange._foreachNoEmpty(function (cell) {
-						if (cell && cell.formulaParsed && cell.formulaParsed.ref) {
-							isArray = true;
-						}
-					});
-				}
-				res = new cString(isArray ? "{" + "=" + formula + "}" : "=" + formula);
+				res = new cString(bbox.getValueForEdit());
 			}
 		}
 
