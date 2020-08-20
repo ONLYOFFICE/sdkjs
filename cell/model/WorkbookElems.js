@@ -6134,6 +6134,11 @@ function RangeDataManagerElem(bbox, data)
 				this.buildDependencies();
 			}
 		}
+		var wb = autoFilters.worksheet.workbook;
+		if (this.isTotalsRow() && this.Ref.r2 !== range.r2 && !wb.bUndoChanges && !wb.bRedoChanges) {
+			var rangeTotal = autoFilters.worksheet.getRange3(this.Ref.r2, this.Ref.c1, this.Ref.r2, this.Ref.c2);
+			rangeTotal.cleanText()
+		}
 		this.Ref = new Asc.Range(range.c1, range.r1, range.c2, range.r2);
 		//event
 		this.handlers.trigger("changeRefTablePart", this);
