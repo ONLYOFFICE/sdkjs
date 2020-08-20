@@ -3598,7 +3598,8 @@
 
 		oParagraph.Parent.InsertContent(oSelectedContent, oNearestPos);
 		oParagraph.Clear_NearestPosArray();
-		this.Document.RemoveSelection(true);
+		// TODO: Выяснить нужно ли снимать выделение с автофигур
+		this.Document.MoveCursorRight(false, false, true);
 		return true;
 	};
 
