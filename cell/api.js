@@ -3265,15 +3265,12 @@ var editor;
       } else if (type === "suggest") {
         this.handlers.trigger("asc_onSpellCheckVariantsFound", new AscCommon.asc_CSpellCheckProperty(e["usrWords"][0], null, e["usrSuggest"][0], null, null));
         var cellInfo = e["cellInfo"];
-        var dc = cellInfo.col - ws.model.selectionRange.activeCell.col;
-        var dr = cellInfo.row - ws.model.selectionRange.activeCell.row;
         this.spellcheckState.lockSpell = true;
 
-        if ((dc !== 0 || dr !== 0) && isStart && lastOptions) {
+        if (!ws.model.selectionRange.activeCell.isEqual(cellInfo) && isStart && lastOptions) {
           this.asc_replaceMisspelledWords(lastOptions);
         } else {
-          var d = ws.changeSelectionStartPoint(dc, dr);
-          this.controller.scroll(d);
+          ws.setSelection(new Asc.Range(cellInfo.col, cellInfo.row, cellInfo.col, cellInfo.row));
           this.spellcheckState.lockSpell = false;
           if(this.spellcheckState.afterReplace) {
             History.EndTransaction();
@@ -3538,12 +3535,8 @@ var editor;
         if (lastSpell) {
           var lastIndex = t.spellcheckState.lastIndex;
           var cellInfo = lastSpell["cellsInfo"][lastIndex];
-          var activeCell = ws.model.selectionRange.activeCell;
-          var dc = cellInfo.col - activeCell.col;
-          var dr = cellInfo.row - activeCell.row;
           t.spellcheckState.lockSpell = true;
-          var d = ws.changeSelectionStartPoint(dc, dr);
-          t.controller.scroll(d);
+          ws.setSelection(new Asc.Range(cellInfo.col, cellInfo.row, cellInfo.col, cellInfo.row));
           t.spellcheckState.lockSpell = false;
           t.spellcheckState.newWord = null;
           t.spellcheckState.newCellText = null;
