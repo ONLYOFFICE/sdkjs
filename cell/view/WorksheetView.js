@@ -14781,8 +14781,8 @@
 							t.setSelection(filterRange);
 						}
 
-						t._onUpdateFormatTable(filterRange, !!(styleName), true);
 						History.EndTransaction();
+						t._onUpdateFormatTable(filterRange, !!(styleName), true);
 
 						if (isSlowOperation) {
 							t.handlers.trigger("slowOperation", false);
