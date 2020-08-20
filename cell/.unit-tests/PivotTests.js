@@ -163,7 +163,7 @@ $(function() {
 	var testDataRangeHeader = AscCommonExcel.g_oRangeCache.getAscRange("B54:O55");
 	var testDataRangeTable = AscCommonExcel.g_oRangeCache.getAscRange("B57:H68");
 	var testDataRefreshFieldSettings = AscCommonExcel.g_oRangeCache.getAscRange("B70:H81");
-	var testDataRangeFilters = AscCommonExcel.g_oRangeCache.getAscRange("B83:H94");
+	var testDataRangeFilters = AscCommonExcel.g_oRangeCache.getAscRange("B83:H93");
 	var testDataRangeNumFormat = AscCommonExcel.g_oRangeCache.getAscRange("B96:L107");
 	var testDataRangeDefName = AscCommonExcel.g_oRangeCache.getAscRange("J57:P68");
 	var testDataRangeDefNameLocal = AscCommonExcel.g_oRangeCache.getAscRange("R57:X68");

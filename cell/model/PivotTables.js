@@ -2022,6 +2022,7 @@ CT_PivotCacheRecords.prototype.convertToSharedItems = function(index, si) {
 	}
 };
 CT_PivotCacheRecords.prototype.fromWorksheetRange = function(location, cacheFields) {
+	var i;
 	var ws = location.ws;
 	var bbox = location.bbox;
 	var headings = location.headings;
@@ -2037,7 +2038,7 @@ CT_PivotCacheRecords.prototype.fromWorksheetRange = function(location, cacheFiel
 		return;
 	}
 	var nameDuplicateMap = new Map();
-	for (var i = 0; i < headings.length; ++i) {
+	for (i = 0; i < headings.length; ++i) {
 		var text = headings[i];
 		var index = 1;
 		while (nameDuplicateMap.has(text)) {
@@ -2051,7 +2052,8 @@ CT_PivotCacheRecords.prototype.fromWorksheetRange = function(location, cacheFiel
 		cacheFields.cacheField.push(cacheField);
 	}
 	this._cols = [];
-	for (var i = 0; i < cacheFields.cacheField.length; ++i) {
+	var lastRowMax = 0, firstRow = location.headings ? bbox.r1 : bbox.r1 + 1;
+	for (i = 0; i < cacheFields.cacheField.length; ++i) {
 		var cacheField = cacheFields.cacheField[i];
 		var cacheFieldNum = undefined;
 		var si = cacheField.sharedItems;
@@ -2063,7 +2065,7 @@ CT_PivotCacheRecords.prototype.fromWorksheetRange = function(location, cacheFiel
 		si.minValue = si.minDate = Number.POSITIVE_INFINITY;
 		var records = new PivotRecords();
 		var lastRow, lastRowWithText;
-		lastRow = lastRowWithText = location.headings ? bbox.r1 - 1 : bbox.r1;
+		lastRow = lastRowWithText = firstRow - 1;
 		ws.getRange3(lastRow + 1, bbox.c1 + i, bbox.r2, bbox.c1 + i)._foreachNoEmptyByCol(function(cell) {
 			if (undefined === cacheFieldNum) {
 				cacheFieldNum = cell.xfs && cell.xfs.num || null;
@@ -2119,8 +2121,8 @@ CT_PivotCacheRecords.prototype.fromWorksheetRange = function(location, cacheFiel
 			}
 			lastRow = cell.nRow;
 		});
+		lastRowMax = Math.max(lastRowMax, lastRow);
 		if (lastRowWithText < bbox.r2) {
-			records.addMissing(bbox.r2 - lastRowWithText);
 			si.containsBlank = true;
 		}
 		if (lastRow < bbox.r2) {
@@ -2149,7 +2151,15 @@ CT_PivotCacheRecords.prototype.fromWorksheetRange = function(location, cacheFiel
 			cacheField.num = cacheFieldNum;
 		}
 	}
-	//todo trim missing
+	var expectedSize = lastRowMax - firstRow + 1;
+	if (lastRowMax < bbox.r2) {
+		expectedSize += 1;
+	}
+	for (i = 0; i < this._cols.length; ++i) {
+		if (this._cols[i].size < expectedSize) {
+			this._cols[i].addMissing(expectedSize - this._cols[i].size);
+		}
+	}
 };
 CT_PivotCacheRecords.prototype.getType = function() {
 	return AscCommonExcel.UndoRedoDataTypes.PivotCacheRecords;

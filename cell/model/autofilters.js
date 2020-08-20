@@ -975,7 +975,7 @@
 						{
 							addRange = this.expandRange(activeCells);
 						} else {
-							addRange = activeCells;
+							addRange = activeCells.clone();
 						}
 						Asc.CT_pivotTableDefinition.prototype.prepareDataRange(this.worksheet, addRange);
 						res.asc_setRange(AscCommon.parserHelp.get3DRef(this.worksheet.getName(), addRange.getAbsName()));
