@@ -375,6 +375,9 @@
 		return res;
 	};
 	CT_slicer.prototype.merge = function(val) {
+		if(val.name !== this.name) {
+			this.name = undefined;
+		}
 		if(val.caption !== this.caption) {
 			this.caption = undefined;
 		}
