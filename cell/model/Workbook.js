@@ -7310,7 +7310,7 @@
 			pivotTable = this.pivotTables[i];
 			if (pivotTable.isInRange(range)) {
 				var newPivot = pivotTable.clone();
-				newPivot.setOffset(offset, false);
+				newPivot.prepareToPaste(pivotTable.GetWS(), offset);
 				this.workbook.oApi._changePivotSimple(newPivot, true, false, function() {
 					t.insertPivotTable(newPivot, true, false);
 				});

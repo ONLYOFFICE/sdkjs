@@ -2391,6 +2391,11 @@ CT_pivotTableDefinition.prototype.cloneShallow = function () {
 	this.cacheDefinition = newPivot.cacheDefinition = oldCacheDefinition;
 	return newPivot;
 };
+CT_pivotTableDefinition.prototype.prepareToPaste = function (ws, offset) {
+	this.setWS(ws);
+	this.name = this.GetWS().workbook.dependencyFormulas.getNextPivotName();
+	this.setOffset(offset, false);
+};
 CT_pivotTableDefinition.prototype.stashCurReportRange = function () {
 	var t = this;
 	if (!this.changed.oldRanges) {

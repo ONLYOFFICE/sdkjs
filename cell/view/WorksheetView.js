@@ -11345,8 +11345,7 @@
 			var refInsertBinary = AscCommonExcel.g_oRangeCache.getAscRange(activeRange);
 			for (var i = 0; i < val.pivotTables.length; i++) {
 				var pivot = val.pivotTables[i];
-				pivot.setWS(t.model);
-				pivot.setOffset(new AscCommon.CellBase(arnToRange.r1 - refInsertBinary.r1, arnToRange.c1 - refInsertBinary.c1));
+				pivot.prepareToPaste(t.model, new AscCommon.CellBase(arnToRange.r1 - refInsertBinary.r1, arnToRange.c1 - refInsertBinary.c1));
 				t.model.workbook.oApi._changePivotSimple(pivot, true, false, function() {
 					t.model.insertPivotTable(pivot, true, true);
 				});

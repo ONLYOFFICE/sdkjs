@@ -2785,7 +2785,7 @@
 				for (var i = 0; i < ws.pivotTables.length; ++i) {
 					var pivotTable = ws.pivotTables[i];
 					if (oThis.isCopyPaste && !pivotTable.isInRange(oThis.isCopyPaste)) {
-						return;
+						continue;
 					}
 					if (pivotTable.cacheDefinition) {
 						var pivotCache = pivotCaches[pivotTable.cacheDefinition.Get_Id()];
