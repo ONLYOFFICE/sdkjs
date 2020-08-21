@@ -3549,12 +3549,18 @@ CT_pivotTableDefinition.prototype.checkPivotFieldItems = function(index) {
 };
 CT_pivotTableDefinition.prototype.checkPivotFieldItem = function(index, pivotField, cacheRecords, cacheField, oldCacheField) {
 	var item, i, j, newItem, equalMap = {};
+	var pivotFieldOld = pivotField.clone();
 	var newItems = new CT_Items();
 	if (!(cacheField.sharedItems && cacheField.sharedItems.Items.getSize() > 0)) {
 		if(!cacheField.sharedItems){
 			cacheField.sharedItems = new CT_SharedItems();
 		}
+		var oldVal = new AscCommonExcel.UndoRedoData_BinaryWrapper2(cacheField);
 		cacheRecords.convertToSharedItems(index, cacheField.sharedItems);
+		var newVal = new AscCommonExcel.UndoRedoData_BinaryWrapper2(cacheField);
+		History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_CacheField,
+			this.worksheet ? this.worksheet.getId() : null, null,
+			new AscCommonExcel.UndoRedoData_PivotField(this.Get_Id(), index, oldVal, newVal));
 	}
 	//save old items order
 	if (pivotField.items && oldCacheField) {
@@ -3589,6 +3595,9 @@ CT_pivotTableDefinition.prototype.checkPivotFieldItem = function(index, pivotFie
 		pivotField.sortItems(Asc.c_oAscSortOptions.Ascending, cacheField.sharedItems);
 	}
 	pivotField.checkSubtotal();
+	History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_PivotField,
+		this.worksheet ? this.worksheet.getId() : null, null,
+		new AscCommonExcel.UndoRedoData_PivotField(this.Get_Id(), index, pivotFieldOld, pivotField.clone()));
 };
 CT_pivotTableDefinition.prototype.getFilterMaps = function() {
 	var labelFilters = [];
@@ -6596,6 +6605,20 @@ CT_CacheField.prototype.toXml = function(writer, name, stylesForWrite) {
 		this.extLst.toXml(writer, "extLst");
 	}
 	writer.WriteXmlNodeEnd(name);
+};
+CT_CacheField.prototype.Write_ToBinary2 = function(writer) {
+	//todo write binary
+	var t = this;
+	AscCommonExcel.executeInR1C1Mode(false, function () {
+		toXmlWithLength(writer, t, "cacheField");
+	});
+};
+CT_CacheField.prototype.Read_FromBinary2 = function(reader) {
+	var tmp = new XmlReaderWrapper("cacheField", this);
+	var len = reader.GetLong();
+	AscCommonExcel.executeInR1C1Mode(false, function () {
+		new AscCommon.openXml.SaxParserBase().parse(AscCommon.GetStringUtf8(reader, len), tmp);
+	});
 };
 CT_CacheField.prototype.asc_getName = function () {
 	return this.name;
@@ -11597,6 +11620,7 @@ prot["asc_getShowColHeaders"] = prot.asc_getShowColHeaders;
 prot["asc_getShowRowStripes"] = prot.asc_getShowRowStripes;
 prot["asc_getShowColStripes"] = prot.asc_getShowColStripes;
 
+window["Asc"]["CT_CacheField"] = window['Asc'].CT_CacheField = CT_CacheField;
 prot = CT_CacheField.prototype;
 prot["asc_getName"] = prot.asc_getName;
 

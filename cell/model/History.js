@@ -199,9 +199,10 @@ function (window, undefined) {
 	window['AscCH'].historyitem_PivotTable_ColItems = 42;
 	window['AscCH'].historyitem_PivotTable_Location = 43;
 	window['AscCH'].historyitem_PivotTable_SetDataPosition = 44;
-	window['AscCH'].historyitem_PivotTable_PivotField = 45;
-	window['AscCH'].historyitem_PivotTable_PivotFilter = 46;
-	window['AscCH'].historyitem_PivotTable_PageFilter = 47;
+	window['AscCH'].historyitem_PivotTable_CacheField = 45;
+	window['AscCH'].historyitem_PivotTable_PivotField = 46;
+	window['AscCH'].historyitem_PivotTable_PivotFilter = 47;
+	window['AscCH'].historyitem_PivotTable_PageFilter = 48;
 
 	window['AscCH'].historyitem_SharedFormula_ChangeFormula = 1;
 	window['AscCH'].historyitem_SharedFormula_ChangeShared = 2;
