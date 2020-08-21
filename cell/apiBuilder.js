@@ -987,8 +987,8 @@
 			defName = this.worksheet.workbook.getDefinesNames(defName, this.worksheet.getId());
 			return new ApiName(defName);
 		}
-		else 
-			return null;
+
+		return null;
 	};
 
 	/**
