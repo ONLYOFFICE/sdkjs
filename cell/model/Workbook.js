@@ -2080,7 +2080,7 @@
 	};
 	Workbook.prototype.forEach = function (callback, isCopyPaste) {
 		//if copy/paste - use only actve ws
-		if (isCopyPaste) {
+		if (isCopyPaste || isCopyPaste === false) {
 			callback(this.getActiveWs(), this.getActive());
 		} else {
 			for (var i = 0, l = this.aWorksheets.length; i < l; ++i) {
