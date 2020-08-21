@@ -6937,8 +6937,8 @@
 			}
 			//todo
 			if (Asc.c_oAscItemType.Data !== rowItem.t || !rowFields || rowR + rowItem.x.length === rowFields.length ||
-				(AscCommonExcel.st_VALUES !== fieldIndex && pivotFields[fieldIndex].checkSubtotalTop() &&
-				rowR > valuesIndex)) {
+				(AscCommonExcel.st_VALUES !== fieldIndex && pivotFields[fieldIndex] &&
+				pivotFields[fieldIndex].checkSubtotalTop() && rowR > valuesIndex)) {
 				dataByColIndex = [curDataRow];
 				for (var colItemsIndex = 0; colItemsIndex < colItems.length; ++colItemsIndex) {
 					var colItem = colItems[colItemsIndex];
