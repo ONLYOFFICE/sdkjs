@@ -2203,9 +2203,9 @@
 			this._updateWorksheetIndexes(wsActive);
 			//copyFrom after sheet add because formula assemble dependce on sheet structure
 			renameParams = newSheet.copyFrom(wsFrom, sName, tableNames);
-			if(!opt_sheet) {
-				newSheet.copyFromFormulas(renameParams);
-			}
+			
+			newSheet.copyFromFormulas(renameParams);
+
 			newSheet.initPostOpen(this.wsHandlers, {});
 			History.TurnOn();
 
