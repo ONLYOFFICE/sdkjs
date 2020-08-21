@@ -1787,6 +1787,21 @@
 		var addedTitleHeight = 0, addedTitleWidth = 0;
 
 		var startTitleArrRow = [];
+
+		var j;
+		var baseTitleHeight = 0;
+		if (tRow1 < currentRowIndex) {
+			for (j = tRow1; j < Math.min(currentRowIndex, tRow2 + 1); j++) {
+				baseTitleHeight += this._getRowHeight(j) * scale;
+			}
+		}
+		var baseTitleWidth = 0;
+		if (tCol1 < currentColIndex) {
+			for (j = tCol1; j < Math.min(currentColIndex, tCol2 + 1); j++) {
+				baseTitleWidth += this._getColumnWidth(j) * scale;
+			}
+		}
+
 		while (AscCommonExcel.c_kMaxPrintPages > arrPages.length) {
 			if(isOnlyFirstPage && nCountPages > 0) {
 				break;
@@ -1818,6 +1833,11 @@
 				addedTitleHeight = startTitleArrRow[rowIndex - 1];
 			}
 
+			if (baseTitleHeight) {
+				curTitleHeight += baseTitleHeight;
+				addedTitleHeight += baseTitleHeight;
+			}
+
 			newPagePrint.titleHeight = curTitleHeight;
 
 			for (rowIndex = currentRowIndex; rowIndex <= range.r2; ++rowIndex) {
@@ -1832,6 +1852,11 @@
 					if(range.c1 === colIndex) {
 						curTitleWidth = 0;
 						addedTitleWidth = 0;
+					}
+
+					if (baseTitleWidth) {
+						curTitleWidth += baseTitleWidth;
+						addedTitleWidth += baseTitleWidth;
 					}
 
 					newPagePrint.titleWidth = curTitleWidth;
