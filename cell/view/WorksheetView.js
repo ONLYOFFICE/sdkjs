@@ -14781,6 +14781,10 @@
 							t.setSelection(filterRange);
 						}
 
+						//приходится принудительно запускать пересчёт перед функцией _onUpdateFormatTable
+						//для грамотного отображения формул(#46170)
+						//TODO пересчёт происходит два раза! в unlockRecal и EndTransaction.
+						t.model.workbook.dependencyFormulas.unlockRecal();
 						t._onUpdateFormatTable(filterRange, !!(styleName), true);
 						History.EndTransaction();
 
