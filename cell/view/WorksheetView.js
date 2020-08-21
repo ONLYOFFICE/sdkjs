@@ -20257,6 +20257,7 @@
 			History.EndTransaction();
 
 			t._updateRange(selection);
+			t._updateSlicers(selection);
 			t.draw();
 
 			if (deleteIndexes.length) {
