@@ -1835,7 +1835,7 @@
 
 			if (baseTitleHeight) {
 				curTitleHeight += baseTitleHeight;
-				addedTitleHeight += baseTitleHeight;
+				//addedTitleHeight += baseTitleHeight;
 			}
 
 			newPagePrint.titleHeight = curTitleHeight;
@@ -1856,7 +1856,7 @@
 
 					if (baseTitleWidth) {
 						curTitleWidth += baseTitleWidth;
-						addedTitleWidth += baseTitleWidth;
+						//addedTitleWidth += baseTitleWidth;
 					}
 
 					newPagePrint.titleWidth = curTitleWidth;
