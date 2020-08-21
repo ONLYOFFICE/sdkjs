@@ -192,7 +192,7 @@
 	};
 
 	/**
-	 * Create a sheet.
+	 * Creates a new worksheet. The new worksheet becomes the active sheet.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sName
