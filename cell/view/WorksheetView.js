@@ -14529,6 +14529,9 @@
 							if(t.model.autoFilters.isIntersectionTable(activeRange.bbox)) {
 								t.handlers.trigger("onErrorEvent", c_oAscError.ID.MultiCellsInTablesFormulaArray, c_oAscError.Level.NoCritical);
 								return false;
+							} else if(t.model.inPivotTable(activeRange.bbox)) {
+								t.handlers.trigger("onErrorEvent", c_oAscError.ID.LockedCellPivot, c_oAscError.Level.NoCritical);
+								return false;
 							} else {
 								activeRange._foreachNoEmpty(function(cell) {
 									ref = cell.formulaParsed && cell.formulaParsed.ref ? cell.formulaParsed.ref : null;
