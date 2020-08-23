@@ -7340,9 +7340,13 @@
 		}
 		return this._isPivotsIntersectRangeButNotInIt(AscCommonExcel.shiftGetBBox(range, 0 !== offset.col));
 	};
-	Worksheet.prototype.checkMovePivotTable = function(arnFrom, arnTo, ctrlKey) {
+	Worksheet.prototype.checkMovePivotTable = function(arnFrom, arnTo, ctrlKey, opt_wsTo) {
+		var t = this;
+		if (!opt_wsTo) {
+			opt_wsTo = this;
+		}
 		if (this.inPivotTable(arnFrom)) {
-			var intersectionTableParts = this.autoFilters.getTablesIntersectionRange(arnTo);
+			var intersectionTableParts = opt_wsTo.autoFilters.getTablesIntersectionRange(arnTo);
 			for (var i = 0; i < intersectionTableParts.length; i++) {
 				if(intersectionTableParts[i] && intersectionTableParts[i].Ref && !arnTo.containsRange(intersectionTableParts[i].Ref)) {
 					return c_oAscError.ID.PivotOverlap;
@@ -7351,10 +7355,10 @@
 		}
 		var res = false;
 		if (ctrlKey) {
-			res = this._isPivotsIntersectRangeButNotInIt(arnFrom) || this._isPivotsIntersectRangeButNotInIt(arnTo);
+			res = this._isPivotsIntersectRangeButNotInIt(arnFrom) || opt_wsTo._isPivotsIntersectRangeButNotInIt(arnTo);
 		} else {
-			res = this._isPivotsIntersectRangeButNotInIt(arnFrom) || this.pivotTables.some(function(element) {
-					return element.intersection(arnTo) && !element.isInRange(arnTo) && !element.isInRange(arnFrom);
+			res = this._isPivotsIntersectRangeButNotInIt(arnFrom) || opt_wsTo.pivotTables.some(function(element) {
+					return element.intersection(arnTo) && !element.isInRange(arnTo) && (opt_wsTo !== t || !element.isInRange(arnFrom));
 				});
 		}
 		return res ? c_oAscError.ID.LockedCellPivot : c_oAscError.ID.No;
