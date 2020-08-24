@@ -1139,6 +1139,10 @@
 
 		Paste_Process_End : function(checkEnd)
 		{
+			// при открытии хтмл не инициализируется. так как нет никакого ввода.
+			if (!this.Api)
+				return;
+
 			AscFonts.IsCheckSymbols             = false;
 			//todo возможно стоит добавить проверку
 			/*if(!this.pasteStart)
