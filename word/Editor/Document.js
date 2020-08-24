@@ -2486,7 +2486,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	//------------------------------------------------------------------------------------------------------------------
 	//  Check StartCollaborationEditing
 	//------------------------------------------------------------------------------------------------------------------
-	if (this.CollaborativeEditing && !this.CollaborativeEditing.Is_SingleUser())
+	if (false !== isMainLogicDocument && this.CollaborativeEditing && !this.CollaborativeEditing.Is_SingleUser())
 	{
 		this.StartCollaborationEditing();
 	}
