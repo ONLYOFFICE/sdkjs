@@ -394,7 +394,7 @@ CHistory.prototype.RedoAdd = function(oRedoObjectParam, Class, Type, sheetid, ra
 	if(bNeedOff)
 		this.TurnOff();
 
-	var bChangeActive = oRedoObjectParam.bChangeActive && AscCommonExcel.g_oUndoRedoWorkbook === Class;
+	var bChangeActive = oRedoObjectParam.bChangeActive && (AscCommonExcel.g_oUndoRedoWorkbook === Class || (AscCommonExcel.g_oUndoRedoWorksheet === Class && AscCH.historyitem_Worksheet_Hide === Type));
 	if (bChangeActive && null != oRedoObjectParam.activeSheet) {
 		//it can be delete action, so set active and get after action
 		this.workbook.setActiveById(oRedoObjectParam.activeSheet);
@@ -428,13 +428,13 @@ CHistory.prototype.RedoAdd = function(oRedoObjectParam, Class, Type, sheetid, ra
 			}
 		}
 	}
-	if (bChangeActive) {
-		oRedoObjectParam.activeSheet = this.workbook.getActiveWs().getId();
-	}
     var curPoint = this.Points[this.Index];
     if (curPoint) {
         this._addRedoObjectParam(oRedoObjectParam, curPoint.Items[curPoint.Items.length - 1]);
     }
+	if (bChangeActive) {
+		oRedoObjectParam.activeSheet = this.workbook.getActiveWs().getId();
+	}
 };
 
 CHistory.prototype.Remove_LastPoint = function()
