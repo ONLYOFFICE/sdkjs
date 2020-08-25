@@ -1137,10 +1137,15 @@ var editor;
   };
   spreadsheet_api.prototype._goToBookmark = function(data) {
     // Disable edit because if there is no name, we will try to create it
-    var tmp = this.restrictions;
-    this.restrictions = Asc.c_oAscRestrictionType.None;
+    var tmpRestrictions = this.restrictions;
+    this.restrictions = Asc.c_oAscRestrictionType.View;
+    // Set A1-mode because all bookmarks in A1-mode
+    var tmpR1C1 = AscCommonExcel.g_R1C1Mode;
+    AscCommonExcel.g_R1C1Mode = false;
     this.asc_findCell(data);
-    this.restrictions = tmp;
+    // Restore variables
+    this.restrictions = tmpRestrictions;
+    AscCommonExcel.g_R1C1Mode = tmpR1C1;
   };
 
   /////////////////////////////////////////////////////////////////////////
