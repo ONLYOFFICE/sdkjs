@@ -15340,15 +15340,16 @@
             }
         };
 
-		var bNeedSort = true;
-		if(expandRange) {
-			bNeedSort = !this.intersectionFormulaArray(expandRange, true);
-		} else if(sortProps) {
-			bNeedSort =  !this.intersectionFormulaArray(sortProps.sortRange.bbox, true)
-		} else if(!sortProps) {
-			bNeedSort = !this.intersectionFormulaArray(activeRange, true);
+		var doSortRange = sortProps ? sortProps.sortRange.bbox : expandRange;
+		if (!doSortRange) {
+			doSortRange = activeRange;
 		}
-		if(bNeedSort) {
+		if (t.model.inPivotTable(doSortRange)) {
+			t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot, c_oAscError.Level.NoCritical);
+			return;
+		}
+
+		if(!this.intersectionFormulaArray(doSortRange, true)) {
 			this._isLockedAll(onChangeAutoFilterCallback);
 		} else {
 			window.setTimeout(function() {
