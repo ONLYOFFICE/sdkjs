@@ -16027,7 +16027,7 @@
 		return (x >= x1 && x <= x2 && y >= y1 && y <= y2);
 	};
 
-	WorksheetView.prototype._checkAddAutoFilter = function (activeRange, styleName, addFormatTableOptionsObj, filterByCellContextMenu) {
+	WorksheetView.prototype._checkAddAutoFilter = function (activeRange, styleName, oTableProps, filterByCellContextMenu) {
 			//write error, if not add autoFilter and return false
 			var result = true;
 			var worksheet = this.model;
@@ -16048,13 +16048,17 @@
 				return res;
 			};
 
+			var fullRange = activeRange;
+			if((styleName && oTableProps) && (!oTableProps.isTitle || activeRange.r1 === activeRange.r2)) {
+				fullRange = new Asc.Range(activeRange.c1, activeRange.r1, activeRange.c2, activeRange.r2 + 1);
+			}
 			if (filter && styleName && filter.Ref.isIntersect(activeRange) && !(filter.Ref.containsRange(activeRange) &&
 					(activeRange.isOneCell() || (filter.Ref.isEqual(activeRange))) ||
 					(filter.Ref.r1 === activeRange.r1 && activeRange.containsRange(filter.Ref)))) {
 				worksheet.workbook.handlers.trigger("asc_onError", c_oAscError.ID.AutoFilterDataRangeError,
 					c_oAscError.Level.NoCritical);
 				result = false;
-			} else if (filter && styleName && filter.Ref.r1 === activeRange.r2 + 1 && addFormatTableOptionsObj.isTitle === false) {
+			} else if (filter && styleName && filter.Ref.r1 === activeRange.r2 + 1 && oTableProps.isTitle === false) {
 				worksheet.workbook.handlers.trigger("asc_onError", c_oAscError.ID.AutoFilterDataRangeError, c_oAscError.Level.NoCritical);
 				result = false;
 			} else if (!styleName && activeRange.isOneCell() && worksheet.autoFilters._isEmptyRange(activeRange, 1)) {
@@ -16072,16 +16076,16 @@
 				//add filter to empty range
 				worksheet.workbook.handlers.trigger("asc_onError", c_oAscError.ID.AutoFilterDataRangeError, c_oAscError.Level.NoCritical);
 				result = false;
-			} else if (styleName && addFormatTableOptionsObj && addFormatTableOptionsObj.isTitle === false &&
+			} else if (styleName && oTableProps && oTableProps.isTitle === false &&
 				worksheet.autoFilters._isEmptyCellsUnderRange(activeRange) == false &&
 				worksheet.autoFilters._isPartTablePartsUnderRange(activeRange)) {
 				//add format table without title if down another format table
 				worksheet.workbook.handlers.trigger("asc_onError", c_oAscError.ID.AutoFilterChangeFormatTableError,
 					c_oAscError.Level.NoCritical);
 				result = false;
-			} else if (this.model.inPivotTable(activeRange)) {
+			} else if (this.model.inPivotTable(fullRange)) {
 				result = false;
-            } else if(styleName && this.intersectionFormulaArray(activeRange, true, true)) {
+			} else if(styleName && this.intersectionFormulaArray(activeRange, true, true)) {
 				worksheet.workbook.handlers.trigger("asc_onError", c_oAscError.ID.MultiCellsInTablesFormulaArray, c_oAscError.Level.NoCritical);
 				result = false;
 			}
