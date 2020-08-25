@@ -11848,13 +11848,13 @@
 		});
 		return res;
 	};
-	Range.prototype.getXfs = function () {
-		var t = this;
+	Range.prototype.getXfs = function (compiled) {
+		var ws = this.worksheet;
 		var nRow = this.bbox.r1;
 		var nCol = this.bbox.c1;
 		var xfs;
 		this.worksheet._getCellNoEmpty(nRow, nCol, function (cell) {
-			xfs = cell ? cell.getCompiledStyle() : t.worksheet.getCompiledStyle(nRow, nCol);
+			xfs = ws.getCompiledStyle(nRow, nCol, cell, compiled ? null : emptyStyleComponents);
 		});
 		return xfs || g_oDefaultFormat.xfs;
 	};
@@ -11922,6 +11922,8 @@
 		return (cellFont.getName() !== rowFont.getName() || cellFont.getSize() !== rowFont.getSize());
 	};
 	Range.prototype.getFont = function (original) {
+		// ToDo разобраться. Есть предположение, что эта функция не нужна и она работает не верно
+		//  при выставлении стиля всему столбцу и тексте в ячейке
 		var t = this;
 		var nRow = this.bbox.r1;
 		var nCol = this.bbox.c1;
