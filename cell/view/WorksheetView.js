@@ -15384,6 +15384,7 @@
 				if (false !== updateRange) {
 					t._onUpdateFormatTable(updateRange, false, true);
                     t.objectRender.updateSizeDrawingObjects({target: c_oTargetType.RowResize, row: updateRange.r1});
+					t._updateSlicers(updateRange);
 				}
 			});
         };
@@ -15414,6 +15415,7 @@
 				if (false !== updateRange) {
 					t._onUpdateFormatTable(updateRange, false, true);
                     t.objectRender.updateSizeDrawingObjects({target: c_oTargetType.RowResize, row: updateRange.r1});
+					t._updateSlicers(updateRange);
 				}
 			});
         };
