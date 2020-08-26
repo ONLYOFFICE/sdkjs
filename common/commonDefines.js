@@ -867,8 +867,8 @@
 		MinPageTopField		: 0.17,
 		MinPageBottomField	: 0.17,
 
-		PageGridLines : 0,
-		PageHeadings  : 0
+		PageGridLines : false,
+		PageHeadings  : false
 	};
 
 	// Тип печати
