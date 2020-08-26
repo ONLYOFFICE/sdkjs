@@ -3301,6 +3301,19 @@
 		}
 		return bRet;
 	};
+	Workbook.prototype.getSlicersByTableName = function (val) {
+		var res = null;
+		for(var i = 0; i < this.aWorksheets.length; ++i) {
+			var wsSlicers = this.aWorksheets[i].getSlicersByTableName(val);
+			if (wsSlicers) {
+				if (!res) {
+					res = [];
+				}
+				res = res.concat(wsSlicers);
+			}
+		}
+		return res;
+	};
 
 //-------------------------------------------------------------------------------------------------
 	var tempHelp = new ArrayBuffer(8);

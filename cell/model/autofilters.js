@@ -918,6 +918,7 @@
 
 			checkApplyFilterOrSort: function (tablePartId) {
 				var worksheet = this.worksheet;
+				var workbook = worksheet.workbook;
 				var result = false;
 
 				if (-1 !== tablePartId) {
@@ -930,6 +931,10 @@
 						result = {isFilterColumns: false, isAutoFilter: true};
 					} else {
 						result = {isFilterColumns: false, isAutoFilter: false};
+					}
+
+					if (result && result.isAutoFilter && workbook.getSlicersByTableName(tablePart.DisplayName)) {
+						result.isAutoFilter = null;
 					}
 				} else {
 					if (worksheet.AutoFilter &&
