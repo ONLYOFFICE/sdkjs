@@ -33,8 +33,8 @@
 $(function() {
 	QUnit.config.autostart = false;
 
-	// Tests completed in 2597 milliseconds.
-	// 2367 assertions of 2416 passed, 49 failed.
+	// Tests completed in 2511 milliseconds.
+	// 2386 assertions of 2431 passed, 45 failed.
 
 	// function getValues(ws, range) {
 	// 	var res = [];
@@ -446,6 +446,8 @@ $(function() {
 	function getXml(pivot){
 		memory.Seek(0);
 		pivot.toXml(memory);
+		memory.WriteXmlString('\n\n');
+		pivot.cacheDefinition.toXml(memory);
 		var buffer = new Uint8Array(memory.GetCurPosition());
 		for (var i = 0; i < memory.GetCurPosition(); i++)
 		{
@@ -458,6 +460,9 @@ $(function() {
 		var wb = pivot.GetWS().workbook;
 		var undoValues = getReportValues(pivot);
 		var xmlUndo = getXml(pivot);
+		var pivotStart = pivot.clone();
+		pivotStart.Id = pivot.Get_Id();
+
 		AscCommon.History.Create_NewPoint();
 		AscCommon.History.StartTransaction();
 		action();
@@ -466,15 +471,21 @@ $(function() {
 		checkReportValues(pivot, getReportValues(pivot), standards, message);
 		var xmlDo = getXml(pivot);
 		var changes = wb.SerializeHistory();
+
 		AscCommon.History.Undo();
 		pivot = wb.getPivotTableById(pivot.Get_Id());
 		checkReportValues(pivot, getReportValues(pivot), undoValues, message + "_undo");
 		strictEqual(getXml(pivot), xmlUndo, message + "_undo_xml");
+
 		AscCommon.History.Redo();
 		pivot = wb.getPivotTableById(pivot.Get_Id());
 		checkReportValues(pivot, getReportValues(pivot), standards, message + "_redo");
 		strictEqual(getXml(pivot), xmlDo, message + "_redo_xml");
+
 		AscCommon.History.Undo();
+		ws.deletePivotTable(pivot.Get_Id());
+		pivot = pivotStart;
+		ws.insertPivotTable(pivot, false, false);
 		wb.DeserializeHistory(changes);
 		pivot = wb.getPivotTableById(pivot.Get_Id());
 		checkReportValues(pivot, getReportValues(pivot), standards, message + "_changes");

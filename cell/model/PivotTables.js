@@ -3802,19 +3802,62 @@ CT_pivotTableDefinition.prototype._updateRowColItemsRecursively = function(index
 	} else {
 		pivotField = pivotFields[x];
 		if (pivotField && pivotField.items) {
-			for (indexItem = 0; indexItem < pivotField.items.item.length; ++indexItem) {
-				item = pivotField.items.item[indexItem];
-				if (Asc.c_oAscItemType.Data === item.t) {
-					subDataMap = dataMap.vals[item.x];
-					if(!subDataMap && (showAll || pivotField.showAll)){
-						showAll = showAll || pivotField.showAll;
-						subDataMap = new PivotDataElem(dataFields.length);
-					} else {
-						showAll = false;
+			var sortDataIndex = pivotField.getSortDataIndex();
+			if (c_oAscFieldSortType.Manual !== pivotField.sortType && 0 <= sortDataIndex && sortDataIndex < dataFields.length) {
+				pivotField = pivotField.clone();
+				dataField = dataFields[sortDataIndex];
+				var sortedPivotItems = pivotField.items.item.map(function(currentValue, index) {
+					return {item: currentValue, index: index};
+				});
+				var sign = Asc.c_oAscSortOptions.Ascending == pivotField.sortType ? 1 : -1;
+				sortedPivotItems.sort(function(a, b) {
+					var aDataMap = dataMap.vals[a.item.x];
+					aDataMap = aDataMap && aDataMap.total[sortDataIndex].getCellValue(dataField.subtotal, Asc.c_oAscItemType.Default, Asc.c_oAscItemType.Default, Asc.c_oAscItemType.Default);
+					var bDataMap = dataMap.vals[b.item.x];
+					bDataMap = bDataMap && bDataMap.total[sortDataIndex].getCellValue(dataField.subtotal, Asc.c_oAscItemType.Default, Asc.c_oAscItemType.Default, Asc.c_oAscItemType.Default);
+					var res = 0;
+					if (aDataMap && aDataMap.type === AscCommon.CellValueType.Number && bDataMap && bDataMap.type === AscCommon.CellValueType.Number) {
+						res = aDataMap.number - bDataMap.number;
+					} else if (aDataMap && aDataMap.type === AscCommon.CellValueType.Number) {
+						res = 1;
+					} else if (bDataMap && bDataMap.type === AscCommon.CellValueType.Number) {
+						res = -1;
 					}
-					if (subDataMap) {
-						this._updateRowColItemsRecursivelyElem(index, subDataMap, items, fields, isCol, pivotField, pivotFields, dataIndex, dataFields, indexItem, parentI, indexValues, showAll);
-						parentI = null;
+					return sign * res;
+				});
+				for (indexItem = 0; indexItem < sortedPivotItems.length; ++indexItem) {
+					var sortedPivotItem = sortedPivotItems[indexItem];
+					item = sortedPivotItem.item;
+					var itemIndex = sortedPivotItem.index;
+					if (Asc.c_oAscItemType.Data === item.t) {
+						subDataMap = dataMap.vals[item.x];
+						if (!subDataMap && (showAll || pivotField.showAll)) {
+							showAll = showAll || pivotField.showAll;
+							subDataMap = new PivotDataElem(dataFields.length);
+						} else {
+							showAll = false;
+						}
+						if (subDataMap) {
+							this._updateRowColItemsRecursivelyElem(index, subDataMap, items, fields, isCol, pivotField, pivotFields, dataIndex, dataFields, itemIndex, parentI, indexValues, showAll);
+							parentI = null;
+						}
+					}
+				}
+			} else {
+				for (indexItem = 0; indexItem < pivotField.items.item.length; ++indexItem) {
+					item = pivotField.items.item[indexItem];
+					if (Asc.c_oAscItemType.Data === item.t) {
+						subDataMap = dataMap.vals[item.x];
+						if (!subDataMap && (showAll || pivotField.showAll)) {
+							showAll = showAll || pivotField.showAll;
+							subDataMap = new PivotDataElem(dataFields.length);
+						} else {
+							showAll = false;
+						}
+						if (subDataMap) {
+							this._updateRowColItemsRecursivelyElem(index, subDataMap, items, fields, isCol, pivotField, pivotFields, dataIndex, dataFields, indexItem, parentI, indexValues, showAll);
+							parentI = null;
+						}
 					}
 				}
 			}
@@ -8250,6 +8293,15 @@ CT_PivotField.prototype.sortItems = function(type, sharedItems) {
 	this.items.item.sort(function(a, b) {
 		return sign * cmpPivotItems(sharedItems, a, b);
 	});
+};
+CT_PivotField.prototype.getSortDataIndex = function() {
+	if (this.autoSortScope && this.autoSortScope.pivotArea && this.autoSortScope.pivotArea.references) {
+		var reference = this.autoSortScope.pivotArea.references.reference[0];
+		if (reference && reference.x[0]) {
+			return reference.x[0].v;
+		}
+	}
+	return -1;
 };
 
 
