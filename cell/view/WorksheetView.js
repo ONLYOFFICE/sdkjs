@@ -15352,9 +15352,7 @@
 		if(!this.intersectionFormulaArray(doSortRange, true)) {
 			this._isLockedAll(onChangeAutoFilterCallback);
 		} else {
-			window.setTimeout(function() {
-				t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
-			}, 0);
+			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
 		}
     };
 
