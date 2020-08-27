@@ -15012,7 +15012,7 @@
 		}
         var onChangeAutoFilterCallback = function (isSuccess) {
             if (false === isSuccess) {
-                t.model.slicersUpdateAfterChangeTable(autoFilterObject.displayName);
+                t.model.workbook.slicersUpdateAfterChangeTable(autoFilterObject.displayName);
                 return;
             }
 

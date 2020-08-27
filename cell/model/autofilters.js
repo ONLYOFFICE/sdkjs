@@ -4387,11 +4387,11 @@
 			},
 
 			updateSlicer: function(tableName) {
-				var worksheet = this.worksheet;
-				var _slicers = worksheet.getSlicersByTableName(tableName);
+				var wb = this.worksheet.workbook;
+				var _slicers = wb.getSlicersByTableName(tableName);
 				if (_slicers) {
 					for (var i = 0; i < _slicers.length; i++) {
-						worksheet.workbook.onSlicerUpdate(_slicers[i].name);
+						wb.onSlicerUpdate(_slicers[i].name);
 					}
 				}
 			},

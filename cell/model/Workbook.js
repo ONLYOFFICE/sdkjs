@@ -3314,6 +3314,14 @@
 		}
 		return res;
 	};
+	Workbook.prototype.slicersUpdateAfterChangeTable = function (name) {
+		var slicers = this.getSlicersByTableName(name);
+		if (slicers) {
+			for (var j = 0; j < slicers.length; j++) {
+				this.onSlicerUpdate(slicers[j].name);
+			}
+		}
+	};
 
 //-------------------------------------------------------------------------------------------------
 	var tempHelp = new ArrayBuffer(8);
@@ -8298,7 +8306,7 @@
 			return;
 		}
 
-		var slicers = this.getSlicersByTableName(oldVal);
+		var slicers = this.workbook.getSlicersByTableName(oldVal);
 		if (slicers) {
 			History.Create_NewPoint();
 			History.StartTransaction();
@@ -8350,7 +8358,7 @@
 		History.Create_NewPoint();
 		History.StartTransaction();
 
-		var slicers = this.getSlicersByTableName(tableName);
+		var slicers = this.workbook.getSlicersByTableName(tableName);
 		if (slicers) {
 			for (var i = 0; i < slicers.length; i++) {
 				this.deleteSlicer(slicers[i].name);
@@ -8399,7 +8407,7 @@
 		var tables = this.autoFilters.getTablesIntersectionRange(arn);
 		if (tables) {
 			for (var i = 0; i < tables.length; i++) {
-				this.slicersUpdateAfterChangeTable(tables[i].DisplayName);
+				this.workbook.slicersUpdateAfterChangeTable(tables[i].DisplayName);
 			}
 		}
 	};
@@ -8408,21 +8416,12 @@
 		var tables = this.autoFilters.getTablesIntersectionRange(range);
 		if (tables) {
 			for (var i = 0; i < tables.length; i++) {
-				this.slicersUpdateAfterChangeTable(tables[i].DisplayName);
+				this.workbook.slicersUpdateAfterChangeTable(tables[i].DisplayName);
 			}
 		}
 		var pivot = false;
 		if (pivot) {
 
-		}
-	};
-
-	Worksheet.prototype.slicersUpdateAfterChangeTable = function (name) {
-		var slicers = this.getSlicersByTableName(name);
-		if (slicers) {
-			for (var j = 0; j < slicers.length; j++) {
-				this.workbook.onSlicerUpdate(slicers[j].name);
-			}
 		}
 	};
 
