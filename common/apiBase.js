@@ -2173,7 +2173,7 @@
                 case c_oEditorId.Word:
                 case c_oEditorId.Presentation:
                 {
-                	if (pr && c_oEditorId.Word === c_oEditorId.Word)
+                	if (pr && c_oEditorId.Word === this.editorId)
 					{
 						this.WordControl.m_oLogicDocument.AddSpecialSymbol(pr);
 					}

@@ -12507,7 +12507,7 @@ Paragraph.prototype.CanAddComment = function()
 		return isCanAdd;
 	}
 
-	if (true === this.Selection.Use && true != this.IsSelectionEmpty())
+	if (true === this.Selection.Use && true !== this.IsSelectionEmpty())
 	{
 		var nStartPos = this.Selection.StartPos <= this.Selection.EndPos ? this.Selection.StartPos : this.Selection.EndPos;
 		var nEndPos   = this.Selection.StartPos <= this.Selection.EndPos ? this.Selection.EndPos : this.Selection.StartPos;
@@ -12521,14 +12521,13 @@ Paragraph.prototype.CanAddComment = function()
 		return true;
 	}
 
+	if (this.Content[this.CurPos.ContentPos].CanAddComment && !this.Content[this.CurPos.ContentPos].CanAddComment())
+		return false;
+
 	var oNext = this.GetNextRunElement();
 	var oPrev = this.GetPrevRunElement();
 
-	if ((oNext && para_Text === oNext.Type)
-		|| (oPrev && para_Text === oPrev.Type))
-		return true;
-
-	return false;
+	return ((oNext && para_Text === oNext.Type) || (oPrev && para_Text === oPrev.Type));
 };
 Paragraph.prototype.RemoveCommentMarks = function(Id)
 {
