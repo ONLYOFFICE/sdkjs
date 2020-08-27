@@ -9884,6 +9884,31 @@ CDocument.prototype.OnKeyDown = function(e)
         bUpdateSelection = false;
         bRetValue        = keydownresult_PreventAll;
     }
+    else if (e.KeyCode === 109) // Num-
+	{
+		if (true === e.AltKey && (true === e.CtrlKey || true === e.AltGr) && false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content, null, true))
+		{
+			this.StartAction(AscDFH.historydescription_Document_MinusButton);
+
+			this.DrawingDocument.TargetStart();
+			this.DrawingDocument.TargetShow();
+
+			this.AddToParagraph(new ParaText(0x2014));
+			this.FinalizeAction();
+			bRetValue = keydownresult_PreventAll;
+		}
+		// else if (true === e.CtrlKey && !this.IsSelectionLocked(changestype_Paragraph_Content, null, true))
+		// {
+		// 	this.StartAction(AscDFH.historydescription_Document_MinusButton);
+		//
+		// 	this.DrawingDocument.TargetStart();
+		// 	this.DrawingDocument.TargetShow();
+		//
+		// 	this.AddToParagraph(new ParaText(0x2013));
+		// 	this.FinalizeAction();
+		// 	bRetValue = keydownresult_PreventAll;
+		// }
+	}
 	else if (e.KeyCode == 120) // F9 - обновление полей
 	{
 		this.UpdateFields(true);
@@ -9931,7 +9956,7 @@ CDocument.prototype.OnKeyDown = function(e)
             bRetValue = keydownresult_PreventAll;
         }
     }
-    else if (e.KeyCode == 189) // Клавиша Num-
+    else if (e.KeyCode === 189) // -
     {
         if (true === e.CtrlKey && true === e.ShiftKey && false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content, null, true))
         {
@@ -9947,17 +9972,6 @@ CDocument.prototype.OnKeyDown = function(e)
 			this.FinalizeAction();
             bRetValue = keydownresult_PreventAll;
         }
-        else if (true === e.AltKey && (true === e.CtrlKey || true === e.AltGr) && false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content, null, true))
-		{
-			this.StartAction(AscDFH.historydescription_Document_MinusButton);
-
-			this.DrawingDocument.TargetStart();
-			this.DrawingDocument.TargetShow();
-
-			this.AddToParagraph(new ParaText(0x2014));
-			this.FinalizeAction();
-			bRetValue = keydownresult_PreventAll;
-		}
         else if (true === e.AltKey && false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content, null, true))
 		{
 			this.StartAction(AscDFH.historydescription_Document_MinusButton);
@@ -22614,6 +22628,37 @@ CDocument.prototype.AddTextWithPr = function(sText, oTextPr, isMoveCursorOutside
 				oRun.MoveCursorOutsideElement(false);
 			}
 		}
+
+		this.Recalculate();
+		this.UpdateInterface();
+		this.UpdateSelection();
+		this.FinalizeAction();
+	}
+};
+/**
+ * Добавляем спец символ
+ * @param oPr
+ */
+CDocument.prototype.AddSpecialSymbol = function(oPr)
+{
+	var oItem;
+	if (oPr)
+	{
+		if (true === oPr["NonBreakingHyphen"])
+		{
+			oItem = new ParaText(0x002D);
+			oItem.Set_SpaceAfter(false);
+		}
+	}
+
+	if (!oItem)
+		return;
+
+	if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_AddText))
+	{
+		this.StartAction(AscDFH.historydescription_Document_AddTextWithProperties);
+
+		this.AddToParagraph(oItem);
 
 		this.Recalculate();
 		this.UpdateInterface();

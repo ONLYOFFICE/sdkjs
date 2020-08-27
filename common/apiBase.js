@@ -2158,7 +2158,7 @@
     {
     };
 
-    baseEditorsApi.prototype["asc_insertSymbol"] = function(familyName, code)
+    baseEditorsApi.prototype["asc_insertSymbol"] = function(familyName, code, pr)
     {
 		var arrCharCodes = [code];
         AscFonts.FontPickerByCharacter.checkTextLight(arrCharCodes, true);
@@ -2173,9 +2173,16 @@
                 case c_oEditorId.Word:
                 case c_oEditorId.Presentation:
                 {
-					var textPr = new AscCommonWord.CTextPr();
-					textPr.SetFontFamily(familyName);
-                	this.WordControl.m_oLogicDocument.AddTextWithPr(new AscCommon.CUnicodeStringEmulator(arrCharCodes), textPr, true);
+                	if (pr && c_oEditorId.Word === c_oEditorId.Word)
+					{
+						this.WordControl.m_oLogicDocument.AddSpecialSymbol(pr);
+					}
+                	else
+					{
+						var textPr = new AscCommonWord.CTextPr();
+						textPr.SetFontFamily(familyName);
+						this.WordControl.m_oLogicDocument.AddTextWithPr(new AscCommon.CUnicodeStringEmulator(arrCharCodes), textPr, true);
+					}
                     break;
                 }
                 case c_oEditorId.Spreadsheet:
