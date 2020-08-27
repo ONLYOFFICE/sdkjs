@@ -1625,7 +1625,8 @@
 	CellEditor.prototype._updateCursorByTopLine = function () {
 		var b = this.input.selectionStart;
 		var e = this.input.selectionEnd;
-		if ('backward' === this.input.selectionDirection) {
+		// ToDo replace code to input.selectionDirection after updating closure-compiler to version 20200719
+		if ('backward' === this.input["selectionDirection"]) {
 			var tmp = b;
 			b = e;
 			e = tmp;
