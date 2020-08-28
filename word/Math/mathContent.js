@@ -5520,16 +5520,15 @@ CMathContent.prototype.private_CanAutoCorrectText = function(AutoCorrectEngine, 
     var AutoCorrectCount = g_aAutoCorrectMathSymbols.length;
     for (var nIndex = 0; nIndex < AutoCorrectCount; nIndex++) {
         var AutoCorrectElement = g_aAutoCorrectMathSymbols[nIndex];
-        var tmp = AutoCorrectElement[0].length == 2 ? 1 : 0;
         var CheckString = AutoCorrectElement[0];
         var CheckStringLen = CheckString.length;
 
-        if (ElCount < CheckStringLen + IndexAdd - tmp) {
+        if (ElCount < CheckStringLen + IndexAdd) {
             continue;
         }
         var Found = true;
         for (var nStringPos = 0; nStringPos < CheckStringLen; nStringPos++) {
-            var LastEl = AutoCorrectEngine.Elements[ElCount - nStringPos - 1 - IndexAdd + tmp];
+            var LastEl = AutoCorrectEngine.Elements[ElCount - nStringPos - 1 - IndexAdd];
             if (!LastEl.Element.IsText()) {
                 FlagEnd = true;
                 Found = false;
@@ -5542,7 +5541,7 @@ CMathContent.prototype.private_CanAutoCorrectText = function(AutoCorrectEngine, 
         }
         if (true === Found) {
             RemoveCount = CheckStringLen + IndexAdd - skip;
-            Start = ElCount - RemoveCount - skip + tmp;
+            Start = ElCount - RemoveCount - skip;
 
             if (undefined === AutoCorrectElement[1].length) {
                 ReplaceChars[0] = AutoCorrectElement[1];
