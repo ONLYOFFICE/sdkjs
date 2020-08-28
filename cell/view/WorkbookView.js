@@ -3454,7 +3454,7 @@
 
 		var doCopy = function() {
 			History.Create_NewPoint();
-			var renameParams = t.model.copyWorksheet(0, insertBefore, name, undefined, undefined, undefined, pastedWs);
+			var renameParams = t.model.copyWorksheet(0, insertBefore, name, undefined, undefined, undefined, pastedWs, base64);
 			callback(renameParams);
 		};
 

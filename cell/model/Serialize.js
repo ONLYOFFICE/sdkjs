@@ -2894,7 +2894,7 @@
         this.WriteDefinedNames = function()
         {
             var oThis = this;
-            var defNameList = this.wb.dependencyFormulas.saveDefName();
+            var defNameList = this.wb.dependencyFormulas.saveDefName(this.isCopyPaste === false);
 
             var filterDefName = "_xlnm._FilterDatabase";
 			var tempMap = {};

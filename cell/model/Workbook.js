@@ -845,68 +845,94 @@
 			return res;
 		},
 		copyDefNameByWorksheet: function(wsFrom, wsTo, renameParams, opt_sheet) {
+			var sheetContainerFrom;
+			var opt_df = opt_sheet && opt_sheet.workbook && opt_sheet.workbook.dependencyFormulas ? opt_sheet.workbook.dependencyFormulas : null;
+			if(opt_df && opt_df.defNames && opt_df.defNames.sheet && opt_df.defNames.sheet[wsFrom.getId()]) {
+				//TODO пересмотреть!
+				//пока делаю только для им. диапазонов листа. в случае книгой - необходимо хранить map преообразований для redo
+				sheetContainerFrom = opt_df.defNames.sheet[wsFrom.getId()];
+			} else {
+				sheetContainerFrom = this.defNames.sheet[wsFrom.getId()];
+			}
+			if (sheetContainerFrom) {
+				for (var name in sheetContainerFrom) {
+					var defNameOld = sheetContainerFrom[name];
+					if (defNameOld.type !== Asc.c_oAscDefNameType.table && defNameOld.parsedRef) {
+						var parsedRefNew = defNameOld.parsedRef.clone();
+						parsedRefNew.renameSheetCopy(renameParams);
+						var refNew = parsedRefNew.assemble(true);
+						this.addDefName(defNameOld.name, refNew, wsTo.getId(), defNameOld.hidden, defNameOld.type);
+					}
+				}
+			}
+		},
+		copyDefNameByWorkbook: function(wsFrom, wsTo, renameParams, opt_sheet) {
 			var t = this;
 			var opt_wb = opt_sheet && opt_sheet.workbook;
 			var opt_df = opt_wb && opt_wb.dependencyFormulas;
 
-			var doCopy = function (_sheetContainerFrom, _wbNames) {
+			var doCopy = function (_sheetContainerFrom) {
 				if (_sheetContainerFrom) {
 					for (var name in _sheetContainerFrom) {
 						var defNameOld = _sheetContainerFrom[name];
-						if (opt_df) {
-							//пропускаем именованные диапазоны, которые ссылаются на другой лист
-							//+ диапазоны, имя которых уже существует
 
-							//пропускаем именованный диапазон, который ссылается на другой лист
-							if (!_wbNames && opt_sheet.getId() !== defNameOld.sheetId) {
-								//ms в данном случае делает ссылку на другую книгу
-								//как это поддержим - необходимо поправить
-								continue;
-							}
-							//проверям, не добавили ли мы уже раньше данный диапазон
-							var dN = t.wb.dependencyFormulas.getDefNameByName(name, _wbNames ? null : wsTo.getId());
-							if (dN) {
-								//TODO пока не реализовываю для повторяющегося имени из wb
-								//необходимо в данном случае менять scope на лист
-								continue;
-							} else if (!defNameOld.parsedRef || !defNameOld.parsedRef.outStack || !defNameOld.parsedRef.outStack.length) {
-								//необходимо отсеять диапазоны Ref которыx ссылаются на другой лист
-								//ms в данном случае делает ссылку на другую книгу
-								//как это поддержим - необходимо поправить
-								continue;
-							}
-						}
 						if (defNameOld.type !== Asc.c_oAscDefNameType.table && defNameOld.parsedRef) {
 							var parsedRefNew = defNameOld.parsedRef.clone();
 							parsedRefNew.renameSheetCopy(renameParams);
 							var refNew = parsedRefNew.assemble(true);
-							if (opt_df) {
-								//при перемещении листа в другую книгу пишем в историю добавление всех именованных диапазонов
-								//и при redo данную функцию не вызываем
-								var _newDefName = new DefName(t.wb, defNameOld.name, refNew, !_wbNames ? wsTo.getId() : null, defNameOld.hidden, defNameOld.type);
-								t.editDefinesNames(null, _newDefName);
-							} else {
-								t.addDefName(defNameOld.name, refNew, wsTo.getId(), defNameOld.hidden, defNameOld.type);
-							}
+							t.addDefName(defNameOld.name, refNew, null, defNameOld.hidden, defNameOld.type);
+							/*var parsedRefNew = defNameOld.parsedRef.clone();
+							parsedRefNew.renameSheetCopy(renameParams);
+							var refNew = parsedRefNew.assemble(true);
+							var _newDefName = new DefName(t.wb, defNameOld.name, refNew,  null, defNameOld.hidden, defNameOld.type);
+							t.editDefinesNames(null, _newDefName);*/
 						}
 					}
 				}
 			};
-			if(opt_df) {
-				doCopy(opt_df.defNames.sheet[wsFrom.getId()]);
-				doCopy(opt_df.defNames.wb, true);
-			} else {
-				doCopy(this.defNames.sheet[wsFrom.getId()]);
+
+			if (opt_df) {
+				doCopy(opt_df.defNames.wb);
 			}
 		},
-		saveDefName: function() {
+		saveDefName: function(isCopySheet) {
 			var list = [];
+			var t = this;
 			this._foreachDefName(function(defName) {
 				if (defName.type !== Asc.c_oAscDefNameType.table && defName.ref) {
-					list.push(defName.getAscCDefName());
+					if (!isCopySheet || t._checkDefNamesCopySheet(defName)) {
+						list.push(defName.getAscCDefName());
+					}
 				}
 			});
 			return list;
+		},
+		_checkDefNamesCopySheet: function (defName) {
+			var res = true;
+
+			var ws = this.wb.getActiveWs();
+			if (defName.sheetId && defName.sheetId !== ws.Id) {
+				return false;
+			}
+			if (defName.type === Asc.c_oAscDefNameType.slicer) {
+				return false;
+			}
+
+			//временная правка - не пишем именованный диапазоны, которые ссылаются на другие листы
+			var parsedRef = defName.parsedRef;
+			if (parsedRef) {
+				for (var i = 0; i < parsedRef.outStack.length; i++) {
+					var elem = parsedRef.outStack[i];
+					if (cElementType.cell === elem.type || cElementType.cellsRange === elem.type ||
+						cElementType.cell3D === elem.type || cElementType.cellsRange3D === elem.type ) {
+						if (elem.getWS().getName() !== ws.getName()) {
+							return false;
+						}
+					}
+				}
+			}
+
+			return res;
 		},
 		unlockDefName: function() {
 			this._foreachDefName(function(defName) {
@@ -2219,7 +2245,7 @@
 		this.dependencyFormulas.unlockRecal();
 		return oNewWorksheet;
 	};
-	Workbook.prototype.copyWorksheet=function(index, insertBefore, sName, sId, bFromRedo, tableNames, opt_sheet){
+	Workbook.prototype.copyWorksheet=function(index, insertBefore, sName, sId, bFromRedo, tableNames, opt_sheet, opt_base64){
 		//insertBefore - optional
 		var renameParams;
 		if(index >= 0 && index < this.aWorksheets.length){
@@ -2252,8 +2278,9 @@
 			newSheet.initPostOpen(this.wsHandlers, {});
 			History.TurnOn();
 
-			if (!(bFromRedo && opt_sheet)) {
-				this.dependencyFormulas.copyDefNameByWorksheet(wsFrom, newSheet, renameParams, opt_sheet);
+			this.dependencyFormulas.copyDefNameByWorksheet(wsFrom, newSheet, renameParams, opt_sheet);
+			if (opt_sheet /*&& !bFromRedo*/) {
+				this.dependencyFormulas.copyDefNameByWorkbook(wsFrom, newSheet, renameParams, opt_sheet);
 			}
 			//для формул. создаем копию this.cwf[this.Id] для нового листа.
 			//newSheet._BuildDependencies(wsFrom.getCwf());
@@ -2265,11 +2292,13 @@
 				tableNames = newSheet.getTableNames();
 			}
 
-			var opt_sheet_binary = null;
+			/*var opt_sheet_binary = null;
 			if(!bFromRedo && opt_sheet) {
 				opt_sheet_binary = AscCommonExcel.g_clipboardExcel.copyProcessor.getBinaryForCopy(wsFrom, null, null, true);
 			}
-			History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_SheetAdd, null, null, new UndoRedoData_SheetAdd(insertBefore, newSheet.getName(), wsFrom.getId(), newSheet.getId(), tableNames, opt_sheet_binary));
+			History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_SheetAdd, null, null, new UndoRedoData_SheetAdd(insertBefore, newSheet.getName(), wsFrom.getId(), newSheet.getId(), tableNames, opt_sheet_binary));*/
+
+			History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_SheetAdd, null, null, new UndoRedoData_SheetAdd(insertBefore, newSheet.getName(), wsFrom.getId(), newSheet.getId(), tableNames, opt_base64));
 			History.SetSheetUndo(wsActive.getId());
 			History.SetSheetRedo(newSheet.getId());
 			if(!(bFromRedo === true))
@@ -8205,7 +8234,8 @@
 				new AscCommonExcel.UndoRedoData_FromTo(slicerObj.obj, null));
 			this.workbook.onSlicerDelete(name);
 			res = true;
-			if ((!this.workbook.bUndoChanges && !this.workbook.bRedoChanges) || doDelDefName) {
+			if ((!this.workbook.bUndoChanges && !this.workbook.bRedoChanges) || doDelDefName)
+			{
 				var cache = slicerObj.obj.getCacheDefinition();
 				//удаляем именованный диапазон только если на данный кэш уже никто не ссылается
 				if (cache && null === this.getSlicersByCacheName(cache.name)) {

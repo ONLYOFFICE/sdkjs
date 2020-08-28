@@ -2078,9 +2078,17 @@ function (window, undefined) {
 					var tempWorkbook = new AscCommonExcel.Workbook();
 					tempWorkbook.DrawingDocument = Asc.editor.wbModel.DrawingDocument;
 					tempWorkbook.setCommonIndexObjectsFrom(wb);
-					AscCommonExcel.g_clipboardExcel.pasteProcessor._readExcelBinary(Data.opt_sheet.split('xslData;')[1], tempWorkbook);
+					AscCommonExcel.g_clipboardExcel.pasteProcessor._readExcelBinary(Data.opt_sheet.split('xslData;')[1], tempWorkbook, true);
+
+					/*var api = window["Asc"]["editor"];
+					//api.wb.pasteSheet(Data.opt_sheet, 0, Data.name);
+					api.asc_EndMoveSheet(Data.insertBefore, [Data.name], [Data.opt_sheet]);*/
 
 					wb.copyWorksheet(0, Data.insertBefore, Data.name, Data.sheetid, true, Data.tableNames, tempWorkbook.aWorksheets[0]);
+
+					//var renameParams = t.model.copyWorksheet(0, insertBefore, name, undefined, undefined, undefined, pastedWs);
+
+					//wb.copyWorksheet(0, Data.insertBefore, Data.name, Data.sheetid, true, Data.tableNames, tempWorkbook.aWorksheets[0]);
 				} else if (null != Data.sheet) {
 					//сюда заходим только если до этого было сделано Undo
 					wb.insertWorksheet(Data.insertBefore, Data.sheet);
