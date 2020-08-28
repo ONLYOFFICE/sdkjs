@@ -596,8 +596,9 @@
 		prepareRemoveSheet: function(sheetId, tableNames) {
 			var t = this;
 			//cells
+			var ws = this.wb.getWorksheetById(sheetId);
 			var formulas = [];
-			this.wb.getWorksheetById(sheetId).getAllFormulas(formulas);
+			ws.getAllFormulas(formulas);
 			for (var i = 0; i < formulas.length; ++i) {
 				formulas[i].removeDependencies();
 			}
@@ -605,15 +606,24 @@
 			this._foreachDefNameSheet(sheetId, function(defName){
 				if (!defName.type !== Asc.c_oAscDefNameType.table) {
 					t._removeDefName(sheetId, defName.name, AscCH.historyitem_Workbook_DefinedNamesChangeUndo);
-					}
+				}
 			});
 			//tables
 			var tableNamesMap = {};
-			for (var i = 0; i < tableNames.length; ++i) {
+			var i;
+			for (i = 0; i < tableNames.length; ++i) {
 				var tableName = tableNames[i];
 				this._removeDefName(null, tableName, null);
 				tableNamesMap[tableName] = 1;
+				this.wb.deleteSlicersByTable(tableName, true);
 			}
+			//удаляю срезы, которые остались на данном листе, но привязаны к таблицам других листов
+			if (ws.aSlicers) {
+				for (i = 0; i < ws.aSlicers.length; i++) {
+					ws.deleteSlicer(ws.aSlicers[i].name, true);
+				}
+			}
+
 			//dependence
 			return this.prepareChangeSheet(sheetId, {remove: sheetId, tableNamesMap: tableNamesMap}, tableNamesMap);
 		},
@@ -867,13 +877,16 @@
 							}
 						}
 						if (defNameOld.type !== Asc.c_oAscDefNameType.table && defNameOld.parsedRef) {
+							var parsedRefNew = defNameOld.parsedRef.clone();
+							parsedRefNew.renameSheetCopy(renameParams);
+							var refNew = parsedRefNew.assemble(true);
 							if (opt_df) {
-								t.editDefinesNames(null, defNameOld)
+								//при перемещении листа в другую книгу пишем в историю добавление всех именованных диапазонов
+								//и при redo данную функцию не вызываем
+								var _newDefName = new DefName(t.wb, defNameOld.name, refNew, !_wbNames ? wsTo.getId() : null, defNameOld.hidden, defNameOld.type);
+								t.editDefinesNames(null, _newDefName);
 							} else {
-								var parsedRefNew = defNameOld.parsedRef.clone();
-								parsedRefNew.renameSheetCopy(renameParams);
-								var refNew = parsedRefNew.assemble(true);
-								t.addDefName(defNameOld.name, refNew, !_wbNames ? wsTo.getId() : null, defNameOld.hidden, defNameOld.type);
+								t.addDefName(defNameOld.name, refNew, wsTo.getId(), defNameOld.hidden, defNameOld.type);
 							}
 						}
 					}
@@ -3353,6 +3366,22 @@
 				this.onSlicerUpdate(slicers[j].name);
 			}
 		}
+	};
+
+	Workbook.prototype.deleteSlicersByTable = function (tableName, doDelDefName) {
+		History.Create_NewPoint();
+		History.StartTransaction();
+
+		for(var i = 0; i < this.aWorksheets.length; ++i) {
+			var wsSlicers = this.aWorksheets[i].getSlicersByTableName(tableName);
+			if (wsSlicers) {
+				for (var j = 0; j < wsSlicers.length; j++) {
+					this.aWorksheets[i].deleteSlicer(wsSlicers[j].name, doDelDefName);
+				}
+			}
+		}
+
+		History.EndTransaction();
 	};
 
 //-------------------------------------------------------------------------------------------------
@@ -8163,7 +8192,7 @@
 		return slicer;
 	};
 
-	Worksheet.prototype.deleteSlicer = function (name) {
+	Worksheet.prototype.deleteSlicer = function (name, doDelDefName) {
 		var res = false;
 
 		History.Create_NewPoint();
@@ -8176,7 +8205,7 @@
 				new AscCommonExcel.UndoRedoData_FromTo(slicerObj.obj, null));
 			this.workbook.onSlicerDelete(name);
 			res = true;
-			if (!this.workbook.bUndoChanges && !this.workbook.bRedoChanges) {
+			if ((!this.workbook.bUndoChanges && !this.workbook.bRedoChanges) || doDelDefName) {
 				var cache = slicerObj.obj.getCacheDefinition();
 				//удаляем именованный диапазон только если на данный кэш уже никто не ссылается
 				if (cache && null === this.getSlicersByCacheName(cache.name)) {
