@@ -982,17 +982,7 @@
 					}
 					else if (pluginData.getAttribute("resize") || window.g_asc_plugins.api.asc_canPaste())
 					{
-						var oLogicDocument, i;
-						var editorId = window.g_asc_plugins.api.getEditorId();
-						if (AscCommon.c_oEditorId.Word === editorId ||
-							AscCommon.c_oEditorId.Presentation === editorId)
-						{
-							oLogicDocument = window.g_asc_plugins.api.WordControl ?
-								window.g_asc_plugins.api.WordControl.m_oLogicDocument : null;
-							if(AscCommon.c_oEditorId.Word === editorId){
-								oLogicDocument.LockPanelStyles();
-							}
-						}
+						window.g_asc_plugins.api._beforeEvalCommand();
 
                         AscFonts.IsCheckSymbols = true;
 						var _script = "(function(){ var Api = window.g_asc_plugins.api;\n" + value + "\n})();";
@@ -1008,91 +998,16 @@
 						if (pluginData.getAttribute("recalculate") == true)
 						{
 							_command_callback_send = false;
-							if (AscCommon.c_oEditorId.Word === editorId ||
-								AscCommon.c_oEditorId.Presentation === editorId)
-							{
-								oLogicDocument = window.g_asc_plugins.api.WordControl ?
-									window.g_asc_plugins.api.WordControl.m_oLogicDocument : null;
-								var _fonts         = oLogicDocument.Document_Get_AllFontNames();
-								var _imagesArray   = oLogicDocument.Get_AllImageUrls();
-								var _images        = {};
-								for (i = 0; i < _imagesArray.length; i++)
-								{
-									_images[_imagesArray[i]] = _imagesArray[i];
-								}
 
-								window.g_asc_plugins.images_rename = _images;
-								AscCommon.Check_LoadingDataBeforePrepaste(window.g_asc_plugins.api, _fonts, _images,
-									function()
-									{
-										if (window.g_asc_plugins.api.WordControl &&
-											window.g_asc_plugins.api.WordControl.m_oLogicDocument &&
-											window.g_asc_plugins.api.WordControl.m_oLogicDocument.Reassign_ImageUrls)
-										{
-											window.g_asc_plugins.api.WordControl.m_oLogicDocument.Reassign_ImageUrls(
-												window.g_asc_plugins.images_rename);
-										}
-										delete window.g_asc_plugins.images_rename;
+							window.g_asc_plugins.api._afterEvalCommand(function(){
+								var pluginData = new CPluginData();
+								pluginData.setAttribute("guid", guid);
+								pluginData.setAttribute("type", "onCommandCallback");
 
-										if(AscCommon.c_oEditorId.Word === editorId) {
-											oLogicDocument.UnlockPanelStyles(true);
-											oLogicDocument.OnEndLoadScript();
-										}
-
-										window.g_asc_plugins.api.asc_Recalculate(true);
-										window.g_asc_plugins.api.WordControl.m_oLogicDocument.FinalizeAction();
-
-										if (window.g_asc_plugins.api.SaveAfterMacros)
-										{
-											window.g_asc_plugins.api.asc_Save();
-											window.g_asc_plugins.api.SaveAfterMacros = false;
-										}
-
-										var pluginData = new CPluginData();
-										pluginData.setAttribute("guid", guid);
-										pluginData.setAttribute("type", "onCommandCallback");
-
-										var _iframe = document.getElementById(runObject.frameId);
-										if (_iframe)
-											_iframe.contentWindow.postMessage(pluginData.serialize(), "*");
-									});
-							}
-							else if (AscCommon.c_oEditorId.Spreadsheet === editorId)
-							{
-								var oApi    = window.g_asc_plugins.api;
-								var oFonts  = oApi.wbModel._generateFontMap();
-								var aImages = oApi.wbModel.getAllImageUrls();
-								var oImages = {};
-								for (i = 0; i < aImages.length; i++)
-								{
-									oImages[aImages[i]] = aImages[i];
-								}
-								window.g_asc_plugins.images_rename = oImages;
-								AscCommon.Check_LoadingDataBeforePrepaste(window.g_asc_plugins.api, oFonts, oImages,
-									function(){
-										oApi.wbModel.reassignImageUrls(window.g_asc_plugins.images_rename);
-										delete window.g_asc_plugins.images_rename;
-										window.g_asc_plugins.api.asc_Recalculate(true);
-										var wsView = oApi.wb && oApi.wb.getWorksheet();
-										if (wsView && wsView.objectRender && wsView.objectRender.controller) {
-											wsView.objectRender.controller.recalculate2(undefined);
-										}
-
-										if (window.g_asc_plugins.api.SaveAfterMacros)
-										{
-											window.g_asc_plugins.api.asc_Save();
-											window.g_asc_plugins.api.SaveAfterMacros = false;
-										}
-
-										var pluginData = new CPluginData();
-										pluginData.setAttribute("guid", guid);
-										pluginData.setAttribute("type", "onCommandCallback");
-
-										var _iframe = document.getElementById(runObject.frameId);
-										if (_iframe)
-											_iframe.contentWindow.postMessage(pluginData.serialize(), "*");
-									});
-							}
+								var _iframe = document.getElementById(runObject.frameId);
+								if (_iframe)
+									_iframe.contentWindow.postMessage(pluginData.serialize(), "*");
+							});
 						}
 						else
 						{
