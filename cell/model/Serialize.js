@@ -2949,7 +2949,13 @@
                 this.memory.WriteString2(oDefinedName.Ref);
             }
             if (null !== oDefinedName.LocalSheetId){
-                this.bs.WriteItem(c_oSerDefinedNameTypes.LocalSheetId, function(){oThis.memory.WriteLong(oDefinedName.LocalSheetId);});
+                var _localSheetId = oDefinedName.LocalSheetId;
+                if (this.isCopyPaste === false) {
+                    //при переносе листов пишем только один лист
+                    // соответсвенно именованные диапазоны должны ссылаться на первый лист
+                    _localSheetId = 0;
+                }
+                this.bs.WriteItem(c_oSerDefinedNameTypes.LocalSheetId, function(){oThis.memory.WriteLong(_localSheetId);});
             }
             if (null != oDefinedName.Hidden) {
                 this.bs.WriteItem(c_oSerDefinedNameTypes.Hidden, function(){oThis.memory.WriteBool(oDefinedName.Hidden);});
