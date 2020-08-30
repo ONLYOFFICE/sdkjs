@@ -845,11 +845,33 @@
 			return res;
 		},
 		copyDefNameByWorksheet: function(wsFrom, wsTo, renameParams, opt_sheet) {
+			var sheetContainerFrom;
+			var opt_df = opt_sheet && opt_sheet.workbook && opt_sheet.workbook.dependencyFormulas ? opt_sheet.workbook.dependencyFormulas : null;
+			if(opt_df && opt_df.defNames && opt_df.defNames.sheet && opt_df.defNames.sheet[wsFrom.getId()]) {
+				//TODO пересмотреть!
+				//пока делаю только для им. диапазонов листа. в случае книгой - необходимо хранить map преообразований для redo
+				sheetContainerFrom = opt_df.defNames.sheet[wsFrom.getId()];
+			} else {
+				sheetContainerFrom = this.defNames.sheet[wsFrom.getId()];
+			}
+			if (sheetContainerFrom) {
+				for (var name in sheetContainerFrom) {
+					var defNameOld = sheetContainerFrom[name];
+					if (defNameOld.type !== Asc.c_oAscDefNameType.table && defNameOld.parsedRef) {
+						var parsedRefNew = defNameOld.parsedRef.clone();
+						parsedRefNew.renameSheetCopy(renameParams);
+						var refNew = parsedRefNew.assemble(true);
+						this.addDefName(defNameOld.name, refNew, wsTo.getId(), defNameOld.hidden, defNameOld.type);
+					}
+				}
+			}
+		},
+		copyDefNameByWorkbook: function(wsFrom, wsTo, renameParams, opt_sheet) {
 			var t = this;
 			var opt_wb = opt_sheet && opt_sheet.workbook;
 			var opt_df = opt_wb && opt_wb.dependencyFormulas;
 
-			var doCopy = function (_sheetContainerFrom, isWbNames) {
+			var doCopy = function (_sheetContainerFrom) {
 				if (_sheetContainerFrom) {
 					for (var name in _sheetContainerFrom) {
 						var defNameOld = _sheetContainerFrom[name];
@@ -858,21 +880,15 @@
 							var parsedRefNew = defNameOld.parsedRef.clone();
 							parsedRefNew.renameSheetCopy(renameParams);
 							var refNew = parsedRefNew.assemble(true);
-							t.addDefName(defNameOld.name, refNew, isWbNames ? null : wsTo.getId(), defNameOld.hidden, defNameOld.type);
+							var _newDefName = new Asc.asc_CDefName(defNameOld.name, refNew,  null, defNameOld.type, defNameOld.hidden);
+							t.wb.editDefinesNames(null, _newDefName);
 						}
 					}
 				}
 			};
 
-			var sheetContainerFrom;
-			if(opt_df && opt_df.defNames && opt_df.defNames.sheet && opt_df.defNames.sheet[wsFrom.getId()]) {
-				sheetContainerFrom = opt_df.defNames.sheet[wsFrom.getId()];
-			} else {
-				sheetContainerFrom = this.defNames.sheet[wsFrom.getId()];
-			}
-			doCopy(sheetContainerFrom);
 			if (opt_df) {
-				doCopy(opt_df.defNames.wb, true);
+				doCopy(opt_df.defNames.wb);
 			}
 		},
 		saveDefName: function(isCopySheet) {
@@ -2259,6 +2275,9 @@
 			History.TurnOn();
 
 			this.dependencyFormulas.copyDefNameByWorksheet(wsFrom, newSheet, renameParams, opt_sheet);
+			if (opt_sheet && !bFromRedo) {
+				this.dependencyFormulas.copyDefNameByWorkbook(wsFrom, newSheet, renameParams, opt_sheet);
+			}
 			//для формул. создаем копию this.cwf[this.Id] для нового листа.
 			//newSheet._BuildDependencies(wsFrom.getCwf());
 
