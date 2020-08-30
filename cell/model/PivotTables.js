@@ -240,6 +240,8 @@ var PAGE_MULTIPLE_CAPTION = '(Multiple Items)';
 var FIELD_CAPTION = '%1 of %2';
 var NEW_PIVOT_LAST_COL_OFFSET = 2;
 var NEW_PIVOT_LAST_ROW_OFFSET = 17;
+var NEW_PIVOT_LAST_COL_OFFSET_GRID_DROP_ZONES = 6;
+var NEW_PIVOT_LAST_ROW_OFFSET_GRID_DROP_ZONES = 13;
 var NEW_PIVOT_ROW = 2;
 var NEW_PIVOT_COL = 0;
 
@@ -3551,17 +3553,7 @@ CT_pivotTableDefinition.prototype.checkPivotFieldItem = function(index, pivotFie
 	var item, i, j, newItem, equalMap = {};
 	var pivotFieldOld = pivotField.clone();
 	var newItems = new CT_Items();
-	if (!(cacheField.sharedItems && cacheField.sharedItems.Items.getSize() > 0)) {
-		if(!cacheField.sharedItems){
-			cacheField.sharedItems = new CT_SharedItems();
-		}
-		var oldVal = new AscCommonExcel.UndoRedoData_BinaryWrapper2(cacheField);
-		cacheRecords.convertToSharedItems(index, cacheField.sharedItems);
-		var newVal = new AscCommonExcel.UndoRedoData_BinaryWrapper2(cacheField);
-		History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_CacheField,
-			this.worksheet ? this.worksheet.getId() : null, null,
-			new AscCommonExcel.UndoRedoData_PivotField(this.Get_Id(), index, oldVal, newVal));
-	}
+	cacheField.checkSharedItems(this, index, cacheRecords);
 	//save old items order
 	if (pivotField.items && oldCacheField) {
 		for (i = 0; i < pivotField.items.item.length; ++i) {
@@ -4019,8 +4011,13 @@ CT_pivotTableDefinition.prototype.updateLocation = function() {
 		location.firstDataRow = 0;
 		location.firstDataCol = 0;
 	} else {
-		location.ref.r2 = location.ref.r1 + NEW_PIVOT_LAST_ROW_OFFSET;
-		location.ref.c2 = location.ref.c1 + NEW_PIVOT_LAST_COL_OFFSET;
+		if (this.gridDropZones) {
+			location.ref.r2 = location.ref.r1 + NEW_PIVOT_LAST_ROW_OFFSET_GRID_DROP_ZONES;
+			location.ref.c2 = location.ref.c1 + NEW_PIVOT_LAST_COL_OFFSET_GRID_DROP_ZONES;
+		} else {
+			location.ref.r2 = location.ref.r1 + NEW_PIVOT_LAST_ROW_OFFSET;
+			location.ref.c2 = location.ref.c1 + NEW_PIVOT_LAST_COL_OFFSET;
+		}
 		location.firstHeaderRow = 1;
 		location.firstDataRow = 1;
 		location.firstDataCol = 0;
@@ -6677,6 +6674,17 @@ CT_CacheField.prototype.isSumSubtotal = function () {
 };
 CT_CacheField.prototype.IsNumType = function () {
 	return this.sharedItems && false === this.sharedItems.containsSemiMixedTypes && (true === this.sharedItems.containsNumber || true === this.sharedItems.containsDate);
+};
+CT_CacheField.prototype.checkSharedItems = function (pivot, index, cacheRecords) {
+	if (this.sharedItems && this.sharedItems.Items.getSize() > 0) {
+		return;
+	}
+	if(!this.sharedItems){
+		this.sharedItems = new CT_SharedItems();
+	}
+	cacheRecords.convertToSharedItems(index, this.sharedItems);
+	History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_CacheField, pivot.GetWS().getId(),
+		null, new AscCommonExcel.UndoRedoData_PivotField(pivot.Get_Id(), index, null, null));
 };
 
 function CT_CacheHierarchy() {
@@ -11631,6 +11639,9 @@ window['AscCommonExcel'].PAGE_MULTIPLE_CAPTION = PAGE_MULTIPLE_CAPTION;
 window['AscCommonExcel'].FIELD_CAPTION = FIELD_CAPTION;
 window['AscCommonExcel'].NEW_PIVOT_LAST_COL_OFFSET = NEW_PIVOT_LAST_COL_OFFSET;
 window['AscCommonExcel'].NEW_PIVOT_LAST_ROW_OFFSET = NEW_PIVOT_LAST_ROW_OFFSET;
+window['AscCommonExcel'].NEW_PIVOT_LAST_COL_OFFSET_GRID_DROP_ZONES = NEW_PIVOT_LAST_COL_OFFSET_GRID_DROP_ZONES;
+window['AscCommonExcel'].NEW_PIVOT_LAST_ROW_OFFSET_GRID_DROP_ZONES = NEW_PIVOT_LAST_ROW_OFFSET_GRID_DROP_ZONES;
+
 window['AscCommonExcel'].NEW_PIVOT_ROW = NEW_PIVOT_ROW;
 window['AscCommonExcel'].NEW_PIVOT_COL = NEW_PIVOT_COL;
 
