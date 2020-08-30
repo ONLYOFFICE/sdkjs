@@ -11130,7 +11130,8 @@ drawStockChart.prototype = {
 			val1 = null, val2 = null, val3 = null, val4 = null;
 			val1 = numCache.pts[i].val;
 
-			lastNamCache = this.cChartDrawer.getNumCache(this.chart.series[this.chart.series.length - 1].val).pts;
+			lastNamCache = this.cChartDrawer.getNumCache(this.chart.series[this.chart.series.length - 1].val);
+			lastNamCache = lastNamCache ? lastNamCache.pts : null;
 			val4 = lastNamCache && lastNamCache[i] ? lastNamCache[i].val : null;
 
 			for (var k = 1; k < this.chart.series.length - 1; k++) {
