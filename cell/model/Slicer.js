@@ -477,6 +477,12 @@
 			}
 		}
 	};
+	CT_slicer.prototype.getIndexSheetCache = function () {
+		if (this.cacheDefinition) {
+			return this.cacheDefinition.getIndexSheetCache();
+		}
+		return null;
+	};
 	CT_slicer.prototype.initInterfaceOptions = function () {
 		this._ascSourceName = this.getSourceName();
 		this._ascNameInFormulas = this.getNameInFormulas();
@@ -1179,6 +1185,25 @@
 			}
 		}
 		s.Seek2(_end_pos);
+	};
+
+	CT_slicerCacheDefinition.prototype.getIndexSheetCache = function () {
+		//TODO позже можно использовать данную функцию в функции getFilterValues. сейчас часть кода дублируется.
+		var res = null;
+		var type = this.getType();
+		var wb = this.wb;
+		switch (type) {
+			case insertSlicerType.table: {
+				//пока беру первый элемент, поскольку не очень понятно в каких случаях их вообще может быть несколько
+				var tableCache = this.tableSlicerCache;
+				var tableObj = wb.getTableByName(tableCache.tableId, true);
+				res = tableObj ? tableObj.index : null;
+			}
+			case insertSlicerType.pivotTable: {
+				break;
+			}
+		}
+		return res;
 	};
 
 	CT_slicerCacheDefinition.prototype.getFilterValues = function () {

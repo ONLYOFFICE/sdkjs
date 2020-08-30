@@ -3480,7 +3480,14 @@
 
 	WorkbookView.prototype.setFilterValuesFromSlicer = function (name, val) {
 		var slicer = this.model.getSlicerByName(name);
-		this.getWorksheet().setFilterValuesFromSlicer(slicer, val);
+		//нам нужно получить индекс листа где находится кэш данного среза
+		var sheetIndex = slicer.getIndexSheetCache();
+		if (sheetIndex !== null) {
+			var ws = this.getWorksheet(sheetIndex);
+			if (ws) {
+				ws.setFilterValuesFromSlicer(slicer, val);
+			}
+		}
 	};
 
 	WorkbookView.prototype.deleteSlicer = function (name) {

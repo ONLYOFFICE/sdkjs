@@ -1333,7 +1333,7 @@
 						//заносим в историю
 						if (isTablePart) {
 							if (!worksheet.workbook.bUndoChanges && !worksheet.workbook.bRedoChanges) {
-								worksheet.deleteSlicersByTable(oldFilter.DisplayName);
+								worksheet.workbook.deleteSlicersByTable(oldFilter.DisplayName);
 							}
 							t._addHistoryObj(oldFilter, AscCH.historyitem_AutoFilter_Empty,
 								{activeCells: activeCells, val: bConvertTableFormulaToRef}, null, bbox);
