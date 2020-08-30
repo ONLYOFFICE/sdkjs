@@ -9081,963 +9081,976 @@ CDocument.prototype.OnKeyDown = function(e)
     var bUpdateSelection = true;
     var bRetValue        = keydownresult_PreventNothing;
 
-    if (e.KeyCode == 8) // BackSpace
-    {
-        if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Remove, null, true, this.IsFormFieldEditing()))
-        {
-            this.StartAction(AscDFH.historydescription_Document_BackSpaceButton);
+    var isShortcut = true;
 
-			var oSelectInfo = this.GetSelectedElementsInfo();
-			if (oSelectInfo.GetInlineLevelSdt())
-				this.CheckInlineSdtOnDelete = oSelectInfo.GetInlineLevelSdt();
-
-			this.Remove(-1, true, false, false, e.CtrlKey);
-
-			this.CheckInlineSdtOnDelete = null;
-
-			this.FinalizeAction();
-        }
-        bRetValue = keydownresult_PreventAll;
-    }
-    else if (e.KeyCode == 9) // Tab
-    {
-        var SelectedInfo = this.GetSelectedElementsInfo();
-
-        if (null !== SelectedInfo.Get_Math())
-        {
-            var ParaMath  = SelectedInfo.Get_Math();
-            var Paragraph = ParaMath.GetParagraph();
-            if (Paragraph && false === this.Document_Is_SelectionLocked(changestype_None, {
-                    Type      : changestype_2_Element_and_Type,
-                    Element   : Paragraph,
-                    CheckType : changestype_Paragraph_Content
-                }))
-            {
-                this.StartAction(AscDFH.historydescription_Document_AddTabToMath);
-                ParaMath.HandleTab(!e.ShiftKey);
-                this.Recalculate();
-                this.FinalizeAction();
-            }
-        }
-        else if (true === SelectedInfo.Is_InTable() && true != e.CtrlKey)
-        {
-            this.MoveCursorToCell(true === e.ShiftKey ? false : true);
-        }
-        else if (true === SelectedInfo.Is_DrawingObjSelected() && true != e.CtrlKey)
-        {
-            this.DrawingObjects.selectNextObject(( e.ShiftKey === true ? -1 : 1 ));
-        }
-        else
-        {
-            if (true === SelectedInfo.Is_MixedSelection())
-            {
-                if (true === e.ShiftKey)
-                    this.DecreaseIndent();
-                else
-                    this.IncreaseIndent();
-            }
-            else
-            {
-                var Paragraph = SelectedInfo.GetParagraph();
-                var ParaPr    = Paragraph ? Paragraph.Get_CompiledPr2(false).ParaPr : null;
-                if (null != Paragraph && ( true === Paragraph.IsCursorAtBegin() || true === Paragraph.Selection_IsFromStart() ) && ( undefined != Paragraph.GetNumPr() || ( true != Paragraph.IsEmpty() && ParaPr.Tabs.Tabs.length <= 0 ) ))
-                {
-                    if (false === this.Document_Is_SelectionLocked(changestype_None, {
-                            Type      : changestype_2_Element_and_Type,
-                            Element   : Paragraph,
-                            CheckType : AscCommon.changestype_Paragraph_Properties
-                        }))
-                    {
-                        this.StartAction(AscDFH.historydescription_Document_MoveParagraphByTab);
-                        Paragraph.Add_Tab(e.ShiftKey);
-                        this.Recalculate();
-                        this.UpdateInterface();
-                        this.UpdateSelection();
-						this.FinalizeAction();
-                    }
-                }
-                else if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
-                {
-                    this.StartAction(AscDFH.historydescription_Document_AddTab);
-                    this.AddToParagraph(new ParaTab());
-					this.FinalizeAction();
-                }
-            }
-        }
-        bRetValue = keydownresult_PreventAll;
-    }
-    else if (e.KeyCode == 13) // Enter
-    {
-        var Hyperlink = this.IsCursorInHyperlink(false);
-        if (null != Hyperlink && false === e.ShiftKey)
-        {
-			var sBookmarkName = Hyperlink.GetAnchor();
-			var sValue        = Hyperlink.GetValue();
-
-			if (Hyperlink.IsTopOfDocument())
-			{
-				this.MoveCursorToStartOfDocument();
-			}
-			else if (sValue)
-			{
-				this.Api.sync_HyperlinkClickCallback(sBookmarkName ? sValue + "#" + sBookmarkName : sValue);
-				Hyperlink.SetVisited(true);
-
-				// TODO: Пока сделаем так, потом надо будет переделать
-				this.DrawingDocument.ClearCachePages();
-				this.DrawingDocument.FirePaint();
-			}
-			else if (sBookmarkName)
-			{
-				var oBookmark = this.BookmarksManager.GetBookmarkByName(sBookmarkName);
-				if (oBookmark)
-					oBookmark[0].GoToBookmark();
-			}
-        }
-        else
-		{
-			var oSelectedInfo = this.GetSelectedElementsInfo();
-			var CheckType = ( e.ShiftKey || e.CtrlKey ? changestype_Paragraph_Content : AscCommon.changestype_Document_Content_Add );
-
-			var bCanPerform = true;
-			if ((oSelectedInfo.GetInlineLevelSdt() && !oSelectedInfo.IsSdtOverDrawing() && (!e.ShiftKey || e.CtrlKey)) || (oSelectedInfo.Get_Field() && oSelectedInfo.Get_Field().IsFillingForm()))
-				bCanPerform = false;
-
-			if (bCanPerform && (docpostype_DrawingObjects === this.CurPos.Type ||
-				(docpostype_HdrFtr === this.CurPos.Type && null != this.HdrFtr.CurHdrFtr && docpostype_DrawingObjects === this.HdrFtr.CurHdrFtr.Content.CurPos.Type )))
-			{
-				var oTargetDocContent = this.DrawingObjects.getTargetDocContent();
-				if (!oTargetDocContent)
-				{
-					var nRet    = this.DrawingObjects.handleEnter();
-					bCanPerform = (nRet === 0);
-				}
-
-				if (this.DrawingObjects.selection && null !== this.DrawingObjects.selection.cropSelection)
-					CheckType = AscCommon.changestype_Drawing_Props;
-			}
-
-			if (bCanPerform && false === this.Document_Is_SelectionLocked(CheckType, null, false, true !== e.CtrlKey && this.IsFormFieldEditing()))
-			{
-				this.StartAction(AscDFH.historydescription_Document_EnterButton);
-
-				var oMath = oSelectedInfo.Get_Math();
-				if (null !== oMath && oMath.Is_InInnerContent())
-				{
-					if (oMath.Handle_AddNewLine())
-						this.Recalculate();
-				}
-				else
-				{
-					if (e.ShiftKey && e.CtrlKey)
-					{
-						this.AddToParagraph(new ParaNewLine(break_Column));
-					}
-					else if (e.ShiftKey)
-					{
-						this.AddToParagraph(new ParaNewLine(break_Line));
-					}
-					else if (e.CtrlKey)
-					{
-						this.AddToParagraph(new ParaNewLine(break_Page));
-					}
-					else
-					{
-						this.AddNewParagraph();
-					}
-				}
-				this.FinalizeAction();
-			}
-		}
-
-        bRetValue = keydownresult_PreventAll;
-    }
-    else if (e.KeyCode == 27) // Esc
-    {
-        // 1. Если начался drag-n-drop сбрасываем его.
-        // 2. Если у нас сейчас происходит выделение маркером, тогда его отменяем
-        // 3. Если у нас сейчас происходит форматирование по образцу, тогда его отменяем
-        // 4. Если у нас выделена автофигура (в колонтитуле или документе), тогда снимаем выделение с нее
-        // 5. Если мы просто находимся в колонтитуле (автофигура не выделена) выходим из колонтитула
-		if (editor.isDrawTablePen || editor.isDrawTableErase)
-		{
-            editor.isDrawTablePen && editor.sync_TableDrawModeCallback(false);
-            editor.isDrawTableErase && editor.sync_TableEraseModeCallback(false);
-            this.UpdateCursorType(this.CurPos.RealX, this.CurPos.RealY, this.CurPage, new AscCommon.CMouseEventHandler());
-		}
-		else if (true === this.DrawingDocument.IsTrackText())
-        {
-            // Сбрасываем проверку Drag-n-Drop
-            this.Selection.DragDrop.Flag = 0;
-            this.Selection.DragDrop.Data = null;
-
-            this.DrawingDocument.CancelTrackText();
-        }
-        else if (true === editor.isMarkerFormat)
-        {
-            editor.sync_MarkerFormatCallback(false);
-            this.UpdateCursorType(this.CurPos.RealX, this.CurPos.RealY, this.CurPage, new AscCommon.CMouseEventHandler());
-        }
-        else if (c_oAscFormatPainterState.kOff !== editor.isPaintFormat)
-        {
-            editor.sync_PaintFormatCallback(c_oAscFormatPainterState.kOff);
-            this.UpdateCursorType(this.CurPos.RealX, this.CurPos.RealY, this.CurPage, new AscCommon.CMouseEventHandler());
-        }
-        else if (editor.isStartAddShape)
-        {
-            editor.sync_StartAddShapeCallback(false);
-            editor.sync_EndAddShape();
-            this.DrawingObjects.endTrackNewShape();
-            this.UpdateCursorType(this.CurPos.RealX, this.CurPos.RealY, this.CurPage, new AscCommon.CMouseEventHandler());
-        }
-        else if (docpostype_DrawingObjects === this.CurPos.Type || (docpostype_HdrFtr === this.CurPos.Type && null != this.HdrFtr.CurHdrFtr && docpostype_DrawingObjects === this.HdrFtr.CurHdrFtr.Content.CurPos.Type ))
-        {
-        	this.EndDrawingEditing();
-        }
-        else if (docpostype_HdrFtr == this.CurPos.Type)
-        {
-            this.EndHdrFtrEditing(true);
-        }
-
-		if(window['AscCommon'].g_specialPasteHelper.showSpecialPasteButton)
-		{
-			window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
-		}
-
-        bRetValue = keydownresult_PreventAll;
-    }
-	else if (e.KeyCode == 32) // Space
+    switch (this.Api.getShortcut(e))
 	{
-		var bFillingForm = false;
-		if (this.IsFormFieldEditing() && ((true === e.ShiftKey && true === e.CtrlKey) || true !== e.CtrlKey))
-			bFillingForm = true;
-
-		var oSelectedInfo = this.GetSelectedElementsInfo();
-		var oMath         = oSelectedInfo.Get_Math();
-		var oInlineSdt    = oSelectedInfo.GetInlineLevelSdt();
-		var oBlockSdt     = oSelectedInfo.GetBlockLevelSdt();
-
-		var oCheckBox;
-
-		if (oInlineSdt && oInlineSdt.IsCheckBox())
-			oCheckBox = oInlineSdt;
-		else if (oBlockSdt && oBlockSdt.IsCheckBox())
-			oCheckBox = oBlockSdt;
-
-		if (oCheckBox)
+		case c_oAscWordShortcutType.ClearFormatting:
 		{
-			oCheckBox.SkipSpecialContentControlLock(true);
-			if (!this.IsSelectionLocked(changestype_Paragraph_Content, null, true, bFillingForm))
-			{
-				this.StartAction(AscDFH.historydescription_Document_SpaceButton);
-				oCheckBox.ToggleCheckBox();
-				this.Recalculate();
-				this.FinalizeAction();
-			}
-			oCheckBox.SkipSpecialContentControlLock(false);
+			break;
 		}
-		else
-		{
-			if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content, null, true, bFillingForm))
-			{
-				this.StartAction(AscDFH.historydescription_Document_SpaceButton);
-
-				// Если мы находимся в формуле, тогда пытаемся выполнить автозамену
-				if (null !== oMath && true === oMath.Make_AutoCorrect())
-				{
-					// Ничего тут не делаем. Все делается в автозамене
-				}
-				else
-				{
-					if (true === e.ShiftKey && true === e.CtrlKey)
-					{
-						this.DrawingDocument.TargetStart();
-						this.DrawingDocument.TargetShow();
-
-						this.AddToParagraph(new ParaText(0x00A0));
-					}
-					else if (true === e.CtrlKey)
-					{
-						this.ClearParagraphFormatting(false, true);
-					}
-					else
-					{
-						this.DrawingDocument.TargetStart();
-						this.DrawingDocument.TargetShow();
-
-						this.CheckLanguageOnTextAdd = true;
-						this.AddToParagraph(new ParaSpace());
-						this.CheckLanguageOnTextAdd = false;
-					}
-				}
-				this.FinalizeAction();
-			}
-		}
-
-		bRetValue = keydownresult_PreventNothing;
 	}
-    else if (e.KeyCode == 33) // PgUp
-    {
-        if (true === e.AltKey)
-        {
-            var MouseEvent = new AscCommon.CMouseEventHandler();
 
-            MouseEvent.ClickCount = 1;
-            MouseEvent.Type       = AscCommon.g_mouse_event_type_down;
-
-            this.CurPage--;
-
-            if (this.CurPage < 0)
-                this.CurPage = 0;
-
-            this.Selection_SetStart(0, 0, MouseEvent);
-
-            MouseEvent.Type = AscCommon.g_mouse_event_type_up;
-            this.Selection_SetEnd(0, 0, MouseEvent);
-        }
-        else
-        {
-            if (docpostype_HdrFtr === this.CurPos.Type)
-            {
-                if (true === this.HdrFtr.GoTo_PrevHdrFtr())
-                {
-                    this.Document_UpdateSelectionState();
-                    this.Document_UpdateInterfaceState();
-                }
-            }
-            else
-            {
-            	if (this.Controller !== this.LogicDocumentController)
-				{
-					this.RemoveSelection();
-					this.SetDocPosType(docpostype_Content);
-				}
-
-            	this.MoveCursorPageUp(true === e.ShiftKey, true === e.CtrlKey);
-            }
-        }
-
-		this.private_CheckCursorPosInFillingFormMode();
-        this.CheckComplexFieldsInSelection();
-        bRetValue = keydownresult_PreventAll;
-    }
-    else if (e.KeyCode == 34) // PgDn
-    {
-        if (true === e.AltKey)
-        {
-            var MouseEvent = new AscCommon.CMouseEventHandler();
-
-            MouseEvent.ClickCount = 1;
-            MouseEvent.Type       = AscCommon.g_mouse_event_type_down;
-
-            this.CurPage++;
-
-            // TODO: переделать данную проверку
-            if (this.CurPage >= this.DrawingDocument.m_lPagesCount)
-                this.CurPage = this.DrawingDocument.m_lPagesCount - 1;
-
-            this.Selection_SetStart(0, 0, MouseEvent);
-
-            MouseEvent.Type = AscCommon.g_mouse_event_type_up;
-            this.Selection_SetEnd(0, 0, MouseEvent);
-        }
-        else
-        {
-            if (docpostype_HdrFtr === this.CurPos.Type)
-            {
-                if (true === this.HdrFtr.GoTo_NextHdrFtr())
-                {
-                    this.Document_UpdateSelectionState();
-                    this.Document_UpdateInterfaceState();
-                }
-            }
-            else
-            {
-				if (this.Controller !== this.LogicDocumentController)
-				{
-					this.RemoveSelection();
-					this.SetDocPosType(docpostype_Content);
-				}
-
-				this.MoveCursorPageDown(true === e.ShiftKey, true === e.CtrlKey);
-            }
-        }
-
-		this.private_CheckCursorPosInFillingFormMode();
-		this.CheckComplexFieldsInSelection();
-        bRetValue = keydownresult_PreventAll;
-    }
-    else if (e.KeyCode == 35) // клавиша End
-    {
-        if (true === e.CtrlKey) // Ctrl + End - переход в конец документа
-        {
-            this.MoveCursorToEndPos(true === e.ShiftKey);
-        }
-        else // Переходим в конец строки
-        {
-            this.MoveCursorToEndOfLine(true === e.ShiftKey);
-        }
-
-        this.Document_UpdateInterfaceState();
-        this.Document_UpdateRulersState();
-
-		this.private_CheckCursorPosInFillingFormMode();
-		this.CheckComplexFieldsInSelection();
-        bRetValue = keydownresult_PreventAll;
-    }
-    else if (e.KeyCode == 36) // клавиша Home
-    {
-        if (true === e.CtrlKey) // Ctrl + Home - переход в начало документа
-        {
-            this.MoveCursorToStartPos(true === e.ShiftKey);
-        }
-        else // Переходим в начало строки
-        {
-            this.MoveCursorToStartOfLine(true === e.ShiftKey);
-        }
-
-        this.Document_UpdateInterfaceState();
-        this.Document_UpdateRulersState();
-
-		this.private_CheckCursorPosInFillingFormMode();
-		this.CheckComplexFieldsInSelection();
-        bRetValue = keydownresult_PreventAll;
-    }
-    else if (e.KeyCode == 37) // Left Arrow
-    {
-        // Чтобы при зажатой клавише курсор не пропадал
-        if (true != e.ShiftKey)
-            this.DrawingDocument.TargetStart();
-
-        this.DrawingDocument.UpdateTargetFromPaint = true;
-        this.MoveCursorLeft(true === e.ShiftKey, true === e.CtrlKey);
-		this.private_CheckCursorPosInFillingFormMode();
-		this.CheckComplexFieldsInSelection();
-        bRetValue = keydownresult_PreventAll;
-    }
-    else if (e.KeyCode == 38) // Top Arrow
-    {
-        // TODO: Реализовать Ctrl + Up/ Ctrl + Shift + Up
-        // Чтобы при зажатой клавише курсор не пропадал
-        if (true != e.ShiftKey)
-            this.DrawingDocument.TargetStart();
-
-        this.DrawingDocument.UpdateTargetFromPaint = true;
-        this.MoveCursorUp(true === e.ShiftKey, true === e.CtrlKey);
-		this.private_CheckCursorPosInFillingFormMode();
-		this.CheckComplexFieldsInSelection();
-        bRetValue = keydownresult_PreventAll;
-    }
-    else if (e.KeyCode == 39) // Right Arrow
-    {
-        // Чтобы при зажатой клавише курсор не пропадал
-        if (true != e.ShiftKey)
-            this.DrawingDocument.TargetStart();
-
-        this.DrawingDocument.UpdateTargetFromPaint = true;
-        this.MoveCursorRight(true === e.ShiftKey, true === e.CtrlKey);
-		this.private_CheckCursorPosInFillingFormMode();
-		this.CheckComplexFieldsInSelection();
-        bRetValue = keydownresult_PreventAll;
-    }
-    else if (e.KeyCode == 40) // Bottom Arrow
-    {
-        // TODO: Реализовать Ctrl + Down/ Ctrl + Shift + Down
-        // Чтобы при зажатой клавише курсор не пропадал
-        if (true != e.ShiftKey)
-            this.DrawingDocument.TargetStart();
-
-        this.DrawingDocument.UpdateTargetFromPaint = true;
-        this.MoveCursorDown(true === e.ShiftKey, true === e.CtrlKey);
-		this.private_CheckCursorPosInFillingFormMode();
-		this.CheckComplexFieldsInSelection();
-        bRetValue = keydownresult_PreventAll;
-    }
-    else if (e.KeyCode == 46) // Delete
-    {
-        if (true != e.ShiftKey)
-        {
-            if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Delete, null, true, this.IsFormFieldEditing()))
-            {
-                this.StartAction(AscDFH.historydescription_Document_DeleteButton);
+    if (!isShortcut)
+	{
+		if (e.KeyCode == 8) // BackSpace
+		{
+			if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Remove, null, true, this.IsFormFieldEditing()))
+			{
+				this.StartAction(AscDFH.historydescription_Document_BackSpaceButton);
 
 				var oSelectInfo = this.GetSelectedElementsInfo();
 				if (oSelectInfo.GetInlineLevelSdt())
 					this.CheckInlineSdtOnDelete = oSelectInfo.GetInlineLevelSdt();
 
-				this.Remove(1, false, false, false, e.CtrlKey);
+				this.Remove(-1, true, false, false, e.CtrlKey);
 
 				this.CheckInlineSdtOnDelete = null;
 
 				this.FinalizeAction();
-            }
-            bRetValue = keydownresult_PreventAll;
-        }
-    }
-    else if (e.KeyCode == 49 && true === e.AltKey && !e.AltGr) // Alt + Ctrl + Num1 - применяем стиль Heading1
-    {
-        if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_Properties))
-        {
-            this.StartAction(AscDFH.historydescription_Document_SetStyleHeading1);
-            this.SetParagraphStyle("Heading 1");
-            this.UpdateInterface();
-			this.FinalizeAction();
-        }
-        bRetValue = keydownresult_PreventAll;
-    }
-    else if (e.KeyCode == 50 && true === e.AltKey && !e.AltGr) // Alt + Ctrl + Num2 - применяем стиль Heading2
-    {
-        if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_Properties))
-        {
-            this.StartAction(AscDFH.historydescription_Document_SetStyleHeading2);
-            this.SetParagraphStyle("Heading 2");
-            this.UpdateInterface();
-			this.FinalizeAction();
-        }
-        bRetValue = keydownresult_PreventAll;
-    }
-    else if (e.KeyCode == 51 && true === e.AltKey && !e.AltGr) // Alt + Ctrl + Num3 - применяем стиль Heading3
-    {
-        if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_Properties))
-        {
-            this.StartAction(AscDFH.historydescription_Document_SetStyleHeading3);
-            this.SetParagraphStyle("Heading 3");
-            this.UpdateInterface();
-			this.FinalizeAction();
-        }
-        bRetValue = keydownresult_PreventAll;
-    }
-    else if (e.KeyCode === 53 && true === e.CtrlKey) // Ctrl + Num5 - зачеркиваем текст
-    {
-        var TextPr = this.GetCalculatedTextPr();
-        if (null != TextPr)
-        {
-            if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_TextProperties))
-            {
-                this.StartAction(AscDFH.historydescription_Document_SetTextStrikeoutHotKey);
-                this.AddToParagraph(new ParaTextPr({Strikeout : TextPr.Strikeout === true ? false : true}));
-                this.UpdateInterface();
-				this.FinalizeAction();
-            }
-            bRetValue = keydownresult_PreventAll;
-        }
-    }
-    else if (e.KeyCode === 56 && true === e.CtrlKey && true === e.ShiftKey) // Ctrl + Shift + Num8 показать/скрыть невидимые символы
-	{
-		var isShow = this.Api.get_ShowParaMarks();
-		this.Api.put_ShowParaMarks(!isShow);
-		this.Api.sync_ShowParaMarks();
-		bRetValue = keydownresult_PreventAll;
-	}
-    else if (e.KeyCode == 65 && true === e.CtrlKey) // Ctrl + A - выделяем все
-    {
-        this.SelectAll();
-        bUpdateSelection = false;
-        bRetValue        = keydownresult_PreventAll;
-    }
-    else if (e.KeyCode == 66 && true === e.CtrlKey) // Ctrl + B - делаем текст жирным
-    {
-        var TextPr = this.GetCalculatedTextPr();
-        if (null != TextPr)
-        {
-            if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_TextProperties))
-            {
-                this.StartAction(AscDFH.historydescription_Document_SetTextBoldHotKey);
-                this.AddToParagraph(new ParaTextPr({Bold : TextPr.Bold === true ? false : true}));
-                this.UpdateInterface();
-				this.FinalizeAction();
-            }
-            bRetValue = keydownresult_PreventAll;
-        }
-    }
-    else if (e.KeyCode == 67 && true === e.CtrlKey) // Ctrl + C + ...
-    {
-        if (true === e.ShiftKey) // Ctrl + Shift + C - копирование форматирования текста
-        {
-            this.Document_Format_Copy();
-            bRetValue = keydownresult_PreventAll;
-        }
-        else if (true === e.AltKey && true === e.CtrlKey) // Ctrl + Alt + C - добавляем знак (с)
+			}
+			bRetValue = keydownresult_PreventAll;
+		}
+		else if (e.KeyCode == 9) // Tab
 		{
-			if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
+			var SelectedInfo = this.GetSelectedElementsInfo();
+
+			if (null !== SelectedInfo.Get_Math())
 			{
-				this.StartAction(AscDFH.historydescription_Document_AddEuroLetter);
+				var ParaMath  = SelectedInfo.Get_Math();
+				var Paragraph = ParaMath.GetParagraph();
+				if (Paragraph && false === this.Document_Is_SelectionLocked(changestype_None, {
+					Type      : changestype_2_Element_and_Type,
+					Element   : Paragraph,
+					CheckType : changestype_Paragraph_Content
+				}))
+				{
+					this.StartAction(AscDFH.historydescription_Document_AddTabToMath);
+					ParaMath.HandleTab(!e.ShiftKey);
+					this.Recalculate();
+					this.FinalizeAction();
+				}
+			}
+			else if (true === SelectedInfo.Is_InTable() && true != e.CtrlKey)
+			{
+				this.MoveCursorToCell(true === e.ShiftKey ? false : true);
+			}
+			else if (true === SelectedInfo.Is_DrawingObjSelected() && true != e.CtrlKey)
+			{
+				this.DrawingObjects.selectNextObject((e.ShiftKey === true ? -1 : 1));
+			}
+			else
+			{
+				if (true === SelectedInfo.Is_MixedSelection())
+				{
+					if (true === e.ShiftKey)
+						this.DecreaseIndent();
+					else
+						this.IncreaseIndent();
+				}
+				else
+				{
+					var Paragraph = SelectedInfo.GetParagraph();
+					var ParaPr    = Paragraph ? Paragraph.Get_CompiledPr2(false).ParaPr : null;
+					if (null != Paragraph && (true === Paragraph.IsCursorAtBegin() || true === Paragraph.Selection_IsFromStart()) && (undefined != Paragraph.GetNumPr() || (true != Paragraph.IsEmpty() && ParaPr.Tabs.Tabs.length <= 0)))
+					{
+						if (false === this.Document_Is_SelectionLocked(changestype_None, {
+							Type      : changestype_2_Element_and_Type,
+							Element   : Paragraph,
+							CheckType : AscCommon.changestype_Paragraph_Properties
+						}))
+						{
+							this.StartAction(AscDFH.historydescription_Document_MoveParagraphByTab);
+							Paragraph.Add_Tab(e.ShiftKey);
+							this.Recalculate();
+							this.UpdateInterface();
+							this.UpdateSelection();
+							this.FinalizeAction();
+						}
+					}
+					else if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
+					{
+						this.StartAction(AscDFH.historydescription_Document_AddTab);
+						this.AddToParagraph(new ParaTab());
+						this.FinalizeAction();
+					}
+				}
+			}
+			bRetValue = keydownresult_PreventAll;
+		}
+		else if (e.KeyCode == 13) // Enter
+		{
+			var Hyperlink = this.IsCursorInHyperlink(false);
+			if (null != Hyperlink && false === e.ShiftKey)
+			{
+				var sBookmarkName = Hyperlink.GetAnchor();
+				var sValue        = Hyperlink.GetValue();
+
+				if (Hyperlink.IsTopOfDocument())
+				{
+					this.MoveCursorToStartOfDocument();
+				}
+				else if (sValue)
+				{
+					this.Api.sync_HyperlinkClickCallback(sBookmarkName ? sValue + "#" + sBookmarkName : sValue);
+					Hyperlink.SetVisited(true);
+
+					// TODO: Пока сделаем так, потом надо будет переделать
+					this.DrawingDocument.ClearCachePages();
+					this.DrawingDocument.FirePaint();
+				}
+				else if (sBookmarkName)
+				{
+					var oBookmark = this.BookmarksManager.GetBookmarkByName(sBookmarkName);
+					if (oBookmark)
+						oBookmark[0].GoToBookmark();
+				}
+			}
+			else
+			{
+				var oSelectedInfo = this.GetSelectedElementsInfo();
+				var CheckType     = (e.ShiftKey || e.CtrlKey ? changestype_Paragraph_Content : AscCommon.changestype_Document_Content_Add);
+
+				var bCanPerform = true;
+				if ((oSelectedInfo.GetInlineLevelSdt() && !oSelectedInfo.IsSdtOverDrawing() && (!e.ShiftKey || e.CtrlKey)) || (oSelectedInfo.Get_Field() && oSelectedInfo.Get_Field().IsFillingForm()))
+					bCanPerform = false;
+
+				if (bCanPerform && (docpostype_DrawingObjects === this.CurPos.Type ||
+					(docpostype_HdrFtr === this.CurPos.Type && null != this.HdrFtr.CurHdrFtr && docpostype_DrawingObjects === this.HdrFtr.CurHdrFtr.Content.CurPos.Type)))
+				{
+					var oTargetDocContent = this.DrawingObjects.getTargetDocContent();
+					if (!oTargetDocContent)
+					{
+						var nRet    = this.DrawingObjects.handleEnter();
+						bCanPerform = (nRet === 0);
+					}
+
+					if (this.DrawingObjects.selection && null !== this.DrawingObjects.selection.cropSelection)
+						CheckType = AscCommon.changestype_Drawing_Props;
+				}
+
+				if (bCanPerform && false === this.Document_Is_SelectionLocked(CheckType, null, false, true !== e.CtrlKey && this.IsFormFieldEditing()))
+				{
+					this.StartAction(AscDFH.historydescription_Document_EnterButton);
+
+					var oMath = oSelectedInfo.Get_Math();
+					if (null !== oMath && oMath.Is_InInnerContent())
+					{
+						if (oMath.Handle_AddNewLine())
+							this.Recalculate();
+					}
+					else
+					{
+						if (e.ShiftKey && e.CtrlKey)
+						{
+							this.AddToParagraph(new ParaNewLine(break_Column));
+						}
+						else if (e.ShiftKey)
+						{
+							this.AddToParagraph(new ParaNewLine(break_Line));
+						}
+						else if (e.CtrlKey)
+						{
+							this.AddToParagraph(new ParaNewLine(break_Page));
+						}
+						else
+						{
+							this.AddNewParagraph();
+						}
+					}
+					this.FinalizeAction();
+				}
+			}
+
+			bRetValue = keydownresult_PreventAll;
+		}
+		else if (e.KeyCode == 27) // Esc
+		{
+			// 1. Если начался drag-n-drop сбрасываем его.
+			// 2. Если у нас сейчас происходит выделение маркером, тогда его отменяем
+			// 3. Если у нас сейчас происходит форматирование по образцу, тогда его отменяем
+			// 4. Если у нас выделена автофигура (в колонтитуле или документе), тогда снимаем выделение с нее
+			// 5. Если мы просто находимся в колонтитуле (автофигура не выделена) выходим из колонтитула
+			if (editor.isDrawTablePen || editor.isDrawTableErase)
+			{
+				editor.isDrawTablePen && editor.sync_TableDrawModeCallback(false);
+				editor.isDrawTableErase && editor.sync_TableEraseModeCallback(false);
+				this.UpdateCursorType(this.CurPos.RealX, this.CurPos.RealY, this.CurPage, new AscCommon.CMouseEventHandler());
+			}
+			else if (true === this.DrawingDocument.IsTrackText())
+			{
+				// Сбрасываем проверку Drag-n-Drop
+				this.Selection.DragDrop.Flag = 0;
+				this.Selection.DragDrop.Data = null;
+
+				this.DrawingDocument.CancelTrackText();
+			}
+			else if (true === editor.isMarkerFormat)
+			{
+				editor.sync_MarkerFormatCallback(false);
+				this.UpdateCursorType(this.CurPos.RealX, this.CurPos.RealY, this.CurPage, new AscCommon.CMouseEventHandler());
+			}
+			else if (c_oAscFormatPainterState.kOff !== editor.isPaintFormat)
+			{
+				editor.sync_PaintFormatCallback(c_oAscFormatPainterState.kOff);
+				this.UpdateCursorType(this.CurPos.RealX, this.CurPos.RealY, this.CurPage, new AscCommon.CMouseEventHandler());
+			}
+			else if (editor.isStartAddShape)
+			{
+				editor.sync_StartAddShapeCallback(false);
+				editor.sync_EndAddShape();
+				this.DrawingObjects.endTrackNewShape();
+				this.UpdateCursorType(this.CurPos.RealX, this.CurPos.RealY, this.CurPage, new AscCommon.CMouseEventHandler());
+			}
+			else if (docpostype_DrawingObjects === this.CurPos.Type || (docpostype_HdrFtr === this.CurPos.Type && null != this.HdrFtr.CurHdrFtr && docpostype_DrawingObjects === this.HdrFtr.CurHdrFtr.Content.CurPos.Type))
+			{
+				this.EndDrawingEditing();
+			}
+			else if (docpostype_HdrFtr == this.CurPos.Type)
+			{
+				this.EndHdrFtrEditing(true);
+			}
+
+			if (window['AscCommon'].g_specialPasteHelper.showSpecialPasteButton)
+			{
+				window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
+			}
+
+			bRetValue = keydownresult_PreventAll;
+		}
+		else if (e.KeyCode == 32) // Space
+		{
+			var bFillingForm = false;
+			if (this.IsFormFieldEditing() && ((true === e.ShiftKey && true === e.CtrlKey) || true !== e.CtrlKey))
+				bFillingForm = true;
+
+			var oSelectedInfo = this.GetSelectedElementsInfo();
+			var oMath         = oSelectedInfo.Get_Math();
+			var oInlineSdt    = oSelectedInfo.GetInlineLevelSdt();
+			var oBlockSdt     = oSelectedInfo.GetBlockLevelSdt();
+
+			var oCheckBox;
+
+			if (oInlineSdt && oInlineSdt.IsCheckBox())
+				oCheckBox = oInlineSdt;
+			else if (oBlockSdt && oBlockSdt.IsCheckBox())
+				oCheckBox = oBlockSdt;
+
+			if (oCheckBox)
+			{
+				oCheckBox.SkipSpecialContentControlLock(true);
+				if (!this.IsSelectionLocked(changestype_Paragraph_Content, null, true, bFillingForm))
+				{
+					this.StartAction(AscDFH.historydescription_Document_SpaceButton);
+					oCheckBox.ToggleCheckBox();
+					this.Recalculate();
+					this.FinalizeAction();
+				}
+				oCheckBox.SkipSpecialContentControlLock(false);
+			}
+			else
+			{
+				if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content, null, true, bFillingForm))
+				{
+					this.StartAction(AscDFH.historydescription_Document_SpaceButton);
+
+					// Если мы находимся в формуле, тогда пытаемся выполнить автозамену
+					if (null !== oMath && true === oMath.Make_AutoCorrect())
+					{
+						// Ничего тут не делаем. Все делается в автозамене
+					}
+					else
+					{
+						if (true === e.ShiftKey && true === e.CtrlKey)
+						{
+							this.DrawingDocument.TargetStart();
+							this.DrawingDocument.TargetShow();
+
+							this.AddToParagraph(new ParaText(0x00A0));
+						}
+						else if (true === e.CtrlKey)
+						{
+							this.ClearParagraphFormatting(false, true);
+						}
+						else
+						{
+							this.DrawingDocument.TargetStart();
+							this.DrawingDocument.TargetShow();
+
+							this.CheckLanguageOnTextAdd = true;
+							this.AddToParagraph(new ParaSpace());
+							this.CheckLanguageOnTextAdd = false;
+						}
+					}
+					this.FinalizeAction();
+				}
+			}
+
+			bRetValue = keydownresult_PreventNothing;
+		}
+		else if (e.KeyCode == 33) // PgUp
+		{
+			if (true === e.AltKey)
+			{
+				var MouseEvent = new AscCommon.CMouseEventHandler();
+
+				MouseEvent.ClickCount = 1;
+				MouseEvent.Type       = AscCommon.g_mouse_event_type_down;
+
+				this.CurPage--;
+
+				if (this.CurPage < 0)
+					this.CurPage = 0;
+
+				this.Selection_SetStart(0, 0, MouseEvent);
+
+				MouseEvent.Type = AscCommon.g_mouse_event_type_up;
+				this.Selection_SetEnd(0, 0, MouseEvent);
+			}
+			else
+			{
+				if (docpostype_HdrFtr === this.CurPos.Type)
+				{
+					if (true === this.HdrFtr.GoTo_PrevHdrFtr())
+					{
+						this.Document_UpdateSelectionState();
+						this.Document_UpdateInterfaceState();
+					}
+				}
+				else
+				{
+					if (this.Controller !== this.LogicDocumentController)
+					{
+						this.RemoveSelection();
+						this.SetDocPosType(docpostype_Content);
+					}
+
+					this.MoveCursorPageUp(true === e.ShiftKey, true === e.CtrlKey);
+				}
+			}
+
+			this.private_CheckCursorPosInFillingFormMode();
+			this.CheckComplexFieldsInSelection();
+			bRetValue = keydownresult_PreventAll;
+		}
+		else if (e.KeyCode == 34) // PgDn
+		{
+			if (true === e.AltKey)
+			{
+				var MouseEvent = new AscCommon.CMouseEventHandler();
+
+				MouseEvent.ClickCount = 1;
+				MouseEvent.Type       = AscCommon.g_mouse_event_type_down;
+
+				this.CurPage++;
+
+				// TODO: переделать данную проверку
+				if (this.CurPage >= this.DrawingDocument.m_lPagesCount)
+					this.CurPage = this.DrawingDocument.m_lPagesCount - 1;
+
+				this.Selection_SetStart(0, 0, MouseEvent);
+
+				MouseEvent.Type = AscCommon.g_mouse_event_type_up;
+				this.Selection_SetEnd(0, 0, MouseEvent);
+			}
+			else
+			{
+				if (docpostype_HdrFtr === this.CurPos.Type)
+				{
+					if (true === this.HdrFtr.GoTo_NextHdrFtr())
+					{
+						this.Document_UpdateSelectionState();
+						this.Document_UpdateInterfaceState();
+					}
+				}
+				else
+				{
+					if (this.Controller !== this.LogicDocumentController)
+					{
+						this.RemoveSelection();
+						this.SetDocPosType(docpostype_Content);
+					}
+
+					this.MoveCursorPageDown(true === e.ShiftKey, true === e.CtrlKey);
+				}
+			}
+
+			this.private_CheckCursorPosInFillingFormMode();
+			this.CheckComplexFieldsInSelection();
+			bRetValue = keydownresult_PreventAll;
+		}
+		else if (e.KeyCode == 35) // клавиша End
+		{
+			if (true === e.CtrlKey) // Ctrl + End - переход в конец документа
+			{
+				this.MoveCursorToEndPos(true === e.ShiftKey);
+			}
+			else // Переходим в конец строки
+			{
+				this.MoveCursorToEndOfLine(true === e.ShiftKey);
+			}
+
+			this.Document_UpdateInterfaceState();
+			this.Document_UpdateRulersState();
+
+			this.private_CheckCursorPosInFillingFormMode();
+			this.CheckComplexFieldsInSelection();
+			bRetValue = keydownresult_PreventAll;
+		}
+		else if (e.KeyCode == 36) // клавиша Home
+		{
+			if (true === e.CtrlKey) // Ctrl + Home - переход в начало документа
+			{
+				this.MoveCursorToStartPos(true === e.ShiftKey);
+			}
+			else // Переходим в начало строки
+			{
+				this.MoveCursorToStartOfLine(true === e.ShiftKey);
+			}
+
+			this.Document_UpdateInterfaceState();
+			this.Document_UpdateRulersState();
+
+			this.private_CheckCursorPosInFillingFormMode();
+			this.CheckComplexFieldsInSelection();
+			bRetValue = keydownresult_PreventAll;
+		}
+		else if (e.KeyCode == 37) // Left Arrow
+		{
+			// Чтобы при зажатой клавише курсор не пропадал
+			if (true != e.ShiftKey)
 				this.DrawingDocument.TargetStart();
-				this.DrawingDocument.TargetShow();
-				this.AddToParagraph(new ParaText(0x00A9));
-				this.FinalizeAction();
-			}
-			bRetValue = keydownresult_PreventAll;
-		}
-    }
-    else if (e.KeyCode == 68 && true === e.CtrlKey) // Ctrl + D + ...
-	{
-		if (true === e.AltKey) // Ctrl + Alt + D - вставка концевой сноски
-		{
-			this.AddEndnote();
-			bRetValue = keydownresult_PreventAll;
-		}
-	}
-    else if (e.KeyCode == 69 && true === e.CtrlKey) // Ctrl + E + ...
-    {
-        if (true !== e.AltKey) // Ctrl + E - переключение прилегания параграфа между center и left
-        {
-            this.private_ToggleParagraphAlignByHotkey(AscCommon.align_Center);
-            bRetValue = keydownresult_PreventAll;
-        }
-        else // Ctrl + Alt + E - добавляем знак евро €
-        {
-            if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
-            {
-                this.StartAction(AscDFH.historydescription_Document_AddEuroLetter);
-                this.DrawingDocument.TargetStart();
-                this.DrawingDocument.TargetShow();
-                this.AddToParagraph(new ParaText(0x20AC));
-				this.FinalizeAction();
-            }
-            bRetValue = keydownresult_PreventAll;
-        }
-    }
-	else if (e.KeyCode == 70 && true === e.CtrlKey) // Ctrl + F + ...
-	{
-		if (true === e.AltKey)
-		{
-			this.AddFootnote();
-			bRetValue = keydownresult_PreventAll;
-		}
-	}
-    else if (e.KeyCode == 73 && true === e.CtrlKey) // Ctrl + I - делаем текст наклонным
-    {
-        var TextPr = this.GetCalculatedTextPr();
-        if (null != TextPr)
-        {
-            if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_TextProperties))
-            {
-                this.StartAction(AscDFH.historydescription_Document_SetTextItalicHotKey);
-                this.AddToParagraph(new ParaTextPr({Italic : TextPr.Italic === true ? false : true}));
-                this.UpdateInterface();
-				this.FinalizeAction();
-            }
-            bRetValue = keydownresult_PreventAll;
-        }
-    }
-    else if (e.KeyCode == 74 && true === e.CtrlKey) // Ctrl + J переключение прилегания параграфа между justify и left
-    {
-        this.private_ToggleParagraphAlignByHotkey(AscCommon.align_Justify);
-        bRetValue = keydownresult_PreventAll;
-    }
-    else if (e.KeyCode == 75 && true === e.CtrlKey && false === e.ShiftKey) // Ctrl + K - добавление гиперссылки
-    {
-        if (true === this.CanAddHyperlink(false) && this.CanEdit())
-            this.Api.sync_DialogAddHyperlink();
 
-        bRetValue = keydownresult_PreventAll;
-    }
-    else if (e.KeyCode == 76 && true === e.CtrlKey) // Ctrl + L + ...
-    {
-        if (true === e.ShiftKey) // Ctrl + Shift + L - добавляем список к данному параграфу
-        {
-            if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
-            {
-                this.StartAction(AscDFH.historydescription_Document_SetParagraphNumberingHotKey);
-                this.SetParagraphNumbering({Type : 0, SubType : 1});
-                this.UpdateInterface();
-				this.FinalizeAction();
-            }
-            bRetValue = keydownresult_PreventAll;
-        }
-        else // Ctrl + L - переключение прилегания параграфа между left и justify
-        {
-            this.private_ToggleParagraphAlignByHotkey(align_Left);
-            bRetValue = keydownresult_PreventAll;
-        }
-    }
-    else if (e.KeyCode == 77 && true === e.CtrlKey) // Ctrl + M + ...
-    {
-        if (true === e.ShiftKey) // Ctrl + Shift + M - уменьшаем левый отступ
-            this.DecreaseIndent();
-        else // Ctrl + M - увеличиваем левый отступ
-            this.IncreaseIndent();
-
-        bRetValue = keydownresult_PreventAll;
-    }
-    else if (e.KeyCode == 80 && true === e.CtrlKey) // Ctrl + P + ...
-    {
-        if (true === e.ShiftKey) // Ctrl + Shift + P - добавляем номер страницы в текущую позицию
-        {
-            if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
-            {
-                this.StartAction(AscDFH.historydescription_Document_AddPageNumHotKey);
-                this.AddToParagraph(new ParaPageNum());
-				this.FinalizeAction();
-            }
-            bRetValue = keydownresult_PreventAll;
-        }
-        else // Ctrl + P - print
-        {
-            this.DrawingDocument.m_oWordControl.m_oApi.onPrint();
-            bRetValue = keydownresult_PreventAll;
-        }
-    }
-    else if (e.KeyCode == 82 && true === e.CtrlKey) // Ctrl + R
-    {
-		if (true === e.AltKey && true === e.CtrlKey) // Ctrl + Alt + R - добавляем знак (R)
+			this.DrawingDocument.UpdateTargetFromPaint = true;
+			this.MoveCursorLeft(true === e.ShiftKey, true === e.CtrlKey);
+			this.private_CheckCursorPosInFillingFormMode();
+			this.CheckComplexFieldsInSelection();
+			bRetValue = keydownresult_PreventAll;
+		}
+		else if (e.KeyCode == 38) // Top Arrow
 		{
-			if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
-			{
-				this.StartAction(AscDFH.historydescription_Document_AddEuroLetter);
+			// TODO: Реализовать Ctrl + Up/ Ctrl + Shift + Up
+			// Чтобы при зажатой клавише курсор не пропадал
+			if (true != e.ShiftKey)
 				this.DrawingDocument.TargetStart();
-				this.DrawingDocument.TargetShow();
-				this.AddToParagraph(new ParaText(0x00AE));
-				this.FinalizeAction();
-			}
+
+			this.DrawingDocument.UpdateTargetFromPaint = true;
+			this.MoveCursorUp(true === e.ShiftKey, true === e.CtrlKey);
+			this.private_CheckCursorPosInFillingFormMode();
+			this.CheckComplexFieldsInSelection();
 			bRetValue = keydownresult_PreventAll;
 		}
-		else // Ctrl + R - переключение прилегания параграфа между right и left
+		else if (e.KeyCode == 39) // Right Arrow
 		{
-			this.private_ToggleParagraphAlignByHotkey(AscCommon.align_Right);
-			bRetValue = keydownresult_PreventAll;
-		}
-    }
-    else if (e.KeyCode == 83 && false === this.IsViewMode() && true === e.CtrlKey) // Ctrl + S - save
-    {
-		this.Api.asc_Save(false);
-        bRetValue = keydownresult_PreventAll;
-    }
-    else if (e.KeyCode === 84 && true === e.CtrlKey) // Ctrl + T
-	{
-		if (true === e.AltKey) // Ctrl + Alt + T - добавляем знак (Tm)
-		{
-			if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
-			{
-				this.StartAction(AscDFH.historydescription_Document_AddEuroLetter);
+			// Чтобы при зажатой клавише курсор не пропадал
+			if (true != e.ShiftKey)
 				this.DrawingDocument.TargetStart();
-				this.DrawingDocument.TargetShow();
-				this.AddToParagraph(new ParaText(0x2122));
-				this.FinalizeAction();
-			}
+
+			this.DrawingDocument.UpdateTargetFromPaint = true;
+			this.MoveCursorRight(true === e.ShiftKey, true === e.CtrlKey);
+			this.private_CheckCursorPosInFillingFormMode();
+			this.CheckComplexFieldsInSelection();
 			bRetValue = keydownresult_PreventAll;
 		}
-	}
-    else if (e.KeyCode == 85 && true === e.CtrlKey) // Ctrl + U - делаем текст подчеркнутым
-    {
-        var TextPr = this.GetCalculatedTextPr();
-        if (null != TextPr)
-        {
-            if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_TextProperties))
-            {
-                this.StartAction(AscDFH.historydescription_Document_SetTextUnderlineHotKey);
-                this.AddToParagraph(new ParaTextPr({Underline : TextPr.Underline === true ? false : true}));
-                this.UpdateInterface();
-				this.FinalizeAction();
-            }
-            bRetValue = keydownresult_PreventAll;
-        }
-    }
-	else if (e.KeyCode == 86 && true === e.CtrlKey) // Ctrl + V
-	{
-		if (true === e.ShiftKey) // Ctrl + Shift + V - вставка форматирования текста
+		else if (e.KeyCode == 40) // Bottom Arrow
 		{
-			if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
+			// TODO: Реализовать Ctrl + Down/ Ctrl + Shift + Down
+			// Чтобы при зажатой клавише курсор не пропадал
+			if (true != e.ShiftKey)
+				this.DrawingDocument.TargetStart();
+
+			this.DrawingDocument.UpdateTargetFromPaint = true;
+			this.MoveCursorDown(true === e.ShiftKey, true === e.CtrlKey);
+			this.private_CheckCursorPosInFillingFormMode();
+			this.CheckComplexFieldsInSelection();
+			bRetValue = keydownresult_PreventAll;
+		}
+		else if (e.KeyCode == 46) // Delete
+		{
+			if (true != e.ShiftKey)
 			{
-				this.StartAction(AscDFH.historydescription_Document_FormatPasteHotKey);
-				this.Document_Format_Paste();
-				this.FinalizeAction();
-			}
-			bRetValue = keydownresult_PreventAll;
-		}
-	}
-    else if (e.KeyCode == 89 && true === e.CtrlKey && (this.CanEdit() || this.IsEditCommentsMode() || this.IsFillingFormMode())) // Ctrl + Y - Redo
-    {
-        this.Document_Redo();
-        bRetValue = keydownresult_PreventAll;
-    }
-    else if (e.KeyCode == 90 && true === e.CtrlKey && (this.CanEdit() || this.IsEditCommentsMode() || this.IsFillingFormMode()) && !this.IsViewModeInReview()) // Ctrl + Z - Undo
-    {
-       	this.Document_Undo();
-        bRetValue = keydownresult_PreventAll;
-    }
-    else if ((e.KeyCode == 93) || (/*в Opera такой код*/AscCommon.AscBrowser.isOpera && (57351 == e.KeyCode)) ||
-             (e.KeyCode == 121 && true === e.ShiftKey)) // // Shift + F10 - контекстное меню
-    {
-        var X_abs, Y_abs, oPosition, ConvertedPos;
-        if (this.DrawingObjects.selectedObjects.length > 0)
-        {
-            oPosition    = this.DrawingObjects.getContextMenuPosition(this.CurPage);
-            ConvertedPos = this.DrawingDocument.ConvertCoordsToCursorWR(oPosition.X, oPosition.Y, oPosition.PageIndex);
-        }
-        else
-        {
-            ConvertedPos = this.DrawingDocument.ConvertCoordsToCursorWR(this.TargetPos.X, this.TargetPos.Y, this.TargetPos.PageNum);
-        }
-        X_abs = ConvertedPos.X;
-        Y_abs = ConvertedPos.Y;
+				if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Delete, null, true, this.IsFormFieldEditing()))
+				{
+					this.StartAction(AscDFH.historydescription_Document_DeleteButton);
 
-        editor.sync_ContextMenuCallback({Type : Asc.c_oAscContextMenuTypes.Common, X_abs : X_abs, Y_abs : Y_abs});
+					var oSelectInfo = this.GetSelectedElementsInfo();
+					if (oSelectInfo.GetInlineLevelSdt())
+						this.CheckInlineSdtOnDelete = oSelectInfo.GetInlineLevelSdt();
 
-        bUpdateSelection = false;
-        bRetValue        = keydownresult_PreventAll;
-    }
-    else if (e.KeyCode === 109) // Num-
-	{
-		if (true === e.AltKey && (true === e.CtrlKey || true === e.AltGr) && false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content, null, true))
-		{
-			this.StartAction(AscDFH.historydescription_Document_MinusButton);
+					this.Remove(1, false, false, false, e.CtrlKey);
 
-			this.DrawingDocument.TargetStart();
-			this.DrawingDocument.TargetShow();
+					this.CheckInlineSdtOnDelete = null;
 
-			this.AddToParagraph(new ParaText(0x2014));
-			this.FinalizeAction();
-			bRetValue = keydownresult_PreventAll;
-		}
-		// else if (true === e.CtrlKey && !this.IsSelectionLocked(changestype_Paragraph_Content, null, true))
-		// {
-		// 	this.StartAction(AscDFH.historydescription_Document_MinusButton);
-		//
-		// 	this.DrawingDocument.TargetStart();
-		// 	this.DrawingDocument.TargetShow();
-		//
-		// 	this.AddToParagraph(new ParaText(0x2013));
-		// 	this.FinalizeAction();
-		// 	bRetValue = keydownresult_PreventAll;
-		// }
-	}
-	else if (e.KeyCode == 120) // F9 - обновление полей
-	{
-		this.UpdateFields(true);
-
-		bUpdateSelection = false;
-		bRetValue        = keydownresult_PreventAll;
-	}
-    else if (e.KeyCode == 144) // Num Lock
-    {
-        // Ничего не делаем
-        bUpdateSelection = false;
-        bRetValue        = keydownresult_PreventAll;
-    }
-    else if (e.KeyCode == 145) // Scroll Lock
-    {
-        // Ничего не делаем
-        bUpdateSelection = false;
-        bRetValue        = keydownresult_PreventAll;
-    }
-    else if (e.KeyCode == 187) // =
-    {
-        if (!e.CtrlKey && true === e.AltKey && !e.AltGr) // Alt + =
-        {
-            var oSelectedInfo = this.GetSelectedElementsInfo();
-            var oMath         = oSelectedInfo.Get_Math();
-            if (null === oMath)
-            {
-            	this.Api.asc_AddMath();
+					this.FinalizeAction();
+				}
 				bRetValue = keydownresult_PreventAll;
-            }
-        }
-    }
-    else if (e.KeyCode == 188 && true === e.CtrlKey) // Ctrl + ,
-    {
-        var TextPr = this.GetCalculatedTextPr();
-        if (null != TextPr)
-        {
-            if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_TextProperties))
-            {
-                this.StartAction(AscDFH.historydescription_Document_SetTextVertAlignHotKey2);
-                this.AddToParagraph(new ParaTextPr({VertAlign : TextPr.VertAlign === AscCommon.vertalign_SuperScript ? AscCommon.vertalign_Baseline : AscCommon.vertalign_SuperScript}));
-                this.UpdateInterface();
-				this.FinalizeAction();
-            }
-            bRetValue = keydownresult_PreventAll;
-        }
-    }
-    else if (e.KeyCode === 189) // -
-    {
-        if (true === e.CtrlKey && true === e.ShiftKey && false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content, null, true))
-        {
-            this.StartAction(AscDFH.historydescription_Document_MinusButton);
-
-            this.DrawingDocument.TargetStart();
-            this.DrawingDocument.TargetShow();
-
-            var Item = new ParaText(0x002D);
-            Item.Set_SpaceAfter(false);
-
-            this.AddToParagraph(Item);
-			this.FinalizeAction();
-            bRetValue = keydownresult_PreventAll;
-        }
-        else if (true === e.AltKey && false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content, null, true))
-		{
-			this.StartAction(AscDFH.historydescription_Document_MinusButton);
-
-			this.DrawingDocument.TargetStart();
-			this.DrawingDocument.TargetShow();
-
-			this.AddToParagraph(new ParaText(0x00AD));
-			this.FinalizeAction();
-			bRetValue = keydownresult_PreventAll;
+			}
 		}
-    }
-    else if (e.KeyCode == 190 && true === e.CtrlKey) // Ctrl + .
-    {
-		if (true === e.AltKey) // Ctrl + Alt + . - добавляем знак ...
+		else if (e.KeyCode == 49 && true === e.AltKey && !e.AltGr) // Alt + Ctrl + Num1 - применяем стиль Heading1
 		{
-			if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
+			if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_Properties))
 			{
-				this.StartAction(AscDFH.historydescription_Document_AddEuroLetter);
-				this.DrawingDocument.TargetStart();
-				this.DrawingDocument.TargetShow();
-				this.AddToParagraph(new ParaText(0x2026));
+				this.StartAction(AscDFH.historydescription_Document_SetStyleHeading1);
+				this.SetParagraphStyle("Heading 1");
+				this.UpdateInterface();
 				this.FinalizeAction();
 			}
 			bRetValue = keydownresult_PreventAll;
 		}
-		else
+		else if (e.KeyCode == 50 && true === e.AltKey && !e.AltGr) // Alt + Ctrl + Num2 - применяем стиль Heading2
+		{
+			if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_Properties))
+			{
+				this.StartAction(AscDFH.historydescription_Document_SetStyleHeading2);
+				this.SetParagraphStyle("Heading 2");
+				this.UpdateInterface();
+				this.FinalizeAction();
+			}
+			bRetValue = keydownresult_PreventAll;
+		}
+		else if (e.KeyCode == 51 && true === e.AltKey && !e.AltGr) // Alt + Ctrl + Num3 - применяем стиль Heading3
+		{
+			if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_Properties))
+			{
+				this.StartAction(AscDFH.historydescription_Document_SetStyleHeading3);
+				this.SetParagraphStyle("Heading 3");
+				this.UpdateInterface();
+				this.FinalizeAction();
+			}
+			bRetValue = keydownresult_PreventAll;
+		}
+		else if (e.KeyCode === 53 && true === e.CtrlKey) // Ctrl + Num5 - зачеркиваем текст
 		{
 			var TextPr = this.GetCalculatedTextPr();
 			if (null != TextPr)
 			{
 				if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_TextProperties))
 				{
-					this.StartAction(AscDFH.historydescription_Document_SetTextVertAlignHotKey3);
-					this.AddToParagraph(new ParaTextPr({VertAlign : TextPr.VertAlign === AscCommon.vertalign_SubScript ? AscCommon.vertalign_Baseline : AscCommon.vertalign_SubScript}));
+					this.StartAction(AscDFH.historydescription_Document_SetTextStrikeoutHotKey);
+					this.AddToParagraph(new ParaTextPr({Strikeout : TextPr.Strikeout === true ? false : true}));
 					this.UpdateInterface();
 					this.FinalizeAction();
 				}
 				bRetValue = keydownresult_PreventAll;
 			}
 		}
-    }
-    else if (e.KeyCode == 219 && true === e.CtrlKey) // Ctrl + [
-    {
-    	this.Api.FontSizeOut();
-        this.Document_UpdateInterfaceState();
-        bRetValue = keydownresult_PreventAll;
-    }
-    else if (e.KeyCode == 221 && true === e.CtrlKey) // Ctrl + ]
-    {
-        this.Api.FontSizeIn();
-        this.Document_UpdateInterfaceState();
-        bRetValue = keydownresult_PreventAll;
-    }
-    else if (e.KeyCode == 12288) // Space
-    {
-        if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content, null, true, this.IsFormFieldEditing()))
-        {
-            this.StartAction(AscDFH.historydescription_Document_SpaceButton);
+		else if (e.KeyCode === 56 && true === e.CtrlKey && true === e.ShiftKey) // Ctrl + Shift + Num8 показать/скрыть невидимые символы
+		{
+			var isShow = this.Api.get_ShowParaMarks();
+			this.Api.put_ShowParaMarks(!isShow);
+			this.Api.sync_ShowParaMarks();
+			bRetValue = keydownresult_PreventAll;
+		}
+		else if (e.KeyCode == 65 && true === e.CtrlKey) // Ctrl + A - выделяем все
+		{
+			this.SelectAll();
+			bUpdateSelection = false;
+			bRetValue        = keydownresult_PreventAll;
+		}
+		else if (e.KeyCode == 66 && true === e.CtrlKey) // Ctrl + B - делаем текст жирным
+		{
+			var TextPr = this.GetCalculatedTextPr();
+			if (null != TextPr)
+			{
+				if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_TextProperties))
+				{
+					this.StartAction(AscDFH.historydescription_Document_SetTextBoldHotKey);
+					this.AddToParagraph(new ParaTextPr({Bold : TextPr.Bold === true ? false : true}));
+					this.UpdateInterface();
+					this.FinalizeAction();
+				}
+				bRetValue = keydownresult_PreventAll;
+			}
+		}
+		else if (e.KeyCode == 67 && true === e.CtrlKey) // Ctrl + C + ...
+		{
+			if (true === e.ShiftKey) // Ctrl + Shift + C - копирование форматирования текста
+			{
+				this.Document_Format_Copy();
+				bRetValue = keydownresult_PreventAll;
+			}
+			else if (true === e.AltKey && true === e.CtrlKey) // Ctrl + Alt + C - добавляем знак (с)
+			{
+				if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
+				{
+					this.StartAction(AscDFH.historydescription_Document_AddEuroLetter);
+					this.DrawingDocument.TargetStart();
+					this.DrawingDocument.TargetShow();
+					this.AddToParagraph(new ParaText(0x00A9));
+					this.FinalizeAction();
+				}
+				bRetValue = keydownresult_PreventAll;
+			}
+		}
+		else if (e.KeyCode == 68 && true === e.CtrlKey) // Ctrl + D + ...
+		{
+			if (true === e.AltKey) // Ctrl + Alt + D - вставка концевой сноски
+			{
+				this.AddEndnote();
+				bRetValue = keydownresult_PreventAll;
+			}
+		}
+		else if (e.KeyCode == 69 && true === e.CtrlKey) // Ctrl + E + ...
+		{
+			if (true !== e.AltKey) // Ctrl + E - переключение прилегания параграфа между center и left
+			{
+				this.private_ToggleParagraphAlignByHotkey(AscCommon.align_Center);
+				bRetValue = keydownresult_PreventAll;
+			}
+			else // Ctrl + Alt + E - добавляем знак евро €
+			{
+				if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
+				{
+					this.StartAction(AscDFH.historydescription_Document_AddEuroLetter);
+					this.DrawingDocument.TargetStart();
+					this.DrawingDocument.TargetShow();
+					this.AddToParagraph(new ParaText(0x20AC));
+					this.FinalizeAction();
+				}
+				bRetValue = keydownresult_PreventAll;
+			}
+		}
+		else if (e.KeyCode == 70 && true === e.CtrlKey) // Ctrl + F + ...
+		{
+			if (true === e.AltKey)
+			{
+				this.AddFootnote();
+				bRetValue = keydownresult_PreventAll;
+			}
+		}
+		else if (e.KeyCode == 73 && true === e.CtrlKey) // Ctrl + I - делаем текст наклонным
+		{
+			var TextPr = this.GetCalculatedTextPr();
+			if (null != TextPr)
+			{
+				if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_TextProperties))
+				{
+					this.StartAction(AscDFH.historydescription_Document_SetTextItalicHotKey);
+					this.AddToParagraph(new ParaTextPr({Italic : TextPr.Italic === true ? false : true}));
+					this.UpdateInterface();
+					this.FinalizeAction();
+				}
+				bRetValue = keydownresult_PreventAll;
+			}
+		}
+		else if (e.KeyCode == 74 && true === e.CtrlKey) // Ctrl + J переключение прилегания параграфа между justify и left
+		{
+			this.private_ToggleParagraphAlignByHotkey(AscCommon.align_Justify);
+			bRetValue = keydownresult_PreventAll;
+		}
+		else if (e.KeyCode == 75 && true === e.CtrlKey && false === e.ShiftKey) // Ctrl + K - добавление гиперссылки
+		{
+			if (true === this.CanAddHyperlink(false) && this.CanEdit())
+				this.Api.sync_DialogAddHyperlink();
 
-            this.DrawingDocument.TargetStart();
-            this.DrawingDocument.TargetShow();
+			bRetValue = keydownresult_PreventAll;
+		}
+		else if (e.KeyCode == 76 && true === e.CtrlKey) // Ctrl + L + ...
+		{
+			if (true === e.ShiftKey) // Ctrl + Shift + L - добавляем список к данному параграфу
+			{
+				if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
+				{
+					this.StartAction(AscDFH.historydescription_Document_SetParagraphNumberingHotKey);
+					this.SetParagraphNumbering({Type : 0, SubType : 1});
+					this.UpdateInterface();
+					this.FinalizeAction();
+				}
+				bRetValue = keydownresult_PreventAll;
+			}
+			else // Ctrl + L - переключение прилегания параграфа между left и justify
+			{
+				this.private_ToggleParagraphAlignByHotkey(align_Left);
+				bRetValue = keydownresult_PreventAll;
+			}
+		}
+		else if (e.KeyCode == 77 && true === e.CtrlKey) // Ctrl + M + ...
+		{
+			if (true === e.ShiftKey) // Ctrl + Shift + M - уменьшаем левый отступ
+				this.DecreaseIndent();
+			else // Ctrl + M - увеличиваем левый отступ
+				this.IncreaseIndent();
 
-            this.CheckLanguageOnTextAdd = true;
-            this.AddToParagraph(new ParaSpace());
-            this.CheckLanguageOnTextAdd = false;
+			bRetValue = keydownresult_PreventAll;
+		}
+		else if (e.KeyCode == 80 && true === e.CtrlKey) // Ctrl + P + ...
+		{
+			if (true === e.ShiftKey) // Ctrl + Shift + P - добавляем номер страницы в текущую позицию
+			{
+				if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
+				{
+					this.StartAction(AscDFH.historydescription_Document_AddPageNumHotKey);
+					this.AddToParagraph(new ParaPageNum());
+					this.FinalizeAction();
+				}
+				bRetValue = keydownresult_PreventAll;
+			}
+			else // Ctrl + P - print
+			{
+				this.DrawingDocument.m_oWordControl.m_oApi.onPrint();
+				bRetValue = keydownresult_PreventAll;
+			}
+		}
+		else if (e.KeyCode == 82 && true === e.CtrlKey) // Ctrl + R
+		{
+			if (true === e.AltKey && true === e.CtrlKey) // Ctrl + Alt + R - добавляем знак (R)
+			{
+				if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
+				{
+					this.StartAction(AscDFH.historydescription_Document_AddEuroLetter);
+					this.DrawingDocument.TargetStart();
+					this.DrawingDocument.TargetShow();
+					this.AddToParagraph(new ParaText(0x00AE));
+					this.FinalizeAction();
+				}
+				bRetValue = keydownresult_PreventAll;
+			}
+			else // Ctrl + R - переключение прилегания параграфа между right и left
+			{
+				this.private_ToggleParagraphAlignByHotkey(AscCommon.align_Right);
+				bRetValue = keydownresult_PreventAll;
+			}
+		}
+		else if (e.KeyCode == 83 && false === this.IsViewMode() && true === e.CtrlKey) // Ctrl + S - save
+		{
+			this.Api.asc_Save(false);
+			bRetValue = keydownresult_PreventAll;
+		}
+		else if (e.KeyCode === 84 && true === e.CtrlKey) // Ctrl + T
+		{
+			if (true === e.AltKey) // Ctrl + Alt + T - добавляем знак (Tm)
+			{
+				if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
+				{
+					this.StartAction(AscDFH.historydescription_Document_AddEuroLetter);
+					this.DrawingDocument.TargetStart();
+					this.DrawingDocument.TargetShow();
+					this.AddToParagraph(new ParaText(0x2122));
+					this.FinalizeAction();
+				}
+				bRetValue = keydownresult_PreventAll;
+			}
+		}
+		else if (e.KeyCode == 85 && true === e.CtrlKey) // Ctrl + U - делаем текст подчеркнутым
+		{
+			var TextPr = this.GetCalculatedTextPr();
+			if (null != TextPr)
+			{
+				if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_TextProperties))
+				{
+					this.StartAction(AscDFH.historydescription_Document_SetTextUnderlineHotKey);
+					this.AddToParagraph(new ParaTextPr({Underline : TextPr.Underline === true ? false : true}));
+					this.UpdateInterface();
+					this.FinalizeAction();
+				}
+				bRetValue = keydownresult_PreventAll;
+			}
+		}
+		else if (e.KeyCode == 86 && true === e.CtrlKey) // Ctrl + V
+		{
+			if (true === e.ShiftKey) // Ctrl + Shift + V - вставка форматирования текста
+			{
+				if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
+				{
+					this.StartAction(AscDFH.historydescription_Document_FormatPasteHotKey);
+					this.Document_Format_Paste();
+					this.FinalizeAction();
+				}
+				bRetValue = keydownresult_PreventAll;
+			}
+		}
+		else if (e.KeyCode == 89 && true === e.CtrlKey && (this.CanEdit() || this.IsEditCommentsMode() || this.IsFillingFormMode())) // Ctrl + Y - Redo
+		{
+			this.Document_Redo();
+			bRetValue = keydownresult_PreventAll;
+		}
+		else if (e.KeyCode == 90 && true === e.CtrlKey && (this.CanEdit() || this.IsEditCommentsMode() || this.IsFillingFormMode()) && !this.IsViewModeInReview()) // Ctrl + Z - Undo
+		{
+			this.Document_Undo();
+			bRetValue = keydownresult_PreventAll;
+		}
+		else if ((e.KeyCode == 93) || (/*в Opera такой код*/AscCommon.AscBrowser.isOpera && (57351 == e.KeyCode)) ||
+			(e.KeyCode == 121 && true === e.ShiftKey)) // // Shift + F10 - контекстное меню
+		{
+			var X_abs, Y_abs, oPosition, ConvertedPos;
+			if (this.DrawingObjects.selectedObjects.length > 0)
+			{
+				oPosition    = this.DrawingObjects.getContextMenuPosition(this.CurPage);
+				ConvertedPos = this.DrawingDocument.ConvertCoordsToCursorWR(oPosition.X, oPosition.Y, oPosition.PageIndex);
+			}
+			else
+			{
+				ConvertedPos = this.DrawingDocument.ConvertCoordsToCursorWR(this.TargetPos.X, this.TargetPos.Y, this.TargetPos.PageNum);
+			}
+			X_abs = ConvertedPos.X;
+			Y_abs = ConvertedPos.Y;
 
-			this.FinalizeAction();
-        }
+			editor.sync_ContextMenuCallback({Type : Asc.c_oAscContextMenuTypes.Common, X_abs : X_abs, Y_abs : Y_abs});
 
-        bRetValue = keydownresult_PreventAll;
-    }
+			bUpdateSelection = false;
+			bRetValue        = keydownresult_PreventAll;
+		}
+		else if (e.KeyCode === 109) // Num-
+		{
+			if (true === e.AltKey && (true === e.CtrlKey || true === e.AltGr) && false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content, null, true))
+			{
+				this.StartAction(AscDFH.historydescription_Document_MinusButton);
+
+				this.DrawingDocument.TargetStart();
+				this.DrawingDocument.TargetShow();
+
+				this.AddToParagraph(new ParaText(0x2014));
+				this.FinalizeAction();
+				bRetValue = keydownresult_PreventAll;
+			}
+			// else if (true === e.CtrlKey && !this.IsSelectionLocked(changestype_Paragraph_Content, null, true))
+			// {
+			// 	this.StartAction(AscDFH.historydescription_Document_MinusButton);
+			//
+			// 	this.DrawingDocument.TargetStart();
+			// 	this.DrawingDocument.TargetShow();
+			//
+			// 	this.AddToParagraph(new ParaText(0x2013));
+			// 	this.FinalizeAction();
+			// 	bRetValue = keydownresult_PreventAll;
+			// }
+		}
+		else if (e.KeyCode == 120) // F9 - обновление полей
+		{
+			this.UpdateFields(true);
+
+			bUpdateSelection = false;
+			bRetValue        = keydownresult_PreventAll;
+		}
+		else if (e.KeyCode == 144) // Num Lock
+		{
+			// Ничего не делаем
+			bUpdateSelection = false;
+			bRetValue        = keydownresult_PreventAll;
+		}
+		else if (e.KeyCode == 145) // Scroll Lock
+		{
+			// Ничего не делаем
+			bUpdateSelection = false;
+			bRetValue        = keydownresult_PreventAll;
+		}
+		else if (e.KeyCode == 187) // =
+		{
+			if (!e.CtrlKey && true === e.AltKey && !e.AltGr) // Alt + =
+			{
+				var oSelectedInfo = this.GetSelectedElementsInfo();
+				var oMath         = oSelectedInfo.Get_Math();
+				if (null === oMath)
+				{
+					this.Api.asc_AddMath();
+					bRetValue = keydownresult_PreventAll;
+				}
+			}
+		}
+		else if (e.KeyCode == 188 && true === e.CtrlKey) // Ctrl + ,
+		{
+			var TextPr = this.GetCalculatedTextPr();
+			if (null != TextPr)
+			{
+				if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_TextProperties))
+				{
+					this.StartAction(AscDFH.historydescription_Document_SetTextVertAlignHotKey2);
+					this.AddToParagraph(new ParaTextPr({VertAlign : TextPr.VertAlign === AscCommon.vertalign_SuperScript ? AscCommon.vertalign_Baseline : AscCommon.vertalign_SuperScript}));
+					this.UpdateInterface();
+					this.FinalizeAction();
+				}
+				bRetValue = keydownresult_PreventAll;
+			}
+		}
+		else if (e.KeyCode === 189) // -
+		{
+			if (true === e.CtrlKey && true === e.ShiftKey && false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content, null, true))
+			{
+				this.StartAction(AscDFH.historydescription_Document_MinusButton);
+
+				this.DrawingDocument.TargetStart();
+				this.DrawingDocument.TargetShow();
+
+				var Item = new ParaText(0x002D);
+				Item.Set_SpaceAfter(false);
+
+				this.AddToParagraph(Item);
+				this.FinalizeAction();
+				bRetValue = keydownresult_PreventAll;
+			}
+			else if (true === e.AltKey && false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content, null, true))
+			{
+				this.StartAction(AscDFH.historydescription_Document_MinusButton);
+
+				this.DrawingDocument.TargetStart();
+				this.DrawingDocument.TargetShow();
+
+				this.AddToParagraph(new ParaText(0x00AD));
+				this.FinalizeAction();
+				bRetValue = keydownresult_PreventAll;
+			}
+		}
+		else if (e.KeyCode == 190 && true === e.CtrlKey) // Ctrl + .
+		{
+			if (true === e.AltKey) // Ctrl + Alt + . - добавляем знак ...
+			{
+				if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
+				{
+					this.StartAction(AscDFH.historydescription_Document_AddEuroLetter);
+					this.DrawingDocument.TargetStart();
+					this.DrawingDocument.TargetShow();
+					this.AddToParagraph(new ParaText(0x2026));
+					this.FinalizeAction();
+				}
+				bRetValue = keydownresult_PreventAll;
+			}
+			else
+			{
+				var TextPr = this.GetCalculatedTextPr();
+				if (null != TextPr)
+				{
+					if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_TextProperties))
+					{
+						this.StartAction(AscDFH.historydescription_Document_SetTextVertAlignHotKey3);
+						this.AddToParagraph(new ParaTextPr({VertAlign : TextPr.VertAlign === AscCommon.vertalign_SubScript ? AscCommon.vertalign_Baseline : AscCommon.vertalign_SubScript}));
+						this.UpdateInterface();
+						this.FinalizeAction();
+					}
+					bRetValue = keydownresult_PreventAll;
+				}
+			}
+		}
+		else if (e.KeyCode == 219 && true === e.CtrlKey) // Ctrl + [
+		{
+			this.Api.FontSizeOut();
+			this.Document_UpdateInterfaceState();
+			bRetValue = keydownresult_PreventAll;
+		}
+		else if (e.KeyCode == 221 && true === e.CtrlKey) // Ctrl + ]
+		{
+			this.Api.FontSizeIn();
+			this.Document_UpdateInterfaceState();
+			bRetValue = keydownresult_PreventAll;
+		}
+		else if (e.KeyCode == 12288) // Space
+		{
+			if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content, null, true, this.IsFormFieldEditing()))
+			{
+				this.StartAction(AscDFH.historydescription_Document_SpaceButton);
+
+				this.DrawingDocument.TargetStart();
+				this.DrawingDocument.TargetShow();
+
+				this.CheckLanguageOnTextAdd = true;
+				this.AddToParagraph(new ParaSpace());
+				this.CheckLanguageOnTextAdd = false;
+
+				this.FinalizeAction();
+			}
+
+			bRetValue = keydownresult_PreventAll;
+		}
+	}
 
     // Если был пересчет, значит были изменения, а вместе с ними пересылается и новая позиция курсора
     if (bRetValue & keydownresult_PreventKeyPress && OldRecalcId === this.RecalcId)

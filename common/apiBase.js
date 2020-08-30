@@ -194,6 +194,8 @@
 		// macros & plugins events
 		this.internalEvents = {};
 
+		this.Shortcuts = new Asc.CShortcuts();
+
 		return this;
 	}
 
@@ -2979,6 +2981,20 @@
 		return ret;
 	};
 
+	baseEditorsApi.prototype.initShortcuts = function(arrShortcuts)
+	{
+		// Массив
+		// [[ActionType, KeyCode, Ctrl, Shift, Alt]]
+		for (var nIndex = 0, nCount = arrShortcuts.length; nIndex < nCount; ++nIndex)
+		{
+			var s = arrShortcuts[nIndex];
+			this.Shortcuts.Add(s[0], s[1], s[2], s[3], s[4]);
+		}
+	};
+	baseEditorsApi.prototype.getShortcut = function(e)
+	{
+		return this.Shortcuts.Get(e.KeyCode, e.CtrlKey, e.ShiftKey, e.AltKey);
+	};
 	//----------------------------------------------------------addons----------------------------------------------------
     baseEditorsApi.prototype["asc_isSupportFeature"] = function(type)
 	{

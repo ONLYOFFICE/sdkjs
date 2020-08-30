@@ -193,6 +193,14 @@ var c_oAscSdtCheckBoxDefaults = {
 
 window["flat_desine"] = false;
 
+var c_oAscWordShortcutType = {
+
+	ClearFormatting  : 1,
+	NonBreakingSpace : 2,
+
+
+};
+
 //------------------------------------------------------------export---------------------------------------------------
 var prot;
 window['Asc'] = window['Asc'] || {};
