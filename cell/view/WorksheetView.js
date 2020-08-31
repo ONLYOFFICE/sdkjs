@@ -14893,13 +14893,19 @@
 		}
 	};
 
-	WorksheetView.prototype.changeAutoFilter = function (tableName, optionType, val) {
+	WorksheetView.prototype.changeAutoFilter = function (tableName, optionType, val, opt_callback) {
 		// Проверка глобального лока
 		if (this.collaborativeEditing.getGlobalLock()) {
+			if (opt_callback) {
+				opt_callback(false);
+			}
 			return;
 		}
 
 		if (!window['AscCommonExcel'].filteringMode) {
+			if (opt_callback) {
+				opt_callback(false);
+			}
 			return;
 		}
 
@@ -14910,6 +14916,9 @@
 
 		var onChangeAutoFilterCallback = function (isSuccess) {
 			if (false === isSuccess) {
+				if (opt_callback) {
+					opt_callback(false);
+				}
 				t.handlers.trigger("selectionChanged");
 				return;
 			}
@@ -14930,7 +14939,11 @@
 							return;
 						}
 
-						var deleteFilterCallBack = function () {
+						var deleteFilterCallBack = function (_success) {
+							if (!_success) {
+								return;
+							}
+
 							t.model.autoFilters.deleteAutoFilter(ar, tableName);
 
 							t.af_drawButtons(filterRange);
@@ -14941,7 +14954,14 @@
 
 					} else//ADD ONLY FILTER
 					{
-						var addFilterCallBack = function () {
+						var addFilterCallBack = function (_success) {
+							if (!_success) {
+								if (opt_callback) {
+									opt_callback(false);
+								}
+								return;
+							}
+
 							History.Create_NewPoint();
 							History.StartTransaction();
 
@@ -14949,6 +14969,9 @@
 							History.EndTransaction();
 
 							t._onUpdateFormatTable(filterRange, false, true);
+							if (opt_callback) {
+								opt_callback(true);
+							}
 						};
 
 						var filterInfo = t.model.autoFilters._getFilterInfoByAddTableProps(ar);
@@ -14961,7 +14984,11 @@
 				}
 				case Asc.c_oAscChangeFilterOptions.style://CHANGE STYLE
 				{
-					var changeStyleFilterCallBack = function () {
+					var changeStyleFilterCallBack = function (_success) {
+						if (!_success) {
+							return;
+						}
+
 						History.Create_NewPoint();
 						History.StartTransaction();
 
@@ -20395,6 +20422,7 @@
 
 		var callback = function (success) {
 			if (!success) {
+				History.EndTransaction();
 				return;
 			}
 
@@ -20404,14 +20432,21 @@
 				arr[i] = slicer.name;
 			}
 			t.objectRender.addSlicers(arr);
+			History.EndTransaction();
 		};
+
+		History.Create_NewPoint();
+		History.StartTransaction();
 
 		//чтобы лишний раз не проверять - может быть взять информацию из cellinfo?
 		var obj = this.model.autoFilters.getTableByActiveCell();
-		var lockRanges = [], colRange;
+		var lockRanges = [], colRange, needAddFilter;
 		if (obj) {
 			type = window['AscCommonExcel'].insertSlicerType.table;
 			name = obj.DisplayName;
+			if (!obj.AutoFilter) {
+				needAddFilter = true;
+			}
 			for (var k = 0; k < arr.length; k++) {
 				colRange = this.model.getTableRangeColumnByName(name, arr[k]);
 				if (colRange) {
@@ -20422,11 +20457,23 @@
 			type = window['AscCommonExcel'].insertSlicerType.pivotTable;
 		}
 
-		this._isLockedCells(lockRanges, null, function(success) {
-			if (success) {
+		if (needAddFilter) {
+			this.changeAutoFilter(name, Asc.c_oAscChangeFilterOptions.filter, true, function (success) {
+				if (!success) {
+					History.EndTransaction();
+					return;
+				}
 				t._isLockedDefNames(callback);
-			}
-		});
+			});
+		} else {
+			this._isLockedCells(lockRanges, null, function(success) {
+				if (!success) {
+					History.EndTransaction();
+					return;
+				}
+				t._isLockedDefNames(callback);
+			});
+		}
 	};
 
 	WorksheetView.prototype.deleteSlicer = function (name) {
