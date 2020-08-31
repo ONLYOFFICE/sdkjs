@@ -1303,8 +1303,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cArea3D.prototype = Object.create(cBaseType.prototype);
 	cArea3D.prototype.constructor = cArea3D;
 	cArea3D.prototype.type = cElementType.cellsRange3D;
-	cArea3D.prototype.clone = function () {
-		var oRes = new cArea3D(null, this.wsFrom, this.wsTo);
+	cArea3D.prototype.clone = function (opt_ws) {
+		var oRes = new cArea3D(null, opt_ws ? opt_ws : this.wsFrom, opt_ws ? opt_ws : this.wsTo);
 		this.cloneTo(oRes);
 		if (this.bbox) {
 			oRes.bbox = this.bbox.clone();
