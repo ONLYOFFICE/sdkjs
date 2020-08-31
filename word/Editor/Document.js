@@ -8602,8 +8602,8 @@ CDocument.prototype.Can_InsertContent = function(SelectedContent, NearPos)
 
 	var Para = NearPos.Paragraph;
 
-	// Автофигуры не вставляем в другие автофигуры
-	if (true === Para.Parent.Is_DrawingShape() && true === SelectedContent.HaveShape)
+	// Автофигуры не вставляем в другие автофигуры, сноски и концевые сноски
+	if ((true === Para.Parent.Is_DrawingShape() || true === Para.Parent.IsFootnote()) && true === SelectedContent.HaveShape)
 		return false;
 
 

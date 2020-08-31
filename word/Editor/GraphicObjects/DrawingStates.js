@@ -523,54 +523,58 @@ MoveInlineObject.prototype =
     onMouseUp: function(e, x,y,pageIndex)
     {
         var check_paragraphs = [];
-        if(!e.CtrlKey)
+
+		if (this.majorObject.parent.CanInsertToPos(this.InlinePos))
 		{
-			var arrCheckTypes = [];
-
-			var parent_paragraph = this.majorObject.parent.checkShapeChildAndGetTopParagraph();
-			check_paragraphs.push(parent_paragraph);
-			arrCheckTypes.push(AscCommon.changestype_Drawing_Props);
-
-			var new_check_paragraph = this.majorObject.parent.checkShapeChildAndGetTopParagraph(this.InlinePos.Paragraph);
-			if (parent_paragraph !== new_check_paragraph)
+			if(!e.CtrlKey)
 			{
-				check_paragraphs.push(new_check_paragraph);
-				arrCheckTypes.push(AscCommon.changestype_Paragraph_Content);
-			}
+				var arrCheckTypes = [];
 
-			if (!this.drawingObjects.document.IsSelectionLocked(AscCommon.changestype_Drawing_Props, {
-					Type       : AscCommon.changestype_2_Element_and_Type_Array,
-					Elements   : check_paragraphs,
-					CheckTypes : arrCheckTypes
-				}, true))
+				var parent_paragraph = this.majorObject.parent.checkShapeChildAndGetTopParagraph();
+				check_paragraphs.push(parent_paragraph);
+				arrCheckTypes.push(AscCommon.changestype_Drawing_Props);
+
+				var new_check_paragraph = this.majorObject.parent.checkShapeChildAndGetTopParagraph(this.InlinePos.Paragraph);
+				if (parent_paragraph !== new_check_paragraph)
+				{
+					check_paragraphs.push(new_check_paragraph);
+					arrCheckTypes.push(AscCommon.changestype_Paragraph_Content);
+				}
+
+				if (!this.drawingObjects.document.IsSelectionLocked(AscCommon.changestype_Drawing_Props, {
+						Type       : AscCommon.changestype_2_Element_and_Type_Array,
+						Elements   : check_paragraphs,
+						CheckTypes : arrCheckTypes
+					}, true))
+				{
+					this.drawingObjects.document.StartAction(AscDFH.historydescription_Document_MoveInlineObject);
+					this.majorObject.parent.OnEnd_MoveInline(this.InlinePos);
+					this.drawingObjects.document.FinalizeAction();
+				}
+			}
+			else
 			{
-				this.drawingObjects.document.StartAction(AscDFH.historydescription_Document_MoveInlineObject);
-				this.majorObject.parent.OnEnd_MoveInline(this.InlinePos);
-				this.drawingObjects.document.FinalizeAction();
-			}
-		}
-        else
-        {
-            check_paragraphs.push(this.majorObject.parent.checkShapeChildAndGetTopParagraph(this.InlinePos.Paragraph));
-            if(false === this.drawingObjects.document.Document_Is_SelectionLocked(changestype_Drawing_Props, {Type : changestype_2_ElementsArray_and_Type , Elements : check_paragraphs, CheckType : AscCommon.changestype_Paragraph_Content}, true))
-            {
-				this.drawingObjects.document.StartAction(AscDFH.historydescription_Document_CopyAndMoveInlineObject);
-                var new_para_drawing = new ParaDrawing(this.majorObject.parent.Extent.W, this.majorObject.parent.Extent.H, null, this.drawingObjects.drawingDocument, null, null);
-                var drawing = this.majorObject.copy(undefined);
+				check_paragraphs.push(this.majorObject.parent.checkShapeChildAndGetTopParagraph(this.InlinePos.Paragraph));
+				if(false === this.drawingObjects.document.Document_Is_SelectionLocked(changestype_Drawing_Props, {Type : changestype_2_ElementsArray_and_Type , Elements : check_paragraphs, CheckType : AscCommon.changestype_Paragraph_Content}, true))
+				{
+					this.drawingObjects.document.StartAction(AscDFH.historydescription_Document_CopyAndMoveInlineObject);
+					var new_para_drawing = new ParaDrawing(this.majorObject.parent.Extent.W, this.majorObject.parent.Extent.H, null, this.drawingObjects.drawingDocument, null, null);
+					var drawing = this.majorObject.copy(undefined);
 
-                var oRunPr = this.majorObject.parent && this.majorObject.parent.GetRun() ? this.majorObject.parent.GetRun().GetDirectTextPr() : null;
-                if(drawing.copyComments)
-                {
-                    drawing.copyComments(this.drawingObjects.document);
-                }
-                drawing.setParent(new_para_drawing);
-                new_para_drawing.Set_GraphicObject(drawing);
-                new_para_drawing.Add_ToDocument(this.InlinePos, false, oRunPr);
-                this.drawingObjects.resetSelection();
-                this.drawingObjects.selectObject(drawing, pageIndex);
-                this.drawingObjects.document.Recalculate();
-				this.drawingObjects.document.FinalizeAction();
-            }
+					var oRunPr = this.majorObject.parent && this.majorObject.parent.GetRun() ? this.majorObject.parent.GetRun().GetDirectTextPr() : null;
+					if(drawing.copyComments)
+					{
+						drawing.copyComments(this.drawingObjects.document);
+					}
+					drawing.setParent(new_para_drawing);
+					new_para_drawing.Set_GraphicObject(drawing);
+					new_para_drawing.Add_ToDocument(this.InlinePos, false, oRunPr);
+					this.drawingObjects.resetSelection();
+					this.drawingObjects.selectObject(drawing, pageIndex);
+					this.drawingObjects.document.Recalculate();
+					this.drawingObjects.document.FinalizeAction();
+				}
+			}
         }
         this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));
     }

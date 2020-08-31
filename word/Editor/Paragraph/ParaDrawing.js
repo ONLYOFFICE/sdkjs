@@ -1651,11 +1651,19 @@ ParaDrawing.prototype.Draw_Selection = function()
 	}
 
 };
+ParaDrawing.prototype.CanInsertToPos = function(oAnchorPos)
+{
+	// Автофигуры не вставляем в другие автофигуры, сноски и концевые сноски
+	if (!oAnchorPos || !oAnchorPos.Paragraph || !oAnchorPos.Paragraph.Parent)
+		return false;
+
+	return !((this.IsShape() || this.IsGroup()) && (true === oAnchorPos.Paragraph.Parent.Is_DrawingShape() || true === oAnchorPos.Paragraph.Parent.IsFootnote()));
+};
 ParaDrawing.prototype.OnEnd_MoveInline = function(NearPos)
 {
 	NearPos.Paragraph.Check_NearestPos(NearPos);
 
-	var oRun        = this.Parent.Get_DrawingObjectRun(this.Id);
+	var oRun        = this.Parent.Get_DrawingObjectRun(this.GetId());
 	var isPictureCC = false;
 	if (oRun)
 	{
@@ -1674,7 +1682,7 @@ ParaDrawing.prototype.OnEnd_MoveInline = function(NearPos)
 
 	// При переносе всегда создаем копию, чтобы в совместном редактировании не было проблем
 	var NewParaDrawing = this.Copy();
-	this.DocumentContent.Select_DrawingObject(NewParaDrawing.Get_Id());
+	this.DocumentContent.Select_DrawingObject(NewParaDrawing.GetId());
 	NewParaDrawing.Add_ToDocument(NearPos, true, RunPr, undefined, isPictureCC);
 };
 ParaDrawing.prototype.Get_ParentTextTransform = function()
@@ -2911,7 +2919,22 @@ ParaDrawing.prototype.GetPicture = function()
 {
 	return this.GraphicObj.getObjectType() === AscDFH.historyitem_type_ImageShape ? this.GraphicObj : null;
 };
-
+/**
+ * Является ли объект фигурой
+ * @returns {boolean}
+ */
+ParaDrawing.prototype.IsShape = function()
+{
+	return (this.GraphicObj.getObjectType() === AscDFH.historyitem_type_Shape);
+};
+/**
+ * Является ли объект группой
+ * @returns {boolean}
+ */
+ParaDrawing.prototype.IsGroup = function()
+{
+	return (this.GraphicObj.getObjectType() === AscDFH.historyitem_type_GroupShape);
+};
 /**
  * Класс, описывающий текущее положение параграфа при рассчете позиции автофигуры.
  * @constructor
