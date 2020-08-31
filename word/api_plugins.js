@@ -197,43 +197,6 @@
         return _ret;
     };
     /**
-     * This method allows to add an empty content control to the document.
-     * @memberof Api
-     * @typeofeditors ["CDE"]
-     * @alias AddContentControl
-     * @param {ContentControlType} type is a numeric value that specifies the content control type
-     * @param {ContentControlProperties}  [ properties = {} ] is property of content control
-     * @returns {ContentControl} return json with "Tag", "Id", "Lock" and "InternalId" values of created content control
-     * @example
-     * var type = 1;
-     * var properties = {"Id": 100, "Tag": "CC_Tag", "Lock": 3};
-     * window.Asc.plugin.executeMethod("AddContentControl", [type, properties]);
-     */
-    window["asc_docs_api"].prototype["pluginMethod_AddContentControl"] = function(type, properties)
-    {
-        var _content_control_pr;
-        if (properties)
-        {
-            _content_control_pr = new AscCommon.CContentControlPr();
-            _content_control_pr.Id = properties["Id"];
-            _content_control_pr.Tag = properties["Tag"];
-            _content_control_pr.Lock = properties["Lock"];
-
-            _content_control_pr.Alias = properties["Alias"];
-
-            if (undefined !== properties["Appearance"])
-                _content_control_pr.Appearance = properties["Appearance"];
-
-            if (undefined !== properties["Color"])
-                _content_control_pr.Color = new Asc.asc_CColor(properties["Color"]["R"], properties["Color"]["G"], properties["Color"]["B"]);
-        }
-
-        var _obj = this.asc_AddContentControl(type, _content_control_pr);
-        if (!_obj)
-            return undefined;
-        return {"Tag" : _obj.Tag, "Id" : _obj.Id, "Lock" : _obj.Lock, "InternalId" : _obj.InternalId};
-    };
-    /**
      * This method allows to remove content control, but leave all its contents.
      * @memberof Api
      * @typeofeditors ["CDE"]
