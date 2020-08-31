@@ -18680,15 +18680,17 @@
 			}
 		};
 
-		var _allProps = bCol ? this.model.getAllCol() :  this.model.getAllRow();
-		var allOutLineLevel = _allProps ? _allProps.getOutlineLevel() : 0;
+		//TODO пересмотреть общее свойство outlineLevelRow/outlineLevelCol
+		/*var _allProps = bCol ? this.model.getAllCol() :  this.model.getAllRow();
+		var allOutLineLevel = _allProps ? _allProps.getOutlineLevel() : 0;*/
+
 		if(bCol) {
 			this.model.getRange3(0, 0, 0, gc_nMaxCol0)._foreachColNoEmpty(func);
 		} else {
 			this.model.getRange3(0, 0, gc_nMaxRow0, 0)._foreachRowNoEmpty(func);
 		}
 
-		return allOutLineLevel > res ? allOutLineLevel : res;
+		return /*res && allOutLineLevel > res ? allOutLineLevel :*/ res;
 	};
 
 	WorksheetView.prototype.getGroupCommonWidth = function (level, bCol) {
