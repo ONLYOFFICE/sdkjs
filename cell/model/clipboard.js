@@ -2388,7 +2388,7 @@
 					if (data.Drawings[i].graphicObject.getObjectType() === AscDFH.historyitem_type_SlicerView) {
 						if (pastedInOriginalDoc) {
 							var pastedSlicer = data.getSlicerByName(data.Drawings[i].graphicObject.name);
-							if (pastedSlicers) {
+							if (pastedSlicer) {
 								if (pastedSlicer.checkModelContent(ws.model)) {
 									pastedSlicers.push(pastedSlicer);
 								} else {

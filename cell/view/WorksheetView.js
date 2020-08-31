@@ -15050,9 +15050,13 @@
             var minChangeRow = applyFilterProps.minChangeRow;
             var rangeOldFilter = applyFilterProps.rangeOldFilter;
 
+			//если срез находится на одном листе, а таблица на другом
+			//в данном случае пересчёт для ф/т нужен, а перерисовка не нужна
+			var differentSheetApply = t.model.index !== t.workbook.model.nActive;
+
             if (null !== rangeOldFilter && !t.model.workbook.bUndoChanges && !t.model.workbook.bRedoChanges) {
                 t.objectRender.bUpdateMetrics = false;
-                t._onUpdateFormatTable(rangeOldFilter, false, true);
+                t._onUpdateFormatTable(rangeOldFilter, false, true, differentSheetApply);
                 t.objectRender.bUpdateMetrics = true;
 				if (applyFilterProps.nOpenRowsCount !== applyFilterProps.nAllRowsCount) {
 					t.handlers.trigger('onFilterInfo', applyFilterProps.nOpenRowsCount, applyFilterProps.nAllRowsCount);
@@ -15456,7 +15460,7 @@
      * @param changeRowsOrMerge - менялись ли строки (скрытие раскрытие) или был unmerge
      * @private
      */
-    WorksheetView.prototype._onUpdateFormatTable = function (range, recalc, changeRowsOrMerge) {
+    WorksheetView.prototype._onUpdateFormatTable = function (range, recalc, changeRowsOrMerge, lockDraw) {
 		var arrChanged;
 
         if (!recalc) {
@@ -15470,7 +15474,7 @@
 			this.model.onUpdateRanges(arrChanged);
 			this.objectRender.rebuildChartGraphicObjects(arrChanged);
 			this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical | AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
-			this.draw();
+			this.draw(lockDraw);
 			this._updateSelectionNameAndInfo();
             return;
         }
@@ -15509,11 +15513,11 @@
 			this.model.onUpdateRanges(arrChanged);
             this.objectRender.rebuildChartGraphicObjects(arrChanged);
 			this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical | AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
-            this.draw();
+            this.draw(lockDraw);
 			this._updateSelectionNameAndInfo();
         } else {
             // Просто отрисуем
-            this.draw();
+            this.draw(lockDraw);
 			this._updateSelectionNameAndInfo();
         }
     };
