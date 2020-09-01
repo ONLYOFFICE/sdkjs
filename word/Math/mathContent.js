@@ -7252,22 +7252,16 @@ CMathAutoCorrectEngine.prototype.private_CorrectBuffForRadical = function(buff, 
                 }
             }
         case 0x221B:
-            var MathRun = new ParaRun(this.Paragraph, true);
-            MathRun.Set_Pr(this.TextPr.Copy());
-            MathRun.Set_MathPr(this.MathPr);
             var MathText = new CMathText();
             MathText.addTxt("3");
-            MathRun.Add_ToContent(0, MathText);
-            buff.splice(1,0,MathRun);
+            var tmp = buff[0].splice(0, buff[0].length);
+            buff[0].push(tmp,[MathText]);
             return false;
         case 0x221C:
-            var MathRun = new ParaRun(this.Paragraph, true);
-            MathRun.Set_Pr(this.TextPr.Copy());
-            MathRun.Set_MathPr(this.MathPr);
             var MathText = new CMathText();
             MathText.addTxt("4");
-            MathRun.Add_ToContent(0, MathText);
-            buff.splice(1,0,MathRun);
+            var tmp = buff[0].splice(0, buff[0].length);
+            buff[0].push(tmp,[MathText]);
             return false;
     }
 };
@@ -8855,7 +8849,7 @@ var g_aAutoCorrectMathSymbols =
     ['\\hphantom', 0x2B04],
     ['\\hsmash', 0x2B0C],
     ['\\hvec', 0x20D1],
-    ['\\identitymatrix', [0x0028, 0x25A0, 0x0028, 0x0031, 0x0026, 0x0030, 0x0026, 0x0030, 0x0040, 0x0030, 0x0026,0x0031, 0x0026, 0x0030, 0x0030, 0x0040, 0x0030, 0x0026, 0x0030, 0x0026, 0x0031, 0x0029, 0x0029]],
+    ['\\identitymatrix', [0x0028, 0x25A0, 0x0028, 0x0031, 0x0026, 0x0030, 0x0026, 0x0030, 0x0040, 0x0030, 0x0026,0x0031, 0x0026, 0x0030, 0x0040, 0x0030, 0x0026, 0x0030, 0x0026, 0x0031, 0x0029, 0x0029]],
     ['\\ii', 0x2148],
     ['\\iiint', 0x222D],
     ['\\iint', 0x222C],
@@ -8970,7 +8964,7 @@ var g_aAutoCorrectMathSymbols =
     ['\\psi', 0x03C8],
     ['\\Psi', 0x03A8],
     ['\\qdrt', 0x221C],
-    ['\\quadratic', [0x0078, 0x003d, 0x0028, 0x002d, 0x0062, 0x00B1, 0x221A, 0x0020, 0x0028, 0x0062, 0x005e, 0x0032, 0x002d, 0x0034, 0x0061, 0x0063, 0x0029, 0x0029, 0x002f, 0x0032, 0x0061]],
+    ['\\quadratic', [0x0078, 0x003d, 0x0028, 0x002d, 0x0062, 0x00B1, 0x221A, 0x0028, 0x0062, 0x005e, 0x0032, 0x002d, 0x0034, 0x0061, 0x0063, 0x0029, 0x0029, 0x002f, 0x0032, 0x0061]],
     ['\\rangle', 0x232A],
     ['\\Rangle', 0x27EB],
     ['\\ratio', 0x2236],
