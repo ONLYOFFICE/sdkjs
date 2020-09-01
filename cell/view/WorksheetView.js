@@ -11194,8 +11194,18 @@
 			window['AscCommon'].g_specialPasteHelper.Paste_Process_Start();
 			window['AscCommon'].g_specialPasteHelper.Special_Paste_Start();
 
+			var doUndo = true;
+			if (window['Asc'].c_oSpecialPasteOperation.none !== props.operation) {
+				if (window['AscCommon'].g_specialPasteHelper.isAppliedOperation) {
+					doUndo = false;
+				}
+				window['AscCommon'].g_specialPasteHelper.isAppliedOperation = true;
+			}
+
 			//тут нужно откатить селект
-			api.asc_Undo();
+			if (doUndo) {
+				api.asc_Undo();
+			}
 			if (specialPasteHelper.selectionRange) {
 				t.model.selectionRange = specialPasteHelper.selectionRange.clone();
 			}
