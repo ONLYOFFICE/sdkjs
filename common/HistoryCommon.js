@@ -478,14 +478,14 @@
 			case AscDFH.historydescription_Document_ShiftDeleteButton                  :
 				sString = "Document_ShiftDeleteButton";
 				break;
-			case AscDFH.historydescription_Document_SetStyleHeading1                   :
-				sString = "Document_SetStyleHeading1";
+			case AscDFH.historydescription_Document_Shortcut_SetStyleHeading1:
+				sString = "Document_Shortcut_SetStyleHeading1";
 				break;
-			case AscDFH.historydescription_Document_SetStyleHeading2                   :
-				sString = "Document_SetStyleHeading2";
+			case AscDFH.historydescription_Document_Shortcut_SetStyleHeading2:
+				sString = "Document_Shortcut_SetStyleHeading2";
 				break;
-			case AscDFH.historydescription_Document_SetStyleHeading3                   :
-				sString = "Document_SetStyleHeading3";
+			case AscDFH.historydescription_Document_Shortcut_SetStyleHeading3:
+				sString = "Document_Shortcut_SetStyleHeading3";
 				break;
 			case AscDFH.historydescription_Document_SetTextStrikeoutHotKey             :
 				sString = "Document_SetTextStrikeoutHotKey";
@@ -1175,6 +1175,13 @@
 			case AscDFH.historydescription_Document_AutoCorrectCommon:
 				sString = "Document_AutoCorrectCommon";
 				break;
+			case AscDFH.historydescription_Document_Shortcut_ClearFormatting:
+				sString = "Document_Shortcut_ClearFormatting";
+				break;
+			case AscDFH.historydescription_Document_Shortcut_AddNonBreakingSpace:
+				sString = "Document_Shortcut_AddNonBreakingSpace";
+				break;
+
 		}
 		return sString;
 	}
@@ -3042,9 +3049,9 @@
 	window['AscDFH'].historydescription_Document_ShiftInsertSafari                  = 0x008d;
 	window['AscDFH'].historydescription_Document_DeleteButton                       = 0x008e;
 	window['AscDFH'].historydescription_Document_ShiftDeleteButton                  = 0x008f;
-	window['AscDFH'].historydescription_Document_SetStyleHeading1                   = 0x0090;
-	window['AscDFH'].historydescription_Document_SetStyleHeading2                   = 0x0091;
-	window['AscDFH'].historydescription_Document_SetStyleHeading3                   = 0x0092;
+	window['AscDFH'].historydescription_Document_Shortcut_SetStyleHeading1          = 0x0090;
+	window['AscDFH'].historydescription_Document_Shortcut_SetStyleHeading2          = 0x0091;
+	window['AscDFH'].historydescription_Document_Shortcut_SetStyleHeading3          = 0x0092;
 	window['AscDFH'].historydescription_Document_SetTextStrikeoutHotKey             = 0x0093;
 	window['AscDFH'].historydescription_Document_SetTextBoldHotKey                  = 0x0094;
 	window['AscDFH'].historydescription_Document_SetParagraphAlignHotKey            = 0x0095;
@@ -3284,6 +3291,8 @@
 	window['AscDFH'].historydescription_Document_SetEndnotePr                       = 0x017a;
 	window['AscDFH'].historydescription_Document_ConvertFootnoteType                = 0x017b;
 	window['AscDFH'].historydescription_Document_AutoCorrectCommon                  = 0x017c;
+	window['AscDFH'].historydescription_Document_Shortcut_ClearFormatting           = 0x017d;
+	window['AscDFH'].historydescription_Document_Shortcut_AddNonBreakingSpace       = 0x017e;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//

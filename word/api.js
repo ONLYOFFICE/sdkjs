@@ -1270,6 +1270,59 @@ background-repeat: no-repeat;\
 		return text_data.data;
 	};
 
+	asc_docs_api.prototype.initDefaultShortcuts = function()
+	{
+		// ActionType, Key, Ctrl, Shift, Alt
+		this.initShortcuts([
+			[c_oAscDocumentShortcutType.AddPageBreak, 13, true, false, false],
+			[c_oAscDocumentShortcutType.AddLineBreak, 13, false, true, false],
+			[c_oAscDocumentShortcutType.AddColumnBreak, 13, true, true, false],
+			[c_oAscDocumentShortcutType.ClearFormatting, 32, true, false, false],
+			[c_oAscDocumentShortcutType.NonBreakingSpace, 32, true, true, false],
+			[c_oAscDocumentShortcutType.StyleHeading1, 49, false, false, true],
+			[c_oAscDocumentShortcutType.StyleHeading2, 50, false, false, true],
+			[c_oAscDocumentShortcutType.StyleHeading3, 51, false, false, true],
+			[c_oAscDocumentShortcutType.Strikeout, 53, true, false, false],
+			[c_oAscDocumentShortcutType.ToggleNonPrintingCharacters, 56, true, true, false],
+			[c_oAscDocumentShortcutType.SelectAll, 65, true, false, false],
+			[c_oAscDocumentShortcutType.Bold, 66, true, false, false],
+			[c_oAscDocumentShortcutType.CopyFormatting, 67, true, true, false],
+			[c_oAscDocumentShortcutType.CopyrightSign, 67, true, false, true],
+			[c_oAscDocumentShortcutType.AddEndnote, 68, true, false, true],
+			[c_oAscDocumentShortcutType.ToggleParagraphAlignCenterLeft, 69, true, false, true],
+			[c_oAscDocumentShortcutType.EuroSign, 69, true, false, true],
+			[c_oAscDocumentShortcutType.AddFootnote, 70, true, false, true],
+			[c_oAscDocumentShortcutType.Italic, 73, true, false, false],
+			[c_oAscDocumentShortcutType.ToggleParagraphAlignJustifyLeft, 74, true, false, false],
+			[c_oAscDocumentShortcutType.AddHyperlink, 75, true, false, false],
+			[c_oAscDocumentShortcutType.AddBulletedList, 76, true, true, false],
+			[c_oAscDocumentShortcutType.ToggleParagraphAlignJustifyLeft, 76, true, false, false],
+			[c_oAscDocumentShortcutType.IncreaseIndent, 77, true, false, false],
+			[c_oAscDocumentShortcutType.DecreaseIndent, 77, true, true, false],
+			[c_oAscDocumentShortcutType.Print, 80, true, false, false],
+			[c_oAscDocumentShortcutType.AddPageNumber, 80, true, true, false],
+			[c_oAscDocumentShortcutType.ToggleParagraphAlignRightLeft, 82, true, false, false],
+			[c_oAscDocumentShortcutType.RegisteredSign, 82, true, false, true],
+			[c_oAscDocumentShortcutType.Save, 83, true, false, false],
+			[c_oAscDocumentShortcutType.TrademarkSign, 84, true, false, true],
+			[c_oAscDocumentShortcutType.Underline, 85, true, false, false],
+			[c_oAscDocumentShortcutType.PasteFormatting, 86, true, true, false],
+			[c_oAscDocumentShortcutType.Redo, 89, true, false, false],
+			[c_oAscDocumentShortcutType.Undo, 90, true, false, false],
+			[c_oAscDocumentShortcutType.EnDash, 109, true, false, false],
+			[c_oAscDocumentShortcutType.EmDash, 109, true, false, true],
+			[c_oAscDocumentShortcutType.UpdateFields, 120, false, false, false],
+			[c_oAscDocumentShortcutType.AddEquation, 187, false, false, true],
+			[c_oAscDocumentShortcutType.Superscript, 188, true, false, false],
+			[c_oAscDocumentShortcutType.NonBreakingHyphen, 189, true, true, false],
+			[c_oAscDocumentShortcutType.SoftHyphen, 189, false, false, true],
+			[c_oAscDocumentShortcutType.HorizontalEllipsis, 190, true, false, true],
+			[c_oAscDocumentShortcutType.Subscript, 190, true, false, false],
+			[c_oAscDocumentShortcutType.IncreaseFontSize, 219, true, false, false],
+			[c_oAscDocumentShortcutType.DecreaseFontSize, 221, true, false, false],
+		]);
+	};
+
 	asc_docs_api.prototype.InitEditor = function()
 	{
 		this.WordControl.m_oLogicDocument                    = new AscCommonWord.CDocument(this.WordControl.m_oDrawingDocument);

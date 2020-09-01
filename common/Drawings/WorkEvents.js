@@ -196,12 +196,29 @@
 
 	CKeyboardEvent.prototype.Up = function()
 	{
-		this.AltKey   = false;
-		this.CtrlKey  = false;
-		this.ShiftKey = false;
-		this.AltGr    = false;
+		this.AltKey    = false;
+		this.CtrlKey   = false;
+		this.ShiftKey  = false;
+		this.AltGr     = false;
         this.MacCmdKey = false;
 	};
+	CKeyboardEvent.prototype.IsCtrl = function()
+	{
+		return (this.CtrlKey || (this.AltKey && this.AltGr));
+	};
+	CKeyboardEvent.prototype.IsShift = function()
+	{
+		return this.ShiftKey;
+	};
+	CKeyboardEvent.prototype.IsAlt = function()
+	{
+		return this.AltKey;
+	};
+	CKeyboardEvent.prototype.GetKeyCode = function()
+	{
+		return this.KeyCode;
+	};
+
 
 	var global_mouseEvent    = new CMouseEventHandler();
 	var global_keyboardEvent = new CKeyboardEvent();

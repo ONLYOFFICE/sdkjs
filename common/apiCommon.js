@@ -4707,6 +4707,14 @@
 
 		return null;
 	};
+	CShortcuts.prototype.RemoveByType = function(nType)
+	{
+		for (var nIndex in this.List)
+		{
+			if (this.List[nIndex] === nType)
+				delete this.List[nIndex];
+		}
+	};
 
     /*
      * Export

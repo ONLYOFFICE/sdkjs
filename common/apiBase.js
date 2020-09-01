@@ -195,6 +195,7 @@
 		this.internalEvents = {};
 
 		this.Shortcuts = new Asc.CShortcuts();
+		this.initDefaultShortcuts();
 
 		return this;
 	}
@@ -2981,20 +2982,28 @@
 		return ret;
 	};
 
-	baseEditorsApi.prototype.initShortcuts = function(arrShortcuts)
+	baseEditorsApi.prototype.initShortcuts = function(arrShortcuts, isRemoveBeforeAdd)
 	{
 		// Массив
 		// [[ActionType, KeyCode, Ctrl, Shift, Alt]]
 		for (var nIndex = 0, nCount = arrShortcuts.length; nIndex < nCount; ++nIndex)
 		{
 			var s = arrShortcuts[nIndex];
+
+			if (true === isRemoveBeforeAdd)
+				this.Shortcuts.RemoveByType(s[0]);
+
 			this.Shortcuts.Add(s[0], s[1], s[2], s[3], s[4]);
 		}
 	};
+	baseEditorsApi.prototype.initDefaultShortcuts = function()
+	{
+	};
 	baseEditorsApi.prototype.getShortcut = function(e)
 	{
-		return this.Shortcuts.Get(e.KeyCode, e.CtrlKey, e.ShiftKey, e.AltKey);
+		return this.Shortcuts.Get(e.GetKeyCode(), e.IsCtrl(), e.IsShift(), e.IsAlt());
 	};
+	baseEditorsApi.prototype.asc_initShortcuts = baseEditorsApi.prototype.initShortcuts;
 	//----------------------------------------------------------addons----------------------------------------------------
     baseEditorsApi.prototype["asc_isSupportFeature"] = function(type)
 	{
@@ -3068,6 +3077,7 @@
 	prot['asc_refreshOnStartAutoCorrectMathSymbols'] = prot.asc_refreshOnStartAutoCorrectMathSymbols;
 	prot['asc_refreshOnStartAutoCorrectMathFunctions'] = prot.asc_refreshOnStartAutoCorrectMathFunctions;
 	prot['asc_updateFlagAutoCorrectMathSymbols'] = prot.asc_updateFlagAutoCorrectMathSymbols;
+	prot['asc_initShortcuts'] = prot.asc_initShortcuts;
 
 	prot['asc_isCrypto'] = prot.asc_isCrypto;
 
