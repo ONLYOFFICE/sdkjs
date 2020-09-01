@@ -417,7 +417,7 @@ function (window, undefined) {
 		this.PivotFieldElem = 89;
 		this.PivotFilter = 90;
 
-		this.Layout = 90;
+		this.Layout = 91;
 
 		this.ArrayFormula = 95;
 
