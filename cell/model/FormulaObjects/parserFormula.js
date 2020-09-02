@@ -1761,10 +1761,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cRef3D.prototype.constructor = cRef3D;
 	cRef3D.prototype.type = cElementType.cell3D;
 	cRef3D.prototype.clone = function (opt_ws) {
+		//TODO заливаю дополнительную проверку на вставку листа в другую книгу.
+		//необходимо перепроверить и всегда, если приходит opt_ws, использовать только его.
+		var isAddingSheet = Asc["editor"] && Asc["editor"].wb && Asc["editor"].wb.model && Asc["editor"].wb.model.addingWorksheet;
 		var ws = opt_ws ? opt_ws : this.ws;
 		var oRes = new cRef3D(null, null);
 		this.cloneTo(oRes);
-		if (opt_ws && this.ws.getName() == opt_ws.getName()) {
+		if (opt_ws && (this.ws.getName() == opt_ws.getName() || isAddingSheet)) {
 			oRes.ws = opt_ws;
 		} else {
 			oRes.ws = this.ws;
