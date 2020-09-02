@@ -1522,7 +1522,9 @@ CDocMeta.prototype =
                 case 122:
                 {
                     // begin/end command
-                    s.Skip(4);
+                    var _command_type = s.GetLong();
+                    if (33 == _command_type)
+                        s.Skip(4);
                     break;
                 }
                 default:
@@ -1681,7 +1683,9 @@ CDocMeta.prototype =
                 case 122:
                 {
                     // begin/end command
-                    s.Skip(4);
+                    var _command_type = s.GetLong();
+                    if (33 == _command_type)
+                        s.Skip(4);
                     break;
                 }
                 default:
@@ -2072,7 +2076,9 @@ CDocMeta.prototype =
                 case 122:
                 {
                     // begin/end command
-                    s.Skip(4);
+                    var _command_type = s.GetLong();
+                    if (33 == _command_type)
+                        s.Skip(4);
                     break;
                 }
                 default:
@@ -2410,7 +2416,9 @@ CDocMeta.prototype =
                 case 122:
                 {
                     // begin/end command
-                    s.Skip(4);
+                    var _command_type = s.GetLong();
+                    if (33 == _command_type)
+                        s.Skip(4);
                     break;
                 }
                 default:
@@ -2614,7 +2622,9 @@ CDocMeta.prototype =
                 case 122:
                 {
                     // begin/end command
-                    s.Skip(4);
+                    var _command_type = s.GetLong();
+                    if (33 == _command_type)
+                        s.Skip(4);
                     break;
                 }
                 default:
@@ -2888,7 +2898,9 @@ CDocMeta.prototype =
                 case 122:
                 {
                     // begin/end command
-                    s.Skip(4);
+                    var _command_type = s.GetLong();
+                    if (33 == _command_type)
+                        s.Skip(4);
                     break;
                 }
                 default:
@@ -3100,7 +3112,9 @@ CDocMeta.prototype =
                 case 122:
                 {
                     // begin/end command
-                    s.Skip(4);
+                    var _command_type = s.GetLong();
+                    if (33 == _command_type)
+                        s.Skip(4);
                     break;
                 }
                 default:
@@ -3331,7 +3345,9 @@ CDocMeta.prototype =
                 case 122:
                 {
                     // begin/end command
-                    s.Skip(4);
+                    var _command_type = s.GetLong();
+                    if (33 == _command_type)
+                        s.Skip(4);
                     break;
                 }
                 default:
