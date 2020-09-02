@@ -3874,6 +3874,7 @@
 				var _newSlicer;
 				if (tableIdNew) {
 					_newSlicer = this.insertSlicer(_table.column, tableIdNew, window['AscCommonExcel'].insertSlicerType.table);
+					_newSlicer.set(_slicer.clone(), true);
 				}
 
 				if (_newSlicer) {

@@ -711,10 +711,11 @@
 
 	};
 
-	CT_slicer.prototype.set = function (val) {
-		if (this.name !== val.name && val.name !== undefined) {
+	CT_slicer.prototype.set = function (val, opt_moveSheet) {
+		if (!opt_moveSheet && this.name !== val.name && val.name !== undefined) {
 			this.setName(val.name);
 		}
+
 		this.caption = this.checkProperty(this.caption, val.caption, AscCH.historyitem_Slicer_SetCaption);
 		this.startItem = this.checkProperty(this.startItem, val.startItem, AscCH.historyitem_Slicer_SetStartItem);
 		this.columnCount = this.checkProperty(this.columnCount, val.columnCount, AscCH.historyitem_Slicer_SetColumnCount);
@@ -740,10 +741,12 @@
 		}
 
 		//TODO ws?
-		var slicers = this.ws.getSlicersByCacheName(this.cacheDefinition.name);
-		if (slicers) {
-			for (var i = 0; i < slicers.length; i++) {
-				this.ws.workbook.onSlicerUpdate(slicers[i].name);
+		if (!opt_moveSheet) {
+			var slicers = this.ws.getSlicersByCacheName(this.cacheDefinition.name);
+			if (slicers) {
+				for (var i = 0; i < slicers.length; i++) {
+					this.ws.workbook.onSlicerUpdate(slicers[i].name);
+				}
 			}
 		}
 	};
