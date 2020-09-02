@@ -3323,7 +3323,7 @@
 				res = res.concat(slicers);
 			}
 		}
-		return res;
+		return res.length ? res : null;
 	};
 	Workbook.prototype.getDrawingDocument = function() {
 		return this.DrawingDocument;
@@ -3962,12 +3962,17 @@
 			var drawingObjects = new AscFormat.DrawingObjects();
 			oNewWs.Drawings = [];
 			for (i = 0; i < this.Drawings.length; ++i) {
+				var _isSlicer = this.Drawings[i].graphicObject.getObjectType() === AscDFH.historyitem_type_SlicerView;
+				if (_isSlicer && renameParams && !renameParams.slicerNameMap[this.Drawings[i].graphicObject.name]) {
+					continue;
+				}
+
 				var drawingObject = drawingObjects.cloneDrawingObject(this.Drawings[i]);
 				drawingObject.graphicObject = this.Drawings[i].graphicObject.copy(undefined);
-				var _isSlicer = drawingObject.graphicObject.getObjectType() === AscDFH.historyitem_type_SlicerView;
-				if (_isSlicer && renameParams.slicerNameMap[drawingObject.graphicObject.name]) {
+				if (_isSlicer && renameParams) {
 					drawingObject.graphicObject.setName(renameParams.slicerNameMap[drawingObject.graphicObject.name]);
 				}
+
 				drawingObject.graphicObject.setWorksheet(oNewWs);
 				drawingObject.graphicObject.addToDrawingObjects();
 				var drawingBase = this.Drawings[i];
