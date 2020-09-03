@@ -1071,6 +1071,15 @@ CDocumentPageSection.prototype.CanDecreaseBottomLine = function()
 {
 	return this.CanDecrease;
 };
+CDocumentPageSection.prototype.CanIncreaseBottomLine = function()
+{
+	// Данная функция не должна возвращать false, если возвращает, значит неправильно работает алгоритм по вычислению
+	// нижней границы continuous секции
+	// if (!(this.YLimit2 - this.CurrentY > 0.001))
+	// 	console.log("Bad continuous section calculate");
+
+	return (this.YLimit2 - this.CurrentY > 0.001);
+};
 
 function CDocumentPageColumn()
 {
@@ -4211,7 +4220,10 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
 							NewPageSection.EndPos        = Index;
 							NewPageSection.Y             = SectionY + 0.001;
 							NewPageSection.YLimit        = this.Pages[PageIndex].YLimit;
+							NewPageSection.YLimit2       = this.Pages[PageIndex].YLimit;
 							Page.Sections[_SectionIndex] = NewPageSection;
+							// YLimit, YLimit2 проставляем здесь, потому что в функции Init учитываются настройки уже
+							// новой секции, а нам нужно расчет вести с учетом отступов самой первой секции
 							break;
 						}
 					}
@@ -4250,7 +4262,7 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
 		}
         else if (RecalcResult & recalcresult_NextPage)
         {
-            if (true === PageSection.IsCalculatingSectionBottomLine() && (RecalcResult & recalcresultflags_LastFromNewPage || ColumnIndex >= ColumnsCount - 1))
+            if (true === PageSection.IsCalculatingSectionBottomLine() && PageSection.CanIncreaseBottomLine() && (RecalcResult & recalcresultflags_LastFromNewPage || ColumnIndex >= ColumnsCount - 1))
             {
                 PageSection.IterateBottomLineCalculation(true);
 
