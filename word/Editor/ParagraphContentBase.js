@@ -1339,7 +1339,10 @@ CParagraphContentWithParagraphLikeContent.prototype.Get_FirstTextPr = function(b
 			for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
 			{
 				if (this.Content[nPos].IsCursorPlaceable())
+				{
 					oElement = this.Content[nPos];
+					break;
+				}
 			}
 		}
 	}
