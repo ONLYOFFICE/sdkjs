@@ -1252,7 +1252,6 @@
 			} else if(needClean) {
 				this.CleanButtonInfo();
 			}
-			this.isAppliedOperation = false;
 		},
 		
 		SpecialPasteButton_Update_Position : function()

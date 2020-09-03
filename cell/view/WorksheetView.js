@@ -11194,20 +11194,24 @@
 			window['AscCommon'].g_specialPasteHelper.Paste_Process_Start();
 			window['AscCommon'].g_specialPasteHelper.Special_Paste_Start();
 
+			//для того, чтобы была возможность делать несколько математических операций подряд
 			var doUndo = true;
-			if (window['Asc'].c_oSpecialPasteOperation.none !== props.operation) {
+			if (window['Asc'].c_oSpecialPasteOperation.none !== props.operation && null !== props.operation) {
 				if (window['AscCommon'].g_specialPasteHelper.isAppliedOperation) {
 					doUndo = false;
 				}
 				window['AscCommon'].g_specialPasteHelper.isAppliedOperation = true;
+				//specialPasteHelper.selectionRange = null;
+			} else {
+				window['AscCommon'].g_specialPasteHelper.isAppliedOperation = false;
 			}
 
 			//тут нужно откатить селект
 			if (doUndo) {
 				api.asc_Undo();
-			}
-			if (specialPasteHelper.selectionRange) {
-				t.model.selectionRange = specialPasteHelper.selectionRange.clone();
+				if (specialPasteHelper.selectionRange) {
+					t.model.selectionRange = specialPasteHelper.selectionRange.clone();
+				}
 			}
 
 			//транзакция закроется в end_paste
@@ -11245,6 +11249,7 @@
 
 		if (!specialPasteHelper.specialPasteStart) {
 			specialPasteHelper.selectionRange = this.model.selectionRange ? this.model.selectionRange.clone() : null;
+			window['AscCommon'].g_specialPasteHelper.isAppliedOperation = false;
 		}
 		
 		var callTrigger = false;
@@ -11414,6 +11419,12 @@
 				specialPasteProps.font = false;
 			}
 			selectData = t._pasteFromHTML(val, null, specialPasteProps);
+		}
+
+		if (specialPasteHelper.specialPasteStart) {
+			if (window['Asc'].c_oSpecialPasteOperation.none !== specialPasteProps.operation && null !== specialPasteProps.operation) {
+				specialPasteHelper.selectionRange = t.model.selectionRange ? t.model.selectionRange.clone() : null;
+			}
 		}
 
 		t.model.checkChangeTablesContent(t.model.selectionRange.getLast());
