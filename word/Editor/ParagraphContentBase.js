@@ -610,6 +610,10 @@ CParagraphContentBase.prototype.Get_TextPr = function(ContentPos, Depth)
 {
 	return new CTextPr();
 };
+CParagraphContentBase.prototype.Get_FirstTextPr = function(bByPos)
+{
+	return new CTextPr();
+};
 CParagraphContentBase.prototype.SetReviewType = function(ReviewType, RemovePrChange)
 {
 };
@@ -1313,36 +1317,42 @@ CParagraphContentWithParagraphLikeContent.prototype.Get_TextPr = function(_Conte
 };
 CParagraphContentWithParagraphLikeContent.prototype.Get_FirstTextPr = function(bByPos)
 {
-    var oElement = null;
-    if (this.Content.length > 0)
-    {
-        if (true === bByPos)
-        {
-            if (true === this.Selection.Use)
-            {
-                if (this.Selection.StartPos > this.Selection.EndPos)
-                    oElement = this.Content[this.Selection.EndPos];
-                else
-                    oElement = this.Content[this.Selection.StartPos];
-            }
-            else
-                oElement = this.Content[this.State.ContentPos];
-        }
-        else
-        {
-            oElement = this.Content[0];
-        }
-    }
+	var oElement = null;
+	if (this.Content.length > 0)
+	{
+		if (true === bByPos)
+		{
+			if (true === this.Selection.Use)
+			{
+				if (this.Selection.StartPos > this.Selection.EndPos)
+					oElement = this.Content[this.Selection.EndPos];
+				else
+					oElement = this.Content[this.Selection.StartPos];
+			}
+			else
+			{
+				oElement = this.Content[this.State.ContentPos];
+			}
+		}
+		else
+		{
+			for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
+			{
+				if (this.Content[nPos].IsCursorPlaceable())
+					oElement = this.Content[nPos];
+			}
+		}
+	}
 
-    if (null !== oElement && undefined !== oElement)
-    {
-        if (para_Run === this.Content[0].Type)
-            return this.Content[0].Get_TextPr();
-        else
-            return this.Content[0].Get_FirstTextPr();
-    }
-    else
-        return new CTextPr();
+	if (null !== oElement && undefined !== oElement)
+	{
+		if (para_Run === oElement.Type)
+			return oElement.Get_TextPr();
+		else
+			return oElement.Get_FirstTextPr();
+	}
+
+	return new CTextPr();
 };
 CParagraphContentWithParagraphLikeContent.prototype.Get_CompiledTextPr = function(Copy)
 {
