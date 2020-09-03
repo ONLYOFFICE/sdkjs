@@ -9772,9 +9772,13 @@
 		}
 		this.PostLoadPrepareDefNames = function(wb)
 		{
-			this.oReadResult.defNames.forEach(function(defName){
+			this.oReadResult.defNames.forEach(function (defName) {
 				if (null != defName.Name && null != defName.Ref) {
-					wb.dependencyFormulas.addDefNameOpen(defName.Name, defName.Ref, defName.LocalSheetId, defName.Hidden, false);
+					var _type = Asc.c_oAscDefNameType.none;
+					if (wb.getSlicerCacheByName(defName.Name)) {
+						_type = Asc.c_oAscDefNameType.slicer;
+					}
+					wb.dependencyFormulas.addDefNameOpen(defName.Name, defName.Ref, defName.LocalSheetId, defName.Hidden, _type);
 				}
 			});
 		}

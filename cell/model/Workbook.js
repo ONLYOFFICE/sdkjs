@@ -299,8 +299,9 @@
 				var sheet = this.wb.getWorksheetById(this.sheetId);
 				index = sheet.getIndex();
 			}
-			//тип у именованных диапазона необходим только для интерефейса
-			//поэтому на открытие его не заполняю, если необходимо - проставляю здесь
+			//теперь тип используется ещё и при получении результата вычисления именованного диапазона
+			//так же заполняю при отркытии
+			//TODO - проверить, возможно необходимо убрать
 			if (!this.type && this.wb && this.wb.getSlicerCacheByName(this.name)) {
 				this.type = Asc.c_oAscDefNameType.slicer;
 			}

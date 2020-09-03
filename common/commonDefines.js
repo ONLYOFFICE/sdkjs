@@ -1617,6 +1617,7 @@
 	};
 
 	var c_oAscDefNameType = {
+		none: 0,
 		table: 1,
 		slicer: 2
 	};

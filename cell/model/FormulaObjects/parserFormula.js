@@ -1949,6 +1949,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		if (!defName.parsedRef) {
 			return new cError(cErrorType.wrong_name);
 		}
+
+		//несмотря на то, что именованный диапазон ссылается на ошибку
+		//при рассчётах с его участием необходимо возвращать пустую строку
+		if (defName.type === Asc.c_oAscDefNameType.slicer) {
+			return new cString("");
+		}
+
 		//defName not linked to cell, use inherit range
 		var offset;
 		var bbox = arguments[1];
