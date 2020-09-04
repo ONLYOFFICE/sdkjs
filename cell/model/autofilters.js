@@ -4620,7 +4620,7 @@
 							newTableColumn = new AscCommonExcel.TableColumn();
 							if (val.length >= AscCommon.c_oAscMaxTableColumnTextLength) {
 								val = val.substring(0, AscCommon.c_oAscMaxTableColumnTextLength - 1);
-								var cell = this.worksheet.getRange3(ref.r1 + i, ref.c1, ref.r1 + i, ref.c1);
+								var cell = this.worksheet.getRange3(ref.r1, ref.c1 + i, ref.r1, ref.c1 + i);
 								cell.setValue(val);
 							}
 							newTableColumn.Name = val;
