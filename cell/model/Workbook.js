@@ -3786,7 +3786,7 @@
 		//this.index = wsFrom.index;
 		this.nRowsCount = wsFrom.nRowsCount;
 		this.nColsCount = wsFrom.nColsCount;
-		var renameParams = {lastName: wsFrom.getName(), newName: this.getName(), tableNameMap: {}, slicerNameMap: {}};
+		var renameParams = {lastName: wsFrom.getName(), newName: this.getName(), tableNameMap: {}, slicerNameMap: {}, copySlicerError: false};
 		for (i = 0; i < wsFrom.TableParts.length; ++i)
 		{
 			var tableFrom = wsFrom.TableParts[i];
@@ -3966,6 +3966,7 @@
 			for (i = 0; i < this.Drawings.length; ++i) {
 				var _isSlicer = this.Drawings[i].graphicObject.getObjectType() === AscDFH.historyitem_type_SlicerView;
 				if (_isSlicer && renameParams && !renameParams.slicerNameMap[this.Drawings[i].graphicObject.name]) {
+					renameParams.copySlicerError = true;
 					continue;
 				}
 

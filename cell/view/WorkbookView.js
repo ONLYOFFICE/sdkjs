@@ -3455,6 +3455,11 @@
 		var doCopy = function() {
 			History.Create_NewPoint();
 			var renameParams = t.model.copyWorksheet(0, insertBefore, name, undefined, undefined, undefined, pastedWs, base64);
+			//TODO ошибку по срезам добавил в renameParams. необходимо пересмотреть
+			//переименовать эту переменную, либо не добавлять copySlicerError и посылать ошибку в другом месте
+			if (renameParams && renameParams.copySlicerError) {
+				t.model.handlers.trigger("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmSlicerMoveError, function () {});
+			}
 			callback(renameParams);
 		};
 
