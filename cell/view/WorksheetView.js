@@ -11209,9 +11209,9 @@
 			//тут нужно откатить селект
 			if (doUndo) {
 				api.asc_Undo();
-				if (specialPasteHelper.selectionRange) {
-					t.model.selectionRange = specialPasteHelper.selectionRange.clone();
-				}
+			}
+			if (specialPasteHelper.selectionRange) {
+				t.model.selectionRange = specialPasteHelper.selectionRange.clone();
 			}
 
 			//транзакция закроется в end_paste
