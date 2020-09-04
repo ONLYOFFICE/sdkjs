@@ -2943,6 +2943,10 @@
 
 								cell = worksheet.getCell3(ref.r1, j);
 								val = props ? props.val : cell.getValueWithFormat();
+								if (val.length >= AscCommon.c_oAscMaxTableColumnTextLength) {
+									val = val.substring(0, AscCommon.c_oAscMaxTableColumnTextLength - 1);
+									cell.setValue(val);
+								}
 
 								//если не пустая изменяем TableColumns
 								var oldVal = filter.TableColumns[j - tableRange.c1].Name;
@@ -4614,6 +4618,11 @@
 							uniqueColumns[valLower] = true;
 
 							newTableColumn = new AscCommonExcel.TableColumn();
+							if (val.length >= AscCommon.c_oAscMaxTableColumnTextLength) {
+								val = val.substring(0, AscCommon.c_oAscMaxTableColumnTextLength - 1);
+								var cell = this.worksheet.getRange3(ref.r1 + i, ref.c1, ref.r1 + i, ref.c1);
+								cell.setValue(val);
+							}
 							newTableColumn.Name = val;
 							tableColumns.push(newTableColumn);
 							isDuplicate = false;

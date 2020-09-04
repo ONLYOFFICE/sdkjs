@@ -1116,6 +1116,7 @@
 	var c_oAscMaxHeaderFooterLength  = 255;
 	var c_oAscMaxFilterListLength    = 10000;
 	var c_oAscMaxFormulaReferenceLength = 2048;
+	var c_oAscMaxTableColumnTextLength  = 256;
 
 	var locktype_None   = 1; // никто не залочил данный объект
 	var locktype_Mine   = 2; // данный объект залочен текущим пользователем
@@ -2740,6 +2741,7 @@
 	window["AscCommon"].c_oAscCodePageUtf32BE       = c_oAscCodePageUtf32BE;
 	window["AscCommon"].c_oAscMaxFormulaLength      = c_oAscMaxFormulaLength;
 	window["AscCommon"].c_oAscMaxFormulaReferenceLength = c_oAscMaxFormulaReferenceLength;
+	window["AscCommon"].c_oAscMaxTableColumnTextLength = c_oAscMaxTableColumnTextLength;
 
 
 	window["AscCommon"].locktype_None   = locktype_None;
