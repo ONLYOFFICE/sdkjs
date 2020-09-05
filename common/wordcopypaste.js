@@ -1577,14 +1577,14 @@ CopyProcessor.prototype =
 
 		//TODO необходимо записать перед записью слайда ссылки стиль и сами стили
 		// - аналогично тому как это реализовано при записи таблицы
-		/*var presentation = editor.WordControl.m_oLogicDocument;
+		var presentation = editor.WordControl.m_oLogicDocument;
 		for(var key in presentation.TableStylesIdMap)
 		{
 			if(presentation.TableStylesIdMap.hasOwnProperty(key))
 			{
-				this.oPresentationWriter.tableStylesGuides[key] = "{" + AscCommon.GUID() + "}"
+				this.oPresentationWriter.tableStylesGuides[key] = key;
 			}
-		}*/
+		}
 
 		//записываем slide
 		this.oPresentationWriter.WriteSlide(slide);
@@ -4187,6 +4187,13 @@ PasteProcessor.prototype =
 				loader.stream = stream;
 				loader.presentation = editor.WordControl.m_oLogicDocument;
 				loader.DrawingDocument = editor.WordControl.m_oLogicDocument.DrawingDocument;
+
+				var _globalTableStyles = editor.WordControl.m_oLogicDocument.globalTableStyles;
+				for (var key in _globalTableStyles.Style) {
+					if (_globalTableStyles.Style.hasOwnProperty(key)) {
+						loader.map_table_styles[_globalTableStyles.Style[key].Id] =_globalTableStyles.Style[key];
+					}
+				}
 
 				//read slides
 				var slide_count = stream.GetULong();
