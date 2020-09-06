@@ -461,18 +461,18 @@
 
 			runObject.currentInit = false;
 
-		    if (AscCommon.AscBrowser.isIE && !AscCommon.AscBrowser.isIeEdge)
+			if (AscCommon.AscBrowser.isIE && !AscCommon.AscBrowser.isIeEdge)
 			{
 				var ie_frame_id = runObject.frameId;
 				var ie_frame_message = {
 					data : JSON.stringify({type : "initialize", guid : guid})
 				};
 
-                document.getElementById(runObject.frameId).addEventListener("load", function(){
+				document.getElementById(runObject.frameId).addEventListener("load", function(){
 					setTimeout(function(){
 
-                        var channel = new MessageChannel();
-                        channel["port1"]["onmessage"] = onMessage;
+						var channel = new MessageChannel();
+						channel["port1"]["onmessage"] = onMessage;
 
 						onMessage(ie_frame_message, channel);
 					}, 500);
@@ -970,8 +970,8 @@
 				if (channel)
 					_iframe.contentWindow.postMessage(pluginData.serialize(), "*", [channel["port2"]]);
 				else
-                    _iframe.contentWindow.postMessage(pluginData.serialize(), "*");
-            }
+					_iframe.contentWindow.postMessage(pluginData.serialize(), "*");
+			}
 			return;
 		}
 		else if ("reload" == name)

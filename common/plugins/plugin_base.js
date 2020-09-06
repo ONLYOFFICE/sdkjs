@@ -446,9 +446,9 @@
 
     window.plugin_sendMessage = function sendMessage(data)
     {
-    	if (window.Asc.plugin.ie_channel)
+        if (window.Asc.plugin.ie_channel)
             window.Asc.plugin.ie_channel.postMessage(data);
-    	else
+        else
             window.parent.postMessage(data, "*");
     };
 
