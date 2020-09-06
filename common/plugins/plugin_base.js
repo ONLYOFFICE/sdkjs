@@ -446,7 +446,10 @@
 
     window.plugin_sendMessage = function sendMessage(data)
     {
-        window.parent.postMessage(data, "*");
+    	if (window.Asc.plugin.ie_channel)
+            window.Asc.plugin.ie_channel.postMessage(data);
+    	else
+            window.parent.postMessage(data, "*");
     };
 
     window.plugin_onMessage = function(event)
