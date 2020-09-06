@@ -1575,7 +1575,8 @@ CopyProcessor.prototype =
 			oDomTarget.addChild(oImg);
 		}
 
-		//TODO необходимо записать перед записью слайда ссылки стиль и сами стили
+		//пока записываю для копирования/вставки ссылку на стиль
+		//TODO в дальнейшем необходимо пересмотреть и писать стили вместе со слайдом
 		// - аналогично тому как это реализовано при записи таблицы
 		var presentation = editor.WordControl.m_oLogicDocument;
 		for(var key in presentation.TableStylesIdMap)
@@ -4188,10 +4189,14 @@ PasteProcessor.prototype =
 				loader.presentation = editor.WordControl.m_oLogicDocument;
 				loader.DrawingDocument = editor.WordControl.m_oLogicDocument.DrawingDocument;
 
+				//для вставки таблицы со стилем
+				//TODO в дальнейшем необходимо пересмотреть и писать стили вместе со слайдом
 				var _globalTableStyles = editor.WordControl.m_oLogicDocument.globalTableStyles;
-				for (var key in _globalTableStyles.Style) {
-					if (_globalTableStyles.Style.hasOwnProperty(key)) {
-						loader.map_table_styles[_globalTableStyles.Style[key].Id] =_globalTableStyles.Style[key];
+				if (_globalTableStyles) {
+					for (var key in _globalTableStyles.Style) {
+						if (_globalTableStyles.Style.hasOwnProperty(key)) {
+							loader.map_table_styles[_globalTableStyles.Style[key].Id] =_globalTableStyles.Style[key];
+						}
 					}
 				}
 

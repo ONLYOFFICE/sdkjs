@@ -1690,7 +1690,7 @@
 				var curDocId = api.DocInfo.Id;
 				var curUserId = api.CoAuthoringApi.getUserConnectionId();
 
-				if(pastedWb.Core && pastedWb.Core.identifier === curDocId && pastedWb.Core.creator === curUserId) {
+				if(pastedWb && pastedWb.Core && pastedWb.Core.identifier === curDocId && pastedWb.Core.creator === curUserId) {
 					res = true;
 				}
 
