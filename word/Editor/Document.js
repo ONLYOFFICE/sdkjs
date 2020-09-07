@@ -8684,11 +8684,9 @@ CDocument.prototype.InsertContent = function(SelectedContent, NearPos)
 			}
 		}
 
-        if(null === InsertMathContent)
-        {
-            //try to convert content to ParaMath in simple cases.
-            InsertMathContent = SelectedContent.ConvertToMath();
-        }
+		// Try to convert content to ParaMath in simple cases
+		if (!InsertMathContent)
+			InsertMathContent = SelectedContent.ConvertToMath();
 
         if (null !== InsertMathContent)
 		{
@@ -22623,7 +22621,20 @@ CDocument.prototype.AddTextWithPr = function(sText, oTextPr, isMoveCursorOutside
 
 			oParagraph.GetParent().InsertContent(oSelectedContent, oAnchorPos);
 
-			if (this.IsSelectionUse())
+			// TODO: Надо переделать здесь по-нормальному, и сделать как-то грамотную обработку в InsertContent
+			var isMath = false;
+			if (oAnchorPos && oAnchorPos.Paragraph)
+			{
+				var oParaNearPos = oAnchorPos.Paragraph.Get_ParaNearestPos(oAnchorPos);
+				var oLastClass   = oParaNearPos.Classes[oParaNearPos.Classes.length - 1];
+				isMath = (para_Math_Run === oLastClass.Type)
+			}
+
+			if (isMath)
+			{
+				this.MoveCursorRight(false, false, true);
+			}
+			else if (this.IsSelectionUse())
 			{
 				if (isMoveCursorOutside)
 				{
