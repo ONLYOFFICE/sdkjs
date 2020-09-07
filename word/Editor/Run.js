@@ -11300,18 +11300,22 @@ ParaRun.prototype.GetAllFields = function(isUseSelection, arrFields)
 		{
 			var oComplexField = oItem.GetComplexField();
 
-			var isNeedAdd = true;
-			for (var nFieldIndex = 0, nFieldsCount = arrFields.length; nFieldIndex < nFieldsCount; ++nFieldIndex)
+			// Поле еще может быть не собрано на данный момент
+			if (oComplexField)
 			{
-				if (oComplexField === arrFields[nFieldIndex])
+				var isNeedAdd = true;
+				for (var nFieldIndex = 0, nFieldsCount = arrFields.length; nFieldIndex < nFieldsCount; ++nFieldIndex)
 				{
-					isNeedAdd = false;
-					break;
+					if (oComplexField === arrFields[nFieldIndex])
+					{
+						isNeedAdd = false;
+						break;
+					}
 				}
-			}
 
-			if (isNeedAdd)
-				arrFields.push(oComplexField);
+				if (isNeedAdd)
+					arrFields.push(oComplexField);
+			}
 		}
 		else if (para_Drawing === oItem.Type)
 		{
