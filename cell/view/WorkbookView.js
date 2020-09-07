@@ -3458,7 +3458,7 @@
 			//TODO ошибку по срезам добавил в renameParams. необходимо пересмотреть
 			//переименовать эту переменную, либо не добавлять copySlicerError и посылать ошибку в другом месте
 			if (renameParams && renameParams.copySlicerError) {
-				t.model.handlers.trigger("onErrorEvent", Asc.c_oAscError.ID.PasteSlicerError, Asc.c_oAscError.Level.NoCritical);
+				t.handlers.trigger("asc_onError", c_oAscError.ID.MoveSlicerError, c_oAscError.Level.NoCritical);
 			}
 			callback(renameParams);
 		};
