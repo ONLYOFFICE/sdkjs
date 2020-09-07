@@ -3261,8 +3261,9 @@ CDocument.prototype.Is_OnRecalculate = function()
 /**
  * Пересчитываем весь документ без включения таймеров
  * @param {boolean} isFromStart
+ * @param {number} [nPagesCount=-1]
  */
-CDocument.prototype.RecalculateAllAtOnce = function(isFromStart)
+CDocument.prototype.RecalculateAllAtOnce = function(isFromStart, nPagesCount)
 {
 	//var nStartTime = new Date().getTime();
 
@@ -3288,6 +3289,10 @@ CDocument.prototype.RecalculateAllAtOnce = function(isFromStart)
 	{
 		this.FullRecalc.Continue = false;
 		this.Recalculate_Page();
+
+		// Если задано количество страниц для пересчета, то считаем, что страница пересчитана, если текущая PageIndex + 2
+		if (undefined !== nPagesCount && null !== nPagesCount && nPagesCount > 0 && this.FullRecalc.PageIndex >= nPagesCount + 1)
+			break;
 	}
 
 	this.FullRecalc.UseRecursion = false;
