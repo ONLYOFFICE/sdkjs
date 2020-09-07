@@ -9880,7 +9880,7 @@ background-repeat: no-repeat;\
 				this.WordControl.m_oDrawingDocument.CheckTableStylesOne();
 		}
 	};
-	window["asc_docs_api"].prototype["asc_nativeCalculateFile"] = function()
+	window["asc_docs_api"].prototype["asc_nativeCalculateFile"] = function(options)
 	{
 		if (null == this.WordControl.m_oLogicDocument)
 			return;
@@ -9904,7 +9904,10 @@ background-repeat: no-repeat;\
 		if (window['IS_NATIVE_EDITOR']) {
 			Document.RecalculateFromStart();
 		} else {
-			Document.RecalculateAllAtOnce(true);
+			var pagescount = undefined;
+			if (options && options["printOptions"] && options["printOptions"]["onlyFirstPage"])
+				pagescount = 1;
+			Document.RecalculateAllAtOnce(true, pagescount);
 		}
 
 		Document.Document_UpdateInterfaceState();
