@@ -6093,8 +6093,7 @@
         var angleCos = Math.cos(angle * Math.PI / 180.0);
 
         if (!isCustomWidth && fl.isNumberFormat && !(mergeType & c_oAscMergeType.cols) &&
-          (c_oAscCanChangeColWidth.numbers === this.canChangeColWidth ||
-          c_oAscCanChangeColWidth.all === this.canChangeColWidth)) {
+          c_oAscCanChangeColWidth.none !== this.canChangeColWidth) {
             colWidth = this._getColumnWidthInner(col);
             // Измеряем целую часть числа
             sstr = c.getValue2(gc_nMaxDigCountView, function () {
