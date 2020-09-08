@@ -2033,7 +2033,7 @@ function (window, undefined) {
 				}
 			}
 
-			putDouble(pMatZ, row, fSum / pVecR[row]);
+			putDouble(pMatZ, row, fSum);
 		}
 	}
 
@@ -2266,7 +2266,7 @@ function (window, undefined) {
 
 
 					//*********
-					//pMatZ->FillDouble(0.0, 0, 0, 0, N-1);
+					fillDouble(pMatZ, 0.0, 0, 0, 0, N-1);
 
 
 					// Z = R * Slopes
@@ -2335,6 +2335,7 @@ function (window, undefined) {
 						for (var col = 0; col < K; col++) {
 							//re-use memory of MatZ
 							//pMatZ->FillDouble(0.0,0,0,0,K-1); // Z = unit vector e
+							fillDouble(pMatZ, 0.0, 0, 0, 0, K-1);
 							putDouble(pMatZ, col, 1);//->PutDouble(1.0, col);
 							//Solve R' * Z = e
 							lcl_SolveWithLowerLeftTriangle(pMatX, aVecR, pMatZ, K, false);
@@ -2550,6 +2551,14 @@ function (window, undefined) {
 		var col = parseInt(rowSize > 1 ? nIndex / rowSize : nIndex);
 		var row = nIndex - col * rowSize;
 		return {row: row, col: col};
+	}
+
+	function fillDouble(matrix, val, nC1, nR1, nC2, nR2) {
+		for (var i = nC1; i <= nC2; i++) {
+			for (var j = nR1; j <= nR2; j++) {
+				matrix[i][j] = val;
+			}
+		}
 	}
 
 	function getBoolValue(val, defaultValue) {
@@ -7457,17 +7466,24 @@ function (window, undefined) {
 		var bConstant = getBoolValue(argClone[2], true);
 		var bStats = getBoolValue(argClone[3], true);
 
-		var res = CalculateRGPRKP(pMatY, pMatX, bConstant, bStats);
+		//возвращает матрицу [col][row]
+		var mat = CalculateRGPRKP(pMatY, pMatX, bConstant, bStats);
 
-		if (res && res[0] && res[0][0]) {
-			var array = new cArray();
-			for(var i = 0; i < res.length; i++) {
-				array.addRow();
-				for(var j = 0; j < res.length; j++) {
-					array.addElement(new cNumber(res[i][j]));
+		//TODO далее функцию необходимо отптимизировать и сразу формировать итоговую матрицу без промежуточного транспонирования
+		if (mat && mat[0] && mat[0][0]) {
+			var tMatrix = [], res = new cArray();
+
+			for (var i = 0; i < mat.length; i++) {
+				for (var j = 0; j < mat[i].length; j++) {
+					if (!tMatrix[j]) {
+						tMatrix[j] = [];
+					}
+					tMatrix[j][i] = new cNumber(mat[i][j]);
 				}
 			}
-			return array;
+
+			res.fillFromArray(tMatrix);
+			return res;
 		} else {
 			return new cError(cErrorType.wrong_value_type);
 		}
