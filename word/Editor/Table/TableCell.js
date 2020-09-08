@@ -919,18 +919,18 @@ CTableCell.prototype =
 			}
 		}
 
-        if (true !== isRotated && true === this.GetNoWrap())
-		{
-			if (tblwidth_Mm !== this.GetW().Type)
-			{
-				Result.Min = Math.max(Result.Min, Result.Max);
-			}
-			else
-			{
-				var oMargins = this.GetMargins();
-				Result.Min = Math.max(Result.Min, this.GetW().W - oMargins.Left.W - oMargins.Right.W, 0);
-			}
-		}
+        // if (true !== isRotated && true === this.GetNoWrap())
+		// {
+		// 	if (tblwidth_Mm !== this.GetW().Type)
+		// 	{
+		// 		Result.Min = Math.max(Result.Min, Result.Max);
+		// 	}
+		// 	else
+		// 	{
+		//      var oMargins = this.GetMargins();
+		// 		Result.Min = Math.max(Result.Min, this.GetW().W - oMargins.Left.W - oMargins.Right.W, 0);
+		// 	}
+		// }
 
         return Result;
     },

@@ -1755,7 +1755,10 @@ Paragraph.prototype.RecalculateMinMaxContentWidth = function(isRotated)
 	}
 
 	var ParaPr = this.Get_CompiledPr2(false).ParaPr;
-	var MinInd = ParaPr.Ind.Left + ParaPr.Ind.Right + ParaPr.Ind.FirstLine;
+	var MinInd = ParaPr.Ind.Left + ParaPr.Ind.Right;
+
+	if (this.LogicDocument.GetCompatibilityMode() >= AscCommon.document_compatibility_mode_Word15)
+		MinInd += ParaPr.Ind.FirstLine;
 
 	if (MinMax.nMinWidth > 0.001 || MinMax.nMaxWidth > 0.001)
 	{

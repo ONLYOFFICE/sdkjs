@@ -514,6 +514,17 @@ CTable.prototype.private_RecalculateGrid = function()
                 var CellW        = Cell.Get_W();
                 var CellWW       = null;
 
+                // TODO: Надо переделать схему расчета, маргины должны учитываться для каждой ячейки свои, а не по колонке в целом
+				if (!Cell.Is_VerticalText() && Cell.GetNoWrap())
+				{
+					if (tblwidth_Mm !== CellW.Type)
+						CellMin = Math.max(CellMin, CellMax);
+					else if (1 === GridSpan)
+						CellMin = Math.max(CellMin, CellW.W - MinMargin[CurGridCol], 0);
+					else
+						CellMin = Math.max(CellMin, CellW.W - MinMargin[CurGridCol] - MinMargin[CurGridCol + GridSpan - 1], 0);
+				}
+
                 var Add = ( ( 0 === CurCell || CellsCount - 1 === CurCell ) ? 3 / 2 * SpacingW : SpacingW );
 
                 CellMin += Add;
