@@ -5471,8 +5471,10 @@ CMathContent.prototype.Process_AutoCorrect = function(ActionElement) {
             }
             if(oLogicDocument) {
                 this.private_ReplaceAutoCorrect(AutoCorrectEngine);
-                if (oLogicDocument.Api.WordControl.EditorType == "presentations")
-                    this.Paragraph.Parent.Parent.parent.checkExtentsByDocContent();
+                if (oLogicDocument.Api.WordControl.EditorType == "presentations") {
+                    if (this.Paragraph.Parent.Parent.parent)
+                        this.Paragraph.Parent.Parent.parent.checkExtentsByDocContent();
+                }
             } else {
                 var shape = this.Paragraph.Parent.DrawingDocument.drawingObjects.controller.selectedObjects[0];
                 var wb = shape.worksheet.workbook.oApi.wb;
