@@ -5520,15 +5520,20 @@ CMathContent.prototype.private_CanAutoCorrectText = function(AutoCorrectEngine, 
     var AutoCorrectCount = g_aAutoCorrectMathSymbols.length;
     for (var nIndex = 0; nIndex < AutoCorrectCount; nIndex++) {
         var AutoCorrectElement = g_aAutoCorrectMathSymbols[nIndex];
+        var Ind = g_aMathAutoCorrectSpecSymb.findIndex(function(el, ind) {
+            if (el == AutoCorrectElement[0])
+                return el;
+        });
+        var IndexSkip = (Ind === -1) ? 0 : 1;
         var CheckString = AutoCorrectElement[0];
         var CheckStringLen = CheckString.length;
 
-        if (ElCount < CheckStringLen + IndexAdd) {
+        if (ElCount < CheckStringLen + IndexAdd - IndexSkip) {
             continue;
         }
         var Found = true;
         for (var nStringPos = 0; nStringPos < CheckStringLen; nStringPos++) {
-            var LastEl = AutoCorrectEngine.Elements[ElCount - nStringPos - 1 - IndexAdd];
+            var LastEl = AutoCorrectEngine.Elements[ElCount - nStringPos - 1 - IndexAdd + IndexSkip];
             if (!LastEl.Element.IsText()) {
                 FlagEnd = true;
                 Found = false;
@@ -5541,7 +5546,7 @@ CMathContent.prototype.private_CanAutoCorrectText = function(AutoCorrectEngine, 
         }
         if (true === Found) {
             RemoveCount = CheckStringLen + IndexAdd - skip;
-            Start = ElCount - RemoveCount - skip;
+            Start = ElCount - RemoveCount - skip + IndexSkip;
 
             if (undefined === AutoCorrectElement[1].length) {
                 ReplaceChars[0] = AutoCorrectElement[1];
@@ -9271,6 +9276,11 @@ var g_aMathAutoCorrectLatinAlph = {
     0x70 : 1, 0x71 : 1, 0x72 : 1, 0x73 : 1, 0x74 : 1, 0x75 : 1,
     0x76 : 1, 0x77 : 1, 0x78 : 1, 0x79 : 1, 0x7A : 1
 };
+// special symbols for autocorrect text
+var g_aMathAutoCorrectSpecSymb = [
+    '!!', '...', '::', ':=', '/<', '/>', '/=',
+    '~=', '-+', '+-', '<<', '<=', '->', '>=', '>>'
+];
 
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
