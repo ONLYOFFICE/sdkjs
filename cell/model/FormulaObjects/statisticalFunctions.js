@@ -1417,22 +1417,27 @@ function (window, undefined) {
 		var N = 0;
 		var nCase;
 
-		var nRY = pMatY.length;
-		var nCY = pMatY[0].length;
+		nRY = pMatY.length;
+		nCY = pMatY[0].length;
 		var nCountY = nCY * nRY;
+		var _pMatY = [];
 		for (var i = 0; i < pMatY.length; i++) {
 			for (var j = 0; j < pMatY[i].length; j++) {
 				if (!pMatY[i][j]) {
 					//PushIllegalArgument();
 					return false;
 				} else {
-					pMatY[i][j] = pMatY[i][j].getValue();
+					if (!_pMatY[j]) {
+						_pMatY[j] = [];
+					}
+					_pMatY[j][i] = pMatY[i][j].getValue();
+					//pMatY[i][j] = pMatY[i][j].getValue();
 				}
 			}
 		}
 
 		if (_bLOG) {
-			var pNewY = matrixClone(pMatY);
+			var pNewY = matrixClone(_pMatY);
 
 			for (var i = 0; i < pMatY.length; i++) {
 				for (var j = 0; j < pMatY[i].length; j++) {
@@ -1445,10 +1450,12 @@ function (window, undefined) {
 					}
 				}
 			}
-			pMatY = pNewY;
+			_pMatY = pNewY;
 		}
 
+		var _pMatX;
 		if (pMatX) {
+			_pMatX = [];
 			nRX = pMatX.length;
 			nCX = pMatX[0].length;
 			var nCountX = nCX * nRX;
@@ -1458,7 +1465,11 @@ function (window, undefined) {
 						//PushIllegalArgument();
 						return false;
 					} else {
-						pMatX[i][j] = pMatX[i][j].getValue();
+						if (!_pMatX[j]) {
+							_pMatX[j] = [];
+						}
+						_pMatX[j][i] = pMatX[i][j].getValue();
+						//pMatX[i][j] = pMatX[i][j].getValue();
 					}
 				}
 			}
@@ -1509,7 +1520,7 @@ function (window, undefined) {
 			M = 1;
 		}
 
-		return {nCase: nCase, nCX: nCX, nCY: nCY, nRX: nRX, nRY: nRY, M: M, N: N, pMatX: pMatX, pMatY: pMatY};
+		return {nCase: nCase, nCX: nCX, nCY: nCY, nRX: nRX, nRY: nRY, M: M, N: N, pMatX: _pMatX, pMatY: _pMatY};
 	}
 
 	function lcl_GetMeanOverAll(pMat, nN) {
@@ -1525,10 +1536,8 @@ function (window, undefined) {
 
 	function lcl_GetSumProduct(pMatA, pMatB, nM) {
 		var fSum = 0.0;
-		for (var i = 0; i < pMatA.length; i++) {
-			for (var j = 0; j < pMatA[i].length; j++) {
-				fSum += pMatA[i][j] * pMatB[i][j];
-			}
+		for (var i = 0; i < nM; i++) {
+			fSum += getDouble(pMatA, i) * getDouble(pMatB, i);
 		}
 		return fSum;
 	}
@@ -1545,16 +1554,16 @@ function (window, undefined) {
 		for (var i = 0; i < nC; i++) {
 			var fSum = 0.0;
 			for (var k = 0; k < nR; k++) {
-				fSum += pX[k][i];// GetDouble(Column,Row)
+				fSum += pX[i][k];// GetDouble(Column,Row)
 			}
-			pResMat[i][0] = fSum / nR;
+			pResMat[0][i] = fSum / nR;
 		}
 	}
 
 	function lcl_CalculateColumnsDelta(pMat, pColumnMeans, nC, nR) {
 		for (var i = 0; i < nC; i++) {
 			for (var k = 0; k < nR; k++) {
-				pMat[k][i] = approxSub(pMat[k][i], pColumnMeans[i][0]);
+				pMat[i][k] = approxSub(pMat[i][k], pColumnMeans[0][i]);
 			}
 		}
 	}
@@ -1630,7 +1639,7 @@ function (window, undefined) {
 		var fNumerator = lcl_GetColumnSumProduct(pMatA, nC, pMatY, 0, nC, nN);
 		var fFactor = 2.0 * (fNumerator / fDenominator);
 		for (var row = nC; row < nN; row++) {
-			pMatY[0][row] = pMatY[0][row] - fFactor * pMatA[nC][row];
+			putDouble(pMatY, row, getDouble(pMatY, row) - fFactor * pMatA[nC][row]);
 		}
 	}
 
@@ -1648,16 +1657,16 @@ function (window, undefined) {
 		// SCSIZE is never negative, therefore test with rowp1=row+1
 		for (var rowp1 = nK; rowp1 > 0; rowp1--) {
 			row = rowp1 - 1;
-			var fSum = pMatS[row][0];
+			var fSum = getDouble(pMatS, row);
 			for (var col = rowp1; col < nK; col++) {
 				if (bIsTransposed) {
-					fSum -= pMatA[col][row] * pMatS[col][0];
+					fSum -= pMatA[row][col] * getDouble(pMatS, col);
 				} else {
-					fSum -= pMatA[row][col] * pMatS[col][0];
+					fSum -= pMatA[col][row] * getDouble(pMatS, col);
 				}
 			}
 
-			pMatS[row][0] = fSum / pVecR[row];
+			putDouble(pMatS, row, fSum / pVecR[row]);
 		}
 	}
 
@@ -2015,30 +2024,31 @@ function (window, undefined) {
 	function lcl_ApplyUpperRightTriangle(pMatA, pVecR, pMatB, pMatZ, nK, bIsTransposed) {
 		// ScMatrix matrices are zero based, index access (column,row)
 		for (var row = 0; row < nK; row++) {
-			var fSum = pVecR[row] * pMatB[row][0];
+			var fSum = pVecR[row] * getDouble(pMatB, row);
 			for (var col = row + 1; col < nK; col++) {
 				if (bIsTransposed) {
-					fSum += pMatA[row][col] * pMatB[col][0];
+					fSum += pMatA[row][col] * getDouble(pMatB, col);
 				} else {
-					fSum += pMatA[col][row] * pMatB[col][0];
+					fSum += pMatA[col][row] * getDouble(pMatB, col);
 				}
 			}
-			pMatZ[row][0] = fSum;
+
+			putDouble(pMatZ, row, fSum / pVecR[row]);
 		}
 	}
 
 	function lcl_SolveWithLowerLeftTriangle(pMatA, pVecR, pMatT, nK, bIsTransposed) {
 		// ScMatrix matrices are zero based, index access (column,row)
 		for (var row = 0; row < nK; row++) {
-			var fSum = pMatT[row][0];
+			var fSum = getDouble(pMatT, row);
 			for (var col = 0; col < row; col++) {
 				if (bIsTransposed) {
-					fSum -= pMatA[col][row] * pMatT[col][0];
+					fSum -= pMatA[row][col] * getDouble(pMatT, col);
 				} else {
-					fSum -= pMatA[row][col] * pMatT[col][0];
+					fSum -= pMatA[col][row] * getDouble(pMatT, col);
 				}
 			}
-			pMatT[row][0] = fSum / pVecR[row];
+			putDouble(pMatT, row, fSum / pVecR[row]);
 		}
 	}
 
@@ -2235,7 +2245,7 @@ function (window, undefined) {
 				// B = R^(-1) * Q' * Y <=> B = R^(-1) * Z <=> R * B = Z
 				// result Z should have zeros for index>=K; if not, ignore values
 				for (var col = 0; col < K; col++) {
-					pSlopes[col][0] = pMatY[col][0];
+					putDouble(pSlopes, col, getDouble(pMatZ, col));
 				}
 				lcl_SolveWithUpperRightTriangle(pMatX, aVecR, pSlopes, K, false);
 				var fIntercept = 0.0;
@@ -2245,7 +2255,7 @@ function (window, undefined) {
 				// Fill first line in result matrix
 				pResMat[K][0] = _bRKP ? Math.exp(fIntercept) : fIntercept;
 				for (var i = 0; i < K; i++) {
-					pResMat[K - 1 - i][0] = _bRKP ? Math.exp(pSlopes[i][0]) : pSlopes[i][0];
+					pResMat[K - 1 - i][0] = _bRKP ? Math.exp(getDouble(pSlopes, i)) : getDouble(pSlopes, i);
 				}
 
 
@@ -2271,7 +2281,7 @@ function (window, undefined) {
 					//********
 					// re-use Y for residuals, Y = Y-Z
 					for (var row = 0; row < N; row++) {
-						pMatY[row][0] = pMatY[row][0] - pMatZ[row][0];
+						putDouble(pMatY, row, getDouble(pMatY, row) - getDouble(pMatZ, row));
 					}
 
 
@@ -2325,18 +2335,18 @@ function (window, undefined) {
 						for (var col = 0; col < K; col++) {
 							//re-use memory of MatZ
 							//pMatZ->FillDouble(0.0,0,0,0,K-1); // Z = unit vector e
-							pMatZ[col][0] = 1;//->PutDouble(1.0, col);
+							putDouble(pMatZ, col, 1);//->PutDouble(1.0, col);
 							//Solve R' * Z = e
 							lcl_SolveWithLowerLeftTriangle(pMatX, aVecR, pMatZ, K, false);
 							// Solve R * Znew = Zold
 							lcl_SolveWithUpperRightTriangle(pMatX, aVecR, pMatZ, K, false);
 							// now Z is column col in (R' R)^(-1)
-							var fSigmaSlope = fRMSE * Math.sqrt(pMatZ[col][0]);
+							var fSigmaSlope = fRMSE * Math.sqrt(getDouble(pMatZ, col));
 							pResMat[K - 1 - col][1] = fSigmaSlope//->PutDouble(fSigmaSlope, K-1-col, 1);
 							// (R' R) ^(-1) is symmetric
 							if (bConstant) {
 								fPart = lcl_GetSumProduct(pMeans, pMatZ, K);
-								fSigmaIntercept += fPart * pMeans[0][col];
+								fSigmaIntercept += fPart * getDouble(pMeans, col);
 							}
 						}
 
@@ -2523,6 +2533,23 @@ function (window, undefined) {
 			}
 		}
 		return pResMat;
+	}
+
+	function getDouble(matrix, nIndex) {
+		var position = calcPosition(matrix, nIndex);
+		return matrix[position.col][position.row];
+	}
+
+	function putDouble(matrix, nIndex, val) {
+		var position = calcPosition(matrix, nIndex);
+		matrix[position.col][position.row] = val;
+	}
+
+	function calcPosition(matrix, nIndex) {
+		var rowSize = matrix[0].length;
+		var col = parseInt(rowSize > 1 ? nIndex / rowSize : nIndex);
+		var row = nIndex - col * rowSize;
+		return {row: row, col: col};
 	}
 
 	function getBoolValue(val, defaultValue) {
