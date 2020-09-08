@@ -1437,7 +1437,7 @@ function (window, undefined) {
 		}
 
 		if (_bLOG) {
-			var pNewY = matrixClone(_pMatY);
+			var pNewY = matrixClone(pMatY);
 
 			for (var i = 0; i < pMatY.length; i++) {
 				for (var j = 0; j < pMatY[i].length; j++) {
@@ -1446,7 +1446,11 @@ function (window, undefined) {
 						//PushIllegalArgument();
 						return false;
 					} else {
-						pNewY[i][j] = Math.log(fVal);
+						//pNewY[i][j] = Math.log(fVal);
+						if (!pNewY[j]) {
+							pNewY[j] = [];
+						}
+						pNewY[j][i] = Math.log(fVal);
 					}
 				}
 			}
@@ -1499,10 +1503,10 @@ function (window, undefined) {
 				M = nRX;
 			}
 		} else {
-			pMatX = GetNewMat(nRY, nCY);
+			_pMatX = GetNewMat(nRY, nCY);
 			nCX = nCY;
 			nRX = nRY;
-			if (!pMatX) {
+			if (!_pMatX) {
 				//PushIllegalArgument();
 				return false;
 			}
@@ -1510,7 +1514,10 @@ function (window, undefined) {
 			var num = 1;
 			for (var i = 0; i < nRY; i++) {
 				for (var j = 1; j <= nCY; j++) {
-					pMatX[i][j - 1] = num;
+					if (!_pMatX[j-1]) {
+						_pMatX[j-1] = [];
+					}
+					_pMatX[j-1][i] = num;
 					num++;
 				}
 			}
