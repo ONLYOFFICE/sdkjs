@@ -6092,7 +6092,7 @@
         var angleSin = Math.sin(angle * Math.PI / 180.0);
         var angleCos = Math.cos(angle * Math.PI / 180.0);
 
-        if (!isCustomWidth && fl.isNumberFormat && !(mergeType & c_oAscMergeType.cols) &&
+        if (!isCustomWidth && fl.isNumberFormat && !fl.shrinkToFit && !(mergeType & c_oAscMergeType.cols) &&
           c_oAscCanChangeColWidth.none !== this.canChangeColWidth) {
             colWidth = this._getColumnWidthInner(col);
             // Измеряем целую часть числа
@@ -6118,7 +6118,7 @@
             dDigitsCount = this.getColumnWidthInSymbols(col);
             colWidth = this._getColumnWidthInner(col);
             // подбираем ширину
-            if (!isCustomWidth && !(mergeType & c_oAscMergeType.cols) && !fl.wrapText &&
+            if (!isCustomWidth && !fl.shrinkToFit && !(mergeType & c_oAscMergeType.cols) && !fl.wrapText &&
               c_oAscCanChangeColWidth.all === this.canChangeColWidth) {
                 sstr = c.getValue2(gc_nMaxDigCountView, function () {
                     return true;
@@ -6144,7 +6144,7 @@
         var rowHeight = this._getRowHeight(row);
 
         // ToDo dDigitsCount нужно рассчитывать исходя не из дефалтового шрифта и размера, а исходя из текущего шрифта и размера ячейки
-        if (angle === 0) {
+        if (angle === 0 && !fl.shrinkToFit) {
             str = c.getValue2(dDigitsCount, makeFnIsGoodNumFormat(fl, colWidth));
         } else {
             str = c.getValue2();
