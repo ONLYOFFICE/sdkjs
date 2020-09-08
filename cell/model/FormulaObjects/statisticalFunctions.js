@@ -2072,7 +2072,9 @@ function (window, undefined) {
 		var nCX = getMatrixParams.nCX, nCY = getMatrixParams.nCY; // number of columns
 		var nRX = getMatrixParams.nRX, nRY = getMatrixParams.nRY; //number of rows
 		var K = getMatrixParams.M, N = getMatrixParams.N; // K=number of variables X, N=number of data samples
-		pMatX = getMatrixParams.pMatX, pMatY = getMatrixParams.pMatY;
+		pMatX = getMatrixParams.pMatX;
+		pMatY = getMatrixParams.pMatY;
+		var i, j;
 
 		// Enough data samples?
 		if ((bConstant && (N < K + 1)) || (!bConstant && (N < K)) || (N < 1) || (K < 1)) {
@@ -2095,7 +2097,7 @@ function (window, undefined) {
 		//********
 		// Fill unused cells in pResMat; order (column,row)
 		if (bStats) {
-			for (var i = 2; i < K + 1; i++) {
+			for (i = 2; i < K + 1; i++) {
 				pResMat[i][2] = null;//->PutError( FormulaError::NotAvailable, i, 2);
 				pResMat[i][3] = null;//->PutError( FormulaError::NotAvailable, i, 3);
 				pResMat[i][4] = null;//->PutError( FormulaError::NotAvailable, i, 4);
@@ -2117,21 +2119,23 @@ function (window, undefined) {
 			pMatY = pNewY;
 			// DeltaY is possible here; DeltaX depends on nCase, so later
 			fMeanY = lcl_GetMeanOverAll(pMatY, N);
-			for (var i = 0; i < pMatY.length; i++) {
-				for (var j = 0; j < pMatY[i].length; j++) {
+			for (i = 0; i < pMatY.length; i++) {
+				for (j = 0; j < pMatY[i].length; j++) {
 					pMatY[i][j] = approxSub(pMatY[i][j], fMeanY);
 				}
 			}
 		}
 
 
+		var fIntercept, fSSreg, fDegreesFreedom, fSSresid, fFstatistic, fRMSE, fSigmaSlope, fSigmaIntercept, fR2;
+		var aVecR, pMeans, pMatZ, pSlopes, bIsSingular, row, col, fPart;
 		if (nCase === 1) {
 			// calculate simple regression
 			var fMeanX = 0.0;
 			if (bConstant) {   // Mat = Mat - Mean
 				fMeanX = lcl_GetMeanOverAll(pMatX, N);
-				for (var i = 0; i < pMatX.length; i++) {
-					for (var j = 0; j < pMatX[i].length; j++) {
+				for (i = 0; i < pMatX.length; i++) {
+					for (j = 0; j < pMatX[i].length; j++) {
 						pMatX[i][j] = approxSub(pMatX[i][j], fMeanX);
 					}
 				}
@@ -2143,7 +2147,7 @@ function (window, undefined) {
 				return;
 			}
 			var fSlope = fSumXY / fSumX2;
-			var fIntercept = 0.0;
+			fIntercept = 0.0;
 
 			if (bConstant) {
 				fIntercept = fMeanY - fSlope * fMeanX;
@@ -2153,13 +2157,13 @@ function (window, undefined) {
 			pResMat[0][0] = _bRKP ? Math.exp(fSlope) : fSlope;
 
 			if (bStats) {
-				var fSSreg = fSlope * fSlope * fSumX2;
+				fSSreg = fSlope * fSlope * fSumX2;
 				pResMat[0][4] = fSSreg;
 
-				var fDegreesFreedom = bConstant ? N - 2 : N - 1;
+				fDegreesFreedom = bConstant ? N - 2 : N - 1;
 				pResMat[1][3] = fDegreesFreedom;
 
-				var fSSresid = lcl_GetSSresid(pMatX, pMatY, fSlope, N);
+				fSSresid = lcl_GetSSresid(pMatX, pMatY, fSlope, N);
 				pResMat[1][4] = fSSresid;
 
 				if (fDegreesFreedom === 0.0 || fSSresid === 0.0 || fSSreg === 0.0) {   // exact fit; test SSreg too, because SSresid might be
@@ -2176,24 +2180,24 @@ function (window, undefined) {
 
 					pResMat[0][2] = 1;//->PutDouble(1.0, 0, 2); // R^2
 				} else {
-					var fFstatistic = (fSSreg / K) / (fSSresid / fDegreesFreedom);
+					fFstatistic = (fSSreg / K) / (fSSresid / fDegreesFreedom);
 					pResMat[0][3] = fFstatistic;//->PutDouble(fFstatistic, 0, 3);
 
 					// standard error of estimate
-					var fRMSE = Math.sqrt(fSSresid / fDegreesFreedom);
+					fRMSE = Math.sqrt(fSSresid / fDegreesFreedom);
 					pResMat[1][2] = fRMSE;
 
-					var fSigmaSlope = fRMSE / Math.sqrt(fSumX2);
+					fSigmaSlope = fRMSE / Math.sqrt(fSumX2);
 					pResMat[0][1] = fSigmaSlope;
 
 					if (bConstant) {
-						var fSigmaIntercept = fRMSE * Math.sqrt(fMeanX * fMeanX / fSumX2 + 1.0 / N);
+						fSigmaIntercept = fRMSE * Math.sqrt(fMeanX * fMeanX / fSumX2 + 1.0 / N);
 						pResMat[1][1] = fSigmaIntercept;
 					} else {
 						pResMat[1][1] = null;//->PutError( FormulaError::NotAvailable, 1, 1);
 					}
 
-					var fR2 = fSSreg / (fSSreg + fSSresid);
+					fR2 = fSSreg / (fSSreg + fSSresid);
 					pResMat[0][2] = fR2;
 				}
 			}
@@ -2203,10 +2207,10 @@ function (window, undefined) {
 			// becomes B = R^(-1) * Q' * Y
 			if (nCase === 2) // Y is column
 			{
-				var aVecR = []; // for QR decomposition
+				aVecR = []; // for QR decomposition
 				// Enough memory for needed matrices?
-				var pMeans = GetNewMat(K, 1); // mean of each column
-				var pMatZ; // for Q' * Y , inter alia
+				pMeans = GetNewMat(K, 1); // mean of each column
+
 				if (bStats) {
 					pMatZ = matrixClone(pMatY);
 				}// Y is used in statistic, keep it
@@ -2214,7 +2218,7 @@ function (window, undefined) {
 					pMatZ = pMatY;
 				} // Y can be overwritten
 
-				var pSlopes = GetNewMat(1, K); // from b1 to bK
+				pSlopes = GetNewMat(1, K); // from b1 to bK
 				if (!pMeans || !pMatZ || !pSlopes) {
 					//PushError(FormulaError::CodeOverflow);
 					return;
@@ -2229,8 +2233,8 @@ function (window, undefined) {
 				}
 				// Later on we will divide by elements of aVecR, so make sure
 				// that they aren't zero.
-				var bIsSingular = false;
-				for (var row = 0; row < K && !bIsSingular; row++) {
+				bIsSingular = false;
+				for (row = 0; row < K && !bIsSingular; row++) {
 					bIsSingular = bIsSingular || aVecR[row] === 0;
 				}
 
@@ -2239,34 +2243,34 @@ function (window, undefined) {
 					return;
 				}
 				// Z = Q' Y;
-				for (var col = 0; col < K; col++) {
+				for (col = 0; col < K; col++) {
 					lcl_ApplyHouseholderTransformation(pMatX, col, pMatZ, N);
 				}
 				// B = R^(-1) * Q' * Y <=> B = R^(-1) * Z <=> R * B = Z
 				// result Z should have zeros for index>=K; if not, ignore values
-				for (var col = 0; col < K; col++) {
+				for (col = 0; col < K; col++) {
 					putDouble(pSlopes, col, getDouble(pMatZ, col));
 				}
 				lcl_SolveWithUpperRightTriangle(pMatX, aVecR, pSlopes, K, false);
-				var fIntercept = 0.0;
+				fIntercept = 0.0;
 				if (bConstant) {
 					fIntercept = fMeanY - lcl_GetSumProduct(pMeans, pSlopes, K);
 				}
 				// Fill first line in result matrix
 				pResMat[K][0] = _bRKP ? Math.exp(fIntercept) : fIntercept;
-				for (var i = 0; i < K; i++) {
+				for (i = 0; i < K; i++) {
 					pResMat[K - 1 - i][0] = _bRKP ? Math.exp(getDouble(pSlopes, i)) : getDouble(pSlopes, i);
 				}
 
 
 				if (bStats) {
-					var fSSreg = 0.0;
-					var fSSresid = 0.0;
+					fSSreg = 0.0;
+					fSSresid = 0.0;
 					// re-use memory of Z;
 
 
 					//*********
-					fillDouble(pMatZ, 0.0, 0, 0, 0, N-1);
+					fillDouble(pMatZ, 0.0, 0, 0, 0, N - 1);
 
 
 					// Z = R * Slopes
@@ -2280,7 +2284,7 @@ function (window, undefined) {
 
 					//********
 					// re-use Y for residuals, Y = Y-Z
-					for (var row = 0; row < N; row++) {
+					for (row = 0; row < N; row++) {
 						putDouble(pMatY, row, getDouble(pMatY, row) - getDouble(pMatZ, row));
 					}
 
@@ -2289,7 +2293,7 @@ function (window, undefined) {
 					pResMat[0][4] = fSSreg;
 					pResMat[1][4] = fSSresid;
 
-					var fDegreesFreedom = (bConstant) ? N - K - 1 : N - K;
+					fDegreesFreedom = (bConstant) ? N - K - 1 : N - K;
 					pResMat[1][3] = fDegreesFreedom;
 
 					if (fDegreesFreedom === 0.0 || fSSresid === 0.0 || fSSreg === 0.0) {
@@ -2299,7 +2303,7 @@ function (window, undefined) {
 
 
 						//********
-						for (var i = 0; i < K; i++) {
+						for (i = 0; i < K; i++) {
 							pResMat[K - 1 - i][1] = 0;//->PutDouble(0.0, K-1-i, 1);
 						}
 
@@ -2314,11 +2318,11 @@ function (window, undefined) {
 						//  R^2 = SSreg / (SSreg + SSresid) = 1.0
 						pResMat[0][2] = 1; // R^2
 					} else {
-						var fFstatistic = (fSSreg / (K)) / (fSSresid / fDegreesFreedom);
+						fFstatistic = (fSSreg / (K)) / (fSSresid / fDegreesFreedom);
 						pResMat[0][3] = fFstatistic;
 
 						// standard error of estimate = root mean SSE
-						var fRMSE = Math.sqrt(fSSresid / fDegreesFreedom);
+						fRMSE = Math.sqrt(fSSresid / fDegreesFreedom);
 						pResMat[1][2] = fRMSE;
 
 						// standard error of slopes
@@ -2327,22 +2331,21 @@ function (window, undefined) {
 						// = RMSE * sqrt( Xmean * (R' R)^(-1) * Xmean' + 1/N)
 						// (R' R)^(-1) = R^(-1) * (R')^(-1). Do not calculate it as
 						// a whole matrix, but iterate over unit vectors.
-						var fSigmaIntercept = 0.0;
-						var fPart; // for Xmean * single column of (R' R)^(-1)
+						fSigmaIntercept = 0.0;
 
 
 						//********
-						for (var col = 0; col < K; col++) {
+						for (col = 0; col < K; col++) {
 							//re-use memory of MatZ
 							//pMatZ->FillDouble(0.0,0,0,0,K-1); // Z = unit vector e
-							fillDouble(pMatZ, 0.0, 0, 0, 0, K-1);
+							fillDouble(pMatZ, 0.0, 0, 0, 0, K - 1);
 							putDouble(pMatZ, col, 1);//->PutDouble(1.0, col);
 							//Solve R' * Z = e
 							lcl_SolveWithLowerLeftTriangle(pMatX, aVecR, pMatZ, K, false);
 							// Solve R * Znew = Zold
 							lcl_SolveWithUpperRightTriangle(pMatX, aVecR, pMatZ, K, false);
 							// now Z is column col in (R' R)^(-1)
-							var fSigmaSlope = fRMSE * Math.sqrt(getDouble(pMatZ, col));
+							fSigmaSlope = fRMSE * Math.sqrt(getDouble(pMatZ, col));
 							pResMat[K - 1 - col][1] = fSigmaSlope//->PutDouble(fSigmaSlope, K-1-col, 1);
 							// (R' R) ^(-1) is symmetric
 							if (bConstant) {
@@ -2359,23 +2362,23 @@ function (window, undefined) {
 							pResMat[K][1] = null;//->PutError( FormulaError::NotAvailable, K, 1);
 						}
 
-						var fR2 = fSSreg / (fSSreg + fSSresid);
+						fR2 = fSSreg / (fSSreg + fSSresid);
 						pResMat[0][2] = fR2;
 					}
 				}
 			} else {
 				// nCase == 3
-				var aVecR = []; // for QR decomposition
+				aVecR = []; // for QR decomposition
 				// Enough memory for needed matrices?
-				var pMeans = GetNewMat(1, K); // mean of each row
-				var pMatZ; // for Q' * Y , inter alia
+				pMeans = GetNewMat(1, K); // mean of each row
+
 				if (bStats) {
 					pMatZ = matrixClone(pMatY);
 				}// Y is used in statistic, keep it
 				else {
 					pMatZ = pMatY;
 				} // Y can be overwritten
-				var pSlopes = GetNewMat(K, 1); // from b1 to bK
+				pSlopes = GetNewMat(K, 1); // from b1 to bK
 				if (!pMeans || !pMatZ || !pSlopes) {
 					//PushError(FormulaError::CodeOverflow);
 					return;
@@ -2392,8 +2395,8 @@ function (window, undefined) {
 
 				// Later on we will divide by elements of aVecR, so make sure
 				// that they aren't zero.
-				var bIsSingular = false;
-				for (var row = 0; row < K && !bIsSingular; row++) {
+				bIsSingular = false;
+				for (row = 0; row < K && !bIsSingular; row++) {
 					bIsSingular = bIsSingular || aVecR[row] === 0.0;
 				}
 				if (bIsSingular) {
@@ -2401,7 +2404,7 @@ function (window, undefined) {
 					return;
 				}
 				// Z = Q' Y
-				for (var row = 0; row < K; row++) {
+				for (row = 0; row < K; row++) {
 					lcl_TApplyHouseholderTransformation(pMatX, row, pMatZ, N);
 				}
 
@@ -2409,25 +2412,25 @@ function (window, undefined) {
 				//*******
 				// B = R^(-1) * Q' * Y <=> B = R^(-1) * Z <=> R * B = Z
 				// result Z should have zeros for index>=K; if not, ignore values
-				for (var col = 0; col < K; col++) {
+				for (col = 0; col < K; col++) {
 					pSlopes[col][0] = pMatZ[col][0];
 				}
 
 
 				lcl_SolveWithUpperRightTriangle(pMatX, aVecR, pSlopes, K, true);
-				var fIntercept = 0.0;
+				fIntercept = 0.0;
 				if (bConstant) {
 					fIntercept = fMeanY - lcl_GetSumProduct(pMeans, pSlopes, K);
 				}
 				// Fill first line in result matrix
 				pResMat[K][0] = _bRKP ? Math.exp(fIntercept) : fIntercept;//->PutDouble(_bRKP ? exp(fIntercept) : fIntercept, K, 0 );
-				for (var i = 0; i < K; i++) {
+				for (i = 0; i < K; i++) {
 					pResMat[K - 1 - i][0] = _bRKP ? Math.exp(pSlopes[i][0]) : pSlopes[i][0];
 				}
 
 				if (bStats) {
-					var fSSreg = 0.0;
-					var fSSresid = 0.0;
+					fSSreg = 0.0;
+					fSSresid = 0.0;
 					// re-use memory of Z;
 
 
@@ -2446,7 +2449,7 @@ function (window, undefined) {
 
 					//********
 					// re-use Y for residuals, Y = Y-Z
-					for (var col = 0; col < N; col++) {
+					for (col = 0; col < N; col++) {
 						pMatY[0][col] = pMatY[0][col] - pMatZ[0][col];
 					}
 
@@ -2455,7 +2458,7 @@ function (window, undefined) {
 					pResMat[0][4] = fSSreg;
 					pResMat[1][4] = fSSresid;
 
-					var fDegreesFreedom = bConstant ? N - K - 1 : N - K;
+					fDegreesFreedom = bConstant ? N - K - 1 : N - K;
 					pResMat[1][3] = fDegreesFreedom;
 
 					if (fDegreesFreedom === 0.0 || fSSresid === 0.0 || fSSreg === 0.0) {   // exact fit; incl. case observed values Y are identical
@@ -2467,7 +2470,7 @@ function (window, undefined) {
 						// SigmaSlope[i] = RMSE * sqrt(matrix[i,i]) = 0 * sqrt(...) = 0
 
 
-						for (var i = 0; i < K; i++) {
+						for (i = 0; i < K; i++) {
 							pResMat[K - 1 - i][1] = 0;
 						}
 
@@ -2483,11 +2486,11 @@ function (window, undefined) {
 						//  R^2 = SSreg / (SSreg + SSresid) = 1.0
 						pResMat[0][2] = 1; // R^2
 					} else {
-						var fFstatistic = (fSSreg / K) / (fSSresid / fDegreesFreedom);
+						fFstatistic = (fSSreg / K) / (fSSresid / fDegreesFreedom);
 						pResMat[0][3] = fFstatistic;
 
 						// standard error of estimate = root mean SSE
-						var fRMSE = Math.sqrt(fSSresid / fDegreesFreedom);
+						fRMSE = Math.sqrt(fSSresid / fDegreesFreedom);
 						pResMat[1][2] = fRMSE;
 
 						// standard error of slopes
@@ -2500,9 +2503,9 @@ function (window, undefined) {
 
 
 						//********
-						var fSigmaIntercept = 0.0;
-						var fPart; // for Xmean * single col of (R' R)^(-1)
-						for (var row = 0; row < K; row++) {
+						fSigmaIntercept = 0.0;
+
+						for (row = 0; row < K; row++) {
 							//re-use memory of MatZ
 							//pMatZ->FillDouble(0.0,0,0,K-1,0); // Z = unit vector e
 							pMatZ[0][row] = 1;//->PutDouble(1.0, row);
@@ -2511,7 +2514,7 @@ function (window, undefined) {
 							// Solve R * Znew = Zold
 							lcl_SolveWithUpperRightTriangle(pMatX, aVecR, pMatZ, K, true);
 							// now Z is column col in (R' R)^(-1)
-							var fSigmaSlope = fRMSE * Math.sqrt(pMatZ[0][row]);
+							fSigmaSlope = fRMSE * Math.sqrt(pMatZ[0][row]);
 							pResMat[K - 1 - row][1] = fSigmaSlope;
 							if (bConstant) {
 								fPart = lcl_GetSumProduct(pMeans, pMatZ, K);
@@ -2527,7 +2530,7 @@ function (window, undefined) {
 							pResMat[K][1] = null;
 						}
 
-						var fR2 = fSSreg / (fSSreg + fSSresid);
+						fR2 = fSSreg / (fSSreg + fSSresid);
 						pResMat[0][2] = fR2;
 					}
 				}
