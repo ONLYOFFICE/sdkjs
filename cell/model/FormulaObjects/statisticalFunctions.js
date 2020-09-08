@@ -7464,7 +7464,7 @@ function (window, undefined) {
 		var pMatY = argClone[0];
 		var pMatX = argClone[1];
 		var bConstant = getBoolValue(argClone[2], true);
-		var bStats = getBoolValue(argClone[3], true);
+		var bStats = getBoolValue(argClone[3], false);
 
 		//возвращает матрицу [col][row]
 		var mat = CalculateRGPRKP(pMatY, pMatX, bConstant, bStats);
