@@ -465,7 +465,7 @@
 			{
 				var ie_frame_id = runObject.frameId;
 				var ie_frame_message = {
-					data : JSON.stringify({type : "initialize", guid : guid})
+					data : JSON.stringify({"type" : "initialize", "guid" : guid})
 				};
 
 				document.getElementById(runObject.frameId).addEventListener("load", function(){
