@@ -2043,9 +2043,9 @@ function (window, undefined) {
 			var fSum = getDouble(pMatT, row);
 			for (var col = 0; col < row; col++) {
 				if (bIsTransposed) {
-					fSum -= pMatA[row][col] * getDouble(pMatT, col);
-				} else {
 					fSum -= pMatA[col][row] * getDouble(pMatT, col);
+				} else {
+					fSum -= pMatA[row][col] * getDouble(pMatT, col);
 				}
 			}
 			putDouble(pMatT, row, fSum / pVecR[row]);
