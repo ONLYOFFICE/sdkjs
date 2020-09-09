@@ -6961,7 +6961,7 @@ function (window, undefined) {
 	cGROWTH.prototype.argumentsMax = 4;
 	cGROWTH.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1};
 	cGROWTH.prototype.argumentsType = [argType.reference, argType.reference, argType.reference, argType.logical];
-	cGROWTH.prototype.Calculate = function (arg) {
+	/*cGROWTH.prototype.Calculate = function (arg) {
 
 		var prepeareArgs = prepeareGrowthTrendCalculation(this, arg);
 		if (cElementType.error === prepeareArgs.type) {
@@ -6985,7 +6985,7 @@ function (window, undefined) {
 		} else {
 			return new cError(cErrorType.wrong_value_type);
 		}
-	};
+	};*/
 
 	/**
 	 * @constructor
@@ -10909,7 +10909,7 @@ function (window, undefined) {
 	cTREND.prototype.argumentsMax = 4;
 	cTREND.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1};
 	cTREND.prototype.argumentsType = [argType.reference, argType.reference, argType.reference, argType.logical];
-	cTREND.prototype.Calculate = function (arg) {
+	/*cTREND.prototype.Calculate = function (arg) {
 
 		var prepeareArgs = prepeareGrowthTrendCalculation(this, arg);
 		if (cElementType.error === prepeareArgs.type) {
@@ -10933,7 +10933,7 @@ function (window, undefined) {
 		} else {
 			return new cError(cErrorType.wrong_value_type);
 		}
-	};
+	};*/
 
 	/**
 	 * @constructor

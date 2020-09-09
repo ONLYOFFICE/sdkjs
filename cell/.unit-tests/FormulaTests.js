@@ -12550,7 +12550,7 @@ $( function () {
 		testArrayFormula2("UPPER", 1, 1);
 	});
 
-	test( "Test: \"GROWTH\"", function () {
+	/*test( "Test: \"GROWTH\"", function () {
 
 		ws.getRange2( "A102" ).setValue( "11" );
 		ws.getRange2( "A103" ).setValue( "12" );
@@ -12611,14 +12611,9 @@ $( function () {
 		oParser = new parserFormula( "GROWTH({1,2,3},A104:C105,A106:C107,A106:C107)", "A2", ws );
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getValue(), "#VALUE!");
+	} );*/
 
-		/*oParser = new parserFormula( "GROWTH({3,4,5,6,7})", "A2", ws );
-		ok( oParser.parse() );
-		strictEqual( oParser.calculate().getValue().toFixed(8) - 0, 3.14681449);*/
-
-	} );
-
-	test( "Test: \"TREND\"", function () {
+	/*test( "Test: \"TREND\"", function () {
 
 		ws.getRange2( "A101" ).setValue( "1" );
 		ws.getRange2( "A102" ).setValue( "2" );
@@ -12660,7 +12655,7 @@ $( function () {
 		oParser = new parserFormula( "TREND(B101:B112,A101:A112,A115:A119)", "A2", ws );
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue().toFixed(4) - 0, 146171.5152);
-	} );
+	} );*/
 
 	test( "Test: \"PDURATION\"", function () {
 		oParser = new parserFormula( "PDURATION(2.5%,2000,2200)", "A2", ws );
