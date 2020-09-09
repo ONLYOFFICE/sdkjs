@@ -3127,8 +3127,8 @@ function CBinaryFileWriter()
 
                 if(fill.color){
                     oThis.CorrectUniColorAlpha(fill.color, trans);
-                    oThis.WriteRecord1(0, fill.color, oThis.WriteUniColor);
                 }
+                oThis.WriteRecord1(0, fill.color, oThis.WriteUniColor);
                 oThis.EndRecord();
                 break;
             }
