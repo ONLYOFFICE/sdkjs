@@ -5904,16 +5904,22 @@
 		}
 		return res;
 	};
-	Worksheet.prototype._movePivots = function(oBBoxFrom, oBBoxTo, copyRange, wsTo) {
-		//todo wsTo
-		var offset = new AscCommon.CellBase(oBBoxTo.r1 - oBBoxFrom.r1, oBBoxTo.c1 - oBBoxFrom.c1);
+	Worksheet.prototype._movePivots = function (oBBoxFrom, oBBoxTo, copyRange, offset, wsTo) {
+		if (!wsTo) {
+			wsTo = this;
+		}
 		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
 			if (copyRange) {
-				this.deletePivotTables(oBBoxTo);
-				this.copyPivotTable(oBBoxFrom, offset);
+				wsTo.deletePivotTables(oBBoxTo);
+				this.copyPivotTable(oBBoxFrom, offset, wsTo);
 			} else {
-				this.deletePivotTablesOnMove(oBBoxFrom, oBBoxTo);
-				this.movePivotOffset(oBBoxFrom, offset);
+				if (this === wsTo) {
+					this.deletePivotTablesOnMove(oBBoxFrom, oBBoxTo);
+					this.movePivotOffset(oBBoxFrom, offset);
+				} else {
+					this.copyPivotTable(oBBoxFrom, offset, wsTo);
+					this.deletePivotTables(oBBoxFrom, true);
+				}
 			}
 		}
 	};
@@ -7430,16 +7436,16 @@
 			}
 		}
 	};
-	Worksheet.prototype.copyPivotTable = function (range, offset) {
+	Worksheet.prototype.copyPivotTable = function (range, offset, wsTo) {
 		var t = this;
 		var pivotTable;
 		for (var i = 0; i < this.pivotTables.length; ++i) {
 			pivotTable = this.pivotTables[i];
 			if (pivotTable.isInRange(range)) {
 				var newPivot = pivotTable.clone();
-				newPivot.prepareToPaste(pivotTable.GetWS(), offset);
+				newPivot.prepareToPaste(wsTo, offset);
 				this.workbook.oApi._changePivotSimple(newPivot, true, false, function() {
-					t.insertPivotTable(newPivot, true, false);
+					wsTo.insertPivotTable(newPivot, true, false);
 				});
 			}
 		}
@@ -7501,18 +7507,20 @@
 			}
 		}
 	};
-	Worksheet.prototype._deletePivotTable = function (pivotTables, pivotTable, index) {
+	Worksheet.prototype._deletePivotTable = function (pivotTables, pivotTable, index, withoutCells) {
+		if (!withoutCells) {
+			this.clearPivotTableCell(pivotTable);
+		}
 		this.clearPivotTableStyle(pivotTable);
-		this.clearPivotTableCell(pivotTable);
 		History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_PivotDelete, this.getId(), null,
 			new AscCommonExcel.UndoRedoData_PivotTableRedo(pivotTable.Get_Id(), pivotTable, null));
 		this.pivotTables.splice(index, 1);
 	};
-	Worksheet.prototype.deletePivotTables = function (range) {
+	Worksheet.prototype.deletePivotTables = function (range, withoutCells) {
 		for (var i = this.pivotTables.length - 1; i >= 0; --i) {
 			var pivotTable = this.pivotTables[i];
 			if (pivotTable.intersection(range)) {
-				this._deletePivotTable(this.pivotTables, pivotTable, i);
+				this._deletePivotTable(this.pivotTables, pivotTable, i, withoutCells);
 			}
 		}
 		return true;
