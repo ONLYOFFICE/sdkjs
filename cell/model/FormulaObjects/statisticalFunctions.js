@@ -1417,6 +1417,10 @@ function (window, undefined) {
 		var N = 0;
 		var nCase;
 
+		if (!pMatY || !pMatY[0]) {
+			return false;
+		}
+
 		nRY = pMatY.length;
 		nCY = pMatY[0].length;
 		var nCountY = nCY * nRY;

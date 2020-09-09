@@ -7302,6 +7302,97 @@ $( function () {
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue().toFixed(8) - 0, 2.31034483);
 
+		ws.getRange2( "A102" ).setValue( "1" );
+		ws.getRange2( "A103" ).setValue( "9" );
+		ws.getRange2( "A104" ).setValue( "5" );
+		ws.getRange2( "A105" ).setValue( "7" );
+
+		ws.getRange2( "B102" ).setValue( "0" );
+		ws.getRange2( "B103" ).setValue( "4" );
+		ws.getRange2( "B104" ).setValue( "2" );
+		ws.getRange2( "B105" ).setValue( "3" );
+
+		oParser = new parserFormula( "LINEST(A102:A105,B102:B105,,FALSE)", "A1", ws );
+		oParser.setArrayFormulaRef(ws.getRange2("E106:F106").bbox);
+		ok( oParser.parse() );
+		var array = oParser.calculate();
+		if(AscCommonExcel.cElementType.array === array.type) {
+			strictEqual( array.getElementRowCol(0,0).getValue(), 2);
+			strictEqual( array.getElementRowCol(0,1).getValue(), 1);
+		}
+
+
+		ws.getRange2( "A102" ).setValue( "2310" );
+		ws.getRange2( "A103" ).setValue( "2333" );
+		ws.getRange2( "A104" ).setValue( "2356" );
+		ws.getRange2( "A105" ).setValue( "2379" );
+		ws.getRange2( "A106" ).setValue( "2402" );
+		ws.getRange2( "A107" ).setValue( "2425" );
+		ws.getRange2( "A108" ).setValue( "2448" );
+		ws.getRange2( "A109" ).setValue( "2471" );
+		ws.getRange2( "A110" ).setValue( "2494" );
+		ws.getRange2( "A111" ).setValue( "2517" );
+		ws.getRange2( "A112" ).setValue( "2540" );
+
+		ws.getRange2( 'B102' ).setValue( '2')
+		ws.getRange2( 'B103' ).setValue( '2')
+		ws.getRange2( 'B104' ).setValue( '3')
+		ws.getRange2( 'B105' ).setValue( '3')
+		ws.getRange2( 'B106' ).setValue( '2')
+		ws.getRange2( 'B107' ).setValue( '4')
+		ws.getRange2( 'B108' ).setValue( '2')
+		ws.getRange2( 'B109' ).setValue( '2')
+		ws.getRange2( 'B110' ).setValue( '3')
+		ws.getRange2( 'B111' ).setValue( '4')
+		ws.getRange2( 'B112' ).setValue( '2')
+
+		ws.getRange2( 'C102' ).setValue( '2')
+		ws.getRange2( 'C103' ).setValue( '2')
+		ws.getRange2( 'C104' ).setValue( '1.5')
+		ws.getRange2( 'C105' ).setValue( '2')
+		ws.getRange2( 'C106' ).setValue( '3')
+		ws.getRange2( 'C107' ).setValue( '2')
+		ws.getRange2( 'C108' ).setValue( '1.5')
+		ws.getRange2( 'C109' ).setValue( '2')
+		ws.getRange2( 'C110' ).setValue( '3')
+		ws.getRange2( 'C111' ).setValue( '4')
+		ws.getRange2( 'C112' ).setValue( '3')
+
+		ws.getRange2( 'D102' ).setValue( '20')
+		ws.getRange2( 'D103' ).setValue( '12')
+		ws.getRange2( 'D104' ).setValue( '33')
+		ws.getRange2( 'D105' ).setValue( '43')
+		ws.getRange2( 'D106' ).setValue( '53')
+		ws.getRange2( 'D107' ).setValue( '23')
+		ws.getRange2( 'D108' ).setValue( '99')
+		ws.getRange2( 'D109' ).setValue( '34')
+		ws.getRange2( 'D110' ).setValue( '23')
+		ws.getRange2( 'D111' ).setValue( '55')
+		ws.getRange2( 'D112' ).setValue( '22')
+
+		ws.getRange2( 'E102' ).setValue( '142000')
+		ws.getRange2( 'E103' ).setValue( '144000')
+		ws.getRange2( 'E104' ).setValue( '151000')
+		ws.getRange2( 'E105' ).setValue( '150000')
+		ws.getRange2( 'E106' ).setValue( '139000')
+		ws.getRange2( 'E107' ).setValue( '169000')
+		ws.getRange2( 'E108' ).setValue( '126000')
+		ws.getRange2( 'E109' ).setValue( '142900')
+		ws.getRange2( 'E110' ).setValue( '163000')
+		ws.getRange2( 'E111' ).setValue( '169000')
+		ws.getRange2( 'E112' ).setValue( '149000')
+
+		oParser = new parserFormula( "LINEST(E102:E112,A102:D112,TRUE,TRUE)", "A1", ws );
+		oParser.setArrayFormulaRef(ws.getRange2("E120:E123").bbox);
+		ok( oParser.parse() );
+		var array = oParser.calculate();
+		if(AscCommonExcel.cElementType.array === array.type) {
+			strictEqual( array.getElementRowCol(0,0).getValue().toFixed(7) - 0, -234.2371645);
+			strictEqual( array.getElementRowCol(1,0).getValue().toFixed(8) - 0, 13.26801148);
+			strictEqual( array.getElementRowCol(2,0).getValue().toFixed(9) - 0, 0.996747993);
+			strictEqual( array.getElementRowCol(3,0).getValue().toFixed(7) - 0, 459.7536742);
+		}
+
 	} );
 
     test( "Test: \"MEDIAN\"", function () {
