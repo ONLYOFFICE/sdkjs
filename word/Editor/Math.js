@@ -1412,7 +1412,7 @@ ParaMath.prototype.Remove = function(Direction, bOnAddText)
                         oContent.Select_ElementByPos(nStartPos + 1, true);
                     }
                 }
-                else if (Direction < 0)
+                else
                 {
                     var oPrevElement = oContent.getElem(nStartPos - 1);
                     if (para_Math_Run === oPrevElement.Type)
