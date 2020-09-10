@@ -2700,20 +2700,6 @@
 		}
 		return false;
 	};
-	parserHelper.prototype.isName3D = function (formula, start_pos)
-	{
-		if (this instanceof parserHelper)
-		{
-			this._reset();
-		}
-
-		var is3D = this.is3DRef(formula, start_pos);
-		if(is3D && is3D[0] && is3D[1] && is3D[1].length) {
-			return this.isName(formula, this.pCurrPos);
-		}
-
-		return false;
-	};
 	parserHelper.prototype.isLeftBrace = function (formula, start_pos)
 	{
 		if (this instanceof parserHelper)
