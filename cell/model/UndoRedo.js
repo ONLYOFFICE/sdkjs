@@ -895,17 +895,6 @@ function (window, undefined) {
 				break;
 		}
 	};
-	UndoRedoData_FromToHyperlink.prototype.applyCollaborative = function (nSheetId, collaborativeEditing) {
-		this.from.r1 = collaborativeEditing.getLockMeRow2(nSheetId, this.from.r1);
-		this.from.r2 = collaborativeEditing.getLockMeRow2(nSheetId, this.from.r2);
-		this.from.c1 = collaborativeEditing.getLockMeColumn2(nSheetId, this.from.c1);
-		this.from.c2 = collaborativeEditing.getLockMeColumn2(nSheetId, this.from.c2);
-
-		this.to.r1 = collaborativeEditing.getLockMeRow2(nSheetId, this.to.r1);
-		this.to.r2 = collaborativeEditing.getLockMeRow2(nSheetId, this.to.r2);
-		this.to.c1 = collaborativeEditing.getLockMeColumn2(nSheetId, this.to.c1);
-		this.to.c2 = collaborativeEditing.getLockMeColumn2(nSheetId, this.to.c2);
-	};
 
 	function UndoRedoData_IndexSimpleProp(index, bRow, oOldVal, oNewVal) {
 		this.index = index;
