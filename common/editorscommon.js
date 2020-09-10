@@ -2707,8 +2707,7 @@
 			this._reset();
 		}
 
-		this.pCurrPos = start_pos;
-		var _is3DRef = this.is3DRef(formula, this.pCurrPos);
+		var _is3DRef = this.is3DRef(formula, start_pos);
 		if(_is3DRef && _is3DRef[0] && _is3DRef[1] && _is3DRef[1].length)
 		{
 			var _startPos = this.pCurrPos;
