@@ -3954,19 +3954,8 @@ StyleManager.prototype =
 		this.bUpdateLocation = true;
 		this.LocationSheet = this.LocationRange = this.LocationRangeBbox = null;
 
-		var _isName3D = function () {
-			var ph = {operand_str: null, pCurrPos: 0};
-			var _is3DRef = parserHelp.is3DRef.call(ph, Location, ph.pCurrPos);
-			if(_is3DRef && _is3DRef[0] && _is3DRef[1] && _is3DRef[1].length) {
-				var _isArea = parserHelp.isArea.call(ph, Location, ph.pCurrPos);
-				var _isRef = !_isArea && parserHelp.isRef.call(ph, Location, ph.pCurrPos);
-				return !_isRef && !_isArea && parserHelp.isName.call(ph, Location, ph.pCurrPos);
-			}
-			return false;
-		};
-
 		if (null !== Location) {
-			if (_isName3D() || parserHelp.isName(Location, 0)) {
+			if (parserHelp.isName3D(Location, 0) || parserHelp.isName(Location, 0)) {
 				this.LocationRange = Location;
 			} else {
 				var result = parserHelp.parse3DRef(Location);

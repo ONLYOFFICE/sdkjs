@@ -2700,6 +2700,25 @@
 		}
 		return false;
 	};
+	parserHelper.prototype.isName3D = function (formula, start_pos)
+	{
+		if (this instanceof parserHelper)
+		{
+			this._reset();
+		}
+
+		this.pCurrPos = start_pos;
+		var _is3DRef = this.is3DRef(formula, this.pCurrPos);
+		if(_is3DRef && _is3DRef[0] && _is3DRef[1] && _is3DRef[1].length)
+		{
+			var _startPos = this.pCurrPos;
+			var _isArea = this.isArea(formula, _startPos);
+			var _isRef = !_isArea && this.isRef(formula, _startPos);
+			return !_isRef && !_isArea && this.isName(formula, _startPos);
+		}
+
+		return false;
+	};
 	parserHelper.prototype.isLeftBrace = function (formula, start_pos)
 	{
 		if (this instanceof parserHelper)
