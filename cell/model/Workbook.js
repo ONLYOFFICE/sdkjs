@@ -2298,6 +2298,7 @@
 			History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_SheetAdd, null, null, new UndoRedoData_SheetAdd(insertBefore, newSheet.getName(), wsFrom.getId(), newSheet.getId(), tableNames, opt_base64));
 			History.SetSheetUndo(wsActive.getId());
 			History.SetSheetRedo(newSheet.getId());
+			newSheet.copyFromAfterInsert(wsFrom);
 			if(!(bFromRedo === true))
 			{
 				wsFrom.copyObjects(newSheet, renameParams);
@@ -3778,7 +3779,8 @@
 			this.Drawings[i].graphicObject.Reassign_ImageUrls(oImages);
 		}
 	};
-	Worksheet.prototype.copyFrom=function(wsFrom, sName, tableNames){	var i, elem, range;
+	Worksheet.prototype.copyFrom=function(wsFrom, sName, tableNames){
+		var i, elem, range;
 		var t = this;
 		this.sName = this.workbook.checkValidSheetName(sName) ? sName : this.workbook.getUniqueSheetNameFrom(wsFrom.sName, true);
 		this.bHidden = wsFrom.bHidden;
@@ -3804,9 +3806,6 @@
 		}
 		if(wsFrom.AutoFilter)
 			this.AutoFilter = wsFrom.AutoFilter.clone();
-		for (i = 0; i < wsFrom.pivotTables.length; ++i) {
-			this.insertPivotTable(wsFrom.pivotTables[i].cloneShallow());
-		}
 		for (i in wsFrom.aCols) {
 			var col = wsFrom.aCols[i];
 			if(null != col)
@@ -3887,6 +3886,13 @@
 		return renameParams;
 	};
 
+	Worksheet.prototype.copyFromAfterInsert=function(wsFrom){
+		if (!this.workbook.bUndoChanges && !this.workbook.bRedoChanges) {
+			for (var i = 0; i < wsFrom.pivotTables.length; ++i) {
+				this.insertPivotTable(wsFrom.pivotTables[i].cloneShallow(), true);
+			}
+		}
+	};
 	Worksheet.prototype.copyFromFormulas=function(renameParams, renameSheetMap) {
 		//change cell formulas
 		var t = this;
