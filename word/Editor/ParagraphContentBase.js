@@ -1057,6 +1057,11 @@ CParagraphContentWithContentBase.prototype.ConvertParaContentPosToRangePos = fun
 {
 	return 0;
 };
+CParagraphContentWithContentBase.prototype.ProcessNotInlineObjectCheck = function(oChecker)
+{
+	oChecker.Result = false;
+	oChecker.Found  = true;
+};
 /**
  * Это базовый класс для элементов параграфа, которые сами по себе могут содержать элементы параграфа.
  * @constructor
@@ -2437,11 +2442,6 @@ CParagraphContentWithParagraphLikeContent.prototype.CheckMathPara = function(nMa
 		return false;
 
 	return this.CheckNotInlineObject(nMathPos);
-};
-CParagraphContentWithParagraphLikeContent.prototype.ProcessNotInlineObjectCheck = function(oChecker)
-{
-	oChecker.Result = false;
-	oChecker.Found  = true;
 };
 CParagraphContentWithParagraphLikeContent.prototype.CheckNotInlineObject = function(nMathPos, nDirection)
 {

@@ -1800,14 +1800,14 @@ ParaMath.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
     var bContinueRecalc   = !isInline && PRS.bContinueRecalc === true;
 
     var LDRecalcInfo  = this.Paragraph.Parent.RecalcInfo;
-    
-    // информация о пересчете
-    var RPI = new CRPI();
-    RPI.MergeMathInfo(this.ParaMathRPI);
-    this.Root.PreRecalc(null, this, new CMathArgSize(), RPI);
 
 	if (bStartRecalculate == true && bContinueRecalc == false) // первый пересчет
 	{
+		// информация о пересчете
+		var RPI = new CRPI();
+		RPI.MergeMathInfo(this.ParaMathRPI);
+		this.Root.PreRecalc(null, this, new CMathArgSize(), RPI);
+
 		this.PageInfo.Reset();
 		this.PageInfo.Set_StartPos(Page, ParaLine);
 		this.PageInfo.Update_RelativePage(RelativePage);
