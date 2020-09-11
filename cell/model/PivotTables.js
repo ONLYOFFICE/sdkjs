@@ -3392,7 +3392,7 @@ CT_pivotTableDefinition.prototype._getPivotFieldButton = function (range, index,
 	}
 	var autoFilterObject = new Asc.AutoFiltersOptions();
 	this.fillAutoFiltersOptions(autoFilterObject, index);
-	var isSortState = null !== autoFilterObject.sortVal ? Asc.c_oAscSortOptions.Ascending === autoFilterObject.sortVal : null;
+	var isSortState = null !== autoFilterObject.sortVal ? Asc.c_oAscSortOptions.Descending === autoFilterObject.sortVal : null;
 	var isSetFilter = autoFilterObject.filter.type !== Asc.c_oAscAutoFilterTypes.None;
 	return {isSortState: isSortState, isSetFilter: isSetFilter, row: row, col: col, idPivot: {id: this.Get_Id(), fld: index, row: row, col: col}};
 };
