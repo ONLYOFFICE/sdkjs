@@ -3316,6 +3316,283 @@ function (window, undefined) {
 		}
 	};
 
+	function UndoRedoPivotTables(wb) {
+		this.wb = wb;
+		this.nType = UndoRedoClassTypes.Add(function () {
+			return AscCommonExcel.g_oUndoRedoPivotTables;
+		});
+	}
+
+	UndoRedoPivotTables.prototype.getClassType = function () {
+		return this.nType;
+	};
+	UndoRedoPivotTables.prototype.Undo = function (Type, Data, nSheetId) {
+		this.UndoRedo(Type, Data, nSheetId, true);
+	};
+	UndoRedoPivotTables.prototype.Redo = function (Type, Data, nSheetId) {
+		this.UndoRedo(Type, Data, nSheetId, false);
+	};
+	UndoRedoPivotTables.prototype.UndoRedo = function (Type, Data, nSheetId, bUndo) {
+		var ws = this.wb.getWorksheetById(nSheetId);
+		if (!ws) {
+			return;
+		}
+		var pivotTable = ws.getPivotTableById(Data.pivot);
+		if (!pivotTable) {
+			return;
+		}
+		pivotTable.stashCurReportRange();
+
+		var value = bUndo ? Data.from : Data.to;
+		var valueFrom = bUndo ? Data.to : Data.from;
+		switch (Type) {
+			case AscCH.historyitem_PivotTable_StyleName:
+				pivotTable.asc_getStyleInfo()._setName(value, pivotTable, ws);
+				break;
+			case AscCH.historyitem_PivotTable_StyleShowRowHeaders:
+				pivotTable.asc_getStyleInfo()._setShowRowHeaders(value, pivotTable, ws);
+				break;
+			case AscCH.historyitem_PivotTable_StyleShowColHeaders:
+				pivotTable.asc_getStyleInfo()._setShowColHeaders(value, pivotTable, ws);
+				break;
+			case AscCH.historyitem_PivotTable_StyleShowRowStripes:
+				pivotTable.asc_getStyleInfo()._setShowRowStripes(value, pivotTable, ws);
+				break;
+			case AscCH.historyitem_PivotTable_StyleShowColStripes:
+				pivotTable.asc_getStyleInfo()._setShowColStripes(value, pivotTable, ws);
+				break;
+			case AscCH.historyitem_PivotTable_SetName:
+				pivotTable.asc_setName(value);
+				break;
+			case AscCH.historyitem_PivotTable_SetRowGrandTotals:
+				pivotTable.asc_setRowGrandTotals(value);
+				break;
+			case AscCH.historyitem_PivotTable_SetColGrandTotals:
+				pivotTable.asc_setColGrandTotals(value);
+				break;
+			case AscCH.historyitem_PivotTable_SetPageOverThenDown:
+				pivotTable.asc_setPageOverThenDown(value);
+				break;
+			case AscCH.historyitem_PivotTable_SetPageWrap:
+				pivotTable.asc_setPageWrap(value);
+				break;
+			case AscCH.historyitem_PivotTable_SetShowHeaders:
+				pivotTable.asc_setShowHeaders(value);
+				break;
+			case AscCH.historyitem_PivotTable_SetCompact:
+				pivotTable.asc_setCompact(value);
+				break;
+			case AscCH.historyitem_PivotTable_SetOutline:
+				pivotTable.asc_setOutline(value);
+				break;
+			case AscCH.historyitem_PivotTable_SetGridDropZones:
+				pivotTable.asc_setGridDropZones(value);
+				break;
+			case AscCH.historyitem_PivotTable_SetFillDownLabelsDefault:
+				pivotTable.asc_setFillDownLabelsDefault(value);
+				break;
+			case AscCH.historyitem_PivotTable_SetDataOnRows:
+				pivotTable.setDataOnRows(value);
+				break;
+			case AscCH.historyitem_PivotTable_SetDataPosition:
+				pivotTable.setDataPosition(value);
+				break;
+			case AscCH.historyitem_PivotTable_SetAltText:
+				pivotTable.setTitle(value);
+				break;
+			case AscCH.historyitem_PivotTable_SetAltTextSummary:
+				pivotTable.setDescription(value);
+				break;
+			case AscCH.historyitem_PivotTable_AddPageField:
+				if (bUndo) {
+					pivotTable.removeNoDataField(Data.from);
+				} else {
+					pivotTable.addPageField(Data.from, Data.to);
+				}
+				break;
+			case AscCH.historyitem_PivotTable_AddRowField:
+				if (bUndo) {
+					pivotTable.removeNoDataField(Data.from);
+				} else {
+					pivotTable.addRowField(Data.from, Data.to);
+				}
+				break;
+			case AscCH.historyitem_PivotTable_AddColField:
+				if (bUndo) {
+					pivotTable.removeNoDataField(Data.from);
+				} else {
+					pivotTable.addColField(Data.from, Data.to);
+				}
+				break;
+			case AscCH.historyitem_PivotTable_AddDataField:
+				if (bUndo) {
+					pivotTable.removeDataField(Data.from, Data.to);
+				} else {
+					pivotTable.addDataField(Data.from, Data.to);
+				}
+				break;
+			case AscCH.historyitem_PivotTable_RemovePageField:
+				if (bUndo) {
+					pivotTable.addPageField(Data.from, Data.to);
+				} else {
+					pivotTable.removeNoDataField(Data.from);
+				}
+				break;
+			case AscCH.historyitem_PivotTable_RemoveRowField:
+				if (bUndo) {
+					pivotTable.addRowField(Data.from, Data.to);
+				} else {
+					pivotTable.removeNoDataField(Data.from);
+				}
+				break;
+			case AscCH.historyitem_PivotTable_RemoveColField:
+				if (bUndo) {
+					pivotTable.addColField(Data.from, Data.to);
+				} else {
+					pivotTable.removeNoDataField(Data.from);
+				}
+				break;
+			case AscCH.historyitem_PivotTable_RemoveDataField:
+				for (var i = Data.to.length - 1; i >= 0; --i) {
+					if (bUndo) {
+						pivotTable.addDataField(Data.from, Data.to[i]);
+					} else {
+						pivotTable.removeDataField(Data.from, Data.to[i]);
+					}
+				}
+				break;
+			case AscCH.historyitem_PivotTable_MovePageField:
+				pivotTable.moveField(pivotTable.asc_getPageFields(), valueFrom, value);
+				break;
+			case AscCH.historyitem_PivotTable_MoveRowField:
+				pivotTable.moveField(pivotTable.asc_getRowFields(), valueFrom, value);
+				break;
+			case AscCH.historyitem_PivotTable_MoveColField:
+				pivotTable.moveField(pivotTable.asc_getColumnFields(), valueFrom, value);
+				break;
+			case AscCH.historyitem_PivotTable_MoveDataField:
+				pivotTable.moveField(pivotTable.asc_getDataFields(), valueFrom, value);
+				break;
+			case AscCH.historyitem_PivotTable_RowItems:
+				pivotTable.setRowItems(value);
+				break;
+			case AscCH.historyitem_PivotTable_ColItems:
+				pivotTable.setColItems(value);
+				break;
+			case AscCH.historyitem_PivotTable_Location:
+				pivotTable.setLocation(value);
+				break;
+			case AscCH.historyitem_PivotTable_CacheField:
+				var cacheFields = pivotTable.asc_getCacheFields();
+				if(cacheFields && cacheFields[Data.index]) {
+					cacheFields[Data.index].checkSharedItems(pivotTable, Data.index, pivotTable.getRecords());
+				}
+				break;
+			case AscCH.historyitem_PivotTable_PivotField:
+				var pivotFields = pivotTable.asc_getPivotFields();
+				if (pivotFields[Data.index]) {
+					pivotFields[Data.index] = value;
+				}
+				break;
+			case AscCH.historyitem_PivotTable_PivotFilter:
+				if (value) {
+					if (!pivotTable.filters) {
+						pivotTable.filters = new CT_PivotFilters();
+					}
+					pivotTable.filters.filter.splice(Data.index, 0, value);
+				} else if (pivotTable.filters) {
+					pivotTable.filters.filter.splice(Data.index, 1);
+					if (pivotTable.filters.filter.length == 0) {
+						pivotTable.filters = null;
+					}
+				}
+				break;
+			case AscCH.historyitem_PivotTable_PageFilter:
+				var pageField = pivotTable.getPageFieldByFieldIndex(Data.index);
+				if (pageField) {
+					pageField.item = value;
+				}
+				break;
+		}
+	};
+
+	function UndoRedoPivotFields(wb) {
+		this.wb = wb;
+		this.nType = UndoRedoClassTypes.Add(function () {
+			return AscCommonExcel.g_oUndoRedoPivotFields;
+		});
+	}
+
+	UndoRedoPivotFields.prototype.getClassType = function () {
+		return this.nType;
+	};
+	UndoRedoPivotFields.prototype.Undo = function (Type, Data, nSheetId) {
+		this.UndoRedo(Type, Data, nSheetId, true);
+	};
+	UndoRedoPivotFields.prototype.Redo = function (Type, Data, nSheetId) {
+		this.UndoRedo(Type, Data, nSheetId, false);
+	};
+	UndoRedoPivotFields.prototype.UndoRedo = function (Type, Data, nSheetId, bUndo) {
+		var ws = this.wb.getWorksheetById(nSheetId);
+		if (!ws) {
+			return;
+		}
+		var pivotTable = ws.getPivotTableById(Data.pivot);
+		if (!pivotTable) {
+			return;
+		}
+		var fields;
+		if (Type < AscCH.historyitem_PivotTable_DataFieldSetName) {
+			fields = pivotTable.asc_getPivotFields();
+		} else {
+			fields = pivotTable.asc_getDataFields();
+		}
+		if (!fields || !fields[Data.index]) {
+			return;
+		}
+		var field = fields[Data.index];
+		pivotTable.stashCurReportRange();
+
+		var value = bUndo ? Data.from : Data.to;
+		switch (Type) {
+			case AscCH.historyitem_PivotTable_PivotFieldSetName:
+				field.asc_setName(value, pivotTable, Data.index);
+				break;
+			case AscCH.historyitem_PivotTable_PivotFieldSetOutline:
+				field.asc_setOutline(value, pivotTable, Data.index);
+				break;
+			case AscCH.historyitem_PivotTable_PivotFieldSetCompact:
+				field.asc_setCompact(value, pivotTable, Data.index);
+				break;
+			case AscCH.historyitem_PivotTable_PivotFieldFillDownLabelsDefault:
+				field.asc_setFillDownLabelsDefault(value, pivotTable, Data.index);
+				break;
+			case AscCH.historyitem_PivotTable_PivotFieldSetInsertBlankRow:
+				field.asc_setInsertBlankRow(value, pivotTable, Data.index);
+				break;
+			case AscCH.historyitem_PivotTable_PivotFieldSetDefaultSubtotal:
+				field.asc_setDefaultSubtotal(value, pivotTable, Data.index);
+				field.checkSubtotal();
+				break;
+			case AscCH.historyitem_PivotTable_PivotFieldSetSubtotalTop:
+				field.asc_setSubtotalTop(value, pivotTable, Data.index);
+				break;
+			case AscCH.historyitem_PivotTable_PivotFieldSetShowAll:
+				field.asc_setShowAll(value, pivotTable, Data.index);
+				break;
+			case AscCH.historyitem_PivotTable_PivotFieldSetSubtotals:
+				field.setSubtotals(value, pivotTable, Data.index);
+				field.checkSubtotal();
+				break;
+			case AscCH.historyitem_PivotTable_DataFieldSetName:
+				field.asc_setName(value, pivotTable, Data.index);
+				break;
+			case AscCH.historyitem_PivotTable_DataFieldSetSubtotal:
+				field.asc_setSubtotal(value, pivotTable, Data.index);
+				break;
+		}
+	};
+
 	function UndoRedoSlicer(wb) {
 		this.wb = wb;
 		this.nType = UndoRedoClassTypes.Add(function () {
@@ -3524,6 +3801,8 @@ function (window, undefined) {
 	window['AscCommonExcel'].UndoRedoSortState = UndoRedoSortState;
 	window['AscCommonExcel'].UndoRedoData_BinaryWrapper = UndoRedoData_BinaryWrapper;
 	window['AscCommonExcel'].UndoRedoData_BinaryWrapper2 = UndoRedoData_BinaryWrapper2;
+	window['AscCommonExcel'].UndoRedoPivotTables = UndoRedoPivotTables;
+	window['AscCommonExcel'].UndoRedoPivotFields = UndoRedoPivotFields;
 	window['AscCommonExcel'].UndoRedoSlicer = UndoRedoSlicer;
 
 	window['AscCommonExcel'].g_oUndoRedoWorkbook = null;
@@ -3535,6 +3814,7 @@ function (window, undefined) {
 	window['AscCommonExcel'].g_oUndoRedoAutoFilters = null;
 	window['AscCommonExcel'].g_oUndoRedoSparklines = null;
 	window['AscCommonExcel'].g_oUndoRedoPivotTables = null;
+	window['AscCommonExcel'].g_oUndoRedoPivotFields = null;
 	window['AscCommonExcel'].g_oUndoRedoSharedFormula = null;
 	window['AscCommonExcel'].g_oUndoRedoLayout = null;
 	window['AscCommonExcel'].g_UndoRedoArrayFormula = null;

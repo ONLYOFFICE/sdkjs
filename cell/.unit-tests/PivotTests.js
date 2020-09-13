@@ -122,7 +122,8 @@ $(function() {
 	AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function() {
 	};
 
-
+	var CT_PivotField = Asc.CT_PivotField;
+	var c_oAscDataConsolidateFunction = Asc.c_oAscDataConsolidateFunction;
 	var sData = AscCommon.getEmpty();
 	var api = new Asc.spreadsheet_api({
 		'id-view': 'editor_sdk'
