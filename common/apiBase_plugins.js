@@ -530,22 +530,26 @@
                 }
                 case "watermark_on_draw":
                 {
-                    if (obj.watermark_on_draw && obj.watermark_on_draw !== "undefined") {
-                        var sText = "";
-                        var tempProp = JSON.parse(obj.watermark_on_draw);
-                        tempProp.paragraphs.forEach(function(el) {
-                            sText += el.runs.reduce(function(accum, curel) {
-                                return accum + curel.text;
-                            }, "");
-                        });
-                        if(!(typeof sText === "string")) {
-                            sText = "";
-                        }
-                        AscFonts.FontPickerByCharacter.checkText(sText, this, function () {
-                            this.watermarkDraw = obj[prop] ? new AscCommon.CWatermarkOnDraw(obj[prop], this) : null;
-                            this.watermarkDraw.checkOnReady();
-                        });
-                    }
+					var sText = "";
+					var tempProp = JSON.parse(obj[prop]);
+					if (tempProp["paragraphs"])
+					{
+						tempProp["paragraphs"].forEach(function (el) {
+							if (el["runs"])
+							{
+								sText += el["runs"].reduce(function (accum, curel) {
+									return accum + (curel["text"] ? curel["text"] : "");
+								}, "");
+							}
+						});
+					}
+					if(!(typeof sText === "string")) {
+						sText = "";
+					}
+					AscFonts.FontPickerByCharacter.checkText(sText, this, function () {
+						this.watermarkDraw = obj[prop] ? new AscCommon.CWatermarkOnDraw(obj[prop], this) : null;
+						this.watermarkDraw.checkOnReady();
+					});
                     break;
                 }
                 case "hideContentControlTrack":
