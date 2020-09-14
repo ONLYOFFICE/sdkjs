@@ -6445,7 +6445,6 @@ function parserFormula( formula, parent, _ws ) {
 				}
 
 				if (found_operator !== null) {
-					found_operator.bArrayFormula = null;
 					var _nullArgCount = t.Formula[ph.pCurrPos + 1] === ")";
 					if (!_checkReferenceCount(_nullArgCount ? 0.6 : 0.5)) {
 						return false;
