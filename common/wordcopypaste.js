@@ -5279,7 +5279,7 @@ PasteProcessor.prototype =
 					var type = range.getType();
 					if (null != align.hor) {
 						oCurPar.Pr.Jc = align.hor;
-					} else if (null === type || AscCommon.CellValueType.Number === type) {
+					} else if (AscCommon.CellValueType.Number === type) {
 						oCurPar.Pr.Jc = AscCommon.align_Right;
 					}
 				}
