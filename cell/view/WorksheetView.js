@@ -13790,11 +13790,32 @@
 		return true;
     };
 
+	WorksheetView.prototype._autoFitColumnsWidth = function (ranges) {
+		var c1, c2, range;
+		var max = this.model.getColsCount();
+
+		for (var i = 0; i < ranges.length; ++i) {
+			range = ranges[i];
+			c1 = range.c1;
+			c2 = Math.min(range.c2, max);
+			for (; c1 <= c2; ++c1) {
+				this._autoFitColumnWidth(c1, range.r1, range.r2);
+			}
+		}
+	};
     WorksheetView.prototype.autoFitColumnsWidth = function (col) {
 		var viewMode = this.handlers.trigger('getViewMode');
         var t = this;
-        var max = this.model.getColsCount();
-		var selectionRanges = t.model.selectionRange.clone().ranges;
+        var r1 = 0, r2 = this.model.getRowsCount() - 1;
+		var ranges = [];
+		if (col) {
+			ranges.push(new Asc.Range(col, r1, col, r2));
+		} else {
+			var selectionRanges = this.model.selectionRange.ranges;
+			for (var i = 0; i < selectionRanges.length; ++i) {
+				ranges.push(new Asc.Range(selectionRanges.c1, r1, selectionRanges.c2, r2));
+			}
+		}
 
 		var onChangeCallback = function (isSuccess) {
 			if (false === isSuccess) {
@@ -13804,23 +13825,10 @@
 			if (viewMode) {
 				History.TurnOff();
 			}
-			var c1, c2;
 
 			History.Create_NewPoint();
 			History.StartTransaction();
-
-			if (null !== col) {
-				t._autoFitColumnWidth(col, null, null);
-			} else {
-				for (var i = 0; i < selectionRanges.length; ++i) {
-					c1 = selectionRanges[i].c1;
-					c2 = Math.min(selectionRanges[i].c2, max);
-					for (; c1 <= c2; ++c1) {
-						t._autoFitColumnWidth(c1, null, null);
-					}
-				}
-			}
-
+			t._autoFitColumnsWidth(ranges);
 			t.draw();
 			History.EndTransaction();
 			if (viewMode) {
