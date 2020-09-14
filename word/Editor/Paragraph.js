@@ -884,11 +884,9 @@ Paragraph.prototype.Internal_Content_Add = function(Pos, Item, bCorrectPos)
 	}
 
 	// Передвинем все метки слов для проверки орфографии
-	// Обновляем позиции в SearchResults
-	var SpellingsCount = this.SpellChecker.Elements.length;
-	for (var Pos = 0; Pos < SpellingsCount; Pos++)
+	for (var nIndex = 0, nCount = this.SpellChecker.Elements.length; nIndex < nCount; ++nIndex)
 	{
-		var Element    = this.SpellChecker.Elements[Pos];
+		var Element    = this.SpellChecker.Elements[nIndex];
 		var ContentPos = Element.StartPos;
 
 		if (ContentPos.Data[0] >= Pos)
@@ -990,10 +988,9 @@ Paragraph.prototype.Internal_Content_Remove = function(Pos)
 	if (true === this.DeleteCommentOnRemove && para_Comment === Item.Type && this.LogicDocument)
 		this.LogicDocument.RemoveComment(Item.CommentId, true, false);
 
-	var SpellingsCount = this.SpellChecker.Elements.length;
-	for (var Pos = 0; Pos < SpellingsCount; Pos++)
+	for (var nIndex = 0, nCount = this.SpellChecker.Elements.length; nIndex < nCount; ++nIndex)
 	{
-		var Element    = this.SpellChecker.Elements[Pos];
+		var Element    = this.SpellChecker.Elements[nIndex];
 		var ContentPos = Element.StartPos;
 
 		if (ContentPos.Data[0] > Pos)
