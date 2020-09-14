@@ -533,13 +533,13 @@
                     var sText = "";
                     var tempProp = {};
                     try
-					{
-						tempProp = (typeof obj[prop] === "string") ? JSON.parse(obj[prop]) : obj[prop];
-					}
-					catch (err)
-					{
-						tempProp = {};
-					}
+                    {
+                        tempProp = (typeof obj[prop] === "string") ? JSON.parse(obj[prop]) : obj[prop];
+                    }
+                    catch (err)
+                    {
+                        tempProp = {};
+                    }
                     if (tempProp["paragraphs"])
                     {
                         tempProp["paragraphs"].forEach(function (el) {
