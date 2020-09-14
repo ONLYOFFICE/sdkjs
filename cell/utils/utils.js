@@ -1073,7 +1073,6 @@
 			});
 		};
 		SelectionRange.prototype.inContains = function (ranges) {
-			var t = this;
 			return this.ranges.every(function (item1) {
 				return ranges.some(function (item2) {
 					return item2.containsRange(item1);
