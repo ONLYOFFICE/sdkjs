@@ -122,6 +122,7 @@
 	cCell.prototype.argumentsMax = 2;
 	cCell.prototype.ca = true;
 	cCell.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.area_to_ref;
+	cCell.prototype.argumentsType = [argType.text, argType.reference];
 	cCell.prototype.Calculate = function (arg, opt_bbox, opt_defName, ws) {
 		//специально ввожу ограничения - минимум 2 аргумента
 		//в случае одного аргумента необходимо следить всегда за последней измененной ячейкой
