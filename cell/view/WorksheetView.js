@@ -13790,7 +13790,7 @@
 		return true;
     };
 
-	WorksheetView.prototype._autoFitColumnsWidth = function (ranges) {
+	WorksheetView.prototype._autoFitColumnsWidth = function (ranges, onlyIfMore) {
 		var c1, c2, range;
 		var max = this.model.getColsCount();
 
@@ -13799,7 +13799,7 @@
 			c1 = range.c1;
 			c2 = Math.min(range.c2, max);
 			for (; c1 <= c2; ++c1) {
-				this._autoFitColumnWidth(c1, range.r1, range.r2);
+				this._autoFitColumnWidth(c1, range.r1, range.r2, onlyIfMore);
 			}
 		}
 	};
