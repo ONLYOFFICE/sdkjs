@@ -531,7 +531,15 @@
                 case "watermark_on_draw":
                 {
                     var sText = "";
-                    var tempProp = JSON.parse(obj[prop]);
+                    var tempProp = {};
+                    try
+					{
+						tempProp = (typeof obj[prop] === "string") ? JSON.parse(obj[prop]) : obj[prop];
+					}
+					catch (err)
+					{
+						tempProp = {};
+					}
                     if (tempProp["paragraphs"])
                     {
                         tempProp["paragraphs"].forEach(function (el) {
