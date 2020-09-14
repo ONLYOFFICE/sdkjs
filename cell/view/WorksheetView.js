@@ -14845,7 +14845,15 @@
 						//для грамотного отображения формул(#46170)
 						//TODO пересчёт происходит два раза! в unlockRecal и EndTransaction.
 						t.model.workbook.dependencyFormulas.unlockRecal();
-						t._onUpdateFormatTable(filterRange, !!(styleName), true);
+
+						if (styleName) {
+							t._updateRange(filterRange);
+							t._autoFitColumnsWidth([new Asc.Range(filterRange.c1, filterRange.r1, filterRange.c2, filterRange.r1)]);
+							t.draw();
+						} else {
+							t._onUpdateFormatTable(filterRange, !!(styleName), true);
+						}
+
 						History.EndTransaction();
 
 						if (isSlowOperation) {
