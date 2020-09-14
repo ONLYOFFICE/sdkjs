@@ -6855,7 +6855,7 @@ $( function () {
 
 		oParser = new parserFormula( "FORMULATEXT(S101:S102)", "A1", ws );
 		ok( oParser.parse() );
-		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), "=TODAY()" );
+		strictEqual( oParser.calculate().getValue(), "=TODAY()" );
 
 		oParser = new parserFormula( "FORMULATEXT(S102)", "A1", ws );
 		ok( oParser.parse() );

@@ -5990,7 +5990,7 @@ function parserFormula( formula, parent, _ws ) {
 					}
 				} else {
 					if (top_elem_arg_count >= func.argumentsMin) {
-						t.outStack.push(null !== startArrayArg ? - top_elem_arg_count : top_elem_arg_count);
+						t.outStack.push(null !== startArrayArg && startArrayArg < currentFuncLevel  ? - top_elem_arg_count : top_elem_arg_count);
 						if (!func.checkArguments(top_elem_arg_count)) {
 							bError = true;
 						}
@@ -6445,6 +6445,7 @@ function parserFormula( formula, parent, _ws ) {
 				}
 
 				if (found_operator !== null) {
+					found_operator.bArrayFormula = null;
 					var _nullArgCount = t.Formula[ph.pCurrPos + 1] === ")";
 					if (!_checkReferenceCount(_nullArgCount ? 0.6 : 0.5)) {
 						return false;
