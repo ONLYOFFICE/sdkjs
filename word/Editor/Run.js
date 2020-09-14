@@ -4883,8 +4883,8 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
 
 				if (Item.IsNumValue())
 				{
-					PRSA.X    += Item.WidthVisible;
-					PRSA.LastW = Item.WidthVisible;
+					PRSA.X    += Item.Get_WidthVisible();
+					PRSA.LastW = Item.Get_WidthVisible();
 				}
 
 				break;
