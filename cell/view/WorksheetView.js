@@ -1583,11 +1583,15 @@
 			return;
 		}
 
-        var x = 0;
-        for (var l = this.cols.length, i = this.updateColumnsStart; i < l; ++i) {
-            this.cols[i].left = x;
-            x += this.cols[i].width;
-        }
+		var i = this.updateColumnsStart;
+		var l = this.cols.length;
+		if (i < l) {
+			var x = (0 === i) ? 0 : this.cols[--i].left;
+			for (; i < l; ++i) {
+				this.cols[i].left = x;
+				x += this.cols[i].width;
+			}
+		}
 
         if (this.objectRender) {
 			this.objectRender.updateDrawingsTransform({target: c_oTargetType.ColumnResize, col: this.updateColumnsStart});
