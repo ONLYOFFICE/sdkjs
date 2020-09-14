@@ -1592,11 +1592,14 @@
 				x += this.cols[i].width;
 			}
 		}
-
-        if (this.objectRender) {
-			this.objectRender.updateDrawingsTransform({target: c_oTargetType.ColumnResize, col: this.updateColumnsStart});
-		}
+		var updateColumnsStart = this.updateColumnsStart;
 		this.updateColumnsStart = Number.MAX_VALUE;
+
+		this._updateVisibleColsCount(true); // ToDo check need calculate
+		this._updateDrawingArea(); // ToDo может отказаться от своих area в DO?
+        if (this.objectRender) {
+			this.objectRender.updateDrawingsTransform({target: c_oTargetType.ColumnResize, col: updateColumnsStart});
+		}
     };
 
     /** Обновляет позицию строк */
@@ -14720,8 +14723,6 @@
 		}
 
 		this._updateColumnPositions();
-		this._updateVisibleColsCount(true); // ToDo check need calculate
-		this._updateDrawingArea(); // ToDo не в том месте этот вызов. Может отказаться от своих area в DO?
 
 		this._reinitializeScroll();
 	};
