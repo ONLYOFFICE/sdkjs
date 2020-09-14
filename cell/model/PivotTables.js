@@ -5099,13 +5099,20 @@ CT_pivotTableDefinition.prototype.removeFilter = function(index, isRemovePageFil
 	}
 	var pageField = this.getPageFieldByFieldIndex(index);
 	if (pageField) {
+		var pageFieldItemOld = pageField.item;
 		pageField.item = null;
-		if (isRemovePageFilter) {
-			//todo
-		}
+		History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_PageFilter,
+			this.worksheet ? this.worksheet.getId() : null, null,
+			new AscCommonExcel.UndoRedoData_PivotField(this.Get_Id(), index, pageFieldItemOld, null));
 	}
 	var pivotField = this.asc_getPivotFields()[index];
-	pivotField.removeFilter();
+	if (pivotField) {
+		var pivotFieldOld = pivotField.clone();
+		pivotField.removeFilter();
+		History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_PivotField,
+			this.worksheet ? this.worksheet.getId() : null, null,
+			new AscCommonExcel.UndoRedoData_PivotField(this.Get_Id(), index, pivotFieldOld, pivotField.clone()));
+	}
 	this.setChanged(true);
 };
 CT_pivotTableDefinition.prototype.removeValueFilters = function() {
@@ -6677,7 +6684,7 @@ function CT_Index() {
 }
 CT_Index.prototype.clone = function() {
 	var res = new CT_Index();
-	res.v = res.v;
+	res.v = this.v;
 	return res;
 };
 CT_Index.prototype.readAttributes = function(attr, uq) {
