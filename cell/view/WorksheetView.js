@@ -2260,8 +2260,23 @@
 					printPagesData.pageHeight / vector_koef, printPagesData.scale);
 				}
 
+				//TODO временно подменяю scale. пересмотреть! подменять либо всегда, либо флаг добавить.
+				var _modelScale, _modelPagesOptions;
+				if(t.model.PagePrintOptions && t.model.PagePrintOptions.pageSetup) {
+					_modelScale = t.model.PagePrintOptions.pageSetup.scale;
+					t.model.PagePrintOptions.pageSetup.scale = printPagesData.scale;
+				} else {
+					_modelPagesOptions = t.model.PagePrintOptions;
+					t.model.PagePrintOptions = new Asc.asc_CPageOptions(t.model);
+					t.model.PagePrintOptions.pageSetup.scale = printPagesData.scale;
+				}
 				// Отрисовываем ячейки и бордеры
 				t._drawCellsAndBorders(drawingCtx, range, offsetX, offsetY);
+				if (_modelPagesOptions) {
+					t.model.PagePrintOptions = _modelPagesOptions;
+				} else {
+					t.model.PagePrintOptions.pageSetup.scale = _modelScale;
+				}
 
 				drawingCtx.RemoveClipRect();
 
