@@ -3190,8 +3190,7 @@ var editor;
           if (cellsChange.length !== 0 && lastFindOptions && !isCellEditing) {
             this.asc_replaceMisspelledWords(lastFindOptions);
           }
-        }
-        if (this.spellcheckState.isStart) {
+
           this.handlers.trigger("asc_onSpellCheckVariantsFound", null);
           this.spellcheckState.clean();
         }
