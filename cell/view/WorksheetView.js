@@ -1439,6 +1439,11 @@
     };
 
 	WorksheetView.prototype._calcColWidth = function (i) {
+		if (i !== this.cols.length) {
+			// Only this.model.getColsCount() can >= i
+			this._calcWidthColumns(AscCommonExcel.recalcType.newLines);
+		}
+
 		var w;
 		// Получаем свойства колонки
 		var column = this.model._getColNoEmptyWithAll(i);
