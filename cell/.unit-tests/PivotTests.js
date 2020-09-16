@@ -111,7 +111,9 @@ $(function() {
 	};
 	AscCommonExcel.WorksheetView.prototype._init = function() {
 	};
-	AscCommonExcel.WorksheetView.prototype._onUpdateFormatTable = function() {
+	AscCommonExcel.WorksheetView.prototype.updateRanges = function() {
+	};
+	AscCommonExcel.WorksheetView.prototype._autoFitColumnsWidth = function() {
 	};
 	AscCommonExcel.WorksheetView.prototype.setSelection = function() {
 	};
