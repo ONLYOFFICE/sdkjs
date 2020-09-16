@@ -203,7 +203,7 @@
 			}
 			this.HtmlArea.id                   	= "area_id";
 
-			if (this.Api.isViewMode)
+			if (this.Api.isViewMode && this.Api.isMobileVersion)
 				this.setReadOnlyWrapper(true);
 
 			var _style = ("left:-" + (this.HtmlAreaWidth >> 1) + "px;top:" + (-this.HtmlAreaOffset) + "px;");
