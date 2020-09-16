@@ -16455,6 +16455,7 @@
 			}
 		}
 
+		t._endSelectionShape()
 		//todo обработать выделение при клике с зажатым ctrl
 		t.setSelection(new Asc.Range(startCol, startRow, endCol, endRow));
 	};
