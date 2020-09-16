@@ -13836,12 +13836,12 @@
         var t = this;
         var r1 = 0, r2 = this.model.getRowsCount() - 1;
 		var ranges = [];
-		if (col) {
+		if (null !== col) {
 			ranges.push(new Asc.Range(col, r1, col, r2));
 		} else {
 			var selectionRanges = this.model.selectionRange.ranges;
 			for (var i = 0; i < selectionRanges.length; ++i) {
-				ranges.push(new Asc.Range(selectionRanges.c1, r1, selectionRanges.c2, r2));
+				ranges.push(new Asc.Range(selectionRanges[i].c1, r1, selectionRanges[i].c2, r2));
 			}
 		}
 
