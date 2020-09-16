@@ -423,7 +423,6 @@
         this.scrollType = 0;
         this.updateRowHeightValuePx = null;
         this.updateColumnsStart = Number.MAX_VALUE;
-		this.updateDrawingsColumnsStart = Number.MAX_VALUE; // ToDo delete this. Update with
 
         this.viewPrintLines = false;
 
@@ -1609,6 +1608,8 @@
 
     /** Обновляет позицию строк */
     WorksheetView.prototype._updateRowPositions = function () {
+    	// ToDo add updateStart. See _updateColumnPositions
+
         var y = this.cellsTop;
         for (var l = this.rows.length, i = 0; i < l; ++i) {
             this.rows[i].top = y;
@@ -13147,6 +13148,36 @@
 		return this.collaborativeEditing.lock(arrLocks, newCallback);
     };
 
+    WorksheetView.prototype._onChangeSheetViewSettings = function (type) {
+		if (AscCH.historyitem_Worksheet_SetDisplayHeadings === type) {
+			this._calcHeaderRowHeight(); //ToDo оставить только _calcHeaderRowHeight, а в нем выставить необходимость обновления
+			this._updateRowPositions();
+			this._updateVisibleRowsCount(/*skipScrolReinit*/true);
+		}
+	};
+    WorksheetView.prototype.changeSheetViewSettings = function (type, val) {
+		// Проверка глобального лока
+		if (this.collaborativeEditing.getGlobalLock()) {
+			return;
+		}
+
+    	var t = this;
+    	var onChangeSheetViewSettings = function (isSuccess) {
+			if (false === isSuccess) {
+				return;
+			}
+
+			if (AscCH.historyitem_Worksheet_SetDisplayHeadings === type) {
+				t.model.setDisplayHeadings(val);
+			} else {
+				t.model.setDisplayGridlines(val);
+			}
+			t.draw();
+		};
+
+		this._isLockedAll(onChangeSheetViewSettings);
+	};
+
 	WorksheetView.prototype.changeWorksheet = function (prop, val) {
 		// Проверка глобального лока
 		if (this.collaborativeEditing.getGlobalLock()) {
@@ -13680,22 +13711,6 @@
 				}
 
 				functionModelAction = t.clearOutline();
-				this._isLockedAll(onChangeWorksheetCallback);
-				break;
-			case "sheetViewSettings":
-				functionModelAction = function () {
-					if (AscCH.historyitem_Worksheet_SetDisplayGridlines === val.type) {
-						t.model.setDisplayGridlines(val.value);
-					} else {
-						t.model.setDisplayHeadings(val.value);
-					}
-
-					isUpdateCols = true;
-					isUpdateRows = true;
-					oRecalcType = AscCommonExcel.recalcType.full;
-					reinitRanges = true;
-				};
-
 				this._isLockedAll(onChangeWorksheetCallback);
 				break;
 			case "update":

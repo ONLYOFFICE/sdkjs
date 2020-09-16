@@ -2653,13 +2653,11 @@ var editor;
   };
 
 	spreadsheet_api.prototype.asc_setDisplayGridlines = function (value) {
-		this.wb.getWorksheet()
-			.changeWorksheet("sheetViewSettings", {type: AscCH.historyitem_Worksheet_SetDisplayGridlines, value: value});
+		this.wb.getWorksheet().changeSheetViewSettings(AscCH.historyitem_Worksheet_SetDisplayGridlines, value);
 	};
 
 	spreadsheet_api.prototype.asc_setDisplayHeadings = function (value) {
-		this.wb.getWorksheet()
-			.changeWorksheet("sheetViewSettings", {type: AscCH.historyitem_Worksheet_SetDisplayHeadings, value: value});
+		this.wb.getWorksheet().changeSheetViewSettings(AscCH.historyitem_Worksheet_SetDisplayHeadings, value);
 	};
 
   // Images & Charts
