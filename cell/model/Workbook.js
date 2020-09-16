@@ -2276,7 +2276,7 @@
 			History.TurnOn();
 
 			this.dependencyFormulas.copyDefNameByWorksheet(wsFrom, newSheet, renameParams, opt_sheet);
-			if (opt_sheet && !bFromRedo) {
+			if (opt_sheet /*&& !bFromRedo*/) {
 				this.dependencyFormulas.copyDefNameByWorkbook(wsFrom, newSheet, renameParams, opt_sheet);
 			}
 			//для формул. создаем копию this.cwf[this.Id] для нового листа.
