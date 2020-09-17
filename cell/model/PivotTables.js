@@ -5267,7 +5267,7 @@ CT_pivotTableDefinition.prototype.getLayoutByCellData = function(row, col, rowFi
 	return PivotLayout.prototype.createCell(rows, cols, row - rowHeader + 1, rowFieldsOffset && (rowFieldsOffset[col - colHeader] + 1));
 };
 CT_pivotTableDefinition.prototype._getLayoutByCellItems = function(index, indexHeader, indexDataStart, indexDataEnd, fields, items) {
-	if (index < indexDataStart || index > indexDataEnd ) {
+	if (index < indexDataStart || index > indexDataEnd || !fields || !items) {
 		return;
 	}
 	var res = null;
@@ -7750,10 +7750,10 @@ CT_WorksheetSource.prototype.fromDataRef = function(dataRef) {
 	}
 };
 CT_WorksheetSource.prototype._updateAttributes = function() {
-	this.ref = null;
-	this.name = null;
-	this.sheet = null;
 	if (this.formula && 1 === this.formula.getOutStackSize()) {
+		this.ref = null;
+		this.name = null;
+		this.sheet = null;
 		var elem = this.formula.getOutStackElem(0);
 		if (elem) {
 			switch (elem.type) {
