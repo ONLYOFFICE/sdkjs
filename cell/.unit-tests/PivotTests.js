@@ -121,6 +121,9 @@ $(function() {
 	};
 	AscCommonExcel.WorksheetView.prototype._prepareDrawingObjects = function() {
 	};
+	AscCommonExcel.WorksheetView.prototype._autoFitColumnsWidth = function() {
+	};
+
 	AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function() {
 	};
 

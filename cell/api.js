@@ -4474,7 +4474,7 @@ var editor;
 		if (pivotChanged.data) {
 			dataRow = pivot.updateAfterEdit();
 		}
-		this._updatePivotTable(pivot, pivotChanged, wsModel, ws, dataRow, needUpdateView);
+		this._updatePivotTable(pivot, pivotChanged, wsModel, ws, dataRow, needUpdateView, false);
 	};
 	spreadsheet_api.prototype.updatePivotTables = function() {
 		var t = this;
@@ -4482,12 +4482,12 @@ var editor;
 			var ws = t.wb.getWorksheet(wsModel.getIndex());
 			for (var i = 0; i < wsModel.pivotTables.length; ++i) {
 				var pivot = wsModel.pivotTables[i];
-				t._updatePivotTable(pivot, pivot.getAndCleanChanged(), wsModel, ws, undefined, true);
+				t._updatePivotTable(pivot, pivot.getAndCleanChanged(), wsModel, ws, undefined, true, true);
 			}
 		});
 	};
-	spreadsheet_api.prototype._updatePivotTable = function(pivot, changed, wsModel, ws, dataRow, needUpdateView) {
-		var ranges = wsModel.updatePivotTable(pivot, changed, dataRow);
+	spreadsheet_api.prototype._updatePivotTable = function(pivot, changed, wsModel, ws, dataRow, needUpdateView, canModifyDocument) {
+		var ranges = wsModel.updatePivotTable(pivot, changed, dataRow, canModifyDocument);
 		if (needUpdateView) {
 			if (changed.oldRanges) {
 				ws.updateRanges(changed.oldRanges);
@@ -4662,7 +4662,7 @@ var editor;
 			History.EndTransaction();
 		} else {
 			var ws = this.wb.getWorksheet(wsModel.getIndex());
-			this._updatePivotTable(pivot, pivotChanged, wsModel, ws, dataRow, true);
+			this._updatePivotTable(pivot, pivotChanged, wsModel, ws, dataRow, true, true);
 			this.wbModel.dependencyFormulas.unlockRecal();
 			History.EndTransaction();
 

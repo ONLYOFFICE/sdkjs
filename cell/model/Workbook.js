@@ -6801,7 +6801,7 @@
 			this.pivotTables[i].init();
 		}
 	};
-	Worksheet.prototype.updatePivotTable = function(pivotTable, changed, dataRow) {
+	Worksheet.prototype.updatePivotTable = function(pivotTable, changed, dataRow, canModifyDocument) {
 		if (!changed.data && !changed.style) {
 			return;
 		}
@@ -6820,7 +6820,7 @@
 		}
 		var res = pivotTable.getReportRanges();
 		multiplyRange.union2(new AscCommonExcel.MultiplyRange(res));
-		this.updatePivotTablesStyle(multiplyRange.getUnionRange(), true);
+		this.updatePivotTablesStyle(multiplyRange.getUnionRange(), canModifyDocument);
 		return res;
 	};
 	Worksheet.prototype.clearPivotTableCell = function (pivotTable) {
