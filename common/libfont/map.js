@@ -1160,43 +1160,43 @@ CFontSelect.prototype =
     GetFaceNamePenalty_private : function(sReqName, sMyName)
     {
         // На MSDN написано, что если имена не совпадают, то вес 10000.
-		// Мы будем сравнивать сколько совпало символов у запрашиваемого
-		// имени и с именем кандидата, без учета решистра, пробелов, запятых
-		// и тире.
+        // Мы будем сравнивать сколько совпало символов у запрашиваемого
+        // имени и с именем кандидата, без учета решистра, пробелов, запятых
+        // и тире.
 
-		/*
-		 TODO:
-		 sCandName.Remove(' '); sReqName.Remove(' ');
-		 sCandName.Remove(','); sReqName.Remove(',');
-		 sCandName.Remove('-'); sReqName.Remove('-');
+        /*
+         TODO:
+         sCandName.Remove(' '); sReqName.Remove(' ');
+         sCandName.Remove(','); sReqName.Remove(',');
+         sCandName.Remove('-'); sReqName.Remove('-');
 
-		 sCandName.MakeLower(); sReqName.MakeLower();
-		 */
+         sCandName.MakeLower(); sReqName.MakeLower();
+         */
 
-		if ( 0 == sReqName.length )
-			return 0;
+        if ( 0 == sReqName.length )
+            return 0;
 
-		if ( 0 == sMyName.length )
-			return 10000;
+        if ( 0 == sMyName.length )
+            return 10000;
 
-		if ( sReqName == sMyName )
-			return 0;
+        if ( sReqName == sMyName )
+            return 0;
 
-		// check equals, inst
-		if (sReqName.replace(/[\s-,]/g, '').toLowerCase() == sMyName.replace(/[\s-,]/g, '').toLowerCase())
-			return 100;
+        // check equals, inst
+        if (sReqName.replace(/[\s-,]/g, '').toLowerCase() == sMyName.replace(/[\s-,]/g, '').toLowerCase())
+            return 100;
 
-		if (-1 != sReqName.indexOf(sMyName) || -1 != sMyName.indexOf(sReqName))
-		{
-			if (g_fontApplication.g_fontDictionary.CheckLikeFonts(sMyName, sReqName))
-				return 700;
-			return 1000;
-		}
+        if (-1 != sReqName.indexOf(sMyName) || -1 != sMyName.indexOf(sReqName))
+        {
+            if (g_fontApplication.g_fontDictionary.CheckLikeFonts(sMyName, sReqName))
+                return 700;
+            return 1000;
+        }
 
-		if (g_fontApplication.g_fontDictionary.CheckLikeFonts(sMyName, sReqName))
-			return 1000;
+        if (g_fontApplication.g_fontDictionary.CheckLikeFonts(sMyName, sReqName))
+            return 1000;
 
-		return this.CheckEqualFonts2(sReqName, sMyName);
+        return this.CheckEqualFonts2(sReqName, sMyName);
     },
 
     GetFaceNamePenalty : function(sReqName)
