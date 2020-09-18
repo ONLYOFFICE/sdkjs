@@ -4552,6 +4552,7 @@ var editor;
 		var cacheDefinition = wb.getPivotCacheByDataRef(dataRef);
 		if (!cacheDefinition) {
 			cacheDefinition = new Asc.CT_PivotCacheDefinition();
+			cacheDefinition.asc_create();
 			cacheDefinition.fromDataRef(dataRef);
 		}
 		pivot.asc_create(ws, pivotName, cacheDefinition, location);

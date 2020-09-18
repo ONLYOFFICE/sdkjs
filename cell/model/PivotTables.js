@@ -1696,6 +1696,9 @@ CT_PivotCacheDefinition.prototype.fromDataRef = function(dataRef) {
 		this.cacheRecords.fromWorksheetRange(location, this.cacheFields);
 	}
 };
+CT_PivotCacheDefinition.prototype.asc_create = function() {
+	this.createdVersion = 4;//default value blocks label filter clear button
+};
 function CT_PivotCacheRecords() {
 //Attributes
 //	this.count = null;
@@ -4643,6 +4646,7 @@ CT_pivotTableDefinition.prototype.asc_refresh = function(api) {
 CT_pivotTableDefinition.prototype.updateCacheData = function(dataRef) {
 	var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(this);
 	var newCacheDefinition = new CT_PivotCacheDefinition();
+	newCacheDefinition.asc_create();
 	newCacheDefinition.fromDataRef(dataRef);
 
 	var pivotFieldsMap = new Map();
@@ -4754,6 +4758,7 @@ CT_pivotTableDefinition.prototype.asc_create = function(ws, name, cacheDefinitio
 	this.dataCaption = AscCommon.translateManager.getValue(DATA_CAPTION);
 	this.useAutoFormatting = true;
 	this.itemPrintTitles = true;
+	this.createdVersion = 4;//default value blocks label filter clear button
 	this.indent = 0;
 	this.outline = true;
 	this.outlineData = true;
@@ -10668,7 +10673,11 @@ CT_PivotFilter.prototype.initFromCustom = function(index, filter, iMeasureFld) {
 	}
 	if (filter.CustomFilters) {
 		if (1 === filter.CustomFilters.length) {
+			filter.asc_setAnd(false);
 			this.type = baseEqual + filter.CustomFilters[0].Operator - c_oAscCustomAutoFilter.equals;
+			if (this.type !== Asc.c_oAscPivotFilterType.Unknown && isCaption) {
+				this.stringValue1 = filter.CustomFilters[0].Val;
+			}
 		} else if (2 === filter.CustomFilters.length) {
 			if (filter.CustomFilters[0].Operator === c_oAscCustomAutoFilter.isGreaterThanOrEqualTo &&
 				filter.CustomFilters[1].Operator === c_oAscCustomAutoFilter.isLessThanOrEqualTo &&
