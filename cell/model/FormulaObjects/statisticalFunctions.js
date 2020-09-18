@@ -7492,7 +7492,11 @@ function (window, undefined) {
 					if (!tMatrix[j]) {
 						tMatrix[j] = [];
 					}
-					tMatrix[j][i] = new cNumber(mat[i][j]);
+					if (null === mat[i][j]) {
+						tMatrix[j][i] = new cError(cErrorType.not_available);
+					} else {
+						tMatrix[j][i] = new cNumber(mat[i][j]);
+					}
 				}
 			}
 

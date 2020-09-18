@@ -556,8 +556,8 @@ function (window, undefined) {
 			var _colCount = _from.getCountElementInRow();
 			var _rowCount = _from.rowCount;
 			var i;
-			row = Math.ceil(row);
-			col = Math.ceil(col);
+			row = row !== undefined ? Math.ceil(row) : row;
+			col = col !== undefined ? Math.ceil(col) : col;
 			if (undefined !== row) {
 				if (_rowCount < row) {
 					if (col === undefined && _rowCount === 1 && _from.array[0] && _from.array[0][row - 1]) {
