@@ -865,9 +865,18 @@ function CFontSelect()
     this.m_shLineGap        = 0;
     this.m_shXHeight        = 0;
     this.m_shCapHeight      = 0;
+
+    this.m_names = null;
 }
 CFontSelect.prototype =
 {
+	_readStringUtf8 : function(stream, len)
+	{
+	    if (undefined === len)
+	        len = stream.GetLong();
+		return AscCommon.GetStringUtf8(stream, len);
+	},
+
     fromStream : function(fs, bIsDictionary)
     {
         // name
@@ -876,12 +885,20 @@ CFontSelect.prototype =
         if (bIsDictionary === false)
             this.m_wsFontName = fs.GetString1(_len);
         else
-            this.m_wsFontName = fs.GetString(_len >> 1);
+        {
+            this.m_wsFontName = this._readStringUtf8(fs, _len);
+
+            var _count = fs.GetLong();
+            if (0 < _count)
+                this.m_names = [];
+
+            for (var nameI = 0; nameI < _count; nameI++)
+                this.m_names.push(this._readStringUtf8(fs));
+		}
 
         if (bIsDictionary !== false)
         {
-            _len = fs.GetLong();
-            this.m_wsFontPath = fs.GetString(_len >> 1);
+            this.m_wsFontPath = this._readStringUtf8(fs);
 
             if (undefined === window["AscDesktopEditor"])
             {
@@ -1140,46 +1157,62 @@ CFontSelect.prototype =
         return nPenalty;
     },
 
-    GetFaceNamePenalty : function(sReqName)
+    GetFaceNamePenalty_private : function(sReqName, sMyName)
     {
         // На MSDN написано, что если имена не совпадают, то вес 10000.
-        // Мы будем сравнивать сколько совпало символов у запрашиваемого
-        // имени и с именем кандидата, без учета решистра, пробелов, запятых
-        // и тире.
+		// Мы будем сравнивать сколько совпало символов у запрашиваемого
+		// имени и с именем кандидата, без учета решистра, пробелов, запятых
+		// и тире.
 
-        /*
-         TODO:
-         sCandName.Remove(' '); sReqName.Remove(' ');
-         sCandName.Remove(','); sReqName.Remove(',');
-         sCandName.Remove('-'); sReqName.Remove('-');
+		/*
+		 TODO:
+		 sCandName.Remove(' '); sReqName.Remove(' ');
+		 sCandName.Remove(','); sReqName.Remove(',');
+		 sCandName.Remove('-'); sReqName.Remove('-');
 
-         sCandName.MakeLower(); sReqName.MakeLower();
-         */
+		 sCandName.MakeLower(); sReqName.MakeLower();
+		 */
 
-        if ( 0 == sReqName.length )
-            return 0;
+		if ( 0 == sReqName.length )
+			return 0;
 
-        if ( 0 == this.m_wsFontName.length )
-            return 10000;
+		if ( 0 == sMyName.length )
+			return 10000;
 
-        if ( sReqName == this.m_wsFontName )
-            return 0;
+		if ( sReqName == sMyName )
+			return 0;
 
-        // check equals, inst
-        if (sReqName.replace(/[\s-,]/g, '').toLowerCase() == this.m_wsFontName.replace(/[\s-,]/g, '').toLowerCase())
-            return 100;
+		// check equals, inst
+		if (sReqName.replace(/[\s-,]/g, '').toLowerCase() == sMyName.replace(/[\s-,]/g, '').toLowerCase())
+			return 100;
 
-        if (-1 != sReqName.indexOf(this.m_wsFontName) || -1 != this.m_wsFontName.indexOf(sReqName))
-        {
-			if (g_fontApplication.g_fontDictionary.CheckLikeFonts(this.m_wsFontName, sReqName))
+		if (-1 != sReqName.indexOf(sMyName) || -1 != sMyName.indexOf(sReqName))
+		{
+			if (g_fontApplication.g_fontDictionary.CheckLikeFonts(sMyName, sReqName))
 				return 700;
 			return 1000;
 		}
 
-        if (g_fontApplication.g_fontDictionary.CheckLikeFonts(this.m_wsFontName, sReqName))
-            return 1000;
+		if (g_fontApplication.g_fontDictionary.CheckLikeFonts(sMyName, sReqName))
+			return 1000;
 
-        return this.CheckEqualFonts2(sReqName, this.m_wsFontName);
+		return this.CheckEqualFonts2(sReqName, sMyName);
+    },
+
+    GetFaceNamePenalty : function(sReqName)
+    {
+        var min = this.GetFaceNamePenalty_private(sReqName, this.m_wsFontName);
+        if (this.names)
+        {
+            var tmpMin = 0;
+            for (var i = 0, len = this.names.length; i < len; i++)
+            {
+                tmpMin = this.GetFaceNamePenalty_private(sReqName, this.names[i]);
+                if (tmpMin < min)
+                    min = tmpMin;
+            }
+        }
+        return min;
     },
 
     GetWidthPenalty : function(usReqWidth)
