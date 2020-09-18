@@ -903,7 +903,8 @@
 		EndCalculate: 2,
 		GetRangeCell: 3,
 		IsDefName: 4,
-		Shared: 5
+		Shared: 5,
+		ProcessNotify: 6
 	};
 
 	var c_oDashType = {

@@ -3513,6 +3513,12 @@ function (window, undefined) {
 					pageField.item = value;
 				}
 				break;
+			case AscCH.historyitem_PivotTable_WorksheetSource:
+				var worksheetSource = new Asc.CT_WorksheetSource();
+				var wrapper = bUndo ? Data.from : Data.to;
+				wrapper.initObject(worksheetSource);
+				pivotTable.cacheDefinition.fromWorksheetSource(worksheetSource);
+				break;
 		}
 	};
 

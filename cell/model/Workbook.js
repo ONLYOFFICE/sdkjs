@@ -3265,6 +3265,15 @@
 		}
 		return null;
 	};
+	Workbook.prototype.getPivotTableByDataRef = function(dataRef) {
+		for (var i = 0, l = this.aWorksheets.length; i < l; ++i) {
+			var pivot = this.aWorksheets[i].getPivotTableByDataRef(dataRef);
+			if (pivot) {
+				return pivot;
+			}
+		}
+		return null;
+	};
 	Workbook.prototype.getPivotCacheByDataRef = function(dataRef) {
 		for (var i = 0, l = this.aWorksheets.length; i < l; ++i) {
 			var cache = this.aWorksheets[i].getPivotCacheByDataRef(dataRef);
@@ -7572,17 +7581,22 @@
 		}
 		return res;
 	};
-	Worksheet.prototype.getPivotCacheByDataRef = function(dataRef) {
+	Worksheet.prototype.getPivotTableByDataRef = function(dataRef) {
 		var res = null;
 		for (var i = 0; i < this.pivotTables.length; ++i) {
 			var pivotTable = this.pivotTables[i];
 			if (dataRef === pivotTable.asc_getDataRef()) {
-				res = pivotTable.cacheDefinition;
+				res = pivotTable;
 				break;
 			}
 		}
 		return res;
 	};
+	Worksheet.prototype.getPivotCacheByDataRef = function(dataRef) {
+		var res = this.getPivotTableByDataRef(dataRef);
+		return res ? res.cacheDefinition : res;
+	};
+
 	Worksheet.prototype.insertPivotTable = function (pivotTable, addToHistory, checkCacheDefinition) {
 		pivotTable.worksheet = this;
 		pivotTable.setChanged(false, true);

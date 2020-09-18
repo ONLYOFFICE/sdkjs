@@ -2397,6 +2397,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		return res;
 	};
+	cStrucTable.prototype.getTable = function() {
+		return this.wb.getTableByName(this.tableName);
+	};
 	cStrucTable.prototype.getWS = function () {
 		return this.ws;
 	};
@@ -5342,7 +5345,10 @@ function parserFormula( formula, parent, _ws ) {
 			this.processNotifyPrepare(data);
 		} else {
 			this.removeDependencies();
-			var needAssemble = this.processNotify(data);
+			var needAssemble = true;
+			if (this.parent && this.parent.onFormulaEvent && !this.parent.onFormulaEvent(AscCommon.c_oNotifyParentType.ProcessNotify, eventData)) {
+				needAssemble = this.processNotify(data);
+			}
 			if (needAssemble) {
 				eventData.assemble = this.assemble(true);
 			} else {
@@ -6932,7 +6938,7 @@ function parserFormula( formula, parent, _ws ) {
 			}
 		}
 	};
-	parserFormula.prototype.shiftCells = function(notifyType, sheetId, bbox, offset, opt_sheetIdTo) {
+	parserFormula.prototype.shiftCells = function(notifyType, sheetId, bbox, offset, opt_sheetIdTo, opt_isPivot) {
 		var res = false;
 		var elem, bboxCell;
 		var wb = this.ws.workbook;
@@ -7031,7 +7037,7 @@ function parserFormula( formula, parent, _ws ) {
 							elem.range = _cellsRange.createFromBBox(wsTo, _cellsBbox);
 						}
 						elem.value = _cellsBbox.getName();
-					} else {
+					} else if(!opt_isPivot){
 						this.outStack[i] = new cError(cErrorType.bad_reference);
 					}
 					res = true;
