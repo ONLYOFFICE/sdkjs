@@ -569,6 +569,10 @@ CChangesSdtPrPlaceholder.prototype.private_SetValue = function(Value)
 {
 	this.Class.Pr.Placeholder = Value;
 };
+CChangesSdtPrPlaceholder.prototype.IsNeedRecalculate = function()
+{
+	return false;
+};
 
 /**
  * @constructor
