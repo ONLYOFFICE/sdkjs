@@ -14847,6 +14847,8 @@
 					t._autoFitColumnsWidth([new Asc.Range(filterRange.c1, filterRange.r1, filterRange.c2, filterRange.r1)]);
 					t.draw();
 
+					History.SetSelection(ar);
+					History.SetSelectionRedo(filterRange);
 					History.EndTransaction();
 				};
 				if(ar.containsRange(filterRange)) {
@@ -14897,6 +14899,8 @@
 						}
 						t.draw();
 
+						History.SetSelection(ar);
+						History.SetSelectionRedo(filterRange);
 						History.EndTransaction();
 
 						if (isSlowOperation) {
