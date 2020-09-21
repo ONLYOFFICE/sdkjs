@@ -4046,7 +4046,7 @@ var editor;
     }
 
     // На view-режиме не нужно отправлять стили
-    if (this.canEdit()) {
+    if (!this.getViewMode()) {
       // Отправка стилей
       this._sendWorkbookStyles();
     }
