@@ -20286,6 +20286,23 @@
 				History.StartTransaction();
 			}
 
+			var tableIntersection;
+			var filterIntersection = t.model.AutoFilter && t.model.AutoFilter.Ref.intersection(selection);
+			if (filterIntersection) {
+				//unhide
+				t.model.setRowHidden(false, filterIntersection.r1, filterIntersection.r2);
+			} else if (t.model.TableParts) {
+				for (var i = 0; i < t.model.TableParts.length; i++) {
+					var _intersection = selection.intersection(t.model.TableParts[i].Ref);
+					if (_intersection) {
+						tableIntersection = t.model.TableParts[i];
+						t.model.setRowHidden(false, filterIntersection.r1, filterIntersection.r2);
+						break;
+					}
+				}
+			}
+
+
 			aSortElems.sort(function(a, b) {
 				if ((deleteIndexesMap[a.index] && deleteIndexesMap[b.index]) || (!deleteIndexesMap[a.index] && !deleteIndexesMap[b.index])) {
 					return 0;
@@ -20325,6 +20342,12 @@
 					var range = new Asc.Range(selection.r1, selection.c1, selection.r2, selection.c2);
 					History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_Sort, t.model.getId(), range, _historyElem);
 				}
+			}
+
+			if (filterIntersection) {
+				t.model.autoFilters.reapplyAutoFilter(null);
+			} else if (tableIntersection) {
+				t.model.autoFilters.reapplyAutoFilter(tableIntersection.DisplayName);
 			}
 
 			History.EndTransaction();
