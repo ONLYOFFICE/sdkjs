@@ -13811,15 +13811,6 @@
         }
 
         History.Create_NewPoint();
-        if (!onlyIfMore) {
-            var oSelection = History.GetSelection();
-            if (null != oSelection) {
-                oSelection = oSelection.clone();
-                oSelection.assign(col, 0, col, gc_nMaxRow0);
-                History.SetSelection(oSelection);
-                History.SetSelectionRedo(oSelection);
-            }
-        }
         History.StartTransaction();
         // Выставляем, что это bestFit
 		cw = this.model.charCountToModelColWidth(cc);
@@ -13872,6 +13863,14 @@
 
 			History.Create_NewPoint();
 			History.StartTransaction();
+
+			// ToDo multi-select
+			var oSelection = ranges[0].clone();
+			oSelection.r1 = 0;
+			oSelection.r2 = gc_nMaxRow0;
+			History.SetSelection(oSelection);
+			History.SetSelectionRedo(oSelection);
+
 			t._autoFitColumnsWidth(ranges);
 			t.draw();
 			History.EndTransaction();
