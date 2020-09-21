@@ -14896,6 +14896,7 @@
 							t._autoFitColumnsWidth([new Asc.Range(filterRange.c1, filterRange.r1, filterRange.c2, filterRange.r1)]);
 						}
 						t.draw();
+						t.handlers.trigger("selectionChanged");
 
 						History.EndTransaction();
 
