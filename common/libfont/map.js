@@ -879,6 +879,10 @@ CFontSelect.prototype =
 
     fromStream : function(fs, bIsDictionary)
     {
+		var _version = window["__all_fonts_js_version__"];
+		if (undefined === _version)
+			_version = 0;
+
         // name
         var _len = fs.GetLong();
 
@@ -886,19 +890,45 @@ CFontSelect.prototype =
             this.m_wsFontName = fs.GetString1(_len);
         else
         {
-            this.m_wsFontName = this._readStringUtf8(fs, _len);
+            switch (_version)
+            {
+                case 0:
+                {
+					this.m_wsFontName = fs.GetString(_len >> 1);
+                    break;
+                }
+                default:
+                {
+					this.m_wsFontName = this._readStringUtf8(fs, _len);
 
-            var _count = fs.GetLong();
-            if (0 < _count)
-                this.m_names = [];
+					var _count = fs.GetLong();
+					if (0 < _count)
+						this.m_names = [];
 
-            for (var nameI = 0; nameI < _count; nameI++)
-                this.m_names.push(this._readStringUtf8(fs));
+					for (var nameI = 0; nameI < _count; nameI++)
+						this.m_names.push(this._readStringUtf8(fs));
+
+                    break;
+                }
+            }
 		}
 
         if (bIsDictionary !== false)
         {
-            this.m_wsFontPath = this._readStringUtf8(fs);
+			switch (_version)
+			{
+				case 0:
+				{
+					_len = fs.GetLong();
+					this.m_wsFontPath = fs.GetString(_len >> 1);
+					break;
+				}
+				default:
+				{
+					this.m_wsFontPath = this._readStringUtf8(fs);
+					break;
+				}
+			}
 
             if (undefined === window["AscDesktopEditor"])
             {
