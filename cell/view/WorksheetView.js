@@ -12448,7 +12448,11 @@
 						if (_isFormula) {
 							_res = part1 + "/" + part2;
 						} else {
-							_res = part1 / part2;
+							if (part2 === 0) {
+								_res = AscCommon.cErrorLocal["div"];
+							} else {
+								_res = part1 / part2;
+							}
 						}
 						break;
 					}
@@ -12466,17 +12470,26 @@
 			var _typeModel = _modelVal && _modelVal.value && !isEmptyModel ? _modelVal.value.type : null;
 
 			var res = null;
+			var _calculateRes = undefined;
 			if (_typePasted === CellValueType.Number && _typeModel === CellValueType.Number) {
-				_pastedVal.value.number = _calculateSpecialOperation(_modelVal.value.number, _pastedVal.value.number, _operation);
-				res = _pastedVal;
+				_calculateRes = _calculateSpecialOperation(_modelVal.value.number, _pastedVal.value.number, _operation);
 			} else if (_typePasted === CellValueType.Number && isEmptyModel) {
-				_pastedVal.value.number = _calculateSpecialOperation(0, _pastedVal.value.number, _operation);
-				res = _pastedVal;
+				_calculateRes = _calculateSpecialOperation(0, _pastedVal.value.number, _operation);
 			} else if (_typeModel === CellValueType.Number && isEmptyPasted) {
-				_pastedVal.value.number = _calculateSpecialOperation(_modelVal.value.number, 0, _operation);
-				res = _pastedVal;
+				_calculateRes = _calculateSpecialOperation(_modelVal.value.number, 0, _operation);
 			} else {
 				res = _modelVal;
+			}
+
+			if (_calculateRes !== undefined) {
+				if (!isNaN(_calculateRes)) {
+					_pastedVal.value.number = _calculateRes;
+				} else {
+					_pastedVal.value.text = _calculateRes;
+					_pastedVal.value.type = CellValueType.Error;
+				}
+
+				res = _pastedVal;
 			}
 
 			return res;
