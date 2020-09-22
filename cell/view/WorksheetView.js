@@ -12487,6 +12487,7 @@
 				} else {
 					_pastedVal.value.text = _calculateRes;
 					_pastedVal.value.type = CellValueType.Error;
+					_pastedVal.value.number = null;
 				}
 
 				res = _pastedVal;
