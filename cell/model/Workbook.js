@@ -6869,12 +6869,15 @@
 				var cells = this.getRange4(pos.row, pos.col);
 				this._updatePivotTableSetCellValue(cells, pivotTable.getPageFieldName(i));
 				cells = this.getRange4(pos.row, pos.col + 1);
-				//todo right align
 				var num = pivotTable.getPivotFieldNum(pos.pageField.fld);
 				if (num) {
 					cells.setNum(num);
 				}
-				cells.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, pivotTable.getPageFieldCellValue(i)));
+				var oCellValue = pivotTable.getPageFieldCellValue(i);
+				if (oCellValue.type !== AscCommon.CellValueType.String) {
+					cells.setAlignHorizontal(AscCommon.align_Left);
+				}
+				cells.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
 			}
 		}
 	};
