@@ -7710,6 +7710,13 @@ PasteProcessor.prototype =
 
 		var checkStyle = function (elem) {
 			var res = false;
+
+			//TODO пересмотреть! возможно стоит сделать проверку на computedStyle.
+			var _nodeName = elem.nodeName.toLowerCase();
+			if ("h1" === _nodeName || "h2" === _nodeName || "h3" === _nodeName || "h4" === _nodeName || "h5" === _nodeName || "h6" === _nodeName) {
+				return true;
+			}
+
 			var sClass = elem.getAttribute("class");
 			var sStyle = elem.getAttribute("style");
 			var sHref = elem.getAttribute("href");
