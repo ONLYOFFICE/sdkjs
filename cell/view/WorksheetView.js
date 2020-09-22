@@ -20296,7 +20296,7 @@
 					var _intersection = selection.intersection(t.model.TableParts[i].Ref);
 					if (_intersection) {
 						tableIntersection = t.model.TableParts[i];
-						t.model.setRowHidden(false, filterIntersection.r1, filterIntersection.r2);
+						t.model.setRowHidden(false, _intersection.r1, _intersection.r2);
 						break;
 					}
 				}
