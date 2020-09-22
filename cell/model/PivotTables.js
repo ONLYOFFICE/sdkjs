@@ -5323,8 +5323,10 @@ CT_pivotTableDefinition.prototype.updateSelection = function(wsView) {
 	var activeCell = ws.selectionRange.activeCell;
 	if (!this.contains(activeCell.col, activeCell.row)) {
 		var pivotRange = this.getRange();
-		wsView.setSelection(new Asc.Range(pivotRange.c1, pivotRange.r1, pivotRange.c1, pivotRange.r1));
+		var selection = new Asc.Range(pivotRange.c1, pivotRange.r1, pivotRange.c1, pivotRange.r1);
+		wsView.setSelection(selection);
 		wsView.workbook._onWSSelectionChanged();
+		History.SetSelectionRedo(selection);
 	}
 };
 
