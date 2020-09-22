@@ -17463,48 +17463,46 @@
 	};
 
 	WorksheetView.prototype.savePageOptions = function (obj, viewMode) {
-		var t = this;
-		var pageOptions = t.model.PagePrintOptions;
+		var pageOptions = this.model.PagePrintOptions;
 
-		var callback = function() {
-			History.Create_NewPoint();
-			History.StartTransaction();
-
-			var pageSetupModel = pageOptions.asc_getPageSetup();
-			var oldFitToWidth = pageSetupModel.asc_getFitToWidth();
-			var oldFitToHeight = pageSetupModel.asc_getFitToHeight();
-			var pageSetupObj = obj.asc_getPageSetup();
-			var newFitToWidth = pageSetupObj.asc_getFitToWidth();
-			var newFitToHeight = pageSetupObj.asc_getFitToHeight();
-
-			//если поменялись scaling - fit sheet on.. -> необходимо пересчитать scaling
-			if(oldFitToWidth != newFitToWidth || oldFitToHeight != newFitToHeight) {
-				t.fitToWidthHeight(newFitToWidth, newFitToHeight);
-			}
-
-			if(newFitToWidth === 0 && newFitToHeight === 0) {
-				pageOptions.asc_getPageSetup().asc_setScale(pageSetupObj.asc_getScale());
-			}
-
-			pageOptions.asc_setOptions(obj);
-			t._changePrintTitles(obj.printTitlesWidth, obj.printTitlesHeight);
-
-			t.recalcPrintScale();
-			t.changeViewPrintLines(true);
-			//window["Asc"]["editor"]._onUpdateLayoutMenu(this.model.nSheetId);
-
-			History.EndTransaction();
-		};
-		if(viewMode) {
+		if (viewMode) {
 			History.TurnOff();
 		}
-		callback();
-		if(viewMode) {
+
+		History.Create_NewPoint();
+		History.StartTransaction();
+
+		var pageSetupModel = pageOptions.asc_getPageSetup();
+		var oldFitToWidth = pageSetupModel.asc_getFitToWidth();
+		var oldFitToHeight = pageSetupModel.asc_getFitToHeight();
+		var pageSetupObj = obj.asc_getPageSetup();
+		var newFitToWidth = pageSetupObj.asc_getFitToWidth();
+		var newFitToHeight = pageSetupObj.asc_getFitToHeight();
+
+		//если поменялись scaling - fit sheet on.. -> необходимо пересчитать scaling
+		if (oldFitToWidth != newFitToWidth || oldFitToHeight != newFitToHeight) {
+			this.fitToWidthHeight(newFitToWidth, newFitToHeight);
+		}
+
+		if (newFitToWidth === 0 && newFitToHeight === 0) {
+			pageOptions.asc_getPageSetup().asc_setScale(pageSetupObj.asc_getScale());
+		}
+
+		pageOptions.asc_setOptions(obj);
+		this._changePrintTitles(obj.printTitlesWidth, obj.printTitlesHeight);
+
+		this.recalcPrintScale();
+		this.changeViewPrintLines(true);
+		//window["Asc"]["editor"]._onUpdateLayoutMenu(this.model.nSheetId);
+
+		History.EndTransaction();
+
+		if (viewMode) {
 			History.TurnOn();
 		}
 
-		if(t.viewPrintLines) {
-			t.updateSelection();
+		if (this.viewPrintLines) {
+			this.updateSelection();
 		}
 	};
 
@@ -17701,7 +17699,6 @@
 	};
 
 	WorksheetView.prototype._changePrintTitles = function (cols, rows) {
-		var wb = window["Asc"]["editor"].wb;
 		var t = this;
 
 		var _convertRangeStr = function(_val, _byCols) {
@@ -17711,12 +17708,7 @@
 			AscCommonExcel.executeInR1C1Mode(AscCommonExcel.g_R1C1Mode, function () {
 				_res = AscCommonExcel.g_oRangeCache.getAscRange(_val);
 			});
-
-			var c1 = _byCols ? _res.c1 : 0;
-			var r1 = _byCols ? 0 : _res.r1;
-			var c2 = _byCols ? _res.c2 : gc_nMaxCol0;
-			var r2 = _byCols ? gc_nMaxRow0 : _res.r2;
-			_res = Asc.Range(c1, r1, c2, r2);
+			_res = _byCols ? new Asc.Range(_res.c1, 0, _res.c2, gc_nMaxRow0) : new Asc.Range(0, _res.r1, gc_nMaxCol0, _res.r2);
 
 			//в модель ->в виде A1B1
 			AscCommonExcel.executeInR1C1Mode(false, function () {
@@ -17732,28 +17724,23 @@
 		var printTitles = this.model.workbook.getDefinesNames("Print_Titles", this.model.getId());
 
 		var oldDefName = printTitles ? printTitles.getAscCDefName() : null;
-		var oldScope = oldDefName ? oldDefName.asc_getScope() : t.model.index;
+		var oldScope = oldDefName ? oldDefName.asc_getScope() : this.model.index;
 
 		var newRef;
 		if(cols) {
 			newRef = _convertRangeStr(cols, true);
 		}
 		if(rows) {
-			if(newRef) {
-				newRef = newRef + ",";
-			} else {
-				newRef = "";
-			}
-			newRef += _convertRangeStr(rows);
+			newRef = (newRef ? (newRef + ',') : '') +  _convertRangeStr(rows);
 		}
 
 		if(!newRef) {
 			if(printTitles) {
-				wb.delDefinedNames(printTitles.getAscCDefName());
+				this.workbook.delDefinedNames(printTitles.getAscCDefName());
 			}
 		} else {
 			var newDefName = new Asc.asc_CDefName("Print_Titles", newRef, oldScope, null, null, null, true);
-			wb.editDefinedNames(oldDefName, newDefName);
+			this.workbook.editDefinedNames(oldDefName, newDefName);
 		}
 
 		History.EndTransaction();
