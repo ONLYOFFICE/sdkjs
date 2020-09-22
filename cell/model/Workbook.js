@@ -381,6 +381,7 @@
 		this.buildDefName = {};
 		this.buildShared = {};
 		this.buildArrayFormula = [];
+		this.buildPivot = [];
 		this.cleanCellCache = {};
 		//lock
 		this.lockCounter = 0;
@@ -1168,6 +1169,9 @@
 			//происходит это позже - в Cell.prototype.saveContent
 			this.buildArrayFormula.push(f);
 		},
+		addToBuildDependencyPivot: function(f) {
+			this.buildPivot.push(f);
+		},
 		addToCleanCellCache: function(sheetId, row, col) {
 			var sheetArea = this.cleanCellCache[sheetId];
 			if (sheetArea) {
@@ -1229,10 +1233,18 @@
 					this.wb.dependencyFormulas.addToChangedRange2(parsed.getWs().getId(), array);
 				}
 			}
+			for (var index = 0; index < this.buildPivot.length; ++index) {
+				var parsed = this.buildPivot[index];
+				if (parsed) {
+					parsed.parse();
+					parsed.buildDependencies();
+				}
+			}
 			this.buildCell = {};
 			this.buildDefName = {};
 			this.buildShared = {};
 			this.buildArrayFormula = [];
+			this.buildPivot = [];
 		},
 		calcTree: function() {
 			if (this.lockCounter > 0) {

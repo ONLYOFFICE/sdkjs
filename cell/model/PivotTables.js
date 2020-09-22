@@ -1681,9 +1681,6 @@ CT_PivotCacheDefinition.prototype.isValidCacheSource = function () {
 CT_PivotCacheDefinition.prototype.getWorksheetSource = function() {
 	return this.cacheSource && this.cacheSource.worksheetSource;
 };
-CT_PivotCacheDefinition.prototype.fromWorksheetSource = function(worksheetSource) {
-	return this.cacheSource && this.cacheSource.worksheetSource && this.cacheSource.worksheetSource.fromWorksheetSource(worksheetSource);
-};
 CT_PivotCacheDefinition.prototype.fromDataRef = function(dataRef) {
 	this.cacheSource = new CT_CacheSource();
 	this.cacheSource.type = c_oAscSourceType.Worksheet;
@@ -7682,17 +7679,23 @@ function CT_WorksheetSource() {
 	this.id = null;
 //Private
 	this.formula = null;
+	this.Id = AscCommon.g_oIdCounter.Get_NewId();
+	AscCommon.g_oTableId.Add( this, this.Id );
 }
+CT_WorksheetSource.prototype.getObjectType = function () {
+	return AscDFH.historyitem_type_PivotWorksheetSource;
+};
+CT_WorksheetSource.prototype.Get_Id = function () {
+	return this.Id;
+};
 CT_WorksheetSource.prototype.onFormulaEvent = function (type, eventData) {
 	if (AscCommon.c_oNotifyParentType.ChangeFormula === type) {
-		var oldVal = new AscCommonExcel.UndoRedoData_BinaryWrapper2(this);
+		//add to history for undo
+		var oldVal = new AscCommonExcel.UndoRedoData_BinaryWrapper(this);
 		this._updateAttributes();
-		var pivot = eventData.formula.getWs().workbook.getPivotTableByDataRef(this.getDataRef());
-		if (pivot) {
-			var newVal = new AscCommonExcel.UndoRedoData_BinaryWrapper2(this);
-			History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_WorksheetSource, pivot.worksheet.getId(), null,
-				new AscCommonExcel.UndoRedoData_PivotTable(pivot.Get_Id(), oldVal, newVal));
-		}
+		var newVal = new AscCommonExcel.UndoRedoData_BinaryWrapper(this);
+		History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_PivotWorksheetSource, null, null,
+			new AscCommonExcel.UndoRedoData_PivotTable(this.Get_Id(), oldVal, newVal));
 	} else if (AscCommon.c_oNotifyParentType.ProcessNotify === type) {
 		var data = eventData.notifyData;
 		if (AscCommon.c_oNotifyType.ChangeDefName === data.type && !data.to) {
@@ -7733,12 +7736,9 @@ CT_WorksheetSource.prototype.Read_FromBinary2 = function(reader) {
 	var ref = reader.GetString2();
 	var name = reader.GetString2();
 	var sheet = reader.GetString2();
-	if ("" !== ref)
-		this.ref = ref;
-	if ("" !== name)
-		this.name = name;
-	if ("" !== sheet)
-		this.sheet = sheet;
+	this.ref = "" !== ref ? ref : null;
+	this.name = "" !== name ? name : null;
+	this.sheet = "" !== sheet ? sheet : null;
 };
 CT_WorksheetSource.prototype.readAttributes = function(attr, uq) {
 	if (attr()) {
@@ -7814,7 +7814,7 @@ CT_WorksheetSource.prototype.fromDataRef = function(dataRef) {
 		this.formula.buildDependencies();
 	}
 };
-CT_WorksheetSource.prototype.fromWorksheetSource = function(worksheetSource) {
+CT_WorksheetSource.prototype.fromWorksheetSource = function(worksheetSource, addToBuildDependencyPivot) {
 	if (this.formula) {
 		this.formula.removeDependencies();
 		this.formula = null;
@@ -7832,14 +7832,18 @@ CT_WorksheetSource.prototype.fromWorksheetSource = function(worksheetSource) {
 	if (text) {
 		this.formula = new AscCommonExcel.parserFormula(text, this, AscCommonExcel.g_DefNameWorksheet);
 		this.formula.parse();
-		this.formula.buildDependencies();
+		if (addToBuildDependencyPivot) {
+			var ws = this.formula.getWs();
+			if (ws && ws.workbook) {
+				ws.workbook.dependencyFormulas.addToBuildDependencyPivot(this.formula);
+			}
+		} else {
+			this.formula.buildDependencies();
+		}
 	}
 };
 CT_WorksheetSource.prototype._updateAttributes = function() {
 	if (this.formula && 1 === this.formula.getOutStackSize()) {
-		this.ref = null;
-		this.name = null;
-		this.sheet = null;
 		var elem = this.formula.getOutStackElem(0);
 		if (elem) {
 			switch (elem.type) {
@@ -7849,15 +7853,21 @@ CT_WorksheetSource.prototype._updateAttributes = function() {
 				case AscCommonExcel.cElementType.cellsRange3D:
 					this.sheet = elem.getWS().getName();
 					this.ref = elem.getBBox0().getName(AscCommonExcel.referenceType.R);
+					this.name = null;
 					break;
 				case AscCommonExcel.cElementType.name:
+					this.sheet = null;
+					this.ref = null;
 					this.name = elem.toString();
 					break;
 				case AscCommonExcel.cElementType.name3D:
 					this.sheet = elem.getWS().getName();
+					this.ref = null;
 					this.name = AscCommonExcel.cName.prototype.toString.call(elem);
 					break;
 				case AscCommonExcel.cElementType.table:
+					this.sheet = null;
+					this.ref = null;
 					//todo without '[]'
 					this.name = elem.toString();
 					break;

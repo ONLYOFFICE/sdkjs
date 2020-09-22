@@ -1352,6 +1352,10 @@ function (window, undefined) {
 		data.Read_FromBinary2(reader);
 		return data;
 	};
+	UndoRedoData_BinaryWrapper.prototype.readData = function (data) {
+		var reader = new AscCommon.FT_Stream2(this.binary, this.len);
+		data.Read_FromBinary2(reader);
+	};
 	function UndoRedoData_BinaryWrapper2(data) {
 		this.binary = null;
 		this.len = 0;
@@ -2140,6 +2144,13 @@ function (window, undefined) {
 		} else if(AscCH.historyitem_Workbook_Calculate === Type) {
 			if (!bUndo) {
 				wb.calculate(Data.elem, nSheetId);
+			}
+		} else if (bUndo && AscCH.historyitem_Workbook_PivotWorksheetSource === Type) {
+			var wrapper = bUndo ? Data.from : Data.to;
+			var worksheetSource = AscCommon.g_oTableId.Get_ById(wrapper.Id);
+			if (worksheetSource) {
+				wrapper.readData(worksheetSource);
+				worksheetSource.fromWorksheetSource(worksheetSource, true);
 			}
 		}
 	};
@@ -3512,12 +3523,6 @@ function (window, undefined) {
 				if (pageField) {
 					pageField.item = value;
 				}
-				break;
-			case AscCH.historyitem_PivotTable_WorksheetSource:
-				var worksheetSource = new Asc.CT_WorksheetSource();
-				var wrapper = bUndo ? Data.from : Data.to;
-				wrapper.initObject(worksheetSource);
-				pivotTable.cacheDefinition.fromWorksheetSource(worksheetSource);
 				break;
 		}
 	};
