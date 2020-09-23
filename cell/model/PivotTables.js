@@ -7825,7 +7825,7 @@ CT_WorksheetSource.prototype.getDataLocation = function() {
 };
 CT_WorksheetSource.prototype.getDataRef = function() {
 	if (this.formula) {
-		return this.formula.getFormula();
+		return this.formula.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true);
 	}
 };
 CT_WorksheetSource.prototype.fromDataRef = function(dataRef) {
