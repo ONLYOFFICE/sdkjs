@@ -6925,12 +6925,14 @@
 		var items, fields, field, oCellValue, fieldIndex, cells, r1, c1, valuesIndex;
 		var pivotRange = pivotTable.getRange();
 		var location = pivotTable.location;
+		var hasLeftAlignInRowLables = false;
 		if (rowFieldsOffset) {
 			items = pivotTable.getRowItems();
 			fields = pivotTable.asc_getRowFields();
 			r1 = pivotRange.r1 + location.firstDataRow;
 			c1 = pivotRange.c1;
 			valuesIndex = pivotTable.getRowFieldsValuesIndex();
+			hasLeftAlignInRowLables = pivotTable.hasLeftAlignInRowLables();
 		} else {
 			items = pivotTable.getColItems();
 			fields = pivotTable.asc_getColumnFields();
@@ -6999,6 +7001,9 @@
 					if (num) {
 						cells.setNum(num);
 					}
+				}
+				if (hasLeftAlignInRowLables) {
+					cells.setAlignHorizontal(AscCommon.align_Left);
 				}
 				cells.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
 			}

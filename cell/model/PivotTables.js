@@ -5329,6 +5329,25 @@ CT_pivotTableDefinition.prototype.updateSelection = function(wsView) {
 		History.SetSelectionRedo(selection);
 	}
 };
+CT_pivotTableDefinition.prototype.hasLeftAlignInRowLables = function() {
+	var i, index;
+	var rowFields = this.asc_getRowFields();
+	var pivotFields = this.asc_getPivotFields();
+	if (rowFields && pivotFields) {
+		if (this.compact) {
+			return !rowFields.every(function(rowField) {
+				index = rowField.asc_getIndex();
+				return st_VALUES === index || false === pivotFields[index].outline;
+			});
+		} else {
+			return rowFields.some(function(rowField) {
+				index = rowField.asc_getIndex();
+				return st_VALUES !== index && true === pivotFields[index].compact;
+			});
+		}
+	}
+	return false;
+};
 
 function CT_pivotTableDefinitionX14() {
 //Attributes
