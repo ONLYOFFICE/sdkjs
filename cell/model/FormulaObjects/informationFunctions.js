@@ -139,6 +139,12 @@
 
 			var cell, bbox;
 			if(arg1) {
+				//TODO добавил заглушку, на случай если приходит массив.
+				// необходимо пересмотреть - сейчас мы рассматриваем как функции массива все дочерние элементы аргумента с типом .reference
+				if (cElementType.array === arg1.type) {
+					arg1 = arg1.getElementRowCol(0,0);
+				}
+
 				var isRangeArg1 = cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type;
 				if (isRangeArg1 || cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
 					var _tempValue = isRangeArg1 ? arg1.getValueByRowCol(0,0) : arg1.getValue();
