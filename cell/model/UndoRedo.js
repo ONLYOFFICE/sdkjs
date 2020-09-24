@@ -3464,10 +3464,12 @@ function (window, undefined) {
 				}
 				break;
 			case AscCH.historyitem_PivotTable_RemoveDataField:
-				for (var i = Data.to.length - 1; i >= 0; --i) {
-					if (bUndo) {
+				if (bUndo) {
+					for (var i = Data.to.length - 1; i >= 0; --i) {
 						pivotTable.addDataField(Data.from, Data.to[i]);
-					} else {
+					}
+				} else {
+					for (var i = 0; i < Data.to.length; ++i) {
 						pivotTable.removeDataField(Data.from, Data.to[i]);
 					}
 				}
@@ -3516,6 +3518,18 @@ function (window, undefined) {
 					if (pivotTable.filters.filter.length == 0) {
 						pivotTable.filters = null;
 					}
+				}
+				break;
+			case AscCH.historyitem_PivotTable_PivotFilterDataField:
+				var pivotFilters = pivotTable.asc_getPivotFilters();
+				if (pivotFilters && Data.index < pivotFilters.length) {
+					pivotFilters[Data.index].dataField = value;
+				}
+				break;
+			case AscCH.historyitem_PivotTable_PivotFilterMeasureFld:
+				var pivotFilters = pivotTable.asc_getPivotFilters();
+				if (pivotFilters && Data.index < pivotFilters.length) {
+					pivotFilters[Data.index].setMeasureFld(value);
 				}
 				break;
 			case AscCH.historyitem_PivotTable_PageFilter:

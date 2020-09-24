@@ -5401,6 +5401,17 @@
 		return null;
 	}
 
+	function arrayMove(array, from, to) {
+		array.splice(to, 0, array.splice(from, 1)[0]);
+	}
+	function getRangeArray(start, stop) {
+		var res = new Array(stop - start);
+		for (var i = start; i < stop; ++i) {
+			res[i - start] = i;
+		}
+		return res;
+	}
+
 	var g_oBackoffDefaults = {
 		retries: 2,
 		factor: 2,
@@ -5584,6 +5595,8 @@
 
 	window["AscCommon"].valueToMm = valueToMm;
 	window["AscCommon"].valueToMmType = valueToMmType;
+	window["AscCommon"].arrayMove = arrayMove;
+	window["AscCommon"].getRangeArray = getRangeArray;
 
 	window["AscCommon"].CUnicodeStringEmulator = CUnicodeStringEmulator;
 
