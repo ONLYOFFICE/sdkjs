@@ -3979,15 +3979,23 @@ CT_pivotTableDefinition.prototype.updateLocation = function() {
 	var pageFields = this.asc_getPageFields();
 	if (rowFields || colFields || dataFields) {
 		location.firstHeaderRow = 1;
-		var colFieldsCount = 0;
-		if (colFields) {
-			colFieldsCount = colFields.length;
-			if (1 === colFieldsCount && st_VALUES === colFields[0].asc_getIndex()) {
-				location.firstHeaderRow = 0;
+		var colFieldsCount = colFields ? colFields.length : 0;
+		var colFieldsCountWithoutValues = colFieldsCount;
+		var rowFieldsCount = rowFields ? rowFields.length : 0;
+		var dataFieldsCount = dataFields ? dataFields.length : 0;
+		if (1 === colFieldsCount && st_VALUES === colFields[0].asc_getIndex()) {
+			location.firstHeaderRow = 0;
+			colFieldsCountWithoutValues = 0;
+		}
+		location.firstDataCol = 0;
+		if (this.gridDropZones && (0 === colFieldsCountWithoutValues || 0 === rowFieldsCount)) {
+			location.firstHeaderRow = 1;
+			if (0 < rowFieldsCount && 0 === colFieldsCountWithoutValues && dataFieldsCount < 2) {
+				location.firstHeaderRow = 2;
 			}
+			location.firstDataCol = 1;
 		}
 		location.firstDataRow = location.firstHeaderRow + colFieldsCount;
-		location.firstDataCol = 0;
 		if (rowFields) {
 			location.firstDataCol = 1;
 			for (i = 0; i < rowFields.length - 1; ++i) {
@@ -4003,7 +4011,7 @@ CT_pivotTableDefinition.prototype.updateLocation = function() {
 					}
 				}
 			}
-		} else if (colFields && dataFields && 1 === dataFields.length) {
+		} else if (colFields && 1 === dataFieldsCount) {
 			location.firstDataCol = 1;
 		}
 		var rowItemsCount = (rowFields || dataFields) ? this.rowItems.i.length : 0;
@@ -4011,8 +4019,16 @@ CT_pivotTableDefinition.prototype.updateLocation = function() {
 		if (!this.compact) {
 			colItemsCount = Math.max(colItemsCount, colFieldsCount);
 		}
-		location.ref.r2 = location.ref.r1 + location.firstDataRow + rowItemsCount - 1;
-		location.ref.c2 = location.ref.c1 + location.firstDataCol + colItemsCount - 1;
+		if (this.gridDropZones && 0 < colFieldsCount && 0 === rowFieldsCount && 0 === dataFieldsCount) {
+			location.ref.r2 = location.ref.r1 + location.firstDataRow + NEW_PIVOT_LAST_ROW_OFFSET_GRID_DROP_ZONES - 1;
+		} else {
+			location.ref.r2 = location.ref.r1 + location.firstDataRow + rowItemsCount - 1;
+		}
+		if (this.gridDropZones && 0 < rowFieldsCount && 0 === colFieldsCount && 0 === dataFieldsCount) {
+			location.ref.c2 = location.ref.c1 + location.firstDataCol + NEW_PIVOT_LAST_COL_OFFSET_GRID_DROP_ZONES - 1;
+		} else {
+			location.ref.c2 = location.ref.c1 + location.firstDataCol + colItemsCount - 1;
+		}
 	} else if (this.asc_getPageFields()) {
 		location.ref.r2 = location.ref.r1;
 		location.ref.c2 = location.ref.c1;

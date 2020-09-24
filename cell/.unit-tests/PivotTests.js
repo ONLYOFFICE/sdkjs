@@ -3868,50 +3868,6 @@ $(function() {
 		});
 	}
 
-	function testGridDropZones() {
-		test("Test: GridDropZones", function() {
-			var pivot = init();
-			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
-
-			AscCommon.History.Clear();
-			pivot = checkHistoryOperation(pivot, standards["GridDropZones_0row_0col_0data"], "0row_0col_0data", function(){
-				pivot.asc_setGridDropZones(true);
-			});
-			pivot = checkHistoryOperation(pivot, standards["GridDropZones_0row_0col_1data"], "0row_0col_1data", function(){
-				pivot.asc_addDataField(5);
-			});
-			pivot = checkHistoryOperation(pivot, standards["GridDropZones_0row_0col_1data"], "0row_0col_2data_col", function(){
-				pivot.asc_addDataField(5);
-			});
-			pivot = checkHistoryOperation(pivot, standards["GridDropZones_0row_0col_1data"], "0row_0col_1data", function(){
-				pivot.asc_addDataField(5);
-			});
-			pivot = checkHistoryOperation(pivot, standards["GridDropZones_0row_0col_1data"], "0row_0col_1data", function(){
-				pivot.asc_addDataField(5);
-			});
-			pivot = checkHistoryOperation(pivot, standards["GridDropZones_0row_0col_1data"], "0row_0col_1data", function(){
-				pivot.asc_addDataField(5);
-			});
-			pivot = checkHistoryOperation(pivot, standards["GridDropZones_0row_0col_1data"], "0row_0col_1data", function(){
-				pivot.asc_addDataField(5);
-			});
-			pivot = checkHistoryOperation(pivot, standards["GridDropZones_0row_0col_1data"], "0row_0col_1data", function(){
-				pivot.asc_addDataField(5);
-			});
-			pivot = checkHistoryOperation(pivot, standards["GridDropZones_0row_0col_1data"], "0row_0col_1data", function(){
-				pivot.asc_addDataField(5);
-			});
-			pivot = checkHistoryOperation(pivot, standards["GridDropZones_0row_0col_1data"], "0row_0col_1data", function(){
-				pivot.asc_addDataField(5);
-			});
-			pivot = checkHistoryOperation(pivot, standards["GridDropZones_0row_0col_1data"], "0row_0col_1data", function(){
-				pivot.asc_addDataField(5);
-			});
-
-			ws.deletePivotTables(new AscCommonExcel.MultiplyRange(pivot.getReportRanges()).getUnionRange());
-		});
-	}
-
 	function testPivotInsertBlankRow() {
 		test("Test: InsertBlankRow", function() {
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
@@ -4808,7 +4764,7 @@ $(function() {
 
 		testLayout("tabular");
 
-		// testLayout("gridDropZones");
+		testLayout("gridDropZones");
 
 		testLayoutValues("compact");
 
