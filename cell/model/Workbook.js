@@ -6956,6 +6956,10 @@
 				oCellValue.text = AscCommonExcel.ToName_ST_ItemType(Asc.c_oAscItemType.Default);
 				cells.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
 			}
+			if (rowFieldsOffset && false === pivotTable.showHeaders && false === pivotTable.gridDropZones && pivotTable.getDataFieldsCount() > 0) {
+				cells = this.getRange4(pivotRange.r1 + location.firstDataRow, pivotRange.c1 + location.firstDataCol - 1);
+				this._updatePivotTableSetCellValue(cells, pivotTable.getDataFieldName(0));
+			}
 			return;
 		}
 		var pivotFields = pivotTable.asc_getPivotFields();

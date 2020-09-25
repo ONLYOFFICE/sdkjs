@@ -3978,22 +3978,25 @@ CT_pivotTableDefinition.prototype.updateLocation = function() {
 	var dataFields = this.asc_getDataFields();
 	var pageFields = this.asc_getPageFields();
 	if (rowFields || colFields || dataFields) {
-		location.firstHeaderRow = 1;
 		var colFieldsCount = colFields ? colFields.length : 0;
 		var colFieldsCountWithoutValues = colFieldsCount;
 		var rowFieldsCount = rowFields ? rowFields.length : 0;
 		var dataFieldsCount = dataFields ? dataFields.length : 0;
+		location.firstDataCol = 0;
+		location.firstHeaderRow = 1;
 		if (1 === colFieldsCount && st_VALUES === colFields[0].asc_getIndex()) {
 			location.firstHeaderRow = 0;
 			colFieldsCountWithoutValues = 0;
 		}
-		location.firstDataCol = 0;
 		if (this.gridDropZones && (0 === colFieldsCountWithoutValues || 0 === rowFieldsCount)) {
 			location.firstHeaderRow = 1;
 			if (0 < rowFieldsCount && 0 === colFieldsCountWithoutValues && dataFieldsCount < 2) {
 				location.firstHeaderRow = 2;
 			}
 			location.firstDataCol = 1;
+		}
+		if (false === this.showHeaders && false === this.gridDropZones && (1 !== dataFieldsCount || (0 < colFieldsCountWithoutValues && 0 === rowFieldsCount))) {
+			location.firstHeaderRow = 0;
 		}
 		location.firstDataRow = location.firstHeaderRow + colFieldsCount;
 		if (rowFields) {
