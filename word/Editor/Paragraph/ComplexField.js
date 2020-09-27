@@ -607,11 +607,26 @@ CComplexField.prototype.private_UpdateTOC = function()
 	}
 
 	var oStyles          = this.LogicDocument.Get_Styles();
-	var arrOutline       = this.LogicDocument.GetOutlineParagraphs(null, {
+	var arrOutline;
+	var sCaption = this.Instruction.GetCaption();
+	var oOutlinePr = {
 		OutlineStart : this.Instruction.GetHeadingRangeStart(),
 		OutlineEnd   : this.Instruction.GetHeadingRangeEnd(),
 		Styles       : this.Instruction.GetStylesArray()
-	});
+	};
+	if(typeof sCaption === "string" && sCaption.length > 0)
+	{
+		var aParagraphs = this.LogicDocument.GetAllCaptionParagraphs(sCaption);
+		arrOutline = [];
+		for(var nParagraph = 0; nParagraph < aParagraphs.length; ++nParagraph)
+		{
+			arrOutline.push({Paragraph: aParagraphs[nParagraph], Lvl: 0});
+		}
+	}
+	else
+	{
+		arrOutline = this.LogicDocument.GetOutlineParagraphs(null, oOutlinePr);
+	}
 	var oSelectedContent = new CSelectedContent();
 
 	var isPreserveTabs   = this.Instruction.IsPreserveTabs();
