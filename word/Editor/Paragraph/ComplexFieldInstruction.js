@@ -506,6 +506,10 @@ CFieldInstructionTOC.prototype.ToString = function()
 
 		sInstr += "\" ";
 	}
+	if(typeof this.Caption === "string" && this.Caption.length > 0)
+	{
+		sInstr += ("\\c \"" + this.Caption + "\"");
+	}
 
 	return sInstr;
 };
