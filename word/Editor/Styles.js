@@ -6668,6 +6668,14 @@ CStyle.prototype.CreateTOCHeading = function()
 	this.Set_UnhideWhenUsed(true);
 	this.Set_ParaPr(ParaPr);
 };
+CStyle.prototype.CreateTOF = function(nType)
+{
+	this.CreateTOC(0, nType);
+	var oParaPr = this.ParaPr.Copy();
+	oParaPr.SetSpacing(undefined, undefined, undefined, 0, undefined, undefined);
+	this.Set_ParaPr(oParaPr);
+	this.Set_UiPriority(99);
+};
 /**
  * Дефолтовые настройки для стиля ListParagraph
  */
@@ -7315,6 +7323,7 @@ function CStyles(bCreateDefault)
 			IntenseQuote      : null,
 			TOC               : [],
 			TOCHeading        : null,
+			TOF               : null,
 			Caption           : null,
 			EndnoteText       : null,
 			EndnoteTextChar   : null,
@@ -7970,6 +7979,10 @@ function CStyles(bCreateDefault)
 		oStyleTOCHeading.CreateTOCHeading();
 		this.Default.TOCHeading = this.Add(oStyleTOCHeading);
 
+		var oStyleTOF = new CStyle("table of figures", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
+		oStyleTOF.CreateTOF();
+		this.Default.TOF = this.Add(oStyleTOF);
+
         // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
         g_oTableId.Add( this, this.Id );
     }
@@ -7998,6 +8011,7 @@ function CStyles(bCreateDefault)
 
 			TOC               : [],
 			TOCHeading        : null,
+			TOF               : null,
 			Caption           : null,
 			EndnoteText       : null,
 			EndnoteTextChar   : null,
@@ -9490,6 +9504,10 @@ CStyles.prototype.GetDefaultTOC = function(nLvl)
 CStyles.prototype.GetDefaultTOCHeading = function()
 {
 	return this.Default.TOCHeading;
+};
+CStyles.prototype.GetDefaultTOF = function()
+{
+	return this.Default.TOF;
 };
 CStyles.prototype.GetDefaultHyperlink = function()
 {

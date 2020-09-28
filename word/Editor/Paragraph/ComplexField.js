@@ -820,7 +820,15 @@ CComplexField.prototype.private_UpdateTOC = function()
 	}
 	else
 	{
-		var sReplacementText = AscCommon.translateManager.getValue("No table of contents entries found.");
+		var sReplacementText;
+		if(typeof sCaption === "string" && sCaption.length > 0)
+		{
+			sReplacementText = AscCommon.translateManager.getValue("No table of figures entries found.");
+		}
+		else
+		{
+			sReplacementText = AscCommon.translateManager.getValue("No table of contents entries found.");
+		}
 
 		var oPara = new Paragraph(this.LogicDocument.GetDrawingDocument(), this.LogicDocument, false);
 		var oRun  = new ParaRun(oPara, false);
