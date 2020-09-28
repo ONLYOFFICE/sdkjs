@@ -7275,6 +7275,11 @@ function BinaryFileReader(doc, openParams)
 		if(null != oNewId)
 			stDefault.TOCHeading = oNewId.id;
 
+		var sTOF = stDefault.TOF;
+		var oNewId = oIdRenameMap[sTOF];
+		if(null != oNewId)
+			stDefault.TOF = oNewId.id;
+
 		var localHyperlink = AscCommon.translateManager.getValue("Hyperlink").toLowerCase().replace(/\s/g,"");
 		//меняем старые id
 		for(var sOldId in oIdRenameMap)
