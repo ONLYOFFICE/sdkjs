@@ -9575,6 +9575,42 @@ CStyles.prototype.private_CheckTOCStyle = function(nLvl, nType)
 
 	return (!!oCheckStyle.IsEqual(oTOCStyle));
 };
+
+/**
+ * Get table of figures style type
+ * @returns {Asc.c_oAscTOCStylesType}
+ */
+CStyles.prototype.GetTOFStyleType = function()
+{
+	if (this.private_CheckTOFStyle(Asc.c_oAscTOCStylesType.Simple))
+		return Asc.c_oAscTOCStylesType.Simple;
+	else if (this.private_CheckTOFStyle(Asc.c_oAscTOCStylesType.Standard))
+		return Asc.c_oAscTOCStylesType.Standard;
+	else if (this.private_CheckTOFStyle(Asc.c_oAscTOCStylesType.Modern))
+		return Asc.c_oAscTOCStylesType.Modern;
+	else if (this.private_CheckTOFStyle(Asc.c_oAscTOCStylesType.Classic))
+		return Asc.c_oAscTOCStylesType.Classic;
+	else if (this.private_CheckTOFStyle(Asc.c_oAscTOCStylesType.Web))
+		return Asc.c_oAscTOCStylesType.Web;
+
+	return Asc.c_oAscTOCStylesType.Current;
+};
+CStyles.prototype.private_CheckTOFStyle = function(nType)
+{
+	var oTOCStyle = this.Get(this.GetDefaultTOF());
+
+	if (!this.LogicDocument || !oTOCStyle)
+		return false;
+
+	this.LogicDocument.TurnOffHistory();
+	var oCheckStyle = new CStyle();
+	oCheckStyle.Clear(oTOCStyle.GetName(), oTOCStyle.GetBasedOn(), oTOCStyle.GetNext(), oTOCStyle.GetType());
+	oCheckStyle.CreateTOF(nType);
+	this.LogicDocument.TurnOnHistory();
+
+	return (!!oCheckStyle.IsEqual(oTOCStyle));
+};
+
 /**
  * Переделываем стили для Table of Contents на заданную коллекцию стилей
  * @param nType {Asc.c_oAscTOCStylesType}
@@ -9594,6 +9630,24 @@ CStyles.prototype.SetTOCStylesType = function(nType)
 		oStyle.CreateTOC(nLvl, nType);
 	}
 };
+
+
+/**
+ * Recreate table of figures style according to current style type
+ * @param nType {Asc.c_oAscTOCStylesType}
+ */
+CStyles.prototype.SetTOFStyleType = function(nType)
+{
+	if (Asc.c_oAscTOCStylesType.Current === nType)
+		return;
+	var oStyle = this.Get(this.GetDefaultTOF());
+	if (!oStyle)
+		return;
+
+	oStyle.Clear(oStyle.GetName(), oStyle.GetBasedOn(), oStyle.GetNext(), oStyle.GetType());
+	oStyle.CreateTOF(nType);
+};
+
 /**
  * Получаем массив стилей в виде классов Asc.CAscStyle
  * @returns {Asc.CAscStyle[]}
