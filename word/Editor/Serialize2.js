@@ -639,7 +639,10 @@ var c_oSer_CommentsType = {
 	Replies: 9,
 	OOData: 10,
 	DurableId: 11,
-	ProviderId: 12
+	ProviderId: 12,
+	CommentContent: 13,
+	DateUtc: 14,
+	UserData: 15
 };
 
 var c_oSer_StyleType = {
@@ -1187,16 +1190,6 @@ var ESdtType = {
 	sdttypeCheckBox: 12
 };
 
-	function getCommentAdditionalData (comment) {
-		var AdditionalData = "";
-		if(null != comment.m_sOOTime && "" != comment.m_sOOTime)
-		{
-			AdditionalData += "teamlab_data:";
-			var dateStr = new Date(comment.m_sOOTime - 0).toISOString().slice(0, 19) + 'Z';
-			AdditionalData += "0;" + dateStr.length + ";" + dateStr + ";";
-		}
-		return AdditionalData;
-	};
 	function ReadNextInteger(_parsed)
 	{
 		var _len = _parsed.data.length;
@@ -6416,11 +6409,15 @@ function BinaryCommentsTableWriter(memory, doc, oMapCommentId, commentUniqueGuid
 		{
 			this.bs.WriteItem(c_oSer_CommentsType.Replies, function(){oThis.WriteReplies(comment.m_aReplies);});
 		}
-		var dataStr = getCommentAdditionalData(comment);
-		if (dataStr)
+		if (null != comment.m_sOOTime)
 		{
-			this.memory.WriteByte(c_oSer_CommentsType.OOData);
-			this.memory.WriteString2(dataStr);
+			this.memory.WriteByte(c_oSer_CommentsType.DateUtc);
+			this.memory.WriteString2(new Date(comment.m_sOOTime - 0).toISOString().slice(0, 19) + 'Z');
+		}
+		if (null != comment.m_sUserData)
+		{
+			this.memory.WriteByte(c_oSer_CommentsType.UserData);
+			this.memory.WriteString2(comment.m_sUserData);
 		}
     };
 	this.WriteReplies = function(aComments)
@@ -7533,6 +7530,8 @@ function BinaryFileReader(doc, openParams)
 				oCommentObj.m_sTime = comment.Date;
 			if(null != comment.OODate)
 				oCommentObj.m_sOOTime = comment.OODate;
+			if(null != comment.UserData)
+				oCommentObj.m_sUserData = comment.UserData;
 			if(null != comment.Text)
 				oCommentObj.m_sText = comment.Text;
 			if(null != comment.Solved)
@@ -15401,6 +15400,19 @@ function Binary_CommentsTableReader(doc, oReadResult, stream, oComments)
 		else if ( c_oSer_CommentsType.OOData === type )
 		{
 			ParceAdditionalData(this.stream.GetString2LE(length), oNewImage);
+		}
+		else if ( c_oSer_CommentsType.DateUtc === type )
+		{
+			var dateStr = this.stream.GetString2LE(length);
+			var dateMs = AscCommon.getTimeISO8601(dateStr);
+			if (isNaN(dateMs)) {
+				dateMs = new Date().getTime();
+			}
+			oNewImage.OODate = dateMs + "";
+		}
+		else if ( c_oSer_CommentsType.UserData === type )
+		{
+			oNewImage.UserData = this.stream.GetString2LE(length);
 		}
 		else if ( c_oSer_CommentsType.DurableId === type )
 		{
