@@ -372,7 +372,8 @@ var c_oSerProp_secPrType = {
 	pgBorders: 9,
 	footnotePr: 10,
 	endnotePr: 11,
-	rtlGutter: 12
+	rtlGutter: 12,
+	lnNumType: 13
 };
 var c_oSerProp_secPrSettingsType = {
     titlePg: 0,
@@ -381,6 +382,12 @@ var c_oSerProp_secPrSettingsType = {
 };
 var c_oSerProp_secPrPageNumType = {
 	start: 0
+};
+var c_oSerProp_secPrLineNumType = {
+	CountBy: 0,
+	Distance: 1,
+	Restart: 2,
+	Start: 3
 };
 var c_oSerProp_Columns = {
 	EqualWidth: 0,
@@ -2442,6 +2449,8 @@ function Binary_pPrWriter(memory, oNumIdMap, oBinaryHeaderFooterTableWriter, sav
 		var PageNumType = sectPr.Get_PageNum_Start();
 		if(-1 != PageNumType)
 			this.bs.WriteItem(c_oSerProp_secPrType.pageNumType, function(){oThis.WritePageNumType(PageNumType);});
+		if(undefined !== sectPr.LnNumType)
+			this.bs.WriteItem(c_oSerProp_secPrType.lnNumType, function(){oThis.WriteLineNumType(sectPr.LnNumType);});
 		if(null != sectPr.Columns)
 			this.bs.WriteItem(c_oSerProp_secPrType.cols, function(){oThis.WriteColumns(sectPr.Columns);});
 		if(null != sectPr.Borders && !sectPr.Borders.IsEmptyBorders())
@@ -2623,6 +2632,22 @@ function Binary_pPrWriter(memory, oNumIdMap, oBinaryHeaderFooterTableWriter, sav
 		var oThis = this;
 		this.bs.WriteItem(c_oSerProp_secPrPageNumType.start, function(){oThis.memory.WriteLong(PageNumType);});
 	}
+	this.WriteLineNumType = function(lineNum)
+	{
+		var oThis = this;
+		if(undefined != lineNum.CountBy){
+			this.bs.WriteItem(c_oSerProp_secPrLineNumType.CountBy, function(){oThis.memory.WriteLong(lineNum.CountBy);});
+		}
+		if(undefined != lineNum.Distance){
+			this.bs.WriteItem(c_oSerProp_secPrLineNumType.Distance, function(){oThis.memory.WriteLong(lineNum.Distance);});
+		}
+		if(undefined != lineNum.Restart){
+			this.bs.WriteItem(c_oSerProp_secPrLineNumType.Restart, function(){oThis.memory.WriteByte(lineNum.Restart);});
+		}
+		if(undefined != lineNum.Start){
+			this.bs.WriteItem(c_oSerProp_secPrLineNumType.Start, function(){oThis.memory.WriteLong(lineNum.Start);});
+		}
+	};
     this.WriteColumns = function(cols)
     {
         var oThis = this;
@@ -8768,6 +8793,14 @@ function Binary_pPrReader(doc, oReadResult, stream)
                 return oThis.Read_pageNumType(t, l, oSectPr);
             });
         }
+		else if( c_oSerProp_secPrType.lnNumType === type )
+		{
+			var lineNum = {nCountBy: undefined, nDistance: undefined, nStart: undefined, nRestartType: undefined};
+			res = this.bcr.Read1(length, function(t, l) {
+				return oThis.Read_lineNumType(t, l, lineNum);
+			});
+			oSectPr.SetLineNumbers(lineNum.nCountBy, lineNum.nDistance, lineNum.nStart, lineNum.nRestartType);
+		}
         else if( c_oSerProp_secPrType.sectPrChange === type )
             res = c_oSerConstants.ReadUnknown;//todo
         else if( c_oSerProp_secPrType.cols === type ) {
@@ -9031,6 +9064,22 @@ function Binary_pPrReader(doc, oReadResult, stream)
             res = c_oSerConstants.ReadUnknown;
         return res;
     }
+	this.Read_lineNumType = function(type, length, lineNum)
+	{
+		var res = c_oSerConstants.ReadOk;
+		var oThis = this;
+		if( c_oSerProp_secPrLineNumType.CountBy === type ) {
+			lineNum.nCountBy = this.stream.GetULongLE();
+		} else if( c_oSerProp_secPrLineNumType.Distance === type ) {
+			lineNum.nDistance = this.stream.GetULongLE();
+		} else if( c_oSerProp_secPrLineNumType.Restart === type ) {
+			lineNum.nRestartType = this.stream.GetByte();
+		} else if( c_oSerProp_secPrLineNumType.Start === type ) {
+			lineNum.nStart = this.stream.GetULongLE();
+		} else
+			res = c_oSerConstants.ReadUnknown;
+		return res;
+	}
     this.Read_cols = function(type, length, oSectPr)
     {
         var res = c_oSerConstants.ReadOk;
