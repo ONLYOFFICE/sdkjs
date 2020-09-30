@@ -17955,6 +17955,18 @@ CTable.prototype.GetTableOfContents = function(isUnique, isCheckFields)
 
 	return null;
 };
+
+CTable.prototype.GetTablesOfFigures = function(arrComplexFields)
+{
+	for (var nCurRow = 0, nRowsCount = this.GetRowsCount(); nCurRow < nRowsCount; ++nCurRow)
+	{
+		var oRow = this.GetRow(nCurRow);
+		for (var nCurCell = 0, nCellsCount = oRow.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
+		{
+			oRow.GetCell(nCurCell).Content.GetTablesOfFigures(arrComplexFields);
+		}
+	}
+};
 /**
  * Делаем выделенные ячейки равными по ширине
  * @returns {boolean} Возрвщаем false, если операция невозможна

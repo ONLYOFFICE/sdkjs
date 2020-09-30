@@ -1395,6 +1395,17 @@ CDocumentContentBase.prototype.GetTableOfContents = function(isUnique, isCheckFi
 	return null;
 };
 /**
+ * Get all tables of figures inside
+ * @param arrComplexFields
+ */
+CDocumentContentBase.prototype.GetTablesOfFigures = function(arrComplexFields)
+{
+	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
+	{
+		this.Content[nIndex].GetTablesOfFigures(arrComplexFields);
+	}
+};
+/**
  * Добавляем заданный текст в текущей позиции
  * @param {String} sText
  */

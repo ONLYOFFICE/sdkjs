@@ -1831,6 +1831,8 @@ function CSelectedElementsInfo(oPr)
 {
 	this.m_bSkipTOC = !!(oPr && oPr.SkipTOC);
 	this.m_bCheckAllSelection = !!(oPr && oPr.CheckAllSelection); // Проверять все выделение, или только 1 элемент
+    this.m_bAddAllComplexFields = !!(oPr && oPr.AddAllComplexFields);
+
 
 	this.m_bTable             = false; // Находится курсор или выделение целиком в какой-нибудь таблице
 	this.m_bMixedSelection    = false; // Попадает ли в выделение одновременно несколько элементов
@@ -2015,27 +2017,66 @@ CSelectedElementsInfo.prototype.CanEditInlineSdts = function()
 };
 CSelectedElementsInfo.prototype.SetComplexFields = function(arrComplexFields)
 {
-	this.m_arrComplexFields = arrComplexFields;
+    if(this.m_bAddAllComplexFields)
+    {
+        var nAddIndex, nIndex;
+        for(nAddIndex = 0; nAddIndex < arrComplexFields.length; ++nAddIndex)
+        {
+            var oAddField = arrComplexFields[nAddIndex];
+            for(nIndex = 0; nIndex < this.m_arrComplexFields.length; ++nIndex)
+            {
+                if(this.m_arrComplexFields[nIndex] === oAddField)
+                {
+                    break;
+                }
+            }
+            if(nIndex === this.m_arrComplexFields.length)
+            {
+                this.m_arrComplexFields.push(oAddField);
+            }
+        }
+    }
+    else
+    {
+        this.m_arrComplexFields = arrComplexFields;
+    }
 };
 CSelectedElementsInfo.prototype.GetComplexFields = function()
 {
 	return this.m_arrComplexFields;
 };
-CSelectedElementsInfo.prototype.GetTableOfContents = function()
+CSelectedElementsInfo.prototype.GetAllTablesOfFigures = function()
 {
+    var aTOF = [];
 	for (var nIndex = this.m_arrComplexFields.length - 1; nIndex >= 0; --nIndex)
 	{
 		var oComplexField = this.m_arrComplexFields[nIndex];
 		var oInstruction  = oComplexField.GetInstruction();
 
-		if (AscCommonWord.fieldtype_TOC === oInstruction.GetType())
-			return oComplexField;
+		if (AscCommonWord.fieldtype_TOC === oInstruction.GetType() && oInstruction.IsTableOfFigures())//TOC field can be table of contents or table or figures depending on flags
+        {
+            aTOF.push(oComplexField);
+        }
 	}
+	return aTOF;
+};
+CSelectedElementsInfo.prototype.GetTableOfContents = function()
+{
+    for (var nIndex = this.m_arrComplexFields.length - 1; nIndex >= 0; --nIndex)
+    {
+        var oComplexField = this.m_arrComplexFields[nIndex];
+        var oInstruction  = oComplexField.GetInstruction();
 
-	if (this.m_oBlockLevelSdt && this.m_oBlockLevelSdt.IsBuiltInTableOfContents())
-		return this.m_oBlockLevelSdt;
+        if (AscCommonWord.fieldtype_TOC === oInstruction.GetType() && oInstruction.IsTableOfContents())//TOC field can be table of contents or table or figures depending on flags
+        {
+            return oComplexField;
+        }
+    }
 
-	return null;
+    if (this.m_oBlockLevelSdt && this.m_oBlockLevelSdt.IsBuiltInTableOfContents())
+        return this.m_oBlockLevelSdt;
+
+    return null;
 };
 CSelectedElementsInfo.prototype.SetHyperlink = function(oHyperlink)
 {
@@ -21852,6 +21893,25 @@ CDocument.prototype.GetTableOfContents = function(isCurrent)
 
 	return null;
 };
+CDocument.prototype.GetAllTablesOfFigures = function(isCurrent)
+{
+    if (true === isCurrent)
+    {
+        var oSelectedInfo = this.GetSelectedElementsInfo();
+        return oSelectedInfo.GetAllTablesOfFigures();
+    }
+    else
+    {
+        var aResult = [];
+        for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
+        {
+            this.Content[nIndex].GetAllTablesOfFigures(aResult);
+            if (aResult.length > 0)
+                return aResult;
+        }
+        return aResult;
+    }
+}
 /**
  * Получаем текущее сложное поле
  * @returns {CComplexField | ParaPageNum | ParaPageCount | null}

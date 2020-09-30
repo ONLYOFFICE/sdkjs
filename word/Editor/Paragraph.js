@@ -14620,10 +14620,31 @@ Paragraph.prototype.GetTableOfContents = function(isUnique, isCheckFields)
 	{
 		var oResult = this.Content[nIndex].GetComplexField(fieldtype_TOC);
 		if (oResult)
-			return oResult;
+		{
+			var oInstruction = oResult.GetInstruction();
+			if(oInstruction && oInstruction.IsTableOfContents())//TOC field can be table of contents or table or figures depending on flags
+			{
+				return oResult;
+			}
+		}
 	}
 
 	return null;
+};
+Paragraph.prototype.GetTableSOfFigures = function(arrComplexFields)
+{
+	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
+	{
+		var oResult = this.Content[nIndex].GetComplexField(fieldtype_TOC);
+		if (oResult)
+		{
+			var oInstruction = oResult.GetInstruction();
+			if(oInstruction && oInstruction.IsTableOfFigures())//TOC field can be table of contents or table or figures depending on flags
+			{
+				arrComplexFields.push(oResult);
+			}
+		}
+	}
 };
 Paragraph.prototype.GetComplexFieldsArrayByType = function(nType)
 {

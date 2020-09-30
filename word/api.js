@@ -9649,6 +9649,42 @@ background-repeat: no-repeat;\
 
 	};
 
+	asc_docs_api.prototype.asc_CanUpdateTablesOfFigures = function()
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		var aTOF = oLogicDocument.GetAllTablesOfFigures(true);
+		return aTOF.length > 0;
+	};
+	asc_docs_api.prototype.asc_UpdateTablesOfFigures = function()
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		var aTOF = oLogicDocument.GetAllTablesOfFigures(true);
+		if(aTOF.length === 0)
+		{
+			return;
+		}
+		var oApi = this;
+		var fCallback = function (isUpdatePageNumbers)
+		{
+			var oTOF = aTOF.pop();
+			if(oTOF)
+			{
+				oApi.asc_UpdateTableOfContents(isUpdatePageNumbers, oTOF);
+			}
+			if(aTOF.length > 0)
+			{
+				aTOF[aTOF.length - 1].SelectField();
+				oApi.sendEvent("asc_onAscTOFUpdate", fCallback);
+			}
+		};
+		aTOF[aTOF.length - 1].SelectField();
+		oApi.sendEvent("asc_onAscTOFUpdate", fCallback);
+		
+	};
+
+	asc_docs_api.prototype.asc_AddTableOfFigures = function(oPr)
+	{};
+
 	asc_docs_api.prototype.asc_GetCurrentComplexField = function()
 	{
 		var oLogicDocument = this.WordControl.m_oLogicDocument;

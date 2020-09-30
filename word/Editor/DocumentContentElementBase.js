@@ -956,6 +956,13 @@ CDocumentContentElementBase.prototype.GetTableOfContents = function(isUnique, is
 	return null;
 };
 /**
+ * Get all tables of figures inside
+ * @param arrComplexFields
+ */
+CDocumentContentElementBase.prototype.GetTablesOfFigures = function(arrComplexFields)
+{
+};
+/**
  * Проверяем у родительского класса выделен ли только один элемент
  * @returns {boolean}
  */

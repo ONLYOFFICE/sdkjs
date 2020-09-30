@@ -1309,6 +1309,10 @@ CBlockLevelSdt.prototype.GetInnerTableOfContents = function()
 
 	return oTOC;
 };
+CBlockLevelSdt.prototype.GetTablesOfFigures = function(arrComplexFields)
+{
+	this.Content.GetTablesOfFigures(arrComplexFields);
+};
 CBlockLevelSdt.prototype.IsBlockLevelSdtFirstOnNewPage = function()
 {
 	if ((null != this.Get_DocumentPrev() && !this.Parent.IsElementStartOnNewPage(this.GetIndex()))
