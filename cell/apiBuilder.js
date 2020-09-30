@@ -979,7 +979,7 @@
 			return this.GetPrintHeadings();
 		},
 		set: function (bPrint) {
-			this.SetPrintHeadings(!!bPrint)
+			this.SetPrintHeadings(bPrint)
 		}
 	});
 
