@@ -21897,7 +21897,7 @@ CDocument.prototype.GetAllTablesOfFigures = function(isCurrent)
 {
     if (true === isCurrent)
     {
-        var oSelectedInfo = this.GetSelectedElementsInfo();
+        var oSelectedInfo = this.GetSelectedElementsInfo({CheckAllSelection: true, AddAllComplexFields: true});
         return oSelectedInfo.GetAllTablesOfFigures();
     }
     else

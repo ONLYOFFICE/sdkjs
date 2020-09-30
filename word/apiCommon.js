@@ -1400,6 +1400,8 @@
 		this.StylesType   = Asc.c_oAscTOCStylesType.Current;
 
 		this.ComplexField = null;
+		this.Caption = null;
+		this.IsIncludeLabelAndNumber = false;
 	}
 	CTableOfContentsPr.prototype.InitFromTOCInstruction = function(oComplexField)
 	{
@@ -1430,6 +1432,11 @@
 		}
 
 		this.ComplexField = oComplexField;
+		if(oInstruction.IsTableOfFigures())
+		{
+			this.Caption = oInstruction.Caption || oInstruction.CaptionOnlyText;
+			this.IsIncludeLabelAndNumber = (this.CaptionOnlyText === undefined);
+		}
 	};
 	CTableOfContentsPr.prototype.InitFromSdtTOC = function(oSdtTOC)
 	{
@@ -1527,28 +1534,47 @@
 	{
 		return this.ComplexField;
 	};
-
+	CTableOfContentsPr.prototype.put_Caption = function(sCaption)
+	{
+		this.Caption = sCaption;
+	};
+	CTableOfContentsPr.prototype.get_Caption = function()
+	{
+		return this.Caption;
+	};
+	CTableOfContentsPr.prototype.put_IncludeLabelAndNumber = function(bInclude)
+	{
+		this.IsIncludeLabelAndNumber = bInclude;
+	};
+	CTableOfContentsPr.prototype.get_IncludeLabelAndNumber = function()
+	{
+		return this.IsIncludeLabelAndNumber;
+	};
 
 	window['Asc']['CTableOfContentsPr'] = window['Asc'].CTableOfContentsPr = CTableOfContentsPr;
-	CTableOfContentsPr.prototype['get_Hyperlink']       = CTableOfContentsPr.prototype.get_Hyperlink;
-	CTableOfContentsPr.prototype['put_Hyperlink']       = CTableOfContentsPr.prototype.put_Hyperlink;
-	CTableOfContentsPr.prototype['get_OutlineStart']    = CTableOfContentsPr.prototype.get_OutlineStart;
-	CTableOfContentsPr.prototype['get_OutlineEnd']      = CTableOfContentsPr.prototype.get_OutlineEnd;
-	CTableOfContentsPr.prototype['put_OutlineRange']    = CTableOfContentsPr.prototype.put_OutlineRange;
-	CTableOfContentsPr.prototype['get_StylesCount']     = CTableOfContentsPr.prototype.get_StylesCount;
-	CTableOfContentsPr.prototype['get_StyleName']       = CTableOfContentsPr.prototype.get_StyleName;
-	CTableOfContentsPr.prototype['get_StyleLevel']      = CTableOfContentsPr.prototype.get_StyleLevel;
-	CTableOfContentsPr.prototype['clear_Styles']        = CTableOfContentsPr.prototype.clear_Styles;
-	CTableOfContentsPr.prototype['add_Style']           = CTableOfContentsPr.prototype.add_Style;
-	CTableOfContentsPr.prototype['put_ShowPageNumbers'] = CTableOfContentsPr.prototype.put_ShowPageNumbers;
-	CTableOfContentsPr.prototype['get_ShowPageNumbers'] = CTableOfContentsPr.prototype.get_ShowPageNumbers;
-	CTableOfContentsPr.prototype['put_RightAlignTab']   = CTableOfContentsPr.prototype.put_RightAlignTab;
-	CTableOfContentsPr.prototype['get_RightAlignTab']   = CTableOfContentsPr.prototype.get_RightAlignTab;
-	CTableOfContentsPr.prototype['get_TabLeader']       = CTableOfContentsPr.prototype.get_TabLeader;
-	CTableOfContentsPr.prototype['put_TabLeader']       = CTableOfContentsPr.prototype.put_TabLeader;
-	CTableOfContentsPr.prototype['get_StylesType']      = CTableOfContentsPr.prototype.get_StylesType;
-	CTableOfContentsPr.prototype['put_StylesType']      = CTableOfContentsPr.prototype.put_StylesType;
-	CTableOfContentsPr.prototype['get_InternalClass']   = CTableOfContentsPr.prototype.get_InternalClass;
+	CTableOfContentsPr.prototype['get_Hyperlink']             = CTableOfContentsPr.prototype.get_Hyperlink;
+	CTableOfContentsPr.prototype['put_Hyperlink']             = CTableOfContentsPr.prototype.put_Hyperlink;
+	CTableOfContentsPr.prototype['get_OutlineStart']          = CTableOfContentsPr.prototype.get_OutlineStart;
+	CTableOfContentsPr.prototype['get_OutlineEnd']            = CTableOfContentsPr.prototype.get_OutlineEnd;
+	CTableOfContentsPr.prototype['put_OutlineRange']          = CTableOfContentsPr.prototype.put_OutlineRange;
+	CTableOfContentsPr.prototype['get_StylesCount']           = CTableOfContentsPr.prototype.get_StylesCount;
+	CTableOfContentsPr.prototype['get_StyleName']             = CTableOfContentsPr.prototype.get_StyleName;
+	CTableOfContentsPr.prototype['get_StyleLevel']            = CTableOfContentsPr.prototype.get_StyleLevel;
+	CTableOfContentsPr.prototype['clear_Styles']              = CTableOfContentsPr.prototype.clear_Styles;
+	CTableOfContentsPr.prototype['add_Style']                 = CTableOfContentsPr.prototype.add_Style;
+	CTableOfContentsPr.prototype['put_ShowPageNumbers']       = CTableOfContentsPr.prototype.put_ShowPageNumbers;
+	CTableOfContentsPr.prototype['get_ShowPageNumbers']       = CTableOfContentsPr.prototype.get_ShowPageNumbers;
+	CTableOfContentsPr.prototype['put_RightAlignTab']         = CTableOfContentsPr.prototype.put_RightAlignTab;
+	CTableOfContentsPr.prototype['get_RightAlignTab']         = CTableOfContentsPr.prototype.get_RightAlignTab;
+	CTableOfContentsPr.prototype['get_TabLeader']             = CTableOfContentsPr.prototype.get_TabLeader;
+	CTableOfContentsPr.prototype['put_TabLeader']             = CTableOfContentsPr.prototype.put_TabLeader;
+	CTableOfContentsPr.prototype['get_StylesType']            = CTableOfContentsPr.prototype.get_StylesType;
+	CTableOfContentsPr.prototype['put_StylesType']            = CTableOfContentsPr.prototype.put_StylesType;
+	CTableOfContentsPr.prototype['get_InternalClass']         = CTableOfContentsPr.prototype.get_InternalClass;
+	CTableOfContentsPr.prototype['put_Caption']               = CTableOfContentsPr.prototype.put_Caption;
+	CTableOfContentsPr.prototype['get_Caption']               = CTableOfContentsPr.prototype.get_Caption;
+	CTableOfContentsPr.prototype['put_IncludeLabelAndNumber'] = CTableOfContentsPr.prototype.put_IncludeLabelAndNumber;
+	CTableOfContentsPr.prototype['get_IncludeLabelAndNumber'] = CTableOfContentsPr.prototype.get_IncludeLabelAndNumber;
 
 
 	/**
