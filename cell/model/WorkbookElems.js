@@ -4755,13 +4755,14 @@ StyleManager.prototype =
 		}
 	};
 	Row.prototype.setHidden = function (val, bViewLocalChange) {
-		if (this.index >= 0 && (!this.getHidden() !== !val)) {
-			this.ws.hiddenManager.addHidden(true, this.index);
-		}
-
+		var inViewAndFilter = this.ws.getActiveNamedSheetViewId() !== null && this.ws.autoFilters.containInFilter(this.index);
 		if (!bViewLocalChange) {
 			var bCollaborativeChanges = !this.ws.autoFilters.useViewLocalChange && this.ws.workbook.bCollaborativeChanges;
-			bViewLocalChange = !bCollaborativeChanges && this.ws.getActiveNamedSheetViewId() !== null && this.ws.autoFilters.containInFilter(this.index);
+			bViewLocalChange = !bCollaborativeChanges && inViewAndFilter;
+		}
+		//если находимся в режиме вью, а приходят изменения для дефолта - не меняем hiddenManager
+		if (this.index >= 0 && (!this.getHidden() !== !val) && !(inViewAndFilter && !bViewLocalChange)) {
+			this.ws.hiddenManager.addHidden(true, this.index);
 		}
 
 		var _rowFlag_hd = !bViewLocalChange ? g_nRowFlag_hd : g_nRowFlag_hdView;
