@@ -5316,7 +5316,9 @@
 					autoFilterElement.SortState = null;
 				}
 
-				worksheet.setRowHidden(false, autoFilterElement.Ref.r1, autoFilterElement.Ref.r2);
+				if (!viewId || viewId === worksheet.getActiveNamedSheetViewId()) {
+					worksheet.setRowHidden(false, autoFilterElement.Ref.r1, autoFilterElement.Ref.r2);
+				}
 
 				var doClean = function(af) {
 					var filterColumns = af.FilterColumns;
@@ -5368,7 +5370,9 @@
 
 				if (colId !== null) {
 					var index = autoFilterObj.getIndexByColId(colId);
-					this._openHiddenRowsAfterDeleteColumn(filter, colId);
+					if (!viewId || viewId === this.worksheet.getActiveNamedSheetViewId()) {
+						this._openHiddenRowsAfterDeleteColumn(filter, colId);
+					}
 
 					var filterColumn = autoFilterObj.getFilterColumnByIndex(index);
 					if (filterColumn) {
