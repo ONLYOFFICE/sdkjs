@@ -9684,6 +9684,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.asc_AddTableOfFigures = function(oPr)
 	{
 		var oLogicDocument = this.private_GetLogicDocument();
+		var oApi = this;
 		if(!oLogicDocument)
 		{
 			return;
@@ -9728,8 +9729,20 @@ background-repeat: no-repeat;\
 		}
 		if(oTOFToReplace)
 		{
-			oPr.ComplexField = oTOFToReplace;
-			this.asc_SetTableOfContentsPr(oPr);
+			var oState = oLogicDocument.SaveDocumentState();
+			oTOFToReplace.SelectFieldValue();
+			this.sendEvent("asc_onAscReplaceCurrentTOF", function(bReplace){
+				if(!bReplace)
+				{
+					oLogicDocument.AddTableOfFigures(oPr);
+				}
+				else
+				{
+					oPr.ComplexField = oTOFToReplace;
+					oLogicDocument.LoadDocumentState(oState);
+					oApi.asc_SetTableOfContentsPr(oPr);
+				}
+			});
 		}
 		else
 		{
