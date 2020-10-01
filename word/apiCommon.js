@@ -1400,8 +1400,8 @@
 		this.StylesType   = Asc.c_oAscTOCStylesType.Current;
 
 		this.ComplexField = null;
-		this.Caption = null;
-		this.IsIncludeLabelAndNumber = false;
+		this.Caption = undefined;// undefined for TOC, null or string for TOF
+		this.IsIncludeLabelAndNumber = true;
 	}
 	CTableOfContentsPr.prototype.InitFromTOCInstruction = function(oComplexField)
 	{

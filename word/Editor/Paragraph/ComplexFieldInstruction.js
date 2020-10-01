@@ -455,6 +455,21 @@ CFieldInstructionTOC.prototype.SetPr = function(oPr)
 		this.SetSeparator(" ");
 
 	this.ForceTabLeader = oPr.TabLeader;
+	var sCaption = oPr.get_Caption();
+	if(sCaption !== undefined)
+	{
+		if(sCaption || this.Styles.length > 0)
+		{
+			if(oPr.IsIncludeLabelAndNumber)
+			{
+				this.SetCaption(sCaption);
+			}
+			else
+			{
+				this.SetCaptionOnlyText(sCaption);
+			}
+		}
+	}
 };
 CFieldInstructionTOC.prototype.GetForceTabLeader = function()
 {

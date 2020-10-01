@@ -14631,7 +14631,7 @@ Paragraph.prototype.GetTableOfContents = function(isUnique, isCheckFields)
 
 	return null;
 };
-Paragraph.prototype.GetTableSOfFigures = function(arrComplexFields)
+Paragraph.prototype.GetTablesOfFigures = function(arrComplexFields)
 {
 	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
 	{

@@ -21854,6 +21854,70 @@ CDocument.prototype.AddTableOfContents = function(sHeading, oPr, oSdt)
 		this.FinalizeAction();
 	}
 };
+CDocument.prototype.AddTableOfFigures = function(oPr)
+{
+    var oStyles     = this.GetStyles();
+    var nStylesType = oPr ? oPr.get_StylesType() : Asc.c_oAscTOCStylesType.Current;
+
+    var isNeedChangeStyles = (Asc.c_oAscTOCStylesType.Current !== nStylesType && nStylesType !== oStyles.GetTOCStylesType());
+
+    var isLocked = true;
+    if (isNeedChangeStyles)
+    {
+        isLocked = this.IsSelectionLocked(AscCommon.changestype_Document_Content, {
+            Type : AscCommon.changestype_2_AdditionalTypes, Types : [AscCommon.changestype_Document_Styles]
+        });
+    }
+    else
+    {
+        isLocked = this.IsSelectionLocked(AscCommon.changestype_Document_Content)
+    }
+    if (!isLocked)
+    {
+        this.StartAction(AscDFH.historydescription_Document_AddTableOfContents);
+
+        if (this.DrawingObjects.selectedObjects.length > 0)
+        {
+            var oContent = this.DrawingObjects.getTargetDocContent();
+            if (!oContent || oContent.bPresentation)
+            {
+                this.DrawingObjects.resetInternalSelection();
+            }
+        }
+
+        var oComplexField = this.AddFieldWithInstruction("TOC \\h \\z");
+        if (oPr)
+        {
+            if (isNeedChangeStyles)
+                oStyles.SetTOFStyleType(nStylesType);
+
+            oComplexField.SetPr(oPr);
+            oComplexField.Update();
+            var oNextParagraph;
+            this.MoveCursorToEndPos(false);
+            var oParagraph = this.GetCurrentParagraph();
+            if(oParagraph)
+            {
+                oNextParagraph = oParagraph.GetNextParagraph();
+                if (oNextParagraph)
+                {
+                    oNextParagraph.MoveCursorToStartPos(false);
+                    oNextParagraph.Document_SetThisElementCurrent();
+                }
+                else
+                {
+                    oParagraph.MoveCursorToEndPos(false);
+                }
+            }
+        }
+
+        this.Recalculate();
+        this.UpdateInterface();
+        this.UpdateSelection();
+        this.UpdateRulers();
+        this.FinalizeAction();
+    }
+};
 CDocument.prototype.GetPagesCount = function()
 {
 	return this.Pages.length;
@@ -21905,7 +21969,7 @@ CDocument.prototype.GetAllTablesOfFigures = function(isCurrent)
         var aResult = [];
         for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
         {
-            this.Content[nIndex].GetAllTablesOfFigures(aResult);
+            this.Content[nIndex].GetTablesOfFigures(aResult);
             if (aResult.length > 0)
                 return aResult;
         }

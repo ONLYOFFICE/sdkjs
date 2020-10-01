@@ -9679,11 +9679,63 @@ background-repeat: no-repeat;\
 		};
 		aTOF[aTOF.length - 1].SelectField();
 		oApi.sendEvent("asc_onAscTOFUpdate", fCallback);
-		
 	};
 
 	asc_docs_api.prototype.asc_AddTableOfFigures = function(oPr)
-	{};
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		if(!oLogicDocument)
+		{
+			return;
+		}
+		var sCaption = oPr.get_Caption();
+		var aTOF, oTOF, nIndex, sInstrCaption;
+		var oTOFToReplace = null;
+		var oInstruction;
+		aTOF = oLogicDocument.GetAllTablesOfFigures(true);
+		if(aTOF.length > 0)
+		{
+			oTOFToReplace = aTOF[0];
+		}
+		if(!oTOFToReplace)
+		{
+			aTOF = oLogicDocument.GetAllTablesOfFigures();
+			if(aTOF.length > 0)
+			{
+				if(typeof sCaption === "string" && sCaption.length > 0)
+				{
+					for(nIndex = 0; nIndex < aTOF.length; ++nIndex)
+					{
+						oTOF = aTOF[nIndex];
+						oInstruction = oTOF.GetInstruction();
+						if(!oInstruction)
+						{
+							continue;
+						}
+						sInstrCaption = oInstruction.GetCaptionOnlyText() || oInstruction.GetCaption();
+						if(sInstrCaption === sCaption)
+						{
+							oTOFToReplace = oTOF;
+							break;
+						}
+					}
+				}
+				if(!oTOFToReplace)
+				{
+					oTOFToReplace = aTOF[0];
+				}
+			}
+		}
+		if(oTOFToReplace)
+		{
+			oPr.ComplexField = oTOFToReplace;
+			this.asc_SetTableOfContentsPr(oPr);
+		}
+		else
+		{
+			oLogicDocument.AddTableOfFigures(oPr);
+		}
+	};
 
 	asc_docs_api.prototype.asc_GetCurrentComplexField = function()
 	{
@@ -9919,6 +9971,19 @@ background-repeat: no-repeat;\
 			return [];
 
 		return oLogicDocument.GetStyles().GetAscStylesArray();
+	};
+	asc_docs_api.prototype.asc_getAllUsedParagraphStyles = function()
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument)
+			return [];
+		var aStyles = oLogicDocument.GetAllUsedParagraphStyles();
+		var aAscStyles = [];
+		for(var nStyle = 0; nStyle < aStyles.length; ++nStyle)
+		{
+			aAscStyles.push(aStyles[nStyle].ToAscStyle());
+		}
+		return aAscStyles;
 	};
 
 	asc_docs_api.prototype.asc_SetAutomaticBulletedLists = function(isAuto)
@@ -11190,6 +11255,11 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_GetTableOfContentsPr']                  = asc_docs_api.prototype.asc_GetTableOfContentsPr;
 	asc_docs_api.prototype['asc_SetTableOfContentsPr']                  = asc_docs_api.prototype.asc_SetTableOfContentsPr;
 	asc_docs_api.prototype['asc_UpdateTableOfContents']                 = asc_docs_api.prototype.asc_UpdateTableOfContents;
+
+	asc_docs_api.prototype['asc_getAllUsedParagraphStyles']             = asc_docs_api.prototype.asc_getAllUsedParagraphStyles;
+	asc_docs_api.prototype['asc_CanUpdateTablesOfFigures']              = asc_docs_api.prototype.asc_CanUpdateTablesOfFigures;
+	asc_docs_api.prototype['asc_UpdateTablesOfFigures']                 = asc_docs_api.prototype.asc_UpdateTablesOfFigures;
+	asc_docs_api.prototype['asc_AddTableOfFigures']                     = asc_docs_api.prototype.asc_AddTableOfFigures;
 
 	asc_docs_api.prototype['asc_GetCurrentComplexField']                = asc_docs_api.prototype.asc_GetCurrentComplexField;
 	asc_docs_api.prototype['asc_UpdateComplexField']                    = asc_docs_api.prototype.asc_UpdateComplexField;
