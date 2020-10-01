@@ -4811,6 +4811,7 @@
 				}
 
 				worksheet.workbook.dependencyFormulas.lockRecal();
+				this.useViewLocalChange = true;
 				for (var i = ref.r1 + 1; i <= ref.r2; i++) {
 					if (worksheet.getRowHidden(i) === false) {
 						continue;
@@ -4821,6 +4822,7 @@
 						worksheet.setRowHidden(false, i, i);
 					}
 				}
+				this.useViewLocalChange = null;
 				worksheet.workbook.dependencyFormulas.unlockRecal();
 			},
 

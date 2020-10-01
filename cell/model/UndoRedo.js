@@ -3155,9 +3155,11 @@ function (window, undefined) {
 						Data.nRow = collaborativeEditing.getLockOtherRow2(nSheetId, Data.nRow);
 						Data.nCol = collaborativeEditing.getLockOtherColumn2(nSheetId, Data.nCol);
 					}
-				} else if (AscCH.historyitem_AutoFilter_Apply === Type) {
-					if (Data.autoFiltersObject.cellId !== undefined) {
-						var curCellId = Data.autoFiltersObject.cellId.split('af')[0];
+				} else if (AscCH.historyitem_AutoFilter_Apply === Type ||
+					AscCH.historyitem_AutoFilter_ClearFilterColumn === Type) {
+					var _obj = Data.autoFiltersObject ? Data.autoFiltersObject : Data;
+					if (_obj.cellId !== undefined) {
+						var curCellId = _obj.cellId.split('af')[0];
 						var range;
 						AscCommonExcel.executeInR1C1Mode(false, function () {
 							range = AscCommonExcel.g_oRangeCache.getAscRange(curCellId).clone();
@@ -3165,7 +3167,7 @@ function (window, undefined) {
 						var nRow = collaborativeEditing.getLockOtherRow2(nSheetId, range.r1);
 						var nCol = collaborativeEditing.getLockOtherColumn2(nSheetId, range.c1);
 						if (nCol !== range.c1 || nRow !== range.r1) {
-							Data.autoFiltersObject.cellId = new AscCommon.CellBase(nRow, nCol).getName();
+							_obj.cellId = new AscCommon.CellBase(nRow, nCol).getName();
 						}
 					}
 				}

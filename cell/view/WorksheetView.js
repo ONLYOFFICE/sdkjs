@@ -15235,9 +15235,9 @@
         return this.model.autoFilters.getAddFormatTableOptions(selectionRange, range, isPivot);
     };
 
-    WorksheetView.prototype.clearFilter = function () {
-        var t = this;
-        var ar = this.model.selectionRange.getLast().clone();
+	WorksheetView.prototype.clearFilter = function () {
+		var t = this;
+		var ar = this.model.selectionRange.getLast().clone();
 		//pivot
 		if (Asc.CT_pivotTableDefinition.prototype.asc_removeFilters) {
 			var pivotTable = this.model.inPivotTable(ar);
@@ -15247,22 +15247,32 @@
 			}
 		}
 
-        var onChangeAutoFilterCallback = function (isSuccess) {
-            if (false === isSuccess) {
-                return;
-            }
+		var onChangeAutoFilterCallback = function (isSuccess) {
+			if (false === isSuccess) {
+				return;
+			}
 
 			AscCommonExcel.checkFilteringMode(function () {
 				var updateRange = t.model.autoFilters.isApplyAutoFilterInCell(ar, true);
 				if (false !== updateRange) {
 					t._onUpdateFormatTable(updateRange);
-                    t.objectRender.updateSizeDrawingObjects({target: c_oTargetType.RowResize, row: updateRange.r1});
+					t.objectRender.updateSizeDrawingObjects({target: c_oTargetType.RowResize, row: updateRange.r1});
 					t._updateSlicers(updateRange);
 				}
 			});
-        };
-        this._isLockedAll(onChangeAutoFilterCallback);
-    };
+		};
+		//в особом режиме не лочим лист при фильтрации
+		var nActive = t.model.getActiveNamedSheetViewId();
+		if (null !== nActive) {
+			//лочу для того, чтобы не было возможности изменить имя текущего отображения
+			//иначе будут конфликты при принятии изменений
+			//api._isLockedNamedSheetView([t.model.aNamedSheetViews[nActive]], function (_success) {
+			onChangeAutoFilterCallback(true);
+			//});
+		} else {
+			this._isLockedAll(onChangeAutoFilterCallback);
+		}
+	};
 
     WorksheetView.prototype.clearFilterColumn = function (cellId, displayName) {
         var t = this;
@@ -15292,7 +15302,17 @@
 				}
 			});
         };
-        this._isLockedAll(onChangeAutoFilterCallback);
+		//в особом режиме не лочим лист при фильтрации
+		var nActive = t.model.getActiveNamedSheetViewId();
+		if (null !== nActive) {
+			//лочу для того, чтобы не было возможности изменить имя текущего отображения
+			//иначе будут конфликты при принятии изменений
+			//api._isLockedNamedSheetView([t.model.aNamedSheetViews[nActive]], function (_success) {
+			onChangeAutoFilterCallback(true);
+			//});
+		} else {
+			this._isLockedAll(onChangeAutoFilterCallback);
+		}
     };
 
     /**
