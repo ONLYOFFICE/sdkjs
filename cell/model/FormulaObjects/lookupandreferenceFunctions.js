@@ -534,7 +534,7 @@ function (window, undefined) {
 			}
 		}
 		if (cElementType.array === arg2.type) {
-			arg2 = arg1.getElementRowCol(0,0);
+			arg2 = arg2.getElementRowCol(0,0);
 			if (cElementType.error === arg2.type) {
 				return new cError(cErrorType.wrong_value_type);
 			}
