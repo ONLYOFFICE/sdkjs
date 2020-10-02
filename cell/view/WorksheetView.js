@@ -14914,8 +14914,10 @@
 				}
 			}
 		}
+
+		var nActive = t.model.getActiveNamedSheetViewId();
         var onChangeAutoFilterCallback = function (isSuccess) {
-            if (false === isSuccess) {
+            if (false === isSuccess && nActive === null) {
                 t.model.workbook.slicersUpdateAfterChangeTable(autoFilterObject.displayName);
                 return;
             }
@@ -14951,17 +14953,9 @@
 			onChangeAutoFilterCallback();
 			History.LocalChange = false;
 		} else {
-			//в особом режиме не лочим лист при фильтрации
-			var nActive = t.model.getActiveNamedSheetViewId();
-			if (null !== nActive) {
-				//лочу для того, чтобы не было возможности изменить имя текущего отображения
-				//иначе будут конфликты при принятии изменений
-				//api._isLockedNamedSheetView([t.model.aNamedSheetViews[nActive]], function (_success) {
-					onChangeAutoFilterCallback(true);
-				//});
-			} else {
-				this._isLockedAll(onChangeAutoFilterCallback);
-			}
+			//лочу даже в режиме вью. для того чтобы избежать кофликтов - допустим, когда один пользователь сортирует
+			//второй - фильтрует
+			this._isLockedAll(onChangeAutoFilterCallback);
 		}
 	};
 
@@ -15299,8 +15293,10 @@
 			}
 		}
 
+		//в особом режиме не лочим лист при фильтрации
+		var nActive = t.model.getActiveNamedSheetViewId();
 		var onChangeAutoFilterCallback = function (isSuccess) {
-			if (false === isSuccess) {
+			if (false === isSuccess && null === nActive) {
 				return;
 			}
 
@@ -15313,17 +15309,8 @@
 				}
 			});
 		};
-		//в особом режиме не лочим лист при фильтрации
-		var nActive = t.model.getActiveNamedSheetViewId();
-		if (null !== nActive) {
-			//лочу для того, чтобы не было возможности изменить имя текущего отображения
-			//иначе будут конфликты при принятии изменений
-			//api._isLockedNamedSheetView([t.model.aNamedSheetViews[nActive]], function (_success) {
-			onChangeAutoFilterCallback(true);
-			//});
-		} else {
-			this._isLockedAll(onChangeAutoFilterCallback);
-		}
+
+		this._isLockedAll(onChangeAutoFilterCallback);
 	};
 
     WorksheetView.prototype.clearFilterColumn = function (cellId, displayName) {
@@ -15340,8 +15327,10 @@
 			}
 		}
 
+		//в особом режиме не лочим лист при фильтрации
+		var nActive = t.model.getActiveNamedSheetViewId();
         var onChangeAutoFilterCallback = function (isSuccess) {
-            if (false === isSuccess) {
+            if (false === isSuccess && nActive === null) {
                 return;
             }
 
@@ -15354,17 +15343,8 @@
 				}
 			});
         };
-		//в особом режиме не лочим лист при фильтрации
-		var nActive = t.model.getActiveNamedSheetViewId();
-		if (null !== nActive) {
-			//лочу для того, чтобы не было возможности изменить имя текущего отображения
-			//иначе будут конфликты при принятии изменений
-			//api._isLockedNamedSheetView([t.model.aNamedSheetViews[nActive]], function (_success) {
-			onChangeAutoFilterCallback(true);
-			//});
-		} else {
-			this._isLockedAll(onChangeAutoFilterCallback);
-		}
+
+		this._isLockedAll(onChangeAutoFilterCallback);
     };
 
     /**
