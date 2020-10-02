@@ -14916,11 +14916,11 @@
 		}
 
 		var nActive = t.model.getActiveNamedSheetViewId();
-        var onChangeAutoFilterCallback = function (isSuccess) {
-            if (false === isSuccess && nActive === null) {
-                t.model.workbook.slicersUpdateAfterChangeTable(autoFilterObject.displayName);
-                return;
-            }
+		var onChangeAutoFilterCallback = function (isSuccess) {
+			if (false === isSuccess && nActive === null) {
+				t.model.workbook.slicersUpdateAfterChangeTable(autoFilterObject.displayName);
+				return;
+			}
 
 			var applyFilterProps = t.model.autoFilters.applyAutoFilter(autoFilterObject, ar);
 			if (!applyFilterProps) {
@@ -14933,10 +14933,10 @@
 			//в данном случае пересчёт для ф/т нужен, а перерисовка не нужна
 			var differentSheetApply = t.model.index !== t.workbook.model.nActive;
 
-            if (null !== rangeOldFilter && !t.model.workbook.bUndoChanges && !t.model.workbook.bRedoChanges) {
-                t.objectRender.bUpdateMetrics = false;
-                t._onUpdateFormatTable(rangeOldFilter, differentSheetApply);
-                t.objectRender.bUpdateMetrics = true;
+			if (null !== rangeOldFilter && !t.model.workbook.bUndoChanges && !t.model.workbook.bRedoChanges) {
+				t.objectRender.bUpdateMetrics = false;
+				t._onUpdateFormatTable(rangeOldFilter, differentSheetApply);
+				t.objectRender.bUpdateMetrics = true;
 				if (applyFilterProps.nOpenRowsCount !== applyFilterProps.nAllRowsCount) {
 					t.handlers.trigger('onFilterInfo', applyFilterProps.nOpenRowsCount, applyFilterProps.nAllRowsCount);
 				}
@@ -15313,8 +15313,8 @@
 		this._isLockedAll(onChangeAutoFilterCallback);
 	};
 
-    WorksheetView.prototype.clearFilterColumn = function (cellId, displayName) {
-        var t = this;
+	WorksheetView.prototype.clearFilterColumn = function (cellId, displayName) {
+		var t = this;
 		//pivot
 		if (Asc.CT_pivotTableDefinition.prototype.asc_removeFilterByCell) {
 			if (cellId) {
@@ -15329,23 +15329,23 @@
 
 		//в особом режиме не лочим лист при фильтрации
 		var nActive = t.model.getActiveNamedSheetViewId();
-        var onChangeAutoFilterCallback = function (isSuccess) {
-            if (false === isSuccess && nActive === null) {
-                return;
-            }
+		var onChangeAutoFilterCallback = function (isSuccess) {
+			if (false === isSuccess && nActive === null) {
+				return;
+			}
 
 			AscCommonExcel.checkFilteringMode(function () {
 				var updateRange = t.model.autoFilters.clearFilterColumn(cellId, displayName);
 				if (false !== updateRange) {
 					t._onUpdateFormatTable(updateRange);
-                    t.objectRender.updateSizeDrawingObjects({target: c_oTargetType.RowResize, row: updateRange.r1});
+					t.objectRender.updateSizeDrawingObjects({target: c_oTargetType.RowResize, row: updateRange.r1});
 					t._updateSlicers(updateRange);
 				}
 			});
-        };
+		};
 
 		this._isLockedAll(onChangeAutoFilterCallback);
-    };
+	};
 
     /**
      * Обновление при изменениях форматированной таблицы
