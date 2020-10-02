@@ -5901,7 +5901,22 @@
 								//в дальнейшем если перейти на айдишники колонок, то этот вопрос можно решить
 								var autoFiltersObjectAction = action && action.oData ? action.oData.autoFiltersObject : null;
 								if (autoFiltersObjectAction && autoFiltersObject && autoFiltersObject.displayName === autoFiltersObjectAction.displayName) {
-									return true;
+									var cellIdMe = autoFiltersObject.cellId.split('af')[0];
+									var rangeMe;
+									AscCommonExcel.executeInR1C1Mode(false, function () {
+										rangeMe = AscCommonExcel.g_oRangeCache.getAscRange(cellIdMe).clone();
+									});
+									var cellIdOther = autoFiltersObjectAction.cellId.split('af')[0];
+									var rangeOther;
+									AscCommonExcel.executeInR1C1Mode(false, function () {
+										rangeOther = AscCommonExcel.g_oRangeCache.getAscRange(cellIdOther).clone();
+									});
+									var colMe =  rangeMe.c1;
+									var colOther = window["Asc"]["editor"].collaborativeEditing.getLockMeColumn2(this.worksheet.Id, rangeOther.c1);
+
+									if (colMe === colOther) {
+										return true;
+									}
 								}
 							}
 						}
