@@ -9749,6 +9749,24 @@ background-repeat: no-repeat;\
 			oLogicDocument.AddTableOfFigures(oPr);
 		}
 	};
+	asc_docs_api.prototype.asc_GetTableOfFiguresPr = function()
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		var oApi = this;
+		if(!oLogicDocument)
+		{
+			return null;
+		}
+		var aTOF = oLogicDocument.GetAllTablesOfFigures(true);
+		if(aTOF.length > 0)
+		{
+			var oPr = new Asc.CTableOfContentsPr();
+			oPr.InitFromTOCInstruction(aTOF[0]);
+			oPr.CheckStylesType(oLogicDocument.GetStyles());
+			return oPr;
+		}
+		return null;
+	};
 
 	asc_docs_api.prototype.asc_GetCurrentComplexField = function()
 	{
@@ -11279,6 +11297,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_CanUpdateTablesOfFigures']              = asc_docs_api.prototype.asc_CanUpdateTablesOfFigures;
 	asc_docs_api.prototype['asc_UpdateTablesOfFigures']                 = asc_docs_api.prototype.asc_UpdateTablesOfFigures;
 	asc_docs_api.prototype['asc_AddTableOfFigures']                     = asc_docs_api.prototype.asc_AddTableOfFigures;
+	asc_docs_api.prototype['asc_GetTableOfFiguresPr']                   = asc_docs_api.prototype.asc_GetTableOfFiguresPr;
 
 	asc_docs_api.prototype['asc_GetCurrentComplexField']                = asc_docs_api.prototype.asc_GetCurrentComplexField;
 	asc_docs_api.prototype['asc_UpdateComplexField']                    = asc_docs_api.prototype.asc_UpdateComplexField;
