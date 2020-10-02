@@ -10611,6 +10611,11 @@ background-repeat: no-repeat;\
 		if (this.WordControl.m_oDrawingDocument)
 			this.WordControl.m_oDrawingDocument.SetDrawImagePlaceContents(id, props);
 	};
+	asc_docs_api.prototype.SetDrawImagePlaceTableOfFigures = function(id, props)
+	{
+		if (this.WordControl.m_oDrawingDocument)
+			this.WordControl.m_oDrawingDocument.SetDrawImagePlaceTableOfFigures(id, props);
+	};
 
     asc_docs_api.prototype.SetDrawImagePreviewMargins = function(id, props)
     {
@@ -11225,6 +11230,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_SpecialPaste"]                          = asc_docs_api.prototype.asc_SpecialPaste;
 
 	asc_docs_api.prototype["SetDrawImagePlaceContents"]					= asc_docs_api.prototype.SetDrawImagePlaceContents;
+	asc_docs_api.prototype["SetDrawImagePlaceTableOfFigures"]			= asc_docs_api.prototype.SetDrawImagePlaceTableOfFigures;
     asc_docs_api.prototype["SetDrawImagePreviewMargins"]				= asc_docs_api.prototype.SetDrawImagePreviewMargins;
     asc_docs_api.prototype["SetDrawImagePreviewBullet"]					= asc_docs_api.prototype.SetDrawImagePreviewBullet;
 
