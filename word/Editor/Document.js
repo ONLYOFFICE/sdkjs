@@ -2180,6 +2180,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	//Props
 	this.App = null;
 	this.Core = null;
+    this.CustomProperties = null;
 
     // Сначала настраиваем размеры страницы и поля
     this.SectPr = new CSectionPr(this);

@@ -70,7 +70,8 @@ var c_oMainTables = {
     FontMap			: 43,
 	SlideNotesRels	: 45,
 	NotesRels		: 46,
-	NotesMastersRels: 47
+	NotesMastersRels: 47,
+	CustomProperties: 48
 };
 
 function CSeekTableEntry()
@@ -583,6 +584,10 @@ function CBinaryFileWriter()
 		if (presentation.Core)
 			this.WriteCore(presentation.Core, presentation.Api);
 
+		// Core
+		if (presentation.CustomProperties)
+			this.WriteCustomProperties(presentation.CustomProperties, presentation.Api);
+
         // ViewProps
 		if (presentation.ViewProps)
 			this.WriteViewProps(presentation.ViewProps);
@@ -1022,6 +1027,11 @@ function CBinaryFileWriter()
     {
         this.StartMainRecord(c_oMainTables.Core);
         core.toStream(this, api);
+    };
+    this.WriteCustomProperties = function(customProperties, api)
+    {
+        this.StartMainRecord(c_oMainTables.CustomProperties);
+        customProperties.toStream(this, api);
     };
     this.WriteViewProps = function(viewprops)
     {

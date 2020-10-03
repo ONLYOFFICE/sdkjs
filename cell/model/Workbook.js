@@ -2056,6 +2056,7 @@
 		this.nActive = 0;
 		this.App = null;
 		this.Core = null;
+		this.CustomProperties = null;
 		this.theme = null;
 		this.clrSchemeMap = null;
 

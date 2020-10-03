@@ -80,7 +80,8 @@ var c_oSerTableTypes = {
 	VbaProject: 13,
 	App: 15,
 	Core: 16,
-	DocumentComments: 17
+	DocumentComments: 17,
+	CustomProperties: 18
 };
 var c_oSerSigTypes = {
     Version:0
@@ -1710,6 +1711,16 @@ function BinaryFileWriter(doc, bMailMergeDocx, bMailMergeHtml, isCompatible)
 				pptx_content_writer.BinaryFileWriter.ExportToMemory(old);
 				pptx_content_writer.BinaryFileWriter.ImportFromMemory(t.memory);
 				t.Document.Core.toStream(pptx_content_writer.BinaryFileWriter, t.Document.DrawingDocument.m_oWordControl.m_oApi);
+				pptx_content_writer.BinaryFileWriter.ExportToMemory(t.memory);
+				pptx_content_writer.BinaryFileWriter.ImportFromMemory(old);
+			}});
+		}
+		if (this.Document.CustomProperties) {
+			this.WriteTable(c_oSerTableTypes.CustomProperties, {Write: function(){
+				var old = new AscCommon.CMemory(true);
+				pptx_content_writer.BinaryFileWriter.ExportToMemory(old);
+				pptx_content_writer.BinaryFileWriter.ImportFromMemory(t.memory);
+				t.Document.CustomProperties.toStream(pptx_content_writer.BinaryFileWriter);
 				pptx_content_writer.BinaryFileWriter.ExportToMemory(t.memory);
 				pptx_content_writer.BinaryFileWriter.ImportFromMemory(old);
 			}});
@@ -7137,6 +7148,13 @@ function BinaryFileReader(doc, openParams)
 					fileStream = this.stream.ToFileStream();
 					this.Document.Core = new AscCommon.CCore();
 					this.Document.Core.fromStream(fileStream);
+					this.stream.FromFileStream(fileStream);
+					break;
+				case c_oSerTableTypes.CustomProperties:
+					this.stream.Seek2(mtiOffBits);
+					fileStream = this.stream.ToFileStream();
+					this.Document.CustomProperties = new AscCommon.CCustomProperties();
+					this.Document.CustomProperties.fromStream(fileStream);
 					this.stream.FromFileStream(fileStream);
 					break;
             }

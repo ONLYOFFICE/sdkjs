@@ -1206,6 +1206,21 @@ function isRealObject(obj)
       return (this.data[this.cur++] | this.data[this.cur++] << 8 | this.data[this.cur++] << 16 | this.data[this.cur++] << 24);
     }
 
+    this.GetDouble = function()
+    {
+      if (this.cur + 7 >= this.size)
+        return 0;
+      tempHelpUnit[0] = this.GetUChar();
+      tempHelpUnit[1] = this.GetUChar();
+      tempHelpUnit[2] = this.GetUChar();
+      tempHelpUnit[3] = this.GetUChar();
+      tempHelpUnit[4] = this.GetUChar();
+      tempHelpUnit[5] = this.GetUChar();
+      tempHelpUnit[6] = this.GetUChar();
+      tempHelpUnit[7] = this.GetUChar();
+      return tempHelpFloat[0];
+    }
+
     //String
     this.GetString = function(len)
     {

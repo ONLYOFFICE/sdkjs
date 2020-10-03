@@ -2722,6 +2722,7 @@ function CPresentation(DrawingDocument) {
     //Props
     this.App = null;
     this.Core = null;
+    this.CustomProperties = null;
 
     this.StartPage = 0; // Для совместимости с CDocumentContent
     this.CurPage = 0;

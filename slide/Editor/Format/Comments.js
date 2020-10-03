@@ -580,6 +580,10 @@ CWriteCommentData.prototype =
             {
                 this.AdditionalData += "4;" + this.Data.m_sGuid.length + ";" + this.Data.m_sGuid + ";";
             }
+            if (this.Data.m_sUserData)
+            {
+                this.AdditionalData += "5;" + this.Data.m_sUserData.length + ";" + this.Data.m_sUserData + ";";
+            }
         }
     },
 
@@ -643,6 +647,8 @@ CWriteCommentData.prototype =
 			}
             else if (4 == _attr)
                 _comment_data.m_sGuid = _value;
+            else if (5 == _attr)
+                _comment_data.m_sUserData = _value;
         }
     }
 };

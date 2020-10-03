@@ -88,7 +88,8 @@
         CalcChain: 5,
         App: 6,
         Core: 7,
-        PersonList: 8
+        PersonList: 8,
+        CustomProperties: 9
     };
     /** @enum */
     var c_oSerStylesTypes =
@@ -675,7 +676,8 @@
         Replies : 7,
         Reply : 8,
         OOTime : 9,
-        Guid : 10
+        Guid : 10,
+        UserData : 11
     };
     var c_oSer_ThreadedComment =
     {
@@ -4489,6 +4491,9 @@
                 this.memory.WriteByte(c_oSer_CommentData.UserName);
                 this.memory.WriteString2(sUserName);
             }
+            var userData = oCommentData.asc_getUserData();
+            if(userData)
+                this.bs.WriteItem( c_oSer_CommentData.UserData, function(){oThis.memory.WriteString2(userData);});
             var sQuoteText = oCommentData.asc_getQuoteText();
             if(null != sQuoteText)
             {
@@ -5136,6 +5141,16 @@
                     pptx_content_writer.BinaryFileWriter.ExportToMemory(old);
                     pptx_content_writer.BinaryFileWriter.ImportFromMemory(t.Memory);
                     t.wb.Core.toStream(pptx_content_writer.BinaryFileWriter, t.wb.oApi);
+                    pptx_content_writer.BinaryFileWriter.ExportToMemory(t.Memory);
+                    pptx_content_writer.BinaryFileWriter.ImportFromMemory(old);
+                }});
+            }
+            if (this.wb.CustomProperties) {
+                this.WriteTable(c_oSerTableTypes.CustomProperties, {Write: function(){
+                    var old = new AscCommon.CMemory(true);
+                    pptx_content_writer.BinaryFileWriter.ExportToMemory(old);
+                    pptx_content_writer.BinaryFileWriter.ImportFromMemory(t.Memory);
+                    t.wb.CustomProperties.toStream(pptx_content_writer.BinaryFileWriter);
                     pptx_content_writer.BinaryFileWriter.ExportToMemory(t.Memory);
                     pptx_content_writer.BinaryFileWriter.ImportFromMemory(old);
                 }});
@@ -8488,6 +8503,8 @@
                 oCommentData.asc_putUserId(this.stream.GetString2LE(length));
             else if ( c_oSer_CommentData.UserName == type )
                 oCommentData.asc_putUserName(this.stream.GetString2LE(length));
+            else if ( c_oSer_CommentData.UserData == type )
+                oCommentData.asc_putUserData(this.stream.GetString2LE(length));
             else if ( c_oSer_CommentData.QuoteText == type )
                 oCommentData.asc_putQuoteText(this.stream.GetString2LE(length));
             else if ( c_oSer_CommentData.Replies == type )
@@ -9794,6 +9811,13 @@
                             fileStream = this.stream.ToFileStream();
                             wb.Core = new AscCommon.CCore();
                             wb.Core.fromStream(fileStream);
+                            this.stream.FromFileStream(fileStream);
+                            break;
+                        case c_oSerTableTypes.CustomProperties:
+                            this.stream.Seek2(mtiOffBits);
+                            fileStream = this.stream.ToFileStream();
+                            wb.CustomProperties = new AscCommon.CCustomProperties();
+                            wb.CustomProperties.fromStream(fileStream);
                             this.stream.FromFileStream(fileStream);
                             break;
                     }
