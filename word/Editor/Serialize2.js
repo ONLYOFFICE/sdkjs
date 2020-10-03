@@ -7022,7 +7022,7 @@ function BinaryFileReader(doc, openParams)
 			res = this.stream.Seek(nDocumentCommentTableSeek);
 			if(c_oSerConstants.ReadOk != res)
 				return res;
-			res = (new Binary_CommentsTableReader(this.Document, this.oReadResult, this.stream, this.oReadResult.oComments)).Read();
+			res = (new Binary_CommentsTableReader(this.Document, this.oReadResult, this.stream, this.oReadResult.oDocumentComments)).Read();
 			if(c_oSerConstants.ReadOk != res)
 				return res;
 		}
@@ -7552,6 +7552,13 @@ function BinaryFileReader(doc, openParams)
 			this.Document.Comments.Add(oNewComment);
 			oCommentsNewId[oOldComment.Id] = oNewComment;
 		}
+		for(var i in this.oReadResult.oDocumentComments)
+		{
+			var oOldComment = this.oReadResult.oDocumentComments[i];
+			var oNewComment = new AscCommon.CComment(this.Document.Comments, fInitCommentData(oOldComment));
+			this.Document.Comments.Add(oNewComment);
+		}
+
 		for(var commentIndex in this.oReadResult.oCommentsPlaces)
 		{
 			var item = this.oReadResult.oCommentsPlaces[commentIndex];
@@ -7595,9 +7602,10 @@ function BinaryFileReader(doc, openParams)
 			}
 		}
 		//посылаем событие о добавлении комментариев
-		for(var i in oCommentsNewId)
+		var allComments = this.Document.Comments.GetAllComments();
+		for(var i in allComments)
 		{
-			var oNewComment = oCommentsNewId[i];
+			var oNewComment = allComments[i];
 			this.Document.DrawingDocument.m_oWordControl.m_oApi.sync_AddComment( oNewComment.Id, oNewComment.Data );
 		}
 		//remove bookmarks without end
@@ -16364,6 +16372,7 @@ function DocReadResult(doc) {
 	this.logicDocument = doc;
 	this.ImageMap = {};
 	this.oComments = {};
+	this.oDocumentComments = {};
 	this.oCommentsPlaces = {};
 	this.setting = {titlePg: false, EvenAndOddHeaders: false};
 	this.numToNumClass = {};
