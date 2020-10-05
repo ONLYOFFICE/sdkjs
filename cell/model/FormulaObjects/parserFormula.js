@@ -3721,8 +3721,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cPercentOperator.prototype.Assemble2 = function (arg, start, count) {
 		return new cString(arg[start + count - 1] + this.name);
 	};
-	cPercentOperator.prototype.Assemble2Locale = function (arg, start, count) {
-		return new cString(arg[start + count - 1] + this.name);
+	cPercentOperator.prototype.Assemble2Locale = function (arg, start, count, locale, digitDelim) {
+		return new cString(arg[start + count - 1].toLocaleString(digitDelim) + this.name);
 	};
 
 	/**
