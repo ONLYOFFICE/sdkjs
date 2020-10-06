@@ -1694,7 +1694,7 @@
 
 							if (diff < 0) {
 								diffColId = ref.c1 - activeRange.c2 - 1;
-								this._deleteCollaborativeActiveAfterDeleteColumn(filter, activeRange);
+								t._deleteCollaborativeActiveAfterDeleteColumn(filter, activeRange);
 								filter.deleteTableColumns(activeRange);
 								filter.changeRef(-diffColId, null, true);
 							}
@@ -1706,7 +1706,7 @@
 
 							if (diff < 0) {
 								filter.deleteTableColumns(activeRange);
-								this._deleteCollaborativeActiveAfterDeleteColumn(filter, activeRange);
+								t._deleteCollaborativeActiveAfterDeleteColumn(filter, activeRange);
 							} else {
 								filter.addTableColumns(activeRange, t);
 							}
@@ -1718,7 +1718,7 @@
 
 							if (diff < 0) {
 								filter.deleteTableColumns(activeRange);
-								this._deleteCollaborativeActiveAfterDeleteColumn(filter, activeRange);
+								t._deleteCollaborativeActiveAfterDeleteColumn(filter, activeRange);
 							} else {
 								filter.addTableColumns(activeRange, t);
 							}
@@ -5935,7 +5935,7 @@
 				}
 
 				var compareFilter = function (_name1, _name2) {
-					if (_name1 === name2 || (!_name1 && !_name2)) {
+					if (_name1 === _name2 || (!_name1 && !_name2)) {
 						return true;
 					}
 					return false;
@@ -5965,8 +5965,6 @@
 						}
 					}
 				}
-
-				return res;
 			}
 		};
 
