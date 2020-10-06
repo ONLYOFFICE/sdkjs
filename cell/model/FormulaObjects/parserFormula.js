@@ -4944,11 +4944,13 @@ _func.binarySearch = function ( sElem, arrTagert, regExp ) {
 };
 
 _func.binarySearchByRange = function ( sElem, area, regExp ) {
-	var bbox;
+	var bbox, ws;
 	if (cElementType.cellsRange3D === area.type) {
 		bbox = area.bbox;
+		ws = area.getWs();
 	} else if (cElementType.cellsRange === area.type) {
 		bbox = area.range.bbox;
+		ws = area.ws;
 	}
 	var bVertical = bbox.r2 - bbox.r1 >= bbox.c2 - bbox.c1;//r>=c
 	var first = 0, /* Номер первого элемента в массиве */
@@ -4956,32 +4958,35 @@ _func.binarySearchByRange = function ( sElem, area, regExp ) {
 		/* Если просматриваемый участок непустой, first<last */
 		mid;
 
-	var getValue = function(n) {
-		var r, c;
-		if(bVertical) {
-			r = n;
-			c = 0;
-		} else {
-			r = 0;
-			c = n;
-		}
-		var res = area.getValueByRowCol(r, c);
-		return res ? res : new cEmpty();
+	var getValuesNoEmpty = function () {
+		var _r1 = bbox.r1;
+		var _r2 = bVertical ? bbox.r2 : bbox.r1;
+		var _c1 = bbox.c1;
+		var _c2 = bVertical ? bbox.c1 : bbox.c2;
+		var _val = [];
+		ws.getRange3(_r1, _c1, _r2, _c2)._foreachNoEmpty(function(cell) {
+			var checkTypeVal = checkTypeCell(cell);
+			_val.push(checkTypeVal);
+		});
+		return _val;
 	};
 
-	if (last === 0) {
+	var noEmptyValues = getValuesNoEmpty();
+	last = noEmptyValues.length - 1;
+
+	if (noEmptyValues.length === 0) {
 		return -1;
 		/* массив пуст */
-	} else if (getValue(0).value > sElem.value) {
+	} else if (noEmptyValues[0].value > sElem.value) {
 		return -2;
-	} else if (getValue(last).value < sElem.value) {
+	} else if (noEmptyValues[last].value < sElem.value) {
 		return last;
 	}
 
 	var tempValue;
 	while (first < last) {
 		mid = Math.floor(first + (last - first) / 2);
-		tempValue = getValue(mid);
+		tempValue = noEmptyValues[mid];
 		if (sElem.value <= tempValue.value || ( regExp && regExp.test(tempValue.value) )) {
 			last = mid;
 		} else {
@@ -4990,7 +4995,7 @@ _func.binarySearchByRange = function ( sElem, area, regExp ) {
 	}
 
 	/* Если условный оператор if(n==0) и т.д. в начале опущен - значит, тут раскомментировать!    */
-	if (/* last<n &&*/ getValue(last).value === sElem.value) {
+	if (/* last<n &&*/ noEmptyValues[last].value === sElem.value) {
 		return last;
 		/* Искомый элемент найден. last - искомый индекс */
 	} else {
