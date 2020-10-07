@@ -11299,26 +11299,6 @@ CCore.prototype.Refresh_RecalcData2 = function(){
         newProperty.content = variant;
         this.properties.push(newProperty);
     };
-    CCustomProperties.prototype.test = function() {
-        editor.WordControl.m_oLogicDocument.CustomProperties = new AscCommon.CCustomProperties()
-        var cp = editor.WordControl.m_oLogicDocument.CustomProperties;
-        var vt = new AscCommon.CVariant();
-        vt.setText("qwe");
-        cp.add("text", vt);
-        vt = new AscCommon.CVariant();
-        vt.setNumber(123);
-        cp.add("num", vt);
-        vt = new AscCommon.CVariant();
-        vt.setDate(new Date());
-        cp.add("date", vt);
-        vt = new AscCommon.CVariant();
-        vt.setBool(false);
-        cp.add("bool", vt);
-        vt = new AscCommon.CVariant();
-        vt.setText("zxc");
-        cp.add("link", vt, "asd");
-    };
-
 
     function CPres()
 {
