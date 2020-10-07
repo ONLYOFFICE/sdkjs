@@ -11141,10 +11141,7 @@
 			}
 
 			if (bIsAddTable) {
-				t._isLockedAll(function () {
-					//TODO перепроверить лок
-					t._isLockedDefNames(null, null)
-				});
+				t._isLockedDefNames(null, null);
 			}
 		}
 
@@ -11411,9 +11408,56 @@
 
 		};
 
+		var _isLockedAll = function () {
+			if (val.fromBinary && pasteContent.TableParts && pasteContent.TableParts.length && specialPasteProps.formatTable) {
+
+				var arnToRange = t.model.selectionRange.getLast();
+
+				var range, tablePartRange, tables = pasteContent.TableParts, diffRow, diffCol, curTable, bIsAddTable;
+				var activeRange = AscCommonExcel.g_clipboardExcel.pasteProcessor.activeRange;
+				var refInsertBinary = AscCommonExcel.g_oRangeCache.getAscRange(activeRange);
+
+				var pasteRange = AscCommonExcel.g_clipboardExcel.pasteProcessor.activeRange;
+				var activeCellsPasteFragment = typeof pasteRange === "string" ?
+					AscCommonExcel.g_oRangeCache.getAscRange(pasteRange) : pasteRange;
+
+				for (var i = 0; i < tables.length; i++) {
+					curTable = tables[i];
+					tablePartRange = curTable.Ref;
+					diffRow = tablePartRange.r1 - refInsertBinary.r1 + arnToRange.r1;
+					diffCol = tablePartRange.c1 - refInsertBinary.c1 + arnToRange.c1;
+					range = t.model.getRange3(diffRow, diffCol, diffRow + (tablePartRange.r2 - tablePartRange.r1),
+						diffCol + (tablePartRange.c2 - tablePartRange.c1));
+
+					//если в активную область при записи попала лишь часть таблицы
+					if (activeCellsPasteFragment && !activeCellsPasteFragment.containsRange(tablePartRange)) {
+						continue;
+					}
+
+					//если область вставки содержит форматированную таблицу, которая пересекается с вставляемой форматированной таблицей
+					if (t.model.autoFilters._intersectionRangeWithTableParts(range.bbox)) {
+						continue;
+					}
+					return true;
+				}
+			}
+			return false;
+		};
+
 		var fonts = pasteContent.props && pasteContent.props.fontsNew ? pasteContent.props.fontsNew : val.fontsNew;
 		//загрузка шрифтов, в случае удачи на callback вставляем текст
-		t._loadFonts(fonts, callbackLoadFonts);
+		if (_isLockedAll()) {
+			t._isLockedAll(function (success) {
+				if (!success) {
+					History.EndTransaction();
+					window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
+					return;
+				}
+				t._loadFonts(fonts, callbackLoadFonts);
+			});
+		} else {
+			t._loadFonts(fonts, callbackLoadFonts);
+		}
     };
 
 	WorksheetView.prototype._pasteFromHTML = function (pasteContent, isCheckSelection, specialPasteProps) {
