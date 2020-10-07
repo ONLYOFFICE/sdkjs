@@ -4966,11 +4966,15 @@ _func.binarySearchByRange = function ( sElem, area, regExp ) {
 		var _val = [];
 		ws.getRange3(_r1, _c1, _r2, _c2)._foreachNoEmpty(function(cell) {
 			var checkTypeVal = checkTypeCell(cell);
-			_val.push(checkTypeVal);
+			if (checkTypeVal.type !== cElementType.empty) {
+				_val.push(checkTypeVal);
+				mapEmptyFullValues[_val.length - 1] = bVertical ? cell.nRow - bbox.r1 : cell.nCol - bbox.c1;
+			}
 		});
 		return _val;
 	};
 
+	var mapEmptyFullValues = [];
 	var noEmptyValues = getValuesNoEmpty();
 	last = noEmptyValues.length - 1;
 
@@ -4996,10 +5000,10 @@ _func.binarySearchByRange = function ( sElem, area, regExp ) {
 
 	/* Если условный оператор if(n==0) и т.д. в начале опущен - значит, тут раскомментировать!    */
 	if (/* last<n &&*/ noEmptyValues[last].value === sElem.value) {
-		return last;
+		return mapEmptyFullValues[last];
 		/* Искомый элемент найден. last - искомый индекс */
 	} else {
-		return last - 1;
+		return mapEmptyFullValues[last - 1];
 		/* Искомый элемент не найден. Но если вам вдруг надо его вставить со сдвигом, то его место - last.    */
 	}
 

@@ -8973,6 +8973,64 @@ $( function () {
 		oParser = new parserFormula( "LOOKUP(9,C101:H101,C102:H102)", "A2", ws );
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getValue().getValue(), "black" );
+
+		ws.getRange2( "A102" ).setValue( "1" );
+		ws.getRange2( "A103" ).setValue( "" );
+		ws.getRange2( "A104" ).setValue( "3" );
+		ws.getRange2( "A105" ).setValue( "3" );
+
+		ws.getRange2( "B102" ).setValue( "a" );
+		ws.getRange2( "B103" ).setValue( "b" );
+		ws.getRange2( "B104" ).setValue( "c" );
+		ws.getRange2( "B105" ).setValue( "d" );
+
+		oParser = new parserFormula( "LOOKUP(1,A102:A105,B102:B105)", "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue().getValue(), "a" );
+
+		oParser = new parserFormula( "LOOKUP(,A102:A105,B102:B105)", "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "#N/A" );
+
+		ws.getRange2( "C101" ).setValue( "2" );
+		ws.getRange2( "D101" ).setValue( "" );
+		ws.getRange2( "E101" ).setValue( "4" );
+		ws.getRange2( "F101" ).setValue( "5" );
+		ws.getRange2( "G101" ).setValue( "" );
+		ws.getRange2( "H101" ).setValue( "" );
+		ws.getRange2( "I101" ).setValue( "6" );
+		ws.getRange2( "J101" ).setValue( "" );
+		ws.getRange2( "K101" ).setValue( "7" );
+
+		ws.getRange2( "C102" ).setValue( "a" );
+		ws.getRange2( "D102" ).setValue( "b" );
+		ws.getRange2( "E102" ).setValue( "c" );
+		ws.getRange2( "F102" ).setValue( "d" );
+		ws.getRange2( "G102" ).setValue( "e" );
+		ws.getRange2( "H102" ).setValue( "f" );
+		ws.getRange2( "I102" ).setValue( "g" );
+		ws.getRange2( "J102" ).setValue( "h" );
+		ws.getRange2( "K102" ).setValue( "i" );
+
+		oParser = new parserFormula( "LOOKUP(3,C101:K101,C102:K102)", "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue().getValue(), "a" );
+
+		oParser = new parserFormula( "LOOKUP(2,C101:K101,C102:K102)", "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue().getValue(), "a" );
+
+		oParser = new parserFormula( "LOOKUP(7,C101:K101,C102:K102)", "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue().getValue(), "i" );
+
+		oParser = new parserFormula( "LOOKUP(10,C101:K101,C102:K102)", "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue().getValue(), "i" );
+
+		oParser = new parserFormula( "LOOKUP(1,C101:K101,C102:K102)", "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "#N/A" );
 	});
 
 
