@@ -20147,6 +20147,7 @@
 				t.model.autoFilters.reapplyAutoFilter(null);
 			} else if (tableIntersection) {
 				t.model.autoFilters.reapplyAutoFilter(tableIntersection.DisplayName);
+				t.model.autoFilters._setColorStyleTable(tableIntersection.Ref, tableIntersection, null, true);
 			}
 
 			History.EndTransaction();
