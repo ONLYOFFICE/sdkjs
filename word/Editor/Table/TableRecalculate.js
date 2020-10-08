@@ -441,7 +441,7 @@ CTable.prototype.private_RecalculateGrid = function()
 			if (arrMinMargin[nCurCol] + arrMinContent[nCurCol] > 558.7)
 				arrMinContent[nCurCol] = Math.max(558.7 - arrMinMargin[nCurCol], 0);
 
-			if (arrMinMargin[CurCol] + arrMaxContent[CurCol] > 558.7)
+			if (arrMinMargin[nCurCol] + arrMaxContent[nCurCol] > 558.7)
 				arrMaxContent[nCurCol] = Math.max(558.7 - arrMinMargin[nCurCol], 0);
 		}
 
@@ -686,63 +686,6 @@ CTable.prototype.private_RecalculateGrid = function()
         for ( var CurCol = 0; CurCol < nColsCount; CurCol++ )
             this.TableSumGrid[CurCol] = this.TableSumGrid[CurCol - 1] + this.TableGridCalc[CurCol];
     }
-};
-CTable.prototype.private_RecalculateGridMinMargins = function(arrMinMargins)
-{
-	for (var nCurRow = 0, nRowsCount = this.GetRowsCount(); nCurRow < nRowsCount; ++nCurRow)
-	{
-		var oRow      = this.GetRow(nCurRow);
-		var isSpacing = null !== oRow.GetCellSpacing();
-
-		var nCurGridCol = oRow.GetBefore().Grid;
-		for (var nCurCell = 0, nCellsCount = oRow.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
-		{
-			var oCell        = oRow.GetCell(nCurCell);
-			var nGridSpan    = oCell.GetGridSpan();
-			var oCellMargins = oCell.GetMargins();
-			var oCellRBorder = oCell.GetBorder(1);
-			var oCellLBorder = oCell.GetBorder(3);
-
-			var nCellMarginsLeftW  = 0;
-			var nCellMarginsRightW = 0;
-
-			if (isSpacing)
-			{
-				nCellMarginsLeftW  = oCellMargins.Left.W;
-				nCellMarginsRightW = oCellMargins.Right.W;
-
-				if (border_None !== oCellRBorder.Value)
-					nCellMarginsRightW += oCellRBorder.Size;
-
-				if (border_None !== oCellLBorder.Value)
-					nCellMarginsLeftW += oCellLBorder.Size;
-			}
-			else
-			{
-				if (border_None !== oCellRBorder.Value)
-					nCellMarginsRightW += Math.max(oCellRBorder.Size / 2, oCellMargins.Right.W);
-				else
-					nCellMarginsRightW += oCellMargins.Right.W;
-
-				if (border_None !== oCellLBorder.Value)
-					nCellMarginsLeftW += Math.max(oCellLBorder.Size / 2, oCellMargins.Left.W);
-				else
-					nCellMarginsLeftW += oCellMargins.Left.W;
-			}
-
-			if (nGridSpan <= 1)
-			{
-				if (arrMinMargins[nCurGridCol] < nCellMarginsLeftW + nCellMarginsRightW)
-					arrMinMargins[nCurGridCol] = nCellMarginsLeftW + nCellMarginsRightW;
-			}
-			else
-			{
-				// Мы не можем быть уверены в какой промежуток попадают отступы ячейки
-			}
-
-			nCurGridCol += nGridSpan;
-		}
-	}
 };
 CTable.prototype.private_RecalculateGridMinContent = function(nPctWidth, arrMinMargins, arrMinContent, arrMaxContent, arrPreferred)
 {
