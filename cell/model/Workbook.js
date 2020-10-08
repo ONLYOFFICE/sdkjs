@@ -2929,6 +2929,7 @@
 			history.UndoRedoPrepare(oRedoObjectParam, false);
 			var changesMine = [].concat.apply([], oThis.aCollaborativeActions);
 			oThis._forwardTransformation(oThis.snapshot, changesMine, aUndoRedoElems);
+			oThis.cleanCollaborativeFilterObj();
 			for (var i = 0, length = aUndoRedoElems.length; i < length; ++i)
 			{
 				var item = aUndoRedoElems[i];
@@ -3431,6 +3432,12 @@
 		}
 
 		History.EndTransaction();
+	};
+
+	Workbook.prototype.cleanCollaborativeFilterObj = function () {
+		for(var i = 0; i < this.aWorksheets.length; ++i) {
+			this.aWorksheets[i].autoFilters.cleanCollaborativeObj();
+		}
 	};
 
 //-------------------------------------------------------------------------------------------------

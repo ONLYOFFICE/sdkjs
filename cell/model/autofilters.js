@@ -448,6 +448,9 @@
 			//флаг для того, чтобы применять скрытые строки к текущему вью
 			this.useViewLocalChange = null;
 
+			this.applyCollaborativeChangedColumnsArr = [];
+			this.applyCollaborativeChangedRowsArr = [];
+
 			this.m_oColor = new AscCommon.CColor(120, 120, 120);
 			return this;
 		}
@@ -1679,6 +1682,10 @@
 
 				activeRange = activeRange.clone();
 
+				if (this.worksheet.workbook.bCollaborativeChanges) {
+					this.applyCollaborativeChangedColumnsArr.push({range: activeRange, offset: diff});
+				}
+
 				var redrawTablesArr = [];
 				var changeFilter = function (filter, bTablePart) {
 					var ref = filter.Ref;
@@ -1854,6 +1861,10 @@
 
 				if (type === "delCell") {
 					diff = -diff;
+				}
+
+				if (this.worksheet.workbook.bCollaborativeChanges) {
+					this.applyCollaborativeChangedRowsArr.push({range: activeRange, offset: diff});
 				}
 
 				if (DeleteRows)//в случае, если удаляем строки, тогда расширяем активную область область по всем столбцам
@@ -5893,6 +5904,20 @@
 				//здесь проверяем массив aCollaborativeActions
 				var res = false;
 
+				var _setOffset = function (_val, arr, byCol) {
+					if (arr && arr.length) {
+						for (var i = 0; i < arr.length; i++) {
+							var offset = arr[i].offset;
+							var first = byCol ? arr[i].range.c1 : arr[i].range.r1;
+							var last = byCol ? arr[i].range.c2 : arr[i].range.r2;
+							if (_val > last) {
+								_val += offset;
+							}
+						}
+					}
+					return _val;
+				};
+
 				var wb = this.worksheet.workbook;
 				if (wb.aCollaborativeActions) {
 					for (var i = 0; i < wb.aCollaborativeActions.length; i++) {
@@ -5904,18 +5929,20 @@
 								//в дальнейшем если перейти на айдишники колонок, то этот вопрос можно решить
 								var autoFiltersObjectAction = action && action.oData ? action.oData.autoFiltersObject : null;
 								if (autoFiltersObjectAction && autoFiltersObject && autoFiltersObject.displayName === autoFiltersObjectAction.displayName) {
-									var cellIdMe = autoFiltersObject.cellId.split('af')[0];
-									var rangeMe;
-									AscCommonExcel.executeInR1C1Mode(false, function () {
-										rangeMe = AscCommonExcel.g_oRangeCache.getAscRange(cellIdMe).clone();
-									});
-									var cellIdOther = autoFiltersObjectAction.cellId.split('af')[0];
+									var cellIdOther = autoFiltersObject.cellId.split('af')[0];
 									var rangeOther;
 									AscCommonExcel.executeInR1C1Mode(false, function () {
 										rangeOther = AscCommonExcel.g_oRangeCache.getAscRange(cellIdOther).clone();
 									});
-									var colMe =  rangeMe.c1;
-									var colOther = window["Asc"]["editor"].collaborativeEditing.getLockMeColumn2(this.worksheet.Id, rangeOther.c1);
+									var cellIdMe = autoFiltersObjectAction.cellId.split('af')[0];
+									var rangeMe;
+									AscCommonExcel.executeInR1C1Mode(false, function () {
+										rangeMe = AscCommonExcel.g_oRangeCache.getAscRange(cellIdMe).clone();
+									});
+
+
+									var colMe =  _setOffset(rangeMe.c1, this.applyCollaborativeChangedColumnsArr, true);
+									var colOther = rangeOther.c1;
 
 									if (colMe === colOther) {
 										return true;
@@ -5965,6 +5992,11 @@
 						}
 					}
 				}
+			},
+
+			cleanCollaborativeObj: function () {
+				this.applyCollaborativeChangedColumnsArr = [];
+				this.applyCollaborativeChangedRowsArr = [];
 			}
 		};
 
