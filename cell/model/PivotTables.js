@@ -2033,6 +2033,9 @@ CT_PivotCacheRecords.prototype.convertToSharedItems = function(index, si) {
 CT_PivotCacheRecords.prototype.fromWorksheetRange = function(location, cacheFields) {
 	var i;
 	var ws = location.ws;
+	if (!ws) {
+		return;
+	}
 	var bbox = location.bbox;
 	var headings = location.headings;
 	if (!headings) {
@@ -4051,7 +4054,7 @@ CT_pivotTableDefinition.prototype.parseDataRef = function(dataRef) {
 };
 CT_pivotTableDefinition.prototype.isValidDataRef = function(dataRef) {
 	var location = this.parseDataRef(dataRef);
-	if (location && location.bbox.getHeight() > 0) {
+	if (location && location.ws && location.bbox.getHeight() > 0) {
 		if (location.headings) {
 			return location.headings.length === location.bbox.getWidth();
 		} else if (location.bbox.getHeight() > 1) {
@@ -7707,7 +7710,7 @@ CT_WorksheetSource.prototype.onFormulaEvent = function (type, eventData) {
 					var table = elem.getTable();
 					if (table.isHeaderRow()) {
 						var dataLocation = this.getDataLocation();
-						if (dataLocation) {
+						if (dataLocation && dataLocation.ws) {
 							eventData.formula.removeTableName(data.from, true);
 							var bbox = dataLocation.bbox.clone();
 							bbox.r1--;
@@ -7798,7 +7801,8 @@ CT_WorksheetSource.prototype.getDataLocation = function() {
 				case AscCommonExcel.cElementType.cellsRange:
 				case AscCommonExcel.cElementType.cell3D:
 				case AscCommonExcel.cElementType.cellsRange3D:
-					return {ws: val.getWS(), bbox: val.getBBox0(), headings: headings};
+					var ws = val.getWS() !== AscCommonExcel.g_DefNameWorksheet ? val.getWS() : null;
+					return {ws: ws, bbox: val.getBBox0(), headings: headings};
 					break;
 			}
 		}

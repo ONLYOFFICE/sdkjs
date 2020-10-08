@@ -4568,10 +4568,15 @@ var editor;
 		var location = Asc.CT_pivotTableDefinition.prototype.parseDataRef(pivotRef);
 		if (location) {
 			var wb = this.wbModel;
-			this.wbModel.setActiveById(location.ws.getId());
+			var ws = location.ws;
+			if (ws) {
+				this.wbModel.setActiveById(ws.getId());
+			} else {
+				ws = wb.getActiveWs();
+			}
 			this.wb.updateWorksheetByModel();
 			this.wb.showWorksheet();
-			this._asc_insertPivot(wb, dataRef, location.ws, location.bbox, false);
+			this._asc_insertPivot(wb, dataRef, ws, location.bbox, false);
 		}
 	};
 	spreadsheet_api.prototype._asc_insertPivot = function(wb, dataRef, ws, location, confirmation) {
