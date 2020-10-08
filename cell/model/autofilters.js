@@ -1682,7 +1682,7 @@
 
 				activeRange = activeRange.clone();
 
-				if (this.worksheet.workbook.bCollaborativeChanges) {
+				if (this.worksheet.workbook.bCollaborativeChanges && Asc.CT_NamedSheetView.prototype.asc_getName) {
 					this.applyCollaborativeChangedColumnsArr.push({range: activeRange, offset: diff});
 				}
 
@@ -1863,7 +1863,7 @@
 					diff = -diff;
 				}
 
-				if (this.worksheet.workbook.bCollaborativeChanges) {
+				if (this.worksheet.workbook.bCollaborativeChanges && Asc.CT_NamedSheetView.prototype.asc_getName) {
 					this.applyCollaborativeChangedRowsArr.push({range: activeRange, offset: diff});
 				}
 
@@ -5912,6 +5912,8 @@
 							var last = byCol ? arr[i].range.c2 : arr[i].range.r2;
 							if (_val > last) {
 								_val += offset;
+							} else if (_val >= first && _val <= last && offset > 0) {
+								_val += offset;
 							}
 						}
 					}
@@ -5943,8 +5945,10 @@
 
 									var colMe =  _setOffset(rangeMe.c1, this.applyCollaborativeChangedColumnsArr, true);
 									var colOther = rangeOther.c1;
+									var rowMe = _setOffset(rangeMe.r1, this.applyCollaborativeChangedRowsArr);
+									var rowOther = rangeOther.r1;
 
-									if (colMe === colOther) {
+									if (colMe === colOther && rowMe === rowOther) {
 										return true;
 									}
 								}

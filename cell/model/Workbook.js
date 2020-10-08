@@ -3435,6 +3435,9 @@
 	};
 
 	Workbook.prototype.cleanCollaborativeFilterObj = function () {
+		if (!Asc.CT_NamedSheetView.prototype.asc_getName) {
+			return;
+		}
 		for(var i = 0; i < this.aWorksheets.length; ++i) {
 			this.aWorksheets[i].autoFilters.cleanCollaborativeObj();
 		}
