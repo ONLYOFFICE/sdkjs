@@ -7514,8 +7514,10 @@
 		var _checkPos = function (_r1, _c1, isRow, isCol) {
 			var x1 = t._getColLeft(_c1) - offsetX;
 			var y1 = t._getRowTop(_r1) - offsetY;
-			var height = t._getRowTop(_r1 + 1) - y1;
-			var width = t._getColLeft(_c1 + 1) - x1;
+			var x2 = t._getColLeft(_c1 + 1) - offsetX;
+			var y2 = t._getRowTop(_r1 + 1) - offsetY;
+			var height = y2 - y1;
+			var width = x2 - x1;
 			var _x2, _y2;
 
 			//TODO коэффициэнты перепроверить
