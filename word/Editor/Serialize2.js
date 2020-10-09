@@ -6512,7 +6512,7 @@ function BinaryCommentsTableWriter(memory, doc, oMapCommentId, commentUniqueGuid
 			this.memory.WriteByte(c_oSer_CommentsType.DateUtc);
 			this.memory.WriteString2(new Date(comment.m_sOOTime - 0).toISOString().slice(0, 19) + 'Z');
 		}
-		if (null != comment.m_sUserData)
+		if (comment.m_sUserData)
 		{
 			this.memory.WriteByte(c_oSer_CommentsType.UserData);
 			this.memory.WriteString2(comment.m_sUserData);
