@@ -1012,6 +1012,9 @@ CTableCell.prototype =
 				oResult.Max += oMargins.Left.W + oMargins.Right.W;
 			}
 
+			oResult.ContentMin = oResult.Min;
+			oResult.ContentMax = oResult.Max;
+
 			var oPrefW = this.GetW();
 			if (tblwidth_Mm === oPrefW.Type)
 			{
@@ -1032,7 +1035,10 @@ CTableCell.prototype =
 			}
 
 			if (true !== isRotated && true === this.GetNoWrap())
-				oResult.Min = Math.max(oResult.Min, oResult.Max);
+			{
+				oResult.Min        = Math.max(oResult.Min, oResult.Max);
+				oResult.ContentMin = Math.max(oResult.ContentMin, oResult.ContentMax);
+			}
 
 			if (oLogicDocument)
 			{

@@ -408,9 +408,9 @@ CTable.prototype.private_RecalculateGrid = function()
 		this.RecalcInfo.TableGrid = false;
 	}
 
-    var TopTable = this.Parent.IsInTable(true);
-    if ( ( null === TopTable && tbllayout_AutoFit === TablePr.TableLayout) || ( null != TopTable && tbllayout_AutoFit === TopTable.Get_CompiledPr(false).TablePr.TableLayout ) )
-    {
+	var TopTable = this.Parent.IsInTable(true);
+	if ((null === TopTable && tbllayout_AutoFit === TablePr.TableLayout) || (null != TopTable && tbllayout_AutoFit === TopTable.Get_CompiledPr(false).TablePr.TableLayout))
+	{
 		//---------------------------------------------------------------------------
 		// 2 часть пересчета ширины таблицы : Рассчитываем ширину по содержимому
 		//---------------------------------------------------------------------------
@@ -420,7 +420,8 @@ CTable.prototype.private_RecalculateGrid = function()
 		var arrMinMargin  = [],
 			arrMinContent = [],
 			arrMaxContent = [],
-			arrPreferred  = []; // 0 - ориентируемся на содержимое ячеек, > 0 - ориентируемся только на ширину ячеек записанную в свойствах
+			arrPreferred  = [], // 0 - ориентируемся на содержимое ячеек, > 0 - ориентируемся только на ширину ячеек записанную в свойствах
+			arrMinNoPref  = []; // минимальное значение контента, только без учета предпочитаемы ширин
 
 		var nColsCount = this.TableGridCalc.length;
 		for (var nCurCol = 0; nCurCol < nColsCount; ++nCurCol)
@@ -429,8 +430,9 @@ CTable.prototype.private_RecalculateGrid = function()
 			arrMinContent[nCurCol] = 0;
 			arrMaxContent[nCurCol] = 0;
 			arrPreferred[nCurCol]  = 0;
+			arrMinNoPref[nCurCol]  = 0;
 		}
-		this.private_RecalculateGridMinContent(PctWidth, arrMinMargin, arrMinContent, arrMaxContent, arrPreferred);
+		this.private_RecalculateGridMinContent(PctWidth, arrMinMargin, arrMinContent, arrMaxContent, arrPreferred, arrMinNoPref);
 
 		// 2. Проследим, чтобы значения arrMinContent и arrMaxContent не превосходили значение 55,87см(так работает Word)
 		for (var nCurCol = 0; nCurCol < nColsCount; ++nCurCol)
@@ -438,11 +440,14 @@ CTable.prototype.private_RecalculateGrid = function()
 			if (arrMaxContent[nCurCol] < arrMinContent[nCurCol])
 				arrMaxContent[nCurCol] = arrMinContent[nCurCol];
 
-			if (arrMinMargin[nCurCol] + arrMinContent[nCurCol] > 558.7)
-				arrMinContent[nCurCol] = Math.max(558.7 - arrMinMargin[nCurCol], 0);
+			if (arrMinNoPref[nCurCol] > 558.7)
+				arrMinNoPref[nCurCol] = 558.7;
 
-			if (arrMinMargin[nCurCol] + arrMaxContent[nCurCol] > 558.7)
-				arrMaxContent[nCurCol] = Math.max(558.7 - arrMinMargin[nCurCol], 0);
+			if (arrMinContent[nCurCol] > 558.7)
+				arrMinContent[nCurCol] = 558.7;
+
+			if (arrMaxContent[nCurCol] > 558.7)
+				arrMaxContent[nCurCol] = 558.7;
 		}
 
 		// 3. Рассчитаем максимально допустимую ширину под всю таблицу
@@ -480,10 +485,8 @@ CTable.prototype.private_RecalculateGrid = function()
 			nSumMinMargin  = 0,
 			nSumMax        = 0;
 
-		var arrTableGrid2 = [];
 		for (var nCurCol = 0; nCurCol < nColsCount; ++nCurCol)
 		{
-			arrTableGrid2[nCurCol] = arrMinContent[nCurCol] < this.TableGridCalc[nCurCol] ? this.TableGridCalc[nCurCol] : arrMinContent[nCurCol];
 			arrMaxOverMin[nCurCol] = Math.max(0, arrMaxContent[nCurCol] - arrMinContent[nCurCol]);
 
 			nSumMin += arrMinContent[nCurCol];
@@ -492,6 +495,7 @@ CTable.prototype.private_RecalculateGrid = function()
 			nSumMax += arrMinContent[nCurCol] + arrMaxOverMin[nCurCol];
 		}
 
+		var nMaxTableWOrigin = nMaxTableW;
 		if ((TablePr.TableW.IsMM() || TablePr.TableW.IsPercent()) && nMaxTableW < nTableW)
 			nMaxTableW = nTableW;
 
@@ -516,178 +520,231 @@ CTable.prototype.private_RecalculateGrid = function()
 			// максимальным значениям.
 			if (TablePr.TableW.IsMM() || TablePr.TableW.IsPercent())
 			{
+				if (nSumMin < 0.001 && nSumMax < 0.001)
+				{
+					for (var nCurCol = 0; nCurCol < nColsCount; ++nCurCol)
+					{
+						this.TableGridCalc[nCurCol] = nTableW / nColsCount;
+					}
+				}
+				else if (nSumMin >= nTableW)
+				{
+					var nSumMinContent         = 0,
+						nSumPrefOverMinContent = 0,
+						arrPrefOverMinContent  = [];
 
-				// nSumMin < nMaxTableW, значит у нас есть свободное пространство для распределения
-				// У нас есть три типа ширины: Min < Preferred < Max
+					for (var nCurCol = 0; nCurCol < nColsCount; ++nCurCol)
+					{
+						arrPrefOverMinContent[nCurCol] = Math.max(0, arrMinContent[nCurCol] - arrMinNoPref[nCurCol]);
+						nSumPrefOverMinContent += arrPrefOverMinContent[nCurCol];
+						nSumMinContent += arrMinNoPref[nCurCol];
+					}
 
-				var SumPreffered = 0, nSumMax = 0;
-				var PreffOverMin = [], MaxOverPreff = [];
-				var SumPreffOverMin = 0, SumMaxOverPreff = 0;
-				var PreffContent = [];
+					if (nSumMinContent >= nTableW)
+					{
+						for (var nCurCol = 0; nCurCol < nColsCount; ++nCurCol)
+						{
+							this.TableGridCalc[nCurCol] = arrMinNoPref[nCurCol];
+						}
+					}
+					else
+					{
+						for (var nCurCol = 0; nCurCol < nColsCount; ++nCurCol)
+						{
+							this.TableGridCalc[nCurCol] = arrMinNoPref[nCurCol] + arrPrefOverMinContent[nCurCol] * (nTableW - nSumMinContent) / nSumPrefOverMinContent;
+						}
+					}
+				}
+				else
+				{
+					// nSumMin < nMaxTableW, значит у нас есть свободное пространство для распределения
+					// Колонки, у которых задана предпочитаемая ширина не трогаем, с одним исключением, когда
+					// такие колонки все, в этом случае растягиваем их пропрорционально
+
+					var nSumMaxOverMin      = 0,
+						isAllPreferred      = true,
+						arrNoPrefMaxOverMin = [],
+						nSumMaxOverMin      = 0,
+						nSumNonPrefMax      = 0,
+						nSumPrefMin         = 0,
+						nSumNoPrefMin       = 0;
+
+					for (var nCurCol = 0; nCurCol < nColsCount; ++nCurCol)
+					{
+						if (arrPreferred[nCurCol] < 0.001)
+						{
+							isAllPreferred = false;
+
+							var nMinW = arrMinContent[nCurCol];
+							var nMaxW = Math.max(arrMaxContent[nCurCol], nMinW);
+
+							arrNoPrefMaxOverMin[nCurCol] = nMaxW - nMinW;
+							nSumMaxOverMin += nMaxW - nMinW;
+							nSumNonPrefMax += nMaxW;
+							nSumNoPrefMin += nMinW;
+						}
+						else
+						{
+							nSumPrefMin += arrMinContent[nCurCol];
+							arrNoPrefMaxOverMin[nCurCol] = 0;
+						}
+					}
+
+
+					// Если данное условие выполняется, значит у нас все ячейки с предпочитаемыми значениями, тогда
+					// мы растягиваем все ячейки равномерно. Если не выполняется, значит есть ячейки, в которых
+					// предпочитаемое значение не задано, и тогда растягиваем только такие ячейки.
+					if (isAllPreferred)
+					{
+						for (var nCurCol = 0; nCurCol < nColsCount; ++nCurCol)
+						{
+							this.TableGridCalc[nCurCol] = arrMinContent[nCurCol] * nTableW / nSumMin;
+						}
+					}
+					else if (nSumNonPrefMax < nMaxTableW - nSumMin && nSumNonPrefMax > 0.001)
+					{
+						for (var nCurCol = 0; nCurCol < nColsCount; ++nCurCol)
+						{
+							if (arrPreferred[nCurCol] < 0.001)
+								this.TableGridCalc[nCurCol] = arrMaxContent[nCurCol] * (nTableW - nSumPrefMin) / nSumNonPrefMax;
+							else
+								this.TableGridCalc[nCurCol] = arrMinContent[nCurCol];
+						}
+					}
+					else if (nSumMaxOverMin > 0.001)
+					{
+						for (var nCurCol = 0; nCurCol < nColsCount; ++nCurCol)
+						{
+							this.TableGridCalc[nCurCol] = arrMinContent[nCurCol] + (nTableW - nSumMin) * arrNoPrefMaxOverMin[nCurCol] / nSumMaxOverMin;
+						}
+					}
+					else if (nSumNoPrefMin > 0.001)
+					{
+						for (var nCurCol = 0; nCurCol < nColsCount; ++nCurCol)
+						{
+							if (arrPreferred[nCurCol] < 0.001)
+								this.TableGridCalc[nCurCol] = arrMinContent[nCurCol] * (nTableW - nSumPrefMin) / nSumNoPrefMin;
+							else
+								this.TableGridCalc[nCurCol] = arrMinContent[nCurCol];
+						}
+					}
+					else
+					{
+						// Такого быть не должно
+					}
+				}
+			}
+		}
+		else
+		{
+			// Если в таблице сделать все ячейки нулевой ширины (для контента), и все равно она получается шире
+			// максимальной допустимой ширины, тогда выставляем ширины всех колоно по минимальному значению
+			// маргинов и оставляем так как есть
+			if (nMaxTableW - nSumMinMargin < 0.001)
+			{
+				for (var nCurCol = 0; nCurCol < nColsCount; ++nCurCol)
+				{
+					this.TableGridCalc[nCurCol] = arrMinMargin[nCurCol];
+				}
+			}
+			else
+			{
+				var nSumMinContent         = 0,
+					nSumPrefOverMinContent = 0,
+					arrPrefOverMinContent  = [];
 
 				for (var nCurCol = 0; nCurCol < nColsCount; ++nCurCol)
 				{
-					var MinW   = arrMinContent[nCurCol];
-					var MaxW   = arrMaxContent[nCurCol];
-					var PreffW = (arrPreferred[nCurCol] > 0.001 ? MaxW : MinW);
-
-					SumPreffered += PreffW;
-					nSumMax += MaxW;
-
-					PreffContent[nCurCol] = PreffW;
-					PreffOverMin[nCurCol] = Math.max(0, PreffW - MinW);
-					MaxOverPreff[nCurCol] = Math.max(0, MaxW - PreffW);
-
-					SumPreffOverMin += PreffOverMin[nCurCol];
-					SumMaxOverPreff += MaxOverPreff[nCurCol];
+					arrPrefOverMinContent[nCurCol] = Math.max(0, arrMinContent[nCurCol] - arrMinNoPref[nCurCol]);
+					nSumPrefOverMinContent += arrPrefOverMinContent[nCurCol];
+					nSumMinContent += arrMinNoPref[nCurCol];
 				}
 
-                if (nSumMin < 0.001 && nSumMax < 0.001)
-                {
-                    for (var nCurCol = 0; nCurCol < nColsCount; ++nCurCol)
-                    {
-                        this.TableGridCalc[nCurCol] = nTableW / nColsCount;
-                    }
-                }
-                else if (nSumMin >= nTableW)
-                {
-                    for (var nCurCol = 0; nCurCol < nColsCount; ++nCurCol)
-                    {
-                        this.TableGridCalc[nCurCol] = arrMinContent[nCurCol];
-                    }
-                }
-                else if (SumPreffered >= nTableW && SumPreffOverMin > 0.001)
-                {
-                    // Растягиваем только те колонки, в которых заданы предпочитаемые ширины
-                    for (var CurCol = 0; CurCol < nColsCount; ++CurCol)
-                    {
-                        this.TableGridCalc[CurCol] = arrMinContent[CurCol] + (nTableW - nSumMin) * PreffOverMin[CurCol] / SumPreffOverMin;
-                    }
-                }
-                else
-                {
-                    // Если данное условие выполняется, значит у нас все ячейки с предпочитаемыми значениями, тогда
-                    // мы растягиваем все ячейки равномерно. Если не выполняется, значит есть ячейки, в которых
-                    // предпочитаемое значение не задано, и тогда растягиваем только такие ячейки.
-                    if (Math.abs(nSumMax - SumPreffered) < 0.001)
-                    {
-                        if (nSumMax >= nTableW)
-                        {
-                            for (var CurCol = 0; CurCol < nColsCount; ++CurCol)
-                            {
-                                this.TableGridCalc[CurCol] = arrMinContent[CurCol] + (nTableW - nSumMin) * arrMaxOverMin[CurCol] / nSumMaxOverMin;
-                            }
-                        }
-                        else
-                        {
-                            for (var CurCol = 0; CurCol < nColsCount; CurCol++)
-                            {
-                                this.TableGridCalc[CurCol] = arrMaxContent[CurCol] + (nTableW - nSumMax) * (arrMinMargin[CurCol] + arrMaxContent[CurCol]) / nSumMax;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        for (var CurCol = 0; CurCol < nColsCount; ++CurCol)
-                        {
-                            this.TableGridCalc[CurCol] = PreffContent[CurCol] + (nTableW - SumPreffered) * MaxOverPreff[CurCol] / SumMaxOverPreff;
-                        }
-                    }
-                }
-            }
-        }
-        else
-        {
-            // 5. Если в таблице сделать все ячейки нулевой ширины (для контента), и все равно она получается шире
-            //    максимальной допустимой ширины, тогда выставляем ширины всех колоно по минимальному значению
-            //    маргинов и оставляем так как есть
-            if (nMaxTableW - nSumMinMargin < 0.001)
-            {
-                for ( var CurCol = 0; CurCol < nColsCount; CurCol++ )
-                {
-                    this.TableGridCalc[CurCol] = arrMinMargin[CurCol];
-                }
-            }
-            else
-            {
-                // 6. Равномерно уменьшаем все колонки до достижения суммарного значения nMaxTableW
-                var ColsDiff = [];
-                var SumColsDiff = 0;
-                for ( var CurCol = 0; CurCol < nColsCount; CurCol++ )
-                {
-                    var Temp = arrTableGrid2[CurCol] - arrMinMargin[CurCol];
-                    ColsDiff[CurCol] = Temp;
-                    SumColsDiff += Temp;
-                }
 
-                for ( var CurCol = 0; CurCol < nColsCount; CurCol++ )
-                {
-					arrTableGrid2[CurCol] = arrMinMargin[CurCol] + (nMaxTableW - nSumMinMargin) * ColsDiff[CurCol] / SumColsDiff;
-                }
+				if (nSumMinContent > nMaxTableW)
+				{
+					if (nTableW > nMaxTableWOrigin)
+					{
+						for (var nCurCol = 0; nCurCol < nColsCount; ++nCurCol)
+						{
+							this.TableGridCalc[nCurCol] = arrMinNoPref[nCurCol];
+						}
+					}
+					else
+					{
+						var nSumMinNoPrefOverMinMargin = 0,
+							arrMinNoPrefOverMinMargin  = [];
 
-                // 7. Ищем колонки, у которых текущая ширина меньше arrMinContent (заодно ищем недостоющую сумму).
-                //    Также запоминаем остальные колонки и находим у них избыточную сумму.
-                var SumN = 0, SumI = 0;
-                var GridCols = [];
-                for ( var CurCol = 0; CurCol < nColsCount; CurCol++ )
-                {
-                    var Temp = arrTableGrid2[CurCol] - (arrMinMargin[CurCol] + arrMinContent[CurCol]);
-                    if ( Temp >= 0 )
-                    {
-                        GridCols[CurCol] = Temp;
-                        SumI += Temp;
-                    }
-                    else
-                    {
-                        GridCols[CurCol] = -1;
-                        SumN -= Temp;
-                    }
-                }
+						for (var nCurCol = 0; nCurCol < nColsCount; ++nCurCol)
+						{
+							arrMinNoPrefOverMinMargin[nCurCol] = Math.max(arrMinNoPref[nCurCol] - arrMinMargin[nCurCol], 0);
+							nSumMinNoPrefOverMinMargin += arrMinNoPrefOverMinMargin[nCurCol];
+						}
 
-                // 8. Если недостающего пространста больше, чем избыточного, тогда ищем разницу
-                //    (nMaxTableW - nSumMinMargin) и распределяем ее в отношении, как соотносятся
-                //    значения arrMinContent между собой.
-                if (SumN > SumI || SumI < 0.001)
-                {
-                    if (nSumMin > 0.001)
-                    {
-                        var SumDiff = nMaxTableW - nSumMinMargin;
-                        for (var CurCol = 0; CurCol < nColsCount; CurCol++)
-                        {
-                            this.TableGridCalc[CurCol] = arrMinMargin[CurCol] + SumDiff * arrMinContent[CurCol] / nSumMin;
-                        }
-                    }
-                    else
-                    {
-                        for (var CurCol = 0; CurCol < nColsCount; CurCol++)
-                        {
-                            this.TableGridCalc[CurCol] = arrMinMargin[CurCol];
-                        }
-                    }
-                }
-                else
-                {
-                    for ( var CurCol = 0; CurCol < nColsCount; CurCol++ )
-                    {
-                        if ( GridCols[CurCol] < 0 )
-                        {
-                            this.TableGridCalc[CurCol] = arrMinMargin[CurCol] + arrMinContent[CurCol];
-                        }
-                        else
-                        {
-                            this.TableGridCalc[CurCol] = arrTableGrid2[CurCol] - SumN * GridCols[CurCol] / SumI;
-                        }
-                    }
-                }
-            }
-        }
+						if (nSumMinNoPrefOverMinMargin > 0.001)
+						{
+							for (var nCurCol = 0; nCurCol < nColsCount; ++nCurCol)
+							{
+								this.TableGridCalc[nCurCol] = arrMinMargin[nCurCol] + arrMinNoPrefOverMinMargin[nCurCol] * (nMaxTableW - nSumMinMargin) / nSumMinNoPrefOverMinMargin;
+							}
+						}
+						else
+						{
+							// Такого быть не должно, т.к. мы в ветке nMaxTableW > nSumMinMargin + 0.001 && nSumMinContent > nMaxTableW
+						}
+					}
+				}
+				else
+				{
+					// Если попали в эту ветку, то это может означать только одно, что у нас есть ячейки с заданной
+					// шириной, превышающей минимальное значения ширины контента
 
-        this.TableSumGrid[-1] = 0;
-        for ( var CurCol = 0; CurCol < nColsCount; CurCol++ )
-            this.TableSumGrid[CurCol] = this.TableSumGrid[CurCol - 1] + this.TableGridCalc[CurCol];
-    }
+					if ((TablePr.TableW.IsMM() || TablePr.TableW.IsPercent()) && nTableW < nSumMinContent)
+					{
+						for (var nCurCol = 0; nCurCol < nColsCount; ++nCurCol)
+						{
+							this.TableGridCalc[nCurCol] = arrMinNoPref[nCurCol];
+						}
+					}
+					else
+					{
+						var _nTableW = (TablePr.TableW.IsMM() || TablePr.TableW.IsPercent() ? nTableW : nMaxTableWOrigin);
+
+						var nSumPrefOverMinContent = 0,
+							arrPrefOverMinContent  = [];
+
+						for (var nCurCol = 0; nCurCol < nColsCount; ++nCurCol)
+						{
+							arrPrefOverMinContent[nCurCol] = Math.max(arrMinContent[nCurCol] - arrMinNoPref[nCurCol], 0);
+							nSumPrefOverMinContent += arrPrefOverMinContent[nCurCol];
+						}
+
+						if (nSumPrefOverMinContent > 0.001)
+						{
+							for (var nCurCol = 0; nCurCol < nColsCount; ++nCurCol)
+							{
+								this.TableGridCalc[nCurCol] = arrMinNoPref[nCurCol] + arrPrefOverMinContent[nCurCol] * (_nTableW - nSumMinContent) / nSumPrefOverMinContent;
+							}
+						}
+						else
+						{
+							// Такого быть не должно
+							for (var nCurCol = 0; nCurCol < nColsCount; ++nCurCol)
+							{
+								this.TableGridCalc[nCurCol] = arrMinNoPref[nCurCol];
+							}
+						}
+					}
+				}
+			}
+		}
+
+		this.TableSumGrid[-1] = 0;
+		for (var nCurCol = 0; nCurCol < nColsCount; ++nCurCol)
+			this.TableSumGrid[nCurCol] = this.TableSumGrid[nCurCol - 1] + this.TableGridCalc[nCurCol];
+	}
 };
-CTable.prototype.private_RecalculateGridMinContent = function(nPctWidth, arrMinMargins, arrMinContent, arrMaxContent, arrPreferred)
+CTable.prototype.private_RecalculateGridMinContent = function(nPctWidth, arrMinMargins, arrMinContent, arrMaxContent, arrPreferred, arrMinNoPreferred)
 {
 	// Сначала мы высчитываем минимальный и максимальный контент для всех ячеек с GridSpan=1, ячейки
 	// у которых GridSpan > 1 заносим в массив arrMergedColumns.
@@ -739,7 +796,8 @@ CTable.prototype.private_RecalculateGridMinContent = function(nPctWidth, arrMinM
 					Max       : nBeforeW,
 					Preferred : nBeforeW,
 					Margins   : 0,
-					Grid      : nGridBefore
+					Grid      : nGridBefore,
+					MinNoPref : 0
 				});
 
 				if (!arrMergedPreferred[nGridBefore])
@@ -786,6 +844,9 @@ CTable.prototype.private_RecalculateGridMinContent = function(nPctWidth, arrMinM
 
 				if (arrMinMargins[nCurGridCol] < nMarginsMin)
 					arrMinMargins[nCurGridCol] = nMarginsMin;
+
+				if (arrMinNoPreferred[nCurGridCol] < oCellMinMax.ContentMin + nSpacingAdd)
+					arrMinNoPreferred[nCurGridCol] = oCellMinMax.ContentMin + nSpacingAdd;
 			}
 			else if (nGridSpan > 1)
 			{
@@ -795,7 +856,8 @@ CTable.prototype.private_RecalculateGridMinContent = function(nPctWidth, arrMinM
 					Max       : nCellMax,
 					Preferred : nPreferred,
 					Margins   : nMarginsMin,
-					Grid      : nGridSpan
+					Grid      : nGridSpan,
+					MinNoPref : oCellMinMax.ContentMin + nSpacingAdd
 				});
 
 				if (nPreferred > 0.001)
@@ -839,7 +901,8 @@ CTable.prototype.private_RecalculateGridMinContent = function(nPctWidth, arrMinM
 					Max       : nAfterW,
 					Preferred : nAfterW,
 					Margins   : 0,
-					Grid      : nGridAfter
+					Grid      : nGridAfter,
+					MinNoPref : 0
 				});
 
 				if (!arrMergedPreferred[nGridAfter])
@@ -877,8 +940,7 @@ CTable.prototype.private_RecalculateGridMinContent = function(nPctWidth, arrMinM
 
 			if (nPreferredSum > 0 && nPreferred > nPreferredSum && arrPreferred[nStart + nGridSpan - 1] < nPreferred - nPreferredSum)
 			{
-				arrPreferred[nStart + nGridSpan - 1]  = nPreferred - nPreferredSum;
-				arrMaxContent[nStart + nGridSpan - 1] = arrPreferred[nStart + nGridSpan - 1];
+				arrPreferred[nStart + nGridSpan - 1] = nPreferred - nPreferredSum;
 
 				if (arrMinContent[nStart + nGridSpan - 1] < arrPreferred[nStart + nGridSpan - 1])
 					arrMinContent[nStart + nGridSpan - 1] = arrPreferred[nStart + nGridSpan - 1];
@@ -894,16 +956,19 @@ CTable.prototype.private_RecalculateGridMinContent = function(nPctWidth, arrMinM
 		var nMargins   = arrMergedColumns[nIndex].Margins;
 		var nPreferred = arrMergedColumns[nIndex].Preferred;
 		var nGridSpan  = arrMergedColumns[nIndex].Grid;
+		var nMinNoPref = arrMergedColumns[nIndex].MinNoPref;
 
-		var nSumSpanMin = 0;
-		var nSumSpanMax = 0;
-		var nSumMargin  = 0;
+		var nSumSpanMin       = 0;
+		var nSumSpanMax       = 0;
+		var nSumMargin        = 0;
+		var nSumSpanMinNoPref = 0;
 
 		for (var nCurSpan = nStart; nCurSpan < nStart + nGridSpan; ++nCurSpan)
 		{
 			nSumSpanMin += arrMinContent[nCurSpan];
 			nSumSpanMax += arrMaxContent[nCurSpan];
 			nSumMargin += arrMinMargins[nCurSpan];
+			nSumSpanMinNoPref += arrMinNoPreferred[nCurSpan];
 		}
 
 		if (nMargins > nSumMargin)
@@ -939,6 +1004,24 @@ CTable.prototype.private_RecalculateGridMinContent = function(nPctWidth, arrMinM
 				for (var nCurSpan = nStart; nCurSpan < nStart + nGridSpan; ++nCurSpan)
 				{
 					arrMinContent[nCurSpan] = arrMinContent[nCurSpan] * nMin / nSumSpanMin;
+				}
+			}
+		}
+
+		if (nMinNoPref > nSumSpanMinNoPref)
+		{
+			if (nSumSpanMinNoPref < 0.001)
+			{
+				for (var nCurSpan = nStart; nCurSpan < nStart + nGridSpan; ++nCurSpan)
+				{
+					arrMinNoPreferred[nCurSpan] = nMinNoPref / nGridSpan;
+				}
+			}
+			else
+			{
+				for (var nCurSpan = nStart; nCurSpan < nStart + nGridSpan; ++nCurSpan)
+				{
+					arrMinNoPreferred[nCurSpan] = arrMinContent[nCurSpan] * nMinNoPref / nSumSpanMinNoPref;
 				}
 			}
 		}
