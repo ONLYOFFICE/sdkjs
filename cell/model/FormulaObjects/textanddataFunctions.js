@@ -1102,6 +1102,10 @@ function (window, undefined) {
 			arg0 = arg0.getElementRowCol(0, 0);
 		}
 
+		if (arg0 instanceof cError) {
+			return arg0;
+		}
+
 		if (arg0 instanceof cRef || arg0 instanceof cRef3D) {
 			arg0 = arg0.getValue();
 			if (arg0 instanceof cError) {
@@ -1111,10 +1115,6 @@ function (window, undefined) {
 			}
 		} else {
 			arg0 = arg0.toLocaleString();
-		}
-
-		if (arg0 instanceof cError) {
-			return arg0;
 		}
 
 		return new cString(arg0.toLowerCase());
@@ -2145,6 +2145,10 @@ function (window, undefined) {
 			arg0 = arg0.getElementRowCol(0, 0);
 		}
 
+		if (arg0 instanceof cError) {
+			return arg0;
+		}
+
 		if (arg0 instanceof cRef || arg0 instanceof cRef3D) {
 			arg0 = arg0.getValue();
 			if (arg0 instanceof cError) {
@@ -2154,10 +2158,6 @@ function (window, undefined) {
 			}
 		} else {
 			arg0 = arg0.toLocaleString();
-		}
-
-		if (arg0 instanceof cError) {
-			return arg0;
 		}
 
 		return new cString(arg0.toUpperCase());
