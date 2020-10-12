@@ -1519,9 +1519,12 @@
 			var difAbs = ( end - start );
 			difAbs = ( difAbs + (c_msPerDay) ) / c_msPerDay;
 
+			var date = new cDate(start);
+			var startTime = date.getTime();
 			for (var i = 0; i < difAbs; i++) {
-				var date = new cDate(start);
+				date.setTime(startTime);
 				date.setUTCDate(start.getUTCDate() + i);
+
 				if (!_includeInHolidays(date, holidays) && !weekends[date.getUTCDay()]) {
 					count++;
 				}
