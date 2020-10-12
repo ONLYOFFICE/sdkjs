@@ -7292,32 +7292,6 @@ function BinaryPPTYLoader()
                     break;
                 }
                 case 5:
-                {//create shape for pivot slicer
-                    if (typeof AscFormat.CSlicer !== "undefined")
-                    {
-                        _slicer = new AscFormat.CShape();
-                        _slicer.setBDeleted(false);
-                        if(_slicer.setWorksheet)
-                        {
-                            _slicer.setWorksheet(this.presentation);
-                        }
-                        _slicer.setSpPr(new AscFormat.CSpPr());
-                        _slicer.spPr.setParent(_slicer);
-                        _slicer.spPr.setFill(AscFormat.CreateSolidFillRGBA(0xFF, 0xFF, 0xFF, 0xFF));
-                        var oPenFill = AscFormat.CreateUniFillSchemeColorWidthTint(0, 0);
-                        var oPen = AscFormat.CreatePenFromParams(oPenFill, undefined, undefined, undefined, undefined, 0);
-                        _slicer.spPr.setLn(oPen);
-                        _slicer.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
-                        _slicer.createTextBody();
-                        var oContent = _slicer.getDocContent();
-                        if(oContent)
-                        {
-                            oContent.AddText("This shape represents a slicer.");
-                        }
-                    }
-                    s.SkipRecord();
-                    break;
-                }
                 case 6:
                 {
                     if (typeof AscFormat.CSlicer !== "undefined")

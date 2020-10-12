@@ -775,12 +775,12 @@
 
 		//TODO ws?
 		if (!opt_moveSheet) {
-		var slicers = this.ws.getSlicersByCacheName(this.cacheDefinition.name);
-		if (slicers) {
-			for (var i = 0; i < slicers.length; i++) {
-				this.ws.workbook.onSlicerUpdate(slicers[i].name);
+			var slicers = this.ws.getSlicersByCacheName(this.cacheDefinition.name);
+			if (slicers) {
+				for (var i = 0; i < slicers.length; i++) {
+					this.ws.workbook.onSlicerUpdate(slicers[i].name);
+				}
 			}
-		}
 		}
 	};
 
@@ -1674,7 +1674,6 @@
 				null, null, new AscCommonExcel.UndoRedoData_Slicer(this.name, oldVal, newVal));
 		}
 	};
-
 
 	function CT_slicerCacheData() {
 		this.olap = null;//OlapSlicerCache

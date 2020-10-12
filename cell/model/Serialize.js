@@ -1573,7 +1573,7 @@
             if(null != table.TableColumns) {
                 if (ws) {
                     //TODO пока оставляю. проверить необходим ли до сих пор вызов данной функции
-				table.syncTotalLabels(ws);
+                    table.syncTotalLabels(ws);
                 }
                 this.bs.WriteItem(c_oSer_TablePart.TableColumns, function(){oThis.WriteTableColumns(table.TableColumns);});
 			}
@@ -2979,7 +2979,7 @@
                     //при переносе листов пишем только один лист
                     // соответсвенно именованные диапазоны должны ссылаться на первый лист
                     _localSheetId = 0;
-            }
+                }
                 this.bs.WriteItem(c_oSerDefinedNameTypes.LocalSheetId, function(){oThis.memory.WriteLong(_localSheetId);});
             }
             if (null != oDefinedName.Hidden) {
@@ -6998,7 +6998,7 @@
                     return oThis.ReadDefinedName(t,l,oNewDefinedName);
                 });
                 this.oReadResult.defNames.push(oNewDefinedName);
-                }
+            }
             else
                 res = c_oSerConstants.ReadUnknown;
             return res;
@@ -7487,7 +7487,7 @@
 					data.table.cacheDefinition = cacheDefinition;
 					oWorksheet.insertPivotTable(data.table);
 				}
-            } else if (/*c_oSerWorksheetsTypes.Slicers === type ||*/ c_oSerWorksheetsTypes.SlicersExt === type) {
+            } else if (c_oSerWorksheetsTypes.Slicers === type || c_oSerWorksheetsTypes.SlicersExt === type) {
                 res = this.bcr.Read1(length, function(t, l) {
                     return oThis.ReadSlicers(t, l, oWorksheet);
                 });
@@ -8062,7 +8062,7 @@
 				}
 			} else if (formula.v && !(this.copyPasteObj && this.copyPasteObj.isCopyPaste)) {
 				tmp.ws.workbook.openErrors.push(cell.getName());
-			}
+            }
 			if (curFormula) {
 				cell.setFormulaInternal(curFormula.parsed);
 				if (curFormula.parsed.ca || cell.isNullTextString()) {
@@ -9466,7 +9466,7 @@
             slicerCaches: {},
 			tableIds: {},
 			defNames: [],
-            sheetIds: {}
+			sheetIds: {}
         };
         this.getbase64DecodedData = function(szSrc)
         {
@@ -9690,7 +9690,7 @@
             }
 			if(!pasteBinaryFromExcel)
 				History.TurnOn();
-			//чтобы удалялся stream с бинарником
+            //чтобы удалялся stream с бинарником
 			pptx_content_loader.Clear(true);
         };
         this.ReadMainTable = function(wb)
@@ -9862,7 +9862,7 @@
 					var _type = Asc.c_oAscDefNameType.none;
 					if (wb.getSlicerCacheByName(defName.Name)) {
 						_type = Asc.c_oAscDefNameType.slicer;
-    }
+					}
 					wb.dependencyFormulas.addDefNameOpen(defName.Name, defName.Ref, defName.LocalSheetId, defName.Hidden, _type);
 				}
 			});
