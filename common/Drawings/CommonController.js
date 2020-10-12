@@ -868,7 +868,7 @@ DrawingObjectsController.prototype =
                                 var Coords         = oDD.ConvertCoordsToCursorWR(x, y, pageIndex, null);
                                 MMData.X_abs       = Coords.X;
                                 MMData.Y_abs       = Coords.Y;
-                                MMData.Type      = AscCommon.c_oAscMouseMoveDataTypes.Hyperlink;
+                                MMData.Type      = Asc.c_oAscMouseMoveDataTypes.Hyperlink;
                                 MMData.Hyperlink = new Asc.CHyperlinkProperty({Text: null, Value: oNvPr.hlinkClick.id, ToolTip: oNvPr.hlinkClick.tooltip, Class: null});
                                 if(this.isSlideShow())
                                 {

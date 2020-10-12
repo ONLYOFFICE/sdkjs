@@ -281,7 +281,7 @@ function handleSelectedObjects(drawingObjectsController, e, x, y, group, pageInd
                 var Coords              =  drawingObjectsController.getDrawingDocument().ConvertCoordsToCursorWR(drawing.bounds.x, drawing.bounds.y, pageIndex, null);
                 MMData.X_abs            = Coords.X - 5;
                 MMData.Y_abs            = Coords.Y;
-                MMData.Type             = AscCommon.c_oAscMouseMoveDataTypes.LockedObject;
+                MMData.Type             = Asc.c_oAscMouseMoveDataTypes.LockedObject;
                 MMData.UserId           = drawing.Lock.Get_UserId();
                 MMData.HaveChanges      = drawing.Lock.Have_Changes();
                 editor.sync_MouseMoveCallback(MMData);
@@ -343,7 +343,7 @@ function handleFloatObjects(drawingObjectsController, drawingArr, e, x, y, group
                     var Coords              =  drawingObjectsController.getDrawingDocument().ConvertCoordsToCursorWR(drawing.bounds.x, drawing.bounds.y, pageIndex, null);
                     MMData.X_abs            = Coords.X - 5;
                     MMData.Y_abs            = Coords.Y;
-                    MMData.Type             = AscCommon.c_oAscMouseMoveDataTypes.LockedObject;
+                    MMData.Type             = Asc.c_oAscMouseMoveDataTypes.LockedObject;
                     MMData.UserId           = drawing.Lock.Get_UserId();
                     MMData.HaveChanges      = drawing.Lock.Have_Changes();
                     editor.sync_MouseMoveCallback(MMData);
