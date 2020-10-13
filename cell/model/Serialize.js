@@ -4493,7 +4493,7 @@
             }
             var userData = oCommentData.asc_getUserData();
             if(userData)
-                this.bs.WriteItem( c_oSer_CommentData.UserData, function(){oThis.memory.WriteString2(userData);});
+                this.bs.WriteItem( c_oSer_CommentData.UserData, function(){oThis.memory.WriteString3(userData);});
             var sQuoteText = oCommentData.asc_getQuoteText();
             if(null != sQuoteText)
             {
