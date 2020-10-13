@@ -730,6 +730,8 @@ function (window, undefined) {
 					} else {
 						found_operand = new cRef3D(o.real_str ? o.real_str.toUpperCase() : o.operand_str.toUpperCase(), wsFrom);
 					}
+				} else if (parserHelp.isName.call(o, o.Formula, o.pCurrPos)) {
+					found_operand = new AscCommonExcel.cName(o.operand_str, wsFrom);
 				}
 			} else if (parserHelp.isArea.call(o, o.Formula, o.pCurrPos)) {
 				found_operand = new cArea(o.real_str ? o.real_str.toUpperCase() : o.operand_str.toUpperCase(), ws);
@@ -757,9 +759,14 @@ function (window, undefined) {
 			if (found_operand) {
 				if (cElementType.name === found_operand.type) {
 					found_operand = found_operand.toRef(arguments[1]);
+					if (found_operand && cElementType.error === found_operand.type) {
+						ret = new cError(cErrorType.bad_reference);
+					} else {
+						ret = found_operand;
+					}
+				} else {
+					ret = found_operand;
 				}
-
-				ret = found_operand;
 			} else {
 				ret = new cError(cErrorType.bad_reference);
 			}
