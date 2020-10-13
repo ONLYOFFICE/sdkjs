@@ -394,6 +394,12 @@ ParaText.prototype.Measure = function(Context, TextPr)
 
 	this.Width        = ResultWidth;
 	this.WidthVisible = ResultWidth;
+
+	if (this.LGap || this.RGap)
+	{
+		delete this.LGap;
+		delete this.RGap;
+	}
 };
 ParaText.prototype.Is_RealContent = function()
 {

@@ -20747,6 +20747,11 @@ CDocument.prototype.RemoveContentControlWrapper = function(Id)
 
 	this.StartAction();
 
+	if (oContentControl.IsForm())
+	{
+		oContentControl.RemoveFormPr();
+	}
+
 	oContentControl.RemoveContentControlWrapper();
 	this.Recalculate();
 	this.UpdateInterface();
@@ -23366,6 +23371,15 @@ CDocument.prototype.RegisterForm = function(oForm)
 		else
 			delete this.SpecialForms[oForm.GetId()];
 	}
+};
+/**
+ * Удаляем запись о форме
+ * @param oForm
+ */
+CDocument.prototype.UnregisterForm = function(oForm)
+{
+	if (oForm)
+		delete this.SpecialForms[oForm.GetId()];
 };
 /**
  * Получаем ключи форм по заданным параметрам
