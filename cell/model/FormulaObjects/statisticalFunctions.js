@@ -4045,7 +4045,7 @@ function (window, undefined) {
 	cAVERAGEIFS.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&
-			cElementType.cellsRange !== arg0.type) {
+			cElementType.cellsRange !== arg0.type && cElementType.cellsRange3D !== arg0.type) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
@@ -4055,8 +4055,8 @@ function (window, undefined) {
 			arg1 = arg[k];
 			arg2 = arg[k + 1];
 
-			if ((cElementType.cell !== arg1.type && cElementType.cell3D !== arg1.type && cElementType.cellsRange !==
-					arg1.type)) {
+			if (cElementType.cell !== arg1.type && cElementType.cell3D !== arg1.type && cElementType.cellsRange !==
+					arg1.type && cElementType.cellsRange3D !== arg1.type) {
 				return new cError(cErrorType.wrong_value_type);
 			}
 
@@ -4082,7 +4082,8 @@ function (window, undefined) {
 					return new cError(cErrorType.wrong_value_type);
 				}
 				for (j = 0; j < arg1Matrix[i].length; ++j) {
-					if (arg0Matrix[i][j] && !AscCommonExcel.matching(arg1Matrix[i][j], matchingInfo)) {
+					var arg1Val = arg1Matrix[i][j] && arg1Matrix[i][j][0] ? arg1Matrix[i][j][0] : arg1Matrix[i][j];
+					if (arg0Matrix[i][j] && !AscCommonExcel.matching(arg1Val, matchingInfo)) {
 						arg0Matrix[i][j] = null;
 					}
 				}
@@ -4093,7 +4094,8 @@ function (window, undefined) {
 		var valMatrix0;
 		for (i = 0; i < arg0Matrix.length; ++i) {
 			for (j = 0; j < arg0Matrix[i].length; ++j) {
-				if ((valMatrix0 = arg0Matrix[i][j]) && cElementType.number === valMatrix0.type) {
+				valMatrix0 = arg0Matrix[i][j] && arg0Matrix[i][j][0] ? arg0Matrix[i][j][0] : arg0Matrix[i][j];
+				if (valMatrix0 && cElementType.number === valMatrix0.type) {
 					_sum += valMatrix0.getValue();
 					++_count;
 				}
