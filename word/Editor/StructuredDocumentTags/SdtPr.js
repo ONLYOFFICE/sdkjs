@@ -45,18 +45,6 @@ function CSdtPr()
 	this.Label = undefined;
 	this.Lock  = undefined;
 
-	// section property
-	this.SectionBreak = undefined;
-	this.PageSizeW	  = undefined;
-	this.PageSizeH	  = undefined;
-	this.Orient 	  = undefined;
-
-	// Margins 
-	this.MarginT	 		 = undefined;
-	this.MarginL	 		 = undefined;
-	this.MarginR	 		 = undefined;
-	this.MarginB	 		 = undefined;
-
 	this.DocPartObj = {
 		Gallery  : undefined,
 		Category : undefined,
