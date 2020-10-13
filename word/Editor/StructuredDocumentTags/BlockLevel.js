@@ -2450,6 +2450,10 @@ CBlockLevelSdt.prototype.UpdateLineNumbersInfo = function()
 {
 	this.Content.UpdateLineNumbersInfo();
 };
+CBlockLevelSdt.prototype.private_OnAddFormPr = function()
+{
+	this.Content.Recalc_AllParagraphs_CompiledPr();
+};
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CBlockLevelSdt = CBlockLevelSdt;

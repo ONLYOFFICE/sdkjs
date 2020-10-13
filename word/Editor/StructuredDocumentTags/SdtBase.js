@@ -194,8 +194,27 @@ CSdtBase.prototype.SetFormPr = function(oFormPr)
 		var oLogicDocument = this.GetLogicDocument();
 		if (oLogicDocument)
 			oLogicDocument.RegisterForm(this);
+
+		this.private_OnAddFormPr();
 	}
 }
+/**
+ * Удаляем настройки специальных форм
+ */
+CSdtBase.prototype.RemoveFormPr = function()
+{
+	if (this.Pr.FormPr)
+	{
+		History.Add(new CChangesSdtPrFormPr(this, this.Pr.FormPr, undefined));
+		this.Pr.FormPr = undefined;
+
+		var oLogicDocument = this.GetLogicDocument();
+		if (oLogicDocument)
+			oLogicDocument.UnregisterForm(this);
+
+		this.private_OnAddFormPr();
+	}
+};
 /**
  * @returns {?CSdtFormPr}
  */

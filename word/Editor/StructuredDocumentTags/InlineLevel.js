@@ -1591,6 +1591,8 @@ CInlineLevelSdt.prototype.SetTextFormPr = function(oPr)
 		var _oPr = oPr ? oPr.Copy() : undefined;
 		History.Add(new CChangesSdtPrTextForm(this, this.Pr.TextForm, _oPr));
 		this.Pr.TextForm = _oPr;
+
+		this.Recalc_RunsCompiledPr();
 	}
 };
 CInlineLevelSdt.prototype.GetTextFormPr = function()
@@ -1762,6 +1764,10 @@ CInlineLevelSdt.prototype.GetLogicDocument = function()
 {
 	var oParagraph = this.GetParagraph();
 	return oParagraph ? oParagraph.GetLogicDocument() : editor.WordControl.m_oLogicDocument;
+};
+CInlineLevelSdt.prototype.private_OnAddFormPr = function()
+{
+	this.Recalc_RunsCompiledPr();
 };
 
 //--------------------------------------------------------export--------------------------------------------------------
