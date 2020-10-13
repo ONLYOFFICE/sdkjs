@@ -10085,7 +10085,7 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 		var oRes = new CHeaderFooter(ws);
 
 		oRes.alignWithMargins = this.alignWithMargins;
-		oRes.differentFirst = this.alignWithMargins;
+		oRes.differentFirst = this.differentFirst;
 		oRes.differentOddEven = this.differentOddEven;
 		oRes.scaleWithDoc = this.scaleWithDoc;
 		oRes.evenFooter = this.evenFooter ? this.evenFooter.clone() : null;
