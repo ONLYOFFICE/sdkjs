@@ -1190,6 +1190,9 @@
 			case AscDFH.historydescription_Document_AddCrossRef:
 				sString = "Document_AddCrossRef";
 				break;
+			case AscDFH.historydescription_Document_ClearAllSpecialForms:
+				sString = "Document_ClearAllSpecialForms";
+				break;
 
 		}
 		return sString;
@@ -3309,6 +3312,7 @@
 	window['AscDFH'].historydescription_Document_SetParagraphSuppressLineNumbers    = 0x017f;
 	window['AscDFH'].historydescription_Document_SetLineNumbersProps                = 0x0180;
 	window['AscDFH'].historydescription_Document_AddCrossRef                        = 0x0181;
+	window['AscDFH'].historydescription_Document_ClearAllSpecialForms               = 0x0182;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//

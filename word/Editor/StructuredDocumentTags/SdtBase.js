@@ -248,3 +248,15 @@ CSdtBase.prototype.GetRadioButtonGroupKey = function()
 
 	return (this.Pr.CheckBox.GroupKey);
 };
+/**
+ * Для чекбоксов и радио-кнопок получаем состояние
+ * @returns {bool}
+ */
+CSdtBase.prototype.IsCheckBoxChecked = function()
+{
+	if (this.IsCheckBox())
+		return this.Pr.CheckBox.Checked;
+
+	return false;
+};
+
