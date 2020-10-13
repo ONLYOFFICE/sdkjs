@@ -2841,6 +2841,14 @@ function CPresentation(DrawingDocument) {
     this.FocusOnNotes = false;
 
     this.lastMaster = null;
+
+    this.AutoCorrectSettings = {
+        SmartQuotes            : true,
+        HyphensWithDash        : true,
+        AutomaticBulletedLists : true,
+        AutomaticNumberedLists : true,
+        FrenchPunctuation      : true
+    };
 }
 
 //CPresentation.prototype = Object.create(CDocumentContentBase.prototype);
@@ -10495,6 +10503,74 @@ CPresentation.prototype.UpdateRulers = function () {
  */
 CPresentation.prototype.UpdateUndoRedo = function () {
     this.Document_UpdateUndoRedoState();
+};
+
+/**
+ * Устанавливаем настройку автосоздания маркированных списков
+ * @param isAuto {boolean}
+ */
+CPresentation.prototype.SetAutomaticBulletedLists = function(isAuto) {
+    this.AutoCorrectSettings.AutomaticBulletedLists = isAuto;
+};
+/**
+ * Запрашиваем настройку автосоздания маркированных списков
+ * @returns {boolean}
+ */
+CPresentation.prototype.IsAutomaticBulletedLists = function() {
+    return this.AutoCorrectSettings.AutomaticBulletedLists;
+};
+/**
+ * Устанавливаем настройку автосоздания нумерованных списков
+ * @param isAuto {boolean}
+ */
+CPresentation.prototype.SetAutomaticNumberedLists = function(isAuto) {
+    this.AutoCorrectSettings.AutomaticNumberedLists = isAuto;
+};
+/**
+ * Запрашиваем настройку автосоздания нумерованных списков
+ * @returns {boolean}
+ */
+CPresentation.prototype.IsAutomaticNumberedLists = function() {
+    return this.AutoCorrectSettings.AutomaticNumberedLists;
+};
+/**
+ * Устанавливаем параметр автозамены: заменять ли прямые кавычки "умными"
+ * @param isSmartQuotes {boolean}
+ */
+CPresentation.prototype.SetAutoCorrectSmartQuotes = function(isSmartQuotes) {
+    this.AutoCorrectSettings.SmartQuotes = isSmartQuotes;
+};
+/**
+ * Запрашиваем настройку автозамены: заменять ли прямые кавычки "умными"
+ * @returns {boolean}
+ */
+CPresentation.prototype.IsAutoCorrectSmartQuotes = function()
+{
+    return this.AutoCorrectSettings.SmartQuotes;
+};
+/**
+ * Устанавливаем параметр автозамены двух дефисов на тире
+ * @param isReplace {boolean}
+ */
+CPresentation.prototype.SetAutoCorrectHyphensWithDash = function(isReplace)
+{
+    this.AutoCorrectSettings.HyphensWithDash = isReplace;
+};
+/**
+ * Запрашиваем настройку автозамены двух дефисов на тире
+ * @returns {boolean}
+ */
+CPresentation.prototype.IsAutoCorrectHyphensWithDash = function()
+{
+    return this.AutoCorrectSettings.HyphensWithDash;
+};
+/**
+ * Запрашиваем настройку автозамены для французской пунктуации
+ * @returns {boolean}
+ */
+CPresentation.prototype.IsAutoCorrectFrenchPunctuation = function()
+{
+    return this.AutoCorrectSettings.FrenchPunctuation;
 };
 
 function collectSelectedObjects(aSpTree, aCollectArray, bRecursive, oIdMap, bSourceFormatting) {

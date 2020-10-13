@@ -13115,6 +13115,19 @@ function ApplyPresetToChartSpace(oChartSpace, aPreset, bCreate){
                 numberingType = 31;//numbering_numfmt_romanLcPeriod;
                 break;
             }
+            case 8 : //numbering_numfmt_alphaUcParenR
+            {
+                break;
+            }
+            case 9 :
+            {
+                break;
+            }
+            case 10 :
+            {
+
+                break;
+            }
         }
         return numberingType;
     }
