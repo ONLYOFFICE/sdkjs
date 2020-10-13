@@ -23440,6 +23440,58 @@ CDocument.prototype.OnChangeForm = function(sKey, oForm, oPr)
 	this.Action.Additional.FormChange[sKey] = {Form : oForm, Pr : oPr};
 };
 /**
+ * Очищаем все специальные формы до плейсхолдеров
+ */
+CDocument.prototype.ClearAllSpecialForms = function()
+{
+	var arrParagraphs = [];
+	for (var sId in this.SpecialForms)
+	{
+		var oForm = this.SpecialForms[sId];
+		if (oForm.IsInlineLevel())
+			arrParagraphs.push(oForm.GetParagraph());
+
+		oForm.SkipSpecialContentControlLock(true);
+	}
+
+	if (!this.IsSelectionLocked(AscCommon.changestype_None, {
+		Type      : changestype_2_ElementsArray_and_Type,
+		Elements  : arrParagraphs,
+		CheckType : AscCommon.changestype_Paragraph_Content
+	}, true))
+	{
+		this.StartAction(AscDFH.historydescription_Document_ClearAllSpecialForms);
+
+		for (var sId in this.SpecialForms)
+		{
+			var oForm = this.SpecialForms[sId];
+			if (oForm.IsCheckBox())
+			{
+				oForm.SetCheckBoxChecked(false);
+			}
+			else if (oForm.IsPicture())
+			{
+				oForm.ReplaceContentWithPlaceHolder();
+				oForm.ApplyPicturePr(true);
+			}
+			else
+			{
+				oForm.ReplaceContentWithPlaceHolder();
+			}
+		}
+
+		this.Recalculate();
+		this.UpdateInterface();
+		this.UpdateSelection();
+		this.FinalizeAction();
+	}
+
+	for (var sId in this.SpecialForms)
+	{
+		oForm.SkipSpecialContentControlLock(false);
+	}
+};
+/**
  * Функция, которая используется для отрисовки символа конца секции
  * @constructor
  */

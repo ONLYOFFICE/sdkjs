@@ -9298,6 +9298,14 @@ background-repeat: no-repeat;\
 		var oLogicDocument = this.private_GetLogicDocument();
 		return oLogicDocument ? oLogicDocument.GetFormKeys({RadioGroup : true}) : [];
 	};
+	asc_docs_api.prototype.asc_ClearAllSpecialForms = function()
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument)
+			return;
+
+		oLogicDocument.ClearAllSpecialForms();
+	};
 
 
 	asc_docs_api.prototype.asc_UncheckContentControlButtons = function()
