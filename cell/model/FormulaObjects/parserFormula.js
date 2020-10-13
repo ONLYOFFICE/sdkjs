@@ -8298,6 +8298,7 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'].cRef3D = cRef3D;
 	window['AscCommonExcel'].cEmpty = cEmpty;
 	window['AscCommonExcel'].cName = cName;
+	window['AscCommonExcel'].cName3D = cName3D;
 	window['AscCommonExcel'].cArray = cArray;
 	window['AscCommonExcel'].cUndefined = cUndefined;
 	window['AscCommonExcel'].cBaseFunction = cBaseFunction;
