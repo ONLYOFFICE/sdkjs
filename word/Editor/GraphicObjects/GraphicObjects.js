@@ -1853,6 +1853,8 @@ CGraphicObjects.prototype =
         {
             this.drawingDocument.SelectClear();
             this.drawingDocument.TargetEnd();
+			this.drawingDocument.SelectEnabled(true);
+			this.drawingDocument.SelectShow();
         }
     },
 
