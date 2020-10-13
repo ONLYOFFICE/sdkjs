@@ -503,33 +503,20 @@
 						_content_control_pr.InternalId = _current["Props"]["InternalId"];
 						_content_control_pr.Alias 	   = _current["Props"]["Alias"];
 						
-						_content_control_pr.SectionBreak = _current["Props"]["SectionBreak"];
-						_content_control_pr.PageSizeW 	 = _current["Props"]["PageSizeW"];
-						_content_control_pr.PageSizeH    = _current["Props"]["PageSizeH"];
-						
-
-						// Margins
-						_content_control_pr.MarginT	 		 = _current["Props"]["MarginT"];
-						_content_control_pr.MarginL	 		 = _current["Props"]["MarginL"];
-						_content_control_pr.MarginR	 		 = _current["Props"]["MarginR"];
-						_content_control_pr.MarginB	 		 = _current["Props"]["MarginB"];
-
-						_content_control_pr.Orient 		     = _current["Props"]["Orient"];
-
 						// Page break 
                         if (undefined !== _current["Props"]["SectionBreak"])
                         {
 							var oCurPara = LogicDocument.GetCurrentParagraph(); 
                             LogicDocument.Content[oCurPara.Index].Document_SetThisElementCurrent();
-							LogicDocument.Add_SectionBreak(_content_control_pr.SectionBreak);
-							LogicDocument.Add_SectionBreak(_content_control_pr.SectionBreak);
+							LogicDocument.Add_SectionBreak(_current["Props"]["SectionBreak"]);
+							LogicDocument.Add_SectionBreak(_current["Props"]["SectionBreak"]);
 							LogicDocument.Content[oCurPara.Index + 1].Document_SetThisElementCurrent();
 						}
 
 						// Page Size
 						if (undefined !== _current["Props"]["PageSizeW"] || undefined !== _current["Props"]["PageSizeH"])
 						{
-							var Width  = _content_control_pr.PageSizeW;
+							var Width  = _current["Props"]["PageSizeW"];
 							if (Width === undefined)
 							{
 								Width = LogicDocument.Get_DocumentPageSize().W;
@@ -539,7 +526,7 @@
 								Width = 58;
 							}
 								
-							var Height = _content_control_pr.PageSizeH;
+							var Height = _current["Props"]["PageSizeH"];
 							if (Height === undefined)
 							{
 								Height = LogicDocument.Get_DocumentPageSize().H;
@@ -555,9 +542,9 @@
 						// Orient
 						if (undefined !== _current["Props"]["Orient"])
 						{
-							if (_content_control_pr.Orient === 0 || _content_control_pr.Orient === 1)
+							if (_current["Props"]["Orient"] === 0 || _current["Props"]["Orient"] === 1)
 							{	
-								LogicDocument.Set_DocumentOrientation(_content_control_pr.Orient);
+								LogicDocument.Set_DocumentOrientation(_current["Props"]["Orient"]);
 							}
 						}
 
@@ -565,10 +552,10 @@
 						if (undefined !== _current["Props"]["MarginT"] || undefined !== _current["Props"]["MarginL"] || undefined !== _current["Props"]["MarginR"] || undefined !== _current["Props"]["MarginB"])
 						{
 							var oMargins = {
-								Left: _content_control_pr.ML,
-								Top: _content_control_pr.MT,
-								Right: _content_control_pr.MR,
-								Bottom: _content_control_pr.MB
+								Left: _current["Props"]["MarginL"],
+								Top: _current["Props"]["MarginT"],
+								Right: _current["Props"]["MarginR"],
+								Bottom: _current["Props"]["MarginB"]
 							};
 							LogicDocument.SetDocumentMargin(oMargins);
 						}
