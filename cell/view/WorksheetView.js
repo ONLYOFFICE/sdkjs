@@ -11801,9 +11801,12 @@
 
 		var addComments = function (pasteRow, pasteCol, comments) {
 			var comment;
+			var isMergedCell = val.getMergedByCell(pasteRow, pasteCol)
+
 			for (var i = 0; i < comments.length; i++) {
 				comment = comments[i];
-				if (comment.nCol == pasteCol && comment.nRow == pasteRow) {
+				var _isMergedContain = isMergedCell && isMergedCell.contains(comment.nCol, comment.nRow);
+				if (_isMergedContain || (comment.nCol === pasteCol && comment.nRow === pasteRow)) {
 					var commentData = comment.clone(true);
 					//change nRow, nCol
 					commentData.asc_putCol(nCol);
