@@ -3385,7 +3385,7 @@ CParagraphRecalculateStateWrap.prototype =
             var FirstTextPr = Para.Get_FirstTextPr2();
 
 
-            if (Bullet.Get_Type() >= numbering_presentationnumfrmt_AlphaLcParenR)
+            if (Bullet.IsAlpha())
             {
                 if(BulletNum > 780)
                 {
@@ -3403,7 +3403,7 @@ CParagraphRecalculateStateWrap.prototype =
             NumberingItem.Measure(g_oTextMeasurer, FirstTextPr, Para.Get_Theme(), Para.Get_ColorMap());
 
 
-            if ( numbering_presentationnumfrmt_None != Bullet.Get_Type() )
+            if ( !Bullet.IsNone() )
             {
                 if ( ParaPr.Ind.FirstLine < 0 )
                     NumberingItem.WidthVisible = Math.max( NumberingItem.Width, Para.Pages[CurPage].X + ParaPr.Ind.Left + ParaPr.Ind.FirstLine - X, Para.Pages[CurPage].X + ParaPr.Ind.Left - X );

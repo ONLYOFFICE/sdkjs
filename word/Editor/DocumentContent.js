@@ -4922,7 +4922,7 @@ CDocumentContent.prototype.Set_ParagraphPresentationNumbering = function(Bullet)
 			var Level = AscFormat.isRealNumber(oLastParagraph.Pr.Lvl) ? oLastParagraph.Pr.Lvl : 0;
 
 			var oLastBullet_ = oLastParagraph.Get_PresentationNumbering();
-			if (oLastBullet_.Get_Type() >= numbering_presentationnumfrmt_ArabicPeriod)
+			if (oLastBullet_.IsNumbered())
 			{
 				var Next = oLastParagraph.Next;
 				while (null != Next && type_Paragraph === Next.GetType())

@@ -16193,7 +16193,7 @@ CParaPr.prototype.Get_PresentationBullet = function(theme, colorMap)
 
 			case AscFormat.BULLET_TYPE_BULLET_AUTONUM :
 			{
-				Bullet.m_nType    = g_NumberingArr[this.Bullet.bulletType.AutoNumType];
+				Bullet.m_nType    = this.Bullet.bulletType.AutoNumType;
 				if(this.Bullet.bulletType.startAt === null)
 				{
 					Bullet.m_nStartAt = 1;

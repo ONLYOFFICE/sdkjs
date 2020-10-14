@@ -629,15 +629,30 @@ CopyProcessor.prototype =
                 var _presentation_bullet = Item.PresentationPr.Bullet;
                 switch(_presentation_bullet.m_nType)
                 {
-                    case numbering_presentationnumfrmt_ArabicPeriod:
+                    case numbering_presentationnumfrmt_ArabicParenBoth:
                     case numbering_presentationnumfrmt_ArabicParenR:
+                    case numbering_presentationnumfrmt_ArabicPeriod:
+                    case numbering_presentationnumfrmt_ArabicPlain:
                     {
                         sListStyle = "decimal";
                         break;
                     }
-                    case numbering_presentationnumfrmt_RomanLcPeriod: sListStyle = "lower-roman";break;
-                    case numbering_presentationnumfrmt_RomanUcPeriod: sListStyle = "upper-roman";break;
+                    case numbering_presentationnumfrmt_RomanLcParenBoth:
+                    case numbering_presentationnumfrmt_RomanLcParenR:
+                    case numbering_presentationnumfrmt_RomanLcPeriod:
+                    {
+                        sListStyle = "lower-roman";
+                        break;
+                    }
+                    case numbering_presentationnumfrmt_RomanUcParenBoth:
+                    case numbering_presentationnumfrmt_RomanUcParenR:
+                    case numbering_presentationnumfrmt_RomanUcPeriod:
+                    {
+                        sListStyle = "upper-roman";
+                        break;
+                    }
 
+                    case numbering_presentationnumfrmt_AlphaLcParenBoth:
                     case numbering_presentationnumfrmt_AlphaLcParenR:
                     case numbering_presentationnumfrmt_AlphaLcPeriod:
                     {
@@ -646,11 +661,11 @@ CopyProcessor.prototype =
                     }
                     case numbering_presentationnumfrmt_AlphaUcParenR:
                     case numbering_presentationnumfrmt_AlphaUcPeriod:
+                    case numbering_presentationnumfrmt_AlphaUcParenBoth:
                     {
                         sListStyle = "upper-alpha";
                         break;
                     }
-
                     default:
                         sListStyle = "disc";
                         bBullet = true;
@@ -6665,38 +6680,41 @@ PasteProcessor.prototype =
 				if (null != pNoHtmlPr.numType)
 					num = pNoHtmlPr.numType;
 				var type = pNoHtmlPr["list-style-type"];
+                var oBullet = null;
 				if (type) {
 					switch (type) {
-						case "disc":
-							num = numbering_presentationnumfrmt_Char;
-							break;
-						case "decimal":
-							num = numbering_presentationnumfrmt_ArabicPeriod;
-							break;
-						case "lower-roman":
-							num = numbering_presentationnumfrmt_RomanLcPeriod;
-							break;
-						case "upper-roman":
-							num = numbering_presentationnumfrmt_RomanUcPeriod;
-							break;
-						case "lower-alpha":
-							num = numbering_presentationnumfrmt_AlphaLcPeriod;
-							break;
-						case "upper-alpha":
-							num = numbering_presentationnumfrmt_AlphaUcPeriod;
-							break;
+						case "disc": {
+                            oBullet = AscFormat.fGetPresentationBulletByNumInfo({Type: 0, SubType: 1});
+                            break;
+                        }
+						case "decimal": {
+                            oBullet = AscFormat.fGetPresentationBulletByNumInfo({Type: 1, SubType: 0});
+                            break;
+                        }
+
+						case "lower-roman": {
+                            oBullet = AscFormat.fGetPresentationBulletByNumInfo({Type: 1, SubType: 7});
+                            break;
+                        }
+						case "upper-roman": {
+                            oBullet = AscFormat.fGetPresentationBulletByNumInfo({Type: 1, SubType: 3});
+                            break;
+                        }
+						case "lower-alpha": {
+                            oBullet = AscFormat.fGetPresentationBulletByNumInfo({Type: 1, SubType: 6});
+                            break;
+                        }
+						case "upper-alpha": {
+                            oBullet = AscFormat.fGetPresentationBulletByNumInfo({Type: 1, SubType: 4});
+                            break;
+                        }
 						default: {
-							num = numbering_presentationnumfrmt_Char;
-						}
+                            oBullet = AscFormat.fGetPresentationBulletByNumInfo({Type: 0, SubType: 1});
+                            break;
+                        }
 					}
 				}
-				var _bullet = new CPresentationBullet();
-				_bullet.m_nType = num;
-				if (num === numbering_presentationnumfrmt_Char) {
-					_bullet.m_sChar = "•";
-				}
-				_bullet.m_nStartAt = 1;
-				Para.Add_PresentationNumbering2(_bullet);
+				Para.Add_PresentationNumbering(oBullet);
 			} else {
 				Para.Remove_PresentationNumbering();
 			}

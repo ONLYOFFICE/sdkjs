@@ -12989,7 +12989,7 @@ function ApplyPresetToChartSpace(oChartSpace, aPreset, bCreate){
                         ListType.SubType = undefined;
                         if (AscFormat.isRealNumber(Bullet.bulletType.AutoNumType))
                         {
-                            var AutoNumType = AscCommonWord.g_NumberingArr[Bullet.bulletType.AutoNumType] - 99;
+                            var AutoNumType = undefined;
                             switch (Bullet.bulletType.AutoNumType)
                             {
                                 case 1:
