@@ -8990,7 +8990,7 @@ background-repeat: no-repeat;\
 			}
 		});
 	};
-	asc_docs_api.prototype.asc_SetContentControlPictureUrl = function(sUrl, sId)
+	asc_docs_api.prototype.asc_SetContentControlPictureUrl = function(sUrl, sId, sToken)
 	{
 		if (this.WordControl && this.WordControl.m_oDrawingDocument)
 		{
@@ -9088,7 +9088,7 @@ background-repeat: no-repeat;\
 						fReplaceCallback(data[0].url);
 						fApplyCallback();
 					}
-				}, false);
+				}, false, undefined, sToken);
 			}
 			else
 			{
