@@ -1400,21 +1400,22 @@ CDocumentContentBase.prototype.GetTableOfContents = function(isUnique, isCheckFi
  */
 CDocumentContentBase.prototype.AddText = function(sText)
 {
-	for (var oIterator = sText.getUnicodeIterator(); oIterator.check(); oIterator.next())
-	{
-		var nCharCode = oIterator.value();
+	var oLogicDocument = this.GetLogicDocument();
+	if (oLogicDocument)
+		oLogicDocument.RemoveSelection();
 
-		if (9 === nCharCode) // \t
-			this.AddToParagraph(new ParaTab(), false);
-		if (10 === nCharCode) // \n
-			this.AddToParagraph(new ParaNewLine(break_Line), false);
-		else if (13 === nCharCode) // \r
-			continue;
-		else if (32 === nCharCode) // space
-			this.AddToParagraph(new ParaSpace(), false);
-		else
-			this.AddToParagraph(new ParaText(nCharCode), false);
-	}
+	var oParagraph = this.GetCurrentParagraph();
+	if (!oParagraph)
+		return;
+
+	var oTextPr = oParagraph.GetDirectTextPr();
+	if (!oTextPr)
+		oTextPr = new CTextPr();
+
+	var oRun = new ParaRun(oParagraph);
+	oRun.SetPr(oTextPr);
+	oRun.AddText(sText);
+	oParagraph.Add(oRun);
 };
 /**
  * Проверяем находимся ли мы заголовке хоть какой-либо таблицы
