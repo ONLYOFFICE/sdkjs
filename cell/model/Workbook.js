@@ -11452,13 +11452,31 @@
 			return new Range(this.worksheet, r1, c1, r2, c2);
 		}
 	};
-	Range.prototype.setValue=function(val,callback, isCopyPaste, byRef, ignoreHyperlink){
+	Range.prototype.setValue=function(val, callback, isCopyPaste, byRef, ignoreHyperlink){
 		History.Create_NewPoint();
 		History.StartTransaction();
+		//не хотелось бы вводить дополнительный параметр, поэтому если byRef == null
+		//то в качестве значения придёт формула, которой необходимо сделать offset в зависимости от range
+		//при вызове данной функции обратить внимание на  параметр byRef
+		var _formula, t = this, activeCell;
+		if (byRef === null) {
+			_formula = new AscCommonExcel.parserFormula(val.substr(1), null, this.worksheet);
+			if (!_formula.parse(true)) {
+				_formula = null;
+			} else {
+				var _selection = this.worksheet.getSelection();
+				activeCell = _selection.activeCell;
+			}
+		}
 		this._foreach(function(cell){
-			cell.setValue(val,callback, isCopyPaste, byRef, ignoreHyperlink);
-			// if(cell.isEmpty())
-			// cell.Remove();
+			var _val = val;
+			if (_formula) {
+				_formula.isParsed = false;
+				_formula.parse(true);
+				var offset = new AscCommon.CellBase(cell.nRow - activeCell.row, cell.nCol - activeCell.col);
+				_val = "=" + _formula.changeOffset(offset, null, true).assemble(true);
+			}
+			cell.setValue(_val, callback, isCopyPaste, byRef, ignoreHyperlink);
 		});
 		History.EndTransaction();
 	};
