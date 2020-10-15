@@ -682,6 +682,62 @@ CSdtGlobalSettings.prototype.Read_FromBinary = function(oReader)
 };
 
 /**
+ * Класс с глобальными настройками для всех специальных форм
+ */
+function CSpecialFormsGlobalSettings()
+{
+	this.Highlight = new AscCommonWord.CDocumentColor(255, 192, 0);//undefined;
+}
+CSpecialFormsGlobalSettings.prototype.Copy = function()
+{
+	var oSettings = new CSpecialFormsGlobalSettings();
+
+	if (this.Highlight)
+		oSettings.Highlight = this.Highlight.Copy();
+
+	return oSettings;
+};
+/**
+ * Проверяем все ли параметры выставлены по умолчанию
+ * @returns {boolean}
+ */
+CSpecialFormsGlobalSettings.prototype.IsDefault = function()
+{
+	return (undefined === this.Highlight);
+};
+CSpecialFormsGlobalSettings.prototype.Write_ToBinary = function(oWriter)
+{
+	var nStartPos = oWriter.GetCurPosition();
+	oWriter.Skip(4);
+	var nFlags = 0;
+
+	if (undefined !== this.Highlight)
+	{
+		this.Highlight.WriteToBinary(oWriter);
+		nFlags |= 1;
+	}
+
+	var nEndPos = oWriter.GetCurPosition();
+	oWriter.Seek(nStartPos);
+	oWriter.WriteLong(nFlags);
+	oWriter.Seek(nEndPos);
+};
+CSpecialFormsGlobalSettings.prototype.Read_FromBinary = function(oReader)
+{
+	var nFlags = oReader.GetLong();
+
+	if (nFlags & 1)
+	{
+		this.Highlight = new AscCommonWord.CDocumentColor();
+		this.Highlight.ReadFromBinary(oReader);
+	}
+	else
+	{
+		this.Highlight = undefined;
+	}
+};
+
+/**
  * Класс с настройками чекбокса
  * @constructor
  */

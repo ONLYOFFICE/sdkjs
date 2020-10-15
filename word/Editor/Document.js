@@ -2127,17 +2127,18 @@ CSelectedElementsInfo.prototype.GetFootEndNoteRefs  = function()
 
 function CDocumentSettings()
 {
-    this.MathSettings      = undefined !== CMathSettings ? new CMathSettings() : {};
-    this.CompatibilityMode = AscCommon.document_compatibility_mode_Current;
-    this.SdtSettings       = new CSdtGlobalSettings();
+	this.MathSettings         = undefined !== CMathSettings ? new CMathSettings() : {};
+	this.CompatibilityMode    = AscCommon.document_compatibility_mode_Current;
+	this.SdtSettings          = new CSdtGlobalSettings();
+	this.SpecialFormsSettings = new CSpecialFormsGlobalSettings();
 
-    this.ListSeparator = undefined;
-    this.DecimalSymbol = undefined;
-    this.GutterAtTop   = false;
-    this.MirrorMargins = false;
+	this.ListSeparator = undefined;
+	this.DecimalSymbol = undefined;
+	this.GutterAtTop   = false;
+	this.MirrorMargins = false;
 
-    // Compatibility
-    this.SplitPageBreakAndParaMark = false;
+	// Compatibility
+	this.SplitPageBreakAndParaMark = false;
 	this.DoNotExpandShiftReturn    = false;
 }
 
@@ -15482,6 +15483,45 @@ CDocument.prototype.IsDoNotExpandShiftReturn = function()
  * @returns {boolean}
  */
 CDocument.prototype.IsSdtGlobalSettingsDefault = function()
+{
+	return this.Settings.SdtSettings.IsDefault();
+};
+CDocument.prototype.GetSpecialFormsHighlight = function()
+{
+	return this.Settings.SpecialFormsSettings.Highlight;
+};
+CDocument.prototype.SetSpecialFormsHighlight = function(r, g, b)
+{
+	if ((undefined === r || null === r) && undefined !== this.Settings.SpecialFormsSettings.Highlight)
+	{
+		var oNewSettings = this.Settings.SpecialFormsSettings.Copy();
+		oNewSettings.Highlight = undefined;
+
+		this.History.Add(new CChangesDocumentSpecialFormsGlobalSettings(this, this.Settings.SpecialFormsSettings, oNewSettings));
+		this.Settings.SpecialFormsSettings = oNewSettings;
+
+		this.OnChangeSpecialFormsGlobalSettings();
+	}
+	else if (undefined !== r && null !== r)
+	{
+		var oNewColor = new CDocumentColor(r, g, b);
+		if (!oNewColor.IsEqual(this.Settings.SpecialFormsSettings.Highlight))
+		{
+			var oNewSettings = this.Settings.SpecialFormsSettings.Copy();
+			oNewSettings.Highlight = oNewColor;
+
+			this.History.Add(new CChangesDocumentSpecialFormsGlobalSettings(this, this.Settings.SpecialFormsSettings, oNewSettings));
+			this.Settings.SpecialFormsSettings = oNewSettings;
+
+			this.OnChangeSpecialFormsGlobalSettings();
+		}
+	}
+};
+CDocument.prototype.OnChangeSpecialFormsGlobalSettings = function()
+{
+	this.GetApi().sync_OnChangeSpecialFormsGlobalSettings();
+};
+CDocument.prototype.IsSpecialFormsSettingsDefault = function()
 {
 	return this.Settings.SdtSettings.IsDefault();
 };
