@@ -6072,6 +6072,15 @@ CPresentation.prototype.OnKeyDown = function (e) {
                 if (!bNeedRedraw) {
                     bNeedRedraw = bChart;
                 }
+                if(!bNeedRedraw) {
+                    var oCurContent = oDrawingObjects.getTargetDocContent(false, false);
+                    if(oCurContent) {
+                        var oCurParagraph = oCurContent.GetCurrentParagraph();
+                        if(oCurParagraph && oCurParagraph.IsEmpty()) {
+                            bNeedRedraw = true;
+                        }
+                    }
+                }
                 if (e.ShiftKey || (!oDrawingObjects.selection.groupSelection && !oDrawingObjects.selection.textSelection && !oDrawingObjects.selection.chartSelection)) {
                     oDrawingObjects.resetSelection();
                 } else {

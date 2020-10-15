@@ -4078,6 +4078,8 @@ CGraphicObjects.prototype =
     cropFit: DrawingObjectsController.prototype.cropFit,
     cropFill: DrawingObjectsController.prototype.cropFill,
 
+    checkRedrawOnChangeCursorPosition: DrawingObjectsController.prototype.checkRedrawOnChangeCursorPosition,
+
     getFromTargetTextObjectContextMenuPosition: function(oTargetTextObject, pageIndex)
     {
         var dPosX = this.document.TargetPos.X, dPosY = this.document.TargetPos.Y, oTransform = oTargetTextObject.transformText;

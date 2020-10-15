@@ -267,32 +267,7 @@ NullState.prototype =
 {
     checkRedrawOnMouseDown: function(oStartContent, oStartPara)
     {
-        var oEndContent = checkEmptyPlaceholderContent(this.drawingObjects.getTargetDocContent());
-        var bRedraw = false;
-        var oEndPara = null;
-        if(oStartContent || oEndContent)
-        {
-            if(oStartContent !== oEndContent)
-            {
-                bRedraw = true;
-            }
-            else
-            {
-                if(oEndContent)
-                {
-                    oEndPara = oEndContent.GetCurrentParagraph();
-                }
-                if(oEndPara !== oStartPara)
-                {
-                    bRedraw = true;
-                }
-            }
-        }
-        if(bRedraw)
-        {
-            this.drawingObjects.checkChartTextSelection(true);
-            this.drawingObjects.drawingObjects.showDrawingObjects();
-        }
+        this.drawingObjects.checkRedrawOnChangeCursorPosition(oStartContent, oStartPara);
     },
     onMouseDown: function(e, x, y, pageIndex, bTextFlag)
     {
