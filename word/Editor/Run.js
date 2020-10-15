@@ -11765,7 +11765,8 @@ ParaRun.prototype.ProcessAutoCorrect = function(nPos)
 	}
 
 	// Автосоздание списка
-	if (oParagraph.GetNumPr())
+	if (oParagraph.bFromDocument && oParagraph.GetNumPr()
+	|| !oParagraph.bFromDocument && !oParagraph.PresentationPr.Bullet.IsNone())
 		return false;
 
 	var oPrevNumPr = null;
