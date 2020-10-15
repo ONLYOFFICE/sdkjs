@@ -11777,7 +11777,6 @@ ParaRun.prototype.ProcessAutoCorrect = function(nPos)
 	{
 		if(oParagraph.bFromDocument)
 		{
-
 			var oNumPr = null;
 
 			if (oDocument.IsAutomaticBulletedLists())
@@ -11930,7 +11929,6 @@ ParaRun.prototype.ProcessAutoCorrect = function(nPos)
 			if (oDocument.IsAutomaticBulletedLists())
 			{
 				oBullet = this.private_GetSuitablePrBulletForAutoCorrect(sText);
-
 			}
 			if (!oBullet && oDocument.IsAutomaticNumberedLists())
 			{
@@ -11952,7 +11950,6 @@ ParaRun.prototype.ProcessAutoCorrect = function(nPos)
 				oParagraph.Add_PresentationNumbering(oBullet);
 				oDocument.FinalizeAction();
 			}
-
 		}
 	}
 
@@ -12165,38 +12162,78 @@ ParaRun.prototype.private_GetSuitablePrBulletForAutoCorrect = function (sText)
 };
 ParaRun.prototype.private_GetSuitablePrNumberingForAutoCorrect = function (sText)
 {
-	if (sText.length !== 2)
-		return null;
-
 	var sLastChar = sText.charAt(sText.length - 1);
-	var sFirstChar = sText.charAt(0);
 	if ('.' !== sLastChar && ')' !== sLastChar)
 		return null;
 
-	var nSubtype = null;
-	if(sFirstChar === '1')
+	var nNumType = null;
+	if(sText === "(a)")
 	{
-		nSubtype = sLastChar === '.' ? 1 : 2;
+		nNumType = numbering_presentationnumfrmt_AlphaLcParenBoth;
 	}
-	else if(sFirstChar === 'a')
+	else if(sText === "a)")
 	{
-		nSubtype = sLastChar === '.' ? 6 : 5;
+		nNumType = numbering_presentationnumfrmt_AlphaLcParenR;
 	}
-	else if(sFirstChar === 'A')
+	else if(sText === "a.")
 	{
-		nSubtype = sLastChar === '.' ? 4 : 8;
+		nNumType = numbering_presentationnumfrmt_AlphaLcPeriod;
 	}
-	else if(sFirstChar === 'i')
+	else if(sText === "(A)")
 	{
-		nSubtype = sLastChar === '.' ? 7 : 9;
+		nNumType = numbering_presentationnumfrmt_AlphaUcParenBoth;
 	}
-	else if(sFirstChar === 'I')
+	else if(sText === "A)")
 	{
-		nSubtype = sLastChar === '.' ? 3 : 10;
+		nNumType = numbering_presentationnumfrmt_AlphaUcParenR;
 	}
-	if(nSubtype !== null)
+	else if(sText === "A.")
 	{
-		return AscFormat.fGetPresentationBulletByNumInfo({Type: 1, SubType: nSubtype});
+		nNumType = numbering_presentationnumfrmt_AlphaUcPeriod;
+	}
+	else if(sText === "(1)")
+	{
+		nNumType = numbering_presentationnumfrmt_ArabicParenBoth;
+	}
+	else if(sText === "1)")
+	{
+		nNumType = numbering_presentationnumfrmt_ArabicParenR;
+	}
+	else if(sText === "1.")
+	{
+		nNumType = numbering_presentationnumfrmt_ArabicPeriod;
+	}
+	else if(sText === "(i)")
+	{
+		nNumType = numbering_presentationnumfrmt_RomanLcParenBoth;
+	}
+	else if(sText === "i)")
+	{
+		nNumType = numbering_presentationnumfrmt_RomanLcParenR;
+	}
+	else if(sText === "i.")
+	{
+		nNumType = numbering_presentationnumfrmt_RomanLcPeriod;
+	}
+	else if(sText === "(I)")
+	{
+		nNumType = numbering_presentationnumfrmt_RomanUcParenBoth;
+	}
+	else if(sText === "I)")
+	{
+		nNumType = numbering_presentationnumfrmt_RomanUcParenR;
+	}
+	else if(sText === "I.")
+	{
+		nNumType = numbering_presentationnumfrmt_RomanUcPeriod;
+	}
+	if(nNumType !== null)
+	{
+		var oBullet = new AscFormat.CBullet();
+		oBullet.bulletType = new AscFormat.CBulletType();
+		oBullet.bulletType.type = AscFormat.BULLET_TYPE_BULLET_AUTONUM;
+		oBullet.bulletType.AutoNumType = nNumType;
+		return oBullet;
 	}
 	return null;
 };
