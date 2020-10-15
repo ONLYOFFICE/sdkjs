@@ -11926,119 +11926,31 @@ ParaRun.prototype.ProcessAutoCorrect = function(nPos)
 		}
 		else
 		{
+			var oBullet = null;
 			if (oDocument.IsAutomaticBulletedLists())
 			{
-				var oNumLvl = this.private_GetSuitableBulletedLvlForAutoCorrect(sText);
-				if (oNumLvl)
-				{
-					if (oPrevNumPr)
-					{
-						var oPrevNumLvl = oDocument.GetNumbering().GetNum(oPrevNumPr.NumId).GetLvl(oPrevNumPr.Lvl);
-						if (oPrevNumLvl.IsSimilar(oNumLvl))
-						{
-							oNumPr = new CNumPr(oPrevNumPr.NumId, oPrevNumPr.Lvl);
-						}
-					}
+				oBullet = this.private_GetSuitablePrBulletForAutoCorrect(sText);
 
-					if (!oNumPr)
-					{
-						var oNum = oDocument.GetNumbering().CreateNum();
-						oNum.CreateDefault(c_oAscMultiLevelNumbering.Bullet);
-						oNum.SetLvl(oNumLvl, 0);
-						oNumPr = new CNumPr(oNum.GetId(), 0);
-					}
-				}
 			}
-
-			if (oDocument.IsAutomaticNumberedLists())
+			if (!oBullet && oDocument.IsAutomaticNumberedLists())
 			{
-				var arrResult = this.private_GetSuitableNumberedLvlForAutoCorrect(sText);
+				oBullet = this.private_GetSuitablePrNumberingForAutoCorrect(sText);
+			}
+			if (oBullet)
+			{
+				oDocument.StartAction(AscDFH.historydescription_Document_AutomaticListAsType);
+				var oStartPos = oParagraph.GetStartPos();
+				var oEndPos   = oContentPos;
+				oContentPos.Update(nPos + 1, oContentPos.GetDepth());
 
-				if (arrResult && arrResult.length > 0 && arrResult.length <= 9)
-				{
-					if (oPrevNumPr)
-					{
-						var isAdd      = false;
-						var nResultLvL = oPrevNumPr.Lvl;
-
-						var oResult = arrResult[arrResult.length - 1];
-						if (oResult && -1 !== oResult.Value && oResult.Lvl)
-						{
-							var oNumInfo = oPrevParagraph.Parent.CalculateNumberingValues(oPrevParagraph, oPrevNumPr);
-							var oPrevNum = oDocument.GetNumbering().GetNum(oPrevNumPr.NumId);
-							var nPrevLvl = oPrevNumPr.Lvl;
-
-							for (var nLvl = nPrevLvl; nLvl >= 0; --nLvl)
-							{
-								var oPrevNumLvl = oPrevNum.GetLvl(nLvl);
-								if (oPrevNumLvl.IsSimilar(oResult.Lvl))
-								{
-									if (oResult.Value > oNumInfo[nLvl] && oResult.Value <= oNumInfo[nLvl] + 2 && arrResult.length - 1 >= nLvl)
-									{
-										var isCheckPrevLvls = true;
-										for (var nLvl2 = 0; nLvl2 < nLvl; ++nLvl2)
-										{
-											if (arrResult[nLvl2].Value !== oNumInfo[nLvl2])
-											{
-												isCheckPrevLvls = false;
-												break;
-											}
-										}
-
-										if (isCheckPrevLvls)
-										{
-											isAdd      = true;
-											nResultLvL = nLvl;
-											break;
-										}
-									}
-								}
-							}
-
-							if (!isAdd)
-							{
-								oResult.Lvl.ResetNumberedText(oPrevNumPr.Lvl);
-
-								var oPrevNumLvl = oDocument.GetNumbering().GetNum(oPrevNumPr.NumId).GetLvl(oPrevNumPr.Lvl);
-								if (oPrevNumLvl.IsSimilar(oResult.Lvl))
-								{
-									var oNumInfo = oPrevParagraph.Parent.CalculateNumberingValues(oPrevParagraph, oPrevNumPr);
-									if (oResult.Value > oNumInfo[oPrevNumPr.Lvl] && oResult.Value <= oNumInfo[oPrevNumPr.Lvl] + 2)
-										isAdd = true;
-								}
-							}
-
-						}
-
-						if (isAdd)
-							oNumPr = new CNumPr(oPrevNumPr.NumId, nResultLvL);
-					}
-					else
-					{
-						var isCreateNew = true;
-						for (var nIndex = 0, nCount = arrResult.length; nIndex < nCount; ++nIndex)
-						{
-							var oResult = arrResult[nIndex];
-							if (!oResult || 1 !== oResult.Value || !oResult.Lvl)
-							{
-								isCreateNew = false;
-								break;
-							}
-						}
-
-						if (isCreateNew)
-						{
-							var oNum = oDocument.GetNumbering().CreateNum();
-							oNum.CreateDefault(c_oAscMultiLevelNumbering.Numbered);
-							for (var nIndex = 0, nCount = arrResult.length; nIndex < nCount; ++nIndex)
-							{
-								oNum.SetLvl(arrResult[nIndex].Lvl, nIndex);
-							}
-
-							oNumPr = new CNumPr(oNum.GetId(), arrResult.length - 1);
-						}
-					}
-				}
+				oParagraph.RemoveSelection();
+				oParagraph.SetSelectionUse(true);
+				oParagraph.SetSelectionContentPos(oStartPos, oEndPos, false);
+				oParagraph.Remove(1);
+				oParagraph.RemoveSelection();
+				oParagraph.MoveCursorToStartPos(false);
+				oParagraph.Add_PresentationNumbering(oBullet);
+				oDocument.FinalizeAction();
 			}
 
 		}
@@ -12243,11 +12155,11 @@ ParaRun.prototype.private_GetSuitablePrBulletForAutoCorrect = function (sText)
 {
 	if ('*' === sText)
 	{
-		return AscFormat.fGetPresentationBulletByNumInfo({type: 0, subtype: 0});
+		return AscFormat.fGetPresentationBulletByNumInfo({Type: 0, SubType: 0});
 	}
 	else if ('-' === sText)
 	{
-		return AscFormat.fGetPresentationBulletByNumInfo({type: 0, subtype: 8});
+		return AscFormat.fGetPresentationBulletByNumInfo({Type: 0, SubType: 8});
 	}
 	return null;
 };
@@ -12284,7 +12196,7 @@ ParaRun.prototype.private_GetSuitablePrNumberingForAutoCorrect = function (sText
 	}
 	if(nSubtype !== null)
 	{
-		return AscFormat.fGetPresentationBulletByNumInfo({type: 1, subtype: nSubtype});
+		return AscFormat.fGetPresentationBulletByNumInfo({Type: 1, SubType: nSubtype});
 	}
 	return null;
 };

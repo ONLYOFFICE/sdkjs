@@ -461,8 +461,31 @@ CPresentationBullet.prototype.Draw = function(X, Y, Context, PDSE)
 			this.m_oColor.g = RGBA.G;
 			this.m_oColor.b = RGBA.B;
 		}
-		Context.p_color( this.m_oColor.r, this.m_oColor.g, this.m_oColor.b, 255 );
-		Context.b_color1( this.m_oColor.r, this.m_oColor.g, this.m_oColor.b, 255 );
+		var r = this.m_oColor.r;
+		var g = this.m_oColor.g;
+		var b = this.m_oColor.b;
+		if(PDSE.Paragraph && PDSE.Paragraph.IsEmpty())
+		{
+			var dAlpha = 0.4;
+			var rB, gB, bB;
+			if(PDSE.BgColor)
+			{
+				rB = PDSE.BgColor.r;
+				gB = PDSE.BgColor.g;
+				bB = PDSE.BgColor.b;
+			}
+			else
+			{
+				rB = 255;
+				gB = 255;
+				bB = 255;
+			}
+			r = Math.min(255, (r  * dAlpha + rB * (1 - dAlpha) + 0.5) >> 0);
+			g = Math.min(255, (g  * dAlpha + gB * (1 - dAlpha) + 0.5) >> 0);
+			b = Math.min(255, (b  * dAlpha + bB * (1 - dAlpha) + 0.5) >> 0);
+		}
+		Context.p_color(r, g, b, 255 );
+		Context.b_color1(r, g, b, 255 );
 	}
 	g_oTextMeasurer.SetTextPr( this.m_oTextPr, PDSE.Theme  );
 	g_oTextMeasurer.SetFontSlot( FontSlot );

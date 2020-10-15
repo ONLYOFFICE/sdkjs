@@ -2732,7 +2732,10 @@ Paragraph.prototype.Internal_Draw_4 = function(CurPage, pGraphics, Pr, BgColor, 
 				}
 				else if (para_PresentationNumbering === this.Numbering.Type)
 				{
-					if (true != this.IsEmpty())
+					var bIsEmpty = this.IsEmpty();
+					if (!bIsEmpty ||
+						this.Is_ThisElementCurrent() ||
+						this.Parent.IsSelectionEmpty() && this.Parent.Selection.StartPos === this.Index)
 					{
 						if (Pr.ParaPr.Ind.FirstLine < 0)
 							NumberingItem.Draw(X, Y, pGraphics, PDSE);

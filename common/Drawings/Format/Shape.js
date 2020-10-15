@@ -6259,6 +6259,21 @@ CShape.prototype.getColumnNumber = function(){
             return oContent.GetAllSeqFieldsByType(sType, aFields)
         }
     };
+
+    CShape.prototype.Get_TextBackGroundColor = function()
+    {
+        if(!this.brush)
+        {
+            return undefined;
+        }
+        var oTheme = this.Get_Theme && this.Get_Theme();
+        var oColorMap = this.Get_ColorMap && this.Get_ColorMap();
+        if(oTheme && oColorMap)
+        {
+            this.brush.check(oTheme, oColorMap);
+        }
+        return this.brush.Get_TextBackGroundColor();
+    };
 function CreateBinaryReader(szSrc, offset, srcLen)
 {
     var nWritten = 0;

@@ -388,6 +388,10 @@ CTextBody.prototype =
 
     Get_TextBackGroundColor: function()
     {
+        if(this.parent && this.parent.Get_TextBackGroundColor)
+        {
+            return this.parent.Get_TextBackGroundColor();
+        }
         return undefined;
     },
 
