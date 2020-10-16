@@ -12921,6 +12921,35 @@ $( function () {
 		oParser = new parserFormula( "MINUTE(A204)", "A1", ws );
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getValue(), 0 );
+
+		ws.getRange2( "A205" ).setValue( "06/30/2020 20:00" );
+		ws.getRange2( "A206" ).setValue( "06/30/2020 21:15" );
+
+		ws.getRange2( "A207" ).setValue( "06/30/2020 23:15" );
+
+		oParser = new parserFormula( "MINUTE(A206-A205)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), 15 );
+
+		oParser = new parserFormula( "MINUTE(A207-A205)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), 15 );
+
+		oParser = new parserFormula( "MINUTE(A207-A206)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), 0 );
+
+		oParser = new parserFormula( "MINUTE(A207+A206)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), 30 );
+
+		oParser = new parserFormula( "MINUTE(123.1231231 - 1.12334343)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), 59 );
+
+		oParser = new parserFormula( "MINUTE(1.12334343 - 123.1231231)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "#NUM!" );
 	} );
 
 	/*test( "Test: \"MINVERSE\"", function () {

@@ -1276,10 +1276,9 @@
 			if (val < 0) {
 				return new cError(cErrorType.not_numeric);
 			} else {
-				val = parseInt(( ( val * 24 - Math.floor(val * 24) ) * 60 ).toFixed(cExcelDateTimeDigits)) % 60;
-				//todo need test
-				//d = AscCommon.NumFormat.prototype.parseDate(val);
-				//val = d.min;
+				//TODO исплользую функцию parseDate. по идее необходима только первая часть этой функции
+				d = AscCommon.NumFormat.prototype.parseDate(val);
+				val = d.min;
 
 				return t.setCalcValue(new cNumber(val), 0);
 			}
