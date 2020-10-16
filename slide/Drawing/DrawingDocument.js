@@ -2680,7 +2680,7 @@ function CDrawingDocument()
 		var api      = this.m_oWordControl.m_oApi;
 		for (var i in map_used)
 		{
-			var key       = AscFonts.GenerateMapId(api, map_used[i].Name, map_used[i].Style, map_used[i].Size);
+			var key       = AscFonts.GenerateMapId(api, g_fontApplication.GetFontInfoName(map_used[i].Name), map_used[i].Style, map_used[i].Size);
 			map_keys[key] = true;
 		}
 
