@@ -16543,6 +16543,12 @@
 				History.StartTransaction();
 				var shiftCells = type === c_oAscInsertOptions.InsertCellsAndShiftRight ?
 					range.addCellsShiftRight(displayName) : range.addCellsShiftBottom(displayName);
+				var deferredHistoryAction = t.model.autoFilters.deferredHistoryAction;
+				if (deferredHistoryAction) {
+					History.Add(AscCommonExcel.g_oUndoRedoAutoFilters, deferredHistoryAction._type, t.model.getId(), t.model.selectionRange.getLast().clone(),
+						deferredHistoryAction);
+					t.model.autoFilters.deferredHistoryAction = null;
+				}
 				History.EndTransaction();
 				if (shiftCells) {
 					t.cellCommentator.updateCommentsDependencies(true, type, arn);

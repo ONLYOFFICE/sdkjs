@@ -1232,7 +1232,9 @@
 							} else if (data.type === false) {
 								redrawTablesArr = this.insertLastTableRow(data.displayName, data.activeCells);
 							}
-							this.redrawStylesTables(redrawTablesArr);
+							if (redrawTablesArr) {
+								this.redrawStylesTables(redrawTablesArr);
+							}
 						}
 						break;
 					case AscCH.historyitem_AutoFilter_ChangeTableInfo:
@@ -1829,7 +1831,7 @@
 						var changeElement = {
 							oldFilter: oldFilter, newFilterRef: filter.Ref.clone()
 						};
-						t._addHistoryObj(changeElement, AscCH.historyitem_AutoFilter_Change,
+						t.deferredHistoryAction = t._getHistoryObj(changeElement, AscCH.historyitem_AutoFilter_Change,
 							{displayName: displayNameFormatTable, activeCells: activeRange, type: true}, false,
 							oldFilter.Ref, null, activeRange);
 					}
@@ -3109,6 +3111,27 @@
 			_addHistoryObj: function (oldObj, type, redoObject, deleteFilterAfterDeleteColRow, activeHistoryRange,
 									  bWithoutFilter, activeRange) {
 				var ws = this.worksheet;
+				var oHistoryObject = this._getHistoryObj(oldObj, type, redoObject, deleteFilterAfterDeleteColRow, activeHistoryRange,
+					bWithoutFilter);
+
+				if (!redoObject) {
+					oHistoryObject.activeCells = activeRange ? activeRange.clone() : null;
+					if (type !== AscCH.historyitem_AutoFilter_Change) {
+						type = null;
+					}
+				}
+
+				if (!activeHistoryRange) {
+					activeHistoryRange = null;
+				}
+
+				History.Add(AscCommonExcel.g_oUndoRedoAutoFilters, type, ws.getId(), activeHistoryRange,
+					oHistoryObject);
+			},
+
+			_getHistoryObj: function (oldObj, type, redoObject, deleteFilterAfterDeleteColRow, activeHistoryRange,
+									  bWithoutFilter) {
+				var ws = this.worksheet;
 				var oHistoryObject = new AscCommonExcel.UndoRedoData_AutoFilter();
 				oHistoryObject.undo = oldObj;
 
@@ -3131,19 +3154,10 @@
 					oHistoryObject.formula = redoObject.formula;
 					oHistoryObject.totalFunction = redoObject.totalFunction;
 					oHistoryObject.viewId = ws.getActiveNamedSheetViewId();
-				} else {
-					oHistoryObject.activeCells = activeRange ? activeRange.clone() : null;
-					if (type !== AscCH.historyitem_AutoFilter_Change) {
-						type = null;
-					}
+					oHistoryObject._type = type;
 				}
 
-				if (!activeHistoryRange) {
-					activeHistoryRange = null;
-				}
-
-				History.Add(AscCommonExcel.g_oUndoRedoAutoFilters, type, ws.getId(), activeHistoryRange,
-					oHistoryObject);
+				return oHistoryObject;
 			},
 
 			renameTableColumn: function (range, bUndo, props) {
