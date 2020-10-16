@@ -8506,9 +8506,9 @@ ParaRun.prototype.Apply_Pr = function(TextPr)
 	if (undefined !== TextPr.Position)
 		this.Set_Position(null === TextPr.Position ? undefined : TextPr.Position);
 
-	if (undefined !== TextPr.RFonts)
+	if (undefined !== TextPr.RFonts && !this.IsInCheckBox())
 	{
-		if (this.Type == para_Math_Run && !this.IsNormalText()) // при смене Font в этом случае (даже на Cambria Math) cs, eastAsia не меняются
+		if (para_Math_Run === this.Type && !this.IsNormalText()) // при смене Font в этом случае (даже на Cambria Math) cs, eastAsia не меняются
 		{
 			// только для редактирования
 			// делаем так для проверки действительно ли нужно сменить Font, чтобы при смене других текстовых настроек не выставился Cambria Math (TextPr.RFonts приходит всегда в виде объекта)
@@ -8521,7 +8521,9 @@ ParaRun.prototype.Apply_Pr = function(TextPr)
 			}
 		}
 		else
+		{
 			this.Set_RFonts2(TextPr.RFonts);
+		}
 	}
 
 
@@ -12396,6 +12398,17 @@ ParaRun.prototype.GetTextForm = function()
 		return null;
 
 	return oTextFormPr;
+};
+ParaRun.prototype.IsInCheckBox = function()
+{
+	var arrParentCC = this.GetParentContentControls();
+	for (var nIndex = 0, nCount = arrParentCC.length; nIndex < nCount; ++nIndex)
+	{
+		if (arrParentCC[nIndex].IsCheckBox())
+			return true;
+	}
+
+	return false;
 };
 ParaRun.prototype.CheckParentFormKey = function(oPr)
 {
