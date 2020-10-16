@@ -9329,6 +9329,14 @@ background-repeat: no-repeat;\
 	{
 		this.sendEvent("asc_onChangeSpecialFormsGlobalSettings");
 	};
+	asc_docs_api.prototype.asc_SetPerformContentControlActionByClick = function(isPerform)
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument)
+			return;
+
+		oLogicDocument.SetPerformContentControlActionByClick(isPerform);
+	};
 
 	asc_docs_api.prototype.asc_UncheckContentControlButtons = function()
 	{
@@ -11113,6 +11121,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_ClearAllSpecialForms']                  = asc_docs_api.prototype.asc_ClearAllSpecialForms;
 	asc_docs_api.prototype['asc_SetSpecialFormsHighlightColor']         = asc_docs_api.prototype.asc_SetSpecialFormsHighlightColor;
 	asc_docs_api.prototype['asc_GetSpecialFormsHighlightColor']         = asc_docs_api.prototype.asc_GetSpecialFormsHighlightColor;
+	asc_docs_api.prototype['asc_SetPerformContentControlActionByClick'] = asc_docs_api.prototype.asc_SetPerformContentControlActionByClick;
 
 	asc_docs_api.prototype['asc_BeginViewModeInReview']                 = asc_docs_api.prototype.asc_BeginViewModeInReview;
 	asc_docs_api.prototype['asc_EndViewModeInReview']                   = asc_docs_api.prototype.asc_EndViewModeInReview;

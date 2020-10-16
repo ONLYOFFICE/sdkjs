@@ -1455,15 +1455,16 @@
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CDocument
 	//------------------------------------------------------------------------------------------------------------------
-	window['AscDFH'].historyitem_Document_AddItem                = window['AscDFH'].historyitem_type_Document | 1;
-	window['AscDFH'].historyitem_Document_RemoveItem             = window['AscDFH'].historyitem_type_Document | 2;
-	window['AscDFH'].historyitem_Document_DefaultTab             = window['AscDFH'].historyitem_type_Document | 3;
-	window['AscDFH'].historyitem_Document_EvenAndOddHeaders      = window['AscDFH'].historyitem_type_Document | 4;
-	window['AscDFH'].historyitem_Document_DefaultLanguage        = window['AscDFH'].historyitem_type_Document | 5;
-	window['AscDFH'].historyitem_Document_MathSettings           = window['AscDFH'].historyitem_type_Document | 6;
-	window['AscDFH'].historyitem_Document_SdtGlobalSettings      = window['AscDFH'].historyitem_type_Document | 7;
-	window['AscDFH'].historyitem_Document_Settings_GutterAtTop   = window['AscDFH'].historyitem_type_Document | 8;
-	window['AscDFH'].historyitem_Document_Settings_MirrorMargins = window['AscDFH'].historyitem_type_Document | 9;
+	window['AscDFH'].historyitem_Document_AddItem                    = window['AscDFH'].historyitem_type_Document | 1;
+	window['AscDFH'].historyitem_Document_RemoveItem                 = window['AscDFH'].historyitem_type_Document | 2;
+	window['AscDFH'].historyitem_Document_DefaultTab                 = window['AscDFH'].historyitem_type_Document | 3;
+	window['AscDFH'].historyitem_Document_EvenAndOddHeaders          = window['AscDFH'].historyitem_type_Document | 4;
+	window['AscDFH'].historyitem_Document_DefaultLanguage            = window['AscDFH'].historyitem_type_Document | 5;
+	window['AscDFH'].historyitem_Document_MathSettings               = window['AscDFH'].historyitem_type_Document | 6;
+	window['AscDFH'].historyitem_Document_SdtGlobalSettings          = window['AscDFH'].historyitem_type_Document | 7;
+	window['AscDFH'].historyitem_Document_Settings_GutterAtTop       = window['AscDFH'].historyitem_type_Document | 8;
+	window['AscDFH'].historyitem_Document_Settings_MirrorMargins     = window['AscDFH'].historyitem_type_Document | 9;
+	window['AscDFH'].historyitem_Document_SpecialFormsGlobalSettings = window['AscDFH'].historyitem_type_Document | 10;
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе Paragraph
 	//------------------------------------------------------------------------------------------------------------------
