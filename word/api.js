@@ -8960,6 +8960,23 @@ background-repeat: no-repeat;\
 		if (!oContentControl || !oContentControl.IsCheckBox())
 			return;
 
+		if (oContentControl.IsForm() && oPr)
+		{
+			if (oPr.GroupKey)
+			{
+				oPr.CheckedSymbol   = 0x25C9;
+				oPr.UncheckedSymbol = 0x25CB;
+			}
+			else
+			{
+				oPr.CheckedSymbol   = 0x2611;
+				oPr.UncheckedSymbol = 0x2610;
+			}
+
+			oPr.CheckedFont   = "Segoe UI Symbol";
+			oPr.UncheckedFont = "Segoe UI Symbol";
+		}
+
 		if (oPr.CheckedSymbol)
 			AscFonts.FontPickerByCharacter.getFontBySymbol(oPr.CheckedSymbol);
 
