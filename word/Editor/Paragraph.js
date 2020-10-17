@@ -2954,7 +2954,7 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 		{
 			var arrRunReviewRects = arrRunReviewAreas[ReviewAreaIndex];
 			var oRunReviewColor   = arrRunReviewAreasColors[ReviewAreaIndex];
-			var ReviewPolygon     = new CPolygon();
+			var ReviewPolygon     = new AscCommon.CPolygon();
 			ReviewPolygon.fill(arrRunReviewRects);
 			var PolygonPaths = ReviewPolygon.GetPaths(0);
 			pGraphics.p_color(oRunReviewColor.r, oRunReviewColor.g, oRunReviewColor.b, 255);

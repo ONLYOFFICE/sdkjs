@@ -3534,6 +3534,12 @@ function CEditorPage(api)
 				this.MobileTouchManager.CheckSelect(overlay);
 		}
 
+		if (drDoc.MathTrack.IsActive())
+		{
+			drDoc.DrawMathTrack(overlay);
+		}
+
+
 		if (isDrawNotes && drDoc.m_bIsSelection)
 		{
 			var ctxOverlay = overlayNotes.m_oContext;

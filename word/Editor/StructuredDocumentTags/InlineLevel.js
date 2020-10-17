@@ -459,7 +459,7 @@ CInlineLevelSdt.prototype.GetBoundingPolygon = function()
 		this.BoundsPaths = [];
 		for (var nIndex = 0, nCount = arrBounds.length; nIndex < nCount; ++nIndex)
 		{
-			var oPolygon = new CPolygon();
+			var oPolygon = new AscCommon.CPolygon();
 			oPolygon.fill([arrBounds[nIndex]]);
 			this.BoundsPaths = this.BoundsPaths.concat(oPolygon.GetPaths(0));
 		}

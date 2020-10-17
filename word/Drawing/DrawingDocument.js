@@ -1033,373 +1033,6 @@ function CCacheManager()
 	}
 }
 
-function CPolygonPoint2(X, Y)
-{
-	this.X = X;
-	this.Y = Y;
-}
-function CPolygonVectors()
-{
-	this.Page = -1;
-	this.VX = [];
-	this.VY = [];
-}
-function CPolygonPath(precision)
-{
-	this.Page = -1;
-	this.Direction = 1;
-	this.precision = precision;
-	this.Points = [];
-}
-CPolygonPath.prototype.PushPoint = function (x, y)
-{
-	this.Points.push(new CPolygonPoint2(x / this.precision, y / this.precision));
-};
-CPolygonPath.prototype.CorrectExtremePoints = function ()
-{
-	var Lng = this.Points.length;
-
-	this.Points[0].X = this.Points[Lng - 1].X;
-	this.Points[Lng - 1].Y = this.Points[0].Y;
-};
-
-function CPolygon()
-{
-	this.Vectors = [];
-	this.precision = 1000;
-}
-CPolygon.prototype.fill = function (arrBounds)
-{
-	this.Vectors.length = 0;
-
-	if (arrBounds.length <= 0)
-		return;
-
-	var nStartLineIndex = 0, nStartIndex = 0,
-		CountLines = arrBounds.length,
-		CountBounds;
-
-	while (nStartLineIndex < arrBounds.length)
-	{
-		CountBounds = arrBounds[nStartLineIndex].length;
-
-		while (nStartIndex < CountBounds)
-		{
-			if (arrBounds[nStartLineIndex][nStartIndex].W < 0.001)
-				nStartIndex++;
-			else
-				break;
-		}
-
-		if (nStartIndex < CountBounds)
-			break;
-
-		nStartLineIndex++;
-		nStartIndex = 0;
-	}
-
-	if (nStartLineIndex >= arrBounds.length)
-		return;
-
-	var CurrentPage = arrBounds[nStartLineIndex][nStartIndex].Page,
-		CurrentVectors = new CPolygonVectors(),
-		VectorsX = CurrentVectors.VX,
-		VectorsY = CurrentVectors.VY;
-
-	CurrentVectors.Page = CurrentPage;
-	this.Vectors.push(CurrentVectors);
-
-	for (var LineIndex = nStartLineIndex; LineIndex < CountLines; nStartIndex = 0, LineIndex++)
-	{
-		if (arrBounds[LineIndex][nStartIndex].Page !== CurrentPage)
-		{
-			CurrentPage = arrBounds[LineIndex][nStartIndex].Page;
-
-			CurrentVectors = new CPolygonVectors();
-			VectorsX = CurrentVectors.VX;
-			VectorsY = CurrentVectors.VY;
-			CurrentVectors.Page = CurrentPage;
-			this.Vectors.push(CurrentVectors);
-
-		}
-
-		for (var Index = nStartIndex; Index < arrBounds[LineIndex].length; Index++)
-		{
-			var oBound = arrBounds[LineIndex][Index];
-
-			if (oBound.W < 0.001)
-				continue;
-
-			var x1 = Math.round(oBound.X * this.precision), x2 = Math.round((oBound.X + oBound.W) * this.precision),
-				y1 = Math.round(oBound.Y * this.precision), y2 = Math.round((oBound.Y + oBound.H) * this.precision);
-
-			if (VectorsX[y1] == undefined)
-			{
-				VectorsX[y1] = {};
-			}
-
-			this.IntersectionX(VectorsX, x2, x1, y1);
-
-			if (VectorsY[x1] == undefined)
-			{
-				VectorsY[x1] = {};
-			}
-
-			this.IntersectionY(VectorsY, y1, y2, x1);
-
-			if (VectorsX[y2] == undefined)
-			{
-				VectorsX[y2] = {};
-			}
-
-			this.IntersectionX(VectorsX, x1, x2, y2);
-
-			if (VectorsY[x2] == undefined)
-			{
-				VectorsY[x2] = {};
-			}
-
-			this.IntersectionY(VectorsY, y2, y1, x2);
-		}
-	}
-};
-CPolygon.prototype.IntersectionX = function (VectorsX, BeginX, EndX, Y)
-{
-	var CurrentVector = {};
-	CurrentVector[BeginX] = EndX;
-	var VX = VectorsX[Y];
-
-	if (BeginX > EndX)
-	{
-		while (true == this.IntersectVectorX(CurrentVector, VX))
-		{
-		}
-	}
-	else
-	{
-		while (true == this.IntersectVectorX(VX, CurrentVector))
-		{
-		}
-	}
-
-	for (var X in CurrentVector)
-	{
-		var VBeginX = parseInt(X);
-		var VEndX = CurrentVector[VBeginX];
-
-		if (VBeginX !== VEndX || VX[VBeginX] === undefined) // добавляем точку, только если она не существует, а ненулевой вектор всегда
-		{
-			VX[VBeginX] = VEndX;
-		}
-	}
-};
-CPolygon.prototype.IntersectVectorX = function (VectorOpp, VectorClW) // vector opposite, vector clockwise
-{
-	for (var X in VectorOpp)
-	{
-		var VBeginX = parseInt(X);
-		var VEndX = VectorOpp[VBeginX];
-
-		if (VEndX == VBeginX)
-			continue;
-
-		for (var ClwX in VectorClW)
-		{
-			var ClwBeginX = parseInt(ClwX);
-			var ClwEndX = VectorClW[ClwBeginX];
-			var bIntersection = false;
-
-			if (ClwBeginX == ClwEndX)
-				continue;
-
-			if (ClwBeginX <= VEndX && VBeginX <= ClwEndX) // inside vector ClW
-			{
-				VectorOpp[VBeginX] = VBeginX;
-
-				VectorClW[ClwBeginX] = VEndX;
-				VectorClW[VBeginX] = ClwEndX;
-
-				bIntersection = true;
-			}
-			else if (VEndX <= ClwBeginX && ClwEndX <= VBeginX) // inside vector Opposite clockwise
-			{
-				VectorClW[ClwBeginX] = ClwBeginX;
-
-				VectorOpp[VBeginX] = ClwEndX;
-				VectorOpp[ClwBeginX] = VEndX;
-
-				bIntersection = true;
-
-			}
-			else if (ClwBeginX < VEndX && VEndX < ClwEndX) // intersect vector ClW
-			{
-				VectorClW[ClwBeginX] = VEndX;
-				VectorOpp[VBeginX] = ClwEndX;
-
-				bIntersection = true;
-			}
-			else if (ClwBeginX < VBeginX && VBeginX < ClwEndX) // intersect vector ClW
-			{
-				VectorOpp[ClwBeginX] = VEndX;
-				VectorClW[VBeginX] = ClwEndX;
-
-				delete VectorOpp[VBeginX];
-				delete VectorClW[ClwBeginX];
-
-				bIntersection = true;
-			}
-
-			if (bIntersection == true)
-				return true;
-		}
-	}
-
-	return false;
-};
-CPolygon.prototype.IntersectionY = function (VectorsY, BeginY, EndY, X)
-{
-	var bIntersect = false;
-
-	for (var y in VectorsY[X])
-	{
-		var CurBeginY = parseInt(y);
-		var CurEndY = VectorsY[X][CurBeginY];
-
-		var minY, maxY;
-
-		if (CurBeginY < CurEndY)
-		{
-			minY = CurBeginY;
-			maxY = CurEndY;
-		}
-		else
-		{
-			minY = CurEndY;
-			maxY = CurBeginY;
-		}
-
-		var bInterSection = !((maxY <= BeginY && maxY <= EndY) || (minY >= BeginY && minY >= EndY )), // нач или конечная точка нах-ся внутри данного отрезка
-			bDirection = (CurBeginY - CurEndY) * (BeginY - EndY) < 0; // векторы противоположно направленны
-
-		if (bInterSection && bDirection) // если направления векторов совпало, значит один Bounds нах-ся в другом, ничего не делаем, такого быть не должно
-		{
-
-			VectorsY[X][CurBeginY] = EndY;
-			VectorsY[X][BeginY] = CurEndY;
-			bIntersect = true;
-		}
-	}
-
-	if (bIntersect == false)
-	{
-		VectorsY[X][BeginY] = EndY;
-	}
-};
-CPolygon.prototype.GetPaths = function (shift)
-{
-	var Paths = [];
-
-	shift *= this.precision;
-
-	for (var PageIndex = 0; PageIndex < this.Vectors.length; PageIndex++)
-	{
-		var y, x1, x2,
-			x, y1, y2;
-
-		var VectorsX = this.Vectors[PageIndex].VX,
-			VectorsY = this.Vectors[PageIndex].VY,
-			Page = this.Vectors[PageIndex].Page;
-
-
-		for (var LineIndex in VectorsX)
-		{
-			for (var Index in VectorsX[LineIndex])
-			{
-				var Polygon = new CPolygonPath(this.precision);
-				Polygon.Page = Page;
-
-				y = parseInt(LineIndex);
-				x1 = parseInt(Index);
-				x2 = VectorsX[y][x1];
-
-				VectorsX[y][x1] = -1;
-
-				var Direction = x1 > x2 ? 1 : -1;
-				var minY = y;
-				var SignRightLeft, SignDownUp;
-				var X, Y;
-
-				if (x2 !== -1)
-				{
-					SignRightLeft = x1 > x2 ? 1 : -1;
-					Y = y - SignRightLeft * shift;
-
-					Polygon.PushPoint(x1, Y);
-
-					while (true)
-					{
-						x = x2;
-						y1 = y;
-						y2 = VectorsY[x][y1];
-
-						if (y2 == -1)
-						{
-							break;
-						}
-						else if (y2 == undefined) // такой ситуации не должно произойти, если произошла, значит есть ошибка в алгоритме => не отрисовываем путь
-						{
-							return [];
-						}
-
-						VectorsY[x][y1] = -1;  // выставляем -1 => чтобы не добавить повторно путь с данными точками + проверка на возвращение в стартовую точку
-
-						SignDownUp = y1 > y2 ? 1 : -1;
-						X = x + SignDownUp * shift;
-
-						Polygon.PushPoint(X, Y);
-
-						y = y2;
-						x1 = x;
-						x2 = VectorsX[y][x1];
-
-						if (x2 == -1)
-						{
-							break;
-						}
-						else if (x2 == undefined) // такой ситуации не должно произойти, если произошла, значит есть ошибка в алгоритме => не отрисовываем путь
-						{
-							return [];
-						}
-
-						VectorsX[y][x1] = -1; // выставляем -1 => чтобы не добавить повторно путь с данными точками + проверка на возвращение в стартовую точку
-
-						SignRightLeft = x1 > x2 ? 1 : -1;
-						Y = y - SignRightLeft * shift;
-
-						Polygon.PushPoint(X, Y);
-
-						if (y < minY) // направление обхода
-						{
-							minY = y;
-							Direction = x1 > x2 ? 1 : -1;
-						}
-
-					}
-					Polygon.PushPoint(X, Y);
-					Polygon.CorrectExtremePoints();
-
-
-					Polygon.Direction = Direction;
-					Paths.push(Polygon);
-
-				}
-			}
-		}
-	}
-
-	return Paths;
-};
-
 function CDrawingPage()
 {
 	this.left = 0;
@@ -2414,9 +2047,8 @@ function CDrawingDocument()
 		Track: {X: 0, Y: 0, L: 0, T: 0, R: 0, B: 0, PageIndex: 0, Type: -1}, IsTracked: false, PageIndex: 0
 	};
 
-	this.MathRect = {IsActive: false, Bounds: [], ContentSelection: null};
-	this.MathPolygons = [];
-	this.MathSelectPolygons = [];
+	this.MathTrack = new AscCommon.CMathTrack();
+
 	this.FieldTrack = {IsActive: false, Rects: []};
 
 	this.m_oCacheManager = new CCacheManager();
@@ -4308,155 +3940,22 @@ function CDrawingDocument()
 		return this.contentControls.OnDrawContentControl(obj, state, geom);
 	};
 
-	this.private_DrawMathTrack = function (overlay, oPath, shift, color, dKoefX, dKoefY, drPage)
-	{
-		var ctx = overlay.m_oContext;
-		ctx.strokeStyle = color;
-		ctx.lineWidth = 1;
-		ctx.beginPath();
-
-		var Points = oPath.Points;
-
-		var nCount = Points.length;
-		// берем предпоследнюю точку, т.к. последняя совпадает с первой
-		var PrevX = Points[nCount - 2].X, PrevY = Points[nCount - 2].Y;
-		var _x = drPage.left + dKoefX * Points[nCount - 2].X,
-			_y = drPage.top + dKoefY * Points[nCount - 2].Y;
-		var StartX, StartY;
-
-		for (var nIndex = 0; nIndex < nCount; nIndex++)
-		{
-			if (PrevX > Points[nIndex].X)
-			{
-				_y = drPage.top + dKoefY * Points[nIndex].Y - shift;
-			}
-			else if (PrevX < Points[nIndex].X)
-			{
-				_y = drPage.top + dKoefY * Points[nIndex].Y + shift;
-			}
-
-			if (PrevY < Points[nIndex].Y)
-			{
-				_x = drPage.left + dKoefX * Points[nIndex].X - shift;
-			}
-			else if (PrevY > Points[nIndex].Y)
-			{
-				_x = drPage.left + dKoefX * Points[nIndex].X + shift;
-			}
-
-			PrevX = Points[nIndex].X;
-			PrevY = Points[nIndex].Y;
-
-			if (nIndex > 0)
-			{
-				overlay.CheckPoint(_x, _y);
-
-				if (1 == nIndex)
-				{
-					StartX = _x;
-					StartY = _y;
-					overlay.m_oContext.moveTo((_x >> 0) + 0.5, (_y >> 0) + 0.5);
-				}
-				else
-				{
-					overlay.m_oContext.lineTo((_x >> 0) + 0.5, (_y >> 0) + 0.5);
-				}
-			}
-		}
-
-		overlay.m_oContext.lineTo((StartX >> 0) + 0.5, (StartY >> 0) + 0.5);
-
-		ctx.closePath();
-		ctx.stroke();
-		ctx.beginPath();
-	};
-	this.private_DrawMathTrackWithMatrix = function (overlay, oPath, ShiftX, ShiftY, color, dKoefX, dKoefY, drPage, m)
-	{
-		var ctx = overlay.m_oContext;
-		ctx.strokeStyle = color;
-		ctx.lineWidth = 1;
-		ctx.beginPath();
-
-		var Points = oPath.Points;
-
-		var nCount = Points.length;
-		// берем предпоследнюю точку, т.к. последняя совпадает с первой
-		var x = Points[nCount - 2].X, y = Points[nCount - 2].Y;
-		var _x, _y;
-
-		var PrevX = Points[nCount - 2].X, PrevY = Points[nCount - 2].Y;
-		var StartX, StartY;
-
-		for (var nIndex = 0; nIndex < nCount; nIndex++)
-		{
-			if (PrevX > Points[nIndex].X)
-			{
-				y = Points[nIndex].Y - ShiftY;
-			}
-			else if (PrevX < Points[nIndex].X)
-			{
-				y = Points[nIndex].Y + ShiftY;
-			}
-
-			if (PrevY < Points[nIndex].Y)
-			{
-				x = Points[nIndex].X - ShiftX;
-			}
-			else if (PrevY > Points[nIndex].Y)
-			{
-				x = Points[nIndex].X + ShiftX;
-			}
-
-			PrevX = Points[nIndex].X;
-			PrevY = Points[nIndex].Y;
-
-			if (nIndex > 0)
-			{
-				_x = (drPage.left + dKoefX * m.TransformPointX(x, y));
-				_y = (drPage.top + dKoefY * m.TransformPointY(x, y));
-
-				overlay.CheckPoint(_x, _y);
-
-				if (1 == nIndex)
-				{
-					StartX = _x;
-					StartY = _y;
-					overlay.m_oContext.moveTo((_x >> 0) + 0.5, (_y >> 0) + 0.5);
-				}
-				else
-				{
-					overlay.m_oContext.lineTo((_x >> 0) + 0.5, (_y >> 0) + 0.5);
-				}
-			}
-
-		}
-
-		overlay.m_oContext.lineTo((StartX >> 0) + 0.5, (StartY >> 0) + 0.5);
-
-		ctx.closePath();
-		ctx.stroke();
-		ctx.beginPath();
-	};
-
 	this.DrawMathTrack = function (overlay)
 	{
-		if (!this.MathRect.IsActive)
+		if(!this.MathTrack.IsActive())
+		{
 			return;
-
+		}
 		overlay.Show();
-
-		var ctx = overlay.m_oContext;
 		var nIndex, nCount;
-		var oPath, SelectPaths;
+		var oPath;
 		var _page, drPage, dKoefX, dKoefY;
-		var PathLng = this.MathPolygons.length;
-		var Points, nPointIndex, _x, _y;
-
+		var PathLng = this.MathTrack.GetPolygonsCount();
 		if (null == this.TextMatrix || global_MatrixTransformer.IsIdentity(this.TextMatrix))
 		{
 			for (nIndex = 0; nIndex < PathLng; nIndex++)
 			{
-				oPath = this.MathPolygons[nIndex];
+				oPath = this.MathTrack.GetPolygon(nIndex);
 
 				_page = this.m_arrPages[oPath.Page];
 				drPage = _page.drawingPage;
@@ -4464,49 +3963,24 @@ function CDrawingDocument()
 				dKoefX = (drPage.right - drPage.left) / _page.width_mm;
 				dKoefY = (drPage.bottom - drPage.top) / _page.height_mm;
 
-				this.private_DrawMathTrack(overlay, oPath, 0, "#939393", dKoefX, dKoefY, drPage);
-				this.private_DrawMathTrack(overlay, oPath, 1, "#FFFFFF", dKoefX, dKoefY, drPage);
+				this.MathTrack.Draw(overlay, oPath, 0, "#939393", dKoefX, dKoefY, drPage.left, drPage.top);
+				this.MathTrack.Draw(overlay, oPath, 1, "#FFFFFF", dKoefX, dKoefY, drPage.left, drPage.top);
 			}
-
-			SelectPaths = this.MathSelectPolygons;
-
-			for (nIndex = 0, nCount = SelectPaths.length; nIndex < nCount; nIndex++)
+			for (nIndex = 0, nCount = this.MathTrack.GetSelectPathsCount(); nIndex < nCount; nIndex++)
 			{
-				oPath = SelectPaths[nIndex];
+				oPath = this.MathTrack.GetSelectPath(nIndex);
 				_page = this.m_arrPages[oPath.Page];
 				drPage = _page.drawingPage;
-
 				dKoefX = (drPage.right - drPage.left) / _page.width_mm;
 				dKoefY = (drPage.bottom - drPage.top) / _page.height_mm;
-
-				ctx.fillStyle = "#375082";
-				ctx.beginPath();
-
-				Points = oPath.Points;
-				for (nPointIndex = 0; nPointIndex < Points.length - 1; nPointIndex++)
-				{
-					_x = drPage.left + dKoefX * Points[nPointIndex].X;
-					_y = drPage.top + dKoefY * Points[nPointIndex].Y;
-
-					overlay.CheckPoint(_x, _y);
-
-					if (0 == nPointIndex)
-						ctx.moveTo((_x >> 0) + 0.5, (_y >> 0) + 0.5);
-					else
-						ctx.lineTo((_x >> 0) + 0.5, (_y >> 0) + 0.5);
-				}
-
-				ctx.globalAlpha = 0.2;
-				ctx.fill();
-				ctx.globalAlpha = 1;
-
+				this.MathTrack.DrawSelectPolygon(overlay, oPath, dKoefX, dKoefY, drPage.left, drPage.top, null);
 			}
 		}
 		else
 		{
 			for (nIndex = 0; nIndex < PathLng; nIndex++)
 			{
-				oPath = this.MathPolygons[nIndex];
+				oPath = this.MathTrack.GetPolygon(nIndex);
 				_page = this.m_arrPages[oPath.Page];
 				drPage = _page.drawingPage;
 
@@ -4516,43 +3990,19 @@ function CDrawingDocument()
 				var _1px_mm_x = 1 / Math.max(dKoefX, 0.001);
 				var _1px_mm_y = 1 / Math.max(dKoefY, 0.001);
 
-				this.private_DrawMathTrackWithMatrix(overlay, oPath, 0, 0, "#939393", dKoefX, dKoefY, drPage, this.TextMatrix);
-				this.private_DrawMathTrackWithMatrix(overlay, oPath, _1px_mm_x, _1px_mm_y, "#FFFFFF", dKoefX, dKoefY, drPage, this.TextMatrix);
+				this.MathTrack.DrawWithMatrix(overlay, oPath, 0, 0, "#939393", dKoefX, dKoefY, drPage.left, drPage.top, this.TextMatrix);
+				this.MathTrack.DrawWithMatrix(overlay, oPath, _1px_mm_x, _1px_mm_y, "#FFFFFF", dKoefX, dKoefY, drPage.left, drPage.top, this.TextMatrix);
 			}
 
-			SelectPaths = this.MathSelectPolygons;
 
-			for (nIndex = 0, nCount = SelectPaths.length; nIndex < nCount; nIndex++)
+			for (nIndex = 0, nCount = this.MathTrack.GetSelectPathsCount(); nIndex < nCount; nIndex++)
 			{
-				oPath = SelectPaths[nIndex];
+				oPath = this.MathTrack.GetSelectPath(nIndex);
 				_page = this.m_arrPages[oPath.Page];
 				drPage = _page.drawingPage;
-
 				dKoefX = (drPage.right - drPage.left) / _page.width_mm;
 				dKoefY = (drPage.bottom - drPage.top) / _page.height_mm;
-
-				ctx.fillStyle = "#375082";
-				ctx.beginPath();
-
-				Points = oPath.Points;
-				for (nPointIndex = 0; nPointIndex < Points.length - 1; nPointIndex++)
-				{
-					var x = Points[nPointIndex].X, y = Points[nPointIndex].Y;
-					_x = drPage.left + dKoefX * this.TextMatrix.TransformPointX(x, y);
-					_y = drPage.top + dKoefY * this.TextMatrix.TransformPointY(x, y);
-
-					overlay.CheckPoint(_x, _y);
-
-					if (0 == nPointIndex)
-						ctx.moveTo((_x >> 0) + 0.5, (_y >> 0) + 0.5);
-					else
-						ctx.lineTo((_x >> 0) + 0.5, (_y >> 0) + 0.5);
-				}
-
-				ctx.globalAlpha = 0.2;
-				ctx.fill();
-				ctx.globalAlpha = 1;
-
+				this.MathTrack.DrawSelectPolygon(overlay, oPath, dKoefX, dKoefY, drPage.left, drPage.top, this.TextMatrix);
 			}
 		}
 	};
@@ -5639,33 +5089,8 @@ function CDrawingDocument()
 
 	this.Update_MathTrack = function (IsActive, IsContentActive, oMath)
 	{
-		this.MathRect.IsActive = IsActive;
-
-		if (true === IsActive && null !== oMath)
-		{
-			var selectBounds = true === IsContentActive ? oMath.Get_ContentSelection() : null;
-			if (selectBounds != null)
-			{
-				var SelectPolygon = new CPolygon();
-				SelectPolygon.fill(selectBounds);
-				this.MathSelectPolygons = SelectPolygon.GetPaths(0);
-			}
-			else
-			{
-				this.MathSelectPolygons.length = 0;
-			}
-
-			var arrBounds = oMath.Get_Bounds();
-
-			if (arrBounds.length <= 0)
-				return;
-
-			var MPolygon = new CPolygon();
-			MPolygon.fill(arrBounds);
-
-			var PixelError = this.GetMMPerDot(1) * 3;
-			this.MathPolygons = MPolygon.GetPaths(PixelError);
-		}
+		var PixelError = this.GetMMPerDot(1) * 3;
+		this.MathTrack.Update(IsActive, IsContentActive, oMath, PixelError);
 	};
 
 	this.Update_FieldTrack = function (IsActive, aRects)

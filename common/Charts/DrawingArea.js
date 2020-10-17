@@ -653,6 +653,11 @@ function FrozenPlace(ws, type) {
 
 			this.worksheet.handlers.trigger("drawMobileSelection");
 		}
+
+		if (drawingDocument.MathTrack.IsActive())
+		{
+			drawingDocument.DrawMathTrack(trackOverlay);
+		}
 		ctx.globalAlpha = 1.0;
 		this.worksheet.objectRender.controller.drawSelection(drawingDocument);
 		if ( this.worksheet.objectRender.controller.needUpdateOverlay() ) {

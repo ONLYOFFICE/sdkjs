@@ -3081,7 +3081,7 @@ function CEditorPage(api)
 				drDoc.DrawFrameTrack(overlay);
 			}
 
-			if (drDoc.MathRect.IsActive)
+			if (drDoc.MathTrack.IsActive())
 			{
 				drDoc.DrawMathTrack(overlay);
 			}

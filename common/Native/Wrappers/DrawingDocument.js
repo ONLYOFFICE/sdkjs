@@ -647,8 +647,8 @@ function CDrawingDocument()
     this.FrameRect = { IsActive : false, Rect : { X : 0, Y : 0, R : 0, B : 0 }, Frame : null,
         Track : { X : 0, Y : 0, L : 0, T : 0, R : 0, B : 0, PageIndex : 0, Type : -1 }, IsTracked : false, PageIndex : 0 };
 
-	  // math rect
-	  this.MathRect = { IsActive : false, Rect : { X : 0, Y : 0, R : 0, B : 0, PageIndex : 0 } };
+    // math rect
+    this.MathTrack = new CMathTrack();
 
     // table track
     this.TableOutlineDr = new CTableOutlineDr();
@@ -1418,7 +1418,7 @@ CDrawingDocument.prototype =
     },
     OnUpdateOverlay : function()
     {
-        isSelectionMatrix = false;
+        this.isSelectionMatrix = false;
 
         if (this.IsUpdateOverlayOnlyEnd)
         {
@@ -2778,11 +2778,12 @@ CDrawingDocument.prototype =
 
     DrawMathTrack : function()
     {
-        if (!this.MathRect.IsActive)
-            return;
-
-        this.Native["DD_Overlay_DrawFrameTrack1"](this.MathRect.Rect.PageIndex,
-            this.MathRect.Rect.X, this.MathRect.Rect.Y, this.MathRect.Rect.R, this.MathRect.Rect.B);
+        //TODO: Implement!
+        //if (!this.MathRect.IsActive)
+        //    return;
+        //
+        //this.Native["DD_Overlay_DrawFrameTrack1"](this.MathRect.Rect.PageIndex,
+        //    this.MathRect.Rect.X, this.MathRect.Rect.Y, this.MathRect.Rect.R, this.MathRect.Rect.B);
     },
 
     DrawFieldTrack : function()
@@ -2795,18 +2796,10 @@ CDrawingDocument.prototype =
         // TODO:
     },
 
-    Update_MathTrack : function(IsActive, X, Y, W, H, PageIndex)
+    Update_MathTrack : function(IsActive, IsContentActive, oMath)
     {
-        this.MathRect.IsActive = IsActive;
-
-        if (true === IsActive)
-        {
-            this.MathRect.Rect.X = X;
-            this.MathRect.Rect.Y = Y;
-            this.MathRect.Rect.R = X + W;
-            this.MathRect.Rect.B = Y + H;
-            this.MathRect.Rect.PageIndex = PageIndex;
-        }
+        var PixelError = this.GetMMPerDot(1) * 3;
+        this.MathTrack.Update(IsActive, IsContentActive, oMath, PixelError);
     },
 
     DrawTableTrack : function()
