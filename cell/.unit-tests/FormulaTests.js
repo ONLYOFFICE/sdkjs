@@ -12613,7 +12613,7 @@ $( function () {
 		strictEqual( oParser.calculate().getValue(), "#VALUE!");
 	} );
 
-	/*test( "Test: \"TREND\"", function () {
+	test( "Test: \"TREND\"", function () {
 
 		ws.getRange2( "A101" ).setValue( "1" );
 		ws.getRange2( "A102" ).setValue( "2" );
@@ -12655,7 +12655,7 @@ $( function () {
 		oParser = new parserFormula( "TREND(B101:B112,A101:A112,A115:A119)", "A2", ws );
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue().toFixed(4) - 0, 146171.5152);
-	} );*/
+	} );
 
 	test( "Test: \"PDURATION\"", function () {
 		oParser = new parserFormula( "PDURATION(2.5%,2000,2200)", "A2", ws );
