@@ -648,6 +648,9 @@ CChangesSdtPrTextForm.prototype.Type = AscDFH.historyitem_SdtPr_TextForm;
 CChangesSdtPrTextForm.prototype.private_SetValue = function(Value)
 {
 	this.Class.Pr.TextForm = Value;
+
+	if (this.Class.Recalc_RunsCompiledPr)
+		this.Class.Recalc_RunsCompiledPr();
 };
 CChangesSdtPrTextForm.prototype.private_CreateObject = function()
 {
