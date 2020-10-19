@@ -11119,7 +11119,7 @@
 
 		//для бага 26402 - добавляю возможность продолжения ф/т если вставляем фрагмент по ширине такой же как и ф/т
 		//и имеет хоть одну ячейку с данными
-		if (specialPasteProps.formatTable) {
+		if (specialPasteProps.formatTable && window['AscCommonExcel'].g_IncludeNewRowColInTable) {
 			var tableIndexAboveRange = t.model.autoFilters.searchRangeInTableParts(
 				new Asc.Range(pasteToRange.c1, pasteToRange.r1 - 1, pasteToRange.c1, pasteToRange.r1 - 1));
 			var tableAboveRange = t.model.TableParts[tableIndexAboveRange];
