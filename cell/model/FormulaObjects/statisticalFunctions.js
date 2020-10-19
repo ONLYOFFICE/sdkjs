@@ -1565,9 +1565,10 @@ function (window, undefined) {
 		for (var i = 0; i < nC; i++) {
 			var fSum = 0.0;
 			for (var k = 0; k < nR; k++) {
-				fSum += pX[k][i];// GetDouble(Column,Row)
+				fSum += pX[i][k];// GetDouble(Column,Row)
 			}
-			pResMat[0][k] = fSum / nR;
+			 putDouble( pResMat, i, fSum/nR, i);
+			//pResMat[0][k] = fSum / nR;
 		}
 	}
 
