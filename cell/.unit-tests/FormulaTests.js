@@ -12550,7 +12550,7 @@ $( function () {
 		testArrayFormula2("UPPER", 1, 1);
 	});
 
-	/*test( "Test: \"GROWTH\"", function () {
+	test( "Test: \"GROWTH\"", function () {
 
 		ws.getRange2( "A102" ).setValue( "11" );
 		ws.getRange2( "A103" ).setValue( "12" );
@@ -12611,7 +12611,7 @@ $( function () {
 		oParser = new parserFormula( "GROWTH({1,2,3},A104:C105,A106:C107,A106:C107)", "A2", ws );
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getValue(), "#VALUE!");
-	} );*/
+	} );
 
 	/*test( "Test: \"TREND\"", function () {
 

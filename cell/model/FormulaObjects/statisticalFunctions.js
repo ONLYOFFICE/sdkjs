@@ -1441,11 +1441,11 @@ function (window, undefined) {
 		}
 
 		if (_bLOG) {
-			var pNewY = matrixClone(pMatY);
+			var pNewY = [];
 
 			for (var i = 0; i < pMatY.length; i++) {
 				for (var j = 0; j < pMatY[i].length; j++) {
-					var fVal = pNewY[i][j];
+					var fVal = pMatY[i][j];
 					if (fVal <= 0.0) {
 						//PushIllegalArgument();
 						return false;
@@ -1565,9 +1565,9 @@ function (window, undefined) {
 		for (var i = 0; i < nC; i++) {
 			var fSum = 0.0;
 			for (var k = 0; k < nR; k++) {
-				fSum += pX[i][k];// GetDouble(Column,Row)
+				fSum += pX[k][i];// GetDouble(Column,Row)
 			}
-			pResMat[0][i] = fSum / nR;
+			pResMat[0][k] = fSum / nR;
 		}
 	}
 
@@ -1593,7 +1593,7 @@ function (window, undefined) {
 	function lcl_TGetColumnEuclideanNorm(pMatA, nR, nC, nN) {
 		var fNorm = 0.0;
 		for (var col = nC; col < nN; col++) {
-			fNorm += (pMatA[nR][col]) * (pMatA[nR][col]);
+			fNorm += (pMatA[col][nR]) * (pMatA[col][nR]);
 		}
 
 		return Math.sqrt(fNorm);
@@ -1606,13 +1606,16 @@ function (window, undefined) {
 	function lcl_TGetColumnSumProduct(pMatA, nRa, pMatB, nRb, nC, nN) {
 		var fResult = 0.0;
 		for (var col = nC; col < nN; col++) {
-			fResult += pMatA[nRa][col] * pMatB[nRb][col];
+			fResult += pMatA[col][nRa] * pMatB[col][nRb];
 		}
 		return fResult;
 	}
 
 	// same with transposed matrix A, N is count of columns, K count of rows
 	function lcl_TCalculateQRdecomposition(pMatA, pVecR, nK, nN) {
+
+
+		
 		var fSum;
 		// ScMatrix matrices are zero based, index access (column,row)
 		for (var row = 0; row < nK; row++) {
@@ -1623,7 +1626,7 @@ function (window, undefined) {
 				return false;
 			}
 			for (var col = row; col < nN; col++) {
-				pMatA[row][col] = pMatA[row][col] / fScale;
+				pMatA[col][row] = pMatA[col][row] / fScale;
 			}
 
 			var fEuclid = lcl_TGetColumnEuclideanNorm(pMatA, row, row, nN);
@@ -1636,7 +1639,7 @@ function (window, undefined) {
 			for (var r = row + 1; r < nK; r++) {
 				fSum = lcl_TGetColumnSumProduct(pMatA, row, pMatA, r, row, nN);
 				for (var col = row; col < nN; col++) {
-					pMatA[r][col] = pMatA[r][col] - fSum * fFactor * pMatA[row][col];
+					pMatA[col][r] = pMatA[col][r] - fSum * fFactor * pMatA[col][row];
 				}
 			}
 
@@ -1688,7 +1691,7 @@ function (window, undefined) {
 			for (var col = 0; col < l; col++) {   // result element(col, row) =sum[ (row of A) * (column of B)]
 				sum = 0.0;
 				for (var k = 0; k < m; k++) {
-					sum += pA[k][row] * pB[k][col];
+					sum += pA[k][row] * pB[col][k];
 				}
 				pR[col][row] = sum;
 			}
@@ -1699,7 +1702,7 @@ function (window, undefined) {
 		for (var k = 0; k < nR; k++) {
 			var fSum = 0.0;
 			for (var i = 0; i < nC; i++) {
-				fSum += pX[k][i];
+				fSum += pX[i][k];
 			}
 			// GetDouble(Column,Row)
 			pResMat[k][0] = fSum / nC;
@@ -1709,7 +1712,7 @@ function (window, undefined) {
 	function lcl_CalculateRowsDelta(pMat, pRowMeans, nC, nR) {
 		for (var k = 0; k < nR; k++) {
 			for (var i = 0; i < nC; i++) {
-				pMat[k][i] = approxSub(pMat[k][i], pRowMeans[k][0]);
+				pMat[i][k] = approxSub(pMat[i][k], pRowMeans[k][0]);
 			}
 		}
 	}
@@ -1720,7 +1723,7 @@ function (window, undefined) {
 		var fNumerator = lcl_TGetColumnSumProduct(pMatA, nR, pMatY, 0, nR, nN);
 		var fFactor = 2.0 * (fNumerator / fDenominator);
 		for (var col = nR; col < nN; col++) {
-			pMatY[0][col] = pMatY[0][col] - fFactor * pMatA[nR][col];
+			putDouble(pMatY, col, getDouble(pMatY, col) - fFactor * pMatA[col][nR]);
 		}
 	}
 
@@ -1807,8 +1810,8 @@ function (window, undefined) {
 
 		// 1 = simple; 2 = multiple with Y as column; 3 = multiple with Y as row
 		var nCase = getMatrixParams.nCase;
-		var nCX = getMatrixParams.nRX, nCY = getMatrixParams.nCY; // number of columns
-		var nRX = getMatrixParams.nCX, nRY = getMatrixParams.nRY; //number of rows
+		var nCX = getMatrixParams.nCX, nCY = getMatrixParams.nCY; // number of columns
+		var nRX = getMatrixParams.nRX, nRY = getMatrixParams.nRY; //number of rows
 		var K = getMatrixParams.M, N = getMatrixParams.N; // K=number of variables X, N=number of data samples
 		pMatX = getMatrixParams.pMatX, pMatY = getMatrixParams.pMatY;
 
@@ -1828,7 +1831,7 @@ function (window, undefined) {
 		} else {
 			nRXN = pMatNewX[0].length;
 			nCXN = pMatNewX.length;
-			if ((nCase === 2 && N !== nCXN) || (nCase === 3 && N !== nRXN)) {
+			if ((nCase === 2 && K !== nCXN) || (nCase === 3 && K !== nRXN)) {
 				return;
 			}
 			nCountXN = nCXN * nRXN;
@@ -1953,7 +1956,7 @@ function (window, undefined) {
 				// B = R^(-1) * Q' * Y <=> B = R^(-1) * Z <=> R * B = Z
 				// result Z should have zeros for index>=K; if not, ignore values
 				for (var col = 0; col < K; col++) {
-					pSlopes[col][0] = pMatY[col][0];
+					putDouble( pSlopes, col, getDouble(pMatY, col));
 				}
 				lcl_SolveWithUpperRightTriangle(pMatX, aVecR, pSlopes, K, false);
 
@@ -1982,6 +1985,7 @@ function (window, undefined) {
 					//PushError(FormulaError::CodeOverflow);
 					return;
 				}
+
 				if (bConstant) {
 					lcl_CalculateRowMeans(pMatX, pMeans, N, K);
 					lcl_CalculateRowsDelta(pMatX, pMeans, N, K);
@@ -2007,7 +2011,7 @@ function (window, undefined) {
 				// B = R^(-1) * Q' * Y <=> B = R^(-1) * Z <=> R * B = Z
 				// result Z should have zeros for index>=K; if not, ignore values
 				for (var col = 0; col < K; col++) {
-					pSlopes[col][0] = pMatY[0][col];
+					putDouble( pSlopes, col, getDouble(pMatY, col));
 				}
 				lcl_SolveWithUpperRightTriangle(pMatX, aVecR, pSlopes, K, true);
 
@@ -6963,7 +6967,9 @@ function (window, undefined) {
 	cGROWTH.prototype.argumentsMax = 4;
 	cGROWTH.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1};
 	cGROWTH.prototype.argumentsType = [argType.reference, argType.reference, argType.reference, argType.logical];
-	/*cGROWTH.prototype.Calculate = function (arg) {
+	cGROWTH.prototype.Calculate = function (arg) {
+
+
 
 		var prepeareArgs = prepeareGrowthTrendCalculation(this, arg);
 		if (cElementType.error === prepeareArgs.type) {
@@ -6973,9 +6979,23 @@ function (window, undefined) {
 		var pMatX = prepeareArgs.pMatX;
 		var pMatNewX = prepeareArgs.pMatNewX;
 		var bConstant = prepeareArgs.bConstant;
-		var res = CalculateTrendGrowth(pMatY, pMatX, pMatNewX, bConstant, true);
 
-		if (res && res[0] && res[0][0]) {
+		if (pMatNewX) {
+			var _pMatNewX = [];
+			for (var i = 0; i < pMatNewX.length; i++) {
+				for (var j = 0; j < pMatNewX[i].length; j++) {
+					if (!_pMatNewX[j]) {
+						_pMatNewX[j] = [];
+					}
+					_pMatNewX[j][i] = pMatNewX[i][j];
+				}
+			}
+			pMatNewX = _pMatNewX;
+		}
+
+		var mat = CalculateTrendGrowth(pMatY, pMatX, pMatNewX, bConstant, true);
+
+		/*if (res && res[0] && res[0][0]) {
 			var array = new cArray();
 			for(var i = 0; i < res.length; i++) {
 				array.addRow();
@@ -6986,8 +7006,25 @@ function (window, undefined) {
 			return array;
 		} else {
 			return new cError(cErrorType.wrong_value_type);
+		}*/
+		if (mat && mat[0] && mat[0][0]) {
+			var tMatrix = [], res = new cArray();
+
+			for (var i = 0; i < mat.length; i++) {
+				for (var j = 0; j < mat[i].length; j++) {
+					if (!tMatrix[j]) {
+						tMatrix[j] = [];
+					}
+					tMatrix[j][i] = new cNumber(mat[i][j]);
+				}
+			}
+
+			res.fillFromArray(tMatrix);
+			return res;
+		} else {
+			return new cError(cErrorType.wrong_value_type);
 		}
-	};*/
+	};
 
 	/**
 	 * @constructor
