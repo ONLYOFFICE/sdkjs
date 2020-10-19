@@ -12603,6 +12603,8 @@ $( function () {
 		oParser = new parserFormula( "GROWTH(A103:C103,A104:C105,A106:C107,0)", "A2", ws );
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue().toFixed(8) - 0, 1.0017632);
+		strictEqual( oParser.calculate().getElementRowCol(0,1).getValue().toFixed(3) - 0, 12047829814.167);
+		strictEqual( oParser.calculate().getElementRowCol(0,2).getValue().toFixed(3) - 0, 10705900594.962);
 
 		oParser = new parserFormula( "GROWTH({1,2,3},A104:C105,A106:C107,1)", "A2", ws );
 		ok( oParser.parse() );
@@ -12611,6 +12613,12 @@ $( function () {
 		oParser = new parserFormula( "GROWTH({1,2,3},A104:C105,A106:C107,A106:C107)", "A2", ws );
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula( "GROWTH(A103:C103,A104:C105,A106:C107,1)", "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue().toFixed(8) - 0, 12.00187209);
+		strictEqual( oParser.calculate().getElementRowCol(0,1).getValue().toFixed(3) - 0, 676231620.297);
+		strictEqual( oParser.calculate().getElementRowCol(0,2).getValue().toFixed(3) - 0, 612512904.254)
 	} );
 
 	test( "Test: \"TREND\"", function () {
