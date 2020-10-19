@@ -12655,6 +12655,18 @@ $( function () {
 		oParser = new parserFormula( "TREND(B101:B112,A101:A112,A115:A119)", "A2", ws );
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue().toFixed(4) - 0, 146171.5152);
+		strictEqual( oParser.calculate().getElementRowCol(1,0).getValue().toFixed(4) - 0, 147189.697);
+		strictEqual( oParser.calculate().getElementRowCol(2,0).getValue().toFixed(4) - 0, 148207.8788);
+		strictEqual( oParser.calculate().getElementRowCol(3,0).getValue().toFixed(4) - 0, 149226.0606);
+		strictEqual( oParser.calculate().getElementRowCol(4,0).getValue().toFixed(4) - 0, 150244.2424);
+
+		oParser = new parserFormula( "TREND(B101:B112,A101:A112,A115:A119, FALSE)", "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue().toFixed(4) - 0, 220615.2);
+		strictEqual( oParser.calculate().getElementRowCol(1,0).getValue().toFixed(4) - 0, 237585.6);
+		strictEqual( oParser.calculate().getElementRowCol(2,0).getValue().toFixed(4) - 0, 254556);
+		strictEqual( oParser.calculate().getElementRowCol(3,0).getValue().toFixed(4) - 0, 271526.4);
+		strictEqual( oParser.calculate().getElementRowCol(4,0).getValue().toFixed(4) - 0, 288496.8);
 	} );
 
 	test( "Test: \"PDURATION\"", function () {

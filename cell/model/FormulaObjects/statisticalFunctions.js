@@ -1797,7 +1797,20 @@ function (window, undefined) {
 		var pMatY = argClone[0];
 		var pMatX = argClone[1];
 		var pMatNewX = argClone[2];
-		var bConstant = undefined !== argClone[3] ? argClone[3].getValue() : true;
+		if (pMatNewX) {
+			var _pMatNewX = [];
+			for (var i = 0; i < pMatNewX.length; i++) {
+				for (var j = 0; j < pMatNewX[i].length; j++) {
+					if (!_pMatNewX[j]) {
+						_pMatNewX[j] = [];
+					}
+					_pMatNewX[j][i] = pMatNewX[i][j];
+				}
+			}
+			pMatNewX = _pMatNewX;
+		}
+
+		var bConstant = undefined !== argClone[3] ? argClone[3].tocBool().toBool() : true;
 
 		return {pMatY: pMatY, pMatX: pMatX, pMatNewX: pMatNewX, bConstant: bConstant};
 	}
@@ -6980,20 +6993,6 @@ function (window, undefined) {
 		var pMatX = prepeareArgs.pMatX;
 		var pMatNewX = prepeareArgs.pMatNewX;
 		var bConstant = prepeareArgs.bConstant;
-
-		if (pMatNewX) {
-			var _pMatNewX = [];
-			for (var i = 0; i < pMatNewX.length; i++) {
-				for (var j = 0; j < pMatNewX[i].length; j++) {
-					if (!_pMatNewX[j]) {
-						_pMatNewX[j] = [];
-					}
-					_pMatNewX[j][i] = pMatNewX[i][j];
-				}
-			}
-			pMatNewX = _pMatNewX;
-		}
-
 		var mat = CalculateTrendGrowth(pMatY, pMatX, pMatNewX, bConstant, true);
 
 		if (mat && mat[0] && mat[0][0]) {
@@ -10951,27 +10950,13 @@ function (window, undefined) {
 		var pMatNewX = prepeareArgs.pMatNewX;
 		var bConstant = prepeareArgs.bConstant;
 
-		var i,j
-		if (pMatNewX) {
-			var _pMatNewX = [];
-			for (i = 0; i < pMatNewX.length; i++) {
-				for (j = 0; j < pMatNewX[i].length; j++) {
-					if (!_pMatNewX[j]) {
-						_pMatNewX[j] = [];
-					}
-					_pMatNewX[j][i] = pMatNewX[i][j];
-				}
-			}
-			pMatNewX = _pMatNewX;
-		}
-
 		var mat = CalculateTrendGrowth(pMatY, pMatX, pMatNewX, bConstant);
 
 		if (mat && mat[0] && mat[0][0]) {
 			var tMatrix = [], res = new cArray();
 
-			for (i = 0; i < mat.length; i++) {
-				for (j = 0; j < mat[i].length; j++) {
+			for (var i = 0; i < mat.length; i++) {
+				for (var j = 0; j < mat[i].length; j++) {
 					if (!tMatrix[j]) {
 						tMatrix[j] = [];
 					}
