@@ -2869,22 +2869,24 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 
 	if (nCombWidth && nMaxComb > 0)
 	{
+		var oCombBorder  = oTextForm.GetCombBorder();
+		var nCombBorderW = oCombBorder? oCombBorder.GetWidth() : 0;
+
 		for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
 		{
 			this.private_MeasureElement(nPos, oTextPr, oTheme, oInfoMathText);
-
 			var Item = this.Content[nPos];
 			if (para_Space === this.Content[nPos].Type || para_Text === this.Content[nPos].Type)
 			{
-				var nLeftGap  = 0;
-				var nRightGap = 0;
+				var nLeftGap  = nCombBorderW / 2;
+				var nRightGap = nCombBorderW / 2;
 
-				var nWidth = Item.Get_Width();
+				var nWidth = Item.Get_Width() + nLeftGap + nRightGap;
 
-				if (Item.Get_Width() < nCombWidth)
+				if (nWidth < nCombWidth)
 				{
-					nLeftGap  = (nCombWidth - nWidth) / 2;
-					nRightGap = (nCombWidth - nWidth) / 2;
+					nLeftGap  += (nCombWidth - nWidth) / 2;
+					nRightGap += (nCombWidth - nWidth) / 2;
 				}
 
 				Item.ResetGapBackground();
@@ -2892,12 +2894,13 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 				{
 					if (oTextForm.CombPlaceholderSymbol)
 					{
-						Item.SetGapBackground(nMaxComb - nCount, oTextForm.CombPlaceholderSymbol, nCombWidth, g_oTextMeasurer, oTextForm.CombPlaceholderFont, oTextPr, oTheme);
+						Item.SetGapBackground(nMaxComb - nCount, oTextForm.CombPlaceholderSymbol, nCombWidth, g_oTextMeasurer, oTextForm.CombPlaceholderFont, oTextPr, oTheme, nCombBorderW);
 						nRightGap += (nMaxComb - nCount) * Item.RGapShift;
 					}
 					else
 					{
-						nRightGap += (nMaxComb - nCount) * nCombWidth;
+						Item.SetGapBackground(nMaxComb - nCount, 0, nCombWidth, g_oTextMeasurer, null, oTextPr, oTheme, nCombBorderW);
+						nRightGap += (nMaxComb - nCount) * Math.max(nCombWidth, nCombBorderW);
 					}
 				}
 
@@ -6130,6 +6133,9 @@ ParaRun.prototype.Draw_Lines = function(PDSL)
     var aUnderline  = PDSL.Underline;
     var aSpelling   = PDSL.Spelling;
     var aDUnderline = PDSL.DUnderline;
+    var aCombForms  = PDSL.CombForms;
+
+    var oCombBorder = this.GetTextForm() && this.GetTextForm().Comb && this.GetTextForm().GetCombBorder() ? this.GetTextForm().GetCombBorder() : null;
 
     var CurTextPr = this.Get_CompiledPr( false );
     var StrikeoutY = Y - this.YOffset;
@@ -6262,6 +6268,26 @@ ParaRun.prototype.Draw_Lines = function(PDSL)
 
 		if (SpellData[Pos])
 			nSpellingErrorsCounter += SpellData[Pos];
+
+		if (oCombBorder && ItemWidthVisible > 0.001)
+		{
+			var nCombBorderW     = oCombBorder.GetWidth();
+			var oCombBorderColor = oCombBorder.GetColor();
+
+			if (Item.RGapCount)
+			{
+				var nGapEnd = X + ItemWidthVisible;
+				aCombForms.Add(Y, Y, X, nGapEnd - Item.RGapCount * Item.RGapShift, nCombBorderW, oCombBorderColor.r, oCombBorderColor.g, oCombBorderColor.b);
+				for (var nGapIndex = 0; nGapIndex < Item.RGapCount; ++nGapIndex)
+				{
+					aCombForms.Add(Y, Y, nGapEnd - (Item.RGapCount - nGapIndex) * Item.RGapShift, nGapEnd - (Item.RGapCount - nGapIndex - 1) * Item.RGapShift, nCombBorderW, oCombBorderColor.r, oCombBorderColor.g, oCombBorderColor.b);
+				}
+			}
+			else
+			{
+				aCombForms.Add(Y, Y, X, X + ItemWidthVisible, nCombBorderW, oCombBorderColor.r, oCombBorderColor.g, oCombBorderColor.b);
+			}
+		}
 
 		switch (ItemType)
 		{

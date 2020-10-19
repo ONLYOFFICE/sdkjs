@@ -559,7 +559,7 @@ ParaText.prototype.ResetGapBackground = function()
 	this.RGapFontSlot  = undefined;
 	this.RGapFont      = undefined;
 };
-ParaText.prototype.SetGapBackground = function(nCount, nCharCode, nCombWidth, oContext, sFont, oTextPr, oTheme)
+ParaText.prototype.SetGapBackground = function(nCount, nCharCode, nCombWidth, oContext, sFont, oTextPr, oTheme, nCombBorderW)
 {
 	this.RGapCount    = nCount;
 	this.RGapCharCode = nCharCode;
@@ -576,7 +576,7 @@ ParaText.prototype.SetGapBackground = function(nCount, nCharCode, nCombWidth, oC
 		oContext.SetFontSlot(this.RGapFontSlot, oTextPr.Get_FontKoef());
 	}
 
-	this.RGapCharWidth = Math.max(oContext.MeasureCode(nCharCode).Width + oTextPr.Spacing, 0);
+	this.RGapCharWidth = !nCharCode ? nCombBorderW : Math.max(oContext.MeasureCode(nCharCode).Width + oTextPr.Spacing + nCombBorderW, nCombBorderW);
 	this.RGapShift     = Math.max(nCombWidth, this.RGapCharWidth);
 
 	if (sFont)
@@ -584,6 +584,9 @@ ParaText.prototype.SetGapBackground = function(nCount, nCharCode, nCombWidth, oC
 };
 ParaText.prototype.private_DrawGapsBackground = function(X, Y, oContext, PDSE, oTextPr)
 {
+	if (!this.RGapCharCode)
+		return;
+
 	if (this.RGapFont)
 	{
 		var oCurTextPr = oTextPr.Copy();

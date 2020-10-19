@@ -773,6 +773,16 @@ CInlineLevelSdt.prototype.private_FillPlaceholderContent = function()
 			{
 				this.AddToContent(0, oFirstParagraph.Content[nPos].Copy());
 			}
+
+			if (this.IsTextForm() && this.GetTextFormPr().MaxCharacters > 0 && this.Content[0] instanceof ParaRun)
+			{
+				// В такой ситуации у нас должен быть всего 1 ран в параграфе
+				var oRun = this.Content[0];
+				if (oRun.Content.length > this.GetTextFormPr().MaxCharacters)
+				{
+					oRun.RemoveFromContent(this.GetTextFormPr().MaxCharacters, oRun.Content.length - this.GetTextFormPr().MaxCharacters, true);
+				}
+			}
 		}
 	}
 	else

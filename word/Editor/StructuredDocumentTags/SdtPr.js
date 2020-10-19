@@ -1135,13 +1135,14 @@ CSdtDatePickerPr.prototype.GetFormatsExamples = function()
  * Клосс с настройками для текстовой формы
  * @constructor
  */
-function CSdtTextFormPr(nMax, isComb, nWidth, nSymbol, sFont)
+function CSdtTextFormPr(nMax, isComb, nWidth, nSymbol, sFont, oCombBorder)
 {
 	this.MaxCharacters         = undefined !== nMax ? nMax : -1;
 	this.Comb                  = undefined !== isComb ? isComb : false;
 	this.Width                 = nWidth;
 	this.CombPlaceholderSymbol = nSymbol;
 	this.CombPlaceholderFont   = sFont;
+	this.CombBorder            = undefined !== oCombBorder ? oCombBorder.Copy() : undefined;
 }
 CSdtTextFormPr.prototype.Copy = function()
 {
@@ -1152,12 +1153,19 @@ CSdtTextFormPr.prototype.Copy = function()
 	oText.Width                 = this.Width;
 	oText.CombPlaceholderSymbol = this.CombPlaceholderSymbol;
 	oText.CombPlaceholderFont   = this.CombPlaceholderFont;
+	oText.CombBorder            = this.CombBorder ? this.CombBorder.Copy() : undefined;
 
 	return oText;
 };
 CSdtTextFormPr.prototype.IsEqual = function(oOther)
 {
-	return (this.MaxCharacters === oOther.MaxCharacters && this.Comb === oOther.Comb && this.Width === oOther.Width && this.CombPlaceholderSymbol === oOther.CombPlaceholderSymbol && this.CombPlaceholderFont === oOther.CombPlaceholderFont);
+	return (this.MaxCharacters === oOther.MaxCharacters
+		&& this.Comb === oOther.Comb
+		&& this.Width === oOther.Width
+		&& this.CombPlaceholderSymbol === oOther.CombPlaceholderSymbol
+		&& this.CombPlaceholderFont === oOther.CombPlaceholderFont
+		&& ((!this.CombBorder && !oOther) || (this.CombBorder && this.CombBorder.IsEqual(oOther)))
+	);
 };
 CSdtTextFormPr.prototype.WriteToBinary = function(oWriter)
 {
@@ -1184,6 +1192,16 @@ CSdtTextFormPr.prototype.WriteToBinary = function(oWriter)
 	{
 		oWriter.WriteBool(false);
 	}
+
+	if (undefined !== this.CombBorder)
+	{
+		oWriter.WriteBool(true);
+		this.CombBorder.WriteToBinary(oWriter);
+	}
+	else
+	{
+		oWriter.WriteBool(false);
+	}
 };
 CSdtTextFormPr.prototype.ReadFromBinary = function(oReader)
 {
@@ -1196,6 +1214,12 @@ CSdtTextFormPr.prototype.ReadFromBinary = function(oReader)
 
 	if (oReader.GetBool())
 		this.CombPlaceholderFont = oReader.GetString2();
+
+	if (oReader.GetBool())
+	{
+		this.CombBorder = new CDocumentBorder();
+		this.CombBorder.ReadFromBinary(oReader);
+	}
 };
 CSdtTextFormPr.prototype.Write_ToBinary = function(oWriter)
 {
@@ -1244,6 +1268,29 @@ CSdtTextFormPr.prototype.GetPlaceHolderFont = function()
 CSdtTextFormPr.prototype.SetPlaceHolderFont = function(sFont)
 {
 	this.CombPlaceholderFont = sFont;
+};
+CSdtTextFormPr.prototype.GetCombBorder = function()
+{
+	return this.CombBorder;
+};
+CSdtTextFormPr.prototype.GetAscCombBorder = function()
+{
+	if (!this.CombBorder)
+		return undefined;
+
+	return (new asc_CTextBorder(this.CombBorder));
+};
+CSdtTextFormPr.prototype.SetAscCombBorder = function(oAscBorder)
+{
+	if (!oAscBorder)
+	{
+		this.CombBorder = undefined;
+	}
+	else
+	{
+		this.CombBorder = new CDocumentBorder();
+		this.ComBorder.Set_FromObject(oAscBorder);
+	}
 };
 
 function CSdtFormPr(sKey, sLabel, sHelpText, isRequired)
@@ -1465,3 +1512,5 @@ CSdtTextFormPr.prototype['get_PlaceHolderSymbol'] = CSdtTextFormPr.prototype.Get
 CSdtTextFormPr.prototype['put_PlaceHolderSymbol'] = CSdtTextFormPr.prototype.SetPlaceHolderSymbol;
 CSdtTextFormPr.prototype['get_PlaceHolderFont']   = CSdtTextFormPr.prototype.GetPlaceHolderFont;
 CSdtTextFormPr.prototype['put_PlaceHolderFont']   = CSdtTextFormPr.prototype.SetPlaceHolderFont;
+CSdtTextFormPr.prototype['get_CombBorder']        = CSdtTextFormPr.prototype.GetAscCombBorder;
+CSdtTextFormPr.prototype['put_CombBorder']        = CSdtTextFormPr.prototype.SetAscCombBorder;
