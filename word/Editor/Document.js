@@ -15579,6 +15579,7 @@ CDocument.prototype.AddContentControlPicture = function()
 	if (!oCC)
 		return null;
 
+	oCC.SetPlaceholderText(AscCommon.translateManager.getValue("Click to load image"));
 	oCC.ApplyPicturePr(true);
 	return oCC;
 };

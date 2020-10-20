@@ -1269,7 +1269,10 @@ CInlineLevelSdt.prototype.private_UpdatePictureContent = function()
 		return;
 
 	if (this.IsPlaceHolder())
+	{
 		this.ReplacePlaceHolderWithContent();
+		this.SetShowingPlcHdr(true);
+	}
 
 	var arrDrawings = this.GetAllDrawingObjects();
 
@@ -1311,7 +1314,6 @@ CInlineLevelSdt.prototype.private_UpdatePictureContent = function()
 CInlineLevelSdt.prototype.ApplyPicturePr = function(isPicture)
 {
 	this.SetPicturePr(isPicture);
-	this.SetPlaceholder(undefined);
 	this.private_UpdatePictureContent();
 };
 /**

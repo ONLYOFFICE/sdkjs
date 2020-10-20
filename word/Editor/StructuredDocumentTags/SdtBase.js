@@ -110,7 +110,10 @@ CSdtBase.prototype.SetPlaceholderText = function(sText)
 
 	oDocPart.RemoveSelection();
 
-	if (this.IsPlaceHolder())
+	var isPlaceHolder = this.IsPlaceHolder();
+	if (isPlaceHolder && this.IsPicture())
+		this.private_UpdatePictureContent();
+	else
 		this.private_FillPlaceholderContent();
 
 	return oDocPart;

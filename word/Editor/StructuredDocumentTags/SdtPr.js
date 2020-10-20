@@ -1289,7 +1289,7 @@ CSdtTextFormPr.prototype.SetAscCombBorder = function(oAscBorder)
 	else
 	{
 		this.CombBorder = new CDocumentBorder();
-		this.ComBorder.Set_FromObject(oAscBorder);
+		this.CombBorder.Set_FromObject(oAscBorder);
 	}
 };
 
