@@ -171,6 +171,16 @@ var c_oAscTOCStylesType = {
 	Web      : 5
 };
 
+var c_oAscTOFStylesType = {
+	Current     : 0,
+	Classic     : 1,
+	Distinctive : 2,
+	Centered    : 3,
+	Formal      : 4,
+	Simple      : 5,
+	Web         : 6
+};
+
 var c_oAscStyleType = {
 	Paragraph : 1,
 	Numbering : 2,
@@ -330,6 +340,14 @@ prot['Modern']   = c_oAscTOCStylesType.Modern;
 prot['Classic']  = c_oAscTOCStylesType.Classic;
 prot['Web']      = c_oAscTOCStylesType.Web;
 
+prot = window['Asc']['c_oAscTOFStylesType'] = window['Asc'].c_oAscTOFStylesType = c_oAscTOFStylesType;
+prot['Current']     = prot.Current;
+prot['Classic']     = prot.Classic;
+prot['Distinctive'] = prot.Distinctive;
+prot['Centered']    = prot.Centered;
+prot['Formal']      = prot.Formal;
+prot['Simple']      = prot.Simple;
+prot['Web']         = prot.Web;
 
 prot = window['Asc']['c_oAscStyleType'] = window['Asc'].c_oAscStyleType = c_oAscStyleType;
 prot['Paragraph'] = c_oAscStyleType.Paragraph;
