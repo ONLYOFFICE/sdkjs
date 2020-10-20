@@ -3844,10 +3844,11 @@ function (window, undefined) {
 			case AscCH.historyitem_Slicer_SetCacheData: {
 				slicerCache = oModel.getSlicerCacheByName(Data.name);
 				if (slicerCache) {
-					var cache = new Asc.CT_slicerCacheDefinition();
 					var wrapper = bUndo ? Data.from : Data.to;
+					var cache = new Asc.CT_slicerCacheDefinition();
 					wrapper.initObject(cache);
-					slicerCache.data = cache.data;
+					cache.initAfterSerialize(this.wb);
+					slicerCache.copyFrom(cache);
 					updateByCacheName = Data.name;
 				}
 				break;

@@ -20655,7 +20655,7 @@
 						lockRanges.push(_range);
 					}
 				} else if (_type === window['AscCommonExcel'].insertSlicerType.pivotTable) {
-
+					//lock pivot
 				}
 				modelCaches[i] = modelCache;
 			} else {
