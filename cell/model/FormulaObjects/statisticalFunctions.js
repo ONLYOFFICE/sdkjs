@@ -1785,8 +1785,14 @@ function (window, undefined) {
 			arg[2] = tryNumberToArray(arg[2]);
 		}
 
-		var oArguments = t._prepareArguments(arg, arguments[1], true,
-			[cElementType.array, cElementType.array, cElementType.array]);
+		var types = [cElementType.array];
+		if (arg[1] && arg[1].type !== cElementType.empty) {
+			types.push(cElementType.array);
+		}
+		if (arg[2] && arg[2].type !== cElementType.empty) {
+			types.push(cElementType.array);
+		}
+		var oArguments = t._prepareArguments(arg, arguments[1], true,types);
 		var argClone = oArguments.args;
 
 		var argError;
@@ -1796,8 +1802,11 @@ function (window, undefined) {
 
 		var pMatY = argClone[0];
 		var pMatX = argClone[1];
+		if (pMatX && !pMatX.length && pMatX.type === cElementType.empty) {
+			pMatX = undefined;
+		}
 		var pMatNewX = argClone[2];
-		if (pMatNewX) {
+		if (pMatNewX && pMatNewX.length) {
 			var _pMatNewX = [];
 			for (var i = 0; i < pMatNewX.length; i++) {
 				for (var j = 0; j < pMatNewX[i].length; j++) {
@@ -1808,6 +1817,8 @@ function (window, undefined) {
 				}
 			}
 			pMatNewX = _pMatNewX;
+		} else if (pMatNewX && pMatNewX.type === cElementType.empty) {
+			pMatNewX = undefined;
 		}
 
 		var bConstant = undefined !== argClone[3] ? argClone[3].tocBool().toBool() : true;
@@ -6995,7 +7006,7 @@ function (window, undefined) {
 		var bConstant = prepeareArgs.bConstant;
 		var mat = CalculateTrendGrowth(pMatY, pMatX, pMatNewX, bConstant, true);
 
-		if (mat && mat[0] && mat[0][0]) {
+		if (mat && mat[0] && mat[0][0] !== undefined) {
 			var tMatrix = [], res = new cArray();
 
 			for (var i = 0; i < mat.length; i++) {
@@ -7511,7 +7522,7 @@ function (window, undefined) {
 		var mat = CalculateRGPRKP(pMatY, pMatX, bConstant, bStats);
 
 		//TODO далее функцию необходимо отптимизировать и сразу формировать итоговую матрицу без промежуточного транспонирования
-		if (mat && mat[0] && mat[0][0]) {
+		if (mat && mat[0] && mat[0][0] !== undefined) {
 			var tMatrix = [], res = new cArray();
 
 			for (var i = 0; i < mat.length; i++) {
@@ -10952,7 +10963,7 @@ function (window, undefined) {
 
 		var mat = CalculateTrendGrowth(pMatY, pMatX, pMatNewX, bConstant);
 
-		if (mat && mat[0] && mat[0][0]) {
+		if (mat && mat[0] && mat[0][0] !== undefined) {
 			var tMatrix = [], res = new cArray();
 
 			for (var i = 0; i < mat.length; i++) {
