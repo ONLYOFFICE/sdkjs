@@ -1278,7 +1278,7 @@ CSdtTextFormPr.prototype.GetAscCombBorder = function()
 	if (!this.CombBorder)
 		return undefined;
 
-	return (new asc_CTextBorder(this.CombBorder));
+	return (new Asc.asc_CTextBorder(this.CombBorder));
 };
 CSdtTextFormPr.prototype.SetAscCombBorder = function(oAscBorder)
 {
