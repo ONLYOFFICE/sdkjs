@@ -81,7 +81,7 @@ function (window, undefined) {
 		cVAR_P, cVAR_S, cVARPA, cWEIBULL, cWEIBULL_DIST, cZTEST, cZ_TEST);
 
 	cFormulaFunctionGroup['NotRealised'] = cFormulaFunctionGroup['NotRealised'] || [];
-	cFormulaFunctionGroup['NotRealised'].push(cGROWTH, cLOGEST, cTREND);
+	cFormulaFunctionGroup['NotRealised'].push(cLOGEST);
 
 	function integralPhi(x) { // Using gauss(x)+0.5 has severe cancellation errors for x<-4
 		return 0.5 * AscCommonExcel.rtl_math_erfc(-x * 0.7071067811865475); // * 1/sqrt(2)
@@ -1574,7 +1574,7 @@ function (window, undefined) {
 	function lcl_CalculateColumnsDelta(pMat, pColumnMeans, nC, nR) {
 		for (var i = 0; i < nC; i++) {
 			for (var k = 0; k < nR; k++) {
-				pMat[i][k] = approxSub(pMat[i][k], pColumnMeans[0][i]);
+				pMat[i][k] = approxSub(pMat[i][k], getDouble(pColumnMeans, i));
 			}
 		}
 	}
@@ -1999,9 +1999,8 @@ function (window, undefined) {
 				}
 				if (_bGrowth) {
 					for (i = 0; i < nRXN; i++) {
-						pResMat[i] = Math.exp(pResMat[i]);
+						putDouble(pResMat, i, Math.exp(getDouble(pResMat, i)));
 					}
-
 				}
 			} else { // nCase == 3, Y is row, all matrices are transposed
 
@@ -2054,9 +2053,8 @@ function (window, undefined) {
 				}
 				if (_bGrowth) {
 					for (i = 0; i < nCXN; i++) {
-						pResMat[i][0] = Math.exp(pResMat[i][0]);
+						putDouble(pResMat, i, Math.exp(getDouble(pResMat, i)));
 					}
-
 				}
 			}
 		}
