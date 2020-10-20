@@ -19929,14 +19929,15 @@
 		var api = window["Asc"]["editor"];
 		var bFast = api.collaborativeEditing.m_bFast;
 		var bIsSingleUser = !api.collaborativeEditing.getCollaborativeEditing();
-		var oAutoExpansionTable;
-		if (!(bFast && !bIsSingleUser)) {
-			oAutoExpansionTable = t.model.autoFilters.checkTableAutoExpansion(bbox);
-		}
+		var oAutoExpansionTable = t.model.autoFilters.checkTableAutoExpansion(bbox);
 
 		if (oAutoExpansionTable && !applyByArray) {
 			var callback = function (success) {
 				if (!success) {
+					return;
+				}
+				if (bFast && !bIsSingleUser) {
+					t.handlers.trigger("toggleAutoCorrectOptions");
 					return;
 				}
 				var options = {
