@@ -7552,6 +7552,7 @@ function (window, undefined) {
 	cLOGEST.prototype.name = 'LOGEST';
 	cLOGEST.prototype.argumentsMin = 1;
 	cLOGEST.prototype.argumentsMax = 4;
+	cLOGEST.prototype.arrayIndexes = {0: 1, 1: 1};
 	cLOGEST.prototype.argumentsType = [argType.reference, argType.reference, argType.logical, argType.logical];
 	cLOGEST.prototype.Calculate = function (arg) {
 
@@ -7571,15 +7572,34 @@ function (window, undefined) {
 		var pMatY = argClone[0];
 		var pMatX = argClone[1];
 		var bConstant = getBoolValue(argClone[2], true);
-		var bStats = getBoolValue(argClone[3], true);
+		var bStats = getBoolValue(argClone[3], false);
 
-		var res = CalculateRGPRKP(pMatY, pMatX, bConstant, bStats, true);
+		//возвращает матрицу [col][row]
+		var mat = CalculateRGPRKP(pMatY, pMatX, bConstant, bStats, true);
 
-		if (res && res[0] && res[0][0]) {
-			return new cNumber(res[0][0]);
+		//TODO далее функцию необходимо отптимизировать и сразу формировать итоговую матрицу без промежуточного транспонирования
+		if (mat && mat[0] && mat[0][0] !== undefined) {
+			var tMatrix = [], res = new cArray();
+
+			for (var i = 0; i < mat.length; i++) {
+				for (var j = 0; j < mat[i].length; j++) {
+					if (!tMatrix[j]) {
+						tMatrix[j] = [];
+					}
+					if (null === mat[i][j]) {
+						tMatrix[j][i] = new cError(cErrorType.not_available);
+					} else {
+						tMatrix[j][i] = new cNumber(mat[i][j]);
+					}
+				}
+			}
+
+			res.fillFromArray(tMatrix);
+			return res;
 		} else {
 			return new cError(cErrorType.wrong_value_type);
 		}
+
 	};
 
 	/**
