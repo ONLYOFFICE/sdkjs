@@ -1435,6 +1435,10 @@
 		if(oInstruction.IsTableOfFigures())
 		{
 			this.Caption = oInstruction.Caption || oInstruction.CaptionOnlyText;
+			if(!this.Caption)
+			{
+				this.Caption = null;
+			}
 			this.IsIncludeLabelAndNumber = (this.CaptionOnlyText === undefined);
 		}
 	};
