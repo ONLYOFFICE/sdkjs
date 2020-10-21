@@ -9553,7 +9553,18 @@ background-repeat: no-repeat;\
 		var oStyles     = oLogicDocument.GetStyles();
 		var nStylesType = oPr.get_StylesType();
 
-		var isNeedChangeStyles = (Asc.c_oAscTOFStylesType.Current !== nStylesType && nStylesType !== oStyles.GetTOCStylesType());
+		var isTOF = oPr.get_Caption() !== undefined;
+
+		var isNeedChangeStyles = false;
+
+		if(isTOF)
+		{
+			isNeedChangeStyles = (Asc.c_oAscTOFStylesType.Current !== nStylesType && nStylesType !== oStyles.GetTOFStyleType());
+		}
+		else
+		{
+			isNeedChangeStyles = (Asc.c_oAscTOCStylesType.Current !== nStylesType && nStylesType !== oStyles.GetTOCStylesType());
+		}
 
 		oTOC.SelectField();
 
@@ -9574,7 +9585,16 @@ background-repeat: no-repeat;\
 			oLogicDocument.StartAction(AscDFH.historydescription_Document_SetComplexFieldPr);
 
 			if (isNeedChangeStyles)
-				oStyles.SetTOCStylesType(nStylesType);
+			{
+				if(isTOF)
+				{
+					oStyles.SetTOFStyleType(nStylesType);
+				}
+				else
+				{
+					oStyles.SetTOCStylesType(nStylesType);
+				}
+			}
 
 			oTOC.SetPr(oPr);
 			oTOC.Update();

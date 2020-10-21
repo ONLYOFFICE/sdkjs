@@ -21857,9 +21857,9 @@ CDocument.prototype.AddTableOfContents = function(sHeading, oPr, oSdt)
 CDocument.prototype.AddTableOfFigures = function(oPr)
 {
     var oStyles     = this.GetStyles();
-    var nStylesType = oPr ? oPr.get_StylesType() : Asc.c_oAscTOCStylesType.Current;
+    var nStylesType = oPr ? oPr.get_StylesType() : Asc.c_oAscTOFStylesType.Current;
 
-    var isNeedChangeStyles = (Asc.c_oAscTOCStylesType.Current !== nStylesType && nStylesType !== oStyles.GetTOFStyleType());
+    var isNeedChangeStyles = (Asc.c_oAscTOFStylesType.Current !== nStylesType && nStylesType !== oStyles.GetTOFStyleType());
 
     var isLocked = true;
     if (isNeedChangeStyles)
@@ -21885,13 +21885,20 @@ CDocument.prototype.AddTableOfFigures = function(oPr)
             }
         }
 
-        var oComplexField = this.AddFieldWithInstruction("TOC \\h \\z");
+        var sInstruction = "TOC \\h \\z \\u";
+        if (oPr)
+        {
+            var oInstruction = new CFieldInstructionTOC();
+            oInstruction.SetPr(oPr);
+            sInstruction = oInstruction.ToString();
+        }
+
+        this.AddNewParagraph(false, false);
+        var oComplexField = this.AddFieldWithInstruction(sInstruction);
         if (oPr)
         {
             if (isNeedChangeStyles)
                 oStyles.SetTOFStyleType(nStylesType);
-
-            oComplexField.SetPr(oPr);
             oComplexField.Update();
             var oNextParagraph;
             this.MoveCursorToEndPos(false);
