@@ -9553,7 +9553,7 @@ background-repeat: no-repeat;\
 		var oStyles     = oLogicDocument.GetStyles();
 		var nStylesType = oPr.get_StylesType();
 
-		var isNeedChangeStyles = (Asc.c_oAscTOCStylesType.Current !== nStylesType && nStylesType !== oStyles.GetTOCStylesType());
+		var isNeedChangeStyles = (Asc.c_oAscTOFStylesType.Current !== nStylesType && nStylesType !== oStyles.GetTOCStylesType());
 
 		oTOC.SelectField();
 
