@@ -5897,46 +5897,42 @@ function CDrawingDocument()
 		if (undefined === nTabLeader || null === nTabLeader)
 			nTabLeader = Asc.c_oAscTabLeader.Dot;
 
-		if (-1 === nOutlineEnd && -1 === nOutlineStart)
-		{
-			nOutlineStart = 1;
-			nOutlineEnd   = 9;
-		}
 
 		var arrLevels         = [];
 		var arrStylesToDelete = [];
 
-		for (var nIndex = 0, nCount = props.get_StylesCount(); nIndex < nCount; ++nIndex)
+		var nStyle, nStylesCount, nAddStyle, nAddStyleCount;
+		var nLvl, sName, sStyleId, oStyle, isAddStyle;
+		for (nStyle = 0, nStylesCount = props.get_StylesCount(); nStyle < nStylesCount; ++nStyle)
 		{
-			var nLvl  = props.get_StyleLevel(nIndex) - 1;
-			var sName = props.get_StyleName(nIndex);
+			nLvl  = props.get_StyleLevel(nStyle) - 1;
+			sName = props.get_StyleName(nStyle);
 
 			if (!arrLevels[nLvl])
 			{
-				var sStyleId = null;
+				sStyleId = null;
 				if (Asc.c_oAscTOCStylesType.Current === nStylesType)
 				{
 					sStyleId = oStyles.GetDefaultTOC(nLvl);
 				}
 				else
 				{
-					var oStyle = new CStyle("", null, null, styletype_Paragraph, true);
+					oStyle = new CStyle("", null, null, styletype_Paragraph, true);
 					oStyle.CreateTOC(nLvl, nStylesType);
 					sStyleId = oStyle.GetId();
 					oStyles.Add(oStyle);
 					arrStylesToDelete.push(oStyle.GetId());
 				}
-
 				arrLevels[nLvl] = {
 					Styles  : [],
 					StyleId : sStyleId
 				};
 			}
 
-			var isAddStyle = true;
-			for (var nIndex = 0, nCount = arrLevels[nLvl].Styles.length; nIndex < nCount; ++nIndex)
+			isAddStyle = true;
+			for (nAddStyle = 0, nAddStyleCount = arrLevels[nLvl].Styles.length; nAddStyle < nAddStyleCount; ++nAddStyle)
 			{
-				if (arrLevels[nLvl].Styles[nIndex] === sName)
+				if (arrLevels[nLvl].Styles[nAddStyle] === sName)
 				{
 					isAddStyle = false;
 					break;
@@ -5947,60 +5943,65 @@ function CDrawingDocument()
 				arrLevels[nLvl].Styles.push(sName);
 		}
 
-		for (var _nLvl = nOutlineStart; _nLvl <= nOutlineEnd; ++_nLvl)
+		if (-1 !== nOutlineEnd && -1 !== nOutlineStart)
 		{
-			var sName = "Heading " + _nLvl;
-			var nLvl  = _nLvl - 1;
-
-			if (!arrLevels[nLvl])
+			for (var _nLvl = nOutlineStart; _nLvl <= nOutlineEnd; ++_nLvl)
 			{
-				var sStyleId = null;
-				if (Asc.c_oAscTOCStylesType.Current === nStylesType)
+				sName = "Heading " + _nLvl;
+				nLvl  = _nLvl - 1;
+
+				if (!arrLevels[nLvl])
 				{
-					sStyleId = oStyles.GetDefaultTOC(nLvl);
-				}
-				else
-				{
-					var oStyle = new CStyle("", null, null, styletype_Paragraph, true);
-					oStyle.CreateTOC(nLvl, nStylesType);
-					sStyleId = oStyle.GetId();
-					oStyles.Add(oStyle);
-					arrStylesToDelete.push(oStyle.GetId());
+					sStyleId = null;
+					if (Asc.c_oAscTOCStylesType.Current === nStylesType)
+					{
+						sStyleId = oStyles.GetDefaultTOC(nLvl);
+					}
+					else
+					{
+						oStyle = new CStyle("", null, null, styletype_Paragraph, true);
+						oStyle.CreateTOC(nLvl, nStylesType);
+						sStyleId = oStyle.GetId();
+						oStyles.Add(oStyle);
+						arrStylesToDelete.push(oStyle.GetId());
+					}
+
+					arrLevels[nLvl] = {
+						Styles  : [],
+						StyleId : sStyleId
+					};
 				}
 
-				arrLevels[nLvl] = {
-					Styles  : [],
-					StyleId : sStyleId
-				};
+				isAddStyle = true;
+				for (nAddStyle = 0, nAddStyleCount = arrLevels[nLvl].Styles.length; nAddStyle < nAddStyleCount; ++nAddStyle)
+				{
+					if (arrLevels[nLvl].Styles[nAddStyle] === sName)
+					{
+						isAddStyle = false;
+						break;
+					}
+				}
+
+				if (isAddStyle)
+					arrLevels[nLvl].Styles.push(sName);
 			}
-
-			var isAddStyle = true;
-			for (var nIndex = 0, nCount = arrLevels[nLvl].Styles.length; nIndex < nCount; ++nIndex)
-			{
-				if (arrLevels[nLvl].Styles[nIndex] === sName)
-				{
-					isAddStyle = false;
-					break;
-				}
-			}
-
-			if (isAddStyle)
-				arrLevels[nLvl].Styles.push(sName);
 		}
+
+
 
 		var oParaIndex = 0;
 		var nPageIndex = 1;
 
 
-		for (var nLvl = 0; nLvl <= 8; ++nLvl)
+		for (nLvl = 0; nLvl <= 8; ++nLvl)
 		{
 			if (!arrLevels[nLvl])
 				continue;
 
-			var sStyleId = arrLevels[nLvl].StyleId;
-			for (var nIndex = 0, nCount = arrLevels[nLvl].Styles.length; nIndex < nCount; ++nIndex)
+			sStyleId = arrLevels[nLvl].StyleId;
+			for (nStyle = 0, nStylesCount = arrLevels[nLvl].Styles.length; nStyle < nStylesCount; ++nStyle)
 			{
-				var sStyleName = AscCommon.translateManager.getValue(arrLevels[nLvl].Styles[nIndex]);
+				var sStyleName = AscCommon.translateManager.getValue(arrLevels[nLvl].Styles[nStyle]);
 
 				var oParagraph = new Paragraph(this, oDocumentContent, false);
 				oDocumentContent.AddToContent(oParaIndex++, oParagraph);
@@ -6035,9 +6036,9 @@ function CDrawingDocument()
 		oDocumentContent.Reset(1, 0, 1000, 10000);
 		oDocumentContent.Recalculate_Page(0, true);
 
-		for (var nIndex = 0, nCount = arrStylesToDelete.length; nIndex < nCount; ++nIndex)
+		for (nStyle = 0, nStylesCount = arrStylesToDelete.length; nStyle < nStylesCount; ++nStyle)
 		{
-			oStyles.Remove(arrStylesToDelete[nIndex]);
+			oStyles.Remove(arrStylesToDelete[nStyle]);
 		}
 
 		var nContentHeight = oDocumentContent.GetSummaryHeight();
