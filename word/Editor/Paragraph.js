@@ -14533,26 +14533,31 @@ Paragraph.prototype.GetOutlineParagraphs = function(arrOutline, oPr)
 	var nOutlineLvl = this.GetOutlineLvl();
 	if (undefined !== nOutlineLvl
 		&& (!oPr
-		|| -1 === oPr.OutlineStart
-		|| -1 === oPr.OutlineEnd
-		|| undefined === oPr.OutlineStart
-		|| undefined === oPr.OutlineEnd
-		|| (nOutlineLvl >= oPr.OutlineStart - 1 && nOutlineLvl <= oPr.OutlineEnd - 1)))
+			|| (-1 !== oPr.OutlineStart
+				&& -1 !== oPr.OutlineEnd
+				&& undefined !== oPr.OutlineStart
+				&& undefined !== oPr.OutlineEnd
+				&& nOutlineLvl >= oPr.OutlineStart - 1
+				&& nOutlineLvl <= oPr.OutlineEnd - 1)))
 	{
 		arrOutline.push({Paragraph : this, Lvl : nOutlineLvl});
 	}
 	else if (oPr && oPr.Styles && oPr.Styles.length > 0)
 	{
-		if(!this.LogicDocument)
-		{
+		if (!this.LogicDocument)
 			return;
-		}
-		var oStyle = this.LogicDocument.Get_Styles().Get(this.Style_Get());
+
+		var oStyles = this.LogicDocument.GetStyles();
+
+		var sStyleId = this.Style_Get();
+		if (!sStyleId)
+			sStyleId = oStyles.GetDefaultParagraph();
+
+		var oStyle = oStyles.Get(sStyleId);
 		if (!oStyle)
 			return;
 
-		var sStyleName = oStyle.Get_Name();
-
+		var sStyleName = oStyle.GetName();
 		for (var nIndex = 0, nCount = oPr.Styles.length; nIndex < nCount; ++nIndex)
 		{
 			if (oPr.Styles[nIndex].Name === sStyleName)

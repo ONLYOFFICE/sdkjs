@@ -1765,6 +1765,10 @@ CFieldInstructionParser.prototype.private_ReadTOC = function()
 					if (null !== arrRange)
 						this.Result.SetHeadingRange(arrRange[0], arrRange[1]);
 				}
+				else
+				{
+					this.Result.SetHeadingRange(1, 9);
+				}
 			}
 			else if ('t' === sType)
 			{
