@@ -21781,17 +21781,19 @@ CDocument.prototype.AddTableOfContents = function(sHeading, oPr, oSdt)
 
 		oSdt.SetThisElementCurrent();
 
-		var oComplexField = this.AddFieldWithInstruction("TOC \\o \"1-3\" \\h \\z \\u");
-		oSdt.SetDocPartObj(undefined, "Table of Contents", true);
-
+		var sInstruction = "TOC \\o \"1-3\" \\h \\z \\u";
 		if (oPr)
 		{
+			var oInstruction = new CFieldInstructionTOC();
+			oInstruction.SetPr(oPr);
+			sInstruction = oInstruction.ToString();
+
 			if (isNeedChangeStyles)
 				oStyles.SetTOCStylesType(nStylesType);
-
-			oComplexField.SetPr(oPr);
-			oComplexField.Update();
 		}
+
+		this.AddFieldWithInstruction(sInstruction);
+		oSdt.SetDocPartObj(undefined, "Table of Contents", true);
 
 		var oNextParagraph = oSdt.GetNextParagraph();
 		if (oNextParagraph)

@@ -486,9 +486,13 @@ CFieldInstructionTOC.prototype.ToString = function()
 
 		for (var nIndex = 0, nCount = this.Styles.length; nIndex < nCount; ++nIndex)
 		{
-			sInstr += this.Styles[nIndex].Name + sListSeparator;
+			if (0 === nIndex)
+				sInstr += this.Styles[nIndex].Name;
+			else
+				sInstr += sListSeparator + this.Styles[nIndex].Name;
+
 			if (undefined !== this.Styles[nIndex].Lvl && null !== this.Styles[nIndex].Lvl)
-				sInstr += this.Styles[nIndex].Lvl + sListSeparator;
+				sInstr += sListSeparator + this.Styles[nIndex].Lvl;
 		}
 
 		sInstr += "\" ";
