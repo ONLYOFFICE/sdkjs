@@ -365,7 +365,7 @@ CFieldInstructionTOC.prototype.SetStylesArrayRaw = function(sString)
 		var sName = arrValues[nIndex];
 		var nLvl  = nIndex + 1 >= nCount ? 1 : parseInt(arrValues[nIndex + 1]);
 		if (isNaN(nLvl))
-			nLvl = 1;
+			nLvl = undefined;
 		else
 			nIndex++;
 
@@ -486,7 +486,9 @@ CFieldInstructionTOC.prototype.ToString = function()
 
 		for (var nIndex = 0, nCount = this.Styles.length; nIndex < nCount; ++nIndex)
 		{
-			sInstr += this.Styles[nIndex].Name + sListSeparator + this.Styles[nIndex].Lvl + sListSeparator;
+			sInstr += this.Styles[nIndex].Name + sListSeparator;
+			if (undefined !== this.Styles[nIndex].Lvl && null !== this.Styles[nIndex].Lvl)
+				sInstr += this.Styles[nIndex].Lvl + sListSeparator;
 		}
 
 		sInstr += "\" ";
