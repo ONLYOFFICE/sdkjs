@@ -6161,19 +6161,19 @@ function CDrawingDocument()
 
 		var sStyleId = null;
 		var sStyleToDelete = null;
+		var oStyle;
 		if (Asc.c_oAscTOCStylesType.Current === nStylesType)
 		{
 			sStyleId = oStyles.GetDefaultTOF();
 		}
 		else
 		{
-			var oStyle = new CStyle("", null, null, styletype_Paragraph, true);
+			oStyle = new CStyle("", null, null, styletype_Paragraph, true);
 			oStyle.CreateTOF(nStylesType);
 			sStyleId = oStyle.GetId();
 			oStyles.Add(oStyle);
 			sStyleToDelete = oStyle.GetId();
 		}
-
 
 		var oParaIndex = 0;
 		var nPageIndex = 1;
@@ -6224,7 +6224,7 @@ function CDrawingDocument()
 			}
 		}
 
-		oDocumentContent.Reset(1, 0, 1000, 10000);
+		oDocumentContent.Reset(1, 0, wMm - 1, 10000);
 		oDocumentContent.Recalculate_Page(0, true);
 
 		if(sStyleToDelete)

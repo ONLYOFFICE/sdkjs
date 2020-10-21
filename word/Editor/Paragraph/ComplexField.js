@@ -629,12 +629,6 @@ CComplexField.prototype.private_UpdateTOC = function()
 		var aStyles = this.Instruction.GetStylesArray();
 		if(aStyles.length > 0)
 		{
-			oOutlinePr =
-			{
-				OutlineStart : 100,
-				OutlineEnd   : 110,
-				Styles       : [aStyles[0]]
-			};
 			arrOutline = this.LogicDocument.GetOutlineParagraphs(null, oOutlinePr);
 		}
 		else
