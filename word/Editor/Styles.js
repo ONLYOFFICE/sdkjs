@@ -6671,49 +6671,52 @@ CStyle.prototype.CreateTOCHeading = function()
 CStyle.prototype.CreateTOF = function(nType)
 {
 	var nType_;
-	if(nType === undefined || nType === null)
-	{
-		nType_ = Asc.c_oAscTOFStylesType.Formal;
-	}
-	else
-	{
-		nType_ = nType;
-	}
 	var oParaPr = new CParaPr(), oTextPr = new CTextPr();
 	oParaPr.Spacing.Set_FromObject({After: 0, AfterAutoSpacing: 0});
-	switch(nType_)
+	if(Asc.c_oAscTOFStylesType)
 	{
-		case Asc.c_oAscTOFStylesType.Classic:
+		if(nType === undefined || nType === null)
 		{
-			oTextPr.SetCaps(true);
-			break;
+			nType_ = Asc.c_oAscTOFStylesType.Formal;
 		}
-		case Asc.c_oAscTOFStylesType.Distinctive:
+		else
 		{
-			oTextPr.SetItalic(true);
-			break;
+			nType_ = nType;
 		}
-		case Asc.c_oAscTOFStylesType.Centered:
+		switch(nType_)
 		{
-			oTextPr.SetBold(true);
-			oTextPr.SetItalic(true);
-			oParaPr.SetJc(AscCommon.align_Center);
-			break;
-		}
-		case Asc.c_oAscTOFStylesType.Formal:
-		{
-			break;
-		}
-		case Asc.c_oAscTOFStylesType.Simple:
-		{
-			oTextPr.SetBold(true);
-			break;
-		}
-		case Asc.c_oAscTOFStylesType.Web:
-		{
-			oTextPr.SetUnderline(true);
-			oTextPr.SetUnifill(AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorHyperlink, null, null));
-			break;
+			case Asc.c_oAscTOFStylesType.Classic:
+			{
+				oTextPr.SetCaps(true);
+				break;
+			}
+			case Asc.c_oAscTOFStylesType.Distinctive:
+			{
+				oTextPr.SetItalic(true);
+				break;
+			}
+			case Asc.c_oAscTOFStylesType.Centered:
+			{
+				oTextPr.SetBold(true);
+				oTextPr.SetItalic(true);
+				oParaPr.SetJc(AscCommon.align_Center);
+				break;
+			}
+			case Asc.c_oAscTOFStylesType.Formal:
+			{
+				break;
+			}
+			case Asc.c_oAscTOFStylesType.Simple:
+			{
+				oTextPr.SetBold(true);
+				break;
+			}
+			case Asc.c_oAscTOFStylesType.Web:
+			{
+				oTextPr.SetUnderline(true);
+				oTextPr.SetUnifill(AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorHyperlink, null, null));
+				break;
+			}
 		}
 	}
 	this.Set_UiPriority(99);
