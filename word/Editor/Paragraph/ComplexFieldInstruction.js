@@ -360,12 +360,14 @@ CFieldInstructionTOC.prototype.SetStylesArrayRaw = function(sString)
 	var arrValues = sString.split(sListSeparator);
 	var arrStyles = [];
 
-	for (var nIndex = 0, nCount = arrValues.length; nIndex < nCount - 1; nIndex += 2)
+	for (var nIndex = 0, nCount = arrValues.length; nIndex < nCount; ++nIndex)
 	{
 		var sName = arrValues[nIndex];
-		var nLvl  = parseInt(arrValues[nIndex + 1]);
+		var nLvl  = nIndex + 1 >= nCount ? 1 : parseInt(arrValues[nIndex + 1]);
 		if (isNaN(nLvl))
-			break;
+			nLvl = 1;
+		else
+			nIndex++;
 
 		arrStyles.push({
 			Name : sName,
