@@ -80,9 +80,6 @@ function (window, undefined) {
 		cT_DIST_2T, cT_DIST_RT, cT_INV, cT_INV_2T, cTINV, cTREND, cTRIMMEAN, cTTEST, cT_TEST, cVAR, cVARA, cVARP,
 		cVAR_P, cVAR_S, cVARPA, cWEIBULL, cWEIBULL_DIST, cZTEST, cZ_TEST);
 
-	cFormulaFunctionGroup['NotRealised'] = cFormulaFunctionGroup['NotRealised'] || [];
-	cFormulaFunctionGroup['NotRealised'].push(cLOGEST);
-
 	function integralPhi(x) { // Using gauss(x)+0.5 has severe cancellation errors for x<-4
 		return 0.5 * AscCommonExcel.rtl_math_erfc(-x * 0.7071067811865475); // * 1/sqrt(2)
 	}
@@ -7556,34 +7553,34 @@ function (window, undefined) {
 	cLOGEST.prototype.argumentsMin = 1;
 	cLOGEST.prototype.argumentsMax = 4;
 	cLOGEST.prototype.argumentsType = [argType.reference, argType.reference, argType.logical, argType.logical];
-	/*cLOGEST.prototype.Calculate = function (arg) {
+	cLOGEST.prototype.Calculate = function (arg) {
 
-	 arg[0] = tryNumberToArray(arg[0]);
-	 if(arg[1]){
-	 arg[1] = tryNumberToArray(arg[1]);
-	 }
+		arg[0] = tryNumberToArray(arg[0]);
+		if (arg[1]) {
+			arg[1] = tryNumberToArray(arg[1]);
+		}
 
-	 var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, cElementType.array]);
-	 var argClone = oArguments.args;
+		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, cElementType.array]);
+		var argClone = oArguments.args;
 
-	 var argError;
-	 if (argError = this._checkErrorArg(argClone)) {
-	 return argError;
-	 }
+		var argError;
+		if (argError = this._checkErrorArg(argClone)) {
+			return argError;
+		}
 
-	 var pMatY = argClone[0];
-	 var pMatX = argClone[1];
-	 var bConstant = getBoolValue(argClone[2], true);
-	 var bStats = getBoolValue(argClone[3], true);
+		var pMatY = argClone[0];
+		var pMatX = argClone[1];
+		var bConstant = getBoolValue(argClone[2], true);
+		var bStats = getBoolValue(argClone[3], true);
 
-	 var res = CalculateRGPRKP( pMatY, pMatX, bConstant, bStats, true);
+		var res = CalculateRGPRKP(pMatY, pMatX, bConstant, bStats, true);
 
-	 if(res && res[0] && res[0][0]){
-	 return new cNumber(res[0][0]);
-	 }else{
-	 return new cError(cErrorType.wrong_value_type);
-	 }
-	 };*/
+		if (res && res[0] && res[0][0]) {
+			return new cNumber(res[0][0]);
+		} else {
+			return new cError(cErrorType.wrong_value_type);
+		}
+	};
 
 	/**
 	 * @constructor
