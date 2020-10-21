@@ -113,7 +113,7 @@ CSdtBase.prototype.SetPlaceholderText = function(sText)
 	var isPlaceHolder = this.IsPlaceHolder();
 	if (isPlaceHolder && this.IsPicture())
 		this.private_UpdatePictureContent();
-	else
+	else if (isPlaceHolder)
 		this.private_FillPlaceholderContent();
 
 	return oDocPart;
