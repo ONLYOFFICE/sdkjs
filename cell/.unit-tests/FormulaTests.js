@@ -12744,7 +12744,32 @@ $( function () {
 		ws.getRange2( "A118" ).setValue( "16" );
 		ws.getRange2( "A119" ).setValue( "17" );
 
+		oParser = new parserFormula( "LOGEST(B101:B112,A101:A112)", "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue().toFixed(8) - 0, 1.00732561);
+		strictEqual( oParser.calculate().getElementRowCol(0,1).getValue().toFixed(4) - 0, 133044.8167);
 
+		oParser = new parserFormula( "LOGEST(B101:B112,A101:A112,,false)", "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue().toFixed(8) - 0, 1.00732561);
+		strictEqual( oParser.calculate().getElementRowCol(0,1).getValue().toFixed(4) - 0, 133044.8167);
+
+		//todo необходимо перепроверить остальные значения в данном случае
+		oParser = new parserFormula( "LOGEST(B101:B112,A101:A112,,true)", "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue().toFixed(8) - 0, 1.00732561);
+		strictEqual( oParser.calculate().getElementRowCol(0,1).getValue().toFixed(4) - 0, 133044.8167);
+
+		oParser = new parserFormula( "LOGEST(B101:B112,A101:A112,true,true)", "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue().toFixed(8) - 0, 1.00732561);
+		strictEqual( oParser.calculate().getElementRowCol(0,1).getValue().toFixed(4) - 0, 133044.8167);
+
+		//todo необходимо перепроверить остальные значения в данном случае
+		oParser = new parserFormula( "LOGEST(B101:B112,A101:A112,false,true)", "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue().toFixed(8) - 0, 4.15001464);
+		strictEqual( oParser.calculate().getElementRowCol(0,1).getValue().toFixed(4) - 0, 1);
 	} );
 
 
