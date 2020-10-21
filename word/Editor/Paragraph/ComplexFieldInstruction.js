@@ -193,24 +193,23 @@ CFieldInstructionFORMULA.prototype.Calculate = function(oLogicDocument)
 		this.ResultStr = '';
 	}
 };
-
-
 CFieldInstructionFORMULA.prototype.private_Calculate = function (oLogicDocument)
 {
-	var sListSeparator = ",";
+	var sListSeparator  = ",";
 	var sDigitSeparator = ".";
-	if(oLogicDocument && oLogicDocument.Settings){
-		var oSettings = oLogicDocument.Settings;
-		if(oSettings.DecimalSymbol && oSettings.ListSeparator && oSettings.DecimalSymbol !== oSettings.ListSeparator){
-			sListSeparator = oSettings.ListSeparator;
-			sDigitSeparator = oSettings.DecimalSymbol;
-		}
+
+	if (oLogicDocument && oLogicDocument.GetDecimalSymbol && oLogicDocument.GetListSeparator && oLogicDocument.GetDecimalSymbol() !== oLogicDocument.GetListSeparator())
+	{
+		sListSeparator  = oLogicDocument.GetListSeparator();
+		sDigitSeparator = oLogicDocument.GetDecimalSymbol();
 	}
+
 	var oParser = new AscCommonWord.CFormulaParser(sListSeparator, sDigitSeparator);
 	oParser.parse(this.Formula, this.ParentContent);
 
 	this.SetParseQueue(oParser.parseQueue);
-	if(oParser.parseQueue){
+	if (oParser.parseQueue)
+	{
 		oParser.parseQueue.format = this.Format;
 	}
 	this.SetError(oParser.error);
@@ -355,8 +354,10 @@ CFieldInstructionTOC.prototype.GetHeadingRangeEnd = function()
 };
 CFieldInstructionTOC.prototype.SetStylesArrayRaw = function(sString)
 {
-	// В спецификации написано, то разделено запятыми, но на деле Word реагирует на точку с запятой
-	var arrValues = sString.split(";");
+	var oLogicDocument = editor.WordControl.m_oLogicDocument;
+	var sListSeparator = oLogicDocument.GetListSeparator();
+
+	var arrValues = sString.split(sListSeparator);
 	var arrStyles = [];
 
 	for (var nIndex = 0, nCount = arrValues.length; nIndex < nCount - 1; nIndex += 2)
@@ -443,6 +444,9 @@ CFieldInstructionTOC.prototype.GetForceTabLeader = function()
 };
 CFieldInstructionTOC.prototype.ToString = function()
 {
+	var oLogicDocument = editor.WordControl.m_oLogicDocument;
+	var sListSeparator = oLogicDocument.GetListSeparator();
+
 	var sInstr = "TOC ";
 
 	if (this.HeadingS >= 1
@@ -480,7 +484,7 @@ CFieldInstructionTOC.prototype.ToString = function()
 
 		for (var nIndex = 0, nCount = this.Styles.length; nIndex < nCount; ++nIndex)
 		{
-			sInstr += this.Styles[nIndex].Name + ";" + this.Styles[nIndex].Lvl + ";";
+			sInstr += this.Styles[nIndex].Name + sListSeparator + this.Styles[nIndex].Lvl + sListSeparator;
 		}
 
 		sInstr += "\" ";
