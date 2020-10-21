@@ -21859,7 +21859,7 @@ CDocument.prototype.AddTableOfFigures = function(oPr)
     var oStyles     = this.GetStyles();
     var nStylesType = oPr ? oPr.get_StylesType() : Asc.c_oAscTOCStylesType.Current;
 
-    var isNeedChangeStyles = (Asc.c_oAscTOCStylesType.Current !== nStylesType && nStylesType !== oStyles.GetTOCStylesType());
+    var isNeedChangeStyles = (Asc.c_oAscTOCStylesType.Current !== nStylesType && nStylesType !== oStyles.GetTOFStyleType());
 
     var isLocked = true;
     if (isNeedChangeStyles)

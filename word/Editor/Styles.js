@@ -9627,18 +9627,31 @@ CStyles.prototype.private_CheckTOCStyle = function(nLvl, nType)
  */
 CStyles.prototype.GetTOFStyleType = function()
 {
-	if (this.private_CheckTOFStyle(Asc.c_oAscTOCStylesType.Simple))
-		return Asc.c_oAscTOCStylesType.Simple;
-	else if (this.private_CheckTOFStyle(Asc.c_oAscTOCStylesType.Standard))
-		return Asc.c_oAscTOCStylesType.Standard;
-	else if (this.private_CheckTOFStyle(Asc.c_oAscTOCStylesType.Modern))
-		return Asc.c_oAscTOCStylesType.Modern;
-	else if (this.private_CheckTOFStyle(Asc.c_oAscTOCStylesType.Classic))
-		return Asc.c_oAscTOCStylesType.Classic;
-	else if (this.private_CheckTOFStyle(Asc.c_oAscTOCStylesType.Web))
-		return Asc.c_oAscTOCStylesType.Web;
-
-	return Asc.c_oAscTOCStylesType.Current;
+	if(this.private_CheckTOFStyle(Asc.c_oAscTOFStylesType.Classic))
+	{
+		return Asc.c_oAscTOFStylesType.Classic;
+	}
+	else if(this.private_CheckTOFStyle(Asc.c_oAscTOFStylesType.Distinctive))
+	{
+		return Asc.c_oAscTOFStylesType.Distinctive;
+	}
+	else if(this.private_CheckTOFStyle(Asc.c_oAscTOFStylesType.Centered))
+	{
+		return Asc.c_oAscTOFStylesType.Centered;
+	}
+	else if(this.private_CheckTOFStyle(Asc.c_oAscTOFStylesType.Formal))
+	{
+		return Asc.c_oAscTOFStylesType.Formal;
+	}
+	else if(this.private_CheckTOFStyle(Asc.c_oAscTOFStylesType.Simple))
+	{
+		return Asc.c_oAscTOFStylesType.Simple;
+	}
+	else if(this.private_CheckTOFStyle(Asc.c_oAscTOFStylesType.Web))
+	{
+		return Asc.c_oAscTOFStylesType.Web;
+	}
+	return Asc.c_oAscTOFStylesType.Current;
 };
 CStyles.prototype.private_CheckTOFStyle = function(nType)
 {

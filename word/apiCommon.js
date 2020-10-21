@@ -1445,7 +1445,16 @@
 	CTableOfContentsPr.prototype.CheckStylesType = function(oStyles)
 	{
 		if (oStyles)
-			this.StylesType = oStyles.GetTOCStylesType();
+		{
+			if(this.Caption !== undefined)
+			{
+				this.StylesType = oStyles.GetTOFStyleType();
+			}
+			else
+			{
+				this.StylesType = oStyles.GetTOCStylesType();
+			}
+		}
 	};
 	CTableOfContentsPr.prototype.get_Hyperlink = function()
 	{
