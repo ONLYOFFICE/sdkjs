@@ -21875,7 +21875,6 @@ CDocument.prototype.AddTableOfFigures = function(oPr)
     if (!isLocked)
     {
         this.StartAction(AscDFH.historydescription_Document_AddTableOfContents);
-
         if (this.DrawingObjects.selectedObjects.length > 0)
         {
             var oContent = this.DrawingObjects.getTargetDocContent();
@@ -21884,7 +21883,6 @@ CDocument.prototype.AddTableOfFigures = function(oPr)
                 this.DrawingObjects.resetInternalSelection();
             }
         }
-
         var sInstruction = "TOC \\h \\z \\u";
         if (oPr)
         {
@@ -21892,37 +21890,55 @@ CDocument.prototype.AddTableOfFigures = function(oPr)
             oInstruction.SetPr(oPr);
             sInstruction = oInstruction.ToString();
         }
-
-        this.AddNewParagraph(false, false);
-        var oComplexField = this.AddFieldWithInstruction(sInstruction);
-        if (oPr)
+        this.Remove(1, true, true, true);
+        var oCurParagraph = this.GetCurrentParagraph();
+        if(oCurParagraph)
         {
-            if (isNeedChangeStyles)
-                oStyles.SetTOFStyleType(nStylesType);
-            oComplexField.Update();
-            var oNextParagraph;
-            this.MoveCursorToEndPos(false);
-            var oParagraph = this.GetCurrentParagraph();
-            if(oParagraph)
+            if(!oCurParagraph.IsEmpty())
             {
-                oNextParagraph = oParagraph.GetNextParagraph();
-                if (oNextParagraph)
-                {
-                    oNextParagraph.MoveCursorToStartPos(false);
-                    oNextParagraph.Document_SetThisElementCurrent();
-                }
-                else
-                {
-                    oParagraph.MoveCursorToEndPos(false);
-                }
+                this.AddNewParagraph(false, false);
             }
         }
-
-        this.Recalculate();
-        this.UpdateInterface();
-        this.UpdateSelection();
-        this.UpdateRulers();
-        this.FinalizeAction();
+        else
+        {
+            this.AddNewParagraph(false, false);
+        }
+        var oComplexField = this.AddFieldWithInstruction(sInstruction);
+        if(oComplexField)
+        {
+            if (oPr)
+            {
+                if (isNeedChangeStyles)
+                    oStyles.SetTOFStyleType(nStylesType);
+                oComplexField.Update();
+                var oNextParagraph;
+                this.MoveCursorToEndPos(false);
+                var oParagraph = this.GetCurrentParagraph();
+                if(oParagraph)
+                {
+                    oNextParagraph = oParagraph.GetNextParagraph();
+                    if (oNextParagraph)
+                    {
+                        oNextParagraph.MoveCursorToStartPos(false);
+                        oNextParagraph.Document_SetThisElementCurrent();
+                    }
+                    else
+                    {
+                        oParagraph.MoveCursorToEndPos(false);
+                    }
+                }
+            }
+            this.Recalculate();
+            this.UpdateInterface();
+            this.UpdateSelection();
+            this.UpdateRulers();
+            this.FinalizeAction();
+        }
+        else
+        {
+            this.FinalizeAction();
+            this.Document_Undo();
+        }
     }
 };
 CDocument.prototype.GetPagesCount = function()
