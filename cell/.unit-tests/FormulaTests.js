@@ -2582,71 +2582,71 @@ $( function () {
 	} );
 
 	test( "Test: \"MMULT\"", function () {
-		ws.getRange2( "A2" ).setValue( "4" );
-		ws.getRange2( "A3" ).setValue( "5" );
-		ws.getRange2( "A4" ).setValue( "6" );
-		ws.getRange2( "A5" ).setValue( "7" );
-		ws.getRange2( "B2" ).setValue( "1" );
-		ws.getRange2( "B3" ).setValue( "2" );
-		ws.getRange2( "B4" ).setValue( "3" );
-		ws.getRange2( "B5" ).setValue( "2" );
-		ws.getRange2( "C2" ).setValue( "4" );
-		ws.getRange2( "C3" ).setValue( "5" );
-		ws.getRange2( "C4" ).setValue( "6" );
-		ws.getRange2( "C5" ).setValue( "3" );
-		ws.getRange2( "D2" ).setValue( "7" );
-		ws.getRange2( "D3" ).setValue( "8" );
-		ws.getRange2( "D4" ).setValue( "9" );
-		ws.getRange2( "D5" ).setValue( "4" );
+		ws.getRange2( "AAA102" ).setValue( "4" );
+		ws.getRange2( "AAA103" ).setValue( "5" );
+		ws.getRange2( "AAA104" ).setValue( "6" );
+		ws.getRange2( "AAA105" ).setValue( "7" );
+		ws.getRange2( "AAB102" ).setValue( "1" );
+		ws.getRange2( "AAB103" ).setValue( "2" );
+		ws.getRange2( "AAB104" ).setValue( "3" );
+		ws.getRange2( "AAB105" ).setValue( "2" );
+		ws.getRange2( "AAC102" ).setValue( "4" );
+		ws.getRange2( "AAC103" ).setValue( "5" );
+		ws.getRange2( "AAC104" ).setValue( "6" );
+		ws.getRange2( "AAC105" ).setValue( "3" );
+		ws.getRange2( "AAD102" ).setValue( "7" );
+		ws.getRange2( "AAD103" ).setValue( "8" );
+		ws.getRange2( "AAD104" ).setValue( "9" );
+		ws.getRange2( "AAD105" ).setValue( "4" );
 
-		ws.getRange2( "F2" ).setValue( "1" );
-		ws.getRange2( "F3" ).setValue( "2" );
-		ws.getRange2( "F4" ).setValue( "3" );
-		ws.getRange2( "F5" ).setValue( "6" );
+		ws.getRange2( "AAF102" ).setValue( "1" );
+		ws.getRange2( "AAF103" ).setValue( "2" );
+		ws.getRange2( "AAF104" ).setValue( "3" );
+		ws.getRange2( "AAF105" ).setValue( "6" );
 
-		ws.getRange2( "G2" ).setValue( "2" );
-		ws.getRange2( "G3" ).setValue( "3" );
-		ws.getRange2( "G4" ).setValue( "4" );
-		ws.getRange2( "G5" ).setValue( "5" );
+		ws.getRange2( "AAG102" ).setValue( "2" );
+		ws.getRange2( "AAG103" ).setValue( "3" );
+		ws.getRange2( "AAG104" ).setValue( "4" );
+		ws.getRange2( "AAG105" ).setValue( "5" );
 
-		oParser = new parserFormula( "MMULT(C2,F4)", "A1", ws );
+		oParser = new parserFormula( "MMULT(AAC102,AAF104)", "A1", ws );
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), 12 );
 
-		oParser = new parserFormula( "MMULT(A2:D5,F4)", "A1", ws );
+		oParser = new parserFormula( "MMULT(AAA102:AAD105,AAF104)", "A1", ws );
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getValue(), "#VALUE!" );
 
-		oParser = new parserFormula( "MMULT(C2,F4)", "A1", ws );
+		oParser = new parserFormula( "MMULT(AAC102,AAF104)", "A1", ws );
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), 12 );
 
-		oParser = new parserFormula( "MMULT(A2:D5,F2:G5)", "A1", ws );
+		oParser = new parserFormula( "MMULT(AAA102:AAD105,AAF102:AAG105)", "A1", ws );
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), 60 );
 		strictEqual( oParser.calculate().getElementRowCol(0,1).getValue(), 62 );
 		strictEqual( oParser.calculate().getElementRowCol(1,0).getValue(), 72 );
 		strictEqual( oParser.calculate().getElementRowCol(1,1).getValue(), 76 );
 
-		oParser = new parserFormula( "MMULT(A2:D5,F2:F5)", "A1", ws );
+		oParser = new parserFormula( "MMULT(AAA102:AAD105,AAF102:AAF105)", "A1", ws );
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), 60 );
 		strictEqual( oParser.calculate().getElementRowCol(1,0).getValue(), 72 );
 
-		oParser = new parserFormula( "MMULT(A2:D5,F2:F5)", "A1", ws );
+		oParser = new parserFormula( "MMULT(AAA102:AAD105,AAF102:AAF105)", "A1", ws );
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), 60 );
 		strictEqual( oParser.calculate().getElementRowCol(1,0).getValue(), 72 );
 
-		oParser = new parserFormula( "MMULT(A2:D5,F2:F4)", "A1", ws );
+		oParser = new parserFormula( "MMULT(AAA102:AAD105,AAF102:AAF104)", "A1", ws );
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getValue(), "#VALUE!" );
 
-		oParser = new parserFormula( "MMULT(A2:D5,K10:N10)", "A1", ws );
+		oParser = new parserFormula( "MMULT(AAA102:AAD105,AAK110:AAN110)", "A1", ws );
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getValue(), "#VALUE!" );
 
-		oParser = new parserFormula( "MMULT(A2:D5,A2:D5)", "A1", ws );
+		oParser = new parserFormula( "MMULT(AAA102:AAD105,AAA102:AAD105)", "A1", ws );
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), 94 );
 		strictEqual( oParser.calculate().getElementRowCol(1,0).getValue(), 116 );
@@ -2656,11 +2656,11 @@ $( function () {
 		strictEqual( oParser.calculate().getElementRowCol(1,1).getValue(), 40 );
 		strictEqual( oParser.calculate().getElementRowCol(2,1).getValue(), 48 );
 
-		oParser = new parserFormula( "MMULT(F2:F5,G2:G5)", "A1", ws );
+		oParser = new parserFormula( "MMULT(AAF102:AAF105,AAG102:AAG105)", "A1", ws );
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getValue(), "#VALUE!" );
 
-		oParser = new parserFormula( "MMULT(F2:F5,A2:D2)", "A1", ws );
+		oParser = new parserFormula( "MMULT(AAF102:AAF105,AAA102:AAD102)", "A1", ws );
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), 4 );
 		strictEqual( oParser.calculate().getElementRowCol(1,0).getValue(), 8 );
