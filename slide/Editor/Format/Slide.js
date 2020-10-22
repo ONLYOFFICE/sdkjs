@@ -105,7 +105,7 @@ AscDFH.changesFactory[AscDFH.historyitem_SlideSetClrMapOverride    ] = AscDFH.CC
 AscDFH.changesFactory[AscDFH.historyitem_PropLockerSetId           ] = AscDFH.CChangesDrawingsString    ;
 AscDFH.changesFactory[AscDFH.historyitem_SlideCommentsAddComment   ] = AscDFH.CChangesDrawingsContentComments   ;
 AscDFH.changesFactory[AscDFH.historyitem_SlideCommentsRemoveComment] = AscDFH.CChangesDrawingsContentComments   ;
-AscDFH.changesFactory[AscDFH.historyitem_SlideSetNotes      ] = AscDFH.CChangesDrawingsObject   ;
+AscDFH.changesFactory[AscDFH.historyitem_SlideSetNotes             ] = AscDFH.CChangesDrawingsObject   ;
 
 
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideSetComments          ] = function(oClass, value){oClass.slideComments = value;};
@@ -763,6 +763,13 @@ Slide.prototype =
        History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_SlideAddToSpTree, _pos, [item], true));
         this.cSld.spTree.splice(_pos, 0, item);
         item.setParent2(this);
+    },
+
+    shapeRemove: function (pos, count) {
+        if(pos > -1 && pos < this.cSld.spTree.length){
+        History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_SlideRemoveFromSpTree, pos, this.cSld.spTree.slice(pos, pos + count), false));
+        this.cSld.spTree.splice(pos, count);
+        }
     },
 
     isVisible: function(){

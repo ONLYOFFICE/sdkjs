@@ -2637,21 +2637,22 @@ CShowPr.prototype.Copy = function () {
 };
 
 
-AscDFH.changesFactory[AscDFH.historyitem_Presentation_SetShowPr] = AscDFH.CChangesDrawingsObjectNoId;
-AscDFH.changesFactory[AscDFH.historyitem_Presentation_AddSlideMaster] = AscDFH.CChangesDrawingsContent;
-AscDFH.changesFactory[AscDFH.historyitem_Presentation_ChangeTheme] = AscDFH.CChangesDrawingChangeTheme;
-AscDFH.changesFactory[AscDFH.historyitem_Presentation_SlideSize] = AscDFH.CChangesDrawingsObjectNoId;
-AscDFH.changesFactory[AscDFH.historyitem_Presentation_ChangeColorScheme] = AscDFH.CChangesDrawingChangeTheme;
-AscDFH.changesFactory[AscDFH.historyitem_Presentation_RemoveSlide] = AscDFH.CChangesDrawingsContentPresentation;
-AscDFH.changesFactory[AscDFH.historyitem_Presentation_AddSlide] = AscDFH.CChangesDrawingsContentPresentation;
-AscDFH.changesFactory[AscDFH.historyitem_Presentation_SetDefaultTextStyle] = AscDFH.CChangesDrawingsObjectNoId;
-AscDFH.changesFactory[AscDFH.historyitem_Presentation_SetFirstSlideNum] = AscDFH.CChangesDrawingsLong;
+AscDFH.changesFactory[AscDFH.historyitem_Presentation_SetShowPr]                   = AscDFH.CChangesDrawingsObjectNoId;
+AscDFH.changesFactory[AscDFH.historyitem_Presentation_AddSlideMaster]              = AscDFH.CChangesDrawingsContent;
+AscDFH.changesFactory[AscDFH.historyitem_Presentation_ChangeTheme]                 = AscDFH.CChangesDrawingChangeTheme;
+AscDFH.changesFactory[AscDFH.historyitem_Presentation_SlideSize]                   = AscDFH.CChangesDrawingsObjectNoId;
+AscDFH.changesFactory[AscDFH.historyitem_Presentation_ChangeColorScheme]           = AscDFH.CChangesDrawingChangeTheme;
+AscDFH.changesFactory[AscDFH.historyitem_Presentation_RemoveSlide]                 = AscDFH.CChangesDrawingsContentPresentation;
+AscDFH.changesFactory[AscDFH.historyitem_Presentation_AddSlide]                    = AscDFH.CChangesDrawingsContentPresentation;
+AscDFH.changesFactory[AscDFH.historyitem_Presentation_SetDefaultTextStyle]         = AscDFH.CChangesDrawingsObjectNoId;
+AscDFH.changesFactory[AscDFH.historyitem_Presentation_SetFirstSlideNum]            = AscDFH.CChangesDrawingsLong;
 AscDFH.changesFactory[AscDFH.historyitem_Presentation_SetShowSpecialPlsOnTitleSld] = AscDFH.CChangesDrawingsBool;
+AscDFH.changesFactory[AscDFH.historyitem_Presentation_RemoveSlideMaster]           = AscDFH.CChangesDrawingsContent;
 
 
-AscDFH.changesFactory[AscDFH.historyitem_PresentationSectionSetName] = AscDFH.CChangesDrawingsString;
+AscDFH.changesFactory[AscDFH.historyitem_PresentationSectionSetName]       = AscDFH.CChangesDrawingsString;
 AscDFH.changesFactory[AscDFH.historyitem_PresentationSectionSetStartIndex] = AscDFH.CChangesDrawingsLong;
-AscDFH.changesFactory[AscDFH.historyitem_PresentationSectionSetGuid] = AscDFH.CChangesDrawingsString;
+AscDFH.changesFactory[AscDFH.historyitem_PresentationSectionSetGuid]       = AscDFH.CChangesDrawingsString;
 
 AscDFH.drawingsChangesMap[AscDFH.historyitem_PresentationSectionSetName] = function (oClass, value) {
     oClass.name = value;
@@ -2688,6 +2689,9 @@ AscDFH.drawingContentChanges[AscDFH.historyitem_Presentation_RemoveSlide] = func
     return oClass.Slides;
 };
 AscDFH.drawingContentChanges[AscDFH.historyitem_Presentation_AddSlideMaster] = function (oClass) {
+    return oClass.slideMasters;
+};
+AscDFH.drawingContentChanges[AscDFH.historyitem_Presentation_RemoveSlideMaster] = function (oClass) {
     return oClass.slideMasters;
 };
 
@@ -3932,6 +3936,11 @@ CPresentation.prototype.Get_CollaborativeEditing = function () {
 CPresentation.prototype.addSlideMaster = function (pos, master) {
     History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_Presentation_AddSlideMaster, pos, [master], true));
     this.slideMasters.splice(pos, 0, master);
+};
+
+CPresentation.prototype.removeSlideMaster = function (pos, count) {
+    History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_Presentation_RemoveSlideMaster, pos, this.slideMasters.slice(pos, pos + count), false));
+    this.slideMasters.splice(pos, count);
 };
 
 CPresentation.prototype.Get_Id = function () {

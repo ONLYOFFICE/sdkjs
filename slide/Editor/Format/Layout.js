@@ -36,24 +36,25 @@
 var History = AscCommon.History;
 
 
-AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetMaster] = AscDFH.CChangesDrawingsObject;
-AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetHF] = AscDFH.CChangesDrawingsObject;
-AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetMatchingName] = AscDFH.CChangesDrawingsString;
-AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetType] = AscDFH.CChangesDrawingsLong;
-AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetBg] = AscDFH.CChangesDrawingsObjectNoId;
-AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetCSldName] = AscDFH.CChangesDrawingsString;
-AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetShow] = AscDFH.CChangesDrawingsBool;
-AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetShowPhAnim] = AscDFH.CChangesDrawingsBool;
-AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetShowMasterSp] = AscDFH.CChangesDrawingsBool;
+AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetMaster]         = AscDFH.CChangesDrawingsObject;
+AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetHF]             = AscDFH.CChangesDrawingsObject;
+AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetMatchingName]   = AscDFH.CChangesDrawingsString;
+AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetType]           = AscDFH.CChangesDrawingsLong;
+AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetBg]             = AscDFH.CChangesDrawingsObjectNoId;
+AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetCSldName]       = AscDFH.CChangesDrawingsString;
+AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetShow]           = AscDFH.CChangesDrawingsBool;
+AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetShowPhAnim]     = AscDFH.CChangesDrawingsBool;
+AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetShowMasterSp]   = AscDFH.CChangesDrawingsBool;
 AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetClrMapOverride] = AscDFH.CChangesDrawingsObject;
-AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutAddToSpTree] = AscDFH.CChangesDrawingsContent;
-AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetSize] = AscDFH.CChangesDrawingsObjectNoId;
+AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutAddToSpTree]       = AscDFH.CChangesDrawingsContent;
+AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetSize]           = AscDFH.CChangesDrawingsObjectNoId;
+AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutRemoveFromSpTree]  = AscDFH.CChangesDrawingsContent;
 
-AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideLayoutSetBg] = AscFormat.CBg;
-AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideLayoutSetSize] = AscFormat.CDrawingBaseCoordsWritable;
+AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideLayoutSetBg]    = AscFormat.CBg;
+AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideLayoutSetSize]  = AscFormat.CDrawingBaseCoordsWritable;
 
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetMaster]            = function(oClass, value){oClass.Master = value;};
-AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetHF]            = function(oClass, value){oClass.hf = value;};
+AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetHF]                = function(oClass, value){oClass.hf = value;};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetMatchingName]      = function(oClass, value){oClass.matchingName = value;};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetType]              = function(oClass, value){oClass.type = value;};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetBg]                = function(oClass, value, FromLoad){
@@ -81,6 +82,10 @@ AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetClrMapOverride]    = 
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetSize]              = function(oClass, value){oClass.Width = value.a; oClass.Height = value.b;};
 
 AscDFH.drawingContentChanges[AscDFH.historyitem_SlideLayoutAddToSpTree] = function(oClass){
+    oClass.recalcInfo.recalculateBounds = true;
+    return oClass.cSld.spTree;
+};
+AscDFH.drawingContentChanges[AscDFH.historyitem_SlideLayoutRemoveFromSpTree] = function(oClass){
     oClass.recalcInfo.recalculateBounds = true;
     return oClass.cSld.spTree;
 };
@@ -253,6 +258,10 @@ SlideLayout.prototype =
         item.setParent2(this);
     },
 
+    shapeRemove: function (pos, count) {
+        History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_SlideLayoutRemoveFromSpTree, pos, this.cSld.spTree.slice(pos, pos + count), false));
+        this.cSld.spTree.splice(pos, count);
+    },
 
     setSlideSize: function(w, h)
     {
