@@ -14230,7 +14230,10 @@
 			});
 		}
 
-		t.applyTableAutoExpansion(bbox, applyByArray);
+		var emptyValue = val && val.length === 1 && val[0] && val[0].text === "";
+		if (!emptyValue) {
+			t.applyTableAutoExpansion(bbox, applyByArray);
+		}
 
 		//t.model.workbook.dependencyFormulas.unlockRecal();
 
