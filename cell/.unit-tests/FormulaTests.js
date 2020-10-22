@@ -12775,35 +12775,30 @@ $( function () {
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue().toFixed(8) - 0, 1.0000838);
 		strictEqual( oParser.calculate().getElementRowCol(0,1).getValue().toFixed(4) - 0, 1);
-		/*strictEqual( oParser.calculate().getElementRowCol(1,0).getValue().toFixed(4) - 0, 2.6428);
-		strictEqual( oParser.calculate().getElementRowCol(2,0).getValue().toFixed(4) - 0, 0.991127);
-		strictEqual( oParser.calculate().getElementRowCol(3,0).getValue().toFixed(4) - 0, 1005.313125);
-		strictEqual( oParser.calculate().getElementRowCol(4,0).getValue().toFixed(4) - 0, 698.5683655);*/
+		strictEqual( oParser.calculate().getElementRowCol(1,0).getValue().toFixed(8) - 0, 0.00000264);
+		strictEqual( oParser.calculate().getElementRowCol(2,0).getValue().toFixed(4) - 0, 0.9911);
+		strictEqual( oParser.calculate().getElementRowCol(3,0).getValue().toFixed(4) - 0, 1005.3131);
+		strictEqual( oParser.calculate().getElementRowCol(4,0).getValue().toFixed(4) - 0, 698.5684);
 
 		oParser = new parserFormula( "LOGEST(A101:B105,A106:B110,,)", "A2", ws );
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue().toFixed(8) - 0, 1.00007701);
 		strictEqual( oParser.calculate().getElementRowCol(0,1).getValue().toFixed(4) - 0, 2.6063);
-		/*strictEqual( oParser.calculate().getElementRowCol(1,0).getValue().toFixed(4) - 0, 1.000077009);
-		strictEqual( oParser.calculate().getElementRowCol(2,0).getValue().toFixed(4) - 0, 1.000077009);
-		strictEqual( oParser.calculate().getElementRowCol(3,0).getValue().toFixed(4) - 0, 1.000077009);
-		strictEqual( oParser.calculate().getElementRowCol(4,0).getValue().toFixed(4) - 0, 1.000077009);*/
 
 		oParser = new parserFormula( "LOGEST(A101:B105,A106:B110,false,false)", "A2", ws );
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue().toFixed(8) - 0, 1.0000838);
 		strictEqual( oParser.calculate().getElementRowCol(0,1).getValue().toFixed(4) - 0, 1);
-		//strictEqual( oParser.calculate().getElementRowCol(1,0).getValue().toFixed(4) - 0, 1.000083801);
 
 		//todo необходимо перепроверить остальные значения в данном случае
 		oParser = new parserFormula( "LOGEST(A101:B105,A106:B110,true,true)", "A2", ws );
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue().toFixed(8) - 0, 1.00007701);
 		strictEqual( oParser.calculate().getElementRowCol(0,1).getValue().toFixed(4) - 0, 2.6063);
-		/*strictEqual( oParser.calculate().getElementRowCol(1,0).getValue().toFixed(4) - 0, 2.0460);
-		strictEqual( oParser.calculate().getElementRowCol(2,0).getValue().toFixed(4) - 0, 0.9943);
+		strictEqual( oParser.calculate().getElementRowCol(1,0).getValue().toFixed(8) - 0, 0.00000205);
+		strictEqual( oParser.calculate().getElementRowCol(2,0).getValue().toFixed(4) - 0, 0.9944);
 		strictEqual( oParser.calculate().getElementRowCol(3,0).getValue().toFixed(4) - 0, 1416.4887);
-		strictEqual( oParser.calculate().getElementRowCol(4,0).getValue().toFixed(4) - 0, 294.9627);*/
+		strictEqual( oParser.calculate().getElementRowCol(4,0).getValue().toFixed(4) - 0, 294.9627);
 
 	} );
 

@@ -2093,8 +2093,8 @@ function (window, undefined) {
 	function lcl_GetSSresid(pMatX, pMatY, fSlope, nN) {
 		var fSum = 0.0;
 		for (var i = 0; i < nN; i++) {
-			//var fTemp = pMatY->GetDouble(i) - fSlope * pMatX->GetDouble(i);
-			//fSum += fTemp * fTemp;
+			var fTemp = getDouble(pMatY, i) - fSlope * getDouble(pMatX, i);
+			fSum += fTemp * fTemp;
 		}
 		return fSum;
 	}
