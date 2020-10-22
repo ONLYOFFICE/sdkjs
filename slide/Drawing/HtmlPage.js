@@ -3536,7 +3536,10 @@ function CEditorPage(api)
 
 		if (drDoc.MathTrack.IsActive())
 		{
+			var dGlobalAplpha = ctx.globalAlpha;
+			ctx.globalAlpha = 1.0;
 			drDoc.DrawMathTrack(overlay);
+			ctx.globalAlpha = dGlobalAplpha;
 		}
 
 
