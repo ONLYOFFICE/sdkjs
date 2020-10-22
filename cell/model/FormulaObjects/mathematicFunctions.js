@@ -2786,7 +2786,8 @@
 				}
 			}
 
-			if (A.length != B[0].length) {
+
+			if (!((B[0] && A.length === B[0].length) || (A[0] && B.length === A[0].length))) {
 				return new cError(cErrorType.wrong_value_type);
 			}
 			var C = new Array(A.length);
@@ -2806,14 +2807,14 @@
 		}
 
 		var arg0 = arg[0], arg1 = arg[1];
-		if (arg0 instanceof cArea || arg0 instanceof cArray) {
+		if (arg0 instanceof cArea || arg0 instanceof cArray || arg0 instanceof cRef  || arg0 instanceof cRef3D) {
 			arg0 = arg0.getMatrix();
 		} else if(arg1 instanceof cArea3D) {
 			arg0 = arg0.getMatrix()[0];
 		} else {
 			return new cError(cErrorType.not_available);
 		}
-		if (arg1 instanceof cArea || arg1 instanceof cArray) {
+		if (arg1 instanceof cArea || arg1 instanceof cArray || arg1 instanceof cRef || arg1 instanceof cRef3D) {
 			arg1 = arg1.getMatrix();
 		} else if(arg1 instanceof cArea3D) {
 			arg1 = arg1.getMatrix()[0];

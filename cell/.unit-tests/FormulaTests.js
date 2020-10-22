@@ -2575,11 +2575,98 @@ $( function () {
 		testArrayFormula2("MROUND", 2, 2, true);
     } );
 
-    test( "Test: \"T(\"HELLO\")\"", function () {
-        oParser = new parserFormula( "T(\"HELLO\")", "A1", ws );
-        ok( oParser.parse() );
-        strictEqual( oParser.calculate().getValue(), "HELLO" );
-    } );
+	test( "Test: \"T(\"HELLO\")\"", function () {
+		oParser = new parserFormula( "T(\"HELLO\")", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "HELLO" );
+	} );
+
+	test( "Test: \"MMULT\"", function () {
+		ws.getRange2( "A2" ).setValue( "4" );
+		ws.getRange2( "A3" ).setValue( "5" );
+		ws.getRange2( "A4" ).setValue( "6" );
+		ws.getRange2( "A5" ).setValue( "7" );
+		ws.getRange2( "B2" ).setValue( "1" );
+		ws.getRange2( "B3" ).setValue( "2" );
+		ws.getRange2( "B4" ).setValue( "3" );
+		ws.getRange2( "B5" ).setValue( "2" );
+		ws.getRange2( "C2" ).setValue( "4" );
+		ws.getRange2( "C3" ).setValue( "5" );
+		ws.getRange2( "C4" ).setValue( "6" );
+		ws.getRange2( "C5" ).setValue( "3" );
+		ws.getRange2( "D2" ).setValue( "7" );
+		ws.getRange2( "D3" ).setValue( "8" );
+		ws.getRange2( "D4" ).setValue( "9" );
+		ws.getRange2( "D5" ).setValue( "4" );
+
+		ws.getRange2( "F2" ).setValue( "1" );
+		ws.getRange2( "F3" ).setValue( "2" );
+		ws.getRange2( "F4" ).setValue( "3" );
+		ws.getRange2( "F5" ).setValue( "6" );
+
+		ws.getRange2( "G2" ).setValue( "2" );
+		ws.getRange2( "G3" ).setValue( "3" );
+		ws.getRange2( "G4" ).setValue( "4" );
+		ws.getRange2( "G5" ).setValue( "5" );
+
+		oParser = new parserFormula( "MMULT(C2,F4)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), 12 );
+
+		oParser = new parserFormula( "MMULT(A2:D5,F4)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "#VALUE!" );
+
+		oParser = new parserFormula( "MMULT(C2,F4)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), 12 );
+
+		oParser = new parserFormula( "MMULT(A2:D5,F2:G5)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), 60 );
+		strictEqual( oParser.calculate().getElementRowCol(0,1).getValue(), 62 );
+		strictEqual( oParser.calculate().getElementRowCol(1,0).getValue(), 72 );
+		strictEqual( oParser.calculate().getElementRowCol(1,1).getValue(), 76 );
+
+		oParser = new parserFormula( "MMULT(A2:D5,F2:F5)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), 60 );
+		strictEqual( oParser.calculate().getElementRowCol(1,0).getValue(), 72 );
+
+		oParser = new parserFormula( "MMULT(A2:D5,F2:F5)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), 60 );
+		strictEqual( oParser.calculate().getElementRowCol(1,0).getValue(), 72 );
+
+		oParser = new parserFormula( "MMULT(A2:D5,F2:F4)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "#VALUE!" );
+
+		oParser = new parserFormula( "MMULT(A2:D5,K10:N10)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "#VALUE!" );
+
+		oParser = new parserFormula( "MMULT(A2:D5,A2:D5)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), 94 );
+		strictEqual( oParser.calculate().getElementRowCol(1,0).getValue(), 116 );
+		strictEqual( oParser.calculate().getElementRowCol(2,0).getValue(), 138 );
+
+		strictEqual( oParser.calculate().getElementRowCol(0,1).getValue(), 32 );
+		strictEqual( oParser.calculate().getElementRowCol(1,1).getValue(), 40 );
+		strictEqual( oParser.calculate().getElementRowCol(2,1).getValue(), 48 );
+
+		oParser = new parserFormula( "MMULT(F2:F5,G2:G5)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "#VALUE!" );
+
+		oParser = new parserFormula( "MMULT(F2:F5,A2:D2)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), 4 );
+		strictEqual( oParser.calculate().getElementRowCol(1,0).getValue(), 8 );
+		strictEqual( oParser.calculate().getElementRowCol(2,0).getValue(), 12 );
+
+	} );
 
     test( "Test: \"T(123)\"", function () {
         oParser = new parserFormula( "T(123)", "A1", ws );
