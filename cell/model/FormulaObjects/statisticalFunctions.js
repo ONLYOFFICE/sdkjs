@@ -80,9 +80,6 @@ function (window, undefined) {
 		cT_DIST_2T, cT_DIST_RT, cT_INV, cT_INV_2T, cTINV, cTREND, cTRIMMEAN, cTTEST, cT_TEST, cVAR, cVARA, cVARP,
 		cVAR_P, cVAR_S, cVARPA, cWEIBULL, cWEIBULL_DIST, cZTEST, cZ_TEST);
 
-	cFormulaFunctionGroup['NotRealised'] = cFormulaFunctionGroup['NotRealised'] || [];
-	cFormulaFunctionGroup['NotRealised'].push(cLOGEST);
-
 	function integralPhi(x) { // Using gauss(x)+0.5 has severe cancellation errors for x<-4
 		return 0.5 * AscCommonExcel.rtl_math_erfc(-x * 0.7071067811865475); // * 1/sqrt(2)
 	}
@@ -2096,8 +2093,8 @@ function (window, undefined) {
 	function lcl_GetSSresid(pMatX, pMatY, fSlope, nN) {
 		var fSum = 0.0;
 		for (var i = 0; i < nN; i++) {
-			//var fTemp = pMatY->GetDouble(i) - fSlope * pMatX->GetDouble(i);
-			//fSum += fTemp * fTemp;
+			var fTemp = getDouble(pMatY, i) - fSlope * getDouble(pMatX, i);
+			fSum += fTemp * fTemp;
 		}
 		return fSum;
 	}
@@ -7555,35 +7552,55 @@ function (window, undefined) {
 	cLOGEST.prototype.name = 'LOGEST';
 	cLOGEST.prototype.argumentsMin = 1;
 	cLOGEST.prototype.argumentsMax = 4;
+	cLOGEST.prototype.arrayIndexes = {0: 1, 1: 1};
 	cLOGEST.prototype.argumentsType = [argType.reference, argType.reference, argType.logical, argType.logical];
-	/*cLOGEST.prototype.Calculate = function (arg) {
+	cLOGEST.prototype.Calculate = function (arg) {
 
-	 arg[0] = tryNumberToArray(arg[0]);
-	 if(arg[1]){
-	 arg[1] = tryNumberToArray(arg[1]);
-	 }
+		arg[0] = tryNumberToArray(arg[0]);
+		if (arg[1]) {
+			arg[1] = tryNumberToArray(arg[1]);
+		}
 
-	 var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, cElementType.array]);
-	 var argClone = oArguments.args;
+		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, cElementType.array]);
+		var argClone = oArguments.args;
 
-	 var argError;
-	 if (argError = this._checkErrorArg(argClone)) {
-	 return argError;
-	 }
+		var argError;
+		if (argError = this._checkErrorArg(argClone)) {
+			return argError;
+		}
 
-	 var pMatY = argClone[0];
-	 var pMatX = argClone[1];
-	 var bConstant = getBoolValue(argClone[2], true);
-	 var bStats = getBoolValue(argClone[3], true);
+		var pMatY = argClone[0];
+		var pMatX = argClone[1];
+		var bConstant = getBoolValue(argClone[2], true);
+		var bStats = getBoolValue(argClone[3], false);
 
-	 var res = CalculateRGPRKP( pMatY, pMatX, bConstant, bStats, true);
+		//возвращает матрицу [col][row]
+		var mat = CalculateRGPRKP(pMatY, pMatX, bConstant, bStats, true);
 
-	 if(res && res[0] && res[0][0]){
-	 return new cNumber(res[0][0]);
-	 }else{
-	 return new cError(cErrorType.wrong_value_type);
-	 }
-	 };*/
+		//TODO далее функцию необходимо отптимизировать и сразу формировать итоговую матрицу без промежуточного транспонирования
+		if (mat && mat[0] && mat[0][0] !== undefined) {
+			var tMatrix = [], res = new cArray();
+
+			for (var i = 0; i < mat.length; i++) {
+				for (var j = 0; j < mat[i].length; j++) {
+					if (!tMatrix[j]) {
+						tMatrix[j] = [];
+					}
+					if (null === mat[i][j]) {
+						tMatrix[j][i] = new cError(cErrorType.not_available);
+					} else {
+						tMatrix[j][i] = new cNumber(mat[i][j]);
+					}
+				}
+			}
+
+			res.fillFromArray(tMatrix);
+			return res;
+		} else {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+	};
 
 	/**
 	 * @constructor
