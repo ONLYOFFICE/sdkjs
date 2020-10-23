@@ -4820,12 +4820,16 @@ background-repeat: no-repeat;\
 
 	/*----------------------------------------------------------------*/
 	/*functions for working with table*/
-	asc_docs_api.prototype.put_Table               = function(col, row)
+	asc_docs_api.prototype.put_Table               = function(col, row, sStyleId)
 	{
 		if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Document_Content_Add))
 		{
 			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_AddTable);
-			this.WordControl.m_oLogicDocument.AddInlineTable(col, row);
+			var oTable = this.WordControl.m_oLogicDocument.AddInlineTable(col, row);
+			if(oTable && sStyleId)
+			{
+				oTable.Set_TableStyle(sStyleId);
+			}
 			this.WordControl.m_oLogicDocument.FinalizeAction();
 		}
 	};

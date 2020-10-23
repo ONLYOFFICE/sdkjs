@@ -4999,7 +4999,7 @@ CPresentation.prototype.Check_GraphicFrameRowHeight = function (grFrame, bIgnore
     }
 };
 
-CPresentation.prototype.Add_FlowTable = function (Cols, Rows, Placeholder) {
+CPresentation.prototype.Add_FlowTable = function (Cols, Rows, Placeholder, sStyleId) {
     if (!this.Slides[this.CurPage])
         return;
 
@@ -5019,7 +5019,7 @@ CPresentation.prototype.Add_FlowTable = function (Cols, Rows, Placeholder) {
         }
     }
     History.Create_NewPoint(AscDFH.historydescription_Presentation_AddFlowTable);
-    var graphic_frame = this.Create_TableGraphicFrame(Cols, Rows, this.Slides[this.CurPage], this.DefaultTableStyleId, Width, Height, X, Y);
+    var graphic_frame = this.Create_TableGraphicFrame(Cols, Rows, this.Slides[this.CurPage], sStyleId || this.DefaultTableStyleId, Width, Height, X, Y);
     var oSlide = this.Slides[this.CurPage];
     editor.WordControl.Thumbnails && editor.WordControl.Thumbnails.SetFocusElement(FOCUS_OBJECT_MAIN);
     this.FocusOnNotes = false;

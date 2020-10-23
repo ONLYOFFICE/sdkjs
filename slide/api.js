@@ -3330,9 +3330,9 @@ background-repeat: no-repeat;\
 
 	/*----------------------------------------------------------------*/
 	/*functions for working with table*/
-	asc_docs_api.prototype.put_Table               = function(col, row, placeholder)
+	asc_docs_api.prototype.put_Table               = function(col, row, placeholder, sStyleId)
 	{
-		this.WordControl.m_oLogicDocument.Add_FlowTable(col, row, placeholder);
+		this.WordControl.m_oLogicDocument.Add_FlowTable(col, row, placeholder, sStyleId);
 	};
 	asc_docs_api.prototype.addRowAbove             = function(count)
 	{
