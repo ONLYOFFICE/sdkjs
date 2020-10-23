@@ -1,0 +1,45 @@
+name: check
+on: [push]
+jobs:
+  code-style:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Ruby 2.7
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 2.7
+      - name: Run rake task
+        run: rake check_source_files
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js 12
+        uses: actions/setup-node@v1
+        with:
+            node-version: 12
+      - name: Run unit tests
+        run: |
+          npm install -g grunt-cli node-qunit-phantomjs
+          npm install --prefix build
+          grunt --gruntfile build/Gruntfile.js develop
+          node-qunit-phantomjs cell/.unit-tests/FormulaTests.html
+  builder-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js 12
+        uses: actions/setup-node@v1
+        with:
+            node-version: 12
+      - run: |
+           npm install -g grunt-cli
+           npm install --prefix build
+           grunt --level=WHITESPACE_ONLY --base build --gruntfile build/Gruntfile.js
+           docker pull onlyofficetestingrobot/doc-builder-testing:develop-latest
+           docker run -v $PWD/deploy/sdkjs/common:/opt/onlyoffice/documentbuilder/sdkjs/common \
+                      -v $PWD/deploy/sdkjs/word:/opt/onlyoffice/documentbuilder/sdkjs/word \
+                      -v $PWD/deploy/sdkjs/cell:/opt/onlyoffice/documentbuilder/sdkjs/cell \
+                      -v $PWD/deploy/sdkjs/slide:/opt/onlyoffice/documentbuilder/sdkjs/slide \
+                      onlyofficetestingrobot/doc-builder-testing:develop-latest
