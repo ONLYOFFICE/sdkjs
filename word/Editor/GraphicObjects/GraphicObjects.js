@@ -1433,6 +1433,7 @@ CGraphicObjects.prototype =
     getEditorApi: DrawingObjectsController.prototype.getEditorApi,
     resetConnectors: DrawingObjectsController.prototype.resetConnectors,
     checkDlblsPosition: DrawingObjectsController.prototype.checkDlblsPosition,
+    resetChartElementsSelection: DrawingObjectsController.prototype.resetChartElementsSelection,
 
 
     handleChartDoubleClick: function(drawing, chart, e, x, y, pageIndex)

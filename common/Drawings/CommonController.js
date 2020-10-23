@@ -1518,6 +1518,17 @@ DrawingObjectsController.prototype =
         }
     },
 
+    resetChartElementsSelection: function() {
+        var oTargetDocContent = this.getTargetDocContent(false, false);
+        if(!oTargetDocContent) {
+            var oSelector = this.selection.groupSelection ? this.selection.groupSelection : this;
+            if(oSelector.selection.chartSelection) {
+                oSelector.selection.chartSelection.resetSelection(false);
+                oSelector.selection.chartSelection = null;
+            }
+        }
+    },
+
     handleHandleHit: function(hit, selectedObject, group, pageIndex, bWord)
     {
         if(this.handleEventMode === HANDLE_EVENT_MODE_HANDLE)

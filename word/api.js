@@ -10729,6 +10729,19 @@ background-repeat: no-repeat;\
 		}
 		return false;
 	};
+	asc_docs_api.prototype.asc_Remove = function()
+	{
+		var oDocument = this.private_GetLogicDocument();
+		if(oDocument)
+		{
+			var oController = oDocument.DrawingObjects;
+			if(oController)
+			{
+				oController.resetChartElementsSelection();
+				AscCommon.baseEditorsApi.prototype.asc_Remove.call(this);
+			}
+		}
+	};
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                       = window['Asc'] || {};
 	CAscSection.prototype['get_PageWidth']                              = CAscSection.prototype.get_PageWidth;

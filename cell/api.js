@@ -4869,8 +4869,13 @@ var editor;
   spreadsheet_api.prototype.asc_setSlicers = function (names, obj) {
     return this.wb.setSlicers(names, obj);
   };
-  
-
+  spreadsheet_api.prototype.asc_Remove = function() {
+    var ws = this.wb.getWorksheet();
+    if (ws && ws.objectRender && ws.objectRender.controller) {
+      ws.objectRender.controller.resetChartElementsSelection();
+    }
+    AscCommon.baseEditorsApi.prototype.asc_Remove.call(this);
+  };
   /*
    * Export
    * -----------------------------------------------------------------------------

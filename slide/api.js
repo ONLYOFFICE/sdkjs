@@ -7565,6 +7565,19 @@ background-repeat: no-repeat;\
 			this.WordControl.m_oLogicDocument.Document_UpdateInterfaceState();
 		}
 	};
+	asc_docs_api.prototype.asc_Remove = function()
+	{
+		var oPresentation = (this.WordControl && this.WordControl.m_oLogicDocument);
+		if(oPresentation)
+		{
+			var oController = oPresentation.GetCurrentController();
+			if(oController)
+			{
+				oController.resetChartElementsSelection();
+				AscCommon.baseEditorsApi.prototype.asc_Remove.call(this);
+			}
+		}
+	};
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                 = window['Asc'] || {};
 	window['AscCommonSlide']                                      = window['AscCommonSlide'] || {};
