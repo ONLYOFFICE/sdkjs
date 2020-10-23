@@ -201,7 +201,7 @@
 		}
 
 		this.name = reader.GetString2();
-		this.id = reader.GetLong();
+		this.id = reader.GetString2();
 	};
 	CT_NamedSheetView.prototype.initPostOpen = function (tableIds, ws) {
 		for (var i = 0; i < this.nsvFilters.length; ++i) {
