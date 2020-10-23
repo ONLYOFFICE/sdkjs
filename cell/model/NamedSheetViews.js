@@ -219,7 +219,6 @@
 		}
 
 		res.name = this.name;
-		res.id = this.id;
 		res.ws = this.ws;
 
 		return res;
