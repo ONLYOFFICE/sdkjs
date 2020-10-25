@@ -20385,7 +20385,7 @@
 
 		//чтобы лишний раз не проверять - может быть взять информацию из cellinfo?
 		var obj = this.model.autoFilters.getTableByActiveCell();
-		var lockRanges = [], colRange, needAddFilter;
+		var lockRanges = [], colRange, needAddFilter, pivotLockInfos = [];
 		if (obj) {
 			type = window['AscCommonExcel'].insertSlicerType.table;
 			name = obj.DisplayName;
@@ -20405,6 +20405,7 @@
 				pivotTable = this.model.inPivotTable(ar);
 				if (pivotTable) {
 					type = window['AscCommonExcel'].insertSlicerType.pivotTable;
+					pivotTable.fillLockInfo(pivotLockInfos, t.collaborativeEditing);
 				}
 			}
 		}
@@ -20425,7 +20426,15 @@
 					return;
 				}
 				//TODO перепроверить лок
-				t._isLockedDefNames(callback);
+				if (pivotLockInfos.length > 0) {
+					t.collaborativeEditing.lock(pivotLockInfos, function(success){
+						if (!success) {
+							History.EndTransaction();
+							return;
+						}
+						t._isLockedDefNames(callback);
+					});
+				}
 			});
 		}
 	};
@@ -20641,7 +20650,7 @@
 			callback(true, newNames);
 		};
 
-		var lockRanges = [], isLockDefNames, slicerPasted, cachePasted, modelCache, _range;
+		var lockRanges = [], isLockDefNames, slicerPasted, cachePasted, modelCache, _range, pivotLockInfos = [];
 		var modelCaches = [];
 		for (var i = 0; i < arr.length; i++) {
 			slicerPasted = arr[i];
@@ -20655,7 +20664,9 @@
 						lockRanges.push(_range);
 					}
 				} else if (_type === window['AscCommonExcel'].insertSlicerType.pivotTable) {
-					//lock pivot
+					modelCache.getPivotTables().map(function(pivotTable){
+						pivotTable.fillLockInfo(pivotLockInfos, t.collaborativeEditing);
+					});
 				}
 				modelCaches[i] = modelCache;
 			} else {
@@ -20671,9 +20682,23 @@
 			if (success) {
 				if (isLockDefNames) {
 					//TODO перепроверить лок
-					t._isLockedDefNames(_callback);
+					t._isLockedDefNames(function(isLockedDefNames) {
+						if (isLockedDefNames) {
+							if (pivotLockInfos.length > 0) {
+								t.collaborativeEditing.lock(pivotLockInfos, callback);
+							} else {
+								_callback(true);
+							}
+						} else {
+							_callback(false);
+						}
+					});
 				} else {
-					_callback(true);
+					if (pivotLockInfos.length > 0) {
+						t.collaborativeEditing.lock(pivotLockInfos, callback);
+					} else {
+						_callback(true);
+					}
 				}
 			} else {
 				callback(false);

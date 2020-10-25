@@ -3783,6 +3783,7 @@ CT_pivotTableDefinition.prototype.getFilterMaps = function(cacheFieldsWithData) 
 			var fieldIndex = t.cacheDefinition.getFieldIndexByName(slicerCache.sourceName);
 			pivotField = pivotFields[fieldIndex];
 			if (pivotField) {
+				t.checkPivotFieldItems(fieldIndex);
 				if (slicerCache.getIndicateItemsWithNoData()) {
 					cacheFieldsWithData[fieldIndex] = new Uint8Array(pivotField.getItemsCount());
 				}
