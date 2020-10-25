@@ -1394,6 +1394,11 @@ CT_PivotCacheDefinition.prototype.initPostOpenZip = function(oNumFmts) {
 		});
 	}
 };
+CT_PivotCacheDefinition.prototype.createNewIds = function() {
+	if (this.pivotCacheDefinitionX14) {
+		this.pivotCacheDefinitionX14.pivotCacheId = AscCommon.CreateUInt32();
+	}
+};
 CT_PivotCacheDefinition.prototype.getType = function() {
 	return AscCommonExcel.UndoRedoDataTypes.PivotCacheDefinition;
 };
@@ -2500,7 +2505,7 @@ CT_pivotTableDefinition.prototype.setWS = function (ws) {
 CT_pivotTableDefinition.prototype.clone = function () {
 	var data = new AscCommonExcel.UndoRedoData_BinaryWrapper(this);
 	var pivot = data.getData();
-	pivot.Id = AscCommon.g_oIdCounter.Get_NewId();
+	pivot.createNewIds();
 	pivot.init();
 	return pivot;
 };
@@ -2511,9 +2516,11 @@ CT_pivotTableDefinition.prototype.cloneShallow = function () {
 	this.cacheDefinition = newPivot.cacheDefinition = oldCacheDefinition;
 	return newPivot;
 };
-CT_pivotTableDefinition.prototype.prepareToPaste = function (ws, offset) {
+CT_pivotTableDefinition.prototype.prepareToPaste = function (ws, offset, changeName) {
 	this.setWS(ws);
-	this.name = this.GetWS().workbook.dependencyFormulas.getNextPivotName();
+	if (changeName) {
+		this.name = this.GetWS().workbook.dependencyFormulas.getNextPivotName();
+	}
 	this.setOffset(offset, false);
 };
 CT_pivotTableDefinition.prototype.stashCurReportRange = function () {
@@ -3265,6 +3272,12 @@ CT_pivotTableDefinition.prototype.init = function () {
 		this.location.setPageCount(rowPageCount, colPageCount);
 	}
 	this.updatePivotType();
+};
+CT_pivotTableDefinition.prototype.createNewIds = function () {
+	this.Id = AscCommon.g_oIdCounter.Get_NewId();
+	if (this.cacheDefinition) {
+		this.cacheDefinition.createNewIds();
+	}
 };
 CT_pivotTableDefinition.prototype.updatePivotType = function () {
 	this.clearGrid = false;
@@ -4254,9 +4267,11 @@ CT_pivotTableDefinition.prototype.asc_set = function (api, newVal) {
 		return;
 	}
 	api._changePivotWithLock(this, function (ws) {
+		var oldName = t.name;
 		if (null !== newVal.name) {
 			t.asc_setName(newVal.name, true);
 		}
+		var newName = t.name;
 		if (null !== newVal.rowGrandTotals) {
 			t.asc_setRowGrandTotals(newVal.rowGrandTotals, true);
 		}
@@ -4301,6 +4316,12 @@ CT_pivotTableDefinition.prototype.asc_set = function (api, newVal) {
 		}
 		if (null !== newVal.ascSubtotalTop) {
 			t.setSubtotalTop(newVal.ascSubtotalTop, true);
+		}
+		if (oldName !== newName) {
+			var slicerCaches = ws.workbook.getSlicerCachesByPivotTable(ws.getId(), oldName);
+			slicerCaches.forEach(function(slicerCache) {
+				slicerCache.movePivotTable(ws.getId(), oldName, ws.getId(), newName);
+			});
 		}
 	});
 };

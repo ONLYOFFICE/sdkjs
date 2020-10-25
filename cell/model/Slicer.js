@@ -1679,7 +1679,6 @@
 		return this.pivotTables.length;
 	};
 	CT_slicerCacheDefinition.prototype.syncWithPivot = function (pivotTable, cacheFieldsWithData) {
-		var wb = this.wb;
 		var tabular = this.getTabular();
 		if (!tabular) {
 			return;
@@ -1697,6 +1696,18 @@
 			History.Add(AscCommonExcel.g_oUndoRedoSlicer, AscCH.historyitem_Slicer_SetCacheData,
 				null, null, new AscCommonExcel.UndoRedoData_Slicer(this.name, oldVal, newVal));
 		}
+	};
+	CT_slicerCacheDefinition.prototype.movePivotTable = function (sheetIdFrom, nameFrom, sheetIdTo, nameTo) {
+		this.pivotTables.forEach(function(table) {
+			if(table.sheetId === sheetIdFrom && table.name===nameFrom){
+				table.sheetId = sheetIdTo;
+				table.name = nameTo;
+			}
+		});
+		var from = new AscCommonExcel.UndoRedoData_CellData(sheetIdFrom, nameFrom);
+		var to = new AscCommonExcel.UndoRedoData_CellData(sheetIdTo, nameTo);
+		History.Add(AscCommonExcel.g_oUndoRedoSlicer, AscCH.historyitem_Slicer_SetCacheMovePivot,
+			null, null, new AscCommonExcel.UndoRedoData_Slicer(this.name, from, to));
 	};
 
 	function CT_slicerCacheData() {
