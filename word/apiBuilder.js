@@ -335,6 +335,17 @@
 			}
 		}
 	};
+	
+	/**
+	 * Get the type of this class.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CDE"]
+	 * @returns {"range"}
+	 */
+	ApiRange.prototype.GetClassType = function()
+	{
+		return "range";
+	};
 
 	/**
 	 * Get a paragraph from all paragraphs that are in the range
@@ -1765,10 +1776,17 @@
 	}
 	ApiHyperlink.prototype.constructor = ApiHyperlink;
 
+	/**
+	 * Get the type of this class.
+	 * @memberof ApiHyperlink
+	 * @typeofeditors ["CDE"]
+	 * @returns {"blockLvlSdt"}
+	 */
 	ApiHyperlink.prototype.GetClassType = function()
 	{
 		return "hyperlink";
 	};
+	
 	/**
 	 * Sets the hyperlink address.
 	 * @typeofeditors ["CDE"]
@@ -11290,7 +11308,7 @@
 	 * Gets the collection of content control objects in the content control.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @returns {(ApiBlockLvlSdt | ApiInlineLvlSdt)[]}
+	 * @returns {ApiBlockLvlSdt[] | ApiInlineLvlSdt[]}
 	 */
 	ApiBlockLvlSdt.prototype.GetAllContentControls = function()
 	{
@@ -11653,6 +11671,7 @@
 	ApiDocumentContent.prototype["RemoveElement"]    = ApiDocumentContent.prototype.RemoveElement;
 	ApiDocumentContent.prototype["GetRange"]         = ApiDocumentContent.prototype.GetRange;
 
+	ApiRange.prototype["GetClassType"]               = ApiRange.prototype.GetClassType
 	ApiRange.prototype["GetParagraph"]               = ApiRange.prototype.GetParagraph;
 	ApiRange.prototype["AddText"]                    = ApiRange.prototype.AddText;
 	ApiRange.prototype["AddBookmark"]                = ApiRange.prototype.AddBookmark;
