@@ -11300,7 +11300,7 @@
 	 * Gets the collection of content control objects in the content control.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @returns {(ApiBlockLvlSdt | ApiInlineLvlSdt)[]}
+	 * @returns {ApiBlockLvlSdt[] | ApiInlineLvlSdt[]}
 	 */
 	ApiBlockLvlSdt.prototype.GetAllContentControls = function()
 	{
