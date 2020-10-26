@@ -1780,7 +1780,7 @@
 	 * Get the type of this class.
 	 * @memberof ApiHyperlink
 	 * @typeofeditors ["CDE"]
-	 * @returns {"blockLvlSdt"}
+	 * @returns {"hyperlink"}
 	 */
 	ApiHyperlink.prototype.GetClassType = function()
 	{
