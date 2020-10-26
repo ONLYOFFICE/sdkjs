@@ -211,11 +211,11 @@
 			this.setWS(ws);
 		}
 	};
-	CT_NamedSheetView.prototype.clone = function () {
+	CT_NamedSheetView.prototype.clone = function (tableNameMap) {
 		var res = new CT_NamedSheetView(true);
 
 		for (var i = 0; i < this.nsvFilters.length; ++i) {
-			res.nsvFilters[i] = this.nsvFilters[i].clone();
+			res.nsvFilters[i] = this.nsvFilters[i].clone(tableNameMap);
 		}
 
 		res.name = this.name;
@@ -363,7 +363,7 @@
 			this.tableIdOpen = reader.GetString2();
 		}
 	};
-	CT_NsvFilter.prototype.clone = function () {
+	CT_NsvFilter.prototype.clone = function (tableNameMap) {
 		var res = new CT_NsvFilter();
 		var i;
 		if (this.columnsFilter) {
@@ -379,7 +379,7 @@
 
 		res.filterId = this.filterId;
 		res.ref = this.ref;
-		res.tableId = this.tableId;
+		res.tableId = tableNameMap && tableNameMap[this.tableId] ? tableNameMap[this.tableId] : this.tableId;
 		res.tableIdOpen = this.tableIdOpen;
 
 		return res;

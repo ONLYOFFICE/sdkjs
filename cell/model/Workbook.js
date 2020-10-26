@@ -3933,6 +3933,19 @@
 			}
 		}
 
+		if(wsFrom.headerFooter) {
+			this.headerFooter = wsFrom.headerFooter.clone(this);
+		}
+
+		if (wsFrom.aNamedSheetViews) {
+			for (i = 0; i < wsFrom.aNamedSheetViews.length; ++i) {
+				if (!this.aNamedSheetViews) {
+					this.aNamedSheetViews = [];
+				}
+				this.aNamedSheetViews.push(wsFrom.aNamedSheetViews[i].clone(renameParams.tableNameMap));
+			}
+		}
+
 		return renameParams;
 	};
 
