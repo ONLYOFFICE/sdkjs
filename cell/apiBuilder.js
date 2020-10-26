@@ -2088,7 +2088,7 @@
 	 * Get the background color for the current cell range
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * return {ApiColor|'No Fill'} - return 'No Fill' when the color to the background in the cell/cell range is null
+	 * @returns {ApiColor|'No Fill'} - return 'No Fill' when the color to the background in the cell/cell range is null
 	 */
 	ApiRange.prototype.GetFillColor = function () {
 		var oColor = this.range.getFillColor();
