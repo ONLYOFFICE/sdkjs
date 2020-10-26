@@ -4529,7 +4529,7 @@ var editor;
 			var ws = t.wb.getWorksheet(wsModel.getIndex());
 			for (var i = 0; i < wsModel.pivotTables.length; ++i) {
 				var pivot = wsModel.pivotTables[i];
-				t._updatePivotTable(pivot, pivot.getAndCleanChanged(), wsModel, ws, undefined, true, true);
+				t._updatePivotTable(pivot, pivot.getAndCleanChanged(), wsModel, ws, undefined, false, true);
 			}
 		});
 	};

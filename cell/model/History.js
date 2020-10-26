@@ -211,6 +211,7 @@ function (window, undefined) {
 	window['AscCH'].historyitem_PivotTable_PageFilter = 50;
 	window['AscCH'].historyitem_PivotTable_SetGridDropZones = 51;
 	window['AscCH'].historyitem_PivotTable_WorksheetSource = 52;
+	window['AscCH'].historyitem_PivotTable_PivotCacheId = 51;
 
 	window['AscCH'].historyitem_SharedFormula_ChangeFormula = 1;
 	window['AscCH'].historyitem_SharedFormula_ChangeShared = 2;

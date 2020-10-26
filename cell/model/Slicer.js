@@ -1059,6 +1059,7 @@
 					this.name = this.generateSlicerCacheName(name);
 					this.data = new CT_slicerCacheData();
 					this.data.tabular = new CT_tabularSlicerCache();
+					pivotTable.checkPivotCacheId();
 					this.data.tabular.pivotCacheDefinition = cacheDefinition;
 
 					var table = new CT_slicerCachePivotTable();

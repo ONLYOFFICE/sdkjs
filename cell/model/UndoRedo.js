@@ -3610,6 +3610,9 @@ function (window, undefined) {
 					pageField.item = value;
 				}
 				break;
+			case AscCH.historyitem_PivotTable_PivotCacheId:
+				pivotTable.setPivotCacheId(value);
+				break;
 		}
 	};
 
