@@ -377,7 +377,7 @@
 			}
 		}
 
-		res.filterId = this.filterId;
+		//res.filterId = this.filterId;
 		res.ref = this.ref;
 		res.tableId = tableNameMap && tableNameMap[this.tableId] ? tableNameMap[this.tableId] : this.tableId;
 		res.tableIdOpen = this.tableIdOpen;
@@ -599,6 +599,7 @@
 	CT_ColumnFilter.prototype.clone = function () {
 		var res = new CT_ColumnFilter();
 		res.filter = this.filter ? this.filter.clone() : null;
+		res.colId = this.colId;
 
 		return res;
 	};
