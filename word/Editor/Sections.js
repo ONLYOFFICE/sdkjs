@@ -1293,7 +1293,7 @@ CSectionPr.prototype.GetContentFrameHeight = function()
  */
 CSectionPr.prototype.HaveLineNumbers = function()
 {
-	return (undefined !== this.LnNumType);
+	return (undefined !== this.LnNumType && undefined !== this.LnNumType.CountBy);
 };
 /**
  * Добавляем или меняем нумерацию строк
@@ -1304,7 +1304,7 @@ CSectionPr.prototype.HaveLineNumbers = function()
  */
 CSectionPr.prototype.SetLineNumbers = function(nCountBy, nDistance, nStart, nRestartType)
 {
-	if (!this.LnNumType
+	if (!this.HaveLineNumbers()
 		|| nCountBy !== this.GetLineNumbersCountBy()
 		|| nDistance !== this.GetLineNumbersDistance()
 		|| nStart !== this.GetLineNumbersStart()
@@ -1322,7 +1322,10 @@ CSectionPr.prototype.SetLineNumbers = function(nCountBy, nDistance, nStart, nRes
  */
 CSectionPr.prototype.GetLineNumbers = function()
 {
-	return this.LnNumType;
+	if (this.HaveLineNumbers())
+		return this.LnNumType;
+
+	return undefined;
 };
 /**
  * Убираем нумерацию строк
@@ -1772,7 +1775,10 @@ CFootnotePr.prototype.ReadFromBinary = function(Reader)
 
 function CSectionLnNumType(nCountBy, nDistance, nStart, nRestartType)
 {
-	this.CountBy  = undefined !== nCountBy && 1 !== nCountBy ? nCountBy : undefined;
+	// Если задан сам класс, но в нем не задан CountBy, считаем, что нумерация строк не задана. Поэтому
+	// по умолчанию задаем CountBy=1
+
+	this.CountBy  = undefined !== nCountBy ? nCountBy : 1;
 	this.Distance = undefined !== nDistance && null !== nDistance ? nDistance : undefined; // В твипсах
 	this.Start    = undefined !== nStart && 1 !== nStart ? nStart : undefined;
 	this.Restart  = undefined !== nRestartType && Asc.c_oAscLineNumberRestartType.Continuous !== nRestartType ? nRestartType : undefined;
@@ -1854,7 +1860,7 @@ CSectionLnNumType.prototype.SetCountBy = function(nCountBy)
 };
 CSectionLnNumType.prototype.GetCountBy = function()
 {
-	return (undefined === this.CountBy ? 1 : this.CountBy);
+	return this.CountBy;
 };
 CSectionLnNumType.prototype.SetDistance = function(nDistance)
 {
