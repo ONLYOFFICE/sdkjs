@@ -3216,7 +3216,7 @@ Paragraph.prototype.private_DrawLineNumber = function(X, Y, oContext, nLineNumbe
 	if (nCountBy && nCountBy > 1 && 0 !== _nLineNumber % nCountBy)
 		return;
 
-	var nLineNumDistance = undefined === nDistance ? AscCommon.TwipsToMM(180) : AscCommon.TwipsToMM(nDistance);
+	var nLineNumDistance = undefined === nDistance ? (this.ColumnsCount > 1 ? AscCommon.TwipsToMM(180) : AscCommon.TwipsToMM(360)) : AscCommon.TwipsToMM(nDistance);
 	var sLineNum         = "" + _nLineNumber;
 
 	var oTextPr    = oLineNumInfo.GetTextPr();
