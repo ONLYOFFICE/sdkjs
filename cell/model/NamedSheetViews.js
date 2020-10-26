@@ -344,7 +344,7 @@
 			this.sortRules.push(_obj);
 		}
 
-		this.filterId = reader.GetLong();
+		this.filterId = reader.GetString2();
 
 		if (reader.GetBool()) {
 			var r1 = reader.GetLong();
@@ -593,6 +593,7 @@
 		if (reader.GetBool()) {
 			var obj = new window['AscCommonExcel'].FilterColumn();
 			obj.Read_FromBinary2(reader);
+			this.colId = obj ? obj.ColId : null;
 			this.filter = obj;
 		}
 	};

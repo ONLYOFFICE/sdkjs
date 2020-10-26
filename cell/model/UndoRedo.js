@@ -2902,7 +2902,7 @@ function (window, undefined) {
 			if (bUndo) {
 				ws.deleteNamedSheetViews([ws.getNamedSheetViewById(Data.Id)], true);
 			} else {
-				ws.addNamedSheetView(Data.getData());
+				ws.addNamedSheetView(Data.getData(), true);
 			}
 		} else if (AscCH.historyitem_Worksheet_SheetViewDelete === Type) {
 			if (bUndo) {
