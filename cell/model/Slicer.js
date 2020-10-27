@@ -1380,28 +1380,30 @@
 		});
 		return res;
 	};
-	CT_slicerCacheDefinition.prototype.applyPivotFilterWithLock = function(api, values, excludePivot, confirmation) {
+	CT_slicerCacheDefinition.prototype.applyPivotFilterWithLock = function(api, values, slicerName, excludePivot, confirmation) {
 		var t = this;
 		var fld = this.getPivotFieldIndex();
-		if (-1 === fld) {
-			return;
-		}
 		var pivotTables = this.getPivotTables();
-		if (pivotTables.length === 0) {
-			return;
-		}
-		api._changePivotAndConnectedBySlicerWithLock(pivotTables[0], [fld], function() {
-			History.Create_NewPoint();
-			History.StartTransaction();
-			api.wbModel.dependencyFormulas.lockRecal();
-			var changeRes = t.applyPivotFilter(api, values, excludePivot, confirmation);
-			api.wbModel.dependencyFormulas.unlockRecal();
-			History.EndTransaction();
+		if (-1 !== fld && pivotTables.length > 0) {
+			api._isLockedPivotAndConnectedBySlicer(pivotTables[0], [fld], function(res) {
+				if (!res) {
+					api.wbModel.onSlicerUpdate(slicerName);
+					return;
+				}
+				History.Create_NewPoint();
+				History.StartTransaction();
+				api.wbModel.dependencyFormulas.lockRecal();
+				var changeRes = t.applyPivotFilter(api, values, excludePivot, confirmation);
+				api.wbModel.dependencyFormulas.unlockRecal();
+				History.EndTransaction();
 
-			api._changePivotEndCheckError(pivotTables[0], changeRes, function(){
-				t.applyPivotFilterWithLock(api, values, excludePivot, true);
+				api._changePivotEndCheckError(pivotTables[0], changeRes, function() {
+					t.applyPivotFilterWithLock(api, values, slicerName, excludePivot, true);
+				});
 			});
-		});
+		} else {
+			api.wbModel.onSlicerUpdate(slicerName);
+		}
 	};
 	CT_slicerCacheDefinition.prototype.applyPivotFilter = function(api, values, excludePivot, confirmation) {
 		var changeRes = {error: c_oAscError.ID.No, warning: c_oAscError.ID.No};

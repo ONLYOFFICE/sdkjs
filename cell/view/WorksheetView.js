@@ -20434,6 +20434,8 @@
 						}
 						t._isLockedDefNames(callback);
 					});
+				} else {
+					t._isLockedDefNames(callback);
 				}
 			});
 		}
@@ -20533,7 +20535,7 @@
 					break;
 				}
 				case window['AscCommonExcel'].insertSlicerType.pivotTable: {
-					slicerCache.applyPivotFilterWithLock(this.model.workbook.oApi, val, null, false);
+					slicerCache.applyPivotFilterWithLock(this.model.workbook.oApi, val, slicer.name, null, false);
 					break;
 				}
 			}

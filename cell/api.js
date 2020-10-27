@@ -4543,7 +4543,10 @@ var editor;
 				ws.updateRanges(ranges);
 				ws._autoFitColumnsWidth(ranges);
             }
-			ws.draw();
+			//ws can be inactive in case of slicer on other sheet
+			if (this.wbModel.getActive() === wsModel.getIndex()) {
+				ws.draw();
+			}
 		}
 	};
 	spreadsheet_api.prototype.asc_getAddPivotTableOptions = function(range) {
@@ -4632,6 +4635,10 @@ var editor;
 		this.collaborativeEditing.lock(lockInfos, callback);
 	};
 	spreadsheet_api.prototype._isLockedPivotAndConnectedBySlicer = function (pivot, flds, callback) {
+		if (this.collaborativeEditing.getGlobalLock()) {
+			callback(false);
+			return;
+		}
 		var t = this;
 		var lockInfos = [];
 		pivot.fillLockInfo(lockInfos, this.collaborativeEditing);
@@ -4670,9 +4677,7 @@ var editor;
 	};
 	spreadsheet_api.prototype._changePivotAndConnectedBySlicerWithLock = function (pivot, flds, onAction) {
 		// Проверка глобального лока
-		if (this.collaborativeEditing.getGlobalLock()) {
-			return;
-		}
+
 		var t = this;
 		this._isLockedPivotAndConnectedBySlicer(pivot, flds, function(res) {
 			if (!res) {
@@ -4711,7 +4716,10 @@ var editor;
 			if (updateSelection) {
 				pivot.updateSelection(ws);
 			}
-			ws.draw();
+			//ws can be inactive in case of slicer on other sheet
+			if (this.wbModel.getActive() === wsModel.getIndex()) {
+				ws.draw();
+			}
 		} else {
 			pivot.stashEmptyReportRange();//to prevent clearTableStyle while undo
 		}

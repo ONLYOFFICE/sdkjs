@@ -3279,7 +3279,7 @@ CT_pivotTableDefinition.prototype.init = function () {
 };
 CT_pivotTableDefinition.prototype.createNewIds = function () {
 	this.Id = AscCommon.g_oIdCounter.Get_NewId();
-	if (this.cacheDefinition) {
+	if (this.cacheDefinition && null !== this.cacheDefinition.getPivotCacheId()) {
 		this.cacheDefinition.createNewPivotCacheId();
 	}
 };
