@@ -2962,7 +2962,7 @@
 	{
         var remInd = window['AscCommonWord'].g_AutoCorrectMathsList.AutoCorrectMathSymbols.findIndex(function(val, index){
 			if (val[0] === element){
-				return index;
+				return true;
 			}
 		});
 		window['AscCommonWord'].g_AutoCorrectMathsList.AutoCorrectMathSymbols.splice(remInd, 1);
@@ -2975,7 +2975,7 @@
 	{
         var remInd = window['AscCommonWord'].g_AutoCorrectMathsList.AutoCorrectMathFuncs.findIndex(function(val, index){
 			if (val === element){
-				return index;
+				return true;
 			}
 		});
 		window['AscCommonWord'].g_AutoCorrectMathsList.AutoCorrectMathFuncs.splice(remInd, 1);
@@ -2992,7 +2992,7 @@
 		}
 		var changeInd = window['AscCommonWord'].g_AutoCorrectMathsList.AutoCorrectMathSymbols.findIndex(function(val, index){
 			if (val[0] === element){
-				return index;
+				return true;
 			}
 		});
 		if (changeInd >= 0) {
