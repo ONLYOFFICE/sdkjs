@@ -134,18 +134,6 @@
 	cFORECAST_ETS_STAT.prototype.isXLFN = true;
 	cFORECAST_ETS_STAT.prototype.argumentsType = [argType.reference, argType.reference, argType.number, argType.number,
 		argType.number, argType.number];
-	/**
-	 * @constructor
-	 * @extends {AscCommonExcel.cBaseFunction}
-	 */
-	function cMUNIT() {	
-	}
-
-	cMUNIT.prototype = Object.create(cBaseFunction.prototype);
-	cMUNIT.prototype.constructor = cMUNIT;
-	cMUNIT.prototype.name = "MUNIT";
-	cMUNIT.prototype.isXLFN = true;
-	cMUNIT.prototype.argumentsType = [argType.number];
 
 	/**
 	 * @constructor
