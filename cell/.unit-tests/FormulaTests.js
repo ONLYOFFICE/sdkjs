@@ -5290,6 +5290,51 @@ $( function () {
         testArrayFormula2("MULTINOMIAL", 1, 8, null, true);
     } );
 
+	test( "Test: \"MUNIT\"", function () {
+		ws.getRange2( "A101" ).setValue( "5" );
+		ws.getRange2( "B102" ).setValue( "6" );
+
+		oParser = new parserFormula( "MUNIT(1)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), 1 );
+
+		oParser = new parserFormula( "MUNIT(-1)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "#VALUE!" );
+
+		oParser = new parserFormula( "MUNIT(1.123)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), 1 );
+
+		oParser = new parserFormula( "MUNIT(2.123)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), 1 );
+		strictEqual( oParser.calculate().getElementRowCol(1,1).getValue(), 1 );
+		strictEqual( oParser.calculate().getElementRowCol(1,0).getValue(), 0 );
+
+		oParser = new parserFormula( "MUNIT(A101)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), 1 );
+		strictEqual( oParser.calculate().getElementRowCol(1,1).getValue(), 1 );
+		strictEqual( oParser.calculate().getElementRowCol(1,0).getValue(), 0 );
+
+		oParser = new parserFormula( "MUNIT(A101:B102)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "#VALUE!" );
+
+		oParser = new parserFormula( "MUNIT({0,0;1,2;123,\"sdf\"})", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), "#VALUE!" );
+		strictEqual( oParser.calculate().getElementRowCol(1,1).getValue(), 1 );
+		strictEqual( oParser.calculate().getElementRowCol(2,0).getValue(), 1 );
+		strictEqual( oParser.calculate().getElementRowCol(2,1).getValue(), "#VALUE!" );
+
+		oParser = new parserFormula( "MUNIT({12,2})", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), 1 );
+		strictEqual( oParser.calculate().getElementRowCol(0,1).getValue(), 1 );
+	} );
+
     test( "Test: \"SUMSQ\"", function () {
         oParser = new parserFormula( "SUMSQ(2.5,-3.6,2.4)", "A1", ws );
         ok( oParser.parse() );

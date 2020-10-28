@@ -3123,6 +3123,7 @@
 	cMUNIT.prototype.argumentsMax = 1;
 	cMUNIT.prototype.isXLFN = true;
 	cMUNIT.prototype.argumentsType = [argType.number];
+	cMUNIT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cMUNIT.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
@@ -3132,10 +3133,21 @@
 		if (arg0 instanceof cError) {
 			return arg0;
 		} else if (arg0 instanceof cArray) {
-			
+			//по обработке массива есть вопросы
+			//в случае если аргуметт функции должен вернуть массив - берётся первый элемента массива
+			//в случае формулы массива возвращается результат от каждого значения массива
+			//реализовываю второй вариант
+			arg0.foreach(function (elem, r, c) {
+				if (elem instanceof cNumber) {
+					this.array[r][c] = parseInt(elem.getValue()) > 0 ? new cNumber(1) : new cError(cErrorType.wrong_value_type);
+				} else {
+					this.array[r][c] = new cError(cErrorType.wrong_value_type);
+				}
+			});
+			return arg0;
 		} else {
 			var num = parseInt(arg0);
-			if (num === 0) {
+			if (num <= 0) {
 				return new cError(cErrorType.wrong_value_type);
 			}
 			var _arr = [];
