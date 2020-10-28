@@ -81,7 +81,7 @@
 		cATAN, cATAN2, cATANH, cBASE, cCEILING, cCEILING_MATH, cCEILING_PRECISE, cCOMBIN, cCOMBINA, cCOS, cCOSH, cCOT,
 		cCOTH, cCSC, cCSCH, cDECIMAL, cDEGREES, cECMA_CEILING, cEVEN, cEXP, cFACT, cFACTDOUBLE, cFLOOR, cFLOOR_PRECISE,
 		cFLOOR_MATH, cGCD, cINT, cISO_CEILING, cLCM, cLN, cLOG, cLOG10, cMDETERM, cMINVERSE, cMMULT, cMOD, cMROUND,
-		cMULTINOMIAL, cODD, cPI, cPOWER, cPRODUCT, cQUOTIENT, cRADIANS, cRAND, cRANDBETWEEN, cROMAN, cROUND, cROUNDDOWN,
+		cMULTINOMIAL, cMUNIT, cODD, cPI, cPOWER, cPRODUCT, cQUOTIENT, cRADIANS, cRAND, cRANDBETWEEN, cROMAN, cROUND, cROUNDDOWN,
 		cROUNDUP, cSEC, cSECH, cSERIESSUM, cSIGN, cSIN, cSINH, cSQRT, cSQRTPI, cSUBTOTAL, cSUM, cSUMIF, cSUMIFS,
 		cSUMPRODUCT, cSUMSQ, cSUMX2MY2, cSUMX2PY2, cSUMXMY2, cTAN, cTANH, cTRUNC);
 
@@ -3107,6 +3107,50 @@
 		}
 
 		return new cNumber(Math.fact(arg0.getValue()) / fact);
+	};
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cMUNIT() {
+	}
+
+	cMUNIT.prototype = Object.create(cBaseFunction.prototype);
+	cMUNIT.prototype.constructor = cMUNIT;
+	cMUNIT.prototype.name = "MUNIT";
+	cMUNIT.prototype.argumentsMin = 1;
+	cMUNIT.prototype.argumentsMax = 1;
+	cMUNIT.prototype.isXLFN = true;
+	cMUNIT.prototype.argumentsType = [argType.number];
+	cMUNIT.prototype.Calculate = function (arg) {
+		var arg0 = arg[0];
+		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+			arg0 = arg0.cross(arguments[1]);
+		}
+		arg0 = arg0.tocNumber();
+		if (arg0 instanceof cError) {
+			return arg0;
+		} else if (arg0 instanceof cArray) {
+			
+		} else {
+			var num = parseInt(arg0);
+			if (num === 0) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+			var _arr = [];
+			for (var i = 0; i < num; i++) {
+				for (var j = 0; j < num; j++) {
+					if (!_arr[i]) {
+						_arr[i] = [];
+					}
+					_arr[i][j] = i === j ? new cNumber(1) : new cNumber(0);
+				}
+			}
+			var res = new cArray();
+			res.fillFromArray(_arr);
+			return res;
+		}
 	};
 
 	/**
