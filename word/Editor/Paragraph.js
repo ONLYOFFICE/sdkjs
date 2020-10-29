@@ -2463,7 +2463,8 @@ Paragraph.prototype.Internal_Draw_4 = function(CurPage, pGraphics, Pr, BgColor, 
 
 		if (this.LineNumbersInfo
 			&& (1 === RangesCount || (RangesCount > 1 && (Line.Ranges[0].W > 0.001 || Line.Ranges[0].WEnd > 0.001)))
-			&& (!(Line.Info & paralineinfo_Empty) || (Line.Info & paralineinfo_End) || !(Line.Info & paralineinfo_BreakPage)))
+			&& (!(Line.Info & paralineinfo_Empty) || (Line.Info & paralineinfo_End) || !(Line.Info & paralineinfo_BreakPage))
+			&& (!(Line.Info & paralineinfo_Empty) || !(Line.Info & paralineinfo_End) || undefined === this.Get_SectionPr()))
 		{
 			this.private_DrawLineNumber(X, Y, pGraphics, this.LineNumbersInfo.StartNum + CurLine + 1, Theme, ColorMap, CurPage, CurLine);
 		}
@@ -15942,7 +15943,8 @@ Paragraph.prototype.GetLineNumbersInfo = function(isNewPage)
  */
 Paragraph.prototype.IsCountLineNumbers = function()
 {
-	return (this.IsInline() && (!this.Get_SectionPr() || !this.IsEmpty()) && !this.IsSuppressLineNumbers());
+	var oPrev = this.Get_DocumentPrev();
+	return (this.IsInline() && (!this.Get_SectionPr() || !this.IsEmpty() || (oPrev && oPrev.IsParagraph() && undefined !== oPrev.Get_SectionPr())) && !this.IsSuppressLineNumbers());
 };
 
 Paragraph.prototype.asc_getText = function()
