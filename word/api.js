@@ -1289,7 +1289,7 @@ background-repeat: no-repeat;\
 			[c_oAscDocumentShortcutType.CopyFormat, 67, true, true, false],
 			[c_oAscDocumentShortcutType.CopyrightSign, 67, true, false, true],
 			[c_oAscDocumentShortcutType.InsertEndnoteNow, 68, true, false, true],
-			[c_oAscDocumentShortcutType.CenterPara, 69, true, false, true],
+			[c_oAscDocumentShortcutType.CenterPara, 69, true, false, false],
 			[c_oAscDocumentShortcutType.EuroSign, 69, true, false, true],
 			[c_oAscDocumentShortcutType.InsertFootnoteNow, 70, true, false, true],
 			[c_oAscDocumentShortcutType.Italic, 73, true, false, false],
