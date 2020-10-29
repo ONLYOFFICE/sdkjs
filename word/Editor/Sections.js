@@ -1348,7 +1348,7 @@ CSectionPr.prototype.GetLineNumbersStart = function()
 };
 CSectionPr.prototype.GetLineNumbersRestart = function()
 {
-	return (this.LnNumType && undefined !== this.LnNumType.Restart ? this.LnNumType.Restart : Asc.c_oAscLineNumberRestartType.Continuous);
+	return (this.LnNumType && undefined !== this.LnNumType.Restart ? this.LnNumType.Restart : Asc.c_oAscLineNumberRestartType.NewPage);
 };
 CSectionPr.prototype.GetLineNumbersDistance = function()
 {
@@ -1781,7 +1781,7 @@ function CSectionLnNumType(nCountBy, nDistance, nStart, nRestartType)
 	this.CountBy  = undefined !== nCountBy ? nCountBy : 1;
 	this.Distance = undefined !== nDistance && null !== nDistance ? nDistance : undefined; // В твипсах
 	this.Start    = undefined !== nStart && 1 !== nStart ? nStart : undefined;
-	this.Restart  = undefined !== nRestartType && Asc.c_oAscLineNumberRestartType.Continuous !== nRestartType ? nRestartType : undefined;
+	this.Restart  = undefined !== nRestartType && Asc.c_oAscLineNumberRestartType.NewPage !== nRestartType ? nRestartType : undefined;
 }
 CSectionLnNumType.prototype.Copy = function()
 {
@@ -1884,7 +1884,7 @@ CSectionLnNumType.prototype.SetRestart = function(nRestart)
 };
 CSectionLnNumType.prototype.GetRestart = function()
 {
-	return (undefined === this.Restart ? Asc.c_oAscLineNumberRestartType.Continuous : this.Restart);
+	return (undefined === this.Restart ? Asc.c_oAscLineNumberRestartType.NewPage : this.Restart);
 };
 
 //--------------------------------------------------------export----------------------------------------------------
