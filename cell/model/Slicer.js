@@ -1704,7 +1704,7 @@
 			var pivotField = pivotTable.asc_getPivotFields()[fieldIndex];
 
 			var oldVal = new AscCommonExcel.UndoRedoData_BinaryWrapper2(this);
-			tabular.syncWithCache(cacheField, pivotField, cacheFieldsWithData[fieldIndex], this.slicerCacheHideItemsWithNoData);
+			tabular.syncWithCache(cacheField, pivotField, cacheFieldsWithData[fieldIndex]);
 			var newVal = new AscCommonExcel.UndoRedoData_BinaryWrapper2(this);
 			History.Add(AscCommonExcel.g_oUndoRedoSlicer, AscCH.historyitem_Slicer_SetCacheData,
 				null, null, new AscCommonExcel.UndoRedoData_Slicer(this.name, oldVal, newVal));
@@ -2718,7 +2718,7 @@
 		}
 		s.Seek2(_end_pos);
 	};
-	CT_tabularSlicerCache.prototype.syncWithCache = function (cacheField, pivotField, cacheFieldWithData, slicerCacheHideItemsWithNoData) {
+	CT_tabularSlicerCache.prototype.syncWithCache = function (cacheField, pivotField, cacheFieldWithData) {
 		var pivotItems = pivotField.getItems();
 		var count = Math.min(cacheField.getSharedSize(), pivotItems.length);
 		if (cacheFieldWithData) {
@@ -2734,9 +2734,7 @@
 				if (this.crossFilter !== ST_slicerCacheCrossFilter.None) {
 					item.nd = !(!cacheFieldWithData || cacheFieldWithData[item.x]);
 				}
-				if (!slicerCacheHideItemsWithNoData || !item.nd) {
-					this.items.push(item);
-				}
+				this.items.push(item);
 			}
 		}
 		this.sortItems(this.sortOrder, cacheField.sharedItems);
