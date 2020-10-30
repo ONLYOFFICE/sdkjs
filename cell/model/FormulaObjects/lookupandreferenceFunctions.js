@@ -1814,13 +1814,55 @@ function (window, undefined) {
 	cUNIQUE.prototype.argumentsMin = 1;
 	cUNIQUE.prototype.argumentsMax = 3;
 	cUNIQUE.prototype.arrayIndexes = {0: 1};
-	cUNIQUE.prototype.argumentsType = [argType.any];
+	cUNIQUE.prototype.argumentsType = [argType.reference, argType.logical, argType.logical];
 	cUNIQUE.prototype.isXLFN = true;
 	cUNIQUE.prototype.Calculate = function (arg) {
 
-		var _getUniqueArr = function (_arr) {
+		var _getUniqueArr = function (_arr, _byCol, _exactlyOnce) {
+			var rowCount = _arr && _arr.length;
+			var colCount = _arr && _arr[0] && _arr[0].length;
+			if (!rowCount || !colCount) {
+				return cError(cErrorType.wrong_value_type);
+			}
+
 			var res = new cArray();
-			res.fillFromArray(_arr);
+			if((rowCount !== 1 && colCount !== 1) || (rowCount !== 1 && _byCol) || (colCount !== 1 && !_byCol)) {
+				//ms в данном случае возвращает полностью массив
+				res.fillFromArray(_arr);
+			} else {
+				var repeateArr = [];
+				var i, j, _value;
+				var resArr = [];
+				var _rowCount = 0;
+				for (i = 0; i < _arr.length; i++) {
+					for (j = 0; j < _arr[i].length; j++) {
+						_value = _arr[i][j].getValue();
+						if (!repeateArr[_value]) {
+							if (!resArr[_rowCount]) {
+								resArr[_rowCount] = [];
+							}
+							resArr[_rowCount].push(_arr[i][j]);
+							if (!_byCol) {
+								_rowCount++;
+							}
+							repeateArr[_value] = 1;
+						}
+					}
+				}
+				if (_exactlyOnce) {
+					for (i = 0; i < resArr.length; i++) {
+						for (j = 0; j < resArr[i].length; j++) {
+							_value = resArr[i][j].getValue();
+							if (repeateArr[_value]) {
+								delete resArr[i][j];
+							}
+						}
+					}
+				}
+				res.fillFromArray(resArr);
+			}
+			
+			return res;
 		};
 
 		var arg0 = arg[0];
@@ -1846,7 +1888,21 @@ function (window, undefined) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		return _getUniqueArr(arg0);
+		var arg1 = !arg[1] ? false : arg[1].tocBool();
+		if (arg1 && cElementType.error === arg1.type) {
+			return arg1;
+		} else if (arg1) {
+			arg1 = arg1.toBool();
+		}
+
+		var arg2 = !arg[2] ? false : arg[2].tocBool();
+		if (arg2 && cElementType.error === arg2.type) {
+			return arg2;
+		} else if (arg2) {
+			arg2 = arg2.toBool();
+		}
+
+		return _getUniqueArr(arg0, arg1, arg2);
 	};
 
 	/**
