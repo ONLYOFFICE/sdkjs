@@ -1846,18 +1846,34 @@ function (window, undefined) {
 								_rowCount++;
 							}
 							repeateArr[_value] = 1;
+						} else {
+							repeateArr[_value]++;
 						}
 					}
 				}
 				if (_exactlyOnce) {
+					var tempArr = [];
+					var _count = 0;
 					for (i = 0; i < resArr.length; i++) {
 						for (j = 0; j < resArr[i].length; j++) {
 							_value = resArr[i][j].getValue();
-							if (repeateArr[_value]) {
-								delete resArr[i][j];
+							if (repeateArr[_value] === 1) {
+								if (!_byCol) {
+									if (!tempArr[_count]) {
+										tempArr[_count] = [];
+									}
+									tempArr[_count][0] = resArr[i][j];
+								} else {
+									if (!tempArr[0]) {
+										tempArr[0] = [];
+									}
+									tempArr[0][_count] = resArr[i][j];
+								}
+								_count++;
 							}
 						}
 					}
+					resArr = tempArr;
 				}
 				res.fillFromArray(resArr);
 			}

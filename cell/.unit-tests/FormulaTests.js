@@ -12682,6 +12682,77 @@ $( function () {
 		testArrayFormula2("UPPER", 1, 1);
 	});
 
+	test( "Test: \"UNIQUE \"", function () {
+
+		ws.getRange2( "A101" ).setValue( "1" );
+		ws.getRange2( "A102" ).setValue( "2" );
+		ws.getRange2( "A103" ).setValue( "2" );
+		ws.getRange2( "A104" ).setValue( "-1" );
+		ws.getRange2( "A105" ).setValue( "-1" );
+		ws.getRange2( "A106" ).setValue( "ds" );
+		ws.getRange2( "A107" ).setValue( "ds" );
+		ws.getRange2( "A108" ).setValue( "#NUM!" );
+		ws.getRange2( "A109" ).setValue( "#NUM!" );
+
+		ws.getRange2( "B101" ).setValue( "1" );
+		ws.getRange2( "B102" ).setValue( "2" );
+		ws.getRange2( "B103" ).setValue( "2" );
+		ws.getRange2( "B104" ).setValue( "4" );
+		ws.getRange2( "B105" ).setValue( "5" );
+		ws.getRange2( "B106" ).setValue( "7" );
+		ws.getRange2( "B107" ).setValue( "7" );
+		ws.getRange2( "B108" ).setValue( "8" );
+		ws.getRange2( "B109" ).setValue( "8" );
+
+		ws.getRange2( "C101" ).setValue( "2" );
+		ws.getRange2( "C102" ).setValue( "2" );
+		ws.getRange2( "C103" ).setValue( "2" );
+		ws.getRange2( "C104" ).setValue( "1" );
+		ws.getRange2( "C105" ).setValue( "1" );
+		ws.getRange2( "C106" ).setValue( "2" );
+		ws.getRange2( "C107" ).setValue( "3" );
+		ws.getRange2( "C108" ).setValue( "8" );
+		ws.getRange2( "C109" ).setValue( "8" );
+
+		ws.getRange2( "D101" ).setValue( "2" );
+		ws.getRange2( "D102" ).setValue( "2" );
+		ws.getRange2( "D103" ).setValue( "2" );
+		ws.getRange2( "D104" ).setValue( "1" );
+		ws.getRange2( "D105" ).setValue( "1" );
+		ws.getRange2( "D106" ).setValue( "2" );
+		ws.getRange2( "D107" ).setValue( "3" );
+		ws.getRange2( "D108" ).setValue( "8" );
+		ws.getRange2( "D109" ).setValue( "8" );
+
+		oParser = new parserFormula( "UNIQUE(A101:A109)", "F1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), 1 );
+		strictEqual( oParser.calculate().getElementRowCol(1,0).getValue(), 2 );
+		strictEqual( oParser.calculate().getElementRowCol(2,0).getValue(), -1 );
+		strictEqual( oParser.calculate().getElementRowCol(3,0).getValue(), "ds" );
+		strictEqual( oParser.calculate().getElementRowCol(4,0).getValue(), "#NUM!" );
+
+		oParser = new parserFormula( "UNIQUE(A101:A109)", "F1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), 1 );
+		strictEqual( oParser.calculate().getElementRowCol(1,0).getValue(), 2 );
+		strictEqual( oParser.calculate().getElementRowCol(2,0).getValue(), -1 );
+		strictEqual( oParser.calculate().getElementRowCol(3,0).getValue(), "ds" );
+		strictEqual( oParser.calculate().getElementRowCol(4,0).getValue(), "#NUM!" );
+
+		oParser = new parserFormula( "UNIQUE(A101:D101)", "F1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), 1 );
+		strictEqual( oParser.calculate().getElementRowCol(0,1).getValue(), 1 );
+		strictEqual( oParser.calculate().getElementRowCol(0,2).getValue(), 2 );
+		strictEqual( oParser.calculate().getElementRowCol(0,3).getValue(), 2 );
+
+		oParser = new parserFormula( "UNIQUE(A101:D101, true)", "F1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), 1 );
+		strictEqual( oParser.calculate().getElementRowCol(0,1).getValue(), 2 );
+	} );
+
 	test( "Test: \"GROWTH\"", function () {
 
 		ws.getRange2( "A102" ).setValue( "11" );
