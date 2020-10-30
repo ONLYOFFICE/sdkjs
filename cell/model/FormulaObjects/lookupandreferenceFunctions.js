@@ -69,7 +69,7 @@ function (window, undefined) {
 	cFormulaFunctionGroup['LookupAndReference'] = cFormulaFunctionGroup['LookupAndReference'] || [];
 	cFormulaFunctionGroup['LookupAndReference'].push(cADDRESS, cAREAS, cCHOOSE, cCOLUMN, cCOLUMNS, cFORMULATEXT,
 		cGETPIVOTDATA, cHLOOKUP, cHYPERLINK, cINDEX, cINDIRECT, cLOOKUP, cMATCH, cOFFSET, cROW, cROWS, cRTD, cTRANSPOSE,
-		cVLOOKUP);
+		cUNIQUE, cVLOOKUP);
 
 	cFormulaFunctionGroup['NotRealised'] = cFormulaFunctionGroup['NotRealised'] || [];
 	cFormulaFunctionGroup['NotRealised'].push(cAREAS, cGETPIVOTDATA, cRTD);
@@ -1798,6 +1798,55 @@ function (window, undefined) {
 		}
 
 		return TransposeMatrix(arg0);
+	};
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cUNIQUE() {
+	}
+
+	//***array-formula***
+	cUNIQUE.prototype = Object.create(cBaseFunction.prototype);
+	cUNIQUE.prototype.constructor = cUNIQUE;
+	cUNIQUE.prototype.name = 'UNIQUE';
+	cUNIQUE.prototype.argumentsMin = 1;
+	cUNIQUE.prototype.argumentsMax = 3;
+	cUNIQUE.prototype.arrayIndexes = {0: 1};
+	cUNIQUE.prototype.argumentsType = [argType.any];
+	cUNIQUE.prototype.isXLFN = true;
+	cUNIQUE.prototype.Calculate = function (arg) {
+
+		var _getUniqueArr = function (_arr) {
+			var res = new cArray();
+			res.fillFromArray(_arr);
+		};
+
+		var arg0 = arg[0];
+		if (cElementType.cellsRange === arg0.type) {
+			arg0 = arg0.getMatrix();
+		} else if(cElementType.cellsRange3D === arg0.type) {
+			arg0 = arg0.getMatrix()[0];
+		} else if(cElementType.array === arg0.type) {
+			arg0 = arg0.getMatrix();
+		} else if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
+			return arg0.getValue();
+		} else if (cElementType.number === arg0.type || cElementType.string === arg0.type ||
+			cElementType.bool === arg0.type || cElementType.error === arg0.type) {
+			return arg0;
+		} else {
+			return new cError(cErrorType.not_available);
+		}
+
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+		if(0 === arg0.length){
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		return _getUniqueArr(arg0);
 	};
 
 	/**
