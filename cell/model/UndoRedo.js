@@ -3866,6 +3866,16 @@ function (window, undefined) {
 				}
 				break;
 			}
+			case AscCH.historyitem_Slicer_SetCacheCopySheet: {
+				slicerCache = oModel.getSlicerCacheByName(Data.name);
+				if (slicerCache) {
+					var from = bUndo ? Data.to : Data.from;
+					var to = bUndo ? Data.from : Data.to;
+					slicerCache.forCopySheet(from, to);
+					updateByCacheName = Data.name;
+				}
+				break;
+			}
 		}
 
 		if (updateByCacheName === null && slicer) {

@@ -644,8 +644,18 @@
 	CT_slicer.prototype.getTableSlicerCache = function () {
 		return this.cacheDefinition && this.cacheDefinition.getTableSlicerCache();
 	};
+	CT_slicer.prototype.getTabular = function () {
+		return this.cacheDefinition && this.cacheDefinition.getTabular();
+	};
 	CT_slicer.prototype.getCacheDefinition = function () {
 		return this.cacheDefinition;
+	};
+	CT_slicer.prototype.setCacheDefinition = function (cacheDefinition) {
+		var oldVal = new AscCommonExcel.UndoRedoData_BinaryWrapper2(this.cacheDefinition);
+		this.cacheDefinition = cacheDefinition;
+		var newVal = new AscCommonExcel.UndoRedoData_BinaryWrapper2(this.cacheDefinition);
+		History.Add(AscCommonExcel.g_oUndoRedoSlicer, AscCH.historyitem_Slicer_SetCacheData,
+			null, null, new AscCommonExcel.UndoRedoData_Slicer(this.cacheDefinition.name, oldVal, newVal));
 	};
 	CT_slicer.prototype.generateName = function (name) {
 		var wb = this.ws.workbook;
@@ -1711,6 +1721,15 @@
 		var to = new AscCommonExcel.UndoRedoData_CellData(sheetIdTo, nameTo);
 		History.Add(AscCommonExcel.g_oUndoRedoSlicer, AscCH.historyitem_Slicer_SetCacheMovePivot,
 			null, null, new AscCommonExcel.UndoRedoData_Slicer(this.name, from, to));
+	};
+	CT_slicerCacheDefinition.prototype.forCopySheet = function (sheetIdFrom, sheetIdTo) {
+		this.pivotTables.forEach(function(table) {
+			if(table.sheetId === sheetIdFrom){
+				table.sheetId = sheetIdTo;
+			}
+		});
+		History.Add(AscCommonExcel.g_oUndoRedoSlicer, AscCH.historyitem_Slicer_SetCacheCopySheet,
+			null, null, new AscCommonExcel.UndoRedoData_Slicer(this.name, sheetIdFrom, sheetIdTo));
 	};
 
 	function CT_slicerCacheData() {

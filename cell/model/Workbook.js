@@ -2284,7 +2284,7 @@
 			
 			newSheet.copyFromFormulas(renameParams);
 
-			newSheet.initPostOpen(this.wsHandlers, {});
+			newSheet.initPostOpen(this.wsHandlers, {}, {});
 			History.TurnOn();
 
 			this.dependencyFormulas.copyDefNameByWorksheet(wsFrom, newSheet, renameParams, opt_sheet);
@@ -3277,15 +3277,6 @@
 		}
 		return null;
 	};
-	Workbook.prototype.getPivotTableByDataRef = function(dataRef) {
-		for (var i = 0, l = this.aWorksheets.length; i < l; ++i) {
-			var pivot = this.aWorksheets[i].getPivotTableByDataRef(dataRef);
-			if (pivot) {
-				return pivot;
-			}
-		}
-		return null;
-	};
 	Workbook.prototype.getPivotCacheByDataRef = function(dataRef) {
 		for (var i = 0, l = this.aWorksheets.length; i < l; ++i) {
 			var cache = this.aWorksheets[i].getPivotCacheByDataRef(dataRef);
@@ -3860,7 +3851,7 @@
 		}
 	};
 	Worksheet.prototype.copyFrom=function(wsFrom, sName, tableNames){
-		var i, elem, range;
+		var i, elem, range, _newSlicer;
 		var t = this;
 		this.sName = this.workbook.checkValidSheetName(sName) ? sName : this.workbook.getUniqueSheetNameFrom(wsFrom.sName, true);
 		this.bHidden = wsFrom.bHidden;
@@ -3949,9 +3940,9 @@
 			//пока только для таблиц
 			var _slicer = wsFrom.aSlicers[i];
 			var _table = _slicer.getTableSlicerCache();
+			var pivotCache = _slicer.getPivotCache();
 			if (_table) {
 				var tableIdNew = renameParams.tableNameMap[_table.tableId];
-				var _newSlicer;
 				if (tableIdNew) {
 					_newSlicer = this.insertSlicer(_table.column, tableIdNew, window['AscCommonExcel'].insertSlicerType.table);
 					_newSlicer.set(_slicer.clone(), true);
@@ -3960,6 +3951,13 @@
 				if (_newSlicer) {
 					renameParams.slicerNameMap[_slicer.name] = _newSlicer.name;
 				}
+			} else if (pivotCache) {
+				var _newCacheDefinition = _slicer.getCacheDefinition().clone(this.workbook);
+				_newCacheDefinition.name = _newCacheDefinition.generateSlicerCacheName(_newCacheDefinition.name);
+				_newSlicer = this.insertSlicer(_slicer.name, undefined, window['AscCommonExcel'].insertSlicerType.pivotTable, undefined, _newCacheDefinition);
+				_newCacheDefinition.forCopySheet(wsFrom.getId(), this.getId());
+				_newSlicer.set(_slicer.clone(), true);
+				renameParams.slicerNameMap[_slicer.name] = _newSlicer.name;
 			}
 		}
 
@@ -7742,16 +7740,12 @@
 		}
 		return res;
 	};
-	Worksheet.prototype.getPivotTableByDataRef = function(dataRef) {
+	Worksheet.prototype.getPivotCacheByDataRef = function(dataRef) {
 		return this.forEachPivotCache(undefined, function(cacheDefinition){
 			if (dataRef === cacheDefinition.getDataRef()) {
 				return cacheDefinition;
 			}
 		});
-	};
-	Worksheet.prototype.getPivotCacheByDataRef = function(dataRef) {
-		var res = this.getPivotTableByDataRef(dataRef);
-		return res ? res.cacheDefinition : res;
 	};
 
 	Worksheet.prototype.getPivotCacheById = function(pivotCacheId, pivotCachesOpen) {
@@ -8427,12 +8421,13 @@
 	};
 
 
-	Worksheet.prototype.insertSlicer = function (name, obj_name, type, pivotTable) {
+	Worksheet.prototype.insertSlicer = function (name, obj_name, type, pivotTable, slicerCacheDefinition) {
 		History.Create_NewPoint();
 		History.StartTransaction();
 
 		//TODO недостаточно ли вместо всей данной длинной структуры использовать только tableId(name) и columnName?
 		var slicer = new window['Asc'].CT_slicer(this);
+		slicer.cacheDefinition = slicerCacheDefinition || null;
 		var isNewCache = slicer.init(name, obj_name, type, undefined, pivotTable);
 		this.aSlicers.push(slicer);
 		var oCache = slicer.getCacheDefinition();
