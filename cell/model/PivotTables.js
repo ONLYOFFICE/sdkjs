@@ -4067,16 +4067,19 @@ CT_pivotTableDefinition.prototype.parseDataRef = function(dataRef) {
 	return worksheetSource.getDataLocation();
 };
 CT_pivotTableDefinition.prototype.isValidDataRef = function(dataRef) {
-	var location = this.parseDataRef(dataRef);
-	if (location && location.ws && location.bbox.getHeight() > 0) {
-		if (location.headings) {
-			return location.headings.length === location.bbox.getWidth();
-		} else if (location.bbox.getHeight() > 1) {
-			var header = this._prepareDataRange(location.ws, location.bbox.r1, location.bbox.c1, location.bbox.c2);
-			return header.countCol === location.bbox.getWidth();
+	return AscFormat.ExecuteNoHistory(function()
+	{
+		var location = this.parseDataRef(dataRef);
+		if (location && location.ws && location.bbox.getHeight() > 0) {
+			if (location.headings) {
+				return location.headings.length === location.bbox.getWidth();
+			} else if (location.bbox.getHeight() > 1) {
+				var header = this._prepareDataRange(location.ws, location.bbox.r1, location.bbox.c1, location.bbox.c2);
+				return header.countCol === location.bbox.getWidth();
+			}
 		}
-	}
-	return false;
+		return false;
+	}, this, []);
 };
 CT_pivotTableDefinition.prototype.prepareDataRange = function(ws, range) {
 	var header = this._prepareDataRange(ws, range.r1, range.c1, range.c2);
