@@ -276,7 +276,8 @@ var c_oSerProp_pPrType = {
 	Spacing_BeforeTwips: 40,
 	Spacing_AfterTwips: 41,
 	Tab_Item_PosTwips: 42,
-	Tab_Item_Val: 43
+	Tab_Item_Val: 43,
+	SuppressLineNumbers: 44
 };
 var c_oSerProp_rPrType = {
     Bold:0,
@@ -2242,6 +2243,12 @@ function Binary_pPrWriter(memory, oNumIdMap, oBinaryHeaderFooterTableWriter, sav
 			this.memory.WriteByte(c_oSerProp_pPrType.outlineLvl);
 			this.memory.WriteByte(c_oSerPropLenType.Long);
 			this.memory.WriteLong(pPr.OutlineLvl);
+		}
+		if(null != pPr.SuppressLineNumbers)
+		{
+			this.memory.WriteByte(c_oSerProp_pPrType.SuppressLineNumbers);
+			this.memory.WriteByte(c_oSerPropLenType.Byte);
+			this.memory.WriteBool(pPr.SuppressLineNumbers);
 		}
     };
     this.WriteInd = function(Ind)
@@ -8547,6 +8554,9 @@ function Binary_pPrReader(doc, oReadResult, stream)
                 break;
 			case c_oSerProp_pPrType.outlineLvl:
 				pPr.OutlineLvl = this.stream.GetLongLE();
+				break;
+			case c_oSerProp_pPrType.SuppressLineNumbers:
+				pPr.SuppressLineNumbers = this.stream.GetBool();
 				break;
             default:
                 res = c_oSerConstants.ReadUnknown;
