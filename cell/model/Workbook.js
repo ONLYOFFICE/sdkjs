@@ -3959,8 +3959,9 @@
 		this._forEachCell(function(cell) {
 			if (cell.isFormula()) {
 				var parsed, notMainArrayCell;
-				parsed = cell.getFormulaParsed();
-				if (!cell.transformSharedFormula()) {
+				if (cell.transformSharedFormula()) {
+					parsed = cell.getFormulaParsed();
+				} else {
 					parsed = cell.getFormulaParsed();
 					if(parsed.getArrayFormulaRef()) {//***array-formula***
 						var listenerId = parsed.getListenerId();
