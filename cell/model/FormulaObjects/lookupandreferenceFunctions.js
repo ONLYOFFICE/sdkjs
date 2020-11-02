@@ -1827,135 +1827,87 @@ function (window, undefined) {
 
 			var res = new cArray();
 			var repeateArr = [];
-			var i, j, _value;
+			var i, j, n, _value;
 			var resArr = [];
-			if(true) {
-				var _key;
-				if (!_byCol) {
-					var _rowCount = 0;
-					for (i = 0; i < rowCount; i++) {
-						_key = "";
-						for (j = 0; j < colCount; j++) {
-							_value = _arr[i][j].getValue();
-							_key += _value + ";";
-							if (j === colCount - 1) {
-								if (!repeateArr[_key]) {
-									repeateArr[_key] = {index: _rowCount, count: 1};
-									for (var n = 0; n < colCount; n++) {
-										if (!resArr[_rowCount]) {
-											resArr[_rowCount] = [];
-										}
-										resArr[_rowCount].push(_arr[i][n]);
-									}
-									_rowCount++;
-								}  else {
-									repeateArr[_key].count++;
-								}
-							}
-						}
-					}
-				} else {
-					var _colCount = 0;
-					for (i = 0; i < colCount; i++) {
-						_key = "";
-						for (j = 0; j < rowCount; j++) {
-							_value = _arr[j][i].getValue();
-							_key += _value + ";";
-							if (j === rowCount - 1) {
-								if (!repeateArr[_key]) {
-									repeateArr[_key] = {index: _colCount, count: 1};
-									for (var n = 0; n < rowCount; n++) {
-										if (!resArr[n]) {
-											resArr[n] = [];
-										}
-										resArr[n][_colCount] = _arr[n][i];
-									}
-									_colCount++;
-								} else {
-									repeateArr[_key].count++;
-								}
-							}
-						}
-					}
-				}
 
-				if (_exactlyOnce) {
-					var tempArr = [];
-					var _counter = 0;
-					for (i in repeateArr) {
-						if (repeateArr[i].count > 1) {
-							continue;
-						}
-						if (!_byCol) {
-							tempArr[_counter] = resArr[repeateArr[i].index];
-						} else {
-							for (j = 0; j < rowCount; j++) {
-								if (!tempArr[j]) {
-									tempArr[j] = [];
-								}
-								tempArr[j][_counter] = resArr[j][repeateArr[i].index];
-							}
-						}
-						_counter++;
-					}
-
-					resArr = tempArr;
-				}
-
-
-				if (!resArr.length) {
-					return new cError(cErrorType.wrong_value_type);
-				}
-
-				res.fillFromArray(resArr);
-			} else {
+			var _key;
+			if (!_byCol) {
 				var _rowCount = 0;
-				for (i = 0; i < _arr.length; i++) {
-					for (j = 0; j < _arr[i].length; j++) {
+				for (i = 0; i < rowCount; i++) {
+					_key = "";
+					for (j = 0; j < colCount; j++) {
 						_value = _arr[i][j].getValue();
-						if (!repeateArr[_value]) {
-							if (!resArr[_rowCount]) {
-								resArr[_rowCount] = [];
-							}
-							resArr[_rowCount].push(_arr[i][j]);
-							if (!_byCol) {
-								_rowCount++;
-							}
-							repeateArr[_value] = 1;
-						} else {
-							repeateArr[_value]++;
-						}
-					}
-				}
-				if (_exactlyOnce) {
-					var tempArr = [];
-					var _count = 0;
-					for (i = 0; i < resArr.length; i++) {
-						for (j = 0; j < resArr[i].length; j++) {
-							_value = resArr[i][j].getValue();
-							if (repeateArr[_value] === 1) {
-								if (!_byCol) {
-									if (!tempArr[_count]) {
-										tempArr[_count] = [];
+						_key += _value + ";";
+						if (j === colCount - 1) {
+							if (!repeateArr[_key]) {
+								repeateArr[_key] = {index: _rowCount, count: 1};
+								for (n = 0; n < colCount; n++) {
+									if (!resArr[_rowCount]) {
+										resArr[_rowCount] = [];
 									}
-									tempArr[_count][0] = resArr[i][j];
-								} else {
-									if (!tempArr[0]) {
-										tempArr[0] = [];
-									}
-									tempArr[0][_count] = resArr[i][j];
+									resArr[_rowCount].push(_arr[i][n]);
 								}
-								_count++;
+								_rowCount++;
+							}  else {
+								repeateArr[_key].count++;
 							}
 						}
 					}
-					resArr = tempArr;
 				}
-				if (!resArr.length) {
-					return new cError(cErrorType.wrong_value_type);
+			} else {
+				var _colCount = 0;
+				for (i = 0; i < colCount; i++) {
+					_key = "";
+					for (j = 0; j < rowCount; j++) {
+						_value = _arr[j][i].getValue();
+						_key += _value + ";";
+						if (j === rowCount - 1) {
+							if (!repeateArr[_key]) {
+								repeateArr[_key] = {index: _colCount, count: 1};
+								for (n = 0; n < rowCount; n++) {
+									if (!resArr[n]) {
+										resArr[n] = [];
+									}
+									resArr[n][_colCount] = _arr[n][i];
+								}
+								_colCount++;
+							} else {
+								repeateArr[_key].count++;
+							}
+						}
+					}
 				}
-				res.fillFromArray(resArr);
 			}
+
+			if (_exactlyOnce) {
+				var tempArr = [];
+				var _counter = 0;
+				for (i in repeateArr) {
+					var _elem = repeateArr[i];
+					if (_elem.count > 1) {
+						continue;
+					}
+					if (!_byCol) {
+						tempArr[_counter] = resArr[_elem.index];
+					} else {
+						for (j = 0; j < rowCount; j++) {
+							if (!tempArr[j]) {
+								tempArr[j] = [];
+							}
+							tempArr[j][_counter] = resArr[j][_elem.index];
+						}
+					}
+					_counter++;
+				}
+
+				resArr = tempArr;
+			}
+
+			if (!resArr.length) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+
+			res.fillFromArray(resArr);
 			
 			return res;
 		};
