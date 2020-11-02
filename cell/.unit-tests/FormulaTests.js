@@ -12751,6 +12751,10 @@ $( function () {
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), 1 );
 		strictEqual( oParser.calculate().getElementRowCol(0,1).getValue(), 2 );
+
+		oParser = new parserFormula( "UNIQUE(A101:D101, true, true)", "F1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "#VALUE!" );
 	} );
 
 	test( "Test: \"GROWTH\"", function () {
