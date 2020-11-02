@@ -1829,7 +1829,7 @@ function (window, undefined) {
 			var repeateArr = [];
 			var i, j, _value;
 			var resArr = [];
-			if((rowCount !== 1 && colCount !== 1) || (rowCount !== 1 && _byCol) || (colCount !== 1 && !_byCol)) {
+			if(true) {
 				var _key;
 				if (!_byCol) {
 					var _rowCount = 0;
@@ -1840,7 +1840,7 @@ function (window, undefined) {
 							_key += _value + ";";
 							if (j === colCount - 1) {
 								if (!repeateArr[_key]) {
-									repeateArr[_key] = 1;
+									repeateArr[_key] = {index: _rowCount, count: 1};
 									for (var n = 0; n < colCount; n++) {
 										if (!resArr[_rowCount]) {
 											resArr[_rowCount] = [];
@@ -1848,8 +1848,8 @@ function (window, undefined) {
 										resArr[_rowCount].push(_arr[i][n]);
 									}
 									_rowCount++;
-								} else {
-									repeateArr[_key]++;
+								}  else {
+									repeateArr[_key].count++;
 								}
 							}
 						}
@@ -1863,7 +1863,7 @@ function (window, undefined) {
 							_key += _value + ";";
 							if (j === rowCount - 1) {
 								if (!repeateArr[_key]) {
-									repeateArr[_key] = 1;
+									repeateArr[_key] = {index: _colCount, count: 1};
 									for (var n = 0; n < rowCount; n++) {
 										if (!resArr[n]) {
 											resArr[n] = [];
@@ -1872,12 +1872,36 @@ function (window, undefined) {
 									}
 									_colCount++;
 								} else {
-									repeateArr[_key]++;
+									repeateArr[_key].count++;
 								}
 							}
 						}
 					}
 				}
+
+				if (_exactlyOnce) {
+					var tempArr = [];
+					var _counter = 0;
+					for (i in repeateArr) {
+						if (repeateArr[i].count > 1) {
+							continue;
+						}
+						if (!_byCol) {
+							tempArr[_counter] = resArr[repeateArr[i].index];
+						} else {
+							for (j = 0; j < rowCount; j++) {
+								if (!tempArr[j]) {
+									tempArr[j] = [];
+								}
+								tempArr[j][_counter] = resArr[j][repeateArr[i].index];
+							}
+						}
+						_counter++;
+					}
+
+					resArr = tempArr;
+				}
+
 
 				if (!resArr.length) {
 					return new cError(cErrorType.wrong_value_type);
