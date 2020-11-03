@@ -173,6 +173,26 @@
 		}
 		return false;
 	};
+	CDataValidation.prototype.containsRange = function (range) {
+		if (this.ranges) {
+			for (var i = 0; i < this.ranges.length; ++i) {
+				if (this.ranges[i].containsRange(range)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	};
+	CDataValidation.prototype.intersection = function (range) {
+		if (this.ranges) {
+			for (var i = 0; i < this.ranges.length; ++i) {
+				if (this.ranges[i].intersection(range)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	};
 	CDataValidation.prototype.checkValue = function (cell, ws) {
 		if (!this.showErrorMessage || EDataValidationType.None === this.type) {
 			return true;

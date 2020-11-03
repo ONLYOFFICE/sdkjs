@@ -8934,6 +8934,34 @@
 		}
 	};
 
+	Worksheet.prototype.getDataValidationProps = function (extend, erase) {
+		var _selection = this.worksheet.getSelection();
+		if (this.dataValidations) {
+			var dataValidationIntersection = [];
+			var isContainsNotDataValidation;
+			for (var i = 0; i < this.dataValidations.elems.length; i++) {
+				var dataValidation = this.dataValidations.elems[i];
+				for (var j = 0; j < _selection.ranges.length; j++) {
+					if (dataValidation.intersection(_selection.ranges[j])) {
+						dataValidationIntersection.push(dataValidation);
+						if (!isContainsNotDataValidation) {
+							isContainsNotDataValidation = !dataValidation.containsRange(_selection.ranges[j]);
+						}
+					} else {
+						isContainsNotDataValidation = true;
+					}
+				}
+			}
+			if (dataValidationIntersection.length > 1) {
+				return false;
+			}
+			if (dataValidationIntersection.length && isContainsNotDataValidation) {
+				return false;
+			}
+		}
+	};
+
+
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;
 	var g_nCellOffsetXf = g_nCellOffsetFlag + 1;
