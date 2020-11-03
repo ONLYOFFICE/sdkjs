@@ -8936,28 +8936,44 @@
 
 	Worksheet.prototype.getDataValidationProps = function (extend, erase) {
 		var _selection = this.worksheet.getSelection();
+		var needCheck = extend === undefined && erase === undefined;
+
+		var dataValidationIntersection = [];
 		if (this.dataValidations) {
-			var dataValidationIntersection = [];
 			var isContainsNotDataValidation;
 			for (var i = 0; i < this.dataValidations.elems.length; i++) {
 				var dataValidation = this.dataValidations.elems[i];
+				var canPush = true;
 				for (var j = 0; j < _selection.ranges.length; j++) {
 					if (dataValidation.intersection(_selection.ranges[j])) {
-						dataValidationIntersection.push(dataValidation);
+						if (canPush) {
+							dataValidationIntersection.push(dataValidation);
+							canPush = false;
+						}
 						if (!isContainsNotDataValidation) {
 							isContainsNotDataValidation = !dataValidation.containsRange(_selection.ranges[j]);
 						}
 					} else {
 						isContainsNotDataValidation = true;
 					}
+
+					//возвращаем инфомармацию об ошибках
+					if (needCheck) {
+						if (dataValidationIntersection.length > 1) {
+							return false;
+						}
+						if (dataValidationIntersection.length && isContainsNotDataValidation) {
+							return false;
+						}
+					}
 				}
 			}
-			if (dataValidationIntersection.length > 1) {
-				return false;
-			}
-			if (dataValidationIntersection.length && isContainsNotDataValidation) {
-				return false;
-			}
+		}
+
+		if (dataValidationIntersection.length) {
+			//в зависимости от параметров формируем обект с опциями
+		} else {
+			//возвращаем новый объект с опциями
 		}
 	};
 
