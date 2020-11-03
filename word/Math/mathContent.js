@@ -6775,9 +6775,6 @@ CMathContent.prototype.private_CanAutoCorrectTextFunc = function(AutoCorrectEngi
     var bActionIsSpace = (AutoCorrectEngine.ActionElement.value == 0x20) ? true : false;
     var foundedEl = null;
     var ElCount = AutoCorrectEngine.Elements.length;
-    if (ElCount < 2 + 1) {
-        return false;
-    }
     var Result = false;
     var FlagEnd = false;
     var Start = ElCount - 1;
