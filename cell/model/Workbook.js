@@ -8956,7 +8956,7 @@
 					} else {
 						isContainsNotDataValidation = true;
 					}
-					
+
 					//возвращаем инфомармацию об ошибках
 					if (needCheck) {
 						//если выделено несколько диапазонов с data validation

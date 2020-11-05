@@ -1013,7 +1013,7 @@
   	var dataValidation = this.oSelectionInfo && this.oSelectionInfo.dataValidation;
   	if (dataValidation && dataValidation.showInputMessage && !this.model.getActiveWs().getDisablePrompts()) {
   		title = dataValidation.promptTitle;
-		message = dataValidation.promt;
+		message = dataValidation.prompt;
 	}
   	this.handlers.trigger("asc_onInputMessage", title, message);
   };

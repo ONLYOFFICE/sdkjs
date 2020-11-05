@@ -119,7 +119,7 @@
 		this.operator = EDataValidationOperator.Between;
 		this.error = null;
 		this.errorTitle = null;
-		this.promt = null;
+		this.prompt = null;
 		this.promptTitle = null;
 
 		this.formula1 = null;
@@ -154,11 +154,24 @@
 		res.operator = this.operator;
 		res.error = this.error;
 		res.errorTitle = this.errorTitle;
-		res.promt = this.promt;
+		res.prompt = this.prompt;
 		res.promptTitle = this.promptTitle;
 		res.formula1 = this.formula1;
 		res.formula2 = this.formula2;
 		return res;
+	};
+	CDataValidation.prototype.isEqual = function(obj) {
+		var errorEqual = obj.error === this.error && this.errorStyle === obj.errorStyle && this.showErrorMessage === obj.showErrorMessage;
+		if (errorEqual) {
+			if (obj.allowBlank === this.allowBlank && obj.showDropDown === this.showDropDown && obj.showInputMessage === this.showInputMessage) {
+				if (obj.type === this.type && obj.imeMode === this.imeMode && obj.operator === this.operator && obj.prompt === this.prompt) {
+					if (obj.promptTitle === this.promptTitle && obj.formula1 === this.formula1 && obj.formula2 === this.formula2) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
 	};
 	CDataValidation.prototype.setSqRef = function(sqRef) {
 		this.ranges = AscCommonExcel.g_oRangeCache.getRangesFromSqRef(sqRef);
@@ -332,8 +345,8 @@
 	CDataValidation.prototype.getOperator = function() {
 		return this.operator;
 	};
-	CDataValidation.prototype.getPromt = function() {
-		return this.promt;
+	CDataValidation.prototype.getPrompt = function() {
+		return this.prompt;
 	};
 	CDataValidation.prototype.getPromptTitle = function() {
 		return this.promptTitle;
@@ -379,8 +392,8 @@
 	CDataValidation.prototype.setErrorTitle = function(newVal, addToHistory) {
 		this.errorTitle = newVal;
 	};
-	CDataValidation.prototype.setPromt = function(newVal, addToHistory) {
-		this.promt = newVal;
+	CDataValidation.prototype.setPrompt = function(newVal, addToHistory) {
+		this.prompt = newVal;
 	};
 	CDataValidation.prototype.setPromptTitle = function(newVal, addToHistory) {
 		this.promptTitle = newVal;
@@ -457,7 +470,7 @@
 	prot['asc_getType'] = prot.getType;
 	prot['asc_getImeMode'] = prot.getImeMode;
 	prot['asc_getOperator'] = prot.getOperator;
-	prot['asc_getPromt'] = prot.getPromt;
+	prot['asc_getPrompt'] = prot.getPrompt;
 	prot['asc_getPromptTitle'] = prot.getPromptTitle;
 	prot['asc_getFormula1'] = prot.getFormula1;
 	prot['asc_getFormula2'] = prot.getFormula2;
@@ -472,7 +485,7 @@
 	prot['asc_setType'] = prot.setType;
 	prot['asc_setImeMode'] = prot.setImeMode;
 	prot['asc_setOperator'] = prot.setOperator;
-	prot['asc_setPromt'] = prot.setPromt;
+	prot['asc_setPrompt'] = prot.setPrompt;
 	prot['asc_setPromptTitle'] = prot.setPromptTitle;
 	prot['asc_setFormula1'] = prot.setFormula1;
 	prot['asc_setFormula2'] = prot.setFormula2;
