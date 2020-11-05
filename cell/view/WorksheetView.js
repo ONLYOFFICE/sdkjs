@@ -20802,6 +20802,22 @@
 		return !text ? "" : text;
 	};
 
+	WorksheetView.prototype.setDataValidationProps = function (props) {
+		var t = this;
+		var _selection = this.worksheet.getSelection();
+
+		var callback = function (success) {
+			if (!success) {
+				return;
+			}
+			t.model.setDataValidationProps(props);
+		}
+		
+		//TODO необходимо расширить диапазон лока ещё диапазонами, data validate которых изменяется
+		//TODO необходимо ли лочить каждый объект data validate?
+		this._isLockedCells(_selection, /*subType*/null, callback);
+	};
+
 	//------------------------------------------------------------export---------------------------------------------------
     window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 	window["AscCommonExcel"].CellFlags = CellFlags;

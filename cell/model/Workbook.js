@@ -8985,6 +8985,47 @@
 		return res;
 	};
 
+	Worksheet.prototype.setDataValidationProps = function (props) {
+		var _selection = this.worksheet.getSelection();
+
+
+	};
+
+	Worksheet.prototype._getDataValidationIntersection = function (ranges) {
+		//выделяем несколько групп
+		//первая - если вся активная область находится в пределах одного dataValidation
+		//вторая - если пересекаемся с dataValidation
+		var isContainsNotDataValidation;
+		for (var i = 0; i < this.dataValidations.elems.length; i++) {
+			var dataValidation = this.dataValidations.elems[i];
+			var canPush = true;
+			for (var j = 0; j < ranges.length; j++) {
+				if (dataValidation.intersection(ranges[j])) {
+					if (canPush) {
+						dataValidationIntersection.push(dataValidation);
+						canPush = false;
+					}
+					if (!isContainsNotDataValidation) {
+						isContainsNotDataValidation = !dataValidation.containsRange(_selection.ranges[j]);
+					}
+				} else {
+					isContainsNotDataValidation = true;
+				}
+
+				//возвращаем инфомармацию об ошибках
+				if (needCheck) {
+					//если выделено несколько диапазонов с data validation
+					if (dataValidationIntersection.length > 1) {
+						return c_oAscError.ID.MoreOneTypeDataValidate;
+					}
+					//если в выделение попали диапазоны как с data validation так и без
+					if (dataValidationIntersection.length && isContainsNotDataValidation) {
+						return c_oAscError.ID.ContainsCellsWithoutDataValidate;
+					}
+				}
+			}
+		}
+	};
 
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;

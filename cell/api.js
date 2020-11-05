@@ -4918,6 +4918,12 @@ var editor;
     }
   };
 
+  spreadsheet_api.prototype.asc_setDataValidation = function(props) {
+    var ws = this.wbModel.getActiveWs();
+    if (ws) {
+      return ws.setDataValidationProps(props);
+    }
+  };
 
   /*
    * Export
