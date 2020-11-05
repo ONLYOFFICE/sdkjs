@@ -311,6 +311,86 @@
 	CDataValidation.prototype.getErrorTitle = function () {
 		return this.errorTitle;
 	};
+	CDataValidation.prototype.getAllowBlank = function() {
+		return this.allowBlank;
+	};
+	CDataValidation.prototype.getShowDropDown = function() {
+		return this.showDropDown;
+	};
+	CDataValidation.prototype.getShowErrorMessage = function() {
+		return this.showErrorMessage;
+	};
+	CDataValidation.prototype.getShowInputMessage = function() {
+		return this.showErrorMessage;
+	};
+	CDataValidation.prototype.getType = function() {
+		return this.type;
+	};
+	CDataValidation.prototype.getImeMode = function() {
+		return this.imeMode;
+	};
+	CDataValidation.prototype.getOperator = function() {
+		return this.operator;
+	};
+	CDataValidation.prototype.getPromt = function() {
+		return this.promt;
+	};
+	CDataValidation.prototype.getPromptTitle = function() {
+		return this.promptTitle;
+	};
+	CDataValidation.prototype.getFormula1 = function() {
+		return this.formula1;
+	};
+	CDataValidation.prototype.getFormula2 = function() {
+		return this.formula2;
+	};
+
+	CDataValidation.prototype.setAllowBlank = function(newVal, addToHistory) {
+		//setTableProperty(this, this.name, newVal, addToHistory, AscCH.historyitem_PivotTable_SetName);
+		this.name = newVal;
+	};
+	CDataValidation.prototype.setAllowBlank = function(newVal, addToHistory) {
+		this.allowBlank = newVal;
+	};
+	CDataValidation.prototype.setShowDropDown = function(newVal, addToHistory) {
+		this.showDropDown = newVal;
+	};
+	CDataValidation.prototype.setShowErrorMessage = function(newVal, addToHistory) {
+		this.showErrorMessage = newVal;
+	};
+	CDataValidation.prototype.setShowInputMessage = function(newVal, addToHistory) {
+		this.showErrorMessage = newVal;
+	};
+	CDataValidation.prototype.setType = function(newVal, addToHistory) {
+		this.type = newVal;
+	};
+	CDataValidation.prototype.setErrorStyle = function(newVal, addToHistory) {
+		this.errorStyle = newVal;
+	};
+	CDataValidation.prototype.setImeMode = function(newVal, addToHistory) {
+		this.imeMode = newVal;
+	};
+	CDataValidation.prototype.setOperator = function(newVal, addToHistory) {
+		this.operator = newVal;
+	};
+	CDataValidation.prototype.setError = function(newVal, addToHistory) {
+		this.error = newVal;
+	};
+	CDataValidation.prototype.setErrorTitle = function(newVal, addToHistory) {
+		this.errorTitle = newVal;
+	};
+	CDataValidation.prototype.setPromt = function(newVal, addToHistory) {
+		this.promt = newVal;
+	};
+	CDataValidation.prototype.setPromptTitle = function(newVal, addToHistory) {
+		this.promptTitle = newVal;
+	};
+	CDataValidation.prototype.setFormula1 = function(newVal, addToHistory) {
+		this.formula1 = newVal;
+	};
+	CDataValidation.prototype.setFormula2 = function(newVal, addToHistory) {
+		this.formula2 = newVal;
+	};
 
 	function CDataValidations() {
 		this.disablePrompts = false;
@@ -370,6 +450,32 @@
 	prot['asc_getError'] = prot.getError;
 	prot['asc_getErrorStyle'] = prot.getErrorStyle;
 	prot['asc_getErrorTitle'] = prot.getErrorTitle;
+	prot['asc_getErrorTitle'] = prot.getErrorTitle;
+	prot['asc_getAllowBlank'] = prot.getAllowBlank;
+	prot['asc_getShowDropDown'] = prot.getShowDropDown;
+	prot['asc_getShowErrorMessage'] = prot.getShowErrorMessage;
+	prot['asc_getType'] = prot.getType;
+	prot['asc_getImeMode'] = prot.getImeMode;
+	prot['asc_getOperator'] = prot.getOperator;
+	prot['asc_getPromt'] = prot.getPromt;
+	prot['asc_getPromptTitle'] = prot.getPromptTitle;
+	prot['asc_getFormula1'] = prot.getFormula1;
+	prot['asc_getFormula2'] = prot.getFormula2;
+
+	prot['asc_setError'] = prot.setError;
+	prot['asc_setErrorStyle'] = prot.setErrorStyle;
+	prot['asc_setErrorTitle'] = prot.setErrorTitle;
+	prot['asc_setErrorTitle'] = prot.setErrorTitle;
+	prot['asc_setAllowBlank'] = prot.setAllowBlank;
+	prot['asc_setShowDropDown'] = prot.setShowDropDown;
+	prot['asc_setShowErrorMessage'] = prot.setShowErrorMessage;
+	prot['asc_setType'] = prot.setType;
+	prot['asc_setImeMode'] = prot.setImeMode;
+	prot['asc_setOperator'] = prot.setOperator;
+	prot['asc_setPromt'] = prot.setPromt;
+	prot['asc_setPromptTitle'] = prot.setPromptTitle;
+	prot['asc_setFormula1'] = prot.setFormula1;
+	prot['asc_setFormula2'] = prot.setFormula2;
 
 	window['AscCommonExcel'].CDataValidations = CDataValidations;
 })(window);
