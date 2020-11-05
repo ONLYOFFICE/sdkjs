@@ -8934,12 +8934,12 @@
 		}
 	};
 
-	Worksheet.prototype.getDataValidationProps = function (extend, erase) {
+	Worksheet.prototype.getDataValidationProps = function (doExtend, doErase) {
 		var _selection = this.worksheet.getSelection();
-		var needCheck = extend === undefined && erase === undefined;
+		var needCheck = doExtend === undefined && doErase === undefined;
 
 		var dataValidationIntersection = [];
-		if (this.dataValidations) {
+		if (this.dataValidations && !doErase) {
 			var isContainsNotDataValidation;
 			for (var i = 0; i < this.dataValidations.elems.length; i++) {
 				var dataValidation = this.dataValidations.elems[i];
@@ -8956,25 +8956,33 @@
 					} else {
 						isContainsNotDataValidation = true;
 					}
-
+					
 					//возвращаем инфомармацию об ошибках
 					if (needCheck) {
+						//если выделено несколько диапазонов с data validation
 						if (dataValidationIntersection.length > 1) {
-							return false;
+							return c_oAscError.ID.MoreOneTypeDataValidate;
 						}
+						//если в выделение попали диапазоны как с data validation так и без
 						if (dataValidationIntersection.length && isContainsNotDataValidation) {
-							return false;
+							return c_oAscError.ID.ContainsCellsWithoutDataValidate;
 						}
 					}
 				}
 			}
 		}
 
-		if (dataValidationIntersection.length) {
+		//для передачи в интерфейс использую объект и модели - CDataValidation
+		var res;
+		if (dataValidationIntersection.length && doExtend !== false) {
 			//в зависимости от параметров формируем обект с опциями
+			res = dataValidationIntersection[0].clone();
 		} else {
 			//возвращаем новый объект с опциями
+			res = new window['AscCommonExcel'].CDataValidation();
 		}
+
+		return res;
 	};
 
 
