@@ -160,6 +160,30 @@
 		res.formula2 = this.formula2;
 		return res;
 	};
+	CDataValidation.prototype.set = function (val) {
+		this.allowBlank = this.checkProperty(this.allowBlank, val.allowBlank, AscCH.historyitem_Slicer_SetCaption);
+		this.showDropDown = this.checkProperty(this.showDropDown, val.showDropDown, AscCH.historyitem_Slicer_SetStartItem);
+		this.showErrorMessage = this.checkProperty(this.showErrorMessage, val.showErrorMessage, AscCH.historyitem_Slicer_SetColumnCount);
+		this.showInputMessage = this.checkProperty(this.showInputMessage, val.showInputMessage, AscCH.historyitem_Slicer_SetShowCaption);
+		this.type = this.checkProperty(this.type, val.type, AscCH.historyitem_Slicer_SetLevel);
+		this.errorStyle = this.checkProperty(this.errorStyle, val.errorStyle, AscCH.historyitem_Slicer_SetStyle);
+		this.imeMode = this.checkProperty(this.imeMode, val.imeMode, AscCH.historyitem_Slicer_SetLockedPosition);
+		this.operator = this.checkProperty(this.operator, val.operator, AscCH.historyitem_Slicer_SetRowHeight);
+		this.error = this.checkProperty(this.error, val.error, AscCH.historyitem_Slicer_SetRowHeight);
+		this.errorTitle = this.checkProperty(this.errorTitle, val.errorTitle, AscCH.historyitem_Slicer_SetRowHeight);
+		this.promt = this.checkProperty(this.promt, val.promt, AscCH.historyitem_Slicer_SetRowHeight);
+		this.promptTitle = this.checkProperty(this.promptTitle, val.promptTitle, AscCH.historyitem_Slicer_SetRowHeight);
+		this.formula1 = this.checkProperty(this.formula1, val.formula1, AscCH.historyitem_Slicer_SetRowHeight);
+		this.formula2 = this.checkProperty(this.formula2, val.formula2, AscCH.historyitem_Slicer_SetRowHeight);
+	};
+	CDataValidation.prototype.checkProperty = function (propOld, propNew, type) {
+		if (propOld !== propNew && undefined !== propNew) {
+			History.Add(AscCommonExcel.g_oUndoRedoSlicer, type,
+				this.ws.getId(), null, new AscCommonExcel.UndoRedoData_Slicer(this.name, propOld, propNew));
+			return propNew;
+		}
+		return propOld;
+	};
 	CDataValidation.prototype.isEqual = function(obj) {
 		var errorEqual = obj.error === this.error && this.errorStyle === obj.errorStyle && this.showErrorMessage === obj.showErrorMessage;
 		if (errorEqual) {

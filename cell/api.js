@@ -4908,13 +4908,13 @@ var editor;
     AscCommon.baseEditorsApi.prototype.asc_Remove.call(this);
   };
 
-  spreadsheet_api.prototype.asc_getDataValidationProps = function(extend, erase) {
+  spreadsheet_api.prototype.asc_getDataValidationProps = function(extend) {
     //если активная область затрагивает частично ячейку с date validation, частично без - выдаем предупреждение
     //второе предупреждение - если выделено несколько разных ячеек с разными data validation
     //возвращаем либо id ошибки, либо объект для диалога
     var ws = this.wbModel.getActiveWs();
     if (ws) {
-      return ws.getDataValidationProps(extend, erase);
+      return ws.getDataValidationProps(extend);
     }
   };
 

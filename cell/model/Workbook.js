@@ -8934,49 +8934,32 @@
 		}
 	};
 
-	Worksheet.prototype.getDataValidationProps = function (doExtend, doErase) {
+	Worksheet.prototype.getDataValidationProps = function (doExtend) {
 		var _selection = this.worksheet.getSelection();
-		var needCheck = doExtend === undefined && doErase === undefined;
+		var needCheck = doExtend === undefined;
 
-		var dataValidationIntersection = [];
-		if (this.dataValidations && !doErase) {
-			var isContainsNotDataValidation;
-			for (var i = 0; i < this.dataValidations.elems.length; i++) {
-				var dataValidation = this.dataValidations.elems[i];
-				var canPush = true;
-				for (var j = 0; j < _selection.ranges.length; j++) {
-					if (dataValidation.intersection(_selection.ranges[j])) {
-						if (canPush) {
-							dataValidationIntersection.push(dataValidation);
-							canPush = false;
-						}
-						if (!isContainsNotDataValidation) {
-							isContainsNotDataValidation = !dataValidation.containsRange(_selection.ranges[j]);
-						}
-					} else {
-						isContainsNotDataValidation = true;
-					}
-
-					//возвращаем инфомармацию об ошибках
-					if (needCheck) {
-						//если выделено несколько диапазонов с data validation
-						if (dataValidationIntersection.length > 1) {
-							return c_oAscError.ID.MoreOneTypeDataValidate;
-						}
-						//если в выделение попали диапазоны как с data validation так и без
-						if (dataValidationIntersection.length && isContainsNotDataValidation) {
-							return c_oAscError.ID.ContainsCellsWithoutDataValidate;
-						}
-					}
-				}
+		var _obj = this.getDataValidationIntersection(_selection.ranges);
+		var dataValidationIntersection = _obj.intersection;
+		var dataValidationContain = _obj.contain;
+		if (needCheck) {
+			//если выделено несколько диапазонов с data validation
+			if (dataValidationIntersection.length > 1 || dataValidationContain.length > 1) {
+				return c_oAscError.ID.MoreOneTypeDataValidate;
+			}
+			//если в выделение попали диапазоны как с data validation так и без
+			if (dataValidationIntersection.length) {
+				return c_oAscError.ID.ContainsCellsWithoutDataValidate;
 			}
 		}
 
+
 		//для передачи в интерфейс использую объект и модели - CDataValidation
 		var res;
-		if (dataValidationIntersection.length && doExtend !== false) {
+		if (dataValidationIntersection.length && doExtend !== false && dataValidationContain.length === 0) {
 			//в зависимости от параметров формируем обект с опциями
 			res = dataValidationIntersection[0].clone();
+		} else if (dataValidationContain.length === 1) {
+			res = dataValidationContain[0].clone();
 		} else {
 			//возвращаем новый объект с опциями
 			res = new window['AscCommonExcel'].CDataValidation();
@@ -8987,44 +8970,62 @@
 
 	Worksheet.prototype.setDataValidationProps = function (props) {
 		var _selection = this.worksheet.getSelection();
+		var _obj = this.getDataValidationIntersection(_selection.ranges);
+		var instersection = _obj.intersection;
+		var contain = _obj.contain;
+		if (!instersection.length && !contain.length) {
+			//самый простой вариант - просто добавляем новый обхект и привязываем его к активной области
+			this.addDataValidation(props);
+		}
+	};
 
+	Worksheet.prototype.addDataValidation = function (props, ranges) {
+		var _selection = ranges ? ranges : this.worksheet.getSelection();
+		var newDataValidation = new AscCommonExcel.CDataValidation();
+		newDataValidation.ranges = _selection;
+		//add to history
 
+		if (props) {
+			newDataValidation.set(props);
+		}
+		return newDataValidation;
 	};
 
 	Worksheet.prototype._getDataValidationIntersection = function (ranges) {
 		//выделяем несколько групп
 		//первая - если вся активная область находится в пределах одного dataValidation
 		//вторая - если пересекаемся с dataValidation
-		var isContainsNotDataValidation;
+
+		var checkAdd = function (arr, obj) {
+			for (var n = 0; n < arr.length; n++) {
+				if (arr[n].isEqual(obj)) {
+					return true;
+				}
+			}
+			return false;
+		};
+
+		var intersectionArr = [];
+		var containArr = []
 		for (var i = 0; i < this.dataValidations.elems.length; i++) {
 			var dataValidation = this.dataValidations.elems[i];
-			var canPush = true;
+
 			for (var j = 0; j < ranges.length; j++) {
 				if (dataValidation.intersection(ranges[j])) {
-					if (canPush) {
-						dataValidationIntersection.push(dataValidation);
-						canPush = false;
-					}
-					if (!isContainsNotDataValidation) {
-						isContainsNotDataValidation = !dataValidation.containsRange(_selection.ranges[j]);
-					}
-				} else {
-					isContainsNotDataValidation = true;
-				}
-
-				//возвращаем инфомармацию об ошибках
-				if (needCheck) {
-					//если выделено несколько диапазонов с data validation
-					if (dataValidationIntersection.length > 1) {
-						return c_oAscError.ID.MoreOneTypeDataValidate;
-					}
-					//если в выделение попали диапазоны как с data validation так и без
-					if (dataValidationIntersection.length && isContainsNotDataValidation) {
-						return c_oAscError.ID.ContainsCellsWithoutDataValidate;
+					if (dataValidation.containsRange(ranges[j])) {
+						if (!checkAdd(dataValidation, containArr)) {
+							containArr.push(dataValidation);
+						}
+					} else {
+						if (!checkAdd(dataValidation, intersectionArr)) {
+							intersectionArr.push(dataValidation);
+						}
 					}
 				}
 			}
 		}
+
+		return {intersection: intersectionArr, contain: containArr};
 	};
 
 //-------------------------------------------------------------------------------------------------
