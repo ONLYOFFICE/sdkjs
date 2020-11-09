@@ -8973,9 +8973,23 @@
 		var _obj = this.getDataValidationIntersection(_selection.ranges);
 		var instersection = _obj.intersection;
 		var contain = _obj.contain;
+		var equalDataValidation;
+		if (this.dataValidations) {
+			for (var i = 0; i < this.dataValidations.length; i++) {
+				if (props.isEqual(this.dataValidations[i])) {
+					equalDataValidation = this.dataValidations[i];
+					break;
+				}
+			}
+		}
 		if (!instersection.length && !contain.length) {
 			//самый простой вариант - просто добавляем новый обхект и привязываем его к активной области
-			this.addDataValidation(props);
+			if (equalDataValidation) {
+				//в данном случае расширяем диапазон
+
+			} else {
+				this.addDataValidation(props);
+			}
 		}
 	};
 

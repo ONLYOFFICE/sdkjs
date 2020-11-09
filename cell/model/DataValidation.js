@@ -105,6 +105,19 @@
 		var res = this._formula.calculate(null, new Asc.Range(activeCell.col, activeCell.row, activeCell.col, activeCell.row));
 		return returnRaw ? this._formula.simplifyRefType(res) : res;
 	};
+	CDataFormula.prototype.Write_ToBinary2 = function(writer) {
+		if (null !== this.text) {
+			writer.WriteBool(true);
+			writer.WriteString2(this.text);
+		} else {
+			writer.WriteBool(false);
+		}
+	};
+	CDataFormula.prototype.Read_FromBinary2 = function(reader) {
+		if (reader.GetBool()) {
+			this.text = reader.GetString2();
+		}
+	};
 
 	function CDataValidation() {
 		this.ranges = null;
@@ -196,6 +209,112 @@
 			}
 		}
 		return false;
+	};
+	CDataValidation.prototype.Write_ToBinary2 = function (writer) {
+		if (null != this.ranges) {
+			writer.WriteBool(true);
+			writer.WriteLong(this.ranges.length);
+			for (var i = 0; i < this.ranges.length; i++) {
+				writer.WriteLong(this.ranges[i].r1);
+				writer.WriteLong(this.ranges[i].c1);
+				writer.WriteLong(this.ranges[i].r2);
+				writer.WriteLong(this.ranges[i].c2);
+			}
+		} else {
+			writer.WriteBool(false);
+		}
+
+		writer.WriteBool(this.allowBlank);
+		writer.WriteBool(this.showDropDown);
+		writer.WriteBool(this.showErrorMessage);
+		writer.WriteBool(this.showInputMessage);
+		writer.WriteBool(this.showInputMessage);
+		writer.WriteLong(this.type);
+		writer.WriteLong(this.errorStyle);
+		writer.WriteLong(this.imeMode);
+		writer.WriteLong(this.operator);
+
+		if(null != this.error) {
+			writer.WriteBool(true);
+			writer.WriteString2(this.error);
+		}else {
+			writer.WriteBool(false);
+		}
+		if(null != this.errorTitle) {
+			writer.WriteBool(true);
+			writer.WriteString2(this.errorTitle);
+		}else {
+			writer.WriteBool(false);
+		}
+		if(null != this.promt) {
+			writer.WriteBool(true);
+			writer.WriteString2(this.promt);
+		}else {
+			writer.WriteBool(false);
+		}
+		if(null != this.promptTitle) {
+			writer.WriteBool(true);
+			writer.WriteString2(this.promptTitle);
+		}else {
+			writer.WriteBool(false);
+		}
+		if(null != this.formula1) {
+			writer.WriteBool(true);
+			this.formula1.Write_ToBinary2(writer);
+		}else {
+			writer.WriteBool(false);
+		}
+		if(null != this.formula2) {
+			writer.WriteBool(true);
+			this.formula2.Write_ToBinary2(writer);
+		}else {
+			writer.WriteBool(false);
+		}
+	};
+	CDataValidation.prototype.Read_ToBinary2 = function (reader) {
+		if (reader.GetBool()) {
+			var length = reader.GetULong();
+			for (var i = 0; i < length; ++i) {
+				var r1 = reader.GetLong();
+				var c1 = reader.GetLong();
+				var r2 = reader.GetLong();
+				var c2 = reader.GetLong();
+				this.ranges.push(new Asc.Range(c1, r1, c2, r2));			}
+		}
+
+		this.allowBlank = reader.GetBool();
+		this.showDropDown = reader.GetBool();
+		this.showErrorMessage = reader.GetBool();
+		this.showInputMessage = reader.GetBool();
+		this.showInputMessage = reader.GetBool();
+		this.type = reader.GetLong();
+		this.errorStyle = reader.GetLong();
+		this.imeMode = reader.GetLong();
+		this.operator = reader.GetLong();
+
+		if(reader.GetBool()) {
+			this.error = reader.GetString2();
+		}
+		if(reader.GetBool()) {
+			this.errorTitle = reader.GetString2();
+		}
+		if(reader.GetBool()) {
+			this.promt = reader.GetString2();
+		}
+		if(reader.GetBool()) {
+			this.promptTitle = reader.GetString2();
+		}
+		var obj;
+		if(reader.GetBool()) {
+			obj = new CDataFormula();
+			obj.Read_FromBinary2(reader);
+			this.formula1 = obj;
+		}
+		if(reader.GetBool()) {
+			obj = new CDataFormula();
+			obj.Read_FromBinary2(reader);
+			this.formula2 = obj;
+		}
 	};
 	CDataValidation.prototype.setSqRef = function(sqRef) {
 		this.ranges = AscCommonExcel.g_oRangeCache.getRangesFromSqRef(sqRef);
