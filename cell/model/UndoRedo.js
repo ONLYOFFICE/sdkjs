@@ -434,6 +434,8 @@ function (window, undefined) {
 		this.NamedSheetView = 130;
 		this.NamedSheetViewChange = 131;
 
+		this.DataValidation = 140;
+
 		this.Create = function (nType) {
 			switch (nType) {
 				case this.ValueMultiTextElem:
@@ -610,6 +612,9 @@ function (window, undefined) {
 					if (window['AscCommonExcel'].UndoRedoData_NamedSheetView) {
 						return new window['AscCommonExcel'].UndoRedoData_NamedSheetView();
 					}
+					break;
+				case this.DataValidation:
+					return new window['AscCommonExcel'].CDataValidation();
 			}
 			return null;
 		};
@@ -2909,6 +2914,12 @@ function (window, undefined) {
 				ws.addNamedSheetView(Data.from);
 			} else {
 				ws.deleteNamedSheetViews([ws.getNamedSheetViewById(Data.sheetView)], true);
+			}
+		} else if (AscCH.historyitem_Worksheet_DataValidationAdd === Type) {
+			if (bUndo) {
+				//ws.deleteNamedSheetViews([ws.getNamedSheetViewById(Data.Id)], true);
+			} else {
+				ws._addDataValidation(Data.getData());
 			}
 		}
 	};

@@ -138,9 +138,19 @@
 		this.formula1 = null;
 		this.formula2 = null;
 
+		this.Id = AscCommon.g_oIdCounter.Get_NewId();
+
 		return this;
 	}
-
+	CDataValidation.prototype.Get_Id = function () {
+		return this.Id;
+	};
+	CDataValidation.prototype.getObjectType = function () {
+		return AscDFH.historyitem_type_DataValidation;
+	};
+	CDataValidation.prototype.getType = function () {
+		return AscCommonExcel.UndoRedoDataTypes.DataValidation;
+	};
 	CDataValidation.prototype._init = function (ws) {
 		if (this.formula1) {
 			this.formula1._init(ws);

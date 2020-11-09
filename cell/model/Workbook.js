@@ -8993,16 +8993,23 @@
 		}
 	};
 
-	Worksheet.prototype.addDataValidation = function (props, ranges) {
+	Worksheet.prototype.addDataValidation = function (props, ranges, addToHistory) {
 		var _selection = ranges ? ranges : this.worksheet.getSelection();
-		var newDataValidation = new AscCommonExcel.CDataValidation();
-		newDataValidation.ranges = _selection;
-		//add to history
+		var _dataValidation = props.clone();
+		_dataValidation.ranges = _selection;
+		this._addDataValidation(_dataValidation, addToHistory);
+		return _dataValidation;
+	};
 
-		if (props) {
-			newDataValidation.set(props);
+	Worksheet.prototype._addDataValidation = function (dataValidation, addToHistory) {
+		if (!this.dataValidations) {
+			this.dataValidations = [];
 		}
-		return newDataValidation;
+		this.dataValidations.push(dataValidation);
+		if (addToHistory) {
+			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_DataValidationAdd, this.getId(), null,
+				new AscCommonExcel.UndoRedoData_BinaryWrapper(dataValidation));
+		}
 	};
 
 	Worksheet.prototype._getDataValidationIntersection = function (ranges) {

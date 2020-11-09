@@ -297,6 +297,7 @@
 			this.m_oFactoryClass[AscDFH.historyitem_type_PivotTableDefinition] = Asc.CT_pivotTableDefinition;
 			this.m_oFactoryClass[AscDFH.historyitem_type_PivotWorksheetSource] = Asc.CT_WorksheetSource;
 			this.m_oFactoryClass[AscDFH.historyitem_type_NamedSheetView] = Asc.CT_NamedSheetView;
+			this.m_oFactoryClass[AscDFH.historyitem_type_DataValidation] = AscCommonExcel.CDataValidation;
 		}
 
 		this.m_oFactoryClass[AscDFH.historyitem_type_DocumentMacros] = AscCommon.CDocumentMacros;
