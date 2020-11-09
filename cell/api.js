@@ -4919,7 +4919,7 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setDataValidation = function(props) {
-    var ws = this.wbModel.getActiveWs();
+    var ws = this.wb.getWorksheet();
     if (ws) {
       return ws.setDataValidationProps(props);
     }
@@ -5351,5 +5351,9 @@ var editor;
 
   prot["asc_beforeInsertSlicer"] = prot.asc_beforeInsertSlicer;
   prot["asc_insertSlicer"] = prot.asc_insertSlicer;
+
+  //data validation
+  prot["asc_setDataValidation"] = prot.asc_setDataValidation;
+  prot["asc_getDataValidationProps"] = prot.asc_getDataValidationProps;
 
 })(window);
