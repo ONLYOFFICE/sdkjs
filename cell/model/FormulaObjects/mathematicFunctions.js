@@ -3535,16 +3535,16 @@
 		var argClone = oArguments.args;
 
 		if (argClone[0]) {
-			argClone[0] = argClone[0].tocNumber();
+			argClone[0] = cElementType.empty === argClone[0].type ? new cNumber(1) : argClone[0].tocNumber();
 		}
 		if (argClone[1]) {
-			argClone[1] = argClone[1].tocNumber();
+			argClone[1] = cElementType.empty === argClone[1].type ? new cNumber(1) : argClone[1].tocNumber();
 		}
 		if (argClone[2]) {
-			argClone[2] = argClone[2].tocNumber();
+			argClone[2] = cElementType.empty === argClone[2].type ? new cNumber(0) : argClone[1].tocNumber();
 		}
 		if (argClone[3]) {
-			argClone[3] = argClone[3].tocNumber();
+			argClone[3] = cElementType.empty === argClone[3].type ? new cNumber(1) : argClone[3].tocNumber();
 		}
 		if (argClone[4]) {
 			argClone[4] = argClone[4].tocBool();
@@ -3559,7 +3559,7 @@
 		var colCount = argClone[1] ? parseInt(argClone[1].getValue()) : 1;
 		var min = argClone[2] ? argClone[2].getValue() : 0;
 		var max = argClone[3] ? argClone[3].getValue() : 1;
-		var wholeNumber = argClone[4] ? argClone[4].getValue() : false;
+		var wholeNumber = argClone[4] ? argClone[4].toBool() : false;
 
 		if (min > max) {
 			return new cError(cErrorType.wrong_value_type);
@@ -3570,9 +3570,9 @@
 
 		function randBetween(a, b, _wholeNumber) {
 			if (_wholeNumber) {
-				return new cNumber(Math.floor(Math.random() * (a - b + 1)) + a);
+				return new cNumber(Math.floor(Math.random() * (b - a + 1)) + a);
 			} else {
-				return new cNumber(Math.round(Math.random() * Math.abs(a - b)) + a);
+				return new cNumber(Math.random() * (max - min) + min);
 			}
 		}
 
@@ -3580,7 +3580,7 @@
 		for (var i = 0; i < rowCount; i++) {
 			_array.addRow();
 			for (var j = 0; j < colCount; j++) {
-				_array.addElement(randBetween(min, max, _wholeNumber));
+				_array.addElement(randBetween(min, max, wholeNumber));
 			}
 		}
 
