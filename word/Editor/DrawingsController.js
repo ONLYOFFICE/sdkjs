@@ -82,9 +82,9 @@ CDrawingsController.prototype.CanUpdateTarget = function()
 {
 	return true;
 };
-CDrawingsController.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY)
+CDrawingsController.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY, isUpdateTarget)
 {
-	return this.DrawingObjects.recalculateCurPos(bUpdateX, bUpdateY);
+	return this.DrawingObjects.recalculateCurPos(bUpdateX, bUpdateY, isUpdateTarget);
 };
 CDrawingsController.prototype.GetCurPage = function()
 {

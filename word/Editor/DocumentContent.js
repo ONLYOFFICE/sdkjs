@@ -1505,13 +1505,13 @@ CDocumentContent.prototype.UpdateEndInfo = function()
 		this.Content[Index].UpdateEndInfo();
 	}
 };
-CDocumentContent.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY)
+CDocumentContent.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY, isUpdateTarget)
 {
 	var oCurPosInfo = null;
 
 	if (docpostype_Content === this.CurPos.Type)
 	{
-		if (this.CurPos.ContentPos >= 0 && undefined != this.Content[this.CurPos.ContentPos])
+		if (this.CurPos.ContentPos >= 0 && undefined !== this.Content[this.CurPos.ContentPos])
 		{
 			this.private_CheckCurPage();
 
@@ -1522,13 +1522,13 @@ CDocumentContent.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY)
 			}
 			else
 			{
-				oCurPosInfo = this.Content[this.CurPos.ContentPos].RecalculateCurPos(bUpdateX, bUpdateY);
+				oCurPosInfo = this.Content[this.CurPos.ContentPos].RecalculateCurPos(bUpdateX, bUpdateY, isUpdateTarget);
 			}
 		}
 	}
 	else // if (docpostype_DrawingObjects === this.CurPos.Type)
 	{
-		oCurPosInfo = this.LogicDocument.DrawingObjects.recalculateCurPos(bUpdateX, bUpdateY);
+		oCurPosInfo = this.LogicDocument.DrawingObjects.recalculateCurPos(bUpdateX, bUpdateY, isUpdateTarget);
 	}
 
 	if (oCurPosInfo)

@@ -279,7 +279,7 @@ CDocumentContentElementBase.prototype.GetSelectionBounds = function()
 		Direction : 0
 	};
 };
-CDocumentContentElementBase.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY)
+CDocumentContentElementBase.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY, isUpdateTarget)
 {
 	return null;
 };

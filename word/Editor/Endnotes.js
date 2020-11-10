@@ -1329,10 +1329,10 @@ CEndnotesController.prototype.CanUpdateTarget = function()
 {
 	return true;
 };
-CEndnotesController.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY)
+CEndnotesController.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY, isUpdateTarget)
 {
 	if (this.CurEndnote)
-		return this.CurEndnote.RecalculateCurPos(bUpdateX, bUpdateY);
+		return this.CurEndnote.RecalculateCurPos(bUpdateX, bUpdateY, isUpdateTarget);
 
 	return {X : 0, Y : 0, Height : 0, PageNum : 0, Internal : {Line : 0, Page : 0, Range : 0}, Transform : null};
 };

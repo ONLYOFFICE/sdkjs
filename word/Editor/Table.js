@@ -3034,10 +3034,10 @@ CTable.prototype.Reset_RecalculateCache = function()
 		}
 	}
 };
-CTable.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY)
+CTable.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY, isUpdateTarget)
 {
 	if (this.CurCell)
-		return this.CurCell.Content_RecalculateCurPos(bUpdateX, bUpdateY);
+		return this.CurCell.Content_RecalculateCurPos(bUpdateX, bUpdateY, isUpdateTarget);
 
 	return null;
 };

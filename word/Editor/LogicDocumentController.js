@@ -49,9 +49,9 @@ CLogicDocumentController.prototype.CanUpdateTarget = function()
 {
 	return this.LogicDocument.controller_CanUpdateTarget();
 };
-CLogicDocumentController.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY)
+CLogicDocumentController.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY, isUpdateTarget)
 {
-	return this.LogicDocument.controller_RecalculateCurPos(bUpdateX, bUpdateY);
+	return this.LogicDocument.controller_RecalculateCurPos(bUpdateX, bUpdateY, isUpdateTarget);
 };
 CLogicDocumentController.prototype.GetCurPage = function()
 {

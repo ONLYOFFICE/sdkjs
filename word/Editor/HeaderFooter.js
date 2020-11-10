@@ -1534,10 +1534,10 @@ CHeaderFooterController.prototype =
 //-----------------------------------------------------------------------------------
 //
 //-----------------------------------------------------------------------------------   
-    RecalculateCurPos : function(bUpdateX, bUpdateY)
+    RecalculateCurPos : function(bUpdateX, bUpdateY, isUpdateTarget)
 	{
 		if (this.CurHdrFtr)
-			return this.CurHdrFtr.RecalculateCurPos(bUpdateX, bUpdateY);
+			return this.CurHdrFtr.RecalculateCurPos(bUpdateX, bUpdateY, isUpdateTarget);
 
 		return null;
 	},
