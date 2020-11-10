@@ -3555,21 +3555,32 @@
 			return argError;
 		}
 
-		var rowCount = argClone[0] ? argClone[0].getValue() : 1;
-		var colCount = argClone[1] ? argClone[1].getValue() : 1;
+		var rowCount = argClone[0] ? parseInt(argClone[0].getValue()) : 1;
+		var colCount = argClone[1] ? parseInt(argClone[1].getValue()) : 1;
 		var min = argClone[2] ? argClone[2].getValue() : 0;
 		var max = argClone[3] ? argClone[3].getValue() : 1;
-		var wholeNumber = argClone[3] ? argClone[3].getValue() : false;
+		var wholeNumber = argClone[4] ? argClone[4].getValue() : false;
 
-		function randBetween(a, b) {
-			return new cNumber(Math.round(Math.random() * Math.abs(a - b)) + a);
+		if (min > max) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+		if (wholeNumber && (!Number.isInteger(min) || !Number.isInteger(max))) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		function randBetween(a, b, _wholeNumber) {
+			if (_wholeNumber) {
+				return new cNumber(Math.floor(Math.random() * (a - b + 1)) + a);
+			} else {
+				return new cNumber(Math.round(Math.random() * Math.abs(a - b)) + a);
+			}
 		}
 
 		var _array = new cArray();
 		for (var i = 0; i < rowCount; i++) {
 			_array.addRow();
 			for (var j = 0; j < colCount; j++) {
-				_array.addElement(randBetween(min, max));
+				_array.addElement(randBetween(min, max, _wholeNumber));
 			}
 		}
 
