@@ -81,7 +81,7 @@
 		cATAN, cATAN2, cATANH, cBASE, cCEILING, cCEILING_MATH, cCEILING_PRECISE, cCOMBIN, cCOMBINA, cCOS, cCOSH, cCOT,
 		cCOTH, cCSC, cCSCH, cDECIMAL, cDEGREES, cECMA_CEILING, cEVEN, cEXP, cFACT, cFACTDOUBLE, cFLOOR, cFLOOR_PRECISE,
 		cFLOOR_MATH, cGCD, cINT, cISO_CEILING, cLCM, cLN, cLOG, cLOG10, cMDETERM, cMINVERSE, cMMULT, cMOD, cMROUND,
-		cMULTINOMIAL, cMUNIT, cODD, cPI, cPOWER, cPRODUCT, cQUOTIENT, cRADIANS, cRAND, cRANDBETWEEN, cROMAN, cROUND, cROUNDDOWN,
+		cMULTINOMIAL, cMUNIT, cODD, cPI, cPOWER, cPRODUCT, cQUOTIENT, cRADIANS, cRAND, cRANDARRAY, cRANDBETWEEN, cROMAN, cROUND, cROUNDDOWN,
 		cROUNDUP, cSEC, cSECH, cSERIESSUM, cSIGN, cSIN, cSINH, cSQRT, cSQRTPI, cSUBTOTAL, cSUM, cSUMIF, cSUMIFS,
 		cSUMPRODUCT, cSUMSQ, cSUMX2MY2, cSUMX2PY2, cSUMXMY2, cTAN, cTANH, cTRUNC);
 
@@ -3517,6 +3517,63 @@
 	cRAND.prototype.argumentsType = null;
 	cRAND.prototype.Calculate = function () {
 		return new cNumber(Math.random());
+	};
+
+	function cRANDARRAY() {
+	}
+
+	//***array-formula***
+	cRANDARRAY.prototype = Object.create(cBaseFunction.prototype);
+	cRANDARRAY.prototype.constructor = cRANDARRAY;
+	cRANDARRAY.prototype.name = 'RANDARRAY';
+	cRANDARRAY.prototype.argumentsMin = 0;
+	cRANDARRAY.prototype.argumentsMax = 5;
+	cRANDARRAY.prototype.ca = true;
+	cRANDARRAY.prototype.argumentsType = null;
+	cRANDARRAY.prototype.Calculate = function (arg) {
+		var oArguments = this._prepareArguments(arg, arguments[1]);
+		var argClone = oArguments.args;
+
+		if (argClone[0]) {
+			argClone[0] = argClone[0].tocNumber();
+		}
+		if (argClone[1]) {
+			argClone[1] = argClone[1].tocNumber();
+		}
+		if (argClone[2]) {
+			argClone[2] = argClone[2].tocNumber();
+		}
+		if (argClone[3]) {
+			argClone[3] = argClone[3].tocNumber();
+		}
+		if (argClone[4]) {
+			argClone[4] = argClone[4].tocBool();
+		}
+
+		var argError;
+		if (argError = this._checkErrorArg(argClone)) {
+			return argError;
+		}
+
+		var rowCount = argClone[0] ? argClone[0].getValue() : 1;
+		var colCount = argClone[1] ? argClone[1].getValue() : 1;
+		var min = argClone[2] ? argClone[2].getValue() : 0;
+		var max = argClone[3] ? argClone[3].getValue() : 1;
+		var wholeNumber = argClone[3] ? argClone[3].getValue() : false;
+
+		function randBetween(a, b) {
+			return new cNumber(Math.round(Math.random() * Math.abs(a - b)) + a);
+		}
+
+		var _array = new cArray();
+		for (var i = 0; i < rowCount; i++) {
+			_array.addRow();
+			for (var j = 0; j < colCount; j++) {
+				_array.addElement(randBetween(min, max));
+			}
+		}
+
+		return _array;
 	};
 
 	/**
