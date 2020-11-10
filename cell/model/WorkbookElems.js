@@ -9015,7 +9015,7 @@ ColorFilter.prototype.Read_FromBinary2 = function(reader) {
 		var api_sheet = Asc['editor'];
 		var wb = api_sheet.wbModel;
 		var bsr = new AscCommonExcel.Binary_StylesTableReader(reader, wb);
-		var bcr = new AscCommon.Binary_CommonReader(r);
+		var bcr = new AscCommon.Binary_CommonReader(reader);
 		var oDxf = new AscCommonExcel.CellXfs();
 		reader.GetUChar();
 		var length = reader.GetULongLE();
