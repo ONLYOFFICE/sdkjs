@@ -769,6 +769,7 @@
 					}
 
 					if (nsvFilter) {
+						oldFilter = nsvFilter.clone();
 						//TODO перепроверить. соответствует ли индекс?
 						newFilterColumn = nsvFilter.getColumnFilterByColId(filterObj.ColId, true);
 
