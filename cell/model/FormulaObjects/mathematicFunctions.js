@@ -3568,6 +3568,10 @@
 			return new cError(cErrorType.wrong_value_type);
 		}
 
+		if (min < 0 || max < 0) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
 		function randBetween(a, b, _wholeNumber) {
 			if (_wholeNumber) {
 				return new cNumber(Math.floor(Math.random() * (b - a + 1)) + a);
