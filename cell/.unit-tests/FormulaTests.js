@@ -5772,6 +5772,94 @@ $( function () {
         testArrayFormula2("RANDBETWEEN", 2, 2, true)
     } );
 
+	test( "Test: \"RANDARRAY\"", function () {
+		var res;
+		oParser = new parserFormula( "RANDARRAY()", "A1", ws );
+		ok( oParser.parse() );
+		res = oParser.calculate().getElementRowCol(0,0).getValue();
+		ok( res >= 0 && res <= 1 );
+
+		oParser = new parserFormula( "RANDARRAY(2,2)", "A1", ws );
+		ok( oParser.parse() );
+		res = oParser.calculate().getElementRowCol(0,0).getValue();
+		ok( res >= 0 && res <= 1 );
+		res = oParser.calculate().getElementRowCol(1,0).getValue();
+		ok( res >= 0 && res <= 1 );
+		res = oParser.calculate().getElementRowCol(0,1).getValue();
+		ok( res >= 0 && res <= 1 );
+		res = oParser.calculate().getElementRowCol(1,1).getValue();
+		ok( res >= 0 && res <= 1 );
+
+		oParser = new parserFormula( "RANDARRAY(2,2,-10,-5)", "A1", ws );
+		ok( oParser.parse() );
+		res = oParser.calculate().getElementRowCol(0,0).getValue();
+		ok( res >= -10 && res <= -5 );
+		res = oParser.calculate().getElementRowCol(1,0).getValue();
+		ok( res >= -10 && res <= -5 );
+		res = oParser.calculate().getElementRowCol(0,1).getValue();
+		ok( res >= -10 && res <= -5 );
+		res = oParser.calculate().getElementRowCol(1,1).getValue();
+		ok( res >= -10 && res <= -5 );
+
+		oParser = new parserFormula( "RANDARRAY(2,2,-10,-5, true)", "A1", ws );
+		ok( oParser.parse() );
+		res = oParser.calculate().getElementRowCol(0,0).getValue();
+		ok( res >= -10 && res <= -5 );
+		res = oParser.calculate().getElementRowCol(1,0).getValue();
+		ok( res >= -10 && res <= -5 );
+		res = oParser.calculate().getElementRowCol(0,1).getValue();
+		ok( res >= -10 && res <= -5 );
+		res = oParser.calculate().getElementRowCol(1,1).getValue();
+		ok( res >= -10 && res <= -5 );
+
+		oParser = new parserFormula( "RANDARRAY(2,2,,, true)", "A1", ws );
+		ok( oParser.parse() );
+		res = oParser.calculate().getElementRowCol(0,0).getValue();
+		ok( res >= 0 && res <= 1 );
+		res = oParser.calculate().getElementRowCol(1,0).getValue();
+		ok( res >= 0 && res <= 1 );
+		res = oParser.calculate().getElementRowCol(0,1).getValue();
+		ok( res >= 0 && res <= 1 );
+		res = oParser.calculate().getElementRowCol(1,1).getValue();
+		ok( res >= 0 && res <= 1 );
+
+		oParser = new parserFormula( "RANDARRAY(-1)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "#VALUE!" );
+
+		oParser = new parserFormula( "RANDARRAY(1, -1)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "#VALUE!" );
+
+		oParser = new parserFormula( "RANDARRAY(-1, -1)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "#VALUE!" );
+
+		oParser = new parserFormula( "RANDARRAY(1, 1, 5, 2)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "#VALUE!" );
+
+		oParser = new parserFormula( "RANDARRAY(0, 0, 5, 2)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "#VALUE!" );
+
+		oParser = new parserFormula( "RANDARRAY(0, 1, 5, 2)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "#VALUE!" );
+
+		oParser = new parserFormula( "RANDARRAY(1, 0, 5, 2)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "#VALUE!" );
+
+		oParser = new parserFormula( "RANDARRAY(1,1,,-2,FALSE)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "#VALUE!" );
+
+		oParser = new parserFormula( "RANDARRAY(1,1,2,,FALSE)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "#VALUE!" );
+	} );
+
     test( "Test: \"QUOTIENT\"", function () {
         oParser = new parserFormula( "QUOTIENT(1,6)", "A1", ws );
         ok( oParser.parse() );

@@ -3530,6 +3530,7 @@
 	cRANDARRAY.prototype.argumentsMax = 5;
 	cRANDARRAY.prototype.ca = true;
 	cRANDARRAY.prototype.argumentsType = null;
+	cRANDARRAY.prototype.isXLFN = true;
 	cRANDARRAY.prototype.Calculate = function (arg) {
 		var oArguments = this._prepareArguments(arg, arguments[1]);
 		var argClone = oArguments.args;
@@ -3541,7 +3542,7 @@
 			argClone[1] = cElementType.empty === argClone[1].type ? new cNumber(1) : argClone[1].tocNumber();
 		}
 		if (argClone[2]) {
-			argClone[2] = cElementType.empty === argClone[2].type ? new cNumber(0) : argClone[1].tocNumber();
+			argClone[2] = cElementType.empty === argClone[2].type ? new cNumber(0) : argClone[2].tocNumber();
 		}
 		if (argClone[3]) {
 			argClone[3] = cElementType.empty === argClone[3].type ? new cNumber(1) : argClone[3].tocNumber();
@@ -3568,7 +3569,7 @@
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		if (min < 0 || max < 0) {
+		if (rowCount <= 0 || colCount <= 0) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
