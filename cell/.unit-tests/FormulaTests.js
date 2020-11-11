@@ -5773,7 +5773,35 @@ $( function () {
     } );
 
 	test( "Test: \"RANDARRAY\"", function () {
+		ws.getRange2( "A101" ).setValue( "2" );
+		ws.getRange2( "A102" ).setValue( "2" );
+		ws.getRange2( "A103" ).setValue( "test1" );
+		ws.getRange2( "A104" ).setValue( "-4" );
+		ws.getRange2( "A105" ).setValue( "-1" );
+
 		var res;
+		oParser = new parserFormula( "RANDARRAY(A101,A102)", "A1", ws );
+		ok( oParser.parse() );
+		res = oParser.calculate().getElementRowCol(0,0).getValue();
+		ok( res >= 0 && res <= 1 );
+		res = oParser.calculate().getElementRowCol(1,0).getValue();
+		ok( res >= 0 && res <= 1 );
+		res = oParser.calculate().getElementRowCol(0,1).getValue();
+		ok( res >= 0 && res <= 1 );
+		res = oParser.calculate().getElementRowCol(1,1).getValue();
+		ok( res >= 0 && res <= 1 );
+
+		oParser = new parserFormula( "RANDARRAY(A101,A102,A104,A105)", "A1", ws );
+		ok( oParser.parse() );
+		res = oParser.calculate().getElementRowCol(0,0).getValue();
+		ok( res >= -4 && res <= -1 );
+		res = oParser.calculate().getElementRowCol(1,0).getValue();
+		ok( res >= -4 && res <= -1 );
+		res = oParser.calculate().getElementRowCol(0,1).getValue();
+		ok( res >= -4 && res <= -1 );
+		res = oParser.calculate().getElementRowCol(1,1).getValue();
+		ok( res >= -4 && res <= -1 );
+
 		oParser = new parserFormula( "RANDARRAY()", "A1", ws );
 		ok( oParser.parse() );
 		res = oParser.calculate().getElementRowCol(0,0).getValue();
@@ -5856,6 +5884,10 @@ $( function () {
 		strictEqual( oParser.calculate().getValue(), "#VALUE!" );
 
 		oParser = new parserFormula( "RANDARRAY(1,1,2,,FALSE)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "#VALUE!" );
+
+		oParser = new parserFormula( "RANDARRAY(A103,1,2,,FALSE)", "A1", ws );
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getValue(), "#VALUE!" );
 	} );

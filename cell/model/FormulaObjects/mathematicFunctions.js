@@ -3535,18 +3535,20 @@
 		var oArguments = this._prepareArguments(arg, arguments[1]);
 		var argClone = oArguments.args;
 
-		if (argClone[0]) {
-			argClone[0] = cElementType.empty === argClone[0].type ? new cNumber(1) : argClone[0].tocNumber();
+		for (var i = 0; i < argClone.length; i++) {
+			if (argClone[i].type === cElementType.empty && i !== 4) {
+				if (i !== 2) {
+					argClone[i] = new cNumber(1);
+				} else {
+					argClone[i] = new cNumber(0);
+				}
+			} else if (argClone[i].type === cElementType.array || cElementType.cellsRange === argClone[i].type || cElementType.cellsRange3D === argClone[i].type) {
+
+			} else if (i !== 4) {
+				argClone[i] = argClone[i].tocNumber()
+			}
 		}
-		if (argClone[1]) {
-			argClone[1] = cElementType.empty === argClone[1].type ? new cNumber(1) : argClone[1].tocNumber();
-		}
-		if (argClone[2]) {
-			argClone[2] = cElementType.empty === argClone[2].type ? new cNumber(0) : argClone[2].tocNumber();
-		}
-		if (argClone[3]) {
-			argClone[3] = cElementType.empty === argClone[3].type ? new cNumber(1) : argClone[3].tocNumber();
-		}
+
 		if (argClone[4]) {
 			argClone[4] = argClone[4].tocBool();
 		}
