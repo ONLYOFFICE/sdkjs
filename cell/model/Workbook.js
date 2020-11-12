@@ -8935,10 +8935,10 @@
 	};
 
 	Worksheet.prototype.getDataValidationProps = function (doExtend) {
-		var _selection = this.worksheet.getSelection();
+		var _selection = this.getSelection();
 		var needCheck = doExtend === undefined;
 
-		var _obj = this.getDataValidationIntersection(_selection.ranges);
+		var _obj = this._getDataValidationIntersection(_selection.ranges);
 		var dataValidationIntersection = _obj.intersection;
 		var dataValidationContain = _obj.contain;
 		if (needCheck) {
@@ -8970,7 +8970,7 @@
 
 	Worksheet.prototype.setDataValidationProps = function (props) {
 		var _selection = this.worksheet.getSelection();
-		var _obj = this.getDataValidationIntersection(_selection.ranges);
+		var _obj = this._getDataValidationIntersection(_selection.ranges);
 		var instersection = _obj.intersection;
 		var contain = _obj.contain;
 		var equalDataValidation;
@@ -9028,18 +9028,20 @@
 
 		var intersectionArr = [];
 		var containArr = []
-		for (var i = 0; i < this.dataValidations.elems.length; i++) {
-			var dataValidation = this.dataValidations.elems[i];
+		if (this.dataValidations && this.dataValidations.elems) {
+			for (var i = 0; i < this.dataValidations.elems.length; i++) {
+				var dataValidation = this.dataValidations.elems[i];
 
-			for (var j = 0; j < ranges.length; j++) {
-				if (dataValidation.intersection(ranges[j])) {
-					if (dataValidation.containsRange(ranges[j])) {
-						if (!checkAdd(dataValidation, containArr)) {
-							containArr.push(dataValidation);
-						}
-					} else {
-						if (!checkAdd(dataValidation, intersectionArr)) {
-							intersectionArr.push(dataValidation);
+				for (var j = 0; j < ranges.length; j++) {
+					if (dataValidation.intersection(ranges[j])) {
+						if (dataValidation.containsRange(ranges[j])) {
+							if (!checkAdd(dataValidation, containArr)) {
+								containArr.push(dataValidation);
+							}
+						} else {
+							if (!checkAdd(dataValidation, intersectionArr)) {
+								intersectionArr.push(dataValidation);
+							}
 						}
 					}
 				}
