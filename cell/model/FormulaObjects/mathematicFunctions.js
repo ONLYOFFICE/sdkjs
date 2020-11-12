@@ -3535,6 +3535,8 @@
 		var oArguments = this._prepareArguments(arg, arguments[1]);
 		var argClone = oArguments.args;
 
+		var matrixRowCount;
+		var matrixColCount;
 		for (var i = 0; i < argClone.length; i++) {
 			if (argClone[i].type === cElementType.empty && i !== 4) {
 				if (i !== 2) {
@@ -3543,7 +3545,16 @@
 					argClone[i] = new cNumber(0);
 				}
 			} else if (argClone[i].type === cElementType.array || cElementType.cellsRange === argClone[i].type || cElementType.cellsRange3D === argClone[i].type) {
-
+				argClone[i] = argClone[i].getMatrix();
+				if (cElementType.cellsRange3D === argClone[i].type) {
+					argClone[i] = argClone[i][0];
+				}
+				if (matrixRowCount === undefined || matrixRowCount > argClone[i].length) {
+					matrixRowCount = argClone[i].length;
+				}
+				if (matrixColCount === undefined || matrixColCount > argClone[i][0].length) {
+					matrixColCount = argClone[i][0].length;
+				}
 			} else if (i !== 4) {
 				argClone[i] = argClone[i].tocNumber()
 			}
