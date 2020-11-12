@@ -2948,7 +2948,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cBaseFunction.prototype._checkErrorArg = function (argArray) {
 		for (var i = 0; i < argArray.length; i++) {
-			if (cElementType.error === argArray[i].type) {
+			if (argArray[i] && cElementType.error === argArray[i].type) {
 				return argArray[i];
 			}
 		}

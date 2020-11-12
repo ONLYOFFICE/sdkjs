@@ -3535,9 +3535,14 @@
 		var oArguments = this._prepareArguments(arg, arguments[1]);
 		var argClone = oArguments.args;
 
+		//если какой-то из аргументов массив - обрабатываю здесь
+		//если обрабатывать выше и проходиться по массиву, то данная функция всегда будет возвращать массив
+		//а нам нужно только значение с индексом 0,0 у возвращаемого массива
+
+		var i, j;
 		var matrixRowCount;
 		var matrixColCount;
-		for (var i = 0; i < argClone.length; i++) {
+		for (i = 0; i < argClone.length; i++) {
 			if (argClone[i].type === cElementType.empty && i !== 4) {
 				if (i !== 2) {
 					argClone[i] = new cNumber(1);
@@ -3561,29 +3566,17 @@
 		}
 
 		if (argClone[4]) {
-			argClone[4] = argClone[4].tocBool();
+			if (matrixRowCount === undefined) {
+				if (argClone[4].type === cElementType.string) {
+					return new cError(cErrorType.wrong_value_type);
+				}
+				argClone[4] = argClone[4].tocBool();
+			}
 		}
 
 		var argError;
 		if (argError = this._checkErrorArg(argClone)) {
 			return argError;
-		}
-
-		var rowCount = argClone[0] ? parseInt(argClone[0].getValue()) : 1;
-		var colCount = argClone[1] ? parseInt(argClone[1].getValue()) : 1;
-		var min = argClone[2] ? argClone[2].getValue() : 0;
-		var max = argClone[3] ? argClone[3].getValue() : 1;
-		var wholeNumber = argClone[4] ? argClone[4].toBool() : false;
-
-		if (min > max) {
-			return new cError(cErrorType.wrong_value_type);
-		}
-		if (wholeNumber && (!Number.isInteger(min) || !Number.isInteger(max))) {
-			return new cError(cErrorType.wrong_value_type);
-		}
-
-		if (rowCount <= 0 || colCount <= 0) {
-			return new cError(cErrorType.wrong_value_type);
 		}
 
 		function randBetween(a, b, _wholeNumber) {
@@ -3594,11 +3587,91 @@
 			}
 		}
 
-		var _array = new cArray();
-		for (var i = 0; i < rowCount; i++) {
-			_array.addRow();
-			for (var j = 0; j < colCount; j++) {
-				_array.addElement(randBetween(min, max, wholeNumber));
+		var rowCount;
+		var colCount;
+		var min;
+		var max;
+		var wholeNumber;
+		var _array;
+		if (matrixRowCount !== undefined) {
+			_array = new cArray();
+			for (i = 0; i < matrixRowCount; i++) {
+				_array.addRow();
+				for (j = 0; j < matrixColCount; j++) {
+					if (argClone[0] && argClone[0][i] && argClone[0][i][j] && argClone[0][i][j].type === cElementType.error) {
+						_array.addElement(argClone[0][i][j]);
+						continue;
+					} else if (argClone[1] && argClone[1][i] && argClone[1][i][j] && argClone[1][i][j].type === cElementType.error) {
+						_array.addElement(argClone[1][i][j]);
+						continue;
+					}
+
+					min = 0;
+					if (argClone[2] && argClone[2][i]) {
+						if (argClone[2][i][j] && argClone[2][i][j].type === cElementType.error) {
+							_array.addElement(argClone[2][i][j]);
+							continue;
+						}
+						min = argClone[2][i][j].getValue();
+					} else if (argClone[2]) {
+						min = argClone[2].getValue();
+					}
+					max = 1;
+					if (argClone[3] && argClone[3][i]) {
+						if (argClone[3][i][j] && argClone[3][i][j].type === cElementType.error) {
+							_array.addElement(argClone[3][i][j]);
+							continue;
+						}
+						max = argClone[3][i][j].getValue();
+					} else if (argClone[3]) {
+						max = argClone[3].getValue();
+					}
+					wholeNumber = false;
+					if (argClone[4] && argClone[4][i]) {
+						if (argClone[4][i][j] && (argClone[4][i][j].type === cElementType.error || argClone[4][i][j].type === cElementType.string)) {
+							if (argClone[4][i][j].type === cElementType.string) {
+								_array.addElement(new cError(cErrorType.wrong_value_type))
+							} else {
+								_array.addElement(argClone[4][i][j]);
+							}
+							continue;
+						}
+						wholeNumber = argClone[4][i][j].getValue();
+					} else if (argClone[4]) {
+						if (argClone[4][i][j].type === cElementType.string) {
+							_array.addElement(new cError(cErrorType.wrong_value_type))
+							continue;
+						}
+						wholeNumber = argClone[4].toBool();
+					}
+					
+					_array.addElement(randBetween(min, max, wholeNumber));
+				}
+			}
+		} else {
+			rowCount = argClone[0] ? parseInt(argClone[0].getValue()) : 1;
+			colCount = argClone[1] ? parseInt(argClone[1].getValue()) : 1;
+			min = argClone[2] ? argClone[2].getValue() : 0;
+			max = argClone[3] ? argClone[3].getValue() : 1;
+			wholeNumber = argClone[4] ? argClone[4].toBool() : false;
+
+			if (min > max) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+			if (wholeNumber && (!Number.isInteger(min) || !Number.isInteger(max))) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+
+			if (rowCount <= 0 || colCount <= 0) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+
+			_array = new cArray();
+			for (i = 0; i < rowCount; i++) {
+				_array.addRow();
+				for (j = 0; j < colCount; j++) {
+					_array.addElement(randBetween(min, max, wholeNumber));
+				}
 			}
 		}
 
