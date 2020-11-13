@@ -643,16 +643,6 @@
 	prot['asc_setFormula1'] = prot.setFormula1;
 	prot['asc_setFormula2'] = prot.setFormula2;
 
-	window['Asc']['EDataValidationType'] = window['Asc'].EDataValidationType = EDataValidationType;
-	prot = EDataValidationType;
-	prot['None'] = prot.None;
-	prot['Date'] = prot.Date;
-	prot['Decimal'] = prot.Decimal;
-	prot['List'] = prot.List;
-	prot['TextLength'] = prot.TextLength;
-	prot['Time'] = prot.Time;
-	prot['Whole'] = prot.Whole;
-
 	window['Asc']['EDataValidationOperator'] = window['Asc'].EDataValidationOperator = EDataValidationOperator;
 	prot = EDataValidationOperator;
 	prot['Between'] = prot.Between;
