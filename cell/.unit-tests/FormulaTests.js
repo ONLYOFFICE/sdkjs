@@ -5890,6 +5890,30 @@ $( function () {
 		oParser = new parserFormula( "RANDARRAY(A103,1,2,,FALSE)", "A1", ws );
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getValue(), "#VALUE!" );
+
+		ws.getRange2( "A101" ).setValue( "#DIV/0!" );
+		ws.getRange2( "A102" ).setValue( "2" );
+		ws.getRange2( "A103" ).setValue( "3" );
+		ws.getRange2( "A104" ).setValue( "4" );
+		ws.getRange2( "A105" ).setValue( "5" );
+		ws.getRange2( "A105" ).setValue( "6" );
+
+		ws.getRange2( "B101" ).setValue( "-3" );
+		ws.getRange2( "B102" ).setValue( "-5" );
+		ws.getRange2( "B103" ).setValue( "2" );
+		ws.getRange2( "B104" ).setValue( "1" );
+		ws.getRange2( "B105" ).setValue( "12" );
+		ws.getRange2( "B105" ).setValue( "13" );
+
+		oParser = new parserFormula( "RANDARRAY({1,123,3},{1,2,3,4},,2,A101:C101)", "A1", ws );
+		ok( oParser.parse() );
+		res = oParser.calculate().getElementRowCol(0,0).getValue();
+		strictEqual( res, "#DIV/0!" );
+		res = oParser.calculate().getElementRowCol(0,1).getValue();
+		ok( res >= 0 && res <= 2 );
+		res = oParser.calculate().getElementRowCol(0,2).getValue();
+		ok( res >= 0 && res <= 2 );
+
 	} );
 
     test( "Test: \"QUOTIENT\"", function () {
