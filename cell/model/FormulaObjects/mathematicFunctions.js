@@ -3532,8 +3532,8 @@
 	cRANDARRAY.prototype.argumentsType = null;
 	cRANDARRAY.prototype.isXLFN = true;
 	cRANDARRAY.prototype.Calculate = function (arg) {
-		var oArguments = this._prepareArguments(arg, arguments[1]);
-		var argClone = oArguments.args;
+		//var oArguments = this._prepareArguments(arg, arguments[1]);
+		var argClone = arg;
 
 		//если какой-то из аргументов массив - обрабатываю здесь
 		//если обрабатывать выше и проходиться по массиву, то данная функция всегда будет возвращать массив
@@ -3567,9 +3567,15 @@
 
 		if (argClone[4]) {
 			if (matrixRowCount === undefined) {
+				if (argClone[4].type === cElementType.cell || argClone[4].type === cElementType.cell3D) {
+					argClone[4] = argClone[4].getValue();
+				}
 				if (argClone[4].type === cElementType.string) {
 					return new cError(cErrorType.wrong_value_type);
+				} else if (argClone[4].type === cElementType.error) {
+					return argClone[4];
 				}
+
 				argClone[4] = argClone[4].tocBool();
 			}
 		}

@@ -2915,31 +2915,30 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var newArgs = [];
 		var indexArr = null;
 
-		for(var i = 0; i < args.length; i++){
+		for (var i = 0; i < args.length; i++) {
 			var arg = args[i];
 
 			//для массивов отдельная ветка
-			if(typeArray && cElementType.array === typeArray[i])
-			{
+			if (typeArray && cElementType.array === typeArray[i]) {
 				if (cElementType.cellsRange === arg.type || cElementType.array === arg.type) {
 					newArgs[i] = arg.getMatrix(this.excludeHiddenRows, this.excludeErrorsVal, this.excludeNestedStAg);
 				} else if (cElementType.cellsRange3D === arg.type) {
 					newArgs[i] = arg.getMatrix(this.excludeHiddenRows, this.excludeErrorsVal, this.excludeNestedStAg)[0];
-				} else if(cElementType.error === arg.type) {
+				} else if (cElementType.error === arg.type) {
 					newArgs[i] = arg;
 				} else {
 					newArgs[i] = new cError(cErrorType.division_by_zero);
 				}
-			}else if (cElementType.cellsRange === arg.type || cElementType.cellsRange3D === arg.type) {
+			} else if (cElementType.cellsRange === arg.type || cElementType.cellsRange3D === arg.type) {
 				newArgs[i] = arg.cross(arg1);
-			}else if(cElementType.array === arg.type){
-				if(bAddFirstArrElem){
-					newArgs[i] = arg.getElementRowCol(0,0);
-				}else{
+			} else if (cElementType.array === arg.type) {
+				if (bAddFirstArrElem) {
+					newArgs[i] = arg.getElementRowCol(0, 0);
+				} else {
 					indexArr = i;
 					newArgs[i] = arg;
 				}
-			}else{
+			} else {
 				newArgs[i] = arg;
 			}
 		}
