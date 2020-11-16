@@ -2446,9 +2446,13 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
                         ShiftDy   = -Cell.Content.Pages[0].Y + Y_content_start;
 
 						// Если в ячейке есть ссылки на сноски, тогда такую ячейку нужно пересчитывать
-						var arrFootnotes = Cell.Content.GetFootnotesList(null, null);
-						if (arrFootnotes && arrFootnotes.length > 0)
+						var arrFootnotes = Cell.Content.GetFootnotesList(null, null, false);
+						var arrEndnotes  = Cell.Content.GetFootnotesList(null, null, true);
+						if ((arrFootnotes && arrFootnotes.length > 0)
+							|| (arrEndnotes && arrEndnotes.length > 0))
+						{
 							bCanShift = false;
+						}
                     }
                 }
 

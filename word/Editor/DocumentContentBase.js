@@ -156,7 +156,7 @@ CDocumentContentBase.prototype.GetAllDrawingObjects = function(arrDrawings)
  */
 CDocumentContentBase.prototype.Get_AllImageUrls = function(arrUrls)
 {
-	if (undefined === arrDrawings || null === arrDrawings)
+	if (undefined === arrUrls || null === arrUrls)
 		arrUrls = [];
 
 	var arrDrawings = this.GetAllDrawingObjects();
@@ -290,15 +290,10 @@ CDocumentContentBase.prototype.GetFootnotesList = function(oFirstFootnote, oLast
 	var oEngine = new CDocumentFootnotesRangeEngine();
 	oEngine.Init(oFirstFootnote, oLastFootnote, !isEndnotes, isEndnotes);
 
-	var arrFootnotes = [];
-
 	var arrParagraphs = this.GetAllParagraphs({OnlyMainDocument : true, All : true});
 	for (var nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
 	{
-		var oParagraph = arrParagraphs[nIndex];
-
-		if (true === oParagraph.GetFootnotesList(oEngine))
-			return arrFootnotes;
+		arrParagraphs[nIndex].GetFootnotesList(oEngine);
 	}
 
 	return oEngine.GetRange();
