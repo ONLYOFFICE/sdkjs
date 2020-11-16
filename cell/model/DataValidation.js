@@ -620,6 +620,7 @@
 	prot['asc_getAllowBlank'] = prot.getAllowBlank;
 	prot['asc_getShowDropDown'] = prot.getShowDropDown;
 	prot['asc_getShowErrorMessage'] = prot.getShowErrorMessage;
+	prot['asc_getShowInputMessage'] = prot.getShowInputMessage;
 	prot['asc_getType'] = prot.getType;
 	prot['asc_getImeMode'] = prot.getImeMode;
 	prot['asc_getOperator'] = prot.getOperator;
@@ -635,6 +636,7 @@
 	prot['asc_setAllowBlank'] = prot.setAllowBlank;
 	prot['asc_setShowDropDown'] = prot.setShowDropDown;
 	prot['asc_setShowErrorMessage'] = prot.setShowErrorMessage;
+	prot['asc_setShowInputMessage'] = prot.setShowInputMessage;
 	prot['asc_setType'] = prot.setType;
 	prot['asc_setImeMode'] = prot.setImeMode;
 	prot['asc_setOperator'] = prot.setOperator;
