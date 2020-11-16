@@ -408,7 +408,7 @@ CEndnotesController.prototype.HaveEndnotes = function(oSectPr, isFinal)
 {
 	var nEndnotesPos = this.GetEndnotePrPos();
 
-	if (isFinal && section_endnote_PosDocEnd === nEndnotesPos)
+	if (isFinal && Asc.c_oAscEndnotePos.DocEnd === nEndnotesPos)
 	{
 		for (var nCurPage = 0, nPagesCount = this.Pages.length; nCurPage < nPagesCount; ++nCurPage)
 		{
@@ -416,7 +416,7 @@ CEndnotesController.prototype.HaveEndnotes = function(oSectPr, isFinal)
 				return true;
 		}
 	}
-	else if (section_endnote_PosSectEnd === nEndnotesPos)
+	else if (Asc.c_oAscEndnotePos.SectEnd === nEndnotesPos)
 	{
 		// Мы должны найти просто ссылку на самую последнюю сноску, и если она привязана не данной секции, значит
 		// в данной секции и не было никаких сносок
@@ -626,7 +626,7 @@ CEndnotesController.prototype.private_UpdateSection = function(oSectPr, nSection
 		{
 			for (var nEndnoteIndex = 0, nEndnotesCount = oPage.Endnotes.length; nEndnoteIndex < nEndnotesCount; ++nEndnoteIndex)
 			{
-				if ((oPos === section_endnote_PosDocEnd && isFinal) || (oPos === section_endnote_PosSectEnd && oPage.Endnotes[nEndnoteIndex].GetReferenceSectPr() === oSectPr))
+				if ((oPos === Asc.c_oAscEndnotePos.DocEnd && isFinal) || (oPos === Asc.c_oAscEndnotePos.SectEnd && oPage.Endnotes[nEndnoteIndex].GetReferenceSectPr() === oSectPr))
 					this.Sections[nSectionIndex].Endnotes.push(oPage.Endnotes[nEndnoteIndex]);
 			}
 		}
@@ -880,12 +880,12 @@ CEndnotesController.prototype.GetNearestPos = function(X, Y, nPageAbs, bAnchor, 
  * Проверяем попадание в сноски на заданной странице.
  * @param X
  * @param Y
- * @param nPageAbsAdd
+ * @param nPageAbs
  * @returns {boolean}
  */
 CEndnotesController.prototype.CheckHitInEndnote = function(X, Y, nPageAbs)
 {
-	var isCheckBottom = this.GetEndnotePrPos() === section_endnote_PosSectEnd;
+	var isCheckBottom = this.GetEndnotePrPos() === Asc.c_oAscEndnotePos.SectEnd;
 
 	if (true === this.IsEmptyPage(nPageAbs))
 		return false;

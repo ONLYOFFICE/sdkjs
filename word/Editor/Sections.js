@@ -58,14 +58,6 @@ var section_footnote_RestartContinuous = 0x00;
 var section_footnote_RestartEachSect   = 0x01;
 var section_footnote_RestartEachPage   = 0x02;
 
-var section_footnote_PosBeneathText = 0x00;
-var section_footnote_PosDocEnd      = 0x01;
-var section_footnote_PosPageBottom  = 0x02;
-var section_footnote_PosSectEnd     = 0x03;
-
-var section_endnote_PosDocEnd  = 0x00;
-var section_endnote_PosSectEnd = 0x01;
-
 function CSectionPr(LogicDocument)
 {
     this.Id = AscCommon.g_oIdCounter.Get_NewId();
@@ -830,7 +822,7 @@ CSectionPr.prototype.SetFootnotePos = function(nPos)
 CSectionPr.prototype.GetFootnotePos = function()
 {
 	if (undefined === this.FootnotePr.Pos)
-		return section_footnote_PosPageBottom;
+		return Asc.c_oAscFootnotePos.PageBottom;
 
 	return this.FootnotePr.Pos;
 };
@@ -1704,14 +1696,14 @@ CFootnotePr.prototype.InitDefault = function()
 	this.NumFormat  = Asc.c_oAscNumberingFormat.Decimal;
 	this.NumRestart = section_footnote_RestartContinuous;
 	this.NumStart   = 1;
-	this.Pos        = section_footnote_PosPageBottom;
+	this.Pos        = Asc.c_oAscFootnotePos.PageBottom;
 };
 CFootnotePr.prototype.InitDefaultEndnotePr = function()
 {
 	this.NumFormat  = Asc.c_oAscNumberingFormat.LowerRoman;
 	this.NumRestart = section_footnote_RestartContinuous;
 	this.NumStart   = 1;
-	this.Pos        = section_endnote_PosDocEnd;
+	this.Pos        = Asc.c_oAscEndnotePos.DocEnd;
 };
 CFootnotePr.prototype.WriteToBinary = function(Writer)
 {

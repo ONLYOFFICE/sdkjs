@@ -142,10 +142,15 @@ var c_oSerFormat = {
 };
 
 var c_oAscFootnotePos = {
-	BeneathText : 0x00, //section_footnote_PosBeneathText
-	DocEnd      : 0x01, //section_footnote_PosDocEnd
-	PageBottom  : 0x02, //section_footnote_PosPageBottom,
-	SectEnd     : 0x03  //section_footnote_PosSectEnd
+	BeneathText : 0x00,
+	DocEnd      : 0x01,
+	PageBottom  : 0x02,
+	SectEnd     : 0x03
+};
+
+var c_oAscEndnotePos = {
+	DocEnd      : 0x00,
+	SectEnd     : 0x01
 };
 
 var c_oAscFootnoteRestart = {
@@ -309,6 +314,10 @@ prot['BeneathText'] = c_oAscFootnotePos.BeneathText;
 prot['DocEnd']      = c_oAscFootnotePos.DocEnd;
 prot['PageBottom']  = c_oAscFootnotePos.PageBottom;
 prot['SectEnd']     = c_oAscFootnotePos.SectEnd;
+
+prot = window['Asc']['c_oAscEndnotePos'] = c_oAscEndnotePos;
+prot['DocEnd']      = c_oAscEndnotePos.DocEnd;
+prot['SectEnd']     = c_oAscEndnotePos.SectEnd;
 
 prot = window['Asc']['c_oAscFootnoteRestart'] = c_oAscFootnoteRestart;
 prot['Continuous'] = c_oAscFootnoteRestart.Continuous;
