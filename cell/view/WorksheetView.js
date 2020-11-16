@@ -20804,7 +20804,7 @@
 
 	WorksheetView.prototype.setDataValidationProps = function (props) {
 		var t = this;
-		var _selection = this.worksheet.getSelection();
+		var _selection = this.model.getSelection();
 
 		var callback = function (success) {
 			if (!success) {

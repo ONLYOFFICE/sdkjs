@@ -8969,7 +8969,7 @@
 	};
 
 	Worksheet.prototype.setDataValidationProps = function (props) {
-		var _selection = this.worksheet.getSelection();
+		var _selection = this.getSelection();
 		var _obj = this._getDataValidationIntersection(_selection.ranges);
 		var instersection = _obj.intersection;
 		var contain = _obj.contain;
@@ -8994,7 +8994,7 @@
 	};
 
 	Worksheet.prototype.addDataValidation = function (props, ranges, addToHistory) {
-		var _selection = ranges ? ranges : this.worksheet.getSelection();
+		var _selection = ranges ? ranges : this.getSelection();
 		var _dataValidation = props.clone();
 		_dataValidation.ranges = _selection;
 		this._addDataValidation(_dataValidation, addToHistory);
@@ -9003,9 +9003,9 @@
 
 	Worksheet.prototype._addDataValidation = function (dataValidation, addToHistory) {
 		if (!this.dataValidations) {
-			this.dataValidations = [];
+			this.dataValidations = new window['AscCommonExcel'].CDataValidations();
 		}
-		this.dataValidations.push(dataValidation);
+		this.dataValidations.elems.push(dataValidation);
 		if (addToHistory) {
 			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_DataValidationAdd, this.getId(), null,
 				new AscCommonExcel.UndoRedoData_BinaryWrapper(dataValidation));

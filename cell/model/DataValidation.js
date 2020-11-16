@@ -487,7 +487,7 @@
 		return this.showErrorMessage;
 	};
 	CDataValidation.prototype.getShowInputMessage = function() {
-		return this.showErrorMessage;
+		return this.showInputMessage;
 	};
 	CDataValidation.prototype.getType = function() {
 		return this.type;
@@ -525,7 +525,7 @@
 		this.showErrorMessage = newVal;
 	};
 	CDataValidation.prototype.setShowInputMessage = function(newVal, addToHistory) {
-		this.showErrorMessage = newVal;
+		this.showInputMessage = newVal;
 	};
 	CDataValidation.prototype.setType = function(newVal, addToHistory) {
 		this.type = newVal;
@@ -622,7 +622,7 @@
 	prot['asc_getShowErrorMessage'] = prot.getShowErrorMessage;
 	prot['asc_getShowInputMessage'] = prot.getShowInputMessage;
 	prot['asc_getType'] = prot.getType;
-	prot['asc_getImeMode'] = prot.getImeMode;
+	//prot['asc_getImeMode'] = prot.getImeMode;
 	prot['asc_getOperator'] = prot.getOperator;
 	prot['asc_getPrompt'] = prot.getPrompt;
 	prot['asc_getPromptTitle'] = prot.getPromptTitle;
@@ -638,7 +638,7 @@
 	prot['asc_setShowErrorMessage'] = prot.setShowErrorMessage;
 	prot['asc_setShowInputMessage'] = prot.setShowInputMessage;
 	prot['asc_setType'] = prot.setType;
-	prot['asc_setImeMode'] = prot.setImeMode;
+	//prot['asc_setImeMode'] = prot.setImeMode;
 	prot['asc_setOperator'] = prot.setOperator;
 	prot['asc_setPrompt'] = prot.setPrompt;
 	prot['asc_setPromptTitle'] = prot.setPromptTitle;
