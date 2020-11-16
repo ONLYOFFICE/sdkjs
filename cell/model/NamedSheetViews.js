@@ -97,6 +97,11 @@
 		}
 		s.Seek2(_end_pos);
 	};
+	CT_NamedSheetViews.prototype.hasColorFilter = function(){
+		return this.namedSheetView.some(function(namedSheetView) {
+			return namedSheetView.hasColorFilter();
+		});
+	}
 
 	function CT_NamedSheetView() {
 		this.nsvFilters = [];
@@ -227,6 +232,11 @@
 	CT_NamedSheetView.prototype.setWS = function (ws) {
 		this.ws = ws;
 	};
+	CT_NamedSheetView.prototype.hasColorFilter = function(){
+		return this.nsvFilters.some(function(nsvFilter) {
+			return nsvFilter.hasColorFilter();
+		});
+	}
 
 	function CT_NsvFilter() {
 		this.columnsFilter = [];
@@ -471,6 +481,11 @@
 			this.columnsFilter.splice(index, 1)
 		}
 	};
+	CT_NsvFilter.prototype.hasColorFilter = function(){
+		return this.columnsFilter.some(function(columnsFilter) {
+			return columnsFilter.hasColorFilter();
+		});
+	}
 
 
 	function CT_ColumnFilter() {
@@ -604,6 +619,9 @@
 
 		return res;
 	};
+	CT_ColumnFilter.prototype.hasColorFilter = function(){
+		return null !== this.filter && this.filter.isColorFilter();
+	}
 
 	function CT_SortRules() {
 		this.sortMethod = null;//none

@@ -7713,6 +7713,9 @@ function RangeDataManagerElem(bbox, data)
 
 		return false;
 	};
+	FilterColumn.prototype.isColorFilter = function () {
+		return this.ColorFilter !== null;
+	};
 	FilterColumn.prototype.readAttributes = function(attr, uq) {
 		if (attr()) {
 			var vals = attr();

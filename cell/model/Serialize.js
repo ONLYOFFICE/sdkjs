@@ -3256,11 +3256,20 @@
         this.WriteWorksheetsContent = function()
         {
 			var oThis = this;
+			var hasColorFilter = false;
 			this.wb.forEach(function (ws, index) {
 				oThis.bs.WriteItem(c_oSerWorksheetsTypes.Worksheet, function () {
 					oThis.WriteWorksheet(ws, index);
 				});
+				hasColorFilter = ws.aNamedSheetViews.some(function(namedSheetView){
+					return namedSheetView.hasColorFilter();
+				});
 			}, this.isCopyPaste);
+
+			//Fix excel crash with colorFilter in NamedSheetView
+			if(hasColorFilter && 0 === this.aDxfs.length) {
+				this.aDxfs.push(new AscCommonExcel.CellXfs());
+			}
         };
         this.WriteWorksheet = function(ws, index)
         {
@@ -6715,7 +6724,7 @@
         };
 		this.ReadDxfExternal = function () {
 			var oThis = this;
-			var dxf = new CT_Dxf();
+			var dxf = new AscCommonExcel.CellXfs();
 			var length = this.stream.GetULongLE();
 			this.bcr.Read1(length, function (t, l) {
 				return oThis.ReadDxf(t, l, dxf);
