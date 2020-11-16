@@ -8622,7 +8622,7 @@ CustomFilter.prototype.Write_ToBinary2 = function(writer) {
 
 	if (null != this.Val) {
 		writer.WriteBool(true);
-		writer.WriteLong(this.Val);
+		writer.WriteString2(this.Val);
 	} else {
 		writer.WriteBool(false);
 	}
@@ -8632,7 +8632,7 @@ CustomFilter.prototype.Read_FromBinary2 = function(reader) {
 		this.Operator = reader.GetLong();
 	}
 	if (reader.GetBool()) {
-		this.Val = reader.GetLong();
+		this.Val = reader.GetString2();
 	}
 };
 
