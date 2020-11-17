@@ -8996,7 +8996,7 @@ ColorFilter.prototype.toXml = function(writer, name) {
 ColorFilter.prototype.Write_ToBinary2 = function(writer) {
 	if (null !== this.CellColor) {
 		writer.WriteBool(true);
-		writer.WriteLong(this.CellColor);
+		writer.WriteBool(this.CellColor);
 	} else {
 		writer.WriteBool(false);
 	}
@@ -9012,7 +9012,7 @@ ColorFilter.prototype.Write_ToBinary2 = function(writer) {
 };
 ColorFilter.prototype.Read_FromBinary2 = function(reader) {
 	if (reader.GetBool()) {
-		this.CellColor = reader.GetLong();
+		this.CellColor = reader.GetBool();
 	}
 	if (reader.GetBool()) {
 		var api_sheet = Asc['editor'];
