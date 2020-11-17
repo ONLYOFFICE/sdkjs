@@ -242,8 +242,12 @@
 			CustomSortNotOriginalSelectError: -801,
 
 			// Data Validate
-			DataValidateNotNumericMinimum: -830,
-			DataValidateNotNumericMaximum: -831,
+			DataValidateNotNumeric: -830,
+			DataValidateNegativeTextLength: -831,
+			DataValidateMustEnterValue: -832,
+			DataValidateMinGreaterMax: 833,
+			DataValidateInvalid: 834,
+
 
 			RemoveDuplicates : -850,
 
@@ -2271,8 +2275,11 @@
 	prot['RemoveDuplicates']                 = prot.RemoveDuplicates;
 	prot['LargeRangeWarning']                = prot.LargeRangeWarning;
 	prot['LockedEditView']                   = prot.LockedEditView;
-	prot['DataValidateNotNumericMinimum']    = prot.DataValidateNotNumericMinimum;
-	prot['DataValidateNotNumericMaximum']    = prot.DataValidateNotNumericMaximum;
+	prot['DataValidateNotNumericFirst']      = prot.DataValidateNotNumericFirst;
+	prot['DataValidateNotNumericSecond']     = prot.DataValidateNotNumericSecond
+	prot['DataValidateNegativeTextLength']   = prot.DataValidateNegativeTextLength;
+	prot['DataValidateMustEnterFirstValue']  = prot.DataValidateMustEnterFirstValue
+	prot['DataValidateMustEnterSecondValue'] = prot.DataValidateMustEnterSecondValue;
 
 	window['Asc']['c_oAscAsyncAction']       = window['Asc'].c_oAscAsyncAction = c_oAscAsyncAction;
 	prot                                     = c_oAscAsyncAction;

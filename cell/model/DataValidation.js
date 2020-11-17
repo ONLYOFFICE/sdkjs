@@ -92,20 +92,20 @@
 
 		this._formula = new AscCommonExcel.parserFormula(this.text, this, ws);
 		this._formula.parse();
-        this._formula.buildDependencies();
+		this._formula.buildDependencies();
 	};
-    CDataFormula.prototype.onFormulaEvent = function (type, eventData) {
-        if (AscCommon.c_oNotifyParentType.ChangeFormula === type) {
-            this.text = eventData.assemble;
-        }
-    };
-	CDataFormula.prototype.getValue = function(ws, returnRaw) {
+	CDataFormula.prototype.onFormulaEvent = function (type, eventData) {
+		if (AscCommon.c_oNotifyParentType.ChangeFormula === type) {
+			this.text = eventData.assemble;
+		}
+	};
+	CDataFormula.prototype.getValue = function (ws, returnRaw) {
 		this._init(ws);
 		var activeCell = ws.getSelection().activeCell;
 		var res = this._formula.calculate(null, new Asc.Range(activeCell.col, activeCell.row, activeCell.col, activeCell.row));
 		return returnRaw ? this._formula.simplifyRefType(res) : res;
 	};
-	CDataFormula.prototype.Write_ToBinary2 = function(writer) {
+	CDataFormula.prototype.Write_ToBinary2 = function (writer) {
 		if (null !== this.text) {
 			writer.WriteBool(true);
 			writer.WriteString2(this.text);
@@ -113,16 +113,72 @@
 			writer.WriteBool(false);
 		}
 	};
-	CDataFormula.prototype.Read_FromBinary2 = function(reader) {
+	CDataFormula.prototype.Read_FromBinary2 = function (reader) {
 		if (reader.GetBool()) {
 			this.text = reader.GetString2();
 		}
 	};
-	CDataFormula.prototype.asc_getValue = function() {
+	CDataFormula.prototype.asc_getValue = function () {
 		return this.text;
 	};
-	CDataFormula.prototype.asc_setValue = function(val) {
+	CDataFormula.prototype.asc_setValue = function (val) {
 		this.text = val;
+	};
+	CDataFormula.prototype.asc_checkValid = function () {
+		function _isNumeric(value) {
+			return !isNaN(parseFloat(value)) && isFinite(value);
+		}
+
+		var res = null;
+
+		var _formula, _formulaRes
+		var val = this.text;
+		if (val[0] === "=") {
+			_formula = new CDataFormula(this.text);
+			_formulaRes = _formula.getValue();
+		}
+
+		var asc_error = Asc.c_oAscError.ID;
+		switch (type) {
+			case EDataValidationType.Date:
+				if (!_formula && !_isNumeric(val)) {
+					return asc_error.DataValidateInvalid;
+				}
+				//TODO не нашёл константу на максимальную дату
+				var maxDate = 2958465;
+				if (val < 0 || val > maxDate) {
+					return asc_error.DataValidateInvalid;
+				}
+				break;
+			case EDataValidationType.Decimal:
+			case EDataValidationType.Whole:
+				if (!_formula && !_isNumeric(val)) {
+					return asc_error.DataValidateNotNumeric;
+				}
+				break;
+			case EDataValidationType.List:
+				break;
+			case EDataValidationType.TextLength:
+				if (!_formula && !_isNumeric(val)) {
+					return asc_error.DataValidateNotNumeric;
+				}
+				if (val.length >= 10000000000 || val < 0) {
+					return asc_error.DataValidateNegativeTextLength;
+				}
+				break;
+			case EDataValidationType.Time:
+				if (!_formula && !_isNumeric(val)) {
+					return asc_error.DataValidateInvalid;
+				}
+				if (val < 0 || val >= 1) {
+					return asc_error.DataValidateInvalid;
+				}
+
+				break;
+		}
+
+
+		return res;
 	};
 
 
@@ -149,6 +205,7 @@
 
 		return this;
 	}
+
 	CDataValidation.prototype.Get_Id = function () {
 		return this.Id;
 	};
@@ -166,7 +223,7 @@
 			this.formula2._init(ws);
 		}
 	};
-	CDataValidation.prototype.clone = function() {
+	CDataValidation.prototype.clone = function () {
 		var res = new CDataValidation();
 		if (this.ranges) {
 			res.ranges = [];
@@ -214,7 +271,7 @@
 		}
 		return propOld;
 	};
-	CDataValidation.prototype.isEqual = function(obj) {
+	CDataValidation.prototype.isEqual = function (obj) {
 		var errorEqual = obj.error === this.error && this.errorStyle === obj.errorStyle && this.showErrorMessage === obj.showErrorMessage;
 		if (errorEqual) {
 			if (obj.allowBlank === this.allowBlank && obj.showDropDown === this.showDropDown && obj.showInputMessage === this.showInputMessage) {
@@ -251,40 +308,40 @@
 		writer.WriteLong(this.imeMode);
 		writer.WriteLong(this.operator);
 
-		if(null != this.error) {
+		if (null != this.error) {
 			writer.WriteBool(true);
 			writer.WriteString2(this.error);
-		}else {
+		} else {
 			writer.WriteBool(false);
 		}
-		if(null != this.errorTitle) {
+		if (null != this.errorTitle) {
 			writer.WriteBool(true);
 			writer.WriteString2(this.errorTitle);
-		}else {
+		} else {
 			writer.WriteBool(false);
 		}
-		if(null != this.promt) {
+		if (null != this.promt) {
 			writer.WriteBool(true);
 			writer.WriteString2(this.promt);
-		}else {
+		} else {
 			writer.WriteBool(false);
 		}
-		if(null != this.promptTitle) {
+		if (null != this.promptTitle) {
 			writer.WriteBool(true);
 			writer.WriteString2(this.promptTitle);
-		}else {
+		} else {
 			writer.WriteBool(false);
 		}
-		if(null != this.formula1) {
+		if (null != this.formula1) {
 			writer.WriteBool(true);
 			this.formula1.Write_ToBinary2(writer);
-		}else {
+		} else {
 			writer.WriteBool(false);
 		}
-		if(null != this.formula2) {
+		if (null != this.formula2) {
 			writer.WriteBool(true);
 			this.formula2.Write_ToBinary2(writer);
-		}else {
+		} else {
 			writer.WriteBool(false);
 		}
 	};
@@ -296,7 +353,8 @@
 				var c1 = reader.GetLong();
 				var r2 = reader.GetLong();
 				var c2 = reader.GetLong();
-				this.ranges.push(new Asc.Range(c1, r1, c2, r2));			}
+				this.ranges.push(new Asc.Range(c1, r1, c2, r2));
+			}
 		}
 
 		this.allowBlank = reader.GetBool();
@@ -309,31 +367,31 @@
 		this.imeMode = reader.GetLong();
 		this.operator = reader.GetLong();
 
-		if(reader.GetBool()) {
+		if (reader.GetBool()) {
 			this.error = reader.GetString2();
 		}
-		if(reader.GetBool()) {
+		if (reader.GetBool()) {
 			this.errorTitle = reader.GetString2();
 		}
-		if(reader.GetBool()) {
+		if (reader.GetBool()) {
 			this.promt = reader.GetString2();
 		}
-		if(reader.GetBool()) {
+		if (reader.GetBool()) {
 			this.promptTitle = reader.GetString2();
 		}
 		var obj;
-		if(reader.GetBool()) {
+		if (reader.GetBool()) {
 			obj = new CDataFormula();
 			obj.Read_FromBinary2(reader);
 			this.formula1 = obj;
 		}
-		if(reader.GetBool()) {
+		if (reader.GetBool()) {
 			obj = new CDataFormula();
 			obj.Read_FromBinary2(reader);
 			this.formula2 = obj;
 		}
 	};
-	CDataValidation.prototype.setSqRef = function(sqRef) {
+	CDataValidation.prototype.setSqRef = function (sqRef) {
 		this.ranges = AscCommonExcel.g_oRangeCache.getRangesFromSqRef(sqRef);
 	};
 	CDataValidation.prototype.contains = function (c, r) {
@@ -472,62 +530,15 @@
 		return (this.type === EDataValidationType.List && !this.showDropDown);
 	};
 	CDataValidation.prototype.getListValues = function (ws) {
-		return this.isListValues() ?  this._getListValues(ws) : null;
+		return this.isListValues() ? this._getListValues(ws) : null;
 	};
-	CDataValidation.prototype.isValidDataRef = function (dataRange, type) {
+	CDataValidation.prototype.asc_checkValid = function () {
 		var res = null;
-		if (dataRange.length && dataRange[0] && dataRange[1]) {
-			if (dataRange[1] < dataRange[0]) {
-				return false;
+		if (this.formula1 && this.formula2) {
+			if (this.formula1 < this.formula2) {
+				return Asc.c_oAscError.ID.DataValidateMinGreaterMax;
 			}
 		}
-
-		function _isNumeric(value) {
-			return !isNaN(parseFloat(value)) && isFinite(value);
-		}
-
-		var _isValid =  function (_val, isSecond) {
-			var _error = null;
-			var _formula, _formulaRes
-			if (_val[0] === "=") {
-				_formula = new CDataFormula(_val);
-				_formulaRes = _formula.getValue();
-			}
-			var asc_error = Asc.c_oAscError.ID;
-			switch (type) {
-				case EDataValidationType.Date:
-
-					break;
-				case EDataValidationType.Decimal:
-				case EDataValidationType.Whole:
-					if (!_formula && !_isNumeric(_val)) {
-						return isSecond ?  asc_error.DataValidateNotNumericMaximum : asc_error.DataValidateNotNumericMinimum;
-					}
-					break;
-				case EDataValidationType.List:
-
-
-					break;
-				case EDataValidationType.TextLength:
-
-
-					break;
-				case EDataValidationType.Time:
-
-					break;
-			}
-			return _error;
-		};
-
-		if (dataRange.length) {
-			res = _isValid(dataRange[0]);
-			if (res !== null && dataRange[1]) {
-				res = _isValid(dataRange[1], true);
-			}
-		} else {
-			res = _isValid(dataRange);
-		}
-
 		return res;
 	};
 
@@ -540,84 +551,84 @@
 	CDataValidation.prototype.getErrorTitle = function () {
 		return this.errorTitle;
 	};
-	CDataValidation.prototype.getAllowBlank = function() {
+	CDataValidation.prototype.getAllowBlank = function () {
 		return this.allowBlank;
 	};
-	CDataValidation.prototype.getShowDropDown = function() {
+	CDataValidation.prototype.getShowDropDown = function () {
 		return this.showDropDown;
 	};
-	CDataValidation.prototype.getShowErrorMessage = function() {
+	CDataValidation.prototype.getShowErrorMessage = function () {
 		return this.showErrorMessage;
 	};
-	CDataValidation.prototype.getShowInputMessage = function() {
+	CDataValidation.prototype.getShowInputMessage = function () {
 		return this.showInputMessage;
 	};
-	CDataValidation.prototype.getType = function() {
+	CDataValidation.prototype.getType = function () {
 		return this.type;
 	};
-	CDataValidation.prototype.getImeMode = function() {
+	CDataValidation.prototype.getImeMode = function () {
 		return this.imeMode;
 	};
-	CDataValidation.prototype.getOperator = function() {
+	CDataValidation.prototype.getOperator = function () {
 		return this.operator;
 	};
-	CDataValidation.prototype.getPrompt = function() {
+	CDataValidation.prototype.getPrompt = function () {
 		return this.prompt;
 	};
-	CDataValidation.prototype.getPromptTitle = function() {
+	CDataValidation.prototype.getPromptTitle = function () {
 		return this.promptTitle;
 	};
-	CDataValidation.prototype.getFormula1 = function() {
+	CDataValidation.prototype.getFormula1 = function () {
 		return this.formula1;
 	};
-	CDataValidation.prototype.getFormula2 = function() {
+	CDataValidation.prototype.getFormula2 = function () {
 		return this.formula2;
 	};
 
-	CDataValidation.prototype.setAllowBlank = function(newVal, addToHistory) {
+	CDataValidation.prototype.setAllowBlank = function (newVal, addToHistory) {
 		//setTableProperty(this, this.name, newVal, addToHistory, AscCH.historyitem_PivotTable_SetName);
 		this.name = newVal;
 	};
-	CDataValidation.prototype.setAllowBlank = function(newVal, addToHistory) {
+	CDataValidation.prototype.setAllowBlank = function (newVal, addToHistory) {
 		this.allowBlank = newVal;
 	};
-	CDataValidation.prototype.setShowDropDown = function(newVal, addToHistory) {
+	CDataValidation.prototype.setShowDropDown = function (newVal, addToHistory) {
 		this.showDropDown = newVal;
 	};
-	CDataValidation.prototype.setShowErrorMessage = function(newVal, addToHistory) {
+	CDataValidation.prototype.setShowErrorMessage = function (newVal, addToHistory) {
 		this.showErrorMessage = newVal;
 	};
-	CDataValidation.prototype.setShowInputMessage = function(newVal, addToHistory) {
+	CDataValidation.prototype.setShowInputMessage = function (newVal, addToHistory) {
 		this.showInputMessage = newVal;
 	};
-	CDataValidation.prototype.setType = function(newVal, addToHistory) {
+	CDataValidation.prototype.setType = function (newVal, addToHistory) {
 		this.type = newVal;
 	};
-	CDataValidation.prototype.setErrorStyle = function(newVal, addToHistory) {
+	CDataValidation.prototype.setErrorStyle = function (newVal, addToHistory) {
 		this.errorStyle = newVal;
 	};
-	CDataValidation.prototype.setImeMode = function(newVal, addToHistory) {
+	CDataValidation.prototype.setImeMode = function (newVal, addToHistory) {
 		this.imeMode = newVal;
 	};
-	CDataValidation.prototype.setOperator = function(newVal, addToHistory) {
+	CDataValidation.prototype.setOperator = function (newVal, addToHistory) {
 		this.operator = newVal;
 	};
-	CDataValidation.prototype.setError = function(newVal, addToHistory) {
+	CDataValidation.prototype.setError = function (newVal, addToHistory) {
 		this.error = newVal;
 	};
-	CDataValidation.prototype.setErrorTitle = function(newVal, addToHistory) {
+	CDataValidation.prototype.setErrorTitle = function (newVal, addToHistory) {
 		this.errorTitle = newVal;
 	};
-	CDataValidation.prototype.setPrompt = function(newVal, addToHistory) {
+	CDataValidation.prototype.setPrompt = function (newVal, addToHistory) {
 		this.prompt = newVal;
 	};
-	CDataValidation.prototype.setPromptTitle = function(newVal, addToHistory) {
+	CDataValidation.prototype.setPromptTitle = function (newVal, addToHistory) {
 		this.promptTitle = newVal;
 	};
-	CDataValidation.prototype.setFormula1 = function(newVal, addToHistory) {
+	CDataValidation.prototype.setFormula1 = function (newVal, addToHistory) {
 		this.formula1 = newVal;
 	};
-	CDataValidation.prototype.setFormula2 = function(newVal, addToHistory) {
+	CDataValidation.prototype.setFormula2 = function (newVal, addToHistory) {
 		this.formula2 = newVal;
 	};
 
@@ -636,7 +647,7 @@
 			this.elems[i]._init(ws);
 		}
 	};
-	CDataValidations.prototype.clone = function() {
+	CDataValidations.prototype.clone = function () {
 		var i, res = new CDataValidations();
 		res.disablePrompts = this.disablePrompts;
 		res.xWindow = this.xWindow;
