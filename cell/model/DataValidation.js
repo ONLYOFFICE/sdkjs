@@ -118,6 +118,13 @@
 			this.text = reader.GetString2();
 		}
 	};
+	CDataFormula.prototype.asc_getValue = function() {
+		return this.text;
+	};
+	CDataFormula.prototype.asc_setValue = function(val) {
+		this.text = val;
+	};
+
 
 	function CDataValidation() {
 		this.ranges = null;
@@ -611,6 +618,9 @@
 
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 	window['AscCommonExcel'].CDataFormula = CDataFormula;
+	prot = CDataFormula.prototype;
+	prot['asc_getValue'] = prot.asc_getValue;
+	prot['asc_setValue'] = prot.asc_setValue;
 	window['AscCommonExcel'].CDataValidation = CDataValidation;
 	prot = CDataValidation.prototype;
 	prot['asc_getError'] = prot.getError;
