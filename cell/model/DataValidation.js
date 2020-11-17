@@ -124,62 +124,6 @@
 	CDataFormula.prototype.asc_setValue = function (val) {
 		this.text = val;
 	};
-	CDataFormula.prototype.asc_checkValid = function () {
-		function _isNumeric(value) {
-			return !isNaN(parseFloat(value)) && isFinite(value);
-		}
-
-		var res = null;
-
-		var _formula, _formulaRes
-		var val = this.text;
-		if (val[0] === "=") {
-			_formula = new CDataFormula(this.text);
-			_formulaRes = _formula.getValue();
-		}
-
-		var asc_error = Asc.c_oAscError.ID;
-		switch (type) {
-			case EDataValidationType.Date:
-				if (!_formula && !_isNumeric(val)) {
-					return asc_error.DataValidateInvalid;
-				}
-				//TODO не нашёл константу на максимальную дату
-				var maxDate = 2958465;
-				if (val < 0 || val > maxDate) {
-					return asc_error.DataValidateInvalid;
-				}
-				break;
-			case EDataValidationType.Decimal:
-			case EDataValidationType.Whole:
-				if (!_formula && !_isNumeric(val)) {
-					return asc_error.DataValidateNotNumeric;
-				}
-				break;
-			case EDataValidationType.List:
-				break;
-			case EDataValidationType.TextLength:
-				if (!_formula && !_isNumeric(val)) {
-					return asc_error.DataValidateNotNumeric;
-				}
-				if (val.length >= 10000000000 || val < 0) {
-					return asc_error.DataValidateNegativeTextLength;
-				}
-				break;
-			case EDataValidationType.Time:
-				if (!_formula && !_isNumeric(val)) {
-					return asc_error.DataValidateInvalid;
-				}
-				if (val < 0 || val >= 1) {
-					return asc_error.DataValidateInvalid;
-				}
-
-				break;
-		}
-
-
-		return res;
-	};
 
 
 	function CDataValidation() {
@@ -539,6 +483,59 @@
 				return Asc.c_oAscError.ID.DataValidateMinGreaterMax;
 			}
 		}
+		return res;
+	};
+	CDataValidation.prototype.isValidDataRef = function (ws, _val, type) {
+		function _isNumeric(value) {
+			return !isNaN(parseFloat(value)) && isFinite(value);
+		}
+
+		var res = null;
+
+		var val = this.text;
+		var _formula = new CDataFormula(this.text);
+		var _formulaRes = _formula.getValue();
+		//AscCommonExcel.cElementType.number === val.type
+
+		var asc_error = Asc.c_oAscError.ID;
+		switch (type) {
+			case EDataValidationType.Date:
+				if (!_formula && !_isNumeric(val)) {
+					return asc_error.DataValidateInvalid;
+				}
+				//TODO не нашёл константу на максимальную дату
+				var maxDate = 2958465;
+				if (val < 0 || val > maxDate) {
+					return asc_error.DataValidateInvalid;
+				}
+				break;
+			case EDataValidationType.Decimal:
+			case EDataValidationType.Whole:
+				if (!_formula && !_isNumeric(val)) {
+					return asc_error.DataValidateNotNumeric;
+				}
+				break;
+			case EDataValidationType.List:
+				break;
+			case EDataValidationType.TextLength:
+				if (!_formula && !_isNumeric(val)) {
+					return asc_error.DataValidateNotNumeric;
+				}
+				if (val.length >= 10000000000 || val < 0) {
+					return asc_error.DataValidateNegativeTextLength;
+				}
+				break;
+			case EDataValidationType.Time:
+				if (!_formula && !_isNumeric(val)) {
+					return asc_error.DataValidateInvalid;
+				}
+				if (val < 0 || val >= 1) {
+					return asc_error.DataValidateInvalid;
+				}
+
+				break;
+		}
+
 		return res;
 	};
 

@@ -3034,7 +3034,7 @@
 			}
 			else if (Asc.c_oAscSelectionDialogType.DataValidation === dialogType)
 			{
-				var dataValidaionTest = AscCommonExcel.CDataValidation.prototype.isValidDataRef(dataRange, subType);
+				var dataValidaionTest = AscCommonExcel.CDataValidation.prototype.isValidDataRef(wb.getWorksheet().model, dataRange, subType);
 				if (null !== dataValidaionTest)
 				{
 					return dataValidaionTest;
