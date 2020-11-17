@@ -474,6 +474,62 @@
 	CDataValidation.prototype.getListValues = function (ws) {
 		return this.isListValues() ?  this._getListValues(ws) : null;
 	};
+	CDataValidation.prototype.isValidDataRef = function (dataRange, type) {
+		var res = null;
+		if (dataRange.length && dataRange[0] && dataRange[1]) {
+			if (dataRange[1] < dataRange[0]) {
+				return false;
+			}
+		}
+
+		function _isNumeric(value) {
+			return !isNaN(parseFloat(value)) && isFinite(value);
+		}
+
+		var _isValid =  function (_val, isSecond) {
+			var _error = null;
+			var _formula, _formulaRes
+			if (_val[0] === "=") {
+				_formula = new CDataFormula(_val);
+				_formulaRes = _formula.getValue();
+			}
+			var asc_error = Asc.c_oAscError.ID;
+			switch (type) {
+				case EDataValidationType.Date:
+
+					break;
+				case EDataValidationType.Decimal:
+				case EDataValidationType.Whole:
+					if (!_formula && !_isNumeric(_val)) {
+						return isSecond ?  asc_error.DataValidateNotNumericMaximum : asc_error.DataValidateNotNumericMinimum;
+					}
+					break;
+				case EDataValidationType.List:
+
+
+					break;
+				case EDataValidationType.TextLength:
+
+
+					break;
+				case EDataValidationType.Time:
+
+					break;
+			}
+			return _error;
+		};
+
+		if (dataRange.length) {
+			res = _isValid(dataRange[0]);
+			if (res !== null && dataRange[1]) {
+				res = _isValid(dataRange[1], true);
+			}
+		} else {
+			res = _isValid(dataRange);
+		}
+
+		return res;
+	};
 
 	CDataValidation.prototype.getError = function () {
 		return this.error;

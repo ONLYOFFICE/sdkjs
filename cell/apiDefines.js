@@ -111,7 +111,8 @@ var c_oAscSelectionDialogType = {
   PivotTableData: 6,
   PivotTableReport: 7,
   PrintTitles: 8,
-  Function: 9
+  Function: 9,
+  DataValidation: 10
 };
 
 var c_oAscScrollType = {
@@ -578,6 +579,7 @@ var c_oAscPopUpSelectorType = {
   prot['PivotTableReport'] = prot.PivotTableReport;
   prot['PrintTitles'] = prot.PrintTitles;
   prot['Function'] = prot.Function;
+  prot['DataValidation'] = prot.DataValidation;
   window['Asc']['c_oAscHyperlinkType'] = window['Asc'].c_oAscHyperlinkType = c_oAscHyperlinkType;
   prot = c_oAscHyperlinkType;
   prot['WebLink'] = prot.WebLink;

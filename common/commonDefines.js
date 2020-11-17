@@ -242,6 +242,9 @@
 			CustomSortNotOriginalSelectError: -801,
 
 			// Data Validate
+			DataValidateNotNumericMinimum: -830,
+			DataValidateNotNumericMaximum: -831,
+
 			RemoveDuplicates : -850,
 
 			LargeRangeWarning: -900,
@@ -2268,6 +2271,9 @@
 	prot['RemoveDuplicates']                 = prot.RemoveDuplicates;
 	prot['LargeRangeWarning']                = prot.LargeRangeWarning;
 	prot['LockedEditView']                   = prot.LockedEditView;
+	prot['DataValidateNotNumericMinimum']    = prot.DataValidateNotNumericMinimum;
+	prot['DataValidateNotNumericMaximum']    = prot.DataValidateNotNumericMaximum;
+
 	window['Asc']['c_oAscAsyncAction']       = window['Asc'].c_oAscAsyncAction = c_oAscAsyncAction;
 	prot                                     = c_oAscAsyncAction;
 	prot['Open']                             = prot.Open;
