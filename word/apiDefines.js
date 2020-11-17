@@ -308,18 +308,17 @@ prot['ALIGN_MIDDLE'] = c_oAscAlignShapeType.ALIGN_MIDDLE;
 
 
 
-
-prot = window['Asc']['c_oAscFootnotePos'] = c_oAscFootnotePos;
+prot = window['Asc']['c_oAscFootnotePos'] = window['Asc'].c_oAscFootnotePos = c_oAscFootnotePos;
 prot['BeneathText'] = c_oAscFootnotePos.BeneathText;
 prot['DocEnd']      = c_oAscFootnotePos.DocEnd;
 prot['PageBottom']  = c_oAscFootnotePos.PageBottom;
 prot['SectEnd']     = c_oAscFootnotePos.SectEnd;
 
-prot = window['Asc']['c_oAscEndnotePos'] = c_oAscEndnotePos;
+prot = window['Asc']['c_oAscEndnotePos'] = window['Asc'].c_oAscEndnotePos = c_oAscEndnotePos;
 prot['DocEnd']      = c_oAscEndnotePos.DocEnd;
 prot['SectEnd']     = c_oAscEndnotePos.SectEnd;
 
-prot = window['Asc']['c_oAscFootnoteRestart'] = c_oAscFootnoteRestart;
+prot = window['Asc']['c_oAscFootnoteRestart'] = window['Asc'].c_oAscFootnoteRestart = c_oAscFootnoteRestart;
 prot['Continuous'] = c_oAscFootnoteRestart.Continuous;
 prot['EachSect']   = c_oAscFootnoteRestart.EachSect;
 prot['EachPage']   = c_oAscFootnoteRestart.EachPage;
