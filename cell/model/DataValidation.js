@@ -492,15 +492,19 @@
 
 		var res = null;
 
-		var val = this.text;
-		var _formula = new CDataFormula(this.text);
-		var _formulaRes = _formula.getValue();
+		var isNumeric = _isNumeric(_val);
+		var _formula, _formulaRes;
+		if (!isNumeric) {
+			_formula = new CDataFormula(_val);
+			_formulaRes = _formula.getValue(ws);
+		}
 		//AscCommonExcel.cElementType.number === val.type
 
 		var asc_error = Asc.c_oAscError.ID;
 		switch (type) {
 			case EDataValidationType.Date:
-				if (!_formula && !_isNumeric(val)) {
+				if (!isNumeric) {
+					//проверка на корректность формулы
 					return asc_error.DataValidateInvalid;
 				}
 				//TODO не нашёл константу на максимальную дату
@@ -511,22 +515,25 @@
 				break;
 			case EDataValidationType.Decimal:
 			case EDataValidationType.Whole:
-				if (!_formula && !_isNumeric(val)) {
+				if (!isNumeric) {
+					//проверка на корректность формулы
 					return asc_error.DataValidateNotNumeric;
 				}
 				break;
 			case EDataValidationType.List:
 				break;
 			case EDataValidationType.TextLength:
-				if (!_formula && !_isNumeric(val)) {
+				if (!isNumeric) {
+					//проверка на корректность формулы
 					return asc_error.DataValidateNotNumeric;
 				}
-				if (val.length >= 10000000000 || val < 0) {
+				if (val >= 10000000000 || val < 0) {
 					return asc_error.DataValidateNegativeTextLength;
 				}
 				break;
 			case EDataValidationType.Time:
-				if (!_formula && !_isNumeric(val)) {
+				if (!isNumeric) {
+					//проверка на корректность формулы
 					return asc_error.DataValidateInvalid;
 				}
 				if (val < 0 || val >= 1) {
@@ -718,6 +725,7 @@
 	prot['asc_setPromptTitle'] = prot.setPromptTitle;
 	prot['asc_setFormula1'] = prot.setFormula1;
 	prot['asc_setFormula2'] = prot.setFormula2;
+	prot['asc_checkValid'] = prot.asc_checkValid;
 
 	window['Asc']['EDataValidationOperator'] = window['Asc'].EDataValidationOperator = EDataValidationOperator;
 	prot = EDataValidationOperator;

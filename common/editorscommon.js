@@ -2947,7 +2947,7 @@
 			range = AscCommonExcel.g_oRangeCache.getAscRange(dataRange);
 		}
 
-		if (!range)
+		if (!range && Asc.c_oAscSelectionDialogType.DataValidation !== dialogType)
 			return Asc.c_oAscError.ID.DataRangeError;
 
 		if (fullCheck)
@@ -3034,7 +3034,7 @@
 			}
 			else if (Asc.c_oAscSelectionDialogType.DataValidation === dialogType)
 			{
-				var dataValidaionTest = AscCommonExcel.CDataValidation.prototype.isValidDataRef(wb.getWorksheet().model, dataRange, subType);
+				var dataValidaionTest = AscCommonExcel.CDataValidation.prototype.isValidDataRef(model.getActiveWs(), dataRange, subType);
 				if (null !== dataValidaionTest)
 				{
 					return dataValidaionTest;
