@@ -1696,14 +1696,14 @@ CFootnotePr.prototype.InitDefault = function()
 	this.NumFormat  = Asc.c_oAscNumberingFormat.Decimal;
 	this.NumRestart = section_footnote_RestartContinuous;
 	this.NumStart   = 1;
-	this.Pos        = Asc.c_oAscFootnotePos.PageBottom;
+	this.Pos        = Asc.c_oAscFootnotePos && Asc.c_oAscFootnotePos.PageBottom;
 };
 CFootnotePr.prototype.InitDefaultEndnotePr = function()
 {
 	this.NumFormat  = Asc.c_oAscNumberingFormat.LowerRoman;
 	this.NumRestart = section_footnote_RestartContinuous;
 	this.NumStart   = 1;
-	this.Pos        = Asc.c_oAscEndnotePos.DocEnd;
+	this.Pos        = Asc.c_oAscEndnotePos && Asc.c_oAscEndnotePos.DocEnd;
 };
 CFootnotePr.prototype.WriteToBinary = function(Writer)
 {
