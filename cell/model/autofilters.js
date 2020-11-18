@@ -878,9 +878,8 @@
 				}
 
 				//history
-				var updateRange =  oldFilter ? oldFilter.Ref: null;
 				this._addHistoryObj(oldFilter, AscCH.historyitem_AutoFilter_Apply,
-					{activeCells: ar, autoFiltersObject: autoFiltersObject}, null, updateRange);
+					{activeCells: ar, autoFiltersObject: autoFiltersObject}, null, rangeOldFilter);
 				History.EndTransaction();
 
 				if (!bUndoChanges && !bRedoChanges) {
