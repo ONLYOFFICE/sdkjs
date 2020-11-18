@@ -8996,7 +8996,11 @@
 	Worksheet.prototype.addDataValidation = function (props, ranges, addToHistory) {
 		var _selection = ranges ? ranges : this.getSelection();
 		var _dataValidation = props.clone();
-		_dataValidation.ranges = _selection;
+		var _ranges = [];
+		for (var i = 0; i < _selection.ranges.length; i++) {
+			_ranges.push(_selection.ranges[i].clone());
+		}
+		_dataValidation.ranges = _ranges;
 		this._addDataValidation(_dataValidation, addToHistory);
 		return _dataValidation;
 	};
