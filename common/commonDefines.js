@@ -2275,11 +2275,12 @@
 	prot['RemoveDuplicates']                 = prot.RemoveDuplicates;
 	prot['LargeRangeWarning']                = prot.LargeRangeWarning;
 	prot['LockedEditView']                   = prot.LockedEditView;
-	prot['DataValidateNotNumericFirst']      = prot.DataValidateNotNumericFirst;
-	prot['DataValidateNotNumericSecond']     = prot.DataValidateNotNumericSecond
+	
+	prot['DataValidateNotNumeric']           = prot.DataValidateNotNumeric;
 	prot['DataValidateNegativeTextLength']   = prot.DataValidateNegativeTextLength;
-	prot['DataValidateMustEnterFirstValue']  = prot.DataValidateMustEnterFirstValue
-	prot['DataValidateMustEnterSecondValue'] = prot.DataValidateMustEnterSecondValue;
+	prot['DataValidateMustEnterValue']       = prot.DataValidateMustEnterValue;
+	prot['DataValidateMinGreaterMax']        = prot.DataValidateMinGreaterMax;
+	prot['DataValidateInvalid']              = prot.DataValidateInvalid;
 
 	window['Asc']['c_oAscAsyncAction']       = window['Asc'].c_oAscAsyncAction = c_oAscAsyncAction;
 	prot                                     = c_oAscAsyncAction;
