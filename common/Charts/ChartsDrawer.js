@@ -6036,7 +6036,8 @@ drawAreaChart.prototype = {
 
 		//точки данной серии
 		if(this.subType === "stacked" || this.subType === "stackedPer") {
-			for (var i = 0; i < points.length; i++) {
+			var pointsLength = points.length;
+			for (var i = 0; i < pointsLength; i++) {
 				point = points[i];
 				if(!point) {
 
@@ -6048,8 +6049,8 @@ drawAreaChart.prototype = {
 			}
 
 			//точки предыдущей серии
-			if (prevPoints != null) {
-				for (var i = prevPoints.length - 1; i >= 0; i--) {
+			if (prevPoints != null && pointsLength) {
+				for (var i = pointsLength - 1; i >= 0; i--) {
 					point = prevPoints[i];
 					path.lnTo(point.x * pathW, point.y * pathH);
 
