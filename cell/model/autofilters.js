@@ -827,7 +827,7 @@
 
 				//автоматическое расширение диапазона а/ф
 				if (autoFiltersObject.automaticRowCount && filterObj.filter && filterObj.filter.Ref &&
-					filterObj.filter.isAutoFilter() && !nsvFilter) {
+					filterObj.filter.isAutoFilter() /*&& !nsvFilter*/) {
 					var currentDiff = filterObj.filter.Ref.r2 - filterObj.filter.Ref.r1;
 					var newDiff = autoFiltersObject.automaticRowCount - filterObj.filter.Ref.r1;
 
