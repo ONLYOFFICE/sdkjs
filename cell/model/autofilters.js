@@ -5391,7 +5391,7 @@
 
 				var oldFilter = autoFilterObj && autoFilterObj.columnsFilter ? autoFilterObj.clone() : filter.clone(null);
 
-				var colId = this._getColIdColumn(filter, cellId);
+				var colId = this._getColIdColumn(filter, cellId, viewId);
 
 				History.Create_NewPoint();
 				History.StartTransaction();
