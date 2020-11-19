@@ -2896,7 +2896,7 @@ function (window, undefined) {
 					namedSheetView._isActive = true;
 				}
 
-				ws.autoFilters.reapplyAllFilters(true);
+				ws.autoFilters.reapplyAllFilters(true, ws.getActiveNamedSheetViewId() !== null, true);
 			}
 		} else if (AscCH.historyitem_Worksheet_SheetViewAdd === Type) {
 			if (bUndo) {
