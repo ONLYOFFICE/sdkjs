@@ -477,9 +477,11 @@
 		return this.isListValues() ? this._getListValues(ws) : null;
 	};
 	CDataValidation.prototype.asc_checkValid = function () {
-		var res = null;
+		var res = Asc.c_oAscError.ID.No;
 		if (this.formula1 && this.formula2) {
-			if (this.formula1 < this.formula2) {
+			var numFormula1 = parseFloat(this.formula1.text);
+			var numFormula2 = parseFloat(this.formula2.text);
+			if (!isNaN(numFormula1) && !isNaN(numFormula2) && numFormula2 < numFormula1) {
 				return Asc.c_oAscError.ID.DataValidateMinGreaterMax;
 			}
 		}
