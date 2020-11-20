@@ -20810,7 +20810,12 @@
 			if (!success) {
 				return;
 			}
+			History.Create_NewPoint();
+			History.StartTransaction();
+
 			t.model.setDataValidationProps(props);
+
+			History.EndTransaction();
 		}
 		
 		//TODO необходимо расширить диапазон лока ещё диапазонами, data validate которых изменяется

@@ -2942,6 +2942,12 @@
 				range = AscCommonExcel.g_oRangeCache.getAscRange(dataRange);
 			}
 		}
+		else if (Asc.c_oAscSelectionDialogType.DataValidation === dialogType)
+		{
+			if (dataRange === null) {
+				return Asc.c_oAscError.ID.No;
+			}
+		}
 		else
 		{
 			range = AscCommonExcel.g_oRangeCache.getAscRange(dataRange);

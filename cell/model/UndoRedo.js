@@ -2917,7 +2917,7 @@ function (window, undefined) {
 			}
 		} else if (AscCH.historyitem_Worksheet_DataValidationAdd === Type) {
 			if (bUndo) {
-				//ws.deleteNamedSheetViews([ws.getNamedSheetViewById(Data.Id)], true);
+				ws.deleteDataValidationById(Data.Id);
 			} else {
 				ws._addDataValidation(Data.getData());
 			}

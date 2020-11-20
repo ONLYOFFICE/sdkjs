@@ -229,6 +229,9 @@
 		return false;
 	};
 	CDataValidation.prototype.Write_ToBinary2 = function (writer) {
+		//for wrapper
+		writer.WriteLong(this.getObjectType());
+
 		if (null != this.ranges) {
 			writer.WriteBool(true);
 			writer.WriteLong(this.ranges.length);
@@ -289,10 +292,13 @@
 			writer.WriteBool(false);
 		}
 	};
-	CDataValidation.prototype.Read_ToBinary2 = function (reader) {
+	CDataValidation.prototype.Read_FromBinary2 = function (reader) {
 		if (reader.GetBool()) {
 			var length = reader.GetULong();
 			for (var i = 0; i < length; ++i) {
+				if (!this.ranges) {
+					this.ranges = [];
+				}
 				var r1 = reader.GetLong();
 				var c1 = reader.GetLong();
 				var r2 = reader.GetLong();
