@@ -8973,9 +8973,30 @@
 		var _obj = this._getDataValidationIntersection(_selection.ranges);
 		var instersection = _obj.intersection;
 		var contain = _obj.contain;
+
+		var _equalRanges = function (_ranges1, _ranges2) {
+			var res = false;
+
+			if (_ranges1.length === _ranges2.length) {
+				res = true;
+				for (var j = 0; j < _ranges1.length; j++) {
+					if (!_ranges1[j].isEqual(_ranges2[j])) {
+						res = false;
+						break;
+					}
+				}
+			}
+
+			return res;
+		};
+
+		var equalRangeDataValidation;
 		var equalDataValidation;
 		if (this.dataValidations && this.dataValidations.elems) {
 			for (var i = 0; i < this.dataValidations.elems.length; i++) {
+				if (_equalRanges(this.dataValidations.elems[i].ranges, _selection.ranges)) {
+					equalRangeDataValidation = this.dataValidations.elems[i];
+				}
 				if (props.isEqual(this.dataValidations.elems[i])) {
 					equalDataValidation = this.dataValidations.elems[i];
 					break;
@@ -8986,10 +9007,12 @@
 			//самый простой вариант - просто добавляем новый обхект и привязываем его к активной области
 			if (equalDataValidation) {
 				//в данном случае расширяем диапазон
-
+				//set
 			} else {
 				this.addDataValidation(props, null, true);
 			}
+		} else if (equalRangeDataValidation) {
+			equalRangeDataValidation.set(props);
 		}
 	};
 

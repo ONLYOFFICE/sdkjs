@@ -192,20 +192,20 @@
 		return res;
 	};
 	CDataValidation.prototype.set = function (val) {
-		this.allowBlank = this.checkProperty(this.allowBlank, val.allowBlank, AscCH.historyitem_Slicer_SetCaption);
-		this.showDropDown = this.checkProperty(this.showDropDown, val.showDropDown, AscCH.historyitem_Slicer_SetStartItem);
-		this.showErrorMessage = this.checkProperty(this.showErrorMessage, val.showErrorMessage, AscCH.historyitem_Slicer_SetColumnCount);
-		this.showInputMessage = this.checkProperty(this.showInputMessage, val.showInputMessage, AscCH.historyitem_Slicer_SetShowCaption);
-		this.type = this.checkProperty(this.type, val.type, AscCH.historyitem_Slicer_SetLevel);
-		this.errorStyle = this.checkProperty(this.errorStyle, val.errorStyle, AscCH.historyitem_Slicer_SetStyle);
-		this.imeMode = this.checkProperty(this.imeMode, val.imeMode, AscCH.historyitem_Slicer_SetLockedPosition);
-		this.operator = this.checkProperty(this.operator, val.operator, AscCH.historyitem_Slicer_SetRowHeight);
-		this.error = this.checkProperty(this.error, val.error, AscCH.historyitem_Slicer_SetRowHeight);
-		this.errorTitle = this.checkProperty(this.errorTitle, val.errorTitle, AscCH.historyitem_Slicer_SetRowHeight);
-		this.promt = this.checkProperty(this.promt, val.promt, AscCH.historyitem_Slicer_SetRowHeight);
-		this.promptTitle = this.checkProperty(this.promptTitle, val.promptTitle, AscCH.historyitem_Slicer_SetRowHeight);
-		this.formula1 = this.checkProperty(this.formula1, val.formula1, AscCH.historyitem_Slicer_SetRowHeight);
-		this.formula2 = this.checkProperty(this.formula2, val.formula2, AscCH.historyitem_Slicer_SetRowHeight);
+		this.allowBlank = this.checkProperty(this.allowBlank, val.allowBlank, AscCH.historyitem_DataValidation_AllowBlank);
+		this.showDropDown = this.checkProperty(this.showDropDown, val.showDropDown, AscCH.historyitem_DataValidation_ShowDropDown);
+		this.showErrorMessage = this.checkProperty(this.showErrorMessage, val.showErrorMessage, AscCH.historyitem_DataValidation_ShowErrorMessage);
+		this.showInputMessage = this.checkProperty(this.showInputMessage, val.showInputMessage, AscCH.historyitem_DataValidation_ShowInputMessage);
+		this.type = this.checkProperty(this.type, val.type, AscCH.historyitem_DataValidation_Type);
+		this.errorStyle = this.checkProperty(this.errorStyle, val.errorStyle, AscCH.historyitem_DataValidation_ErrorStyle);
+		this.imeMode = this.checkProperty(this.imeMode, val.imeMode, AscCH.historyitem_DataValidation_ImeMode);
+		this.operator = this.checkProperty(this.operator, val.operator, AscCH.historyitem_DataValidation_Operator);
+		this.error = this.checkProperty(this.error, val.error, AscCH.historyitem_DataValidation_Error);
+		this.errorTitle = this.checkProperty(this.errorTitle, val.errorTitle, AscCH.historyitem_DataValidation_ErrorTitle);
+		this.promt = this.checkProperty(this.promt, val.promt, AscCH.historyitem_DataValidation_Promt);
+		this.promptTitle = this.checkProperty(this.promptTitle, val.promptTitle, AscCH.historyitem_DataValidation_PromtTotle);
+		this.formula1 = this.checkProperty(this.formula1, val.formula1, AscCH.historyitem_DataValidation_Formula1);
+		this.formula2 = this.checkProperty(this.formula2, val.formula2, AscCH.historyitem_DataValidation_Formula2);
 	};
 	CDataValidation.prototype.checkProperty = function (propOld, propNew, type) {
 		if (propOld !== propNew && undefined !== propNew) {
