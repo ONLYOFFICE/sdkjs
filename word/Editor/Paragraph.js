@@ -14162,7 +14162,7 @@ Paragraph.prototype.CanUpdateTarget = function(CurPage)
 		return false;
 
 	if (this.Pages.length <= CurPage)
-		return true;
+		return false;
 
 	if (!this.Pages[CurPage] || !this.Lines[this.Pages[CurPage].EndLine] || !this.Lines[this.Pages[CurPage].EndLine].Ranges || this.Lines[this.Pages[CurPage].EndLine].Ranges.length <= 0)
 		return false;

@@ -1327,6 +1327,65 @@ CEndnotesController.prototype.private_GetSelectionArray = function()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 CEndnotesController.prototype.CanUpdateTarget = function()
 {
+	var oLogicDocument = this.LogicDocument;
+	if (!oLogicDocument)
+		return false;
+
+	var oCurEndnote = this.CurEndnote;
+	if (null !== oLogicDocument.FullRecalc.Id && oCurEndnote)
+	{
+		var nPageAbs   = oLogicDocument.FullRecalc.PageIndex;
+
+		var nSectionIndex = oCurEndnote.GetSectionIndex();
+
+		var nLastIndex = this.LogicDocument.GetElementsCount() - 1;
+		if (Asc.c_oAscEndnotePos.SectEnd === this.GetEndnotePrPos())
+			nLastIndex = this.LogicDocument.SectionsInfo.Get(nSectionIndex).Index;
+
+		if (oLogicDocument.FullRecalc.StartIndex < nLastIndex || (oLogicDocument.FullRecalc.StartIndex === nLastIndex && !oLogicDocument.FullRecalc.Endnotes))
+			return false;
+
+		if (!oLogicDocument.FullRecalc.Endnotes)
+			return true;
+
+		var _nSectionIndex = this.LogicDocument.SectionsInfo.Find(this.LogicDocument.SectionsInfo.Get_SectPr(oLogicDocument.FullRecalc.StartIndex).SectPr);
+		if (_nSectionIndex < nSectionIndex)
+			return false;
+		else if (_nSectionIndex > nSectionIndex)
+			return true;
+
+		var oSection = this.Sections[nSectionIndex];
+		if (!oSection)
+			return false;
+
+		var nStartPos = 0;
+
+		if (nPageAbs - 1 <= oSection.StartPage || !oSection.Pages[nPageAbs - 1] || !oSection.Pages[nPageAbs - 1].Columns.length)
+		{
+			return false;
+		}
+		else
+		{
+			nStartPos = oSection.Pages[nPageAbs - 1].Columns[0].EndPos;
+		}
+
+		if (oSection.Endnotes[nStartPos] === this.CurEndnote)
+		{
+			var nEndnotePageIndex = this.CurEndnote.GetElementPageIndex(oLogicDocument.FullRecalc.PageIndex, oLogicDocument.FullRecalc.ColumnIndex);
+			return this.CurEndnote.CanUpdateTarget(nEndnotePageIndex);
+		}
+		else
+		{
+			for (var nPos = 0; nPos < nStartPos; ++nPos)
+			{
+				if (this.CurEndnote === oSection.Endnotes[nPos])
+					return true;
+			}
+		}
+
+		return false;
+	}
+
 	return true;
 };
 CEndnotesController.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY, isUpdateTarget)
