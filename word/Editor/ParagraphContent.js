@@ -2471,7 +2471,7 @@ ParaEndnoteReference.prototype.UpdateNumber = function(PRS, isKeepNumber)
 	{
 		var nPageAbs    = PRS.GetPageAbs();
 		var nColumnAbs  = PRS.GetColumnAbs();
-		var nAdditional = PRS.GetEndnoteReferenceCount(this);
+		var nNumber     = PRS.GetEndnoteReferenceNumber(this);
 		var oSectPr     = PRS.GetSectPr();
 		var nNumFormat  = oSectPr.GetEndnoteNumFormat();
 
@@ -2481,7 +2481,7 @@ ParaEndnoteReference.prototype.UpdateNumber = function(PRS, isKeepNumber)
 		if (!isKeepNumber)
 		{
 			this.NumFormat = nNumFormat;
-			this.Number    = oEndnotesController.GetEndnoteNumberOnPage(nPageAbs, nColumnAbs, oSectPr, this.Footnote) + nAdditional;
+			this.Number    = -1 === nNumber ? oEndnotesController.GetEndnoteNumberOnPage(nPageAbs, nColumnAbs, oSectPr, this.Footnote) : nNumber;
 
 			// Если данная сноска не участвует в нумерации, просто уменьшаем ей номер на 1, для упрощения работы
 			if (this.IsCustomMarkFollows())

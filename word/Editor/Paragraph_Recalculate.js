@@ -1199,7 +1199,7 @@ Paragraph.prototype.private_RecalculateLineInfo        = function(CurLine, CurPa
     if (true === PRS.BadLeftTab)
         this.Lines[CurLine].Info |= paralineinfo_BadLeftTab;
 
-    if (PRS.GetFootnoteReferencesCount(null, true) > 0 || PRS.GetEndnoteReferenceCount(null, true) > 0)
+    if (PRS.GetFootnoteReferencesCount(null, true) > 0 || PRS.GetEndnoteReferenceCount() > 0)
     	this.Lines[CurLine].Info |= paralineinfo_Notes;
 
     if (true === PRS.TextOnLine)
@@ -3469,24 +3469,26 @@ CParagraphRecalculateStateWrap.prototype.AddEndnoteReference = function(oEndnote
 
 	this.Endnotes.push({EndnoteReference : oEndnoteReference, Pos : oPos});
 };
-CParagraphRecalculateStateWrap.prototype.GetEndnoteReferenceCount = function(oEndnoteReference, isAllowCustom)
+CParagraphRecalculateStateWrap.prototype.GetEndnoteReferenceNumber = function(oEndnoteReference)
 {
-	var _isAllowCustom = (true === isAllowCustom ? true : false);
-
-	// Если данную ссылку мы добавляли уже в строке, тогда ищем сколько было элементов до нее, если не добавляли,
-	// тогда возвращаем просто количество ссылок. Ссылки с флагом CustomMarkFollows не учитываются
+	if (this.Endnotes.length <= 0 || this.Endnotes[0].EndnoteReference === oEndnoteReference)
+		return -1;
 
 	var nRefsCount = 0;
 	for (var nIndex = 0, nCount = this.Endnotes.length; nIndex < nCount; ++nIndex)
 	{
 		if (this.Endnotes[nIndex].EndnoteReference === oEndnoteReference)
-			return nRefsCount;
+			return (this.Endnotes[0].EndnoteReference.Number + nRefsCount);
 
-		if (true === _isAllowCustom || true !== this.Endnotes[nIndex].EndnoteReference.IsCustomMarkFollows())
+		if (true !== this.Endnotes[nIndex].EndnoteReference.IsCustomMarkFollows())
 			nRefsCount++;
 	}
 
-	return nRefsCount;
+	return (this.Endnotes[0].EndnoteReference.Number + nRefsCount);
+};
+CParagraphRecalculateStateWrap.prototype.GetEndnoteReferenceCount = function()
+{
+	return this.Endnotes.length;
 };
 CParagraphRecalculateStateWrap.prototype.SetFast = function(bValue)
 {
