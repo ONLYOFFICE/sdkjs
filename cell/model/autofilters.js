@@ -366,6 +366,7 @@
 				} else if (!ignoreCustomFilter && filters.CustomFiltersObj && filters.CustomFiltersObj.CustomFilters) {
 					this.type = c_oAscAutoFilterTypes.CustomFilters;
 					this.filter = filters.CustomFiltersObj;
+					this.filter = this.filter.changeForInterface();
 				} else if (filters.DynamicFilter) {
 					this.type = c_oAscAutoFilterTypes.DynamicFilter;
 					this.filter = filters.DynamicFilter.clone();
