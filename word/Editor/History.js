@@ -341,8 +341,8 @@ CHistory.prototype =
 		if ( 0 !== this.TurnOffHistory )
 			return false;
 
-		if (this.Document && this.Document.OnCreateNewHistoryPoint)
-			this.Document.OnCreateNewHistoryPoint();
+		if (this.Document && this.Document.ClearListsCache)
+			this.Document.ClearListsCache();
 
         this.CanNotAddChanges = false;
 		this.CollectChanges   = false;

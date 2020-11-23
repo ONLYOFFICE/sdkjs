@@ -625,6 +625,9 @@ CWordCollaborativeEditing.prototype.OnEnd_ReadForeignChanges = function()
 		{
 			oApi.asc_OnBookmarksUpdate();
 		}
+
+		if (this.m_oLogicDocument && this.m_oLogicDocument.ClearListsCache)
+			this.m_oLogicDocument.ClearListsCache();
 	}
 
 };
