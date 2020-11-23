@@ -2167,7 +2167,29 @@ ParaRun.prototype.Split2 = function(CurPos, Parent, ParentPos)
     var NewRun = new ParaRun(this.Paragraph, bMathRun);
 
     // Копируем настройки
-    NewRun.Set_Pr(this.Pr.Copy(true));
+    NewRun.SetPr(this.Pr.Copy(true));
+
+	if ((0 === CurPos || this.Content.length === CurPos)
+		&& this.Paragraph
+		&& this.Paragraph.LogicDocument
+		&& this.Paragraph.bFromDocument)
+	{
+		var oStyles = this.Paragraph.LogicDocument.GetStyles();
+		if (this.GetRStyle() === oStyles.GetDefaultFootnoteReference() || this.GetRStyle() === oStyles.GetDefaultEndnoteReference())
+		{
+			if (0 === CurPos)
+			{
+				this.SetRStyle(undefined);
+				this.SetVertAlign(undefined);
+			}
+			else
+			{
+				NewRun.SetRStyle(undefined);
+				NewRun.SetVertAlign(undefined);
+			}
+		}
+	}
+
     NewRun.SetReviewTypeWithInfo(this.ReviewType, this.ReviewInfo ? this.ReviewInfo.Copy() : undefined);
 
     NewRun.CollPrChangeMine  = this.CollPrChangeMine;

@@ -11963,6 +11963,14 @@ Paragraph.prototype.Split = function(NewParagraph)
 
 	var TextPr = this.Get_TextPr(ContentPos);
 
+	var oLogicDocument = this.GetLogicDocument();
+	var oStyles        = oLogicDocument ? oLogicDocument.GetStyles() : null;
+	if (oStyles && (TextPr.RStyle === oStyles.GetDefaultEndnoteReference() || TextPr.RStyle === oStyles.GetDefaultFootnoteReference()))
+	{
+		TextPr        = TextPr.Copy();
+		TextPr.RStyle = undefined;
+	}
+
 	// Разделяем текущий элемент (возвращается правая, отделившаяся часть, если она null, тогда заменяем
 	// ее на пустой ран с заданными настройками).
 	var NewElement = this.Content[CurPos].Split(ContentPos, 1);
@@ -12136,8 +12144,14 @@ Paragraph.prototype.Continue = function(NewParagraph)
 		// 2. Стиль сноски не продолжаем
 		TextPr.HighLight = highlight_None;
 
-		if (this.bFromDocument && this.LogicDocument && TextPr.RStyle === this.LogicDocument.GetStyles().GetDefaultFootnoteReference())
+		var oStyles;
+		if (this.bFromDocument
+			&& this.LogicDocument
+			&& (oStyles = this.LogicDocument.GetStyles())
+			&& (TextPr.RStyle === oStyles.GetDefaultFootnoteReference() || TextPr.RStyle === oStyles.GetDefaultEndnoteReference()))
+		{
 			TextPr.RStyle = undefined;
+		}
 	}
 
 	// Копируем настройки параграфа
