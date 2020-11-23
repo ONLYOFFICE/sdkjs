@@ -7858,6 +7858,14 @@ background-repeat: no-repeat;\
 			this.WordControl.m_oLogicDocument.FinalizeAction();
 		}
 	};
+	asc_docs_api.prototype.asc_GetSectionsCount = function()
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument)
+			return 1;
+
+		return oLogicDocument.GetSectionsCount();
+	};
 
 	asc_docs_api.prototype.asc_setViewMode = function(isViewMode)
 	{
@@ -10982,6 +10990,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['ClearFormating']                            = asc_docs_api.prototype.ClearFormating;
 	asc_docs_api.prototype['GetSectionInfo']                            = asc_docs_api.prototype.GetSectionInfo;
 	asc_docs_api.prototype['add_SectionBreak']                          = asc_docs_api.prototype.add_SectionBreak;
+	asc_docs_api.prototype['asc_GetSectionsCount']                      = asc_docs_api.prototype.asc_GetSectionsCount;
 	asc_docs_api.prototype['asc_setViewMode']                           = asc_docs_api.prototype.asc_setViewMode;
 	asc_docs_api.prototype['OnMouseUp']                                 = asc_docs_api.prototype.OnMouseUp;
 	asc_docs_api.prototype['asyncImageEndLoaded2']                      = asc_docs_api.prototype.asyncImageEndLoaded2;

@@ -682,7 +682,7 @@ CSectionPr.prototype =
         if ( (AscDFH.historyitem_Section_Header_First === Data.Type || AscDFH.historyitem_Section_Footer_First === Data.Type) && false === this.TitlePage )
         {
             var bHeader = AscDFH.historyitem_Section_Header_First === Data.Type ? true : false
-            var SectionsCount = this.LogicDocument.SectionsInfo.Get_SectionsCount();
+            var SectionsCount = this.LogicDocument.SectionsInfo.GetSectionsCount();
             while ( Index < SectionsCount - 1 )
             {
                 Index++;
