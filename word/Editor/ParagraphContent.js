@@ -1862,15 +1862,15 @@ ParaPresentationNumbering.prototype.Check_Range = function(Range, Line)
 
 
 /**
- * Класс представляющий ссылку на сноску.
- * @param {CFootEndnote} Footnote - Ссылка на сноску.
+ * Класс представляющий ссылку на сноску
+ * @param {CFootEndnote} Footnote - Ссылка на сноску
  * @param {string} CustomMark
  * @constructor
  * @extends {CRunElementBase}
  */
 function ParaFootnoteReference(Footnote, CustomMark)
 {
-	this.Footnote   = Footnote;
+	this.Footnote   = Footnote instanceof AscCommonWord.CFootEndnote ? Footnote : null;
 	this.CustomMark = CustomMark ? CustomMark : undefined;
 
 	this.Width        = 0;
@@ -1881,8 +1881,8 @@ function ParaFootnoteReference(Footnote, CustomMark)
 	this.Run          = null;
 	this.Widths       = [];
 
-	if (Footnote)
-		Footnote.SetRef(this);
+	if (this.Footnote)
+		this.Footnote.SetRef(this);
 }
 ParaFootnoteReference.prototype = Object.create(CRunElementBase.prototype);
 ParaFootnoteReference.prototype.constructor = ParaFootnoteReference;
@@ -1931,16 +1931,19 @@ ParaFootnoteReference.prototype.Measure = function(Context, TextPr, MathInfo, Ru
 };
 ParaFootnoteReference.prototype.Copy = function(oPr)
 {
-	var oFootnote;
-	if(oPr && oPr.Comparison)
+	if (this.Footnote)
 	{
-		oFootnote = oPr.Comparison.createFootNote();
+		var oFootnote;
+		if (oPr && oPr.Comparison)
+		{
+			oFootnote = oPr.Comparison.createFootNote();
+		}
+		else
+		{
+			oFootnote = this.Footnote.Parent.CreateFootnote();
+		}
+		oFootnote.Copy2(this.Footnote, oPr);
 	}
-	else
-	{
-		oFootnote = this.Footnote.Parent.CreateFootnote();
-	}
-	oFootnote.Copy2(this.Footnote, oPr);
 
 	var oRef = new ParaFootnoteReference(oFootnote);
 
@@ -1960,7 +1963,7 @@ ParaFootnoteReference.prototype.Write_ToBinary = function(Writer)
 	// Bool : is undefined mark ?
 	// false -> String2 : CustomMark
 	Writer.WriteLong(this.Type);
-	Writer.WriteString2(this.Footnote.Get_Id());
+	Writer.WriteString2(this.Footnote ? this.Footnote.GetId() : "");
 
 	if (undefined === this.CustomMark)
 	{
@@ -2447,16 +2450,19 @@ ParaEndnoteReference.prototype.Get_Type = function()
 };
 ParaEndnoteReference.prototype.Copy = function(oPr)
 {
-	var oEndnote;
-	if (oPr && oPr.Comparison)
+	if (this.Footnote)
 	{
-		oEndnote = oPr.Comparison.createEndNote();
+		var oEndnote;
+		if (oPr && oPr.Comparison)
+		{
+			oEndnote = oPr.Comparison.createEndNote();
+		}
+		else
+		{
+			oEndnote = this.Footnote.Parent.CreateEndnote();
+		}
+		oEndnote.Copy2(this.Footnote, oPr);
 	}
-	else
-	{
-		oEndnote = this.Footnote.Parent.CreateEndnote();
-	}
-	oEndnote.Copy2(this.Footnote, oPr);
 
 	var oRef = new ParaEndnoteReference(oEndnote);
 
@@ -2494,7 +2500,7 @@ ParaEndnoteReference.prototype.UpdateNumber = function(PRS, isKeepNumber)
 	else
 	{
 		this.Number    = 1;
-		this.NumFormat = Asc.c_oAscNumberingFormat.LowerRoman;
+		this.NumFormat = Asc.c_oAscNumberingFormat.Decimal;
 		this.private_Measure();
 	}
 };
@@ -2548,7 +2554,7 @@ ParaEndnoteRef.prototype.UpdateNumber = function(oEndnote)
 	else
 	{
 		this.Number    = 1;
-		this.NumFormat = Asc.c_oAscNumberingFormat.LowerRoman;
+		this.NumFormat = Asc.c_oAscNumberingFormat.Decimal;
 		this.private_Measure();
 	}
 };
