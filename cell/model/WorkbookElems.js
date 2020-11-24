@@ -8665,15 +8665,19 @@ CustomFilter.prototype.changeForInterface = function() {
 	if (!this.Val || this.Val.length <= 1) {
 		return;
 	}
-	var isStartSpecSymbol = this.Val && this.Val[0] === "*";
+
+	var isStartSpecSymbol = this.Val && this.Val.length > 1 && this.Val[0] === "*";
 	var isEndSpecSymbol;
 	if (!isStartSpecSymbol || (isStartSpecSymbol && this.Val.length >= 2)) {
 		isEndSpecSymbol = this.Val && this.Val[this.Val.length - 1] === "*";
 	}
+	if (isStartSpecSymbol && isEndSpecSymbol && this.Val.length <= 2) {
+		return;
+	}
 	if (isStartSpecSymbol || isEndSpecSymbol) {
 		this.Val = this.Val.substring(isStartSpecSymbol ? 1 : 0, isEndSpecSymbol ? this.Val.length - 1 : this.Val.length);
 		if(c_oAscCustomAutoFilter.doesNotEqual === this.Operator) {
-			if (isStartSpecSymbol && isEndSpecSymbol && this.Val.length > 2) {
+			if (isStartSpecSymbol && isEndSpecSymbol) {
 				this.Operator = c_oAscCustomAutoFilter.doesNotContain;
 			} else if (isStartSpecSymbol) {
 				this.Operator = c_oAscCustomAutoFilter.doesNotEndWith;
@@ -8681,7 +8685,7 @@ CustomFilter.prototype.changeForInterface = function() {
 				this.Operator = c_oAscCustomAutoFilter.doesNotBeginWith;
 			}
 		} else {
-			if (isStartSpecSymbol && isEndSpecSymbol && this.Val.length > 2) {
+			if (isStartSpecSymbol && isEndSpecSymbol) {
 				this.Operator = c_oAscCustomAutoFilter.contains;
 			} else if (isStartSpecSymbol) {
 				this.Operator = c_oAscCustomAutoFilter.endsWith;
