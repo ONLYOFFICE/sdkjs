@@ -493,14 +493,16 @@ CEndnotesController.prototype.Recalculate = function(X, Y, XLimit, YLimit, nPage
 	{
 		oSection.Pages[nPageAbs] = new CEndnoteSectionPage();
 
+		var nColumnSpace = nColumnAbs > 0 ? oSectPr.GetColumnSpace(nColumnAbs - 1) : 0;
+
 		for (var nColumnIndex = 0; nColumnIndex < nColumnAbs; ++nColumnIndex)
 		{
 			var oTempColumn = new CEndnoteSectionPageColumn();
 			oSection.Pages[nPageAbs].Columns[nColumnIndex] = oTempColumn;
 
-			oTempColumn.X      = X - 5;
+			oTempColumn.X      = X - nColumnSpace;
 			oTempColumn.Y      = Y;
-			oTempColumn.XLimit = XLimit - 10;
+			oTempColumn.XLimit = X - nColumnSpace;
 			oTempColumn.YLimit = YLimit;
 		}
 	}
