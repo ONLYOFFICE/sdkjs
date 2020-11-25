@@ -94,6 +94,12 @@
 		this._formula.parse();
 		this._formula.buildDependencies();
 	};
+	CDataFormula.prototype.clone = function () {
+		var res = new CDataFormula();
+		res.text = this.text;
+		//this._formula = null;
+		return res;
+	};
 	CDataFormula.prototype.onFormulaEvent = function (type, eventData) {
 		if (AscCommon.c_oNotifyParentType.ChangeFormula === type) {
 			this.text = eventData.assemble;
@@ -187,30 +193,33 @@
 		res.errorTitle = this.errorTitle;
 		res.prompt = this.prompt;
 		res.promptTitle = this.promptTitle;
-		res.formula1 = this.formula1;
-		res.formula2 = this.formula2;
+		res.formula1 = this.formula1 ? this.formula1.clone() : null;
+		res.formula2 = this.formula2 ? this.formula2.clone() : null;
 		return res;
 	};
-	CDataValidation.prototype.set = function (val) {
-		this.allowBlank = this.checkProperty(this.allowBlank, val.allowBlank, AscCH.historyitem_DataValidation_AllowBlank);
-		this.showDropDown = this.checkProperty(this.showDropDown, val.showDropDown, AscCH.historyitem_DataValidation_ShowDropDown);
-		this.showErrorMessage = this.checkProperty(this.showErrorMessage, val.showErrorMessage, AscCH.historyitem_DataValidation_ShowErrorMessage);
-		this.showInputMessage = this.checkProperty(this.showInputMessage, val.showInputMessage, AscCH.historyitem_DataValidation_ShowInputMessage);
-		this.type = this.checkProperty(this.type, val.type, AscCH.historyitem_DataValidation_Type);
-		this.errorStyle = this.checkProperty(this.errorStyle, val.errorStyle, AscCH.historyitem_DataValidation_ErrorStyle);
-		this.imeMode = this.checkProperty(this.imeMode, val.imeMode, AscCH.historyitem_DataValidation_ImeMode);
-		this.operator = this.checkProperty(this.operator, val.operator, AscCH.historyitem_DataValidation_Operator);
-		this.error = this.checkProperty(this.error, val.error, AscCH.historyitem_DataValidation_Error);
-		this.errorTitle = this.checkProperty(this.errorTitle, val.errorTitle, AscCH.historyitem_DataValidation_ErrorTitle);
-		this.promt = this.checkProperty(this.promt, val.promt, AscCH.historyitem_DataValidation_Promt);
-		this.promptTitle = this.checkProperty(this.promptTitle, val.promptTitle, AscCH.historyitem_DataValidation_PromtTotle);
-		this.formula1 = this.checkProperty(this.formula1, val.formula1, AscCH.historyitem_DataValidation_Formula1);
-		this.formula2 = this.checkProperty(this.formula2, val.formula2, AscCH.historyitem_DataValidation_Formula2);
+	CDataValidation.prototype.set = function (val, ws) {
+		this.allowBlank = this.checkProperty(this.allowBlank, val.allowBlank, AscCH.historyitem_DataValidation_AllowBlank, ws);
+		this.showDropDown = this.checkProperty(this.showDropDown, val.showDropDown, AscCH.historyitem_DataValidation_ShowDropDown, ws);
+		this.showErrorMessage = this.checkProperty(this.showErrorMessage, val.showErrorMessage, AscCH.historyitem_DataValidation_ShowErrorMessage, ws);
+		this.showInputMessage = this.checkProperty(this.showInputMessage, val.showInputMessage, AscCH.historyitem_DataValidation_ShowInputMessage, ws);
+		this.type = this.checkProperty(this.type, val.type, AscCH.historyitem_DataValidation_Type, ws);
+		this.errorStyle = this.checkProperty(this.errorStyle, val.errorStyle, AscCH.historyitem_DataValidation_ErrorStyle, ws);
+		this.imeMode = this.checkProperty(this.imeMode, val.imeMode, AscCH.historyitem_DataValidation_ImeMode, ws);
+		this.operator = this.checkProperty(this.operator, val.operator, AscCH.historyitem_DataValidation_Operator, ws);
+		this.error = this.checkProperty(this.error, val.error, AscCH.historyitem_DataValidation_Error, ws);
+		this.errorTitle = this.checkProperty(this.errorTitle, val.errorTitle, AscCH.historyitem_DataValidation_ErrorTitle, ws);
+		this.promt = this.checkProperty(this.promt, val.promt, AscCH.historyitem_DataValidation_Promt, ws);
+		this.promptTitle = this.checkProperty(this.promptTitle, val.promptTitle, AscCH.historyitem_DataValidation_PromtTotle, ws);
+		this.formula1 = this.checkProperty(this.formula1, val.formula1, AscCH.historyitem_DataValidation_Formula1, ws);
+		this.formula2 = this.checkProperty(this.formula2, val.formula2, AscCH.historyitem_DataValidation_Formula2, ws);
 	};
-	CDataValidation.prototype.checkProperty = function (propOld, propNew, type) {
-		if (propOld !== propNew && undefined !== propNew) {
+	CDataValidation.prototype.checkProperty = function (propOld, propNew, type, ws) {
+		var isFormulaType = type === AscCH.historyitem_DataValidation_Formula1 || type === AscCH.historyitem_DataValidation_Formula12;
+		var _propOld = isFormulaType ? propOld && propOld.text : propOld;
+		var _propNew = isFormulaType ? propNew && propNew.text : propNew;
+		if (_propOld !== _propNew && undefined !== _propNew) {
 			History.Add(AscCommonExcel.g_oUndoRedoSlicer, type,
-				this.ws.getId(), null, new AscCommonExcel.UndoRedoData_Slicer(this.name, propOld, propNew));
+				ws.getId(), null, new AscCommonExcel.UndoRedoData_DataValidation(this.Id, _propOld, _propNew));
 			return propNew;
 		}
 		return propOld;

@@ -2050,6 +2050,49 @@ function (window, undefined) {
 		}
 	};
 
+	function UndoRedoData_DataValidation(from, to, id) {
+		this.from = from;
+		this.to = to;
+		this.id = id;
+	}
+
+	UndoRedoData_DataValidation.prototype.Properties = {
+		from: 0, to: 1, id: 2
+	};
+	UndoRedoData_DataValidation.prototype.getType = function () {
+		return UndoRedoDataTypes.DataValidation;
+	};
+	UndoRedoData_DataValidation.prototype.getProperties = function () {
+		return this.Properties;
+	};
+	UndoRedoData_DataValidation.prototype.getProperty = function (nType) {
+		switch (nType) {
+			case this.Properties.from:
+				return this.from;
+				break;
+			case this.Properties.to:
+				return this.to;
+				break;
+			case this.Properties.id:
+				return this.id;
+				break;
+		}
+		return null;
+	};
+	UndoRedoData_DataValidation.prototype.setProperty = function (nType, value) {
+		switch (nType) {
+			case this.Properties.from:
+				this.from = value;
+				break;
+			case this.Properties.to:
+				this.to = value;
+				break;
+			case this.Properties.id:
+				this.id = value;
+				break;
+		}
+	};
+
 	//для применения изменений
 	var UndoRedoClassTypes = new function () {
 		this.aTypes = [];
