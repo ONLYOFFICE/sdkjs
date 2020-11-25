@@ -9012,7 +9012,7 @@
 				this.addDataValidation(props, null, true);
 			}
 		} else if (equalRangeDataValidation) {
-			equalRangeDataValidation.set(props, this);
+			this.changeDataValidation(equalRangeDataValidation, props, true);
 		}
 	};
 
@@ -9036,6 +9036,19 @@
 		if (addToHistory) {
 			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_DataValidationAdd, this.getId(), null,
 				new AscCommonExcel.UndoRedoData_BinaryWrapper(dataValidation));
+		}
+	};
+
+	Worksheet.prototype.changeDataValidation = function (from, to, addToHistory) {
+		to.Id = from.Id;
+		for (var i = 0; i < this.dataValidations.elems.length; i++) {
+			if (this.dataValidations.elems[i].Id === to.Id) {
+				this.dataValidations.elems[i] = to;
+			}
+		}
+		if (addToHistory) {
+			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_DataValidationChange, this.getId(), null,
+				new AscCommonExcel.UndoRedoData_DataValidation(from.Id, new AscCommonExcel.UndoRedoData_BinaryWrapper(from), new AscCommonExcel.UndoRedoData_BinaryWrapper(to)));
 		}
 	};
 
@@ -9083,6 +9096,16 @@
 			for (var i = 0; i < this.dataValidations.elems.length; i++) {
 				if (this.dataValidations.elems[i].Id === id) {
 					this.dataValidations.elems.splice(i, 1);
+				}
+			}
+		}
+	};
+
+	Worksheet.prototype.getDataValidationById = function (id) {
+		if (this.dataValidations && this.dataValidations.elems) {
+			for (var i = 0; i < this.dataValidations.elems.length; i++) {
+				if (this.dataValidations.elems[i].Id === id) {
+					return {data: this.dataValidations.elems[i], index: i};
 				}
 			}
 		}
