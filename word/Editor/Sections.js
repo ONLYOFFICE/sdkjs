@@ -1285,7 +1285,7 @@ CSectionPr.prototype.GetContentFrameHeight = function()
  */
 CSectionPr.prototype.HaveLineNumbers = function()
 {
-	return (undefined !== this.LnNumType && undefined !== this.LnNumType.CountBy);
+	return (undefined !== this.LnNumType && undefined !== this.LnNumType.CountBy && this.LnNumType.GetStart() >= 0);
 };
 /**
  * Добавляем или меняем нумерацию строк
@@ -1336,7 +1336,7 @@ CSectionPr.prototype.GetLineNumbersCountBy = function()
 };
 CSectionPr.prototype.GetLineNumbersStart = function()
 {
-	return (this.LnNumType && undefined !== this.LnNumType.Start ? this.LnNumType.Start : 1);
+	return (this.LnNumType && undefined !== this.LnNumType.GetStart() ? this.LnNumType.GetStart() : 0);
 };
 CSectionPr.prototype.GetLineNumbersRestart = function()
 {
@@ -1772,7 +1772,7 @@ function CSectionLnNumType(nCountBy, nDistance, nStart, nRestartType)
 
 	this.CountBy  = undefined !== nCountBy ? nCountBy : 1;
 	this.Distance = undefined !== nDistance && null !== nDistance ? nDistance : undefined; // В твипсах
-	this.Start    = undefined !== nStart && 1 !== nStart ? nStart : undefined;
+	this.Start    = undefined !== nStart && 0 !== nStart ? nStart : undefined;
 	this.Restart  = undefined !== nRestartType && Asc.c_oAscLineNumberRestartType.NewPage !== nRestartType ? nRestartType : undefined;
 }
 CSectionLnNumType.prototype.Copy = function()
@@ -1868,7 +1868,7 @@ CSectionLnNumType.prototype.SetStart = function(nStart)
 };
 CSectionLnNumType.prototype.GetStart = function()
 {
-	return (undefined === this.Start ? 1 : this.Start);
+	return undefined === this.Start ? 0 : this.Start;
 };
 CSectionLnNumType.prototype.SetRestart = function(nRestart)
 {
@@ -1888,7 +1888,13 @@ CSectionLnNumType.prototype["get_CountBy"]  = CSectionLnNumType.prototype.GetCou
 CSectionLnNumType.prototype["put_CountBy"]  = CSectionLnNumType.prototype.SetCountBy;
 CSectionLnNumType.prototype["get_Distance"] = CSectionLnNumType.prototype.GetDistance;
 CSectionLnNumType.prototype["put_Distance"] = CSectionLnNumType.prototype.SetDistance;
-CSectionLnNumType.prototype["get_Start"]    = CSectionLnNumType.prototype.GetStart;
-CSectionLnNumType.prototype["put_Start"]    = CSectionLnNumType.prototype.SetStart;
+CSectionLnNumType.prototype["get_Start"]    = function()
+{
+	return undefined === this.Start ? 1 : this.Start + 1;
+};
+CSectionLnNumType.prototype["put_Start"]    = function(nStart)
+{
+	this.Start = nStart - 1;
+};
 CSectionLnNumType.prototype["get_Restart"]  = CSectionLnNumType.prototype.GetRestart;
 CSectionLnNumType.prototype["put_Restart"]  = CSectionLnNumType.prototype.SetRestart;

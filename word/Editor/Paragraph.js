@@ -3191,7 +3191,7 @@ Paragraph.prototype.private_DrawLineNumber = function(X, Y, oContext, nLineNumbe
 
 	var oSectPr = this.Get_SectPr();
 
-	var nStart    = oSectPr.GetLineNumbersStart();
+	var nStart    = oSectPr.GetLineNumbersStart() + 1;
 	var nCountBy  = oSectPr.GetLineNumbersCountBy();
 	var nDistance = oSectPr.GetLineNumbersDistance();
 	var nRestart  = oSectPr.GetLineNumbersRestart();
