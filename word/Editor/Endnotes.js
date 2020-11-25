@@ -148,6 +148,7 @@ CEndnotesController.prototype.CreateEndnote = function()
 CEndnotesController.prototype.AddEndnote = function(oEndnote)
 {
 	this.Endnote[oEndnote.GetId()] = oEndnote;
+	oEndnote.SetParent(this);
 	this.LogicDocument.GetHistory().Add(new CChangesEndnotesAddEndnote(this, oEndnote.GetId()));
 };
 CEndnotesController.prototype.RemoveEndnote = function(oEndnote)

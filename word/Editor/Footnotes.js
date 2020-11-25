@@ -148,8 +148,8 @@ CFootnotesController.prototype.CreateFootnote = function()
 CFootnotesController.prototype.AddFootnote = function(oFootnote)
 {
 	this.Footnote[oFootnote.GetId()] = oFootnote;
-	var oHistory                     = this.LogicDocument.GetHistory();
-	oHistory.Add(new CChangesFootnotesAddFootnote(this, oFootnote.GetId()));
+	oFootnote.SetParent(this);
+	this.LogicDocument.GetHistory().Add(new CChangesFootnotesAddFootnote(this, oFootnote.GetId()));
 };
 CFootnotesController.prototype.RemoveFootnote = function(oFootnote)
 {
