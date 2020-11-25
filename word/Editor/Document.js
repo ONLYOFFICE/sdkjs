@@ -23598,15 +23598,21 @@ CDocument.prototype.SetLineNumbersProps = function(nApplyType, oProps)
 			}
 			else
 			{
-				var nCountBy     = oProps.GetCountBy();
-				var nDistance    = oProps.GetDistance();
-				var nStart       = oProps.GetStart();
-				var nRestartType = oProps.GetRestart();
+				var nCountBy  = oProps.GetCountBy();
+				var nDistance = oProps.GetDistance();
+				var nStart    = oProps.GetStart();
+				var nRestart  = oProps.GetRestart();
 
 				for (var nIndex = 0, nCount = arrSectPr.length; nIndex < nCount; ++nIndex)
 				{
 					var oSectPr = arrSectPr[nIndex];
-					oSectPr.SetLineNumbers(nCountBy, nDistance, nStart, nRestartType);
+
+					var _nCountBy  = undefined === nCountBy ? oSectPr.GetLineNumbersCountBy() : nCountBy;
+					var _nDistance = undefined === nDistance ? oSectPr.GetLineNumbersDistance() : nDistance;
+					var _nStart    = undefined === nStart ? oSectPr.GetLineNumbersStart() : nStart;
+					var _nRestart  = undefined === nRestart ? oSectPr.GetLineNumbersRestart() : nRestart;
+
+					oSectPr.SetLineNumbers(_nCountBy, _nDistance, _nStart, _nRestart);
 				}
 			}
 		}
