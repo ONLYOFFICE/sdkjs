@@ -13958,7 +13958,7 @@
                     if (false !== isSuccess) {
 						var c = t._getVisibleCell(cell.c1, cell.r1);
 						var cellValue = c.getValueForEdit();
-
+                        var v, newValue, oldCellValue = cellValue;
                     	// Check replace cell for spell. Replace full cell to fix skip first words (otherwise replace)
                     	if (!isSC) {
 							cellValue = cellValue.replace(options.findRegExp, function () {
@@ -13969,14 +13969,14 @@
                            cellValue = AscCommonExcel.replaceSpellCheckWords(cellValue, options);
 						}
 
-						var v, newValue;
+                    	var isNeedToSave = oldCellValue === cellValue ? false : true;
 						// get first fragment and change its text
 						v = c.getValueForEdit2().slice(0, 1);
 						// Создаем новый массив, т.к. getValueForEdit2 возвращает ссылку
 						newValue = [];
 						newValue[0] = new AscCommonExcel.Fragment({ text: cellValue, format: v[0].format.clone() });
 
-						if (!t._saveCellValueAfterEdit(c, newValue, /*flags*/undefined, /*isNotHistory*/true,
+						if (isNeedToSave && !t._saveCellValueAfterEdit(c, newValue, /*flags*/undefined, /*isNotHistory*/true,
 							/*lockDraw*/true)) {
 							options.error = true;
 							t.draw(lockDraw);
