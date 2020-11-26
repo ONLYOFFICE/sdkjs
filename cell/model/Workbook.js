@@ -8843,10 +8843,15 @@
 			if (table.isHeaderRow()) {
 				for (var j = 0; j < table.TableColumns.length; j++) {
 					this._getCell(table.Ref.r1, table.Ref.c1 + j, function(cell) {
-						var val = cell.getValueForEdit();
-						if (val === ""){
-							cell.setValue(table.TableColumns[j].Name);
-							cell.setType(CellValueType.String);
+						var tableColName = table.TableColumns[j].Name;
+						var valueData = cell.getValueData();
+						var val = valueData && valueData.value && valueData.value.text;
+						if (val !== tableColName){
+							cell.setValueData(
+								new AscCommonExcel.UndoRedoData_CellValueData(null, new AscCommonExcel.CCellValue({
+									text: tableColName,
+									type: CellValueType.String
+								})));
 						}
 					});
 				}
