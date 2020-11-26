@@ -3151,7 +3151,7 @@
 	};
 
 	/**
-	 * Gets the mail merge template doc.
+	 * Gets the mail merge receptions count.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @return {number}  
