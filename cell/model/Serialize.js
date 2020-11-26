@@ -9860,6 +9860,7 @@
 			if (this.oReadResult.macros) {
 				wb.oApi.macros.SetData(this.oReadResult.macros);
 			}
+            wb.checkCorrectTables();
 		}
 		this.PostLoadPrepareDefNames = function(wb)
 		{
