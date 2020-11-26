@@ -614,7 +614,7 @@ function (window, undefined) {
 					}
 					break;
 				case this.DataValidation:
-					return new window['AscCommonExcel'].CDataValidation();
+					return new window['AscCommonExcel'].UndoRedoData_DataValidation();
 			}
 			return null;
 		};
@@ -2050,14 +2050,13 @@ function (window, undefined) {
 		}
 	};
 
-	function UndoRedoData_DataValidation(id, from, to) {
-		this.id = id;
+	function UndoRedoData_DataValidation(from, to) {
 		this.from = from;
 		this.to = to;
 	}
 
 	UndoRedoData_DataValidation.prototype.Properties = {
-		id: 0, from: 1, to: 2
+		to: 0
 	};
 	UndoRedoData_DataValidation.prototype.getType = function () {
 		return UndoRedoDataTypes.DataValidation;
@@ -2072,9 +2071,6 @@ function (window, undefined) {
 				break;
 			case this.Properties.to:
 				return this.to;
-				break;
-			case this.Properties.id:
-				return this.id;
 				break;
 		}
 		return null;
@@ -2959,7 +2955,7 @@ function (window, undefined) {
 				ws.deleteNamedSheetViews([ws.getNamedSheetViewById(Data.sheetView)], true);
 			}
 		} else if (AscCH.historyitem_Worksheet_DataValidationAdd === Type) {
-			if (bUndo) {historyitem_Worksheet_PivotReplace
+			if (bUndo) {
 				ws.deleteDataValidationById(Data.Id);
 			} else {
 				ws._addDataValidation(Data.getData());

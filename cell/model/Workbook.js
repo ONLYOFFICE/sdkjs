@@ -9048,7 +9048,7 @@
 		}
 		if (addToHistory) {
 			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_DataValidationChange, this.getId(), null,
-				new AscCommonExcel.UndoRedoData_DataValidation(from.Id, new AscCommonExcel.UndoRedoData_BinaryWrapper(from), new AscCommonExcel.UndoRedoData_BinaryWrapper(to)));
+				new AscCommonExcel.UndoRedoData_DataValidation(new AscCommonExcel.UndoRedoData_BinaryWrapper(from), new AscCommonExcel.UndoRedoData_BinaryWrapper(to)));
 		}
 	};
 
