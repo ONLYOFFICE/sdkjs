@@ -868,7 +868,7 @@
     };
 
     /**
-     * Specifies a legend position
+     * Specifies a legend font size
      * @number nFontSize
      * */
     ApiChart.prototype.SetLegendFontSize = function(nFontSize)
@@ -906,7 +906,7 @@
     };
 
     /**
-     * Spicifies a show options for data labels
+     * Specifies a show options for data labels
      * @param {number} nSeriesIndex
      * @param {number} nPointIndex
      * @param {boolean} bShowSerName
@@ -920,7 +920,7 @@
     };
 
     /**
-     * Spicifies tick labels position vertical axis
+     * Specifies tick labels position for vertical axis
      * @param {TickLabelPosition} sTickLabelPosition
      * */
     ApiChart.prototype.SetVertAxisTickLabelPosition = function(sTickLabelPosition)
@@ -928,7 +928,7 @@
         AscFormat.builder_SetChartVertAxisTickLablePosition(this.Chart, sTickLabelPosition);
     };
     /**
-     * Spicifies tick labels position horizontal axis
+     * Specifies tick labels position for horizontal axis
      * @param {TickLabelPosition} sTickLabelPosition
      * */
     ApiChart.prototype.SetHorAxisTickLabelPosition = function(sTickLabelPosition)
@@ -1005,7 +1005,7 @@
     };
 
     /**
-     * Specifies minor vertical gridline's visual properties
+     * Specifies minor horizontal gridline's visual properties
      * @param {?ApiStroke} oStroke
      * */
     ApiChart.prototype.SetMinorHorizontalGridlines = function(oStroke)
