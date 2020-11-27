@@ -2978,6 +2978,14 @@
 				var oBinaryFileReader = new AscCommonWord.BinaryFileReader(newCDocument, openParams);
 				var oRes = oBinaryFileReader.ReadFromString(sBase64, {excelCopyPaste: true});
 
+				var defrPr = oBinaryFileReader.oReadResult && oBinaryFileReader.oReadResult.DefrPr;
+				if (defrPr && newCDocument.Styles && newCDocument.Styles.Default && newCDocument.Styles.Default.TextPr) {
+					newCDocument.Styles.Default.TextPr.FontSize = defrPr.FontSize;
+					if (defrPr.RFonts) {
+						newCDocument.Styles.Default.TextPr.RFonts = defrPr.RFonts;
+					}
+				}
+
 				pptx_content_loader.End_UseFullUrl();
 
 				oTempDrawingDocument.m_oLogicDocument = old_m_oLogicDocument;
