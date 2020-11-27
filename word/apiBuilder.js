@@ -2475,10 +2475,13 @@
 		return new ApiParagraph(new Paragraph(private_GetDrawingDocument(), private_GetLogicDocument()));
 	};
 	/**
-	 * Create a new paragraph.
+	 * Create a new range.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @returns {ApiParagraph}
+	 * @param oElement - may be Document, Table, Paragraph, Run, Hyperlink
+	 * @param {Number} Start - start element of Range in current Element
+	 * @param {Number} End - end element of Range in current Element
+	 * @returns {ApiRange}
 	 */
 	Api.prototype.CreateRange = function(oElement, Start, End)
 	{
@@ -10424,7 +10427,7 @@
 	};
 
 	/**
-	 * Specifies a legend position
+	 * Specifies a legend font size
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE"]
 	 * @number nFontSize
@@ -10450,7 +10453,7 @@
 
 
 	/**
-	 * Spicifies a show options for data labels
+	 * Specifies a show options for data labels
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE"]
 	 * @param {number} nSeriesIndex
@@ -10466,7 +10469,7 @@
 	};
 
 	/**
-	 * Spicifies tick labels position vertical axis
+	 * Specifies tick labels position for vertical axis
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE"]
 	 * @param {TickLabelPosition} sTickLabelPosition
@@ -10477,7 +10480,7 @@
 	};
 
 	/**
-	 * Spicifies tick labels position horizontal axis
+	 * Specifies tick labels position for horizontal axis
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE"]
 	 * @param {TickLabelPosition} sTickLabelPosition
@@ -10563,7 +10566,7 @@
 	};
 
 	/**
-	 * Specifies minor vertical gridline's visual properties
+	 * Specifies minor horizontal gridline's visual properties
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE"]
 	 * @param {?ApiStroke} oStroke
