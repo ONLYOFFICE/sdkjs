@@ -2619,7 +2619,7 @@
 	};
 
 	/**
-	 * Specifies a legend position
+	 * Specifies a legend font size
 	 * @memberof ApiChart
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nFontSize
@@ -2644,7 +2644,7 @@
 	};
 
 	/**
-	 * Spicifies a show options for data labels
+	 * Specifies a show options for data labels
 	 * @memberof ApiChart
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nSeriesIndex
@@ -2716,7 +2716,7 @@
 	};
 
 	/**
-	 * Specifies minor vertical gridline's visual properties
+	 * Specifies minor horizontal gridline's visual properties
 	 * @memberof ApiChart
 	 * @typeofeditors ["CSE"]
 	 * @param {?ApiStroke} oStroke
