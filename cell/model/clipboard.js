@@ -3727,9 +3727,6 @@
 					return;
 				}
 
-				cDocument.Get_Styles().Default.TextPr.FontFamily.Name =  worksheet.model.workbook.getDefaultFont();
-				cDocument.Get_Styles().Default.TextPr.FontSize = worksheet.model.workbook.getDefaultSize();
-
 				var documentContentBounds = new DocumentContentBounds();
 				var coverDocument = documentContentBounds.getBounds(0, 0, documentContent);
 				this._parseChildren(coverDocument);
@@ -4119,17 +4116,7 @@
 				var cloneNewItem, formatText;
 				var newLine = "\n";
 
-				var changeDefaultFontName;
-				if (!prevTextPr && paraRun.RecalcInfo.TextPr) {
-					//TODO пришлось поставить вот такую заглушку, потому что -
-					//в таком случае внутри Get_CompiledPr -> Internal_Compile_Pr выставляется всегда
-					//TextPr.FontFamily.Name  = TextPr.RFonts.Ascii.Name;
-					changeDefaultFontName = true;
-				}
 				var cTextPr = prevTextPr ? prevTextPr : paraRun.Get_CompiledPr();
-				if (changeDefaultFontName) {
-					cTextPr.FontFamily.Name = this.ws.model.workbook.getDefaultFont();
-				}
 				if (cTextPr && !(paraRunContent.length === 1 && paraRunContent[0] instanceof ParaEnd))//settings for text
 				{
 					formatText = this._getPrParaRun(paraPr, cTextPr);
