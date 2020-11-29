@@ -8997,10 +8997,11 @@
 				if (_equalRanges(this.dataValidations.elems[i].ranges, _selection.ranges)) {
 					equalRangeDataValidation = this.dataValidations.elems[i];
 				}
-				if (props.isEqual(this.dataValidations.elems[i])) {
+				//пока не усложняем логику и не объединяем объекты с одинаковыми настройками
+				/*if (props.isEqual(this.dataValidations.elems[i])) {
 					equalDataValidation = this.dataValidations.elems[i];
 					break;
-				}
+				}*/
 			}
 		}
 		if (!instersection.length && !contain.length) {
@@ -9013,6 +9014,43 @@
 			}
 		} else if (equalRangeDataValidation) {
 			this.changeDataValidation(equalRangeDataValidation, props, true);
+		} else {
+			var t = this;
+			var _split = function (_dataValidation) {
+				var _newRanges = [];
+
+				var dataValidationRanges = _dataValidation.ranges;
+				for (var i = 0; i < dataValidationRanges.length; i++) {
+
+					var tempRanges = [];
+					for (var j = 0; j < _selection.ranges.length; j++) {
+						if (tempRanges.length) {
+							var tempRanges2 = [];
+							for (var k = 0; k < tempRanges.length; k++) {
+								tempRanges2 = tempRanges2.concat(_selection.ranges[j].difference(tempRanges[k]));
+							}
+							tempRanges = tempRanges;
+						} else {
+							tempRanges = _selection.ranges[j].difference(dataValidationRanges[i]);
+						}
+					}
+					_newRanges = _newRanges.concat(tempRanges);
+				}
+
+				var newDataValidation = _dataValidation.clone();
+				newDataValidation.ranges = _newRanges;
+				t.changeDataValidation(_dataValidation, newDataValidation, true);
+			};
+
+			var k;
+			for (k = 0; k < instersection.length; k++) {
+				_split(instersection[k]);
+			}
+			for (k = 0; k < contain.length; k++) {
+				_split(contain[k]);
+			}
+			//разбиваем диапазон объектов, с которыми пересекаемся + добавляем новый
+			this.addDataValidation(props, null, true);
 		}
 	};
 
