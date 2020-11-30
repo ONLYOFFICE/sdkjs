@@ -208,8 +208,8 @@
 		this.operator = this.checkProperty(this.operator, val.operator, AscCH.historyitem_DataValidation_Operator, ws);
 		this.error = this.checkProperty(this.error, val.error, AscCH.historyitem_DataValidation_Error, ws);
 		this.errorTitle = this.checkProperty(this.errorTitle, val.errorTitle, AscCH.historyitem_DataValidation_ErrorTitle, ws);
-		this.promt = this.checkProperty(this.promt, val.promt, AscCH.historyitem_DataValidation_Promt, ws);
-		this.promptTitle = this.checkProperty(this.promptTitle, val.promptTitle, AscCH.historyitem_DataValidation_PromtTotle, ws);
+		this.prompt = this.checkProperty(this.prompt, val.prompt, AscCH.historyitem_DataValidation_Prompt, ws);
+		this.promptTitle = this.checkProperty(this.promptTitle, val.promptTitle, AscCH.historyitem_DataValidation_PromptTotle, ws);
 		this.formula1 = this.checkProperty(this.formula1, val.formula1, AscCH.historyitem_DataValidation_Formula1, ws);
 		this.formula2 = this.checkProperty(this.formula2, val.formula2, AscCH.historyitem_DataValidation_Formula2, ws);
 	};
@@ -276,9 +276,9 @@
 		} else {
 			writer.WriteBool(false);
 		}
-		if (null != this.promt) {
+		if (null != this.prompt) {
 			writer.WriteBool(true);
-			writer.WriteString2(this.promt);
+			writer.WriteString2(this.prompt);
 		} else {
 			writer.WriteBool(false);
 		}
@@ -333,7 +333,7 @@
 			this.errorTitle = reader.GetString2();
 		}
 		if (reader.GetBool()) {
-			this.promt = reader.GetString2();
+			this.prompt = reader.GetString2();
 		}
 		if (reader.GetBool()) {
 			this.promptTitle = reader.GetString2();
