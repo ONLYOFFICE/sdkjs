@@ -13294,6 +13294,7 @@
 								oRecalcType = AscCommonExcel.recalcType.full;
 								reinitRanges = true;
 								t.cellCommentator.updateCommentsDependencies(true, val, arn);
+								t.model.updateDataValidation(true, val, arn);
 								updateDrawingObjectsInfo2 = {bInsert: true, operType: val, updateRange: arn};
 							}
 							History.EndTransaction();
@@ -13326,6 +13327,7 @@
 								oRecalcType = AscCommonExcel.recalcType.full;
 								reinitRanges = true;
 								t.cellCommentator.updateCommentsDependencies(true, val, arn);
+								t.model.updateDataValidation(true, val, arn);
 								updateDrawingObjectsInfo2 = {bInsert: true, operType: val, updateRange: arn};
 							}
 							History.EndTransaction();
@@ -13372,6 +13374,7 @@
 							t._updateGroups(true);
 							updateDrawingObjectsInfo2 = {bInsert: true, operType: val, updateRange: arn};
 							t.cellCommentator.updateCommentsDependencies(true, val, arn);
+							t.model.updateDataValidation(true, val, arn);
 							History.EndTransaction();
 						};
 
@@ -13399,6 +13402,7 @@
 							t._updateGroups();
 							updateDrawingObjectsInfo2 = {bInsert: true, operType: val, updateRange: arn};
 							t.cellCommentator.updateCommentsDependencies(true, val, arn);
+							t.model.updateDataValidation(true, val, arn);
 						};
 
 						arrChangedRanges.push(lockRange);
@@ -13431,6 +13435,7 @@
 							if (range.deleteCellsShiftLeft(function () {
 									t._cleanCache(lockRange);
 									t.cellCommentator.updateCommentsDependencies(false, val, checkRange);
+								t.model.updateDataValidation(false, val, checkRange);
 								})) {
 								updateDrawingObjectsInfo2 = {bInsert: false, operType: val, updateRange: arn};
 							}
@@ -13468,6 +13473,7 @@
 							if (range.deleteCellsShiftUp(function () {
 									t._cleanCache(lockRange);
 									t.cellCommentator.updateCommentsDependencies(false, val, checkRange);
+									t.model.updateDataValidation(false, val, checkRange);
 								})) {
 								updateDrawingObjectsInfo2 = {bInsert: false, operType: val, updateRange: arn};
 							}
@@ -13515,6 +13521,7 @@
 							History.Create_NewPoint();
 							History.StartTransaction();
 							t.cellCommentator.updateCommentsDependencies(false, val, checkRange);
+							t.model.updateDataValidation(false, val, checkRange);
 							t.model.autoFilters.isEmptyAutoFilters(arn, c_oAscDeleteOptions.DeleteColumns);
 							t.model.removeCols(checkRange.c1, checkRange.c2);
 							t._updateGroups(true);
@@ -13552,6 +13559,7 @@
 							History.StartTransaction();
 							checkRange = t.model.autoFilters.checkDeleteAllRowsFormatTable(checkRange, true);
 							t.cellCommentator.updateCommentsDependencies(false, val, checkRange);
+							t.model.updateDataValidation(false, val, checkRange);
 							t.model.autoFilters.isEmptyAutoFilters(arn, c_oAscDeleteOptions.DeleteRows);
 
 							var bExcludeHiddenRows = t.model.autoFilters.bIsExcludeHiddenRows(checkRange, t.model.selectionRange.activeCell);
@@ -16646,6 +16654,7 @@
 				History.EndTransaction();
 				if (shiftCells) {
 					t.cellCommentator.updateCommentsDependencies(true, type, arn);
+					t.model.updateDataValidation(true, type, arn);
 					t.objectRender.updateDrawingObject(true, type, arn);
 					t._onUpdateFormatTable(range);
 				}
@@ -16733,6 +16742,7 @@
 
                 var preDeleteAction = function () {
                     t.cellCommentator.updateCommentsDependencies(false, type, arn);
+					t.model.updateDataValidation(false, type, arn);
                 };
 
                 var res;

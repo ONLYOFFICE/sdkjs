@@ -9070,26 +9070,9 @@
 		if (!this.dataValidations) {
 			this.dataValidations = new window['AscCommonExcel'].CDataValidations();
 		}
-		this.dataValidations.elems.push(dataValidation);
-		if (addToHistory) {
-			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_DataValidationAdd, this.getId(), null,
-				new AscCommonExcel.UndoRedoData_BinaryWrapper(dataValidation));
-		}
+		this.dataValidations.add(this, dataValidation, addToHistory);
 	};
-
-	Worksheet.prototype.changeDataValidation = function (from, to, addToHistory) {
-		to.Id = from.Id;
-		for (var i = 0; i < this.dataValidations.elems.length; i++) {
-			if (this.dataValidations.elems[i].Id === to.Id) {
-				this.dataValidations.elems[i] = to;
-			}
-		}
-		if (addToHistory) {
-			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_DataValidationChange, this.getId(), null,
-				new AscCommonExcel.UndoRedoData_DataValidation(new AscCommonExcel.UndoRedoData_BinaryWrapper(from), new AscCommonExcel.UndoRedoData_BinaryWrapper(to)));
-		}
-	};
-
+	
 	Worksheet.prototype._getDataValidationIntersection = function (ranges) {
 		//выделяем несколько групп
 		//первая - если вся активная область находится в пределах одного dataValidation
@@ -9129,23 +9112,27 @@
 		return {intersection: intersectionArr, contain: containArr};
 	};
 
+	Worksheet.prototype.changeDataValidation = function (from, to, addToHistory) {
+		if (this.dataValidations) {
+			this.dataValidations.change(this, from, to, addToHistory);
+		}
+	};
+
 	Worksheet.prototype.deleteDataValidationById = function (id) {
-		if (this.dataValidations && this.dataValidations.elems) {
-			for (var i = 0; i < this.dataValidations.elems.length; i++) {
-				if (this.dataValidations.elems[i].Id === id) {
-					this.dataValidations.elems.splice(i, 1);
-				}
-			}
+		if (this.dataValidations) {
+			this.dataValidations.delete(id);
 		}
 	};
 
 	Worksheet.prototype.getDataValidationById = function (id) {
-		if (this.dataValidations && this.dataValidations.elems) {
-			for (var i = 0; i < this.dataValidations.elems.length; i++) {
-				if (this.dataValidations.elems[i].Id === id) {
-					return {data: this.dataValidations.elems[i], index: i};
-				}
-			}
+		if (this.dataValidations) {
+			this.dataValidations.getById(id);
+		}
+	};
+
+	Worksheet.prototype.updateDataValidation = function (bInsert, operType, updateRange) {
+		if (this.dataValidations) {
+			this.dataValidations.updateDiff(bInsert, operType, updateRange);
 		}
 	};
 

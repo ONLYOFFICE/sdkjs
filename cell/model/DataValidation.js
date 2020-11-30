@@ -37,6 +37,10 @@
 	 * Import
 	 * -----------------------------------------------------------------------------
 	 */
+
+	var c_oAscInsertOptions = Asc.c_oAscInsertOptions;
+	var c_oAscDeleteOptions = Asc.c_oAscDeleteOptions;
+
 	var EDataValidationType = {
 		None: 0,
 		Custom: 1,
@@ -678,6 +682,85 @@
 		}
 		return res;
 	};
+	CDataValidations.prototype.updateDiff = function(bInsert, type, updateRange) {
+
+		if (bInsert) {
+			switch (type) {
+				case c_oAscInsertOptions.InsertCellsAndShiftDown:
+
+					break;
+
+				case c_oAscInsertOptions.InsertCellsAndShiftRight:
+
+					break;
+
+				case c_oAscInsertOptions.InsertColumns:
+
+					break;
+
+				case c_oAscInsertOptions.InsertRows:
+
+					break;
+			}
+		} else {
+			switch (type) {
+				case c_oAscDeleteOptions.DeleteCellsAndShiftTop:
+
+					break;
+
+				case c_oAscDeleteOptions.DeleteCellsAndShiftLeft:
+
+					break;
+
+				case c_oAscDeleteOptions.DeleteColumns:
+
+					break;
+
+				case c_oAscDeleteOptions.DeleteRows:
+
+					break;
+			}
+		}
+		updateCommentsList(aChangedComments);
+	};
+
+	CDataValidations.prototype.add = function(ws, val, addToHistory) {
+		this.elems.push(val);
+		if (addToHistory) {
+			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_DataValidationAdd, ws.getId(), null,
+				new AscCommonExcel.UndoRedoData_BinaryWrapper(val));
+		}
+	};
+
+	CDataValidations.prototype.change = function (ws, from, to, addToHistory) {
+		to.Id = from.Id;
+		for (var i = 0; i < this.elems.length; i++) {
+			if (this.elems[i].Id === to.Id) {
+				this.elems[i] = to;
+			}
+		}
+		if (addToHistory) {
+			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_DataValidationChange, ws.getId(), null,
+				new AscCommonExcel.UndoRedoData_DataValidation(new AscCommonExcel.UndoRedoData_BinaryWrapper(from), new AscCommonExcel.UndoRedoData_BinaryWrapper(to)));
+		}
+	};
+
+	CDataValidations.prototype.delete = function (id) {
+		for (var i = 0; i < this.elems.length; i++) {
+			if (this.elems[i].Id === id) {
+				this.elems.splice(i, 1);
+			}
+		}
+	};
+
+	CDataValidations.prototype.getById = function (id) {
+		for (var i = 0; i < this.elems.length; i++) {
+			if (this.elems[i].Id === id) {
+				return {data: this.elems[i], index: i};
+			}
+		}
+	};
+
 
 	/*
 	 * Export
