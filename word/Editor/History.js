@@ -920,50 +920,6 @@ CHistory.prototype =
         this.RecIndex = this.Index;
     },
 
-    Is_SimpleChanges : function()
-    {
-        var Count, Items;
-        if (this.Index - this.RecIndex !== 1 && this.RecIndex >= -1)
-        {
-            Items = [];
-            Count = 0;
-            for (var PointIndex = this.RecIndex + 1; PointIndex <= this.Index; PointIndex++)
-            {
-                Items = Items.concat(this.Points[PointIndex].Items);
-                Count += this.Points[PointIndex].Items.length;
-            }
-        }
-        else if (this.Index >= 0)
-        {
-            // Считываем изменения, начиная с последней точки, и смотрим что надо пересчитать.
-            var Point = this.Points[this.Index];
-
-            Count = Point.Items.length;
-            Items = Point.Items;
-        }
-        else
-            return [];
-        
-
-        if (Items.length > 0)
-        {
-            var Class = Items[0].Class;
-            // Смотрим, чтобы класс, в котором произошли все изменения был один и тот же
-            for (var Index = 1; Index < Count; Index++)
-            {
-                var Item = Items[Index];
-
-                if (Class !== Item.Class)
-                    return [];
-            }
-
-            if (Class instanceof ParaRun && Class.Is_SimpleChanges(Items))
-                return [Items[0]];
-        }
-
-        return [];
-    },
-
     Set_Additional_ExtendDocumentToPos : function()
     {
         if ( this.Index >= 0 )
@@ -1357,6 +1313,53 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 		}
 
 		this.SavedIndex = null;
+	};
+	/**
+	 * Проверяем, являются ли изменения в последней точке простыми
+	 * @returns {[]}
+	 */
+	CHistory.prototype.IsSimpleChanges = function()
+	{
+		var Count, Items;
+		if (this.Index - this.RecIndex !== 1 && this.RecIndex >= -1)
+		{
+			Items = [];
+			Count = 0;
+			for (var PointIndex = this.RecIndex + 1; PointIndex <= this.Index; PointIndex++)
+			{
+				Items = Items.concat(this.Points[PointIndex].Items);
+				Count += this.Points[PointIndex].Items.length;
+			}
+		}
+		else if (this.Index >= 0)
+		{
+			// Считываем изменения, начиная с последней точки, и смотрим что надо пересчитать.
+			var Point = this.Points[this.Index];
+
+			Count = Point.Items.length;
+			Items = Point.Items;
+		}
+		else
+			return [];
+
+
+		if (Items.length > 0)
+		{
+			var Class = Items[0].Class;
+			// Смотрим, чтобы класс, в котором произошли все изменения был один и тот же
+			for (var Index = 1; Index < Count; Index++)
+			{
+				var Item = Items[Index];
+
+				if (Class !== Item.Class)
+					return [];
+			}
+
+			if (Class instanceof ParaRun && Class.IsSimpleChanges(Items))
+				return [Items[0]];
+		}
+
+		return [];
 	};
 
 function CRC32()
