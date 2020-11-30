@@ -11489,23 +11489,11 @@ CChartSpace.prototype.hitInTextRect = function()
                         case AscDFH.historyitem_type_BarSeries:
                         case AscDFH.historyitem_type_BubbleSeries:
                         case AscDFH.historyitem_type_AreaSeries:
+                        case AscDFH.historyitem_type_PieSeries:
                         {
                             union_marker.marker = AscFormat.CreateMarkerGeometryByType(AscFormat.SYMBOL_SQUARE, null);
                             union_marker.marker.pen = ser.compiledSeriesPen;
                             union_marker.marker.brush = ser.compiledSeriesBrush;
-                            break;
-                        }
-                        case AscDFH.historyitem_type_PieSeries:
-                        {
-                            union_marker.marker = AscFormat.CreateMarkerGeometryByType(AscFormat.SYMBOL_SQUARE, null);
-                            if(pts.length > 0){
-                                union_marker.marker.pen = pts[0].pen;
-                                union_marker.marker.brush = pts[0].brush;
-                            }
-                            else{
-                                union_marker.marker.pen = ser.compiledSeriesPen;
-                                union_marker.marker.brush = ser.compiledSeriesBrush;
-                            }
                             break;
                         }
                         case AscDFH.historyitem_type_SurfaceSeries:{
