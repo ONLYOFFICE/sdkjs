@@ -903,7 +903,7 @@
 							for (var k = 0; k < tempRanges.length; k++) {
 								tempRanges2 = tempRanges2.concat(ranges[j].difference(tempRanges[k]));
 							}
-							tempRanges = tempRanges;
+							tempRanges = tempRanges2;
 						} else {
 							tempRanges = ranges[j].difference(dataValidationRanges[i]);
 						}
