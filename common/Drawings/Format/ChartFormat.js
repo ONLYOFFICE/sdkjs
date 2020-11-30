@@ -4270,9 +4270,14 @@ function CPlotArea()
         oLineChart.mergeNoSeries(oOldChart);
         oLineChart.setGrouping(nNewGrouping);
         oLineChart.setVaryColors(false);
+        oLineChart.setMarker(new AscFormat.CMarker());
+        oLineChart.marker.setSymbol(AscFormat.SYMBOL_NONE);
         for(nSeries = 0; nSeries < aSeries.length; ++nSeries) {
             oSeries = new AscFormat.CLineSeries();
             oSeries.setFromOtherSeries(aSeries[nSeries]);
+            oSeries.setMarker(new AscFormat.CMarker());
+            oSeries.marker.setSymbol(AscFormat.SYMBOL_NONE);
+            oSeries.setSmooth(false);
             oLineChart.addSer(oSeries);
         }
         oLineChart.addAxes(aAxes);
