@@ -3405,7 +3405,7 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
     if (undefined === _RecalcData)
     {
         // Проверяем можно ли сделать быстрый пересчет
-        var SimpleChanges = History.Is_SimpleChanges();
+        var SimpleChanges = History.IsSimpleChanges();
         if (1 === SimpleChanges.length)
         {
             var Run  = SimpleChanges[0].Class;
@@ -5345,7 +5345,6 @@ CDocument.prototype.GetRecalcId = function()
 };
 /**
  * Останавливаем процесс пересчета (если пересчет был запущен и он долгий)
- * @constructor
  */
 CDocument.prototype.StopRecalculate = function()
 {
@@ -26007,7 +26006,6 @@ function CDocumentNumberingInfoEngine(oPara, oNumPr, oNumbering)
 /**
  * Проверяем закончилось ли вычисление номера
  * @returns {boolean}
- * @constructor
  */
 CDocumentNumberingInfoEngine.prototype.IsStop = function()
 {

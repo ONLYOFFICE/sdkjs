@@ -2062,9 +2062,12 @@ ParaRun.prototype.Recalculate_CurPos = function(X, Y, CurrentRun, _CurRange, _Cu
 
     return { X : X, Y: Y,  PageNum : Para.Get_AbsolutePage(CurPage), Internal : { Line : CurLine, Page : CurPage, Range : CurRange } };
 };
-
-// Проверяем, произошло ли простейшее изменение (набор или удаление текста)
-ParaRun.prototype.Is_SimpleChanges = function(Changes)
+/**
+ * Проверяем являются ли заданные изменения заданного рана простыми (например, последовательное удаление или набор текста)
+ * @param Changes
+ * @returns {boolean}
+ */
+ParaRun.prototype.IsSimpleChanges = function(Changes)
 {
     var ParaPos = null;
 
@@ -2113,7 +2116,6 @@ ParaRun.prototype.Is_SimpleChanges = function(Changes)
 
     return true;
 };
-
 /**
  * Проверяем произошло ли простое изменение параграфа, сейчас главное, чтобы это было не добавлениe/удаление картинки
  * или ссылки на сноску или разметки сложного поля, или изменение типа реценизрования для рана со знаком конца

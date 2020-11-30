@@ -4070,7 +4070,7 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
     ++this.RecalcId;
     if (undefined === RecalcData) {
         // Проверяем можно ли сделать быстрый пересчет
-        var SimpleChanges = History.Is_SimpleChanges();
+        var SimpleChanges = History.IsSimpleChanges();
         if (1 === SimpleChanges.length) {
             var Run = SimpleChanges[0].Class;
             var Para = Run.Paragraph;
