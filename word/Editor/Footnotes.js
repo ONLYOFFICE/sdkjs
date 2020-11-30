@@ -184,6 +184,10 @@ CFootnotesController.prototype.SetContinuationNotice = function(oFootnote)
 	oHistory.Add(new CChangesFootnotesSetContinuationNotice(this, oOldValue, oNewValue));
 	this.ContinuationNotice = oNewValue;
 };
+CFootnotesController.prototype.IsSpecialFootnote = function(oFootnote)
+{
+	return (oFootnote === this.Separator || oFootnote === this.ContinuationSeparator || oFootnote === this.ContinuationNotice);
+};
 CFootnotesController.prototype.SetFootnotePrNumFormat = function(nFormatType)
 {
 	if (undefined !== nFormatType && this.FootnotePr.NumFormat !== nFormatType)
@@ -1111,11 +1115,19 @@ CFootnotesController.prototype.GotoPrevFootnote = function()
 };
 CFootnotesController.prototype.GetNumberingInfo = function(oPara, oNumPr, oFootnote, isUseReview)
 {
-	var arrFootnotes     = this.LogicDocument.GetFootnotesList(null, oFootnote);
 	var oNumberingEngine = new CDocumentNumberingInfoEngine(oPara, oNumPr, this.Get_Numbering());
-	for (var nIndex = 0, nCount = arrFootnotes.length; nIndex < nCount; ++nIndex)
+
+	if (this.IsSpecialFootnote(oFootnote))
 	{
-		arrFootnotes[nIndex].GetNumberingInfo(oNumberingEngine, oPara, oNumPr);
+		oFootnote.GetNumberingInfo(oNumberingEngine, oPara, oNumPr);
+	}
+	else
+	{
+		var arrFootnotes = this.LogicDocument.GetFootnotesList(null, oFootnote);
+		for (var nIndex = 0, nCount = arrFootnotes.length; nIndex < nCount; ++nIndex)
+		{
+			arrFootnotes[nIndex].GetNumberingInfo(oNumberingEngine, oPara, oNumPr);
+		}
 	}
 
 	if (true === isUseReview)

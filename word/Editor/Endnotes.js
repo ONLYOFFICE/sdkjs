@@ -159,6 +159,7 @@ CEndnotesController.prototype.RemoveEndnote = function(oEndnote)
 CEndnotesController.prototype.SetSeparator = CFootnotesController.prototype.SetSeparator;
 CEndnotesController.prototype.SetContinuationSeparator = CFootnotesController.prototype.SetContinuationSeparator;
 CEndnotesController.prototype.SetContinuationNotice = CFootnotesController.prototype.SetContinuationNotice;
+CEndnotesController.prototype.IsSpecialEndnote = CFootnotesController.prototype.IsSpecialFootnote;
 CEndnotesController.prototype.SetEndnotePrNumFormat = function(nFormatType)
 {
 	if (undefined !== nFormatType && this.EndnotePr.NumFormat !== nFormatType)
@@ -1010,11 +1011,19 @@ CEndnotesController.prototype.GotoPrevEndnote = function()
 };
 CEndnotesController.prototype.GetNumberingInfo = function(oPara, oNumPr, oEndnote, isUseReview)
 {
-	var arrEndnotes      = this.LogicDocument.GetEndnotesList(null, oEndnote);
 	var oNumberingEngine = new CDocumentNumberingInfoEngine(oPara, oNumPr, this.Get_Numbering());
-	for (var nIndex = 0, nCount = arrEndnotes.length; nIndex < nCount; ++nIndex)
+
+	if (this.IsSpecialEndnote(oEndnote))
 	{
-		arrEndnotes[nIndex].GetNumberingInfo(oNumberingEngine, oPara, oNumPr);
+		oEndnote.GetNumberingInfo(oNumberingEngine, oPara, oNumPr);
+	}
+	else
+	{
+		var arrEndnotes = this.LogicDocument.GetEndnotesList(null, oEndnote);
+		for (var nIndex = 0, nCount = arrEndnotes.length; nIndex < nCount; ++nIndex)
+		{
+			arrEndnotes[nIndex].GetNumberingInfo(oNumberingEngine, oPara, oNumPr);
+		}
 	}
 
 	if (true === isUseReview)

@@ -2560,6 +2560,8 @@ CDocument.prototype.Init                           = function()
 };
 CDocument.prototype.On_EndLoad                     = function()
 {
+	this.ClearListsCache();
+
     // Обновляем информацию о секциях
     this.UpdateAllSectionsInfo();
 
