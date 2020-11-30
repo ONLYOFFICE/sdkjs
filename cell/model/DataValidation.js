@@ -761,6 +761,173 @@
 		}
 	};
 
+	CDataValidations.prototype.getIntersections = function (ranges) {
+		//выделяем несколько групп
+		//первая - если вся активная область находится в пределах одного dataValidation
+		//вторая - если пересекаемся с dataValidation
+
+		var checkAdd = function (arr, obj) {
+			for (var n = 0; n < arr.length; n++) {
+				if (arr[n].isEqual(obj)) {
+					return true;
+				}
+			}
+			return false;
+		};
+
+		var intersectionArr = [];
+		var containArr = []
+		if (this.elems) {
+			for (var i = 0; i < this.elems.length; i++) {
+				var dataValidation = this.elems[i];
+
+				for (var j = 0; j < ranges.length; j++) {
+					if (dataValidation.intersection(ranges[j])) {
+						if (dataValidation.containsRange(ranges[j])) {
+							if (!checkAdd(dataValidation, containArr)) {
+								containArr.push(dataValidation);
+							}
+						} else {
+							if (!checkAdd(dataValidation, intersectionArr)) {
+								intersectionArr.push(dataValidation);
+							}
+						}
+					}
+				}
+			}
+		}
+
+		return {intersection: intersectionArr, contain: containArr};
+	};
+
+	CDataValidations.prototype.getProps = function (ranges, doExtend) {
+		var _obj = this.getIntersections(ranges);
+		var dataValidationIntersection = _obj.intersection;
+		var dataValidationContain = _obj.contain;
+		var needCheck = doExtend === undefined;
+
+		if (needCheck) {
+			//если выделено несколько диапазонов с data validation
+			if (dataValidationIntersection.length > 1 || dataValidationContain.length > 1) {
+				return c_oAscError.ID.MoreOneTypeDataValidate;
+			}
+			//если в выделение попали диапазоны как с data validation так и без
+			if (dataValidationIntersection.length) {
+				return c_oAscError.ID.ContainsCellsWithoutDataValidate;
+			}
+		}
+
+
+		//для передачи в интерфейс использую объект и модели - CDataValidation
+		var res;
+		if (dataValidationIntersection.length && doExtend !== false && dataValidationContain.length === 0) {
+			//в зависимости от параметров формируем обект с опциями
+			res = dataValidationIntersection[0].clone();
+		} else if (dataValidationContain.length === 1) {
+			res = dataValidationContain[0].clone();
+		} else {
+			//возвращаем новый объект с опциями
+			res = new window['AscCommonExcel'].CDataValidation();
+		}
+
+		return res;
+	};
+
+	CDataValidations.prototype.setProps = function (ws, ranges, props) {
+		var _obj = this.getIntersections(ranges);
+		var instersection = _obj.intersection;
+		var contain = _obj.contain;
+
+		var _equalRanges = function (_ranges1, _ranges2) {
+			var res = false;
+
+			if (_ranges1.length === _ranges2.length) {
+				res = true;
+				for (var j = 0; j < _ranges1.length; j++) {
+					if (!_ranges1[j].isEqual(_ranges2[j])) {
+						res = false;
+						break;
+					}
+				}
+			}
+
+			return res;
+		};
+
+		var prepeareAdd = function (_props) {
+			var _dataValidation = _props.clone();
+			var _ranges = [];
+			for (var i = 0; i < ranges.length; i++) {
+				_ranges.push(ranges[i].clone());
+			}
+			_dataValidation.ranges = _ranges;
+			return _dataValidation;
+		};
+
+		var equalRangeDataValidation;
+		var equalDataValidation;
+		if (this.elems) {
+			for (var i = 0; i < this.elems.length; i++) {
+				if (_equalRanges(this.elems[i].ranges, ranges)) {
+					equalRangeDataValidation = this.elems[i];
+				}
+				//пока не усложняем логику и не объединяем объекты с одинаковыми настройками
+				/*if (props.isEqual(this.dataValidations.elems[i])) {
+					equalDataValidation = this.dataValidations.elems[i];
+					break;
+				}*/
+			}
+		}
+		if (!instersection.length && !contain.length) {
+			//самый простой вариант - просто добавляем новый обхект и привязываем его к активной области
+			if (equalDataValidation) {
+				//в данном случае расширяем диапазон
+				//set
+			} else {
+				this.add(ws, prepeareAdd(props), null, true);
+			}
+		} else if (equalRangeDataValidation) {
+			this.change(ws, equalRangeDataValidation, props, true);
+		} else {
+			var t = this;
+			var _split = function (_dataValidation) {
+				var _newRanges = [];
+
+				var dataValidationRanges = _dataValidation.ranges;
+				for (var i = 0; i < dataValidationRanges.length; i++) {
+
+					var tempRanges = [];
+					for (var j = 0; j < ranges.length; j++) {
+						if (tempRanges.length) {
+							var tempRanges2 = [];
+							for (var k = 0; k < tempRanges.length; k++) {
+								tempRanges2 = tempRanges2.concat(ranges[j].difference(tempRanges[k]));
+							}
+							tempRanges = tempRanges;
+						} else {
+							tempRanges = ranges[j].difference(dataValidationRanges[i]);
+						}
+					}
+					_newRanges = _newRanges.concat(tempRanges);
+				}
+
+				var newDataValidation = _dataValidation.clone();
+				newDataValidation.ranges = _newRanges;
+				t.change(ws, _dataValidation, newDataValidation, true);
+			};
+
+			var k;
+			for (k = 0; k < instersection.length; k++) {
+				_split(instersection[k]);
+			}
+			for (k = 0; k < contain.length; k++) {
+				_split(contain[k]);
+			}
+			//разбиваем диапазон объектов, с которыми пересекаемся + добавляем новый
+			this.add(ws, prepeareAdd(props), true);
+		}
+	};
+
 
 	/*
 	 * Export

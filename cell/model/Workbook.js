@@ -8936,134 +8936,22 @@
 
 	Worksheet.prototype.getDataValidationProps = function (doExtend) {
 		var _selection = this.getSelection();
-		var needCheck = doExtend === undefined;
-
-		var _obj = this._getDataValidationIntersection(_selection.ranges);
-		var dataValidationIntersection = _obj.intersection;
-		var dataValidationContain = _obj.contain;
-		if (needCheck) {
-			//если выделено несколько диапазонов с data validation
-			if (dataValidationIntersection.length > 1 || dataValidationContain.length > 1) {
-				return c_oAscError.ID.MoreOneTypeDataValidate;
-			}
-			//если в выделение попали диапазоны как с data validation так и без
-			if (dataValidationIntersection.length) {
-				return c_oAscError.ID.ContainsCellsWithoutDataValidate;
-			}
-		}
-
-
-		//для передачи в интерфейс использую объект и модели - CDataValidation
-		var res;
-		if (dataValidationIntersection.length && doExtend !== false && dataValidationContain.length === 0) {
-			//в зависимости от параметров формируем обект с опциями
-			res = dataValidationIntersection[0].clone();
-		} else if (dataValidationContain.length === 1) {
-			res = dataValidationContain[0].clone();
+		
+		if (!this.dataValidations) {
+			return new window['AscCommonExcel'].CDataValidation();
 		} else {
-			//возвращаем новый объект с опциями
-			res = new window['AscCommonExcel'].CDataValidation();
+			return this.dataValidations.getProps(_selection.ranges, doExtend);
 		}
-
-		return res;
 	};
 
 	Worksheet.prototype.setDataValidationProps = function (props) {
 		var _selection = this.getSelection();
-		var _obj = this._getDataValidationIntersection(_selection.ranges);
-		var instersection = _obj.intersection;
-		var contain = _obj.contain;
 
-		var _equalRanges = function (_ranges1, _ranges2) {
-			var res = false;
-
-			if (_ranges1.length === _ranges2.length) {
-				res = true;
-				for (var j = 0; j < _ranges1.length; j++) {
-					if (!_ranges1[j].isEqual(_ranges2[j])) {
-						res = false;
-						break;
-					}
-				}
-			}
-
-			return res;
-		};
-
-		var equalRangeDataValidation;
-		var equalDataValidation;
-		if (this.dataValidations && this.dataValidations.elems) {
-			for (var i = 0; i < this.dataValidations.elems.length; i++) {
-				if (_equalRanges(this.dataValidations.elems[i].ranges, _selection.ranges)) {
-					equalRangeDataValidation = this.dataValidations.elems[i];
-				}
-				//пока не усложняем логику и не объединяем объекты с одинаковыми настройками
-				/*if (props.isEqual(this.dataValidations.elems[i])) {
-					equalDataValidation = this.dataValidations.elems[i];
-					break;
-				}*/
-			}
+		if (!this.dataValidations) {
+			this.dataValidations = new window['AscCommonExcel'].CDataValidations();
 		}
-		if (!instersection.length && !contain.length) {
-			//самый простой вариант - просто добавляем новый обхект и привязываем его к активной области
-			if (equalDataValidation) {
-				//в данном случае расширяем диапазон
-				//set
-			} else {
-				this.addDataValidation(props, null, true);
-			}
-		} else if (equalRangeDataValidation) {
-			this.changeDataValidation(equalRangeDataValidation, props, true);
-		} else {
-			var t = this;
-			var _split = function (_dataValidation) {
-				var _newRanges = [];
 
-				var dataValidationRanges = _dataValidation.ranges;
-				for (var i = 0; i < dataValidationRanges.length; i++) {
-
-					var tempRanges = [];
-					for (var j = 0; j < _selection.ranges.length; j++) {
-						if (tempRanges.length) {
-							var tempRanges2 = [];
-							for (var k = 0; k < tempRanges.length; k++) {
-								tempRanges2 = tempRanges2.concat(_selection.ranges[j].difference(tempRanges[k]));
-							}
-							tempRanges = tempRanges;
-						} else {
-							tempRanges = _selection.ranges[j].difference(dataValidationRanges[i]);
-						}
-					}
-					_newRanges = _newRanges.concat(tempRanges);
-				}
-
-				var newDataValidation = _dataValidation.clone();
-				newDataValidation.ranges = _newRanges;
-				t.changeDataValidation(_dataValidation, newDataValidation, true);
-			};
-
-			var k;
-			for (k = 0; k < instersection.length; k++) {
-				_split(instersection[k]);
-			}
-			for (k = 0; k < contain.length; k++) {
-				_split(contain[k]);
-			}
-			//разбиваем диапазон объектов, с которыми пересекаемся + добавляем новый
-			this.addDataValidation(props, null, true);
-		}
-	};
-
-	Worksheet.prototype.addDataValidation = function (props, ranges, addToHistory) {
-		var _selection = ranges ? ranges : this.getSelection();
-		var _dataValidation = props.clone();
-		var _ranges = [];
-		for (var i = 0; i < _selection.ranges.length; i++) {
-			_ranges.push(_selection.ranges[i].clone());
-		}
-		_dataValidation.ranges = _ranges;
-		this._addDataValidation(_dataValidation, addToHistory);
-		return _dataValidation;
+		this.dataValidations.setProps(this, _selection.ranges, props);
 	};
 
 	Worksheet.prototype._addDataValidation = function (dataValidation, addToHistory) {
@@ -9074,42 +8962,10 @@
 	};
 	
 	Worksheet.prototype._getDataValidationIntersection = function (ranges) {
-		//выделяем несколько групп
-		//первая - если вся активная область находится в пределах одного dataValidation
-		//вторая - если пересекаемся с dataValidation
-
-		var checkAdd = function (arr, obj) {
-			for (var n = 0; n < arr.length; n++) {
-				if (arr[n].isEqual(obj)) {
-					return true;
-				}
-			}
-			return false;
-		};
-
-		var intersectionArr = [];
-		var containArr = []
-		if (this.dataValidations && this.dataValidations.elems) {
-			for (var i = 0; i < this.dataValidations.elems.length; i++) {
-				var dataValidation = this.dataValidations.elems[i];
-
-				for (var j = 0; j < ranges.length; j++) {
-					if (dataValidation.intersection(ranges[j])) {
-						if (dataValidation.containsRange(ranges[j])) {
-							if (!checkAdd(dataValidation, containArr)) {
-								containArr.push(dataValidation);
-							}
-						} else {
-							if (!checkAdd(dataValidation, intersectionArr)) {
-								intersectionArr.push(dataValidation);
-							}
-						}
-					}
-				}
-			}
+		if (this.dataValidations) {
+			return this.dataValidations.getIntersections(ranges);
 		}
-
-		return {intersection: intersectionArr, contain: containArr};
+		return {intersection: [], contain: []};
 	};
 
 	Worksheet.prototype.changeDataValidation = function (from, to, addToHistory) {
@@ -9126,7 +8982,7 @@
 
 	Worksheet.prototype.getDataValidationById = function (id) {
 		if (this.dataValidations) {
-			this.dataValidations.getById(id);
+			return this.dataValidations.getById(id);
 		}
 	};
 
