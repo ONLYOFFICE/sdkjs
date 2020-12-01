@@ -215,6 +215,7 @@ CWordCollaborativeEditing.prototype.OnEnd_Load_Objects = function()
     AscCommon.CollaborativeEditing.Set_GlobalLock(false);
     AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
 
+	this.m_oLogicDocument.ResumeRecalculate();
 	this.private_RecalculateDocument(AscCommon.History.Get_RecalcData(null, this.m_aAllChanges, this.m_nRecalcIndexStart, this.m_nRecalcIndexEnd));
 
     editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.ApplyChanges);
