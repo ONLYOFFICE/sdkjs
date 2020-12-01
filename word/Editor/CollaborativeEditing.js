@@ -215,8 +215,7 @@ CWordCollaborativeEditing.prototype.OnEnd_Load_Objects = function()
     AscCommon.CollaborativeEditing.Set_GlobalLock(false);
     AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
 
-    // Запускаем полный пересчет документа
-    editor.WordControl.m_oLogicDocument.RecalculateFromStart(true);
+	this.private_RecalculateDocument(AscCommon.History.Get_RecalcData(null, this.m_aAllChanges, this.m_nRecalcIndexStart, this.m_nRecalcIndexEnd));
 
     editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.ApplyChanges);
 };
@@ -629,14 +628,11 @@ CWordCollaborativeEditing.prototype.OnEnd_ReadForeignChanges = function()
 		if (this.m_oLogicDocument && this.m_oLogicDocument.ClearListsCache)
 			this.m_oLogicDocument.ClearListsCache();
 	}
-
 };
-
-
-CWordCollaborativeEditing.prototype.private_RecalculateDocument = function(oRecalcData){
-    this.m_oLogicDocument.RecalculateWithParams(oRecalcData);
+CWordCollaborativeEditing.prototype.private_RecalculateDocument = function(oRecalcData)
+{
+	this.m_oLogicDocument.RecalculateWithParams(oRecalcData);
 };
-
 
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommon'] = window['AscCommon'] || {};

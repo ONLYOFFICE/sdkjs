@@ -252,6 +252,9 @@ function CCollaborativeEditingBase()
 
     this.m_nAllChangesSavedIndex = 0;
 
+	this.m_nRecalcIndexStart  = 0;
+	this.m_nRecalcIndexEnd    = 0;
+
     this.m_aAllChanges        = []; // Список всех изменений
     this.m_aOwnChangesIndexes = []; // Список номеров своих изменений в общем списке, которые мы можем откатить
 
@@ -377,6 +380,8 @@ CCollaborativeEditingBase.prototype.Apply_OtherChanges = function()
     if (this.m_aChanges.length > 0)
     	this.private_CollectOwnChanges();
 
+    this.private_SaveRecalcChangeIndex(true);
+
     // Применяем изменения, пока они есть
     var _count = this.m_aChanges.length;
     for (var i = 0; i < _count; i++)
@@ -393,6 +398,7 @@ CCollaborativeEditingBase.prototype.Apply_OtherChanges = function()
         // this.m_nErrorLog_PointChangesCount++;
     }
 
+	this.private_SaveRecalcChangeIndex(false);
     this.private_ClearChanges();
 
     // У новых элементов выставляем указатели на другие классы
@@ -916,25 +922,6 @@ CCollaborativeEditingBase.prototype.UpdateDocumentPositionsByState = function(Do
 //----------------------------------------------------------------------------------------------------------------------
 // Private area
 //----------------------------------------------------------------------------------------------------------------------
-	CCollaborativeEditingBase.prototype.private_ClearChanges = function()
-	{
-		this.m_aChanges = [];
-	};
-	CCollaborativeEditingBase.prototype.private_CollectOwnChanges = function()
-	{
-	};
-	CCollaborativeEditingBase.prototype.private_AddOverallChange = function(oChange)
-	{
-	    return true;
-	};
-
-
-	//-------------------------------------
-    ///
-    /////----------------------------------------
-    //----------------------------------------------------------------------------------------------------------------------
-//
-//----------------------------------------------------------------------------------------------------------------------
     CCollaborativeEditingBase.prototype.private_ClearChanges = function()
     {
         this.m_aChanges    = [];
@@ -1306,7 +1293,7 @@ CCollaborativeEditingBase.prototype.UpdateDocumentPositionsByState = function(Do
     };
     CCollaborativeEditingBase.prototype.CanUndo = function()
     {
-        return this.m_aOwnChangesIndexes.length <= 0 ? false : true;
+        return this.m_aOwnChangesIndexes.length > 0;
     };
     CCollaborativeEditingBase.prototype.private_CommutateContentChanges = function(oChange, nStartPosition)
 	{
@@ -1429,11 +1416,16 @@ CCollaborativeEditingBase.prototype.UpdateDocumentPositionsByState = function(Do
         }
         return true;
     };
-
-
-    CCollaborativeEditingBase.prototype.private_RecalculateDocument = function(oRecalcData){
-
+    CCollaborativeEditingBase.prototype.private_RecalculateDocument = function(oRecalcData)
+	{
     };
+	CCollaborativeEditingBase.prototype.private_SaveRecalcChangeIndex = function(isStart)
+	{
+		if (isStart)
+			this.m_nRecalcIndexStart = this.m_aAllChanges.length;
+		else
+			this.m_nRecalcIndexEnd   = this.m_aAllChanges.length - 1;
+	};
 
 
 //----------------------------------------------------------------------------------------------------------------------

@@ -870,20 +870,24 @@ CHistory.prototype =
 		return false;
 	},
 
-    Get_RecalcData : function(RecalcData, arrChanges)
+    Get_RecalcData : function(oRecalcData, arrChanges, nChangeStart, nChangeEnd)
     {
-        if (RecalcData)
+        if (oRecalcData)
         {
-            this.RecalculateData = RecalcData;
+            this.RecalculateData = oRecalcData;
         }
         else if (arrChanges)
 		{
 			this.private_ClearRecalcData();
-			for (var nIndex = 0, nCount = arrChanges.length; nIndex < nCount; ++nIndex)
+
+			var nStart = undefined !== nChangeStart ? nChangeStart : 0;
+			var nEnd   = undefined !== nChangeEnd ? nChangeEnd : arrChanges.length - 1;
+			for (var nIndex = nStart; nIndex <= nEnd; ++nIndex)
 			{
 				var oChange = arrChanges[nIndex];
 				oChange.RefreshRecalcData();
 			}
+
 			this.private_PostProcessingRecalcData();
 		}
         else
