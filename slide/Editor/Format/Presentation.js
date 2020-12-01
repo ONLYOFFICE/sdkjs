@@ -4309,6 +4309,11 @@ CPresentation.prototype.StopRecalculate = function () {
     this.clearThemeTimeouts();
 //        this.DrawingDocument.OnStartRecalculate( 0 );
 };
+CPresentation.prototype.PauseRecalculate = function() {
+	this.StopRecalculate();
+};
+CPresentation.prototype.ResumeRecalculate = function() {
+};
 
 CPresentation.prototype.OnContentReDraw = function (StartPage, EndPage) {
     this.ReDraw(StartPage, EndPage);
