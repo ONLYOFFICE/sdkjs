@@ -10741,6 +10741,7 @@
 							    range.cleanAll();
 								t.model.deletePivotTables(range.bbox);
 								t.model.removeSparklines(range.bbox);
+								t.model.clearDataValidation([range.bbox], true);
 								// Удаляем комментарии
                                 t.cellCommentator.deleteCommentsRange(range.bbox);
 								break;

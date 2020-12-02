@@ -784,9 +784,12 @@
 			var intersection = this.ranges[i].intersection(oBBoxFrom);
 			if (intersection) {
 				isChanged = true;
-				if (copyRange) {
+				if (!copyRange) {
 					newRanges = newRanges.concat(intersection.difference(this.ranges[i]));
+				} else {
+					newRanges.push(this.ranges[i]);
 				}
+
 				intersection.setOffset(offset);
 				newRanges.push(intersection);
 			} else {

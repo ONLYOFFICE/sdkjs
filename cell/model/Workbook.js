@@ -9027,12 +9027,6 @@
 		}
 	};
 
-	Worksheet.prototype.moveDataValidation = function (oBBoxFrom, oBBoxTo, copyRange, offset) {
-		if (this.dataValidations) {
-			this.dataValidations.move(this, oBBoxFrom, oBBoxTo, copyRange, offset);
-		}
-	};
-
 	Worksheet.prototype._moveDataValidation = function (oBBoxFrom, oBBoxTo, copyRange, offset, wsTo) {
 		if (!wsTo) {
 			wsTo = this;
@@ -9041,7 +9035,9 @@
 			wsTo.clearDataValidation([oBBoxTo], true);
 
 			if (this === wsTo) {
-				wsTo.moveDataValidation(oBBoxFrom, oBBoxTo, copyRange, offset);
+				if (this.dataValidations) {
+					this.dataValidations.move(this, oBBoxFrom, oBBoxTo, copyRange, offset);
+				}
 			} else {
 				var aDataValidations = this._getCopyDataValidationByRange(oBBoxFrom, offset);
 				if (aDataValidations) {
