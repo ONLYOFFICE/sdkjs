@@ -387,6 +387,21 @@
 		}
 		return false;
 	};
+	CDataValidation.prototype.getIntersections = function (range, offset) {
+		var res = [];
+		if (this.ranges) {
+			for (var i = 0; i < this.ranges.length; ++i) {
+				var intersection = this.ranges[i].intersection(range);
+				if (intersection) {
+					if (offset) {
+						intersection.setOffset(offset);
+					}
+					res.push(intersection);
+				}
+			}
+		}
+		return res.length ? res : null;
+	};
 	CDataValidation.prototype.checkValue = function (cell, ws) {
 		if (!this.showErrorMessage || EDataValidationType.None === this.type) {
 			return true;
@@ -753,6 +768,8 @@
 				if (intersection) {
 					isChanged = true;
 					newRanges = newRanges.concat(intersection.difference(this.ranges[i]));
+				} else {
+					newRanges.push(this.ranges[i]);
 				}
 			}
 		}
@@ -760,6 +777,25 @@
 		return isChanged ? newRanges : null;
 	};
 
+	CDataValidation.prototype.move = function (oBBoxFrom, copyRange, offset) {
+		var newRanges = [];
+		var isChanged;
+		for (var i = 0; i < this.ranges.length; i++) {
+			var intersection = this.ranges[i].intersection(oBBoxFrom);
+			if (intersection) {
+				isChanged = true;
+				if (copyRange) {
+					newRanges = newRanges.concat(intersection.difference(this.ranges[i]));
+				}
+				intersection.setOffset(offset);
+				newRanges.push(intersection);
+			} else {
+				newRanges.push(this.ranges[i]);
+			}
+		}
+
+		return isChanged ? newRanges : null;
+	};
 
 	function CDataValidations() {
 		this.disablePrompts = false;
@@ -1014,11 +1050,35 @@
 		for (var i = 0; i < this.elems.length; i++) {
 			var changedRanges = this.elems[i].clear(ranges);
 			if (changedRanges) {
-				var newDataValidation = this.clone();
+				var newDataValidation = this.elems[i].clone();
 				newDataValidation.ranges = changedRanges;
-				this.change(ws, this, newDataValidation, addToHistory);
+				this.change(ws, this.elems[i], newDataValidation, addToHistory);
 			}
 		}
+	};
+
+	CDataValidations.prototype.move = function (ws, oBBoxFrom, oBBoxTo, copyRange, offset) {
+		for (var i = 0; i < this.elems.length; i++) {
+			var changedRanges = this.elems[i].move(oBBoxFrom, copyRange, offset);
+			if (changedRanges) {
+				var newDataValidation = this.elems[i].clone();
+				newDataValidation.ranges = changedRanges;
+				this.change(ws, this.elems[i], newDataValidation, true);
+			}
+		}
+	};
+
+	CDataValidations.prototype.getCopyByRange = function (range, offset) {
+		var res = [];
+		for (var i = 0; i < this.elems.length; i++) {
+			var changedRanges = this.elems[i].getIntersections(range, offset);
+			if (changedRanges) {
+				var newDataValidation = this.elems[i].clone();
+				newDataValidation.ranges = changedRanges;
+				res.push(newDataValidation);
+			}
+		}
+		return res.length ? res : null;
 	};
 
 

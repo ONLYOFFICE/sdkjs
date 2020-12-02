@@ -9027,23 +9027,43 @@
 		}
 	};
 
+	Worksheet.prototype.moveDataValidation = function (oBBoxFrom, oBBoxTo, copyRange, offset) {
+		if (this.dataValidations) {
+			this.dataValidations.move(this, oBBoxFrom, oBBoxTo, copyRange, offset);
+		}
+	};
+
 	Worksheet.prototype._moveDataValidation = function (oBBoxFrom, oBBoxTo, copyRange, offset, wsTo) {
 		if (!wsTo) {
 			wsTo = this;
 		}
 		if (false === this.workbook.bUndoChanges && false === this.workbook.bRedoChanges) {
 			wsTo.clearDataValidation([oBBoxTo], true);
-			if (copyRange) {
 
+			if (this === wsTo) {
+				wsTo.moveDataValidation(oBBoxFrom, oBBoxTo, copyRange, offset);
 			} else {
-				if (this === wsTo) {
+				var aDataValidations = this._getCopyDataValidationByRange(oBBoxFrom, offset);
+				if (aDataValidations) {
+					if (!copyRange) {
+						this.clearDataValidation([oBBoxFrom], true);
+					}
 
-				} else {
-
+					//далее необходимо создать новые объекты на новом листе
+					for (var i = 0; i < aDataValidations.length; i++) {
+						wsTo._addDataValidation(aDataValidations[i], true);
+					}
 				}
 			}
 		}
 	};
+
+	Worksheet.prototype._getCopyDataValidationByRange = function (range, offset) {
+		if (this.dataValidations) {
+			this.dataValidations.getCopyByRange(range, offset);
+		}
+	};
+
 
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;
