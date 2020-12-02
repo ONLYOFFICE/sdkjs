@@ -949,6 +949,8 @@
 		} else {
 			//возвращаем новый объект с опциями
 			res = new window['AscCommonExcel'].CDataValidation();
+			res.showErrorMessage = true;
+			res.showInputMessage = true;
 		}
 
 		return res;

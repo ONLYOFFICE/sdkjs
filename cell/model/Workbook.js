@@ -8967,7 +8967,10 @@
 		var _selection = this.getSelection();
 		
 		if (!this.dataValidations) {
-			return new window['AscCommonExcel'].CDataValidation();
+			var newDataValidation = new window['AscCommonExcel'].CDataValidation();
+			newDataValidation.showErrorMessage = true;
+			newDataValidation.showInputMessage = true;
+			return newDataValidation;
 		} else {
 			return this.dataValidations.getProps(_selection.ranges, doExtend);
 		}
