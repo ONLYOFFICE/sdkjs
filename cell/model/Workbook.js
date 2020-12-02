@@ -8986,7 +8986,7 @@
 		this.dataValidations.setProps(this, _selection.ranges, props);
 	};
 
-	Worksheet.prototype._addDataValidation = function (dataValidation, addToHistory) {
+	Worksheet.prototype.addDataValidation = function (dataValidation, addToHistory) {
 		if (!this.dataValidations) {
 			this.dataValidations = new window['AscCommonExcel'].CDataValidations();
 		}
@@ -9050,7 +9050,7 @@
 
 					//далее необходимо создать новые объекты на новом листе
 					for (var i = 0; i < aDataValidations.length; i++) {
-						wsTo._addDataValidation(aDataValidations[i], true);
+						wsTo.addDataValidation(aDataValidations[i], true);
 					}
 				}
 			}

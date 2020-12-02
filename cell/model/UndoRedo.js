@@ -2962,7 +2962,7 @@ function (window, undefined) {
 			if (bUndo) {
 				ws.deleteDataValidationById(Data.Id);
 			} else {
-				ws._addDataValidation(Data.getData());
+				ws.addDataValidation(Data.getData());
 			}
 		} else if (AscCH.historyitem_Worksheet_DataValidationChange === Type) {
 			var data = bUndo ? Data.from.getData() : Data.to.getData();
@@ -2972,7 +2972,7 @@ function (window, undefined) {
 			}
 		} else if (AscCH.historyitem_Worksheet_DataValidationDelete === Type) {
 			if (bUndo) {
-				ws._addDataValidation(Data.from.getData());
+				ws.addDataValidation(Data.from.getData());
 			} else {
 				ws.deleteDataValidationById(Data.id);
 			}

@@ -800,6 +800,21 @@
 		return isChanged ? newRanges : null;
 	};
 
+	CDataValidation.prototype.prepeareToPaste = function (range, offset) {
+		var newRanges = [];
+		for (var j = 0; j < this.ranges.length; j++) {
+			var intersection = range.intersection(this.ranges[j]);
+			if (intersection) {
+				newRanges.push(intersection.setOffset(offset));
+			}
+		}
+		if (newRanges.length) {
+			this.ranges = newRanges;
+			return true;
+		}
+		return false;
+	};
+
 	function CDataValidations() {
 		this.disablePrompts = false;
 		this.xWindow = null;
