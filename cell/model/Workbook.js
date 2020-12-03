@@ -9018,9 +9018,9 @@
 		}
 	};
 
-	Worksheet.prototype.shiftDataValidation = function (bInsert, operType, updateRange) {
+	Worksheet.prototype.shiftDataValidation = function (bInsert, operType, updateRange, addToHistory) {
 		if (this.dataValidations) {
-			this.dataValidations.shift(this, bInsert, operType, updateRange);
+			this.dataValidations.shift(this, bInsert, operType, updateRange, addToHistory);
 		}
 	};
 

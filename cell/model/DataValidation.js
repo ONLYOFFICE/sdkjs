@@ -843,15 +843,15 @@
 		}
 		return res;
 	};
-	CDataValidations.prototype.shift = function(ws, bInsert, type, updateRange) {
+	CDataValidations.prototype.shift = function(ws, bInsert, type, updateRange, addToHistory) {
 		for (var i = 0; i < this.elems.length; i++) {
 			var isUpdate = this.elems[i].shift(bInsert, type, updateRange);
 			if (isUpdate === -1) {
-				this.delete(ws, this.elems[i].Id, true);
+				this.delete(ws, this.elems[i].Id, addToHistory);
 			} else if (isUpdate) {
 				var to = this.elems[i].clone();
 				to.ranges = isUpdate;
-				this.change(ws, this.elems[i], to , true);
+				this.change(ws, this.elems[i], to , addToHistory);
 			}
 		}
 	};
@@ -1102,6 +1102,21 @@
 			}
 		}
 		return res.length ? res : null;
+	};
+
+	CDataValidations.prototype.expandRanges = function (ranges) {
+		var res = [];
+		for (var k = 0; k < ranges.length; k++) {
+			res[k] = ranges[k];
+			for (var i = 0; i < this.elems.length; i++) {
+				for (var j = 0; j < this.elems[i].ranges.length; j++) {
+					if (this.elems[i].ranges[j].intersection(res[k])) {
+						res[k] = ranges[k].union(this.elems[i].ranges[j]);
+					}
+				}
+			}
+		}
+		return res;
 	};
 
 

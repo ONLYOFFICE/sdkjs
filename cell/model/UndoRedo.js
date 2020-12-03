@@ -2548,6 +2548,8 @@ function (window, undefined) {
 			// ToDo Так делать неправильно, нужно поправить (перенести логику в model, а отрисовку отделить)
 			worksheetView = wb.oApi.wb.getWorksheetById(nSheetId);
 			worksheetView.cellCommentator.updateCommentsDependencies(bInsert, operType, range);
+
+			ws.shiftDataValidation(bInsert, operType, range);
 		} else if (AscCH.historyitem_Worksheet_AddCols == Type || AscCH.historyitem_Worksheet_RemoveCols == Type) {
 			from = Data.from;
 			to = Data.to;
@@ -2584,6 +2586,8 @@ function (window, undefined) {
 			// ToDo Так делать неправильно, нужно поправить (перенести логику в model, а отрисовку отделить)
 			worksheetView = wb.oApi.wb.getWorksheetById(nSheetId);
 			worksheetView.cellCommentator.updateCommentsDependencies(bInsert, operType, range);
+
+			ws.shiftDataValidation(bInsert, operType, range)
 		} else if (AscCH.historyitem_Worksheet_ShiftCellsLeft == Type ||
 			AscCH.historyitem_Worksheet_ShiftCellsRight == Type) {
 			r1 = Data.r1;
@@ -2974,16 +2978,17 @@ function (window, undefined) {
 			}
 		} else if (AscCH.historyitem_Worksheet_DataValidationAdd === Type) {
 			if (bUndo) {
-				ws.deleteDataValidationById(Data.Id);
+				ws.deleteDataValidationById(Data.id);
 			} else {
 				var _dataValidation = Data.to;
+				_dataValidation.Id = Data.id;
 				if (wb.bCollaborativeChanges) {
 					if (_dataValidation.ranges) {
-						for (var i = 0; i < _dataValidation.ranges.length; i++) {
-							_dataValidation.ranges.r1 = collaborativeEditing.getLockOtherRow2(nSheetId, _dataValidation.ranges.r1);
-							_dataValidation.ranges.c1 = collaborativeEditing.getLockOtherColumn2(nSheetId, _dataValidation.ranges.c1);
-							_dataValidation.ranges.r2 = collaborativeEditing.getLockOtherRow2(nSheetId, _dataValidation.ranges.r2);
-							_dataValidation.ranges.c2 = collaborativeEditing.getLockOtherColumn2(nSheetId, _dataValidation.ranges.c2);
+						for (i = 0; i < _dataValidation.ranges.length; i++) {
+							_dataValidation.ranges[i].r1 = collaborativeEditing.getLockOtherRow2(nSheetId, _dataValidation.ranges[i].r1);
+							_dataValidation.ranges[i].c1 = collaborativeEditing.getLockOtherColumn2(nSheetId, _dataValidation.ranges[i].c1);
+							_dataValidation.ranges[i].r2 = collaborativeEditing.getLockOtherRow2(nSheetId, _dataValidation.ranges[i].r2);
+							_dataValidation.ranges[i].c2 = collaborativeEditing.getLockOtherColumn2(nSheetId, _dataValidation.ranges[i].c2);
 						}
 					}
 				}
@@ -2991,10 +2996,21 @@ function (window, undefined) {
 				ws.addDataValidation(_dataValidation);
 			}
 		} else if (AscCH.historyitem_Worksheet_DataValidationChange === Type) {
-			var data = bUndo ? Data.from : Data.to;
-			var dataValidation = ws.getDataValidationById(data.Id);
-			if (dataValidation) {
-				ws.dataValidations.elems[dataValidation.index] = data;
+			var dataValidationTo = bUndo ? Data.from : Data.to;
+			var dataValidationFrom = ws.getDataValidationById(Data.id);
+			if (dataValidationFrom) {
+				dataValidationTo.Id = Data.id;
+				if (wb.bCollaborativeChanges) {
+					if (dataValidationTo.ranges) {
+						for (i = 0; i < dataValidationTo.ranges.length; i++) {
+							dataValidationTo.ranges[i].r1 = collaborativeEditing.getLockOtherRow2(nSheetId, dataValidationTo.ranges[i].r1);
+							dataValidationTo.ranges[i].c1 = collaborativeEditing.getLockOtherColumn2(nSheetId, dataValidationTo.ranges[i].c1);
+							dataValidationTo.ranges[i].r2 = collaborativeEditing.getLockOtherRow2(nSheetId, dataValidationTo.ranges[i].r2);
+							dataValidationTo.ranges[i].c2 = collaborativeEditing.getLockOtherColumn2(nSheetId, dataValidationTo.ranges[i].c2);
+						}
+					}
+				}
+				ws.dataValidations.elems[dataValidationFrom.index] = dataValidationTo;
 			}
 		} else if (AscCH.historyitem_Worksheet_DataValidationDelete === Type) {
 			if (bUndo) {
