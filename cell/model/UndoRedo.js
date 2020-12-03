@@ -435,6 +435,7 @@ function (window, undefined) {
 		this.NamedSheetViewChange = 131;
 
 		this.DataValidation = 140;
+		this.DataValidationInner = 141;
 
 		this.Create = function (nType) {
 			switch (nType) {
@@ -613,6 +614,8 @@ function (window, undefined) {
 						return new window['AscCommonExcel'].UndoRedoData_NamedSheetView();
 					}
 					break;
+				case this.DataValidationInner:
+					return new window['AscCommonExcel'].CDataValidation();
 				case this.DataValidation:
 					return new window['AscCommonExcel'].UndoRedoData_DataValidation();
 			}
@@ -2057,7 +2060,7 @@ function (window, undefined) {
 	}
 
 	UndoRedoData_DataValidation.prototype.Properties = {
-		id: 0, to: 1
+		id: 0, to: 2
 	};
 	UndoRedoData_DataValidation.prototype.getType = function () {
 		return UndoRedoDataTypes.DataValidation;
@@ -2090,6 +2093,17 @@ function (window, undefined) {
 			case this.Properties.id:
 				this.id = value;
 				break;
+		}
+	};
+	UndoRedoData_DataValidation.prototype.applyCollaborative = function (nSheetId, collaborativeEditing) {
+		if (this.to) {
+			for (var i = 0; i < this.to.ranges.length; i++) {
+				var range = this.to.ranges[i];
+				range.r1 = collaborativeEditing.getLockMeRow2(nSheetId, range.r1);
+				range.r2 = collaborativeEditing.getLockMeRow2(nSheetId, range.r2);
+				range.c1 = collaborativeEditing.getLockMeColumn2(nSheetId, range.c1);
+				range.c2 = collaborativeEditing.getLockMeColumn2(nSheetId, range.c2);
+			}
 		}
 	};
 
@@ -2962,17 +2976,29 @@ function (window, undefined) {
 			if (bUndo) {
 				ws.deleteDataValidationById(Data.Id);
 			} else {
-				ws.addDataValidation(Data.getData());
+				var _dataValidation = Data.to;
+				if (wb.bCollaborativeChanges) {
+					if (_dataValidation.ranges) {
+						for (var i = 0; i < _dataValidation.ranges.length; i++) {
+							_dataValidation.ranges.r1 = collaborativeEditing.getLockOtherRow2(nSheetId, _dataValidation.ranges.r1);
+							_dataValidation.ranges.c1 = collaborativeEditing.getLockOtherColumn2(nSheetId, _dataValidation.ranges.c1);
+							_dataValidation.ranges.r2 = collaborativeEditing.getLockOtherRow2(nSheetId, _dataValidation.ranges.r2);
+							_dataValidation.ranges.c2 = collaborativeEditing.getLockOtherColumn2(nSheetId, _dataValidation.ranges.c2);
+						}
+					}
+				}
+
+				ws.addDataValidation(_dataValidation);
 			}
 		} else if (AscCH.historyitem_Worksheet_DataValidationChange === Type) {
-			var data = bUndo ? Data.from.getData() : Data.to.getData();
+			var data = bUndo ? Data.from : Data.to;
 			var dataValidation = ws.getDataValidationById(data.Id);
 			if (dataValidation) {
 				ws.dataValidations.elems[dataValidation.index] = data;
 			}
 		} else if (AscCH.historyitem_Worksheet_DataValidationDelete === Type) {
 			if (bUndo) {
-				ws.addDataValidation(Data.from.getData());
+				ws.addDataValidation(Data.from);
 			} else {
 				ws.deleteDataValidationById(Data.id);
 			}

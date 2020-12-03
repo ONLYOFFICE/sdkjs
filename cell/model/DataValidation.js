@@ -167,7 +167,7 @@
 		return AscDFH.historyitem_type_DataValidation;
 	};
 	CDataValidation.prototype.getType = function () {
-		return AscCommonExcel.UndoRedoDataTypes.DataValidation;
+		return AscCommonExcel.UndoRedoDataTypes.DataValidationInner;
 	};
 	CDataValidation.prototype._init = function (ws) {
 		if (this.formula1) {
@@ -243,7 +243,7 @@
 	};
 	CDataValidation.prototype.Write_ToBinary2 = function (writer) {
 		//for wrapper
-		writer.WriteLong(this.getObjectType());
+		//writer.WriteLong(this.getObjectType());
 
 		if (null != this.ranges) {
 			writer.WriteBool(true);
@@ -261,7 +261,6 @@
 		writer.WriteBool(this.allowBlank);
 		writer.WriteBool(this.showDropDown);
 		writer.WriteBool(this.showErrorMessage);
-		writer.WriteBool(this.showInputMessage);
 		writer.WriteBool(this.showInputMessage);
 		writer.WriteLong(this.type);
 		writer.WriteLong(this.errorStyle);
@@ -323,7 +322,6 @@
 		this.allowBlank = reader.GetBool();
 		this.showDropDown = reader.GetBool();
 		this.showErrorMessage = reader.GetBool();
-		this.showInputMessage = reader.GetBool();
 		this.showInputMessage = reader.GetBool();
 		this.type = reader.GetLong();
 		this.errorStyle = reader.GetLong();
@@ -603,7 +601,7 @@
 	CDataValidation.prototype.getShowInputMessage = function () {
 		return this.showInputMessage;
 	};
-	CDataValidation.prototype.getType = function () {
+	CDataValidation.prototype.asc_getType = function () {
 		return this.type;
 	};
 	CDataValidation.prototype.getImeMode = function () {
@@ -816,6 +814,10 @@
 		return false;
 	};
 
+	CDataValidation.prototype.applyCollaborative = function (nSheetId, collaborativeEditing) {
+
+	};
+
 	function CDataValidations() {
 		this.disablePrompts = false;
 		this.xWindow = null;
@@ -858,7 +860,7 @@
 		this.elems.push(val);
 		if (addToHistory) {
 			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_DataValidationAdd, ws.getId(), null,
-				new AscCommonExcel.UndoRedoData_BinaryWrapper(val));
+				new AscCommonExcel.UndoRedoData_DataValidation(val.Id, null, val));
 		}
 	};
 
@@ -871,7 +873,7 @@
 		}
 		if (addToHistory) {
 			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_DataValidationChange, ws.getId(), null,
-				new AscCommonExcel.UndoRedoData_DataValidation(from.Id, new AscCommonExcel.UndoRedoData_BinaryWrapper(from), new AscCommonExcel.UndoRedoData_BinaryWrapper(to)));
+				new AscCommonExcel.UndoRedoData_DataValidation(from.Id, from, to));
 		}
 	};
 
@@ -886,7 +888,7 @@
 
 		if (addToHistory) {
 			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_DataValidationDelete, ws.getId(), null,
-				new AscCommonExcel.UndoRedoData_DataValidation(from.Id, new AscCommonExcel.UndoRedoData_BinaryWrapper(from), null));
+				new AscCommonExcel.UndoRedoData_DataValidation(from.Id, from, null));
 		}
 	};
 
@@ -1143,7 +1145,7 @@
 	prot['asc_getShowDropDown'] = prot.getShowDropDown;
 	prot['asc_getShowErrorMessage'] = prot.getShowErrorMessage;
 	prot['asc_getShowInputMessage'] = prot.getShowInputMessage;
-	prot['asc_getType'] = prot.getType;
+	prot['asc_getType'] = prot.asc_getType;
 	//prot['asc_getImeMode'] = prot.getImeMode;
 	prot['asc_getOperator'] = prot.getOperator;
 	prot['asc_getPrompt'] = prot.getPrompt;
