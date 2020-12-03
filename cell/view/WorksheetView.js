@@ -20840,7 +20840,7 @@
 
 			History.EndTransaction();
 		}
-		
+
 		//TODO необходимо ли лочить каждый объект data validate?
 		var lockRanges = this.model.dataValidations ? this.model.dataValidations.expandRanges(_selection) : _selection;
 		this._isLockedCells(lockRanges, /*subType*/null, callback);

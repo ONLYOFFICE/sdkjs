@@ -1106,17 +1106,28 @@
 
 	CDataValidations.prototype.expandRanges = function (ranges) {
 		var res = [];
+		var _notExpandRanges = [];
 		for (var k = 0; k < ranges.length; k++) {
 			res[k] = ranges[k];
 			for (var i = 0; i < this.elems.length; i++) {
+				var _expandRange = res[k];
+				var isIntersection = false;
+				var tempArr = [];
 				for (var j = 0; j < this.elems[i].ranges.length; j++) {
-					if (this.elems[i].ranges[j].intersection(res[k])) {
-						res[k] = ranges[k].union(this.elems[i].ranges[j]);
+					if (this.elems[i].ranges[j].intersection(_expandRange)) {
+						isIntersection = true;
+						_expandRange = _expandRange.union(this.elems[i].ranges[j]);
+					} else {
+						tempArr.push(this.elems[i].ranges[j]);
 					}
+				}
+				if (isIntersection) {
+					_notExpandRanges = _notExpandRanges.concat(tempArr);
+					res[k] = _expandRange;
 				}
 			}
 		}
-		return res;
+		return res.concat(_notExpandRanges);
 	};
 
 
