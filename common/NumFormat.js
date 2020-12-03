@@ -75,6 +75,7 @@ var numFormat_General = 103;
 var numFormat_DigitDrop = 104;
 var numFormat_Plus = 105;
 var numFormat_Minus = 106;
+var numFormat_ThousandText = 107;
 
 var FormatStates = {Decimal: 1, Frac: 2, Scientific: 3, Slash: 4, SlashFrac: 5};
 var SignType = {Negative: 1, Null:2, Positive: 3};
@@ -817,15 +818,11 @@ NumFormat.prototype =
             {
                 this._addToFormat(numFormat_Percent);
             }
-			else if("$" == next || "+" == next || "-" == next || "(" == next || ")" == next || " " == next)
-			{
-				this._addToFormat(numFormat_Text, next);
-			}
             else if(TimeSeparator == next)
             {
                 this._addToFormat(numFormat_TimeSeparator);
             }
-            else if(0 <= next && next <= 9)
+            else if('0' <= next && next <= '9')
             {
                 //не 0 может быть только в дробях
                 this._addToFormat(numFormat_Digit, next - 0);
@@ -849,6 +846,10 @@ NumFormat.prototype =
             else if(GroupSeparator == next)
             {
                 this._addToFormat(numFormat_Thousand, 1);
+            }
+            else if("$" == next || "+" == next || "-" == next || "(" == next || ")" == next || " " == next)
+            {
+                this._addToFormat(numFormat_Text, next);
             }
             else if (sGeneralFirst === next.toLowerCase() &&
                 sGeneral === (next + this._GetText(sGeneral.length - 1)).toLowerCase()) {
@@ -1274,63 +1275,22 @@ NumFormat.prototype =
             }
             else if(numFormat_Thousand == item.type)
             {
-                if(FormatStates.Decimal == nReadState)
-                {
-                    var bStartCondition = false;
-                    if(i > 0)
-                    {
-                        var prevItem = this.aRawFormat[i - 1];
-                        if(this._isDigitType(prevItem.type))
-                        {
-                            bStartCondition = true;
-                        }
-                    }
-                    var bEndCondition = false;
-                    if(i+1 < nFormatLength)
-                    {
-                        var nextItem = this.aRawFormat[i+1];
-                        if(this._isDigitType(nextItem.type))
-                            bEndCondition = true;
-                    }
-
-                    if(true == bStartCondition && true == bEndCondition)
-                    {
+                var isPrevDigit = i > 0 && this._isDigitType(this.aRawFormat[i - 1].type);
+                var isPrevDecimalPoint = i > 0 && numFormat_DecimalPoint === this.aRawFormat[i - 1].type;
+                var isNextDigit = i + 1 < nFormatLength && this._isDigitType(this.aRawFormat[i + 1].type);
+                if (isPrevDigit && isNextDigit) {
+                    if(FormatStates.Decimal == nReadState) {
                         this.bThousandSep = true;
                     }
-                    else if(bEndCondition == true)
-                    {
-                        //преобразуем в текст
-                        item.type = numFormat_Text;
-                        item.val = gc_sFormatThousandSeparator;
-                    }
-                }
-                //проверка на концевой nThousandScale
-                var bStartCondition = false;
-                if(i > 0)
-                {
-                    var prevItem = this.aRawFormat[i - 1];
-                    if(this._isDigitType(prevItem.type))
-                    {
-                        bStartCondition = true;
-                    }
-                }
-                var bEndCondition = true;
-                //в последующем тексте нет numFormat_Digit, numFormat_DigitNoDisp, numFormat_DigitSpace
-                for(var j = i + 1; j < nFormatLength; ++j)
-                {
-                    var nextItem = this.aRawFormat[j];
-                    if(this._isDigitType(nextItem.type) || numFormat_DecimalPoint == nextItem.type)
-                    {
-                        bEndCondition = false;
-                        break;
-                    }
-                }
-                if(true == bStartCondition && true == bEndCondition)
+                } else if (isPrevDigit || isPrevDecimalPoint) {
                     this.nThousandScale = item.val;
-
+                } else {
+                    item.type = numFormat_ThousandText;
+                }
             }
             else if(this._isDigitType(item.type))
             {
+                this.nThousandScale = 0;
                 if(FormatStates.Decimal == nReadState)
                 {
                     this.aDecFormat.push(item);
@@ -2013,6 +1973,9 @@ NumFormat.prototype =
                 else if (numFormat_DecimalPointText == item.type) {
                     oCurText.text += cultureInfo.NumberDecimalSeparator;
                 }
+                else if (numFormat_ThousandText == item.type) {
+                    oCurText.text += cultureInfo.NumberGroupSeparator;
+                }
                 else if(this._isDigitType(item.type))
                 {
                     var text = null;
@@ -2405,7 +2368,7 @@ NumFormat.prototype =
             else if (numFormat_DecimalPointText == item.type) {
                 res += DecimalSeparator;
             }
-            else if(numFormat_Thousand == item.type)
+            else if(numFormat_Thousand == item.type || numFormat_ThousandText == item.type)
             {
                 for(var j = 0; j < item.val; ++j)
                     res += GroupSeparator;
