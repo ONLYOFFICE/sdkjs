@@ -805,7 +805,8 @@
 		for (var j = 0; j < this.ranges.length; j++) {
 			var intersection = range.intersection(this.ranges[j]);
 			if (intersection) {
-				newRanges.push(intersection.setOffset(offset));
+				intersection.setOffset(offset)
+				newRanges.push(intersection);
 			}
 		}
 		if (newRanges.length) {
