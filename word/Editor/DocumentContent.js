@@ -7586,31 +7586,31 @@ CDocumentContent.prototype.Get_ParentObject_or_DocumentPos = function()
 {
     return this.Parent.Get_ParentObject_or_DocumentPos();
 };
-CDocumentContent.prototype.Refresh_RecalcData = function(Data)
+CDocumentContent.prototype.Refresh_RecalcData = function(oData)
 {
-	var bNeedRecalc = false;
-
-	var Type = Data.Type;
-
-	var CurPage = 0;
-
-	switch (Type)
+	var nCurPage = 0;
+	switch (oData.Type)
 	{
 		case AscDFH.historyitem_DocumentContent_AddItem:
 		case AscDFH.historyitem_DocumentContent_RemoveItem:
 		{
-			for (CurPage = this.Pages.length - 1; CurPage > 0; CurPage--)
+			var nDataPos = 0;
+			if (oData instanceof CChangesDocumentContentAddItem || oData instanceof CChangesDocumentContentRemoveItem)
+				nDataPos = oData.GetMinPos();
+			else if (undefined !== oData.Pos)
+				nDataPos = oData.Pos;
+
+			for (nCurPage = this.Pages.length - 1; nCurPage > 0; nCurPage--)
 			{
-				if (Data.Pos > this.Pages[CurPage].Pos)
+				if (nDataPos > this.Pages[nCurPage].Pos)
 					break;
 			}
 
-			bNeedRecalc = true;
 			break;
 		}
 	}
 
-	this.Refresh_RecalcData2(0, CurPage);
+	this.Refresh_RecalcData2(0, nCurPage);
 };
 CDocumentContent.prototype.Refresh_RecalcData2 = function(nIndex, nPageRel)
 {

@@ -12304,17 +12304,19 @@ CDocument.prototype.Get_ParentObject_or_DocumentPos = function(Index)
 {
 	return {Type : AscDFH.historyitem_recalctype_Inline, Data : Index};
 };
-CDocument.prototype.Refresh_RecalcData = function(Data)
+CDocument.prototype.Refresh_RecalcData = function(oData)
 {
-	var ChangePos = -1;
-	var Type      = Data.Type;
-
-	switch (Type)
+	var nChangePos = -1;
+	switch (oData.Type)
 	{
 		case AscDFH.historyitem_Document_AddItem:
 		case AscDFH.historyitem_Document_RemoveItem:
 		{
-			ChangePos = Data.Pos;
+			if (oData instanceof CChangesDocumentAddItem || oData instanceof CChangesDocumentRemoveItem)
+				nChangePos = oData.GetMinPos();
+			else
+				nChangePos = oData.Pos;
+
 			break;
 		}
 
@@ -12324,16 +12326,16 @@ CDocument.prototype.Refresh_RecalcData = function(Data)
 		case AscDFH.historyitem_Document_Settings_GutterAtTop:
 		case AscDFH.historyitem_Document_Settings_MirrorMargins:
 		{
-			ChangePos = 0;
+			nChangePos = 0;
 			break;
 		}
 	}
 
-	if (-1 != ChangePos)
+	if (-1 !== nChangePos)
 	{
 		this.History.RecalcData_Add({
 			Type : AscDFH.historyitem_recalctype_Inline,
-			Data : {Pos : ChangePos, PageNum : 0}
+			Data : {Pos : nChangePos, PageNum : 0}
 		});
 	}
 };

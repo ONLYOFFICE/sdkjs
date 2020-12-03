@@ -12299,9 +12299,15 @@ Paragraph.prototype.Refresh_RecalcData = function(Data)
 		case AscDFH.historyitem_Paragraph_AddItem:
 		case AscDFH.historyitem_Paragraph_RemoveItem:
 		{
+			var nDataPos = 0;
+			if (Data instanceof CChangesParagraphAddItem || Data instanceof CChangesParagraphRemoveItem)
+				nDataPos = Data.GetMinPos();
+			else if (undefined !== Data.Pos)
+				nDataPos = Data.Pos;
+
 			for (CurPage = this.Pages.length - 1; CurPage > 0; CurPage--)
 			{
-				if (Data.Pos > this.Lines[this.Pages[CurPage].StartLine].Get_StartPos())
+				if (nDataPos > this.Lines[this.Pages[CurPage].StartLine].Get_StartPos())
 					break;
 			}
 
