@@ -40,6 +40,7 @@
 
 	var c_oAscInsertOptions = Asc.c_oAscInsertOptions;
 	var c_oAscDeleteOptions = Asc.c_oAscDeleteOptions;
+	var cElementType = AscCommonExcel.cElementType;
 
 	var EDataValidationType = {
 		None: 0,
@@ -524,51 +525,95 @@
 			return !isNaN(parseFloat(value)) && isFinite(value);
 		}
 
+		var _checkFormula = function (val) {
+			var _res = false;
+			if (val.type === cElementType.cell || val.type === cElementType.cell3D) {
+				_res = true;
+			} else if (val.type === cElementType.number) {
+				_res = true;
+			}
+			return _res;
+		};
+
 		var res = null;
 
 		var isNumeric = _isNumeric(_val);
-		var _formula, _formulaRes;
+		var _formula, _formulaRes, date;
 		if (!isNumeric) {
-			_formula = new CDataFormula(_val);
-			_formulaRes = _formula.getValue(ws);
+			//проверим, может быть это дата или время
+			date = AscCommon.g_oFormatParser.parseDate(_val, AscCommon.g_oDefaultCultureInfo);
+			if (!date) {
+				//проверка на формулу
+				_formula = new CDataFormula(_val);
+				_formulaRes = _formula.getValue(ws);
+			}
 		}
-		//AscCommonExcel.cElementType.number === val.type
 
 		var asc_error = Asc.c_oAscError.ID;
 		switch (type) {
 			case EDataValidationType.Date:
 				if (!isNumeric) {
 					//проверка на корректность формулы
-					return asc_error.DataValidateInvalid;
+					if (date) {
+						_val = date.value;
+					} else if (_formulaRes) {
+						if (!_checkFormula(_formulaRes)) {
+							return asc_error.DataValidateInvalid;
+						}
+					} else {
+						return asc_error.DataValidateInvalid;
+					}
 				}
+
 				//TODO не нашёл константу на максимальную дату
 				var maxDate = 2958465;
-				if (val < 0 || val > maxDate) {
+				if (isNumeric && (_val < 0 || _val > maxDate)) {
 					return asc_error.DataValidateInvalid;
 				}
 				break;
 			case EDataValidationType.Decimal:
 			case EDataValidationType.Whole:
 				if (!isNumeric) {
-					//проверка на корректность формулы
-					return asc_error.DataValidateNotNumeric;
+					if (date) {
+						_val = date.value;
+					} else if (_formulaRes) {
+						if (!_checkFormula(_formulaRes)) {
+							return asc_error.DataValidateNotNumeric;
+						}
+					} else {
+						return asc_error.DataValidateNotNumeric;
+					}
 				}
 				break;
 			case EDataValidationType.List:
 				break;
 			case EDataValidationType.TextLength:
 				if (!isNumeric) {
-					//проверка на корректность формулы
-					return asc_error.DataValidateNotNumeric;
+					if (date) {
+						_val = date.value;
+					} else if (_formulaRes) {
+						if (!_checkFormula(_formulaRes)) {
+							return asc_error.DataValidateNotNumeric;
+						}
+					} else {
+						return asc_error.DataValidateNotNumeric;
+					}
 				}
-				if (val >= 10000000000 || val < 0) {
+				if (_val >= 10000000000 || _val < 0) {
 					return asc_error.DataValidateNegativeTextLength;
 				}
 				break;
 			case EDataValidationType.Time:
 				if (!isNumeric) {
-					//проверка на корректность формулы
-					return asc_error.DataValidateInvalid;
+					if (date) {
+						_val = date.value;
+					} else if (_formulaRes) {
+						if (!_checkFormula(_formulaRes)) {
+							return asc_error.DataValidateInvalid;
+						}
+					} else {
+						return asc_error.DataValidateInvalid;
+					}
 				}
 				if (val < 0 || val >= 1) {
 					return asc_error.DataValidateInvalid;
@@ -960,6 +1005,7 @@
 			var _res = new window['AscCommonExcel'].CDataValidation();
 			_res.showErrorMessage = true;
 			_res.showInputMessage = true;
+			_res.showDropDown = true;
 			return _res;
 		};
 
