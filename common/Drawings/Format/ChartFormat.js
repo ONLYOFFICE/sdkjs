@@ -5227,14 +5227,28 @@ function CPlotArea()
             }
         }
     };
-    CChartBase.prototype.tryMoveSeries = function(oSeries, nType, bIsSecondaryAxis) {
+    CChartBase.prototype.tryMoveSeries = function(oSeries, nType, bIsSecondaryAxis, bExactType) {
         var aCharts = this.parent.charts;
         var nChart, oChart, oNewSeries;
+        var bCanMove;
         for(nChart = 0; nChart < aCharts.length; ++nChart) {
             oChart = aCharts[nChart];
             if(oChart !== this) {
                 oChart = aCharts[nChart];
-                if(bIsSecondaryAxis === oChart.isSecondaryAxis() && oChart.tryChangeType(nType)) {
+                bCanMove = false;
+                if(bIsSecondaryAxis === oChart.isSecondaryAxis()) {
+                    if(bExactType) {
+                        if(nType === oChart.getChartType()) {
+                            bCanMove = true;
+                        }
+                    }
+                    else {
+                        if(oChart.tryChangeType(nType)) {
+                            bCanMove = true;
+                        }
+                    }
+                }
+                if(bCanMove) {
                     oNewSeries = oChart.getSeriesConstructor();
                     oNewSeries.setFromOtherSeries(oSeries);
                     this.removeSeries(this.getSeriesArrayIdx(oSeries));
@@ -5319,10 +5333,17 @@ function CPlotArea()
             return Asc.c_oAscError.ID.No;
         }
         var bIsSecondaryAxis = this.isSecondaryAxis();
-        if(this.tryMoveSeries(oSeries, nType, bIsSecondaryAxis)) {
+        if(this.tryMoveSeries(oSeries, nType, bIsSecondaryAxis, false)) {
             return Asc.c_oAscError.ID.No;
         }
-        return this.tryCreateNewChartFormSeries(oSeries, nType, bIsSecondaryAxis);
+        var nRes = this.tryCreateNewChartFormSeries(oSeries, nType, bIsSecondaryAxis);
+        if(nRes === Asc.c_oAscError.ID.No) {
+            return nRes;
+        }
+        if(this.tryMoveSeries(oSeries, nType, !bIsSecondaryAxis, true)) {
+            return Asc.c_oAscError.ID.No;
+        }
+        return this.tryCreateNewChartFormSeries(oSeries, nType, !bIsSecondaryAxis);
     };
     CChartBase.prototype.tryChangeSeriesAxisType = function(oSeries, bIsSecondaryAxis) {
         if(this.isSecondaryAxis() === bIsSecondaryAxis) {
@@ -5332,7 +5353,7 @@ function CPlotArea()
             return Asc.c_oAscError.ID.No;
         }
         var nChartType = this.getChartType();
-        if(this.tryMoveSeries(oSeries, nChartType, bIsSecondaryAxis)) {
+        if(this.tryMoveSeries(oSeries, nChartType, bIsSecondaryAxis, false)) {
             return Asc.c_oAscError.ID.No;
         }
         return this.tryCreateNewChartFormSeries(oSeries, this.getChartType(), bIsSecondaryAxis);
