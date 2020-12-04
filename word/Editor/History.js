@@ -1377,7 +1377,7 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 		{
 			for (var nPointIndex = this.RecIndex + 1; nPointIndex <= this.Index; ++nPointIndex)
 			{
-				this.GetChangesArrayFromPoint(nPointIndex, arrChanges);
+				this.GetChangesFromPoint(nPointIndex, arrChanges);
 			}
 		}
 		else if (this.Index >= 0)
