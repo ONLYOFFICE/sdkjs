@@ -3486,6 +3486,7 @@ var c_oAscAxisType = Asc.c_oAscAxisType;
         if(nRes === Asc.c_oAscError.ID.No) {
             this.onDataUpdate();
         }
+        return nRes;
     };
     CSeriesBase.prototype["asc_TryChangeAxisType"] = CSeriesBase.prototype.asc_TryChangeAxisType;
     CSeriesBase.prototype.tryChangeChartType = function(nType) {
@@ -3500,6 +3501,7 @@ var c_oAscAxisType = Asc.c_oAscAxisType;
         if(nRes === Asc.c_oAscError.ID.No) {
             this.onDataUpdate();
         }
+        return nRes;
     };
     CSeriesBase.prototype["asc_TryChangeChartType"] = CSeriesBase.prototype.asc_TryChangeChartType;
 
