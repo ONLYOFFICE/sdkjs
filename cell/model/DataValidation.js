@@ -956,19 +956,25 @@
 			}
 		}
 
+		var getNewObject = function () {
+			var _res = new window['AscCommonExcel'].CDataValidation();
+			_res.showErrorMessage = true;
+			_res.showInputMessage = true;
+			return _res;
+		};
 
 		//для передачи в интерфейс использую объект и модели - CDataValidation
+		//если doExtend = null -> значит erase === true
 		var res;
-		if (dataValidationIntersection.length && doExtend !== false && dataValidationContain.length === 0) {
-			//в зависимости от параметров формируем обект с опциями
-			res = dataValidationIntersection[0].clone();
+		if (doExtend === null) {
+			res = getNewObject();
+		} else if (doExtend !== undefined) {
+			res = doExtend ? dataValidationIntersection[0].clone() : getNewObject();
 		} else if (dataValidationContain.length === 1) {
 			res = dataValidationContain[0].clone();
 		} else {
 			//возвращаем новый объект с опциями
-			res = new window['AscCommonExcel'].CDataValidation();
-			res.showErrorMessage = true;
-			res.showInputMessage = true;
+			res = getNewObject();
 		}
 
 		return res;
