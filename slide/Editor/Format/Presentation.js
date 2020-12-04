@@ -4074,7 +4074,7 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
         if (1 === SimpleChanges.length) {
             var Run = SimpleChanges[0].Class;
             var Para = Run.Paragraph;
-            var Res = Para.Recalculate_FastRange(SimpleChanges);
+            var Res = Para.RecalculateFastRunRange(SimpleChanges);
             if (-1 !== Res) {
                 var oCurSlide = this.Slides[this.CurPage];
                 if (oCurSlide) {
@@ -4273,6 +4273,10 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
         if (this.DrawingDocument.placeholders)
             this.DrawingDocument.placeholders.update(this.Slides[this.CurPage].getPlaceholdersControls());
     }
+};
+
+CPresentation.prototype.private_RecalculateFastRunRange = function(arrChanges, nStart, nEnd) {
+
 };
 
 CPresentation.prototype.updateSlideIndexes = function () {

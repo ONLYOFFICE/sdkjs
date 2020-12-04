@@ -2064,57 +2064,66 @@ ParaRun.prototype.Recalculate_CurPos = function(X, Y, CurrentRun, _CurRange, _Cu
 };
 /**
  * Проверяем являются ли заданные изменения заданного рана простыми (например, последовательное удаление или набор текста)
- * @param Changes
- * @returns {boolean}
+ * @param arrChanges
+ * @param [nStart=0] {number}
+ * @param [nEnd=arrChanges.length - 1] {number}
+ * @returns {?CParaPos}
  */
-ParaRun.prototype.IsSimpleChanges = function(Changes)
+ParaRun.prototype.GetSimpleChangesRange = function(arrChanges, nStart, nEnd)
 {
-    var ParaPos = null;
+	var oParaPos = null;
 
-    var Count = Changes.length;
-    for (var Index = 0; Index < Count; Index++)
-    {
-        var Data = Changes[Index].Data;
+	var _nStart = undefined !== nStart ? nStart : 0;
+	var _nEnd   = undefined !== nEnd ? nEnd : arrChanges.length - 1;
 
-        if (undefined === Data.Items || 1 !== Data.Items.length)
-            return false;
+	for (var nIndex = _nStart; nIndex <= _nEnd; ++nIndex)
+	{
+		var oChange = arrChanges[nIndex];
 
-        var Type = Data.Type;
-        var Item = Data.Items[0];
+		if (!oChange || !oChange.IsContentChange() || 1 !== oChange.GetItemsCount())
+			return null;
 
-        if (undefined === Item)
-            return false;
+		var nType = oChange.GetType();
+		if (AscDFH.historyitem_ParaRun_AddItem !== nType && AscDFH.historyitem_ParaRun_RemoveItem !== nType)
+			return null;
 
-        if (AscDFH.historyitem_ParaRun_AddItem !== Type && AscDFH.historyitem_ParaRun_RemoveItem !== Type)
-            return false;
+		for (var nItemIndex = 0, nItemsCount = oChange.GetItemsCount(); nItemIndex < nItemsCount; ++nItemIndex)
+		{
+			var oItem = oChange.GetItem(nItemIndex);
 
-        // Добавление/удаление картинок может изменить размер строки. Добавление/удаление переноса строки/страницы/колонки
-        // нельзя обсчитывать функцией Recalculate_Fast. Добавление и удаление разметок сложных полей тоже нельзя
-		// обсчитывать в быстром пересчете.
-        // TODO: Но на самом деле стоило бы сделать нормальную проверку на высоту строки в функции Recalculate_Fast
-		var ItemType = Item.Type;
-		if (para_Drawing === ItemType
-			|| para_NewLine === ItemType
-			|| para_FootnoteRef === ItemType
-			|| para_FootnoteReference === ItemType
-			|| para_FieldChar === ItemType
-			|| para_InstrText === ItemType
-			|| para_EndnoteRef === ItemType
-			|| para_EndnoteReference === ItemType)
-            return false;
+			if (!oItem)
+				return null;
 
-        // Проверяем, что все изменения произошли в одном и том же отрезке
-        var CurParaPos = this.Get_SimpleChanges_ParaPos([Changes[Index]]);
-        if (null === CurParaPos)
-            return false;
+			// Добавление/удаление картинок может изменить размер строки. Добавление/удаление переноса строки/страницы/колонки
+			// нельзя обсчитывать функцией Recalculate_Fast. Добавление и удаление разметок сложных полей тоже нельзя
+			// обсчитывать в быстром пересчете.
+			// TODO: Но на самом деле стоило бы сделать нормальную проверку на высоту строки в функции Recalculate_Fast
+			var nItemType = oItem.Type;
+			if (para_Drawing === nItemType
+				|| para_NewLine === nItemType
+				|| para_FootnoteRef === nItemType
+				|| para_FootnoteReference === nItemType
+				|| para_FieldChar === nItemType
+				|| para_InstrText === nItemType
+				|| para_EndnoteRef === nItemType
+				|| para_EndnoteReference === nItemType)
+				return null;
 
-        if (null === ParaPos)
-            ParaPos = CurParaPos;
-        else if (ParaPos.Line !== CurParaPos.Line || ParaPos.Range !== CurParaPos.Range)
-            return false;
-    }
+			// Проверяем, что все изменения произошли в одном и том же отрезке
+			var oCurParaPos = this.Get_SimpleChanges_ParaPos(nType, oChange.GetPos(nItemIndex));
+			if (!oCurParaPos)
+				return null;
 
-    return true;
+			if (!oParaPos)
+				oParaPos = oCurParaPos;
+			else if (oParaPos.Line !== oCurParaPos.Line
+				|| oParaPos.Range !== oCurParaPos.Range
+				|| oParaPos.Page !== oCurParaPos.Page)
+				return null;
+		}
+	}
+
+	return oParaPos;
 };
 /**
  * Проверяем произошло ли простое изменение параграфа, сейчас главное, чтобы это было не добавлениe/удаление картинки
@@ -2172,12 +2181,8 @@ ParaRun.prototype.IsContentSuitableForParagraphSimpleChanges = function()
 };
 
 // Возвращаем строку и отрезок, в котором произошли простейшие изменения
-ParaRun.prototype.Get_SimpleChanges_ParaPos = function(Changes)
+ParaRun.prototype.Get_SimpleChanges_ParaPos = function(Type, Pos)
 {
-    var Change = Changes[0].Data;
-    var Type   = Changes[0].Data.Type;
-    var Pos    = Change.Pos;
-
     var CurLine  = 0;
     var CurRange = 0;
 

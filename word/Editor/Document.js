@@ -3410,37 +3410,8 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
     // Если задан параметр _RecalcData, тогда мы не можем ориентироваться на историю
     if (undefined === _RecalcData)
     {
-        // Проверяем можно ли сделать быстрый пересчет
-        var SimpleChanges = History.IsSimpleChanges();
-        if (1 === SimpleChanges.length)
-        {
-            var Run  = SimpleChanges[0].Class;
-            var Para = Run.Paragraph;
-
-            var PageIndex = Para.Recalculate_FastRange(SimpleChanges);
-            if (-1 !== PageIndex && this.Pages[PageIndex])
-            {
-                // Если за данным параграфом следовал пустой параграф с новой секцией, тогда его тоже надо пересчитать.
-                var NextElement = Para.Get_DocumentNext();
-                if (null !== NextElement && true === this.Pages[PageIndex].Check_EndSectionPara(NextElement))
-                    this.private_RecalculateEmptySectionParagraph(NextElement, Para, PageIndex, Para.Get_AbsoluteColumn(Para.Get_PagesCount() - 1), Para.Get_ColumnsCount());
-
-                // Перерисуем страницу, на которой произошли изменения
-                this.DrawingDocument.OnRecalculatePage(PageIndex, this.Pages[PageIndex]);
-                this.DrawingDocument.OnEndRecalculate(false, true);
-                History.Reset_RecalcIndex();
-                this.private_UpdateCursorXY(true, true);
-
-                if (Para.Parent && Para.Parent.GetTopDocumentContent)
-				{
-					var oTopDocument = Para.Parent.GetTopDocumentContent();
-					if (oTopDocument instanceof CFootEndnote)
-						oTopDocument.OnFastRecalculate();
-				}
-
-                return;
-            }
-        }
+    	if (this.private_RecalculateFastRunRange(this.History.GetNonRecalculatedChanges()))
+			return;
 
         // TODO: Тут надо вставить заглушку, что если у нас в долгом пересчете находится страница <= PageIndex + 1,
         //       по отношению к данной, тогда не надо делать быстрый пересчет.
@@ -3509,7 +3480,8 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
 		}
     }
 
-    //console.log( "Long Recalc " );
+	// Recalculation LOG
+    console.log("Regular Recalculation");
 
     var ChangeIndex = 0;
     var MainChange  = false;
@@ -3782,6 +3754,71 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
 CDocument.prototype.RecalculateWithParams = function(oRecalcData, isForceStrictRecalc, nNoTimerPageIndex)
 {
 	this.private_Recalculate(oRecalcData, isForceStrictRecalc, nNoTimerPageIndex);
+};
+CDocument.prototype.RecalculateByChanges = function(arrChanges, nStartIndex, nEndIndex)
+{
+
+};
+CDocument.prototype.private_RecalculateFastRunRange = function(arrChanges, nStartIndex, nEndIndex)
+{
+	var _nStartIndex = undefined !== nStartIndex ? nStartIndex : 0;
+	var _nEndIndex   = undefined !== nEndIndex ? nEndIndex : arrChanges.length - 1;
+
+	var oRun = null;
+	for (var nIndex = _nStartIndex; nIndex <= _nEndIndex; ++nIndex)
+	{
+		var oChange = arrChanges[nIndex];
+
+		if (oChange.IsDescriptionChange())
+			continue;
+
+		if (!oRun)
+			oRun = oChange.GetClass();
+		else if (oRun !== oChange.GetClass())
+			return false;
+	}
+
+	if (!oRun || !(oRun instanceof ParaRun) || !oRun.GetParagraph())
+		return false;
+
+	var oParaPos = oRun.GetSimpleChangesRange(arrChanges, _nStartIndex, _nEndIndex);
+	if (oParaPos)
+	{
+		var oParagraph = oRun.GetParagraph();
+		var nPageIndex = oParagraph.RecalculateFastRunRange(oParaPos);
+
+		if (-1 !== nPageIndex && this.Pages[nPageIndex])
+		{
+			// Если за данным параграфом следовал пустой параграф с новой секцией, тогда его тоже надо пересчитать.
+			var NextElement = oParagraph.Get_DocumentNext();
+			if (null !== NextElement && true === this.Pages[nPageIndex].Check_EndSectionPara(NextElement))
+				this.private_RecalculateEmptySectionParagraph(NextElement, oParagraph, nPageIndex, oParagraph.Get_AbsoluteColumn(oParagraph.Get_PagesCount() - 1), oParagraph.Get_ColumnsCount());
+
+			// Перерисуем страницу, на которой произошли изменения
+			this.DrawingDocument.OnRecalculatePage(nPageIndex, this.Pages[nPageIndex]);
+			this.DrawingDocument.OnEndRecalculate(false, true);
+			this.History.Reset_RecalcIndex();
+			this.private_UpdateCursorXY(true, true);
+
+			if (oParagraph.Parent && oParagraph.Parent.GetTopDocumentContent)
+			{
+				var oTopDocument = oParagraph.Parent.GetTopDocumentContent();
+				if (oTopDocument instanceof CFootEndnote)
+					oTopDocument.OnFastRecalculate();
+			}
+
+			// Recalculation LOG
+			console.log("Fast Recalculation RunRange, PageIndex=" + nPageIndex);
+
+			return true;
+		}
+	}
+
+	return false;
+};
+CDocument.prototype.private_RecalculateFastParagraph = function(arrChanges, nStartIndex, nEndIndex)
+{
+
 };
 /**
  * Пересчитываем следующую страницу.
