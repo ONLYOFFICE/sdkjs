@@ -21527,7 +21527,7 @@ CDocument.prototype.GetCurrentComplexFields = function()
 
 	return oParagraph.GetCurrentComplexFields();
 };
-CDocument.prototype.IsFastCollaboartionBeforeViewModeInReview = function()
+CDocument.prototype.IsFastCollaborationBeforeViewModeInReview = function()
 {
 	return this.ViewModeInReview.isFastCollaboration;
 };
@@ -22706,7 +22706,7 @@ CDocument.prototype.AddBlankPage = function()
 };
 /**
  * Получаем формулу в текущей ячейке таблицы
- * {boolen} [isReturnField=false] - возвращаем само поле
+ * {boolean} [isReturnField=false] - возвращаем само поле
  * @returns {string | CComplexField}
  */
 CDocument.prototype.GetTableCellFormula = function(isReturnField)
@@ -23527,7 +23527,7 @@ CDocument.prototype.DocumentPositionToAnchorPosition = function(oDocPos)
 	return oParaContentPos.ToAnchorPos(oParagraph);
 };
 /**
- * Конвертируем NearesPos в позицию документа
+ * Конвертируем NearestPos в позицию документа
  * @param oAnchorPos {NearestPos}
  * @returns {*}
  */
