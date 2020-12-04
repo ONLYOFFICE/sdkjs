@@ -637,9 +637,9 @@ CWordCollaborativeEditing.prototype.OnEnd_ReadForeignChanges = function()
 			this.m_oLogicDocument.ClearListsCache();
 	}
 };
-CWordCollaborativeEditing.prototype.private_RecalculateDocument = function(oRecalcData)
+CWordCollaborativeEditing.prototype.private_RecalculateDocument = function(arrChanges)
 {
-	this.m_oLogicDocument.RecalculateWithParams(oRecalcData);
+	this.m_oLogicDocument.RecalculateByChanges(arrChanges);
 };
 
 //--------------------------------------------------------export----------------------------------------------------

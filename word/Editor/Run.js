@@ -2133,34 +2133,34 @@ ParaRun.prototype.GetSimpleChangesRange = function(arrChanges, nStart, nEnd)
  * или ссылки на сноску или разметки сложного поля, или изменение типа реценизрования для рана со знаком конца
  * параграфа. На вход приходит либо массив изменений, либо одно изменение
  * (можно не в массиве).
+ * @param {[CChangesBase] | CChangesBase} arrChanges
  * @returns {boolean}
  */
-ParaRun.prototype.IsParagraphSimpleChanges = function(_Changes)
+ParaRun.prototype.IsParagraphSimpleChanges = function(arrChanges)
 {
-    var Changes = _Changes;
-    if (!_Changes.length)
-        Changes = [_Changes];
+    var _arrChanges = arrChanges;
+    if (!arrChanges.length)
+		_arrChanges = [arrChanges];
 
-    var ChangesCount = Changes.length;
-    for (var ChangesIndex = 0; ChangesIndex < ChangesCount; ChangesIndex++)
+    for (var nChangesIndex = 0, nChangesCount = _arrChanges.length; nChangesIndex < nChangesCount; ++nChangesIndex)
     {
-        var Data = Changes[ChangesIndex].Data;
-        var ChangeType = Data.Type;
+        var oChange = _arrChanges[nChangesIndex];
+        var nType   = oChange.GetType();
 
-        if (AscDFH.historyitem_ParaRun_AddItem === ChangeType || AscDFH.historyitem_ParaRun_RemoveItem === ChangeType)
+        if (AscDFH.historyitem_ParaRun_AddItem === nType || AscDFH.historyitem_ParaRun_RemoveItem === nType)
         {
-            for (var ItemIndex = 0, ItemsCount = Data.Items.length; ItemIndex < ItemsCount; ItemIndex++)
+            for (var nItemIndex = 0, nItemsCount = oChange.GetItemsCount(); nItemIndex < nItemsCount; ++nItemIndex)
 			{
-				var Item = Data.Items[ItemIndex];
-				if (para_Drawing === Item.Type
-					|| para_FootnoteReference === Item.Type
-					|| para_FieldChar === Item.Type
-					|| para_InstrText === Item.Type
-					|| para_EndnoteReference === Item.Type)
+				var oItem = oChange.GetItem(nItemIndex);
+				if (para_Drawing === oItem.Type
+					|| para_FootnoteReference === oItem.Type
+					|| para_FieldChar === oItem.Type
+					|| para_InstrText === oItem.Type
+					|| para_EndnoteReference === oItem.Type)
 					return false;
 			}
         }
-        else if (AscDFH.historyitem_ParaRun_ReviewType === ChangeType && this.GetParaEnd())
+        else if (AscDFH.historyitem_ParaRun_ReviewType === nType && this.GetParaEnd())
 		{
 			return false;
 		}

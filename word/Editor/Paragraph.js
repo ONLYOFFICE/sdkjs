@@ -15272,18 +15272,18 @@ Paragraph.prototype.GetElementsCount = function()
 /**
  * Проверяем произошло ли простое изменение параграфа, сейчас это только добавление/удаление комментариев.
  * (можно не в массиве).
+ * @param {[CChangesBase] | CChangesBase} arrChanges
+ * @returns {boolean}
  */
-Paragraph.prototype.IsParagraphSimpleChanges = function(_Changes)
+Paragraph.prototype.IsParagraphSimpleChanges = function(arrChanges)
 {
-	var Changes = _Changes;
-	if (!_Changes.length)
-		Changes = [_Changes];
+	var _arrChanges = arrChanges;
+	if (!arrChanges.length)
+		_arrChanges = [arrChanges];
 
-	var ChangesCount = Changes.length;
-	for (var ChangesIndex = 0; ChangesIndex < ChangesCount; ChangesIndex++)
+	for (var nChangesIndex = 0, nChangesCount = _arrChanges.length; nChangesIndex < nChangesCount; ++nChangesIndex)
 	{
-		var Data = Changes[ChangesIndex].Data;
-		if (!Data.IsParagraphSimpleChanges())
+		if (!_arrChanges[nChangesIndex].IsParagraphSimpleChanges())
 			return false;
 	}
 

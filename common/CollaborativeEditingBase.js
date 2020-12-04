@@ -1285,7 +1285,7 @@ CCollaborativeEditingBase.prototype.UpdateDocumentPositionsByState = function(Do
         this.private_RestoreDocumentState(DocState);
 
         oLogicDocument.TurnOnCheckChartSelection();
-        this.private_RecalculateDocument(AscCommon.History.Get_RecalcData(null, arrReverseChanges));
+        this.private_RecalculateDocument(arrReverseChanges);
 
         oLogicDocument.Document_UpdateSelectionState();
         oLogicDocument.Document_UpdateInterfaceState();
