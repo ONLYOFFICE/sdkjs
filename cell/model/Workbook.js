@@ -8992,19 +8992,6 @@
 		}
 		this.dataValidations.add(this, dataValidation, addToHistory);
 	};
-	
-	Worksheet.prototype._getDataValidationIntersection = function (ranges) {
-		if (this.dataValidations) {
-			return this.dataValidations.getIntersections(ranges);
-		}
-		return {intersection: [], contain: []};
-	};
-
-	Worksheet.prototype.changeDataValidation = function (from, to, addToHistory) {
-		if (this.dataValidations) {
-			this.dataValidations.change(this, from, to, addToHistory);
-		}
-	};
 
 	Worksheet.prototype.deleteDataValidationById = function (id) {
 		if (this.dataValidations) {
