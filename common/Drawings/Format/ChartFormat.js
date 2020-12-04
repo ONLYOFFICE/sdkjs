@@ -4862,6 +4862,15 @@ function CPlotArea()
         }
         return null;
     };
+    CPlotArea.prototype.getChartsWithSecondaryAxis = function() {
+        var aRet = [];
+        for(var nChart = 0; nChart < this.charts.length; ++nChart) {
+            if(this.charts[nChart].isSecondaryAxis()) {
+                aRet.push(this.charts[nChart]);
+            }
+        }
+        return aRet;
+    };
     CPlotArea.prototype.addAxes = function(aAxes) {
         for(var nAx = 0; nAx < aAxes.length; ++nAx) {
             this.addAxis(aAxes[nAx]);
@@ -5281,10 +5290,22 @@ function CPlotArea()
                 aNewAxes = oChartForAxes.axId;
             }
             else {
-                if(this.parent.hasChartWithSecondaryAxis()) {
-                    nResult = Asc.c_oAscError.ID.SecondaryAxis;
+                var bCreateAxes = false;
+                var aChartsSAxes = this.parent.getChartsWithSecondaryAxis();
+                if(aChartsSAxes.length > 0) {
+                    if(aChartsSAxes.length === 1 && aChartsSAxes[0] === this && this.series.length === 1) {
+                        this.removeSeries(this.getSeriesArrayIdx(oSeries));
+                        this.parent.removeChart(this);
+                        bCreateAxes = true;
+                    }
+                    else {
+                        nResult = Asc.c_oAscError.ID.SecondaryAxis;
+                    }
                 }
                 else {
+                    bCreateAxes = true;
+                }
+                if(bCreateAxes) {
                     if(this.parent.isScatterType(nType)) {
                         aNewAxes = this.parent.createScatterAxes(true);
                     }
