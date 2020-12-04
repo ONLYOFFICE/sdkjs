@@ -1365,6 +1365,50 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 
 		return [];
 	};
+	/**
+	 * Получаем массив изменений, которые еще не были пересчитаны
+	 * @returns {[]}
+	 */
+	CHistory.prototype.GetNonRecalculatedChanges = function()
+	{
+		var arrChanges = [];
+
+		if (this.Index - this.RecIndex !== 1 && this.RecIndex >= -1)
+		{
+			for (var nPointIndex = this.RecIndex + 1; nPointIndex <= this.Index; ++nPointIndex)
+			{
+				this.GetChangesArrayFromPoint(nPointIndex, arrChanges);
+			}
+		}
+		else if (this.Index >= 0)
+		{
+			this.GetChangesFromPoint(this.Index, arrChanges);
+		}
+
+		return arrChanges;
+	};
+	/**
+	 * Получем массив изменений	из заданной точки
+	 * @param nPointIndex {number}
+	 * @param [arrChanges=undefined] {[CChangesBase]}
+	 * @returns {[CChangesBase]}
+	 */
+	CHistory.prototype.GetChangesFromPoint = function(nPointIndex, arrChanges)
+	{
+		if (!arrChanges)
+			arrChanges = [];
+
+		var oHPoint = this.Points[nPointIndex];
+		if (oHPoint)
+		{
+			for (var nIndex = 0, nItemsCount = oHPoint.Items.length; nIndex < nItemsCount; ++nIndex)
+			{
+				arrChanges.push(oHPoint.Items[nIndex].Data);
+			}
+		}
+
+		return arrChanges;
+	};
 
 function CRC32()
 {

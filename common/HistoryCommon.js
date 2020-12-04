@@ -3354,6 +3354,10 @@
 		this.Reverted = false;
 	}
 	CChangesBase.prototype.Type = window['AscDFH'].historyitem_Unknown_Unknown;
+	CChangesBase.prototype.GetType = function()
+	{
+		return this.Type;
+	};
 	CChangesBase.prototype.Undo = function()
 	{
 		if (this.Class && this.Class.Undo)
@@ -3423,6 +3427,10 @@
 	{
 		return false;
 	};
+	CChangesBase.prototype.IsDescriptionChange = function()
+	{
+		return false;
+	};
 	window['AscDFH'].CChangesBase = CChangesBase;
 	/**
 	 * Базовый класс для изменений, которые меняют содержимое родительского класса.*
@@ -3466,6 +3474,17 @@
 	CChangesBaseContentChange.prototype.GetItemsCount = function()
 	{
 		return this.Items.length;
+	};
+	CChangesBaseContentChange.prototype.GetItem = function(nIndex)
+	{
+		return this.Items[nIndex];
+	};
+	CChangesBaseContentChange.prototype.GetPos = function(nIndex)
+	{
+		if (nIndex === undefined)
+			nIndex = 0;
+
+		return this.UseArray ? this.PosArray[nIndex] : this.Pos + nIndex;
 	};
 	CChangesBaseContentChange.prototype.WriteToBinary = function(Writer)
 	{
