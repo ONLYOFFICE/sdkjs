@@ -4247,7 +4247,7 @@ function CPlotArea()
     };
     CPlotArea.prototype.getGroupingByType = function(nType) {
         var oCT = Asc.c_oAscChartTypeSettings;
-        var nNewGrouping = null;
+        var nNewGrouping = AscFormat.GROUPING_STANDARD;
         if(nType === oCT.lineNormal
             || nType === oCT.lineNormalMarker
             || nType === oCT.line3d
@@ -5845,7 +5845,7 @@ function CPlotArea()
     };
     CAreaChart.prototype.tryChangeType = function(nType) {
         if(!this.parent) {
-            return;
+            return false;
         }
         if(!this.parent.isAreaType(nType)) {
             return false;
@@ -5853,16 +5853,13 @@ function CPlotArea()
         if(nType === this.getChartType()) {
             return true;
         }
-        var aCharts = this.charts;
-        if(aCharts.length < 1) {
-            return;
-        }
-        if(aCharts.length === 1) {
-            if(aCharts[0].tryChangeType(nType)) {
-                return;
-            }
+        var nNewGrouping;
+        nNewGrouping = this.parent.getGroupingByType(nType);
+        if(this.grouping !== nNewGrouping) {
+            this.setGrouping(nNewGrouping);
         }
         this.checkValAxesFormatByType(nType);
+        this.parent.check3DOptions(nType);
         return true;
     };
 
