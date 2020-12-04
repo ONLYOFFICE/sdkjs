@@ -4068,35 +4068,10 @@ CPresentation.prototype.replaceMisspelledWord = function (Word, SpellCheckProper
 CPresentation.prototype.Recalculate = function (RecalcData) {
     this.DrawingDocument.OnStartRecalculate(this.Slides.length);
     ++this.RecalcId;
-    if (undefined === RecalcData) {
-        // Проверяем можно ли сделать быстрый пересчет
-        var SimpleChanges = History.IsSimpleChanges();
-        if (1 === SimpleChanges.length) {
-            var Run = SimpleChanges[0].Class;
-            var Para = Run.Paragraph;
-            var Res = Para.RecalculateFastRunRange(SimpleChanges);
-            if (-1 !== Res) {
-                var oCurSlide = this.Slides[this.CurPage];
-                if (oCurSlide) {
-                    if (!this.FocusOnNotes) {
-                        this.DrawingDocument.OnRecalculatePage(this.CurPage, oCurSlide);
-                        this.DrawingDocument.OnEndRecalculate();
-                    } else {
-                        this.DrawingDocument.Notes_OnRecalculate(this.CurPage, oCurSlide.NotesWidth, oCurSlide.getNotesHeight());
-                    }
 
-                }
-                History.Get_RecalcData();
-                History.Reset_RecalcIndex();
-                var DrawingShape = Para.Parent.Is_DrawingShape(true);
-                if (DrawingShape && DrawingShape.recalcInfo && DrawingShape.recalcInfo.recalcTitle) {
-                    DrawingShape.recalcInfo.bRecalculatedTitle = true;
-                    DrawingShape.recalcInfo.recalcTitle = null;
-                }
-                return;
-            }
-        }
-    }
+    if (undefined === RecalcData && this.private_RecalculateFastRunRange(History.GetNonRecalculatedChanges()))
+    	return;
+
     if (this.SearchEngine.ClearOnRecalc) {
         this.SearchEngine.Clear();
         this.SearchEngine.ClearOnRecalc = false;
@@ -4275,8 +4250,55 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
     }
 };
 
-CPresentation.prototype.private_RecalculateFastRunRange = function(arrChanges, nStart, nEnd) {
+CPresentation.prototype.private_RecalculateFastRunRange = function(arrChanges, nStartIndex, nEndIndex) {
 
+	var _nStartIndex = undefined !== nStartIndex ? nStartIndex : 0;
+	var _nEndIndex   = undefined !== nEndIndex ? nEndIndex : arrChanges.length - 1;
+
+	var oRun = null;
+	for (var nIndex = _nStartIndex; nIndex <= _nEndIndex; ++nIndex) {
+		var oChange = arrChanges[nIndex];
+
+		if (oChange.IsDescriptionChange())
+			continue;
+
+		if (!oRun)
+			oRun = oChange.GetClass();
+		else if (oRun !== oChange.GetClass())
+			return false;
+	}
+
+	if (!oRun || !(oRun instanceof ParaRun) || !oRun.GetParagraph())
+		return false;
+
+	var oParaPos = oRun.GetSimpleChangesRange(arrChanges, _nStartIndex, _nEndIndex);
+	if (oParaPos) {
+
+		var oParagraph = oRun.GetParagraph();
+		var nRes       = oParagraph.RecalculateFastRunRange(oParaPos);
+		if (-1 !== nRes) {
+			var oCurSlide = this.Slides[this.CurPage];
+			if (oCurSlide) {
+				if (!this.FocusOnNotes) {
+					this.DrawingDocument.OnRecalculatePage(this.CurPage, oCurSlide);
+					this.DrawingDocument.OnEndRecalculate();
+				} else {
+					this.DrawingDocument.Notes_OnRecalculate(this.CurPage, oCurSlide.NotesWidth, oCurSlide.getNotesHeight());
+				}
+
+			}
+			History.Get_RecalcData();
+			History.Reset_RecalcIndex();
+			var DrawingShape = oParagraph.Parent.Is_DrawingShape(true);
+			if (DrawingShape && DrawingShape.recalcInfo && DrawingShape.recalcInfo.recalcTitle) {
+				DrawingShape.recalcInfo.bRecalculatedTitle = true;
+				DrawingShape.recalcInfo.recalcTitle        = null;
+			}
+			return true;
+		}
+	}
+
+	return false;
 };
 
 CPresentation.prototype.updateSlideIndexes = function () {
