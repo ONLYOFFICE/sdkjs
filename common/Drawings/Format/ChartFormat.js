@@ -4055,7 +4055,8 @@ function CPlotArea()
     CPlotArea.prototype.getChartType = function() {
         if(this.charts.length > 0) {
             if(this.charts.length > 1) {
-                return Asc.c_oAscChartTypeSettings.combo;
+                //TODO
+                return Asc.c_oAscChartTypeSettings.comboCustom;
             }
             return this.charts[0].getChartType();
         }
@@ -4190,14 +4191,15 @@ function CPlotArea()
         return oBarChart;
 
     };
-    CPlotArea.prototype.switchToCombo = function() {
+    CPlotArea.prototype.switchToCombo = function(nType) {
         if(this.charts.length < 1) {
             return;
         }
         var nCurType = this.getChartType();
-        if(nCurType === Asc.c_oAscChartTypeSettings.combo) {
+        if(nCurType === nType) {
             return;
         }
+        //TODO: Use type
         var aSeries = this.getAllSeries(), oTypedChart;
         if(aSeries.length < 2) {
             return;
@@ -4488,8 +4490,11 @@ function CPlotArea()
         if(nCurType === nType) {
             return;
         }
-        if(nType === Asc.c_oAscChartTypeSettings.combo) {
-            this.switchToCombo();
+        if(nType === Asc.c_oAscChartTypeSettings.comboCustom
+            || nType === Asc.c_oAscChartTypeSettings.comboAreaBar
+            || nType === Asc.c_oAscChartTypeSettings.comboBarLine
+            || nType === Asc.c_oAscChartTypeSettings.comboBarLineSecondary) {
+            this.switchToCombo(nType);
         }
         else if(this.isBarType(nType) || this.isHBarType(nType)) {
             this.switchToBarChart(nType);

@@ -547,8 +547,11 @@
 		surfaceWireframe       : 35,
 		contourNormal          : 36,
 		contourWireframe       : 37,
-		combo                  : 38,
-		unknown                : 39
+		comboCustom            : 38,
+		comboBarLine           : 39,
+		comboBarLineSecondary  : 40,
+		comboAreaBar           : 41,
+		unknown                : 42
 	};
 
 	var c_oAscValAxisRule = {
@@ -2468,7 +2471,10 @@
 	prot['surfaceWireframe']           = prot.surfaceWireframe;
 	prot['contourNormal']              = prot.contourNormal;
 	prot['contourWireframe']           = prot.contourWireframe;
-	prot['combo']                      = prot.combo;
+	prot['comboCustom']                = prot.comboCustom;
+	prot['comboBarLine']               = prot.comboBarLine;
+	prot['comboBarLineSecondary']      = prot.comboBarLineSecondary;
+	prot['comboAreaBar']               = prot.comboAreaBar;
 	prot['unknown']                    = prot.unknown;
 
 	window['Asc']['c_oAscValAxisRule'] = window['Asc'].c_oAscValAxisRule = c_oAscValAxisRule;
