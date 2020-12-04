@@ -2962,7 +2962,7 @@ CDocument.prototype.UpdateRulers = function()
 		this.private_UpdateRulers();
 };
 /**
- * Сообщаем документу, что потребуется обновить состояние кнопки Unddo/Redo
+ * Сообщаем документу, что потребуется обновить состояние кнопки Undo/Redo
  */
 CDocument.prototype.UpdateUndoRedo = function()
 {
@@ -3755,9 +3755,13 @@ CDocument.prototype.RecalculateWithParams = function(oRecalcData, isForceStrictR
 {
 	this.private_Recalculate(oRecalcData, isForceStrictRecalc, nNoTimerPageIndex);
 };
-CDocument.prototype.RecalculateByChanges = function(arrChanges, nStartIndex, nEndIndex)
+CDocument.prototype.RecalculateByChanges = function(arrChanges, nStartIndex, nEndIndex, isForceStrictRecalc, nNoTimerPageIndex)
 {
+	if (this.private_RecalculateFastRunRange(arrChanges, nStartIndex, nEndIndex))
+		return;
 
+	var oRecalcData = this.History.Get_RecalcData(null, arrChanges, nStartIndex, nEndIndex);
+	this.RecalculateWithParams(oRecalcData, isForceStrictRecalc, nNoTimerPageIndex);
 };
 CDocument.prototype.private_RecalculateFastRunRange = function(arrChanges, nStartIndex, nEndIndex)
 {

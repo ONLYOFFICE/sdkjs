@@ -1319,53 +1319,6 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 		this.SavedIndex = null;
 	};
 	/**
-	 * Проверяем, являются ли изменения в последней точке простыми
-	 * @returns {[]}
-	 */
-	CHistory.prototype.IsSimpleChanges = function()
-	{
-		var Count, Items;
-		if (this.Index - this.RecIndex !== 1 && this.RecIndex >= -1)
-		{
-			Items = [];
-			Count = 0;
-			for (var PointIndex = this.RecIndex + 1; PointIndex <= this.Index; PointIndex++)
-			{
-				Items = Items.concat(this.Points[PointIndex].Items);
-				Count += this.Points[PointIndex].Items.length;
-			}
-		}
-		else if (this.Index >= 0)
-		{
-			// Считываем изменения, начиная с последней точки, и смотрим что надо пересчитать.
-			var Point = this.Points[this.Index];
-
-			Count = Point.Items.length;
-			Items = Point.Items;
-		}
-		else
-			return [];
-
-
-		if (Items.length > 0)
-		{
-			var Class = Items[0].Class;
-			// Смотрим, чтобы класс, в котором произошли все изменения был один и тот же
-			for (var Index = 1; Index < Count; Index++)
-			{
-				var Item = Items[Index];
-
-				if (Class !== Item.Class)
-					return [];
-			}
-
-			if (Class instanceof ParaRun && Class.IsSimpleChanges(Items))
-				return [Items[0]];
-		}
-
-		return [];
-	};
-	/**
 	 * Получаем массив изменений, которые еще не были пересчитаны
 	 * @returns {[]}
 	 */
@@ -1410,56 +1363,56 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 		return arrChanges;
 	};
 
-function CRC32()
-{
-    this.m_aTable = [];
-    this.private_InitTable();
-}
-CRC32.prototype.private_InitTable = function()
-{
-    var CRC_POLY = 0xEDB88320;
-    var nChar;
-    for(var nIndex = 0; nIndex < 256; nIndex++)
-    {
-        nChar = nIndex;
-        for(var nCounter = 0; nCounter < 8; nCounter++)
-        {
-            nChar = ((nChar & 1) ? ((nChar >>> 1) ^ CRC_POLY) : (nChar >>> 1));
-        }
-        this.m_aTable[nIndex] = nChar;
-    }
-};
-CRC32.prototype.Calculate_ByString = function(sStr, nSize)
-{
-    var CRC_MASK = 0xD202EF8D;
-    var nCRC = 0 ^ (-1);
+	function CRC32()
+	{
+		this.m_aTable = [];
+		this.private_InitTable();
+	}
+	CRC32.prototype.private_InitTable = function()
+	{
+		var CRC_POLY = 0xEDB88320;
+		var nChar;
+		for (var nIndex = 0; nIndex < 256; nIndex++)
+		{
+			nChar = nIndex;
+			for (var nCounter = 0; nCounter < 8; nCounter++)
+			{
+				nChar = ((nChar & 1) ? ((nChar >>> 1) ^ CRC_POLY) : (nChar >>> 1));
+			}
+			this.m_aTable[nIndex] = nChar;
+		}
+	};
+	CRC32.prototype.Calculate_ByString = function(sStr, nSize)
+	{
+		var CRC_MASK = 0xD202EF8D;
+		var nCRC     = 0 ^ (-1);
 
-    for (var nIndex = 0; nIndex < nSize; nIndex++)
-    {
-        nCRC = this.m_aTable[(nCRC ^ sStr.charCodeAt(nIndex)) & 0xFF] ^ (nCRC >>> 8);
-        nCRC ^= CRC_MASK;
-    }
+		for (var nIndex = 0; nIndex < nSize; nIndex++)
+		{
+			nCRC = this.m_aTable[(nCRC ^ sStr.charCodeAt(nIndex)) & 0xFF] ^ (nCRC >>> 8);
+			nCRC ^= CRC_MASK;
+		}
 
-    return (nCRC ^ (-1)) >>> 0;
-};
-CRC32.prototype.Calculate_ByByteArray = function(aArray, nSize)
-{
-    var CRC_MASK = 0xD202EF8D;
-    var nCRC = 0 ^ (-1);
+		return (nCRC ^ (-1)) >>> 0;
+	};
+	CRC32.prototype.Calculate_ByByteArray = function(aArray, nSize)
+	{
+		var CRC_MASK = 0xD202EF8D;
+		var nCRC     = 0 ^ (-1);
 
-    for (var nIndex = 0; nIndex < nSize; nIndex++)
-    {
-        nCRC = (nCRC >>> 8) ^ this.m_aTable[(nCRC ^ aArray[nIndex]) & 0xFF];
-        nCRC ^= CRC_MASK;
-    }
+		for (var nIndex = 0; nIndex < nSize; nIndex++)
+		{
+			nCRC = (nCRC >>> 8) ^ this.m_aTable[(nCRC ^ aArray[nIndex]) & 0xFF];
+			nCRC ^= CRC_MASK;
+		}
 
-    return (nCRC ^ (-1)) >>> 0;
-};
+		return (nCRC ^ (-1)) >>> 0;
+	};
 
-var g_oCRC32 = new CRC32();
+	var g_oCRC32 = new CRC32();
 
-    //----------------------------------------------------------export--------------------------------------------------
-    window['AscCommon'] = window['AscCommon'] || {};
-    window['AscCommon'].CHistory = CHistory;
-    window['AscCommon'].History = new CHistory();
+	//----------------------------------------------------------export--------------------------------------------------
+	window['AscCommon']          = window['AscCommon'] || {};
+	window['AscCommon'].CHistory = CHistory;
+	window['AscCommon'].History  = new CHistory();
 })(window);

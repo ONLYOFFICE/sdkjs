@@ -216,8 +216,6 @@ CWordCollaborativeEditing.prototype.OnEnd_Load_Objects = function()
     AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
 
     var nPageIndex  = undefined;
-    var oRecalcData = AscCommon.History.Get_RecalcData(null, this.m_aAllChanges, this.m_nRecalcIndexStart, this.m_nRecalcIndexEnd);
-
     if (this.Is_Fast())
 	{
 		var oParagraph = this.m_oLogicDocument.GetCurrentParagraph();
@@ -225,7 +223,7 @@ CWordCollaborativeEditing.prototype.OnEnd_Load_Objects = function()
 	}
 
 	this.m_oLogicDocument.ResumeRecalculate();
-	this.m_oLogicDocument.RecalculateWithParams(oRecalcData, false, nPageIndex);
+	this.m_oLogicDocument.RecalculateByChanges(this.m_aAllChanges, this.m_nRecalcIndexStart, this.m_nRecalcIndexEnd, false, nPageIndex);
 
     editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.ApplyChanges);
 };

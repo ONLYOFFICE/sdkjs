@@ -2080,6 +2080,9 @@ ParaRun.prototype.GetSimpleChangesRange = function(arrChanges, nStart, nEnd)
 	{
 		var oChange = arrChanges[nIndex];
 
+		if (oChange.IsDescriptionChange())
+			continue;
+
 		if (!oChange || !oChange.IsContentChange() || 1 !== oChange.GetItemsCount())
 			return null;
 
