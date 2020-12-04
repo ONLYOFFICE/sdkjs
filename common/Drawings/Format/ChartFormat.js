@@ -3443,7 +3443,7 @@ var c_oAscAxisType = Asc.c_oAscAxisType;
         oGraphics.SaveGrState();
         oGraphics.SetIntegerGrid(false);
         var ShapeDrawer = new AscCommon.CShapeDrawer();
-        oGraphics.fromShape2(new AscFormat.ObjectToDraw(this.getPreviewBrush(), null, dMMW, dMMH, null, new AscCommon.CMatrix()), oGraphics, null);
+        ShapeDrawer.fromShape2(new AscFormat.ObjectToDraw(this.getPreviewBrush(), null, dMMW, dMMH, null, new AscCommon.CMatrix()), oGraphics, null);
         ShapeDrawer.draw(null);
         oGraphics.RestoreGrState();
     };
