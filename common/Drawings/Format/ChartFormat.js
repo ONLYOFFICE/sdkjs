@@ -4206,7 +4206,7 @@ function CPlotArea()
         if(aSeries.length < 2) {
             return;
         }
-        var aAxes = this.createRegularAxes(this.getAxisNumFormatByType(Asc.c_oAscChartTypeSettings.barNormal, aSeries));
+        var aAxes = this.createRegularAxes(this.getAxisNumFormatByType(Asc.c_oAscChartTypeSettings.barNormal, aSeries), false);
         oTypedChart = this.charts[0];
         var nLength = (aSeries.length / 2 + 0.5) >> 0;
         var oBarChart = this.createBarChart(Asc.c_oAscChartTypeSettings.barNormal, aSeries.slice(0, nLength), aAxes, oTypedChart);
@@ -4237,10 +4237,10 @@ function CPlotArea()
         var aAxes;
         var oBarChart;
         if(this.getBarDirByType(nType) === AscFormat.BAR_DIR_COL) {
-            aAxes = this.createRegularAxes(this.getAxisNumFormatByType(nType, this.getAllSeries()));
+            aAxes = this.createRegularAxes(this.getAxisNumFormatByType(nType, this.getAllSeries()), false);
         }
         else {
-            aAxes = this.createHBarAxes(this.getAxisNumFormatByType(nType, this.getAllSeries()));
+            aAxes = this.createHBarAxes(this.getAxisNumFormatByType(nType, this.getAllSeries()), false);
         }
         oBarChart = this.createBarChart(nType, this.getAllSeries(), aAxes, this.charts[0]);
         this.addChartWithAxes(oBarChart);
@@ -4302,7 +4302,7 @@ function CPlotArea()
             }
         }
         var aSeries = this.getAllSeries();
-        var aAxes = this.createRegularAxes(this.getAxisNumFormatByType(nType, aSeries));
+        var aAxes = this.createRegularAxes(this.getAxisNumFormatByType(nType, aSeries), false);
         var oLineChart = this.createLineChart(nType, aSeries, aAxes, this.charts[0]);
         oLineChart.addAxes(aAxes);
         this.addChartWithAxes(oLineChart);
@@ -4408,7 +4408,7 @@ function CPlotArea()
             }
         }
         var aSeries = this.getAllSeries();
-        var aAxes = this.createRegularAxes(this.getAxisNumFormatByType(nType, aSeries));
+        var aAxes = this.createRegularAxes(this.getAxisNumFormatByType(nType, aSeries), false);
         var oAreaChart = this.createAreaChart(nType, aSeries, aAxes, this.charts[0]);
         oAreaChart.addAxes(aAxes);
         this.addChartWithAxes(oAreaChart);
@@ -4442,7 +4442,7 @@ function CPlotArea()
             }
         }
         var aSeries = this.getAllSeries();
-        var aAxes = this.createScatterAxes(this.getAxisNumFormatByType(nType, aSeries));
+        var aAxes = this.createScatterAxes(false);
         var oScatterChart = this.createScatterChart(nType, aSeries, aAxes, this.charts[0]);
         this.addChartWithAxes(oScatterChart);
     };
@@ -4477,7 +4477,7 @@ function CPlotArea()
                 return;
             }
         }
-        var aAxes = this.createRegularAxes("General");
+        var aAxes = this.createRegularAxes("General", false);
         var oStockChart = this.createStockChart(nType, this.getAllSeries(), aAxes, this.charts[0]);
         this.addChartWithAxes(oStockChart);
     };
@@ -4642,66 +4642,70 @@ function CPlotArea()
         oValAx.checkNumFormat(sNewNumFormat);
         return [oCatAx, oValAx];
     };
-    CPlotArea.prototype.createHBarAxes = function(sNewNumFormat) {
+    CPlotArea.prototype.createHBarAxes = function(sNewNumFormat, bSecondary) {
         var aHAxes = this.createCatValAxes(sNewNumFormat);
         var oCatAx = aHAxes[0], oValAx = aHAxes[1];
         var aAxes = this.axId;
         var nAx, oAx;
         oValAx.setAxPos(AX_POS_B);
         oCatAx.setAxPos(AX_POS_L);
-        oCatAx.setDelete(true);
-        for(nAx = 0; nAx < aAxes.length; ++nAx) {
-            oAx = aAxes[nAx];
-            if(oAx.axPos === AX_POS_B || oAx.axPos === AX_POS_T) {
-                if(oAx.axPos === AX_POS_B) {
-                    oValAx.setAxPos(AX_POS_T);
-                }
-                else {
-                    oValAx.setAxPos(AX_POS_B);
-                }
-                if(oAx.crosses === null ||oAx.crosses === CROSSES_AUTO_ZERO || oAx.crosses === CROSSES_MIN) {
-                    oValAx.setCrosses(CROSSES_MAX);
-                }
-                else {
-                    oValAx.setCrosses(CROSSES_AUTO_ZERO);
+        if(bSecondary) {
+            oCatAx.setDelete(true);
+            for(nAx = 0; nAx < aAxes.length; ++nAx) {
+                oAx = aAxes[nAx];
+                if(oAx.axPos === AX_POS_B || oAx.axPos === AX_POS_T) {
+                    if(oAx.axPos === AX_POS_B) {
+                        oValAx.setAxPos(AX_POS_T);
+                    }
+                    else {
+                        oValAx.setAxPos(AX_POS_B);
+                    }
+                    if(oAx.crosses === null ||oAx.crosses === CROSSES_AUTO_ZERO || oAx.crosses === CROSSES_MIN) {
+                        oValAx.setCrosses(CROSSES_MAX);
+                    }
+                    else {
+                        oValAx.setCrosses(CROSSES_AUTO_ZERO);
+                    }
                 }
             }
-        }
 
-        oValAx.setMajorGridlines(null);
-        oValAx.setMinorGridlines(null);
+            oValAx.setMajorGridlines(null);
+            oValAx.setMinorGridlines(null);
+        }
         return [oCatAx, oValAx];
     };
-    CPlotArea.prototype.createRegularAxes = function(sNewNumFormat) {
+    CPlotArea.prototype.createRegularAxes = function(sNewNumFormat, bSecondary) {
         var aRegAxes = this.createCatValAxes(sNewNumFormat);
         var oCatAx = aRegAxes[0], oValAx = aRegAxes[1];
         var aAxes = this.axId;
         var nAx, oAx;
         oValAx.setAxPos(AX_POS_L);
         oCatAx.setAxPos(AX_POS_B);
-        oCatAx.setDelete(true);
-        for(nAx = 0; nAx < aAxes.length; ++nAx) {
-            oAx = aAxes[nAx];
-            if(oAx.axPos === AX_POS_L || oAx.axPos === AX_POS_R) {
-                if(oAx.axPos === AX_POS_L) {
-                    oValAx.setAxPos(AX_POS_R);
-                }
-                else {
-                    oValAx.setAxPos(AX_POS_L);
-                }
-                if(oAx.crosses === null ||oAx.crosses === CROSSES_AUTO_ZERO || oAx.crosses === CROSSES_MIN) {
-                    oValAx.setCrosses(CROSSES_MAX);
-                }
-                else {
-                    oValAx.setCrosses(CROSSES_AUTO_ZERO);
+        if(bSecondary) {
+            oCatAx.setDelete(true);
+            for(nAx = 0; nAx < aAxes.length; ++nAx) {
+                oAx = aAxes[nAx];
+                if(oAx.axPos === AX_POS_L || oAx.axPos === AX_POS_R) {
+                    if(oAx.axPos === AX_POS_L) {
+                        oValAx.setAxPos(AX_POS_R);
+                    }
+                    else {
+                        oValAx.setAxPos(AX_POS_L);
+                    }
+                    if(oAx.crosses === null ||oAx.crosses === CROSSES_AUTO_ZERO || oAx.crosses === CROSSES_MIN) {
+                        oValAx.setCrosses(CROSSES_MAX);
+                    }
+                    else {
+                        oValAx.setCrosses(CROSSES_AUTO_ZERO);
+                    }
                 }
             }
+            oValAx.setMajorGridlines(null);
+            oValAx.setMinorGridlines(null);
         }
-        oValAx.setMajorGridlines(null);
-        oValAx.setMinorGridlines(null);
         return [oCatAx, oValAx];
     };
-    CPlotArea.prototype.createScatterAxes = function() {
+    CPlotArea.prototype.createScatterAxes = function(bSecondary) {
         var oAxes = AscFormat.CreateScatterAxis();
         var aMergeAxes = this.getCatValMergeAxes();
         if(aMergeAxes) {
@@ -4712,41 +4716,43 @@ function CPlotArea()
         var nAx, oAx;
         oAxes.valAx.setAxPos(AX_POS_L);
         oAxes.catAx.setAxPos(AX_POS_B);
-        for(nAx = 0; nAx < aAxes.length; ++nAx) {
-            oAx = aAxes[nAx];
-            if(oAx.axPos === AX_POS_L || oAx.axPos === AX_POS_R) {
-                if(oAx.axPos === AX_POS_L) {
-                    oAxes.valAx.setAxPos(AX_POS_R);
+        if(bSecondary) {
+            for(nAx = 0; nAx < aAxes.length; ++nAx) {
+                oAx = aAxes[nAx];
+                if(oAx.axPos === AX_POS_L || oAx.axPos === AX_POS_R) {
+                    if(oAx.axPos === AX_POS_L) {
+                        oAxes.valAx.setAxPos(AX_POS_R);
+                    }
+                    else {
+                        oAxes.valAx.setAxPos(AX_POS_L);
+                    }
+                    if(oAx.crosses === null ||oAx.crosses === CROSSES_AUTO_ZERO || oAx.crosses === CROSSES_MIN) {
+                        oAxes.valAx.setCrosses(CROSSES_MAX);
+                    }
+                    else {
+                        oAxes.valAx.setCrosses(CROSSES_AUTO_ZERO);
+                    }
                 }
                 else {
-                    oAxes.valAx.setAxPos(AX_POS_L);
-                }
-                if(oAx.crosses === null ||oAx.crosses === CROSSES_AUTO_ZERO || oAx.crosses === CROSSES_MIN) {
-                    oAxes.valAx.setCrosses(CROSSES_MAX);
-                }
-                else {
-                    oAxes.valAx.setCrosses(CROSSES_AUTO_ZERO);
+                    if(oAx.axPos === AX_POS_T) {
+                        oAxes.catAx.setAxPos(AX_POS_B);
+                    }
+                    else {
+                        oAxes.catAx.setAxPos(AX_POS_T);
+                    }
+                    if(oAx.crosses === null ||oAx.crosses === CROSSES_AUTO_ZERO || oAx.crosses === CROSSES_MIN) {
+                        oAxes.catAx.setCrosses(CROSSES_MAX);
+                    }
+                    else {
+                        oAxes.catAx.setCrosses(CROSSES_AUTO_ZERO);
+                    }
                 }
             }
-            else {
-                if(oAx.axPos === AX_POS_T) {
-                    oAxes.catAx.setAxPos(AX_POS_B);
-                }
-                else {
-                    oAxes.catAx.setAxPos(AX_POS_T);
-                }
-                if(oAx.crosses === null ||oAx.crosses === CROSSES_AUTO_ZERO || oAx.crosses === CROSSES_MIN) {
-                    oAxes.catAx.setCrosses(CROSSES_MAX);
-                }
-                else {
-                    oAxes.catAx.setCrosses(CROSSES_AUTO_ZERO);
-                }
-            }
+            oAxes.valAx.setMajorGridlines(null);
+            oAxes.valAx.setMinorGridlines(null);
+            oAxes.catAx.setMajorGridlines(null);
+            oAxes.catAx.setMinorGridlines(null);
         }
-        oAxes.valAx.setMajorGridlines(null);
-        oAxes.valAx.setMinorGridlines(null);
-        oAxes.catAx.setMajorGridlines(null);
-        oAxes.catAx.setMinorGridlines(null);
         return [oAxes.catAx, oAxes.valAx];
     };
     CPlotArea.prototype.createSurfaceAxes = function(sNewNumFormat) {
@@ -5266,13 +5272,13 @@ function CPlotArea()
                 }
                 else {
                     if(this.parent.isScatterType(nType)) {
-                        aNewAxes = this.parent.createScatterAxes(this.parent.getAxisNumFormatByType(nType, [oSeries]));
+                        aNewAxes = this.parent.createScatterAxes(true);
                     }
                     else if(this.parent.isHBarType(nType)){
-                        aNewAxes = this.parent.createHBarAxes(this.parent.getAxisNumFormatByType(nType, [oSeries]));
+                        aNewAxes = this.parent.createHBarAxes(this.parent.getAxisNumFormatByType(nType, [oSeries]), true);
                     }
                     else {
-                        aNewAxes = this.parent.createRegularAxes(this.parent.getAxisNumFormatByType(nType, [oSeries]));
+                        aNewAxes = this.parent.createRegularAxes(this.parent.getAxisNumFormatByType(nType, [oSeries]), true);
                     }
                     this.parent.addAxes(aNewAxes);
                 }

@@ -1593,6 +1593,7 @@
 		this.putType(type);
 		if(this.chartSpace) {
 			this.chartSpace.changeChartType(type);
+			this.updateChart();
 		}
 	};
 	asc_ChartSettings.prototype.getSeries = function() {
