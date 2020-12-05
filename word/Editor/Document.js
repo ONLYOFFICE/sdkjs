@@ -3419,8 +3419,8 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
     		return;
     }
 
-	// Recalculation LOG
-    console.log("Regular Recalculation");
+	// // Recalculation LOG
+    // console.log("Regular Recalculation");
 
     var ChangeIndex = 0;
     var MainChange  = false;
@@ -3759,8 +3759,8 @@ CDocument.prototype.private_RecalculateFastRunRange = function(arrChanges, nStar
 					oTopDocument.OnFastRecalculate();
 			}
 
-			// Recalculation LOG
-			console.log("Fast Recalculation RunRange, PageIndex=" + nPageIndex);
+			// // Recalculation LOG
+			// console.log("Fast Recalculation RunRange, PageIndex=" + nPageIndex);
 
 			return true;
 		}
@@ -3857,8 +3857,8 @@ CDocument.prototype.private_RecalculateFastParagraph = function(arrChanges, nSta
 		{
 			for (var nPageIndex in oFastPages)
 			{
-				// Recalculation LOG
-				console.log("Fast Recalculation Paragraph, PageIndex=" + nPageIndex);
+				// // Recalculation LOG
+				// console.log("Fast Recalculation Paragraph, PageIndex=" + nPageIndex);
 				this.DrawingDocument.OnRecalculatePage(oFastPages[nPageIndex], this.Pages[nPageIndex]);
 			}
 
