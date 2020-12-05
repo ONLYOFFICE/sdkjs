@@ -3774,11 +3774,9 @@ CDocument.prototype.private_RecalculateFastParagraph = function(arrChanges, nSta
 	var _nEndIndex   = undefined !== nEndIndex ? nEndIndex : arrChanges.length - 1;
 
 
-	var arrParagraphs = [];
 	// Смотрим, чтобы изменения происходили только внутри параграфов. Если есть изменение,
 	// которое не возвращает параграф, значит возвращаем null.
 	// А также проверяем, что каждое из этих изменений влияет только на параграф.
-
 	var arrParagraphs = [];
 	for (var nIndex = _nStartIndex; nIndex <= _nEndIndex; ++nIndex)
 	{
@@ -14727,6 +14725,8 @@ CDocument.prototype.Load_DocumentStateAfterLoadChanges = function(State)
 			Table.SelectTable(c_oAscTableSelectionType.Cell);
 		}
 	}
+
+	this.UpdateSelection();
 };
 CDocument.prototype.SaveDocumentState = function()
 {
