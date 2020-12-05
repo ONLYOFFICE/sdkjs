@@ -221,6 +221,8 @@ CHistory.prototype =
 
     Undo : function(Options)
     {
+    	var arrChanges = [];
+
         this.CheckUnionLastPoints();
 
         // Проверяем можно ли сделать Undo
@@ -232,8 +234,6 @@ CHistory.prototype =
             this.LastState = this.Document.GetSelectionState();
         
         this.Document.RemoveSelection(true);
-
-        this.private_ClearRecalcData();
 
         var Point = null;
         if (undefined !== Options && null !== Options && true === Options.All)
@@ -250,7 +250,7 @@ CHistory.prototype =
 					if (Item.Data)
 					{
 						Item.Data.Undo();
-						Item.Data.RefreshRecalcData();
+						arrChanges.push(Item.Data);
 					}
                     this.private_UpdateContentChangesOnUndo(Item);
                 }
@@ -267,13 +267,11 @@ CHistory.prototype =
 				if (Item.Data)
 				{
 					Item.Data.Undo();
-					Item.Data.RefreshRecalcData();
+					arrChanges.push(Item.Data);
 				}
 				this.private_UpdateContentChangesOnUndo(Item);
             }
         }
-
-		this.private_PostProcessingRecalcData();
 
         if (null != Point)
             this.Document.SetSelectionState( Point.State );
@@ -283,20 +281,20 @@ CHistory.prototype =
 			window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide(true);
 		}
 		
-        return this.RecalculateData;
+        return arrChanges;
     },
 
     Redo : function()
     {
+		var arrChanges = [];
+
         // Проверяем можно ли сделать Redo
-        if ( true != this.Can_Redo() )
+        if (true !== this.Can_Redo())
             return null;
 
         this.Document.RemoveSelection(true);
         
         var Point = this.Points[++this.Index];
-
-        this.private_ClearRecalcData();
 
         // Выполняем все действия в прямом порядке
         for ( var Index = 0; Index < Point.Items.length; Index++ )
@@ -306,12 +304,10 @@ CHistory.prototype =
 			if (Item.Data)
 			{
 				Item.Data.Redo();
-				Item.Data.RefreshRecalcData();
+				arrChanges.push(Item.Data);
 			}
 			this.private_UpdateContentChangesOnRedo(Item);
         }
-
-        this.private_PostProcessingRecalcData();
 
         // Восстанавливаем состояние на следующую точку
         var State = null;
@@ -327,7 +323,7 @@ CHistory.prototype =
 			window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
 		}
 		
-        return this.RecalculateData;
+        return arrChanges;
     },
 
 	/**

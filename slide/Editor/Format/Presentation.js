@@ -7663,8 +7663,8 @@ CPresentation.prototype.Document_Undo = function () {
         }
     } else {
         this.clearThemeTimeouts();
-        this.History.Undo();
-        this.Recalculate(this.History.RecalculateData);
+        var arrChanges = this.History.Undo();
+        this.Recalculate(this.History.Get_RecalcData(null, arrChanges));
 
         this.Document_UpdateSelectionState();
         this.Document_UpdateInterfaceState();
@@ -7676,10 +7676,11 @@ CPresentation.prototype.Document_Redo = function () {
         return;
 
     this.clearThemeTimeouts();
-    this.History.Redo();
-    this.Recalculate(this.History.RecalculateData);
+    var arrChanges = this.History.Redo();
+	this.Recalculate(this.History.Get_RecalcData(null, arrChanges));
 
-    this.Document_UpdateSelectionState();
+
+	this.Document_UpdateSelectionState();
     this.Document_UpdateInterfaceState();
 };
 

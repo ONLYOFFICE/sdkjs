@@ -12281,10 +12281,10 @@ CDocument.prototype.Document_Undo = function(Options)
 			this.DrawingObjects.TurnOffCheckChartSelection();
 			this.BookmarksManager.SetNeedUpdate(true);
 
-			this.History.Undo(Options);
+			var arrChanges = this.History.Undo(Options);
 			this.DocumentOutline.UpdateAll(); // TODO: надо бы подумать как переделать на более легкий пересчет
 			this.DrawingObjects.TurnOnCheckChartSelection();
-			this.RecalculateWithParams(this.History.RecalculateData);
+			this.RecalculateByChanges(arrChanges);
 
 			this.Document_UpdateSelectionState();
 			this.Document_UpdateInterfaceState();
@@ -12307,10 +12307,10 @@ CDocument.prototype.Document_Redo = function()
 		this.DrawingObjects.TurnOffCheckChartSelection();
 		this.BookmarksManager.SetNeedUpdate(true);
 
-		this.History.Redo();
+		var arrChanges = this.History.Redo();
 		this.DocumentOutline.UpdateAll(); // TODO: надо бы подумать как переделать на более легкий пересчет
 		this.DrawingObjects.TurnOnCheckChartSelection();
-		this.RecalculateWithParams(this.History.RecalculateData);
+		this.RecalculateByChanges(arrChanges);
 
 		this.Document_UpdateSelectionState();
 		this.Document_UpdateInterfaceState();
