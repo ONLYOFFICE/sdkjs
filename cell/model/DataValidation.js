@@ -541,7 +541,9 @@
 		var _formula, _formulaRes, date;
 		if (!isNumeric) {
 			//проверим, может быть это дата или время
-			date = AscCommon.g_oFormatParser.parseDate(_val, AscCommon.g_oDefaultCultureInfo);
+			if (type !== EDataValidationType.List) {
+				date = AscCommon.g_oFormatParser.parseDate(_val, AscCommon.g_oDefaultCultureInfo);
+			}
 			if (!date) {
 				//проверка на формулу
 				_formula = new CDataFormula(_val);
@@ -578,14 +580,27 @@
 						_val = date.value;
 					} else if (_formulaRes) {
 						if (!_checkFormula(_formulaRes)) {
-							return asc_error.DataValidateNotNumeric;
+							return asc_error.DataValidateInvalid;
 						}
 					} else {
-						return asc_error.DataValidateNotNumeric;
+						return asc_error.DataValidateInvalid;
 					}
 				}
 				break;
 			case EDataValidationType.List:
+				if (!isNumeric) {
+					if (_formulaRes) {
+						//Max string length -> 255
+						if (AscCommonExcel.cElementType.string === _formulaRes.type) {
+
+						} if (!_checkFormula(_formulaRes)) {
+							return asc_error.DataValidateInvalid;
+						}
+					} else {
+						return asc_error.DataValidateInvalid;
+					}
+				}
+
 				break;
 			case EDataValidationType.TextLength:
 				if (!isNumeric) {
@@ -593,7 +608,7 @@
 						_val = date.value;
 					} else if (_formulaRes) {
 						if (!_checkFormula(_formulaRes)) {
-							return asc_error.DataValidateNotNumeric;
+							return asc_error.DataValidateInvalid;
 						}
 					} else {
 						return asc_error.DataValidateNotNumeric;
@@ -615,7 +630,7 @@
 						return asc_error.DataValidateInvalid;
 					}
 				}
-				if (val < 0 || val >= 1) {
+				if (_val < 0 || _val >= 1) {
 					return asc_error.DataValidateInvalid;
 				}
 
