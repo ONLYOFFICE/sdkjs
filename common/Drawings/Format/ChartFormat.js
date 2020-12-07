@@ -4057,7 +4057,29 @@ function CPlotArea()
     CPlotArea.prototype.getChartType = function() {
         if(this.charts.length > 0) {
             if(this.charts.length > 1) {
-                //TODO
+                if(this.charts.length === 2) {
+                    var oFirstChart = this.charts[0];
+                    var oSecondChart = this.charts[1];
+                    if(oFirstChart.getChartType() === Asc.c_oAscChartTypeSettings.barNormal
+                    && oSecondChart.getChartType() === Asc.c_oAscChartTypeSettings.lineNormal) {
+                        if(!oFirstChart.isSecondaryAxis()) {
+                            if(!oSecondChart.isSecondaryAxis()) {
+                                return Asc.c_oAscChartTypeSettings.comboBarLine;
+                            }
+                            else {
+                                return Asc.c_oAscChartTypeSettings.comboBarLineSecondary;
+                            }
+                        }
+                    }
+                    else if(oFirstChart.getChartType() === Asc.c_oAscChartTypeSettings.areaNormal
+                        && oSecondChart.getChartType() === Asc.c_oAscChartTypeSettings.barNormal) {
+                        if(!oFirstChart.isSecondaryAxis()) {
+                            if(!oSecondChart.isSecondaryAxis()) {
+                                return Asc.c_oAscChartTypeSettings.comboAreaBar;
+                            }
+                        }
+                    }
+                }
                 return Asc.c_oAscChartTypeSettings.comboCustom;
             }
             return this.charts[0].getChartType();
