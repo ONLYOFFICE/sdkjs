@@ -39,7 +39,7 @@ var CShowPr;
 var MasterSlide;
 var SlideLayout;
 var CWriteCommentData;
-var CAscSlideTiming;
+var CAscSlideTransition;
 var c_oAscSlideTransitionTypes;
 var c_oAscSlideTransitionParams;
 var CCommentAuthor;

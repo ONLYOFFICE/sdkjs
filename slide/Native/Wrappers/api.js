@@ -2165,7 +2165,7 @@ function asc_menu_WriteImagePr(_imagePr, _stream){
 
 function asc_menu_WriteSlidePr(_slidePr, _stream){
     asc_menu_WriteAscFill(0, _slidePr.Background, _stream);
-    asc_menu_WriteTiming(1, _slidePr.Timing, _stream);
+    asc_menu_WriteTransition(1, _slidePr.Transition, _stream);
     if(AscFormat.isRealNumber(_slidePr.LayoutIndex)){
         _stream["WriteByte"](2);
         _stream["WriteLong"](_slidePr.LayoutIndex);
@@ -2194,9 +2194,9 @@ function asc_menu_WriteSlidePr(_slidePr, _stream){
         _stream["WriteByte"](8);
         _stream["WriteBool"](_slidePr.lockTiming);
     }
-    if(AscFormat.isRealBool(_slidePr.lockTranzition)){
+    if(AscFormat.isRealBool(_slidePr.lockTransition)){
         _stream["WriteByte"](9);
-        _stream["WriteBool"](_slidePr.lockTranzition);
+        _stream["WriteBool"](_slidePr.lockTransition);
     }
     _stream["WriteByte"](255);
 }
@@ -2217,7 +2217,7 @@ function asc_menu_ReadSlidePr(_params, _cursor){
             }
             case 1:
             {
-                _settings.Timing = asc_menu_ReadTiming(_params, _cursor);
+                _settings.Transition = asc_menu_ReadTransition(_params, _cursor);
                 break;
             }
             case 2:
@@ -2257,7 +2257,7 @@ function asc_menu_ReadSlidePr(_params, _cursor){
             }
             case 9:
             {
-                _settings.lockTranzition = _params[_cursor.pos++];
+                _settings.lockTransition = _params[_cursor.pos++];
                 break;
             }
             case 255:
@@ -2271,44 +2271,44 @@ function asc_menu_ReadSlidePr(_params, _cursor){
     return _settings;
 }
 
-function asc_menu_WriteTiming(type, _timing, _stream){
+function asc_menu_WriteTransition(type, _transition, _stream){
 
     _stream["WriteByte"](type);
-    if(AscFormat.isRealNumber(_timing.TransitionType)){
+    if(AscFormat.isRealNumber(_transition.TransitionType)){
         _stream["WriteByte"](0);
-        _stream["WriteLong"](_timing.TransitionType);
+        _stream["WriteLong"](_transition.TransitionType);
     }
-    if(AscFormat.isRealNumber(_timing.TransitionOption)){
+    if(AscFormat.isRealNumber(_transition.TransitionOption)){
         _stream["WriteByte"](1);
-        _stream["WriteLong"](_timing.TransitionOption);
+        _stream["WriteLong"](_transition.TransitionOption);
     }
-    if(AscFormat.isRealNumber(_timing.TransitionDuration)){
+    if(AscFormat.isRealNumber(_transition.TransitionDuration)){
         _stream["WriteByte"](2);
-        _stream["WriteLong"](_timing.TransitionDuration);
+        _stream["WriteLong"](_transition.TransitionDuration);
     }
-    if(AscFormat.isRealBool(_timing.SlideAdvanceOnMouseClick)){
+    if(AscFormat.isRealBool(_transition.SlideAdvanceOnMouseClick)){
         _stream["WriteByte"](3);
-        _stream["WriteBool"](_timing.SlideAdvanceOnMouseClick);
+        _stream["WriteBool"](_transition.SlideAdvanceOnMouseClick);
     }
-    if(AscFormat.isRealBool(_timing.SlideAdvanceAfter)){
+    if(AscFormat.isRealBool(_transition.SlideAdvanceAfter)){
         _stream["WriteByte"](4);
-        _stream["WriteBool"](_timing.SlideAdvanceAfter);
+        _stream["WriteBool"](_transition.SlideAdvanceAfter);
     }
-    if(AscFormat.isRealBool(_timing.ShowLoop)){
+    if(AscFormat.isRealBool(_transition.ShowLoop)){
         _stream["WriteByte"](5);
-        _stream["WriteBool"](_timing.ShowLoop);
+        _stream["WriteBool"](_transition.ShowLoop);
     }
-    if(AscFormat.isRealNumber(_timing.SlideAdvanceDuration)){
+    if(AscFormat.isRealNumber(_transition.SlideAdvanceDuration)){
         _stream["WriteByte"](6);
-        _stream["WriteLong"](_timing.SlideAdvanceDuration);
+        _stream["WriteLong"](_transition.SlideAdvanceDuration);
     }
 
     _stream["WriteByte"](255);
 }
 
-function asc_menu_ReadTiming(_params, _cursor)
+function asc_menu_ReadTransition(_params, _cursor)
 {
-    var _settings = new Asc.CAscSlideTiming();
+    var _settings = new Asc.CAscSlideTransition();
 
     var _continue = true;
     while (_continue)
@@ -2670,10 +2670,10 @@ function NativeOpenFileP(_params, documentInfo){
         var dPresentationWidth = _presentation.Width;
         var dPresentationHeight = _presentation.Height;
 
-        var aTimings = [];
+        var aTransitions = [];
         var slides = _presentation.Slides;
         // for(var i = 0; i < slides.length; ++i){
-        //     aTimings.push(slides[i].timing.ToArray());
+        //     aTransitions.push(slides[i].transition.ToArray());
         // }
 
         _api.asc_GetDefaultTableStyles();
@@ -2700,7 +2700,7 @@ function NativeOpenFileP(_params, documentInfo){
             }
         }
 
-        return [nSlidesCount, dPresentationWidth, dPresentationHeight, aTimings];
+        return [nSlidesCount, dPresentationWidth, dPresentationHeight, aTransitions];
     }
 }
 
@@ -3119,12 +3119,12 @@ Asc['asc_docs_api'].prototype.openDocument = function(file)
     var dPresentationWidth = _presentation.Width;
     var dPresentationHeight = _presentation.Height;
 
-    var aTimings = [];
+    var aTransitions = [];
     var slides = _presentation.Slides;
     // for(var i = 0; i < slides.length; ++i){
-    //     aTimings.push(slides[i].timing.ToArray());
+    //     aTransitions.push(slides[i].transition.ToArray());
     // }
-    var _result =  [nSlidesCount, dPresentationWidth, dPresentationHeight, aTimings];
+    var _result =  [nSlidesCount, dPresentationWidth, dPresentationHeight, aTransitions];
     var oTheme = null;
 
     if (null != slides[0])

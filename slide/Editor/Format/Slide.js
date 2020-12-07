@@ -88,14 +88,14 @@ CChangesDrawingsContentComments.prototype.Load = function(){
 AscDFH.CChangesDrawingsContentComments = CChangesDrawingsContentComments;
 
 
-AscDFH.changesFactory[AscDFH.historyitem_SlideSetLocks             ] = AscDFH.CChangesDrawingTimingLocks;
+AscDFH.changesFactory[AscDFH.historyitem_SlideSetLocks             ] = AscDFH.CChangesDrawingSlideLocks;
 AscDFH.changesFactory[AscDFH.historyitem_SlideSetComments          ] = AscDFH.CChangesDrawingsObject    ;
 AscDFH.changesFactory[AscDFH.historyitem_SlideSetShow              ] = AscDFH.CChangesDrawingsBool      ;
 AscDFH.changesFactory[AscDFH.historyitem_SlideSetShowPhAnim        ] = AscDFH.CChangesDrawingsBool      ;
 AscDFH.changesFactory[AscDFH.historyitem_SlideSetShowMasterSp      ] = AscDFH.CChangesDrawingsBool      ;
 AscDFH.changesFactory[AscDFH.historyitem_SlideSetLayout            ] = AscDFH.CChangesDrawingsObject    ;
 AscDFH.changesFactory[AscDFH.historyitem_SlideSetNum               ] = AscDFH.CChangesDrawingsLong      ;
-AscDFH.changesFactory[AscDFH.historyitem_SlideSetTiming            ] = AscDFH.CChangesDrawingsObjectNoId;
+AscDFH.changesFactory[AscDFH.historyitem_SlideSetTransition        ] = AscDFH.CChangesDrawingsObjectNoId;
 AscDFH.changesFactory[AscDFH.historyitem_SlideSetSize              ] = AscDFH.CChangesDrawingsObjectNoId;
 AscDFH.changesFactory[AscDFH.historyitem_SlideSetBg                ] = AscDFH.CChangesDrawingsObjectNoId;
 AscDFH.changesFactory[AscDFH.historyitem_SlideAddToSpTree          ] = AscDFH.CChangesDrawingsContentPresentation   ;
@@ -114,7 +114,7 @@ AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideSetShowPhAnim        ] = funct
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideSetShowMasterSp      ] = function(oClass, value){oClass.showMasterSp = value;};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideSetLayout            ] = function(oClass, value){oClass.Layout = value;};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideSetNum               ] = function(oClass, value){oClass.num = value;};
-AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideSetTiming            ] = function(oClass, value){oClass.timing = value;};
+AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideSetTransition        ] = function(oClass, value){oClass.transition = value;};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideSetSize              ] = function(oClass, value){oClass.Width = value.a; oClass.Height = value.b;};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideSetBg                ] = function(oClass, value, FromLoad){
     oClass.cSld.Bg = value;
@@ -166,8 +166,8 @@ function Slide(presentation, slideLayout, slideNum)
 
     this.notes = null;
 
-    this.timing = new CAscSlideTiming();
-    this.timing.setDefaultParams();
+    this.transition = new CAscSlideTransition();
+    this.transition.setDefaultParams();
 
     this.recalcInfo =
     {
@@ -285,7 +285,7 @@ Slide.prototype =
             copy.setShowMasterSp(this.showMasterSp);
         }
 
-        copy.applyTiming(this.timing.createDuplicate());
+        copy.applyTransition(this.transition.createDuplicate());
         copy.setSlideSize(this.Width, this.Height);
 
         if(this.notes){
@@ -725,11 +725,11 @@ Slide.prototype =
         this.num = num;
     },
 
-    applyTiming: function(timing)
+    applyTransition: function(transition)
     {
-        var oldTiming = this.timing.createDuplicate();
-        this.timing.applyProps(timing);
-       History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_SlideSetTiming, oldTiming, this.timing.createDuplicate()));
+        var oldTransition = this.transition.createDuplicate();
+        this.transition.applyProps(transition);
+       History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_SlideSetTransition, oldTransition, this.transition.createDuplicate()));
     },
 
     setSlideSize: function(w, h)
@@ -753,7 +753,7 @@ Slide.prototype =
         this.transitionLock = transitionLock;
         this.layoutLock = layoutLock;
         this.showLock = showLock;
-       History.Add(new AscDFH.CChangesDrawingTimingLocks(this, deleteLock, backgroundLock, timingLock, transitionLock, layoutLock, showLock));
+       History.Add(new AscDFH.CChangesDrawingSlideLocks(this, deleteLock, backgroundLock, timingLock, transitionLock, layoutLock, showLock));
     },
 
     shapeAdd: function(pos, item)

@@ -3010,14 +3010,14 @@ function CDemonstrationManager(htmlpage)
         }
 
         var _slides = oThis.HtmlPage.m_oLogicDocument.Slides;
-        var _timing = null;
+        var _transition = null;
         if (is_transition_use && _slides[oThis.SlideNum])
         {
-            _timing = _slides[oThis.SlideNum].timing;
+            _transition = _slides[oThis.SlideNum].transition;
 
-            if (_timing.TransitionType != c_oAscSlideTransitionTypes.None && _timing.TransitionDuration > 0)
+            if (_transition.TransitionType != c_oAscSlideTransitionTypes.None && _transition.TransitionDuration > 0)
             {
-                oThis.StartTransition(_timing, is_first_play, false);
+                oThis.StartTransition(_transition, is_first_play, false);
                 return;
             }
         }
@@ -3052,11 +3052,11 @@ function CDemonstrationManager(htmlpage)
         }
 
         var _slides = oThis.HtmlPage.m_oLogicDocument.Slides;
-        var _timing = _slides[oThis.SlideNum].timing;
+        var _transition = _slides[oThis.SlideNum].transition;
 
-        if (!_is_transition && (_timing.TransitionType != c_oAscSlideTransitionTypes.None && _timing.TransitionDuration > 0))
+        if (!_is_transition && (_transition.TransitionType != c_oAscSlideTransitionTypes.None && _transition.TransitionDuration > 0))
         {
-            oThis.StartTransition(_timing, false, true);
+            oThis.StartTransition(_transition, false, true);
             return;
         }
 
@@ -3077,7 +3077,7 @@ function CDemonstrationManager(htmlpage)
         this.CheckSlideDuration = -1;
     }
 
-    this.StartTransition = function(_timing, is_first, is_backward)
+    this.StartTransition = function(_transition, is_first, is_backward)
     {
         // сначала проверим, создан ли уже оверлей (в идеале спрашивать еще у транзишна, нужен ли ему оверлей)
         // пока так.
@@ -3100,9 +3100,9 @@ function CDemonstrationManager(htmlpage)
             this.DemonstrationDiv.appendChild(oThis.Overlay);
         }
 
-        oThis.Transition.Type = _timing.TransitionType;
-        oThis.Transition.Param = _timing.TransitionOption;
-        oThis.Transition.Duration = _timing.TransitionDuration;
+        oThis.Transition.Type = _transition.TransitionType;
+        oThis.Transition.Param = _transition.TransitionOption;
+        oThis.Transition.Duration = _transition.TransitionDuration;
 
         oThis.PrepareTransition(is_first, is_backward);
         oThis.Transition.Start(false);
@@ -3146,11 +3146,11 @@ function CDemonstrationManager(htmlpage)
         // теперь запустим функцию
 
         var _slides = oThis.HtmlPage.m_oLogicDocument.Slides;
-        var _timing = _slides[oThis.SlideNum] ? _slides[oThis.SlideNum].timing : null;
-        if (!_timing)
+        var _transition = _slides[oThis.SlideNum] ? _slides[oThis.SlideNum].transition : null;
+        if (!_transition)
             return;
 
-        if (_timing.SlideAdvanceAfter === true)
+        if (_transition.SlideAdvanceAfter === true)
         {
             oThis.CheckSlideDuration = setTimeout(function()
             {
@@ -3168,7 +3168,7 @@ function CDemonstrationManager(htmlpage)
 					oThis.TmpSlideVisible = -1;
                 }
             },
-            _timing.SlideAdvanceDuration);
+                _transition.SlideAdvanceDuration);
         }
     }
 
@@ -3676,9 +3676,9 @@ function CDemonstrationManager(htmlpage)
             else
             {
                 var _slides = oThis.HtmlPage.m_oLogicDocument.Slides;
-                var _timing = _slides[oThis.SlideNum].timing;
+                var _transition = _slides[oThis.SlideNum].transition;
 
-                if (_timing.SlideAdvanceOnMouseClick === true)
+                if (_transition.SlideAdvanceOnMouseClick === true)
                 {
                     oThis.NextSlide();
                 }

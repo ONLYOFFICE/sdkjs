@@ -239,6 +239,10 @@
 	{
 		return null;
 	};
+	CChangesTableIdDescription.prototype.IsDescriptionChange = function()
+	{
+		return true;
+	};
 	window["AscCommon"].CChangesTableIdDescription = CChangesTableIdDescription;
 	/**
 	 * @constructor

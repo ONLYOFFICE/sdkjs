@@ -1278,7 +1278,7 @@ function CBinaryFileWriter()
 
         this.WriteRecord1(0, _slide.cSld, this.WriteCSld);
         this.WriteRecord2(1, _slide.clrMap, this.WriteClrMapOvr);
-        this.WriteRecord1(2, _slide.timing, this.WriteSlideTransition);
+        this.WriteRecord1(2, _slide.transition, this.WriteSlideTransition);
         this.WriteComments(4, _slide.writecomments);
 
         this.EndRecord();
@@ -1341,32 +1341,32 @@ function CBinaryFileWriter()
         }
     };
 
-    this.WriteSlideTransition = function(_timing)
+    this.WriteSlideTransition = function(_transition)
     {
         oThis.WriteUChar(g_nodeAttributeStart);
-        oThis._WriteBool1(0, _timing.SlideAdvanceOnMouseClick);
+        oThis._WriteBool1(0, _transition.SlideAdvanceOnMouseClick);
 
-        if (_timing.SlideAdvanceAfter)
+        if (_transition.SlideAdvanceAfter)
         {
-            oThis._WriteInt1(1, _timing.SlideAdvanceDuration);
+            oThis._WriteInt1(1, _transition.SlideAdvanceDuration);
 
-            if (_timing.TransitionType == c_oAscSlideTransitionTypes.None)
+            if (_transition.TransitionType == c_oAscSlideTransitionTypes.None)
             {
                 oThis._WriteInt1(2, 0);
             }
         }
-        else if (_timing.TransitionType == c_oAscSlideTransitionTypes.None)
+        else if (_transition.TransitionType == c_oAscSlideTransitionTypes.None)
         {
             oThis._WriteInt1(2, 2000);
         }
 
-        if (_timing.TransitionType != c_oAscSlideTransitionTypes.None)
+        if (_transition.TransitionType != c_oAscSlideTransitionTypes.None)
         {
-            oThis._WriteInt1(2, _timing.TransitionDuration);
+            oThis._WriteInt1(2, _transition.TransitionDuration);
 
-            if (_timing.TransitionDuration < 250)
+            if (_transition.TransitionDuration < 250)
                 oThis._WriteUChar1(3, 0);
-            else if (_timing.TransitionDuration > 1000)
+            else if (_transition.TransitionDuration > 1000)
                 oThis._WriteUChar1(3, 2);
             else
                 oThis._WriteUChar1(3, 1);
@@ -1377,12 +1377,12 @@ function CBinaryFileWriter()
 
             oThis.WriteUChar(g_nodeAttributeStart);
 
-            switch (_timing.TransitionType)
+            switch (_transition.TransitionType)
             {
                 case c_oAscSlideTransitionTypes.Fade:
                 {
                     oThis._WriteString2(0, "p:fade");
-                    switch (_timing.TransitionOption)
+                    switch (_transition.TransitionOption)
                     {
                         case c_oAscSlideTransitionParams.Fade_Smoothly:
                         {
@@ -1404,7 +1404,7 @@ function CBinaryFileWriter()
                 case c_oAscSlideTransitionTypes.Push:
                 {
                     oThis._WriteString2(0, "p:push");
-                    switch (_timing.TransitionOption)
+                    switch (_transition.TransitionOption)
                     {
                         case c_oAscSlideTransitionParams.Param_Left:
                         {
@@ -1437,7 +1437,7 @@ function CBinaryFileWriter()
                 }
                 case c_oAscSlideTransitionTypes.Wipe:
                 {
-                    switch (_timing.TransitionOption)
+                    switch (_transition.TransitionOption)
                     {
                         case c_oAscSlideTransitionParams.Param_Left:
                         {
@@ -1503,7 +1503,7 @@ function CBinaryFileWriter()
                 case c_oAscSlideTransitionTypes.Split:
                 {
                     oThis._WriteString2(0, "p:split");
-                    switch (_timing.TransitionOption)
+                    switch (_transition.TransitionOption)
                     {
                         case c_oAscSlideTransitionParams.Split_HorizontalIn:
                         {
@@ -1545,12 +1545,12 @@ function CBinaryFileWriter()
                 case c_oAscSlideTransitionTypes.UnCover:
                 case c_oAscSlideTransitionTypes.Cover:
                 {
-                    if (_timing.TransitionType == c_oAscSlideTransitionTypes.Cover)
+                    if (_transition.TransitionType == c_oAscSlideTransitionTypes.Cover)
                         oThis._WriteString2(0, "p:cover");
                     else
                         oThis._WriteString2(0, "p:pull");
 
-                    switch (_timing.TransitionOption)
+                    switch (_transition.TransitionOption)
                     {
                         case c_oAscSlideTransitionParams.Param_Left:
                         {
@@ -1607,7 +1607,7 @@ function CBinaryFileWriter()
                 }
                 case c_oAscSlideTransitionTypes.Clock:
                 {
-                    switch (_timing.TransitionOption)
+                    switch (_transition.TransitionOption)
                     {
                         case c_oAscSlideTransitionParams.Clock_Clockwise:
                         {
@@ -1635,7 +1635,7 @@ function CBinaryFileWriter()
                 }
                 case c_oAscSlideTransitionTypes.Zoom:
                 {
-                    switch (_timing.TransitionOption)
+                    switch (_transition.TransitionOption)
                     {
                         case c_oAscSlideTransitionParams.Zoom_In:
                         {

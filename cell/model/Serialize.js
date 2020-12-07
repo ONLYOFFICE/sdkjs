@@ -777,7 +777,7 @@
 		ErrorStyle: 9,
 		ImeMode: 10,
 		Operator: 11,
-		Promt: 12,
+		Prompt: 12,
 		PromptTitle: 13,
 		ShowDropDown: 14,
 		ShowErrorMessage: 15,
@@ -3486,10 +3486,10 @@
 				this.memory.WriteByte(c_oSerPropLenType.Byte);
 				this.memory.WriteByte(dataValidation.operator);
 			}
-			if (null != dataValidation.promt) {
-				this.memory.WriteByte(c_oSer_DataValidation.Promt);
+			if (null != dataValidation.prompt) {
+				this.memory.WriteByte(c_oSer_DataValidation.Prompt);
 				this.memory.WriteByte(c_oSerPropLenType.Variable);
-				this.memory.WriteString2(dataValidation.promt);
+				this.memory.WriteString2(dataValidation.prompt);
 			}
 			if (null != dataValidation.promptTitle) {
 				this.memory.WriteByte(c_oSer_DataValidation.PromptTitle);
@@ -7610,8 +7610,8 @@
 				dataValidation.imeMode = this.stream.GetUChar();
 			} else if (c_oSer_DataValidation.Operator == type) {
 				dataValidation.operator = this.stream.GetUChar();
-			} else if (c_oSer_DataValidation.Promt == type) {
-				dataValidation.promt = this.stream.GetString2LE(length);
+			} else if (c_oSer_DataValidation.Prompt == type) {
+				dataValidation.prompt = this.stream.GetString2LE(length);
 			} else if (c_oSer_DataValidation.PromptTitle == type) {
 				dataValidation.promptTitle = this.stream.GetString2LE(length);
 			} else if (c_oSer_DataValidation.ShowDropDown == type) {

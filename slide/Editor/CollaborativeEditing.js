@@ -751,8 +751,8 @@ CCollaborativeEditing.prototype.Update_ForeignCursorLabelPosition = function(Use
 };
 
 
-CCollaborativeEditing.prototype.private_RecalculateDocument = function(oRecalcData){
-    this.m_oLogicDocument.Recalculate(oRecalcData);
+CCollaborativeEditing.prototype.private_RecalculateDocument = function(arrChanges){
+    this.m_oLogicDocument.Recalculate(AscCommon.History.Get_RecalcData(null, arrChanges));
 };
 
 

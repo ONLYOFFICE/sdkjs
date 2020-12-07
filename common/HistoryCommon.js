@@ -764,8 +764,8 @@
 			case AscDFH.historydescription_Presentation_BringBackward                  :
 				sString = "Presentation_BringBackward";
 				break;
-			case AscDFH.historydescription_Presentation_ApplyTiming                    :
-				sString = "Presentation_ApplyTiming";
+			case AscDFH.historydescription_Presentation_ApplyTransition                :
+				sString = "Presentation_ApplyTransition";
 				break;
 			case AscDFH.historydescription_Presentation_MoveSlidesToEnd                :
 				sString = "Presentation_MoveSlidesToEnd";
@@ -1436,6 +1436,7 @@
 	window['AscDFH'].historyitem_type_SlicerView             = 1137 << 16;
 	window['AscDFH'].historyitem_type_PivotWorksheetSource   = 1138 << 16;
 	window['AscDFH'].historyitem_type_NamedSheetView         = 1139 << 16;
+	window['AscDFH'].historyitem_type_DataValidation         = 1140 << 16;
 
 
 	window['AscDFH'].historyitem_type_DocumentMacros         = 2000 << 16;
@@ -2774,7 +2775,7 @@
 	window['AscDFH'].historyitem_SlideSetShowMasterSp   = window['AscDFH'].historyitem_type_Slide | 4;
 	window['AscDFH'].historyitem_SlideSetLayout         = window['AscDFH'].historyitem_type_Slide | 5;
 	window['AscDFH'].historyitem_SlideSetNum            = window['AscDFH'].historyitem_type_Slide | 6;
-	window['AscDFH'].historyitem_SlideSetTiming         = window['AscDFH'].historyitem_type_Slide | 7;
+	window['AscDFH'].historyitem_SlideSetTransition     = window['AscDFH'].historyitem_type_Slide | 7;
 	window['AscDFH'].historyitem_SlideSetSize           = window['AscDFH'].historyitem_type_Slide | 8;
 	window['AscDFH'].historyitem_SlideSetBg             = window['AscDFH'].historyitem_type_Slide | 9;
 	window['AscDFH'].historyitem_SlideSetLocks          = window['AscDFH'].historyitem_type_Slide | 10;
@@ -3162,7 +3163,7 @@
 	window['AscDFH'].historydescription_Presentation_BringForward                   = 0x00ec;
 	window['AscDFH'].historydescription_Presentation_SendToBack                     = 0x00ed;
 	window['AscDFH'].historydescription_Presentation_BringBackward                  = 0x00ef;
-	window['AscDFH'].historydescription_Presentation_ApplyTiming                    = 0x00f0;
+	window['AscDFH'].historydescription_Presentation_ApplyTransition                = 0x00f0;
 	window['AscDFH'].historydescription_Presentation_MoveSlidesToEnd                = 0x00f1;
 	window['AscDFH'].historydescription_Presentation_MoveSlidesNextPos              = 0x00f2;
 	window['AscDFH'].historydescription_Presentation_MoveSlidesPrevPos              = 0x00f3;
@@ -3229,7 +3230,7 @@
 	window['AscDFH'].historydescription_Document_AcceptRevisionChangesBySelection   = 0x012b;
 	window['AscDFH'].historydescription_Document_RejectRevisionChangesBySelection   = 0x012c;
 	window['AscDFH'].historydescription_Document_AddLetterUnion                     = 0x012d;
-	window['AscDFH'].historydescription_Presentation_ApplyTimingToAll               = 0x012e;
+	window['AscDFH'].historydescription_Presentation_ApplyTransitionToAll           = 0x012e;
 	window['AscDFH'].historydescription_Document_SetColumnsFromRuler                = 0x012f;
 	window['AscDFH'].historydescription_Document_SetColumnsProps                    = 0x0130;
 	window['AscDFH'].historydescription_Document_AddColumnBreak                     = 0x0131;
@@ -3353,6 +3354,10 @@
 		this.Reverted = false;
 	}
 	CChangesBase.prototype.Type = window['AscDFH'].historyitem_Unknown_Unknown;
+	CChangesBase.prototype.GetType = function()
+	{
+		return this.Type;
+	};
 	CChangesBase.prototype.Undo = function()
 	{
 		if (this.Class && this.Class.Undo)
@@ -3422,6 +3427,10 @@
 	{
 		return false;
 	};
+	CChangesBase.prototype.IsDescriptionChange = function()
+	{
+		return false;
+	};
 	window['AscDFH'].CChangesBase = CChangesBase;
 	/**
 	 * Базовый класс для изменений, которые меняют содержимое родительского класса.*
@@ -3465,6 +3474,17 @@
 	CChangesBaseContentChange.prototype.GetItemsCount = function()
 	{
 		return this.Items.length;
+	};
+	CChangesBaseContentChange.prototype.GetItem = function(nIndex)
+	{
+		return this.Items[nIndex];
+	};
+	CChangesBaseContentChange.prototype.GetPos = function(nIndex)
+	{
+		if (nIndex === undefined)
+			nIndex = 0;
+
+		return this.UseArray ? this.PosArray[nIndex] : this.Pos + nIndex;
 	};
 	CChangesBaseContentChange.prototype.WriteToBinary = function(Writer)
 	{

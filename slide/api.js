@@ -65,13 +65,13 @@
 	function CAscSlideProps()
 	{
 		this.Background     = null;
-		this.Timing         = null;
+		this.Transition     = null;
 		this.LayoutIndex    = null;
 		this.lockDelete     = null;
 		this.lockLayout     = null;
 		this.lockTiming     = null;
 		this.lockBackground = null;
-		this.lockTranzition = null;
+		this.lockTransition = null;
 		this.lockRemove     = null;
 		this.isHidden       = false;
 	}
@@ -92,13 +92,13 @@
 	{
 		this.LayoutIndex = v;
 	};
-	CAscSlideProps.prototype.get_timing         = function()
+	CAscSlideProps.prototype.get_transition         = function()
 	{
-		return this.Timing;
+		return this.Transition;
 	};
-	CAscSlideProps.prototype.put_timing         = function(v)
+	CAscSlideProps.prototype.put_transition         = function(v)
 	{
-		this.Timing = v;
+		this.Transition = v;
 	};
 	CAscSlideProps.prototype.get_LockDelete     = function()
 	{
@@ -132,13 +132,13 @@
 	{
 		this.lockBackground = v;
 	};
-	CAscSlideProps.prototype.get_LockTranzition = function()
+	CAscSlideProps.prototype.get_LockTransition = function()
 	{
-		return this.lockTranzition;
+		return this.lockTransition;
 	};
-	CAscSlideProps.prototype.put_LockTranzition = function(v)
+	CAscSlideProps.prototype.put_LockTransition = function(v)
 	{
-		this.lockTranzition = v;
+		this.lockTransition = v;
 	};
 	CAscSlideProps.prototype.get_LockRemove     = function()
 	{
@@ -3071,10 +3071,10 @@ background-repeat: no-repeat;\
 			}
 		}
 
-		var _timing = prop.get_timing();
-		if (_timing)
+		var _transition = prop.get_transition();
+		if (_transition)
 		{
-			this.ApplySlideTiming(_timing);
+			this.ApplySlideTransition(_transition);
 		}
 	};
 
@@ -5936,32 +5936,32 @@ background-repeat: no-repeat;\
 				this.WordControl.m_oDrawingDocument.DrawImageTextureFillSlide(null);
 			}
 		}
-		var timing = aSlides[0].timing ? aSlides[0].timing.createDuplicate() : aSlides[0].timing;
+		var transition = aSlides[0].transition ? aSlides[0].transition.createDuplicate() : aSlides[0].transition;
 		for(i = 1; i < aSlides.length; ++i)
 		{
-			timing = AscCommonSlide.CompareTiming(timing, aSlides[i].timing);
-			if(!timing){
+			transition = AscCommonSlide.CompareTransitions(transition, aSlides[i].transition);
+			if(!transition){
 				break;
 			}
 		}
 
-        if(timing){
-            obj.Timing = timing.createDuplicate();
+        if(transition){
+            obj.Transition = transition.createDuplicate();
         }
         else{
-            obj.Timing = Asc.CAscSlideTiming();
+            obj.Transition = Asc.CAscSlideTransition();
         }
-        obj.Timing.ShowLoop = this.WordControl.m_oLogicDocument.isLoopShowMode();
+        obj.Transition.ShowLoop = this.WordControl.m_oLogicDocument.isLoopShowMode();
 
         obj.lockDelete     = !(slide.deleteLock.Lock.Type === locktype_Mine || slide.deleteLock.Lock.Type === locktype_None);
 		obj.lockLayout     = !(slide.layoutLock.Lock.Type === locktype_Mine || slide.layoutLock.Lock.Type === locktype_None);
 		obj.lockTiming     = !(slide.timingLock.Lock.Type === locktype_Mine || slide.timingLock.Lock.Type === locktype_None);
-		obj.lockTranzition = !(slide.transitionLock.Lock.Type === locktype_Mine || slide.transitionLock.Lock.Type === locktype_None);
+		obj.lockTransition = !(slide.transitionLock.Lock.Type === locktype_Mine || slide.transitionLock.Lock.Type === locktype_None);
 		obj.lockBackground = !(slide.backgroundLock.Lock.Type === locktype_Mine || slide.backgroundLock.Lock.Type === locktype_None);
 		obj.lockRemove     = obj.lockDelete ||
 			obj.lockLayout ||
 			obj.lockTiming ||
-			obj.lockTranzition ||
+			obj.lockTransition ||
 			obj.lockBackground || slide.isLockedObject();
 
 		if(slide && slide.Layout && slide.Layout.Master){
@@ -6751,11 +6751,11 @@ background-repeat: no-repeat;\
 		this.isOnlyDemonstration = true;
 	};
 
-	asc_docs_api.prototype.ApplySlideTiming      = function(oTiming)
+	asc_docs_api.prototype.ApplySlideTransition      = function(oTransition)
 	{
-		if (this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_SlideTiming) === false)
+		if (this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_SlideTransition) === false)
 		{
-			History.Create_NewPoint(AscDFH.historydescription_Presentation_ApplyTiming);
+			History.Create_NewPoint(AscDFH.historydescription_Presentation_ApplyTransition);
 			var _count = this.WordControl.m_oDrawingDocument.SlidesCount;
 			var _cur   = this.WordControl.m_oDrawingDocument.SlideCurrent;
 			if (_cur < 0 || _cur >= _count)
@@ -6765,23 +6765,23 @@ background-repeat: no-repeat;\
             for(var i = 0; i < aSelectedSlides.length; ++i)
             {
                 var _curSlide = this.WordControl.m_oLogicDocument.Slides[aSelectedSlides[i]];
-                _curSlide.applyTiming(oTiming);
+                _curSlide.applyTransition(oTransition);
 			}
 
-            if(oTiming){
-                if(AscFormat.isRealBool(oTiming.get_ShowLoop()) && oTiming.get_ShowLoop() !== this.WordControl.m_oLogicDocument.isLoopShowMode()){
-                    this.WordControl.m_oLogicDocument.setShowLoop(oTiming.get_ShowLoop());
+            if(oTransition){
+                if(AscFormat.isRealBool(oTransition.get_ShowLoop()) && oTransition.get_ShowLoop() !== this.WordControl.m_oLogicDocument.isLoopShowMode()){
+                    this.WordControl.m_oLogicDocument.setShowLoop(oTransition.get_ShowLoop());
                 }
             }
 		}
 		this.WordControl.m_oLogicDocument.Document_UpdateInterfaceState();
 	};
-	asc_docs_api.prototype.SlideTimingApplyToAll = function()
+	asc_docs_api.prototype.SlideTransitionApplyToAll = function()
 	{
 
-		if (this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_SlideTiming, {All : true}) === false)
+		if (this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_SlideTransition, {All : true}) === false)
 		{
-			History.Create_NewPoint(AscDFH.historydescription_Presentation_ApplyTimingToAll);
+			History.Create_NewPoint(AscDFH.historydescription_Presentation_ApplyTransitionToAll);
 			var _count  = this.WordControl.m_oDrawingDocument.SlidesCount;
 			var _cur    = this.WordControl.m_oDrawingDocument.SlideCurrent;
 			var _slides = this.WordControl.m_oLogicDocument.Slides;
@@ -6789,15 +6789,15 @@ background-repeat: no-repeat;\
 				return;
 			var _curSlide = _slides[_cur];
 
-			_curSlide.timing.makeDuplicate(this.WordControl.m_oLogicDocument.DefaultSlideTiming);
-			var _default = this.WordControl.m_oLogicDocument.DefaultSlideTiming;
+			_curSlide.transition.makeDuplicate(this.WordControl.m_oLogicDocument.DefaultSlideTransition);
+			var _default = this.WordControl.m_oLogicDocument.DefaultSlideTransition;
 
 			for (var i = 0; i < _count; i++)
 			{
 				if (i == _cur)
 					continue;
 
-				_slides[i].applyTiming(_default);
+				_slides[i].applyTransition(_default);
 			}
 		}
 	};
@@ -6807,12 +6807,12 @@ background-repeat: no-repeat;\
 		var _cur   = this.WordControl.m_oDrawingDocument.SlideCurrent;
 		if (_cur < 0 || _cur >= _count)
 			return;
-		var _timing = this.WordControl.m_oLogicDocument.Slides[_cur].timing;
+		var _transition = this.WordControl.m_oLogicDocument.Slides[_cur].transition;
 
 		var _tr      = this.WordControl.m_oDrawingDocument.TransitionSlide;
-		_tr.Type     = _timing.TransitionType;
-		_tr.Param    = _timing.TransitionOption;
-		_tr.Duration = _timing.TransitionDuration;
+		_tr.Type     = _transition.TransitionType;
+		_tr.Param    = _transition.TransitionOption;
+		_tr.Duration = _transition.TransitionDuration;
 
 		_tr.Start(true);
 	};
@@ -7975,8 +7975,8 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['DemonstrationGoToSlide']              = asc_docs_api.prototype.DemonstrationGoToSlide;
 	asc_docs_api.prototype['sendFromReporter']              	  = asc_docs_api.prototype.sendFromReporter;
 	asc_docs_api.prototype['SetDemonstrationModeOnly']            = asc_docs_api.prototype.SetDemonstrationModeOnly;
-	asc_docs_api.prototype['ApplySlideTiming']                    = asc_docs_api.prototype.ApplySlideTiming;
-	asc_docs_api.prototype['SlideTimingApplyToAll']               = asc_docs_api.prototype.SlideTimingApplyToAll;
+	asc_docs_api.prototype['ApplySlideTransition']                = asc_docs_api.prototype.ApplySlideTransition;
+	asc_docs_api.prototype['SlideTransitionApplyToAll']           = asc_docs_api.prototype.SlideTransitionApplyToAll;
 	asc_docs_api.prototype['SlideTransitionPlay']                 = asc_docs_api.prototype.SlideTransitionPlay;
 	asc_docs_api.prototype['asc_HideSlides']                      = asc_docs_api.prototype.asc_HideSlides;
 	asc_docs_api.prototype['SetTextBoxInputMode']                 = asc_docs_api.prototype.SetTextBoxInputMode;
@@ -8103,8 +8103,8 @@ background-repeat: no-repeat;\
 	CAscSlideProps.prototype['put_background']        = CAscSlideProps.prototype.put_background;
 	CAscSlideProps.prototype['get_LayoutIndex']        = CAscSlideProps.prototype.get_LayoutIndex;
 	CAscSlideProps.prototype['put_LayoutIndex']        = CAscSlideProps.prototype.put_LayoutIndex;
-	CAscSlideProps.prototype['get_timing']            = CAscSlideProps.prototype.get_timing;
-	CAscSlideProps.prototype['put_timing']            = CAscSlideProps.prototype.put_timing;
+	CAscSlideProps.prototype['get_transition']         = CAscSlideProps.prototype.get_transition;
+	CAscSlideProps.prototype['put_transition']         = CAscSlideProps.prototype.put_transition;
 	CAscSlideProps.prototype['get_LockDelete']        = CAscSlideProps.prototype.get_LockDelete;
 	CAscSlideProps.prototype['put_LockDelete']        = CAscSlideProps.prototype.put_LockDelete;
 	CAscSlideProps.prototype['get_LockLayout']        = CAscSlideProps.prototype.get_LockLayout;
@@ -8113,8 +8113,8 @@ background-repeat: no-repeat;\
 	CAscSlideProps.prototype['put_LockTiming']        = CAscSlideProps.prototype.put_LockTiming;
 	CAscSlideProps.prototype['get_LockBackground']    = CAscSlideProps.prototype.get_LockBackground;
 	CAscSlideProps.prototype['put_LockBackground']    = CAscSlideProps.prototype.put_LockBackground;
-	CAscSlideProps.prototype['get_LockTranzition']    = CAscSlideProps.prototype.get_LockTranzition;
-	CAscSlideProps.prototype['put_LockTranzition']    = CAscSlideProps.prototype.put_LockTranzition;
+	CAscSlideProps.prototype['get_LockTransition']    = CAscSlideProps.prototype.get_LockTransition;
+	CAscSlideProps.prototype['put_LockTransition']    = CAscSlideProps.prototype.put_LockTransition;
 	CAscSlideProps.prototype['get_LockRemove']        = CAscSlideProps.prototype.get_LockRemove;
 	CAscSlideProps.prototype['put_LockRemove']        = CAscSlideProps.prototype.put_LockRemove;
 	CAscSlideProps.prototype['get_IsHidden']          = CAscSlideProps.prototype.get_IsHidden;

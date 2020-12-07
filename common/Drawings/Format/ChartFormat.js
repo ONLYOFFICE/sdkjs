@@ -14475,30 +14475,6 @@ CSurfaceSeries.prototype = Object.create(CSeriesBase.prototype);
         History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_SurfaceSeries_SetCat, this.cat, pr));
         this.cat = pr;
     };
-    CSurfaceSeries.prototype.setIdx = function(pr)
-    {
-        History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_SurfaceSeries_SetIdx, this.idx, pr));
-        this.idx = pr;
-    };
-    CSurfaceSeries.prototype.setOrder = function(pr)
-    {
-        History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_SurfaceSeries_SetOrder, this.order, pr));
-        this.order = pr;
-    };
-    CSurfaceSeries.prototype.setSpPr = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_SurfaceSeries_SetSpPr, this.spPr, pr));
-        this.spPr = pr;
-        if(this.spPr)
-        {
-            this.spPr.setParent(this);
-        }
-    };
-    CSurfaceSeries.prototype.setTx = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_SurfaceSeries_SetTx, this.tx, pr));
-        this.tx = pr;
-    };
     CSurfaceSeries.prototype.setVal = function(pr)
     {
         History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_SurfaceSeries_SetVal, this.val, pr));

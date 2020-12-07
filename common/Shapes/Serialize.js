@@ -4281,8 +4281,8 @@ function BinaryPPTYLoader()
                 }
                 case 2:
                 {
-                    var _timing = this.ReadTransition();
-                    slide.applyTiming(_timing);
+                    var _transition = this.ReadTransition();
+                    slide.applyTransition(_transition);
                     break;
                 }
                 case 4:
@@ -4423,14 +4423,14 @@ function BinaryPPTYLoader()
 
     this.ReadTransition = function()
     {
-        var _timing = new CAscSlideTiming();
-        _timing.setDefaultParams();
+        var _transition = new CAscSlideTransition();
+        _transition.setDefaultParams();
 
         var s = this.stream;
         var end = s.cur + s.GetULong() + 4;
 
         if (s.cur == end)
-            return _timing;
+            return _transition;
 
         s.Skip2(1); // attribute start
         var _presentDuration = false;
@@ -4442,16 +4442,16 @@ function BinaryPPTYLoader()
 
             if (0 == _at)
             {
-                _timing.SlideAdvanceOnMouseClick = s.GetBool();
+                _transition.SlideAdvanceOnMouseClick = s.GetBool();
             }
             else if (1 == _at)
             {
-                _timing.SlideAdvanceAfter = true;
-                _timing.SlideAdvanceDuration = s.GetULong();
+                _transition.SlideAdvanceAfter = true;
+                _transition.SlideAdvanceDuration = s.GetULong();
             }
             else if (2 == _at)
             {
-                _timing.TransitionDuration = s.GetULong();
+                _transition.TransitionDuration = s.GetULong();
                 _presentDuration = true;
             }
             else if (3 == _at)
@@ -4459,11 +4459,11 @@ function BinaryPPTYLoader()
                 var _spd = s.GetUChar();
                 if (!_presentDuration)
                 {
-                    _timing.TransitionDuration = 250;
+                    _transition.TransitionDuration = 250;
                     if (_spd == 1)
-                        _timing.TransitionDuration = 500;
+                        _transition.TransitionDuration = 500;
                     else if (_spd == 2)
-                        _timing.TransitionDuration = 750;
+                        _transition.TransitionDuration = 750;
                 }
             }
         }
@@ -4517,108 +4517,108 @@ function BinaryPPTYLoader()
                         // тут все поддерживаемые переходы
                         if ("p:fade" == _type)
                         {
-                            _timing.TransitionType = c_oAscSlideTransitionTypes.Fade;
-                            _timing.TransitionOption = c_oAscSlideTransitionParams.Fade_Smoothly;
+                            _transition.TransitionType = c_oAscSlideTransitionTypes.Fade;
+                            _transition.TransitionOption = c_oAscSlideTransitionParams.Fade_Smoothly;
 
                             if (1 == _len && _paramNames[0] == "thruBlk" && _paramValues[0] == "1")
                             {
-                                _timing.TransitionOption = c_oAscSlideTransitionParams.Fade_Through_Black;
+                                _transition.TransitionOption = c_oAscSlideTransitionParams.Fade_Through_Black;
                             }
                         }
                         else if ("p:push" == _type)
                         {
-                            _timing.TransitionType = c_oAscSlideTransitionTypes.Push;
-                            _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Bottom;
+                            _transition.TransitionType = c_oAscSlideTransitionTypes.Push;
+                            _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Bottom;
 
                             if (1 == _len && _paramNames[0] == "dir")
                             {
                                 if ("l" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Right;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Right;
                                 if ("r" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Left;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Left;
                                 if ("d" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Top;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Top;
                             }
                         }
                         else if ("p:wipe" == _type)
                         {
-                            _timing.TransitionType = c_oAscSlideTransitionTypes.Wipe;
-                            _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Right;
+                            _transition.TransitionType = c_oAscSlideTransitionTypes.Wipe;
+                            _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Right;
 
                             if (1 == _len && _paramNames[0] == "dir")
                             {
                                 if ("u" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Bottom;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Bottom;
                                 if ("r" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Left;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Left;
                                 if ("d" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Top;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Top;
                             }
                         }
                         else if ("p:strips" == _type)
                         {
-                            _timing.TransitionType = c_oAscSlideTransitionTypes.Wipe;
-                            _timing.TransitionOption = c_oAscSlideTransitionParams.Param_TopRight;
+                            _transition.TransitionType = c_oAscSlideTransitionTypes.Wipe;
+                            _transition.TransitionOption = c_oAscSlideTransitionParams.Param_TopRight;
 
                             if (1 == _len && _paramNames[0] == "dir")
                             {
                                 if ("rd" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_TopLeft;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_TopLeft;
                                 if ("ru" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_BottomLeft;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_BottomLeft;
                                 if ("lu" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_BottomRight;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_BottomRight;
                             }
                         }
                         else if ("p:cover" == _type)
                         {
-                            _timing.TransitionType = c_oAscSlideTransitionTypes.Cover;
-                            _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Right;
+                            _transition.TransitionType = c_oAscSlideTransitionTypes.Cover;
+                            _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Right;
 
                             if (1 == _len && _paramNames[0] == "dir")
                             {
                                 if ("u" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Bottom;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Bottom;
                                 if ("r" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Left;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Left;
                                 if ("d" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Top;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Top;
                                 if ("rd" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_TopLeft;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_TopLeft;
                                 if ("ru" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_BottomLeft;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_BottomLeft;
                                 if ("lu" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_BottomRight;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_BottomRight;
                                 if ("ld" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_TopRight;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_TopRight;
                             }
                         }
                         else if ("p:pull" == _type)
                         {
-                            _timing.TransitionType = c_oAscSlideTransitionTypes.UnCover;
-                            _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Right;
+                            _transition.TransitionType = c_oAscSlideTransitionTypes.UnCover;
+                            _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Right;
 
                             if (1 == _len && _paramNames[0] == "dir")
                             {
                                 if ("u" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Bottom;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Bottom;
                                 if ("r" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Left;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Left;
                                 if ("d" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Top;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Top;
                                 if ("rd" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_TopLeft;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_TopLeft;
                                 if ("ru" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_BottomLeft;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_BottomLeft;
                                 if ("lu" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_BottomRight;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_BottomRight;
                                 if ("ld" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_TopRight;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_TopRight;
                             }
                         }
                         else if ("p:split" == _type)
                         {
-                            _timing.TransitionType = c_oAscSlideTransitionTypes.Split;
+                            _transition.TransitionType = c_oAscSlideTransitionTypes.Split;
 
                             var _is_vert = true;
                             var _is_out = true;
@@ -4638,53 +4638,53 @@ function BinaryPPTYLoader()
                             if (_is_vert)
                             {
                                 if (_is_out)
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Split_VerticalOut;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Split_VerticalOut;
                                 else
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Split_VerticalIn;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Split_VerticalIn;
                             }
                             else
                             {
                                 if (_is_out)
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Split_HorizontalOut;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Split_HorizontalOut;
                                 else
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Split_HorizontalIn;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Split_HorizontalIn;
                             }
                         }
                         else if ("p:wheel" == _type)
                         {
-                            _timing.TransitionType = c_oAscSlideTransitionTypes.Clock;
-                            _timing.TransitionOption = c_oAscSlideTransitionParams.Clock_Clockwise;
+                            _transition.TransitionType = c_oAscSlideTransitionTypes.Clock;
+                            _transition.TransitionOption = c_oAscSlideTransitionParams.Clock_Clockwise;
                         }
                         else if ("p14:wheelReverse" == _type)
                         {
-                            _timing.TransitionType = c_oAscSlideTransitionTypes.Clock;
-                            _timing.TransitionOption = c_oAscSlideTransitionParams.Clock_Counterclockwise;
+                            _transition.TransitionType = c_oAscSlideTransitionTypes.Clock;
+                            _transition.TransitionOption = c_oAscSlideTransitionParams.Clock_Counterclockwise;
                         }
                         else if ("p:wedge" == _type)
                         {
-                            _timing.TransitionType = c_oAscSlideTransitionTypes.Clock;
-                            _timing.TransitionOption = c_oAscSlideTransitionParams.Clock_Wedge;
+                            _transition.TransitionType = c_oAscSlideTransitionTypes.Clock;
+                            _transition.TransitionOption = c_oAscSlideTransitionParams.Clock_Wedge;
                         }
                         else if ("p14:warp" == _type)
                         {
-                            _timing.TransitionType = c_oAscSlideTransitionTypes.Zoom;
-                            _timing.TransitionOption = c_oAscSlideTransitionParams.Zoom_Out;
+                            _transition.TransitionType = c_oAscSlideTransitionTypes.Zoom;
+                            _transition.TransitionOption = c_oAscSlideTransitionParams.Zoom_Out;
 
                             if (1 == _len && _paramNames[0] == "dir")
                             {
                                 if ("in" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Zoom_In;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Zoom_In;
                             }
                         }
                         else if ("p:newsflash" == _type)
                         {
-                            _timing.TransitionType = c_oAscSlideTransitionTypes.Zoom;
-                            _timing.TransitionOption = c_oAscSlideTransitionParams.Zoom_AndRotate;
+                            _transition.TransitionType = c_oAscSlideTransitionTypes.Zoom;
+                            _transition.TransitionOption = c_oAscSlideTransitionParams.Zoom_AndRotate;
                         }
                         else if ("p:none" != _type)
                         {
-                            _timing.TransitionType = c_oAscSlideTransitionTypes.Fade;
-                            _timing.TransitionOption = c_oAscSlideTransitionParams.Fade_Smoothly;
+                            _transition.TransitionType = c_oAscSlideTransitionTypes.Fade;
+                            _transition.TransitionOption = c_oAscSlideTransitionParams.Fade_Smoothly;
                         }
                     }
 
@@ -4700,7 +4700,7 @@ function BinaryPPTYLoader()
         }
 
         s.Seek2(end);
-        return _timing;
+        return _transition;
     }
 
     this.ReadHF = function()
