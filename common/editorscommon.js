@@ -2987,6 +2987,14 @@
 					if (minStockVal !== chartSeries.length || !chartSeries[0].Val || !chartSeries[0].Val.NumCache || chartSeries[0].Val.NumCache.length < minStockVal)
 						return Asc.c_oAscError.ID.StockChartError;
 				}
+				else if(Asc.c_oAscChartTypeSettings.comboAreaBar === subType
+						|| Asc.c_oAscChartTypeSettings.comboBarLine === subType
+						|| Asc.c_oAscChartTypeSettings.comboBarLineSecondary === subType
+						|| Asc.c_oAscChartTypeSettings.comboCustom === subType) {
+					if(intervalSeries < 2) {
+						return Asc.c_oAscError.ID.ComboSeriesError;
+					}
+				}
 				else if (intervalSeries > maxSeries)
 					return Asc.c_oAscError.ID.MaxDataSeriesError;
 				else if(intervalValues > maxValues){

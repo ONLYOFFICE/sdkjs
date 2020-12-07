@@ -255,7 +255,8 @@
 
 			LockedEditView: -950,
 
-			SecondaryAxis: 1001
+			SecondaryAxis: 1001,
+			ComboSeriesError: 1002
 		}
 	};
 
@@ -2281,7 +2282,9 @@
 	prot['RemoveDuplicates']                 = prot.RemoveDuplicates;
 	prot['LargeRangeWarning']                = prot.LargeRangeWarning;
 	prot['LockedEditView']                   = prot.LockedEditView;
-	
+	prot['SecondaryAxis']                    = prot.SecondaryAxis;
+	prot['ComboSeriesError']                 = prot.ComboSeriesError;
+
 	prot['DataValidateNotNumeric']           = prot.DataValidateNotNumeric;
 	prot['DataValidateNegativeTextLength']   = prot.DataValidateNegativeTextLength;
 	prot['DataValidateMustEnterValue']       = prot.DataValidateMustEnterValue;
