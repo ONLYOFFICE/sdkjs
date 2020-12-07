@@ -398,12 +398,16 @@
 		this.buildNumber = v;
 	};
 
-	function asc_CAxNumFmt(oNumFmt) {
+	function asc_CAxNumFmt(oAxis) {
 		this.formatCode = "General";
 		this.sourceLinked = true;
-		if(oNumFmt) {
-			this.formatCode = oNumFmt.formatCode;
-			this.sourceLinked = oNumFmt.sourceLinked;
+		this.axis = oAxis;
+		if(oAxis) {
+			var oNumFmt = oAxis.numFmt;
+			if(oNumFmt) {
+				this.formatCode = oNumFmt.formatCode;
+				this.sourceLinked = oNumFmt.sourceLinked;
+			}
 		}
 	}
 

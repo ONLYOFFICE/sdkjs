@@ -5041,6 +5041,13 @@ DrawingObjectsController.prototype =
                 return AscFormat.CreateSurfaceChart(chartSeries, bUseCache, options, true, false);
             case c_oAscChartTypeSettings.contourWireframe:
                 return AscFormat.CreateSurfaceChart(chartSeries, bUseCache, options, true, true);
+            case c_oAscChartTypeSettings.comboAreaBar:
+            case c_oAscChartTypeSettings.comboBarLine:
+            case c_oAscChartTypeSettings.comboBarLineSecondary: {
+                var oChartSpace = AscFormat.CreateBarChart(chartSeries, BAR_GROUPING_CLUSTERED, bUseCache, options);
+                oChartSpace.changeChartType(options.type);
+                return oChartSpace;
+            }
 			// radar return CreateRadarChart(chartSeries);
 		}
 

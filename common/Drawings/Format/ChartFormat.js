@@ -4206,19 +4206,43 @@ function CPlotArea()
         if(aSeries.length < 2) {
             return;
         }
-        var aAxes = this.createRegularAxes(this.getAxisNumFormatByType(Asc.c_oAscChartTypeSettings.barNormal, aSeries), false);
-        oTypedChart = this.charts[0];
+        var nAx, oAxis, aAllAxes, aFirstAxes, aSecondAxes, aFirstChartSeries, aSecondChartSeries;
+        var aAllCharts = [], nChart;
+        var oBarChart, oLineChart, oAreaChart;
         var nLength = (aSeries.length / 2 + 0.5) >> 0;
-        var oBarChart = this.createBarChart(Asc.c_oAscChartTypeSettings.barNormal, aSeries.slice(0, nLength), aAxes, oTypedChart);
-        var oLineChart = this.createLineChart(Asc.c_oAscChartTypeSettings.lineNormal, aSeries.slice(nLength), aAxes, oTypedChart);
-        var oAxis;
-        this.removeAllCharts();
-        this.removeAllAxes();
-        this.addChart(oBarChart, 0);
-        this.addChart(oLineChart, 1);
-        for(var nAx = 0; nAx < aAxes.length; ++nAx) {
-            oAxis = aAxes[nAx];
-            this.addAxis(oAxis);
+        aFirstChartSeries = aSeries.slice(0, nLength);
+        aSecondChartSeries = aSeries.slice(nLength);
+        if(nType === Asc.c_oAscChartTypeSettings.comboBarLine
+        || nType === Asc.c_oAscChartTypeSettings.comboBarLineSecondary) {
+            aAllAxes = aFirstAxes = aSecondAxes = this.createRegularAxes(this.getAxisNumFormatByType(Asc.c_oAscChartTypeSettings.barNormal, aFirstChartSeries), false);
+            if(nType === Asc.c_oAscChartTypeSettings.comboBarLineSecondary) {
+                aSecondAxes = this.createRegularAxes(this.getAxisNumFormatByType(Asc.c_oAscChartTypeSettings.lineNormal, aSecondChartSeries), true);
+                aAllAxes = aAllAxes.concat(aSecondAxes);
+            }
+            oTypedChart = this.charts[0];
+            oBarChart = this.createBarChart(Asc.c_oAscChartTypeSettings.barNormal, aFirstChartSeries, aFirstAxes, oTypedChart);
+            oLineChart = this.createLineChart(Asc.c_oAscChartTypeSettings.lineNormal, aSecondChartSeries, aSecondAxes, oTypedChart);
+            aAllCharts.push(oBarChart);
+            aAllCharts.push(oLineChart);
+        }
+        else if(nType === Asc.c_oAscChartTypeSettings.comboAreaBar) {
+            aAllAxes = aFirstAxes = aSecondAxes = this.createRegularAxes(this.getAxisNumFormatByType(Asc.c_oAscChartTypeSettings.barNormal, aFirstChartSeries), false);
+            oTypedChart = this.charts[0];
+            oAreaChart = this.createAreaChart(Asc.c_oAscChartTypeSettings.areaNormal, aFirstChartSeries, aFirstAxes, oTypedChart);
+            oBarChart = this.createBarChart(Asc.c_oAscChartTypeSettings.barNormal, aSecondChartSeries, aSecondAxes, oTypedChart);
+            aAllCharts.push(oAreaChart);
+            aAllCharts.push(oBarChart);
+        }
+        if(aAllCharts.length > 0) {
+            this.removeAllCharts();
+            this.removeAllAxes();
+            for(nChart = 0; nChart < aAllCharts.length; ++nChart) {
+                this.addChart(aAllCharts[nChart], nChart);
+            }
+            for(nAx = 0; nAx < aAllAxes.length; ++nAx) {
+                oAxis = aAllAxes[nAx];
+                this.addAxis(oAxis);
+            }
         }
     };
     CPlotArea.prototype.switchToBarChart = function(nType) {
@@ -6481,7 +6505,7 @@ function CCatAx()
         ret.putShow(!this.bDelete);
         ret.putGridlines(getAxisGridlinesSetting(this));
         ret.putLabel(getAxisLabelSetting(this));
-        ret.putNumFmt(new AscCommon.asc_CAxNumFmt(this.numFmt));
+        ret.putNumFmt(new AscCommon.asc_CAxNumFmt(this));
         ret.putAuto(this.auto !== false);
         return ret;
     };
@@ -8276,7 +8300,7 @@ function CValAx()
         ret.putShow(!this.bDelete);
         ret.putGridlines(getAxisGridlinesSetting(this));
         ret.putLabel(getAxisLabelSetting(this));
-        ret.putNumFmt(new AscCommon.asc_CAxNumFmt(this.numFmt));
+        ret.putNumFmt(new AscCommon.asc_CAxNumFmt(this));
         return ret;
     };
     CValAx.prototype.setMenuProps = function(props)
@@ -12163,10 +12187,6 @@ CNumFmt.prototype =
     {
         History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_NumFmt_SetSourceLinked, this.sourceLinked, pr));
         this.sourceLinked = pr;
-    },
-    getAscObject: function()
-    {
-        return new AscCommon.asc_CAxNumFmt(this);
     },
     setFromAscObject: function(o)
     {
