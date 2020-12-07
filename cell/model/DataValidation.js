@@ -520,11 +520,10 @@
 		}
 		return res;
 	};
-	CDataValidation.prototype.isValidDataRef = function (ws, _val, type) {
-		function _isNumeric(value) {
+	CDataValidation.prototype.isValidDataRef = function (ws, _val, isRange, type) {
+		var _isNumeric = function (value) {
 			return !isNaN(parseFloat(value)) && isFinite(value);
-		}
-
+		};
 		var _checkFormula = function (val) {
 			var _res = false;
 			if (val.type === cElementType.cell || val.type === cElementType.cell3D) {
@@ -535,19 +534,31 @@
 			return _res;
 		};
 
-		var res = null;
+		//TODO пока проверяем на введенный диапазон и формулу
+		//позже необходимо переделать ввод данных в select data range - добавлять в данном режиме всегда с "="
+		//и рассматривать диапазон/формулу только в случае, если начинается с "="
 
-		var isNumeric = _isNumeric(_val);
-		var _formula, _formulaRes, date;
-		if (!isNumeric) {
-			//проверим, может быть это дата или время
-			if (type !== EDataValidationType.List) {
-				date = AscCommon.g_oFormatParser.parseDate(_val, AscCommon.g_oDefaultCultureInfo);
+		var res = null;
+		var _formula, _formulaRes, isNumeric, date;
+		if (isRange) {
+			//если ссылка на диапазон - в любом случае отдаём ошибку
+			if (!isRange.isOneCell()) {
+				return asc_error.DataValidateInvalid;
 			}
-			if (!date) {
-				//проверка на формулу
-				_formula = new CDataFormula(_val);
-				_formulaRes = _formula.getValue(ws);
+			//есои ссылка на одиночную ячейку
+			return asc_error.No;
+		} else {
+			isNumeric = _isNumeric(_val);
+			if (!isNumeric) {
+				//проверим, может быть это дата или время
+				if (type !== EDataValidationType.List) {
+					date = AscCommon.g_oFormatParser.parseDate(_val, AscCommon.g_oDefaultCultureInfo);
+				}
+				if (!date) {
+					//проверка на формулу
+					_formula = new CDataFormula(_val);
+					_formulaRes = _formula.getValue(ws);
+				}
 			}
 		}
 
@@ -555,7 +566,6 @@
 		switch (type) {
 			case EDataValidationType.Date:
 				if (!isNumeric) {
-					//проверка на корректность формулы
 					if (date) {
 						_val = date.value;
 					} else if (_formulaRes) {

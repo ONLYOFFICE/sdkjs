@@ -2944,8 +2944,18 @@
 		}
 		else if (Asc.c_oAscSelectionDialogType.DataValidation === dialogType)
 		{
-			if (dataRange === null) {
-				return Asc.c_oAscError.ID.No;
+			if (dataRange === null || dataRange === "") {
+				return Asc.c_oAscError.ID.DataValidateMustEnterValue;
+			} else {
+				result = parserHelp.parse3DRef(dataRange);
+				if (result)
+				{
+					sheetModel = model.getWorksheetByName(result.sheet);
+					if (sheetModel)
+					{
+						range = AscCommonExcel.g_oRangeCache.getAscRange(result.range);
+					}
+				}
 			}
 		}
 		else
@@ -3040,7 +3050,7 @@
 			}
 			else if (Asc.c_oAscSelectionDialogType.DataValidation === dialogType)
 			{
-				var dataValidaionTest = AscCommonExcel.CDataValidation.prototype.isValidDataRef(model.getActiveWs(), dataRange, subType);
+				var dataValidaionTest = AscCommonExcel.CDataValidation.prototype.isValidDataRef(model.getActiveWs(), dataRange, range, subType);
 				if (null !== dataValidaionTest)
 				{
 					return dataValidaionTest;
