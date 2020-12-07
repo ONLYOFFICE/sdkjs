@@ -591,9 +591,9 @@
 				if (!isNumeric) {
 					if (_formulaRes) {
 						//Max string length -> 255
-						if (AscCommonExcel.cElementType.string === _formulaRes.type) {
+						if (cElementType.string === _formulaRes.type) {
 
-						} if (!_checkFormula(_formulaRes)) {
+						} if (_formulaRes.type === cElementType.cellsRange || _formulaRes.type === cElementType.cellsRange3D) {
 							return asc_error.DataValidateInvalid;
 						}
 					} else {
