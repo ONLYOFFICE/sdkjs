@@ -6481,9 +6481,7 @@ function CCatAx()
         ret.putShow(!this.bDelete);
         ret.putGridlines(getAxisGridlinesSetting(this));
         ret.putLabel(getAxisLabelSetting(this));
-        if(this.numFmt) {
-            ret.putNumFmt(new AscCommon.asc_CAxNumFmt(this.numFmt));
-        }
+        ret.putNumFmt(new AscCommon.asc_CAxNumFmt(this.numFmt));
         ret.putAuto(this.auto !== false);
         return ret;
     };
@@ -8278,9 +8276,7 @@ function CValAx()
         ret.putShow(!this.bDelete);
         ret.putGridlines(getAxisGridlinesSetting(this));
         ret.putLabel(getAxisLabelSetting(this));
-        if(this.numFmt) {
-            ret.putNumFmt(new AscCommon.asc_CAxNumFmt(this.numFmt));
-        }
+        ret.putNumFmt(new AscCommon.asc_CAxNumFmt(this.numFmt));
         return ret;
     };
     CValAx.prototype.setMenuProps = function(props)

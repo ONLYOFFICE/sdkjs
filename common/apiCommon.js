@@ -399,8 +399,8 @@
 	};
 
 	function asc_CAxNumFmt(oNumFmt) {
-		this.formatCode = null;
-		this.sourceLinked = null;
+		this.formatCode = "General";
+		this.sourceLinked = true;
 		if(oNumFmt) {
 			this.formatCode = oNumFmt.formatCode;
 			this.sourceLinked = oNumFmt.sourceLinked;
@@ -412,6 +412,10 @@
 	};
 	asc_CAxNumFmt.prototype.putFormatCode = function(v) {
 		this.formatCode = v;
+	};
+	asc_CAxNumFmt.prototype.getFormatCellsInfo = function() {
+		var num_format = AscCommon.oNumFormatCache.get(this.formatCode || "General");
+		return num_format.getTypeInfo();
 	};
 	asc_CAxNumFmt.prototype.getSourceLinked = function() {
 		return this.sourceLinked;
@@ -5447,6 +5451,7 @@
 	prot = asc_CAxNumFmt.prototype;
 	prot["getFormatCode"] = prot.getFormatCode;
 	prot["putFormatCode"] = prot.putFormatCode;
+	prot["getFormatCellsInfo"] = prot.getFormatCellsInfo;
 	prot["getSourceLinked"] = prot.getSourceLinked;
 	prot["putSourceLinked"] = prot.putSourceLinked;
 
