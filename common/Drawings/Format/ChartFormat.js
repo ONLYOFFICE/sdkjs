@@ -6357,34 +6357,53 @@ var CROSS_BETWEEN_MID_CAT = 1;
             AscCommon.g_oTableId.Add( this, this.Id );
         }
     }
-
     CAxisBase.prototype = Object.create(AscFormat.CBaseObject.prototype);
     CAxisBase.prototype.constructor = CAxisBase;
-    CAxisBase.prototype.onUpdate = function(bAddToRecalculate) {
-        if(this.parent && this.parent.parent && this.parent.parent.parent) {
-            this.parent.parent.parent.handleUpdateInternalChart();
-            if(bAddToRecalculate) {
-                this.parent.parent.parent.addToRecalculate();
-            }
+    CAxisBase.prototype.getChartSpace = function() {
+        var oPlotArea = this.parent;
+        if(!oPlotArea) {
+            return null;
+        }
+        var oChart = oPlotArea.parent;
+        if(!oChart) {
+            return null;
+        }
+        return oChart.parent;
+    };
+    CAxisBase.prototype.onUpdate = function() {
+        var oChartSpace = this.getChartSpace();
+        if(oChartSpace) {
+            oChartSpace.handleUpdateInternalChart();
         }
     };
     CAxisBase.prototype.Refresh_RecalcData = function() {
-        this.onUpdate(true);
+        this.onUpdate();
     };
     CAxisBase.prototype.Refresh_RecalcData2 = function(pageIndex, object) {
-        this.parent && this.parent.parent && this.parent.parent.Refresh_RecalcData2(pageIndex, object);
+        var oChartSpace = this.getChartSpace();
+        if(oChartSpace) {
+            oChartSpace.Refresh_RecalcData2(pageIndex, object);
+        }
     };
     CAxisBase.prototype.getDrawingDocument = function() {
-        return this.parent && this.parent.parent && this.parent.parent.getDrawingDocument && this.parent.parent.getDrawingDocument();
+        var oChartSpace = this.getChartSpace();
+        if(oChartSpace) {
+            return oChartSpace.getDrawingDocument();
+        }
+        return null;
     };
     CAxisBase.prototype.handleUpdateFill = function() {
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CAxisBase.prototype.handleUpdateLn = function() {
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CAxisBase.prototype.getParentObjects = function() {
-        return this.parent && this.parent.getParentObjects();
+        var oChartSpace = this.getChartSpace();
+        if(oChartSpace) {
+            return oChartSpace.getParentObjects();
+        }
+        return null;
     };
     CAxisBase.prototype.setParent = function(pr) {
         History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CommonChartFormat_SetParent, this.parent, pr));
@@ -6401,26 +6420,25 @@ var CROSS_BETWEEN_MID_CAT = 1;
         if(this.scaling) {
             this.scaling.setParent(this);
         }
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CAxisBase.prototype.setDelete = function(pr) {
         History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_CatAxSetDelete, this.bDelete, pr));
         this.bDelete = pr;
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CAxisBase.prototype.setAxPos = function(pr) {
         History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_CatAxSetAxPos, this.axPos, pr));
         this.axPos = pr;
-        this.onUpdate(false);
+        this.onUpdate();
     };
-
     CAxisBase.prototype.setMajorGridlines = function(pr) {
         History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CatAxSetMajorGridlines, this.majorGridlines, pr));
         this.majorGridlines = pr;
         if(this.majorGridlines) {
             this.majorGridlines.setParent(this);
         }
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CAxisBase.prototype.setMinorGridlines = function(pr) {
         History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CatAxSetMinorGridlines, this.minorGridlines, pr));
@@ -6428,7 +6446,7 @@ var CROSS_BETWEEN_MID_CAT = 1;
         if(this.minorGridlines) {
             this.minorGridlines.setParent(this);
         }
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CAxisBase.prototype.setTitle = function(pr) {
         History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CatAxSetTitle, this.title, pr));
@@ -6436,22 +6454,22 @@ var CROSS_BETWEEN_MID_CAT = 1;
         if(pr) {
             pr.setParent(this);
         }
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CAxisBase.prototype.setNumFmt = function(pr) {
         History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CatAxSetNumFmt, this.numFmt, pr));
         this.numFmt = pr;
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CAxisBase.prototype.setMajorTickMark = function(pr) {
         History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_CatAxSetMajorTickMark, this.majorTickMark, pr));
         this.majorTickMark = pr;
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CAxisBase.prototype.setMinorTickMark = function(pr) {
         History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_CatAxSetMinorTickMark, this.minorTickMark, pr));
         this.minorTickMark = pr;
-        this.onUpdate(false);
+        this.onUpdate();
     };
 
     CAxisBase.prototype.setSpPr = function(pr) {
@@ -6460,7 +6478,7 @@ var CROSS_BETWEEN_MID_CAT = 1;
         if(this.spPr) {
             this.spPr.setParent(this);
         }
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CAxisBase.prototype.setTxPr = function(pr) {
         History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CatAxSetTxPr, this.txPr, pr));
@@ -6468,27 +6486,27 @@ var CROSS_BETWEEN_MID_CAT = 1;
         if(this.txPr) {
             this.txPr.setParent(this);
         }
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CAxisBase.prototype.setTickLblPos = function(pr) {
         History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_CatAxSetTickLblPos, this.tickLblPos, pr));
         this.tickLblPos = pr;
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CAxisBase.prototype.setCrossAx = function(pr) {
         History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CatAxSetCrossAx, this.crossAx, pr));
         this.crossAx = pr;
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CAxisBase.prototype.setCrosses = function(pr) {
         History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_CatAxSetCrosses, this.crosses, pr));
         this.crosses = pr;
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CAxisBase.prototype.setCrossesAt = function(pr) {
         History.Add(new CChangesDrawingsDouble(this, AscDFH.historyitem_CatAxSetCrossesAt, this.crossesAt, pr));
         this.crossesAt = pr;
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CAxisBase.prototype.mergeBase = function(oAxis) {
         if(AscFormat.isRealNumber(oAxis.axPos)) {
@@ -6537,10 +6555,25 @@ var CROSS_BETWEEN_MID_CAT = 1;
     CAxisBase.prototype.merge = function(oAxis) {
         this.mergeBase(oAxis);
     };
-    CAxisBase.prototype.createDuplicate = function(oAxis) {
+    CAxisBase.prototype.createDuplicate = function() {
         var oCopy = new this.constructor();
         oCopy.merge(this);
         return oCopy;
+    };
+    CAxisBase.prototype.getSourceFormatCode = function() {
+        return "General";
+    };
+    CAxisBase.prototype.updateNumFormat = function() {
+        var oNumFmt = this.numFmt;
+        if(!oNumFmt) {
+            oNumFmt = new CNumFmt();
+            oNumFmt.setSourceLinked(true);
+            oNumFmt.setFormatCode("General");
+            this.setNumFmt(oNumFmt)
+        }
+        if(oNumFmt.sourceLinked) {
+            oNumFmt.setFormatCode(this.getSourceFormatCode());
+        }
     };
 
 
@@ -6845,32 +6878,32 @@ var CROSS_BETWEEN_MID_CAT = 1;
     CCatAx.prototype.setAuto = function(pr) {
         History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_CatAxSetAuto, this.auto, pr));
         this.auto = pr;
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CCatAx.prototype.setLblAlgn = function(pr) {
         History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_CatAxSetLblAlgn, this.lblAlgn, pr));
         this.lblAlgn = pr;
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CCatAx.prototype.setLblOffset = function(pr) {
         History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_CatAxSetLblOffset, this.lblOffset, pr));
         this.lblOffset = pr;
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CCatAx.prototype.setNoMultiLvlLbl = function(pr) {
         History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_CatAxSetNoMultiLvlLbl, this.noMultiLvlLbl, pr));
         this.noMultiLvlLbl = pr;
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CCatAx.prototype.setTickLblSkip = function(pr) {
         History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_CatAxSetTickLblSkip, this.tickLblSkip, pr));
         this.tickLblSkip = pr;
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CCatAx.prototype.setTickMarkSkip = function(pr) {
         History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_CatAxSetTickMarkSkip, this.tickMarkSkip, pr));
         this.tickMarkSkip = pr;
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CCatAx.prototype.merge = function(oAxis) {
         this.mergeBase(oAxis);
@@ -6919,37 +6952,37 @@ var CROSS_BETWEEN_MID_CAT = 1;
     CDateAx.prototype.setAuto = function(pr) {
         History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_DateAxAuto, this.auto, pr));
         this.auto = pr;
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CDateAx.prototype.setBaseTimeUnit = function(pr) {
         History.Add(new CChangesDrawingsDouble(this, AscDFH.historyitem_DateAxBaseTimeUnit, this.baseTimeUnit, pr));
         this.baseTimeUnit = pr;
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CDateAx.prototype.setLblOffset = function(pr) {
         History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_DateAxLblOffset, this.lblOffset, pr));
         this.lblOffset = pr;
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CDateAx.prototype.setMajorTimeUnit = function(pr) {
         History.Add(new CChangesDrawingsDouble(this, AscDFH.historyitem_DateAxMajorTimeUnit, this.majorTimeUnit, pr));
         this.majorTimeUnit = pr;
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CDateAx.prototype.setMajorUnit = function(pr) {
         History.Add(new CChangesDrawingsDouble(this, AscDFH.historyitem_DateAxMajorUnit, this.majorUnit, pr));
         this.majorUnit = pr;
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CDateAx.prototype.setMinorTimeUnit = function(pr) {
         History.Add(new CChangesDrawingsDouble(this, AscDFH.historyitem_DateAxMinorTimeUnit, this.minorTimeUnit, pr));
         this.minorTimeUnit = pr;
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CDateAx.prototype.setMinorUnit = function(pr) {
         History.Add(new CChangesDrawingsDouble(this, AscDFH.historyitem_DateAxMinorUnit, this.minorUnit, pr));
         this.minorUnit = pr;
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CDateAx.prototype.merge = function(oAxis) {
         this.mergeBase(oAxis);
@@ -6993,12 +7026,12 @@ var CROSS_BETWEEN_MID_CAT = 1;
     CSerAx.prototype.setTickLblSkip = function(pr) {
         History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_SerAxSetTickLblSkip, this.tickLblSkip, pr));
         this.tickLblSkip = pr;
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CSerAx.prototype.setTickMarkSkip = function(pr) {
         History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_SerAxSetTickMarkSkip, this.tickMarkSkip, pr));
         this.tickMarkSkip = pr;
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CSerAx.prototype.merge = function(oAxis) {
         this.mergeBase(oAxis);
@@ -7027,7 +7060,7 @@ var CROSS_BETWEEN_MID_CAT = 1;
     CValAx.prototype.setCrossBetween = function(pr) {
         History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_ValAxSetCrossBetween, this.crossBetween, pr));
         this.crossBetween = pr;
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CValAx.prototype.setDispUnits = function(pr) {
         History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_ValAxSetDispUnits, this.dispUnits, pr));
@@ -7035,17 +7068,17 @@ var CROSS_BETWEEN_MID_CAT = 1;
         if(this.dispUnits) {
             this.dispUnits.setParent(this);
         }
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CValAx.prototype.setMajorUnit = function(pr) {
         History.Add(new CChangesDrawingsDouble(this, AscDFH.historyitem_ValAxSetMajorUnit, this.majorUnit, pr));
         this.majorUnit = pr;
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CValAx.prototype.setMinorUnit = function(pr) {
         History.Add(new CChangesDrawingsDouble(this, AscDFH.historyitem_ValAxSetMinorUnit, this.minorUnit, pr));
         this.minorUnit = pr;
-        this.onUpdate(false);
+        this.onUpdate();
     };
     CValAx.prototype.getMenuProps = function() {
         var ret = new AscCommon.asc_ValAxisSettings();
@@ -8965,32 +8998,29 @@ CDispUnits.prototype =
         return AscDFH.historyitem_type_DispUnits;
     },
 
+    onUpdate: function() {
+        if(this.parent) {
+            this.parent.onUpdate();
+        }
+    },
+
     setBuiltInUnit: function(pr)
     {
         History.Add(new CChangesDrawingsDouble(this, AscDFH.historyitem_DispUnitsSetBuiltInUnit, this.builtInUnit, pr));
         this.builtInUnit = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent && this.parent.parent.parent.parent && this.parent.parent.parent.parent.handleUpdateInternalChart)
-        {
-            this.parent.parent.parent.parent.handleUpdateInternalChart();
-        }
+        this.onUpdate();
     },
     setCustUnit: function(pr)
     {
         History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_DispUnitsSetCustUnit, this.custUnit, pr));
         this.custUnit = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent && this.parent.parent.parent.parent && this.parent.parent.parent.parent.handleUpdateInternalChart)
-        {
-            this.parent.parent.parent.parent.handleUpdateInternalChart();
-        }
+        this.onUpdate();
     },
     setDispUnitsLbl: function(pr)
     {
         History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_DispUnitsSetDispUnitsLbl, this.dispUnitsLbl, pr));
         this.dispUnitsLbl = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent && this.parent.parent.parent.parent && this.parent.parent.parent.parent.handleUpdateInternalChart)
-        {
-            this.parent.parent.parent.parent.handleUpdateInternalChart();
-        }
+        this.onUpdate();
     },
 
 
@@ -9003,7 +9033,7 @@ CDispUnits.prototype =
     Read_FromBinary2: function(r)
     {
         this.Id = r.GetString2();
-            }
+    }
 };
 
 function CDoughnutChart() {
