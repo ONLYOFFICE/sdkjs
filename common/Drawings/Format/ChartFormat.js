@@ -6491,9 +6491,6 @@ var CROSS_BETWEEN_MID_CAT = 1;
         this.onUpdate(false);
     };
     CAxisBase.prototype.mergeBase = function(oAxis) {
-        if(AscFormat.isRealBool(oAxis.auto)) {
-            this.setAuto(oAxis.auto);
-        }
         if(AscFormat.isRealNumber(oAxis.axPos)) {
             this.setAxPos(oAxis.axPos);
         }
