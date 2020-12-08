@@ -6333,111 +6333,229 @@ var CROSS_BETWEEN_MID_CAT = 1;
         }
     }
 
-function CCatAx()
-{
-    this.auto            = null;
-    this.axId            = null;
-    this.axPos           = null;
-    this.crossAx         = null;
-    this.crosses         = null;
-    this.crossesAt       = null;
-    this.bDelete          = null;
-    this.extLst          = null;
-    this.lblAlgn         = null;
-    this.lblOffset       = null;
-    this.majorGridlines  = null;
-    this.majorTickMark   = null;
-    this.minorGridlines  = null;
-    this.minorTickMark   = null;
-    this.noMultiLvlLbl   = null;
-    this.numFmt          = null;
-    this.scaling         = null;
-    this.spPr            = null;
-    this.tickLblPos      = null;
-    this.tickLblSkip     = null;
-    this.tickMarkSkip    = null;
-    this.title           = null;
-    this.txPr            = null;
+    function CAxisBase() {
+        AscFormat.CBaseObject.call(this);
+        this.axId = null;
+        this.scaling = null;
+        this.bDelete = null;
+        this.axPos = null;
+        this.majorGridlines = null;
+        this.minorGridlines = null;
+        this.title = null;
+        this.numFmt = null;
+        this.majorTickMark = null;
+        this.minorTickMark = null;
+        this.tickLblPos = null;
+        this.spPr = null;
+        this.txPr = null;
+        this.crossAx = null;
+        this.crosses = null;
+        this.crossesAt = null;
+        this.parent = null;
+    }
 
-    this.parent = null;
-    this.posX = null;
-    this.posY = null;
-
-    this.Id = g_oIdCounter.Get_NewId();
-    g_oTableId.Add(this, this.Id);
-
-}
-
-
-    CCatAx.prototype.Get_Id = function()
-    {
-        return this.Id;
-    };
-    CCatAx.prototype.Refresh_RecalcData = function()
-    {
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
+    CAxisBase.prototype = Object.create(AscFormat.CBaseObject.prototype);
+    CAxisBase.prototype.constructor = CAxisBase;
+    CAxisBase.prototype.onUpdate = function(bAddToRecalculate) {
+        if(this.parent && this.parent.parent && this.parent.parent.parent) {
             this.parent.parent.parent.handleUpdateInternalChart();
-            this.parent.parent.parent.addToRecalculate();
+            if(bAddToRecalculate) {
+                this.parent.parent.parent.addToRecalculate();
+            }
         }
     };
-    CCatAx.prototype.Refresh_RecalcData2 = function(pageIndex, object)
-    {
+    CAxisBase.prototype.Refresh_RecalcData = function() {
+        this.onUpdate(true);
+    };
+    CAxisBase.prototype.Refresh_RecalcData2 = function(pageIndex, object) {
         this.parent && this.parent.parent && this.parent.parent.Refresh_RecalcData2(pageIndex, object);
     };
-    CCatAx.prototype.getDrawingDocument = function()
-    {
+    CAxisBase.prototype.getDrawingDocument = function() {
         return this.parent && this.parent.parent && this.parent.parent.getDrawingDocument && this.parent.parent.getDrawingDocument();
     };
-    CCatAx.prototype.createDuplicate = function()
-    {
-        var c = new CCatAx();
-        c.setAuto(this.auto);
-        c.setAxPos(this.axPos);
-        //todo crossAx выставляется родительским классом
-        c.setCrosses(this.crosses);
-        c.setCrossesAt(this.crossesAt);
-        c.setDelete(this.bDelete);
-        c.setLblAlgn(this.lblAlgn);
-        c.setLblOffset(this.lblOffset);
-        if(this.majorGridlines)
-        {
-            c.setMajorGridlines(this.majorGridlines.createDuplicate());
-        }
-        c.setMajorTickMark(this.majorTickMark);
-        if(this.minorGridlines)
-        {
-            c.setMinorGridlines(this.minorGridlines.createDuplicate());
-        }
-        c.setMinorTickMark(this.minorTickMark);
-        c.setNoMultiLvlLbl(this.noMultiLvlLbl);
-        if(this.numFmt)
-        {
-            c.setNumFmt(this.numFmt.createDuplicate());
-        }
-        if(this.scaling)
-        {
-            c.setScaling(this.scaling.createDuplicate());
-        }
-        if(this.spPr)
-        {
-            c.setSpPr(this.spPr.createDuplicate());
-        }
-        c.setTickLblPos(this.tickLblPos);
-        c.setTickLblSkip(this.tickLblSkip);
-        c.setTickMarkSkip(this.tickMarkSkip);
-        if(this.title)
-        {
-            c.setTitle(this.title.createDuplicate());
-        }
-        if(this.txPr)
-        {
-            c.setTxPr(this.txPr.createDuplicate());
-        }
-        return c;
+    CAxisBase.prototype.handleUpdateFill = function() {
+        this.onUpdate(false);
     };
-    CCatAx.prototype.getMenuProps = function()
-    {
+    CAxisBase.prototype.handleUpdateLn = function() {
+        this.onUpdate(false);
+    };
+    CAxisBase.prototype.getParentObjects = function() {
+        return this.parent && this.parent.getParentObjects();
+    };
+    CAxisBase.prototype.setParent = function(pr) {
+        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CommonChartFormat_SetParent, this.parent, pr));
+        this.parent = pr;
+    };
+    CAxisBase.prototype.setAxId = function(pr) {
+        History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_CatAxSetAxId, this.axId, pr));
+        this.axId = pr;
+        checkAxIdCounter(pr);
+    };
+    CAxisBase.prototype.setScaling = function(pr) {
+        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CatAxSetScaling, this.scaling, pr));
+        this.scaling = pr;
+        if(this.scaling) {
+            this.scaling.setParent(this);
+        }
+        this.onUpdate(false);
+    };
+    CAxisBase.prototype.setDelete = function(pr) {
+        History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_CatAxSetDelete, this.bDelete, pr));
+        this.bDelete = pr;
+        this.onUpdate(false);
+    };
+    CAxisBase.prototype.setAxPos = function(pr) {
+        History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_CatAxSetAxPos, this.axPos, pr));
+        this.axPos = pr;
+        this.onUpdate(false);
+    };
+
+    CAxisBase.prototype.setMajorGridlines = function(pr) {
+        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CatAxSetMajorGridlines, this.majorGridlines, pr));
+        this.majorGridlines = pr;
+        if(this.majorGridlines) {
+            this.majorGridlines.setParent(this);
+        }
+        this.onUpdate(false);
+    };
+    CAxisBase.prototype.setMinorGridlines = function(pr) {
+        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CatAxSetMinorGridlines, this.minorGridlines, pr));
+        this.minorGridlines = pr;
+        if(this.minorGridlines) {
+            this.minorGridlines.setParent(this);
+        }
+        this.onUpdate(false);
+    };
+    CAxisBase.prototype.setTitle = function(pr) {
+        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CatAxSetTitle, this.title, pr));
+        this.title = pr;
+        if(pr) {
+            pr.setParent(this);
+        }
+        this.onUpdate(false);
+    };
+    CAxisBase.prototype.setNumFmt = function(pr) {
+        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CatAxSetNumFmt, this.numFmt, pr));
+        this.numFmt = pr;
+        this.onUpdate(false);
+    };
+    CAxisBase.prototype.setMajorTickMark = function(pr) {
+        History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_CatAxSetMajorTickMark, this.majorTickMark, pr));
+        this.majorTickMark = pr;
+        this.onUpdate(false);
+    };
+    CAxisBase.prototype.setMinorTickMark = function(pr) {
+        History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_CatAxSetMinorTickMark, this.minorTickMark, pr));
+        this.minorTickMark = pr;
+        this.onUpdate(false);
+    };
+
+    CAxisBase.prototype.setSpPr = function(pr) {
+        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CatAxSetSpPr, this.spPr, pr));
+        this.spPr = pr;
+        if(this.spPr) {
+            this.spPr.setParent(this);
+        }
+        this.onUpdate(false);
+    };
+    CAxisBase.prototype.setTxPr = function(pr) {
+        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CatAxSetTxPr, this.txPr, pr));
+        this.txPr = pr;
+        if(this.txPr) {
+            this.txPr.setParent(this);
+        }
+        this.onUpdate(false);
+    };
+    CAxisBase.prototype.setTickLblPos = function(pr) {
+        History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_CatAxSetTickLblPos, this.tickLblPos, pr));
+        this.tickLblPos = pr;
+        this.onUpdate(false);
+    };
+    CAxisBase.prototype.setCrossAx = function(pr) {
+        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CatAxSetCrossAx, this.crossAx, pr));
+        this.crossAx = pr;
+        this.onUpdate(false);
+    };
+    CAxisBase.prototype.setCrosses = function(pr) {
+        History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_CatAxSetCrosses, this.crosses, pr));
+        this.crosses = pr;
+        this.onUpdate(false);
+    };
+    CAxisBase.prototype.setCrossesAt = function(pr) {
+        History.Add(new CChangesDrawingsDouble(this, AscDFH.historyitem_CatAxSetCrossesAt, this.crossesAt, pr));
+        this.crossesAt = pr;
+        this.onUpdate(false);
+    };
+    CAxisBase.prototype.mergeBase = function(oAxis) {
+        if(AscFormat.isRealBool(oAxis.auto)) {
+            this.setAuto(oAxis.auto);
+        }
+        if(AscFormat.isRealNumber(oAxis.axPos)) {
+            this.setAxPos(oAxis.axPos);
+        }
+        if(AscFormat.isRealNumber(oAxis.crosses)) {
+            this.setCrosses(oAxis.crosses);
+        }
+        if(AscFormat.isRealNumber(oAxis.crossesAt)) {
+            this.setCrossesAt(oAxis.crossesAt);
+        }
+        if(AscFormat.isRealBool(oAxis.bDelete)) {
+            this.setDelete(oAxis.bDelete);
+        }
+        if(AscCommon.isRealObject(oAxis.majorGridlines)) {
+            this.setMajorGridlines(oAxis.majorGridlines.createDuplicate());
+        }
+        if(AscFormat.isRealNumber(oAxis.majorTickMark)) {
+            this.setMajorTickMark(oAxis.majorTickMark);
+        }
+        if(AscCommon.isRealObject(oAxis.minorGridlines)) {
+            this.setMinorGridlines(oAxis.minorGridlines.createDuplicate());
+        }
+        if(AscFormat.isRealNumber(oAxis.minorTickMark)) {
+            this.setMinorTickMark(oAxis.minorTickMark);
+        }
+        if(AscCommon.isRealObject(oAxis.numFmt)) {
+            this.setNumFmt(oAxis.numFmt.createDuplicate());
+        }
+        if(AscCommon.isRealObject(oAxis.scaling)) {
+            this.setScaling(oAxis.scaling.createDuplicate());
+        }
+        if(AscCommon.isRealObject(oAxis.spPr)) {
+            this.setSpPr(oAxis.spPr.createDuplicate());
+        }
+        if(AscFormat.isRealNumber(oAxis.tickLblPos)) {
+            this.setTickLblPos(oAxis.tickLblPos);
+        }
+        if(AscCommon.isRealObject(oAxis.title)) {
+            this.setTitle(oAxis.title.createDuplicate());
+        }
+        if(AscCommon.isRealObject(oAxis.txPr)) {
+            this.setTxPr(oAxis.txPr.createDuplicate());
+        }
+    };
+    CAxisBase.prototype.merge = function(oAxis) {
+        this.mergeBase(oAxis);
+    };
+    CAxisBase.prototype.createDuplicate = function(oAxis) {
+        var oCopy = new this.constructor();
+        oCopy.merge(this);
+        return oCopy;
+    };
+
+
+    function CCatAx() {
+        CAxisBase.call(this);
+        this.auto            = null;
+        this.extLst          = null;
+        this.lblAlgn         = null;
+        this.lblOffset       = null;
+        this.noMultiLvlLbl   = null;
+        this.tickLblSkip     = null;
+        this.tickMarkSkip    = null;
+    }
+    CCatAx.prototype = Object.create(CAxisBase.prototype);
+    CCatAx.prototype.constructor = CCatAx;
+    CCatAx.prototype.getMenuProps = function() {
         var ret = new AscCommon.asc_CatAxisSettings();
 
         if(AscFormat.isRealNumber(this.tickMarkSkip))
@@ -6532,9 +6650,7 @@ function CCatAx()
         ret.putAuto(this.auto !== false);
         return ret;
     };
-
-    CCatAx.prototype.setMenuProps = function(props)
-    {
+    CCatAx.prototype.setMenuProps = function(props) {
         if(!(isRealObject(props)
             && typeof props.getAxisType === "function"
             &&(props.getAxisType() === c_oAscAxisType.cat || props.getAxisType() === c_oAscAxisType.date)))
@@ -6722,273 +6838,43 @@ function CCatAx()
         }
         this.setAuto(props.getAuto());
     };
-    CCatAx.prototype.getObjectType = function()
-    {
+    CCatAx.prototype.getObjectType = function() {
         return AscDFH.historyitem_type_CatAx;
     };
-    CCatAx.prototype.Write_ToBinary2 = function(w)
-    {
-        w.WriteLong(this.getObjectType());
-        w.WriteString2(this.Get_Id());
-    };
-    CCatAx.prototype.Read_FromBinary2 = function(r)
-    {
-        this.Id = r.GetString2();
-    };
-    CCatAx.prototype.setParent = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CommonChartFormat_SetParent, this.parent, pr));
-        this.parent = pr;
-    };
-    CCatAx.prototype.setAuto = function(pr)
-    {
+    CCatAx.prototype.setAuto = function(pr) {
         History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_CatAxSetAuto, this.auto, pr));
         this.auto = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
+        this.onUpdate(false);
     };
-    CCatAx.prototype.setAxId = function(pr)
-    {
-        History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_CatAxSetAxId, this.axId, pr));
-        this.axId = pr;
-        checkAxIdCounter(pr);
-    };
-    CCatAx.prototype.setAxPos = function(pr)
-    {
-        History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_CatAxSetAxPos, this.axPos, pr));
-        this.axPos = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CCatAx.prototype.setCrossAx = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CatAxSetCrossAx, this.crossAx, pr));
-        this.crossAx = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CCatAx.prototype.setCrosses = function(pr)
-    {
-        History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_CatAxSetCrosses, this.crosses, pr));
-        this.crosses = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CCatAx.prototype.setCrossesAt = function(pr)
-    {
-        History.Add(new CChangesDrawingsDouble(this, AscDFH.historyitem_CatAxSetCrossesAt, this.crossesAt, pr));
-        this.crossesAt = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CCatAx.prototype.setDelete = function(pr)
-    {
-        History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_CatAxSetDelete, this.bDelete, pr));
-        this.bDelete = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CCatAx.prototype.setLblAlgn = function(pr)
-    {
+    CCatAx.prototype.setLblAlgn = function(pr) {
         History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_CatAxSetLblAlgn, this.lblAlgn, pr));
         this.lblAlgn = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
+        this.onUpdate(false);
     };
-    CCatAx.prototype.setLblOffset = function(pr)
-    {
+    CCatAx.prototype.setLblOffset = function(pr) {
         History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_CatAxSetLblOffset, this.lblOffset, pr));
         this.lblOffset = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
+        this.onUpdate(false);
     };
-    CCatAx.prototype.setMajorGridlines = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CatAxSetMajorGridlines, this.majorGridlines, pr));
-        this.majorGridlines = pr;
-        if(this.majorGridlines)
-        {
-            this.majorGridlines.setParent(this);
-        }
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateGridlines();
-        }
-    };
-    CCatAx.prototype.setMajorTickMark = function(pr)
-    {
-        History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_CatAxSetMajorTickMark, this.majorTickMark, pr));
-        this.majorTickMark = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CCatAx.prototype.setMinorGridlines = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CatAxSetMinorGridlines, this.minorGridlines, pr));
-        this.minorGridlines = pr;
-        if(this.minorGridlines)
-        {
-            this.minorGridlines.setParent(this);
-        }
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateGridlines();
-        }
-    };
-    CCatAx.prototype.setMinorTickMark = function(pr)
-    {
-        History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_CatAxSetMinorTickMark, this.minorTickMark, pr));
-        this.minorTickMark = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CCatAx.prototype.setNoMultiLvlLbl = function(pr)
-    {
+    CCatAx.prototype.setNoMultiLvlLbl = function(pr) {
         History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_CatAxSetNoMultiLvlLbl, this.noMultiLvlLbl, pr));
         this.noMultiLvlLbl = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
+        this.onUpdate(false);
     };
-    CCatAx.prototype.setNumFmt = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CatAxSetNumFmt, this.numFmt, pr));
-        this.numFmt = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CCatAx.prototype.setScaling = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CatAxSetScaling, this.scaling, pr));
-        this.scaling = pr;
-        if(this.scaling)
-        {
-            this.scaling.setParent(this);
-        }
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CCatAx.prototype.setSpPr = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CatAxSetSpPr, this.spPr, pr));
-        this.spPr = pr;
-        if(this.spPr)
-        {
-            this.spPr.setParent(this);
-        }
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CCatAx.prototype.setTickLblPos = function(pr)
-    {
-        History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_CatAxSetTickLblPos, this.tickLblPos, pr));
-        this.tickLblPos = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CCatAx.prototype.setTickLblSkip = function(pr)
-    {
+    CCatAx.prototype.setTickLblSkip = function(pr) {
         History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_CatAxSetTickLblSkip, this.tickLblSkip, pr));
         this.tickLblSkip = pr;
+        this.onUpdate(false);
     };
-    CCatAx.prototype.setTickMarkSkip = function(pr)
-    {
+    CCatAx.prototype.setTickMarkSkip = function(pr) {
         History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_CatAxSetTickMarkSkip, this.tickMarkSkip, pr));
         this.tickMarkSkip = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CCatAx.prototype.setTitle = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CatAxSetTitle, this.title, pr));
-        this.title = pr;
-        if(pr)
-        {
-            pr.setParent(this);
-        }
-
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CCatAx.prototype.getParentObjects = function()
-    {
-        return this.parent && this.parent.getParentObjects();
-    };
-    CCatAx.prototype.setTxPr = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CatAxSetTxPr, this.txPr, pr));
-        this.txPr = pr;
-        if(this.txPr)
-        {
-            this.txPr.setParent(this);
-        }
-        if(this.parent && this.parent.parent && this.parent.parent.parent && this.parent.parent.parent.handleUpdateInternalChart)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CCatAx.prototype.handleUpdateFill = function()
-    {
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CCatAx.prototype.handleUpdateLn = function()
-    {
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
+        this.onUpdate(false);
     };
     CCatAx.prototype.merge = function(oAxis) {
+        this.mergeBase(oAxis);
         if(AscFormat.isRealBool(oAxis.auto)) {
             this.setAuto(oAxis.auto);
-        }
-        if(AscFormat.isRealNumber(oAxis.axPos)) {
-            this.setAxPos(oAxis.axPos);
-        }
-        if(AscFormat.isRealNumber(oAxis.crosses)) {
-            this.setCrosses(oAxis.crosses);
-        }
-        if(AscFormat.isRealNumber(oAxis.crossesAt)) {
-            this.setCrossesAt(oAxis.crossesAt);
-        }
-        if(AscFormat.isRealBool(oAxis.bDelete)) {
-            this.setDelete(oAxis.bDelete);
         }
         if(AscFormat.isRealNumber(oAxis.lblAlgn)) {
             this.setLblAlgn(oAxis.lblAlgn);
@@ -6996,32 +6882,8 @@ function CCatAx()
         if(AscFormat.isRealNumber(oAxis.lblOffset)) {
             this.setLblOffset(oAxis.lblOffset);
         }
-        if(AscCommon.isRealObject(oAxis.majorGridlines)) {
-            this.setMajorGridlines(oAxis.majorGridlines.createDuplicate());
-        }
-        if(AscFormat.isRealNumber(oAxis.majorTickMark)) {
-            this.setMajorTickMark(oAxis.majorTickMark);
-        }
-        if(AscCommon.isRealObject(oAxis.minorGridlines)) {
-            this.setMinorGridlines(oAxis.minorGridlines.createDuplicate());
-        }
-        if(AscFormat.isRealNumber(oAxis.minorTickMark)) {
-            this.setMinorTickMark(oAxis.minorTickMark);
-        }
         if(AscFormat.isRealBool(oAxis.noMultiLvlLbl)) {
             this.setNoMultiLvlLbl(oAxis.noMultiLvlLbl);
-        }
-        if(AscCommon.isRealObject(oAxis.numFmt)) {
-            this.setNumFmt(oAxis.numFmt.createDuplicate());
-        }
-        if(AscCommon.isRealObject(oAxis.scaling)) {
-            this.setScaling(oAxis.scaling.createDuplicate());
-        }
-        if(AscCommon.isRealObject(oAxis.spPr)) {
-            this.setSpPr(oAxis.spPr.createDuplicate());
-        }
-        if(AscFormat.isRealNumber(oAxis.tickLblPos)) {
-            this.setTickLblPos(oAxis.tickLblPos);
         }
         if(AscFormat.isRealNumber(oAxis.tickLblSkip)) {
             this.setTickLblSkip(oAxis.tickLblSkip);
@@ -7029,73 +6891,23 @@ function CCatAx()
         if(AscFormat.isRealNumber(oAxis.tickMarkSkip)) {
             this.setTickMarkSkip(oAxis.tickMarkSkip);
         }
-        if(AscCommon.isRealObject(oAxis.title)) {
-            this.setTitle(oAxis.title.createDuplicate());
-        }
-        if(AscCommon.isRealObject(oAxis.txPr)) {
-            this.setTxPr(oAxis.txPr.createDuplicate());
-        }
     };
 
-function CDateAx()
-{
-    this.auto           = null;
-    this.axId           = null;
-    this.axPos          = null;
-    this.baseTimeUnit   = null;
-    this.crossAx        = null;
-    this.crosses        = null;
-    this.crossesAt      = null;
-    this.bDelete        = null;
-    this.extLst         = null;
-    this.lblOffset      = null;
-    this.majorGridlines = null;
-    this.majorTickMark  = null;
-    this.majorTimeUnit  = null;
-    this.majorUnit      = null;
-    this.minorGridlines = null;
-    this.minorTickMark  = null;
-    this.minorTimeUnit  = null;
-
-    this.minorUnit      = null;
-    this.numFmt         = null;
-    this.scaling        = null;
-    this.spPr           = null;
-    this.tickLblPos     = null;
-    this.title          = null;
-    this.txPr           = null;
-
-    this.parent = null;
-    this.posX = null;
-    this.posY = null;
-
-    this.Id = g_oIdCounter.Get_NewId();
-    g_oTableId.Add(this, this.Id);
-}
-
-    CDateAx.prototype.Get_Id = function()
-    {
-        return  this.Id;
-    };
-    CDateAx.prototype.getObjectType = function()
-    {
+    function CDateAx() {
+        CAxisBase.call(this);
+        this.auto           = null;
+        this.baseTimeUnit   = null;
+        this.extLst         = null;
+        this.lblOffset      = null;
+        this.majorTimeUnit  = null;
+        this.majorUnit      = null;
+        this.minorTimeUnit  = null;
+        this.minorUnit      = null;
+    }
+    CDateAx.prototype = Object.create(CAxisBase.prototype);
+    CDateAx.prototype.constructor = CDateAx;
+    CDateAx.prototype.getObjectType = function() {
         return AscDFH.historyitem_type_DateAx;
-    };
-    CDateAx.prototype.Refresh_RecalcData2 = function(pageIndex, object)
-    {
-        this.parent && this.parent.parent && this.parent.parent.Refresh_RecalcData2(pageIndex, object);
-    };
-    CDateAx.prototype.getDrawingDocument = function()
-    {
-        return this.parent && this.parent.parent && this.parent.parent.getDrawingDocument && this.parent.parent.getDrawingDocument();
-    };
-    CDateAx.prototype.Refresh_RecalcData = function(pageIndex, object)
-    {
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-            this.parent.parent.parent.addToRecalculate();
-        }
     };
     CDateAx.prototype.getMenuProps = function() {
         var oProps = CCatAx.prototype.getMenuProps.call(this);
@@ -7103,1091 +6915,138 @@ function CDateAx()
         return oProps;
     };
     CDateAx.prototype.setMenuProps = CCatAx.prototype.setMenuProps;
-    CDateAx.prototype.createDuplicate = function()
-    {
-        var c = new CDateAx();
-        c.setAuto(this.auto);
-        c.setAxPos(this.axPos);
-        c.setBaseTimeUnit(this.baseTimeUnit);
-        c.setCrosses(this.crosses);
-        c.setCrossesAt(this.crossesAt);
-        c.setDelete(this.bDelete);
-        c.setLblOffset(this.lblOffset);
-        if(this.majorGridlines)
-        {
-            c.setMajorGridlines(this.majorGridlines.createDuplicate());
-        }
-        c.setMajorTickMark(this.majorTickMark);
-        c.setMajorTimeUnit(this.majorTimeUnit);
-        if(this.minorGridlines)
-        {
-            c.setMinorGridlines(this.minorGridlines.createDuplicate());
-        }
-        c.setMinorTickMark(this.minorTickMark);
-        c.setMinorTimeUnit(this.minorTimeUnit);
-        if(this.numFmt)
-        {
-            c.setNumFmt(this.numFmt.createDuplicate());
-        }
-        if(this.scaling)
-        {
-            c.setScaling(this.scaling.createDuplicate());
-        }
-        if(this.spPr)
-        {
-            c.setSpPr(this.spPr.createDuplicate());
-        }
-        c.setTickLblPos(this.tickLblPos);
-        if(this.title)
-        {
-            c.setTitle(this.title.createDuplicate());
-        }
-        if(this.txPr)
-        {
-            c.setTxPr(this.txPr.createDuplicate());
-        }
-        return c;
-    };
-    CDateAx.prototype.setAuto = function(pr)
-    {
+    CDateAx.prototype.setAuto = function(pr) {
         History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_DateAxAuto, this.auto, pr));
         this.auto = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-
+        this.onUpdate(false);
     };
-    CDateAx.prototype.setAxId = function(pr)
-    {
-        History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_DateAxAxId, this.axId, pr));
-        this.axId = pr;
-        checkAxIdCounter(pr);
-    };
-    CDateAx.prototype.setAxPos = function(pr)
-    {
-        History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_DateAxAxPos, this.axPos, pr));
-        this.axPos = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-
-    };
-    CDateAx.prototype.setBaseTimeUnit = function(pr)
-    {
+    CDateAx.prototype.setBaseTimeUnit = function(pr) {
         History.Add(new CChangesDrawingsDouble(this, AscDFH.historyitem_DateAxBaseTimeUnit, this.baseTimeUnit, pr));
         this.baseTimeUnit = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-
+        this.onUpdate(false);
     };
-    CDateAx.prototype.setCrossAx = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_DateAxCrossAx, this.crossAx, pr));
-        this.crossAx = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-
-    };
-    CDateAx.prototype.setCrosses = function(pr)
-    {
-        History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_DateAxCrosses, this.crosses, pr));
-        this.crosses = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-
-    };
-    CDateAx.prototype.setCrossesAt = function(pr)
-    {
-        History.Add(new CChangesDrawingsDouble(this, AscDFH.historyitem_DateAxCrossesAt, this.crossesAt, pr));
-        this.crossesAt = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CDateAx.prototype.setDelete = function(pr)
-    {
-        History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_DateAxDelete, this.bDelete, pr));
-        this.bDelete = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-
-    };
-    CDateAx.prototype.setLblOffset = function(pr)
-    {
+    CDateAx.prototype.setLblOffset = function(pr) {
         History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_DateAxLblOffset, this.lblOffset, pr));
         this.lblOffset = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-
+        this.onUpdate(false);
     };
-    CDateAx.prototype.setMajorGridlines = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_DateAxMajorGridlines, this.majorGridlines, pr));
-        this.majorGridlines = pr;
-        if(this.majorGridlines)
-        {
-            this.majorGridlines.setParent(this);
-        }
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateGridlines();
-        }
-
-    };
-    CDateAx.prototype.setMajorTickMark = function(pr)
-    {
-        History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_DateAxMajorTickMark, this.majorTickMark, pr));
-        this.majorTickMark = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-
-    };
-    CDateAx.prototype.setMajorTimeUnit = function(pr)
-    {
+    CDateAx.prototype.setMajorTimeUnit = function(pr) {
         History.Add(new CChangesDrawingsDouble(this, AscDFH.historyitem_DateAxMajorTimeUnit, this.majorTimeUnit, pr));
         this.majorTimeUnit = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-
+        this.onUpdate(false);
     };
-    CDateAx.prototype.setMajorUnit = function(pr)
-    {
+    CDateAx.prototype.setMajorUnit = function(pr) {
         History.Add(new CChangesDrawingsDouble(this, AscDFH.historyitem_DateAxMajorUnit, this.majorUnit, pr));
         this.majorUnit = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-
+        this.onUpdate(false);
     };
-    CDateAx.prototype.setMinorGridlines = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_DateAxMajorGridlines, this.majorGridlines, pr));
-        this.minorGridlines = pr;
-        if(this.minorGridlines)
-        {
-            this.minorGridlines.setParent(this);
-        }
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateGridlines();
-        }
-
-    };
-    CDateAx.prototype.setMinorTickMark = function(pr)
-    {
-        History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_DateAxMinorTickMark, this.minorTickMark, pr));
-        this.minorTickMark = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-
-    };
-    CDateAx.prototype.setMinorTimeUnit = function(pr)
-    {
+    CDateAx.prototype.setMinorTimeUnit = function(pr) {
         History.Add(new CChangesDrawingsDouble(this, AscDFH.historyitem_DateAxMinorTimeUnit, this.minorTimeUnit, pr));
         this.minorTimeUnit = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
+        this.onUpdate(false);
     };
-    CDateAx.prototype.setMinorUnit = function(pr)
-    {
+    CDateAx.prototype.setMinorUnit = function(pr) {
         History.Add(new CChangesDrawingsDouble(this, AscDFH.historyitem_DateAxMinorUnit, this.minorUnit, pr));
         this.minorUnit = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CDateAx.prototype.setNumFmt = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_DateAxNumFmt, this.numFmt, pr));
-        this.numFmt = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CDateAx.prototype.setScaling = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_DateAxScaling, this.scaling, pr));
-        this.scaling = pr;
-        if(this.scaling)
-        {
-            this.scaling.setParent(this);
-        }
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CDateAx.prototype.setSpPr = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_DateAxSpPr, this.spPr, pr));
-        this.spPr = pr;
-        if(this.spPr)
-        {
-            this.spPr.setParent(this);
-        }
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CDateAx.prototype.setTickLblPos = function(pr)
-    {
-        History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_DateAxTickLblPos, this.tickLblPos, pr));
-        this.tickLblPos = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CDateAx.prototype.setTitle = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_DateAxTitle, this.title, pr));
-        this.title = pr;
-        if(pr)
-        {
-            pr.setParent(this);
-        }
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CDateAx.prototype.getParentObjects = function()
-    {
-        return this.parent && this.parent.getParentObjects();
-    };
-    CDateAx.prototype.setTxPr = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_DateAxTxPr, this.txPr, pr));
-        this.txPr = pr;
-        if(this.txPr)
-        {
-            this.txPr.setParent(this);
-        }
-        if(this.parent && this.parent.parent && this.parent.parent.parent && this.parent.parent.parent.handleUpdateInternalChart)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CDateAx.prototype.Write_ToBinary2 = function(w)
-    {
-        w.WriteLong(this.getObjectType());
-        w.WriteString2(this.Get_Id());
-    };
-    CDateAx.prototype.Read_FromBinary2 = function(r)
-    {
-        this.Id = r.GetString2();
-    };
-    CDateAx.prototype.setParent = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CommonChartFormat_SetParent, this.parent, pr));
-        this.parent = pr;
+        this.onUpdate(false);
     };
     CDateAx.prototype.merge = function(oAxis) {
+        this.mergeBase(oAxis);
         if(AscFormat.isRealNumber(oAxis.baseTimeUnit)) {
             this.setBaseTimeUnit(oAxis.baseTimeUnit);
         }
-
         if(AscFormat.isRealNumber(oAxis.majorTimeUnit)) {
             this.setMajorTimeUnit(oAxis.majorTimeUnit);
         }
         if(AscFormat.isRealNumber(oAxis.majorUnit)) {
             this.setMajorUnit(oAxis.majorUnit);
         }
-
         if(AscFormat.isRealNumber(oAxis.minorTimeUnit)) {
             this.setMinorTimeUnit(oAxis.minorTimeUnit);
         }
         if(AscFormat.isRealNumber(oAxis.minorUnit)) {
             this.setMinorUnit(oAxis.minorUnit);
         }
-
         if(AscFormat.isRealBool(oAxis.auto)) {
             this.setAuto(oAxis.auto);
-        }
-        if(AscFormat.isRealNumber(oAxis.axPos)) {
-            this.setAxPos(oAxis.axPos);
-        }
-        if(AscFormat.isRealNumber(oAxis.crosses)) {
-            this.setCrosses(oAxis.crosses);
-        }
-        if(AscFormat.isRealNumber(oAxis.crossesAt)) {
-            this.setCrossesAt(oAxis.crossesAt);
-        }
-        if(AscFormat.isRealBool(oAxis.bDelete)) {
-            this.setDelete(oAxis.bDelete);
         }
         if(AscFormat.isRealNumber(oAxis.lblOffset)) {
             this.setLblOffset(oAxis.lblOffset);
         }
-        if(AscCommon.isRealObject(oAxis.majorGridlines)) {
-            this.setMajorGridlines(oAxis.majorGridlines.createDuplicate());
-        }
-        if(AscFormat.isRealNumber(oAxis.majorTickMark)) {
-            this.setMajorTickMark(oAxis.majorTickMark);
-        }
-        if(AscCommon.isRealObject(oAxis.minorGridlines)) {
-            this.setMinorGridlines(oAxis.minorGridlines.createDuplicate());
-        }
-        if(AscFormat.isRealNumber(oAxis.minorTickMark)) {
-            this.setMinorTickMark(oAxis.minorTickMark);
-        }
-        if(AscCommon.isRealObject(oAxis.numFmt)) {
-            this.setNumFmt(oAxis.numFmt.createDuplicate());
-        }
-        if(AscCommon.isRealObject(oAxis.scaling)) {
-            this.setScaling(oAxis.scaling.createDuplicate());
-        }
-        if(AscCommon.isRealObject(oAxis.spPr)) {
-            this.setSpPr(oAxis.spPr.createDuplicate());
-        }
-        if(AscFormat.isRealNumber(oAxis.tickLblPos)) {
-            this.setTickLblPos(oAxis.tickLblPos);
-        }
-        if(AscCommon.isRealObject(oAxis.title)) {
-            this.setTitle(oAxis.title.createDuplicate());
-        }
-        if(AscCommon.isRealObject(oAxis.txPr)) {
-            this.setTxPr(oAxis.txPr.createDuplicate());
-        }
     };
 
-function CSerAx()
-{
-    this.axId           = null;
-    this.axPos          = null;
-    this.crossAx        = null;
-    this.crosses        = null;
-    this.crossesAt      = null;
-    this.bDelete        = null;
-    this.extLst         = null;
-    this.majorGridlines = null;
-    this.majorTickMark  = null;
-    this.minorGridlines = null;
-    this.minorTickMark  = null;
-    this.numFmt         = null;
-    this.scaling        = null;
-    this.spPr           = null;
-    this.tickLblPos     = null;
-    this.tickLblSkip    = null;
-    this.tickMarkSkip   = null;
-    this.title          = null;
-    this.txPr           = null;
+    function CSerAx() {
+        CAxisBase.call(this);
+        this.extLst         = null;
+        this.tickLblSkip    = null;
+        this.tickMarkSkip   = null;
+    }
 
-    this.parent = null;
-    this.posX = null;
-    this.posY = null;
-
-    this.Id = g_oIdCounter.Get_NewId();
-    g_oTableId.Add(this, this.Id);
-}
-
-    CSerAx.prototype.getObjectType = function()
-    {
+    CSerAx.prototype = Object.create(CAxisBase.prototype);
+    CSerAx.prototype.constructor = CSerAx;
+    CSerAx.prototype.getObjectType = function() {
         return AscDFH.historyitem_type_SerAx;
-    };
-    CSerAx.prototype.Get_Id = function()
-    {
-        return this.Id;
-    };
-    CSerAx.prototype.Refresh_RecalcData2 = function(pageIndex, object)
-    {
-        this.parent && this.parent.parent && this.parent.parent.Refresh_RecalcData2(pageIndex, object);
     };
     CSerAx.prototype.getMenuProps = CCatAx.prototype.getMenuProps;
     CSerAx.prototype.setMenuProps = CCatAx.prototype.setMenuProps;
-    CSerAx.prototype.getDrawingDocument = function()
-    {
-        return this.parent && this.parent.parent && this.parent.parent.getDrawingDocument && this.parent.parent.getDrawingDocument();
-    };
-    CSerAx.prototype.Refresh_RecalcData = function(pageIndex, object)
-    {
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-            this.parent.parent.parent.addToRecalculate();
-        }
-    };
-    CSerAx.prototype.createDuplicate = function()
-    {
-        var c = new CSerAx();
-        c.setAxPos(this.axPos);
-        c.setCrosses(this.crosses);
-        c.setCrossesAt(this.crossesAt);
-        c.setDelete(this.bDelete);
-        if(this.majorGridlines)
-        {
-            c.setMajorGridlines(this.majorGridlines.createDuplicate());
-        }
-        c.setMajorTickMark(this.majorTickMark);
-        if(this.minorGridlines)
-        {
-            c.setMajorGridlines(this.minorGridlines.createDuplicate());
-        }
-        c.setMajorTickMark(this.minorTickMark);
-        if(this.numFmt)
-        {
-            c.setNumFmt(this.numFmt.createDuplicate());
-        }
-        if(this.scaling)
-        {
-            c.setScaling(this.scaling.createDuplicate());
-        }
-        if(this.spPr)
-        {
-            c.setSpPr(this.spPr.createDuplicate());
-        }
-        c.setTickLblPos(this.tickLblPos);
-        c.setTickLblSkip(this.tickLblSkip);
-        c.setTickMarkSkip(this.tickMarkSkip);
-        if(this.title)
-        {
-            c.setTitle(this.title.createDuplicate());
-        }
-        if(this.txPr)
-        {
-            c.setTxPr(this.txPr.createDuplicate());
-        }
-        return c;
-    };
-    CSerAx.prototype.setAxId = function(pr)
-    {
-        History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_SerAxSetAxId, this.axId, pr));
-        this.axId = pr;
-        checkAxIdCounter(pr);
-    };
-    CSerAx.prototype.setAxPos = function(pr)
-    {
-        History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_SerAxSetAxPos, this.axPos, pr));
-        this.axPos = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CSerAx.prototype.setCrossAx = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_SerAxSetCrossAx, this.crossAx, pr));
-        this.crossAx = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CSerAx.prototype.setCrosses = function(pr)
-    {
-        History.Add(new CChangesDrawingsDouble(this, AscDFH.historyitem_SerAxSetCrosses, this.crosses, pr));
-        this.crosses = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CSerAx.prototype.setCrossesAt = function(pr)
-    {
-        History.Add(new CChangesDrawingsDouble(this, AscDFH.historyitem_SerAxSetCrossesAt, this.crossesAt, pr));
-        this.crossesAt = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CSerAx.prototype.setDelete = function(pr)
-    {
-        History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_SerAxSetDelete, this.bDelete, pr));
-        this.bDelete = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CSerAx.prototype.setMajorGridlines = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_SerAxSetMajorGridlines, this.majorGridlines, pr));
-        this.majorGridlines = pr;
-        if(this.majorGridlines)
-        {
-            this.majorGridlines.setParent(this);
-        }
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateGridlines();
-        }
-    };
-    CSerAx.prototype.setMajorTickMark = function(pr)
-    {
-        History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_SerAxSetMajorTickMark, this.majorTickMark, pr));
-        this.majorTickMark = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateGridlines();
-        }
-    };
-    CSerAx.prototype.setMinorGridlines = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_SerAxSetMinorGridlines, this.majorGridlines, pr));
-        this.minorGridlines = pr;
-        if(this.minorGridlines)
-        {
-            this.minorGridlines.setParent(this);
-        }
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateGridlines();
-        }
-    };
-    CSerAx.prototype.setMinorTickMark = function(pr)
-    {
-        History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_SerAxSetMinorTickMark, this.minorTickMark, pr));
-        this.minorTickMark = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CSerAx.prototype.setNumFmt = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_SerAxSetNumFmt, this.numFmt, pr));
-        this.numFmt = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CSerAx.prototype.setScaling = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_SerAxSetScaling, this.scaling, pr));
-        this.scaling = pr;
-        if(this.scaling)
-        {
-            this.scaling.setParent(this);
-        }
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CSerAx.prototype.setSpPr = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_SerAxSetSpPr, this.spPr, pr));
-        this.spPr = pr;
-        if(this.spPr)
-        {
-            this.spPr.setParent(this);
-        }
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CSerAx.prototype.setTickLblPos = function(pr)
-    {
-        History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_SerAxSetTickLblPos, this.tickLblPos, pr));
-        this.tickLblPos = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CSerAx.prototype.setTickLblSkip = function(pr)
-    {
+    CSerAx.prototype.setTickLblSkip = function(pr) {
         History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_SerAxSetTickLblSkip, this.tickLblSkip, pr));
         this.tickLblSkip = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
+        this.onUpdate(false);
     };
-    CSerAx.prototype.setTickMarkSkip = function(pr)
-    {
+    CSerAx.prototype.setTickMarkSkip = function(pr) {
         History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_SerAxSetTickMarkSkip, this.tickMarkSkip, pr));
         this.tickMarkSkip = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CSerAx.prototype.setTitle = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_SerAxSetTitle, this.title, pr));
-        this.title = pr;
-        if(pr)
-        {
-            pr.setParent(this);
-        }
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CSerAx.prototype.getParentObjects = function()
-    {
-        return this.parent && this.parent.getParentObjects();
-    };
-    CSerAx.prototype.setTxPr = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_SerAxSetTxPr, this.txPr, pr));
-        this.txPr = pr;
-        if(this.txPr)
-        {
-            this.txPr.setParent(this);
-        }
-        if(this.parent && this.parent.parent && this.parent.parent.parent && this.parent.parent.parent.handleUpdateInternalChart)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CSerAx.prototype.setParent = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CommonChartFormat_SetParent, this.parent, pr));
-        this.parent = pr;
-    };
-    CSerAx.prototype.Write_ToBinary2 = function(w)
-    {
-        w.WriteLong(this.getObjectType());
-        w.WriteString2(this.Get_Id());
-    };
-    CSerAx.prototype.Read_FromBinary2 = function(r)
-    {
-        this.Id = r.GetString2();
+        this.onUpdate(false);
     };
     CSerAx.prototype.merge = function(oAxis) {
-
+        this.mergeBase(oAxis);
         if(AscFormat.isRealNumber(oAxis.tickLblSkip)) {
             this.setTickLblSkip(oAxis.tickLblSkip);
         }
         if(AscFormat.isRealNumber(oAxis.tickMarkSkip)) {
             this.setTickMarkSkip(oAxis.tickMarkSkip);
         }
-        if(AscFormat.isRealNumber(oAxis.axPos)) {
-            this.setAxPos(oAxis.axPos);
-        }
-        if(AscFormat.isRealNumber(oAxis.crosses)) {
-            this.setCrosses(oAxis.crosses);
-        }
-        if(AscFormat.isRealNumber(oAxis.crossesAt)) {
-            this.setCrossesAt(oAxis.crossesAt);
-        }
-        if(AscFormat.isRealBool(oAxis.bDelete)) {
-            this.setDelete(oAxis.bDelete);
-        }
-
-        if(AscCommon.isRealObject(oAxis.majorGridlines)) {
-            this.setMajorGridlines(oAxis.majorGridlines.createDuplicate());
-        }
-        if(AscFormat.isRealNumber(oAxis.majorTickMark)) {
-            this.setMajorTickMark(oAxis.majorTickMark);
-        }
-        if(AscCommon.isRealObject(oAxis.minorGridlines)) {
-            this.setMinorGridlines(oAxis.minorGridlines.createDuplicate());
-        }
-        if(AscFormat.isRealNumber(oAxis.minorTickMark)) {
-            this.setMinorTickMark(oAxis.minorTickMark);
-        }
-        if(AscCommon.isRealObject(oAxis.numFmt)) {
-            this.setNumFmt(oAxis.numFmt.createDuplicate());
-        }
-        if(AscCommon.isRealObject(oAxis.scaling)) {
-            this.setScaling(oAxis.scaling.createDuplicate());
-        }
-        if(AscCommon.isRealObject(oAxis.spPr)) {
-            this.setSpPr(oAxis.spPr.createDuplicate());
-        }
-        if(AscFormat.isRealNumber(oAxis.tickLblPos)) {
-            this.setTickLblPos(oAxis.tickLblPos);
-        }
-        if(AscCommon.isRealObject(oAxis.title)) {
-            this.setTitle(oAxis.title.createDuplicate());
-        }
-        if(AscCommon.isRealObject(oAxis.txPr)) {
-            this.setTxPr(oAxis.txPr.createDuplicate());
-        }
     };
 
 
-
-function CValAx()
-{
-    this.axId           = null;
-    this.axPos          = null;
-    this.crossAx        = null;
-    this.crossBetween   = null;
-    this.crosses        = null;
-    this.crossesAt      = null;
-    this.bDelete        = null;
-    this.dispUnits      = null;
-    this.extLst         = null;
-    this.majorGridlines = null;
-    this.majorTickMark  = null;
-    this.majorUnit      = null;
-    this.minorGridlines = null;
-    this.minorTickMark  = null;
-    this.minorUnit      = null;
-    this.numFmt         = null;
-    this.scaling        = null;
-    this.spPr           = null;
-    this.tickLblPos     = null;
-    this.title          = null;
-    this.txPr           = null;
-
-    this.parent = null;
-    this.posX = null;
-    this.posY = null;
-
-
-    this.Id = g_oIdCounter.Get_NewId();
-    g_oTableId.Add(this, this.Id);
-}
-
-
-    CValAx.prototype.Get_Id = function()
-    {
-        return this.Id;
-    };
-    CValAx.prototype.Refresh_RecalcData = function()
-    {
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-            this.parent.parent.parent.addToRecalculate();
-        }
-    };
-    CValAx.prototype.Refresh_RecalcData2 = function(pageIndex, object)
-    {
-        this.parent && this.parent.parent && this.parent.parent.Refresh_RecalcData2(pageIndex, object);
-    };
-    CValAx.prototype.getDrawingDocument = function()
-    {
-        return this.parent && this.parent.parent && this.parent.parent.getDrawingDocument && this.parent.parent.getDrawingDocument();
-    };
-    CValAx.prototype.createDuplicate = function(o)
-    {
-        var c;
-        if(o)
-        {
-            c = o;
-        }
-        else
-        {
-            c = new CValAx();
-        }
-        c.setAxPos(this.axPos);
-        c.setCrossBetween(this.crossBetween);
-        c.setCrosses(this.crosses);
-        c.setCrossesAt(this.crossesAt);
-        c.setDelete(this.bDelete);
-        if(this.dispUnits)
-        {
-            c.setDispUnits(this.dispUnits.createDuplicate());
-        }
-        if(this.majorGridlines)
-        {
-            c.setMajorGridlines(this.majorGridlines.createDuplicate());
-        }
-        c.setMajorTickMark(this.majorTickMark);
-        c.setMajorUnit(this.majorUnit);
-
-        if(this.minorGridlines)
-        {
-            c.setMinorGridlines(this.minorGridlines.createDuplicate());
-        }
-        c.setMinorTickMark(this.minorTickMark);
-        c.setMinorUnit(this.minorUnit);
-
-        this.numFmt && c.setNumFmt(this.numFmt.createDuplicate());
-        this.scaling && c.setScaling(this.scaling.createDuplicate());
-        if(this.spPr)
-        {
-            c.setSpPr(this.spPr.createDuplicate());
-        }
-        c.setTickLblPos(this.tickLblPos);
-        if(this.title)
-        {
-            c.setTitle(this.title.createDuplicate());
-        }
-        if(this.txPr)
-        {
-            c.setTxPr(this.txPr.createDuplicate());
-        }
-        c.scale = this.scale;
-        return c;
-    };
-    CValAx.prototype.getObjectType = function()
-    {
+    function CValAx() {
+        CAxisBase.call(this);
+        this.crossBetween   = null;
+        this.majorUnit      = null;
+        this.minorUnit      = null;
+        this.dispUnits      = null;
+        this.extLst         = null;
+    }
+    CValAx.prototype = Object.create(CAxisBase.prototype);
+    CValAx.prototype.constructor = CValAx;
+    CValAx.prototype.getObjectType = function() {
         return AscDFH.historyitem_type_ValAx;
     };
-    CValAx.prototype.Write_ToBinary2 = function(w)
-    {
-        w.WriteLong(this.getObjectType());
-        w.WriteString2(this.Get_Id());
-    };
-    CValAx.prototype.Read_FromBinary2 = function(r)
-    {
-        this.Id = r.GetString2();
-    };
-    CValAx.prototype.setAxId = function(pr)
-    {
-        History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_ValAxSetAxId, this.axId, pr));
-        this.axId = pr;
-        checkAxIdCounter(pr);
-    };
-    CValAx.prototype.setAxPos = function(pr)
-    {
-        History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_ValAxSetAxPos, this.axPos, pr));
-        this.axPos = pr;
-
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CValAx.prototype.setCrossAx = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_ValAxSetCrossAx, this.crossAx, pr));
-        this.crossAx = pr;
-
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CValAx.prototype.setCrossBetween = function(pr)
-    {
+    CValAx.prototype.setCrossBetween = function(pr) {
         History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_ValAxSetCrossBetween, this.crossBetween, pr));
         this.crossBetween = pr;
-
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
+        this.onUpdate(false);
     };
-    CValAx.prototype.setCrosses = function(pr)
-    {
-        History.Add(new CChangesDrawingsDouble(this, AscDFH.historyitem_ValAxSetCrosses, this.crosses, pr));
-        this.crosses = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CValAx.prototype.setCrossesAt = function(pr)
-    {
-        History.Add(new CChangesDrawingsDouble(this, AscDFH.historyitem_ValAxSetCrossesAt, this.crossesAt, pr));
-        this.crossesAt = pr;
-
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CValAx.prototype.setDelete = function(pr)
-    {
-        History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_ValAxSetDelete, this.bDelete, pr));
-        this.bDelete = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CValAx.prototype.setDispUnits = function(pr)
-    {
+    CValAx.prototype.setDispUnits = function(pr) {
         History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_ValAxSetDispUnits, this.dispUnits, pr));
         this.dispUnits = pr;
-        if(this.dispUnits)
-        {
+        if(this.dispUnits) {
             this.dispUnits.setParent(this);
         }
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
+        this.onUpdate(false);
     };
-    CValAx.prototype.setMajorGridlines = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_ValAxSetMajorGridlines, this.majorGridlines, pr));
-        this.majorGridlines = pr;
-        if(this.majorGridlines)
-        {
-            this.majorGridlines.setParent(this);
-        }
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateGridlines();
-        }
-    };
-    CValAx.prototype.setMajorTickMark = function(pr)
-    {
-        History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_ValAxSetMajorTickMark, this.majorTickMark, pr));
-        this.majorTickMark = pr;
-
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CValAx.prototype.setMajorUnit = function(pr)
-    {
+    CValAx.prototype.setMajorUnit = function(pr) {
         History.Add(new CChangesDrawingsDouble(this, AscDFH.historyitem_ValAxSetMajorUnit, this.majorUnit, pr));
         this.majorUnit = pr;
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
+        this.onUpdate(false);
     };
-    CValAx.prototype.setMinorGridlines = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_ValAxSetMinorGridlines, this.minorGridlines, pr));
-        this.minorGridlines = pr;
-        if(this.minorGridlines)
-        {
-            this.minorGridlines.setParent(this);
-        }
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateGridlines();
-        }
-    };
-    CValAx.prototype.setMinorTickMark = function(pr)
-    {
-        History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_ValAxSetMinorTickMark, this.minorTickMark, pr));
-        this.minorTickMark = pr;
-
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CValAx.prototype.setMinorUnit = function(pr)
-    {
+    CValAx.prototype.setMinorUnit = function(pr) {
         History.Add(new CChangesDrawingsDouble(this, AscDFH.historyitem_ValAxSetMinorUnit, this.minorUnit, pr));
         this.minorUnit = pr;
-
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
+        this.onUpdate(false);
     };
-    CValAx.prototype.setNumFmt = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_ValAxSetNumFmt, this.numFmt, pr));
-        this.numFmt = pr;
-
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CValAx.prototype.setScaling = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_ValAxSetScaling, this.scaling, pr));
-        this.scaling = pr;
-        if(this.scaling)
-        {
-            this.scaling.setParent(this);
-        }
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CValAx.prototype.setSpPr = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_ValAxSetSpPr, this.spPr, pr));
-        this.spPr = pr;
-        if(this.spPr)
-        {
-            this.spPr.setParent(this);
-        }
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CValAx.prototype.setTickLblPos = function(pr)
-    {
-        History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_ValAxSetTickLblPos, this.tickLblPos, pr));
-        this.tickLblPos = pr;
-
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CValAx.prototype.setTitle = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_ValAxSetTitle, this.title, pr));
-        this.title = pr;
-        if(pr)
-        {
-            pr.setParent(this);
-        }
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CValAx.prototype.getParentObjects = function()
-    {
-        return this.parent && this.parent.getParentObjects();
-    };
-    CValAx.prototype.setTxPr = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_ValAxSetTxPr, this.txPr, pr));
-        this.txPr = pr;
-        if(this.txPr)
-        {
-            this.txPr.setParent(this);
-        }
-        if(this.parent && this.parent.parent && this.parent.parent.parent && this.parent.parent.parent.handleUpdateInternalChart)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CValAx.prototype.setParent = function(pr)
-    {
-        History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CommonChartFormat_SetParent, this.parent, pr));
-        this.parent = pr;
-    };
-    CValAx.prototype.handleUpdateFill = function()
-    {
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CValAx.prototype.handleUpdateLn = function()
-    {
-        if(this.parent && this.parent.parent && this.parent.parent.parent)
-        {
-            this.parent.parent.parent.handleUpdateInternalChart();
-        }
-    };
-    CValAx.prototype.getMenuProps = function()
-    {
+    CValAx.prototype.getMenuProps = function() {
         var ret = new AscCommon.asc_ValAxisSettings();
         var scaling = this.scaling;
 
@@ -8610,59 +7469,22 @@ function CValAx()
         if(!oAxis) {
             return;
         }
+        this.mergeBase(oAxis);
         if(AscFormat.isRealNumber(oAxis.axPos)) {
             this.setAxPos(oAxis.axPos);
         }
         if(AscFormat.isRealNumber(oAxis.crossBetween)) {
             this.setCrossBetween(oAxis.crossBetween);
         }
-        if(AscFormat.isRealNumber(oAxis.crosses)) {
-            this.setCrosses(oAxis.crosses);
-        }
-        if(AscFormat.isRealNumber(oAxis.crossesAt)) {
-            this.setCrossesAt(oAxis.crossesAt);
-        }
-        if(AscFormat.isRealBool(oAxis.bDelete)) {
-            this.setDelete(oAxis.bDelete);
-        }
-        if(AscCommon.isRealObject(oAxis.dispUnits)) {
-            this.setDispUnits(oAxis.dispUnits.createDuplicate())
-        }
-        if(AscCommon.isRealObject(oAxis.majorGridlines)) {
-            this.setMajorGridlines(oAxis.majorGridlines.createDuplicate());
-        }
-        if(AscFormat.isRealNumber(oAxis.majorTickMark)) {
-            this.setMajorTickMark(oAxis.majorTickMark);
-        }
         if(AscFormat.isRealNumber(oAxis.majorUnit)) {
             this.setMajorUnit(oAxis.majorUnit);
         }
-        if(AscCommon.isRealObject(oAxis.minorGridlines)) {
-            this.setMinorGridlines(oAxis.minorGridlines.createDuplicate());
-        }
-        if(AscFormat.isRealNumber(oAxis.minorTickMark)) {
-            this.setMinorTickMark(oAxis.minorTickMark);
-        }
+
         if(AscFormat.isRealNumber(oAxis.minorUnit)) {
             this.setMinorUnit(oAxis.minorUnit);
         }
-        if(AscCommon.isRealObject(oAxis.numFmt)) {
-            this.setNumFmt(oAxis.numFmt.createDuplicate());
-        }
-        if(AscCommon.isRealObject(oAxis.scaling)) {
-            this.setScaling(oAxis.scaling.createDuplicate());
-        }
-        if(AscCommon.isRealObject(oAxis.spPr)) {
-            this.setSpPr(oAxis.spPr.createDuplicate());
-        }
-        if(AscFormat.isRealNumber(oAxis.tickLblPos)) {
-            this.setTickLblPos(oAxis.tickLblPos);
-        }
-        if(AscCommon.isRealObject(oAxis.title)) {
-            this.setTitle(oAxis.title.createDuplicate());
-        }
-        if(AscCommon.isRealObject(oAxis.txPr)) {
-            this.setTxPr(oAxis.txPr.createDuplicate());
+        if(AscCommon.isRealObject(oAxis.dispUnits)) {
+            this.setDispUnits(oAxis.dispUnits.createDuplicate())
         }
     };
     CValAx.prototype.checkNumFormat = function(sNewFormat) {
