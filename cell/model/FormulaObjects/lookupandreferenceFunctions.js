@@ -651,18 +651,18 @@ function (window, undefined) {
 							} else {
 								res = new Asc.Range(bbox.c1 + arg2 - 1, bbox.r1, bbox.c1 + arg2 - 1, bbox.r2);
 							}
-							res = new cArea(res.getName(), ws);
+							res = res.isOneCell() ? new cRef(res.getName(),ws) : new cArea(res.getName(), ws);
 						}
 					} else if ((0 === arg2 || undefined === arg[2] || cElementType.empty === arg[2].type) && arg1 > 0) {
 						if (arg1 > Math.abs(bbox.r1 - bbox.r2) + 1) {
 							res = new cError(cErrorType.bad_reference);
 						} else {
 							res = new Asc.Range(bbox.c1 + arg2 - diffArg2, bbox.r1 + arg1 - diffArg1, bbox.c2 + arg2 - diffArg2, bbox.r1 + arg1 - diffArg1);
-							res = new cArea(res.getName(), ws);
+							res = res.isOneCell() ? new cRef(res.getName(),ws) : new cArea(res.getName(), ws);
 						}
 					} else if ((0 === arg1 || undefined === arg[1] || cElementType.empty === arg[1].type) && (0 === arg2 || undefined === arg[2] || cElementType.empty === arg[2].type)) {
 						res = new Asc.Range(bbox.c1 + arg2 - diffArg2, bbox.r1 + arg1 - diffArg1, bbox.c2 + arg2 - diffArg2, bbox.r2 + arg1 - diffArg1);
-						res = new cArea(res.getName(), ws);
+						res = res.isOneCell() ? new cRef(res.getName(),ws) : new cArea(res.getName(), ws);
 					} else {
 						if (arg1 > Math.abs(bbox.r1 - bbox.r2) + 1 || arg2 > Math.abs(bbox.c1 - bbox.c2) + 1) {
 							res = new cError(cErrorType.bad_reference);
@@ -1149,7 +1149,7 @@ function (window, undefined) {
 
 		return findMatch(arg0, arg1, arg2);*/
 
-		return g_oMatchCache.calculate(arg);
+		return g_oMatchCache.calculate(arg, arguments[1]);
 	};
 
 	/**
@@ -2208,13 +2208,14 @@ function (window, undefined) {
 
 	MatchCache.prototype = Object.create(VHLOOKUPCache.prototype);
 	MatchCache.prototype.constructor = MatchCache;
-	MatchCache.prototype.calculate = function (arg) {
+	MatchCache.prototype.calculate = function (arg, _arg1) {
 
 		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2] ? arg[2] : new cNumber(1);
 
-		if (cElementType.cellsRange3D === arg0.type || cElementType.array === arg0.type ||
-			cElementType.cellsRange === arg0.type) {
-			return new cError(cErrorType.wrong_value_type);
+		if (cElementType.cellsRange3D === arg0.type || cElementType.cellsRange === arg0.type) {
+			arg0 = arg0.cross(_arg1);
+		} else if (cElementType.array === arg0.type) {
+			arg0 = arg0.getElementRowCol(0,0);
 		} else if (cElementType.error === arg0.type) {
 			return arg0;
 		}

@@ -10090,6 +10090,10 @@ $( function () {
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getValue(), "#N/A" );
 
+		oParser = new parserFormula( "MATCH({6,2,3},F106:F117,1)", "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), 5 );
+
 		//TODO excel по-другому работает
 		/*oParser = new parserFormula( "MATCH(123,F106:F117,1)", "A2", ws );
 		ok( oParser.parse() );
@@ -10219,7 +10223,11 @@ $( function () {
 		oParser = new parserFormula( "INDEX(A651:C651,1,1,2)", "A2", ws );
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getValue(), "#REF!" );
-    } );
+
+		oParser = new parserFormula( "INDEX(A651:A655,A651,0)", "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue().getValue(), 1 );
+	} );
 
 	test( "Test: \"INDIRECT\"", function () {
 
