@@ -235,6 +235,10 @@ CTableRow.prototype =
     Recalc_CompiledPr : function()
     {
         this.CompiledPr.NeedRecalc = true;
+
+        var oTable = this.GetTable();
+        if (oTable)
+        	oTable.RecalcInfo.RecalcBorders();
     },
 
     // Формируем конечные свойства параграфа на основе стиля и прямых настроек.
@@ -698,7 +702,7 @@ CTableRow.prototype =
             this.Table.RecalcInfo.Add_Cell( this.Get_Cell(CurCell) );
         }
 
-        this.Table.RecalcInfo.Recalc_Borders();
+        this.Table.RecalcInfo.RecalcBorders();
 
         if ( true === bNeedRecalc )
             this.Refresh_RecalcData2( 0, 0 );

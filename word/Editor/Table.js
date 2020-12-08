@@ -4222,7 +4222,7 @@ CTable.prototype.Refresh_RecalcData = function(Data)
 	}
 
 	this.RecalcInfo.Recalc_AllCells();
-	this.RecalcInfo.Recalc_Borders();
+	this.RecalcInfo.RecalcBorders();
 
 	if (true === bNeedRecalc)
 	{
@@ -8222,6 +8222,7 @@ CTable.prototype.SetImageProps = function(Props)
 CTable.prototype.Recalc_CompiledPr = function()
 {
 	this.CompiledPr.NeedRecalc = true;
+	this.RecalcInfo.RecalcBorders();
 };
 CTable.prototype.Recalc_CompiledPr2 = function()
 {
@@ -16814,7 +16815,7 @@ CTable.prototype.private_UpdateCellsGrid = function()
     }
 
     // Мы обнулили метрики, нужно будет их заново пересчитать
-    this.RecalcInfo.Recalc_Borders();
+    this.RecalcInfo.RecalcBorders();
 };
 CTable.prototype.SetTableGrid = function(arrGrid)
 {
