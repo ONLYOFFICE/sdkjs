@@ -893,16 +893,24 @@
 	};
 
 	CDataValidation.prototype.correctToInterface = function () {
+		var t = this;
 		var doCorrect = function (_formula) {
 			var _val = _formula.text;
 			var isNumeric = isNum(_val);
 
 			if (isNumeric) {
 				//переводим в дату
+				var _format;
 				if (t.type === EDataValidationType.Date) {
-
+					_format = AscCommon.oNumFormatCache.get("m/d/yyyy");
 				} else if (t.type === EDataValidationType.Time) {
-
+					_format = AscCommon.oNumFormatCache.get("h:mm:ss AM/PM");
+				}
+				if (_format) {
+					var dateVal = _format.format(_val);
+					if (dateVal && dateVal[0] && dateVal[0].text) {
+						_formula.text = dateVal[0].text;
+					}
 				}
 			}
 

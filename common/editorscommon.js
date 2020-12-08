@@ -2946,7 +2946,7 @@
 		{
 			if (dataRange === null || dataRange === "") {
 				return Asc.c_oAscError.ID.DataValidateMustEnterValue;
-			} else {
+			} else if (typeof dataRange === "string") {
 				result = parserHelp.parse3DRef(dataRange);
 				if (result)
 				{
