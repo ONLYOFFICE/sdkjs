@@ -5043,7 +5043,8 @@ DrawingObjectsController.prototype =
                 return AscFormat.CreateSurfaceChart(chartSeries, bUseCache, options, true, true);
             case c_oAscChartTypeSettings.comboAreaBar:
             case c_oAscChartTypeSettings.comboBarLine:
-            case c_oAscChartTypeSettings.comboBarLineSecondary: {
+            case c_oAscChartTypeSettings.comboBarLineSecondary:
+            case c_oAscChartTypeSettings.comboCustom: {
                 var oChartSpace = AscFormat.CreateBarChart(chartSeries, BAR_GROUPING_CLUSTERED, bUseCache, options);
                 oChartSpace.changeChartType(options.type);
                 return oChartSpace;

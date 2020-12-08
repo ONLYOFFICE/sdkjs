@@ -4235,7 +4235,8 @@ function CPlotArea()
         aFirstChartSeries = aSeries.slice(0, nLength);
         aSecondChartSeries = aSeries.slice(nLength);
         if(nType === Asc.c_oAscChartTypeSettings.comboBarLine
-        || nType === Asc.c_oAscChartTypeSettings.comboBarLineSecondary) {
+        || nType === Asc.c_oAscChartTypeSettings.comboBarLineSecondary
+        || nType === Asc.c_oAscChartTypeSettings.comboCustom) {
             aAllAxes = aFirstAxes = aSecondAxes = this.createRegularAxes(this.getAxisNumFormatByType(Asc.c_oAscChartTypeSettings.barNormal, aFirstChartSeries), false);
             if(nType === Asc.c_oAscChartTypeSettings.comboBarLineSecondary) {
                 aSecondAxes = this.createRegularAxes(this.getAxisNumFormatByType(Asc.c_oAscChartTypeSettings.lineNormal, aSecondChartSeries), true);
