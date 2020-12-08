@@ -6352,6 +6352,10 @@ var CROSS_BETWEEN_MID_CAT = 1;
         this.crosses = null;
         this.crossesAt = null;
         this.parent = null;
+        if(this.Id === null) {
+            this.Id = AscCommon.g_oIdCounter.Get_NewId();
+            AscCommon.g_oTableId.Add( this, this.Id );
+        }
     }
 
     CAxisBase.prototype = Object.create(AscFormat.CBaseObject.prototype);
