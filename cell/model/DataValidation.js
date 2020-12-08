@@ -84,6 +84,9 @@
 	function checkIntegerType(val) {
 		return val && AscCommonExcel.cElementType.number === val.type;
 	}
+	function isNum(value) {
+		return !isNaN(parseFloat(value)) && isFinite(value);
+	}
 
 	function CDataFormula(value) {
 		this.text = value;
@@ -521,9 +524,6 @@
 		return res;
 	};
 	CDataValidation.prototype.isValidDataRef = function (ws, _val, isRange, type) {
-		var _isNumeric = function (value) {
-			return !isNaN(parseFloat(value)) && isFinite(value);
-		};
 		var _checkFormula = function (val) {
 			var _res = false;
 			if (val.type === cElementType.cell || val.type === cElementType.cell3D) {
@@ -539,16 +539,17 @@
 		//и рассматривать диапазон/формулу только в случае, если начинается с "="
 
 		var res = null;
+		var asc_error = Asc.c_oAscError.ID;
 		var _formula, _formulaRes, isNumeric, date;
 		if (isRange) {
 			//если ссылка на диапазон - в любом случае отдаём ошибку
 			if (!isRange.isOneCell()) {
 				return asc_error.DataValidateInvalid;
 			}
-			//есои ссылка на одиночную ячейку
+			//если ссылка на одиночную ячейку
 			return asc_error.No;
 		} else {
-			isNumeric = _isNumeric(_val);
+			isNumeric = isNum(_val);
 			if (!isNumeric) {
 				//проверим, может быть это дата или время
 				if (type !== EDataValidationType.List) {
@@ -556,13 +557,16 @@
 				}
 				if (!date) {
 					//проверка на формулу
+					if (_val[0] === "=") {
+						_val = _val.slice(1);
+					}
 					_formula = new CDataFormula(_val);
 					_formulaRes = _formula.getValue(ws);
 				}
 			}
 		}
 
-		var asc_error = Asc.c_oAscError.ID;
+		res = asc_error.No;
 		switch (type) {
 			case EDataValidationType.Date:
 				if (!isNumeric) {
@@ -888,6 +892,80 @@
 
 	};
 
+	CDataValidation.prototype.correctToInterface = function () {
+		var doCorrect = function (_formula) {
+			var _val = _formula.text;
+			var isNumeric = isNum(_val);
+
+			if (isNumeric) {
+				//переводим в дату
+				if (t.type === EDataValidationType.Date) {
+
+				} else if (t.type === EDataValidationType.Time) {
+
+				}
+			}
+
+			if (t.type === EDataValidationType.List) {
+				if (_val[1] === '"') {
+					_formula.text = _val.slice(1, -1);
+				}
+			}
+		};
+
+		if (this.formula1) {
+			doCorrect(this.formula1);
+		}
+		if (this.formula2) {
+			doCorrect(this.formula2);
+		}
+	};
+
+	CDataValidation.prototype.correctFromInterface = function (ws) {
+		var t = this;
+		var doCorrect = function (_formula) {
+			var _val = _formula.text;
+			var isNumeric = isNum(_val);
+			var isDate;
+			var isFormula;
+			if (!isNumeric) {
+				//проверим, может быть это дата или время
+				if (t.type !== EDataValidationType.List) {
+					isDate = AscCommon.g_oFormatParser.parseDate(_val, AscCommon.g_oDefaultCultureInfo);
+				}
+				if (!isDate) {
+					//проверка на формулу
+					if (_val[0] === "=") {
+						_val = _val.slice(1);
+					}
+					var _tempFormula = new CDataFormula(_val);
+					isFormula = _tempFormula.getValue(ws);
+				}
+			}
+
+			//храним число
+			if (isDate) {
+				_formula.text = isDate.value;
+				return;
+			}
+
+			if (t.type === EDataValidationType.List) {
+				if (isFormula) {
+					if (!(isFormula.type === cElementType.cell || isFormula.type === cElementType.cell3D)) {
+						formula.text = '"' + formula.text + '"';
+					}
+				}
+			}
+		};
+
+		if (this.formula1) {
+			doCorrect(this.formula1);
+		}
+		if (this.formula2) {
+			doCorrect(this.formula2);
+		}
+	};
+
 	function CDataValidations() {
 		this.disablePrompts = false;
 		this.xWindow = null;
@@ -1048,6 +1126,8 @@
 			res = getNewObject();
 		}
 
+		res.correctToInterface();
+
 		return res;
 	};
 
@@ -1081,6 +1161,8 @@
 			_dataValidation.ranges = _ranges;
 			return _dataValidation;
 		};
+
+		props.correctFromInterface(ws);
 
 		var equalRangeDataValidation;
 		var equalDataValidation;
