@@ -1261,6 +1261,7 @@
 		this.smooth = null;
 		this.chartSpace = null;
 
+		this.bStartEdit = false;
 		this.horizontalAxes = [];
 		this.verticalAxes = [];
 		this.depthAxes = [];
@@ -1505,6 +1506,15 @@
 	};
 	asc_ChartSettings.prototype.putStyle = function(index) {
 		this.style = parseInt(index, 10);
+		if(this.bStartEdit && this.chartSpace) {
+			if(AscFormat.isRealNumber(this.style)){
+				var oPreset = AscCommon.g_oChartPresets[this.type] && AscCommon.g_oChartPresets[this.type][this.style - 1];
+				if(oPreset) {
+					AscFormat.ApplyPresetToChartSpace(this.chartSpace, oPreset, false);
+					this.updateChart();
+				}
+			}
+		}
 	};
 	asc_ChartSettings.prototype.getStyle = function() {
 		return this.style;
@@ -1684,14 +1694,17 @@
 		return oRet;
 	};
 	asc_ChartSettings.prototype.startEdit = function() {
+		this.bStartEdit = true;
 		AscCommon.History.Create_NewPoint();
 		AscCommon.History.StartTransaction();
 	};
 	asc_ChartSettings.prototype.endEdit = function() {
+		this.bStartEdit = false;
 		AscCommon.History.EndTransaction();
 		this.updateChart();
 	};
 	asc_ChartSettings.prototype.cancelEdit = function() {
+		this.bStartEdit = false;
 		AscCommon.History.EndTransaction();
 		AscCommon.History.Undo();
 		AscCommon.History.Clear_Redo();
