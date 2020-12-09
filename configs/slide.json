@@ -90,6 +90,7 @@
 
 			"common/scroll.js",
 			"vendor/iscroll.js",
+			"vendor/delta.js",
 			"common/Scrolls/mobileTouchManagerBase.js",
 			"slide/Drawing/mobileTouchManager.js",
 
