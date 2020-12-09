@@ -11240,13 +11240,14 @@ CNumLit.prototype =
             this.removeAllPts();
             if(!(typeof sFormula === "string" && sFormula.length > 0)) {
                 this.setPtCount(0);
+                this.setFormatCode("General");
                 return;
             }
             var aParsedRef = AscFormat.fParseChartFormula(sFormula);
             var nRef, oRef, oMinRef, oWS, oBB, nPtIdx, nPtCount, nCount;
             var oHM, nHidden, nR, nC, oMinBB, oCell, aSpanPoints = [], oStartPoint;
             var dVal, sVal, oPt, sCellFC, nSpan, nLastNoEmptyIndex, nSpliceIndex;
-            var sFC = typeof this.formatCode === "string" && this.formatCode.length > 0 ? this.formatCode : "General";
+            var sCommonFormatCode = null;
             var bHaveTotalRow;
             nPtCount = 0;
             nPtIdx = 0;
@@ -11306,8 +11307,16 @@ CNumLit.prototype =
                             oPt.setIdx(nPtIdx);
                             oPt.setVal(dVal);
                             sCellFC = oCell.getNumFormatStr();
-                            if(sCellFC !== sFC) {
-                                oPt.setFormatCode(sCellFC)
+                            oPt.setFormatCode(sCellFC);
+                            if(sCommonFormatCode === null) {
+                                sCommonFormatCode = sCellFC;
+                            }
+                            else {
+                                if(sCommonFormatCode !== undefined) {
+                                    if(sCommonFormatCode !== sCellFC) {
+                                        sCommonFormatCode = undefined;
+                                    }
+                                }
                             }
                             this.addPt(oPt);
                             if(aSpanPoints.length > 0) {
@@ -11361,6 +11370,17 @@ CNumLit.prototype =
                 }
             }
             this.setPtCount(nPtCount);
+            //check format
+            if(sCommonFormatCode) {
+                this.setFormatCode(sCommonFormatCode);
+                for(var nPt = 0; nPt < this.pts.length; ++nPt) {
+                    oPt = this.pts[nPt];
+                    oPt.setFormatCode(null);
+                }
+            }
+            else {
+                this.setFormatCode("General");
+            }
         }, this, []);
     },
 
