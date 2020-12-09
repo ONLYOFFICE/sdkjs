@@ -915,7 +915,7 @@
 			}
 
 			if (t.type === EDataValidationType.List) {
-				if (_val[1] === '"') {
+				if (_val[0] === '"') {
 					_formula.text = _val.slice(1, -1);
 				}
 			}
@@ -960,8 +960,10 @@
 			if (t.type === EDataValidationType.List) {
 				if (isFormula) {
 					if (!(isFormula.type === cElementType.cell || isFormula.type === cElementType.cell3D)) {
-						formula.text = '"' + formula.text + '"';
+						_formula.text = '"' + _formula.text + '"';
 					}
+				} else {
+					_formula.text = '"' + _formula.text + '"';
 				}
 			}
 		};
@@ -1116,7 +1118,6 @@
 			var _res = new window['AscCommonExcel'].CDataValidation();
 			_res.showErrorMessage = true;
 			_res.showInputMessage = true;
-			_res.showDropDown = true;
 			return _res;
 		};
 
@@ -1167,6 +1168,7 @@
 				_ranges.push(ranges[i].clone());
 			}
 			_dataValidation.ranges = _ranges;
+			_dataValidation._init(ws);
 			return _dataValidation;
 		};
 
@@ -1195,7 +1197,7 @@
 				this.add(ws, prepeareAdd(props), true);
 			}
 		} else if (equalRangeDataValidation) {
-			this.change(ws, equalRangeDataValidation, props, true);
+			this.change(ws, equalRangeDataValidation, prepeareAdd(props), true);
 		} else {
 			var t = this;
 			var _split = function (_dataValidation) {
@@ -1221,7 +1223,7 @@
 
 				var newDataValidation = _dataValidation.clone();
 				newDataValidation.ranges = _newRanges;
-				t.change(ws, _dataValidation, newDataValidation, true);
+				t.change(ws, _dataValidation, prepeareAdd(newDataValidation), true);
 			};
 
 			var k;
