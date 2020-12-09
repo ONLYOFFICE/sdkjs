@@ -412,13 +412,21 @@
 	}
 
 	asc_CAxNumFmt.prototype.getFormatCode = function() {
-		return this.formatCode;
+		if(this.sourceLinked) {
+			if(this.axis) {
+				return this.axis.getSourceFormatCode();
+			}
+			else {
+				return "General";
+			}
+		}
+		return this.formatCode || "General";
 	};
 	asc_CAxNumFmt.prototype.putFormatCode = function(v) {
 		this.formatCode = v;
 	};
 	asc_CAxNumFmt.prototype.getFormatCellsInfo = function() {
-		var num_format = AscCommon.oNumFormatCache.get(this.formatCode || "General");
+		var num_format = AscCommon.oNumFormatCache.get(this.getFormatCode());
 		return num_format.getTypeInfo();
 	};
 	asc_CAxNumFmt.prototype.getSourceLinked = function() {

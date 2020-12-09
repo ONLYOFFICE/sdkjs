@@ -1835,7 +1835,7 @@ var c_oAscAxisType = Asc.c_oAscAxisType;
                 sFormatCode =  this.pt.formatCode;
             }
             else{
-                sFormatCode = this.series.getFormatCode();
+                sFormatCode = this.series.getValSourceNumFormat();
             }
 
             var num_format = AscCommon.oNumFormatCache.get(sFormatCode);
@@ -2866,40 +2866,6 @@ var c_oAscAxisType = Asc.c_oAscAxisType;
         }
         return (idx + 1) + "";
     };
-    CSeriesBase.prototype.getFormatCode = function()
-    {
-        var pts;
-        var val;
-        if(this.val)
-        {
-            val = this.val;
-        }
-        else if(this.yVal)
-        {
-            val = this.yVal;
-        }
-
-        if(val)
-        {
-            if(val && val.strRef && val.strRef.strCache && val.strRef.strCache.formatCode)
-            {
-                return val.strRef.strCache.formatCode;
-            }
-            else if(val.strLit && val.strLit.formatCode)
-            {
-                return val.strLit.formatCode;
-            }
-            else if(val.numRef && val.numRef.numCache && val.numRef.numCache.formatCode)
-            {
-                return val.numRef.numCache.formatCode;
-            }
-            else if(val.numLit && val.numLit.formatCode)
-            {
-                return val.numLit.formatCode;
-            }
-        }
-        return "General"
-    };
     CSeriesBase.prototype.getValByIndex = function(idx, bPercent)
     {
         var pts;
@@ -3243,6 +3209,34 @@ var c_oAscAxisType = Asc.c_oAscAxisType;
             this.setDLbls(new AscFormat.CDLbls());
         }
         this.dLbls.setSettings(nPos, oProps);
+    };
+    CSeriesBase.prototype.getCatSourceNumFormat = function() {
+        var oCat = this.cat || this.xVal;
+        if(!oCat) {
+            return "General";
+        }
+        return oCat.getSourceNumFormat();
+    };
+    CSeriesBase.prototype.getValSourceNumFormat = function() {
+        var oChart = this.parent;
+        if(!oChart) {
+            return "General";
+        }
+        if(oChart.getObjectType() === AscDFH.historyitem_type_BarChart) {
+            if(oChart.grouping === AscFormat.BAR_GROUPING_PERCENT_STACKED) {
+                return "0%";
+            }
+        }
+        else {
+            if(oChart.grouping === AscFormat.GROUPING_PERCENT_STACKED) {
+                return "0%";
+            }
+        }
+        var oVal = this.val || this.yVal;
+        if(!oVal) {
+            return "General";
+        }
+        return oVal.getSourceNumFormat();
     };
     CSeriesBase.prototype.asc_getName = function() {
         return AscFormat.ExecuteNoHistory(CSeriesBase.prototype.getName, this, []);
@@ -6370,6 +6364,9 @@ var CROSS_BETWEEN_MID_CAT = 1;
         }
         return oChart.parent;
     };
+    CAxisBase.prototype.getPlotArea = function() {
+        return this.parent;
+    };
     CAxisBase.prototype.onUpdate = function() {
         var oChartSpace = this.getChartSpace();
         if(oChartSpace) {
@@ -6926,6 +6923,18 @@ var CROSS_BETWEEN_MID_CAT = 1;
             this.setTickMarkSkip(oAxis.tickMarkSkip);
         }
     };
+    CCatAx.prototype.getSourceFormatCode = function() {
+        var oPlotArea = this.getPlotArea();
+        var sDefault = "General";
+        if(!oPlotArea) {
+            return sDefault;
+        }
+        var oSeries = oPlotArea.getSeriesWithSmallestIndexForAxis(this);
+        if(!oSeries) {
+            return sDefault;
+        }
+        return oSeries.getCatSourceNumFormat();
+    };
 
     function CDateAx() {
         CAxisBase.call(this);
@@ -7007,6 +7016,9 @@ var CROSS_BETWEEN_MID_CAT = 1;
         if(AscFormat.isRealNumber(oAxis.lblOffset)) {
             this.setLblOffset(oAxis.lblOffset);
         }
+    };
+    CDateAx.prototype.getSourceFormatCode = function() {
+        return CCatAx.prototype.getSourceFormatCode.call(this);
     };
 
     function CSerAx() {
@@ -7450,54 +7462,26 @@ var CROSS_BETWEEN_MID_CAT = 1;
         var sFormatCode = null;
         if(oNumFmt) {
             sFormatCode = oNumFmt.formatCode;
-            if(false === oNumFmt.sourceLinked && typeof sFormatCode === "string" && sFormatCode.length > 0) {
+            if(typeof sFormatCode === "string" && sFormatCode.length > 0) {
                 return sFormatCode;
             }
         }
-        if(oSeries) {
-            if(oSeries.getObjectType() === AscDFH.historyitem_type_ScatterSer &&
-                (this.axPos === AscFormat.AX_POS_B || this.axPos === AscFormat.AX_POS_T)) {
-                var oXVal = oSeries.xVal;
-                if(oXVal) {
-                    var oXValLit = (oXVal.numRef && oXVal.numRef.numCache || oXVal.numLit || oXVal.strRef && oXVal.strRef.strCache);
-                    if(oXValLit) {
-                        var aXPts = oXValLit.pts;
-                        if(aXPts[0] &&  aXPts[0].idx === 0 && typeof aXPts[0].formatCode === "string" && aXPts[0].formatCode.length > 0){
-                            sFormatCode = aXPts[0].formatCode;
-                        }
-                        else {
-                            if(oXValLit.formatCode) {
-                                sFormatCode = oXValLit.formatCode;
-                            }
-                        }
-                    }
-                }
-            }
-            else {
-                var aPoints = AscFormat.getPtsFromSeries(oSeries);
-                if(aPoints[0] &&  aPoints[0].idx === 0 && typeof aPoints[0].formatCode === "string" && aPoints[0].formatCode.length > 0){
-                    sFormatCode = aPoints[0].formatCode;
-                }
-                else {
-                    if(oSeries.parent
-                        && (oSeries.parent.getObjectType() === AscDFH.historyitem_type_BarChart  && oSeries.parent.grouping ===  AscFormat.BAR_GROUPING_PERCENT_STACKED
-                        || oSeries.parent.getObjectType() !== AscDFH.historyitem_type_BarChart && oSeries.parent.grouping === AscFormat.GROUPING_PERCENT_STACKED)) {
-                        sFormatCode = "0%";
-                    }
-                    else if(oChartSpace.worksheet) {
-                        var oBBox = oChartSpace._recalculateBBox([oSeries]);
-                        if(oBBox && oBBox.seriesBBoxes[0] && oBBox.seriesBBoxes[0].bbox) {
-                            var cell = oChartSpace.worksheet.getCell3(oBBox.seriesBBoxes[0].bbox.r1, oBBox.seriesBBoxes[0].bbox.c1);
-                            sFormatCode = cell.getNumFormatStr();
-                        }
-                    }
-                }
-                if(!sFormatCode) {
-                    sFormatCode = oSeries.getFormatCode();
-                }
-            }
+        return "General";
+    };
+    CValAx.prototype.getSourceFormatCode = function() {
+        var oPlotArea = this.getPlotArea();
+        var sDefault = "General";
+        if(!oPlotArea) {
+            return sDefault;
         }
-        return sFormatCode;
+        var oSeries = oPlotArea.getSeriesWithSmallestIndexForAxis(this);
+        if(!oSeries) {
+            return sDefault;
+        }
+        if(oSeries.getObjectType() === AscDFH.historyitem_type_ScatterSer && isHorizontalAxis(this)) {
+            return oSeries.getCatSourceNumFormat();
+        }
+        return oSeries.getValSourceNumFormat();
     };
     CValAx.prototype.merge = function(oAxis) {
         if(!oAxis) {
@@ -8242,6 +8226,16 @@ CCat.prototype =
         if(this.strRef) {
             this.strRef.updateCache();
         }
+    },
+
+    getSourceNumFormat: function() {
+        if(this.numRef) {
+            return this.numRef.getNumFormat();
+        }
+        if(this.numLit) {
+            return this.numLit.getNumFormat();
+        }
+        return "General";
     }
  };
 
@@ -10929,9 +10923,14 @@ CNumRef.prototype =
     getFormula: function() {
         return "=" + this.f;
     },
-
     getParsedRefs: function() {
         return AscFormat.fParseChartFormula(this.f);
+    },
+    getNumFormat: function() {
+        if(!this.numCache) {
+            return "General";
+        }
+        return this.numCache.getNumFormat();
     }
 };
 
@@ -11006,6 +11005,13 @@ CNumericPoint.prototype =
         }
         History.CanAddChanges() && History.Add(new CChangesDrawingsDouble2(this, AscDFH.historyitem_NumericPoint_SetVal, this.val, _pr));
         this.val = _pr;
+    },
+
+    getFormatCode: function() {
+        if(typeof this.formatCode === "string" && this.formatCode.length > 0) {
+            return this.formatCode;
+        }
+        return "General";
     }
 };
 
@@ -11356,6 +11362,17 @@ CNumLit.prototype =
         }
         sRet += "}";
         return sRet;
+    },
+
+    getNumFormat: function () {
+        if(typeof this.formatCode === "string" && this.formatCode.length > 0) {
+            return this.formatCode;
+        }
+        var oPt = this.pts[0];
+        if(oPt) {
+            return oPt.getFormatCode();
+        }
+        return "General";
     }
 };
 
@@ -14421,6 +14438,15 @@ CYVal.prototype =
         if(this.numRef) {
             this.numRef.updateCache(displayEmptyCellsAs, displayHidden, ser);
         }
+    },
+    getSourceNumFormat: function() {
+        if(this.numRef) {
+            return this.numRef.getNumFormat();
+        }
+        if(this.numLit) {
+            return this.numLit.getNumFormat();
+        }
+        return "General";
     }
 };
 
