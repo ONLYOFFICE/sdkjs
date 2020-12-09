@@ -69,7 +69,7 @@ function (window, undefined) {
 	cFormulaFunctionGroup['LookupAndReference'] = cFormulaFunctionGroup['LookupAndReference'] || [];
 	cFormulaFunctionGroup['LookupAndReference'].push(cADDRESS, cAREAS, cCHOOSE, cCOLUMN, cCOLUMNS, cFORMULATEXT,
 		cGETPIVOTDATA, cHLOOKUP, cHYPERLINK, cINDEX, cINDIRECT, cLOOKUP, cMATCH, cOFFSET, cROW, cROWS, cRTD, cTRANSPOSE,
-		cUNIQUE, cVLOOKUP);
+		cUNIQUE, cVLOOKUP, cXLOOKUP);
 
 	cFormulaFunctionGroup['NotRealised'] = cFormulaFunctionGroup['NotRealised'] || [];
 	cFormulaFunctionGroup['NotRealised'].push(cAREAS, cGETPIVOTDATA, cRTD);
@@ -2478,6 +2478,229 @@ function (window, undefined) {
 		}
 
 		return g_oVLOOKUPCache.calculate(arg, arguments[1]);
+	};
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cXLOOKUP() {
+	}
+
+	//***array-formula***
+	cXLOOKUP.prototype = Object.create(cBaseFunction.prototype);
+	cXLOOKUP.prototype.constructor = cXLOOKUP;
+	cXLOOKUP.prototype.name = 'XLOOKUP';
+	cXLOOKUP.prototype.argumentsMin = 3;
+	cXLOOKUP.prototype.argumentsMax = 6;
+	cXLOOKUP.prototype.arrayIndexes = {1: 1, 2: 1};
+	cXLOOKUP.prototype.argumentsType = [argType.any, argType.reference, argType.reference];
+	cXLOOKUP.prototype.Calculate = function (arg) {
+
+		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
+		var arg3 = arg[3], arg4 = arg[4], arg5 = arg[5];
+
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+		if (cElementType.cell === arg0.type) {
+			arg0 = arg0.getValue();
+		}
+
+		if (!( (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type ||
+			cElementType.array === arg1.type) &&
+			(cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type ||
+				cElementType.array === arg2.type) )) {
+			return new cError(cErrorType.not_available);
+		}
+
+		//[if_not_found]
+		if (!arg3) {
+			arg3 = new cError(cErrorType.not_available);
+		}
+		
+		//[match_mode]
+		//0 - If none found, return #N/A. This is the default.
+		//-1 - If none found, return the next smaller item.
+		//1 - If none found, return the next larger item.
+		//2 - A wildcard match where *, ?, and ~
+		//TODO если аргумент массив/area - результат становится размером с этот массив
+		//TODO либо обрабатывать выше и вызывать эту функцию для каждого элемента массива, либо здесь вычислять этот массив
+		if (!arg4) {
+			arg4 = new cNumber(0);
+		}
+		arg4 = arg4.tocNumber();
+		if (cElementType.error === arg4.type) {
+			return arg4;
+		} else {
+			arg4 = parseInt(arg4.toNumber());
+			if (!(arg4 >= -1 && arg4 <= 2)) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+		}
+
+		//TODO если аргумент массив/area - результат становится размером с этот массив
+		//TODO либо обрабатывать выше и вызывать эту функцию для каждого элемента массива, либо здесь вычислять этот массив
+		//[search_mode]
+		//1 - Perform a search starting at the first item. This is the default.
+		//-1 - Perform a reverse search starting at the last item.
+		//2 - Perform a binary search that relies on lookup_array being sorted in ascending order. If not sorted, invalid results will be returned.
+		//-2 - Perform a binary search that relies on lookup_array being sorted in descending order. If not sorted, invalid results will be returned.
+		if (!arg5) {
+			arg5 = new cNumber(1);
+		}
+		arg5 = arg5.tocNumber();
+		if (cElementType.error === arg5.type) {
+			return arg5;
+		} else {
+			arg5 = parseInt(arg5.toNumber());
+			if (!(arg5 >= -1 && arg5 <= 2)) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+		}
+
+		if (cElementType.array === arg1.type && cElementType.array === arg2.type) {
+			if (arg1.getRowCount() !== arg2.getRowCount() &&
+				arg1.getCountElementInRow() !== arg2.getCountElementInRow()) {
+				return new cError(cErrorType.not_available);
+			}
+
+			arrFinder(arg1);
+
+			if (resR <= -1 && resC <= -1 || resR <= -2 || resC <= -2) {
+				return new cError(cErrorType.not_available);
+			}
+
+			return arg2.getElementRowCol(resR, resC);
+
+		} else if (cElementType.array === arg1.type || cElementType.array === arg2.type) {
+
+			var _arg1, _arg2;
+
+			_arg1 = cElementType.array === arg1.type ? arg1 : arg2;
+
+			_arg2 = cElementType.array === arg2.type ? arg1 : arg2;
+
+			var BBox = _arg2.getBBox0();
+
+			if (_arg1.getRowCount() !== (BBox.r2 - BBox.r1) && _arg1.getCountElementInRow() !== (BBox.c2 - BBox.c1)) {
+				return new cError(cErrorType.not_available);
+			}
+
+			arrFinder(_arg1);
+
+			if (resR <= -1 && resC <= -1 || resR <= -2 || resC <= -2) {
+				return new cError(cErrorType.not_available);
+			}
+
+			var c = new CellAddress(BBox.r1 + resR, BBox.c1 + resC, 0);
+			_arg2.getWS()._getCellNoEmpty(c.getRow0(), c.getCol0(), function (cell) {
+				res = checkTypeCell(cell);
+			});
+			return res;
+		} else {
+			if (cElementType.cellsRange3D === arg1.type && !arg1.isSingleSheet() ||
+				cElementType.cellsRange3D === arg2.type && !arg2.isSingleSheet()) {
+				return new cError(cErrorType.not_available);
+			}
+
+
+			var arg2RowsLength;
+			var bbox;
+			if (cElementType.cellsRange3D === arg1.type) {
+				bbox = arg1.bbox;
+			} else if (cElementType.cellsRange === arg1.type) {
+				bbox = arg1.range.bbox;
+			}
+
+			if (cElementType.cellsRange3D === arg2.type) {
+				arg2RowsLength = arg2.bbox.r2 - arg2.bbox.r1 + 1;
+			} else if (cElementType.cellsRange === arg2.type) {
+				arg2RowsLength = arg2.range.bbox.r2 - arg2.range.bbox.r1 + 1;
+			}
+
+
+			var bVertical = bbox.r2 - bbox.r1 >= bbox.c2 - bbox.c1;
+			var index;
+
+			var _getValue = function(n) {
+				var r, c;
+				if(bVertical) {
+					r = n;
+					c = 0;
+				} else {
+					r = 0;
+					c = n;
+				}
+				var res = arg1.getValueByRowCol(r, c);
+				return res ? res : new cEmpty();
+			};
+
+			var length = bVertical ? bbox.r2 - bbox.r1 : bbox.c2 - bbox.c1;
+			var lastValue = _getValue(length);
+			if(lastValue && lastValue.value < arg0.value) {
+				//в этом случае фукнция бинарного поиска одаст последний элемент. для конкретного случая это неверно
+				//Если функции не удается найти искомое_значение, то в просматриваемом_векторе выбирается наибольшее значение, которое меньше искомого_значения или равно ему.
+				var diff = null;
+				var endNumber;
+				for(var i = 0; i <= length; i++) {
+					var tempValue = _getValue(i);
+					if(cElementType.number === tempValue.type) {
+						if(tempValue.value <= arg0.value && (null === diff || diff > (arg0.value - tempValue.value))) {
+							index = i;
+							diff = arg0.value - tempValue.value;
+						}
+						endNumber = i;
+					}
+				}
+				if(undefined === index) {
+					if(undefined !== endNumber) {
+						index = endNumber;
+					}
+				}
+			}
+			if(index === undefined) {
+				index = _func.binarySearchByRange(arg0, arg1);
+
+				if (index < 0) {
+					return new cError(cErrorType.not_available);
+				}
+			}
+
+
+
+			var ws = cElementType.cellsRange3D === arg1.type && arg1.isSingleSheet() ? arg1.getWS() : arg1.ws;
+
+			if (cElementType.cellsRange3D === arg1.type) {
+				if (arg1.isSingleSheet()) {
+					ws = arg1.getWS();
+				} else {
+					return new cError(cErrorType.bad_reference);
+				}
+			} else if (cElementType.cellsRange === arg1.type) {
+				ws = arg1.getWS();
+			} else {
+				return new cError(cErrorType.bad_reference);
+			}
+
+			AscCommonExcel.executeInR1C1Mode(false, function () {
+				var b = arg2.getBBox0();
+				if (2 === arg.length) {
+					if (bVertical) {
+						res = new cRef(ws.getCell3(b.r1 + 0, b.c1 + index).getName(), ws);
+					} else {
+						res = new cRef(ws.getCell3(b.r1 + index, b.c1 + 0).getName(), ws);
+					}
+				} else {
+					if (1 === arg2RowsLength) {
+						res = new cRef(ws.getCell3(b.r1 + 0, b.c1 + index).getName(), ws);
+					} else {
+						res = new cRef(ws.getCell3(b.r1 + index, b.c1 + 0).getName(), ws);
+					}
+				}
+			});
+			return res;
+		}
 	};
 
 	var g_oVLOOKUPCache = new VHLOOKUPCache(false);
