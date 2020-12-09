@@ -8217,6 +8217,42 @@ CCat.prototype =
         return oLit;
     },
     update: function(oSeries) {
+        if(this.numRef || this.strRef || this.multiLvlStrRef) {
+            var sFormula = this.getFormula();
+            if(typeof sFormula === "string" && sFormula.length > 0) {
+                var oTestCat = new CCat();
+                var oRes = oTestCat.setValues(sFormula);
+                var oNumRef = oTestCat.numRef;
+                var oStrRef = oTestCat.strRef;
+                var oMultiLvlStrRef = oTestCat.multiLvlStrRef;
+                if(oRes && oRes.error === Asc.c_oAscError.ID.No &&  (oNumRef || oStrRef || oMultiLvlStrRef)) {
+                    if(oNumRef) {
+                        this.setNumRef(oNumRef.createDuplicate());
+                    }
+                    else {
+                        if(this.numRef) {
+                            this.setNumRef(null);
+                        }
+                    }
+                    if(oStrRef) {
+                        this.setStrRef(oStrRef);
+                    }
+                    else {
+                        if(this.strRef) {
+                            this.setStrRef(null);
+                        }
+                    }
+                    if(oMultiLvlStrRef) {
+                        this.setMultiLvlStrRef(oMultiLvlStrRef);
+                    }
+                    else {
+                        if(this.multiLvlStrRef) {
+                            this.setMultiLvlStrRef(null);
+                        }
+                    }
+                }
+            }
+        }
         if(this.multiLvlStrRef) {
             this.multiLvlStrRef.updateCache(oSeries);
         }
@@ -11365,12 +11401,14 @@ CNumLit.prototype =
     },
 
     getNumFormat: function () {
-        if(typeof this.formatCode === "string" && this.formatCode.length > 0) {
-            return this.formatCode;
-        }
         var oPt = this.pts[0];
         if(oPt) {
-            return oPt.getFormatCode();
+            if(typeof oPt.formatCode === "string" && oPt.formatCode.length > 0) {
+                return oPt.formatCode;
+            }
+        }
+        if(typeof this.formatCode === "string" && this.formatCode.length > 0) {
+            return this.formatCode;
         }
         return "General";
     }
