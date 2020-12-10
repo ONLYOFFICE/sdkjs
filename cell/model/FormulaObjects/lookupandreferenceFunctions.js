@@ -2659,12 +2659,25 @@ function (window, undefined) {
 				return arg3;
 			} else {
 				//возвращаем из arg2 строку или столбец
-				if (bVertical) {
-
-				} else {
-
+				var _startRange = 0;
+				if (dimensions2.bbox) {
+					_startRange = bVertical ? dimensions2.bbox.r1 : dimensions2.bbox.c1;
 				}
-				return new cNumber(res);
+				var _length = !bVertical ? dimensions2.row : dimensions2.col;
+				var _array = new cArray();
+				for (var i = 0; i < _length; i++) {
+					var _row = !bVertical ? i : res - _startRange;
+					var _col = bVertical ? i : res - _startRange;
+					var _elem = arg2.getElementRowCol ? arg2.getElementRowCol(_row, _col) : arg2.getValueByRowCol(_row, _col);
+					if (!bVertical) {
+						_array.addRow();
+						_array.addElement(_elem);
+					} else {
+						_array.addElement(_elem);
+					}
+				}
+
+				return _array;
 			}
 		}
 
