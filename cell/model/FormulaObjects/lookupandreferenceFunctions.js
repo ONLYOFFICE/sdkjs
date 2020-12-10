@@ -2150,33 +2150,74 @@ function (window, undefined) {
 			return res ? res.value : false;
 		};
 
-		var simpleSearch = function() {
-			for (; i < length; i++) {
-				elem = cacheArray[i];
-				val = elem.v;
-				if (_compareValues(valueForSearching, val, "=")) {
-					return elem.i;
+		var simpleSearch = function(revert) {
+			if (revert) {
+				for (i = length - 1; i >= 0; i--) {
+					elem = cacheArray[i];
+					val = elem.v;
+					if (_compareValues(valueForSearching, val, "=")) {
+						return elem.i;
+					}
+				}
+			} else {
+				for (i = 0; i < length; i++) {
+					elem = cacheArray[i];
+					val = elem.v;
+					if (_compareValues(valueForSearching, val, "=")) {
+						return elem.i;
+					}
 				}
 			}
 			return -1;
 		};
 
-		if (lookup) {
-			j = length - 1;
-			while (i <= j) {
-				k = Math.floor((i + j) / 2);
-				elem = cacheArray[k];
-				val = elem.v;
-				if (_compareValues(valueForSearching, val, "=")) {
-					return elem.i;
-				} else if (_compareValues(valueForSearching, val, "<")) {
-					j = k - 1;
-				} else {
-					i = k + 1;
+		var _binarySearch = function (revert) {
+			i = 0;
+			if (revert) {
+				j = length - 1;
+				while (i <= j) {
+					k = Math.ceil((i + j) / 2);
+					elem = cacheArray[k];
+					val = elem.v;
+					if (_compareValues(valueForSearching, val, "=")) {
+						return elem.i;
+					} else if (_compareValues(valueForSearching, val, "<")) {
+						j = k + 1;
+					} else {
+						i = k - 1;
+					}
+				}
+			} else {
+				j = length - 1;
+				while (i <= j) {
+					k = Math.floor((i + j) / 2);
+					elem = cacheArray[k];
+					val = elem.v;
+					if (_compareValues(valueForSearching, val, "=")) {
+						return elem.i;
+					} else if (_compareValues(valueForSearching, val, "<")) {
+						j = k - 1;
+					} else {
+						i = k + 1;
+					}
 				}
 			}
-			res = Math.min(i, j);
-			res = -1 === res ? res : cacheArray[res].i;
+
+			var _res = Math.min(i, j);
+			_res = -1 === _res ? _res : cacheArray[_res].i;
+			return _res;
+		};
+
+		//TODO opt_arg5 - пока не обрабатываю результат == 2( A wildcard match where *, ?, and ~ have)
+
+		if (opt_arg4 !== undefined && opt_arg5 !== undefined) {
+			if (Math.abs(opt_arg5) === 1) {
+				res = simpleSearch(opt_arg5 < 0);
+			} else if (Math.abs(opt_arg5) === 2) {
+				res = _binarySearch(opt_arg5 < 0);
+			}
+		} else if (lookup) {
+			res = _binarySearch();
 			if(res === -1 && cElementType.string === valueForSearching.type) {
 				res = simpleSearch();
 			}
@@ -2184,7 +2225,7 @@ function (window, undefined) {
 			// Exact value
 			res = simpleSearch();
 		}
-		
+
 		return res;
 	};
 	VHLOOKUPCache.prototype.remove = function (cell) {
@@ -2581,6 +2622,16 @@ function (window, undefined) {
 				res = g_oHLOOKUPCache.calculate([arg0, arg1, null, null, arg4, arg5], arguments[1]);
 			}
 
+			if (res === -1) {
+				return arg3;
+			} else {
+				//возвращаем из arg2 строку или столбец
+				if (bVertical) {
+
+				} else {
+
+				}
+			}
 		}
 
 	};
