@@ -5364,7 +5364,7 @@
 						filterColumns = af.columnsFilter;
 						oldFilter = af.clone();
 					}
-					if(filterColumns.length) {
+					if(filterColumns && filterColumns.length) {
 						var isAllClean = true;
 						for(var i = 0; i < filterColumns.length; i++) {
 							var _filterColumn = filterColumns[i].filter ? filterColumns[i].filter : filterColumns[i];

@@ -2324,8 +2324,29 @@ function asc_WriteCCellInfo(c, s) {
     if (v) {
         asc_WriteFormatTableInfo(31, v, s);
     }
+
+    s['WriteByte'](32);
+    s['WriteString2'](asc_CellInfoToJson(c));
     
     s['WriteByte'](255);
+}
+function asc_CellInfoToJson(cellInfo) {
+    var json = {
+        asc_getSelectionType: cellInfo.asc_getSelectionType(),
+        asc_getLocked: cellInfo.asc_getLocked(),
+        asc_getLockedTable: cellInfo.asc_getLockedTable(),
+        asc_getComments: []
+    };
+
+    var cellComments = cellInfo.asc_getComments();
+    var jsonComments = [];
+    for (var i = 0; i < cellComments.length; ++i) {
+        jsonComments.push(JSON.stringify(readSDKComment(cellComments[i].asc_getId(), cellComments[i])));
+    }
+
+    json["asc_getComments"] = jsonComments;
+    
+    return JSON.stringify(json);
 }
 function asc_WriteColorSchemes(schemas, s) {
     
@@ -3260,61 +3281,66 @@ function OfflineEditor () {
             
         } else {
 
+        	 var t = this;
+
              var thenCallback = function() {
 
-            this.asc_WriteAllWorksheets(true);
-            this.asc_WriteCurrentCell();
+            	t.asc_WriteAllWorksheets(true);
+            	t.asc_WriteCurrentCell();
             
-            _api.sendColorThemes(_api.wbModel.theme);
-            _api.asc_ApplyColorScheme(false);
-            _api._applyFirstLoadChanges();
-            // Go to if sent options
-            _api.goTo();
+            	_api.sendColorThemes(_api.wbModel.theme);
+            	_api.asc_ApplyColorScheme(false);
+            	_api._applyFirstLoadChanges();
+            	// Go to if sent options
+            	_api.goTo();
             
-            var ws = _api.wb.getWorksheet();
+            	var ws = _api.wb.getWorksheet();
             
-            _api.wb.showWorksheet(undefined, true);
-            ws._fixSelectionOfMergedCells();
+            	_api.wb.showWorksheet(undefined, true);
+            	ws._fixSelectionOfMergedCells();
             
-            if (ws.topLeftFrozenCell) {
-                this.row0 = ws.topLeftFrozenCell.getRow0();
-                this.col0 = ws.topLeftFrozenCell.getCol0();
-            }
+            	if (ws.topLeftFrozenCell) {
+                	t.row0 = ws.topLeftFrozenCell.getRow0();
+                	t.col0 = ws.topLeftFrozenCell.getCol0();
+            	}
             
-            var chartData = this.initSettings["chartData"];
-            if (chartData.length > 0) {
-                var json = JSON.parse(chartData);
-                if (json) {
+            	var chartData = t.initSettings["chartData"];
+
+            	if (chartData.length > 0) {
+                	var json = JSON.parse(chartData);
+                	if (json) {
                     
-                    var nativeToEditor = 1.0 / deviceScale;
+                    	var nativeToEditor = 1.0 / deviceScale;
                     
-                    var screenWidth = this.initSettings["screenWidth"] * nativeToEditor / 2.54 - ws.headersWidth;
-                    var screenHeight = this.initSettings["screenHeight"] * nativeToEditor / 2.54 - ws.headersHeight;
+                    	var screenWidth = t.initSettings["screenWidth"] * nativeToEditor / 2.54 - ws.headersWidth;
+                    	var screenHeight = t.initSettings["screenHeight"] * nativeToEditor / 2.54 - ws.headersHeight;
                     
-                    _api.asc_addChartDrawingObject(json);
+                    	_api.asc_addChartDrawingObject(json);
                     
-                    var objects = ws.objectRender.controller.drawingObjects.getDrawingObjects();
-                    if (objects.length > 0) {
+                    	var objects = ws.objectRender.controller.drawingObjects.getDrawingObjects();
+                    	if (objects.length > 0) {
                         
-                        var gr = objects[0].graphicObject;
+                        	var gr = objects[0].graphicObject;
                         
-                        var w = gr.spPr.xfrm.extX;
-                        var h = gr.spPr.xfrm.extY;
+                        	var w = gr.spPr.xfrm.extX;
+                        	var h = gr.spPr.xfrm.extY;
                         
-                        var offX = Math.max(0, (screenWidth - w) * 0.5);
-                        var offY = Math.max(screenHeight * 0.2, (screenHeight - w) * 0.5);
+                        	var offX = Math.max(0, (screenWidth - w) * 0.5);
+                        	var offY = Math.max(screenHeight * 0.2, (screenHeight - w) * 0.5);
                         
-                        gr.spPr.xfrm.setOffX(offX);
-                        gr.spPr.xfrm.setOffY(offY);
-                        gr.checkDrawingBaseCoords();
-                        gr.recalculate();
-                    }
+                        	gr.spPr.xfrm.setOffX(offX);
+                        	gr.spPr.xfrm.setOffY(offY);
+                        	gr.checkDrawingBaseCoords();
+                        	gr.recalculate();
+                    	}
                     
-                    //console.log(JSON.stringify(json));
-                }
-            }
+                    	//console.log(JSON.stringify(json));
+                	}
+            	}
             };
+
             _api.asc_nativeOpenFile(window["native"]["GetFileString"](), undefined, true, window["native"]["GetXlsxPath"]()).then(thenCallback, thenCallback);
+           
             // TODO: Implement frozen places
             // TODO: Implement Text Art Styles
         }

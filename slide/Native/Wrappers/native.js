@@ -1658,6 +1658,17 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
             break;
         }
 
+        case 23109: // ASC_MENU_EVENT_TYPE_DO_CAN_ADD_QUOTED_COMMENT
+        {
+            var _stream = global_memory_stream_menu;
+            _stream["ClearNoAttack"]();
+            _stream["WriteString2"](JSON.stringify({
+                result: this.can_AddQuotedComment()
+            }));
+            _return = _stream;
+            break;
+        }
+
         default:
             break;
     }

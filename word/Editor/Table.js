@@ -4222,7 +4222,7 @@ CTable.prototype.Refresh_RecalcData = function(Data)
 	}
 
 	this.RecalcInfo.Recalc_AllCells();
-	this.RecalcInfo.Recalc_Borders();
+	this.RecalcInfo.RecalcBorders();
 
 	if (true === bNeedRecalc)
 	{
@@ -8222,6 +8222,7 @@ CTable.prototype.SetImageProps = function(Props)
 CTable.prototype.Recalc_CompiledPr = function()
 {
 	this.CompiledPr.NeedRecalc = true;
+	this.RecalcInfo.RecalcBorders();
 };
 CTable.prototype.Recalc_CompiledPr2 = function()
 {
@@ -15151,16 +15152,18 @@ CTable.prototype.private_UpdateTableMarkup = function(nRowIndex, nCellIndex, nCu
 		// Возможно, на данной странице строку, с которой началось разбиение на стрнице,
 		// не надо рисовать. (Если начальная и конечная строки совпадают, тогда это 2
 		// или более страница данной строки)
-		if ((Row_start != Row_last || ( 0 === Row_start && 0 === Row_last ) ) && false === this.RowsInfo[Row_last].FirstPage)
+		if ((Row_start !== Row_last || ( 0 === Row_start && 0 === Row_last ) ) && false === this.RowsInfo[Row_last].FirstPage)
 			Row_last--;
 	}
 	else
+	{
 		Row_last = this.Content.length - 1;
+	}
 
 	this.Markup.Rows = [];
 	for (var CurRow = Row_start; CurRow <= Row_last; CurRow++)
 	{
-		if (this.RowsInfo[CurRow] && this.RowsInfo[CurRow].Y[nCurPage] && this.RowsInfo[CurRow].H[nCurPage])
+		if (this.RowsInfo[CurRow] && undefined !== this.RowsInfo[CurRow].Y[nCurPage] && undefined !== this.RowsInfo[CurRow].H[nCurPage])
 			this.Markup.Rows.push({Y : this.RowsInfo[CurRow].Y[nCurPage], H : this.RowsInfo[CurRow].H[nCurPage]});
 	}
 
@@ -16812,7 +16815,7 @@ CTable.prototype.private_UpdateCellsGrid = function()
     }
 
     // Мы обнулили метрики, нужно будет их заново пересчитать
-    this.RecalcInfo.Recalc_Borders();
+    this.RecalcInfo.RecalcBorders();
 };
 CTable.prototype.SetTableGrid = function(arrGrid)
 {

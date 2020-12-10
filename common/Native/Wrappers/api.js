@@ -1168,7 +1168,11 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
                     case 8:
                     {
                         var color = asc_menu_ReadColor(_params, _current);
-                        _textPr.HighLight = { r: color.r, g: color.g, b: color.b };
+                        if (color.a < 1) {
+                            _textPr.HighLight = AscCommonWord.highlight_None;
+                        } else {
+                            _textPr.HighLight = { r: color.r, g: color.g, b: color.b };
+                        }
                         break;
                     }
                     case 9:
@@ -2600,6 +2604,17 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
                     _api.asc_changeComment(commentId, ascComment);
                 }
             }
+            break;
+        }
+
+        case 23109: // ASC_MENU_EVENT_TYPE_DO_CAN_ADD_QUOTED_COMMENT
+        {
+            var _stream = global_memory_stream_menu;
+            _stream["ClearNoAttack"]();
+            _stream["WriteString2"](JSON.stringify({
+                result: this.can_AddQuotedComment()
+            }));
+            _return = _stream;
             break;
         }
 
@@ -6307,7 +6322,7 @@ function onApiShowRevisionsChange(data) {
                     if (value.Get_SpacingBeforeAutoSpacing())
                         changes.push("|Spacing before| |auto|");
                     else if (value.Get_SpacingBefore() !== undefined)
-                        changes.push("|Spacing before|" + " " + recalcFromMM(value.Get_SpacingBefore()).toFixed(2) + ' ' + Common.Utils.Metric.getCurrentMetricName());
+                        changes.push("|Spacing before|" + " " + recalcFromMM(value.Get_SpacingBefore()).toFixed(2) + ' ' + metricName);
                     if (value.Get_SpacingAfterAutoSpacing())
                         changes.push("|Spacing after| |auto|");
                     else if (value.Get_SpacingAfter() !== undefined)

@@ -3480,6 +3480,12 @@
 		}
 	};
 
+	Workbook.prototype.checkCorrectTables = function () {
+		for(var i = 0; i < this.aWorksheets.length; ++i) {
+			this.aWorksheets[i].checkCorrectTables();
+		}
+	};
+
 //-------------------------------------------------------------------------------------------------
 	var tempHelp = new ArrayBuffer(8);
 	var tempHelpUnit = new Uint8Array(tempHelp);
@@ -8931,6 +8937,28 @@
 			var activeId = this.getActiveNamedSheetViewId();
 			for (var i = 0; i < namedSheetViews.length; i++) {
 				actionView(namedSheetViews[i], activeId === namedSheetViews[i].Id);
+			}
+		}
+	};
+
+	Worksheet.prototype.checkCorrectTables = function () {
+		for (var i = 0; i < this.TableParts.length; ++i) {
+			var table = this.TableParts[i];
+			if (table.isHeaderRow()) {
+				for (var j = 0; j < table.TableColumns.length; j++) {
+					this._getCell(table.Ref.r1, table.Ref.c1 + j, function(cell) {
+						var tableColName = table.TableColumns[j].Name;
+						var valueData = cell.getValueData();
+						var val = valueData && valueData.value && valueData.value.text;
+						if (val !== tableColName){
+							cell.setValueData(
+								new AscCommonExcel.UndoRedoData_CellValueData(null, new AscCommonExcel.CCellValue({
+									text: tableColName,
+									type: CellValueType.String
+								})));
+						}
+					});
+				}
 			}
 		}
 	};
