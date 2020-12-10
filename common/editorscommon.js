@@ -797,6 +797,9 @@
 			case c_oAscServerError.VKeyUserCountExceed :
 				nRes = Asc.c_oAscError.ID.UserCountExceed;
 				break;
+			case c_oAscServerError.Password :
+				nRes = Asc.c_oAscError.ID.Password;
+				break;
 			case c_oAscServerError.Storage :
 			case c_oAscServerError.StorageFileNoFound :
 			case c_oAscServerError.StorageRead :
@@ -1307,7 +1310,9 @@
 		VKey:                -120,
 		VKeyEncrypt:         -121,
 		VKeyKeyExpire:       -122,
-		VKeyUserCountExceed: -123
+		VKeyUserCountExceed: -123,
+
+		Password: -180
 	};
 
 	//todo get from server config

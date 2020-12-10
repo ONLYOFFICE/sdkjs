@@ -255,6 +255,8 @@
 
 			LockedEditView: -950,
 
+			Password : -1000,
+
 			SecondaryAxis: 1001,
 			ComboSeriesError: 1002
 		}

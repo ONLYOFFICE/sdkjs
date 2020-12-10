@@ -2097,6 +2097,7 @@ background-repeat: no-repeat;\
 		switch (idOption)
 		{
 			case c_oAscAdvancedOptionsID.DRM:
+				this.currentPassword = option.asc_getPassword();
 				var v = {
 					"id": this.documentId,
 					"userid": this.documentUserId,

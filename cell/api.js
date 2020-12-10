@@ -695,6 +695,7 @@ var editor;
         sendCommand(this, null, v);
         break;
       case c_oAscAdvancedOptionsID.DRM:
+        this.currentPassword = option.asc_getPassword();
         v = {
           "id": this.documentId,
           "userid": this.documentUserId,
@@ -780,6 +781,7 @@ var editor;
     }
 	if (opt_isPassword) {
 		if (t.handlers.hasTrigger("asc_onAdvancedOptions")) {
+			asc["editor"].sendEvent("asc_onDocumentPassword", true);
 			t.handlers.trigger("asc_onAdvancedOptions", c_oAscAdvancedOptionsID.DRM);
 		} else {
 			t.handlers.trigger("asc_onError", c_oAscError.ID.ConvertationPassword, c_oAscError.Level.Critical);

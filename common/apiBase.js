@@ -1854,6 +1854,7 @@
 		if (this.isLoadFullApi && this.DocInfo && this.openResult && this.isLoadFonts)
 		{
 			this.openDocument(this.openResult);
+			this.sendEvent("asc_onDocumentPassword", ("" !== this.currentPassword));
 			this.openResult = null;
 		}
 
@@ -2461,7 +2462,7 @@
     {
         if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsProtectionSupport"])
             return window["AscDesktopEditor"]["IsProtectionSupport"]();
-        return false;
+        return !(this.DocInfo && this.DocInfo.get_OfflineApp());
     };
 
 	baseEditorsApi.prototype.asc_gotoSignature = function(guid)
@@ -2735,11 +2736,38 @@
 	{
 		this.currentPassword = password;
 		this.asc_Save(false, undefined, true);
+		if (!(this.DocInfo && this.DocInfo.get_OfflineApp())) {
+			var rData = {
+				"c": 'setpassword',
+				"id": this.documentId,
+				"password": password
+			};
+			var t            = this;
+			t.fCurCallback   = function(input)
+			{
+				if (null != input && "setpassword" == input["type"])
+				{
+					if ('ok' === input["status"])
+					{
+						t.sendEvent("asc_onDocumentPassword", "" !== t.currentPassword);
+					}
+					else
+					{
+						t.sendEvent("asc_onError", AscCommon.mapAscServerErrorToAscError(parseInt(input["data"])),
+							c_oAscError.Level.NoCritical);
+					}
+				}
+				else
+				{
+					t.sendEvent("asc_onError", c_oAscError.ID.Unknown, c_oAscError.Level.NoCritical);
+				}
+			};
+			AscCommon.sendCommand(this, null, rData);
+		}
 	};
 	baseEditorsApi.prototype.asc_resetPassword = function()
 	{
-		this.currentPassword = "";
-		this.asc_Save(false, undefined, true);
+		this.asc_setCurrentPassword("");
 	};
 
 	baseEditorsApi.prototype.asc_setMacros = function(sData)
