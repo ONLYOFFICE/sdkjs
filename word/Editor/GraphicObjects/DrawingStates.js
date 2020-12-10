@@ -2308,7 +2308,7 @@ PolyLineAddState.prototype =
         this.drawingObjects.resetSelection();
         this.drawingObjects.updateOverlay();
         var _min_distance = this.drawingObjects.drawingDocument.GetMMPerDot(1);
-        this.drawingObjects.changeCurrentState(new PolyLineAddState2(this.drawingObjects, _min_distance));
+        this.drawingObjects.changeCurrentState(new PolyLineAddState2(this.drawingObjects, _min_distance, pageIndex));
     },
 
     onMouseMove: function()
@@ -2321,12 +2321,12 @@ PolyLineAddState.prototype =
 };
 
 
-function PolyLineAddState2(drawingObjects, minDistance)
+function PolyLineAddState2(drawingObjects, minDistance, pageIndex)
 {
     this.drawingObjects = drawingObjects;
     this.minDistance = minDistance;
     this.polylineFlag = true;
-
+    this.pageIndex = pageIndex;
 }
 PolyLineAddState2.prototype =
 {
@@ -2454,7 +2454,7 @@ AddPolyLine2State2.prototype =
             }
             this.drawingObjects.swapTrackObjects();
             this.drawingObjects.arrTrackObjects[0].arrPoint.push({x : tr_x, y: tr_y});
-            this.drawingObjects.changeCurrentState(new AddPolyLine2State3(this.drawingObjects));
+            this.drawingObjects.changeCurrentState(new AddPolyLine2State3(this.drawingObjects, pageIndex));
         }
     },
 
@@ -2463,12 +2463,13 @@ AddPolyLine2State2.prototype =
     }
 };
 
-function AddPolyLine2State3(drawingObjects)
+function AddPolyLine2State3(drawingObjects, pageIndex)
 {
     this.drawingObjects = drawingObjects;
     this.minSize = drawingObjects.drawingDocument.GetMMPerDot(1);
 
     this.polylineFlag = true;
+    this.pageIndex = pageIndex;
 }
 AddPolyLine2State3.prototype =
 {
