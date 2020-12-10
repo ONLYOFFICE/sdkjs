@@ -2127,7 +2127,7 @@ function (window, undefined) {
 		}
 
 		var sInputKey;
-		if (opt_xlookup) {
+		if (!opt_xlookup) {
 			sInputKey = valueForSearching.getValue() + g_cCharDelimiter + arg3Value + g_cCharDelimiter + valueForSearching.type;
 		} else {
 			sInputKey = valueForSearching.getValue() + g_cCharDelimiter + opt_arg4 + g_cCharDelimiter + opt_arg5 + g_cCharDelimiter + valueForSearching.type;
@@ -2140,7 +2140,7 @@ function (window, undefined) {
 		return res;
 	};
 	VHLOOKUPCache.prototype._calculate = function (cacheArray, valueForSearching, lookup, opt_arg4, opt_arg5) {
-		var res = -1, i = 0, j, length = cacheArray.length, k, elem, val;
+		var res = -1, i = 0, j, length = cacheArray.length, k, elem, val, aNextVals;
 
 		//TODO неверно работает функция, допустим для случая: VLOOKUP("12",A1:A5,1) 12.00 ; "qwe" ; "3" ; 3.00 ; 4.00
 
@@ -2148,6 +2148,22 @@ function (window, undefined) {
 		var _compareValues = function (val1, val2, op) {
 			var res = _func[val1.type][val2.type](val1, val2, op);
 			return res ? res.value : false;
+		};
+
+		//aNextVals - фомируем массив специально для опции opt_arg4, чтобы потом найти меньший или больший элемент
+		var addNextOptVal = function (arrayVal, searchVal, isGreater) {
+			var _needPush;
+			if (opt_arg4 === -1 && (isGreater === false || (isGreater === undefined && _compareValues(arrayVal.v, searchVal, "<")))) {
+				_needPush = true;
+			} else if (opt_arg4 === 1 && (isGreater || (isGreater === undefined && _compareValues(arrayVal.v, searchVal, ">")))) {
+				_needPush = true;
+			}
+			if (_needPush) {
+				if (!aNextVals) {
+					aNextVals = [];
+				}
+				aNextVals.push(arrayVal);
+			}
 		};
 
 		var simpleSearch = function(revert) {
@@ -2158,6 +2174,7 @@ function (window, undefined) {
 					if (_compareValues(valueForSearching, val, "=")) {
 						return elem.i;
 					}
+					opt_arg4 !== undefined && addNextOptVal(elem, valueForSearching);
 				}
 			} else {
 				for (i = 0; i < length; i++) {
@@ -2166,6 +2183,7 @@ function (window, undefined) {
 					if (_compareValues(valueForSearching, val, "=")) {
 						return elem.i;
 					}
+					opt_arg4 !== undefined && addNextOptVal(elem, valueForSearching);
 				}
 			}
 			return -1;
@@ -2183,8 +2201,10 @@ function (window, undefined) {
 						return elem.i;
 					} else if (_compareValues(valueForSearching, val, "<")) {
 						j = k + 1;
+						opt_arg4 !== undefined && addNextOptVal(elem, valueForSearching, true);
 					} else {
 						i = k - 1;
+						opt_arg4 !== undefined && addNextOptVal(elem, valueForSearching, false);
 					}
 				}
 			} else {
@@ -2197,8 +2217,10 @@ function (window, undefined) {
 						return elem.i;
 					} else if (_compareValues(valueForSearching, val, "<")) {
 						j = k - 1;
+						opt_arg4 !== undefined && addNextOptVal(elem, valueForSearching, true);
 					} else {
 						i = k + 1;
+						opt_arg4 !== undefined && addNextOptVal(elem, valueForSearching, false);
 					}
 				}
 			}
@@ -2215,6 +2237,16 @@ function (window, undefined) {
 				res = simpleSearch(opt_arg5 < 0);
 			} else if (Math.abs(opt_arg5) === 2) {
 				res = _binarySearch(opt_arg5 < 0);
+			}
+
+			if (res === -1) {
+				if ((opt_arg4 === -1 || opt_arg4 === 1) && aNextVals) {
+					aNextVals.sort(function(a, b){
+						var _compare = a.v.value > b.v.value ? 1 : -1;
+						return opt_arg4 === 1 ? _compare : -_compare;
+					});
+					res = aNextVals[0].i;
+				}
 			}
 		} else if (lookup) {
 			res = _binarySearch();
@@ -2538,6 +2570,7 @@ function (window, undefined) {
 	cXLOOKUP.prototype.argumentsMax = 6;
 	cXLOOKUP.prototype.arrayIndexes = {1: 1, 2: 1};
 	cXLOOKUP.prototype.argumentsType = [argType.any, argType.reference, argType.reference];
+	cXLOOKUP.prototype.isXLFN = true;
 	cXLOOKUP.prototype.Calculate = function (arg) {
 
 		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
@@ -2631,6 +2664,7 @@ function (window, undefined) {
 				} else {
 
 				}
+				return new cNumber(res);
 			}
 		}
 
