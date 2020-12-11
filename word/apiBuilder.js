@@ -11736,6 +11736,7 @@
 						itemText.Parent = oRun.GetParagraph();
 						oRun.AddToContent(nPosToAdd, itemText);
 						textDelta[change].insert.shift();
+						nAddChar--;
 
 						nPosToAdd += 1;
 					}
