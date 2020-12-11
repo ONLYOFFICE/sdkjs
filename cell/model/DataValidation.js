@@ -516,14 +516,17 @@
 		var res = Asc.c_oAscError.ID.No;
 
 		var _getNumber = function (_text) {
-			var _val = parseFloat(_text);
-			if (isNaN(_val)) {
+			var _val = null;
+			if (!isNum(_text)) {
 				var date = AscCommon.g_oFormatParser.parseDate(_text, AscCommon.g_oDefaultCultureInfo);
 				if (date) {
 					_val = date.value;
 				}
+			} else {
+				_val = parseFloat(_text);
 			}
-			return isNaN(_val) ? null : _val;
+
+			return _val;
 		};
 		if (this.operator === EDataValidationOperator.Between || this.operator === EDataValidationOperator.NotBetween) {
 			if (this.formula1 && this.formula2) {
@@ -590,7 +593,7 @@
 			}
 
 			if (type !== EDataValidationType.Custom && !_checkValidType(fValue)) {
-				return asc_error.DataValidateNotNumeric;
+				return type === EDataValidationType.List ? asc_error.DataValidateInvalidList : asc_error.DataValidateNotNumeric;
 			}
 
 			//если ощибка в подсчете формулы - выдаём предупреждение
