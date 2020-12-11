@@ -11767,8 +11767,8 @@
 
 				oPara.CheckRunContent(DelInsertChars);
 
-				textDelta.forEach(element => {
-					element.pos -= deleteCount - insertCount;
+				textDelta.forEach(function(item, i, textDelta) {
+					item.pos -= deleteCount - insertCount;
 					
 				});
 				charsCount = 0;
