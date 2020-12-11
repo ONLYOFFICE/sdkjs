@@ -523,7 +523,7 @@
 		}
 		return res;
 	};
-	CDataValidation.prototype.isValidDataRef = function (ws, _val, isRange, type) {
+	CDataValidation.prototype.isValidDataRef = function (ws, _val, type) {
 		var _checkFormula = function (val) {
 			var _res = false;
 			if (val.type === cElementType.cell || val.type === cElementType.cell3D) {
@@ -534,6 +534,18 @@
 			return _res;
 		};
 
+		var checkDefNames = function (_f) {
+			var outStack = _f._formula.outStack;
+			if (outStack && outStack.length) {
+				for (var i = 0; i < outStack.length; i++) {
+					if (outStack[i].type === cElementType.name && outStack[i].Calculate().type === cElementType.error) {
+						return false;
+					}
+				}
+			}
+			return true;
+		};
+
 		//TODO пока проверяем на введенный диапазон и формулу
 		//позже необходимо переделать ввод данных в select data range - добавлять в данном режиме всегда с "="
 		//и рассматривать диапазон/формулу только в случае, если начинается с "="
@@ -541,13 +553,37 @@
 		var res = null;
 		var asc_error = Asc.c_oAscError.ID;
 		var _formula, _formulaRes, isNumeric, date;
-		if (isRange) {
+		if (_val[0] === "=") {
+			var sFormula = _val.slice(1);
+			_formula = new CDataFormula(sFormula);
+			_formulaRes = _formula.getValue(ws);
+
+			//ошибка по именованному диапазону
+			if (_formulaRes.type === cElementType.error && _formulaRes.errorType === AscCommonExcel.cErrorType.wrong_name && !checkDefNames(_formula)) {
+				return asc_error.NamedRangeNotFound;
+			}
+
+			if (_formulaRes.type === cElementType.error && _formulaRes.errorType === AscCommonExcel.cErrorType.wrong_name && !checkDefNames(_formula)) {
+				return asc_error.NamedRangeNotFound;
+			}
+
 			//если ссылка на диапазон - в любом случае отдаём ошибку
-			if (!isRange.isOneCell()) {
+			if (_formulaRes.type === cElementType.cellsRange || _formulaRes.type === cElementType.cellsRange3D) {
 				return asc_error.DataValidateInvalid;
 			}
-			//если ссылка на одиночную ячейку
-			return asc_error.No;
+			if (_formulaRes.type === cElementType.array) {
+				//в ms другой текст ошибки, мы выдаём общий
+				return asc_error.DataValidateInvalid;
+			}
+			if (type !== EDataValidationType.List && type !== EDataValidationType.Custom && !_checkFormula(_formulaRes)) {
+				return asc_error.DataValidateNotNumeric;
+			}
+
+			//если ощибка в подсчете формулы - выдаём предупреждение
+			if (_formulaRes.type === cElementType.error) {
+				return asc_error.FormulaEvaluateError;
+			}
+
 		} else {
 			isNumeric = isNum(_val);
 			if (!isNumeric) {
@@ -555,97 +591,96 @@
 				if (type !== EDataValidationType.List) {
 					date = AscCommon.g_oFormatParser.parseDate(_val, AscCommon.g_oDefaultCultureInfo);
 				}
-				if (!date) {
-					//проверка на формулу
-					if (_val[0] === "=") {
-						_val = _val.slice(1);
-					}
-					_formula = new CDataFormula(_val);
-					_formulaRes = _formula.getValue(ws);
-				}
 			}
 		}
 
 		res = asc_error.No;
 		switch (type) {
 			case EDataValidationType.Date:
-				if (!isNumeric) {
-					if (date) {
-						_val = date.value;
-					} else if (_formulaRes) {
-						if (!_checkFormula(_formulaRes)) {
+				if (_formulaRes) {
+
+				} else {
+					if (!isNumeric) {
+						if (date) {
+							_val = date.value;
+						} else {
 							return asc_error.DataValidateInvalid;
 						}
-					} else {
+					}
+
+					//TODO не нашёл константу на максимальную дату
+					var maxDate = 2958465;
+					if (isNumeric && (_val < 0 || _val > maxDate)) {
 						return asc_error.DataValidateInvalid;
 					}
 				}
 
-				//TODO не нашёл константу на максимальную дату
-				var maxDate = 2958465;
-				if (isNumeric && (_val < 0 || _val > maxDate)) {
-					return asc_error.DataValidateInvalid;
-				}
 				break;
 			case EDataValidationType.Decimal:
 			case EDataValidationType.Whole:
-				if (!isNumeric) {
-					if (date) {
-						_val = date.value;
-					} else if (_formulaRes) {
-						if (!_checkFormula(_formulaRes)) {
+				if (_formulaRes) {
+
+				} else {
+					if (!isNumeric) {
+						if (date) {
+							_val = date.value;
+						} else {
 							return asc_error.DataValidateInvalid;
 						}
-					} else {
-						return asc_error.DataValidateInvalid;
 					}
 				}
+
 				break;
 			case EDataValidationType.List:
-				if (!isNumeric) {
-					if (_formulaRes) {
-						//Max string length -> 255
-						if (cElementType.string === _formulaRes.type) {
+				if (_formulaRes) {
 
-						} if (_formulaRes.type === cElementType.cellsRange || _formulaRes.type === cElementType.cellsRange3D) {
+				} else {
+					/*if (!isNumeric) {
+						if (_formulaRes) {
+							//Max string length -> 255
+							if (cElementType.string === _formulaRes.type) {
+
+							} if (_formulaRes.type === cElementType.cellsRange || _formulaRes.type === cElementType.cellsRange3D) {
+								return asc_error.DataValidateInvalid;
+							}
+						} else {
 							return asc_error.DataValidateInvalid;
 						}
-					} else {
-						return asc_error.DataValidateInvalid;
-					}
+					}*/
 				}
 
 				break;
 			case EDataValidationType.TextLength:
-				if (!isNumeric) {
-					if (date) {
-						_val = date.value;
-					} else if (_formulaRes) {
-						if (!_checkFormula(_formulaRes)) {
-							return asc_error.DataValidateInvalid;
+				if (_formulaRes) {
+
+				} else {
+					if (!isNumeric) {
+						if (date) {
+							_val = date.value;
+						} else {
+							return asc_error.DataValidateNotNumeric;
 						}
-					} else {
-						return asc_error.DataValidateNotNumeric;
+					}
+					if (_val >= 10000000000 || _val < 0) {
+						return asc_error.DataValidateNegativeTextLength;
 					}
 				}
-				if (_val >= 10000000000 || _val < 0) {
-					return asc_error.DataValidateNegativeTextLength;
-				}
+
 				break;
 			case EDataValidationType.Time:
-				if (!isNumeric) {
-					if (date) {
-						_val = date.value;
-					} else if (_formulaRes) {
-						if (!_checkFormula(_formulaRes)) {
+				if (_formulaRes) {
+
+				} else {
+					if (!isNumeric) {
+						if (date) {
+							_val = date.value;
+						} else {
 							return asc_error.DataValidateInvalid;
 						}
-					} else {
+					}
+					if (_val < 0 || _val >= 1) {
 						return asc_error.DataValidateInvalid;
 					}
-				}
-				if (_val < 0 || _val >= 1) {
-					return asc_error.DataValidateInvalid;
 				}
 
 				break;
@@ -896,28 +931,31 @@
 		var t = this;
 		var doCorrect = function (_formula) {
 			var _val = _formula.text;
-			var isNumeric = isNum(_val);
 
-			if (isNumeric) {
-				//переводим в дату
-				var _format;
-				if (t.type === EDataValidationType.Date) {
-					_format = AscCommon.oNumFormatCache.get("m/d/yyyy");
-				} else if (t.type === EDataValidationType.Time) {
-					_format = AscCommon.oNumFormatCache.get("h:mm:ss AM/PM");
-				}
-				if (_format) {
-					var dateVal = _format.format(_val);
-					if (dateVal && dateVal[0] && dateVal[0].text) {
-						_formula.text = dateVal[0].text;
+			//если формула
+			if (_val[0] === '"') {
+				_val = _formula.text = _val.slice(1, -1);
+
+				var isNumeric = isNum(_val);
+
+				if (isNumeric) {
+					//переводим в дату
+					var _format;
+					if (t.type === EDataValidationType.Date) {
+						_format = AscCommon.oNumFormatCache.get("m/d/yyyy");
+					} else if (t.type === EDataValidationType.Time) {
+						_format = AscCommon.oNumFormatCache.get("h:mm:ss AM/PM");
+					}
+					if (_format) {
+						var dateVal = _format.format(_val);
+						if (dateVal && dateVal[0] && dateVal[0].text) {
+							_formula.text = dateVal[0].text;
+						}
 					}
 				}
-			}
 
-			if (t.type === EDataValidationType.List) {
-				if (_val[0] === '"') {
-					_formula.text = _val.slice(1, -1);
-				}
+			} else {
+				_formula.text = "=" + _formula.text;
 			}
 		};
 
@@ -937,35 +975,26 @@
 			var isDate;
 			var isFormula;
 			if (!isNumeric) {
-				//проверим, может быть это дата или время
-				if (t.type !== EDataValidationType.List) {
-					isDate = AscCommon.g_oFormatParser.parseDate(_val, AscCommon.g_oDefaultCultureInfo);
-				}
-				if (!isDate) {
-					//проверка на формулу
-					if (_val[0] === "=") {
-						_val = _val.slice(1);
-					}
+				if (_val[0] === "=") {
+					_val = _val.slice(1);
+					_formula.text = _val;
 					var _tempFormula = new CDataFormula(_val);
 					isFormula = _tempFormula.getValue(ws);
+				} else if (t.type !== EDataValidationType.List) {
+					isDate = AscCommon.g_oFormatParser.parseDate(_val, AscCommon.g_oDefaultCultureInfo);
 				}
 			}
 
 			//храним число
 			if (isDate) {
-				_formula.text = isDate.value;
-				return;
+				_formula.text = '"' + isDate.value + '"';
 			}
 
-			if (t.type === EDataValidationType.List) {
-				if (isFormula) {
-					if (!(isFormula.type === cElementType.cell || isFormula.type === cElementType.cell3D)) {
-						_formula.text = '"' + _formula.text + '"';
-					}
-				} else {
+			//if (t.type === EDataValidationType.List || t.type === EDataValidationType.Custom) {
+				if (!isFormula) {
 					_formula.text = '"' + _formula.text + '"';
 				}
-			}
+			//}
 		};
 
 		if (this.formula1) {
