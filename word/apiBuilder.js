@@ -11677,6 +11677,100 @@
 		Document.UpdateSelection();
 	};
 
+
+	Api.prototype.ReplaceTextSmart = function(arrString)
+	{
+		var oDocument = this.GetDocument();
+		var oSelectedContent = oDocument.Document.GetSelectedParagraphs();
+
+		function DelInsertChars(oRun)
+		{
+			var contentLength = oRun.Content.length;
+			var runCharNumber = 0;
+			var realPosInRun = oRun.Selection.StartPos;
+
+			for (var nPos = oRun.Selection.StartPos; nPos < contentLength; ++nPos)
+			{
+				if (oRun.Selection.Use === false)
+					break;
+
+				if (para_Text === oRun.Content[nPos].Type || para_Space === oRun.Content[nPos].Type || para_Tab === oRun.Content[nPos].Type)
+				{
+					runCharNumber++;
+					realPosInRun++;
+				}
+				else
+					realPosInRun++;
+					
+					
+				if (charsCount + runCharNumber - 1 == textDelta[change].pos)
+				{
+					for (var nDelChar = realPosInRun - 1; nDelChar < oRun.Content.length; nDelChar++)
+					{	
+						if (textDelta[change].deleteCount != 0)
+						{
+							if (para_Text === oRun.Content[nDelChar].Type || para_Space === oRun.Content[nDelChar].Type || para_Tab === oRun.Content[nDelChar].Type)
+							{
+								oRun.RemoveFromContent(nDelChar, 1);
+								nDelChar--;
+								textDelta[change].deleteCount--;
+								contentLength--;
+							}
+						}
+					}
+					
+					var nPosToAdd = realPosInRun - 1;
+					for (var nAddChar = 0; nAddChar < textDelta[change].insert.length; nAddChar++)
+					{
+						var itemText = null;
+
+						if (textDelta[change].insert[nAddChar] === 160 || textDelta[change].insert[nAddChar] === 32)
+						{
+							itemText = new AscCommonWord.ParaSpace(32);
+						}
+						else
+							itemText = new AscCommonWord.ParaText(textDelta[change].insert[nAddChar]);
+
+						itemText.Parent = oRun.GetParagraph();
+						oRun.AddToContent(nPosToAdd, itemText);
+						nPosToAdd += 1;
+					}
+					
+				}
+					
+			}
+
+			if (runCharNumber !== 0)
+				charsCount += runCharNumber;
+			
+		};
+
+		for (var Index = 0; Index < oSelectedContent.length; Index++)
+		{
+			var charsCount = 0;
+			var oPara = oSelectedContent[Index];
+			
+			var oParaText = oPara.GetSelectedText(undefined, {ParaEndToSpace : false});
+			var textDelta = AscCommon.getTextDelta(oParaText, arrString[Index]);
+
+			for (var change = 0; change < textDelta.length; change++)
+			{
+				var deleteCount = textDelta[change].deleteCount;
+				var insertCount = textDelta[change].insert.length;
+
+				oPara.CheckRunContent(DelInsertChars);
+
+				textDelta.forEach(element => {
+					element.pos -= deleteCount - insertCount;
+					
+				});
+				charsCount = 0;
+			}
+		}
+
+		oDocument.Document.RemoveSelection();
+	};
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -11708,7 +11802,7 @@
 	Api.prototype["GetMailMergeReceptionsCount"]     = Api.prototype.GetMailMergeReceptionsCount;
 	Api.prototype["ReplaceDocumentContent"]          = Api.prototype.ReplaceDocumentContent;
 	Api.prototype["MailMerge"]                       = Api.prototype.MailMerge;
-
+	Api.prototype["ReplaceTextSmart"]				 = Api.prototype.ReplaceTextSmart;
 	ApiUnsupported.prototype["GetClassType"]         = ApiUnsupported.prototype.GetClassType;
 
 	ApiDocumentContent.prototype["GetClassType"]     = ApiDocumentContent.prototype.GetClassType;
