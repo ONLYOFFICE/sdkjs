@@ -528,6 +528,10 @@
 			var _res = false;
 			if (val.type === cElementType.cell || val.type === cElementType.cell3D) {
 				_res = true;
+			} else if (type === EDataValidationType.List) {
+				if (val.type === cElementType.cellsRange || val.type === cElementType.cellsRange3D) {
+					_res = true;
+				}
 			} else if (val.type === cElementType.number) {
 				_res = true;
 			}
@@ -569,13 +573,21 @@
 
 			//если ссылка на диапазон - в любом случае отдаём ошибку
 			if (_formulaRes.type === cElementType.cellsRange || _formulaRes.type === cElementType.cellsRange3D) {
-				return asc_error.DataValidateInvalid;
+				//в случае списка допустимы строки/столбцы
+				if (type === EDataValidationType.List) {
+					var _bbox = _formulaRes.getBBox0();
+					if (_bbox.c1 !== _bbox.c2 && _bbox.r1 !== _bbox.r2) {
+						return asc_error.DataValidateInvalidList;
+					}
+				} else {
+					return asc_error.DataValidateInvalid;
+				}
 			}
 			if (_formulaRes.type === cElementType.array) {
 				//в ms другой текст ошибки, мы выдаём общий
 				return asc_error.DataValidateInvalid;
 			}
-			if (type !== EDataValidationType.List && type !== EDataValidationType.Custom && !_checkFormula(_formulaRes)) {
+			if (type !== EDataValidationType.Custom && !_checkFormula(_formulaRes)) {
 				return asc_error.DataValidateNotNumeric;
 			}
 
@@ -983,7 +995,7 @@
 					if (_val[0] === "=") {
 						_val = _val.slice(1);
 						_formula.text = _val;
-						
+
 						if (isNum(_val)) {
 							if (t.type === EDataValidationType.List) {
 								_val = '"' + _val + '"';

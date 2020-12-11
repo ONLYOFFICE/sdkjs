@@ -249,6 +249,7 @@
 			DataValidateInvalid: 834,
 			NamedRangeNotFound: 835,
 			FormulaEvaluateError: 836,
+			DataValidateInvalidList: 837,
 
 
 			RemoveDuplicates : -850,
@@ -2283,8 +2284,9 @@
 	prot['DataValidateMustEnterValue']       = prot.DataValidateMustEnterValue;
 	prot['DataValidateMinGreaterMax']        = prot.DataValidateMinGreaterMax;
 	prot['DataValidateInvalid']              = prot.DataValidateInvalid;
-	prot['NamedRangeNotFound']              = prot.NamedRangeNotFound;
-	prot['FormulaEvaluateError']              = prot.FormulaEvaluateError;
+	prot['NamedRangeNotFound']               = prot.NamedRangeNotFound;
+	prot['FormulaEvaluateError']             = prot.FormulaEvaluateError;
+	prot['DataValidateInvalidList']          = prot.DataValidateInvalidList;
 
 	window['Asc']['c_oAscAsyncAction']       = window['Asc'].c_oAscAsyncAction = c_oAscAsyncAction;
 	prot                                     = c_oAscAsyncAction;
