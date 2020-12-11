@@ -8785,7 +8785,18 @@ CDocument.prototype.InsertContent = function(SelectedContent, NearPos)
 	{
 		if (LastClass.GetParentForm())
 		{
+			var isPlaceHolder  = LastClass.GetParentForm().IsPlaceHolder();
+			var nInRunStartPos = LastClass.State.ContentPos;
 			LastClass.AddText(SelectedContent.GetText({ParaEndToSpace : false}), ParaNearPos.NearPos.ContentPos.Data[ParaNearPos.Classes.length - 1]);
+			var nInRunEndPos = LastClass.State.ContentPos;
+
+			LastClass.SelectThisElement();
+			if (!isPlaceHolder)
+			{
+				LastClass.Selection.Use      = true;
+				LastClass.Selection.StartPos = nInRunStartPos;
+				LastClass.Selection.EndPos   = nInRunEndPos;
+			}
 			return;
 		}
 

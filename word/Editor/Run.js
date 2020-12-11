@@ -1689,15 +1689,15 @@ ParaRun.prototype.AddText = function(sString, nPos)
 			var nCharCode = oIterator.value();
 
 			if (9 === nCharCode) // \t
-				this.AddToContent(nCharPos++, new ParaTab());
+				this.AddToContent(nCharPos++, new ParaTab(), true);
 			else if (10 === nCharCode) // \n
-				this.AddToContent(nCharPos++, new ParaNewLine(break_Line));
+				this.AddToContent(nCharPos++, new ParaNewLine(break_Line), true);
 			else if (13 === nCharCode) // \r
 				continue;
 			else if (AscCommon.IsSpace(nCharCode)) // space
-				this.AddToContent(nCharPos++, new ParaSpace(nCharCode));
+				this.AddToContent(nCharPos++, new ParaSpace(nCharCode), true);
 			else
-				this.AddToContent(nCharPos++, new ParaText(nCharCode));
+				this.AddToContent(nCharPos++, new ParaText(nCharCode), true);
 		}
 	}
 };
