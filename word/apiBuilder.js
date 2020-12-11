@@ -11687,13 +11687,11 @@
 		{
 			var contentLength = oRun.Content.length;
 			var runCharNumber = 0;
-			var realPosInRun = oRun.Selection.StartPos;
+			var realPosInRun = Math.min(oRun.Selection.StartPos, oRun.Selection.EndPos);
+			var bDelChars = false;
 
-			for (var nPos = oRun.Selection.StartPos; nPos < contentLength; ++nPos)
+			for (var nPos = Math.min(oRun.Selection.StartPos, oRun.Selection.EndPos); nPos < contentLength; ++nPos)
 			{
-				if (oRun.Selection.Use === false)
-					break;
-
 				if (para_Text === oRun.Content[nPos].Type || para_Space === oRun.Content[nPos].Type || para_Tab === oRun.Content[nPos].Type)
 				{
 					runCharNumber++;
@@ -11705,7 +11703,7 @@
 					
 				if (charsCount + runCharNumber - 1 == textDelta[change].pos)
 				{
-					for (var nDelChar = realPosInRun - 1; nDelChar < oRun.Content.length; nDelChar++)
+					for (var nDelChar = realPosInRun - 1; nDelChar < contentLength; nDelChar++)
 					{	
 						if (textDelta[change].deleteCount != 0)
 						{
@@ -11715,9 +11713,13 @@
 								nDelChar--;
 								textDelta[change].deleteCount--;
 								contentLength--;
+								bDelChars = true;
 							}
 						}
 					}
+
+					if (bDelChars)
+						runCharNumber--;
 					
 					var nPosToAdd = realPosInRun - 1;
 					for (var nAddChar = 0; nAddChar < textDelta[change].insert.length; nAddChar++)
@@ -11733,24 +11735,28 @@
 
 						itemText.Parent = oRun.GetParagraph();
 						oRun.AddToContent(nPosToAdd, itemText);
+						textDelta[change].insert.shift();
+
 						nPosToAdd += 1;
 					}
-					
 				}
-					
 			}
 
 			if (runCharNumber !== 0)
 				charsCount += runCharNumber;
-			
 		};
 
 		for (var Index = 0; Index < oSelectedContent.length; Index++)
 		{
 			var charsCount = 0;
 			var oPara = oSelectedContent[Index];
-			
-			var oParaText = oPara.GetSelectedText(undefined, {ParaEndToSpace : false});
+			var oParaText = "";
+
+			if (oPara.Selection.Use)
+				oParaText = oPara.GetSelectedText(undefined, {ParaEndToSpace : false});
+			else
+				oParaText = oPara.GetText({ParaEndToSpace : false});
+				
 			var textDelta = AscCommon.getTextDelta(oParaText, arrString[Index]);
 
 			for (var change = 0; change < textDelta.length; change++)
