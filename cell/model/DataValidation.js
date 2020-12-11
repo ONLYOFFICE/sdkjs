@@ -954,7 +954,7 @@
 					}
 				}
 
-			} else {
+			} else if (!isNum(_formula.text)) {
 				_formula.text = "=" + _formula.text;
 			}
 		};
@@ -972,29 +972,42 @@
 		var doCorrect = function (_formula) {
 			var _val = _formula.text;
 			var isNumeric = isNum(_val);
-			var isDate;
-			var isFormula;
-			if (!isNumeric) {
-				if (_val[0] === "=") {
-					_val = _val.slice(1);
-					_formula.text = _val;
-					var _tempFormula = new CDataFormula(_val);
-					isFormula = _tempFormula.getValue(ws);
-				} else if (t.type !== EDataValidationType.List) {
-					isDate = AscCommon.g_oFormatParser.parseDate(_val, AscCommon.g_oDefaultCultureInfo);
+			if (isNumeric) {
+				if (t.type === EDataValidationType.List) {
+					_formula.text = '"' + _formula.text + '"';
 				}
-			}
+			} else {
+				var isDate;
+				var isFormula;
+				if (!isNumeric) {
+					if (_val[0] === "=") {
+						_val = _val.slice(1);
+						_formula.text = _val;
+						
+						if (isNum(_val)) {
+							if (t.type === EDataValidationType.List) {
+								_val = '"' + _val + '"';
+							}
+							_formula.text = _val;
+							return;
+						}
+						var _tempFormula = new CDataFormula(_val);
+						isFormula = _tempFormula.getValue(ws);
+					} else if (t.type !== EDataValidationType.List) {
+						isDate = AscCommon.g_oFormatParser.parseDate(_val, AscCommon.g_oDefaultCultureInfo);
+					}
+				}
 
-			//храним число
-			if (isDate) {
-				_formula.text = '"' + isDate.value + '"';
-			}
+				//храним число
+				if (isDate) {
+					_formula.text = isDate.value;
+					return;
+				}
 
-			//if (t.type === EDataValidationType.List || t.type === EDataValidationType.Custom) {
 				if (!isFormula) {
 					_formula.text = '"' + _formula.text + '"';
 				}
-			//}
+			}
 		};
 
 		if (this.formula1) {
