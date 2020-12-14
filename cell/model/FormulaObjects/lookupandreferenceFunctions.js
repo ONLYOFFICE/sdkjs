@@ -2141,6 +2141,7 @@ function (window, undefined) {
 	};
 	VHLOOKUPCache.prototype._calculate = function (cacheArray, valueForSearching, lookup, opt_arg4, opt_arg5) {
 		var res = -1, i = 0, j, length = cacheArray.length, k, elem, val, nextVal;
+		var xlookup = opt_arg4 !== undefined && opt_arg5 !== undefined;
 
 		//TODO неверно работает функция, допустим для случая: VLOOKUP("12",A1:A5,1) 12.00 ; "qwe" ; "3" ; 3.00 ; 4.00
 
@@ -2225,6 +2226,10 @@ function (window, undefined) {
 				}
 			}
 
+			if (xlookup) {
+				return -1;
+			}
+
 			var _res = Math.min(i, j);
 			_res = -1 === _res ? _res : cacheArray[_res].i;
 			return _res;
@@ -2232,7 +2237,7 @@ function (window, undefined) {
 
 		//TODO opt_arg5 - пока не обрабатываю результат == 2( A wildcard match where *, ?, and ~ have)
 
-		if (opt_arg4 !== undefined && opt_arg5 !== undefined) {
+		if (xlookup) {
 			if (Math.abs(opt_arg5) === 1) {
 				res = simpleSearch(opt_arg5 < 0);
 			} else if (Math.abs(opt_arg5) === 2) {
@@ -2584,7 +2589,7 @@ function (window, undefined) {
 		}
 
 		//[if_not_found]
-		if (!arg3) {
+		if (!arg3 || arg3.type === cElementType.empty) {
 			arg3 = new cError(cErrorType.not_available);
 		}
 
