@@ -7933,7 +7933,7 @@ background-repeat: no-repeat;\
 		var t = this;
 		if (opt_isPassword) {
 			if (this.asc_checkNeedCallback("asc_onAdvancedOptions")) {
-				t.sendEvent("asc_onAdvancedOptions", c_oAscAdvancedOptionsID.DRM);
+				t.sendEvent("asc_onAdvancedOptions", c_oAscAdvancedOptionsID.DRM, data ? data.message : undefined);
 			} else {
 				t.sendEvent("asc_onError", c_oAscError.ID.ConvertationPassword, c_oAscError.Level.Critical);
 			}
