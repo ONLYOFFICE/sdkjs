@@ -197,10 +197,10 @@ Paragraph.prototype.Recalculate_FastWholeParagraph = function()
 /**
  * Пытаемся быстро рассчитать отрезок, в котором произошли изменения, и если ничего не съехало, тогда
  * перерисовываем страницу, в противном случаем запускаем обычный пересчет.
- * @param SimpleChanges
+ * @param {CParaPos} oParaPos
  * @returns {*} -1 если быстрый пересчет не получился, либо номер страницы, которую нужно перерисовать
  */
-Paragraph.prototype.Recalculate_FastRange = function(SimpleChanges)
+Paragraph.prototype.RecalculateFastRunRange = function(oParaPos)
 {
 	if (this.Pages.length <= 0)
         return -1;
@@ -208,18 +208,16 @@ Paragraph.prototype.Recalculate_FastRange = function(SimpleChanges)
     if (true === this.Parent.IsHdrFtr(false))
         return -1;
 
-    var Run = SimpleChanges[0].Class;
-    var ParaPos = Run.Get_SimpleChanges_ParaPos(SimpleChanges);
-    if ( null === ParaPos )
+    if (!oParaPos)
         return -1;
 
-    var Line  = ParaPos.Line;
-    var Range = ParaPos.Range;
+    var Line  = oParaPos.Line;
+    var Range = oParaPos.Range;
 
     // Такое возможно, если у нас шел долгий пересчет (например, из-за изменений второго пользователя) и в это же время
 	// запустился быстрый (ввод символа). Долгий пересчет успел сбросить рассчет данного параграфа, но не пересчитал параграф
 	// до конца, а в это время у данного параграфа запросился быстрый пересчет.
-    if (this.Lines.length <= ParaPos.Line)
+    if (this.Lines.length <= oParaPos.Line)
     	return -1;
 
     // TODO: Отключаем это ускорение в таблицах, т.к. в таблицах и так есть свое ускорение. Но можно и это ускорение

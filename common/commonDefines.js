@@ -253,7 +253,12 @@
 
 			LargeRangeWarning: -900,
 
-			LockedEditView: -950
+			LockedEditView: -950,
+
+			Password : -1000,
+
+			SecondaryAxis: 1001,
+			ComboSeriesError: 1002
 		}
 	};
 
@@ -504,7 +509,8 @@
 		l       : 6,
 		outEnd  : 7,
 		r       : 8,
-		t       : 9
+		t       : 9,
+		show    : 10
 	};
 
 	var c_oAscGridLinesSettings = {
@@ -553,7 +559,11 @@
 		surfaceWireframe       : 35,
 		contourNormal          : 36,
 		contourWireframe       : 37,
-		unknown                : 38
+		comboCustom            : 38,
+		comboBarLine           : 39,
+		comboBarLineSecondary  : 40,
+		comboAreaBar           : 41,
+		unknown                : 42
 	};
 
 	var c_oAscValAxisRule = {
@@ -608,11 +618,10 @@
 	};
 
 	var c_oAscAxisType = {
-		auto : 0,
-		date : 1,
-		text : 2,
-		cat  : 3,
-		val  : 4
+		date : 0,
+		cat  : 1,
+		val  : 2,
+		ser  : 3
 	};
 
 	var c_oAscHAnchor = {
@@ -2275,7 +2284,9 @@
 	prot['RemoveDuplicates']                 = prot.RemoveDuplicates;
 	prot['LargeRangeWarning']                = prot.LargeRangeWarning;
 	prot['LockedEditView']                   = prot.LockedEditView;
-	
+	prot['SecondaryAxis']                    = prot.SecondaryAxis;
+	prot['ComboSeriesError']                 = prot.ComboSeriesError;
+
 	prot['DataValidateNotNumeric']           = prot.DataValidateNotNumeric;
 	prot['DataValidateNegativeTextLength']   = prot.DataValidateNegativeTextLength;
 	prot['DataValidateMustEnterValue']       = prot.DataValidateMustEnterValue;
@@ -2436,6 +2447,7 @@
 	prot['outEnd']                           = prot.outEnd;
 	prot['r']                                = prot.r;
 	prot['t']                                = prot.t;
+	prot['show']                             = prot.show;
 	window['Asc']['c_oAscGridLinesSettings'] = window['Asc'].c_oAscGridLinesSettings = c_oAscGridLinesSettings;
 	prot                                     = c_oAscGridLinesSettings;
 	prot['none']                             = prot.none;
@@ -2478,7 +2490,16 @@
 	prot['scatterNone']                = prot.scatterNone;
 	prot['scatterSmooth']              = prot.scatterSmooth;
 	prot['scatterSmoothMarker']        = prot.scatterSmoothMarker;
+	prot['surfaceNormal']              = prot.surfaceNormal;
+	prot['surfaceWireframe']           = prot.surfaceWireframe;
+	prot['contourNormal']              = prot.contourNormal;
+	prot['contourWireframe']           = prot.contourWireframe;
+	prot['comboCustom']                = prot.comboCustom;
+	prot['comboBarLine']               = prot.comboBarLine;
+	prot['comboBarLineSecondary']      = prot.comboBarLineSecondary;
+	prot['comboAreaBar']               = prot.comboAreaBar;
 	prot['unknown']                    = prot.unknown;
+
 	window['Asc']['c_oAscValAxisRule'] = window['Asc'].c_oAscValAxisRule = c_oAscValAxisRule;
 	prot                              = c_oAscValAxisRule;
 	prot['auto']                      = prot.auto;
@@ -2528,6 +2549,7 @@
 	prot['text']                   = prot.text;
 	prot['cat']                    = prot.cat;
 	prot['val']                    = prot.val;
+	prot['ser']                    = prot.ser;
 	window['Asc']['c_oAscHAnchor'] = window['Asc'].c_oAscHAnchor = c_oAscHAnchor;
 	prot                          = c_oAscHAnchor;
 	prot['Margin']                = prot.Margin;

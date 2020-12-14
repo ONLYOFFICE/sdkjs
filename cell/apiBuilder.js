@@ -1091,7 +1091,7 @@
 	 * @typeofeditors ["CSE"]
 	 */
 	ApiWorksheet.prototype.Delete = function () {
-		this.worksheet.workbook.removeWorksheet(this.worksheet.getIndex());
+		this.worksheet.workbook.oApi.asc_deleteWorksheet([this.worksheet.getIndex()]);
 	};
 
 	/**

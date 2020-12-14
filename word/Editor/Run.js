@@ -2062,91 +2062,105 @@ ParaRun.prototype.Recalculate_CurPos = function(X, Y, CurrentRun, _CurRange, _Cu
 
     return { X : X, Y: Y,  PageNum : Para.Get_AbsolutePage(CurPage), Internal : { Line : CurLine, Page : CurPage, Range : CurRange } };
 };
-
-// Проверяем, произошло ли простейшее изменение (набор или удаление текста)
-ParaRun.prototype.Is_SimpleChanges = function(Changes)
+/**
+ * Проверяем являются ли заданные изменения заданного рана простыми (например, последовательное удаление или набор текста)
+ * @param arrChanges
+ * @param [nStart=0] {number}
+ * @param [nEnd=arrChanges.length - 1] {number}
+ * @returns {?CParaPos}
+ */
+ParaRun.prototype.GetSimpleChangesRange = function(arrChanges, nStart, nEnd)
 {
-    var ParaPos = null;
+	var oParaPos = null;
 
-    var Count = Changes.length;
-    for (var Index = 0; Index < Count; Index++)
-    {
-        var Data = Changes[Index].Data;
+	var _nStart = undefined !== nStart ? nStart : 0;
+	var _nEnd   = undefined !== nEnd ? nEnd : arrChanges.length - 1;
 
-        if (undefined === Data.Items || 1 !== Data.Items.length)
-            return false;
+	for (var nIndex = _nStart; nIndex <= _nEnd; ++nIndex)
+	{
+		var oChange = arrChanges[nIndex];
 
-        var Type = Data.Type;
-        var Item = Data.Items[0];
+		if (oChange.IsDescriptionChange())
+			continue;
 
-        if (undefined === Item)
-            return false;
+		if (!oChange || !oChange.IsContentChange() || 1 !== oChange.GetItemsCount())
+			return null;
 
-        if (AscDFH.historyitem_ParaRun_AddItem !== Type && AscDFH.historyitem_ParaRun_RemoveItem !== Type)
-            return false;
+		var nType = oChange.GetType();
+		if (AscDFH.historyitem_ParaRun_AddItem !== nType && AscDFH.historyitem_ParaRun_RemoveItem !== nType)
+			return null;
 
-        // Добавление/удаление картинок может изменить размер строки. Добавление/удаление переноса строки/страницы/колонки
-        // нельзя обсчитывать функцией Recalculate_Fast. Добавление и удаление разметок сложных полей тоже нельзя
-		// обсчитывать в быстром пересчете.
-        // TODO: Но на самом деле стоило бы сделать нормальную проверку на высоту строки в функции Recalculate_Fast
-		var ItemType = Item.Type;
-		if (para_Drawing === ItemType
-			|| para_NewLine === ItemType
-			|| para_FootnoteRef === ItemType
-			|| para_FootnoteReference === ItemType
-			|| para_FieldChar === ItemType
-			|| para_InstrText === ItemType
-			|| para_EndnoteRef === ItemType
-			|| para_EndnoteReference === ItemType)
-            return false;
+		for (var nItemIndex = 0, nItemsCount = oChange.GetItemsCount(); nItemIndex < nItemsCount; ++nItemIndex)
+		{
+			var oItem = oChange.GetItem(nItemIndex);
 
-        // Проверяем, что все изменения произошли в одном и том же отрезке
-        var CurParaPos = this.Get_SimpleChanges_ParaPos([Changes[Index]]);
-        if (null === CurParaPos)
-            return false;
+			if (!oItem)
+				return null;
 
-        if (null === ParaPos)
-            ParaPos = CurParaPos;
-        else if (ParaPos.Line !== CurParaPos.Line || ParaPos.Range !== CurParaPos.Range)
-            return false;
-    }
+			// Добавление/удаление картинок может изменить размер строки. Добавление/удаление переноса строки/страницы/колонки
+			// нельзя обсчитывать функцией Recalculate_Fast. Добавление и удаление разметок сложных полей тоже нельзя
+			// обсчитывать в быстром пересчете.
+			// TODO: Но на самом деле стоило бы сделать нормальную проверку на высоту строки в функции Recalculate_Fast
+			var nItemType = oItem.Type;
+			if (para_Drawing === nItemType
+				|| para_NewLine === nItemType
+				|| para_FootnoteRef === nItemType
+				|| para_FootnoteReference === nItemType
+				|| para_FieldChar === nItemType
+				|| para_InstrText === nItemType
+				|| para_EndnoteRef === nItemType
+				|| para_EndnoteReference === nItemType)
+				return null;
 
-    return true;
+			// Проверяем, что все изменения произошли в одном и том же отрезке
+			var oCurParaPos = this.Get_SimpleChanges_ParaPos(nType, oChange.GetPos(nItemIndex));
+			if (!oCurParaPos)
+				return null;
+
+			if (!oParaPos)
+				oParaPos = oCurParaPos;
+			else if (oParaPos.Line !== oCurParaPos.Line
+				|| oParaPos.Range !== oCurParaPos.Range
+				|| oParaPos.Page !== oCurParaPos.Page)
+				return null;
+		}
+	}
+
+	return oParaPos;
 };
-
 /**
  * Проверяем произошло ли простое изменение параграфа, сейчас главное, чтобы это было не добавлениe/удаление картинки
  * или ссылки на сноску или разметки сложного поля, или изменение типа реценизрования для рана со знаком конца
  * параграфа. На вход приходит либо массив изменений, либо одно изменение
  * (можно не в массиве).
+ * @param {[CChangesBase] | CChangesBase} arrChanges
  * @returns {boolean}
  */
-ParaRun.prototype.IsParagraphSimpleChanges = function(_Changes)
+ParaRun.prototype.IsParagraphSimpleChanges = function(arrChanges)
 {
-    var Changes = _Changes;
-    if (!_Changes.length)
-        Changes = [_Changes];
+    var _arrChanges = arrChanges;
+    if (!arrChanges.length)
+		_arrChanges = [arrChanges];
 
-    var ChangesCount = Changes.length;
-    for (var ChangesIndex = 0; ChangesIndex < ChangesCount; ChangesIndex++)
+    for (var nChangesIndex = 0, nChangesCount = _arrChanges.length; nChangesIndex < nChangesCount; ++nChangesIndex)
     {
-        var Data = Changes[ChangesIndex].Data;
-        var ChangeType = Data.Type;
+        var oChange = _arrChanges[nChangesIndex];
+        var nType   = oChange.GetType();
 
-        if (AscDFH.historyitem_ParaRun_AddItem === ChangeType || AscDFH.historyitem_ParaRun_RemoveItem === ChangeType)
+        if (AscDFH.historyitem_ParaRun_AddItem === nType || AscDFH.historyitem_ParaRun_RemoveItem === nType)
         {
-            for (var ItemIndex = 0, ItemsCount = Data.Items.length; ItemIndex < ItemsCount; ItemIndex++)
+            for (var nItemIndex = 0, nItemsCount = oChange.GetItemsCount(); nItemIndex < nItemsCount; ++nItemIndex)
 			{
-				var Item = Data.Items[ItemIndex];
-				if (para_Drawing === Item.Type
-					|| para_FootnoteReference === Item.Type
-					|| para_FieldChar === Item.Type
-					|| para_InstrText === Item.Type
-					|| para_EndnoteReference === Item.Type)
+				var oItem = oChange.GetItem(nItemIndex);
+				if (para_Drawing === oItem.Type
+					|| para_FootnoteReference === oItem.Type
+					|| para_FieldChar === oItem.Type
+					|| para_InstrText === oItem.Type
+					|| para_EndnoteReference === oItem.Type)
 					return false;
 			}
         }
-        else if (AscDFH.historyitem_ParaRun_ReviewType === ChangeType && this.GetParaEnd())
+        else if (AscDFH.historyitem_ParaRun_ReviewType === nType && this.GetParaEnd())
 		{
 			return false;
 		}
@@ -2170,12 +2184,8 @@ ParaRun.prototype.IsContentSuitableForParagraphSimpleChanges = function()
 };
 
 // Возвращаем строку и отрезок, в котором произошли простейшие изменения
-ParaRun.prototype.Get_SimpleChanges_ParaPos = function(Changes)
+ParaRun.prototype.Get_SimpleChanges_ParaPos = function(Type, Pos)
 {
-    var Change = Changes[0].Data;
-    var Type   = Changes[0].Data.Type;
-    var Pos    = Change.Pos;
-
     var CurLine  = 0;
     var CurRange = 0;
 

@@ -533,6 +533,7 @@ CChartSpace.prototype.updateTransformMatrix  = function()
 CChartSpace.prototype.getArrayWrapIntervals = CShape.prototype.getArrayWrapIntervals;
 CChartSpace.prototype.select = CShape.prototype.select;
 CChartSpace.prototype.Is_UseInDocument = CShape.prototype.Is_UseInDocument;
+CChartSpace.prototype.getDrawingObjectsController = CShape.prototype.getDrawingObjectsController;
 //CChartSpace.prototype.Refresh_RecalcData = function(data)
 //{
 //    this.addToRecalculate();

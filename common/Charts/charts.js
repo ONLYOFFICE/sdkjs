@@ -317,11 +317,6 @@ ChartPreviewManager.prototype.getChartByType = function(type)
 		chart_space.spPr.xfrm.setExtX(fChartSize);
 		chart_space.spPr.xfrm.setExtY(fChartSize);
 		settings.putTitle(Asc.c_oAscChartTitleShowSettings.noOverlay);
-		//settings.putHorAxisLabel(Asc.c_oAscChartTitleShowSettings.none);
-		//settings.putVertAxisLabel(Asc.c_oAscChartTitleShowSettings.none);
-		//settings.putLegendPos(Asc.c_oAscChartLegendShowSettings.none);
-		//settings.putHorGridLines(Asc.c_oAscGridLinesSettings.none);
-		//settings.putVertGridLines(Asc.c_oAscGridLinesSettings.none);
 
 
 		var val_ax_props = new AscCommon.asc_ValAxisSettings();
@@ -390,8 +385,8 @@ ChartPreviewManager.prototype.getChartByType = function(type)
 			}
 		}
 
-		settings.putVertAxisProps(vert_axis_settings);
-		settings.putHorAxisProps(hor_axis_settings);
+		settings.addVertAxesProps(vert_axis_settings);
+		settings.addHorAxesProps(hor_axis_settings);
 
 		AscFormat.DrawingObjectsController.prototype.applyPropsToChartSpace(settings, chart_space);
 		chart_space.setBDeleted(false);

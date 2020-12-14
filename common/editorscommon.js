@@ -797,6 +797,9 @@
 			case c_oAscServerError.VKeyUserCountExceed :
 				nRes = Asc.c_oAscError.ID.UserCountExceed;
 				break;
+			case c_oAscServerError.Password :
+				nRes = Asc.c_oAscError.ID.Password;
+				break;
 			case c_oAscServerError.Storage :
 			case c_oAscServerError.StorageFileNoFound :
 			case c_oAscServerError.StorageRead :
@@ -1307,7 +1310,9 @@
 		VKey:                -120,
 		VKeyEncrypt:         -121,
 		VKeyKeyExpire:       -122,
-		VKeyUserCountExceed: -123
+		VKeyUserCountExceed: -123,
+
+		Password: -180
 	};
 
 	//todo get from server config
@@ -2986,6 +2991,14 @@
 					var chartSeries = AscFormat.getChartSeries(sheetModel, chartSettings).series;
 					if (minStockVal !== chartSeries.length || !chartSeries[0].Val || !chartSeries[0].Val.NumCache || chartSeries[0].Val.NumCache.length < minStockVal)
 						return Asc.c_oAscError.ID.StockChartError;
+				}
+				else if(Asc.c_oAscChartTypeSettings.comboAreaBar === subType
+						|| Asc.c_oAscChartTypeSettings.comboBarLine === subType
+						|| Asc.c_oAscChartTypeSettings.comboBarLineSecondary === subType
+						|| Asc.c_oAscChartTypeSettings.comboCustom === subType) {
+					if(intervalSeries < 2) {
+						return Asc.c_oAscError.ID.ComboSeriesError;
+					}
 				}
 				else if (intervalSeries > maxSeries)
 					return Asc.c_oAscError.ID.MaxDataSeriesError;

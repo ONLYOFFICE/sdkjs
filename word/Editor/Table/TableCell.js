@@ -242,7 +242,11 @@ CTableCell.prototype =
     {
         this.CompiledPr.NeedRecalc = true;
         this.Content.Recalc_AllParagraphs_CompiledPr();
-    },
+
+        var oTable = this.GetTable();
+		if (oTable)
+			oTable.RecalcInfo.RecalcBorders();
+	},
 
     // Формируем конечные свойства параграфа на основе стиля и прямых настроек.
     Get_CompiledPr : function(bCopy)
@@ -1879,7 +1883,7 @@ CTableCell.prototype =
             }
         }
 
-        this.Row.Table.RecalcInfo.Recalc_Borders();
+        this.Row.Table.RecalcInfo.RecalcBorders();
 
         this.Refresh_RecalcData2( 0, 0 );
     },

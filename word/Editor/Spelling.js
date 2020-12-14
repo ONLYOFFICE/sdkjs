@@ -360,7 +360,7 @@ CParaSpellChecker.prototype =
 			var oElement    = this.Elements[nIndex];
 			oElement.CurPos = false;
 
-			if (1 >= oElement.Word.length || AscCommon.private_IsAbbreviation(oElement.Word))
+			if (!editor.SpellCheckApi.checkDictionary(this.Elements[nIndex].Lang) || 1 >= oElement.Word.length || AscCommon.private_IsAbbreviation(oElement.Word))
 			{
 				oElement.Checked = true;
 			}
@@ -371,7 +371,7 @@ CParaSpellChecker.prototype =
 				editor.WordControl.m_oLogicDocument.Spelling.Add_CurPara(this.ParaId, g_oTableId.Get_ById(this.ParaId));
 			}
 
-			if (null === oElement.Checked && editor.SpellCheckApi.checkDictionary(this.Elements[nIndex].Lang))
+			if (null === oElement.Checked)
 			{
 				usrWords.push(this.Elements[nIndex].Word);
 				usrLang.push(this.Elements[nIndex].Lang);

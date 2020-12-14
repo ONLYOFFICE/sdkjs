@@ -12299,9 +12299,15 @@ Paragraph.prototype.Refresh_RecalcData = function(Data)
 		case AscDFH.historyitem_Paragraph_AddItem:
 		case AscDFH.historyitem_Paragraph_RemoveItem:
 		{
+			var nDataPos = 0;
+			if (Data instanceof CChangesParagraphAddItem || Data instanceof CChangesParagraphRemoveItem)
+				nDataPos = Data.GetMinPos();
+			else if (undefined !== Data.Pos)
+				nDataPos = Data.Pos;
+
 			for (CurPage = this.Pages.length - 1; CurPage > 0; CurPage--)
 			{
-				if (Data.Pos > this.Lines[this.Pages[CurPage].StartLine].Get_StartPos())
+				if (nDataPos > this.Lines[this.Pages[CurPage].StartLine].Get_StartPos())
 					break;
 			}
 
@@ -15266,18 +15272,18 @@ Paragraph.prototype.GetElementsCount = function()
 /**
  * Проверяем произошло ли простое изменение параграфа, сейчас это только добавление/удаление комментариев.
  * (можно не в массиве).
+ * @param {[CChangesBase] | CChangesBase} arrChanges
+ * @returns {boolean}
  */
-Paragraph.prototype.IsParagraphSimpleChanges = function(_Changes)
+Paragraph.prototype.IsParagraphSimpleChanges = function(arrChanges)
 {
-	var Changes = _Changes;
-	if (!_Changes.length)
-		Changes = [_Changes];
+	var _arrChanges = arrChanges;
+	if (!arrChanges.length)
+		_arrChanges = [arrChanges];
 
-	var ChangesCount = Changes.length;
-	for (var ChangesIndex = 0; ChangesIndex < ChangesCount; ChangesIndex++)
+	for (var nChangesIndex = 0, nChangesCount = _arrChanges.length; nChangesIndex < nChangesCount; ++nChangesIndex)
 	{
-		var Data = Changes[ChangesIndex].Data;
-		if (!Data.IsParagraphSimpleChanges())
+		if (!_arrChanges[nChangesIndex].IsParagraphSimpleChanges())
 			return false;
 	}
 
@@ -17209,7 +17215,7 @@ CParagraphDrawStateLines.prototype.GetSpellingErrorsCounter = function()
 	{
 		var oSpellElement = oSpellChecker.GetElement(nIndex);
 
-		if (oSpellElement.Checked || oSpellElement.CurPos)
+		if (false !== oSpellElement.Checked || oSpellElement.CurPos)
 			continue;
 
 		var oStartPos = oSpellElement.GetStartPos();

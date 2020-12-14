@@ -4313,1431 +4313,381 @@ DrawingObjectsController.prototype =
         }
     },
 
-    applyPropsToChartSpace: function(chartSettings, chartSpace)
+    applyPropsToChartSpace: function(oProps, oChartSpace)
     {
-        var chart_space = chartSpace;
-        var style_index = chartSettings.getStyle();
-        var sRange = chartSettings.getRange();
-        var b_clear_formatting = false;
-        chartSpace.resetSelection(true);
-        var oPr = this.getPropsFromChart(chart_space);
-        if(oPr.isEqual(chartSettings)){
+        if(!oChartSpace || !oProps) {
+            return;
+        }
+        var oApi = this.getEditorApi();
+        oChartSpace.resetSelection(true);
+        var oCurProps = this.getPropsFromChart(oChartSpace);
 
-
-            var oChartType = chart_space && chart_space.chart && chart_space.chart.plotArea && chart_space.chart.plotArea.charts[0];
-            if(!oChartType){
-                return;
-            }
-            //подписи данных
-            if(typeof oChartType.setDLbls === "function" && AscFormat.isRealNumber(chartSettings.getDataLabelsPos()) && chartSettings.getDataLabelsPos() !== c_oAscChartDataLabelsPos.none)
-            {
-                if(oChartType.dLbls && oChartType.dLbls.bDelete){
-                    oChartType.dLbls.setDelete(false);
-                }
-                for(var i = 0; i < oChartType.series.length; ++i){
-                    var oSerie = oChartType.series[i];
-                    if(oSerie.dLbls){
-                        if(oSerie.dLbls.bDelete){
-                            oSerie.dLbls.setDelete(false);
-                            for(var j = 0; j < oSerie.dLbls.dLbl.length; ++j){
-                                if(oSerie.dLbls.dLbl[j].bDelete){
-                                    oSerie.dLbls.dLbl[j].setDelete(false);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
+        //Check data labels. Todo: check it
+        if(oCurProps.isEqual(oProps)) {
+            oChartSpace.setDLblsDeleteValue(false);
             return;
         }
 
-        //for bug http://bugzilla.onlyoffice.com/show_bug.cgi?id=35570
-        var type = chartSettings.getType();
-        if(oPr.getType() === type){
-            chartSettings.type = null;
-            var testChartSettings = new Asc.asc_ChartSettings();
-            if(testChartSettings.isEqual(chartSettings)){
-                chartSettings.type = type;
-                return;
-            }
-            chartSettings.type = type;
-        }
-
-        //Title Settings
-        chart_space.setChart(chart_space.chart.createDuplicate());
-
-        /*if(AscFormat.isRealNumber(style_index) && style_index > 0 && style_index < 49 && chart_space.style !== style_index)
-        {
-            if(!b_clear_formatting)
-            {
-                chart_space.clearFormatting();
-            }
-            chart_space.setStyle(style_index);
-        }*/
-
-        var chart = chart_space.chart;
-        var plot_area = chart.plotArea;
-        if(AscFormat.isRealNumber(style_index)){
-            --style_index;
-            var oCurChartSettings = oPr;
-            var _cur_type = oCurChartSettings.type;
-            if(AscCommon.g_oChartPresets[_cur_type] && AscCommon.g_oChartPresets[_cur_type][style_index]){
-
-                plot_area.removeCharts(1, plot_area.charts.length - 1);
-                AscFormat.ApplyPresetToChartSpace(chartSpace, AscCommon.g_oChartPresets[_cur_type][style_index], chartSettings.bCreate);
+        //for bug http://bugzilla.onlyoffice.com/show_bug.cgi?id=35570 TODO: check it
+        var nType = oProps.getType(), nCurType = oCurProps.getType(), bEmpty;
+        if(nType === nCurType) {
+            oProps.putType(null);
+            bEmpty = oProps.isEmpty();
+            oProps.putType(nType);
+            if(bEmpty) {
                 return;
             }
         }
 
+        //Set the properties which was already set. It needs for the fast coediting. TODO: check it
+        oChartSpace.setChart(oChartSpace.chart.createDuplicate());
+        oChartSpace.setStyle(oChartSpace.style);
 
-        chart_space.updateLinks();
-        var oValAx = chart_space.chart.plotArea.valAx;
-        var oCatAx = chart_space.chart.plotArea.catAx;
-        chart_space.setStyle(chart_space.style);
-        if(this.drawingObjects && this.drawingObjects.getWorksheet && typeof sRange === "string" && sRange.length > 0)
-        {
-            var ws_view = this.drawingObjects.getWorksheet();
-            var parsed_formula = parserHelp.parse3DRef(sRange);
-            if(parsed_formula)
-            {
-
-                var ws = ws_view.model.workbook.getWorksheetByName(parsed_formula.sheet);
-                var new_bbox;
-                var range_object = ws.getRange2(parsed_formula.range);
-                if(range_object)
-                {
-                    new_bbox = range_object.bbox;
-                }
-                if(ws && new_bbox )
-                {
-                    var oCommonBBox = chart_space.getCommonBBox();
-                    var b_equal_bbox = oCommonBBox && oCommonBBox.r1 === new_bbox.r1
-                        && oCommonBBox.r2 === new_bbox.r2
-                        && oCommonBBox.c1 === new_bbox.c1
-                        && oCommonBBox.c2 === new_bbox.c2;
-                    var b_equal_ws = chart_space.bbox && chart_space.bbox.worksheet === ws;
-                    var b_equal_vert = chart_space.bbox && chartSettings.getInColumns() === !chart_space.bbox.seriesBBox.bVert;
-
-                    var bLimit = (Math.abs(new_bbox.r2 - new_bbox.r1) > 4096 || Math.abs(new_bbox.c2 - new_bbox.c1) > 4096);
-                    if(!(chart_space.bbox && chart_space.bbox.seriesBBox && b_equal_ws
-                        && b_equal_bbox && b_equal_vert ) && !bLimit)
-                    {
-                        var catHeadersBBox, serHeadersBBox;
-                        if(chart_space.bbox && b_equal_bbox && b_equal_ws && !b_equal_vert)
-                        {
-                            if(chart_space.bbox.catBBox)
-                                serHeadersBBox = {r1: chart_space.bbox.catBBox.r1, r2: chart_space.bbox.catBBox.r2,
-                                    c1: chart_space.bbox.catBBox.c1, c2: chart_space.bbox.catBBox.c2};
-                            if(chart_space.bbox.serBBox)
-                                catHeadersBBox = {r1: chart_space.bbox.serBBox.r1, r2: chart_space.bbox.serBBox.r2,
-                                    c1: chart_space.bbox.serBBox.c1, c2: chart_space.bbox.serBBox.c2};
-                        }
-                        var chartSeries = AscFormat.getChartSeries(ws_view.model, chartSettings, catHeadersBBox, serHeadersBBox);
-                        //chart_space.clearFormatting(true);
-                        b_clear_formatting = true;
-                        chart_space.rebuildSeriesFromAsc(chartSeries);
-                        if(chart_space.pivotSource){
-                            chart_space.setPivotSource(null);
-                        }
-                    }
-                }
+        //Apply chart preset TODO: remove this when chartStyle will be implemented
+        var oChart = oChartSpace.chart;
+        var oPlotArea = oChart.plotArea;
+        var nStyle = oProps.getStyle();
+        if(AscFormat.isRealNumber(nStyle)){
+            var oPreset = AscCommon.g_oChartPresets[nCurType] && AscCommon.g_oChartPresets[nCurType][nStyle - 1];
+            if(oPreset) {
+                AscFormat.ApplyPresetToChartSpace(oChartSpace, oPreset, oProps.bCreate);
+                return;
             }
         }
 
-
-        var title_show_settings = chartSettings.getTitle();
-        if(title_show_settings === c_oAscChartTitleShowSettings.none)
-        {
-            if(chart.title)
-            {
-                chart.setTitle(null);
-            }
-        }
-        else if(title_show_settings === c_oAscChartTitleShowSettings.noOverlay
-            || title_show_settings === c_oAscChartTitleShowSettings.overlay)
-        {
-            if(!chart.title)
-            {
-                chart.setTitle(new AscFormat.CTitle());
-            }
-            if(chart.title.overlay !== (title_show_settings === c_oAscChartTitleShowSettings.overlay))
-            {
-                chart.title.setOverlay(title_show_settings === c_oAscChartTitleShowSettings.overlay);
-            }
-        }
-        //horAxisLabel
-
-
-        //legend
-        var legend_pos_settings =  chartSettings.getLegendPos();
-        if(legend_pos_settings !== null)
-        {
-            if(legend_pos_settings === c_oAscChartLegendShowSettings.none)
-            {
-                if(chart.legend)
-                {
-                    chart.setLegend(null);
-                }
-            }
-            else
-            {
-                if(!chart.legend)
-                {
-                    chart.setLegend(new AscFormat.CLegend());
-                }
-                if(chart.legend.legendPos !== legend_pos_settings && legend_pos_settings !== c_oAscChartLegendShowSettings.layout)
-                    chart.legend.setLegendPos(legend_pos_settings);
-                var b_overlay = c_oAscChartLegendShowSettings.leftOverlay === legend_pos_settings || legend_pos_settings === c_oAscChartLegendShowSettings.rightOverlay;
-                if(chart.legend.overlay !== b_overlay)
-                {
-                    chart.legend.setOverlay(b_overlay);
-                }
-            }
-        }
-
-
-        var chart_type = plot_area.charts[0];
-        plot_area.removeCharts(1, plot_area.charts.length - 1);
-        //Data Labels
-        var i;
-        var need_groupping, need_num_fmt, need_bar_dir;
-        var val_axis, new_chart_type, object_type, axis_obj ;
-        var axis_by_types;
-        var val_ax, cat_ax;
-        object_type = chart_type.getObjectType();
-        var sDefaultValAxFormatCode = null;
-        if(chart_type && chart_type.series[0]){
-            var aPoints = AscFormat.getPtsFromSeries(chart_type.series[0]);
-            if(aPoints[0] && typeof aPoints[0].formatCode === "string" && aPoints[0].formatCode.length > 0){
-                sDefaultValAxFormatCode = aPoints[0].formatCode;
-            }
-        }
-        need_num_fmt = sDefaultValAxFormatCode;
-
-        var checkSwapAxis = function(plotArea, chartType, newChartType)
-        {
-            if(chartType.getAxisByTypes )
-            {
-                var axis_by_types = chartType.getAxisByTypes(), cat_ax, val_ax;
-                if(axis_by_types.catAx.length > 0 && axis_by_types.valAx.length > 0)
-                {
-                    cat_ax = axis_by_types.catAx[0];
-                    val_ax = axis_by_types.valAx[0];
-                }
-            }
-            if(!val_ax || !cat_ax)
-            {
-                var axis_obj = AscFormat.CreateDefaultAxises(need_num_fmt ? need_num_fmt : "General");
-                cat_ax = axis_obj.catAx;
-                val_ax = axis_obj.valAx;
-
-
-
-                if(oValAx && oValAx instanceof AscFormat.CValAx){
-                    oValAx.createDuplicate(val_ax);
-                    val_ax.numFmt.setFormatCode(need_num_fmt);
-                }
-                if(oCatAx){
-                    if(oCatAx.majorGridlines)
-                    {
-                        axis_obj.catAx.setMajorGridlines(oCatAx.majorGridlines.createDuplicate());
-                    }
-                    axis_obj.catAx.setMajorTickMark(oCatAx.majorTickMark);
-
-                    if(oCatAx.minorGridlines)
-                    {
-                        axis_obj.catAx.setMinorGridlines(oCatAx.minorGridlines.createDuplicate());
-                    }
-                    axis_obj.catAx.setMinorTickMark(oCatAx.minorTickMark);
-
-                    if(oCatAx.spPr)
-                    {
-                        axis_obj.catAx.setSpPr(oCatAx.spPr.createDuplicate());
-                    }
-                    axis_obj.catAx.setTickLblPos(oCatAx.tickLblPos);
-                    if(oCatAx.title)
-                    {
-                        axis_obj.catAx.setTitle(oCatAx.title.createDuplicate());
-                    }
-                    if(oCatAx.txPr)
-                    {
-                        axis_obj.catAx.setTxPr(oCatAx.txPr.createDuplicate());
-                    }
-                }
-
-            }
-            if(cat_ax && val_ax)
-            {
-                if(newChartType.getObjectType() === AscDFH.historyitem_type_BarChart && newChartType.barDir === BAR_DIR_BAR)
-                {
-                    if(cat_ax.axPos !== AscFormat.AX_POS_L)
-                    {
-                        cat_ax.setAxPos(AscFormat.AX_POS_L);
-                    }
-                    if(val_ax.axPos !== AscFormat.AX_POS_B)
-                    {
-                        val_ax.setAxPos(AscFormat.AX_POS_B);
-                    }
-                }
-                else
-                {
-                    if(cat_ax.axPos !== AscFormat.AX_POS_B)
-                    {
-                        cat_ax.setAxPos(AscFormat.AX_POS_B);
-                    }
-                    if(val_ax.axPos !== AscFormat.AX_POS_L)
-                    {
-                        val_ax.setAxPos(AscFormat.AX_POS_L);
-                    }
-                }
-                newChartType.addAxId(cat_ax);
-                newChartType.addAxId(val_ax);
-                plotArea.addAxis(cat_ax);
-                plotArea.addAxis(val_ax);
-            }
-        };
-
-        var replaceChart = function(plotArea, chartType, newChartType)
-        {
-            plotArea.addChart(newChartType, 0);
-            plotArea.removeCharts(1, plotArea.charts.length - 1);
-            newChartType.setFromOtherChart(chartType);
-            if(newChartType.getObjectType() !== AscDFH.historyitem_type_PieChart && newChartType.getObjectType() !== AscDFH.historyitem_type_DoughnutChart)
-            {
-                if(newChartType.setVaryColors && newChartType.varyColors === true)
-                {
-                    newChartType.setVaryColors(false);
-                }
-            }
-        };
-
-        switch(type)
-        {
-            case c_oAscChartTypeSettings.barNormal     :
-            case c_oAscChartTypeSettings.barStacked    :
-            case c_oAscChartTypeSettings.barStackedPer :
-            case c_oAscChartTypeSettings.barNormal3d           :
-            case c_oAscChartTypeSettings.barStacked3d          :
-            case c_oAscChartTypeSettings.barStackedPer3d       :
-            case c_oAscChartTypeSettings.barNormal3dPerspective:
-            case c_oAscChartTypeSettings.hBarNormal    :
-            case c_oAscChartTypeSettings.hBarStacked   :
-            case c_oAscChartTypeSettings.hBarStackedPer:
-            case c_oAscChartTypeSettings.hBarNormal3d:
-            case c_oAscChartTypeSettings.hBarStacked3d:
-            case c_oAscChartTypeSettings.hBarStackedPer3d:
-            {
-                if(type === c_oAscChartTypeSettings.barNormal || type === c_oAscChartTypeSettings.hBarNormal
-                    || type === c_oAscChartTypeSettings.barNormal3d || type === c_oAscChartTypeSettings.hBarNormal3d )
-                    need_groupping = BAR_GROUPING_CLUSTERED;
-                else if(type === c_oAscChartTypeSettings.barStacked || type === c_oAscChartTypeSettings.hBarStacked
-                    || type === c_oAscChartTypeSettings.barStacked3d || type === c_oAscChartTypeSettings.hBarStacked3d)
-                    need_groupping = BAR_GROUPING_STACKED;
-                else if(type === c_oAscChartTypeSettings.barNormal3dPerspective)
-                    need_groupping = BAR_GROUPING_STANDARD;
-                else
-                    need_groupping = BAR_GROUPING_PERCENT_STACKED;
-
-                var bNeed3D = type === c_oAscChartTypeSettings.barNormal3d || type === c_oAscChartTypeSettings.barStacked3d
-                    || type === c_oAscChartTypeSettings.barStackedPer3d || type === c_oAscChartTypeSettings.barNormal3dPerspective
-                    || type === c_oAscChartTypeSettings.hBarNormal3d || type === c_oAscChartTypeSettings.hBarStacked3d || type === c_oAscChartTypeSettings.hBarStackedPer3d;
-
-                if( type === c_oAscChartTypeSettings.barNormal || type === c_oAscChartTypeSettings.barStacked
-                    || type === c_oAscChartTypeSettings.barNormal3d || type === c_oAscChartTypeSettings.barStacked3d
-                    || type === c_oAscChartTypeSettings.hBarNormal || type === c_oAscChartTypeSettings.hBarStacked
-                    || type === c_oAscChartTypeSettings.hBarNormal3d || type === c_oAscChartTypeSettings.hBarStacked3d
-                    || type === c_oAscChartTypeSettings.barNormal3dPerspective){
-                    need_num_fmt = sDefaultValAxFormatCode;
-
-                }
-                else
-                    need_num_fmt = "0%";
-
-                if(type === c_oAscChartTypeSettings.barNormal || type === c_oAscChartTypeSettings.barStacked || type === c_oAscChartTypeSettings.barStackedPer
-                    || type === c_oAscChartTypeSettings.barNormal3d || type === c_oAscChartTypeSettings.barStacked3d || type === c_oAscChartTypeSettings.barStackedPer3d  || type === c_oAscChartTypeSettings.barNormal3dPerspective)
-                    need_bar_dir = BAR_DIR_COL;
-                else
-                    need_bar_dir = BAR_DIR_BAR;
-
-                if(chart_type.getObjectType() === AscDFH.historyitem_type_BarChart)
-                {
-                    var bChangedGrouping = false;
-                    var nOldGrouping = chart_type.grouping;
-                    if(chart_type.grouping !== need_groupping)
-                    {
-                        chart_type.setGrouping(need_groupping);
-                        bChangedGrouping = true;
-                    }
-
-                    if(!AscFormat.isRealNumber(chart_type.gapWidth))
-                    {
-                        chart_type.setGapWidth(150);
-                    }
-                    if(BAR_GROUPING_PERCENT_STACKED === need_groupping || BAR_GROUPING_STACKED === need_groupping)
-                    {
-                        if(!AscFormat.isRealNumber(chart_type.overlap) || nOldGrouping !== BAR_GROUPING_PERCENT_STACKED || nOldGrouping !== BAR_GROUPING_STACKED)
-                        {
-                            chart_type.setOverlap(100);
-                        }
-                    }
-                    else
-                    {
-                        if(bChangedGrouping && chart_type.overlap !== null)
-                        {
-                            chart_type.setOverlap(null);
-                        }
-                    }
-
-                    axis_by_types = chart_type.getAxisByTypes();
-                    if(chart_type.barDir !== need_bar_dir)
-                    {
-                        val_axis = axis_by_types.valAx;
-                        if(need_bar_dir === BAR_DIR_BAR)
-                        {
-                            for(i = 0; i < val_axis.length; ++i)
-                                val_axis[i].setAxPos(AscFormat.AX_POS_B);
-
-                            for(i = 0; i < axis_by_types.catAx.length; ++i)
-                                axis_by_types.catAx[i].setAxPos(AscFormat.AX_POS_L);
-                        }
-                        else
-                        {
-                            for(i = 0; i < val_axis.length; ++i)
-                                val_axis[i].setAxPos(AscFormat.AX_POS_L);
-
-                            for(i = 0; i < axis_by_types.catAx.length; ++i)
-                                axis_by_types.catAx[i].setAxPos(AscFormat.AX_POS_B);
-                        }
-                        chart_type.setBarDir(need_bar_dir);
-                    }
-
-                    if(bNeed3D)
-                    {
-                        if(!chart_type.b3D)
-                        {
-                            chart_type.set3D(true);
-                        }
-                        if(!chart.view3D)
-                        {
-                            chart.setView3D(new AscFormat.CView3d());
-                        }
-
-                        var oView3d = chart.view3D;
-                        if(!AscFormat.isRealNumber(oView3d.rotX))
-                        {
-                            oView3d.setRotX(15);
-                        }
-                        if(!AscFormat.isRealNumber(oView3d.rotY))
-                        {
-                            oView3d.setRotY(20);
-                        }
-                        if(!AscFormat.isRealBool(oView3d.rAngAx))
-                        {
-                            oView3d.setRAngAx(true);
-                        }
-                        if(c_oAscChartTypeSettings.barNormal3dPerspective === type)
-                        {
-                            if(!AscFormat.isRealNumber(oView3d.depthPercent))
-                            {
-                                oView3d.setDepthPercent(100);
-                            }
-                        }
-                        else
-                        {
-                            if(null !== oView3d.depthPercent)
-                            {
-                                oView3d.setDepthPercent(null);
-                            }
-                        }
-
-                        chart.setDefaultWalls();
-                    }
-                    else
-                    {
-                        if(chart_type.b3D)
-                        {
-                            chart_type.set3D(false);
-                        }
-                        if(chart.view3D)
-                        {
-                            chart.setView3D(null);
-                        }
-                        if(chart.floor)
-                        {
-                            chart.setFloor(null);
-                        }
-                        if(chart.sideWall)
-                        {
-                            chart.setSideWall(null);
-                        }
-                        if(chart.backWall)
-                        {
-                            chart.setBackWall(null);
-                        }
-                    }
-                    val_axis = axis_by_types.valAx;
-                    for(i = 0; i < val_axis.length; ++i)
-                    {
-                        if(!val_axis[i].numFmt)
-                        {
-                            val_axis[i].setNumFmt(new AscFormat.CNumFmt());
-                            val_axis[i].numFmt.setFormatCode(sDefaultValAxFormatCode ? sDefaultValAxFormatCode : "General");
-                            val_axis[i].numFmt.setSourceLinked(true);
-                        }
-                        if(need_num_fmt && val_axis[i].numFmt.formatCode !== need_num_fmt)
-                            val_axis[i].numFmt.setFormatCode(need_num_fmt);
-                    }
-                }
-                else
-                {
-                    new_chart_type = new AscFormat.CBarChart();
-                    replaceChart(plot_area, chart_type, new_chart_type);
-                    new_chart_type.setBarDir(need_bar_dir);
-                    checkSwapAxis(plot_area, chart_type, new_chart_type);
-                    new_chart_type.setGrouping(need_groupping);
-                    new_chart_type.setGapWidth(150);
-
-                    if(BAR_GROUPING_PERCENT_STACKED === need_groupping || BAR_GROUPING_STACKED === need_groupping)
-                        new_chart_type.setOverlap(100);
-
-                    if(bNeed3D)
-                    {
-                        if(!chart.view3D){
-                            chart.setView3D(AscFormat.CreateView3d(15, 20, true, c_oAscChartTypeSettings.barNormal3dPerspective === type ? 100 : undefined));
-                            chart.setDefaultWalls();
-                        }
-                        if(!new_chart_type.b3D){
-                            new_chart_type.set3D(true);
-                        }
-
-                    }
-                    else
-                    {
-                        if(chart.view3D)
-                        {
-                            chart.setView3D(null);
-                        }
-                        if(chart.floor)
-                        {
-                            chart.setFloor(null);
-                        }
-                        if(chart.sideWall)
-                        {
-                            chart.setSideWall(null);
-                        }
-                        if(chart.backWall)
-                        {
-                            chart.setBackWall(null);
-                        }
-                    }
-
-                    axis_by_types = new_chart_type.getAxisByTypes();
-                    val_axis = axis_by_types.valAx;
-                    for(i = 0; i < val_axis.length; ++i)
-                    {
-                        if(!val_axis[i].numFmt)
-                        {
-                            val_axis[i].setNumFmt(new AscFormat.CNumFmt());
-                            val_axis[i].numFmt.setFormatCode(sDefaultValAxFormatCode ? sDefaultValAxFormatCode : "General");
-                            val_axis[i].numFmt.setSourceLinked(true);
-                        }
-                        if(need_num_fmt && val_axis[i].numFmt.formatCode !== need_num_fmt)
-                            val_axis[i].numFmt.setFormatCode(need_num_fmt);
-                        if(need_bar_dir = BAR_DIR_BAR)
-                            val_axis[i].setAxPos(AscFormat.AX_POS_B);
-                    }
-                    if(need_bar_dir = BAR_DIR_BAR)
-                    {
-                        for(i = 0; i < axis_by_types.catAx.length; ++i)
-                            axis_by_types.catAx[i].setAxPos(AscFormat.AX_POS_L);
-                    }
-                }
-                break;
-            }
-            case c_oAscChartTypeSettings.lineNormal           :
-            case c_oAscChartTypeSettings.lineStacked          :
-            case c_oAscChartTypeSettings.lineStackedPer      :
-            case c_oAscChartTypeSettings.lineNormalMarker    :
-            case c_oAscChartTypeSettings.lineStackedMarker   :
-            case c_oAscChartTypeSettings.lineStackedPerMarker:
-            case c_oAscChartTypeSettings.line3d:
-            {
-                if(type === c_oAscChartTypeSettings.lineNormal || type === c_oAscChartTypeSettings.lineNormalMarker || type === c_oAscChartTypeSettings.line3d)
-                    need_groupping = GROUPING_STANDARD;
-                else if(type === c_oAscChartTypeSettings.lineStacked || type === c_oAscChartTypeSettings.lineStackedMarker)
-                    need_groupping = GROUPING_STACKED;
-                else
-                    need_groupping = GROUPING_PERCENT_STACKED;
-
-                if(type === c_oAscChartTypeSettings.lineNormal || type === c_oAscChartTypeSettings.lineStacked  || type === c_oAscChartTypeSettings.line3d
-                    || type === c_oAscChartTypeSettings.lineNormalMarker || type === c_oAscChartTypeSettings.lineStackedMarker)
-                    need_num_fmt = sDefaultValAxFormatCode;
-                else
-                    need_num_fmt = "0%";
-
-                var b_marker = chartSettings.getShowMarker();
-
-                if(chart_type.getObjectType() === AscDFH.historyitem_type_LineChart)
-                {
-                    if(chart_type.grouping !== need_groupping)
-                        chart_type.setGrouping(need_groupping);
-                    val_axis = chart_type.getAxisByTypes().valAx;
-                    for(i = 0; i < val_axis.length; ++i)
-                    {
-                        if(!val_axis[i].numFmt)
-                        {
-                            val_axis[i].setNumFmt(new AscFormat.CNumFmt());
-                            val_axis[i].numFmt.setFormatCode(sDefaultValAxFormatCode ? sDefaultValAxFormatCode : "General");
-                            val_axis[i].numFmt.setSourceLinked(true);
-                        }
-                        if(need_num_fmt && val_axis[i].numFmt.formatCode !== need_num_fmt)
-                            val_axis[i].numFmt.setFormatCode(need_num_fmt);
-                    }
-
-
-
-                    if(type === c_oAscChartTypeSettings.line3d)
-                    {
-
-                        if(!chart.view3D)
-                        {
-                            chart.setView3D(new AscFormat.CView3d());
-                        }
-
-                        var oView3d = chart.view3D;
-                        if(!AscFormat.isRealNumber(oView3d.rotX))
-                        {
-                            oView3d.setRotX(15);
-                        }
-                        if(!AscFormat.isRealNumber(oView3d.rotY))
-                        {
-                            oView3d.setRotY(20);
-                        }
-                        if(!AscFormat.isRealBool(oView3d.rAngAx))
-                        {
-                            oView3d.setRAngAx(true);
-                        }
-                        if(!AscFormat.isRealNumber(oView3d.depthPercent))
-                        {
-                            oView3d.setDepthPercent(100);
-                        }
-                        chart.setDefaultWalls();
-                    }
-                    else
-                    {
-                        if(chart.view3D)
-                        {
-                            chart.setView3D(null);
-                            chartSettings.bLine = true;
-                            new_chart_type = new AscFormat.CLineChart();
-                            replaceChart(plot_area, chart_type, new_chart_type);
-                            checkSwapAxis(plot_area, chart_type, new_chart_type);
-                        }
-                        if(chart.floor)
-                        {
-                            chart.setFloor(null);
-                        }
-                        if(chart.sideWall)
-                        {
-                            chart.setSideWall(null);
-                        }
-                        if(chart.backWall)
-                        {
-                            chart.setBackWall(null);
-                        }
-                    }
-
-                   // if((AscFormat.isRealBool(chart_type.marker) && chart_type.marker) !== b_marker)
-                   //     chart_type.setMarker(b_marker);
-                }
-                else
-                {
-
-
-                    new_chart_type = new AscFormat.CLineChart();
-                    replaceChart(plot_area, chart_type, new_chart_type);
-                    checkSwapAxis(plot_area, chart_type, new_chart_type);
-                    val_axis = new_chart_type.getAxisByTypes().valAx;
-                    for(i = 0; i < val_axis.length; ++i)
-                    {
-                        if(!val_axis[i].numFmt)
-                        {
-                            val_axis[i].setNumFmt(new AscFormat.CNumFmt());
-                            val_axis[i].numFmt.setFormatCode(sDefaultValAxFormatCode ? sDefaultValAxFormatCode : "General");
-                            val_axis[i].numFmt.setSourceLinked(true);
-                        }
-                        if(need_num_fmt && val_axis[i].numFmt.formatCode !== need_num_fmt)
-                            val_axis[i].numFmt.setFormatCode(need_num_fmt);
-                    }
-                    if(type === c_oAscChartTypeSettings.line3d)
-                    {
-                        if(!chart.view3D){
-                            chart.setView3D(AscFormat.CreateView3d(15, 20, true, 100));
-                            chart.setDefaultWalls();
-                        }
-                    }
-                    else
-                    {
-                        if(chart.view3D)
-                        {
-                            chart.setView3D(null);
-                        }
-                        if(chart.floor)
-                        {
-                            chart.setFloor(null);
-                        }
-                        if(chart.sideWall)
-                        {
-                            chart.setSideWall(null);
-                        }
-                        if(chart.backWall)
-                        {
-                            chart.setBackWall(null);
-                        }
-                    }
-                    //new_chart_type.setMarker(b_marker);
-                    new_chart_type.setGrouping(need_groupping);
-                }
-                break;
-            }
-            case c_oAscChartTypeSettings.pie:
-            case c_oAscChartTypeSettings.pie3d:
-            {
-                if(chart_type.getObjectType() !== AscDFH.historyitem_type_PieChart)
-                {
-                    new_chart_type = new AscFormat.CPieChart();
-                    replaceChart(plot_area, chart_type, new_chart_type);
-                    new_chart_type.setVaryColors(true);
-                    if(type === c_oAscChartTypeSettings.pie3d)
-                    {
-                        if(!chart.view3D){
-                            chart.setView3D(AscFormat.CreateView3d(30, 0, true, 100));
-                            chart.setDefaultWalls();
-                        }
-                        if(!chart.view3D.rAngAx){
-                            chart.view3D.setRAngAx(true);
-                        }
-                        if(chart.view3D.rotX < 0){
-                            chart.view3D.rotX = 30;
-                        }
-                    }
-                    else
-                    {
-                        if(chart.view3D)
-                        {
-                            chart.setView3D(null);
-                        }
-                        if(chart.floor)
-                        {
-                            chart.setFloor(null);
-                        }
-                        if(chart.sideWall)
-                        {
-                            chart.setSideWall(null);
-                        }
-                        if(chart.backWall)
-                        {
-                            chart.setBackWall(null);
-                        }
-                    }
-                }
-                else
-                {
-                    if(type === c_oAscChartTypeSettings.pie3d)
-                    {
-                        if(!chart.view3D)
-                        {
-                            chart.setView3D(new AscFormat.CView3d());
-                        }
-
-                        var oView3d = chart.view3D;
-                        if(!AscFormat.isRealNumber(oView3d.rotX))
-                        {
-                            oView3d.setRotX(30);
-                        }
-                        if(!AscFormat.isRealNumber(oView3d.rotY))
-                        {
-                            oView3d.setRotY(0);
-                        }
-                        if(!AscFormat.isRealBool(oView3d.rAngAx))
-                        {
-                            oView3d.setRAngAx(true);
-                        }
-                        if(!AscFormat.isRealNumber(oView3d.depthPercent))
-                        {
-                            oView3d.setDepthPercent(100);
-                        }
-                        chart.setDefaultWalls();
-                    }
-                    else
-                    {
-                        if(chart.view3D)
-                        {
-                            chart.setView3D(null);
-                        }
-                        if(chart.floor)
-                        {
-                            chart.setFloor(null);
-                        }
-                        if(chart.sideWall)
-                        {
-                            chart.setSideWall(null);
-                        }
-                        if(chart.backWall)
-                        {
-                            chart.setBackWall(null);
-                        }
-                    }
-                }
-                break;
-            }
-            case c_oAscChartTypeSettings.doughnut:
-            {
-                if(chart_type.getObjectType() !== AscDFH.historyitem_type_DoughnutChart)
-                {
-                    new_chart_type = new AscFormat.CDoughnutChart();
-                    replaceChart(plot_area, chart_type, new_chart_type);
-                    new_chart_type.setVaryColors(true);
-                    new_chart_type.setHoleSize(50);
-                }
-                break;
-            }
-            case c_oAscChartTypeSettings.areaNormal:
-            case c_oAscChartTypeSettings.areaStacked:
-            case c_oAscChartTypeSettings.areaStackedPer:
-            {
-
-                if(type === c_oAscChartTypeSettings.areaNormal)
-                    need_groupping = GROUPING_STANDARD;
-                else if(type === c_oAscChartTypeSettings.areaStacked)
-                    need_groupping = GROUPING_STACKED;
-                else
-                    need_groupping = GROUPING_PERCENT_STACKED;
-
-                if(type === c_oAscChartTypeSettings.areaNormal || type === c_oAscChartTypeSettings.areaStacked)
-                    need_num_fmt = sDefaultValAxFormatCode;
-                else
-                    need_num_fmt = "0%";
-
-                if(chart_type.getObjectType() === AscDFH.historyitem_type_AreaChart)
-                {
-                    if(chart_type.grouping !== need_groupping)
-                        chart_type.setGrouping(need_groupping);
-                    val_axis = chart_type.getAxisByTypes().valAx;
-                    for(i = 0; i < val_axis.length; ++i)
-                    {
-                        if(!val_axis[i].numFmt)
-                        {
-                            val_axis[i].setNumFmt(new AscFormat.CNumFmt());
-                            val_axis[i].numFmt.setFormatCode(sDefaultValAxFormatCode ? sDefaultValAxFormatCode : "General");
-                            val_axis[i].numFmt.setSourceLinked(true);
-                        }
-                        if(need_num_fmt && val_axis[i].numFmt.formatCode !== need_num_fmt)
-                            val_axis[i].numFmt.setFormatCode(need_num_fmt);
-                    }
-                }
-                else
-                {
-                    new_chart_type = new AscFormat.CAreaChart();
-                    replaceChart(plot_area, chart_type, new_chart_type);
-                    checkSwapAxis(plot_area, chart_type, new_chart_type);
-
-                    val_axis = new_chart_type.getAxisByTypes().valAx;
-                    for(i = 0; i < val_axis.length; ++i)
-                    {
-                        if(!val_axis[i].numFmt)
-                        {
-                            val_axis[i].setNumFmt(new AscFormat.CNumFmt());
-                            val_axis[i].numFmt.setFormatCode(sDefaultValAxFormatCode ? sDefaultValAxFormatCode : "General");
-                            val_axis[i].numFmt.setSourceLinked(true);
-                        }
-                        if(need_num_fmt && val_axis[i].numFmt.formatCode !== need_num_fmt)
-                            val_axis[i].numFmt.setFormatCode(need_num_fmt);
-                    }
-                    new_chart_type.setGrouping(need_groupping);
-                }
-                chart_space.chart.setView3D(null);
-                break;
-            }
-            case c_oAscChartTypeSettings.scatter:
-            case c_oAscChartTypeSettings.scatterLine:
-            case c_oAscChartTypeSettings.scatterSmooth:
-            {
-                if(chart_type.getObjectType() !== AscDFH.historyitem_type_ScatterChart)
-                {
-                    new_chart_type = new AscFormat.CScatterChart();
-                    replaceChart(plot_area, chart_type, new_chart_type);
-                    for(var j = 0; j < new_chart_type.series.length; ++j)
-                    {
-                        new_chart_type.series[j].setMarker(null);
-                    }
-                    new_chart_type.setScatterStyle(SCATTER_STYLE_MARKER);
-                    axis_obj = AscFormat.CreateScatterAxis(); //cat - 0, val - 1
-                    if(oValAx && oValAx instanceof AscFormat.CValAx){
-                        oValAx.createDuplicate(axis_obj.valAx);
-                        axis_obj.valAx.setAxPos(AscFormat.AX_POS_L);
-                    }
-                    if(oCatAx){
-                        if(oCatAx.majorGridlines)
-                        {
-                            axis_obj.catAx.setMajorGridlines(oCatAx.majorGridlines.createDuplicate());
-                        }
-                        axis_obj.catAx.setMajorTickMark(oCatAx.majorTickMark);
-
-                        if(oCatAx.minorGridlines)
-                        {
-                            axis_obj.catAx.setMinorGridlines(oCatAx.minorGridlines.createDuplicate());
-                        }
-                        axis_obj.catAx.setMinorTickMark(oCatAx.minorTickMark);
-
-                        if(oCatAx.spPr)
-                        {
-                            axis_obj.catAx.setSpPr(oCatAx.spPr.createDuplicate());
-                        }
-                        axis_obj.catAx.setTickLblPos(oCatAx.tickLblPos);
-                        if(oCatAx.title)
-                        {
-                            axis_obj.catAx.setTitle(oCatAx.title.createDuplicate());
-                        }
-                        if(oCatAx.txPr)
-                        {
-                            axis_obj.catAx.setTxPr(oCatAx.txPr.createDuplicate());
-                        }
-                    }
-                    new_chart_type.addAxId(axis_obj.catAx);
-                    new_chart_type.addAxId(axis_obj.valAx);
-                    plot_area.addAxis(axis_obj.catAx);
-                    plot_area.addAxis(axis_obj.valAx);
-                }
-                break;
-            }
-            case c_oAscChartTypeSettings.stock:
-            {
-                if(chart_type.getObjectType() !== AscDFH.historyitem_type_StockChart)
-                {
-                    new_chart_type = new AscFormat.CStockChart();
-                    replaceChart(plot_area, chart_type, new_chart_type);
-                    checkSwapAxis(plot_area, chart_type, new_chart_type);
-
-                    new_chart_type.setHiLowLines(new AscFormat.CSpPr());
-                    new_chart_type.setUpDownBars(new AscFormat.CUpDownBars());
-                    new_chart_type.upDownBars.setGapWidth(150);
-                    new_chart_type.upDownBars.setUpBars(new AscFormat.CSpPr());
-                    new_chart_type.upDownBars.setDownBars(new AscFormat.CSpPr());
-                    val_axis = new_chart_type.getAxisByTypes().valAx;
-                    for(i = 0; i < val_axis.length; ++i)
-                    {
-                        if(!val_axis[i].numFmt)
-                        {
-                            val_axis[i].setNumFmt(new AscFormat.CNumFmt());
-                            val_axis[i].numFmt.setSourceLinked(true);
-                        }
-                        if(val_axis[i].numFmt.formatCode !== "General")
-                            val_axis[i].numFmt.setFormatCode("General");
-                    }
-                }
-                break;
-            }
-        }
-
-
-        var hor_axis = plot_area.getHorizontalAxis();
-        var hor_axis_label_setting = chartSettings.getHorAxisLabel();
-        if(hor_axis)
-        {
-            if(hor_axis_label_setting !== null)
-            {
-                switch (hor_axis_label_setting)
-                {
-                    case c_oAscChartHorAxisLabelShowSettings.none:
-                    {
-                        if(hor_axis.title)
-                            hor_axis.setTitle(null);
-                        break;
-                    }
-                    case c_oAscChartHorAxisLabelShowSettings.noOverlay:
-                    {
-                        var _text_body;
-                        if(hor_axis.title && hor_axis.title.tx && hor_axis.title.tx.rich)
-                        {
-                            _text_body = hor_axis.title.tx.rich;
-                        }
-                        else
-                        {
-                            if(!hor_axis.title)
-                            {
-                                hor_axis.setTitle(new AscFormat.CTitle());
-                            }
-                            if(!hor_axis.title.txPr)
-                            {
-                                hor_axis.title.setTxPr(new AscFormat.CTextBody());
-                            }
-                            if(!hor_axis.title.txPr.bodyPr)
-                            {
-                                hor_axis.title.txPr.setBodyPr(new AscFormat.CBodyPr());
-                            }
-                            if(!hor_axis.title.txPr.content)
-                            {
-                                hor_axis.title.txPr.setContent(new AscFormat.CDrawingDocContent(hor_axis.title.txPr, chart_space.getDrawingDocument(), 0, 0, 100, 500, false, false, true));
-                            }
-                            _text_body = hor_axis.title.txPr;
-                        }
-                        if(hor_axis.title.overlay !== false)
-                            hor_axis.title.setOverlay(false);
-
-                        if(!_text_body.bodyPr || _text_body.bodyPr.isNotNull())
-                        {
-                            _text_body.setBodyPr(new AscFormat.CBodyPr());
-                        }
-
-                        break;
-                    }
-                }
-            }
-            hor_axis.setMenuProps(chartSettings.getHorAxisProps());
-            if(AscFormat.isRealBool(chartSettings.getShowHorAxis())){
-                hor_axis.setDelete(!chartSettings.getShowHorAxis());
-            }
-        }
-
-        //vertAxis
-        var vert_axis = plot_area.getVerticalAxis(); //TODO: запрашивать у chart_type
-        var vert_axis_labels_settings = chartSettings.getVertAxisLabel();
-        if(vert_axis)
-        {
-            if(vert_axis_labels_settings !== null)
-            {
-                switch (vert_axis_labels_settings)
-                {
-                    case c_oAscChartVertAxisLabelShowSettings.none:
-                    {
-                        if(vert_axis.title)
-                        {
-                            vert_axis.setTitle(null);
-                        }
-                        break;
-                    }
-                    case c_oAscChartVertAxisLabelShowSettings.vertical:
-                    {
-                        //TODO: пока СDocumentContent не поддерживает вертикальный текст, может быть будет когда-нибудь, хотя вряд ли.
-                        break;
-                    }
-                    default:
-                    {
-                        if( vert_axis_labels_settings === c_oAscChartVertAxisLabelShowSettings.rotated
-                            || vert_axis_labels_settings === c_oAscChartVertAxisLabelShowSettings.horizontal)
-                        {
-                            var _text_body;
-                            if(vert_axis.title && vert_axis.title.tx && vert_axis.title.tx.rich)
-                            {
-                                _text_body = vert_axis.title.tx.rich;
-                            }
-                            else
-                            {
-                                if(!vert_axis.title)
-                                {
-                                    vert_axis.setTitle(new AscFormat.CTitle());
+        //Set the data range
+        //TODO: Rework this
+        var sRange = oProps.getRange();
+        if(typeof sRange === "string" && sRange.length > 0) {
+            var oWB = oApi.wb, oWS, oRange, oBBox, oCommonBBox, oChartBBox, oSeriesBBox;
+            var bEqualBBox = false, bEqualWS = false, bEqualVert = false, bLimit = false;
+            var oCatHeadersBBox, oSerHeadersBBox, oCatBBox, oSerBBox;
+            var aSeries;
+            if(oWB) {
+                var oParsedFormula = parserHelp.parse3DRef(sRange);
+                if(oParsedFormula) {
+                    oWS = oWB.getWorksheetByName(oParsedFormula.sheet);
+                    if(oWS) {
+                        oRange = oWS.getRange2(oParsedFormula.range);
+                        if(oRange) {
+                            oBBox = oRange.bbox;
+                            if(oBBox) {
+                                oCommonBBox = oChartSpace.getCommonBBox();
+                                oChartBBox = oChartSpace.bbox;
+                                bEqualBBox = oBBox.isEqual(oCommonBBox);
+                                if(oChartBBox) {
+                                    bEqualWS = oChartBBox.worksheet === oWS;
+                                    oSeriesBBox = oChartBBox.seriesBBox;
+                                    if(oSeriesBBox) {
+                                        bEqualVert =  oProps.getInColumns() === !oSeriesBBox.bVert;
+                                    }
                                 }
-                                if(!vert_axis.title.txPr)
-                                {
-                                    vert_axis.title.setTxPr(new AscFormat.CTextBody());
-                                }
-                                _text_body =  vert_axis.title.txPr;
-                            }
-                            if(!_text_body.bodyPr)
-                            {
-                                _text_body.setBodyPr(new AscFormat.CBodyPr());
-                            }
-                            var _body_pr = _text_body.bodyPr.createDuplicate();
-                            if(!_text_body.content)
-                            {
-                                _text_body.setContent(new AscFormat.CDrawingDocContent(_text_body, chart_space.getDrawingDocument(), 0, 0, 100, 500, false, false, true));
-                            }
-                            if(vert_axis_labels_settings === c_oAscChartVertAxisLabelShowSettings.rotated)
-                            {
-                                _body_pr.reset();
-                            }
-                            else
-                            {
-                                _body_pr.setVert(AscFormat.nVertTThorz);
-                                _body_pr.setRot(0);
-                            }
-                            _text_body.setBodyPr(_body_pr);
-                            if(vert_axis.title.overlay !== false)
-                            {
-                                vert_axis.title.setOverlay(false);
-                            }
-                        }
-                    }
-                }
-            }
-            vert_axis.setMenuProps(chartSettings.getVertAxisProps());
-            if(AscFormat.isRealBool(chartSettings.getShowVerAxis())){
-                vert_axis.setDelete(!chartSettings.getShowVerAxis());
-            }
-        }
-
-        //gridLines
-        //Hor GridLInes
-        var setAxisGridLines = function(axis, gridLinesSettings)
-        {
-            if(axis)
-            {
-                switch(gridLinesSettings)
-                {
-                    case c_oAscGridLinesSettings.none:
-                    {
-                        if(axis.majorGridlines)
-                            axis.setMajorGridlines(null);
-                        if(axis.minorGridlines)
-                            axis.setMinorGridlines(null);
-                        break;
-                    }
-                    case c_oAscGridLinesSettings.major:
-                    {
-                        if(!axis.majorGridlines)
-                            axis.setMajorGridlines(new AscFormat.CSpPr());
-                        if(axis.minorGridlines)
-                            axis.setMinorGridlines(null);
-                        break;
-                    }
-                    case c_oAscGridLinesSettings.minor:
-                    {
-                        if(!axis.minorGridlines)
-                            axis.setMinorGridlines(new AscFormat.CSpPr());
-                        if(axis.majorGridlines)
-                            axis.setMajorGridlines(null);
-                        break;
-                    }
-                    case c_oAscGridLinesSettings.majorMinor:
-                    {
-                        if(!axis.minorGridlines)
-                            axis.setMinorGridlines(new AscFormat.CSpPr());
-                        if(!axis.majorGridlines)
-                            axis.setMajorGridlines(new AscFormat.CSpPr());
-                        break;
-                    }
-                }
-            }
-        };
-
-        setAxisGridLines(plot_area.getVerticalAxis(), chartSettings.getHorGridLines());
-        setAxisGridLines(plot_area.getHorizontalAxis(), chartSettings.getVertGridLines());
-
-        for(var i = 0; i < plot_area.charts.length; ++i){
-            chart_type = plot_area.charts[i];
-            var data_labels_pos_setting = chartSettings.getDataLabelsPos();
-            if(AscFormat.isRealNumber(data_labels_pos_setting)){
-                if(data_labels_pos_setting === c_oAscChartDataLabelsPos.none){
-                    if(chart_type.dLbls)
-                        chart_type.setDLbls(null);
-                    chart_type.removeDataLabels();
-                }
-                else{
-                    var finish_dlbl_pos =  data_labels_pos_setting;
-                    finish_dlbl_pos = this.checkDlblsPosition(chart, chart_type, finish_dlbl_pos);
-                    if(chart_type.dLbls && chart_type.dLbls.dLblPos !== finish_dlbl_pos){
-                        chart_type.dLbls.setDLblPos(finish_dlbl_pos);
-                    }
-                    for(var i = 0; i < chart_type.series.length; ++i){
-                        if(chart_type.series[i].setDLbls){
-                            if(!chart_type.series[i].dLbls){
-                                var d_lbls = new AscFormat.CDLbls();
-                                d_lbls.setShowVal(true);
-                                chart_type.series[i].setDLbls(d_lbls);
-                                chart_type.series[i].dLbls.setParent(chart_type);
-                            }
-                            if(chart_type.series[i].dLbls.dLblPos !== finish_dlbl_pos){
-                                chart_type.series[i].dLbls.setDLblPos(finish_dlbl_pos);
-                            }
-                            for(var j = 0; j < chart_type.series[i].dLbls.dLbl.length; ++j){
-                                if(chart_type.series[i].dLbls.dLbl[j].dLblPos !== finish_dlbl_pos){
-                                    chart_type.series[i].dLbls.dLbl[j].setDLblPos(finish_dlbl_pos);
+                                bLimit = (oBBox.getHeight() > AscFormat.MAX_POINTS_COUNT || oBBox.getWidth() > AscFormat.MAX_POINTS_COUNT);
+                                if(!bLimit && (!bEqualWS || !bEqualBBox || !bEqualVert)) {
+                                    if(oChartBBox && bEqualBBox && bEqualWS && !bEqualVert) {
+                                        oCatBBox = oChartBBox.catBBox;
+                                        if(oCatBBox) {
+                                            oSerHeadersBBox = {
+                                                r1: oCatBBox.r1,
+                                                r2: oCatBBox.r2,
+                                                c1: oCatBBox.c1,
+                                                c2: oCatBBox.c2
+                                            };
+                                        }
+                                        oSerBBox = oChartBBox.serBBox;
+                                        if(oSerBBox)
+                                            oCatHeadersBBox = {
+                                                r1: oSerBBox.r1,
+                                                r2: oSerBBox.r2,
+                                                c1: oSerBBox.c1,
+                                                c2: oSerBBox.c2
+                                            };
+                                    }
+                                    aSeries = AscFormat.getChartSeries(oWS, oProps, oCatHeadersBBox, oSerHeadersBBox);
+                                    oChartSpace.rebuildSeriesFromAsc(aSeries);
+                                    if(oChartSpace.pivotSource){
+                                        oChartSpace.setPivotSource(null);
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-            else{
-                if(chart_type.dLbls && AscFormat.isRealNumber(chart_type.dLbls.dLblPos)){
-                    chart_type.dLbls.setDLblPos(this.checkDlblsPosition(chart, chart_type, chart_type.dLbls.dLblPos));
-                }
-                for(var i = 0; i < chart_type.series.length; ++i){
-                    if(chart_type.series[i].dLbls){
-                        if(AscFormat.isRealNumber(chart_type.series[i].dLbls.dLblPos)){
-                            chart_type.series[i].dLbls.setDLblPos(this.checkDlblsPosition(chart, chart_type, chart_type.series[i].dLbls.dLblPos));
-                        }
-                        for(var j = 0; j < chart_type.series[i].dLbls.dLbl.length; ++j){
-                            if(AscFormat.isRealNumber(chart_type.series[i].dLbls.dLbl[j].dLblPos)){
-                                chart_type.series[i].dLbls.dLbl[j].setDLblPos(this.checkDlblsPosition(chart, chart_type, chart_type.series[i].dLbls.dLbl[j].dLblPos));
-                            }
-                        }
-                    }
+        }
+
+        //Title
+        var nTitle = oProps.getTitle(), oTitle, bOverlay;
+        if(nTitle === c_oAscChartTitleShowSettings.none) {
+            if(oChart.title) {
+                oChart.setTitle(null);
+            }
+        }
+        else if(nTitle === c_oAscChartTitleShowSettings.noOverlay
+            || nTitle === c_oAscChartTitleShowSettings.overlay) {
+            oTitle = oChart.title;
+            if(!oTitle) {
+                oTitle = new AscFormat.CTitle();
+                oChart.setTitle(oTitle);
+            }
+            bOverlay = (nTitle === c_oAscChartTitleShowSettings.overlay);
+            if(oTitle.overlay !== bOverlay) {
+                oTitle.setOverlay(bOverlay);
+            }
+        }
+
+        //Legend
+        var nLegend = oProps.getLegendPos(), oLegend;
+        bOverlay = (c_oAscChartLegendShowSettings.leftOverlay === nLegend || nLegend === c_oAscChartLegendShowSettings.rightOverlay);
+        if(bOverlay) {
+            if(c_oAscChartLegendShowSettings.leftOverlay === nLegend) {
+                nLegend = c_oAscChartLegendShowSettings.left;
+            }
+            if(c_oAscChartLegendShowSettings.rightOverlay === nLegend) {
+                nLegend = c_oAscChartLegendShowSettings.right;
+            }
+        }
+        if(nLegend !== null) {
+            if(nLegend === c_oAscChartLegendShowSettings.none) {
+                if(oChart.legend) {
+                    oChart.setLegend(null);
                 }
             }
-            //подписи данных
-            if(typeof chart_type.setDLbls === "function" && AscFormat.isRealNumber(chartSettings.getDataLabelsPos()) && chartSettings.getDataLabelsPos() !== c_oAscChartDataLabelsPos.none)
-            {
-                if(AscFormat.isRealBool(chartSettings.showCatName) ||
-                    AscFormat.isRealBool(chartSettings.showSerName) ||
-                    AscFormat.isRealBool(chartSettings.showVal)){
-                    var fCheckLbls = function(oLbl){
-                        if(oLbl.setDelete && oLbl.bDelete){
-                            oLbl.setDelete(false);
-                        }
-                        if(AscFormat.isRealBool(chartSettings.showCatName)){
-                            oLbl.setShowCatName(chartSettings.showCatName);
-                        }
-                        if(AscFormat.isRealBool(chartSettings.showSerName)){
-                            oLbl.setShowSerName(chartSettings.showSerName);
-                        }
-                        if(AscFormat.isRealBool(chartSettings.showVal)){
-                            oLbl.setShowVal(chartSettings.showVal);
-                        }
-                        if(!AscFormat.isRealBool(oLbl.showLegendKey) || oLbl.showLegendKey === true)                {
-                            oLbl.setShowLegendKey(false);
-                        }
-                        if(!AscFormat.isRealBool(oLbl.showPercent) || oLbl.showPercent === true){
-                            oLbl.setShowPercent(false);
-                        }
-                        if(!AscFormat.isRealBool(oLbl.showBubbleSize) || oLbl.showBubbleSize === true){
-                            oLbl.setShowBubbleSize(false);
-                        }
-                        if(typeof chartSettings.separator === "string" && chartSettings.separator.length > 0)
-                            oLbl.setSeparator(chartSettings.separator);
-                    };
-                    for(var i = 0; i < chart_type.series.length; ++i){
-                        var oSeries = chart_type.series[i];
-                        if(oSeries.setDLbls){
-                            if(!oSeries.dLbls){
-                                oSeries.setDLbls(new AscFormat.CDLbls());
-                                oSeries.dLbls.setParent(oSeries);
-                            }
-                        }
-                        fCheckLbls(oSeries.dLbls);
-                        for(var j = 0; j < oSeries.dLbls.dLbl.length; ++j){
-                            fCheckLbls(oSeries.dLbls.dLbl[j]);
-                        }
-                    }
+            else {
+                oLegend = oChart.legend;
+                if(!oLegend) {
+                    oLegend = new AscFormat.CLegend();
+                    oChart.setLegend(oLegend);
+                }
+                if(oLegend.legendPos !== nLegend && nLegend !== c_oAscChartLegendShowSettings.layout) {
+                    oLegend.setLegendPos(nLegend);
+                }
+                if(oLegend.overlay !== bOverlay) {
+                    oLegend.setOverlay(bOverlay);
                 }
             }
+        }
 
-            if(chart_type.getObjectType() === AscDFH.historyitem_type_LineChart )
+        oChartSpace.changeChartType(oProps.getType());
+        var oOrderedAxes = oChartSpace.getOrderedAxes();
+        var aAx = oOrderedAxes.getHorizontalAxes();
+        var aAxSettings = oProps.getHorAxesProps();
+        var nAx;
+        if(aAx.length === aAxSettings.length) {
+            for(nAx = 0; nAx < aAx.length; ++nAx) {
+                aAx[nAx].setMenuProps(aAxSettings[nAx]);
+            }
+        }
+        aAx = oOrderedAxes.getVerticalAxes();
+        aAxSettings = oProps.getVertAxesProps();
+        if(aAx.length === aAxSettings.length) {
+            for(nAx = 0; nAx < aAx.length; ++nAx) {
+                aAx[nAx].setMenuProps(aAxSettings[nAx]);
+            }
+        }
+
+        oChartSpace.setDlblsProps(oProps);
+        var oTypedChart, nChart, nSer, oSeries;
+        for(nChart = 0; nChart < oPlotArea.charts.length; ++nChart){
+            oTypedChart = oPlotArea.charts[nChart];
+            if(oTypedChart.getObjectType() === AscDFH.historyitem_type_LineChart )
             {
-                if(!AscFormat.isRealBool(chartSettings.showMarker) || AscFormat.CChartsDrawer.prototype._isSwitchCurrent3DChart(chartSpace))
+                if(!AscFormat.isRealBool(oProps.showMarker) || AscFormat.CChartsDrawer.prototype._isSwitchCurrent3DChart(oChartSpace))
                 {
-                    chartSettings.showMarker = false;
+                    oProps.showMarker = false;
                 }
-                if(!AscFormat.isRealBool(chartSettings.bLine) || AscFormat.CChartsDrawer.prototype._isSwitchCurrent3DChart(chartSpace))
+                if(!AscFormat.isRealBool(oProps.bLine) || AscFormat.CChartsDrawer.prototype._isSwitchCurrent3DChart(oChartSpace))
                 {
-                    chartSettings.bLine = true;
+                    oProps.bLine = true;
                 }
-
-                if(chartSettings.showMarker)
+                oTypedChart.setMarkerValue(oProps.showMarker);
+                if(!oProps.bLine)
                 {
-                    if(!chart_type.marker)
+                    for(nSer = 0; nSer < oTypedChart.series.length; ++nSer)
                     {
-                        chart_type.setMarker(true);
-                    }
-                    for(var j = 0; j < chart_type.series.length; ++j)
-                    {
-                        if(chart_type.series[j].marker && chart_type.series[j].marker.symbol === AscFormat.SYMBOL_NONE)
+                        oSeries = oTypedChart.series[nSer];
+                        removeDPtsFromSeries(oSeries);
+                        if(!oSeries.spPr)
                         {
-                            chart_type.series[j].setMarker(null);
+                            oSeries.setSpPr(new AscFormat.CSpPr());
                         }
+
+                        if(AscFormat.isRealBool(oSeries.smooth))
+                        {
+                            oSeries.setSmooth(null);
+                        }
+                        oSeries.spPr.setLn(AscFormat.CreateNoFillLine());
                     }
                 }
                 else
                 {
-                    for(var j = 0; j < chart_type.series.length; ++j)
+                    for(nSer = 0; nSer < oTypedChart.series.length; ++nSer)
                     {
-                        if(!chart_type.series[j].marker)
+                        oSeries = oTypedChart.series[nSer];
+                        removeDPtsFromSeries(oSeries);
+                        if(oSeries.smooth !== (oProps.smooth === true))
                         {
-                            chart_type.series[j].setMarker(new AscFormat.CMarker());
+                            oSeries.setSmooth(oProps.smooth === true);
                         }
-                        if(chart_type.series[j].marker.symbol !== AscFormat.SYMBOL_NONE)
+                        if(oSeries.spPr && oSeries.spPr.ln)
                         {
-                            chart_type.series[j].marker.setSymbol(AscFormat.SYMBOL_NONE);
+                            oSeries.spPr.setLn(null);
                         }
                     }
                 }
-
-                if(!chartSettings.bLine)
+                if(oTypedChart.smooth !== (oProps.smooth === true))
                 {
-                    for(var j = 0; j < chart_type.series.length; ++j)
-                    {
-                        removeDPtsFromSeries(chart_type.series[j]);
-                        if(!chart_type.series[j].spPr)
-                        {
-                            chart_type.series[j].setSpPr(new AscFormat.CSpPr());
-                        }
-
-                        if(AscFormat.isRealBool(chart_type.series[j].smooth))
-                        {
-                            chart_type.series[j].setSmooth(null);
-                        }
-                        chart_type.series[j].spPr.setLn(AscFormat.CreateNoFillLine());
-                    }
+                    oTypedChart.setSmooth(oProps.smooth === true);
                 }
-                else
+                for(nSer = 0; nSer < oTypedChart.series.length; ++nSer)
                 {
-                    for(var j = 0; j < chart_type.series.length; ++j)
+                    oSeries = oTypedChart.series[nSer];
+                    if(oSeries.smooth !== (oProps.smooth === true))
                     {
-                        removeDPtsFromSeries(chart_type.series[j]);
-                        if(chart_type.series[j].smooth !== (chartSettings.smooth === true))
-                        {
-                            chart_type.series[j].setSmooth(chartSettings.smooth === true);
-                        }
-                        if(chart_type.series[j].spPr && chart_type.series[j].spPr.ln)
-                        {
-                            chart_type.series[j].spPr.setLn(null);
-                        }
-                    }
-                }
-                if(chart_type.smooth !== (chartSettings.smooth === true))
-                {
-                    chart_type.setSmooth(chartSettings.smooth === true);
-                }
-                for(var j = 0; j < chart_type.series.length; ++j)
-                {
-                    if(chart_type.series[j].smooth !== (chartSettings.smooth === true))
-                    {
-                        chart_type.series[j].setSmooth(chartSettings.smooth === true);
+                        oSeries.setSmooth(oProps.smooth === true);
                     }
                 }
             }
-            if(chart_type.getObjectType() === AscDFH.historyitem_type_ScatterChart)
+            if(oTypedChart.getObjectType() === AscDFH.historyitem_type_ScatterChart)
             {
-                if(!AscFormat.isRealBool(chartSettings.showMarker))
+                if(!AscFormat.isRealBool(oProps.showMarker))
                 {
-                    chartSettings.showMarker = true;
+                    oProps.showMarker = true;
                 }
-                if(!AscFormat.isRealBool(chartSettings.bLine))
+                if(!AscFormat.isRealBool(oProps.bLine))
                 {
-                    chartSettings.bLine = false;
+                    oProps.bLine = false;
                 }
 
-                for(var i = 0; i < chart_type.series.length; ++i)
+                for(nSer = 0; nSer < oTypedChart.series.length; ++nSer)
                 {
-                    if(chart_type.series[i].marker)
+                    oSeries = oTypedChart.series[nSer];
+                    if(oSeries.marker)
                     {
-                        chart_type.series[i].setMarker(null);
+                        oSeries.setMarker(null);
                     }
-                    if(AscFormat.isRealBool(chart_type.series[i].smooth))
+                    if(AscFormat.isRealBool(oSeries.smooth))
                     {
-                        chart_type.series[i].setSmooth(null);
+                        oSeries.setSmooth(null);
                     }
                 }
                 var new_scatter_style;
-                if(chartSettings.bLine)
+                if(oProps.bLine)
                 {
-                    for(var j = 0; j < chart_type.series.length; ++j)
+                    for(nSer = 0; nSer < oTypedChart.series.length; ++nSer)
                     {
-                        removeDPtsFromSeries(chart_type.series[j]);
-                        if(chart_type.series[j].spPr && chart_type.series[j].spPr.ln)
+                        oSeries = oTypedChart.series[nSer];
+                        removeDPtsFromSeries(oSeries);
+                        if(oSeries.spPr && oSeries.spPr.ln)
                         {
-                            chart_type.series[j].spPr.setLn(null);
+                            oSeries.spPr.setLn(null);
                         }
                     }
-                    if(chartSettings.smooth)
+                    if(oProps.smooth)
                     {
-                        if(chartSettings.showMarker)
+                        if(oProps.showMarker)
                         {
                             new_scatter_style = SCATTER_STYLE_SMOOTH_MARKER;
-                            for(var j = 0; j < chart_type.series.length; ++j)
+                            for(nSer = 0; nSer < oTypedChart.series.length; ++nSer)
                             {
-                                if(chart_type.series[j].marker)
+                                oSeries = oTypedChart.series[nSer];
+                                if(oSeries.marker)
                                 {
-                                    chart_type.series[j].setMarker(null);
+                                    oSeries.setMarker(null);
                                 }
-                                chart_type.series[j].setSmooth(true);
+                                if(oSeries.smooth !== true) {
+                                    oSeries.setSmooth(true);
+                                }
                             }
                         }
                         else
                         {
                             new_scatter_style = SCATTER_STYLE_SMOOTH;
-                            for(var j = 0; j < chart_type.series.length; ++j)
+                            for(nSer = 0; nSer < oTypedChart.series.length; ++nSer)
                             {
-                                if(!chart_type.series[j].marker)
+                                oSeries = oTypedChart.series[nSer];
+                                if(!oSeries.marker)
                                 {
-                                    chart_type.series[j].setMarker(new AscFormat.CMarker());
+                                    oSeries.setMarker(new AscFormat.CMarker());
                                 }
-                                chart_type.series[j].marker.setSymbol(AscFormat.SYMBOL_NONE);
-                                chart_type.series[j].setSmooth(true);
+                                oSeries.marker.setSymbol(AscFormat.SYMBOL_NONE);
+                                oSeries.setSmooth(true);
                             }
                         }
                     }
                     else
                     {
-                        if(chartSettings.showMarker)
+                        if(oProps.showMarker)
                         {
                             new_scatter_style = SCATTER_STYLE_LINE_MARKER;
-                            for(var j = 0; j < chart_type.series.length; ++j)
+                            for(nSer = 0; nSer < oTypedChart.series.length; ++nSer)
                             {
-                                if(chart_type.series[j].marker)
+                                oSeries = oTypedChart.series[nSer];
+                                if(oSeries.marker)
                                 {
-                                    chart_type.series[j].setMarker(null);
+                                    oSeries.setMarker(null);
                                 }
-                                chart_type.series[j].setSmooth(false);
+                                oSeries.setSmooth(false);
                             }
                         }
                         else
                         {
                             new_scatter_style = SCATTER_STYLE_LINE;
-                            for(var j = 0; j < chart_type.series.length; ++j)
+                            for(nSer = 0; nSer < oTypedChart.series.length; ++nSer)
                             {
-                                if(!chart_type.series[j].marker)
+                                oSeries = oTypedChart.series[nSer];
+                                if(!oSeries.marker)
                                 {
-                                    chart_type.series[j].setMarker(new AscFormat.CMarker());
+                                    oSeries.setMarker(new AscFormat.CMarker());
                                 }
-                                chart_type.series[j].marker.setSymbol(AscFormat.SYMBOL_NONE);
-                                chart_type.series[j].setSmooth(false);
+                                oSeries.marker.setSymbol(AscFormat.SYMBOL_NONE);
+                                oSeries.setSmooth(false);
                             }
                         }
                     }
                 }
                 else
                 {
-                    for(var j = 0; j < chart_type.series.length; ++j)
+                    for(nSer = 0; nSer < oTypedChart.series.length; ++nSer)
                     {
-                        removeDPtsFromSeries(chart_type.series[j]);
-                        if(!chart_type.series[j].spPr)
+                        oSeries = oTypedChart.series[nSer];
+                        removeDPtsFromSeries(oSeries);
+                        if(!oSeries.spPr)
                         {
-                            chart_type.series[j].setSpPr(new AscFormat.CSpPr());
+                            oSeries.setSpPr(new AscFormat.CSpPr());
                         }
-                        chart_type.series[j].spPr.setLn(AscFormat.CreateNoFillLine());
+                        oSeries.spPr.setLn(AscFormat.CreateNoFillLine());
                     }
-                    if(chartSettings.showMarker)
+                    if(oProps.showMarker)
                     {
                         new_scatter_style = SCATTER_STYLE_MARKER;
-                        for(var j = 0; j < chart_type.series.length; ++j)
+                        for(nSer = 0; nSer < oTypedChart.series.length; ++nSer)
                         {
-                            if(chart_type.series[j].marker)
+                            oSeries = oTypedChart.series[nSer];
+                            if(oSeries.marker)
                             {
-                                chart_type.series[j].setMarker(null);
+                                oSeries.setMarker(null);
                             }
-                            chart_type.series[j].setSmooth(false);
+                            oSeries.setSmooth(false);
                         }
                     }
                     else
                     {
                         new_scatter_style = SCATTER_STYLE_MARKER;
-                        for(var j = 0; j < chart_type.series.length; ++j)
+                        for(nSer = 0; nSer < oTypedChart.series.length; ++nSer)
                         {
-                            if(!chart_type.series[j].marker)
+                            oSeries = oTypedChart.series[nSer];
+                            if(!oSeries.marker)
                             {
-                                chart_type.series[j].setMarker(new AscFormat.CMarker());
+                                oSeries.setMarker(new AscFormat.CMarker());
                             }
-                            chart_type.series[j].marker.setSymbol(AscFormat.SYMBOL_NONE);
+                            oSeries.marker.setSymbol(AscFormat.SYMBOL_NONE);
                         }
                     }
                 }
-                chart_type.setScatterStyle(new_scatter_style);
+                oTypedChart.setScatterStyle(new_scatter_style);
             }
         }
-
     },
 
     checkDlblsPosition: function(chart, chart_type, position){
@@ -5836,120 +4786,51 @@ DrawingObjectsController.prototype =
                 ret.putInColumns(!range_obj.bVert);
             }
         }
-        //ret.putStyle(AscFormat.isRealNumber(chart_space.style) ? chart_space.style : null);
+
+
         ret.putTitle(isRealObject(chart.title) ? (chart.title.overlay ? c_oAscChartTitleShowSettings.overlay : c_oAscChartTitleShowSettings.noOverlay) : c_oAscChartTitleShowSettings.none);
-        var hor_axis = plot_area.getHorizontalAxis();
-        var vert_axis = plot_area.getVerticalAxis();
 
-        var calc_grid_lines = function(axis)
-        {
-            if(!axis || (!axis.majorGridlines && !axis.minorGridlines))
-                return c_oAscGridLinesSettings.none;
-            if(axis.majorGridlines && !axis.minorGridlines)
-                return c_oAscGridLinesSettings.major;
-            if(axis.minorGridlines && !axis.majorGridlines)
-                return c_oAscGridLinesSettings.minor;
-            return c_oAscGridLinesSettings.majorMinor;
-        };
-
-        var chart_type = plot_area.charts[0];
-        var chart_type_object_type = chart_type.getObjectType();
-
-        if(hor_axis)
-        {
-            ret.putShowHorAxis(!hor_axis.bDelete);
-            ret.putHorAxisProps(hor_axis.getMenuProps());
+        var oOrderedAxes = chart_space.getOrderedAxes();
+        var aAx = oOrderedAxes.getHorizontalAxes();
+        var nAx;
+        for(nAx = 0; nAx < aAx.length; ++nAx) {
+            ret.addHorAxesProps(aAx[nAx].getMenuProps());
         }
-        else
-        {
-            if(vert_axis)
-            {
-                if(vert_axis.getObjectType() === AscDFH.historyitem_type_ValAx)
-                {
-                    ret.putShowHorAxis(false);
-                    var _cat_ax_pr = new AscCommon.asc_CatAxisSettings();
-                    _cat_ax_pr.setDefault();
-                    ret.putHorAxisProps(_cat_ax_pr);
-                }
-                else
-                {
-                    ret.putShowHorAxis(false);
-                    var _val_ax_pr = new AscCommon.asc_ValAxisSettings();
-                    _val_ax_pr.setDefault();
-                    ret.putHorAxisProps(_val_ax_pr);
-                }
-            }
+        aAx = oOrderedAxes.getVerticalAxes();
+        for(nAx = 0; nAx < aAx.length; ++nAx) {
+            ret.addVertAxesProps(aAx[nAx].getMenuProps());
         }
-        ret.putHorGridLines(calc_grid_lines(vert_axis));
 
-        if(vert_axis)
-        {
-            ret.putShowVerAxis(!vert_axis.bDelete);
-            ret.putVertAxisProps(vert_axis.getMenuProps());
-            if(chart_type.getObjectType() === AscDFH.historyitem_type_AreaChart && !AscFormat.isRealNumber(vert_axis.crossBetween))
-            {
-                if(ret.horAxisProps)
-                {
-                    ret.horAxisProps.putLabelsPosition(Asc.c_oAscLabelsPosition.byDivisions);
-                }
-            }
+        if(chart.legend) {
+            ret.putLegendPos(AscFormat.isRealNumber(chart.legend.legendPos) ? chart.legend.legendPos : c_oAscChartLegendShowSettings.bottom);
         }
-        ret.putVertGridLines(calc_grid_lines(hor_axis));
-
-        ret.putHorAxisLabel(hor_axis && hor_axis.title ? c_oAscChartHorAxisLabelShowSettings.noOverlay : c_oAscChartTitleShowSettings.none);
-        var _label;
-        if(vert_axis && vert_axis.title)
-        {
-            var tx_body;
-            if(vert_axis.title.tx && vert_axis.title.tx.rich)
-            {
-                tx_body  =  vert_axis.title.tx.rich;
-            }
-            else if(vert_axis.title.txPr)
-            {
-                tx_body  =  vert_axis.title.txPr;
-            }
-            if(tx_body)
-            {
-                var oBodyPr = vert_axis.title.getBodyPr();
-                if(oBodyPr && oBodyPr.vert === AscFormat.nVertTThorz)
-                {
-                    _label = c_oAscChartVertAxisLabelShowSettings.horizontal;
-                }
-                else
-                {
-                    _label = c_oAscChartVertAxisLabelShowSettings.rotated;
-                }
-            }
-            else
-            {
-                _label = c_oAscChartVertAxisLabelShowSettings.none;
-            }
+        else {
+            ret.putLegendPos(c_oAscChartLegendShowSettings.none);
         }
-        else
-        {
-            _label = c_oAscChartVertAxisLabelShowSettings.none;
-        }
-        ret.putVertAxisLabel(_label);
+        ret.putType(chart_space.getChartType());
 
-        var data_labels = plot_area.charts[0].dLbls;
-        var nDefaultDatalabelsPos = chart_type && chart_type.getDefaultDataLabelsPosition ? chart_type.getDefaultDataLabelsPosition() :  c_oAscChartDataLabelsPos.none;
-
-        if(data_labels)
-        {
-            if(chart_type.series[0] && chart_type.series[0].dLbls){
-                this.collectPropsFromDLbls(nDefaultDatalabelsPos, chart_type.series[0].dLbls, ret);
+        //TODO: change work with labels and markers
+        var aPositions = chart_space.getPossibleDLblsPosition();
+        var nDefaultDatalabelsPos;
+        nDefaultDatalabelsPos = aPositions[0];
+        var oFirstChart = plot_area.charts[0];
+        var aSeries = oFirstChart.series;
+        var nSer, oSeries;
+        var oFirstSeries = aSeries[0];
+        var data_labels = oFirstChart.dLbls;
+        if(data_labels) {
+            if(oFirstSeries && oFirstSeries.dLbls) {
+                this.collectPropsFromDLbls(nDefaultDatalabelsPos, oFirstSeries.dLbls, ret);
             }
-            else{
+            else {
                 this.collectPropsFromDLbls(nDefaultDatalabelsPos, data_labels, ret);
             }
         }
-        else
-        {
-            if(chart_type.series[0] && chart_type.series[0].dLbls){
-                this.collectPropsFromDLbls(nDefaultDatalabelsPos, chart_type.series[0].dLbls, ret);
+        else {
+            if(oFirstSeries && oFirstSeries.dLbls) {
+                this.collectPropsFromDLbls(nDefaultDatalabelsPos, oFirstSeries.dLbls, ret);
             }
-            else{
+            else {
                 ret.putShowSerName(false);
                 ret.putShowCatName(false);
                 ret.putShowVal(false);
@@ -5957,299 +4838,122 @@ DrawingObjectsController.prototype =
                 ret.putDataLabelsPos(c_oAscChartDataLabelsPos.none);
             }
         }
-
-        if(chart.legend)
-        {
-            ret.putLegendPos(AscFormat.isRealNumber(chart.legend.legendPos) ? chart.legend.legendPos : c_oAscChartLegendShowSettings.bottom);
-        }
-        else
-        {
-            ret.putLegendPos(c_oAscChartLegendShowSettings.none);
-        }
-
-
-        var calc_chart_type;
-        if(chart_type_object_type === AscDFH.historyitem_type_PieChart)
-        {
-            if(!AscFormat.CChartsDrawer.prototype._isSwitchCurrent3DChart(chart_space))
-            {
-                calc_chart_type = c_oAscChartTypeSettings.pie;
-            }
-            else
-            {
-                calc_chart_type = c_oAscChartTypeSettings.pie3d;
-            }
-        }
-        else if(chart_type_object_type === AscDFH.historyitem_type_DoughnutChart)
-            calc_chart_type = c_oAscChartTypeSettings.doughnut;
-        else if(chart_type_object_type === AscDFH.historyitem_type_StockChart)
-            calc_chart_type = c_oAscChartTypeSettings.stock;
-        else if(chart_type_object_type === AscDFH.historyitem_type_BarChart)
-        {
-            var b_hbar = chart_type.barDir === BAR_DIR_BAR;
-            var bView3d = AscFormat.CChartsDrawer.prototype._isSwitchCurrent3DChart(chart_space);
-            if(b_hbar)
-            {
-                switch(chart_type.grouping)
-                {
-                    case BAR_GROUPING_CLUSTERED:
-                    {
-                        calc_chart_type = bView3d ? c_oAscChartTypeSettings.hBarNormal3d : c_oAscChartTypeSettings.hBarNormal;
-                        break;
-                    }
-                    case BAR_GROUPING_STACKED:
-                    {
-                        calc_chart_type = bView3d ? c_oAscChartTypeSettings.hBarStacked3d : c_oAscChartTypeSettings.hBarStacked;
-                        break;
-                    }
-                    case BAR_GROUPING_PERCENT_STACKED:
-                    {
-                        calc_chart_type = bView3d ? c_oAscChartTypeSettings.hBarStackedPer3d : c_oAscChartTypeSettings.hBarStackedPer;
-                        break;
-                    }
-                    default:
-                    {
-                        calc_chart_type = bView3d ? c_oAscChartTypeSettings.hBarNormal3d : c_oAscChartTypeSettings.hBarNormal;
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                switch(chart_type.grouping)
-                {
-                    case BAR_GROUPING_CLUSTERED:
-                    {
-                        calc_chart_type = bView3d ? c_oAscChartTypeSettings.barNormal3d : c_oAscChartTypeSettings.barNormal;
-                        break;
-                    }
-                    case BAR_GROUPING_STACKED:
-                    {
-                        calc_chart_type = bView3d ? c_oAscChartTypeSettings.barStacked3d : c_oAscChartTypeSettings.barStacked;
-                        break;
-                    }
-                    case BAR_GROUPING_PERCENT_STACKED:
-                    {
-                        calc_chart_type = bView3d ? c_oAscChartTypeSettings.barStackedPer3d : c_oAscChartTypeSettings.barStackedPer;
-                        break;
-                    }
-                    default:
-                    {
-                        if(BAR_GROUPING_STANDARD && bView3d)
-                        {
-                            calc_chart_type = c_oAscChartTypeSettings.barNormal3dPerspective;
-                        }
-                        else
-                        {
-                            calc_chart_type = c_oAscChartTypeSettings.barNormal;
-                        }
-                        break;
-                    }
-                }
-            }
-        }
-        else if(chart_type_object_type === AscDFH.historyitem_type_LineChart)
-        {
-            switch(chart_type.grouping)
-            {
-                case GROUPING_PERCENT_STACKED :
-                {
-                    calc_chart_type = c_oAscChartTypeSettings.lineStackedPer;
-                    break;
-                }
-                case GROUPING_STACKED         :
-                {
-                    calc_chart_type = c_oAscChartTypeSettings.lineStacked;
-                    break;
-                }
-                default        :
-                {
-                    if(!AscFormat.CChartsDrawer.prototype._isSwitchCurrent3DChart(chart_space))
-                    {
-                        calc_chart_type = c_oAscChartTypeSettings.lineNormal;
-                    }
-                    else
-                    {
-                        calc_chart_type = c_oAscChartTypeSettings.line3d;
-                    }
-                    break;
-                }
-            }
-            var bShowMarker = false;
-            if(chart_type.marker !== false)
-            {
-                for(var j = 0; j < chart_type.series.length; ++j)
-                {
-                    if(!chart_type.series[j].marker)
-                    {
+        var bShowMarker, bNoLine, bSmooth;
+        if(oFirstChart.getObjectType() === AscDFH.historyitem_type_LineChart) {
+            bShowMarker = false;
+            if(oFirstChart.marker !== false) {
+                for(nSer = 0; nSer < aSeries.length; ++nSer) {
+                    oSeries = aSeries[nSer];
+                    if(!oSeries.marker) {
                         bShowMarker = true;
                         break;
                     }
-                    if(chart_type.series[j].marker.symbol !== AscFormat.SYMBOL_NONE)
-                    {
+                    if(oSeries.marker.symbol !== AscFormat.SYMBOL_NONE) {
                         bShowMarker = true;
                         break;
                     }
                 }
             }
             ret.putShowMarker(bShowMarker);
-            var b_no_line = true;
-            for(var i = 0; i < chart_type.series.length; ++i)
-            {
-                if(!(chart_type.series[i].spPr && chart_type.series[i].spPr.ln &&
-                    chart_type.series[i].spPr.ln.Fill &&chart_type.series[i].spPr.ln.Fill.fill && chart_type.series[i].spPr.ln.Fill.fill.type === c_oAscFill.FILL_TYPE_NOFILL))
-                {
-                    b_no_line = false;
+            bNoLine = true;
+            for(nSer = 0; nSer < aSeries.length; ++nSer) {
+                oSeries = aSeries[nSer];
+                if(!(oSeries.spPr
+                    && oSeries.spPr.ln
+                    && oSeries.spPr.ln.Fill
+                    && oSeries.spPr.ln.Fill.fill
+                    && oSeries.spPr.ln.Fill.fill.type === c_oAscFill.FILL_TYPE_NOFILL)) {
+                    bNoLine = false;
                     break;
                 }
             }
-            var b_smooth = true;
-            for(var i = 0; i < chart_type.series.length; ++i)
-            {
-                if(chart_type.series[i].smooth === false)
-                {
-                    b_smooth = false;
+            bSmooth = true;
+            for(nSer = 0; nSer < aSeries.length; ++nSer) {
+                oSeries = aSeries[nSer];
+                if(oSeries.smooth === false) {
+                    bSmooth = false;
                     break;
                 }
             }
-            if(!b_no_line)
-            {
+            if(!bNoLine) {
                 ret.putLine(true);
-                ret.putSmooth(b_smooth);
+                ret.putSmooth(bSmooth);
             }
-            else
-            {
+            else {
                 ret.putLine(false);
             }
         }
-        else if(chart_type_object_type === AscDFH.historyitem_type_AreaChart)
-        {
-            switch(chart_type.grouping)
-            {
-                case GROUPING_PERCENT_STACKED :
-                {
-                    calc_chart_type = c_oAscChartTypeSettings.areaStackedPer;
-                    break;
-                }
-                case GROUPING_STACKED         :
-                {
-                    calc_chart_type = c_oAscChartTypeSettings.areaStacked;
-                    break;
-                }
-                default        :
-                {
-                    calc_chart_type = c_oAscChartTypeSettings.areaNormal;
-                    break;
-                }
-            }
-        }
-        else if(chart_type_object_type === AscDFH.historyitem_type_ScatterChart)
-        {
-            calc_chart_type = c_oAscChartTypeSettings.scatter;
-            switch(chart_type.scatterStyle)
-            {
-                case SCATTER_STYLE_LINE:
-                {
+        else if(oFirstChart.getObjectType() === AscDFH.historyitem_type_ScatterChart) {
+            switch(oFirstChart.scatterStyle) {
+                case SCATTER_STYLE_LINE: {
                     ret.bLine = true;
                     ret.smooth = false;
                     ret.showMarker = false;
                     break;
                 }
-                case SCATTER_STYLE_LINE_MARKER:
-                {
+                case SCATTER_STYLE_LINE_MARKER: {
                     ret.bLine = true;
                     ret.smooth = false;
                     ret.showMarker = true;
                     break;
                 }
-                case SCATTER_STYLE_MARKER:
-                {
+                case SCATTER_STYLE_MARKER: {
                     ret.bLine = false;
                     ret.showMarker = false;
-                    for(var j = 0; j < chart_type.series.length; ++j)
-                    {
-                        if(!(chart_type.series[j].marker && chart_type.series[j].marker.symbol === AscFormat.SYMBOL_NONE))
-                        {
+                    for(nSer = 0; nSer < aSeries.length; ++nSer) {
+                        oSeries = aSeries[nSer];
+                        if(!(oSeries.marker && oSeries.marker.symbol === AscFormat.SYMBOL_NONE)) {
                             ret.showMarker = true;
                             break;
                         }
                     }
                     break;
                 }
-                case SCATTER_STYLE_NONE:
-                {
+                case SCATTER_STYLE_NONE: {
                     ret.bLine = false;
                     ret.showMarker = false;
                     break;
                 }
-                case SCATTER_STYLE_SMOOTH:
-                {
+                case SCATTER_STYLE_SMOOTH: {
                     ret.bLine = true;
                     ret.smooth = true;
                     ret.showMarker = false;
                     break;
                 }
-                case SCATTER_STYLE_SMOOTH_MARKER:
-                {
+                case SCATTER_STYLE_SMOOTH_MARKER: {
                     ret.bLine = true;
                     ret.smooth = true;
                     ret.showMarker = true;
                     break;
                 }
             }
-            if(ret.bLine)
-            {
-                for(var i = 0; i < chart_type.series.length; ++i)
-                {
-                    if(!(chart_type.series[i].spPr && chart_type.series[i].spPr.ln &&
-                        chart_type.series[i].spPr.ln.Fill &&chart_type.series[i].spPr.ln.Fill.fill && chart_type.series[i].spPr.ln.Fill.fill.type === c_oAscFill.FILL_TYPE_NOFILL))
-                    {
+            if(ret.bLine) {
+                for(nSer = 0; nSer < aSeries.length; ++nSer) {
+                    oSeries = aSeries[nSer];
+                    if(!(oSeries.spPr
+                        && oSeries.spPr.ln
+                        && oSeries.spPr.ln.Fill
+                        && oSeries.spPr.ln.Fill.fill
+                        && oSeries.spPr.ln.Fill.fill.type === c_oAscFill.FILL_TYPE_NOFILL)) {
                         break;
                     }
                 }
-                if(i === chart_type.series.length)
-                {
+                if(nSer === aSeries.length) {
                     ret.bLine = false;
                 }
-                var b_smooth = ret.smooth;
-                if(b_smooth)
-                {
-                    for(var i = 0; i < chart_type.series.length; ++i)
-                    {
-                        if(!chart_type.series[i].smooth)
-                        {
-                            b_smooth = false;
+                bSmooth = ret.smooth;
+                if(bSmooth) {
+                    for(nSer = 0; nSer < aSeries.length; ++nSer) {
+                        oSeries = aSeries[nSer];
+                        if(!oSeries.smooth) {
+                            bSmooth = false;
                             break;
                         }
                     }
                 }
-                ret.putSmooth(b_smooth);
+                ret.putSmooth(bSmooth);
             }
         }
-        else if(chart_type_object_type === AscDFH.historyitem_type_SurfaceChart){
-            var oView3D = chart_space.chart.view3D;
-            if(chart_type.isWireframe()){
-                if(oView3D && oView3D.rotX === 90 && oView3D.rotY === 0 && oView3D.rAngAx === false && oView3D.perspective === 0){
-                    calc_chart_type = c_oAscChartTypeSettings.contourWireframe;
-                }
-                else{
-                    calc_chart_type = c_oAscChartTypeSettings.surfaceWireframe;
-                }
-            }
-            else{
-                if(oView3D && oView3D.rotX === 90 && oView3D.rotY === 0 && oView3D.rAngAx === false && oView3D.perspective === 0){
-                    calc_chart_type = c_oAscChartTypeSettings.contourNormal;
-                }
-                else{
-                    calc_chart_type = c_oAscChartTypeSettings.surfaceNormal;
-                }
-            }
-        }
-        else
-        {
-            calc_chart_type = c_oAscChartTypeSettings.unknown;
-        }
-        ret.type = calc_chart_type;
         return ret;
     },
 
@@ -6337,6 +5041,14 @@ DrawingObjectsController.prototype =
                 return AscFormat.CreateSurfaceChart(chartSeries, bUseCache, options, true, false);
             case c_oAscChartTypeSettings.contourWireframe:
                 return AscFormat.CreateSurfaceChart(chartSeries, bUseCache, options, true, true);
+            case c_oAscChartTypeSettings.comboAreaBar:
+            case c_oAscChartTypeSettings.comboBarLine:
+            case c_oAscChartTypeSettings.comboBarLineSecondary:
+            case c_oAscChartTypeSettings.comboCustom: {
+                var oChartSpace = AscFormat.CreateBarChart(chartSeries, BAR_GROUPING_CLUSTERED, bUseCache, options);
+                oChartSpace.changeChartType(options.type);
+                return oChartSpace;
+            }
 			// radar return CreateRadarChart(chartSeries);
 		}
 
@@ -7971,12 +6683,12 @@ DrawingObjectsController.prototype =
                 {
                     var new_hor_axis_settings = new AscCommon.asc_ValAxisSettings();
                     new_hor_axis_settings.setDefault();
-                    options.putHorAxisProps(new_hor_axis_settings);
+                    new_hor_axis_settings.putGridlines(c_oAscGridLinesSettings.major);
+                    options.addHorAxesProps(new_hor_axis_settings);
                     var new_vert_axis_settings = new AscCommon.asc_ValAxisSettings();
                     new_vert_axis_settings.setDefault();
-                    options.putVertAxisProps(new_vert_axis_settings);
-                    options.putHorGridLines(c_oAscGridLinesSettings.major);
-                    options.putVertGridLines(c_oAscGridLinesSettings.major);
+                    new_vert_axis_settings.putGridlines(c_oAscGridLinesSettings.major);
+                    options.addVertAxesProps(new_vert_axis_settings);
                     options.putShowMarker(true);
                     options.putSmooth(null);
                     options.putLine(false);

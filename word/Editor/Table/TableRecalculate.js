@@ -3372,7 +3372,7 @@ function CTableRecalcInfo()
     this.CellsToRecalc = {};
     this.CellsAll      = true;
 }
-CTableRecalcInfo.prototype.Recalc_Borders = function()
+CTableRecalcInfo.prototype.RecalcBorders = function()
 {
     this.TableBorders = true;
 };

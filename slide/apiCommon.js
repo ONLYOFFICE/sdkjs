@@ -363,35 +363,14 @@ CAscHFProps.prototype['put_ShowDateTime'] = CAscHFProps.prototype.put_ShowDateTi
 
 CAscHFProps.prototype['put_DivId'] = CAscHFProps.prototype.put_DivId = function(v){this.DivId = v;};
 CAscHFProps.prototype['updateView'] = CAscHFProps.prototype.updateView = function(){
-    var oDiv = document.getElementById(this.DivId);
-    if(!oDiv){
+    var oCanvas = AscCommon.checkCanvasInDiv(this.DivId);
+    if(!oCanvas) {
         return;
-    }
-    var aChildren = oDiv.children;
-    var oCanvas = null, i;
-    for(i = 0; i < aChildren.length; ++i){
-        if(aChildren[i].nodeName && aChildren[i].nodeName.toUpperCase() === 'CANVAS'){
-            oCanvas = aChildren[i];
-            break;
-        }
-    }
-    if(null === oCanvas){
-        oCanvas = document.createElement('canvas');
-        oCanvas.style.width = "100%";
-        oCanvas.style.height = "100%";
-        oDiv.appendChild(oCanvas);
-        var nCanvasW = oCanvas.clientWidth;
-        var nCanvasH = oCanvas.clientHeight;
-        if (AscCommon.AscBrowser.isRetina) {
-            nCanvasW = AscCommon.AscBrowser.convertToRetinaValue(nCanvasW, true);
-            nCanvasH = AscCommon.AscBrowser.convertToRetinaValue(nCanvasH, true);
-        }
-        oCanvas.width = nCanvasW;
-        oCanvas.height = nCanvasH;
     }
     var oContext = oCanvas.getContext('2d');
     oContext.clearRect(0, 0, oCanvas.width, oCanvas.height);
     var oSp, nPhType, aSpTree, oSlideObject = null, l, t, r, b;
+    var i;
     if(this.slide) {
         oSlideObject = this.slide.Layout;
     }

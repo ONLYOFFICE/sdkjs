@@ -161,6 +161,41 @@
 		return window["NATIVE_EDITOR_ENJINE"] && !window["IS_NATIVE_EDITOR"] && !window["DoctRendererMode"];
 	}
 
+	function checkCanvasInDiv(sDivId)
+	{
+		var oDiv = document.getElementById(sDivId);
+		if(!oDiv)
+		{
+			return null;
+		}
+		var aChildren = oDiv.children;
+		var oCanvas = null, i;
+		for(i = 0; i < aChildren.length; ++i)
+		{
+			if(aChildren[i].nodeName && aChildren[i].nodeName.toUpperCase() === 'CANVAS')
+			{
+				oCanvas = aChildren[i];
+				break;
+			}
+		}
+		if(null === oCanvas)
+		{
+			oCanvas = document.createElement('canvas');
+			oCanvas.style.width = "100%";
+			oCanvas.style.height = "100%";
+			oDiv.appendChild(oCanvas);
+			var nCanvasW = oCanvas.clientWidth;
+			var nCanvasH = oCanvas.clientHeight;
+			if (AscCommon.AscBrowser.isRetina)
+			{
+				nCanvasW = AscCommon.AscBrowser.convertToRetinaValue(nCanvasW, true);
+				nCanvasH = AscCommon.AscBrowser.convertToRetinaValue(nCanvasH, true);
+			}
+			oCanvas.width = nCanvasW;
+			oCanvas.height = nCanvasH;
+		}
+		return oCanvas;
+	}
 
 	var c_oLicenseResult = {
 		Error         : 1,
@@ -363,6 +398,53 @@
 		this.buildNumber = v;
 	};
 
+	function asc_CAxNumFmt(oAxis) {
+		this.formatCode = "General";
+		this.sourceLinked = true;
+		this.axis = oAxis;
+		if(oAxis) {
+			var oNumFmt = oAxis.numFmt;
+			if(oNumFmt) {
+				this.formatCode = oNumFmt.formatCode;
+				this.sourceLinked = oNumFmt.sourceLinked;
+			}
+		}
+	}
+
+	asc_CAxNumFmt.prototype.getFormatCode = function() {
+		if(this.sourceLinked) {
+			if(this.axis) {
+				return this.axis.getSourceFormatCode();
+			}
+			else {
+				return "General";
+			}
+		}
+		return this.formatCode || "General";
+	};
+	asc_CAxNumFmt.prototype.putFormatCode = function(v) {
+		this.formatCode = v;
+	};
+	asc_CAxNumFmt.prototype.getFormatCellsInfo = function() {
+		var num_format = AscCommon.oNumFormatCache.get(this.getFormatCode());
+		return num_format.getTypeInfo();
+	};
+	asc_CAxNumFmt.prototype.getSourceLinked = function() {
+		return this.sourceLinked;
+	};
+	asc_CAxNumFmt.prototype.putSourceLinked = function(v) {
+		this.sourceLinked = v;
+	};
+	asc_CAxNumFmt.prototype.isEqual = function(v) {
+		if(!v) {
+			return false;
+		}
+		return this.formatCode === v.formatCode && this.sourceLinked === v.sourceLinked;
+	};
+	asc_CAxNumFmt.prototype.isCorrect = function() {
+		return typeof this.formatCode === "string" && this.formatCode.length > 0;
+	};
+
 	/** @constructor */
 	function asc_ValAxisSettings() {
 		this.minValRule = null;
@@ -384,152 +466,396 @@
 		this.crossesRule = null;
 		this.crosses = null;
 		this.axisType = c_oAscAxisType.val;
+		this.show = true;
+		this.label = null;
+		this.gridlines = null;
+		this.numFmt = null;
 	}
-
-	asc_ValAxisSettings.prototype = {
-
-
-		isEqual: function(oPr){
-			if(!oPr){
-				return false;
-			}
-            if(this.minValRule !== oPr.minValRule){
-				return false;
-			}
-            if(this.minVal !== oPr.minVal){
-            	return false;
-			}
-            if(this.maxValRule !== oPr.maxValRule){
-            	return false;
-			}
-            if(this.maxVal !== oPr.maxVal){
-            	return false;
-			}
-            if(this.invertValOrder !== oPr.invertValOrder){
-            	return false;
-			}
-            if(this.logScale !== oPr.logScale){
-            	return false;
-			}
-            if(this.logBase !== oPr.logBase){
-            	return false;
-			}
-            if(this.dispUnitsRule !== oPr.dispUnitsRule){
-            	return false;
-			}
-            if(this.units !== oPr.units){
-            	return false;
-			}
-            if(this.showUnitsOnChart !== oPr.showUnitsOnChart){
-            	return false;
-			}
-            if(this.majorTickMark !== oPr.majorTickMark){
-            	return false;
-			}
-            if(this.minorTickMark !== oPr.minorTickMark){
-            	return false;
-			}
-            if(this.tickLabelsPos !== oPr.tickLabelsPos){
-            	return false;
-			}
-            if(this.crossesRule !== oPr.crossesRule){
-            	return false;
-			}
-            if(this.crosses !== oPr.crosses){
-            	return false;
-			}
-            if(this.axisType !== oPr.axisType){
-            	return false;
-			}
-
-			return true;
-		},
-
-		putAxisType: function (v) {
-			this.axisType = v;
-		},
-
-		putMinValRule: function (v) {
-			this.minValRule = v;
-		}, putMinVal: function (v) {
-			this.minVal = v;
-		}, putMaxValRule: function (v) {
-			this.maxValRule = v;
-		}, putMaxVal: function (v) {
-			this.maxVal = v;
-		}, putInvertValOrder: function (v) {
-			this.invertValOrder = v;
-		}, putLogScale: function (v) {
-			this.logScale = v;
-		}, putLogBase: function (v) {
-			this.logBase = v;
-		}, putUnits: function (v) {
-			this.units = v;
-		}, putShowUnitsOnChart: function (v) {
-			this.showUnitsOnChart = v;
-		}, putMajorTickMark: function (v) {
-			this.majorTickMark = v;
-		}, putMinorTickMark: function (v) {
-			this.minorTickMark = v;
-		}, putTickLabelsPos: function (v) {
-			this.tickLabelsPos = v;
-		}, putCrossesRule: function (v) {
-			this.crossesRule = v;
-		}, putCrosses: function (v) {
-			this.crosses = v;
-		},
-
-
-		putDispUnitsRule: function (v) {
-			this.dispUnitsRule = v;
-		},
-
-		getAxisType: function () {
-			return this.axisType;
-		},
-
-		getDispUnitsRule: function () {
-			return this.dispUnitsRule;
-		},
-
-		getMinValRule: function () {
-			return this.minValRule;
-		}, getMinVal: function () {
-			return this.minVal;
-		}, getMaxValRule: function () {
-			return this.maxValRule;
-		}, getMaxVal: function () {
-			return this.maxVal;
-		}, getInvertValOrder: function () {
-			return this.invertValOrder;
-		}, getLogScale: function () {
-			return this.logScale;
-		}, getLogBase: function () {
-			return this.logBase;
-		}, getUnits: function () {
-			return this.units;
-		}, getShowUnitsOnChart: function () {
-			return this.showUnitsOnChart;
-		}, getMajorTickMark: function () {
-			return this.majorTickMark;
-		}, getMinorTickMark: function () {
-			return this.minorTickMark;
-		}, getTickLabelsPos: function () {
-			return this.tickLabelsPos;
-		}, getCrossesRule: function () {
-			return this.crossesRule;
-		}, getCrosses: function () {
-			return this.crosses;
-		}, setDefault: function () {
-			this.putMinValRule(Asc.c_oAscValAxisRule.auto);
-			this.putMaxValRule(Asc.c_oAscValAxisRule.auto);
-			this.putTickLabelsPos(Asc.c_oAscTickLabelsPos.TICK_LABEL_POSITION_NEXT_TO);
-			this.putInvertValOrder(false);
-			this.putDispUnitsRule(Asc.c_oAscValAxUnits.none);
-			this.putMajorTickMark(c_oAscTickMark.TICK_MARK_OUT);
-			this.putMinorTickMark(c_oAscTickMark.TICK_MARK_NONE);
-			this.putCrossesRule(Asc.c_oAscCrossesRule.auto);
+	asc_ValAxisSettings.prototype.isEqual = function(oPr){
+		if(!oPr){
+			return false;
 		}
+		if(this.minValRule !== oPr.minValRule){
+			return false;
+		}
+		if(this.minVal !== oPr.minVal){
+			return false;
+		}
+		if(this.maxValRule !== oPr.maxValRule){
+			return false;
+		}
+		if(this.maxVal !== oPr.maxVal){
+			return false;
+		}
+		if(this.invertValOrder !== oPr.invertValOrder){
+			return false;
+		}
+		if(this.logScale !== oPr.logScale){
+			return false;
+		}
+		if(this.logBase !== oPr.logBase){
+			return false;
+		}
+		if(this.dispUnitsRule !== oPr.dispUnitsRule){
+			return false;
+		}
+		if(this.units !== oPr.units){
+			return false;
+		}
+		if(this.showUnitsOnChart !== oPr.showUnitsOnChart){
+			return false;
+		}
+		if(this.majorTickMark !== oPr.majorTickMark){
+			return false;
+		}
+		if(this.minorTickMark !== oPr.minorTickMark){
+			return false;
+		}
+		if(this.tickLabelsPos !== oPr.tickLabelsPos){
+			return false;
+		}
+		if(this.crossesRule !== oPr.crossesRule){
+			return false;
+		}
+		if(this.crosses !== oPr.crosses){
+			return false;
+		}
+		if(this.axisType !== oPr.axisType){
+			return false;
+		}
+		if(this.show !== oPr.show) {
+			return false;
+		}
+		if(this.label !== oPr.label) {
+			return false;
+		}
+		if(this.gridlines !== oPr.gridlines) {
+			return false;
+		}
+		var bEqualNumFmt = false;
+		if(this.numFmt) {
+			bEqualNumFmt = this.numFmt.isEqual(oPr.numFmt);
+		}
+		else {
+			bEqualNumFmt = (this.numFmt === oPr.numFmt);
+		}
+		if(!bEqualNumFmt) {
+			return false;
+		}
+		return true;
+	};
+	asc_ValAxisSettings.prototype.putAxisType = function(v) {
+		this.axisType = v;
+	};
+	asc_ValAxisSettings.prototype.putMinValRule = function(v) {
+		this.minValRule = v;
+	};
+	asc_ValAxisSettings.prototype.putMinVal = function(v) {
+		this.minVal = v;
+	};
+	asc_ValAxisSettings.prototype.putMaxValRule = function(v) {
+		this.maxValRule = v;
+	};
+	asc_ValAxisSettings.prototype.putMaxVal = function(v) {
+		this.maxVal = v;
+	};
+	asc_ValAxisSettings.prototype.putInvertValOrder = function(v) {
+		this.invertValOrder = v;
+	};
+	asc_ValAxisSettings.prototype.putLogScale = function(v) {
+		this.logScale = v;
+	};
+	asc_ValAxisSettings.prototype.putLogBase = function(v) {
+		this.logBase = v;
+	};
+	asc_ValAxisSettings.prototype.putUnits = function(v) {
+		this.units = v;
+	};
+	asc_ValAxisSettings.prototype.putShowUnitsOnChart = function(v) {
+		this.showUnitsOnChart = v;
+	};
+	asc_ValAxisSettings.prototype.putMajorTickMark = function(v) {
+		this.majorTickMark = v;
+	};
+	asc_ValAxisSettings.prototype.putMinorTickMark = function(v) {
+		this.minorTickMark = v;
+	};
+	asc_ValAxisSettings.prototype.putTickLabelsPos = function(v) {
+		this.tickLabelsPos = v;
+	};
+	asc_ValAxisSettings.prototype.putCrossesRule = function(v) {
+		this.crossesRule = v;
+	};
+	asc_ValAxisSettings.prototype.putCrosses = function(v) {
+		this.crosses = v;
+	};
+	asc_ValAxisSettings.prototype.putDispUnitsRule = function(v) {
+		this.dispUnitsRule = v;
+	};
+	asc_ValAxisSettings.prototype.getAxisType = function() {
+		return this.axisType;
+	};
+	asc_ValAxisSettings.prototype.getDispUnitsRule = function() {
+		return this.dispUnitsRule;
+	};
+	asc_ValAxisSettings.prototype.getMinValRule = function() {
+		return this.minValRule;
+	};
+	asc_ValAxisSettings.prototype.getMinVal = function() {
+		return this.minVal;
+	};
+	asc_ValAxisSettings.prototype.getMaxValRule = function() {
+		return this.maxValRule;
+	};
+	asc_ValAxisSettings.prototype.getMaxVal = function() {
+		return this.maxVal;
+	};
+	asc_ValAxisSettings.prototype.getInvertValOrder = function() {
+		return this.invertValOrder;
+	};
+	asc_ValAxisSettings.prototype.getLogScale = function() {
+		return this.logScale;
+	};
+	asc_ValAxisSettings.prototype.getLogBase = function() {
+		return this.logBase;
+	};
+	asc_ValAxisSettings.prototype.getUnits = function() {
+		return this.units;
+	};
+	asc_ValAxisSettings.prototype.getShowUnitsOnChart = function() {
+		return this.showUnitsOnChart;
+	};
+	asc_ValAxisSettings.prototype.getMajorTickMark = function() {
+		return this.majorTickMark;
+	};
+	asc_ValAxisSettings.prototype.getMinorTickMark = function() {
+		return this.minorTickMark;
+	};
+	asc_ValAxisSettings.prototype.getTickLabelsPos = function() {
+		return this.tickLabelsPos;
+	};
+	asc_ValAxisSettings.prototype.getCrossesRule = function() {
+		return this.crossesRule;
+	};
+	asc_ValAxisSettings.prototype.getCrosses = function() {
+		return this.crosses;
+	};
+	asc_ValAxisSettings.prototype.setDefault = function() {
+		this.putMinValRule(Asc.c_oAscValAxisRule.auto);
+		this.putMaxValRule(Asc.c_oAscValAxisRule.auto);
+		this.putTickLabelsPos(Asc.c_oAscTickLabelsPos.TICK_LABEL_POSITION_NEXT_TO);
+		this.putInvertValOrder(false);
+		this.putDispUnitsRule(Asc.c_oAscValAxUnits.none);
+		this.putMajorTickMark(c_oAscTickMark.TICK_MARK_OUT);
+		this.putMinorTickMark(c_oAscTickMark.TICK_MARK_NONE);
+		this.putCrossesRule(Asc.c_oAscCrossesRule.auto);
+		this.putShow(true);
+	};
+	asc_ValAxisSettings.prototype.getShow = function() {
+		return this.show;
+	};
+	asc_ValAxisSettings.prototype.putShow = function(val) {
+		this.show = val;
+	};
+	asc_ValAxisSettings.prototype.getLabel = function() {
+		return this.label;
+	};
+	asc_ValAxisSettings.prototype.putLabel = function(v) {
+		this.label = v;
+	};
+	asc_ValAxisSettings.prototype.getGridlines = function() {
+		return this.gridlines;
+	};
+	asc_ValAxisSettings.prototype.putGridlines = function(v) {
+		this.gridlines = v;
+	};
+	asc_ValAxisSettings.prototype.getNumFmt = function() {
+		return this.numFmt;
+	};
+	asc_ValAxisSettings.prototype.putNumFmt = function(v) {
+		this.numFmt = v;
+	};
+	asc_ValAxisSettings.prototype.read = function(_params, _cursor){
+		var _continue = true;
+		while (_continue)
+		{
+			var _attr = _params[_cursor.pos++];
+			switch (_attr)
+			{
+				case 0:
+				{
+					this.putMinValRule(_params[_cursor.pos++]);
+					break;
+				}
+				case 1:
+				{
+					this.putMinVal(_params[_cursor.pos++]);
+					break;
+				}
+				case 2:
+				{
+					this.putMaxValRule(_params[_cursor.pos++]);
+					break;
+				}
+				case 3:
+				{
+					this.putMaxVal(_params[_cursor.pos++]);
+					break;
+				}
+				case 4:
+				{
+					this.putInvertValOrder(_params[_cursor.pos++]);
+					break;
+				}
+				case 5:
+				{
+					this.putLogScale(_params[_cursor.pos++]);
+					break;
+				}
+				case 6:
+				{
+					this.putLogBase(_params[_cursor.pos++]);
+					break;
+				}
+				case 7:
+				{
+					this.putDispUnitsRule(_params[_cursor.pos++]);
+					break;
+				}
+				case 8:
+				{
+					this.putUnits(_params[_cursor.pos++]);
+					break;
+				}
+				case 9:
+				{
+					this.putShowUnitsOnChart(_params[_cursor.pos++]);
+					break;
+				}
+				case 10:
+				{
+					this.putMajorTickMark(_params[_cursor.pos++]);
+					break;
+				}
+				case 11:
+				{
+					this.putMinorTickMark(_params[_cursor.pos++]);
+					break;
+				}
+				case 12:
+				{
+					this.putTickLabelsPos(_params[_cursor.pos++]);
+					break;
+				}
+				case 13:
+				{
+					this.putCrossesRule(_params[_cursor.pos++]);
+					break;
+				}
+				case 14:
+				{
+					this.putCrosses(_params[_cursor.pos++]);
+					break;
+				}
+				case 15:
+				{
+					this.putAxisType(_params[_cursor.pos++]);
+					break;
+				}
+				case 255:
+				default:
+				{
+					_continue = false;
+					break;
+				}
+			}
+		}
+	};
+	asc_ValAxisSettings.prototype.write = function(_type, _stream) {
+		_stream["WriteByte"](_type);
+
+		if (this.minValRule !== undefined && this.minValRule !== null)
+		{
+			_stream["WriteByte"](0);
+			_stream["WriteLong"](this.minValRule);
+		}
+		if (this.minVal !== undefined && this.minVal !== null)
+		{
+			_stream["WriteByte"](1);
+			_stream["WriteLong"](this.minVal);
+		}
+		if (this.maxValRule !== undefined && this.maxValRule !== null)
+		{
+			_stream["WriteByte"](2);
+			_stream["WriteLong"](this.maxValRule);
+		}
+		if (this.maxVal !== undefined && this.maxVal !== null)
+		{
+			_stream["WriteByte"](3);
+			_stream["WriteLong"](this.maxVal);
+		}
+		if (this.invertValOrder !== undefined && this.invertValOrder !== null)
+		{
+			_stream["WriteByte"](4);
+			_stream["WriteBool"](this.invertValOrder);
+		}
+		if (this.logScale !== undefined && this.logScale !== null)
+		{
+			_stream["WriteByte"](5);
+			_stream["WriteBool"](this.logScale);
+		}
+		if (this.logBase !== undefined && this.logBase !== null)
+		{
+			_stream["WriteByte"](6);
+			_stream["WriteLong"](this.logBase);
+		}
+		if (this.dispUnitsRule !== undefined && this.dispUnitsRule !== null)
+		{
+			_stream["WriteByte"](7);
+			_stream["WriteLong"](this.dispUnitsRule);
+		}
+		if (this.units !== undefined && this.units !== null)
+		{
+			_stream["WriteByte"](8);
+			_stream["WriteLong"](this.units);
+		}
+		if (this.showUnitsOnChart !== undefined && this.showUnitsOnChart !== null)
+		{
+			_stream["WriteByte"](9);
+			_stream["WriteBool"](this.showUnitsOnChart);
+		}
+		if (this.majorTickMark !== undefined && this.majorTickMark !== null)
+		{
+			_stream["WriteByte"](10);
+			_stream["WriteLong"](this.majorTickMark);
+		}
+		if (this.minorTickMark !== undefined && this.minorTickMark !== null)
+		{
+			_stream["WriteByte"](11);
+			_stream["WriteLong"](this.minorTickMark);
+		}
+		if (this.tickLabelsPos !== undefined && this.tickLabelsPos !== null)
+		{
+			_stream["WriteByte"](12);
+			_stream["WriteLong"](this.tickLabelsPos);
+		}
+		if (this.crossesRule !== undefined && this.crossesRule !== null)
+		{
+			_stream["WriteByte"](13);
+			_stream["WriteLong"](this.crossesRule);
+		}
+		if (this.crosses !== undefined && this.crosses !== null)
+		{
+			_stream["WriteByte"](14);
+			_stream["WriteLong"](this.crosses);
+		}
+		if (this.axisType !== undefined && this.axisType !== null)
+		{
+			_stream["WriteByte"](15);
+			_stream["WriteLong"](this.axisType);
+		}
+
+		_stream["WriteByte"](255);
 	};
 
 	/** @constructor */
@@ -548,147 +874,369 @@
 		this.axisType = c_oAscAxisType.cat;
 		this.crossMinVal = null;
 		this.crossMaxVal = null;
+		this.show = true;
+		this.label = null;
+		this.gridlines = null;
+		this.numFmt = null;
+		this.auto = false;
 	}
-
-	asc_CatAxisSettings.prototype = {
-
-		isEqual: function(oPr){
-			if(!oPr){
-				return false;
-			}
-            if(this.intervalBetweenTick !== oPr.intervalBetweenTick){
-            	return false;
-			}
-            if(this.intervalBetweenLabelsRule !== oPr.intervalBetweenLabelsRule){
-            	return false;
-			}
-            if(this.intervalBetweenLabels !== oPr.intervalBetweenLabels){
-            	return false;
-			}
-            if(this.invertCatOrder !== oPr.invertCatOrder){
-            	return false;
-			}
-            if(this.labelsAxisDistance !== oPr.labelsAxisDistance){
-            	return false;
-			}
-            if(this.majorTickMark !== oPr.majorTickMark){
-            	return false;
-			}
-            if(this.minorTickMark !== oPr.minorTickMark){
-            	return false;
-			}
-            if(this.tickLabelsPos !== oPr.tickLabelsPos){
-            	return false;
-			}
-            if(this.crossesRule !== oPr.crossesRule){
-            	return false;
-			}
-            if(this.crosses !== oPr.crosses){
-            	return false;
-			}
-            if(this.labelsPosition !== oPr.labelsPosition){
-            	return false;
-			}
-            if(this.axisType !==  oPr.axisType){
-            	return false;
-			}
-            if(this.crossMinVal !== oPr.crossMinVal){
-            	return false;
-			}
-            if(this.crossMaxVal !== oPr.crossMaxVal){
-            	return false;
-			}
-			return true;
-		},
-		putIntervalBetweenTick: function (v) {
-			this.intervalBetweenTick = v;
-		}, putIntervalBetweenLabelsRule: function (v) {
-			this.intervalBetweenLabelsRule = v;
-		}, putIntervalBetweenLabels: function (v) {
-			this.intervalBetweenLabels = v;
-		}, putInvertCatOrder: function (v) {
-			this.invertCatOrder = v;
-		}, putLabelsAxisDistance: function (v) {
-			this.labelsAxisDistance = v;
-		}, putMajorTickMark: function (v) {
-			this.majorTickMark = v;
-		}, putMinorTickMark: function (v) {
-			this.minorTickMark = v;
-		}, putTickLabelsPos: function (v) {
-			this.tickLabelsPos = v;
-		}, putCrossesRule: function (v) {
-			this.crossesRule = v;
-		}, putCrosses: function (v) {
-			this.crosses = v;
-		},
-
-		putAxisType: function (v) {
-			this.axisType = v;
-		},
-
-		putLabelsPosition: function (v) {
-			this.labelsPosition = v;
-		},
-
-		getIntervalBetweenTick: function (v) {
-			return this.intervalBetweenTick;
-		},
-
-		getIntervalBetweenLabelsRule: function () {
-			return this.intervalBetweenLabelsRule;
-		}, getIntervalBetweenLabels: function () {
-			return this.intervalBetweenLabels;
-		}, getInvertCatOrder: function () {
-			return this.invertCatOrder;
-		}, getLabelsAxisDistance: function () {
-			return this.labelsAxisDistance;
-		}, getMajorTickMark: function () {
-			return this.majorTickMark;
-		}, getMinorTickMark: function () {
-			return this.minorTickMark;
-		}, getTickLabelsPos: function () {
-			return this.tickLabelsPos;
-		}, getCrossesRule: function () {
-			return this.crossesRule;
-		}, getCrosses: function () {
-			return this.crosses;
-		},
-
-		getAxisType: function () {
-			return this.axisType;
-		},
-
-		getLabelsPosition: function () {
-			return this.labelsPosition;
-		},
-
-		getCrossMinVal: function () {
-			return this.crossMinVal;
-		},
-
-		getCrossMaxVal: function () {
-			return this.crossMaxVal;
-		},
-
-
-		putCrossMinVal: function (val) {
-			this.crossMinVal = val;
-		},
-
-		putCrossMaxVal: function (val) {
-			this.crossMaxVal = val;
-		},
-
-		setDefault: function () {
-			this.putIntervalBetweenLabelsRule(Asc.c_oAscBetweenLabelsRule.auto);
-			this.putLabelsPosition(Asc.c_oAscLabelsPosition.betweenDivisions);
-			this.putTickLabelsPos(Asc.c_oAscTickLabelsPos.TICK_LABEL_POSITION_NEXT_TO);
-			this.putLabelsAxisDistance(100);
-			this.putMajorTickMark(c_oAscTickMark.TICK_MARK_OUT);
-			this.putMinorTickMark(c_oAscTickMark.TICK_MARK_NONE);
-			this.putIntervalBetweenTick(1);
-			this.putCrossesRule(Asc.c_oAscCrossesRule.auto);
+	asc_CatAxisSettings.prototype.isEqual = function(oPr){
+		if(!oPr){
+			return false;
 		}
+		if(this.intervalBetweenTick !== oPr.intervalBetweenTick){
+			return false;
+		}
+		if(this.intervalBetweenLabelsRule !== oPr.intervalBetweenLabelsRule){
+			return false;
+		}
+		if(this.intervalBetweenLabels !== oPr.intervalBetweenLabels){
+			return false;
+		}
+		if(this.invertCatOrder !== oPr.invertCatOrder){
+			return false;
+		}
+		if(this.labelsAxisDistance !== oPr.labelsAxisDistance){
+			return false;
+		}
+		if(this.majorTickMark !== oPr.majorTickMark){
+			return false;
+		}
+		if(this.minorTickMark !== oPr.minorTickMark){
+			return false;
+		}
+		if(this.tickLabelsPos !== oPr.tickLabelsPos){
+			return false;
+		}
+		if(this.crossesRule !== oPr.crossesRule){
+			return false;
+		}
+		if(this.crosses !== oPr.crosses){
+			return false;
+		}
+		if(this.labelsPosition !== oPr.labelsPosition){
+			return false;
+		}
+		if(this.axisType !==  oPr.axisType){
+			return false;
+		}
+		if(this.crossMinVal !== oPr.crossMinVal){
+			return false;
+		}
+		if(this.crossMaxVal !== oPr.crossMaxVal){
+			return false;
+		}
+		if(this.show !== oPr.show) {
+			return false;
+		}
+		if(this.label !== oPr.label) {
+			return false;
+		}
+		if(this.gridlines !== oPr.gridlines) {
+			return false;
+		}
+		if(this.auto !== oPr.auto) {
+			return false;
+		}
+		var bEqualNumFmt = false;
+		if(this.numFmt) {
+			bEqualNumFmt = this.numFmt.isEqual(oPr.numFmt);
+		}
+		else {
+			bEqualNumFmt = (this.numFmt === oPr.numFmt);
+		}
+		if(!bEqualNumFmt) {
+			return false;
+		}
+		return true;
+	};
+	asc_CatAxisSettings.prototype.putIntervalBetweenTick = function(v) {
+		this.intervalBetweenTick = v;
+	};
+	asc_CatAxisSettings.prototype.putIntervalBetweenLabelsRule = function(v) {
+		this.intervalBetweenLabelsRule = v;
+	};
+	asc_CatAxisSettings.prototype.putIntervalBetweenLabels = function(v) {
+		this.intervalBetweenLabels = v;
+	};
+	asc_CatAxisSettings.prototype.putInvertCatOrder = function(v) {
+		this.invertCatOrder = v;
+	};
+	asc_CatAxisSettings.prototype.putLabelsAxisDistance = function(v) {
+		this.labelsAxisDistance = v;
+	};
+	asc_CatAxisSettings.prototype.putMajorTickMark = function(v) {
+		this.majorTickMark = v;
+	};
+	asc_CatAxisSettings.prototype.putMinorTickMark = function(v) {
+		this.minorTickMark = v;
+	};
+	asc_CatAxisSettings.prototype.putTickLabelsPos = function(v) {
+		this.tickLabelsPos = v;
+	};
+	asc_CatAxisSettings.prototype.putCrossesRule = function(v) {
+		this.crossesRule = v;
+	};
+	asc_CatAxisSettings.prototype.putCrosses = function(v) {
+		this.crosses = v;
+	};
+	asc_CatAxisSettings.prototype.putAxisType = function(v) {
+		this.axisType = v;
+	};
+	asc_CatAxisSettings.prototype.putLabelsPosition = function(v) {
+		this.labelsPosition = v;
+	};
+	asc_CatAxisSettings.prototype.getIntervalBetweenTick = function(v) {
+		return this.intervalBetweenTick;
+	};
+	asc_CatAxisSettings.prototype.getIntervalBetweenLabelsRule = function() {
+		return this.intervalBetweenLabelsRule;
+	};
+	asc_CatAxisSettings.prototype.getIntervalBetweenLabels = function() {
+		return this.intervalBetweenLabels;
+	};
+	asc_CatAxisSettings.prototype.getInvertCatOrder = function() {
+		return this.invertCatOrder;
+	};
+	asc_CatAxisSettings.prototype.getLabelsAxisDistance = function() {
+		return this.labelsAxisDistance;
+	};
+	asc_CatAxisSettings.prototype.getMajorTickMark = function() {
+		return this.majorTickMark;
+	};
+	asc_CatAxisSettings.prototype.getMinorTickMark = function() {
+		return this.minorTickMark;
+	};
+	asc_CatAxisSettings.prototype.getTickLabelsPos = function() {
+		return this.tickLabelsPos;
+	};
+	asc_CatAxisSettings.prototype.getCrossesRule = function() {
+		return this.crossesRule;
+	};
+	asc_CatAxisSettings.prototype.getCrosses = function() {
+		return this.crosses;
+	};
+	asc_CatAxisSettings.prototype.getAxisType = function() {
+		return this.axisType;
+	};
+	asc_CatAxisSettings.prototype.getLabelsPosition = function() {
+		return this.labelsPosition;
+	};
+	asc_CatAxisSettings.prototype.getCrossMinVal = function() {
+		return this.crossMinVal;
+	};
+	asc_CatAxisSettings.prototype.getCrossMaxVal = function() {
+		return this.crossMaxVal;
+	};
+	asc_CatAxisSettings.prototype.putCrossMinVal = function(val) {
+		this.crossMinVal = val;
+	};
+	asc_CatAxisSettings.prototype.putCrossMaxVal = function(val) {
+		this.crossMaxVal = val;
+	};
+	asc_CatAxisSettings.prototype.setDefault = function() {
+		this.putIntervalBetweenLabelsRule(Asc.c_oAscBetweenLabelsRule.auto);
+		this.putLabelsPosition(Asc.c_oAscLabelsPosition.betweenDivisions);
+		this.putTickLabelsPos(Asc.c_oAscTickLabelsPos.TICK_LABEL_POSITION_NEXT_TO);
+		this.putLabelsAxisDistance(100);
+		this.putMajorTickMark(c_oAscTickMark.TICK_MARK_OUT);
+		this.putMinorTickMark(c_oAscTickMark.TICK_MARK_NONE);
+		this.putIntervalBetweenTick(1);
+		this.putCrossesRule(Asc.c_oAscCrossesRule.auto);
+		this.putShow(true);
+		this.putAuto(true);
+	};
+	asc_CatAxisSettings.prototype.getShow = function() {
+		return this.show;
+	};
+	asc_CatAxisSettings.prototype.putShow = function(val) {
+		this.show = val;
+	};
+	asc_CatAxisSettings.prototype.getLabel = function() {
+		return this.label;
+	};
+	asc_CatAxisSettings.prototype.putLabel = function(v) {
+		this.label = v;
+	};
+	asc_CatAxisSettings.prototype.getGridlines = function() {
+		return this.gridlines;
+	};
+	asc_CatAxisSettings.prototype.putGridlines = function(v) {
+		this.gridlines = v;
+	};
+	asc_CatAxisSettings.prototype.getNumFmt = function() {
+		return this.numFmt;
+	};
+	asc_CatAxisSettings.prototype.putNumFmt = function(v) {
+		this.numFmt = v;
+	};
+	asc_CatAxisSettings.prototype.getAuto = function() {
+		return this.auto;
+	};
+	asc_CatAxisSettings.prototype.putAuto = function(v) {
+		this.auto = v;
+	};
+	asc_CatAxisSettings.prototype.read = function(_params, _cursor){
+		var _continue = true;
+		while (_continue)
+		{
+			var _attr = _params[_cursor.pos++];
+			switch (_attr)
+			{
+				case 0:
+				{
+					this.putIntervalBetweenTick(_params[_cursor.pos++]);
+					break;
+				}
+				case 1:
+				{
+					this.putIntervalBetweenLabelsRule(_params[_cursor.pos++]);
+					break;
+				}
+				case 2:
+				{
+					this.putIntervalBetweenLabels(_params[_cursor.pos++]);
+					break;
+				}
+				case 3:
+				{
+					this.putInvertCatOrder(_params[_cursor.pos++]);
+					break;
+				}
+				case 4:
+				{
+					this.putLabelsAxisDistance(_params[_cursor.pos++]);
+					break;
+				}
+				case 5:
+				{
+					this.putLabelsPosition(_params[_cursor.pos++]);
+					break;
+				}
+				case 6:
+				{
+					this.putMajorTickMark(_params[_cursor.pos++]);
+					break;
+				}
+				case 7:
+				{
+					this.putMinorTickMark(_params[_cursor.pos++]);
+					break;
+				}
+				case 8:
+				{
+					this.putTickLabelsPos(_params[_cursor.pos++]);
+					break;
+				}
+				case 9:
+				{
+					this.putCrossesRule(_params[_cursor.pos++]);
+					break;
+				}
+				case 10:
+				{
+					this.putCrosses(_params[_cursor.pos++]);
+					break;
+				}
+				case 11:
+				{
+					this.putAxisType(_params[_cursor.pos++]);
+					break;
+				}
+				case 12:
+				{
+					this.putCrossMinVal(_params[_cursor.pos++]);
+					break;
+				}
+				case 13:
+				{
+					this.putCrossMaxVal(_params[_cursor.pos++]);
+					break;
+				}
+				case 255:
+				default:
+				{
+					_continue = false;
+					break;
+				}
+			}
+		}
+	};
+	asc_CatAxisSettings.prototype.write = function(_type, _stream) {
+		_stream["WriteByte"](_type);
+
+		if (this.getIntervalBetweenTick() !== undefined && this.getIntervalBetweenTick() !== null)
+		{
+			_stream["WriteByte"](0);
+			_stream["WriteDouble2"](this.getIntervalBetweenTick());
+		}
+		if (this.getIntervalBetweenLabelsRule() !== undefined && this.getIntervalBetweenLabelsRule() !== null)
+		{
+			_stream["WriteByte"](1);
+			_stream["WriteLong"](this.getIntervalBetweenLabelsRule());
+		}
+		if (this.getIntervalBetweenLabels() !== undefined && this.getIntervalBetweenLabels() !== null)
+		{
+			_stream["WriteByte"](2);
+			_stream["WriteDouble2"](this.getIntervalBetweenLabels());
+		}
+		if (this.getInvertCatOrder() !== undefined && this.getInvertCatOrder() !== null)
+		{
+			_stream["WriteByte"](3);
+			_stream["WriteBool"](this.getInvertCatOrder());
+		}
+		if (this.getLabelsAxisDistance() !== undefined && this.getLabelsAxisDistance() !== null)
+		{
+			_stream["WriteByte"](4);
+			_stream["WriteDouble2"](this.getLabelsAxisDistance());
+		}
+		if (this.getTickLabelsPos() !== undefined && this.getTickLabelsPos() !== null)
+		{
+			_stream["WriteByte"](5);
+			_stream["WriteLong"](this.getTickLabelsPos());
+		}
+		if (this.getMajorTickMark() !== undefined && this.getMajorTickMark() !== null)
+		{
+			_stream["WriteByte"](6);
+			_stream["WriteLong"](this.getMajorTickMark());
+		}
+		if (this.getMinorTickMark() !== undefined && this.getMinorTickMark() !== null)
+		{
+			_stream["WriteByte"](7);
+			_stream["WriteLong"](this.getMinorTickMark());
+		}
+		if (this.getTickLabelsPos() !== undefined && this.getTickLabelsPos() !== null)
+		{
+			_stream["WriteByte"](8);
+			_stream["WriteLong"](this.getTickLabelsPos());
+		}
+		if (this.getCrossesRule() !== undefined && this.getCrossesRule() !== null)
+		{
+			_stream["WriteByte"](9);
+			_stream["WriteLong"](this.getCrossesRule());
+		}
+		if (this.getCrosses() !== undefined && this.getCrosses() !== null)
+		{
+			_stream["WriteByte"](10);
+			_stream["WriteLong"](this.getCrosses());
+		}
+		if (this.getAxisType() !== undefined && this.getAxisType() !== null)
+		{
+			_stream["WriteByte"](11);
+			_stream["WriteLong"](this.getAxisType());
+		}
+		if (this.getCrossMinVal() !== undefined && this.getCrossMinVal() !== null)
+		{
+			_stream["WriteByte"](12);
+			_stream["WriteLong"](this.getCrossMinVal());
+		}
+		if (this.getCrossMaxVal() !== undefined && this.getCrossMaxVal() !== null)
+		{
+			_stream["WriteByte"](13);
+			_stream["WriteLong"](this.getCrossMaxVal());
+		}
+
+		_stream["WriteByte"](255);
 	};
 
 	/** @constructor */
@@ -696,725 +1244,797 @@
 		this.style = null;
 		this.title = null;
 		this.rowCols = null;
-		this.horAxisLabel = null;
-		this.vertAxisLabel = null;
 		this.legendPos = null;
 		this.dataLabelsPos = null;
-		this.vertAx = null;
-		this.horAx = null;
-		this.horGridLines = null;
-		this.vertGridLines = null;
 		this.type = null;
 		this.showSerName = null;
 		this.showCatName = null;
 		this.showVal = null;
 		this.separator = null;
-		this.horAxisProps = null;
-		this.vertAxisProps = null;
 		this.inColumns = null;
 
 		this.aRanges = [];
 
+
 		this.showMarker = null;
 		this.bLine = null;
 		this.smooth = null;
-		this.showHorAxis = null;
-		this.showVerAxis = null;
 		this.chartSpace = null;
+
+		this.bStartEdit = false;
+		this.horizontalAxes = [];
+		this.verticalAxes = [];
+		this.depthAxes = [];
 	}
 
-	asc_ChartSettings.prototype = {
+	//TODO:remove this---------------------
+	asc_ChartSettings.prototype.putHorAxisProps = function(v) {
+		if(!AscCommon.isRealObject(v)) {
+			this.horizontalAxes.length = 0;
+		}
+		else {
+			this.horizontalAxes[0] = v;
+		}
+	};
+	asc_ChartSettings.prototype.getHorAxisProps = function() {
+		return this.horizontalAxes[0] || null;
+	};
+	asc_ChartSettings.prototype.putVertAxisProps = function(v) {
+		if(!AscCommon.isRealObject(v)) {
+			this.verticalAxes.length = 0;
+		}
+		else {
+			this.verticalAxes[0] = v;
+		}
+	};
+	asc_ChartSettings.prototype.getVertAxisProps = function() {
+		return this.verticalAxes[0] || null;
+	};
+	asc_ChartSettings.prototype.putShowHorAxis = function(v) {
+		var oAx = this.horizontalAxes[0];
+		if(oAx) {
+			oAx.putShow(v);
+		}
+	};
+	asc_ChartSettings.prototype.getShowHorAxis = function() {
+		var oAx = this.horizontalAxes[0];
+		if(oAx) {
+			return oAx.getShow();
+		}
+		return false;
+	};
+	asc_ChartSettings.prototype.putShowVerAxis = function(v) {
+		var oAx = this.verticalAxes[0];
+		if(oAx) {
+			oAx.putShow(v);
+		}
+	};
+	asc_ChartSettings.prototype.getShowVerAxis = function() {
+		var oAx = this.verticalAxes[0];
+		if(oAx) {
+			return oAx.getShow();
+		}
+		return false;
+	};
+	asc_ChartSettings.prototype.putHorAxisLabel = function(v) {
+		var oAx = this.horizontalAxes[0];
+		if(oAx) {
+			oAx.putLabel(v);
+		}
+	};
+	asc_ChartSettings.prototype.getHorAxisLabel = function() {
+		var oAx = this.horizontalAxes[0];
+		if(oAx) {
+			return oAx.getLabel();
+		}
+		return null;
+	};
+	asc_ChartSettings.prototype.putVertAxisLabel = function(v) {
+		var oAx = this.verticalAxes[0];
+		if(oAx) {
+			return oAx.getLabel();
+		}
+		return null;
+	};
+	asc_ChartSettings.prototype.getVertAxisLabel = function() {
+		var oAx = this.verticalAxes[0];
+		if(oAx) {
+			return oAx.getLabel();
+		}
+		return null;
+	};
+	asc_ChartSettings.prototype.putHorGridLines = function(v) {
+		var oAx = this.verticalAxes[0];
+		if(oAx) {
+			oAx.putGridlines(v);
+		}
+	};
+	asc_ChartSettings.prototype.getHorGridLines = function() {
+		var oAx = this.verticalAxes[0];
+		if(oAx) {
+			return oAx.getGridlines();
+		}
+		return null;
+	};
+	asc_ChartSettings.prototype.putVertGridLines = function(v) {
+		var oAx = this.horizontalAxes[0];
+		if(oAx) {
+			oAx.putGridlines(v);
+		}
+	};
+	asc_ChartSettings.prototype.getVertGridLines = function() {
+		var oAx = this.horizontalAxes[0];
+		if(oAx) {
+			return oAx.getGridlines();
+		}
+		return null;
+	};
+	//------------------------------
+	asc_ChartSettings.prototype.getHorAxesProps = function() {
+		return this.horizontalAxes;
+	};
+	asc_ChartSettings.prototype.getVertAxesProps = function() {
+		return this.verticalAxes;
+	};
+	asc_ChartSettings.prototype.getDepthAxesProps = function() {
+		return this.depthAxes;
+	};
+	asc_ChartSettings.prototype.addHorAxesProps = function(v) {
+		this.horizontalAxes.push(v);
+	};
+	asc_ChartSettings.prototype.addVertAxesProps = function(v) {
+		this.verticalAxes.push(v);
+	};
+	asc_ChartSettings.prototype.addDepthAxesProps = function(v) {
+		this.depthAxes.push(v);
+	};
+	asc_ChartSettings.prototype.removeAllAxesProps = function(v) {
+		this.horizontalAxes.length = 0;
+		this.verticalAxes.length = 0;
+		this.depthAxes.length = 0;
+	};
+	asc_ChartSettings.prototype.equalBool = function(a, b){
+		return ((!!a) === (!!b));
+	};
+	asc_ChartSettings.prototype.isEqual = function(oPr){
+		if(!oPr){
+			return false;
+		}
+		if(this.style !== oPr.style){
+			return false;
+		}
+		if(this.title !== oPr.title){
+			return false;
+		}
+		if(this.rowCols !== oPr.rowCols){
+			return false;
+		}
+		if(this.legendPos !== oPr.legendPos){
+			return false;
+		}
+		if(this.dataLabelsPos !== oPr.dataLabelsPos){
+			return false;
+		}
+		if(this.type !== oPr.type){
+			return false;
+		}
+		if(!this.equalBool(this.showSerName, oPr.showSerName)){
+			return false;
+		}
+		if(!this.equalBool(this.showCatName, oPr.showCatName)){
+			return false;
+		}
+		if(!this.equalBool(this.showVal, oPr.showVal)){
+			return false;
+		}
 
-		equalBool: function(a, b){
-			return ((!!a) === (!!b));
-		},
-
-		isEqual: function(oPr){
-			if(!oPr){
+		if(this.separator !== oPr.separator &&
+		!(this.separator === ' ' && oPr.separator == null || oPr.separator === ' ' && this.separator == null)){
+			return false;
+		}
+		if(this.aRanges.length !== oPr.aRanges.length){
+			return false;
+		}
+		for(var i = 0; i < this.aRanges.length; ++i) {
+			if(this.aRanges[i] !== oPr.aRanges[i]) {
 				return false;
 			}
-			if(this.style !== oPr.style){
+		}
+		if(!this.equalBool(this.inColumns, oPr.inColumns)){
+			return false;
+		}
+
+		if(!this.equalBool(this.showMarker, oPr.showMarker)){
+			return false;
+		}
+		if(!this.equalBool(this.bLine, oPr.bLine)){
+			return false;
+		}
+		if(!this.equalBool(this.smooth, oPr.smooth)){
+			return false;
+		}
+		if(this.verticalAxes.length !== oPr.verticalAxes.length) {
+			return false;
+		}
+		if(this.horizontalAxes.length !== oPr.horizontalAxes.length) {
+			return false;
+		}
+		var nAx;
+		for(nAx = 0; nAx < this.verticalAxes.length; ++nAx) {
+			if(!this.verticalAxes[nAx].isEqual(oPr.verticalAxes[nAx])) {
 				return false;
 			}
-            if(this.title !== oPr.title){
+		}
+		for(nAx = 0; nAx < this.horizontalAxes.length; ++nAx) {
+			if(!this.horizontalAxes[nAx].isEqual(oPr.horizontalAxes[nAx])) {
 				return false;
 			}
-			if(this.rowCols !== oPr.rowCols){
-            	return false;
-			}
-			if(this.horAxisLabel !== oPr.horAxisLabel){
-				return false;
-			}
-            if(this.vertAxisLabel !== oPr.vertAxisLabel){
-				return false;
-			}
-			if(this.legendPos !== oPr.legendPos){
-           		return false;
-			}
-			if(this.dataLabelsPos !== oPr.dataLabelsPos){
-				return false;
-			}
-			if(this.vertAx !== oPr.vertAx){
-				return false;
-			}
-			if(this.horAx !== oPr.horAx){
-				return false;
-			}
-            if(this.horGridLines !== oPr.horGridLines){
-            	return false;
-			}
-            if(this.vertGridLines !== oPr.vertGridLines){
-            	return false;
-			}
-            if(this.type !== oPr.type){
-            	return false;
-			}
-            if(!this.equalBool(this.showSerName, oPr.showSerName)){
-            	return false;
-			}
-
-            if(!this.equalBool(this.showCatName, oPr.showCatName)){
-            	return false;
-			}
-            if(!this.equalBool(this.showVal, oPr.showVal)){
-            	return false;
-			}
-
-            if(this.separator !== oPr.separator &&
-			!(this.separator === ' ' && oPr.separator == null || oPr.separator === ' ' && this.separator == null)){
-            	return false;
-			}
-			if(!this.horAxisProps){
-            	if(oPr.horAxisProps){
-            		return false;
-				}
-			}
-			else{
-				if(!this.horAxisProps.isEqual(oPr.horAxisProps)){
-					return false;
-				}
-			}
-            if(!this.vertAxisProps){
-                if(oPr.vertAxisProps){
-                    return false;
-                }
-            }
-            else{
-                if(!this.vertAxisProps.isEqual(oPr.vertAxisProps)){
-                    return false;
-                }
-            }
-            if(this.aRanges.length !== oPr.aRanges.length){
-                return false;
-            }
-			for(var i = 0; i < this.aRanges.length; ++i) {
-				if(this.aRanges[i] !== oPr.aRanges[i]) {
-					return false;
-				}
-			}
-            if(!this.equalBool(this.inColumns, oPr.inColumns)){
-                return false;
-            }
-
-            if(!this.equalBool(this.showMarker, oPr.showMarker)){
-                return false;
-            }
-            if(!this.equalBool(this.bLine, oPr.bLine)){
-                return false;
-            }
-            if(!this.equalBool(this.smooth, oPr.smooth)){
-                return false;
-            }
-            if(!this.equalBool(this.showHorAxis, oPr.showHorAxis)){
-                return false;
-            }
-
-            if(!this.equalBool(this.showVerAxis, oPr.showVerAxis)){
-                return false;
-            }
-            return true;
-		},
-
-		putShowMarker: function (v) {
-			this.showMarker = v;
-		},
-
-		getShowMarker: function () {
-			return this.showMarker;
-		},
-
-		putLine: function (v) {
-			this.bLine = v;
-		},
-
-		getLine: function () {
-			return this.bLine;
-		},
-
-		putRanges: function(aRanges) {
-			if(Array.isArray(aRanges)) {
-				this.aRanges = aRanges;
-			}
-			else {
-				this.aRanges.length = 0;
-			}
-		},
-
-		getRanges: function() {
-			return this.aRanges;
-		},
-
-		putSmooth: function (v) {
-			this.smooth = v;
-		},
-
-		getSmooth: function () {
-			return this.smooth;
-		},
-
-		putStyle: function (index) {
-			this.style = parseInt(index, 10);
-		},
-
-		getStyle: function () {
-			return this.style;
-		},
-
-		putRange: function (range) {
+		}
+		return true;
+	};
+	asc_ChartSettings.prototype.isEmpty = function() {
+		return this.isEqual(new asc_ChartSettings());
+	};
+	asc_ChartSettings.prototype.putShowMarker = function(v) {
+		this.showMarker = v;
+	};
+	asc_ChartSettings.prototype.getShowMarker = function() {
+		return this.showMarker;
+	};
+	asc_ChartSettings.prototype.putLine = function(v) {
+		this.bLine = v;
+	};
+	asc_ChartSettings.prototype.getLine = function() {
+		return this.bLine;
+	};
+	asc_ChartSettings.prototype.putRanges = function(aRanges) {
+		if(Array.isArray(aRanges)) {
+			this.aRanges = aRanges;
+		}
+		else {
 			this.aRanges.length = 0;
-			this.aRanges[0] = range;
-		},
-
-		setRange: function(sRange) {
-			if(this.chartSpace) {
-				this.chartSpace.setRange(sRange);
-				this.updateChart();
-			}
-		},
-
-		isValidRange: function(sRange) {
-			if(sRange === "") {
-				return Asc.c_oAscError.ID.No;
-			}
-			var sCheck = sRange;
-			if(sRange[0] === "=") {
-				sCheck = sRange.slice(1);
-			}
-			var aRanges = AscFormat.fParseChartFormula(sCheck);
-			return (aRanges.length !== 0) ? Asc.c_oAscError.ID.No : Asc.c_oAscError.ID.DataRangeError;
-		},
-
-		getRange: function () {
-			if(this.chartSpace) {
-				return this.chartSpace.getCommonRange();
-			}
-			if(this.aRanges.length > 0 && typeof this.aRanges[0] === "string" ) {
-				var sRange = this.aRanges[0];
-				if(sRange.length > 0) {
-					return sRange;
+		}
+	};
+	asc_ChartSettings.prototype.getRanges = function() {
+		return this.aRanges;
+	};
+	asc_ChartSettings.prototype.putSmooth = function(v) {
+		this.smooth = v;
+	};
+	asc_ChartSettings.prototype.getSmooth = function() {
+		return this.smooth;
+	};
+	asc_ChartSettings.prototype.putStyle = function(index) {
+		this.style = parseInt(index, 10);
+		if(this.bStartEdit && this.chartSpace) {
+			if(AscFormat.isRealNumber(this.style)){
+				var oPreset = AscCommon.g_oChartPresets[this.type] && AscCommon.g_oChartPresets[this.type][this.style - 1];
+				if(oPreset) {
+					AscFormat.ApplyPresetToChartSpace(this.chartSpace, oPreset, false);
+					this.updateChart();
 				}
-			}
-			return null;
-		},
-
-		putInColumns: function (inColumns) {
-			this.inColumns = inColumns;
-		},
-
-		getInColumns: function () {
-			return this.inColumns;
-		},
-
-		putTitle: function (v) {
-			this.title = v;
-		},
-
-		getTitle: function () {
-			return this.title;
-		},
-
-		putRowCols: function (v) {
-			this.rowCols = v;
-		},
-
-		getRowCols: function () {
-			return this.rowCols;
-		},
-
-		putHorAxisLabel: function (v) {
-			this.horAxisLabel = v;
-		}, putVertAxisLabel: function (v) {
-			this.vertAxisLabel = v;
-		}, putLegendPos: function (v) {
-			this.legendPos = v;
-		}, putDataLabelsPos: function (v) {
-			this.dataLabelsPos = v;
-		}, putCatAx: function (v) {
-			this.vertAx = v;
-		}, putValAx: function (v) {
-			this.horAx = v;
-		},
-
-		getHorAxisLabel: function (v) {
-			return this.horAxisLabel;
-		}, getVertAxisLabel: function (v) {
-			return this.vertAxisLabel;
-		}, getLegendPos: function (v) {
-			return this.legendPos;
-		}, getDataLabelsPos: function (v) {
-			return this.dataLabelsPos;
-		}, getVertAx: function (v) {
-			return this.vertAx;
-		}, getHorAx: function (v) {
-			return this.horAx;
-		},
-
-		putHorGridLines: function (v) {
-			this.horGridLines = v;
-		},
-
-		getHorGridLines: function (v) {
-			return this.horGridLines;
-		},
-
-		putVertGridLines: function (v) {
-			this.vertGridLines = v;
-		},
-
-		getVertGridLines: function () {
-			return this.vertGridLines;
-		},
-
-		getType: function () {
-			return this.type;
-		},
-
-		putType: function (v) {
-			return this.type = v;
-		},
-
-		putShowSerName: function (v) {
-			return this.showSerName = v;
-		}, putShowCatName: function (v) {
-			return this.showCatName = v;
-		}, putShowVal: function (v) {
-			return this.showVal = v;
-		},
-
-
-		getShowSerName: function () {
-			return this.showSerName;
-		}, getShowCatName: function () {
-			return this.showCatName;
-		}, getShowVal: function () {
-			return this.showVal;
-		},
-
-		putSeparator: function (v) {
-			this.separator = v;
-		},
-
-		getSeparator: function () {
-			return this.separator;
-		},
-
-		putHorAxisProps: function (v) {
-			this.horAxisProps = v;
-		},
-
-		getHorAxisProps: function () {
-			return this.horAxisProps;
-		},
-
-
-		putVertAxisProps: function (v) {
-			this.vertAxisProps = v;
-		},
-
-		getVertAxisProps: function () {
-			return this.vertAxisProps;
-		},
-
-
-
-		checkSwapAxisProps: function(bHBar){
-            var hor_axis_settings = this.getHorAxisProps();
-            var vert_axis_settings = this.getVertAxisProps();
-			if(!bHBar){
-                if(hor_axis_settings){
-                    if(hor_axis_settings.getAxisType() !== c_oAscAxisType.cat){
-                        if(vert_axis_settings &&  vert_axis_settings.getAxisType() === c_oAscAxisType.cat){
-                            this.putHorAxisProps(vert_axis_settings);
-                        }
-                        else{
-                            var new_hor_axis_settings = new asc_CatAxisSettings();
-                            new_hor_axis_settings.setDefault();
-                            this.putHorAxisProps(new_hor_axis_settings);
-                        }
-                    }
-                }
-                else{
-                    var new_hor_axis_settings = new asc_CatAxisSettings();
-                    new_hor_axis_settings.setDefault();
-                    this.putHorAxisProps(new_hor_axis_settings);
-                }
-
-                if(vert_axis_settings){
-                    if(vert_axis_settings.getAxisType() !== c_oAscAxisType.val){
-                        if(hor_axis_settings && hor_axis_settings.getAxisType() === c_oAscAxisType.val){
-                            this.putVertAxisProps(hor_axis_settings);
-                        }
-                        else{
-                            var new_vert_axis_settings = new asc_ValAxisSettings();
-                            new_vert_axis_settings.setDefault();
-                            this.putVertAxisProps(new_vert_axis_settings);
-                        }
-                    }
-                }
-                else{
-                    var new_vert_axis_settings = new asc_ValAxisSettings();
-                    new_vert_axis_settings.setDefault();
-                    this.putVertAxisProps(new_vert_axis_settings);
-                }
-            }
-            else{
-                if(hor_axis_settings){
-                    if(hor_axis_settings.getAxisType() !== c_oAscAxisType.val){
-                        if(vert_axis_settings &&  vert_axis_settings.getAxisType() === c_oAscAxisType.val){
-                            this.putHorAxisProps(vert_axis_settings);
-                        }
-                        else{
-                            var new_hor_axis_settings = new asc_ValAxisSettings();
-                            new_hor_axis_settings.setDefault();
-                            this.putHorAxisProps(new_hor_axis_settings);
-                        }
-                    }
-                }
-                else{
-                    var new_hor_axis_settings = new asc_ValAxisSettings();
-                    new_hor_axis_settings.setDefault();
-                    this.putHorAxisProps(new_hor_axis_settings);
-                }
-
-                if(vert_axis_settings){
-                    if(vert_axis_settings.getAxisType() !== c_oAscAxisType.cat){
-                        if(hor_axis_settings && hor_axis_settings.getAxisType() === c_oAscAxisType.cat){
-                            this.putVertAxisProps(hor_axis_settings);
-                        }
-                        else{
-                            var new_vert_axis_settings = new asc_CatAxisSettings();
-                            new_vert_axis_settings.setDefault();
-                            this.putVertAxisProps(new_vert_axis_settings);
-                        }
-                    }
-                }
-                else{
-                    var new_vert_axis_settings = new asc_CatAxisSettings();
-                    new_vert_axis_settings.setDefault();
-                    this.putVertAxisProps(new_vert_axis_settings);
-                }
-			}
-		},
-
-		changeType: function (type) {
-			if(null === this.type){
-				this.putType(type);
-				return;
-			}
-			if (this.type === type) {
-				return;
-			}
-
-			var bSwapGridLines = ((this.type === c_oAscChartTypeSettings.hBarNormal ||
-			this.type === c_oAscChartTypeSettings.hBarStacked || this.type === c_oAscChartTypeSettings.hBarStackedPer
-			|| this.type === c_oAscChartTypeSettings.hBarNormal3d || this.type === c_oAscChartTypeSettings.hBarStacked3d
-			|| this.type === c_oAscChartTypeSettings.hBarStackedPer3d) !==
-			(type === c_oAscChartTypeSettings.hBarNormal || type === c_oAscChartTypeSettings.hBarStacked ||
-			type === c_oAscChartTypeSettings.hBarStackedPer || this.type === c_oAscChartTypeSettings.hBarNormal3d
-			|| this.type === c_oAscChartTypeSettings.hBarStacked3d || this.type === c_oAscChartTypeSettings.hBarStackedPer3d)   );
-			var bSwapLines = ((
-				type === c_oAscChartTypeSettings.lineNormal || type === c_oAscChartTypeSettings.lineStacked ||
-				type === c_oAscChartTypeSettings.lineStackedPer || type === c_oAscChartTypeSettings.lineNormalMarker ||
-				type === c_oAscChartTypeSettings.lineStackedMarker || type === c_oAscChartTypeSettings.lineStackedPerMarker || type === c_oAscChartTypeSettings.line3d
-
-			) !== (
-
-				this.type === c_oAscChartTypeSettings.lineNormal || this.type === c_oAscChartTypeSettings.lineStacked ||
-				this.type === c_oAscChartTypeSettings.lineStackedPer ||
-				this.type === c_oAscChartTypeSettings.lineNormalMarker ||
-				this.type === c_oAscChartTypeSettings.lineStackedMarker ||
-				this.type === c_oAscChartTypeSettings.lineStackedPerMarker ||
-				this.type === c_oAscChartTypeSettings.line3d
-			));
-			var bSwapScatter = ((this.type === c_oAscChartTypeSettings.scatter) !==
-			(type === c_oAscChartTypeSettings.scatter));
-
-
-			var nOldType = this.type;
-			this.putType(type);
-
-			var hor_axis_settings = this.getHorAxisProps();
-			var vert_axis_settings = this.getVertAxisProps();
-			var new_hor_axis_settings, new_vert_axis_settings, oTempVal;
-			if (bSwapGridLines) {
-				oTempVal = hor_axis_settings;
-				hor_axis_settings = vert_axis_settings;
-				vert_axis_settings = oTempVal;
-				this.putHorAxisProps(hor_axis_settings);
-				this.putVertAxisProps(vert_axis_settings);
-
-				oTempVal = this.horGridLines;
-				this.putHorGridLines(this.vertGridLines);
-				this.putVertGridLines(oTempVal);
-			}
-			switch (type) {
-				case c_oAscChartTypeSettings.pie                 :
-				case c_oAscChartTypeSettings.pie3d                 :
-				case c_oAscChartTypeSettings.doughnut            : {
-					this.putHorAxisProps(null);
-					this.putVertAxisProps(null);
-					this.putHorAxisLabel(null);
-					this.putVertAxisLabel(null);
-					this.putShowHorAxis(null);
-					this.putShowVerAxis(null);
-					break;
-				}
-				case c_oAscChartTypeSettings.barNormal           :
-				case c_oAscChartTypeSettings.barStacked          :
-				case c_oAscChartTypeSettings.barStackedPer       :
-				case c_oAscChartTypeSettings.barNormal3d         :
-				case c_oAscChartTypeSettings.barStacked3d        :
-				case c_oAscChartTypeSettings.barStackedPer3d     :
-				case c_oAscChartTypeSettings.barNormal3dPerspective     :
-				case c_oAscChartTypeSettings.lineNormal          :
-				case c_oAscChartTypeSettings.lineStacked         :
-				case c_oAscChartTypeSettings.lineStackedPer      :
-				case c_oAscChartTypeSettings.lineNormalMarker    :
-				case c_oAscChartTypeSettings.lineStackedMarker   :
-				case c_oAscChartTypeSettings.lineStackedPerMarker:
-				case c_oAscChartTypeSettings.line3d:
-				case c_oAscChartTypeSettings.areaNormal          :
-				case c_oAscChartTypeSettings.areaStacked         :
-				case c_oAscChartTypeSettings.areaStackedPer      :
-				case c_oAscChartTypeSettings.stock               :
-                case c_oAscChartTypeSettings.surfaceNormal       :
-                case c_oAscChartTypeSettings.surfaceWireframe    :
-                case c_oAscChartTypeSettings.contourNormal       :
-                case c_oAscChartTypeSettings.contourWireframe    :
-					{
-
-
-
-                        this.checkSwapAxisProps(false);
-					if (bSwapLines) {
-						this.putShowMarker(false);
-						this.putSmooth(null);
-						this.putLine(true);
-					}
-					if (nOldType === c_oAscChartTypeSettings.hBarNormal || nOldType === c_oAscChartTypeSettings.hBarStacked ||
-						nOldType === c_oAscChartTypeSettings.hBarStackedPer || nOldType === c_oAscChartTypeSettings.hBarNormal3d ||
-						nOldType === c_oAscChartTypeSettings.hBarStacked3d || nOldType === c_oAscChartTypeSettings.hBarStackedPer3d) {
-						var bTemp = this.showHorAxis;
-						this.putShowHorAxis(this.showVerAxis);
-						this.putShowVerAxis(bTemp);
-					} else if (nOldType === c_oAscChartTypeSettings.pie || nOldType === c_oAscChartTypeSettings.pie3d || nOldType === c_oAscChartTypeSettings.doughnut) {
-						this.putShowHorAxis(true);
-						this.putShowVerAxis(true);
-					}
-					var oHorAxisProps = this.getHorAxisProps();
-						if(oHorAxisProps && oHorAxisProps.getAxisType() === c_oAscAxisType.cat){
-							if(type === c_oAscChartTypeSettings.areaNormal ||
-							type === c_oAscChartTypeSettings.areaStacked ||
-							type === c_oAscChartTypeSettings.areaStackedPer||
-							type === c_oAscChartTypeSettings.stock ||
-							type === c_oAscChartTypeSettings.surfaceNormal ||
-							type === c_oAscChartTypeSettings.surfaceWireframe ||
-							type === c_oAscChartTypeSettings.contourNormal ||
-							type === c_oAscChartTypeSettings.contourWireframe){
-								oHorAxisProps.putLabelsPosition(Asc.c_oAscLabelsPosition.byDivisions);
-							}
-							else{
-								oHorAxisProps.putLabelsPosition(Asc.c_oAscLabelsPosition.betweenDivisions);
-							}
-						}
-					break;
-				}
-				case c_oAscChartTypeSettings.hBarNormal          :
-				case c_oAscChartTypeSettings.hBarStacked         :
-				case c_oAscChartTypeSettings.hBarStackedPer      :
-                case c_oAscChartTypeSettings.hBarNormal3d        :
-                case c_oAscChartTypeSettings.hBarStacked3d       :
-                case c_oAscChartTypeSettings.hBarStackedPer3d    :
-					{
-                        this.checkSwapAxisProps(true);
-					if (nOldType === c_oAscChartTypeSettings.pie || nOldType === c_oAscChartTypeSettings.pie3d || nOldType === c_oAscChartTypeSettings.doughnut) {
-						this.putShowHorAxis(true);
-						this.putShowVerAxis(true);
-					} else if (nOldType !== c_oAscChartTypeSettings.hBarNormal &&
-						nOldType !== c_oAscChartTypeSettings.hBarStacked && nOldType !== c_oAscChartTypeSettings.hBarStackedPer || nOldType !== c_oAscChartTypeSettings.hBarNormal3d ||
-                        nOldType !== c_oAscChartTypeSettings.hBarStacked3d || nOldType !== c_oAscChartTypeSettings.hBarStackedPer3d) {
-						var bTemp = this.showHorAxis;
-						this.putShowHorAxis(this.showVerAxis);
-						this.putShowVerAxis(bTemp);
-					}
-
-					var oVertAxisProps = this.getVertAxisProps();
-					if(oVertAxisProps && oVertAxisProps.getAxisType() === c_oAscAxisType.cat){
-						oVertAxisProps.putLabelsPosition(Asc.c_oAscLabelsPosition.betweenDivisions);
-					}
-					//this.putHorGridLines(c_oAscGridLinesSettings.none);
-					//this.putVertGridLines(c_oAscGridLinesSettings.major);
-					break;
-				}
-				case c_oAscChartTypeSettings.scatter             :
-				case c_oAscChartTypeSettings.scatterLine         :
-				case c_oAscChartTypeSettings.scatterLineMarker   :
-				case c_oAscChartTypeSettings.scatterMarker       :
-				case c_oAscChartTypeSettings.scatterNone         :
-				case c_oAscChartTypeSettings.scatterSmooth       :
-				case c_oAscChartTypeSettings.scatterSmoothMarker : {
-					if (!hor_axis_settings || hor_axis_settings.getAxisType() !== c_oAscAxisType.val) {
-						new_hor_axis_settings = new asc_ValAxisSettings();
-						new_hor_axis_settings.setDefault();
-						this.putHorAxisProps(new_hor_axis_settings);
-					}
-					if (!vert_axis_settings || vert_axis_settings.getAxisType() !== c_oAscAxisType.val) {
-						new_vert_axis_settings = new asc_ValAxisSettings();
-						new_vert_axis_settings.setDefault();
-						this.putVertAxisProps(new_vert_axis_settings);
-					}
-					//this.putHorGridLines(c_oAscGridLinesSettings.major);
-					//this.putVertGridLines(c_oAscGridLinesSettings.major);
-					if (bSwapScatter) {
-						this.putShowMarker(true);
-						this.putSmooth(null);
-						this.putLine(false);
-					}
-					if (nOldType === c_oAscChartTypeSettings.hBarNormal || nOldType === c_oAscChartTypeSettings.hBarStacked ||
-						nOldType === c_oAscChartTypeSettings.hBarStackedPer || nOldType === c_oAscChartTypeSettings.hBarNormal3d ||
-                        nOldType === c_oAscChartTypeSettings.hBarStacked3d || nOldType === c_oAscChartTypeSettings.hBarStackedPer3d) {
-						var bTemp = this.showHorAxis;
-						this.putShowHorAxis(this.showVerAxis);
-						this.putShowVerAxis(bTemp);
-					} else if (nOldType === c_oAscChartTypeSettings.pie || nOldType === c_oAscChartTypeSettings.pie3d || nOldType === c_oAscChartTypeSettings.doughnut) {
-						this.putShowHorAxis(true);
-						this.putShowVerAxis(true);
-					}
-					break;
-				}
-			}
-		},
-
-		putShowHorAxis: function (v) {
-			this.showHorAxis = v;
-		}, getShowHorAxis: function () {
-			return this.showHorAxis;
-		},
-
-		putShowVerAxis: function (v) {
-			this.showVerAxis = v;
-		}, getShowVerAxis: function () {
-			return this.showVerAxis;
-		},
-
-		getSeries: function() {
-			if(this.chartSpace) {
-				return this.chartSpace.getAllSeries();
-			}
-			return [];
-		},
-
-		getCatValues: function() {
-			if(this.chartSpace) {
-				return this.chartSpace.getCatValues();
-			}
-			return [];
-		},
-
-		getCatFormula: function() {
-			if(this.chartSpace) {
-				return this.chartSpace.getCatFormula();
-			}
-			return "";
-		},
-
-		setCatFormula: function(sFormula) {
-			if(this.chartSpace) {
-				return this.chartSpace.setCatFormula(sFormula);
-			}
-			this.updateChart();
-		},
-
-		isValidCatFormula: function(sFormula) {
-			if(sFormula === "" || sFormula === null) {
-				return Asc.c_oAscError.ID.No;
-			}
-			return AscFormat.ExecuteNoHistory(function(){
-				var oCat = new AscFormat.CCat();
-				return oCat.setValues(sFormula).getError();
-			}, this, []);
-		},
-
-		switchRowCol: function() {
-			var nError = Asc.c_oAscError.ID.No;
-			if(this.chartSpace) {
-				nError = this.chartSpace.switchRowCol();
-			}
-			this.updateChart();
-			return nError;
-		},
-
-		addSeries: function() {
-			var oRet = null;
-			if(this.chartSpace) {
-				oRet = this.chartSpace.addNewSeries();
-			}
-			this.updateChart();
-			return oRet;
-		},
-
-		addScatterSeries: function() {
-			var oRet = null;
-			if(this.chartSpace) {
-				oRet = this.chartSpace.addNewSeries();
-			}
-			this.updateChart();
-			return oRet;
-		},
-
-		startEdit: function() {
-			AscCommon.History.Create_NewPoint();
-			AscCommon.History.StartTransaction();
-		},
-		endEdit: function() {
-			AscCommon.History.EndTransaction();
-			this.updateChart();
-		},
-		cancelEdit: function() {
-			AscCommon.History.EndTransaction();
-			AscCommon.History.Undo();
-			AscCommon.History.Clear_Redo();
-			AscCommon.History._sendCanUndoRedo();
-			this.updateChart();
-		},
-		startEditData: function() {
-			AscCommon.History.SavePointIndex();
-		},
-		cancelEditData: function() {
-			AscCommon.History.UndoToPointIndex();
-			this.updateChart();
-		},
-		endEditData: function() {
-			AscCommon.History.ClearPointIndex();
-			this.updateChart();
-		},
-		updateChart: function() {
-			if(this.chartSpace) {
-				this.chartSpace.onDataUpdate();
 			}
 		}
 	};
+	asc_ChartSettings.prototype.getStyle = function() {
+		return this.style;
+	};
+	asc_ChartSettings.prototype.putRange = function(range) {
+		this.aRanges.length = 0;
+		this.aRanges[0] = range;
+	};
+	asc_ChartSettings.prototype.setRange = function(sRange) {
+		if(this.chartSpace) {
+			this.chartSpace.setRange(sRange);
+			this.updateChart();
+		}
+	};
+	asc_ChartSettings.prototype.isValidRange = function(sRange) {
+		if(sRange === "") {
+			return Asc.c_oAscError.ID.No;
+		}
+		var sCheck = sRange;
+		if(sRange[0] === "=") {
+			sCheck = sRange.slice(1);
+		}
+		var aRanges = AscFormat.fParseChartFormula(sCheck);
+		return (aRanges.length !== 0) ? Asc.c_oAscError.ID.No : Asc.c_oAscError.ID.DataRangeError;
+	};
+	asc_ChartSettings.prototype.getRange = function() {
+		if(this.chartSpace) {
+			return this.chartSpace.getCommonRange();
+		}
+		if(this.aRanges.length > 0 && typeof this.aRanges[0] === "string" ) {
+			var sRange = this.aRanges[0];
+			if(sRange.length > 0) {
+				return sRange;
+			}
+		}
+		return null;
+	};
+	asc_ChartSettings.prototype.putInColumns = function(inColumns) {
+		this.inColumns = inColumns;
+	};
+	asc_ChartSettings.prototype.getInColumns = function() {
+		return this.inColumns;
+	};
+	asc_ChartSettings.prototype.putTitle = function(v) {
+		this.title = v;
+	};
+	asc_ChartSettings.prototype.getTitle = function() {
+		return this.title;
+	};
+	asc_ChartSettings.prototype.putRowCols = function(v) {
+		this.rowCols = v;
+	};
+	asc_ChartSettings.prototype.getRowCols = function() {
+		return this.rowCols;
+	};
+	asc_ChartSettings.prototype.putLegendPos = function(v) {
+		this.legendPos = v;
+	};
+	asc_ChartSettings.prototype.putDataLabelsPos = function(v) {
+		this.dataLabelsPos = v;
+	};
+	asc_ChartSettings.prototype.getLegendPos = function(v) {
+		return this.legendPos;
+	};
+	asc_ChartSettings.prototype.getDataLabelsPos = function(v) {
+		return this.dataLabelsPos;
+	};
+	asc_ChartSettings.prototype.getType = function() {
+		if(this.chartSpace) {
+			return this.chartSpace.getChartType();
+		}
+		return this.type;
+	};
+	asc_ChartSettings.prototype.putType = function(v) {
+		this.type = v;
+	};
+	asc_ChartSettings.prototype.putShowSerName = function(v) {
+		this.showSerName = v;
+	};
+	asc_ChartSettings.prototype.putShowCatName = function(v) {
+		this.showCatName = v;
+	};
+	asc_ChartSettings.prototype.putShowVal = function(v) {
+		this.showVal = v;
+	};
+	asc_ChartSettings.prototype.getShowSerName = function() {
+		return this.showSerName;
+	};
+	asc_ChartSettings.prototype.getShowCatName = function() {
+		return this.showCatName;
+	};
+	asc_ChartSettings.prototype.getShowVal = function() {
+		return this.showVal;
+	};
+	asc_ChartSettings.prototype.putSeparator = function(v) {
+		this.separator = v;
+	};
+	asc_ChartSettings.prototype.getSeparator = function() {
+		return this.separator;
+	};
+	asc_ChartSettings.prototype.changeType = function(type) {
+		this.putType(type);
+		if(this.chartSpace) {
+			var oApi = Asc && Asc.editor;
+			if(oApi && oApi.editorId === AscCommon.c_oEditorId.Spreadsheet) {
+				this.chartSpace.changeChartType(type);
+				this.updateChart();
+			}
+			else {
+				var oController = this.chartSpace.getDrawingObjectsController();
+				if(oController) {
+					var oThis = this;
+					var oChartSpace = this.chartSpace;
+					oController.checkSelectedObjectsAndCallback(function() {
+						oChartSpace.changeChartType(type);
+						oThis.updateChart();
+					}, [], false, 0, []);
+				}
+			}
+		}
+	};
+	asc_ChartSettings.prototype.getSeries = function() {
+		if(this.chartSpace) {
+			return this.chartSpace.getAllSeries();
+		}
+		return [];
+	};
+	asc_ChartSettings.prototype.getCatValues = function() {
+		if(this.chartSpace) {
+			return this.chartSpace.getCatValues();
+		}
+		return [];
+	};
+	asc_ChartSettings.prototype.getCatFormula = function() {
+		if(this.chartSpace) {
+			return this.chartSpace.getCatFormula();
+		}
+		return "";
+	};
+	asc_ChartSettings.prototype.setCatFormula = function(sFormula) {
+		if(this.chartSpace) {
+			return this.chartSpace.setCatFormula(sFormula);
+		}
+		this.updateChart();
+	};
+	asc_ChartSettings.prototype.isValidCatFormula = function(sFormula) {
+		if(sFormula === "" || sFormula === null) {
+			return Asc.c_oAscError.ID.No;
+		}
+		return AscFormat.ExecuteNoHistory(function(){
+			var oCat = new AscFormat.CCat();
+			return oCat.setValues(sFormula).getError();
+		}, this, []);
+	};
+	asc_ChartSettings.prototype.switchRowCol = function() {
+		var nError = Asc.c_oAscError.ID.No;
+		if(this.chartSpace) {
+			nError = this.chartSpace.switchRowCol();
+		}
+		this.updateChart();
+		return nError;
+	};
+	asc_ChartSettings.prototype.addSeries = function() {
+		var oRet = null;
+		if(this.chartSpace) {
+			oRet = this.chartSpace.addNewSeries();
+		}
+		this.updateChart();
+		return oRet;
+	};
+	asc_ChartSettings.prototype.addScatterSeries = function() {
+		var oRet = null;
+		if(this.chartSpace) {
+			oRet = this.chartSpace.addNewSeries();
+		}
+		this.updateChart();
+		return oRet;
+	};
+	asc_ChartSettings.prototype.startEdit = function() {
+		this.bStartEdit = true;
+		AscCommon.History.Create_NewPoint();
+		AscCommon.History.StartTransaction();
+	};
+	asc_ChartSettings.prototype.endEdit = function() {
+		this.bStartEdit = false;
+		AscCommon.History.EndTransaction();
+		this.updateChart();
+	};
+	asc_ChartSettings.prototype.cancelEdit = function() {
+		this.bStartEdit = false;
+		AscCommon.History.EndTransaction();
+		AscCommon.History.Undo();
+		AscCommon.History.Clear_Redo();
+		AscCommon.History._sendCanUndoRedo();
+		this.updateChart();
+	};
+	asc_ChartSettings.prototype.startEditData = function() {
+		AscCommon.History.SavePointIndex();
+	};
+	asc_ChartSettings.prototype.cancelEditData = function() {
+		AscCommon.History.UndoToPointIndex();
+		this.updateChart();
+	};
+	asc_ChartSettings.prototype.endEditData = function() {
+		AscCommon.History.ClearPointIndex();
+		this.updateChart();
+	};
+	asc_ChartSettings.prototype.updateChart = function() {
+		if(this.chartSpace) {
+			this.chartSpace.onDataUpdate();
+		}
+	};
+	asc_ChartSettings.prototype.read = function(_params, _cursor) {
+		var _continue = true;
+		var oAxPr;
+		var nHorAxislabel = null, nVertAxisLabel = null;
+		var nHorGridlines = null, nVertGridlines = null;
+		while (_continue)
+		{
+			var _attr = _params[_cursor.pos++];
+			switch (_attr)
+			{
+				case 0:
+				{
+					this.putStyle(_params[_cursor.pos++]);
+					break;
+				}
+				case 1:
+				{
+					this.putTitle(_params[_cursor.pos++]);
+					break;
+				}
+				case 2:
+				{
+					this.putRowCols(_params[_cursor.pos++]);
+					break;
+				}
+				case 3:
+				{
+					nHorAxislabel = _params[_cursor.pos++];
+					break;
+				}
+				case 4:
+				{
+					nVertAxisLabel = _params[_cursor.pos++];
+					break;
+				}
+				case 5:
+				{
+					this.putLegendPos(_params[_cursor.pos++]);
+					break;
+				}
+				case 6:
+				{
+					this.putDataLabelsPos(_params[_cursor.pos++]);
+					break;
+				}
+				case 7:
+				{
+					_cursor.pos++;
+					break;
+				}
+				case 8:
+				{
+					_cursor.pos++;
+					break;
+				}
+				case 9:
+				{
+					nHorGridlines = _params[_cursor.pos++];
+					break;
+				}
+				case 10:
+				{
+					nVertGridlines = _params[_cursor.pos++];
+					break;
+				}
+				case 11:
+				{
+					this.putType(_params[_cursor.pos++]);
+					break;
+				}
+				case 12:
+				{
+					this.putShowSerName(_params[_cursor.pos++]);
+					break;
+				}
+				case 13:
+				{
+					this.putShowCatName(_params[_cursor.pos++]);
+					break;
+				}
+				case 14:
+				{
+					this.putShowVal(_params[_cursor.pos++]);
+					break;
+				}
+				case 15:
+				{
+					this.putSeparator(_params[_cursor.pos++]);
+					break;
+				}
+				case 16:
+				{
+					oAxPr = new asc_ValAxisSettings();
+					oAxPr.read(_params, _cursor);
+					this.addHorAxesProps(oAxPr);
+					break;
+				}
+				case 17:
+				{
+					oAxPr = new asc_ValAxisSettings();
+					oAxPr.read(_params, _cursor);
+					this.addVertAxesProps(oAxPr);
+					break;
+				}
+				case 18:
+				{
+					this.putRange(_params[_cursor.pos++]);
+					break;
+				}
+				case 19:
+				{
+					this.putInColumns(_params[_cursor.pos++]);
+					break;
+				}
+				case 20:
+				{
+					this.putShowMarker(_params[_cursor.pos++]);
+					break;
+				}
+				case 21:
+				{
+					this.putLine(_params[_cursor.pos++]);
+					break;
+				}
+				case 22:
+				{
+					this.putSmooth(_params[_cursor.pos++]);
+					break;
+				}
+				case 23:
+				{
+					oAxPr = new asc_CatAxisSettings();
+					oAxPr.read(_params, _cursor);
+					this.addHorAxesProps(oAxPr);
+					break;
+				}
+				case 24:
+				{
+					oAxPr = new asc_CatAxisSettings();
+					oAxPr.read(_params, _cursor);
+					this.addVertAxesProps(oAxPr);
+					break;
+				}
 
+				case 255:
+				default:
+				{
+					_continue = false;
+					break;
+				}
+			}
+		}
+		oAxPr = this.horizontalAxes[0];
+		if(oAxPr) {
+			if(nHorAxislabel !== null) {
+				oAxPr.putLabel(nHorAxislabel);
+			}
+			if(nVertGridlines !== null) {
+				oAxPr.putGridlines(nVertGridlines);
+			}
+		}
+		oAxPr = this.verticalAxes[0];
+		if(oAxPr) {
+			if(nVertAxisLabel !== null) {
+				oAxPr.putLabel(nVertAxisLabel);
+			}
+			if(nHorGridlines !== null) {
+				oAxPr.putGridlines(nHorGridlines);
+			}
+		}
+
+	};
+	asc_ChartSettings.prototype.write = function(_type, _stream) {
+		_stream["WriteByte"](_type);
+
+		if (this.style !== undefined && this.style !== null)
+		{
+			_stream["WriteByte"](0);
+			_stream["WriteLong"](this.style);
+		}
+		if (this.title !== undefined && this.title !== null)
+		{
+			_stream["WriteByte"](1);
+			_stream["WriteLong"](this.title);
+		}
+		if (this.rowCols !== undefined && this.rowCols !== null)
+		{
+			_stream["WriteByte"](2);
+			_stream["WriteLong"](this.rowCols);
+		}
+		var nLabel = this.horizontalAxes[0] && this.horizontalAxes[0].getLabel();
+		if (nLabel !== undefined && nLabel !== null)
+		{
+			_stream["WriteByte"](3);
+			_stream["WriteLong"](nLabel);
+		}
+		nLabel = this.verticalAxes[0] && this.verticalAxes[0].getLabel();
+		if (nLabel !== undefined && nLabel !== null)
+		{
+			_stream["WriteByte"](4);
+			_stream["WriteLong"](nLabel);
+		}
+		if (this.legendPos !== undefined && this.legendPos !== null)
+		{
+			_stream["WriteByte"](5);
+			_stream["WriteLong"](this.legendPos);
+		}
+		if (this.dataLabelsPos !== undefined && this.dataLabelsPos !== null)
+		{
+			_stream["WriteByte"](6);
+			_stream["WriteLong"](this.dataLabelsPos);
+		}
+		var nGridlines = this.verticalAxes[0] && this.verticalAxes[0].getGridlines();
+		if (nGridlines !== undefined && nGridlines !== null)
+		{
+			_stream["WriteByte"](9);
+			_stream["WriteLong"](nGridlines);
+		}
+		nGridlines = this.horizontalAxes[0] && this.horizontalAxes[0].getGridlines();
+		if (nGridlines !== undefined && nGridlines !== null)
+		{
+			_stream["WriteByte"](10);
+			_stream["WriteLong"](nGridlines);
+		}
+		if (this.type !== undefined && this.type !== null)
+		{
+			_stream["WriteByte"](11);
+			_stream["WriteLong"](this.type);
+		}
+
+		if (this.showSerName !== undefined && this.showSerName !== null)
+		{
+			_stream["WriteByte"](12);
+			_stream["WriteBool"](this.showSerName);
+		}
+		if (this.showCatName !== undefined && this.showCatName !== null)
+		{
+			_stream["WriteByte"](13);
+			_stream["WriteBool"](this.showCatName);
+		}
+		if (this.showVal !== undefined && this.showVal !== null)
+		{
+			_stream["WriteByte"](14);
+			_stream["WriteBool"](this.showVal);
+		}
+
+		if (this.separator !== undefined && this.separator !== null)
+		{
+			_stream["WriteByte"](15);
+			_stream["WriteString2"](this.separator);
+		}
+
+
+		var oHorAx = this.getHorAxesProps()[0];
+		var oVertAx = this.getVertAxesProps()[0];
+		if (undefined != oHorAx
+			&& null != oHorAx
+			&& oHorAx.getAxisType() == Asc.c_oAscAxisType.val) {
+			oHorAx.write(16, _stream);
+		}
+
+		if (undefined != oVertAx
+			&& null != oVertAx
+			&& oVertAx.getAxisType() == Asc.c_oAscAxisType.val) {
+			oVertAx.write(17, _stream);
+		}
+		var sRange = this.getRange();
+		if (sRange !== undefined && sRange !== null)
+		{
+			_stream["WriteByte"](18);
+			_stream["WriteString2"](sRange);
+		}
+
+		if (this.inColumns !== undefined && this.inColumns !== null)
+		{
+			_stream["WriteByte"](19);
+			_stream["WriteBool"](this.inColumns);
+		}
+		if (this.showMarker !== undefined && this.showMarker !== null)
+		{
+			_stream["WriteByte"](20);
+			_stream["WriteBool"](this.showMarker);
+		}
+		if (this.bLine !== undefined && this.bLine !== null)
+		{
+			_stream["WriteByte"](21);
+			_stream["WriteBool"](this.bLine);
+		}
+		if (this.smooth !== undefined && this.smooth !== null)
+		{
+			_stream["WriteByte"](22);
+			_stream["WriteBool"](this.showVal);
+		}
+
+		if (undefined != oHorAx
+			&& null != oHorAx
+			&& oHorAx.getAxisType() == Asc.c_oAscAxisType.cat) {
+			oHorAx.write(23, _stream);
+		}
+
+		if (undefined != oVertAx
+			&& null != oVertAx
+			&& oVertAx.getAxisType() == Asc.c_oAscAxisType.cat) {
+			oVertAx.write(24, _stream);
+		}
+
+		_stream["WriteByte"](255);
+	};
 	/** @constructor */
 	function asc_CRect(x, y, width, height) {
 		// private members
@@ -4866,6 +5486,14 @@
 	prot["asc_getBuildNumber"] = prot.asc_getBuildNumber;
 	prot["asc_getIsBeta"] = prot.asc_getIsBeta;
 
+	window["AscCommon"].asc_CAxNumFmt = asc_CAxNumFmt;
+	prot = asc_CAxNumFmt.prototype;
+	prot["getFormatCode"] = prot.getFormatCode;
+	prot["putFormatCode"] = prot.putFormatCode;
+	prot["getFormatCellsInfo"] = prot.getFormatCellsInfo;
+	prot["getSourceLinked"] = prot.getSourceLinked;
+	prot["putSourceLinked"] = prot.putSourceLinked;
+
 	window["AscCommon"].asc_ValAxisSettings = asc_ValAxisSettings;
 	prot = asc_ValAxisSettings.prototype;
 	prot["putMinValRule"] = prot.putMinValRule;
@@ -4901,6 +5529,14 @@
 	prot["getCrossesRule"] = prot.getCrossesRule;
 	prot["getCrosses"] = prot.getCrosses;
 	prot["setDefault"] = prot.setDefault;
+	prot["getShow"] = prot.getShow;
+	prot["putShow"] = prot.putShow;
+	prot["putLabel"] = prot.putLabel;
+	prot["getLabel"] = prot.getLabel;
+	prot["putGridlines"] = prot.putGridlines;
+	prot["getGridlines"] = prot.getGridlines;
+	prot["putNumFmt"] = prot.putNumFmt;
+	prot["getNumFmt"] = prot.getNumFmt;
 
 	window["AscCommon"].asc_CatAxisSettings = asc_CatAxisSettings;
 	prot = asc_CatAxisSettings.prototype;
@@ -4933,6 +5569,16 @@
 	prot["getCrossMaxVal"] = prot.getCrossMaxVal;
 	prot["getCrossMinVal"] = prot.getCrossMinVal;
 	prot["setDefault"] = prot.setDefault;
+	prot["getShow"] = prot.getShow;
+	prot["putShow"] = prot.putShow;
+	prot["getLabel"] = prot.getLabel;
+	prot["putLabel"] = prot.putLabel;
+	prot["putGridlines"] = prot.putGridlines;
+	prot["getGridlines"] = prot.getGridlines;
+	prot["putNumFmt"] = prot.putNumFmt;
+	prot["getNumFmt"] = prot.getNumFmt;
+	prot["getAuto"] = prot.getAuto;
+	prot["putAuto"] = prot.putAuto;
 
 	window["Asc"]["asc_ChartSettings"] = window["Asc"].asc_ChartSettings = asc_ChartSettings;
 	prot = asc_ChartSettings.prototype;
@@ -4952,8 +5598,6 @@
 	prot["getVertAxisLabel"] = prot.getVertAxisLabel;
 	prot["getLegendPos"] = prot.getLegendPos;
 	prot["getDataLabelsPos"] = prot.getDataLabelsPos;
-	prot["getHorAx"] = prot.getHorAx;
-	prot["getVertAx"] = prot.getVertAx;
 	prot["getHorGridLines"] = prot.getHorGridLines;
 	prot["putHorGridLines"] = prot.putHorGridLines;
 	prot["getVertGridLines"] = prot.getVertGridLines;
@@ -5005,10 +5649,9 @@
 	prot["startEditData"] = prot.startEditData;
 	prot["cancelEditData"] = prot.cancelEditData;
 	prot["endEditData"] = prot.endEditData;
-
-
-
-
+	prot["getHorAxesProps"] = prot.getHorAxesProps;
+	prot["getVertAxesProps"] = prot.getVertAxesProps;
+	prot["getDepthAxesProps"] = prot.getDepthAxesProps;
 
 	window["AscCommon"].asc_CRect = asc_CRect;
 	prot = asc_CRect.prototype;
@@ -5652,6 +6295,7 @@
 
     window["AscCommon"].CWatermarkOnDraw = CWatermarkOnDraw;
     window["AscCommon"].isFileBuild = isFileBuild;
+    window["AscCommon"].checkCanvasInDiv = checkCanvasInDiv;
 
 	window["Asc"]["CPluginVariation"] = window["Asc"].CPluginVariation = CPluginVariation;
 	window["Asc"]["CPlugin"] = window["Asc"].CPlugin = CPlugin;

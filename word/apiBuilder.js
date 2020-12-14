@@ -3151,7 +3151,7 @@
 	};
 
 	/**
-	 * Gets the mail merge template doc.
+	 * Gets the mail merge receptions count.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @return {number}  
@@ -3705,7 +3705,7 @@
 		if (this.Document.IsSelectionUse())
 		{
 			this.Document.Start_SilentMode();
-			this.Document.Remove(1, false, false, false);
+			this.Document.Remove(1, false, false, isInline);
 			this.Document.End_SilentMode();
 			this.Document.RemoveSelection(true);
 		}

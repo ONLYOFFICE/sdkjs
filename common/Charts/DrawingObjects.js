@@ -655,11 +655,7 @@ CSparklineView.prototype.initFromSparkline = function(oSparkline, oSparklineGrou
         chart_space.displayHidden = oSparklineGroup.asc_getDisplayHidden();
         chart_space.displayEmptyCellsAs = oSparklineGroup.asc_getDisplayEmpty();
         settings.putTitle(c_oAscChartTitleShowSettings.none);
-        settings.putHorAxisLabel(c_oAscChartTitleShowSettings.none);
-        settings.putVertAxisLabel(c_oAscChartTitleShowSettings.none);
         settings.putLegendPos(Asc.c_oAscChartLegendShowSettings.none);
-        settings.putHorGridLines(c_oAscGridLinesSettings.none);
-        settings.putVertGridLines(c_oAscGridLinesSettings.none);
 
 
         chart_space.recalculateReferences();
@@ -736,6 +732,8 @@ CSparklineView.prototype.initFromSparkline = function(oSparkline, oSparklineGrou
         val_ax_props.putMajorTickMark(Asc.c_oAscTickMark.TICK_MARK_NONE);
         val_ax_props.putMinorTickMark(Asc.c_oAscTickMark.TICK_MARK_NONE);
         val_ax_props.putCrossesRule(Asc.c_oAscCrossesRule.auto);
+        val_ax_props.putLabel(c_oAscChartTitleShowSettings.none);
+        val_ax_props.putGridlines(c_oAscGridLinesSettings.none);
 
         var cat_ax_props = new AscCommon.asc_CatAxisSettings();
         cat_ax_props.putIntervalBetweenLabelsRule(Asc.c_oAscBetweenLabelsRule.auto);
@@ -746,12 +744,14 @@ CSparklineView.prototype.initFromSparkline = function(oSparkline, oSparklineGrou
         cat_ax_props.putMinorTickMark(Asc.c_oAscTickMark.TICK_MARK_NONE);
         cat_ax_props.putIntervalBetweenTick(1);
         cat_ax_props.putCrossesRule(Asc.c_oAscCrossesRule.auto);
+        cat_ax_props.putLabel(c_oAscChartTitleShowSettings.none);
+        cat_ax_props.putGridlines(c_oAscGridLinesSettings.none);
         if(oSparklineGroup.rightToLeft)
         {
             cat_ax_props.putInvertCatOrder(true);
         }
-        settings.putVertAxisProps(val_ax_props);
-        settings.putHorAxisProps(cat_ax_props);
+        settings.addVertAxesProps(val_ax_props);
+        settings.addHorAxesProps(cat_ax_props);
 
         AscFormat.DrawingObjectsController.prototype.applyPropsToChartSpace(settings, chart_space);
 
@@ -4222,34 +4222,22 @@ GraphicOption.prototype.union = function(oGraphicOption) {
             settings.putStyle(2);
             settings.putType(Asc.c_oAscChartTypeSettings.lineNormal);
             settings.putTitle(Asc.c_oAscChartTitleShowSettings.noOverlay);
-            settings.putShowHorAxis(true);
-            settings.putShowVerAxis(true);
-            //var series = AscFormat.getChartSeries(worksheet.model, settings);
-            // if(series && series.series.length > 1)
-            // {
-            //     settings.putLegendPos(Asc.c_oAscChartLegendShowSettings.right);
-            // }
-            // else
-            // {
-            //     settings.putLegendPos(Asc.c_oAscChartLegendShowSettings.none);
-            // }
-            settings.putHorAxisLabel(Asc.c_oAscChartHorAxisLabelShowSettings.none);
-            settings.putVertAxisLabel(Asc.c_oAscChartVertAxisLabelShowSettings.none);
+
+            var vert_axis_settings = new AscCommon.asc_ValAxisSettings();
+            settings.addVertAxesProps(vert_axis_settings);
+            vert_axis_settings.setDefault();
+            vert_axis_settings.putLabel(Asc.c_oAscChartVertAxisLabelShowSettings.none);
+            vert_axis_settings.putGridlines(Asc.c_oAscGridLinesSettings.major);
+            var hor_axis_settings = new AscCommon.asc_CatAxisSettings();
+            settings.addHorAxesProps(hor_axis_settings);
+            hor_axis_settings.setDefault();
+            hor_axis_settings.putLabel(Asc.c_oAscChartHorAxisLabelShowSettings.none);
+            hor_axis_settings.putGridlines(Asc.c_oAscGridLinesSettings.none);
             settings.putDataLabelsPos(Asc.c_oAscChartDataLabelsPos.none);
-            settings.putHorGridLines(Asc.c_oAscGridLinesSettings.major);
-            settings.putVertGridLines(Asc.c_oAscGridLinesSettings.none);
-            //settings.putInColumns(false);
             settings.putSeparator(",");
             settings.putLine(true);
             settings.putShowMarker(false);
 
-            var vert_axis_settings = new AscCommon.asc_ValAxisSettings();
-            settings.putVertAxisProps(vert_axis_settings);
-            vert_axis_settings.setDefault();
-
-            var hor_axis_settings = new AscCommon.asc_CatAxisSettings();
-            settings.putHorAxisProps(hor_axis_settings);
-            hor_axis_settings.setDefault();
         }
         else{
             if(true !== bNoLock){
