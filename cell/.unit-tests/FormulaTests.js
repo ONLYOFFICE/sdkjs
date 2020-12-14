@@ -9976,6 +9976,22 @@ $( function () {
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), "u" );
 
+		oParser = new parserFormula( 'XLOOKUP("t???",A551:A561,B551:C561,,2)', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), "c" );
+
+		oParser = new parserFormula( 'XLOOKUP("t???",A551:A561,B551:C561,,2)', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), "c" );
+
+		oParser = new parserFormula( 'XLOOKUP("t?",A551:A561,B551:C561,,2)', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), "u" );
+
+		oParser = new parserFormula( 'XLOOKUP("t?",A551:A561,B551:C561,,0)', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "#N/A" );
+
 	} );
 
 

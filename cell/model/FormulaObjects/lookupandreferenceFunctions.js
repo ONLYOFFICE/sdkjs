@@ -2147,8 +2147,13 @@ function (window, undefined) {
 
 		//ascending order: ..., -2, -1, 0, 1, 2, ..., A-Z, FALSE
 		var _compareValues = function (val1, val2, op) {
-			var res = _func[val1.type][val2.type](val1, val2, op);
-			return res ? res.value : false;
+			if (opt_arg4 === 2 && val2.type === cElementType.string) {
+				var matchingInfo = AscCommonExcel.matchingValue(val1);
+				return AscCommonExcel.matching(val2,matchingInfo)
+			} else {
+				var res = _func[val1.type][val2.type](val1, val2, op);
+				return res ? res.value : false;
+			}
 		};
 
 		var addNextOptVal = function (arrayVal, searchVal, isGreater) {
