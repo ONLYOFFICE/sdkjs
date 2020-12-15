@@ -3002,8 +3002,8 @@
 	AscDFH.historyitem_OptBlackTransitionThruBlk     = AscDFH.historyitem_type_OptBlackTransition | 1;
 
 
-	AscDFH.historyitem_GraphicElChart     = AscDFH.AscDFH.historyitem_type_GraphicEl | 1;
-	AscDFH.historyitem_GraphicElDgm       = AscDFH.AscDFH.historyitem_type_GraphicEl | 2;
+	AscDFH.historyitem_GraphicElChart     = AscDFH.historyitem_type_GraphicEl | 1;
+	AscDFH.historyitem_GraphicElDgm       = AscDFH.historyitem_type_GraphicEl | 2;
 
 	AscDFH.historyitem_IndexRgSt      = AscDFH.historyitem_type_IndexRg | 1;
 	AscDFH.historyitem_IndexRgEnd     = AscDFH.historyitem_type_IndexRg | 2;
