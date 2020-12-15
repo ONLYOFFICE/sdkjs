@@ -1482,6 +1482,13 @@
 	window['AscDFH'].historyitem_type_StSnd                  = 1183 << 16;
 	window['AscDFH'].historyitem_type_TxEl                   = 1184 << 16;
 	window['AscDFH'].historyitem_type_Wheel                  = 1185 << 16;
+	window['AscDFH'].historyitem_type_AttrName               = 1186 << 16;
+	window['AscDFH'].historyitem_type_AttrNameLst            = 1187 << 16;
+	window['AscDFH'].historyitem_type_BldLst                 = 1188 << 16;
+	window['AscDFH'].historyitem_type_CondLst                = 1189 << 16;
+	window['AscDFH'].historyitem_type_ChildTnLst             = 1190 << 16;
+	window['AscDFH'].historyitem_type_Par                    = 1191 << 16;
+	window['AscDFH'].historyitem_type_Excl                   = 1192 << 16;
 
 	window['AscDFH'].historyitem_type_DocumentMacros         = 2000 << 16;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3177,6 +3184,8 @@
 	AscDFH.historyitem_TxElPRg                = AscDFH.historyitem_type_TxEl | 2;
 
 	AscDFH.historyitem_WheelSpokes            = AscDFH.historyitem_type_Wheel | 1;
+
+	AscDFH.historyitem_AttrNameText            = AscDFH.historyitem_type_AttrName | 1;
 
 
 
