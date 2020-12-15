@@ -3100,12 +3100,13 @@
 	AscDFH.historyitem_AnimVariantIntVal    = AscDFH.historyitem_type_AnimVariant | 4;
 	AscDFH.historyitem_AnimVariantStrVal    = AscDFH.historyitem_type_AnimVariant | 5;
 
-	AscDFH.historyitem_AnimClrBy            = AscDFH.historyitem_type_AnimClr | 1;
-	AscDFH.historyitem_AnimClrCBhvr         = AscDFH.historyitem_type_AnimClr | 2;
-	AscDFH.historyitem_AnimClrFrom          = AscDFH.historyitem_type_AnimClr | 3;
-	AscDFH.historyitem_AnimClrTo            = AscDFH.historyitem_type_AnimClr | 4;
-	AscDFH.historyitem_AnimClrClrSpc        = AscDFH.historyitem_type_AnimClr | 5;
-	AscDFH.historyitem_AnimClrDir           = AscDFH.historyitem_type_AnimClr | 6;
+	AscDFH.historyitem_AnimClrByRGB         = AscDFH.historyitem_type_AnimClr | 1;
+	AscDFH.historyitem_AnimClrByHSL         = AscDFH.historyitem_type_AnimClr | 2;
+	AscDFH.historyitem_AnimClrCBhvr         = AscDFH.historyitem_type_AnimClr | 3;
+	AscDFH.historyitem_AnimClrFrom          = AscDFH.historyitem_type_AnimClr | 4;
+	AscDFH.historyitem_AnimClrTo            = AscDFH.historyitem_type_AnimClr | 5;
+	AscDFH.historyitem_AnimClrClrSpc        = AscDFH.historyitem_type_AnimClr | 6;
+	AscDFH.historyitem_AnimClrDir           = AscDFH.historyitem_type_AnimClr | 7;
 
 	AscDFH.historyitem_AnimEffectCBhvr      = AscDFH.historyitem_type_AnimEffect | 1;
 	AscDFH.historyitem_AnimEffectProgress   = AscDFH.historyitem_type_AnimEffect | 2;

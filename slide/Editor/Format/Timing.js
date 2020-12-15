@@ -1907,22 +1907,49 @@
         }
     };
 
-    changesFactory[AscDFH.historyitem_AnimClrBy] = CChangeObject;
+    changesFactory[AscDFH.historyitem_AnimClrByRGB] = CChangeObjectNoId;
+    changesFactory[AscDFH.historyitem_AnimClrByHSL] = CChangeObjectNoId;
     changesFactory[AscDFH.historyitem_AnimClrCBhvr] = CChangeObject;
     changesFactory[AscDFH.historyitem_AnimClrFrom] = CChangeObject;
     changesFactory[AscDFH.historyitem_AnimClrTo] = CChangeObject;
     changesFactory[AscDFH.historyitem_AnimClrClrSpc] = CChangeLong;
     changesFactory[AscDFH.historyitem_AnimClrDir] = CChangeLong;
 
-    drawingsChangesMap[AscDFH.historyitem_AnimClrBy] = function(oClass, value) {oClass.by = value;};
+    drawingsChangesMap[AscDFH.historyitem_AnimClrByRGB] = function(oClass, value) {oClass.byRGB = value;};
+    drawingsChangesMap[AscDFH.historyitem_AnimClrByHSL] = function(oClass, value) {oClass.byHSL = value;};
     drawingsChangesMap[AscDFH.historyitem_AnimClrCBhvr] = function(oClass, value) {oClass.cBhvr = value;};
     drawingsChangesMap[AscDFH.historyitem_AnimClrFrom] = function(oClass, value) {oClass.from = value;};
     drawingsChangesMap[AscDFH.historyitem_AnimClrTo] = function(oClass, value) {oClass.to = value;};
     drawingsChangesMap[AscDFH.historyitem_AnimClrClrSpc] = function(oClass, value) {oClass.clrSpc = value;};
     drawingsChangesMap[AscDFH.historyitem_AnimClrDir] = function(oClass, value) {oClass.dir = value;};
+
+    function CColorPercentage() {
+        this.c1 = 10000;
+        this.c2 = 10000;
+        this.c2 = 10000;
+    }
+    CColorPercentage.prototype.Write_ToBinary = function(oWriter) {
+        oWriter.WriteLong(this.c1);
+        oWriter.WriteLong(this.c2);
+        oWriter.WriteLong(this.c3);
+    };
+    CColorPercentage.prototype.Read_FromBinary = function(oReader) {
+        this.c1 = oReader.GetLong();
+        this.c2 = oReader.GetLong();
+        this.c2 = oReader.GetLong();
+    };
+    CColorPercentage.prototype.copy = function() {
+        var oCopy = new CColorPercentage();
+        oCopy.c1 = this.c1;
+        oCopy.c2 = this.c2;
+        oCopy.c3 = this.c3;
+        return oCopy;
+    };
     function CAnimClr() {
         CBaseFormatObject.call(this);
-        this.by = null;
+        this.byRGB = null;
+        this.byHSL = null;
+
         this.cBhvr = null;
         this.from = null;
         this.to = null;
@@ -1930,9 +1957,13 @@
         this.dir = null;
     }
     InitClass(CAnimClr, CBaseFormatObject, AscDFH.historyitem_type_AnimClr);
-    CAnimClr.prototype.setBy = function(pr) {
-        oHistory.Add(new CChangeObject(this, AscDFH.historyitem_AnimClrBy, this.by, pr));
-        this.by = pr;
+    CAnimClr.prototype.setByRGB = function(pr) {
+        oHistory.Add(new CChangeObject(this, AscDFH.historyitem_AnimClrByRGB, this.byRGB, pr));
+        this.byRGB = pr;
+    };
+    CAnimClr.prototype.setByHSL = function(pr) {
+        oHistory.Add(new CChangeObject(this, AscDFH.historyitem_AnimClrByHSL, this.byHSL, pr));
+        this.byHSL = pr;
     };
     CAnimClr.prototype.setCBhvr = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_AnimClrCBhvr, this.cBhvr, pr));
@@ -1955,8 +1986,11 @@
         this.dir = pr;
     };
     CAnimClr.prototype.fillObject = function(oCopy) {
-        if(this.by !== null) {
-            oCopy.setBy(this.by.copy());
+        if(this.byRGB !== null) {
+            oCopy.setByRGB(this.byRGB.copy());
+        }
+        if(this.byHSL !== null) {
+            oCopy.setByHSL(this.byHSL.copy());
         }
         if(this.cBhvr !== null) {
             oCopy.setCBhvr(this.cBhvr.copy());
@@ -1975,16 +2009,83 @@
         }
     };
     CAnimClr.prototype.privateWriteAttributes = function(pWriter) {
-        //TODO
+        pWriter._WriteLimit2(0, this.clrSpc);
+        pWriter._WriteLimit2(1, this.dir);
+        if(this.byRGB) {
+            pWriter._WriteInt2(2, this.byRGB.c1);
+            pWriter._WriteInt2(3, this.byRGB.c2);
+            pWriter._WriteInt2(4, this.byRGB.c3);
+        }
+        if(this.byHSL) {
+            pWriter._WriteInt2(5, this.byHSL.c1);
+            pWriter._WriteInt2(6, this.byHSL.c2);
+            pWriter._WriteInt2(7, this.byHSL.c3);
+        }
     };
     CAnimClr.prototype.writeChildren = function(pWriter) {
-        //TODO
+        this.writeRecord1(pWriter, 0, this.cBhvr);
+        pWriter.WriteRecord1(1, this.from, pWriter.WriteUniColor);
+        pWriter.WriteRecord1(2, this.to, pWriter.WriteUniColor);
     };
     CAnimClr.prototype.readAttribute = function(nType, pReader) {
-        //TODO
+        var oStream = pReader.stream;
+        if (0 === nType) {
+            this.setClrSpc(oStream.GetUChar());
+        }
+        else if (1 === nType) {
+            this.setDir(oStream.GetUChar());
+        }
+        else if(2 === nType ||  3 === nType ||   4 === nType ||
+                5 === nType || 6 === nType ||  7 === nType) {
+            var oColor;
+            if(2 === nType || 3 === nType || 4 === nType) {
+                if(this.byRGB) {
+                    oColor = this.byRGB.copy();
+                }
+                else {
+                    oColor = new CColorPercentage();
+                }
+                if (2 === nType)	oColor.c1 = oStream.GetLong();
+                else if (3 === nType) oColor.c2 = oStream.GetLong();
+                else if (4 === nType) oColor.c3 = oStream.GetLong();
+                this.setByRGB(oColor);
+            }
+            else {
+                if(this.byHSL) {
+                    oColor = this.byHSL.copy();
+                }
+                else {
+                    oColor = new CColorPercentage();
+                }
+                if(5 === nType)	oColor.c1 = oStream.GetLong();
+                else if (6 === nType) oColor.c2 = oStream.GetLong();
+                else if (7 === nType) oColor.c3 = oStream.GetLong();
+                this.setByHSL(oColor);
+            }
+
+        }
     };
     CAnimClr.prototype.readChild = function(nType, pReader) {
-        //TODO
+        var oStream = pReader.stream;
+        switch (nType) {
+            case 0: {
+                this.setCBhvr(new CCBhvr());
+                this.cBhvr.fromPPTY(pReader);
+                break;
+            }
+            case 1: {
+                this.setFrom(pReader.ReadUniColor());
+                break;
+            }
+            case 2: {
+                this.setTo(pReader.ReadUniColor());
+                break;
+            }
+            default: {
+                oStream.SkipRecord();
+                break;
+            }
+        }
     };
 
     changesFactory[AscDFH.historyitem_AnimEffectCBhvr] = CChangeObject;
@@ -2187,12 +2288,95 @@
         }
     };
     CAnimMotion.prototype.privateWriteAttributes = function(pWriter) {
+        pWriter._WriteLimit2(0, this.origin);
+        pWriter._WriteLimit2(1, this.pathEditMode);
+        pWriter._WriteString2(2, this.path);
+        pWriter._WriteString2(3, this.ptsTypes);
+        if(this.by) {
+            pWriter._WriteInt2(4, this.by.x);
+            pWriter._WriteInt2(5, this.by.y);
+        }
+        if(this.from) {
+            pWriter._WriteInt2(6, this.from.x);
+            pWriter._WriteInt2(7, this.from.y);
+        }
+        if(this.to) {
+            pWriter._WriteInt2(8, this.to.x);
+            pWriter._WriteInt2(9, this.to.y);
+        }
+        if(this.rCtr) {
+            pWriter._WriteInt2(10, this.rCtr.x);
+            pWriter._WriteInt2(11, this.rCtr.y);
+        }
+        pWriter._WriteInt2(12, this.rAng);
     };
     CAnimMotion.prototype.writeChildren = function(pWriter) {
+        this.writeRecord1(pWriter, 0, this.cBhvr);
     };
     CAnimMotion.prototype.readAttribute = function(nType, pReader) {
+        var oStream = pReader.stream;
+        if (0 === nType)	this.setOrigin(oStream.GetUChar());
+        else if (1 === nType)	this.setPathEditMode(oStream.GetUChar());
+        else if (2 === nType)	this.setPath(oStream.GetString2());
+        else if (3 === nType)	this.setPtsTypes(oStream.GetString2());
+        else if (4 === nType)	{
+            if(!this.by) {
+                this.setBy(new CTLPoint());
+            }
+            this.by.setX(oStream.GetLong());
+        }
+        else if (5 === nType) {
+            if(!this.by) {
+                this.setBy(new CTLPoint());
+            }
+            this.by.setY(oStream.GetLong());
+        }
+        else if (6 === nType) {
+            if(!this.from) {
+                this.setFrom(new CTLPoint());
+            }
+            this.from.setX(oStream.GetLong());
+        }
+        else if (7 === nType) {
+            if(!this.from) {
+                this.setFrom(new CTLPoint());
+            }
+            this.from.setY(oStream.GetLong());
+        }
+        else if (8 === nType) {
+            if(!this.to) {
+                this.setTo(new CTLPoint());
+            }
+            this.to.setX(oStream.GetLong());
+        }
+        else if (9 === nType) {
+            if(!this.to) {
+                this.setTo(new CTLPoint());
+            }
+            this.to.setY(oStream.GetLong());
+        }
+        else if (10 === nType) {
+            if(!this.rCtr) {
+                this.setRCtr(new CTLPoint());
+            }
+            this.rCtr.setX(oStream.GetLong());
+        }
+        else if (11 === nType){
+            if(!this.rCtr) {
+                this.setRCtr(new CTLPoint());
+            }
+            this.rCtr.setY(oStream.GetLong());
+        }
+        else if (12 === nType)	this.setRAng(oStream.GetLong());
     };
     CAnimMotion.prototype.readChild = function(nType, pReader) {
+        if(0 === nType) {
+            this.setCBhvr(new CCBhvr());
+            this.cBhvr.fromPPTY(pReader);
+        }
+        else {
+            pReader.stream.SkipRecord();
+        }
     };
 
 
@@ -2245,12 +2429,34 @@
         }
     };
     CAnimRot.prototype.privateWriteAttributes = function(pWriter) {
+        pWriter._WriteInt2(0, this.by);
+        pWriter._WriteInt2(1, this.from);
+        pWriter._WriteInt2(2, this.to);
     };
     CAnimRot.prototype.writeChildren = function(pWriter) {
+        this.writeRecord1(pWriter, 0, this.cBhvr);
+
     };
     CAnimRot.prototype.readAttribute = function(nType, pReader) {
+        var oStream = pReader.stream;
+        if(0 === nType) {
+            this.setBy(oStream.GetLong());
+        }
+        else if(1 === nType) {
+            this.setFrom(oStream.GetLong());
+        }
+        else if(2 === nType) {
+            this.setTo(oStream.GetLong());
+        }
     };
     CAnimRot.prototype.readChild = function(nType, pReader) {
+        if(0 === nType) {
+            this.setCBhvr(new CCBhvr());
+            this.cBhvr.fromPPTY(pReader);
+        }
+        else {
+            pReader.stream.SkipRecord();
+        }
     };
 
 
@@ -2312,12 +2518,73 @@
         }
     };
     CAnimScale.prototype.privateWriteAttributes = function(pWriter) {
+        if(this.by) {
+            pWriter._WriteInt2(0, this.by.x);
+            pWriter._WriteInt2(1, this.by.y);
+        }
+        if(this.from) {
+            pWriter._WriteInt2(2, this.from.x);
+            pWriter._WriteInt2(3, this.from.y);
+        }
+        if(this.to) {
+            pWriter._WriteInt2(4, this.to.x);
+            pWriter._WriteInt2(5, this.to.y);
+        }
+        pWriter._WriteBool2(6, this.zoomContents);
     };
     CAnimScale.prototype.writeChildren = function(pWriter) {
+        this.writeRecord1(pWriter, 0, this.cBhvr);
     };
     CAnimScale.prototype.readAttribute = function(nType, pReader) {
+        var oStream = pReader.stream;
+        if(0 === nType) {
+            if(!this.by) {
+                this.setBy(new CTLPoint());
+            }
+            this.by.setX(oStream.GetLong());
+        }
+        else if(1 === nType) {
+            if(!this.by) {
+                this.setBy(new CTLPoint());
+            }
+            this.by.setY(oStream.GetLong());
+        }
+        else if(2 === nType) {
+            if(!this.from) {
+                this.setFrom(new CTLPoint());
+            }
+            this.from.setX(oStream.GetLong());
+        }
+        else if(3 === nType) {
+            if(!this.from) {
+                this.setFrom(new CTLPoint());
+            }
+            this.from.setY(oStream.GetLong());
+        }
+        else if(4 === nType) {
+            if(!this.to) {
+                this.setTo(new CTLPoint());
+            }
+            this.to.setX(oStream.GetLong());
+        }
+        else if(5 === nType) {
+            if(!this.to) {
+                this.setTo(new CTLPoint());
+            }
+            this.to.setY(oStream.GetLong());
+        }
+        else if(6 === nType) {
+            this.setZoomContents(oStream.GetBool());
+        }
     };
     CAnimScale.prototype.readChild = function(nType, pReader) {
+        if(0 === nType) {
+            this.setCBhvr(new CCBhvr());
+            this.cBhvr.fromPPTY(pReader);
+        }
+        else {
+            pReader.stream.SkipRecord();
+        }
     };
 
     changesFactory[AscDFH.historyitem_AudioCMediaNode] = CChangeObject;
