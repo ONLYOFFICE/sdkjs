@@ -11692,6 +11692,8 @@
 
 			for (var nPos = Math.min(oRun.Selection.StartPos, oRun.Selection.EndPos); nPos < contentLength; ++nPos)
 			{
+				if (oRun.Selection.StartPos === oRun.Selection.EndPos)
+					break;
 				if (para_Text === oRun.Content[nPos].Type || para_Space === oRun.Content[nPos].Type || para_Tab === oRun.Content[nPos].Type)
 				{
 					runCharNumber++;
@@ -11699,7 +11701,6 @@
 				}
 				else
 					realPosInRun++;
-					
 					
 				if (charsCount + runCharNumber - 1 == textDelta[change].pos)
 				{
@@ -11724,15 +11725,8 @@
 					var nPosToAdd = realPosInRun - 1;
 					for (var nAddChar = 0; nAddChar < textDelta[change].insert.length; nAddChar++)
 					{
-						var itemText = null;
-
-						if (textDelta[change].insert[nAddChar] === 160 || textDelta[change].insert[nAddChar] === 32)
-						{
-							itemText = new AscCommonWord.ParaSpace(32);
-						}
-						else
-							itemText = new AscCommonWord.ParaText(textDelta[change].insert[nAddChar]);
-
+						var itemText = new AscCommonWord.ParaText(textDelta[change].insert[nAddChar]);
+						
 						itemText.Parent = oRun.GetParagraph();
 						oRun.AddToContent(nPosToAdd, itemText);
 						textDelta[change].insert.shift();
@@ -11747,6 +11741,68 @@
 				charsCount += runCharNumber;
 		};
 
+		function GetSelectedText(oRun)
+		{
+			var StartPos = 0;
+			var EndPos   = 0;
+
+			if ( true === oRun.Selection.Use )
+			{
+				StartPos = oRun.State.Selection.StartPos;
+				EndPos   = oRun.State.Selection.EndPos;
+
+				if ( StartPos > EndPos )
+				{
+					var Temp = EndPos;
+					EndPos   = StartPos;
+					StartPos = Temp;
+				}
+			}
+
+			var Str = "";
+
+			for ( var Pos = StartPos; Pos < EndPos; Pos++ )
+			{
+				var Item = oRun.Content[Pos];
+				var ItemType = Item.Type;
+
+				switch ( ItemType )
+				{
+					case para_Drawing:
+					case para_Numbering:
+					case para_PresentationNumbering:
+					case para_PageNum:
+					case para_PageCount:
+					{
+						if ( true === bClearText )
+							return null;
+
+						break;
+					}
+
+					case para_Text :
+					{
+						Str += AscCommon.encodeSurrogateChar(Item.Value);
+						break;
+					}
+					case para_Space:
+					case para_Tab  : Str += " "; break;
+					case para_NewLine:
+					{
+						if (oPr && true === oPr.NewLine)
+						{
+							Str += '\r';
+						}
+						break;
+					}
+					case para_End:
+						break;
+				}
+			}
+
+			oParaText += Str;
+		}
+		
 		for (var Index = 0; Index < oSelectedContent.length; Index++)
 		{
 			var charsCount = 0;
@@ -11754,23 +11810,15 @@
 			var oParaText = "";
 
 			if (oPara.Selection.Use)
-				oParaText = oPara.GetSelectedText(undefined, {ParaEndToSpace : false});
+				oPara.CheckRunContent(GetSelectedText)
 			else
 				oParaText = oPara.GetText({ParaEndToSpace : false});
-				
+
 			var textDelta = AscCommon.getTextDelta(oParaText, arrString[Index]);
 
-			for (var change = 0; change < textDelta.length; change++)
+			for (var change = textDelta.length - 1; change >= 0; change--)
 			{
-				var deleteCount = textDelta[change].deleteCount;
-				var insertCount = textDelta[change].insert.length;
-
 				oPara.CheckRunContent(DelInsertChars);
-
-				textDelta.forEach(function(item, i, textDelta) {
-					item.pos -= deleteCount - insertCount;
-					
-				});
 				charsCount = 0;
 			}
 		}
