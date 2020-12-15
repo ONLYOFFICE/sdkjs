@@ -1383,11 +1383,12 @@
 
 	window['Asc'].EDataValidationImeMode = EDataValidationImeMode;
 
-	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
-	window['AscCommonExcel'].CDataFormula = CDataFormula;
+	window['Asc']['CDataFormula'] = window['Asc'].CDataFormula = CDataFormula;
 	prot = CDataFormula.prototype;
 	prot['asc_getValue'] = prot.asc_getValue;
 	prot['asc_setValue'] = prot.asc_setValue;
+
+	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 	window['AscCommonExcel'].CDataValidation = CDataValidation;
 	prot = CDataValidation.prototype;
 	prot['asc_getError'] = prot.getError;
