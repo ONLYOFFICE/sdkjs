@@ -139,6 +139,7 @@
 			"slide/Drawing/HtmlPage.js",
 			"slide/Editor/Format/Presentation.js",
 			"slide/Editor/DrawingObjectsController.js",
+			"slide/Editor/Format/Timing.js",
 			"slide/Editor/Format/Slide.js",
 			"slide/Editor/Format/SlideMaster.js",
 			"slide/Editor/Format/Layout.js",
