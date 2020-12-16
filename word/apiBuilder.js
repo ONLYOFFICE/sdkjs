@@ -7112,6 +7112,7 @@
 	};
 	/**
      * Gets the next table.
+	 * <note> Using the method in a script along with adding tables will not display the tables just added. </note>
      * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
      * @return {ApiTable | null} - returns null if table is last.  
@@ -7145,6 +7146,7 @@
 	};
 	/**
      * Gets the previous table.
+	 * <note> Using the method in a script along with adding tables will not display the tables just added. </note>
      * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
      * @return {ApiTable | null} - returns null if table is first.  
@@ -9996,7 +9998,8 @@
 	};
 	/**
 	 * Gets the next inline drawing object. 
-	 *  @memberof ApiDrawing
+	 * <note> Using the method in a script along with adding drawings will not display the drawings just added. </note>
+	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiDrawing | null} - returns null if drawing object is last.
 	 */
@@ -10022,6 +10025,7 @@
 	};
 	/**
 	 * Gets the previous inline drawing object. 
+	 * <note> Using the method in a script along with adding drawings will not display the drawings just added. </note>
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiDrawing | null} - returns null if drawing object is first.
@@ -10092,6 +10096,7 @@
 	};
 	/**
 	 * Gets the previous inline image. 
+	 * <note> Using the method in a script along with adding images will not display the images just added. </note>
 	 * @memberof ApiImage
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiImage | null} - returns null if image is first.
@@ -10215,6 +10220,7 @@
 	};
 	/**
 	 * Gets the next inline shape. 
+	 * <note> Using the method in a script along with adding shapes will not display the shapes just added. </note>
 	 * @memberof ApiShape
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiShape | null} - returns null if shape is last.
@@ -10241,6 +10247,7 @@
 	};
 	/**
 	 * Gets the previous inline shape. 
+	 * <note> Using the method in a script along with adding shapes will not display the shapes just added. </note>
 	 * @memberof ApiShape
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiShape | null} - returns null is shape is first.
@@ -10596,6 +10603,7 @@
 
 	/**
 	 * Gets the next inline chart.
+	 * <note> Using the method in a script along with adding charts will not display the charts just added. </note>
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiChart | null} - returns null if chart is last.
@@ -10623,6 +10631,7 @@
 
 	/**
 	 * Gets the previous inline chart. 
+	 * <note> Using the method in a script along with adding charts will not display the charts just added. </note>
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiChart | null} - return null if char if first.
