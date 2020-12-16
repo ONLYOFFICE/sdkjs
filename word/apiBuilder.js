@@ -4516,10 +4516,11 @@
 	 */
 	ApiParagraph.prototype.GetNext = function()
 	{
-		if (this.Paragraph.Next !== null && this.Paragraph.Next !== undefined)
-			return new ApiParagraph(this.Paragraph.Next);
+		var nextPara = this.Paragraph.GetNextParagraph();
+        if (nextPara !== null)
+            return new ApiParagraph(nextPara);
 
-		return null;
+        return null;
 	};
 	/**
 	 * Gets the Previous paragraph.
@@ -4529,10 +4530,11 @@
 	 */
 	ApiParagraph.prototype.GetPrevious = function()
 	{
-		if (this.Paragraph.Prev !== null && this.Paragraph.Prev !== undefined)
-			return new ApiParagraph(this.Paragraph.Prev);
+		var prevPara = this.Paragraph.GetPrevParagraph();
+        if (prevPara !== null)
+            return new ApiParagraph(prevPara);
 
-		return null;
+        return null;
 	};
 	/**
 	 * Create a copy of the paragraph. Ingonore comments, footnote references, complex fields
