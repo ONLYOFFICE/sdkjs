@@ -99,6 +99,7 @@
         }
     };
     CBaseFormatObject.prototype.readChild = function(nType, pReader) {
+        pReader.stream.SkipRecord();
     };
     CBaseFormatObject.prototype.toPPTY = function(pWriter) {
         this.writeAttributes(pWriter);
@@ -179,13 +180,13 @@
         var oChild;
         switch(nType) {
             case 0: {
-                oChild = new CCommonTimingList();
+                oChild = new CTnLst();
                 oChild.fromPPTY(pReader);
                 this.setTnLst(oChild);
                 break;
             }
             case 1: {
-                oChild = new CCommonTimingList();
+                oChild = new CBldLst();
                 oChild.fromPPTY(pReader);
                 this.setBldLst(oChild);
                 break;
@@ -199,7 +200,7 @@
     drawingContentChanges[AscDFH.historyitem_CommonTimingListRemove] = function(oClass) {return oClass.list;};
     function CCommonTimingList() {
         CBaseFormatObject.call(this);
-        this.list = []
+        this.list = [];
     }
     InitClass(CCommonTimingList, CBaseFormatObject, AscDFH.historyitem_type_CommonTimingList);
     CCommonTimingList.prototype.addToLst = function(nIdx, oPr) {
@@ -231,6 +232,7 @@
         }
     };
     CCommonTimingList.prototype.readAttribute = function(nType, pReader) {
+	var oStream = pReader.stream;
     };
     CCommonTimingList.prototype.readElement = function(pReader) {
         var oStream = pReader.stream;
@@ -253,7 +255,6 @@
 
     function CAttrNameLst() {
         CCommonTimingList.call(this);
-        this.list = []
     }
     InitClass(CAttrNameLst, CCommonTimingList, AscDFH.historyitem_type_AttrNameLst);
     CAttrNameLst.prototype.readElement = function(pReader) {
@@ -263,13 +264,47 @@
     };
     function CBldLst() {
         CCommonTimingList.call(this);
-        this.list = []
     }
     InitClass(CBldLst, CCommonTimingList, AscDFH.historyitem_type_BldLst);
+    CBldLst.prototype.readElement = function(pReader) {
+        var oStream = pReader.stream;
+        var nType = oStream.GetUChar();
+        var oElement = null;
+        switch(nType) {
+            case 1: oElement = new CBldDgm(); break;
+            case 2: oElement = new CBldOleChart(); break;
+            case 3: oElement = new CBldGraphic(); break;
+            case 4: oElement = new CBldP(); break;
+            default:break;
+        }
+        if(oElement) {
+            oElement.fromPPTY(pReader);
+        }
+        return oElement;
+    };
+    CBldLst.prototype.writeChildren = function(pWriter) {
+        if(this.list.length > 0) {
+            pWriter.StartRecord(0);
+            pWriter.WriteULong(this.list.length);
+            for(var nIndex = 0; nIndex < this.list.length; ++nIndex) {
+                var oElement = this.list[nIndex];
+                var nType = null;
+                switch (oElement.getObjectType()) {
+                    case AscDFH.historyitem_type_BldDgm: nType = 1; break;
+                    case AscDFH.historyitem_type_BldOleChart: nType = 2; break;
+                    case AscDFH.historyitem_type_BldGraphic: nType = 3; break;
+                    case AscDFH.historyitem_type_BldP: nType = 4; break;
+                }
+                if(nType !== null) {
+                    this.writeRecord1(pWriter, nType, oElement);
+                }
+            }
+            pWriter.EndRecord();
+        }
+    };
 
     function CCondLst() {
         CCommonTimingList.call(this);
-        this.list = []
     }
     InitClass(CCondLst, CCommonTimingList, AscDFH.historyitem_type_CondLst);
     CCondLst.prototype.readElement = function(pReader) {
@@ -280,7 +315,6 @@
 
     function CChildTnLst() {
         CCommonTimingList.call(this);
-        this.list = []
     }
     InitClass(CChildTnLst, CCommonTimingList, AscDFH.historyitem_type_ChildTnLst);
     CChildTnLst.prototype.readElement = function(pReader) {
@@ -338,6 +372,33 @@
         }
     };
 
+
+    function CTmplLst() {
+        CCommonTimingList.call(this);
+    }
+    InitClass(CTmplLst, CCommonTimingList, AscDFH.historyitem_type_TmplLst);
+    CTmplLst.prototype.readElement = function(pReader) {
+        var oElement = new CTmpl();
+        oElement.fromPPTY(pReader);
+        return oElement;
+    };
+
+    function CTnLst() {
+        CChildTnLst.call(this);
+    }
+    InitClass(CTnLst, CChildTnLst, AscDFH.historyitem_type_TnLst);
+
+
+    function CTavLst() {
+        CCommonTimingList.call(this);
+    }
+    InitClass(CTavLst, CCommonTimingList, AscDFH.historyitem_type_TavLst);
+    CTavLst.prototype.readElement = function(pReader) {
+        var oElement = new CTav();
+        oElement.fromPPTY(pReader);
+        return oElement;
+    };
+
     changesFactory[AscDFH.historyitem_ObjectTargetSpid] = CChangeString;
     drawingsChangesMap[AscDFH.historyitem_ObjectTargetSpid] = function(oClass, value) {oClass.spid = value;};
     function CObjectTarget() {//subsp
@@ -357,6 +418,7 @@
     CObjectTarget.prototype.writeChildren = function(pWriter) {
     };
     CObjectTarget.prototype.readAttribute = function(nType, pReader) {
+	var oStream = pReader.stream;
     };
     CObjectTarget.prototype.readChild = function(nType, pReader) {
     };
@@ -388,6 +450,7 @@
     CBldBase.prototype.writeChildren = function(pWriter) {
     };
     CBldBase.prototype.readAttribute = function(nType, pReader) {
+	var oStream = pReader.stream;
     };
     CBldBase.prototype.readChild = function(nType, pReader) {
     };
@@ -407,16 +470,22 @@
         oCopy.setBld(this.bld);
     };
     CBldDgm.prototype.privateWriteAttributes = function(pWriter) {
-        //TODO
+        pWriter._WriteLimit2(0, this.bld);
+        pWriter._WriteBool2(1, this.uiExpand);
+        pWriter._WriteString1(2, this.spid);
+        pWriter._WriteInt1(3, this.grpId);
     };
     CBldDgm.prototype.writeChildren = function(pWriter) {
-        //TODO
     };
     CBldDgm.prototype.readAttribute = function(nType, pReader) {
-        //TODO
+        var oStream = pReader.stream;
+        if (0 === nType) this.setBld(oStream.GetUChar());
+        else if (1 === nType) this.setUiExpand(oStream.GetBool());
+        else if (2 === nType) this.setSpid(oStream.GetString2());
+        else if (3 === nType) this.setGrpId(oStream.GetLong());
     };
     CBldDgm.prototype.readChild = function(nType, pReader) {
-        //TODO
+        pReader.stream.SkipRecord();
     };
 
     changesFactory[AscDFH.historyitem_BldGraphicBldAsOne] = CChangeObject;
@@ -433,7 +502,7 @@
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BldGraphicBldAsOne, this.bldAsOne, pr));
         this.bldAsOne = pr;
     };
-    CBldGraphic.prototype.setBldAsOne = function(pr) {
+    CBldGraphic.prototype.setBldSub = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BldGraphicBldSub, this.bldSub, pr));
         this.bldSub = pr;
     };
@@ -446,18 +515,28 @@
         }
     };
     CBldGraphic.prototype.privateWriteAttributes = function(pWriter) {
-        //TODO
+        pWriter._WriteBool2(0, this.uiExpand);
+        pWriter._WriteString1(1, this.spid);
+        pWriter._WriteInt1(2, this.grpId);
     };
     CBldGraphic.prototype.writeChildren = function(pWriter) {
-        //TODO
+        this.writeRecord2(pWriter, 0, this.bldSub);
     };
     CBldGraphic.prototype.readAttribute = function(nType, pReader) {
-        //TODO
+        var oStream = pReader.stream;
+        if (0 == nType)	this.setUiExpand(oStream.GetBool());
+        else if (1 == nType)	this.setSpid(oStream.GetString2());
+        else if (2 == nType)	this.setGrpId(oStream.GetLong());
     };
     CBldGraphic.prototype.readChild = function(nType, pReader) {
-        //TODO
+        if(0 === nType) {
+            this.setBldSub(new CBldSub());
+            this.bldSub.fromPPTY(pReader);
+        }
+        else {
+            pReader.stream.SkipRecord();
+        }
     };
-
 
     changesFactory[AscDFH.historyitem_BldGraphicBldSub] = CChangeBool;
     drawingsChangesMap[AscDFH.historyitem_BldGraphicBldAsOne] = function(oClass, value) {oClass.animBg = value;};
@@ -474,16 +553,24 @@
         oCopy.setAnimBg(this.animBg);
     };
     CBldOleChart.prototype.privateWriteAttributes = function(pWriter) {
-        //TODO
+        pWriter._WriteLimit2(0, this.bld);
+        pWriter._WriteBool2(1, this.uiExpand);
+        pWriter._WriteString1(2, this.spid);
+        pWriter._WriteInt1(3, this.grpId);
+        pWriter._WriteBool2(4, this.animBg);
     };
     CBldOleChart.prototype.writeChildren = function(pWriter) {
-        //TODO
     };
     CBldOleChart.prototype.readAttribute = function(nType, pReader) {
-        //TODO
+        var oStream = pReader.stream;
+        if (0 === nType)	this.setBld(oStream.GetUChar());
+        else if (1 === nType)	this.setUiExpand(oStream.GetBool());
+        else if (2 === nType)	this.setSpid(oStream.GetString2());
+        else if (3 === nType)	this.setGrpId(oStream.GetLong());
+        else if (4 === nType)	this.setAnimBg(oStream.GetBool());
     };
     CBldOleChart.prototype.readChild = function(nType, pReader) {
-        //TODO
+        pReader.stream.SkipRecord();
     };
 
 
@@ -545,16 +632,39 @@
         oCopy.setRev(this.rev);
     };
     CBldP.prototype.privateWriteAttributes = function(pWriter) {
-        //TODO
+        pWriter._WriteLimit2(0, this.build);
+        pWriter._WriteBool2(1, this.uiExpand);
+        pWriter._WriteString1(2, this.spid);
+        pWriter._WriteInt1(3, this.grpId);
+        pWriter._WriteInt2(4, this.bldLvl);
+        pWriter._WriteBool2(5, this.animBg);
+        pWriter._WriteBool2(6, this.autoUpdateAnimBg);
+        pWriter._WriteBool2(7, this.rev);
+        pWriter._WriteString2(8, this.advAuto);
     };
     CBldP.prototype.writeChildren = function(pWriter) {
-        //TODO
+        this.writeRecord2(pWriter, 0, this.tmplLst);
     };
     CBldP.prototype.readAttribute = function(nType, pReader) {
-        //TODO
+        var oStream = pReader.stream;
+        if (0 === nType) this.setBuild(oStream.GetUChar());
+        else if (1 === nType) this.setUiExpand(oStream.GetBool());
+        else if (2 === nType) this.setSpid(oStream.GetString2());
+        else if (3 === nType) this.setGrpId(oStream.GetLong());
+        else if (4 === nType) this.setBldLvl(oStream.GetLong());
+        else if (5 === nType) this.setAnimBg(oStream.GetBool());
+        else if (6 === nType) this.setAutoUpdateAnimBg(oStream.GetBool());
+        else if (7 === nType) this.setRev(oStream.GetBool());
+        else if (8 === nType) this.setAdvAuto(oStream.GetString2());
     };
     CBldP.prototype.readChild = function(nType, pReader) {
-        //TODO
+        if(0 === nType) {
+            this.setTmplLst(new CTmplLst());
+            this.tmplLst.fromPPTY(pReader);
+        }
+        else {
+            pReader.stream.SkipRecord();
+        }
     };
 
     changesFactory[AscDFH.historyitem_BldSubBldChart] = CChangeObject;
@@ -584,16 +694,19 @@
         }
     };
     CBldSub.prototype.privateWriteAttributes = function(pWriter) {
-        //TODO
-    };
-    CBldSub.prototype.writeChildren = function(pWriter) {
-        //TODO
+        pWriter._WriteBool2(0, this.chart);
+        pWriter._WriteBool2(1, this.animBg);
+        pWriter._WriteLimit2(2, this.bldChart);
+        pWriter._WriteLimit2(3, this.bldDgm);
+        pWriter._WriteBool2(4, this.rev);
     };
     CBldSub.prototype.readAttribute = function(nType, pReader) {
-        //TODO
-    };
-    CBldSub.prototype.readChild = function(nType, pReader) {
-        //TODO
+        var oStream = pReader.stream;
+        if (0 === nType) this.setChart(oStream.GetBool());
+        else if (1 === nType) this.setAnimBg(oStream.GetBool());
+        else if (2 === nType) this.setBldChart(oStream.GetUChar());
+        else if (3 === nType) this.setBldDgm(oStream.GetUChar());
+        else if (4 === nType) this.setRev(oStream.GetBool());
     };
 
     changesFactory[AscDFH.historyitem_DirTransitionDir] = CChangeLong;
@@ -615,6 +728,7 @@
     CDirTransition.prototype.writeChildren = function(pWriter) {
     };
     CDirTransition.prototype.readAttribute = function(nType, pReader) {
+	var oStream = pReader.stream;
     };
     CDirTransition.prototype.readChild = function(nType, pReader) {
     };
@@ -639,43 +753,88 @@
     COptionalBlackTransition.prototype.writeChildren = function(pWriter) {
     };
     COptionalBlackTransition.prototype.readAttribute = function(nType, pReader) {
+	var oStream = pReader.stream;
     };
     COptionalBlackTransition.prototype.readChild = function(nType, pReader) {
     };
 
-    changesFactory[AscDFH.historyitem_GraphicElChart] = CChangeObject;
-    changesFactory[AscDFH.historyitem_GraphicElDgm] = CChangeObject;
-    drawingsChangesMap[AscDFH.historyitem_GraphicElChart] = function(oClass, value) {oClass.chart = value;};
-    drawingsChangesMap[AscDFH.historyitem_GraphicElDgm] = function(oClass, value) {oClass.dgm = value;};
+    changesFactory[AscDFH.historyitem_GraphicElDgmId] = CChangeString;
+    changesFactory[AscDFH.historyitem_GraphicElDgmBuildStep] = CChangeLong;
+    changesFactory[AscDFH.historyitem_GraphicElChartBuildStep] = CChangeLong;
+    changesFactory[AscDFH.historyitem_GraphicElSeriesIdx] = CChangeLong;
+    changesFactory[AscDFH.historyitem_GraphicElCategoryIdx] = CChangeLong;
+
+    drawingsChangesMap[AscDFH.historyitem_GraphicElDgmId] = function(oClass, value) {oClass.chart = value;};
+    drawingsChangesMap[AscDFH.historyitem_GraphicElDgmBuildStep] = function(oClass, value) {oClass.chart = value;};
+    drawingsChangesMap[AscDFH.historyitem_GraphicElChartBuildStep] = function(oClass, value) {oClass.chart = value;};
+    drawingsChangesMap[AscDFH.historyitem_GraphicElSeriesIdx] = function(oClass, value) {oClass.chart = value;};
+    drawingsChangesMap[AscDFH.historyitem_GraphicElCategoryIdx] = function(oClass, value) {oClass.chart = value;};
+
     function CGraphicEl() {
         CBaseFormatObject.call(this);
-        this.chart = null;
-        this.dgm = null;
+        this.dgmId = null;
+        this.dgmBuildStep = null;
+        this.chartBuildStep = null;
+        this.seriesIdx = null;
+        this.categoryIdx = null;
     }
     InitClass(CGraphicEl, CBaseFormatObject, AscDFH.historyitem_type_GraphicEl);
-    CGraphicEl.prototype.setChart = function(pr) {
-        oHistory.Add(new CChangeObject(this, AscDFH.historyitem_GraphicElChart, this.chart, pr));
-        this.chart = pr;
+    CGraphicEl.prototype.setDgmId = function(pr) {
+        oHistory.Add(new CChangeString(this, AscDFH.historyitem_GraphicElDgmId, this.dgmId, pr));
+        this.dgmId = pr;
     };
-    CGraphicEl.prototype.setDgm = function(pr) {
-        oHistory.Add(new CChangeObject(this, AscDFH.historyitem_GraphicElDgm, this.dgm, pr));
-        this.dgm = pr;
+    CGraphicEl.prototype.setDgmBuildStep = function(pr) {
+        oHistory.Add(new CChangeLong(this, AscDFH.historyitem_GraphicElDgmBuildStep, this.dgmId, pr));
+        this.dgmBuildStep = pr;
+    };
+    CGraphicEl.prototype.setChartBuildStep = function(pr) {
+        oHistory.Add(new CChangeLong(this, AscDFH.historyitem_GraphicElChartBuildStep, this.dgmId, pr));
+        this.chartBuildStep = pr;
+    };
+    CGraphicEl.prototype.setSeriesIdx = function(pr) {
+        oHistory.Add(new CChangeLong(this, AscDFH.historyitem_GraphicElSeriesIdx, this.dgmId, pr));
+        this.seriesIdx = pr;
+    };
+    CGraphicEl.prototype.setCategoryIdx = function(pr) {
+        oHistory.Add(new CChangeLong(this, AscDFH.historyitem_GraphicElCategoryIdx, this.dgmId, pr));
+        this.categoryIdx = pr;
     };
     CGraphicEl.prototype.fillObject = function(oCopy) {
-        if(this.chart) {
-            oCopy.setChart(this.chart.copy());
+        if(this.dgmId !== null) {
+            oCopy.setDgmId(oCopy.dgmId);
         }
-        if(this.dgm) {
-            oCopy.setDgm(this.dgm.copy());
+        if(this.dgmBuildStep !== null) {
+            oCopy.setDgmBuildStep(oCopy.dgmBuildStep);
+        }
+        if(this.chartBuildStep !== null) {
+            oCopy.setChartBuildStep(oCopy.chartBuildStep);
+        }
+        if(this.seriesIdx !== null) {
+            oCopy.setSeriesIdx(oCopy.seriesIdx);
+        }
+        if(this.categoryIdx !== null) {
+            oCopy.setCategoryIdx(oCopy.categoryIdx);
         }
     };
     CGraphicEl.prototype.privateWriteAttributes = function(pWriter) {
+        pWriter._WriteString2(0, this.dgmId);
+        pWriter._WriteLimit2(1, this.dgmBuildStep);
+        pWriter._WriteLimit2(2, this.chartBuildStep);
+        pWriter._WriteInt2(3, this.seriesIdx);
+        pWriter._WriteInt2(4, this.categoryIdx);
     };
     CGraphicEl.prototype.writeChildren = function(pWriter) {
     };
     CGraphicEl.prototype.readAttribute = function(nType, pReader) {
+        var oStream = pReader.stream;
+        if (0 === nType) this.setDgmId(oStream.GetString2());
+        else if (1 === nType) this.setDgmBuildStep(oStream.GetUChar());
+        else if (2 === nType) this.setChartBuildStep(oStream.GetUChar());
+        else if (3 === nType) this.setSeriesIdx(oStream.GetLong());
+        else if (4 === nType) this.setCategoryIdx(oStream.GetLong());
     };
     CGraphicEl.prototype.readChild = function(nType, pReader) {
+        pReader.stream.SkipRecord();
     };
 
 
@@ -710,6 +869,7 @@
     CIndexRg.prototype.writeChildren = function(pWriter) {
     };
     CIndexRg.prototype.readAttribute = function(nType, pReader) {
+	var oStream = pReader.stream;
     };
     CIndexRg.prototype.readChild = function(nType, pReader) {
     };
@@ -741,12 +901,26 @@
         }
     };
     CTmpl.prototype.privateWriteAttributes = function(pWriter) {
+        pWriter._WriteInt2(0, this.lvl);
     };
     CTmpl.prototype.writeChildren = function(pWriter) {
+        this.writeRecord1(pWriter, 0, this.tnLst);
     };
     CTmpl.prototype.readAttribute = function(nType, pReader) {
+        var oStream = pReader.stream;
+	    if(0 === nType) {
+            this.setLvl(oStream.GetLong())
+        }
     };
     CTmpl.prototype.readChild = function(nType, pReader) {
+        var oStream = pReader.stream;
+        if(0 === nType) {
+            this.setTnLst(new CTnLst());
+            this.tnLst.fromPPTY(pReader);
+        }
+        else {
+            oStream.SkipRecord();
+        }
     };
 
     changesFactory[AscDFH.historyitem_AnimCBhvr] = CChangeObject;
@@ -853,7 +1027,7 @@
                 break;
             }
             case 1: {
-                this.setTavLst(new CCommonTimingList());
+                this.setTavLst(new CTavLst());
                 this.tavLst.fromPPTY(pReader);
                 break;
             }
@@ -1392,8 +1566,6 @@
         else if (23 === nType) this.setTmFilter(oStream.GetString2());
     };
     CCTn.prototype.readChild = function(nType, pReader) {
-
-        var oStream = pReader.stream;
         switch (nType) {
             case 0: {
                 this.setStCondLst(new CCondLst());
@@ -1415,20 +1587,20 @@
                 this.iterate.fromPPTY(pReader);
                 break;
             }
-            //case 4: {
-            //    childTnLst.Init();
-            //    childTnLst->fromPPTY(pReader);
-            //}break;
-            //case 5:
-            //{
-            //    subTnLst.Init();
-            //    subTnLst->node_name = L"subTnLst";
-            //    subTnLst->fromPPTY(pReader);
-            //}break;
-            //default:
-            //{
-            //    pReader->SkipRecord();
-            //}break;
+            case 4: {
+                this.setChildTnLst(new CChildTnLst());
+                this.childTnLst.fromPPTY(pReader);
+                break;
+            }
+            case 5: {
+                this.setSubTnLst(new CTnLst());
+                this.subTnLst.fromPPTY(pReader);
+                break;
+            }
+            default: {
+                pReader.stream.SkipRecord();
+                break;
+            }
         }
     };
 
@@ -1538,6 +1710,7 @@
     CRtn.prototype.writeChildren = function(pWriter) {
     };
     CRtn.prototype.readAttribute = function(nType, pReader) {
+	var oStream = pReader.stream;
     };
     CRtn.prototype.readChild = function(nType, pReader) {
     };
@@ -1590,23 +1763,69 @@
         }
     };
     CTgtEl.prototype.privateWriteAttributes = function(pWriter) {
+        if(this.inkTgt) {
+            pWriter._WriteString2(pWriter, 0, this.inkTgt.spid);
+        }
+        if(this.sndTgt) {
+            pWriter._WriteString2(1, this.sndTgt.name);
+            pWriter._WriteBool2(2, this.sndTgt.builtIn);
+            pWriter._WriteString2(3, this.sndTgt.embed);
+        }
+
     };
     CTgtEl.prototype.writeChildren = function(pWriter) {
+        this.writeRecord2(pWriter, 0, this.spTgt);
     };
     CTgtEl.prototype.readAttribute = function(nType, pReader) {
+	    var oStream = pReader.stream;
+        if(0 === nType) {
+            if(!this.inkTgt) {
+                this.setInkTgt(new CObjectTarget());
+            }
+            this.inkTgt.setSpid(oStream.GetString2());
+        }
+        else if(1 === nType) {
+            if(!this.sndTgt) {
+                this.setSndTgt(new CSndTgt());
+            }
+            this.sndTgt.setName(oStream.GetString2());
+        }
+        else if(2 === nType) {
+            if(!this.sndTgt) {
+                this.setSndTgt(new CSndTgt());
+            }
+            this.sndTgt.setBuiltIn(oStream.GetBool());
+        }
+        else if(3 === nType) {
+            if(!this.sndTgt) {
+                this.setSndTgt(new CSndTgt());
+            }
+            this.sndTgt.setEmbed(oStream.GetString2());
+        }
+
     };
     CTgtEl.prototype.readChild = function(nType, pReader) {
+        if(0 === nType) {
+            this.setSpTgt(new CSpTgt());
+            this.spTgt.fromPPTY(pReader);
+        }
+        else {
+            pReader.stream.SkipRecord();
+        }
     };
 
 
     changesFactory[AscDFH.historyitem_SndTgtEmbed] = CChangeLong;
     changesFactory[AscDFH.historyitem_SndTgtName] = CChangeString;
+    changesFactory[AscDFH.historyitem_SndTgtBuiltIn] = CChangeBool;
     drawingsChangesMap[AscDFH.historyitem_SndTgtEmbed] = function(oClass, value) {oClass.embed = value;};
     drawingsChangesMap[AscDFH.historyitem_SndTgtName] =  function(oClass, value) {oClass.name = value;};
+    drawingsChangesMap[AscDFH.historyitem_SndTgtBuiltIn] =  function(oClass, value) {oClass.builtIn = value;};
     function CSndTgt() {//snd
         CBaseFormatObject.call(this);
         this.embed = null;
         this.name = null;
+        this.builtIn = null;
     }
     InitClass(CSndTgt, CBaseFormatObject, AscDFH.historyitem_type_SndTgt);
     CSndTgt.prototype.setEmbed = function (pr) {
@@ -1617,12 +1836,19 @@
         oHistory.Add(new CChangeString(this, AscDFH.historyitem_SndTgtName, this.name, pr));
         this.name = pr;
     };
+    CSndTgt.prototype.setBuiltIn = function (pr) {
+        oHistory.Add(new CChangeString(this, AscDFH.historyitem_SndTgtBuiltIn, this.builtIn, pr));
+        this.builtIn = pr;
+    };
     CSndTgt.prototype.fillObject = function(oCopy) {
         if(this.embed !== null) {
             oCopy.setEmbed(this.embed);
         }
         if(this.name !== null) {
             oCopy.setName(this.name);
+        }
+        if(this.builtIn !== null) {
+            oCopy.setBuiltIn(this.builtIn);
         }
     };
     CSndTgt.prototype.privateWriteAttributes = function(pWriter) {
@@ -1637,20 +1863,20 @@
     changesFactory[AscDFH.historyitem_SpTgtBg] = CChangeObject;
     changesFactory[AscDFH.historyitem_SpTgtGraphicEl] = CChangeObject;
     changesFactory[AscDFH.historyitem_SpTgtOleChartEl] = CChangeObject;
-    changesFactory[AscDFH.historyitem_SpTgtSubSp] = CChangeObject;
+    changesFactory[AscDFH.historyitem_SpTgtSubSpId] = CChangeString;
     changesFactory[AscDFH.historyitem_SpTgtTxEl] = CChangeObject;
 
     drawingsChangesMap[AscDFH.historyitem_SpTgtBg] = function(oClass, value) {oClass.bg = value;};
     drawingsChangesMap[AscDFH.historyitem_SpTgtGraphicEl] = function(oClass, value) {oClass.graphicEl = value;};
     drawingsChangesMap[AscDFH.historyitem_SpTgtOleChartEl] = function(oClass, value) {oClass.oleChartEl = value;};
-    drawingsChangesMap[AscDFH.historyitem_SpTgtSubSp] = function(oClass, value) {oClass.subSp = value;};
+    drawingsChangesMap[AscDFH.historyitem_SpTgtSubSpId] = function(oClass, value) {oClass.subSpId = value;};
     drawingsChangesMap[AscDFH.historyitem_SpTgtTxEl] = function(oClass, value) {oClass.bg = value;};
     function CSpTgt() {
         CObjectTarget.call(this);
         this.bg = null;
         this.graphicEl = null;
         this.oleChartEl = null;
-        this.subSp = null;
+        this.subSpId = null;
         this.txEl = null;
     }
     InitClass(CSpTgt, CObjectTarget, AscDFH.historyitem_type_SpTgt);
@@ -1666,9 +1892,9 @@
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SpTgtOleChartEl, this.oleChartEl, pr));
         this.oleChartEl = pr;
     };
-    CSpTgt.prototype.setSubSp = function(pr) {
-        oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SpTgtSubSp, this.subSp, pr));
-        this.subSp = pr;
+    CSpTgt.prototype.setSubSpId = function(pr) {
+        oHistory.Add(new CChangeString(this, AscDFH.historyitem_SpTgtSubSpId, this.subSpId, pr));
+        this.subSpId = pr;
     };
     CSpTgt.prototype.setTxEl = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SpTgtTxEl, this.txEl, pr));
@@ -1684,20 +1910,44 @@
         if(this.oleChartEl !== null) {
             oCopy.setOleChartEl(this.oleChartEl.copy());
         }
-        if(this.subSp !== null) {
-            oCopy.setSubSp(this.subSp.copy());
+        if(this.subSpId !== null) {
+            oCopy.setSubSpId(this.subSpId);
         }
         if(this.txEl !== null) {
             oCopy.setTxEl(this.txEl.copy());
         }
     };
     CSpTgt.prototype.privateWriteAttributes = function(pWriter) {
+        pWriter._WriteString1(0, this.spid);
+        pWriter._WriteString2(1, this.subSpId);
+        pWriter._WriteBool2(2, this.bg);
+        pWriter._WriteLimit2(3, this.type);
+        pWriter._WriteInt2(4, this.lvl);
     };
     CSpTgt.prototype.writeChildren = function(pWriter) {
+        this.writeRecord2(pWriter, 0, this.txEl);
+        this.writeRecord2(pWriter, 1, this.graphicEl);
     };
     CSpTgt.prototype.readAttribute = function(nType, pReader) {
+	    var oStream = pReader.stream;
+        if (0 === nType) this.setSpid(oStream.GetString2());
+        else if (1 === nType) this.setSubSpId(oStream.GetString2());
+        else if (2 === nType) this.setBg(oStream.GetBool());
+        else if (3 === nType) this.setType(oStream.GetUChar());
+        else if (4 === nType) this.setLvl(oStream.GetLong());
     };
     CSpTgt.prototype.readChild = function(nType, pReader) {
+        if(0 === nType) {
+            this.setTxEl(new CTxEl());
+            this.txEl.fromPPTY(pReader);
+        }
+        else if(1 === nType) {
+            this.setGraphicEl(new CGraphicEl());
+            this.graphicEl.fromPPTY(pReader);
+        }
+        else {
+            pReader.stream.SkipRecord();
+        }
     };
 
     changesFactory[AscDFH.historyitem_IterateDataTmAbs] = CChangeObject;
@@ -1748,12 +1998,22 @@
         }
     };
     CIterateData.prototype.privateWriteAttributes = function(pWriter) {
+        pWriter._WriteLimit2(0, this.type);
+        pWriter._WriteBool2(1, this.backwards);
+        pWriter._WriteString2(2, this.tmAbs);
+        pWriter._WriteInt2(3, this.tmPct);
     };
     CIterateData.prototype.writeChildren = function(pWriter) {
     };
     CIterateData.prototype.readAttribute = function(nType, pReader) {
+	    var oStream = pReader.stream;
+        if (0 === nType) this.setType(oStream.GetUChar());
+        else if (1 === nType) this.setBackwards(oStream.GetBool());
+        else if (2 === nType) this.setTmAbs(oStream.GetString2());
+        else if (3 === nType) this.setTmPct(oStream.GetLong());
     };
     CIterateData.prototype.readChild = function(nType, pReader) {
+        pReader.stream.SkipRecord();
     };
 
 
@@ -1778,13 +2038,14 @@
     CTm.prototype.writeChildren = function(pWriter) {
     };
     CTm.prototype.readAttribute = function(nType, pReader) {
+	var oStream = pReader.stream;
     };
     CTm.prototype.readChild = function(nType, pReader) {
     };
 
     changesFactory[AscDFH.historyitem_TavVal] = CChangeObject;
     changesFactory[AscDFH.historyitem_TavFmla] = CChangeString;
-    changesFactory[AscDFH.historyitem_TavTm] = CChangeLong;
+    changesFactory[AscDFH.historyitem_TavTm] = CChangeString;
     drawingsChangesMap[AscDFH.historyitem_TavVal] = function(oClass, value) {oClass.val = value;};
     drawingsChangesMap[AscDFH.historyitem_TavFmla] = function(oClass, value) {oClass.fmla = value;};
     drawingsChangesMap[AscDFH.historyitem_TavTm] = function(oClass, value) {oClass.tm = value;};
@@ -1804,7 +2065,7 @@
         this.fmla = pr;
     };
     CTav.prototype.setTm = function(pr) {
-        oHistory.Add(new CChangeLong(this, AscDFH.historyitem_TavTm, this.tm, pr));
+        oHistory.Add(new CChangeString(this, AscDFH.historyitem_TavTm, this.tm, pr));
         this.tm = pr;
     };
     CTav.prototype.fillObject = function(oCopy) {
@@ -1819,12 +2080,29 @@
         }
     };
     CTav.prototype.privateWriteAttributes = function(pWriter) {
+        pWriter._WriteString2(0, this.tm);
+        pWriter._WriteString2(1, this.fmla);
     };
     CTav.prototype.writeChildren = function(pWriter) {
+        this.writeRecord2(pWriter, 0, this.val);
     };
     CTav.prototype.readAttribute = function(nType, pReader) {
+	    var oStream = pReader.stream;
+        if(0 === nType) {
+            this.setTm(oStream.GetString2());
+        }
+        else if(1 === nType) {
+            this.setFmla(oStream.GetString2());
+        }
     };
     CTav.prototype.readChild = function(nType, pReader) {
+        if(0 === nType) {
+            this.setVal(new CAnimVariant());
+            this.val.fromPPTY(pReader);
+        }
+        else {
+            pReader.stream.SkipRecord();
+        }
     };
 
 
@@ -2617,16 +2895,25 @@
         }
     };
     CAudio.prototype.privateWriteAttributes = function(pWriter) {
-        //TODO
+        pWriter._WriteBool2(0, this.isNarration);
     };
     CAudio.prototype.writeChildren = function(pWriter) {
-        //TODO
+        this.writeRecord1(pWriter, 0, this.cMediaNode);
     };
     CAudio.prototype.readAttribute = function(nType, pReader) {
-        //TODO
+        var oStream = pReader.stream;
+        if(0 === nType) {
+            this.setIsNarration(oStream.GetBool());
+        }
     };
     CAudio.prototype.readChild = function(nType, pReader) {
-        //TODO
+        if(0 === nType) {
+            this.setCMediaNode(new CCMediaNode());
+            this.cMediaNode.fromPPTY(pReader);
+        }
+        else {
+            pReader.stream.SkipRecord();
+        }
     };
 
 
@@ -2699,16 +2986,34 @@
         }
     };
     CCMediaNode.prototype.privateWriteAttributes = function(pWriter) {
-        //TODO
+        pWriter._WriteInt2(0, this.numSld);
+        pWriter._WriteInt2(1, this.vol);
+        pWriter._WriteBool2(2, this.mute);
+        pWriter._WriteBool2(3, this.showWhenStopped);
     };
     CCMediaNode.prototype.writeChildren = function(pWriter) {
-        //TODO
+        this.writeRecord1(pWriter, 0, this.cTn);
+        this.writeRecord1(pWriter, 1, this.tgtEl);
     };
     CCMediaNode.prototype.readAttribute = function(nType, pReader) {
-        //TODO
+        var oStream = pReader.stream;
+        if (0 === nType) this.setNumSld(oStream.GetLong());
+        else if (1 === nType) this.setVol(oStream.GetLong());
+        else if (2 === nType) this.setMute(oStream.GetBool());
+        else if (3 === nType) this.setShowWhenStopped(oStream.GetBool());
     };
     CCMediaNode.prototype.readChild = function(nType, pReader) {
-        //TODO
+        if(0 === nType) {
+            this.setCTn(new CCTn());
+            this.cTn.fromPPTY(pReader);
+        }
+        else if(1 === nType) {
+            this.setTgtEl(new CTgtEl());
+            this.tgtEl.fromPPTY(pReader);
+        }
+        else {
+            pReader.stream.SkipRecord();
+        }
     };
 
     changesFactory[AscDFH.historyitem_CmdCBhvr] = CChangeObject;
@@ -2795,10 +3100,18 @@
     CTimeNodeContainer.prototype.privateWriteAttributes = function(pWriter) {
     };
     CTimeNodeContainer.prototype.writeChildren = function(pWriter) {
+        this.writeRecord1(pWriter, 0, this.cTn);
     };
     CTimeNodeContainer.prototype.readAttribute = function(nType, pReader) {
     };
     CTimeNodeContainer.prototype.readChild = function(nType, pReader) {
+        if(0 === nType) {
+            this.setCTn(new CCTn());
+            this.cTn.fromPPTY(pReader);
+        }
+        else {
+            pReader.stream.SkipRecord();
+        }
     };
 
     function CPar() {//par, excl
@@ -2872,12 +3185,34 @@
         }
     };
     CSeq.prototype.privateWriteAttributes = function(pWriter) {
+        pWriter._WriteBool2(0, this.concurrent);
+        pWriter._WriteLimit2(1, this.nextAc);
+        pWriter._WriteLimit2(2, this.prevAc);
     };
     CSeq.prototype.writeChildren = function(pWriter) {
+        this.writeRecord2(pWriter, 0, this.prevCondLst);
+        this.writeRecord2(pWriter, 1, this.nextCondLst);
+        this.writeRecord1(pWriter, 2, this.cTn);
     };
     CSeq.prototype.readAttribute = function(nType, pReader) {
+	    var oStream = pReader.stream;
+        if (0 === nType) this.setConcurrent(oStream.GetBool());
+        else if (1 === nType) this.setNextAc(oStream.GetUChar());
+        else if (2 === nType) this.setPrevAc(oStream.GetUChar());
     };
     CSeq.prototype.readChild = function(nType, pReader) {
+        if(0 === nType) {
+            this.setPrevCondLst(new CCondLst());
+            this.prevCondLst.fromPPTY(pReader);
+        }
+        else if(1 === nType) {
+            this.setNextCondLst(new CCondLst());
+            this.nextCondLst.fromPPTY(pReader);
+        }
+        else if(2 === nType) {
+            this.setCTn(new CCTn());
+            this.cTn.fromPPTY(pReader);
+        }
     };
 
 
@@ -2910,10 +3245,20 @@
     CSet.prototype.privateWriteAttributes = function(pWriter) {
     };
     CSet.prototype.writeChildren = function(pWriter) {
+        this.writeRecord1(pWriter, 0, this.cBhvr);
+        this.writeRecord2(pWriter, 1, this.to);
     };
     CSet.prototype.readAttribute = function(nType, pReader) {
     };
     CSet.prototype.readChild = function(nType, pReader) {
+        if(0 === nType) {
+            this.setCBhvr(new CCBhvr());
+            this.cBhvr.fromPPTY(pReader);
+        }
+        else if(1 === nType) {
+            this.setTo(new CAnimVariant());
+            this.to.fromPPTY(pReader);
+        }
     };
 
     changesFactory[AscDFH.historyitem_VideoCMediaNode] = CChangeObject;
@@ -2943,12 +3288,25 @@
         }
     };
     CVideo.prototype.privateWriteAttributes = function(pWriter) {
+        pWriter._WriteBool2(0, this.fullScrn);
     };
     CVideo.prototype.writeChildren = function(pWriter) {
+        this.writeRecord1(pWriter, 0, this.cMediaNode);
     };
     CVideo.prototype.readAttribute = function(nType, pReader) {
+	    var oStream = pReader.stream;
+        if(0 === nType) {
+            this.setFullScrn(oStream.GetBool());
+        }
     };
     CVideo.prototype.readChild = function(nType, pReader) {
+        if(0 === nType) {
+            this.setCMediaNode(new CCMediaNode());
+            this.cMediaNode.fromPPTY(pReader);
+        }
+        else {
+            pReader.stream.SkipRecord();
+        }
     };
 
 
@@ -2983,6 +3341,7 @@
     COleChartEl.prototype.writeChildren = function(pWriter) {
     };
     COleChartEl.prototype.readAttribute = function(nType, pReader) {
+	var oStream = pReader.stream;
     };
     COleChartEl.prototype.readChild = function(nType, pReader) {
     };
@@ -3018,6 +3377,7 @@
     CTLPoint.prototype.writeChildren = function(pWriter) {
     };
     CTLPoint.prototype.readAttribute = function(nType, pReader) {
+	var oStream = pReader.stream;
     };
     CTLPoint.prototype.readChild = function(nType, pReader) {
     };
@@ -3054,6 +3414,7 @@
     CSndAc.prototype.writeChildren = function(pWriter) {
     };
     CSndAc.prototype.readAttribute = function(nType, pReader) {
+	var oStream = pReader.stream;
     };
     CSndAc.prototype.readChild = function(nType, pReader) {
     };
@@ -3090,6 +3451,7 @@
     CStSnd.prototype.writeChildren = function(pWriter) {
     };
     CStSnd.prototype.readAttribute = function(nType, pReader) {
+	var oStream = pReader.stream;
     };
     CStSnd.prototype.readChild = function(nType, pReader) {
     };
@@ -3102,16 +3464,16 @@
     drawingsChangesMap[AscDFH.historyitem_TxElPRg] = function(oClass, value) {oClass.pRg = value;};
     function CTxEl() {//rCtr
         CBaseFormatObject.call(this);
-        this.charRg = null;
+        this.charRg = null;//CIndexRg
         this.pRg = null;
     }
     InitClass(CTxEl, CBaseFormatObject, AscDFH.historyitem_type_TxEl);
     CTxEl.prototype.setCharRg = function(pr) {
-        oHistory.Add(new CChangeLong(this, AscDFH.historyitem_TxElCharRg, this.charRg, pr));
+        oHistory.Add(new CChangeObject(this, AscDFH.historyitem_TxElCharRg, this.charRg, pr));
         this.charRg = pr;
     };
     CTxEl.prototype.setPRg = function(pr) {
-        oHistory.Add(new CChangeLong(this, AscDFH.historyitem_TxElPRg, this.pRg, pr));
+        oHistory.Add(new CChangeObject(this, AscDFH.historyitem_TxElPRg, this.pRg, pr));
         this.pRg = pr;
     };
     CTxEl.prototype.fillObject = function(oCopy) {
@@ -3123,10 +3485,48 @@
         }
     };
     CTxEl.prototype.privateWriteAttributes = function(pWriter) {
+        if(this.charRg) {
+            pWriter._WriteBool2(0, true);
+            pWriter._WriteUInt2(1, this.charRg.st);
+            pWriter._WriteUInt2(2, this.charRg.end);
+        }
+        else if(this.pRg) {
+            pWriter._WriteBool2(0, false);
+            pWriter._WriteUInt2(1, this.charRg.st);
+            pWriter._WriteUInt2(2, this.charRg.end);
+        }
     };
     CTxEl.prototype.writeChildren = function(pWriter) {
     };
     CTxEl.prototype.readAttribute = function(nType, pReader) {
+        var oStream = pReader.stream;
+	    if(nType === 0) {
+            var bCharRg = oStream.GetBool();
+            if(bCharRg) {
+                this.setCharRg(new CIndexRg())
+            }
+            else {
+                this.setPRg(new CIndexRg());
+            }
+        }
+        else if(1 === nType) {
+            var nSt = oStream.GetULong();
+            if(this.charRg) {
+                this.charRg.setSt(nSt);
+            }
+            else if(this.pRg) {
+                this.pRg.setSt(nSt);
+            }
+        }
+        else if(2 === nType) {
+            var nEnd = oStream.GetULong();
+            if(this.charRg) {
+                this.charRg.setEnd(nEnd);
+            }
+            else if(this.pRg) {
+                this.pRg.setEnd(nEnd);
+            }
+        }
     };
     CTxEl.prototype.readChild = function(nType, pReader) {
     };
@@ -3153,6 +3553,7 @@
     CWheel.prototype.writeChildren = function(pWriter) {
     };
     CWheel.prototype.readAttribute = function(nType, pReader) {
+	var oStream = pReader.stream;
     };
     CWheel.prototype.readChild = function(nType, pReader) {
     };

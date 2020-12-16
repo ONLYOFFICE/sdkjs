@@ -1489,6 +1489,9 @@
 	window['AscDFH'].historyitem_type_ChildTnLst             = 1190 << 16;
 	window['AscDFH'].historyitem_type_Par                    = 1191 << 16;
 	window['AscDFH'].historyitem_type_Excl                   = 1192 << 16;
+	window['AscDFH'].historyitem_type_TmplLst                = 1193 << 16;
+	window['AscDFH'].historyitem_type_TnLst                  = 1194 << 16;
+	window['AscDFH'].historyitem_type_TavLst                 = 1195 << 16;
 
 	window['AscDFH'].historyitem_type_DocumentMacros         = 2000 << 16;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3002,8 +3005,11 @@
 	AscDFH.historyitem_OptBlackTransitionThruBlk     = AscDFH.historyitem_type_OptBlackTransition | 1;
 
 
-	AscDFH.historyitem_GraphicElChart     = AscDFH.historyitem_type_GraphicEl | 1;
-	AscDFH.historyitem_GraphicElDgm       = AscDFH.historyitem_type_GraphicEl | 2;
+	AscDFH.historyitem_GraphicElDgmId                = AscDFH.historyitem_type_GraphicEl | 1;
+	AscDFH.historyitem_GraphicElDgmBuildStep         = AscDFH.historyitem_type_GraphicEl | 2;
+	AscDFH.historyitem_GraphicElChartBuildStep       = AscDFH.historyitem_type_GraphicEl | 3;
+	AscDFH.historyitem_GraphicElSeriesIdx            = AscDFH.historyitem_type_GraphicEl | 4;
+	AscDFH.historyitem_GraphicElCategoryIdx          = AscDFH.historyitem_type_GraphicEl | 5;
 
 	AscDFH.historyitem_IndexRgSt      = AscDFH.historyitem_type_IndexRg | 1;
 	AscDFH.historyitem_IndexRgEnd     = AscDFH.historyitem_type_IndexRg | 2;
@@ -3074,13 +3080,14 @@
 	AscDFH.historyitem_TgtElSndTgt      = AscDFH.historyitem_type_TgtEl | 3;
 	AscDFH.historyitem_TgtElSpTgt       = AscDFH.historyitem_type_TgtEl | 4;
 
-	AscDFH.historyitem_SndTgtEmbed      = AscDFH.historyitem_type_SndTgt | 1;
-	AscDFH.historyitem_SndTgtName       = AscDFH.historyitem_type_SndTgt | 2;
+	AscDFH.historyitem_SndTgtEmbed         = AscDFH.historyitem_type_SndTgt | 1;
+	AscDFH.historyitem_SndTgtName          = AscDFH.historyitem_type_SndTgt | 2;
+	AscDFH.historyitem_SndTgtBuiltIn       = AscDFH.historyitem_type_SndTgt | 3;
 
 	AscDFH.historyitem_SpTgtBg          = AscDFH.historyitem_type_SpTgt | 1;
 	AscDFH.historyitem_SpTgtGraphicEl   = AscDFH.historyitem_type_SpTgt | 2;
 	AscDFH.historyitem_SpTgtOleChartEl  = AscDFH.historyitem_type_SpTgt | 3;
-	AscDFH.historyitem_SpTgtSubSp       = AscDFH.historyitem_type_SpTgt | 4;
+	AscDFH.historyitem_SpTgtSubSpId       = AscDFH.historyitem_type_SpTgt | 4;
 	AscDFH.historyitem_SpTgtTxEl        = AscDFH.historyitem_type_SpTgt | 5;
 
 	AscDFH.historyitem_IterateDataTmAbs     = AscDFH.historyitem_type_IterateData | 1;
