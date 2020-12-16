@@ -4081,6 +4081,7 @@
 	};
 	/**
 	 * Get the collection of tables on a given absolute page
+	 * <note> Using the method in a script along with adding tables will not display the tables just added. </note>
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param nPage - page number
@@ -11351,7 +11352,8 @@
 	};
 
 	/**
-	 * Get the collection of tables on a given absolute page
+	 * Get the collection of tables on a given absolute page.
+	 * 
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param nPage - page number
