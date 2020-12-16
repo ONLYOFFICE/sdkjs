@@ -2378,23 +2378,23 @@
         this.transition = null;
     }
     InitClass(CAnimEffect, CBaseFormatObject, AscDFH.historyitem_type_AnimEffect);
-    CAnimEffect.progress.setCBhvr = function(pr) {
+    CAnimEffect.prototype.setCBhvr = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_AnimEffectCBhvr, this.cBhvr, pr));
         this.cBhvr = pr;
     };
-    CAnimEffect.progress.setProgress = function(pr) {
+    CAnimEffect.prototype.setProgress = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_AnimEffectProgress, this.progress, pr));
         this.progress = pr;
     };
-    CAnimEffect.progress.setFilter = function(pr) {
+    CAnimEffect.prototype.setFilter = function(pr) {
         oHistory.Add(new CChangeString(this, AscDFH.historyitem_AnimEffectFilter, this.filter, pr));
         this.filter = pr;
     };
-    CAnimEffect.progress.setPrLst = function(pr) {
+    CAnimEffect.prototype.setPrLst = function(pr) {
         oHistory.Add(new CChangeString(this, AscDFH.historyitem_AnimEffectPrLst, this.prLst, pr));
         this.prLst = pr;
     };
-    CAnimEffect.progress.setTransition = function(pr) {
+    CAnimEffect.prototype.setTransition = function(pr) {
         oHistory.Add(new CChangeLong(this, AscDFH.historyitem_AnimEffectTransition, this.transition, pr));
         this.transition = pr;
     };
