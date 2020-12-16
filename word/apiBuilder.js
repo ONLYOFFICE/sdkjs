@@ -4110,6 +4110,7 @@
 	};
 	/**
 	 * Gets the collection of drawing objects in the document.
+	 * <note> Using the method in a script along with adding drawing objects will not display the drawing objects just added. </note>
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiDrawing[]}  
@@ -4126,6 +4127,7 @@
 	};
 	/**
 	 * Gets the collection of shapes objects in the document.
+	 * <note> Using the method in a script along with adding shapes objects will not display the shapes objects just added. </note>
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiShape[]}  
@@ -4143,6 +4145,7 @@
 	};
 	/**
 	 * Gets the collection of image objects in the document.
+	 * <note> Using the method in a script along with adding image objects will not display the image objects just added. </note>
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiImage[]}  
@@ -4160,6 +4163,7 @@
 	};
 	/**
 	 * Gets the collection of chart objects in the document.
+	 * <note> Using the method in a script along with adding chart objects will not display the chart objects just added. </note>
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiChart[]}  
@@ -5163,6 +5167,7 @@
 	};
 	/**
 	 * Gets the collection of drawing objects in the paragraph.
+	 * <note> Using the method in a script along with adding drawing objects will not display the drawing objects just added. </note>
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiDrawing[]}  
@@ -5179,6 +5184,7 @@
 	};
 	/**
 	 * Gets the collection of shapes objects in the Paragraph.
+	 * <note> Using the method in a script along with adding shapes will not display the shapes just added. </note>
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiShape[]}  
@@ -5196,6 +5202,7 @@
 	};
 	/**
 	 * Gets the collection of image objects in the Paragraph.
+	 * <note> Using the method in a script along with adding image objects will not display the image objects just added. </note>
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiImage[]}  
@@ -5213,6 +5220,7 @@
 	};
 	/**
 	 * Gets the collection of chart objects in the Paragraph.
+	 * <note> Using the method in a script along with adding chart objects will not display the chart objects just added. </note>
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiChart[]}  
@@ -11426,6 +11434,7 @@
 
 	/**
 	 * Gets the collection of drawing objects in the document.
+	 * <note> Using the method in a script along with adding drawing objects will not display the drawing objects just added. </note>
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiDrawing[]}  
