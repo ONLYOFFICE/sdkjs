@@ -232,7 +232,6 @@
         }
     };
     CCommonTimingList.prototype.readAttribute = function(nType, pReader) {
-	var oStream = pReader.stream;
     };
     CCommonTimingList.prototype.readElement = function(pReader) {
         var oStream = pReader.stream;
@@ -418,7 +417,6 @@
     CObjectTarget.prototype.writeChildren = function(pWriter) {
     };
     CObjectTarget.prototype.readAttribute = function(nType, pReader) {
-	var oStream = pReader.stream;
     };
     CObjectTarget.prototype.readChild = function(nType, pReader) {
     };
@@ -450,7 +448,6 @@
     CBldBase.prototype.writeChildren = function(pWriter) {
     };
     CBldBase.prototype.readAttribute = function(nType, pReader) {
-	var oStream = pReader.stream;
     };
     CBldBase.prototype.readChild = function(nType, pReader) {
     };
@@ -728,7 +725,6 @@
     CDirTransition.prototype.writeChildren = function(pWriter) {
     };
     CDirTransition.prototype.readAttribute = function(nType, pReader) {
-	var oStream = pReader.stream;
     };
     CDirTransition.prototype.readChild = function(nType, pReader) {
     };
@@ -753,7 +749,6 @@
     COptionalBlackTransition.prototype.writeChildren = function(pWriter) {
     };
     COptionalBlackTransition.prototype.readAttribute = function(nType, pReader) {
-	var oStream = pReader.stream;
     };
     COptionalBlackTransition.prototype.readChild = function(nType, pReader) {
     };
@@ -869,7 +864,6 @@
     CIndexRg.prototype.writeChildren = function(pWriter) {
     };
     CIndexRg.prototype.readAttribute = function(nType, pReader) {
-	var oStream = pReader.stream;
     };
     CIndexRg.prototype.readChild = function(nType, pReader) {
     };
@@ -1710,7 +1704,6 @@
     CRtn.prototype.writeChildren = function(pWriter) {
     };
     CRtn.prototype.readAttribute = function(nType, pReader) {
-	var oStream = pReader.stream;
     };
     CRtn.prototype.readChild = function(nType, pReader) {
     };
@@ -2038,7 +2031,6 @@
     CTm.prototype.writeChildren = function(pWriter) {
     };
     CTm.prototype.readAttribute = function(nType, pReader) {
-	var oStream = pReader.stream;
     };
     CTm.prototype.readChild = function(nType, pReader) {
     };
@@ -3341,7 +3333,6 @@
     COleChartEl.prototype.writeChildren = function(pWriter) {
     };
     COleChartEl.prototype.readAttribute = function(nType, pReader) {
-	var oStream = pReader.stream;
     };
     COleChartEl.prototype.readChild = function(nType, pReader) {
     };
@@ -3377,7 +3368,6 @@
     CTLPoint.prototype.writeChildren = function(pWriter) {
     };
     CTLPoint.prototype.readAttribute = function(nType, pReader) {
-	var oStream = pReader.stream;
     };
     CTLPoint.prototype.readChild = function(nType, pReader) {
     };
@@ -3414,7 +3404,6 @@
     CSndAc.prototype.writeChildren = function(pWriter) {
     };
     CSndAc.prototype.readAttribute = function(nType, pReader) {
-	var oStream = pReader.stream;
     };
     CSndAc.prototype.readChild = function(nType, pReader) {
     };
@@ -3451,7 +3440,6 @@
     CStSnd.prototype.writeChildren = function(pWriter) {
     };
     CStSnd.prototype.readAttribute = function(nType, pReader) {
-	var oStream = pReader.stream;
     };
     CStSnd.prototype.readChild = function(nType, pReader) {
     };
@@ -3553,7 +3541,6 @@
     CWheel.prototype.writeChildren = function(pWriter) {
     };
     CWheel.prototype.readAttribute = function(nType, pReader) {
-	var oStream = pReader.stream;
     };
     CWheel.prototype.readChild = function(nType, pReader) {
     };
