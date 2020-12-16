@@ -4285,6 +4285,13 @@ function BinaryPPTYLoader()
                     slide.applyTransition(_transition);
                     break;
                 }
+                case 3:
+                {
+                    var oTiming = new AscFormat.CTiming();
+                    oTiming.fromPPTY(this);
+                    slide.setTiming(oTiming);
+                    break;
+                }
                 case 4:
                 {
                     this.ReadComments(slide.writecomments);
