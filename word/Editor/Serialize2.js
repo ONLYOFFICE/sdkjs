@@ -8977,24 +8977,29 @@ function Binary_pPrReader(doc, oReadResult, stream)
 	this.ReadNumFmt = function(type, length, props) {
 		var res = c_oSerConstants.ReadOk;
 		if (c_oSerNumTypes.NumFmtVal === type) {
+			var nFormat = Asc.c_oAscNumberingFormat.Decimal;
 			switch (this.stream.GetByte()) {
-				case 48: props.Format = Asc.c_oAscNumberingFormat.None; break;
-				case 5: props.Format = Asc.c_oAscNumberingFormat.Bullet; break;
-				case 13: props.Format = Asc.c_oAscNumberingFormat.Decimal; break;
-				case 47: props.Format = Asc.c_oAscNumberingFormat.LowerRoman; break;
-				case 61: props.Format = Asc.c_oAscNumberingFormat.UpperRoman; break;
-				case 46: props.Format = Asc.c_oAscNumberingFormat.LowerLetter; break;
-				case 60: props.Format = Asc.c_oAscNumberingFormat.UpperLetter; break;
-				case 21: props.Format = Asc.c_oAscNumberingFormat.DecimalZero; break;
-				case 14: props.Format = Asc.c_oAscNumberingFormat.DecimalEnclosedCircle; break;
-				case 15: props.Format = Asc.c_oAscNumberingFormat.DecimalEnclosedCircle; break;
-				case 52: props.Format = Asc.c_oAscNumberingFormat.RussianLower; break;
-				case 53: props.Format = Asc.c_oAscNumberingFormat.RussianUpper; break;
-				case 8: props.Format = Asc.c_oAscNumberingFormat.ChineseCounting; break;
-				case 9: props.Format = Asc.c_oAscNumberingFormat.ChineseCountingThousand; break;
-				case 10: props.Format = Asc.c_oAscNumberingFormat.ChineseLegalSimplified; break;
-				default: props.Format = Asc.c_oAscNumberingFormat.Decimal; break;
+				case 48: nFormat = Asc.c_oAscNumberingFormat.None; break;
+				case 5:  nFormat = Asc.c_oAscNumberingFormat.Bullet; break;
+				case 13: nFormat = Asc.c_oAscNumberingFormat.Decimal; break;
+				case 47: nFormat = Asc.c_oAscNumberingFormat.LowerRoman; break;
+				case 61: nFormat = Asc.c_oAscNumberingFormat.UpperRoman; break;
+				case 46: nFormat = Asc.c_oAscNumberingFormat.LowerLetter; break;
+				case 60: nFormat = Asc.c_oAscNumberingFormat.UpperLetter; break;
+				case 21: nFormat = Asc.c_oAscNumberingFormat.DecimalZero; break;
+				case 14: nFormat = Asc.c_oAscNumberingFormat.DecimalEnclosedCircle; break;
+				case 15: nFormat = Asc.c_oAscNumberingFormat.DecimalEnclosedCircle; break;
+				case 52: nFormat = Asc.c_oAscNumberingFormat.RussianLower; break;
+				case 53: nFormat = Asc.c_oAscNumberingFormat.RussianUpper; break;
+				case 8:  nFormat = Asc.c_oAscNumberingFormat.ChineseCounting; break;
+				case 9:  nFormat = Asc.c_oAscNumberingFormat.ChineseCountingThousand; break;
+				case 10: nFormat = Asc.c_oAscNumberingFormat.ChineseLegalSimplified; break;
+				default: nFormat = Asc.c_oAscNumberingFormat.Decimal; break;
 			}
+			if (props instanceof CNumberingLvl)
+				props.SetFormat(nFormat);
+			else
+				props.Format = nFormat;
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}
@@ -10350,7 +10355,7 @@ function Binary_NumberingTableReader(doc, oReadResult, stream)
         var res = c_oSerConstants.ReadOk;
         if ( c_oSerNumTypes.lvl_Format === type )
         {
-            oNewLvl.Format = this.stream.GetULongLE();
+            oNewLvl.SetFormat(this.stream.GetULongLE());
         }
 		else if ( c_oSerNumTypes.lvl_NumFmt === type )
 		{
