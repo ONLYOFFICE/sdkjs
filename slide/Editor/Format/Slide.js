@@ -881,8 +881,12 @@ Slide.prototype =
 
     removeFromSpTreeByPos: function(pos){
         if(pos > -1 && pos < this.cSld.spTree.length){
-            History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_SlideRemoveFromSpTree, pos, [this.cSld.spTree[pos]], false));
+            var oSp = this.cSld.spTree[pos];
+            History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_SlideRemoveFromSpTree, pos, [oSp], false));
             this.cSld.spTree.splice(pos, 1);
+            if(this.timing) {
+                this.timing.onRemoveObject(oSp.Get_Id());
+            }
         }
     },
 
@@ -893,8 +897,7 @@ Slide.prototype =
         {
             if(sp_tree[i].Get_Id() === id)
             {
-                History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_SlideRemoveFromSpTree, i, [sp_tree[i]], false));
-                sp_tree.splice(i, 1);
+                this.removeFromSpTreeByPos(i);
                 return i;
             }
         }

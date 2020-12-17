@@ -145,14 +145,22 @@
         return [];
     };
     CBaseObject.prototype.traverse = function(fCallback) {
-        fCallback(this);
+        if(fCallback(this)) {
+            return true;
+        }
         var  aChildren = this.getChildren();
-        for(var nChild = 0; nChild < aChildren.length; ++nChild) {
+        for(var nChild = aChildren.length - 1; nChild > -1; --nChild) {
             var oChild = aChildren[nChild];
             if(oChild) {
-                oChild.traverse(fCallback);
+                if(oChild.traverse(fCallback)) {
+                    return true;
+                }
             }
         }
+        return false;
+    };
+    CBaseObject.prototype.handleRemoveObject = function(sObjectId) {
+        return false;
     };
 
     function InitClass(fClass, fBase, nType) {
@@ -223,9 +231,13 @@
     CTiming.prototype.getChildren = function() {
         return [this.bldLst, this.tnLst];
     };
-    CTiming.prototype.handleRemoveObject = function(sObjectId) {
-        return [this.bldLst, this.tnLst];
+    CTiming.prototype.onRemoveObject = function(sObjectId) {
+        this.traverse(function(oNode) {
+            oNode.handleRemoveObject(sObjectId);
+            return false;
+        });
     };
+
 
     changesFactory[AscDFH.historyitem_CommonTimingListAdd] = CChangeContent;
     changesFactory[AscDFH.historyitem_CommonTimingListRemove] = CChangeContent;
@@ -362,15 +374,15 @@
         var nType = oStream.GetUChar();
         var oElement = null;
         switch(nType) {
-            case 1:	oElement = new CPar(); break;
-            case 2:	oElement = new CSeq(); break;
-            case 3:	oElement = new CAudio(); break;
-            case 4:	oElement = new CVideo(); break;
-            case 5:	oElement = new CExcl(); break;
-            case 6:	oElement = new CAnim(); break;
-            case 7:	oElement = new CAnimClr(); break;
-            case 8:	oElement = new CAnimEffect(); break;
-            case 9:	oElement = new CAnimMotion(); break;
+            case 1: oElement = new CPar(); break;
+            case 2: oElement = new CSeq(); break;
+            case 3: oElement = new CAudio(); break;
+            case 4: oElement = new CVideo(); break;
+            case 5: oElement = new CExcl(); break;
+            case 6: oElement = new CAnim(); break;
+            case 7: oElement = new CAnimClr(); break;
+            case 8: oElement = new CAnimEffect(); break;
+            case 9: oElement = new CAnimMotion(); break;
             case 10: oElement = new CAnimRot(); break;
             case 11: oElement = new CAnimScale(); break;
             case 12: oElement = new CCmd(); break;
@@ -390,12 +402,12 @@
                 var oElement = this.list[nIndex];
                 var nType = null;
                 switch (oElement.getObjectType()) {
-                    case AscDFH.historyitem_type_Par:	nType = 1; break;
-                    case AscDFH.historyitem_type_Seq:	nType = 2; break;
-                    case AscDFH.historyitem_type_Audio:	nType = 3; break;
-                    case AscDFH.historyitem_type_Video:	nType = 4; break;
-                    case AscDFH.historyitem_type_Excl:	nType = 5; break;
-                    case AscDFH.historyitem_type_Anim:	nType = 6; break;
+                    case AscDFH.historyitem_type_Par: nType = 1; break;
+                    case AscDFH.historyitem_type_Seq: nType = 2; break;
+                    case AscDFH.historyitem_type_Audio: nType = 3; break;
+                    case AscDFH.historyitem_type_Video: nType = 4; break;
+                    case AscDFH.historyitem_type_Excl: nType = 5; break;
+                    case AscDFH.historyitem_type_Anim: nType = 6; break;
                     case AscDFH.historyitem_type_AnimClr: nType = 7; break;
                     case AscDFH.historyitem_type_AnimEffect: nType = 8; break;
                     case AscDFH.historyitem_type_AnimMotion: nType = 9; break;
@@ -586,9 +598,9 @@
     };
     CBldGraphic.prototype.readAttribute = function(nType, pReader) {
         var oStream = pReader.stream;
-        if (0 == nType)	this.setUiExpand(oStream.GetBool());
-        else if (1 == nType)	this.setSpid(oStream.GetString2(), pReader);
-        else if (2 == nType)	this.setGrpId(oStream.GetLong());
+        if (0 == nType) this.setUiExpand(oStream.GetBool());
+        else if (1 == nType) this.setSpid(oStream.GetString2(), pReader);
+        else if (2 == nType) this.setGrpId(oStream.GetLong());
     };
     CBldGraphic.prototype.readChild = function(nType, pReader) {
         if(0 === nType) {
@@ -631,11 +643,11 @@
     };
     CBldOleChart.prototype.readAttribute = function(nType, pReader) {
         var oStream = pReader.stream;
-        if (0 === nType)	this.setBld(oStream.GetUChar());
-        else if (1 === nType)	this.setUiExpand(oStream.GetBool());
-        else if (2 === nType)	this.setSpid(oStream.GetString2(), pReader);
-        else if (3 === nType)	this.setGrpId(oStream.GetLong());
-        else if (4 === nType)	this.setAnimBg(oStream.GetBool());
+        if (0 === nType) this.setBld(oStream.GetUChar());
+        else if (1 === nType) this.setUiExpand(oStream.GetBool());
+        else if (2 === nType) this.setSpid(oStream.GetString2(), pReader);
+        else if (3 === nType) this.setGrpId(oStream.GetLong());
+        else if (4 === nType) this.setAnimBg(oStream.GetBool());
     };
     CBldOleChart.prototype.readChild = function(nType, pReader) {
         pReader.stream.SkipRecord();
@@ -994,7 +1006,7 @@
     };
     CTmpl.prototype.readAttribute = function(nType, pReader) {
         var oStream = pReader.stream;
-	    if(0 === nType) {
+     if(0 === nType) {
             this.setLvl(oStream.GetLong())
         }
     };
@@ -1103,11 +1115,11 @@
     };
     CAnim.prototype.readAttribute = function(nType, pReader) {
         var oStream = pReader.stream;
-        if (0 === nType)	    this.setCalcmode(oStream.GetUChar());
-        else if (1 === nType)	this.setBy(oStream.GetString2());
-        else if (2 === nType)	this.setFrom(oStream.GetString2());
-        else if (3 === nType)	this.setTo(oStream.GetString2());
-        else if (4 === nType)	this.setValueType(oStream.GetUChar());
+        if (0 === nType)     this.setCalcmode(oStream.GetUChar());
+        else if (1 === nType) this.setBy(oStream.GetString2());
+        else if (2 === nType) this.setFrom(oStream.GetString2());
+        else if (3 === nType) this.setTo(oStream.GetString2());
+        else if (4 === nType) this.setValueType(oStream.GetUChar());
     };
     CAnim.prototype.readChild = function(nType, pReader) {
         var s = this.stream;
@@ -1269,14 +1281,14 @@
     };
     CCBhvr.prototype.readAttribute = function(nType, pReader) {
         var oStream = pReader.stream;
-        if (0 === nType)	this.setAccumulate(oStream.GetUChar());
-        else if (1 === nType)	this.setAdditive(oStream.GetUChar());
-        else if (2 === nType)	this.setBy(oStream.GetString2());
-        else if (3 === nType)	this.setFrom(oStream.GetString2());
-        else if (4 === nType)	this.setOverride(oStream.GetUChar());
-        else if (5 === nType)	this.setRctx(oStream.GetString2());
-        else if (6 === nType)	this.setTo(oStream.GetString2());
-        else if (7 === nType)	this.setXfrmType(oStream.GetUChar());
+        if (0 === nType) this.setAccumulate(oStream.GetUChar());
+        else if (1 === nType) this.setAdditive(oStream.GetUChar());
+        else if (2 === nType) this.setBy(oStream.GetString2());
+        else if (3 === nType) this.setFrom(oStream.GetString2());
+        else if (4 === nType) this.setOverride(oStream.GetUChar());
+        else if (5 === nType) this.setRctx(oStream.GetString2());
+        else if (6 === nType) this.setTo(oStream.GetString2());
+        else if (7 === nType) this.setXfrmType(oStream.GetUChar());
     };
     CCBhvr.prototype.readChild = function(nType, pReader) {
         var oStream = pReader.stream;
@@ -1897,7 +1909,7 @@
         this.writeRecord2(pWriter, 0, this.spTgt);
     };
     CTgtEl.prototype.readAttribute = function(nType, pReader) {
-	    var oStream = pReader.stream;
+        var oStream = pReader.stream;
         if(0 === nType) {
             if(!this.inkTgt) {
                 this.setInkTgt(new CObjectTarget());
@@ -2075,7 +2087,7 @@
         this.writeRecord2(pWriter, 1, this.graphicEl);
     };
     CSpTgt.prototype.readAttribute = function(nType, pReader) {
-	    var oStream = pReader.stream;
+        var oStream = pReader.stream;
         if (0 === nType) this.setSpid(oStream.GetString2(), pReader);
         else if (1 === nType) this.setSubSpId(oStream.GetString2());
         else if (2 === nType) this.setBg(oStream.GetBool());
@@ -2167,7 +2179,7 @@
     CIterateData.prototype.writeChildren = function(pWriter) {
     };
     CIterateData.prototype.readAttribute = function(nType, pReader) {
-	    var oStream = pReader.stream;
+        var oStream = pReader.stream;
         if (0 === nType) this.setType(oStream.GetUChar());
         else if (1 === nType) this.setBackwards(oStream.GetBool());
         else if (2 === nType) this.setTmAbs(oStream.GetString2());
@@ -2248,7 +2260,7 @@
         this.writeRecord2(pWriter, 0, this.val);
     };
     CTav.prototype.readAttribute = function(nType, pReader) {
-	    var oStream = pReader.stream;
+        var oStream = pReader.stream;
         if(0 === nType) {
             this.setTm(oStream.GetString2());
         }
@@ -2509,7 +2521,7 @@
                 else {
                     oColor = new CColorPercentage();
                 }
-                if (2 === nType)	oColor.c1 = oStream.GetLong();
+                if (2 === nType) oColor.c1 = oStream.GetLong();
                 else if (3 === nType) oColor.c2 = oStream.GetLong();
                 else if (4 === nType) oColor.c3 = oStream.GetLong();
                 this.setByRGB(oColor);
@@ -2521,7 +2533,7 @@
                 else {
                     oColor = new CColorPercentage();
                 }
-                if(5 === nType)	oColor.c1 = oStream.GetLong();
+                if(5 === nType) oColor.c1 = oStream.GetLong();
                 else if (6 === nType) oColor.c2 = oStream.GetLong();
                 else if (7 === nType) oColor.c3 = oStream.GetLong();
                 this.setByHSL(oColor);
@@ -2625,9 +2637,9 @@
     };
     CAnimEffect.prototype.readAttribute = function(nType, pReader) {
         var oStream = pReader.stream;
-        if (0 == nType)  	    this.setTransition(oStream.GetUChar());
-        else if (1 == nType)	this.setFilter(oStream.GetString2());
-        else if (2 == nType)	this.setPrLst(oStream.GetString2());
+        if (0 == nType)       this.setTransition(oStream.GetUChar());
+        else if (1 == nType) this.setFilter(oStream.GetString2());
+        else if (2 == nType) this.setPrLst(oStream.GetString2());
     };
     CAnimEffect.prototype.readChild = function(nType, pReader) {
         var s = pReader.stream;
@@ -2792,11 +2804,11 @@
     };
     CAnimMotion.prototype.readAttribute = function(nType, pReader) {
         var oStream = pReader.stream;
-        if (0 === nType)	this.setOrigin(oStream.GetUChar());
-        else if (1 === nType)	this.setPathEditMode(oStream.GetUChar());
-        else if (2 === nType)	this.setPath(oStream.GetString2());
-        else if (3 === nType)	this.setPtsTypes(oStream.GetString2());
-        else if (4 === nType)	{
+        if (0 === nType) this.setOrigin(oStream.GetUChar());
+        else if (1 === nType) this.setPathEditMode(oStream.GetUChar());
+        else if (2 === nType) this.setPath(oStream.GetString2());
+        else if (3 === nType) this.setPtsTypes(oStream.GetString2());
+        else if (4 === nType) {
             if(!this.by) {
                 this.setBy(new CTLPoint());
             }
@@ -2844,7 +2856,7 @@
             }
             this.rCtr.setY(oStream.GetLong());
         }
-        else if (12 === nType)	this.setRAng(oStream.GetLong());
+        else if (12 === nType) this.setRAng(oStream.GetLong());
     };
     CAnimMotion.prototype.readChild = function(nType, pReader) {
         if(0 === nType) {
@@ -3426,7 +3438,7 @@
         this.writeRecord1(pWriter, 2, this.cTn);
     };
     CSeq.prototype.readAttribute = function(nType, pReader) {
-	    var oStream = pReader.stream;
+        var oStream = pReader.stream;
         if (0 === nType) this.setConcurrent(oStream.GetBool());
         else if (1 === nType) this.setNextAc(oStream.GetUChar());
         else if (2 === nType) this.setPrevAc(oStream.GetUChar());
@@ -3535,7 +3547,7 @@
         this.writeRecord1(pWriter, 0, this.cMediaNode);
     };
     CVideo.prototype.readAttribute = function(nType, pReader) {
-	    var oStream = pReader.stream;
+        var oStream = pReader.stream;
         if(0 === nType) {
             this.setFullScrn(oStream.GetBool());
         }
@@ -3742,7 +3754,7 @@
     };
     CTxEl.prototype.readAttribute = function(nType, pReader) {
         var oStream = pReader.stream;
-	    if(nType === 0) {
+     if(nType === 0) {
             var bCharRg = oStream.GetBool();
             if(bCharRg) {
                 this.setCharRg(new CIndexRg())
