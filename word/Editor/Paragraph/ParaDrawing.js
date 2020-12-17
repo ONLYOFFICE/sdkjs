@@ -1703,8 +1703,8 @@ ParaDrawing.prototype.OnEnd_MoveInline = function(NearPos)
 
 	NearPos.Paragraph.Check_NearestPos(NearPos);
 
-	var oRun        = this.GetRun();
-	var isPictureCC = false;
+	var oRun       = this.GetRun();
+	var oPictureCC = false;
 	if (oRun)
 	{
 		var arrContentControls = oRun.GetParentContentControls();
@@ -1712,14 +1712,14 @@ ParaDrawing.prototype.OnEnd_MoveInline = function(NearPos)
 		{
 			if (arrContentControls[nIndex].IsPicture())
 			{
-				isPictureCC = true;
+				oPictureCC = arrContentControls[nIndex];
 				break;
 			}
 		}
 	}
 
 	// Ничего никуда не переносим в такой ситуации
-	if (isPictureCC)
+	if (oPictureCC)
 	{
 		var oDstRun = null;
 		var arrClasses = NearPos.Paragraph.GetClassesByPos(NearPos.ContentPos);
@@ -1741,7 +1741,7 @@ ParaDrawing.prototype.OnEnd_MoveInline = function(NearPos)
 	// При переносе всегда создаем копию, чтобы в совместном редактировании не было проблем
 	var NewParaDrawing = this.Copy();
 	this.DocumentContent.Select_DrawingObject(NewParaDrawing.GetId());
-	NewParaDrawing.Add_ToDocument(NearPos, true, RunPr, undefined, isPictureCC);
+	NewParaDrawing.Add_ToDocument(NearPos, true, RunPr, undefined, oPictureCC);
 };
 ParaDrawing.prototype.Get_ParentTextTransform = function()
 {
@@ -1828,7 +1828,7 @@ ParaDrawing.prototype.SelectAsText = function()
 	oDocument.RemoveSelection();
 	oDocument.SetSelectionByContentPositions(oStartPos, oEndPos);
 };
-ParaDrawing.prototype.Add_ToDocument = function(NearPos, bRecalculate, RunPr, Run, isPictureCC)
+ParaDrawing.prototype.Add_ToDocument = function(NearPos, bRecalculate, RunPr, Run, oPictureCC)
 {
 	NearPos.Paragraph.Check_NearestPos(NearPos);
 
@@ -1844,13 +1844,17 @@ ParaDrawing.prototype.Add_ToDocument = function(NearPos, bRecalculate, RunPr, Ru
 	if (Run)
 		DrawingRun.SetReviewTypeWithInfo(Run.GetReviewType(), Run.GetReviewInfo());
 
-	if (isPictureCC)
+	if (oPictureCC)
 	{
 		var oSdt = new CInlineLevelSdt();
 		oSdt.SetPicturePr(true);
 		oSdt.ReplacePlaceHolderWithContent();
 		oSdt.AddToContent(0, DrawingRun);
 		Para.Add_ToContent(0, oSdt);
+
+		var oFormPr = oPictureCC.GetFormPr();
+		if (oFormPr)
+			oSdt.SetFormPr(oFormPr.Copy());
 	}
 	else
 	{
