@@ -1240,6 +1240,11 @@ function CBinaryFileWriter()
 
         this.WriteRecord1(0, _master.cSld, this.WriteCSld);
         this.WriteRecord1(1, _master.clrMap, this.WriteClrMap);
+        this.WriteRecord2(2, _master.transition, this.WriteSlideTransition);
+        var oThis = this;
+        this.WriteRecord2(3, _master.timing, function() {
+            _master.timing.toPPTY(oThis);
+        });
         this.WriteRecord2(5, _master.hf, this.WriteHF);
         this.WriteRecord2(6, _master.txStyles, this.WriteTxStyles);
 
@@ -1261,6 +1266,11 @@ function CBinaryFileWriter()
 
         this.WriteRecord1(0, _layout.cSld, this.WriteCSld);
         this.WriteRecord2(1, _layout.clrMap, this.WriteClrMapOvr);
+        this.WriteRecord2(2, _layout.transition, this.WriteSlideTransition);
+        var oThis = this;
+        this.WriteRecord2(3, _layout.timing, function() {
+            _layout.timing.toPPTY(oThis);
+        });
         this.WriteRecord2(4, _layout.hf, this.WriteHF);
 
         this.EndRecord();
@@ -1278,7 +1288,11 @@ function CBinaryFileWriter()
 
         this.WriteRecord1(0, _slide.cSld, this.WriteCSld);
         this.WriteRecord2(1, _slide.clrMap, this.WriteClrMapOvr);
-        this.WriteRecord1(2, _slide.transition, this.WriteSlideTransition);
+        this.WriteRecord2(2, _slide.transition, this.WriteSlideTransition);
+        var oThis = this;
+        this.WriteRecord2(3, _slide.timing, function() {
+            _slide.timing.toPPTY(oThis);
+        });
         this.WriteComments(4, _slide.writecomments);
 
         this.EndRecord();

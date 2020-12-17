@@ -82,7 +82,7 @@ CAscSlideTransition.prototype.applyProps = function(v)
 
 CAscSlideTransition.prototype.createDuplicate = function(v)
 {
-    var _slideT = new CAscSlideTransition();
+    var _slideT = new Asc.CAscSlideTransition();
 
     _slideT.TransitionType     = this.TransitionType;
     _slideT.TransitionOption   = this.TransitionOption;
@@ -254,7 +254,7 @@ function CompareTransitions(transition1, transition2){
     if(!transition1 || !transition2){
         return null;
     }
-    var ret = new CAscSlideTransition();
+    var ret = new Asc.CAscSlideTransition();
     if(transition1.TransitionType === transition2.TransitionType){
         ret.TransitionType = transition1.TransitionType;
     }

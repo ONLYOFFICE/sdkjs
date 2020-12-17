@@ -2793,7 +2793,7 @@ function CPresentation(DrawingDocument) {
     this.LastColorScheme = null;
     this.LastColorMap = null;
     this.LastTableLook = null;
-    this.DefaultSlideTransition = new CAscSlideTransition();
+    this.DefaultSlideTransition = new Asc.CAscSlideTransition();
     this.DefaultSlideTransition.setDefaultParams();
 
     this.DefaultTableStyleId = null;

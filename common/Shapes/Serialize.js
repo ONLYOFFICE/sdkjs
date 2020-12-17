@@ -4051,7 +4051,18 @@ function BinaryPPTYLoader()
                     break;
                 }
                 case 2:
+                {
+                    var _transition = this.ReadTransition();
+                    master.applyTransition(_transition);
+                    break;
+                }
                 case 3:
+                {
+                    var oTiming = new AscFormat.CTiming();
+                    oTiming.fromPPTY(this);
+                    master.setTiming(oTiming);
+                    break;
+                }
                 case 4:
                 {
                     var _len = s.GetULong();
@@ -4203,6 +4214,20 @@ function BinaryPPTYLoader()
                 case 1:
                 {
                     layout.setClMapOverride(this.ReadClrOverride());
+                    break;
+                }
+
+                case 2:
+                {
+                    var _transition = this.ReadTransition();
+                    layout.applyTransition(_transition);
+                    break;
+                }
+                case 3:
+                {
+                    var oTiming = new AscFormat.CTiming();
+                    oTiming.fromPPTY(this);
+                    layout.setTiming(oTiming);
                     break;
                 }
                 case 4:
@@ -4430,7 +4455,7 @@ function BinaryPPTYLoader()
 
     this.ReadTransition = function()
     {
-        var _transition = new CAscSlideTransition();
+        var _transition = new Asc.CAscSlideTransition();
         _transition.setDefaultParams();
 
         var s = this.stream;
