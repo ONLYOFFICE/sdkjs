@@ -139,6 +139,8 @@ CInlineLevelSdt.prototype.Copy = function(isUseSelection, oPr)
 			oContentControl.AddToContent(nCurPos - nStartPos, oItem.Copy(false, oPr));
 	}
 
+	// ВАЖНО: настройки копируем после копирования содержимого, потому что есть специальные случаи, когда
+	//        содержимое дальше меняется в зависимости от настроек (например, для радио кнопок)
 	this.private_CopyPrTo(oContentControl);
 
 	if (oContentControl.IsEmpty())
@@ -160,7 +162,25 @@ CInlineLevelSdt.prototype.private_CopyPrTo = function(oContentControl)
 		oContentControl.SetDocPartObj(this.Pr.DocPartObj.Category, this.Pr.DocPartObj.Gallery, this.Pr.DocPartObj.Unique);
 
 	if (undefined !== this.Pr.CheckBox)
-		oContentControl.SetCheckBoxPr(this.Pr.CheckBox);
+	{
+		var oCheckBoxPr     = this.Pr.CheckBox;
+		var isChangeChecked = false;
+
+		if (this.Pr.CheckBox.GroupKey
+			&& true === this.Pr.CheckBox.Checked
+			&& this.GetLogicDocument()
+			&& !this.GetLogicDocument().DragAndDropAction)
+		{
+			oCheckBoxPr = this.Pr.CheckBox.Copy();
+			oCheckBoxPr.Checked = false;
+			isChangeChecked = true;
+		}
+
+		oContentControl.SetCheckBoxPr(oCheckBoxPr);
+
+		if (isChangeChecked)
+			oContentControl.private_UpdateCheckBoxContent();
+	}
 
 	if (undefined !== this.Pr.Picture)
 		oContentControl.SetPicturePr(this.Pr.Picture);
