@@ -54,12 +54,22 @@
 
     function CBaseFormatObject() {
         CBaseObject.call(this);
+        this.parent = null;
     }
     CBaseFormatObject.prototype = Object.create(CBaseObject.prototype);
     CBaseFormatObject.prototype.constructor = CBaseFormatObject;
     CBaseFormatObject.prototype.classType = AscDFH.historyitem_type_Unknown;
     CBaseFormatObject.prototype.getObjectType = function() {
         return this.classType;
+    };
+    CBaseFormatObject.prototype.setParent = function(oParent) {
+        oHistory.Add(new CChangeObject(this, AscDFH.historyitem_CommonChartFormat_SetParent, this.parent, oParent));
+        this.parent = oParent;
+    };
+    CBaseFormatObject.prototype.setParentToChild = function(oChild) {
+        if(oChild) {
+            oChild.setParent(this);
+        }
     };
     CBaseFormatObject.prototype.createDuplicate = function() {
         var oCopy = new this.constructor();
@@ -131,6 +141,19 @@
             this.writeRecord1(pWriter, nType, oChild);
         }
     };
+    CBaseObject.prototype.getChildren = function() {
+        return [];
+    };
+    CBaseObject.prototype.traverse = function(fCallback) {
+        fCallback(this);
+        var  aChildren = this.getChildren();
+        for(var nChild = 0; nChild < aChildren.length; ++nChild) {
+            var oChild = aChildren[nChild];
+            if(oChild) {
+                oChild.traverse(fCallback);
+            }
+        }
+    };
 
     function InitClass(fClass, fBase, nType) {
         fClass.prototype = Object.create(fBase.prototype);
@@ -157,10 +180,12 @@
     CTiming.prototype.setBldLst = function(oPr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_TimingBldLst, this.bldLst, oPr));
         this.bldLst = oPr;
+        this.setParentToChild(oPr);
     };
     CTiming.prototype.setTnLst = function(oPr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_TimingTnLst, this.tnLst, oPr));
         this.tnLst = oPr;
+        this.setParentToChild(oPr);
     };
     CTiming.prototype.fillObject = function(oCopy) {
         if(this.bldLst) {
@@ -195,6 +220,12 @@
             }
         }
     };
+    CTiming.prototype.getChildren = function() {
+        return [this.bldLst, this.tnLst];
+    };
+    CTiming.prototype.handleRemoveObject = function(sObjectId) {
+        return [this.bldLst, this.tnLst];
+    };
 
     changesFactory[AscDFH.historyitem_CommonTimingListAdd] = CChangeContent;
     changesFactory[AscDFH.historyitem_CommonTimingListRemove] = CChangeContent;
@@ -209,9 +240,11 @@
         var nInsertIdx = Math.min(this.list.length, Math.max(0, nIdx));
         History.Add(new CChangeContent(this, AscDFH.historyitem_CommonTimingListAdd, nInsertIdx, [oPr], true));
         this.list.splice(nInsertIdx, 0, oPr);
+        this.setParentToChild(oPr);
     };
     CCommonTimingList.prototype.removeFromLst = function(nIdx) {
         if(nIdx > -1 && nIdx < this.list.length) {
+            this.list[nIdx].setParent(null);
             History.Add(new CChangeContent(this, AscDFH.historyitem_CommonTimingListRemove, nIdx, [this.list[nIdx]], false));
             this.list.splice(nIdx, 1);
         }
@@ -253,6 +286,9 @@
                 }
             }
         }
+    };
+    CCommonTimingList.prototype.getChildren = function() {
+        return [].concat(this.list);
     };
 
     function CAttrNameLst() {
@@ -522,10 +558,12 @@
     CBldGraphic.prototype.setBldAsOne = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BldGraphicBldAsOne, this.bldAsOne, pr));
         this.bldAsOne = pr;
+        this.setParentToChild(pr);
     };
     CBldGraphic.prototype.setBldSub = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BldGraphicBldSub, this.bldSub, pr));
         this.bldSub = pr;
+        this.setParentToChild(pr);
     };
     CBldGraphic.prototype.fillObject = function(oCopy) {
         if(this.bldAsOne) {
@@ -560,6 +598,9 @@
         else {
             pReader.stream.SkipRecord();
         }
+    };
+    CBldGraphic.prototype.getChildren = function() {
+        return [this.bldSub];
     };
 
     changesFactory[AscDFH.historyitem_BldGraphicBldSub] = CChangeBool;
@@ -627,6 +668,7 @@
     CBldP.prototype.setTmplLst = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BldPTmplLst, this.tmplLst, pr));
         this.tmplLst = pr;
+        this.setParentToChild(pr);
     };
     CBldP.prototype.setAdvAuto = function(pr) {
         oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BldPAdvAuto, this.advAuto, pr));
@@ -696,6 +738,9 @@
             pReader.stream.SkipRecord();
         }
     };
+    CBldP.prototype.getChildren = function() {
+        return [this.tmplLst];
+    };
 
     changesFactory[AscDFH.historyitem_BldSubBldChart] = CChangeObject;
     changesFactory[AscDFH.historyitem_BldSubBldDgm] = CChangeObject;
@@ -710,10 +755,12 @@
     CBldSub.prototype.setBldChart = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BldSubBldChart, this.bldChart, pr));
         this.bldChart = pr;
+        this.setParentToChild(pr);
     };
     CBldSub.prototype.setBldDgm = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BldSubBldDgm, this.bldDgm, pr));
         this.bldDgm = pr;
+        this.setParentToChild(pr);
     };
     CBldSub.prototype.fillObject = function(oCopy) {
         if(this.bldChart) {
@@ -792,11 +839,11 @@
     changesFactory[AscDFH.historyitem_GraphicElSeriesIdx] = CChangeLong;
     changesFactory[AscDFH.historyitem_GraphicElCategoryIdx] = CChangeLong;
 
-    drawingsChangesMap[AscDFH.historyitem_GraphicElDgmId] = function(oClass, value) {oClass.chart = value;};
-    drawingsChangesMap[AscDFH.historyitem_GraphicElDgmBuildStep] = function(oClass, value) {oClass.chart = value;};
-    drawingsChangesMap[AscDFH.historyitem_GraphicElChartBuildStep] = function(oClass, value) {oClass.chart = value;};
-    drawingsChangesMap[AscDFH.historyitem_GraphicElSeriesIdx] = function(oClass, value) {oClass.chart = value;};
-    drawingsChangesMap[AscDFH.historyitem_GraphicElCategoryIdx] = function(oClass, value) {oClass.chart = value;};
+    drawingsChangesMap[AscDFH.historyitem_GraphicElDgmId] = function(oClass, value) {oClass.dgmId = value;};
+    drawingsChangesMap[AscDFH.historyitem_GraphicElDgmBuildStep] = function(oClass, value) {oClass.dgmBuildStep = value;};
+    drawingsChangesMap[AscDFH.historyitem_GraphicElChartBuildStep] = function(oClass, value) {oClass.chartBuildStep = value;};
+    drawingsChangesMap[AscDFH.historyitem_GraphicElSeriesIdx] = function(oClass, value) {oClass.seriesIdx = value;};
+    drawingsChangesMap[AscDFH.historyitem_GraphicElCategoryIdx] = function(oClass, value) {oClass.categoryIdx = value;};
 
     function CGraphicEl() {
         CBaseFormatObject.call(this);
@@ -807,16 +854,24 @@
         this.categoryIdx = null;
     }
     InitClass(CGraphicEl, CBaseFormatObject, AscDFH.historyitem_type_GraphicEl);
-    CGraphicEl.prototype.setDgmId = function(pr) {
+    CGraphicEl.prototype.setDgmId = function(pr, pReader) {
+        if(pReader) {
+            pReader.AddConnectedObject(this);
+        }
         oHistory.Add(new CChangeString(this, AscDFH.historyitem_GraphicElDgmId, this.dgmId, pr));
         this.dgmId = pr;
     };
+    CGraphicEl.prototype.assignConnection = function(oObjectsMap) {
+        if(AscCommon.isRealObject(oObjectsMap[this.spid])){
+            this.setSpid(oObjectsMap[this.dgmId].Id);
+        }
+    };
     CGraphicEl.prototype.setDgmBuildStep = function(pr) {
-        oHistory.Add(new CChangeLong(this, AscDFH.historyitem_GraphicElDgmBuildStep, this.dgmId, pr));
+        oHistory.Add(new CChangeLong(this, AscDFH.historyitem_GraphicElDgmBuildStep, this.dgmBuildStep, pr));
         this.dgmBuildStep = pr;
     };
     CGraphicEl.prototype.setChartBuildStep = function(pr) {
-        oHistory.Add(new CChangeLong(this, AscDFH.historyitem_GraphicElChartBuildStep, this.dgmId, pr));
+        oHistory.Add(new CChangeLong(this, AscDFH.historyitem_GraphicElChartBuildStep, this.chartBuildStep, pr));
         this.chartBuildStep = pr;
     };
     CGraphicEl.prototype.setSeriesIdx = function(pr) {
@@ -845,7 +900,10 @@
         }
     };
     CGraphicEl.prototype.privateWriteAttributes = function(pWriter) {
-        pWriter._WriteString2(0, this.dgmId);
+        var nSpId = pWriter.GetSpIdxId(this.dgmId);
+        if(nSpId !== null) {
+            pWriter._WriteString2(0, nSpId + "");
+        }
         pWriter._WriteLimit2(1, this.dgmBuildStep);
         pWriter._WriteLimit2(2, this.chartBuildStep);
         pWriter._WriteInt2(3, this.seriesIdx);
@@ -855,7 +913,7 @@
     };
     CGraphicEl.prototype.readAttribute = function(nType, pReader) {
         var oStream = pReader.stream;
-        if (0 === nType) this.setDgmId(oStream.GetString2());
+        if (0 === nType) this.setDgmId(oStream.GetString2(), pReader);
         else if (1 === nType) this.setDgmBuildStep(oStream.GetUChar());
         else if (2 === nType) this.setChartBuildStep(oStream.GetUChar());
         else if (3 === nType) this.setSeriesIdx(oStream.GetLong());
@@ -918,6 +976,7 @@
     CTmpl.prototype.setTnLst = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_TmplTnLst, this.tnLst, pr));
         this.tnLst = pr;
+        this.setParentToChild(pr);
     };
     CTmpl.prototype.fillObject = function(oCopy) {
         if(this.lvl !== null) {
@@ -949,6 +1008,9 @@
             oStream.SkipRecord();
         }
     };
+    CTmpl.prototype.getChildren = function() {
+        return [this.tnLst];
+    };
 
     changesFactory[AscDFH.historyitem_AnimCBhvr] = CChangeObject;
     changesFactory[AscDFH.historyitem_AnimTavLst] = CChangeObject;
@@ -978,10 +1040,12 @@
     CAnim.prototype.setCBhvr = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_AnimCBhvr, this.cBhvr, pr));
         this.cBhvr = pr;
+        this.setParentToChild(pr);
     };
     CAnim.prototype.setTavLst = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_AnimTavLst, this.tavLst, pr));
         this.tavLst = pr;
+        this.setParentToChild(pr);
     };
     CAnim.prototype.setBy = function(pr) {
         oHistory.Add(new CChangeString(this, AscDFH.historyitem_AnimBy, this.by, pr));
@@ -1064,6 +1128,9 @@
             }
         }
     };
+    CAnim.prototype.getChildren = function() {
+        return [this.cBhvr, this.tavLst];
+    };
 
     changesFactory[AscDFH.historyitem_CBhvrAttrNameLst] = CChangeObject;
     changesFactory[AscDFH.historyitem_CBhvrCTn] = CChangeObject;
@@ -1106,14 +1173,17 @@
     CCBhvr.prototype.setAttrNameLst = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_CBhvrAttrNameLst, this.attrNameLst, pr));
         this.attrNameLst = pr;
+        this.setParentToChild(pr);
     };
     CCBhvr.prototype.setCTn = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_CBhvrCTn, this.cTn, pr));
         this.cTn = pr;
+        this.setParentToChild(pr);
     };
     CCBhvr.prototype.setTgtEl = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_CBhvrTgtEl, this.tgtEl, pr));
         this.tgtEl = pr;
+        this.setParentToChild(pr);
     };
     CCBhvr.prototype.setAccumulate = function(pr) {
         oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CBhvrAccumulate, this.accumulate, pr));
@@ -1233,6 +1303,9 @@
             }
         }
     };
+    CCBhvr.prototype.getChildren = function() {
+        return [this.cTn, this.tgtEl, this.attrNameLst];
+    };
 
     changesFactory[AscDFH.historyitem_CTnChildTnLst] = CChangeObject;
     changesFactory[AscDFH.historyitem_CTnEndCondLst] = CChangeObject;
@@ -1329,26 +1402,32 @@
     CCTn.prototype.setChildTnLst = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_CTnChildTnLst, this.childTnLst, pr));
         this.childTnLst = pr;
+        this.setParentToChild(pr);
     };
     CCTn.prototype.setEndCondLst = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_CTnEndCondLst, this.endCondLst, pr));
         this.endCondLst = pr;
+        this.setParentToChild(pr);
     };
     CCTn.prototype.setEndSync = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_CTnEndSync, this.endSync, pr));
         this.endSync = pr;
+        this.setParentToChild(pr);
     };
     CCTn.prototype.setIterate = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_CTnIterate, this.iterate, pr));
         this.iterate = pr;
+        this.setParentToChild(pr);
     };
     CCTn.prototype.setStCondLst = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_CTnStCondLst, this.stCondLst, pr));
         this.stCondLst = pr;
+        this.setParentToChild(pr);
     };
     CCTn.prototype.setSubTnLst = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_CTnSubTnLst, this.subTnLst, pr));
         this.subTnLst = pr;
+        this.setParentToChild(pr);
     };
     CCTn.prototype.setAccel = function(pr) {
         oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CTnAccel, this.accel, pr));
@@ -1630,6 +1709,9 @@
             }
         }
     };
+    CCTn.prototype.getChildren = function() {
+        return [this.stCondLst, this.endCondLst, this.endSync, this.iterate, this.childTnLst, this.subTnLst];
+    };
 
     changesFactory[AscDFH.historyitem_CondRtn] = CChangeObject;
     changesFactory[AscDFH.historyitem_CondTgtEl] = CChangeObject;
@@ -1655,13 +1737,15 @@
     CCond.prototype.setRtn = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_CondRtn, this.rtn, pr));
         this.rtn = pr;
+        this.setParentToChild(pr);
     };
     CCond.prototype.setTgtEl = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_CondTgtEl, this.tgtEl, pr));
         this.tgtEl = pr;
+        this.setParentToChild(pr);
     };
     CCond.prototype.setTn = function(pr) {
-        oHistory.Add(new CChangeObject(this, AscDFH.historyitem_CondTn, this.tn, pr));
+        oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CondTn, this.tn, pr));
         this.tn = pr;
     };
     CCond.prototype.setDelay = function(pr) {
@@ -1715,6 +1799,9 @@
             oStream.SkipRecord();
         }
     };
+    CCond.prototype.getChildren = function() {
+        return [this.tgtEl];
+    };
 
     changesFactory[AscDFH.historyitem_RtnVal] = CChangeLong;
     drawingsChangesMap[AscDFH.historyitem_RtnVal] = function(oClass, value) {this.val = value;};
@@ -1761,18 +1848,22 @@
     CTgtEl.prototype.setInkTgt = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_TgtElInkTgt, this.inkTgt, pr));
         this.inkTgt = pr;
+        this.setParentToChild(pr);
     };
     CTgtEl.prototype.setSldTgt = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_TgtElSldTgt, this.sldTgt, pr));
         this.sldTgt = pr;
+        this.setParentToChild(pr);
     };
     CTgtEl.prototype.setSndTgt = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_TgtElSndTgt, this.sndTgt, pr));
         this.sndTgt = pr;
+        this.setParentToChild(pr);
     };
     CTgtEl.prototype.setSpTgt = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_TgtElSpTgt, this.spTgt, pr));
         this.spTgt = pr;
+        this.setParentToChild(pr);
     };
     CTgtEl.prototype.fillObject = function(oCopy) {
         if(this.inkTgt !== null) {
@@ -1841,6 +1932,9 @@
         else {
             pReader.stream.SkipRecord();
         }
+    };
+    CTgtEl.prototype.getChildren = function() {
+        return [this.spTgt];
     };
 
 
@@ -1912,14 +2006,17 @@
     CSpTgt.prototype.setBg = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SpTgtBg, this.bg, pr));
         this.bg = pr;
+        this.setParentToChild(pr);
     };
     CSpTgt.prototype.setGraphicEl = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SpTgtGraphicEl, this.graphicEl, pr));
         this.graphicEl = pr;
+        this.setParentToChild(pr);
     };
     CSpTgt.prototype.setOleChartEl = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SpTgtOleChartEl, this.oleChartEl, pr));
         this.oleChartEl = pr;
+        this.setParentToChild(pr);
     };
     CSpTgt.prototype.setSubSpId = function(pr, pReader) {
         if(pReader) {
@@ -1939,6 +2036,7 @@
     CSpTgt.prototype.setTxEl = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SpTgtTxEl, this.txEl, pr));
         this.txEl = pr;
+        this.setParentToChild(pr);
     };
     CSpTgt.prototype.fillObject = function(oCopy) {
         if(this.bg !== null) {
@@ -2007,6 +2105,9 @@
             pReader.stream.SkipRecord();
         }
     };
+    CSpTgt.prototype.getChildren = function() {
+        return [this.txEl, this.graphicEl];
+    };
 
     changesFactory[AscDFH.historyitem_IterateDataTmAbs] = CChangeObject;
     changesFactory[AscDFH.historyitem_IterateDataTmPct] = CChangeObject;
@@ -2028,10 +2129,12 @@
     CIterateData.prototype.setTmAbs = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_IterateDataTmAbs, this.tmAbs, pr));
         this.tmAbs = pr;
+        this.setParentToChild(pr);
     };
     CIterateData.prototype.setTmPct = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_IterateDataTmPct, this.tmPct, pr));
         this.tmPct = pr;
+        this.setParentToChild(pr);
     };
     CIterateData.prototype.setBackwards = function(pr) {
         oHistory.Add(new CChangeBool(this, AscDFH.historyitem_IterateDataBackwards, this.backwards, pr));
@@ -2116,6 +2219,7 @@
     CTav.prototype.setVal = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_TavVal, this.val, pr));
         this.val = pr;
+        this.setParentToChild(pr);
     };
     CTav.prototype.setFmla = function(pr) {
         oHistory.Add(new CChangeString(this, AscDFH.historyitem_TavFmla, this.fmla, pr));
@@ -2160,6 +2264,9 @@
         else {
             pReader.stream.SkipRecord();
         }
+    };
+    CTav.prototype.getChildren = function() {
+        return [this.val];
     };
 
 
@@ -2322,14 +2429,17 @@
     CAnimClr.prototype.setCBhvr = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_AnimClrCBhvr, this.cBhvr, pr));
         this.cBhvr = pr;
+        this.setParentToChild(pr);
     };
     CAnimClr.prototype.setFrom = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_AnimClrFrom, this.from, pr));
         this.from = pr;
+        this.setParentToChild(pr);
     };
     CAnimClr.prototype.setTo = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_AnimClrTo, this.to, pr));
         this.to = pr;
+        this.setParentToChild(pr);
     };
     CAnimClr.prototype.setClrSpc = function(pr) {
         oHistory.Add(new CChangeLong(this, AscDFH.historyitem_AnimClrClrSpc, this.clrSpc, pr));
@@ -2441,6 +2551,9 @@
             }
         }
     };
+    CAnimClr.prototype.getChildren = function() {
+        return [this.cBhvr];
+    };
 
     changesFactory[AscDFH.historyitem_AnimEffectCBhvr] = CChangeObject;
     changesFactory[AscDFH.historyitem_AnimEffectProgress] = CChangeObject;
@@ -2465,10 +2578,12 @@
     CAnimEffect.prototype.setCBhvr = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_AnimEffectCBhvr, this.cBhvr, pr));
         this.cBhvr = pr;
+        this.setParentToChild(pr);
     };
     CAnimEffect.prototype.setProgress = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_AnimEffectProgress, this.progress, pr));
         this.progress = pr;
+        this.setParentToChild(pr);
     };
     CAnimEffect.prototype.setFilter = function(pr) {
         oHistory.Add(new CChangeString(this, AscDFH.historyitem_AnimEffectFilter, this.filter, pr));
@@ -2532,6 +2647,9 @@
             }
         }
     };
+    CAnimEffect.prototype.getChildren = function() {
+        return [this.cBhvr, this.progress];
+    };
 
     changesFactory[AscDFH.historyitem_AnimMotionBy] = CChangeObject;
     changesFactory[AscDFH.historyitem_AnimMotionCBhvr] = CChangeObject;
@@ -2572,22 +2690,27 @@
     CAnimMotion.prototype.setBy = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_AnimMotionBy, this.by, pr));
         this.by = pr;
+        this.setParentToChild(pr);
     };
     CAnimMotion.prototype.setCBhvr = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_AnimMotionCBhvr, this.cBhvr, pr));
         this.cBhvr = pr;
+        this.setParentToChild(pr);
     };
     CAnimMotion.prototype.setFrom = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_AnimMotionFrom, this.from, pr));
         this.from = pr;
+        this.setParentToChild(pr);
     };
     CAnimMotion.prototype.setRCtr = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_AnimMotionRCtr, this.rCtr, pr));
         this.rCtr = pr;
+        this.setParentToChild(pr);
     };
     CAnimMotion.prototype.setTo = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_AnimMotionTo, this.to, pr));
         this.to = pr;
+        this.setParentToChild(pr);
     };
     CAnimMotion.prototype.setOrigin = function(pr) {
         oHistory.Add(new CChangeLong(this, AscDFH.historyitem_AnimMotionOrigin, this.origin, pr));
@@ -2732,7 +2855,9 @@
             pReader.stream.SkipRecord();
         }
     };
-
+    CAnimMotion.prototype.getChildren = function() {
+        return [this.cBhvr];
+    };
 
     changesFactory[AscDFH.historyitem_AnimRotCBhvr] = CChangeObject;
     changesFactory[AscDFH.historyitem_AnimRotBy] = CChangeLong;
@@ -2755,6 +2880,7 @@
     CAnimRot.prototype.setCBhvr = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Unknown_Unknown, this.cBhvr, pr));
         this.cBhvr = pr;
+        this.setParentToChild(pr);
     };
     CAnimRot.prototype.setBy = function(pr) {
         oHistory.Add(new CChangeLong(this, AscDFH.historyitem_Unknown_Unknown, this.by, pr));
@@ -2812,6 +2938,9 @@
             pReader.stream.SkipRecord();
         }
     };
+    CAnimRot.prototype.getChildren = function() {
+        return [this.cBhvr];
+    };
 
 
     changesFactory[AscDFH.historyitem_AnimScaleCBhvr] = CChangeObject;
@@ -2837,18 +2966,22 @@
     CAnimScale.prototype.setCBhvr = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_AnimScaleCBhvr, this.cBhvr, pr));
         this.cBhvr = pr;
+        this.setParentToChild(pr);
     };
     CAnimScale.prototype.setBy = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_AnimScaleBy, this.by, pr));
         this.by = pr;
+        this.setParentToChild(pr);
     };
     CAnimScale.prototype.setFrom = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_AnimScaleFrom, this.from, pr));
         this.from = pr;
+        this.setParentToChild(pr);
     };
     CAnimScale.prototype.setTo = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_AnimScaleTo, this.to, pr));
         this.to = pr;
+        this.setParentToChild(pr);
     };
     CAnimScale.prototype.setZoomContents = function(pr) {
         oHistory.Add(new CChangeBool(this, AscDFH.historyitem_AnimScaleZoomContents, this.zoomContents, pr));
@@ -2940,6 +3073,9 @@
             pReader.stream.SkipRecord();
         }
     };
+    CAnimScale.prototype.getChildren = function() {
+        return [this.cBhvr];
+    };
 
     changesFactory[AscDFH.historyitem_AudioCMediaNode] = CChangeObject;
     changesFactory[AscDFH.historyitem_AudioIsNarration] = CChangeBool;
@@ -2957,6 +3093,7 @@
     CAudio.prototype.setCMediaNode = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_AudioCMediaNode, this.cMediaNode, pr));
         this.cMediaNode = pr;
+        this.setParentToChild(pr);
     };
     CAudio.prototype.setIsNarration = function(pr) {
         oHistory.Add(new CChangeBool(this, AscDFH.historyitem_AudioIsNarration, this.isNarration, pr));
@@ -2991,6 +3128,9 @@
             pReader.stream.SkipRecord();
         }
     };
+    CAudio.prototype.getChildren = function() {
+        return [this.cMediaNode];
+    };
 
 
     changesFactory[AscDFH.historyitem_CMediaNodeCTn] = CChangeObject;
@@ -3020,10 +3160,12 @@
     CCMediaNode.prototype.setCTn = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_CMediaNodeCTn, this.cTn, pr));
         this.cTn = pr;
+        this.setParentToChild(pr);
     };
     CCMediaNode.prototype.setTgtEl = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_CMediaNodeTgtEl, this.tgtEl, pr));
         this.tgtEl = pr;
+        this.setParentToChild(pr);
     };
     CCMediaNode.prototype.setMute = function(pr) {
         oHistory.Add(new CChangeBool(this, AscDFH.historyitem_CMediaNodeMute, this.mute, pr));
@@ -3091,6 +3233,9 @@
             pReader.stream.SkipRecord();
         }
     };
+    CCMediaNode.prototype.getChildren = function() {
+        return [this.cTn, this.tgtEl];
+    };
 
     changesFactory[AscDFH.historyitem_CmdCBhvr] = CChangeObject;
     changesFactory[AscDFH.historyitem_CmdCmd] = CChangeString;
@@ -3109,6 +3254,7 @@
     CCmd.prototype.setCBhvr = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_CmdCBhvr, this.cBhvr, pr));
         this.cBhvr = pr;
+        this.setParentToChild(pr);
     };
     CCmd.prototype.setCmd = function(pr) {
         oHistory.Add(new CChangeString(this, AscDFH.historyitem_CmdCmd, this.cmd, pr));
@@ -3134,7 +3280,7 @@
         pWriter._WriteString2(1, this.cmd);
     };
     CCmd.prototype.writeChildren = function(pWriter) {
-        this.writeRecord1(pWriter, 0, cBhvr);
+        this.writeRecord1(pWriter, 0, this.cBhvr);
     };
     CCmd.prototype.readAttribute = function(nType, pReader) {
         var oStream = pReader.stream;
@@ -3155,6 +3301,9 @@
             oStream.SkipRecord();
         }
     };
+    CCmd.prototype.getChildren = function() {
+        return [this.cBhvr];
+    };
 
     changesFactory[AscDFH.historyitem_TimeNodeContainerCTn] = CChangeObject;
     drawingsChangesMap[AscDFH.historyitem_TimeNodeContainerCTn] = function(oClass, value) {oClass.cTn = value;};
@@ -3167,6 +3316,7 @@
     CTimeNodeContainer.prototype.setCTn = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_TimeNodeContainerCTn, this.cTn, pr));
         this.cTn = pr;
+        this.setParentToChild(pr);
     };
     CTimeNodeContainer.prototype.fillObject = function(oCopy) {
         if(this.cTn !== null) {
@@ -3188,6 +3338,9 @@
         else {
             pReader.stream.SkipRecord();
         }
+    };
+    CTimeNodeContainer.prototype.getChildren = function() {
+        return [this.cTn];
     };
 
     function CPar() {//par, excl
@@ -3226,10 +3379,12 @@
     CSeq.prototype.setNextCondLst = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SeqNextCondLst, this.nextCondLst, pr));
         this.nextCondLst = pr;
+        this.setParentToChild(pr);
     };
     CSeq.prototype.setPrevCondLst = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SeqPrevCondLst, this.prevCondLst, pr));
         this.prevCondLst = pr;
+        this.setParentToChild(pr);
     };
     CSeq.prototype.setConcurrent = function(pr) {
         oHistory.Add(new CChangeBool(this, AscDFH.historyitem_SeqConcurrent, this.concurrent, pr));
@@ -3290,6 +3445,9 @@
             this.cTn.fromPPTY(pReader);
         }
     };
+    CSeq.prototype.getChildren = function() {
+        return [this.prevCondLst, this.nextCondLst, this.cTn];
+    };
 
 
     changesFactory[AscDFH.historyitem_SetCBhvr] = CChangeObject;
@@ -3305,10 +3463,12 @@
     CSet.prototype.setCBhvr = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SetCBhvr, this.cBhvr, pr));
         this.cBhvr = pr;
+        this.setParentToChild(pr);
     };
     CSet.prototype.setTo = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SetTo, this.cBhvr, pr));
         this.to = pr;
+        this.setParentToChild(pr);
     };
     CSet.prototype.fillObject = function(oCopy) {
         if(this.cBhvr !== null) {
@@ -3336,6 +3496,9 @@
             this.to.fromPPTY(pReader);
         }
     };
+    CSet.prototype.getChildren = function() {
+        return [this.cBhvr, this.to];
+    };
 
     changesFactory[AscDFH.historyitem_VideoCMediaNode] = CChangeObject;
     changesFactory[AscDFH.historyitem_VideoFullScrn] = CChangeBool;
@@ -3350,10 +3513,12 @@
     CVideo.prototype.setCMediaNode = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VideoCMediaNode, this.cMediaNode, pr));
         this.cMediaNode = pr;
+        this.setParentToChild(pr);
     };
     CVideo.prototype.setFullScrn = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VideoFullScrn, this.fullScrn, pr));
         this.fullScrn = pr;
+        this.setParentToChild(pr);
     };
     CVideo.prototype.fillObject = function(oCopy) {
         if(this.cMediaNode !== null) {
@@ -3383,6 +3548,9 @@
         else {
             pReader.stream.SkipRecord();
         }
+    };
+    CVideo.prototype.getChildren = function() {
+        return [this.cMediaNode];
     };
 
 
@@ -3543,10 +3711,12 @@
     CTxEl.prototype.setCharRg = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_TxElCharRg, this.charRg, pr));
         this.charRg = pr;
+        this.setParentToChild(pr);
     };
     CTxEl.prototype.setPRg = function(pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_TxElPRg, this.pRg, pr));
         this.pRg = pr;
+        this.setParentToChild(pr);
     };
     CTxEl.prototype.fillObject = function(oCopy) {
         if(this.charRg !== null) {
