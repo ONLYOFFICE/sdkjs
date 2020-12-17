@@ -1649,11 +1649,11 @@
 
 				AscFormat.ExecuteNoHistory(function(){
 					pptx_content_loader.Start_UseFullUrl();
-					pptx_content_loader.Reader.ClearConnectorsMaps();
+					pptx_content_loader.Reader.ClearConnectedObjects();
 					oBinaryFileReader.Read(base64, tempWorkbook);
 					t.activeRange = oBinaryFileReader.copyPasteObj.activeRange;
 					aPastedImages = pptx_content_loader.End_UseFullUrl();
-					pptx_content_loader.Reader.AssignConnectorsId();
+					pptx_content_loader.Reader.AssignConnectedObjects();
 				}, this, []);
 
 				return aPastedImages;
@@ -2869,7 +2869,7 @@
 				loader.DrawingDocument = worksheet.getDrawingDocument();
 				loader.Start_UseFullUrl();
 
-				loader.ClearConnectorsMaps();
+				loader.ClearConnectedObjects();
 				loader.stream = stream;
 
 				var count = stream.GetULong();
@@ -2914,7 +2914,7 @@
 					arr_shapes[i] = worksheet.objectRender.createDrawingObject();
 					arr_shapes[i].graphicObject = drawing;
 				}
-				loader.AssignConnectorsId();
+				loader.AssignConnectedObjects();
 				History.TurnOn();
 
 				var arrImages = arrBase64Img.concat(loader.End_UseFullUrl());

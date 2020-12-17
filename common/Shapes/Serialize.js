@@ -200,42 +200,25 @@ function BinaryPPTYLoader()
     this.aSlideLayouts = [];
     this.aThemes = [];
 
-	this.arr_connectors = [];
+	this.oConnectedObjects = {};
 	this.map_shapes_by_id = {};
 	this.fields = [];
 
 
-
-	this.ClearConnectorsMaps = function(){
-        this.arr_connectors.length = 0;
+	this.ClearConnectedObjects = function(){
+        this.oConnectedObjects = {};
         this.map_shapes_by_id = {};
     };
-
-	this.AssignConnectorsId = function () {
-	    var oPr = null;
-        for(var i = 0; i < this.arr_connectors.length; ++i){
-            oPr = this.arr_connectors[i].nvSpPr.nvUniSpPr;
-            if(AscFormat.isRealNumber(oPr.stCnxId)){
-                if(AscCommon.isRealObject(this.map_shapes_by_id[oPr.stCnxId])){
-                    oPr.stCnxId = this.map_shapes_by_id[oPr.stCnxId].Id;
-                }
-                else{
-                    oPr.stCnxId = null;
-                    oPr.stCnxIdx = null;
-                }
+	this.AddConnectedObject = function(oObject){
+        this.oConnectedObjects[oObject.Id] = oObject;
+    };
+	this.AssignConnectedObjects = function () {
+        for(var sId in this.oConnectedObjects) {
+            if(this.oConnectedObjects.hasOwnProperty(sId)) {
+                this.oConnectedObjects[sId].assignConnection(this.map_shapes_by_id);
             }
-            if(AscFormat.isRealNumber(oPr.endCnxId)){
-                if(AscCommon.isRealObject(this.map_shapes_by_id[oPr.endCnxId])){
-                    oPr.endCnxId = this.map_shapes_by_id[oPr.endCnxId].Id;
-                }
-                else{
-                    oPr.endCnxId = null;
-                    oPr.endCnxIdx = null;
-                }
-            }
-            this.arr_connectors[i].nvSpPr.setUniSpPr(oPr.copy());
         }
-        this.ClearConnectorsMaps();
+        this.ClearConnectedObjects();
     };
 
     this.Start_UseFullUrl = function(insertDocumentUrlsData)
@@ -3996,6 +3979,7 @@ function BinaryPPTYLoader()
     this.ReadSlideMaster = function()
     {
         var master = new MasterSlide(this.presentation, null);
+        this.ClearConnectedObjects();
         this.TempMainObject = master;
 
         var s = this.stream;
@@ -4089,6 +4073,7 @@ function BinaryPPTYLoader()
 
         s.Seek2(end);
         this.TempMainObject = null;
+        this.AssignConnectedObjects();
         return master;
     }
 
@@ -4139,6 +4124,7 @@ function BinaryPPTYLoader()
     this.ReadSlideLayout = function()
     {
         var layout = new SlideLayout(null);
+        this.ClearConnectedObjects();
         this.TempMainObject = layout;
 
         var s = this.stream;
@@ -4246,6 +4232,7 @@ function BinaryPPTYLoader()
 
         s.Seek2(end);
         this.TempMainObject = null;
+        this.AssignConnectedObjects();
         return layout;
     }
 
@@ -4256,6 +4243,7 @@ function BinaryPPTYLoader()
     this.ReadSlide = function(sldIndex)
     {
         var slide = new Slide(this.presentation, null, sldIndex);
+        this.ClearConnectedObjects();
         this.TempMainObject = slide;
 
         slide.maxId = -1;
@@ -4335,6 +4323,7 @@ function BinaryPPTYLoader()
 
         s.Seek2(end);
         this.TempMainObject = null;
+        this.AssignConnectedObjects();
         return slide;
     }
 
@@ -4767,8 +4756,8 @@ function BinaryPPTYLoader()
 
     this.ReadNoteMaster = function()
     {
-
         var oNotesMaster = new AscCommonSlide.CNotesMaster();
+        this.ClearConnectedObjects();
         this.TempMainObject = oNotesMaster;
         this.stream.Skip2(1); // type
         var end = this.stream.cur + this.stream.GetLong() + 4;
@@ -4816,12 +4805,14 @@ function BinaryPPTYLoader()
 
         this.stream.Seek2(end);
         this.TempMainObject = null;
+        this.AssignConnectedObjects()
         return oNotesMaster;
     }
 
     this.ReadNote = function()
     {
         var oNotes = new AscCommonSlide.CNotes();
+        this.ClearConnectedObjects()
         this.TempMainObject = oNotes;
         var _s = this.stream;
         _s.Skip2(1); // type
@@ -4874,6 +4865,7 @@ function BinaryPPTYLoader()
         }
         this.TempMainObject = null;
         _s.Seek2(_end);
+        this.AssignConnectedObjects();
         return oNotes;
     }
 
@@ -4909,10 +4901,7 @@ function BinaryPPTYLoader()
                 }
                 case 1:
                 {
-                    // SHAPES
-                    this.ClearConnectorsMaps();
                     csld.spTree = this.ReadGroupShapeMain();
-                    this.AssignConnectorsId();
                     break;
                 }
                 default:
@@ -7177,7 +7166,7 @@ function BinaryPPTYLoader()
                 }
             }
         }
-        this.arr_connectors.push(shape);
+        this.AddConnectedObject(shape);
         s.Seek2(_end_rec);
         return shape;
     }

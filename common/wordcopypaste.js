@@ -5629,9 +5629,9 @@ PasteProcessor.prototype =
 		Asc.getBinaryOtherTableGVar(tempWorkbook);
 
 		pptx_content_loader.Start_UseFullUrl();
-		pptx_content_loader.Reader.ClearConnectorsMaps();
+		pptx_content_loader.Reader.ClearConnectedObjects();
 		oBinaryFileReader.Read(base64, tempWorkbook);
-		pptx_content_loader.Reader.AssignConnectorsId();
+		pptx_content_loader.Reader.AssignConnectedObjects();
 
 		if (!tempWorkbook.aWorksheets.length) {
 			return null;
@@ -5715,7 +5715,7 @@ PasteProcessor.prototype =
 	ReadPresentationShapes: function (stream) {
 		var loader = new AscCommon.BinaryPPTYLoader();
 		loader.Start_UseFullUrl();
-		loader.ClearConnectorsMaps();
+		loader.ClearConnectedObjects();
 		pptx_content_loader.Reader.Start_UseFullUrl();
 
 		loader.stream = stream;
@@ -5812,7 +5812,7 @@ PasteProcessor.prototype =
 
 		var chartImages = pptx_content_loader.Reader.End_UseFullUrl();
 		var images = loader.End_UseFullUrl();
-		loader.AssignConnectorsId();
+		loader.AssignConnectedObjects();
 		var allImages = chartImages.concat(images);
 
 		return {arrShapes: arr_shapes, arrImages: allImages, arrTransforms: arr_transforms};
@@ -5829,9 +5829,9 @@ PasteProcessor.prototype =
 		var arr_slides = [];
 		var slide;
 		for (var i = 0; i < count; ++i) {
-			loader.ClearConnectorsMaps();
+			loader.ClearConnectedObjects();
 			slide = loader.ReadSlide(0);
-			loader.AssignConnectorsId();
+			loader.AssignConnectedObjects();
 			arr_slides.push(slide);
 		}
 		return arr_slides;

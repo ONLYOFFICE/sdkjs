@@ -9712,7 +9712,7 @@
             }
             if(pptx_content_loader.Reader)
             {
-                pptx_content_loader.Reader.AssignConnectorsId();
+                pptx_content_loader.Reader.AssignConnectedObjects();
             }
 			if(!pasteBinaryFromExcel)
 				History.TurnOn();
