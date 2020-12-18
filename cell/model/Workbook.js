@@ -11737,6 +11737,7 @@
 			var _val = val;
 			if (_formula) {
 				_formula.isParsed = false;
+				_formula.outStack = [];
 				_formula.parse(true);
 				var offset = new AscCommon.CellBase(cell.nRow - activeCell.row, cell.nCol - activeCell.col);
 				_val = "=" + _formula.changeOffset(offset, null, true).assemble(true);

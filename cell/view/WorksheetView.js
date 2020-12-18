@@ -14333,13 +14333,9 @@
 				this.model.workbook.dependencyFormulas.lockRecal();
 			}
 
-			if (!applyByArray && ctrlKey) {
-				applyByArray = null;
-			}
-
 			c.setValue(AscCommonExcel.getFragmentsText(val), function (r) {
 				ret = r;
-			}, null, applyByArray ? bbox : null);
+			}, null, applyByArray ? bbox : ((!applyByArray && ctrlKey) ? null : undefined));
 
 			//***array-formula***
 			if(ctrlKey) {
