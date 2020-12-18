@@ -55,6 +55,10 @@
     function CBaseFormatObject() {
         CBaseObject.call(this);
         this.parent = null;
+        if(this.Id === null) {
+            this.Id = AscCommon.g_oIdCounter.Get_NewId();
+            AscCommon.g_oTableId.Add(this, this.Id);
+        }
     }
     CBaseFormatObject.prototype = Object.create(CBaseObject.prototype);
     CBaseFormatObject.prototype.constructor = CBaseFormatObject;
@@ -157,45 +161,46 @@
     CBaseObject.prototype.handleRemoveObject = function(sObjectId) {
         return false;
     };
-    CBaseObject.prototype.compareTypes = function(oOther) {
-        if(!oOther || !oOther.compareTypes) {
-            debugger;
-        }
-        for(var sKey in oOther) {
-            if((oOther[sKey] === null || oOther[sKey] === undefined) &&
-                (this[sKey] !== null && this[sKey] !== undefined)
-            || (this[sKey] === null || this[sKey] === undefined) &&
-                (oOther[sKey] !== null && oOther[sKey] !== undefined)
-            || (typeof this[sKey]) !== (typeof oOther[sKey])) {
-                debugger;
-            }
-            if(this[sKey] !== this.parent &&  typeof this[sKey] === "object" &&  this[sKey] && this[sKey].compareTypes) {
-                this[sKey].compareTypes(oOther[sKey]);
-            }
-            if(Array.isArray(this[sKey])) {
-                if(!Array.isArray(oOther[sKey])) {
-                    debugger;
-                }
-                else {
-                    var a1 =  this[sKey];
-                    var a2 = oOther[sKey];
-                    if(a1.length !== a2.length) {
-                        debugger;
-                    }
-                    else {
-                        for(var i = 0; i < a1.length; ++i) {
-                            if(!a1[i] || !a2[i]) {
-                                debugger;
-                            }
-                            if(typeof a1[i] === "object" &&  a1[i] && a1[i].compareTypes) {
-                                a1[i].compareTypes(a2[i]);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    };
+    //Method for debug
+    //CBaseObject.prototype.compareTypes = function(oOther) {
+    //    if(!oOther || !oOther.compareTypes) {
+    //        debugger;
+    //    }
+    //    for(var sKey in oOther) {
+    //        if((oOther[sKey] === null || oOther[sKey] === undefined) &&
+    //            (this[sKey] !== null && this[sKey] !== undefined)
+    //        || (this[sKey] === null || this[sKey] === undefined) &&
+    //            (oOther[sKey] !== null && oOther[sKey] !== undefined)
+    //        || (typeof this[sKey]) !== (typeof oOther[sKey])) {
+    //            debugger;
+    //        }
+    //        if(this[sKey] !== this.parent &&  typeof this[sKey] === "object" &&  this[sKey] && this[sKey].compareTypes) {
+    //            this[sKey].compareTypes(oOther[sKey]);
+    //        }
+    //        if(Array.isArray(this[sKey])) {
+    //            if(!Array.isArray(oOther[sKey])) {
+    //                debugger;
+    //            }
+    //            else {
+    //                var a1 =  this[sKey];
+    //                var a2 = oOther[sKey];
+    //                if(a1.length !== a2.length) {
+    //                    debugger;
+    //                }
+    //                else {
+    //                    for(var i = 0; i < a1.length; ++i) {
+    //                        if(!a1[i] || !a2[i]) {
+    //                            debugger;
+    //                        }
+    //                        if(typeof a1[i] === "object" &&  a1[i] && a1[i].compareTypes) {
+    //                            a1[i].compareTypes(a2[i]);
+    //                        }
+    //                    }
+    //                }
+    //            }
+    //        }
+    //    }
+    //};
 
     function InitClass(fClass, fBase, nType) {
         fClass.prototype = Object.create(fBase.prototype);
@@ -1137,7 +1142,7 @@
             oCopy.setBy(this.by);
         }
         if(this.calcmode !== null) {
-            oCopy.setCalcmode(this.calcMode);
+            oCopy.setCalcmode(this.calcmode);
         }
         if(this.from !== null) {
             oCopy.setFrom(this.from);
@@ -1775,7 +1780,7 @@
     changesFactory[AscDFH.historyitem_CondRtn] = CChangeObject;
     changesFactory[AscDFH.historyitem_CondTgtEl] = CChangeObject;
     changesFactory[AscDFH.historyitem_CondTn] = CChangeObject;
-    changesFactory[AscDFH.historyitem_CondDelay] = CChangeLong;
+    changesFactory[AscDFH.historyitem_CondDelay] = CChangeString;
     changesFactory[AscDFH.historyitem_CondEvt] = CChangeLong;
 
     drawingsChangesMap[AscDFH.historyitem_CondRtn] = function(oClass, value) {this.rtn = value;};
@@ -1808,7 +1813,7 @@
         this.tn = pr;
     };
     CCond.prototype.setDelay = function(pr) {
-        oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CondDelay, this.delay, pr));
+        oHistory.Add(new CChangeString(this, AscDFH.historyitem_CondDelay, this.delay, pr));
         this.delay = pr;
     };
     CCond.prototype.setEvt = function(pr) {
@@ -1816,19 +1821,19 @@
         this.evt = pr;
     };
     CCond.prototype.fillObject = function(oCopy, oIdMap) {
-        if(this.rtn = null) {
+        if(this.rtn !== null) {
             oCopy.setRtn(this.rtn.createDuplicate(oIdMap));
         }
-        if(this.tgtEl = null) {
+        if(this.tgtEl !== null) {
             oCopy.setTgtEl(this.tgtEl.createDuplicate(oIdMap));
         }
-        if(this.tn = null) {
+        if(this.tn !== null) {
             oCopy.setTn(this.tn.createDuplicate(oIdMap));
         }
-        if(this.delay = null) {
+        if(this.delay !== null) {
             oCopy.setDelay(this.delay);
         }
-        if(this.evt = null) {
+        if(this.evt !== null) {
             oCopy.setEvt(this.evt);
         }
     };
