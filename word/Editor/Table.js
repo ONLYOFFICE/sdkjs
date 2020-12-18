@@ -5541,7 +5541,6 @@ CTable.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent)
 	}
 
 	this.Content[Pos.Row].Get_Cell(Pos.Cell).Content_SetCurPosXY(X, Y);
-	this.private_SetSelectionData(null);
 	this.Selection.EndPos.Pos        = Pos;
 	this.Selection.EndPos.X          = X;
 	this.Selection.EndPos.Y          = Y;
@@ -5552,6 +5551,8 @@ CTable.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent)
 	// При селекте внутри ячейки мы селектим содержимое ячейки
 	if (table_Selection_Common === this.Selection.Type2 && this.Parent.IsSelectedSingleElement() && this.Selection.StartPos.Pos.Row === this.Selection.EndPos.Pos.Row && this.Selection.StartPos.Pos.Cell === this.Selection.EndPos.Pos.Cell)
 	{
+		this.private_SetSelectionData(null);
+
 		this.CurCell.Content_Selection_SetStart(this.Selection.StartPos.X, this.Selection.StartPos.Y, this.Selection.StartPos.PageIndex - this.CurCell.Content.Get_StartPage_Relative(), this.Selection.StartPos.MouseEvent);
 
 		this.Selection.Type = table_Selection_Text;
@@ -15435,72 +15436,84 @@ CTable.prototype.private_UpdateSelectedCellsArray = function(bForceSelectByLines
 		this.Selection.CurRow = arrSelectionData[arrSelectionData.length - 1].Row;
 
 	this.private_SetSelectionData(arrSelectionData);
-
-	// console.log("Update");
-	//
-	// var arrFlags = [];
-	// for (var nIndex = 0, nCount = arrOldSelectionData.length; nIndex < nCount; ++nIndex)
-	// {
-	// 	var oPos = arrOldSelectionData[nIndex];
-	// 	var nPos = (oPos.Row << 16) | (oPos.Cell & 0xFFFF)
-	// 	arrFlags[nPos] = 1;
-	// }
-	//
-	// for (var nIndex = 0, nCount = this.Selection.Data.length; nIndex < nCount; ++nIndex)
-	// {
-	// 	var oPos = this.Selection.Data[nIndex];
-	// 	var nPos = (oPos.Row << 16) | (oPos.Cell & 0xFFFF)
-	// 	if (undefined !== arrFlags[nPos])
-	// 		arrFlags[nPos] |= 2;
-	// 	else
-	// 		arrFlags[nPos] = 2;
-	// }
-	//
-	// for (var nIndex = 0, nCount = arrOldSelectionData.length; nIndex < nCount; ++nIndex)
-	// {
-	// 	var oPos = arrOldSelectionData[nIndex];
-	// 	var nPos = (oPos.Row << 16) | (oPos.Cell & 0xFFFF)
-	// 	if (undefined !== arrFlags[nPos] && (arrFlags[nPos] & 1) && !(arrFlags[nPos] & 2))
-	// 	{
-	// 		var oRow = this.GetRow(oPos.Row);
-	// 		if (!oRow)
-	// 			continue;
-	//
-	// 		var oCell = oRow.GetCell(oPos.Cell);
-	// 		if (!oCell)
-	// 			continue;
-	//
-	// 		oCell.GetContent().RemoveSelection();
-	//
-	// 		console.log("Remove: Cell " + oPos.Cell + " Row " + oPos.Row);
-	// 	}
-	// }
-	//
-	// for (var nIndex = 0, nCount = this.Selection.Data.length; nIndex < nCount; ++nIndex)
-	// {
-	// 	var oPos = this.Selection.Data[nIndex];
-	// 	var nPos = (oPos.Row << 16) | (oPos.Cell & 0xFFFF)
-	//
-	// 	if (undefined !== arrFlags[nPos] && (arrFlags[nPos] & 2) && !(arrFlags[nPos] & 1))
-	// 	{
-	// 		var oRow = this.GetRow(oPos.Row);
-	// 		if (!oRow)
-	// 			continue;
-	//
-	// 		var oCell = oRow.GetCell(oPos.Cell);
-	// 		if (!oCell)
-	// 			continue;
-	//
-	// 		oCell.GetContent().SelectAll();
-	// 		console.log("Add: Cell " + oPos.Cell + " Row " + oPos.Row);
-	// 	}
-	// }
 };
 CTable.prototype.private_SetSelectionData = function(oData)
 {
-	this.private_RemoveSelectionInCells();
+	if (!this.Selection.Data && !oData)
+	{
+		this.Selection.Data = null;
+		return;
+	}
+
+	if (!this.Selection.Data)
+	{
+		this.Selection.Data = oData;
+		return this.private_UpdateSelectionInCells();
+	}
+
+	if (!oData)
+	{
+		this.Selection.Data = null;
+		return this.private_RemoveSelectionInCells();
+	}
+
+	var arrOldSelectionData = this.Selection.Data;
 	this.Selection.Data = oData;
-	this.private_UpdateSelectionInCells();
+
+	var arrFlags = [];
+	for (var nIndex = 0, nCount = arrOldSelectionData.length; nIndex < nCount; ++nIndex)
+	{
+		var oPos = arrOldSelectionData[nIndex];
+		var nPos = (oPos.Row << 16) | (oPos.Cell & 0xFFFF)
+		arrFlags[nPos] = 1;
+	}
+
+	for (var nIndex = 0, nCount = this.Selection.Data.length; nIndex < nCount; ++nIndex)
+	{
+		var oPos = this.Selection.Data[nIndex];
+		var nPos = (oPos.Row << 16) | (oPos.Cell & 0xFFFF)
+		if (undefined !== arrFlags[nPos])
+			arrFlags[nPos] |= 2;
+		else
+			arrFlags[nPos] = 2;
+	}
+
+	for (var nIndex = 0, nCount = arrOldSelectionData.length; nIndex < nCount; ++nIndex)
+	{
+		var oPos = arrOldSelectionData[nIndex];
+		var nPos = (oPos.Row << 16) | (oPos.Cell & 0xFFFF)
+		if (undefined !== arrFlags[nPos] && (arrFlags[nPos] & 1) && !(arrFlags[nPos] & 2))
+		{
+			var oRow = this.GetRow(oPos.Row);
+			if (!oRow)
+				continue;
+
+			var oCell = oRow.GetCell(oPos.Cell);
+			if (!oCell)
+				continue;
+
+			oCell.GetContent().RemoveSelection();
+		}
+	}
+
+	for (var nIndex = 0, nCount = this.Selection.Data.length; nIndex < nCount; ++nIndex)
+	{
+		var oPos = this.Selection.Data[nIndex];
+		var nPos = (oPos.Row << 16) | (oPos.Cell & 0xFFFF)
+
+		if (undefined !== arrFlags[nPos] && (arrFlags[nPos] & 2) && !(arrFlags[nPos] & 1))
+		{
+			var oRow = this.GetRow(oPos.Row);
+			if (!oRow)
+				continue;
+
+			var oCell = oRow.GetCell(oPos.Cell);
+			if (!oCell)
+				continue;
+
+			oCell.GetContent().SelectAll();
+		}
+	}
 };
 CTable.prototype.private_RemoveSelectionInCells = function()
 {
