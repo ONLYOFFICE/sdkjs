@@ -11673,7 +11673,6 @@
 
 				switch ( ItemType )
 				{
-					case para_Drawing:
 					case para_Numbering:
 					case para_PresentationNumbering:
 					case para_PageNum:
@@ -11690,11 +11689,7 @@
 					}
 					case para_Space:
 					case para_Tab  : 
-					{
-						Str += " ";
-						runInfo.StringCount++; 
-						break;
-					}
+					case para_Drawing:
 					case para_NewLine:
 					{
 						Str += " ";
