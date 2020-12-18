@@ -11678,6 +11678,7 @@
 					case para_PresentationNumbering:
 					case para_PageNum:
 					case para_PageCount:
+					case para_End:
 					{
 						break;
 					}
@@ -11696,15 +11697,10 @@
 					}
 					case para_NewLine:
 					{
-						if (oPr && true === oPr.NewLine)
-						{
-							Str += '\r';
-							runInfo.StringCount++;
-						}
+						Str += " ";
+						runInfo.StringCount++; 
 						break;
 					}
-					case para_End:
-						break;
 				}
 			}
 			
@@ -11737,9 +11733,9 @@
 					if (oChange.pos >= oInfo.GlobStartPos || oChange.pos + DelCount >= oInfo.GlobStartPos)
 					{
 						var nPosToDel = Math.max(0, oChange.pos - oInfo.GlobStartPos + oInfo.StartPos);
-						var countToDel = Math.min(oChange.deleteCount, oInfo.StringCount - nPosToDel);
+						var countToDel = Math.min(oChange.deleteCount, oInfo.StringCount);
 
-						if (countToDel < 0)
+						if (nPosToDel >= oInfo.Run.Content.length)
 							continue;
 
 						for (var nDelChar = 0; nDelChar < countToDel; nDelChar++)
@@ -11759,7 +11755,7 @@
 								
 						}
 						
-						var nPosToAdd = oChange.pos - oInfo.GlobStartPos;
+						var nPosToAdd = Math.max(0, oChange.pos - oInfo.GlobStartPos + oInfo.StartPos);
 						for (var nAddChar = 0; nAddChar < oChange.insert.length; nAddChar++)
 						{
 							var itemText = new AscCommonWord.ParaText(oChange.insert[nAddChar]);
