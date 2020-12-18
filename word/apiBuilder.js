@@ -11779,11 +11779,14 @@
 						var nPosToDel = Math.max(0, oChange.pos - oInfo.GlobStartPos + oInfo.StartPos);
 						var countToDel = Math.min(oChange.deleteCount, oInfo.StringCount);
 
-						if (nPosToDel >= oInfo.Run.Content.length)
+						if (nPosToDel >= oInfo.Run.Content.length || (countToDel === 0 && oChange.deleteCount !== 0))
 							continue;
 
 						for (var nDelChar = 0; nDelChar < countToDel; nDelChar++)
 						{
+							if (!oInfo.Run.Content[nPosToDel])
+								continue;
+								
 							if (para_Text === oInfo.Run.Content[nPosToDel].Type || para_Space === oInfo.Run.Content[nPosToDel].Type || para_Tab === oInfo.Run.Content[nPosToDel].Type)
 							{
 								oInfo.Run.RemoveFromContent(nPosToDel, 1);
