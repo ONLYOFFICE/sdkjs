@@ -167,32 +167,29 @@ function CTable(DrawingDocument, Parent, Inline, Rows, Cols, TableGrid, bPresent
 		Pages             : []
 	};
 
-    this.Selection =
-    {
-        Start    : false,
-        Use      : false,
-        StartPos :
-        {
-            Pos        : { Row : 0, Cell : 0 },
-            X          : 0,
-            Y          : 0,
-            PageIndex  : 0,
-            MouseEvent : { ClickCount : 1, Type : AscCommon.g_mouse_event_type_down, CtrlKey : false }
-        },
-        EndPos   :
-        {
-            Pos        : { Row : 0, Cell : 0 },
-            X          : 0,
-            Y          : 0,
-            PageIndex  : 0,
-            MouseEvent : { ClickCount : 1, Type : AscCommon.g_mouse_event_type_down, CtrlKey : false }
-        },
-        Type     : table_Selection_Text,
-        Data     : null,
-        Type2    : table_Selection_Common,
-        Data2    : null,
-        CurRow   : 0  // Специальный параметр, используемый для стрелок вправо/влево
-    };
+    this.Selection = {
+		Start    : false,
+		Use      : false,
+		StartPos : {
+			Pos        : {Row : 0, Cell : 0},
+			X          : 0,
+			Y          : 0,
+			PageIndex  : 0,
+			MouseEvent : {ClickCount : 1, Type : AscCommon.g_mouse_event_type_down, CtrlKey : false}
+		},
+		EndPos   : {
+			Pos        : {Row : 0, Cell : 0},
+			X          : 0,
+			Y          : 0,
+			PageIndex  : 0,
+			MouseEvent : {ClickCount : 1, Type : AscCommon.g_mouse_event_type_down, CtrlKey : false}
+		},
+		Type     : table_Selection_Text,
+		Data     : null,
+		Type2    : table_Selection_Common,
+		Data2    : null,
+		CurRow   : 0  // Специальный параметр, используемый для стрелок вправо/влево
+	};
 
     // this.X_origin - точка, которую нам задали как начальную для рисования таблицы
     // this.X        - фактическая начальная точка для рисования и обсчета таблицы
@@ -3833,9 +3830,9 @@ CTable.prototype.SelectTable = function(Type)
 			this.Selection.Use   = true;
 			this.Selection.Start = false;
 			this.Selection.Type  = table_Selection_Text;
-			this.Selection.Data  = null;
 			this.Selection.Type2 = table_Selection_Common;
 			this.Selection.Data2 = null;
+			this.private_SetSelectionData(null);
 		}
 
 		return;
@@ -3946,9 +3943,9 @@ CTable.prototype.SelectTable = function(Type)
 	this.Selection.Use   = true;
 	this.Selection.Start = false;
 	this.Selection.Type  = table_Selection_Cell;
-	this.Selection.Data  = NewSelectionData;
 	this.Selection.Type2 = table_Selection_Common;
 	this.Selection.Data2 = null;
+	this.private_SetSelectionData(NewSelectionData);
 
 	this.Selection.StartPos.Pos = {Row : NewSelectionData[0].Row, Cell : NewSelectionData[0].Cell};
 	this.Selection.EndPos.Pos   = {
@@ -4009,9 +4006,9 @@ CTable.prototype.SelectRows = function(nStartRow, nEndRow)
 	this.Selection.Use   = true;
 	this.Selection.Start = false;
 	this.Selection.Type  = table_Selection_Cell;
-	this.Selection.Data  = arrSelectionData;
 	this.Selection.Type2 = table_Selection_Common;
 	this.Selection.Data2 = null;
+	this.private_SetSelectionData(arrSelectionData);
 
 	this.Selection.StartPos.Pos = {
 		Row  : arrSelectionData[0].Row,
@@ -4127,15 +4124,16 @@ CTable.prototype.SetSelectionState = function(State, StateIndex)
 		CurRow   : TableState.Selection.CurRow
 	};
 
-	this.Selection.Data = [];
+	var arrSelectionData = [];
 	if (true === this.Selection.Use && table_Selection_Cell === this.Selection.Type)
 	{
 		for (var Index = 0; Index < TableState.Selection.Data.length; Index++)
-			this.Selection.Data[Index] = {
+			arrSelectionData[Index] = {
 				Row  : TableState.Selection.Data[Index].Row,
 				Cell : TableState.Selection.Data[Index].Cell
 			};
 	}
+	this.private_SetSelectionData(arrSelectionData);
 
 	this.CurCell = this.Content[TableState.CurCell.Row].Get_Cell(TableState.CurCell.Cell);
 	this.CurCell.Content.SetSelectionState(State, StateIndex - 1);
@@ -4413,9 +4411,9 @@ CTable.prototype.Set_SelectionState2 = function(TableState)
 		this.Selection.EndPos.Pos   = {Row : Pos.Row, Cell : Pos.Cell};
 		this.Selection.Type         = table_Selection_Common;
 		this.Selection.Type2        = table_Selection_Common;
-		this.Selection.Data         = null;
 		this.Selection.Data2        = null;
 		this.Selection.CurRow       = 0;
+		this.private_SetSelectionData(null);
 
 		this.CurCell.Content.Set_SelectionState2(TableState.Data);
 	}
@@ -5543,7 +5541,7 @@ CTable.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent)
 	}
 
 	this.Content[Pos.Row].Get_Cell(Pos.Cell).Content_SetCurPosXY(X, Y);
-	this.Selection.Data              = null;
+	this.private_SetSelectionData(null);
 	this.Selection.EndPos.Pos        = Pos;
 	this.Selection.EndPos.X          = X;
 	this.Selection.EndPos.Y          = Y;
@@ -5683,6 +5681,7 @@ CTable.prototype.RemoveSelection = function()
 	if (false === this.Selection.Use)
 		return;
 
+	console.log("RemoveSelection");
 	this.CurCell = null;
 	if (this.GetRowsCount() > 0)
 	{
@@ -6344,12 +6343,13 @@ CTable.prototype.MoveCursorLeftWithSelectionFromEnd = function(Word)
 		Cell : 0
 	};
 	this.CurCell                = LastRow.Get_Cell(0);
-	this.Selection.Data         = [];
 
+	var arrSelectionData = [];
 	for (var CellIndex = 0; CellIndex < LastRow.Get_CellsCount(); CellIndex++)
 	{
-		this.Selection.Data.push({Cell : CellIndex, Row : LastRow.Index});
+		arrSelectionData.push({Cell : CellIndex, Row : LastRow.Index});
 	}
+	this.private_SetSelectionData(arrSelectionData);
 };
 CTable.prototype.MoveCursorRight = function(AddToSelect, Word, FromPaste)
 {
@@ -6550,12 +6550,13 @@ CTable.prototype.MoveCursorRightWithSelectionFromStart = function(Word)
 		Cell : FirstRow.Get_CellsCount() - 1
 	};
 	this.CurCell                = FirstRow.Get_Cell(FirstRow.Get_CellsCount() - 1);
-	this.Selection.Data         = [];
 
+	var arrSelectionData = [];
 	for (var CellIndex = 0; CellIndex < FirstRow.Get_CellsCount(); CellIndex++)
 	{
-		this.Selection.Data.push({Cell : CellIndex, Row : 0});
+		arrSelectionData.push({Cell : CellIndex, Row : 0});
 	}
+	this.private_SetSelectionData(arrSelectionData);
 };
 CTable.prototype.MoveCursorUp = function(AddToSelect)
 {
@@ -9208,7 +9209,7 @@ CTable.prototype.MergeTableCells = function(isClearMerge)
 	this.Selection.StartPos.Pos = Pos_tl;
 	this.Selection.EndPos.Pos   = Pos_tl;
 	this.Selection.Type         = table_Selection_Cell;
-	this.Selection.Data         = [Pos_tl];
+	this.private_SetSelectionData([Pos_tl]);
 
 	this.CurCell = Cell_tl;
 
@@ -9720,11 +9721,6 @@ CTable.prototype.AddTableRow = function(bBefore, nCount, isCheckInnerTable)
 	// Выделим новые строки
 	this.Selection.Use = true;
 
-	if (null != this.Selection.Data)
-		this.Selection.Data.length = 0;
-	else
-		this.Selection.Data = [];
-
 	this.Selection.Use  = true;
 	this.Selection.Type = table_Selection_Cell;
 
@@ -9739,6 +9735,7 @@ CTable.prototype.AddTableRow = function(bBefore, nCount, isCheckInnerTable)
 		Cell : this.Content[StartRow + Count - 1].GetCellsCount() - 1
 	};
 
+	var arrSelectionData = [];
 	for (var Index = 0; Index < Count; Index++)
 	{
 		var Row        = this.Content[StartRow + Index];
@@ -9750,9 +9747,10 @@ CTable.prototype.AddTableRow = function(bBefore, nCount, isCheckInnerTable)
 			if (vmerge_Continue === Cell.GetVMerge())
 				continue;
 
-			this.Selection.Data.push({Row : StartRow + Index, Cell : CurCell});
+			arrSelectionData.push({Row : StartRow + Index, Cell : CurCell});
 		}
 	}
+	this.private_SetSelectionData(arrSelectionData);
 
 	this.Recalc_CompiledPr2();
 };
@@ -10372,24 +10370,19 @@ CTable.prototype.AddTableColumn = function(bBefore, nCount)
 	this.Internal_CreateNewGrid(Rows_info);
 
 	// Выделим новые строки
-	this.Selection.Use = true;
-
-	if (null != this.Selection.Data)
-		this.Selection.Data.length = 0;
-	else
-		this.Selection.Data = [];
-
 	this.Selection.Use  = true;
 	this.Selection.Type = table_Selection_Cell;
 
+	var arrSelectionData = [];
 	for (var CurRow = 0; CurRow < this.Content.length; CurRow++)
 	{
 		var StartCell = ( true === bBefore ? Add_info[CurRow] : Add_info[CurRow] + 1 );
 		for (var Index = 0; Index < Count; Index++)
 		{
-			this.Selection.Data.push({Row : CurRow, Cell : StartCell + Index});
+			arrSelectionData.push({Row : CurRow, Cell : StartCell + Index});
 		}
 	}
+	this.private_SetSelectionData(arrSelectionData);
 
 	this.private_RecalculateGrid();
 	this.Internal_Recalculate_1();
@@ -10598,7 +10591,7 @@ CTable.prototype.EraseTable = function(X1, Y1, X2, Y2, CurPageStart)
 			click = true;
 		}
 
-		this.Selection.Data = SelectedCells.Cells;
+		this.private_SetSelectionData(SelectedCells.Cells);
 	}
 	// Если выделяем несколько ячеек
 	else
@@ -15281,7 +15274,8 @@ CTable.prototype.private_UpdateSelectedCellsArray = function(bForceSelectByLines
 		bForceSelectByLines = false;
 
 	this.Selection.Type = table_Selection_Cell;
-	this.Selection.Data = [];
+
+	var arrSelectionData = [];
 
 	if (this.Parent.IsSelectedSingleElement() && false === bForceSelectByLines)
 	{
@@ -15327,7 +15321,7 @@ CTable.prototype.private_UpdateSelectedCellsArray = function(bForceSelectByLines
 				if (vmerge_Continue === Vmerge)
 					continue;
 
-				this.Selection.Data.push({Row : StartRow, Cell : CurCell});
+				arrSelectionData.push({Row : StartRow, Cell : CurCell});
 			}
 		}
 		else
@@ -15400,7 +15394,7 @@ CTable.prototype.private_UpdateSelectedCellsArray = function(bForceSelectByLines
 						|| (nCurGridCol + nGridSpan - 1 >= GridCol_start && nCurGridCol + nGridSpan - 1 <= GridCol_end)
 						|| (nCurGridCol <= GridCol_start && GridCol_end <= nCurGridCol + nGridSpan - 1))
 					{
-						this.Selection.Data.push({Row : nCurRow, Cell : nCurCell});
+						arrSelectionData.push({Row : nCurRow, Cell : nCurCell});
 					}
 
 					nCurGridCol += nGridSpan;
@@ -15432,13 +15426,122 @@ CTable.prototype.private_UpdateSelectedCellsArray = function(bForceSelectByLines
 				if (vmerge_Continue === oCell.GetVMerge())
 					continue;
 
-				this.Selection.Data.push({Row : nCurRow, Cell : nCurCell});
+				arrSelectionData.push({Row : nCurRow, Cell : nCurCell});
 			}
 		}
 	}
 
-	if (this.Selection.Data.length > 1)
-		this.Selection.CurRow = this.Selection.Data[this.Selection.Data.length - 1].Row;
+	if (arrSelectionData.length > 1)
+		this.Selection.CurRow = arrSelectionData[arrSelectionData.length - 1].Row;
+
+	this.private_SetSelectionData(arrSelectionData);
+
+	// console.log("Update");
+	//
+	// var arrFlags = [];
+	// for (var nIndex = 0, nCount = arrOldSelectionData.length; nIndex < nCount; ++nIndex)
+	// {
+	// 	var oPos = arrOldSelectionData[nIndex];
+	// 	var nPos = (oPos.Row << 16) | (oPos.Cell & 0xFFFF)
+	// 	arrFlags[nPos] = 1;
+	// }
+	//
+	// for (var nIndex = 0, nCount = this.Selection.Data.length; nIndex < nCount; ++nIndex)
+	// {
+	// 	var oPos = this.Selection.Data[nIndex];
+	// 	var nPos = (oPos.Row << 16) | (oPos.Cell & 0xFFFF)
+	// 	if (undefined !== arrFlags[nPos])
+	// 		arrFlags[nPos] |= 2;
+	// 	else
+	// 		arrFlags[nPos] = 2;
+	// }
+	//
+	// for (var nIndex = 0, nCount = arrOldSelectionData.length; nIndex < nCount; ++nIndex)
+	// {
+	// 	var oPos = arrOldSelectionData[nIndex];
+	// 	var nPos = (oPos.Row << 16) | (oPos.Cell & 0xFFFF)
+	// 	if (undefined !== arrFlags[nPos] && (arrFlags[nPos] & 1) && !(arrFlags[nPos] & 2))
+	// 	{
+	// 		var oRow = this.GetRow(oPos.Row);
+	// 		if (!oRow)
+	// 			continue;
+	//
+	// 		var oCell = oRow.GetCell(oPos.Cell);
+	// 		if (!oCell)
+	// 			continue;
+	//
+	// 		oCell.GetContent().RemoveSelection();
+	//
+	// 		console.log("Remove: Cell " + oPos.Cell + " Row " + oPos.Row);
+	// 	}
+	// }
+	//
+	// for (var nIndex = 0, nCount = this.Selection.Data.length; nIndex < nCount; ++nIndex)
+	// {
+	// 	var oPos = this.Selection.Data[nIndex];
+	// 	var nPos = (oPos.Row << 16) | (oPos.Cell & 0xFFFF)
+	//
+	// 	if (undefined !== arrFlags[nPos] && (arrFlags[nPos] & 2) && !(arrFlags[nPos] & 1))
+	// 	{
+	// 		var oRow = this.GetRow(oPos.Row);
+	// 		if (!oRow)
+	// 			continue;
+	//
+	// 		var oCell = oRow.GetCell(oPos.Cell);
+	// 		if (!oCell)
+	// 			continue;
+	//
+	// 		oCell.GetContent().SelectAll();
+	// 		console.log("Add: Cell " + oPos.Cell + " Row " + oPos.Row);
+	// 	}
+	// }
+};
+CTable.prototype.private_SetSelectionData = function(oData)
+{
+	this.private_RemoveSelectionInCells();
+	this.Selection.Data = oData;
+	this.private_UpdateSelectionInCells();
+};
+CTable.prototype.private_RemoveSelectionInCells = function()
+{
+	if (!this.Selection.Data)
+		return;
+
+	for (var nIndex = 0, nCount = this.Selection.Data.length; nIndex < nCount; ++nIndex)
+	{
+		var oPos = this.Selection.Data[nIndex];
+		var oRow = this.GetRow(oPos.Row);
+		if (!oRow)
+			continue;
+
+		var oCell = oRow.GetCell(oPos.Cell);
+		if (!oCell)
+			continue;
+
+		oCell.GetContent().RemoveSelection();
+	}
+};
+CTable.prototype.private_UpdateSelectionInCells = function()
+{
+	if (!this.Selection.Data)
+		return;
+
+	if (this.IsCellSelection())
+	{
+		for (var nIndex = 0, nCount = this.Selection.Data.length; nIndex < nCount; ++nIndex)
+		{
+			var oPos = this.Selection.Data[nIndex];
+			var oRow = this.GetRow(oPos.Row);
+			if (!oRow)
+				continue;
+
+			var oCell = oRow.GetCell(oPos.Cell);
+			if (!oCell)
+				continue;
+
+			oCell.GetContent().SelectAll();
+		}
+	}
 };
 CTable.prototype.Internal_CompareBorders2 = function(Border1, Border2)
 {
@@ -16459,9 +16562,9 @@ CTable.prototype.SetContentSelection = function(StartDocPos, EndDocPos, Depth, S
     this.Selection.StartPos.Pos = {Row : StartRow, Cell : StartCell};
     this.Selection.EndPos.Pos   = {Row : EndRow, Cell : EndCell};
     this.Selection.CurRow       = EndRow;
-    this.Selection.Data         = null;
     this.Selection.Type2        = table_Selection_Common;
     this.Selection.Data2        = null;
+    this.private_SetSelectionData(null);
 
     if (StartRow === EndRow && StartCell === EndCell && null !== __StartDocPos && null !== __EndDocPos)
     {
