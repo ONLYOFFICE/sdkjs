@@ -331,6 +331,7 @@ function ParseLocalFormatSymbol(Name)
 //___________________________________________________fy________________________________________________________________
 		case("fy"):
 		case("nds"):
+		case("nl"):
 		case("en-NL"):
 		case("fy-NL"):
 		case("nds-NL"):
@@ -366,6 +367,7 @@ function ParseLocalFormatSymbol(Name)
 			LocaleFormatSymbol['general'] = 'Geral';
 			break;
 		}
+		case("pt"):
 		case("pt-PT"): {
 			LocaleFormatSymbol['Y'] = 'A';
 			LocaleFormatSymbol['y'] = 'a';
@@ -379,6 +381,7 @@ function ParseLocalFormatSymbol(Name)
 		case("kk"):
 		case("os"):
 		case("rm"):
+		case("ru"):
 		case("sah"):
 		case("tt"):
 		case("wae"):
@@ -388,7 +391,6 @@ function ParseLocalFormatSymbol(Name)
 		case("de-BE"):
 		case("en-BE"):
 		case("en-CH"):
-		case("gsw-CH"):
 		case("kk-KZ"):
 		case("os-RU"):
 		case("pt-CH"):
@@ -417,6 +419,7 @@ function ParseLocalFormatSymbol(Name)
 		case("oc"):
 		case("br"):
 		case("co"):
+		case("fr"):
 		case("br-FR"):
 		case("ca-FR"):
 		case("co-FR"):
@@ -433,6 +436,7 @@ function ParseLocalFormatSymbol(Name)
 			break;
 		}
 //____________________________________________________de_______________________________________________________________
+		case("de"):
 		case("ksh"):
 		case("dsb"):
 		case("hsb"):
@@ -496,6 +500,8 @@ function ParseLocalFormatSymbol(Name)
 		case("se"):
 		case("smj"):
 		case("sma"):
+		case("fo"):
+		case("da"):
 		case("smj-NO"):
 		case("sma-NO"):
 		case("se-NO"):
@@ -512,6 +518,7 @@ function ParseLocalFormatSymbol(Name)
 			break;
 		}
 //_____________________________________________________ch______________________________________________________________
+		case("bo"):
 		case("ii"):
 		case("ug"):
 		case("zh"):
