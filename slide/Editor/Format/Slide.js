@@ -310,7 +310,9 @@ Slide.prototype =
         {
             copy.cachedImage = this.getBase64Img();
         }
-
+        if(this.timing) {
+            copy.setTiming(this.timing.createDuplicate(oIdMap));
+        }
         return copy;
     },
 

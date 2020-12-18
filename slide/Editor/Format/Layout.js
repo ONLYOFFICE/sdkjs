@@ -190,6 +190,9 @@ SlideLayout.prototype =
         if(this.type !== copy.type){
             copy.setType(this.type);
         }
+        if(this.timing) {
+            copy.setTiming(this.timing.createDuplicate(oIdMap));
+        }
         return copy;
     },
 

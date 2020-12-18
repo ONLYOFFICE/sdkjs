@@ -615,6 +615,9 @@ MasterSlide.prototype =
             if (this.txStyles) {
                 copy.setTxStyles(this.txStyles.createDuplicate());
             }
+            if(this.timing) {
+                copy.setTiming(this.timing.createDuplicate(oIdMap));
+            }
             return copy;
         },
       
