@@ -8381,6 +8381,7 @@ Paragraph.prototype.GetCalculatedTextPr = function()
 	var TextPr;
 	if (true === this.ApplyToAll)
 	{
+		var oState = this.SaveSelectionState();
 		this.SelectAll(1);
 
 		var StartPos = 0;
@@ -8398,7 +8399,7 @@ Paragraph.prototype.GetCalculatedTextPr = function()
 				TextPr = TextPr.Compare(TempTextPr);
 		}
 
-		this.RemoveSelection();
+		this.LoadSelectionState(oState);
 	}
 	else
 	{
@@ -9712,6 +9713,7 @@ Paragraph.prototype.GetDirectTextPr = function()
 	var TextPr;
 	if (true === this.ApplyToAll)
 	{
+		var oState = this.SaveSelectionState();
 		this.SelectAll(1);
 
 		var Count    = this.Content.length;
@@ -9721,7 +9723,7 @@ Paragraph.prototype.GetDirectTextPr = function()
 
 		TextPr = this.Content[StartPos].GetDirectTextPr();
 
-		this.RemoveSelection();
+		this.LoadSelectionState(oState);
 	}
 	else
 	{

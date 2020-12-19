@@ -5682,7 +5682,6 @@ CTable.prototype.RemoveSelection = function()
 	if (false === this.Selection.Use)
 		return;
 
-	console.log("RemoveSelection");
 	this.CurCell = null;
 	if (this.GetRowsCount() > 0)
 	{
@@ -5703,6 +5702,8 @@ CTable.prototype.RemoveSelection = function()
 
 	this.Selection.Use   = false;
 	this.Selection.Start = false;
+
+	this.private_SetSelectionData(null);
 
 	this.Selection.StartPos.Pos = {Row : 0, Cell : 0};
 	this.Selection.EndPos.Pos   = {Row : 0, Cell : 0};
