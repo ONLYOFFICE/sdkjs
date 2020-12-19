@@ -116,16 +116,16 @@
         this.writeAttributes(pWriter);
         this.writeChildren(pWriter);
     };
-    CBaseObject.prototype.writeAttributes = function(pWriter) {
+    CBaseFormatObject.prototype.writeAttributes = function(pWriter) {
         pWriter.WriteUChar(g_nodeAttributeStart);
         this.privateWriteAttributes(pWriter);
         pWriter.WriteUChar(g_nodeAttributeEnd);
     };
-    CBaseObject.prototype.privateWriteAttributes = function(pWriter) {
+    CBaseFormatObject.prototype.privateWriteAttributes = function(pWriter) {
     };
-    CBaseObject.prototype.writeChildren = function(pWriter) {
+    CBaseFormatObject.prototype.writeChildren = function(pWriter) {
     };
-    CBaseObject.prototype.writeRecord1 = function(pWriter, nType, oChild) {
+    CBaseFormatObject.prototype.writeRecord1 = function(pWriter, nType, oChild) {
         if(AscCommon.isRealObject(oChild)) {
             pWriter.WriteRecord1(nType, oChild, function(oChild) {
                 oChild.toPPTY(pWriter);
@@ -135,15 +135,15 @@
             //TODO: throw an error
         }
     };
-    CBaseObject.prototype.writeRecord2 = function(pWriter, nType, oChild) {
+    CBaseFormatObject.prototype.writeRecord2 = function(pWriter, nType, oChild) {
         if(AscCommon.isRealObject(oChild)) {
             this.writeRecord1(pWriter, nType, oChild);
         }
     };
-    CBaseObject.prototype.getChildren = function() {
+    CBaseFormatObject.prototype.getChildren = function() {
         return [];
     };
-    CBaseObject.prototype.traverse = function(fCallback) {
+    CBaseFormatObject.prototype.traverse = function(fCallback) {
         if(fCallback(this)) {
             return true;
         }
@@ -158,8 +158,13 @@
         }
         return false;
     };
-    CBaseObject.prototype.handleRemoveObject = function(sObjectId) {
+    CBaseFormatObject.prototype.handleRemoveObject = function(sObjectId) {
         return false;
+    };
+    CBaseFormatObject.prototype.onRemoveChild = function(oChild) {
+        if(this.parent) {
+            this.parent.onRemoveChild(this);
+        }
     };
     //Method for debug
     //CBaseObject.prototype.compareTypes = function(oOther) {
@@ -276,6 +281,14 @@
             return false;
         });
     };
+    CTiming.prototype.onRemoveChild = function(oChild) {
+        if(oChild === this.tnLst) {
+            this.setTnLst(null);
+        }
+        else if(oChild === this.bldLst) {
+            this.setBldLst(null);
+        }
+    };
 
 
     changesFactory[AscDFH.historyitem_CommonTimingListAdd] = CChangeContent;
@@ -340,6 +353,19 @@
     };
     CCommonTimingList.prototype.getChildren = function() {
         return [].concat(this.list);
+    };
+    CCommonTimingList.prototype.onRemoveChild = function(oChild) {
+        if(this.parent) {
+            for(var nIdx = this.list.length - 1; nIdx > -1; --nIdx) {
+                if(this.list[nIdx] === oChild) {
+                    this.removeFromLst(nIdx);
+                    if(this.list.length === 0) {
+                        this.parent.onRemoveChild(this);
+                    }
+                    return;
+                }
+            }
+        }
     };
 
     function CAttrNameLst() {
@@ -525,6 +551,13 @@
     CObjectTarget.prototype.readAttribute = function(nType, pReader) {
     };
     CObjectTarget.prototype.readChild = function(nType, pReader) {
+    };
+    CObjectTarget.prototype.handleRemoveObject = function(sObjectId) {
+        if(this.spid === sObjectId) {
+            if(this.parent) {
+                this.parent.onRemoveChild(this);
+            }
+        }
     };
 
     changesFactory[AscDFH.historyitem_BldBaseGrpId] = CChangeLong;
@@ -986,7 +1019,13 @@
     CGraphicEl.prototype.readChild = function(nType, pReader) {
         pReader.stream.SkipRecord();
     };
-
+    CGraphicEl.prototype.handleRemoveObject = function(sObjectId) {
+        if(this.dgmId === sObjectId) {
+            if(this.parent) {
+                this.parent.onRemoveChild(this);
+            }
+        }
+    };
 
     changesFactory[AscDFH.historyitem_IndexRgSt] = CChangeLong;
     changesFactory[AscDFH.historyitem_IndexRgEnd] = CChangeLong;
@@ -1369,6 +1408,13 @@
     };
     CCBhvr.prototype.getChildren = function() {
         return [this.cTn, this.tgtEl, this.attrNameLst];
+    };
+    CCBhvr.prototype.onRemoveChild = function(oChild) {
+        if(oChild === this.tgtEl) {
+            if(this.parent) {
+                this.parent.onRemoveChild(this);
+            }
+        }
     };
 
     changesFactory[AscDFH.historyitem_CTnChildTnLst] = CChangeObject;
@@ -2000,6 +2046,11 @@
     CTgtEl.prototype.getChildren = function() {
         return [this.spTgt];
     };
+    CTgtEl.prototype.onRemoveChild = function(oChild) {
+        if(this.parent) {
+            this.parent.onRemoveChild(this);
+        }
+    };
 
 
     changesFactory[AscDFH.historyitem_SndTgtEmbed] = CChangeLong;
@@ -2175,6 +2226,14 @@
     };
     CSpTgt.prototype.getChildren = function() {
         return [this.txEl, this.graphicEl];
+    };
+    CSpTgt.prototype.handleRemoveObject = function(sObjectId) {
+        if(this.spid === sObjectId
+        || this.subSpId === sObjectId) {
+            if(this.parent) {
+                this.parent.onRemoveChild(this);
+            }
+        }
     };
 
     changesFactory[AscDFH.historyitem_IterateDataTmAbs] = CChangeObject;
