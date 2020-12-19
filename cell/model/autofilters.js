@@ -987,7 +987,7 @@
 				}
 			},
 
-			reapplyAllFilters: function (turnOffHistory, openPreviousHiddenRows, ignoreUndoRedo) {
+			reapplyAllFilters: function (turnOffHistory, openPreviousHiddenRows, ignoreUndoRedo, doExpandAutoFilter) {
 				if (turnOffHistory) {
 					History.TurnOff();
 				}
@@ -995,6 +995,15 @@
 				if (worksheet.AutoFilter) {
 					if (openPreviousHiddenRows && worksheet.AutoFilter.isApplyAutoFilter()) {
 						worksheet.setRowHidden(false, worksheet.AutoFilter.Ref.r1, worksheet.AutoFilter.Ref.r2);
+					}
+					if (doExpandAutoFilter) {
+						if (turnOffHistory) {
+							History.TurnOn();
+						}
+						this.expandAutoFilter();
+						if (turnOffHistory) {
+							History.TurnOff();
+						}
 					}
 					this.reapplyAutoFilter(null, ignoreUndoRedo);
 				}
@@ -1034,6 +1043,7 @@
 				History.Create_NewPoint();
 				History.StartTransaction();
 
+
 				//open/close rows
 				if ((!bUndoChanges && !bRedoChanges) || ignoreUndoRedo) {
 					var activeNamedSheetView = worksheet.getActiveNamedSheetViewId();
@@ -1050,6 +1060,27 @@
 				worksheet.workbook.dependencyFormulas.unlockRecal();
 				this.updateSlicer(displayName);
 				return {minChangeRow: minChangeRow, updateRange: filter.Ref, filter: filter};
+			},
+
+			expandAutoFilter: function () {
+				var ws = this.worksheet;
+
+				History.Create_NewPoint();
+				History.StartTransaction();
+
+				if (ws.AutoFilter) {
+					var _range = this.expandRange(ws.AutoFilter.Ref, true);
+					if (_range && _range.r2 > ws.AutoFilter.Ref.r2) {
+						var oldFilter = ws.AutoFilter.clone(null);
+						ws.AutoFilter.Ref.r2 = _range.r2;
+						var changeElement = {
+							oldFilter: oldFilter, newFilterRef: ws.AutoFilter.Ref.clone()
+						};
+						this._addHistoryObj(changeElement, AscCH.historyitem_AutoFilter_Change, null, true, oldFilter.Ref, null, oldFilter.Ref);
+					}
+				}
+
+				History.EndTransaction();
 			},
 
 			checkRemoveTableParts: function (delRange, tableRange) {

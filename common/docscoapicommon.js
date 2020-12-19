@@ -57,6 +57,11 @@
     return this;
   }
 
+  asc_CUser.prototype.isEqual = function(obj) {
+    return this.id === obj.id && this.idOriginal === obj.idOriginal && this.userName === obj.userName &&
+      this.state === obj.state && this.indexUser === obj.indexUser && this.color === obj.color &&
+      this.view === obj.view;
+  };
   asc_CUser.prototype._setUser = function(val) {
     if (val) {
       this.id = val['id'];

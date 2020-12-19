@@ -2612,7 +2612,7 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
             var _stream = global_memory_stream_menu;
             _stream["ClearNoAttack"]();
             _stream["WriteString2"](JSON.stringify({
-                result: this.can_AddQuotedComment()
+                result: this.can_AddQuotedComment() !== false
             }));
             _return = _stream;
             break;
@@ -2704,6 +2704,31 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
         {
             if (_api.asc_FollowRevisionMove) {
                 _api.asc_FollowRevisionMove(_internalStorage.changesReview[0]);
+            }
+            break;
+        }
+
+        case 25001: // ASC_MENU_EVENT_TYPE_DO_API_FUNCTION_CALL
+        {
+            var json = JSON.parse(_params[0]),
+                func = json["func"],
+                params = json["params"] || [],
+                returnable = json["returnable"] || false; // need return result
+
+            if (json && func) {
+                if (_api[func]) {
+                    if (returnable) {
+                        var _stream = global_memory_stream_menu;
+                        _stream["ClearNoAttack"]();
+                        var result = _api[func].apply(_api, params);
+                        _stream["WriteString2"](JSON.stringify({
+                            result: result
+                        }));
+                        _return = _stream;
+                    } else {
+                        _api[func].apply(_api, params);
+                    }
+                }
             }
             break;
         }

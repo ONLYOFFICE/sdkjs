@@ -4945,6 +4945,7 @@ var editor;
 
   prot["asc_GetFontThumbnailsPath"] = prot.asc_GetFontThumbnailsPath;
   prot["asc_setDocInfo"] = prot.asc_setDocInfo;
+  prot["asc_changeDocInfo"] = prot.asc_changeDocInfo;
   prot['asc_getFunctionArgumentSeparator'] = prot.asc_getFunctionArgumentSeparator;
   prot['asc_getCurrencySymbols'] = prot.asc_getCurrencySymbols;
   prot['asc_getLocaleExample'] = prot.asc_getLocaleExample;

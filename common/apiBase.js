@@ -413,6 +413,33 @@
 			this.onEndLoadDocInfo();
 		}
 	};
+	baseEditorsApi.prototype.asc_changeDocInfo = function(oDocInfo)
+	{
+		this.DocInfo.asc_getUserInfo().asc_putFullName(oDocInfo.asc_getUserName());
+		this.User.setUserName(oDocInfo.asc_getUserName());
+		var rData = {
+			"c": 'changedocinfo',
+			"id": this.documentId,
+			"username": oDocInfo.asc_getUserName()
+		};
+		var t            = this;
+		t.fCurCallback   = function(input)
+		{
+			if (null != input && "changedocinfo" == input["type"])
+			{
+				if ('ok' !== input["status"])
+				{
+					t.sendEvent("asc_onError", AscCommon.mapAscServerErrorToAscError(parseInt(input["data"])),
+						c_oAscError.Level.NoCritical);
+				}
+			}
+			else
+			{
+				t.sendEvent("asc_onError", c_oAscError.ID.Unknown, c_oAscError.Level.NoCritical);
+			}
+		};
+		AscCommon.sendCommand(this, null, rData);
+	};
 	baseEditorsApi.prototype.asc_isCrypto = function()
 	{
 		if (this.DocInfo && this.DocInfo.get_Encrypted() === true)

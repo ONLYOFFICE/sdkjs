@@ -1341,17 +1341,17 @@
       }
     }
     if (needChanged) {
-      for (i in participantsNew) {
-        if (!this._participants[i]) {
-          tmpUser = participantsNew[i];
-          tmpUser.setState(true);
+      for (i in this._participants) {
+        if (!(participantsNew[i] && this._participants[i].isEqual(participantsNew[i]))) {
+          tmpUser = this._participants[i];
+          tmpUser.setState(false);
           usersStateChanged.push(tmpUser);
         }
       }
-      for (i in this._participants) {
-        if (!participantsNew[i]) {
-          tmpUser = this._participants[i];
-          tmpUser.setState(false);
+      for (i in participantsNew) {
+        if (!(this._participants[i] && this._participants[i].isEqual(participantsNew[i]))) {
+          tmpUser = participantsNew[i];
+          tmpUser.setState(true);
           usersStateChanged.push(tmpUser);
         }
       }

@@ -9885,6 +9885,116 @@ $( function () {
 	});
 
 
+	test( "Test: \"XLOOKUP\"", function () {
+
+		ws.getRange2( "A551" ).setValue( "6" );
+		ws.getRange2( "A552" ).setValue( "2" );
+		ws.getRange2( "A553" ).setValue( "test" );
+		ws.getRange2( "A554" ).setValue( "5" );
+		ws.getRange2( "A555" ).setValue( "4" );
+		ws.getRange2( "A556" ).setValue( "12" );
+		ws.getRange2( "A557" ).setValue( "16" );
+		ws.getRange2( "A558" ).setValue( "14" );
+		ws.getRange2( "A559" ).setValue( "99" );
+		ws.getRange2( "A560" ).setValue( "tt" );
+		ws.getRange2( "A561" ).setValue( "t4" );
+
+		ws.getRange2( "B551" ).setValue( "a" );
+		ws.getRange2( "B552" ).setValue( "b" );
+		ws.getRange2( "B553" ).setValue( "c" );
+		ws.getRange2( "B554" ).setValue( "d" );
+		ws.getRange2( "B555" ).setValue( "e" );
+		ws.getRange2( "B556" ).setValue( "f" );
+		ws.getRange2( "B557" ).setValue( "g" );
+		ws.getRange2( "B558" ).setValue( "l" );
+		ws.getRange2( "B559" ).setValue( "n" );
+		ws.getRange2( "B560" ).setValue( "u" );
+		ws.getRange2( "B561" ).setValue( "p" );
+
+		ws.getRange2( "C551" ).setValue( "a1" );
+		ws.getRange2( "C552" ).setValue( "b1" );
+		ws.getRange2( "C553" ).setValue( "test2" );
+		ws.getRange2( "C554" ).setValue( "c2" );
+		ws.getRange2( "C555" ).setValue( "d2" );
+		ws.getRange2( "C556" ).setValue( "h3" );
+		ws.getRange2( "C557" ).setValue( "j5" );
+		ws.getRange2( "C558" ).setValue( "u2" );
+		ws.getRange2( "C559" ).setValue( "m1" );
+		ws.getRange2( "C560" ).setValue( "k" );
+		ws.getRange2( "C561" ).setValue( "l" );
+
+		ws.getRange2( "C565" ).setValue( "99" );
+
+		oParser = new parserFormula( "XLOOKUP(14,A551:A561,C551:C561)", "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), "u2" );
+
+		oParser = new parserFormula( "XLOOKUP(C565,A551:A561,B551:C561)", "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), "n" );
+		strictEqual( oParser.calculate().getElementRowCol(0,1).getValue(), "m1" );
+
+		oParser = new parserFormula( 'XLOOKUP(1,A551:A561,B551:C561,"not found")', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "not found" );
+
+		oParser = new parserFormula( 'XLOOKUP(10,A551:A561,B551:C561,0,1,1)', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), "f" );
+		strictEqual( oParser.calculate().getElementRowCol(0,1).getValue(), "h3" );
+
+		oParser = new parserFormula( 'XLOOKUP(10,A551:A561,B551:C561,0,-1,1)', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), "a" );
+		strictEqual( oParser.calculate().getElementRowCol(0,1).getValue(), "a1" );
+
+		oParser = new parserFormula( 'XLOOKUP(10,A551:A561,B551:C561,0,0)', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), 0 );
+
+		oParser = new parserFormula( 'XLOOKUP(10,A551:A561,B551:C561)', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "#N/A" );
+
+		oParser = new parserFormula( 'XLOOKUP(10,A551:A561,B551:C561,,,2)', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "#N/A" );
+
+		oParser = new parserFormula( 'XLOOKUP(10,A551:A561,B551:C561,,,-2)', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "#N/A" );
+
+		oParser = new parserFormula( 'XLOOKUP(10,A551:A561,B551:C561,,-1,-2)', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "#N/A" );
+
+		oParser = new parserFormula( 'XLOOKUP("test",A551:A561,B551:C561,,-1,2)', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), "n" );
+
+		oParser = new parserFormula( 'XLOOKUP("tt",A551:A561,B551:C561,,-1,2)', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), "u" );
+
+		oParser = new parserFormula( 'XLOOKUP("t???",A551:A561,B551:C561,,2)', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), "c" );
+
+		oParser = new parserFormula( 'XLOOKUP("t???",A551:A561,B551:C561,,2)', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), "c" );
+
+		oParser = new parserFormula( 'XLOOKUP("t?",A551:A561,B551:C561,,2)', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getElementRowCol(0,0).getValue(), "u" );
+
+		oParser = new parserFormula( 'XLOOKUP("t?",A551:A561,B551:C561,,0)', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "#N/A" );
+
+	} );
+
+
 	test( "Test: \"MATCH\"", function () {
 
         ws.getRange2( "A551" ).setValue( "28" );

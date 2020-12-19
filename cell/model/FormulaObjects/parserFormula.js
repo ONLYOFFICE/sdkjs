@@ -1279,6 +1279,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 		}
 	};
+	cArea.prototype.getDimensions = function () {
+		var res = null;
+		if (this.range && this.range.bbox) {
+			var bbox = this.range.bbox;
+			res =  {col: bbox.c2 - bbox.c1 + 1, row:  bbox.r2 - bbox.r1 + 1, bbox: bbox};
+		}
+		return res;
+	};
 
 	/**
 	 * @constructor
@@ -1632,6 +1640,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArea3D.prototype.isBetweenSheet = function (ws) {
 		return ws && this.wsFrom.getIndex() <= ws.getIndex() && ws.getIndex() <= this.wsTo.getIndex();
+	};
+	cArea3D.prototype.getDimensions = function () {
+		var res = null;
+		if (this.bbox) {
+			res =  {col: this.bbox.c2 - this.bbox.c1 + 1, row: this.bbox.r2 - this.bbox.r1 + 1, bbox: this.bbox};
+		}
+		return res;
 	};
 
 	/**
@@ -2689,6 +2704,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				this.addElement(null);
 			}
 		}
+	};
+	cArray.prototype.getDimensions = function () {
+		return {col: this.getCountElementInRow(), row: this.getCountElement()};
 	};
 
 

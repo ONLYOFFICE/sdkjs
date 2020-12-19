@@ -15072,6 +15072,12 @@
 			}
 
 			//reApply
+			History.Create_NewPoint();
+			History.StartTransaction();
+			if (tableName === null) {
+				t.model.autoFilters.expandAutoFilter()
+			}
+
 			var applyFilterProps = t.model.autoFilters.reapplyAutoFilter(tableName, ar);
 
 			//reSort
@@ -15110,15 +15116,16 @@
 			}
 
 			t.model.autoFilters._resetTablePartStyle();
+			History.EndTransaction();
 
 			var minChangeRow = applyFilterProps.minChangeRow;
 			var updateRange = applyFilterProps.updateRange;
 
-            if (updateRange && !t.model.workbook.bUndoChanges && !t.model.workbook.bRedoChanges) {
-                t.objectRender.bUpdateMetrics = false;
-                t._onUpdateFormatTable(updateRange);
-                t.objectRender.bUpdateMetrics = true;
-            }
+			if (updateRange && !t.model.workbook.bUndoChanges && !t.model.workbook.bRedoChanges) {
+				t.objectRender.bUpdateMetrics = false;
+				t._onUpdateFormatTable(updateRange);
+				t.objectRender.bUpdateMetrics = true;
+			}
 
 			if (null !== minChangeRow) {
 				t.objectRender.updateSizeDrawingObjects({target: c_oTargetType.RowResize, row: minChangeRow});

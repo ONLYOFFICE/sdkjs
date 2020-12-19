@@ -10839,6 +10839,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['sync_ChangeLastSelectedElement']            = asc_docs_api.prototype.sync_ChangeLastSelectedElement;
 	asc_docs_api.prototype['asc_getEditorPermissions']                  = asc_docs_api.prototype.asc_getEditorPermissions;
 	asc_docs_api.prototype['asc_setDocInfo']                            = asc_docs_api.prototype.asc_setDocInfo;
+	asc_docs_api.prototype['asc_changeDocInfo']                         = asc_docs_api.prototype.asc_changeDocInfo;
 	asc_docs_api.prototype['asc_setLocale']                             = asc_docs_api.prototype.asc_setLocale;
 	asc_docs_api.prototype['asc_getLocale']                             = asc_docs_api.prototype.asc_getLocale;
 	asc_docs_api.prototype['asc_LoadDocument']                          = asc_docs_api.prototype.asc_LoadDocument;

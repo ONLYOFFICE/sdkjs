@@ -800,6 +800,9 @@
 			case c_oAscServerError.Password :
 				nRes = Asc.c_oAscError.ID.Password;
 				break;
+			case c_oAscServerError.ChangeDocInfo :
+				nRes = Asc.c_oAscError.ID.AccessDeny;
+				break;
 			case c_oAscServerError.Storage :
 			case c_oAscServerError.StorageFileNoFound :
 			case c_oAscServerError.StorageRead :
@@ -1270,6 +1273,7 @@
 		NoError:           0,
 		Unknown:           -1,
 		ReadRequestStream: -3,
+		ChangeDocInfo:     -5,
 
 		TaskQueue: -20,
 
