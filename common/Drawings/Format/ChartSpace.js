@@ -123,9 +123,9 @@ var SKIP_LBL_LIMIT = 100;
             oContent = bLbl ? oContent.compiledDlb && oContent.compiledDlb.txBody && oContent.compiledDlb.txBody.content : oContent.txBody && oContent.txBody.content;
             if(!oContent)
                 continue;
-            oContent.Set_ApplyToAll(true);
+            oContent.SetApplyToAll(true);
             var oTextPr = oContent.GetCalculatedTextPr();
-            oContent.Set_ApplyToAll(false);
+            oContent.SetApplyToAll(false);
             if(!oResultTextPr)
             {
                 oResultTextPr = oTextPr;
@@ -569,10 +569,10 @@ var G_O_ACTIVE_COMMENT_BRUSH = AscFormat.CreateUniFillByUniColor(AscFormat.Creat
                     CheckParagraphTextPr(aContent[i], oTextPr);
                 }
 
-                oElement.tx.rich.content.Set_ApplyToAll(true);
+                oElement.tx.rich.content.SetApplyToAll(true);
                 var oParTextPr = new AscCommonWord.ParaTextPr(oTextPr);
                 oElement.tx.rich.content.AddToParagraph(oParTextPr);
-                oElement.tx.rich.content.Set_ApplyToAll(false);
+                oElement.tx.rich.content.SetApplyToAll(false);
             }
             CheckParagraphTextPr(oElement.txPr.content.Content[0], oTextPr);
         }
@@ -602,9 +602,9 @@ var G_O_ACTIVE_COMMENT_BRUSH = AscFormat.CreateUniFillByUniColor(AscFormat.Creat
             oElement.txPr.content.Content[0].Set_Pr(oParaPr);
             if(oElement.tx && oElement.tx.rich)
             {
-                oElement.tx.rich.content.Set_ApplyToAll(true);
+                oElement.tx.rich.content.SetApplyToAll(true);
                 oElement.tx.rich.content.IncreaseDecreaseFontSize(bIncrease);
-                oElement.tx.rich.content.Set_ApplyToAll(false);
+                oElement.tx.rich.content.SetApplyToAll(false);
 
             }
         }
@@ -909,10 +909,10 @@ var G_O_ACTIVE_COMMENT_BRUSH = AscFormat.CreateUniFillByUniColor(AscFormat.Creat
             }
             if(oLabel){
                 var oContent = oLabel.tx.rich.content;
-                oContent.Set_ApplyToAll(true);
+                oContent.SetApplyToAll(true);
                 oContent.SetParagraphAlign(AscCommon.align_Left);
                 oContent.SetParagraphIndent({FirstLine: 0.0, Left: 0.0});
-                oContent.Set_ApplyToAll(false);
+                oContent.SetApplyToAll(false);
                 var oSize = oLabel.tx.rich.getContentOneStringSizes();
                 var fInset = fMultiplier*(oSize.h);
                 fInset *= 2;
@@ -954,10 +954,10 @@ var G_O_ACTIVE_COMMENT_BRUSH = AscFormat.CreateUniFillByUniColor(AscFormat.Creat
             if(aLabels[i]){
                 var oLabel = aLabels[i];
                 var oContent = oLabel.tx.rich.content;
-                oContent.Set_ApplyToAll(true);
+                oContent.SetApplyToAll(true);
                 oContent.SetParagraphAlign(AscCommon.align_Left);
                 oContent.SetParagraphIndent({FirstLine: 0.0, Left: 0.0});
-                oContent.Set_ApplyToAll(false);
+                oContent.SetApplyToAll(false);
                 var oSize = oLabel.tx.rich.getContentOneStringSizes();
                 var fBoxW = fMultiplier*(oSize.w + oSize.h);
                 var fBoxH = fBoxW;
@@ -1047,9 +1047,9 @@ var G_O_ACTIVE_COMMENT_BRUSH = AscFormat.CreateUniFillByUniColor(AscFormat.Creat
             if(this.aLabels[i]){
                 oLabel = this.aLabels[i];
                 oContent = oLabel.tx.rich.content;
-                oContent.Set_ApplyToAll(true);
+                oContent.SetApplyToAll(true);
                 oContent.SetParagraphAlign(AscCommon.align_Left);
-                oContent.Set_ApplyToAll(false);
+                oContent.SetApplyToAll(false);
                 oSize = oLabel.tx.rich.getContentOneStringSizes();
                 if(oSize.w + fDistance_ > fMaxBlockWidth){
                     break;
@@ -1085,9 +1085,9 @@ var G_O_ACTIVE_COMMENT_BRUSH = AscFormat.CreateUniFillByUniColor(AscFormat.Creat
                 oLabel = this.aLabels[i];
                 if(oLabel){
                     oContent = oLabel.tx.rich.content;
-                    oContent.Set_ApplyToAll(true);
+                    oContent.SetApplyToAll(true);
                     oContent.SetParagraphAlign(AscCommon.align_Center);
-                    oContent.Set_ApplyToAll(false);
+                    oContent.SetApplyToAll(false);
                     var fContentWidth;
                     if(fMaxMinWidth + fDistance_ < fMaxBlockWidth) {
                         fContentWidth = oContent.RecalculateMinMaxContentWidth().Min + 0.1;
@@ -1173,9 +1173,9 @@ var G_O_ACTIVE_COMMENT_BRUSH = AscFormat.CreateUniFillByUniColor(AscFormat.Creat
         dlbl.tx = new AscFormat.CChartText();
         dlbl.tx.rich = AscFormat.CreateTextBodyFromString(sText, oDrawingDocument, dlbl);
         var content = dlbl.tx.rich.content;
-        content.Set_ApplyToAll(true);
+        content.SetApplyToAll(true);
         content.SetParagraphAlign(AscCommon.align_Center);
-        content.Set_ApplyToAll(false);
+        content.SetApplyToAll(false);
         dlbl.txBody = dlbl.tx.rich;
         dlbl.oneStringWidth = -1.0;
         return dlbl;
@@ -2425,9 +2425,9 @@ CChartSpace.prototype.paragraphAdd = function(paraItem, bRecalculate)
             CheckObjectTextPr(this.selection.title, _paraItem.Value, this.getDrawingDocument(), 18);
             if(this.selection.title.tx && this.selection.title.tx.rich && this.selection.title.tx.rich.content)
             {
-                this.selection.title.tx.rich.content.Set_ApplyToAll(true);
+                this.selection.title.tx.rich.content.SetApplyToAll(true);
                 this.selection.title.tx.rich.content.AddToParagraph(_paraItem);
-                this.selection.title.tx.rich.content.Set_ApplyToAll(false);
+                this.selection.title.tx.rich.content.SetApplyToAll(false);
             }
             return;
         }*/
@@ -9017,9 +9017,9 @@ CChartSpace.prototype.recalculateAxis = function()
                             //dlbl.recalculate();
 
                             var content = dlbl.tx.rich.content;
-                            content.Set_ApplyToAll(true);
+                            content.SetApplyToAll(true);
                             content.SetParagraphAlign(AscCommon.align_Center);
-                            content.Set_ApplyToAll(false);
+                            content.SetApplyToAll(false);
                             dlbl.txBody = dlbl.tx.rich;
                             if(cat_ax.labels.aLabels.length > 0)
                             {
@@ -9899,9 +9899,9 @@ CChartSpace.prototype.recalculateAxis = function()
                                 if(cat_ax.labels.aLabels[i])
                                 {
                                     var label_text_transform = cat_ax.labels.aLabels[i].transformText;
-                                    cat_ax.labels.aLabels[i].tx.rich.content.Set_ApplyToAll(true);
+                                    cat_ax.labels.aLabels[i].tx.rich.content.SetApplyToAll(true);
                                     cat_ax.labels.aLabels[i].tx.rich.content.SetParagraphAlign(AscCommon.align_Left);
-                                    cat_ax.labels.aLabels[i].tx.rich.content.Set_ApplyToAll(false);
+                                    cat_ax.labels.aLabels[i].tx.rich.content.SetApplyToAll(false);
                                     var wh = cat_ax.labels.aLabels[i].tx.rich.getContentOneStringSizes();//Todo: не расчитывать больше контент
                                     w2 = wh.w*Math.cos(Math.PI/4) + wh.h*Math.sin(Math.PI/4);
                                     h2 = wh.w*Math.sin(Math.PI/4) + wh.h*Math.cos(Math.PI/4);
@@ -9944,9 +9944,9 @@ CChartSpace.prototype.recalculateAxis = function()
                                 if(cat_ax.labels.aLabels[i])
                                 {
                                     var label_text_transform = cat_ax.labels.aLabels[i].transformText;
-                                    cat_ax.labels.aLabels[i].tx.rich.content.Set_ApplyToAll(true);
+                                    cat_ax.labels.aLabels[i].tx.rich.content.SetApplyToAll(true);
                                     cat_ax.labels.aLabels[i].tx.rich.content.SetParagraphAlign(AscCommon.align_Left);
-                                    cat_ax.labels.aLabels[i].tx.rich.content.Set_ApplyToAll(false);
+                                    cat_ax.labels.aLabels[i].tx.rich.content.SetApplyToAll(false);
                                     var wh = cat_ax.labels.aLabels[i].tx.rich.getContentOneStringSizes();//Todo: не расчитывать больше контент
                                     w2 = wh.w*Math.cos(Math.PI/4) + wh.h*Math.sin(Math.PI/4);
                                     h2 = wh.w*Math.sin(Math.PI/4) + wh.h*Math.cos(Math.PI/4);
@@ -10524,9 +10524,9 @@ CChartSpace.prototype.recalculateAxis = function()
                             {
                                 dlbl.lastStyleObject = cat_ax.labels.aLabels[0].lastStyleObject;
                             }
-                            dlbl.tx.rich.content.Set_ApplyToAll(true);
+                            dlbl.tx.rich.content.SetApplyToAll(true);
                             dlbl.tx.rich.content.SetParagraphAlign(AscCommon.align_Center);
-                            dlbl.tx.rich.content.Set_ApplyToAll(false);
+                            dlbl.tx.rich.content.SetApplyToAll(false);
                             var min_max =  dlbl.tx.rich.content.RecalculateMinMaxContentWidth();
                             var max_min_content_width = min_max.Min;
                             if(min_max.Max > max_max_width)
@@ -10921,9 +10921,9 @@ CChartSpace.prototype.recalculateAxis = function()
                          {
                          if(cat_ax.labels.aLabels[i])
                          {
-                         cat_ax.labels.aLabels[i].tx.rich.content.Set_ApplyToAll(true);
+                         cat_ax.labels.aLabels[i].tx.rich.content.SetApplyToAll(true);
                          cat_ax.labels.aLabels[i].tx.rich.content.SetParagraphAlign(align_Center);
-                         cat_ax.labels.aLabels[i].tx.rich.content.Set_ApplyToAll(false);
+                         cat_ax.labels.aLabels[i].tx.rich.content.SetApplyToAll(false);
                          cat_ax.labels.aLabels[i].tx.rich.content.Reset(0, 0, cat_ax.labels.extX - labels_offset, 2000);
                          cat_ax.labels.aLabels[i].tx.rich.content.Recalculate_Page(0, true);
                          cat_ax.labels.aLabels[i].setPosition(cat_ax.labels.x, arr_cat_labels_points[i] - cat_ax.labels.aLabels[i].tx.rich.content.GetSummaryHeight()/2);

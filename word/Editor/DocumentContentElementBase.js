@@ -656,14 +656,6 @@ CDocumentContentElementBase.prototype.SaveRecalculateObject = function()
 CDocumentContentElementBase.prototype.LoadRecalculateObject = function(RecalcObj)
 {
 };
-CDocumentContentElementBase.prototype.Set_ApplyToAll = function(bValue)
-{
-	this.SetApplyToAll(bValue);
-};
-CDocumentContentElementBase.prototype.Get_ApplyToAll = function()
-{
-	return this.IsApplyToAll();
-};
 CDocumentContentElementBase.prototype.SetApplyToAll = function(isApplyAll)
 {
 	this.ApplyToAll = isApplyAll;

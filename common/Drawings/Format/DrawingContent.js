@@ -716,9 +716,9 @@
             for (var Index = 0; Index < this.Content.length; Index++)
             {
                 var Item = this.Content[Index];
-                Item.Set_ApplyToAll(true);
+                Item.SetApplyToAll(true);
                 Item.ClearParagraphFormatting(isClearParaPr, isClearTextPr);
-                Item.Set_ApplyToAll(false);
+                Item.SetApplyToAll(false);
             }
 
             return;

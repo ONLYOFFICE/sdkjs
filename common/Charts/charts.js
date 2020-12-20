@@ -772,10 +772,10 @@ TextArtPreviewManager.prototype.getShapeByPrst = function(prst)
 			break;
 		}
 	}
-	oContent.Set_ApplyToAll(true);
+	oContent.SetApplyToAll(true);
 	oContent.SetParagraphAlign(AscCommon.align_Center);
 	oContent.AddToParagraph(new ParaTextPr({FontSize: 36, Spacing: TextSpacing}));
-	oContent.Set_ApplyToAll(false);
+	oContent.SetApplyToAll(false);
 
 	var oBodypr = oShape.getBodyPr().createDuplicate();
 	oBodypr.prstTxWarp = AscFormat.ExecuteNoHistory(
@@ -878,11 +878,11 @@ TextArtPreviewManager.prototype.getTAShape = function()
 				oContent.MoveCursorToStartPos();
 			}
 			oContent.AddText("Ta");
-			oContent.Set_ApplyToAll(true);
+			oContent.SetApplyToAll(true);
 			oContent.AddToParagraph(new ParaTextPr({FontSize: 109, RFonts: {Ascii : {Name: "Arial", Index: -1}}}));
 			oContent.SetParagraphAlign(AscCommon.align_Center);
 			oContent.SetParagraphIndent({FirstLine: 0, Left: 0, Right: 0});
-			oContent.Set_ApplyToAll(false);
+			oContent.SetApplyToAll(false);
 		}
 		if (MainLogicDocument && true === TrackRevisions)
 			MainLogicDocument.SetTrackRevisions(true);
@@ -948,7 +948,7 @@ TextArtPreviewManager.prototype.generateTextArtStyles = function()
             editor.ShowParaMarks = false;
         }
         var oContent = oShape.getDocContent();
-        oContent.Set_ApplyToAll(true);
+        oContent.SetApplyToAll(true);
         for(var i = 0; i < this.aStylesByIndex.length; ++i)
         {
             oContent.AddToParagraph(new ParaTextPr(this.aStylesByIndex[i]));
@@ -966,7 +966,7 @@ TextArtPreviewManager.prototype.generateTextArtStyles = function()
             oShape.draw(graphics);
             this.TextArtStyles[i] = _canvas.toDataURL("image/png");
         }
-        oContent.Set_ApplyToAll(false);
+        oContent.SetApplyToAll(false);
 
         if(editor)
         {

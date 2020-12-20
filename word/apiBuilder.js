@@ -4790,9 +4790,9 @@
 	 */
 	ApiParagraph.prototype.SetBold = function(isBold)
 	{
-		this.Paragraph.Set_ApplyToAll(true);
+		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Bold : isBold}));
-		this.Paragraph.Set_ApplyToAll(false);
+		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
 	};
@@ -4805,9 +4805,9 @@
 	 */
 	ApiParagraph.prototype.SetCaps = function(isCaps)
 	{
-		this.Paragraph.Set_ApplyToAll(true);
+		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Caps : isCaps}));
-		this.Paragraph.Set_ApplyToAll(false);
+		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
 	};
@@ -4829,7 +4829,7 @@
 		color.b    = b;
 		color.Auto = isAuto;
 
-		this.Paragraph.Set_ApplyToAll(true);
+		this.Paragraph.SetApplyToAll(true);
 		if (true === color.Auto)
 		{
 			this.Paragraph.Add(new AscCommonWord.ParaTextPr({
@@ -4848,7 +4848,7 @@
 			Unifill.fill.color = AscFormat.CorrectUniColor(color, Unifill.fill.color, 1);
 			this.Paragraph.Add(new AscCommonWord.ParaTextPr({Unifill : Unifill}));
 		}
-		this.Paragraph.Set_ApplyToAll(false);
+		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
 	};
@@ -4861,9 +4861,9 @@
 	 */
 	ApiParagraph.prototype.SetDoubleStrikeout = function(isDoubleStrikeout)
 	{
-		this.Paragraph.Set_ApplyToAll(true);
+		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({DStrikeout : isDoubleStrikeout}));
-		this.Paragraph.Set_ApplyToAll(false);
+		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
 	};
@@ -4890,9 +4890,9 @@
 				Index : -1
 			};
 
-			this.Paragraph.Set_ApplyToAll(true);
+			this.Paragraph.SetApplyToAll(true);
 			this.Paragraph.Add(new AscCommonWord.ParaTextPr({FontFamily : FontFamily}));
-			this.Paragraph.Set_ApplyToAll(false);
+			this.Paragraph.SetApplyToAll(false);
 			
 			return this;
 		}
@@ -4908,9 +4908,9 @@
 	 */
 	ApiParagraph.prototype.SetFontSize = function(nSize)
 	{
-		this.Paragraph.Set_ApplyToAll(true);
+		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({FontSize : nSize/2}));
-		this.Paragraph.Set_ApplyToAll(false);
+		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
 	};
@@ -4926,7 +4926,7 @@
 	 */
 	ApiParagraph.prototype.SetHighlight = function(r, g, b, isNone)
 	{
-		this.Paragraph.Set_ApplyToAll(true);
+		this.Paragraph.SetApplyToAll(true);
 		if (true === isNone)
 		{
 			this.Paragraph.Add(new ParaTextPr({HighLight : highlight_None}));
@@ -4936,7 +4936,7 @@
 			var color = new CDocumentColor(r, g, b);
 			this.Paragraph.Add(new ParaTextPr({HighLight : color}));
 		}
-		this.Paragraph.Set_ApplyToAll(false);
+		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
 	};
@@ -4949,9 +4949,9 @@
 	 */
 	ApiParagraph.prototype.SetItalic = function(isItalic)
 	{
-		this.Paragraph.Set_ApplyToAll(true);
+		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Italic : isItalic}));
-		this.Paragraph.Set_ApplyToAll(false);
+		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
 	};
@@ -4966,9 +4966,9 @@
 	 */
 	ApiParagraph.prototype.SetPosition = function(nPosition)
 	{
-		this.Paragraph.Set_ApplyToAll(true);
+		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Position : nPosition}));
-		this.Paragraph.Set_ApplyToAll(false);
+		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
 	};
@@ -4990,7 +4990,7 @@
 		color.b    = b;
 		color.Auto = false;
 
-		this.Paragraph.Set_ApplyToAll(true);
+		this.Paragraph.SetApplyToAll(true);
 
 		var Shd = new CDocumentShd();
 
@@ -5018,7 +5018,7 @@
 			Shd.Set_FromObject(_Shd);
 			this.Paragraph.SetParagraphShd(_Shd);
 		}
-		this.Paragraph.Set_ApplyToAll(false);
+		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
 	};
@@ -5032,12 +5032,12 @@
 	 */
 	ApiParagraph.prototype.SetSmallCaps = function(isSmallCaps)
 	{
-		this.Paragraph.Set_ApplyToAll(true);
+		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({
 			SmallCaps : isSmallCaps,
 			Caps      : false
 		}));
-		this.Paragraph.Set_ApplyToAll(false);
+		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
 	};
@@ -5050,9 +5050,9 @@
 	 */
 	ApiParagraph.prototype.SetSpacing = function(nSpacing)
 	{
-		this.Paragraph.Set_ApplyToAll(true);
+		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Spacing : nSpacing}));
-		this.Paragraph.Set_ApplyToAll(false);
+		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
 	};
@@ -5065,12 +5065,12 @@
 	 */
 	ApiParagraph.prototype.SetStrikeout = function(isStrikeout)
 	{
-		this.Paragraph.Set_ApplyToAll(true);
+		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({
 			Strikeout  : isStrikeout,
 			DStrikeout : false
 			}));
-		this.Paragraph.Set_ApplyToAll(false);
+		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
 	};
@@ -5084,9 +5084,9 @@
 	 */
 	ApiParagraph.prototype.SetUnderline = function(isUnderline)
 	{
-		this.Paragraph.Set_ApplyToAll(true);
+		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Underline : isUnderline}));
-		this.Paragraph.Set_ApplyToAll(false);
+		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
 	};
@@ -5113,9 +5113,9 @@
 		else 
 			return null;
 
-		this.Paragraph.Set_ApplyToAll(true);
+		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({VertAlign : value}));
-		this.Paragraph.Set_ApplyToAll(false);
+		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
 	};
@@ -5320,9 +5320,9 @@
 		if (!(oTextPr instanceof ApiTextPr))
 			return false;
 
-		this.Paragraph.Set_ApplyToAll(true);
+		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr(oTextPr.TextPr));
-		this.Paragraph.Set_ApplyToAll(false);
+		this.Paragraph.SetApplyToAll(false);
 
 		return true;
 	};
@@ -7276,9 +7276,9 @@
 
 		for (var curPara = 0; curPara < allParagraphs.length; curPara++)
 		{
-			allParagraphs[curPara].Set_ApplyToAll(true);
+			allParagraphs[curPara].SetApplyToAll(true);
 			allParagraphs[curPara].Add(new AscCommonWord.ParaTextPr(oTextPr.TextPr));
-			allParagraphs[curPara].Set_ApplyToAll(false);
+			allParagraphs[curPara].SetApplyToAll(false);
 		}
 		
 		return true;
@@ -7814,9 +7814,9 @@
 		cellContent.GetAllParagraphs({All : true}, allParagraphs);
 		for (var curPara = 0; curPara < allParagraphs.length; curPara++)
 		{
-			allParagraphs[curPara].Set_ApplyToAll(true);
+			allParagraphs[curPara].SetApplyToAll(true);
 			allParagraphs[curPara].Add(new AscCommonWord.ParaTextPr(oTextPr.TextPr));
-			allParagraphs[curPara].Set_ApplyToAll(false);
+			allParagraphs[curPara].SetApplyToAll(false);
 		}
 		
 		return true;
@@ -10293,9 +10293,9 @@
 			oTitle.setTx(new AscFormat.CChartText());
 			var oTextBody = AscFormat.CreateTextBodyFromString(sTitle, this.Chart.getDrawingDocument(), oTitle.tx);
 			if(AscFormat.isRealNumber(nFontSize)){
-				oTextBody.content.Set_ApplyToAll(true);
+				oTextBody.content.SetApplyToAll(true);
 				oTextBody.content.AddToParagraph(new ParaTextPr({ FontSize : nFontSize}));
-				oTextBody.content.Set_ApplyToAll(false);
+				oTextBody.content.SetApplyToAll(false);
 			}
 			oTitle.tx.setRich(oTextBody);
 			return oTitle;
@@ -11419,9 +11419,9 @@
 	ApiBlockLvlSdt.prototype.SetTextPr = function(oTextPr)
 	{
 		var ParaTextPr = new AscCommonWord.ParaTextPr(oTextPr.TextPr);
-		this.Sdt.Content.Set_ApplyToAll(true);
+		this.Sdt.Content.SetApplyToAll(true);
 		this.Sdt.Add(ParaTextPr);
-		this.Sdt.Content.Set_ApplyToAll(false);
+		this.Sdt.Content.SetApplyToAll(false);
 	};
 
 	/**

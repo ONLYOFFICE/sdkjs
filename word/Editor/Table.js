@@ -3479,7 +3479,7 @@ CTable.prototype.Is_UseInDocument = function(Id)
 };
 CTable.prototype.Get_CurrentPage_Absolute = function()
 {
-	if (true === this.ApplyToAll || (true === this.Selection.Use && table_Selection_Cell === this.Selection.Type && this.Selection.Data.length > 0))
+	if (this.IsCellSelection())
 	{
 		// Проходимся по всей последней выделенной строке и находим текущую страницу с наибольшим значением
 		// Если мы будет брать текущую страницу просто у последней ячейки выделения, тогда нужно переделать функцию
@@ -4465,26 +4465,26 @@ CTable.prototype.AddComment = function(Comment, bStart, bEnd)
 		if (true === bStart && true === bEnd && RowsCount <= 1 && CellsCount <= 1)
 		{
 			var Cell_Content = this.Content[0].Get_Cell(0).Content;
-			Cell_Content.Set_ApplyToAll(true);
+			Cell_Content.SetApplyToAll(true);
 			Cell_Content.AddComment(Comment, true, true);
-			Cell_Content.Set_ApplyToAll(false);
+			Cell_Content.SetApplyToAll(false);
 		}
 		else
 		{
 			if (true === bStart)
 			{
 				var Cell_Content = this.Content[0].Get_Cell(0).Content;
-				Cell_Content.Set_ApplyToAll(true);
+				Cell_Content.SetApplyToAll(true);
 				Cell_Content.AddComment(Comment, true, false);
-				Cell_Content.Set_ApplyToAll(false);
+				Cell_Content.SetApplyToAll(false);
 			}
 
 			if (true === bEnd)
 			{
 				var Cell_Content = this.Content[RowsCount - 1].Get_Cell(CellsCount - 1).Content;
-				Cell_Content.Set_ApplyToAll(true);
+				Cell_Content.SetApplyToAll(true);
 				Cell_Content.AddComment(Comment, false, true);
-				Cell_Content.Set_ApplyToAll(false);
+				Cell_Content.SetApplyToAll(false);
 			}
 
 			// TODO: Пока нам приходится пересчитывать ячейки после добавления комментариев. Как только
@@ -4512,9 +4512,9 @@ CTable.prototype.AddComment = function(Comment, bStart, bEnd)
 			{
 				var Pos          = this.Selection.Data[0];
 				var Cell_Content = this.Content[Pos.Row].Get_Cell(Pos.Cell).Content;
-				Cell_Content.Set_ApplyToAll(true);
+				Cell_Content.SetApplyToAll(true);
 				Cell_Content.AddComment(Comment, true, true);
-				Cell_Content.Set_ApplyToAll(false);
+				Cell_Content.SetApplyToAll(false);
 			}
 			else
 			{
@@ -4524,18 +4524,18 @@ CTable.prototype.AddComment = function(Comment, bStart, bEnd)
 				{
 					StartPos         = this.Selection.Data[0];
 					var Cell_Content = this.Content[StartPos.Row].Get_Cell(StartPos.Cell).Content;
-					Cell_Content.Set_ApplyToAll(true);
+					Cell_Content.SetApplyToAll(true);
 					Cell_Content.AddComment(Comment, true, false);
-					Cell_Content.Set_ApplyToAll(false);
+					Cell_Content.SetApplyToAll(false);
 				}
 
 				if (true === bEnd)
 				{
 					EndPos           = this.Selection.Data[this.Selection.Data.length - 1];
 					var Cell_Content = this.Content[EndPos.Row].Get_Cell(EndPos.Cell).Content;
-					Cell_Content.Set_ApplyToAll(true);
+					Cell_Content.SetApplyToAll(true);
 					Cell_Content.AddComment(Comment, false, true);
-					Cell_Content.Set_ApplyToAll(false);
+					Cell_Content.SetApplyToAll(false);
 				}
 
 				// TODO: Пока нам приходится пересчитывать ячейки после добавления комментариев. Как только
@@ -4592,9 +4592,9 @@ CTable.prototype.CanAddComment = function()
 		if (this.Content.length > 1 || this.Content[0].Get_CellsCount() > 1)
 			return true;
 
-		this.Content[0].Get_Cell(0).Content.Set_ApplyToAll(true);
+		this.Content[0].Get_Cell(0).Content.SetApplyToAll(true);
 		var Result = this.Content[0].Get_Cell(0).Content.CanAddComment();
-		this.Content[0].Get_Cell(0).Content.Set_ApplyToAll(false);
+		this.Content[0].Get_Cell(0).Content.SetApplyToAll(false);
 		return Result;
 	}
 	else
@@ -4611,9 +4611,9 @@ CTable.prototype.CanAddComment = function()
 				var oCell = this.GetRow(oPos.Row).GetCell(oPos.Cell);
 
 				var oCellContent = oCell.GetContent();
-				oCellContent.Set_ApplyToAll(true);
+				oCellContent.SetApplyToAll(true);
 				var isCanAdd = oCellContent.CanAddComment();
-				oCellContent.Set_ApplyToAll(false);
+				oCellContent.SetApplyToAll(false);
 
 				return isCanAdd;
 			}
@@ -4637,9 +4637,9 @@ CTable.prototype.Can_IncreaseParagraphLevel = function(bIncrease)
 				var Cell_Content = this.Content[Pos.Row].Get_Cell(Pos.Cell).Content;
 				if (Cell_Content)
 				{
-					Cell_Content.Set_ApplyToAll(true);
+					Cell_Content.SetApplyToAll(true);
 					var bCan = Cell_Content.Can_IncreaseParagraphLevel(bIncrease);
-					Cell_Content.Set_ApplyToAll(false);
+					Cell_Content.SetApplyToAll(false);
 					if (!bCan)
 					{
 						return false;
@@ -4660,7 +4660,7 @@ CTable.prototype.Can_IncreaseParagraphLevel = function(bIncrease)
 };
 CTable.prototype.GetSelectionBounds = function(isForceCellSelection)
 {
-	var isUseSelection = (true === this.ApplyToAll || ( true === this.Selection.Use && table_Selection_Cell === this.Selection.Type && this.Selection.Data.length > 0));
+	var isUseSelection = this.IsCellSelection();
 
 	var arrCells = (isUseSelection ? this.GetSelectionArray() : (isForceCellSelection ? [this.CurCell] : null));
 	if (arrCells)
@@ -4723,7 +4723,7 @@ CTable.prototype.GetSelectionBounds = function(isForceCellSelection)
 };
 CTable.prototype.GetSelectionAnchorPos = function()
 {
-	if (true === this.ApplyToAll || ( true === this.Selection.Use && table_Selection_Cell === this.Selection.Type && this.Selection.Data.length > 0 ))
+	if (this.IsCellSelection())
 	{
 		var Cells_array = this.GetSelectionArray();
 
@@ -5725,15 +5725,15 @@ CTable.prototype.CheckPosInSelection = function(X, Y, CurPage, NearPos)
 				var CurCell     = this.Content[CurPos.Row].Get_Cell(CurPos.Cell);
 				var CellContent = CurCell.Content;
 
-				CellContent.Set_ApplyToAll(true);
+				CellContent.SetApplyToAll(true);
 
 				if (true === CellContent.CheckPosInSelection(0, 0, 0, NearPos))
 				{
-					CellContent.Set_ApplyToAll(false);
+					CellContent.SetApplyToAll(false);
 					return true;
 				}
 
-				CellContent.Set_ApplyToAll(false);
+				CellContent.SetApplyToAll(false);
 			}
 		}
 		else
@@ -5826,7 +5826,7 @@ CTable.prototype.SelectAll = function(nDirection)
  */
 CTable.prototype.IsSelectionToEnd = function()
 {
-	if (true === this.ApplyToAll || (true === this.Selection.Use && table_Selection_Cell === this.Selection.Type && this.Selection.Data.length > 0))
+	if (this.IsCellSelection())
 	{
 		var Cells_array = this.GetSelectionArray();
 		var Len         = Cells_array.length;
@@ -6008,7 +6008,7 @@ CTable.prototype.Add = function(ParaItem, bRecalculate)
 };
 CTable.prototype.AddToParagraph = function(ParaItem, bRecalculate)
 {
-	if (para_TextPr === ParaItem.Type && ( true === this.ApplyToAll || ( true === this.Selection.Use && table_Selection_Cell === this.Selection.Type && this.Selection.Data.length > 0 ) ))
+	if (para_TextPr === ParaItem.Type && this.IsCellSelection())
 	{
 		var Cells_array = this.GetSelectionArray();
 		for (var Index = 0; Index < Cells_array.length; Index++)
@@ -6018,9 +6018,9 @@ CTable.prototype.AddToParagraph = function(ParaItem, bRecalculate)
 			var Cell = Row.Get_Cell(Pos.Cell);
 
 			var Cell_Content = Cell.Content;
-			Cell_Content.Set_ApplyToAll(true);
+			Cell_Content.SetApplyToAll(true);
 			Cell.Content.AddToParagraph(ParaItem, bRecalculate);
-			Cell_Content.Set_ApplyToAll(false);
+			Cell_Content.SetApplyToAll(false);
 		}
 
 		// Если в TextPr только HighLight, тогда не надо ничего пересчитывать, только перерисовываем
@@ -6045,7 +6045,7 @@ CTable.prototype.AddToParagraph = function(ParaItem, bRecalculate)
 };
 CTable.prototype.ClearParagraphFormatting = function(isClearParaPr, isClearTextPr)
 {
-	if (true === this.ApplyToAll || (true === this.Selection.Use && table_Selection_Cell === this.Selection.Type && this.Selection.Data.length > 0))
+	if (this.IsCellSelection())
 	{
 		var Cells_array = this.GetSelectionArray();
 		for (var Index = 0; Index < Cells_array.length; Index++)
@@ -6055,9 +6055,9 @@ CTable.prototype.ClearParagraphFormatting = function(isClearParaPr, isClearTextP
 			var Cell = Row.Get_Cell(Pos.Cell);
 
 			var Cell_Content = Cell.Content;
-			Cell_Content.Set_ApplyToAll(true);
+			Cell_Content.SetApplyToAll(true);
 			Cell.Content.ClearParagraphFormatting(isClearParaPr, isClearTextPr);
-			Cell_Content.Set_ApplyToAll(false);
+			Cell_Content.SetApplyToAll(false);
 		}
 	}
 	else
@@ -6067,7 +6067,7 @@ CTable.prototype.ClearParagraphFormatting = function(isClearParaPr, isClearTextP
 };
 CTable.prototype.PasteFormatting = function(TextPr, ParaPr, ApplyPara)
 {
-	if (true === this.ApplyToAll || ( true === this.Selection.Use && table_Selection_Cell === this.Selection.Type && this.Selection.Data.length > 0 ))
+	if (this.IsCellSelection())
 	{
 		var Cells_array = this.GetSelectionArray();
 		for (var Index = 0; Index < Cells_array.length; Index++)
@@ -6077,9 +6077,9 @@ CTable.prototype.PasteFormatting = function(TextPr, ParaPr, ApplyPara)
 			var Cell = Row.Get_Cell(Pos.Cell);
 
 			var Cell_Content = Cell.Content;
-			Cell_Content.Set_ApplyToAll(true);
+			Cell_Content.SetApplyToAll(true);
 			Cell.Content.PasteFormatting(TextPr, ParaPr, true);
-			Cell_Content.Set_ApplyToAll(false);
+			Cell_Content.SetApplyToAll(false);
 		}
 	}
 	else
@@ -6089,7 +6089,7 @@ CTable.prototype.PasteFormatting = function(TextPr, ParaPr, ApplyPara)
 };
 CTable.prototype.Remove = function(Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord)
 {
-	if (true === this.ApplyToAll || ( true === this.Selection.Use && table_Selection_Cell === this.Selection.Type && this.Selection.Data.length > 0 ))
+	if (this.IsCellSelection())
 	{
 		var Cells_array = this.GetSelectionArray();
 
@@ -6123,9 +6123,9 @@ CTable.prototype.Remove = function(Count, bOnlyText, bRemoveOnlySelection, bOnTe
 				var Cell = Row.Get_Cell(Pos.Cell);
 
 				var Cell_Content = Cell.Content;
-				Cell_Content.Set_ApplyToAll(true);
+				Cell_Content.SetApplyToAll(true);
 				Cell.Content.Remove(Count, bOnlyText, bRemoveOnlySelection, false, false);
-				Cell_Content.Set_ApplyToAll(false);
+				Cell_Content.SetApplyToAll(false);
 			}
 
 			// Снимаем выделение
@@ -7247,9 +7247,9 @@ CTable.prototype.GetSelectedText = function(bClearText, oPr)
 
 				var oCellContent = oCell.GetContent();
 
-				oCellContent.Set_ApplyToAll(true);
+				oCellContent.SetApplyToAll(true);
 				sResultText += oCellContent.GetSelectedText(false, oPr);
-				oCellContent.Set_ApplyToAll(false);
+				oCellContent.SetApplyToAll(false);
 			}
 
 			return sResultText;
@@ -7524,7 +7524,7 @@ CTable.prototype.SetParagraphPrOnAdd = function(oPara)
 };
 CTable.prototype.SetParagraphAlign = function(Align)
 {
-	if (true === this.ApplyToAll || (true === this.Selection.Use && table_Selection_Cell === this.Selection.Type && this.Selection.Data.length > 0))
+	if (this.IsCellSelection())
 	{
 		var Cells_array = this.GetSelectionArray();
 		for (var Index = 0; Index < Cells_array.length; Index++)
@@ -7534,9 +7534,9 @@ CTable.prototype.SetParagraphAlign = function(Align)
 			var Cell = Row.Get_Cell(Pos.Cell);
 
 			var Cell_Content = Cell.Content;
-			Cell_Content.Set_ApplyToAll(true);
+			Cell_Content.SetApplyToAll(true);
 			Cell.Content.SetParagraphAlign(Align);
-			Cell_Content.Set_ApplyToAll(false);
+			Cell_Content.SetApplyToAll(false);
 		}
 	}
 	else
@@ -7546,7 +7546,7 @@ CTable.prototype.SetParagraphAlign = function(Align)
 };
 CTable.prototype.SetParagraphDefaultTabSize = function(TabSize)
 {
-	if (true === this.ApplyToAll || (true === this.Selection.Use && table_Selection_Cell === this.Selection.Type && this.Selection.Data.length > 0))
+	if (this.IsCellSelection())
 	{
 		var Cells_array = this.GetSelectionArray();
 		for (var Index = 0; Index < Cells_array.length; Index++)
@@ -7556,9 +7556,9 @@ CTable.prototype.SetParagraphDefaultTabSize = function(TabSize)
 			var Cell = Row.Get_Cell(Pos.Cell);
 
 			var Cell_Content = Cell.Content;
-			Cell_Content.Set_ApplyToAll(true);
+			Cell_Content.SetApplyToAll(true);
 			Cell.Content.SetParagraphDefaultTabSize(TabSize);
-			Cell_Content.Set_ApplyToAll(false);
+			Cell_Content.SetApplyToAll(false);
 		}
 	}
 	else
@@ -7568,7 +7568,7 @@ CTable.prototype.SetParagraphDefaultTabSize = function(TabSize)
 };
 CTable.prototype.SetParagraphSpacing = function(Spacing)
 {
-	if (true === this.ApplyToAll || ( true === this.Selection.Use && table_Selection_Cell === this.Selection.Type && this.Selection.Data.length > 0 ))
+	if (this.IsCellSelection())
 	{
 		var Cells_array = this.GetSelectionArray();
 		for (var Index = 0; Index < Cells_array.length; Index++)
@@ -7578,9 +7578,9 @@ CTable.prototype.SetParagraphSpacing = function(Spacing)
 			var Cell = Row.Get_Cell(Pos.Cell);
 
 			var Cell_Content = Cell.Content;
-			Cell_Content.Set_ApplyToAll(true);
+			Cell_Content.SetApplyToAll(true);
 			Cell.Content.SetParagraphSpacing(Spacing);
-			Cell_Content.Set_ApplyToAll(false);
+			Cell_Content.SetApplyToAll(false);
 		}
 	}
 	else
@@ -7590,7 +7590,7 @@ CTable.prototype.SetParagraphSpacing = function(Spacing)
 };
 CTable.prototype.SetParagraphIndent = function(Ind)
 {
-	if (true === this.ApplyToAll || ( true === this.Selection.Use && table_Selection_Cell === this.Selection.Type && this.Selection.Data.length > 0 ))
+	if (this.IsCellSelection())
 	{
 		var Cells_array = this.GetSelectionArray();
 		for (var Index = 0; Index < Cells_array.length; Index++)
@@ -7600,9 +7600,9 @@ CTable.prototype.SetParagraphIndent = function(Ind)
 			var Cell = Row.Get_Cell(Pos.Cell);
 
 			var Cell_Content = Cell.Content;
-			Cell_Content.Set_ApplyToAll(true);
+			Cell_Content.SetApplyToAll(true);
 			Cell.Content.SetParagraphIndent(Ind);
-			Cell_Content.Set_ApplyToAll(false);
+			Cell_Content.SetApplyToAll(false);
 		}
 	}
 	else
@@ -7612,7 +7612,7 @@ CTable.prototype.SetParagraphIndent = function(Ind)
 };
 CTable.prototype.Set_ParagraphPresentationNumbering = function(NumInfo)
 {
-	if (true === this.ApplyToAll || ( true === this.Selection.Use && table_Selection_Cell === this.Selection.Type && this.Selection.Data.length > 0 ))
+	if (this.IsCellSelection())
 	{
 		var Cells_array = this.GetSelectionArray();
 		for (var Index = 0; Index < Cells_array.length; Index++)
@@ -7622,9 +7622,9 @@ CTable.prototype.Set_ParagraphPresentationNumbering = function(NumInfo)
 			var Cell = Row.Get_Cell(Pos.Cell);
 
 			var Cell_Content = Cell.Content;
-			Cell_Content.Set_ApplyToAll(true);
+			Cell_Content.SetApplyToAll(true);
 			Cell.Content.Set_ParagraphPresentationNumbering(NumInfo);
-			Cell_Content.Set_ApplyToAll(false);
+			Cell_Content.SetApplyToAll(false);
 		}
 
 		if (Cells_array[0].Row - 1 >= 0)
@@ -7639,7 +7639,7 @@ CTable.prototype.Set_ParagraphPresentationNumbering = function(NumInfo)
 };
 CTable.prototype.Increase_ParagraphLevel = function(bIncrease)
 {
-	if (true === this.ApplyToAll || ( true === this.Selection.Use && table_Selection_Cell === this.Selection.Type && this.Selection.Data.length > 0 ))
+	if (this.IsCellSelection())
 	{
 		var Cells_array = this.GetSelectionArray();
 		for (var Index = 0; Index < Cells_array.length; Index++)
@@ -7649,9 +7649,9 @@ CTable.prototype.Increase_ParagraphLevel = function(bIncrease)
 			var Cell = Row.Get_Cell(Pos.Cell);
 
 			var Cell_Content = Cell.Content;
-			Cell_Content.Set_ApplyToAll(true);
+			Cell_Content.SetApplyToAll(true);
 			Cell.Content.Increase_ParagraphLevel(bIncrease);
-			Cell_Content.Set_ApplyToAll(false);
+			Cell_Content.SetApplyToAll(false);
 		}
 
 		if (Cells_array[0].Row - 1 >= 0)
@@ -7666,7 +7666,7 @@ CTable.prototype.Increase_ParagraphLevel = function(bIncrease)
 };
 CTable.prototype.SetParagraphShd = function(Shd)
 {
-	if (true === this.ApplyToAll || ( true === this.Selection.Use && table_Selection_Cell === this.Selection.Type && this.Selection.Data.length > 0 ))
+	if (this.IsCellSelection())
 	{
 		var Cells_array = this.GetSelectionArray();
 		for (var Index = 0; Index < Cells_array.length; Index++)
@@ -7676,9 +7676,9 @@ CTable.prototype.SetParagraphShd = function(Shd)
 			var Cell = Row.Get_Cell(Pos.Cell);
 
 			var Cell_Content = Cell.Content;
-			Cell_Content.Set_ApplyToAll(true);
+			Cell_Content.SetApplyToAll(true);
 			Cell.Content.SetParagraphShd(Shd);
-			Cell_Content.Set_ApplyToAll(false);
+			Cell_Content.SetApplyToAll(false);
 		}
 	}
 	else
@@ -7688,7 +7688,7 @@ CTable.prototype.SetParagraphShd = function(Shd)
 };
 CTable.prototype.SetParagraphStyle = function(Name)
 {
-	if (true === this.ApplyToAll || ( true === this.Selection.Use && table_Selection_Cell === this.Selection.Type && this.Selection.Data.length > 0 ))
+	if (this.IsCellSelection())
 	{
 		var Cells_array = this.GetSelectionArray();
 		for (var Index = 0; Index < Cells_array.length; Index++)
@@ -7698,9 +7698,9 @@ CTable.prototype.SetParagraphStyle = function(Name)
 			var Cell = Row.Get_Cell(Pos.Cell);
 
 			var Cell_Content = Cell.Content;
-			Cell_Content.Set_ApplyToAll(true);
+			Cell_Content.SetApplyToAll(true);
 			Cell.Content.SetParagraphStyle(Name);
-			Cell_Content.Set_ApplyToAll(false);
+			Cell_Content.SetApplyToAll(false);
 		}
 	}
 	else
@@ -7710,7 +7710,7 @@ CTable.prototype.SetParagraphStyle = function(Name)
 };
 CTable.prototype.SetParagraphTabs = function(Tabs)
 {
-	if (true === this.ApplyToAll || ( true === this.Selection.Use && table_Selection_Cell === this.Selection.Type && this.Selection.Data.length > 0 ))
+	if (this.IsCellSelection())
 	{
 		var Cells_array = this.GetSelectionArray();
 		for (var Index = 0; Index < Cells_array.length; Index++)
@@ -7720,9 +7720,9 @@ CTable.prototype.SetParagraphTabs = function(Tabs)
 			var Cell = Row.Get_Cell(Pos.Cell);
 
 			var Cell_Content = Cell.Content;
-			Cell_Content.Set_ApplyToAll(true);
+			Cell_Content.SetApplyToAll(true);
 			Cell.Content.SetParagraphTabs(Tabs);
-			Cell_Content.Set_ApplyToAll(false);
+			Cell_Content.SetApplyToAll(false);
 		}
 	}
 	else
@@ -7732,7 +7732,7 @@ CTable.prototype.SetParagraphTabs = function(Tabs)
 };
 CTable.prototype.SetParagraphContextualSpacing = function(Value)
 {
-	if (true === this.ApplyToAll || ( true === this.Selection.Use && table_Selection_Cell === this.Selection.Type && this.Selection.Data.length > 0 ))
+	if (this.IsCellSelection())
 	{
 		var Cells_array = this.GetSelectionArray();
 		for (var Index = 0; Index < Cells_array.length; Index++)
@@ -7742,9 +7742,9 @@ CTable.prototype.SetParagraphContextualSpacing = function(Value)
 			var Cell = Row.Get_Cell(Pos.Cell);
 
 			var Cell_Content = Cell.Content;
-			Cell_Content.Set_ApplyToAll(true);
+			Cell_Content.SetApplyToAll(true);
 			Cell.Content.SetParagraphContextualSpacing(Value);
-			Cell_Content.Set_ApplyToAll(false);
+			Cell_Content.SetApplyToAll(false);
 		}
 	}
 	else
@@ -7754,7 +7754,7 @@ CTable.prototype.SetParagraphContextualSpacing = function(Value)
 };
 CTable.prototype.SetParagraphPageBreakBefore = function(Value)
 {
-	if (true === this.ApplyToAll || ( true === this.Selection.Use && table_Selection_Cell === this.Selection.Type && this.Selection.Data.length > 0 ))
+	if (this.IsCellSelection())
 	{
 		var Cells_array = this.GetSelectionArray();
 		for (var Index = 0; Index < Cells_array.length; Index++)
@@ -7764,9 +7764,9 @@ CTable.prototype.SetParagraphPageBreakBefore = function(Value)
 			var Cell = Row.Get_Cell(Pos.Cell);
 
 			var Cell_Content = Cell.Content;
-			Cell_Content.Set_ApplyToAll(true);
+			Cell_Content.SetApplyToAll(true);
 			Cell.Content.SetParagraphPageBreakBefore(Value);
-			Cell_Content.Set_ApplyToAll(false);
+			Cell_Content.SetApplyToAll(false);
 		}
 	}
 	else
@@ -7776,7 +7776,7 @@ CTable.prototype.SetParagraphPageBreakBefore = function(Value)
 };
 CTable.prototype.SetParagraphKeepLines = function(Value)
 {
-	if (true === this.ApplyToAll || ( true === this.Selection.Use && table_Selection_Cell === this.Selection.Type && this.Selection.Data.length > 0 ))
+	if (this.IsCellSelection())
 	{
 		var Cells_array = this.GetSelectionArray();
 		for (var Index = 0; Index < Cells_array.length; Index++)
@@ -7786,9 +7786,9 @@ CTable.prototype.SetParagraphKeepLines = function(Value)
 			var Cell = Row.Get_Cell(Pos.Cell);
 
 			var Cell_Content = Cell.Content;
-			Cell_Content.Set_ApplyToAll(true);
+			Cell_Content.SetApplyToAll(true);
 			Cell.Content.SetParagraphKeepLines(Value);
-			Cell_Content.Set_ApplyToAll(false);
+			Cell_Content.SetApplyToAll(false);
 		}
 	}
 	else
@@ -7798,7 +7798,7 @@ CTable.prototype.SetParagraphKeepLines = function(Value)
 };
 CTable.prototype.SetParagraphKeepNext = function(Value)
 {
-	if (true === this.ApplyToAll || ( true === this.Selection.Use && table_Selection_Cell === this.Selection.Type && this.Selection.Data.length > 0 ))
+	if (this.IsCellSelection())
 	{
 		var Cells_array = this.GetSelectionArray();
 		for (var Index = 0; Index < Cells_array.length; Index++)
@@ -7808,9 +7808,9 @@ CTable.prototype.SetParagraphKeepNext = function(Value)
 			var Cell = Row.Get_Cell(Pos.Cell);
 
 			var Cell_Content = Cell.Content;
-			Cell_Content.Set_ApplyToAll(true);
+			Cell_Content.SetApplyToAll(true);
 			Cell.Content.SetParagraphKeepNext(Value);
-			Cell_Content.Set_ApplyToAll(false);
+			Cell_Content.SetApplyToAll(false);
 		}
 	}
 	else
@@ -7820,7 +7820,7 @@ CTable.prototype.SetParagraphKeepNext = function(Value)
 };
 CTable.prototype.SetParagraphWidowControl = function(Value)
 {
-	if (true === this.ApplyToAll || ( true === this.Selection.Use && table_Selection_Cell === this.Selection.Type && this.Selection.Data.length > 0 ))
+	if (this.IsCellSelection())
 	{
 		var Cells_array = this.GetSelectionArray();
 		for (var Index = 0; Index < Cells_array.length; Index++)
@@ -7830,9 +7830,9 @@ CTable.prototype.SetParagraphWidowControl = function(Value)
 			var Cell = Row.Get_Cell(Pos.Cell);
 
 			var Cell_Content = Cell.Content;
-			Cell_Content.Set_ApplyToAll(true);
+			Cell_Content.SetApplyToAll(true);
 			Cell.Content.SetParagraphWidowControl(Value);
-			Cell_Content.Set_ApplyToAll(false);
+			Cell_Content.SetApplyToAll(false);
 		}
 	}
 	else
@@ -7842,7 +7842,7 @@ CTable.prototype.SetParagraphWidowControl = function(Value)
 };
 CTable.prototype.SetParagraphBorders = function(Borders)
 {
-	if (true === this.ApplyToAll || ( true === this.Selection.Use && table_Selection_Cell === this.Selection.Type && this.Selection.Data.length > 0 ))
+	if (this.IsCellSelection())
 	{
 		var Cells_array = this.GetSelectionArray();
 		for (var Index = 0; Index < Cells_array.length; Index++)
@@ -7852,9 +7852,9 @@ CTable.prototype.SetParagraphBorders = function(Borders)
 			var Cell = Row.Get_Cell(Pos.Cell);
 
 			var Cell_Content = Cell.Content;
-			Cell_Content.Set_ApplyToAll(true);
+			Cell_Content.SetApplyToAll(true);
 			Cell.Content.SetParagraphBorders(Borders);
-			Cell_Content.Set_ApplyToAll(false);
+			Cell_Content.SetApplyToAll(false);
 		}
 	}
 	else
@@ -7898,7 +7898,7 @@ CTable.prototype.SetParagraphPr = function(oParaPr)
 };
 CTable.prototype.IncreaseDecreaseFontSize = function(bIncrease)
 {
-	if (true === this.ApplyToAll || ( true === this.Selection.Use && table_Selection_Cell === this.Selection.Type && this.Selection.Data.length > 0 ))
+	if (this.IsCellSelection())
 	{
 		var Cells_array = this.GetSelectionArray();
 		for (var Index = 0; Index < Cells_array.length; Index++)
@@ -7908,9 +7908,9 @@ CTable.prototype.IncreaseDecreaseFontSize = function(bIncrease)
 			var Cell = Row.Get_Cell(Pos.Cell);
 
 			var Cell_Content = Cell.Content;
-			Cell_Content.Set_ApplyToAll(true);
+			Cell_Content.SetApplyToAll(true);
 			Cell.Content.IncreaseDecreaseFontSize(bIncrease);
-			Cell_Content.Set_ApplyToAll(false);
+			Cell_Content.SetApplyToAll(false);
 		}
 	}
 	else
@@ -7920,7 +7920,7 @@ CTable.prototype.IncreaseDecreaseFontSize = function(bIncrease)
 };
 CTable.prototype.IncreaseDecreaseIndent = function(bIncrease)
 {
-	if (true === this.ApplyToAll || ( true === this.Selection.Use && table_Selection_Cell === this.Selection.Type && this.Selection.Data.length > 0 ))
+	if (this.IsCellSelection())
 	{
 		var TablePr = this.Get_CompiledPr(false).TablePr;
 
@@ -7968,9 +7968,9 @@ CTable.prototype.GetCalculatedParaPr = function()
 		var Row  = this.Content[0];
 		var Cell = Row.Get_Cell(0);
 
-		Cell.Content.Set_ApplyToAll(true);
+		Cell.Content.SetApplyToAll(true);
 		var Result_ParaPr = Cell.Content.GetCalculatedParaPr();
-		Cell.Content.Set_ApplyToAll(false);
+		Cell.Content.SetApplyToAll(false);
 
 		for (var CurRow = 0; CurRow < this.Content.length; CurRow++)
 		{
@@ -7981,9 +7981,9 @@ CTable.prototype.GetCalculatedParaPr = function()
 			for (var CurCell = StartCell; CurCell < CellsCount; CurCell++)
 			{
 				Cell = Row.Get_Cell(CurCell);
-				Cell.Content.Set_ApplyToAll(true);
+				Cell.Content.SetApplyToAll(true);
 				var CurPr = Cell.Content.GetCalculatedParaPr();
-				Cell.Content.Set_ApplyToAll(false);
+				Cell.Content.SetApplyToAll(false);
 
 				Result_ParaPr = Result_ParaPr.Compare(CurPr);
 			}
@@ -7998,9 +7998,9 @@ CTable.prototype.GetCalculatedParaPr = function()
 		var Row  = this.Content[Pos.Row];
 		var Cell = Row.Get_Cell(Pos.Cell);
 
-		Cell.Content.Set_ApplyToAll(true);
+		Cell.Content.SetApplyToAll(true);
 		var Result_ParaPr = Cell.Content.GetCalculatedParaPr();
-		Cell.Content.Set_ApplyToAll(false);
+		Cell.Content.SetApplyToAll(false);
 
 		for (var Index = 1; Index < this.Selection.Data.length; Index++)
 		{
@@ -8008,9 +8008,9 @@ CTable.prototype.GetCalculatedParaPr = function()
 			Row  = this.Content[Pos.Row];
 			Cell = Row.Get_Cell(Pos.Cell);
 
-			Cell.Content.Set_ApplyToAll(true);
+			Cell.Content.SetApplyToAll(true);
 			var CurPr = Cell.Content.GetCalculatedParaPr();
-			Cell.Content.Set_ApplyToAll(false);
+			Cell.Content.SetApplyToAll(false);
 
 			Result_ParaPr = Result_ParaPr.Compare(CurPr);
 		}
@@ -8027,9 +8027,9 @@ CTable.prototype.GetCalculatedTextPr = function()
 		var Row  = this.Content[0];
 		var Cell = Row.Get_Cell(0);
 
-		Cell.Content.Set_ApplyToAll(true);
+		Cell.Content.SetApplyToAll(true);
 		var Result_TextPr = Cell.Content.GetCalculatedTextPr();
-		Cell.Content.Set_ApplyToAll(false);
+		Cell.Content.SetApplyToAll(false);
 
 		for (var CurRow = 0; CurRow < this.Content.length; CurRow++)
 		{
@@ -8040,9 +8040,9 @@ CTable.prototype.GetCalculatedTextPr = function()
 			for (var CurCell = StartCell; CurCell < CellsCount; CurCell++)
 			{
 				Cell = Row.Get_Cell(CurCell);
-				Cell.Content.Set_ApplyToAll(true);
+				Cell.Content.SetApplyToAll(true);
 				var CurPr = Cell.Content.GetCalculatedTextPr();
-				Cell.Content.Set_ApplyToAll(false);
+				Cell.Content.SetApplyToAll(false);
 
 				Result_TextPr = Result_TextPr.Compare(CurPr);
 			}
@@ -8057,9 +8057,9 @@ CTable.prototype.GetCalculatedTextPr = function()
 		var Row  = this.Content[Pos.Row];
 		var Cell = Row.Get_Cell(Pos.Cell);
 
-		Cell.Content.Set_ApplyToAll(true);
+		Cell.Content.SetApplyToAll(true);
 		var Result_TextPr = Cell.Content.GetCalculatedTextPr();
-		Cell.Content.Set_ApplyToAll(false);
+		Cell.Content.SetApplyToAll(false);
 
 		for (var Index = 1; Index < this.Selection.Data.length; Index++)
 		{
@@ -8067,9 +8067,9 @@ CTable.prototype.GetCalculatedTextPr = function()
 			Row  = this.Content[Pos.Row];
 			Cell = Row.Get_Cell(Pos.Cell);
 
-			Cell.Content.Set_ApplyToAll(true);
+			Cell.Content.SetApplyToAll(true);
 			var CurPr = Cell.Content.GetCalculatedTextPr();
-			Cell.Content.Set_ApplyToAll(false);
+			Cell.Content.SetApplyToAll(false);
 
 			Result_TextPr = Result_TextPr.Compare(CurPr);
 		}
@@ -8086,9 +8086,9 @@ CTable.prototype.GetDirectTextPr = function()
 		var Row  = this.Content[0];
 		var Cell = Row.Get_Cell(0);
 
-		Cell.Content.Set_ApplyToAll(true);
+		Cell.Content.SetApplyToAll(true);
 		var Result_TextPr = Cell.Content.GetDirectTextPr();
-		Cell.Content.Set_ApplyToAll(false);
+		Cell.Content.SetApplyToAll(false);
 
 		return Result_TextPr;
 	}
@@ -8099,9 +8099,9 @@ CTable.prototype.GetDirectTextPr = function()
 		var Row  = this.Content[Pos.Row];
 		var Cell = Row.Get_Cell(Pos.Cell);
 
-		Cell.Content.Set_ApplyToAll(true);
+		Cell.Content.SetApplyToAll(true);
 		var Result_TextPr = Cell.Content.GetDirectTextPr();
-		Cell.Content.Set_ApplyToAll(false);
+		Cell.Content.SetApplyToAll(false);
 
 		return Result_TextPr;
 	}
@@ -8115,9 +8115,9 @@ CTable.prototype.GetDirectParaPr = function()
 		var Row  = this.Content[0];
 		var Cell = Row.Get_Cell(0);
 
-		Cell.Content.Set_ApplyToAll(true);
+		Cell.Content.SetApplyToAll(true);
 		var Result_TextPr = Cell.Content.GetDirectParaPr();
-		Cell.Content.Set_ApplyToAll(false);
+		Cell.Content.SetApplyToAll(false);
 
 		return Result_TextPr;
 	}
@@ -8128,9 +8128,9 @@ CTable.prototype.GetDirectParaPr = function()
 		var Row  = this.Content[Pos.Row];
 		var Cell = Row.Get_Cell(Pos.Cell);
 
-		Cell.Content.Set_ApplyToAll(true);
+		Cell.Content.SetApplyToAll(true);
 		var Result_TextPr = Cell.Content.GetDirectParaPr();
-		Cell.Content.Set_ApplyToAll(false);
+		Cell.Content.SetApplyToAll(false);
 
 		return Result_TextPr;
 	}
@@ -8154,9 +8154,9 @@ CTable.prototype.GetCurrentParagraph = function(bIgnoreSelection, arrSelectedPar
 
 			if (true === this.ApplyToAll || (true === this.Selection.Use && table_Selection_Cell === this.Selection.Type))
 			{
-				oCellContent.Set_ApplyToAll(true);
+				oCellContent.SetApplyToAll(true);
 				oCellContent.GetCurrentParagraph(false, arrSelectedParagraphs, oPr);
-				oCellContent.Set_ApplyToAll(false);
+				oCellContent.SetApplyToAll(false);
 			}
 			else
 			{
@@ -8185,9 +8185,9 @@ CTable.prototype.GetCurrentParagraph = function(bIgnoreSelection, arrSelectedPar
 
 			if (true === this.Selection.Use && table_Selection_Cell === this.Selection.Type)
 			{
-				oCellContent.Set_ApplyToAll(true);
+				oCellContent.SetApplyToAll(true);
 				var oRes = oCellContent.GetCurrentParagraph(bIgnoreSelection, null, oPr);
-				oCellContent.Set_ApplyToAll(false);
+				oCellContent.SetApplyToAll(false);
 				return oRes;
 			}
 			else
@@ -10265,7 +10265,7 @@ CTable.prototype.AddTableColumn = function(bBefore, nCount)
 				// Скопируем текстовые настройки
 				var FirstPara = NextCell.Content.Get_FirstParagraph();
 				var TextPr    = FirstPara.GetFirstRunPr();
-				NewCell.Content.Set_ApplyToAll(true);
+				NewCell.Content.SetApplyToAll(true);
 
 				// Добавляем стиль во все параграфы
 				var PStyleId = FirstPara.Style_Get();
@@ -10276,7 +10276,7 @@ CTable.prototype.AddTableColumn = function(bBefore, nCount)
 				}
 
 				NewCell.Content.AddToParagraph(new ParaTextPr(TextPr));
-				NewCell.Content.Set_ApplyToAll(false);
+				NewCell.Content.SetApplyToAll(false);
 
 				if (false === bBefore2)
 					Rows_info[CurRow].splice(Add_info[CurRow], 0, {W : Width, Type : 0, GridSpan : 1});
@@ -10347,7 +10347,7 @@ CTable.prototype.AddTableColumn = function(bBefore, nCount)
 				// Скопируем текстовые настройки
 				var FirstPara = NextCell.Content.Get_FirstParagraph();
 				var TextPr    = FirstPara.GetFirstRunPr();
-				NewCell.Content.Set_ApplyToAll(true);
+				NewCell.Content.SetApplyToAll(true);
 
 				// Добавляем стиль во все параграфы
 				var PStyleId = FirstPara.Style_Get();
@@ -10358,7 +10358,7 @@ CTable.prototype.AddTableColumn = function(bBefore, nCount)
 				}
 
 				NewCell.Content.AddToParagraph(new ParaTextPr(TextPr));
-				NewCell.Content.Set_ApplyToAll(false);
+				NewCell.Content.SetApplyToAll(false);
 
 
 				if (false === bBefore2)
@@ -18732,9 +18732,9 @@ CTable.prototype.Document_Is_SelectionLocked = function(CheckType, bCheckInner)
 					var Pos  = arrCells[Index];
 					var Cell = this.Content[Pos.Row].Get_Cell(Pos.Cell);
 
-					Cell.Content.Set_ApplyToAll(true);
+					Cell.Content.SetApplyToAll(true);
 					Cell.Content.Document_Is_SelectionLocked(CheckType);
-					Cell.Content.Set_ApplyToAll(false);
+					Cell.Content.SetApplyToAll(false);
 				}
 			}
 			else if (this.CurCell)
@@ -18758,9 +18758,9 @@ CTable.prototype.Document_Is_SelectionLocked = function(CheckType, bCheckInner)
 					var oCell        = this.GetRow(oPos.Row).GetCell(oPos.Cell);
 					var oCellContent = oCell.GetContent();
 
-					oCellContent.Set_ApplyToAll(true);
+					oCellContent.SetApplyToAll(true);
 					oCellContent.Document_Is_SelectionLocked(CheckType);
-					oCellContent.Set_ApplyToAll(false);
+					oCellContent.SetApplyToAll(false);
 				}
 			}
 			else if (this.CurCell)

@@ -12757,11 +12757,11 @@ Paragraph.prototype.CanAddComment = function()
 	if (this.ApplyToAll)
 	{
 		var oState = this.Get_SelectionState2();
-		this.Set_ApplyToAll(false);
+		this.SetApplyToAll(false);
 		this.SelectAll(1);
 		var isCanAdd = this.CanAddComment();
 		this.Set_SelectionState2(oState);
-		this.Set_ApplyToAll(true);
+		this.SetApplyToAll(true);
 		return isCanAdd;
 	}
 

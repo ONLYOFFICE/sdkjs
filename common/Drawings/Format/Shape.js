@@ -1232,10 +1232,10 @@ CShape.prototype.applyTextFunction = function (docContentFunction, tableFunction
 CShape.prototype.clearContent = function () {
     var content = this.getDocContent();
     if (content) {
-        content.Set_ApplyToAll(true);
+        content.SetApplyToAll(true);
         content.Remove(-1);
         content.AddToParagraph(new AscCommonWord.ParaTextPr({Lang : {Val : undefined}}), false);
-        content.Set_ApplyToAll(false);
+        content.SetApplyToAll(false);
     }
 };
 
@@ -5204,9 +5204,9 @@ CShape.prototype.getTextArtProperties = function()
             //}
             //else
             //{
-            //    oContent.Set_ApplyToAll(true);
+            //    oContent.SetApplyToAll(true);
             //    oTextPr = oContent.GetCalculatedTextPr();
-            //    oContent.Set_ApplyToAll(false);
+            //    oContent.SetApplyToAll(false);
             //}
             //if(oTextPr.TextFill)
             //{
@@ -5255,9 +5255,9 @@ CShape.prototype.applyTextArtForm = function(sPreset)
 CShape.prototype.getParagraphParaPr = function () {
     if (this.txBody && this.txBody.content) {
         var _result;
-        this.txBody.content.Set_ApplyToAll(true);
+        this.txBody.content.SetApplyToAll(true);
         _result = this.txBody.content.GetCalculatedParaPr();
-        this.txBody.content.Set_ApplyToAll(false);
+        this.txBody.content.SetApplyToAll(false);
         return _result;
     }
     return null;
@@ -5266,9 +5266,9 @@ CShape.prototype.getParagraphParaPr = function () {
 CShape.prototype.getParagraphTextPr = function () {
     if (this.txBody && this.txBody.content) {
         var _result;
-        this.txBody.content.Set_ApplyToAll(true);
+        this.txBody.content.SetApplyToAll(true);
         _result = this.txBody.content.GetCalculatedTextPr();
-        this.txBody.content.Set_ApplyToAll(false);
+        this.txBody.content.SetApplyToAll(false);
         return _result;
     }
     return null;
@@ -5733,9 +5733,9 @@ CShape.prototype.isWatermark = function()
         oContent = this.getDocContent();
         if(oContent)
         {
-            oContent.Set_ApplyToAll(true);
+            oContent.SetApplyToAll(true);
             oTextPr = oContent.GetCalculatedTextPr();
-            oContent.Set_ApplyToAll(false);
+            oContent.SetApplyToAll(false);
             if(oTextPr.FontSize > 20 && oTextPr.TextFill)
             {
                 return true;
@@ -5751,7 +5751,7 @@ CShape.prototype.getWatermarkProps = function()
     oContent = this.getDocContent();
     oProps.put_Type(Asc.c_oAscWatermarkType.Text);
     oProps.put_IsDiagonal(!AscFormat.fApproxEqual(this.rot, 0.0));
-    oContent.Set_ApplyToAll(true);
+    oContent.SetApplyToAll(true);
     oProps.put_Text(oContent.GetSelectedText(true, {NewLineParagraph : false, NewLine : false}));
     oTextPr = oContent.GetCalculatedTextPr();
     oProps.put_Opacity(255);
@@ -5775,7 +5775,7 @@ CShape.prototype.getWatermarkProps = function()
         oProps.put_Opacity(AscFormat.isRealNumber(oTextPr.TextFill.transparent) ? oTextPr.TextFill.transparent : 255);
     }
     oProps.put_TextPr(oInterfaceTextPr);
-    oContent.Set_ApplyToAll(false);
+    oContent.SetApplyToAll(false);
     return oProps;
 };
 
@@ -5967,9 +5967,9 @@ CShape.prototype.checkTextWarp = function(oContent, oBodyPr, dWidth, dHeight, bN
                         editor.WordControl.m_oLogicDocument.TurnOff_Recalculate();
                     }
                 }
-                oContentToDraw.Set_ApplyToAll(true);
+                oContentToDraw.SetApplyToAll(true);
                 oContentToDraw.SetParagraphSpacing({Before: 0, After: 0});
-                oContentToDraw.Set_ApplyToAll(false);
+                oContentToDraw.SetApplyToAll(false);
                 if(bNeedTurnOn)
                 {
                     editor.WordControl.m_oLogicDocument.TurnOn_Recalculate(false);

@@ -22823,9 +22823,9 @@ CDocument.prototype.GetTableCellFormula = function(isReturnField)
 		var oTempCell        = oRow.GetCell(nCellIndex);
 		var oTempCellContent = oTempCell.GetContent();
 
-		oTempCellContent.Set_ApplyToAll(true);
+		oTempCellContent.SetApplyToAll(true);
 		var sCellText = oTempCellContent.GetSelectedText();
-		oTempCellContent.Set_ApplyToAll(false);
+		oTempCellContent.SetApplyToAll(false);
 
 		if (!isNaN(parseInt(sCellText)))
 		{
@@ -22844,9 +22844,9 @@ CDocument.prototype.GetTableCellFormula = function(isReturnField)
 
 		var oTempCellContent = oTempCell.GetContent();
 
-		oTempCellContent.Set_ApplyToAll(true);
+		oTempCellContent.SetApplyToAll(true);
 		var sCellText = oTempCellContent.GetSelectedText();
-		oTempCellContent.Set_ApplyToAll(false);
+		oTempCellContent.SetApplyToAll(false);
 
 		if (!isNaN(parseInt(sCellText)))
 		{

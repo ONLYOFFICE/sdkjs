@@ -2952,9 +2952,9 @@ CPresentation.prototype.collectHFProps = function (oSlide) {
             oContent = oDTShape.getDocContent();
             if (oContent) {
                 var oDateTime = new AscCommonSlide.CAscDateTime();
-                oContent.Set_ApplyToAll(true);
+                oContent.SetApplyToAll(true);
                 sText = oContent.GetSelectedText(false, {NewLine: true, NewParagraph: true});
-                oContent.Set_ApplyToAll(false);
+                oContent.SetApplyToAll(false);
                 oDateTime.put_CustomDateTime(sText);
                 oContent.CalculateAllFields();
                 oField = oContent.GetFieldByType2('datetime');
@@ -3014,9 +3014,9 @@ CPresentation.prototype.collectHFProps = function (oSlide) {
         if (oFooterShape) {
             oContent = oFooterShape.getDocContent();
             if (oContent) {
-                oContent.Set_ApplyToAll(true);
+                oContent.SetApplyToAll(true);
                 sText = oContent.GetSelectedText(false, {NewLine: true, NewParagraph: true});
-                oContent.Set_ApplyToAll(false);
+                oContent.SetApplyToAll(false);
                 oSlideHF.put_Footer(sText);
             }
         }
@@ -3040,9 +3040,9 @@ CPresentation.prototype.collectHFProps = function (oSlide) {
         if (oHeaderShape) {
             oContent = oHeaderShape.getDocContent();
             if (oContent) {
-                oContent.Set_ApplyToAll(true);
+                oContent.SetApplyToAll(true);
                 sText = oContent.GetSelectedText(false, {NewLine: true, NewParagraph: true});
-                oContent.Set_ApplyToAll(false);
+                oContent.SetApplyToAll(false);
                 oSlideHF.put_Footer(sText);
             }
         }
@@ -7164,9 +7164,9 @@ CPresentation.prototype.Table_CheckFunction = function (Function) {
         //    if(by_types.tables.length === 1)
         //    {
         //        var ret;
-        //        by_types.tables[0].graphicObject.Set_ApplyToAll(true);
+        //        by_types.tables[0].graphicObject.SetApplyToAll(true);
         //        ret = Function.apply(by_types.tables[0].graphicObject, []);
-        //        by_types.tables[0].graphicObject.Set_ApplyToAll(false);
+        //        by_types.tables[0].graphicObject.SetApplyToAll(false);
         //        return ret;
         //    }
         //}
@@ -7884,9 +7884,9 @@ CPresentation.prototype.GetSelectedContent = function () {
                             if (doc_content) {
 
                                 var SelectedContent = new CSelectedContent();
-                                doc_content.Set_ApplyToAll(true);
+                                doc_content.SetApplyToAll(true);
                                 doc_content.GetSelectedContent(SelectedContent);
-                                doc_content.Set_ApplyToAll(false);
+                                doc_content.SetApplyToAll(false);
                                 ret.DocContent = SelectedContent;
                             }
                         } else {
@@ -7990,7 +7990,7 @@ CPresentation.prototype.GetSelectedContent2 = function () {
                         } else {
                             if (oDocContent) {
                                 if (bNeedSelectAll) {
-                                    oDocContent.Set_ApplyToAll(true);
+                                    oDocContent.SetApplyToAll(true);
                                 }
                                 oSelectedContent = new CSelectedContent();
                                 oDocContent.GetSelectedContent(oSelectedContent);
@@ -8031,7 +8031,7 @@ CPresentation.prototype.GetSelectedContent2 = function () {
                                 AscFormat.SaveContentSourceFormatting(aContent, aContent, oDocContent.Get_Theme(), oDocContent.Get_ColorMap());
 
                                 if (bNeedSelectAll) {
-                                    oDocContent.Set_ApplyToAll(false);
+                                    oDocContent.SetApplyToAll(false);
                                 }
                                 if (oSelectedContent2.Elements.length > 0) {
                                     oDocContentForDraw = new AscFormat.CDrawingDocContent(oDocContent.Parent, oDocContent.DrawingDocument, 0, 0, 20000, 20000);
@@ -8568,9 +8568,9 @@ CPresentation.prototype.InsertContent2 = function (aContents, nIndex) {
                     for (i = 0; i < aElements.length; ++i) {
                         oElement = aElements[i].Element;
                         if (oElement.GetType() === AscCommonWord.type_Paragraph) {
-                            oElement.Set_ApplyToAll(true);
+                            oElement.SetApplyToAll(true);
                             oElement.AddToParagraph(oParaTextPr);
-                            oElement.Set_ApplyToAll(false);
+                            oElement.SetApplyToAll(false);
                         }
                     }
                 }

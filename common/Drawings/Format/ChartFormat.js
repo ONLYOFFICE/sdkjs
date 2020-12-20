@@ -15084,9 +15084,9 @@ function CreateDocContentFromString(str, drawingDocument, parent)
 
 function CheckContentTextAndAdd(oContent, sText)
 {
-    oContent.Set_ApplyToAll(true);
+    oContent.SetApplyToAll(true);
     var sContentText = oContent.GetSelectedText(false, {NewLine: true, NewParagraph: true});
-    oContent.Set_ApplyToAll(false);
+    oContent.SetApplyToAll(false);
     if(sContentText !== sText)
     {
         oContent.ClearContent(true);

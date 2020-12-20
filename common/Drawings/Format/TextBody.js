@@ -642,9 +642,9 @@ CTextBody.prototype =
     recalculateByMaxWord: function()
     {
         var max_content = this.content.RecalculateMinMaxContentWidth().Max;
-        this.content.Set_ApplyToAll(true);
+        this.content.SetApplyToAll(true);
         this.content.SetParagraphAlign(AscCommon.align_Center);
-        this.content.Set_ApplyToAll(false);
+        this.content.SetApplyToAll(false);
         this.content.Reset(0, 0,max_content, 20000);
         this.content.Recalculate_Page(0, true);
         return {w: max_content, h: this.content.GetSummaryHeight()};
@@ -688,9 +688,9 @@ CTextBody.prototype =
         this.content.Reset(0, 0, maxWidth - 0.01, 20000);
         if(bLeft)
         {
-            this.content.Set_ApplyToAll(true);
+            this.content.SetApplyToAll(true);
             this.content.SetParagraphAlign(AscCommon.align_Left);
-            this.content.Set_ApplyToAll(false);
+            this.content.SetApplyToAll(false);
         }
         this.content.Recalculate_Page(0, true);
         var max_width = 0, arr_content = this.content.Content, paragraph_lines, i, j;

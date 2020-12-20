@@ -4840,10 +4840,10 @@ PasteProcessor.prototype =
 			}
 
 			var oTextPr = presentation.GetCalculatedTextPr();
-			shape.txBody.content.Set_ApplyToAll(true);
+			shape.txBody.content.SetApplyToAll(true);
 			var paraTextPr = new AscCommonWord.ParaTextPr(oTextPr);
 			shape.txBody.content.AddToParagraph(paraTextPr);
-			shape.txBody.content.Set_ApplyToAll(false);
+			shape.txBody.content.SetApplyToAll(false);
 
 			oThis.api.pre_Paste([], [], executePastePresentation);
 		};

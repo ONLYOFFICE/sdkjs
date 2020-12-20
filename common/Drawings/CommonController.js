@@ -2575,9 +2575,9 @@ DrawingObjectsController.prototype =
                 }
                 else if(arr[i].getObjectType() === AscDFH.historyitem_type_GraphicFrame)
                 {
-                    arr[i].graphicObject.Set_ApplyToAll(true);
+                    arr[i].graphicObject.SetApplyToAll(true);
                     tableFunction.apply(arr[i].graphicObject, args);
-                    arr[i].graphicObject.Set_ApplyToAll(false);
+                    arr[i].graphicObject.SetApplyToAll(false);
                     ret = true;
                 }
                 else if(arr[i].getObjectType() === AscDFH.historyitem_type_ChartSpace)
@@ -2601,9 +2601,9 @@ DrawingObjectsController.prototype =
                     var content = arr[i].getDocContent();
                     if(content)
                     {
-                        content.Set_ApplyToAll(true);
+                        content.SetApplyToAll(true);
                         f.apply(content, args);
-                        content.Set_ApplyToAll(false);
+                        content.SetApplyToAll(false);
                         ret = true;
                     }
                     else
@@ -2623,9 +2623,9 @@ DrawingObjectsController.prototype =
                                 content = arr[i].getDocContent();
                                 if(content)
                                 {
-                                    content.Set_ApplyToAll(true);
+                                    content.SetApplyToAll(true);
                                     f.apply(content, args);
-                                    content.Set_ApplyToAll(false);
+                                    content.SetApplyToAll(false);
                                     ret = true;
                                 }
                             }
@@ -2657,9 +2657,9 @@ DrawingObjectsController.prototype =
                 content = chart.selection.title.getDocContent();
                 if(content)
                 {
-                    content.Set_ApplyToAll(true);
+                    content.SetApplyToAll(true);
                     f.apply(content, args);
-                    content.Set_ApplyToAll(false);
+                    content.SetApplyToAll(false);
                 }
             }
         }
@@ -3388,9 +3388,9 @@ DrawingObjectsController.prototype =
                             content = arr[i].getDocContent();
                             if(content)
                             {
-                                content.Set_ApplyToAll(true);
+                                content.SetApplyToAll(true);
                                 cur_pr = content.GetCalculatedParaPr();
-                                content.Set_ApplyToAll(false);
+                                content.SetApplyToAll(false);
                             }
                         }
                     }
@@ -3465,9 +3465,9 @@ DrawingObjectsController.prototype =
                             content = arr[i].getDocContent();
                             if(content)
                             {
-                                content.Set_ApplyToAll(true);
+                                content.SetApplyToAll(true);
                                 cur_pr = content.GetCalculatedTextPr();
-                                content.Set_ApplyToAll(false);
+                                content.SetApplyToAll(false);
                             }
                         }
                     }
@@ -8826,10 +8826,10 @@ DrawingObjectsController.prototype =
             oTextPr.RFonts.CS = {Name: "Cambria Math", Index: -1};
             oTextPr.RFonts.EastAsia = {Name: "Cambria Math", Index: -1};
         }
-        oContent.Set_ApplyToAll(true);
+        oContent.SetApplyToAll(true);
         oContent.AddToParagraph(new ParaTextPr(oTextPr));
         oContent.SetParagraphAlign(AscCommon.align_Center);
-        oContent.Set_ApplyToAll(false);
+        oContent.SetApplyToAll(false);
         var oBodyPr = oShape.getBodyPr().createDuplicate();
         oBodyPr.rot = 0;
         oBodyPr.spcFirstLastPara = false;

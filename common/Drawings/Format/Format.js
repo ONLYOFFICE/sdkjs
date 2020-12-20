@@ -12580,9 +12580,9 @@ function CorrectUniColor(asc_color, unicolor, flag)
             oTitle.setTx(new AscFormat.CChartText());
             var oTextBody = AscFormat.CreateTextBodyFromString(sTitle, oDrawingDocument, oTitle.tx);
             if(AscFormat.isRealNumber(nFontSize)){
-                oTextBody.content.Set_ApplyToAll(true);
+                oTextBody.content.SetApplyToAll(true);
                 oTextBody.content.AddToParagraph(new ParaTextPr({ FontSize : nFontSize, Bold: bIsBold}));
-                oTextBody.content.Set_ApplyToAll(false);
+                oTextBody.content.SetApplyToAll(false);
             }
             oTitle.tx.setRich(oTextBody);
             return oTitle;
@@ -12599,9 +12599,9 @@ function CorrectUniColor(asc_color, unicolor, flag)
             oTitle.setTx(new AscFormat.CChartText());
             var oTextBody = AscFormat.CreateTextBodyFromString(sTitle, oChartSpace.getDrawingDocument(), oTitle.tx);
             if(AscFormat.isRealNumber(nFontSize)){
-                oTextBody.content.Set_ApplyToAll(true);
+                oTextBody.content.SetApplyToAll(true);
                 oTextBody.content.AddToParagraph(new ParaTextPr({ FontSize : nFontSize, Bold: bIsBold}));
-                oTextBody.content.Set_ApplyToAll(false);
+                oTextBody.content.SetApplyToAll(false);
             }
             oTitle.tx.setRich(oTextBody);
             return oTitle;

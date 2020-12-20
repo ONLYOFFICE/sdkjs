@@ -382,12 +382,12 @@ CGraphicObjects.prototype =
             {
                 oTextPr.SetLang(oTextPropMenu.get_Lang());
             }
-            oContent.Set_ApplyToAll(true);
+            oContent.SetApplyToAll(true);
             oContent.AddToParagraph(new ParaTextPr(oTextPr));
             oContent.SetParagraphAlign(AscCommon.align_Center);
             oContent.SetParagraphSpacing({Before : 0, After: 0,  LineRule : Asc.linerule_Auto, Line : 1.0});
             oContent.SetParagraphIndent({FirstLine:0, Left:0, Right:0});
-            oContent.Set_ApplyToAll(false);
+            oContent.SetApplyToAll(false);
             var oBodyPr = oDrawing.getBodyPr().createDuplicate();
             oBodyPr.rot = 0;
             oBodyPr.spcFirstLastPara = false;
@@ -423,9 +423,9 @@ CGraphicObjects.prototype =
                     extX = dMaxWidth;
                 }
                 oTextPr.FontSize *= (extX / oContentSize.w);
-                oContent.Set_ApplyToAll(true);
+                oContent.SetApplyToAll(true);
                 oContent.AddToParagraph(new ParaTextPr(oTextPr));
-                oContent.Set_ApplyToAll(false);
+                oContent.SetApplyToAll(false);
                 oContentSize = AscFormat.GetContentOneStringSizes(oContent);
                 oXfrm.setExtX(extX + 1);
                 oXfrm.setExtY(oContentSize.h);

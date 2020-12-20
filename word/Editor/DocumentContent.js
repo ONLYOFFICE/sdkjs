@@ -1872,9 +1872,9 @@ CDocumentContent.prototype.GetCurrentParagraph = function(bIgnoreSelection, arrS
 			{
 				for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
 				{
-					this.Content[nPos].Set_ApplyToAll(true);
+					this.Content[nPos].SetApplyToAll(true);
 					this.Content[nPos].GetCurrentParagraph(false, arrSelectedParagraphs, oPr);
-					this.Content[nPos].Set_ApplyToAll(false);
+					this.Content[nPos].SetApplyToAll(false);
 				}
 			}
 			else if (true === this.Selection.Use)
@@ -2425,14 +2425,6 @@ CDocumentContent.prototype.MoveCursorToCell = function(bNext)
 CDocumentContent.prototype.Set_ClipInfo = function(CurPage, X0, X1)
 {
 	this.ClipInfo[CurPage] = {X0 : X0, X1 : X1};
-};
-CDocumentContent.prototype.Set_ApplyToAll = function(bValue)
-{
-	this.ApplyToAll = bValue;
-};
-CDocumentContent.prototype.Get_ApplyToAll = function()
-{
-	return this.ApplyToAll;
 };
 CDocumentContent.prototype.IsApplyToAll = function()
 {
@@ -2991,9 +2983,9 @@ CDocumentContent.prototype.AddToParagraph = function(ParaItem, bRecalculate)
 			for (var Index = 0; Index < this.Content.length; Index++)
 			{
 				var Item = this.Content[Index];
-				Item.Set_ApplyToAll(true);
+				Item.SetApplyToAll(true);
 				Item.AddToParagraph(ParaItem);
-				Item.Set_ApplyToAll(false);
+				Item.SetApplyToAll(false);
 			}
 		}
 
@@ -3255,9 +3247,9 @@ CDocumentContent.prototype.ClearParagraphFormatting = function(isClearParaPr, is
 		for (var Index = 0; Index < this.Content.length; Index++)
 		{
 			var Item = this.Content[Index];
-			Item.Set_ApplyToAll(true);
+			Item.SetApplyToAll(true);
 			Item.ClearParagraphFormatting(isClearParaPr, isClearTextPr);
-			Item.Set_ApplyToAll(false);
+			Item.SetApplyToAll(false);
 		}
 
 		return;
@@ -4205,9 +4197,9 @@ CDocumentContent.prototype.GetSelectedText = function(bClearText, oPr)
 	{
 		if (true === bClearText && this.Content.length <= 1)
 		{
-			this.Content[0].Set_ApplyToAll(true);
+			this.Content[0].SetApplyToAll(true);
 			var ResultText = this.Content[0].GetSelectedText(true, oPr);
-			this.Content[0].Set_ApplyToAll(false);
+			this.Content[0].SetApplyToAll(false);
 			return ResultText;
 		}
 		else if (true != bClearText)
@@ -4216,9 +4208,9 @@ CDocumentContent.prototype.GetSelectedText = function(bClearText, oPr)
 			var Count      = this.Content.length;
 			for (var Index = 0; Index < Count; Index++)
 			{
-				this.Content[Index].Set_ApplyToAll(true);
+				this.Content[Index].SetApplyToAll(true);
 				ResultText += this.Content[Index].GetSelectedText(false, oPr);
-				this.Content[Index].Set_ApplyToAll(false);
+				this.Content[Index].SetApplyToAll(false);
 			}
 
 			return ResultText;
@@ -4272,9 +4264,9 @@ CDocumentContent.prototype.GetSelectedElementsInfo = function(oInfo)
 			for (var nPos = 0; nPos < nCount; ++nPos)
 			{
 				var oElement = this.Content[nPos];
-				oElement.Set_ApplyToAll(true);
+				oElement.SetApplyToAll(true);
 				oElement.GetSelectedElementsInfo(oInfo);
-				oElement.Set_ApplyToAll(false);
+				oElement.SetApplyToAll(false);
 			}
 		}
 	}
@@ -4701,9 +4693,9 @@ CDocumentContent.prototype.SetParagraphAlign = function(Align)
 		for (var Index = 0; Index < this.Content.length; Index++)
 		{
 			var Item = this.Content[Index];
-			Item.Set_ApplyToAll(true);
+			Item.SetApplyToAll(true);
 			Item.SetParagraphAlign(Align);
-			Item.Set_ApplyToAll(false);
+			Item.SetApplyToAll(false);
 		}
 
 		return;
@@ -4748,9 +4740,9 @@ CDocumentContent.prototype.SetParagraphDefaultTabSize = function(TabSize)
 		for (var Index = 0; Index < this.Content.length; Index++)
 		{
 			var Item = this.Content[Index];
-			Item.Set_ApplyToAll(true);
+			Item.SetApplyToAll(true);
 			Item.SetParagraphDefaultTabSize(TabSize);
-			Item.Set_ApplyToAll(false);
+			Item.SetApplyToAll(false);
 		}
 
 		return;
@@ -4788,9 +4780,9 @@ CDocumentContent.prototype.SetParagraphSpacing = function(Spacing)
 		for (var Index = 0; Index < this.Content.length; Index++)
 		{
 			var Item = this.Content[Index];
-			Item.Set_ApplyToAll(true);
+			Item.SetApplyToAll(true);
 			Item.SetParagraphSpacing(Spacing);
-			Item.Set_ApplyToAll(false);
+			Item.SetApplyToAll(false);
 		}
 
 		return;
@@ -4835,9 +4827,9 @@ CDocumentContent.prototype.SetParagraphIndent = function(Ind)
 		for (var Index = 0; Index < this.Content.length; Index++)
 		{
 			var Item = this.Content[Index];
-			Item.Set_ApplyToAll(true);
+			Item.SetApplyToAll(true);
 			Item.SetParagraphIndent(Ind);
-			Item.Set_ApplyToAll(false);
+			Item.SetApplyToAll(false);
 		}
 
 		return;
@@ -5041,9 +5033,9 @@ CDocumentContent.prototype.SetParagraphShd = function(Shd)
 		{
 			// При изменении цвета фона параграфа, не надо ничего пересчитывать
 			var Item = this.Content[Index];
-			Item.Set_ApplyToAll(true);
+			Item.SetApplyToAll(true);
 			Item.SetParagraphShd(Shd);
-			Item.Set_ApplyToAll(false);
+			Item.SetApplyToAll(false);
 		}
 
 		return;
@@ -5097,9 +5089,9 @@ CDocumentContent.prototype.SetParagraphStyle = function(Name)
 		for (var Index = 0; Index < this.Content.length; Index++)
 		{
 			var Item = this.Content[Index];
-			Item.Set_ApplyToAll(true);
+			Item.SetApplyToAll(true);
 			Item.SetParagraphStyle(Name);
-			Item.Set_ApplyToAll(false);
+			Item.SetApplyToAll(false);
 		}
 
 		return;
@@ -5147,9 +5139,9 @@ CDocumentContent.prototype.SetParagraphTabs = function(Tabs)
 		for (var Index = 0; Index < this.Content.length; Index++)
 		{
 			var Item = this.Content[Index];
-			Item.Set_ApplyToAll(true);
+			Item.SetApplyToAll(true);
 			Item.SetParagraphTabs(Tabs);
-			Item.Set_ApplyToAll(false);
+			Item.SetApplyToAll(false);
 		}
 
 		return;
@@ -5195,9 +5187,9 @@ CDocumentContent.prototype.SetParagraphContextualSpacing = function(Value)
 		for (var Index = 0; Index < this.Content.length; Index++)
 		{
 			var Item = this.Content[Index];
-			Item.Set_ApplyToAll(true);
+			Item.SetApplyToAll(true);
 			Item.SetParagraphContextualSpacing(Value);
-			Item.Set_ApplyToAll(false);
+			Item.SetApplyToAll(false);
 		}
 
 		return;
@@ -5275,9 +5267,9 @@ CDocumentContent.prototype.SetParagraphKeepLines = function(Value)
 		for (var Index = 0; Index < this.Content.length; Index++)
 		{
 			var Item = this.Content[Index];
-			Item.Set_ApplyToAll(true);
+			Item.SetApplyToAll(true);
 			Item.SetParagraphKeepLines(Value);
-			Item.Set_ApplyToAll(false);
+			Item.SetApplyToAll(false);
 		}
 
 		return;
@@ -5323,9 +5315,9 @@ CDocumentContent.prototype.SetParagraphKeepNext = function(Value)
 		for (var Index = 0; Index < this.Content.length; Index++)
 		{
 			var Item = this.Content[Index];
-			Item.Set_ApplyToAll(true);
+			Item.SetApplyToAll(true);
 			Item.SetParagraphKeepNext(Value);
-			Item.Set_ApplyToAll(false);
+			Item.SetApplyToAll(false);
 		}
 
 		return;
@@ -5371,9 +5363,9 @@ CDocumentContent.prototype.SetParagraphWidowControl = function(Value)
 		for (var Index = 0; Index < this.Content.length; Index++)
 		{
 			var Item = this.Content[Index];
-			Item.Set_ApplyToAll(true);
+			Item.SetApplyToAll(true);
 			Item.SetParagraphWidowControl(Value);
-			Item.Set_ApplyToAll(false);
+			Item.SetApplyToAll(false);
 		}
 
 		return;
@@ -5419,9 +5411,9 @@ CDocumentContent.prototype.SetParagraphBorders = function(Borders)
 		for (var Index = 0; Index < this.Content.length; Index++)
 		{
 			var Item = this.Content[Index];
-			Item.Set_ApplyToAll(true);
+			Item.SetApplyToAll(true);
 			Item.SetParagraphBorders(Borders);
-			Item.Set_ApplyToAll(false);
+			Item.SetApplyToAll(false);
 		}
 
 		return;
@@ -5521,9 +5513,9 @@ CDocumentContent.prototype.IncreaseDecreaseFontSize = function(bIncrease)
 		for (var Index = 0; Index < this.Content.length; Index++)
 		{
 			var Item = this.Content[Index];
-			Item.Set_ApplyToAll(true);
+			Item.SetApplyToAll(true);
 			Item.IncreaseDecreaseFontSize(bIncrease);
-			Item.Set_ApplyToAll(false);
+			Item.SetApplyToAll(false);
 		}
 
 		return;
@@ -5585,9 +5577,9 @@ CDocumentContent.prototype.IncreaseDecreaseIndent = function(bIncrease)
 		for (var Index = 0; Index < this.Content.length; Index++)
 		{
 			var Item = this.Content[Index];
-			Item.Set_ApplyToAll(true);
+			Item.SetApplyToAll(true);
 			Item.IncreaseDecreaseIndent(bIncrease);
-			Item.Set_ApplyToAll(false);
+			Item.SetApplyToAll(false);
 		}
 
 		return;
@@ -5640,9 +5632,9 @@ CDocumentContent.prototype.PasteFormatting = function(TextPr, ParaPr, ApplyPara)
 		for (var Index = 0; Index < this.Content.length; Index++)
 		{
 			var Item = this.Content[Index];
-			Item.Set_ApplyToAll(true);
+			Item.SetApplyToAll(true);
 			Item.PasteFormatting(TextPr, ParaPr, true);
-			Item.Set_ApplyToAll(false);
+			Item.SetApplyToAll(false);
 		}
 
 		return;
@@ -5939,17 +5931,17 @@ CDocumentContent.prototype.GetCalculatedTextPr = function()
 	if (true === this.ApplyToAll)
 	{
 		var VisTextPr;
-		this.Content[0].Set_ApplyToAll(true);
+		this.Content[0].SetApplyToAll(true);
 		VisTextPr = this.Content[0].GetCalculatedTextPr();
-		this.Content[0].Set_ApplyToAll(false);
+		this.Content[0].SetApplyToAll(false);
 
 		var Count = this.Content.length;
 		for (var Index = 1; Index < Count; Index++)
 		{
-			this.Content[Index].Set_ApplyToAll(true);
+			this.Content[Index].SetApplyToAll(true);
 			var CurPr = this.Content[Index].GetCalculatedTextPr();
 			VisTextPr = VisTextPr.Compare(CurPr);
-			this.Content[Index].Set_ApplyToAll(false);
+			this.Content[Index].SetApplyToAll(false);
 		}
 
 		Result_TextPr = VisTextPr;
@@ -6737,18 +6729,18 @@ CDocumentContent.prototype.CheckPosInSelection = function(X, Y, CurPage, NearPos
 						for (var Index = Start; Index <= End; Index++)
 						{
 							if (true === this.ApplyToAll)
-								this.Content[Index].Set_ApplyToAll(true);
+								this.Content[Index].SetApplyToAll(true);
 
 							if (true === this.Content[Index].CheckPosInSelection(0, 0, 0, NearPos))
 							{
 								if (true === this.ApplyToAll)
-									this.Content[Index].Set_ApplyToAll(false);
+									this.Content[Index].SetApplyToAll(false);
 
 								return true;
 							}
 
 							if (true === this.ApplyToAll)
-								this.Content[Index].Set_ApplyToAll(false);
+								this.Content[Index].SetApplyToAll(false);
 						}
 
 						return false;
@@ -7897,24 +7889,24 @@ CDocumentContent.prototype.AddComment = function(Comment, bStart, bEnd)
 	{
 		if (this.Content.length <= 1 && true === bStart && true === bEnd)
 		{
-			this.Content[0].Set_ApplyToAll(true);
+			this.Content[0].SetApplyToAll(true);
 			this.Content[0].AddComment(Comment, true, true);
-			this.Content[0].Set_ApplyToAll(false);
+			this.Content[0].SetApplyToAll(false);
 		}
 		else
 		{
 			if (true === bStart)
 			{
-				this.Content[0].Set_ApplyToAll(true);
+				this.Content[0].SetApplyToAll(true);
 				this.Content[0].AddComment(Comment, true, false);
-				this.Content[0].Set_ApplyToAll(false);
+				this.Content[0].SetApplyToAll(false);
 			}
 
 			if (true === bEnd)
 			{
-				this.Content[this.Content.length - 1].Set_ApplyToAll(true);
+				this.Content[this.Content.length - 1].SetApplyToAll(true);
 				this.Content[this.Content.length - 1].AddComment(Comment, false, true);
-				this.Content[this.Content.length - 1].Set_ApplyToAll(true);
+				this.Content[this.Content.length - 1].SetApplyToAll(true);
 			}
 		}
 	}
@@ -7972,9 +7964,9 @@ CDocumentContent.prototype.CanAddComment = function()
 		else
 		{
 			var oElement = this.Content[0];
-			oElement.Set_ApplyToAll(true);
+			oElement.SetApplyToAll(true);
 			var isCanAdd = oElement.CanAddComment();
-			oElement.Set_ApplyToAll(false);
+			oElement.SetApplyToAll(false);
 			return isCanAdd;
 		}
 	}
@@ -8715,9 +8707,9 @@ CDocumentContent.prototype.Document_Is_SelectionLocked = function(CheckType)
 		var Count = this.Content.length;
 		for ( var Index = 0; Index < Count; Index++ )
 		{
-			this.Content[Index].Set_ApplyToAll( true );
+			this.Content[Index].SetApplyToAll( true );
 			this.Content[Index].Document_Is_SelectionLocked(CheckType);
-			this.Content[Index].Set_ApplyToAll( false );
+			this.Content[Index].SetApplyToAll( false );
 		}
 		return;
 	}
