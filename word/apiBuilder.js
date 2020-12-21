@@ -11727,6 +11727,8 @@
 					case para_PageNum:
 					case para_PageCount:
 					case para_End:
+					case para_Drawing:
+					case para_NewLine:
 					{
 						break;
 					}
@@ -11738,10 +11740,8 @@
 					}
 					case para_Space:
 					case para_Tab  : 
-					case para_Drawing:
-					case para_NewLine:
 					{
-						Str += " ";
+						Str += " ";
 						runInfo.StringCount++; 
 						break;
 					}
@@ -11764,6 +11764,22 @@
 				allRunsInfo.push(runInfo);
 		}
 
+		function CalcPosToAddDel(oRun, nChangePos)
+		{
+			var stringCount = 0;
+
+			for (var nPos = 0; nPos < oRun.Content.length; nPos++)
+			{
+				if (para_Text === oRun.Content[nPos].Type || para_Space === oRun.Content[nPos].Type || para_Tab === oRun.Content[nPos].Type)
+					stringCount++;
+
+				if (stringCount - 1  === nChangePos)
+					return nPos;
+			}
+
+			return 0;
+		}
+
 		function DelInsertChars()
 		{
 			for (var nChange = textDelta.length - 1; nChange >= 0; nChange--)
@@ -11778,9 +11794,11 @@
 					{
 						var nPosToDel = Math.max(0, oChange.pos - oInfo.GlobStartPos + oInfo.StartPos);
 						var countToDel = Math.min(oChange.deleteCount, oInfo.StringCount);
-
+						
 						if (nPosToDel >= oInfo.Run.Content.length || (countToDel === 0 && oChange.deleteCount !== 0))
 							continue;
+
+						nPosToDel = CalcPosToAddDel(oInfo.Run, nPosToDel);
 
 						for (var nDelChar = 0; nDelChar < countToDel; nDelChar++)
 						{
@@ -11796,13 +11814,17 @@
 							}
 							else
 							{
+								//if (para_Drawing === oInfo.Run.Content[nPosToDel].Type || para_NewLine === oInfo.Run.Content[nPosToDel].Type)
+								//	oChange.deleteCount--;
+								
 								nPosToDel++;
 								nDelChar--;
 							}
 								
 						}
 						
-						var nPosToAdd = Math.max(0, oChange.pos - oInfo.GlobStartPos + oInfo.StartPos);
+						var nPosToAdd = nPosToDel;
+						
 						for (var nAddChar = 0; nAddChar < oChange.insert.length; nAddChar++)
 						{
 							var itemText = new AscCommonWord.ParaText(oChange.insert[nAddChar]);
