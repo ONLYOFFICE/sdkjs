@@ -11814,16 +11814,14 @@
 							}
 							else
 							{
-								//if (para_Drawing === oInfo.Run.Content[nPosToDel].Type || para_NewLine === oInfo.Run.Content[nPosToDel].Type)
-								//	oChange.deleteCount--;
-								
 								nPosToDel++;
 								nDelChar--;
 							}
 								
 						}
 						
-						var nPosToAdd = nPosToDel;
+						var nPosToAdd = Math.max(0, oChange.pos - oInfo.GlobStartPos + oInfo.StartPos);
+						nPosToAdd = CalcPosToAddDel(oInfo.Run, nPosToAdd);
 						
 						for (var nAddChar = 0; nAddChar < oChange.insert.length; nAddChar++)
 						{
