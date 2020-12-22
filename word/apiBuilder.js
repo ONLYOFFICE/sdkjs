@@ -11764,20 +11764,38 @@
 				allRunsInfo.push(runInfo);
 		}
 
-		function CalcPosToAddDel(oRun, nChangePos)
+		function CalcPosToDel(oRunInfo, nChangePos)
 		{
 			var stringCount = 0;
 
-			for (var nPos = 0; nPos < oRun.Content.length; nPos++)
+			for (var nPos = oRunInfo.StartPos; nPos < oRunInfo.Run.Content.length; nPos++)
 			{
-				if (para_Text === oRun.Content[nPos].Type || para_Space === oRun.Content[nPos].Type || para_Tab === oRun.Content[nPos].Type)
+				if (para_Text === oRunInfo.Run.Content[nPos].Type || para_Space === oRunInfo.Run.Content[nPos].Type || para_Tab === oRunInfo.Run.Content[nPos].Type)
 					stringCount++;
 
-				if (stringCount - 1  === nChangePos)
-					return nPos;
+				if (stringCount - 1 === nChangePos)
+					return Math.max(0, nPos);
 			}
 
-			return 0;
+			return Math.max(0, nChangePos);
+		}
+
+		function CalcPosToAdd(oRunInfo, nChangePos)
+		{
+			var stringCount = 0;
+
+			for (var nPos = oRunInfo.StartPos; nPos < oRunInfo.Run.Content.length; nPos++)
+			{
+				if (nChangePos === 0)
+					return nPos;
+				if (para_Text === oRunInfo.Run.Content[nPos].Type || para_Space === oRunInfo.Run.Content[nPos].Type || para_Tab === oRunInfo.Run.Content[nPos].Type)
+					stringCount++;
+
+				if (stringCount >= nChangePos)
+					return Math.max(0, nPos + 1);
+			}
+
+			return nChangePos;
 		}
 
 		function DelInsertChars()
@@ -11786,19 +11804,19 @@
 			{
 				var oChange = textDelta[nChange];
 				var DelCount = oChange.deleteCount;
-
+				var infoToAdd = null;
 				for (var nInfo = 0; nInfo < allRunsInfo.length; nInfo++)
 				{
 					var oInfo = allRunsInfo[nInfo];
 					if (oChange.pos >= oInfo.GlobStartPos || oChange.pos + DelCount >= oInfo.GlobStartPos)
 					{
-						var nPosToDel = Math.max(0, oChange.pos - oInfo.GlobStartPos + oInfo.StartPos);
+						var nPosToDel = CalcPosToDel(oInfo, oChange.pos - oInfo.GlobStartPos);
+						var nPosToAdd = CalcPosToAdd(oInfo, oChange.pos - oInfo.GlobStartPos);
 						var countToDel = Math.min(oChange.deleteCount, oInfo.StringCount);
 						
+						var wasDel = false;
 						if (nPosToDel >= oInfo.Run.Content.length || (countToDel === 0 && oChange.deleteCount !== 0))
 							continue;
-
-						nPosToDel = CalcPosToAddDel(oInfo.Run, nPosToDel);
 
 						for (var nDelChar = 0; nDelChar < countToDel; nDelChar++)
 						{
@@ -11811,6 +11829,12 @@
 								nDelChar--;
 								oChange.deleteCount--;
 								countToDel--;
+								
+								if (!wasDel)
+								{
+									nPosToAdd = nPosToDel;
+									wasDel = true;
+								}
 							}
 							else
 							{
@@ -11820,15 +11844,26 @@
 								
 						}
 						
-						var nPosToAdd = Math.max(0, oChange.pos - oInfo.GlobStartPos + oInfo.StartPos);
-						nPosToAdd = CalcPosToAddDel(oInfo.Run, nPosToAdd);
-						
+						if (countToDel !== 0)
+						{
+							infoToAdd = 
+							{
+								Run: oInfo.Run,
+								Pos: nPosToAdd
+							};
+							continue;
+						}
+							
 						for (var nAddChar = 0; nAddChar < oChange.insert.length; nAddChar++)
 						{
 							var itemText = new AscCommonWord.ParaText(oChange.insert[nAddChar]);
 
 							itemText.Parent = oInfo.Run.GetParagraph();
-							oInfo.Run.AddToContent(nPosToAdd, itemText);
+							if (oInfo.Run.Content.length === 0 && infoToAdd)
+								infoToAdd.Run.AddToContent(infoToAdd.Pos, itemText);
+							else
+								oInfo.Run.AddToContent(nPosToAdd, itemText);
+
 							oChange.insert.shift();
 							nAddChar--;
 							nPosToAdd += 1;
