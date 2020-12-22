@@ -23790,7 +23790,7 @@ CDocument.prototype.GetSpecialFormsByKey = function(sKey)
 	for (var sId in this.SpecialForms)
 	{
 		var oForm = this.SpecialForms[sId];
-		if (sKey === oForm.GetFormKey())
+		if (sKey === oForm.GetFormKey() && oForm.Is_UseInDocument())
 			arrForms.push(oForm);
 	}
 
