@@ -1801,8 +1801,13 @@ ParaDrawing.prototype.Get_ParentParagraph = function()
 {
 	if (this.Parent instanceof Paragraph)
 		return this.Parent;
+
 	if (this.Parent instanceof ParaRun)
 		return this.Parent.Paragraph;
+
+	if (this.Parent && this.Parent.GetParagraph())
+		return this.Parent.GetParagraph();
+
 	return null;
 };
 ParaDrawing.prototype.SelectAsText = function()
@@ -1939,7 +1944,8 @@ ParaDrawing.prototype.Get_ParentObject_or_DocumentPos = function()
 };
 ParaDrawing.prototype.Refresh_RecalcData = function(Data)
 {
-	if (undefined != this.Parent && null != this.Parent)
+	var oRun = this.GetRun();
+	if (oRun)
 	{
 		if (AscCommon.isRealObject(Data))
 		{
@@ -1957,11 +1963,7 @@ ParaDrawing.prototype.Refresh_RecalcData = function(Data)
 
 				case AscDFH.historyitem_Drawing_SetExtent:
 				{
-					var Run = this.Parent.Get_DrawingObjectRun(this.Id);
-					if (Run)
-					{
-						Run.RecalcInfo.Measure = true;
-					}
+					oRun.RecalcInfo.Measure = true;
 					break;
 				}
 
@@ -1974,11 +1976,7 @@ ParaDrawing.prototype.Refresh_RecalcData = function(Data)
 						this.GraphicObj.handleUpdateExtents && this.GraphicObj.handleUpdateExtents();
 						this.GraphicObj.addToRecalculate();
 					}
-					var Run = this.Parent.Get_DrawingObjectRun(this.Id);
-					if (Run)
-					{
-						Run.RecalcInfo.Measure = true;
-					}
+					oRun.RecalcInfo.Measure = true;
 					break;
 				}
 				case AscDFH.historyitem_Drawing_WrappingType:
@@ -1992,18 +1990,14 @@ ParaDrawing.prototype.Refresh_RecalcData = function(Data)
 				}
 			}
 		}
-		return this.Parent.Refresh_RecalcData2();
+		return oRun.Refresh_RecalcData2();
 	}
 };
-
-
 ParaDrawing.prototype.Refresh_RecalcData2 = function(Data)
 {
-
-	if(this.Parent && this.Parent.Refresh_RecalcData2)
-	{
-		return this.Parent.Refresh_RecalcData2();
-	}
+	var oRun = this.GetRun();
+	if (oRun)
+		return oRun.Refresh_RecalcData2();
 };
 //----------------------------------------------------------------------------------------------------------------------
 // Функции для совместного редактирования
