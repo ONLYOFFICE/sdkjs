@@ -11879,8 +11879,7 @@
 			
 			if (oPara.Selection.Use)
 				oPara.CheckRunContent(GetRunInfo);
-			else if (oPara.IsTableCellContent())
-				oPara.CheckRunContent(GetRunInfo);
+				
 			for (var nRun = 0; nRun < allRunsInfo.length; nRun++)
 				oParaText += allRunsInfo[nRun].String;
 
