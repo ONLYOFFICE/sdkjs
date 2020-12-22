@@ -951,10 +951,14 @@
 			var _val = _formula.text;
 
 			//если формула
-			if (_val[0] === '"') {
-				_val = _formula.text = _val.slice(1, -1);
+			var _isNum = isNum(_val);
+			if (_val[0] === '"' || _isNum) {
+				if (!_isNum) {
+					_val = _formula.text = _val.slice(1, -1);
+					_isNum = isNum(_val);
+				}
 
-				if (isNum(_val)) {
+				if (_isNum) {
 					//переводим в дату
 					var _format;
 					if (t.type === EDataValidationType.Date) {
@@ -970,8 +974,8 @@
 					}
 				}
 
-			} else if (!isNum(_formula.text)) {
-				_formula.text = "=" + _formula.text;
+			} else {
+				_formula.text = "=" + _val;
 			}
 		};
 
