@@ -11821,7 +11821,7 @@
 						for (var nDelChar = 0; nDelChar < countToDel; nDelChar++)
 						{
 							if (!oInfo.Run.Content[nPosToDel])
-								continue;
+								break;
 								
 							if (para_Text === oInfo.Run.Content[nPosToDel].Type || para_Space === oInfo.Run.Content[nPosToDel].Type || para_Tab === oInfo.Run.Content[nPosToDel].Type)
 							{
@@ -11841,7 +11841,6 @@
 								nPosToDel++;
 								nDelChar--;
 							}
-								
 						}
 						
 						if (countToDel !== 0)
@@ -11886,8 +11885,11 @@
 				oParaText += allRunsInfo[nRun].String;
 
 			if (oParaText == "")
+			{
+				allRunsInfo = [];
 				continue;
-
+			}
+				
 			var textDelta = AscCommon.getTextDelta(oParaText, arrString[Index]);
 
 			DelInsertChars();
