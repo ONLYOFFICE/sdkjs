@@ -20835,11 +20835,31 @@
 			t.model.setDataValidationProps(props);
 
 			History.EndTransaction();
-		}
+		};
 
 		//TODO необходимо ли лочить каждый объект data validate?
 		var lockRanges = this.model.dataValidations ? this.model.dataValidations.expandRanges(_selection) : _selection;
 		this._isLockedCells(lockRanges, /*subType*/null, callback);
+	};
+
+	WorksheetView.prototype.setDataValidationSameSettings = function (props, val) {
+		var _selection = this.model.getSelection().ranges;
+
+		//здесь не будем проверять лок
+		//если какая-то ячейка окажется залочена, то дальнейшего применения не произойдёт
+		if (val) {
+			var elems = this.model.dataValidations.getSameSettingsElems(props);
+			if (elems) {
+				props._tempSelection = _selection.clone();
+				var newSelection = [];
+				for (var i = 0; i < elems.length; i++) {
+					newSelection = newSelection.concat(elems.ranges);
+				}
+				this.setSelection(newSelection);
+			}
+		} else {
+			this.setSelection(_selection);
+		}
 	};
 
 	//------------------------------------------------------------export---------------------------------------------------

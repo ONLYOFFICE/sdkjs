@@ -161,6 +161,8 @@
 
 		this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
+		this._tempSelection = null;
+
 		return this;
 	}
 
@@ -930,7 +932,7 @@
 		for (var j = 0; j < this.ranges.length; j++) {
 			var intersection = range.intersection(this.ranges[j]);
 			if (intersection) {
-				intersection.setOffset(offset)
+				intersection.setOffset(offset);
 				newRanges.push(intersection);
 			}
 		}
@@ -1135,7 +1137,7 @@
 		};
 
 		var intersectionArr = [];
-		var containArr = []
+		var containArr = [];
 		if (this.elems) {
 			for (var i = 0; i < this.elems.length; i++) {
 				var dataValidation = this.elems[i];
@@ -1359,6 +1361,24 @@
 			}
 		}
 		return res.concat(_notExpandRanges);
+	};
+
+	CDataValidations.prototype.getSameSettingsElems = function(_elem) {
+		var res = null;
+		if (!_elem) {
+			return res;
+		}
+
+		for (var i = 0; i < this.elems.length; i++) {
+			if (this.elems[i].isEqual(_elem)) {
+				if (!res) {
+					res = [];
+				}
+				res.push(_elem);
+			}
+		}
+
+		return res;
 	};
 
 

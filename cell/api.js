@@ -4926,10 +4926,14 @@ var editor;
     }
   };
 
-  spreadsheet_api.prototype.asc_setDataValidation = function(props) {
+  spreadsheet_api.prototype.asc_setDataValidation = function(props, switchApplySameSettings) {
     var ws = this.wb.getWorksheet();
     if (ws) {
-      return ws.setDataValidationProps(props);
+      if (undefined === switchApplySameSettings) {
+        return ws.setDataValidationProps(props);
+      } else {
+		  return ws.setDataValidationSameSettings(props, switchApplySameSettings);
+      }
     }
   };
 
