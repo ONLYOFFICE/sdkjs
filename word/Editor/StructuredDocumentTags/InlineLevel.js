@@ -195,7 +195,7 @@ CInlineLevelSdt.prototype.private_CopyPrTo = function(oContentControl)
 		oContentControl.SetDatePickerPr(this.Pr.Date);
 
 	oContentControl.SetShowingPlcHdr(this.Pr.ShowingPlcHdr);
-	oContentControl.SetPlaceholder(this.Pr.Placeholder);
+	oContentControl.SetPlaceholder(this.private_CopyPlaceholder());
 	oContentControl.SetContentControlEquation(this.Pr.Equation);
 	oContentControl.SetContentControlTemporary(this.Pr.Temporary);
 
