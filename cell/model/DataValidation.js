@@ -1221,27 +1221,31 @@
 		var instersection = _obj.intersection;
 		var contain = _obj.contain;
 
-		var _equalRanges = function (_ranges1, _ranges2) {
-			var res = false;
-
-			if (_ranges1.length === _ranges2.length) {
-				res = true;
+		var _containRanges = function (_ranges1, _ranges2) {
+			if (_ranges1.length <= _ranges2.length) {
 				for (var j = 0; j < _ranges1.length; j++) {
-					if (!_ranges1[j].isEqual(_ranges2[j])) {
-						res = false;
-						break;
+					var _equal = false;
+					for (var n = 0; n < _ranges2.length; n++) {
+						if (_ranges1[j].isEqual(_ranges2[n])) {
+							_equal = true;
+							break;
+						}
+					}
+					if (!_equal) {
+						return false;
 					}
 				}
 			}
 
-			return res;
+			return true;
 		};
 
-		var prepeareAdd = function (_props) {
+		var prepeareAdd = function (_props, modelRanges) {
 			var _dataValidation = _props.clone();
 			var _ranges = [];
-			for (var i = 0; i < ranges.length; i++) {
-				_ranges.push(ranges[i].clone());
+			var needRanges = modelRanges ? modelRanges : ranges;
+			for (var i = 0; i < needRanges.length; i++) {
+				_ranges.push(needRanges[i].clone());
 			}
 			_dataValidation.ranges = _ranges;
 			_dataValidation._init(ws);
@@ -1253,10 +1257,14 @@
 
 		var equalRangeDataValidation;
 		var equalDataValidation;
+		var i;
 		if (this.elems) {
-			for (var i = 0; i < this.elems.length; i++) {
-				if (_equalRanges(this.elems[i].ranges, ranges)) {
-					equalRangeDataValidation = this.elems[i];
+			for (i = 0; i < this.elems.length; i++) {
+				if (_containRanges(this.elems[i].ranges, ranges)) {
+					if (!equalRangeDataValidation) {
+						equalRangeDataValidation = [];
+					}
+					equalRangeDataValidation.push(this.elems[i]);
 				}
 				//пока не усложняем логику и не объединяем объекты с одинаковыми настройками
 				/*if (props.isEqual(this.dataValidations.elems[i])) {
@@ -1265,6 +1273,7 @@
 				}*/
 			}
 		}
+
 		if (!instersection.length && !contain.length) {
 			//самый простой вариант - просто добавляем новый обхект и привязываем его к активной области
 			if (equalDataValidation) {
@@ -1274,7 +1283,9 @@
 				this.add(ws, prepeareAdd(props), true);
 			}
 		} else if (equalRangeDataValidation) {
-			this.change(ws, equalRangeDataValidation, prepeareAdd(props), true);
+			for (i = 0; i < equalRangeDataValidation.length; i++) {
+				this.change(ws, equalRangeDataValidation[i], prepeareAdd(props, equalRangeDataValidation[i].ranges), true);
+			}
 		} else {
 			var t = this;
 			var _split = function (_dataValidation) {
@@ -1387,7 +1398,7 @@
 				if (!res) {
 					res = [];
 				}
-				res.push(_elem);
+				res.push(this.elems[i]);
 			}
 		}
 
