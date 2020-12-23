@@ -1817,7 +1817,7 @@
 	/**
 	 * Sets the display text of the hyperlink.
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sDisplay - start character in current element
+	 * @param {string} sDisplay
 	 * @returns {bool} 
 	 * */
 	ApiHyperlink.prototype.SetDisplayedText = function(sDisplay)
@@ -1892,14 +1892,14 @@
 	 * */
 	ApiHyperlink.prototype.GetDisplayedText = function()
 	{
-		var sText = null;
+		var oText = {Text : ""};
 
 		if (this.ParaHyperlink.Content.length !== 0)
 		{
-			sText = this.ParaHyperlink.Get_Text();
+			this.ParaHyperlink.Get_Text(oText);
 		}
 
-		return sText;
+		return oText.Text;
 	};
 	/**
 	 * Gets the ScreenTip text of the hyperlink.
