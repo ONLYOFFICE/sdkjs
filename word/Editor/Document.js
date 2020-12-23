@@ -20862,7 +20862,7 @@ CDocument.prototype.RemoveContentControl = function(Id)
 	else if (c_oAscSdtLevelType.Inline === oContentControl.GetContentControlType())
 	{
 		this.SelectContentControl(Id);
-		this.RemoveBeforePaste();
+		this.Remove(-1, false, false, false);
 	}
 };
 CDocument.prototype.RemoveContentControlWrapper = function(Id)
