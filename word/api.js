@@ -8664,6 +8664,9 @@ background-repeat: no-repeat;\
 
 		if (oContentControl && oContentControl.GetContentControlType)
 		{
+			oLogicDocument.RemoveSelection();
+			oContentControl.SelectContentControl();
+
 			if (c_oAscSdtLevelType.Block === oContentControl.GetContentControlType())
 			{
 				isLocked = oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_None, {
@@ -8680,7 +8683,7 @@ background-repeat: no-repeat;\
 					isLocked = oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_None, {
 						Type      : AscCommon.changestype_2_ElementsArray_and_Type,
 						Elements  : [oParagraph],
-						CheckType : AscCommon.changestype_Paragraph_Content
+						CheckType : AscCommon.changestype_Remove
 					});
 				}
 			}
