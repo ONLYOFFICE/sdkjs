@@ -3234,20 +3234,23 @@ CDocument.prototype.private_FinalizeFormChange = function()
 		}
 		else if (oForm.IsPicture())
 		{
-			for (var sId in this.SpecialForms)
+			if (oPr)
 			{
-				var oTempForm = this.SpecialForms[sId];
-				if (!oTempForm.IsUseInDocument())
-					continue;
-
-				if (oTempForm !== oForm && sKey === oTempForm.GetFormKey() && oTempForm.IsPicture())
+				for (var sId in this.SpecialForms)
 				{
-					var arrDrawings = oTempForm.GetAllDrawingObjects();
-					if (arrDrawings.length > 0)
+					var oTempForm = this.SpecialForms[sId];
+					if (!oTempForm.IsUseInDocument())
+						continue;
+
+					if (oTempForm !== oForm && sKey === oTempForm.GetFormKey() && oTempForm.IsPicture())
 					{
-						var oPicture = arrDrawings[0].GetPicture();
-						if (oPicture)
-							oPicture.setBlipFill(AscFormat.CreateBlipFillRasterImageId(oPr));
+						var arrDrawings = oTempForm.GetAllDrawingObjects();
+						if (arrDrawings.length > 0)
+						{
+							var oPicture = arrDrawings[0].GetPicture();
+							if (oPicture)
+								oPicture.setBlipFill(AscFormat.CreateBlipFillRasterImageId(oPr));
+						}
 					}
 				}
 			}
