@@ -689,7 +689,7 @@ CSdtGlobalSettings.prototype.Read_FromBinary = function(oReader)
  */
 function CSpecialFormsGlobalSettings()
 {
-	this.Highlight = new AscCommonWord.CDocumentColor(255, 192, 0);//undefined;
+	this.Highlight = new AscCommonWord.CDocumentColor(255, 204, 0);
 }
 CSpecialFormsGlobalSettings.prototype.Copy = function()
 {
