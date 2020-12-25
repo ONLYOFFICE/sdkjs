@@ -1555,9 +1555,11 @@ CTable.prototype.private_RecalculateCellTopBorder = function(oPrevRow, nCurRow, 
 			var oPrevCell     = oPrevRow.GetCell(nPrevPos);
 			var nPrevGridSpan = oPrevCell.GetGridSpan();
 
-			// Если данная ячейка учавствует в вертикальном объединении,
-			// тогда нам нужно использовать нижнюю ячейку
-			if (vmerge_Continue === oPrevCell.GetVMerge())
+			// Если данная ячейка участвует в вертикальном объединении, тогда нам нужно использовать нижнюю ячейку
+			// в этом объединении, но в не в случае, когда мы расчитываем границу соприкасающуюся с заголовком таблицы
+			// TODO: Надо проверить, зачем вообще это тут добавлено, т.к. ячейка предыдущей строки по логике
+			//       не должны быть не последней в своем вертикальном объединении
+			if (vmerge_Continue === oPrevCell.GetVMerge() && oPrevRow === this.GetRow(nCurRow - 1))
 				oPrevCell = this.Internal_Get_EndMergedCell(nCurRow - 1, nPrevGridCol, nPrevGridSpan);
 
 			var oPrevBottom = oPrevCell.GetBorders().Bottom;
