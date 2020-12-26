@@ -2077,7 +2077,7 @@ CTableCell.prototype.GetDocumentPositionFromObject = function(arrPos)
     {
     	if (arrPos.length > 0)
 		{
-			arrPos.splice({Class : oRow, Position : this.GetIndex()});
+			arrPos.splice(0, 0, {Class : oRow, Position : this.GetIndex()});
 			oRow.GetDocumentPositionFromObject(arrPos);
 		}
 		else

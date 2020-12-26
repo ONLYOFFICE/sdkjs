@@ -747,8 +747,8 @@ CParagraphContentBase.prototype.GetDocumentPositionFromObject = function(arrPos)
  */
 CParagraphContentBase.prototype.GetParentContentControls = function()
 {
-	var oDocPos = [{Class : this, Pos : 0}];
-	oDocPos = this.GetDocumentPositionFromObject(oDocPos);
+	var oDocPos = this.GetDocumentPositionFromObject();
+	oDocPos.push({Class : this, Pos : 0});
 
 	var arrContentControls = [];
 	for (var nIndex = 0, nCount = oDocPos.length; nIndex < nCount; ++nIndex)
