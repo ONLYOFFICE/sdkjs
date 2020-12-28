@@ -157,16 +157,13 @@
 	};
 
 	var GlobalSkin = EditorSkins["classic"];
-	function updateGlobalSkin(obj)
-	{
+
+	function updateGlobalSkin(obj) {
 		if (!obj) return;
 
-		if (typeof obj === "string" && undefined !== EditorSkins[obj])
-		{
+		if (typeof obj === "string" && undefined !== EditorSkins[obj]) {
 			GlobalSkin = EditorSkins[obj];
-		}
-		else
-		{
+		} else {
 			if (undefined !== obj["Name"]) GlobalSkin.Name = obj["Name"];
 			if (undefined !== obj["Background"]) GlobalSkin.RulersButton = obj["Background"];
 			if (undefined !== obj["Border"]) GlobalSkin.NavigationButtons = obj["Border"];
@@ -196,8 +193,11 @@
 			var rgb = parseInt(_color.split('#')[1], 16);
 			return new CColor((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
 		};
-		this.header = {
-			style: [// Header colors
+		this.updateStyle = function () {
+			this.header.style = this._generateStyle();
+		};
+		this._generateStyle = function () {
+			return [// Header colors
 				{ // kHeaderDefault
 					background: this.getCColor(GlobalSkin.Background),
 					border: this.getCColor(GlobalSkin.Border),
@@ -216,7 +216,10 @@
 					color: this.getCColor(GlobalSkin.ColorHighlighted),
 					backgroundDark: this.getCColor(GlobalSkin.BackgroundDarkHighlighted),
 					colorDark: this.getCColor(GlobalSkin.ColorDarkHighlighted)
-				}], cornerColor: new CColor(193, 193, 193)
+				}];
+		};
+		this.header = {
+			style: this._generateStyle(), cornerColor: new CColor(193, 193, 193)
 		};
 		this.cells = {
 			defaultState: {
@@ -3774,6 +3777,10 @@
 		} else {
 			_callback(true);
 		}
+	};
+
+	WorkbookView.prototype.updateSkin = function () {
+		this.defaults.worksheetView.updateStyle();
 	};
 
 
