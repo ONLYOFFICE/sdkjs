@@ -4939,6 +4939,10 @@ var editor;
     }
   };
 
+  spreadsheet_api.prototype.asc_setSkin = function (theme) {
+    AscCommonExcel.updateGlobalSkin(theme);
+  };
+
   /*
    * Export
    * -----------------------------------------------------------------------------
@@ -5372,5 +5376,7 @@ var editor;
   //data validation
   prot["asc_setDataValidation"] = prot.asc_setDataValidation;
   prot["asc_getDataValidationProps"] = prot.asc_getDataValidationProps;
+
+  prot["asc_setSkin"] = prot.asc_setSkin;
 
 })(window);
