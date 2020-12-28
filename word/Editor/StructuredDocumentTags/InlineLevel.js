@@ -325,6 +325,7 @@ CInlineLevelSdt.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _C
 		W            : X1 - X0,
 		Y            : Y0,
 		H            : Y1 - Y0,
+		TextLineH    : Y1 - Y0,
 		Page         : PRSA.Paragraph.Get_AbsolutePage(_CurPage),
 		PageInternal : _CurPage
 	};
@@ -494,6 +495,22 @@ CInlineLevelSdt.prototype.GetBoundingPolygon = function()
 	}
 
 	return this.BoundsPaths;
+};
+CInlineLevelSdt.prototype.GetBoundingPolygonFirstLineH = function()
+{
+	for (var nCurLine = 0, nLinesCount = this.protected_GetLinesCount(); nCurLine < nLinesCount; ++nCurLine)
+	{
+		for (var nCurRange = 0, nRangesCount = this.protected_GetRangesCount(nCurLine); nCurRange < nRangesCount; ++nCurRange)
+		{
+			var oBounds = this.Bounds[((nCurLine << 16) & 0xFFFF0000) | (nCurRange & 0x0000FFFF)];
+			if (!oBounds)
+				break;
+			else if (oBounds.W > 0)
+				return oBounds.TextLineH;
+		}
+	}
+
+	return 0;
 };
 CInlineLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCurPage)
 {

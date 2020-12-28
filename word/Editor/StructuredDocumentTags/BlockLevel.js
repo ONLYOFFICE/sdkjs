@@ -844,6 +844,12 @@ CBlockLevelSdt.prototype.GetSelectionAnchorPos = function()
 {
 	return this.Content.GetSelectionAnchorPos();
 };
+CBlockLevelSdt.prototype.GetBoundingPolygonFirstLineH = function()
+{
+	// TODO: Когда специальные формы будут реализованы и с помощью блочного контрола, тогда
+	//       надо будет рассчитать тут
+	return 0;
+};
 CBlockLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCurPage)
 {
 	if (!this.IsRecalculated() || !this.LogicDocument)
