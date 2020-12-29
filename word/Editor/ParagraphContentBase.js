@@ -2590,16 +2590,29 @@ CParagraphContentWithParagraphLikeContent.prototype.Draw_HighLights = function(P
 };
 CParagraphContentWithParagraphLikeContent.prototype.Draw_Elements = function(PDSE)
 {
-    var CurLine  = PDSE.Line - this.StartLine;
-    var CurRange = ( 0 === CurLine ? PDSE.Range - this.StartRange : PDSE.Range );
+	var isPlaceHolder = false;
+	var nTextAlpha;
 
-    var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
-    var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
+	if (this.IsPlaceHolder && this.IsPlaceHolder() && PDSE.Graphics.setTextGlobalAlpha)
+	{
+		isPlaceHolder = true;
+		nTextAlpha    = PDSE.Graphics.getTextGlobalAlpha();
+		PDSE.Graphics.setTextGlobalAlpha(0.5);
+	}
 
-    for ( var CurPos = StartPos; CurPos <= EndPos; CurPos++ )
-    {
-        this.Content[CurPos].Draw_Elements( PDSE );
-    }
+	var CurLine  = PDSE.Line - this.StartLine;
+	var CurRange = (0 === CurLine ? PDSE.Range - this.StartRange : PDSE.Range);
+
+	var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
+	var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
+
+	for (var CurPos = StartPos; CurPos <= EndPos; CurPos++)
+	{
+		this.Content[CurPos].Draw_Elements(PDSE);
+	}
+
+	if (isPlaceHolder)
+		PDSE.Graphics.setTextGlobalAlpha(nTextAlpha);
 };
 CParagraphContentWithParagraphLikeContent.prototype.Draw_Lines = function(PDSL)
 {

@@ -206,7 +206,18 @@ CBlockLevelSdt.prototype.Draw = function(CurPage, oGraphics)
 		oGraphics.df();
 	}
 
+	var isPlaceHolder = this.IsPlaceHolder();
+	var nTextAlpha;
+	if (isPlaceHolder && oGraphics.setTextGlobalAlpha)
+	{
+		nTextAlpha = oGraphics.getTextGlobalAlpha();
+		oGraphics.setTextGlobalAlpha(0.5);
+	}
+
 	this.Content.Draw(CurPage, oGraphics);
+
+	if (isPlaceHolder)
+		oGraphics.setTextGlobalAlpha(nTextAlpha);
 
 	if (AscCommon.locktype_None !== this.Lock.Get_Type())
 	{

@@ -163,6 +163,10 @@ CGraphics.prototype =
     {
         this.textAlpha = alpha;
     },
+	getTextGlobalAlpha : function()
+	{
+		return this.textAlpha;
+	},
     resetTextGlobalAlpha : function()
     {
         this.textAlpha = undefined;
