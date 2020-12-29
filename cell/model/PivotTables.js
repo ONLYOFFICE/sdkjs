@@ -1892,12 +1892,19 @@ CT_PivotCacheRecords.prototype._getCol = function(index) {
 	}
 	return col;
 };
-CT_PivotCacheRecords.prototype._getDataMapFromFields = function(indexes, length, row, dataMap) {
-	var i, val;
+CT_PivotCacheRecords.prototype._getDataMapFromFields = function(cacheFields, indexes, length, row, dataMap) {
+	var i, index, val, cacheField, sharedIndex;
 	for (i = 0; i < length; ++i) {
-		if (indexes[i] < this.getColsCount()) {
-			val = this._cols[indexes[i]].get(row);
-			dataMap = this._getDataMapAddElem(dataMap, val.val, dataMap.total.length);
+		index = indexes[i];
+		if (index < cacheFields.length) {
+			cacheField = cacheFields[index];
+			var cacheFieldBaseIndex = cacheField.getGroupBaseIndex(index);
+			if(cacheFieldBaseIndex < this.getColsCount()) {
+				val = this._cols[cacheFieldBaseIndex].get(row);
+				var cacheFieldBase = cacheFields[cacheFieldBaseIndex];
+				sharedIndex = cacheField.getGroupOrSharedIndex(cacheFieldBase, val.val);
+				dataMap = this._getDataMapAddElem(dataMap, sharedIndex, dataMap.total.length);
+			}
 		}
 	}
 	return dataMap;
@@ -1976,7 +1983,7 @@ CT_PivotCacheRecords.prototype._getDataMapRowToTotal = function(cacheFields, row
 			val = this._cols[dataIndex].get(row);
 			if (c_oAscPivotRecType.Index === val.type && cacheFields) {
 				var cacheField = cacheFields[dataIndex];
-				val = cacheField && cacheField.sharedItems && cacheField.sharedItems.Items && cacheField.sharedItems.Items.get(val.val) || val;
+				val = cacheField && cacheField.getSharedItem(val.val) || val;
 			}
 			if (c_oAscPivotRecType.Number === val.type || c_oAscPivotRecType.DateTime === val.type) {
 				total.add(val.val);
@@ -1998,10 +2005,10 @@ CT_PivotCacheRecords.prototype.getDataMap = function(cacheFields, filterMaps, ca
 		this.fillVisibleFields(row, cacheFieldsWithData);
 		rowMapCur = res;
 		if (rowIndexes.length > 0) {
-			rowMapCur = this._getDataMapFromFields(rowIndexes, rowIndexes.length, row, rowMapCur);
+			rowMapCur = this._getDataMapFromFields(cacheFields, rowIndexes, rowIndexes.length, row, rowMapCur);
 		}
 		if (colIndexes.length > 0) {
-			rowMapCur = this._getDataMapFromFields(colIndexes, colIndexes.length, row, rowMapCur);
+			rowMapCur = this._getDataMapFromFields(cacheFields, colIndexes, colIndexes.length, row, rowMapCur);
 		}
 		this._getDataMapRowToTotal(cacheFields, row, rowMapCur, dataFields);
 	}
@@ -3866,7 +3873,7 @@ CT_pivotTableDefinition.prototype.getPivotFieldCellValue = function(fieldIndex, 
 	var cacheFields = this.asc_getCacheFields();
 	var pivotField = pivotFields[fieldIndex];
 	var pivotFieldItem = pivotField.getItem(valueIndex);
-	var sharedItem = cacheFields[fieldIndex].getSharedItem(pivotFieldItem.x);
+	var sharedItem = cacheFields[fieldIndex].getGroupOrSharedItem(pivotFieldItem.x);
 	if (sharedItem) {
 		return sharedItem.getCellValue();
 	}
@@ -3878,7 +3885,7 @@ CT_pivotTableDefinition.prototype.getPivotFieldNum = function(fieldIndex) {
 		var cacheField = this.asc_getCacheFields()[fieldIndex];
 		if (pivotField && pivotField.num) {
 			return pivotField.num;
-		} else if (cacheField && cacheField.sharedItems && cacheField.sharedItems.containsDate) {
+		} else if (cacheField && cacheField.containsDate()) {
 			return AscCommonExcel.Num.prototype.initFromParams(14, AscCommon.getFormatByStandardId(14));
 		}
 	}
@@ -7306,7 +7313,7 @@ CT_PivotFields.prototype.fillWithEmpty = function(cacheFields) {
 	for (var i = 0; i < cacheFields.length; ++i) {
 		var pivotField = new CT_PivotField(true);
 		pivotField.showAll = false;
-		if (cacheFields[i].IsNumType()) {
+		if (cacheFields[i].isNumType()) {
 			pivotField.num = cacheFields[i].num;
 		}
 		this.pivotField.push(pivotField);
@@ -8464,17 +8471,45 @@ CT_CacheField.prototype.Read_FromBinary2 = function(reader) {
 CT_CacheField.prototype.asc_getName = function () {
 	return this.name;
 };
+CT_CacheField.prototype.getSharedItems = function () {
+	return this.sharedItems;
+};
 CT_CacheField.prototype.getSharedItem = function (index) {
 	return this.sharedItems && this.sharedItems.Items.get(index);
 };
 CT_CacheField.prototype.getSharedSize = function () {
 	return this.sharedItems && this.sharedItems.Items.getSize() || 0;
 };
-CT_CacheField.prototype.isSumSubtotal = function () {
-	return this.sharedItems && false === this.sharedItems.containsSemiMixedTypes && true === this.sharedItems.containsNumber;
+CT_CacheField.prototype.getGroupOrSharedItems = function () {
+	return (this.fieldGroup && this.fieldGroup.groupItems) || this.sharedItems;
 };
-CT_CacheField.prototype.IsNumType = function () {
-	return this.sharedItems && false === this.sharedItems.containsSemiMixedTypes && (true === this.sharedItems.containsNumber || true === this.sharedItems.containsDate);
+CT_CacheField.prototype.getGroupOrSharedItem = function (index) {
+	var sharedItems = this.getGroupOrSharedItems();
+	return sharedItems && sharedItems.Items.get(index);
+};
+CT_CacheField.prototype.getGroupOrSharedSize = function () {
+	var sharedItems = this.getGroupOrSharedItems();
+	return sharedItems && sharedItems.Items.getSize() || 0;
+};
+CT_CacheField.prototype.getGroupBaseIndex = function (defaultIndex) {
+	return this.fieldGroup && (null !== this.fieldGroup.base ? this.fieldGroup.base : defaultIndex);
+};
+CT_CacheField.prototype.getGroupOrSharedIndex = function (cacheFieldBase, index) {
+	if (this.fieldGroup) {
+		return this.fieldGroup.getGroupIndex(index, cacheFieldBase.getSharedItem(index));
+	} else {
+		return index;
+	}
+};
+CT_CacheField.prototype.isSumSubtotal = function () {
+	var sharedItems = this.getGroupOrSharedItems();
+	return sharedItems && false === sharedItems.containsSemiMixedTypes && true === sharedItems.containsNumber;
+};
+CT_CacheField.prototype.isNumType = function () {
+	return this.sharedItems && false === this.sharedItems.containsSemiMixedTypes && (true === this.sharedItems.containsNumber || true === this.sharedItems.containsDate) && !this.hasGroup();
+};
+CT_CacheField.prototype.containsDate = function () {
+	return this.sharedItems && this.sharedItems.containsDate;
 };
 CT_CacheField.prototype.getNumFormat = function () {
 	if (this.num) {
@@ -8493,6 +8528,9 @@ CT_CacheField.prototype.checkSharedItems = function (pivot, index, cacheRecords)
 	cacheRecords.convertToSharedItems(index, this.sharedItems);
 	History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_CacheField, pivot.GetWS().getId(),
 		null, new AscCommonExcel.UndoRedoData_PivotField(pivot.Get_Id(), index, null, null));
+};
+CT_CacheField.prototype.hasGroup = function () {
+	return !!(this.fieldGroup && this.fieldGroup.groupItems);
 };
 
 function CT_CacheHierarchy() {
@@ -11454,6 +11492,12 @@ CT_SharedItems.prototype.toXml = function(writer, name) {
 	this.Items.toXml(writer);
 	writer.WriteXmlNodeEnd(name);
 };
+CT_SharedItems.prototype.getCount = function() {
+	return this.Items.getSize();
+};
+CT_SharedItems.prototype.getItem = function(index) {
+	return this.Items.get(index);
+};
 function CT_FieldGroup() {
 //Attributes
 	this.par = null;
@@ -11492,7 +11536,7 @@ CT_FieldGroup.prototype.onStartNode = function(elem, attr, uq) {
 		}
 		this.discretePr = newContext;
 	} else if ("groupItems" === elem) {
-		newContext = new CT_GroupItems();
+		newContext = new CT_SharedItems();
 		if (newContext.readAttributes) {
 			newContext.readAttributes(attr, uq);
 		}
@@ -11522,6 +11566,25 @@ CT_FieldGroup.prototype.toXml = function(writer, name) {
 	}
 	writer.WriteXmlNodeEnd(name);
 };
+CT_FieldGroup.prototype.getGroupIndex = function(index, sharedItem) {
+	var res = index;
+	if (!this.groupItems) {
+		return res;
+	}
+
+	if (this.rangePr && sharedItem) {
+		if(this.rangePr.isNum() && c_oAscPivotRecType.Number === sharedItem.type) {
+			res = this.rangePr.getGroupIndex(sharedItem.val, this.groupItems.getCount() - 1);
+		} else if(!this.rangePr.isNum() && c_oAscPivotRecType.DateTime === sharedItem.type) {
+			var date = Asc.cDate.prototype.getDateFromExcelWithTime(sharedItem.val)
+			res = this.rangePr.getGroupIndex(date, this.groupItems.getCount() - 1);
+		}
+	} else if (this.discretePr) {
+		res = this.discretePr.getGroupIndex(index);
+	}
+	return res;
+};
+
 function CT_FieldsUsage() {
 //Attributes
 //	this.count = null;
@@ -12262,11 +12325,15 @@ CT_RangePr.prototype.readAttributes = function(attr, uq) {
 		}
 		val = vals["startDate"];
 		if (undefined !== val) {
-			this.startDate = AscCommon.unleakString(uq(val));
+			var d = new Asc.cDate(uq(val));
+			this.startDate = new Asc.cDate(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(),
+				d.getSeconds(),	d.getMilliseconds()));
 		}
 		val = vals["endDate"];
 		if (undefined !== val) {
-			this.endDate = AscCommon.unleakString(uq(val));
+			var d = new Asc.cDate(uq(val));
+			this.endDate = new Asc.cDate(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(),
+				d.getSeconds(),	d.getMilliseconds()));
 		}
 		val = vals["groupInterval"];
 		if (undefined !== val) {
@@ -12292,15 +12359,60 @@ CT_RangePr.prototype.toXml = function(writer, name) {
 		writer.WriteXmlAttributeNumber("endNum", this.endNum);
 	}
 	if (null !== this.startDate) {
-		writer.WriteXmlAttributeStringEncode("startDate", this.startDate);
+		writer.WriteXmlAttributeStringEncode("startDate", this.startDate.toISOString().slice(0, 19));
 	}
 	if (null !== this.endDate) {
-		writer.WriteXmlAttributeStringEncode("endDate", this.endDate);
+		writer.WriteXmlAttributeStringEncode("endDate", this.endDate.toISOString().slice(0, 19));
 	}
 	if (1 !== this.groupInterval) {
 		writer.WriteXmlAttributeNumber("groupInterval", this.groupInterval);
 	}
 	writer.WriteXmlNodeEnd(name, true, true);
+};
+CT_RangePr.prototype.getGroupIndex = function(val, maxIndex) {
+	var res = 0;
+	if (this.groupBy === c_oAscGroupBy.Range) {
+		var index = Math.floor((val - this.startNum) / this.groupInterval);
+		if (index < 0) {
+			res = 0;
+		} else if (index + 1 > maxIndex) {
+			res = maxIndex;
+		} else {
+			res = index + 1;
+		}
+	} else {
+		if(val < this.startDate) {
+			res = 0;
+		} else if(val > this.endDate) {
+			res = maxIndex;
+		} else {
+			if (this.groupBy === c_oAscGroupBy.Seconds) {
+				res = val.getUTCSeconds();
+			} else if (this.groupBy === c_oAscGroupBy.Minutes) {
+				res = val.getUTCMinutes();
+			} else if (this.groupBy === c_oAscGroupBy.Hours) {
+				res = val.getUTCHours();
+			} else if (this.groupBy === c_oAscGroupBy.Months) {
+				res = val.getUTCMonth();
+			} else if (this.groupBy === c_oAscGroupBy.Quarters) {
+				res = Math.floor(val.getUTCMonth() / 3);
+			} else if (this.groupBy === c_oAscGroupBy.Years) {
+				res = val.getUTCFullYear() - this.startDate.getUTCFullYear();
+			} else {
+				//c_oAscGroupBy.Days
+				if (1 === this.groupInterval) {
+					res = Math.floor((val.getTime() - Date.UTC(val.getUTCFullYear())) / AscCommonExcel.c_msPerDay);
+				} else {
+					res = Math.floor((val.getTime() - this.startDate.getTime()) / AscCommonExcel.c_msPerDay / this.groupInterval);
+				}
+			}
+			res += 1;//0 for "< this.startDate"
+		}
+	}
+	return res;
+};
+CT_RangePr.prototype.isNum = function() {
+	return this.groupBy === c_oAscGroupBy.Range;
 };
 function CT_DiscretePr() {
 //Attributes
@@ -12333,35 +12445,14 @@ CT_DiscretePr.prototype.toXml = function(writer, name) {
 	}
 	writer.WriteXmlNodeEnd(name);
 };
-function CT_GroupItems() {
-//Attributes
-//	this.count = null;
-//Members
-	this.Items = new PivotRecords();
-}
-CT_GroupItems.prototype.onStartNode = function(elem, attr, uq) {
-	var newContext = this;
-	var newContextCandidate = this.Items.onStartNode(elem, attr, uq);
-	if (newContextCandidate) {
-		newContext = newContextCandidate;
-	} else {
-		newContext = null;
+CT_DiscretePr.prototype.getGroupIndex = function(index) {
+	var res = 0;
+	if(0 <= index && index < this.x.length) {
+		res = this.x[index].v;
 	}
-	return newContext;
+	return res;
 };
-CT_GroupItems.prototype.onEndNode = function(prevContext, elem) {
-	this.Items.onEndNode(prevContext, elem);
-};
-CT_GroupItems.prototype.toXml = function(writer, name) {
-	writer.WriteXmlNodeStart(name);
-	var count = this.Items.getSize();
-	if (count > 0) {
-		writer.WriteXmlAttributeNumber("count", count);
-	}
-	writer.WriteXmlNodeEnd(name, true);
-	this.Items.toXml(writer);
-	writer.WriteXmlNodeEnd(name);
-};
+
 function CT_FieldUsage() {
 //Attributes
 	this.x = null;
