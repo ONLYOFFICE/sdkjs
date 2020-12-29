@@ -1178,12 +1178,12 @@ CGraphics.prototype =
             {
                 oldAlpha = this.m_oContext.globalAlpha;
                 this.m_oContext.globalAlpha = oldAlpha * this.textAlpha;
-			}
+            }
 
 			this.private_FillGlyph(pGlyph);
 
             if (undefined !== oldAlpha)
-				this.m_oContext.globalAlpha = oldAlpha;
+                this.m_oContext.globalAlpha = oldAlpha;
         }
         if (false === this.m_bIntegerGrid)
         {
