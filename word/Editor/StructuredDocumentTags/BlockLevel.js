@@ -216,7 +216,7 @@ CBlockLevelSdt.prototype.Draw = function(CurPage, oGraphics)
 
 	this.Content.Draw(CurPage, oGraphics);
 
-	if (isPlaceHolder)
+	if (isPlaceHolder && oGraphics.setTextGlobalAlpha)
 		oGraphics.setTextGlobalAlpha(nTextAlpha);
 
 	if (AscCommon.locktype_None !== this.Lock.Get_Type())
