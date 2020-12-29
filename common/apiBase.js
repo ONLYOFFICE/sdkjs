@@ -498,6 +498,7 @@
 	baseEditorsApi.prototype.asc_setRestriction              = function(val)
 	{
 		this.restrictions = val;
+		this.onUpdateRestrictions();
 	};
 	baseEditorsApi.prototype.getViewMode                     = function()
 	{
@@ -506,6 +507,7 @@
 	baseEditorsApi.prototype.asc_addRestriction              = function(val)
 	{
 		this.restrictions |= val;
+		this.onUpdateRestrictions();
 	};
 	baseEditorsApi.prototype.asc_removeRestriction           = function(val)
 	{
@@ -530,6 +532,9 @@
 	baseEditorsApi.prototype.isRestrictionView               = function()
 	{
 		return !!(this.restrictions & Asc.c_oAscRestrictionType.View);
+	};
+	baseEditorsApi.prototype.onUpdateRestrictions = function()
+	{
 	};
 	baseEditorsApi.prototype.isLongAction                    = function()
 	{

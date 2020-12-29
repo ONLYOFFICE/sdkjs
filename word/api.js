@@ -10772,6 +10772,23 @@ background-repeat: no-repeat;\
 			}
 		}
 	};
+
+	asc_docs_api.prototype.onUpdateRestrictions = function()
+	{
+		var contentControls = null;
+		if (this.WordControl && this.WordControl.m_oDrawingDocument)
+			contentControls = this.WordControl.m_oDrawingDocument.contentControls;
+
+		if (!contentControls)
+			return;
+
+		if (contentControls.ContentControlObjects.length === 0)
+			return;
+
+		contentControls.ContentControlObjectState = -1;
+		this.WordControl.m_oLogicDocument.Document_UpdateSelectionState();
+	};
+
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                       = window['Asc'] || {};
 	CAscSection.prototype['get_PageWidth']                              = CAscSection.prototype.get_PageWidth;

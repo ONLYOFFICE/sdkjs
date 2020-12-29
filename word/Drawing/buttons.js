@@ -789,7 +789,7 @@
             this.IsNoButtons = true;
 
         this.IsNoButtonsIsFillingForm = this.IsNoButtons;
-        if (this.IsNoButtons && this.parent.document.m_oLogicDocument)
+        if (!this.IsNoButtons && this.parent.document.m_oLogicDocument)
             this.IsNoButtons = this.parent.document.m_oLogicDocument.IsFillingFormMode();
 
         this.CalculateNameRect();
@@ -1447,159 +1447,159 @@
                                 xText += 15;
                             }
 
-                            if (0 == widthHeader)
-                                continue;
-
-                            // сразу чекаем весь хедер
-                            overlay.CheckRect(_x, _y, widthHeader, 20);
-
-                            // рисуем подложку
-                            ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsBack;
-                            ctx.rect(_x, _y, widthHeader, 20);
-                            ctx.fill();
-                            ctx.beginPath();
-
-                            // draw mover in header
-                            if (!_object.IsNoButtons)
+                            if (0 != widthHeader)
                             {
-                                ctx.rect(_x, _y, 15, 20);
-                                ctx.fillStyle = (1 == this.ContentControlObjectState) ? AscCommonWord.GlobalSkin.ContentControlsAnchorActive : AscCommonWord.GlobalSkin.ContentControlsBack;
-                                ctx.fill();
-                                ctx.beginPath();
+								// сразу чекаем весь хедер
+								overlay.CheckRect(_x, _y, widthHeader, 20);
 
-                                if (1 == this.ContentControlObjectState)
-                                {
-                                    ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsAnchorActive;
-                                    ctx.rect(_x, _y, 15, 20);
-                                    ctx.fill();
-                                    ctx.beginPath();
-                                }
+								// рисуем подложку
+								ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsBack;
+								ctx.rect(_x, _y, widthHeader, 20);
+								ctx.fill();
+								ctx.beginPath();
 
-                                var cx = _x - 0.5 + 4;
-                                var cy = _y - 0.5 + 4;
+								// draw mover in header
+								if (!_object.IsNoButtons)
+								{
+									ctx.rect(_x, _y, 15, 20);
+									ctx.fillStyle = (1 == this.ContentControlObjectState) ? AscCommonWord.GlobalSkin.ContentControlsAnchorActive : AscCommonWord.GlobalSkin.ContentControlsBack;
+									ctx.fill();
+									ctx.beginPath();
 
-                                var _color1 = "#ADADAD";
-                                var _color2 = "#D4D4D4";
+									if (1 == this.ContentControlObjectState)
+									{
+										ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsAnchorActive;
+										ctx.rect(_x, _y, 15, 20);
+										ctx.fill();
+										ctx.beginPath();
+									}
 
-                                if (0 == this.ContentControlObjectState || 1 == this.ContentControlObjectState)
-                                {
-                                    _color1 = "#444444";
-                                    _color2 = "#9D9D9D";
-                                }
+									var cx = _x - 0.5 + 4;
+									var cy = _y - 0.5 + 4;
 
-                                overlay.AddRect(cx, cy, 3, 3);
-                                overlay.AddRect(cx + 5, cy, 3, 3);
-                                overlay.AddRect(cx, cy + 5, 3, 3);
-                                overlay.AddRect(cx + 5, cy + 5, 3, 3);
-                                overlay.AddRect(cx, cy + 10, 3, 3);
-                                overlay.AddRect(cx + 5, cy + 10, 3, 3);
+									var _color1 = "#ADADAD";
+									var _color2 = "#D4D4D4";
 
-                                ctx.fillStyle = _color2;
-                                ctx.fill();
-                                ctx.beginPath();
+									if (0 == this.ContentControlObjectState || 1 == this.ContentControlObjectState)
+									{
+										_color1 = "#444444";
+										_color2 = "#9D9D9D";
+									}
 
-                                ctx.moveTo(cx + 1.5, cy);
-                                ctx.lineTo(cx + 1.5, cy + 3);
-                                ctx.moveTo(cx + 6.5, cy);
-                                ctx.lineTo(cx + 6.5, cy + 3);
-                                ctx.moveTo(cx + 1.5, cy + 5);
-                                ctx.lineTo(cx + 1.5, cy + 8);
-                                ctx.moveTo(cx + 6.5, cy + 5);
-                                ctx.lineTo(cx + 6.5, cy + 8);
-                                ctx.moveTo(cx + 1.5, cy + 10);
-                                ctx.lineTo(cx + 1.5, cy + 13);
-                                ctx.moveTo(cx + 6.5, cy + 10);
-                                ctx.lineTo(cx + 6.5, cy + 13);
+									overlay.AddRect(cx, cy, 3, 3);
+									overlay.AddRect(cx + 5, cy, 3, 3);
+									overlay.AddRect(cx, cy + 5, 3, 3);
+									overlay.AddRect(cx + 5, cy + 5, 3, 3);
+									overlay.AddRect(cx, cy + 10, 3, 3);
+									overlay.AddRect(cx + 5, cy + 10, 3, 3);
 
-                                ctx.moveTo(cx, cy + 1.5);
-                                ctx.lineTo(cx + 3, cy + 1.5);
-                                ctx.moveTo(cx + 5, cy + 1.5);
-                                ctx.lineTo(cx + 8, cy + 1.5);
-                                ctx.moveTo(cx, cy + 6.5);
-                                ctx.lineTo(cx + 3, cy + 6.5);
-                                ctx.moveTo(cx + 5, cy + 6.5);
-                                ctx.lineTo(cx + 8, cy + 6.5);
-                                ctx.moveTo(cx, cy + 11.5);
-                                ctx.lineTo(cx + 3, cy + 11.5);
-                                ctx.moveTo(cx + 5, cy + 11.5);
-                                ctx.lineTo(cx + 8, cy + 11.5);
+									ctx.fillStyle = _color2;
+									ctx.fill();
+									ctx.beginPath();
 
-                                ctx.strokeStyle = _color1;
-                                ctx.stroke();
-                                ctx.beginPath();
-                            }
+									ctx.moveTo(cx + 1.5, cy);
+									ctx.lineTo(cx + 1.5, cy + 3);
+									ctx.moveTo(cx + 6.5, cy);
+									ctx.lineTo(cx + 6.5, cy + 3);
+									ctx.moveTo(cx + 1.5, cy + 5);
+									ctx.lineTo(cx + 1.5, cy + 8);
+									ctx.moveTo(cx + 6.5, cy + 5);
+									ctx.lineTo(cx + 6.5, cy + 8);
+									ctx.moveTo(cx + 1.5, cy + 10);
+									ctx.lineTo(cx + 1.5, cy + 13);
+									ctx.moveTo(cx + 6.5, cy + 10);
+									ctx.lineTo(cx + 6.5, cy + 13);
 
-                            // draw name
-                            if (_object.Name != "")
-                            {
-                                if (_object.ActiveButtonIndex == -1)
-                                    ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsActive;
-                                else if (_object.HoverButtonIndex == -1)
-                                    ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsHover;
-                                else
-                                    ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsBack;
+									ctx.moveTo(cx, cy + 1.5);
+									ctx.lineTo(cx + 3, cy + 1.5);
+									ctx.moveTo(cx + 5, cy + 1.5);
+									ctx.lineTo(cx + 8, cy + 1.5);
+									ctx.moveTo(cx, cy + 6.5);
+									ctx.lineTo(cx + 3, cy + 6.5);
+									ctx.moveTo(cx + 5, cy + 6.5);
+									ctx.lineTo(cx + 8, cy + 6.5);
+									ctx.moveTo(cx, cy + 11.5);
+									ctx.lineTo(cx + 3, cy + 11.5);
+									ctx.moveTo(cx + 5, cy + 11.5);
+									ctx.lineTo(cx + 8, cy + 11.5);
 
-                                ctx.rect(xText, _y, widthName, 20);
-                                ctx.fill();
-                                ctx.beginPath();
+									ctx.strokeStyle = _color1;
+									ctx.stroke();
+									ctx.beginPath();
+								}
 
-                                ctx.fillStyle = (_object.ActiveButtonIndex == -1) ? AscCommonWord.GlobalSkin.ContentControlsTextActive : AscCommonWord.GlobalSkin.ContentControlsText;
-                                ctx.font = this.getFont();
-                                ctx.fillText(_object.Name, xText + 3, _y + 20 - 6);
+								// draw name
+								if (_object.Name != "")
+								{
+									if (_object.ActiveButtonIndex == -1)
+										ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsActive;
+									else if (_object.HoverButtonIndex == -1)
+										ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsHover;
+									else
+										ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsBack;
 
-                                if (_object.IsNameAdvanced() && !_object.IsNoButtons)
-                                {
-                                    var nY = _y - 0.5;
-                                    nY += 10;
-                                    nY -= 1;
+									ctx.rect(xText, _y, widthName, 20);
+									ctx.fill();
+									ctx.beginPath();
 
-                                    var plus = AscCommon.AscBrowser.isRetina ? 0.5 : 1;
+									ctx.fillStyle = (_object.ActiveButtonIndex == -1) ? AscCommonWord.GlobalSkin.ContentControlsTextActive : AscCommonWord.GlobalSkin.ContentControlsText;
+									ctx.font = this.getFont();
+									ctx.fillText(_object.Name, xText + 3, _y + 20 - 6);
 
-                                    var nX = (xText + widthName - 7) >> 0;
-                                    for (var i = 0; i <= 2; i+=plus)
-                                        ctx.rect(nX + i, nY + i, 1, 1);
+									if (_object.IsNameAdvanced() && !_object.IsNoButtons)
+									{
+										var nY = _y - 0.5;
+										nY += 10;
+										nY -= 1;
 
-                                    for (var i = 0; i <= 2; i+=plus)
-                                        ctx.rect(nX + 4 - i, nY + i, 1, 1);
+										var plus = AscCommon.AscBrowser.isRetina ? 0.5 : 1;
 
-                                    ctx.fill();
-                                    ctx.beginPath();
-                                }
-                            }
+										var nX = (xText + widthName - 7) >> 0;
+										for (var i = 0; i <= 2; i += plus)
+											ctx.rect(nX + i, nY + i, 1, 1);
 
-                            // draw buttons
-                            for (var nIndexB = 0; nIndexB < _object.Buttons.length; nIndexB++)
-                            {
-                                var isFill = false;
-                                if (_object.ActiveButtonIndex == nIndexB)
-                                {
-                                    ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsActive;
-                                    isFill = true;
-                                }
-                                else if (_object.HoverButtonIndex == nIndexB)
-                                {
-                                    ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsHover;
-                                    isFill = true;
-                                }
+										for (var i = 0; i <= 2; i += plus)
+											ctx.rect(nX + 4 - i, nY + i, 1, 1);
 
-                                if (isFill)
-                                {
-                                    ctx.rect(xText + widthName + 20 * nIndexB, _y, 20, 20);
-                                    ctx.fill();
-                                    ctx.beginPath();
-                                }
+										ctx.fill();
+										ctx.beginPath();
+									}
+								}
 
-                                var image = this.icons.getImage(_object.Buttons[nIndexB], nIndexB == _object.ActiveButtonIndex);
-                                if (image)
-                                    ctx.drawImage(image, (xText + widthName + 20 * nIndexB) >> 0, _y >> 0, 20, 20);
-                            }
+								// draw buttons
+								for (var nIndexB = 0; nIndexB < _object.Buttons.length; nIndexB++)
+								{
+									var isFill = false;
+									if (_object.ActiveButtonIndex == nIndexB)
+									{
+										ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsActive;
+										isFill = true;
+									}
+									else if (_object.HoverButtonIndex == nIndexB)
+									{
+										ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsHover;
+										isFill = true;
+									}
 
-                            // рисуем единую обводку
-                            _object.SetColor(ctx);
-                            ctx.beginPath();
-                            ctx.rect(_x, _y, widthHeader, 20);
-                            ctx.stroke();
-                            ctx.beginPath();
+									if (isFill)
+									{
+										ctx.rect(xText + widthName + 20 * nIndexB, _y, 20, 20);
+										ctx.fill();
+										ctx.beginPath();
+									}
+
+									var image = this.icons.getImage(_object.Buttons[nIndexB], nIndexB == _object.ActiveButtonIndex);
+									if (image)
+										ctx.drawImage(image, (xText + widthName + 20 * nIndexB) >> 0, _y >> 0, 20, 20);
+								}
+
+								// рисуем единую обводку
+								_object.SetColor(ctx);
+								ctx.beginPath();
+								ctx.rect(_x, _y, widthHeader, 20);
+								ctx.stroke();
+								ctx.beginPath();
+							}
 
                             // есть ли комбо-кнопка?
                             if (_object.ComboRect)
@@ -1659,158 +1659,157 @@
                             }
 
                             if (widthHeader < 0.001)
-                                continue;
-
-                            _r = _x + widthHeader;
-                            _b = _y + scaleY_20;
-
-                            var x1 = _ft.TransformPointX(_x, _y);
-                            var y1 = _ft.TransformPointY(_x, _y);
-                            var x2 = _ft.TransformPointX(_r, _y);
-                            var y2 = _ft.TransformPointY(_r, _y);
-                            var x3 = _ft.TransformPointX(_r, _b);
-                            var y3 = _ft.TransformPointY(_r, _b);
-                            var x4 = _ft.TransformPointX(_x, _b);
-                            var y4 = _ft.TransformPointY(_x, _b);
-
-                            x1 = _drawingPage.left + _koefX * x1;
-                            x2 = _drawingPage.left + _koefX * x2;
-                            x3 = _drawingPage.left + _koefX * x3;
-                            x4 = _drawingPage.left + _koefX * x4;
-                            y1 = _drawingPage.top + _koefY * y1;
-                            y2 = _drawingPage.top + _koefY * y2;
-                            y3 = _drawingPage.top + _koefY * y3;
-                            y4 = _drawingPage.top + _koefY * y4;
-
-                            overlay.CheckPoint(x1, y1);
-                            overlay.CheckPoint(x2, y2);
-                            overlay.CheckPoint(x3, y3);
-                            overlay.CheckPoint(x4, y4);
-                            // --------------------------------
-
-                            var coords = new AscCommon.CMatrix();
-                            coords.sx = _koefX;
-                            coords.sy = _koefY;
-                            coords.tx = _drawingPage.left;
-                            coords.ty = _drawingPage.top;
-
-                            global_MatrixTransformer.MultiplyAppend(_ft, coords);
-                            ctx.transform(_ft.sx, _ft.shy, _ft.shx, _ft.sy, _ft.tx, _ft.ty);
-
-                            // рисуем подложку
-                            ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsBack;
-                            ctx.rect(_x, _y, widthHeader, scaleY_20);
-                            ctx.fill();
-                            ctx.beginPath();
-
-                            // draw mover
-                            if (!_object.IsNoButtons)
                             {
-                                ctx.rect(_x, _y, scaleX_15, scaleY_20);
-                                ctx.fillStyle = (1 == this.ContentControlObjectState) ? AscCommonWord.GlobalSkin.ContentControlsAnchorActive : AscCommonWord.GlobalSkin.ContentControlsBack;
-                                ctx.fill();
-                                ctx.beginPath();
+								_r = _x + widthHeader;
+								_b = _y + scaleY_20;
 
-                                if (1 == this.ContentControlObjectState)
-                                {
-                                    ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsAnchorActive;
-                                    ctx.rect(_x, _y, scaleX_15, scaleY_20);
-                                    ctx.fill();
-                                    ctx.beginPath();
-                                }
+								var x1 = _ft.TransformPointX(_x, _y);
+								var y1 = _ft.TransformPointY(_x, _y);
+								var x2 = _ft.TransformPointX(_r, _y);
+								var y2 = _ft.TransformPointY(_r, _y);
+								var x3 = _ft.TransformPointX(_r, _b);
+								var y3 = _ft.TransformPointY(_r, _b);
+								var x4 = _ft.TransformPointX(_x, _b);
+								var y4 = _ft.TransformPointY(_x, _b);
 
-                                var cx1 = _x + 5 / _koefX;
-                                var cy1 = _y + 5 / _koefY;
-                                var cx2 = _x + 10 / _koefX;
-                                var cy2 = _y + 5 / _koefY;
+								x1 = _drawingPage.left + _koefX * x1;
+								x2 = _drawingPage.left + _koefX * x2;
+								x3 = _drawingPage.left + _koefX * x3;
+								x4 = _drawingPage.left + _koefX * x4;
+								y1 = _drawingPage.top + _koefY * y1;
+								y2 = _drawingPage.top + _koefY * y2;
+								y3 = _drawingPage.top + _koefY * y3;
+								y4 = _drawingPage.top + _koefY * y4;
 
-                                var cx3 = _x + 5 / _koefX;
-                                var cy3 = _y + 10 / _koefY;
-                                var cx4 = _x + 10 / _koefX;
-                                var cy4 = _y + 10 / _koefY;
+								overlay.CheckPoint(x1, y1);
+								overlay.CheckPoint(x2, y2);
+								overlay.CheckPoint(x3, y3);
+								overlay.CheckPoint(x4, y4);
+								// --------------------------------
 
-                                var cx5 = _x + 5 / _koefX;
-                                var cy5 = _y + 15 / _koefY;
-                                var cx6 = _x + 10 / _koefX;
-                                var cy6 = _y + 15 / _koefY;
+								var coords = new AscCommon.CMatrix();
+								coords.sx = _koefX;
+								coords.sy = _koefY;
+								coords.tx = _drawingPage.left;
+								coords.ty = _drawingPage.top;
 
-                                var rad = 1.5 / _koefX;
-                                overlay.AddEllipse2(cx1, cy1, rad);
-                                overlay.AddEllipse2(cx2, cy2, rad);
-                                overlay.AddEllipse2(cx3, cy3, rad);
-                                overlay.AddEllipse2(cx4, cy4, rad);
-                                overlay.AddEllipse2(cx5, cy5, rad);
-                                overlay.AddEllipse2(cx6, cy6, rad);
+								global_MatrixTransformer.MultiplyAppend(_ft, coords);
+								ctx.transform(_ft.sx, _ft.shy, _ft.shx, _ft.sy, _ft.tx, _ft.ty);
 
-                                var _color1 = "#ADADAD";
-                                if (0 == this.ContentControlObjectState || 1 == this.ContentControlObjectState)
-                                    _color1 = "#444444";
+								// рисуем подложку
+								ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsBack;
+								ctx.rect(_x, _y, widthHeader, scaleY_20);
+								ctx.fill();
+								ctx.beginPath();
 
-                                ctx.fillStyle = _color1;
-                                ctx.fill();
-                                ctx.beginPath();
-                            }
+								// draw mover
+								if (!_object.IsNoButtons)
+								{
+									ctx.rect(_x, _y, scaleX_15, scaleY_20);
+									ctx.fillStyle = (1 == this.ContentControlObjectState) ? AscCommonWord.GlobalSkin.ContentControlsAnchorActive : AscCommonWord.GlobalSkin.ContentControlsBack;
+									ctx.fill();
+									ctx.beginPath();
 
-                            // draw name
-                            if (_object.Name != "")
-                            {
-                                if (_object.ActiveButtonIndex == -1)
-                                    ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsActive;
-                                else if (_object.HoverButtonIndex == -1)
-                                    ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsHover;
-                                else
-                                    ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsBack;
+									if (1 == this.ContentControlObjectState)
+									{
+										ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsAnchorActive;
+										ctx.rect(_x, _y, scaleX_15, scaleY_20);
+										ctx.fill();
+										ctx.beginPath();
+									}
 
-                                ctx.rect(_x + (_object.IsNoButtons ? 0 : scaleX_15), _y, widthName, scaleY_20);
-                                ctx.fill();
-                                ctx.beginPath();
+									var cx1 = _x + 5 / _koefX;
+									var cy1 = _y + 5 / _koefY;
+									var cx2 = _x + 10 / _koefX;
+									var cy2 = _y + 5 / _koefY;
 
-                                ctx.fillStyle = (_object.ActiveButtonIndex == -1) ? AscCommonWord.GlobalSkin.ContentControlsTextActive : AscCommonWord.GlobalSkin.ContentControlsText;
-                                ctx.font = this.getFont(_koefY);
-                                ctx.fillText(_object.Name, xText + 3 / _koefX, _y + (20 - 6) / _koefY);
+									var cx3 = _x + 5 / _koefX;
+									var cy3 = _y + 10 / _koefY;
+									var cx4 = _x + 10 / _koefX;
+									var cy4 = _y + 10 / _koefY;
 
-                                if (_object.IsNameAdvanced() && !_object.IsNoButtons)
-                                {
-                                    var nY = _y + 9 / _koefY;
-                                    var nX = xText + widthName - 6 / _koefX;
+									var cx5 = _x + 5 / _koefX;
+									var cy5 = _y + 15 / _koefY;
+									var cx6 = _x + 10 / _koefX;
+									var cy6 = _y + 15 / _koefY;
 
-                                    for (var i = 0; i < 3; i++)
-                                        ctx.rect(_x + nX + i / _koefX, nY + i / _koefY, 1 / _koefX, 1 / _koefY);
+									var rad = 1.5 / _koefX;
+									overlay.AddEllipse2(cx1, cy1, rad);
+									overlay.AddEllipse2(cx2, cy2, rad);
+									overlay.AddEllipse2(cx3, cy3, rad);
+									overlay.AddEllipse2(cx4, cy4, rad);
+									overlay.AddEllipse2(cx5, cy5, rad);
+									overlay.AddEllipse2(cx6, cy6, rad);
 
-                                    for (var i = 0; i < 2; i++)
-                                        ctx.rect(_x + nX + (4 - i) / _koefX, nY + i / _koefY, 1 / _koefX, 1 / _koefY);
+									var _color1 = "#ADADAD";
+									if (0 == this.ContentControlObjectState || 1 == this.ContentControlObjectState)
+										_color1 = "#444444";
 
-                                    ctx.fill();
-                                    ctx.beginPath();
-                                }
-                            }
+									ctx.fillStyle = _color1;
+									ctx.fill();
+									ctx.beginPath();
+								}
 
-                            // draw buttons
-                            for (var nIndexB = 0; nIndexB < _object.Buttons.length; nIndexB++)
-                            {
-                                var isFill = false;
-                                if (_object.ActiveButtonIndex == nIndexB)
-                                {
-                                    ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsActive;
-                                    isFill = true;
-                                }
-                                else if (_object.HoverButtonIndex == nIndexB)
-                                {
-                                    ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsHover;
-                                    isFill = true;
-                                }
+								// draw name
+								if (_object.Name != "") {
+									if (_object.ActiveButtonIndex == -1)
+										ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsActive;
+									else if (_object.HoverButtonIndex == -1)
+										ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsHover;
+									else
+										ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsBack;
 
-                                if (isFill)
-                                {
-                                    ctx.rect(xText + widthName + scaleX_20 * nIndexB, _y, scaleX_20, scaleY_20);
-                                    ctx.fill();
-                                    ctx.beginPath();
-                                }
+									ctx.rect(_x + (_object.IsNoButtons ? 0 : scaleX_15), _y, widthName, scaleY_20);
+									ctx.fill();
+									ctx.beginPath();
 
-                                var image = this.icons.getImage(_object.Buttons[nIndexB], nIndexB == _object.ActiveButtonIndex);
-                                if (image)
-                                    ctx.drawImage(image, xText + widthName + scaleX_20 * nIndexB, _y, scaleX_20, scaleY_20);
-                            }
+									ctx.fillStyle = (_object.ActiveButtonIndex == -1) ? AscCommonWord.GlobalSkin.ContentControlsTextActive : AscCommonWord.GlobalSkin.ContentControlsText;
+									ctx.font = this.getFont(_koefY);
+									ctx.fillText(_object.Name, xText + 3 / _koefX, _y + (20 - 6) / _koefY);
+
+									if (_object.IsNameAdvanced() && !_object.IsNoButtons)
+									{
+										var nY = _y + 9 / _koefY;
+										var nX = xText + widthName - 6 / _koefX;
+
+										for (var i = 0; i < 3; i++)
+											ctx.rect(_x + nX + i / _koefX, nY + i / _koefY, 1 / _koefX, 1 / _koefY);
+
+										for (var i = 0; i < 2; i++)
+											ctx.rect(_x + nX + (4 - i) / _koefX, nY + i / _koefY, 1 / _koefX, 1 / _koefY);
+
+										ctx.fill();
+										ctx.beginPath();
+									}
+								}
+
+								// draw buttons
+								for (var nIndexB = 0; nIndexB < _object.Buttons.length; nIndexB++)
+								{
+									var isFill = false;
+									if (_object.ActiveButtonIndex == nIndexB)
+									{
+										ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsActive;
+										isFill = true;
+									}
+									else if (_object.HoverButtonIndex == nIndexB)
+									{
+										ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsHover;
+										isFill = true;
+									}
+
+									if (isFill)
+									{
+										ctx.rect(xText + widthName + scaleX_20 * nIndexB, _y, scaleX_20, scaleY_20);
+										ctx.fill();
+										ctx.beginPath();
+									}
+
+									var image = this.icons.getImage(_object.Buttons[nIndexB], nIndexB == _object.ActiveButtonIndex);
+									if (image)
+										ctx.drawImage(image, xText + widthName + scaleX_20 * nIndexB, _y, scaleX_20, scaleY_20);
+								}
+							}
 
                             // есть ли комбо-кнопка?
                             if (_object.ComboRect)
