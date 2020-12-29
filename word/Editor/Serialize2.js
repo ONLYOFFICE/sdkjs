@@ -678,7 +678,8 @@ var c_oSer_SettingsType = {
 	PrintTwoOnOne: 14,
 	BookFoldPrinting: 15,
 	BookFoldPrintingSheets: 16,
-	BookFoldRevPrinting: 17
+	BookFoldRevPrinting: 17,
+	SpecialFormsHighlight: 18
 };
 var c_oSer_MathPrType = {
 	BrkBin: 0,
@@ -1012,7 +1013,8 @@ var c_oSerSdt = {
 	TextFormPrCombWidth: 52,
 	TextFormPrCombSym: 53,
 	TextFormPrCombFont: 54,
-	TextFormPrMaxCharacters: 55
+	TextFormPrMaxCharacters: 55,
+	TextFormPrCombBorder: 56
 };
 var c_oSerFFData = {
 	CalcOnExit: 0,
@@ -6402,6 +6404,9 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 		if (null != val.MaxCharacters) {
 			oThis.bs.WriteItem(c_oSerSdt.TextFormPrMaxCharacters, function (){oThis.memory.WriteLong(val.MaxCharacters);});
 		}
+		if (null != val.CombBorder) {
+			this.bs.WriteItem(c_oSerSdt.TextFormPrCombBorder, function(){oThis.bs.WriteBorder(val.CombBorder);});
+		}
 	};
 	this.WriteSdtTextFormPrComb = function (val)
 	{
@@ -6594,6 +6599,11 @@ function BinarySettingsTableWriter(memory, doc, saveParams)
 			rPr.Color = oThis.Document.GetSdtGlobalColor();
 			this.bs.WriteItem(c_oSer_SettingsType.SdtGlobalColor, function (){oThis.brPrs.Write_rPr(rPr, null, null);});
 			this.bs.WriteItem(c_oSer_SettingsType.SdtGlobalShowHighlight, function(){oThis.memory.WriteBool(oThis.Document.GetSdtGlobalShowHighlight());});
+		}
+		if (!oThis.Document.IsSpecialFormsSettingsDefault()) {
+			var rPr = new CTextPr();
+			rPr.Color = oThis.Document.GetSpecialFormsHighlight();
+			this.bs.WriteItem(c_oSer_SettingsType.SpecialFormsHighlight, function (){oThis.brPrs.Write_rPr(rPr, null, null);});
 		}
 		this.bs.WriteItem(c_oSer_SettingsType.Compat, function (){oThis.WriteCompat();});
     }
@@ -12683,6 +12693,13 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			});
 		} else if (c_oSerSdt.TextFormPrMaxCharacters === type) {
 			val.MaxCharacters = this.stream.GetLong();
+		} else if (c_oSerSdt.TextFormPrCombBorder === type) {
+			var oNewBorber = new CDocumentBorder();
+			res = this.bcr.Read2(length, function (t, l) {
+				return oThis.bpPrr.ReadBorder(t, l, oNewBorber);
+			});
+			if (null != oNewBorber.Value)
+				val.CombBorder = oThis.bpPrr.NormalizeBorder(oNewBorber);
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}
@@ -15755,6 +15772,14 @@ function Binary_SettingsTableReader(doc, oReadResult, stream)
 		else if ( c_oSer_SettingsType.SdtGlobalShowHighlight === type )
 		{
 			this.Document.SetSdtGlobalShowHighlight(this.stream.GetBool());
+		}
+		else if ( c_oSer_SettingsType.SpecialFormsHighlight === type )
+		{
+			var textPr = new CTextPr();
+			res = this.brPrr.Read(length, textPr, null);
+			if (textPr.Color && !textPr.Color.Auto) {
+				this.Document.SetSpecialFormsHighlight(textPr.Color.r, textPr.Color.g, textPr.Color.b);
+			}
 		}
 		else if ( c_oSer_SettingsType.Compat === type )
 		{

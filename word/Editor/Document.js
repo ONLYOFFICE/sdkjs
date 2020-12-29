@@ -15603,7 +15603,7 @@ CDocument.prototype.OnChangeSpecialFormsGlobalSettings = function()
 };
 CDocument.prototype.IsSpecialFormsSettingsDefault = function()
 {
-	return this.Settings.SdtSettings.IsDefault();
+	return this.Settings.SpecialFormsSettings.IsDefault();
 };
 /**
  * Добавляем специальный контейнер в виде чекбокса
