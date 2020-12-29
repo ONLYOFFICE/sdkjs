@@ -163,10 +163,10 @@ CGraphics.prototype =
     {
         this.textAlpha = alpha;
     },
-	resetTextGlobalAlpha : function()
-	{
-		this.textAlpha = undefined;
-	},
+    resetTextGlobalAlpha : function()
+    {
+        this.textAlpha = undefined;
+    },
 
     put_GlobalAlpha : function(enable, alpha)
     {
@@ -1008,17 +1008,17 @@ CGraphics.prototype =
 
         if (null != pGlyph.oBitmap)
         {
-			var oldAlpha = undefined;
-			if (this.textAlpha)
-			{
-				oldAlpha = this.m_oContext.globalAlpha;
-				this.m_oContext.globalAlpha = oldAlpha * this.textAlpha;
-			}
+            var oldAlpha = undefined;
+            if (this.textAlpha)
+            {
+                oldAlpha = this.m_oContext.globalAlpha;
+                this.m_oContext.globalAlpha = oldAlpha * this.textAlpha;
+            }
 
-			this.private_FillGlyph(pGlyph);
+            this.private_FillGlyph(pGlyph);
 
-			if (undefined !== oldAlpha)
-				this.m_oContext.globalAlpha = oldAlpha;
+            if (undefined !== oldAlpha)
+                this.m_oContext.globalAlpha = oldAlpha;
         }
         if (false === this.m_bIntegerGrid)
         {
