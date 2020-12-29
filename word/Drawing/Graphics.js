@@ -1180,7 +1180,7 @@ CGraphics.prototype =
                 this.m_oContext.globalAlpha = oldAlpha * this.textAlpha;
             }
 
-			this.private_FillGlyph(pGlyph);
+            this.private_FillGlyph(pGlyph);
 
             if (undefined !== oldAlpha)
                 this.m_oContext.globalAlpha = oldAlpha;
