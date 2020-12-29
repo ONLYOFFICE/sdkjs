@@ -1311,7 +1311,7 @@
 
 				var newDataValidation = _dataValidation.clone();
 				newDataValidation.ranges = _newRanges;
-				t.change(ws, _dataValidation, prepeareAdd(newDataValidation), true);
+				t.change(ws, _dataValidation, prepeareAdd(newDataValidation, _newRanges), true);
 			};
 
 			var k;
