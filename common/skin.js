@@ -281,21 +281,21 @@ function updateGlobalSkin(obj)
 		if (undefined !== obj["SplitterWidthMM"]) GlobalSkin.SplitterWidthMM = obj["SplitterWidthMM"];
 		if (undefined !== obj["ThumbnailScrollWidthNullIfNoScrolling"]) GlobalSkin.ThumbnailScrollWidthNullIfNoScrolling = obj["ThumbnailScrollWidthNullIfNoScrolling"];
 
-		if (undefined !== obj["Background"]) GlobalSkin.RulersButton = obj["Background"];
-		if (undefined !== obj["Border"]) GlobalSkin.NavigationButtons = obj["Border"];
-		if (undefined !== obj["Color"]) GlobalSkin.BackgroundColor = obj["Color"];
-		if (undefined !== obj["BackgroundDark"]) GlobalSkin.RulerDark = obj["BackgroundDark"];
-		if (undefined !== obj["ColorDark"]) GlobalSkin.RulerLight = obj["ColorDark"];
-		if (undefined !== obj["BackgroundActive"]) GlobalSkin.RulersButton = obj["BackgroundActive"];
-		if (undefined !== obj["BorderActive"]) GlobalSkin.NavigationButtons = obj["BorderActive"];
-		if (undefined !== obj["ColorActive"]) GlobalSkin.BackgroundColor = obj["ColorActive"];
-		if (undefined !== obj["BackgroundDarkActive"]) GlobalSkin.RulerDark = obj["BackgroundDarkActive"];
-		if (undefined !== obj["ColorDarkActive"]) GlobalSkin.RulerLight = obj["ColorDarkActive"];
-		if (undefined !== obj["BackgroundHighlighted"]) GlobalSkin.RulersButton = obj["BackgroundHighlighted"];
-		if (undefined !== obj["BorderHighlighted"]) GlobalSkin.NavigationButtons = obj["BorderHighlighted"];
-		if (undefined !== obj["ColorHighlighted"]) GlobalSkin.BackgroundColor = obj["ColorHighlighted"];
-		if (undefined !== obj["BackgroundDarkHighlighted"]) GlobalSkin.RulerDark = obj["BackgroundDarkHighlighted"];
-		if (undefined !== obj["ColorDarkHighlighted"]) GlobalSkin.RulerLight = obj["ColorDarkHighlighted"];
+		if (undefined !== obj["Background"]) GlobalSkin.Background = obj["Background"];
+		if (undefined !== obj["Border"]) GlobalSkin.Border = obj["Border"];
+		if (undefined !== obj["Color"]) GlobalSkin.Color = obj["Color"];
+		if (undefined !== obj["BackgroundDark"]) GlobalSkin.BackgroundDark = obj["BackgroundDark"];
+		if (undefined !== obj["ColorDark"]) GlobalSkin.ColorDark = obj["ColorDark"];
+		if (undefined !== obj["BackgroundActive"]) GlobalSkin.BackgroundActive = obj["BackgroundActive"];
+		if (undefined !== obj["BorderActive"]) GlobalSkin.BorderActive = obj["BorderActive"];
+		if (undefined !== obj["ColorActive"]) GlobalSkin.ColorActive = obj["ColorActive"];
+		if (undefined !== obj["BackgroundDarkActive"]) GlobalSkin.BackgroundDarkActive = obj["BackgroundDarkActive"];
+		if (undefined !== obj["ColorDarkActive"]) GlobalSkin.ColorDarkActive = obj["ColorDarkActive"];
+		if (undefined !== obj["BackgroundHighlighted"]) GlobalSkin.BackgroundHighlighted = obj["BackgroundHighlighted"];
+		if (undefined !== obj["BorderHighlighted"]) GlobalSkin.BorderHighlighted = obj["BorderHighlighted"];
+		if (undefined !== obj["ColorHighlighted"]) GlobalSkin.ColorHighlighted = obj["ColorHighlighted"];
+		if (undefined !== obj["BackgroundDarkHighlighted"]) GlobalSkin.BackgroundDarkHighlighted = obj["BackgroundDarkHighlighted"];
+		if (undefined !== obj["ColorDarkHighlighted"]) GlobalSkin.ColorDarkHighlighted = obj["ColorDarkHighlighted"];
 	}
 
 	window['AscCommon'].GlobalSkin = GlobalSkin;
