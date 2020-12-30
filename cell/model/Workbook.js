@@ -9046,8 +9046,9 @@
 
 	Worksheet.prototype._getCopyDataValidationByRange = function (range, offset) {
 		if (this.dataValidations) {
-			this.dataValidations.getCopyByRange(range, offset);
+			return this.dataValidations.getCopyByRange(range, offset);
 		}
+		return null;
 	};
 
 
@@ -14796,6 +14797,25 @@
 						}
 					}
 				}
+
+				var aDataValidations = wsFrom._getCopyDataValidationByRange(from);
+				if(aDataValidations.length > 0) {
+					var newDataValidations = [];
+					for (var i = to.c1; i <= to.c2; i += nDx) {
+						for (var j = to.r1; j <= to.r2; j += nDy) {
+							for(var k = 0, length3 = aDataValidations.length; k < length3; k++){
+								var oDataValidation = aDataValidations[k];
+								var ranges = oDataValidation.ranges;
+								for (var n = 0; n < ranges.length; n++) {
+									var _newRange = new Asc.Range(i + ranges[n].c1 - from.c1, j + ranges[n].r1 - from.r1, i + ranges[n].c2 - from.c1, j + ranges[n].r2 - from.r1);
+									if (to.containsRange(_newRange)) {
+										newDataValidations[k].push(_newRange);
+									}
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 
@@ -15272,7 +15292,8 @@
 		}
 	};
 
-//-------------------------------------------------------------------------------------------------
+//--------------------------
+// -----------------------------------------------------------------------
 
 	/**
 	 * @constructor
