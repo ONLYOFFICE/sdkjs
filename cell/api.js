@@ -4940,7 +4940,7 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setSkin = function (theme) {
-    AscCommonExcel.updateGlobalSkin(theme);
+    AscCommon.updateGlobalSkin(theme);
     this.wb.updateSkin();
   };
 

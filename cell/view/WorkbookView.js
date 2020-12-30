@@ -79,113 +79,6 @@
   WorkbookCommentsModel.prototype.getMergedByCell = function() {
     return null;
   };
-	var EditorSkins = {
-		"classic": {
-			Name: "classic",
-			Background: "#f1f1f1",
-			Border: "#d5d5d5",
-			Color: "#363636",
-			BackgroundDark: "#444444",
-			ColorDark: "#ffffff",
-			BackgroundActive: "#c1c1c1",
-			BorderActive: "#929292",
-			ColorActive: "#363636",
-			BackgroundDarkActive: "#000000",
-			ColorDarkActive: "#ffffff",
-			BackgroundHighlighted: "#dfdfdf",
-			BorderHighlighted: "#afafaf",
-			ColorHighlighted: "#6a6a70",
-			BackgroundDarkHighlighted: "#ffffff",
-			ColorDarkHighlighted: "#c1c1c1"
-		},
-		"flat": {
-			Name: "flat",
-			Background: "#f1f1f1",
-			Border: "#d5d5d5",
-			Color: "#363636",
-			BackgroundDark: "#444444",
-			ColorDark: "#ffffff",
-			BackgroundActive: "#c1c1c1",
-			BorderActive: "#929292",
-			ColorActive: "#363636",
-			BackgroundDarkActive: "#000000",
-			ColorDarkActive: "#ffffff",
-			BackgroundHighlighted: "#dfdfdf",
-			BorderHighlighted: "#afafaf",
-			ColorHighlighted: "#6a6a70",
-			BackgroundDarkHighlighted: "#ffffff",
-			ColorDarkHighlighted: "#c1c1c1"
-
-		},
-		"flat2": {
-			Name: "flat2",
-			Background: "#f1f1f1",
-			Border: "#d5d5d5",
-			Color: "#363636",
-			BackgroundDark: "#444444",
-			ColorDark: "#ffffff",
-			BackgroundActive: "#c1c1c1",
-			BorderActive: "#929292",
-			ColorActive: "#363636",
-			BackgroundDarkActive: "#000000",
-			ColorDarkActive: "#ffffff",
-			BackgroundHighlighted: "#dfdfdf",
-			BorderHighlighted: "#afafaf",
-			ColorHighlighted: "#6a6a70",
-			BackgroundDarkHighlighted: "#ffffff",
-			ColorDarkHighlighted: "#c1c1c1"
-
-		},
-		"flatDark": {
-			Name: "flatDark",
-			Background: "#f1f1f1",
-			Border: "#d5d5d5",
-			Color: "#363636",
-			BackgroundDark: "#444444",
-			ColorDark: "#ffffff",
-			BackgroundActive: "#c1c1c1",
-			BorderActive: "#929292",
-			ColorActive: "#363636",
-			BackgroundDarkActive: "#000000",
-			ColorDarkActive: "#ffffff",
-			BackgroundHighlighted: "#dfdfdf",
-			BorderHighlighted: "#afafaf",
-			ColorHighlighted: "#6a6a70",
-			BackgroundDarkHighlighted: "#ffffff",
-			ColorDarkHighlighted: "#c1c1c1"
-		}
-	};
-
-	var GlobalSkin = EditorSkins["classic"];
-
-	function updateGlobalSkin(obj) {
-		if (!obj) return;
-
-		if (typeof obj === "string" && undefined !== EditorSkins[obj]) {
-			GlobalSkin = EditorSkins[obj];
-		} else {
-			if (undefined !== obj["Name"]) GlobalSkin.Name = obj["Name"];
-			if (undefined !== obj["Background"]) GlobalSkin.RulersButton = obj["Background"];
-			if (undefined !== obj["Border"]) GlobalSkin.NavigationButtons = obj["Border"];
-			if (undefined !== obj["Color"]) GlobalSkin.BackgroundColor = obj["Color"];
-			if (undefined !== obj["BackgroundDark"]) GlobalSkin.RulerDark = obj["BackgroundDark"];
-			if (undefined !== obj["ColorDark"]) GlobalSkin.RulerLight = obj["ColorDark"];
-
-			if (undefined !== obj["BackgroundActive"]) GlobalSkin.RulersButton = obj["BackgroundActive"];
-			if (undefined !== obj["BorderActive"]) GlobalSkin.NavigationButtons = obj["BorderActive"];
-			if (undefined !== obj["ColorActive"]) GlobalSkin.BackgroundColor = obj["ColorActive"];
-			if (undefined !== obj["BackgroundDarkActive"]) GlobalSkin.RulerDark = obj["BackgroundDarkActive"];
-			if (undefined !== obj["ColorDarkActive"]) GlobalSkin.RulerLight = obj["ColorDarkActive"];
-
-			if (undefined !== obj["BackgroundHighlighted"]) GlobalSkin.RulersButton = obj["BackgroundHighlighted"];
-			if (undefined !== obj["BorderHighlighted"]) GlobalSkin.NavigationButtons = obj["BorderHighlighted"];
-			if (undefined !== obj["ColorHighlighted"]) GlobalSkin.BackgroundColor = obj["ColorHighlighted"];
-			if (undefined !== obj["BackgroundDarkHighlighted"]) GlobalSkin.RulerDark = obj["BackgroundDarkHighlighted"];
-			if (undefined !== obj["ColorDarkHighlighted"]) GlobalSkin.RulerLight = obj["ColorDarkHighlighted"];
-		}
-
-		window['AscCommonWord'].GlobalSkin = GlobalSkin;
-	}
 
 	function WorksheetViewSettings() {
 		//TODO темные цвета необходимо скорректировать
@@ -199,23 +92,23 @@
 		this._generateStyle = function () {
 			return [// Header colors
 				{ // kHeaderDefault
-					background: this.getCColor(GlobalSkin.Background),
-					border: this.getCColor(GlobalSkin.Border),
-					color: this.getCColor(GlobalSkin.Color),
-					backgroundDark: this.getCColor(GlobalSkin.BackgroundDark),
-					colorDark: this.getCColor(GlobalSkin.ColorDark)
+					background: this.getCColor(AscCommon.GlobalSkin.Background),
+					border: this.getCColor(AscCommon.GlobalSkin.Border),
+					color: this.getCColor(AscCommon.GlobalSkin.Color),
+					backgroundDark: this.getCColor(AscCommon.GlobalSkin.BackgroundDark),
+					colorDark: this.getCColor(AscCommon.GlobalSkin.ColorDark)
 				}, { // kHeaderActive
-					background: this.getCColor(GlobalSkin.BackgroundActive),
-					border: this.getCColor(GlobalSkin.BorderActive),
-					color: this.getCColor(GlobalSkin.ColorActive),
-					backgroundDark: this.getCColor(GlobalSkin.BackgroundDarkActive),
-					colorDark: this.getCColor(GlobalSkin.ColorDarkActive)
+					background: this.getCColor(AscCommon.GlobalSkin.BackgroundActive),
+					border: this.getCColor(AscCommon.GlobalSkin.BorderActive),
+					color: this.getCColor(AscCommon.GlobalSkin.ColorActive),
+					backgroundDark: this.getCColor(AscCommon.GlobalSkin.BackgroundDarkActive),
+					colorDark: this.getCColor(AscCommon.GlobalSkin.ColorDarkActive)
 				}, { // kHeaderHighlighted
-					background: this.getCColor(GlobalSkin.BackgroundHighlighted),
-					border: this.getCColor(GlobalSkin.BorderHighlighted),
-					color: this.getCColor(GlobalSkin.ColorHighlighted),
-					backgroundDark: this.getCColor(GlobalSkin.BackgroundDarkHighlighted),
-					colorDark: this.getCColor(GlobalSkin.ColorDarkHighlighted)
+					background: this.getCColor(AscCommon.GlobalSkin.BackgroundHighlighted),
+					border: this.getCColor(AscCommon.GlobalSkin.BorderHighlighted),
+					color: this.getCColor(AscCommon.GlobalSkin.ColorHighlighted),
+					backgroundDark: this.getCColor(AscCommon.GlobalSkin.BackgroundDarkHighlighted),
+					colorDark: this.getCColor(AscCommon.GlobalSkin.ColorDarkHighlighted)
 				}];
 		};
 		this.header = {
@@ -3787,6 +3680,4 @@
 	//------------------------------------------------------------export---------------------------------------------------
   window['AscCommonExcel'] = window['AscCommonExcel'] || {};
   window["AscCommonExcel"].WorkbookView = WorkbookView;
-  window["AscCommonExcel"].GlobalSkin = GlobalSkin;
-  window["AscCommonExcel"].updateGlobalSkin = updateGlobalSkin;
 })(window);

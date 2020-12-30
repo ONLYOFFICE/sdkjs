@@ -25,6 +25,7 @@
 			"cell/api.js"
 		],
 		"common": [
+			"common/skin.js",
 			"common/downloaderfiles.js",
 			"common/NumFormat.js",
 			"common/SerializeChart.js",
