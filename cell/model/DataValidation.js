@@ -1361,6 +1361,17 @@
 		return res.length ? res : null;
 	};
 
+	CDataValidations.prototype.getIntersectionByRange = function (range) {
+		var res = [];
+		for (var i = 0; i < this.elems.length; i++) {
+			var changedRanges = this.elems[i].getIntersections(range);
+			if (changedRanges) {
+				res.push({ranges: changedRanges, id: this.elems[i].Id});
+			}
+		}
+		return res.length ? res : null;
+	};
+
 	CDataValidations.prototype.expandRanges = function (ranges) {
 		var res = [];
 		var _notExpandRanges = [];
