@@ -14800,7 +14800,8 @@
 
 
 				var aDataValidations;
-				if (wsFrom.dataValidations) {
+				if (wsFrom.dataValidations && wsTo.dataValidations) {
+					wsTo.clearDataValidation([to], true);
 					aDataValidations = wsFrom.dataValidations.getIntersectionByRange(from);
 				}
 				if(aDataValidations && aDataValidations.length > 0) {
