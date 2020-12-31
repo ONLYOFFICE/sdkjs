@@ -81,7 +81,8 @@ var c_oSerTableTypes = {
 	App: 15,
 	Core: 16,
 	DocumentComments: 17,
-	CustomProperties: 18
+	CustomProperties: 18,
+	Glossary: 19
 };
 var c_oSerSigTypes = {
     Version:0
@@ -426,7 +427,24 @@ var c_oSerParType = {
 	JsaProject: 22,
 	BookmarkStart: 23,
 	BookmarkEnd: 24,
-	MRun: 25
+	MRun: 25,
+	AltChunk: 26,
+	DocParts: 27
+};
+var c_oSerGlossary = {
+	DocPart: 0,
+	DocPartPr: 1,
+	DocPartBody: 2,
+	Name: 3,
+	Style: 4,
+	Guid: 5,
+	Description: 6,
+	CategoryName: 7,
+	CategoryGallery: 8,
+	Types: 9,
+	Type: 10,
+	Behaviors: 11,
+	Behavior: 12
 };
 var c_oSerDocTableType = {
     tblPr:0,
@@ -5201,6 +5219,12 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 				case para_RevisionMove:
 					WiteMoveRange(this.bs, this.saveParams, item);
 					break;
+				case para_Bookmark:
+					var typeBookmark = item.IsStart() ? c_oSerParType.BookmarkStart : c_oSerParType.BookmarkEnd;
+					this.bs.WriteItem(typeBookmark, function () {
+						oThis.bs.WriteBookmark(item);
+					});
+					break;
             }
         }
         if ((bLastRun && bUseSelection && !par.Selection_CheckParaEnd()) || (selectedAll != undefined && selectedAll === false) )
@@ -5211,6 +5235,33 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
             });
         }
     };
+	this.WriteDocParts = function (oHyperlink, bUseSelection) {
+		var oThis = this;
+		var sAnchor = oHyperlink.GetAnchor();
+		if (null != sAnchor && "" != sAnchor) {
+			this.memory.WriteByte(c_oSer_HyperlinkType.Anchor);
+			this.memory.WriteString2(sAnchor);
+		}
+		var sValue = oHyperlink.GetValue() || "";
+		if ("" != sValue || "" === sAnchor) {
+			this.memory.WriteByte(c_oSer_HyperlinkType.Link);
+			this.memory.WriteString2(sValue);
+		}
+		//Tooltip
+		var sTooltip = oHyperlink.GetToolTip();
+		if (null != sTooltip && "" != sTooltip)
+		{
+			this.memory.WriteByte(c_oSer_HyperlinkType.Tooltip);
+			this.memory.WriteString2(sTooltip);
+		}
+		this.bs.WriteItem(c_oSer_HyperlinkType.History, function(){
+			oThis.memory.WriteBool(true);
+		});
+		//Content
+		this.bs.WriteItem(c_oSer_HyperlinkType.Content, function () {
+			oThis.WriteParagraphContent(oHyperlink, bUseSelection, false);
+		});
+	}
     this.WriteHyperlink = function (oHyperlink, bUseSelection) {
         var oThis = this;
 		var sAnchor = oHyperlink.GetAnchor();
@@ -7033,23 +7084,27 @@ function BinaryFileReader(doc, openParams)
 		}
         return stream;
     };
-    this.Read = function(data)
-    {
-		try{
-			this.stream = this.getbase64DecodedData(data);
+	this.ReadFromStream = function(stream)
+	{
+		// try{
+			this.stream = stream;
 			this.PreLoadPrepare();
 			this.ReadMainTable();
 			this.PostLoadPrepare();
-		}
-		catch(e)
-		{
-			if(e.message == g_sErrorCharCountMessage)
-				return false;
-			else
-				throw e;
-		}
+		// }
+		// catch(e)
+		// {
+		// 	if(e.message == g_sErrorCharCountMessage)
+		// 		return false;
+		// 	else
+		// 		throw e;
+		// }
 
 		return true;
+	};
+    this.Read = function(data)
+    {
+		return this.ReadFromStream(this.getbase64DecodedData(data));
     };
 	this.PreLoadPrepare = function()
 	{
@@ -7235,6 +7290,20 @@ function BinaryFileReader(doc, openParams)
 					this.Document.CustomProperties = new AscCommon.CCustomProperties();
 					this.Document.CustomProperties.fromStream(fileStream);
 					this.stream.FromFileStream(fileStream);
+					break;
+				case c_oSerTableTypes.Glossary:
+					var oBinaryFileReader, openParams        = {checkFileSize : /*this.isMobileVersion*/false, charCount : 0, parCount : 0, disableRevisions: false};
+					var oDoc2 = new AscCommonWord.CDocument(editor.WordControl.m_oDrawingDocument, false);
+					var oDoc1 = editor.WordControl.m_oLogicDocument;
+					editor.WordControl.m_oDrawingDocument.m_oLogicDocument = oDoc2;
+					editor.WordControl.m_oLogicDocument = oDoc2;
+					oBinaryFileReader = new AscCommonWord.BinaryFileReader(oDoc2, openParams);
+					if (oBinaryFileReader.ReadFromStream(this.stream))
+					{
+						oDoc1.GlossaryDocument = oDoc2.GlossaryDocument;
+					}
+					editor.WordControl.m_oDrawingDocument.m_oLogicDocument = oDoc1;
+					editor.WordControl.m_oLogicDocument = oDoc1;
 					break;
             }
             if(c_oSerConstants.ReadOk != res)
@@ -10748,12 +10817,119 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 				this.toNextParStruct.push(c_oToNextParType.MoveToRangeEnd, this.stream.GetCurPos(), length);
 				res = c_oSerConstants.ReadUnknown;
 			}
+		} else if (c_oSerParType.DocParts === type) {
+			var glossary = this.oReadResult.logicDocument.GetGlossaryDocument();
+			res = this.bcr.Read1(length, function(t, l){
+				return oThis.ReadDocParts(t,l, glossary);
+			});
 		} else if (c_oSerParType.JsaProject === type) {
 			this.Document.DrawingDocument.m_oWordControl.m_oApi.macros.SetData(AscCommon.GetStringUtf8(this.stream, length));
 		} else
             res = c_oSerConstants.ReadUnknown;
         return res;
     };
+	this.ReadDocParts = function(type, length, glossary)
+	{
+		var res = c_oSerConstants.ReadOk;
+		var oThis = this;
+		if (c_oSerGlossary.DocPart === type) {
+			var docPart = new CDocPart(glossary);
+			res = this.bcr.Read1(length, function(t, l){
+				return oThis.ReadDocPart(t,l, docPart);
+			});
+			glossary.AddDocPart(docPart);
+		} else
+			res = c_oSerConstants.ReadUnknown;
+		return res;
+	};
+	this.ReadDocPart = function(type, length, docPart)
+	{
+		var res = c_oSerConstants.ReadOk;
+		var oThis = this;
+		if (c_oSerGlossary.DocPartPr === type) {
+			res = this.bcr.Read1(length, function(t, l){
+				return oThis.ReadDocPartPr(t,l, docPart.Pr);
+			});
+		} else if (c_oSerGlossary.DocPartBody === type) {
+			var noteContent = [];
+			var bdtr = new Binary_DocumentTableReader(docPart, this.oReadResult, this.openParams, this.stream, docPart, this.oReadResult.oCommentsPlaces);
+			bdtr.Read(length, noteContent);
+			if(noteContent.length > 0)
+			{
+				for(var i = 0; i < noteContent.length; ++i)
+				{
+					if(i == length - 1)
+						docPart.Internal_Content_Add(i + 1, noteContent[i], true);
+					else
+						docPart.Internal_Content_Add(i + 1, noteContent[i], false);
+				}
+				docPart.Internal_Content_Remove(0, 1);
+			}
+		} else
+			res = c_oSerConstants.ReadUnknown;
+		return res;
+	};
+	this.ReadDocPartPr = function(type, length, docPartPr)
+	{
+		var res = c_oSerConstants.ReadOk;
+		var oThis = this;
+		if (c_oSerGlossary.Name === type) {
+			docPartPr.Name = this.stream.GetString2LE(length);
+		} else if (c_oSerGlossary.Style === type) {
+			docPartPr.Style = this.stream.GetString2LE(length);
+		} else if (c_oSerGlossary.Guid === type) {
+			docPartPr.GUID = this.stream.GetString2LE(length);
+		} else if (c_oSerGlossary.Description === type) {
+			docPartPr.Description = this.stream.GetString2LE(length);
+		} else if (c_oSerGlossary.CategoryName === type) {
+			if(!docPartPr.Category) {
+				docPartPr.Category = new CDocPartCategory();
+			}
+			docPartPr.Category.Name = this.stream.GetString2LE(length);
+		} else if (c_oSerGlossary.CategoryGallery === type) {
+			if(!docPartPr.Category) {
+				docPartPr.Category = new CDocPartCategory();
+			}
+			docPartPr.Category.Gallery = this.stream.GetByte();
+		} else if (c_oSerGlossary.Types === type) {
+			res = this.bcr.Read1(length, function(t, l){
+				return oThis.ReadDocPartTypes(t,l, docPartPr);
+			});
+		} else if (c_oSerGlossary.Behaviors === type) {
+			res = this.bcr.Read1(length, function(t, l){
+				return oThis.ReadDocPartBehaviors(t,l, docPartPr);
+			});
+		} else
+			res = c_oSerConstants.ReadUnknown;
+		return res;
+	};
+	this.ReadDocPartTypes = function(type, length, docPartPr)
+	{
+		var res = c_oSerConstants.ReadOk;
+		if (c_oSerGlossary.Type === type) {
+			var type = this.stream.GetString2LE(length);
+			switch(type) {
+				case "autoExp": docPartPr.Types = c_oAscDocPartType.AutoExp;break;
+				case "bbPlcHdr": docPartPr.Types = c_oAscDocPartType.BBPlcHolder;break;
+				case "formFld": docPartPr.Types = c_oAscDocPartType.FormFld;break;
+				case "none": docPartPr.Types = c_oAscDocPartType.None;break;
+				case "normal": docPartPr.Types = c_oAscDocPartType.Normal;break;
+				case "speller": docPartPr.Types = c_oAscDocPartType.Speller;break;
+				case "toolbar": docPartPr.Types = c_oAscDocPartType.Toolbar;break;
+			}
+		} else
+			res = c_oSerConstants.ReadUnknown;
+		return res;
+	};
+	this.ReadDocPartBehaviors = function(type, length, docPartPr)
+	{
+		var res = c_oSerConstants.ReadOk;
+		if (c_oSerGlossary.Behavior === type) {
+			docPartPr.Behavior = this.stream.GetByte() + 1;
+		} else
+			res = c_oSerConstants.ReadUnknown;
+		return res;
+	};
 	this.ReadBackground = function(type, length, oBackground)
 	{
 		var res = c_oSerConstants.ReadOk;
