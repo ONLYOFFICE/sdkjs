@@ -11867,7 +11867,7 @@
 						{
 							var itemText = null;
 							
-							if (oChange.insert[nAddChar] === 32 || oChange.insert[nAddChar] === 160)
+							if (AscCommon.IsSpace(oChange.insert[nAddChar]))
 								itemText = new AscCommonWord.ParaSpace(oChange.insert[nAddChar]);
 							else
 								itemText = new AscCommonWord.ParaText(oChange.insert[nAddChar]);
