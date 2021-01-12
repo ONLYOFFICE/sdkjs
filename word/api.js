@@ -10229,7 +10229,7 @@ background-repeat: no-repeat;\
 	{
 		var oLogicDocument = this.private_GetLogicDocument();
 		var arrOutline = [];
-		oLogicDocument.GetOutlineParagraphs(arrOutline, {SkipEmptyParagraphs : true});
+		oLogicDocument.GetOutlineParagraphs(arrOutline, {SkipEmptyParagraphs : true, OutlineStart : 1, OutlineEnd : 9});
 		var aParagraphs = [];
 		for(var nIndex = 0; nIndex < arrOutline.length; ++nIndex)
 		{

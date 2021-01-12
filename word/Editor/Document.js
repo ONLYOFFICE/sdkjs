@@ -22109,7 +22109,7 @@ CDocument.prototype.GetHyperlinkAnchors = function()
 	var arrAnchors = [];
 
 	var arrOutline = [];
-	this.GetOutlineParagraphs(arrOutline, {SkipEmptyParagraphs : true});
+	this.GetOutlineParagraphs(arrOutline, {SkipEmptyParagraphs : true, OutlineStart : 1, OutlineEnd : 9});
 	var nIndex = 0, nCount = arrOutline.length;
 	for (nIndex = 0; nIndex < nCount; ++nIndex)
 	{
