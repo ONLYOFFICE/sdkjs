@@ -69,6 +69,12 @@ function CGlossaryDocument(oLogicDocument)
 		TextForm : this.private_CreateDefaultTextFormPlaceholder()
 	};
 
+	// TODO: Реализовать работу нумерации, стилей, сносок, заданных в контентах по-нормальному
+	this.Numbering = new CNumbering();
+	this.Styles    = new CStyles();
+	this.Footnotes = new CFootnotesController(oLogicDocument);
+	this.Endnotes  = new CEndnotesController(oLogicDocument);
+
 	oLogicDocument.GetTableId().Add(this, this.Id);
 }
 /**
@@ -89,6 +95,34 @@ CGlossaryDocument.prototype.GetId = function()
 CGlossaryDocument.prototype.Get_Id = function()
 {
 	return this.Id;
+};
+/**
+ * @return {CNumbering}
+ */
+CGlossaryDocument.prototype.GetNumbering = function()
+{
+	return this.Numbering;
+};
+/**
+ * @return {CStyles}
+ */
+CGlossaryDocument.prototype.GetStyles = function()
+{
+	return this.Styles;
+};
+/**
+ * @return {CFootnotesController}
+ */
+CGlossaryDocument.prototype.GetFootnotes = function()
+{
+	return this.Footnotes;
+};
+/**
+ * @return {CEndnotesController}
+ */
+CGlossaryDocument.prototype.GetEndnotes = function()
+{
+	return this.Endnotes;
 };
 /**
  * Создаем новый контент
