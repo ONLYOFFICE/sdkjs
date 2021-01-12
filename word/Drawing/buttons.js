@@ -743,6 +743,7 @@
         // native contentControl
         this.base = obj;
         this.type = this.base.GetSpecificType();
+        this.isForm = this.base.IsForm();
         this.state = state;
 
         this.geom = geom;
@@ -1259,166 +1260,193 @@
                 _object.SetColor(ctx);
                 ctx.lineWidth = 1;
 
-                if (!_object.transform)
+                if (!_object.isForm)
                 {
-                    if (_object.rects)
-                    {
-                        for (var j = 0; j < _object.rects.length; j++)
-                        {
-                            _geom = _object.rects[j];
+					if (!_object.transform)
+					{
+						if (_object.rects)
+						{
+							for (var j = 0; j < _object.rects.length; j++)
+							{
+								_geom = _object.rects[j];
 
-                            if (_geom.Page < _pageStart || _geom.Page > this._pageEnd)
-                                continue;
+								if (_geom.Page < _pageStart || _geom.Page > this._pageEnd)
+									continue;
 
-                            _drawingPage = _pages[_geom.Page].drawingPage;
+								_drawingPage = _pages[_geom.Page].drawingPage;
 
-                            ctx.beginPath();
+								ctx.beginPath();
 
-                            _x = (_drawingPage.left + _koefX * (_geom.X + _object.OffsetX));
-                            _y = (_drawingPage.top  + _koefY * (_geom.Y + _object.OffsetY));
-                            _r = (_drawingPage.left + _koefX * (_geom.R + _object.OffsetX));
-                            _b = (_drawingPage.top  + _koefY * (_geom.B + _object.OffsetY));
+								_x = (_drawingPage.left + _koefX * (_geom.X + _object.OffsetX));
+								_y = (_drawingPage.top + _koefY * (_geom.Y + _object.OffsetY));
+								_r = (_drawingPage.left + _koefX * (_geom.R + _object.OffsetX));
+								_b = (_drawingPage.top + _koefY * (_geom.B + _object.OffsetY));
 
-                            overlay.CheckRect(_x, _y, _r - _x, _b - _y);
-                            ctx.rect((_x >> 0) + 0.5, (_y >> 0) + 0.5, (_r - _x) >> 0, (_b - _y) >> 0);
+								overlay.CheckRect(_x, _y, _r - _x, _b - _y);
+								ctx.rect((_x >> 0) + 0.5, (_y >> 0) + 0.5, (_r - _x) >> 0, (_b - _y) >> 0);
 
-                            if (_object.state == AscCommon.ContentControlTrack.Hover)
-                                ctx.fill();
-                            ctx.stroke();
+								if (_object.state == AscCommon.ContentControlTrack.Hover)
+									ctx.fill();
+								ctx.stroke();
 
-                            ctx.beginPath();
-                        }
-                    }
-                    else if (_object.paths)
-                    {
-                        for (var j = 0; j < _object.paths.length; j++)
-                        {
-                            _geom = _object.paths[j];
-                            if (_geom.Page < _pageStart || _geom.Page > this._pageEnd)
-                                continue;
+								ctx.beginPath();
+							}
+						}
+						else if (_object.paths)
+						{
+							for (var j = 0; j < _object.paths.length; j++)
+							{
+								_geom = _object.paths[j];
+								if (_geom.Page < _pageStart || _geom.Page > this._pageEnd)
+									continue;
 
-                            _drawingPage = _pages[_geom.Page].drawingPage;
+								_drawingPage = _pages[_geom.Page].drawingPage;
 
-                            ctx.beginPath();
+								ctx.beginPath();
 
-                            for (var pointIndex = 0, pointCount = _geom.Points.length; pointIndex < pointCount; pointIndex++)
-                            {
-                                _x = (_drawingPage.left + _koefX * (_geom.Points[pointIndex].X + _object.OffsetX));
-                                _y = (_drawingPage.top  + _koefY * (_geom.Points[pointIndex].Y + _object.OffsetY));
+								for (var pointIndex = 0, pointCount = _geom.Points.length; pointIndex < pointCount; pointIndex++)
+								{
+									_x = (_drawingPage.left + _koefX * (_geom.Points[pointIndex].X + _object.OffsetX));
+									_y = (_drawingPage.top + _koefY * (_geom.Points[pointIndex].Y + _object.OffsetY));
 
-                                overlay.CheckPoint(_x, _y);
+									overlay.CheckPoint(_x, _y);
 
-                                _x = (_x >> 0) + 0.5;
-                                _y = (_y >> 0) + 0.5;
+									_x = (_x >> 0) + 0.5;
+									_y = (_y >> 0) + 0.5;
 
-                                if (0 == pointCount)
-                                    ctx.moveTo(_x, _y);
-                                else
-                                    ctx.lineTo(_x, _y);
-                            }
+									if (0 == pointCount)
+										ctx.moveTo(_x, _y);
+									else
+										ctx.lineTo(_x, _y);
+								}
 
-                            ctx.closePath();
+								ctx.closePath();
 
-                            if (_object.state == AscCommon.ContentControlTrack.Hover)
-                                ctx.fill();
-                            ctx.stroke();
+								if (_object.state == AscCommon.ContentControlTrack.Hover)
+									ctx.fill();
+								ctx.stroke();
 
-                            ctx.beginPath();
-                        }
-                    }
-                }
-                else
-                {
-                    if (_object.rects)
-                    {
-                        for (var j = 0; j < _object.rects.length; j++)
-                        {
-                            _geom = _object.rects[j];
+								ctx.beginPath();
+							}
+						}
+					}
+					else
+					{
+						if (_object.rects)
+						{
+							for (var j = 0; j < _object.rects.length; j++)
+							{
+								_geom = _object.rects[j];
 
-                            if (_geom.Page < _pageStart || _geom.Page > this._pageEnd)
-                                continue;
+								if (_geom.Page < _pageStart || _geom.Page > this._pageEnd)
+									continue;
 
-                            _drawingPage = _pages[_geom.Page].drawingPage;
+								_drawingPage = _pages[_geom.Page].drawingPage;
 
-                            var x1 = _object.transform.TransformPointX(_geom.X, _geom.Y);
-                            var y1 = _object.transform.TransformPointY(_geom.X, _geom.Y);
-                            var x2 = _object.transform.TransformPointX(_geom.R, _geom.Y);
-                            var y2 = _object.transform.TransformPointY(_geom.R, _geom.Y);
-                            var x3 = _object.transform.TransformPointX(_geom.R, _geom.B);
-                            var y3 = _object.transform.TransformPointY(_geom.R, _geom.B);
-                            var x4 = _object.transform.TransformPointX(_geom.X, _geom.B);
-                            var y4 = _object.transform.TransformPointY(_geom.X, _geom.B);
+								var x1 = _object.transform.TransformPointX(_geom.X, _geom.Y);
+								var y1 = _object.transform.TransformPointY(_geom.X, _geom.Y);
+								var x2 = _object.transform.TransformPointX(_geom.R, _geom.Y);
+								var y2 = _object.transform.TransformPointY(_geom.R, _geom.Y);
+								var x3 = _object.transform.TransformPointX(_geom.R, _geom.B);
+								var y3 = _object.transform.TransformPointY(_geom.R, _geom.B);
+								var x4 = _object.transform.TransformPointX(_geom.X, _geom.B);
+								var y4 = _object.transform.TransformPointY(_geom.X, _geom.B);
 
-                            x1 = _drawingPage.left + _koefX * x1;
-                            x2 = _drawingPage.left + _koefX * x2;
-                            x3 = _drawingPage.left + _koefX * x3;
-                            x4 = _drawingPage.left + _koefX * x4;
+								x1 = _drawingPage.left + _koefX * x1;
+								x2 = _drawingPage.left + _koefX * x2;
+								x3 = _drawingPage.left + _koefX * x3;
+								x4 = _drawingPage.left + _koefX * x4;
 
-                            y1 = _drawingPage.top + _koefY * y1;
-                            y2 = _drawingPage.top + _koefY * y2;
-                            y3 = _drawingPage.top + _koefY * y3;
-                            y4 = _drawingPage.top + _koefY * y4;
+								y1 = _drawingPage.top + _koefY * y1;
+								y2 = _drawingPage.top + _koefY * y2;
+								y3 = _drawingPage.top + _koefY * y3;
+								y4 = _drawingPage.top + _koefY * y4;
 
-                            ctx.beginPath();
+								ctx.beginPath();
 
-                            overlay.CheckPoint(x1, y1);
-                            overlay.CheckPoint(x2, y2);
-                            overlay.CheckPoint(x3, y3);
-                            overlay.CheckPoint(x4, y4);
+								overlay.CheckPoint(x1, y1);
+								overlay.CheckPoint(x2, y2);
+								overlay.CheckPoint(x3, y3);
+								overlay.CheckPoint(x4, y4);
 
-                            ctx.moveTo(x1, y1);
-                            ctx.lineTo(x2, y2);
-                            ctx.lineTo(x3, y3);
-                            ctx.lineTo(x4, y4);
-                            ctx.closePath();
+								ctx.moveTo(x1, y1);
+								ctx.lineTo(x2, y2);
+								ctx.lineTo(x3, y3);
+								ctx.lineTo(x4, y4);
+								ctx.closePath();
 
-                            if (_object.state == AscCommon.ContentControlTrack.Hover)
-                                ctx.fill();
-                            ctx.stroke();
+								if (_object.state == AscCommon.ContentControlTrack.Hover)
+									ctx.fill();
+								ctx.stroke();
 
-                            ctx.beginPath();
-                        }
-                    }
-                    else if (_object.paths)
-                    {
-                        for (var j = 0; j < _object.paths.length; j++)
-                        {
-                            _geom = _object.paths[j];
-                            if (_geom.Page < _pageStart || _geom.Page > this._pageEnd)
-                                continue;
+								ctx.beginPath();
+							}
+						}
+						else if (_object.paths)
+						{
+							for (var j = 0; j < _object.paths.length; j++)
+							{
+								_geom = _object.paths[j];
+								if (_geom.Page < _pageStart || _geom.Page > this._pageEnd)
+									continue;
 
-                            _drawingPage = _pages[_geom.Page].drawingPage;
+								_drawingPage = _pages[_geom.Page].drawingPage;
 
-                            ctx.beginPath();
+								ctx.beginPath();
 
-                            for (var pointIndex = 0, pointCount = _geom.Points.length; pointIndex < pointCount; pointIndex++)
-                            {
-                                _x = _object.transform.TransformPointX(_geom.Points[pointIndex].X, _geom.Points[pointIndex].Y);
-                                _y = _object.transform.TransformPointY(_geom.Points[pointIndex].X, _geom.Points[pointIndex].Y);
+								for (var pointIndex = 0, pointCount = _geom.Points.length; pointIndex < pointCount; pointIndex++)
+								{
+									_x = _object.transform.TransformPointX(_geom.Points[pointIndex].X, _geom.Points[pointIndex].Y);
+									_y = _object.transform.TransformPointY(_geom.Points[pointIndex].X, _geom.Points[pointIndex].Y);
 
-                                _x = (_drawingPage.left + _koefX * _x);
-                                _y = (_drawingPage.top + _koefY * _y);
+									_x = (_drawingPage.left + _koefX * _x);
+									_y = (_drawingPage.top + _koefY * _y);
 
-                                overlay.CheckPoint(_x, _y);
+									overlay.CheckPoint(_x, _y);
 
-                                if (0 == pointCount)
-                                    ctx.moveTo(_x, _y);
-                                else
-                                    ctx.lineTo(_x, _y);
-                            }
+									if (0 == pointCount)
+										ctx.moveTo(_x, _y);
+									else
+										ctx.lineTo(_x, _y);
+								}
 
-                            ctx.closePath();
+								ctx.closePath();
 
-                            if (_object.state == AscCommon.ContentControlTrack.Hover)
-                                ctx.fill();
-                            ctx.stroke();
+								if (_object.state == AscCommon.ContentControlTrack.Hover)
+									ctx.fill();
+								ctx.stroke();
 
-                            ctx.beginPath();
-                        }
-                    }
-                }
+								ctx.beginPath();
+							}
+						}
+					}
+				}
+				else
+				{
+					if (_object.paths)
+					{
+						for (var j = 0; j < _object.paths.length; j++)
+						{
+							_geom = _object.paths[j];
+							if (_geom.Page < _pageStart || _geom.Page > this._pageEnd)
+								continue;
 
-                if (_object.state == AscCommon.ContentControlTrack.In)
+							_drawingPage = _pages[_geom.Page].drawingPage;
+
+							var _polygonDrawer = new CPolygonCC();
+							_polygonDrawer.checkPixelSize((_koefX + _koefY) / 2);
+							for (var pointIndex = 0, pointCount = _geom.Points.length; pointIndex < pointCount; pointIndex++)
+							{
+								_polygonDrawer.lineTo(_geom.Points[pointIndex].X, _geom.Points[pointIndex].Y);
+							}
+							_polygonDrawer.closePath();
+
+							_polygonDrawer.draw(overlay, _object, _drawingPage, _koefX, _koefY);
+						}
+					}
+				}
+
+                if (_object.state == AscCommon.ContentControlTrack.In && !_object.isForm)
                 {
                     // draw header
                     if (_object.Pos.Page >= _pageStart && _object.Pos.Page <= _pageEnd)
@@ -2343,5 +2371,478 @@
     }
 
     AscCommon.DrawingContentControls = ContentControls;
+
+    // по точкам (paths) нужно определить отрезки и точки по порядку, чтобы была возможность делать скругления.
+	// и по-всякому рисовать якорьки (движение/выпадашку для комбобокса и т.д.)
+
+	function isEqualFloat(coord1, coord2)
+	{
+		return (Math.abs(coord1 - coord2) < 0.0001) ? true : false;
+	}
+
+	var PointDirection = {
+		Unitialized : 0,
+		Up : 1,
+		Down : 2,
+		Right : 3,
+		Left : 4
+	};
+	var PointRound = {
+		Unitialized : 0,
+		True : 1,
+		False : 2
+	};
+
+	function CPointCC(x, y)
+	{
+		this.x = x;
+		this.y = y;
+		this.inDir = PointDirection.Unitialized;
+		this.outDir = PointDirection.Unitialized;
+		this.round = PointRound.Unitialized;
+	}
+
+	function CPolygonCC()
+	{
+		this.points = [];
+
+		this.rectMove = null;
+		this.rectCombo = null;
+		this.bounds = null;
+
+		this.indexMin = 0;
+		this.indexMax = 0;
+
+		this.rectMoveWidthPx = 5;
+		this.rectComboWidthPx = 7;
+		this.roundSizePx = 2;
+
+		this.rectMoveWidth = 5;
+		this.rectComboWidth = 7;
+		this.roundSize = 2;
+
+		this.isClockwise = false;
+		this.isActive = false;
+
+		this.type = 0;
+	}
+
+	CPolygonCC.prototype.nextIndex = function(index, add)
+	{
+		if (add === false)
+			index--;
+		else
+			index++;
+		if (index < 0)
+			return this.points.length - index;
+		if (index >= this.points.length)
+			return index - this.points.length;
+		return index;
+	};
+	CPolygonCC.prototype.checkPixelSize = function(koef)
+	{
+		this.rectMoveWidth = this.rectMoveWidthPx / koef;
+		this.rectComboWidth = this.rectComboWidthPx / koef;
+		this.roundSize = this.roundSizePx / koef;
+	};
+	CPolygonCC.prototype.moveTo = function(x, y)
+	{
+		if (this.points.length > 0)
+			this.points = [];
+		this.indexMin = 0;
+		this.indexMax = 0;
+		this.points.push(new CPointCC(x, y));
+	};
+	CPolygonCC.prototype.lineTo = function(x, y)
+	{
+		if (this.points.length == 0)
+		{
+			this.moveTo(x, y);
+			return;
+		}
+		var lastPoint = this.points[this.points.length - 1];
+		var isEqualX = isEqualFloat(lastPoint.x, x);
+		var isEqualY = isEqualFloat(lastPoint.y, y);
+
+		if (isEqualX && isEqualY)
+		{
+			// дублируемые не добавляем
+			return;
+		}
+
+		var firstPoint = this.points[0];
+		if (isEqualFloat(firstPoint.x, x) && isEqualFloat(firstPoint.y, y))
+		{
+			// закроем path на closePath
+			return;
+		}
+
+		var newPoint = new CPointCC(x, y);
+
+		// minimum check
+		var pointCheck = this.points[this.indexMin];
+		if (isEqualFloat(pointCheck.y, newPoint.y))
+		{
+			if (pointCheck.x > newPoint.x)
+				this.indexMin = this.points.length;
+		}
+		if (pointCheck.y > newPoint.y)
+			this.indexMin = this.points.length;
+
+		// maximum check
+		pointCheck = this.points[this.indexMax];
+		if (isEqualFloat(pointCheck.y, newPoint.y))
+		{
+			if (pointCheck.x < newPoint.x)
+				this.indexMax = this.points.length;
+		}
+		if (pointCheck.y < newPoint.y)
+			this.indexMax = this.points.length;
+
+		this.points.push(newPoint);
+	};
+	CPolygonCC.prototype.closePath = function(type)
+	{
+		this.calcRects(type);
+		this.calcDirections();
+		this.calcRounds();
+	};
+	CPolygonCC.prototype.calcRects = function(type)
+	{
+		var pointsLen = this.points.length;
+
+		var minPoint = this.points[this.indexMin];
+		var maxPoint = this.points[this.indexMax];
+
+		// определяем bounds
+		this.bounds = {x : minPoint.x, y : minPoint.y, w : (maxPoint.x - minPoint.x), h : (maxPoint.y - minPoint.y) };
+
+		// определяем первый рект (для перетаскивания) и передвигаем точки
+		// нужно найти направление, по которому мы шли, так как это экстремум, а проход в один конец, то
+		// верное направление одно
+		var direction = -1; // назад
+		var indexMinFriend = this.nextIndex(this.indexMin);
+		if (isEqualFloat(minPoint.x, this.points[indexMinFriend].x))
+			direction = 1;
+		this.isClockwise = (direction === 1) ? false : true;
+
+		// зацикливаем
+		var indexMinFriend = this.nextIndex(this.indexMin, direction === 1);
+		var yMax = minPoint.y;
+		while (isEqualFloat(this.points[indexMinFriend].x, minPoint.x))
+		{
+			// точка учавствует в пути - проходная или конечная
+			this.points[indexMinFriend].x -= this.rectMoveWidth;
+			if (this.points[indexMinFriend].y > yMax) // по идее всегда так
+				yMax = this.points[indexMinFriend].y;
+			indexMinFriend = this.nextIndex(indexMinFriend, direction === 1);
+		}
+		minPoint.x -= this.rectMoveWidth;
+		this.rectMove = { x : minPoint.x, y : minPoint.y, w : this.rectMoveWidth, h : (yMax - minPoint.y) };
+
+		// определяем второй рект (для комбобокса), и передвигаем точки
+		// нужно найти направление, по которому мы шли, так как это экстремум, а проход в один конец, то
+		// верное направление одно
+		direction = -1; // назад
+		var indexMaxFriend = this.nextIndex(this.indexMax);
+		if (isEqualFloat(maxPoint.x, this.points[indexMaxFriend].x))
+			direction = 1;
+
+		// зацикливаем
+		var indexMaxFriend = this.nextIndex(this.indexMax, direction === 1);
+		var yMin = maxPoint.y;
+		while (isEqualFloat(this.points[indexMaxFriend].x, maxPoint.x))
+		{
+			// точка учавствует в пути - проходная или конечная
+			this.points[indexMaxFriend].x += this.rectComboWidth;
+			if (this.points[indexMaxFriend].y < yMin) // по идее всегда так
+				yMin = this.points[indexMaxFriend].y;
+			indexMinFriend = this.nextIndex(indexMinFriend, direction === 1);
+		}
+		maxPoint.x += this.rectComboWidth;
+		this.rectCombo = { x : maxPoint.x, y : yMin, w : this.rectComboWidth, h: (maxPoint.y - yMin) };
+
+	};
+	CPolygonCC.prototype.calcDirections = function()
+	{
+		for (var i = 0, len = this.points.length; i < len; i++)
+		{
+			var curPoint = this.points[i];
+			var nextPoint = (i == (len - 1)) ? this.points[0] : this.points[i + 1];
+
+			if (isEqualFloat(curPoint.y, nextPoint.y))
+			{
+				if (curPoint.x < nextPoint.x)
+				{
+					curPoint.outDir = nextPoint.inDir = PointDirection.Right;
+				}
+				else
+				{
+					curPoint.outDir = nextPoint.inDir = PointDirection.Left;
+				}
+			}
+			else if (isEqualFloat(curPoint.x, nextPoint.x))
+			{
+				if (curPoint.y < nextPoint.y)
+				{
+					curPoint.outDir = nextPoint.inDir = PointDirection.Down;
+				}
+				else
+				{
+					curPoint.outDir = nextPoint.inDir = PointDirection.Up;
+				}
+			}
+		}
+	};
+	CPolygonCC.prototype.calcRounds = function()
+	{
+		for (var i = 0, len = this.points.length; i < len; i++)
+		{
+			var curPoint = this.points[i];
+			var nextPoint = (i == (len - 1)) ? this.points[0] : this.points[i + 1];
+
+			// 1) короткая ли линия?
+			var lineLen = Math.abs(curPoint.x - nextPoint.x) + Math.abs(curPoint.y - nextPoint.y);
+			if (lineLen < this.roundSize)
+			{
+				curPoint.round = nextPoint.round = PointRound.False;
+			}
+
+			// 2) скругляем только внешние углы.
+			// зависит от направлений и от общего направления обхода
+			if (curPoint.round === PointRound.Unitialized)
+			{
+				switch (curPoint.inDir)
+				{
+					case PointDirection.Left:
+					{
+						switch (curPoint.outDir)
+						{
+							case PointDirection.Left:
+							case PointDirection.Right:
+							{
+								curPoint.round = PointRound.False;
+								break;
+							}
+							case PointDirection.Up:
+							{
+								curPoint.round = this.isClockwise ? PointRound.True : PointRound.False;
+								break;
+							}
+							case PointDirection.Down:
+							{
+								curPoint.round = this.isClockwise ? PointRound.False : PointRound.True;
+								break;
+							}
+							default:
+								break;
+						}
+						break;
+					}
+					case PointDirection.Right:
+					{
+						switch (curPoint.outDir)
+						{
+							case PointDirection.Left:
+							case PointDirection.Right:
+							{
+								curPoint.round = PointRound.False;
+								break;
+							}
+							case PointDirection.Up:
+							{
+								curPoint.round = this.isClockwise ? PointRound.False : PointRound.True;
+								break;
+							}
+							case PointDirection.Down:
+							{
+								curPoint.round = this.isClockwise ? PointRound.True : PointRound.False;
+								break;
+							}
+							default:
+								break;
+						}
+						break;
+					}
+					case PointDirection.Up:
+					{
+						switch (curPoint.outDir)
+						{
+							case PointDirection.Left:
+							{
+								curPoint.round = this.isClockwise ? PointRound.False : PointRound.True;
+								break;
+							}
+							case PointDirection.Right:
+							{
+								curPoint.round = this.isClockwise ? PointRound.True : PointRound.False;
+								break;
+							}
+							case PointDirection.Up:
+							case PointDirection.Down:
+							{
+								curPoint.round = PointRound.False;
+								break;
+							}
+							default:
+								break;
+						}
+						break;
+					}
+					case PointDirection.Down:
+					{
+						switch (curPoint.outDir)
+						{
+							case PointDirection.Left:
+							{
+								curPoint.round = this.isClockwise ? PointRound.True : PointRound.False;
+								break;
+							}
+							case PointDirection.Right:
+							{
+								curPoint.round = this.isClockwise ? PointRound.False : PointRound.True;
+								break;
+							}
+							case PointDirection.Up:
+							case PointDirection.Down:
+							{
+								curPoint.round = PointRound.False;
+								break;
+							}
+							default:
+								break;
+						}
+						break;
+					}
+					default:
+						break;
+				}
+			}
+		}
+	};
+
+	var const_rad = 0.9142; // (Math.sqrt(2) - 0.5)
+	CPolygonCC.prototype.draw = function(overlay, object, drPage, koefX, koefY)
+	{
+		var ctx = overlay.m_oContext;
+		var pointsLen = this.points.length;
+		if (!object.transform)
+		{
+			var point;
+			var _x, _y;
+			for (var i = 0; i < pointsLen; i++)
+			{
+				point = this.points[i];
+				_x = drPage.left + koefX * (point.x + object.OffsetX);
+				_y = drPage.top  + koefY * (point.y + object.OffsetY);
+
+				overlay.CheckPoint(_x, _y);
+
+				_x = (_x >> 0) + 0.5;
+				_y = (_y >> 0) + 0.5;
+
+				if (point.round !== PointRound.True)
+				{
+					if (0 === i)
+						ctx.moveTo(_x, _y);
+					else
+						ctx.lineTo(_x, _y);
+				}
+				else
+				{
+					var x1, y1, x2, y2, xCP, yCP;
+					var isX = true;
+					switch (point.inDir)
+					{
+						case PointDirection.Left:
+						{
+							x1 = _x + this.roundSizePx;
+							y1 = _y;
+							break;
+						}
+						case PointDirection.Right:
+						{
+							x1 = _x - this.roundSizePx;
+							y1 = _y;
+							break;
+						}
+						case PointDirection.Up:
+						{
+							x1 = _x;
+							y1 = _y + this.roundSizePx;
+							isX = false;
+							break;
+						}
+						case PointDirection.Down:
+						{
+							x1 = _x;
+							y1 = _y - this.roundSizePx;
+							isX = false;
+							break;
+						}
+						default:
+							break;
+					}
+					switch (point.outDir)
+					{
+						case PointDirection.Left:
+						{
+							x2 = _x - this.roundSizePx;
+							y2 = _y;
+							break;
+						}
+						case PointDirection.Right:
+						{
+							x2 = _x + this.roundSizePx;
+							y2 = _y;
+							break;
+						}
+						case PointDirection.Up:
+						{
+							x2 = _x;
+							y2 = _y - this.roundSizePx;
+							break;
+						}
+						case PointDirection.Down:
+						{
+							x2 = _x;
+							y2 = _y + this.roundSizePx;
+							break;
+						}
+						default:
+							break;
+					}
+
+					if (isX)
+					{
+						xCP = x1 + (x2 - x1) * const_rad;
+						yCP = y1 + (y2 - y1) * (1 - const_rad);
+					}
+					else
+					{
+						xCP = x1 + (x2 - x1) * (1 - const_rad);
+						yCP = y1 + (y2 - y1) * const_rad;
+					}
+
+					if (0 === i)
+						ctx.moveTo(x1, y1);
+					else
+						ctx.lineTo(x1, y1);
+					ctx.quadraticCurveTo(xCP, yCP, x2, y2);
+				}
+			}
+			ctx.closePath();
+
+			if (!this.isActive)
+				ctx.strokeStyle = AscCommonWord.GlobalSkin.FormsContentControlsOutlineHover;
+			else
+				ctx.strokeStyle = AscCommonWord.GlobalSkin.FormsContentControlsOutlineActive;
+
+			ctx.lineWidth = 1;
+			ctx.stroke();
+
+			ctx.beginPath();
+		}
+	}
 
 })(window);
