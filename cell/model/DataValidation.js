@@ -1309,9 +1309,13 @@
 					_newRanges = _newRanges.concat(tempRanges);
 				}
 
-				var newDataValidation = _dataValidation.clone();
-				newDataValidation.ranges = _newRanges;
-				t.change(ws, _dataValidation, prepeareAdd(newDataValidation, _newRanges), true);
+				if (!_newRanges.length) {
+					t.delete(ws, _dataValidation.Id, true)
+				} else {
+					var newDataValidation = _dataValidation.clone();
+					newDataValidation.ranges = _newRanges;
+					t.change(ws, _dataValidation, prepeareAdd(newDataValidation, _newRanges), true);
+				}
 			};
 
 			var k;
