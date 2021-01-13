@@ -1434,7 +1434,7 @@
 							_drawingPage = _pages[_geom.Page].drawingPage;
 
 							var _polygonDrawer = new CPolygonCC();
-							_polygonDrawer.init(_object, (_koefX + _koefY) / 2);
+							_polygonDrawer.init(_object, (_koefX + _koefY) / 2, j, _object.paths.length);
 							for (var pointIndex = 0, pointCount = _geom.Points.length; pointIndex < pointCount; pointIndex++)
 							{
 								_polygonDrawer.lineTo(_geom.Points[pointIndex].X, _geom.Points[pointIndex].Y);
@@ -2426,6 +2426,8 @@
 
 		this.isUseMoveRect = true;
 		this.isCombobox = false;
+
+		this.wideOutline = 0;
 	}
 
 	CPolygonCC.prototype.nextIndex = function(index, add)
@@ -2440,7 +2442,7 @@
 			return index - this.points.length;
 		return index;
 	};
-	CPolygonCC.prototype.init = function(object, koef)
+	CPolygonCC.prototype.init = function(object, koef, indexPath, countPaths)
 	{
 		this.isCombobox = object.base.IsComboBox && object.base.IsComboBox();
 
@@ -2465,10 +2467,17 @@
 			this.isCombobox = false;
 		}
 
+		if (0 !== indexPath)
+			this.isUseMoveRect = false;
+		if (indexPath !== (countPaths - 1))
+			this.isCombobox = false;
+
 		this.roundSizePx = this.isActive ? AscCommonWord.GlobalSkin.FormsContentControlsOutlineBorderRadiusActive : AscCommonWord.GlobalSkin.FormsContentControlsOutlineBorderRadiusHover;
 		this.rectMoveWidth = this.rectMoveWidthPx / koef;
 		this.rectComboWidth = this.rectComboWidthPx / koef;
 		this.roundSize = this.roundSizePx / koef;
+
+		this.wideOutline = 1 / koef;
 	};
 	CPolygonCC.prototype.moveTo = function(x, y)
 	{
@@ -2772,6 +2781,7 @@
 				++currentIteration;
 				if (currentIteration === countIteration)
 				{
+					var lineH = koefY * object.base.GetBoundingPolygonFirstLineH();
 					if (this.rectMove)
 					{
 						// draw move rect
@@ -2792,7 +2802,6 @@
 						ctx.fill();
 						ctx.beginPath();
 
-						var lineH = koefY * object.base.GetBoundingPolygonFirstLineH();
 						var yCenterPos = ((_y1 + 0.5 * lineH) >> 0) + 0.5;
 						var xCenter = _x1 + this.rectMoveWidthPx / 2;
 						var wCenter = ((this.rectMoveWidthPx / 3) + 1) >> 0;
@@ -2965,7 +2974,6 @@
 
 					ctx.lineWidth = 1;
 					ctx.stroke();
-
 					ctx.beginPath();
 
 					break;
