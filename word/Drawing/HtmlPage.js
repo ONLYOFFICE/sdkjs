@@ -127,7 +127,8 @@ var GlobalSkinFlat2    = {
 	FormsContentControlsOutlineHover : "#CBCBCB",
 	FormsContentControlsOutlineActive : "#CBCBCB",
 	FormsContentControlsOutlineBorderRadiusHover : 1,
-	FormsContentControlsOutlineBorderRadiusActive : 2
+	FormsContentControlsOutlineBorderRadiusActive : 1,
+	FormsContentControlsMarkersBackground : "#FFFFFF"
 };
 
 var GlobalSkin = GlobalSkinFlat2;

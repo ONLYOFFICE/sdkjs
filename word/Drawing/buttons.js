@@ -1434,14 +1434,14 @@
 							_drawingPage = _pages[_geom.Page].drawingPage;
 
 							var _polygonDrawer = new CPolygonCC();
-							_polygonDrawer.checkPixelSize((_koefX + _koefY) / 2);
+							_polygonDrawer.init(_object, (_koefX + _koefY) / 2);
 							for (var pointIndex = 0, pointCount = _geom.Points.length; pointIndex < pointCount; pointIndex++)
 							{
 								_polygonDrawer.lineTo(_geom.Points[pointIndex].X, _geom.Points[pointIndex].Y);
 							}
 							_polygonDrawer.closePath();
 
-							_polygonDrawer.draw(overlay, _object, _drawingPage, _koefX, _koefY);
+							_polygonDrawer.draw(overlay, _object, _drawingPage, _koefX, _koefY, this.icons);
 						}
 					}
 				}
@@ -2413,18 +2413,19 @@
 		this.indexMin = 0;
 		this.indexMax = 0;
 
-		this.rectMoveWidthPx = 5;
-		this.rectComboWidthPx = 7;
-		this.roundSizePx = 2;
+		this.rectMoveWidthPx = 13;
+		this.rectComboWidthPx = 22;
+		this.roundSizePx = 1;
 
-		this.rectMoveWidth = 5;
-		this.rectComboWidth = 7;
-		this.roundSize = 2;
+		this.rectMoveWidth = 1;
+		this.rectComboWidth = 1;
+		this.roundSize = 1;
 
 		this.isClockwise = false;
 		this.isActive = false;
 
-		this.type = 0;
+		this.isUseMoveRect = true;
+		this.isCombobox = false;
 	}
 
 	CPolygonCC.prototype.nextIndex = function(index, add)
@@ -2439,8 +2440,32 @@
 			return index - this.points.length;
 		return index;
 	};
-	CPolygonCC.prototype.checkPixelSize = function(koef)
+	CPolygonCC.prototype.init = function(object, koef)
 	{
+		this.isCombobox = object.base.IsComboBox && object.base.IsComboBox();
+
+		if (object.parent.document.m_oWordControl.m_oApi.isViewMode)
+		{
+			this.isUseMoveRect = false;
+			this.isCombobox = false;
+		}
+		else if (object.parent.document.m_oLogicDocument && object.parent.document.m_oLogicDocument.IsFillingFormMode())
+		{
+			this.isUseMoveRect = false;
+		}
+
+		if (object.state === AscCommon.ContentControlTrack.In)
+		{
+			this.isActive = true;
+		}
+
+		if (!this.isActive)
+		{
+			this.isUseMoveRect = false;
+			this.isCombobox = false;
+		}
+
+		this.roundSizePx = this.isActive ? AscCommonWord.GlobalSkin.FormsContentControlsOutlineBorderRadiusActive : AscCommonWord.GlobalSkin.FormsContentControlsOutlineBorderRadiusHover;
 		this.rectMoveWidth = this.rectMoveWidthPx / koef;
 		this.rectComboWidth = this.rectComboWidthPx / koef;
 		this.roundSize = this.roundSizePx / koef;
@@ -2517,51 +2542,56 @@
 		// определяем bounds
 		this.bounds = {x : minPoint.x, y : minPoint.y, w : (maxPoint.x - minPoint.x), h : (maxPoint.y - minPoint.y) };
 
-		// определяем первый рект (для перетаскивания) и передвигаем точки
-		// нужно найти направление, по которому мы шли, так как это экстремум, а проход в один конец, то
-		// верное направление одно
-		var direction = -1; // назад
-		var indexMinFriend = this.nextIndex(this.indexMin);
-		if (isEqualFloat(minPoint.x, this.points[indexMinFriend].x))
-			direction = 1;
-		this.isClockwise = (direction === 1) ? false : true;
-
-		// зацикливаем
-		var indexMinFriend = this.nextIndex(this.indexMin, direction === 1);
-		var yMax = minPoint.y;
-		while (isEqualFloat(this.points[indexMinFriend].x, minPoint.x))
+		if (this.isUseMoveRect)
 		{
-			// точка учавствует в пути - проходная или конечная
-			this.points[indexMinFriend].x -= this.rectMoveWidth;
-			if (this.points[indexMinFriend].y > yMax) // по идее всегда так
-				yMax = this.points[indexMinFriend].y;
-			indexMinFriend = this.nextIndex(indexMinFriend, direction === 1);
+			// определяем первый рект (для перетаскивания) и передвигаем точки
+			// нужно найти направление, по которому мы шли, так как это экстремум, а проход в один конец, то
+			// верное направление одно
+			var direction = -1; // назад
+			var indexMinFriend = this.nextIndex(this.indexMin);
+			if (isEqualFloat(minPoint.x, this.points[indexMinFriend].x))
+				direction = 1;
+			this.isClockwise = (direction === 1) ? false : true;
+
+			// зацикливаем
+			var indexMinFriend = this.nextIndex(this.indexMin, direction === 1);
+			var yMax = minPoint.y;
+			while (isEqualFloat(this.points[indexMinFriend].x, minPoint.x))
+			{
+				// точка учавствует в пути - проходная или конечная
+				this.points[indexMinFriend].x -= this.rectMoveWidth;
+				if (this.points[indexMinFriend].y > yMax) // по идее всегда так
+					yMax = this.points[indexMinFriend].y;
+				indexMinFriend = this.nextIndex(indexMinFriend, direction === 1);
+			}
+			minPoint.x -= this.rectMoveWidth;
+			this.rectMove = {x: minPoint.x, y: minPoint.y, w: this.rectMoveWidth, h: (yMax - minPoint.y)};
 		}
-		minPoint.x -= this.rectMoveWidth;
-		this.rectMove = { x : minPoint.x, y : minPoint.y, w : this.rectMoveWidth, h : (yMax - minPoint.y) };
 
-		// определяем второй рект (для комбобокса), и передвигаем точки
-		// нужно найти направление, по которому мы шли, так как это экстремум, а проход в один конец, то
-		// верное направление одно
-		direction = -1; // назад
-		var indexMaxFriend = this.nextIndex(this.indexMax);
-		if (isEqualFloat(maxPoint.x, this.points[indexMaxFriend].x))
-			direction = 1;
-
-		// зацикливаем
-		var indexMaxFriend = this.nextIndex(this.indexMax, direction === 1);
-		var yMin = maxPoint.y;
-		while (isEqualFloat(this.points[indexMaxFriend].x, maxPoint.x))
+		if (this.isCombobox)
 		{
-			// точка учавствует в пути - проходная или конечная
-			this.points[indexMaxFriend].x += this.rectComboWidth;
-			if (this.points[indexMaxFriend].y < yMin) // по идее всегда так
-				yMin = this.points[indexMaxFriend].y;
-			indexMinFriend = this.nextIndex(indexMinFriend, direction === 1);
-		}
-		maxPoint.x += this.rectComboWidth;
-		this.rectCombo = { x : maxPoint.x, y : yMin, w : this.rectComboWidth, h: (maxPoint.y - yMin) };
+			// определяем второй рект (для комбобокса), и передвигаем точки
+			// нужно найти направление, по которому мы шли, так как это экстремум, а проход в один конец, то
+			// верное направление одно
+			direction = -1; // назад
+			var indexMaxFriend = this.nextIndex(this.indexMax);
+			if (isEqualFloat(maxPoint.x, this.points[indexMaxFriend].x))
+				direction = 1;
 
+			// зацикливаем
+			var indexMaxFriend = this.nextIndex(this.indexMax, direction === 1);
+			var yMin = maxPoint.y;
+			while (isEqualFloat(this.points[indexMaxFriend].x, maxPoint.x))
+			{
+				// точка учавствует в пути - проходная или конечная
+				this.points[indexMaxFriend].x += this.rectComboWidth;
+				if (this.points[indexMaxFriend].y < yMin) // по идее всегда так
+					yMin = this.points[indexMaxFriend].y;
+				indexMaxFriend = this.nextIndex(indexMaxFriend, direction === 1);
+			}
+			this.rectCombo = {x: maxPoint.x, y: yMin, w: this.rectComboWidth, h: (maxPoint.y - yMin)};
+			maxPoint.x += this.rectComboWidth;
+		}
 	};
 	CPolygonCC.prototype.calcDirections = function()
 	{
@@ -2722,7 +2752,7 @@
 	};
 
 	var const_rad = 0.9142; // (Math.sqrt(2) - 0.5)
-	CPolygonCC.prototype.draw = function(overlay, object, drPage, koefX, koefY)
+	CPolygonCC.prototype.draw = function(overlay, object, drPage, koefX, koefY, icons)
 	{
 		var ctx = overlay.m_oContext;
 		var pointsLen = this.points.length;
@@ -2730,118 +2760,225 @@
 		{
 			var point;
 			var _x, _y;
-			for (var i = 0; i < pointsLen; i++)
+
+			var countIteration = (0 === this.roundSizePx) ? 1 : 2;
+			var currentIteration = 0;
+
+			if (countIteration > 1 && null === this.rectMove && null === this.rectCombo)
+				countIteration = 1;
+
+			while (true)
 			{
-				point = this.points[i];
-				_x = drPage.left + koefX * (point.x + object.OffsetX);
-				_y = drPage.top  + koefY * (point.y + object.OffsetY);
-
-				overlay.CheckPoint(_x, _y);
-
-				_x = (_x >> 0) + 0.5;
-				_y = (_y >> 0) + 0.5;
-
-				if (point.round !== PointRound.True)
+				++currentIteration;
+				if (currentIteration === countIteration)
 				{
-					if (0 === i)
-						ctx.moveTo(_x, _y);
+					if (this.rectMove)
+					{
+						// draw move rect
+						var _x1 = (drPage.left + koefX * (this.rectMove.x + object.OffsetX)) >> 0;
+						var _y1 = (drPage.top + koefY * (this.rectMove.y + object.OffsetY)) >> 0;
+						var _x2 = (drPage.left + koefX * (this.rectMove.x + this.rectMove.w + object.OffsetX)) >> 0;
+						var _y2 = _y1;
+						var _x3 = _x2;
+						var _y3 = (drPage.top + koefY * (this.rectMove.y + this.rectMove.h + object.OffsetY)) >> 0;
+						var _x4 = _x1;
+						var _y4 = _y3;
+
+						ctx.moveTo(_x1 + 0.5, _y1 + 0.5);
+						ctx.lineTo(_x2 + 1.5, _y2 + 0.5);
+						ctx.lineTo(_x3 + 1.5, _y3 + 0.5);
+						ctx.lineTo(_x4 + 0.5, _y4 + 0.5);
+						ctx.closePath();
+						ctx.fill();
+						ctx.beginPath();
+
+						var lineH = koefY * object.base.GetBoundingPolygonFirstLineH();
+						var yCenterPos = ((_y1 + 0.5 * lineH) >> 0) + 0.5;
+						var xCenter = _x1 + this.rectMoveWidthPx / 2;
+						var wCenter = ((this.rectMoveWidthPx / 3) + 1) >> 0;
+						xCenter -= wCenter / 2;
+						xCenter = xCenter >> 0;
+						xCenter += 1; // lineWidth
+
+						if (!this.isActive)
+							ctx.strokeStyle = AscCommonWord.GlobalSkin.FormsContentControlsOutlineHover;
+						else
+							ctx.strokeStyle = AscCommonWord.GlobalSkin.FormsContentControlsOutlineActive;
+
+						ctx.moveTo(xCenter, yCenterPos);
+						ctx.lineTo(xCenter + wCenter, yCenterPos);
+						ctx.moveTo(xCenter, yCenterPos - 2);
+						ctx.lineTo(xCenter + wCenter, yCenterPos - 2);
+						ctx.moveTo(xCenter, yCenterPos + 2);
+						ctx.lineTo(xCenter + wCenter, yCenterPos + 2);
+
+						ctx.lineWidth = 1;
+						ctx.stroke();
+						ctx.beginPath();
+					}
+
+					if (this.rectCombo)
+					{
+						// draw combo rect
+						_x1 = (drPage.left + koefX * (this.rectCombo.x + object.OffsetX)) >> 0;
+						_y1 = (drPage.top + koefY * (this.rectCombo.y + object.OffsetY)) >> 0;
+						_x2 = (drPage.left + koefX * (this.rectCombo.x + this.rectCombo.w + object.OffsetX)) >> 0;
+						_y2 = _y1;
+						_x3 = _x2;
+						_y3 = (drPage.top + koefY * (this.rectCombo.y + this.rectCombo.h + object.OffsetY)) >> 0;
+						_x4 = _x1;
+						_y4 = _y3;
+
+						ctx.moveTo(_x1 - 0.5, _y1 + 0.5);
+						ctx.lineTo(_x2 + 0.5, _y2 + 0.5);
+						ctx.lineTo(_x3 + 0.5, _y3 + 0.5);
+						ctx.lineTo(_x4 - 0.5, _y4 + 0.5);
+						ctx.closePath();
+						ctx.fill();
+						ctx.beginPath();
+
+						var image = icons.getImage(AscCommon.CCButtonType.Combo, false);
+						if (image)
+						{
+							var yPos = ((_y4 - image.height - 0.5 * (lineH - image.height) >> 0)) + 2;
+							var xPos = ((_x1 + 0.5 * (this.rectComboWidthPx - image.width) >> 0)) + 1;
+
+							ctx.drawImage(image, xPos, yPos);
+						}
+					}
+
+					if (2 === currentIteration)
+					{
+						ctx.restore();
+					}
+				}
+
+				for (var i = 0; i < pointsLen; i++)
+				{
+					point = this.points[i];
+					_x = drPage.left + koefX * (point.x + object.OffsetX);
+					_y = drPage.top + koefY * (point.y + object.OffsetY);
+
+					overlay.CheckPoint(_x, _y);
+
+					_x = (_x >> 0) + 0.5;
+					_y = (_y >> 0) + 0.5;
+
+					if (point.round !== PointRound.True)
+					{
+						if (0 === i)
+							ctx.moveTo(_x, _y);
+						else
+							ctx.lineTo(_x, _y);
+					}
 					else
-						ctx.lineTo(_x, _y);
+					{
+						var x1, y1, x2, y2, xCP, yCP;
+						var isX = true;
+						switch (point.inDir)
+						{
+							case PointDirection.Left:
+							{
+								x1 = _x + this.roundSizePx;
+								y1 = _y;
+								break;
+							}
+							case PointDirection.Right:
+							{
+								x1 = _x - this.roundSizePx;
+								y1 = _y;
+								break;
+							}
+							case PointDirection.Up:
+							{
+								x1 = _x;
+								y1 = _y + this.roundSizePx;
+								isX = false;
+								break;
+							}
+							case PointDirection.Down:
+							{
+								x1 = _x;
+								y1 = _y - this.roundSizePx;
+								isX = false;
+								break;
+							}
+							default:
+								break;
+						}
+						switch (point.outDir)
+						{
+							case PointDirection.Left:
+							{
+								x2 = _x - this.roundSizePx;
+								y2 = _y;
+								break;
+							}
+							case PointDirection.Right:
+							{
+								x2 = _x + this.roundSizePx;
+								y2 = _y;
+								break;
+							}
+							case PointDirection.Up:
+							{
+								x2 = _x;
+								y2 = _y - this.roundSizePx;
+								break;
+							}
+							case PointDirection.Down:
+							{
+								x2 = _x;
+								y2 = _y + this.roundSizePx;
+								break;
+							}
+							default:
+								break;
+						}
+
+						if (isX)
+						{
+							xCP = x1 + (x2 - x1) * const_rad;
+							yCP = y1 + (y2 - y1) * (1 - const_rad);
+						}
+						else
+						{
+							xCP = x1 + (x2 - x1) * (1 - const_rad);
+							yCP = y1 + (y2 - y1) * const_rad;
+						}
+
+						if (0 === i)
+							ctx.moveTo(x1, y1);
+						else
+							ctx.lineTo(x1, y1);
+						ctx.quadraticCurveTo(xCP, yCP, x2, y2);
+					}
+				}
+				ctx.closePath();
+
+				if (currentIteration === countIteration)
+				{
+					if (!this.isActive)
+						ctx.strokeStyle = AscCommonWord.GlobalSkin.FormsContentControlsOutlineHover;
+					else
+						ctx.strokeStyle = AscCommonWord.GlobalSkin.FormsContentControlsOutlineActive;
+
+					ctx.lineWidth = 1;
+					ctx.stroke();
+
+					ctx.beginPath();
+
+					break;
 				}
 				else
 				{
-					var x1, y1, x2, y2, xCP, yCP;
-					var isX = true;
-					switch (point.inDir)
-					{
-						case PointDirection.Left:
-						{
-							x1 = _x + this.roundSizePx;
-							y1 = _y;
-							break;
-						}
-						case PointDirection.Right:
-						{
-							x1 = _x - this.roundSizePx;
-							y1 = _y;
-							break;
-						}
-						case PointDirection.Up:
-						{
-							x1 = _x;
-							y1 = _y + this.roundSizePx;
-							isX = false;
-							break;
-						}
-						case PointDirection.Down:
-						{
-							x1 = _x;
-							y1 = _y - this.roundSizePx;
-							isX = false;
-							break;
-						}
-						default:
-							break;
-					}
-					switch (point.outDir)
-					{
-						case PointDirection.Left:
-						{
-							x2 = _x - this.roundSizePx;
-							y2 = _y;
-							break;
-						}
-						case PointDirection.Right:
-						{
-							x2 = _x + this.roundSizePx;
-							y2 = _y;
-							break;
-						}
-						case PointDirection.Up:
-						{
-							x2 = _x;
-							y2 = _y - this.roundSizePx;
-							break;
-						}
-						case PointDirection.Down:
-						{
-							x2 = _x;
-							y2 = _y + this.roundSizePx;
-							break;
-						}
-						default:
-							break;
-					}
+					ctx.save();
+					ctx.clip();
 
-					if (isX)
-					{
-						xCP = x1 + (x2 - x1) * const_rad;
-						yCP = y1 + (y2 - y1) * (1 - const_rad);
-					}
-					else
-					{
-						xCP = x1 + (x2 - x1) * (1 - const_rad);
-						yCP = y1 + (y2 - y1) * const_rad;
-					}
-
-					if (0 === i)
-						ctx.moveTo(x1, y1);
-					else
-						ctx.lineTo(x1, y1);
-					ctx.quadraticCurveTo(xCP, yCP, x2, y2);
+					ctx.fillStyle = AscCommonWord.GlobalSkin.FormsContentControlsMarkersBackground;
+					ctx.beginPath();
 				}
 			}
-			ctx.closePath();
-
-			if (!this.isActive)
-				ctx.strokeStyle = AscCommonWord.GlobalSkin.FormsContentControlsOutlineHover;
-			else
-				ctx.strokeStyle = AscCommonWord.GlobalSkin.FormsContentControlsOutlineActive;
-
-			ctx.lineWidth = 1;
-			ctx.stroke();
-
-			ctx.beginPath();
 		}
 	}
 
