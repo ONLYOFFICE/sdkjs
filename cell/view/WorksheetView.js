@@ -13387,7 +13387,7 @@
 							t._updateGroups(true);
 							updateDrawingObjectsInfo2 = {bInsert: true, operType: val, updateRange: arn};
 							t.cellCommentator.updateCommentsDependencies(true, val, arn);
-							t.model.shiftDataValidation(true, val, arn);
+							t.model.shiftDataValidation(true, val, arn, true);
 							History.EndTransaction();
 						};
 
@@ -13415,7 +13415,7 @@
 							t._updateGroups();
 							updateDrawingObjectsInfo2 = {bInsert: true, operType: val, updateRange: arn};
 							t.cellCommentator.updateCommentsDependencies(true, val, arn);
-							t.model.shiftDataValidation(true, val, arn);
+							t.model.shiftDataValidation(true, val, arn, true);
 						};
 
 						arrChangedRanges.push(lockRange);
@@ -13534,7 +13534,7 @@
 							History.Create_NewPoint();
 							History.StartTransaction();
 							t.cellCommentator.updateCommentsDependencies(false, val, checkRange);
-							t.model.shiftDataValidation(false, val, checkRange);
+							t.model.shiftDataValidation(false, val, checkRange, true);
 							t.model.autoFilters.isEmptyAutoFilters(arn, c_oAscDeleteOptions.DeleteColumns);
 							t.model.removeCols(checkRange.c1, checkRange.c2);
 							t._updateGroups(true);
@@ -13572,7 +13572,7 @@
 							History.StartTransaction();
 							checkRange = t.model.autoFilters.checkDeleteAllRowsFormatTable(checkRange, true);
 							t.cellCommentator.updateCommentsDependencies(false, val, checkRange);
-							t.model.shiftDataValidation(false, val, checkRange);
+							t.model.shiftDataValidation(false, val, checkRange, true);
 							t.model.autoFilters.isEmptyAutoFilters(arn, c_oAscDeleteOptions.DeleteRows);
 
 							var bExcludeHiddenRows = t.model.autoFilters.bIsExcludeHiddenRows(checkRange, t.model.selectionRange.activeCell);
