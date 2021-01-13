@@ -2927,10 +2927,14 @@ function (window, undefined) {
 				ws.deletePivotTable(Data.pivot);
 			}
 		} else if (AscCH.historyitem_Worksheet_PivotReplace === Type) {
-			ws.deletePivotTable(Data.pivot);
 			var data = bUndo ? Data.from : Data.to;
 			var pivot = data.getData();
 			pivot.init();
+			var oldPivot = ws.getPivotTableById(Data.pivot);
+			if (oldPivot) {
+				pivot.replaceSlicersPivotCacheDefinition(oldPivot.cacheDefinition, pivot.cacheDefinition);
+			}
+			ws.deletePivotTable(Data.pivot);
 			ws.insertPivotTable(pivot, false, true);
 		} else if (AscCH.historyitem_Worksheet_SlicerAdd === Type) {
 			if (bUndo) {

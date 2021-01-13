@@ -3284,6 +3284,14 @@
 		}
 		return null;
 	};
+	Workbook.prototype.getPivotTablesByCacheId = function(pivotCacheId) {
+		var res = [];
+		for (var i = 0, l = this.aWorksheets.length; i < l; ++i) {
+			var pivotTables = this.aWorksheets[i].getPivotTablesByCacheId(pivotCacheId);
+			res = res.concat(pivotTables);
+		}
+		return res;
+	};
 	Workbook.prototype.getPivotCacheByDataRef = function(dataRef) {
 		for (var i = 0, l = this.aWorksheets.length; i < l; ++i) {
 			var cache = this.aWorksheets[i].getPivotCacheByDataRef(dataRef);
@@ -3333,6 +3341,14 @@
 		var res = [];
 		for (var i = 0, l = this.aWorksheets.length; i < l; ++i) {
 			var caches = this.aWorksheets[i].getSlicerCachesByPivotTable(sheetId, pivotName);
+			res = res.concat(caches);
+		}
+		return res;
+	};
+	Workbook.prototype.getSlicerCachesByPivotCacheId = function (pivotCacheId) {
+		var res = [];
+		for (var i = 0, l = this.aWorksheets.length; i < l; ++i) {
+			var caches = this.aWorksheets[i].getSlicerCachesByPivotCacheId(pivotCacheId);
 			res = res.concat(caches);
 		}
 		return res;
@@ -3439,12 +3455,41 @@
 			}
 		}
 	};
+	Workbook.prototype.getSlicersByPivotTable = function (sheetId, pivotName) {
+		var res = [];
+		for(var i = 0; i < this.aWorksheets.length; ++i) {
+			var slicers = this.aWorksheets[i].getSlicersByPivotTable(sheetId, pivotName);
+			res = res.concat(slicers);
+		}
+		return res;
+	};
+	Workbook.prototype.slicersUpdateAfterChangePivotTable = function (sheetId, pivotName) {
+		var slicers = this.getSlicersByPivotTable(sheetId, pivotName);
+		for (var j = 0; j < slicers.length; j++) {
+			this.onSlicerUpdate(slicers[j].name);
+		}
+	};
 	Workbook.prototype.deleteSlicersByPivotTable = function (sheetId, pivotName) {
 		var wb = this;
 		var slicerCaches = wb.getSlicerCachesByPivotTable(sheetId, pivotName);
 		slicerCaches.forEach(function (slicerCache) {
 			slicerCache.deletePivotTable(sheetId, pivotName);
 			if (0 === slicerCache.getPivotTablesCount()) {
+				var slicers = wb.getSlicersByCacheName(slicerCache.name);
+				if (slicers) {
+					slicers.forEach(function (slicer) {
+						wb.deleteSlicer(slicer.name);
+					});
+				}
+			}
+		});
+	};
+	Workbook.prototype.deleteSlicersByPivotTableAndFields = function (sheetId, pivotName, cacheFieldsToDelete) {
+		var wb = this;
+		var slicerCaches = wb.getSlicerCachesByPivotTable(sheetId, pivotName);
+		slicerCaches.forEach(function (slicerCache) {
+			if (cacheFieldsToDelete[slicerCache.getSourceName()]) {
+				slicerCache.deletePivotTable(sheetId, pivotName);
 				var slicers = wb.getSlicersByCacheName(slicerCache.name);
 				if (slicers) {
 					slicers.forEach(function (slicer) {
@@ -6963,6 +7008,26 @@
 		}
 		return res;
 	};
+	Worksheet.prototype.getSlicerCachesByPivotCacheId = function(pivotCacheId) {
+		var res = [];
+		for (var i = 0; i < this.aSlicers.length; i++) {
+			var cache = this.aSlicers[i].getSlicerCache();
+			if (cache && pivotCacheId === cache.getPivotCacheId()) {
+				res.push(cache);
+			}
+		}
+		return res;
+	};
+	Worksheet.prototype.getSlicersByPivotTable = function(sheetId, pivotName) {
+		var res = [];
+		for (var i = 0; i < this.aSlicers.length; i++) {
+			var cache = this.aSlicers[i].getSlicerCache();
+			if (cache && cache.indexOfPivotTable(sheetId, pivotName) >= 0) {
+				res.push(this.aSlicers[i]);
+			}
+		}
+		return res;
+	};
 	Worksheet.prototype.initPivotTables = function () {
 		for (var i = 0; i < this.pivotTables.length; ++i) {
 			this.pivotTables[i].init();
@@ -7763,6 +7828,16 @@
 		for (var i = 0; i < this.pivotTables.length; ++i) {
 			if (this.pivotTables[i].Get_Id() === id) {
 				res = this.pivotTables[i];
+				break;
+			}
+		}
+		return res;
+	};
+	Worksheet.prototype.getPivotTablesByCacheId = function (pivotCacheId) {
+		var res = [];
+		for (var i = 0; i < this.pivotTables.length; ++i) {
+			if (this.pivotTables[i].getPivotCacheId() === pivotCacheId) {
+				res.push(this.pivotTables[i]);
 				break;
 			}
 		}

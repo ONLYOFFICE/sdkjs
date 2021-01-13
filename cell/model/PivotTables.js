@@ -1729,6 +1729,9 @@ CT_PivotCacheDefinition.prototype.getPivotCacheId = function() {
 	return this.pivotCacheDefinitionX14 && this.pivotCacheDefinitionX14.pivotCacheId || null;
 };
 CT_PivotCacheDefinition.prototype.setPivotCacheId = function(val) {
+	if (null === val) {
+		return;
+	}
 	if (!this.pivotCacheDefinitionX14) {
 		this.pivotCacheDefinitionX14 = new CT_PivotCacheDefinitionX14();
 	}
@@ -4914,6 +4917,7 @@ CT_pivotTableDefinition.prototype.updateCacheData = function(dataRef) {
 	var newCacheDefinition = new CT_PivotCacheDefinition();
 	newCacheDefinition.asc_create();
 	newCacheDefinition.fromDataRef(dataRef);
+	newCacheDefinition.setPivotCacheId(this.cacheDefinition.getPivotCacheId());
 
 	var pivotFieldsMap = new Map();
 	var newCTPivotFields = new CT_PivotFields();
@@ -4936,6 +4940,8 @@ CT_pivotTableDefinition.prototype.updateCacheData = function(dataRef) {
 	var newCTRowFields = this._updateCacheDataUpdateRowColFieldsIndexes(this.asc_getRowFields(), new CT_RowFields(), newCTDataFields, pivotFieldsMap);
 	var newCTColFields = this._updateCacheDataUpdateRowColFieldsIndexes(this.asc_getColumnFields(), new CT_ColFields(), newCTDataFields, pivotFieldsMap);
 
+	this._updateCacheDataUpdateSlicers(newCacheDefinition, pivotFieldsMap);
+
 	this.cacheDefinition = newCacheDefinition;
 	this.pivotFields = newCTPivotFields;
 	this.pageFields = newCTPageFields;
@@ -4947,6 +4953,8 @@ CT_pivotTableDefinition.prototype.updateCacheData = function(dataRef) {
 	var newPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(this);
 	History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_PivotReplace, this.worksheet.getId(),
 		null, new AscCommonExcel.UndoRedoData_PivotTableRedo(this.Get_Id(), oldPivot, newPivot));
+
+	this._updateCacheDataUpdateSlicersPost();
 };
 CT_pivotTableDefinition.prototype._updateCacheDataUpdatePivotFieldsIndexes = function(newCacheDefinition, newCTPivotFields, pivotFieldsMap) {
 	var i;
@@ -5008,6 +5016,37 @@ CT_pivotTableDefinition.prototype._updateCacheDataUpdateRowColFieldsIndexes = fu
 		}
 	}
 	return newCTFields;
+};
+CT_pivotTableDefinition.prototype._updateCacheDataUpdateSlicers = function(pivotCacheDefinition, pivotFieldsMap) {
+	var wb = this.worksheet.workbook;
+	var sheetId = this.worksheet.getId();
+	var pivotName = this.name;
+	var cacheFieldsToDelete = {};
+	var oldCacheFields = this.cacheDefinition.getFields();
+	for (var i = 0; i < oldCacheFields.length; ++i) {
+		if(!pivotFieldsMap.has(i)) {
+			cacheFieldsToDelete[oldCacheFields[i].asc_getName()] = 1;
+		}
+	}
+	wb.deleteSlicersByPivotTableAndFields(sheetId, pivotName, cacheFieldsToDelete);
+	this.replaceSlicersPivotCacheDefinition(this.cacheDefinition, pivotCacheDefinition);
+};
+CT_pivotTableDefinition.prototype._updateCacheDataUpdateSlicersPost = function() {
+	var wb = this.worksheet.workbook;
+	var sheetId = this.worksheet.getId();
+	var pivotName = this.name;
+	this.syncSlicersWithPivot({});
+	wb.slicersUpdateAfterChangePivotTable(sheetId, pivotName);
+};
+CT_pivotTableDefinition.prototype.replaceSlicersPivotCacheDefinition = function(oldCacheDefinition, newCacheDefinition) {
+	var wb = this.worksheet.workbook;
+	var sheetId = this.worksheet.getId();
+	var pivotName = this.name;
+	var slicerCaches = this.worksheet.workbook.getSlicerCachesByPivotCacheId(oldCacheDefinition.getPivotCacheId());
+	slicerCaches.forEach(function(slicerCache) {
+		slicerCache.setPivotCacheDefinition(newCacheDefinition);
+	});
+	wb.slicersUpdateAfterChangePivotTable(sheetId, pivotName);
 };
 CT_pivotTableDefinition.prototype.asc_create = function(ws, name, cacheDefinition, bbox) {
 	this.worksheet = ws;

@@ -650,13 +650,6 @@
 	CT_slicer.prototype.getCacheDefinition = function () {
 		return this.cacheDefinition;
 	};
-	CT_slicer.prototype.setCacheDefinition = function (cacheDefinition) {
-		var oldVal = new AscCommonExcel.UndoRedoData_BinaryWrapper2(this.cacheDefinition);
-		this.cacheDefinition = cacheDefinition;
-		var newVal = new AscCommonExcel.UndoRedoData_BinaryWrapper2(this.cacheDefinition);
-		History.Add(AscCommonExcel.g_oUndoRedoSlicer, AscCH.historyitem_Slicer_SetCacheData,
-			null, null, new AscCommonExcel.UndoRedoData_Slicer(this.cacheDefinition.name, oldVal, newVal));
-	};
 	CT_slicer.prototype.generateName = function (name) {
 		var wb = this.ws.workbook;
 		var mapNames = [];
@@ -1070,7 +1063,7 @@
 					this.data = new CT_slicerCacheData();
 					this.data.tabular = new CT_tabularSlicerCache();
 					pivotTable.checkPivotCacheId();
-					this.data.tabular.pivotCacheDefinition = cacheDefinition;
+					this.setPivotCacheDefinition(cacheDefinition);
 
 					var table = new CT_slicerCachePivotTable();
 					table.name = pivotTable.asc_getName();
@@ -1094,7 +1087,36 @@
 			olap.initAfterSerialize(this.wb, pivotCachesOpen);
 		}
 	};
-
+	CT_slicerCacheDefinition.prototype.setPivotCacheDefinition = function (pivotCacheDefinition) {
+		var tabular = this.getTabular();
+		if (tabular) {
+			tabular.setPivotCacheDefinition(pivotCacheDefinition);
+		}
+		var olap = this.getOlap();
+		if (olap) {
+			olap.setPivotCacheDefinition(pivotCacheDefinition);
+		}
+	};
+	CT_slicerCacheDefinition.prototype.moveToWb = function (wb) {
+		this.initAfterSerialize(wb);
+		var realPivotTables = wb.getPivotTablesByCacheId(this.getPivotCacheId());
+		var oldPivotTables = this.pivotTables;
+		this.pivotTables = [];
+		for(var i = 0; i < oldPivotTables.length; ++i) {
+			for(var j = 0; j < realPivotTables.length; ++j) {
+				if(oldPivotTables[i].name === realPivotTables[j].name) {
+					this.addPivotTable(realPivotTables[j]);
+				}
+			}
+		}
+		return !this.getTabular() || -1 !== this.getPivotFieldIndex();
+	};
+	CT_slicerCacheDefinition.prototype.addPivotTable = function (pivotTable) {
+		var table = new CT_slicerCachePivotTable();
+		table.name = pivotTable.asc_getName();
+		table.sheetId = pivotTable.GetWS().getId();
+		this.pivotTables.push(table);
+	};
 	CT_slicerCacheDefinition.prototype.clone = function (wb) {
 		var res = new CT_slicerCacheDefinition(wb);
 
@@ -1460,6 +1482,9 @@
 		}
 		return changeRes;
 	};
+	CT_slicerCacheDefinition.prototype.getSourceName = function () {
+		return this.sourceName;
+	};
 	CT_slicerCacheDefinition.prototype.setSourceName = function (val) {
 		this.sourceName = val;
 	};
@@ -1627,10 +1652,11 @@
 	CT_slicerCacheDefinition.prototype.checkModelContent = function (model) {
 		var res = null;
 		var type = this.getType();
+		var wb = model.workbook;
 		switch (type) {
 			case insertSlicerType.table: {
 				var tableCache = this.tableSlicerCache;
-				var table = model.workbook.getTableByName(tableCache.tableId);
+				var table = wb.getTableByName(tableCache.tableId);
 				if (table) {
 					if (null !== table.getColIdByName(tableCache.column)) {
 						res = true;
@@ -1641,7 +1667,7 @@
 			case insertSlicerType.pivotTable: {
 				var tabular = this.getTabular();
 				var olap = this.getOlap();
-				if ((!tabular || tabular.checkModelContent(model)) && (!olap || olap.checkModelContent(model))) {
+				if ((!tabular || tabular.checkModelContent(wb)) && (!olap || olap.checkModelContent(wb))) {
 					res = true;
 				}
 				break;
@@ -1652,6 +1678,11 @@
 	CT_slicerCacheDefinition.prototype.getPivotCache = function() {
 		var tabular = this.getTabular();
 		return tabular && tabular.pivotCacheDefinition || null;
+	};
+	CT_slicerCacheDefinition.prototype.getPivotCacheId = function() {
+		//todo olap
+		var tabular = this.getTabular();
+		return tabular && tabular.pivotCacheDefinition && tabular.pivotCacheDefinition.getPivotCacheId() || null;
 	};
 	CT_slicerCacheDefinition.prototype.getPivotFieldIndex = function() {
 		var tabular = this.getTabular();
@@ -2139,6 +2170,10 @@
 			this.pivotCacheDefinition = wb.getPivotCacheById(this.pivotCacheId, pivotCachesOpen);
 			this.pivotCacheId = null;
 		}
+	};
+	CT_olapSlicerCache.prototype.setPivotCacheDefinition = function (pivotCacheDefinition) {
+		this.pivotCacheDefinition = pivotCacheDefinition;
+		this.pivotCacheId = null;
 	};
 	CT_olapSlicerCache.prototype.checkModelContent = function (wb) {
 		return null !== this.pivotCacheId && !!wb.getPivotCacheById(this.pivotCacheId);
@@ -2635,6 +2670,10 @@
 				this.pivotCacheId = null;
 			}
 		}
+	};
+	CT_tabularSlicerCache.prototype.setPivotCacheDefinition = function (pivotCacheDefinition) {
+		this.pivotCacheDefinition = pivotCacheDefinition;
+		this.pivotCacheId = null;
 	};
 	CT_tabularSlicerCache.prototype.checkModelContent = function (wb) {
 		return null !== this.pivotCacheId && !!wb.getPivotCacheById(this.pivotCacheId);

@@ -20712,9 +20712,16 @@
 					slicer.cacheDefinition = modelCaches[i];
 				} else {
 					//тут необходимо ещё проверить, соответсвует ли внутренняя структура
-					var table = slicer.cacheDefinition.getTableSlicerCache();
-					if (!table || !t.model.workbook.getTableIndexColumnByName(table.tableId, table.column)) {
-						continue;
+					var _type = slicer.cacheDefinition.getType();
+					if (_type === window['AscCommonExcel'].insertSlicerType.table) {
+						var table = slicer.cacheDefinition.getTableSlicerCache();
+						if (!table || !t.model.workbook.getTableIndexColumnByName(table.tableId, table.column)) {
+							continue;
+						}
+					} else if (_type === window['AscCommonExcel'].insertSlicerType.pivotTable) {
+						if (!slicer.cacheDefinition.moveToWb(t.model.workbook)) {
+							continue;
+						}
 					}
 					slicer.cacheDefinition.name = slicer.cacheDefinition.generateSlicerCacheName(slicer.name);
 					var newDefName = new Asc.asc_CDefName(slicer.cacheDefinition.name, "#N/A", null, Asc.c_oAscDefNameType.slicer);
@@ -20764,7 +20771,7 @@
 					t._isLockedDefNames(function(isLockedDefNames) {
 						if (isLockedDefNames) {
 							if (pivotLockInfos.length > 0) {
-								t.collaborativeEditing.lock(pivotLockInfos, callback);
+								t.collaborativeEditing.lock(pivotLockInfos, _callback);
 							} else {
 								_callback(true);
 							}
@@ -20774,7 +20781,7 @@
 					});
 				} else {
 					if (pivotLockInfos.length > 0) {
-						t.collaborativeEditing.lock(pivotLockInfos, callback);
+						t.collaborativeEditing.lock(pivotLockInfos, _callback);
 					} else {
 						_callback(true);
 					}
