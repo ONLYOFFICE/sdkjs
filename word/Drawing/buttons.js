@@ -2427,7 +2427,8 @@
 		this.isUseMoveRect = true;
 		this.isCombobox = false;
 
-		this.wideOutline = 0;
+		this.wideOutlineX = 0;
+		this.wideOutlineY = 0;
 	}
 
 	CPolygonCC.prototype.nextIndex = function(index, add)
@@ -2441,6 +2442,28 @@
 		if (index >= this.points.length)
 			return index - this.points.length;
 		return index;
+	};
+	CPolygonCC.prototype.widePoint = function(point, x, y)
+	{
+		if (x !== 0)
+			point.x += (x === 1) ? this.wideOutlineX : -this.wideOutlineX;
+		if (y !== 0)
+			point.y += (y === 1) ? this.wideOutlineY : -this.wideOutlineY;
+	};
+	CPolygonCC.prototype.wideRects = function()
+	{
+		if (this.rectMove)
+		{
+			this.rectMove.x -= this.wideOutlineX;
+			this.rectMove.y -= this.wideOutlineY;
+			this.rectMove.w += this.wideOutlineX;
+			this.rectMove.h += this.wideOutlineY;
+		}
+		if (this.rectCombo)
+		{
+			this.rectCombo.w += this.wideOutlineX;
+			this.rectCombo.h += this.wideOutlineY;
+		}
 	};
 	CPolygonCC.prototype.init = function(object, koef, indexPath, countPaths)
 	{
@@ -2477,7 +2500,8 @@
 		this.rectComboWidth = this.rectComboWidthPx / koef;
 		this.roundSize = this.roundSizePx / koef;
 
-		this.wideOutline = 1 / koef;
+		//this.wideOutlineX = 1 / koef;
+		//this.wideOutlineY = 1 / koef;
 	};
 	CPolygonCC.prototype.moveTo = function(x, y)
 	{
@@ -2649,6 +2673,7 @@
 
 			// 2) скругляем только внешние углы.
 			// зависит от направлений и от общего направления обхода
+			// и тут же сразу 3) расширяем рамку!
 			if (curPoint.round === PointRound.Unitialized)
 			{
 				switch (curPoint.inDir)
@@ -2665,12 +2690,30 @@
 							}
 							case PointDirection.Up:
 							{
-								curPoint.round = this.isClockwise ? PointRound.True : PointRound.False;
+								if (this.isClockwise)
+								{
+									curPoint.round = PointRound.True;
+									this.widePoint(curPoint, -1, 1);
+								}
+								else
+								{
+									curPoint.round = PointRound.False;
+									this.widePoint(curPoint, 1, -1);
+								}
 								break;
 							}
 							case PointDirection.Down:
 							{
-								curPoint.round = this.isClockwise ? PointRound.False : PointRound.True;
+								if (this.isClockwise)
+								{
+									curPoint.round = PointRound.False;
+									this.widePoint(curPoint, 1, 1);
+								}
+								else
+								{
+									curPoint.round = PointRound.True;
+									this.widePoint(curPoint, -1, -1);
+								}
 								break;
 							}
 							default:
@@ -2690,12 +2733,30 @@
 							}
 							case PointDirection.Up:
 							{
-								curPoint.round = this.isClockwise ? PointRound.False : PointRound.True;
+								if (this.isClockwise)
+								{
+									curPoint.round = PointRound.False;
+									this.widePoint(curPoint, -1, -1);
+								}
+								else
+								{
+									curPoint.round = PointRound.True;
+									this.widePoint(curPoint, 1, 1);
+								}
 								break;
 							}
 							case PointDirection.Down:
 							{
-								curPoint.round = this.isClockwise ? PointRound.True : PointRound.False;
+								if (this.isClockwise)
+								{
+									curPoint.round = PointRound.True;
+									this.widePoint(curPoint, 1, -1);
+								}
+								else
+								{
+									curPoint.round = PointRound.False;
+									this.widePoint(curPoint, -1, 1);
+								}
 								break;
 							}
 							default:
@@ -2709,15 +2770,38 @@
 						{
 							case PointDirection.Left:
 							{
-								curPoint.round = this.isClockwise ? PointRound.False : PointRound.True;
+								if (this.isClockwise)
+								{
+									curPoint.round = PointRound.False;
+									this.widePoint(curPoint, -1, 1);
+								}
+								else
+								{
+									curPoint.round = PointRound.True;
+									this.widePoint(curPoint, 1, -1);
+								}
 								break;
 							}
 							case PointDirection.Right:
 							{
-								curPoint.round = this.isClockwise ? PointRound.True : PointRound.False;
+								if (this.isClockwise)
+								{
+									curPoint.round = PointRound.True;
+									this.widePoint(curPoint, -1, -1);
+								}
+								else
+								{
+									curPoint.round = PointRound.False;
+									this.widePoint(curPoint, 1, 1);
+								}
 								break;
 							}
 							case PointDirection.Up:
+							{
+								curPoint.round = PointRound.False;
+								this.widePoint(curPoint, this.isClockwise ? -1 : 1, 0);
+								break;
+							}
 							case PointDirection.Down:
 							{
 								curPoint.round = PointRound.False;
@@ -2734,18 +2818,40 @@
 						{
 							case PointDirection.Left:
 							{
-								curPoint.round = this.isClockwise ? PointRound.True : PointRound.False;
+								if (this.isClockwise)
+								{
+									curPoint.round = PointRound.True;
+									this.widePoint(curPoint, 1, 1);
+								}
+								else
+								{
+									curPoint.round = PointRound.False;
+									this.widePoint(curPoint, -1, -1);
+								}
 								break;
 							}
 							case PointDirection.Right:
 							{
-								curPoint.round = this.isClockwise ? PointRound.False : PointRound.True;
+								if (this.isClockwise)
+								{
+									curPoint.round = PointRound.False;
+									this.widePoint(curPoint, 1, -1);
+								}
+								else
+								{
+									curPoint.round = PointRound.True;
+									this.widePoint(curPoint, -1, 1);
+								}
 								break;
 							}
 							case PointDirection.Up:
+							{
+								curPoint.round = PointRound.False;
+							}
 							case PointDirection.Down:
 							{
 								curPoint.round = PointRound.False;
+								this.widePoint(curPoint, this.isClockwise ? 1 : -1, 0);
 								break;
 							}
 							default:
@@ -2758,6 +2864,7 @@
 				}
 			}
 		}
+		this.wideRects();
 	};
 
 	var const_rad = 0.9142; // (Math.sqrt(2) - 0.5)
