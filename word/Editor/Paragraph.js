@@ -2183,7 +2183,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 					isForm     = oInlineSdt.IsForm();
 					oSdtBounds = PDSH.InlineSdt[nSdtIndex].GetRangeBounds(CurLine, CurRange);
 
-					if (isForm && FormsHighlight)
+					if (isForm && FormsHighlight && !oInlineSdt.IsCurrent())
 					{
 						if (1 !== nPrevColorState)
 						{
