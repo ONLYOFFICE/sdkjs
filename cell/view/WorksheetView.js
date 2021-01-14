@@ -11572,7 +11572,9 @@
 
 		//если вставляем в мерженную ячейку, диапазон которой больше или равен
 		var fPasteCell = pasteContent.content[0][0];
-		if (arn.c2 >= cMax - 1 && arn.r2 >= rMax - 1 && isMergedFirstCell && isMergedFirstCell.isEqual(arn) && cMax - arn.c1 === fPasteCell.colSpan && rMax - arn.r1 === fPasteCell.rowSpan) {
+		var colSpanCompare = cMax - arn.c1 === fPasteCell.colSpan || (fPasteCell.colSpan === null && cMax - arn.c1 === 1);
+		var rowSpanCompare = rMax - arn.r1 === fPasteCell.rowSpan || (fPasteCell.rowSpan === null && rMax - arn.r1 === 1);
+		if (arn.c2 >= cMax - 1 && arn.r2 >= rMax - 1 && isMergedFirstCell && isMergedFirstCell.isEqual(arn) && colSpanCompare && rowSpanCompare) {
 			if (!isCheckSelection) {
 				pasteContent.content[0][0].colSpan = isMergedFirstCell.c2 - isMergedFirstCell.c1 + 1;
 				pasteContent.content[0][0].rowSpan = isMergedFirstCell.r2 - isMergedFirstCell.r1 + 1;
