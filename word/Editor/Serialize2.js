@@ -1822,6 +1822,10 @@ function BinaryFileWriter(doc, bMailMergeDocx, bMailMergeHtml, isCompatible, opt
 				this.WriteTable(c_oSerTableTypes.Glossary, {Write: function(){
 						var doc = new AscCommonWord.CDocument(editor.WordControl.m_oDrawingDocument, false);
 						doc.GlossaryDocument = null;
+						doc.Numbering = glossaryDocument.GetNumbering();
+						doc.Styles = glossaryDocument.GetStyles();
+						doc.Footnotes = glossaryDocument.GetFootnotes();
+						doc.Endnotes = glossaryDocument.GetEndnotes();
 						var oBinaryFileWriter = new AscCommonWord.BinaryFileWriter(doc, undefined, undefined, t.saveParams.isCompatible, t.memory, docParts);
 						oBinaryFileWriter.WriteToMemory(false);
 					}});
@@ -7385,6 +7389,10 @@ function BinaryFileReader(doc, openParams)
 							editor.WordControl.m_oDrawingDocument.m_oLogicDocument = doc;
 							editor.WordControl.m_oLogicDocument = doc;
 							doc.GlossaryDocument = oldDoc.GlossaryDocument;
+							doc.Numbering = doc.GlossaryDocument.GetNumbering();
+							doc.Styles = doc.GlossaryDocument.GetStyles();
+							doc.Footnotes = doc.GlossaryDocument.GetFootnotes();
+							doc.Endnotes = doc.GlossaryDocument.GetEndnotes();
 							oBinaryFileReader = new AscCommonWord.BinaryFileReader(doc, openParams);
 							oBinaryFileReader.ReadFromStream(this.stream);
 							editor.WordControl.m_oDrawingDocument.m_oLogicDocument = oldDoc;
