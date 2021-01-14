@@ -11411,6 +11411,11 @@
 		var callback = function () {
 			for (var j = 0; j < pasteToRange.length; j++) {
 				_doPaste(pasteToRange[j]);
+				if (!selectData && !fromBinaryExcel) {
+					History.EndTransaction();
+					window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
+					return;
+				}
 			}
 
 			var _selection;
@@ -11425,8 +11430,10 @@
 				}
 			} else {
 				_selection = t.model.selectionRange.getLast();
-				_selection.c2 = pastedInfo[0].selectData[0].c2;
-				_selection.r2 = pastedInfo[0].selectData[0].r2;
+				if (pastedInfo) {
+					_selection.c2 = pastedInfo[0].selectData[0].c2;
+					_selection.r2 = pastedInfo[0].selectData[0].r2;
+				}
 			}
 
 			History.EndTransaction();
