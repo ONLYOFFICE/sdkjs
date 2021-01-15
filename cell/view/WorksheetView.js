@@ -14508,7 +14508,10 @@
 					};
 
 					var text = AscCommonExcel.getFragmentsText(val);
-					var dataValidation = 0 !== text.length && t.model.getDataValidation(col, row);
+					var dataValidation = t.model.getDataValidation(col, row);
+					if (dataValidation && !dataValidation.allowBlank && 0 === text.length) {
+						dataValidation = null;
+					}
 					if (dataValidation) {
 						var checkCell, setValueError;
 						checkCell = t.model.getCellForValidation(row, col, val, t._isFormula(val) ? text : null,
@@ -14520,9 +14523,9 @@
 							return false;
 						}
 						if (!dataValidation.checkValue(checkCell, t.model)) {
-						t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.DataValidate, c_oAscError.Level.NoCritical, dataValidation);
-						return false;
-					}
+							t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.DataValidate, c_oAscError.Level.NoCritical, dataValidation);
+							return false;
+						}
 					}
 
 					//***array-formula***
