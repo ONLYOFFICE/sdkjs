@@ -128,7 +128,11 @@ var GlobalSkinFlat2    = {
 	FormsContentControlsOutlineActive : "rgba(0, 0, 0, 0.3)",
 	FormsContentControlsOutlineBorderRadiusHover : 0,
 	FormsContentControlsOutlineBorderRadiusActive : 2,
-	FormsContentControlsMarkersBackground : "#FFFFFF"
+	FormsContentControlsMarkersBackground : "#FFFFFF",
+    FormsContentControlsMarkersBackgroundHover : "#E1E1E1",
+    FormsContentControlsMarkersBackgroundActive : "#CCCCCC",
+    FormsContentControlsOutlineMoverHover : "#444444",
+    FormsContentControlsOutlineMoverActive : "#444444"
 };
 
 var GlobalSkin = GlobalSkinFlat2;
@@ -3046,6 +3050,8 @@ function CEditorPage(api)
 				}
 			}
 
+            drDoc.contentControls && drDoc.contentControls.DrawContentControlsTrack(overlay);
+
 			// drawShapes (+ track)
 			if (this.m_oLogicDocument.DrawingObjects)
 			{
@@ -3063,8 +3069,6 @@ function CEditorPage(api)
 					this.m_oDrawingDocument.AutoShapesTrack.CorrectOverlayBounds();
 				}
 			}
-
-			drDoc.contentControls && drDoc.contentControls.DrawContentControlsTrack(overlay);
 
             if (drDoc.placeholders.objects.length > 0)
             {

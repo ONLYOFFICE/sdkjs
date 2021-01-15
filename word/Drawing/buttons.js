@@ -744,6 +744,7 @@
         this.base = obj;
         this.type = this.base.GetSpecificType();
         this.isForm = this.base.IsForm();
+        this.formInfo = null;
         this.state = state;
 
         this.geom = geom;
@@ -852,6 +853,14 @@
             H : 20 / koefY
         };
 
+        if (this.formInfo && undefined !== this.formInfo.MoveRectH)
+        {
+            rect.W = CPolygonCC.prototype.rectMoveWidthPx / koefX;
+            rect.H = this.formInfo.MoveRectH;
+            rect.X -= rect.W;
+            return rect;
+        }
+
         if (this.Name == "" && this.Buttons.length == 0)
             rect.X -= rect.W;
         else
@@ -897,6 +906,10 @@
             H : (this.ComboRect.B - this.ComboRect.Y),
             Page : this.ComboRect.Page
         };
+        if (this.formInfo)
+        {
+            rect.W = CPolygonCC.prototype.rectComboWidthPx;
+        }
 
         return rect;
     };
@@ -1050,6 +1063,44 @@
             }
             default:
                 break;
+        }
+
+        if (this.isForm)
+        {
+            this.formInfo = {};
+            var _geom, _polygonDrawer;
+            if (this.rects)
+            {
+                _geom = this.rects[0];
+                _polygonDrawer = new CPolygonCC();
+                _polygonDrawer.init(this, 1, 0, 1);
+
+                if (_polygonDrawer.isUseMoveRect)
+                {
+                    _polygonDrawer.moveTo(_geom.R, _geom.Y);
+                    _polygonDrawer.lineTo(_geom.X, _geom.Y);
+                    _polygonDrawer.lineTo(_geom.X, _geom.B);
+                    _polygonDrawer.lineTo(_geom.R, _geom.B);
+                    _polygonDrawer.closePath();
+                    this.formInfo.MoveRectH = _polygonDrawer.rectMove.h;
+                }
+            }
+            else if (this.paths)
+            {
+                _geom = this.paths[0];
+
+                _polygonDrawer = new CPolygonCC();
+                _polygonDrawer.init(this, 1, 0, 1);
+                if (_polygonDrawer.isUseMoveRect)
+                {
+                    for (var pointIndex = 0, pointCount = _geom.Points.length; pointIndex < pointCount; pointIndex++)
+                    {
+                        _polygonDrawer.lineTo(_geom.Points[pointIndex].X, _geom.Points[pointIndex].Y);
+                    }
+                    _polygonDrawer.closePath();
+                    this.formInfo.MoveRectH = _polygonDrawer.rectMove.h;
+                }
+            }
         }
     };
     CContentControlTrack.prototype.GetButtonObj = function(indexButton)
@@ -1423,7 +1474,30 @@
 				}
 				else
 				{
-					if (_object.paths)
+                    if (_object.rects)
+                    {
+                        for (var j = 0; j < _object.rects.length; j++)
+                        {
+                            _geom = _object.rects[j];
+
+                            if (_geom.Page < _pageStart || _geom.Page > this._pageEnd)
+                                continue;
+
+                            _drawingPage = _pages[_geom.Page].drawingPage;
+
+                            var _polygonDrawer = new CPolygonCC();
+                            _polygonDrawer.init(_object, (_koefX + _koefY) / 2, j, _object.rects.length);
+
+                            _polygonDrawer.moveTo(_geom.R, _geom.Y);
+                            _polygonDrawer.lineTo(_geom.X, _geom.Y);
+                            _polygonDrawer.lineTo(_geom.X, _geom.B);
+                            _polygonDrawer.lineTo(_geom.R, _geom.B);
+                            _polygonDrawer.closePath();
+
+                            _polygonDrawer.draw(overlay, _object, _drawingPage, _koefX, _koefY, this.icons);
+                        }
+                    }
+					else if (_object.paths)
 					{
 						for (var j = 0; j < _object.paths.length; j++)
 						{
@@ -2413,9 +2487,7 @@
 		this.indexMin = 0;
 		this.indexMax = 0;
 
-		this.rectMoveWidthPx = 13;
-		this.rectComboWidthPx = 22;
-		this.roundSizePx = 1;
+    	this.roundSizePx = 1;
 
 		this.rectMoveWidth = 1;
 		this.rectComboWidth = 1;
@@ -2426,10 +2498,16 @@
 
 		this.isUseMoveRect = true;
 		this.isCombobox = false;
+		this.isImage = false;
 
 		this.wideOutlineX = 0;
 		this.wideOutlineY = 0;
+		this.koef = 1;
 	}
+
+	CPolygonCC.prototype.rectMoveWidthPx = 13;
+    CPolygonCC.prototype.rectComboWidthPx = 22;
+    CPolygonCC.prototype.rectMoveImageMaxH = 30;
 
 	CPolygonCC.prototype.nextIndex = function(index, add)
 	{
@@ -2467,7 +2545,23 @@
 	};
 	CPolygonCC.prototype.init = function(object, koef, indexPath, countPaths)
 	{
-		this.isCombobox = object.base.IsComboBox && object.base.IsComboBox();
+        switch (object.type)
+        {
+            case Asc.c_oAscContentControlSpecificType.ComboBox:
+            case Asc.c_oAscContentControlSpecificType.DropDownList:
+            case Asc.c_oAscContentControlSpecificType.DateTime:
+            {
+                this.isCombobox = true;
+                break;
+            }
+            case Asc.c_oAscContentControlSpecificType.Picture:
+            {
+                this.isImage = true;
+                break;
+            }
+            default:
+                break;
+        }
 
 		if (object.parent.document.m_oWordControl.m_oApi.isViewMode)
 		{
@@ -2502,6 +2596,7 @@
 
 		//this.wideOutlineX = 1 / koef;
 		//this.wideOutlineY = 1 / koef;
+        this.koef = koef;
 	};
 	CPolygonCC.prototype.moveTo = function(x, y)
 	{
@@ -2559,13 +2654,13 @@
 
 		this.points.push(newPoint);
 	};
-	CPolygonCC.prototype.closePath = function(type)
+	CPolygonCC.prototype.closePath = function()
 	{
-		this.calcRects(type);
+		this.calcRects();
 		this.calcDirections();
 		this.calcRounds();
 	};
-	CPolygonCC.prototype.calcRects = function(type)
+	CPolygonCC.prototype.calcRects = function()
 	{
 		var pointsLen = this.points.length;
 
@@ -2595,6 +2690,22 @@
 				this.points[indexMinFriend].x -= this.rectMoveWidth;
 				if (this.points[indexMinFriend].y > yMax) // по идее всегда так
 					yMax = this.points[indexMinFriend].y;
+
+				if (this.isImage)
+                {
+                    var yMaxLimit = minPoint.y + this.rectMoveImageMaxH / this.koef;
+                    if (yMax > yMaxLimit)
+                    {
+                        var x1 = this.points[indexMinFriend].x;
+                        var x2 = this.points[indexMinFriend].x + this.rectMoveWidth;
+                        this.points[indexMinFriend].x += this.rectMoveWidth;
+                        this.points.splice(indexMinFriend, 0, new CPointCC(x1, yMaxLimit));
+                        this.points.splice(indexMinFriend + 1, 0, new CPointCC(x2, yMaxLimit));
+                        yMax = yMaxLimit;
+                        break;
+                    }
+                }
+
 				indexMinFriend = this.nextIndex(indexMinFriend, direction === 1);
 			}
 			minPoint.x -= this.rectMoveWidth;
@@ -2891,6 +3002,9 @@
 					var lineH = koefY * object.base.GetBoundingPolygonFirstLineH();
 					if (this.rectMove)
 					{
+                        if (this.isImage)
+                            lineH = koefY * this.rectMove.h;
+
 						// draw move rect
 						var _x1 = (drPage.left + koefX * (this.rectMove.x + object.OffsetX)) >> 0;
 						var _y1 = (drPage.top + koefY * (this.rectMove.y + object.OffsetY)) >> 0;
@@ -2919,7 +3033,20 @@
 						if (!this.isActive)
 							ctx.strokeStyle = AscCommonWord.GlobalSkin.FormsContentControlsOutlineHover;
 						else
-							ctx.strokeStyle = AscCommonWord.GlobalSkin.FormsContentControlsOutlineActive;
+                        {
+                            switch (object.parent.ContentControlObjectState)
+                            {
+                                case 0:
+                                    ctx.strokeStyle = AscCommonWord.GlobalSkin.FormsContentControlsOutlineMoverHover;
+                                    break;
+                                case 1:
+                                    ctx.strokeStyle = AscCommonWord.GlobalSkin.FormsContentControlsOutlineMoverActive;
+                                    break;
+                                default:
+                                    ctx.strokeStyle = AscCommonWord.GlobalSkin.FormsContentControlsOutlineActive;
+                                    break;
+                            }
+                        }
 
 						ctx.moveTo(xCenter, yCenterPos);
 						ctx.lineTo(xCenter + wCenter, yCenterPos);
@@ -2950,6 +3077,15 @@
 						ctx.lineTo(_x3 + 0.5, _y3 + 0.5);
 						ctx.lineTo(_x4 - 0.5, _y4 + 0.5);
 						ctx.closePath();
+
+						var indexButton = object.Buttons.length;
+                        if (object.ActiveButtonIndex === indexButton)
+                            ctx.fillStyle = AscCommonWord.GlobalSkin.FormsContentControlsMarkersBackgroundActive;
+                        else if (object.HoverButtonIndex === indexButton)
+                            ctx.fillStyle = AscCommonWord.GlobalSkin.FormsContentControlsMarkersBackgroundHover;
+                        else
+                            ctx.fillStyle = AscCommonWord.GlobalSkin.FormsContentControlsMarkersBackground;
+
 						ctx.fill();
 						ctx.beginPath();
 
@@ -3095,6 +3231,6 @@
 				}
 			}
 		}
-	}
+	};
 
 })(window);
