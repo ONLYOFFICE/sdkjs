@@ -124,10 +124,10 @@ var GlobalSkinFlat2    = {
 	ContentControlsText    : "#444444",
 	ContentControlsTextActive   : "#FFFFFF",
 	ContentControlsAnchorActive : "#CFCFCF",
-	FormsContentControlsOutlineHover : "#CBCBCB",
-	FormsContentControlsOutlineActive : "#CBCBCB",
-	FormsContentControlsOutlineBorderRadiusHover : 1,
-	FormsContentControlsOutlineBorderRadiusActive : 1,
+	FormsContentControlsOutlineHover : "rgba(0, 0, 0, 0.3)",
+	FormsContentControlsOutlineActive : "rgba(0, 0, 0, 0.3)",
+	FormsContentControlsOutlineBorderRadiusHover : 0,
+	FormsContentControlsOutlineBorderRadiusActive : 2,
 	FormsContentControlsMarkersBackground : "#FFFFFF"
 };
 
