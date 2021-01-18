@@ -1084,6 +1084,7 @@
                     _polygonDrawer.closePath();
                     this.formInfo.MoveRectH = _polygonDrawer.rectMove.h;
                 }
+                this.formInfo.bounds = _polygonDrawer.bounds;
             }
             else if (this.paths)
             {
@@ -1100,6 +1101,7 @@
                     _polygonDrawer.closePath();
                     this.formInfo.MoveRectH = _polygonDrawer.rectMove.h;
                 }
+                this.formInfo.bounds = _polygonDrawer.bounds;
             }
         }
     };
@@ -2118,48 +2120,77 @@
                         // check buttons
                         if (_object.Buttons.length > 0)
                         {
-                            var rectOrigin = rectName || rectMove;
-                            if (!rectOrigin)
-                                return false;
-                            var x = rectOrigin.X + rectOrigin.W;
-                            var y = rectOrigin.Y;
-                            var w = 20 / koefX;
-                            var h = 20 / koefY;
+                            var indexButton = -1;
+                            var xCC, yCC;
 
-                            for (var indexB = 0; indexB < _object.Buttons.length; indexB++)
+                            var x, y, w, h;
+                            if (_object.formInfo)
                             {
+                                w = 20 / koefX;
+                                h = 20 / koefY;
+
+                                x = _object.formInfo.bounds.x + (_object.formInfo.bounds.w - w) / 2;
+                                y = _object.formInfo.bounds.y + (_object.formInfo.bounds.h - h) / 2;
+
                                 if (xPos > x && xPos < (x + w) && yPos > y && yPos < (y + h))
                                 {
-                                    if (_object.ActiveButtonIndex == indexB)
-                                    {
-                                        _object.ActiveButtonIndex = -2;
-                                        oWordControl.m_oApi.sendEvent("asc_onHideContentControlsActions");
-                                    }
-                                    else
-                                    {
-                                        _object.ActiveButtonIndex = indexB;
-
-                                        var xCC = x + _object.OffsetX;
-                                        var yCC = rectOrigin.Y + rectOrigin.H + _object.OffsetY;
-                                        if (_object.transform)
-                                        {
-                                            var tmp = _object.transform.TransformPointX(xCC, yCC);
-                                            yCC = _object.transform.TransformPointY(xCC, yCC);
-                                            xCC = tmp;
-                                        }
-
-                                        var posOnScreen = this.document.ConvertCoordsToCursorWR(xCC, yCC, _object.Pos.Page);
-                                        oWordControl.m_oApi.sendEvent("asc_onShowContentControlsActions", _object.GetButtonObj(indexB), posOnScreen.X, posOnScreen.Y);
-                                    }
-
-                                    oWordControl.ShowOverlay();
-                                    oWordControl.OnUpdateOverlay();
-                                    oWordControl.EndUpdateOverlay();
-
-                                    this.document.LockCursorType("default");
-                                    return true;
+                                    indexButton = 0;
+                                    xCC = x;
+                                    yCC = y + h;
                                 }
-                                x += w;
+                            }
+                            else
+                            {
+                                var rectOrigin = rectName || rectMove;
+                                if (!rectOrigin)
+                                    return false;
+                                x = rectOrigin.X + rectOrigin.W;
+                                y = rectOrigin.Y;
+                                w = 20 / koefX;
+                                h = 20 / koefY;
+
+                                for (var indexB = 0; indexB < _object.Buttons.length; indexB++)
+                                {
+                                    if (xPos > x && xPos < (x + w) && yPos > y && yPos < (y + h))
+                                    {
+                                        xCC = x + _object.OffsetX;
+                                        yCC = rectOrigin.Y + rectOrigin.H + _object.OffsetY;
+
+                                        indexButton = indexB;
+                                        break;
+                                    }
+                                    x += w;
+                                }
+                            }
+
+                            if (-1 !== indexButton)
+                            {
+                                if (_object.ActiveButtonIndex === indexButton)
+                                {
+                                    _object.ActiveButtonIndex = -2;
+                                    oWordControl.m_oApi.sendEvent("asc_onHideContentControlsActions");
+                                }
+                                else
+                                {
+                                    _object.ActiveButtonIndex = indexButton;
+
+                                    if (_object.transform)
+                                    {
+                                        var tmp = _object.transform.TransformPointX(xCC, yCC);
+                                        yCC = _object.transform.TransformPointY(xCC, yCC);
+                                        xCC = tmp;
+                                    }
+
+                                    var posOnScreen = this.document.ConvertCoordsToCursorWR(xCC, yCC, _object.Pos.Page);
+                                    oWordControl.m_oApi.sendEvent("asc_onShowContentControlsActions", _object.GetButtonObj(indexButton), posOnScreen.X, posOnScreen.Y);
+                                }
+
+                                oWordControl.ShowOverlay();
+                                oWordControl.OnUpdateOverlay();
+                                oWordControl.EndUpdateOverlay();
+
+                                this.document.LockCursorType("default");
+                                return true;
                             }
                         }
                     }
@@ -2325,30 +2356,55 @@
                 // check buttons
                 if (_object.Buttons.length > 0)
                 {
-                    var rectOrigin = rectName || rectMove;
-                    if (!rectOrigin)
-                        return false;
-                    var x = rectOrigin.X + rectOrigin.W;
-                    var y = rectOrigin.Y;
-                    var w = 20 / koefX;
-                    var h = 20 / koefY;
+                    var indexButton = -1;
 
-                    for (var indexB = 0; indexB < _object.Buttons.length; indexB++)
+                    var x, y, w, h;
+                    if (_object.formInfo)
                     {
+                        w = 20 / koefX;
+                        h = 20 / koefY;
+
+                        x = _object.formInfo.bounds.x + (_object.formInfo.bounds.w - w) / 2;
+                        y = _object.formInfo.bounds.y + (_object.formInfo.bounds.h - h) / 2;
+
                         if (xPos > x && xPos < (x + w) && yPos > y && yPos < (y + h))
                         {
-                            _object.HoverButtonIndex = indexB;
-                            oWordControl.ShowOverlay();
-                            oWordControl.OnUpdateOverlay();
-                            oWordControl.EndUpdateOverlay();
-
-                            this.document.SetCursorType("default");
-
-                            oWordControl.m_oApi.sync_MouseMoveStartCallback();
-                            oWordControl.m_oApi.sync_MouseMoveEndCallback();
-                            return true;
+                            indexButton = 0;
                         }
-                        x += w;
+                    }
+                    else
+                    {
+                        var rectOrigin = rectName || rectMove;
+                        if (!rectOrigin)
+                            return false;
+                        x = rectOrigin.X + rectOrigin.W;
+                        y = rectOrigin.Y;
+                        w = 20 / koefX;
+                        h = 20 / koefY;
+
+                        for (var indexB = 0; indexB < _object.Buttons.length; indexB++)
+                        {
+                            if (xPos > x && xPos < (x + w) && yPos > y && yPos < (y + h))
+                            {
+                                indexButton = indexB;
+                                break;
+                            }
+                            x += w;
+                        }
+                    }
+
+                    if (-1 != indexButton)
+                    {
+                        _object.HoverButtonIndex = indexButton;
+                        oWordControl.ShowOverlay();
+                        oWordControl.OnUpdateOverlay();
+                        oWordControl.EndUpdateOverlay();
+
+                        this.document.SetCursorType("default");
+
+                        oWordControl.m_oApi.sync_MouseMoveStartCallback();
+                        oWordControl.m_oApi.sync_MouseMoveEndCallback();
+                        return true;
                     }
                 }
 
@@ -2999,6 +3055,7 @@
 				++currentIteration;
 				if (currentIteration === countIteration)
 				{
+				    var _x1, _x2, _y1, _y2, _x3, _y3, _x4, _y4;
 					var lineH = koefY * object.base.GetBoundingPolygonFirstLineH();
 					if (this.rectMove)
 					{
@@ -3006,14 +3063,14 @@
                             lineH = koefY * this.rectMove.h;
 
 						// draw move rect
-						var _x1 = (drPage.left + koefX * (this.rectMove.x + object.OffsetX)) >> 0;
-						var _y1 = (drPage.top + koefY * (this.rectMove.y + object.OffsetY)) >> 0;
-						var _x2 = (drPage.left + koefX * (this.rectMove.x + this.rectMove.w + object.OffsetX)) >> 0;
-						var _y2 = _y1;
-						var _x3 = _x2;
-						var _y3 = (drPage.top + koefY * (this.rectMove.y + this.rectMove.h + object.OffsetY)) >> 0;
-						var _x4 = _x1;
-						var _y4 = _y3;
+						_x1 = (drPage.left + koefX * (this.rectMove.x + object.OffsetX)) >> 0;
+						_y1 = (drPage.top + koefY * (this.rectMove.y + object.OffsetY)) >> 0;
+						_x2 = (drPage.left + koefX * (this.rectMove.x + this.rectMove.w + object.OffsetX)) >> 0;
+						_y2 = _y1;
+						_x3 = _x2;
+						_y3 = (drPage.top + koefY * (this.rectMove.y + this.rectMove.h + object.OffsetY)) >> 0;
+						_x4 = _x1;
+						_y4 = _y3;
 
 						ctx.moveTo(_x1, _y1);
 						ctx.lineTo(_x2, _y2);
@@ -3100,6 +3157,42 @@
 							ctx.drawImage(image, xPos, yPos, imageW, imageH);
 						}
 					}
+
+					if (this.isImage)
+                    {
+                        _x1 = drPage.left + koefX * (this.bounds.x + object.OffsetX);
+                        _y1 = drPage.top + koefY * (this.bounds.y + object.OffsetY);
+                        _x4 = drPage.left + koefX * (this.bounds.x + this.bounds.w + object.OffsetX);
+                        _y4 = drPage.top + koefY * (this.bounds.y + this.bounds.h + object.OffsetY);
+
+                        var imageW = 20; // 1x scale!
+                        var imageH = 20;
+                        var xPos = (_x1 + _x4 - imageW) >> 1;
+                        var yPos = (_y1 + _y4 - imageH) >> 1;
+
+                        var isFill = false;
+                        if (object.ActiveButtonIndex === 0)
+                        {
+                            ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsActive;
+                            isFill = true;
+                        }
+                        else if (object.HoverButtonIndex === 0)
+                        {
+                            ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsHover;
+                            isFill = true;
+                        }
+
+                        if (isFill)
+                        {
+                            ctx.rect(xPos, yPos, imageW, imageH);
+                            ctx.fill();
+                            ctx.beginPath();
+                        }
+
+                        var image = icons.getImage(AscCommon.CCButtonType.Image, 0 === object.ActiveButtonIndex);
+                        if (image)
+                            ctx.drawImage(image, xPos, yPos, imageW, imageH);
+                    }
 
 					if (2 === currentIteration)
 					{
@@ -3339,6 +3432,37 @@
 
                             ctx.drawImage(image, xPos, yPos, imageW, imageH);
                         }
+                    }
+
+                    if (this.isImage)
+                    {
+                        var imageW = 20 / koefX; // 1x scale!
+                        var imageH = 20 / koefY;
+                        var xPos = this.bounds.x + (this.bounds.w - imageW) / 2;
+                        var yPos = this.bounds.y + (this.bounds.h - imageH) / 2;
+
+                        var isFill = false;
+                        if (object.ActiveButtonIndex === 0)
+                        {
+                            ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsActive;
+                            isFill = true;
+                        }
+                        else if (object.HoverButtonIndex === 0)
+                        {
+                            ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsHover;
+                            isFill = true;
+                        }
+
+                        if (isFill)
+                        {
+                            ctx.rect(xPos, yPos, imageW, imageH);
+                            ctx.fill();
+                            ctx.beginPath();
+                        }
+
+                        var image = icons.getImage(AscCommon.CCButtonType.Image, 0 === object.ActiveButtonIndex);
+                        if (image)
+                            ctx.drawImage(image, xPos, yPos, imageW, imageH);
                     }
 
                     overlay.SetBaseTransform();
