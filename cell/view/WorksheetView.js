@@ -366,6 +366,7 @@
         this.defaultColWidthPx = 0;
         this.defaultRowHeightPx = 0;
         this.defaultRowDescender = 0;
+        this.defaultSpaceWidth = 0;
         this.headersLeft = 0;
         this.headersTop = 0;
         this.headersWidth = 0;
@@ -480,6 +481,11 @@
 		AscCommonExcel.oDefaultMetrics.RowHeight = Math.min(Asc.c_oAscMaxRowHeight,
 			this.model.getDefaultHeight() || AscCommonExcel.convertPxToPt(this.headersHeightByFont));
 		this.defaultRowHeightPx = AscCommonExcel.convertPtToPx(AscCommonExcel.oDefaultMetrics.RowHeight);
+
+		var tmSpace = this._roundTextMetrics(this.stringRender.measureString(" "));
+		if (tmSpace) {
+			this.defaultSpaceWidth = tmSpace.width;
+		}
 
 		// ToDo refactoring
 		this.model.setDefaultHeight(AscCommonExcel.oDefaultMetrics.RowHeight);
@@ -4008,6 +4014,10 @@
 				if (this._getCellCF(aRules, c, row, col, Asc.ECfType.iconSet) && AscCommon.align_Left === ct.cellHA) {
 					textX += getCFIconSize(font.getSize());
 				}
+				if (ct.indent) {
+					textX += ct.indent * 3 * this.defaultSpaceWidth;
+					//getNormalSpaceSize()
+				}
 				this.stringRender.restoreInternalState(ct.state).render(drawingCtx, textX, textY, textW, color);
 				ctx.RemoveClipRect();
 			}
@@ -5951,6 +5961,9 @@
         }
 
         tm = this._roundTextMetrics(this.stringRender.measureString(str, fl, maxW));
+        if (indent) {
+			tm.width += indent * 3 * this.defaultSpaceWidth;
+		}
         var cto = (mergeType || fl.wrapText || fl.shrinkToFit) ? {
             maxWidth: maxW - this._getColumnWidthInner(col) + this._getColumnWidth(col), leftSide: 0, rightSide: 0
         } : this._calcCellTextOffset(col, row, ha, tm.width);
