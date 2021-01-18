@@ -908,7 +908,7 @@
         };
         if (this.formInfo)
         {
-            rect.W = CPolygonCC.prototype.rectComboWidthPx;
+            rect.W = CPolygonCC.prototype.rectComboWidthPx / koefX;
         }
 
         return rect;
@@ -1073,7 +1073,7 @@
             {
                 _geom = this.rects[0];
                 _polygonDrawer = new CPolygonCC();
-                _polygonDrawer.init(this, 1, 0, 1);
+                _polygonDrawer.init(this, AscCommon.g_dKoef_mm_to_pix, 0, 1);
 
                 if (_polygonDrawer.isUseMoveRect)
                 {
@@ -1090,7 +1090,7 @@
                 _geom = this.paths[0];
 
                 _polygonDrawer = new CPolygonCC();
-                _polygonDrawer.init(this, 1, 0, 1);
+                _polygonDrawer.init(this, AscCommon.g_dKoef_mm_to_pix, 0, 1);
                 if (_polygonDrawer.isUseMoveRect)
                 {
                     for (var pointIndex = 0, pointCount = _geom.Points.length; pointIndex < pointCount; pointIndex++)
@@ -3015,10 +3015,10 @@
 						var _x4 = _x1;
 						var _y4 = _y3;
 
-						ctx.moveTo(_x1 + 0.5, _y1 + 0.5);
-						ctx.lineTo(_x2 + 1.5, _y2 + 0.5);
-						ctx.lineTo(_x3 + 1.5, _y3 + 0.5);
-						ctx.lineTo(_x4 + 0.5, _y4 + 0.5);
+						ctx.moveTo(_x1, _y1);
+						ctx.lineTo(_x2, _y2);
+						ctx.lineTo(_x3, _y3);
+						ctx.lineTo(_x4, _y4);
 						ctx.closePath();
 						ctx.fill();
 						ctx.beginPath();
@@ -3072,10 +3072,10 @@
 						_x4 = _x1;
 						_y4 = _y3;
 
-						ctx.moveTo(_x1 - 0.5, _y1 + 0.5);
-						ctx.lineTo(_x2 + 0.5, _y2 + 0.5);
-						ctx.lineTo(_x3 + 0.5, _y3 + 0.5);
-						ctx.lineTo(_x4 - 0.5, _y4 + 0.5);
+						ctx.moveTo(_x1, _y1);
+						ctx.lineTo(_x2, _y2);
+						ctx.lineTo(_x3, _y3);
+						ctx.lineTo(_x4, _y4);
 						ctx.closePath();
 
 						var indexButton = object.Buttons.length;
@@ -3092,10 +3092,12 @@
 						var image = icons.getImage(AscCommon.CCButtonType.Combo, false);
 						if (image)
 						{
-							var yPos = ((_y4 - image.height - 0.5 * (lineH - image.height) >> 0)) + 2;
-							var xPos = ((_x1 + 0.5 * (this.rectComboWidthPx - image.width) >> 0)) + 1;
+                            var imageW = 20; // 1x scale!
+                            var imageH = 20;
+							var yPos = ((_y4 - imageH - 0.5 * (lineH - imageH) >> 0)) + 2;
+							var xPos = ((_x1 + 0.5 * (this.rectComboWidthPx - imageW) >> 0)) + 1;
 
-							ctx.drawImage(image, xPos, yPos);
+							ctx.drawImage(image, xPos, yPos, imageW, imageH);
 						}
 					}
 
@@ -3231,6 +3233,248 @@
 				}
 			}
 		}
+		else
+        {
+            var point;
+            var _x, _y;
+
+            var countIteration = (0 === this.roundSizePx) ? 1 : 2;
+            var currentIteration = 0;
+
+            if (countIteration > 1 && null === this.rectMove && null === this.rectCombo)
+                countIteration = 1;
+
+            var matrix = object.transform;
+            var coordMatrix = new AscCommon.CMatrix();
+            coordMatrix.sx = koefX;
+            coordMatrix.sy = koefY;
+            coordMatrix.tx = drPage.left;
+            coordMatrix.ty = drPage.top;
+            AscCommon.global_MatrixTransformer.MultiplyPrepend(coordMatrix, matrix);
+
+            while (true)
+            {
+                ++currentIteration;
+                if (currentIteration === countIteration)
+                {
+                    ctx.transform(coordMatrix.sx, coordMatrix.shy, coordMatrix.shx, coordMatrix.sy, coordMatrix.tx, coordMatrix.ty);
+
+                    var lineH = object.base.GetBoundingPolygonFirstLineH();
+                    if (this.rectMove)
+                    {
+                        if (this.isImage)
+                            lineH = this.rectMove.h;
+
+                        // draw move rect
+                        ctx.moveTo(this.rectMove.x, this.rectMove.y);
+                        ctx.lineTo(this.rectMove.x + this.rectMove.w, this.rectMove.y);
+                        ctx.lineTo(this.rectMove.x + this.rectMove.w, this.rectMove.y + this.rectMove.h);
+                        ctx.lineTo(this.rectMove.x, this.rectMove.y + this.rectMove.h);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.beginPath();
+
+                        var xLine = this.rectMove.x + this.rectMove.w / 3;
+                        var wLine = this.rectMove.w / 3;
+                        var yLine = this.rectMove.y + 0.5 * lineH;
+                        var hLine = 2 / koefY;
+
+                        if (!this.isActive)
+                            ctx.strokeStyle = AscCommonWord.GlobalSkin.FormsContentControlsOutlineHover;
+                        else
+                        {
+                            switch (object.parent.ContentControlObjectState)
+                            {
+                                case 0:
+                                    ctx.strokeStyle = AscCommonWord.GlobalSkin.FormsContentControlsOutlineMoverHover;
+                                    break;
+                                case 1:
+                                    ctx.strokeStyle = AscCommonWord.GlobalSkin.FormsContentControlsOutlineMoverActive;
+                                    break;
+                                default:
+                                    ctx.strokeStyle = AscCommonWord.GlobalSkin.FormsContentControlsOutlineActive;
+                                    break;
+                            }
+                        }
+
+                        ctx.moveTo(xLine, yLine - hLine);
+                        ctx.lineTo(xLine + wLine, yLine - hLine);
+                        ctx.moveTo(xLine, yLine);
+                        ctx.lineTo(xLine + wLine, yLine);
+                        ctx.moveTo(xLine, yLine + hLine);
+                        ctx.lineTo(xLine + wLine, yLine + hLine);
+
+                        ctx.lineWidth = 1 / koefY;
+                        ctx.stroke();
+                        ctx.beginPath();
+                    }
+
+                    if (this.rectCombo)
+                    {
+                        // draw combo rect
+                        ctx.moveTo(this.rectCombo.x, this.rectCombo.y);
+                        ctx.lineTo(this.rectCombo.x + this.rectCombo.w, this.rectCombo.y);
+                        ctx.lineTo(this.rectCombo.x + this.rectCombo.w, this.rectCombo.y + this.rectCombo.h);
+                        ctx.lineTo(this.rectCombo.x, this.rectCombo.y + this.rectCombo.h);
+                        ctx.closePath();
+
+                        var indexButton = object.Buttons.length;
+                        if (object.ActiveButtonIndex === indexButton)
+                            ctx.fillStyle = AscCommonWord.GlobalSkin.FormsContentControlsMarkersBackgroundActive;
+                        else if (object.HoverButtonIndex === indexButton)
+                            ctx.fillStyle = AscCommonWord.GlobalSkin.FormsContentControlsMarkersBackgroundHover;
+                        else
+                            ctx.fillStyle = AscCommonWord.GlobalSkin.FormsContentControlsMarkersBackground;
+
+                        ctx.fill();
+                        ctx.beginPath();
+
+                        var image = icons.getImage(AscCommon.CCButtonType.Combo, false);
+                        if (image)
+                        {
+                            var imageW = 20 / koefX; // 1x scale!
+                            var imageH = 20 / koefY;
+                            var yPos = this.rectCombo.y + this.rectCombo.h - imageH - 0.5 * (lineH - imageH);
+                            var xPos = this.rectCombo.x + 0.5 * (this.rectCombo.w - imageW);
+
+                            ctx.drawImage(image, xPos, yPos, imageW, imageH);
+                        }
+                    }
+
+                    overlay.SetBaseTransform();
+
+                    if (2 === currentIteration)
+                    {
+                        ctx.restore();
+                    }
+                }
+
+                for (var i = 0; i < pointsLen; i++)
+                {
+                    point = this.points[i];
+                    _x = matrix.TransformPointX(point.x, point.y);
+                    _y = matrix.TransformPointY(point.x, point.y);
+
+                    _x = drPage.left + koefX * _x;
+                    _y = drPage.top + koefY * _y;
+
+                    overlay.CheckPoint(_x, _y);
+
+                    if (point.round !== PointRound.True)
+                    {
+                        if (0 === i)
+                            ctx.moveTo(_x, _y);
+                        else
+                            ctx.lineTo(_x, _y);
+                    }
+                    else
+                    {
+                        var x1, y1, x2, y2, xCP, yCP;
+                        var isX = true;
+                        switch (point.inDir)
+                        {
+                            case PointDirection.Left:
+                            {
+                                x1 = _x + this.roundSizePx;
+                                y1 = _y;
+                                break;
+                            }
+                            case PointDirection.Right:
+                            {
+                                x1 = _x - this.roundSizePx;
+                                y1 = _y;
+                                break;
+                            }
+                            case PointDirection.Up:
+                            {
+                                x1 = _x;
+                                y1 = _y + this.roundSizePx;
+                                isX = false;
+                                break;
+                            }
+                            case PointDirection.Down:
+                            {
+                                x1 = _x;
+                                y1 = _y - this.roundSizePx;
+                                isX = false;
+                                break;
+                            }
+                            default:
+                                break;
+                        }
+                        switch (point.outDir)
+                        {
+                            case PointDirection.Left:
+                            {
+                                x2 = _x - this.roundSizePx;
+                                y2 = _y;
+                                break;
+                            }
+                            case PointDirection.Right:
+                            {
+                                x2 = _x + this.roundSizePx;
+                                y2 = _y;
+                                break;
+                            }
+                            case PointDirection.Up:
+                            {
+                                x2 = _x;
+                                y2 = _y - this.roundSizePx;
+                                break;
+                            }
+                            case PointDirection.Down:
+                            {
+                                x2 = _x;
+                                y2 = _y + this.roundSizePx;
+                                break;
+                            }
+                            default:
+                                break;
+                        }
+
+                        if (isX)
+                        {
+                            xCP = x1 + (x2 - x1) * const_rad;
+                            yCP = y1 + (y2 - y1) * (1 - const_rad);
+                        }
+                        else
+                        {
+                            xCP = x1 + (x2 - x1) * (1 - const_rad);
+                            yCP = y1 + (y2 - y1) * const_rad;
+                        }
+
+                        if (0 === i)
+                            ctx.moveTo(x1, y1);
+                        else
+                            ctx.lineTo(x1, y1);
+                        ctx.quadraticCurveTo(xCP, yCP, x2, y2);
+                    }
+                }
+                ctx.closePath();
+
+                if (currentIteration === countIteration)
+                {
+                    if (!this.isActive)
+                        ctx.strokeStyle = AscCommonWord.GlobalSkin.FormsContentControlsOutlineHover;
+                    else
+                        ctx.strokeStyle = AscCommonWord.GlobalSkin.FormsContentControlsOutlineActive;
+
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                    ctx.beginPath();
+
+                    break;
+                }
+                else
+                {
+                    ctx.save();
+                    ctx.clip();
+
+                    ctx.fillStyle = AscCommonWord.GlobalSkin.FormsContentControlsMarkersBackground;
+                    ctx.beginPath();
+                }
+            }
+        }
 	};
 
 })(window);
