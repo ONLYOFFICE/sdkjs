@@ -3031,8 +3031,9 @@ var g_oBorderProperties = {
 
 	/** @constructor */
 	function Align(val) {
-		if (null == val)
+		if (null == val) {
 			val = g_oDefaultFormat.AlignAbs;
+		}
 		this.hor = val.hor;
 		this.indent = val.indent;
 		this.RelativeIndent = val.RelativeIndent;
@@ -3060,10 +3061,11 @@ var g_oBorderProperties = {
 		this._index = val;
 	};
 	Align.prototype._mergeProperty = function (first, second, def) {
-		if (def != first)
+		if (def != first) {
 			return first;
-		else
+		} else {
 			return second;
+		}
 	};
 	Align.prototype.merge = function (align) {
 		var defaultAlign = g_oDefaultFormat.Align;
@@ -3080,36 +3082,44 @@ var g_oBorderProperties = {
 	Align.prototype.getDif = function (val) {
 		var oRes = new Align(this);
 		var bEmpty = true;
-		if (this.hor == val.hor)
+		if (this.hor == val.hor) {
 			oRes.hor = null;
-		else
+		} else {
 			bEmpty = false;
-		if (this.indent == val.indent)
+		}
+		if (this.indent == val.indent) {
 			oRes.indent = null;
-		else
+		} else {
 			bEmpty = false;
-		if (this.RelativeIndent == val.RelativeIndent)
+		}
+		if (this.RelativeIndent == val.RelativeIndent) {
 			oRes.RelativeIndent = null;
-		else
+		} else {
 			bEmpty = false;
-		if (this.shrink == val.shrink)
+		}
+		if (this.shrink == val.shrink) {
 			oRes.shrink = null;
-		else
+		} else {
 			bEmpty = false;
-		if (this.angle == val.angle)
+		}
+		if (this.angle == val.angle) {
 			oRes.angle = null;
-		else
+		} else {
 			bEmpty = false;
-		if (this.ver == val.ver)
+		}
+		if (this.ver == val.ver) {
 			oRes.ver = null;
-		else
+		} else {
 			bEmpty = false;
-		if (this.wrap == val.wrap)
+		}
+		if (this.wrap == val.wrap) {
 			oRes.wrap = null;
-		else
+		} else {
 			bEmpty = false;
-		if (bEmpty)
+		}
+		if (bEmpty) {
 			oRes = null;
+		}
 		return oRes;
 	};
 	Align.prototype.isEqual = function (val) {
@@ -3211,6 +3221,12 @@ var g_oBorderProperties = {
 	};
 	Align.prototype.setAlignVertical = function (val) {
 		this.ver = val;
+	};
+	Align.prototype.getIndent = function () {
+		return this.indent;
+	};
+	Align.prototype.setIndent = function (val) {
+		this.indent = val;
 	};
 	Align.prototype.readAttributes = function (attr, uq) {
 		if (attr()) {

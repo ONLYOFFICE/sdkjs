@@ -202,6 +202,7 @@
 		this.isFormula = false;
 		this.angle = null;
 		this.textBound = null;
+		this.indent = null;
 	}
 
     function Cache() {
@@ -5847,6 +5848,7 @@
         var align = c.getAlign();
         var va = align.getAlignVertical();
         var angle = align.getAngle();
+        var indent = align.getIndent();
         if (c.isEmptyTextString()) {
             if (!angle && c.isNotDefaultFont() && !(mergeType & c_oAscMergeType.rows)) {
                 // Пустая ячейка с измененной гарнитурой или размером, учитвается в высоте
@@ -6029,6 +6031,7 @@
 		cache.isFormula = c.isFormula();
 		cache.angle = angle;
 		cache.textBound = textBound;
+		cache.indent = indent;
 
         this._fetchCellCacheText(col, row);
 
