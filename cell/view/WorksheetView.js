@@ -14509,7 +14509,7 @@
 
 					var text = AscCommonExcel.getFragmentsText(val);
 					var dataValidation = t.model.getDataValidation(col, row);
-					if (dataValidation && !dataValidation.allowBlank && 0 === text.length) {
+					if (dataValidation && dataValidation.allowBlank && 0 === text.length) {
 						dataValidation = null;
 					}
 					if (dataValidation) {

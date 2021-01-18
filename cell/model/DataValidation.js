@@ -763,11 +763,6 @@
 	CDataValidation.prototype.getFormula2 = function () {
 		return this.formula2;
 	};
-
-	CDataValidation.prototype.setAllowBlank = function (newVal, addToHistory) {
-		//setTableProperty(this, this.name, newVal, addToHistory, AscCH.historyitem_PivotTable_SetName);
-		this.name = newVal;
-	};
 	CDataValidation.prototype.setAllowBlank = function (newVal, addToHistory) {
 		this.allowBlank = newVal;
 	};
@@ -1194,6 +1189,7 @@
 			var _res = new window['AscCommonExcel'].CDataValidation();
 			_res.showErrorMessage = true;
 			_res.showInputMessage = true;
+			_res.allowBlank = true;
 			return _res;
 		};
 
