@@ -845,6 +845,16 @@ CInlineLevelSdt.prototype.private_FillPlaceholderContent = function()
 		}
 	}
 
+	// В формах для плейсхолдера мы копируем настройки текста в сам плейсхолдер тоже
+	if (this.IsForm())
+	{
+		for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
+		{
+			if (this.Content[nIndex] instanceof ParaRun)
+				this.Content[nIndex].SetPr(this.Pr.TextPr.Copy());
+		}
+	}
+
 	if (isSelection)
 		this.SelectAll(1);
 };
