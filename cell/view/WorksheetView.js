@@ -14708,6 +14708,7 @@
 					if (arrBottomS[arrBottomS.length - 1] > h) {
 						arrBottomS[arrBottomS.length - 1] = h;
 					}
+					cellX += c.getAlign().indent * 3 * t.defaultSpaceWidth;
 					return {l: arrLeftS, r: arrRightS, b: arrBottomS, cellX: cellX, cellY: cellY, ri: ri, bi: bi};
 				},
 				checkVisible: function () {
