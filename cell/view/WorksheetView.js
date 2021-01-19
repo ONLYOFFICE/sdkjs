@@ -4017,10 +4017,13 @@
 				if (ct.indent) {
 					if (AscCommon.align_Right === ct.cellHA) {
 						textX -= ct.indent * 3 * this.defaultSpaceWidth;
+					} else if (AscCommon.align_Left === ct.cellHA) {
+						textX += ct.indent * 3 * this.defaultSpaceWidth;
 					} else if (AscCommon.align_Center === ct.cellHA) {
 
-					} else {
-						textX += ct.indent * 3 * this.defaultSpaceWidth;
+					} else if (AscCommon.align_Justify === ct.cellHA) {
+						//textX += ct.indent * 3 * this.defaultSpaceWidth;
+						textW -= 20;
 					}
 				}
 				this.stringRender.restoreInternalState(ct.state).render(drawingCtx, textX, textY, textW, color);
@@ -14717,11 +14720,13 @@
 					}
 					if (indent) {
 						if (AscCommon.align_Right === align.hor) {
-							cellX -= indent * 3 * t.defaultSpaceWidth;
+							arrRightS[ri] -= indent * 3 * t.defaultSpaceWidth + 1;
+						} else if (AscCommon.align_Left === align.hor) {
+							cellX += indent * 3 * t.defaultSpaceWidth;
 						} else if (AscCommon.align_Center === align.hor) {
 
-						} else {
-							cellX += indent * 3 * t.defaultSpaceWidth;
+						} else if (AscCommon.align_Justify === align.hor) {
+
 						}
 					}
 					return {l: arrLeftS, r: arrRightS, b: arrBottomS, cellX: cellX, cellY: cellY, ri: ri, bi: bi};
