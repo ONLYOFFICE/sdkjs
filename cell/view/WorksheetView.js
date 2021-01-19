@@ -4015,8 +4015,13 @@
 					textX += getCFIconSize(font.getSize());
 				}
 				if (ct.indent) {
-					textX += ct.indent * 3 * this.defaultSpaceWidth;
-					//getNormalSpaceSize()
+					if (AscCommon.align_Right === ct.cellHA) {
+						textX -= ct.indent * 3 * this.defaultSpaceWidth;
+					} else if (AscCommon.align_Center === ct.cellHA) {
+
+					} else {
+						textX += ct.indent * 3 * this.defaultSpaceWidth;
+					}
 				}
 				this.stringRender.restoreInternalState(ct.state).render(drawingCtx, textX, textY, textW, color);
 				ctx.RemoveClipRect();
@@ -14711,7 +14716,13 @@
 						arrBottomS[arrBottomS.length - 1] = h;
 					}
 					if (indent) {
-						cellX += indent * 3 * t.defaultSpaceWidth;
+						if (AscCommon.align_Right === align.hor) {
+							cellX -= indent * 3 * t.defaultSpaceWidth;
+						} else if (AscCommon.align_Center === align.hor) {
+
+						} else {
+							cellX += indent * 3 * t.defaultSpaceWidth;
+						}
 					}
 					return {l: arrLeftS, r: arrRightS, b: arrBottomS, cellX: cellX, cellY: cellY, ri: ri, bi: bi};
 				},
