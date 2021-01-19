@@ -2257,7 +2257,7 @@
             return false;
         };
 
-        this.onPointerMove = function(pos)
+        this.onPointerMove = function(pos, isWithoutCoords)
         {
             var oWordControl = this.document.m_oWordControl;
             var _object = null;
@@ -2354,7 +2354,7 @@
                 }
 
                 // check buttons
-                if (_object.Buttons.length > 0)
+                if (_object.Buttons.length > 0 && (isWithoutCoords !== true))
                 {
                     var indexButton = -1;
 

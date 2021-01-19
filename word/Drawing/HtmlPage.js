@@ -1725,7 +1725,7 @@ function CEditorPage(api)
 		}
 
 		oWordControl.StartUpdateOverlay();
-		var is_drawing = oWordControl.m_oDrawingDocument.checkMouseMove_Drawing(pos);
+		var is_drawing = oWordControl.m_oDrawingDocument.checkMouseMove_Drawing(pos, e === undefined ? true : false);
 		if (is_drawing === true)
 			return;
 

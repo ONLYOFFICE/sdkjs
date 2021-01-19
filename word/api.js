@@ -9392,6 +9392,11 @@ background-repeat: no-repeat;\
 		if (_controls.length === 0)
 			return;
 
+        if (!window['IS_NATIVE_EDITOR'] && AscCommon.global_mouseEvent.IsLocked)
+        {
+            this.WordControl.onMouseUpMainSimple();
+        }
+
 		for (var i = 0; i < _controls.length; i++)
 		{
 			_controls[i].ActiveButtonIndex = -2;

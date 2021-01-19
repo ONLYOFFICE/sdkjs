@@ -7257,7 +7257,7 @@ function CDrawingDocument()
 		return false;
 	};
 
-	this.checkMouseMove_Drawing = function (pos)
+	this.checkMouseMove_Drawing = function (pos, isWithoutCoords)
 	{
 		var oWordControl = this.m_oWordControl;
 
@@ -7369,7 +7369,7 @@ function CDrawingDocument()
 			}
 		}
 
-		if (this.contentControls.onPointerMove(pos))
+		if (this.contentControls.onPointerMove(pos, isWithoutCoords))
 			return true;
 
         var _page = this.m_arrPages[pos.Page];
