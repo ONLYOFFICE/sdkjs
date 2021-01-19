@@ -1009,6 +1009,16 @@ CSdtComboBoxPr.prototype.GetItemValue = function(nIndex)
 
 	return this.ListItems[nIndex].Value;
 };
+CSdtComboBoxPr.prototype.FindByText = function(sValue)
+{
+	for (var nIndex = 0, nCount = this.ListItems.length; nIndex < nCount; ++nIndex)
+	{
+		if (this.ListItems[nIndex].DisplayText === sValue)
+			return nIndex;
+	}
+
+	return -1;
+};
 
 /**
  * Класс с настройками для даты

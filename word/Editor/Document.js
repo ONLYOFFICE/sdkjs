@@ -1951,6 +1951,16 @@ CSelectedElementsInfo.prototype.GetInlineLevelSdt = function()
 {
 	return this.m_oInlineLevelSdt;
 };
+/**
+ * @returns {?CInlineLevelSdt}
+ */
+CSelectedElementsInfo.prototype.GetForm = function()
+{
+	if (this.m_oInlineLevelSdt && this.m_oInlineLevelSdt.IsForm())
+		return this.m_oInlineLevelSdt;
+
+	return null;
+};
 CSelectedElementsInfo.prototype.IsSdtOverDrawing = function()
 {
 	return this.m_bSdtOverDrawing;
@@ -6347,21 +6357,13 @@ CDocument.prototype.MoveCursorUp = function(AddToSelect, CtrlKey)
 {
 	this.Reset_WordSelection();
 	this.private_UpdateTargetForCollaboration();
-
-	if (true === this.IsFillingFormMode())
-		this.MoveToFillingForm(false);
-	else
-		this.Controller.MoveCursorUp(AddToSelect, CtrlKey);
+	this.Controller.MoveCursorUp(AddToSelect, CtrlKey);
 };
 CDocument.prototype.MoveCursorDown = function(AddToSelect, CtrlKey)
 {
 	this.Reset_WordSelection();
 	this.private_UpdateTargetForCollaboration();
-
-	if (true === this.IsFillingFormMode())
-		this.MoveToFillingForm(true);
-	else
-		this.Controller.MoveCursorDown(AddToSelect, CtrlKey);
+	this.Controller.MoveCursorDown(AddToSelect, CtrlKey);
 };
 CDocument.prototype.MoveCursorToEndOfLine = function(AddToSelect)
 {
@@ -9662,69 +9664,82 @@ CDocument.prototype.OnKeyDown = function(e)
 		}
 		else if (e.KeyCode === 9) // Tab
 		{
-			var SelectedInfo = this.GetSelectedElementsInfo();
-
-			if (null !== SelectedInfo.GetMath())
+			if (this.IsFillingFormMode())
 			{
-				var ParaMath  = SelectedInfo.GetMath();
-				var Paragraph = ParaMath.GetParagraph();
-				if (Paragraph && false === this.Document_Is_SelectionLocked(changestype_None, {
-					Type      : changestype_2_Element_and_Type,
-					Element   : Paragraph,
-					CheckType : changestype_Paragraph_Content
-				}))
-				{
-					this.StartAction(AscDFH.historydescription_Document_AddTabToMath);
-					ParaMath.HandleTab(!e.ShiftKey);
-					this.Recalculate();
-					this.FinalizeAction();
-				}
-			}
-			else if (true === SelectedInfo.IsInTable() && true != e.CtrlKey)
-			{
-				this.MoveCursorToCell(true === e.ShiftKey ? false : true);
-			}
-			else if (true === SelectedInfo.IsDrawingObjSelected() && true != e.CtrlKey)
-			{
-				this.DrawingObjects.selectNextObject((e.ShiftKey === true ? -1 : 1));
+				this.DrawingDocument.UpdateTargetFromPaint = true;
+				this.Reset_WordSelection();
+				this.private_UpdateTargetForCollaboration();
+				this.MoveToFillingForm(true !== e.ShiftKey);
+				this.private_CheckCursorPosInFillingFormMode();
+				this.CheckComplexFieldsInSelection();
 			}
 			else
 			{
-				if (true === SelectedInfo.IsMixedSelection())
+				var SelectedInfo = this.GetSelectedElementsInfo();
+
+				if (null !== SelectedInfo.GetMath())
 				{
-					if (true === e.ShiftKey)
-						this.DecreaseIndent();
-					else
-						this.IncreaseIndent();
-				}
-				else
-				{
-					var Paragraph = SelectedInfo.GetParagraph();
-					var ParaPr    = Paragraph ? Paragraph.Get_CompiledPr2(false).ParaPr : null;
-					if (null != Paragraph && (true === Paragraph.IsCursorAtBegin() || true === Paragraph.Selection_IsFromStart()) && (undefined != Paragraph.GetNumPr() || (true != Paragraph.IsEmpty() && ParaPr.Tabs.Tabs.length <= 0)))
+					var ParaMath  = SelectedInfo.GetMath();
+					var Paragraph = ParaMath.GetParagraph();
+					if (Paragraph && false === this.Document_Is_SelectionLocked(changestype_None, {
+						Type      : changestype_2_Element_and_Type,
+						Element   : Paragraph,
+						CheckType : changestype_Paragraph_Content
+					}))
 					{
-						if (false === this.Document_Is_SelectionLocked(changestype_None, {
-							Type      : changestype_2_Element_and_Type,
-							Element   : Paragraph,
-							CheckType : AscCommon.changestype_Paragraph_Properties
-						}))
-						{
-							this.StartAction(AscDFH.historydescription_Document_MoveParagraphByTab);
-							Paragraph.Add_Tab(e.ShiftKey);
-							this.Recalculate();
-							this.UpdateInterface();
-							this.UpdateSelection();
-							this.FinalizeAction();
-						}
-					}
-					else if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
-					{
-						this.StartAction(AscDFH.historydescription_Document_AddTab);
-						this.AddToParagraph(new ParaTab());
+						this.StartAction(AscDFH.historydescription_Document_AddTabToMath);
+						ParaMath.HandleTab(!e.ShiftKey);
+						this.Recalculate();
 						this.FinalizeAction();
 					}
 				}
+				else if (true === SelectedInfo.IsInTable() && true != e.CtrlKey)
+				{
+					this.MoveCursorToCell(true === e.ShiftKey ? false : true);
+				}
+				else if (true === SelectedInfo.IsDrawingObjSelected() && true != e.CtrlKey)
+				{
+					this.DrawingObjects.selectNextObject((e.ShiftKey === true ? -1 : 1));
+				}
+				else
+				{
+					if (true === SelectedInfo.IsMixedSelection())
+					{
+						if (true === e.ShiftKey)
+							this.DecreaseIndent();
+						else
+							this.IncreaseIndent();
+					}
+					else
+					{
+						var Paragraph = SelectedInfo.GetParagraph();
+						var ParaPr    = Paragraph ? Paragraph.Get_CompiledPr2(false).ParaPr : null;
+						if (null != Paragraph && (true === Paragraph.IsCursorAtBegin() || true === Paragraph.Selection_IsFromStart()) && (undefined != Paragraph.GetNumPr() || (true != Paragraph.IsEmpty() && ParaPr.Tabs.Tabs.length <= 0)))
+						{
+							if (false === this.Document_Is_SelectionLocked(changestype_None, {
+								Type      : changestype_2_Element_and_Type,
+								Element   : Paragraph,
+								CheckType : AscCommon.changestype_Paragraph_Properties
+							}))
+							{
+								this.StartAction(AscDFH.historydescription_Document_MoveParagraphByTab);
+								Paragraph.Add_Tab(e.ShiftKey);
+								this.Recalculate();
+								this.UpdateInterface();
+								this.UpdateSelection();
+								this.FinalizeAction();
+							}
+						}
+						else if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
+						{
+							this.StartAction(AscDFH.historydescription_Document_AddTab);
+							this.AddToParagraph(new ParaTab());
+							this.FinalizeAction();
+						}
+					}
+				}
 			}
+
 			bRetValue = keydownresult_PreventAll;
 		}
 		else if (e.KeyCode === 13) // Enter
@@ -10034,7 +10049,7 @@ CDocument.prototype.OnKeyDown = function(e)
 		else if (e.KeyCode === 37) // Left Arrow
 		{
 			// Чтобы при зажатой клавише курсор не пропадал
-			if (true != e.ShiftKey)
+			if (true !== e.ShiftKey)
 				this.DrawingDocument.TargetStart();
 
 			this.DrawingDocument.UpdateTargetFromPaint = true;
@@ -10045,21 +10060,36 @@ CDocument.prototype.OnKeyDown = function(e)
 		}
 		else if (e.KeyCode === 38) // Top Arrow
 		{
-			// TODO: Реализовать Ctrl + Up/ Ctrl + Shift + Up
-			// Чтобы при зажатой клавише курсор не пропадал
-			if (true != e.ShiftKey)
-				this.DrawingDocument.TargetStart();
+			if (this.IsFillingFormMode())
+			{
+				var oSelectedInfo = this.GetSelectedElementsInfo();
+				var oForm         = oSelectedInfo.GetForm();
 
-			this.DrawingDocument.UpdateTargetFromPaint = true;
-			this.MoveCursorUp(true === e.ShiftKey, true === e.CtrlKey);
-			this.private_CheckCursorPosInFillingFormMode();
-			this.CheckComplexFieldsInSelection();
+				if (oForm && !oForm.IsComboBox() && !oForm.IsDropDownList())
+					oForm = null;
+
+				if (oForm)
+					this.TurnComboBoxFormValue(oForm, true);
+			}
+			else
+			{
+				// TODO: Реализовать Ctrl + Up/ Ctrl + Shift + Up
+				// Чтобы при зажатой клавише курсор не пропадал
+				if (true !== e.ShiftKey)
+					this.DrawingDocument.TargetStart();
+
+				this.DrawingDocument.UpdateTargetFromPaint = true;
+				this.MoveCursorUp(true === e.ShiftKey, true === e.CtrlKey);
+				this.private_CheckCursorPosInFillingFormMode();
+				this.CheckComplexFieldsInSelection();
+			}
+
 			bRetValue = keydownresult_PreventAll;
 		}
 		else if (e.KeyCode === 39) // Right Arrow
 		{
 			// Чтобы при зажатой клавише курсор не пропадал
-			if (true != e.ShiftKey)
+			if (true !== e.ShiftKey)
 				this.DrawingDocument.TargetStart();
 
 			this.DrawingDocument.UpdateTargetFromPaint = true;
@@ -10070,15 +10100,29 @@ CDocument.prototype.OnKeyDown = function(e)
 		}
 		else if (e.KeyCode === 40) // Bottom Arrow
 		{
-			// TODO: Реализовать Ctrl + Down/ Ctrl + Shift + Down
-			// Чтобы при зажатой клавише курсор не пропадал
-			if (true != e.ShiftKey)
-				this.DrawingDocument.TargetStart();
+			if (this.IsFillingFormMode())
+			{
+				var oSelectedInfo = this.GetSelectedElementsInfo();
+				var oForm         = oSelectedInfo.GetForm();
 
-			this.DrawingDocument.UpdateTargetFromPaint = true;
-			this.MoveCursorDown(true === e.ShiftKey, true === e.CtrlKey);
-			this.private_CheckCursorPosInFillingFormMode();
-			this.CheckComplexFieldsInSelection();
+				if (oForm && !oForm.IsComboBox() && !oForm.IsDropDownList())
+					oForm = null;
+
+				if (oForm)
+					this.TurnComboBoxFormValue(oForm, true);
+			}
+			else
+			{
+				// TODO: Реализовать Ctrl + Down/ Ctrl + Shift + Down
+				// Чтобы при зажатой клавише курсор не пропадал
+				if (true !== e.ShiftKey)
+					this.DrawingDocument.TargetStart();
+
+				this.DrawingDocument.UpdateTargetFromPaint = true;
+				this.MoveCursorDown(true === e.ShiftKey, true === e.CtrlKey);
+				this.private_CheckCursorPosInFillingFormMode();
+				this.CheckComplexFieldsInSelection();
+			}
 			bRetValue = keydownresult_PreventAll;
 		}
 		else if (e.KeyCode === 46) // Delete
@@ -20839,6 +20883,49 @@ CDocument.prototype.MoveToFillingForm = function(isNext)
 			oRes.SelectThisElement();
 		}
 	}
+};
+CDocument.prototype.TurnComboBoxFormValue = function(oForm, isNext)
+{
+	if (!(oForm instanceof CInlineLevelSdt) || (!oForm.IsComboBox() && !oForm.IsDropDownList()))
+		return;
+
+	var sValue = oForm.GetSelectedText(true, true);
+	var oComboBoxPr = oForm.IsComboBox() ? oForm.GetComboBoxPr() : oForm.GetDropDownListPr();
+
+	var nIndex = oComboBoxPr.FindByText(sValue);
+	var nCount = oComboBoxPr.GetItemsCount();
+	if (nCount <= 0)
+		return;
+
+	var nNewIndex = 0;
+	if (-1 !== nIndex)
+	{
+		if (isNext)
+		{
+			nNewIndex = nIndex + 1;
+			if (nNewIndex >= nCount)
+				nNewIndex = 0;
+		}
+		else
+		{
+			nNewIndex = nIndex - 1;
+			if (nNewIndex < 0)
+				nNewIndex = nCount - 1;
+		}
+	}
+
+	var sNewValue = oComboBoxPr.GetItemValue(nNewIndex);
+	oForm.SelectContentControl();
+	oForm.SkipSpecialContentControlLock(true);
+	if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, this.IsFormFieldEditing()))
+	{
+		this.StartAction();
+		oForm.SelectListItem(sNewValue);
+		oForm.SelectContentControl();
+		this.Recalculate();
+		this.FinalizeAction();
+	}
+	oForm.SkipSpecialContentControlLock(false);
 };
 CDocument.prototype.OnContentControlTrackEnd = function(Id, NearestPos, isCopy)
 {
