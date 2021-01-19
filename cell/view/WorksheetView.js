@@ -14497,6 +14497,8 @@
 				c = this._getVisibleCell(mc.c1, mc.r1);
 				fl = this._getCellFlags(c);
 			}
+			var align = c.getAlign();
+			var indent = align && align.indent;
 
 			this.handlers.trigger("onScroll", this._calcActiveCellOffset());
 
@@ -14708,7 +14710,9 @@
 					if (arrBottomS[arrBottomS.length - 1] > h) {
 						arrBottomS[arrBottomS.length - 1] = h;
 					}
-					cellX += c.getAlign().indent * 3 * t.defaultSpaceWidth;
+					if (indent) {
+						cellX += indent * 3 * t.defaultSpaceWidth;
+					}
 					return {l: arrLeftS, r: arrRightS, b: arrBottomS, cellX: cellX, cellY: cellY, ri: ri, bi: bi};
 				},
 				checkVisible: function () {
