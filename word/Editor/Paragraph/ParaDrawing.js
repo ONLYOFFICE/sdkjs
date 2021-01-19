@@ -1731,7 +1731,10 @@ ParaDrawing.prototype.OnEnd_MoveInline = function(NearPos)
 
 	// Ничего никуда не переносим в такой ситуации
 	if (!oDstRun || (oPictureCC && oDstRun === oRun) || oDstRun.GetParentForm())
+	{
+		NearPos.Paragraph.Clear_NearestPosArray();
 		return;
+	}
 
 	var RunPr = this.Remove_FromDocument(false);
 
