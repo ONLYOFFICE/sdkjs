@@ -7173,11 +7173,11 @@ function BinaryFileReader(doc, openParams)
 		}
         return stream;
     };
-	this.ReadFromStream = function(stream)
+	this.ReadFromStream = function(stream, bClearStreamOnly)
 	{
 		try{
 			this.stream = stream;
-			this.PreLoadPrepare();
+			this.PreLoadPrepare(bClearStreamOnly);
 			this.ReadMainTable();
 			this.PostLoadPrepare();
 		}
@@ -7195,7 +7195,7 @@ function BinaryFileReader(doc, openParams)
     {
 		return this.ReadFromStream(this.getbase64DecodedData(data));
     };
-	this.PreLoadPrepare = function()
+	this.PreLoadPrepare = function(bClearStreamOnly)
 	{
 		var styles = this.Document.Styles.Style;
         
@@ -7206,7 +7206,7 @@ function BinaryFileReader(doc, openParams)
 		stDefault.Table = null;
 
         //надо сбросить то, что остался после открытия документа(повторное открытие в Version History)
-        pptx_content_loader.Clear();
+        pptx_content_loader.Clear(bClearStreamOnly);
 	}
     this.ReadMainTable = function()
 	{	
@@ -7394,7 +7394,7 @@ function BinaryFileReader(doc, openParams)
 							doc.Footnotes = doc.GlossaryDocument.GetFootnotes();
 							doc.Endnotes = doc.GlossaryDocument.GetEndnotes();
 							oBinaryFileReader = new AscCommonWord.BinaryFileReader(doc, openParams);
-							oBinaryFileReader.ReadFromStream(this.stream);
+							oBinaryFileReader.ReadFromStream(this.stream, true);
 							editor.WordControl.m_oDrawingDocument.m_oLogicDocument = oldDoc;
 							editor.WordControl.m_oLogicDocument = oldDoc;
 						}, this, []);
