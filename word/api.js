@@ -9389,9 +9389,13 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.asc_UncheckContentControlButtons = function()
 	{
 		var _controls = (this.WordControl && this.WordControl.m_oDrawingDocument && this.WordControl.m_oDrawingDocument.contentControls) ? this.WordControl.m_oDrawingDocument.contentControls.ContentControlObjects : [];
+		if (_controls.length === 0)
+			return;
+
 		for (var i = 0; i < _controls.length; i++)
 		{
 			_controls[i].ActiveButtonIndex = -2;
+			_controls[i].HoverButtonIndex = -2;
 		}
 
 		this.WordControl.ShowOverlay();

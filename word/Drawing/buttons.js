@@ -2651,7 +2651,7 @@
 		this.roundSize = this.roundSizePx / koef;
 
 		//this.wideOutlineX = 1 / koef;
-		//this.wideOutlineY = 1 / koef;
+		this.wideOutlineY = 1 / koef;
         this.koef = koef;
 	};
 	CPolygonCC.prototype.moveTo = function(x, y)
