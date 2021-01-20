@@ -5968,10 +5968,34 @@
             angle = 0;
         }
 
-        tm = this._roundTextMetrics(this.stringRender.measureString(str, fl, maxW));
-        if (indent) {
-			tm.width += indent * 3 * this.defaultSpaceWidth;
+		if (indent) {
+			if (AscCommon.align_Right === alignH) {
+				//maxW += indent * 3 * this.defaultSpaceWidth + 1;
+			} else if (AscCommon.align_Left === alignH) {
+				//maxW += indent * 3 * this.defaultSpaceWidth;
+			} else if (AscCommon.align_Center === alignH) {
+
+			} else if (AscCommon.align_Justify === alignH) {
+				maxW -= indent * 3 * this.defaultSpaceWidth;
+				fl.textAlign = AscCommon.align_Center;
+			}
 		}
+
+        tm = this._roundTextMetrics(this.stringRender.measureString(str, fl, maxW));
+
+        if (indent) {
+			if (AscCommon.align_Right === alignH) {
+				tm.width += indent * 3 * this.defaultSpaceWidth + 1;
+			} else if (AscCommon.align_Left === alignH) {
+				tm.width += indent * 3 * this.defaultSpaceWidth;
+			} else if (AscCommon.align_Center === alignH) {
+
+			} else if (AscCommon.align_Justify === alignH) {
+				//maxW -= indent * 3 * this.defaultSpaceWidth;
+				//fl.textAlign = AscCommon.align_Center;
+			}
+		}
+
         var cto = (mergeType || fl.wrapText || fl.shrinkToFit) ? {
             maxWidth: maxW - this._getColumnWidthInner(col) + this._getColumnWidth(col), leftSide: 0, rightSide: 0
         } : this._calcCellTextOffset(col, row, ha, tm.width);
