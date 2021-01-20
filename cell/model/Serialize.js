@@ -6486,7 +6486,7 @@
                     case 0 :
                     case 1 : oAligment.hor = AscCommon.align_Center;break;
                     case 2 :
-                    case 3 :
+                    case 3 : oAligment.hor = AscCommon.align_Distributed;break;
                     case 5 : oAligment.hor = AscCommon.align_Justify;break;
                     case 4 : oAligment.hor = null;break;
                     case 6 : oAligment.hor = AscCommon.align_Left;break;
