@@ -3682,7 +3682,7 @@
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {DocumentElement[]} arrContent - An array of elements to insert.
-	 * @param {boolean} [isInline=false] - Inline insert on not (works only when the length of arrContent = 1 and it's a paragraph)
+	 * @param {boolean} [isInline=false] - Inline insert or not (works only for the last and the first element and only if it's a paragraph)
 	 * @param {object} [oPr=undefined]
 	 * @returns {boolean} Success?
 	 */
@@ -3694,7 +3694,7 @@
 			var oElement = arrContent[nIndex];
 			if (oElement instanceof ApiParagraph || oElement instanceof ApiTable)
 			{
-				if (true === isInline && 1 === nCount && oElement instanceof ApiParagraph)
+				if (true === isInline && oElement instanceof ApiParagraph)
 					oSelectedContent.Add(new CSelectedElement(oElement.private_GetImpl(), false));
 				else
 					oSelectedContent.Add(new CSelectedElement(oElement.private_GetImpl(), true));

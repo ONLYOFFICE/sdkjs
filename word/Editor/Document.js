@@ -8980,7 +8980,7 @@ CDocument.prototype.InsertContent = function(SelectedContent, NearPos)
 			}
 
 			var EndIndex = ElementsCount - 1;
-			if (true === bConcatE && StartIndex < EndIndex)
+			if (true === bConcatE && ElementsCount > 1)
 			{
 				var _ParaE    = Elements[ElementsCount - 1].Element;
 				var TempCount = _ParaE.Content.length - 1;
