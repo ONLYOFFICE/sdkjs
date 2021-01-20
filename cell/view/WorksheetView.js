@@ -4022,6 +4022,7 @@
 					} else if (AscCommon.align_Center === ct.cellHA) {
 
 					} else if (AscCommon.align_Justify === ct.cellHA) {
+						//TODO align_Distributed
 						//textX += ct.indent * 3 * this.defaultSpaceWidth;
 					}
 				}
@@ -5975,6 +5976,7 @@
 			} else if (AscCommon.align_Center === alignH) {
 
 			} else if (AscCommon.align_Justify === alignH) {
+				//TODO align_Distributed
 				maxW -= 2 * indent * 3 * this.defaultSpaceWidth;
 				fl.textAlign = AscCommon.align_Center;
 			}
@@ -5990,6 +5992,7 @@
 			} else if (AscCommon.align_Center === alignH) {
 
 			} else if (AscCommon.align_Justify === alignH) {
+				//TODO align_Distributed
 				//maxW -= indent * 3 * this.defaultSpaceWidth;
 				//fl.textAlign = AscCommon.align_Center;
 			}
@@ -14749,7 +14752,7 @@
 						} else if (AscCommon.align_Center === align.hor) {
 
 						} else if (AscCommon.align_Justify === align.hor) {
-
+							//TODO align_Distributed
 						}
 					}
 					return {l: arrLeftS, r: arrRightS, b: arrBottomS, cellX: cellX, cellY: cellY, ri: ri, bi: bi};
