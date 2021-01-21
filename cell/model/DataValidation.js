@@ -1217,27 +1217,6 @@
 		var instersection = _obj.intersection;
 		var contain = _obj.contain;
 
-		var _containRanges = function (_ranges1, _ranges2) {
-			if (_ranges1.length <= _ranges2.length) {
-				for (var j = 0; j < _ranges1.length; j++) {
-					var _equal = false;
-					for (var n = 0; n < _ranges2.length; n++) {
-						if (_ranges1[j].isEqual(_ranges2[n])) {
-							_equal = true;
-							break;
-						}
-					}
-					if (!_equal) {
-						return false;
-					}
-				}
-			} else {
-				return false;
-			}
-
-			return true;
-		};
-
 		var prepeareAdd = function (_props, modelRanges) {
 			var _dataValidation = _props.clone();
 			var _ranges = [];
@@ -1258,7 +1237,7 @@
 		var i;
 		if (this.elems) {
 			for (i = 0; i < this.elems.length; i++) {
-				if (_containRanges(this.elems[i].ranges, ranges)) {
+				if (this._containRanges(this.elems[i].ranges, ranges)) {
 					if (!equalRangeDataValidation) {
 						equalRangeDataValidation = [];
 					}
@@ -1328,13 +1307,38 @@
 		}
 	};
 
+	CDataValidations.prototype._containRanges = function (_ranges1, _ranges2) {
+		if (_ranges1.length <= _ranges2.length) {
+			for (var j = 0; j < _ranges1.length; j++) {
+				var _equal = false;
+				for (var n = 0; n < _ranges2.length; n++) {
+					if (_ranges1[j].isEqual(_ranges2[n])) {
+						_equal = true;
+						break;
+					}
+				}
+				if (!_equal) {
+					return false;
+				}
+			}
+		} else {
+			return false;
+		}
+
+		return true;
+	};
+
 	CDataValidations.prototype.clear = function (ws, ranges, addToHistory) {
 		for (var i = 0; i < this.elems.length; i++) {
-			var changedRanges = this.elems[i].clear(ranges);
-			if (changedRanges) {
-				var newDataValidation = this.elems[i].clone();
-				newDataValidation.ranges = changedRanges;
-				this.change(ws, this.elems[i], newDataValidation, addToHistory);
+			if (this._containRanges(this.elems[i].ranges, ranges)) {
+				this.delete(ws, this.elems[i].Id, addToHistory);
+			} else {
+				var changedRanges = this.elems[i].clear(ranges);
+				if (changedRanges) {
+					var newDataValidation = this.elems[i].clone();
+					newDataValidation.ranges = changedRanges;
+					this.change(ws, this.elems[i], newDataValidation, addToHistory);
+				}
 			}
 		}
 	};
