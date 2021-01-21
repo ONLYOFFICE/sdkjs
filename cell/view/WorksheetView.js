@@ -5864,6 +5864,10 @@
         var va = align.getAlignVertical();
         var angle = align.getAngle();
         var indent = align.getIndent();
+		if (align.hor === AscCommon.align_Distributed) {
+			fl.wrapText = true;
+			fl.textAlign = AscCommon.align_Center;
+		}
         if (c.isEmptyTextString()) {
             if (!angle && c.isNotDefaultFont() && !(mergeType & c_oAscMergeType.rows)) {
                 // Пустая ячейка с измененной гарнитурой или размером, учитвается в высоте
@@ -5972,7 +5976,7 @@
 				//maxW += indent * 3 * this.defaultSpaceWidth;
 			} else if (AscCommon.align_Distributed === alignH) {
 				maxW -= 2 * indent * 3 * this.defaultSpaceWidth;
-				fl.textAlign = AscCommon.align_Center;
+				//fl.textAlign = AscCommon.align_Center;
 			}
 		}
 
@@ -6096,11 +6100,13 @@
 			fr[0].format = cell.getFont();
 		}
 
+
 		var th;
 		var cellType = cell.getType();
+		var wrap = align.getWrap() || align.hor === AscCommon.align_Distributed;
 		// Автоподбор делается по любому типу (кроме строки)
 		var isNumberFormat = !cell.isEmptyTextString() && (null === cellType || CellValueType.String !== cellType);
-		if (angle || isNumberFormat || align.getWrap()) {
+		if (angle || isNumberFormat || wrap) {
 			this._addCellTextToCache(cell.nCol, cell.nRow);
 			th = this.updateRowHeightValuePx || AscCommonExcel.convertPtToPx(this._getRowHeightReal(cell.nRow));
 		} else {
@@ -6254,7 +6260,7 @@
 		var ls = 0, rs = 0, i, size;
         var width = this._getColumnWidth(col);
 		textWidth = textWidth + this.settings.cells.padding;
-		if (textAlign === AscCommon.align_Center) {
+		if (textAlign === AscCommon.align_Center || textAlign === AscCommon.align_Distributed) {
 			textWidth /= 2;
 			width /= 2;
 		}
@@ -6671,6 +6677,7 @@
     WorksheetView.prototype._calcTextHorizPos = function (x1, x2, tm, align) {
         switch (align) {
             case AscCommon.align_Center:
+			case AscCommon.align_Distributed:
                 return Asc.round(0.5 * (x1 + x2 + 1 - tm.width));
             case AscCommon.align_Right:
                 return x2 + 1 - this.settings.cells.padding - tm.width;
@@ -14524,6 +14531,9 @@
 			}
 			var align = c.getAlign();
 			var indent = align && align.indent;
+			if (AscCommon.align_Distributed === fl.textAlign) {
+				fl.textAlign = AscCommon.align_Center;
+			}
 
 			this.handlers.trigger("onScroll", this._calcActiveCellOffset());
 
