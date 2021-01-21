@@ -289,47 +289,56 @@ CInlineLevelSdt.prototype.CanSplit = function()
 };
 CInlineLevelSdt.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange, _CurPage)
 {
+	var isFastRangeRecalc = PRSA.IsFastRangeRecalc();
+
 	var CurLine  = _CurLine - this.StartLine;
 	var CurRange = (0 === CurLine ? _CurRange - this.StartRange : _CurRange);
 
-	if (0 === CurLine && 0 === CurRange && true !== PRSA.RecalcFast)
+	if (0 === CurLine && 0 === CurRange && !isFastRangeRecalc)
 		this.Bounds = {};
 
 	var oParagraph = PRSA.Paragraph;
 	var Y0         = oParagraph.Lines[_CurLine].Top + oParagraph.Pages[_CurPage].Y;
-	var Y1         = oParagraph.Lines[_CurLine].Bottom + oParagraph.Pages[_CurPage].Y;
+	var Y1         = oParagraph.Lines[_CurLine].Y + oParagraph.Pages[_CurPage].Y + oParagraph.Lines[_CurLine].Metrics.Descent;
 	var X0         = PRSA.X;
 
 	if (0 === CurLine)
 		Y0 = oParagraph.Lines[_CurLine].Y + oParagraph.Pages[_CurPage].Y - oParagraph.Lines[_CurLine].Metrics.Ascent;
 
-	if (CurLine >= this.protected_GetLinesCount() - 1)
+	if (!isFastRangeRecalc)
 	{
 		for (var Key in this.Bounds)
 		{
 			var __CurLine = (Key | 0) >> 16;
-			if (__CurLine === CurLine - 1)
+			if (__CurLine === CurLine - 1 && this.Bounds[Key].PageInternal === _CurPage)
 			{
 				this.Bounds[Key].H = Y0 - this.Bounds[Key].Y;
 			}
 		}
-
-		Y1 = oParagraph.Lines[_CurLine].Y + oParagraph.Pages[_CurPage].Y + oParagraph.Lines[_CurLine].Metrics.Descent;
 	}
 
 	CParagraphContentWithParagraphLikeContent.prototype.Recalculate_Range_Spaces.apply(this, arguments);
 
 	var X1 = PRSA.X;
 
-	this.Bounds[((CurLine << 16) & 0xFFFF0000) | (CurRange & 0x0000FFFF)] = {
-		X            : X0,
-		W            : X1 - X0,
-		Y            : Y0,
-		H            : Y1 - Y0,
-		TextLineH    : Y1 - Y0,
-		Page         : PRSA.Paragraph.Get_AbsolutePage(_CurPage),
-		PageInternal : _CurPage
-	};
+	if (isFastRangeRecalc && this.Bounds[((CurLine << 16) & 0xFFFF0000) | (CurRange & 0x0000FFFF)])
+	{
+		var oBounds = this.Bounds[((CurLine << 16) & 0xFFFF0000) | (CurRange & 0x0000FFFF)];
+		oBounds.X = X0;
+		oBounds.W = X1 - X0;
+	}
+	else
+	{
+		this.Bounds[((CurLine << 16) & 0xFFFF0000) | (CurRange & 0x0000FFFF)] = {
+			X            : X0,
+			W            : X1 - X0,
+			Y            : Y0,
+			H            : Y1 - Y0,
+			TextLineH    : Y1 - Y0,
+			Page         : PRSA.Paragraph.Get_AbsolutePage(_CurPage),
+			PageInternal : _CurPage
+		};
+	}
 
 	this.BoundsPaths = null;
 };

@@ -3695,6 +3695,10 @@ function CParagraphRecalculateStateAlign()
 
 	this.ComplexFields = new CParagraphComplexFieldsInfo();
 }
+CParagraphRecalculateStateAlign.prototype.IsFastRangeRecalc = function()
+{
+	return this.RecalcFast;
+};
 
 function CParagraphRecalculateStateInfo()
 {
