@@ -11812,7 +11812,14 @@
 		var arrFormula = [];
 
 		var pasteRange = AscCommonExcel.g_clipboardExcel.pasteProcessor.activeRange;
-		var activeCellsPasteFragment = typeof pasteRange === "string" ? AscCommonExcel.g_oRangeCache.getAscRange(pasteRange) : pasteRange;
+		var activeCellsPasteFragment;
+		if (typeof pasteRange === "string") {
+			AscCommonExcel.executeInR1C1Mode(false, function () {
+				activeCellsPasteFragment = AscCommonExcel.g_oRangeCache.getAscRange(pasteRange);
+			});
+		} else {
+			activeCellsPasteFragment = pasteRange
+		}
 
 		var specialPasteHelper = window['AscCommon'].g_specialPasteHelper;
 		var specialPasteProps = specialPasteHelper.specialPasteProps;
