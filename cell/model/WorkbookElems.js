@@ -2971,7 +2971,8 @@ var g_oBorderProperties = {
 		return this.getAlign2().getAngle();
 	};
 	CellXfs.prototype.asc_getWrapText = function () {
-		return this.getAlign2().getWrap();
+		var align = this.getAlign2();
+		return align.getWrap() || align.hor === AscCommon.align_Distributed;
 	};
 	CellXfs.prototype.asc_getShrinkToFit = function () {
 		return this.getAlign2().getShrinkToFit();
