@@ -5608,7 +5608,7 @@
 				return result;
 			},
 
-			isPartFilterUnderRange: function (range) {
+			isPartFilterUnderRange: function (range, checkFirstRow) {
 				var worksheet = this.worksheet;
 				var result = false;
 
@@ -5617,7 +5617,9 @@
 					var allColRef = new Asc.Range(range.c1, range.r1, range.c2, AscCommon.gc_nMaxRow0);
 
 					if (allColRef.intersection(ref) && !allColRef.containsRange(ref)) {
-						result = true;
+						if (!checkFirstRow || (checkFirstRow && allColRef.r1 <= ref.r1)) {
+							result = true;
+						}
 					}
 
 				}
