@@ -20864,6 +20864,8 @@
 			History.StartTransaction();
 
 			t.model.setDataValidationProps(props);
+			t.handlers.trigger("selectionChanged");
+			t.draw();
 
 			History.EndTransaction();
 		};
