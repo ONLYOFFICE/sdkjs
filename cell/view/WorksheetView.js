@@ -4019,8 +4019,6 @@
 						textX -= ct.indent * 3 * this.defaultSpaceWidth;
 					} else if (AscCommon.align_Left === ct.cellHA) {
 						textX += ct.indent * 3 * this.defaultSpaceWidth;
-					} else if (AscCommon.align_Distributed === ct.cellHA) {
-						//textX += ct.indent * 3 * this.defaultSpaceWidth;
 					}
 				}
 				this.stringRender.restoreInternalState(ct.state).render(drawingCtx, textX, textY, textW, color);
@@ -5969,29 +5967,23 @@
             angle = 0;
         }
 
-		if (indent) {
-			if (AscCommon.align_Right === alignH) {
-				//maxW += indent * 3 * this.defaultSpaceWidth + 1;
-			} else if (AscCommon.align_Left === alignH) {
-				//maxW += indent * 3 * this.defaultSpaceWidth;
-			} else if (AscCommon.align_Distributed === alignH) {
-				maxW -= 2 * indent * 3 * this.defaultSpaceWidth;
-				//fl.textAlign = AscCommon.align_Center;
-			}
+		if (indent && AscCommon.align_Distributed === alignH) {
+			maxW -= 2 * indent * 3 * this.defaultSpaceWidth;
+		} else if (AscCommon.align_Right === alignH) {
+			maxW += indent * 3 * this.defaultSpaceWidth + 1;
+		} else if (AscCommon.align_Left === alignH) {
+			maxW += indent * 3 * this.defaultSpaceWidth;
 		}
 
         tm = this._roundTextMetrics(this.stringRender.measureString(str, fl, maxW));
 
-        if (indent) {
+        /*if (indent) {
 			if (AscCommon.align_Right === alignH) {
 				tm.width += indent * 3 * this.defaultSpaceWidth + 1;
 			} else if (AscCommon.align_Left === alignH) {
 				tm.width += indent * 3 * this.defaultSpaceWidth;
-			} else if (AscCommon.align_Distributed === alignH) {
-				//maxW -= indent * 3 * this.defaultSpaceWidth;
-				//fl.textAlign = AscCommon.align_Center;
 			}
-		}
+		}*/
 
         var cto = (mergeType || fl.wrapText || fl.shrinkToFit) ? {
             maxWidth: maxW - this._getColumnWidthInner(col) + this._getColumnWidth(col), leftSide: 0, rightSide: 0
@@ -14750,8 +14742,6 @@
 							arrRightS[ri] -= indent * 3 * t.defaultSpaceWidth + 1;
 						} else if (AscCommon.align_Left === align.hor) {
 							cellX += indent * 3 * t.defaultSpaceWidth;
-						} else if (AscCommon.align_Distributed === align.hor) {
-
 						}
 					}
 					return {l: arrLeftS, r: arrRightS, b: arrBottomS, cellX: cellX, cellY: cellY, ri: ri, bi: bi};
