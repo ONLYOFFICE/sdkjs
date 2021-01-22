@@ -10794,7 +10794,7 @@ background-repeat: no-repeat;\
 		if (contentControls.ContentControlObjects.length === 0)
 			return;
 
-		contentControls.ContentControlObjectState = -1;
+		contentControls.clearAttack();
 		this.WordControl.m_oLogicDocument.Document_UpdateSelectionState();
 	};
 

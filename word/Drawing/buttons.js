@@ -790,14 +790,47 @@
         if (this.parent.document.m_oWordControl.m_oApi.isViewMode)
             this.IsNoButtons = true;
 
-        this.IsNoButtonsIsFillingForm = this.IsNoButtons;
-        if (!this.IsNoButtons && this.parent.document.m_oLogicDocument)
-            this.IsNoButtons = this.parent.document.m_oLogicDocument.IsFillingFormMode();
+        this.IsFillFormsMode = false;
+        if (this.parent.document.m_oLogicDocument)
+            this.IsFillFormsMode = this.parent.document.m_oLogicDocument.IsFillingFormMode();
 
         this.CalculateNameRect();
         this.CalculateMoveRect();
         this.CalculateButtons();
     }
+
+    CContentControlTrack.prototype.IsUseMoveRect = function()
+    {
+        if (this.IsNoButtons || this.IsFillFormsMode)
+            return false;
+        return true;
+    };
+
+    CContentControlTrack.prototype.IsNoUseButtons = function()
+    {
+        if (this.IsNoButtons)
+            return true;
+
+        switch (this.type)
+        {
+            case Asc.c_oAscContentControlSpecificType.TOC:
+            {
+                if (this.IsFillFormsMode)
+                    return true;
+                return false;
+            }
+            case Asc.c_oAscContentControlSpecificType.Picture:
+            case Asc.c_oAscContentControlSpecificType.ComboBox:
+            case Asc.c_oAscContentControlSpecificType.DropDownList:
+            case Asc.c_oAscContentControlSpecificType.DateTime:
+            {
+                return false;
+            }
+            default:
+                break;
+        }
+        return false;
+    };
 
     // является ли имя кнопкой
     CContentControlTrack.prototype.IsNameAdvanced = function()
@@ -818,7 +851,7 @@
         var width = this.parent.measure(this.Name);
         width += 6; // 3 + 3
 
-        if (this.IsNameAdvanced() && !this.IsNoButtons)
+        if (this.IsNameAdvanced() && !this.IsNoUseButtons())
         {
             width += 5;
             width += 3;
@@ -835,16 +868,28 @@
             H : 20 / koefY
         };
 
-        if (!this.IsNoButtons)
+        if (!this.IsNoUseButtons())
             rect.X += 15 / koefX;
 
         return rect;
     };
     // расчет области для переноса
-    CContentControlTrack.prototype.CalculateMoveRect = function(koefX, koefY)
+    CContentControlTrack.prototype.CalculateMoveRect = function(koefX, koefY, isCheckTrack)
     {
-        if (this.IsNoButtons)
-            return null;
+        if (this.IsNoUseButtons() || this.IsFillFormsMode)
+        {
+            if (true !== isCheckTrack)
+                return null;
+
+            var rectEmpty = {
+                X : this.Pos.X,
+                Y : this.Pos.Y,
+                W : 0,
+                H : 20 / koefY
+            };
+            rectEmpty.Y -= rectEmpty.H;
+            return rectEmpty;
+        }
 
         var rect = {
             X : this.Pos.X,
@@ -872,7 +917,7 @@
     CContentControlTrack.prototype.CalculateButtons = function()
     {
         this.Buttons = [];
-        if (this.IsNoButtons)
+        if (this.IsNoUseButtons())
             return;
 
         switch (this.type)
@@ -896,7 +941,7 @@
     };
     CContentControlTrack.prototype.CalculateComboRect = function(koefX, koefY)
     {
-        if (this.IsNoButtonsIsFillingForm || !this.ComboRect)
+        if (this.IsNoUseButtons() || !this.ComboRect)
             return null;
 
         var rect = {
@@ -1035,34 +1080,34 @@
         }
 
         // ComboRect
-        switch (this.type)
+        if (!this.IsNoUseButtons())
         {
-            case Asc.c_oAscContentControlSpecificType.ComboBox:
-            case Asc.c_oAscContentControlSpecificType.DropDownList:
-            case Asc.c_oAscContentControlSpecificType.DateTime:
+            switch (this.type)
             {
-                if (this.IsNoButtonsIsFillingForm)
-                    break;
-
-                var len = arrY.length;
-                if (len > 0)
+                case Asc.c_oAscContentControlSpecificType.ComboBox:
+                case Asc.c_oAscContentControlSpecificType.DropDownList:
+                case Asc.c_oAscContentControlSpecificType.DateTime:
                 {
-                    this.ComboRect = { X : arrY[len - 1].R, Y : arrY[len - 1].Y, B : arrY[len - 1].Y, Page : arrY[len - 1].Page };
-                    for (i = len - 2; i >= 0; i--)
+                    var len = arrY.length;
+                    if (len > 0)
                     {
-                        if (this.ComboRect.Page != arrY[i].Page || Math.abs(this.ComboRect.X - arrY[i].R) > eps || arrY[i].allX.length > 2)
-                            break;
-                    }
-                    if (i == (len - 1)) i--;
-                    if (i < 0) i = 0;
+                        this.ComboRect = { X : arrY[len - 1].R, Y : arrY[len - 1].Y, B : arrY[len - 1].Y, Page : arrY[len - 1].Page };
+                        for (i = len - 2; i >= 0; i--)
+                        {
+                            if (this.ComboRect.Page != arrY[i].Page || Math.abs(this.ComboRect.X - arrY[i].R) > eps || arrY[i].allX.length > 2)
+                                break;
+                        }
+                        if (i == (len - 1)) i--;
+                        if (i < 0) i = 0;
 
-                    if (i >= 0)
-                        this.ComboRect.Y = arrY[i].Y;
+                        if (i >= 0)
+                            this.ComboRect.Y = arrY[i].Y;
+                    }
+                    break;
                 }
-                break;
+                default:
+                    break;
             }
-            default:
-                break;
         }
 
         if (this.isForm)
@@ -1075,15 +1120,12 @@
                 _polygonDrawer = new CPolygonCC();
                 _polygonDrawer.init(this, AscCommon.g_dKoef_mm_to_pix, 0, 1);
 
-                if (_polygonDrawer.isUseMoveRect)
-                {
-                    _polygonDrawer.moveTo(_geom.R, _geom.Y);
-                    _polygonDrawer.lineTo(_geom.X, _geom.Y);
-                    _polygonDrawer.lineTo(_geom.X, _geom.B);
-                    _polygonDrawer.lineTo(_geom.R, _geom.B);
-                    _polygonDrawer.closePath();
-                    this.formInfo.MoveRectH = _polygonDrawer.rectMove.h;
-                }
+                _polygonDrawer.moveTo(_geom.R, _geom.Y);
+                _polygonDrawer.lineTo(_geom.X, _geom.Y);
+                _polygonDrawer.lineTo(_geom.X, _geom.B);
+                _polygonDrawer.lineTo(_geom.R, _geom.B);
+                _polygonDrawer.closePath();
+                this.formInfo.MoveRectH = _polygonDrawer.rectMove ? _polygonDrawer.rectMove.h : 0;
                 this.formInfo.bounds = _polygonDrawer.bounds;
             }
             else if (this.paths)
@@ -1092,15 +1134,13 @@
 
                 _polygonDrawer = new CPolygonCC();
                 _polygonDrawer.init(this, AscCommon.g_dKoef_mm_to_pix, 0, 1);
-                if (_polygonDrawer.isUseMoveRect)
+
+                for (var pointIndex = 0, pointCount = _geom.Points.length; pointIndex < pointCount; pointIndex++)
                 {
-                    for (var pointIndex = 0, pointCount = _geom.Points.length; pointIndex < pointCount; pointIndex++)
-                    {
-                        _polygonDrawer.lineTo(_geom.Points[pointIndex].X, _geom.Points[pointIndex].Y);
-                    }
-                    _polygonDrawer.closePath();
-                    this.formInfo.MoveRectH = _polygonDrawer.rectMove.h;
+                    _polygonDrawer.lineTo(_geom.Points[pointIndex].X, _geom.Points[pointIndex].Y);
                 }
+                _polygonDrawer.closePath();
+                this.formInfo.MoveRectH = _polygonDrawer.rectMove ? _polygonDrawer.rectMove.h : 0;
                 this.formInfo.bounds = _polygonDrawer.bounds;
             }
         }
@@ -1170,6 +1210,13 @@
         this.ContentControlSmallChangesCheck = { X: 0, Y: 0, Page: 0, Min: 2, IsSmall : true };
 
         this.measures = {};
+
+        this.clearAttack = function()
+        {
+            this.ContentControlObjects = [];
+            this.ContentControlObjectsLast = [];
+            this.ContentControlObjectState = -1;
+        };
 
         this.getFont = function(koef)
         {
@@ -1545,7 +1592,7 @@
                             var widthHeader = widthName + 20 * _object.Buttons.length;
                             var xText = _x;
 
-                            if (!_object.IsNoButtons)
+                            if (_object.IsUseMoveRect())
                             {
                                 widthHeader += 15;
                                 xText += 15;
@@ -1563,7 +1610,7 @@
 								ctx.beginPath();
 
 								// draw mover in header
-								if (!_object.IsNoButtons)
+								if (_object.IsUseMoveRect())
 								{
 									ctx.rect(_x, _y, 15, 20);
 									ctx.fillStyle = (1 == this.ContentControlObjectState) ? AscCommonWord.GlobalSkin.ContentControlsAnchorActive : AscCommonWord.GlobalSkin.ContentControlsBack;
@@ -1650,7 +1697,7 @@
 									ctx.font = this.getFont();
 									ctx.fillText(_object.Name, xText + 3, _y + 20 - 6);
 
-									if (_object.IsNameAdvanced() && !_object.IsNoButtons)
+									if (_object.IsNameAdvanced() && !_object.IsNoUseButtons())
 									{
 										var nY = _y - 0.5;
 										nY += 10;
@@ -1756,7 +1803,7 @@
                             var widthHeader = widthName + scaleX_20 * _object.Buttons.length;
                             var xText = _x;
 
-                            if (!_object.IsNoButtons)
+                            if (_object.IsUseMoveRect())
                             {
                                 widthHeader += scaleX_15;
                                 xText += scaleX_15;
@@ -1807,7 +1854,7 @@
 								ctx.beginPath();
 
 								// draw mover
-								if (!_object.IsNoButtons)
+								if (_object.IsUseMoveRect())
 								{
 									ctx.rect(_x, _y, scaleX_15, scaleY_20);
 									ctx.fillStyle = (1 == this.ContentControlObjectState) ? AscCommonWord.GlobalSkin.ContentControlsAnchorActive : AscCommonWord.GlobalSkin.ContentControlsBack;
@@ -1863,7 +1910,7 @@
 									else
 										ctx.fillStyle = AscCommonWord.GlobalSkin.ContentControlsBack;
 
-									ctx.rect(_x + (_object.IsNoButtons ? 0 : scaleX_15), _y, widthName, scaleY_20);
+									ctx.rect(_x + (_object.IsNoUseButtons() ? 0 : scaleX_15), _y, widthName, scaleY_20);
 									ctx.fill();
 									ctx.beginPath();
 
@@ -1871,7 +1918,7 @@
 									ctx.font = this.getFont(_koefY);
 									ctx.fillText(_object.Name, xText + 3 / _koefX, _y + (20 - 6) / _koefY);
 
-									if (_object.IsNameAdvanced() && !_object.IsNoButtons)
+									if (_object.IsNameAdvanced() && !_object.IsNoUseButtons())
 									{
 										var nY = _y + 9 / _koefY;
 										var nX = xText + widthName - 6 / _koefX;
@@ -2041,7 +2088,7 @@
                 var _object = this.ContentControlObjects[i];
                 if (_object.state == AscCommon.ContentControlTrack.In)
                 {
-                    if (_object.Pos.Page == pos.Page && !_object.IsNoButtons)
+                    if (_object.Pos.Page == pos.Page && !_object.IsNoUseButtons())
                     {
                         // check header
                         var _page = this.document.m_arrPages[_object.Pos.Page];
@@ -2063,8 +2110,8 @@
                         }
 
                         // move
-                        var rectMove = _object.CalculateMoveRect(koefX, koefY);
-                        if (rectMove && xPos > rectMove.X && xPos < (rectMove.X + rectMove.W) && yPos > rectMove.Y && yPos < (rectMove.Y + rectMove.H))
+                        var rectMove = _object.CalculateMoveRect(koefX, koefY, true);
+                        if (rectMove && rectMove.W > 0.001 && xPos > rectMove.X && xPos < (rectMove.X + rectMove.W) && yPos > rectMove.Y && yPos < (rectMove.Y + rectMove.H))
                         {
                             oWordControl.m_oLogicDocument.SelectContentControl(_object.base.GetId());
                             this.ContentControlObjectState = 1;
@@ -2274,7 +2321,7 @@
                 }
             }
 
-            if (_object && !_object.IsNoButtons && pos.Page == _object.Pos.Page)
+            if (_object && !_object.IsNoUseButtons() && pos.Page == _object.Pos.Page)
             {
                 if (1 == this.ContentControlObjectState)
                 {
@@ -2322,8 +2369,8 @@
                 this.ContentControlObjectState = -1;
 
                 // move
-                var rectMove = _object.CalculateMoveRect(koefX, koefY);
-                if (rectMove && xPos > rectMove.X && xPos < (rectMove.X + rectMove.W) && yPos > rectMove.Y && yPos < (rectMove.Y + rectMove.H))
+                var rectMove = _object.CalculateMoveRect(koefX, koefY, true);
+                if (rectMove && rectMove.W > 0.001 && xPos > rectMove.X && xPos < (rectMove.X + rectMove.W) && yPos > rectMove.Y && yPos < (rectMove.Y + rectMove.H))
                 {
                     this.ContentControlObjectState = 0;
                     oWordControl.ShowOverlay();
@@ -2412,7 +2459,7 @@
                     oWordControl.OnUpdateOverlay();
             }
 
-            if (_object && !_object.IsNoButtonsIsFillingForm)
+            if (_object)
             {
                 var _page = this.document.m_arrPages[pos.Page];
                 if (!_page) return false;
