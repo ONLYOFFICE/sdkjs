@@ -1864,6 +1864,17 @@ CInlineLevelSdt.prototype.private_OnAddFormPr = function()
 {
 	this.Recalc_RunsCompiledPr();
 };
+CInlineLevelSdt.prototype.UpdatePlaceHolderTextPrForForm = function()
+{
+	if (this.IsPlaceHolder() && this.IsForm() && this.Pr.TextPr)
+	{
+		for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
+		{
+			if (this.Content[nIndex] instanceof ParaRun)
+				this.Content[nIndex].SetPr(this.Pr.TextPr.Copy());
+		}
+	}
+};
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
