@@ -5627,7 +5627,7 @@
 				return result;
 			},
 
-			isPartFilterRightRange: function (range) {
+			isPartFilterRightRange: function (range, checkFirstCol) {
 				var worksheet = this.worksheet;
 				var result = false;
 
@@ -5636,7 +5636,9 @@
 					var allColRef = new Asc.Range(range.c1, range.r1, AscCommon.gc_nMaxCol0, range.r2);
 
 					if (allColRef.intersection(ref) && !allColRef.containsRange(ref)) {
-						result = true;
+						if (!checkFirstCol || (checkFirstCol && (allColRef.c1 <= ref.c1 || allColRef.r1 <= ref.r1))) {
+							result = true;
+						}
 					}
 
 				}
