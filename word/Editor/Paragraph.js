@@ -2376,7 +2376,8 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 
 					if (sValue)
 					{
-						pGraphics.AddHyperlink(_l, _t, _r - _l, _b - _t, sValue, sValue);
+						var _sValue = sAnchor ? sValue + "#" + sAnchor : sValue;
+						pGraphics.AddHyperlink(_l, _t, _r - _l, _b - _t, _sValue, _sValue);
 					}
 					else if (sAnchor)
 					{
