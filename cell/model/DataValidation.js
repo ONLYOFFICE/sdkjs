@@ -1076,7 +1076,9 @@
 		for (var i = 0; i < this.elems.length; i++) {
 			var isUpdate = this.elems[i].shift(bInsert, type, updateRange);
 			if (isUpdate === -1) {
-				this.delete(ws, this.elems[i].Id, addToHistory);
+				if (this.delete(ws, this.elems[i].Id, addToHistory)) {
+					i--;
+				}
 			} else if (isUpdate) {
 				var to = this.elems[i].clone();
 				to.ranges = isUpdate;
@@ -1107,18 +1109,20 @@
 	};
 
 	CDataValidations.prototype.delete = function (ws, id, addToHistory) {
-		var from;
+		var deleteElem;
 		for (var i = 0; i < this.elems.length; i++) {
 			if (this.elems[i].Id === id) {
-				from = this.elems[i];
+				deleteElem = this.elems[i];
 				this.elems.splice(i, 1);
 			}
 		}
 
-		if (addToHistory) {
+		if (addToHistory && deleteElem) {
 			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_DataValidationDelete, ws.getId(), null,
-				new AscCommonExcel.UndoRedoData_DataValidation(from.Id, from, null));
+				new AscCommonExcel.UndoRedoData_DataValidation(deleteElem.Id, deleteElem, null));
 		}
+
+		return deleteElem;
 	};
 
 	CDataValidations.prototype.getById = function (id) {
@@ -1331,7 +1335,9 @@
 	CDataValidations.prototype.clear = function (ws, ranges, addToHistory) {
 		for (var i = 0; i < this.elems.length; i++) {
 			if (this._containRanges(this.elems[i].ranges, ranges)) {
-				this.delete(ws, this.elems[i].Id, addToHistory);
+				if (this.delete(ws, this.elems[i].Id, addToHistory)) {
+					i--;
+				}
 			} else {
 				var changedRanges = this.elems[i].clear(ranges);
 				if (changedRanges) {

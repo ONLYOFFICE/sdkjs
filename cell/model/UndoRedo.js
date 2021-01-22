@@ -2549,7 +2549,7 @@ function (window, undefined) {
 			worksheetView = wb.oApi.wb.getWorksheetById(nSheetId);
 			worksheetView.cellCommentator.updateCommentsDependencies(bInsert, operType, range);
 
-			ws.shiftDataValidation(bInsert, operType, range);
+			//ws.shiftDataValidation(bInsert, operType, range);
 		} else if (AscCH.historyitem_Worksheet_AddCols == Type || AscCH.historyitem_Worksheet_RemoveCols == Type) {
 			from = Data.from;
 			to = Data.to;
@@ -2587,7 +2587,7 @@ function (window, undefined) {
 			worksheetView = wb.oApi.wb.getWorksheetById(nSheetId);
 			worksheetView.cellCommentator.updateCommentsDependencies(bInsert, operType, range);
 
-			ws.shiftDataValidation(bInsert, operType, range)
+			//ws.shiftDataValidation(bInsert, operType, range)
 		} else if (AscCH.historyitem_Worksheet_ShiftCellsLeft == Type ||
 			AscCH.historyitem_Worksheet_ShiftCellsRight == Type) {
 			r1 = Data.r1;
