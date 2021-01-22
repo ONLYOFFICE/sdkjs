@@ -10016,6 +10016,11 @@
 		if(History.Is_On() && oRes.oldVal != oRes.newVal)
 			History.Add(AscCommonExcel.g_oUndoRedoCell, AscCH.historyitem_Cell_Angle, this.ws.getId(), new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new UndoRedoData_CellSimpleData(this.nRow, this.nCol, oRes.oldVal, oRes.newVal));
 	};
+	Cell.prototype.setIndent=function(val){
+		var oRes = this.ws.workbook.oStyleManager.setIndent(this, val);
+		if(History.Is_On() && oRes.oldVal != oRes.newVal)
+			History.Add(AscCommonExcel.g_oUndoRedoCell, AscCH.historyitem_Cell_Indent, this.ws.getId(), new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new UndoRedoData_CellSimpleData(this.nRow, this.nCol, oRes.oldVal, oRes.newVal));
+	};
 	Cell.prototype.setQuotePrefix=function(val){
 		var oRes = this.ws.workbook.oStyleManager.setQuotePrefix(this, val);
 		if(History.Is_On() && oRes.oldVal != oRes.newVal)
@@ -12555,6 +12560,26 @@
 						  function(cell){
 							  cell.setAngle(val);
 						  });
+	};
+	Range.prototype.setIndent = function (val) {
+		History.Create_NewPoint();
+		this.createCellOnRowColCross();
+		var fSetProperty = this._setProperty;
+		var nRangeType = this._getRangeType();
+		if (c_oRangeType.All == nRangeType) {
+			this.worksheet.getAllCol().setAngle(val);
+			fSetProperty = this._setPropertyNoEmpty;
+		}
+		fSetProperty.call(this, function (row) {
+			if (c_oRangeType.All == nRangeType && null == row.xfs) {
+				return;
+			}
+			row.setIndent(val);
+		}, function (col) {
+			col.setIndent(val);
+		}, function (cell) {
+			cell.setIndent(val);
+		});
 	};
 	Range.prototype.setType=function(type){
 		History.Create_NewPoint();

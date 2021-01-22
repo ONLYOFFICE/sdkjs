@@ -114,6 +114,7 @@ function (window, undefined) {
 	window['AscCH'].historyitem_RowCol_SetStyle = 18;
 	window['AscCH'].historyitem_RowCol_SetCellStyle = 19;
 	window['AscCH'].historyitem_RowCol_Num = 20;
+	window['AscCH'].historyitem_RowCol_Indent = 21;
 
 	window['AscCH'].historyitem_Cell_Fontname = 1;
 	window['AscCH'].historyitem_Cell_Fontsize = 2;
@@ -140,6 +141,7 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Cell_Num = 24;
 	window['AscCH'].historyitem_Cell_SetPivotButton = 25;
 	window['AscCH'].historyitem_Cell_RemoveSharedFormula = 26;
+	window['AscCH'].historyitem_Cell_Indent = 27;
 
 	window['AscCH'].historyitem_Comment_Add = 1;
 	window['AscCH'].historyitem_Comment_Remove = 2;

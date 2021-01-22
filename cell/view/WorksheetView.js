@@ -5969,21 +5969,17 @@
 
 		if (indent && AscCommon.align_Distributed === alignH) {
 			maxW -= 2 * indent * 3 * this.defaultSpaceWidth;
-		} else if (AscCommon.align_Right === alignH) {
-			maxW += indent * 3 * this.defaultSpaceWidth + 1;
-		} else if (AscCommon.align_Left === alignH) {
-			maxW += indent * 3 * this.defaultSpaceWidth;
 		}
 
-        tm = this._roundTextMetrics(this.stringRender.measureString(str, fl, maxW));
+		tm = this._roundTextMetrics(this.stringRender.measureString(str, fl, maxW));
 
-        /*if (indent) {
+		if (indent) {
 			if (AscCommon.align_Right === alignH) {
 				tm.width += indent * 3 * this.defaultSpaceWidth + 1;
 			} else if (AscCommon.align_Left === alignH) {
 				tm.width += indent * 3 * this.defaultSpaceWidth;
 			}
-		}*/
+		}
 
         var cto = (mergeType || fl.wrapText || fl.shrinkToFit) ? {
             maxWidth: maxW - this._getColumnWidthInner(col) + this._getColumnWidth(col), leftSide: 0, rightSide: 0
@@ -10702,6 +10698,9 @@
                     case "angle":
                         range.setAngle(val);
                         break;
+					case "indent":
+						range.setIndent(val);
+						break;
                     case "rh":
                         range.removeHyperlink(null, true);
                         break;

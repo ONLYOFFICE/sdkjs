@@ -2347,6 +2347,8 @@ function (window, undefined) {
 				cell.setNum(Val);
 			} else if (AscCH.historyitem_Cell_Angle == Type) {
 				cell.setAngle(Val);
+			} else if (AscCH.historyitem_Cell_Indent == Type) {
+				cell.setIndent(Val);
 			} else if (AscCH.historyitem_Cell_ChangeArrayValueFormat == Type) {
 				var multiText = [];
 				for (var i = 0, length = Val.length; i < length; ++i) {
@@ -3145,6 +3147,8 @@ function (window, undefined) {
 				row.setStyle(Val);
 			} else if (AscCH.historyitem_RowCol_SetCellStyle == Type) {
 				row.setCellStyle(Val);
+			} else if (AscCH.historyitem_RowCol_Indent == Type) {
+				row.setIndent(Val);
 			}
 		}
 

@@ -3577,6 +3577,10 @@ StyleManager.prototype =
 			return AscCommonExcel.angleFormatToInterface2(this.angle);
 		}, Align.prototype.setAngle);
     },
+	setIndent : function(oItemWithXfs, val)
+	{
+		return this._setAlignProperty(oItemWithXfs, val, "indent", Align.prototype.getIndent, Align.prototype.setIndent);
+	},
 	_initXf: function(oItemWithXfs){
 		var xfs = oItemWithXfs.xfs;
 		if (!xfs) {
@@ -4397,6 +4401,13 @@ StyleManager.prototype =
 				this._getUpdateRange(), new UndoRedoData_IndexSimpleProp(this.index, false, oRes.oldVal, oRes.newVal));
 		}
 	};
+	Col.prototype.setIndent = function (val) {
+		var oRes = this.ws.workbook.oStyleManager.setIndent(this, val);
+		if (History.Is_On() && oRes.oldVal != oRes.newVal) {
+			History.Add(AscCommonExcel.g_oUndoRedoCol, AscCH.historyitem_RowCol_Indent, this.ws.getId(),
+				this._getUpdateRange(), new UndoRedoData_IndexSimpleProp(this.index, false, oRes.oldVal, oRes.newVal));
+		}
+	};
 	Col.prototype.setHidden = function (val) {
 		if (this.index >= 0 && (!this.hd !== !val)) {
 			this.ws.hiddenManager.addHidden(false, this.index);
@@ -4772,6 +4783,13 @@ StyleManager.prototype =
 		var oRes = this.ws.workbook.oStyleManager.setAngle(this, val);
 		if (History.Is_On() && oRes.oldVal != oRes.newVal) {
 			History.Add(AscCommonExcel.g_oUndoRedoRow, AscCH.historyitem_RowCol_Angle, this.ws.getId(),
+				this._getUpdateRange(), new UndoRedoData_IndexSimpleProp(this.index, true, oRes.oldVal, oRes.newVal));
+		}
+	};
+	Row.prototype.setIndent = function (val) {
+		var oRes = this.ws.workbook.oStyleManager.setIndent(this, val);
+		if (History.Is_On() && oRes.oldVal != oRes.newVal) {
+			History.Add(AscCommonExcel.g_oUndoRedoRow, AscCH.historyitem_RowCol_Indent, this.ws.getId(),
 				this._getUpdateRange(), new UndoRedoData_IndexSimpleProp(this.index, true, oRes.oldVal, oRes.newVal));
 		}
 	};
