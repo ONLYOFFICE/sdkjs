@@ -23875,6 +23875,8 @@ CDocument.prototype.ClearAllSpecialForms = function()
 		oForm.SkipSpecialContentControlLock(true);
 	}
 
+	var oCurrentForm = this.GetSelectedElementsInfo().GetForm();
+
 	if (!this.IsSelectionLocked(AscCommon.changestype_None, {
 		Type      : changestype_2_ElementsArray_and_Type,
 		Elements  : arrParagraphs,
@@ -23883,9 +23885,16 @@ CDocument.prototype.ClearAllSpecialForms = function()
 	{
 		this.StartAction(AscDFH.historydescription_Document_ClearAllSpecialForms);
 
+		if (oCurrentForm)
+			this.RemoveSelection();
+
 		for (var sId in this.SpecialForms)
 		{
 			var oForm = this.SpecialForms[sId];
+
+			if (!oCurrentForm && oForm.Is_UseInDocument())
+				oCurrentForm = oForm;
+
 			if (oForm.IsCheckBox())
 			{
 				oForm.SetCheckBoxChecked(false);
@@ -23900,6 +23909,9 @@ CDocument.prototype.ClearAllSpecialForms = function()
 				oForm.ReplaceContentWithPlaceHolder();
 			}
 		}
+
+		if (oCurrentForm)
+			oCurrentForm.SelectContentControl();
 
 		this.Recalculate();
 		this.UpdateInterface();
