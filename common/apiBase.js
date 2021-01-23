@@ -2723,6 +2723,17 @@
 		return new Date().getTime() - this.lastWorkTime;
 	};
 
+	baseEditorsApi.prototype.checkInterfaceElementBlur = function()
+	{
+		if (!document.activeElement || !document.createEvent || (document.activeElement.id === "area_id"))
+			return;
+
+        var e = document.createEvent("HTMLEvents");
+        e.initEvent("blur", true, true);
+        e.eventName = "blur";
+        document.activeElement.dispatchEvent(e);
+	};
+
 	baseEditorsApi.prototype.checkLastWork = function()
 	{
 		this.lastWorkTime = new Date().getTime();
