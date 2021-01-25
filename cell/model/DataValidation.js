@@ -965,6 +965,9 @@
 				if (!_isNum) {
 					_val = _formula.text = _val.slice(1, -1);
 					_isNum = isNum(_val);
+					if (!_isNum) {
+						_val = _formula.text = _val.replace(/\"\"/g, "\"");
+					}
 				}
 
 				if (_isNum) {
@@ -1002,7 +1005,8 @@
 		var addQuotes = function (_val) {
 			var _res;
 			if (_val[0] === '"') {
-				_res = _val.replace(/(")/g, "\"$1");
+				_res = _val.replace(/\"/g, "\"\"");
+				_res = "\"" + _res + "\"";
 			} else {
 				_res = "\"" + _val + "\"";
 			}
