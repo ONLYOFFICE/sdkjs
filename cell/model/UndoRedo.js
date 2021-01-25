@@ -2998,6 +2998,7 @@ function (window, undefined) {
 				}
 
 				ws.addDataValidation(_dataValidation);
+				_dataValidation._init(ws);
 			}
 		} else if (AscCH.historyitem_Worksheet_DataValidationChange === Type) {
 			var dataValidationTo = bUndo ? Data.from : Data.to;
