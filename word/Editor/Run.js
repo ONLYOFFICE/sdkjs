@@ -12445,13 +12445,15 @@ ParaRun.prototype.private_ProcessFrenchPunctuation = function(oDocument, oParagr
  */
 ParaRun.prototype.private_ProcessHyperlinkAutoCorrect = function(oDocument, oParagraph, oContentPos, nPos, oRunElementsBefore, sText)
 {
+	var isPresentation = !!(AscCommonSlide.CPresentation && oDocument instanceof AscCommonSlide.CPresentation);
+
 	if (this.IsInHyperlink())
 		return false;
 
 	var nTypeHyper = AscCommon.getUrlType(sText);
 	if (AscCommon.c_oAscUrlType.Invalid !== nTypeHyper)
 	{
-		if ((oDocument instanceof CPresentation) || !oDocument.IsSelectionLocked({
+		if (isPresentation || !oDocument.IsSelectionLocked({
 			Type      : AscCommon.changestype_2_ElementsArray_and_Type,
 			Elements  : [oParagraph],
 			CheckType : AscCommon.changestype_Paragraph_Properties
@@ -12459,23 +12461,25 @@ ParaRun.prototype.private_ProcessHyperlinkAutoCorrect = function(oDocument, oPar
 		{
 			oDocument.StartAction(AscDFH.historydescription_Document_AutomaticListAsType);
 			var oTopElement;
-			if((oDocument instanceof CPresentation))
+
+			if (isPresentation)
 			{
-				var oParentConent = oParagraph.Parent;
-				var oTable = oParentConent.IsInTable(true);
-				if(oTable)
+				var oParentContent = oParagraph.Parent;
+				var oTable         = oParentContent.IsInTable(true);
+				if (oTable)
 				{
 					oTopElement = oTable;
 				}
 				else
 				{
-					oTopElement = oParentConent;
+					oTopElement = oParentContent;
 				}
 			}
 			else
 			{
 				oTopElement = oDocument;
 			}
+
 			var arrContentPosition = oRunElementsBefore.GetContentPositions();
 			var oStartPos = arrContentPosition.length > 0 ? arrContentPosition[arrContentPosition.length - 1] : oRunElementsBefore.CurContentPos;
 			var oEndPos   = oContentPos;

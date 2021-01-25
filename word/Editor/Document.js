@@ -26544,9 +26544,12 @@ CDocumentLineNumbersInfo.prototype.private_Update = function()
 };
 
 //-------------------------------------------------------------export---------------------------------------------------
-window['Asc'] = window['Asc'] || {};
-window['AscCommon'] = window['AscCommon'] || {};
-window['AscCommonWord'] = window['AscCommonWord'] || {};
+window['Asc']            = window['Asc'] || {};
+window['AscCommon']      = window['AscCommon'] || {};
+window['AscCommonWord']  = window['AscCommonWord'] || {};
+window['AscCommonSlide'] = window['AscCommonSlide'] || {};
+window['AscCommonExcel'] = window['AscCommonExcel'] || {};
+
 window['AscCommonWord'].CDocument = CDocument;
 window['AscCommonWord'].docpostype_Content        = docpostype_Content;
 window['AscCommonWord'].docpostype_HdrFtr         = docpostype_HdrFtr;
