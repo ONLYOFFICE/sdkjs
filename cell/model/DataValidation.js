@@ -998,6 +998,17 @@
 
 	CDataValidation.prototype.correctFromInterface = function (ws) {
 		var t = this;
+
+		var addQuotes = function (_val) {
+			var _res;
+			if (_val[0] === '"') {
+				_res = _val.replace(/(")/g, "\"$1");
+			} else {
+				_res = "\"" + _val + "\"";
+			}
+			return _res;
+		};
+
 		var doCorrect = function (_formula) {
 			var _val = _formula.text;
 			var isNumeric = isNum(_val);
@@ -1034,7 +1045,7 @@
 				}
 
 				if (!isFormula) {
-					_formula.text = '"' + _formula.text + '"';
+					_formula.text = addQuotes(_formula.text);
 				}
 			}
 		};
