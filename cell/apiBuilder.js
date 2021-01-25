@@ -524,6 +524,27 @@
 		return resultList;
 	};
 
+	Api.prototype.testFormulas = function() {
+		var formulas = this.wbModel.getAllFormulas();
+		for (var i = 0; i < formulas.length; ++i) {
+			var formula = formulas[i];
+			var sOldFormula = formula.Formula;
+			formula.setFormula(formula.getFormula());
+			formula.parse();
+			//formula.calculate();
+			var sNewFormula = formula.assemble();
+			if (sOldFormula !== sNewFormula) {
+				//error
+
+				//formula.ws.sName
+				//formula.parent.nCol
+				//formula.parent.nRow
+				//sOldFormula
+				//sNewFormula
+			}
+		}
+	};
+
 	/**
 	 * Returns Visible of sheet
 	 * @memberof ApiWorksheet
