@@ -524,6 +524,30 @@
 		return resultList;
 	};
 
+	Api.prototype.TestAllFormulas = function(fCallback) {
+		var formulas = this.wbModel.getAllFormulas();
+		for (var i = 0; i < formulas.length; ++i) {
+			var formula = formulas[i];
+			formula.setFormula(formula.getFormula());
+			formula.parse();
+			var formulaRes = formula.calculate();
+			var oldValue = formulaRes.getValue();
+			var cell = formula.ws.getCell3(formula.parent.nRow, formula.parent.nCol);
+			var newValue = cell.getValue();
+			if (oldValue != newValue) {
+				//error
+				fCallback({
+					sheet: formula.ws.sName,
+					r: formula.parent.nRow,
+					c: formula.parent.nCol,
+					f: formula.Formula,
+					oldValue: oldValue,
+					newValue: newValue
+				});
+			}
+		}
+	};
+
 	/**
 	 * Returns Visible of sheet
 	 * @memberof ApiWorksheet
@@ -2943,6 +2967,8 @@
 	Api.prototype["GetMailMergeData"]      = Api.prototype.GetMailMergeData;
 	
 	Api.prototype["GetRange"] = Api.prototype.GetRange;
+
+	Api.prototype["TestAllFormulas"] = Api.prototype.TestAllFormulas;
 
 	ApiWorksheet.prototype["GetVisible"] = ApiWorksheet.prototype.GetVisible;
 	ApiWorksheet.prototype["SetVisible"] = ApiWorksheet.prototype.SetVisible;
