@@ -528,14 +528,14 @@
 		var formulas = this.wbModel.getAllFormulas();
 		for (var i = 0; i < formulas.length; ++i) {
 			var formula = formulas[i];
+			var cell = formula.ws.getCell3(formula.parent.nRow, formula.parent.nCol);
+			var oldValue = cell.getValue();
 			formula.setFormula(formula.getFormula());
 			formula.parse();
 			var formulaRes = formula.calculate();
+			var newValue = formulaRes.getValue();
 
 			if (fLogger) {
-				var oldValue = formulaRes.getValue();
-				var cell = formula.ws.getCell3(formula.parent.nRow, formula.parent.nCol);
-				var newValue = cell.getValue();
 				if (oldValue != newValue) {
 					//error
 					fLogger({
