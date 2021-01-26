@@ -542,13 +542,16 @@
 
 			return _val;
 		};
-		if (this.operator === EDataValidationOperator.Between || this.operator === EDataValidationOperator.NotBetween) {
-			if (this.formula1 && this.formula2) {
-				var nFormula1 = _getNumber(this.formula1.text);
-				var nFormula2 = _getNumber(this.formula2.text);
 
-				if (nFormula1 !== null && nFormula2 !== null && nFormula2 < nFormula1) {
-					return Asc.c_oAscError.ID.DataValidateMinGreaterMax;
+		if (this.type !== EDataValidationType.Custom && this.type !== EDataValidationType.List) {
+			if (this.operator === EDataValidationOperator.Between || this.operator === EDataValidationOperator.NotBetween) {
+				if (this.formula1 && this.formula2) {
+					var nFormula1 = _getNumber(this.formula1.text);
+					var nFormula2 = _getNumber(this.formula2.text);
+
+					if (nFormula1 !== null && nFormula2 !== null && nFormula2 < nFormula1) {
+						return Asc.c_oAscError.ID.DataValidateMinGreaterMax;
+					}
 				}
 			}
 		}
