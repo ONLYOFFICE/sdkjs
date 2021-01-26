@@ -463,7 +463,12 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 
 	// Тут может быть как CDocumentColor так и Asc.asc_CColor
 	if (undefined !== this.Color)
-		oContentControl.SetColor(new CDocumentColor(this.Color.r, this.Color.g, this.Color.b));
+	{
+		if (!this.Color)
+			oContentControl.SetColor(undefined);
+		else
+			oContentControl.SetColor(new CDocumentColor(this.Color.r, this.Color.g, this.Color.b));
+	}
 
 	if (undefined !== this.CheckBoxPr)
 	{
