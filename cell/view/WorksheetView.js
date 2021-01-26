@@ -11252,10 +11252,10 @@
 		}
 		
 		//data validation
-		if (specialPasteProps.val) {
+		if (specialPasteProps.val && specialPasteProps.format) {
 			t.model.clearDataValidation([pasteToRange], true);
 		}
-		if (fromBinary && val.dataValidations && val.dataValidations.elems.length && specialPasteProps.val) {
+		if (fromBinary && val.dataValidations && val.dataValidations.elems.length && specialPasteProps.val && specialPasteProps.format) {
 			var _offset = new AscCommon.CellBase(arnToRange.r1 - refInsertBinary.r1, arnToRange.c1 - refInsertBinary.c1);
 			for (i = 0; i < val.dataValidations.elems.length; i++) {
 				var dataValidation = val.dataValidations.elems[i];
