@@ -1311,6 +1311,10 @@ CSdtTextFormPr.prototype.SetAscCombBorder = function(oAscBorder)
 		this.CombBorder.Set_FromObject(oAscBorder);
 	}
 };
+CSdtTextFormPr.prototype.IsComb = function()
+{
+	return !!(this.Comb && undefined !== this.MaxCharacters && this.MaxCharacters <= 1000);
+};
 
 function CSdtFormPr(sKey, sLabel, sHelpText, isRequired)
 {

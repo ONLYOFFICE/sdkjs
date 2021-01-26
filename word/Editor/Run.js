@@ -1444,7 +1444,7 @@ ParaRun.prototype.GetLogicDocument = function()
 // Добавляем элемент в позицию с сохранием в историю
 ParaRun.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
 {
-	if (this.GetTextForm() && this.GetTextForm().Comb)
+	if (this.GetTextForm() && this.GetTextForm().IsComb())
 		this.RecalcInfo.Measure = true;
 
 	this.CheckParentFormKey();
@@ -1523,7 +1523,7 @@ ParaRun.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
 
 ParaRun.prototype.Remove_FromContent = function(Pos, Count, UpdatePosition)
 {
-	if (this.GetTextForm() && this.GetTextForm().Comb)
+	if (this.GetTextForm() && this.GetTextForm().IsComb())
 		this.RecalcInfo.Measure = true;
 
 	this.CheckParentFormKey();
@@ -2939,7 +2939,7 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 	var nMaxComb   = -1;
 	var nCombWidth = null;
 	var oTextForm  = this.GetTextForm();
-	if (oTextForm && oTextForm.Comb)
+	if (oTextForm && oTextForm.IsComb())
 	{
 		nMaxComb = oTextForm.MaxCharacters;
 
@@ -6222,7 +6222,7 @@ ParaRun.prototype.Draw_Lines = function(PDSL)
     var aDUnderline = PDSL.DUnderline;
     var aCombForms  = PDSL.CombForms;
 
-    var oCombBorder = this.GetTextForm() && this.GetTextForm().Comb && this.GetTextForm().GetCombBorder() ? this.GetTextForm().GetCombBorder() : null;
+    var oCombBorder = this.GetTextForm() && this.GetTextForm().IsComb() && this.GetTextForm().GetCombBorder() ? this.GetTextForm().GetCombBorder() : null;
 
     var CurTextPr = this.Get_CompiledPr( false );
     var StrikeoutY = Y - this.YOffset;
