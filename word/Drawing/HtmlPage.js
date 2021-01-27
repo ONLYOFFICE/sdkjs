@@ -1576,7 +1576,7 @@ function CEditorPage(api)
 
 	this.onMouseDown = function(e, isTouch)
 	{
-        oThis.m_oApi.checkInterfaceElementBlur();
+		oThis.m_oApi.checkInterfaceElementBlur();
 		oThis.m_oApi.checkLastWork();
 
 		//console.log("down: " + isTouch + ", " + AscCommon.isTouch);
