@@ -2231,12 +2231,12 @@ background-repeat: no-repeat;\
 	{
 	    if (AscCommon.CollaborativeEditing.Get_GlobalLock())
 	        return;
-
+	    
 		var _logicDoc = this.WordControl.m_oLogicDocument;
 		if (!_logicDoc)
 			return;
 
-		if (false === _logicDoc.Document_Is_SelectionLocked(changestype_Paragraph_Content, null, true, false))
+		if (false === _logicDoc.IsSelectionLocked(changestype_Paragraph_Content, null, true, _logicDoc.IsFormFieldEditing()))
 		{
 			window['AscCommon'].g_specialPasteHelper.Paste_Process_Start(arguments[5]);
 			
