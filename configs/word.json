@@ -219,7 +219,9 @@
 			"common/text_input.js",
 			"common/Drawings/Format/OleObject.js",
 			"common/Drawings/Format/DrawingContent.js",
-			"common/plugins.js"
+			"common/plugins.js",
+			
+			"common/Native/native_graphics.js"
 		],
 		"desktop": {
 			"min": [
