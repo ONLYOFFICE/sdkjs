@@ -951,6 +951,53 @@
 		return null;*/
 	};
 
+	CConditionalFormattingRule.prototype.asc_checkScope = function (type, tableId) {
+		var sheet, range;
+		var api_sheet = Asc['editor'];
+		var wb = api_sheet.wbModel;
+
+		switch (type) {
+			case Asc.c_oAscSelectionForCFType.selection:
+				sheet = wb.getActiveWs();
+				// ToDo multiselect
+				range = sheet.selectionRange.getLast();
+				break;
+			case Asc.c_oAscSelectionForCFType.worksheet:
+				break;
+			case Asc.c_oAscSelectionForCFType.table:
+				var oTable;
+				if (tableId) {
+					oTable = wb.getTableByName(tableId, true);
+					if (oTable) {
+						sheet = wb.aWorksheets[oTable.index];
+						range = oTable.table.Ref;
+					}
+				} else {
+					//this table
+					sheet = wb.getActiveWs();
+					var thisTableIndex = sheet.autoFilters.searchRangeInTableParts(sheet.selectionRange.getLast());
+					if (thisTableIndex >= 0) {
+						range = sheet.TableParts[thisTableIndex].Ref;
+					} else {
+						sheet = null;
+					}
+				}
+				break;
+			case Asc.c_oAscSelectionForCFType.pivot:
+				// ToDo
+				break;
+		}
+
+		if (range) {
+			var multiplyRange = new AscCommonExcel.MultiplyRange(this.ranges);
+			if (multiplyRange.isIntersect(range)) {
+				return true;
+			}
+		}
+
+		return false;
+	};
+
 	function CColorScale() {
 		this.aCFVOs = [];
 		this.aColors = [];
@@ -1913,6 +1960,7 @@
 	prot['asc_setStdDev'] = prot.asc_setStdDev;
 	prot['asc_setValue1'] = prot.asc_setValue1;
 	prot['asc_setValue2'] = prot.asc_setValue2;
+	prot['asc_checkScope'] = prot.asc_checkScope;
 	//prot['asc_setColorScaleOrDataBarOrIconSetRule'] = prot.asc_setColorScaleOrDataBarOrIconSetRule;
 
 

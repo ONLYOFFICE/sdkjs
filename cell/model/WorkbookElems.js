@@ -2995,7 +2995,23 @@ var g_oBorderProperties = {
 	};
 	CellXfs.prototype.asc_getPreview2 = function (api, id, text) {
 		//подготовить текст с форматом
-		return AscCommonExcel.generateXfsStyle2(id, api.wb, this, text);
+		var oldAlign = this.align;
+		var oldAlignHor;
+		if (oldAlign) {
+			oldAlignHor = this.align.hor;
+		} else {
+			this.align = new Align();
+		}
+		this.align.hor = AscCommon.align_Center;
+
+		var res = AscCommonExcel.generateXfsStyle2(id, api.wb, this, text);
+		if (oldAlign) {
+			this.align.hor = oldAlignHor;
+		} else {
+			this.align = null;
+		}
+
+		return res;
 	};
 	CellXfs.prototype.asc_setFillColor = function (val) {
 		//TODO не применяю цвета темы?

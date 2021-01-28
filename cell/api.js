@@ -4888,7 +4888,6 @@ var editor;
 				  sheet = null;
               }
           }
-          // ToDo
           break;
         case Asc.c_oAscSelectionForCFType.pivot:
           // ToDo
@@ -4900,10 +4899,10 @@ var editor;
         });
         if (range) {
           rules = [];
-          var putRange = function (_range) {
+          var putRange = function (_range, _rule) {
             multiplyRange = new AscCommonExcel.MultiplyRange(_range);
             if (multiplyRange.isIntersect(range)) {
-                rules.push(oRule);
+                rules.push(_rule);
             }
           };
           var oRule, ranges, multiplyRange, i, mapChangedRules = [];
@@ -4911,7 +4910,7 @@ var editor;
             for (i = 0; i < aChangedRules.length; ++i) {
                 oRule = aRules[i];
                 ranges = oRule.ranges;
-                putRange(ranges);
+                putRange(ranges, oRule.clone());
                 mapChangedRules[oRule.id] = 1;
             }
           }
@@ -4921,7 +4920,7 @@ var editor;
               continue;
             }
             ranges = oRule.ranges;
-            putRange(ranges);
+            putRange(ranges, oRule.clone());
           }
         } else {
           rules = aRules;

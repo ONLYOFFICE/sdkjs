@@ -2052,9 +2052,13 @@
 
 			format.setSize(nSize);
 
-			var width_padding = 4;
 
 			var tm = sr.measureString(sStyleName);
+			var width_padding = 4;
+			if (oStyle.xfs && oStyle.xfs.align && oStyle.xfs.align.hor === AscCommon.align_Center) {
+				width_padding = Asc.round(0.5 * (width - tm.width));
+			}
+
 			// Текст будем рисовать по центру (в Excel чуть по другому реализовано, у них постоянный отступ снизу)
 			var textY = Asc.round(0.5 * (height - tm.height));
 			ctx.setFont(format);
