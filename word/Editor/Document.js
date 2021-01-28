@@ -23880,7 +23880,7 @@ CDocument.prototype.ClearAllSpecialForms = function()
 		Type      : changestype_2_ElementsArray_and_Type,
 		Elements  : arrParagraphs,
 		CheckType : AscCommon.changestype_Paragraph_Content
-	}, true))
+	}, true, this.IsFillingFormMode()))
 	{
 		this.StartAction(AscDFH.historydescription_Document_ClearAllSpecialForms);
 
