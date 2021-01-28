@@ -2254,16 +2254,13 @@
 			if (!parent)
 				return;
 
-			var canvas = parent.firstChild;
-			var w, h;
-			if (canvas) {
-				w = canvas.width;
-				h = canvas.height;
-			} else {
-				w = parent.clientWidth;
-				h = parent.clientHeight;
+			var w = parent.clientWidth;
+			var h = parent.clientHeight;
+			if (!w || !h) {
+				return;
 			}
 
+			var canvas = parent.firstChild;
 			if (!canvas)
 			{
 				canvas = document.createElement('canvas');
