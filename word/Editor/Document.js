@@ -23907,6 +23907,8 @@ CDocument.prototype.ClearAllSpecialForms = function()
 			{
 				oForm.ReplaceContentWithPlaceHolder();
 			}
+
+			oForm.RemoveSelection();
 		}
 
 		if (oCurrentForm)
