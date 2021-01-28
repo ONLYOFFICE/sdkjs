@@ -2254,10 +2254,16 @@
 			if (!parent)
 				return;
 
-			var w = parent.clientWidth;
-			var h = parent.clientHeight;
-
 			var canvas = parent.firstChild;
+			var w, h;
+			if (canvas) {
+				w = canvas.width;
+				h = canvas.height;
+			} else {
+				w = parent.clientWidth;
+				h = parent.clientHeight;
+			}
+
 			if (!canvas)
 			{
 				canvas = document.createElement('canvas');
@@ -2266,12 +2272,11 @@
 				canvas.style.height = h + "px";
 				parent.appendChild(canvas);
 			}
-
+			
 			canvas.width = AscCommon.AscBrowser.convertToRetinaValue(w, true);
 			canvas.height = AscCommon.AscBrowser.convertToRetinaValue(h, true);
 
 			var ctx = new Asc.DrawingContext({canvas: canvas, units: 0/*px*/, fmgrGraphics: wb.fmgrGraphics, font: wb.m_oFont});
-			var oCanvas = ctx.getCanvas();
 			var graphics = getGraphics(ctx);
 
 			var oStyle = new AscCommonExcel.CCellStyle();
