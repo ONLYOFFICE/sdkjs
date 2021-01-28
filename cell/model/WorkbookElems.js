@@ -3015,8 +3015,11 @@ var g_oBorderProperties = {
 	};
 	CellXfs.prototype.asc_setFillColor = function (val) {
 		//TODO не применяю цвета темы?
-		var fill = new AscCommonExcel.Fill();
-		fill.fromColor(AscCommonExcel.createRgbColor(val.get_r(),val.get_g(),val.get_b()));
+		var fill = null;
+		if (val) {
+			fill = new AscCommonExcel.Fill();
+			fill.fromColor(AscCommonExcel.createRgbColor(val.get_r(),val.get_g(),val.get_b()));
+		}
 		return this.setFill(fill);
 	};
 	CellXfs.prototype.asc_setFill = function (val) {
