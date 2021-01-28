@@ -789,7 +789,7 @@
 			}
 
 			this.ranges.forEach(function (item) {
-				arrResult.push(sheet ? sheet.sName + "!" : "" + item.getAbsName());
+				arrResult.push((sheet ? sheet.sName + "!" : "") + item.getAbsName());
 			});
 		}
 		return [isActive, arrResult.join(AscCommon.FormulaSeparators.functionArgumentSeparator)];
@@ -852,7 +852,10 @@
 		}
 		return null;
 	};
-
+	CConditionalFormattingRule.prototype.asc_getId = function () {
+		return this.id;
+	};
+	
 	CConditionalFormattingRule.prototype.asc_setType = function (val) {
 		this.type = val;
 	};
@@ -1895,6 +1898,7 @@
 	prot['asc_getValue1'] = prot.asc_getValue1;
 	prot['asc_getValue2'] = prot.asc_getValue2;
 	prot['asc_getColorScaleOrDataBarOrIconSetRule'] = prot.asc_getColorScaleOrDataBarOrIconSetRule;
+	prot['asc_getId'] = prot.asc_getId;
 	prot['asc_setDxf'] = prot.asc_setDxf;
 	prot['asc_setType'] = prot.asc_setType;
 	prot['asc_setLocation'] = prot.asc_setLocation;
