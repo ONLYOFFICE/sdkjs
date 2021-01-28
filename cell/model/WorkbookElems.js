@@ -3060,7 +3060,7 @@ var g_oBorderProperties = {
 		if (!this.font) {
 			this.font = new AscCommonExcel.Font();
 		}
-		this.getFont().setUnderline(val);
+		this.getFont().setUnderline(val ? Asc.EUnderline.underlineSingle : Asc.EUnderline.underlineNone);
 	};
 	CellXfs.prototype.asc_setFontStrikeout = function (val) {
 		if (!this.font) {

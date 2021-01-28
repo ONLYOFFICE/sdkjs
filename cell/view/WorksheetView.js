@@ -20877,7 +20877,7 @@
 		}
 		if (deleteIdArr) {
 			for (i = 0; i < deleteIdArr.length; i++) {
-				var oRule = this.getCFRuleById(deleteIdArr[i]);
+				var oRule = this.model.getCFRuleById(deleteIdArr[i]);
 				_selection = _selection.concat(oRule.ranges);
 			}
 		}
