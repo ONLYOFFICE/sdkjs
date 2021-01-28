@@ -14527,16 +14527,43 @@
 					if (dataValidation) {
 						var checkCell, setValueError;
 						checkCell = t.model.getCellForValidation(row, col, val, t._isFormula(val) ? text : null,
-													 function (_res) {
-														 setValueError = !_res;
-													 });
+							function (_res) {
+								setValueError = !_res;
+							});
 						if (setValueError) {
 							// Error sent from another function
 							return false;
 						}
+
+						//если в качестве условия введена формула, необходимо чтобы данные временно были в ячейке
+						//поскольку формула может ссылаться на данную ячейку
+						//TODO нужно ещё записываться введенные формулы! пока только значения!
+						var oldValueData;
+						var temporarySetValue = function (_val) {
+							if (Asc.EDataValidationType.Custom === dataValidation.type) {
+								c._foreach(function(cell){
+									if (cell.nCol === col && cell.nRow === row) {
+										if (_val) {
+											//temporary set
+											oldValueData = cell.getValueData();
+											cell._setValueData(_val.value);
+										} else {
+											//revert
+											cell._setValueData(oldValueData.value);
+											cell._hasChanged = false;
+										}
+									}
+								});
+							}
+						};
+
+						temporarySetValue(checkCell.getValueData());
 						if (!dataValidation.checkValue(checkCell, t.model)) {
 							t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.DataValidate, c_oAscError.Level.NoCritical, dataValidation);
+							temporarySetValue();
 							return false;
+						} else {
+							temporarySetValue();
 						}
 					}
 
