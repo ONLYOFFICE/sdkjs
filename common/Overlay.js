@@ -1176,12 +1176,12 @@ CAutoshapeTrack.prototype =
                             var _image_track_rotate = overlay.GetImageTrackRotationImage();
                             if (_image_track_rotate.asc_complete)
                             {
-                                overlay.CheckRect(_xI, _yI, _w, _w);
                                 var _w = Math.round(ROTATE_TRACK_W * rPR),
+                                    _xI = (xC + indent - _w / 2) >> 0,
                                     _yI = y1 - Math.round(TRACK_DISTANCE_ROTATE * rPR),
                                     radius = Math.round(6 * rPR);
 
-                                // ctx.beginPath();
+                                overlay.CheckRect(_xI, _yI - radius * 2, _w, _w);
                                 ctx.fillStyle = "#939393";
 
                                 overlay.drawArrow(ctx, xC - Math.round(12.5 * rPR), _yI - Math.round(4.5 * rPR), Math.round(4 * rPR), {r: 147, g: 147, b: 147}, true);
@@ -1466,7 +1466,7 @@ CAutoshapeTrack.prototype =
 						if (!nIsCleverWithTransform)
 						{
 							ctx.moveTo(xc1, yc1);
-							ctx.lineTo(xc1 + ex2 * TRACK_DISTANCE_ROTATE2 * rPR, yc1 + ey2 * TRACK_DISTANCE_ROTATE2 * rPR);
+							ctx.lineTo(xc1 + ex2 * (TRACK_DISTANCE_ROTATE2 * rPR + Math.round(rPR)), yc1 + ey2 * (TRACK_DISTANCE_ROTATE2 * rPR + Math.round(rPR)));
 						}
 						else
 						{
@@ -1611,12 +1611,13 @@ CAutoshapeTrack.prototype =
                             var _image_track_rotate = overlay.GetImageTrackRotationImage();
                             if (_image_track_rotate.asc_complete)
                             {
-                                overlay.CheckRect(_xI, _yI, _w, _w);
                                 var _w = Math.round(ROTATE_TRACK_W * rPR),
+                                    _xI = (xC + indent - _w / 2) >> 0,
                                     _yI = y1 - Math.round(TRACK_DISTANCE_ROTATE * rPR),
                                     radius = Math.round(6 * rPR);
 
-                                // ctx.beginPath();
+                                overlay.CheckRect(_xI, _yI - radius * 2, _w, _w);
+
                                 ctx.fillStyle = "#939393";
 
                                 overlay.drawArrow(ctx, xC - Math.round(12.5 * rPR), _yI - Math.round(4.5 * rPR), Math.round(4 * rPR), {r: 147, g: 147, b: 147}, true);
@@ -1881,7 +1882,7 @@ CAutoshapeTrack.prototype =
 						if (!nIsCleverWithTransform)
 						{
 							ctx.moveTo(xc1, yc1);
-							ctx.lineTo(xc1 + ex2 * TRACK_DISTANCE_ROTATE2 * rPR, yc1 + ey2 * TRACK_DISTANCE_ROTATE2 * rPR);
+							ctx.lineTo(xc1 + ex2 * (TRACK_DISTANCE_ROTATE2 * rPR + Math.round(rPR)), yc1 + ey2 * (TRACK_DISTANCE_ROTATE2 * rPR + Math.round(rPR)));
 						}
 						else
 						{
