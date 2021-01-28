@@ -1458,11 +1458,13 @@ CComplexField.prototype.GetInstruction = function()
 };
 CComplexField.prototype.private_UpdateInstruction = function()
 {
-	if (!this.Instruction && this.InstructionLine)
+	if (this.InstructionLine &&
+		(!this.Instruction || !this.Instruction.CheckInstructionLine(this.InstructionLine)))
 	{
 		var oParser = new CFieldInstructionParser();
 		this.Instruction = oParser.GetInstructionClass(this.InstructionLine);
 		this.Instruction.SetComplexField(this);
+		this.Instruction.SetInstructionLine(this.InstructionLine);
 	}
 };
 CComplexField.prototype.private_CheckNestedComplexFields = function()

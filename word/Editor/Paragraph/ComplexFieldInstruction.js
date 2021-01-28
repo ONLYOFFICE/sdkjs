@@ -87,7 +87,8 @@ window['AscCommonWord'].fieldtype_NOTEREF    = fieldtype_NOTEREF;
  */
 function CFieldInstructionBase()
 {
-	this.ComplexField = null;
+	this.ComplexField    = null;
+	this.InstructionLine = "";
 }
 CFieldInstructionBase.prototype.Type = fieldtype_UNKNOWN;
 CFieldInstructionBase.prototype.GetType = function()
@@ -108,6 +109,14 @@ CFieldInstructionBase.prototype.ToString = function()
 };
 CFieldInstructionBase.prototype.SetPr = function()
 {
+};
+CFieldInstructionBase.prototype.SetInstructionLine = function(sLine)
+{
+	this.InstructionLine = sLine;
+};
+CFieldInstructionBase.prototype.CheckInstructionLine = function(sLine)
+{
+	return (this.InstructionLine === sLine);
 };
 /**
 * FORMULA field
