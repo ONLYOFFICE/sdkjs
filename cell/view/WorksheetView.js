@@ -20644,10 +20644,6 @@
 			//set menu object
 			var autoFilterObject = new Asc.AutoFiltersOptions();
 
-			if (!checkFilterItems(val)) {
-				checkFilterItems(val, true);
-			}
-
 			autoFilterObject.asc_setCellId(cellId);
 			autoFilterObject.asc_setValues(val);
 			autoFilterObject.asc_setFilterObj(filterObj);
@@ -20660,11 +20656,16 @@
 			var type = slicerCache.getType();
 			switch (type) {
 				case window['AscCommonExcel'].insertSlicerType.table: {
-					//TODO сформировать объект autoFiltersObject
+					if (!checkFilterItems(val)) {
+						checkFilterItems(val, true);
+					}
 					this.applyAutoFilter(createSimpleFilterOptions());
 					break;
 				}
 				case window['AscCommonExcel'].insertSlicerType.pivotTable: {
+					if (!checkFilterItems(val)) {
+						checkFilterItems(val, true);
+					}
 					slicerCache.applyPivotFilterWithLock(this.model.workbook.oApi, val, slicer.name, null, false);
 					break;
 				}
