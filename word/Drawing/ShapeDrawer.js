@@ -1819,7 +1819,7 @@ function ShapeToImageConverter(shape, pageIndex)
 		_need_pix_width = _need_pix_width >> 0;
 		_need_pix_height = _need_pix_height >> 0;
 		_canvas = new CNativeGraphics();
-		_canvas.init(null, _need_pix_width, _need_pix_height, _need_pix_width / dKoef, _need_pix_height / dKoef);
+		_canvas.init(window["native"]["getImagesDirectory"](), window["native"]["GetFontsDirectory"](), _need_pix_width, _need_pix_height, _need_pix_width / dKoef, _need_pix_height / dKoef);
 		_canvas.transform(1, 0, 0, 1, 0, 0);
 		shape.draw(_canvas, 0);
 	}

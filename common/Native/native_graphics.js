@@ -52,11 +52,11 @@ function CNativeGraphics()
 
 CNativeGraphics.prototype =
 {
-    init : function(context, width_px, height_px, width_mm, height_mm)
+    init : function(ImagesDirectory, FontsDirectory, width_px, height_px, width_mm, height_mm)
     {
         this.TextureFillTransformScaleX = width_mm  / (width_px  >> 0);
         this.TextureFillTransformScaleY = height_mm / (height_px >> 0);
-        this.Native["init"](width_px, height_px, width_mm, height_mm);
+        this.Native["init"](ImagesDirectory, FontsDirectory, width_px, height_px, width_mm, height_mm);
     },
     EndDraw : function()
     {
