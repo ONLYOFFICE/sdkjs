@@ -1722,6 +1722,9 @@ function CPage()
 				ctx.strokeStyle = "rgb(140, 140, 140)";
 
 				//draw rect
+				if(0 !== (rectSize & 1)) {
+					rectSize +=1;
+				}
 				ctx.strokeRect(0.5 * ctx.lineWidth + _x, 0.5 * ctx.lineWidth + _y, rectSize, rectSize);
 
 				//draw cross element
