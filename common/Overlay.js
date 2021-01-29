@@ -670,7 +670,7 @@ CAutoshapeTrack.prototype =
 
         this.Graphics = new AscCommon.CGraphics();
 
-        var _scale = AscCommon.AscBrowser.retinaPixelRatio;
+        var _scale = this.m_oOverlay.IsCellEditor ? 1 : AscCommon.AscBrowser.retinaPixelRatio;
 
         this.Graphics.init(this.m_oContext, _scale * (r - x), _scale * (b - y), w_mm, h_mm);
 
@@ -861,7 +861,7 @@ CAutoshapeTrack.prototype =
 
         this.Graphics = new AscCommon.CGraphics();
 
-        var _scale = AscCommon.AscBrowser.retinaPixelRatio;
+        var _scale = this.m_oOverlay.IsCellEditor ? 1 : AscCommon.AscBrowser.retinaPixelRatio;
 
         this.Graphics.init(this.m_oContext, _scale * (drawPage.right - drawPage.left), _scale * (drawPage.bottom - drawPage.top), oPage.width_mm, oPage.height_mm);
 
@@ -947,8 +947,6 @@ CAutoshapeTrack.prototype =
 
 		if (this.m_oOverlay.IsCellEditor)
         {
-            this.m_oOverlay.m_oContext.setTransform(1, 0, 0, 1, 0, 0);
-
             left    /= AscCommon.AscBrowser.retinaPixelRatio;
             top     /= AscCommon.AscBrowser.retinaPixelRatio;
             width   /= AscCommon.AscBrowser.retinaPixelRatio;
@@ -959,10 +957,6 @@ CAutoshapeTrack.prototype =
 				matrix.tx /= AscCommon.AscBrowser.retinaPixelRatio;
 				matrix.ty /= AscCommon.AscBrowser.retinaPixelRatio;
 			}
-
-			this.m_oOverlay.m_oContext.translate(this.Graphics.m_oCoordTransform.tx, this.Graphics.m_oCoordTransform.ty);
-            this.m_oOverlay.m_oContext.scale(AscCommon.AscBrowser.retinaPixelRatio, AscCommon.AscBrowser.retinaPixelRatio);
-			this.m_oOverlay.m_oContext.translate(-this.Graphics.m_oCoordTransform.tx, -this.Graphics.m_oCoordTransform.ty);
         }
 
         // с самого начала нужно понять, есть ли поворот. Потому что если его нет, то можно
@@ -976,8 +970,8 @@ CAutoshapeTrack.prototype =
         var drPage = this.CurrentPageInfo.drawingPage;
 
         var rPR = AscCommon.AscBrowser.retinaPixelRatio;
-        var xDst = drPage.left * rPR;
-        var yDst = drPage.top * rPR;
+        var xDst = this.m_oOverlay.IsCellEditor ? drPage.left : drPage.left * rPR;
+        var yDst = this.m_oOverlay.IsCellEditor ? drPage.top : drPage.top * rPR;
         var wDst = (drPage.right - drPage.left) * rPR;
         var hDst = (drPage.bottom - drPage.top) * rPR;
 
