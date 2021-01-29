@@ -1192,7 +1192,7 @@ CAutoshapeTrack.prototype =
 
                                 ctx.beginPath();
                                 ctx.globalCompositeOperation = "destination-over";
-                                ctx.arc(xC, _yI, _w / 2, 0, 2 * Math.PI);
+                                ctx.arc(xC, _yI + Math.round(rPR), _w / 2, 0, 2 * Math.PI);
                                 ctx.fillStyle = "#ffffff";
                                 ctx.fill();
                                 ctx.closePath();
@@ -1630,7 +1630,7 @@ CAutoshapeTrack.prototype =
 
                                 ctx.beginPath();
                                 ctx.globalCompositeOperation = "destination-over";
-                                ctx.arc(xC, _yI, _w / 2, 0, 2 * Math.PI);
+                                ctx.arc(xC, _yI + Math.round(rPR), _w / 2, 0, 2 * Math.PI);
                                 ctx.fillStyle = "#ffffff";
                                 ctx.fill();
                                 ctx.closePath();
