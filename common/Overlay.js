@@ -2719,10 +2719,17 @@ CAutoshapeTrack.prototype =
         var drPage = this.CurrentPageInfo.drawingPage;
 
         var rPR = AscCommon.AscBrowser.retinaPixelRatio;
-        var xDst = drPage.left * rPR;
-        var yDst = drPage.top * rPR;
-        var wDst = (drPage.right - drPage.left) * rPR;
-        var hDst = (drPage.bottom - drPage.top) * rPR;
+        var xDst = drPage.left;
+        var yDst = drPage.top;
+        var wDst = drPage.right - drPage.left;
+        var hDst = drPage.bottom - drPage.top;
+
+        if (!overlay.IsCellEditor) {
+            xDst *= rPR;
+            yDst *= rPR;
+            wDst *= rPR;
+            hDst *= rPR;
+        }
 
         var dKoefX = wDst / this.CurrentPageInfo.width_mm;
         var dKoefY = hDst / this.CurrentPageInfo.height_mm;
@@ -2737,9 +2744,6 @@ CAutoshapeTrack.prototype =
         var ctx = overlay.m_oContext;
 
         var dist = TRACK_ADJUSTMENT_SIZE * rPR / 2;
-
-        if (overlay.IsCellEditor)
-            dist *= AscCommon.AscBrowser.retinaPixelRatio;
 
         ctx.lineWidth = Math.round(rPR);
         ctx.moveTo(cx - dist, cy);
