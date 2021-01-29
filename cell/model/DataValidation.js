@@ -1065,6 +1065,22 @@
 		}
 	};
 
+	CDataValidation.prototype.checkFormulaStackOnCell = function (row, col) {
+		var stack = this.formula1 && this.formula1._formula && this.formula1._formula.outStack;
+		if (stack && stack.length) {
+			for (var i = 0; i < stack.length; i++) {
+				if (stack[i]) {
+					if (stack[i].type === AscCommonExcel.cElementType.cell || stack[i].type === AscCommonExcel.cElementType.cellsRange) {
+						if (stack[i].range && stack[i].range.bbox && stack[i].range.bbox.contains(col, row)) {
+							return true;
+						}
+					}
+				}
+			}
+		}
+		return false;
+	};
+
 	function CDataValidations() {
 		this.disablePrompts = false;
 		this.xWindow = null;

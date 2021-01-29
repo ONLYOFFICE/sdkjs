@@ -14537,10 +14537,12 @@
 
 						//если в качестве условия введена формула, необходимо чтобы данные временно были в ячейке
 						//поскольку формула может ссылаться на данную ячейку
-						//TODO нужно ещё записываться введенные формулы! пока только значения!
 						var oldValueData;
+						//дополнительно ещё проверим на наличие данной ячейки в стеке формулы
+						//если её там нет - временно подменять значение не нужно
+						var isNeedChange = Asc.EDataValidationType.Custom === dataValidation.type && dataValidation.checkFormulaStackOnCell(row, col);
 						var temporarySetValue = function (_val) {
-							if (Asc.EDataValidationType.Custom === dataValidation.type) {
+							if (isNeedChange) {
 								c._foreach(function(cell){
 									if (cell.nCol === col && cell.nRow === row) {
 										if (_val) {
