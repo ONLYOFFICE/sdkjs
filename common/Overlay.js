@@ -1177,9 +1177,10 @@ CAutoshapeTrack.prototype =
 
                                 overlay.CheckRect(_xI, _yI - radius * 2, _w, _w);
                                 ctx.fillStyle = "#939393";
-
-                                overlay.drawArrow(ctx, xC - Math.round(12.5 * rPR), _yI - Math.round(4.5 * rPR), Math.round(4 * rPR), {r: 147, g: 147, b: 147}, true);
-
+                                var cnvs = document.createElement('canvas'),
+                                    cntx = cnvs.getContext('2d');
+                                overlay.drawArrow(cntx, 0, 0, Math.round(4 * rPR), {r: 147, g: 147, b: 147}, true);
+                                ctx.drawImage(cnvs, xC - Math.round(12.5 * rPR), _yI - Math.round(4.5 * rPR))
                                 ctx.beginPath();
                                 ctx.lineWidth = Math.round(rPR);
                                 ctx.arc(xC, _yI + Math.round(rPR), radius, -3 / 4 * Math.PI, Math.PI);
@@ -1613,8 +1614,10 @@ CAutoshapeTrack.prototype =
                                 overlay.CheckRect(_xI, _yI - radius * 2, _w, _w);
 
                                 ctx.fillStyle = "#939393";
-
-                                overlay.drawArrow(ctx, xC - Math.round(12.5 * rPR), _yI - Math.round(4.5 * rPR), Math.round(4 * rPR), {r: 147, g: 147, b: 147}, true);
+                                var cnvs = document.createElement('canvas'),
+                                    cntx = cnvs.getContext('2d');
+                                overlay.drawArrow(cntx, 0, 0, Math.round(4 * rPR), {r: 147, g: 147, b: 147}, true);
+                                ctx.drawImage(cnvs, xC - Math.round(12.5 * rPR), _yI - Math.round(4.5 * rPR))
 
                                 ctx.beginPath();
                                 ctx.lineWidth = Math.round(rPR);
