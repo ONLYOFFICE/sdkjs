@@ -2801,8 +2801,9 @@
 			var item = this.items[i];
 			var elem = AscCommonExcel.AutoFiltersOptionsElements();
 			var sharedItem = cacheField.getSharedItem(item.x);
+			var num = sharedItem.isDateOrNum() && cacheField.getNumFormat();
 			var cellValue = sharedItem.getCellValue();
-			elem.val = elem.text = cellValue.getTextValue();
+			elem.val = elem.text = cellValue.getTextValue(num);
 			elem.visible = item.s;
 			elem.hiddenByOtherColumns = item.nd || undefined;//todo
 			elem.isDateFormat = false;

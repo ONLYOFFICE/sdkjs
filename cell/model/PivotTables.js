@@ -8464,6 +8464,13 @@ CT_CacheField.prototype.isSumSubtotal = function () {
 CT_CacheField.prototype.IsNumType = function () {
 	return this.sharedItems && false === this.sharedItems.containsSemiMixedTypes && (true === this.sharedItems.containsNumber || true === this.sharedItems.containsDate);
 };
+CT_CacheField.prototype.getNumFormat = function () {
+	if (this.num) {
+		return this.num;
+	} else if (this.sharedItems && this.sharedItems.containsDate) {
+		return AscCommonExcel.Num.prototype.initFromParams(14, AscCommon.getFormatByStandardId(14));
+	}
+};
 CT_CacheField.prototype.checkSharedItems = function (pivot, index, cacheRecords) {
 	if (this.sharedItems && this.sharedItems.Items.getSize() > 0) {
 		return;
@@ -13069,6 +13076,9 @@ PivotRecordValue.prototype.getCellValue = function() {
 };
 PivotRecordValue.prototype.isBlank = function() {
 	return c_oAscPivotRecType.Missing === this.type;
+};
+PivotRecordValue.prototype.isDateOrNum = function() {
+	return c_oAscPivotRecType.DateTime === this.type || c_oAscPivotRecType.Number === this.type;
 };
 PivotRecordValue.prototype.shallowEqual = function(elem) {
 	return this.type === elem.type && this.val === elem.val;
