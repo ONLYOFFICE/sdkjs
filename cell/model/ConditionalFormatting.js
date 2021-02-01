@@ -865,6 +865,8 @@
 		var res;
 		if (this.dxf) {
 			res = this.dxf.asc_getPreview2(api_sheet, id, text);
+		} else if (Asc.ECfType.colorScale === this.type && 1 === this.aRuleElements.length) {
+			res = this.aRuleElements[0].asc_getPreview();
 		}
 		return res;
 	};

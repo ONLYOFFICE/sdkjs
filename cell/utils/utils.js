@@ -2286,18 +2286,35 @@
 			drawStyle(ctx, graphics, wb.stringRender, oStyle, text, w, h);
 		}
 
-		function drawColorScalePreview(wb, w, h, colors) {
+		function drawColorScalePreview(id, wb, colors) {
 			if (!colors || !colors.length) {
 				return null;
 			}
 
-			if (AscCommon.AscBrowser.isRetina) {
-				w = AscCommon.AscBrowser.convertToRetinaValue(w, true);
-				h = AscCommon.AscBrowser.convertToRetinaValue(h, true);
+			var parent =  document.getElementById(id);
+			if (!parent)
+				return;
+
+			var w = parent.clientWidth;
+			var h = parent.clientHeight;
+			if (!w || !h) {
+				return;
 			}
 
-			var ctx = getContext(w, h, wb);
-			var oCanvas = ctx.getCanvas();
+			var canvas = parent.firstChild;
+			if (!canvas)
+			{
+				canvas = document.createElement('canvas');
+				canvas.style.cssText = "pointer-events: none;padding:0;margin:0;user-select:none;";
+				canvas.style.width = w + "px";
+				canvas.style.height = h + "px";
+				parent.appendChild(canvas);
+			}
+
+			canvas.width = AscCommon.AscBrowser.convertToRetinaValue(w, true);
+			canvas.height = AscCommon.AscBrowser.convertToRetinaValue(h, true);
+
+			var ctx = new Asc.DrawingContext({canvas: canvas, units: 0/*px*/, fmgrGraphics: wb.fmgrGraphics, font: wb.m_oFont});
 			var graphics = getGraphics(ctx);
 
 			//var endColor = AscCommonExcel.getDataBarGradientColor(color);
@@ -2313,8 +2330,6 @@
 			fill.gradientFill.asc_putGradientStops(arrColors);
 
 			AscCommonExcel.drawFillCell(ctx, graphics, fill,  new AscCommon.asc_CRect(0, 0, w, h));
-
-			return new AscCommon.CStyleImage(null, null, oCanvas.toDataURL("image/png"));
 		}
 
 		//-----------------------------------------------------------------
