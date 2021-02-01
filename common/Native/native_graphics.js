@@ -615,7 +615,7 @@ CNativeGraphics.prototype =
     },
     put_brushTexture : function(src, type)
     {
-        this.Native["put_brushTexture"](src);
+        this.Native["put_brushTexture"](src, type);
     },
     put_brushTextureMode : function(mode)
     {
