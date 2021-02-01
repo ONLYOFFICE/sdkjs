@@ -5056,7 +5056,7 @@ var editor;
 
   spreadsheet_api.prototype._onUpdateCFLock = function(lockElem) {
 	  if (lockElem.Element["rangeOrObjectId"] != -1 && !this.collaborativeEditing.getFast()) {
-		  var wsModel = t.wbModel.getWorksheetById(lockElem.Element["sheetId"]);
+		  var wsModel = this.wbModel.getWorksheetById(lockElem.Element["sheetId"]);
 		  if (wsModel) {
 			  var cFRule = wsModel.getCFRuleById(lockElem.Element["rangeOrObjectId"]);
 			  if (cFRule) {

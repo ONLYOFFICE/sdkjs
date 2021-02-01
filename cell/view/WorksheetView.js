@@ -12917,6 +12917,19 @@
 		this.collaborativeEditing.lock([lockInfo], callback);
 	};
 
+	WorksheetView.prototype._isLockedCF = function (callback, cFIdArr) {
+		if (!cFIdArr || cFIdArr.length) {
+			return;
+		}
+		var lockInfos = [];
+		for (var i = 0; i < cFIdArr.length; i++) {
+			var lockInfo = this.collaborativeEditing.getLockInfo(c_oAscLockTypeElem.Object, null, -1, cFIdArr[i]);
+			lockInfos.push(lockInfo);
+		}
+
+		this.collaborativeEditing.lock(lockInfos, callback);
+	};
+
 	// Залочен ли весь лист
 	WorksheetView.prototype._isLockedAll = function (callback) {
 		var ar = this.model.getSelection().getLast();
@@ -20860,7 +20873,7 @@
 			var j;
 			if (deleteIdArr) {
 				for (j = 0; j < deleteIdArr.length; j++) {
-					t.model.deleteCFRule(deleteIdArr[j].id, true);
+					t.model.deleteCFRule(deleteIdArr[j], true);
 				}
 			}
 
@@ -20871,18 +20884,13 @@
 			History.EndTransaction();
 		};
 
-		var _selection = [], i;
-		for (i = 0; i < arr.length; i++) {
-			_selection = _selection.concat(arr[i].ranges);
-		}
-		if (deleteIdArr) {
-			for (i = 0; i < deleteIdArr.length; i++) {
-				var oRule = this.model.getCFRuleById(deleteIdArr[i]);
-				_selection = _selection.concat(oRule.ranges);
+		var unitedArr = deleteIdArr ? deleteIdArr : {};
+		if (arr) {
+			for (var i = 0; i < arr.length; i++) {
+				unitedArr.push(arr[i].id);
 			}
 		}
-
-		this._isLockedCells(_selection, /*subType*/null, callback);
+		this._isLockedCF(unitedArr, /*subType*/null, callback);
 	};
 
 	WorksheetView.prototype.deleteCF = function (arr) {
