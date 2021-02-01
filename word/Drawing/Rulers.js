@@ -237,44 +237,49 @@ function CHorRuler()
 
     this.Units = c_oAscDocumentUnits.Millimeter;
 
-    this.InitTablePict = function() {
-        var dPR = window.devicePixelRatio;
-        var roundDPR = Math.round(dPR);
-        // var roundDPR = ((dPR - Math.floor(dPR)) <= 0.5) ? Math.floor(dPR) : Math.round(dPR);
+    this.DrawTablePict = function() {
         var ctx = g_memory.ctx;
-        ctx.canvas.width = 7 * roundDPR;
-        ctx.canvas.height = 8 * roundDPR;
+        var dPR = window.devicePixelRatio;
+        var isNeedRedraw = (dPR - Math.floor(dPR)) >= 0.5 ? true : false;
+        var roundDPR = isNeedRedraw ? Math.floor(dPR) : Math.round(dPR);
+
+        var canvasWidth = (isNeedRedraw && dPR >= 1 ) ? Math.round(7 * (Math.floor(dPR) + 0.5)) : 7 * (isNeedRedraw ? dPR : Math.round(dPR)),
+            canvasHeight = (isNeedRedraw && dPR >= 1) ? Math.round(8 * (Math.floor(dPR) + 0.5)) : 8 * (isNeedRedraw ? dPR : Math.round(dPR));
+
+        if (null != this.tableSprite)
+        {
+            if (ctx.canvas.width == canvasWidth)
+                return;
+        }
+
+        ctx.canvas.width = canvasWidth;
+        ctx.canvas.height = canvasHeight;
+
+
         ctx.beginPath();
         ctx.fillStyle = '#ffffff';
         ctx.strokeStyle = '#ffffff';
         ctx.stroke();
         ctx.rect(0,0,ctx.canvas.width, ctx.canvas.height)
         ctx.fill();
+
         ctx.beginPath();
         ctx.strokeStyle = '#646464';
         ctx.lineWidth = roundDPR;
-        for (var i = 0; i < 7 * roundDPR; i += 2 * ctx.lineWidth) {
-            ctx.moveTo(0,  1.5 * ctx.lineWidth + i);
-            ctx.lineTo(7 * roundDPR, 1.5 * ctx.lineWidth + i);
+
+        var step = isNeedRedraw ? Math.round(dPR): ctx.lineWidth;
+        for (var i = 0; i < 7 * ctx.canvas.width; i += step + ctx.lineWidth) {
+            ctx.moveTo(0,  0.5 * ctx.lineWidth + step + i);
+            ctx.lineTo(ctx.canvas.width, 0.5 * ctx.lineWidth + step + i);
             ctx.stroke();
         }
-        for (var i = 0; i < 8 * roundDPR; i += 2 * ctx.lineWidth) {
-            ctx.moveTo(1.5 * ctx.lineWidth + i, 0);
-            ctx.lineTo(1.5 * ctx.lineWidth + i, 8 * roundDPR);
+        for (var i = 0; i < 8 * ctx.canvas.height; i += step + ctx.lineWidth) {
+            ctx.moveTo(0.5 * ctx.lineWidth + step + i, 0);
+            ctx.lineTo(0.5 * ctx.lineWidth + step + i, ctx.canvas.height);
             ctx.stroke();
         }
 
         return ctx.canvas;
-    }
-
-    this.CheckTableSprite = function(is_retina)
-    {
-        if (null != this.tableSprite)
-        {
-            if (this.tableSprite.width == 7 * Math.round(window.devicePixelRatio))
-                return;
-        }
-            this.tableSprite = this.InitTablePict();
     }
 
     this.tableSprite = null;
@@ -284,7 +289,10 @@ function CHorRuler()
         this.m_dZoom = this.m_oWordControl.m_nZoomValue / 100;
         this.IsRetina = AscCommon.AscBrowser.isCustomScalingAbove2();
 
-        this.CheckTableSprite(this.IsRetina);
+        var tablePict = this.DrawTablePict();
+
+        if (tablePict)
+            this.tableSprite = tablePict;
 
         var dPR = window.devicePixelRatio;
         var dKoef_mm_to_pix = g_dKoef_mm_to_pix * this.m_dZoom;
