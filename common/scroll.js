@@ -552,9 +552,11 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 
 			percentInViewV = (this.maxScrollY * dPR + this.paneHeight) / this.paneHeight;
 			this.scroller.h = Math.ceil(Math.ceil( 1 / percentInViewV * this.verticalTrackHeight / dPR) * dPR);
-			this.settings.scrollerMinHeight = 34 * dPR;
-			if ( this.scroller.h < this.settings.scrollerMinHeight )
-				this.scroller.h = this.settings.scrollerMinHeight;
+
+			var scrollMinH = Math.round(this.settings.scrollerMinHeight * dPR);
+			
+			if ( this.scroller.h < scrollMinH)
+				this.scroller.h = scrollMinH;
 			else if ( this.scroller.h > this.settings.scrollerMaxHeight )
 				this.scroller.h = this.settings.scrollerMaxHeight;
 			this.scrollCoeff = this.maxScrollY / Math.max( 1, this.paneHeight - this.scroller.h );
@@ -577,10 +579,11 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 			var percentInViewH;
 			percentInViewH = ( this.maxScrollX * dPR + this.paneWidth ) / this.paneWidth;
 			this.scroller.w = Math.ceil(Math.ceil( 1 / percentInViewH * this.horizontalTrackWidth / dPR) * dPR);
-			this.settings.scrollerMinWidth = 34 * dPR;
 
-			if ( this.scroller.w < this.settings.scrollerMinWidth )
-				this.scroller.w = this.settings.scrollerMinWidth;
+			var scrollMinW = Math.round(this.settings.scrollerMinWidth * dPR);
+
+			if ( this.scroller.w < scrollMinW)
+				this.scroller.w = scrollMinW;
 			else if ( this.scroller.w > this.settings.scrollerMaxWidth )
 				this.scroller.w = this.settings.scrollerMaxWidth;
 			this.scrollCoeff = this.maxScrollX / Math.max( 1, this.paneWidth - this.scroller.w );
