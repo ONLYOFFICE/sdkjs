@@ -112,6 +112,8 @@
 		this.pivot = false;
 		this.ranges = null;
 
+		this.isLock = null;
+
 		return this;
 	}
 
@@ -854,6 +856,9 @@
 	};
 	CConditionalFormattingRule.prototype.asc_getId = function () {
 		return this.id;
+	};
+	CConditionalFormattingRule.prototype.asc_getIsLock = function () {
+		return this.isLock;
 	};
 	
 	CConditionalFormattingRule.prototype.asc_setType = function (val) {
@@ -1946,6 +1951,7 @@
 	prot['asc_getValue2'] = prot.asc_getValue2;
 	prot['asc_getColorScaleOrDataBarOrIconSetRule'] = prot.asc_getColorScaleOrDataBarOrIconSetRule;
 	prot['asc_getId'] = prot.asc_getId;
+	prot['asc_getIsLock'] = prot.asc_getIsLock;
 	prot['asc_setDxf'] = prot.asc_setDxf;
 	prot['asc_setType'] = prot.asc_setType;
 	prot['asc_setLocation'] = prot.asc_setLocation;

@@ -1312,6 +1312,7 @@ var editor;
             t._onUpdateNamedSheetViewLock(lockElem);
           }
 
+          t._onUpdateCFLock(lockElem);
 
 
           var ws = t.wb.getWorksheet();
@@ -5051,6 +5052,20 @@ var editor;
   spreadsheet_api.prototype.asc_setCF = function (arr, deleteIdArr) {
       var ws = this.wb.getWorksheet();
       ws.setCF(arr, deleteIdArr);
+  };
+
+  spreadsheet_api.prototype._onUpdateCFLock = function(lockElem) {
+	  if (lockElem.Element["rangeOrObjectId"] != -1 && !this.collaborativeEditing.getFast()) {
+		  var wsModel = t.wbModel.getWorksheetById(lockElem.Element["sheetId"]);
+		  if (wsModel) {
+			  var cFRule = wsModel.getCFRuleById(lockElem.Element["rangeOrObjectId"]);
+			  if (cFRule) {
+				  cFRule.isLock = lockElem.UserId;
+				  this.handlers.trigger("asc_onRefreshCFList", cFRule.id);
+			  }
+			  this.handlers.trigger("asc_onLockCFManager", wsModel.index);
+          }
+	  }
   };
 
   spreadsheet_api.prototype.asc_beforeInsertSlicer = function () {
