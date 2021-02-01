@@ -12918,7 +12918,7 @@
 	};
 
 	WorksheetView.prototype._isLockedCF = function (callback, cFIdArr) {
-		if (!cFIdArr || cFIdArr.length) {
+		if (!cFIdArr || !cFIdArr.length) {
 			return;
 		}
 		var lockInfos = [];
@@ -20877,20 +20877,25 @@
 				}
 			}
 
-			for (j = 0; j < arr.length; j++) {
-				t.model.setCFRule(arr[j]);
+			if (arr && arr[nActive]) {
+				for (j = 0; j < arr[nActive].length; j++) {
+					t.model.setCFRule(arr[nActive][j]);
+				}
 			}
 
 			History.EndTransaction();
 		};
 
 		var unitedArr = deleteIdArr ? deleteIdArr : {};
+		var nActive = this.model.workbook.nActive;
 		if (arr) {
-			for (var i = 0; i < arr.length; i++) {
-				unitedArr.push(arr[i].id);
+			if (arr[nActive]) {
+				for (var i = 0; i < arr[nActive].length; i++) {
+					unitedArr.push(arr[nActive][i].id);
+				}
 			}
 		}
-		this._isLockedCF(unitedArr, /*subType*/null, callback);
+		this._isLockedCF(callback, unitedArr);
 	};
 
 	WorksheetView.prototype.deleteCF = function (arr) {

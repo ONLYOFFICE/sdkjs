@@ -9079,6 +9079,14 @@
 		if (!val) {
 			return;
 		}
+
+		if (!val.ranges) {
+			val.ranges = [];
+			for (var i = 0; i < this.selectionRange.ranges.length; i++) {
+				val.ranges.push(this.selectionRange.ranges[i].clone());
+			}
+		}
+
 		this.aConditionalFormattingRules.push(val);
 		if (addToHistory) {
 			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_CFRuleAdd, this.getId(), null, new AscCommonExcel.UndoRedoData_CF(val.id, null, val));
