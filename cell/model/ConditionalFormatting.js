@@ -863,10 +863,17 @@
 	CConditionalFormattingRule.prototype.asc_getPreview = function (id, text) {
 		var api_sheet = Asc['editor'];
 		var res;
-		if (this.dxf) {
-			res = this.dxf.asc_getPreview2(api_sheet, id, text);
-		} else if (Asc.ECfType.colorScale === this.type && 1 === this.aRuleElements.length) {
+		if (Asc.ECfType.colorScale === this.type && 1 === this.aRuleElements.length) {
 			res = this.aRuleElements[0].asc_getPreview();
+		} else if (Asc.ECfType.dataBar === this.type) {
+
+		} else {
+			if (this.dxf) {
+				res = this.dxf.asc_getPreview2(api_sheet, id, text);
+			} else {
+				var tempXfs = new AscCommonExcel.CellXfs();
+				res = tempXfs.asc_getPreview2(api_sheet, id, text);
+			}
 		}
 		return res;
 	};

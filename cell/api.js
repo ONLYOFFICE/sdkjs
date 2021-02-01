@@ -4965,7 +4965,12 @@ var editor;
   };*/
 
   spreadsheet_api.prototype.asc_getPreviewCF = function(id, props, text) {
-	  props.asc_getPreview2(this, id, text);
+	if (!props && text) {
+	  props = new AscCommonExcel.CellXfs();
+    }
+    if (props) {
+		props.asc_getPreview2(this, id, text);
+	}
   };
 
   spreadsheet_api.prototype.asc_generatePresetsCF = function () {
