@@ -860,6 +860,14 @@
 	CConditionalFormattingRule.prototype.asc_getIsLock = function () {
 		return this.isLock;
 	};
+	CConditionalFormattingRule.prototype.asc_getPreview = function (id, text) {
+		var api_sheet = Asc['editor'];
+		var res;
+		if (this.dxf) {
+			res = this.dxf.asc_getPreview2(api_sheet, id, text);
+		}
+		return res;
+	};
 	
 	CConditionalFormattingRule.prototype.asc_setType = function (val) {
 		this.type = val;
@@ -1952,6 +1960,7 @@
 	prot['asc_getColorScaleOrDataBarOrIconSetRule'] = prot.asc_getColorScaleOrDataBarOrIconSetRule;
 	prot['asc_getId'] = prot.asc_getId;
 	prot['asc_getIsLock'] = prot.asc_getIsLock;
+	prot['asc_getPreview'] = prot.asc_getPreview;
 	prot['asc_setDxf'] = prot.asc_setDxf;
 	prot['asc_setType'] = prot.asc_setType;
 	prot['asc_setLocation'] = prot.asc_setLocation;
