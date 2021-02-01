@@ -293,6 +293,10 @@ CCommentData.prototype.GetQuoteText = function()
 {
 	return this.Get_QuoteText();
 };
+CCommentData.prototype.SetQuoteText = function(sText)
+{
+	this.Set_QuoteText(sText);
+};
 CCommentData.prototype.IsSolved = function()
 {
 	return this.m_bSolved;
