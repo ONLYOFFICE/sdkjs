@@ -887,7 +887,7 @@ CComplexField.prototype.private_UpdateTOC = function()
 				oContainer.Add_ToContent(nContainerPos + 1, oPageRefRun);
 			}
 
-			oSelectedContent.Add(new CSelectedElement(oPara, false));
+			oSelectedContent.Add(new CSelectedElement(oPara, true));
 		}
 	}
 	else
@@ -907,7 +907,7 @@ CComplexField.prototype.private_UpdateTOC = function()
 		oRun.Set_Bold(true);
 		oRun.AddText(sReplacementText);
 		oPara.AddToContent(0, oRun);
-		oSelectedContent.Add(new CSelectedElement(oPara, false));
+		oSelectedContent.Add(new CSelectedElement(oPara, true));
 	}
 
 	this.SelectFieldValue();
