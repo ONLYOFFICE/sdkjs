@@ -20886,7 +20886,7 @@
 			History.EndTransaction();
 		};
 
-		var unitedArr = deleteIdArr ? deleteIdArr : {};
+		var unitedArr = [];
 		var nActive = this.model.workbook.nActive;
 		if (arr) {
 			if (arr[nActive]) {
@@ -20895,6 +20895,10 @@
 				}
 			}
 		}
+		if (deleteIdArr && deleteIdArr.length) {
+			unitedArr = unitedArr.concat(deleteIdArr);
+		}
+
 		this._isLockedCF(callback, unitedArr);
 	};
 

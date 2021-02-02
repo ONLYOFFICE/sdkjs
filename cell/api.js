@@ -4898,12 +4898,16 @@ var editor;
         var aRules = sheet.aConditionalFormattingRules.sort(function(v1, v2) {
           return v1.priority - v2.priority;
         });
+
+        rules = [];
         if (range) {
-          rules = [];
           var putRange = function (_range, _rule) {
             multiplyRange = new AscCommonExcel.MultiplyRange(_range);
             if (multiplyRange.isIntersect(range)) {
-                rules.push(_rule);
+              var _id = _rule.id;
+              _rule = _rule.clone();
+              _rule.id = _id;
+              rules.push(_rule);
             }
           };
           var oRule, ranges, multiplyRange, i, mapChangedRules = [];
@@ -4911,7 +4915,7 @@ var editor;
             for (i = 0; i < aChangedRules.length; ++i) {
                 oRule = aRules[i];
                 ranges = oRule.ranges;
-                putRange(ranges, oRule.clone());
+                putRange(ranges, oRule);
                 mapChangedRules[oRule.id] = 1;
             }
           }
@@ -4921,10 +4925,15 @@ var editor;
               continue;
             }
             ranges = oRule.ranges;
-            putRange(ranges, oRule.clone());
+            putRange(ranges, oRule);
           }
         } else {
-          rules = aRules;
+          for (i = 0; i < aRules.length; ++i) {
+			  var _id = aRules[i].id;
+			  var _rule = aRules[i].clone();
+			  _rule.id = _id;
+			  rules.push(_rule);
+          }
         }
       }
 
