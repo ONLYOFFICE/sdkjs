@@ -864,7 +864,7 @@
 		var api_sheet = Asc['editor'];
 		var res;
 		if (Asc.ECfType.colorScale === this.type && 1 === this.aRuleElements.length) {
-			res = this.aRuleElements[0].asc_getPreview();
+			res = this.aRuleElements[0].asc_getPreview(api_sheet, id, text);
 		} else if (Asc.ECfType.dataBar === this.type) {
 
 		} else {
@@ -1101,8 +1101,8 @@
 		}
 		return res;
 	};
-	CColorScale.prototype.asc_getPreview = function (api, width, height) {
-		return AscCommonExcel.drawColorScalePreview(api.wb, width, height, this.aColors);
+	CColorScale.prototype.asc_getPreview = function (api, id) {
+		return AscCommonExcel.drawColorScalePreview(id, api.wb, this.aColors);
 	};
 	CColorScale.prototype.asc_setCFVOs = function (val) {
 		this.aCFVOs = val;
