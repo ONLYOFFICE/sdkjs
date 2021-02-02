@@ -528,24 +528,26 @@
 		var formulas = this.wbModel.getAllFormulas();
 		for (var i = 0; i < formulas.length; ++i) {
 			var formula = formulas[i];
-			var cell = formula.ws.getCell3(formula.parent.nRow, formula.parent.nCol);
-			var oldValue = cell.getValue();
-			formula.setFormula(formula.getFormula());
-			formula.parse();
-			var formulaRes = formula.calculate();
-			var newValue = formulaRes.getValue();
+			if (formula.parent && formula.parent.nRow !== undefined) {
+				var cell = formula.ws.getCell3(formula.parent.nRow, formula.parent.nCol);
+				var oldValue = cell.getValue();
+				formula.setFormula(formula.getFormula());
+				formula.parse();
+				var formulaRes = formula.calculate();
+				var newValue = formulaRes.getValue();
 
-			if (fLogger) {
-				if (oldValue != newValue) {
-					//error
-					fLogger({
-						sheet: formula.ws.sName,
-						r: formula.parent.nRow,
-						c: formula.parent.nCol,
-						f: formula.Formula,
-						oldValue: oldValue,
-						newValue: newValue
-					});
+				if (fLogger) {
+					if (oldValue != newValue) {
+						//error
+						fLogger({
+							sheet: formula.ws.sName,
+							r: formula.parent.nRow,
+							c: formula.parent.nCol,
+							f: formula.Formula,
+							oldValue: oldValue,
+							newValue: newValue
+						});
+					}
 				}
 			}
 		}
