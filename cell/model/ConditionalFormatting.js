@@ -866,7 +866,10 @@
 		if (Asc.ECfType.colorScale === this.type && 1 === this.aRuleElements.length) {
 			res = this.aRuleElements[0].asc_getPreview(api_sheet, id, text);
 		} else if (Asc.ECfType.dataBar === this.type) {
-
+			/*var xfs = new AscCommonExcel.CellXfs();
+			xfs.fill = props[0];
+			xfs.border = props[1];
+			res = xfs.asc_getPreview(api_sheet, id, text);*/
 		} else {
 			if (this.dxf) {
 				res = this.dxf.asc_getPreview2(api_sheet, id, text);
