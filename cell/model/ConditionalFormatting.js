@@ -961,16 +961,11 @@
 		this.aRuleElements[1].Text = val;
 	};
 
-	//TODO?
-	CConditionalFormattingRule.prototype.asc_setColorScaleOrDataBarOrIconSetRule = function () {
-		/*if ((Asc.ECfType.dataBar === this.type || Asc.ECfType.iconSet === this.type ||
-			Asc.ECfType.colorScale === this.type) && 1 === this.aRuleElements.length) {
-			var res = this.aRuleElements[0];
-			if (res && this.type === res.type) {
-				return res;
-			}
+	CConditionalFormattingRule.prototype.asc_setColorScaleOrDataBarOrIconSetRule = function (val) {
+		if (!this.aRuleElements) {
+			this.aRuleElements = [];
 		}
-		return null;*/
+		this.aRuleElements.push(val);
 	};
 
 	CConditionalFormattingRule.prototype.asc_checkScope = function (type, tableId) {
@@ -1985,7 +1980,7 @@
 	prot['asc_setValue1'] = prot.asc_setValue1;
 	prot['asc_setValue2'] = prot.asc_setValue2;
 	prot['asc_checkScope'] = prot.asc_checkScope;
-	//prot['asc_setColorScaleOrDataBarOrIconSetRule'] = prot.asc_setColorScaleOrDataBarOrIconSetRule;
+	prot['asc_setColorScaleOrDataBarOrIconSetRule'] = prot.asc_setColorScaleOrDataBarOrIconSetRule;
 
 
 	prot = CColorScale;
