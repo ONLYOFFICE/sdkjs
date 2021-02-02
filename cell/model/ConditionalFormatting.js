@@ -1415,7 +1415,7 @@
 	CDataBar.prototype.asc_getNegativeBarBorderColorSameAsPositive = function (val) {
 		this.NegativeBarBorderColorSameAsPositive = val;
 	};
-	CDataBar.prototype.asc_getCFVOs = function (val) {
+	CDataBar.prototype.asc_setCFVOs = function (val) {
 		this.aCFVOs = val;
 	};
 	CDataBar.prototype.asc_getColor = function (val) {
