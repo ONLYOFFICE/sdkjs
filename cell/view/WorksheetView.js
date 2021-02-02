@@ -14552,7 +14552,6 @@
 										} else {
 											//revert
 											cell._setValueData(oldValueData.value);
-											cell._hasChanged = false;
 										}
 									}
 								});
