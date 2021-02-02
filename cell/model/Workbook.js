@@ -2705,11 +2705,11 @@
 		wb.init({}, {}, {}, true, false);
 		return wb;
 	};
-	Workbook.prototype.getAllFormulas = function() {
+	Workbook.prototype.getAllFormulas = function(needReturnCellProps) {
 		var res = [];
 		this.dependencyFormulas.getAllFormulas(res);
 		this.forEach(function (ws) {
-			ws.getAllFormulas(res);
+			ws.getAllFormulas(res, needReturnCellProps);
 		});
 		return res;
 	};
@@ -6875,11 +6875,11 @@
 		});
 		return cwf;
 	};
-	Worksheet.prototype.getAllFormulas = function(formulas) {
+	Worksheet.prototype.getAllFormulas = function(formulas, needReturnCellProps) {
 		var range = this.getRange3(0, 0, gc_nMaxRow0, gc_nMaxCol0);
 		range._setPropertyNoEmpty(null, null, function(cell) {
 			if (cell.isFormula()) {
-				formulas.push(cell.getFormulaParsed());
+				formulas.push(needReturnCellProps ? {f: cell.getFormulaParsed(), c: cell.nCol, r: cell.nRow} : cell.getFormulaParsed());
 			}
 		});
 		for (var i = 0; i < this.TableParts.length; ++i) {

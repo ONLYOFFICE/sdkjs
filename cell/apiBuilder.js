@@ -525,29 +525,45 @@
 	};
 
 	Api.prototype.RecalculateAllFormulas = function(fLogger) {
-		var formulas = this.wbModel.getAllFormulas();
+		var formulas = this.wbModel.getAllFormulas(true);
 		for (var i = 0; i < formulas.length; ++i) {
 			var formula = formulas[i];
-			if (formula.parent && formula.parent.nRow !== undefined) {
-				var cell = formula.ws.getCell3(formula.parent.nRow, formula.parent.nCol);
+			var nRow;
+			var nCol;
+			if (formula.f && formula.r !== undefined && formula.c !== undefined) {
+				nRow = formula.r;
+				nCol = formula.c;
+				formula = formula.f;
+			} else if (formula.parent) {
+				nRow = formula.parent.nRow;
+				nCol = formula.parent.nCol;
+			}
+
+			if (formula.parent && nRow !== undefined &&  nCol !== undefined) {
+				var cell = formula.ws.getCell3(nRow, nCol);
 				var oldValue = cell.getValue();
 				formula.setFormula(formula.getFormula());
 				formula.parse();
 				var formulaRes = formula.calculate();
-				var newValue = formulaRes.getValue();
+				var arrayFormula = formula.getArrayFormulaRef();
+				var newValue;
+				if (arrayFormula && formulaRes.type === AscCommonExcel.cElementType.array) {
+					newValue = formulaRes.getElementRowCol(nRow - arrayFormula.r1, nCol - arrayFormula.c1);
+					newValue = newValue.getValue();
+				} else {
+					newValue = formulaRes.getValue();
+				}
 
-				if (fLogger) {
-					if (oldValue != newValue) {
-						//error
-						fLogger({
-							sheet: formula.ws.sName,
-							r: formula.parent.nRow,
-							c: formula.parent.nCol,
-							f: formula.Formula,
-							oldValue: oldValue,
-							newValue: newValue
-						});
-					}
+				if (oldValue != newValue) {
+					//error
+					console.log({
+						sheet: formula.ws.sName,
+						r: formula.parent.nRow,
+						c: formula.parent.nCol,
+						f: formula.Formula,
+						oldValue: oldValue,
+						newValue: newValue
+					});
 				}
 			}
 		}
