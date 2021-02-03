@@ -243,8 +243,8 @@ function CHorRuler()
         var isNeedRedraw = (dPR - Math.floor(dPR)) >= 0.5 ? true : false;
         var roundDPR = isNeedRedraw ? Math.floor(dPR) : Math.round(dPR);
 
-        var canvasWidth = (isNeedRedraw && dPR >= 1 ) ? Math.round(7 * (Math.floor(dPR) + 0.5)) : 7 * (isNeedRedraw ? dPR : Math.round(dPR)),
-            canvasHeight = (isNeedRedraw && dPR >= 1) ? Math.round(8 * (Math.floor(dPR) + 0.5)) : 8 * (isNeedRedraw ? dPR : Math.round(dPR));
+        var canvasWidth = (isNeedRedraw && dPR >= 1 ) ? Math.round(7 * (Math.floor(dPR) + 0.5)) : 7 * (isNeedRedraw ? dPR : ( dPR >= 1 ? Math.round(dPR) : dPR)),
+            canvasHeight = (isNeedRedraw && dPR >= 1) ? Math.round(8 * (Math.floor(dPR) + 0.5)) : 8 * (isNeedRedraw ? dPR : ( dPR >= 1 ? Math.round(dPR) : dPR));
 
         if (null != this.tableSprite)
         {
