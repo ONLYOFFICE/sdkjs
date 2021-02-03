@@ -14561,6 +14561,7 @@
 						temporarySetValue(checkCell.getValueData());
 						if (!dataValidation.checkValue(checkCell, t.model)) {
 							t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.DataValidate, c_oAscError.Level.NoCritical, dataValidation);
+							editor.setFocus(true);
 							temporarySetValue();
 							return false;
 						} else {
