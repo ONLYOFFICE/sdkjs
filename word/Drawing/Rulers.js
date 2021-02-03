@@ -2536,16 +2536,19 @@ function CHorRuler()
                 var1 = parseInt(dCenterX - _1mm_to_pix) - indent + Math.round(dPR) - 1;
                 var4 = parseInt(dCenterX + _1mm_to_pix) + indent + Math.round(dPR) - 1;
 
+                if ( 0 != ((var1 - var4 + Math.round(dPR)) & 1))
+                    var4 += 1;
+
                 context.beginPath();
                 context.lineWidth = roundDPR;
                 context.moveTo(var1, this.m_nBottom + indent);
                 context.lineTo(var4, this.m_nBottom + indent);
-                context.lineTo(var4, this.m_nBottom + indent + var2);
-                context.lineTo(var1, this.m_nBottom + indent + var2);
+                context.lineTo(var4, this.m_nBottom + indent + Math.round(var2));
+                context.lineTo(var1, this.m_nBottom + indent + Math.round(var2));
                 context.lineTo(var1, this.m_nBottom + indent);
-                context.lineTo(var1, this.m_nBottom + indent - var3);
-                context.lineTo((var1 + var4) / 2, this.m_nBottom - var2 * 1.2);
-                context.lineTo(var4, this.m_nBottom + indent - var3);
+                context.lineTo(var1, this.m_nBottom + indent - Math.round(var3));
+                context.lineTo((var1 + var4) / 2, this.m_nBottom - Math.round(var2 * 1.2));
+                context.lineTo(var4, this.m_nBottom + indent - Math.round(var3));
                 context.lineTo(var4, this.m_nBottom + indent);
 
                 context.fill();
@@ -2556,13 +2559,16 @@ function CHorRuler()
                 var1 = parseInt(dCenterX - _1mm_to_pix) - indent + Math.round(dPR) - 1;
                 var4 = parseInt(dCenterX + _1mm_to_pix) + indent + Math.round(dPR) - 1;
 
+                if ( 0 != ((var1 - var4 + Math.round(dPR)) & 1))
+                    var4 += 1;
+
                 context.beginPath();
                 context.lineWidth = Math.round(dPR);
                 context.moveTo(var1, this.m_nBottom + indent);
                 context.lineTo(var4, this.m_nBottom + indent);
-                context.lineTo(var4, this.m_nBottom + indent - var3);
-                context.lineTo((var1 + var4) / 2, this.m_nBottom - var2 * 1.2);
-                context.lineTo(var1, this.m_nBottom + indent - var3);
+                context.lineTo(var4, this.m_nBottom + indent - Math.round(var3));
+                context.lineTo((var1 + var4) / 2, this.m_nBottom - Math.round(var2 * 1.2));
+                context.lineTo(var1, this.m_nBottom + indent - Math.round(var3));
                 context.closePath();
 
                 context.fill();
@@ -2573,13 +2579,16 @@ function CHorRuler()
                 var1 = parseInt(dCenterX - _1mm_to_pix) - indent + Math.round(dPR) - 1;
                 var4 = parseInt(dCenterX + _1mm_to_pix) + indent + Math.round(dPR) - 1;
 
+                if ( 0 != ((var1 - var4 + Math.round(dPR)) & 1))
+                    var4 += 1;
+
                 context.beginPath();
                 context.lineWidth = Math.round(dPR);
                 context.moveTo(var1, this.m_nTop + indent);
-                context.lineTo(var1, this.m_nTop + indent - var3);
-                context.lineTo(var4, this.m_nTop + indent - var3);
+                context.lineTo(var1, this.m_nTop + indent - Math.round(var3));
+                context.lineTo(var4, this.m_nTop + indent - Math.round(var3));
                 context.lineTo(var4, this.m_nTop + indent);
-                context.lineTo((var1 + var4) / 2, this.m_nTop + var2 * 1.2);
+                context.lineTo((var1 + var4) / 2, this.m_nTop + Math.round(var2 * 1.2));
                 context.closePath();
 
                 context.fill();
