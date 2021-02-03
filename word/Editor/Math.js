@@ -1887,11 +1887,11 @@ ParaMath.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 				// Уберем из массива информацию о рассчитанных ширинах, чтобы не учлась рассчитанная ранее максимальная ширина (в связи с тем, что отрезок, в к-ом нужно расположить, изменился по ширине)
 				// выставляем EmptyLine = false, т.к. нужно сделать заново пересчет в новом отрезке (а не перенести формулу под картинку)
 				// т.к. инициируем пересчет заново, то в проверку на ParaNewLine : if (true === NotInlineMath && true !== PRS.EmptyLine) не зайдем, т.к. NewRange = true
+				this.private_SetRestartRecalcInfo(PRS);
 				this.PageInfo.Reset_Page(Page);
 				this.ParaMathRPI.bInternalRanges = true;
 				// не выставляем EmtyLine = false, т.к. так и так выйдем из пересчета данной строки при расчете Ranges, до пересчета картинок не дойдем, поэтому PRS.EmptyLine = false  выставлять не нужно
 				//PRS.EmptyLine = false;
-				this.private_SetRestartRecalcInfo(PRS);
 			}
 			else if (UpdWrap == MATH_UPDWRAP_UNDERFLOW)
 			{
