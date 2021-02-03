@@ -129,7 +129,7 @@ function CArrowDrawer( settings ) {
 CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
   /*  if ( ( sizeH == this.SizeH || sizeW == this.SizeW ) && is_retina == this.IsRetina && null != this.ImageLeft )
         return;*/
-	var dPR = AscCommon.AscBrowser.retinaPixelRatio;
+	var dPR = AscBrowser.retinaPixelRatio;
     this.SizeW = Math.max( sizeW, 1 );
     this.SizeH = Math.max( sizeH, 1 );
     this.IsRetina = is_retina;
@@ -264,7 +264,7 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 		this.scrollerMaxWidth = 99999;
 
 		//arrow dimension
-		this.arrowDim = Math.round(13 * AscCommon.AscBrowser.retinaPixelRatio);
+		this.arrowDim = Math.round(13 * AscBrowser.retinaPixelRatio);
 
 		//scroll elements color
 		this.scrollerColor = 241;
@@ -300,8 +300,8 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 		this.hoverColor = 207;
 		this.activeColor = 173;
 
-        this.arrowSizeW = Math.round(13 * AscCommon.AscBrowser.retinaPixelRatio);
-        this.arrowSizeH = Math.round(13 * AscCommon.AscBrowser.retinaPixelRatio);
+        this.arrowSizeW = Math.round(13 * AscBrowser.retinaPixelRatio);
+        this.arrowSizeH = Math.round(13 * AscBrowser.retinaPixelRatio);
 		this.cornerRadius = 0;
 		this.slimScroll = false;
 		this.alwaysVisible = false;
@@ -391,7 +391,7 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 	}
 
 	ScrollObject.prototype._initPiperImg = function() {
-		var dPR = AscCommon.AscBrowser.retinaPixelRatio;
+		var dPR = AscBrowser.retinaPixelRatio;
 		this.piperImgVert = document.createElement( 'canvas' );
 		this.piperImgHor =  document.createElement( 'canvas' );
 
@@ -438,7 +438,7 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 	ScrollObject.prototype._init = function ( elemID ) {
 		if ( !elemID ) return false;
 
-		var dPR = AscCommon.AscBrowser.retinaPixelRatio;
+		var dPR = AscBrowser.retinaPixelRatio;
 		var holder = document.getElementById( elemID );
 
 		if ( holder.getElementsByTagName( 'canvas' ).length == 0 ){
@@ -527,7 +527,7 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 			left += obj.offsetLeft;
 			obj = obj.offsetParent;
 		}
-		var dPR = AscCommon.AscBrowser.retinaPixelRatio;
+		var dPR = AscBrowser.retinaPixelRatio;
 		// return relative mouse position
         var mouseX = (((evt.clientX * AscBrowser.zoom) >> 0) - left + window.pageXOffset) * dPR;
         var mouseY = (((evt.clientY * AscBrowser.zoom) >> 0) - top + window.pageYOffset) * dPR;
@@ -538,7 +538,7 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 		};
 	};
 	ScrollObject.prototype.RecalcScroller = function ( startpos ) {
-		var dPR = AscCommon.AscBrowser.retinaPixelRatio;
+		var dPR = AscBrowser.retinaPixelRatio;
 		if ( this.settings.isVerticalScroll ) {
 			if ( this.settings.showArrows ) {
 				this.verticalTrackHeight = this.canvasH - this.arrowPosition * 2;
@@ -592,7 +592,7 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 		}
 	};
 	ScrollObject.prototype.Repos = function ( settings, bIsHorAttack, bIsVerAttack, pos ) {
-		var dPR = AscCommon.AscBrowser.retinaPixelRatio;
+		var dPR = AscBrowser.retinaPixelRatio;
 
 			if(this.settings.showArrows) {
 				this.settings.arrowSizeW = Math.round(13 * dPR);
@@ -622,7 +622,7 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 					return;
 			}
 		}
-		var dPR = AscCommon.AscBrowser.retinaPixelRatio;
+		var dPR = AscBrowser.retinaPixelRatio;
 		var _parentClientW = GetClientWidth( this.canvas.parentNode );
 		var _parentClientH = GetClientHeight( this.canvas.parentNode );
 
@@ -759,7 +759,7 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 			return;
 		}
 
-		var dPR = AscCommon.AscBrowser.retinaPixelRatio;
+		var dPR = AscBrowser.retinaPixelRatio;
 		var result = this._correctScrollByYDelta( this, delta );
 		if ( result != null && result.isChange === true )
 			delta = result.Pos;
@@ -824,7 +824,7 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 		if ( !this.settings.isHorizontalScroll ) {
 			return;
 		}
-        var dPR = AscCommon.AscBrowser.retinaPixelRatio;
+        var dPR = AscBrowser.retinaPixelRatio;
 		var destX = this.scrollHCurrentX + delta, isTop = false, isBottom = false, hend = false;
 
 		if ( destX < 0 ) {
@@ -917,7 +917,7 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 		}
 		var t = that.ArrowDrawer;
 		var xDeltaBORDER = 0.5, yDeltaBORDER = 1.5;
-		var roundDPR = that._roundForScale(AscCommon.AscBrowser.retinaPixelRatio);
+		var roundDPR = that._roundForScale(AscBrowser.retinaPixelRatio);
 		var x1 = that.settings.isVerticalScroll ? 0 : roundDPR;
 		var y1 = that.settings.isVerticalScroll ? yDeltaBORDER * roundDPR : -roundDPR;
 		var x2 = 0;
@@ -973,7 +973,7 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 	ScrollObject.prototype._drawScroll = function (fillColor, piperColor) {
 		var that = this;
 		that.context.beginPath();
-		var roundDPR = this._roundForScale(AscCommon.AscBrowser.retinaPixelRatio);
+		var roundDPR = this._roundForScale(AscBrowser.retinaPixelRatio);
 		that.context.lineWidth = roundDPR;
 
 		if (that.settings.isVerticalScroll) {
@@ -1054,7 +1054,7 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 		if (that._checkPiperImagesV()) {
 
 			x = Math.round((that.scroller.w - that.piperImgVert.width) / 2);
-			y = Math.floor((that.scroller.y + Math.floor(that.scroller.h / 2) - 6 * AscCommon.AscBrowser.retinaPixelRatio));
+			y = Math.floor((that.scroller.y + Math.floor(that.scroller.h / 2) - 6 * AscBrowser.retinaPixelRatio));
 
 			ctx_piperImg = that.piperImgVert.getContext('2d');
 			ctx_piperImg.globalCompositeOperation = "source-in";
@@ -1091,7 +1091,7 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 
 	ScrollObject.prototype._animateArrow = function (fadeIn, curArrowType, backgroundColorUnfade) {
 		var that = this;
-		var roundDPR = that._roundForScale(AscCommon.AscBrowser.retinaPixelRatio);
+		var roundDPR = that._roundForScale(AscBrowser.retinaPixelRatio);
 		var sizeW = that.ArrowDrawer.SizeW, sizeH = that.ArrowDrawer.SizeH;
 
 		if (!that.settings.showArrows || !curArrowType) {
@@ -1344,19 +1344,19 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 	};
 
 	ScrollObject.prototype._checkPiperImagesV = function() {
-		if ( this.settings.isVerticalScroll && this.maxScrollY != 0 && this.scroller.h >= Math.round(13 * AscCommon.AscBrowser.retinaPixelRatio) )
+		if ( this.settings.isVerticalScroll && this.maxScrollY != 0 && this.scroller.h >= Math.round(13 * AscBrowser.retinaPixelRatio) )
 			return true;
 		return false;
 	};
 	ScrollObject.prototype._checkPiperImagesH = function() {
-		if ( this.settings.isHorizontalScroll && this.maxScrollX != 0 && this.scroller.w >= Math.round(13 * AscCommon.AscBrowser.retinaPixelRatio) )
+		if ( this.settings.isHorizontalScroll && this.maxScrollX != 0 && this.scroller.w >= Math.round(13 * AscBrowser.retinaPixelRatio) )
 			return true;
 		return false;
 	};
 
 	ScrollObject.prototype._setDimension = function ( h, w ) {
 
-		var dPR = AscCommon.AscBrowser.retinaPixelRatio;
+		var dPR = AscBrowser.retinaPixelRatio;
 		if(this.canvasH ===  Math.round(h * dPR) && this.canvasW === Math.round(w * dPR)) {
 			this.isResizeArrows = false;
 			return;
@@ -1370,7 +1370,7 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 		this.canvas.width =  this.canvasW;
 	};
 	ScrollObject.prototype._setScrollerHW = function () {
-		var dPR = AscCommon.AscBrowser.retinaPixelRatio;
+		var dPR = AscBrowser.retinaPixelRatio;
 		if ( this.settings.isVerticalScroll ) {
 			this.scroller.x = this._roundForScale(dPR);
 			this.scroller.w = Math.round((this.canvasOriginalW - 1) * dPR);
@@ -1511,7 +1511,7 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 		this.that.EndMousePosition.x = mousePos.x;
 		this.that.EndMousePosition.y = mousePos.y;
 		var arrowHover = this.that._MouseArrowHover(mousePos);
-		var dPR = AscCommon.AscBrowser.retinaPixelRatio;
+		var dPR = AscBrowser.retinaPixelRatio;
 
 		//arrow pressed
 		if (this.that.settings.showArrows && this.that.mouseDownArrow) {
