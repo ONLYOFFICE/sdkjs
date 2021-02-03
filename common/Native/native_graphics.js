@@ -679,5 +679,13 @@ CNativeGraphics.prototype =
         _transform.tx  = _trans.tx;
         _transform.ty  = _trans.ty;
         return _transform;
+    },
+    GetBrush : function()
+    {
+        return { Color1 : this.Native["GetBrushColor"]()};
+    },
+    GetPen : function()
+    {
+        return { Color : this.Native["GetPenColor"]()};
     }
 };
