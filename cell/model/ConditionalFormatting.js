@@ -965,9 +965,7 @@
 	};
 
 	CConditionalFormattingRule.prototype.asc_setColorScaleOrDataBarOrIconSetRule = function (val) {
-		if (!this.aRuleElements) {
-			this.aRuleElements = [];
-		}
+		this.aRuleElements = [];
 		this.aRuleElements.push(val);
 	};
 
