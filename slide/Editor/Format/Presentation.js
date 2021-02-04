@@ -5165,11 +5165,17 @@ CPresentation.prototype.AddToParagraph = function (ParaItem, bRecalculate, noUpd
         if (this.FocusOnNotes) {
             var oCurSlide = this.Slides[this.CurPage];
             if (oCurSlide.notes) {
-                oCurSlide.notes.graphicObjects.paragraphAdd(ParaItem, bRecalculate);
+                oCurSlide.notes.graphicObjects.paragraphAdd(ParaItem, false);
+                if(bRecalculate !== false) {
+                    this.Recalculate();
+                }
                 bRecalculate = false;
             }
         } else {
-            this.Slides[this.CurPage].graphicObjects.paragraphAdd(ParaItem, bRecalculate);
+            this.Slides[this.CurPage].graphicObjects.paragraphAdd(ParaItem, false);
+            if(bRecalculate !== false) {
+                this.Recalculate();
+            }
             var oTargetTextObject = AscFormat.getTargetTextObject(this.Slides[this.CurPage].graphicObjects);
             if (!oTargetTextObject || oTargetTextObject instanceof AscFormat.CGraphicFrame) {
                 bRecalculate = false;

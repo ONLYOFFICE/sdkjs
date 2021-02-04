@@ -4281,6 +4281,15 @@ CShape.prototype.checkExtentsByDocContent = function(bForce, bNeedRecalc)
                         break;
                     }
                 }
+                if(AscFormat.isRealNumber(this.tmpFontScale) && this.tmpFontScale < 90000) {
+                    if(this.isPlaceholder()) {
+                        var nType = this.getPlaceholderType();
+                        if(nType === AscFormat.phType_title || nType === AscFormat.phType_ctrTitle) {
+                            this.tmpFontScale = 90000;
+                            this.tmpLnSpcReduction = dReductionScale*(100000 - this.tmpFontScale) >> 0;
+                        }
+                    }
+                }
 
                 if(oBodyPr.textFit.lnSpcReduction !== this.tmpLnSpcReduction
                 || oBodyPr.textFit.fontScale !== this.tmpFontScale)
