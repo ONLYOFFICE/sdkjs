@@ -2659,6 +2659,8 @@ ParaMath.prototype.MathToImageConverter = function(bCopy, _canvasInput, _widthPx
         var _width  = undefined == _widthPx  ? w_px : _widthPx;
         var _height = undefined == _heightPx ? h_px : _heightPx;
         _canvas = new CNativeGraphics();
+        _canvas.width  = _width;
+        _canvas.height = _height;
         _canvas.init(window["native"], _width, _height, _width / dKoef, _height / dKoef);
         _canvas.CoordTransformOffset(_widthPx  !== undefined ? (_widthPx  - w_px) / 2 : 0,
                                      _heightPx !== undefined ? (_heightPx - h_px) / 2 : 0);

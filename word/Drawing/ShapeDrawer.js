@@ -1819,6 +1819,8 @@ function ShapeToImageConverter(shape, pageIndex)
 		_need_pix_width = _need_pix_width >> 0;
 		_need_pix_height = _need_pix_height >> 0;
 		_canvas = new CNativeGraphics();
+		_canvas.width  = _need_pix_width;
+		_canvas.height = _need_pix_height;
 		_canvas.init(window["native"], _need_pix_width, _need_pix_height, _need_pix_width / dKoef, _need_pix_height / dKoef);
 		_canvas.CoordTransformOffset(-_bounds_cheker.Bounds.min_x, -_bounds_cheker.Bounds.min_y);
 		_canvas.transform(1, 0, 0, 1, 0, 0);

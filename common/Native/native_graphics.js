@@ -3,6 +3,8 @@ function CNativeGraphics()
 {
     this.Native = CreateNativeGraphics();
 
+    this.width        = 0;
+    this.height       = 0;
     this.m_dWidthMM   = 0;
     this.m_dHeightMM  = 0;
     this.m_lWidthPix  = 0;
