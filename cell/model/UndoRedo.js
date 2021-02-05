@@ -438,6 +438,7 @@ function (window, undefined) {
 
 		this.CFData = 150;
 		this.CFDataInner = 151;
+		this.ColorScale = 152;
 
 		this.Create = function (nType) {
 			switch (nType) {
@@ -622,6 +623,8 @@ function (window, undefined) {
 					return new AscCommonExcel.UndoRedoData_CF();
 				case this.CFDataInner:
 					return new AscCommonExcel.CConditionalFormattingRule();
+				case this.ColorScale:
+					return new AscCommonExcel.CColorScale();
 			}
 			return null;
 		};

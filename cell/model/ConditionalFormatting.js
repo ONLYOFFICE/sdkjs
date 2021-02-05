@@ -1089,7 +1089,11 @@
 						elem = new AscCommonExcel.ThemeColor();
 						break;
 				}
-				elem.Read_FromBinary2(reader);
+				if (null != elem.Read_FromBinary2) {
+					elem.Read_FromBinary2(reader);
+				} else if (null != elem.Read_FromBinary2AndReplace) {
+					elem = elem.Read_FromBinary2AndReplace(reader);
+				}
 				this.aColors.push(elem);
 			}
 		}
@@ -1140,6 +1144,9 @@
 		}
 
 		return false;
+	};
+	CColorScale.prototype.getType = function () {
+		return window['AscCommonExcel'].UndoRedoDataTypes.ColorScale;
 	};
 
 	function CDataBar() {
