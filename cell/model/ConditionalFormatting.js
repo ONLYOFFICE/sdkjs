@@ -1114,6 +1114,26 @@
 		}
 		this.aColors = newArr;
 	};
+	CColorScale.prototype.isEqual = function (elem) {
+		if (elem.aCFVOs && elem.aCFVOs.length === this.aCFVOs.length) {
+			var i;
+			for (i = 0; i < elem.aCFVOs.length; i++) {
+				if (!elem.aCFVOs[i].isEqual(this.aCFVOs[i])) {
+					return false;
+				}
+			}
+			if (elem.aColors && elem.aColors.length === this.aColors.length) {
+				for (i = 0; i < elem.aColors.length; i++) {
+					if (!elem.aColors[i].isEqual(this.aColors[i])) {
+						return false;
+					}
+				}
+				return true;
+			}
+		}
+
+		return false;
+	};
 
 	function CDataBar() {
 		this.MaxLength = 90;
@@ -1737,6 +1757,12 @@
 	};
 	CConditionalFormatValueObject.prototype.asc_setVal = function (val) {
 		this.Val = val;
+	};
+	CConditionalFormatValueObject.prototype.isEqual = function (elem) {
+		if (this.Gte === elem.Gte && this.Type === elem.Type && this.Val === elem.Val && this.Type === elem.Type) {
+			return true;
+		}
+		return false;
 	};
 
 	function CConditionalFormatIconSet() {
