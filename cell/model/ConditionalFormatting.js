@@ -1104,10 +1104,15 @@
 		this.aCFVOs = val;
 	};
 	CColorScale.prototype.asc_setColors = function (val) {
-		this.aColors = [];
+		var newArr = [];
 		for (var i = 0; i < val.length; ++i) {
-			this.aColors.push(AscCommonExcel.CorrectAscColor(val[i]));
+			if (this.aColors[i] && this.aColors[i].getR() === val[i].asc_getR() && this.aColors[i].getG() === val[i].asc_getG() && this.aColors[i].getB() === val[i].asc_getB()) {
+				newArr.push(this.aColors[i]);
+			} else {
+				newArr.push(AscCommonExcel.CorrectAscColor(val[i]));
+			}
 		}
+		this.aColors = newArr;
 	};
 
 	function CDataBar() {
