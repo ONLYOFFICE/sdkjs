@@ -4117,6 +4117,10 @@ function (window, undefined) {
 					cfRule.ranges = toAscRanges(value);
 					break;
 				}
+				case AscCH.historyitem_CFRule_SetRuleElements: {
+					cfRule.aRuleElements = value;
+					break;
+				}
 			}
 		}
 	};

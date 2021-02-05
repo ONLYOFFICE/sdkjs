@@ -329,7 +329,8 @@
 						break;
 					//TODO ?CFormulaCF
 				}
-				this.aRuleElements.push(elem.Read_FromBinary2(reader));
+				elem.Read_FromBinary2(reader)
+				this.aRuleElements.push(elem);
 			}
 		}
 
@@ -1051,7 +1052,7 @@
 			writer.WriteBool(true);
 			writer.WriteLong(this.aColors.length);
 			for (i = 0; i < this.aColors.length; i++) {
-				writer.WriteLong(this.aColors[i].asc_getType());
+				writer.WriteLong(this.aColors[i].getType());
 				this.aColors[i].Write_ToBinary2(writer);
 			}
 		} else {
@@ -1067,7 +1068,8 @@
 					this.aCFVOs = [];
 				}
 				elem = new CConditionalFormatValueObject();
-				this.aCFVOs.push(elem.Read_FromBinary2(reader));
+				elem.Read_FromBinary2(reader)
+				this.aCFVOs.push(elem);
 			}
 		}
 
@@ -1080,10 +1082,15 @@
 				//TODO colors!!!
 				var type = reader.GetLong();
 				switch (type) {
-					case Asc.ECfType.colorScale:
+					case AscCommonExcel.UndoRedoDataTypes.RgbColor:
+						elem = new AscCommonExcel.RgbColor();
+						break;
+					case AscCommonExcel.UndoRedoDataTypes.ThemeColor:
+						elem = new AscCommonExcel.ThemeColor();
 						break;
 				}
-				this.aColors.push(elem.Read_FromBinary2(reader));
+				elem.Read_FromBinary2(reader);
+				this.aColors.push(elem);
 			}
 		}
 	};
@@ -1316,7 +1323,8 @@
 					this.aCFVOs = [];
 				}
 				elem = new CConditionalFormatValueObject();
-				this.aCFVOs.push(elem.Read_FromBinary2(reader));
+				elem.Read_FromBinary2(reader);
+				this.aCFVOs.push(elem);
 			}
 		}
 
@@ -1603,7 +1611,8 @@
 					this.aCFVOs = [];
 				}
 				elem = new CConditionalFormatValueObject();
-				this.aCFVOs.push(elem.Read_FromBinary2(reader));
+				elem.Read_FromBinary2(reader);
+				this.aCFVOs.push(elem);
 			}
 		}
 
@@ -1614,7 +1623,8 @@
 					this.aIconSets = [];
 				}
 				elem = new CConditionalFormatIconSet();
-				this.aIconSets.push(elem.Read_FromBinary2(reader));
+				elem.Read_FromBinary2(reader);
+				this.aIconSets.push(elem);
 			}
 		}
 	};
@@ -1684,7 +1694,7 @@
 		}
 		if (null != this.Val) {
 			writer.WriteBool(true);
-			writer.WriteLong(this.Val);
+			writer.WriteString2(this.Val);
 		} else {
 			writer.WriteBool(false);
 		}
@@ -1713,7 +1723,7 @@
 			this.Type = reader.GetLong();
 		}
 		if (reader.GetBool()) {
-			this.Val = reader.GetBool();
+			this.Val = reader.GetString2();
 		}
 
 		//not format
