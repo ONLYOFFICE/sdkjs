@@ -299,7 +299,7 @@ ChartPreviewManager.prototype.getChartByType = function(type)
 	{
 		var settings = new Asc.asc_ChartSettings();
 		settings.type = type;
-		var chartSeries = {series: this.getAscChartSeriesDefault(type), parsedHeaders: {bLeft: true, bTop: true}};
+		var chartSeries = this.getAscChartSeriesDefault(type);
 		var chart_space = AscFormat.DrawingObjectsController.prototype._getChartSpace(chartSeries, settings, true);
         chart_space.bPreview = true;
 		if (Asc['editor'] && AscCommon.c_oEditorId.Spreadsheet === Asc['editor'].getEditorId()) {
@@ -455,13 +455,8 @@ ChartPreviewManager.prototype._isCachedChartStyles = function(chartType) {
 ChartPreviewManager.prototype._getGraphics = function() {
 	if (null === this._canvas_charts) {
 		this._canvas_charts = document.createElement('canvas');
-		this._canvas_charts.width = this.CHART_PREVIEW_WIDTH_PIX;
-		this._canvas_charts.height = this.CHART_PREVIEW_HEIGHT_PIX;
-
-		if (AscCommon.AscBrowser.isRetina) {
-			this._canvas_charts.width = AscCommon.AscBrowser.convertToRetinaValue(this._canvas_charts.width, true);
-			this._canvas_charts.height = AscCommon.AscBrowser.convertToRetinaValue(this._canvas_charts.height, true);
-		}
+		this._canvas_charts.width = AscCommon.AscBrowser.convertToRetinaValue(this.CHART_PREVIEW_WIDTH_PIX, true);
+		this._canvas_charts.height = AscCommon.AscBrowser.convertToRetinaValue(this.CHART_PREVIEW_HEIGHT_PIX, true);
 	}
 
 	var _canvas = this._canvas_charts;
@@ -694,13 +689,8 @@ TextArtPreviewManager.prototype.getCanvas = function()
 	if (null === this.canvas)
 	{
 		this.canvas = document.createElement('canvas');
-		this.canvas.width = this.canvasWidth;
-		this.canvas.height = this.canvasHeight;
-
-		if (AscCommon.AscBrowser.isRetina) {
-			this.canvas.width <<= 1;
-			this.canvas.height <<= 1;
-		}
+		this.canvas.width = AscCommon.AscBrowser.convertToRetinaValue(this.canvasWidth, true);
+        this.canvas.height = AscCommon.AscBrowser.convertToRetinaValue(this.canvasHeight, true);
 	}
 	return this.canvas;
 };

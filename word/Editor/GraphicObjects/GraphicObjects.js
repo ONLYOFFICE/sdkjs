@@ -1052,9 +1052,7 @@ CGraphicObjects.prototype =
 
     editChart: function(chart)
     {
-        var chart_space = this.getChartSpace2(chart, null), select_start_page, parent_paragraph, nearest_pos;
-
-
+        var chart_space = this.getChartSpace2(chart, null), select_start_page;
         var by_types;
         by_types = AscFormat.getObjectsByTypesFromArr(this.selectedObjects, true);
 

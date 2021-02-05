@@ -338,15 +338,17 @@ CDocPart.prototype.Refresh_RecalcData2 = function(nIndex, nCurPage)
 CDocPart.prototype.Write_ToBinary2 = function(oWriter)
 {
 	oWriter.WriteLong(AscDFH.historyitem_type_DocPart);
+	oWriter.WriteString2(this.Glossary ? this.Glossary.GetId() : "");
 	this.Pr.WriteToBinary(oWriter);
 	CDocumentContent.prototype.Write_ToBinary2.call(this, oWriter);
 };
 CDocPart.prototype.Read_FromBinary2 = function(oReader)
 {
 	// historyitem_type_DocPart
+	// String : Glossary.Id
 	// CDocPartPr
+	this.Glossary =  AscCommon.g_oTableId.Get_ById(oReader.GetString2());
 	this.Pr.ReadFromBinary(oReader);
-
 	oReader.GetLong(); // Должен вернуть historyitem_type_DocumentContent
 	CDocumentContent.prototype.Read_FromBinary2.call(this, oReader);
 };

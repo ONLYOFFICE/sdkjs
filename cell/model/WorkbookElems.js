@@ -581,7 +581,7 @@ ThemeColor.prototype =
 };
 function CorrectAscColor(asc_color)
 {
-	if (null == asc_color)
+	if (null == asc_color || asc_color.asc_getAuto())
 		return null;
 
 	var ret = null;
@@ -979,6 +979,9 @@ var g_oFontProperties = {
 	};
 	Font.prototype.getColor = function () {
 		return this.c || g_oDefaultFormat.ColorAuto;
+	};
+	Font.prototype.getColorNotDefault = function () {
+		return this.c;
 	};
 	Font.prototype.setColor = function(val) {
 		return this.c = val;
@@ -2090,6 +2093,9 @@ var g_oFontProperties = {
 		}
 		return nRes;
 	};
+	BorderProp.prototype.getColorOrDefault = function () {
+		return this.c || g_oDefaultFormat.ColorAuto;
+	};
 	BorderProp.prototype.isEmpty = function () {
 		return c_oAscBorderStyles.None === this.s;
 	};
@@ -2105,9 +2111,7 @@ var g_oFontProperties = {
 		if (null != oBorderProp.s && c_oAscBorderStyles.None !== oBorderProp.s) {
 			this.s = oBorderProp.s;
 			this.w = oBorderProp.w;
-			if (null != oBorderProp.c) {
-				this.c = oBorderProp.c;
-			}
+			this.c = oBorderProp.c;
 		}
 	};
 	BorderProp.prototype.getType = function () {
@@ -2928,7 +2932,7 @@ var g_oBorderProperties = {
         return this.getFont2().getSize();
     };
     CellXfs.prototype.asc_getFontColor = function () {
-        return Asc.colorObjToAscColor(this.getFont2().getColor());
+        return Asc.colorObjToAscColor(this.getFont2().getColorNotDefault());
     };
     CellXfs.prototype.asc_getFontBold = function () {
         return this.getFont2().getBold();
@@ -5907,12 +5911,9 @@ function RangeDataManagerElem(bbox, data)
 		}
 
 		var canvas = document.createElement('canvas');
-		canvas.width = 50;
-		canvas.height = 50;
-		if (AscCommon.AscBrowser.isRetina) {
-			canvas.width = AscCommon.AscBrowser.convertToRetinaValue(canvas.width, true);
-			canvas.height = AscCommon.AscBrowser.convertToRetinaValue(canvas.height, true);
-		}
+		canvas.width = AscCommon.AscBrowser.convertToRetinaValue(50, true);
+		canvas.height = AscCommon.AscBrowser.convertToRetinaValue(50, true);
+
 		var oSparklineView = new AscFormat.CSparklineView();
 		var oSparkline = new sparkline();
 		oSparkline.oCache = this._generateThumbCache();

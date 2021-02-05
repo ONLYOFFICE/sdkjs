@@ -2606,189 +2606,16 @@
 	Api.prototype.CreateChart = function(sType, aSeries, aSeriesNames, aCatNames, nWidth, nHeight, nStyleIndex)
 	{
 		var oDrawingDocument = private_GetDrawingDocument();
-		var oLogicDocument = private_GetLogicDocument();
 		var nW = private_EMU2MM(nWidth);
 		var nH = private_EMU2MM(nHeight);
-		var settings = new Asc.asc_ChartSettings();
-		switch (sType)
-		{
-			case "bar" :
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.barNormal;
-				break;
-			}
-			case "barStacked":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.barStacked;
-				break;
-			}
-			case "barStackedPercent":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.barStackedPer;
-				break;
-			}
-			case "bar3D":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.barNormal3d;
-				break;
-			}
-			case "barStacked3D":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.barStacked3d;
-				break;
-			}
-			case "barStackedPercent3D":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.barStackedPer3d;
-				break;
-			}
-			case "barStackedPercent3DPerspective":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.barNormal3dPerspective;
-				break;
-			}
-			case "horizontalBar":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.hBarNormal;
-				break;
-			}
-			case "horizontalBarStacked":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.hBarStacked;
-				break;
-			}
-			case "horizontalBarStackedPercent":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.hBarStackedPer;
-				break;
-			}
-			case "horizontalBar3D":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.hBarNormal3d;
-				break;
-			}
-			case "horizontalBarStacked3D":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.hBarStacked3d;
-				break;
-			}
-			case "horizontalBarStackedPercent3D":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.hBarStackedPer3d;
-				break;
-			}
-			case "lineNormal":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.lineNormal;
-				break;
-			}
-			case "lineStacked":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.lineStacked;
-				break;
-			}
-			case "lineStackedPercent":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.lineStackedPer;
-				break;
-			}
-			case "line3D":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.line3d;
-				break;
-			}
-			case "pie":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.pie;
-				break;
-			}
-			case "pie3D":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.pie3d;
-				break;
-			}
-			case "doughnut":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.doughnut;
-				break;
-			}
-			case "scatter":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.scatter;
-				break;
-			}
-			case "stock":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.stock;
-				break;
-			}
-			case "area":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.areaNormal;
-				break;
-			}
-			case "areaStacked":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.areaStacked;
-				break;
-			}
-			case "areaStackedPercent":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.areaStackedPer;
-				break;
-			}
-		}
-		var aAscSeries = [];
-		var aAlphaBet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
-		var oCat, i;
-		if(aCatNames.length > 0)
-		{
-			var aNumCache = [];
-			for(i = 0; i < aCatNames.length; ++i)
-			{
-				aNumCache.push({val: aCatNames[i] + ""});
-			}
-			oCat = { Formula: "Sheet1!$B$1:$" + AscFormat.CalcLiterByLength(aAlphaBet, aCatNames.length) + "$1", NumCache: aNumCache };
-		}
-		for(i = 0; i < aSeries.length; ++i)
-		{
-			var oAscSeries = new AscFormat.asc_CChartSeria();
-			oAscSeries.Val.NumCache = [];
-			var aData = aSeries[i];
-			var sEndLiter = AscFormat.CalcLiterByLength(aAlphaBet, aData.length);
-			oAscSeries.Val.Formula = 'Sheet1!' + '$B$' + (i + 2) + ':$' + sEndLiter + '$' + (i + 2);
-			if(aSeriesNames[i])
-			{
-				oAscSeries.TxCache.Formula =  'Sheet1!' + '$A$' + (i + 2);
-				oAscSeries.TxCache.Tx = aSeriesNames[i];
-			}
-			if(oCat)
-			{
-				oAscSeries.Cat = oCat;
-			}
-			for(var j = 0; j < aData.length; ++j)
-			{
-
-				oAscSeries.Val.NumCache.push({ numFormatStr: "General", isDateTimeFormat: false, val: aData[j], isHidden: false });
-			}
-			aAscSeries.push(oAscSeries);
-		}
-		var chartSeries = {series: aAscSeries, parsedHeaders: {bLeft: true, bTop: true}};
 		var oDrawing = new ParaDrawing( nW, nH, null, oDrawingDocument, null, null);
-		var oChartSpace = AscFormat.DrawingObjectsController.prototype._getChartSpace(chartSeries, settings, true);
+		var oChartSpace = AscFormat.builder_CreateChart(nW, nH, sType, aCatNames, aSeriesNames, aSeries, nStyleIndex);
 		if(!oChartSpace)
 		{
 			return null;
 		}
 		oChartSpace.setParent(oDrawing);
 		oDrawing.Set_GraphicObject(oChartSpace);
-		oChartSpace.setBDeleted(false);
-		oChartSpace.extX = nW;
-		oChartSpace.extY = nH;
-		if(AscFormat.isRealNumber(nStyleIndex)){
-			oChartSpace.setStyle(nStyleIndex);
-		}
-		AscFormat.CheckSpPrXfrm(oChartSpace);
 		oDrawing.setExtent( oChartSpace.spPr.xfrm.extX, oChartSpace.spPr.xfrm.extY );
 		return new ApiChart(oChartSpace);
 	};
@@ -3682,7 +3509,7 @@
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {DocumentElement[]} arrContent - An array of elements to insert.
-	 * @param {boolean} [isInline=false] - Inline insert on not (works only when the length of arrContent = 1 and it's a paragraph)
+	 * @param {boolean} [isInline=false] - Inline insert or not (works only for the last and the first element and only if it's a paragraph)
 	 * @param {object} [oPr=undefined]
 	 * @returns {boolean} Success?
 	 */
@@ -3694,7 +3521,7 @@
 			var oElement = arrContent[nIndex];
 			if (oElement instanceof ApiParagraph || oElement instanceof ApiTable)
 			{
-				if (true === isInline && 1 === nCount && oElement instanceof ApiParagraph)
+				if (true === isInline && oElement instanceof ApiParagraph)
 					oSelectedContent.Add(new CSelectedElement(oElement.private_GetImpl(), false));
 				else
 					oSelectedContent.Add(new CSelectedElement(oElement.private_GetImpl(), true));
@@ -11925,9 +11752,9 @@
 
 	Api.prototype.ReplaceTextSmart = function(arrString)
 	{
-		var oDocument = this.GetDocument();
-		var oSelectedContent = oDocument.Document.GetSelectedParagraphs();
-		var allRunsInfo = [];
+		var allRunsInfo      = null;
+		var textDelta        = null;
+		var arrSelectedParas = null;
 
 		function GetRunInfo(oRun)
 		{
@@ -12136,32 +11963,85 @@
 			}
 		};
 
-		for (var Index = 0; Index < oSelectedContent.length; Index++)
+		function ReplaceInParas(arrBasicParas) 
 		{
-			var oPara = oSelectedContent[Index];
-			var oParaText = "";
-			
-			if (oPara.Selection.Use)
-				oPara.CheckRunContent(GetRunInfo);
-				
-			for (var nRun = 0; nRun < allRunsInfo.length; nRun++)
-				oParaText += allRunsInfo[nRun].String;
-
-			if (oParaText == "")
-			{
-				allRunsInfo = [];
-				continue;
-			}
-				
-			var textDelta = AscCommon.getTextDelta(oParaText, arrString[Index]);
-
-			DelInsertChars();
 			allRunsInfo = [];
+
+			for (var Index = 0; Index < arrBasicParas.length; Index++)
+			{
+				var oPara = arrBasicParas[Index];
+				var oParaText = "";
+				
+				if (oPara.Selection.Use)
+					oPara.CheckRunContent(GetRunInfo);
+					
+				for (var nRun = 0; nRun < allRunsInfo.length; nRun++)
+					oParaText += allRunsInfo[nRun].String;
+
+				if (oParaText == "")
+				{
+					allRunsInfo = [];
+					continue;
+				}
+					
+				textDelta = AscCommon.getTextDelta(oParaText, arrString[Index]);
+
+				DelInsertChars();
+				allRunsInfo = [];
+			}
 		}
 
-		oDocument.Document.RemoveSelection();
+		if (this.editorId === AscCommon.c_oEditorId.Spreadsheet) 
+		{
+			var oWorksheet        = this.GetActiveSheet();
+			var oRange            = oWorksheet.GetSelection();
+			var tempRange         = null;
+			var nCountLinesInCell = null;
+			var resultText        = null;
+			var nTextToReplace    = 0;
+			var ws                = this.wb.getWorksheet();
+			var oContent = ws.objectRender.controller.getTargetDocContent();
 
-	}
+			if (oContent) 
+			{
+				arrSelectedParas = [];
+				oContent.GetCurrentParagraph(false, arrSelectedParas, {});
+				ReplaceInParas(arrSelectedParas);
+				Asc.editor.wb.recalculateDrawingObjects();
+				return;
+			}
+
+			for (var nRow = oRange.range.bbox.r1; nRow <= oRange.range.bbox.r2; nRow++)
+			{
+				for (var nCol = oRange.range.bbox.c1; nCol <= oRange.range.bbox.c2; nCol++)
+				{
+					resultText        = '';
+					tempRange         = oWorksheet.GetRangeByNumber(nRow, nCol);
+					nCountLinesInCell = tempRange.GetValue().split('\n').length;
+
+					for (var nText = nTextToReplace; nText < nTextToReplace + nCountLinesInCell; nText++) 
+					{
+						resultText += arrString[nText];
+						if (nText !== nTextToReplace + nCountLinesInCell - 1)
+							resultText += '\n';
+
+					}
+					nTextToReplace += nCountLinesInCell;
+
+					if (resultText !== '')
+						tempRange.SetValue(resultText);
+				}
+			}
+		}
+		else 
+		{
+			var oDocument = this.GetDocument();
+			arrSelectedParas = oDocument.Document.GetSelectedParagraphs();
+			
+			ReplaceInParas(arrSelectedParas);
+			oDocument.Document.RemoveSelection();
+		}
+	};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export

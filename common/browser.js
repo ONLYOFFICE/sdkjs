@@ -53,7 +53,6 @@ var AscBrowser = {
     isSafari : false,
     isArm : false,
     isMozilla : false,
-    isRetina : false,
     isLinuxOS : false,
     retinaPixelRatio : 1,
     isVivaldiLinux : false,
@@ -151,6 +150,74 @@ AscBrowser.isNeedEmulateUpload = (AscBrowser.userAgent.indexOf("needemulateuploa
 
 AscBrowser.zoom = 1;
 
+AscBrowser.isCustomScaling = function()
+{
+    return (Math.abs(AscBrowser.retinaPixelRatio - 1) > 0.001) ? true : false;
+};
+
+AscBrowser.isCustomScalingAbove2 = function()
+{
+    return (AscBrowser.retinaPixelRatio > 1.999) ? true : false;
+};
+
+AscBrowser.supportedScale = [1, 2];
+
+// uncomment to debug all
+//AscBrowser.supportedScale = [];
+
+AscBrowser.checkSupportedZoom = function()
+{
+	var retValue = {
+		zoom: 1,
+		devicePixelRatio: window.devicePixelRatio,
+		retinaPixelRatio: window.devicePixelRatio,
+		correct : false
+	};
+
+	if (AscBrowser.supportedScale.length === 0 ||
+		AscBrowser.isAndroid ||
+		!AscBrowser.isChrome ||
+		AscBrowser.isOperaOld ||
+		AscBrowser.isMobile ||
+		!document || !document.firstElementChild || !document.body)
+	{
+		return retValue;
+	}
+
+	var systemScaling = window.devicePixelRatio;
+	var bestIndex = 0;
+	var bestDistance = Math.abs(AscBrowser.supportedScale[0] - systemScaling);
+	var currentDistance = 0;
+	for (var i = 1, len = AscBrowser.supportedScale.length; i < len; i++)
+	{
+		if (true)
+		{
+			// это "подстройка под интерфейс" - после убирания этого в общий код - удалить
+			if (Math.abs(AscBrowser.supportedScale[i] - systemScaling) > 0.0001)
+			{
+				if (AscBrowser.supportedScale[i] > (systemScaling - 0.0001))
+					break;
+			}
+		}
+
+		currentDistance = Math.abs(AscBrowser.supportedScale[i] - systemScaling);
+		if (currentDistance < (bestDistance - 0.0001))
+		{
+			bestDistance = currentDistance;
+			bestIndex = i;
+		}
+	}
+
+	retValue.retinaPixelRatio = AscBrowser.supportedScale[bestIndex];
+	if (Math.abs(retValue.devicePixelRatio - retValue.retinaPixelRatio) > 0.01)
+	{
+		retValue.zoom = retValue.devicePixelRatio / retValue.retinaPixelRatio;
+		retValue.correct = true;
+	}
+	return retValue;
+};
+
+
 AscBrowser.checkZoom = function()
 {
     if (AscBrowser.isSailfish && AscBrowser.isEmulateDevicePixelRatio)
@@ -163,92 +230,23 @@ AscBrowser.checkZoom = function()
         else if (screen.width > 768)
             scale = 3;
 
-
-        //document.body.style.zoom = scale;
-        //AscBrowser.zoom = 1 / scale;
-        AscBrowser.isRetina = (scale >= 1.9);
         AscBrowser.retinaPixelRatio = scale;
         window.devicePixelRatio = scale;
         return;
     }
 
-    if (AscBrowser.isAndroid)
+    var zoomValue = AscBrowser.checkSupportedZoom();
+	AscBrowser.retinaPixelRatio = zoomValue.retinaPixelRatio;
+	AscBrowser.zoom = zoomValue.zoom;
+
+    if (zoomValue.correct)
 	{
-		AscBrowser.isRetina = (window.devicePixelRatio >= 1.9);
-		AscBrowser.retinaPixelRatio = window.devicePixelRatio;
-		return;
-	}
-
-	AscBrowser.zoom = 1.0;
-	AscBrowser.isRetina = false;
-	AscBrowser.retinaPixelRatio = 1;
-
-	// пока отключаем мозиллу... хотя почти все работает
-    if ((/*AscBrowser.isMozilla || */AscBrowser.isChrome) && !AscBrowser.isOperaOld && !AscBrowser.isMobile && document && document.firstElementChild && document.body)
-    {
-        // делаем простую проверку
-        // считаем: 0 < window.devicePixelRatio < 2 => _devicePixelRatio = 1; zoom = window.devicePixelRatio / _devicePixelRatio;
-        // считаем: window.devicePixelRatio >= 2 => _devicePixelRatio = 2; zoom = window.devicePixelRatio / _devicePixelRatio;
-        if (window.devicePixelRatio > 0.1)
-        {
-            if (window.devicePixelRatio < 1.99)
-            {
-                var _devicePixelRatio = 1;
-                AscBrowser.zoom = window.devicePixelRatio / _devicePixelRatio;
-            }
-            else
-            {
-                var _devicePixelRatio = 2;
-                AscBrowser.zoom = window.devicePixelRatio / _devicePixelRatio;
-                AscBrowser.isRetina = true;
-            }
-        }
-
-        var firstElemStyle = document.firstElementChild.style;
-        if (AscBrowser.isMozilla)
-		{
-            if (window.devicePixelRatio > 0.1)
-            {
-                firstElemStyle.transformOrigin = "0 0";
-                firstElemStyle.transform = ("scale(" + (1 / AscBrowser.zoom) + ")");
-                firstElemStyle.width = ((AscBrowser.zoom * 100) + "%");
-                firstElemStyle.height = ((AscBrowser.zoom * 100) + "%");
-            }
-            else
-			{
-                firstElemStyle.transformOrigin = "0 0";
-                firstElemStyle.transform = "scale(1)";
-                firstElemStyle.width = "100%";
-                firstElemStyle.height = "100%";
-			}
-		}
+		var firstElemStyle = document.firstElementChild.style;
+		if (Math.abs(AscBrowser.zoom - 1) < 0.001)
+			firstElemStyle.zoom = "normal";
 		else
-        {
-            if (window.devicePixelRatio > 0.1)
-			{
-				// chrome 54.x: zoom = "reset" - clear retina zoom (windows)
-				//document.firstElementChild.style.zoom = "reset";
-                firstElemStyle.zoom = 1.0 / AscBrowser.zoom;
-			}
-			else
-                firstElemStyle.zoom = "normal";
-        }
-
-        if (AscBrowser.isRetina)
-        	AscBrowser.retinaPixelRatio = 2;
-    }
-    else
-    {
-		AscBrowser.isRetina = (Math.abs(2 - (window.devicePixelRatio / AscBrowser.zoom)) < 0.01);
-		if (AscBrowser.isRetina)
-			AscBrowser.retinaPixelRatio = 2;
-
-		if (AscBrowser.isMobile)
-		{
-			AscBrowser.isRetina = (window.devicePixelRatio >= 1.9);
-			AscBrowser.retinaPixelRatio = window.devicePixelRatio;
-		}
-    }
+			firstElemStyle.zoom = 1.0 / AscBrowser.zoom;
+	}
 };
 
 AscBrowser.checkZoom();

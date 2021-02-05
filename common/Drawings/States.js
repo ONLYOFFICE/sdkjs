@@ -126,11 +126,6 @@ StartAddNewShape.prototype =
         if(this.bStart && this.drawingObjects.canEdit() && this.drawingObjects.arrTrackObjects.length > 0)
         {
             bRet = true;
-            if(this.drawingObjects.drawingObjects.objectLocker)
-            {
-                this.drawingObjects.drawingObjects.objectLocker.reset();
-                this.drawingObjects.drawingObjects.objectLocker.addObjectId(AscCommon.g_oIdCounter.Get_NewId());
-            }
             var oThis = this;
             var track =  oThis.drawingObjects.arrTrackObjects[0];
             if(!this.bMoved && this instanceof StartAddNewShape)
@@ -140,6 +135,29 @@ StartAddNewShape.prototype =
                 ext_x = oExt.x;
                 ext_y = oExt.y;
                 this.onMouseMove({IsLocked: true}, this.startX + ext_x, this.startY + ext_y);
+            }
+            var oTrack = this.drawingObjects.arrTrackObjects[0];
+            if(oTrack instanceof AscFormat.PolyLine)
+            {
+                if(!oTrack.canCreateShape())
+                {
+                    this.drawingObjects.clearTrackObjects();
+                    this.drawingObjects.clearPreTrackObjects();
+                    this.drawingObjects.updateOverlay();
+                    if(Asc["editor"])
+                    {
+                        if(!e.fromWindow || this.bStart)
+                        {
+                            Asc["editor"].asc_endAddShape();
+                        }
+                    }
+                    else if(editor && editor.sync_EndAddShape)
+                    {
+                        editor.sync_EndAddShape();
+                    }
+                    this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));
+                    return;
+                }
             }
             var callback = function(bLock){
 
@@ -182,9 +200,9 @@ StartAddNewShape.prototype =
                 }
 
             };
-            if(this.drawingObjects.drawingObjects.objectLocker)
+            if(Asc.editor && Asc.editor.checkObjectsLock)
             {
-                this.drawingObjects.drawingObjects.objectLocker.checkObjects(callback);
+                Asc.editor.checkObjectsLock([AscCommon.g_oIdCounter.Get_NewId()], callback);
             }
             else
             {
@@ -1671,23 +1689,47 @@ TextAddState.prototype =
         this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));
         this.drawingObjects.handleEventMode = HANDLE_EVENT_MODE_CURSOR;
         this.drawingObjects.noNeedUpdateCursorType = true;
+        var oApi = this.drawingObjects.getEditorApi();
         var cursor_type = this.drawingObjects.curState.onMouseDown(e, x, y, pageIndex);
         if(cursor_type && cursor_type.hyperlink)
         {
             this.drawingObjects.drawingObjects.showDrawingObjects();
             if(this.drawingObjects.isSlideShow())
             {
-                this.drawingObjects.getEditorApi().sync_HyperlinkClickCallback(cursor_type.hyperlink.Value);
+                oApi.sync_HyperlinkClickCallback(cursor_type.hyperlink.Value);
             }
         }
         this.drawingObjects.noNeedUpdateCursorType = false;
         this.drawingObjects.handleEventMode = HANDLE_EVENT_MODE_HANDLE;
-        if(editor && AscCommon.c_oAscFormatPainterState.kOff !== editor.isPaintFormat)
+        if(oApi)
         {
-            this.drawingObjects.paragraphFormatPaste2();
-            if (AscCommon.c_oAscFormatPainterState.kOn === editor.isPaintFormat)
+            if(oApi.editorId === AscCommon.c_oEditorId.Presentation)
             {
-                editor.sync_PaintFormatCallback(c_oAscFormatPainterState.kOff);
+                if(AscCommon.c_oAscFormatPainterState.kOff !== oApi.isPaintFormat)
+                {
+                    this.drawingObjects.paragraphFormatPaste2();
+                    if (AscCommon.c_oAscFormatPainterState.kOn === oApi.isPaintFormat)
+                    {
+                        oApi.sync_PaintFormatCallback(c_oAscFormatPainterState.kOff);
+                    }
+                }
+                else if(oApi.isMarkerFormat)
+                {
+                    var oPresentation = oApi.WordControl && oApi.WordControl.m_oLogicDocument;
+                    if(oPresentation)
+                    {
+                        if(oPresentation.HighlightColor)
+                        {
+                            var oC = oPresentation.HighlightColor;
+                            oPresentation.SetParagraphHighlight(true, oC.r, oC.g, oC.b);
+                        }
+                        else
+                        {
+                            oPresentation.SetParagraphHighlight(false);
+                        }
+                        oApi.sync_MarkerFormatCallback(true);
+                    }
+                }
             }
         }
     }
@@ -2193,7 +2235,7 @@ PolyLineAddState.prototype =
         this.drawingObjects.startTrackPos = {x: x, y: y, pageIndex:pageIndex};
         this.drawingObjects.clearTrackObjects();
         this.drawingObjects.addTrackObject(new AscFormat.PolyLine(this.drawingObjects, this.drawingObjects.getTheme(), null, null, null, pageIndex));
-        this.drawingObjects.arrTrackObjects[0].arrPoint.push({x : x, y: y});
+        this.drawingObjects.arrTrackObjects[0].addPoint(x, y);
         this.drawingObjects.checkChartTextSelection();
         this.drawingObjects.resetSelection();
         this.drawingObjects.updateOverlay();
@@ -2223,7 +2265,6 @@ PolyLineAddState.prototype =
 function PolyLineAddState2(drawingObjects, minDistance)
 {
     this.drawingObjects = drawingObjects;
-    this.minDistance = minDistance;
     this.polylineFlag = true;
 
 }
@@ -2238,8 +2279,6 @@ PolyLineAddState2.prototype =
 
     onMouseMove: function(e, x, y, pageIndex)
     {
-        var _last_point = this.drawingObjects.arrTrackObjects[0].arrPoint[this.drawingObjects.arrTrackObjects[0].arrPoint.length - 1];
-
         var tr_x, tr_y;
         if(pageIndex === this.drawingObjects.startTrackPos.pageIndex)
         {
@@ -2252,19 +2291,13 @@ PolyLineAddState2.prototype =
             tr_x = tr_point.X;
             tr_y = tr_point.Y;
         }
-        var dx = tr_x - _last_point.x;
-        var dy = tr_y - _last_point.y;
-
-        if(Math.sqrt(dx*dx + dy*dy) >= this.minDistance)
-        {
-            this.drawingObjects.arrTrackObjects[0].arrPoint.push({x : tr_x, y : tr_y});
-            this.drawingObjects.updateOverlay();
-        }
+        this.drawingObjects.arrTrackObjects[0].tryAddPoint(tr_x, tr_y);
+        this.drawingObjects.updateOverlay();
     },
 
     onMouseUp: function(e, x, y, pageIndex)
     {
-        if(this.drawingObjects.arrTrackObjects[0].arrPoint.length > 1)
+        if(this.drawingObjects.arrTrackObjects[0].canCreateShape())
         {
             this.bStart = true;
             this.pageIndex = this.drawingObjects.startTrackPos.pageIndex;
@@ -2309,7 +2342,7 @@ AddPolyLine2State.prototype =
         this.drawingObjects.updateOverlay();
         this.drawingObjects.clearTrackObjects();
         this.drawingObjects.addPreTrackObject(new AscFormat.PolyLine(this.drawingObjects, this.drawingObjects.getTheme(), null, null, null, pageIndex));
-        this.drawingObjects.arrPreTrackObjects[0].arrPoint.push({x : x, y: y});
+        this.drawingObjects.arrPreTrackObjects[0].addPoint(x, y);
         this.drawingObjects.changeCurrentState(new AddPolyLine2State2(this.drawingObjects, x, y));
     },
 
@@ -2369,7 +2402,7 @@ AddPolyLine2State2.prototype =
                 tr_y = tr_point.Y;
             }
             this.drawingObjects.swapTrackObjects();
-            this.drawingObjects.arrTrackObjects[0].arrPoint.push({x : tr_x, y: tr_y});
+            this.drawingObjects.arrTrackObjects[0].tryAddPoint(tr_x, tr_y);
             this.drawingObjects.changeCurrentState(new AddPolyLine2State3(this.drawingObjects));
         }
     },
@@ -2382,7 +2415,10 @@ AddPolyLine2State2.prototype =
 function AddPolyLine2State3(drawingObjects)
 {
     this.drawingObjects = drawingObjects;
-    this.minSize = drawingObjects.convertPixToMM(1);
+
+    this.lastX = -1000;
+    this.lastY = -1000;
+
 
     this.polylineFlag = true;
 }
@@ -2392,6 +2428,10 @@ AddPolyLine2State3.prototype =
     {
         if(this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_CURSOR)
             return {objectId: "1", bMarker: true, cursorType: "crosshair"};
+
+
+        this.lastX = x;
+        this.lastY = y;
         var tr_x, tr_y;
         if(pageIndex === this.drawingObjects.startTrackPos.pageIndex)
         {
@@ -2404,19 +2444,26 @@ AddPolyLine2State3.prototype =
             tr_x = tr_point.X;
             tr_y = tr_point.Y;
         }
-        this.drawingObjects.arrTrackObjects[0].arrPoint.push({x: tr_x, y: tr_y});
         if(e.ClickCount > 1)
         {
 
             this.bStart = true;
             this.pageIndex = this.drawingObjects.startTrackPos.pageIndex;
             StartAddNewShape.prototype.onMouseUp.call(this, e, x, y, pageIndex);
-
+        }
+        else
+        {
+            var oTrack = this.drawingObjects.arrTrackObjects[0];
+            oTrack.replaceLastPoint(tr_x, tr_y, false);
+            oTrack.addPoint(tr_x, tr_y, true);
         }
     },
 
     onMouseMove: function(e, x, y, pageIndex)
     {
+        if(AscFormat.fApproxEqual(x, this.lastX) && AscFormat.fApproxEqual(y, this.lastY)) {
+            return;
+        }
         var tr_x, tr_y;
         if(pageIndex === this.drawingObjects.startTrackPos.pageIndex)
         {
@@ -2430,26 +2477,24 @@ AddPolyLine2State3.prototype =
             tr_y = tr_point.Y;
         }
 
-        if(!e.IsLocked)
+        var oTrack = this.drawingObjects.arrTrackObjects[0];
+        if(!e.IsLocked && oTrack.getPointsCount() > 1)
         {
-            this.drawingObjects.arrTrackObjects[0].arrPoint[this.drawingObjects.arrTrackObjects[0].arrPoint.length - 1] = {x: tr_x, y: tr_y};
+            oTrack.replaceLastPoint(tr_x, tr_y, true);
         }
         else
         {
-            var _last_point = this.drawingObjects.arrTrackObjects[0].arrPoint[this.drawingObjects.arrTrackObjects[0].arrPoint.length - 1];
-            var dx = tr_x - _last_point.x;
-            var dy = tr_y - _last_point.y;
-
-            if(Math.sqrt(dx*dx + dy*dy) >= this.minSize)
-            {
-                this.drawingObjects.arrTrackObjects[0].arrPoint.push({x: tr_x, y: tr_y});
-            }
+            oTrack.tryAddPoint(tr_x, tr_y);
         }
         this.drawingObjects.updateOverlay();
+        this.lastX = x;
+        this.lastY = y;
     },
 
     onMouseUp: function(e, x, y, pageIndex)
     {
+        this.lastX = x;
+        this.lastY = y;
         if(e.fromWindow)
         {
             var nOldClickCount = e.ClickCount;

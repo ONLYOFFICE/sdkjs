@@ -77,12 +77,21 @@ var EditorSkins = {
 		STYLE_THUMBNAIL_HEIGHT    : 38,
 
 		isNeedInvertOnActive      : false,
-		ContentControlsBack       : "#F1F1F1",
-		ContentControlsHover      : "#D8DADC",
-		ContentControlsActive     : "#7C838A",
-		ContentControlsText       : "#444444",
-		ContentControlsTextActive : "#FFFFFF",
+		ContentControlsBack	   : "#F1F1F1",
+		ContentControlsHover   : "#D8DADC",
+		ContentControlsActive  : "#7C838A",
+		ContentControlsText    : "#444444",
+		ContentControlsTextActive   : "#FFFFFF",
 		ContentControlsAnchorActive : "#CFCFCF",
+		FormsContentControlsOutlineHover : "rgba(0, 0, 0, 0.3)",
+		FormsContentControlsOutlineActive : "rgba(0, 0, 0, 0.3)",
+		FormsContentControlsOutlineBorderRadiusHover : 0,
+		FormsContentControlsOutlineBorderRadiusActive : 2,
+		FormsContentControlsMarkersBackground : "#FFFFFF",
+		FormsContentControlsMarkersBackgroundHover : "#E1E1E1",
+		FormsContentControlsMarkersBackgroundActive : "#CCCCCC",
+		FormsContentControlsOutlineMoverHover : "#444444",
+		FormsContentControlsOutlineMoverActive : "#444444",
 
 		/* presentations */
 		BackgroundColorThumbnails       : "#F4F4F4",
@@ -93,6 +102,7 @@ var EditorSkins = {
 		ThumbnailsPageNumberText        : "#000000",
 		ThumbnailsPageNumberTextActive  : "#000000",
 		ThumbnailsPageNumberTextHover   : "#000000",
+		BackgroundColorNotes       	    : "#F0F0F0",
 
 		THEMES_THUMBNAIL_WIDTH          : 85,
 		THEMES_THUMBNAIL_HEIGHT         : 38,
@@ -118,7 +128,8 @@ var EditorSkins = {
 		BorderHighlighted        : "#afafaf",
 		ColorHighlighted         : "#6a6a70",
 		BackgroundDarkHighlighted: "#ffffff",
-		ColorDarkHighlighted     : "#c1c1c1"
+		ColorDarkHighlighted     : "#c1c1c1",
+		GroupDataBorder          : "#000000"
 
 	},
 	"flatDark" : {
@@ -167,6 +178,15 @@ var EditorSkins = {
 		ContentControlsText         : "#444444",
 		ContentControlsTextActive   : "#FFFFFF",
 		ContentControlsAnchorActive : "#CFCFCF",
+		FormsContentControlsOutlineHover : "rgba(0, 0, 0, 0.3)",
+		FormsContentControlsOutlineActive : "rgba(0, 0, 0, 0.3)",
+		FormsContentControlsOutlineBorderRadiusHover : 0,
+		FormsContentControlsOutlineBorderRadiusActive : 2,
+		FormsContentControlsMarkersBackground : "#FFFFFF",
+		FormsContentControlsMarkersBackgroundHover : "#E1E1E1",
+		FormsContentControlsMarkersBackgroundActive : "#CCCCCC",
+		FormsContentControlsOutlineMoverHover : "#444444",
+		FormsContentControlsOutlineMoverActive : "#444444",
 
 		/* presentations */
 		BackgroundColorThumbnails       : "#666666",
@@ -177,6 +197,7 @@ var EditorSkins = {
 		ThumbnailsPageNumberText        : "#FFFFFF",
 		ThumbnailsPageNumberTextActive  : "#FFFFFF",
 		ThumbnailsPageNumberTextHover   : "#FFFFFF",
+		BackgroundColorNotes       	    : "#666666",
 
 		THEMES_THUMBNAIL_WIDTH  : 85,
 		THEMES_THUMBNAIL_HEIGHT : 38,
@@ -186,21 +207,22 @@ var EditorSkins = {
 		SplitterWidthMM                       : 1,
 		ThumbnailScrollWidthNullIfNoScrolling : false,
 
-		Background               : "#f1f1f1",
-		Border                   : "#d5d5d5",
-		Color                    : "#363636",
-		BackgroundDark           : "#444444",
-		ColorDark                : "#ffffff",
-		BackgroundActive         : "#c1c1c1",
-		BorderActive             : "#929292",
-		ColorActive              : "#363636",
-		BackgroundDarkActive     : "#000000",
-		ColorDarkActive          : "#ffffff",
-		BackgroundHighlighted    : "#dfdfdf",
-		BorderHighlighted        : "#afafaf",
-		ColorHighlighted         : "#6a6a70",
-		BackgroundDarkHighlighted: "#ffffff",
-		ColorDarkHighlighted     : "#c1c1c1"
+		Background               : "#060606",
+		Border                   : "#4b4b4b",
+		Color                    : "#d9d9d9",
+		BackgroundDark           : "#010101",
+		ColorDark                : "#d9d9d9",
+		BackgroundActive         : "#5d5d5d",
+		BorderActive             : "#9e9e9e",
+		ColorActive              : "#d9d9d9",
+		BackgroundDarkActive     : "#030303",
+		ColorDarkActive          : "#d9d9d9",
+		BackgroundHighlighted    : "#4e4e4e",
+		BorderHighlighted        : "#555555",
+		ColorHighlighted         : "#d9d9d9",
+		BackgroundDarkHighlighted: "#000000",
+		ColorDarkHighlighted     : "#d9d9d9",
+		GroupDataBorder          : "#ffffff"
 	}
 };
 
@@ -296,6 +318,8 @@ function updateGlobalSkin(obj)
 		if (undefined !== obj["ColorHighlighted"]) GlobalSkin.ColorHighlighted = obj["ColorHighlighted"];
 		if (undefined !== obj["BackgroundDarkHighlighted"]) GlobalSkin.BackgroundDarkHighlighted = obj["BackgroundDarkHighlighted"];
 		if (undefined !== obj["ColorDarkHighlighted"]) GlobalSkin.ColorDarkHighlighted = obj["ColorDarkHighlighted"];
+		if (undefined !== obj["GroupDataBorder"]) GlobalSkin.GroupDataBorder = obj["GroupDataBorder"];
+
 	}
 
 	window['AscCommon'].GlobalSkin = GlobalSkin;

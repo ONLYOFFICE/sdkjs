@@ -600,6 +600,7 @@
 		this.bSelectedSlidesTheme = false;
 
 		this.isPaintFormat              = AscCommon.c_oAscFormatPainterState.kOff;
+		this.isMarkerFormat             = false;
 		this.isShowTableEmptyLine       = false;//true;
 		this.isShowTableEmptyLineAttack = false;//true;
 
@@ -1048,7 +1049,7 @@
     asc_docs_api.prototype._spellCheckDisconnect   = function()
     {
         if (this.WordControl.m_oLogicDocument)
-            this.WordControl.m_oLogicDocument.TurnOff_CheckSpelling();
+            this.WordControl.m_oLogicDocument.TurnOffCheckSpelling();
     };
 
     asc_docs_api.prototype.pre_Save = function(_images)
@@ -1362,8 +1363,8 @@ background-repeat: no-repeat;\
 
 		if (true)
 		{
-			_innerHTML += "<div id=\"id_panel_notes\" class=\"block_elem\" style=\"-ms-touch-action: none;-moz-user-select:none;-khtml-user-select:none;user-select:none;overflow:hidden;background-color:#FFFFFF;\">\
-                                <canvas id=\"id_notes\" class=\"block_elem\" style=\"-ms-touch-action: none;-webkit-user-select: none;background-color:#FFFFFF;z-index:6\"></canvas>\
+			_innerHTML += "<div id=\"id_panel_notes\" class=\"block_elem\" style=\"-ms-touch-action: none;-moz-user-select:none;-khtml-user-select:none;user-select:none;overflow:hidden;background-color:" + AscCommon.GlobalSkin.BackgroundColorNotes + ";\">\
+                                <canvas id=\"id_notes\" class=\"block_elem\" style=\"-ms-touch-action: none;-webkit-user-select: none;background-color:" + AscCommon.GlobalSkin.BackgroundColorNotes + ";z-index:6\"></canvas>\
                                 <canvas id=\"id_notes_overlay\" class=\"block_elem\" style=\"-ms-touch-action: none;-webkit-user-select: none;z-index:7\"></canvas>\
                                 <div id=\"id_vertical_scroll_notes\" style=\"left:0;top:0;width:16px;overflow:hidden;position:absolute;\">\
                                     <div id=\"panel_right_scroll_notes\" class=\"block_elem\" style=\"left:0;top:0;width:1px;height:1px;\"></div>\
@@ -1396,10 +1397,13 @@ background-repeat: no-repeat;\
 			obj_id_main.style.backgroundColor = AscCommon.GlobalSkin.BackgroundColor;
 			document.getElementById("id_panel_thumbnails").style.backgroundColor = AscCommon.GlobalSkin.BackgroundColorThumbnails;
 			document.getElementById("id_panel_thumbnails_split").style.backgroundColor = AscCommon.GlobalSkin.BackgroundColorThumbnails;
-			document.getElementById("id_main_parent").style.backgroundColor = AscCommon.GlobalSkin.BorderSplitterColor;
+			document.getElementById("id_main_parent").style.borderLeftColor = AscCommon.GlobalSkin.BorderSplitterColor;
 			document.getElementById("id_viewer").style.backgroundColor = AscCommon.GlobalSkin.BackgroundColor;
 			document.getElementById("id_panel_right").style.backgroundColor = AscCommon.GlobalSkin.ScrollBackgroundColor;
 			document.getElementById("id_horscrollpanel").style.backgroundColor = AscCommon.GlobalSkin.ScrollBackgroundColor;
+			document.getElementById("id_panel_notes").style.backgroundColor = AscCommon.GlobalSkin.BackgroundColorNotes;
+			document.getElementById("id_panel_notes").style.borderTopColor = AscCommon.GlobalSkin.BorderSplitterColor;
+			document.getElementById("id_notes").style.backgroundColor = AscCommon.GlobalSkin.BackgroundColorNotes;
 		}
 
 		if (this.WordControl && this.WordControl.m_oBody)
@@ -1614,6 +1618,16 @@ background-repeat: no-repeat;\
 			if (TextPr.Unifill !== undefined)
 			{
 				this.sync_TextColor2(TextPr.Unifill);
+			}
+
+			if (AscCommon.isRealObject(TextPr.HighlightColor))
+			{
+				var oRGB = TextPr.HighlightColor.RGBA;
+				this.sendEvent("asc_onTextHighLight", new AscCommon.CColor(oRGB.R, oRGB.G, oRGB.B));
+			}
+			else
+			{
+				this.sendEvent("asc_onTextHighLight", AscCommonWord.highlight_None);
 			}
 		}
 	};
@@ -2447,7 +2461,7 @@ background-repeat: no-repeat;\
 		{
 			History.Create_NewPoint(AscDFH.historydescription_Presentation_ParagraphAdd);
 			this.WordControl.m_oLogicDocument.AddToParagraph(new AscCommonWord.ParaTextPr({FontSize : Math.min(size, 300)}), false);
-
+			this.WordControl.m_oLogicDocument.CheckResetShapesAutoFit(true);
 			// для мобильной версии это важно
 			if (this.isMobileVersion)
 				this.UpdateInterfaceState();
@@ -5134,9 +5148,6 @@ background-repeat: no-repeat;\
 				}
 
 				if(!window["NATIVE_EDITOR_ENJINE"]){
-
-					this.WordControl.m_oLayoutDrawer.IsRetina = this.WordControl.bIsRetinaSupport;
-
 					this.WordControl.m_oLayoutDrawer.WidthMM  = presentation.Width;
 					this.WordControl.m_oLayoutDrawer.HeightMM = presentation.Height;
 					this.WordControl.m_oMasterDrawer.WidthMM  = presentation.Width;
@@ -6040,6 +6051,21 @@ background-repeat: no-repeat;\
 		this.isPaintFormat = value;
 		return this.sendEvent("asc_onPaintFormatChanged", value);
 	};
+	asc_docs_api.prototype.SetMarkerFormat          = function(value, is_flag, r, g, b)
+	{
+		this.isMarkerFormat = value;
+		if (this.isMarkerFormat)
+		{
+			this.WordControl.m_oLogicDocument.SetParagraphHighlight(is_flag, r, g, b);
+		}
+	};
+
+	asc_docs_api.prototype.sync_MarkerFormatCallback = function(value)
+	{
+		this.isMarkerFormat = value;
+		return this.sendEvent("asc_onMarkerFormatChanged", value);
+	};
+
 	asc_docs_api.prototype.ClearFormating           = function()
 	{
 		this.WordControl.m_oLogicDocument.ClearParagraphFormatting(false, true);
@@ -6919,6 +6945,13 @@ background-repeat: no-repeat;\
 		}
 		return this.WordControl.m_oLogicDocument.getSelectedDrawingObjectsCount();
 	};
+	asc_docs_api.prototype.asc_ChangeTextCase = function(nType)
+	{
+		var oLogicDocument = this.WordControl && this.WordControl.m_oLogicDocument;
+		if (!oLogicDocument)
+			return;
+		oLogicDocument.ChangeTextCase(nType);
+	};
 
 	//-----------------------------------------------------------------
 	// События контекстного меню
@@ -6975,7 +7008,7 @@ background-repeat: no-repeat;\
 	{
 		if (opt_isPassword) {
 			if (this.asc_checkNeedCallback("asc_onAdvancedOptions")) {
-				this.sendEvent("asc_onAdvancedOptions", c_oAscAdvancedOptionsID.DRM);
+				this.sendEvent("asc_onAdvancedOptions", c_oAscAdvancedOptionsID.DRM, data ? data.message : undefined);
 			} else {
 				this.sendEvent("asc_onError", c_oAscError.ID.ConvertationPassword, c_oAscError.Level.Critical);
 			}
@@ -7962,6 +7995,8 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['GetCurrentPixOffsetY']                = asc_docs_api.prototype.GetCurrentPixOffsetY;
 	asc_docs_api.prototype['SetPaintFormat']                      = asc_docs_api.prototype.SetPaintFormat;
 	asc_docs_api.prototype['sync_PaintFormatCallback']            = asc_docs_api.prototype.sync_PaintFormatCallback;
+	asc_docs_api.prototype['SetMarkerFormat']                     = asc_docs_api.prototype.SetMarkerFormat;
+	asc_docs_api.prototype['sync_MarkerFormatCallback']           = asc_docs_api.prototype.sync_MarkerFormatCallback;
 	asc_docs_api.prototype['ClearFormating']                      = asc_docs_api.prototype.ClearFormating;
 	asc_docs_api.prototype['SetDeviceInputHelperId']              = asc_docs_api.prototype.SetDeviceInputHelperId;
 	asc_docs_api.prototype['asc_setViewMode']                     = asc_docs_api.prototype.asc_setViewMode;
@@ -8013,6 +8048,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_getTextArtPreviews']              = asc_docs_api.prototype.asc_getTextArtPreviews;
 	asc_docs_api.prototype['sync_closeChartEditor']               = asc_docs_api.prototype.sync_closeChartEditor;
 	asc_docs_api.prototype['asc_getSelectedDrawingObjectsCount']  = asc_docs_api.prototype.asc_getSelectedDrawingObjectsCount;
+	asc_docs_api.prototype['asc_ChangeTextCase']                  = asc_docs_api.prototype.asc_ChangeTextCase;
 	asc_docs_api.prototype['asc_stopSaving']                      = asc_docs_api.prototype.asc_stopSaving;
 	asc_docs_api.prototype['asc_continueSaving']                  = asc_docs_api.prototype.asc_continueSaving;
 	asc_docs_api.prototype['asc_undoAllChanges']                  = asc_docs_api.prototype.asc_undoAllChanges;

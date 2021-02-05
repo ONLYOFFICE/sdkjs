@@ -1718,22 +1718,22 @@ ParaDrawing.prototype.OnEnd_MoveInline = function(NearPos)
 		}
 	}
 
-	// Ничего никуда не переносим в такой ситуации
-	if (oPictureCC)
+	var oDstRun = null;
+	var arrClasses = NearPos.Paragraph.GetClassesByPos(NearPos.ContentPos);
+	for (var nIndex = arrClasses.length - 1; nIndex >= 0; --nIndex)
 	{
-		var oDstRun = null;
-		var arrClasses = NearPos.Paragraph.GetClassesByPos(NearPos.ContentPos);
-		for (var nIndex = arrClasses.length - 1; nIndex >= 0; --nIndex)
+		if (arrClasses[nIndex] instanceof ParaRun)
 		{
-			if (arrClasses[nIndex] instanceof ParaRun)
-			{
-				oDstRun = arrClasses[nIndex];
-				break;
-			}
+			oDstRun = arrClasses[nIndex];
+			break;
 		}
+	}
 
-		if (oDstRun === oRun)
-			return;
+	// Ничего никуда не переносим в такой ситуации
+	if (!oDstRun || (oPictureCC && oDstRun === oRun) || oDstRun.GetParentForm())
+	{
+		NearPos.Paragraph.Clear_NearestPosArray();
+		return;
 	}
 
 	var RunPr = this.Remove_FromDocument(false);

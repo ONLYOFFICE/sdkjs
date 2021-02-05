@@ -676,6 +676,7 @@ CComplexField.prototype.private_UpdateTOC = function()
 	var nForceTabLeader = this.Instruction.GetForceTabLeader();
 
 	var oTab = new CParaTab(tab_Right, nTabPos, Asc.c_oAscTabLeader.Dot);
+	var oPara, oTabs, oRun;
 	if (undefined !== nForceTabLeader)
 	{
 		oTab = new CParaTab(tab_Right, nTabPos, nForceTabLeader);
@@ -685,8 +686,8 @@ CComplexField.prototype.private_UpdateTOC = function()
 		var arrSelectedParagraphs = this.LogicDocument.GetCurrentParagraph(false, true);
 		if (arrSelectedParagraphs.length > 0)
 		{
-			var oPara = arrSelectedParagraphs[0];
-			var oTabs = oPara.GetParagraphTabs();
+			oPara = arrSelectedParagraphs[0];
+			oTabs = oPara.GetParagraphTabs();
 
 			if (oTabs.Tabs.length > 0)
 				oTab = oTabs.Tabs[oTabs.Tabs.length - 1];
@@ -699,7 +700,7 @@ CComplexField.prototype.private_UpdateTOC = function()
 		{
 			var oSrcParagraph = arrOutline[nIndex].Paragraph;
 			var sBookmarkName;
-			var oPara, oParaForCopy = oSrcParagraph;
+			var oParaForCopy = oSrcParagraph;
 			if(bSkipCaptionLbl)
 			{
 				sBookmarkName = oSrcParagraph.AddBookmarkForCaption(sResultCaption, true, true);
@@ -727,8 +728,10 @@ CComplexField.prototype.private_UpdateTOC = function()
 				SkipFootnoteReference : true,
 				SkipComplexFields     : true,
 				SkipComments          : true,
-				SkipBookmarks         : true
+				SkipBookmarks         : true,
+				CopyReviewPr          : false
 			});
+			oPara.RemovePrChange();
 			if(bTOF)
 			{
 				oPara.Style_Add(oStyles.GetDefaultTOF(), false);
@@ -838,7 +841,7 @@ CComplexField.prototype.private_UpdateTOC = function()
 			}
 
 			// Word добавляет табы независимо о наличия Separator и PAGEREF
-			var oTabs = new CParaTabs();
+			oTabs = new CParaTabs();
 			oTabs.Add(oTab);
 
 			if ((!isPreserveTabs && oPara.RemoveTabsForTOC()) || isAddTabForNumbering)
@@ -899,8 +902,8 @@ CComplexField.prototype.private_UpdateTOC = function()
 			sReplacementText = AscCommon.translateManager.getValue("No table of contents entries found.");
 		}
 
-		var oPara = new Paragraph(this.LogicDocument.GetDrawingDocument(), this.LogicDocument, false);
-		var oRun  = new ParaRun(oPara, false);
+		oPara = new Paragraph(this.LogicDocument.GetDrawingDocument(), this.LogicDocument, false);
+		oRun  = new ParaRun(oPara, false);
 		oRun.Set_Bold(true);
 		oRun.AddText(sReplacementText);
 		oPara.AddToContent(0, oRun);
@@ -913,7 +916,7 @@ CComplexField.prototype.private_UpdateTOC = function()
 	this.LogicDocument.Remove(1, false, false, false);
 	this.LogicDocument.TurnOn_Recalculate(false);
 	this.LogicDocument.TurnOn_InterfaceEvents(false);
-	var oRun       = this.BeginChar.GetRun();
+	oRun       = this.BeginChar.GetRun();
 	var oParagraph = oRun.GetParagraph();
 	var oNearPos   = {
 		Paragraph  : oParagraph,
@@ -1455,11 +1458,13 @@ CComplexField.prototype.GetInstruction = function()
 };
 CComplexField.prototype.private_UpdateInstruction = function()
 {
-	if (!this.Instruction && this.InstructionLine)
+	if (this.InstructionLine &&
+		(!this.Instruction || !this.Instruction.CheckInstructionLine(this.InstructionLine)))
 	{
 		var oParser = new CFieldInstructionParser();
 		this.Instruction = oParser.GetInstructionClass(this.InstructionLine);
 		this.Instruction.SetComplexField(this);
+		this.Instruction.SetInstructionLine(this.InstructionLine);
 	}
 };
 CComplexField.prototype.private_CheckNestedComplexFields = function()

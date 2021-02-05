@@ -489,7 +489,7 @@
                 }
                 else
                 {
-                    this._onNeedParams(undefined, true);
+                    this._onNeedParams({ message : obj["message"] }, true);
                 }
                 break;
             }

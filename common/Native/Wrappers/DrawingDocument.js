@@ -648,7 +648,7 @@ function CDrawingDocument()
         Track : { X : 0, Y : 0, L : 0, T : 0, R : 0, B : 0, PageIndex : 0, Type : -1 }, IsTracked : false, PageIndex : 0 };
 
     // math rect
-    this.MathTrack = new CMathTrack();
+    this.MathTrack = new AscCommon.CMathTrack();
 
     // table track
     this.TableOutlineDr = new CTableOutlineDr();

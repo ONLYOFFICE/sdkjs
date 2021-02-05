@@ -184,9 +184,7 @@ window["DesktopOfflineAppDocumentStartSave"] = function(isSaveAs, password, isFo
 	var _param = "";
 	if (isSaveAs === true)
 		_param += "saveas=true;";
-	if (AscCommon.AscBrowser.isRetina)
-		_param += "retina=true;";
-	
+
 	window["AscDesktopEditor"]["LocalFileSave"](_param, (password === undefined) ? editor.currentPassword : password, docinfo);
 };
 window["DesktopOfflineAppDocumentEndSave"] = function(error, hash, password)
@@ -251,8 +249,7 @@ Asc['asc_docs_api'].prototype.AddImage = Asc['asc_docs_api'].prototype.asc_addIm
 		var file = _file;
 		if (Array.isArray(file))
 			file = file[0];
-
-		if (file == "")
+		if (!file)
 			return;
 
 		var _url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](file);

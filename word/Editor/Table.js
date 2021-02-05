@@ -18898,6 +18898,15 @@ CTable.prototype.GetMaxTableGridWidth = function()
 		GridWidth : this.TableSumGrid[this.TableSumGrid.length - 1] + this.GetTableOffsetCorrection() - this.GetRightTableOffsetCorrection()
 	};
 };
+CTable.prototype.GetDocumentPositionFromObject = function(arrPos)
+{
+	arrPos = CDocumentContentElementBase.prototype.GetDocumentPositionFromObject.call(this, arrPos);
+	if(this.Parent instanceof AscFormat.CGraphicFrame)
+	{
+		arrPos.splice(0, 1);
+	}
+	return arrPos;
+};
 
 //----------------------------------------------------------------------------------------------------------------------
 // Класс  CTableLook

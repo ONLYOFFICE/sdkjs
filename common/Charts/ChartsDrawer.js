@@ -3892,11 +3892,7 @@ CChartsDrawer.prototype =
 		var res = null;
 
 		if (val) {
-			if (val.numRef && val.numRef.numCache) {
-				res = val.numRef.numCache;
-			} else if (val.numLit) {
-				res = val.numLit;
-			}
+			res = val.getNumCache();
 		}
 
 		return res;
@@ -7183,7 +7179,7 @@ drawAreaChart.prototype = {
 		if (k !== 5 && k !== 0) {
 			var props = this.cChartSpace.getParentObjects();
 
-			if (brush.fill.type === Asc.c_oAscFill.FILL_TYPE_NOFILL) {
+			if (brush.isNoFill()) {
 				return;
 			}
 
@@ -10355,7 +10351,11 @@ drawRadarChart.prototype = {
 
 			seria = this.chart.series[i];
 
-			dataSeries = this.cChartDrawer.getNumCache(seria.val);
+			var oNumCache = this.cChartDrawer.getNumCache(seria.val);
+			if(!oNumCache) {
+				continue;
+			}
+			dataSeries = oNumCache.pts;
 			if(!dataSeries) {
 				continue;
 			}

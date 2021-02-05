@@ -546,10 +546,10 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_Resize = function () {
-    var isRetinaOld = AscCommon.AscBrowser.isRetina;
+    var oldScale = AscCommon.AscBrowser.retinaPixelRatio;
     AscCommon.AscBrowser.checkZoom();
     if (this.wb) {
-      if (isRetinaOld !== AscCommon.AscBrowser.isRetina) {
+      if (Math.abs(oldScale - AscCommon.AscBrowser.retinaPixelRatio) > 0.001) {
         this.wb.changeZoom(null);
       }
       this.wb.resize();
@@ -2230,10 +2230,9 @@ var editor;
       return false;
     }
 
-    var sheet, arrLocks = [], arrDeleteNames = [];
+    var sheet, arrLocks = [];
     for (var i = 0; i < arrSheets.length; ++i) {
       sheet = arrSheets[i] = this.wbModel.getWorksheet(arrSheets[i]);
-      arrDeleteNames.push(sheet.sName);
       arrLocks.push(this.collaborativeEditing.getLockInfo(c_oAscLockTypeElem.Sheet, /*subType*/null, sheet.getId(), sheet.getId()));
     }
 
@@ -2242,22 +2241,10 @@ var editor;
       if (res) {
         History.Create_NewPoint();
         History.StartTransaction();
-        // Нужно проверить все диаграммы, ссылающиеся на удаляемый лист
-          t.wbModel.forEach(function (ws) {
-			  History.TurnOff();
-			  var wsView = t.wb.getWorksheet(ws.index, true);
-			  History.TurnOn();
-			  for (var i = 0; i < arrDeleteNames.length; ++i) {
-                ws.oDrawingOjectsManager.updateChartReferencesWidthHistory(arrDeleteNames[i], parserHelp.getEscapeSheetName(ws.sName));
-              }
-			  if (wsView && wsView.objectRender && wsView.objectRender.controller) {
-				  wsView.objectRender.controller.recalculate2(true);
-			  }
-          });
-
         for (var i = 0; i < arrSheets.length; ++i) {
           t.wbModel.removeWorksheet(arrSheets[i].getIndex());
         }
+        t.wbModel.handleChartsOnWorksheetsRemove(arrSheets);
         t.wb.updateWorksheetByModel();
         t.wb.showWorksheet();
         History.EndTransaction();
@@ -4090,13 +4077,7 @@ var editor;
   spreadsheet_api.prototype.asc_ApplyColorScheme = function(bRedraw) {
 
     if (window['IS_NATIVE_EDITOR'] || !window["NATIVE_EDITOR_ENJINE"]) {
-      var wsViews = Asc["editor"].wb.wsViews;
-      History.Get_RecalcData();
-      for (var i = 0; i < wsViews.length; ++i) {
-        if (wsViews[i] && wsViews[i].objectRender && wsViews[i].objectRender.controller) {
-          wsViews[i].objectRender.controller.startRecalculate(false);
-        }
-      }
+      Asc["editor"].wb.recalculateDrawingObjects();
       this.chartPreviewManager.clearPreviews();
       this.textArtPreviewManager.clear();
     }
@@ -4777,28 +4758,25 @@ var editor;
 		return this.wbModel && this.wbModel.App || null;
 	};
 
+    spreadsheet_api.prototype.checkObjectsLock = function(aObjectsId, fCallback) {
+      if(!this.collaborativeEditing) {
+        fCallback(true, true);
+        return;
+      }
+      this.collaborativeEditing.checkObjectsLock(aObjectsId, fCallback);
+    };
     spreadsheet_api.prototype.asc_setCoreProps = function(oProps)
     {
       var oCore = this.getInternalCoreProps();
       if(!oCore) {
         return;
       }
-      var oWS = this.wb && this.wb.getWorksheet();
-      if(!oWS || !oWS.objectRender) {
-        History.Create_NewPoint();
-        oCore.setProps(oProps);
-      }
-      var oLocker = oWS.objectRender.objectLocker;
-      oLocker.reset();
-      oLocker.addObjectId(oCore.Get_Id());
-      oLocker.checkObjects(
-          function(bNoLock, bSync){
-              if(bNoLock) {
-                History.Create_NewPoint();
-                oCore.setProps(oProps);
-              }
-          }
-      );
+      this.checkObjectsLock([oCore.Get_Id()], function(bNoLock) {
+        if(bNoLock) {
+          History.Create_NewPoint();
+          oCore.setProps(oProps);
+        }
+      });
       return null;
     };
 
@@ -4941,7 +4919,19 @@ var editor;
 
   spreadsheet_api.prototype.asc_setSkin = function (theme) {
     AscCommon.updateGlobalSkin(theme);
-    this.wb.updateSkin();
+    if (this.wb) {
+      var corner = document.getElementById("ws-scrollbar-corner");
+      if (corner) {
+        corner.style.backgroundColor = AscCommon.GlobalSkin.ScrollBackgroundColor;
+      }
+
+      this.wb.updateSkin();
+      var ws = this.wb.getWorksheet();
+      if (ws) {
+          this.controller.updateScrollSettings();
+		  ws.draw();
+      }
+    }
   };
 
   /*

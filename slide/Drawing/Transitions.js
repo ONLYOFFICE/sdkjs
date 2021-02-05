@@ -94,11 +94,8 @@ function CTransitionAnimation(htmlpage)
 
         var w = _page.m_oEditor.HtmlElement.width;
         var _px_h = _page.m_oEditor.HtmlElement.height;
-        if (this.HtmlPage.bIsRetinaSupport)
-        {
-            w /= AscCommon.AscBrowser.retinaPixelRatio;
-            _px_h /= AscCommon.AscBrowser.retinaPixelRatio;
-        }
+        w /= AscCommon.AscBrowser.retinaPixelRatio;
+        _px_h /= AscCommon.AscBrowser.retinaPixelRatio;
 
         var h = (((_page.m_oBody.AbsolutePosition.B - _page.m_oBody.AbsolutePosition.T) -
             (_page.m_oTopRuler.AbsolutePosition.B - _page.m_oTopRuler.AbsolutePosition.T)) * g_dKoef_mm_to_pix) >> 0;
@@ -182,11 +179,7 @@ function CTransitionAnimation(htmlpage)
         if (this.DemonstrationObject == null)
         {
             var ctx1 = this.HtmlPage.m_oEditor.HtmlElement.getContext('2d');
-            if (this.HtmlPage.bIsRetinaSupport)
-                ctx1.setTransform(AscCommon.AscBrowser.retinaPixelRatio, 0, 0, AscCommon.AscBrowser.retinaPixelRatio, 0, 0);
-            else
-                ctx1.setTransform(1, 0, 0, 1, 0, 0);
-
+            ctx1.setTransform(AscCommon.AscBrowser.retinaPixelRatio, 0, 0, AscCommon.AscBrowser.retinaPixelRatio, 0, 0);
             this.HtmlPage.m_oOverlayApi.SetBaseTransform();
         }
         else
@@ -317,7 +310,7 @@ function CTransitionAnimation(htmlpage)
         this.StartTime = new Date().getTime();
         this.EndTime = this.StartTime + this.Duration;
 
-        if (this.HtmlPage.bIsRetinaSupport)
+        if (AscCommon.AscBrowser.isCustomScaling())
         {
             var ctx1 = oThis.HtmlPage.m_oEditor.HtmlElement.getContext('2d');
             ctx1.setTransform(AscCommon.AscBrowser.retinaPixelRatio, 0, 0, AscCommon.AscBrowser.retinaPixelRatio, 0, 0);

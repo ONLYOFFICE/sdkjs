@@ -154,14 +154,6 @@ function CGroupShape()
         }
     };
 
-    CGroupShape.prototype.checkRemoveCache = function()
-    {
-        for(var i = 0; i < this.spTree.length; ++i)
-        {
-            this.spTree[i].checkRemoveCache && this.spTree[i].checkRemoveCache();
-        }
-    };
-
     CGroupShape.prototype.documentUpdateSelectionState = function()
     {
         if(this.selection.textSelection)
@@ -1082,24 +1074,6 @@ function CGroupShape()
             this.selectedObjects[0].documentUpdateRulersState();
     };
 
-    CGroupShape.prototype.updateChartReferences = function(oldWorksheet, newWorksheet, bNoRebuildCache)
-    {
-        for(var i = 0; i < this.spTree.length; ++i)
-        {
-            if(this.spTree[i].updateChartReferences)
-                this.spTree[i].updateChartReferences(oldWorksheet, newWorksheet, bNoRebuildCache);
-        }
-    };
-
-    CGroupShape.prototype.rebuildSeries = function(data)
-    {
-        for(var i = 0; i < this.spTree.length; ++i)
-        {
-            if(this.spTree[i].rebuildSeries)
-                this.spTree[i].rebuildSeries(data);
-        }
-    };
-
     CGroupShape.prototype.CheckNeedRecalcAutoFit = function(oSectPr)
     {
         var bRet = false;
@@ -1910,6 +1884,13 @@ function CGroupShape()
             }
         }
         return res;
+    };
+
+    CGroupShape.prototype.handleObject = function (fCallback) {
+        fCallback(this);
+        for(var nSp = 0; nSp < this.spTree.length; ++nSp) {
+            this.spTree[nSp].handleObject(fCallback);
+        }
     };
 
     //--------------------------------------------------------export----------------------------------------------------

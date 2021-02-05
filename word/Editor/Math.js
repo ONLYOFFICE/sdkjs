@@ -2561,10 +2561,6 @@ ParaMath.prototype.SetRecalcCtrPrp = function(Class)
 };
 ParaMath.prototype.MathToImageConverter = function(bCopy, _canvasInput, _widthPx, _heightPx, raster_koef)
 {
-    if(window['IS_NATIVE_EDITOR'])
-    {
-        return null;
-    }
     var bTurnOnId = false;
     if (false === g_oTableId.m_bTurnOff)
     {
@@ -2657,41 +2653,67 @@ ParaMath.prototype.MathToImageConverter = function(bCopy, _canvasInput, _widthPx
             _heightPx *= raster_koef;
     }
 
-    var _canvas = (_canvasInput === undefined) ? document.createElement('canvas') : _canvasInput;
-
-    _canvas.width   = (undefined == _widthPx) ? w_px : _widthPx;
-    _canvas.height  = (undefined == _heightPx) ? h_px : _heightPx;
-
-    var _ctx = _canvas.getContext('2d');
-
-    var g = new AscCommon.CGraphics();
-    g.init(_ctx, w_px, h_px, w_mm, h_mm);
-    g.m_oFontManager = AscCommon.g_fontManager;
-
-    g.m_oCoordTransform.tx = 0;
-    g.m_oCoordTransform.ty = 0;
-
-    if (_widthPx !== undefined && _heightPx !== undefined)
+    var _canvas = null;
+    if (window["NATIVE_EDITOR_ENJINE"] === true && window["IS_NATIVE_EDITOR"] !== true)
     {
-        g.m_oCoordTransform.tx = (_widthPx - w_px) / 2;
-        g.m_oCoordTransform.ty = (_heightPx - h_px) / 2;
+        var _width  = undefined == _widthPx  ? w_px : _widthPx;
+        var _height = undefined == _heightPx ? h_px : _heightPx;
+        _canvas = new CNativeGraphics();
+        _canvas.width  = _width;
+        _canvas.height = _height;
+        _canvas.init(window["native"], _width, _height, _width / dKoef, _height / dKoef);
+        _canvas.CoordTransformOffset(_widthPx  !== undefined ? (_widthPx  - w_px) / 2 : 0,
+                                     _heightPx !== undefined ? (_heightPx - h_px) / 2 : 0);
+        _canvas.transform(1, 0, 0, 1, 0, 0);
+        var bNeedSetParaMarks = false;
+        if (AscCommon.isRealObject(editor) && editor.ShowParaMarks) 
+        {
+          bNeedSetParaMarks = true;
+          editor.ShowParaMarks = false;
+        }
+        par.Draw(0, _canvas);
+        if (bNeedSetParaMarks) 
+        {
+          editor.ShowParaMarks = true;
+        }
     }
-
-    g.transform(1,0,0,1,0,0);
-
-
-    var bNeedSetParaMarks = false;
-    if(AscCommon.isRealObject(editor) && editor.ShowParaMarks)
+    else
     {
-        bNeedSetParaMarks = true;
-        editor.ShowParaMarks = false;
-    }
+        var _canvas = (_canvasInput === undefined) ? document.createElement('canvas') : _canvasInput;
 
-    par.Draw(0, g);
+        _canvas.width   = (undefined == _widthPx) ? w_px : _widthPx;
+        _canvas.height  = (undefined == _heightPx) ? h_px : _heightPx;
 
-    if(bNeedSetParaMarks)
-    {
-        editor.ShowParaMarks = true;
+        var _ctx = _canvas.getContext('2d');
+
+        var g = new AscCommon.CGraphics();
+        g.init(_ctx, w_px, h_px, w_mm, h_mm);
+        g.m_oFontManager = AscCommon.g_fontManager;
+
+        g.m_oCoordTransform.tx = 0;
+        g.m_oCoordTransform.ty = 0;
+
+        if (_widthPx !== undefined && _heightPx !== undefined)
+        {
+            g.m_oCoordTransform.tx = (_widthPx - w_px) / 2;
+            g.m_oCoordTransform.ty = (_heightPx - h_px) / 2;
+        }
+
+        g.transform(1,0,0,1,0,0);
+
+        var bNeedSetParaMarks = false;
+        if(AscCommon.isRealObject(editor) && editor.ShowParaMarks)
+        {
+            bNeedSetParaMarks = true;
+            editor.ShowParaMarks = false;
+        }
+
+        par.Draw(0, g);
+
+        if(bNeedSetParaMarks)
+        {
+            editor.ShowParaMarks = true;
+        }
     }
 
     AscCommon.IsShapeToImageConverter = false;

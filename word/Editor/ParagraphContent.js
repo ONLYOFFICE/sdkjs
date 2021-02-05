@@ -561,7 +561,8 @@ ParaText.prototype.SetGaps = function(nLeftGap, nRightGap)
 	this.LGap = nLeftGap;
 	this.RGap = nRightGap;
 
-	this.Width += ((nLeftGap + nRightGap) * TEXTWIDTH_DIVIDER) | 0;
+	this.Width        += ((nLeftGap + nRightGap) * TEXTWIDTH_DIVIDER) | 0;
+	this.WidthVisible += ((nLeftGap + nRightGap) * TEXTWIDTH_DIVIDER) | 0;
 };
 ParaText.prototype.ResetGapBackground = function()
 {
@@ -700,6 +701,12 @@ ParaSpace.prototype.Measure = function(Context, TextPr)
 		this.SpaceGap = 0;
 
 	// Не меняем здесь WidthVisible, это значение для пробела высчитывается отдельно, и не должно меняться при пересчете
+
+	if (this.LGap || this.RGap)
+	{
+		delete this.LGap;
+		delete this.RGap;
+	}
 };
 ParaSpace.prototype.Get_FontKoef = function()
 {

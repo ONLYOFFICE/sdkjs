@@ -1247,10 +1247,7 @@ CParagraphContentWithParagraphLikeContent.prototype.Is_Empty = function(oPr)
 };
 CParagraphContentWithParagraphLikeContent.prototype.Is_CheckingNearestPos = function()
 {
-    if (this.NearPosArray.length > 0)
-        return true;
-
-    return false;
+    return (this.NearPosArray.length > 0);
 };
 CParagraphContentWithParagraphLikeContent.prototype.IsStartFromNewLine = function()
 {
@@ -4348,10 +4345,54 @@ CParagraphContentWithParagraphLikeContent.prototype.MakeSingleRunElement = funct
 {
 	if (this.Content.length !== 1 || para_Run !== this.Content[0].Type)
 	{
+		var oRun = new ParaRun(this.GetParagraph(), false);
+
+		if (true !== isClearRun)
+		{
+			// У нас при открытии ран делится маскимально по 255 элементов внутри каждого рана, поэтому
+			// в формах, где должен быть только 1 ран после открытия их может быть несколько. Объединяем здесь
+			// все раны в один общий ран, чтобы исправить данную ситуцию
+
+			var oParagraph = this.GetParagraph();
+			var oCurrentRun = null;
+			if (oParagraph)
+			{
+				var oCurPos = oParagraph.Get_ParaContentPos(false, false, false);
+				oCurPos.DecreaseDepth(1);
+				oCurrentRun = oParagraph.GetClassByPos(oCurPos);
+				if (!oCurrentRun || !(oCurrentRun instanceof ParaRun))
+					oCurrentRun = null;
+			}
+
+			var nNewCurPos = 0;
+			var isFirst    = true;
+			this.CheckRunContent(function(_oRun)
+			{
+				if (_oRun === oCurrentRun)
+					nNewCurPos = _oRun.State.ContentPos + oRun.Content.length;
+
+				var arrContentToInsert = [];
+				for (var nPos = 0, nCount = _oRun.Content.length; nPos < nCount; ++nPos)
+				{
+					arrContentToInsert.push(_oRun.Content[nPos].Copy());
+				}
+
+				oRun.ConcatToContent(arrContentToInsert);
+
+				if (isFirst && arrContentToInsert.length > 0)
+				{
+					oRun.SetPr(_oRun.GetDirectTextPr().Copy());
+					isFirst = false;
+				}
+			});
+
+			oRun.State.ContentPos = nNewCurPos;
+		}
+
 		if (this.Content.length > 0)
 			this.RemoveFromContent(0, this.Content.length, true);
 
-		this.AddToContent(0, new ParaRun(this.GetParagraph(), false), true);
+		this.AddToContent(0, oRun, true);
 	}
 
 	var oRun = this.Content[0];

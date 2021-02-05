@@ -1388,8 +1388,8 @@
 	function CTableOfContentsPr()
 	{
 		this.Hyperlink    = true;
-		this.OutlineStart = -1;
-		this.OutlineEnd   = -1;
+		this.OutlineStart = 1;
+		this.OutlineEnd   = 9;
 		this.Styles       = [];
 		this.PageNumbers  = true;
 		this.RightTab     = true;

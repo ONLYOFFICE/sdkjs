@@ -461,8 +461,14 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 	if (undefined !== this.Appearance)
 		oContentControl.SetAppearance(this.Appearance);
 
+	// Тут может быть как CDocumentColor так и Asc.asc_CColor
 	if (undefined !== this.Color)
-		oContentControl.SetColor(this.Color);
+	{
+		if (!this.Color)
+			oContentControl.SetColor(undefined);
+		else
+			oContentControl.SetColor(new CDocumentColor(this.Color.r, this.Color.g, this.Color.b));
+	}
 
 	if (undefined !== this.CheckBoxPr)
 	{
@@ -689,7 +695,7 @@ CSdtGlobalSettings.prototype.Read_FromBinary = function(oReader)
  */
 function CSpecialFormsGlobalSettings()
 {
-	this.Highlight = new AscCommonWord.CDocumentColor(255, 204, 0);
+	this.Highlight = new AscCommonWord.CDocumentColor(201, 200, 255);
 }
 CSpecialFormsGlobalSettings.prototype.Copy = function()
 {
@@ -1009,6 +1015,16 @@ CSdtComboBoxPr.prototype.GetItemValue = function(nIndex)
 
 	return this.ListItems[nIndex].Value;
 };
+CSdtComboBoxPr.prototype.FindByText = function(sValue)
+{
+	for (var nIndex = 0, nCount = this.ListItems.length; nIndex < nCount; ++nIndex)
+	{
+		if (this.ListItems[nIndex].DisplayText === sValue)
+			return nIndex;
+	}
+
+	return -1;
+};
 
 /**
  * Класс с настройками для даты
@@ -1294,6 +1310,10 @@ CSdtTextFormPr.prototype.SetAscCombBorder = function(oAscBorder)
 		this.CombBorder = new CDocumentBorder();
 		this.CombBorder.Set_FromObject(oAscBorder);
 	}
+};
+CSdtTextFormPr.prototype.IsComb = function()
+{
+	return !!(this.Comb && undefined !== this.MaxCharacters && this.MaxCharacters <= 1000);
 };
 
 function CSdtFormPr(sKey, sLabel, sHelpText, isRequired)

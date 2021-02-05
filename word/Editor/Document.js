@@ -1953,6 +1953,16 @@ CSelectedElementsInfo.prototype.GetInlineLevelSdt = function()
 {
 	return this.m_oInlineLevelSdt;
 };
+/**
+ * @returns {?CInlineLevelSdt}
+ */
+CSelectedElementsInfo.prototype.GetForm = function()
+{
+	if (this.m_oInlineLevelSdt && this.m_oInlineLevelSdt.IsForm())
+		return this.m_oInlineLevelSdt;
+
+	return null;
+};
 CSelectedElementsInfo.prototype.IsSdtOverDrawing = function()
 {
 	return this.m_bSdtOverDrawing;
@@ -2382,6 +2392,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.MoveDrawing               = false; // Происходит ли сейчас перенос автофигуры
 	this.PrintSelection            = false; // Печатаем выделенный фрагмент
 	this.CCActionByClick           = true;  // Выполнять ли действие с ContentControl по простому клику (если false, то мы должны находится внутри, чтобы действие выполнилось)
+	this.CheckFormPlaceHolder      = true;  // Выполняем ли специальную обработку для плейсхолдеров у форм
 
 	this.DrawTableMode = {
 		Start  : false,
@@ -2520,6 +2531,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	};
 
 	this.SpecialForms = {}; // Список специальных форм в документе
+	this.CurrentForm  = null;
 
 	this.LastBulletList   = undefined; // Последний примененный маркированный список
 	this.LastNumberedList = undefined; // Последний примененный нумерованный список
@@ -6484,21 +6496,13 @@ CDocument.prototype.MoveCursorUp = function(AddToSelect, CtrlKey)
 {
 	this.Reset_WordSelection();
 	this.private_UpdateTargetForCollaboration();
-
-	if (true === this.IsFillingFormMode())
-		this.MoveToFillingForm(false);
-	else
-		this.Controller.MoveCursorUp(AddToSelect, CtrlKey);
+	this.Controller.MoveCursorUp(AddToSelect, CtrlKey);
 };
 CDocument.prototype.MoveCursorDown = function(AddToSelect, CtrlKey)
 {
 	this.Reset_WordSelection();
 	this.private_UpdateTargetForCollaboration();
-
-	if (true === this.IsFillingFormMode())
-		this.MoveToFillingForm(true);
-	else
-		this.Controller.MoveCursorDown(AddToSelect, CtrlKey);
+	this.Controller.MoveCursorDown(AddToSelect, CtrlKey);
 };
 CDocument.prototype.MoveCursorToEndOfLine = function(AddToSelect)
 {
@@ -8789,6 +8793,8 @@ CDocument.prototype.OnEndTextDrag = function(NearPos, bCopy)
 				DocContent.CreateNewCommentsGuid(this.Comments);
 			}
 
+			this.CheckFormPlaceHolder = false;
+
 			// Выделение выставляется внутри функции InsertContent
             Para.Parent.InsertContent(DocContent, NearPos);
 
@@ -8797,7 +8803,9 @@ CDocument.prototype.OnEndTextDrag = function(NearPos, bCopy)
             this.UpdateInterface();
             this.UpdateRulers();
 			this.FinalizeAction();
-        }
+
+			this.CheckFormPlaceHolder = true;
+		}
         else
 		{
 			this.History.Remove_LastPoint();
@@ -9141,7 +9149,7 @@ CDocument.prototype.InsertContent = function(SelectedContent, NearPos)
 			}
 
 			var EndIndex = ElementsCount - 1;
-			if (true === bConcatE && StartIndex < EndIndex)
+			if (true === bConcatE && ElementsCount > 1)
 			{
 				var _ParaE    = Elements[ElementsCount - 1].Element;
 				var TempCount = _ParaE.Content.length - 1;
@@ -9825,69 +9833,82 @@ CDocument.prototype.OnKeyDown = function(e)
 		}
 		else if (e.KeyCode === 9) // Tab
 		{
-			var SelectedInfo = this.GetSelectedElementsInfo();
-
-			if (null !== SelectedInfo.GetMath())
+			if (this.IsFillingFormMode())
 			{
-				var ParaMath  = SelectedInfo.GetMath();
-				var Paragraph = ParaMath.GetParagraph();
-				if (Paragraph && false === this.Document_Is_SelectionLocked(changestype_None, {
-					Type      : changestype_2_Element_and_Type,
-					Element   : Paragraph,
-					CheckType : changestype_Paragraph_Content
-				}))
-				{
-					this.StartAction(AscDFH.historydescription_Document_AddTabToMath);
-					ParaMath.HandleTab(!e.ShiftKey);
-					this.Recalculate();
-					this.FinalizeAction();
-				}
-			}
-			else if (true === SelectedInfo.IsInTable() && true != e.CtrlKey)
-			{
-				this.MoveCursorToCell(true === e.ShiftKey ? false : true);
-			}
-			else if (true === SelectedInfo.IsDrawingObjSelected() && true != e.CtrlKey)
-			{
-				this.DrawingObjects.selectNextObject((e.ShiftKey === true ? -1 : 1));
+				this.DrawingDocument.UpdateTargetFromPaint = true;
+				this.Reset_WordSelection();
+				this.private_UpdateTargetForCollaboration();
+				this.MoveToFillingForm(true !== e.ShiftKey);
+				this.private_CheckCursorPosInFillingFormMode();
+				this.CheckComplexFieldsInSelection();
 			}
 			else
 			{
-				if (true === SelectedInfo.IsMixedSelection())
+				var SelectedInfo = this.GetSelectedElementsInfo();
+
+				if (null !== SelectedInfo.GetMath())
 				{
-					if (true === e.ShiftKey)
-						this.DecreaseIndent();
-					else
-						this.IncreaseIndent();
-				}
-				else
-				{
-					var Paragraph = SelectedInfo.GetParagraph();
-					var ParaPr    = Paragraph ? Paragraph.Get_CompiledPr2(false).ParaPr : null;
-					if (null != Paragraph && (true === Paragraph.IsCursorAtBegin() || true === Paragraph.Selection_IsFromStart()) && (undefined != Paragraph.GetNumPr() || (true != Paragraph.IsEmpty() && ParaPr.Tabs.Tabs.length <= 0)))
+					var ParaMath  = SelectedInfo.GetMath();
+					var Paragraph = ParaMath.GetParagraph();
+					if (Paragraph && false === this.Document_Is_SelectionLocked(changestype_None, {
+						Type      : changestype_2_Element_and_Type,
+						Element   : Paragraph,
+						CheckType : changestype_Paragraph_Content
+					}))
 					{
-						if (false === this.Document_Is_SelectionLocked(changestype_None, {
-							Type      : changestype_2_Element_and_Type,
-							Element   : Paragraph,
-							CheckType : AscCommon.changestype_Paragraph_Properties
-						}))
-						{
-							this.StartAction(AscDFH.historydescription_Document_MoveParagraphByTab);
-							Paragraph.Add_Tab(e.ShiftKey);
-							this.Recalculate();
-							this.UpdateInterface();
-							this.UpdateSelection();
-							this.FinalizeAction();
-						}
-					}
-					else if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
-					{
-						this.StartAction(AscDFH.historydescription_Document_AddTab);
-						this.AddToParagraph(new ParaTab());
+						this.StartAction(AscDFH.historydescription_Document_AddTabToMath);
+						ParaMath.HandleTab(!e.ShiftKey);
+						this.Recalculate();
 						this.FinalizeAction();
 					}
 				}
+				else if (true === SelectedInfo.IsInTable() && true != e.CtrlKey)
+				{
+					this.MoveCursorToCell(true === e.ShiftKey ? false : true);
+				}
+				else if (true === SelectedInfo.IsDrawingObjSelected() && true != e.CtrlKey)
+				{
+					this.DrawingObjects.selectNextObject((e.ShiftKey === true ? -1 : 1));
+				}
+				else
+				{
+					if (true === SelectedInfo.IsMixedSelection())
+					{
+						if (true === e.ShiftKey)
+							this.DecreaseIndent();
+						else
+							this.IncreaseIndent();
+					}
+					else
+					{
+						var Paragraph = SelectedInfo.GetParagraph();
+						var ParaPr    = Paragraph ? Paragraph.Get_CompiledPr2(false).ParaPr : null;
+						if (null != Paragraph && (true === Paragraph.IsCursorAtBegin() || true === Paragraph.Selection_IsFromStart()) && (undefined != Paragraph.GetNumPr() || (true != Paragraph.IsEmpty() && ParaPr.Tabs.Tabs.length <= 0)))
+						{
+							if (false === this.Document_Is_SelectionLocked(changestype_None, {
+								Type      : changestype_2_Element_and_Type,
+								Element   : Paragraph,
+								CheckType : AscCommon.changestype_Paragraph_Properties
+							}))
+							{
+								this.StartAction(AscDFH.historydescription_Document_MoveParagraphByTab);
+								Paragraph.Add_Tab(e.ShiftKey);
+								this.Recalculate();
+								this.UpdateInterface();
+								this.UpdateSelection();
+								this.FinalizeAction();
+							}
+						}
+						else if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
+						{
+							this.StartAction(AscDFH.historydescription_Document_AddTab);
+							this.AddToParagraph(new ParaTab());
+							this.FinalizeAction();
+						}
+					}
+				}
 			}
+
 			bRetValue = keydownresult_PreventAll;
 		}
 		else if (e.KeyCode === 13) // Enter
@@ -10197,7 +10218,7 @@ CDocument.prototype.OnKeyDown = function(e)
 		else if (e.KeyCode === 37) // Left Arrow
 		{
 			// Чтобы при зажатой клавише курсор не пропадал
-			if (true != e.ShiftKey)
+			if (true !== e.ShiftKey)
 				this.DrawingDocument.TargetStart();
 
 			this.DrawingDocument.UpdateTargetFromPaint = true;
@@ -10208,21 +10229,36 @@ CDocument.prototype.OnKeyDown = function(e)
 		}
 		else if (e.KeyCode === 38) // Top Arrow
 		{
-			// TODO: Реализовать Ctrl + Up/ Ctrl + Shift + Up
-			// Чтобы при зажатой клавише курсор не пропадал
-			if (true != e.ShiftKey)
-				this.DrawingDocument.TargetStart();
+			if (this.IsFillingFormMode())
+			{
+				var oSelectedInfo = this.GetSelectedElementsInfo();
+				var oForm         = oSelectedInfo.GetForm();
 
-			this.DrawingDocument.UpdateTargetFromPaint = true;
-			this.MoveCursorUp(true === e.ShiftKey, true === e.CtrlKey);
-			this.private_CheckCursorPosInFillingFormMode();
-			this.CheckComplexFieldsInSelection();
+				if (oForm && !oForm.IsComboBox() && !oForm.IsDropDownList())
+					oForm = null;
+
+				if (oForm)
+					this.TurnComboBoxFormValue(oForm, true);
+			}
+			else
+			{
+				// TODO: Реализовать Ctrl + Up/ Ctrl + Shift + Up
+				// Чтобы при зажатой клавише курсор не пропадал
+				if (true !== e.ShiftKey)
+					this.DrawingDocument.TargetStart();
+
+				this.DrawingDocument.UpdateTargetFromPaint = true;
+				this.MoveCursorUp(true === e.ShiftKey, true === e.CtrlKey);
+				this.private_CheckCursorPosInFillingFormMode();
+				this.CheckComplexFieldsInSelection();
+			}
+
 			bRetValue = keydownresult_PreventAll;
 		}
 		else if (e.KeyCode === 39) // Right Arrow
 		{
 			// Чтобы при зажатой клавише курсор не пропадал
-			if (true != e.ShiftKey)
+			if (true !== e.ShiftKey)
 				this.DrawingDocument.TargetStart();
 
 			this.DrawingDocument.UpdateTargetFromPaint = true;
@@ -10233,15 +10269,29 @@ CDocument.prototype.OnKeyDown = function(e)
 		}
 		else if (e.KeyCode === 40) // Bottom Arrow
 		{
-			// TODO: Реализовать Ctrl + Down/ Ctrl + Shift + Down
-			// Чтобы при зажатой клавише курсор не пропадал
-			if (true != e.ShiftKey)
-				this.DrawingDocument.TargetStart();
+			if (this.IsFillingFormMode())
+			{
+				var oSelectedInfo = this.GetSelectedElementsInfo();
+				var oForm         = oSelectedInfo.GetForm();
 
-			this.DrawingDocument.UpdateTargetFromPaint = true;
-			this.MoveCursorDown(true === e.ShiftKey, true === e.CtrlKey);
-			this.private_CheckCursorPosInFillingFormMode();
-			this.CheckComplexFieldsInSelection();
+				if (oForm && !oForm.IsComboBox() && !oForm.IsDropDownList())
+					oForm = null;
+
+				if (oForm)
+					this.TurnComboBoxFormValue(oForm, true);
+			}
+			else
+			{
+				// TODO: Реализовать Ctrl + Down/ Ctrl + Shift + Down
+				// Чтобы при зажатой клавише курсор не пропадал
+				if (true !== e.ShiftKey)
+					this.DrawingDocument.TargetStart();
+
+				this.DrawingDocument.UpdateTargetFromPaint = true;
+				this.MoveCursorDown(true === e.ShiftKey, true === e.CtrlKey);
+				this.private_CheckCursorPosInFillingFormMode();
+				this.CheckComplexFieldsInSelection();
+			}
 			bRetValue = keydownresult_PreventAll;
 		}
 		else if (e.KeyCode === 46) // Delete
@@ -11906,6 +11956,8 @@ CDocument.prototype.private_UpdateTracks = function(bSelection, bEmptySelection)
 		return;
 	}
 
+	var isNeedRedraw = false;
+
 	this.NeedUpdateTracksOnRecalc = false;
 
 	var oSelectedInfo = this.GetSelectedElementsInfo();
@@ -11919,12 +11971,27 @@ CDocument.prototype.private_UpdateTracks = function(bSelection, bEmptySelection)
 	var oBlockLevelSdt  = oSelectedInfo.GetBlockLevelSdt();
 	var oInlineLevelSdt = oSelectedInfo.GetInlineLevelSdt();
 
+	var oCurrentForm = null;
 	if (oInlineLevelSdt)
+	{
+		if (oInlineLevelSdt.IsForm())
+			oCurrentForm = oInlineLevelSdt;
+
 		oInlineLevelSdt.DrawContentControlsTrack(false);
+	}
 	else if (oBlockLevelSdt)
+	{
 		oBlockLevelSdt.DrawContentControlsTrack(false);
+	}
 	else
+	{
 		this.DrawingDocument.OnDrawContentControl(null, AscCommon.ContentControlTrack.In);
+	}
+
+	if (this.private_SetCurrentSpecialForm(oCurrentForm))
+	{
+		isNeedRedraw = true;
+	}
 
 	var oField = oSelectedInfo.GetField();
 	if (null !== oField && (fieldtype_MERGEFIELD !== oField.Get_FieldType() || true !== this.MailMergeFieldsHighlight))
@@ -11940,9 +12007,14 @@ CDocument.prototype.private_UpdateTracks = function(bSelection, bEmptySelection)
 		if ((arrComplexFields.length > 0 && this.FieldsManager.SetCurrentComplexField(arrComplexFields[arrComplexFields.length - 1]))
 			|| (arrComplexFields.length <= 0 && this.FieldsManager.SetCurrentComplexField(null)))
 		{
-			this.DrawingDocument.ClearCachePages();
-			this.DrawingDocument.FirePaint();
+			isNeedRedraw = true;
 		}
+	}
+
+	if (isNeedRedraw)
+	{
+		this.DrawingDocument.ClearCachePages();
+		this.DrawingDocument.FirePaint();
 	}
 };
 CDocument.prototype.Document_UpdateUndoRedoState = function()
@@ -15771,7 +15843,22 @@ CDocument.prototype.OnChangeSpecialFormsGlobalSettings = function()
 };
 CDocument.prototype.IsSpecialFormsSettingsDefault = function()
 {
-	return this.Settings.SdtSettings.IsDefault();
+	return this.Settings.SpecialFormsSettings.IsDefault();
+};
+CDocument.prototype.private_SetCurrentSpecialForm = function(oForm)
+{
+	if (this.CurrentForm === oForm)
+		return false;
+
+	if (this.CurrentForm)
+		this.CurrentForm.SetCurrent(false);
+
+	this.CurrentForm = oForm;
+
+	if (this.CurrentForm)
+		this.CurrentForm.SetCurrent(true);
+
+	return true;
 };
 /**
  * Добавляем специальный контейнер в виде чекбокса
@@ -20969,6 +21056,49 @@ CDocument.prototype.MoveToFillingForm = function(isNext)
 		}
 	}
 };
+CDocument.prototype.TurnComboBoxFormValue = function(oForm, isNext)
+{
+	if (!(oForm instanceof CInlineLevelSdt) || (!oForm.IsComboBox() && !oForm.IsDropDownList()))
+		return;
+
+	var sValue = oForm.GetSelectedText(true, true);
+	var oComboBoxPr = oForm.IsComboBox() ? oForm.GetComboBoxPr() : oForm.GetDropDownListPr();
+
+	var nIndex = oComboBoxPr.FindByText(sValue);
+	var nCount = oComboBoxPr.GetItemsCount();
+	if (nCount <= 0)
+		return;
+
+	var nNewIndex = 0;
+	if (-1 !== nIndex)
+	{
+		if (isNext)
+		{
+			nNewIndex = nIndex + 1;
+			if (nNewIndex >= nCount)
+				nNewIndex = 0;
+		}
+		else
+		{
+			nNewIndex = nIndex - 1;
+			if (nNewIndex < 0)
+				nNewIndex = nCount - 1;
+		}
+	}
+
+	var sNewValue = oComboBoxPr.GetItemValue(nNewIndex);
+	oForm.SelectContentControl();
+	oForm.SkipSpecialContentControlLock(true);
+	if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, this.IsFormFieldEditing()))
+	{
+		this.StartAction();
+		oForm.SelectListItem(sNewValue);
+		oForm.SelectContentControl();
+		this.Recalculate();
+		this.FinalizeAction();
+	}
+	oForm.SkipSpecialContentControlLock(false);
+};
 CDocument.prototype.OnContentControlTrackEnd = function(Id, NearestPos, isCopy)
 {
 	return this.OnEndTextDrag(NearestPos, isCopy);
@@ -21105,8 +21235,8 @@ CDocument.prototype.SelectContentControl = function(sId)
 		&& (c_oAscSdtLevelType.Block === oContentControl.GetContentControlType()
 		|| c_oAscSdtLevelType.Inline === oContentControl.GetContentControlType()))
 	{
+		this.CheckFormPlaceHolder = false;
 		this.RemoveSelection();
-
 		oContentControl.SelectContentControl();
 		this.UpdateSelection();
 		this.UpdateRulers();
@@ -21114,6 +21244,7 @@ CDocument.prototype.SelectContentControl = function(sId)
 		this.UpdateTracks();
 
 		this.private_UpdateCursorXY(true, true);
+		this.CheckFormPlaceHolder = true;
 	}
 };
 /**
@@ -21192,8 +21323,8 @@ CDocument.prototype.private_CheckCursorPosInFillingFormMode = function()
 	if (this.IsFillingFormMode() && !this.IsInFormField())
 	{
 		this.MoveToFillingForm(true);
-		this.Document_UpdateSelectionState();
-		this.Document_UpdateInterfaceState();
+		this.UpdateSelection();
+		this.UpdateInterface();
 	}
 };
 CDocument.prototype.OnEndLoadScript = function()
@@ -22276,7 +22407,7 @@ CDocument.prototype.GetHyperlinkAnchors = function()
 	var arrAnchors = [];
 
 	var arrOutline = [];
-	this.GetOutlineParagraphs(arrOutline, {SkipEmptyParagraphs : true});
+	this.GetOutlineParagraphs(arrOutline, {SkipEmptyParagraphs : true, OutlineStart : 1, OutlineEnd : 9});
 	var nIndex = 0, nCount = arrOutline.length;
 	for (nIndex = 0; nIndex < nCount; ++nIndex)
 	{
@@ -23054,6 +23185,7 @@ CDocument.prototype.AddCaption = function(oPr)
         var nCurPos = 0;
         var oComplexField;
         var oBeginChar, oSeparateChar, oEndChar;
+        var aFieldsToUpdate = [];
         if(!oPr.get_ExcludeLabel())
         {
             var sLabel = oPr.get_Label();
@@ -23089,7 +23221,7 @@ CDocument.prototype.AddCaption = function(oPr)
                 oComplexField.SetInstructionLine(" STYLEREF \"" + oStyle.GetName() + "\" \\s");
                 oComplexField.SetSeparateChar(oSeparateChar);
                 oComplexField.SetEndChar(oEndChar);
-                oComplexField.Update(false, false);
+                aFieldsToUpdate.push(oComplexField);
             }
             var sSeparator = oPr.get_Separator();
             if(!sSeparator || sSeparator.length === 0)
@@ -23135,7 +23267,7 @@ CDocument.prototype.AddCaption = function(oPr)
 
         var aFields = [];
 
-        oComplexField.Update(false, false);
+        aFieldsToUpdate.push(oComplexField);
         this.GetAllSeqFieldsByType(oPr.get_Label(), aFields);
         for(var i = 0; i < aFields.length; ++i)
         {
@@ -23179,6 +23311,10 @@ CDocument.prototype.AddCaption = function(oPr)
                 }
                 this.FinalizeAction();
             }
+        }
+        for(var nField = aFieldsToUpdate.length - 1; nField > -1; --nField)
+        {
+            aFieldsToUpdate[nField].Update(false, false);
         }
         NewParagraph.MoveCursorToEndPos();
         NewParagraph.Document_SetThisElementCurrent(true);
@@ -23912,17 +24048,26 @@ CDocument.prototype.ClearAllSpecialForms = function()
 		oForm.SkipSpecialContentControlLock(true);
 	}
 
+	var oCurrentForm = this.GetSelectedElementsInfo().GetForm();
+
 	if (!this.IsSelectionLocked(AscCommon.changestype_None, {
 		Type      : changestype_2_ElementsArray_and_Type,
 		Elements  : arrParagraphs,
 		CheckType : AscCommon.changestype_Paragraph_Content
-	}, true))
+	}, true, this.IsFillingFormMode()))
 	{
 		this.StartAction(AscDFH.historydescription_Document_ClearAllSpecialForms);
+
+		if (oCurrentForm)
+			this.RemoveSelection();
 
 		for (var sId in this.SpecialForms)
 		{
 			var oForm = this.SpecialForms[sId];
+
+			if (!oCurrentForm && oForm.Is_UseInDocument())
+				oCurrentForm = oForm;
+
 			if (oForm.IsCheckBox())
 			{
 				oForm.SetCheckBoxChecked(false);
@@ -23936,7 +24081,12 @@ CDocument.prototype.ClearAllSpecialForms = function()
 			{
 				oForm.ReplaceContentWithPlaceHolder();
 			}
+
+			oForm.RemoveSelection();
 		}
+
+		if (oCurrentForm)
+			oCurrentForm.SelectContentControl();
 
 		this.Recalculate();
 		this.UpdateInterface();
@@ -26719,9 +26869,12 @@ CDocumentChangeTextCaseEngine.prototype.SetStartSentence = function(isStart)
 
 
 //-------------------------------------------------------------export---------------------------------------------------
-window['Asc'] = window['Asc'] || {};
-window['AscCommon'] = window['AscCommon'] || {};
-window['AscCommonWord'] = window['AscCommonWord'] || {};
+window['Asc']            = window['Asc'] || {};
+window['AscCommon']      = window['AscCommon'] || {};
+window['AscCommonWord']  = window['AscCommonWord'] || {};
+window['AscCommonSlide'] = window['AscCommonSlide'] || {};
+window['AscCommonExcel'] = window['AscCommonExcel'] || {};
+
 window['AscCommonWord'].CDocument = CDocument;
 window['AscCommonWord'].docpostype_Content        = docpostype_Content;
 window['AscCommonWord'].docpostype_HdrFtr         = docpostype_HdrFtr;

@@ -3284,6 +3284,14 @@
 		}
 		return null;
 	};
+	Workbook.prototype.getPivotTablesByCacheId = function(pivotCacheId) {
+		var res = [];
+		for (var i = 0, l = this.aWorksheets.length; i < l; ++i) {
+			var pivotTables = this.aWorksheets[i].getPivotTablesByCacheId(pivotCacheId);
+			res = res.concat(pivotTables);
+		}
+		return res;
+	};
 	Workbook.prototype.getPivotCacheByDataRef = function(dataRef) {
 		for (var i = 0, l = this.aWorksheets.length; i < l; ++i) {
 			var cache = this.aWorksheets[i].getPivotCacheByDataRef(dataRef);
@@ -3333,6 +3341,14 @@
 		var res = [];
 		for (var i = 0, l = this.aWorksheets.length; i < l; ++i) {
 			var caches = this.aWorksheets[i].getSlicerCachesByPivotTable(sheetId, pivotName);
+			res = res.concat(caches);
+		}
+		return res;
+	};
+	Workbook.prototype.getSlicerCachesByPivotCacheId = function (pivotCacheId) {
+		var res = [];
+		for (var i = 0, l = this.aWorksheets.length; i < l; ++i) {
+			var caches = this.aWorksheets[i].getSlicerCachesByPivotCacheId(pivotCacheId);
 			res = res.concat(caches);
 		}
 		return res;
@@ -3439,12 +3455,41 @@
 			}
 		}
 	};
+	Workbook.prototype.getSlicersByPivotTable = function (sheetId, pivotName) {
+		var res = [];
+		for(var i = 0; i < this.aWorksheets.length; ++i) {
+			var slicers = this.aWorksheets[i].getSlicersByPivotTable(sheetId, pivotName);
+			res = res.concat(slicers);
+		}
+		return res;
+	};
+	Workbook.prototype.slicersUpdateAfterChangePivotTable = function (sheetId, pivotName) {
+		var slicers = this.getSlicersByPivotTable(sheetId, pivotName);
+		for (var j = 0; j < slicers.length; j++) {
+			this.onSlicerUpdate(slicers[j].name);
+		}
+	};
 	Workbook.prototype.deleteSlicersByPivotTable = function (sheetId, pivotName) {
 		var wb = this;
 		var slicerCaches = wb.getSlicerCachesByPivotTable(sheetId, pivotName);
 		slicerCaches.forEach(function (slicerCache) {
 			slicerCache.deletePivotTable(sheetId, pivotName);
 			if (0 === slicerCache.getPivotTablesCount()) {
+				var slicers = wb.getSlicersByCacheName(slicerCache.name);
+				if (slicers) {
+					slicers.forEach(function (slicer) {
+						wb.deleteSlicer(slicer.name);
+					});
+				}
+			}
+		});
+	};
+	Workbook.prototype.deleteSlicersByPivotTableAndFields = function (sheetId, pivotName, cacheFieldsToDelete) {
+		var wb = this;
+		var slicerCaches = wb.getSlicerCachesByPivotTable(sheetId, pivotName);
+		slicerCaches.forEach(function (slicerCache) {
+			if (cacheFieldsToDelete[slicerCache.getSourceName()]) {
+				slicerCache.deletePivotTable(sheetId, pivotName);
 				var slicers = wb.getSlicersByCacheName(slicerCache.name);
 				if (slicers) {
 					slicers.forEach(function (slicer) {
@@ -3469,6 +3514,110 @@
 		}
 
 		History.EndTransaction();
+	};
+	Workbook.prototype.handleDrawings = function (fCallback) {
+		for(var i = 0; i < this.aWorksheets.length; ++i) {
+			this.aWorksheets[i].handleDrawings(fCallback);
+		}
+	};
+	Workbook.prototype.checkObjectsLock = function (aId, fCallback) {
+		if(aId.length > 0) {
+			if(Asc && Asc.editor) {
+				Asc.editor.checkObjectsLock(aId, fCallback);
+			}
+			else {
+				fCallback(true, true);
+			}
+		}
+	};
+	Workbook.prototype.handleChartsOnWorksheetsRemove = function (aWorksheets) {
+		if(!History.CanAddChanges()) {
+			return;
+		}
+		var aRefsToChange = [];
+		var aId = [];
+		var aRanges = [];
+		var aNames = [];
+		var oWorksheet;
+		for(var nWS = 0; nWS < aWorksheets.length; ++nWS) {
+			oWorksheet = aWorksheets[nWS];
+			aRanges.push(new AscCommonExcel.Range(oWorksheet, 0, 0, gc_nMaxRow0, gc_nMaxCol0));
+			aNames.push(parserHelp.getEscapeSheetName(oWorksheet.sName));
+		}
+		this.handleDrawings(function(oDrawing) {
+			if(oDrawing.getObjectType() === AscDFH.historyitem_type_ChartSpace) {
+				var nPrevLength = aRefsToChange.length;
+				oDrawing.collectIntersectionRefs(aRanges, aRefsToChange);
+				if(aRefsToChange.length > nPrevLength) {
+					aId.push(oDrawing.Get_Id());
+				}
+			}
+		});
+		this.checkObjectsLock(aId, function(bNoLock) {
+			if(bNoLock) {
+				for(var nRef = 0; nRef < aRefsToChange.length; ++nRef) {
+					aRefsToChange[nRef].handleRemoveWorksheets(aNames);
+				}
+				if(Asc.editor && Asc.editor.wb) {
+					Asc.editor.wb.recalculateDrawingObjects(null, false);
+				}
+			}
+		});
+	};
+	Workbook.prototype.handleChartsOnChangeSheetName = function (oWorksheet, sNewName) {
+		if(!History.CanAddChanges()) {
+			return;
+		}
+		var aRefsToChange = [];
+		var aId = [];
+		var aRanges = [new AscCommonExcel.Range(oWorksheet, 0, 0, gc_nMaxRow0, gc_nMaxCol0)];
+		this.handleDrawings(function(oDrawing) {
+			if(oDrawing.getObjectType() === AscDFH.historyitem_type_ChartSpace) {
+				var nPrevLength = aRefsToChange.length;
+				oDrawing.collectIntersectionRefs(aRanges, aRefsToChange);
+				if(aRefsToChange.length > nPrevLength) {
+					aId.push(oDrawing.Get_Id());
+				}
+			}
+		});
+
+		var sOldName = parserHelp.getEscapeSheetName(oWorksheet.sName);
+		this.checkObjectsLock(aId, function(bNoLock) {
+			if(bNoLock) {
+				for(var nRef = 0; nRef < aRefsToChange.length; ++nRef) {
+					aRefsToChange[nRef].handleOnChangeSheetName(sOldName, sNewName);
+				}
+				if(Asc.editor && Asc.editor.wb) {
+					Asc.editor.wb.recalculateDrawingObjects(null, false);
+				}
+			}
+		});
+	};
+	Workbook.prototype.handleChartsOnMoveRange = function (oRangeFrom, oRangeTo) {
+		if(!History.CanAddChanges()) {
+			return;
+		}
+		var aRefsToReplace = [];
+		var aId = [];
+		this.handleDrawings(function(oDrawing) {
+			if(oDrawing.getObjectType() === AscDFH.historyitem_type_ChartSpace) {
+				var nPrevLength = aRefsToReplace.length;
+				oDrawing.collectRefsInsideRange(oRangeFrom, aRefsToReplace);
+				if(aRefsToReplace.length > nPrevLength) {
+					aId.push(oDrawing.Get_Id());
+				}
+			}
+		});
+		this.checkObjectsLock(aId, function(bNoLock) {
+			if(bNoLock) {
+				for(var nRef = 0; nRef < aRefsToReplace.length; ++nRef) {
+					aRefsToReplace[nRef].handleOnMoveRange(oRangeFrom, oRangeTo);
+				}
+				if(Asc.editor && Asc.editor.wb) {
+					Asc.editor.wb.recalculateDrawingObjects(null, false);
+				}
+			}
+		});
 	};
 
 	Workbook.prototype.cleanCollaborativeFilterObj = function () {
@@ -3728,7 +3877,6 @@
 		this.autoFilters = AscCommonExcel.AutoFilters !== undefined ? new AscCommonExcel.AutoFilters(this) : null;
 		this.sortState = null;
 
-		this.oDrawingOjectsManager = new DrawingObjectsManager(this);
 		this.contentChanges = new AscCommon.CContentChanges();
 
 		this.aSparklineGroups = [];
@@ -4102,9 +4250,19 @@
 				}
 				oNewWs.Drawings[oNewWs.Drawings.length - 1] = drawingObject;
 			}
+			var aRefsToChange = [];
+			var sNewName = parserHelp.getEscapeSheetName(oNewWs.sName);
+			var aRanges = [new AscCommonExcel.Range(this, 0, 0, gc_nMaxRow0, gc_nMaxCol0)];
+			this.handleDrawings(function(oDrawing) {
+				if(oDrawing.getObjectType() === AscDFH.historyitem_type_ChartSpace) {
+					oDrawing.collectIntersectionRefs(aRanges, aRefsToChange);
+				}
+			});
+			var sOldName = parserHelp.getEscapeSheetName(this.sName);
+			for(var nRef = 0; nRef < aRefsToChange.length; ++nRef) {
+				aRefsToChange[nRef].handleOnChangeSheetName(sOldName, sNewName);
+			}
 			drawingObjects.pushToAObjects(oNewWs.Drawings);
-			drawingObjects.updateChartReferences2(parserHelp.getEscapeSheetName(this.sName),
-												  parserHelp.getEscapeSheetName(oNewWs.sName));
 		}
 
 		var newSparkline;
@@ -4595,25 +4753,16 @@
 		{
 			var lastName = this.sName;
 			History.Create_NewPoint();
+			if(!bFromUndoRedo)
+			{
+				this.workbook.handleChartsOnChangeSheetName(this, parserHelp.getEscapeSheetName(name));
+			}
 			var prepared = this.workbook.dependencyFormulas.prepareChangeSheet(this.getId(), {rename: {from: lastName, to: name}});
 			this.sName = name;
 			this.workbook.dependencyFormulas.changeSheet(prepared);
 
 			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_Rename, this.getId(), null, new UndoRedoData_FromTo(lastName, name));
-			if(!bFromUndoRedo)
-			{
-				var _lastName = parserHelp.getEscapeSheetName(lastName);
-				var _newName = parserHelp.getEscapeSheetName(this.sName);
 
-				for (var key in this.workbook.aWorksheets)
-				{
-					if (this.workbook.aWorksheets.hasOwnProperty(key)) {
-						var wsModel = this.workbook.aWorksheets[key];
-						if ( wsModel )
-							wsModel.oDrawingOjectsManager.updateChartReferencesWidthHistory(_lastName, _newName, true);
-					}
-				}
-			}
 			this.workbook.dependencyFormulas.calcTree();
 		} else {
 			console.log(new Error('The sheet name must be less than 31 characters.'));
@@ -6963,6 +7112,26 @@
 		}
 		return res;
 	};
+	Worksheet.prototype.getSlicerCachesByPivotCacheId = function(pivotCacheId) {
+		var res = [];
+		for (var i = 0; i < this.aSlicers.length; i++) {
+			var cache = this.aSlicers[i].getSlicerCache();
+			if (cache && pivotCacheId === cache.getPivotCacheId()) {
+				res.push(cache);
+			}
+		}
+		return res;
+	};
+	Worksheet.prototype.getSlicersByPivotTable = function(sheetId, pivotName) {
+		var res = [];
+		for (var i = 0; i < this.aSlicers.length; i++) {
+			var cache = this.aSlicers[i].getSlicerCache();
+			if (cache && cache.indexOfPivotTable(sheetId, pivotName) >= 0) {
+				res.push(this.aSlicers[i]);
+			}
+		}
+		return res;
+	};
 	Worksheet.prototype.initPivotTables = function () {
 		for (var i = 0; i < this.pivotTables.length; ++i) {
 			this.pivotTables[i].init();
@@ -7763,6 +7932,16 @@
 		for (var i = 0; i < this.pivotTables.length; ++i) {
 			if (this.pivotTables[i].Get_Id() === id) {
 				res = this.pivotTables[i];
+				break;
+			}
+		}
+		return res;
+	};
+	Worksheet.prototype.getPivotTablesByCacheId = function (pivotCacheId) {
+		var res = [];
+		for (var i = 0; i < this.pivotTables.length; ++i) {
+			if (this.pivotTables[i].getPivotCacheId() === pivotCacheId) {
+				res.push(this.pivotTables[i]);
 				break;
 			}
 		}
@@ -8629,6 +8808,11 @@
 		}
 		return res.length ? res : null;
 	};
+	Worksheet.prototype.handleDrawings = function (fCallback) {
+		for(var nIndex = 0; nIndex < this.Drawings.length; ++nIndex) {
+			this.Drawings[nIndex].handleObject(fCallback);
+		}
+	};
 
 	Worksheet.prototype.changeTableColName = function (tableName, oldVal, newVal) {
 		if (this.workbook.bUndoChanges || this.workbook.bRedoChanges) {
@@ -8970,6 +9154,7 @@
 			var newDataValidation = new window['AscCommonExcel'].CDataValidation();
 			newDataValidation.showErrorMessage = true;
 			newDataValidation.showInputMessage = true;
+			newDataValidation.allowBlank = true;
 			return newDataValidation;
 		} else {
 			return this.dataValidations.getProps(_selection.ranges, doExtend);
@@ -9046,8 +9231,9 @@
 
 	Worksheet.prototype._getCopyDataValidationByRange = function (range, offset) {
 		if (this.dataValidations) {
-			this.dataValidations.getCopyByRange(range, offset);
+			return this.dataValidations.getCopyByRange(range, offset);
 		}
+		return null;
 	};
 
 
@@ -11353,6 +11539,18 @@
 		if(!oNewWs)
 			oNewWs = this.worksheet;
 		return this.createFromBBox(oNewWs, this.bbox);
+	};
+	Range.prototype.isIntersect=function(oRange){
+		if(this.worksheet === oRange.worksheet) {
+			return this.bbox.isIntersect(oRange.bbox);
+		}
+		return false;
+	};
+	Range.prototype.containsRange=function(oRange){
+		if(this.worksheet === oRange.worksheet) {
+			return this.bbox.containsRange(oRange.bbox);
+		}
+		return false;
 	};
 	Range.prototype._foreach = function(action) {
 		if (null != action) {
@@ -14796,6 +14994,46 @@
 						}
 					}
 				}
+
+
+				var aDataValidations;
+				if (wsFrom.dataValidations && wsTo.dataValidations) {
+					wsTo.clearDataValidation([to], true);
+					aDataValidations = wsFrom.dataValidations.getIntersectionByRange(from);
+				}
+				if(aDataValidations && aDataValidations.length > 0) {
+					var newDataValidations = [];
+					for (var i = to.c1; i <= to.c2; i += nDx) {
+						for (var j = to.r1; j <= to.r2; j += nDy) {
+							for(var k = 0, length3 = aDataValidations.length; k < length3; k++){
+								var oDataValidation = aDataValidations[k];
+								var ranges = oDataValidation.ranges;
+								for (var n = 0; n < ranges.length; n++) {
+									var _newRange = new Asc.Range(i + ranges[n].c1 - from.c1, j + ranges[n].r1 - from.r1, i + ranges[n].c2 - from.c1, j + ranges[n].r2 - from.r1);
+									if (to.containsRange(_newRange)) {
+										if (!newDataValidations[k]) {
+											newDataValidations[k] = [];
+										}
+										newDataValidations[k].push(_newRange);
+									}
+								}
+							}
+						}
+					}
+					if (newDataValidations && newDataValidations.length) {
+						for (var i = 0; i < newDataValidations.length; i++) {
+							if (newDataValidations[i] && newDataValidations[i].length) {
+								var fromDataValidation = wsFrom.getDataValidationById(aDataValidations[i].id);
+								if (fromDataValidation) {
+									fromDataValidation = fromDataValidation.data;
+									var toDataValidation = fromDataValidation.clone();
+									toDataValidation.ranges = fromDataValidation.ranges.concat(newDataValidations[i]);
+									wsTo.dataValidations.change(wsTo, fromDataValidation, toDataValidation, true);
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 
@@ -15393,45 +15631,6 @@
 		return hiddenSum;
 	};
 
-	/**
-	 * @constructor
-	 */
-	function DrawingObjectsManager(worksheet)
-	{
-		this.worksheet = worksheet;
-	}
-
-	DrawingObjectsManager.prototype.updateChartReferences = function(oldWorksheet, newWorksheet)
-	{
-		AscFormat.ExecuteNoHistory(function(){
-			this.updateChartReferencesWidthHistory(oldWorksheet, newWorksheet);
-		}, this, []);
-	};
-
-	DrawingObjectsManager.prototype.updateChartReferencesWidthHistory = function(oldWorksheet, newWorksheet, bNoRebuildCache)
-	{
-		var aObjects = this.worksheet.Drawings;
-		for (var i = 0; i < aObjects.length; i++) {
-			var graphicObject = aObjects[i].graphicObject;
-			if ( graphicObject.updateChartReferences )
-			{
-				graphicObject.updateChartReferences(oldWorksheet, newWorksheet, bNoRebuildCache);
-			}
-		}
-	};
-
-
-	DrawingObjectsManager.prototype.rebuildCharts = function(data)
-	{
-		var aObjects = this.worksheet.Drawings;
-		for(var i = 0; i < aObjects.length; ++i)
-		{
-			if(aObjects[i].graphicObject.rebuildSeries)
-			{
-				aObjects[i].graphicObject.rebuildSeries(data);
-			}
-		}
-	};
 
 	function tryTranslateToPrintArea(val) {
 		var printAreaStr = "Print_Area";

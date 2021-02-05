@@ -2089,15 +2089,28 @@
         return ((this.buttons.length - 1) / this.getColumnsCount() >> 0) + 1;
     };
     CButtonsContainer.prototype.getRowsInFrame = function () {
+        if(this.buttons.length === 0) {
+            return 0;
+        }
         var dCount = (this.extY) / (this.getButtonHeight() + SPACE_BETWEEN);
         var nCeil = (dCount >> 0);
         if(dCount - nCeil > 0) {
             ++nCeil;
         }
-        return nCeil;
+        return Math.min(this.buttons.length, nCeil);
+    };
+    CButtonsContainer.prototype.getRowsInFrameFull = function () {
+        if(this.buttons.length === 0) {
+            return 0;
+        }
+        var dCount = (this.extY + SPACE_BETWEEN) / (this.getButtonHeight() + SPACE_BETWEEN);
+        if(dCount <= 0) {
+            return 0;
+        }
+        return (dCount >> 0);
     };
     CButtonsContainer.prototype.getScrolledRows = function () {
-        return this.getRowsCount() - this.getRowsInFrame();
+        return this.getRowsCount() - this.getRowsInFrameFull();
     };
     CButtonsContainer.prototype.getTotalHeight = function () {
         var nRowsCount = this.getRowsCount();

@@ -1585,8 +1585,6 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 				scrollTimeout = setTimeout( doScroll, isFirst ? that.settings.initialDelay : that.settings.arrowRepeatFreq );
 				isFirst = false;
 			};
-		that.settings.vscrollStep = 10;
-		that.settings.hscrollStep = 10;
 		doScroll();
 		this.bind( "mouseup.main mouseout", function () {
 			scrollTimeout && clearTimeout( scrollTimeout );
@@ -1605,8 +1603,6 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 				scrollTimeout = setTimeout( doScroll, isFirst ? that.settings.initialDelay : that.settings.arrowRepeatFreq );
 				isFirst = false;
 			};
-		that.settings.vscrollStep = 10;
-		that.settings.hscrollStep = 10;
 		doScroll();
 		this.bind( "mouseup.main mouseout", function () {
 			scrollTimeout && clearTimeout( scrollTimeout );
@@ -2141,4 +2137,3 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 	window["AscCommon"].ScrollSettings = ScrollSettings;
     window["AscCommon"].ScrollObject = ScrollObject;
 })(window);
-

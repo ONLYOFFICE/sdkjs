@@ -322,3 +322,25 @@ CSdtBase.prototype.private_CopyPlaceholder = function()
 		return oCopyName;
 	}
 };
+/**
+ * Проверяем является ли данный контрол текущим
+ * @return {boolean}
+ */
+CSdtBase.prototype.IsCurrent = function()
+{
+	return this.Current;
+};
+/**
+ * Выставляем, является ли данный контрол текущим
+ * @param {boolean} isCurrent
+ */
+CSdtBase.prototype.SetCurrent = function(isCurrent)
+{
+	this.Current = isCurrent;
+};
+/**
+ * Специальная функция, которая обновляет текстовые настройки у плейсхолдера для форм
+ */
+CSdtBase.prototype.UpdatePlaceHolderTextPrForForm = function()
+{
+};

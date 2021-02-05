@@ -232,8 +232,26 @@ function CControl()
             var _W = ((_r - _x) * g_dKoef_mm_to_pix + 0.5) >> 0;
             var _H = ((_b - _y) * g_dKoef_mm_to_pix + 0.5) >> 0;
 
-            this.HtmlElement.width 	= AscCommon.AscBrowser.convertToRetinaValue(_W, true);
-            this.HtmlElement.height = AscCommon.AscBrowser.convertToRetinaValue(_H, true);
+            this.HtmlElement.style.width 	= _W + "px";
+            this.HtmlElement.style.height 	= _H + "px";
+
+            if (/*api.CheckRetinaElement2 && api.CheckRetinaElement2(this.HtmlElement)*/this.HtmlElement.tagName === "CANVAS")
+            {
+                AscCommon.calculateCanvasSize(this.HtmlElement);
+            }
+            else
+            {
+                if (AscCommon.AscBrowser.isCustomScalingAbove2())
+                {
+                    this.HtmlElement.width = (_W << 1);
+                    this.HtmlElement.height = (_H << 1);
+                }
+                else
+                {
+                    this.HtmlElement.width = _W;
+                    this.HtmlElement.height = _H;
+                }
+            }
         }
         else
         {

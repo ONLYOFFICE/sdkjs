@@ -157,26 +157,7 @@ DrawingObjectsController.prototype.recalculate = function(bAll, Point, bCheckPoi
     {
         History.Get_RecalcData(Point);//Только для таблиц
     }
-    if(bAll)
-    {
-        var drawings = this.getDrawingObjects();
-        for(var i = 0; i < drawings.length; ++i)
-        {
-            if(drawings[i].recalcText)
-            {
-                drawings[i].recalcText();
-            }
-            drawings[i].recalculate();
-        }
-    }
-    else
-    {
-        for(var key in this.objectsForRecalculate)
-        {
-            this.objectsForRecalculate[key].recalculate();
-        }
-    }
-    this.objectsForRecalculate = {};
+    this.recalculate2(bAll);
 };
 
 DrawingObjectsController.prototype.recalculate2 = function(bAll)
@@ -251,10 +232,10 @@ DrawingObjectsController.prototype.checkSelectedObjectsAndFireCallback = functio
         return;
     }
     var selection_state = this.getSelectionState();
-    this.drawingObjects.objectLocker.reset();
+    var aId = [];
     for(var i = 0; i < this.selectedObjects.length; ++i)
     {
-        this.drawingObjects.objectLocker.addObjectId(this.selectedObjects[i].Get_Id());
+        aId.push(this.selectedObjects[i].Get_Id());
     }
     var _this = this;
     var callback2 = function(bLock, bSync)
@@ -268,7 +249,7 @@ DrawingObjectsController.prototype.checkSelectedObjectsAndFireCallback = functio
             callback.apply(_this, args);
         }
     };
-    this.drawingObjects.objectLocker.checkObjects(callback2);
+    oApi.checkObjectsLock(aId, callback2);
 };
 DrawingObjectsController.prototype.onMouseDown = function(e, x, y)
 {
@@ -380,7 +361,7 @@ DrawingObjectsController.prototype.handleOleObjectDoubleClick = function(drawing
 DrawingObjectsController.prototype.addChartDrawingObject = function(options)
 {
     History.Create_NewPoint();
-    var chart = this.getChartSpace(this.drawingObjects.getWorksheetModel(), options, true);
+    var chart = this.getChartSpace(options, false);
     if(chart)
     {
         chart.setWorksheet(this.drawingObjects.getWorksheetModel());
@@ -535,9 +516,7 @@ DrawingObjectsController.prototype.getDrawingDocument = function()
 DrawingObjectsController.prototype.convertPixToMM = function(pix)
 {
     var _ret = this.drawingObjects ? this.drawingObjects.convertMetric(pix, 0, 3) : 0;
-    if(AscCommon.AscBrowser.isRetina){
-        _ret *= 2;
-    }
+    _ret *= AscCommon.AscBrowser.retinaPixelRatio;
     return _ret;
 };
 

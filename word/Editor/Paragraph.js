@@ -1371,7 +1371,7 @@ Paragraph.prototype.RecalculateEndInfo = function()
 		return;
 
 	var oLogicDocument = this.GetLogicDocument();
-	if (oLogicDocument && this.EndInfoRecalcId === oLogicDocument.GetRecalcId())
+	if (oLogicDocument && oLogicDocument.GetRecalcId && this.EndInfoRecalcId === oLogicDocument.GetRecalcId())
 		return;
 
 	var oPRSI     = this.m_oPRSI;
@@ -1385,7 +1385,7 @@ Paragraph.prototype.RecalculateEndInfo = function()
 
 	this.EndInfo.SetFromPRSI(oPRSI);
 
-	if (oLogicDocument)
+	if (oLogicDocument && oLogicDocument.GetRecalcId)
 		this.EndInfoRecalcId = oLogicDocument.GetRecalcId();
 };
 Paragraph.prototype.GetEndInfo = function()
@@ -2183,7 +2183,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 					isForm     = oInlineSdt.IsForm();
 					oSdtBounds = PDSH.InlineSdt[nSdtIndex].GetRangeBounds(CurLine, CurRange);
 
-					if (isForm && FormsHighlight)
+					if (isForm && FormsHighlight && !oInlineSdt.IsCurrent())
 					{
 						if (1 !== nPrevColorState)
 						{
@@ -2376,12 +2376,17 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 
 					if (sValue)
 					{
-						pGraphics.AddHyperlink(_l, _t, _r - _l, _b - _t, sValue, sValue);
+						var _sValue = sAnchor ? sValue + "#" + sAnchor : sValue;
+						pGraphics.AddHyperlink(_l, _t, _r - _l, _b - _t, _sValue, _sValue);
 					}
 					else if (sAnchor)
 					{
 						var oLogicDocument = this.GetLogicDocument();
-						var oBookmark = oLogicDocument.BookmarksManager.GetBookmarkByName(sAnchor);
+						var oBookmark;
+						if(oLogicDocument && oLogicDocument.BookmarksManager)
+						{
+							oBookmark = oLogicDocument.BookmarksManager.GetBookmarkByName(sAnchor);
+						}
 						if (oBookmark)
 						{
 							var oBookmarkPos = oBookmark[0].GetDestinationXY();
@@ -8488,6 +8493,7 @@ Paragraph.prototype.GetCalculatedTextPr = function()
 				{
 					TextPr = this.Get_CompiledPr2(false).TextPr.Copy();
 					TextPr.Merge(this.TextPr.Value);
+					TextPr.CheckFontScale();
 				}
 
 				for (var CurPos = StartPos + 1; CurPos <= EndPos; CurPos++)
@@ -8504,6 +8510,7 @@ Paragraph.prototype.GetCalculatedTextPr = function()
 				{
 					var EndTextPr = this.Get_CompiledPr2(false).TextPr.Copy();
 					EndTextPr.Merge(this.TextPr.Value);
+					EndTextPr.CheckFontScale();
 					TextPr = TextPr.Compare(EndTextPr);
 				}
 			}
@@ -12047,7 +12054,7 @@ Paragraph.prototype.Split = function(NewParagraph)
 	var TextPr = this.Get_TextPr(ContentPos);
 
 	var oLogicDocument = this.GetLogicDocument();
-	var oStyles        = oLogicDocument ? oLogicDocument.GetStyles() : null;
+	var oStyles        = oLogicDocument && oLogicDocument.GetStyles ? oLogicDocument.GetStyles() : null;
 	if (oStyles && (TextPr.RStyle === oStyles.GetDefaultEndnoteReference() || TextPr.RStyle === oStyles.GetDefaultFootnoteReference()))
 	{
 		TextPr        = TextPr.Copy();

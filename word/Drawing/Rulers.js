@@ -237,44 +237,49 @@ function CHorRuler()
 
     this.Units = c_oAscDocumentUnits.Millimeter;
 
-    this.InitTablePict = function() {
-        var dPR = AscCommon.AscBrowser.retinaPixelRatio;
-        var roundDPR = Math.round(dPR);
-        // var roundDPR = ((dPR - Math.floor(dPR)) <= 0.5) ? Math.floor(dPR) : Math.round(dPR);
+    this.DrawTablePict = function() {
         var ctx = g_memory.ctx;
-        ctx.canvas.width = 7 * roundDPR;
-        ctx.canvas.height = 8 * roundDPR;
+        var dPR = AscCommon.AscBrowser.retinaPixelRatio;
+        var isNeedRedraw = (dPR - Math.floor(dPR)) >= 0.5 ? true : false;
+        var roundDPR = isNeedRedraw ? Math.floor(dPR) : Math.round(dPR);
+
+        var canvasWidth = (isNeedRedraw && dPR >= 1 ) ? Math.round(7 * (Math.floor(dPR) + 0.5)) : 7 * (isNeedRedraw ? dPR : ( dPR >= 1 ? Math.round(dPR) : dPR)),
+            canvasHeight = (isNeedRedraw && dPR >= 1) ? Math.round(8 * (Math.floor(dPR) + 0.5)) : 8 * (isNeedRedraw ? dPR : ( dPR >= 1 ? Math.round(dPR) : dPR));
+
+        if (null != this.tableSprite)
+        {
+            if (ctx.canvas.width == canvasWidth)
+                return;
+        }
+
+        ctx.canvas.width = canvasWidth;
+        ctx.canvas.height = canvasHeight;
+
+
         ctx.beginPath();
-        ctx.fillStyle = GlobalSkin.RulerTableColor1;
-        ctx.strokeStyle = GlobalSkin.RulerTableColor1;
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#ffffff';
         ctx.stroke();
-        ctx.rect(0,0,ctx.canvas.width, ctx.canvas.height);
+        ctx.rect(0,0,ctx.canvas.width, ctx.canvas.height)
         ctx.fill();
+
         ctx.beginPath();
-        ctx.strokeStyle = GlobalSkin.RulerTableColor2;
+        ctx.strokeStyle = '#646464';
         ctx.lineWidth = roundDPR;
-        for (var i = 0; i < 7 * roundDPR; i += 2 * ctx.lineWidth) {
-            ctx.moveTo(0,  1.5 * ctx.lineWidth + i);
-            ctx.lineTo(7 * roundDPR, 1.5 * ctx.lineWidth + i);
+
+        var step = isNeedRedraw ? Math.round(dPR): ctx.lineWidth;
+        for (var i = 0; i < 7 * ctx.canvas.width; i += step + ctx.lineWidth) {
+            ctx.moveTo(0,  0.5 * ctx.lineWidth + step + i);
+            ctx.lineTo(ctx.canvas.width, 0.5 * ctx.lineWidth + step + i);
             ctx.stroke();
         }
-        for (var i = 0; i < 8 * roundDPR; i += 2 * ctx.lineWidth) {
-            ctx.moveTo(1.5 * ctx.lineWidth + i, 0);
-            ctx.lineTo(1.5 * ctx.lineWidth + i, 8 * roundDPR);
+        for (var i = 0; i < 8 * ctx.canvas.height; i += step + ctx.lineWidth) {
+            ctx.moveTo(0.5 * ctx.lineWidth + step + i, 0);
+            ctx.lineTo(0.5 * ctx.lineWidth + step + i, ctx.canvas.height);
             ctx.stroke();
         }
 
         return ctx.canvas;
-    }
-
-    this.CheckTableSprite = function()
-    {
-        if (null != this.tableSprite)
-        {
-            if (this.tableSprite.width === 7 * Math.round(AscCommon.AscBrowser.retinaPixelRatio))
-                return;
-        }
-            this.tableSprite = this.InitTablePict();
     }
 
     this.tableSprite = null;
@@ -282,10 +287,12 @@ function CHorRuler()
     this.CheckCanvas = function()
     {
         this.m_dZoom = this.m_oWordControl.m_nZoomValue / 100;
+		var dPR = AscCommon.AscBrowser.retinaPixelRatio;
 
-        this.CheckTableSprite();
+        var tablePict = this.DrawTablePict();
+        if (tablePict)
+            this.tableSprite = tablePict;
 
-        var dPR = AscCommon.AscBrowser.retinaPixelRatio;
         var dKoef_mm_to_pix = g_dKoef_mm_to_pix * this.m_dZoom;
         dKoef_mm_to_pix *= dPR;
 
@@ -871,6 +878,7 @@ function CHorRuler()
                     {
                         context.fillStyle = GlobalSkin.RulerLight;
                         context.strokeStyle = GlobalSkin.RulerMarkersOutlineColor;
+
                         var roundV1 = Math.round(3 * dPR);
                         var roundV2 = Math.round(6 * dPR);
                         context.fillRect(__x + roundV1, this.m_nTop + indent + roundV1, roundV1, this.m_nBottom - this.m_nTop - roundV2);
@@ -2527,16 +2535,19 @@ function CHorRuler()
                 var1 = parseInt(dCenterX - _1mm_to_pix) - indent + Math.round(dPR) - 1;
                 var4 = parseInt(dCenterX + _1mm_to_pix) + indent + Math.round(dPR) - 1;
 
+                if ( 0 != ((var1 - var4 + Math.round(dPR)) & 1))
+                    var4 += 1;
+
                 context.beginPath();
                 context.lineWidth = roundDPR;
                 context.moveTo(var1, this.m_nBottom + indent);
                 context.lineTo(var4, this.m_nBottom + indent);
-                context.lineTo(var4, this.m_nBottom + indent + var2);
-                context.lineTo(var1, this.m_nBottom + indent + var2);
+                context.lineTo(var4, this.m_nBottom + indent + Math.round(var2));
+                context.lineTo(var1, this.m_nBottom + indent + Math.round(var2));
                 context.lineTo(var1, this.m_nBottom + indent);
-                context.lineTo(var1, this.m_nBottom + indent - var3);
-                context.lineTo((var1 + var4) / 2, this.m_nBottom - var2 * 1.2);
-                context.lineTo(var4, this.m_nBottom + indent - var3);
+                context.lineTo(var1, this.m_nBottom + indent - Math.round(var3));
+                context.lineTo((var1 + var4) / 2, this.m_nBottom - Math.round(var2 * 1.2));
+                context.lineTo(var4, this.m_nBottom + indent - Math.round(var3));
                 context.lineTo(var4, this.m_nBottom + indent);
 
                 context.fill();
@@ -2547,13 +2558,16 @@ function CHorRuler()
                 var1 = parseInt(dCenterX - _1mm_to_pix) - indent + Math.round(dPR) - 1;
                 var4 = parseInt(dCenterX + _1mm_to_pix) + indent + Math.round(dPR) - 1;
 
+                if ( 0 != ((var1 - var4 + Math.round(dPR)) & 1))
+                    var4 += 1;
+
                 context.beginPath();
                 context.lineWidth = Math.round(dPR);
                 context.moveTo(var1, this.m_nBottom + indent);
                 context.lineTo(var4, this.m_nBottom + indent);
-                context.lineTo(var4, this.m_nBottom + indent - var3);
-                context.lineTo((var1 + var4) / 2, this.m_nBottom - var2 * 1.2);
-                context.lineTo(var1, this.m_nBottom + indent - var3);
+                context.lineTo(var4, this.m_nBottom + indent - Math.round(var3));
+                context.lineTo((var1 + var4) / 2, this.m_nBottom - Math.round(var2 * 1.2));
+                context.lineTo(var1, this.m_nBottom + indent - Math.round(var3));
                 context.closePath();
 
                 context.fill();
@@ -2564,13 +2578,16 @@ function CHorRuler()
                 var1 = parseInt(dCenterX - _1mm_to_pix) - indent + Math.round(dPR) - 1;
                 var4 = parseInt(dCenterX + _1mm_to_pix) + indent + Math.round(dPR) - 1;
 
+                if ( 0 != ((var1 - var4 + Math.round(dPR)) & 1))
+                    var4 += 1;
+
                 context.beginPath();
                 context.lineWidth = Math.round(dPR);
                 context.moveTo(var1, this.m_nTop + indent);
-                context.lineTo(var1, this.m_nTop + indent - var3);
-                context.lineTo(var4, this.m_nTop + indent - var3);
+                context.lineTo(var1, this.m_nTop + indent - Math.round(var3));
+                context.lineTo(var4, this.m_nTop + indent - Math.round(var3));
                 context.lineTo(var4, this.m_nTop + indent);
-                context.lineTo((var1 + var4) / 2, this.m_nTop + var2 * 1.2);
+                context.lineTo((var1 + var4) / 2, this.m_nTop + Math.round(var2 * 1.2));
                 context.closePath();
 
                 context.fill();
@@ -2718,7 +2735,6 @@ function CVerRuler()
     this.CheckCanvas = function()
     {
         this.m_dZoom = this.m_oWordControl.m_nZoomValue / 100;
-
         var dPR = AscCommon.AscBrowser.retinaPixelRatio;
         var dKoef_mm_to_pix = g_dKoef_mm_to_pix * this.m_dZoom * dPR;
 

@@ -2520,6 +2520,7 @@
 	prot['fixed']                     = prot.fixed;
 	window['Asc']['c_oAscValAxUnits'] = window['Asc'].c_oAscValAxUnits = c_oAscValAxUnits;
 	prot                            = c_oAscValAxUnits;
+	prot['none']                    = prot.none;
 	prot['BILLIONS']                = prot.BILLIONS;
 	prot['HUNDRED_MILLIONS']        = prot.HUNDRED_MILLIONS;
 	prot['HUNDREDS']                = prot.HUNDREDS;

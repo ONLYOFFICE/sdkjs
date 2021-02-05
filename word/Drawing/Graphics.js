@@ -206,6 +206,12 @@ CGraphics.prototype =
                 this.m_oFullTransform.sy,this.m_oFullTransform.tx,this.m_oFullTransform.ty);
         }
     },
+    darkModeOverride : function(r,g,b,a)
+    {
+        this.p_color_old = this.p_color; this.p_color = function(r,g,b,a) { (r<10 && g<10 && b<10) ? this.p_color_old(255-r,255-g,255-b,a) : this.p_color_old(r,g,b,a); };
+		this.b_color1_old = this.b_color1; this.b_color1 = function(r,g,b,a) { (r<10 && g<10 && b<10) ? this.b_color1_old(255-r,255-g,255-b,a) : this.b_color1_old(r,g,b,a); };
+		this.b_color2_old = this.b_color2; this.b_color2 = function(r,g,b,a) { (r<10 && g<10 && b<10) ? this.b_color2_old(255-r,255-g,255-b,a) : this.b_color2_old(r,g,b,a); };
+    },
     // pen methods
     p_color : function(r,g,b,a)
     {
@@ -1405,11 +1411,8 @@ CGraphics.prototype =
 
         var _xPxOffset = 10;
         var _yPxOffset = 5;
-        if (AscBrowser.isRetina)
-        {
-            _xPxOffset = (_xPxOffset * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-            _yPxOffset = (_yPxOffset * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-        }
+        _xPxOffset = (_xPxOffset * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        _yPxOffset = (_yPxOffset * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 
         var __x = this.m_oFullTransform.TransformPointX(x, y) >> 0;
         var __y = this.m_oFullTransform.TransformPointY(x, y) >> 0;
@@ -1419,7 +1422,7 @@ CGraphics.prototype =
         if (!bIsHeader)
             __y -= __h;
 
-        if (!AscBrowser.isRetina)
+        if (!AscBrowser.isCustomScalingAbove2())
             _ctx.rect(__x + 0.5, __y + 0.5, __w, __h);
         else
             _ctx.rect(__x, __y, __w, __h);
@@ -1465,11 +1468,8 @@ CGraphics.prototype =
 
         var _xPxOffset = 10;
         var _yPxOffset = 5;
-        if (AscBrowser.isRetina)
-        {
-			_xPxOffset = (_xPxOffset * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-			_yPxOffset = (_yPxOffset * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-        }
+        _xPxOffset = (_xPxOffset * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+		_yPxOffset = (_yPxOffset * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 
         var __x = this.m_oFullTransform.TransformPointX(this.m_dWidthMM - x, y) >> 0;
         var __y = this.m_oFullTransform.TransformPointY(this.m_dWidthMM - x, y) >> 0;
@@ -1480,7 +1480,7 @@ CGraphics.prototype =
         if (!bIsHeader)
             __y -= __h;
 
-        if (!AscBrowser.isRetina)
+        if (!AscBrowser.isCustomScalingAbove2())
             _ctx.rect(__x + 0.5, __y + 0.5, __w, __h);
         else
             _ctx.rect(__x, __y, __w, __h);
@@ -1512,11 +1512,8 @@ CGraphics.prototype =
         var _w2 = 3;
 
         var _lineWidth = 1;
-        var _isRetina = AscBrowser.isRetina;
-        if (_isRetina && !editor.WordControl.bIsRetinaSupport)
-            _isRetina = false;
 
-        if (_isRetina)
+        if (AscBrowser.isCustomScalingAbove2())
         {
             _y >>= 0;
             _lineWidth = 2;
@@ -1555,11 +1552,8 @@ CGraphics.prototype =
             }
         }
 
-        if (_isRetina)
-        {
-			_w1 = (_w1 * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-			_w2 = (_w2 * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-        }
+        _w1 = (_w1 * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+		_w2 = (_w2 * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 
         var bIsNoIntGrid = this.m_bIntegerGrid;
 
@@ -1595,7 +1589,7 @@ CGraphics.prototype =
             }
         }
 
-        var _fontSize = _isRetina ? ((9 * AscCommon.AscBrowser.retinaPixelRatio) >> 0) : 9;
+        var _fontSize = ((9 * AscCommon.AscBrowser.retinaPixelRatio) >> 0);
         this.DrawStringASCII("Courier New", _fontSize, false, false, _header_text, 2, yPos, true);
 
         if (bIsRepeat)
@@ -1614,11 +1608,7 @@ CGraphics.prototype =
         var _w2 = 3;
 
         var _lineWidth = 1;
-        var _isRetina = AscBrowser.isRetina;
-        if (_isRetina && !editor.WordControl.bIsRetinaSupport)
-            _isRetina = false;
-
-        if (_isRetina)
+        if (AscBrowser.isCustomScalingAbove2())
         {
             _y >>= 0;
             _lineWidth = 2;
@@ -1656,11 +1646,8 @@ CGraphics.prototype =
             }
         }
 
-        if (_isRetina)
-        {
-			_w1 = (_w1 * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-			_w2 = (_w2 * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-        }
+        _w1 = (_w1 * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+		_w2 = (_w2 * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 
         var _wmax = this.m_lWidthPix;
 
@@ -1698,7 +1685,7 @@ CGraphics.prototype =
             }
         }
 
-        var _fontSize = _isRetina ? ((9 * AscCommon.AscBrowser.retinaPixelRatio) >> 0) : 9;
+        var _fontSize = ((9 * AscCommon.AscBrowser.retinaPixelRatio) >> 0);
         this.DrawStringASCII("Courier New", _fontSize, false, false, _header_text, 2, yPos, false);
 
         if (bIsRepeat)
@@ -2819,7 +2806,7 @@ CGraphics.prototype =
                 if ((type & 0x01) == 0x01)
                     _index += 1;
 
-                if (this.IsRetina)
+                if (AscBrowser.isCustomScalingAbove2())
                     _index += 4;
 
                 var _offset = AscCommon.g_comment_image_offsets[_index];

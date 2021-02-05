@@ -270,8 +270,7 @@ function CEditorPage(api)
 	this.VerticalScrollOnMouseUp = {SlideNum : 0, ScrollY : 0, ScrollY_max : 0};
 	this.IsGoToPageMAXPosition   = false;
 
-	this.bIsRetinaSupport         = true;
-	this.bIsRetinaNoSupportAttack = false;
+	this.retinaScaling = AscCommon.AscBrowser.retinaPixelRatio;
 
 	this.MasterLayouts = null; // мастер, от которого посылались в меню последние шаблоны
 
@@ -921,45 +920,44 @@ function CEditorPage(api)
 
 	this.CheckRetinaDisplay = function()
 	{
-		var old = this.bIsRetinaSupport;
-		if (!this.bIsRetinaNoSupportAttack)
+		if (this.retinaScaling != AscCommon.AscBrowser.retinaPixelRatio)
 		{
-			this.bIsRetinaSupport       = AscCommon.AscBrowser.isRetina;
-			this.m_oOverlayApi.IsRetina = this.bIsRetinaSupport;
-
-			if (this.m_oNotesApi && this.m_oNotesApi.m_oOverlayApi)
-				this.m_oNotesApi.m_oOverlayApi.IsRetina = this.bIsRetinaSupport;
-		}
-		else
-		{
-			this.bIsRetinaSupport = false;
-			this.m_oOverlayApi.IsRetina = this.bIsRetinaSupport;
-
-			if (this.m_oNotesApi && this.m_oNotesApi.m_oOverlayApi)
-				this.m_oNotesApi.m_oOverlayApi.IsRetina = this.bIsRetinaSupport;
-		}
-
-		if (old != this.bIsRetinaSupport)
-		{
-			// сбросить кэш страниц
-			this.onButtonTabsDraw();
+            this.retinaScaling = AscCommon.AscBrowser.retinaPixelRatio;
+            // сбросить кэш страниц
+            this.onButtonTabsDraw();
 		}
 	};
 
 	this.CheckRetinaElement = function(htmlElem)
 	{
-		if (this.bIsRetinaSupport)
+		switch (htmlElem.id)
 		{
-			if (htmlElem.id == "id_viewer" ||
-				(htmlElem.id == "id_viewer_overlay" && this.m_oOverlayApi.IsRetina) ||
-				htmlElem.id == "id_hor_ruler" ||
-				htmlElem.id == "id_vert_ruler" ||
-				htmlElem.id == "id_buttonTabs" ||
-				htmlElem.id == "id_notes" ||
-				(htmlElem.id == "id_notes_overlay" && this.m_oOverlayApi.IsRetina))
-				return true;
+			case "id_viewer":
+            case "id_viewer_overlay":
+            case "id_hor_ruler":
+            case "id_vert_ruler":
+            case "id_buttonTabs":
+            case "id_notes":
+            case "id_notes_overlay":
+            	return true;
+			default:
+				break;
 		}
 		return false;
+	};
+	this.CheckRetinaElement2 = function(htmlElem)
+	{
+        switch (htmlElem.id)
+        {
+            case "id_viewer":
+            case "id_viewer_overlay":
+            case "id_notes":
+            case "id_notes_overlay":
+                return true;
+            default:
+                break;
+        }
+        return false;
 	};
 
 	this.ShowOverlay        = function()
@@ -1183,8 +1181,7 @@ function CEditorPage(api)
 			return _value;
 
 		var w = this.m_oEditor.HtmlElement.width;
-		if (this.bIsRetinaSupport)
-			w /= AscCommon.AscBrowser.retinaPixelRatio;
+		w /= AscCommon.AscBrowser.retinaPixelRatio;
 
 		var Zoom       = 100;
 		var _pageWidth = this.m_oLogicDocument.Width * g_dKoef_mm_to_pix;
@@ -1207,11 +1204,8 @@ function CEditorPage(api)
 		var w = this.m_oEditor.HtmlElement.width;
 		var h = (undefined == _canvas_height) ? this.m_oEditor.HtmlElement.height : _canvas_height;
 
-		if (this.bIsRetinaSupport)
-		{
-			w /= AscCommon.AscBrowser.retinaPixelRatio;
-			h /= AscCommon.AscBrowser.retinaPixelRatio;
-		}
+		w /= AscCommon.AscBrowser.retinaPixelRatio;
+		h /= AscCommon.AscBrowser.retinaPixelRatio;
 
 		var _pageWidth  = this.m_oLogicDocument.Width * g_dKoef_mm_to_pix;
 		var _pageHeight = this.m_oLogicDocument.Height * g_dKoef_mm_to_pix;
@@ -1430,11 +1424,9 @@ function CEditorPage(api)
 		var boxY = 0;
 
 		var w = this.m_oEditor.HtmlElement.width;
-		if (this.bIsRetinaSupport)
-			w /= AscCommon.AscBrowser.retinaPixelRatio;
+		w /= AscCommon.AscBrowser.retinaPixelRatio;
 		var h = this.m_oEditor.HtmlElement.height;
-		if (this.bIsRetinaSupport)
-			h /= AscCommon.AscBrowser.retinaPixelRatio;
+		h /= AscCommon.AscBrowser.retinaPixelRatio;
 
 		var boxR = w - 2;
 		var boxB = h - rectSize;
@@ -1508,7 +1500,7 @@ function CEditorPage(api)
 	this.onButtonTabsDraw = function()
 	{
 		var _ctx = this.m_oLeftRuler_buttonsTabs.HtmlElement.getContext('2d');
-		_ctx.setTransform(1, 0, 0, 1, 0, 0);
+		_ctx.setTransform(AscCommon.AscBrowser.retinaPixelRatio, 0, 0, AscCommon.AscBrowser.retinaPixelRatio, 0, 0);
 
 		var dPR = window.devicePixelRatio;
 		var _width  = Math.round(19 * dPR);
@@ -2058,6 +2050,7 @@ function CEditorPage(api)
 
 	this.onMouseDown = function(e)
 	{
+		oThis.m_oApi.checkInterfaceElementBlur();
 		oThis.m_oApi.checkLastWork();
 
 		if (false === oThis.m_oApi.bInit_word_control)
@@ -2879,12 +2872,10 @@ function CEditorPage(api)
 			settings.screenAddH = this.m_oTopRuler_horRuler.HtmlElement.height;
 		}
 
-		if (this.bIsRetinaSupport)
-		{
-			settings.screenW = AscCommon.AscBrowser.convertToRetinaValue(settings.screenW);
-			settings.screenH = AscCommon.AscBrowser.convertToRetinaValue(settings.screenH);
-			settings.screenAddH = AscCommon.AscBrowser.convertToRetinaValue(settings.screenAddH);
-		}
+		settings.screenW = AscCommon.AscBrowser.convertToRetinaValue(settings.screenW);
+		settings.screenH = AscCommon.AscBrowser.convertToRetinaValue(settings.screenH);
+		settings.screenAddH = AscCommon.AscBrowser.convertToRetinaValue(settings.screenAddH);
+
 		return settings;
 	};
 
@@ -3324,8 +3315,7 @@ function CEditorPage(api)
 	this.checkNeedHorScrollValue = function(_width)
 	{
 		var w = this.m_oEditor.HtmlElement.width;
-		if (this.bIsRetinaSupport)
-			w /= AscCommon.AscBrowser.retinaPixelRatio;
+		w /= AscCommon.AscBrowser.retinaPixelRatio;
 
 		return (_width <= w) ? false : true;
 	};
@@ -3565,7 +3555,7 @@ function CEditorPage(api)
 
 		var _srcW = this.m_oEditor.HtmlElement.width;
 		var _srcH = this.m_oEditor.HtmlElement.height;
-		if (this.bIsRetinaSupport)
+		if (AscCommon.AscBrowser.isCustomScaling())
 		{
 			_srcW = (_srcW / AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 			_srcH = (_srcH / AscCommon.AscBrowser.retinaPixelRatio) >> 0;
@@ -3718,7 +3708,7 @@ function CEditorPage(api)
 
 		var _srcW = this.m_oEditor.HtmlElement.width;
 		var _srcH = (undefined !== _canvas_height) ? _canvas_height : this.m_oEditor.HtmlElement.height;
-		if (this.bIsRetinaSupport)
+		if (AscCommon.AscBrowser.isCustomScaling())
 		{
 			_srcW = (_srcW / AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 			_srcH = (_srcH / AscCommon.AscBrowser.retinaPixelRatio) >> 0;

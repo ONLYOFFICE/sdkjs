@@ -1813,21 +1813,33 @@ function ShapeToImageConverter(shape, pageIndex)
         _bounds_cheker.Bounds.min_y -= _w_pen;
     }*/
 
-    var _canvas = document.createElement('canvas');
-    _canvas.width = _need_pix_width >> 0;
-    _canvas.height = _need_pix_height >> 0;
-
-    var _ctx = _canvas.getContext('2d');
-
-    var g = new AscCommon.CGraphics();
-    g.init(_ctx, w_px, h_px, w_mm, h_mm);
-    g.m_oFontManager = AscCommon.g_fontManager;
-
-    g.m_oCoordTransform.tx = -_bounds_cheker.Bounds.min_x;
-    g.m_oCoordTransform.ty = -_bounds_cheker.Bounds.min_y;
-    g.transform(1,0,0,1,0,0);
-
-    shape.draw(g, /*pageIndex*/0);
+	var _canvas = null;
+	if (window["NATIVE_EDITOR_ENJINE"] === true && window["IS_NATIVE_EDITOR"] !== true)
+	{
+		_need_pix_width = _need_pix_width >> 0;
+		_need_pix_height = _need_pix_height >> 0;
+		_canvas = new CNativeGraphics();
+		_canvas.width  = _need_pix_width;
+		_canvas.height = _need_pix_height;
+		_canvas.init(window["native"], _need_pix_width, _need_pix_height, _need_pix_width / dKoef, _need_pix_height / dKoef);
+		_canvas.CoordTransformOffset(-_bounds_cheker.Bounds.min_x, -_bounds_cheker.Bounds.min_y);
+		_canvas.transform(1, 0, 0, 1, 0, 0);
+		shape.draw(_canvas, 0);
+	}
+	else
+	{
+		_canvas = document.createElement("canvas");
+		_canvas.width = _need_pix_width >> 0;
+		_canvas.height = _need_pix_height >> 0;
+		var _ctx = _canvas.getContext("2d");
+		var g = new AscCommon.CGraphics;
+		g.init(_ctx, w_px, h_px, w_mm, h_mm);
+		g.m_oFontManager = AscCommon.g_fontManager;
+		g.m_oCoordTransform.tx = -_bounds_cheker.Bounds.min_x;
+		g.m_oCoordTransform.ty = -_bounds_cheker.Bounds.min_y;
+		g.transform(1, 0, 0, 1, 0, 0);
+		shape.draw(g, 0);
+	}
 
     AscCommon.IsShapeToImageConverter = false;
 

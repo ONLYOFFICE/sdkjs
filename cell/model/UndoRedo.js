@@ -2549,7 +2549,7 @@ function (window, undefined) {
 			worksheetView = wb.oApi.wb.getWorksheetById(nSheetId);
 			worksheetView.cellCommentator.updateCommentsDependencies(bInsert, operType, range);
 
-			ws.shiftDataValidation(bInsert, operType, range);
+			//ws.shiftDataValidation(bInsert, operType, range);
 		} else if (AscCH.historyitem_Worksheet_AddCols == Type || AscCH.historyitem_Worksheet_RemoveCols == Type) {
 			from = Data.from;
 			to = Data.to;
@@ -2587,7 +2587,7 @@ function (window, undefined) {
 			worksheetView = wb.oApi.wb.getWorksheetById(nSheetId);
 			worksheetView.cellCommentator.updateCommentsDependencies(bInsert, operType, range);
 
-			ws.shiftDataValidation(bInsert, operType, range)
+			//ws.shiftDataValidation(bInsert, operType, range)
 		} else if (AscCH.historyitem_Worksheet_ShiftCellsLeft == Type ||
 			AscCH.historyitem_Worksheet_ShiftCellsRight == Type) {
 			r1 = Data.r1;
@@ -2927,10 +2927,14 @@ function (window, undefined) {
 				ws.deletePivotTable(Data.pivot);
 			}
 		} else if (AscCH.historyitem_Worksheet_PivotReplace === Type) {
-			ws.deletePivotTable(Data.pivot);
 			var data = bUndo ? Data.from : Data.to;
 			var pivot = data.getData();
 			pivot.init();
+			var oldPivot = ws.getPivotTableById(Data.pivot);
+			if (oldPivot) {
+				pivot.replaceSlicersPivotCacheDefinition(oldPivot.cacheDefinition, pivot.cacheDefinition);
+			}
+			ws.deletePivotTable(Data.pivot);
 			ws.insertPivotTable(pivot, false, true);
 		} else if (AscCH.historyitem_Worksheet_SlicerAdd === Type) {
 			if (bUndo) {
@@ -2994,6 +2998,7 @@ function (window, undefined) {
 				}
 
 				ws.addDataValidation(_dataValidation);
+				_dataValidation._init(ws);
 			}
 		} else if (AscCH.historyitem_Worksheet_DataValidationChange === Type) {
 			var dataValidationTo = bUndo ? Data.from : Data.to;

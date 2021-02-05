@@ -490,15 +490,7 @@ CHistory.prototype.RedoExecute = function(Point, oRedoObjectParam)
 		this._addRedoObjectParam(oRedoObjectParam, Item);
 	}
 	AscCommon.CollaborativeEditing.Apply_LinkData();
-	var wsViews = Asc["editor"].wb.wsViews;
-	this.Get_RecalcData(Point);
-	for(var i = 0; i < wsViews.length; ++i)
-	{
-		if(wsViews[i] && wsViews[i].objectRender && wsViews[i].objectRender.controller)
-		{
-			wsViews[i].objectRender.controller.recalculate2(undefined);
-		}
-	}
+	Asc["editor"].wb.recalculateDrawingObjects(Point, false);
 };
 CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 	var wsViews, i, oState = null, bCoaut = false, t = this;
@@ -507,13 +499,7 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 		AscCommon.CollaborativeEditing.Apply_LinkData();
 		bCoaut = true;
         if(!window["NATIVE_EDITOR_ENJINE"] || window['IS_NATIVE_EDITOR']) {
-            this.Get_RecalcData(Point);
-            wsViews = Asc["editor"].wb.wsViews;
-            for (i = 0; i < wsViews.length; ++i) {
-                if (wsViews[i] && wsViews[i].objectRender && wsViews[i].objectRender.controller) {
-                    wsViews[i].objectRender.controller.recalculate2(true);
-                }
-            }
+			Asc["editor"].wb.recalculateDrawingObjects(Point, true);
         }
 	}
 
@@ -572,13 +558,7 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 		}
 
         if(!window["NATIVE_EDITOR_ENJINE"] || window['IS_NATIVE_EDITOR']) {
-            this.Get_RecalcData(Point);
-            wsViews = Asc["editor"].wb.wsViews;
-            for (i = 0; i < wsViews.length; ++i) {
-                if (wsViews[i] && wsViews[i].objectRender && wsViews[i].objectRender.controller) {
-                    wsViews[i].objectRender.controller.recalculate2(undefined);
-                }
-            }
+			Asc["editor"].wb.recalculateDrawingObjects(Point, false);
         }
 
 		if (oRedoObjectParam.oOnUpdateSheetViewSettings[this.workbook.getWorksheet(this.workbook.getActive()).getId()])

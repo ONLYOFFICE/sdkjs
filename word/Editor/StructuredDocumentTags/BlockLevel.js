@@ -60,6 +60,7 @@ function CBlockLevelSdt(oLogicDocument, oParent)
 	g_oTableId.Add(this, this.Id);
 
 	this.SkipSpecialLock = false;
+	this.Current         = false;
 }
 
 CBlockLevelSdt.prototype = Object.create(CDocumentContentElementBase.prototype);

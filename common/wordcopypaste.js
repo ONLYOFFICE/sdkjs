@@ -4808,34 +4808,41 @@ PasteProcessor.prototype =
 			oThis.aContent = shape.txBody.content.Content;
 
 			text = text.replace(/^(\r|\t)+|(\r|\t)+$/g, '');
-			//text = text.replace(/(\r|\t)/g, ' ');
 			if (text.length > 0) {
-				oThis.oDocument = shape.txBody.content;
-
+                //TODO: May be use CDocumentContent.AddText instead
+                var oContent = shape.txBody.content;
+				oThis.oDocument = oContent;
 				var bAddParagraph = false;
+                var oCurParagraph = oContent.Content[0];
+                var oCurRun = new ParaRun(oCurParagraph, false);
+                var nCharPos = 0;
+                oCurParagraph.Internal_Content_Add(0, oCurRun);
 				for (var oIterator = text.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
 					if (bAddParagraph) {
-						shape.txBody.content.AddNewParagraph();
+                        oContent.Internal_Content_Add(oContent.Content.length, new Paragraph(oContent.DrawingDocument, oContent, oContent.bPresentation === true));
+                        oCurRun = new ParaRun(oCurParagraph, false);
+                        oCurParagraph.Internal_Content_Add(0, oCurRun);
 						bAddParagraph = false;
+                        nCharPos = 0;
 					}
-
 					var nUnicode = oIterator.value();
-
-					if (null !== nUnicode && 13 !== nUnicode) {
-						var Item;
-						if (0x0A === nUnicode || 0x0D === nUnicode) {
-							bAddParagraph = true;
-						} else if (0x09 === nUnicode) {
-							Item = new ParaTab();
-							shape.paragraphAdd(Item, false);
-						} else if (0x20 !== nUnicode && 0xA0 !== nUnicode && 0x2009 !== nUnicode) {
-							Item = new ParaText(nUnicode);
-							shape.paragraphAdd(Item, false);
-						} else {
-							Item = new ParaSpace();
-							shape.paragraphAdd(Item, false);
-						}
-					}
+                    if(null !== nUnicode) {
+                        if (null !== nUnicode && 13 !== nUnicode) {
+                            if (0x0A === nUnicode || 0x0D === nUnicode) {
+                                bAddParagraph = true;
+                            }
+                            else if (9 === nUnicode) // \t
+                                oCurRun.AddToContent(nCharPos++, new ParaTab(), true);
+                            else if (10 === nUnicode) // \n
+                                oCurRun.AddToContent(nCharPos++, new ParaNewLine(break_Line), true);
+                            else if (13 === nUnicode) // \r
+                                continue;
+                            else if (AscCommon.IsSpace(nUnicode)) // space
+                                oCurRun.AddToContent(nCharPos++, new ParaSpace(nUnicode), true);
+                            else
+                                oCurRun.AddToContent(nCharPos++, new ParaText(nUnicode), true);
+                        }
+                    }
 				}
 			}
 
@@ -5092,7 +5099,8 @@ PasteProcessor.prototype =
 				res.Value = border_Single;
 				res.Size = border.w * g_dKoef_pix_to_mm;
 			}
-			res.Color = new CDocumentColor(border.c.getR(), border.c.getG(), border.c.getB());
+			var bc = border.getColorOrDefault();
+			res.Color = new CDocumentColor(bc.getR(), bc.getG(), bc.getB());
 
 			return res;
 		};
@@ -8165,11 +8173,7 @@ PasteProcessor.prototype =
 			if (bPresentation) {
 				//Добавляем linebreak, если он не разделяет блочные элементы и до этого был блочный элемент
 				if ("br" === sNodeName || "always" === node.style.pageBreakBefore) {
-					if ("always" === node.style.pageBreakBefore) {
-						shape.paragraphAdd(new ParaNewLine(break_Line), false);
-					} else {
-						shape.paragraphAdd(new ParaNewLine(break_Line), false);
-					}
+                    shape.paragraphAdd(new ParaNewLine(break_Line), false);
 				}
 			} else {
 				//Добавляем linebreak, если он не разделяет блочные элементы и до этого был блочный элемент

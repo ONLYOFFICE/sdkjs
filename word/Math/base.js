@@ -1055,6 +1055,8 @@ CMathBase.prototype.Apply_TextPrToCtrPr = function(TextPr, IncFontSize, ApplyToA
 
 		if (undefined !== TextPr.HighLight)
 			this.Set_HighLight(null === TextPr.HighLight ? undefined : TextPr.HighLight);
+		if (undefined !== TextPr.HighlightColor)
+			this.SetHighlightColor(null === TextPr.HighlightColor ? undefined : TextPr.HighlightColor);
 
 		if (undefined !== TextPr.Underline)
 			this.Set_Underline(null === TextPr.Underline ? undefined : TextPr.Underline);
@@ -1152,6 +1154,18 @@ CMathBase.prototype.Set_HighLight = function(Value)
 	{
 		History.Add(new CChangesMathBaseHighLight(this, this.CtrPrp.HighLight, Value));
 		this.raw_SetHighLight(Value);
+	}
+};
+CMathBase.prototype.SetHighlightColor = function(Value)
+{
+	if (null === Value)
+		Value = undefined;
+
+	var OldValue = this.CtrPrp.HighlightColor;
+	if (OldValue && !OldValue.IsIdentical(Value) || Value && !Value.IsIdentical(OldValue))
+	{
+		History.Add(new CChangesMathBaseHighlightColor(this, OldValue, Value));
+		this.raw_SetHighlightColor(Value);
 	}
 };
 CMathBase.prototype.Set_Shd = function(Shd)
@@ -1342,6 +1356,11 @@ CMathBase.prototype.raw_SetTextOutline = function(Value)
 CMathBase.prototype.raw_SetHighLight = function(Value)
 {
     this.CtrPrp.HighLight = Value;
+    this.NeedUpdate_CtrPrp();
+};
+CMathBase.prototype.raw_SetHighlightColor = function(Value)
+{
+    this.CtrPrp.HighlightColor = Value;
     this.NeedUpdate_CtrPrp();
 };
 CMathBase.prototype.raw_SetRFonts = function(RFonts)

@@ -165,13 +165,6 @@ function addToDrawings(worksheet, graphic, position, lockByDefault, anchor)
         ret = aObjects.length;
         aObjects.push(drawingObject);
     }
-
-    /*if ( lockByDefault ) {
-     _this.objectLocker.reset();
-     _this.objectLocker.addObjectId(drawingObject.graphicObject.Id);
-     _this.objectLocker.checkObjects( function(result) {} );
-     }
-     worksheet.setSelectionShape(true);  */
     if(oldDrawingBase)
     {
         graphic.setDrawingBaseType(oldDrawingBase.Type);

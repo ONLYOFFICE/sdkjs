@@ -524,6 +524,33 @@
 		return resultList;
 	};
 
+	Api.prototype.RecalculateAllFormulas = function(fLogger) {
+		var formulas = this.wbModel.getAllFormulas();
+		for (var i = 0; i < formulas.length; ++i) {
+			var formula = formulas[i];
+			var cell = formula.ws.getCell3(formula.parent.nRow, formula.parent.nCol);
+			var oldValue = cell.getValue();
+			formula.setFormula(formula.getFormula());
+			formula.parse();
+			var formulaRes = formula.calculate();
+			var newValue = formulaRes.getValue();
+
+			if (fLogger) {
+				if (oldValue != newValue) {
+					//error
+					fLogger({
+						sheet: formula.ws.sName,
+						r: formula.parent.nRow,
+						c: formula.parent.nCol,
+						f: formula.Formula,
+						oldValue: oldValue,
+						newValue: newValue
+					});
+				}
+			}
+		}
+	};
+
 	/**
 	 * Returns Visible of sheet
 	 * @memberof ApiWorksheet
@@ -1148,137 +1175,11 @@
 	ApiWorksheet.prototype.AddChart =
 		function (sDataRange, bInRows, sType, nStyleIndex, nExtX, nExtY, nFromCol, nColOffset,  nFromRow, nRowOffset) {
 			var settings = new Asc.asc_ChartSettings();
-			switch (sType) {
-				case "bar" :
-				{
-					settings.type = Asc.c_oAscChartTypeSettings.barNormal;
-					break;
-				}
-				case "barStacked":
-				{
-					settings.type = Asc.c_oAscChartTypeSettings.barStacked;
-					break;
-				}
-				case "barStackedPercent":
-				{
-					settings.type = Asc.c_oAscChartTypeSettings.barStackedPer;
-					break;
-				}
-				case "bar3D":
-				{
-					settings.type = Asc.c_oAscChartTypeSettings.barNormal3d;
-					break;
-				}
-				case "barStacked3D":
-				{
-					settings.type = Asc.c_oAscChartTypeSettings.barStacked3d;
-					break;
-				}
-				case "barStackedPercent3D":
-				{
-					settings.type = Asc.c_oAscChartTypeSettings.barStackedPer3d;
-					break;
-				}
-				case "barStackedPercent3DPerspective":
-				{
-					settings.type = Asc.c_oAscChartTypeSettings.barNormal3dPerspective;
-					break;
-				}
-				case "horizontalBar":
-				{
-					settings.type = Asc.c_oAscChartTypeSettings.hBarNormal;
-					break;
-				}
-				case "horizontalBarStacked":
-				{
-					settings.type = Asc.c_oAscChartTypeSettings.hBarStacked;
-					break;
-				}
-				case "horizontalBarStackedPercent":
-				{
-					settings.type = Asc.c_oAscChartTypeSettings.hBarStackedPer;
-					break;
-				}
-				case "horizontalBar3D":
-				{
-					settings.type = Asc.c_oAscChartTypeSettings.hBarNormal3d;
-					break;
-				}
-				case "horizontalBarStacked3D":
-				{
-					settings.type = Asc.c_oAscChartTypeSettings.hBarStacked3d;
-					break;
-				}
-				case "horizontalBarStackedPercent3D":
-				{
-					settings.type = Asc.c_oAscChartTypeSettings.hBarStackedPer3d;
-					break;
-				}
-				case "lineNormal":
-				{
-					settings.type = Asc.c_oAscChartTypeSettings.lineNormal;
-					break;
-				}
-				case "lineStacked":
-				{
-					settings.type = Asc.c_oAscChartTypeSettings.lineStacked;
-					break;
-				}
-				case "lineStackedPercent":
-				{
-					settings.type = Asc.c_oAscChartTypeSettings.lineStackedPer;
-					break;
-				}
-				case "line3D":
-				{
-					settings.type = Asc.c_oAscChartTypeSettings.line3d;
-					break;
-				}
-				case "pie":
-				{
-					settings.type = Asc.c_oAscChartTypeSettings.pie;
-					break;
-				}
-				case "pie3D":
-				{
-					settings.type = Asc.c_oAscChartTypeSettings.pie3d;
-					break;
-				}
-				case "doughnut":
-				{
-					settings.type = Asc.c_oAscChartTypeSettings.doughnut;
-					break;
-				}
-				case "scatter":
-				{
-					settings.type = Asc.c_oAscChartTypeSettings.scatter;
-					break;
-				}
-				case "stock":
-				{
-					settings.type = Asc.c_oAscChartTypeSettings.stock;
-					break;
-				}
-				case "area":
-				{
-					settings.type = Asc.c_oAscChartTypeSettings.areaNormal;
-					break;
-				}
-				case "areaStacked":
-				{
-					settings.type = Asc.c_oAscChartTypeSettings.areaStacked;
-					break;
-				}
-				case "areaStackedPercent":
-				{
-					settings.type = Asc.c_oAscChartTypeSettings.areaStackedPer;
-					break;
-				}
-			}
+			settings.type = AscFormat.ChartBuilderTypeToInternal(sType);
 			settings.style = nStyleIndex;
 			settings.inColumns = !bInRows;
 			settings.putRange(sDataRange);
-			var oChart = AscFormat.DrawingObjectsController.prototype.getChartSpace(this.worksheet, settings, true);
+			var oChart = AscFormat.DrawingObjectsController.prototype.getChartSpace(settings);
 			if(arguments.length === 8){//support old variant
 				oChart.setBDeleted(false);
 				oChart.setWorksheet(this.worksheet);
@@ -1291,6 +1192,7 @@
 			if (AscFormat.isRealNumber(nStyleIndex)) {
 				oChart.setStyle(nStyleIndex);
 			}
+			oChart.recalculateReferences();
 			return new ApiChart(oChart);
 		};
 
@@ -2943,6 +2845,8 @@
 	Api.prototype["GetMailMergeData"]      = Api.prototype.GetMailMergeData;
 	
 	Api.prototype["GetRange"] = Api.prototype.GetRange;
+
+	Api.prototype["RecalculateAllFormulas"] = Api.prototype.RecalculateAllFormulas;
 
 	ApiWorksheet.prototype["GetVisible"] = ApiWorksheet.prototype.GetVisible;
 	ApiWorksheet.prototype["SetVisible"] = ApiWorksheet.prototype.SetVisible;

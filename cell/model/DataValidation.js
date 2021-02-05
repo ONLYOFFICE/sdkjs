@@ -542,13 +542,16 @@
 
 			return _val;
 		};
-		if (this.operator === EDataValidationOperator.Between || this.operator === EDataValidationOperator.NotBetween) {
-			if (this.formula1 && this.formula2) {
-				var nFormula1 = _getNumber(this.formula1.text);
-				var nFormula2 = _getNumber(this.formula2.text);
 
-				if (nFormula1 !== null && nFormula2 !== null && nFormula2 < nFormula1) {
-					return Asc.c_oAscError.ID.DataValidateMinGreaterMax;
+		if (this.type !== EDataValidationType.Custom && this.type !== EDataValidationType.List) {
+			if (this.operator === EDataValidationOperator.Between || this.operator === EDataValidationOperator.NotBetween) {
+				if (this.formula1 && this.formula2) {
+					var nFormula1 = _getNumber(this.formula1.text);
+					var nFormula2 = _getNumber(this.formula2.text);
+
+					if (nFormula1 !== null && nFormula2 !== null && nFormula2 < nFormula1) {
+						return Asc.c_oAscError.ID.DataValidateMinGreaterMax;
+					}
 				}
 			}
 		}
@@ -763,11 +766,6 @@
 	CDataValidation.prototype.getFormula2 = function () {
 		return this.formula2;
 	};
-
-	CDataValidation.prototype.setAllowBlank = function (newVal, addToHistory) {
-		//setTableProperty(this, this.name, newVal, addToHistory, AscCH.historyitem_PivotTable_SetName);
-		this.name = newVal;
-	};
 	CDataValidation.prototype.setAllowBlank = function (newVal, addToHistory) {
 		this.allowBlank = newVal;
 	};
@@ -970,6 +968,9 @@
 				if (!_isNum) {
 					_val = _formula.text = _val.slice(1, -1);
 					_isNum = isNum(_val);
+					if (!_isNum) {
+						_val = _formula.text = _val.replace(/\"\"/g, "\"");
+					}
 				}
 
 				if (_isNum) {
@@ -1003,6 +1004,18 @@
 
 	CDataValidation.prototype.correctFromInterface = function (ws) {
 		var t = this;
+
+		var addQuotes = function (_val) {
+			var _res;
+			if (_val[0] === '"') {
+				_res = _val.replace(/\"/g, "\"\"");
+				_res = "\"" + _res + "\"";
+			} else {
+				_res = "\"" + _val + "\"";
+			}
+			return _res;
+		};
+
 		var doCorrect = function (_formula) {
 			var _val = _formula.text;
 			var isNumeric = isNum(_val);
@@ -1039,7 +1052,7 @@
 				}
 
 				if (!isFormula) {
-					_formula.text = '"' + _formula.text + '"';
+					_formula.text = addQuotes(_formula.text);
 				}
 			}
 		};
@@ -1050,6 +1063,22 @@
 		if (this.formula2) {
 			doCorrect(this.formula2);
 		}
+	};
+
+	CDataValidation.prototype.checkFormulaStackOnCell = function (row, col) {
+		var stack = this.formula1 && this.formula1._formula && this.formula1._formula.outStack;
+		if (stack && stack.length) {
+			for (var i = 0; i < stack.length; i++) {
+				if (stack[i]) {
+					if (stack[i].type === AscCommonExcel.cElementType.cell || stack[i].type === AscCommonExcel.cElementType.cellsRange) {
+						if (stack[i].range && stack[i].range.bbox && stack[i].range.bbox.contains(col, row)) {
+							return true;
+						}
+					}
+				}
+			}
+		}
+		return false;
 	};
 
 	function CDataValidations() {
@@ -1081,7 +1110,9 @@
 		for (var i = 0; i < this.elems.length; i++) {
 			var isUpdate = this.elems[i].shift(bInsert, type, updateRange);
 			if (isUpdate === -1) {
-				this.delete(ws, this.elems[i].Id, addToHistory);
+				if (this.delete(ws, this.elems[i].Id, addToHistory)) {
+					i--;
+				}
 			} else if (isUpdate) {
 				var to = this.elems[i].clone();
 				to.ranges = isUpdate;
@@ -1112,18 +1143,20 @@
 	};
 
 	CDataValidations.prototype.delete = function (ws, id, addToHistory) {
-		var from;
+		var deleteElem;
 		for (var i = 0; i < this.elems.length; i++) {
 			if (this.elems[i].Id === id) {
-				from = this.elems[i];
+				deleteElem = this.elems[i];
 				this.elems.splice(i, 1);
 			}
 		}
 
-		if (addToHistory) {
+		if (addToHistory && deleteElem) {
 			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_DataValidationDelete, ws.getId(), null,
-				new AscCommonExcel.UndoRedoData_DataValidation(from.Id, from, null));
+				new AscCommonExcel.UndoRedoData_DataValidation(deleteElem.Id, deleteElem, null));
 		}
+
+		return deleteElem;
 	};
 
 	CDataValidations.prototype.getById = function (id) {
@@ -1194,6 +1227,7 @@
 			var _res = new window['AscCommonExcel'].CDataValidation();
 			_res.showErrorMessage = true;
 			_res.showInputMessage = true;
+			_res.allowBlank = true;
 			return _res;
 		};
 
@@ -1221,25 +1255,6 @@
 		var instersection = _obj.intersection;
 		var contain = _obj.contain;
 
-		var _containRanges = function (_ranges1, _ranges2) {
-			if (_ranges1.length <= _ranges2.length) {
-				for (var j = 0; j < _ranges1.length; j++) {
-					var _equal = false;
-					for (var n = 0; n < _ranges2.length; n++) {
-						if (_ranges1[j].isEqual(_ranges2[n])) {
-							_equal = true;
-							break;
-						}
-					}
-					if (!_equal) {
-						return false;
-					}
-				}
-			}
-
-			return true;
-		};
-
 		var prepeareAdd = function (_props, modelRanges) {
 			var _dataValidation = _props.clone();
 			var _ranges = [];
@@ -1260,7 +1275,7 @@
 		var i;
 		if (this.elems) {
 			for (i = 0; i < this.elems.length; i++) {
-				if (_containRanges(this.elems[i].ranges, ranges)) {
+				if (this._containRanges(this.elems[i].ranges, ranges)) {
 					if (!equalRangeDataValidation) {
 						equalRangeDataValidation = [];
 					}
@@ -1309,9 +1324,13 @@
 					_newRanges = _newRanges.concat(tempRanges);
 				}
 
-				var newDataValidation = _dataValidation.clone();
-				newDataValidation.ranges = _newRanges;
-				t.change(ws, _dataValidation, prepeareAdd(newDataValidation), true);
+				if (!_newRanges.length) {
+					t.delete(ws, _dataValidation.Id, true)
+				} else {
+					var newDataValidation = _dataValidation.clone();
+					newDataValidation.ranges = _newRanges;
+					t.change(ws, _dataValidation, prepeareAdd(newDataValidation, _newRanges), true);
+				}
 			};
 
 			var k;
@@ -1326,13 +1345,40 @@
 		}
 	};
 
+	CDataValidations.prototype._containRanges = function (_ranges1, _ranges2) {
+		if (_ranges1.length <= _ranges2.length) {
+			for (var j = 0; j < _ranges1.length; j++) {
+				var _equal = false;
+				for (var n = 0; n < _ranges2.length; n++) {
+					if (_ranges1[j].isEqual(_ranges2[n])) {
+						_equal = true;
+						break;
+					}
+				}
+				if (!_equal) {
+					return false;
+				}
+			}
+		} else {
+			return false;
+		}
+
+		return true;
+	};
+
 	CDataValidations.prototype.clear = function (ws, ranges, addToHistory) {
 		for (var i = 0; i < this.elems.length; i++) {
-			var changedRanges = this.elems[i].clear(ranges);
-			if (changedRanges) {
-				var newDataValidation = this.elems[i].clone();
-				newDataValidation.ranges = changedRanges;
-				this.change(ws, this.elems[i], newDataValidation, addToHistory);
+			if (this._containRanges(this.elems[i].ranges, ranges)) {
+				if (this.delete(ws, this.elems[i].Id, addToHistory)) {
+					i--;
+				}
+			} else {
+				var changedRanges = this.elems[i].clear(ranges);
+				if (changedRanges) {
+					var newDataValidation = this.elems[i].clone();
+					newDataValidation.ranges = changedRanges;
+					this.change(ws, this.elems[i], newDataValidation, addToHistory);
+				}
 			}
 		}
 	};
@@ -1356,6 +1402,17 @@
 				var newDataValidation = this.elems[i].clone();
 				newDataValidation.ranges = changedRanges;
 				res.push(newDataValidation);
+			}
+		}
+		return res.length ? res : null;
+	};
+
+	CDataValidations.prototype.getIntersectionByRange = function (range) {
+		var res = [];
+		for (var i = 0; i < this.elems.length; i++) {
+			var changedRanges = this.elems[i].getIntersections(range);
+			if (changedRanges) {
+				res.push({ranges: changedRanges, id: this.elems[i].Id});
 			}
 		}
 		return res.length ? res : null;
