@@ -20919,11 +20919,14 @@
 			History.EndTransaction();
 		};
 
-		var _selection = [];
-		for (var i = 0; i < arr.length; i++) {
-			_selection = _selection.concat(arr[i].ranges);
+		var lockArr = [];
+		if (arr) {
+			for (var i = 0; i < arr.length; i++) {
+				lockArr.push(arr[i].id);
+			}
 		}
-		this._isLockedCells(_selection, /*subType*/null, callback);
+
+		this._isLockedCF(callback, lockArr);
 	};
 
 	//------------------------------------------------------------export---------------------------------------------------

@@ -5068,6 +5068,14 @@ var editor;
       ws.setCF(arr, deleteIdArr);
   };
 
+  spreadsheet_api.prototype.asc_clearCF = function (type) {
+    var deleteRules = this.asc_getCF(type);
+    if (deleteRules && deleteRules[0]) {
+      var ws = this.wb.getWorksheet();
+      ws.deleteCF(deleteRules);
+    }
+  };
+
   spreadsheet_api.prototype._onUpdateCFLock = function(lockElem) {
 	  if (lockElem.Element["rangeOrObjectId"] != -1 && !this.collaborativeEditing.getFast()) {
 		  var wsModel = this.wbModel.getWorksheetById(lockElem.Element["sheetId"]);
@@ -5547,6 +5555,7 @@ var editor;
   prot["asc_getCF"]        = prot.asc_getCF;
   prot["asc_setCF"]        = prot.asc_setCF;
   prot["asc_getPreviewCF"] = prot.asc_getPreviewCF;
+  prot["asc_clearCF"]      = prot.asc_clearCF;
 
   prot["asc_beforeInsertSlicer"] = prot.asc_beforeInsertSlicer;
   prot["asc_insertSlicer"] = prot.asc_insertSlicer;
