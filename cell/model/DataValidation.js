@@ -97,9 +97,16 @@
 		if (this._formula || !this.text) {
 			return;
 		}
-
+		var t = this;
 		this._formula = new AscCommonExcel.parserFormula(this.text, this, ws);
-		this._formula.parse(locale);
+		if (!locale) {
+			AscCommonExcel.executeInR1C1Mode(false, function () {
+				t._formula.parse();
+			});
+		} else {
+			this._formula.parse(locale);
+		}
+
 		this._formula.buildDependencies();
 	};
 	CDataFormula.prototype.clone = function () {
