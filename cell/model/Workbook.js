@@ -9052,7 +9052,7 @@
 			newDataValidation.allowBlank = true;
 			return newDataValidation;
 		} else {
-			return this.dataValidations.getProps(_selection.ranges, doExtend);
+			return this.dataValidations.getProps(_selection.ranges, doExtend, this);
 		}
 	};
 

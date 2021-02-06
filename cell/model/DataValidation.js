@@ -93,13 +93,13 @@
 		this._formula = null;
 	}
 
-	CDataFormula.prototype._init = function (ws) {
+	CDataFormula.prototype._init = function (ws, locale) {
 		if (this._formula || !this.text) {
 			return;
 		}
 
 		this._formula = new AscCommonExcel.parserFormula(this.text, this, ws);
-		this._formula.parse();
+		this._formula.parse(locale);
 		this._formula.buildDependencies();
 	};
 	CDataFormula.prototype.clone = function () {
@@ -113,8 +113,8 @@
 			this.text = eventData.assemble;
 		}
 	};
-	CDataFormula.prototype.getValue = function (ws, returnRaw) {
-		this._init(ws);
+	CDataFormula.prototype.getValue = function (ws, returnRaw, local) {
+		this._init(ws, local);
 		var activeCell = ws.getSelection().activeCell;
 		var res = this._formula.calculate(null, new Asc.Range(activeCell.col, activeCell.row, activeCell.col, activeCell.row));
 		return returnRaw ? this._formula.simplifyRefType(res) : res;
@@ -625,7 +625,7 @@
 		var formula, fResult, isNumeric, date;
 		if (_val[0] === "=") {
 			formula = new CDataFormula(_val.slice(1));
-			fResult = formula.getValue(ws);
+			fResult = formula.getValue(ws, null, true);
 			var formulaError = _checkFormulaOnError(fResult, formula);
 			if (formulaError !== null) {
 				return formulaError;
@@ -990,7 +990,11 @@
 				}
 
 			} else {
-				_formula.text = "=" + _val;
+				if (_formula && _formula._formula) {
+					_formula.text = "=" + _formula._formula.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale);
+				} else {
+					_formula.text = "=" + _val;
+				}
 			}
 		};
 
@@ -1039,7 +1043,7 @@
 							return;
 						}
 						var _tempFormula = new CDataFormula(_val);
-						isFormula = _tempFormula.getValue(ws);
+						isFormula = _tempFormula.getValue(ws, null, true);
 					} else if (t.type !== EDataValidationType.List) {
 						isDate = AscCommon.g_oFormatParser.parseDate(_val, AscCommon.g_oDefaultCultureInfo);
 					}
@@ -1053,6 +1057,8 @@
 
 				if (!isFormula) {
 					_formula.text = addQuotes(_formula.text);
+				} else if (_tempFormula && _tempFormula._formula) {
+					_formula.text = _tempFormula._formula.assemble();
 				}
 			}
 		};
@@ -1206,7 +1212,7 @@
 		return {intersection: intersectionArr, contain: containArr};
 	};
 
-	CDataValidations.prototype.getProps = function (ranges, doExtend) {
+	CDataValidations.prototype.getProps = function (ranges, doExtend, ws) {
 		var _obj = this.getIntersections(ranges);
 		var dataValidationIntersection = _obj.intersection;
 		var dataValidationContain = _obj.contain;
@@ -1245,6 +1251,7 @@
 			res = getNewObject();
 		}
 
+		res._init(ws);
 		res.correctToInterface();
 
 		return res;
