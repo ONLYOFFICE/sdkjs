@@ -2315,9 +2315,15 @@
 			if(!(bFromRedo === true))
 			{
 				wsFrom.copyObjects(newSheet, renameParams);
+				var i;
 				if (wsFrom.aNamedSheetViews) {
-					for (var i = 0; i < wsFrom.aNamedSheetViews.length; ++i) {
+					for (i = 0; i < wsFrom.aNamedSheetViews.length; ++i) {
 						newSheet.addNamedSheetView(wsFrom.aNamedSheetViews[i].clone(renameParams.tableNameMap));
+					}
+				}
+				if (wsFrom.dataValidations && wsFrom.dataValidations.elems) {
+					for (i = 0; i < wsFrom.dataValidations.elems.length; ++i) {
+						newSheet.addDataValidation(wsFrom.dataValidations.elems[i].clone(), true);
 					}
 				}
 			}
@@ -3987,8 +3993,6 @@
 		for (i = 0; i < wsFrom.aConditionalFormattingRules.length; ++i) {
 			this.aConditionalFormattingRules.push(wsFrom.aConditionalFormattingRules[i].clone());
 		}
-		if (wsFrom.dataValidations)
-			this.dataValidations = wsFrom.dataValidations.clone();
 		if (wsFrom.sheetPr)
 			this.sheetPr = wsFrom.sheetPr.clone();
 
