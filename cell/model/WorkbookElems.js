@@ -2970,6 +2970,9 @@ var g_oBorderProperties = {
 	CellXfs.prototype.asc_getAngle = function () {
 		return this.getAlign2().getAngle();
 	};
+	CellXfs.prototype.asc_getIndent = function () {
+		return this.getAlign2().getIndent();
+	};
 	CellXfs.prototype.asc_getWrapText = function () {
 		var align = this.getAlign2();
 		return align.getWrap() || align.hor === AscCommon.align_Distributed;
@@ -10959,6 +10962,7 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 	prot["asc_getHorAlign"] = prot.asc_getHorAlign;
 	prot["asc_getVertAlign"] = prot.asc_getVertAlign;
 	prot["asc_getAngle"] = prot.asc_getAngle;
+	prot["asc_getIndent"] = prot.asc_getIndent;
 	prot["asc_getWrapText"] = prot.asc_getWrapText;
 	prot["asc_getShrinkToFit"] = prot.asc_getShrinkToFit;
 	prot["asc_getPreview"] = prot.asc_getPreview;
