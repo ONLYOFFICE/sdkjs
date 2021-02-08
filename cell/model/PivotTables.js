@@ -5327,16 +5327,20 @@ CT_pivotTableDefinition.prototype.filterPivotItems = function(index, autoFilterO
 	var pivotFieldOld = pivotField.clone();
 	if (c_oAscAxis.AxisPage === pivotField.axis && c_oAscAutoFilterTypes.Filters === filter.type) {
 		pivotField.multipleItemSelectionAllowed = pivotObj.isMultipleItemSelectionAllowed;
+		this.filterPivotItemsFilters(index, autoFilterObject.values);
 		var pageFieldItem = null;
-		if (pivotField.multipleItemSelectionAllowed) {
-			this.filterPivotItemsFilters(index, autoFilterObject.values);
-		} else {
-			pivotField.removeFilter();
-			for (var i = 0; i < autoFilterObject.values.length; ++i) {
-				if (autoFilterObject.values[i].visible) {
-					pageFieldItem = i;
-					break;
+		if (!pivotField.multipleItemSelectionAllowed) {
+			var visible = [];
+			autoFilterObject.values.forEach(function(value, index) {
+				if (value.visible) {
+					visible.push(index);
 				}
+			});
+			if (1 === visible.length) {
+				pageFieldItem = visible[0];
+				pivotField.removeFilter();
+			} else if (visible.length > 1) {
+				pivotField.multipleItemSelectionAllowed = true;
 			}
 		}
 		var pageField = this.getPageFieldByFieldIndex(index);
