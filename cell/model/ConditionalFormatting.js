@@ -393,12 +393,13 @@
 		}
 
 		if (!(this.dxf && val.dxf && this.dxf.isEqual(val.dxf))) {
+			var elem = val.dxf.clone();
 			if (addToHistory) {
 				History.Add(AscCommonExcel.g_oUndoRedoCF, AscCH.historyitem_CFRule_SetDxf,
-					ws.getId(), null, new AscCommonExcel.UndoRedoData_CF(this.id, this.dxf, val.dxf));
+					ws.getId(), null, new AscCommonExcel.UndoRedoData_CF(this.id, this.dxf, elem));
 			}
 
-			this.xfs = val.dxf;
+			this.xfs = elem;
 		}
 
 		if (this.ranges && val.ranges && !compareElements(this.ranges, val.ranges)) {

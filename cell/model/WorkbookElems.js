@@ -2764,9 +2764,15 @@ var g_oBorderProperties = {
     };
     CellXfs.prototype.clone = function () {
         var res = new CellXfs();
-        res.border = this.border;
-        res.fill = this.fill;
-        res.font = this.font;
+		if (this.border) {
+			res.border = this.border.clone();
+		}
+		if (this.fill) {
+			res.fill = this.fill.clone();
+		}
+		if (this.font) {
+			res.font = this.font.clone();
+		}
         res.num = this.num;
         res.align = this.align;
         res.QuotePrefix = this.QuotePrefix;
