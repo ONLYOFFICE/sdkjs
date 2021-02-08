@@ -2840,22 +2840,22 @@ var g_oBorderProperties = {
         }
     };
 	CellXfs.prototype.Write_ToBinary2 = function (writer) {
-		var dxf = this.dxf;
+		var t = this;
 		var oBinaryStylesTableWriter = new AscCommonExcel.BinaryStylesTableWriter(writer);
-		oBinaryStylesTableWriter.bs.WriteItem(0, function(){oBinaryStylesTableWriter.WriteDxf(dxf);});
+		oBinaryStylesTableWriter.bs.WriteItem(0, function(){oBinaryStylesTableWriter.WriteDxf(t);});
 	};
 	CellXfs.prototype.Read_FromBinary2 = function (reader) {
 		var api_sheet = Asc['editor'];
 		var wb = api_sheet.wbModel;
 		var bsr = new AscCommonExcel.Binary_StylesTableReader(reader, wb);
 		var bcr = new AscCommon.Binary_CommonReader(reader);
-		var oDxf = new AscCommonExcel.CellXfs();
 		reader.GetUChar();
+		var oThis = this;
 		var length = reader.GetULongLE();
 		bcr.Read1(length, function (t, l) {
-			return bsr.ReadDxf(t, l, oDxf);
+			return bsr.ReadDxf(t, l, oThis);
 		});
-		return oDxf;
+		return this;
 	};
     CellXfs.prototype.getBorder = function () {
         return this.border;

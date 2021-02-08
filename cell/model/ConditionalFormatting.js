@@ -399,7 +399,7 @@
 					ws.getId(), null, new AscCommonExcel.UndoRedoData_CF(this.id, this.dxf, elem));
 			}
 
-			this.xfs = elem;
+			this.dxf = elem;
 		}
 
 		if (this.ranges && val.ranges && !compareElements(this.ranges, val.ranges)) {

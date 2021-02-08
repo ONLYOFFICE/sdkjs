@@ -3033,6 +3033,7 @@ function (window, undefined) {
 			if (bUndo) {
 				ws.deleteCFRule(Data.id);
 			} else {
+				Data.to.id = Data.id;
 				ws.addCFRule(Data.to);
 			}
 		} else if (AscCH.historyitem_Worksheet_CFRuleDelete === Type) {
