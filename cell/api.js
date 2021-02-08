@@ -3937,6 +3937,11 @@ var editor;
     }
   };
 
+  spreadsheet_api.prototype.asc_setCellIndent = function(val) {
+	  this.wb.getWorksheet().setSelectionInfo("indent", val);
+	  this.wb.restoreFocus();
+  };
+
   // Формат по образцу
   spreadsheet_api.prototype.asc_formatPainter = function(formatPainterState) {
     if (this.wb) {
@@ -5252,6 +5257,7 @@ var editor;
   prot["asc_decreaseCellDigitNumbers"] = prot.asc_decreaseCellDigitNumbers;
   prot["asc_increaseFontSize"] = prot.asc_increaseFontSize;
   prot["asc_decreaseFontSize"] = prot.asc_decreaseFontSize;
+  prot["asc_setCellIndent"] = prot.asc_setCellIndent;
   prot["asc_formatPainter"] = prot.asc_formatPainter;
   prot["asc_showAutoComplete"] = prot.asc_showAutoComplete;
   prot["asc_getHeaderFooterMode"] = prot.asc_getHeaderFooterMode;
