@@ -10615,6 +10615,16 @@
                 return border;
             }
 
+			var checkIndent = function (_range) {
+				if (_range) {
+					var _align = _range.getAlign();
+					if (_align && _align.getIndent && 0 != _align.getIndent()) {
+						return true;
+					}
+				}
+				return false;
+			};
+
             History.Create_NewPoint();
             History.StartTransaction();
 
@@ -10654,6 +10664,9 @@
                         range.setFontAlign(val);
                         break;
                     case "a":
+						if (!(val === AscCommon.align_Right || val === AscCommon.align_Left) && checkIndent(range)) {
+							range.setIndent(0);
+						}
                         range.setAlignHorizontal(val);
                         break;
                     case "va":
@@ -10696,6 +10709,9 @@
                         canChangeColWidth = c_oAscCanChangeColWidth.numbers;
                         break;
                     case "angle":
+						if (val !== 0 && checkIndent(range)) {
+							range.setIndent(0);
+						}
                         range.setAngle(val);
                         break;
 					case "indent":
