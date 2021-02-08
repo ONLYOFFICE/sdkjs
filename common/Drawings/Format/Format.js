@@ -10819,6 +10819,30 @@ function CompareBullets(bullet1, bullet2)
             this.UniColor = oBulletColor.UniColor.createDuplicate();
         }
     };
+    CBulletColor.prototype.IsIdentical = function(oBulletColor)
+    {
+        if(!oBulletColor)
+        {
+            return false;
+        }
+        if(this.type !== oBulletColor.type)
+        {
+            return false;
+        }
+        if(this.UniColor && !oBulletColor.UniColor || oBulletColor.UniColor && !this.UniColor)
+        {
+            return false;
+        }
+        if(this.UniColor)
+        {
+            if(!this.UniColor.IsIdentical(oBulletColor.UniColor))
+            {
+                return false;
+            }
+        }
+        return true;
+
+    };
     CBulletColor.prototype.createDuplicate = function()
     {
         var duplicate = new CBulletColor();
