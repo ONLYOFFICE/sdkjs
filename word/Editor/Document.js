@@ -9714,7 +9714,7 @@ CDocument.prototype.OnKeyDown = function(e)
 					{
 						var Paragraph = SelectedInfo.GetParagraph();
 						var ParaPr    = Paragraph ? Paragraph.Get_CompiledPr2(false).ParaPr : null;
-						if (null != Paragraph && (true === Paragraph.IsCursorAtBegin() || true === Paragraph.Selection_IsFromStart()) && (undefined != Paragraph.GetNumPr() || (true != Paragraph.IsEmpty() && ParaPr.Tabs.Tabs.length <= 0)))
+						if (null != Paragraph && (true === Paragraph.IsCursorAtBegin() || true === Paragraph.IsSelectionFromStart()) && (undefined != Paragraph.GetNumPr() || (true != Paragraph.IsEmpty() && ParaPr.Tabs.Tabs.length <= 0)))
 						{
 							if (false === this.Document_Is_SelectionLocked(changestype_None, {
 								Type      : changestype_2_Element_and_Type,

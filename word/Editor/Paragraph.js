@@ -8170,7 +8170,7 @@ Paragraph.prototype.GetSelectedText = function(bClearText, oPr)
 	var Str = "";
 
 	var oNumPr = this.GetNumPr();
-	if (oNumPr && oNumPr.IsValid())
+	if (oNumPr && oNumPr.IsValid() && this.IsSelectionFromStart(false))
 	{
 		Str += this.GetNumberingText(false);
 
@@ -8266,7 +8266,7 @@ Paragraph.prototype.GetSelectedContent = function(oSelectedContent)
 	if (true !== this.Selection.Use)
 		return;
 
-	var isAllSelected = (true === this.Selection_IsFromStart(true) && true === this.Selection_CheckParaEnd());
+	var isAllSelected = (true === this.IsSelectionFromStart(true) && true === this.Selection_CheckParaEnd());
 
 	var nStartPos = this.Selection.StartPos;
 	var nEndPos   = this.Selection.EndPos;
@@ -9977,7 +9977,7 @@ Paragraph.prototype.IsCursorAtBegin = function(_ContentPos, bCheckAnchors)
 /**
  * Проверим, начинается ли выделение с начала параграфа
  */
-Paragraph.prototype.Selection_IsFromStart = function(bCheckAnchors)
+Paragraph.prototype.IsSelectionFromStart = function(bCheckAnchors)
 {
 	if (true === this.IsSelectionUse())
 	{
@@ -9987,10 +9987,7 @@ Paragraph.prototype.Selection_IsFromStart = function(bCheckAnchors)
 		if (StartPos.Compare(EndPos) > 0)
 			StartPos = EndPos;
 
-		if (true != this.IsCursorAtBegin(StartPos, bCheckAnchors))
-			return false;
-
-		return true;
+		return (true === this.IsCursorAtBegin(StartPos, bCheckAnchors));
 	}
 
 	return false;
@@ -13753,7 +13750,7 @@ Paragraph.prototype.GetRevisionsChangeElement = function(SearchEngine)
 };
 Paragraph.prototype.IsSelectedAll = function()
 {
-    var bStart = this.Selection_IsFromStart();
+    var bStart = this.IsSelectionFromStart();
     var bEnd   = this.Selection_CheckParaEnd();
 
     return ((true === bStart && true === bEnd) || true === this.ApplyToAll ? true : false);
