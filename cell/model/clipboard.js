@@ -1485,6 +1485,7 @@
 
 			this.fontsNew = {};
 			this.oImages = {};
+			this.multipleSettings = null;
 		}
 		
 		PasteProcessorExcel.prototype = {
@@ -1497,6 +1498,7 @@
 
 				this.fontsNew = {};
 				this.oImages = {};
+				this.multipleSettings = null;
 			},
 
 			pasteFromBinary: function (worksheet, binary, isCellEditMode, isPasteAll) {

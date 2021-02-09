@@ -11256,11 +11256,30 @@
 			t.model.clearDataValidation([pasteToRange], true);
 		}
 		if (fromBinary && val.dataValidations && val.dataValidations.elems.length && specialPasteProps.val && specialPasteProps.format) {
-			var _offset = new AscCommon.CellBase(arnToRange.r1 - refInsertBinary.r1, arnToRange.c1 - refInsertBinary.c1);
-			for (i = 0; i < val.dataValidations.elems.length; i++) {
-				var dataValidation = val.dataValidations.elems[i];
-				if (dataValidation.prepeareToPaste(refInsertBinary, _offset)) {
-					t.model.addDataValidation(dataValidation, true);
+			var aMultiples = AscCommonExcel.g_clipboardExcel.pasteProcessor.multipleSettings;
+			var oMultiple;
+			if (aMultiples) {
+				for (i = 0; i < aMultiples.length; i++) {
+					if (aMultiples[i].pasteInRange && aMultiples[i].pasteInRange.isEqual(pasteToRange)) {
+						oMultiple = aMultiples[i];
+						break;
+					}
+				}
+			}
+
+			var xW = oMultiple ? (oMultiple.w / oMultiple.pasteW) : 1;
+			var xH = oMultiple ? (oMultiple.h / oMultiple.pasteH) : 1;
+			var _pasteH = oMultiple ? oMultiple.pasteH : 0;
+			var _pasteW = oMultiple ? oMultiple.pasteW : 0;
+			for (i = 0; i < xW; i++) {
+				for (var j = 0; j < xH; j++) {
+					var _offset = new AscCommon.CellBase(arnToRange.r1 - refInsertBinary.r1 + j*_pasteH, arnToRange.c1 - refInsertBinary.c1 + i*_pasteW);
+					for (var n = 0; n < val.dataValidations.elems.length; n++) {
+						var dataValidation = val.dataValidations.elems[n].clone();
+						if (dataValidation.prepeareToPaste(refInsertBinary, _offset)) {
+							t.model.addDataValidation(dataValidation, true);
+						}
+					}
 				}
 			}
 		}
@@ -11812,7 +11831,6 @@
 	WorksheetView.prototype._pasteFromBinary = function (val, isCheckSelection, tablesMap, pasteInRange) {
 		var t = this;
 		var trueActiveRange = pasteInRange ? pasteInRange.clone() : t.model.selectionRange.getLast().clone();
-		var lastSelection = pasteInRange ? pasteInRange : this.model.selectionRange.getLast();
 		var arn = pasteInRange ? pasteInRange.clone() : t.model.selectionRange.getLast().clone();
 		var arrFormula = [];
 
@@ -11914,6 +11932,16 @@
 				//Для случая, когда выделен весь диапазон, запрещаю множественную вставку
 				if (arn.getType() !== window["Asc"].c_oAscSelectionType.RangeMax && arn.getType() !== window["Asc"].c_oAscSelectionType.RangeCol && arn.getType() !== window["Asc"].c_oAscSelectionType.RangeRow) {
 					isMultiple = true;
+					if (!AscCommonExcel.g_clipboardExcel.pasteProcessor.multipleSettings) {
+						AscCommonExcel.g_clipboardExcel.pasteProcessor.multipleSettings = [];
+					}
+					AscCommonExcel.g_clipboardExcel.pasteProcessor.multipleSettings.push({
+						w: widthArea,
+						h: heightArea,
+						pasteW: widthPasteFr,
+						pasteH: heightPasteFr,
+						pasteInRange: pasteInRange
+					});
 				}
 			} else if (firstCell.hasMerged() !== null)//в противном случае ошибка
 			{
@@ -11999,7 +12027,7 @@
 
 		var addComments = function (pasteRow, pasteCol, comments) {
 			var comment;
-			var isMergedCell = val.getMergedByCell(pasteRow, pasteCol)
+			var isMergedCell = val.getMergedByCell(pasteRow, pasteCol);
 
 			for (var i = 0; i < comments.length; i++) {
 				comment = comments[i];
