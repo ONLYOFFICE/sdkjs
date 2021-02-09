@@ -7555,6 +7555,7 @@ function (window, undefined) {
 	cLOGEST.prototype.argumentsMax = 4;
 	cLOGEST.prototype.arrayIndexes = {0: 1, 1: 1};
 	cLOGEST.prototype.argumentsType = [argType.reference, argType.reference, argType.logical, argType.logical];
+	cLOGEST.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cLOGEST.prototype.Calculate = function (arg) {
 
 		arg[0] = tryNumberToArray(arg[0]);
@@ -10967,6 +10968,7 @@ function (window, undefined) {
 	cTREND.prototype.argumentsMax = 4;
 	cTREND.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1};
 	cTREND.prototype.argumentsType = [argType.reference, argType.reference, argType.reference, argType.logical];
+	cTREND.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cTREND.prototype.Calculate = function (arg) {
 		var prepeareArgs = prepeareGrowthTrendCalculation(this, arg);
 		if (cElementType.error === prepeareArgs.type) {

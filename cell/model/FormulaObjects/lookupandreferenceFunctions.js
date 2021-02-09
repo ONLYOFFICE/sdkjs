@@ -1816,6 +1816,7 @@ function (window, undefined) {
 	cUNIQUE.prototype.arrayIndexes = {0: 1};
 	cUNIQUE.prototype.argumentsType = [argType.reference, argType.logical, argType.logical];
 	cUNIQUE.prototype.isXLFN = true;
+	cUNIQUE.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cUNIQUE.prototype.Calculate = function (arg) {
 
 		var _getUniqueArr = function (_arr, _byCol, _exactlyOnce) {
