@@ -479,6 +479,7 @@ CFieldInstructionTOC.prototype.SetPr = function(oPr)
 				this.SetCaptionOnlyText(sCaption);
 				this.SetCaption(undefined);
 			}
+			this.SetHeadingRange(-1, -1);
 		}
 	}
 };
