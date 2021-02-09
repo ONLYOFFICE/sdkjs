@@ -3338,7 +3338,7 @@ CDocument.prototype.Is_OnRecalculate = function()
  */
 CDocument.prototype.RecalculateAllAtOnce = function(isFromStart, nPagesCount)
 {
-	var nStartTime = new Date().getTime();
+	//var nStartTime = new Date().getTime();
 
 	this.FullRecalc.UseRecursion = false;
 	this.FullRecalc.Continue     = false;
@@ -3370,7 +3370,7 @@ CDocument.prototype.RecalculateAllAtOnce = function(isFromStart, nPagesCount)
 
 	this.FullRecalc.UseRecursion = false;
 
-	console.log("RecalcTime: " + ((new Date().getTime() - nStartTime) / 1000));
+	//console.log("RecalcTime: " + ((new Date().getTime() - nStartTime) / 1000));
 };
 /**
  * Запускаем пересчет документа.
