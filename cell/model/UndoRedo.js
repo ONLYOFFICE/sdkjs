@@ -439,6 +439,7 @@ function (window, undefined) {
 		this.CFData = 150;
 		this.CFDataInner = 151;
 		this.ColorScale = 152;
+		this.CFormulaCF = 153;
 
 		this.Create = function (nType) {
 			switch (nType) {
@@ -625,6 +626,8 @@ function (window, undefined) {
 					return new AscCommonExcel.CConditionalFormattingRule();
 				case this.ColorScale:
 					return new AscCommonExcel.CColorScale();
+				case this.CFormulaCF:
+					return new AscCommonExcel.CFormulaCF();
 			}
 			return null;
 		};

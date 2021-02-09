@@ -1478,6 +1478,10 @@
 		return this;
 	}
 
+	CFormulaCF.prototype.getType = function () {
+		return AscCommonExcel.UndoRedoDataTypes.CFormulaCF;
+	};
+
 	CFormulaCF.prototype.clone = function () {
 		var res = new CFormulaCF();
 		res.Text = this.Text;

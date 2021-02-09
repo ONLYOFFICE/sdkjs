@@ -3000,7 +3000,15 @@ var g_oBorderProperties = {
 		return AscCommonExcel.generateXfsStyle(width, height, api.wb, this, text);
 	};
 	CellXfs.prototype.asc_getPreview2 = function (api, id, text) {
-		//подготовить текст с форматом
+		if (this.num) {
+			var oNumFormat = AscCommon.oNumFormatCache.get(this.num.getFormat());
+			if (false == oNumFormat.isGeneralFormat()) {
+				//TODO получать значения из интерфейса
+				var aText = oNumFormat.format(123);
+				text = AscCommonExcel.getStringFromMultiText(aText);
+			}
+		}
+
 		var oldAlign = this.align;
 		var oldAlignHor;
 		if (oldAlign) {
