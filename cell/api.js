@@ -258,7 +258,22 @@ var editor;
 		return oFormat.toString(0, true);
 	};
 	spreadsheet_api.prototype.asc_getFormatCells = function(info) {
-		return AscCommon.getFormatCells(info);
+		var res = AscCommon.getFormatCells(info);
+		if (Asc.c_oAscNumFormatType.Custom === info.type) {
+			var unique = {};
+			res.forEach(function(elem) {
+				unique[elem] = 1;
+			});
+			//todo delete button
+			var wbNums = AscCommonExcel.g_StyleCache.getNumFormatStrings();
+			wbNums.forEach(function(elem) {
+				if (!unique[elem]) {
+					unique[elem] = 1;
+					res.push(elem);
+				}
+			});
+		}
+		return res;
 	};
   spreadsheet_api.prototype.asc_getLocaleCurrency = function(val) {
     var cultureInfo = AscCommon.g_aCultureInfos[val];

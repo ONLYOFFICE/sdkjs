@@ -4735,7 +4735,6 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 				res.push(AscCommon.getCurrencyFormat(null, 0, false, false));
 				res.push(AscCommon.getCurrencyFormat(null, 2, true, false));
 				res.push(AscCommon.getCurrencyFormat(null, 2, false, false));
-				//todo add all used in workbook formats
 			} else {
 				res.push(AscCommon.g_cGeneralFormat);
 				res.push('0.00');

@@ -3715,6 +3715,13 @@ StyleManager.prototype =
 	StyleCache.prototype.getXfCount = function() {
 		return this.xfs.list.length;
 	};
+	StyleCache.prototype.getNumFormatStrings = function() {
+		var res = [];
+		for(var fmt in this.nums.vals){
+			res.push(this.nums.vals[fmt].getFormat());
+		}
+		return res;
+	};
 	StyleCache.prototype._add = function(container, newVal, forceAdd) {
 		if (newVal && undefined === newVal.getIndexNumber()) {
 			var hash = newVal.getHash();
