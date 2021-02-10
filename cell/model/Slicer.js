@@ -472,7 +472,7 @@
 			this.cacheDefinition.initAfterSerialize(this.ws.workbook);
 			var tableCache = this.cacheDefinition.tableSlicerCache;
 			if (tableCache) {
-				var _obj = tableCache.initPostOpen(tableIds);
+				var _obj = tableCache.initPostOpen(tableIds, this.cacheDefinition.sourceName);
 				if (_obj) {
 					this.cacheDefinition._type = insertSlicerType.table;
 				}
@@ -2558,13 +2558,17 @@
 
 		return res;
 	};
-	CT_tableSlicerCache.prototype.initPostOpen = function (tableIds) {
+	CT_tableSlicerCache.prototype.initPostOpen = function (tableIds, sourceName) {
 		var table = null;
 		if (null != this.tableIdOpen && null != this.columnOpen) {
 			table = tableIds[this.tableIdOpen];
 			if (table) {
 				this.tableId = table.DisplayName;
-				this.column = table.getTableNameColumnByIndex(this.columnOpen - 1);
+				if (sourceName && null !== table.getIndexByColumnName(sourceName)) {
+					this.column = sourceName;
+				} else {
+					this.column = table.getTableNameColumnByIndex(this.columnOpen - 1);
+				}
 			}
 		}
 		return table;

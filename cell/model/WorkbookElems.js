@@ -6411,6 +6411,22 @@ function RangeDataManagerElem(bbox, data)
 		return res;
 	};
 
+	TablePart.prototype.getIndexByColumnName = function (name) {
+		var res = null;
+		if (name === null || name === undefined || !this.TableColumns) {
+			return res;
+		}
+
+		for (var i = 0; i < this.TableColumns.length; i++) {
+			if (name.toLowerCase() === this.TableColumns[i].Name.toLowerCase()) {
+				res = i;
+				break;
+			}
+		}
+
+		return res;
+	};
+
 	TablePart.prototype.showButton = function (val) {
 		if (val === false) {
 			if (!this.AutoFilter) {
