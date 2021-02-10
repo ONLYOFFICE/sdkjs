@@ -3530,9 +3530,9 @@
 	cRANDARRAY.prototype.argumentsMin = 0;
 	cRANDARRAY.prototype.argumentsMax = 5;
 	cRANDARRAY.prototype.ca = true;
-	cRANDARRAY.prototype.argumentsType = null;
 	cRANDARRAY.prototype.isXLFN = true;
 	cRANDARRAY.prototype.numFormat = AscCommonExcel.cNumFormatNone;
+	cRANDARRAY.prototype.argumentsType = [argType.number, argType.number, argType.number, argType.number, argType.number];
 	cRANDARRAY.prototype.Calculate = function (arg) {
 		//var oArguments = this._prepareArguments(arg, arguments[1]);
 		var argClone = arg;
