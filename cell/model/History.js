@@ -194,7 +194,7 @@ function (window, undefined) {
 	window['AscCH'].historyitem_PivotTable_PivotFieldSetName = 30;
 	window['AscCH'].historyitem_PivotTable_PivotFieldSetOutline = 31;
 	window['AscCH'].historyitem_PivotTable_PivotFieldSetCompact = 32;
-	window['AscCH'].historyitem_PivotTable_PivotFieldFillDownLabelsDefault = 32;
+	window['AscCH'].historyitem_PivotTable_PivotFieldFillDownLabelsDefault = 33;
 	window['AscCH'].historyitem_PivotTable_PivotFieldSetInsertBlankRow = 34;
 	window['AscCH'].historyitem_PivotTable_PivotFieldSetDefaultSubtotal = 35;
 	window['AscCH'].historyitem_PivotTable_PivotFieldSetSubtotalTop = 36;
