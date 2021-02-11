@@ -1068,7 +1068,7 @@
 					this.aCFVOs = [];
 				}
 				elem = new CConditionalFormatValueObject();
-				elem.Read_FromBinary2(reader)
+				elem.Read_FromBinary2(reader);
 				this.aCFVOs.push(elem);
 			}
 		}
@@ -1659,72 +1659,17 @@
 		}
 	};
 	CIconSet.prototype.asc_getPreview = function (api, id) {
-		var img = getCFIcon(this, 0);
-
-		function getGraphics(ctx) {
-			var graphics = new AscCommon.CGraphics();
-			graphics.init(ctx.ctx, ctx.getWidth(0), ctx.getHeight(0), ctx.getWidth(3), ctx.getHeight(3));
-			graphics.m_oFontManager = AscCommon.g_fontManager;
-
-			return graphics;
+		var i, aIconImgs = [];
+		if (!this.Reverse) {
+			for (i = this.aCFVOs.length - 1; i >= 0; i--) {
+				aIconImgs.push(getCFIcon(this, i));
+			}
+		} else {
+			for (i = 0; i < this.aCFVOs.length; i++) {
+				aIconImgs.push(getCFIcon(this, i));
+			}
 		}
-
-		var wb = api.wb;
-		var parent =  document.getElementById(id);
-		if (!parent)
-			return;
-
-		var w = parent.clientWidth;
-		var h = parent.clientHeight;
-		if (!w || !h) {
-			return;
-		}
-
-		var canvas = parent.firstChild;
-		if (!canvas)
-		{
-			canvas = document.createElement('canvas');
-			canvas.style.cssText = "pointer-events: none;padding:0;margin:0;user-select:none;";
-			canvas.style.width = w + "px";
-			canvas.style.height = h + "px";
-			parent.appendChild(canvas);
-		}
-
-		canvas.width = AscCommon.AscBrowser.convertToRetinaValue(w, true);
-		canvas.height = AscCommon.AscBrowser.convertToRetinaValue(h, true);
-
-		var ctx = new Asc.DrawingContext({canvas: canvas, units: 0/*px*/, fmgrGraphics: wb.fmgrGraphics, font: wb.m_oFont});
-		var graphics = getGraphics(ctx);
-
-
-		var geometry = new AscFormat.CreateGeometry("rect");
-		geometry.Recalculate(10, 10, true);
-
-		var oUniFill = new AscFormat.builder_CreateBlipFill(img, "stretch");
-		graphics.save();
-		var oMatrix = new AscCommon.CMatrix();
-		oMatrix.tx = 0;
-		oMatrix.ty = 0;
-		graphics.transform3(oMatrix);
-		var shapeDrawer = new AscCommon.CShapeDrawer();
-		shapeDrawer.Graphics = graphics;
-
-		shapeDrawer.fromShape2(new AscFormat.CColorObj(null, oUniFill, geometry), graphics, geometry);
-		shapeDrawer.draw(geometry);
-		graphics.restore();
-
-		var oUniFill = new AscFormat.builder_CreateBlipFill(img, "stretch");
-		graphics.save();
-		var oMatrix = new AscCommon.CMatrix();
-		oMatrix.tx = 10;
-		oMatrix.ty = 0;
-		graphics.transform3(oMatrix);
-		var shapeDrawer = new AscCommon.CShapeDrawer();
-		shapeDrawer.Graphics = graphics;
-
-		shapeDrawer.fromShape2(new AscFormat.CColorObj(null, oUniFill, geometry), graphics, geometry);
-		shapeDrawer.draw(geometry);
-		graphics.restore();
+		AscCommonExcel.drawIconSetPreview(id, api.wb, aIconImgs);
 	};
 	CIconSet.prototype.asc_getIconSet = function () {
 		return this.IconSet;

@@ -2290,8 +2290,7 @@
 			return new AscCommon.CStyleImage(text, null, oCanvas.toDataURL("image/png"));
 		}
 
-		function generateXfsStyle2(id, wb, xfs, text) {
-
+		function createAndPutCanvas(id) {
 			var parent =  document.getElementById(id);
 			if (!parent)
 				return;
@@ -2311,9 +2310,18 @@
 				canvas.style.height = h + "px";
 				parent.appendChild(canvas);
 			}
-			
+
 			canvas.width = AscCommon.AscBrowser.convertToRetinaValue(w, true);
 			canvas.height = AscCommon.AscBrowser.convertToRetinaValue(h, true);
+
+			return canvas;
+		}
+
+		function generateXfsStyle2(id, wb, xfs, text) {
+			var canvas = createAndPutCanvas(id);
+			if (!canvas) {
+				return;
+			}
 
 			var ctx = new Asc.DrawingContext({canvas: canvas, units: 0/*px*/, fmgrGraphics: wb.fmgrGraphics, font: wb.m_oFont});
 			var graphics = getGraphics(ctx);
@@ -2329,28 +2337,12 @@
 				return null;
 			}
 
-			var parent =  document.getElementById(id);
-			if (!parent)
-				return;
-
-			var w = parent.clientWidth;
-			var h = parent.clientHeight;
-			if (!w || !h) {
+			var canvas = createAndPutCanvas(id);
+			if (!canvas) {
 				return;
 			}
-
-			var canvas = parent.firstChild;
-			if (!canvas)
-			{
-				canvas = document.createElement('canvas');
-				canvas.style.cssText = "pointer-events: none;padding:0;margin:0;user-select:none;";
-				canvas.style.width = w + "px";
-				canvas.style.height = h + "px";
-				parent.appendChild(canvas);
-			}
-
-			canvas.width = AscCommon.AscBrowser.convertToRetinaValue(w, true);
-			canvas.height = AscCommon.AscBrowser.convertToRetinaValue(h, true);
+			var w = canvas.clientWidth;
+			var h = canvas.clientHeight;
 
 			var ctx = new Asc.DrawingContext({canvas: canvas, units: 0/*px*/, fmgrGraphics: wb.fmgrGraphics, font: wb.m_oFont});
 			var graphics = getGraphics(ctx);
@@ -2393,6 +2385,41 @@
 			}
 			if (_colorBorderOut) {
 				ctx.setLineWidth(1).setStrokeStyle(_colorBorderOut).strokeRect(0, 0, w - 1, h - 1);
+			}
+		}
+
+		function drawIconSetPreview(id, wb, iconImgs) {
+			if (!iconImgs || !iconImgs.length) {
+				return null;
+			}
+
+			var canvas = createAndPutCanvas(id);
+			if (!canvas) {
+				return;
+			}
+
+			var ctx = new Asc.DrawingContext({canvas: canvas, units: 0/*px*/, fmgrGraphics: wb.fmgrGraphics, font: wb.m_oFont});
+			var graphics = getGraphics(ctx);
+
+			var shapeDrawer = new AscCommon.CShapeDrawer();
+			shapeDrawer.Graphics = graphics;
+
+			for (var i = 0; i < iconImgs.length; i++) {
+				var img = iconImgs[i];
+
+				var geometry = new AscFormat.CreateGeometry("rect");
+				geometry.Recalculate(5, 5, true);
+
+				var oUniFill = new AscFormat.builder_CreateBlipFill(img, "stretch");
+				graphics.save();
+				var oMatrix = new AscCommon.CMatrix();
+				oMatrix.tx = i*5;
+				oMatrix.ty = 0;
+				graphics.transform3(oMatrix);
+
+				shapeDrawer.fromShape2(new AscFormat.CColorObj(null, oUniFill, geometry), graphics, geometry);
+				shapeDrawer.draw(geometry);
+				graphics.restore();
 			}
 		}
 
@@ -3232,6 +3259,7 @@
 		window["AscCommonExcel"].generateXfsStyle2 = generateXfsStyle2;
 		window["AscCommonExcel"].getIconsForLoad = getIconsForLoad;
 		window["AscCommonExcel"].drawGradientPreview = drawGradientPreview;
+		window["AscCommonExcel"].drawIconSetPreview = drawIconSetPreview;
 
 		window["AscCommonExcel"].referenceType = referenceType;
 		window["Asc"].Range = Range;
