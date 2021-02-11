@@ -2324,7 +2324,7 @@
 			drawStyle(ctx, graphics, wb.stringRender, oStyle, text, w, h);
 		}
 
-		function drawColorScalePreview(id, wb, colors) {
+		function drawGradientPreview(id, wb, colors, _colorBorderOut, _colorBorderIn, _realPercentWidth, _indent) {
 			if (!colors || !colors.length) {
 				return null;
 			}
@@ -2355,19 +2355,45 @@
 			var ctx = new Asc.DrawingContext({canvas: canvas, units: 0/*px*/, fmgrGraphics: wb.fmgrGraphics, font: wb.m_oFont});
 			var graphics = getGraphics(ctx);
 
-			//var endColor = AscCommonExcel.getDataBarGradientColor(color);
 			var fill = new AscCommonExcel.Fill();
-			fill.gradientFill = new AscCommonExcel.GradientFill();
-			var arrColors = [];
-			for (var i = 0; i < colors.length; i++) {
-				var _stop = new AscCommonExcel.GradientStop();
-				_stop.position = (i + 1)/colors.length;
-				_stop.color = colors[i];
-				arrColors.push(_stop);
+			if (colors.length === 1) {
+				fill.patternFill = new AscCommonExcel.PatternFill();
+				fill.patternFill.fromColor(colors[0]);
+			} else {
+				fill.gradientFill = new AscCommonExcel.GradientFill();
+				var arrColors = [];
+				for (var i = 0; i < colors.length; i++) {
+					var _stop = new AscCommonExcel.GradientStop();
+					_stop.position = (i + 1)/colors.length;
+					_stop.color = colors[i];
+					arrColors.push(_stop);
+				}
+				fill.gradientFill.asc_putGradientStops(arrColors);
 			}
-			fill.gradientFill.asc_putGradientStops(arrColors);
 
-			AscCommonExcel.drawFillCell(ctx, graphics, fill,  new AscCommon.asc_CRect(0, 0, w, h));
+			if (!_indent) {
+				_indent = 0;
+			}
+			var rectX = _indent;
+			var rectY = _indent;
+			var rectW = w - _indent * 2;
+			var rectH = h - _indent * 2;
+			if (_realPercentWidth) {
+				if (_realPercentWidth > 0) {
+					rectW = rectW * _realPercentWidth;
+				} else {
+					rectX = rectW - rectW * Math.abs(_realPercentWidth);
+					rectW = rectW * Math.abs(_realPercentWidth);
+				}
+			}
+			AscCommonExcel.drawFillCell(ctx, graphics, fill,  new AscCommon.asc_CRect(rectX, rectY, rectW, rectH));
+
+			if (_colorBorderIn) {
+				ctx.setLineWidth(1).setStrokeStyle(_colorBorderIn).strokeRect(rectX, rectY, rectW - 1, rectH - 1);
+			}
+			if (_colorBorderOut) {
+				ctx.setLineWidth(1).setStrokeStyle(_colorBorderOut).strokeRect(0, 0, w - 1, h - 1);
+			}
 		}
 
 		//-----------------------------------------------------------------
@@ -3205,7 +3231,7 @@
 		window["AscCommonExcel"].generateXfsStyle = generateXfsStyle;
 		window["AscCommonExcel"].generateXfsStyle2 = generateXfsStyle2;
 		window["AscCommonExcel"].getIconsForLoad = getIconsForLoad;
-		window["AscCommonExcel"].drawColorScalePreview = drawColorScalePreview;
+		window["AscCommonExcel"].drawGradientPreview = drawGradientPreview;
 
 		window["AscCommonExcel"].referenceType = referenceType;
 		window["Asc"].Range = Range;

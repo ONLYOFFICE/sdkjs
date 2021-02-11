@@ -392,8 +392,8 @@
 			this.aRuleElements = val.aRuleElements;
 		}
 
-		if (!(this.dxf && val.dxf && this.dxf.isEqual(val.dxf))) {
-			var elem = val.dxf.clone();
+		if ((this.dxf && val.dxf && !this.dxf.isEqual(val.dxf)) || (this.dxf && !val.dxf) || (!this.dxf && val.dxf)) {
+			var elem = val.dxf ? val.dxf.clone() : null;
 			if (addToHistory) {
 				History.Add(AscCommonExcel.g_oUndoRedoCF, AscCH.historyitem_CFRule_SetDxf,
 					ws.getId(), null, new AscCommonExcel.UndoRedoData_CF(this.id, this.dxf, elem));
@@ -868,6 +868,7 @@
 		if (Asc.ECfType.colorScale === this.type && 1 === this.aRuleElements.length) {
 			res = this.aRuleElements[0].asc_getPreview(api_sheet, id, text);
 		} else if (Asc.ECfType.dataBar === this.type) {
+			res = this.aRuleElements[0].asc_getPreview(api_sheet, id);
 			/*var xfs = new AscCommonExcel.CellXfs();
 			xfs.fill = props[0];
 			xfs.border = props[1];
@@ -1110,7 +1111,7 @@
 		return res;
 	};
 	CColorScale.prototype.asc_getPreview = function (api, id) {
-		return AscCommonExcel.drawColorScalePreview(id, api.wb, this.aColors);
+		return AscCommonExcel.drawGradientPreview(id, api.wb, this.aColors);
 	};
 	CColorScale.prototype.asc_setCFVOs = function (val) {
 		this.aCFVOs = val;
@@ -1396,6 +1397,25 @@
 			}
 			this.AxisColor = elem.Read_FromBinary2(reader);
 		}
+	};
+	CDataBar.prototype.asc_getPreview = function (api, id) {
+		var color = this.Color;
+		var aColors = [];
+		var isReverse = this.Direction === AscCommonExcel.EDataBarDirection.rightToLeft;
+		if (color) {
+			if (this.Gradient) {
+				var endColor = getDataBarGradientColor(color);
+				if (isReverse) {
+					aColors = [endColor, color];
+				} else {
+					aColors = [color, endColor];
+				}
+			} else {
+				aColors = [color];
+			}
+		}
+
+		AscCommonExcel.drawGradientPreview(id, api.wb, aColors, new AscCommon.CColor(202, 202, 202)/*this.settings.cells.defaultState.border*/, this.BorderColor, isReverse ? - 0.75 : 0.75, 2);
 	};
 	CDataBar.prototype.asc_getShowValue = function () {
 		return this.ShowValue;
