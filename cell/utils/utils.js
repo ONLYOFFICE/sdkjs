@@ -2382,8 +2382,8 @@
 				if (_realPercentWidth > 0) {
 					rectW = rectW * _realPercentWidth;
 				} else {
-					rectX = rectW - rectW * Math.abs(_realPercentWidth);
-					rectW = rectW * Math.abs(_realPercentWidth);
+					rectX = rectW - rectW * Math.abs(_realPercentWidth) + 1;
+					rectW = rectW * Math.abs(_realPercentWidth) + 1;
 				}
 			}
 			AscCommonExcel.drawFillCell(ctx, graphics, fill,  new AscCommon.asc_CRect(rectX, rectY, rectW, rectH));
