@@ -122,8 +122,11 @@
 			this.text = eventData.assemble;
 		}
 	};
-	CDataFormula.prototype.getValue = function (ws, returnRaw, local) {
+	CDataFormula.prototype.getValue = function (ws, returnRaw, local, offset) {
 		this._init(ws, local);
+		if (offset) {
+			this._formula.changeOffset(offset);
+		}
 		var activeCell = ws.getSelection().activeCell;
 		var res = this._formula.calculate(null, new Asc.Range(activeCell.col, activeCell.row, activeCell.col, activeCell.row));
 		return returnRaw ? this._formula.simplifyRefType(res) : res;
@@ -474,7 +477,7 @@
 				return -1 !== aValue.indexOf(val);
 			}
 		} else if (EDataValidationType.Custom === this.type) {
-			var v = this.formula1 && this.formula1.getValue(ws, true);
+			var v = this.formula1 && this.formula1.clone().getValue(ws, true, null, this.calculateOffset(ws));
 			v = v && v.tocBool();
 			return !!(v && AscCommonExcel.cElementType.bool === v.type && v.toBool());
 		} else {

@@ -14580,7 +14580,7 @@
 						var oldValueData;
 						//дополнительно ещё проверим на наличие данной ячейки в стеке формулы
 						//если её там нет - временно подменять значение не нужно
-						var isNeedChange = Asc.EDataValidationType.Custom === dataValidation.type && dataValidation.checkFormulaStackOnCell(row, col);
+						var isNeedChange = Asc.EDataValidationType.Custom === dataValidation.type /*&& dataValidation.checkFormulaStackOnCell(row, col)*/;
 						var temporarySetValue = function (_val) {
 							if (isNeedChange) {
 								c._foreach(function(cell){
