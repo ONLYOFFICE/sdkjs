@@ -1072,10 +1072,6 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
             y = Math.round((that.scroller.h - that.piperImgHor.height) / 2);
 
 			ctx_piperImg = that.piperImgHor.getContext('2d');
-			_data = ctx_piperImg.getImageData(0, 0, that.piperImgHor.width, that.piperImgHor.height);
-			px = _data.data;
-
-			ctx_piperImg = that.piperImgHor.getContext('2d');
 			ctx_piperImg.globalCompositeOperation = "source-in";
 			ctx_piperImg.fillStyle = "rgb(" + piperColor + "," +
 				piperColor + "," +
