@@ -988,7 +988,7 @@
 
 	};
 
-	CDataValidation.prototype.correctToInterface = function () {
+	CDataValidation.prototype.correctToInterface = function (ws) {
 		var t = this;
 		var doCorrect = function (_formula) {
 			var _val = _formula.text;
@@ -1022,6 +1022,11 @@
 
 			} else {
 				if (_formula && _formula._formula) {
+					//если формула содержит ссылки на диапазоны, то в зависимости от активной области нужно их сдвинуть
+					var offset = t.calculateOffset(ws);
+					if (offset) {
+						_formula._formula.changeOffset(offset);
+					}
 					_formula.text = "=" + _formula._formula.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale);
 				} else {
 					_formula.text = "=" + _val;
@@ -1116,6 +1121,29 @@
 			}
 		}
 		return false;
+	};
+
+	CDataValidation.prototype.calculateOffset = function (ws) {
+		var res = null;
+		//находим левый верхний угол
+		var _row = null, _col = null;
+		for (var i = 0; i < this.ranges.length; i++) {
+			if (_row === null && _col === null) {
+				_row = this.ranges[i].r1;
+				_col = this.ranges[i].c1;
+			} else if (_row > this.ranges[i].r1) {
+				_row = this.ranges[i].r1;
+			} else if (_col > this.ranges[i].c1) {
+				_col = this.ranges[i].c1;
+			}
+		}
+		if (_row !== null && _col !== null) {
+			var selectionRange = ws.selectionRange;
+			var activeCell = selectionRange.activeCell;
+			res = new AscCommon.CellBase(activeCell.row - _row, activeCell.col - _col);
+		}
+
+		return res;
 	};
 
 	function CDataValidations() {
@@ -1283,7 +1311,7 @@
 		}
 
 		res._init(ws);
-		res.correctToInterface();
+		res.correctToInterface(ws);
 
 		return res;
 	};
