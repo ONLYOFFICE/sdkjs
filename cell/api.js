@@ -1274,7 +1274,7 @@ var editor;
           lockElem.setType(c_oAscLockTypes.kLockTypeOther3, true);
         } else {
           lockElem.setType(c_oAscLockTypes.kLockTypeOther, true);
-        }``
+        }
 
         // Выставляем ID пользователя, залочившего данный элемент
         lockElem.setUserId(e["user"]);
