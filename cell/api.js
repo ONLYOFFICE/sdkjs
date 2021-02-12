@@ -2700,6 +2700,16 @@ var editor;
     }
   };
 
+  spreadsheet_api.prototype.asc_groupPivot = function() {
+    var ws = this.wbModel.getActiveWs();
+    var activeCell = ws.selectionRange.activeCell;
+    var pivotTable = ws.getPivotTable(activeCell.col, activeCell.row);
+    var t = this;
+    this._changePivotWithLock(pivotTable, function(ws) {
+      pivotTable.groupDiscrete(0, {"0":1, "1": 1});
+    });
+  };
+
   spreadsheet_api.prototype.asc_ungroup = function(val) {
     if(val) {
         this.wb.getWorksheet().changeWorksheet("groupRows", true);
