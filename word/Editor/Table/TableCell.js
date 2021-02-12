@@ -899,46 +899,6 @@ CTableCell.prototype =
         return this.Content.MoveCursorDownToFirstRow(_X, _Y, AddToSelect);
     },
 
-    Content_RecalculateMinMaxContentWidth : function(isRotated)
-    {
-        if (undefined === isRotated)
-            isRotated = false;
-
-        if (true === this.IsVerticalText())
-            isRotated = true === isRotated ? false : true;
-
-        var Result;
-        if (this.GetTable() && this.GetTable().LogicDocument && this.GetTable().LogicDocument.RecalcId === this.CachedMinMax.RecalcId)
-		{
-			Result = this.CachedMinMax.MinMax;
-		}
-        else
-		{
-			Result = this.Content.RecalculateMinMaxContentWidth(isRotated);
-
-			if (this.GetTable() && this.GetTable().LogicDocument)
-			{
-				this.CachedMinMax.RecalcId = this.GetTable().LogicDocument.RecalcId;
-				this.CachedMinMax.MinMax   = Result;
-			}
-		}
-
-        // if (true !== isRotated && true === this.GetNoWrap())
-		// {
-		// 	if (tblwidth_Mm !== this.GetW().Type)
-		// 	{
-		// 		Result.Min = Math.max(Result.Min, Result.Max);
-		// 	}
-		// 	else
-		// 	{
-		//      var oMargins = this.GetMargins();
-		// 		Result.Min = Math.max(Result.Min, this.GetW().W - oMargins.Left.W - oMargins.Right.W, 0);
-		// 	}
-		// }
-
-        return Result;
-    },
-
 	RecalculateMinMaxContentWidth : function(isRotated, nPctWidth)
 	{
 		var oTable         = this.GetTable();
