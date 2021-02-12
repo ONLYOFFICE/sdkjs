@@ -12923,7 +12923,7 @@
 		}
 		var lockInfos = [];
 		for (var i = 0; i < cFIdArr.length; i++) {
-			var lockInfo = this.collaborativeEditing.getLockInfo(c_oAscLockTypeElem.Object, null, -1, cFIdArr[i]);
+			var lockInfo = this.collaborativeEditing.getLockInfo(c_oAscLockTypeElem.Object, null, this.model.getId(), cFIdArr[i]);
 			lockInfos.push(lockInfo);
 		}
 

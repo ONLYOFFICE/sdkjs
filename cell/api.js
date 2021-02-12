@@ -1243,6 +1243,9 @@ var editor;
           if (t._onUpdateAllSheetViewLock) {
             t._onUpdateAllSheetViewLock.apply(t, arguments);
           }
+      },
+      "unlockCF": function() {
+        t._onUnlockCF.apply(t, arguments);
       }
     }, this.getViewMode());
 
@@ -5081,14 +5084,31 @@ var editor;
 		  var wsModel = this.wbModel.getWorksheetById(lockElem.Element["sheetId"]);
 		  if (wsModel) {
 			  var cFRule = wsModel.getCFRuleById(lockElem.Element["rangeOrObjectId"]);
-			  if (cFRule) {
-				  cFRule.isLock = lockElem.UserId;
+			  if (cFRule && cFRule.val) {
+                  cFRule = cFRule.val;
+			      cFRule.isLock = lockElem.UserId;
 				  this.handlers.trigger("asc_onRefreshCFList", cFRule.id);
 			  }
 			  this.handlers.trigger("asc_onLockCFManager", wsModel.index);
           }
 	  }
   };
+
+  spreadsheet_api.prototype._onUnlockCF = function() {
+    var t = this;
+    if (t.wbModel) {
+      var i, length, wsModel, wsIndex;
+      for (i = 0, length = t.wbModel.getWorksheetCount(); i < length; ++i) {
+        wsModel = t.wbModel.getWorksheet(i);
+        wsIndex = wsModel.getIndex();
+        t.handlers.trigger("asc_onUnLockCF", wsIndex);
+      }
+    }
+  };
+
+  /*spreadsheet_api.prototype._onCheckDefNameLock = function() {
+    return this.wb._onCheckDefNameLock();
+  };*/
 
   spreadsheet_api.prototype.asc_beforeInsertSlicer = function () {
     //пока возвращаю только данные о ф/т
