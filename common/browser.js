@@ -99,18 +99,18 @@ AscBrowser.isSafariMacOs = (AscBrowser.isSafari && AscBrowser.isMacOs);
 AscBrowser.isAppleDevices = (AscBrowser.userAgent.indexOf("ipad") > -1 ||
                              AscBrowser.userAgent.indexOf("iphone") > -1 ||
                              AscBrowser.userAgent.indexOf("ipod") > -1);
+if (!AscBrowser.isAppleDevices && AscBrowser.isSafariMacOs && navigator.platform === "MacIntel" && (navigator.maxTouchPoints > 1))
+	AscBrowser.isAppleDevices = true;
 
 if (AscBrowser.isAppleDevices)
 {
 	var iosversion = AscBrowser.iosVersion;
 	try
 	{
-		if (/iP(hone|od|ad)/.test(navigator.platform))
-		{
-			var v = (navigator.appVersion).match(/OS (\d+)_(\d+)_?(\d+)?/);
-			//[parseInt(v[1], 10), parseInt(v[2], 10), parseInt(v[3] || 0, 10)];
-			iosversion = parseInt(v[1], 10);
-		}
+		var v = (navigator.appVersion).match(/OS (\d+)_(\d+)_?(\d+)?/);
+		if (!v) v = (navigator.appVersion).match(/Version\/(\d+).(\d+)/);
+		//[parseInt(v[1], 10), parseInt(v[2], 10), parseInt(v[3] || 0, 10)];
+		iosversion = parseInt(v[1], 10);
 	}
 	catch (err)
 	{
