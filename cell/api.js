@@ -1246,7 +1246,10 @@ var editor;
       },
       "unlockCF": function() {
         t._onUnlockCF.apply(t, arguments);
-      }
+      },
+      "checkCFRemoveLock": function(lockElem) {
+        return t._onCheckCommentRemoveLock(lockElem);
+      },
     }, this.getViewMode());
 
     this.CoAuthoringApi.onConnectionStateChanged = function(e) {
@@ -1271,7 +1274,7 @@ var editor;
           lockElem.setType(c_oAscLockTypes.kLockTypeOther3, true);
         } else {
           lockElem.setType(c_oAscLockTypes.kLockTypeOther, true);
-        }
+        }``
 
         // Выставляем ID пользователя, залочившего данный элемент
         lockElem.setUserId(e["user"]);
@@ -5101,9 +5104,33 @@ var editor;
       for (i = 0, length = t.wbModel.getWorksheetCount(); i < length; ++i) {
         wsModel = t.wbModel.getWorksheet(i);
         wsIndex = wsModel.getIndex();
-        t.handlers.trigger("asc_onUnLockCF", wsIndex);
+        t.handlers.trigger("asc_onUnLockCFManager", wsIndex);
       }
     }
+  };
+
+  spreadsheet_api.prototype._onCheckCFRemoveLock = function(lockElem) {
+    var res = false;
+    var t = this;
+    var sheetId = lockElem["sheetId"];
+    if (-1 !== sheetId && 0 === sheetId.indexOf(AscCommonExcel.CConditionalFormattingRule.sStartLockCFId)) {
+      res = true;
+      if (t.wbModel) {
+        sheetId = sheetId.split(AscCommonExcel.CConditionalFormattingRule.sStartLockCFId)[1];
+        var wsModel = t.wbModel.getWorksheetById(sheetId);
+        if (wsModel) {
+          var wsIndex = wsModel.getIndex();
+          var cFRule = wsModel.getCFRuleById(lockElem.Element["rangeOrObjectId"]);
+          if (cFRule) {
+            cFRule.isLock = null;
+            this.handlers.trigger("asc_onUnLockCFRule", wsIndex, lockElem["rangeOrObjectId"]);
+          } else {
+
+          }
+        }
+      }
+    }
+    return res;
   };
 
   /*spreadsheet_api.prototype._onCheckDefNameLock = function() {

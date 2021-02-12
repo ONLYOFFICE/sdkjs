@@ -1016,6 +1016,7 @@
 
 		return false;
 	};
+	CConditionalFormattingRule.sStartLockCFId = 'cfrule_';
 
 	function CColorScale() {
 		this.aCFVOs = [];

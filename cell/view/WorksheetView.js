@@ -12922,8 +12922,9 @@
 			return;
 		}
 		var lockInfos = [];
+		var sheetId = AscCommonExcel.CConditionalFormattingRule.sStartLockCFId + this.model.getId();
 		for (var i = 0; i < cFIdArr.length; i++) {
-			var lockInfo = this.collaborativeEditing.getLockInfo(c_oAscLockTypeElem.Object, null, this.model.getId(), cFIdArr[i]);
+			var lockInfo = this.collaborativeEditing.getLockInfo(c_oAscLockTypeElem.Object, null, sheetId, cFIdArr[i]);
 			lockInfos.push(lockInfo);
 		}
 
