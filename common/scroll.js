@@ -467,6 +467,14 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 		this.maxScrollY = this.maxScrollY2 = this.settings.contentH - this.settings.screenH > 0 ? this.settings.contentH - this.settings.screenH : 0;
 		this.maxScrollX = this.maxScrollX2 = this.settings.contentW - this.settings.screenW > 0 ? this.settings.contentW - this.settings.screenW : 0;
 
+		if(this.settings.isVerticalScroll && !this.settings.alwaysVisible) {
+			this.canvas.style.display = this.maxScrollY == 0 ? "none" : "";
+		}
+
+		if(this.settings.isHorizontalScroll && !this.settings.alwaysVisible) {
+			this.canvas.style.display = this.maxScrollX == 0 ? "none" : "";
+		}
+
 		this._setScrollerHW();
 		this.settings.arrowDim = this.settings.slimScroll && this.settings.isVerticalScroll ? this.scroller.w : this.settings.arrowDim;
 		this.settings.arrowDim = this.settings.slimScroll && this.settings.isHorizontalScroll ? this.scroller.h : this.settings.arrowDim;
