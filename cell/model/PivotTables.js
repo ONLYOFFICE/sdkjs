@@ -3395,6 +3395,13 @@ CT_pivotTableDefinition.prototype.contains = function (col, row) {
 	return (this.location && this.location.contains(col, row)) ||
 		this.pageFieldsIntersection(new Asc.Range(col, row, col, row));
 };
+CT_pivotTableDefinition.prototype.containsRange = function (bbox) {
+	var ranges = this.getReportRanges();
+	return ranges.every(function(range) {
+		return range.containsRange(bbox);
+	});
+};
+
 CT_pivotTableDefinition.prototype.getRange = function () {
 	return this.location && this.location.ref;
 };
@@ -3779,6 +3786,7 @@ CT_pivotTableDefinition.prototype.checkPivotFieldItem = function(index, pivotFie
 			if (Asc.c_oAscItemType.Data === item.t && !item.m) {
 				var oldSharedItem = oldCacheField.getSharedItem(item.x);
 				if (oldSharedItem) {
+					//todo getGroupOrSharedSize
 					for (j = 0; j < cacheField.getSharedSize(); ++j) {
 						if (oldSharedItem.shallowEqual(cacheField.getSharedItem(j))) {
 							//create new to lose other flags
@@ -5610,6 +5618,37 @@ CT_pivotTableDefinition.prototype.getLayoutByCell = function(row, col) {
 	return this.getLayoutByCellPage(row, col) || this.getLayoutByCellHeaderCol(row, col)
 		|| this.getLayoutByCellHeaderRow(row, col, rowFieldsOffset) || this.getLayoutByCellData(row, col, rowFieldsOffset);
 };
+CT_pivotTableDefinition.prototype.getLayoutsForGroup = function(selection) {
+	var res = {fld: null, values: {}, valuesCount: 0}, i, layout, activeCell = selection.activeCell, cellLayout;
+	layout = this.getLayoutByCell(activeCell.row, activeCell.col);
+	cellLayout = layout && layout.getGroupCellLayout();
+	if (cellLayout && st_VALUES !== cellLayout.fld) {
+		res.fld = cellLayout.fld;
+		if (Asc.PivotLayoutType.rowField === layout.type) {
+			selection.ranges.forEach(function(range) {
+				for (i = range.r1; i <= range.r2; ++i) {
+					layout = this.getLayoutByCell(i, activeCell.col);
+					cellLayout = layout && layout.getGroupCellLayout();
+					if (cellLayout && res.fld === cellLayout.fld) {
+						res.values[cellLayout.v] = 1;
+					}
+				}
+			}, this);
+		} else if (Asc.PivotLayoutType.colField === layout.type) {
+			selection.ranges.forEach(function(range) {
+				for (i = range.c1; i <= range.c2; ++i) {
+					layout = this.getLayoutByCell(activeCell.row, i);
+					cellLayout = layout && layout.getGroupCellLayout();
+					if (cellLayout && res.fld === cellLayout.fld) {
+						res.values[cellLayout.v] = 1;
+					}
+				}
+			}, this);
+		}
+		res.valuesCount = Object.keys(res.values).length;
+	}
+	return res;
+};
 CT_pivotTableDefinition.prototype.getLayoutByCellPage = function(row, col) {
 	if (this.pageFieldsPositions) {
 		for (var i = 0; i < this.pageFieldsPositions.length; ++i) {
@@ -5789,19 +5828,27 @@ CT_pivotTableDefinition.prototype.getPivotTablesConnectedBySlicer = function(fld
 CT_pivotTableDefinition.prototype.getPivotTablesConnectedByPivotCache = function() {
 	return this.worksheet.workbook.getPivotTablesByCache(this.cacheDefinition);
 };
-CT_pivotTableDefinition.prototype.groupDiscrete = function(fld, groupMap) {
+CT_pivotTableDefinition.prototype.getFieldGroupType = function (fld) {
+	var cacheField = this.cacheDefinition.getFields()[fld];
+	if (cacheField) {
+		return cacheField.getGroupType();
+	}
+	return c_oAscGroupType.Text;
+};
+CT_pivotTableDefinition.prototype.groupRangePr = function(fld, groupMap) {
+};
+CT_pivotTableDefinition.prototype.groupDiscreteCache = function(fld, groupMap) {
 	this.checkPivotFieldItems(fld);
 	var groupMapCache = this._groupDiscreteCacheMap(fld, groupMap);
-	var groupRes = this.cacheDefinition.groupDiscrete(fld, groupMapCache);
-	var pivotTables = this.getPivotTablesConnectedByPivotCache();
-	for (var i = 0; i < pivotTables.length; i++) {
-		var pivotTable = pivotTables[i];
-		pivotTable.checkPivotFieldItems(fld);
-		var pivotFields = pivotTable.asc_getPivotFields();
-		var pivotField = pivotFields[fld];
-		// pivotField.groupDiscrete(groupMap, groupRes.reorderArray);
-		pivotTable._groupDiscreteAddFields(pivotField, groupMap, groupRes);
-	}
+	return this.cacheDefinition.groupDiscrete(fld, groupMapCache);
+
+};
+CT_pivotTableDefinition.prototype.groupDiscrete = function(fld, groupMap, groupRes) {
+	this.checkPivotFieldItems(fld);
+	var pivotFields = this.asc_getPivotFields();
+	var pivotField = pivotFields[fld];
+	// pivotField.groupDiscrete(groupMap, groupRes.reorderArray);
+	this._groupDiscreteAddFields(fld, groupMap, groupRes);
 };
 CT_pivotTableDefinition.prototype._groupDiscreteCacheMap = function(fld, groupMap) {
 	var groupMapCache = {};
@@ -5818,17 +5865,25 @@ CT_pivotTableDefinition.prototype._groupDiscreteCacheMap = function(fld, groupMa
 	}
 	return groupMapCache;
 };
-CT_pivotTableDefinition.prototype._groupDiscreteAddFields = function(pivotField, groupMap, groupRes) {
+CT_pivotTableDefinition.prototype._groupDiscreteAddFields = function(fld, groupMap, groupRes) {
 	var cacheFields = this.asc_getCacheFields();
 	var pivotFields = this.asc_getPivotFields();
 	for (var i = 0; i < groupRes.addFields.length; ++i) {
 		var newPivotField = new CT_PivotField();
-		newPivotField.init(cacheFields[pivotFields.length-1].getSharedSize());
+		newPivotField.init(cacheFields[cacheFields.length-1].getGroupOrSharedSize());
 		newPivotField.groupDiscrete(groupMap, groupRes.reorderArray);
 		pivotFields.push(newPivotField);
 		var pivotIndex = pivotFields.length - 1;
-		this.addRowField(pivotIndex, undefined, true);
+		var insertIndex = this.rowFields.find(fld);
+		if(-1 != insertIndex) {
+			this.addRowField(pivotIndex, insertIndex, true);
+		}
+		insertIndex = this.colFields.find(fld);
+		if(-1 != insertIndex) {
+			this.addColField(pivotIndex, insertIndex, true);
+		}
 	}
+	this.setChanged(true);
 };
 
 function CT_pivotTableDefinitionX14() {
@@ -8621,7 +8676,7 @@ CT_CacheField.prototype.getGroupOrSharedSize = function () {
 	return sharedItems && sharedItems.Items.getSize() || 0;
 };
 CT_CacheField.prototype.getGroupBaseIndex = function (defaultIndex) {
-	return this.fieldGroup && (null !== this.fieldGroup.base ? this.fieldGroup.base : defaultIndex);
+	return (this.fieldGroup && null !== this.fieldGroup.base) ? this.fieldGroup.base : defaultIndex;
 };
 CT_CacheField.prototype.getGroupOrSharedIndex = function (cacheFieldBase, index) {
 	if (this.fieldGroup) {
@@ -11719,7 +11774,7 @@ CT_FieldGroup.prototype.initPar = function (par) {
 CT_FieldGroup.prototype.initDiscrete = function (base, baseCacheField) {
 	this.base = base;
 	this.discretePr = new CT_DiscretePr();
-	this.discretePr.init(baseCacheField.getSharedSize());
+	this.discretePr.init(baseCacheField.getGroupOrSharedSize());
 	this.groupItems = baseCacheField.sharedItems.clone();
 };
 CT_FieldGroup.prototype.readAttributes = function(attr, uq) {
@@ -14032,6 +14087,15 @@ PivotLayout.prototype.getFieldIndex = function(pivotTable) {
 	}
 	return fld;
 };
+PivotLayout.prototype.getGroupCellLayout = function() {
+	if (this.rows) {
+		return this.rows[this.rows.length - 1];
+	}
+	if (this.cols) {
+		return this.cols[this.cols.length - 1];
+	}
+	return null;
+};
 PivotLayout.prototype.getMeasureFld = function() {
 	var iMeasureFld = 0;
 	if (this.rows) {
@@ -14397,3 +14461,7 @@ prot["asc_setSubtotal"] = prot.asc_setSubtotal;
 
 window["Asc"]["CT_PivotFilter"] = window['Asc'].CT_PivotFilter = CT_PivotFilter;
 window["Asc"]["CT_WorksheetSource"] = window['Asc'].CT_WorksheetSource = CT_WorksheetSource;
+
+window["Asc"]["PivotLayoutType"] = window['Asc'].PivotLayoutType = PivotLayoutType;
+window["Asc"]["PivotLayout"] = window['Asc'].PivotLayout = PivotLayout;
+window["Asc"]["PivotLayoutCell"] = window['Asc'].PivotLayoutCell = PivotLayoutCell;
