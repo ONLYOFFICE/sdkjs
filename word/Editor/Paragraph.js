@@ -3232,6 +3232,9 @@ Paragraph.prototype.Internal_Draw_6 = function(CurPage, pGraphics, Pr)
  */
 Paragraph.prototype.private_IsEmptyPageWithBreak = function(CurPage)
 {
+	if (this.Pages.length <= 0 || !this.Pages[CurPage])
+		return true;
+
 	//if (true === this.IsEmptyPage(CurPage))
 	//    return true;
 
@@ -3239,10 +3242,7 @@ Paragraph.prototype.private_IsEmptyPageWithBreak = function(CurPage)
 		return false;
 
 	var Info = this.Lines[this.Pages[CurPage].EndLine].Info;
-	if (Info & paralineinfo_Empty && Info & paralineinfo_BreakPage)
-		return true;
-
-	return false;
+	return !!(Info & paralineinfo_Empty && Info & paralineinfo_BreakPage);
 };
 /**
  * Функция отрисовки нумерации строк
