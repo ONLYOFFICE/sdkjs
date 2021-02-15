@@ -10715,6 +10715,15 @@
                         range.setAngle(val);
                         break;
 					case "indent":
+						var _align = range.getAlign();
+						if (_align) {
+							if (!(_align.h === AscCommon.align_Right || _align.h === AscCommon.align_Left || _align.h == null)) {
+								range.setAlignHorizontal(AscCommon.align_Left);
+							}
+							if (_align.angle !== 0) {
+								range.setAngle(0);
+							}
+						}
 						range.setIndent(val);
 						break;
                     case "rh":
@@ -10751,6 +10760,9 @@
                             callTrigger = true;
                             t.handlers.trigger("slowOperation", true);
                         }
+						if (checkIndent(range)) {
+							range.setIndent(0);
+						}
                         switch (val) {
                             case c_oAscMergeOptions.MergeCenter:
                             case c_oAscMergeOptions.Merge:
