@@ -1607,7 +1607,7 @@
     var t = this;
 
     // Проверка глобального лока
-    if (this.collaborativeEditing.getGlobalLock() || this.controller.isResizeMode) {
+    if (this.collaborativeEditing.getGlobalLock() || this.controller.isResizeMode || !this.canEdit()) {
       return;
     }
 

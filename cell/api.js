@@ -581,26 +581,41 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_changeAutoFilter = function(tableName, optionType, val) {
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return false;
+    }
     var ws = this.wb.getWorksheet();
     return ws.changeAutoFilter(tableName, optionType, val);
   };
 
   spreadsheet_api.prototype.asc_applyAutoFilter = function(autoFilterObject) {
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return false;
+    }
     var ws = this.wb.getWorksheet();
     ws.applyAutoFilter(autoFilterObject);
   };
 
   spreadsheet_api.prototype.asc_applyAutoFilterByType = function(autoFilterObject) {
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return false;
+    }
     var ws = this.wb.getWorksheet();
     ws.applyAutoFilterByType(autoFilterObject);
   };
 
   spreadsheet_api.prototype.asc_reapplyAutoFilter = function(displayName) {
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return false;
+    }
     var ws = this.wb.getWorksheet();
     ws.reapplyAutoFilter(displayName);
   };
 
   spreadsheet_api.prototype.asc_sortColFilter = function(type, cellId, displayName, color, bIsExpandRange) {
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return false;
+    }
     var ws = this.wb.getWorksheet();
     ws.sortRange(type, cellId, displayName, color, bIsExpandRange);
   };
@@ -611,21 +626,33 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_clearFilter = function() {
-    var ws = this.wb.getWorksheet();
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return false;
+    }
+  	var ws = this.wb.getWorksheet();
     return ws.clearFilter();
   };
 
   spreadsheet_api.prototype.asc_clearFilterColumn = function(cellId, displayName) {
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return false;
+    }
     var ws = this.wb.getWorksheet();
     return ws.clearFilterColumn(cellId, displayName);
   };
 
   spreadsheet_api.prototype.asc_changeSelectionFormatTable = function(tableName, optionType) {
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return false;
+    }
     var ws = this.wb.getWorksheet();
     return ws.changeTableSelection(tableName, optionType);
   };
 
   spreadsheet_api.prototype.asc_changeFormatTableInfo = function(tableName, optionType, val) {
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return false;
+    }
     return this.wb.changeFormatTableInfo(tableName, optionType, val);
   };
 
@@ -634,26 +661,41 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_insertCellsInTable = function(tableName, optionType) {
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return false;
+    }
     var ws = this.wb.getWorksheet();
     return ws.af_insertCellsInTable(tableName, optionType);
   };
 
   spreadsheet_api.prototype.asc_deleteCellsInTable = function(tableName, optionType) {
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return false;
+    }
     var ws = this.wb.getWorksheet();
     return ws.af_deleteCellsInTable(tableName, optionType);
   };
 
   spreadsheet_api.prototype.asc_changeDisplayNameTable = function(tableName, newName) {
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return false;
+    }
     var ws = this.wb.getWorksheet();
     return ws.af_changeDisplayNameTable(tableName, newName);
   };
 
   spreadsheet_api.prototype.asc_changeTableRange = function(tableName, range) {
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return false;
+    }
     var ws = this.wb.getWorksheet();
     return ws.af_changeTableRange(tableName, range);
   };
 
   spreadsheet_api.prototype.asc_convertTableToRange = function(tableName) {
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return false;
+    }
     var ws = this.wb.getWorksheet();
     return ws.af_convertTableToRange(tableName);
   };
@@ -1874,7 +1916,7 @@ var editor;
 
 	spreadsheet_api.prototype._isLockedAddWorksheets = function(callback) {
 		// Проверка глобального лока
-		if (this.collaborativeEditing.getGlobalLock()) {
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
 			return false;
 		}
 		var lockInfo = this.collaborativeEditing.getLockInfo(c_oAscLockTypeElem.Sheet, /*subType*/null,
@@ -1920,7 +1962,7 @@ var editor;
   };
   spreadsheet_api.prototype.asc_setWorksheetTabColor = function(color, arrSheets) {
     // Проверка глобального лока
-    if (this.collaborativeEditing.getGlobalLock()) {
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return false;
     }
 
@@ -1973,7 +2015,7 @@ var editor;
   spreadsheet_api.prototype.asc_setDefinedNames = function(defName) {
 //            return this.wb.setDefinedNames(defName);
     // Проверка глобального лока
-    if (this.collaborativeEditing.getGlobalLock()) {
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return;
     }
     return this.wb.editDefinedNames(null, defName);
@@ -1981,7 +2023,7 @@ var editor;
 
   spreadsheet_api.prototype.asc_editDefinedNames = function(oldName, newName) {
     // Проверка глобального лока
-    if (this.collaborativeEditing.getGlobalLock()) {
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return;
     }
 
@@ -1990,7 +2032,7 @@ var editor;
 
   spreadsheet_api.prototype.asc_delDefinedNames = function(oldName) {
     // Проверка глобального лока
-    if (this.collaborativeEditing.getGlobalLock()) {
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return;
     }
     return this.wb.delDefinedNames(oldName);
@@ -2151,7 +2193,7 @@ var editor;
 
   spreadsheet_api.prototype.asc_hideWorksheet = function (arrSheets) {
     // Проверка глобального лока
-    if (this.collaborativeEditing.getGlobalLock()) {
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return false;
     }
 
@@ -2188,7 +2230,7 @@ var editor;
 
   spreadsheet_api.prototype.asc_renameWorksheet = function(name) {
     // Проверка глобального лока
-    if (this.collaborativeEditing.getGlobalLock()) {
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return false;
     }
 
@@ -2230,7 +2272,7 @@ var editor;
   // Удаление листа
   spreadsheet_api.prototype.asc_deleteWorksheet = function (arrSheets) {
     // Проверка глобального лока
-    if (this.collaborativeEditing.getGlobalLock()) {
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return false;
     }
 
@@ -2285,7 +2327,7 @@ var editor;
 
   spreadsheet_api.prototype.asc_moveWorksheet = function (where, arrSheets) {
     // Проверка глобального лока
-    if (this.collaborativeEditing.getGlobalLock()) {
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return false;
     }
 
@@ -2338,7 +2380,7 @@ var editor;
 
   spreadsheet_api.prototype.asc_copyWorksheet = function (where, arrNames, arrSheets) {
     // Проверка глобального лока
-    if (this.collaborativeEditing.getGlobalLock()) {
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return false;
     }
 
@@ -2389,7 +2431,7 @@ var editor;
   spreadsheet_api.prototype.asc_StartMoveSheet = function (arrSheets) {
 	  // Проверка глобального лока
 	  // Лок каждого листа необходимо проверять в интерфейсе. если что-то залочено - не переносим
-      if (this.collaborativeEditing.getGlobalLock()) {
+      if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
 		  return false;
 	  }
 
@@ -2415,7 +2457,7 @@ var editor;
 
   spreadsheet_api.prototype.asc_EndMoveSheet = function(where, arrNames, arrSheets) {
 	  // Проверка глобального лока
-	  if (this.collaborativeEditing.getGlobalLock()) {
+	  if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
 		  return false;
 	  }
 
@@ -2533,6 +2575,9 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_replaceText = function(options) {
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return;
+    }
     options.lookIn = Asc.c_oAscFindLookIn.Formulas; // При замене поиск только в формулах
     this.wb.replaceCellText(options);
   };
@@ -2926,6 +2971,9 @@ var editor;
 
   // Cell comment interface
   spreadsheet_api.prototype.asc_addComment = function(oComment) {
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return false;
+    }
     var oPlace = oComment.bDocument ? this.wb : this.wb.getWorksheet();
     oPlace.cellCommentator.addComment(oComment);
   };
@@ -3654,7 +3702,9 @@ var editor;
 
   // Frozen pane
   spreadsheet_api.prototype.asc_freezePane = function () {
-    this.wb.getWorksheet().freezePane();
+    if (this.canEdit()) {
+      this.wb.getWorksheet().freezePane();
+    }
   };
 
 	spreadsheet_api.prototype.asc_setSparklineGroup = function (id, oSparklineGroup) {
@@ -4026,7 +4076,9 @@ var editor;
     return f ? f.prototype.name : name;
   };
   spreadsheet_api.prototype.asc_calculate = function(type) {
-    this.wb.calculate(type);
+    if (this.canEdit()) {
+        this.wb.calculate(type);
+    }
   };
 
   spreadsheet_api.prototype.asc_setFontRenderingMode = function(mode) {
@@ -4080,6 +4132,9 @@ var editor;
 	};
 
   spreadsheet_api.prototype.asc_ChangeColorSchemeByIdx = function (nIdx) {
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return;
+    }
     var t = this;
     var onChangeColorScheme = function (res) {
       if (res) {
@@ -4663,7 +4718,7 @@ var editor;
 		this.collaborativeEditing.lock(lockInfos, callback);
 	};
 	spreadsheet_api.prototype._isLockedPivotAndConnectedBySlicer = function (pivot, flds, callback) {
-		if (this.collaborativeEditing.getGlobalLock()) {
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
 			callback(false);
 			return;
 		}
@@ -4683,7 +4738,7 @@ var editor;
 	};
 	spreadsheet_api.prototype._changePivotWithLockExt = function (pivot, confirmation, updateSelection, onAction) {
 		// Проверка глобального лока
-		if (this.collaborativeEditing.getGlobalLock()) {
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
 			return;
 		}
 		var t = this;
@@ -4864,6 +4919,9 @@ var editor;
       }
     };
     spreadsheet_api.prototype.asc_setRemoveDuplicates = function (props, bCancel) {
+      if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+        return false;
+      }
       var ws = this.wb && this.wb.getWorksheet();
       if(ws) {
         return ws.setRemoveDuplicates(props, bCancel);
@@ -4942,6 +5000,9 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setDataValidation = function(props, switchApplySameSettings) {
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return false;
+    }
     var ws = this.wb.getWorksheet();
     if (ws) {
       if (undefined === switchApplySameSettings) {

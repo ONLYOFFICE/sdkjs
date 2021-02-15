@@ -2202,7 +2202,7 @@
 					return;
 				}
 
-				if (window["Asc"]["editor"].collaborativeEditing.getGlobalLock()) {
+				if (window["Asc"]["editor"].collaborativeEditing.getGlobalLock() || !window["Asc"]["editor"].canEdit()) {
 					return;
 				}
 
