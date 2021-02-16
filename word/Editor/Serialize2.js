@@ -10314,7 +10314,7 @@ Binary_tblPrReader.prototype =
     },
 	GetNewMargin: function()
     {
-        return { Left : new CTableMeasurement(tblwidth_Auto, 0), Top: new CTableMeasurement(tblwidth_Auto, 0), Right: new CTableMeasurement(tblwidth_Auto, 0), Bottom: new CTableMeasurement(tblwidth_Auto, 0)};
+        return {Bottom: undefined, Left: undefined, Right: undefined, Top: undefined};
     },
 	ReadPaddings: function(type, length, paddings)
     {
