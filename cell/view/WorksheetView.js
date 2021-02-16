@@ -5967,9 +5967,13 @@
             angle = 0;
         }
 
-		if (indent && AscCommon.align_Distributed === alignH) {
-			maxW -= 2 * indent * 3 * this.defaultSpaceWidth;
-		}
+        if (indent && AscCommon.align_Distributed === alignH) {
+            maxW -= 2 * indent * 3 * this.defaultSpaceWidth;
+        }
+
+        if (fl.wrapText) {
+            maxW -= indent * 3 * this.defaultSpaceWidth;
+        }
 
 		tm = this._roundTextMetrics(this.stringRender.measureString(str, fl, maxW));
 
@@ -6068,7 +6072,7 @@
         if (!angle && !verticalText && (cto.leftSide !== 0 || cto.rightSide !== 0)) {
             this._addErasedBordersToCache(col - cto.leftSide, col + cto.rightSide, row);
         }
-            this._updateRowHeight(cache, row, maxW, colWidth);
+		this._updateRowHeight(cache, row, maxW, colWidth);
 
         return mc ? mc.c2 : col;
     };
