@@ -1285,27 +1285,41 @@ CTableCell.prototype =
 		this.private_UpdateTableGrid();
 	},
 
-	GetMargins : function()
+	GetMargins : function(isDirectTop)
 	{
-		var TableCellMar = this.Get_CompiledPr(false).TableCellMar;
+		var oCellMargins    = this.Get_CompiledPr(false).TableCellMar;
+		var oDefaultMargins = this.Row.Table.Get_TableCellMar();
 
-		if (null === TableCellMar)
+		var nT = oDefaultMargins.Top;
+		var nB = oDefaultMargins.Bottom;
+		var nL = oDefaultMargins.Left;
+		var nR = oDefaultMargins.Right
+
+		if (oCellMargins)
 		{
-			return this.Row.Table.Get_TableCellMar();
-		}
-		else
-		{
-			var TableCellDefMargins = this.Row.Table.Get_TableCellMar();
+			if (oCellMargins.Top)
+				nT = oCellMargins.Top;
 
-			var Margins = {
-				Top    : undefined != TableCellMar.Top ? TableCellMar.Top : TableCellDefMargins.Top,
-				Bottom : undefined != TableCellMar.Bottom ? TableCellMar.Bottom : TableCellDefMargins.Bottom,
-				Left   : undefined != TableCellMar.Left ? TableCellMar.Left : TableCellDefMargins.Left,
-				Right  : undefined != TableCellMar.Right ? TableCellMar.Right : TableCellDefMargins.Right
-			};
+			if (oCellMargins.Bottom)
+				nB = oCellMargins.Bottom;
 
-			return Margins;
+			if (oCellMargins.Left)
+				nL = oCellMargins.Left;
+
+			if (oCellMargins.Right)
+				nR = oCellMargins.Right;
 		}
+
+		// Делаем как MSWord, верхний отступ считаем общим для всей строки
+		if (true !== isDirectTop)
+			nT = new CTableMeasurement(tblwidth_Mm, this.private_GetRowTopMargin());
+
+		return {
+			Top    : nT,
+			Bottom : nB,
+			Left   : nL,
+			Right  : nR
+		};
 	},
 
     Is_TableMargins : function()
@@ -2610,6 +2624,25 @@ CTableCell.prototype.CopyParaPrAndTextPr = function(oCell)
 		}
 	}
 };
+CTableCell.prototype.private_GetRowTopMargin = function()
+{
+	var oRow = this.GetRow();
+	if (!oRow)
+		return 0;
+
+	var nTop = null;
+	for (var nCurCell = 0, nCellsCount = oRow.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
+	{
+		var oCell    = oRow.GetCell(nCurCell);
+		var oMargins = oCell.GetMargins(true);
+
+		if (null === nTop || nTop < oMargins.Top.W)
+			nTop = oMargins.Top.W;
+	}
+
+	return nTop;
+};
+
 
 function CTableCellRecalculateObject()
 {
