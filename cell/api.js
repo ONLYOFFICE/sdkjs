@@ -431,6 +431,9 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_SetPrintScale = function(width, height, scale) {
+	  if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+		  return false;
+	  }
 	  var ws = this.wb.getWorksheet();
 	  return ws.setPrintScale(width, height, scale);
   };
@@ -785,25 +788,37 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setPageOption = function (func, val, index) {
+	  if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+		  return false;
+	  }
       var sheetIndex = (undefined !== index && null !== index) ? index : this.wbModel.getActive();
       var ws = this.wb.getWorksheet(sheetIndex);
       ws.setPageOption(func, val);
   };
 
   spreadsheet_api.prototype.asc_changeDocSize = function (width, height, index) {
+	if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+	  return false;
+	}
     var sheetIndex = (undefined !== index && null !== index) ? index : this.wbModel.getActive();
     var ws = this.wb.getWorksheet(sheetIndex);
     ws.changeDocSize(width, height);
   };
 
   spreadsheet_api.prototype.asc_changePageMargins = function (left, right, top, bottom, index) {
-      var sheetIndex = (undefined !== index && null !== index) ? index : this.wbModel.getActive();
+	  if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+		  return false;
+	  }
+	  var sheetIndex = (undefined !== index && null !== index) ? index : this.wbModel.getActive();
       var ws = this.wb.getWorksheet(sheetIndex);
       ws.changePageMargins(left, right, top, bottom);
   };
 
   spreadsheet_api.prototype.asc_changePageOrient = function (isPortrait, index) {
-      var sheetIndex = (undefined !== index && null !== index) ? index : this.wbModel.getActive();
+	if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+	  return false;
+	}
+  	var sheetIndex = (undefined !== index && null !== index) ? index : this.wbModel.getActive();
       var ws = this.wb.getWorksheet(sheetIndex);
       if (isPortrait) {
           ws.changePageOrient(Asc.c_oAscPageOrientation.PagePortrait);
@@ -813,6 +828,9 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_changePrintTitles = function (cols, rows, index) {
+	  if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+		  return false;
+	  }
 	  var sheetIndex = (undefined !== index && null !== index) ? index : this.wbModel.getActive();
 	  var ws = this.wb.getWorksheet(sheetIndex);
 	  ws.changePrintTitles(cols, rows);
@@ -3006,6 +3024,9 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_RemoveAllComments = function(isMine, isCurrent) {
+	if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+	  return;
+	}
   	this.wb.removeAllComments(isMine, isCurrent);
   };
 
@@ -3139,7 +3160,9 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setGraphicObjectProps = function(props) {
-
+	if (!this.canEdit()) {
+	  return;
+	}
     var ws = this.wb.getWorksheet();
     var fReplaceCallback = null, sImageUrl = null, sToken = undefined;
     if(!AscCommon.isNullOrEmptyString(props.ImageUrl)){

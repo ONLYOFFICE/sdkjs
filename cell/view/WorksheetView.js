@@ -20527,6 +20527,10 @@
 	};
 
 	WorksheetView.prototype.insertSlicers = function (arr) {
+		if (this.collaborativeEditing.getGlobalLock() || !window["Asc"]["editor"].canEdit()) {
+			return;
+		}
+
 		var t = this;
 		var type, name, pivotTable;
 
@@ -20623,7 +20627,9 @@
 	};
 
 	WorksheetView.prototype.setSlicer = function (slicer, obj) {
-		var t = this;
+		if (this.collaborativeEditing.getGlobalLock() || !window["Asc"]["editor"].canEdit()) {
+			return;
+		}
 
 		var callback = function (success) {
 			if (!success) {
@@ -20641,6 +20647,10 @@
 	};
 
 	WorksheetView.prototype.setFilterValuesFromSlicer = function (slicer, val) {
+		if (this.collaborativeEditing.getGlobalLock() || !window["Asc"]["editor"].canEdit()) {
+			return;
+		}
+
 		var ws = this.model;
 		var obj;
 		if (slicer && slicer.cacheDefinition) {

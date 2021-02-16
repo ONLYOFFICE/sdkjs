@@ -4721,7 +4721,8 @@ function ObjectLocker(ws) {
                 callback(result, sync);
         };
 
-        if(Asc.editor && Asc.editor.collaborativeEditing && Asc.editor.collaborativeEditing.getGlobalLock()){
+        var api = Asc.editor;
+        if(api && ((api.collaborativeEditing && api.collaborativeEditing.getGlobalLock()) || !api.canEdit())){
             callbackEx(false, true);
             return false;
         }
