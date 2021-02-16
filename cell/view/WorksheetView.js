@@ -10721,7 +10721,7 @@
 					case "indent":
 						var _align = range.getAlign();
 						if (_align) {
-							if (!(_align.h === AscCommon.align_Right || _align.h === AscCommon.align_Left || _align.h == null)) {
+							if (!(_align.h === AscCommon.align_Right || _align.h === AscCommon.align_Left)) {
 								range.setAlignHorizontal(AscCommon.align_Left);
 							}
 							if (_align.angle !== 0) {
