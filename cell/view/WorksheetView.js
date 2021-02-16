@@ -10764,7 +10764,7 @@
                             callTrigger = true;
                             t.handlers.trigger("slowOperation", true);
                         }
-						if (checkIndent(range)) {
+						if (val === c_oAscMergeOptions.MergeCenter && checkIndent(range)) {
 							range.setIndent(0);
 						}
                         switch (val) {
@@ -12274,6 +12274,8 @@
 				pastedRangeProps.font = newVal.getFont();
 
 				pastedRangeProps.shrinkToFit = align.getShrinkToFit();
+
+				pastedRangeProps.indent = align.getIndent();
 			}
 
 			var tableDxf = getTableDxf(pasteRow, pasteCol, newVal);
@@ -12880,6 +12882,11 @@
 					firstCell.setStyle(rangeStyle.tableDxfLocal);
 				}
 			});
+		}
+
+		//indent
+		if (rangeStyle.indent && specialPasteProps.format) {
+			range.setIndent(rangeStyle.indent);
 		}
 
 		//hyperLink
