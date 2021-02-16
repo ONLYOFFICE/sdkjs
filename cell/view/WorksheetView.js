@@ -20590,7 +20590,7 @@
 				t._isLockedDefNames(callback);
 			});
 		} else {
-			this._isLockedCells(lockRanges, null, function(success) {
+			var callbackLockCell = function (success) {
 				if (!success) {
 					History.EndTransaction();
 					return;
@@ -20607,7 +20607,12 @@
 				} else {
 					t._isLockedDefNames(callback);
 				}
-			});
+			};
+			if(lockRanges.length > 0) {
+				this._isLockedCells(lockRanges, null, callbackLockCell);
+			} else {
+				callbackLockCell(true);
+			}
 		}
 	};
 
