@@ -12011,6 +12011,23 @@
 				return;
 			}
 
+			
+			if ( (Math.abs(oRange.range.bbox.r2 - oRange.range.bbox.r1) + 1) * (Math.abs(oRange.range.bbox.c2 - oRange.range.bbox.c1) + 1) < arrString.length ) 
+			{
+				resultText = '';
+				tempRange  = oWorksheet.GetRangeByNumber(oRange.range.bbox.r1, oRange.range.bbox.c1);
+
+				for (var nText = nTextToReplace; nText < arrString.length ; nText++) 
+				{
+					resultText += arrString[nText];
+					if (nText !== arrString.length - 1)
+						resultText += '\n';
+				}
+				if (resultText !== '')
+					tempRange.SetValue(resultText);
+				return;
+			}
+
 			for (var nRow = oRange.range.bbox.r1; nRow <= oRange.range.bbox.r2; nRow++)
 			{
 				for (var nCol = oRange.range.bbox.c1; nCol <= oRange.range.bbox.c2; nCol++)
