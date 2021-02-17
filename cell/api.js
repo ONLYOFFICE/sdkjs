@@ -5069,7 +5069,7 @@ var editor;
     return arr;
   };
 
-	spreadsheet_api.prototype.asc_setCF = function (arr, deleteIdArr) {
+	spreadsheet_api.prototype.asc_setCF = function (arr, deleteIdArr, presetId) {
 		var ws = this.wb.getWorksheet();
 		ws.setCF(arr, deleteIdArr);
 	};
@@ -5146,7 +5146,7 @@ var editor;
 
 		var res = false;
 		var t = this;
-		var sheetId = lockElem.Element["sheetId"];
+		var sheetId = lockElem["sheetId"];
 		if (-1 !== sheetId && 0 === sheetId.indexOf(AscCommonExcel.CConditionalFormattingRule.sStartLockCFId)) {
 			res = true;
 			if (t.wbModel) {
@@ -5154,7 +5154,7 @@ var editor;
 				var wsModel = t.wbModel.getWorksheetById(sheetId);
 				if (wsModel) {
 					var wsIndex = wsModel.getIndex();
-					var cFRule = wsModel.getCFRuleById(lockElem.Element["rangeOrObjectId"]);
+					var cFRule = wsModel.getCFRuleById(lockElem["rangeOrObjectId"]);
 					if (cFRule) {
 						cFRule.isLock = null;
 						this.handlers.trigger("asc_onUnLockCFRule", wsIndex, lockElem["rangeOrObjectId"]);

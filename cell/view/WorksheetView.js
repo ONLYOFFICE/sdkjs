@@ -20865,7 +20865,7 @@
 		this._isLockedCells(_selection, /*subType*/null, callback);
 	};
 
-	WorksheetView.prototype.setCF = function (arr, deleteIdArr) {
+	WorksheetView.prototype.setCF = function (arr, deleteIdArr, presetId) {
 		var t = this;
 
 		var callback = function (success) {
@@ -20890,6 +20890,16 @@
 
 			History.EndTransaction();
 		};
+
+		if (presetId !== undefined) {
+			var _generatedRule = t.model.generateCFRuleFromPreset(presetId);
+			if (_generatedRule) {
+				if (!arr) {
+					arr = [];
+				}
+				arr.push(arr);
+			}
+		}
 
 		var unitedArr = [];
 		var nActive = this.model.workbook.nActive;

@@ -9104,6 +9104,17 @@
 		}
 	};
 
+	Worksheet.prototype.generateCFRuleFromPreset = function (presetId) {
+		if (!presetId || !presetId.length) {
+			return null;
+		}
+
+		var presetType = presetId[0];
+		var styleIndex = presetId[1];
+
+		AscCommonExcel.g_oConditionalFormattingPresets
+	};
+
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;
 	var g_nCellOffsetXf = g_nCellOffsetFlag + 1;

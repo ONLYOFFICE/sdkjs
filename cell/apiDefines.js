@@ -487,6 +487,12 @@ var c_oAscPopUpSelectorType = {
     line: 2
   };
 
+  var c_oAscCFRuleTypeSettings = {
+    dataBar: 1,
+    colorScale: 2,
+    icons: 3
+  };
+
   //----------------------------------------------------------export----------------------------------------------------
   window['AscCommonExcel'] = window['AscCommonExcel'] || {};
   window['AscCommonExcel'].c_oAscDrawDepOptions = c_oAscDrawDepOptions;
@@ -779,6 +785,14 @@ var c_oAscPopUpSelectorType = {
   prot = c_oAscFrozenPaneBorderType;
   prot['shadow'] = prot.shadow;
   prot['line'] = prot.line;
+
+  window['Asc']['c_oAscCFRuleTypeSettings'] = window['Asc'].c_oAscCFRuleTypeSettings = c_oAscCFRuleTypeSettings;
+  prot = c_oAscCFRuleTypeSettings;
+  prot['dataBar'] = prot.dataBar;
+  prot['colorScale'] = prot.colorScale;
+  prot['icons'] = prot.icons;
+
+
 
 
 })(window);

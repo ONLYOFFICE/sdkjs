@@ -2009,6 +2009,15 @@
 		return AscCommonExcel.createRgbColor(RGB.R, RGB.G, RGB.B);
 	}
 
+	var aDataBarStyles = [];
+	var aColorScaleStyles = [];
+	var aIconsStyles = [];
+
+	var g_oConditionalFormattingPresets = {};
+	g_oConditionalFormattingPresets[Asc.c_oAscCFRuleTypeSettings.dataBar] = aDataBarStyles;
+	g_oConditionalFormattingPresets[Asc.c_oAscCFRuleTypeSettings.colorScale] = aColorScaleStyles;
+	g_oConditionalFormattingPresets[Asc.c_oAscCFRuleTypeSettings.icons] = aIconsStyles;
+
 	/*
 	 * Export
 	 * -----------------------------------------------------------------------------
@@ -2031,6 +2040,7 @@
 	window['AscCommonExcel'].getCFIconsForLoad = getCFIconsForLoad;
 	window['AscCommonExcel'].getCFIcon = getCFIcon;
 	window['AscCommonExcel'].getDataBarGradientColor = getDataBarGradientColor;
+	window['AscCommonExcel'].g_oConditionalFormattingPresets = g_oConditionalFormattingPresets;
 
 	prot = CConditionalFormattingRule;
 	prot['asc_getDxf'] = prot.asc_getDxf;
@@ -2121,4 +2131,5 @@
 	prot['asc_setGte'] = prot.asc_setGte;
 	prot['asc_setType'] = prot.asc_setType;
 	prot['asc_setVal'] = prot.asc_setVal;
+
 })(window);
