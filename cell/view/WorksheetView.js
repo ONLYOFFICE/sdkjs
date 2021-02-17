@@ -435,6 +435,10 @@
         this.clickedGroupButton = null;
         this.ignoreGroupSize = null;//для печати не нужно учитывать отступы групп
 
+		//ифомарция о залоченности нового добавленного правила
+		//TODO пока сюда добавляю, пересмотреть!
+		this._lockAddNewRule = null;
+
         this._init();
 
         return this;

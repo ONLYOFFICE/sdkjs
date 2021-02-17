@@ -1248,8 +1248,8 @@ var editor;
         t._onUnlockCF.apply(t, arguments);
       },
       "checkCFRemoveLock": function(lockElem) {
-        return t._onCheckCommentRemoveLock(lockElem);
-      },
+        return t._onCheckCFRemoveLock(lockElem);
+      }
     }, this.getViewMode());
 
     this.CoAuthoringApi.onConnectionStateChanged = function(e) {
@@ -5084,7 +5084,7 @@ var editor;
 
 	spreadsheet_api.prototype._onUpdateCFLock = function (lockElem) {
 		var t = this;
-		var sheetId = lockElem["sheetId"];
+		var sheetId = lockElem.Element["sheetId"];
 		if (-1 !== sheetId && 0 === sheetId.indexOf(AscCommonExcel.CConditionalFormattingRule.sStartLockCFId)) {
 			sheetId = sheetId.split(AscCommonExcel.CConditionalFormattingRule.sStartLockCFId)[1];
 			var wsModel = this.wbModel.getWorksheetById(lockElem.Element["sheetId"]);
@@ -5095,8 +5095,9 @@ var editor;
 					cFRule.isLock = lockElem.UserId;
 					this.handlers.trigger("asc_onLockCFRule", cFRule.id);
 				} else {
-					//TODO необходимо добавить инофрмацию о локе нового добавленного правила!!!
-                }
+					var wsView = this.wb.getWorksheetById(sheetId);
+					wsView._lockAddNewRule = true;
+				}
 				this.handlers.trigger("asc_onLockCFManager", wsModel.index);
 			}
 		}
@@ -5112,34 +5113,40 @@ var editor;
 				//TODO необходимо добавить инофрмацию о локе нового добавленного правила!!!
 
 				var isLockedRules = false;
-				if (wsModel.aConditionalFormattingRules) {
-					wsModel.aConditionalFormattingRules.foreach(function(_rule) {
+				if (wsModel.aConditionalFormattingRules && wsModel.aConditionalFormattingRules.length) {
+					wsModel.aConditionalFormattingRules.forEach(function (_rule) {
 						if (true === _rule.isLock) {
 							isLockedRules = true;
-                        }
+						}
 					});
-                }
-                if (!isLockedRules) {
+					if (!isLockedRules) {
+						var wsView = this.wb.getWorksheetById(wsModel.Id);
+						if (wsView._lockAddNewRule) {
+							isLockedRules = true;
+						}
+					}
+				}
+				if (!isLockedRules) {
 					t.handlers.trigger("asc_onUnLockCFManager", wsIndex);
-                }
+				}
 			}
 		}
 	};
 
 	spreadsheet_api.prototype._onCheckCFRemoveLock = function (lockElem) {
 		//лок правила - с правилом делать ничего нельзя
-        //лок менеджера - незалоченное правило можно удалять и редактировать. новые правила добавлять нельзя.
-        //так же нельзя перемещать местами правила
+		//лок менеджера - незалоченное правило можно удалять и редактировать. новые правила добавлять нельзя.
+		//так же нельзя перемещать местами правила
 
 		//лочим правило как объект. в лок кладём id и лист с префиксом CConditionalFormattingRule.sStartLockCFId
 		//на принятии изменений удаляем локи с соответсвующих элементов
 		//разлочиваем менеджер если нет залоченных элементов(т.е. проверяем все на лок)
 		//+ проверяем нет ли нового добавленного правила другим юзером
-		//всего для передачи в интерфейс 4 события - asc_onUnLockCFRule/asc_onUnLockCFManager; asc_onLockCFManager/asc_onUnLockCFManager
+		//всего для передачи в интерфейс 4 события - asc_onLockCFRule/asc_onUnLockCFRule; asc_onLockCFManager/asc_onUnLockCFManager
 
 		var res = false;
 		var t = this;
-		var sheetId = lockElem["sheetId"];
+		var sheetId = lockElem.Element["sheetId"];
 		if (-1 !== sheetId && 0 === sheetId.indexOf(AscCommonExcel.CConditionalFormattingRule.sStartLockCFId)) {
 			res = true;
 			if (t.wbModel) {
@@ -5152,7 +5159,8 @@ var editor;
 						cFRule.isLock = null;
 						this.handlers.trigger("asc_onUnLockCFRule", wsIndex, lockElem["rangeOrObjectId"]);
 					} else {
-                      //TODO необходимо добавить инофрмацию о локе нового добавленного правила!!!
+						var wsView = this.wb.getWorksheetById(sheetId);
+						wsView._lockAddNewRule = true;
 					}
 				}
 			}
