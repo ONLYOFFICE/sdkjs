@@ -2487,7 +2487,6 @@
                 var ha = 4;
                 switch (align.hor) {
                     case AscCommon.align_Center :ha = 0;break;
-                    case AscCommon.align_Distributed :ha = 2;break
                     case AscCommon.align_Justify :ha = 5;break;
                     case AscCommon.align_Left :ha = 6;break;
                     case AscCommon.align_Right :ha = 7;break;
@@ -6486,7 +6485,7 @@
                 {
                     case 0 :
                     case 1 : oAligment.hor = AscCommon.align_Center;break;
-                    case 2 : oAligment.hor = AscCommon.align_Distributed;break;
+                    case 2 :
                     case 3 :
                     case 5 : oAligment.hor = AscCommon.align_Justify;break;
                     case 4 : oAligment.hor = null;break;
