@@ -5071,7 +5071,7 @@ var editor;
 
 	spreadsheet_api.prototype.asc_setCF = function (arr, deleteIdArr, presetId) {
 		var ws = this.wb.getWorksheet();
-		ws.setCF(arr, deleteIdArr);
+		ws.setCF(arr, deleteIdArr, presetId);
 	};
 
 	spreadsheet_api.prototype.asc_clearCF = function (type) {

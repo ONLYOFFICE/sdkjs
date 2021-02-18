@@ -9109,10 +9109,9 @@
 			return null;
 		}
 
-		var presetType = presetId[0];
-		var styleIndex = presetId[1];
-
-		AscCommonExcel.g_oConditionalFormattingPresets
+		var oRule = new AscCommonExcel.CConditionalFormattingRule();
+		oRule.applyPreset(presetId);
+		return oRule;
 	};
 
 //-------------------------------------------------------------------------------------------------

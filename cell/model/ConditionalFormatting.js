@@ -765,6 +765,27 @@
 		return res;
 	};
 
+	CConditionalFormattingRule.prototype.applyPreset = function (presetId) {
+		var presetType = presetId[0];
+		var styleIndex = presetId[1];
+
+		var elem;
+		switch (presetType) {
+			case Asc.c_oAscCFRuleTypeSettings.dataBar:
+				elem = new CDataBar();
+				elem.applyPreset(styleIndex);
+				break;
+			case Asc.c_oAscCFRuleTypeSettings.colorScale:
+				elem = new CColorScale();
+				elem.applyPreset(styleIndex);
+				break;
+			case Asc.c_oAscCFRuleTypeSettings.icons:
+				elem = new CIconSet();
+				elem.applyPreset(styleIndex);
+				break;
+		}
+	};
+
 	CConditionalFormattingRule.prototype.asc_getType = function () {
 		return this.type;
 	};
@@ -1035,6 +1056,9 @@
 			res.aColors.push(this.aColors[i].clone());
 		}
 		return res;
+	};
+	CColorScale.prototype.applyPreset = function (styleIndex) {
+
 	};
 	CColorScale.prototype.Write_ToBinary2 = function (writer) {
 		//CConditionalFormatValueObject
@@ -1397,6 +1421,35 @@
 			this.AxisColor = elem.Read_FromBinary2(reader);
 		}
 	};
+	CDataBar.prototype.applyPreset = function (styleIndex) {
+		/*AxisColor: RgbColor {rgb: 0}
+		AxisPosition: 0
+		BorderColor: RgbColor {rgb: 6524614}
+		Color: RgbColor {rgb: 6524614}
+		Direction: 0
+		Gradient: true
+		MaxLength: 100
+		MinLength: 0
+		NegativeBarBorderColorSameAsPositive: false
+		NegativeBarColorSameAsPositive: false
+		NegativeBorderColor: RgbColor {rgb: 16711680}
+		NegativeColor: RgbColor {rgb: 16711680}
+		ShowValue: true
+		aCFVOs: Array(2)
+		0: CConditionalFormatValueObject
+		Gte: true
+		Type: 6
+		Val: null
+		formula: null
+		formulaParent: null
+		__proto__: Object
+		1: CConditionalFormatValueObject
+		Gte: true
+		Type: 7
+		Val: null
+		formula: null
+		formulaParent: null*/
+	};
 	CDataBar.prototype.asc_getPreview = function (api, id) {
 		var color = this.Color;
 		var aColors = [];
@@ -1569,6 +1622,9 @@
 		for (i = 0; i < this.aIconSets.length; ++i)
 			res.aIconSets.push(this.aIconSets[i].clone());
 		return res;
+	};
+	CIconSet.prototype.applyPreset = function (styleIndex) {
+
 	};
 	CIconSet.prototype.Write_ToBinary2 = function (writer) {
 		if (null != this.IconSet) {
