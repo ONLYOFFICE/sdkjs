@@ -20891,20 +20891,23 @@
 			History.EndTransaction();
 		};
 
+		var nActive = this.model.workbook.nActive;
 		if (presetId !== undefined) {
 			var _generatedRule = t.model.generateCFRuleFromPreset(presetId);
 			if (_generatedRule) {
 				if (!arr) {
 					arr = [];
 				}
-				arr.push(arr);
+				if (!arr[nActive]) {
+					arr[nActive] = [];
+				}
+				arr[nActive].push(_generatedRule);
 				//TODO новое правило создаётся с определенным приоритетом, нужно изменить приоритет у всех остальных
 
 			}
 		}
 
 		var unitedArr = [];
-		var nActive = this.model.workbook.nActive;
 		if (arr) {
 			if (arr[nActive]) {
 				for (var i = 0; i < arr[nActive].length; i++) {

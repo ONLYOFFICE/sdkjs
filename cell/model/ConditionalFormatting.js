@@ -789,22 +789,26 @@
 		timePeriod: null
 		type: 3*/
 
-		this.type = presetType;
-
 		var elem;
 		switch (presetType) {
 			case Asc.c_oAscCFRuleTypeSettings.dataBar:
 				elem = new CDataBar();
 				elem.applyPreset(styleIndex);
+				this.type = Asc.ECfType.dataBar;
 				break;
 			case Asc.c_oAscCFRuleTypeSettings.colorScale:
 				elem = new CColorScale();
 				elem.applyPreset(styleIndex);
+				this.type = Asc.ECfType.colorScale;
 				break;
 			case Asc.c_oAscCFRuleTypeSettings.icons:
 				elem = new CIconSet();
 				elem.applyPreset(styleIndex);
+				this.type = Asc.ECfType.icons;
 				break;
+		}
+		if (elem) {
+			this.aRuleElements.push(elem);
 		}
 	};
 
@@ -1662,11 +1666,11 @@
 		this.IconSet = presetStyles[0];
 		for (var i = 0; i < presetStyles[1].length; i++) {
 			var formatValueObject = new CConditionalFormatValueObject();
-			formatValueObject.Type = presetStyles[1][0];
-			formatValueObject.Val = presetStyles[1][1];
-			if (presetStyles[1][2]) {
+			formatValueObject.Type = presetStyles[1][i][0];
+			formatValueObject.Val = presetStyles[1][i][1];
+			if (presetStyles[1][i][2]) {
 				formatValueObject.formula = new CFormulaCF();
-				formatValueObject.formula.Text = presetStyles[1][2];
+				formatValueObject.formula.Text = presetStyles[1][i][2];
 			}
 			this.aCFVOs.push(formatValueObject);
 		}
