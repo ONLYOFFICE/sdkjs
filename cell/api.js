@@ -4955,9 +4955,19 @@ var editor;
         var arr  =[];
         var str = "";
 		for (i = rules.length - 1; i >= 0; --i) {
-		  var tmp = [rules[i].aRuleElements[0].AxisColor.rgb, rules[i].aRuleElements[0].BorderColor ? rules[i].aRuleElements[0].BorderColor.rgb : null,rules[i].aRuleElements[0].Color.rgb, rules[i].aRuleElements[0].Gradient, rules[i].aRuleElements[0].NegativeBorderColor ? rules[i].aRuleElements[0].NegativeBorderColor.rgb : null, rules[i].aRuleElements[0].NegativeColor.rgb]
-			arr.push(tmp)
-			str += ",[" + tmp.toString() + "]"
+			str += "[";
+		  for (var j = 0; j < rules[i].aRuleElements[0].aCFVOs.length; ++j) {
+				//var tmp = [rules[i].aRuleElements[0].aCFVOs[j].Type, rules[i].aRuleElements[0].aCFVOs[j].Val, rules[i].aRuleElements[0].aColors[j].rgb]
+
+              str += "[" + rules[i].aRuleElements[0].aCFVOs[j].Type + "," + rules[i].aRuleElements[0].aCFVOs[j].Val + "," + rules[i].aRuleElements[0].aColors[j].rgb + "]"
+			  if (j !== rules[i].aRuleElements[0].aCFVOs.length - 1) {
+				  str += ",";
+			  }
+			}
+			str += "]";
+			if (i !== 0) {
+				str += ",";
+			}
 		}
 
       return [rules, sActiveRanges.join(AscCommon.FormulaSeparators.functionArgumentSeparator)];

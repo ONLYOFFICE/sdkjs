@@ -769,6 +769,28 @@
 		var presetType = presetId[0];
 		var styleIndex = presetId[1];
 
+		/*aRuleElements: [CColorScale]
+		aboveAverage: true
+		activePresent: false
+		bottom: false
+		dxf: null
+		equalAverage: false
+		id: "23"
+		isLock: null
+		operator: null
+		percent: false
+		pivot: false
+		priority: 9
+		ranges: [Range]
+		rank: null
+		stdDev: null
+		stopIfTrue: false
+		text: null
+		timePeriod: null
+		type: 3*/
+
+		this.type = presetType;
+
 		var elem;
 		switch (presetType) {
 			case Asc.c_oAscCFRuleTypeSettings.dataBar:
@@ -1095,6 +1117,15 @@
 		__proto__: Object
 		length: 3*/
 
+		var presetStyles = conditionalFormattingPresets[Asc.c_oAscCFRuleTypeSettings.colorScale][styleIndex];
+		for (var i = 0; i < presetStyles.length; i++) {
+			var formatValueObject = new CConditionalFormatValueObject();
+			formatValueObject.Type = presetStyles[i][0] ? presetStyles[i][0] : null;
+			formatValueObject.Val = presetStyles[i][1] ? presetStyles[i][1] : null;
+			var colorObject = new AscCommonExcel.RgbColor(presetStyles[i][2] ? presetStyles[i][2] : 0);
+			this.aCFVOs.push(formatValueObject);
+			this.aColors.push(colorObject);
+		}
 
 	};
 	CColorScale.prototype.Write_ToBinary2 = function (writer) {
@@ -1692,6 +1723,53 @@
 		return res;
 	};
 	CIconSet.prototype.applyPreset = function (styleIndex) {
+		/*0: CIconSet
+		IconSet: 15
+		Percent: true
+		Reverse: false
+		ShowValue: true
+		aCFVOs: Array(5)
+		0: CConditionalFormatValueObject
+		Gte: true
+		Type: 4
+		Val: "0"
+		formula: null
+		formulaParent: null
+		__proto__: Object
+		1: CConditionalFormatValueObject
+		Gte: true
+		Type: 4
+		Val: "20"
+		formula: null
+		formulaParent: null
+		__proto__: Object
+		2: CConditionalFormatValueObject
+		Gte: true
+		Type: 4
+		Val: "40"
+		formula: null
+		formulaParent: null
+		__proto__: Object
+		3: CConditionalFormatValueObject
+		Gte: true
+		Type: 4
+		Val: "60"
+		formula: null
+		formulaParent: null
+		__proto__: Object
+		4: CConditionalFormatValueObject
+		Gte: true
+		Type: 4
+		Val: "80"
+		formula: CFormulaCF
+		Text: "80"
+		_f: null
+		__proto__: Object
+		formulaParent: CConditionalFormattingFormulaParent {ws: Worksheet, rule: CConditionalFormattingRule, isDefName: false}
+		__proto__: Object*/
+
+		
+
 
 	};
 	CIconSet.prototype.Write_ToBinary2 = function (writer) {
@@ -2139,8 +2217,9 @@
 
 	//[AxisColor, BorderColor, Color, Gradient, NegativeBorderColor, NegativeColor]
 	var aDataBarStyles = [[0,6524614,6524614,true,16711680,16711680],[0,6538116,6538116,true,16711680,16711680],[0,16733530,16733530,true,16711680,16711680],[0,16758312,16758312,true,16711680,16711680],[0,35567,35567,true,16711680,16711680],[0,14024827,14024827,true,16711680,16711680],[0,,6524614,false,,16711680],[0,,6538116,false,,16711680],[0,,16733530,false,,16711680],[0,,16758312,false,,16711680],[0,,35567,false,,16711680],[0,,14024827,false,,16711680]];
+	//[[Type, Val, Rgb], [Type, Val, Rgb], ...]
+	var aColorScaleStyles = [[[2,null,16279915],[5,50,16771972],[1,null,6536827]],[[2,null,6536827],[5,50,16771972],[1,null,16279915]],[[2,null,16279915],[5,50,16579839],[1,null,6536827]],[[2,null,6536827],[5,50,16579839],[1,null,16279915]],[[2,null,16279915],[5,50,16579839],[1,null,5933766]],[[2,null,5933766],[5,50,16579839],[1,null,16279915]],[[2,null,16279915],[1,null,16579839]],[[2,null,16579839],[1,null,16279915]],[[2,null,16579839],[1,null,6536827]],[[2,null,6536827],[1,null,16579839]],[[2,null,16773020],[1,null,6536827]],[[2,null,6536827],[1,null,16773020]]];
 
-	var aColorScaleStyles = [];
 	var aIconsStyles = [];
 
 	var conditionalFormattingPresets = {};
@@ -2262,6 +2341,5 @@
 	prot['asc_setType'] = prot.asc_setType;
 	prot['asc_setVal'] = prot.asc_setVal;
 
-	c_arrIcons
 
 })(window);
