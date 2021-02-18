@@ -4952,6 +4952,14 @@ var editor;
           });
       }
 
+        var arr  =[];
+        var str = "";
+		for (i = rules.length - 1; i >= 0; --i) {
+		  var tmp = [rules[i].aRuleElements[0].AxisColor.rgb, rules[i].aRuleElements[0].BorderColor ? rules[i].aRuleElements[0].BorderColor.rgb : null,rules[i].aRuleElements[0].Color.rgb, rules[i].aRuleElements[0].Gradient, rules[i].aRuleElements[0].NegativeBorderColor ? rules[i].aRuleElements[0].NegativeBorderColor.rgb : null, rules[i].aRuleElements[0].NegativeColor.rgb]
+			arr.push(tmp)
+			str += ",[" + tmp.toString() + "]"
+		}
+
       return [rules, sActiveRanges.join(AscCommon.FormulaSeparators.functionArgumentSeparator)];
     };
 
@@ -5131,6 +5139,10 @@ var editor;
 				}
 			}
 		}
+	};
+
+	spreadsheet_api.prototype.asc_getCFIcons = function() {
+		return AscCommonExcel.getFullCFIcons();
 	};
 
 	spreadsheet_api.prototype._onCheckCFRemoveLock = function (lockElem) {
@@ -5638,6 +5650,8 @@ var editor;
   prot["asc_setCF"]        = prot.asc_setCF;
   prot["asc_getPreviewCF"] = prot.asc_getPreviewCF;
   prot["asc_clearCF"]      = prot.asc_clearCF;
+  prot["asc_getCFIcons"]   = prot.asc_getCFIcons;
+
 
   prot["asc_beforeInsertSlicer"] = prot.asc_beforeInsertSlicer;
   prot["asc_insertSlicer"] = prot.asc_insertSlicer;

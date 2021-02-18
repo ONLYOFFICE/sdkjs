@@ -329,7 +329,7 @@
 						break;
 					//TODO ?CFormulaCF
 				}
-				elem.Read_FromBinary2(reader)
+				elem.Read_FromBinary2(reader);
 				this.aRuleElements.push(elem);
 			}
 		}
@@ -1058,6 +1058,43 @@
 		return res;
 	};
 	CColorScale.prototype.applyPreset = function (styleIndex) {
+		/*0: CColorScale
+		aCFVOs: Array(3)
+		0: CConditionalFormatValueObject
+		Gte: true
+		Type: 2
+		Val: null
+		formula: null
+		formulaParent: null
+		__proto__: Object
+		1: CConditionalFormatValueObject
+		Gte: true
+		Type: 5
+		Val: "50"
+		formula: null
+		formulaParent: null
+		__proto__: Object
+		2: CConditionalFormatValueObject
+		Gte: true
+		Type: 1
+		Val: null
+		formula: null
+		formulaParent: null
+		__proto__: Object
+		length: 3
+		__proto__: Array(0)
+		aColors: Array(3)
+		0: RgbColor
+		rgb: 6536827
+		__proto__: Object
+		1: RgbColor
+		rgb: 16579839
+		__proto__: Object
+		2: RgbColor
+		rgb: 16279915
+		__proto__: Object
+		length: 3*/
+
 
 	};
 	CColorScale.prototype.Write_ToBinary2 = function (writer) {
@@ -1223,6 +1260,66 @@
 			res.AxisColor = this.AxisColor.clone();
 		}
 		return res;
+	};
+	CDataBar.prototype.applyPreset = function (styleIndex) {
+		/*AxisColor: RgbColor {rgb: 0}
+		 AxisPosition: 0
+		 BorderColor: RgbColor {rgb: 6524614}
+		 Color: RgbColor {rgb: 6524614}
+		 Direction: 0
+		 Gradient: true
+		 MaxLength: 100
+		 MinLength: 0
+		 NegativeBarBorderColorSameAsPositive: false
+		 NegativeBarColorSameAsPositive: false
+		 NegativeBorderColor: RgbColor {rgb: 16711680}
+		 NegativeColor: RgbColor {rgb: 16711680}
+		 ShowValue: true
+		 aCFVOs: Array(2)
+		 0: CConditionalFormatValueObject
+		 Gte: true
+		 Type: 6
+		 Val: null
+		 formula: null
+		 formulaParent: null
+		 __proto__: Object
+		 1: CConditionalFormatValueObject
+		 Gte: true
+		 Type: 7
+		 Val: null
+		 formula: null
+		 formulaParent: null*/
+
+		var _generateRgbColor = function (_color) {
+			if (!_color) {
+				return null;
+			}
+
+			return  new AscCommonExcel.RgbColor(_color);
+		};
+
+		var presetStyles = conditionalFormattingPresets[Asc.c_oAscCFRuleTypeSettings.dataBar][styleIndex];
+
+		this.AxisColor = _generateRgbColor(presetStyles[0] ? presetStyles[0] : null);
+		this.AxisPosition = 0;
+		this.BorderColor = _generateRgbColor(presetStyles[1] ? presetStyles[1] : null);
+		this.Color = _generateRgbColor(presetStyles[2] ? presetStyles[2] : null);
+		this.Direction = 0;
+		this.Gradient = presetStyles[3];
+		this.MaxLength = 100;
+		this.MinLength = 0;
+		this.NegativeBarBorderColorSameAsPositive = false;
+		this.NegativeBarColorSameAsPositive = false;
+		this.NegativeBorderColor = _generateRgbColor(presetStyles[4] ? presetStyles[4] : null);
+		this.NegativeColor = _generateRgbColor(presetStyles[5] ? presetStyles[5] : null);
+		this.ShowValue = true;
+
+		var formatValueObject1 = new CConditionalFormatValueObject();
+		formatValueObject1.type = AscCommonExcel.ECfvoType.AutoMin;
+		this.aCFVOs.push(formatValueObject1);
+		var formatValueObject2 = new CConditionalFormatValueObject();
+		formatValueObject2.type = AscCommonExcel.ECfvoType.AutoMax;
+		this.aCFVOs.push(formatValueObject2);
 	};
 	CDataBar.prototype.Write_ToBinary2 = function (writer) {
 		if (null != this.MaxLength) {
@@ -1420,35 +1517,6 @@
 			}
 			this.AxisColor = elem.Read_FromBinary2(reader);
 		}
-	};
-	CDataBar.prototype.applyPreset = function (styleIndex) {
-		/*AxisColor: RgbColor {rgb: 0}
-		AxisPosition: 0
-		BorderColor: RgbColor {rgb: 6524614}
-		Color: RgbColor {rgb: 6524614}
-		Direction: 0
-		Gradient: true
-		MaxLength: 100
-		MinLength: 0
-		NegativeBarBorderColorSameAsPositive: false
-		NegativeBarColorSameAsPositive: false
-		NegativeBorderColor: RgbColor {rgb: 16711680}
-		NegativeColor: RgbColor {rgb: 16711680}
-		ShowValue: true
-		aCFVOs: Array(2)
-		0: CConditionalFormatValueObject
-		Gte: true
-		Type: 6
-		Val: null
-		formula: null
-		formulaParent: null
-		__proto__: Object
-		1: CConditionalFormatValueObject
-		Gte: true
-		Type: 7
-		Val: null
-		formula: null
-		formulaParent: null*/
 	};
 	CDataBar.prototype.asc_getPreview = function (api, id) {
 		var color = this.Color;
@@ -2065,14 +2133,20 @@
 		return AscCommonExcel.createRgbColor(RGB.R, RGB.G, RGB.B);
 	}
 
-	var aDataBarStyles = [];
+	function getFullCFIcons() {
+		return c_arrIcons;
+	}
+
+	//[AxisColor, BorderColor, Color, Gradient, NegativeBorderColor, NegativeColor]
+	var aDataBarStyles = [[0,6524614,6524614,true,16711680,16711680],[0,6538116,6538116,true,16711680,16711680],[0,16733530,16733530,true,16711680,16711680],[0,16758312,16758312,true,16711680,16711680],[0,35567,35567,true,16711680,16711680],[0,14024827,14024827,true,16711680,16711680],[0,,6524614,false,,16711680],[0,,6538116,false,,16711680],[0,,16733530,false,,16711680],[0,,16758312,false,,16711680],[0,,35567,false,,16711680],[0,,14024827,false,,16711680]];
+
 	var aColorScaleStyles = [];
 	var aIconsStyles = [];
 
-	var g_oConditionalFormattingPresets = {};
-	g_oConditionalFormattingPresets[Asc.c_oAscCFRuleTypeSettings.dataBar] = aDataBarStyles;
-	g_oConditionalFormattingPresets[Asc.c_oAscCFRuleTypeSettings.colorScale] = aColorScaleStyles;
-	g_oConditionalFormattingPresets[Asc.c_oAscCFRuleTypeSettings.icons] = aIconsStyles;
+	var conditionalFormattingPresets = {};
+	conditionalFormattingPresets[Asc.c_oAscCFRuleTypeSettings.dataBar] = aDataBarStyles;
+	conditionalFormattingPresets[Asc.c_oAscCFRuleTypeSettings.colorScale] = aColorScaleStyles;
+	conditionalFormattingPresets[Asc.c_oAscCFRuleTypeSettings.icons] = aIconsStyles;
 
 	/*
 	 * Export
@@ -2096,7 +2170,7 @@
 	window['AscCommonExcel'].getCFIconsForLoad = getCFIconsForLoad;
 	window['AscCommonExcel'].getCFIcon = getCFIcon;
 	window['AscCommonExcel'].getDataBarGradientColor = getDataBarGradientColor;
-	window['AscCommonExcel'].g_oConditionalFormattingPresets = g_oConditionalFormattingPresets;
+	window['AscCommonExcel'].getFullCFIcons = getFullCFIcons;
 
 	prot = CConditionalFormattingRule;
 	prot['asc_getDxf'] = prot.asc_getDxf;
@@ -2187,5 +2261,7 @@
 	prot['asc_setGte'] = prot.asc_setGte;
 	prot['asc_setType'] = prot.asc_setType;
 	prot['asc_setVal'] = prot.asc_setVal;
+
+	c_arrIcons
 
 })(window);
