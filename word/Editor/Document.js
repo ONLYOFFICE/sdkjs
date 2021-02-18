@@ -6397,9 +6397,9 @@ CDocument.prototype.MoveCursorToCell = function(bNext)
 	this.private_UpdateTargetForCollaboration();
 	this.Controller.MoveCursorToCell(bNext);
 };
-CDocument.prototype.MoveCursorToSignature = function(sGuid)
+CDocument.prototype.GoToSignature = function(sGuid)
 {
-    this.DrawingObjects.moveCursorToSignature(sGuid);
+    this.DrawingObjects.goToSignature(sGuid);
 };
 CDocument.prototype.MoveCursorToPageStart = function()
 {
@@ -9017,7 +9017,23 @@ CDocument.prototype.InsertContent = function(SelectedContent, NearPos)
 			this.Selection.EndPos   = LastPos;
 			this.CurPos.ContentPos  = LastPos;
 		}
-
+        var aDrawings = SelectedContent.DrawingObjects;
+        var nDrawing, oDrawing, oSp;
+        var sLastSignatureId = null;
+        for(nDrawing = 0; nDrawing < aDrawings.length; ++nDrawing)
+        {
+            oDrawing = aDrawings[nDrawing];
+            oSp = oDrawing.GraphicObj;
+            if(oSp.signatureLine)
+            {
+                oSp.setSignature(oSp.signatureLine);
+                sLastSignatureId = oSp.signatureLine.id;
+            }
+        }
+        if(sLastSignatureId)
+        {
+            this.Api.sendEvent("asc_onAddSignature", sLastSignatureId);
+        }
 		if (docpostype_DrawingObjects !== this.CurPos.Type)
 			this.SetDocPosType(docpostype_Content);
 	}

@@ -2883,13 +2883,52 @@ var editor;
       AscFormat.DrawingObjectsController.prototype.getAllSignatures2(ret, aSpTree);
       return ret;
     };
-
+    spreadsheet_api.prototype.getSignatureLineSp = function(sGuid) {
+        var ret = [];
+        var aSpTree = [];
+        this.wbModel.forEach(function (ws) {
+            for (var j = 0; j < ws.Drawings.length; ++j) {
+                aSpTree.push(ws.Drawings[j].graphicObject);
+            }
+        });
+        AscFormat.DrawingObjectsController.prototype.getAllSignatures2(ret, aSpTree);
+        for(var i = 0; i < aSpTree.length; ++i){
+            if(aSpTree[i].signatureLine && aSpTree[i].signatureLine.id === sGuid){
+                return aSpTree[i];
+            }
+        }
+        return null;
+    };
     spreadsheet_api.prototype.asc_CallSignatureDblClickEvent = function(sGuid){
-        var allSpr = this.asc_getAllSignatures();
-        for(var i = 0; i < allSpr.length; ++i){
-          if(allSpr[i].signatureLine && allSpr[i].signatureLine.id === sGuid){
-              this.sendEvent("asc_onSignatureDblClick", sGuid, allSpr[i].extX, allSpr[i].extY);
-          }
+        var oSp = this.getSignatureLineSp(sGuid);
+        if(oSp){
+            this.sendEvent("asc_onSignatureDblClick", sGuid, oSp.extX, oSp.extY);
+        }
+    };
+    spreadsheet_api.prototype.gotoSignatureInternal = function(sGuid){
+        var oSp = this.getSignatureLineSp(sGuid);
+        if(oSp && !oSp.group){
+            var oWorksheet = oSp.worksheet;
+            if(oWorksheet) {
+                var nSheetIdx = oWorksheet.getIndex();
+                if (this.asc_getActiveWorksheetIndex() !== nSheetIdx) {
+                    this.asc_showWorksheet(nSheetIdx);
+                    var oWSView = this.wb.getWorksheet();
+                    if(oWSView) {
+                        var oRender = oWSView.objectRender;
+                        if(oRender) {
+                            var oController = oRender.controller;
+                            if(oController) {
+                                oSp.Set_CurrentElement(false);
+                                oController.selection.textSelection = null;
+                                oController.updateSelectionState();
+                                oController.updateOverlay();
+                                oRender.sendGraphicObjectProps();
+                            }
+                        }
+                    }
+                }
+            }
         }
     };
     //-------------------------------------------------------

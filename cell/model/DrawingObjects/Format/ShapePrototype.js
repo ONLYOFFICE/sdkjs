@@ -484,6 +484,15 @@ CShape.prototype.addToDrawingObjects =  function(pos, type)
         nv_sp_pr.cNvPr.setId(++AscFormat.Ax_Counter.GLOBAL_AX_ID_COUNTER);
         this.setNvSpPr(nv_sp_pr);
     }
+    if(this.signatureLine)
+    {
+        this.setSignature(this.signatureLine);
+    }
+    var oApi = Asc.editor;
+    if(oApi && this.signatureLine)
+    {
+        oApi.sendEvent("asc_onAddSignature", this.signatureLine.id);
+    }
 };
 
 
@@ -506,12 +515,25 @@ CShape.prototype.deleteDrawingBase = function()
             this.setDrawingBaseCoords(oFrom.col, oFrom.colOff, oFrom.row, oFrom.rowOff, oTo.col, oTo.colOff, oTo.row, oTo.rowOff, oPos.X, oPos.Y, oExt.cx, oExt.cy)
         }
     }
+    if(this.signatureLine && this.setSignature)
+    {
+        this.setSignature(this.signatureLine);
+    }
     var position = AscFormat.deleteDrawingBase(this.worksheet.Drawings, this.Get_Id());
     if(AscFormat.isRealNumber(position))
     {
         //var data = {Type: AscDFH.historyitem_AutoShapes_RemoveFromDrawingObjects, Pos: position};
         History.Add(new CChangesDrawingObjectsRemoveFromDrawingObjects(this, position));
         //this.worksheet.addContentChanges(new AscCommon.CContentChangesElement(AscCommon.contentchanges_Remove, data.Pos, 1, data));
+    }
+    if(this.signatureLine && this.setSignature)
+    {
+        var oApi = Asc.editor;
+        if(oApi)
+        {
+            oApi.sendEvent("asc_onAddSignature", this.signatureLine.id);
+        }
+        this.setSignature(null);
     }
     return position;
 };

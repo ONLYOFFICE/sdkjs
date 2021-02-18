@@ -1771,6 +1771,15 @@ ParaDrawing.prototype.Remove_FromDocument = function(bRecalculate)
 	var oRun = this.Parent.Get_DrawingObjectRun(this.Id);
 	if (oRun)
 	{
+
+		var oGrObject = this.GraphicObj;
+		if(oGrObject && oGrObject.getObjectType() === AscDFH.historyitem_type_Shape)
+		{
+			if(oGrObject.signatureLine)
+			{
+				oGrObject.setSignature(oGrObject.signatureLine);
+			}
+		}
 		var oPictureCC         = null;
 		var arrContentControls = oRun.GetParentContentControls();
 		for (var nIndex = arrContentControls.length - 1; nIndex >= 0; --nIndex)
@@ -1790,6 +1799,15 @@ ParaDrawing.prototype.Remove_FromDocument = function(bRecalculate)
 			oResult = new CTextPr();
 		else
 			oResult = oRun.GetTextPr();
+
+		if(oGrObject && oGrObject.getObjectType() === AscDFH.historyitem_type_Shape)
+		{
+			if(oGrObject.signatureLine)
+			{
+				editor.sendEvent("asc_onRemoveSignature", oGrObject.signatureLine.id);
+				oGrObject.setSignature(null);
+			}
+		}
 	}
 
 	if (false != bRecalculate)

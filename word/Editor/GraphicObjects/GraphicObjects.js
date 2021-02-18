@@ -2907,36 +2907,40 @@ CGraphicObjects.prototype =
         }
     },
 
-    moveCursorToSignature: function(sGuid)
+    goToSignature: function(sGuid)
     {
+        if(!this.document)
+        {
+            return;
+        }
+        var oDrawingDocument = this.document.GetDrawingDocument();
+        if(!oDrawingDocument)
+        {
+            return;
+        }
+        var oWordControl = oDrawingDocument.m_oWordControl;
+        if(!oWordControl)
+        {
+            return;
+        }
         var aSignatureShapes = this.getAllSignatures2([], this.getDrawingArray());
-        var oShape, oMainGroup;
+        var oShape;
         for(var i = 0; i < aSignatureShapes.length; ++i)
         {
             oShape = aSignatureShapes[i];
-            if(oShape && oShape.signatureLine && oShape.signatureLine.id === sGuid)
+            if(oShape && !oShape.group && oShape.signatureLine && oShape.signatureLine.id === sGuid && oShape.parent)
             {
-                oMainGroup = oShape.getMainGroup();
-                if(oMainGroup)
-                {
-                    if(oMainGroup.parent)
-                    {
-                        this.resetSelection();
-                        oMainGroup.parent.GoTo_Text(true, true);
-                    }
-                }
-                else
-                {
-                    if(oShape.parent)
-                    {
-                        this.resetSelection();
-                        oShape.parent.GoTo_Text(true, true);
-                    }
-                }
+                oWordControl.ScrollToPosition(oShape.x, oShape.y, oShape.parent.PageNum, oShape.extY);
+                oShape.Set_CurrentElement(false, oShape.parent.PageNum);
+                this.selection.textSelection = null;
+                this.document.Document_UpdateInterfaceState();
+                this.document.Document_UpdateRulersState();
+                this.document.Document_UpdateSelectionState();
                 return;
             }
         }
     },
+
 
     recalculateCurPos: function(bUpdateX, bUpdateY)
     {
@@ -3131,9 +3135,6 @@ CGraphicObjects.prototype =
                 {
                     this.selectedObjects[i].parent.PreDelete();
                     this.selectedObjects[i].parent.Remove_FromDocument(false);
-                    if(this.selectedObjects[i].signatureLine){
-                        this.document.Api.sendEvent("asc_onRemoveSignature", this.selectedObjects[i].signatureLine.id);
-                    }
                     arr_drawings_.push(this.selectedObjects[i].parent);
                 }
                 this.resetSelection();
