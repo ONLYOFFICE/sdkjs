@@ -1768,9 +1768,19 @@
 		formulaParent: CConditionalFormattingFormulaParent {ws: Worksheet, rule: CConditionalFormattingRule, isDefName: false}
 		__proto__: Object*/
 
-		
+		var presetStyles = conditionalFormattingPresets[Asc.c_oAscCFRuleTypeSettings.icons][styleIndex];
 
-
+		this.IconSet = presetStyles[0];
+		for (var i = 0; i < presetStyles[1].length; i++) {
+			var formatValueObject = new CConditionalFormatValueObject();
+			formatValueObject.Type = presetStyles[1][0];
+			formatValueObject.Val = presetStyles[1][1];
+			if (presetStyles[1][2]) {
+				formatValueObject.formula = new CFormulaCF();
+				formatValueObject.formula.Text = presetStyles[1][2];
+			}
+			this.aCFVOs.push(formatValueObject);
+		}
 	};
 	CIconSet.prototype.Write_ToBinary2 = function (writer) {
 		if (null != this.IconSet) {
@@ -2219,8 +2229,8 @@
 	var aDataBarStyles = [[0,6524614,6524614,true,16711680,16711680],[0,6538116,6538116,true,16711680,16711680],[0,16733530,16733530,true,16711680,16711680],[0,16758312,16758312,true,16711680,16711680],[0,35567,35567,true,16711680,16711680],[0,14024827,14024827,true,16711680,16711680],[0,,6524614,false,,16711680],[0,,6538116,false,,16711680],[0,,16733530,false,,16711680],[0,,16758312,false,,16711680],[0,,35567,false,,16711680],[0,,14024827,false,,16711680]];
 	//[[Type, Val, Rgb], [Type, Val, Rgb], ...]
 	var aColorScaleStyles = [[[2,null,16279915],[5,50,16771972],[1,null,6536827]],[[2,null,6536827],[5,50,16771972],[1,null,16279915]],[[2,null,16279915],[5,50,16579839],[1,null,6536827]],[[2,null,6536827],[5,50,16579839],[1,null,16279915]],[[2,null,16279915],[5,50,16579839],[1,null,5933766]],[[2,null,5933766],[5,50,16579839],[1,null,16279915]],[[2,null,16279915],[1,null,16579839]],[[2,null,16579839],[1,null,16279915]],[[2,null,16579839],[1,null,6536827]],[[2,null,6536827],[1,null,16579839]],[[2,null,16773020],[1,null,6536827]],[[2,null,6536827],[1,null,16773020]]];
-
-	var aIconsStyles = [];
+	//[[IconSet, [[Type, Val, Formula], [Type, Val, Formula], ...], [IconSet, [[Type, Val, Formula], [Type, Val, Formula], ...]]
+	var aIconsStyles = [[0,[[4,0,null],[4,33,null],[4,67,67]]],[17,[[4,0,null],[4,33,null],[4,67,67]]],[8,[[4,0,null],[4,25,null],[4,50,null],[4,75,75]]],[13,[[4,0,null],[4,20,null],[4,40,null],[4,60,null],[4,80,80]]],[1,[[4,0,null],[4,33,null],[4,67,67]]],[9,[[4,0,null],[4,25,null],[4,50,null],[4,75,75]]],[14,[[4,0,null],[4,20,null],[4,40,null],[4,60,null],[4,80,80]]],[6,[[4,0,null],[4,33,null],[4,67,67]]],[3,[[4,0,null],[4,33,null],[4,67,67]]],[11,[[4,0,null],[4,25,null],[4,50,null],[4,75,75]]],[11,[[4,0,null],[4,25,null],[4,50,null],[4,75,75]]],[7,[[4,0,null],[4,33,null],[4,67,67]]],[12,[[4,0,null],[4,25,null],[4,50,null],[4,75,75]]],[4,[[4,0,null],[4,33,null],[4,67,67]]],[2,[[4,0,null],[4,33,null],[4,67,67]]],[5,[[4,0,null],[4,33,null],[4,67,67]]],[18,[[4,0,null],[4,33,null],[4,67,67]]],[15,[[4,0,null],[4,20,null],[4,40,null],[4,60,null],[4,80,80]]],[19,[[4,0,null],[4,20,null],[4,40,null],[4,60,null],[4,80,80]]],[10,[[4,0,null],[4,25,null],[4,50,null],[4,75,75]]],[16,[[4,0,null],[4,20,null],[4,40,null],[4,60,null],[4,80,80]]]];
 
 	var conditionalFormattingPresets = {};
 	conditionalFormattingPresets[Asc.c_oAscCFRuleTypeSettings.dataBar] = aDataBarStyles;
