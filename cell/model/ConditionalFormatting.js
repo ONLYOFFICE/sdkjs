@@ -1080,43 +1080,6 @@
 		return res;
 	};
 	CColorScale.prototype.applyPreset = function (styleIndex) {
-		/*0: CColorScale
-		aCFVOs: Array(3)
-		0: CConditionalFormatValueObject
-		Gte: true
-		Type: 2
-		Val: null
-		formula: null
-		formulaParent: null
-		__proto__: Object
-		1: CConditionalFormatValueObject
-		Gte: true
-		Type: 5
-		Val: "50"
-		formula: null
-		formulaParent: null
-		__proto__: Object
-		2: CConditionalFormatValueObject
-		Gte: true
-		Type: 1
-		Val: null
-		formula: null
-		formulaParent: null
-		__proto__: Object
-		length: 3
-		__proto__: Array(0)
-		aColors: Array(3)
-		0: RgbColor
-		rgb: 6536827
-		__proto__: Object
-		1: RgbColor
-		rgb: 16579839
-		__proto__: Object
-		2: RgbColor
-		rgb: 16279915
-		__proto__: Object
-		length: 3*/
-
 		var presetStyles = conditionalFormattingPresets[Asc.c_oAscCFRuleTypeSettings.colorScale][styleIndex];
 		for (var i = 0; i < presetStyles.length; i++) {
 			var formatValueObject = new CConditionalFormatValueObject();
@@ -1126,7 +1089,6 @@
 			this.aCFVOs.push(formatValueObject);
 			this.aColors.push(colorObject);
 		}
-
 	};
 	CColorScale.prototype.Write_ToBinary2 = function (writer) {
 		//CConditionalFormatValueObject
@@ -1293,34 +1255,6 @@
 		return res;
 	};
 	CDataBar.prototype.applyPreset = function (styleIndex) {
-		/*AxisColor: RgbColor {rgb: 0}
-		 AxisPosition: 0
-		 BorderColor: RgbColor {rgb: 6524614}
-		 Color: RgbColor {rgb: 6524614}
-		 Direction: 0
-		 Gradient: true
-		 MaxLength: 100
-		 MinLength: 0
-		 NegativeBarBorderColorSameAsPositive: false
-		 NegativeBarColorSameAsPositive: false
-		 NegativeBorderColor: RgbColor {rgb: 16711680}
-		 NegativeColor: RgbColor {rgb: 16711680}
-		 ShowValue: true
-		 aCFVOs: Array(2)
-		 0: CConditionalFormatValueObject
-		 Gte: true
-		 Type: 6
-		 Val: null
-		 formula: null
-		 formulaParent: null
-		 __proto__: Object
-		 1: CConditionalFormatValueObject
-		 Gte: true
-		 Type: 7
-		 Val: null
-		 formula: null
-		 formulaParent: null*/
-
 		var _generateRgbColor = function (_color) {
 			if (!_color) {
 				return null;
@@ -1723,51 +1657,6 @@
 		return res;
 	};
 	CIconSet.prototype.applyPreset = function (styleIndex) {
-		/*0: CIconSet
-		IconSet: 15
-		Percent: true
-		Reverse: false
-		ShowValue: true
-		aCFVOs: Array(5)
-		0: CConditionalFormatValueObject
-		Gte: true
-		Type: 4
-		Val: "0"
-		formula: null
-		formulaParent: null
-		__proto__: Object
-		1: CConditionalFormatValueObject
-		Gte: true
-		Type: 4
-		Val: "20"
-		formula: null
-		formulaParent: null
-		__proto__: Object
-		2: CConditionalFormatValueObject
-		Gte: true
-		Type: 4
-		Val: "40"
-		formula: null
-		formulaParent: null
-		__proto__: Object
-		3: CConditionalFormatValueObject
-		Gte: true
-		Type: 4
-		Val: "60"
-		formula: null
-		formulaParent: null
-		__proto__: Object
-		4: CConditionalFormatValueObject
-		Gte: true
-		Type: 4
-		Val: "80"
-		formula: CFormulaCF
-		Text: "80"
-		_f: null
-		__proto__: Object
-		formulaParent: CConditionalFormattingFormulaParent {ws: Worksheet, rule: CConditionalFormattingRule, isDefName: false}
-		__proto__: Object*/
-
 		var presetStyles = conditionalFormattingPresets[Asc.c_oAscCFRuleTypeSettings.icons][styleIndex];
 
 		this.IconSet = presetStyles[0];

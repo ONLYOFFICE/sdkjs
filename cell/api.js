@@ -4952,24 +4952,6 @@ var editor;
           });
       }
 
-        var arr  =[];
-        var str = "";
-		for (i = rules.length - 1; i >= 0; --i) {
-			str += "[" + rules[i].aRuleElements[0].IconSet + ",[";
-		  for (var j = 0; j < rules[i].aRuleElements[0].aCFVOs.length; ++j) {
-				//var tmp = [rules[i].aRuleElements[0].aCFVOs[j].Type, rules[i].aRuleElements[0].aCFVOs[j].Val, rules[i].aRuleElements[0].aColors[j].rgb]
-
-              str += "[" + rules[i].aRuleElements[0].aCFVOs[j].Type + "," + rules[i].aRuleElements[0].aCFVOs[j].Val + "," + (null !== rules[i].aRuleElements[0].aCFVOs[j].formula ? rules[i].aRuleElements[0].aCFVOs[j].formula.Text : null) + "]"
-			  if (j !== rules[i].aRuleElements[0].aCFVOs.length - 1) {
-				  str += ",";
-			  }
-			}
-			str += "]]";
-			if (i !== 0) {
-				str += ",";
-			}
-		}
-
       return [rules, sActiveRanges.join(AscCommon.FormulaSeparators.functionArgumentSeparator)];
     };
 
