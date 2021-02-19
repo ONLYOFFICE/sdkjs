@@ -13044,11 +13044,7 @@ function ApplyPresetToChartSpace(oChartSpace, aPreset, bCreate){
         oSpPr.setParent(oShape);
         var oSignatureLine = new AscFormat.CSignatureLine();
         oSignatureLine.id = AscCommon.CreateGUID();
-        oSignatureLine.signer = oPr.asc_getSigner1();
-        oSignatureLine.signer2 = oPr.asc_getSigner2();
-        oSignatureLine.email = oPr.asc_getEmail();
-        oSignatureLine.showDate = oPr.asc_getShowDate();
-        oSignatureLine.instructions = oPr.asc_getInstructions();
+        oSignatureLine.setProperties(oPr);
         oShape.setSignature(oSignatureLine);
 
         return oShape;

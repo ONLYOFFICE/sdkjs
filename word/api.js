@@ -4165,18 +4165,42 @@ background-repeat: no-repeat;\
 
 	// signatures
 	asc_docs_api.prototype.asc_addSignatureLine = function (oPr, Width, Height, sImgUrl) {
-        if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Document_Content_Add))
+		var oLogicDocument = this.WordControl.m_oLogicDocument;
+        if (false === oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Document_Content_Add))
         {
-            this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_InsertSignatureLine);
-
-            var oSignature = AscFormat.fCreateSignatureShape(oPr, true, null, Width, Height, sImgUrl);
-            var Drawing   = new AscCommonWord.ParaDrawing(oSignature.spPr.xfrm.extX, oSignature.spPr.xfrm.extY, null, this.WordControl.m_oDrawingDocument, null, null);
-            oSignature.setParent(Drawing);
-            Drawing.Set_GraphicObject(oSignature);
-            this.WordControl.m_oLogicDocument.AddSignatureLine(Drawing);
-			oSignature.setSignature(oSignature.signatureLine);
-            this.sendEvent("asc_onAddSignature", oSignature.signatureLine.id);
-			this.WordControl.m_oLogicDocument.FinalizeAction();
+			oLogicDocument.StartAction(AscDFH.historydescription_Document_InsertSignatureLine);
+			var oSpToEdit = null;
+			var sGuid = oPr.asc_getGuid();
+			if(sGuid)
+			{
+				var oDrawingObjects = oLogicDocument.DrawingObjects;
+				var ret = [], allSpr = [];
+				allSpr = allSpr.concat(allSpr.concat(oDrawingObjects.getAllSignatures2(ret, oDrawingObjects.getDrawingArray())));
+				for(var i = 0; i < allSpr.length; ++i)
+				{
+					if(allSpr[i].getSignatureLineGuid() === sGuid)
+					{
+						oSpToEdit = allSpr[i];
+						break;
+					}
+				}
+			}
+			if(!oSpToEdit)
+			{
+				var oSignature = AscFormat.fCreateSignatureShape(oPr, true, null, Width, Height, sImgUrl);
+				var Drawing   = new AscCommonWord.ParaDrawing(oSignature.spPr.xfrm.extX, oSignature.spPr.xfrm.extY, null, this.WordControl.m_oDrawingDocument, null, null);
+				oSignature.setParent(Drawing);
+				Drawing.Set_GraphicObject(oSignature);
+				oLogicDocument.AddSignatureLine(Drawing);
+				oSignature.setSignature(oSignature.signatureLine);
+				this.sendEvent("asc_onAddSignature", oSignature.signatureLine.id);
+			}
+			else
+			{
+				oSpToEdit.setSignaturePr(oPr);
+				this.sendEvent("asc_onAddSignature", sGuid);
+			}
+			oLogicDocument.FinalizeAction();
         }
     };
 

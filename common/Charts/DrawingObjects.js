@@ -2432,19 +2432,45 @@ GraphicOption.prototype.union = function(oGraphicOption) {
     };
     _this.addSignatureLine = function(oPr, Width, Height, sImgUrl)
     {
-        _this.controller.resetSelection();
+        var oApi = window["Asc"]["editor"];
+        var sGuid = oPr.asc_getGuid();
+        var oSpToEdit = null;
+        if(sGuid)
+        {
+            var oDrawingObjects = this.controller;
+            var ret = [], allSpr = [];
+            allSpr = allSpr.concat(allSpr.concat(oDrawingObjects.getAllSignatures2(ret, oDrawingObjects.getDrawingArray())));
+            for(var i = 0; i < allSpr.length; ++i)
+            {
+                if(allSpr[i].getSignatureLineGuid() === sGuid)
+                {
+                    oSpToEdit = allSpr[i];
+                    break;
+                }
+            }
+        }
         History.Create_NewPoint();
-        var dLeft = worksheet.getCellLeft(worksheet.model.selectionRange.activeCell.col, 3);
-        var dTop = worksheet.getCellTop(worksheet.model.selectionRange.activeCell.row, 3);
-        var oSignatureLine = AscFormat.fCreateSignatureShape(oPr, false, worksheet.model, Width, Height, sImgUrl);
-        oSignatureLine.spPr.xfrm.setOffX(dLeft);
-        oSignatureLine.spPr.xfrm.setOffY(dTop);
-        oSignatureLine.addToDrawingObjects();
-        oSignatureLine.checkDrawingBaseCoords();
-        _this.controller.selectObject(oSignatureLine, 0);
+        if(!oSpToEdit)
+        {
+            _this.controller.resetSelection();
+            var dLeft = worksheet.getCellLeft(worksheet.model.selectionRange.activeCell.col, 3);
+            var dTop = worksheet.getCellTop(worksheet.model.selectionRange.activeCell.row, 3);
+            var oSignatureLine = AscFormat.fCreateSignatureShape(oPr, false, worksheet.model, Width, Height, sImgUrl);
+            oSignatureLine.spPr.xfrm.setOffX(dLeft);
+            oSignatureLine.spPr.xfrm.setOffY(dTop);
+            oSignatureLine.addToDrawingObjects();
+            oSignatureLine.checkDrawingBaseCoords();
+            _this.controller.selectObject(oSignatureLine, 0);
+            worksheet.setSelectionShape(true);
+            oApi.sendEvent("asc_onAddSignature", oSignatureLine.signatureLine.id);
+        }
+        else
+        {
+            oSpToEdit.setSignaturePr(oPr);
+            oApi.sendEvent("asc_onAddSignature", sGuid);
+        }
+
         _this.controller.startRecalculate();
-        worksheet.setSelectionShape(true);
-        window["Asc"]["editor"].sendEvent("asc_onAddSignature", oSignatureLine.signatureLine.id);
     };
 
     _this.addMath = function(Type){

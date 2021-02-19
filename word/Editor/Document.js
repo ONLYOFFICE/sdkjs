@@ -626,6 +626,27 @@ CSelectedContent.prototype =
 				LogicDocument.TrackMoveId = null;
 			}
 		}
+    },
+
+    CheckSignatures: function()
+    {
+        var aDrawings = this.DrawingObjects;
+        var nDrawing, oDrawing, oSp;
+        var sLastSignatureId = null;
+        for(nDrawing = 0; nDrawing < aDrawings.length; ++nDrawing)
+        {
+            oDrawing = aDrawings[nDrawing];
+            oSp = oDrawing.GraphicObj;
+            if(oSp && oSp.signatureLine)
+            {
+                oSp.setSignature(oSp.signatureLine);
+                sLastSignatureId = oSp.signatureLine.id;
+            }
+        }
+        if(sLastSignatureId)
+        {
+            editor.sendEvent("asc_onAddSignature", sLastSignatureId);
+        }
     }
 };
 CSelectedContent.prototype.SetInsertOptionForTable = function(nType)
@@ -9017,23 +9038,7 @@ CDocument.prototype.InsertContent = function(SelectedContent, NearPos)
 			this.Selection.EndPos   = LastPos;
 			this.CurPos.ContentPos  = LastPos;
 		}
-        var aDrawings = SelectedContent.DrawingObjects;
-        var nDrawing, oDrawing, oSp;
-        var sLastSignatureId = null;
-        for(nDrawing = 0; nDrawing < aDrawings.length; ++nDrawing)
-        {
-            oDrawing = aDrawings[nDrawing];
-            oSp = oDrawing.GraphicObj;
-            if(oSp.signatureLine)
-            {
-                oSp.setSignature(oSp.signatureLine);
-                sLastSignatureId = oSp.signatureLine.id;
-            }
-        }
-        if(sLastSignatureId)
-        {
-            this.Api.sendEvent("asc_onAddSignature", sLastSignatureId);
-        }
+        SelectedContent.CheckSignatures();
 		if (docpostype_DrawingObjects !== this.CurPos.Type)
 			this.SetDocPosType(docpostype_Content);
 	}
@@ -21120,14 +21125,37 @@ CDocument.prototype.MoveCursorToContentControl = function(sId, isBegin)
 };
 CDocument.prototype.GetAllSignatures = function()
 {
-    return this.DrawingObjects.getAllSignatures();
+    var aSignatures = [];
+    this.CheckRunContent(function(oRun)
+    {
+        var aContent = oRun.Content;
+        if(Array.isArray(aContent))
+        {
+            var nItem, oItem, oSp;
+            for(nItem = 0; nItem < aContent.length; ++nItem)
+            {
+                oItem = aContent[nItem];
+                if(oItem && oItem.GraphicObj)
+                {
+                    oSp = oItem.GraphicObj;
+                    if(oSp.signatureLine)
+                    {
+                        aSignatures.push(oSp.signatureLine);
+                    }
+                }
+            }
+        }
+    });
+    return aSignatures;
 };
 CDocument.prototype.CallSignatureDblClickEvent = function(sGuid)
 {
     var ret = [], allSpr = [];
     allSpr = allSpr.concat(allSpr.concat(this.DrawingObjects.getAllSignatures2(ret, this.DrawingObjects.getDrawingArray())));
-    for(var i = 0; i < allSpr.length; ++i){
-        if(allSpr[i].signatureLine && allSpr[i].signatureLine.id === sGuid){
+    for(var i = 0; i < allSpr.length; ++i)
+    {
+        if(allSpr[i].getSignatureLineGuid() === sGuid)
+        {
             this.Api.sendEvent("asc_onSignatureDblClick", sGuid, allSpr[i].extX, allSpr[i].extY);
         }
     }
@@ -23106,19 +23134,16 @@ CDocument.prototype.AddCaption = function(oPr)
         }
 
 
-
-        var aFields = [];
-
+        //Update added field
         aFieldsToUpdate.push(oComplexField);
-        this.GetAllSeqFieldsByType(oPr.get_Label(), aFields);
-        for(var i = 0; i < aFields.length; ++i)
+        for(nField = aFieldsToUpdate.length - 1; nField > -1; --nField)
         {
-            if(aFields[i] === oComplexField)
-            {
-                break;
-            }
+            aFieldsToUpdate[nField].Update(false, false);
         }
-        aFields = aFields.slice(i);
+
+        //Update all fields from current sequence
+        var aFields = [];
+        this.GetAllSeqFieldsByType(oPr.get_Label(), aFields);
         var arrParagraphs = [];
         for (var nIndex = 0, nCount = aFields.length; nIndex < nCount; ++nIndex)
         {
@@ -23134,7 +23159,7 @@ CDocument.prototype.AddCaption = function(oPr)
                     arrParagraphs.push(oField.GetParagraph());
             }
         }
-
+        var nField;
         if(arrParagraphs.length > 0)
         {
             if (!this.Document_Is_SelectionLocked(changestype_None, {
@@ -23143,20 +23168,14 @@ CDocument.prototype.AddCaption = function(oPr)
                 CheckType : changestype_Paragraph_Content
             }))
             {
-                this.StartAction(AscDFH.historydescription_Document_UpdateFields);
-                for(i = 0; i < aFields.length; ++i)
+                for(nField = 0; nField < aFields.length; ++nField)
                 {
-                    if(aFields[i].Update)
+                    if(aFields[nField].Update)
                     {
-                        aFields[i].Update(false, false);
+                        aFields[nField].Update(false, false);
                     }
                 }
-                this.FinalizeAction();
             }
-        }
-        for(var nField = aFieldsToUpdate.length - 1; nField > -1; --nField)
-        {
-            aFieldsToUpdate[nField].Update(false, false);
         }
         NewParagraph.MoveCursorToEndPos();
         NewParagraph.Document_SetThisElementCurrent(true);

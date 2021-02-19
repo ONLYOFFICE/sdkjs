@@ -972,13 +972,26 @@ function SetXfrmFromMetrics(oDrawing, metrics)
     };
     CSignatureLine.prototype.copy = function(){
         var ret = new CSignatureLine();
-        ret.id =  this.id;
+        ret.id =  AscCommon.CreateGUID();
         ret.signer = this.signer;
         ret.signer2 = this.signer2;
         ret.email = this.email;
         ret.showDate = this.showDate;
         ret.instructions = this.instructions;
         return ret;
+    };
+    CSignatureLine.prototype.copyWithId = function(){
+        var sId = this.id;
+        var oCopy = this.copy();
+        oCopy.id = sId;
+        return oCopy;
+    };
+    CSignatureLine.prototype.setProperties = function(oPr){
+        this.signer = oPr.asc_getSigner1();
+        this.signer2 = oPr.asc_getSigner2();
+        this.email = oPr.asc_getEmail();
+        this.showDate = oPr.asc_getShowDate();
+        this.instructions = oPr.asc_getInstructions();
     };
 
     AscDFH.drawingsConstructorsMap[AscDFH.historyitem_ShapeSetBodyPr] = AscFormat.CBodyPr;
@@ -1037,6 +1050,16 @@ CShape.prototype.setSignature = function(oSignature)
 {
     History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ShapeSetSignature, this.signatureLine, oSignature));
     this.signatureLine = oSignature;
+};
+CShape.prototype.setSignaturePr = function(oPr)
+{
+    if(!oPr || !this.signatureLine)
+    {
+        return;
+    }
+    var oCopy = this.signatureLine.copyWithId();
+    oCopy.setProperties(oPr);
+    this.setSignature(oCopy);
 };
 
 CShape.prototype.convertToWord = function (document) {

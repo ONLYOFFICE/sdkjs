@@ -1888,6 +1888,7 @@ ParaDrawing.prototype.Add_ToDocument = function(NearPos, bRecalculate, RunPr, Ru
 	var SelectedContent = new CSelectedContent();
 	SelectedContent.Add(SelectedElement);
 	SelectedContent.SetMoveDrawing(true);
+	SelectedContent.DrawingObjects.push(this);
 
 	NearPos.Paragraph.Parent.InsertContent(SelectedContent, NearPos);
 	NearPos.Paragraph.Clear_NearestPosArray();
