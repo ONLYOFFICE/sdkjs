@@ -533,7 +533,7 @@ CShape.prototype.deleteDrawingBase = function()
         {
             oApi.sendEvent("asc_onAddSignature", this.signatureLine.id);
         }
-        this.setSignature(null);
+        this.setSignature(this.signatureLine);
     }
     return position;
 };

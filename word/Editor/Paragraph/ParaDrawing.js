@@ -1805,7 +1805,7 @@ ParaDrawing.prototype.Remove_FromDocument = function(bRecalculate)
 			if(oGrObject.signatureLine)
 			{
 				editor.sendEvent("asc_onRemoveSignature", oGrObject.signatureLine.id);
-				oGrObject.setSignature(null);
+				oGrObject.setSignature(oGrObject.signatureLine);
 			}
 		}
 	}
