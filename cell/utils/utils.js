@@ -2066,17 +2066,17 @@
 			ctx.fillText(sStyleName, width_padding, textY + tm.baseline);
 
 
-			//sr.restoreInternalState(ct.state).render(drawingCtx, textX, textY, textW, color);
-
-			/*var dw = sr._calcCharsWidth(0, sr.charWidths.length - 1);
+			//TODO for test underline/strikeout
+			var dw = sr._calcCharsWidth(0, sr.charWidths.length - 1);
 			var l = sr.lines[0];
-			var x1 = l, y1 = textY + tm.baseline;
+			//var x1 = l ? initX(0) : 0, y1 = y, dx = l ? computeWordDeltaX() : 0
+			var x1 = 0, y1 = textY + tm.baseline;
 			var zoom = ctx.getZoom();
 			var ppiy = ctx.getPPIY();
 			var prop = sr.charProps[0];
 			var dh = prop && prop.lm && prop.lm.bl2 > 0 ? prop.lm.bl2 - prop.lm.bl : 0;
-			var so = prop.font.getStrikeout();
-			var ul = Asc.EUnderline.underlineNone !== prop.font.getUnderline();
+			var so = format.s;
+			var ul = Asc.EUnderline.underlineNone !== format.u;
 			var isSO = so === true;
 			var fsz, x2, y, lw, dy, i, b, x_, cp;
 			var bl = Asc.round(l.bl * zoom);
@@ -2088,7 +2088,8 @@
 				fsz = prop.font.getSize();
 				lw = Asc.round(fsz * ppiy / 72 / 18) || 1;
 				ctx.setStrokeStyle(oStyle.getFontColor() || new AscCommon.CColor(0, 0, 0)).setLineWidth(lw).beginPath();
-				dy = (lw / 2); dy = dy >> 0;
+				dy = (lw / 2);
+				dy = dy >> 0;
 				if (ul) {
 					y = Asc.round(y1 + bl + prop.lm.d * 0.4);
 					ctx.lineHor(x1, y + dy, x2 + 1); // ToDo вопрос тут
@@ -2099,9 +2100,7 @@
 					ctx.lineHor(x1, y - dy, x2 + 1); // ToDo вопрос тут
 				}
 				ctx.stroke();
-			}*/
-
-
+			}
 		}
 		
 		function drawFillCell(ctx, graphics, fill, rect) {
