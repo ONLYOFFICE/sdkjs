@@ -994,7 +994,7 @@ CTableCell.prototype =
 					oResult.Max = nPrefW;
 			}
 
-			if (this.GetNoWrap())
+			if (true !== isRotated && this.GetNoWrap())
 			{
 				if (this.GetW().IsMM())
 				{
