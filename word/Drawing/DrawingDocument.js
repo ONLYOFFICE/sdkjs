@@ -6940,31 +6940,35 @@ function CDrawingDocument()
             return;
         }
         
-        var offsetBase = 10;
-        var line_w = 4;
-		// считаем расстояние между линиями
-		var height_px_p = document.getElementById(id[0]).parentNode.clientHeight;
-        var line_distance = (((height_px_p - (offsetBase << 1)) - line_w * 10) / 9) >> 0;
-        // убираем погрешность в offset
-        var offset = (height_px_p - (line_w * 10 + line_distance * 9)) >> 1;
-        var y = offset + 2;
-        var text_base_offset_x = offset + ((6.25 * AscCommon.g_dKoef_mm_to_pix) >> 0);
-        var text_base_offset_dist = (6.25 * AscCommon.g_dKoef_mm_to_pix) >> 0;
+        var offsetBase = 5;
+        var line_w = 2;
+		var height_px_p = document.getElementById(id[0]).clientHeight;
+        var line_distance = (((height_px_p - (offsetBase << 1)) - line_w * 5) / 3) >> 0;
+		var offset = (height_px_p - (line_w + line_distance)) >> 1;
+        var y = (height_px_p >> 1) - (line_w >> 1);
+        var text_base_offset_x = offset + ((3.25 * AscCommon.g_dKoef_mm_to_pix) >> 0);
+        var text_base_offset_dist = (3.25 * AscCommon.g_dKoef_mm_to_pix) >> 0;
 
         for (var k = 0; k < 9; k++) 
         {
-            var elem =  document.getElementById(id[k]);
-            if (!elem)
+			// чтобы убрать отступ у i
+			props.Lvl[k].Align = 1;
+            var parent =  document.getElementById(id[k]);
+            if (!parent)
                 return;
 
-            var width_px = elem.clientWidth;
-            var height_px = elem.clientHeight;
+            var width_px = parent.clientWidth;
+            var height_px = parent.clientHeight;
             
-            var canvas =  document.createElement('canvas');
-            canvas.style.cssText = "padding:0;margin:0;user-select:none;";
-            canvas.style.width = width_px + "px";
-            canvas.style.height = height_px + "px";
-            elem.appendChild(canvas);
+            var canvas = parent.firstChild;
+			if (!canvas)
+			{
+				canvas = document.createElement('canvas');
+				canvas.style.cssText = "padding:0;margin:0;user-select:none;";
+				canvas.style.width = width_px + "px";
+				canvas.style.height = height_px + "px";
+				parent.appendChild(canvas);
+			}
 
             canvas.width = AscCommon.AscBrowser.convertToRetinaValue(width_px, true);
             canvas.height = AscCommon.AscBrowser.convertToRetinaValue(height_px, true);
@@ -6974,58 +6978,18 @@ function CDrawingDocument()
             if (AscCommon.AscBrowser.retinaPixelRatio >= 2)
                 ctx.setTransform(2, 0, 0, 2, 0, 0);
 
-            // AscCommon.addMouseEvent(canvas, "down", function(e) {
-            //  AscCommon.stopEvent(e);
-            //  if (true !== this.is_multi_level)
-            //      return;
-
-            //  var offsetBase = 10;
-            //  var line_w = 4;
-            //  var height = parseInt(this.style.height);
-            //  var line_distance = (((height - (offsetBase << 1)) - line_w * 10) / 9) >> 0;
-            //  var offset = (height - (line_w * 10 + line_distance * 9)) >> 1;
-            //  var current = this.currentLevel;
-
-            //  var yPos = e.pageY;
-            //  if (undefined === yPos)
-            //      yPos = e.clientY;
-            //  yPos = (yPos * AscCommon.AscBrowser.zoom);
-            //  var clientRect = this.getBoundingClientRect();
-            //  if (undefined != clientRect.y)
-            //      yPos -= clientRect.y;
-            //  else if (undefined != clientRect.top)
-            //      yPos -= clientRect.top;
-
-            //  var level = 8;
-            //  var y = offset + 2;
-            //  for (var i = 0; i < 9; i++)
-            //  {
-            //      y += (line_w + line_distance);
-            //      if (i == current)
-            //          y += (line_w + line_distance);
-
-            //      if (yPos < (y - ((line_w + line_distance) >> 1)))
-            //      {
-            //          level = i;
-            //          break;
-            //      }
-            //  }
-            //  editor.sendEvent("asc_onPreviewLevelChange", level);
-            // });
-
-            ctx.lineWidth = 4;
+            ctx.lineWidth = 2;
             ctx.strokeStyle = "000000"; // "#CBCBCB";
 
-            var textYs = {x: text_base_offset_x - ((6.25 * AscCommon.g_dKoef_mm_to_pix) >> 0), y: y + line_w};
+            var textYs = {x: text_base_offset_x - ((4.25 * AscCommon.g_dKoef_mm_to_pix) >> 0), y: y + line_w + line_distance};
 
             ctx.moveTo(text_base_offset_x, y); ctx.lineTo(width_px - offsetBase, y);
             ctx.stroke();
             ctx.beginPath();
 
             text_base_offset_x += text_base_offset_dist;
-            // y += (line_w + line_distance); //если одна канва будет, то надо менять, если каждый раз разная, то не надо
 
-            this.privateGetParagraphByString(props.Lvl[k], k, 1, textYs.x, textYs.y, line_distance, ctx, width_px, height_px);
+            this.privateGetParagraphByString(props.Lvl[k], k, 1, textYs.x, textYs.y, (height_px >> 1), ctx, width_px, height_px);
         }
     };
 
