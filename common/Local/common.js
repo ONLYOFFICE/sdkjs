@@ -563,6 +563,9 @@ window["asc_LocalRequestSign"] = function(guid, width, height, isView)
 	}
 
 	var _editor = window["Asc"]["editor"] ? window["Asc"]["editor"] : window.editor;
+    if (_editor.isRestrictionView())
+    	return;
+
 	var _length = _editor.signatures.length;
 	for (var i = 0; i < _length; i++)
 	{

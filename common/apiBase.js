@@ -2412,7 +2412,7 @@
 
 	baseEditorsApi.prototype.asc_Sign = function(id, guid, url1, url2)
 	{
-		if (window["AscDesktopEditor"])
+        if (window["AscDesktopEditor"] && !this.isRestrictionView())
 			window["AscDesktopEditor"]["Sign"](id, guid, url1, url2);
 	};
 	baseEditorsApi.prototype.asc_RequestSign = function(guid)
