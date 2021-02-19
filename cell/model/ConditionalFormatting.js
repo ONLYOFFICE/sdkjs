@@ -769,26 +769,6 @@
 		var presetType = presetId[0];
 		var styleIndex = presetId[1];
 
-		/*aRuleElements: [CColorScale]
-		aboveAverage: true
-		activePresent: false
-		bottom: false
-		dxf: null
-		equalAverage: false
-		id: "23"
-		isLock: null
-		operator: null
-		percent: false
-		pivot: false
-		priority: 9
-		ranges: [Range]
-		rank: null
-		stdDev: null
-		stopIfTrue: false
-		text: null
-		timePeriod: null
-		type: 3*/
-
 		var elem;
 		switch (presetType) {
 			case Asc.c_oAscCFRuleTypeSettings.dataBar:
@@ -804,7 +784,7 @@
 			case Asc.c_oAscCFRuleTypeSettings.icons:
 				elem = new CIconSet();
 				elem.applyPreset(styleIndex);
-				this.type = Asc.ECfType.icons;
+				this.type = Asc.ECfType.iconSet;
 				break;
 		}
 		if (elem) {
