@@ -2713,12 +2713,16 @@ var editor;
 						var groupRes;
 						var changeRes = t._changePivot(pivotTable, confirmation, true, function(){
 							groupRes = pivotTable.groupDiscreteCache(layout.fld, layout.values);
+							pivotTable.groupDiscrete(layout.fld, layout.values, groupRes);
 						});
 						var index = 0;
 						while (index < pivotTables.length && c_oAscError.ID.No === changeRes.error && c_oAscError.ID.No === changeRes.warning) {
 							var pivotCur = pivotTables[index++];
+							if (pivotCur === pivotTable) {
+								continue;
+							}
 							changeRes = t._changePivot(pivotCur, confirmation, true, function(){
-								groupRes = pivotCur.groupDiscrete(layout.fld, layout.values, groupRes);
+								pivotCur.groupDiscrete(layout.fld, layout.values, groupRes);
 							});
 						}
 						return changeRes;
@@ -2737,7 +2741,40 @@ var editor;
 				}
 			}
 		}
-  };
+	};
+	spreadsheet_api.prototype.asc_ungroupPivot = function () {
+		var t = this;
+		var ws = this.wbModel.getActiveWs();
+		var activeCell = ws.selectionRange.activeCell;
+		var pivotTable = ws.getPivotTable(activeCell.col, activeCell.row);
+		if (pivotTable && ws.selectionRange.inContains(pivotTable.getReportRanges())) {
+			var layout = pivotTable.getLayoutsForGroup(ws.selectionRange);
+			if (null !== layout.fld) {
+				if (layout.valuesCount > 0) {
+					this._changePivotAndConnectedByPivotCacheWithLock(pivotTable, false, function(confirmation, pivotTables) {
+						var groupRes;
+						var changeRes = t._changePivot(pivotTable, confirmation, true, function(){
+							groupRes = pivotTable.ungroupDiscreteCache(layout.fld, layout.values);
+							pivotTable.ungroupDiscrete(layout.fld, groupRes);
+						});
+						var index = 0;
+						while (index < pivotTables.length && c_oAscError.ID.No === changeRes.error && c_oAscError.ID.No === changeRes.warning) {
+							var pivotCur = pivotTables[index++];
+							if (pivotCur === pivotTable) {
+								continue;
+							}
+							changeRes = t._changePivot(pivotCur, confirmation, true, function(){
+								pivotCur.ungroupDiscrete(layout.fld, groupRes);
+							});
+						}
+						return changeRes;
+					});
+				} else {
+					this.sendEvent('asc_onError', c_oAscError.ID.PivotGroup, c_oAscError.Level.Critical);
+				}
+			}
+		}
+	};
 
   spreadsheet_api.prototype.asc_ungroup = function(val) {
     if(val) {
@@ -3914,6 +3951,8 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellItalic = function(isItalic) {
+    this.asc_ungroupPivot();
+    return;
     var ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellItalic) {
       ws.objectRender.controller.setCellItalic(isItalic);
