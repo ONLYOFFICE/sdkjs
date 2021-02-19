@@ -1185,17 +1185,21 @@
 		this.aColors = newArr;
 	};
 	CColorScale.prototype.isEqual = function (elem) {
-		if (elem.aCFVOs && elem.aCFVOs.length === this.aCFVOs.length) {
+		if ((elem.aCFVOs && elem.aCFVOs.length === this.aCFVOs.length) || (!elem.aCFVOs && !this.aCFVOs)) {
 			var i;
-			for (i = 0; i < elem.aCFVOs.length; i++) {
-				if (!elem.aCFVOs[i].isEqual(this.aCFVOs[i])) {
-					return false;
+			if (elem.aCFVOs) {
+				for (i = 0; i < elem.aCFVOs.length; i++) {
+					if (!elem.aCFVOs[i].isEqual(this.aCFVOs[i])) {
+						return false;
+					}
 				}
 			}
-			if (elem.aColors && elem.aColors.length === this.aColors.length) {
-				for (i = 0; i < elem.aColors.length; i++) {
-					if (!elem.aColors[i].isEqual(this.aColors[i])) {
-						return false;
+			if ((elem.aColors && elem.aColors.length === this.aColors.length) || (!elem.aColors && !this.aColors)) {
+				if (elem.aColors) {
+					for (i = 0; i < elem.aColors.length; i++) {
+						if (!elem.aColors[i].isEqual(this.aColors[i])) {
+							return false;
+						}
 					}
 				}
 				return true;
@@ -1257,6 +1261,41 @@
 			res.AxisColor = this.AxisColor.clone();
 		}
 		return res;
+	};
+	CDataBar.prototype.isEqual = function (elem) {
+		var _compareColors = function (_color1, _color2) {
+			if (!_color1 && !_color2) {
+				return true;
+			}
+			if (_color1 && _color2 && _color2.isEqual(_color2)) {
+				return true;
+			}
+			return false;
+		};
+
+		if (this.MaxLength === elem.MaxLength && this.MinLength === elem.MinLength &&
+			this.ShowValue === elem.ShowValue && this.AxisPosition === elem.AxisPosition &&
+			this.Gradient === elem.Gradient && this.Direction === elem.Direction &&
+			this.NegativeBarColorSameAsPositive === elem.NegativeBarColorSameAsPositive &&
+			this.NegativeBarBorderColorSameAsPositive === elem.NegativeBarBorderColorSameAsPositive) {
+			if (elem.aCFVOs && elem.aCFVOs.length === this.aCFVOs.length) {
+				var i;
+				for (i = 0; i < elem.aCFVOs.length; i++) {
+					if (!elem.aCFVOs[i].isEqual(this.aCFVOs[i])) {
+						return false;
+					}
+				}
+
+				if (_compareColors(this.Color, val.Color) && _compareColors(this.NegativeColor, val.NegativeColor) &&
+					_compareColors(this.BorderColor, val.BorderColor) &&
+					_compareColors(this.NegativeBorderColor, val.NegativeBorderColor) &&
+					_compareColors(this.AxisColor, val.AxisColor)) {
+						return true;
+				}
+			}
+		}
+
+		return false;
 	};
 	CDataBar.prototype.applyPreset = function (styleIndex) {
 		var _generateRgbColor = function (_color) {
@@ -1660,6 +1699,33 @@
 			res.aIconSets.push(this.aIconSets[i].clone());
 		return res;
 	};
+	CIconSet.prototype.isEqual = function (elem) {
+		if (this.IconSet === elem.IconSet && this.Percent === elem.Percent && this.Reverse === elem.Reverse &&
+			this.ShowValue === elem.ShowValue) {
+			if ((elem.aCFVOs && elem.aCFVOs.length === this.aCFVOs.length) || (!elem.aCFVOs && !this.aCFVOs)) {
+				var i;
+				if (elem.aCFVOs) {
+					for (i = 0; i < elem.aCFVOs.length; i++) {
+						if (!elem.aCFVOs[i].isEqual(this.aCFVOs[i])) {
+							return false;
+						}
+					}
+				}
+				if (elem.aIconSets && elem.aIconSets.length === this.aIconSets.length) {
+					for (i = 0; i < elem.aIconSets.length; i++) {
+						if (!elem.aIconSets[i].isEqual(this.aIconSets[i])) {
+							return false;
+						}
+					}
+					return true;
+				} else if (!elem.aIconSets && !this.aIconSets) {
+					return true;
+				}
+			}
+		}
+		return false;
+	};
+
 	CIconSet.prototype.applyPreset = function (styleIndex) {
 		var presetStyles = conditionalFormattingPresets[Asc.c_oAscCFRuleTypeSettings.icons][styleIndex];
 
@@ -2123,7 +2189,7 @@
 	//[[Type, Val, Rgb], [Type, Val, Rgb], ...]
 	var aColorScaleStyles = [[[2,null,16279915],[5,50,16771972],[1,null,6536827]],[[2,null,6536827],[5,50,16771972],[1,null,16279915]],[[2,null,16279915],[5,50,16579839],[1,null,6536827]],[[2,null,6536827],[5,50,16579839],[1,null,16279915]],[[2,null,16279915],[5,50,16579839],[1,null,5933766]],[[2,null,5933766],[5,50,16579839],[1,null,16279915]],[[2,null,16279915],[1,null,16579839]],[[2,null,16579839],[1,null,16279915]],[[2,null,16579839],[1,null,6536827]],[[2,null,6536827],[1,null,16579839]],[[2,null,16773020],[1,null,6536827]],[[2,null,6536827],[1,null,16773020]]];
 	//[[IconSet, [[Type, Val, Formula], [Type, Val, Formula], ...], [IconSet, [[Type, Val, Formula], [Type, Val, Formula], ...]]
-	var aIconsStyles = [[0,[[4,0,null],[4,33,null],[4,67,67]]],[17,[[4,0,null],[4,33,null],[4,67,67]]],[8,[[4,0,null],[4,25,null],[4,50,null],[4,75,75]]],[13,[[4,0,null],[4,20,null],[4,40,null],[4,60,null],[4,80,80]]],[1,[[4,0,null],[4,33,null],[4,67,67]]],[9,[[4,0,null],[4,25,null],[4,50,null],[4,75,75]]],[14,[[4,0,null],[4,20,null],[4,40,null],[4,60,null],[4,80,80]]],[6,[[4,0,null],[4,33,null],[4,67,67]]],[3,[[4,0,null],[4,33,null],[4,67,67]]],[11,[[4,0,null],[4,25,null],[4,50,null],[4,75,75]]],[11,[[4,0,null],[4,25,null],[4,50,null],[4,75,75]]],[7,[[4,0,null],[4,33,null],[4,67,67]]],[12,[[4,0,null],[4,25,null],[4,50,null],[4,75,75]]],[4,[[4,0,null],[4,33,null],[4,67,67]]],[2,[[4,0,null],[4,33,null],[4,67,67]]],[5,[[4,0,null],[4,33,null],[4,67,67]]],[18,[[4,0,null],[4,33,null],[4,67,67]]],[15,[[4,0,null],[4,20,null],[4,40,null],[4,60,null],[4,80,80]]],[19,[[4,0,null],[4,20,null],[4,40,null],[4,60,null],[4,80,80]]],[10,[[4,0,null],[4,25,null],[4,50,null],[4,75,75]]],[16,[[4,0,null],[4,20,null],[4,40,null],[4,60,null],[4,80,80]]]];
+	var aIconsStyles = [[0,[[4,'0',null],[4,'33',null],[4,'67','67']]],[17,[[4,'0',null],[4,'33',null],[4,'67','67']]],[8,[[4,'0',null],[4,'25',null],[4,'50',null],[4,'75','75']]],[13,[[4,'0',null],[4,'20',null],[4,'40',null],[4,'60',null],[4,'80','80']]],[1,[[4,'0',null],[4,'33',null],[4,'67','67']]],[9,[[4,'0',null],[4,'25',null],[4,'50',null],[4,'75','75']]],[14,[[4,'0',null],[4,'20',null],[4,'40',null],[4,'60',null],[4,'80','80']]],[6,[[4,'0',null],[4,'33',null],[4,'67','67']]],[3,[[4,'0',null],[4,'33',null],[4,'67','67']]],[11,[[4,'0',null],[4,'25',null],[4,'50',null],[4,'75','75']]],[11,[[4,'0',null],[4,'25',null],[4,'50',null],[4,'75','75']]],[7,[[4,'0',null],[4,'33',null],[4,'67','67']]],[12,[[4,'0',null],[4,'25',null],[4,'50',null],[4,'75','75']]],[4,[[4,'0',null],[4,'33',null],[4,'67','67']]],[2,[[4,'0',null],[4,'33',null],[4,'67','67']]],[5,[[4,'0',null],[4,'33',null],[4,'67','67']]],[18,[[4,'0',null],[4,'33',null],[4,'67','67']]],[15,[[4,'0',null],[4,'20',null],[4,'40',null],[4,'60',null],[4,'80','80']]],[19,[[4,'0',null],[4,'20',null],[4,'40',null],[4,'60',null],[4,'80','80']]],[10,[[4,'0',null],[4,'25',null],[4,'50',null],[4,'75','75']]],[16,[[4,'0',null],[4,'20',null],[4,'40',null],[4,'60',null],[4,'80','80']]]];
 
 	var conditionalFormattingPresets = {};
 	conditionalFormattingPresets[Asc.c_oAscCFRuleTypeSettings.dataBar] = aDataBarStyles;
