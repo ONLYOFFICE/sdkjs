@@ -925,56 +925,52 @@ CTableCell.prototype =
 
 			var oMargins = this.GetMargins();
 			var oRow     = this.GetRow();
+			var nAdd     = 0;
 			if (oRow)
 			{
 				var nCellSpacing = oRow.GetCellSpacing();
 				var oBorders     = this.GetBorders();
 				if (nCellSpacing)
 				{
-					oResult.Min += oMargins.Left.W + oMargins.Right.W;
-					oResult.Max += oMargins.Left.W + oMargins.Right.W;
+					nAdd = oMargins.Left.W + oMargins.Right.W;
 
 					if (border_Single === oBorders.Left.Value)
 					{
-						oResult.Min += oBorders.Left.Size;
-						oResult.Max += oBorders.Left.Size;
+						nAdd += oBorders.Left.Size;
 					}
 					if (border_Single === oBorders.Right.Value)
 					{
-						oResult.Min += oBorders.Right.Size;
-						oResult.Max += oBorders.Right.Size;
+						nAdd += oBorders.Right.Size;
 					}
 				}
 				else
 				{
 					if (border_Single === oBorders.Left.Value && oBorders.Left.Size / 2 > oMargins.Left.W)
 					{
-						oResult.Min += oBorders.Left.Size / 2;
-						oResult.Max += oBorders.Left.Size / 2;
+						nAdd += oBorders.Left.Size / 2;
 					}
 					else
 					{
-						oResult.Min += oMargins.Left.W;
-						oResult.Max += oMargins.Left.W;
+						nAdd += oMargins.Left.W;
 					}
 
 					if (border_Single === oBorders.Right.Value && oBorders.Right.Size / 2 > oMargins.Right.W)
 					{
-						oResult.Min += oBorders.Right.Size / 2;
-						oResult.Max += oBorders.Right.Size / 2;
+						nAdd += oBorders.Right.Size / 2;
 					}
 					else
 					{
-						oResult.Min += oMargins.Right.W;
-						oResult.Max += oMargins.Right.W;
+						nAdd += oMargins.Right.W;
 					}
 				}
 			}
 			else
 			{
-				oResult.Min += oMargins.Left.W + oMargins.Right.W;
-				oResult.Max += oMargins.Left.W + oMargins.Right.W;
+				nAdd = oMargins.Left.W + oMargins.Right.W;
 			}
+
+			oResult.Min += nAdd;
+			oResult.Max += nAdd;
 
 			oResult.ContentMin = oResult.Min;
 			oResult.ContentMax = oResult.Max;
@@ -998,10 +994,19 @@ CTableCell.prototype =
 					oResult.Max = nPrefW;
 			}
 
-			if (true !== isRotated && true === this.GetNoWrap())
+			if (this.GetNoWrap())
 			{
-				oResult.Min        = Math.max(oResult.Min, oResult.Max);
-				oResult.ContentMin = Math.max(oResult.ContentMin, oResult.ContentMax);
+				if (this.GetW().IsMM())
+				{
+					oResult.ContentMin = Math.max(oResult.ContentMin, oResult.Min - nAdd);
+				}
+				else
+				{
+					oResult.ContentMin = Math.max(oResult.ContentMin, oResult.ContentMax);
+
+					oResult.Min = Math.max(oResult.Min, oResult.Max);
+					oResult.Max = oResult.Min;
+				}
 			}
 
 			if (oLogicDocument)
