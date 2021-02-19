@@ -20892,9 +20892,11 @@
 		};
 
 		var nActive = this.model.workbook.nActive;
+		var i;
 		if (presetId !== undefined) {
 			var _generatedRule = t.model.generateCFRuleFromPreset(presetId);
 			if (_generatedRule) {
+				_generatedRule.priority = 1;
 				if (!arr) {
 					arr = [];
 				}
@@ -20902,15 +20904,24 @@
 					arr[nActive] = [];
 				}
 				arr[nActive].push(_generatedRule);
-				//TODO новое правило создаётся с определенным приоритетом, нужно изменить приоритет у всех остальных
 
+				//двигаем приоритет у всех остальных и добавляем их в список измененных
+				if (t.model.aConditionalFormattingRules) {
+					for (i = 0; i < t.model.aConditionalFormattingRules.length; i++) {
+						var _id = t.model.aConditionalFormattingRules[i].id;
+						var oRule = t.model.aConditionalFormattingRules[i].clone();
+						oRule.id = _id;
+						oRule.priority++;
+						arr[nActive].push(oRule);
+					}
+				}
 			}
 		}
 
 		var unitedArr = [];
 		if (arr) {
 			if (arr[nActive]) {
-				for (var i = 0; i < arr[nActive].length; i++) {
+				for (i = 0; i < arr[nActive].length; i++) {
 					unitedArr.push(arr[nActive][i].id);
 				}
 			}
