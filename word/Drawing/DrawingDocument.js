@@ -6943,8 +6943,7 @@ function CDrawingDocument()
         var offsetBase = 5;
         var line_w = 2;
 		var height_px_p = document.getElementById(id[0]).clientHeight;
-        var line_distance = (((height_px_p - (offsetBase << 1)) - line_w * 5) / 3) >> 0;
-		var offset = (height_px_p - (line_w + line_distance)) >> 1;
+		var offset = (height_px_p - (line_w << 1)) >> 1;
         var y = (height_px_p >> 1) - (line_w >> 1);
         var text_base_offset_x = offset + ((3.25 * AscCommon.g_dKoef_mm_to_pix) >> 0);
         var text_base_offset_dist = (3.25 * AscCommon.g_dKoef_mm_to_pix) >> 0;
@@ -6981,7 +6980,7 @@ function CDrawingDocument()
             ctx.lineWidth = 2;
             ctx.strokeStyle = "000000"; // "#CBCBCB";
 
-            var textYs = {x: text_base_offset_x - ((4.25 * AscCommon.g_dKoef_mm_to_pix) >> 0), y: y + line_w + line_distance};
+            var textYs = {x: text_base_offset_x - ((4.25 * AscCommon.g_dKoef_mm_to_pix) >> 0), y: y + (line_w << 1)};
 
             ctx.moveTo(text_base_offset_x, y); ctx.lineTo(width_px - offsetBase, y);
             ctx.stroke();
