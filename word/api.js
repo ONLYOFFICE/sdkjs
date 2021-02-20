@@ -4197,7 +4197,8 @@ background-repeat: no-repeat;\
 			}
 			else
 			{
-				oSpToEdit.setSignaturePr(oPr);
+				oSpToEdit.setSignaturePr(oPr, sImgUrl);
+				oLogicDocument.Recalculate();
 				this.sendEvent("asc_onAddSignature", sGuid);
 			}
 			oLogicDocument.FinalizeAction();

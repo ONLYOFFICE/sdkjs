@@ -1051,7 +1051,7 @@ CShape.prototype.setSignature = function(oSignature)
     History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ShapeSetSignature, this.signatureLine, oSignature));
     this.signatureLine = oSignature;
 };
-CShape.prototype.setSignaturePr = function(oPr)
+CShape.prototype.setSignaturePr = function(oPr, sUrl)
 {
     if(!oPr || !this.signatureLine)
     {
@@ -1060,6 +1060,12 @@ CShape.prototype.setSignaturePr = function(oPr)
     var oCopy = this.signatureLine.copyWithId();
     oCopy.setProperties(oPr);
     this.setSignature(oCopy);
+    if(sUrl) {
+        if(this.spPr) {
+            var oBlipFillUnifill = AscFormat.CreateBlipFillUniFillFromUrl(sUrl);
+            this.spPr.setFill(oBlipFillUnifill);
+        }
+    }
 };
 
 CShape.prototype.convertToWord = function (document) {
