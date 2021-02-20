@@ -422,8 +422,8 @@
 	CConditionalFormattingRule.prototype.checkProperty = function (propOld, propNew, type, ws, addToHistory) {
 		if (propOld !== propNew) {
 			if (addToHistory) {
-				History.Add(AscCommonExcel.g_oUndoRedoCF, type,
-					ws.getId(), null, new AscCommonExcel.UndoRedoData_CF(this.id, propOld, propNew));
+				History.Add(AscCommonExcel.g_oUndoRedoCF, type, ws.getId(), null,
+					new AscCommonExcel.UndoRedoData_CF(this.id, propOld, propNew));
 			}
 			return propNew;
 		}
@@ -647,8 +647,8 @@
 	CConditionalFormattingRule.prototype.getAverage = function (val, average, stdDev) {
 		var res = false;
 		/*if (this.stdDev) {
-			average += (this.aboveAverage ? 1 : -1) * this.stdDev + stdDev;
-		}*/
+		 average += (this.aboveAverage ? 1 : -1) * this.stdDev + stdDev;
+		 }*/
 		if (this.aboveAverage) {
 			res = val > average;
 		} else {
@@ -908,7 +908,7 @@
 		}
 		return res;
 	};
-	
+
 	CConditionalFormattingRule.prototype.asc_setType = function (val) {
 		this.type = val;
 	};
@@ -1270,7 +1270,7 @@
 					_compareColors(this.BorderColor, val.BorderColor) &&
 					_compareColors(this.NegativeBorderColor, val.NegativeBorderColor) &&
 					_compareColors(this.AxisColor, val.AxisColor)) {
-						return true;
+					return true;
 				}
 			}
 		}
@@ -1283,7 +1283,7 @@
 				return null;
 			}
 
-			return  new AscCommonExcel.RgbColor(_color);
+			return new AscCommonExcel.RgbColor(_color);
 		};
 
 		var presetStyles = conditionalFormattingPresets[Asc.c_oAscCFRuleTypeSettings.dataBar][styleIndex];
@@ -1673,10 +1673,12 @@
 		res.Percent = this.Percent;
 		res.Reverse = this.Reverse;
 		res.ShowValue = this.ShowValue;
-		for (i = 0; i < this.aCFVOs.length; ++i)
+		for (i = 0; i < this.aCFVOs.length; ++i) {
 			res.aCFVOs.push(this.aCFVOs[i].clone());
-		for (i = 0; i < this.aIconSets.length; ++i)
+		}
+		for (i = 0; i < this.aIconSets.length; ++i) {
 			res.aIconSets.push(this.aIconSets[i].clone());
+		}
 		return res;
 	};
 	CIconSet.prototype.isEqual = function (elem) {
@@ -1893,22 +1895,6 @@
 		} else {
 			writer.WriteBool(false);
 		}
-
-		//not format
-		/*if (null != this.formulaParent) {
-			writer.WriteBool(true);
-			//writer.WriteLong(this.Color.asc_getType());
-			this.formulaParent.Write_ToBinary2(writer);
-		} else {
-			writer.WriteBool(false);
-		}
-		if (null != this.formula) {
-			writer.WriteBool(true);
-			//writer.WriteLong(this.Color.asc_getType());
-			this.formula.Write_ToBinary2(writer);
-		} else {
-			writer.WriteBool(false);
-		}*/
 	};
 	CConditionalFormatValueObject.prototype.Read_FromBinary2 = function (reader) {
 		if (reader.GetBool()) {
@@ -1920,30 +1906,6 @@
 		if (reader.GetBool()) {
 			this.Val = reader.GetString2();
 		}
-
-		//not format
-		/*var i, length, elem;
-		if (reader.GetBool()) {
-			length = reader.GetULong();
-			for (i = 0; i < length; ++i) {
-				if (!this.aCFVOs) {
-					this.aCFVOs = [];
-				}
-				elem = new CConditionalFormatValueObject();
-				this.aCFVOs.push(elem.Read_FromBinary2(reader));
-			}
-		}
-
-		if (reader.GetBool()) {
-			length = reader.GetULong();
-			for (i = 0; i < length; ++i) {
-				if (!this.aIconSets) {
-					this.aIconSets = [];
-				}
-				elem = new CConditionalFormatIconSet();
-				this.aIconSets.push(elem.Read_FromBinary2(reader));
-			}
-		}*/
 	};
 	CConditionalFormatValueObject.prototype.asc_getGte = function () {
 		return this.Gte;
