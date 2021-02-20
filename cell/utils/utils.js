@@ -1975,7 +1975,7 @@
 			return result;
 		}
 
-		function drawStyle(ctx, graphics, sr, oStyle, sStyleName, width, height) {
+		function drawStyle(ctx, graphics, sr, oStyle, sStyleName, width, height, opt_cf_preview) {
 			var bc = null, bs = AscCommon.c_oAscBorderStyles.None, isNotFirst = false; // cached border color
 			ctx.clear();
 			// Fill cell
@@ -2062,8 +2062,35 @@
 			// Текст будем рисовать по центру (в Excel чуть по другому реализовано, у них постоянный отступ снизу)
 			var textY = Asc.round(0.5 * (height - tm.height));
 			ctx.setFont(format);
-			ctx.setFillStyle(oStyle.getFontColor() || new AscCommon.CColor(0, 0, 0));
-			ctx.fillText(sStyleName, width_padding, textY + tm.baseline);
+
+			if (!opt_cf_preview) {
+				var tm = sr.measureString(sStyleName);
+				var width_padding = 4;
+				if (oStyle.xfs && oStyle.xfs.align && oStyle.xfs.align.hor === AscCommon.align_Center) {
+					width_padding = Asc.round(0.5 * (width - tm.width));
+				}
+
+				// Текст будем рисовать по центру (в Excel чуть по другому реализовано, у них постоянный отступ снизу)
+				var textY = Asc.round(0.5 * (height - tm.height));
+				ctx.setFont(format);
+				ctx.setFillStyle(oStyle.getFontColor() || new AscCommon.CColor(0, 0, 0));
+				ctx.fillText(sStyleName, width_padding, textY + tm.baseline);
+			} else {
+				var cellFlags = new AscCommonExcel.CellFlags();
+				cellFlags.textAlign = oStyle.xfs.align && oStyle.xfs.align.hor;
+
+				var fragments = [];
+				var tempFragment = new AscCommonExcel.Fragment();
+				tempFragment.text = sStyleName;
+				tempFragment.format = format;
+				fragments.push(tempFragment);
+
+				//var cellEditorWidth = width;
+				//sr.setString(fragments, cellFlags);
+
+				var textMetrics = sr.measureString(fragments, cellFlags, width);
+				sr.render(ctx, width_padding, textY, textMetrics.width, oStyle.getFontColor() || new AscCommon.CColor(0, 0, 0));
+			}
 		}
 
 		function drawStyle2(ctx, graphics, sr, oStyle, sStyleName, width, height) {
@@ -2142,6 +2169,8 @@
 			}
 
 			format.setSize(nSize);
+
+
 
 
 			var tm = sr.measureString(sStyleName);
@@ -2400,7 +2429,7 @@
 			var oStyle = new AscCommonExcel.CCellStyle();
 			oStyle.xfs = xfs;
 
-			drawStyle(ctx, graphics, wb.stringRender, oStyle, text, w, h);
+			drawStyle(ctx, graphics, wb.stringRender, oStyle, text, w, h, true);
 		}
 
 		function drawGradientPreview(id, wb, colors, _colorBorderOut, _colorBorderIn, _realPercentWidth, _indent) {
