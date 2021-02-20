@@ -1103,6 +1103,9 @@ CShape.prototype.convertToWord = function (document) {
             c.setTextBoxContent(new_content);
         }
     }
+    if(this.signatureLine) {
+        c.setSignature(this.signatureLine.copy());
+    }
     return c;
 };
 
@@ -1141,6 +1144,11 @@ CShape.prototype.convertToPPTX = function (drawingDocument, worksheet, bIsAddMat
         }
         tx_body.setContent(new_content);
         c.setTxBody(tx_body);
+    }
+    if(worksheet) {
+        if(this.signatureLine) {
+            c.setSignature(this.signatureLine.copy());
+        }
     }
     return c;
 };
@@ -5749,6 +5757,9 @@ CShape.prototype.hitInBoundingRect = function (x, y) {
 
 CShape.prototype.canRotate = function () {
     if(this.cropObject) {
+        return false;
+    }
+    if(this.signatureLine) {
         return false;
     }
     return AscFormat.CGraphicObjectBase.prototype.canRotate.call(this);

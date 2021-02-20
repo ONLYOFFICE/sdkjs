@@ -1736,10 +1736,10 @@ ParaDrawing.prototype.OnEnd_MoveInline = function(NearPos)
 		return;
 	}
 
-	var RunPr = this.Remove_FromDocument(false);
-
 	// При переносе всегда создаем копию, чтобы в совместном редактировании не было проблем
 	var NewParaDrawing = this.Copy();
+	var RunPr = this.Remove_FromDocument(false);
+
 	this.DocumentContent.Select_DrawingObject(NewParaDrawing.GetId());
 	NewParaDrawing.Add_ToDocument(NearPos, true, RunPr, undefined, oPictureCC);
 };
@@ -2945,6 +2945,13 @@ ParaDrawing.prototype.PreDelete = function()
 	for (var nIndex = 0, nCount = arrDocContents.length; nIndex < nCount; ++nIndex)
 	{
 		arrDocContents[nIndex].PreDelete();
+	}
+	var oGrObject = this.GraphicObj;
+	if(oGrObject && oGrObject.signatureLine)
+	{
+		var sId = oGrObject.signatureLine.id;
+		oGrObject.setSignature(null);
+		editor && editor.sendEvent("asc_onRemoveSignature", sId);
 	}
 };
 ParaDrawing.prototype.CheckContentControlEditingLock = function(){

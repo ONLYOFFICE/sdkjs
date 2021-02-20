@@ -120,6 +120,10 @@ CShape.prototype.addToDrawingObjects =  function(pos)
 {
     if(this.parent && this.parent.cSld && this.parent.cSld.spTree)
     {
+        if(this.signatureLine && this.setSignature)
+        {
+            this.setSignature(null);
+        }
         this.parent.shapeAdd(pos, this);
     }
 };
