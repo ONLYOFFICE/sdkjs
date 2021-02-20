@@ -2052,29 +2052,9 @@
 
 			format.setSize(nSize);
 
-
-			var tm = sr.measureString(sStyleName);
-			var width_padding = 4;
-			if (oStyle.xfs && oStyle.xfs.align && oStyle.xfs.align.hor === AscCommon.align_Center) {
-				width_padding = Asc.round(0.5 * (width - tm.width));
-			}
-
-			// Текст будем рисовать по центру (в Excel чуть по другому реализовано, у них постоянный отступ снизу)
-			var textY = Asc.round(0.5 * (height - tm.height));
-			ctx.setFont(format);
-
+			var tm;
 			if (!opt_cf_preview) {
-				var tm = sr.measureString(sStyleName);
-				var width_padding = 4;
-				if (oStyle.xfs && oStyle.xfs.align && oStyle.xfs.align.hor === AscCommon.align_Center) {
-					width_padding = Asc.round(0.5 * (width - tm.width));
-				}
-
-				// Текст будем рисовать по центру (в Excel чуть по другому реализовано, у них постоянный отступ снизу)
-				var textY = Asc.round(0.5 * (height - tm.height));
-				ctx.setFont(format);
-				ctx.setFillStyle(oStyle.getFontColor() || new AscCommon.CColor(0, 0, 0));
-				ctx.fillText(sStyleName, width_padding, textY + tm.baseline);
+				tm = sr.measureString(sStyleName);
 			} else {
 				var cellFlags = new AscCommonExcel.CellFlags();
 				cellFlags.textAlign = oStyle.xfs.align && oStyle.xfs.align.hor;
@@ -2084,12 +2064,22 @@
 				tempFragment.text = sStyleName;
 				tempFragment.format = format;
 				fragments.push(tempFragment);
+				tm = sr.measureString(fragments, cellFlags, width);
+			}
 
-				//var cellEditorWidth = width;
-				//sr.setString(fragments, cellFlags);
+			var width_padding = 4;
+			if (oStyle.xfs && oStyle.xfs.align && oStyle.xfs.align.hor === AscCommon.align_Center) {
+				width_padding = Asc.round(0.5 * (width - tm.width));
+			}
 
-				var textMetrics = sr.measureString(fragments, cellFlags, width);
-				sr.render(ctx, width_padding, textY, textMetrics.width, oStyle.getFontColor() || new AscCommon.CColor(0, 0, 0));
+			// Текст будем рисовать по центру (в Excel чуть по другому реализовано, у них постоянный отступ снизу)
+			var textY = Asc.round(0.5 * (height - tm.height));
+			if (!opt_cf_preview) {
+				ctx.setFont(format);
+				ctx.setFillStyle(oStyle.getFontColor() || new AscCommon.CColor(0, 0, 0));
+				ctx.fillText(sStyleName, width_padding, textY + tm.baseline);
+			} else {
+				sr.render(ctx, width_padding, textY, tm.width, oStyle.getFontColor() || new AscCommon.CColor(0, 0, 0));
 			}
 		}
 
