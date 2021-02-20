@@ -1762,23 +1762,33 @@ CT_PivotCacheDefinition.prototype.groupRangePr = function(fld, rangePr) {
 	var fieldGroup = new CT_FieldGroup();
 	fieldGroup.init(fld, baseCacheField, rangePr, dscretePr);
 };
-CT_PivotCacheDefinition.prototype.groupDiscrete = function(fld, groupMap) {
-	var res = {addFields: [], reorderArray: null};
+CT_PivotCacheDefinition.prototype.groupDiscreteAddField = function(layoutGroup) {
+	var fld = layoutGroup.fld;
+	var cacheFields = this.getFields();
+	var cacheField = cacheFields[fld];
+	var baseFld = cacheField.getGroupBase();
+	var baseCacheField = cacheFields[baseFld];
+	var parFld = cacheField.getGroupPar();
+	var parCacheField = cacheFields[parFld];
+	if (!(baseCacheField && !cacheField.containsGroup(layoutGroup.groupMap)) && !parCacheField) {
+		parCacheField = new CT_CacheField();
+		parCacheField.initGroupDiscrete(this.cacheFields.generateNewName(cacheField.name), fld, cacheField);
+		cacheFields.push(parCacheField);
+
+		parFld = cacheFields.length - 1;
+		cacheField.initGroupPar(parFld);
+	}
+	return parFld;
+};
+CT_PivotCacheDefinition.prototype.groupDiscrete = function(layoutGroupCache) {
+	var fld = layoutGroupCache.fld;
+	var groupMap = layoutGroupCache.groupMap;
+	var res = null;
 	var cacheFields = this.getFields();
 	var baseCacheField = cacheFields[fld];
 	var parCacheField = cacheFields[baseCacheField.getGroupPar()];
-	if (!parCacheField) {
-		parCacheField = new CT_CacheField();
-		parCacheField.initGroupDiscrete(this.cacheFields.generateNewName(baseCacheField.name), fld, baseCacheField);
-		cacheFields.push(parCacheField);
-
-		var parFld = cacheFields.length - 1;
-		baseCacheField.initGroupPar(parFld);
-
-		res.addFields.push(parFld);
-	}
 	if (parCacheField.hasGroup()) {
-		res.reorderArray = parCacheField.groupDiscrete(groupMap);
+		res = parCacheField.groupDiscrete(groupMap);
 	}
 	return res;
 };
@@ -5629,7 +5639,8 @@ CT_pivotTableDefinition.prototype.getLayoutByCell = function(row, col) {
 		|| this.getLayoutByCellHeaderRow(row, col, rowFieldsOffset) || this.getLayoutByCellData(row, col, rowFieldsOffset);
 };
 CT_pivotTableDefinition.prototype.getLayoutsForGroup = function(selection) {
-	var res = {fld: null, values: {}, valuesCount: 0}, i, layout, activeCell = selection.activeCell, cellLayout;
+
+	var res = new PivotLayoutGroup(), i, layout, activeCell = selection.activeCell, cellLayout;
 	layout = this.getLayoutByCell(activeCell.row, activeCell.col);
 	cellLayout = layout && layout.getGroupCellLayout();
 	if (cellLayout && st_VALUES !== cellLayout.fld) {
@@ -5640,7 +5651,7 @@ CT_pivotTableDefinition.prototype.getLayoutsForGroup = function(selection) {
 					layout = this.getLayoutByCell(i, activeCell.col);
 					cellLayout = layout && layout.getGroupCellLayout();
 					if (cellLayout && res.fld === cellLayout.fld) {
-						res.values[cellLayout.v] = 1;
+						res.groupMap[cellLayout.v] = 1;
 					}
 				}
 			}, this);
@@ -5650,12 +5661,11 @@ CT_pivotTableDefinition.prototype.getLayoutsForGroup = function(selection) {
 					layout = this.getLayoutByCell(activeCell.row, i);
 					cellLayout = layout && layout.getGroupCellLayout();
 					if (cellLayout && res.fld === cellLayout.fld) {
-						res.values[cellLayout.v] = 1;
+						res.groupMap[cellLayout.v] = 1;
 					}
 				}
 			}, this);
 		}
-		res.valuesCount = Object.keys(res.values).length;
 	}
 	return res;
 };
@@ -5847,18 +5857,21 @@ CT_pivotTableDefinition.prototype.getFieldGroupType = function (fld) {
 };
 CT_pivotTableDefinition.prototype.groupRangePr = function(fld, groupMap) {
 };
-CT_pivotTableDefinition.prototype.groupDiscreteCache = function(fld, groupMap) {
-	this.checkPivotFieldItems(fld);
-	var groupMapCache = this._getCacheItemsMap(fld, groupMap);
-	return this.cacheDefinition.groupDiscrete(fld, groupMapCache);
-
+CT_pivotTableDefinition.prototype.groupDiscreteCache = function(layoutGroup) {
+	this.checkPivotFieldItems(layoutGroup.fld);
+	var layoutGroupCache = this._convertGroupLayout(layoutGroup);
+	var parFld = this.cacheDefinition.groupDiscreteAddField(layoutGroupCache);
+	// this._groupDiscreteAddFields(layoutGroup.fld, layoutGroup.groupMap);
+	// var groupMapCache = this._getCacheItemsMap(layoutGroup.fld, layoutGroup.groupMap);
+	var reorderArray = this.cacheDefinition.groupDiscrete(layoutGroupCache);
+	return {layoutGroup: layoutGroup, layoutGroupCache: layoutGroupCache, parFld: parFld, reorderArray: reorderArray};
 };
-CT_pivotTableDefinition.prototype.groupDiscrete = function(fld, groupMap, groupRes) {
-	this.checkPivotFieldItems(fld);
+CT_pivotTableDefinition.prototype.groupDiscrete = function(fld, groupRes) {
+	this.checkPivotFieldItems(groupRes.layoutGroup.fld);
+	this._groupDiscreteAddFields(groupRes.layoutGroupCache.fld, groupRes.parFld);
 	var pivotFields = this.asc_getPivotFields();
-	var pivotField = pivotFields[fld];
-	// pivotField.groupDiscrete(groupMap, groupRes.reorderArray);
-	this._groupDiscreteAddFields(fld, groupMap, groupRes);
+	var pivotField = pivotFields[groupRes.parFld];
+	pivotField.groupDiscrete(groupRes.reorderArray);
 	this.setChanged(true);
 };
 CT_pivotTableDefinition.prototype.ungroupDiscreteCache = function(fld, groupMap) {
@@ -5877,30 +5890,46 @@ CT_pivotTableDefinition.prototype.ungroupDiscrete = function(fld, groupRes) {
 	pivotField.ungroupDiscrete(groupRes.reorderArray, groupMembers);
 	this.setChanged(true);
 };
-CT_pivotTableDefinition.prototype._getCacheItemsMap = function(fld, groupMap) {
-	var groupMapCache = {};
+CT_pivotTableDefinition.prototype._convertGroupLayout = function(layoutGroup) {
+	var res = layoutGroup.clone();
 	var pivotFields = this.asc_getPivotFields();
-	var pivotField = pivotFields[fld];
-	if(!pivotField) {
-		return groupMapCache;
+	var cacheFields = this.asc_getCacheFields();
+	var pivotField = pivotFields[res.fld];
+	var cacheField = cacheFields[res.fld];
+	if (!pivotField || !cacheField) {
+		return res;
 	}
-	for (var index in groupMap) {
-		if (groupMap.hasOwnProperty(index)) {
-			var item = pivotField.getItem(parseInt(index));
-			groupMapCache[item.x] = 1;
-		}
+	res.groupMap = pivotField.convertGroupMap(res.groupMap);
+	var parCacheField = cacheFields[cacheField.getGroupPar()];
+	if (parCacheField) {
+		res.fld = cacheField.getGroupPar();
+		res.groupMap = parCacheField.convertGroupMap(res.groupMap);
 	}
-	return groupMapCache;
+	return res;
 };
-CT_pivotTableDefinition.prototype._groupDiscreteAddFields = function(fld, groupMap, groupRes) {
-	var insertIndex;
+CT_pivotTableDefinition.prototype._getCacheItemsMap = function(fld, groupMap) {
+	var res = {};
 	var pivotFields = this.asc_getPivotFields();
-	for (var i = 0; i < groupRes.addFields.length; ++i) {
+	var cacheFields = this.asc_getCacheFields();
+	var pivotField = pivotFields[fld];
+	var cacheField = cacheFields[fld];
+	if (!pivotField || !cacheField) {
+		return res;
+	}
+	res = pivotField.convertGroupMap(groupMap);
+	var parCacheField = cacheFields[cacheField.getGroupPar()];
+	if (parCacheField) {
+		res = parCacheField.convertGroupMap(res);
+	}
+	return res;
+};
+CT_pivotTableDefinition.prototype._groupDiscreteAddFields = function(fld, parFld) {
+	var pivotFields = this.asc_getPivotFields();
+	if (!pivotFields[parFld]) {
 		var newPivotField = pivotFields[fld].clone();
-		newPivotField.groupDiscrete(groupMap, groupRes.reorderArray);
 		pivotFields.push(newPivotField);
 		var pivotIndex = pivotFields.length - 1;
-		insertIndex = this.rowFields && this.rowFields.find(fld) || -1;
+		var insertIndex = this.rowFields && this.rowFields.find(fld) || -1;
 		if (-1 != insertIndex) {
 			this.addRowField(pivotIndex, insertIndex, true);
 		}
@@ -5909,7 +5938,6 @@ CT_pivotTableDefinition.prototype._groupDiscreteAddFields = function(fld, groupM
 			this.addColField(pivotIndex, insertIndex, true);
 		}
 	}
-	this.setChanged(true);
 };
 
 function CT_pivotTableDefinitionX14() {
@@ -8764,6 +8792,12 @@ CT_CacheField.prototype.getGroupRangePr = function () {
 CT_CacheField.prototype.groupDiscrete = function (groupMap) {
 	return this.fieldGroup.groupDiscrete(groupMap);
 };
+CT_CacheField.prototype.convertGroupMap = function (groupMap) {
+	return this.fieldGroup.convertGroupMap(groupMap);
+};
+CT_CacheField.prototype.containsGroup = function (groupMap) {
+	return this.fieldGroup && this.fieldGroup.containsGroup(groupMap);
+};
 CT_CacheField.prototype.ungroupDiscrete = function (base, baseCacheField, groupMap) {
 	return this.fieldGroup.ungroupDiscrete(base, baseCacheField, groupMap);
 };
@@ -10615,43 +10649,49 @@ CT_PivotField.prototype.setSortType = function(sortVal, sortDataIndex) {
 		this.autoSortScope = null;
 	}
 };
-CT_PivotField.prototype.groupDiscrete = function(groupMap, reorderArray) {
-	var newItem;
+CT_PivotField.prototype.groupDiscrete = function(reorderArray) {
+	var newItem, processed = {};
 	var items = this.items && this.items.item;
 	if (items) {
 		var newItems = [];
-		var isFirst = true;
 		for (var i = 0; i < items.length; ++i) {
 			if (!items[i].isData()) {
 				continue;
 			}
-			if (groupMap[items[i].x]) {
-				if (isFirst) {
-					isFirst = false;
-					newItem = new CT_Item();
-					newItem.x = reorderArray[items[i].x];
-					newItems.push(newItem);
-				}
-			} else {
+			var newIndex = reorderArray[items[i].x];
+			if(!processed[newIndex]) {
+				processed[newIndex] = 1;
 				newItem = new CT_Item();
-				newItem.x = reorderArray[items[i].x];;
+				newItem.x = newIndex;
 				newItems.push(newItem);
 			}
 		}
 		this.items.item = newItems;
+		this.checkSubtotal();
 	}
+};
+CT_PivotField.prototype.convertGroupMap = function (groupMap) {
+	var res = {};
+	for (var index in groupMap) {
+		if (groupMap.hasOwnProperty(index)) {
+			var item = this.getItem(parseInt(index));
+			res[item.x] = 1;
+		}
+	}
+	return res;
 };
 CT_PivotField.prototype.convertGroupMembers = function (cacheGroupMap) {
 	var t = this;
 	var res = {};
 	for (var i in cacheGroupMap) {
 		if(cacheGroupMap.hasOwnProperty(i)) {
+			var cacheGroup = cacheGroupMap[i];
 			res[i] = [];
-			for(var j = 0; j < cacheGroupMap[i].length; ++j) {
+			for(var j = 0; j < cacheGroup.length; ++j) {
 				res[i].push(j);
 			}
 			res[i].sort(function(a, b) {
-				return t.getItemIndexByValue(cacheGroupMap[i][a]) - t.getItemIndexByValue(cacheGroupMap[i][b]);
+				return t.getItemIndexByValue(cacheGroup[a]) - t.getItemIndexByValue(cacheGroup[b]);
 			});
 		}
 	}
@@ -10680,6 +10720,7 @@ CT_PivotField.prototype.ungroupDiscrete = function(reorderArray, groupMembers) {
 			}
 		}
 		this.items.item = newItems;
+		this.checkSubtotal();
 	}
 };
 
@@ -11964,6 +12005,12 @@ CT_FieldGroup.prototype.groupDiscrete = function (groupMap) {
 	this.discretePr.group(reorderArray);
 	return reorderArray;
 };
+CT_FieldGroup.prototype.convertGroupMap = function (groupMap) {
+	return this.discretePr.convertGroupMap(groupMap);
+};
+CT_FieldGroup.prototype.containsGroup = function (groupMap) {
+	return this.discretePr.containsGroup(groupMap);
+};
 CT_FieldGroup.prototype.ungroupDiscrete = function (base, baseCacheField, groupMap) {
 	var groupMembers = this.discretePr.getGroupMembers(groupMap);
 	var reorderArray = this._ungroupDiscrete(baseCacheField, groupMap, groupMembers);
@@ -11990,13 +12037,15 @@ CT_FieldGroup.prototype._groupDiscrete = function(groupMap) {
 			reorderArray[i] = newGroupItems.getCount();
 		}
 	}
-	var newIndex = 1;
-	while (groupNameMap.has(GROUP_TEXT_CAPTION + newIndex)) {
-		newIndex++;
+	if (newGroupItems.getCount() < this.groupItems.getCount()) {
+		var newIndex = 1;
+		while (groupNameMap.has(GROUP_TEXT_CAPTION + newIndex)) {
+			newIndex++;
+		}
+		item = new PivotRecordValue();
+		item.init(c_oAscPivotRecType.String, GROUP_TEXT_CAPTION + newIndex);
+		newGroupItems.addItem(item);
 	}
-	item = new PivotRecordValue();
-	item.init(c_oAscPivotRecType.String, GROUP_TEXT_CAPTION + newIndex);
-	newGroupItems.addItem(item);
 	this.groupItems = newGroupItems;
 	return reorderArray;
 };
@@ -12901,6 +12950,28 @@ CT_DiscretePr.prototype.group = function (reorderArray) {
 	for(var i = 0; i < this.x.length; ++i) {
 		this.x[i].v = reorderArray[this.x[i].v];
 	}
+};
+CT_DiscretePr.prototype.convertGroupMap = function (groupMap) {
+	var res = {};
+	for (var index in groupMap) {
+		if (groupMap.hasOwnProperty(index)) {
+			res[this.x[parseInt(index)].v] = 1;
+		}
+	}
+	return res;
+};
+CT_DiscretePr.prototype.containsGroup = function(groupMap) {
+	var tmp = {};
+	for (var index in groupMap) {
+		if (groupMap.hasOwnProperty(index)) {
+			if (!tmp[this.x[parseInt(index)].v]) {
+				tmp[this.x[parseInt(index)].v] = 1;
+			} else {
+				return true;
+			}
+		}
+	}
+	return false;
 };
 CT_DiscretePr.prototype.getGroupMembers = function (groupMap) {
 	var groupElems = {};
@@ -14148,6 +14219,23 @@ PivotRecords.prototype._toXml = function(writer, elem) {
 	}
 };
 
+function PivotLayoutGroup(){
+	this.fld = null;
+	this.groupMap = {};
+}
+PivotLayoutGroup.prototype.clone = function() {
+	var res = new PivotLayoutGroup();
+	res.fld = this.fld;
+	for (var i in this.groupMap) {
+		if (this.groupMap.hasOwnProperty(i)) {
+			res.groupMap[i] = this.groupMap[i];
+		}
+	}
+	return res;
+};
+PivotLayoutGroup.prototype.getGroupSize = function() {
+	return Object.keys(this.groupMap).length;
+};
 function PivotLayoutCell(t, fld, v, i){
 	this.t = t;
 	this.fld = fld;

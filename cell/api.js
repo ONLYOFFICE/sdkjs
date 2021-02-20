@@ -2708,12 +2708,12 @@ var editor;
 		if (pivotTable && ws.selectionRange.inContains(pivotTable.getReportRanges())) {
 			var layout = pivotTable.getLayoutsForGroup(ws.selectionRange);
 			if (null !== layout.fld) {
-				if (layout.valuesCount > 1) {
+				if (layout.getGroupSize() > 1) {
 					this._changePivotAndConnectedByPivotCacheWithLock(pivotTable, false, function(confirmation, pivotTables) {
 						var groupRes;
 						var changeRes = t._changePivot(pivotTable, confirmation, true, function(){
-							groupRes = pivotTable.groupDiscreteCache(layout.fld, layout.values);
-							pivotTable.groupDiscrete(layout.fld, layout.values, groupRes);
+							groupRes = pivotTable.groupDiscreteCache(layout);
+							pivotTable.groupDiscrete(layout.fld, groupRes);
 						});
 						var index = 0;
 						while (index < pivotTables.length && c_oAscError.ID.No === changeRes.error && c_oAscError.ID.No === changeRes.warning) {
@@ -2722,12 +2722,12 @@ var editor;
 								continue;
 							}
 							changeRes = t._changePivot(pivotCur, confirmation, true, function(){
-								pivotCur.groupDiscrete(layout.fld, layout.values, groupRes);
+								pivotCur.groupDiscrete(layout.fld, groupRes);
 							});
 						}
 						return changeRes;
 					});
-				} else if (1 === layout.valuesCount && c_oAscGroupType.Text !== pivotTable.getFieldGroupType(layout.fld)) {
+				} else if (1 === layout.getGroupSize() && c_oAscGroupType.Text !== pivotTable.getFieldGroupType(layout.fld)) {
 					if (opt_rangePr) {
 						this._changePivotAndConnectedByPivotCacheWithLock(pivotTable, function(ws) {
 							pivotTable.groupRangePr(layout.fld, opt_rangePr);
@@ -2750,11 +2750,11 @@ var editor;
 		if (pivotTable && ws.selectionRange.inContains(pivotTable.getReportRanges())) {
 			var layout = pivotTable.getLayoutsForGroup(ws.selectionRange);
 			if (null !== layout.fld) {
-				if (layout.valuesCount > 0) {
+				if (layout.getGroupSize() > 0) {
 					this._changePivotAndConnectedByPivotCacheWithLock(pivotTable, false, function(confirmation, pivotTables) {
 						var groupRes;
 						var changeRes = t._changePivot(pivotTable, confirmation, true, function(){
-							groupRes = pivotTable.ungroupDiscreteCache(layout.fld, layout.values);
+							groupRes = pivotTable.ungroupDiscreteCache(layout.fld, layout.groupMap);
 							pivotTable.ungroupDiscrete(layout.fld, groupRes);
 						});
 						var index = 0;
