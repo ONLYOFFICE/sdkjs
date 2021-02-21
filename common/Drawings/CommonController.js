@@ -2575,9 +2575,9 @@ DrawingObjectsController.prototype =
                 }
                 else if(arr[i].getObjectType() === AscDFH.historyitem_type_GraphicFrame)
                 {
-                    arr[i].graphicObject.Set_ApplyToAll(true);
+                    arr[i].graphicObject.SetApplyToAll(true);
                     tableFunction.apply(arr[i].graphicObject, args);
-                    arr[i].graphicObject.Set_ApplyToAll(false);
+                    arr[i].graphicObject.SetApplyToAll(false);
                     ret = true;
                 }
                 else if(arr[i].getObjectType() === AscDFH.historyitem_type_ChartSpace)
@@ -2601,9 +2601,9 @@ DrawingObjectsController.prototype =
                     var content = arr[i].getDocContent();
                     if(content)
                     {
-                        content.Set_ApplyToAll(true);
+                        content.SetApplyToAll(true);
                         f.apply(content, args);
-                        content.Set_ApplyToAll(false);
+                        content.SetApplyToAll(false);
                         ret = true;
                     }
                     else
@@ -2623,9 +2623,9 @@ DrawingObjectsController.prototype =
                                 content = arr[i].getDocContent();
                                 if(content)
                                 {
-                                    content.Set_ApplyToAll(true);
+                                    content.SetApplyToAll(true);
                                     f.apply(content, args);
-                                    content.Set_ApplyToAll(false);
+                                    content.SetApplyToAll(false);
                                     ret = true;
                                 }
                             }
@@ -2657,9 +2657,9 @@ DrawingObjectsController.prototype =
                 content = chart.selection.title.getDocContent();
                 if(content)
                 {
-                    content.Set_ApplyToAll(true);
+                    content.SetApplyToAll(true);
                     f.apply(content, args);
-                    content.Set_ApplyToAll(false);
+                    content.SetApplyToAll(false);
                 }
             }
         }
@@ -3388,9 +3388,9 @@ DrawingObjectsController.prototype =
                             content = arr[i].getDocContent();
                             if(content)
                             {
-                                content.Set_ApplyToAll(true);
+                                content.SetApplyToAll(true);
                                 cur_pr = content.GetCalculatedParaPr();
-                                content.Set_ApplyToAll(false);
+                                content.SetApplyToAll(false);
                             }
                         }
                     }
@@ -3465,9 +3465,9 @@ DrawingObjectsController.prototype =
                             content = arr[i].getDocContent();
                             if(content)
                             {
-                                content.Set_ApplyToAll(true);
+                                content.SetApplyToAll(true);
                                 cur_pr = content.GetCalculatedTextPr();
-                                content.Set_ApplyToAll(false);
+                                content.SetApplyToAll(false);
                             }
                         }
                     }
@@ -4331,9 +4331,9 @@ DrawingObjectsController.prototype =
         //for bug http://bugzilla.onlyoffice.com/show_bug.cgi?id=35570 TODO: check it
         var nType = oProps.getType(), nCurType = oCurProps.getType(), bEmpty;
         if(nType === nCurType) {
-            oProps.putType(null);
+            oProps.type = null;
             bEmpty = oProps.isEmpty();
-            oProps.putType(nType);
+            oProps.type = nType;
             if(bEmpty) {
                 return;
             }
@@ -4348,9 +4348,37 @@ DrawingObjectsController.prototype =
         var oPlotArea = oChart.plotArea;
         var nStyle = oProps.getStyle();
         if(AscFormat.isRealNumber(nStyle)){
-            var oPreset = AscCommon.g_oChartPresets[nCurType] && AscCommon.g_oChartPresets[nCurType][nStyle - 1];
+            var nTypeForPreset = nCurType;
+            var bChanged = false;
+            if(oPlotArea.isLineType(nCurType)) {
+                if(Asc.c_oAscChartTypeSettings.lineNormalMarker === nCurType) {
+                    nTypeForPreset = Asc.c_oAscChartTypeSettings.lineNormal;
+                    bChanged = true;
+                }
+                if(Asc.c_oAscChartTypeSettings.lineStackedMarker === nCurType) {
+                    nTypeForPreset = Asc.c_oAscChartTypeSettings.lineStacked;
+                    bChanged = true;
+                }
+                if(Asc.c_oAscChartTypeSettings.lineStackedPerMarker === nCurType) {
+                    nTypeForPreset = Asc.c_oAscChartTypeSettings.lineStackedPer;
+                    bChanged = true;
+                }
+            }
+            else if(oPlotArea.isScatterType(nCurType)) {
+                if(Asc.c_oAscChartTypeSettings.scatter !== nCurType) {
+                    nTypeForPreset = Asc.c_oAscChartTypeSettings.scatter;
+                    bChanged = true;
+                }
+            }
+            var oPreset = AscCommon.g_oChartPresets[nTypeForPreset] && AscCommon.g_oChartPresets[nTypeForPreset][nStyle - 1];
             if(oPreset) {
+                if(bChanged) {
+                    oChartSpace.changeChartType(nTypeForPreset);
+                }
                 AscFormat.ApplyPresetToChartSpace(oChartSpace, oPreset, oProps.bCreate);
+                if(bChanged) {
+                    oChartSpace.changeChartType(nCurType);
+                }
                 return;
             }
         }
@@ -4358,62 +4386,8 @@ DrawingObjectsController.prototype =
         //Set the data range
         //TODO: Rework this
         var sRange = oProps.getRange();
-        if(typeof sRange === "string" && sRange.length > 0) {
-            var oWB = oApi.wb, oWS, oRange, oBBox, oCommonBBox, oChartBBox, oSeriesBBox;
-            var bEqualBBox = false, bEqualWS = false, bEqualVert = false, bLimit = false;
-            var oCatHeadersBBox, oSerHeadersBBox, oCatBBox, oSerBBox;
-            var aSeries;
-            if(oWB) {
-                var oParsedFormula = parserHelp.parse3DRef(sRange);
-                if(oParsedFormula) {
-                    oWS = oWB.getWorksheetByName(oParsedFormula.sheet);
-                    if(oWS) {
-                        oRange = oWS.getRange2(oParsedFormula.range);
-                        if(oRange) {
-                            oBBox = oRange.bbox;
-                            if(oBBox) {
-                                oCommonBBox = oChartSpace.getCommonBBox();
-                                oChartBBox = oChartSpace.bbox;
-                                bEqualBBox = oBBox.isEqual(oCommonBBox);
-                                if(oChartBBox) {
-                                    bEqualWS = oChartBBox.worksheet === oWS;
-                                    oSeriesBBox = oChartBBox.seriesBBox;
-                                    if(oSeriesBBox) {
-                                        bEqualVert =  oProps.getInColumns() === !oSeriesBBox.bVert;
-                                    }
-                                }
-                                bLimit = (oBBox.getHeight() > AscFormat.MAX_POINTS_COUNT || oBBox.getWidth() > AscFormat.MAX_POINTS_COUNT);
-                                if(!bLimit && (!bEqualWS || !bEqualBBox || !bEqualVert)) {
-                                    if(oChartBBox && bEqualBBox && bEqualWS && !bEqualVert) {
-                                        oCatBBox = oChartBBox.catBBox;
-                                        if(oCatBBox) {
-                                            oSerHeadersBBox = {
-                                                r1: oCatBBox.r1,
-                                                r2: oCatBBox.r2,
-                                                c1: oCatBBox.c1,
-                                                c2: oCatBBox.c2
-                                            };
-                                        }
-                                        oSerBBox = oChartBBox.serBBox;
-                                        if(oSerBBox)
-                                            oCatHeadersBBox = {
-                                                r1: oSerBBox.r1,
-                                                r2: oSerBBox.r2,
-                                                c1: oSerBBox.c1,
-                                                c2: oSerBBox.c2
-                                            };
-                                    }
-                                    aSeries = AscFormat.getChartSeries(oWS, oProps, oCatHeadersBBox, oSerHeadersBBox);
-                                    oChartSpace.rebuildSeriesFromAsc(aSeries);
-                                    if(oChartSpace.pivotSource){
-                                        oChartSpace.setPivotSource(null);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+        if(typeof sRange === "string") {
+            oChartSpace.setRange(sRange);
         }
 
         //Title
@@ -4488,205 +4462,76 @@ DrawingObjectsController.prototype =
 
         oChartSpace.setDlblsProps(oProps);
         var oTypedChart, nChart, nSer, oSeries;
-        for(nChart = 0; nChart < oPlotArea.charts.length; ++nChart){
-            oTypedChart = oPlotArea.charts[nChart];
-            if(oTypedChart.getObjectType() === AscDFH.historyitem_type_LineChart )
+        oTypedChart = oPlotArea.charts[0];
+        if(oTypedChart.getObjectType() === AscDFH.historyitem_type_LineChart )
+        {
+            if(!AscFormat.isRealBool(oProps.showMarker) || AscFormat.CChartsDrawer.prototype._isSwitchCurrent3DChart(oChartSpace))
             {
-                if(!AscFormat.isRealBool(oProps.showMarker) || AscFormat.CChartsDrawer.prototype._isSwitchCurrent3DChart(oChartSpace))
-                {
-                    oProps.showMarker = false;
-                }
-                if(!AscFormat.isRealBool(oProps.bLine) || AscFormat.CChartsDrawer.prototype._isSwitchCurrent3DChart(oChartSpace))
-                {
-                    oProps.bLine = true;
-                }
-                oTypedChart.setMarkerValue(oProps.showMarker);
-                if(!oProps.bLine)
-                {
-                    for(nSer = 0; nSer < oTypedChart.series.length; ++nSer)
-                    {
-                        oSeries = oTypedChart.series[nSer];
-                        removeDPtsFromSeries(oSeries);
-                        if(!oSeries.spPr)
-                        {
-                            oSeries.setSpPr(new AscFormat.CSpPr());
-                        }
-
-                        if(AscFormat.isRealBool(oSeries.smooth))
-                        {
-                            oSeries.setSmooth(null);
-                        }
-                        oSeries.spPr.setLn(AscFormat.CreateNoFillLine());
-                    }
-                }
-                else
-                {
-                    for(nSer = 0; nSer < oTypedChart.series.length; ++nSer)
-                    {
-                        oSeries = oTypedChart.series[nSer];
-                        removeDPtsFromSeries(oSeries);
-                        if(oSeries.smooth !== (oProps.smooth === true))
-                        {
-                            oSeries.setSmooth(oProps.smooth === true);
-                        }
-                        if(oSeries.spPr && oSeries.spPr.ln)
-                        {
-                            oSeries.spPr.setLn(null);
-                        }
-                    }
-                }
-                if(oTypedChart.smooth !== (oProps.smooth === true))
-                {
-                    oTypedChart.setSmooth(oProps.smooth === true);
-                }
-                for(nSer = 0; nSer < oTypedChart.series.length; ++nSer)
-                {
-                    oSeries = oTypedChart.series[nSer];
-                    if(oSeries.smooth !== (oProps.smooth === true))
-                    {
-                        oSeries.setSmooth(oProps.smooth === true);
-                    }
-                }
+                oProps.showMarker = false;
             }
-            if(oTypedChart.getObjectType() === AscDFH.historyitem_type_ScatterChart)
+            if(!AscFormat.isRealBool(oProps.bLine) || AscFormat.CChartsDrawer.prototype._isSwitchCurrent3DChart(oChartSpace))
             {
-                if(!AscFormat.isRealBool(oProps.showMarker))
-                {
-                    oProps.showMarker = true;
-                }
-                if(!AscFormat.isRealBool(oProps.bLine))
-                {
-                    oProps.bLine = false;
-                }
-
+                oProps.bLine = true;
+            }
+            oTypedChart.setMarkerValue(oProps.showMarker);
+            if(!oProps.bLine)
+            {
                 for(nSer = 0; nSer < oTypedChart.series.length; ++nSer)
                 {
                     oSeries = oTypedChart.series[nSer];
-                    if(oSeries.marker)
+                    removeDPtsFromSeries(oSeries);
+                    if(!oSeries.spPr)
                     {
-                        oSeries.setMarker(null);
+                        oSeries.setSpPr(new AscFormat.CSpPr());
                     }
+
                     if(AscFormat.isRealBool(oSeries.smooth))
                     {
                         oSeries.setSmooth(null);
                     }
+                    oSeries.spPr.setLn(AscFormat.CreateNoFillLine());
                 }
-                var new_scatter_style;
-                if(oProps.bLine)
-                {
-                    for(nSer = 0; nSer < oTypedChart.series.length; ++nSer)
-                    {
-                        oSeries = oTypedChart.series[nSer];
-                        removeDPtsFromSeries(oSeries);
-                        if(oSeries.spPr && oSeries.spPr.ln)
-                        {
-                            oSeries.spPr.setLn(null);
-                        }
-                    }
-                    if(oProps.smooth)
-                    {
-                        if(oProps.showMarker)
-                        {
-                            new_scatter_style = SCATTER_STYLE_SMOOTH_MARKER;
-                            for(nSer = 0; nSer < oTypedChart.series.length; ++nSer)
-                            {
-                                oSeries = oTypedChart.series[nSer];
-                                if(oSeries.marker)
-                                {
-                                    oSeries.setMarker(null);
-                                }
-                                if(oSeries.smooth !== true) {
-                                    oSeries.setSmooth(true);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            new_scatter_style = SCATTER_STYLE_SMOOTH;
-                            for(nSer = 0; nSer < oTypedChart.series.length; ++nSer)
-                            {
-                                oSeries = oTypedChart.series[nSer];
-                                if(!oSeries.marker)
-                                {
-                                    oSeries.setMarker(new AscFormat.CMarker());
-                                }
-                                oSeries.marker.setSymbol(AscFormat.SYMBOL_NONE);
-                                oSeries.setSmooth(true);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if(oProps.showMarker)
-                        {
-                            new_scatter_style = SCATTER_STYLE_LINE_MARKER;
-                            for(nSer = 0; nSer < oTypedChart.series.length; ++nSer)
-                            {
-                                oSeries = oTypedChart.series[nSer];
-                                if(oSeries.marker)
-                                {
-                                    oSeries.setMarker(null);
-                                }
-                                oSeries.setSmooth(false);
-                            }
-                        }
-                        else
-                        {
-                            new_scatter_style = SCATTER_STYLE_LINE;
-                            for(nSer = 0; nSer < oTypedChart.series.length; ++nSer)
-                            {
-                                oSeries = oTypedChart.series[nSer];
-                                if(!oSeries.marker)
-                                {
-                                    oSeries.setMarker(new AscFormat.CMarker());
-                                }
-                                oSeries.marker.setSymbol(AscFormat.SYMBOL_NONE);
-                                oSeries.setSmooth(false);
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    for(nSer = 0; nSer < oTypedChart.series.length; ++nSer)
-                    {
-                        oSeries = oTypedChart.series[nSer];
-                        removeDPtsFromSeries(oSeries);
-                        if(!oSeries.spPr)
-                        {
-                            oSeries.setSpPr(new AscFormat.CSpPr());
-                        }
-                        oSeries.spPr.setLn(AscFormat.CreateNoFillLine());
-                    }
-                    if(oProps.showMarker)
-                    {
-                        new_scatter_style = SCATTER_STYLE_MARKER;
-                        for(nSer = 0; nSer < oTypedChart.series.length; ++nSer)
-                        {
-                            oSeries = oTypedChart.series[nSer];
-                            if(oSeries.marker)
-                            {
-                                oSeries.setMarker(null);
-                            }
-                            oSeries.setSmooth(false);
-                        }
-                    }
-                    else
-                    {
-                        new_scatter_style = SCATTER_STYLE_MARKER;
-                        for(nSer = 0; nSer < oTypedChart.series.length; ++nSer)
-                        {
-                            oSeries = oTypedChart.series[nSer];
-                            if(!oSeries.marker)
-                            {
-                                oSeries.setMarker(new AscFormat.CMarker());
-                            }
-                            oSeries.marker.setSymbol(AscFormat.SYMBOL_NONE);
-                        }
-                    }
-                }
-                oTypedChart.setScatterStyle(new_scatter_style);
             }
+            else
+            {
+                for(nSer = 0; nSer < oTypedChart.series.length; ++nSer)
+                {
+                    oSeries = oTypedChart.series[nSer];
+                    removeDPtsFromSeries(oSeries);
+                    if(oSeries.smooth !== (oProps.smooth === true))
+                    {
+                        oSeries.setSmooth(oProps.smooth === true);
+                    }
+                    if(oSeries.spPr && oSeries.spPr.ln)
+                    {
+                        oSeries.spPr.setLn(null);
+                    }
+                }
+            }
+            if(oTypedChart.smooth !== (oProps.smooth === true))
+            {
+                oTypedChart.setSmooth(oProps.smooth === true);
+            }
+            for(nSer = 0; nSer < oTypedChart.series.length; ++nSer)
+            {
+                oSeries = oTypedChart.series[nSer];
+                if(oSeries.smooth !== (oProps.smooth === true))
+                {
+                    oSeries.setSmooth(oProps.smooth === true);
+                }
+            }
+        }
+        if(oTypedChart.getObjectType() === AscDFH.historyitem_type_ScatterChart)
+        {
+            if(!AscFormat.isRealBool(oProps.showMarker))
+            {
+                oProps.showMarker = true;
+            }
+            if(!AscFormat.isRealBool(oProps.bLine))
+            {
+                oProps.bLine = false;
+            }
+            oTypedChart.setLineParams(oProps.showMarker, oProps.bLine, oProps.smooth);
         }
     },
 
@@ -4838,43 +4683,10 @@ DrawingObjectsController.prototype =
                 ret.putDataLabelsPos(c_oAscChartDataLabelsPos.none);
             }
         }
-        var bShowMarker, bNoLine, bSmooth;
+        var bNoLine, bSmooth;
         if(oFirstChart.getObjectType() === AscDFH.historyitem_type_LineChart) {
-            bShowMarker = false;
-            if(oFirstChart.marker !== false) {
-                for(nSer = 0; nSer < aSeries.length; ++nSer) {
-                    oSeries = aSeries[nSer];
-                    if(!oSeries.marker) {
-                        bShowMarker = true;
-                        break;
-                    }
-                    if(oSeries.marker.symbol !== AscFormat.SYMBOL_NONE) {
-                        bShowMarker = true;
-                        break;
-                    }
-                }
-            }
-            ret.putShowMarker(bShowMarker);
-            bNoLine = true;
-            for(nSer = 0; nSer < aSeries.length; ++nSer) {
-                oSeries = aSeries[nSer];
-                if(!(oSeries.spPr
-                    && oSeries.spPr.ln
-                    && oSeries.spPr.ln.Fill
-                    && oSeries.spPr.ln.Fill.fill
-                    && oSeries.spPr.ln.Fill.fill.type === c_oAscFill.FILL_TYPE_NOFILL)) {
-                    bNoLine = false;
-                    break;
-                }
-            }
-            bSmooth = true;
-            for(nSer = 0; nSer < aSeries.length; ++nSer) {
-                oSeries = aSeries[nSer];
-                if(oSeries.smooth === false) {
-                    bSmooth = false;
-                    break;
-                }
-            }
+            bNoLine = oFirstChart.isNoLine();
+            bSmooth = oFirstChart.isSmooth();
             if(!bNoLine) {
                 ret.putLine(true);
                 ret.putSmooth(bSmooth);
@@ -4884,75 +4696,9 @@ DrawingObjectsController.prototype =
             }
         }
         else if(oFirstChart.getObjectType() === AscDFH.historyitem_type_ScatterChart) {
-            switch(oFirstChart.scatterStyle) {
-                case SCATTER_STYLE_LINE: {
-                    ret.bLine = true;
-                    ret.smooth = false;
-                    ret.showMarker = false;
-                    break;
-                }
-                case SCATTER_STYLE_LINE_MARKER: {
-                    ret.bLine = true;
-                    ret.smooth = false;
-                    ret.showMarker = true;
-                    break;
-                }
-                case SCATTER_STYLE_MARKER: {
-                    ret.bLine = false;
-                    ret.showMarker = false;
-                    for(nSer = 0; nSer < aSeries.length; ++nSer) {
-                        oSeries = aSeries[nSer];
-                        if(!(oSeries.marker && oSeries.marker.symbol === AscFormat.SYMBOL_NONE)) {
-                            ret.showMarker = true;
-                            break;
-                        }
-                    }
-                    break;
-                }
-                case SCATTER_STYLE_NONE: {
-                    ret.bLine = false;
-                    ret.showMarker = false;
-                    break;
-                }
-                case SCATTER_STYLE_SMOOTH: {
-                    ret.bLine = true;
-                    ret.smooth = true;
-                    ret.showMarker = false;
-                    break;
-                }
-                case SCATTER_STYLE_SMOOTH_MARKER: {
-                    ret.bLine = true;
-                    ret.smooth = true;
-                    ret.showMarker = true;
-                    break;
-                }
-            }
-            if(ret.bLine) {
-                for(nSer = 0; nSer < aSeries.length; ++nSer) {
-                    oSeries = aSeries[nSer];
-                    if(!(oSeries.spPr
-                        && oSeries.spPr.ln
-                        && oSeries.spPr.ln.Fill
-                        && oSeries.spPr.ln.Fill.fill
-                        && oSeries.spPr.ln.Fill.fill.type === c_oAscFill.FILL_TYPE_NOFILL)) {
-                        break;
-                    }
-                }
-                if(nSer === aSeries.length) {
-                    ret.bLine = false;
-                }
-                bSmooth = ret.smooth;
-                if(bSmooth) {
-                    for(nSer = 0; nSer < aSeries.length; ++nSer) {
-                        oSeries = aSeries[nSer];
-                        if(!oSeries.smooth) {
-                            bSmooth = false;
-                            break;
-                        }
-                    }
-                }
-                ret.putSmooth(bSmooth);
-            }
+            ret.bLine = !oFirstChart.isNoLine();
+            ret.smooth = oFirstChart.isSmooth();
+            ret.showMarker = oFirstChart.isMarkerChart();
         }
         return ret;
     },
@@ -5055,10 +4801,10 @@ DrawingObjectsController.prototype =
 		return null;
 	},
 
-	getChartSpace: function(worksheet, options, bUseCache)
+	getChartSpace: function(options)
 	{
-		var chartSeries = AscFormat.getChartSeries(worksheet, options);
-		return this._getChartSpace(chartSeries, options, bUseCache);
+		var chartSeries = AscFormat.getChartSeries(options);
+		return this._getChartSpace(chartSeries, options, false);
 	},
 
     getChartSpace2: function(chart, options)
@@ -5076,7 +4822,7 @@ DrawingObjectsController.prototype =
             }
             ret.setBDeleted(false);
         }
-        else if(isRealObject(chart))
+        else if(Array.isArray(chart))
         {
             ret = DrawingObjectsController.prototype._getChartSpace.call(this, chart, options, true);
             ret.setBDeleted(false);
@@ -5095,8 +4841,6 @@ DrawingObjectsController.prototype =
 
 	getSeriesDefault: function (type) {
 		// Обновлены тестовые данные для новой диаграммы
-
-
         var series = [], seria, Cat;
         var  createItem = function(value) {
             return { numFormatStr: "General", isDateTimeFormat: false, val: value, isHidden: false };
@@ -5114,33 +4858,27 @@ DrawingObjectsController.prototype =
             seria.Val.Formula = "Sheet1!$B$2:$B$7";
             seria.Val.NumCache = [ createItem(46), createItem(38), createItem(24), createItem(29), createItem(11), createItem(7) ];
             seria.TxCache.Formula = "Sheet1!$B$1";
-            seria.TxCache.Tx = "Gold";
-            if (!bIsScatter)
-                seria.Cat = Cat;
-            else
-                seria.xVal = Cat;
+            seria.TxCache.NumCache = [createItem("Gold")];
+            seria.Cat = Cat;
+            seria.xVal = Cat;
             series.push(seria);
 
             seria = new AscFormat.asc_CChartSeria();
             seria.Val.Formula = "Sheet1!$C$2:$C$7";
             seria.Val.NumCache = [ createItem(29), createItem(27), createItem(26), createItem(17), createItem(19), createItem(14) ];
             seria.TxCache.Formula = "Sheet1!$C$1";
-            seria.TxCache.Tx = "Silver";
-            if (!bIsScatter)
-                seria.Cat = Cat;
-            else
-                seria.xVal = Cat;
+            seria.TxCache.NumCache = [createItem("Silver")];
+            seria.Cat = Cat;
+            seria.xVal = Cat;
             series.push(seria);
 
             seria = new AscFormat.asc_CChartSeria();
             seria.Val.Formula = "Sheet1!$D$2:$D$7";
             seria.Val.NumCache = [ createItem(29), createItem(23), createItem(32), createItem(19), createItem(14), createItem(17) ];
             seria.TxCache.Formula = "Sheet1!$D$1";
-            seria.TxCache.Tx = "Bronze";
-            if (!bIsScatter)
-                seria.Cat = Cat;
-            else
-                seria.xVal = Cat;
+            seria.TxCache.NumCache = [createItem("Bronze")];
+            seria.Cat = Cat;
+            seria.xVal = Cat;
             series.push(seria);
 
             return series;
@@ -5152,32 +4890,36 @@ DrawingObjectsController.prototype =
             seria.Val.Formula = "Sheet1!$B$2:$B$6";
             seria.Val.NumCache = [ createItem(40), createItem(21), createItem(37), createItem(49), createItem(32)];
             seria.TxCache.Formula = "Sheet1!$B$1";
-            seria.TxCache.Tx = "Open";
+            seria.TxCache.NumCache = [createItem("Open")];
             seria.Cat = Cat;
+            seria.xVal = Cat;
             series.push(seria);
 
             seria = new AscFormat.asc_CChartSeria();
             seria.Val.Formula = "Sheet1!$C$2:$C$6";
             seria.Val.NumCache = [ createItem(57), createItem(54), createItem(52), createItem(59), createItem(34)];
             seria.TxCache.Formula = "Sheet1!$C$1";
-            seria.TxCache.Tx = "High";
+            seria.TxCache.NumCache = [createItem("High")];
             seria.Cat = Cat;
+            seria.xVal = Cat;
             series.push(seria);
 
             seria = new AscFormat.asc_CChartSeria();
             seria.Val.Formula = "Sheet1!$D$2:$D$6";
             seria.Val.NumCache = [ createItem(10), createItem(14), createItem(14), createItem(12), createItem(6)];
             seria.TxCache.Formula = "Sheet1!$D$1";
-            seria.TxCache.Tx = "Low";
+            seria.TxCache.NumCache = [createItem("Low")];
             seria.Cat = Cat;
+            seria.xVal = Cat;
             series.push(seria);
 
             seria = new AscFormat.asc_CChartSeria();
             seria.Val.Formula = "Sheet1!$E$2:$E$6";
             seria.Val.NumCache = [ createItem(24), createItem(35), createItem(48), createItem(35), createItem(15)];
             seria.TxCache.Formula = "Sheet1!$E$1";
-            seria.TxCache.Tx = "Close";
+            seria.TxCache.NumCache = [createItem("Close")];
             seria.Cat = Cat;
+            seria.xVal = Cat;
             series.push(seria);
 
             return series;
@@ -5407,12 +5149,6 @@ DrawingObjectsController.prototype =
                     else
                     {
                         oSp.deleteDrawingBase(true);
-                        if(oSp.signatureLine){
-                            var oApi = this.getEditorApi();
-                            if(oApi){
-                                oApi.sendEvent("asc_onRemoveSignature", this.selectedObjects[i].signatureLine.id);
-                            }
-                        }
                         oSp.setBDeleted(true);
                     }
 
@@ -6668,15 +6404,13 @@ DrawingObjectsController.prototype =
             return AscFormat.ExecuteNoHistory(function()
             {
                 var options = new Asc.asc_ChartSettings();
-                options.type = type;
+                options.putType(type);
                 options.style = 1;
                 options.putTitle(c_oAscChartTitleShowSettings.noOverlay);
-                var chartSeries = {series: DrawingObjectsController.prototype.getSeriesDefault.call(this, type),
-                    parsedHeaders: {bLeft: true, bTop: true}};
+                var chartSeries = DrawingObjectsController.prototype.getSeriesDefault.call(this, type);
                 var ret = this.getChartSpace2(chartSeries, options);
                 if (!ret) {
-                    chartSeries = {series: DrawingObjectsController.prototype.getSeriesDefault.call(this,
-                        c_oAscChartTypeSettings.barNormal), parsedHeaders: {bLeft: true, bTop: true}};
+                    chartSeries = DrawingObjectsController.prototype.getSeriesDefault.call(this, c_oAscChartTypeSettings.barNormal);
                     ret = this.getChartSpace2(chartSeries, options);
                 }
                 if(type === c_oAscChartTypeSettings.scatter)
@@ -6689,9 +6423,6 @@ DrawingObjectsController.prototype =
                     new_vert_axis_settings.setDefault();
                     new_vert_axis_settings.putGridlines(c_oAscGridLinesSettings.major);
                     options.addVertAxesProps(new_vert_axis_settings);
-                    options.putShowMarker(true);
-                    options.putSmooth(null);
-                    options.putLine(false);
                 }
                 options.type = null;
                 options.bCreate = true;
@@ -7487,7 +7218,6 @@ DrawingObjectsController.prototype =
                     var Depth = 0;
                     if(oDrawingSelectionState.textObject instanceof AscFormat.CGraphicFrame){
                         oDocContent = oDrawingSelectionState.textObject.graphicObject;
-                        Depth = 1;
                     }
                     else {
                         oDocContent = oDrawingSelectionState.textObject.getDocContent();
@@ -8066,7 +7796,7 @@ DrawingObjectsController.prototype =
                         new_table_props.Locked = locked;
                         if(new_table_props.CellsBackground)
                         {
-                            if(new_table_props.CellsBackground.Unifill && new_table_props.CellsBackground.Unifill.fill && new_table_props.CellsBackground.Unifill.fill.type !== c_oAscFill.FILL_TYPE_NONE)
+                            if(new_table_props.CellsBackground.Unifill && new_table_props.CellsBackground.Unifill.isVisible())
                             {
                                 new_table_props.CellsBackground.Unifill.check(drawing.Get_Theme(), drawing.Get_ColorMap());
                                 var RGBA = new_table_props.CellsBackground.Unifill.getRGBAColor();
@@ -8085,7 +7815,7 @@ DrawingObjectsController.prototype =
                             {
                                 if(!border)
                                     return;
-                                if(border.Unifill && border.Unifill.fill && border.Unifill.fill.type !== c_oAscFill.FILL_TYPE_NONE)
+                                if(border.Unifill && border.Unifill.isVisible())
                                 {
                                     border.Unifill.check(drawing.Get_Theme(), drawing.Get_ColorMap());
                                     var RGBA = border.Unifill.getRGBAColor();
@@ -8826,10 +8556,10 @@ DrawingObjectsController.prototype =
             oTextPr.RFonts.CS = {Name: "Cambria Math", Index: -1};
             oTextPr.RFonts.EastAsia = {Name: "Cambria Math", Index: -1};
         }
-        oContent.Set_ApplyToAll(true);
+        oContent.SetApplyToAll(true);
         oContent.AddToParagraph(new ParaTextPr(oTextPr));
         oContent.SetParagraphAlign(AscCommon.align_Center);
-        oContent.Set_ApplyToAll(false);
+        oContent.SetApplyToAll(false);
         var oBodyPr = oShape.getBodyPr().createDuplicate();
         oBodyPr.rot = 0;
         oBodyPr.spcFirstLastPara = false;
@@ -8956,20 +8686,23 @@ DrawingObjectsController.prototype =
     checkSelectedObjectsAndCallback: function(callback, args, bNoSendProps, nHistoryPointType, aAdditionalObjects, bNoCheckLock)
     {
         var oApi = Asc.editor;
-        if(oApi && oApi.collaborativeEditing && oApi.collaborativeEditing.getGlobalLock()){
+        if(oApi && oApi.collaborativeEditing && oApi.collaborativeEditing.getGlobalLock())
+        {
             return;
         }
         var selection_state = this.getSelectionState();
+        var aId = [], i;
         if(!(bNoCheckLock === true))
         {
-            this.drawingObjects.objectLocker.reset();
-            for(var i = 0; i < this.selectedObjects.length; ++i)
+            for(i = 0; i < this.selectedObjects.length; ++i)
             {
-                this.drawingObjects.objectLocker.addObjectId(this.selectedObjects[i].Get_Id());
+                aId.push(this.selectedObjects[i].Get_Id());
             }
-            if(aAdditionalObjects){
-                for(var i = 0; i < aAdditionalObjects.length; ++i){
-                    this.drawingObjects.objectLocker.addObjectId(aAdditionalObjects[i].Get_Id());
+            if(aAdditionalObjects)
+            {
+                for(i = 0; i < aAdditionalObjects.length; ++i)
+                {
+                    aId.push(aAdditionalObjects[i].Get_Id());
                 }
             }
         }
@@ -9003,32 +8736,18 @@ DrawingObjectsController.prototype =
         };
         if(!(bNoCheckLock === true))
         {
-            return this.drawingObjects.objectLocker.checkObjects(callback2);
+            return Asc.editor.checkObjectsLock(aId, callback2);
         }
         callback2(true, true);
         return true;
     },
 
-    checkSelectedObjectsAndCallbackNoCheckLock: function(callback, args, bNoSendProps, nHistoryPointType)
-    {
-        var nPointType = AscFormat.isRealNumber(nHistoryPointType) ? nHistoryPointType : AscDFH.historydescription_CommonControllerCheckSelected;
-        History.Create_NewPoint(nPointType);
-
-        callback.apply(this, args);
-        this.startRecalculate();
-        if(!(bNoSendProps === true))
-        {
-            this.drawingObjects.sendGraphicObjectProps();
-        }
-    },
-
     checkSelectedObjectsAndCallback2: function(callback)
     {
-        var selection_state = this.getSelectionState();
-        this.drawingObjects.objectLocker.reset();
+        var aId = [];
         for(var i = 0; i < this.selectedObjects.length; ++i)
         {
-            this.drawingObjects.objectLocker.addObjectId(this.selectedObjects[i].Get_Id());
+            aId.push(this.selectedObjects[i].Get_Id());
         }
         var _this = this;
         var callback2 = function(bLock)
@@ -9045,7 +8764,7 @@ DrawingObjectsController.prototype =
             }
 
         };
-        return this.drawingObjects.objectLocker.checkObjects(callback2);
+        return Asc.editor.checkObjectsLock(aId, callback2);
     },
 
     setGraphicObjectPropsCallBack: function(props)
@@ -10612,9 +10331,6 @@ function CollectSettingsUniFill(oUniFill)
     var oFillTypes = window['Asc'].c_oAscFill;
     switch(oFill.type)
     {
-        case oFillTypes.FILL_TYPE_NONE:{
-            break;
-        }
         case oFillTypes.FILL_TYPE_BLIP:{
             ret.push(oFill.RasterImageId);
             break;
@@ -10725,10 +10441,6 @@ function CollectSettingsUniFill(oUniFill)
         oUnifill.transparent = aPreset[1];
         var oFillTypes = window['Asc'].c_oAscFill;
         switch(aPreset[0]){
-            case oFillTypes.FILL_TYPE_NONE:{
-                oUnifill.fill = new AscFormat.CNoFill();
-                break;
-            }
             case oFillTypes.FILL_TYPE_BLIP:{
                 oUnifill.fill =  new AscFormat.CBlipFill();
                 oUnifill.fill.RasterImageId = aPreset[2];
@@ -11327,7 +11039,7 @@ function ApplyPresetToChartSpace(oChartSpace, aPreset, bCreate){
         lit = null;
         ser = oChart.series[i];
         val = ser.val || ser.yVal;
-        var pts = AscFormat.getPtsFromSeries(ser);
+        var pts = ser.getNumPts();
         if(val){
             if(val.numRef && val.numRef.numCache)
             {
@@ -11730,7 +11442,7 @@ function ApplyPresetToChartSpace(oChartSpace, aPreset, bCreate){
     }
 
 
-    function fCreateSignatureShape(sGuid, sSigner, sSigner2, sEmail, bWord, wsModel, Width, Height, sImgUrl){
+    function fCreateSignatureShape(oPr, bWord, wsModel, Width, Height, sImgUrl){
         var oShape = new AscFormat.CShape();
         oShape.setWordShape(bWord === true);
         oShape.setBDeleted(false);
@@ -11762,10 +11474,8 @@ function ApplyPresetToChartSpace(oChartSpace, aPreset, bCreate){
         oShape.setSpPr(oSpPr);
         oSpPr.setParent(oShape);
         var oSignatureLine = new AscFormat.CSignatureLine();
-        oSignatureLine.id = sGuid;
-        oSignatureLine.signer = sSigner;
-        oSignatureLine.signer2 = sSigner2;
-        oSignatureLine.email = sEmail;
+        oSignatureLine.id = AscCommon.CreateGUID();
+        oSignatureLine.setProperties(oPr);
         oShape.setSignature(oSignatureLine);
 
         return oShape;
@@ -12273,4 +11983,5 @@ function ApplyPresetToChartSpace(oChartSpace, aPreset, bCreate){
 	window['AscFormat'].getNumberingType = getNumberingType;
 	window['AscFormat'].CreateUnifillFromPreset = CreateUnifillFromPreset;
 	window['AscFormat'].fGetDefaultShapeExtents = fGetDefaultShapeExtents;
+	window['AscFormat'].removeDPtsFromSeries = removeDPtsFromSeries;
 })(window);

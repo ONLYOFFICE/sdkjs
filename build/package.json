@@ -4,7 +4,7 @@
   "homepage": "http://www.onlyoffice.com",
   "private": true,
   "dependencies": {
-    "google-closure-compiler": "20200830.0.0",
+    "google-closure-compiler": "20210106.0.0",
     "grunt": "^1.3.0",
     "grunt-contrib-clean": "^2.0.0",
     "grunt-contrib-concat": "^1.0.1",

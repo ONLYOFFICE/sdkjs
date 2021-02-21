@@ -144,9 +144,9 @@ CShape.prototype.deleteDrawingBase = function(bCheckPlaceholder)
                 var doc_content = copy.getDocContent && copy.getDocContent();
                 if(doc_content)
                 {
-                    doc_content.Set_ApplyToAll(true);
+                    doc_content.SetApplyToAll(true);
                     doc_content.Remove(-1);
-                    doc_content.Set_ApplyToAll(false);
+                    doc_content.SetApplyToAll(false);
                 }
             }
         }

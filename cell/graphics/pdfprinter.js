@@ -51,9 +51,7 @@ function CPdfPrinter(fontManager, font)
     }
 
     vector_koef = 25.4 / (this._ppiX * this._zoom);
-
-    if (AscCommon.AscBrowser.isRetina)
-        vector_koef /= AscCommon.AscBrowser.retinaPixelRatio;
+    vector_koef /= AscCommon.AscBrowser.retinaPixelRatio;
 
     this.DocumentRenderer = new AscCommon.CDocumentRenderer();
     if (!window['IS_NATIVE_EDITOR']) {

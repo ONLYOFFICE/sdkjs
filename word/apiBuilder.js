@@ -1817,7 +1817,7 @@
 	/**
 	 * Sets the display text of the hyperlink.
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sDisplay - start character in current element
+	 * @param {string} sDisplay
 	 * @returns {bool} 
 	 * */
 	ApiHyperlink.prototype.SetDisplayedText = function(sDisplay)
@@ -1892,14 +1892,14 @@
 	 * */
 	ApiHyperlink.prototype.GetDisplayedText = function()
 	{
-		var sText = null;
+		var oText = {Text : ""};
 
 		if (this.ParaHyperlink.Content.length !== 0)
 		{
-			sText = this.ParaHyperlink.Get_Text();
+			this.ParaHyperlink.Get_Text(oText);
 		}
 
-		return sText;
+		return oText.Text;
 	};
 	/**
 	 * Gets the ScreenTip text of the hyperlink.
@@ -2606,189 +2606,16 @@
 	Api.prototype.CreateChart = function(sType, aSeries, aSeriesNames, aCatNames, nWidth, nHeight, nStyleIndex)
 	{
 		var oDrawingDocument = private_GetDrawingDocument();
-		var oLogicDocument = private_GetLogicDocument();
 		var nW = private_EMU2MM(nWidth);
 		var nH = private_EMU2MM(nHeight);
-		var settings = new Asc.asc_ChartSettings();
-		switch (sType)
-		{
-			case "bar" :
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.barNormal;
-				break;
-			}
-			case "barStacked":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.barStacked;
-				break;
-			}
-			case "barStackedPercent":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.barStackedPer;
-				break;
-			}
-			case "bar3D":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.barNormal3d;
-				break;
-			}
-			case "barStacked3D":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.barStacked3d;
-				break;
-			}
-			case "barStackedPercent3D":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.barStackedPer3d;
-				break;
-			}
-			case "barStackedPercent3DPerspective":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.barNormal3dPerspective;
-				break;
-			}
-			case "horizontalBar":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.hBarNormal;
-				break;
-			}
-			case "horizontalBarStacked":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.hBarStacked;
-				break;
-			}
-			case "horizontalBarStackedPercent":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.hBarStackedPer;
-				break;
-			}
-			case "horizontalBar3D":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.hBarNormal3d;
-				break;
-			}
-			case "horizontalBarStacked3D":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.hBarStacked3d;
-				break;
-			}
-			case "horizontalBarStackedPercent3D":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.hBarStackedPer3d;
-				break;
-			}
-			case "lineNormal":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.lineNormal;
-				break;
-			}
-			case "lineStacked":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.lineStacked;
-				break;
-			}
-			case "lineStackedPercent":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.lineStackedPer;
-				break;
-			}
-			case "line3D":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.line3d;
-				break;
-			}
-			case "pie":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.pie;
-				break;
-			}
-			case "pie3D":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.pie3d;
-				break;
-			}
-			case "doughnut":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.doughnut;
-				break;
-			}
-			case "scatter":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.scatter;
-				break;
-			}
-			case "stock":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.stock;
-				break;
-			}
-			case "area":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.areaNormal;
-				break;
-			}
-			case "areaStacked":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.areaStacked;
-				break;
-			}
-			case "areaStackedPercent":
-			{
-				settings.type = Asc.c_oAscChartTypeSettings.areaStackedPer;
-				break;
-			}
-		}
-		var aAscSeries = [];
-		var aAlphaBet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
-		var oCat, i;
-		if(aCatNames.length > 0)
-		{
-			var aNumCache = [];
-			for(i = 0; i < aCatNames.length; ++i)
-			{
-				aNumCache.push({val: aCatNames[i] + ""});
-			}
-			oCat = { Formula: "Sheet1!$B$1:$" + AscFormat.CalcLiterByLength(aAlphaBet, aCatNames.length) + "$1", NumCache: aNumCache };
-		}
-		for(i = 0; i < aSeries.length; ++i)
-		{
-			var oAscSeries = new AscFormat.asc_CChartSeria();
-			oAscSeries.Val.NumCache = [];
-			var aData = aSeries[i];
-			var sEndLiter = AscFormat.CalcLiterByLength(aAlphaBet, aData.length);
-			oAscSeries.Val.Formula = 'Sheet1!' + '$B$' + (i + 2) + ':$' + sEndLiter + '$' + (i + 2);
-			if(aSeriesNames[i])
-			{
-				oAscSeries.TxCache.Formula =  'Sheet1!' + '$A$' + (i + 2);
-				oAscSeries.TxCache.Tx = aSeriesNames[i];
-			}
-			if(oCat)
-			{
-				oAscSeries.Cat = oCat;
-			}
-			for(var j = 0; j < aData.length; ++j)
-			{
-
-				oAscSeries.Val.NumCache.push({ numFormatStr: "General", isDateTimeFormat: false, val: aData[j], isHidden: false });
-			}
-			aAscSeries.push(oAscSeries);
-		}
-		var chartSeries = {series: aAscSeries, parsedHeaders: {bLeft: true, bTop: true}};
 		var oDrawing = new ParaDrawing( nW, nH, null, oDrawingDocument, null, null);
-		var oChartSpace = AscFormat.DrawingObjectsController.prototype._getChartSpace(chartSeries, settings, true);
+		var oChartSpace = AscFormat.builder_CreateChart(nW, nH, sType, aCatNames, aSeriesNames, aSeries, nStyleIndex);
 		if(!oChartSpace)
 		{
 			return null;
 		}
 		oChartSpace.setParent(oDrawing);
 		oDrawing.Set_GraphicObject(oChartSpace);
-		oChartSpace.setBDeleted(false);
-		oChartSpace.extX = nW;
-		oChartSpace.extY = nH;
-		if(AscFormat.isRealNumber(nStyleIndex)){
-			oChartSpace.setStyle(nStyleIndex);
-		}
-		AscFormat.CheckSpPrXfrm(oChartSpace);
 		oDrawing.setExtent( oChartSpace.spPr.xfrm.extX, oChartSpace.spPr.xfrm.extY );
 		return new ApiChart(oChartSpace);
 	};
@@ -3682,7 +3509,7 @@
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {DocumentElement[]} arrContent - An array of elements to insert.
-	 * @param {boolean} [isInline=false] - Inline insert on not (works only when the length of arrContent = 1 and it's a paragraph)
+	 * @param {boolean} [isInline=false] - Inline insert or not (works only for the last and the first element and only if it's a paragraph)
 	 * @param {object} [oPr=undefined]
 	 * @returns {boolean} Success?
 	 */
@@ -3694,7 +3521,7 @@
 			var oElement = arrContent[nIndex];
 			if (oElement instanceof ApiParagraph || oElement instanceof ApiTable)
 			{
-				if (true === isInline && 1 === nCount && oElement instanceof ApiParagraph)
+				if (true === isInline && oElement instanceof ApiParagraph)
 					oSelectedContent.Add(new CSelectedElement(oElement.private_GetImpl(), false));
 				else
 					oSelectedContent.Add(new CSelectedElement(oElement.private_GetImpl(), true));
@@ -4081,6 +3908,8 @@
 	};
 	/**
 	 * Get the collection of tables on a given absolute page
+	 * <note>This method can be a little bit slow, because it runs the document calculation
+	 * process to arrange tables on the specified page</note>
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param nPage - page number
@@ -4090,12 +3919,13 @@
 	{
 		var arrApiAllTables = [];
 
+		this.Document.private_Recalculate(undefined, true, nPage + 1);
 		var arrAllTables = this.Document.GetAllTablesOnPage(nPage);
 
 		for (var Index = 0; Index < arrAllTables.length; Index++)
 		{
 			arrApiAllTables.push(new ApiTable(arrAllTables[Index].Table));
-		};
+		}
 
 		return arrApiAllTables;
 	};
@@ -4136,8 +3966,10 @@
 		var arrApiShapes  = [];
 
 		for (var Index = 0; Index < arrAllDrawing.length; Index++)
+		{
 			if (arrAllDrawing[Index].GraphicObj instanceof CShape)
 				arrApiShapes.push(new ApiShape(arrAllDrawing[Index].GraphicObj));
+		}
 		
 		return arrApiShapes;
 	};
@@ -4153,8 +3985,10 @@
 		var arrApiImages  = [];
 
 		for (var Index = 0; Index < arrAllDrawing.length; Index++)
+		{
 			if (arrAllDrawing[Index].GraphicObj instanceof CImageShape)
 				arrApiImages.push(new ApiImage(arrAllDrawing[Index].GraphicObj));
+		}
 		
 		return arrApiImages;
 	};
@@ -4170,8 +4004,10 @@
 		var arrApiCharts  = [];
 
 		for (var Index = 0; Index < arrAllDrawing.length; Index++)
+		{
 			if (arrAllDrawing[Index].GraphicObj instanceof CChartSpace)
 				arrApiCharts.push(new ApiChart(arrAllDrawing[Index].GraphicObj));
+		}
 		
 		return arrApiCharts;
 	};
@@ -4516,10 +4352,11 @@
 	 */
 	ApiParagraph.prototype.GetNext = function()
 	{
-		if (this.Paragraph.Next !== null && this.Paragraph.Next !== undefined)
-			return new ApiParagraph(this.Paragraph.Next);
+		var nextPara = this.Paragraph.GetNextParagraph();
+        if (nextPara !== null)
+            return new ApiParagraph(nextPara);
 
-		return null;
+        return null;
 	};
 	/**
 	 * Gets the Previous paragraph.
@@ -4529,10 +4366,11 @@
 	 */
 	ApiParagraph.prototype.GetPrevious = function()
 	{
-		if (this.Paragraph.Prev !== null && this.Paragraph.Prev !== undefined)
-			return new ApiParagraph(this.Paragraph.Prev);
+		var prevPara = this.Paragraph.GetPrevParagraph();
+        if (prevPara !== null)
+            return new ApiParagraph(prevPara);
 
-		return null;
+        return null;
 	};
 	/**
 	 * Create a copy of the paragraph. Ingonore comments, footnote references, complex fields
@@ -4790,9 +4628,9 @@
 	 */
 	ApiParagraph.prototype.SetBold = function(isBold)
 	{
-		this.Paragraph.Set_ApplyToAll(true);
+		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Bold : isBold}));
-		this.Paragraph.Set_ApplyToAll(false);
+		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
 	};
@@ -4805,9 +4643,9 @@
 	 */
 	ApiParagraph.prototype.SetCaps = function(isCaps)
 	{
-		this.Paragraph.Set_ApplyToAll(true);
+		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Caps : isCaps}));
-		this.Paragraph.Set_ApplyToAll(false);
+		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
 	};
@@ -4829,7 +4667,7 @@
 		color.b    = b;
 		color.Auto = isAuto;
 
-		this.Paragraph.Set_ApplyToAll(true);
+		this.Paragraph.SetApplyToAll(true);
 		if (true === color.Auto)
 		{
 			this.Paragraph.Add(new AscCommonWord.ParaTextPr({
@@ -4848,7 +4686,7 @@
 			Unifill.fill.color = AscFormat.CorrectUniColor(color, Unifill.fill.color, 1);
 			this.Paragraph.Add(new AscCommonWord.ParaTextPr({Unifill : Unifill}));
 		}
-		this.Paragraph.Set_ApplyToAll(false);
+		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
 	};
@@ -4861,9 +4699,9 @@
 	 */
 	ApiParagraph.prototype.SetDoubleStrikeout = function(isDoubleStrikeout)
 	{
-		this.Paragraph.Set_ApplyToAll(true);
+		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({DStrikeout : isDoubleStrikeout}));
-		this.Paragraph.Set_ApplyToAll(false);
+		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
 	};
@@ -4890,9 +4728,9 @@
 				Index : -1
 			};
 
-			this.Paragraph.Set_ApplyToAll(true);
+			this.Paragraph.SetApplyToAll(true);
 			this.Paragraph.Add(new AscCommonWord.ParaTextPr({FontFamily : FontFamily}));
-			this.Paragraph.Set_ApplyToAll(false);
+			this.Paragraph.SetApplyToAll(false);
 			
 			return this;
 		}
@@ -4908,9 +4746,9 @@
 	 */
 	ApiParagraph.prototype.SetFontSize = function(nSize)
 	{
-		this.Paragraph.Set_ApplyToAll(true);
+		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({FontSize : nSize/2}));
-		this.Paragraph.Set_ApplyToAll(false);
+		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
 	};
@@ -4926,7 +4764,7 @@
 	 */
 	ApiParagraph.prototype.SetHighlight = function(r, g, b, isNone)
 	{
-		this.Paragraph.Set_ApplyToAll(true);
+		this.Paragraph.SetApplyToAll(true);
 		if (true === isNone)
 		{
 			this.Paragraph.Add(new ParaTextPr({HighLight : highlight_None}));
@@ -4936,7 +4774,7 @@
 			var color = new CDocumentColor(r, g, b);
 			this.Paragraph.Add(new ParaTextPr({HighLight : color}));
 		}
-		this.Paragraph.Set_ApplyToAll(false);
+		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
 	};
@@ -4949,9 +4787,9 @@
 	 */
 	ApiParagraph.prototype.SetItalic = function(isItalic)
 	{
-		this.Paragraph.Set_ApplyToAll(true);
+		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Italic : isItalic}));
-		this.Paragraph.Set_ApplyToAll(false);
+		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
 	};
@@ -4966,9 +4804,9 @@
 	 */
 	ApiParagraph.prototype.SetPosition = function(nPosition)
 	{
-		this.Paragraph.Set_ApplyToAll(true);
+		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Position : nPosition}));
-		this.Paragraph.Set_ApplyToAll(false);
+		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
 	};
@@ -4990,7 +4828,7 @@
 		color.b    = b;
 		color.Auto = false;
 
-		this.Paragraph.Set_ApplyToAll(true);
+		this.Paragraph.SetApplyToAll(true);
 
 		var Shd = new CDocumentShd();
 
@@ -5018,7 +4856,7 @@
 			Shd.Set_FromObject(_Shd);
 			this.Paragraph.SetParagraphShd(_Shd);
 		}
-		this.Paragraph.Set_ApplyToAll(false);
+		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
 	};
@@ -5032,12 +4870,12 @@
 	 */
 	ApiParagraph.prototype.SetSmallCaps = function(isSmallCaps)
 	{
-		this.Paragraph.Set_ApplyToAll(true);
+		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({
 			SmallCaps : isSmallCaps,
 			Caps      : false
 		}));
-		this.Paragraph.Set_ApplyToAll(false);
+		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
 	};
@@ -5050,9 +4888,9 @@
 	 */
 	ApiParagraph.prototype.SetSpacing = function(nSpacing)
 	{
-		this.Paragraph.Set_ApplyToAll(true);
+		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Spacing : nSpacing}));
-		this.Paragraph.Set_ApplyToAll(false);
+		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
 	};
@@ -5065,12 +4903,12 @@
 	 */
 	ApiParagraph.prototype.SetStrikeout = function(isStrikeout)
 	{
-		this.Paragraph.Set_ApplyToAll(true);
+		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({
 			Strikeout  : isStrikeout,
 			DStrikeout : false
 			}));
-		this.Paragraph.Set_ApplyToAll(false);
+		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
 	};
@@ -5084,9 +4922,9 @@
 	 */
 	ApiParagraph.prototype.SetUnderline = function(isUnderline)
 	{
-		this.Paragraph.Set_ApplyToAll(true);
+		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Underline : isUnderline}));
-		this.Paragraph.Set_ApplyToAll(false);
+		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
 	};
@@ -5113,9 +4951,9 @@
 		else 
 			return null;
 
-		this.Paragraph.Set_ApplyToAll(true);
+		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({VertAlign : value}));
-		this.Paragraph.Set_ApplyToAll(false);
+		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
 	};
@@ -5173,7 +5011,9 @@
 		var arrApiShapes  = [];
 
 		for (var Index = 0; Index < arrAllDrawing.length; Index++)
+		{
 			arrApiShapes.push(new ApiDrawing(arrAllDrawing[Index]));
+		}
 		
 		return arrApiShapes;
 	};
@@ -5189,8 +5029,10 @@
 		var arrApiShapes  = [];
 
 		for (var Index = 0; Index < arrAllDrawing.length; Index++)
+		{
 			if (arrAllDrawing[Index].GraphicObj instanceof CShape)
-				arrApiShapes.push(new ApiShape(arrAllDrawing[Index]));
+				arrApiShapes.push(new ApiShape(arrAllDrawing[Index].GraphicObj));
+		}
 
 		return arrApiShapes;
 	};
@@ -5206,8 +5048,10 @@
 		var arrApiImages  = [];
 
 		for (var Index = 0; Index < arrAllDrawing.length; Index++)
+		{
 			if (arrAllDrawing[Index].GraphicObj instanceof CImageShape)
-				arrApiImages.push(new ApiImage(arrAllDrawing[Index]));
+				arrApiImages.push(new ApiImage(arrAllDrawing[Index].GraphicObj));
+		}
 
 		return arrApiImages;
 	};
@@ -5223,8 +5067,10 @@
 		var arrApiCharts  = [];
 
 		for (var Index = 0; Index < arrAllDrawing.length; Index++)
+		{
 			if (arrAllDrawing[Index].GraphicObj instanceof CChartSpace)
-				arrApiCharts.push(new ApiChart(arrAllDrawing[Index]));
+				arrApiCharts.push(new ApiChart(arrAllDrawing[Index].GraphicObj));
+		}
 
 		return arrApiCharts;
 	};
@@ -5320,9 +5166,9 @@
 		if (!(oTextPr instanceof ApiTextPr))
 			return false;
 
-		this.Paragraph.Set_ApplyToAll(true);
+		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr(oTextPr.TextPr));
-		this.Paragraph.Set_ApplyToAll(false);
+		this.Paragraph.SetApplyToAll(false);
 
 		return true;
 	};
@@ -7276,9 +7122,9 @@
 
 		for (var curPara = 0; curPara < allParagraphs.length; curPara++)
 		{
-			allParagraphs[curPara].Set_ApplyToAll(true);
+			allParagraphs[curPara].SetApplyToAll(true);
 			allParagraphs[curPara].Add(new AscCommonWord.ParaTextPr(oTextPr.TextPr));
-			allParagraphs[curPara].Set_ApplyToAll(false);
+			allParagraphs[curPara].SetApplyToAll(false);
 		}
 		
 		return true;
@@ -7814,9 +7660,9 @@
 		cellContent.GetAllParagraphs({All : true}, allParagraphs);
 		for (var curPara = 0; curPara < allParagraphs.length; curPara++)
 		{
-			allParagraphs[curPara].Set_ApplyToAll(true);
+			allParagraphs[curPara].SetApplyToAll(true);
 			allParagraphs[curPara].Add(new AscCommonWord.ParaTextPr(oTextPr.TextPr));
-			allParagraphs[curPara].Set_ApplyToAll(false);
+			allParagraphs[curPara].SetApplyToAll(false);
 		}
 		
 		return true;
@@ -8119,7 +7965,7 @@
 	 */
 	ApiTextPr.prototype.SetFontFamily = function(sFontFamily)
 	{
-		this.TextPr.RFonts.Set_All(sFontFamily, -1);
+		this.TextPr.RFonts.SetAll(sFontFamily, -1);
 		this.private_OnChange();
 	};
 	/**
@@ -8324,6 +8170,33 @@
 		this.private_OnChange();
 	};
 	/**
+	 * Gets the paragraph style method.
+	 * @memberof ApiParaPr
+	 * @typeofeditors ["CDE"]
+	 * @return {?ApiStyle} - The style of the paragraph.
+	 */
+	ApiParaPr.prototype.GetStyle = function()
+	{
+		var oDocument = private_GetLogicDocument();
+		var oStyles   = oDocument.GetStyles();
+
+		var styleId;
+		if (!this.Parent)
+		{
+			styleId = this.ParaPr.PStyle;
+			if (styleId)
+				return new ApiStyle(oStyles.Get(styleId));
+
+			return null;
+		}
+
+		styleId = this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.PStyle;
+		if (styleId)
+			return new ApiStyle(oStyles.Get(styleId));
+
+		return null;
+	};
+	/**
 	 * Specify that any space before or after this paragraph set using the 
 	 * {@link ApiParaPr#SetSpacingBefore} or {@link ApiParaPr#SetSpacingAfter} spacing element, should not be applied when the preceding and 
 	 * following paragraphs are of the same paragraph style, affecting the top and bottom spacing respectively.
@@ -8348,6 +8221,22 @@
 		this.private_OnChange();
 	};
 	/**
+	 * Gets the paragraph left side indentation.
+	 * @memberof ApiParaPr
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {twips | undefined} - The paragraph left side indentation value measured in twentieths of a point (1/1440 of an inch).
+	 */
+	ApiParaPr.prototype.GetIndLeft = function()
+	{
+		if (!this.Parent)
+		{
+			if (this.ParaPr.Ind.Left !== undefined)
+				return AscCommon.MMToTwips(this.ParaPr.Ind.Left);
+			return undefined;
+		}
+		return AscCommon.MMToTwips(this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Ind.Left);
+	};
+	/**
 	 * Set the paragraph right side indentation.
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
@@ -8357,6 +8246,23 @@
 	{
 		this.ParaPr.Ind.Right = private_Twips2MM(nValue);
 		this.private_OnChange();
+	};
+	/**
+	 * Gets the paragraph right side indentation.
+	 * @memberof ApiParaPr
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {twips | undefined} - The paragraph right side indentation value measured in twentieths of a point (1/1440 of an inch).
+	 */
+	ApiParaPr.prototype.GetIndRight = function()
+	{
+		if (!this.Parent)
+		{
+			if (this.ParaPr.Ind.Right !== undefined)
+				return AscCommon.MMToTwips(this.ParaPr.Ind.Right);
+
+			return undefined;
+		}
+		return AscCommon.MMToTwips(this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Ind.Right);
 	};
 	/**
 	 * Set the paragraph first line indentation.
@@ -8370,6 +8276,24 @@
 		this.private_OnChange();
 	};
 	/**
+	 * Gets the paragraph first line indentation.
+	 * @memberof ApiParaPr
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {twips | undefined} - The paragraph first line indentation value measured in twentieths of a point (1/1440 of an inch).
+	 */
+	ApiParaPr.prototype.GetIndFirstLine = function()
+	{
+		if (!this.Parent)
+		{
+			if (this.ParaPr.Ind.FirstLine !== undefined)
+				return AscCommon.MMToTwips(this.ParaPr.Ind.FirstLine);
+
+			return undefined;
+		}
+
+		return AscCommon.MMToTwips(this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Ind.FirstLine);
+	};
+	/**
 	 * Set paragraph contents justification.
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
@@ -8380,6 +8304,41 @@
 	{
 		this.ParaPr.Jc = private_GetParaAlign(sJc);
 		this.private_OnChange();
+	};
+	/**
+	 * Gets paragraph contents justification.
+	 * @memberof ApiParaPr
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {("left" | "right" | "both" | "center" | undefined)} 
+	 */
+	ApiParaPr.prototype.GetJc = function()
+	{
+		function GetJC(nType) 
+		{
+			switch (nType)
+			{
+				case align_Right :
+					return "right";
+				case align_Left :
+					return "left";
+				case align_Center :
+					return "center";
+				case align_Justify : 
+					return "both";
+			}
+
+			return "left";
+		}
+
+		if (!this.Parent)
+		{
+			if (this.ParaPr.Jc !== undefined)
+				return GetJC(this.ParaPr.Jc);
+
+			return undefined;
+		}
+
+		return GetJC(this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Jc);
 	};
 	/**
 	 * Specify that when rendering this document using a page view, all lines of this paragraph are maintained on a single page whenever possible.
@@ -8453,6 +8412,72 @@
 		this.private_OnChange();
 	};
 	/**
+	 * Get the paragraph line spacing value.
+	 * @memberof ApiParaPr
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {twips | line240 | undefined} - to know is twips or line240 use ApiParaPr.prototype.GetSpacingLineRule().
+	 */
+	ApiParaPr.prototype.GetSpacingLineValue = function()
+	{
+		function GetValue(oSpacing)
+		{
+			switch (oSpacing.LineRule)
+			{
+				case Asc.linerule_Auto:
+					return oSpacing.Line * 240.0;
+				case Asc.linerule_AtLeast:
+				case Asc.linerule_Exact:
+					return AscCommon.MMToTwips(oSpacing.Line);
+			}
+
+			return undefined;
+		}
+
+		if (!this.Parent)
+		{
+			if (this.ParaPr.Spacing)
+				return GetValue(this.ParaPr.Spacing);
+
+			return undefined;
+		}
+
+		return GetValue(this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Spacing);
+	};
+	/**
+	 * Get the paragraph line spacing rule.
+	 * @memberof ApiParaPr
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {"auto" | "atLeast" | "exact" | undefined} 
+	 */
+	ApiParaPr.prototype.GetSpacingLineRule = function()
+	{
+		function GetRule(nLineRule)
+		{
+			switch (nLineRule)
+			{
+				case Asc.linerule_Auto:
+					return "auto";
+				case Asc.linerule_AtLeast:
+					return "atLeast";
+				case Asc.linerule_Exact:
+					return "exact";
+			}
+
+			return "atLeast";
+		}
+
+		if (!this.Parent)
+		{
+			if (this.ParaPr.Spacing)
+				return GetRule(this.ParaPr.Spacing.LineRule);
+
+			return undefined;
+		}
+
+		return GetRule(this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Spacing.LineRule);
+
+	};
+	/**
 	 * Set the spacing before the current paragraph. If the value of the isBeforeAuto parameter is true, then 
 	 * any value of the nBefore is ignored. If isBeforeAuto parameter is not specified, then 
 	 * it will be interpreted as false.
@@ -8470,6 +8495,24 @@
 			this.ParaPr.Spacing.BeforeAutoSpacing = isBeforeAuto;
 
 		this.private_OnChange();
+	};
+	/**
+	 * Get the spacing before value of the current paragraph.
+	 * @memberof ApiParaPr
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {twips} - The value of the spacing before the current paragraph measured in twentieths of a point (1/1440 of an inch).
+	 */
+	ApiParaPr.prototype.GetSpacingBefore = function()
+	{
+		if (!this.Parent)
+		{
+			if (this.ParaPr.Spacing.Before !== undefined)
+				return AscCommon.MMToTwips(this.ParaPr.Spacing.Before);
+
+			return undefined;
+		}
+
+		return AscCommon.MMToTwips(this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Spacing.Before);
 	};
 	/**
 	 * Set the spacing after the current paragraph. If the value of the isAfterAuto parameter is true, then 
@@ -8491,6 +8534,24 @@
 		this.private_OnChange();
 	};
 	/**
+	 * Get the spacing after value of the current paragraph. 
+	 * @memberof ApiParaPr
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {twips} - The value of the spacing after the current paragraph measured in twentieths of a point (1/1440 of an inch).
+	 */
+	ApiParaPr.prototype.GetSpacingAfter = function()
+	{
+		if (!this.Parent)
+		{
+			if (this.ParaPr.Spacing.After !== undefined)
+				return AscCommon.MMToTwips(this.ParaPr.Spacing.After);
+
+			return undefined;
+		}
+
+		return AscCommon.MMToTwips(this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Spacing.After);
+	};
+	/**
 	 * Specify the shading applied to the contents of the paragraph.
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
@@ -8504,6 +8565,39 @@
 	{
 		this.ParaPr.Shd = private_GetShd(sType, r, g, b, isAuto);
 		this.private_OnChange();
+	};
+	/**
+	 * Gets the shading applied to the contents of the paragraph.
+	 * @memberof ApiParaPr
+	 * @typeofeditors ["CDE"]
+	 * @returns {?ApiRGBColor}
+	 */
+	ApiParaPr.prototype.GetShd = function()
+	{
+		var oColor = null;
+		var oShd   = null;
+		if (!this.Parent)
+		{
+			oShd = this.ParaPr.Shd;
+			if (!oShd)
+				return null;
+
+			oColor = this.ParaPr.Shd.Color;
+			if (oColor)
+				return new ApiRGBColor(oColor.r, oColor.g, oColor.b);
+			
+			return null;
+		}
+
+		oShd = this.ParaPr.Shd;
+		if (!oShd)
+			return null;
+
+		oColor = this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Shd.Color;
+		if (oColor)
+			return new ApiRGBColor(oColor.r, oColor.g, oColor.b);
+
+		return null;
 	};
 	/**
 	 * Specify the border which will be displayed below a set of paragraphs which have the same paragraph border settings.
@@ -8646,8 +8740,6 @@
 		}
 		this.private_OnChange();
 	};
-
-
 	/**
 	 * Set the bullet or numbering to the current paragraph.
 	 * @memberof ApiParaPr
@@ -9779,8 +9871,14 @@
 	 */
 	ApiDrawing.prototype.Copy = function()
 	{
-		var CopyParaDrawing = this.Drawing.copy();
-		return new ApiDrawing(CopyParaDrawing);
+		var oDrawing = this.Drawing.copy();
+
+		if (this instanceof ApiShape
+			|| this instanceof ApiChart
+			|| this instanceof ApiImage)
+			return new this.constructor(oDrawing.GraphicObj);
+
+		return new ApiDrawing(oDrawing);
 	};
 	/**
 	 * Wraps the graphic object with a rich text content control.
@@ -9977,7 +10075,7 @@
 			return false;
 
 		this.Drawing.GraphicObj.spPr.setFill(oFill.UniFill);
-		return truel
+		return true;
 	};
 	/**
 	 * Sets the outline properties for the specified graphic object.
@@ -10293,9 +10391,9 @@
 			oTitle.setTx(new AscFormat.CChartText());
 			var oTextBody = AscFormat.CreateTextBodyFromString(sTitle, this.Chart.getDrawingDocument(), oTitle.tx);
 			if(AscFormat.isRealNumber(nFontSize)){
-				oTextBody.content.Set_ApplyToAll(true);
+				oTextBody.content.SetApplyToAll(true);
 				oTextBody.content.AddToParagraph(new ParaTextPr({ FontSize : nFontSize}));
-				oTextBody.content.Set_ApplyToAll(false);
+				oTextBody.content.SetApplyToAll(false);
 			}
 			oTitle.tx.setRich(oTextBody);
 			return oTitle;
@@ -11166,6 +11264,24 @@
 		return Range;
 	};
 
+	/**
+	 * Create a copy of the inline content control. Ingonore comments, footnote references, complex fields
+	 * @memberof ApiInlineLvlSdt
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiInlineLvlSdt}
+	 */
+	ApiInlineLvlSdt.prototype.Copy = function()
+	{
+		var oInlineSdt = this.Sdt.Copy(false, {
+			SkipComments          : true,
+			SkipAnchors           : true,
+			SkipFootnoteReference : true,
+			SkipComplexFields     : true
+		});
+
+		return new ApiInlineLvlSdt(oInlineSdt);
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiBlockLvlSdt
@@ -11351,15 +11467,21 @@
 	};
 
 	/**
-	 * Get the collection of tables on a given absolute page
+	 * Get the collection of tables on a given absolute page.
+	 * <note>This method can be a little bit slow, because it runs the document calculation
+	 * process to arrange tables on the specified page</note>
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param nPage - page number
 	 * @return {ApiTable[]}  
 	 */
-	ApiBlockLvlSdt.prototype.GetAllTablesOnPage = function(nPageAbs)
+	ApiBlockLvlSdt.prototype.GetAllTablesOnPage = function(nPage)
 	{
-		var arrTables		= this.Sdt.GetAllTablesOnPage(nPageAbs);
+		var oLogicDocument = this.Sdt.GetLogicDocument();
+		if (oLogicDocument)
+			oLogicDocument.private_Recalculate(undefined, true, nPage + 1);
+
+		var arrTables		= this.Sdt.GetAllTablesOnPage(nPage);
 		var arrApiTables	= [];
 
 		for (var Index = 0, nCount = arrTables.length; Index < nCount; Index++)
@@ -11419,9 +11541,9 @@
 	ApiBlockLvlSdt.prototype.SetTextPr = function(oTextPr)
 	{
 		var ParaTextPr = new AscCommonWord.ParaTextPr(oTextPr.TextPr);
-		this.Sdt.Content.Set_ApplyToAll(true);
+		this.Sdt.Content.SetApplyToAll(true);
 		this.Sdt.Add(ParaTextPr);
-		this.Sdt.Content.Set_ApplyToAll(false);
+		this.Sdt.Content.SetApplyToAll(false);
 	};
 
 	/**
@@ -11628,6 +11750,299 @@
 		Document.UpdateSelection();
 	};
 
+	Api.prototype.ReplaceTextSmart = function(arrString)
+	{
+		var allRunsInfo      = null;
+		var textDelta        = null;
+		var arrSelectedParas = null;
+
+		function GetRunInfo(oRun)
+		{
+			var StartPos = 0;
+			var EndPos   = 0;
+
+			if (oRun.IsSelectionUse() && oRun.State.Selection.StartPos !== oRun.State.Selection.EndPos)
+			{
+				var runInfo = {
+					Run : oRun,
+					StartPos : null,
+					GlobStartPos : null,
+					GlobEndPos : null,
+					StringCount : 0,
+					String : ""
+				};
+
+				if ( true === oRun.Selection.Use )
+				{
+					StartPos = oRun.State.Selection.StartPos;
+					EndPos   = oRun.State.Selection.EndPos;
+
+					if ( StartPos > EndPos )
+					{
+						var Temp = EndPos;
+						EndPos   = StartPos;
+						StartPos = Temp;
+					}
+
+					runInfo.StartPos     = StartPos;
+					runInfo.GlobStartPos = StartPos;
+					runInfo.GlobEndPos   = EndPos;
+				}
+
+				var posToSplit = [StartPos];
+
+				for ( var Pos = StartPos; Pos < EndPos; Pos++ )
+				{
+					var Item = oRun.Content[Pos];
+					var ItemType = Item.Type;
+
+					switch ( ItemType )
+					{
+						case para_Numbering:
+						case para_PresentationNumbering:
+						case para_PageNum:
+						case para_PageCount:
+						case para_End:
+						case para_Drawing:
+						case para_NewLine:
+						{
+							if (posToSplit.indexOf(Pos) === -1)
+								posToSplit.push(Pos);
+							
+							break;
+						}
+					}
+				}
+
+				var noTextCount = 0;
+				for (var Index = 0; Index < posToSplit.length; Index++)
+				{
+					var oInfo = {
+						Run : oRun,
+						StartPos : null,
+						GlobStartPos : null,
+						GlobEndPos : null,
+						StringCount : 0,
+						String : ""
+					};
+
+					var nEndPos = EndPos;
+					if (posToSplit[Index + 1])
+						nEndPos = posToSplit[Index + 1]
+
+					for (var nPos = posToSplit[Index]; nPos < nEndPos; nPos++)
+					{
+						var Item = oRun.Content[nPos];
+						var ItemType = Item.Type;
+
+						switch ( ItemType )
+						{
+							case para_Numbering:
+							case para_PresentationNumbering:
+							case para_PageNum:
+							case para_PageCount:
+							case para_End:
+							case para_Drawing:
+							case para_NewLine:
+							{
+								noTextCount++;
+								break;
+							}
+							case para_Text :
+							{
+								oInfo.String += AscCommon.encodeSurrogateChar(Item.Value);
+								oInfo.StringCount++;				
+								break;
+							}
+							case para_Space:
+							case para_Tab  : 
+							{
+								oInfo.String += " ";
+								oInfo.StringCount++; 
+								break;
+							}
+						}
+					}
+					
+					if (oInfo.String === "")
+						break;
+					
+					oInfo.StartPos = posToSplit[Index] + noTextCount;
+
+					if (allRunsInfo[allRunsInfo.length - 1])
+					{
+						oInfo.GlobStartPos = allRunsInfo[allRunsInfo.length - 1].GlobStartPos + allRunsInfo[allRunsInfo.length - 1].StringCount;
+						oInfo.GlobEndPos = oInfo.GlobStartPos + Math.max(0, oInfo.StringCount - 1);
+					}
+					else 
+					{
+						oInfo.GlobStartPos = 0
+						oInfo.GlobEndPos = oInfo.GlobStartPos + Math.max(0, oInfo.StringCount - 1);
+					}
+
+					allRunsInfo.push(oInfo);
+				}
+			}
+		}
+
+		function DelInsertChars()
+		{
+			for (var nChange = textDelta.length - 1; nChange >= 0; nChange--)
+			{
+				var oChange = textDelta[nChange];
+				var DelCount = oChange.deleteCount;
+				var infoToAdd = null;
+				for (var nInfo = 0; nInfo < allRunsInfo.length; nInfo++)
+				{
+					var oInfo = allRunsInfo[nInfo];
+					if ((oChange.pos >= oInfo.GlobStartPos || oChange.pos + DelCount > oInfo.GlobStartPos) && oChange.pos <= oInfo.GlobEndPos)
+					{
+						var nPosToDel = Math.max(0, oChange.pos - oInfo.GlobStartPos + oInfo.StartPos);
+						var nPosToAdd = nPosToDel
+						var countToDel = Math.min(oChange.deleteCount, oInfo.StringCount);
+						
+						if (nPosToDel >= oInfo.Run.Content.length || (countToDel === 0 && oChange.deleteCount !== 0))
+							continue;
+
+						for (var nDelChar = 0; nDelChar < countToDel; nDelChar++)
+						{
+							if (!oInfo.Run.Content[nPosToDel])
+								break;
+								
+							if (para_Text === oInfo.Run.Content[nPosToDel].Type || para_Space === oInfo.Run.Content[nPosToDel].Type || para_Tab === oInfo.Run.Content[nPosToDel].Type)
+							{
+								oInfo.Run.RemoveFromContent(nPosToDel, 1);
+								nDelChar--;
+								oChange.deleteCount--;
+								countToDel--;
+							}
+							else
+							{
+								nPosToDel++;
+								nDelChar--;
+							}
+						}
+						
+						if (oChange.insert.length === 0)
+							continue;
+
+						if (oChange.deleteCount !== 0)
+						{
+							infoToAdd = 
+							{
+								Run: oInfo.Run,
+								Pos: nPosToAdd
+							};
+							continue;
+						}
+							
+						for (var nAddChar = 0; nAddChar < oChange.insert.length; nAddChar++)
+						{
+							var itemText = null;
+							
+							if (AscCommon.IsSpace(oChange.insert[nAddChar]))
+								itemText = new AscCommonWord.ParaSpace(oChange.insert[nAddChar]);
+							else
+								itemText = new AscCommonWord.ParaText(oChange.insert[nAddChar]);
+
+							itemText.Parent = oInfo.Run.GetParagraph();
+							if (oInfo.Run.Content.length === 0 && infoToAdd)
+							{
+								infoToAdd.Run.AddToContent(infoToAdd.Pos, itemText);
+								infoToAdd.Pos++;
+							}
+							else
+								oInfo.Run.AddToContent(nPosToAdd, itemText);
+
+							oChange.insert.shift();
+							nAddChar--;
+							nPosToAdd++;
+						}
+					}
+				}
+			}
+		};
+
+		function ReplaceInParas(arrBasicParas) 
+		{
+			allRunsInfo = [];
+
+			for (var Index = 0; Index < arrBasicParas.length; Index++)
+			{
+				var oPara = arrBasicParas[Index];
+				var oParaText = "";
+				
+				if (oPara.Selection.Use)
+					oPara.CheckRunContent(GetRunInfo);
+					
+				for (var nRun = 0; nRun < allRunsInfo.length; nRun++)
+					oParaText += allRunsInfo[nRun].String;
+
+				if (oParaText == "")
+				{
+					allRunsInfo = [];
+					continue;
+				}
+					
+				textDelta = AscCommon.getTextDelta(oParaText, arrString[Index]);
+
+				DelInsertChars();
+				allRunsInfo = [];
+			}
+		}
+
+		if (this.editorId === AscCommon.c_oEditorId.Spreadsheet) 
+		{
+			var oWorksheet        = this.GetActiveSheet();
+			var oRange            = oWorksheet.GetSelection();
+			var tempRange         = null;
+			var nCountLinesInCell = null;
+			var resultText        = null;
+			var nTextToReplace    = 0;
+			var ws                = this.wb.getWorksheet();
+			var oContent = ws.objectRender.controller.getTargetDocContent();
+
+			if (oContent) 
+			{
+				arrSelectedParas = [];
+				oContent.GetCurrentParagraph(false, arrSelectedParas, {});
+				ReplaceInParas(arrSelectedParas);
+				Asc.editor.wb.recalculateDrawingObjects();
+				return;
+			}
+
+			for (var nRow = oRange.range.bbox.r1; nRow <= oRange.range.bbox.r2; nRow++)
+			{
+				for (var nCol = oRange.range.bbox.c1; nCol <= oRange.range.bbox.c2; nCol++)
+				{
+					resultText        = '';
+					tempRange         = oWorksheet.GetRangeByNumber(nRow, nCol);
+					nCountLinesInCell = tempRange.GetValue().split('\n').length;
+
+					for (var nText = nTextToReplace; nText < nTextToReplace + nCountLinesInCell; nText++) 
+					{
+						resultText += arrString[nText];
+						if (nText !== nTextToReplace + nCountLinesInCell - 1)
+							resultText += '\n';
+
+					}
+					nTextToReplace += nCountLinesInCell;
+
+					if (resultText !== '')
+						tempRange.SetValue(resultText);
+				}
+			}
+		}
+		else 
+		{
+			var oDocument = this.GetDocument();
+			arrSelectedParas = oDocument.Document.GetSelectedParagraphs();
+			
+			ReplaceInParas(arrSelectedParas);
+			oDocument.Document.RemoveSelection();
+		}
+	};
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -11659,7 +12074,7 @@
 	Api.prototype["GetMailMergeReceptionsCount"]     = Api.prototype.GetMailMergeReceptionsCount;
 	Api.prototype["ReplaceDocumentContent"]          = Api.prototype.ReplaceDocumentContent;
 	Api.prototype["MailMerge"]                       = Api.prototype.MailMerge;
-
+	Api.prototype["ReplaceTextSmart"]				 = Api.prototype.ReplaceTextSmart;
 	ApiUnsupported.prototype["GetClassType"]         = ApiUnsupported.prototype.GetClassType;
 
 	ApiDocumentContent.prototype["GetClassType"]     = ApiDocumentContent.prototype.GetClassType;
@@ -12080,7 +12495,7 @@
 	ApiImage.prototype["GetClassType"]               = ApiImage.prototype.GetClassType;
 	ApiImage.prototype["GetNextImage"]               = ApiImage.prototype.GetNextImage;
 	ApiImage.prototype["GetPrevImage"]               = ApiImage.prototype.GetPrevImage;
-	
+
 	ApiShape.prototype["GetClassType"]               = ApiShape.prototype.GetClassType;
 	ApiShape.prototype["GetDocContent"]              = ApiShape.prototype.GetDocContent;
 	ApiShape.prototype["GetContent"]                 = ApiShape.prototype.GetContent;
@@ -12153,6 +12568,7 @@
 	ApiInlineLvlSdt.prototype["GetParentTable"]         = ApiInlineLvlSdt.prototype.GetParentTable;
 	ApiInlineLvlSdt.prototype["GetParentTableCell"]     = ApiInlineLvlSdt.prototype.GetParentTableCell;
 	ApiInlineLvlSdt.prototype["GetRange"]               = ApiInlineLvlSdt.prototype.GetRange;
+	ApiInlineLvlSdt.prototype["Copy"]                   = ApiInlineLvlSdt.prototype.Copy;
 
 	ApiBlockLvlSdt.prototype["GetClassType"]            = ApiBlockLvlSdt.prototype.GetClassType;
 	ApiBlockLvlSdt.prototype["SetLock"]                 = ApiBlockLvlSdt.prototype.SetLock;
@@ -12176,7 +12592,7 @@
 	ApiBlockLvlSdt.prototype["GetParentTableCell"]      = ApiBlockLvlSdt.prototype.GetParentTableCell;
 	ApiBlockLvlSdt.prototype["Push"]                    = ApiBlockLvlSdt.prototype.Push;
 	ApiBlockLvlSdt.prototype["AddElement"]              = ApiBlockLvlSdt.prototype.AddElement;
-	ApiBlockLvlSdt.prototype["AddText"]                = ApiBlockLvlSdt.prototype.AddText;
+	ApiBlockLvlSdt.prototype["AddText"]                 = ApiBlockLvlSdt.prototype.AddText;
 	ApiBlockLvlSdt.prototype["GetRange"]                = ApiBlockLvlSdt.prototype.GetRange;
 	ApiBlockLvlSdt.prototype["Search"]                  = ApiBlockLvlSdt.prototype.Search;
 	ApiBlockLvlSdt.prototype["Select"]                  = ApiBlockLvlSdt.prototype.Select;

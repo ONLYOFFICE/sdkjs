@@ -2183,6 +2183,9 @@ CTextDrawer.prototype =
 
     SetTextPr : function(textPr, theme)
     {
+		if (theme && textPr && textPr.ReplaceThemeFonts)
+			textPr.ReplaceThemeFonts(theme.themeElements.fontScheme);
+
         var bNeedGetPath = false;
         if(!this.CheckCompareFillBrush(textPr, this.m_oTextPr))
         {

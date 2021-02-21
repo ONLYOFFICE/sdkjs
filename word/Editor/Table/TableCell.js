@@ -899,46 +899,6 @@ CTableCell.prototype =
         return this.Content.MoveCursorDownToFirstRow(_X, _Y, AddToSelect);
     },
 
-    Content_RecalculateMinMaxContentWidth : function(isRotated)
-    {
-        if (undefined === isRotated)
-            isRotated = false;
-
-        if (true === this.IsVerticalText())
-            isRotated = true === isRotated ? false : true;
-
-        var Result;
-        if (this.GetTable() && this.GetTable().LogicDocument && this.GetTable().LogicDocument.RecalcId === this.CachedMinMax.RecalcId)
-		{
-			Result = this.CachedMinMax.MinMax;
-		}
-        else
-		{
-			Result = this.Content.RecalculateMinMaxContentWidth(isRotated);
-
-			if (this.GetTable() && this.GetTable().LogicDocument)
-			{
-				this.CachedMinMax.RecalcId = this.GetTable().LogicDocument.RecalcId;
-				this.CachedMinMax.MinMax   = Result;
-			}
-		}
-
-        // if (true !== isRotated && true === this.GetNoWrap())
-		// {
-		// 	if (tblwidth_Mm !== this.GetW().Type)
-		// 	{
-		// 		Result.Min = Math.max(Result.Min, Result.Max);
-		// 	}
-		// 	else
-		// 	{
-		//      var oMargins = this.GetMargins();
-		// 		Result.Min = Math.max(Result.Min, this.GetW().W - oMargins.Left.W - oMargins.Right.W, 0);
-		// 	}
-		// }
-
-        return Result;
-    },
-
 	RecalculateMinMaxContentWidth : function(isRotated, nPctWidth)
 	{
 		var oTable         = this.GetTable();
@@ -965,56 +925,52 @@ CTableCell.prototype =
 
 			var oMargins = this.GetMargins();
 			var oRow     = this.GetRow();
+			var nAdd     = 0;
 			if (oRow)
 			{
 				var nCellSpacing = oRow.GetCellSpacing();
 				var oBorders     = this.GetBorders();
 				if (nCellSpacing)
 				{
-					oResult.Min += oMargins.Left.W + oMargins.Right.W;
-					oResult.Max += oMargins.Left.W + oMargins.Right.W;
+					nAdd = oMargins.Left.W + oMargins.Right.W;
 
 					if (border_Single === oBorders.Left.Value)
 					{
-						oResult.Min += oBorders.Left.Size;
-						oResult.Max += oBorders.Left.Size;
+						nAdd += oBorders.Left.Size;
 					}
 					if (border_Single === oBorders.Right.Value)
 					{
-						oResult.Min += oBorders.Right.Size;
-						oResult.Max += oBorders.Right.Size;
+						nAdd += oBorders.Right.Size;
 					}
 				}
 				else
 				{
 					if (border_Single === oBorders.Left.Value && oBorders.Left.Size / 2 > oMargins.Left.W)
 					{
-						oResult.Min += oBorders.Left.Size / 2;
-						oResult.Max += oBorders.Left.Size / 2;
+						nAdd += oBorders.Left.Size / 2;
 					}
 					else
 					{
-						oResult.Min += oMargins.Left.W;
-						oResult.Max += oMargins.Left.W;
+						nAdd += oMargins.Left.W;
 					}
 
 					if (border_Single === oBorders.Right.Value && oBorders.Right.Size / 2 > oMargins.Right.W)
 					{
-						oResult.Min += oBorders.Right.Size / 2;
-						oResult.Max += oBorders.Right.Size / 2;
+						nAdd += oBorders.Right.Size / 2;
 					}
 					else
 					{
-						oResult.Min += oMargins.Right.W;
-						oResult.Max += oMargins.Right.W;
+						nAdd += oMargins.Right.W;
 					}
 				}
 			}
 			else
 			{
-				oResult.Min += oMargins.Left.W + oMargins.Right.W;
-				oResult.Max += oMargins.Left.W + oMargins.Right.W;
+				nAdd = oMargins.Left.W + oMargins.Right.W;
 			}
+
+			oResult.Min += nAdd;
+			oResult.Max += nAdd;
 
 			oResult.ContentMin = oResult.Min;
 			oResult.ContentMax = oResult.Max;
@@ -1038,10 +994,19 @@ CTableCell.prototype =
 					oResult.Max = nPrefW;
 			}
 
-			if (true !== isRotated && true === this.GetNoWrap())
+			if (true !== isRotated && this.GetNoWrap())
 			{
-				oResult.Min        = Math.max(oResult.Min, oResult.Max);
-				oResult.ContentMin = Math.max(oResult.ContentMin, oResult.ContentMax);
+				if (this.GetW().IsMM())
+				{
+					oResult.ContentMin = Math.max(oResult.ContentMin, oResult.Min - nAdd);
+				}
+				else
+				{
+					oResult.ContentMin = Math.max(oResult.ContentMin, oResult.ContentMax);
+
+					oResult.Min = Math.max(oResult.Min, oResult.Max);
+					oResult.Max = oResult.Min;
+				}
 			}
 
 			if (oLogicDocument)
@@ -1325,27 +1290,41 @@ CTableCell.prototype =
 		this.private_UpdateTableGrid();
 	},
 
-	GetMargins : function()
+	GetMargins : function(isDirectTop)
 	{
-		var TableCellMar = this.Get_CompiledPr(false).TableCellMar;
+		var oCellMargins    = this.Get_CompiledPr(false).TableCellMar;
+		var oDefaultMargins = this.Row.Table.Get_TableCellMar();
 
-		if (null === TableCellMar)
+		var nT = oDefaultMargins.Top;
+		var nB = oDefaultMargins.Bottom;
+		var nL = oDefaultMargins.Left;
+		var nR = oDefaultMargins.Right
+
+		if (oCellMargins)
 		{
-			return this.Row.Table.Get_TableCellMar();
-		}
-		else
-		{
-			var TableCellDefMargins = this.Row.Table.Get_TableCellMar();
+			if (oCellMargins.Top)
+				nT = oCellMargins.Top;
 
-			var Margins = {
-				Top    : undefined != TableCellMar.Top ? TableCellMar.Top : TableCellDefMargins.Top,
-				Bottom : undefined != TableCellMar.Bottom ? TableCellMar.Bottom : TableCellDefMargins.Bottom,
-				Left   : undefined != TableCellMar.Left ? TableCellMar.Left : TableCellDefMargins.Left,
-				Right  : undefined != TableCellMar.Right ? TableCellMar.Right : TableCellDefMargins.Right
-			};
+			if (oCellMargins.Bottom)
+				nB = oCellMargins.Bottom;
 
-			return Margins;
+			if (oCellMargins.Left)
+				nL = oCellMargins.Left;
+
+			if (oCellMargins.Right)
+				nR = oCellMargins.Right;
 		}
+
+		// Делаем как MSWord, верхний отступ считаем общим для всей строки
+		if (true !== isDirectTop)
+			nT = new CTableMeasurement(tblwidth_Mm, this.private_GetRowTopMargin());
+
+		return {
+			Top    : nT,
+			Bottom : nB,
+			Left   : nL,
+			Right  : nR
+		};
 	},
 
     Is_TableMargins : function()
@@ -2077,7 +2056,7 @@ CTableCell.prototype.GetDocumentPositionFromObject = function(arrPos)
     {
     	if (arrPos.length > 0)
 		{
-			arrPos.splice({Class : oRow, Position : this.GetIndex()});
+			arrPos.splice(0, 0, {Class : oRow, Position : this.GetIndex()});
 			oRow.GetDocumentPositionFromObject(arrPos);
 		}
 		else
@@ -2650,6 +2629,25 @@ CTableCell.prototype.CopyParaPrAndTextPr = function(oCell)
 		}
 	}
 };
+CTableCell.prototype.private_GetRowTopMargin = function()
+{
+	var oRow = this.GetRow();
+	if (!oRow)
+		return 0;
+
+	var nTop = null;
+	for (var nCurCell = 0, nCellsCount = oRow.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
+	{
+		var oCell    = oRow.GetCell(nCurCell);
+		var oMargins = oCell.GetMargins(true);
+
+		if (null === nTop || nTop < oMargins.Top.W)
+			nTop = oMargins.Top.W;
+	}
+
+	return nTop;
+};
+
 
 function CTableCellRecalculateObject()
 {

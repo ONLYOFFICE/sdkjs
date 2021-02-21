@@ -295,8 +295,8 @@
 				if (oLogicDocument.Slides[0])
 				{
 					var oDrawing            = oLogicDocument.Slides[0].graphicObjects.createWatermarkImage(sUrl);
-					oDrawing.spPr.xfrm.offX = (oLogicDocument.Width - oDrawing.spPr.xfrm.extX) / 2;
-					oDrawing.spPr.xfrm.offY = (oLogicDocument.Height - oDrawing.spPr.xfrm.extY) / 2;
+					oDrawing.spPr.xfrm.offX = (oLogicDocument.GetWidthMM() - oDrawing.spPr.xfrm.extX) / 2;
+					oDrawing.spPr.xfrm.offY = (oLogicDocument.GetHeightMM() - oDrawing.spPr.xfrm.extY) / 2;
 					oDrawing.parent         = oLogicDocument.Slides[0];
 					oLogicDocument.Slides[0].cSld.spTree.push(oDrawing);
 				}

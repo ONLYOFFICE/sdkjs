@@ -1429,7 +1429,7 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
             for(var i = _len - 1; i > -1; --i)
             {
                 var ser = series[i];
-                var pts = AscFormat.getPtsFromSeries(ser);
+                var pts = ser.getNumPts();
                 var oDLbl;
                 for(var j = 0; j < pts.length; ++j)
                 {
@@ -1588,7 +1588,7 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
                 }
 
             }
-            else if(hit_in_text_rect)
+            else if(hit_in_text_rect && drawing.selection.title === title)
             {
                 if(drawingObjectsController.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
                 {

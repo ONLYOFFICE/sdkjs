@@ -180,19 +180,13 @@
 		}
 		if(null === oCanvas)
 		{
+			var rPR = AscCommon.AscBrowser.retinaPixelRatio;
 			oCanvas = document.createElement('canvas');
 			oCanvas.style.width = "100%";
 			oCanvas.style.height = "100%";
 			oDiv.appendChild(oCanvas);
-			var nCanvasW = oCanvas.clientWidth;
-			var nCanvasH = oCanvas.clientHeight;
-			if (AscCommon.AscBrowser.isRetina)
-			{
-				nCanvasW = AscCommon.AscBrowser.convertToRetinaValue(nCanvasW, true);
-				nCanvasH = AscCommon.AscBrowser.convertToRetinaValue(nCanvasH, true);
-			}
-			oCanvas.width = nCanvasW;
-			oCanvas.height = nCanvasH;
+			oCanvas.width = Math.round(oCanvas.clientWidth * rPR);
+			oCanvas.height = Math.round(oCanvas.clientHeight * rPR);
 		}
 		return oCanvas;
 	}
@@ -1253,7 +1247,7 @@
 		this.separator = null;
 		this.inColumns = null;
 
-		this.aRanges = [];
+		this.sRange = null;
 
 
 		this.showMarker = null;
@@ -1432,13 +1426,8 @@
 		!(this.separator === ' ' && oPr.separator == null || oPr.separator === ' ' && this.separator == null)){
 			return false;
 		}
-		if(this.aRanges.length !== oPr.aRanges.length){
+		if(this.sRange !== oPr.sRange){
 			return false;
-		}
-		for(var i = 0; i < this.aRanges.length; ++i) {
-			if(this.aRanges[i] !== oPr.aRanges[i]) {
-				return false;
-			}
 		}
 		if(!this.equalBool(this.inColumns, oPr.inColumns)){
 			return false;
@@ -1488,15 +1477,31 @@
 		return this.bLine;
 	};
 	asc_ChartSettings.prototype.putRanges = function(aRanges) {
-		if(Array.isArray(aRanges)) {
-			this.aRanges = aRanges;
+		if(Array.isArray(aRanges) && aRanges.length > 0) {
+			var sRange = "=";
+			for(var nRange = 0; nRange < aRanges.length; ++nRange) {
+				if(nRange > 0) {
+					sRange += ",";
+				}
+				sRange += aRanges[nRange];
+			}
+			this.sRange = sRange;
 		}
 		else {
-			this.aRanges.length = 0;
+			this.sRange = null;
 		}
 	};
 	asc_ChartSettings.prototype.getRanges = function() {
-		return this.aRanges;
+		var sRange = this.sRange;
+		if(typeof sRange === "string" && sRange > 0) {
+			if(sRange.charAt(0) === '=') {
+				sRange = sRange.slice(1);
+			}
+			return sRange.split(",");
+		}
+		else {
+			return [];
+		}
 	};
 	asc_ChartSettings.prototype.putSmooth = function(v) {
 		this.smooth = v;
@@ -1505,6 +1510,10 @@
 		return this.smooth;
 	};
 	asc_ChartSettings.prototype.putStyle = function(index) {
+		if(!AscFormat.isRealNumber(index)) {
+			this.style = null;
+			return;
+		}
 		this.style = parseInt(index, 10);
 		if(this.bStartEdit && this.chartSpace) {
 			if(AscFormat.isRealNumber(this.style)){
@@ -1520,8 +1529,7 @@
 		return this.style;
 	};
 	asc_ChartSettings.prototype.putRange = function(range) {
-		this.aRanges.length = 0;
-		this.aRanges[0] = range;
+		this.sRange = range;
 	};
 	asc_ChartSettings.prototype.setRange = function(sRange) {
 		if(this.chartSpace) {
@@ -1530,33 +1538,25 @@
 		}
 	};
 	asc_ChartSettings.prototype.isValidRange = function(sRange) {
-		if(sRange === "") {
-			return Asc.c_oAscError.ID.No;
-		}
-		var sCheck = sRange;
-		if(sRange[0] === "=") {
-			sCheck = sRange.slice(1);
-		}
-		var aRanges = AscFormat.fParseChartFormula(sCheck);
-		return (aRanges.length !== 0) ? Asc.c_oAscError.ID.No : Asc.c_oAscError.ID.DataRangeError;
+		return AscFormat.isValidChartRange(sRange);
 	};
 	asc_ChartSettings.prototype.getRange = function() {
 		if(this.chartSpace) {
 			return this.chartSpace.getCommonRange();
 		}
-		if(this.aRanges.length > 0 && typeof this.aRanges[0] === "string" ) {
-			var sRange = this.aRanges[0];
-			if(sRange.length > 0) {
-				return sRange;
-			}
-		}
-		return null;
+		return this.sRange;
 	};
 	asc_ChartSettings.prototype.putInColumns = function(inColumns) {
 		this.inColumns = inColumns;
 	};
 	asc_ChartSettings.prototype.getInColumns = function() {
 		return this.inColumns;
+	};
+	asc_ChartSettings.prototype.getInRows = function() {
+		if(this.inColumns === true || this.inColumns === false) {
+			return !this.inColumns;
+		}
+		return null;
 	};
 	asc_ChartSettings.prototype.putTitle = function(v) {
 		this.title = v;
@@ -1588,8 +1588,35 @@
 		}
 		return this.type;
 	};
+	asc_ChartSettings.prototype.checkParams = function() {
+		if(this.type === null || this.type === Asc.c_oAscChartTypeSettings.comboAreaBar
+			|| this.type === Asc.c_oAscChartTypeSettings.comboBarLine
+		|| this.type === Asc.c_oAscChartTypeSettings.comboBarLineSecondary
+		|| this.type === Asc.c_oAscChartTypeSettings.comboCustom) {
+			return;
+		}
+		if(AscFormat.getIsMarkerByType(this.type)) {
+			this.showMarker = true;
+		}
+		else {
+			this.showMarker = false;
+		}
+		if(AscFormat.getIsSmoothByType(this.type)) {
+			this.smooth = true;
+		}
+		else {
+			this.smooth = false;
+		}
+		if(AscFormat.getIsLineByType(this.type)) {
+			this.bLine = true;
+		}
+		else {
+			this.bLine = false;
+		}
+	};
 	asc_ChartSettings.prototype.putType = function(v) {
 		this.type = v;
+		this.checkParams();
 	};
 	asc_ChartSettings.prototype.putShowSerName = function(v) {
 		this.showSerName = v;
@@ -1618,21 +1645,14 @@
 	asc_ChartSettings.prototype.changeType = function(type) {
 		this.putType(type);
 		if(this.chartSpace) {
-			var oApi = Asc && Asc.editor;
-			if(oApi && oApi.editorId === AscCommon.c_oEditorId.Spreadsheet) {
-				this.chartSpace.changeChartType(type);
-				this.updateChart();
-			}
-			else {
-				var oController = this.chartSpace.getDrawingObjectsController();
-				if(oController) {
-					var oThis = this;
-					var oChartSpace = this.chartSpace;
-					oController.checkSelectedObjectsAndCallback(function() {
-						oChartSpace.changeChartType(type);
-						oThis.updateChart();
-					}, [], false, 0, []);
-				}
+			var oController = this.chartSpace.getDrawingObjectsController();
+			if(oController) {
+				var oThis = this;
+				var oChartSpace = this.chartSpace;
+				oController.checkSelectedObjectsAndCallback(function() {
+					oChartSpace.changeChartType(type);
+					oThis.updateChart();
+				}, [], false, 0, []);
 			}
 		}
 	};
@@ -5622,6 +5642,7 @@
 	prot["getRanges"] = prot.getRanges;
 	prot["putInColumns"] = prot.putInColumns;
 	prot["getInColumns"] = prot.getInColumns;
+	prot["getInRows"] = prot.getInRows;
 	prot["putShowMarker"] = prot.putShowMarker;
 	prot["getShowMarker"] = prot.getShowMarker;
 	prot["putLine"] = prot.putLine;

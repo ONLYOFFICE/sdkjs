@@ -102,12 +102,6 @@ CGraphicFrame.prototype.GetDocumentPositionFromObject = function(arrPos)
 {
 	if (!arrPos)
 		arrPos = [];
-
-	// TODO: Судя по тому как записывается позиция и как она читается
-	//       класс CGraphicFrame не должен попадать в позицию
-	if (arrPos && arrPos.length > 0 && arrPos[0].Class === this)
-		arrPos.splice(0, 1);
-
 	return arrPos;
 };
 
@@ -361,10 +355,10 @@ CGraphicFrame.prototype.Set_Props= function(props)
         {
             var bApplyToAll = this.parent.graphicObjects.State.textObject !== this;
            // if(bApplyToAll)
-           //     this.graphicObject.Set_ApplyToAll(true);
+           //     this.graphicObject.SetApplyToAll(true);
             this.graphicObject.Set_Props(props, bApplyToAll);
             //if(bApplyToAll)
-            //    this.graphicObject.Set_ApplyToAll(false);
+            //    this.graphicObject.SetApplyToAll(false);
             this.OnContentRecalculate();
             editor.WordControl.m_oLogicDocument.recalcMap[this.Id] = this;
         }
@@ -992,9 +986,9 @@ CGraphicFrame.prototype.applyAllAlign = function(val)
     {
         if(isRealObject(this.graphicObject))
         {
-            this.graphicObject.Set_ApplyToAll(true);
+            this.graphicObject.SetApplyToAll(true);
             this.graphicObject.SetParagraphAlign(val);
-            this.graphicObject.Set_ApplyToAll(false);
+            this.graphicObject.SetApplyToAll(false);
         }
 };
 
@@ -1010,9 +1004,9 @@ CGraphicFrame.prototype.applyAllSpacing = function(val)
     {
         if(isRealObject(this.graphicObject))
         {
-            this.graphicObject.Set_ApplyToAll(true);
+            this.graphicObject.SetApplyToAll(true);
             this.graphicObject.SetParagraphSpacing(val);
-            this.graphicObject.Set_ApplyToAll(false);
+            this.graphicObject.SetApplyToAll(false);
         }
 };
 
@@ -1091,9 +1085,9 @@ CGraphicFrame.prototype.Get_PageContentStartPos = function(PageNum)
         var presentation = editor.WordControl.m_oLogicDocument;
         return {
             X : 0,
-            XLimit: presentation.Width,
+            XLimit: presentation.GetWidthMM(),
             Y : 0,
-            YLimit : presentation.Height,
+            YLimit : presentation.GetHeightMM(),
             MaxTopBorder : 0
         };
 

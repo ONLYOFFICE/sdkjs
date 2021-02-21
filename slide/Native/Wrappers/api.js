@@ -2667,8 +2667,8 @@ function NativeOpenFileP(_params, documentInfo){
         var _presentation = _api.WordControl.m_oLogicDocument;
 
         var nSlidesCount = _presentation.Slides.length;
-        var dPresentationWidth = _presentation.Width;
-        var dPresentationHeight = _presentation.Height;
+        var dPresentationWidth = _presentation.GetWidthMM();
+        var dPresentationHeight = _presentation.GetHeightMM();
 
         var aTransitions = [];
         var slides = _presentation.Slides;
@@ -3007,12 +3007,12 @@ Asc['asc_docs_api'].prototype["Native_Editor_Initialize_Settings"] = function(_p
         {
             case 0:
             {
-                AscCommonSlide.GlobalSkin.STYLE_THUMBNAIL_WIDTH = _params[_current.pos++];
+				AscCommon.GlobalSkin.STYLE_THUMBNAIL_WIDTH = _params[_current.pos++];
                 break;
             }
             case 1:
             {
-                AscCommonSlide.GlobalSkin.STYLE_THUMBNAIL_HEIGHT = _params[_current.pos++];
+				AscCommon.GlobalSkin.STYLE_THUMBNAIL_HEIGHT = _params[_current.pos++];
                 break;
             }
             case 2:
@@ -3116,8 +3116,8 @@ Asc['asc_docs_api'].prototype.openDocument = function(file)
     var _presentation = _api.WordControl.m_oLogicDocument;
 
     var nSlidesCount = _presentation.Slides.length;
-    var dPresentationWidth = _presentation.Width;
-    var dPresentationHeight = _presentation.Height;
+    var dPresentationWidth = _presentation.GetWidthMM();
+    var dPresentationHeight = _presentation.GetHeightMM();
 
     var aTransitions = [];
     var slides = _presentation.Slides;

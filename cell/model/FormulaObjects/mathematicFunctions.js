@@ -3124,6 +3124,7 @@
 	cMUNIT.prototype.isXLFN = true;
 	cMUNIT.prototype.argumentsType = [argType.number];
 	cMUNIT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
+	cMUNIT.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cMUNIT.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
@@ -3529,8 +3530,9 @@
 	cRANDARRAY.prototype.argumentsMin = 0;
 	cRANDARRAY.prototype.argumentsMax = 5;
 	cRANDARRAY.prototype.ca = true;
-	cRANDARRAY.prototype.argumentsType = null;
 	cRANDARRAY.prototype.isXLFN = true;
+	cRANDARRAY.prototype.numFormat = AscCommonExcel.cNumFormatNone;
+	cRANDARRAY.prototype.argumentsType = [argType.number, argType.number, argType.number, argType.number, argType.number];
 	cRANDARRAY.prototype.Calculate = function (arg) {
 		//var oArguments = this._prepareArguments(arg, arguments[1]);
 		var argClone = arg;

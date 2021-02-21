@@ -600,6 +600,7 @@
 		this.bSelectedSlidesTheme = false;
 
 		this.isPaintFormat              = AscCommon.c_oAscFormatPainterState.kOff;
+		this.isMarkerFormat             = false;
 		this.isShowTableEmptyLine       = false;//true;
 		this.isShowTableEmptyLineAttack = false;//true;
 
@@ -620,8 +621,6 @@
 		this.saveImageMap       = null;
 
 		this.ServerImagesWaitComplete = false;
-
-		this.DocumentOrientation = false;
 
 		this.SelectedObjectsStack = [];
 
@@ -1048,7 +1047,7 @@
     asc_docs_api.prototype._spellCheckDisconnect   = function()
     {
         if (this.WordControl.m_oLogicDocument)
-            this.WordControl.m_oLogicDocument.TurnOff_CheckSpelling();
+            this.WordControl.m_oLogicDocument.TurnOffCheckSpelling();
     };
 
     asc_docs_api.prototype.pre_Save = function(_images)
@@ -1284,11 +1283,6 @@
 
 	asc_docs_api.prototype.CreateCSS = function()
 	{
-		if (window["flat_desine"] === true)
-		{
-			AscCommonSlide.updateGlobalSkin(AscCommonSlide.GlobalSkinFlat2);
-		}
-
 		var _head = document.getElementsByTagName('head')[0];
 
 		var style0       = document.createElement('style');
@@ -1326,17 +1320,20 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.CreateComponents = function()
 	{
+		this.asc_setSkin(this.skinObject);
+		delete this.skinObject;
+
 		this.CreateCSS();
 
-		var _innerHTML = "<div id=\"id_panel_thumbnails\" class=\"block_elem\" style=\"touch-action:none;background-color:" + AscCommonSlide.GlobalSkin.BackgroundColorThumbnails + ";\">\
-									<div id=\"id_panel_thumbnails_split\" class=\"block_elem\" style=\"pointer-events:none;background-color:" + AscCommonSlide.GlobalSkin.BackgroundColorThumbnails + ";\"></div>\
+		var _innerHTML = "<div id=\"id_panel_thumbnails\" class=\"block_elem\" style=\"touch-action:none;background-color:" + AscCommon.GlobalSkin.BackgroundColorThumbnails + ";\">\
+									<div id=\"id_panel_thumbnails_split\" class=\"block_elem\" style=\"pointer-events:none;background-color:" + AscCommon.GlobalSkin.BackgroundColorThumbnails + ";\"></div>\
 		                            <canvas id=\"id_thumbnails_background\" class=\"block_elem\" style=\"-ms-touch-action: none;-webkit-user-select: none;z-index:1\"></canvas>\
 		                            <canvas id=\"id_thumbnails\" class=\"block_elem\" style=\"-ms-touch-action: none;-webkit-user-select: none;z-index:2\"></canvas>\
 		                            <div id=\"id_vertical_scroll_thmbnl\" style=\"left:0;top:0;width:1px;overflow:hidden;position:absolute;\">\
 									</div>\
 		                        </div>\
-		                    <div id=\"id_main_parent\" class=\"block_elem\" style=\"touch-action:none;-ms-touch-action: none;-moz-user-select:none;-khtml-user-select:none;user-select:none;overflow:hidden;border-left-width: 1px;border-left-color:" + AscCommonSlide.GlobalSkin.BorderSplitterColor + "; border-left-style: solid;\" UNSELECTABLE=\"on\">\
-                            <div id=\"id_main\" class=\"block_elem\" style=\"z-index:5;-ms-touch-action: none;-moz-user-select:none;-khtml-user-select:none;user-select:none;background-color:" + AscCommonSlide.GlobalSkin.BackgroundColor + ";overflow:hidden;\" UNSELECTABLE=\"on\">\
+		                    <div id=\"id_main_parent\" class=\"block_elem\" style=\"touch-action:none;-ms-touch-action: none;-moz-user-select:none;-khtml-user-select:none;user-select:none;overflow:hidden;border-left-width: 1px;border-left-color:" + AscCommon.GlobalSkin.BorderSplitterColor + "; border-left-style: solid;\" UNSELECTABLE=\"on\">\
+                            <div id=\"id_main\" class=\"block_elem\" style=\"z-index:5;-ms-touch-action: none;-moz-user-select:none;-khtml-user-select:none;user-select:none;background-color:" + AscCommon.GlobalSkin.BackgroundColor + ";overflow:hidden;\" UNSELECTABLE=\"on\">\
 								<div id=\"id_panel_left\" class=\"block_elem\">\
 									<canvas id=\"id_buttonTabs\" class=\"block_elem\"></canvas>\
 									<canvas id=\"id_vert_ruler\" class=\"block_elem\"></canvas>\
@@ -1345,18 +1342,18 @@ background-repeat: no-repeat;\
 									<canvas id=\"id_hor_ruler\" class=\"block_elem\"></canvas>\
                                 </div>\
                                 <div id=\"id_main_view\" class=\"block_elem\" style=\"overflow:hidden\">\
-                                    <canvas id=\"id_viewer\" class=\"block_elem\" style=\"-ms-touch-action: none;-webkit-user-select: none;background-color:" + AscCommonSlide.GlobalSkin.BackgroundColor + ";z-index:6\"></canvas>\
+                                    <canvas id=\"id_viewer\" class=\"block_elem\" style=\"-ms-touch-action: none;-webkit-user-select: none;background-color:" + AscCommon.GlobalSkin.BackgroundColor + ";z-index:6\"></canvas>\
                                     <canvas id=\"id_viewer_overlay\" class=\"block_elem\" style=\"-ms-touch-action: none;-webkit-user-select: none;z-index:7\"></canvas>\
                                     <canvas id=\"id_target_cursor\" class=\"block_elem\" width=\"1\" height=\"1\" style=\"-ms-touch-action: none;-webkit-user-select: none;width:2px;height:13px;display:none;z-index:9;\"></canvas>\
                                 </div>\
-							    <div id=\"id_panel_right\" class=\"block_elem\" style=\"margin-right:1px;background-color:" + AscCommonSlide.GlobalSkin.BackgroundColor + ";z-index:0;\">\
+							    <div id=\"id_panel_right\" class=\"block_elem\" style=\"margin-right:1px;background-color:" + AscCommon.GlobalSkin.BackgroundColor + ";z-index:0;\">\
 							        <div id=\"id_buttonRulers\" class=\"block_elem buttonRuler\"></div>\
 								    <div id=\"id_vertical_scroll\" style=\"left:0;top:0;width:14px;overflow:hidden;position:absolute;\">\
 								    </div>\
 								    <div id=\"id_buttonPrevPage\" class=\"block_elem buttonPrevPage\"></div>\
 								    <div id=\"id_buttonNextPage\" class=\"block_elem buttonNextPage\"></div>\
                                 </div>\
-                                <div id=\"id_horscrollpanel\" class=\"block_elem\" style=\"margin-bottom:1px;background-color:#F1F1F1;\">\
+                                <div id=\"id_horscrollpanel\" class=\"block_elem\" style=\"margin-bottom:1px;background-color:" + AscCommon.GlobalSkin.BackgroundColor + ";\">\
                                     <div id=\"id_horizontal_scroll\" style=\"left:0;top:0;height:14px;overflow:hidden;position:absolute;width:100%;\">\
                                     </div>\
                                 </div>\
@@ -1364,8 +1361,8 @@ background-repeat: no-repeat;\
 
 		if (true)
 		{
-			_innerHTML += "<div id=\"id_panel_notes\" class=\"block_elem\" style=\"-ms-touch-action: none;-moz-user-select:none;-khtml-user-select:none;user-select:none;overflow:hidden;background-color:#FFFFFF;\">\
-                                <canvas id=\"id_notes\" class=\"block_elem\" style=\"-ms-touch-action: none;-webkit-user-select: none;background-color:#FFFFFF;z-index:6\"></canvas>\
+			_innerHTML += "<div id=\"id_panel_notes\" class=\"block_elem\" style=\"-ms-touch-action: none;-moz-user-select:none;-khtml-user-select:none;user-select:none;overflow:hidden;background-color:" + AscCommon.GlobalSkin.BackgroundColorNotes + ";\">\
+                                <canvas id=\"id_notes\" class=\"block_elem\" style=\"-ms-touch-action: none;-webkit-user-select: none;background-color:" + AscCommon.GlobalSkin.BackgroundColorNotes + ";z-index:6\"></canvas>\
                                 <canvas id=\"id_notes_overlay\" class=\"block_elem\" style=\"-ms-touch-action: none;-webkit-user-select: none;z-index:7\"></canvas>\
                                 <div id=\"id_vertical_scroll_notes\" style=\"left:0;top:0;width:16px;overflow:hidden;position:absolute;\">\
                                     <div id=\"panel_right_scroll_notes\" class=\"block_elem\" style=\"left:0;top:0;width:1px;height:1px;\"></div>\
@@ -1379,9 +1376,36 @@ background-repeat: no-repeat;\
 
 		if (this.HtmlElement != null)
 		{
-			this.HtmlElement.style.backgroundColor = AscCommonSlide.GlobalSkin.BackgroundColor;
+			this.HtmlElement.style.backgroundColor = AscCommon.GlobalSkin.BackgroundColor;
 			this.HtmlElement.innerHTML = _innerHTML;
 		}
+	};
+
+	asc_docs_api.prototype.asc_setSkin = function(theme)
+	{
+		AscCommon.updateGlobalSkin(theme);
+
+		var baseElem = document.getElementById(this.HtmlElementName);
+		if (baseElem)
+			baseElem.style.backgroundColor = AscCommon.GlobalSkin.BackgroundColor;
+
+		var obj_id_main = document.getElementById("id_main");
+		if (obj_id_main)
+		{
+			obj_id_main.style.backgroundColor = AscCommon.GlobalSkin.BackgroundColor;
+			document.getElementById("id_panel_thumbnails").style.backgroundColor = AscCommon.GlobalSkin.BackgroundColorThumbnails;
+			document.getElementById("id_panel_thumbnails_split").style.backgroundColor = AscCommon.GlobalSkin.BackgroundColorThumbnails;
+			document.getElementById("id_main_parent").style.borderLeftColor = AscCommon.GlobalSkin.BorderSplitterColor;
+			document.getElementById("id_viewer").style.backgroundColor = AscCommon.GlobalSkin.BackgroundColor;
+			document.getElementById("id_panel_right").style.backgroundColor = AscCommon.GlobalSkin.ScrollBackgroundColor;
+			document.getElementById("id_horscrollpanel").style.backgroundColor = AscCommon.GlobalSkin.ScrollBackgroundColor;
+			document.getElementById("id_panel_notes").style.backgroundColor = AscCommon.GlobalSkin.BackgroundColorNotes;
+			document.getElementById("id_panel_notes").style.borderTopColor = AscCommon.GlobalSkin.BorderSplitterColor;
+			document.getElementById("id_notes").style.backgroundColor = AscCommon.GlobalSkin.BackgroundColorNotes;
+		}
+
+		if (this.WordControl && this.WordControl.m_oBody)
+			this.WordControl.OnResize(true);
 	};
 
 	asc_docs_api.prototype.initDefaultShortcuts = function()
@@ -1592,6 +1616,16 @@ background-repeat: no-repeat;\
 			if (TextPr.Unifill !== undefined)
 			{
 				this.sync_TextColor2(TextPr.Unifill);
+			}
+
+			if (AscCommon.isRealObject(TextPr.HighlightColor))
+			{
+				var oRGB = TextPr.HighlightColor.RGBA;
+				this.sendEvent("asc_onTextHighLight", new AscCommon.CColor(oRGB.R, oRGB.G, oRGB.B));
+			}
+			else
+			{
+				this.sendEvent("asc_onTextHighLight", AscCommonWord.highlight_None);
 			}
 		}
 	};
@@ -1979,6 +2013,9 @@ background-repeat: no-repeat;\
 			if (t.isForceSaveOnUserSave && t.IsUserSave) {
 				t.forceSaveButtonContinue = t.forceSave();
 			}
+			if (t.forceSaveForm) {
+				t.forceSaveForm();
+			}
 			// Выставляем, что документ не модифицирован
 			t.CheckChangedDocument();
 			t.canSave    = true;
@@ -2247,10 +2284,6 @@ background-repeat: no-repeat;\
 	{
 
 	};
-	asc_docs_api.prototype.gotoHeader                      = function(page, X, Y)
-	{
-		this.goToPage(page);
-	};
 	asc_docs_api.prototype.sync_ChangeActiveHeaderCallback = function(position, header)
 	{
 		this.sendEvent("asc_onChangeActiveHeader", position, new Asc.CHeader(header));
@@ -2425,7 +2458,7 @@ background-repeat: no-repeat;\
 		{
 			History.Create_NewPoint(AscDFH.historydescription_Presentation_ParagraphAdd);
 			this.WordControl.m_oLogicDocument.AddToParagraph(new AscCommonWord.ParaTextPr({FontSize : Math.min(size, 300)}), false);
-
+			this.WordControl.m_oLogicDocument.CheckResetShapesAutoFit(true);
 			// для мобильной версии это важно
 			if (this.isMobileVersion)
 				this.UpdateInterfaceState();
@@ -3269,10 +3302,6 @@ background-repeat: no-repeat;\
 
 	/*----------------------------------------------------------------*/
 
-	asc_docs_api.prototype.get_DocumentOrientation = function()
-	{
-		return this.DocumentOrientation;
-	};
 
 	asc_docs_api.prototype.Update_ParaInd                = function(Ind)
 	{
@@ -3322,19 +3351,6 @@ background-repeat: no-repeat;\
 			this.WordControl.m_oHorRuler.m_dIndentRight = Right;
 			this.WordControl.UpdateHorRuler();
 		}
-	};
-
-
-	asc_docs_api.prototype.sync_DocSizeCallback               = function(width, height)
-	{
-		this.sendEvent("asc_onDocSize", width, height);
-	};
-	asc_docs_api.prototype.sync_PageOrientCallback            = function(isPortrait)
-	{
-		this.sendEvent("asc_onPageOrient", isPortrait);
-	};
-	asc_docs_api.prototype.sync_HeadersAndFootersPropCallback = function(hafProp)
-	{
 	};
 
 	/*----------------------------------------------------------------*/
@@ -3984,9 +4000,9 @@ background-repeat: no-repeat;\
 
 
     // signatures
-    asc_docs_api.prototype.asc_addSignatureLine = function (sGuid, sSigner, sSigner2, sEmail, Width, Height, sImgUrl) {
+    asc_docs_api.prototype.asc_addSignatureLine = function (oPr, Width, Height, sImgUrl) {
         if (editor.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Drawing_Props) === false){
-            this.WordControl.m_oLogicDocument.AddSignatureLine(sGuid, sSigner, sSigner2, sEmail, Width, Height, sImgUrl);
+            this.WordControl.m_oLogicDocument.AddSignatureLine(oPr, Width, Height, sImgUrl);
         }
     };
 
@@ -5112,19 +5128,16 @@ background-repeat: no-repeat;\
 				}
 
 				if(!window["NATIVE_EDITOR_ENJINE"]){
-
-					this.WordControl.m_oLayoutDrawer.IsRetina = this.WordControl.bIsRetinaSupport;
-
-					this.WordControl.m_oLayoutDrawer.WidthMM  = presentation.Width;
-					this.WordControl.m_oLayoutDrawer.HeightMM = presentation.Height;
-					this.WordControl.m_oMasterDrawer.WidthMM  = presentation.Width;
-					this.WordControl.m_oMasterDrawer.HeightMM = presentation.Height;
+					this.WordControl.m_oLayoutDrawer.WidthMM  = presentation.GetWidthMM();
+					this.WordControl.m_oLayoutDrawer.HeightMM = presentation.GetHeightMM();
+					this.WordControl.m_oMasterDrawer.WidthMM  = presentation.GetWidthMM();
+					this.WordControl.m_oMasterDrawer.HeightMM = presentation.GetHeightMM();
 				}
                 this.standartThemesStatus++;
                 if (2 < this.standartThemesStatus)
                    this.WordControl.m_oLogicDocument.SendThemesThumbnails();
 
-				this.sendEvent("asc_onPresentationSize", presentation.Width, presentation.Height);
+				this.sendEvent("asc_onPresentationSize", presentation.GetWidthEMU(), presentation.GetHeightEMU(), presentation.GetSizeType());
 
 				this.WordControl.GoToPage(0);
 				bIsScroll = true;
@@ -5318,22 +5331,19 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.openDocument = function(file)
 	{
 		this.OpenDocument2(file.url, file.data);
-		this.DocumentOrientation = (null == this.WordControl.m_oLogicDocument) ? true : !this.WordControl.m_oLogicDocument.Orientation;
-		this.sync_DocSizeCallback(AscCommon.Page_Width, AscCommon.Page_Height);
-		this.sync_PageOrientCallback(this.get_DocumentOrientation());
 	};
 
 	asc_docs_api.prototype.get_PresentationWidth  = function()
 	{
 		if (this.WordControl.m_oLogicDocument == null)
 			return 0;
-		return this.WordControl.m_oLogicDocument.Width;
+		return this.WordControl.m_oLogicDocument.GetWidthEMU();
 	};
 	asc_docs_api.prototype.get_PresentationHeight = function()
 	{
 		if (this.WordControl.m_oLogicDocument == null)
 			return 0;
-		return this.WordControl.m_oLogicDocument.Height;
+		return this.WordControl.m_oLogicDocument.GetHeightEMU();
 	};
 
 	asc_docs_api.prototype.pre_Paste = function(_fonts, _images, callback)
@@ -5466,27 +5476,12 @@ background-repeat: no-repeat;\
 		}
 	};
 
-	asc_docs_api.prototype.GoToHeader = function(pageNumber)
-	{
-		if (this.WordControl.m_oDrawingDocument.IsFreezePage(pageNumber))
-			return;
-
-		var oldClickCount            = global_mouseEvent.ClickCount;
-		global_mouseEvent.ClickCount = 2;
-		this.WordControl.m_oLogicDocument.OnMouseDown(global_mouseEvent, 0, 0, pageNumber);
-		this.WordControl.m_oLogicDocument.OnMouseUp(global_mouseEvent, 0, 0, pageNumber);
-
-		this.WordControl.m_oLogicDocument.Document_UpdateInterfaceState();
-
-		global_mouseEvent.ClickCount = oldClickCount;
-	};
-
-	asc_docs_api.prototype.changeSlideSize = function(width, height)
+	asc_docs_api.prototype.changeSlideSize = function(width, height, type)
 	{
 		if (this.isMobileVersion && this.WordControl.MobileTouchManager)
 			this.WordControl.MobileTouchManager.BeginZoomCheck();
 
-		this.WordControl.m_oLogicDocument.changeSlideSize(width, height);
+		this.WordControl.m_oLogicDocument.changeSlideSize(width, height, type);
 
 		if (this.isMobileVersion && this.WordControl.MobileTouchManager)
 			this.WordControl.MobileTouchManager.EndZoomCheck();
@@ -6018,6 +6013,21 @@ background-repeat: no-repeat;\
 		this.isPaintFormat = value;
 		return this.sendEvent("asc_onPaintFormatChanged", value);
 	};
+	asc_docs_api.prototype.SetMarkerFormat          = function(value, is_flag, r, g, b)
+	{
+		this.isMarkerFormat = value;
+		if (this.isMarkerFormat)
+		{
+			this.WordControl.m_oLogicDocument.SetParagraphHighlight(is_flag, r, g, b);
+		}
+	};
+
+	asc_docs_api.prototype.sync_MarkerFormatCallback = function(value)
+	{
+		this.isMarkerFormat = value;
+		return this.sendEvent("asc_onMarkerFormatChanged", value);
+	};
+
 	asc_docs_api.prototype.ClearFormating           = function()
 	{
 		this.WordControl.m_oLogicDocument.ClearParagraphFormatting(false, true);
@@ -6897,6 +6907,13 @@ background-repeat: no-repeat;\
 		}
 		return this.WordControl.m_oLogicDocument.getSelectedDrawingObjectsCount();
 	};
+	asc_docs_api.prototype.asc_ChangeTextCase = function(nType)
+	{
+		var oLogicDocument = this.WordControl && this.WordControl.m_oLogicDocument;
+		if (!oLogicDocument)
+			return;
+		oLogicDocument.ChangeTextCase(nType);
+	};
 
 	//-----------------------------------------------------------------
 	// События контекстного меню
@@ -6953,7 +6970,7 @@ background-repeat: no-repeat;\
 	{
 		if (opt_isPassword) {
 			if (this.asc_checkNeedCallback("asc_onAdvancedOptions")) {
-				this.sendEvent("asc_onAdvancedOptions", c_oAscAdvancedOptionsID.DRM);
+				this.sendEvent("asc_onAdvancedOptions", c_oAscAdvancedOptionsID.DRM, data ? data.message : undefined);
 			} else {
 				this.sendEvent("asc_onError", c_oAscError.ID.ConvertationPassword, c_oAscError.Level.Critical);
 			}
@@ -7417,16 +7434,16 @@ background-repeat: no-repeat;\
 					oDocRenderer.Memory.Seek(0);
 					oDocRenderer.VectorMemoryForPrint.ClearNoAttack();
 
-					oDocRenderer.BeginPage(_drawing_document.m_oLogicDocument.Width, _drawing_document.m_oLogicDocument.Height);
+					oDocRenderer.BeginPage(_drawing_document.m_oLogicDocument.GetWidthMM(), _drawing_document.m_oLogicDocument.GetHeightMM());
 					this.WordControl.m_oLogicDocument.DrawPage(i, oDocRenderer);
 					oDocRenderer.EndPage();
 
-					window["AscDesktopEditor"]["Print_Page"](oDocRenderer.Memory.GetBase64Memory(), _drawing_document.m_oLogicDocument.Width, _drawing_document.m_oLogicDocument.Height);
+					window["AscDesktopEditor"]["Print_Page"](oDocRenderer.Memory.GetBase64Memory(), _drawing_document.m_oLogicDocument.GetWidthMM(), _drawing_document.m_oLogicDocument.GetHeightMM());
 				}
 
 				if (0 == pagescount)
 				{
-					oDocRenderer.BeginPage(_drawing_document.m_oLogicDocument.Width, _drawing_document.m_oLogicDocument.Height);
+					oDocRenderer.BeginPage(_drawing_document.m_oLogicDocument.GetWidthMM(), _drawing_document.m_oLogicDocument.GetHeightMM());
 					oDocRenderer.EndPage();
 
 					window["AscDesktopEditor"]["Print_Page"](oDocRenderer.Memory.GetBase64Memory());
@@ -7440,7 +7457,7 @@ background-repeat: no-repeat;\
 		}
 
 		var _logic_doc = this.WordControl.m_oLogicDocument;
-		_printer.BeginPage(_logic_doc.Width, _logic_doc.Height);
+		_printer.BeginPage(_logic_doc.GetWidthMM(), _logic_doc.GetHeightMM());
 		_logic_doc.DrawPage(_page, _printer);
 		_printer.EndPage();
 	};
@@ -7688,7 +7705,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['ClearPropObjCallback']                = asc_docs_api.prototype.ClearPropObjCallback;
 	asc_docs_api.prototype['CollectHeaders']                      = asc_docs_api.prototype.CollectHeaders;
 	asc_docs_api.prototype['GetActiveHeader']                     = asc_docs_api.prototype.GetActiveHeader;
-	asc_docs_api.prototype['gotoHeader']                          = asc_docs_api.prototype.gotoHeader;
 	asc_docs_api.prototype['sync_ChangeActiveHeaderCallback']     = asc_docs_api.prototype.sync_ChangeActiveHeaderCallback;
 	asc_docs_api.prototype['sync_ReturnHeadersCallback']          = asc_docs_api.prototype.sync_ReturnHeadersCallback;
 	asc_docs_api.prototype['startSearchText']                     = asc_docs_api.prototype.startSearchText;
@@ -7764,15 +7780,11 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['sync_SpaceBetweenPrgCallback']        = asc_docs_api.prototype.sync_SpaceBetweenPrgCallback;
 	asc_docs_api.prototype['sync_PrPropCallback']                 = asc_docs_api.prototype.sync_PrPropCallback;
 	asc_docs_api.prototype['SetDrawImagePlaceParagraph']          = asc_docs_api.prototype.SetDrawImagePlaceParagraph;
-	asc_docs_api.prototype['get_DocumentOrientation']             = asc_docs_api.prototype.get_DocumentOrientation;
 	asc_docs_api.prototype['put_AddPageBreak']                    = asc_docs_api.prototype.put_AddPageBreak;
 	asc_docs_api.prototype['Update_ParaInd']                      = asc_docs_api.prototype.Update_ParaInd;
 	asc_docs_api.prototype['Internal_Update_Ind_FirstLine']       = asc_docs_api.prototype.Internal_Update_Ind_FirstLine;
 	asc_docs_api.prototype['Internal_Update_Ind_Left']            = asc_docs_api.prototype.Internal_Update_Ind_Left;
 	asc_docs_api.prototype['Internal_Update_Ind_Right']           = asc_docs_api.prototype.Internal_Update_Ind_Right;
-	asc_docs_api.prototype['sync_DocSizeCallback']                = asc_docs_api.prototype.sync_DocSizeCallback;
-	asc_docs_api.prototype['sync_PageOrientCallback']             = asc_docs_api.prototype.sync_PageOrientCallback;
-	asc_docs_api.prototype['sync_HeadersAndFootersPropCallback']  = asc_docs_api.prototype.sync_HeadersAndFootersPropCallback;
 	asc_docs_api.prototype['put_Table']                           = asc_docs_api.prototype.put_Table;
 	asc_docs_api.prototype['addRowAbove']                         = asc_docs_api.prototype.addRowAbove;
 	asc_docs_api.prototype['addRowBelow']                         = asc_docs_api.prototype.addRowBelow;
@@ -7896,7 +7908,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_SetViewRulersChange']             = asc_docs_api.prototype.asc_SetViewRulersChange;
 	asc_docs_api.prototype['asc_GetViewRulers']                   = asc_docs_api.prototype.asc_GetViewRulers;
 	asc_docs_api.prototype['asc_SetDocumentUnits']                = asc_docs_api.prototype.asc_SetDocumentUnits;
-	asc_docs_api.prototype['GoToHeader']                          = asc_docs_api.prototype.GoToHeader;
 	asc_docs_api.prototype['changeSlideSize']                     = asc_docs_api.prototype.changeSlideSize;
 	asc_docs_api.prototype['AddSlide']                            = asc_docs_api.prototype.AddSlide;
 	asc_docs_api.prototype['DeleteSlide']                         = asc_docs_api.prototype.DeleteSlide;
@@ -7940,6 +7951,8 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['GetCurrentPixOffsetY']                = asc_docs_api.prototype.GetCurrentPixOffsetY;
 	asc_docs_api.prototype['SetPaintFormat']                      = asc_docs_api.prototype.SetPaintFormat;
 	asc_docs_api.prototype['sync_PaintFormatCallback']            = asc_docs_api.prototype.sync_PaintFormatCallback;
+	asc_docs_api.prototype['SetMarkerFormat']                     = asc_docs_api.prototype.SetMarkerFormat;
+	asc_docs_api.prototype['sync_MarkerFormatCallback']           = asc_docs_api.prototype.sync_MarkerFormatCallback;
 	asc_docs_api.prototype['ClearFormating']                      = asc_docs_api.prototype.ClearFormating;
 	asc_docs_api.prototype['SetDeviceInputHelperId']              = asc_docs_api.prototype.SetDeviceInputHelperId;
 	asc_docs_api.prototype['asc_setViewMode']                     = asc_docs_api.prototype.asc_setViewMode;
@@ -7991,6 +8004,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_getTextArtPreviews']              = asc_docs_api.prototype.asc_getTextArtPreviews;
 	asc_docs_api.prototype['sync_closeChartEditor']               = asc_docs_api.prototype.sync_closeChartEditor;
 	asc_docs_api.prototype['asc_getSelectedDrawingObjectsCount']  = asc_docs_api.prototype.asc_getSelectedDrawingObjectsCount;
+	asc_docs_api.prototype['asc_ChangeTextCase']                  = asc_docs_api.prototype.asc_ChangeTextCase;
 	asc_docs_api.prototype['asc_stopSaving']                      = asc_docs_api.prototype.asc_stopSaving;
 	asc_docs_api.prototype['asc_continueSaving']                  = asc_docs_api.prototype.asc_continueSaving;
 	asc_docs_api.prototype['asc_undoAllChanges']                  = asc_docs_api.prototype.asc_undoAllChanges;
@@ -8028,6 +8042,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_SetMathProps"]           		  = asc_docs_api.prototype.asc_SetMathProps;
 
     asc_docs_api.prototype['sendEvent']								= asc_docs_api.prototype.sendEvent;
+	asc_docs_api.prototype['asc_setSkin']							= asc_docs_api.prototype.asc_setSkin;
 
 	// mobile
 	asc_docs_api.prototype["asc_GetDefaultTableStyles"]           	= asc_docs_api.prototype.asc_GetDefaultTableStyles;

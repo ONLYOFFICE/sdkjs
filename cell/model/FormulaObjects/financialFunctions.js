@@ -49,6 +49,7 @@
 	var cBaseFunction = AscCommonExcel.cBaseFunction;
 	var cFormulaFunctionGroup = AscCommonExcel.cFormulaFunctionGroup;
 	var argType = Asc.c_oAscFormulaArgumentType;
+	var cElementType = AscCommonExcel.cElementType;
 
 	var startRangeCurrentDateSystem = 1;
 
@@ -5301,6 +5302,9 @@
 		if (flag instanceof cError) {
 			return flag;
 		}
+		if (flag.type === cElementType.string) {
+			return new cError(cErrorType.wrong_value_type);
+		}
 
 		cost = cost.getValue();
 		salvage = salvage.getValue();
@@ -5308,7 +5312,7 @@
 		startPeriod = startPeriod.getValue();
 		endPeriod = endPeriod.getValue();
 		factor = factor.getValue();
-		flag = flag.getValue();
+		flag = flag.toBool();
 
 		if (life === 0 && startPeriod === 0 && endPeriod === 0) {
 			return new cError(cErrorType.division_by_zero);

@@ -140,6 +140,7 @@
 		// Переменная, которая отвечает, послали ли мы окончание открытия документа
 		this.isPreOpenLocks = true;
 		this.isApplyChangesOnOpenEnabled = true;
+		this.isProtectionSupport = true;
 
 		this.canSave    = true;        // Флаг нужен чтобы не происходило сохранение пока не завершится предыдущее сохранение
 		this.IsUserSave = false;    // Флаг, контролирующий сохранение было сделано пользователем или нет (по умолчанию - нет)
@@ -147,6 +148,7 @@
         this.forceSaveButtonTimeout = null;
         this.forceSaveButtonContinue = false;
         this.forceSaveTimeoutTimeout = null;
+		this.forceSaveForm = null;
 		this.disconnectOnSave = null;
 		this.forceSaveUndoRequest = false; // Флаг нужен, чтобы мы знали, что данное сохранение пришло по запросу Undo в совместке
 
@@ -193,6 +195,8 @@
 
 		// macros & plugins events
 		this.internalEvents = {};
+
+		this.skinObject = config['skin'];
 
 		this.Shortcuts = new AscCommon.CShortcuts();
 		this.initDefaultShortcuts();
@@ -415,8 +419,6 @@
 	};
 	baseEditorsApi.prototype.asc_changeDocInfo = function(oDocInfo)
 	{
-		this.DocInfo.asc_getUserInfo().asc_putFullName(oDocInfo.asc_getUserName());
-		this.User.setUserName(oDocInfo.asc_getUserName());
 		var rData = {
 			"c": 'changedocinfo',
 			"id": this.documentId,
@@ -427,8 +429,10 @@
 		{
 			if (null != input && "changedocinfo" == input["type"])
 			{
-				if ('ok' !== input["status"])
-				{
+				if ('ok' === input["status"]) {
+					t.DocInfo.asc_getUserInfo().asc_putFullName(oDocInfo.asc_getUserName());
+					t.User.setUserName(oDocInfo.asc_getUserName());
+				} else {
 					t.sendEvent("asc_onError", AscCommon.mapAscServerErrorToAscError(parseInt(input["data"])),
 						c_oAscError.Level.NoCritical);
 				}
@@ -525,6 +529,7 @@
 	baseEditorsApi.prototype.asc_setRestriction              = function(val)
 	{
 		this.restrictions = val;
+		this.onUpdateRestrictions();
 	};
 	baseEditorsApi.prototype.getViewMode                     = function()
 	{
@@ -533,6 +538,7 @@
 	baseEditorsApi.prototype.asc_addRestriction              = function(val)
 	{
 		this.restrictions |= val;
+		this.onUpdateRestrictions();
 	};
 	baseEditorsApi.prototype.asc_removeRestriction           = function(val)
 	{
@@ -557,6 +563,9 @@
 	baseEditorsApi.prototype.isRestrictionView               = function()
 	{
 		return !!(this.restrictions & Asc.c_oAscRestrictionType.View);
+	};
+	baseEditorsApi.prototype.onUpdateRestrictions = function()
+	{
 	};
 	baseEditorsApi.prototype.isLongAction                    = function()
 	{
@@ -792,6 +801,20 @@
 	{
 		return this.CoAuthoringApi.forceSave();
 	};
+	baseEditorsApi.prototype.saveFromChanges = function(data, timeout, callback) {
+		var t = this;
+		var fAfterSaveChanges = function() {
+			t.forceSaveForm = null;
+			if (!t.CoAuthoringApi.callPRC(data, timeout, callback)) {
+				callback(false, undefined);
+			}
+		};
+		if (this.asc_Save(true)) {
+			this.forceSaveForm = fAfterSaveChanges;
+		} else {
+			fAfterSaveChanges();
+		}
+	};
 	baseEditorsApi.prototype.asc_setIsForceSaveOnUserSave = function(val)
 	{
 		this.isForceSaveOnUserSave = val;
@@ -815,6 +838,13 @@
 				// Мы не можем в этот момент сохранять, т.к. попали в ситуацию, когда мы залочили сохранение и успели нажать вставку до ответа
 				// Нужно снять lock с сохранения
 				this.CoAuthoringApi.onUnSaveLock = function () {
+					if (t.isForceSaveOnUserSave && t.IsUserSave) {
+						t.forceSaveButtonContinue = t.forceSave();
+					}
+					if (t.forceSaveForm) {
+						t.forceSaveForm();
+					}
+
 					t.canSave = true;
 					t.IsUserSave = false;
 					t.lastSaveTime = null;
@@ -953,6 +983,10 @@
 				oResult.setRights(this.licenseResult['rights']);
 				oResult.setBuildVersion(this.licenseResult['buildVersion']);
 				oResult.setBuildNumber(this.licenseResult['buildNumber']);
+
+				if (undefined !== this.licenseResult['protectionSupport']) {
+					this.isProtectionSupport = this.licenseResult['protectionSupport'];
+				}
 			}
 			this.sendEvent('asc_onGetEditorPermissions', oResult);
 		}
@@ -2105,8 +2139,8 @@
                     {
                         var _w = transition.Rect.w;
                         var _h = transition.Rect.h;
-                        var _w_mm = manager.HtmlPage.m_oLogicDocument.Width;
-                        var _h_mm = manager.HtmlPage.m_oLogicDocument.Height;
+                        var _w_mm = manager.HtmlPage.m_oLogicDocument.GetWidthMM();
+                        var _h_mm = manager.HtmlPage.m_oLogicDocument.GetHeightMM();
 
                         var _x = transition.Rect.x;
                         if (this.isReporterMode)
@@ -2340,7 +2374,7 @@
 		}
 	};
 
-	baseEditorsApi.prototype.asc_addSignatureLine = function (sGuid, sSigner, sSigner2, sEmail, Width, Height, sImgUrl) {
+	baseEditorsApi.prototype.asc_addSignatureLine = function (oPr, Width, Height, sImgUrl) {
 
     };
 	baseEditorsApi.prototype.asc_getAllSignatures = function () {
@@ -2389,10 +2423,10 @@
 		var _url = _canvas.toDataURL("image/png");
 		_canvas = null;
 
-		var _args = [AscCommon.CreateGUID(), _obj.asc_getSigner1(), _obj.asc_getSigner2(), _obj.asc_getEmail(), _w, _h, _url];
+		var _args = [];
 
-		this.ImageLoader.LoadImagesWithCallback([_url], function(_args) {
-			this.asc_addSignatureLine(_args[0], _args[1], _args[2], _args[3], _args[4], _args[5], _args[6]);
+		this.ImageLoader.LoadImagesWithCallback([_url], function() {
+			this.asc_addSignatureLine(_obj, _w, _h, _url);
 		}, _args);
 	};
 
@@ -2423,6 +2457,8 @@
 				_add_sig.signer1 = _sig.signer;
 				_add_sig.signer2 = _sig.signer2;
 				_add_sig.email = _sig.email;
+				_add_sig.showDate = _sig.showDate;
+				_add_sig.instructions = _sig.instructions;
 
 				_sigs_ret.push(_add_sig);
 			}
@@ -2433,7 +2469,7 @@
 
 	baseEditorsApi.prototype.asc_Sign = function(id, guid, url1, url2)
 	{
-		if (window["AscDesktopEditor"])
+		if (window["AscDesktopEditor"] && !this.isRestrictionView())
 			window["AscDesktopEditor"]["Sign"](id, guid, url1, url2);
 	};
 	baseEditorsApi.prototype.asc_RequestSign = function(guid)
@@ -2489,16 +2525,18 @@
     {
         if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsProtectionSupport"])
             return window["AscDesktopEditor"]["IsProtectionSupport"]();
-        return !(this.DocInfo && this.DocInfo.get_OfflineApp());
+        return !(this.DocInfo && this.DocInfo.get_OfflineApp()) && this.isProtectionSupport;
     };
 
 	baseEditorsApi.prototype.asc_gotoSignature = function(guid)
 	{
 		if (window["AscDesktopEditor"] && window["asc_IsVisibleSign"] && window["asc_IsVisibleSign"](guid))
 		{
-			if (this.asc_MoveCursorToSignature)
-				this.asc_MoveCursorToSignature(guid);
+			this.gotoSignatureInternal(guid);
 		}
+	};
+	baseEditorsApi.prototype.gotoSignatureInternal = function(guid)
+	{
 	};
 
 	baseEditorsApi.prototype.asc_getSignatureSetup = function(guid)
@@ -2515,6 +2553,8 @@
 				_add_sig.signer1 = _sig.signer;
 				_add_sig.signer2 = _sig.signer2;
 				_add_sig.email = _sig.email;
+				_add_sig.showDate = _sig.showDate;
+				_add_sig.instructions = _sig.instructions;
 
 				_add_sig.isrequested = true;
 				for (var j = 0; j < this.signatures.length; j++)
@@ -2746,6 +2786,17 @@
 		return new Date().getTime() - this.lastWorkTime;
 	};
 
+	baseEditorsApi.prototype.checkInterfaceElementBlur = function()
+	{
+		if (!document.activeElement || !document.createEvent || (document.activeElement.id === "area_id"))
+			return;
+
+		var e = document.createEvent("HTMLEvents");
+		e.initEvent("blur", true, true);
+		e.eventName = "blur";
+		document.activeElement.dispatchEvent(e);
+	};
+
 	baseEditorsApi.prototype.checkLastWork = function()
 	{
 		this.lastWorkTime = new Date().getTime();
@@ -2810,11 +2861,8 @@
 
 		if (this.editorId == AscCommon.c_oEditorId.Spreadsheet)
 		{
-			var locker = Asc.editor.wb.getWorksheet().objectRender.objectLocker;
-			locker.addObjectId(this.macros.Get_Id());
-
 			var _this = this;
-			locker.checkObjects(function(bNoLock) {
+			Asc.editor.checkObjectsLock([this.macros.Get_Id()], function(bNoLock) {
 				if (bNoLock)
 				{
 					AscCommon.History.Create_NewPoint(AscDFH.historydescription_DocumentMacros_Data);
@@ -3195,6 +3243,9 @@
 		var nActionType = this.Shortcuts.AddCustomActionSymbol(nCharCode, sFont);
 		this.Shortcuts.Add(nActionType, sShortcut[0], sShortcut[1], sShortcut[2], sShortcut[3]);
 		return nActionType;
+	};
+	baseEditorsApi.prototype.asc_setSkin = function(obj)
+	{
 	};
 	//----------------------------------------------------------addons----------------------------------------------------
     baseEditorsApi.prototype["asc_isSupportFeature"] = function(type)

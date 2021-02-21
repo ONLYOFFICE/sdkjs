@@ -491,13 +491,7 @@
      */
     ApiPresentation.prototype.SetSizes = function(nWidth, nHeight) {
         if(this.Presentation){
-            var width = nWidth/36000.0;
-            var height = nHeight/36000.0;
-            History.Add(new AscDFH.CChangesDrawingsObjectNoId(this.Presentation, AscDFH.historyitem_Presentation_SlideSize, new AscFormat.CDrawingBaseCoordsWritable(this.Presentation.Width,  this.Presentation.Height), new AscFormat.CDrawingBaseCoordsWritable(width,  height)));
-            this.Presentation.Width = width;
-            this.Presentation.Height = height;
-            this.Presentation.changeSlideSizeFunction(this.Presentation.Width, this.Presentation.Height);
-
+            this.Presentation.internalChangeSizes(nWidth, nHeight);
         }
     };
     /**
@@ -569,8 +563,8 @@
                     }
                 }
             }
-            var _x = (this.Presentation.Width - _w)/2.0;
-            var _y = (this.Presentation.Height - _h)/2.0;
+            var _x = (this.Presentation.GetWidthMM() - _w)/2.0;
+            var _y = (this.Presentation.GetHeightMM() - _h)/2.0;
             oImage.spPr.xfrm.setOffX(_x);
             oImage.spPr.xfrm.setOffY(_y);
             _slide.addToSpTreeToPos(_slide.cSld.spTree.length, oImage);

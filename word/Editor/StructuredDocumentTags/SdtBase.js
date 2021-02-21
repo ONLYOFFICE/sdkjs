@@ -296,4 +296,51 @@ CSdtBase.prototype.IsCheckBoxChecked = function()
 
 	return false;
 };
+/**
+ * Копируем placeholder
+ * @return {string}
+ */
+CSdtBase.prototype.private_CopyPlaceholder = function()
+{
+	var oLogicDocument = this.GetLogicDocument();
+	if (!oLogicDocument || !this.Pr.Placeholder)
+		return;
 
+	var oGlossary = oLogicDocument.GetGlossaryDocument();
+	var oDocPart  = oGlossary.GetDocPartByName(this.Pr.Placeholder);
+	if (!oDocPart)
+		return;
+
+	if (oGlossary.IsDefaultDocPart(oDocPart))
+	{
+		return this.Pr.Placeholder;
+	}
+	else
+	{
+		var oCopyName = oGlossary.GetNewName();
+		oGlossary.AddDocPart(oDocPart.Copy(oCopyName));
+		return oCopyName;
+	}
+};
+/**
+ * Проверяем является ли данный контрол текущим
+ * @return {boolean}
+ */
+CSdtBase.prototype.IsCurrent = function()
+{
+	return this.Current;
+};
+/**
+ * Выставляем, является ли данный контрол текущим
+ * @param {boolean} isCurrent
+ */
+CSdtBase.prototype.SetCurrent = function(isCurrent)
+{
+	this.Current = isCurrent;
+};
+/**
+ * Специальная функция, которая обновляет текстовые настройки у плейсхолдера для форм
+ */
+CSdtBase.prototype.UpdatePlaceHolderTextPrForForm = function()
+{
+};

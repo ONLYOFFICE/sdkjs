@@ -209,8 +209,17 @@ function CThemeLoader()
             _loader.IsThemeLoader = true;
 
             var pres = {};
+            pres.setSldSz = function(pr) {
+                this.sldSz = pr;
+            };
+
+            pres.GetWidthEMU = AscCommonSlide.CPresentation.prototype.GetWidthEMU;
+            pres.GetHeightEMU = AscCommonSlide.CPresentation.prototype.GetHeightEMU;
+            pres.GetWidthMM = AscCommonSlide.CPresentation.prototype.GetWidthMM;
+            pres.GetHeightMM = AscCommonSlide.CPresentation.prototype.GetHeightMM;
             pres.slideMasters = [];
             pres.DrawingDocument = editor.WordControl.m_oDrawingDocument;
+
 
             AscCommon.History.MinorChanges = true;
             _loader.Load(_binary, pres);

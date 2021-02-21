@@ -1413,6 +1413,7 @@ function (window, undefined) {
 		var M = 0;
 		var N = 0;
 		var nCase;
+		var i, j;
 
 		if (!pMatY || !pMatY[0]) {
 			return false;
@@ -1422,8 +1423,8 @@ function (window, undefined) {
 		nCY = pMatY[0].length;
 		var nCountY = nCY * nRY;
 		var _pMatY = [];
-		for (var i = 0; i < pMatY.length; i++) {
-			for (var j = 0; j < pMatY[i].length; j++) {
+		for (i = 0; i < pMatY.length; i++) {
+			for (j = 0; j < pMatY[i].length; j++) {
 				if (!pMatY[i][j]) {
 					//PushIllegalArgument();
 					return false;
@@ -1440,8 +1441,8 @@ function (window, undefined) {
 		if (_bLOG) {
 			var pNewY = [];
 
-			for (var i = 0; i < pMatY.length; i++) {
-				for (var j = 0; j < pMatY[i].length; j++) {
+			for (i = 0; i < pMatY.length; i++) {
+				for (j = 0; j < pMatY[i].length; j++) {
 					var fVal = pMatY[i][j];
 					if (fVal <= 0.0) {
 						//PushIllegalArgument();
@@ -1464,8 +1465,8 @@ function (window, undefined) {
 			nRX = pMatX.length;
 			nCX = pMatX[0].length;
 			var nCountX = nCX * nRX;
-			for (var i = 0; i < pMatX.length; i++) {
-				for (var j = 0; j < pMatX[i].length; j++) {
+			for (i = 0; i < pMatX.length; i++) {
+				for (j = 0; j < pMatX[i].length; j++) {
 					if (!pMatX[i][j]) {
 						//PushIllegalArgument();
 						return false;
@@ -1504,21 +1505,17 @@ function (window, undefined) {
 				M = nRX;
 			}
 		} else {
-			_pMatX = GetNewMat(nRY, nCY);
+			_pMatX = GetNewMat(nCY, nRY);
 			nCX = nCY;
 			nRX = nRY;
-			if (!_pMatX) {
-				//PushIllegalArgument();
-				return false;
-			}
 
 			var num = 1;
-			for (var i = 0; i < nRY; i++) {
-				for (var j = 1; j <= nCY; j++) {
-					if (!_pMatX[j-1]) {
-						_pMatX[j-1] = [];
+			for (i = 0; i < nRY; i++) {
+				for (j = 0; j < nCY; j++) {
+					if (!_pMatX[j]) {
+						_pMatX[j] = [];
 					}
-					_pMatX[j-1][i] = num;
+					_pMatX[j][i] = num;
 					num++;
 				}
 			}
@@ -6990,6 +6987,7 @@ function (window, undefined) {
 	cGROWTH.prototype.argumentsMax = 4;
 	cGROWTH.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1};
 	cGROWTH.prototype.argumentsType = [argType.reference, argType.reference, argType.reference, argType.logical];
+	cGROWTH.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cGROWTH.prototype.Calculate = function (arg) {
 		var prepeareArgs = prepeareGrowthTrendCalculation(this, arg);
 		if (cElementType.error === prepeareArgs.type) {
@@ -7554,6 +7552,7 @@ function (window, undefined) {
 	cLOGEST.prototype.argumentsMax = 4;
 	cLOGEST.prototype.arrayIndexes = {0: 1, 1: 1};
 	cLOGEST.prototype.argumentsType = [argType.reference, argType.reference, argType.logical, argType.logical];
+	cLOGEST.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cLOGEST.prototype.Calculate = function (arg) {
 
 		arg[0] = tryNumberToArray(arg[0]);
@@ -10966,6 +10965,7 @@ function (window, undefined) {
 	cTREND.prototype.argumentsMax = 4;
 	cTREND.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1};
 	cTREND.prototype.argumentsType = [argType.reference, argType.reference, argType.reference, argType.logical];
+	cTREND.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cTREND.prototype.Calculate = function (arg) {
 		var prepeareArgs = prepeareGrowthTrendCalculation(this, arg);
 		if (cElementType.error === prepeareArgs.type) {

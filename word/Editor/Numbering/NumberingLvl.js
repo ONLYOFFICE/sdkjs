@@ -225,17 +225,17 @@ CNumberingLvl.prototype.private_InitDefault = function(nLvl)
 
 	if (0 == nLvl % 3)
 	{
-		this.TextPr.RFonts.Set_All("Symbol", -1);
+		this.TextPr.RFonts.SetAll("Symbol", -1);
 		this.LvlText.push(new CNumberingLvlTextString(String.fromCharCode(0x00B7)));
 	}
 	else if (1 == nLvl % 3)
 	{
-		this.TextPr.RFonts.Set_All("Courier New", -1);
+		this.TextPr.RFonts.SetAll("Courier New", -1);
 		this.LvlText.push(new CNumberingLvlTextString("o"));
 	}
 	else
 	{
-		this.TextPr.RFonts.Set_All("Wingdings", -1);
+		this.TextPr.RFonts.SetAll("Wingdings", -1);
 		this.LvlText.push(new CNumberingLvlTextString(String.fromCharCode(0x00A7)));
 	}
 };
@@ -299,17 +299,17 @@ CNumberingLvl.prototype.private_InitDefaultBullet = function(nLvl)
 	this.LvlText = [];
 	if (0 === nLvl % 3)
 	{
-		this.TextPr.RFonts.Set_All("Symbol", -1);
+		this.TextPr.RFonts.SetAll("Symbol", -1);
 		this.LvlText.push(new CNumberingLvlTextString(String.fromCharCode(0x00B7)));
 	}
 	else if (1 === nLvl % 3)
 	{
-		this.TextPr.RFonts.Set_All("Courier New", -1);
+		this.TextPr.RFonts.SetAll("Courier New", -1);
 		this.LvlText.push(new CNumberingLvlTextString("o"));
 	}
 	else
 	{
-		this.TextPr.RFonts.Set_All("Wingdings", -1);
+		this.TextPr.RFonts.SetAll("Wingdings", -1);
 		this.LvlText.push(new CNumberingLvlTextString(String.fromCharCode(0x00A7)));
 	}
 };
@@ -471,9 +471,9 @@ CNumberingLvl.prototype.private_InitDefaultMultiLevel3 = function(nLvl)
 
 	this.TextPr = new CTextPr();
 	if (3 === nLvl || 4 === nLvl || 7 === nLvl || 8 === nLvl)
-		this.TextPr.RFonts.Set_All("Symbol", -1);
+		this.TextPr.RFonts.SetAll("Symbol", -1);
 	else
-		this.TextPr.RFonts.Set_All("Wingdings", -1);
+		this.TextPr.RFonts.SetAll("Wingdings", -1);
 };
 /**
  * Создаем копию

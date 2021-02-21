@@ -747,8 +747,8 @@ CParagraphContentBase.prototype.GetDocumentPositionFromObject = function(arrPos)
  */
 CParagraphContentBase.prototype.GetParentContentControls = function()
 {
-	var oDocPos = [{Class : this, Pos : 0}];
-	oDocPos = this.GetDocumentPositionFromObject(oDocPos);
+	var oDocPos = this.GetDocumentPositionFromObject();
+	oDocPos.push({Class : this, Pos : 0});
 
 	var arrContentControls = [];
 	for (var nIndex = 0, nCount = oDocPos.length; nIndex < nCount; ++nIndex)
@@ -1247,10 +1247,7 @@ CParagraphContentWithParagraphLikeContent.prototype.Is_Empty = function(oPr)
 };
 CParagraphContentWithParagraphLikeContent.prototype.Is_CheckingNearestPos = function()
 {
-    if (this.NearPosArray.length > 0)
-        return true;
-
-    return false;
+    return (this.NearPosArray.length > 0);
 };
 CParagraphContentWithParagraphLikeContent.prototype.IsStartFromNewLine = function()
 {
@@ -1696,7 +1693,7 @@ CParagraphContentWithParagraphLikeContent.prototype.Remove = function(Direction,
 	{
 		var ContentPos = this.State.ContentPos;
 
-		if ((true === this.Cursor_Is_Start() || true === this.Cursor_Is_End()) && (!(this instanceof CInlineLevelSdt) || !this.IsTextForm()))
+		if ((true === this.Cursor_Is_Start() || true === this.Cursor_Is_End()) && (!(this instanceof CInlineLevelSdt) || !(this.IsTextForm() || this.IsComboBox())))
 		{
 			this.SelectAll();
 			this.SelectThisElement(1);
@@ -2590,16 +2587,29 @@ CParagraphContentWithParagraphLikeContent.prototype.Draw_HighLights = function(P
 };
 CParagraphContentWithParagraphLikeContent.prototype.Draw_Elements = function(PDSE)
 {
-    var CurLine  = PDSE.Line - this.StartLine;
-    var CurRange = ( 0 === CurLine ? PDSE.Range - this.StartRange : PDSE.Range );
+	var isPlaceHolder = false;
+	var nTextAlpha;
 
-    var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
-    var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
+	if (this.IsPlaceHolder && this.IsPlaceHolder() && PDSE.Graphics.setTextGlobalAlpha)
+	{
+		isPlaceHolder = true;
+		nTextAlpha    = PDSE.Graphics.getTextGlobalAlpha();
+		PDSE.Graphics.setTextGlobalAlpha(0.5);
+	}
 
-    for ( var CurPos = StartPos; CurPos <= EndPos; CurPos++ )
-    {
-        this.Content[CurPos].Draw_Elements( PDSE );
-    }
+	var CurLine  = PDSE.Line - this.StartLine;
+	var CurRange = (0 === CurLine ? PDSE.Range - this.StartRange : PDSE.Range);
+
+	var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
+	var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
+
+	for (var CurPos = StartPos; CurPos <= EndPos; CurPos++)
+	{
+		this.Content[CurPos].Draw_Elements(PDSE);
+	}
+
+	if (isPlaceHolder)
+		PDSE.Graphics.setTextGlobalAlpha(nTextAlpha);
 };
 CParagraphContentWithParagraphLikeContent.prototype.Draw_Lines = function(PDSL)
 {
@@ -4335,10 +4345,54 @@ CParagraphContentWithParagraphLikeContent.prototype.MakeSingleRunElement = funct
 {
 	if (this.Content.length !== 1 || para_Run !== this.Content[0].Type)
 	{
+		var oRun = new ParaRun(this.GetParagraph(), false);
+
+		if (true !== isClearRun)
+		{
+			// У нас при открытии ран делится маскимально по 255 элементов внутри каждого рана, поэтому
+			// в формах, где должен быть только 1 ран после открытия их может быть несколько. Объединяем здесь
+			// все раны в один общий ран, чтобы исправить данную ситуцию
+
+			var oParagraph = this.GetParagraph();
+			var oCurrentRun = null;
+			if (oParagraph)
+			{
+				var oCurPos = oParagraph.Get_ParaContentPos(false, false, false);
+				oCurPos.DecreaseDepth(1);
+				oCurrentRun = oParagraph.GetClassByPos(oCurPos);
+				if (!oCurrentRun || !(oCurrentRun instanceof ParaRun))
+					oCurrentRun = null;
+			}
+
+			var nNewCurPos = 0;
+			var isFirst    = true;
+			this.CheckRunContent(function(_oRun)
+			{
+				if (_oRun === oCurrentRun)
+					nNewCurPos = _oRun.State.ContentPos + oRun.Content.length;
+
+				var arrContentToInsert = [];
+				for (var nPos = 0, nCount = _oRun.Content.length; nPos < nCount; ++nPos)
+				{
+					arrContentToInsert.push(_oRun.Content[nPos].Copy());
+				}
+
+				oRun.ConcatToContent(arrContentToInsert);
+
+				if (isFirst && arrContentToInsert.length > 0)
+				{
+					oRun.SetPr(_oRun.GetDirectTextPr().Copy());
+					isFirst = false;
+				}
+			});
+
+			oRun.State.ContentPos = nNewCurPos;
+		}
+
 		if (this.Content.length > 0)
 			this.RemoveFromContent(0, this.Content.length, true);
 
-		this.AddToContent(0, new ParaRun(this.GetParagraph(), false), true);
+		this.AddToContent(0, oRun, true);
 	}
 
 	var oRun = this.Content[0];

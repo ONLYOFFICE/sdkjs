@@ -46,11 +46,12 @@ var History = AscCommon.History;
  AscDFH.changesFactory[AscDFH.historyitem_SlideMasterSetClrMapOverride] = AscDFH.CChangesDrawingsObject          ;
  AscDFH.changesFactory[AscDFH.historyitem_SlideMasterSetHF]             = AscDFH.CChangesDrawingsObject          ;
  AscDFH.changesFactory[AscDFH.historyitem_SlideMasterAddLayout]         = AscDFH.CChangesDrawingsContent         ;
+ AscDFH.changesFactory[AscDFH.historyitem_SlideMasterSetTransition]     = AscDFH.CChangesDrawingsObjectNoId         ;
+ AscDFH.changesFactory[AscDFH.historyitem_SlideMasterSetTiming]         = AscDFH.CChangesDrawingsObject         ;
 
  AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideMasterSetThemeIndex]     = function(oClass, value){oClass.ThemeIndex = value;};
  AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideMasterSetSize]           = function(oClass, value){oClass.Width = value.a; oClass.Height = value.b;};
  AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideMasterSetTheme]          = function(oClass, value){oClass.Theme = value;};
-
  AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideMasterSetBg]             = function(oClass, value, FromLoad){
      oClass.cSld.Bg = value;
      if(FromLoad){
@@ -72,11 +73,14 @@ var History = AscCommon.History;
  AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideMasterSetCSldName]       = function(oClass, value){oClass.cSld.name = value;};
  AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideMasterSetClrMapOverride] = function(oClass, value){oClass.clrMap = value;};
  AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideMasterSetHF]             = function(oClass, value){oClass.hf = value;};
+ AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideMasterSetTransition]     = function(oClass, value){oClass.transition = value;};
+ AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideMasterSetTiming]         = function(oClass, value){oClass.timing = value;};
 
 
 AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideMasterSetSize]      = AscFormat.CDrawingBaseCoordsWritable;
 AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideMasterSetBg]        = AscFormat.CBg;
 AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideMasterSetTxStyles]  = AscFormat.CTextStyles;
+AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideMasterSetTransition]  = Asc.CAscSlideTransition;
 
 
 AscDFH.drawingContentChanges[AscDFH.historyitem_SlideMasterAddToSpTree]       = function(oClass){return oClass.cSld.spTree;};
@@ -94,6 +98,9 @@ function MasterSlide(presentation, theme)
 
     this.txStyles = null;
     this.preserve = false;
+
+    this.timing = null;
+    this.transition = null;
 
     this.ImageBase64 = "";
     this.Width64 = 0;
@@ -442,6 +449,40 @@ MasterSlide.prototype =
             this.Height = h;
         },
 
+
+        applyTransition: function(transition) {
+            var oldTransition;
+            if(this.transition) {
+                oldTransition = this.transition.createDuplicate();
+            }
+            else {
+                oldTransition = null;
+            }
+
+            var oNewTransition;
+            if(transition) {
+                if(this.transition) {
+                    oNewTransition = this.transition.createDuplicate();
+                }
+                else {
+                    oNewTransition = new Asc.CAscSlideTransition();
+                    oNewTransition.setDefaultParams();
+                }
+                oNewTransition.applyProps(transition);
+            }
+            else {
+                oNewTransition = null;
+            }
+            this.transition = oNewTransition;
+            History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_SlideMasterSetTransition, oldTransition, oNewTransition));
+        },
+
+        setTiming: function(oTiming)
+        {
+            History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_SlideMasterSetTiming, this.timing, oTiming));
+            this.timing = oTiming;
+        },
+
         changeSize: Slide.prototype.changeSize,
 
         setTheme: function (theme) {
@@ -573,6 +614,9 @@ MasterSlide.prototype =
             }
             if (this.txStyles) {
                 copy.setTxStyles(this.txStyles.createDuplicate());
+            }
+            if(this.timing) {
+                copy.setTiming(this.timing.createDuplicate(oIdMap));
             }
             return copy;
         },

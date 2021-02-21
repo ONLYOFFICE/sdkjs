@@ -2666,6 +2666,9 @@
 			{
 				var _page = this.m_arrayPages[this.m_lPagesCount - 1];
 
+				if (theme && textPr && textPr.ReplaceThemeFonts)
+					textPr.ReplaceThemeFonts(theme.themeElements.fontScheme);
+
 				_page.m_oTextPr = textPr;
 				if (theme)
 					_page.m_oGrFonts.checkFromTheme(theme.themeElements.fontScheme, _page.m_oTextPr.RFonts);

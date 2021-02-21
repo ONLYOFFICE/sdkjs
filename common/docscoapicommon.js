@@ -155,7 +155,8 @@
 	var c_oAscForceSaveTypes = {
 		Command: 0,
 		Button: 1,
-		Timeout: 2
+		Timeout: 2,
+		Form: 3
 	};
 
 	function getDisconnectErrorCode (isDocumentLoadComplete, opt_closeCode) {

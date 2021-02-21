@@ -840,12 +840,11 @@ CDocument.prototype.ContinueCheckSpelling = function()
 {
     this.Spelling.ContinueCheckSpelling();
 };
-
-CDocument.prototype.TurnOff_CheckSpelling = function()
+CDocument.prototype.TurnOffCheckSpelling = function()
 {
     this.Spelling.TurnOff();
 };
-CDocument.prototype.TurnOn_CheckSpelling = function()
+CDocument.prototype.TurnOnCheckSpelling = function()
 {
     this.Spelling.TurnOn();
 };

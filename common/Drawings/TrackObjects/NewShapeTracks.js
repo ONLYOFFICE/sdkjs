@@ -663,6 +663,7 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
         if(this.presetGeom === "textRect")
         {
             shape.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
+            shape.setTxBox(true);
             var fill, ln;
             if(!drawingObjects || !drawingObjects.cSld)
             {

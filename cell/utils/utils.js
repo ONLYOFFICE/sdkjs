@@ -170,17 +170,12 @@
 
 		function convertPtToPx(value) {
 			value = value / sizePxinPt;
-			if (AscBrowser.isRetina) {
-				value = value * AscBrowser.retinaPixelRatio;
-			}
-			value = value | value;
+			value = (value * AscBrowser.retinaPixelRatio) >> 0;			
 			return value;
 		}
 		function convertPxToPt(value) {
 			value = value * sizePxinPt;
-			if (AscBrowser.isRetina) {
-				value = Asc.ceil(value / AscBrowser.retinaPixelRatio * 10) / 10;
-			}
+			value = Asc.ceil(value / AscBrowser.retinaPixelRatio * 10) / 10;
 			return value;
 		}
 
@@ -219,8 +214,10 @@
 				return border2;
 			}
 
-			var r1 = border1.c.getR(), g1 = border1.c.getG(), b1 = border1.c.getB();
-			var r2 = border2.c.getR(), g2 = border2.c.getG(), b2 = border2.c.getB();
+			var bc1 = border1.getColorOrDefault();
+			var bc2 = border2.getColorOrDefault();
+			var r1 = bc1.getR(), g1 = bc1.getG(), b1 = bc1.getB();
+			var r2 = bc2.getR(), g2 = bc2.getG(), b2 = bc2.getB();
 			var Brightness_1_1 = r1 + b1 + 2 * g1;
 			var Brightness_1_2 = r2 + b2 + 2 * g2;
 			if (Brightness_1_1 < Brightness_1_2) {
@@ -435,9 +432,31 @@
 			return range && this.c1 === range.c1 && this.r1 === range.r1 && this.c2 === range.c2 && this.r2 === range.r2;
 		};
 
+		Range.prototype.isEqualCols = function (range) {
+			return range && this.c1 === range.c1 && this.c2 === range.c2;
+		};
+
+		Range.prototype.isEqualRows = function (range) {
+			return range && this.r1 === range.r1 && this.r2 === range.r2;
+		};
+		Range.prototype.isNeighbor = function (range) {
+			if(this.isEqualCols(range)) {
+				if(this.r2 === range.r1 - 1 || range.r2 === this.r1 - 1) {
+					return true;
+				}
+			}
+			else if(this.isEqualRows(range)) {
+				if(this.c2 === range.c1 - 1 || range.c2 === this.c1 - 1) {
+					return true;
+				}
+			}
+			return false;
+		};
+
 		Range.prototype.isEqualAll = function (range) {
 			return this.isEqual(range) && this.refType1 === range.refType1 && this.refType2 === range.refType2;
 		};
+
 		Range.prototype.isEqualWithOffsetRow = function (range, offsetRow) {
 			return this.c1 === range.c1 && this.c2 === range.c2 &&
 				this.isAbsC1() === range.isAbsC1() && this.isAbsC2() === range.isAbsC2() &&
@@ -1931,10 +1950,8 @@
 		function generateCellStyles(w, h, wb) {
 			var result = [];
 
-			if (AscCommon.AscBrowser.isRetina) {
-				w = AscCommon.AscBrowser.convertToRetinaValue(w, true);
-				h = AscCommon.AscBrowser.convertToRetinaValue(h, true);
-			}
+			var widthWithRetina = AscCommon.AscBrowser.convertToRetinaValue(w, true);
+			var heightWithRetina = AscCommon.AscBrowser.convertToRetinaValue(h, true);
 
 			var ctx = getContext(w, h, wb);
 			var oCanvas = ctx.getCanvas();
@@ -1989,7 +2006,7 @@
 			function drawBorder(type, b, x1, y1, x2, y2) {
 				if (b && b.w > 0) {
 					var isStroke = false;
-					var isNewColor = !AscCommonExcel.g_oColorManager.isEqual(bc, b.c);
+					var isNewColor = !AscCommonExcel.g_oColorManager.isEqual(bc, b.getColorOrDefault());
 					var isNewStyle = bs !== b.s;
 					if (isNotFirst && (isNewColor || isNewStyle)) {
 						ctx.stroke();
@@ -1997,7 +2014,7 @@
 					}
 
 					if (isNewColor) {
-						bc = b.c;
+						bc = b.getColorOrDefault();
 						ctx.setStrokeStyle(bc);
 					}
 					if (isNewStyle) {
@@ -2318,26 +2335,26 @@
 			var oBorder = dxf && dxf.getBorder();
 			if (oBorder) {
 				var oS = oBorder.l;
-				if(oS && oS.s !== AscCommon.c_oAscBorderStyles.None && oS.c) {
-					ctx.setStrokeStyle(oS.c).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
+				if(oS && oS.s !== AscCommon.c_oAscBorderStyles.None) {
+					ctx.setStrokeStyle(oS.getColorOrDefault()).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
 					ctx.lineVer(x0, y0, y1);
 					ctx.stroke();
 				}
 				oS = oBorder.t;
-				if(oS && oS.s !== AscCommon.c_oAscBorderStyles.None && oS.c) {
-					ctx.setStrokeStyle(oS.c).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
+				if(oS && oS.s !== AscCommon.c_oAscBorderStyles.None) {
+					ctx.setStrokeStyle(oS.getColorOrDefault()).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
 					ctx.lineHor(x0 + 1, y0, x1 - 1);
 					ctx.stroke();
 				}
 				oS = oBorder.r;
-				if(oS && oS.s !== AscCommon.c_oAscBorderStyles.None && oS.c) {
-					ctx.setStrokeStyle(oS.c).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
+				if(oS && oS.s !== AscCommon.c_oAscBorderStyles.None) {
+					ctx.setStrokeStyle(oS.getColorOrDefault()).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
 					ctx.lineVer(x1 - 1, y0, y1);
 					ctx.stroke();
 				}
 				oS = oBorder.b;
-				if(oS && oS.s !== AscCommon.c_oAscBorderStyles.None && oS.c) {
-					ctx.setStrokeStyle(oS.c).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
+				if(oS && oS.s !== AscCommon.c_oAscBorderStyles.None) {
+					ctx.setStrokeStyle(oS.getColorOrDefault()).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
 					ctx.lineHor(x0 + 1, y1 - 1, x1 - 1);
 					ctx.stroke();
 				}

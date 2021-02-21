@@ -1001,10 +1001,10 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
                 var oDrawingObjects = logicDocument.Slides[logicDocument.CurPage].graphicObjects;
                 oDrawingObjects.changeCurrentState(new AscFormat.StartAddNewShape(oDrawingObjects, shapeProp.type));
 
-                var dsx = logicDocument.Height / 2.5 * aspect
-                var dsy = logicDocument.Height / 2.5
-                var dx  = logicDocument.Width * 0.5 - dsx * 0.5
-                var dy  = logicDocument.Height * 0.5 - dsy * 0.5
+                var dsx = logicDocument.GetHeightMM() / 2.5 * aspect;
+                var dsy = logicDocument.GetHeightMM() / 2.5;
+                var dx  = logicDocument.GetWidthMM() * 0.5 - dsx * 0.5;
+                var dy  = logicDocument.GetHeightMM() * 0.5 - dsy * 0.5;
 
                 logicDocument.OnMouseDown({}, dx, dy, logicDocument.CurPage);
                 logicDocument.OnMouseMove({IsLocked: true}, dx + dsx, dy + dsy, logicDocument.CurPage);
@@ -1666,6 +1666,31 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
                 result: this.can_AddQuotedComment()
             }));
             _return = _stream;
+            break;
+        }
+
+        case 25001: // ASC_MENU_EVENT_TYPE_DO_API_FUNCTION_CALL
+        {
+            var json = JSON.parse(_params[0]),
+                func = json["func"],
+                params = json["params"] || [],
+                returnable = json["returnable"] || false; // need return result
+
+            if (json && func) {
+                if (_api[func]) {
+                    if (returnable) {
+                        var _stream = global_memory_stream_menu;
+                        _stream["ClearNoAttack"]();
+                        var result = _api[func].apply(_api, params);
+                        _stream["WriteString2"](JSON.stringify({
+                            result: result
+                        }));
+                        _return = _stream;
+                    } else {
+                        _api[func].apply(_api, params);
+                    }
+                }
+            }
             break;
         }
 

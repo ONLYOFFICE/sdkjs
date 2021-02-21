@@ -63,94 +63,6 @@ var Y_Bottom_Field = Page_Height - Y_Bottom_Margin;
 
 var tableSpacingMinValue = 0.02;//0.02мм
 
-var GlobalSkinTeamlab = {
-	Name                   : "classic",
-	RulersButton           : true,
-	NavigationButtons      : true,
-	BackgroundColor        : "#B0B0B0",
-	RulerDark              : "#B0B0B0",
-	RulerLight             : "EDEDED",
-	BackgroundScroll       : "#D3D3D3",
-	RulerOutline           : "#929292",
-	RulerMarkersFillColor  : "#E7E7E7",
-	PageOutline            : "#81878F",
-	STYLE_THUMBNAIL_WIDTH  : 80,
-	STYLE_THUMBNAIL_HEIGHT : 40,
-	ContentControlsBack	   : "#F1F1F1",
-	ContentControlsHover   : "#D8DADC",
-	ContentControlsActive  : "#7C838A",
-	ContentControlsText    : "#444444",
-	ContentControlsTextActive   : "#FFFFFF",
-	ContentControlsAnchorActive : "#CFCFCF"
-};
-var GlobalSkinFlat    = {
-	Name                   : "flat",
-	RulersButton           : false,
-	NavigationButtons      : false,
-	BackgroundColor        : "#F4F4F4",
-	RulerDark              : "#CFCFCF",
-	RulerLight             : "#FFFFFF",
-	BackgroundScroll       : "#F1F1F1",
-	RulerOutline           : "#BBBEC2",
-	RulerMarkersFillColor  : "#FFFFFF",
-	PageOutline            : "#BBBEC2",
-	STYLE_THUMBNAIL_WIDTH  : 104,
-	STYLE_THUMBNAIL_HEIGHT : 38,
-	isNeedInvertOnActive   : false,
-	ContentControlsBack	   : "#F1F1F1",
-	ContentControlsHover   : "#D8DADC",
-	ContentControlsActive  : "#7C838A",
-	ContentControlsText    : "#444444",
-	ContentControlsTextActive   : "#FFFFFF",
-	ContentControlsAnchorActive : "#CFCFCF"
-};
-var GlobalSkinFlat2    = {
-	Name                   : "flat",
-	RulersButton           : false,
-	NavigationButtons      : false,
-	BackgroundColor        : "#E2E2E2",
-	RulerDark              : "#CFCFCF",
-	RulerLight             : "#FFFFFF",
-	BackgroundScroll       : "#E2E2E2",
-	RulerOutline           : "#BBBEC2",
-	RulerMarkersFillColor  : "#FFFFFF",
-	PageOutline            : "#BBBEC2",
-	STYLE_THUMBNAIL_WIDTH  : 104,
-	STYLE_THUMBNAIL_HEIGHT : 38,
-	isNeedInvertOnActive   : false,
-	ContentControlsBack	   : "#F1F1F1",
-	ContentControlsHover   : "#D8DADC",
-	ContentControlsActive  : "#7C838A",
-	ContentControlsText    : "#444444",
-	ContentControlsTextActive   : "#FFFFFF",
-	ContentControlsAnchorActive : "#CFCFCF"
-};
-
-var GlobalSkin = GlobalSkinFlat2;
-if (AscCommon.TEMP_STYLE_THUMBNAIL_WIDTH !== undefined && AscCommon.TEMP_STYLE_THUMBNAIL_HEIGHT !== undefined)
-{
-	// TODO: переделать.
-	GlobalSkin.STYLE_THUMBNAIL_WIDTH = AscCommon.TEMP_STYLE_THUMBNAIL_WIDTH;
-	GlobalSkin.STYLE_THUMBNAIL_HEIGHT = AscCommon.TEMP_STYLE_THUMBNAIL_HEIGHT;
-}
-
-function updateGlobalSkin(newSkin)
-{
-	GlobalSkin.Name                   = newSkin.Name;
-	GlobalSkin.RulersButton           = newSkin.RulersButton;
-	GlobalSkin.NavigationButtons      = newSkin.NavigationButtons;
-	GlobalSkin.BackgroundColor        = newSkin.BackgroundColor;
-	GlobalSkin.RulerDark              = newSkin.RulerDark;
-	GlobalSkin.RulerLight             = newSkin.RulerLight;
-	GlobalSkin.BackgroundScroll       = newSkin.BackgroundScroll;
-	GlobalSkin.RulerOutline           = newSkin.RulerOutline;
-	GlobalSkin.RulerMarkersFillColor  = newSkin.RulerMarkersFillColor;
-	GlobalSkin.PageOutline            = newSkin.PageOutline;
-	GlobalSkin.STYLE_THUMBNAIL_WIDTH  = newSkin.STYLE_THUMBNAIL_WIDTH;
-	GlobalSkin.STYLE_THUMBNAIL_HEIGHT = newSkin.STYLE_THUMBNAIL_HEIGHT;
-	GlobalSkin.isNeedInvertOnActive   = newSkin.isNeedInvertOnActive;
-}
-
 function CEditorPage(api)
 {
 	this.Name = "";
@@ -271,6 +183,8 @@ function CEditorPage(api)
 
 	this.m_bIsMouseUpSend = false;
 
+    this.retinaScaling = AscCommon.AscBrowser.retinaPixelRatio;
+
 	this.zoom_values = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200];
 	this.m_nZoomType = 0; // 0 - custom, 1 - fitToWodth, 2 - fitToPage
 
@@ -280,9 +194,6 @@ function CEditorPage(api)
 
 	this.ReaderFontSizeCur = 2;
 	this.ReaderFontSizes   = [12, 14, 16, 18, 22, 28, 36, 48, 72];
-
-	this.bIsRetinaSupport         = true;
-	this.bIsRetinaNoSupportAttack = false;
 
 	this.IsUpdateOverlayOnlyEnd       = false;
 	this.IsUpdateOverlayOnlyEndReturn = false;
@@ -502,26 +413,15 @@ function CEditorPage(api)
 		this.OnResize(true);
 	};
 
-	this.CheckRetinaDisplay = function()
-	{
-		var old = this.bIsRetinaSupport;
-		if (!this.bIsRetinaNoSupportAttack)
-		{
-			this.bIsRetinaSupport       = AscBrowser.isRetina;
-			this.m_oOverlayApi.IsRetina = this.bIsRetinaSupport;
-		}
-		else
-		{
-			this.bIsRetinaSupport = false;
-			this.m_oOverlayApi.IsRetina = this.bIsRetinaSupport;
-		}
-
-		if (old != this.bIsRetinaSupport)
-		{
-			this.m_oDrawingDocument.ClearCachePages();
-			this.onButtonTabsDraw();
-		}
-	};
+    this.CheckRetinaDisplay = function()
+    {
+        if (this.retinaScaling != AscCommon.AscBrowser.retinaPixelRatio)
+        {
+            this.retinaScaling = AscCommon.AscBrowser.retinaPixelRatio;
+            // сбросить кэш страниц
+            this.onButtonTabsDraw();
+        }
+    };
 
 	this.ShowOverlay        = function()
 	{
@@ -900,10 +800,7 @@ function CEditorPage(api)
 			if (this.m_oApi.isMobileVersion)
 			{
 				var _w = this.m_oEditor.HtmlElement.width;
-				if (this.bIsRetinaSupport)
-				{
-					_w /= AscCommon.AscBrowser.retinaPixelRatio;
-				}
+				_w /= AscCommon.AscBrowser.retinaPixelRatio;
 				Zoom = 100 * _w * g_dKoef_pix_to_mm / this.m_dDocumentPageWidth;
 			}
 		}
@@ -937,11 +834,8 @@ function CEditorPage(api)
 		var w = parseInt(this.m_oEditor.HtmlElement.width) * g_dKoef_pix_to_mm;
 		var h = parseInt(this.m_oEditor.HtmlElement.height) * g_dKoef_pix_to_mm;
 
-		if (this.bIsRetinaSupport)
-		{
-			w = AscCommon.AscBrowser.convertToRetinaValue(w);
-			h = AscCommon.AscBrowser.convertToRetinaValue(h);
-		}
+		w = AscCommon.AscBrowser.convertToRetinaValue(w);
+		h = AscCommon.AscBrowser.convertToRetinaValue(h);
 
 		var _hor_Zoom = 100;
 		if (0 != this.m_dDocumentPageWidth)
@@ -1211,11 +1105,8 @@ function CEditorPage(api)
 
         var _ww = this.m_oEditor.HtmlElement.width;
         var _hh = this.m_oEditor.HtmlElement.height;
-        if (this.bIsRetinaSupport)
-        {
-            _ww /= AscCommon.AscBrowser.retinaPixelRatio;
-            _hh /= AscCommon.AscBrowser.retinaPixelRatio;
-        }
+        _ww /= AscCommon.AscBrowser.retinaPixelRatio;
+        _hh /= AscCommon.AscBrowser.retinaPixelRatio;
 
         var boxX = 0;
         var boxY = 0;
@@ -1291,46 +1182,41 @@ function CEditorPage(api)
 	this.onButtonTabsDraw = function()
 	{
 		var _ctx = this.m_oLeftRuler_buttonsTabs.HtmlElement.getContext('2d');
-		if (this.bIsRetinaSupport)
-		{
-			_ctx.setTransform(AscCommon.AscBrowser.retinaPixelRatio, 0, 0, AscCommon.AscBrowser.retinaPixelRatio, 0, 0);
-		}
-		else
-		{
-			_ctx.setTransform(1, 0, 0, 1, 0, 0);
-		}
+		_ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-		var _width  = 19;
-		var _height = 19;
+		var dPR = AscCommon.AscBrowser.retinaPixelRatio;
+		var _width  = Math.round(19 * dPR);
+		var _height = Math.round(19 * dPR);
 
-		_ctx.clearRect(0, 0, 19, 19);
+		_ctx.clearRect(0, 0, _width, _height);
 
-		_ctx.lineWidth   = 1;
-		_ctx.strokeStyle = "#BBBEC2";
-		_ctx.strokeRect(2.5, 3.5, 14, 14);
+		_ctx.lineWidth   = Math.round(dPR);
+		_ctx.strokeStyle = GlobalSkin.RulerOutline;
+
+		_ctx.strokeRect(2.5 * _ctx.lineWidth, 3.5 * _ctx.lineWidth, Math.round(14 * dPR), Math.round(14 * dPR));
 		_ctx.beginPath();
 
-		_ctx.strokeStyle = "#3E3E3E";
+		_ctx.strokeStyle = GlobalSkin.RulerTabsColor;
 
-		_ctx.lineWidth = 2;
+		_ctx.lineWidth = 2 * Math.round(dPR);
 		if (this.m_nTabsType == tab_Left)
 		{
-			_ctx.moveTo(8, 9);
-			_ctx.lineTo(8, 14);
-			_ctx.lineTo(13, 14);
+			_ctx.moveTo(Math.round(8 * dPR), Math.round(9 * dPR));
+			_ctx.lineTo(Math.round(8 * dPR), Math.round(14 * dPR));
+			_ctx.lineTo(Math.round(13 * dPR), Math.round(14 * dPR));
 		}
 		else if (this.m_nTabsType == tab_Center)
 		{
-			_ctx.moveTo(6, 14);
-			_ctx.lineTo(14, 14);
-			_ctx.moveTo(10, 9);
-			_ctx.lineTo(10, 14);
+			_ctx.moveTo(Math.round(6 * dPR), Math.round(14 * dPR));
+			_ctx.lineTo(Math.round(14 * dPR), Math.round(14 * dPR));
+			_ctx.moveTo(Math.round(10 * dPR), Math.round(9 * dPR));
+			_ctx.lineTo(Math.round(10 * dPR), Math.round(14 * dPR));
 		}
 		else
 		{
-			_ctx.moveTo(12, 9);
-			_ctx.lineTo(12, 14);
-			_ctx.lineTo(7, 14);
+			_ctx.moveTo(Math.round(12 * dPR), Math.round(9 * dPR));
+			_ctx.lineTo(Math.round(12 * dPR), Math.round(14 * dPR));
+			_ctx.lineTo(Math.round(7 * dPR), Math.round(14 * dPR));
 		}
 
 		_ctx.stroke();
@@ -1492,8 +1378,7 @@ function CEditorPage(api)
 		// если находимся в самом верху (без тулбара) - то наверх не будем скроллиться
 		// делаем заглушку
 		var minPosY = 20;
-		if (oThis.bIsRetinaSupport)
-			minPosY *= AscCommon.AscBrowser.retinaPixelRatio;
+		minPosY *= AscCommon.AscBrowser.retinaPixelRatio;
 		if (positionMinY < minPosY)
 			positionMinY = minPosY;
 
@@ -1567,6 +1452,7 @@ function CEditorPage(api)
 
 	this.onMouseDown = function(e, isTouch)
 	{
+		oThis.m_oApi.checkInterfaceElementBlur();
 		oThis.m_oApi.checkLastWork();
 
 		//console.log("down: " + isTouch + ", " + AscCommon.isTouch);
@@ -1716,7 +1602,7 @@ function CEditorPage(api)
 		}
 
 		oWordControl.StartUpdateOverlay();
-		var is_drawing = oWordControl.m_oDrawingDocument.checkMouseMove_Drawing(pos);
+		var is_drawing = oWordControl.m_oDrawingDocument.checkMouseMove_Drawing(pos, e === undefined ? true : false);
 		if (is_drawing === true)
 			return;
 
@@ -2645,15 +2531,28 @@ function CEditorPage(api)
 		settings.hscrollStep = 45;
 		settings.isNeedInvertOnActive = GlobalSkin.isNeedInvertOnActive;
 
-		settings.scrollBackgroundColor = GlobalSkin.BackgroundScroll;
-		settings.scrollBackgroundColorHover = GlobalSkin.BackgroundScroll;
-		settings.scrollBackgroundColorActive = GlobalSkin.BackgroundScroll;
+		settings.scrollBackgroundColor = GlobalSkin.ScrollBackgroundColor;
+		settings.scrollBackgroundColorHover = GlobalSkin.ScrollBackgroundColor;
+		settings.scrollBackgroundColorActive = GlobalSkin.ScrollBackgroundColor;
 
-		if (this.bIsRetinaSupport)
-		{
-			settings.screenW = AscCommon.AscBrowser.convertToRetinaValue(settings.screenW);
-			settings.screenH = AscCommon.AscBrowser.convertToRetinaValue(settings.screenH);
-		}
+		settings.scrollerColor = GlobalSkin.ScrollerColor;
+		settings.scrollerHoverColor = GlobalSkin.ScrollerHoverColor;
+		settings.scrollerActiveColor = GlobalSkin.ScrollerActiveColor;
+
+		settings.arrowColor = GlobalSkin.ScrollArrowColor;
+		settings.arrowHoverColor = GlobalSkin.ScrollArrowHoverColor;
+		settings.arrowActiveColor = GlobalSkin.ScrollArrowActiveColor;
+
+		settings.strokeStyleNone = GlobalSkin.ScrollOutlineColor;
+		settings.strokeStyleOver = GlobalSkin.ScrollOutlineHoverColor;
+		settings.strokeStyleActive = GlobalSkin.ScrollOutlineActiveColor;
+
+		settings.targetColor = GlobalSkin.ScrollerTargetColor;
+		settings.targetHoverColor = GlobalSkin.ScrollerTargetHoverColor;
+		settings.targetActiveColor = GlobalSkin.ScrollerTargetActiveColor;
+
+		settings.screenW = AscCommon.AscBrowser.convertToRetinaValue(settings.screenW);
+		settings.screenH = AscCommon.AscBrowser.convertToRetinaValue(settings.screenH);
 		return settings;
 	};
 
@@ -2875,8 +2774,7 @@ function CEditorPage(api)
 		}
 
 		var _editor_width = this.m_oEditor.HtmlElement.width;
-		if (this.bIsRetinaSupport)
-			_editor_width /= AscCommon.AscBrowser.retinaPixelRatio;
+		_editor_width /= AscCommon.AscBrowser.retinaPixelRatio;
 
 		var oldVisible = this.m_bIsHorScrollVisible;
 		if (this.m_dDocumentWidth <= _editor_width)
@@ -3041,6 +2939,8 @@ function CEditorPage(api)
 				}
 			}
 
+            drDoc.contentControls && drDoc.contentControls.DrawContentControlsTrack(overlay);
+
 			// drawShapes (+ track)
 			if (this.m_oLogicDocument.DrawingObjects)
 			{
@@ -3058,8 +2958,6 @@ function CEditorPage(api)
 					this.m_oDrawingDocument.AutoShapesTrack.CorrectOverlayBounds();
 				}
 			}
-
-			drDoc.contentControls && drDoc.contentControls.DrawContentControlsTrack(overlay);
 
             if (drDoc.placeholders.objects.length > 0)
             {
@@ -3222,11 +3120,8 @@ function CEditorPage(api)
 		var _width  = canvas.width;
 		var _height = canvas.height;
 
-		if (this.bIsRetinaSupport)
-		{
-			_width = AscCommon.AscBrowser.convertToRetinaValue(_width);
-			_height = AscCommon.AscBrowser.convertToRetinaValue(_height);
-		}
+		_width = AscCommon.AscBrowser.convertToRetinaValue(_width);
+		_height = AscCommon.AscBrowser.convertToRetinaValue(_height);
 
 		var bIsFoundFirst = false;
 		var bIsFoundEnd   = false;
@@ -3349,26 +3244,13 @@ function CEditorPage(api)
 		{
 			var drawPage = this.m_oDrawingDocument.m_arrPages[i].drawingPage;
 
-			if (!this.bIsRetinaSupport)
-			{
-				var _cur_page_rect = new AscCommon._rect();
-				_cur_page_rect.x   = drawPage.left;
-				_cur_page_rect.y   = drawPage.top;
-				_cur_page_rect.w   = drawPage.right - drawPage.left;
-				_cur_page_rect.h   = drawPage.bottom - drawPage.top;
+			var _cur_page_rect = new AscCommon._rect();
+			_cur_page_rect.x   = (drawPage.left * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+			_cur_page_rect.y   = (drawPage.top * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+			_cur_page_rect.w   = ((drawPage.right * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - _cur_page_rect.x;
+			_cur_page_rect.h   = ((drawPage.bottom * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - _cur_page_rect.y;
 
-				rectsPages.push(_cur_page_rect);
-			}
-			else
-			{
-				var _cur_page_rect = new AscCommon._rect();
-				_cur_page_rect.x   = (drawPage.left * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-				_cur_page_rect.y   = (drawPage.top * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-				_cur_page_rect.w   = ((drawPage.right * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - _cur_page_rect.x;
-				_cur_page_rect.h   = ((drawPage.bottom * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - _cur_page_rect.y;
-
-				rectsPages.push(_cur_page_rect);
-			}
+			rectsPages.push(_cur_page_rect);
 		}
 		this.m_oBoundsController.CheckPageRects(rectsPages, context);
 
@@ -3388,10 +3270,9 @@ function CEditorPage(api)
 			{
 				var drawPage = this.m_oDrawingDocument.m_arrPages[i].drawingPage;
 
-				if (!this.bIsRetinaSupport)
+				if (!AscCommon.AscBrowser.isCustomScaling())
 				{
 					this.m_oDrawingDocument.m_arrPages[i].Draw(context, drawPage.left, drawPage.top, drawPage.right - drawPage.left, drawPage.bottom - drawPage.top);
-					//this.m_oBoundsController.CheckRect(drawPage.left, drawPage.top, drawPage.right - drawPage.left, drawPage.bottom - drawPage.top);
 				}
 				else
 				{
@@ -3400,7 +3281,6 @@ function CEditorPage(api)
 					var __w = ((drawPage.right * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - __x;
 					var __h = ((drawPage.bottom * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - __y;
 					this.m_oDrawingDocument.m_arrPages[i].Draw(context, __x, __y, __w, __h);
-					//this.m_oBoundsController.CheckRect(__x, __y, __w, __h);
 				}
 			}
 		}
@@ -3425,13 +3305,11 @@ function CEditorPage(api)
 				var __y = drawPage.top;
 				var __w = drawPage.right - __x;
 				var __h = drawPage.bottom - __y;
-				if (this.bIsRetinaSupport)
-				{
-					__x = (__x * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-					__y = (__y * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-					__w = (__w * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-					__h = (__h * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-				}
+
+				__x = AscCommon.AscBrowser.convertToRetinaValue(__x, true);
+				__y = AscCommon.AscBrowser.convertToRetinaValue(__y, true);
+				__w = AscCommon.AscBrowser.convertToRetinaValue(__w, true);
+				__h = AscCommon.AscBrowser.convertToRetinaValue(__h, true);
 
 				this.m_oDrawingDocument.CheckRecalculatePage(__w, __h, i);
 				if (null == drawPage.cachedImage)
@@ -3465,19 +3343,33 @@ function CEditorPage(api)
 		}
 	};
 
-	this.CheckRetinaElement = function(htmlElem)
-	{
-		if (this.bIsRetinaSupport)
-		{
-			if (htmlElem.id == "id_viewer" ||
-				(htmlElem.id == "id_viewer_overlay" && this.m_oOverlayApi.IsRetina) ||
-				htmlElem.id == "id_hor_ruler" ||
-				htmlElem.id == "id_vert_ruler" ||
-				htmlElem.id == "id_buttonTabs")
-				return true;
-		}
-		return false;
-	};
+    this.CheckRetinaElement = function(htmlElem)
+    {
+        switch (htmlElem.id)
+        {
+            case "id_viewer":
+            case "id_viewer_overlay":
+            case "id_hor_ruler":
+            case "id_vert_ruler":
+            case "id_buttonTabs":
+                return true;
+            default:
+                break;
+        }
+        return false;
+    };
+    this.CheckRetinaElement2 = function(htmlElem)
+    {
+        switch (htmlElem.id)
+        {
+            case "id_viewer":
+            case "id_viewer_overlay":
+                return true;
+            default:
+                break;
+        }
+        return false;
+    };
 
 	this.GetDrawingPageInfo = function(nPageIndex)
 	{
@@ -3980,10 +3872,6 @@ var _message_update = "zero_delay_update";
 //------------------------------------------------------------export----------------------------------------------------
 window['AscCommon']                      = window['AscCommon'] || {};
 window['AscCommonWord']                  = window['AscCommonWord'] || {};
-window['AscCommonWord'].GlobalSkinFlat   = GlobalSkinFlat;
-window['AscCommonWord'].GlobalSkinFlat2 = GlobalSkinFlat2;
-window['AscCommonWord'].GlobalSkin       = GlobalSkin;
-window['AscCommonWord'].updateGlobalSkin = updateGlobalSkin;
 window['AscCommonWord'].CEditorPage      = CEditorPage;
 
 window['AscCommon'].Page_Width      = Page_Width;

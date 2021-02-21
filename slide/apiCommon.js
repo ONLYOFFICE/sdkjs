@@ -82,7 +82,7 @@ CAscSlideTransition.prototype.applyProps = function(v)
 
 CAscSlideTransition.prototype.createDuplicate = function(v)
 {
-    var _slideT = new CAscSlideTransition();
+    var _slideT = new Asc.CAscSlideTransition();
 
     _slideT.TransitionType     = this.TransitionType;
     _slideT.TransitionOption   = this.TransitionOption;
@@ -254,7 +254,7 @@ function CompareTransitions(transition1, transition2){
     if(!transition1 || !transition2){
         return null;
     }
-    var ret = new CAscSlideTransition();
+    var ret = new Asc.CAscSlideTransition();
     if(transition1.TransitionType === transition2.TransitionType){
         ret.TransitionType = transition1.TransitionType;
     }
@@ -382,14 +382,16 @@ CAscHFProps.prototype['updateView'] = CAscHFProps.prototype.updateView = functio
 
         oContext.fillStyle = "#FFFFFF";
         oContext.fillRect(0, 0, oCanvas.width, oCanvas.height);
+        var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+        oContext.lineWidth = Math.round(rPR);
         oContext.fillStyle = "#000000";
         if(Array.isArray(aSpTree)) {
             for(i = 0; i < aSpTree.length; ++i) {
                 oSp = aSpTree[i];
                 if(oSp.isPlaceholder()) {
                     oSp.recalculate();
-                    l = ((oSp.x / oSlideObject.Width * oCanvas.width) >> 0) + 1;
-                    t = ((oSp.y / oSlideObject.Height * oCanvas.height) >> 0) + 1;
+                    l = ((oSp.x / oSlideObject.Width * oCanvas.width) >> 0) + Math.round(rPR);
+                    t = ((oSp.y / oSlideObject.Height * oCanvas.height) >> 0) + Math.round(rPR);
                     r = (((oSp.x + oSp.extX)/ oSlideObject.Width * oCanvas.width) >> 0);
                     b = (((oSp.y + oSp.extY)/ oSlideObject.Height * oCanvas.height) >> 0);
                     nPhType = oSp.getPhType();

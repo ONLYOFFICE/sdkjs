@@ -1134,8 +1134,8 @@ CopyProcessor.prototype =
 
 				this.oPresentationWriter.WriteString2(this.api.documentId);
 				this.oPresentationWriter.WriteString2(themeName);
-				this.oPresentationWriter.WriteDouble(presentation.Width);
-				this.oPresentationWriter.WriteDouble(presentation.Height);
+				this.oPresentationWriter.WriteDouble(presentation.GetWidthMM());
+				this.oPresentationWriter.WriteDouble(presentation.GetHeightMM());
 				//флаг о том, что множественный контент в буфере
 				this.oPresentationWriter.WriteBool(true);
 			}
@@ -1162,8 +1162,8 @@ CopyProcessor.prototype =
 			if(elementsContent.DocContent || (elementsContent.Drawings && elementsContent.Drawings.length) || (elementsContent.SlideObjects && elementsContent.SlideObjects.length))
 			{
 				this.oPresentationWriter.WriteString2(this.api.documentId);
-				this.oPresentationWriter.WriteDouble(presentation.Width);
-				this.oPresentationWriter.WriteDouble(presentation.Height);
+				this.oPresentationWriter.WriteDouble(presentation.GetWidth());
+				this.oPresentationWriter.WriteDouble(presentation.GetHeight());
 			}
 			this.copyPresentationContent(elementsContent, oDomTarget);
 		}*/
@@ -3444,8 +3444,8 @@ PasteProcessor.prototype =
 					}
 					if (AscFormat.isRealNumber(l) && AscFormat.isRealNumber(t)
 						&& AscFormat.isRealNumber(r) && AscFormat.isRealNumber(b)) {
-						var fSlideCX = presentation.Width / 2.0;
-						var fSlideCY = presentation.Height / 2.0;
+						var fSlideCX = presentation.GetWidthMM() / 2.0;
+						var fSlideCY = presentation.GetHeightMM() / 2.0;
 						var fBoundsCX = (r + l) / 2.0;
 						var fBoundsCY = (t + b) / 2.0;
 						var fDiffX = fBoundsCX - fSlideCX;
@@ -3549,8 +3549,8 @@ PasteProcessor.prototype =
 					graphic_frame.spPr.setParent(graphic_frame);
 					graphic_frame.spPr.setXfrm(new AscFormat.CXfrm());
 					graphic_frame.spPr.xfrm.setParent(graphic_frame.spPr);
-					graphic_frame.spPr.xfrm.setOffX((this.oDocument.Width - W) / 2);
-					graphic_frame.spPr.xfrm.setOffY(this.oDocument.Height / 5);
+					graphic_frame.spPr.xfrm.setOffX((this.oDocument.GetWidthMM() - W) / 2);
+					graphic_frame.spPr.xfrm.setOffY(this.oDocument.GetHeightMM() / 5);
 					graphic_frame.spPr.xfrm.setExtX(W);
 					graphic_frame.spPr.xfrm.setExtY(7.478268771701388 * Rows);
 					graphic_frame.setNvSpPr(new AscFormat.UniNvPr());
@@ -3711,7 +3711,7 @@ PasteProcessor.prototype =
 					element = oThis._convertTableToPPTX(element, true);
 
 					//TODO переделать количество строк и ширину
-					var W = oThis.oDocument.Width / 1.45;
+					var W = oThis.oDocument.GetWidthMM() / 1.45;
 					var Rows = element.GetRowsCount();
 					var H = Rows * 7.478268771701388;
 					var graphic_frame = new CGraphicFrame();
@@ -3719,8 +3719,8 @@ PasteProcessor.prototype =
 					graphic_frame.spPr.setParent(graphic_frame);
 					graphic_frame.spPr.setXfrm(new AscFormat.CXfrm());
 					graphic_frame.spPr.xfrm.setParent(graphic_frame.spPr);
-					graphic_frame.spPr.xfrm.setOffX(oThis.oDocument.Width / 2 - W / 2);
-					graphic_frame.spPr.xfrm.setOffY(oThis.oDocument.Height / 2 - H / 2);
+					graphic_frame.spPr.xfrm.setOffX(oThis.oDocument.GetWidthMM() / 2 - W / 2);
+					graphic_frame.spPr.xfrm.setOffY(oThis.oDocument.GetHeightMM() / 2 - H / 2);
 					graphic_frame.spPr.xfrm.setExtX(W);
 					graphic_frame.spPr.xfrm.setExtY(H);
 					graphic_frame.setNvSpPr(new AscFormat.UniNvPr());
@@ -3778,8 +3778,8 @@ PasteProcessor.prototype =
 						drawing.parent = oldParent;
 						drawing.bDeleted = bDeleted;
 
-						drawing.spPr.xfrm.setOffX(oThis.oDocument.Width / 2 - drawing.extX / 2);
-						drawing.spPr.xfrm.setOffY(oThis.oDocument.Height / 2 - drawing.extY / 2);
+						drawing.spPr.xfrm.setOffX(oThis.oDocument.GetWidthMM() / 2 - drawing.extX / 2);
+						drawing.spPr.xfrm.setOffY(oThis.oDocument.GetHeightMM() / 2 - drawing.extY / 2);
 
 					}
 				}
@@ -4522,13 +4522,13 @@ PasteProcessor.prototype =
 						}
 					}
 
-					w = shape.txBody.getRectWidth(presentation.Width * 2 / 3);
+					w = shape.txBody.getRectWidth(presentation.GetWidthMM() * 2 / 3);
 					h = shape.txBody.content.GetSummaryHeight();
 					AscFormat.CheckSpPrXfrm(shape);
 					shape.spPr.xfrm.setExtX(w);
 					shape.spPr.xfrm.setExtY(h);
-					shape.spPr.xfrm.setOffX((presentation.Width - w) / 2.0);
-					shape.spPr.xfrm.setOffY((presentation.Height - h) / 2.0);
+					shape.spPr.xfrm.setOffX((presentation.GetWidthMM() - w) / 2.0);
+					shape.spPr.xfrm.setOffY((presentation.GetHeightMM() - h) / 2.0);
 
 
 					var oBodyPr = shape.getBodyPr().createDuplicate();
@@ -4563,7 +4563,7 @@ PasteProcessor.prototype =
 					shape = arrTables[i];
 
 					//TODO передалать высоту/ширину!
-					//var w =  shape.txBody.getRectWidth(presentation.Width*2/3);
+					//var w =  shape.txBody.getRectWidth(presentation.GetWidth()*2/3);
 					//var h = shape.txBody.content.GetSummaryHeight();
 					w = 100;
 					h = 100;
@@ -4808,42 +4808,49 @@ PasteProcessor.prototype =
 			oThis.aContent = shape.txBody.content.Content;
 
 			text = text.replace(/^(\r|\t)+|(\r|\t)+$/g, '');
-			//text = text.replace(/(\r|\t)/g, ' ');
 			if (text.length > 0) {
-				oThis.oDocument = shape.txBody.content;
-
+                //TODO: May be use CDocumentContent.AddText instead
+                var oContent = shape.txBody.content;
+				oThis.oDocument = oContent;
 				var bAddParagraph = false;
+                var oCurParagraph = oContent.Content[0];
+                var oCurRun = new ParaRun(oCurParagraph, false);
+                var nCharPos = 0;
+                oCurParagraph.Internal_Content_Add(0, oCurRun);
 				for (var oIterator = text.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
 					if (bAddParagraph) {
-						shape.txBody.content.AddNewParagraph();
+                        oContent.Internal_Content_Add(oContent.Content.length, new Paragraph(oContent.DrawingDocument, oContent, oContent.bPresentation === true));
+                        oCurRun = new ParaRun(oCurParagraph, false);
+                        oCurParagraph.Internal_Content_Add(0, oCurRun);
 						bAddParagraph = false;
+                        nCharPos = 0;
 					}
-
 					var nUnicode = oIterator.value();
-
-					if (null !== nUnicode && 13 !== nUnicode) {
-						var Item;
-						if (0x0A === nUnicode || 0x0D === nUnicode) {
-							bAddParagraph = true;
-						} else if (0x09 === nUnicode) {
-							Item = new ParaTab();
-							shape.paragraphAdd(Item, false);
-						} else if (0x20 !== nUnicode && 0xA0 !== nUnicode && 0x2009 !== nUnicode) {
-							Item = new ParaText(nUnicode);
-							shape.paragraphAdd(Item, false);
-						} else {
-							Item = new ParaSpace();
-							shape.paragraphAdd(Item, false);
-						}
-					}
+                    if(null !== nUnicode) {
+                        if (null !== nUnicode && 13 !== nUnicode) {
+                            if (0x0A === nUnicode || 0x0D === nUnicode) {
+                                bAddParagraph = true;
+                            }
+                            else if (9 === nUnicode) // \t
+                                oCurRun.AddToContent(nCharPos++, new ParaTab(), true);
+                            else if (10 === nUnicode) // \n
+                                oCurRun.AddToContent(nCharPos++, new ParaNewLine(break_Line), true);
+                            else if (13 === nUnicode) // \r
+                                continue;
+                            else if (AscCommon.IsSpace(nUnicode)) // space
+                                oCurRun.AddToContent(nCharPos++, new ParaSpace(nUnicode), true);
+                            else
+                                oCurRun.AddToContent(nCharPos++, new ParaText(nUnicode), true);
+                        }
+                    }
 				}
 			}
 
 			var oTextPr = presentation.GetCalculatedTextPr();
-			shape.txBody.content.Set_ApplyToAll(true);
+			shape.txBody.content.SetApplyToAll(true);
 			var paraTextPr = new AscCommonWord.ParaTextPr(oTextPr);
 			shape.txBody.content.AddToParagraph(paraTextPr);
-			shape.txBody.content.Set_ApplyToAll(false);
+			shape.txBody.content.SetApplyToAll(false);
 
 			oThis.api.pre_Paste([], [], executePastePresentation);
 		};
@@ -5092,7 +5099,8 @@ PasteProcessor.prototype =
 				res.Value = border_Single;
 				res.Size = border.w * g_dKoef_pix_to_mm;
 			}
-			res.Color = new CDocumentColor(border.c.getR(), border.c.getG(), border.c.getB());
+			var bc = border.getColorOrDefault();
+			res.Color = new CDocumentColor(bc.getR(), bc.getG(), bc.getB());
 
 			return res;
 		};
@@ -5629,9 +5637,9 @@ PasteProcessor.prototype =
 		Asc.getBinaryOtherTableGVar(tempWorkbook);
 
 		pptx_content_loader.Start_UseFullUrl();
-		pptx_content_loader.Reader.ClearConnectorsMaps();
+		pptx_content_loader.Reader.ClearConnectedObjects();
 		oBinaryFileReader.Read(base64, tempWorkbook);
-		pptx_content_loader.Reader.AssignConnectorsId();
+		pptx_content_loader.Reader.AssignConnectedObjects();
 
 		if (!tempWorkbook.aWorksheets.length) {
 			return null;
@@ -5715,7 +5723,7 @@ PasteProcessor.prototype =
 	ReadPresentationShapes: function (stream) {
 		var loader = new AscCommon.BinaryPPTYLoader();
 		loader.Start_UseFullUrl();
-		loader.ClearConnectorsMaps();
+		loader.ClearConnectedObjects();
 		pptx_content_loader.Reader.Start_UseFullUrl();
 
 		loader.stream = stream;
@@ -5812,7 +5820,7 @@ PasteProcessor.prototype =
 
 		var chartImages = pptx_content_loader.Reader.End_UseFullUrl();
 		var images = loader.End_UseFullUrl();
-		loader.AssignConnectorsId();
+		loader.AssignConnectedObjects();
 		var allImages = chartImages.concat(images);
 
 		return {arrShapes: arr_shapes, arrImages: allImages, arrTransforms: arr_transforms};
@@ -5829,9 +5837,9 @@ PasteProcessor.prototype =
 		var arr_slides = [];
 		var slide;
 		for (var i = 0; i < count; ++i) {
-			loader.ClearConnectorsMaps();
+			loader.ClearConnectedObjects();
 			slide = loader.ReadSlide(0);
-			loader.AssignConnectorsId();
+			loader.AssignConnectedObjects();
 			arr_slides.push(slide);
 		}
 		return arr_slides;
@@ -6509,21 +6517,21 @@ PasteProcessor.prototype =
 							oNum.CreateDefault(c_oAscMultiLevelNumbering.Bullet);
 							var LvlText = String.fromCharCode(0x00B7);
 							var NumTextPr = new CTextPr();
-							NumTextPr.RFonts.Set_All("Symbol", -1);
+							NumTextPr.RFonts.SetAll("Symbol", -1);
 
 							switch (type) {
 								case "disc": {
-									NumTextPr.RFonts.Set_All("Symbol", -1);
+									NumTextPr.RFonts.SetAll("Symbol", -1);
 									LvlText = String.fromCharCode(0x00B7);
 									break;
 								}
 								case "circle": {
-									NumTextPr.RFonts.Set_All("Courier New", -1);
+									NumTextPr.RFonts.SetAll("Courier New", -1);
 									LvlText = "o";
 									break;
 								}
 								case "square": {
-									NumTextPr.RFonts.Set_All("Wingdings", -1);
+									NumTextPr.RFonts.SetAll("Wingdings", -1);
 									LvlText = String.fromCharCode(0x00A7);
 									break;
 								}
@@ -6616,21 +6624,21 @@ PasteProcessor.prototype =
 							oNum.CreateDefault(c_oAscMultiLevelNumbering.Bullet);
 							var LvlText = String.fromCharCode(0x00B7);
 							var NumTextPr = new CTextPr();
-							NumTextPr.RFonts.Set_All("Symbol", -1);
+							NumTextPr.RFonts.SetAll("Symbol", -1);
 
 							switch (type) {
 								case "disc": {
-									NumTextPr.RFonts.Set_All("Symbol", -1);
+									NumTextPr.RFonts.SetAll("Symbol", -1);
 									LvlText = String.fromCharCode(0x00B7);
 									break;
 								}
 								case "circle": {
-									NumTextPr.RFonts.Set_All("Courier New", -1);
+									NumTextPr.RFonts.SetAll("Courier New", -1);
 									LvlText = "o";
 									break;
 								}
 								case "square": {
-									NumTextPr.RFonts.Set_All("Wingdings", -1);
+									NumTextPr.RFonts.SetAll("Wingdings", -1);
 									LvlText = String.fromCharCode(0x00A7);
 									break;
 								}
@@ -8165,11 +8173,7 @@ PasteProcessor.prototype =
 			if (bPresentation) {
 				//Добавляем linebreak, если он не разделяет блочные элементы и до этого был блочный элемент
 				if ("br" === sNodeName || "always" === node.style.pageBreakBefore) {
-					if ("always" === node.style.pageBreakBefore) {
-						shape.paragraphAdd(new ParaNewLine(break_Line), false);
-					} else {
-						shape.paragraphAdd(new ParaNewLine(break_Line), false);
-					}
+                    shape.paragraphAdd(new ParaNewLine(break_Line), false);
 				}
 			} else {
 				//Добавляем linebreak, если он не разделяет блочные элементы и до этого был блочный элемент

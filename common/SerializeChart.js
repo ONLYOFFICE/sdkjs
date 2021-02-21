@@ -11293,7 +11293,7 @@ BinaryChartReader.prototype.ReadCT_Chart = function (type, length, val) {
                         }
                         var sDefaultValAxFormatCode = null;
                         if(oChart && oChart.series[0]){
-                            var aPoints = AscFormat.getPtsFromSeries(oChart.series[0]);
+                            var aPoints = oChart.series[0].getNumPts();
                             if(aPoints[0] && typeof aPoints[0].formatCode === "string" && aPoints[0].formatCode.length > 0){
                                 sDefaultValAxFormatCode = aPoints[0].formatCode;
                             }

@@ -626,6 +626,27 @@ CSelectedContent.prototype =
 				LogicDocument.TrackMoveId = null;
 			}
 		}
+    },
+
+    CheckSignatures: function()
+    {
+        var aDrawings = this.DrawingObjects;
+        var nDrawing, oDrawing, oSp;
+        var sLastSignatureId = null;
+        for(nDrawing = 0; nDrawing < aDrawings.length; ++nDrawing)
+        {
+            oDrawing = aDrawings[nDrawing];
+            oSp = oDrawing.GraphicObj;
+            if(oSp && oSp.signatureLine)
+            {
+                oSp.setSignature(oSp.signatureLine);
+                sLastSignatureId = oSp.signatureLine.id;
+            }
+        }
+        if(sLastSignatureId)
+        {
+            editor.sendEvent("asc_onAddSignature", sLastSignatureId);
+        }
     }
 };
 CSelectedContent.prototype.SetInsertOptionForTable = function(nType)
@@ -1953,6 +1974,16 @@ CSelectedElementsInfo.prototype.GetInlineLevelSdt = function()
 {
 	return this.m_oInlineLevelSdt;
 };
+/**
+ * @returns {?CInlineLevelSdt}
+ */
+CSelectedElementsInfo.prototype.GetForm = function()
+{
+	if (this.m_oInlineLevelSdt && this.m_oInlineLevelSdt.IsForm())
+		return this.m_oInlineLevelSdt;
+
+	return null;
+};
 CSelectedElementsInfo.prototype.IsSdtOverDrawing = function()
 {
 	return this.m_bSdtOverDrawing;
@@ -2382,6 +2413,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.MoveDrawing               = false; // Происходит ли сейчас перенос автофигуры
 	this.PrintSelection            = false; // Печатаем выделенный фрагмент
 	this.CCActionByClick           = true;  // Выполнять ли действие с ContentControl по простому клику (если false, то мы должны находится внутри, чтобы действие выполнилось)
+	this.CheckFormPlaceHolder      = true;  // Выполняем ли специальную обработку для плейсхолдеров у форм
 
 	this.DrawTableMode = {
 		Start  : false,
@@ -2520,6 +2552,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	};
 
 	this.SpecialForms = {}; // Список специальных форм в документе
+	this.CurrentForm  = null;
 
 	this.LastBulletList   = undefined; // Последний примененный маркированный список
 	this.LastNumberedList = undefined; // Последний примененный нумерованный список
@@ -3236,20 +3269,23 @@ CDocument.prototype.private_FinalizeFormChange = function()
 		}
 		else if (oForm.IsPicture())
 		{
-			for (var sId in this.SpecialForms)
+			if (oPr)
 			{
-				var oTempForm = this.SpecialForms[sId];
-				if (!oTempForm.IsUseInDocument())
-					continue;
-
-				if (oTempForm !== oForm && sKey === oTempForm.GetFormKey() && oTempForm.IsPicture())
+				for (var sId in this.SpecialForms)
 				{
-					var arrDrawings = oTempForm.GetAllDrawingObjects();
-					if (arrDrawings.length > 0)
+					var oTempForm = this.SpecialForms[sId];
+					if (!oTempForm.IsUseInDocument())
+						continue;
+
+					if (oTempForm !== oForm && sKey === oTempForm.GetFormKey() && oTempForm.IsPicture())
 					{
-						var oPicture = arrDrawings[0].GetPicture();
-						if (oPicture)
-							oPicture.setBlipFill(AscFormat.CreateBlipFillRasterImageId(oPr));
+						var arrDrawings = oTempForm.GetAllDrawingObjects();
+						if (arrDrawings.length > 0)
+						{
+							var oPicture = arrDrawings[0].GetPicture();
+							if (oPicture)
+								oPicture.setBlipFill(AscFormat.CreateBlipFillRasterImageId(oPr));
+						}
 					}
 				}
 			}
@@ -6481,21 +6517,13 @@ CDocument.prototype.MoveCursorUp = function(AddToSelect, CtrlKey)
 {
 	this.Reset_WordSelection();
 	this.private_UpdateTargetForCollaboration();
-
-	if (true === this.IsFillingFormMode())
-		this.MoveToFillingForm(false);
-	else
-		this.Controller.MoveCursorUp(AddToSelect, CtrlKey);
+	this.Controller.MoveCursorUp(AddToSelect, CtrlKey);
 };
 CDocument.prototype.MoveCursorDown = function(AddToSelect, CtrlKey)
 {
 	this.Reset_WordSelection();
 	this.private_UpdateTargetForCollaboration();
-
-	if (true === this.IsFillingFormMode())
-		this.MoveToFillingForm(true);
-	else
-		this.Controller.MoveCursorDown(AddToSelect, CtrlKey);
+	this.Controller.MoveCursorDown(AddToSelect, CtrlKey);
 };
 CDocument.prototype.MoveCursorToEndOfLine = function(AddToSelect)
 {
@@ -6529,9 +6557,9 @@ CDocument.prototype.MoveCursorToCell = function(bNext)
 	this.private_UpdateTargetForCollaboration();
 	this.Controller.MoveCursorToCell(bNext);
 };
-CDocument.prototype.MoveCursorToSignature = function(sGuid)
+CDocument.prototype.GoToSignature = function(sGuid)
 {
-    this.DrawingObjects.moveCursorToSignature(sGuid);
+    this.DrawingObjects.goToSignature(sGuid);
 };
 CDocument.prototype.MoveCursorToPageStart = function()
 {
@@ -8545,6 +8573,32 @@ CDocument.prototype.SelectAll = function()
 	this.private_UpdateCursorXY(true, true);
 };
 /**
+ * Выделяем текущее слово
+ * @return {boolean}
+ */
+CDocument.prototype.SelectCurrentWord = function()
+{
+	if (this.IsSelectionUse() && !this.IsTextSelectionUse())
+		return false;
+
+	if (this.IsSelectionUse())
+		this.RemoveSelection();
+
+	var oParagraph = this.GetCurrentParagraph();
+	if (!oParagraph)
+		return false;
+
+	oParagraph.SelectCurrentWord();
+
+	if (this.IsSelectionEmpty())
+	{
+		this.RemoveSelection();
+		return false;
+	}
+
+	return true;
+};
+/**
  * Выделяем все элементы в заданном диапазоне
  * @param {number} nStartPos
  * @param {number} nEndPos
@@ -8760,6 +8814,8 @@ CDocument.prototype.OnEndTextDrag = function(NearPos, bCopy)
 				DocContent.CreateNewCommentsGuid(this.Comments);
 			}
 
+			this.CheckFormPlaceHolder = false;
+
 			// Выделение выставляется внутри функции InsertContent
             Para.Parent.InsertContent(DocContent, NearPos);
 
@@ -8768,7 +8824,9 @@ CDocument.prototype.OnEndTextDrag = function(NearPos, bCopy)
             this.UpdateInterface();
             this.UpdateRulers();
 			this.FinalizeAction();
-        }
+
+			this.CheckFormPlaceHolder = true;
+		}
         else
 		{
 			this.History.Remove_LastPoint();
@@ -8923,7 +8981,18 @@ CDocument.prototype.InsertContent = function(SelectedContent, NearPos)
 	{
 		if (LastClass.GetParentForm())
 		{
+			var isPlaceHolder  = LastClass.GetParentForm().IsPlaceHolder();
+			var nInRunStartPos = LastClass.State.ContentPos;
 			LastClass.AddText(SelectedContent.GetText({ParaEndToSpace : false}), ParaNearPos.NearPos.ContentPos.Data[ParaNearPos.Classes.length - 1]);
+			var nInRunEndPos = LastClass.State.ContentPos;
+
+			LastClass.SelectThisElement();
+			if (!isPlaceHolder)
+			{
+				LastClass.Selection.Use      = true;
+				LastClass.Selection.StartPos = nInRunStartPos;
+				LastClass.Selection.EndPos   = nInRunEndPos;
+			}
 			return;
 		}
 
@@ -9101,7 +9170,7 @@ CDocument.prototype.InsertContent = function(SelectedContent, NearPos)
 			}
 
 			var EndIndex = ElementsCount - 1;
-			if (true === bConcatE && StartIndex < EndIndex)
+			if (true === bConcatE && ElementsCount > 1)
 			{
 				var _ParaE    = Elements[ElementsCount - 1].Element;
 				var TempCount = _ParaE.Content.length - 1;
@@ -9138,7 +9207,7 @@ CDocument.prototype.InsertContent = function(SelectedContent, NearPos)
 			this.Selection.EndPos   = LastPos;
 			this.CurPos.ContentPos  = LastPos;
 		}
-
+        SelectedContent.CheckSignatures();
 		if (docpostype_DrawingObjects !== this.CurPos.Type)
 			this.SetDocPosType(docpostype_Content);
 	}
@@ -9785,69 +9854,82 @@ CDocument.prototype.OnKeyDown = function(e)
 		}
 		else if (e.KeyCode === 9) // Tab
 		{
-			var SelectedInfo = this.GetSelectedElementsInfo();
-
-			if (null !== SelectedInfo.GetMath())
+			if (this.IsFillingFormMode())
 			{
-				var ParaMath  = SelectedInfo.GetMath();
-				var Paragraph = ParaMath.GetParagraph();
-				if (Paragraph && false === this.Document_Is_SelectionLocked(changestype_None, {
-					Type      : changestype_2_Element_and_Type,
-					Element   : Paragraph,
-					CheckType : changestype_Paragraph_Content
-				}))
-				{
-					this.StartAction(AscDFH.historydescription_Document_AddTabToMath);
-					ParaMath.HandleTab(!e.ShiftKey);
-					this.Recalculate();
-					this.FinalizeAction();
-				}
-			}
-			else if (true === SelectedInfo.IsInTable() && true != e.CtrlKey)
-			{
-				this.MoveCursorToCell(true === e.ShiftKey ? false : true);
-			}
-			else if (true === SelectedInfo.IsDrawingObjSelected() && true != e.CtrlKey)
-			{
-				this.DrawingObjects.selectNextObject((e.ShiftKey === true ? -1 : 1));
+				this.DrawingDocument.UpdateTargetFromPaint = true;
+				this.Reset_WordSelection();
+				this.private_UpdateTargetForCollaboration();
+				this.MoveToFillingForm(true !== e.ShiftKey);
+				this.private_CheckCursorPosInFillingFormMode();
+				this.CheckComplexFieldsInSelection();
 			}
 			else
 			{
-				if (true === SelectedInfo.IsMixedSelection())
+				var SelectedInfo = this.GetSelectedElementsInfo();
+
+				if (null !== SelectedInfo.GetMath())
 				{
-					if (true === e.ShiftKey)
-						this.DecreaseIndent();
-					else
-						this.IncreaseIndent();
-				}
-				else
-				{
-					var Paragraph = SelectedInfo.GetParagraph();
-					var ParaPr    = Paragraph ? Paragraph.Get_CompiledPr2(false).ParaPr : null;
-					if (null != Paragraph && (true === Paragraph.IsCursorAtBegin() || true === Paragraph.Selection_IsFromStart()) && (undefined != Paragraph.GetNumPr() || (true != Paragraph.IsEmpty() && ParaPr.Tabs.Tabs.length <= 0)))
+					var ParaMath  = SelectedInfo.GetMath();
+					var Paragraph = ParaMath.GetParagraph();
+					if (Paragraph && false === this.Document_Is_SelectionLocked(changestype_None, {
+						Type      : changestype_2_Element_and_Type,
+						Element   : Paragraph,
+						CheckType : changestype_Paragraph_Content
+					}))
 					{
-						if (false === this.Document_Is_SelectionLocked(changestype_None, {
-							Type      : changestype_2_Element_and_Type,
-							Element   : Paragraph,
-							CheckType : AscCommon.changestype_Paragraph_Properties
-						}))
-						{
-							this.StartAction(AscDFH.historydescription_Document_MoveParagraphByTab);
-							Paragraph.Add_Tab(e.ShiftKey);
-							this.Recalculate();
-							this.UpdateInterface();
-							this.UpdateSelection();
-							this.FinalizeAction();
-						}
-					}
-					else if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
-					{
-						this.StartAction(AscDFH.historydescription_Document_AddTab);
-						this.AddToParagraph(new ParaTab());
+						this.StartAction(AscDFH.historydescription_Document_AddTabToMath);
+						ParaMath.HandleTab(!e.ShiftKey);
+						this.Recalculate();
 						this.FinalizeAction();
 					}
 				}
+				else if (true === SelectedInfo.IsInTable() && true != e.CtrlKey)
+				{
+					this.MoveCursorToCell(true === e.ShiftKey ? false : true);
+				}
+				else if (true === SelectedInfo.IsDrawingObjSelected() && true != e.CtrlKey)
+				{
+					this.DrawingObjects.selectNextObject((e.ShiftKey === true ? -1 : 1));
+				}
+				else
+				{
+					if (true === SelectedInfo.IsMixedSelection())
+					{
+						if (true === e.ShiftKey)
+							this.DecreaseIndent();
+						else
+							this.IncreaseIndent();
+					}
+					else
+					{
+						var Paragraph = SelectedInfo.GetParagraph();
+						var ParaPr    = Paragraph ? Paragraph.Get_CompiledPr2(false).ParaPr : null;
+						if (null != Paragraph && (true === Paragraph.IsCursorAtBegin() || true === Paragraph.IsSelectionFromStart()) && (undefined != Paragraph.GetNumPr() || (true != Paragraph.IsEmpty() && ParaPr.Tabs.Tabs.length <= 0)))
+						{
+							if (false === this.Document_Is_SelectionLocked(changestype_None, {
+								Type      : changestype_2_Element_and_Type,
+								Element   : Paragraph,
+								CheckType : AscCommon.changestype_Paragraph_Properties
+							}))
+							{
+								this.StartAction(AscDFH.historydescription_Document_MoveParagraphByTab);
+								Paragraph.Add_Tab(e.ShiftKey);
+								this.Recalculate();
+								this.UpdateInterface();
+								this.UpdateSelection();
+								this.FinalizeAction();
+							}
+						}
+						else if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
+						{
+							this.StartAction(AscDFH.historydescription_Document_AddTab);
+							this.AddToParagraph(new ParaTab());
+							this.FinalizeAction();
+						}
+					}
+				}
 			}
+
 			bRetValue = keydownresult_PreventAll;
 		}
 		else if (e.KeyCode === 13) // Enter
@@ -10157,7 +10239,7 @@ CDocument.prototype.OnKeyDown = function(e)
 		else if (e.KeyCode === 37) // Left Arrow
 		{
 			// Чтобы при зажатой клавише курсор не пропадал
-			if (true != e.ShiftKey)
+			if (true !== e.ShiftKey)
 				this.DrawingDocument.TargetStart();
 
 			this.DrawingDocument.UpdateTargetFromPaint = true;
@@ -10168,21 +10250,36 @@ CDocument.prototype.OnKeyDown = function(e)
 		}
 		else if (e.KeyCode === 38) // Top Arrow
 		{
-			// TODO: Реализовать Ctrl + Up/ Ctrl + Shift + Up
-			// Чтобы при зажатой клавише курсор не пропадал
-			if (true != e.ShiftKey)
-				this.DrawingDocument.TargetStart();
+			if (this.IsFillingFormMode())
+			{
+				var oSelectedInfo = this.GetSelectedElementsInfo();
+				var oForm         = oSelectedInfo.GetForm();
 
-			this.DrawingDocument.UpdateTargetFromPaint = true;
-			this.MoveCursorUp(true === e.ShiftKey, true === e.CtrlKey);
-			this.private_CheckCursorPosInFillingFormMode();
-			this.CheckComplexFieldsInSelection();
+				if (oForm && !oForm.IsComboBox() && !oForm.IsDropDownList())
+					oForm = null;
+
+				if (oForm)
+					this.TurnComboBoxFormValue(oForm, true);
+			}
+			else
+			{
+				// TODO: Реализовать Ctrl + Up/ Ctrl + Shift + Up
+				// Чтобы при зажатой клавише курсор не пропадал
+				if (true !== e.ShiftKey)
+					this.DrawingDocument.TargetStart();
+
+				this.DrawingDocument.UpdateTargetFromPaint = true;
+				this.MoveCursorUp(true === e.ShiftKey, true === e.CtrlKey);
+				this.private_CheckCursorPosInFillingFormMode();
+				this.CheckComplexFieldsInSelection();
+			}
+
 			bRetValue = keydownresult_PreventAll;
 		}
 		else if (e.KeyCode === 39) // Right Arrow
 		{
 			// Чтобы при зажатой клавише курсор не пропадал
-			if (true != e.ShiftKey)
+			if (true !== e.ShiftKey)
 				this.DrawingDocument.TargetStart();
 
 			this.DrawingDocument.UpdateTargetFromPaint = true;
@@ -10193,15 +10290,29 @@ CDocument.prototype.OnKeyDown = function(e)
 		}
 		else if (e.KeyCode === 40) // Bottom Arrow
 		{
-			// TODO: Реализовать Ctrl + Down/ Ctrl + Shift + Down
-			// Чтобы при зажатой клавише курсор не пропадал
-			if (true != e.ShiftKey)
-				this.DrawingDocument.TargetStart();
+			if (this.IsFillingFormMode())
+			{
+				var oSelectedInfo = this.GetSelectedElementsInfo();
+				var oForm         = oSelectedInfo.GetForm();
 
-			this.DrawingDocument.UpdateTargetFromPaint = true;
-			this.MoveCursorDown(true === e.ShiftKey, true === e.CtrlKey);
-			this.private_CheckCursorPosInFillingFormMode();
-			this.CheckComplexFieldsInSelection();
+				if (oForm && !oForm.IsComboBox() && !oForm.IsDropDownList())
+					oForm = null;
+
+				if (oForm)
+					this.TurnComboBoxFormValue(oForm, true);
+			}
+			else
+			{
+				// TODO: Реализовать Ctrl + Down/ Ctrl + Shift + Down
+				// Чтобы при зажатой клавише курсор не пропадал
+				if (true !== e.ShiftKey)
+					this.DrawingDocument.TargetStart();
+
+				this.DrawingDocument.UpdateTargetFromPaint = true;
+				this.MoveCursorDown(true === e.ShiftKey, true === e.CtrlKey);
+				this.private_CheckCursorPosInFillingFormMode();
+				this.CheckComplexFieldsInSelection();
+			}
 			bRetValue = keydownresult_PreventAll;
 		}
 		else if (e.KeyCode === 46) // Delete
@@ -11866,6 +11977,8 @@ CDocument.prototype.private_UpdateTracks = function(bSelection, bEmptySelection)
 		return;
 	}
 
+	var isNeedRedraw = false;
+
 	this.NeedUpdateTracksOnRecalc = false;
 
 	var oSelectedInfo = this.GetSelectedElementsInfo();
@@ -11879,12 +11992,27 @@ CDocument.prototype.private_UpdateTracks = function(bSelection, bEmptySelection)
 	var oBlockLevelSdt  = oSelectedInfo.GetBlockLevelSdt();
 	var oInlineLevelSdt = oSelectedInfo.GetInlineLevelSdt();
 
+	var oCurrentForm = null;
 	if (oInlineLevelSdt)
+	{
+		if (oInlineLevelSdt.IsForm())
+			oCurrentForm = oInlineLevelSdt;
+
 		oInlineLevelSdt.DrawContentControlsTrack(false);
+	}
 	else if (oBlockLevelSdt)
+	{
 		oBlockLevelSdt.DrawContentControlsTrack(false);
+	}
 	else
+	{
 		this.DrawingDocument.OnDrawContentControl(null, AscCommon.ContentControlTrack.In);
+	}
+
+	if (this.private_SetCurrentSpecialForm(oCurrentForm))
+	{
+		isNeedRedraw = true;
+	}
 
 	var oField = oSelectedInfo.GetField();
 	if (null !== oField && (fieldtype_MERGEFIELD !== oField.Get_FieldType() || true !== this.MailMergeFieldsHighlight))
@@ -11900,9 +12028,14 @@ CDocument.prototype.private_UpdateTracks = function(bSelection, bEmptySelection)
 		if ((arrComplexFields.length > 0 && this.FieldsManager.SetCurrentComplexField(arrComplexFields[arrComplexFields.length - 1]))
 			|| (arrComplexFields.length <= 0 && this.FieldsManager.SetCurrentComplexField(null)))
 		{
-			this.DrawingDocument.ClearCachePages();
-			this.DrawingDocument.FirePaint();
+			isNeedRedraw = true;
 		}
+	}
+
+	if (isNeedRedraw)
+	{
+		this.DrawingDocument.ClearCachePages();
+		this.DrawingDocument.FirePaint();
 	}
 };
 CDocument.prototype.Document_UpdateUndoRedoState = function()
@@ -14481,6 +14614,7 @@ CDocument.prototype.GetAllNumberedParagraphs = function()
 	var oProps = {};
 	oProps.OnlyMainDocument = true;
 	oProps.Shapes = false;
+	oProps.DoNotAddRemoved = true;
 	oProps.Numbering = true;
 	oProps.NumPr = [];
 	var oNumbering = this.GetNumbering();
@@ -15730,7 +15864,22 @@ CDocument.prototype.OnChangeSpecialFormsGlobalSettings = function()
 };
 CDocument.prototype.IsSpecialFormsSettingsDefault = function()
 {
-	return this.Settings.SdtSettings.IsDefault();
+	return this.Settings.SpecialFormsSettings.IsDefault();
+};
+CDocument.prototype.private_SetCurrentSpecialForm = function(oForm)
+{
+	if (this.CurrentForm === oForm)
+		return false;
+
+	if (this.CurrentForm)
+		this.CurrentForm.SetCurrent(false);
+
+	this.CurrentForm = oForm;
+
+	if (this.CurrentForm)
+		this.CurrentForm.SetCurrent(true);
+
+	return true;
 };
 /**
  * Добавляем специальный контейнер в виде чекбокса
@@ -15846,7 +15995,7 @@ CDocument.prototype.AddContentControlTextForm = function(oPr)
 	if (!oPr)
 		oPr = new CSdtTextFormPr();
 
-	this.RemoveSelection();
+	this.RemoveTextSelection();
 	var oCC = this.AddContentControl(c_oAscSdtLevelType.Inline);
 
 	if (oPr.Comb)
@@ -19425,8 +19574,7 @@ CDocument.prototype.controller_IncreaseDecreaseFontSize = function(bIncrease)
 			}
 			case  selectionflag_Numbering:
 			{
-				var OldFontSize = this.GetCalculatedTextPr().FontSize;
-				var NewFontSize = FontSize_IncreaseDecreaseValue(bIncrease, OldFontSize);
+				var NewFontSize = this.GetCalculatedTextPr().GetIncDecFontSize(bIncrease);
 				var TextPr      = new CTextPr();
 				TextPr.FontSize = NewFontSize;
 				this.AddToParagraph(new ParaTextPr(TextPr), true);
@@ -20929,6 +21077,49 @@ CDocument.prototype.MoveToFillingForm = function(isNext)
 		}
 	}
 };
+CDocument.prototype.TurnComboBoxFormValue = function(oForm, isNext)
+{
+	if (!(oForm instanceof CInlineLevelSdt) || (!oForm.IsComboBox() && !oForm.IsDropDownList()))
+		return;
+
+	var sValue = oForm.GetSelectedText(true, true);
+	var oComboBoxPr = oForm.IsComboBox() ? oForm.GetComboBoxPr() : oForm.GetDropDownListPr();
+
+	var nIndex = oComboBoxPr.FindByText(sValue);
+	var nCount = oComboBoxPr.GetItemsCount();
+	if (nCount <= 0)
+		return;
+
+	var nNewIndex = 0;
+	if (-1 !== nIndex)
+	{
+		if (isNext)
+		{
+			nNewIndex = nIndex + 1;
+			if (nNewIndex >= nCount)
+				nNewIndex = 0;
+		}
+		else
+		{
+			nNewIndex = nIndex - 1;
+			if (nNewIndex < 0)
+				nNewIndex = nCount - 1;
+		}
+	}
+
+	var sNewValue = oComboBoxPr.GetItemValue(nNewIndex);
+	oForm.SelectContentControl();
+	oForm.SkipSpecialContentControlLock(true);
+	if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, this.IsFormFieldEditing()))
+	{
+		this.StartAction();
+		oForm.SelectListItem(sNewValue);
+		oForm.SelectContentControl();
+		this.Recalculate();
+		this.FinalizeAction();
+	}
+	oForm.SkipSpecialContentControlLock(false);
+};
 CDocument.prototype.OnContentControlTrackEnd = function(Id, NearestPos, isCopy)
 {
 	return this.OnEndTextDrag(NearestPos, isCopy);
@@ -20992,7 +21183,7 @@ CDocument.prototype.RemoveContentControl = function(Id)
 	else if (c_oAscSdtLevelType.Inline === oContentControl.GetContentControlType())
 	{
 		this.SelectContentControl(Id);
-		this.RemoveBeforePaste();
+		this.Remove(-1, false, false, false);
 	}
 };
 CDocument.prototype.RemoveContentControlWrapper = function(Id)
@@ -21065,8 +21256,8 @@ CDocument.prototype.SelectContentControl = function(sId)
 		&& (c_oAscSdtLevelType.Block === oContentControl.GetContentControlType()
 		|| c_oAscSdtLevelType.Inline === oContentControl.GetContentControlType()))
 	{
+		this.CheckFormPlaceHolder = false;
 		this.RemoveSelection();
-
 		oContentControl.SelectContentControl();
 		this.UpdateSelection();
 		this.UpdateRulers();
@@ -21074,6 +21265,7 @@ CDocument.prototype.SelectContentControl = function(sId)
 		this.UpdateTracks();
 
 		this.private_UpdateCursorXY(true, true);
+		this.CheckFormPlaceHolder = true;
 	}
 };
 /**
@@ -21107,14 +21299,37 @@ CDocument.prototype.MoveCursorToContentControl = function(sId, isBegin)
 };
 CDocument.prototype.GetAllSignatures = function()
 {
-    return this.DrawingObjects.getAllSignatures();
+    var aSignatures = [];
+    this.CheckRunContent(function(oRun)
+    {
+        var aContent = oRun.Content;
+        if(Array.isArray(aContent))
+        {
+            var nItem, oItem, oSp;
+            for(nItem = 0; nItem < aContent.length; ++nItem)
+            {
+                oItem = aContent[nItem];
+                if(oItem && oItem.GraphicObj)
+                {
+                    oSp = oItem.GraphicObj;
+                    if(oSp.signatureLine)
+                    {
+                        aSignatures.push(oSp.signatureLine);
+                    }
+                }
+            }
+        }
+    });
+    return aSignatures;
 };
 CDocument.prototype.CallSignatureDblClickEvent = function(sGuid)
 {
     var ret = [], allSpr = [];
     allSpr = allSpr.concat(allSpr.concat(this.DrawingObjects.getAllSignatures2(ret, this.DrawingObjects.getDrawingArray())));
-    for(var i = 0; i < allSpr.length; ++i){
-        if(allSpr[i].signatureLine && allSpr[i].signatureLine.id === sGuid){
+    for(var i = 0; i < allSpr.length; ++i)
+    {
+        if(allSpr[i].getSignatureLineGuid() === sGuid)
+        {
             this.Api.sendEvent("asc_onSignatureDblClick", sGuid, allSpr[i].extX, allSpr[i].extY);
         }
     }
@@ -21152,8 +21367,8 @@ CDocument.prototype.private_CheckCursorPosInFillingFormMode = function()
 	if (this.IsFillingFormMode() && !this.IsInFormField())
 	{
 		this.MoveToFillingForm(true);
-		this.Document_UpdateSelectionState();
-		this.Document_UpdateInterfaceState();
+		this.UpdateSelection();
+		this.UpdateInterface();
 	}
 };
 CDocument.prototype.OnEndLoadScript = function()
@@ -22236,7 +22451,7 @@ CDocument.prototype.GetHyperlinkAnchors = function()
 	var arrAnchors = [];
 
 	var arrOutline = [];
-	this.GetOutlineParagraphs(arrOutline, {SkipEmptyParagraphs : true});
+	this.GetOutlineParagraphs(arrOutline, {SkipEmptyParagraphs : true, OutlineStart : 1, OutlineEnd : 9});
 	var nIndex = 0, nCount = arrOutline.length;
 	for (nIndex = 0; nIndex < nCount; ++nIndex)
 	{
@@ -22823,9 +23038,9 @@ CDocument.prototype.GetTableCellFormula = function(isReturnField)
 		var oTempCell        = oRow.GetCell(nCellIndex);
 		var oTempCellContent = oTempCell.GetContent();
 
-		oTempCellContent.Set_ApplyToAll(true);
+		oTempCellContent.SetApplyToAll(true);
 		var sCellText = oTempCellContent.GetSelectedText();
-		oTempCellContent.Set_ApplyToAll(false);
+		oTempCellContent.SetApplyToAll(false);
 
 		if (!isNaN(parseInt(sCellText)))
 		{
@@ -22844,9 +23059,9 @@ CDocument.prototype.GetTableCellFormula = function(isReturnField)
 
 		var oTempCellContent = oTempCell.GetContent();
 
-		oTempCellContent.Set_ApplyToAll(true);
+		oTempCellContent.SetApplyToAll(true);
 		var sCellText = oTempCellContent.GetSelectedText();
-		oTempCellContent.Set_ApplyToAll(false);
+		oTempCellContent.SetApplyToAll(false);
 
 		if (!isNaN(parseInt(sCellText)))
 		{
@@ -23014,6 +23229,7 @@ CDocument.prototype.AddCaption = function(oPr)
         var nCurPos = 0;
         var oComplexField;
         var oBeginChar, oSeparateChar, oEndChar;
+        var aFieldsToUpdate = [];
         if(!oPr.get_ExcludeLabel())
         {
             var sLabel = oPr.get_Label();
@@ -23049,7 +23265,7 @@ CDocument.prototype.AddCaption = function(oPr)
                 oComplexField.SetInstructionLine(" STYLEREF \"" + oStyle.GetName() + "\" \\s");
                 oComplexField.SetSeparateChar(oSeparateChar);
                 oComplexField.SetEndChar(oEndChar);
-                oComplexField.Update(false, false);
+                aFieldsToUpdate.push(oComplexField);
             }
             var sSeparator = oPr.get_Separator();
             if(!sSeparator || sSeparator.length === 0)
@@ -23061,7 +23277,7 @@ CDocument.prototype.AddCaption = function(oPr)
             NewParagraph.Internal_Content_Add(nCurPos++, NewRun, false);
         }
 
-        var sInstruction = " SEQ " + oPr.get_Label() + " \\* " + oPr.get_FormatGeneral() + " ";
+        var sInstruction = " SEQ " + oPr.getLabelForInstruction() + " \\* " + oPr.get_FormatGeneral() + " ";
         if(AscFormat.isRealNumber(nHeadingLvl))
         {
             sInstruction += ("\\s " + nHeadingLvl);
@@ -23092,19 +23308,16 @@ CDocument.prototype.AddCaption = function(oPr)
         }
 
 
-
-        var aFields = [];
-
-        oComplexField.Update(false, false);
-        this.GetAllSeqFieldsByType(oPr.get_Label(), aFields);
-        for(var i = 0; i < aFields.length; ++i)
+        //Update added field
+        aFieldsToUpdate.push(oComplexField);
+        for(nField = aFieldsToUpdate.length - 1; nField > -1; --nField)
         {
-            if(aFields[i] === oComplexField)
-            {
-                break;
-            }
+            aFieldsToUpdate[nField].Update(false, false);
         }
-        aFields = aFields.slice(i);
+
+        //Update all fields from current sequence
+        var aFields = [];
+        this.GetAllSeqFieldsByType(oPr.get_Label(), aFields);
         var arrParagraphs = [];
         for (var nIndex = 0, nCount = aFields.length; nIndex < nCount; ++nIndex)
         {
@@ -23120,7 +23333,7 @@ CDocument.prototype.AddCaption = function(oPr)
                     arrParagraphs.push(oField.GetParagraph());
             }
         }
-
+        var nField;
         if(arrParagraphs.length > 0)
         {
             if (!this.Document_Is_SelectionLocked(changestype_None, {
@@ -23129,15 +23342,13 @@ CDocument.prototype.AddCaption = function(oPr)
                 CheckType : changestype_Paragraph_Content
             }))
             {
-                this.StartAction(AscDFH.historydescription_Document_UpdateFields);
-                for(i = 0; i < aFields.length; ++i)
+                for(nField = 0; nField < aFields.length; ++nField)
                 {
-                    if(aFields[i].Update)
+                    if(aFields[nField].Update)
                     {
-                        aFields[i].Update(false, false);
+                        aFields[nField].Update(false, false);
                     }
                 }
-                this.FinalizeAction();
             }
         }
         NewParagraph.MoveCursorToEndPos();
@@ -23872,17 +24083,26 @@ CDocument.prototype.ClearAllSpecialForms = function()
 		oForm.SkipSpecialContentControlLock(true);
 	}
 
+	var oCurrentForm = this.GetSelectedElementsInfo().GetForm();
+
 	if (!this.IsSelectionLocked(AscCommon.changestype_None, {
 		Type      : changestype_2_ElementsArray_and_Type,
 		Elements  : arrParagraphs,
 		CheckType : AscCommon.changestype_Paragraph_Content
-	}, true))
+	}, true, this.IsFillingFormMode()))
 	{
 		this.StartAction(AscDFH.historydescription_Document_ClearAllSpecialForms);
+
+		if (oCurrentForm)
+			this.RemoveSelection();
 
 		for (var sId in this.SpecialForms)
 		{
 			var oForm = this.SpecialForms[sId];
+
+			if (!oCurrentForm && oForm.Is_UseInDocument())
+				oCurrentForm = oForm;
+
 			if (oForm.IsCheckBox())
 			{
 				oForm.SetCheckBoxChecked(false);
@@ -23896,7 +24116,12 @@ CDocument.prototype.ClearAllSpecialForms = function()
 			{
 				oForm.ReplaceContentWithPlaceHolder();
 			}
+
+			oForm.RemoveSelection();
 		}
+
+		if (oCurrentForm)
+			oCurrentForm.SelectContentControl();
 
 		this.Recalculate();
 		this.UpdateInterface();
@@ -23920,7 +24145,7 @@ CDocument.prototype.GetSpecialFormsByKey = function(sKey)
 	for (var sId in this.SpecialForms)
 	{
 		var oForm = this.SpecialForms[sId];
-		if (sKey === oForm.GetFormKey())
+		if (sKey === oForm.GetFormKey() && oForm.Is_UseInDocument())
 			arrForms.push(oForm);
 	}
 
@@ -24166,7 +24391,62 @@ CDocument.prototype.GetDecimalSymbol = function()
 {
 	return this.Settings.DecimalSymbol ? this.Settings.DecimalSymbol : ".";
 };
+/**
+ * Меняем регистр выделенного текста
+ * @param {Asc.c_oAscChangeTextCaseType} nCaseType
+ */
+CDocument.prototype.ChangeTextCase = function(nCaseType)
+{
+	var oState = null;
+	if (!this.IsSelectionUse())
+	{
+		oState = this.SaveDocumentState();
+		if (!this.SelectCurrentWord())
+		{
+			this.LoadDocumentState(oState);
+			return;
+		}
+	}
 
+	if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
+	{
+		this.StartAction(AscDFH.historydescription_Document_ChangeTextCase);
+
+		if (this.IsSelectionUse())
+		{
+			if (!this.IsTextSelectionUse())
+				return;
+
+			var oChangeEngine = new CDocumentChangeTextCaseEngine(nCaseType);
+
+			var arrParagraphs = this.GetSelectedParagraphs();
+			for (var nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
+			{
+				oChangeEngine.Reset();
+
+				var oParagraph = arrParagraphs[nIndex];
+				oParagraph.CheckRunContent(function(oRun)
+				{
+					oRun.ChangeTextCase(oChangeEngine);
+				});
+
+				oChangeEngine.FlushWord();
+			}
+		}
+
+		if (oState)
+			this.LoadDocumentState(oState);
+
+		this.UpdateSelection();
+		this.Recalculate();
+		this.FinalizeAction();
+	}
+	else if (oState)
+	{
+		this.LoadDocumentState(oState);
+		this.UpdateSelection();
+	}
+};
 
 function CDocumentSelectionState()
 {
@@ -26527,10 +26807,109 @@ CDocumentLineNumbersInfo.prototype.private_Update = function()
 	}
 };
 
+/**
+ * Класс для изменения регистра выделенного текста
+ * @param {Asc.c_oAscChangeTextCaseType} nType
+ */
+function CDocumentChangeTextCaseEngine(nType)
+{
+	this.ChangeType    = nType;
+	this.StartSentence = true;
+	this.WordBuffer    = [];
+}
+CDocumentChangeTextCaseEngine.prototype.Reset = function()
+{
+	this.StartSentence = true;
+	this.WordBuffer    = [];
+};
+CDocumentChangeTextCaseEngine.prototype.FlushWord = function()
+{
+	var isFirstCapital        = false;
+	var isAllCapital          = true;
+	var isAllExceptFirstLower = true;
+
+	for (var nIndex = 0, nCount = this.WordBuffer.length; nIndex < nCount; ++nIndex)
+	{
+		var nCharCode   = this.WordBuffer[nIndex].Run.GetElement(this.WordBuffer[nIndex].Pos).Value;
+		var nLowerCode = String.fromCharCode(nCharCode).toLowerCase().charCodeAt(0);
+		var nUpperCode = String.fromCharCode(nCharCode).toUpperCase().charCodeAt(0);
+
+		if (nUpperCode === nCharCode && nLowerCode !== nCharCode)
+		{
+			if (0 === nIndex)
+				isFirstCapital = true;
+			else
+				isAllExceptFirstLower = false;
+		}
+		else
+		{
+			isAllCapital = false;
+		}
+	}
+
+	var nCaseType = this.ChangeType;
+	for (var nIndex = 0, nCount = this.WordBuffer.length; nIndex < nCount; ++nIndex)
+	{
+		if (!this.WordBuffer[nIndex].Change)
+			continue;
+
+		var oRun      = this.WordBuffer[nIndex].Run;
+		var nInRunPos = this.WordBuffer[nIndex].Pos;
+
+		var nCharCode  = oRun.GetElement(nInRunPos).Value;
+		var nLowerCode = String.fromCharCode(nCharCode).toLowerCase().charCodeAt(0);
+		var nUpperCode = String.fromCharCode(nCharCode).toUpperCase().charCodeAt(0);
+
+		if (nLowerCode !== nCharCode || nUpperCode !== nCharCode)
+		{
+			if (nLowerCode === nCharCode
+				&& ((Asc.c_oAscChangeTextCaseType.SentenceCase === nCaseType && (this.StartSentence && 0 === nIndex))
+					|| Asc.c_oAscChangeTextCaseType.ToggleCase === nCaseType
+					|| Asc.c_oAscChangeTextCaseType.UpperCase === nCaseType
+					|| (Asc.c_oAscChangeTextCaseType.CapitalizeWords === nCaseType && 0 === nIndex)))
+			{
+				oRun.AddToContent(nInRunPos, new ParaText(nUpperCode), false);
+				oRun.RemoveFromContent(nInRunPos + 1, 1, false);
+			}
+			else if (nUpperCode === nCharCode
+				&& (Asc.c_oAscChangeTextCaseType.ToggleCase === nCaseType
+					|| Asc.c_oAscChangeTextCaseType.LowerCase === nCaseType
+					|| (Asc.c_oAscChangeTextCaseType.CapitalizeWords === nCaseType && 0 !== nIndex && !isAllCapital)
+					|| (Asc.c_oAscChangeTextCaseType.SentenceCase === nCaseType && !isAllCapital
+						&& (0 !== nIndex || (!this .StartSentence && !isAllExceptFirstLower)))))
+			{
+				oRun.AddToContent(nInRunPos, new ParaText(nLowerCode), false);
+				oRun.RemoveFromContent(nInRunPos + 1, 1, false);
+			}
+		}
+	}
+
+	if (this.WordBuffer.length > 0)
+		this.StartSentence = false;
+
+	this.WordBuffer = [];
+};
+CDocumentChangeTextCaseEngine.prototype.AddLetter = function(oRun, nInRunPos, isChange)
+{
+	this.WordBuffer.push({
+		Run    : oRun,
+		Pos    : nInRunPos,
+		Change : isChange
+	});
+};
+CDocumentChangeTextCaseEngine.prototype.SetStartSentence = function(isStart)
+{
+	this.StartSentence = isStart;
+};
+
+
 //-------------------------------------------------------------export---------------------------------------------------
-window['Asc'] = window['Asc'] || {};
-window['AscCommon'] = window['AscCommon'] || {};
-window['AscCommonWord'] = window['AscCommonWord'] || {};
+window['Asc']            = window['Asc'] || {};
+window['AscCommon']      = window['AscCommon'] || {};
+window['AscCommonWord']  = window['AscCommonWord'] || {};
+window['AscCommonSlide'] = window['AscCommonSlide'] || {};
+window['AscCommonExcel'] = window['AscCommonExcel'] || {};
+
 window['AscCommonWord'].CDocument = CDocument;
 window['AscCommonWord'].docpostype_Content        = docpostype_Content;
 window['AscCommonWord'].docpostype_HdrFtr         = docpostype_HdrFtr;

@@ -5192,8 +5192,8 @@ function CFontManager()
 
 function CStylesPainter()
 {
-    this.STYLE_THUMBNAIL_WIDTH  = AscCommonWord.GlobalSkin.STYLE_THUMBNAIL_WIDTH;
-    this.STYLE_THUMBNAIL_HEIGHT = AscCommonWord.GlobalSkin.STYLE_THUMBNAIL_HEIGHT;
+    this.STYLE_THUMBNAIL_WIDTH  = AscCommon.GlobalSkin.STYLE_THUMBNAIL_WIDTH;
+    this.STYLE_THUMBNAIL_HEIGHT = AscCommon.GlobalSkin.STYLE_THUMBNAIL_HEIGHT;
 
     this.CurrentTranslate = null;
     this.IsRetinaEnabled = false;
@@ -5507,12 +5507,12 @@ Asc['asc_docs_api'].prototype["Native_Editor_Initialize_Settings"] = function(_p
         {
             case 0:
             {
-                AscCommonWord.GlobalSkin.STYLE_THUMBNAIL_WIDTH = _params[_current.pos++];
+                AscCommon.GlobalSkin.STYLE_THUMBNAIL_WIDTH = _params[_current.pos++];
                 break;
             }
             case 1:
             {
-                AscCommonWord.GlobalSkin.STYLE_THUMBNAIL_HEIGHT = _params[_current.pos++];
+                AscCommon.GlobalSkin.STYLE_THUMBNAIL_HEIGHT = _params[_current.pos++];
                 break;
             }
             case 2:

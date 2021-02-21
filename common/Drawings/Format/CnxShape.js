@@ -557,6 +557,28 @@
     CConnectionShape.prototype.getEndCxnIdx = function(){
         return this.nvSpPr.nvUniSpPr.endCnxIdx;
     };
+    CConnectionShape.prototype.assignConnection = function(oObjectsMap){
+        var oPr = this.nvSpPr.nvUniSpPr;
+        if(AscFormat.isRealNumber(oPr.stCnxId)){
+            if(AscCommon.isRealObject(oObjectsMap[oPr.stCnxId])){
+                oPr.stCnxId = oObjectsMap[oPr.stCnxId].Id;
+            }
+            else{
+                oPr.stCnxId = null;
+                oPr.stCnxIdx = null;
+            }
+        }
+        if(AscFormat.isRealNumber(oPr.endCnxId)){
+            if(AscCommon.isRealObject(oObjectsMap[oPr.endCnxId])){
+                oPr.endCnxId = oObjectsMap[oPr.endCnxId].Id;
+            }
+            else{
+                oPr.endCnxId = null;
+                oPr.endCnxIdx = null;
+            }
+        }
+        this.nvSpPr.setUniSpPr(oPr.copy());
+    };
 
     CConnectionShape.prototype.calculateTransform = function (bMove) {
         var oBeginDrawing = null;

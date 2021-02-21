@@ -789,11 +789,10 @@ CCellCommentator.prototype.cleanLastSelection = function() {
 		pos.dTopPX = this.worksheet._getRowTop(top) + ((this.worksheet._getRowHeight(top) / 2) | 0) -
 			this.worksheet._getRowTop(fvr) + headerCellsOffset.top + frozenOffset.offsetY;
 
-		if (AscCommon.AscBrowser.isRetina) {
-			pos.dLeftPX = AscCommon.AscBrowser.convertToRetinaValue(pos.dLeftPX);
-			pos.dTopPX = AscCommon.AscBrowser.convertToRetinaValue(pos.dTopPX);
-			pos.dReverseLeftPX = AscCommon.AscBrowser.convertToRetinaValue(pos.dReverseLeftPX);
-		}
+		pos.dLeftPX = AscCommon.AscBrowser.convertToRetinaValue(pos.dLeftPX);
+		pos.dTopPX = AscCommon.AscBrowser.convertToRetinaValue(pos.dTopPX);
+		pos.dReverseLeftPX = AscCommon.AscBrowser.convertToRetinaValue(pos.dReverseLeftPX);
+
 		return pos;
 	};
 

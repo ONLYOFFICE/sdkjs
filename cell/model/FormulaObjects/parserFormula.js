@@ -2706,7 +2706,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 	};
 	cArray.prototype.getDimensions = function () {
-		return {col: this.getCountElementInRow(), row: this.getCountElement()};
+		return {col: this.getCountElementInRow(), row: this.getRowCount()};
 	};
 
 
@@ -7622,7 +7622,7 @@ function parserFormula( formula, parent, _ws ) {
 		}
 		return false;
 	};
-	parserFormula.prototype.simplifyRefType = function(val, opt_ws, opt_row, opt_col) {
+	parserFormula.prototype.simplifyRefType = function (val, opt_ws, opt_row, opt_col) {
 		var ref = this.getArrayFormulaRef(), row, col;
 
 		if (cElementType.cell === val.type || cElementType.cell3D === val.type) {
@@ -7632,10 +7632,10 @@ function parserFormula( formula, parent, _ws ) {
 				val = new cNumber(0);
 			}
 		} else if (cElementType.array === val.type) {
-			if(ref && opt_ws) {
+			if (ref && opt_ws) {
 				row = 1 === val.array.length ? 0 : opt_row - ref.r1;
 				col = 1 === val.array[0].length ? 0 : opt_col - ref.c1;
-				if(val.array[row] && val.array[row][col]) {
+				if (val.array[row] && val.array[row][col]) {
 					val = val.getElementRowCol(row, col);
 				} else {
 					val = new window['AscCommonExcel'].cError(window['AscCommonExcel'].cErrorType.not_available);
@@ -7646,23 +7646,26 @@ function parserFormula( formula, parent, _ws ) {
 
 			//сделано для формул массива
 			//внутри массива может лежать ссылка на диапазон(например, функция index возвращает area/ref)
-			if(cElementType.cellsRange === val.type || cElementType.cellsRange3D === val.type || cElementType.array === val.type || cElementType.cell === val.type || cElementType.cell3D === val.type) {
+			if (val && (cElementType.cellsRange === val.type || cElementType.cellsRange3D === val.type ||
+				cElementType.array === val.type || cElementType.cell === val.type ||
+				cElementType.cell3D === val.type)) {
 				val = this.simplifyRefType(val, opt_ws, opt_row, opt_col);
 			}
 		} else if (cElementType.cellsRange === val.type || cElementType.cellsRange3D === val.type) {
 			if (opt_ws) {
 				var range;
-				if(ref) {
+				if (ref) {
 					range = val.getRange();
-					if(range) {
+					if (range) {
 						var bbox = range.bbox;
 						var rowCount = bbox.r2 - bbox.r1 + 1;
 						var colCount = bbox.c2 - bbox.c1 + 1;
 						row = 1 === rowCount ? 0 : opt_row - ref.r1;
 						col = 1 === colCount ? 0 : opt_col - ref.c1;
 						val = val.getValueByRowCol(row, col);
-						if(!val) {
-							val = new window['AscCommonExcel'].cError(window['AscCommonExcel'].cErrorType.not_available);
+						if (!val) {
+							val =
+								new window['AscCommonExcel'].cError(window['AscCommonExcel'].cErrorType.not_available);
 						}
 					} else {
 						val = new window['AscCommonExcel'].cError(window['AscCommonExcel'].cErrorType.not_available);

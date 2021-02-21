@@ -1299,27 +1299,19 @@
 	};
 
 	CellEditor.prototype._adjustCanvas = function () {
-		var isRetina = AscBrowser.isRetina;
 		var z = this.defaults.canvasZIndex;
-		var borderSize = 1;
+		var borderSize = AscCommon.AscBrowser.convertToRetinaValue(1, true);
 		var left = this.left * this.kx;
 		var top = this.top * this.ky;
 		var width, height, widthStyle, heightStyle;
 
-		if (isRetina) {
-			borderSize = AscCommon.AscBrowser.convertToRetinaValue(borderSize, true);
-		}
-
 		width = widthStyle = (this.right - this.left) * this.kx - borderSize;
 		height = heightStyle = (this.bottom - this.top) * this.ky - borderSize;
 
-		if (isRetina) {
-			left = AscCommon.AscBrowser.convertToRetinaValue(left);
-			top = AscCommon.AscBrowser.convertToRetinaValue(top);
-
-			widthStyle = AscCommon.AscBrowser.convertToRetinaValue(widthStyle);
-			heightStyle = AscCommon.AscBrowser.convertToRetinaValue(heightStyle);
-		}
+        left = AscCommon.AscBrowser.convertToRetinaValue(left);
+        top = AscCommon.AscBrowser.convertToRetinaValue(top);
+        widthStyle = AscCommon.AscBrowser.convertToRetinaValue(widthStyle);
+        heightStyle = AscCommon.AscBrowser.convertToRetinaValue(heightStyle);
 
 		this.canvasOuterStyle.left = left + 'px';
 		this.canvasOuterStyle.top = top + 'px';
@@ -1329,10 +1321,10 @@
 			this.canvasOuterStyle.zIndex = this.top < 0 ? -1 : z;
 		}
 
-		this.canvas.width = this.canvasOverlay.width = width;
-		this.canvas.height = this.canvasOverlay.height = height;
 		this.canvas.style.width = this.canvasOverlay.style.width = widthStyle + 'px';
 		this.canvas.style.height = this.canvasOverlay.style.height = heightStyle + 'px';
+		AscCommon.calculateCanvasSize(this.canvas);
+        AscCommon.calculateCanvasSize(this.canvasOverlay);
 	};
 
 	CellEditor.prototype._renderText = function (dy) {
@@ -1486,11 +1478,9 @@
 			this._renderText(y);
 		}
 
-		if (AscBrowser.isRetina) {
-			curLeft = AscCommon.AscBrowser.convertToRetinaValue(curLeft);
-			curTop = AscCommon.AscBrowser.convertToRetinaValue(curTop);
-			curHeight = AscCommon.AscBrowser.convertToRetinaValue(curHeight);
-		}
+		curLeft = AscCommon.AscBrowser.convertToRetinaValue(curLeft);
+		curTop = AscCommon.AscBrowser.convertToRetinaValue(curTop);
+		curHeight = AscCommon.AscBrowser.convertToRetinaValue(curHeight);
 
 		this.curLeft = curLeft;
 		this.curTop = curTop;
@@ -2742,10 +2732,8 @@
 		var x = (((event.pageX * AscBrowser.zoom) >> 0) - offs.left) / this.kx;
 		var y = (((event.pageY * AscBrowser.zoom) >> 0) - offs.top) / this.ky;
 
-		if (AscBrowser.isRetina) {
-			x *= AscCommon.AscBrowser.retinaPixelRatio;
-			y *= AscCommon.AscBrowser.retinaPixelRatio;
-		}
+		x *= AscCommon.AscBrowser.retinaPixelRatio;
+		y *= AscCommon.AscBrowser.retinaPixelRatio;
 
 		return {x: x, y: y};
 	};

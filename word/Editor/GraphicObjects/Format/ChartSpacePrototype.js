@@ -460,7 +460,7 @@ CChartSpace.prototype.checkShapeChildTransform = function(transform_text)
                         for(var i = 0; i < series.length; ++i)
                         {
                             var ser = series[i];
-                            var pts = AscFormat.getPtsFromSeries(ser);
+                            var pts = ser.getNumPts();
                             for(var j = 0; j < pts.length; ++j)
                             {
                                 if(pts[j].compiledDlb)

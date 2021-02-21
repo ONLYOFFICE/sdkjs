@@ -657,9 +657,9 @@
 
     CCellRangeNode.prototype.getContentValue = function(oContent){
         var sString;
-        oContent.Set_ApplyToAll(true);
+        oContent.SetApplyToAll(true);
         sString = oContent.GetSelectedText(false, {NewLineParagraph : true, NewLine : true});
-        oContent.Set_ApplyToAll(false);
+        oContent.SetApplyToAll(false);
         return this.parseText(sString);
     };
 

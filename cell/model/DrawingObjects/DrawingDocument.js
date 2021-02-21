@@ -173,7 +173,6 @@ function CDrawingDocument()
 
     this.LockCursorType = function(sType)
     {
-
     };
 
     this.LockCursorTypeCur = function()
@@ -361,7 +360,6 @@ function CDrawingDocument()
             _offX = this.AutoShapesTrack.Graphics.m_oCoordTransform.tx;
             _offY = this.AutoShapesTrack.Graphics.m_oCoordTransform.ty;
         }
-
 
         var targetPosX = 0;
         var targetPosY = 0;

@@ -72,7 +72,7 @@ function (window, undefined)
 		var _res = this.WB.ConvertLogicToXY(x, y);
 		var _point = {X: _res.X, Y: _res.Y, Page: 0, DrawPage: 0};
 
-		if (AscBrowser.isRetina)
+		if (AscBrowser.isCustomScaling())
 		{
 			if (isNoCell === true)
 			{
@@ -99,14 +99,8 @@ function (window, undefined)
 	};
 	CMobileDelegateEditorCell.prototype.ConvertCoordsFromCursor = function(x, y)
 	{
-		var _x = x - this.Offset.X;
-		var _y = y - this.Offset.Y;
-
-		if (AscBrowser.isRetina)
-		{
-			_x *= AscCommon.AscBrowser.retinaPixelRatio;
-			_y *= AscCommon.AscBrowser.retinaPixelRatio;
-		}
+		var _x = x - this.Offset.X * AscCommon.AscBrowser.retinaPixelRatio;
+		var _y = y - this.Offset.Y * AscCommon.AscBrowser.retinaPixelRatio;
 
 		var _res = this.WB.ConvertXYToLogic(_x, _y);
 		var _point = {X: _res.X, Y: _res.Y, Page: 0, DrawPage: 0};
@@ -1019,7 +1013,7 @@ function (window, undefined)
 			ctx.fillStyle = "rgba(" + color.r + "," + color.g + "," + color.b + "," + color.a + ")";
 		}
 
-		var _koef = AscCommon.AscBrowser.isRetina ? AscCommon.AscBrowser.retinaPixelRatio : 1;
+		var _koef = AscCommon.AscBrowser.retinaPixelRatio;
 
 		var _oldGlobalAlpha = ctx.globalAlpha;
 		ctx.globalAlpha = 1.0;

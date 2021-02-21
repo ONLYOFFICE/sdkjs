@@ -293,6 +293,10 @@ CCommentData.prototype.GetQuoteText = function()
 {
 	return this.Get_QuoteText();
 };
+CCommentData.prototype.SetQuoteText = function(sText)
+{
+	this.Set_QuoteText(sText);
+};
 CCommentData.prototype.IsSolved = function()
 {
 	return this.m_bSolved;
@@ -1018,10 +1022,6 @@ ParaComment.prototype.GetCommentId = function()
 ParaComment.prototype.IsCommentStart = function()
 {
 	return this.Start;
-};
-ParaComment.prototype.CheckRunContent = function(fCheck)
-{
-    return fCheck(this);
 };
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommon'] = window['AscCommon'] || {};

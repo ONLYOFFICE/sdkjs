@@ -65,6 +65,7 @@ AscDFH.changesFactory[AscDFH.historyitem_MathBase_HighLight]       = CChangesMat
 AscDFH.changesFactory[AscDFH.historyitem_MathBase_ReviewType]      = CChangesMathBaseReviewType;
 AscDFH.changesFactory[AscDFH.historyitem_MathBase_TextFill]        = CChangesMathBaseTextFill;
 AscDFH.changesFactory[AscDFH.historyitem_MathBase_TextOutline]     = CChangesMathBaseTextOutline;
+AscDFH.changesFactory[AscDFH.historyitem_MathBase_HighlightColor]  = CChangesMathBaseHighlightColor;
 AscDFH.changesFactory[AscDFH.historyitem_MathBox_AlnAt]            = CChangesMathBoxAlnAt;
 AscDFH.changesFactory[AscDFH.historyitem_MathBox_ForcedBreak]      = CChangesMathBoxForcedBreak;
 AscDFH.changesFactory[AscDFH.historyitem_MathFraction_Type]        = CChangesMathFractionType;
@@ -137,6 +138,7 @@ AscDFH.changesRelationMap[AscDFH.historyitem_MathBase_HighLight]       = [AscDFH
 AscDFH.changesRelationMap[AscDFH.historyitem_MathBase_ReviewType]      = [AscDFH.historyitem_MathBase_ReviewType];
 AscDFH.changesRelationMap[AscDFH.historyitem_MathBase_TextFill]        = [AscDFH.historyitem_MathBase_TextFill];
 AscDFH.changesRelationMap[AscDFH.historyitem_MathBase_TextOutline]     = [AscDFH.historyitem_MathBase_TextOutline];
+AscDFH.changesRelationMap[AscDFH.historyitem_MathBase_HighlightColor]  = [AscDFH.historyitem_MathBase_HighlightColor];
 AscDFH.changesRelationMap[AscDFH.historyitem_MathBox_AlnAt]            = [AscDFH.historyitem_MathBox_AlnAt, AscDFH.historyitem_MathBox_ForcedBreak];
 AscDFH.changesRelationMap[AscDFH.historyitem_MathBox_ForcedBreak]      = [AscDFH.historyitem_MathBox_AlnAt, AscDFH.historyitem_MathBox_ForcedBreak];
 AscDFH.changesRelationMap[AscDFH.historyitem_MathFraction_Type]        = [AscDFH.historyitem_MathFraction_Type];
@@ -877,6 +879,71 @@ CChangesMathBaseHighLight.prototype.ReadFromBinary = function(Reader)
 	else
 	{
 		this.Old = new CDocumentColor(0, 0, 0);
+		this.Old.Read_FromBinary(Reader);
+	}
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseProperty}
+ */
+function CChangesMathBaseHighlightColor(Class, Old, New)
+{
+	AscDFH.CChangesBaseProperty.call(this, Class, Old, New);
+}
+CChangesMathBaseHighlightColor.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesMathBaseHighlightColor.prototype.constructor = CChangesMathBaseHighlightColor;
+CChangesMathBaseHighlightColor.prototype.Type = AscDFH.historyitem_MathBase_HighlightColor;
+CChangesMathBaseHighlightColor.prototype.private_SetValue = function(Value)
+{
+	this.Class.raw_SetHighlightColor(Value);
+};
+CChangesMathBaseHighlightColor.prototype.WriteToBinary = function(Writer)
+{
+	var nFlags = 0;
+
+	if (false !== this.Color)
+		nFlags |= 1;
+
+	if (undefined === this.New)
+		nFlags |= 2;
+
+	if (undefined === this.Old)
+		nFlags |= 4;
+
+	Writer.WriteLong(nFlags);
+
+	if (undefined !== this.New)
+		this.New.Write_ToBinary(Writer);
+
+	if (undefined !== this.Old)
+		this.Old.Write_ToBinary(Writer);
+};
+CChangesMathBaseHighlightColor.prototype.ReadFromBinary = function(Reader)
+{
+	var nFlags = Reader.GetLong();
+
+	if (nFlags & 1)
+		this.Color = true;
+	else
+		this.Color = false;
+
+	if (nFlags & 2)
+	{
+		this.New = undefined;
+	}
+	else
+	{
+		this.New = new AscFormat.CUniColor();
+		this.New.Read_FromBinary(Reader);
+	}
+
+	if (nFlags & 4)
+	{
+		this.Old = undefined;
+	}
+	else
+	{
+		this.Old = new AscFormat.CUniColor();
 		this.Old.Read_FromBinary(Reader);
 	}
 };

@@ -252,11 +252,10 @@ window['Asc']["CAscWatermarkProperties"].prototype["showFileDialog"] = function 
     var _this = this;
 
     window["AscDesktopEditor"]["OpenFilenameDialog"]("images", false, function(_file) {
-        var file = _file;
-        if (Array.isArray(file))
-            file = file[0];
-
-        if (!file)
+		var file = _file;
+		if (Array.isArray(file))
+			file = file[0];
+		if (!file)
 			return;
 
         var url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](file);
@@ -564,6 +563,9 @@ window["asc_LocalRequestSign"] = function(guid, width, height, isView)
 	}
 
 	var _editor = window["Asc"]["editor"] ? window["Asc"]["editor"] : window.editor;
+	if (_editor.isRestrictionView())
+		return;
+
 	var _length = _editor.signatures.length;
 	for (var i = 0; i < _length; i++)
 	{

@@ -328,6 +328,7 @@ function (window, undefined) {
 	cCONCAT.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cCONCAT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cCONCAT.prototype.argumentsType = [[argType.text]];
+	cCONCAT.prototype.isXLFN = true;
 	cCONCAT.prototype.Calculate = function (arg) {
 		var arg0 = new cString(""), argI;
 

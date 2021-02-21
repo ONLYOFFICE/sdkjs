@@ -249,7 +249,7 @@ CDrawingDocument.prototype.OnStartRecalculate = function(pageCount)
     {
         return;
     }
-    this.Native["DD_OnStartRecalculate"](pageCount, this.LogicDocument.Width, this.LogicDocument.Height);
+    this.Native["DD_OnStartRecalculate"](pageCount, this.LogicDocument.GetWidthMM(), this.LogicDocument.GetHeightMM());
 };
 
 CDrawingDocument.prototype.SetTargetColor = function(r, g, b)
@@ -293,9 +293,9 @@ CDrawingDocument.prototype.OnRecalculatePage = function(index, pageObject)
     }
     else
     {
-        r = this.m_oLogicDocument.Width;
+        r = this.m_oLogicDocument.GetWidthMM();
         l = 0.0;
-        b = this.m_oLogicDocument.Height;
+        b = this.m_oLogicDocument.GetHeightMM();
         t = 0.0;
     }
     this.Native["DD_OnRecalculatePage"](index, l, t, r, b, bIsHidden, pageObject.Get_Id());
@@ -321,7 +321,7 @@ CDrawingDocument.prototype.RenderDocument = function(Renderer)
 {
     for (var i = 0; i < this.SlidesCount; i++)
     {
-        Renderer.BeginPage(this.m_oLogicDocument.Width, this.m_oLogicDocument.Height);
+        Renderer.BeginPage(this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM());
         this.m_oLogicDocument.DrawPage(i, Renderer);
         Renderer.EndPage();
     }
@@ -354,7 +354,7 @@ CDrawingDocument.prototype.ToRenderer2    = function()
     var ret = "";
     for (var i = 0; i < this.SlidesCount; i++)
     {
-        Renderer.BeginPage(this.m_oLogicDocument.Width, this.m_oLogicDocument.Height);
+        Renderer.BeginPage(this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM());
         this.m_oLogicDocument.DrawPage(i, Renderer);
         Renderer.EndPage();
 
@@ -394,17 +394,17 @@ CDrawingDocument.prototype.ToRendererPart = function(noBase64)
 
     for (var i = start; i <= end; i++)
     {
-        renderer.BeginPage(this.m_oLogicDocument.Width, this.m_oLogicDocument.Height);
+        renderer.BeginPage(this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM());
         this.m_oLogicDocument.DrawPage(i, renderer);
         renderer.EndPage();
 
         if (watermark)
-            watermark.DrawOnRenderer(renderer, this.m_oLogicDocument.Width, this.m_oLogicDocument.Height);
+            watermark.DrawOnRenderer(renderer, this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM());
     }
 
     if (end == -1)
     {
-        renderer.BeginPage(this.m_oLogicDocument.Width, this.m_oLogicDocument.Height);
+        renderer.BeginPage(this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM());
         renderer.EndPage()
     }
 
@@ -938,8 +938,8 @@ CDrawingDocument.prototype.CheckLayouts = function(oMaster){
 
     // NOTE: need check
 
-    var page_w_mm = logicDoc.Width;//THEME_TH_WIDTH * 2.54 / (72.0 / 96.0);
-    var page_h_mm = logicDoc.Height;//THEME_TH_HEIGHT * 2.54 / (72.0 / 96.0);
+    var page_w_mm = logicDoc.GetWidthMM();//THEME_TH_WIDTH * 2.54 / (72.0 / 96.0);
+    var page_h_mm = logicDoc.GetHeightMM();//THEME_TH_HEIGHT * 2.54 / (72.0 / 96.0);
     var page_w_px = THEME_TH_WIDTH * 2;
     var page_h_px = THEME_TH_HEIGHT * 2;
 

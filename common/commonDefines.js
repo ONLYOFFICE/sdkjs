@@ -218,6 +218,7 @@
 
 			ForceSaveButton: -331,
 			ForceSaveTimeout: -332,
+			Submit: -333,
 
 			OpenWarning : 500,
 
@@ -247,6 +248,9 @@
 			DataValidateMustEnterValue: -832,
 			DataValidateMinGreaterMax: 833,
 			DataValidateInvalid: 834,
+			NamedRangeNotFound: 835,
+			FormulaEvaluateError: 836,
+			DataValidateInvalidList: 837,
 
 
 			RemoveDuplicates : -850,
@@ -282,7 +286,8 @@
 		SendMailMerge     : 15,  // рассылка mail merge по почте
 		ForceSaveButton   : 16,
 		ForceSaveTimeout  : 17,
-		Waiting	: 18
+		Waiting	: 18,
+		Submit : 19
 	};
 
 	var c_oAscAdvancedOptionsID = {
@@ -402,6 +407,7 @@
 	var align_Left    = 1;
 	var align_Center  = 2;
 	var align_Justify = 3;
+	var align_Distributed = 4;
 
 
 	var linerule_AtLeast = 0x00;
@@ -1695,6 +1701,14 @@
 		slicer: 2
 	};
 
+	var c_oAscChangeTextCaseType = {
+		SentenceCase    : 0,
+		LowerCase       : 1,
+		UpperCase       : 2,
+		CapitalizeWords : 3,
+		ToggleCase      : 4
+	};
+
 	var g_aLcidNameIdArray = [
 		"ar", 0x0001 ,
 		"bg", 0x0002 ,
@@ -2120,6 +2134,26 @@
 		All     : 2
 	};
 
+	var c_oAscSlideSZType = {
+			Sz35mm: 0,
+			SzA3: 1,
+			SzA4: 2,
+			SzB4ISO: 3,
+			SzB4JIS: 4,
+			SzB5ISO: 5,
+			SzB5JIS: 6,
+			SzBanner: 7,
+			SzCustom: 8,
+			SzHagakiCard: 9,
+			SzLedger: 10,
+			SzLetter: 11,
+			SzOverhead: 12,
+			SzScreen16x10: 13,
+			SzScreen16x9: 14,
+			SzScreen4x3: 15,
+			SzWidescreen: 16
+	};
+
 	//------------------------------------------------------------export--------------------------------------------------
 	var prot;
 	window['Asc']                          = window['Asc'] || {};
@@ -2292,6 +2326,9 @@
 	prot['DataValidateMustEnterValue']       = prot.DataValidateMustEnterValue;
 	prot['DataValidateMinGreaterMax']        = prot.DataValidateMinGreaterMax;
 	prot['DataValidateInvalid']              = prot.DataValidateInvalid;
+	prot['NamedRangeNotFound']               = prot.NamedRangeNotFound;
+	prot['FormulaEvaluateError']             = prot.FormulaEvaluateError;
+	prot['DataValidateInvalidList']          = prot.DataValidateInvalidList;
 
 	window['Asc']['c_oAscAsyncAction']       = window['Asc'].c_oAscAsyncAction = c_oAscAsyncAction;
 	prot                                     = c_oAscAsyncAction;
@@ -2312,6 +2349,8 @@
 	prot['SendMailMerge']                    = prot.SendMailMerge;
 	prot['ForceSaveButton']                  = prot.ForceSaveButton;
 	prot['ForceSaveTimeout']                 = prot.ForceSaveTimeout;
+	prot['Waiting']                          = prot.Waiting;
+	prot['Submit']                           = prot.Submit;
 	window['Asc']['c_oAscAdvancedOptionsID'] = window['Asc'].c_oAscAdvancedOptionsID = c_oAscAdvancedOptionsID;
 	prot                                         = c_oAscAdvancedOptionsID;
 	prot['CSV']                                  = prot.CSV;
@@ -2506,6 +2545,7 @@
 	prot['fixed']                     = prot.fixed;
 	window['Asc']['c_oAscValAxUnits'] = window['Asc'].c_oAscValAxUnits = c_oAscValAxUnits;
 	prot                            = c_oAscValAxUnits;
+	prot['none']                    = prot.none;
 	prot['BILLIONS']                = prot.BILLIONS;
 	prot['HUNDRED_MILLIONS']        = prot.HUNDRED_MILLIONS;
 	prot['HUNDREDS']                = prot.HUNDREDS;
@@ -2972,6 +3012,7 @@
 	window['AscCommon']['align_Left'] = window['AscCommon'].align_Left = align_Left;
 	window['AscCommon']['align_Center'] = window['AscCommon'].align_Center = align_Center;
 	window['AscCommon']['align_Justify'] = window['AscCommon'].align_Justify = align_Justify;
+	window['AscCommon']['align_Distributed'] = window['AscCommon'].align_Distributed = align_Distributed;
 
 
 	window["AscCommon"]["c_oAscFormatPainterState"]    = c_oAscFormatPainterState;
@@ -3157,6 +3198,14 @@
 	prot['table'] = prot.table;
 	prot['slicer'] = prot.slicer;
 
+	window['Asc']['c_oAscChangeTextCaseType'] = window['Asc'].c_oAscChangeTextCaseType = c_oAscChangeTextCaseType;
+	prot = c_oAscChangeTextCaseType;
+	prot['SentenceCase']    = prot.SentenceCase;
+	prot['LowerCase']       = prot.LowerCase;
+	prot['UpperCase']       = prot.UpperCase;
+	prot['CapitalizeWords'] = prot.CapitalizeWords;
+	prot['ToggleCase']      = prot.ToggleCase;
+
 	window["AscCommon"].document_compatibility_mode_Word11  = document_compatibility_mode_Word11;
 	window["AscCommon"].document_compatibility_mode_Word12  = document_compatibility_mode_Word12;
 	window["AscCommon"].document_compatibility_mode_Word14  = document_compatibility_mode_Word14;
@@ -3175,5 +3224,24 @@
 	prot['Current'] = c_oAscSectionApplyType.Current;
 	prot['ToEnd']   = c_oAscSectionApplyType.ToEnd;
 	prot['All']     = c_oAscSectionApplyType.All;
+
+	prot = window['Asc']['c_oAscSlideSZType'] = window['Asc'].c_oAscSlideSZType = c_oAscSlideSZType;
+	prot['Sz35mm'] = prot.Sz35mm;
+	prot['SzA3'] = prot.SzA3;
+	prot['SzA4'] = prot.SzA4;
+	prot['SzB4ISO'] = prot.SzB4ISO;
+	prot['SzB4JIS'] = prot.SzB4JIS;
+	prot['SzB5ISO'] = prot.SzB5ISO;
+	prot['SzB5JIS'] = prot.SzB5JIS;
+	prot['SzBanner'] = prot.SzBanner;
+	prot['SzCustom'] = prot.SzCustom;
+	prot['SzHagakiCard'] = prot.SzHagakiCard;
+	prot['SzLedger'] = prot.SzLedger;
+	prot['SzLetter'] = prot.SzLetter;
+	prot['SzOverhead'] = prot.SzOverhead;
+	prot['SzScreen16x10'] = prot.SzScreen16x10;
+	prot['SzScreen16x9'] = prot.SzScreen16x9;
+	prot['SzScreen4x3'] = prot.SzScreen4x3;
+	prot['SzWidescreen'] = prot.SzWidescreen;
 
 })(window);

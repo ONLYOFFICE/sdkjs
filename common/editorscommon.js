@@ -413,7 +413,7 @@
 		this.value = function(param)
 		{
 			var ret = this.map[param];
-			if (AscCommon.AscBrowser.isRetina && this.mapRetina[param])
+			if (AscCommon.AscBrowser.isCustomScalingAbove2() && this.mapRetina[param])
 				ret = this.mapRetina[param];
 			return ret ? ret : param;
 		};
@@ -2904,19 +2904,9 @@
 		{
 			if(dataRange)
 			{
-				var sData = dataRange;
-				if(sData[0] === "=")
+				if(Asc.c_oAscError.ID.No === AscFormat.isValidChartRange(dataRange))
 				{
-					sData = sData.slice(1);
-				}
-				result = parserHelp.parse3DRef(sData);
-			}
-			if (result)
-			{
-				sheetModel = model.getWorksheetByName(result.sheet);
-				if (sheetModel)
-				{
-					range = AscCommonExcel.g_oRangeCache.getAscRange(result.range);
+					range = AscFormat.fParseChartFormula(dataRange);
 				}
 			}
 		}
@@ -2953,8 +2943,18 @@
 		}
 		else if (Asc.c_oAscSelectionDialogType.DataValidation === dialogType)
 		{
-			if (dataRange === null) {
-				return Asc.c_oAscError.ID.No;
+			if (dataRange === null || dataRange === "") {
+				return Asc.c_oAscError.ID.DataValidateMustEnterValue;
+			} else if (typeof dataRange === "string") {
+				result = parserHelp.parse3DRef(dataRange);
+				if (result)
+				{
+					sheetModel = model.getWorksheetByName(result.sheet);
+					if (sheetModel)
+					{
+						range = AscCommonExcel.g_oRangeCache.getAscRange(result.range);
+					}
+				}
 			}
 		}
 		else
@@ -2969,47 +2969,8 @@
 		{
 			if (Asc.c_oAscSelectionDialogType.Chart === dialogType)
 			{
-				// Проверка максимального дипазона
-				var maxSeries = AscFormat.MAX_SERIES_COUNT;
-				var minStockVal = 4;
-				var maxValues = AscFormat.MAX_POINTS_COUNT;
-
-				var intervalValues, intervalSeries;
-				if (isRows)
-				{
-					intervalSeries = range.r2 - range.r1 + 1;
-					intervalValues = range.c2 - range.c1 + 1;
-				}
-				else
-				{
-					intervalSeries = range.c2 - range.c1 + 1;
-					intervalValues = range.r2 - range.r1 + 1;
-				}
-
-				if (Asc.c_oAscChartTypeSettings.stock === subType)
-				{
-					var chartSettings = new Asc.asc_ChartSettings();
-					chartSettings.putType(Asc.c_oAscChartTypeSettings.stock);
-					chartSettings.putRange(dataRange);
-					chartSettings.putInColumns(!isRows);
-					var chartSeries = AscFormat.getChartSeries(sheetModel, chartSettings).series;
-					if (minStockVal !== chartSeries.length || !chartSeries[0].Val || !chartSeries[0].Val.NumCache || chartSeries[0].Val.NumCache.length < minStockVal)
-						return Asc.c_oAscError.ID.StockChartError;
-				}
-				else if(Asc.c_oAscChartTypeSettings.comboAreaBar === subType
-						|| Asc.c_oAscChartTypeSettings.comboBarLine === subType
-						|| Asc.c_oAscChartTypeSettings.comboBarLineSecondary === subType
-						|| Asc.c_oAscChartTypeSettings.comboCustom === subType) {
-					if(intervalSeries < 2) {
-						return Asc.c_oAscError.ID.ComboSeriesError;
-					}
-				}
-				else if (intervalSeries > maxSeries)
-					return Asc.c_oAscError.ID.MaxDataSeriesError;
-				else if(intervalValues > maxValues){
-					return Asc.c_oAscError.ID.MaxDataPointsError;
-
-				}
+				var oDataRefs = new AscFormat.CChartDataRefs(null);
+				return oDataRefs.checkDataRange(dataRange, isRows, subType);
 			}
 			else if (Asc.c_oAscSelectionDialogType.FormatTable === dialogType)
 			{
@@ -4690,12 +4651,11 @@
 	{
 		this.Text = "";
 		window["AscDesktopEditor"]["OpenFilenameDialog"]("images", false, function(_file) {
-            var file = _file;
-            if (Array.isArray(file))
-                file = file[0];
-
-			if (file == "")
-                return;
+			var file = _file;
+			if (Array.isArray(file))
+				file = file[0];
+			if (!file)
+				return;
 
             var _drawer = window.Asc.g_signature_drawer;
             _drawer.Image = window["AscDesktopEditor"]["GetImageBase64"](file);
@@ -4900,11 +4860,11 @@
 		{
 			var _this = this;
             window["AscDesktopEditor"]["OpenFilenameDialog"]("images", true, function(files) {
-
+				if (!files)
+					return;
                 if (!Array.isArray(files)) // string detect
                     files = [files];
-
-                if (0 == files.length)
+                if (0 === files.length)
                 	return;
 
 				var _files = [];
@@ -5775,10 +5735,13 @@
 	CMathTrack.prototype.Draw = function (overlay, oPath, shift, color, dKoefX, dKoefY, left, top)
 	{
 		var ctx = overlay.m_oContext;
+		var rPR = AscCommon.AscBrowser.retinaPixelRatio;
 		ctx.strokeStyle = color;
-		ctx.lineWidth = 1;
+		ctx.lineWidth = Math.round(window.devicePixelRatio);
 		ctx.beginPath();
 
+        left *= rPR;
+        top *= rPR;
 		var Points = oPath.Points;
 
 		var nCount = Points.length;
@@ -5911,26 +5874,27 @@
 		var Points = oPath.Points;
 		var nPointIndex;
 		var _x, _y, x, y, p;
+		var rPR = AscCommon.AscBrowser.retinaPixelRatio;
 		for (nPointIndex = 0; nPointIndex < Points.length - 1; nPointIndex++)
 		{
 			p = Points[nPointIndex];
 			if(!m)
 			{
-				_x = left + dKoefX * p.X;
-				_y = top + dKoefY * p.Y;
+				_x = (left + dKoefX * p.X) * rPR;
+				_y = (top + dKoefY * p.Y) * rPR;
 			}
 			else
 			{
 				x = p.X;
 				y = p.Y;
-				_x = left + dKoefX * m.TransformPointX(x, y);
-				_y = top + dKoefY * m.TransformPointY(x, y);
+				_x = (left + dKoefX * m.TransformPointX(x, y)) * rPR;
+				_y = (top + dKoefY * m.TransformPointY(x, y)) * rPR;
 			}
 			overlay.CheckPoint(_x, _y);
 			if (0 == nPointIndex)
-				ctx.moveTo((_x >> 0) + 0.5, (_y >> 0) + 0.5);
+				ctx.moveTo((_x >> 0) + 0.5 * Math.round(rPR), (_y >> 0) + 0.5 * Math.round(rPR));
 			else
-				ctx.lineTo((_x >> 0) + 0.5, (_y >> 0) + 0.5);
+				ctx.lineTo((_x >> 0) + 0.5 * Math.round(rPR), (_y >> 0) + 0.5 * Math.round(rPR));
 		}
 		ctx.globalAlpha = 0.2;
 		ctx.fill();
@@ -6239,6 +6203,132 @@
 		return true;
 	}
 
+	function CStringNode(element, par) {
+		this.element = element;
+		this.partner = null;
+		this.par = par;
+		if(typeof element === "string") {
+			this.children = [];
+			for (var oIterator = element.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
+				var nCharCode = oIterator.value();
+				this.children.push(new CStringNode(nCharCode, this));
+			}
+		}
+	}
+	CStringNode.prototype.children = [];
+	CStringNode.prototype.equals = function(oNode) {
+		return this.element === oNode.element;
+	};
+	CStringNode.prototype.forEachDescendant = function(callback, T) {
+		this.children.forEach(function(node) {
+			node.forEach(callback, T);
+		});
+	};
+	CStringNode.prototype.forEach = function(callback, T) {
+		callback.call(T, this);
+		this.children.forEach(function(node) {
+			node.forEach(callback, T);
+		});
+	};
+
+	function CDiffMatching() {
+	}
+	CDiffMatching.prototype.get = function(oNode) {
+		return oNode.partner;
+	};
+	CDiffMatching.prototype.put = function(oNode1, oNode2) {
+		oNode1.partner = oNode2;
+		oNode2.partner = oNode1;
+	};
+	function CStringChange(oOperation) {
+		this.pos = -1;
+		this.deleteCount = 0;
+		this.insert = [];
+
+		var oAnchor = oOperation.anchor;
+		this.pos = oAnchor.index;
+		if(Array.isArray(oOperation.remove)) {
+			this.deleteCount = oOperation.remove.length;
+		}
+		var nIndex, oNode;
+		if(Array.isArray(oOperation.insert)) {
+			for(nIndex = 0; nIndex < oOperation.insert.length; ++nIndex) {
+				oNode = oOperation.insert[nIndex];
+				this.insert.push(oNode.element);
+			}
+		}
+	}
+	CStringChange.prototype.getPos = function() {
+		return this.pos;
+	};
+	CStringChange.prototype.getDeleteCount = function() {
+		return this.deleteCount;
+	};
+	CStringChange.prototype.getInsertSymbols = function() {
+		return this.insert;
+	};
+	function getTextDelta(sBase, sReplace) {
+		var aDelta = [];
+		var oBaseNode = new CStringNode(sBase, null);
+		var oReplaceNode = new CStringNode(sReplace, null);
+		var oMatching = new CDiffMatching();
+		oMatching.put(oBaseNode, oReplaceNode);
+		var oDiff  = new Diff(oBaseNode, oReplaceNode);
+		oDiff.equals = function(a, b)
+		{
+			return a.equals(b);
+		};
+		oDiff.matchTrees(oMatching);
+		var oDeltaCollector = new DeltaCollector(oMatching, oBaseNode, oReplaceNode);
+		oDeltaCollector.forEachChange(function(oOperation){
+			aDelta.push(new CStringChange(oOperation));
+		});
+		return aDelta;
+	}
+
+    function _getIntegerByDivide(val)
+    {
+        // поддерживаем scale, который
+        // 1) рациональное число
+        // 2) знаменатель несократимой дроби <= 10 (поддерживаем проценты кратные 1/10, 1/9, ... 1/2)
+        var test = val;
+        for (var i = 0; i < 10; i++)
+        {
+            test = (val - i) * AscCommon.AscBrowser.retinaPixelRatio;
+            if (test > 0 && Math.abs(test - (test >> 0)) < 0.001)
+                return { start: (val - i), end : (test >> 0) };
+        }
+        return { start : val, end: AscCommon.AscBrowser.convertToRetinaValue(val, true) };
+    };
+
+    function calculateCanvasSize(element)
+	{
+        var scale = AscCommon.AscBrowser.retinaPixelRatio;
+        if (Math.abs(scale - (scale >> 0)) < 0.001)
+		{
+            element.width = (scale * parseInt(element.style.width));
+            element.height = (scale * parseInt(element.style.height));
+            return;
+		}
+
+        var rect = element.getBoundingClientRect();
+        if (!AscCommon.AscBrowser.isMozilla)
+        {
+            element.width = Math.round(scale * rect.right) - Math.round(scale * rect.left);
+            element.height = Math.round(scale * rect.bottom) - Math.round(scale * rect.top);
+        }
+        else
+        {
+            var sizeW = _getIntegerByDivide(rect.width);
+            var sizeH = _getIntegerByDivide(rect.height);
+            if (sizeW.start !== rect.width) element.style.width = sizeW.start + "px";
+            if (sizeH.start !== rect.height) element.style.height = sizeH.start + "px";
+
+            element.width = sizeW.end;
+            element.height = sizeH.end;
+        }
+    };
+
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].getSockJs = getSockJs;
@@ -6355,7 +6445,11 @@
 
 	window["AscCommon"].CUnicodeStringEmulator = CUnicodeStringEmulator;
 
+	window["AscCommon"].calculateCanvasSize = calculateCanvasSize;
+
 	window["AscCommon"].private_IsAbbreviation = private_IsAbbreviation;
+
+	window["AscCommon"].getTextDelta = getTextDelta;
 
 	window["AscCommon"].rx_test_ws_name = rx_test_ws_name;
 

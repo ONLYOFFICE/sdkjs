@@ -228,6 +228,7 @@ _null_object.val = function () { return this; };
 _null_object.remove = function () {};
 _null_object.getComputedStyle = function () { return null; };
 _null_object.getContext = function (type) { return (type == "2d") ? new native_context2d(this) : null; };
+_null_object.getBoundingClientRect = function() { return { left : 0, top : 0, right : this.width(), bottom : this.height() }; };
 
 window._null_object = _null_object;
 
@@ -269,6 +270,9 @@ window.native = native;
 function GetNativeEngine() { return window.native; }
 
 var Api = null; // main builder object
+window.devicePixelRatio = 1;
+if (window.native && window.native.GetDevicePixelRatio)
+	window.devicePixelRatio = window.native.GetDevicePixelRatio();
 
 // OPEN
 function NativeOpenFileData(data, version, xlsx_file_path, options)

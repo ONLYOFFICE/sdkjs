@@ -488,6 +488,13 @@ Paragraph.prototype.GetAllParagraphs = function(Props, ParaArray)
 				this.Content[CurPos].GetAllParagraphs(Props, ParaArray);
 		}	
 	}
+	if(Props && Props.DoNotAddRemoved)
+	{
+		if(this.GetReviewType() === reviewtype_Remove)
+		{
+			return ParaArray;
+		}
+	}
 	if (!Props || true === Props.All)
 	{
 		ParaArray.push(this);
@@ -647,6 +654,10 @@ Paragraph.prototype.Get_Theme = function()
 		return this.Parent.Get_Theme();
 
 	return null;
+};
+Paragraph.prototype.GetTheme = function()
+{
+	return this.Get_Theme();
 };
 Paragraph.prototype.Get_ColorMap = function()
 {
@@ -1364,7 +1375,7 @@ Paragraph.prototype.RecalculateEndInfo = function()
 		return;
 
 	var oLogicDocument = this.GetLogicDocument();
-	if (oLogicDocument && this.EndInfoRecalcId === oLogicDocument.GetRecalcId())
+	if (oLogicDocument && oLogicDocument.GetRecalcId && this.EndInfoRecalcId === oLogicDocument.GetRecalcId())
 		return;
 
 	var oPRSI     = this.m_oPRSI;
@@ -1378,7 +1389,7 @@ Paragraph.prototype.RecalculateEndInfo = function()
 
 	this.EndInfo.SetFromPRSI(oPRSI);
 
-	if (oLogicDocument)
+	if (oLogicDocument && oLogicDocument.GetRecalcId)
 		this.EndInfoRecalcId = oLogicDocument.GetRecalcId();
 };
 Paragraph.prototype.GetEndInfo = function()
@@ -2176,7 +2187,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 					isForm     = oInlineSdt.IsForm();
 					oSdtBounds = PDSH.InlineSdt[nSdtIndex].GetRangeBounds(CurLine, CurRange);
 
-					if (isForm && FormsHighlight)
+					if (isForm && FormsHighlight && !oInlineSdt.IsCurrent())
 					{
 						if (1 !== nPrevColorState)
 						{
@@ -2369,12 +2380,17 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 
 					if (sValue)
 					{
-						pGraphics.AddHyperlink(_l, _t, _r - _l, _b - _t, sValue, sValue);
+						var _sValue = sAnchor ? sValue + "#" + sAnchor : sValue;
+						pGraphics.AddHyperlink(_l, _t, _r - _l, _b - _t, _sValue, _sValue);
 					}
 					else if (sAnchor)
 					{
 						var oLogicDocument = this.GetLogicDocument();
-						var oBookmark = oLogicDocument.BookmarksManager.GetBookmarkByName(sAnchor);
+						var oBookmark;
+						if(oLogicDocument && oLogicDocument.BookmarksManager)
+						{
+							oBookmark = oLogicDocument.BookmarksManager.GetBookmarkByName(sAnchor);
+						}
 						if (oBookmark)
 						{
 							var oBookmarkPos = oBookmark[0].GetDestinationXY();
@@ -3220,6 +3236,9 @@ Paragraph.prototype.Internal_Draw_6 = function(CurPage, pGraphics, Pr)
  */
 Paragraph.prototype.private_IsEmptyPageWithBreak = function(CurPage)
 {
+	if (this.Pages.length <= 0 || !this.Pages[CurPage])
+		return true;
+
 	//if (true === this.IsEmptyPage(CurPage))
 	//    return true;
 
@@ -3227,10 +3246,7 @@ Paragraph.prototype.private_IsEmptyPageWithBreak = function(CurPage)
 		return false;
 
 	var Info = this.Lines[this.Pages[CurPage].EndLine].Info;
-	if (Info & paralineinfo_Empty && Info & paralineinfo_BreakPage)
-		return true;
-
-	return false;
+	return !!(Info & paralineinfo_Empty && Info & paralineinfo_BreakPage);
 };
 /**
  * Функция отрисовки нумерации строк
@@ -6701,7 +6717,7 @@ Paragraph.prototype.Apply_TextPr = function(TextPr, IncFontSize)
 				EndTextPr.Merge(this.TextPr.Value);
 
 				// TODO: Как только перенесем историю изменений TextPr в сам класс CTextPr, переделать тут
-				this.TextPr.Set_FontSize(FontSize_IncreaseDecreaseValue(IncFontSize, EndTextPr.FontSize));
+				this.TextPr.Set_FontSize(EndTextPr.GetIncDecFontSize(IncFontSize));
 			}
 
 			// TODO (ParaEnd): Переделать
@@ -7661,6 +7677,36 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage)
 		}
 	}
 };
+/**
+ * Выделяем слово, в котором стоит селект
+ * @returns {boolean} возвращаем, выделено ли слово
+ */
+Paragraph.prototype.SelectCurrentWord = function()
+{
+	if (this.LogicDocument)
+		this.LogicDocument.RemoveSelection();
+	else
+		this.RemoveSelection();
+
+	var oCurPos = this.Get_ParaContentPos(false, false)
+
+	// Выделяем слово, в котором находимся
+	var SearchPosS = new CParagraphSearchPos();
+	var SearchPosE = new CParagraphSearchPos();
+
+	this.Get_WordEndPos(SearchPosE, oCurPos);
+	this.Get_WordStartPos(SearchPosS, SearchPosE.Pos);
+
+	var StartPos = (true === SearchPosS.Found ? SearchPosS.Pos : this.Get_StartPos());
+	var EndPos   = (true === SearchPosE.Found ? SearchPosE.Pos : this.Get_EndPos(false));
+
+	this.Selection.Use = true;
+	this.Set_SelectionContentPos(StartPos, EndPos);
+	this.Document_SetThisElementCurrent(false);
+
+	if (this.LogicDocument)
+		this.LogicDocument.Set_WordSelection();
+};
 Paragraph.prototype.Selection_CheckParaEnd = function()
 {
 	if (true !== this.Selection.Use)
@@ -8158,7 +8204,7 @@ Paragraph.prototype.GetSelectedText = function(bClearText, oPr)
 	var Str = "";
 
 	var oNumPr = this.GetNumPr();
-	if (oNumPr && oNumPr.IsValid())
+	if (oNumPr && oNumPr.IsValid() && this.IsSelectionFromStart(false))
 	{
 		Str += this.GetNumberingText(false);
 
@@ -8254,7 +8300,7 @@ Paragraph.prototype.GetSelectedContent = function(oSelectedContent)
 	if (true !== this.Selection.Use)
 		return;
 
-	var isAllSelected = (true === this.Selection_IsFromStart(true) && true === this.Selection_CheckParaEnd());
+	var isAllSelected = (true === this.IsSelectionFromStart(true) && true === this.Selection_CheckParaEnd());
 
 	var nStartPos = this.Selection.StartPos;
 	var nEndPos   = this.Selection.EndPos;
@@ -8381,6 +8427,7 @@ Paragraph.prototype.GetCalculatedTextPr = function()
 	var TextPr;
 	if (true === this.ApplyToAll)
 	{
+		var oState = this.SaveSelectionState();
 		this.SelectAll(1);
 
 		var StartPos = 0;
@@ -8398,7 +8445,7 @@ Paragraph.prototype.GetCalculatedTextPr = function()
 				TextPr = TextPr.Compare(TempTextPr);
 		}
 
-		this.RemoveSelection();
+		this.LoadSelectionState(oState);
 	}
 	else
 	{
@@ -8450,6 +8497,7 @@ Paragraph.prototype.GetCalculatedTextPr = function()
 				{
 					TextPr = this.Get_CompiledPr2(false).TextPr.Copy();
 					TextPr.Merge(this.TextPr.Value);
+					TextPr.CheckFontScale();
 				}
 
 				for (var CurPos = StartPos + 1; CurPos <= EndPos; CurPos++)
@@ -8466,6 +8514,7 @@ Paragraph.prototype.GetCalculatedTextPr = function()
 				{
 					var EndTextPr = this.Get_CompiledPr2(false).TextPr.Copy();
 					EndTextPr.Merge(this.TextPr.Value);
+					EndTextPr.CheckFontScale();
 					TextPr = TextPr.Compare(EndTextPr);
 				}
 			}
@@ -8485,7 +8534,15 @@ Paragraph.prototype.GetCalculatedTextPr = function()
 
 	// TODO: Пока возвращаем всегда шрифт лежащий в Ascii, в будущем надо будет это переделать
 	if (undefined !== TextPr.RFonts && null !== TextPr.RFonts)
-		TextPr.FontFamily = TextPr.RFonts.Ascii;
+	{
+		TextPr.ReplaceThemeFonts(this.GetTheme().themeElements.fontScheme);
+
+		if (!TextPr.FontFamily)
+			TextPr.FontFamily = {Name : "", Index : -1};
+
+		TextPr.FontFamily.Name  = TextPr.RFonts.Ascii.Name;
+		TextPr.FontFamily.Index = TextPr.RFonts.Ascii.Index;
+	}
 
 	return TextPr;
 };
@@ -9712,6 +9769,7 @@ Paragraph.prototype.GetDirectTextPr = function()
 	var TextPr;
 	if (true === this.ApplyToAll)
 	{
+		var oState = this.SaveSelectionState();
 		this.SelectAll(1);
 
 		var Count    = this.Content.length;
@@ -9721,7 +9779,7 @@ Paragraph.prototype.GetDirectTextPr = function()
 
 		TextPr = this.Content[StartPos].GetDirectTextPr();
 
-		this.RemoveSelection();
+		this.LoadSelectionState(oState);
 	}
 	else
 	{
@@ -9963,7 +10021,7 @@ Paragraph.prototype.IsCursorAtBegin = function(_ContentPos, bCheckAnchors)
 /**
  * Проверим, начинается ли выделение с начала параграфа
  */
-Paragraph.prototype.Selection_IsFromStart = function(bCheckAnchors)
+Paragraph.prototype.IsSelectionFromStart = function(bCheckAnchors)
 {
 	if (true === this.IsSelectionUse())
 	{
@@ -9973,10 +10031,7 @@ Paragraph.prototype.Selection_IsFromStart = function(bCheckAnchors)
 		if (StartPos.Compare(EndPos) > 0)
 			StartPos = EndPos;
 
-		if (true != this.IsCursorAtBegin(StartPos, bCheckAnchors))
-			return false;
-
-		return true;
+		return (true === this.IsCursorAtBegin(StartPos, bCheckAnchors));
 	}
 
 	return false;
@@ -11675,17 +11730,18 @@ Paragraph.prototype.Supplement_FramePr = function(FramePr)
 		}
 
 		var TextPr = FirstFramePara.GetFirstRunPr();
+		TextPr.ReplaceThemeFonts(this.GetTheme().themeElements.fontScheme);
 
 		if (undefined === TextPr.RFonts || undefined === TextPr.RFonts.Ascii)
 		{
 			TextPr = this.Get_CompiledPr2(false).TextPr;
+			TextPr.ReplaceThemeFonts(this.GetTheme().themeElements.fontScheme);
 		}
 
-		FramePr.FontFamily =
-			{
-				Name  : TextPr.RFonts.Ascii.Name,
-				Index : TextPr.RFonts.Ascii.Index
-			};
+		FramePr.FontFamily = {
+			Name  : TextPr.RFonts.Ascii.Name,
+			Index : TextPr.RFonts.Ascii.Index
+		};
 	}
 
 	var FrameParas = this.Internal_Get_FrameParagraphs();
@@ -12008,7 +12064,7 @@ Paragraph.prototype.Split = function(NewParagraph)
 	var TextPr = this.Get_TextPr(ContentPos);
 
 	var oLogicDocument = this.GetLogicDocument();
-	var oStyles        = oLogicDocument ? oLogicDocument.GetStyles() : null;
+	var oStyles        = oLogicDocument && oLogicDocument.GetStyles ? oLogicDocument.GetStyles() : null;
 	if (oStyles && (TextPr.RStyle === oStyles.GetDefaultEndnoteReference() || TextPr.RStyle === oStyles.GetDefaultFootnoteReference()))
 	{
 		TextPr        = TextPr.Copy();
@@ -12755,11 +12811,11 @@ Paragraph.prototype.CanAddComment = function()
 	if (this.ApplyToAll)
 	{
 		var oState = this.Get_SelectionState2();
-		this.Set_ApplyToAll(false);
+		this.SetApplyToAll(false);
 		this.SelectAll(1);
 		var isCanAdd = this.CanAddComment();
 		this.Set_SelectionState2(oState);
-		this.Set_ApplyToAll(true);
+		this.SetApplyToAll(true);
 		return isCanAdd;
 	}
 
@@ -13745,7 +13801,7 @@ Paragraph.prototype.GetRevisionsChangeElement = function(SearchEngine)
 };
 Paragraph.prototype.IsSelectedAll = function()
 {
-    var bStart = this.Selection_IsFromStart();
+    var bStart = this.IsSelectionFromStart();
     var bEnd   = this.Selection_CheckParaEnd();
 
     return ((true === bStart && true === bEnd) || true === this.ApplyToAll ? true : false);
@@ -16067,7 +16123,7 @@ Paragraph.prototype.GetLineNumbersInfo = function(isNewPage)
 	{
 		return this.LineNumbersInfo.StartNum + this.Lines.length;
 	}
-}
+};
 /**
  * Учитываем ли номера строк у данного параграфа
  * @returns {boolean}
@@ -16081,21 +16137,24 @@ Paragraph.prototype.IsCountLineNumbers = function()
 Paragraph.prototype.asc_getText = function()
 {
 	var sText = "";
-	var oNumPr = this.GetNumPr();
-	var nLvl = oNumPr && oNumPr.Lvl;
-	var nIndex;
-	if(nLvl !== undefined && nLvl !== null)
+	if(this.GetReviewType() !== reviewtype_Remove)
 	{
-		for(nIndex = 0; nIndex < nLvl; ++nIndex)
+		var oNumPr = this.GetNumPr();
+		var nLvl = oNumPr && oNumPr.Lvl;
+		var nIndex;
+		if(nLvl !== undefined && nLvl !== null)
 		{
+			for(nIndex = 0; nIndex < nLvl; ++nIndex)
+			{
+				sText += " ";
+			}
+		}
+		var sNumText = this.GetNumberingText();
+		if(typeof sNumText === "string" && sNumText.length > 0)
+		{
+			sText += sNumText;
 			sText += " ";
 		}
-	}
-	var sNumText = this.GetNumberingText();
-	if(typeof sNumText === "string" && sNumText.length > 0)
-	{
-		sText += sNumText;
-		sText += " ";
 	}
 	sText += this.GetText();
 	return sText;

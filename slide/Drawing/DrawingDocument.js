@@ -902,6 +902,9 @@ CDrawingCollaborativeTarget.prototype =
 
 function CDrawingDocument()
 {
+
+
+	AscCommon.g_oHtmlCursor.register("de-markerformat", "marker_format", "14 8", "pointer");
 	this.IsLockObjectsEnable = false;
 
 	this.m_oWordControl   = null;
@@ -1005,9 +1008,15 @@ function CDrawingDocument()
 		if (AscCommon.g_inputContext)
 			AscCommon.g_inputContext.move(this.TargetHtmlElementLeft, this.TargetHtmlElementTop);
 	};
-	this.GetTargetStyle           = function()
+	this.GetTargetStyle           = function(isFocusOnSlide)
 	{
-		return "rgb(" + this.TargetCursorColor.R + "," + this.TargetCursorColor.G + "," + this.TargetCursorColor.B + ")";
+		if (false !== isFocusOnSlide)
+			return "rgb(" + this.TargetCursorColor.R + "," + this.TargetCursorColor.G + "," + this.TargetCursorColor.B + ")";
+
+		// check dark theme
+		if (AscCommon.GlobalSkin.Name !== "flatDark" || (this.TargetCursorColor.R > 10 || this.TargetCursorColor.R > 10 || this.TargetCursorColor.R > 10))
+			return "rgb(" + this.TargetCursorColor.R + "," + this.TargetCursorColor.G + "," + this.TargetCursorColor.B + ")";
+		return "rgb(" + (255 - this.TargetCursorColor.R) + "," + (255 - this.TargetCursorColor.G) + "," + (255 - this.TargetCursorColor.B) + ")";
 	};
 
 	this.Start_CollaborationEditing = function()
@@ -1038,6 +1047,8 @@ function CDrawingDocument()
 		{
 			if (this.m_oWordControl.m_oApi.isPaintFormat && (("default" == sType) || ("text" == sType)))
 				this.m_oWordControl.m_oMainContent.HtmlElement.style.cursor = AscCommon.g_oHtmlCursor.value(AscCommon.kCurFormatPainterWord);
+			else if (this.m_oWordControl.m_oApi.isMarkerFormat)
+				this.m_oWordControl.m_oMainContent.HtmlElement.style.cursor = AscCommon.g_oHtmlCursor.value("de-markerformat");
 			else
                 elem.style.cursor = AscCommon.g_oHtmlCursor.value(sType);
 		}
@@ -1169,7 +1180,7 @@ function CDrawingDocument()
 	{
 		for (var i = 0; i < this.SlidesCount; i++)
 		{
-			Renderer.BeginPage(this.m_oLogicDocument.Width, this.m_oLogicDocument.Height);
+			Renderer.BeginPage(this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM());
 			this.m_oLogicDocument.DrawPage(i, Renderer);
 			Renderer.EndPage();
 		}
@@ -1204,7 +1215,7 @@ function CDrawingDocument()
 		var ret = "";
 		for (var i = 0; i < this.SlidesCount; i++)
 		{
-			Renderer.BeginPage(this.m_oLogicDocument.Width, this.m_oLogicDocument.Height);
+			Renderer.BeginPage(this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM());
 			this.m_oLogicDocument.DrawPage(i, Renderer);
 			Renderer.EndPage();
 
@@ -1249,17 +1260,17 @@ function CDrawingDocument()
 				if (!this.m_oWordControl.Thumbnails.isSelectedPage(i))
 					continue;
 			}
-			renderer.BeginPage(this.m_oLogicDocument.Width, this.m_oLogicDocument.Height);
+			renderer.BeginPage(this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM());
 			this.m_oLogicDocument.DrawPage(i, renderer);
 			renderer.EndPage();
 
 			if (watermark)
-				watermark.DrawOnRenderer(renderer, this.m_oLogicDocument.Width, this.m_oLogicDocument.Height);
+				watermark.DrawOnRenderer(renderer, this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM());
 		}
 
 		if (end == -1)
 		{
-			renderer.BeginPage(this.m_oLogicDocument.Width, this.m_oLogicDocument.Height);
+			renderer.BeginPage(this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM());
 			renderer.EndPage()
 		}
 
@@ -1519,8 +1530,8 @@ function CDrawingDocument()
 		var wDst = this.SlideCurrectRect.right - this.SlideCurrectRect.left;
 		var hDst = this.SlideCurrectRect.bottom - this.SlideCurrectRect.top;
 
-		var dKoefX = wDst / this.m_oLogicDocument.Width;
-		var dKoefY = hDst / this.m_oLogicDocument.Height;
+		var dKoefX = wDst / this.m_oLogicDocument.GetWidthMM();
+		var dKoefY = hDst / this.m_oLogicDocument.GetHeightMM();
 
 		var ctx            = overlay.m_oContext;
 		var searchingArray = this.m_oLogicDocument.Slides[this.SlideCurrent].searchingArray;
@@ -1589,8 +1600,8 @@ function CDrawingDocument()
 		var wDst = this.SlideCurrectRect.right - this.SlideCurrectRect.left;
 		var hDst = this.SlideCurrectRect.bottom - this.SlideCurrectRect.top;
 
-		var dKoefX = wDst / this.m_oLogicDocument.Width;
-		var dKoefY = hDst / this.m_oLogicDocument.Height;
+		var dKoefX = wDst / this.m_oLogicDocument.GetWidthMM();
+		var dKoefY = hDst / this.m_oLogicDocument.GetHeightMM();
 
 		var ctx = overlay.m_oContext;
 
@@ -1929,13 +1940,13 @@ function CDrawingDocument()
 
 			if (_newW == 2 || _newH == 2)
 			{
-				ctx.fillStyle = this.GetTargetStyle();
+				ctx.fillStyle = this.GetTargetStyle(isFocusOnSlide);
 				ctx.fillRect(0, 0, _newW, _newH);
 			}
 			else
 			{
 				ctx.beginPath();
-				ctx.strokeStyle = this.GetTargetStyle();
+				ctx.strokeStyle = this.GetTargetStyle(isFocusOnSlide);
 				ctx.lineWidth   = 2;
 
 				if (((pos1.X - pos2.X) * (pos1.Y - pos2.Y)) >= 0)
@@ -1975,7 +1986,7 @@ function CDrawingDocument()
 
 			var ctx = this.TargetHtmlElement.getContext('2d');
 
-			ctx.fillStyle = this.GetTargetStyle();
+			ctx.fillStyle = this.GetTargetStyle(isFocusOnSlide);
 			ctx.fillRect(0, 0, _newW, _newH);
 
 			if (null != this.TextMatrix)
@@ -2043,11 +2054,9 @@ function CDrawingDocument()
 
 			var _ww = this.m_oWordControl.m_oEditor.HtmlElement.width;
 			var _hh = this.m_oWordControl.m_oEditor.HtmlElement.height;
-			if (this.m_oWordControl.bIsRetinaSupport)
-			{
-				_ww /= AscCommon.AscBrowser.retinaPixelRatio;
-				_hh /= AscCommon.AscBrowser.retinaPixelRatio;
-			}
+
+			_ww /= AscCommon.AscBrowser.retinaPixelRatio;
+			_hh /= AscCommon.AscBrowser.retinaPixelRatio;
 
 			var boxX = 0;
 			var boxY = 0;
@@ -2114,8 +2123,7 @@ function CDrawingDocument()
 		{
 			var yPos = _y * g_dKoef_mm_to_pix - this.m_oWordControl.m_oNotesApi.Scroll;
 			var _hh = this.m_oWordControl.m_oNotes.HtmlElement.height;
-			if (this.m_oWordControl.bIsRetinaSupport)
-				_hh /= AscCommon.AscBrowser.retinaPixelRatio;
+			_hh /= AscCommon.AscBrowser.retinaPixelRatio;
 
 			var boxY = 0;
 			var targetSizeAscent = (this.m_dTargetAscent * g_dKoef_mm_to_pix) >> 0;
@@ -2274,8 +2282,8 @@ function CDrawingDocument()
 		var yDst = this.SlideCurrectRect.top;
 		var wDst = this.SlideCurrectRect.right - this.SlideCurrectRect.left;
 		var hDst = this.SlideCurrectRect.bottom - this.SlideCurrectRect.top;
-		dKoefX = wDst / this.m_oLogicDocument.Width;
-		dKoefY = hDst / this.m_oLogicDocument.Height;
+		dKoefX = wDst / this.m_oLogicDocument.GetWidthMM();
+		dKoefY = hDst / this.m_oLogicDocument.GetHeightMM();
 		var oTextMatrix = this.TextMatrix;
 		var _1px_mm_x = 1 / Math.max(dKoefX, 0.001);
 		var _1px_mm_y = 1 / Math.max(dKoefY, 0.001);
@@ -2322,13 +2330,15 @@ function CDrawingDocument()
 		if (pageIndex < 0 || pageIndex != this.SlideCurrent || Math.abs(width) < 0.001 || Math.abs(height) < 0.001)
 			return;
 
-		var xDst = this.SlideCurrectRect.left;
-		var yDst = this.SlideCurrectRect.top;
-		var wDst = this.SlideCurrectRect.right - this.SlideCurrectRect.left;
-		var hDst = this.SlideCurrectRect.bottom - this.SlideCurrectRect.top;
+		var dPR = window.devicePixelRatio;
+		var xDst = this.SlideCurrectRect.left * dPR;
+		var yDst = this.SlideCurrectRect.top * dPR;
+		var wDst = (this.SlideCurrectRect.right - this.SlideCurrectRect.left) * dPR;
+		var hDst = (this.SlideCurrectRect.bottom - this.SlideCurrectRect.top) * dPR;
+		var indent = 0.5 * Math.round(dPR);
 
-		var dKoefX = wDst / this.m_oLogicDocument.Width;
-		var dKoefY = hDst / this.m_oLogicDocument.Height;
+		var dKoefX = wDst / this.m_oLogicDocument.GetWidthMM();
+		var dKoefY = hDst / this.m_oLogicDocument.GetHeightMM();
 
 		var overlay = this.m_oWordControl.m_oOverlayApi;
 		if (this.m_oWordControl.IsSupportNotes && this.m_oWordControl.m_oNotesApi && this.m_oLogicDocument.IsFocusOnNotes())
@@ -2342,11 +2352,11 @@ function CDrawingDocument()
 
 		if (null == this.TextMatrix || global_MatrixTransformer.IsIdentity(this.TextMatrix))
 		{
-			var _x = ((xDst + dKoefX * x + 0.5) >> 0) - 0.5;
-			var _y = ((yDst + dKoefY * y + 0.5) >> 0) - 0.5;
+			var _x = ((xDst + dKoefX * x + indent) >> 0) - indent;
+			var _y = ((yDst + dKoefY * y + indent) >> 0) - indent;
 
-			var _r = ((xDst + dKoefX * (x + width) + 0.5) >> 0) - 0.5;
-			var _b = ((yDst + dKoefY * (y + height) + 0.5) >> 0) - 0.5;
+			var _r = ((xDst + dKoefX * (x + width) + indent) >> 0) - indent;
+			var _b = ((yDst + dKoefY * (y + height) + indent) >> 0) - indent;
 
 			if (_x < overlay.min_x)
 				overlay.min_x = _x;
@@ -2388,17 +2398,17 @@ function CDrawingDocument()
 
 			if (global_MatrixTransformer.IsIdentity2(this.TextMatrix))
 			{
-				x1 = (x1 >> 0) + 0.5;
-				y1 = (y1 >> 0) + 0.5;
+				x1 = (x1 >> 0) + indent;
+				y1 = (y1 >> 0) + indent;
 
-				x2 = (x2 >> 0) + 0.5;
-				y2 = (y2 >> 0) + 0.5;
+				x2 = (x2 >> 0) + indent;
+				y2 = (y2 >> 0) + indent;
 
-				x3 = (x3 >> 0) + 0.5;
-				y3 = (y3 >> 0) + 0.5;
+				x3 = (x3 >> 0) + indent;
+				y3 = (y3 >> 0) + indent;
 
-				x4 = (x4 >> 0) + 0.5;
-				y4 = (y4 >> 0) + 0.5;
+				x4 = (x4 >> 0) + indent;
+				y4 = (y4 >> 0) + indent;
 			}
 
 			overlay.CheckPoint(x1, y1);
@@ -2407,6 +2417,7 @@ function CDrawingDocument()
 			overlay.CheckPoint(x4, y4);
 
 			var ctx = overlay.m_oContext;
+			ctx.lineWidth = Math.round(dPR);
 			ctx.moveTo(x1, y1);
 			ctx.lineTo(x2, y2);
 			ctx.lineTo(x3, y3);
@@ -2703,8 +2714,7 @@ function CDrawingDocument()
 	this.GetVisibleMMHeight = function()
 	{
 		var pixHeigth = this.m_oWordControl.m_oEditor.HtmlElement.height;
-		if (this.m_oWordControl.bIsRetinaSupport)
-			pixHeigth /= AscCommon.AscBrowser.retinaPixelRatio;
+		pixHeigth /= AscCommon.AscBrowser.retinaPixelRatio;
 		var pixBetweenPages = 20 * (this.m_lDrawingEnd - this.m_lDrawingFirst);
 
 		return (pixHeigth - pixBetweenPages) * g_dKoef_pix_to_mm * 100 / this.m_oWordControl.m_nZoomValue;
@@ -3484,7 +3494,7 @@ function CDrawingDocument()
         var oWordControl = this.m_oWordControl;
 		var bIsReturn = false;
 
-        if (this.placeholders.onPointerDown(pos, this.SlideCurrectRect, this.m_oLogicDocument.Width, this.m_oLogicDocument.Height))
+        if (this.placeholders.onPointerDown(pos, this.SlideCurrectRect, this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM()))
             bIsReturn = true;
 
         if (bIsReturn)
@@ -3514,7 +3524,7 @@ function CDrawingDocument()
 
             bIsReturn = true;
 		}
-		else if (this.placeholders.onPointerMove(pos, this.SlideCurrectRect, this.m_oLogicDocument.Width, this.m_oLogicDocument.Height))
+		else if (this.placeholders.onPointerMove(pos, this.SlideCurrectRect, this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM()))
 		{
             oWordControl.OnUpdateOverlay();
             oWordControl.EndUpdateOverlay();
@@ -3543,7 +3553,7 @@ function CDrawingDocument()
 
             bIsReturn = true;
 		}
-        else if (this.placeholders.onPointerUp(pos, this.SlideCurrectRect, this.m_oLogicDocument.Width, this.m_oLogicDocument.Height))
+        else if (this.placeholders.onPointerUp(pos, this.SlideCurrectRect, this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM()))
             bIsReturn = true;
 
         if (bIsReturn)
@@ -3848,7 +3858,10 @@ function CThumbnailsManager()
 	this.onMouseDown = function(e)
 	{
 		if (oThis.m_oWordControl)
+		{
+			oThis.m_oWordControl.m_oApi.checkInterfaceElementBlur();
 			oThis.m_oWordControl.m_oApi.checkLastWork();
+		}
 
 		AscCommon.stopEvent(e);
 
@@ -4025,6 +4038,9 @@ function CThumbnailsManager()
 		var y1 = this.m_arrPages[pageNum].top - this.const_border_w;
 		var y2 = this.m_arrPages[pageNum].bottom + this.const_border_w;
 
+		if (!this.m_oWordControl.m_oScrollThumbApi)
+			return;
+
 		if (y1 < 0)
 		{
 			var _sizeH = y2 - y1;
@@ -4097,8 +4113,8 @@ function CThumbnailsManager()
 	};
 	this.RecalculateAll   = function()
 	{
-		this.SlideWidth  = this.m_oWordControl.m_oLogicDocument.Width;
-		this.SlideHeight = this.m_oWordControl.m_oLogicDocument.Height;
+		this.SlideWidth  = this.m_oWordControl.m_oLogicDocument.GetWidthMM();
+		this.SlideHeight = this.m_oWordControl.m_oLogicDocument.GetHeightMM();
 		this.SlidesCount = this.m_oWordControl.m_oDrawingDocument.SlidesCount;
 		this.CheckSizes();
 
@@ -4427,7 +4443,7 @@ function CThumbnailsManager()
 				this.DigitWidths[i] = 10;
 		}
 
-		if (GlobalSkin.Name == "flat")
+		if (true)
 		{
 			this.const_offset_y = 17;
 			this.const_offset_b = this.const_offset_y;
@@ -4540,7 +4556,7 @@ function CThumbnailsManager()
 					word_control.m_oThumbnailsBack.Bounds.R = word_control.ScrollWidthPx * g_dKoef_pix_to_mm;
 					word_control.m_oThumbnails.Bounds.R     = word_control.ScrollWidthPx * g_dKoef_pix_to_mm;
 
-					var _width_mm_scroll                          = (GlobalSkin.Name == "flat") ? 10 : word_control.ScrollWidthPx;
+					var _width_mm_scroll                          = (true) ? 10 : word_control.ScrollWidthPx;
 					word_control.m_oThumbnails_scroll.Bounds.AbsW = _width_mm_scroll * g_dKoef_pix_to_mm;
 				}
 				else
@@ -5638,11 +5654,10 @@ function CSlideDrawer()
 			this.bIsEmptyPresentation = true;
 
 		var dKoef = zoom * g_dKoef_mm_to_pix / 100;
-		if (this.m_oWordControl.bIsRetinaSupport)
-			dKoef *= AscCommon.AscBrowser.retinaPixelRatio;
+		dKoef *= AscCommon.AscBrowser.retinaPixelRatio;
 
-		var w_mm = this.m_oWordControl.m_oLogicDocument.Width;
-		var h_mm = this.m_oWordControl.m_oLogicDocument.Height;
+		var w_mm = this.m_oWordControl.m_oLogicDocument.GetWidthMM();
+		var h_mm = this.m_oWordControl.m_oLogicDocument.GetHeightMM();
 		var w_px = (w_mm * dKoef) >> 0;
 		var h_px = (h_mm * dKoef) >> 0;
 
@@ -5681,11 +5696,10 @@ function CSlideDrawer()
 			this.bIsEmptyPresentation = true;
 
 		var dKoef = this.m_oWordControl.m_nZoomValue * g_dKoef_mm_to_pix / 100;
-		if (this.m_oWordControl.bIsRetinaSupport)
-			dKoef *= AscCommon.AscBrowser.retinaPixelRatio;
+		dKoef *= AscCommon.AscBrowser.retinaPixelRatio;
 
-		var w_mm = this.m_oWordControl.m_oLogicDocument.Width;
-		var h_mm = this.m_oWordControl.m_oLogicDocument.Height;
+		var w_mm = this.m_oWordControl.m_oLogicDocument.GetWidthMM();
+		var h_mm = this.m_oWordControl.m_oLogicDocument.GetHeightMM();
 		var w_px = (w_mm * dKoef) >> 0;
 		var h_px = (h_mm * dKoef) >> 0;
 
@@ -5712,11 +5726,10 @@ function CSlideDrawer()
 		{
 			// поидее если был ресайз только
 			dKoef = this.m_oWordControl.m_nZoomValue * g_dKoef_mm_to_pix / 100;
-			if (this.m_oWordControl.bIsRetinaSupport)
-				dKoef *= AscCommon.AscBrowser.retinaPixelRatio;
+			dKoef *= AscCommon.AscBrowser.retinaPixelRatio;
 
-			w_mm = this.m_oWordControl.m_oLogicDocument.Width;
-			h_mm = this.m_oWordControl.m_oLogicDocument.Height;
+			w_mm = this.m_oWordControl.m_oLogicDocument.GetWidthMM();
+			h_mm = this.m_oWordControl.m_oLogicDocument.GetHeightMM();
 			w_px = (w_mm * dKoef) >> 0;
 			h_px = (h_mm * dKoef) >> 0;
 		}
@@ -5771,7 +5784,7 @@ function CSlideDrawer()
 			g.init(this.CachedCanvasCtx, w_px, h_px, w_mm, h_mm);
 			g.m_oFontManager = AscCommon.g_fontManager;
 
-			if (this.m_oWordControl.bIsRetinaSupport)
+			if (AscCommon.AscBrowser.isCustomScalingAbove2())
 				g.IsRetina = true;
 
 			g.m_oCoordTransform.tx = -this.BoundsChecker.Bounds.min_x + this.SlideEps;
@@ -5804,11 +5817,8 @@ function CSlideDrawer()
 		var _x = _rect.left + _bounds.min_x;
 		var _y = _rect.top + _bounds.min_y;
 
-		if (this.m_oWordControl.bIsRetinaSupport)
-		{
-			_x = ((_rect.left * AscCommon.AscBrowser.retinaPixelRatio) >> 0) + _bounds.min_x;
-			_y = ((_rect.top * AscCommon.AscBrowser.retinaPixelRatio) >> 0) + _bounds.min_y;
-		}
+		_x = ((_rect.left * AscCommon.AscBrowser.retinaPixelRatio) >> 0) + _bounds.min_x;
+		_y = ((_rect.top * AscCommon.AscBrowser.retinaPixelRatio) >> 0) + _bounds.min_y;
 
 		if (this.bIsEmptyPresentation)
 		{
@@ -5869,11 +5879,10 @@ function CSlideDrawer()
 		else
 		{
 			var dKoef = this.m_oWordControl.m_nZoomValue * g_dKoef_mm_to_pix / 100;
-			if (this.m_oWordControl.bIsRetinaSupport)
-				dKoef *= AscCommon.AscBrowser.retinaPixelRatio;
+			dKoef *= AscCommon.AscBrowser.retinaPixelRatio;
 
-			var w_mm = this.m_oWordControl.m_oLogicDocument.Width;
-			var h_mm = this.m_oWordControl.m_oLogicDocument.Height;
+			var w_mm = this.m_oWordControl.m_oLogicDocument.GetWidthMM();
+			var h_mm = this.m_oWordControl.m_oLogicDocument.GetHeightMM();
 			var w_px = (w_mm * dKoef) >> 0;
 			var h_px = (h_mm * dKoef) >> 0;
 
@@ -5881,7 +5890,7 @@ function CSlideDrawer()
 			g.init(outputCtx, w_px, h_px, w_mm, h_mm);
 			g.m_oFontManager = AscCommon.g_fontManager;
 
-			if (this.m_oWordControl.bIsRetinaSupport)
+			if (AscCommon.AscBrowser.isCustomScalingAbove2())
 				g.IsRetina = true;
 
 			g.m_oCoordTransform.tx = _x - _bounds.min_x;
@@ -5976,8 +5985,7 @@ function CNotesDrawer(page)
 		}
 
 		var dKoef = g_dKoef_mm_to_pix;
-		if (this.HtmlPage.bIsRetinaSupport)
-			dKoef *= AscCommon.AscBrowser.retinaPixelRatio;
+		dKoef *= AscCommon.AscBrowser.retinaPixelRatio;
 
 		var w_mm = this.Width;
 		var h_mm = this.Height;
@@ -5988,7 +5996,12 @@ function CNotesDrawer(page)
 		g.init(ctx, w_px, h_px, w_mm, h_mm);
 		g.m_oFontManager = this.fontManager;
 
-		if (this.HtmlPage.bIsRetinaSupport)
+		if (AscCommon.GlobalSkin.Name === "flatDark")
+		{
+			g.darkModeOverride();
+		}
+
+		if (AscCommon.AscBrowser.isCustomScalingAbove2())
 			g.IsRetina = true;
 
 		g.SaveGrState();
@@ -6039,15 +6052,12 @@ function CNotesDrawer(page)
 		settings.contentH = 2 * this.OffsetY + ((height * g_dKoef_mm_to_pix) >> 0);
 		settings.scrollerMinHeight = 5;
 
-		settings.scrollBackgroundColor = GlobalSkin.BackgroundScroll;
-		settings.scrollBackgroundColorHover = GlobalSkin.BackgroundScroll;
-		settings.scrollBackgroundColorActive = GlobalSkin.BackgroundScroll;
+		settings.scrollBackgroundColor = GlobalSkin.ScrollBackgroundColor;
+		settings.scrollBackgroundColorHover = GlobalSkin.ScrollBackgroundColor;
+		settings.scrollBackgroundColorActive = GlobalSkin.ScrollBackgroundColor;
 
-		if (this.HtmlPage.bIsRetinaSupport)
-		{
-			settings.screenW = AscCommon.AscBrowser.convertToRetinaValue(settings.screenW);
-			settings.screenH = AscCommon.AscBrowser.convertToRetinaValue(settings.screenH);
-		}
+		settings.screenW = AscCommon.AscBrowser.convertToRetinaValue(settings.screenW);
+		settings.screenH = AscCommon.AscBrowser.convertToRetinaValue(settings.screenH);
 
 		this.ScrollMax = Math.max(0, settings.contentH - settings.screenH);
 		if (this.Scroll > this.ScrollMax)
@@ -6320,6 +6330,7 @@ function CNotesDrawer(page)
 		if (_pix_width < 10)
 			_pix_width = 10;
 		_pix_width = AscCommon.AscBrowser.convertToRetinaValue(_pix_width);
+		if (window["NATIVE_EDITOR_ENJINE"] && _pix_width < 100) _pix_width = 100;
 		return _pix_width / g_dKoef_mm_to_pix;
 	};
 }

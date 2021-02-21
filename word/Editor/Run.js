@@ -816,6 +816,45 @@ ParaRun.prototype.private_CheckHighlightBeforeAdd = function(oNewRun)
 	return oNewRun;
 };
 /**
+ * Проверяем выделение текста перед добавление нового элемента
+ * @param {!ParaRun} oNewRun
+ * @returns {?ParaRun}
+ */
+ParaRun.prototype.private_CheckHighlightColorBeforeAdd = function(oNewRun)
+{
+	// Специальный код с обработкой выделения (highlight)
+	// Текст, который пишем до или после выделенного текста делаем без выделения.
+	if ((0 === this.State.ContentPos || this.Content.length === this.State.ContentPos) && undefined !== this.Get_CompiledPr(false).HighlightColor)
+	{
+		var Parent = this.Get_Parent();
+		var RunPos = this.private_GetPosInParent(Parent);
+		if (null !== Parent && -1 !== RunPos)
+		{
+			if ((0 === this.State.ContentPos
+				&& (0 === RunPos
+					|| Parent.Content[RunPos - 1].Type !== para_Run
+					|| undefined === Parent.Content[RunPos - 1].Get_CompiledPr(false).HighlightColor))
+				|| (this.Content.length === this.State.ContentPos
+					&& (RunPos === Parent.Content.length - 1
+						|| para_Run !== Parent.Content[RunPos + 1].Type
+						|| undefined === Parent.Content[RunPos + 1].Get_CompiledPr(false).HighlightColor)
+					|| (RunPos === Parent.Content.length - 2
+						&& Parent instanceof Paragraph)))
+			{
+				if (!oNewRun)
+					oNewRun = this.private_SplitRunInCurPos();
+
+				if (oNewRun)
+				{
+					oNewRun.SetHighlightColor(undefined);
+				}
+			}
+		}
+	}
+
+	return oNewRun;
+};
+/**
  * Проверяем принудительный перенос в начале математического рана
  * @param {!ParaRun} oNewRun
  * @returns {?ParaRun}
@@ -843,6 +882,7 @@ ParaRun.prototype.CheckRunBeforeAdd = function(oItem)
 	oNewRun = this.private_CheckLanguageBeforeAdd(oNewRun, oLogicDocument);
 	oNewRun = this.private_CheckFootnoteReferencesBeforeAdd(oNewRun, oItem, oLogicDocument);
 	oNewRun = this.private_CheckHighlightBeforeAdd(oNewRun);
+	oNewRun = this.private_CheckHighlightColorBeforeAdd(oNewRun);
 	oNewRun = this.private_CheckMathBreakOperatorBeforeAdd(oNewRun);
 
 	if (oNewRun)
@@ -1444,7 +1484,7 @@ ParaRun.prototype.GetLogicDocument = function()
 // Добавляем элемент в позицию с сохранием в историю
 ParaRun.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
 {
-	if (this.GetTextForm() && this.GetTextForm().Comb)
+	if (this.GetTextForm() && this.GetTextForm().IsComb())
 		this.RecalcInfo.Measure = true;
 
 	this.CheckParentFormKey();
@@ -1523,7 +1563,7 @@ ParaRun.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
 
 ParaRun.prototype.Remove_FromContent = function(Pos, Count, UpdatePosition)
 {
-	if (this.GetTextForm() && this.GetTextForm().Comb)
+	if (this.GetTextForm() && this.GetTextForm().IsComb())
 		this.RecalcInfo.Measure = true;
 
 	this.CheckParentFormKey();
@@ -1689,15 +1729,15 @@ ParaRun.prototype.AddText = function(sString, nPos)
 			var nCharCode = oIterator.value();
 
 			if (9 === nCharCode) // \t
-				this.AddToContent(nCharPos++, new ParaTab());
+				this.AddToContent(nCharPos++, new ParaTab(), true);
 			else if (10 === nCharCode) // \n
-				this.AddToContent(nCharPos++, new ParaNewLine(break_Line));
+				this.AddToContent(nCharPos++, new ParaNewLine(break_Line), true);
 			else if (13 === nCharCode) // \r
 				continue;
 			else if (AscCommon.IsSpace(nCharCode)) // space
-				this.AddToContent(nCharPos++, new ParaSpace(nCharCode));
+				this.AddToContent(nCharPos++, new ParaSpace(nCharCode), true);
 			else
-				this.AddToContent(nCharPos++, new ParaText(nCharCode));
+				this.AddToContent(nCharPos++, new ParaText(nCharCode), true);
 		}
 	}
 };
@@ -2071,6 +2111,9 @@ ParaRun.prototype.Recalculate_CurPos = function(X, Y, CurrentRun, _CurRange, _Cu
  */
 ParaRun.prototype.GetSimpleChangesRange = function(arrChanges, nStart, nEnd)
 {
+	if (this.IsMathRun())
+		return null;
+
 	var oParaPos = null;
 
 	var _nStart = undefined !== nStart ? nStart : 0;
@@ -2949,7 +2992,7 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 	var nMaxComb   = -1;
 	var nCombWidth = null;
 	var oTextForm  = this.GetTextForm();
-	if (oTextForm && oTextForm.Comb)
+	if (oTextForm && oTextForm.IsComb())
 	{
 		nMaxComb = oTextForm.MaxCharacters;
 
@@ -6232,7 +6275,7 @@ ParaRun.prototype.Draw_Lines = function(PDSL)
     var aDUnderline = PDSL.DUnderline;
     var aCombForms  = PDSL.CombForms;
 
-    var oCombBorder = this.GetTextForm() && this.GetTextForm().Comb && this.GetTextForm().GetCombBorder() ? this.GetTextForm().GetCombBorder() : null;
+    var oCombBorder = this.GetTextForm() && this.GetTextForm().IsComb() && this.GetTextForm().GetCombBorder() ? this.GetTextForm().GetCombBorder() : null;
 
     var CurTextPr = this.Get_CompiledPr( false );
     var StrikeoutY = Y - this.YOffset;
@@ -8026,15 +8069,20 @@ ParaRun.prototype.Internal_Compile_Pr = function ()
 		}
 	}
 
+	var oTheme = this.Paragraph.Get_Theme();
+
 	if (TextPr.TextFill)
-		TextPr.TextFill.check(this.Paragraph.Get_Theme(), this.Paragraph.Get_ColorMap());
+		TextPr.TextFill.check(oTheme, this.Paragraph.Get_ColorMap());
 	else if (TextPr.Unifill)
-		TextPr.Unifill.check(this.Paragraph.Get_Theme(), this.Paragraph.Get_ColorMap());
+		TextPr.Unifill.check(oTheme, this.Paragraph.Get_ColorMap());
+
+	TextPr.ReplaceThemeFonts(oTheme.themeElements.fontScheme);
+	TextPr.CheckFontScale();
 
 	// Для совместимости со старыми версиями запишем FontFamily
 	TextPr.FontFamily.Name  = TextPr.RFonts.Ascii.Name;
 	TextPr.FontFamily.Index = TextPr.RFonts.Ascii.Index;
-	TextPr.CheckFontScale();
+
 	return TextPr;
 };
 
@@ -8137,7 +8185,7 @@ ParaRun.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
             var CurTextPr = this.Get_CompiledPr( false );
 
             this.private_AddCollPrChangeMine();
-            this.Set_FontSize( FontSize_IncreaseDecreaseValue( IncFontSize, CurTextPr.FontSize ) );
+            this.Set_FontSize( CurTextPr.GetIncDecFontSize(IncFontSize));
         }
 
         // Дополнительно проверим, если у нас para_End лежит в данном ране и попадает в выделение, тогда
@@ -8187,7 +8235,7 @@ ParaRun.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
 				var oEndTextPr = this.Paragraph.GetParaEndCompiledPr();
 
 				// TODO: Как только перенесем историю изменений TextPr в сам класс CTextPr, переделать тут
-				this.Paragraph.TextPr.Set_FontSize(FontSize_IncreaseDecreaseValue(IncFontSize, oEndTextPr.FontSize));
+				this.Paragraph.TextPr.Set_FontSize(oEndTextPr.GetIncDecFontSize(IncFontSize));
 			}
 		}
     }
@@ -8261,7 +8309,7 @@ ParaRun.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
 					var CurTextPr = this.Get_CompiledPr(false);
 
 					CRun.private_AddCollPrChangeMine();
-					CRun.Set_FontSize(FontSize_IncreaseDecreaseValue(IncFontSize, CurTextPr.FontSize));
+					CRun.Set_FontSize(CurTextPr.GetIncDecFontSize(IncFontSize));
 				}
 
 				if (null !== RRun)
@@ -8307,7 +8355,7 @@ ParaRun.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
 						var oEndTextPr = this.Paragraph.GetParaEndCompiledPr();
 
 						// TODO: Как только перенесем историю изменений TextPr в сам класс CTextPr, переделать тут
-						this.Paragraph.TextPr.Set_FontSize(FontSize_IncreaseDecreaseValue(IncFontSize, oEndTextPr.FontSize));
+						this.Paragraph.TextPr.Set_FontSize(oEndTextPr.GetIncDecFontSize(IncFontSize));
 					}
 				}
 			}
@@ -8356,7 +8404,7 @@ ParaRun.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
                 var _TextPr = new CTextPr();
                 var CurTextPr = this.Get_CompiledPr( false );
                 CRun.private_AddCollPrChangeMine();
-                CRun.Set_FontSize( FontSize_IncreaseDecreaseValue( IncFontSize, CurTextPr.FontSize ) );
+                CRun.Set_FontSize(CurTextPr.GetIncDecFontSize(IncFontSize));
             }
 
 
@@ -8542,40 +8590,24 @@ ParaRun.prototype.Apply_Pr = function(TextPr)
 	if (undefined !== TextPr.FontSize)
 		this.Set_FontSize(null === TextPr.FontSize ? undefined : TextPr.FontSize);
 
-	if (undefined !== TextPr.Color && undefined === TextPr.Unifill)
+
+	var oCompiledPr;
+	if (undefined !== TextPr.AscUnifill && null !== TextPr.AscUnifill)
 	{
-		this.Set_Color(null === TextPr.Color ? undefined : TextPr.Color);
-		this.Set_Unifill(undefined);
-		this.Set_TextFill(undefined);
-	}
-	else if (undefined !== TextPr.Unifill)
-	{
-		this.Set_Unifill(null === TextPr.Unifill ? undefined : TextPr.Unifill);
-		this.Set_Color(undefined);
-		this.Set_TextFill(undefined);
-	}
-	else if (undefined !== TextPr.AscUnifill && this.Paragraph)
-	{
-		if (!this.Paragraph.bFromDocument)
+		if(this.Paragraph && !this.Paragraph.bFromDocument)
 		{
-			var oCompiledPr = this.Get_CompiledPr(true);
+			oCompiledPr = this.Get_CompiledPr(true);
 			this.Set_Unifill(AscFormat.CorrectUniFill(TextPr.AscUnifill, oCompiledPr.Unifill, 0), AscCommon.isRealObject(TextPr.AscUnifill) && TextPr.AscUnifill.asc_CheckForseSet());
 			this.Set_Color(undefined);
 			this.Set_TextFill(undefined);
 		}
 	}
-	else if (undefined !== TextPr.TextFill)
-	{
-		this.Set_Unifill(undefined);
-		this.Set_Color(undefined);
-		this.Set_TextFill(null === TextPr.TextFill ? undefined : TextPr.TextFill);
-	}
-	else if (undefined !== TextPr.AscFill && this.Paragraph)
+	else if (undefined !== TextPr.AscFill && null !== TextPr.AscFill)
 	{
 		var oMergeUnifill, oColor;
-		if (this.Paragraph.bFromDocument)
+		if (this.Paragraph && this.Paragraph.bFromDocument)
 		{
-			var oCompiledPr = this.Get_CompiledPr(true);
+			oCompiledPr = this.Get_CompiledPr(true);
 			if (oCompiledPr.TextFill)
 			{
 				oMergeUnifill = oCompiledPr.TextFill;
@@ -8594,15 +8626,47 @@ ParaRun.prototype.Apply_Pr = function(TextPr)
 			this.Set_TextFill(AscFormat.CorrectUniFill(TextPr.AscFill, oMergeUnifill, 1), AscCommon.isRealObject(TextPr.AscFill) && TextPr.AscFill.asc_CheckForseSet());
 		}
 	}
-
-	if (undefined !== TextPr.TextOutline)
+	else
+	{
+		if (undefined !== TextPr.Color)
+		{
+			this.Set_Color(null === TextPr.Color ? undefined : TextPr.Color);
+			if(null !== TextPr.Colornull)
+			{
+				this.Set_Unifill(undefined);
+				this.Set_TextFill(undefined);
+			}
+		}
+		if (undefined !== TextPr.Unifill)
+		{
+			this.Set_Unifill(null === TextPr.Unifill ? undefined : TextPr.Unifill);
+			if(null !== TextPr.Unifill)
+			{
+				this.Set_Color(undefined);
+				this.Set_TextFill(undefined);
+			}
+		}
+		if (undefined !== TextPr.TextFill)
+		{
+			this.Set_TextFill(null === TextPr.TextFill ? undefined : TextPr.TextFill);
+			if(null !== TextPr.TextFill)
+			{
+				this.Set_Unifill(undefined);
+				this.Set_Color(undefined);
+			}
+		}
+	}
+	if (undefined !== TextPr.AscLine)
+	{
+		if(this.Paragraph)
+		{
+			oCompiledPr = this.Get_CompiledPr(true);
+			this.Set_TextOutline(AscFormat.CorrectUniStroke(TextPr.AscLine, oCompiledPr.TextOutline, 0));
+		}
+	}
+	else if (undefined !== TextPr.TextOutline)
 	{
 		this.Set_TextOutline(null === TextPr.TextOutline ? undefined : TextPr.TextOutline);
-	}
-	else if (undefined !== TextPr.AscLine && this.Paragraph)
-	{
-		var oCompiledPr = this.Get_CompiledPr(true);
-		this.Set_TextOutline(AscFormat.CorrectUniStroke(TextPr.AscLine, oCompiledPr.TextOutline, 0));
 	}
 
 	if (undefined !== TextPr.VertAlign)
@@ -8610,6 +8674,8 @@ ParaRun.prototype.Apply_Pr = function(TextPr)
 
 	if (undefined !== TextPr.HighLight)
 		this.Set_HighLight(null === TextPr.HighLight ? undefined : TextPr.HighLight);
+	if(undefined !== TextPr.HighlightColor)
+		this.SetHighlightColor(null === TextPr.HighlightColor ? undefined : TextPr.HighlightColor);
 
 	if (undefined !== TextPr.RStyle)
 		this.Set_RStyle(null === TextPr.RStyle ? undefined : TextPr.RStyle);
@@ -8638,7 +8704,7 @@ ParaRun.prototype.Apply_Pr = function(TextPr)
 			if (TextPr.RFonts.Ascii !== undefined || TextPr.RFonts.HAnsi !== undefined)
 			{
 				var RFonts = new CRFonts();
-				RFonts.Set_All("Cambria Math", -1);
+				RFonts.SetAll("Cambria Math", -1);
 
 				this.Set_RFonts2(RFonts);
 			}
@@ -8951,6 +9017,16 @@ ParaRun.prototype.Set_HighLight = function(Value)
 
         this.Recalc_CompiledPr(false);
         this.private_UpdateTrackRevisionOnChangeTextPr(true);
+    }
+};
+ParaRun.prototype.SetHighlightColor = function(Value)
+{
+    var OldValue = this.Pr.HighlightColor;
+    if ( OldValue && !OldValue.IsIdentical(Value) || Value && !Value.IsIdentical(OldValue) )
+    {
+        this.Pr.HighlightColor = Value;
+        History.Add(new CChangesRunHighlightColor(this, OldValue, Value, this.private_IsCollPrChangeMine()));
+        this.Recalc_CompiledPr(false);
     }
 };
 
@@ -12439,22 +12515,42 @@ ParaRun.prototype.private_ProcessFrenchPunctuation = function(oDocument, oParagr
  */
 ParaRun.prototype.private_ProcessHyperlinkAutoCorrect = function(oDocument, oParagraph, oContentPos, nPos, oRunElementsBefore, sText)
 {
+	var isPresentation = !!(AscCommonSlide.CPresentation && oDocument instanceof AscCommonSlide.CPresentation);
+
 	if (this.IsInHyperlink())
 		return false;
 
 	var nTypeHyper = AscCommon.getUrlType(sText);
 	if (AscCommon.c_oAscUrlType.Invalid !== nTypeHyper)
 	{
-		if (!oDocument.IsSelectionLocked({
+		if (isPresentation || !oDocument.IsSelectionLocked({
 			Type      : AscCommon.changestype_2_ElementsArray_and_Type,
 			Elements  : [oParagraph],
 			CheckType : AscCommon.changestype_Paragraph_Properties
 		}))
 		{
 			oDocument.StartAction(AscDFH.historydescription_Document_AutomaticListAsType);
+			var oTopElement;
+
+			if (isPresentation)
+			{
+				var oParentContent = oParagraph.Parent;
+				var oTable         = oParentContent.IsInTable(true);
+				if (oTable)
+				{
+					oTopElement = oTable;
+				}
+				else
+				{
+					oTopElement = oParentContent;
+				}
+			}
+			else
+			{
+				oTopElement = oDocument;
+			}
 
 			var arrContentPosition = oRunElementsBefore.GetContentPositions();
-
 			var oStartPos = arrContentPosition.length > 0 ? arrContentPosition[arrContentPosition.length - 1] : oRunElementsBefore.CurContentPos;
 			var oEndPos   = oContentPos;
 			oContentPos.Update(nPos, oContentPos.GetDepth());
@@ -12472,7 +12568,7 @@ ParaRun.prototype.private_ProcessHyperlinkAutoCorrect = function(oDocument, oPar
 			oParagraph.RemoveSelection();
 
 			oDocument.RefreshDocumentPositions([oDocPos]);
-			oDocument.SetContentPosition(oDocPos, 0, 0)
+			oTopElement.SetContentPosition(oDocPos, 0, 0);
 			oDocument.Recalculate();
 			oDocument.FinalizeAction();
 		}
@@ -12706,6 +12802,55 @@ ParaRun.prototype.ConvertFootnoteType = function(isToFootnote, oStyles, oFootnot
 					this.AddToContent(nCurPos, new ParaEndnoteRef(oFootnote));
 				}
 			}
+		}
+	}
+};
+ParaRun.prototype.ChangeTextCase = function(oEngine)
+{
+	var nStartPos = 0;
+	var nEndPos   = -1;
+
+	if (this.Selection.Use)
+	{
+		nStartPos = this.Selection.StartPos;
+		nEndPos   = this.Selection.EndPos;
+		if (nStartPos > nEndPos)
+		{
+			var nTemp = nStartPos;
+			nStartPos = nEndPos;
+			nEndPos   = nTemp;
+		}
+	}
+
+	for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
+	{
+		var oItem = this.Content[nPos];
+		if (para_Text === oItem.Type)
+		{
+			if (oItem.IsDot())
+			{
+				oEngine.FlushWord();
+				oEngine.SetStartSentence(true);
+			}
+			else
+			{
+				if (!oItem.IsPunctuation())
+				{
+					oEngine.AddLetter(this, nPos, nPos >= nStartPos && nPos < nEndPos);
+				}
+				else
+				{
+					oEngine.FlushWord();
+					oEngine.SetStartSentence(false);
+				}
+			}
+		}
+		else
+		{
+			oEngine.FlushWord();
+
+			if (para_Tab !== oItem.Type && para_Space !== oItem.Type)
+				oEngine.SetStartSentence(false);
 		}
 	}
 };

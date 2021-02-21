@@ -2181,12 +2181,6 @@
         this.WriteBorderProp = function(borderProp)
         {
             var oThis = this;
-            if(null != borderProp.c)
-            {
-                this.memory.WriteByte(c_oSerBorderPropTypes.Color);
-                this.memory.WriteByte(c_oSerPropLenType.Variable);
-                this.bs.WriteItemWithLength(function(){oThis.bs.WriteColorSpreadsheet(borderProp.c);});
-            }
             if(null != borderProp.s)
             {
                 var nStyle = EBorderStyle.borderstyleNone;
@@ -2210,6 +2204,12 @@
                 this.memory.WriteByte(c_oSerBorderPropTypes.Style);
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
                 this.memory.WriteByte(nStyle);
+
+                if (EBorderStyle.borderstyleNone !== nStyle) {
+                    this.memory.WriteByte(c_oSerBorderPropTypes.Color);
+                    this.memory.WriteByte(c_oSerPropLenType.Variable);
+                    this.bs.WriteItemWithLength(function(){oThis.bs.WriteColorSpreadsheet(borderProp.c);});
+                }
             }
         };
         this.WriteFills = function()
@@ -6401,10 +6401,7 @@
                 }
             }
             else if ( c_oSerBorderPropTypes.Color == type ) {
-				var color = ReadColorSpreadsheet2(this.bcr, length);
-				if (null != color) {
-					oBorderProp.c = color;
-				}
+				oBorderProp.c = ReadColorSpreadsheet2(this.bcr, length);
             }
             else
                 res = c_oSerConstants.ReadUnknown;
@@ -7623,9 +7620,9 @@
 			} else if (c_oSer_DataValidation.SqRef == type) {
 			    dataValidation.setSqRef(this.stream.GetString2LE(length));
 			} else if (c_oSer_DataValidation.Formula1 == type) {
-			    dataValidation.formula1 = new AscCommonExcel.CDataFormula(this.stream.GetString2LE(length));
+			    dataValidation.formula1 = new Asc.CDataFormula(this.stream.GetString2LE(length));
 			} else if (c_oSer_DataValidation.Formula2 == type) {
-                dataValidation.formula2 = new AscCommonExcel.CDataFormula(this.stream.GetString2LE(length));
+                dataValidation.formula2 = new Asc.CDataFormula(this.stream.GetString2LE(length));
 			} else
 				res = c_oSerConstants.ReadUnknown;
 			return res;
@@ -9712,7 +9709,7 @@
             }
             if(pptx_content_loader.Reader)
             {
-                pptx_content_loader.Reader.AssignConnectorsId();
+                pptx_content_loader.Reader.AssignConnectedObjects();
             }
 			if(!pasteBinaryFromExcel)
 				History.TurnOn();

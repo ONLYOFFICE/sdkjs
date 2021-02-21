@@ -116,6 +116,7 @@ function (window, undefined) {
 	window['AscCH'].historyitem_RowCol_SetStyle = 18;
 	window['AscCH'].historyitem_RowCol_SetCellStyle = 19;
 	window['AscCH'].historyitem_RowCol_Num = 20;
+	window['AscCH'].historyitem_RowCol_Indent = 21;
 
 	window['AscCH'].historyitem_Cell_Fontname = 1;
 	window['AscCH'].historyitem_Cell_Fontsize = 2;
@@ -142,6 +143,7 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Cell_Num = 24;
 	window['AscCH'].historyitem_Cell_SetPivotButton = 25;
 	window['AscCH'].historyitem_Cell_RemoveSharedFormula = 26;
+	window['AscCH'].historyitem_Cell_Indent = 27;
 
 	window['AscCH'].historyitem_Comment_Add = 1;
 	window['AscCH'].historyitem_Comment_Remove = 2;
@@ -196,7 +198,7 @@ function (window, undefined) {
 	window['AscCH'].historyitem_PivotTable_PivotFieldSetName = 30;
 	window['AscCH'].historyitem_PivotTable_PivotFieldSetOutline = 31;
 	window['AscCH'].historyitem_PivotTable_PivotFieldSetCompact = 32;
-	window['AscCH'].historyitem_PivotTable_PivotFieldFillDownLabelsDefault = 32;
+	window['AscCH'].historyitem_PivotTable_PivotFieldFillDownLabelsDefault = 33;
 	window['AscCH'].historyitem_PivotTable_PivotFieldSetInsertBlankRow = 34;
 	window['AscCH'].historyitem_PivotTable_PivotFieldSetDefaultSubtotal = 35;
 	window['AscCH'].historyitem_PivotTable_PivotFieldSetSubtotalTop = 36;
@@ -510,15 +512,7 @@ CHistory.prototype.RedoExecute = function(Point, oRedoObjectParam)
 		this._addRedoObjectParam(oRedoObjectParam, Item);
 	}
 	AscCommon.CollaborativeEditing.Apply_LinkData();
-	var wsViews = Asc["editor"].wb.wsViews;
-	this.Get_RecalcData(Point);
-	for(var i = 0; i < wsViews.length; ++i)
-	{
-		if(wsViews[i] && wsViews[i].objectRender && wsViews[i].objectRender.controller)
-		{
-			wsViews[i].objectRender.controller.recalculate2(undefined);
-		}
-	}
+	Asc["editor"].wb.recalculateDrawingObjects(Point, false);
 };
 CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 	var wsViews, i, oState = null, bCoaut = false, t = this;
@@ -527,13 +521,7 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 		AscCommon.CollaborativeEditing.Apply_LinkData();
 		bCoaut = true;
         if(!window["NATIVE_EDITOR_ENJINE"] || window['IS_NATIVE_EDITOR']) {
-            this.Get_RecalcData(Point);
-            wsViews = Asc["editor"].wb.wsViews;
-            for (i = 0; i < wsViews.length; ++i) {
-                if (wsViews[i] && wsViews[i].objectRender && wsViews[i].objectRender.controller) {
-                    wsViews[i].objectRender.controller.recalculate2(true);
-                }
-            }
+			Asc["editor"].wb.recalculateDrawingObjects(Point, true);
         }
 	}
 
@@ -592,13 +580,7 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 		}
 
         if(!window["NATIVE_EDITOR_ENJINE"] || window['IS_NATIVE_EDITOR']) {
-            this.Get_RecalcData(Point);
-            wsViews = Asc["editor"].wb.wsViews;
-            for (i = 0; i < wsViews.length; ++i) {
-                if (wsViews[i] && wsViews[i].objectRender && wsViews[i].objectRender.controller) {
-                    wsViews[i].objectRender.controller.recalculate2(undefined);
-                }
-            }
+			Asc["editor"].wb.recalculateDrawingObjects(Point, false);
         }
 
 		if (oRedoObjectParam.oOnUpdateSheetViewSettings[this.workbook.getWorksheet(this.workbook.getActive()).getId()])

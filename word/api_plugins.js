@@ -491,6 +491,18 @@
 		{
 			oCD = new AscCommon.CCommentData();
 			oCD.ReadFromSimpleObject(oCommentData);
+
+			var oLogicDocument = this.private_GetLogicDocument();
+			if (oLogicDocument && AscCommonWord && AscCommonWord.CDocument && oLogicDocument instanceof AscCommonWord.CDocument)
+			{
+				var oComment = oLogicDocument.Comments.Get_ById(sId);
+				if (oComment)
+				{
+					var sQuotedText = oComment.GetData().GetQuoteText();
+					if (sQuotedText)
+						oCD.SetQuoteText(sQuotedText);
+				}
+			}
 		}
 
 		this.asc_changeComment(sId, new window['Asc']['asc_CCommentDataWord'](oCD));
