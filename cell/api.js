@@ -2913,18 +2913,19 @@ var editor;
                 var nSheetIdx = oWorksheet.getIndex();
                 if (this.asc_getActiveWorksheetIndex() !== nSheetIdx) {
                     this.asc_showWorksheet(nSheetIdx);
-                    var oWSView = this.wb.getWorksheet();
-                    if(oWSView) {
-                        var oRender = oWSView.objectRender;
-                        if(oRender) {
-                            var oController = oRender.controller;
-                            if(oController) {
-                                oSp.Set_CurrentElement(false);
-                                oController.selection.textSelection = null;
-                                oController.updateSelectionState();
-                                oController.updateOverlay();
-                                oRender.sendGraphicObjectProps();
-                            }
+                }
+                var oWSView = this.wb.getWorksheet();
+                if(oWSView) {
+                    var oRender = oWSView.objectRender;
+                    if(oRender) {
+                        var oController = oRender.controller;
+                        if(oController) {
+                            oSp.Set_CurrentElement(false);
+                            oController.selection.textSelection = null;
+                            oWSView.setSelectionShape(true);
+                            oController.updateSelectionState();
+                            oController.updateOverlay();
+                            oRender.sendGraphicObjectProps();
                         }
                     }
                 }
