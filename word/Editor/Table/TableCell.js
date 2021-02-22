@@ -1298,7 +1298,7 @@ CTableCell.prototype =
 		var nT = oDefaultMargins.Top;
 		var nB = oDefaultMargins.Bottom;
 		var nL = oDefaultMargins.Left;
-		var nR = oDefaultMargins.Right
+		var nR = oDefaultMargins.Right;
 
 		if (oCellMargins)
 		{
@@ -1316,7 +1316,7 @@ CTableCell.prototype =
 		}
 
 		// Делаем как MSWord, верхний отступ считаем общим для всей строки
-		if (true !== isDirectTop)
+		if (true !== isDirectTop && !this.Row.Table.bPresentation)
 			nT = new CTableMeasurement(tblwidth_Mm, this.private_GetRowTopMargin());
 
 		return {
