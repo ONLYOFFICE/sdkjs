@@ -2713,7 +2713,7 @@ var editor;
 						var groupRes;
 						var changeRes = t._changePivot(pivotTable, confirmation, true, function(){
 							groupRes = pivotTable.groupDiscreteCache(layout);
-							pivotTable.groupDiscrete(layout.fld, groupRes);
+							pivotTable.groupDiscrete(layout, groupRes);
 						});
 						var index = 0;
 						while (index < pivotTables.length && c_oAscError.ID.No === changeRes.error && c_oAscError.ID.No === changeRes.warning) {
@@ -2722,7 +2722,7 @@ var editor;
 								continue;
 							}
 							changeRes = t._changePivot(pivotCur, confirmation, true, function(){
-								pivotCur.groupDiscrete(layout.fld, groupRes);
+								pivotCur.groupDiscrete(layout, groupRes);
 							});
 						}
 						return changeRes;
@@ -2754,8 +2754,8 @@ var editor;
 					this._changePivotAndConnectedByPivotCacheWithLock(pivotTable, false, function(confirmation, pivotTables) {
 						var groupRes;
 						var changeRes = t._changePivot(pivotTable, confirmation, true, function(){
-							groupRes = pivotTable.ungroupDiscreteCache(layout.fld, layout.groupMap);
-							pivotTable.ungroupDiscrete(layout.fld, groupRes);
+							groupRes = pivotTable.ungroupDiscreteCache(layout);
+							pivotTable.ungroupDiscrete(layout, groupRes);
 						});
 						var index = 0;
 						while (index < pivotTables.length && c_oAscError.ID.No === changeRes.error && c_oAscError.ID.No === changeRes.warning) {
@@ -2764,7 +2764,7 @@ var editor;
 								continue;
 							}
 							changeRes = t._changePivot(pivotCur, confirmation, true, function(){
-								pivotCur.ungroupDiscrete(layout.fld, groupRes);
+								pivotCur.ungroupDiscrete(layout, groupRes);
 							});
 						}
 						return changeRes;
