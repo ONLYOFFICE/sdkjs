@@ -47,6 +47,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Document_SdtGlobalSettings]          = 
 AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_GutterAtTop]       = CChangesDocumentSettingsGutterAtTop;
 AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_MirrorMargins]     = CChangesDocumentSettingsMirrorMargins;
 AscDFH.changesFactory[AscDFH.historyitem_Document_SpecialFormsGlobalSettings] = CChangesDocumentSpecialFormsGlobalSettings;
+AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_TrackRevisions]    = CChangesDocumentSettingsTrackRevisions;
 
 //----------------------------------------------------------------------------------------------------------------------
 // Карта зависимости изменений
@@ -67,6 +68,7 @@ AscDFH.changesRelationMap[AscDFH.historyitem_Document_SdtGlobalSettings]        
 AscDFH.changesRelationMap[AscDFH.historyitem_Document_Settings_GutterAtTop]       = [AscDFH.historyitem_Document_Settings_GutterAtTop];
 AscDFH.changesRelationMap[AscDFH.historyitem_Document_Settings_MirrorMargins]     = [AscDFH.historyitem_Document_Settings_MirrorMargins];
 AscDFH.changesRelationMap[AscDFH.historyitem_Document_SpecialFormsGlobalSettings] = [AscDFH.historyitem_Document_SpecialFormsGlobalSettings];
+AscDFH.changesRelationMap[AscDFH.historyitem_Document_Settings_TrackRevisions]    = [AscDFH.historyitem_Document_Settings_TrackRevisions];
 //----------------------------------------------------------------------------------------------------------------------
 
 /**
@@ -620,4 +622,19 @@ CChangesDocumentSpecialFormsGlobalSettings.prototype.private_CreateObject = func
 CChangesDocumentSpecialFormsGlobalSettings.prototype.private_IsCreateEmptyObject = function()
 {
 	return true;
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesDocumentSettingsTrackRevisions(Class, Old, New)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New);
+}
+CChangesDocumentSettingsTrackRevisions.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesDocumentSettingsTrackRevisions.prototype.constructor = CChangesDocumentSettingsTrackRevisions;
+CChangesDocumentSettingsTrackRevisions.prototype.Type = AscDFH.historyitem_Document_Settings_TrackRevisions;
+CChangesDocumentSettingsTrackRevisions.prototype.private_SetValue = function(Value)
+{
+	this.Class.Settings.TrackRevisions = Value;
 };

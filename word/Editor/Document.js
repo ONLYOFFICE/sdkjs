@@ -2206,10 +2206,11 @@ function CDocumentSettings()
 	this.SdtSettings          = new CSdtGlobalSettings();
 	this.SpecialFormsSettings = new CSpecialFormsGlobalSettings();
 
-	this.ListSeparator = undefined;
-	this.DecimalSymbol = undefined;
-	this.GutterAtTop   = false;
-	this.MirrorMargins = false;
+	this.ListSeparator  = undefined;
+	this.DecimalSymbol  = undefined;
+	this.GutterAtTop    = false;
+	this.MirrorMargins  = false;
+	this.TrackRevisions = false; // Флаг рецензирования, который записан в самом файле
 
 	// Compatibility
 	this.SplitPageBreakAndParaMark = false;
@@ -2262,7 +2263,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
     this.SectionsInfo = new CDocumentSectionsInfo();
 
 	// Режим рецензирования
-	this.TrackRevisions = false;
+	this.TrackRevisions = null; // Локальный флаг рецензирования, который перекрывает флаг Settings.TrackRevisions, если сам не null
 	this.TrackRevisionsManager = new CTrackRevisionsManager(this);
 
 	this.Content[0] = new Paragraph(DrawingDocument, this);
@@ -12950,7 +12951,7 @@ CDocument.prototype.EndSelectionLockCheck = function(isDontLockInFastMode)
 };
 CDocument.prototype.private_DocumentIsSelectionLocked = function(CheckType)
 {
-	if (AscCommon.changestype_None != CheckType)
+	if (AscCommon.changestype_None !== CheckType)
 	{
 		if (AscCommon.changestype_Document_SectPr === CheckType)
 		{
@@ -12964,12 +12965,16 @@ CDocument.prototype.private_DocumentIsSelectionLocked = function(CheckType)
 		{
 			this.DrawingObjects.Lock.Check(this.DrawingObjects.Get_Id());
 		}
-		else if(AscCommon.changestype_CorePr === CheckType)
+		else if (AscCommon.changestype_CorePr === CheckType)
 		{
-			if(this.Core)
+			if (this.Core)
 			{
 				this.Core.Lock.Check(this.Core.Get_Id());
 			}
+		}
+		else if (AscCommon.changestype_Document_Settings === CheckType)
+		{
+			this.Lock.Check(this.GetId());
 		}
 		else
 		{
@@ -14470,10 +14475,6 @@ CDocument.prototype.Get_EditingType = function()
 CDocument.prototype.Set_EditingType = function(EditingType)
 {
 	this.EditingType = EditingType;
-};
-CDocument.prototype.IsTrackRevisions = function()
-{
-	return this.TrackRevisions;
 };
 CDocument.prototype.GetTrackRevisionsManager = function()
 {
@@ -16414,6 +16415,47 @@ CDocument.prototype.ContinueTrackRevisions = function()
 CDocument.prototype.SetTrackRevisions = function(bTrack)
 {
 	this.TrackRevisions = bTrack;
+};
+/**
+ * Проверяем включено ли рецезирование в файле
+ * @return {boolean}
+ */
+CDocument.prototype.IsTrackRevisions = function()
+{
+	if (null === this.TrackRevisions)
+		return (true === this.Settings.TrackRevisions);
+
+	return this.TrackRevisions;
+};
+/**
+ * Устанавливаем локальное значение TrackChanges
+ * @param {boolean|null} isTrack
+ */
+CDocument.prototype.SetLocalTrackRevisions = function(isTrack)
+{
+	this.TrackRevisions = isTrack;
+};
+/**
+ * Получаем локальный флаг рецензирования
+ * @return {null|boolean}
+ */
+CDocument.prototype.GetLocalTrackRevisions = function()
+{
+	return this.TrackRevisions;
+};
+/**
+ * Устанавливаем глобальный флаг рецензирования в файле
+ * @param {boolean} isTrack
+ */
+CDocument.prototype.SetGlobalTrackRevisions = function(isTrack)
+{
+	if (isTrack !== this.Settings.TrackRevisions && this.IsSelectionLocked(AscCommon.changestype_Document_Settings))
+	{
+		this.StartAction(AscDFH.historydescription_Document_SetTrackRevisions);
+		this.History.Add(new CChangesDocumentSettingsTrackRevisions(this, this.Settings.TrackRevisions, isTrack));
+		this.Settings.TrackRevisions = isTrack;
+		this.FinalizeAction();
+	}
 };
 CDocument.prototype.GetNextRevisionChange = function()
 {

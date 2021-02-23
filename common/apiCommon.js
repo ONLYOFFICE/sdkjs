@@ -4824,10 +4824,10 @@
 
 				var _oldTrackRevision = false;
                 if (oApi.getEditorId() == AscCommon.c_oEditorId.Word && oApi.WordControl && oApi.WordControl.m_oLogicDocument)
-                    _oldTrackRevision = oApi.WordControl.m_oLogicDocument.TrackRevisions;
+                    _oldTrackRevision = oApi.WordControl.GetLocalTrackRevisions();
 
-                if (_oldTrackRevision)
-                    oApi.WordControl.m_oLogicDocument.TrackRevisions = false;
+                if (false !== _oldTrackRevision)
+                    oApi.WordControl.m_oLogicDocument.SetLocalTrackRevisions(false);
 
                 var bRemoveDocument = false;
                 if(oApi.WordControl && !oApi.WordControl.m_oLogicDocument)
@@ -5002,8 +5002,8 @@
                     oApi.ShowParaMarks = oldShowParaMarks;
 				}
 
-				if (_oldTrackRevision)
-					oApi.WordControl.m_oLogicDocument.TrackRevisions = true;
+				if (false !== _oldTrackRevision)
+					oApi.WordControl.m_oLogicDocument.SetLocalTrackRevisions(_oldTrackRevision);
 
 			}, this, [obj]);
 

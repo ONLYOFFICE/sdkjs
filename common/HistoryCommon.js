@@ -1526,6 +1526,7 @@
 	window['AscDFH'].historyitem_Document_Settings_GutterAtTop       = window['AscDFH'].historyitem_type_Document | 8;
 	window['AscDFH'].historyitem_Document_Settings_MirrorMargins     = window['AscDFH'].historyitem_type_Document | 9;
 	window['AscDFH'].historyitem_Document_SpecialFormsGlobalSettings = window['AscDFH'].historyitem_type_Document | 10;
+	window['AscDFH'].historyitem_Document_Settings_TrackRevisions    = window['AscDFH'].historyitem_type_Document | 11;
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе Paragraph
 	//------------------------------------------------------------------------------------------------------------------
@@ -3591,6 +3592,7 @@
 	window['AscDFH'].historydescription_Document_ClearAllSpecialForms               = 0x0182;
 	window['AscDFH'].historydescription_Document_ChangeTextCase                     = 0x0183;
 	window['AscDFH'].historydescription_Document_SetNumberingLvl                    = 0x0184;
+	window['AscDFH'].historydescription_Document_SetTrackRevisions                  = 0x0185;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
