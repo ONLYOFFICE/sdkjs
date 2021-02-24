@@ -9678,6 +9678,7 @@ DrawingObjectsController.prototype =
             shape_props.ShapeProperties.textFitType = props.shapeProps.textFitType;
             shape_props.ShapeProperties.vertOverflowType = props.shapeProps.vertOverflowType;
             shape_props.ShapeProperties.shadow = props.shapeProps.shadow;
+            shape_props.ShapeProperties.signatureId = props.shapeProps.signatureId;
             if(props.shapeProps.textArtProperties && oDrawingDocument)
             {
                 oTextArtProperties = props.shapeProps.textArtProperties;
