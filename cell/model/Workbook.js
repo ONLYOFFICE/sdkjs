@@ -3641,6 +3641,79 @@
 		}
 	};
 
+	Workbook.prototype.getRulesByType = function(type, id, needClone) {
+		var range, sheet;
+		var rules = null;
+		switch (type) {
+			case Asc.c_oAscSelectionForCFType.selection:
+				sheet = this.getActiveWs();
+				// ToDo multiselect
+				range = sheet.selectionRange.getLast();
+				break;
+			case Asc.c_oAscSelectionForCFType.worksheet:
+				sheet = this.getWorksheet(id);
+				break;
+			case Asc.c_oAscSelectionForCFType.table:
+				var oTable;
+				if (id) {
+					oTable = this.getTableByName(id, true);
+					if (oTable) {
+						sheet = this.aWorksheets[oTable.index];
+						range = oTable.table.Ref;
+					}
+				} else {
+					//this table
+					sheet = this.getActiveWs();
+					var thisTableIndex = sheet.autoFilters.searchRangeInTableParts(sheet.selectionRange.getLast());
+					if (thisTableIndex >= 0) {
+						range = sheet.TableParts[thisTableIndex].Ref;
+					} else {
+						sheet = null;
+					}
+				}
+				break;
+			case Asc.c_oAscSelectionForCFType.pivot:
+				// ToDo
+				break;
+		}
+		if (sheet) {
+			var aRules = sheet.aConditionalFormattingRules.sort(function(v1, v2) {
+				return v1.priority - v2.priority;
+			});
+
+			rules = [];
+			if (range) {
+				var putRange = function (_range, _rule) {
+					multiplyRange = new AscCommonExcel.MultiplyRange(_range);
+					if (multiplyRange.isIntersect(range)) {
+						if (needClone) {
+							var _id = _rule.id;
+							_rule = _rule.clone();
+							_rule.id = _id;
+						}
+						rules.push(_rule);
+					}
+				};
+				var oRule, ranges, multiplyRange, i, mapChangedRules = [];
+				for (i = 0; i < aRules.length; ++i) {
+					oRule = aRules[i];
+					ranges = oRule.ranges;
+					putRange(ranges, oRule);
+				}
+			} else {
+				for (i = 0; i < aRules.length; ++i) {
+					if (needClone) {
+						var _id = aRules[i].id;
+						var _rule = aRules[i].clone();
+						_rule.id = _id;
+					}
+					rules.push(_rule);
+				}
+			}
+		}
+		return rules;
+	};
+
 //-------------------------------------------------------------------------------------------------
 	var tempHelp = new ArrayBuffer(8);
 	var tempHelpUnit = new Uint8Array(tempHelp);

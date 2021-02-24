@@ -4987,83 +4987,8 @@ var editor;
     };
 
     spreadsheet_api.prototype.asc_getCF = function (type, id, aChangedRules) {
-      var rules = null;
-      var range, sheet;
-      switch (type) {
-        case Asc.c_oAscSelectionForCFType.selection:
-          sheet = this.wbModel.getActiveWs();
-          // ToDo multiselect
-          range = sheet.selectionRange.getLast();
-          break;
-        case Asc.c_oAscSelectionForCFType.worksheet:
-          sheet = this.wbModel.getWorksheet(id);
-          break;
-        case Asc.c_oAscSelectionForCFType.table:
-          var oTable;
-          if (id) {
-			  oTable = this.wbModel.getTableByName(id, true);
-			  if (oTable) {
-				  sheet = this.wbModel.aWorksheets[oTable.index];
-				  range = oTable.table.Ref;
-              }
-          } else {
-              //this table
-			  sheet = this.wbModel.getActiveWs();
-			  var thisTableIndex = sheet.autoFilters.searchRangeInTableParts(sheet.selectionRange.getLast());
-			  if (thisTableIndex >= 0) {
-				  range = sheet.TableParts[thisTableIndex].Ref;
-              } else {
-				  sheet = null;
-              }
-          }
-          break;
-        case Asc.c_oAscSelectionForCFType.pivot:
-          // ToDo
-          break;
-      }
-      if (sheet) {
-        var aRules = sheet.aConditionalFormattingRules.sort(function(v1, v2) {
-          return v1.priority - v2.priority;
-        });
-
-        rules = [];
-        if (range) {
-          var putRange = function (_range, _rule) {
-            multiplyRange = new AscCommonExcel.MultiplyRange(_range);
-            if (multiplyRange.isIntersect(range)) {
-              var _id = _rule.id;
-              _rule = _rule.clone();
-              _rule.id = _id;
-              rules.push(_rule);
-            }
-          };
-          var oRule, ranges, multiplyRange, i, mapChangedRules = [];
-          if (aChangedRules) {
-            for (i = 0; i < aChangedRules.length; ++i) {
-                oRule = aRules[i];
-                ranges = oRule.ranges;
-                putRange(ranges, oRule);
-                mapChangedRules[oRule.id] = 1;
-            }
-          }
-          for (i = 0; i < aRules.length; ++i) {
-            oRule = aRules[i];
-            if (mapChangedRules[oRule.id]) {
-              continue;
-            }
-            ranges = oRule.ranges;
-            putRange(ranges, oRule);
-          }
-        } else {
-          for (i = 0; i < aRules.length; ++i) {
-			  var _id = aRules[i].id;
-			  var _rule = aRules[i].clone();
-			  _rule.id = _id;
-			  rules.push(_rule);
-          }
-        }
-      }
-
+      var sheet;
+      var rules = this.wbModel.getRulesByType(type, id, true);
       var aSheet = type === Asc.c_oAscSelectionForCFType.selection ? sheet : this.wbModel.getActiveWs();
       var activeRanges = aSheet.selectionRange.ranges;
       var sActiveRanges = [];
@@ -5195,11 +5120,11 @@ var editor;
 		ws.setCF(arr, deleteIdArr, presetId);
 	};
 
-	spreadsheet_api.prototype.asc_clearCF = function (type) {
-		var deleteRules = this.asc_getCF(type);
-		if (deleteRules && deleteRules[0]) {
+	spreadsheet_api.prototype.asc_clearCF = function (type, id) {
+		var rules = this.wbModel.getRulesByType(type, id);
+		if (rules && rules.length) {
 			var ws = this.wb.getWorksheet();
-			ws.deleteCF(deleteRules);
+			ws.deleteCF(rules);
 		}
 	};
 
