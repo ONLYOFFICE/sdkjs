@@ -1547,19 +1547,19 @@
 		return this.aCFVOs;
 	};
 	CDataBar.prototype.asc_getColor = function () {
-		return Asc.colorObjToAscColor(this.Color);
+		return this.Color ? Asc.colorObjToAscColor(this.Color) : null;
 	};
 	CDataBar.prototype.asc_getNegativeColor = function () {
-		return Asc.colorObjToAscColor(this.NegativeColor);
+		return this.NegativeColor ? Asc.colorObjToAscColor(this.NegativeColor) : null;
 	};
 	CDataBar.prototype.asc_getBorderColor = function () {
-		return Asc.colorObjToAscColor(this.BorderColor);
+		return this.BorderColor ? Asc.colorObjToAscColor(this.BorderColor) : null;
 	};
 	CDataBar.prototype.asc_getNegativeBorderColor = function () {
-		return Asc.colorObjToAscColor(this.NegativeBorderColor);
+		return this.NegativeBorderColor ? Asc.colorObjToAscColor(this.NegativeBorderColor) : null;
 	};
 	CDataBar.prototype.asc_getAxisColor = function () {
-		return Asc.colorObjToAscColor(this.AxisColor);
+		return this.AxisColor ? Asc.colorObjToAscColor(this.AxisColor) : null;
 	};
 
 	CDataBar.prototype.asc_setShowValue = function (val) {
