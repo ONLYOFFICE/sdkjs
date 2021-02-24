@@ -1565,37 +1565,37 @@
 	CDataBar.prototype.asc_setShowValue = function (val) {
 		this.ShowValue = val;
 	};
-	CDataBar.prototype.asc_getAxisPosition = function (val) {
-		return this.AxisPosition;
+	CDataBar.prototype.asc_setAxisPosition = function (val) {
+		this.AxisPosition = val;
 	};
-	CDataBar.prototype.asc_getGradient = function (val) {
+	CDataBar.prototype.asc_setGradient = function (val) {
 		this.Gradient = val;
 	};
-	CDataBar.prototype.asc_getDirection = function (val) {
+	CDataBar.prototype.asc_setDirection = function (val) {
 		this.Direction = val;
 	};
-	CDataBar.prototype.asc_getNegativeBarColorSameAsPositive = function (val) {
+	CDataBar.prototype.asc_setNegativeBarColorSameAsPositive = function (val) {
 		this.NegativeBarColorSameAsPositive = val;
 	};
-	CDataBar.prototype.asc_getNegativeBarBorderColorSameAsPositive = function (val) {
+	CDataBar.prototype.asc_setNegativeBarBorderColorSameAsPositive = function (val) {
 		this.NegativeBarBorderColorSameAsPositive = val;
 	};
 	CDataBar.prototype.asc_setCFVOs = function (val) {
 		this.aCFVOs = val;
 	};
-	CDataBar.prototype.asc_getColor = function (val) {
+	CDataBar.prototype.asc_setColor = function (val) {
 		this.Color = AscCommonExcel.CorrectAscColor(val);
 	};
-	CDataBar.prototype.asc_getNegativeColor = function (val) {
+	CDataBar.prototype.asc_setNegativeColor = function (val) {
 		this.NegativeColor = AscCommonExcel.CorrectAscColor(val);
 	};
-	CDataBar.prototype.asc_getBorderColor = function (val) {
+	CDataBar.prototype.asc_setBorderColor = function (val) {
 		this.BorderColor = AscCommonExcel.CorrectAscColor(val);
 	};
-	CDataBar.prototype.asc_getNegativeBorderColor = function (val) {
+	CDataBar.prototype.asc_setNegativeBorderColor = function (val) {
 		this.NegativeBorderColor = AscCommonExcel.CorrectAscColor(val);
 	};
-	CDataBar.prototype.asc_getAxisColor = function (val) {
+	CDataBar.prototype.asc_setAxisColor = function (val) {
 		this.AxisColor = AscCommonExcel.CorrectAscColor(val);
 	};
 
