@@ -3651,7 +3651,7 @@
 				range = sheet.selectionRange.getLast();
 				break;
 			case Asc.c_oAscSelectionForCFType.worksheet:
-				sheet = this.getWorksheet(id);
+				sheet = id ? this.getWorksheet(id) : this.getActiveWs();
 				break;
 			case Asc.c_oAscSelectionForCFType.table:
 				var oTable;
@@ -3702,9 +3702,10 @@
 				}
 			} else {
 				for (i = 0; i < aRules.length; ++i) {
+					var _rule = aRules[i];
 					if (needClone) {
 						var _id = aRules[i].id;
-						var _rule = aRules[i].clone();
+						_rule = _rule.clone();
 						_rule.id = _id;
 					}
 					rules.push(_rule);
