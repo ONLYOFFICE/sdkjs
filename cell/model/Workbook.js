@@ -9376,6 +9376,44 @@
 		}
 	};
 
+	Worksheet.prototype.tryClearCFRule = function (rule, ranges) {
+		if (!rule) {
+			return;
+		}
+
+		if (ranges) {
+			var _newRanges = [];
+
+			var ruleRanges = rule.ranges;
+			for (var i = 0; i < ruleRanges.length; i++) {
+
+				var tempRanges = [];
+				for (var j = 0; j < ranges.length; j++) {
+					if (tempRanges.length) {
+						var tempRanges2 = [];
+						for (var k = 0; k < tempRanges.length; k++) {
+							tempRanges2 = tempRanges2.concat(ranges[j].difference(tempRanges[k]));
+						}
+						tempRanges = tempRanges2;
+					} else {
+						tempRanges = ranges[j].difference(ruleRanges[i]);
+					}
+				}
+				_newRanges = _newRanges.concat(tempRanges);
+			}
+
+			if (!_newRanges.length) {
+				this.deleteCFRule(rule.Id, true)
+			} else {
+				var newRule = rule.clone();
+				newRule.ranges = _newRanges;
+				this.changeCFRule(rule, newRule, true);
+			}
+		} else {
+			this.deleteCFRule(rule.id, true);
+		}
+	};
+
 	Worksheet.prototype.deleteCFRule = function (id, addToHistory) {
 		var oRule = this.getCFRuleById(id);
 		if (oRule) {

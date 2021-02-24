@@ -5124,7 +5124,7 @@ var editor;
 		var rules = this.wbModel.getRulesByType(type, id);
 		if (rules && rules.length) {
 			var ws = this.wb.getWorksheet();
-			ws.deleteCF(rules);
+			ws.deleteCF(rules, type);
 		}
 	};
 

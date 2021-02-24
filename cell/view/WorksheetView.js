@@ -21232,8 +21232,8 @@
 		this._isLockedCF(callback, unitedArr);
 	};
 
-	WorksheetView.prototype.deleteCF = function (arr) {
-		var t = this;
+	WorksheetView.prototype.deleteCF = function (arr, type) {
+		var t = this, _ranges;
 
 		var callback = function (success) {
 			if (!success) {
@@ -21243,11 +21243,27 @@
 			History.StartTransaction();
 
 			for (var i = 0; i < arr.length; i++) {
-				t.model.deleteCFRule(arr[i].id, true);
+				//TODO для мультиселекта - передать массив!
+				t.model.tryClearCFRule(arr[i], _ranges ? [_ranges] : undefined);
 			}
 
 			History.EndTransaction();
 		};
+
+		switch (type) {
+			case Asc.c_oAscSelectionForCFType.selection:
+				_ranges = this.model.selectionRange.getLast();
+				break;
+			case Asc.c_oAscSelectionForCFType.table:
+				var thisTableIndex = this.model.autoFilters.searchRangeInTableParts(this.model.selectionRange.getLast());
+				if (thisTableIndex >= 0) {
+					_ranges = this.model.TableParts[thisTableIndex].Ref;
+				}
+				break;
+			case Asc.c_oAscSelectionForCFType.pivot:
+				// ToDo
+				break;
+		}
 
 		var lockArr = [];
 		if (arr) {
