@@ -120,7 +120,7 @@ Asc['asc_docs_api'].prototype.asc_Save = function (isNoUserSave, isSaveAs, isRes
 		this.LastUserSavedIndex = AscCommon.History.UserSavedIndex;
 	}
 
-    if (true === this.canSave && !this.isLongAction())
+    if (true === this.canSave && this._saveCheck())
 	{
 		var _isNaturalSave = this.IsUserSave;
 		this.canSave = false;
