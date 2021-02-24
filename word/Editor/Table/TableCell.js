@@ -998,7 +998,7 @@ CTableCell.prototype =
 			{
 				if (this.GetW().IsMM())
 				{
-					oResult.ContentMin = Math.max(oResult.ContentMin, oResult.Min - nAdd);
+					oResult.ContentMin = Math.max(oResult.ContentMin, oResult.Min);
 				}
 				else
 				{
