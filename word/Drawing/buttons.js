@@ -525,6 +525,9 @@
 
     Placeholders.prototype.update = function(objects)
 	{
+		if (this.document.m_oWordControl.m_oApi.isViewMode || this.document.m_oWordControl.m_oApi.isRestrictionSignatures())
+			objects = [];
+
 		var count = this.objects.length;
 		var newCount = objects ? objects.length : 0;
 		if (count != newCount)

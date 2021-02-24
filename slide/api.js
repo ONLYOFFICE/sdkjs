@@ -7586,6 +7586,21 @@ background-repeat: no-repeat;\
 			}
 		}
 	};
+
+	asc_docs_api.prototype.onUpdateRestrictions = function()
+	{
+		if (!this.WordControl || !this.WordControl.m_oLogicDocument || !this.WordControl.m_oDrawingDocument)
+			return;
+
+		var logicDocument = this.WordControl.m_oLogicDocument;
+		var slide = (logicDocument.CurPage >= 0) ? logicDocument.Slides[logicDocument.CurPage] : null;
+		if (slide)
+		{
+			if (this.WordControl.m_oDrawingDocument.placeholders)
+				this.WordControl.m_oDrawingDocument.placeholders.update(slide.getPlaceholdersControls());
+		}
+	};
+
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                 = window['Asc'] || {};
 	window['AscCommonSlide']                                      = window['AscCommonSlide'] || {};
