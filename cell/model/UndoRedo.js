@@ -2938,6 +2938,17 @@ function (window, undefined) {
 			}
 			ws.deletePivotTable(Data.pivot);
 			ws.insertPivotTable(pivot, false, true);
+		} else if (AscCH.historyitem_Worksheet_PivotReplaceKeepRecords === Type) {
+			var data = bUndo ? Data.from : Data.to;
+			var pivot = data.getData();
+			pivot.init();
+			var oldPivot = ws.getPivotTableById(Data.pivot);
+			if (oldPivot) {
+				pivot.cacheDefinition.cacheRecords = oldPivot.cacheDefinition.cacheRecords;
+				pivot.replaceSlicersPivotCacheDefinition(oldPivot.cacheDefinition, pivot.cacheDefinition);
+				ws.deletePivotTable(Data.pivot);
+				ws.insertPivotTable(pivot, false, true);
+			}
 		} else if (AscCH.historyitem_Worksheet_SlicerAdd === Type) {
 			if (bUndo) {
 				ws.deleteSlicer(Data.to.name);

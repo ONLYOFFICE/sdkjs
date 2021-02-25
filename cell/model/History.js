@@ -94,6 +94,7 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Worksheet_DataValidationAdd = 48;
 	window['AscCH'].historyitem_Worksheet_DataValidationChange = 49;
 	window['AscCH'].historyitem_Worksheet_DataValidationDelete = 50;
+	window['AscCH'].historyitem_Worksheet_PivotReplaceKeepRecords = 51;
 
 	window['AscCH'].historyitem_RowCol_Fontname = 1;
 	window['AscCH'].historyitem_RowCol_Fontsize = 2;

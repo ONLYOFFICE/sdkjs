@@ -2712,19 +2712,17 @@ var editor;
 					this._changePivotAndConnectedByPivotCacheWithLock(pivotTable, false, function(confirmation, pivotTables) {
 						var groupRes;
 						var changeRes = t._changePivot(pivotTable, confirmation, true, function(){
+							var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneToHistory(true, false));
+
 							groupRes = pivotTable.groupDiscreteCache(layout);
 							pivotTable.groupDiscrete(layout, groupRes);
+
+							var newPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneToHistory(true, false));
+							History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_PivotReplaceKeepRecords, ws.getId(),
+								null, new AscCommonExcel.UndoRedoData_PivotTableRedo(pivotTable.Get_Id(), oldPivot, newPivot));
+
+							pivotTable._updateCacheDataUpdateSlicersPost();
 						});
-						var index = 0;
-						while (index < pivotTables.length && c_oAscError.ID.No === changeRes.error && c_oAscError.ID.No === changeRes.warning) {
-							var pivotCur = pivotTables[index++];
-							if (pivotCur === pivotTable) {
-								continue;
-							}
-							changeRes = t._changePivot(pivotCur, confirmation, true, function(){
-								pivotCur.groupDiscrete(layout, groupRes);
-							});
-						}
 						return changeRes;
 					});
 				} else if (1 === layout.getGroupSize() && c_oAscGroupType.Text !== pivotTable.getFieldGroupType(layout.fld)) {
@@ -2754,19 +2752,17 @@ var editor;
 					this._changePivotAndConnectedByPivotCacheWithLock(pivotTable, false, function(confirmation, pivotTables) {
 						var groupRes;
 						var changeRes = t._changePivot(pivotTable, confirmation, true, function(){
+							var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneToHistory(true, false));
+
 							groupRes = pivotTable.ungroupDiscreteCache(layout);
 							pivotTable.ungroupDiscrete(layout, groupRes);
+
+							var newPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneToHistory(true, false));
+							History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_PivotReplaceKeepRecords, ws.getId(),
+								null, new AscCommonExcel.UndoRedoData_PivotTableRedo(pivotTable.Get_Id(), oldPivot, newPivot));
+
+							pivotTable._updateCacheDataUpdateSlicersPost();
 						});
-						var index = 0;
-						while (index < pivotTables.length && c_oAscError.ID.No === changeRes.error && c_oAscError.ID.No === changeRes.warning) {
-							var pivotCur = pivotTables[index++];
-							if (pivotCur === pivotTable) {
-								continue;
-							}
-							changeRes = t._changePivot(pivotCur, confirmation, true, function(){
-								pivotCur.ungroupDiscrete(layout, groupRes);
-							});
-						}
 						return changeRes;
 					});
 				} else {

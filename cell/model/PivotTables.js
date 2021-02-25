@@ -1407,6 +1407,17 @@ CT_PivotCacheDefinition.prototype.initPostOpenZip = function(oNumFmts) {
 		});
 	}
 };
+CT_PivotCacheDefinition.prototype.clone = function () {
+	var data = new AscCommonExcel.UndoRedoData_BinaryWrapper(this);
+	return data.getData();
+};
+CT_pivotTableDefinition.prototype.cloneShallow = function () {
+	var oldCacheRecords = this.cacheRecords;
+	this.cacheRecords = null;
+	var newPivot = this.clone();
+	this.cacheRecords = newPivot.cacheRecords = oldCacheRecords;
+	return newPivot;
+};
 CT_PivotCacheDefinition.prototype.getType = function() {
 	return AscCommonExcel.UndoRedoDataTypes.PivotCacheDefinition;
 };
@@ -1809,6 +1820,10 @@ CT_PivotCacheDefinition.prototype.ungroupDiscrete = function(layoutGroupCache) {
 	var baseCacheField = cacheField && cacheFields[baseFld];
 	if (baseCacheField) {
 		res = cacheField.ungroupDiscrete(baseFld, baseCacheField, layoutGroupCache.groupMap);
+		if (layoutGroupCache.fld !== baseFld && cacheField.getGroupOrSharedSize() === baseCacheField.getGroupOrSharedSize()) {
+			//todo remove field
+			//baseCacheField.initGroupPar(cacheField.getGroupPar());
+		}
 	}
 	return res;
 };
@@ -2623,6 +2638,19 @@ CT_pivotTableDefinition.prototype.cloneShallow = function () {
 	this.cacheDefinition = null;
 	var newPivot = this.clone();
 	this.cacheDefinition = newPivot.cacheDefinition = oldCacheDefinition;
+	return newPivot;
+};
+CT_pivotTableDefinition.prototype.cloneToHistory = function (withCache, withRecords) {
+	var oldCacheDefinition = this.cacheDefinition;
+	var oldCacheRecords = this.cacheDefinition.cacheRecords;
+	if(!withCache) {
+		this.cacheDefinition = null;
+	} else if(!withRecords) {
+		this.cacheDefinition.cacheRecords = null;
+	}
+	var newPivot = this.clone();
+	this.cacheDefinition = newPivot.cacheDefinition = oldCacheDefinition;
+	this.cacheDefinition.cacheRecords = newPivot.cacheDefinition.cacheRecords = oldCacheRecords;
 	return newPivot;
 };
 CT_pivotTableDefinition.prototype.prepareToPaste = function (ws, offset, changeName) {
@@ -5906,8 +5934,20 @@ CT_pivotTableDefinition.prototype.ungroupDiscrete = function(layoutGroup, groupR
 	var pivotFields = this.asc_getPivotFields();
 	var pivotField = pivotFields[layoutGroup.fld];
 	var basePivotField = pivotFields[groupRes.base];
-	var groupMembers = basePivotField.convertGroupMembers(groupRes.groupMembers);
-	pivotField.ungroupDiscrete(groupRes.reorderArray, groupMembers);
+	var groupMembersOffset = basePivotField.convertGroupMembers(groupRes.groupMembersPos);
+	pivotField.ungroupDiscrete(groupRes.reorderArray, groupMembersOffset);
+	this.setChanged(true);
+};
+CT_pivotTableDefinition.prototype.History = function(layoutGroup, groupRes) {
+	if(!groupRes) {
+		return;
+	}
+	this.checkPivotFieldItems(layoutGroup.fld);
+	var pivotFields = this.asc_getPivotFields();
+	var pivotField = pivotFields[layoutGroup.fld];
+	var basePivotField = pivotFields[groupRes.base];
+	var groupMembersOffset = basePivotField.convertGroupMembers(groupRes.groupMembersPos);
+	pivotField.ungroupDiscrete(groupRes.reorderArray, groupMembersOffset);
 	this.setChanged(true);
 };
 CT_pivotTableDefinition.prototype._convertToCacheGroupLayout = function(layoutGroup) {
@@ -10730,14 +10770,14 @@ CT_PivotField.prototype.convertGroupMembers = function (cacheGroupMap) {
 	var t = this;
 	var res = {};
 	for (var i in cacheGroupMap) {
-		if(cacheGroupMap.hasOwnProperty(i)) {
-			var cacheGroup = cacheGroupMap[i];
+		if (cacheGroupMap.hasOwnProperty(i)) {
+			var cacheGroupKeys = Object.keys(cacheGroupMap[i]);
 			res[i] = [];
-			for(var j = 0; j < cacheGroup.length; ++j) {
+			for(var j = 0; j < cacheGroupKeys.length; ++j) {
 				res[i].push(j);
 			}
-			res[i].sort(function(a, b) {
-				return t.getItemIndexByValue(cacheGroup[a]) - t.getItemIndexByValue(cacheGroup[b]);
+			res[i].sort(function (a, b) {
+				return t.getItemIndexByValue(cacheGroupKeys[a]) - t.getItemIndexByValue(cacheGroupKeys[b]);
 			});
 		}
 	}
@@ -12089,9 +12129,9 @@ CT_FieldGroup.prototype.convertToDiscreteGroupMembers = function (groupMembers) 
 CT_FieldGroup.prototype.ungroupDiscrete = function (base, baseCacheField, groupMap) {
 	var groupMembers = this.discretePr.getGroupMembers(groupMap);
 	groupMembers = baseCacheField.convertToDiscreteGroupMembers(groupMembers);
-	var reorderArray = this._ungroupDiscrete(baseCacheField, groupMembers);
-	this.discretePr.ungroup(reorderArray, groupMembers);
-	return {base: base, reorderArray: reorderArray, groupMembers: groupMembers};
+	var ungroupRes = this._ungroupDiscrete(baseCacheField, groupMembers);
+	this.discretePr.ungroup(ungroupRes.reorderArray, groupMembers, ungroupRes.groupMembersPos);
+	return {base: base, reorderArray: ungroupRes.reorderArray, groupMembersPos: ungroupRes.groupMembersPos};
 };
 CT_FieldGroup.prototype._groupDiscrete = function(groupMap) {
 	var i, item;
@@ -12125,24 +12165,30 @@ CT_FieldGroup.prototype._groupDiscrete = function(groupMap) {
 	this.groupItems = newGroupItems;
 	return reorderArray;
 };
-CT_FieldGroup.prototype._ungroupDiscrete = function(baseCacheField, groupMembers) {
+CT_FieldGroup.prototype._ungroupDiscrete = function (baseCacheField, groupMembers) {
 	var i, item;
 	var newGroupItems = new CT_SharedItems();
 	var reorderArray = [];
+	var groupMembersPos = {};
 	for (i = 0; i < this.groupItems.getCount(); ++i) {
 		reorderArray[i] = newGroupItems.getCount();
 		if (groupMembers[i]) {
-			for (var j = 0; j < groupMembers[i].length; ++j) {
-				item = baseCacheField.getGroupOrSharedItem(groupMembers[i][j]);
-				newGroupItems.addItem(item);
+			var positions = {};
+			for (var j in groupMembers[i]) {
+				if (groupMembers[i].hasOwnProperty(j) && !positions[groupMembers[i][j]]) {
+					positions[groupMembers[i][j]] = newGroupItems.getCount();
+					item = baseCacheField.getGroupOrSharedItem(groupMembers[i][j]);
+					newGroupItems.addItem(item);
+				}
 			}
+			groupMembersPos[i] = positions;
 		} else {
 			item = this.groupItems.getItem(i);
 			newGroupItems.addItem(item);
 		}
 	}
 	this.groupItems = newGroupItems;
-	return reorderArray;
+	return {reorderArray: reorderArray, groupMembersPos: groupMembersPos};
 };
 
 function CT_FieldsUsage() {
@@ -13064,56 +13110,49 @@ CT_DiscretePr.prototype.convertToDiscreteGroupMap = function (groupMap) {
 };
 CT_DiscretePr.prototype.convertToDiscreteGroupMembers = function (groupMembers) {
 	var res = {};
-	for (var index in groupMembers) {
-		if (groupMembers.hasOwnProperty(index)) {
-			var tmp = {};
-			var memebers = groupMembers[index];
-			for(var i = 0; i < memebers.length; ++i) {
-				tmp[this.x[memebers[i]].v] = 1;
-			}
-			res[index] = [];
-			for(var j in tmp) {
-				if (tmp.hasOwnProperty(j)) {
-					res[index].push(parseInt(j));
+	for (var i in groupMembers) {
+		if (groupMembers.hasOwnProperty(i)) {
+			var newMembers = {};
+			var members = groupMembers[i];
+			for(var j in members) {
+				if (members.hasOwnProperty(j)) {
+					newMembers[j] = this.x[members[j]].v;
 				}
 			}
+			res[i] = newMembers;
 		}
 	}
 	return res;
 };
 
 CT_DiscretePr.prototype.getGroupMembers = function (groupMap) {
-	var groupElems = {};
+	var groupMembers = {};
 	for(var i = 0; i < this.x.length; ++i) {
 		var val = this.x[i].v;
 		if(groupMap[val]) {
-			if(!groupElems[val]) {
-				groupElems[val] = [];
+			if(!groupMembers[val]) {
+				groupMembers[val] = {};
 			}
-			groupElems[val].push(i);
+			groupMembers[val][i] = i;
 		}
 	}
-	return groupElems;
+	return groupMembers;
 };
 CT_DiscretePr.prototype.containsGroup = function(groupMap) {
 	var groupMembers = this.getGroupMembers(groupMap);
 	for (var index in groupMembers) {
-		if (groupMembers.hasOwnProperty(index) && groupMembers[index].length > 1) {
+		if (groupMembers.hasOwnProperty(index) && Object.keys(groupMembers[index]).length > 1) {
 			return true;
 		}
 	}
 	return false;
 };
-CT_DiscretePr.prototype.ungroup = function(reorderArray, groupMembers) {
-	var counter = {};
+CT_DiscretePr.prototype.ungroup = function (reorderArray, groupMembers, groupMembersPos) {
 	for (var i = 0; i < this.x.length; ++i) {
 		var x = this.x[i];
-		if (groupMembers[x.v]) {
-			if (undefined === counter[x.v]) {
-				counter[x.v] = 0;
-			}
-			x.v = reorderArray[x.v] + counter[x.v];
-			counter[x.v]++;
+		if (groupMembers[x.v] && groupMembersPos[x.v]) {
+			var pos = groupMembers[x.v][i];
+			x.v = groupMembersPos[x.v][pos];
 		} else {
 			x.v = reorderArray[x.v];
 		}
