@@ -4986,134 +4986,29 @@ var editor;
       }
     };
 
-    spreadsheet_api.prototype.asc_getCF = function (type, id, aChangedRules) {
-      var sheet;
-      var rules = this.wbModel.getRulesByType(type, id, true);
-      var aSheet = type === Asc.c_oAscSelectionForCFType.selection ? sheet : this.wbModel.getActiveWs();
-      var activeRanges = aSheet.selectionRange.ranges;
-      var sActiveRanges = [];
-      if (activeRanges) {
-		  activeRanges.forEach(function (item) {
-			  sActiveRanges.push(item.getAbsName());
-          });
-      }
+	spreadsheet_api.prototype.asc_getCF = function (type, id, aChangedRules) {
+		var sheet;
+		var rules = this.wbModel.getRulesByType(type, id, true);
+		var aSheet = type === Asc.c_oAscSelectionForCFType.selection ? sheet : this.wbModel.getActiveWs();
+		var activeRanges = aSheet.selectionRange.ranges;
+		var sActiveRanges = [];
+		if (activeRanges) {
+			activeRanges.forEach(function (item) {
+				sActiveRanges.push(item.getAbsName());
+			});
+		}
 
-      return [rules, sActiveRanges.join(AscCommon.FormulaSeparators.functionArgumentSeparator)];
-    };
+		return [rules, sActiveRanges.join(AscCommon.FormulaSeparators.functionArgumentSeparator)];
+	};
 
-  /*spreadsheet_api.prototype.asc_getPreviewCF = function (type, props, text, w, h) {
-    var res;
-
-    if (!props) {
-      return null;
-    }
-
-    switch (type) {
-      case Asc.ECfType.colorScale:
-        res = AscCommonExcel.drawColorScalePreview(this.wb, w, h, props);
-        break;
-      case Asc.ECfType.dataBar:
-        var xfs = new AscCommonExcel.CellXfs();
-        xfs.fill = props[0];
-        xfs.border = props[1];
-        res = xfs.asc_getPreview(this, text, w, h);
-        break;
-      default:
-        res = props.asc_getPreview(this, text, w, h);
-    }
-
-    return res;
-  };*/
-
-  spreadsheet_api.prototype.asc_getPreviewCF = function(id, props, text) {
-	if (!props && text) {
-	  props = new AscCommonExcel.CellXfs();
-    }
-    if (props) {
-		props.asc_getPreview2(this, id, text);
-	}
-  };
-
-  spreadsheet_api.prototype.asc_generatePresetsCF = function () {
-    var arr = [];
-
-    var getGradient = function (_fill, startColor, endColor) {
-        _fill.gradientFill = new AscCommonExcel.GradientFill();
-        var stop0 = new AscCommonExcel.GradientStop();
-        stop0.position = 0;
-        stop0.color = startColor;
-        var stop1 = new AscCommonExcel.GradientStop();
-        stop1.position = 1;
-        stop1.color = endColor;
-        _fill.gradientFill.asc_putGradientStops([stop0, stop1]);
-
-        return _fill;
-    };
-
-    var xfs;
-    //TODO цвета нужно изменить
-    //отдаём 6 вариантов для преетов
-    /*xfs = new AscCommonExcel.CellXfs();
-    xfs.fill = new AscCommonExcel.Fill();
-    getGradient(xfs.fill, AscCommonExcel.createRgbColor(1, 1, 1), AscCommonExcel.createRgbColor(0, 0, 0));
-    arr.push(xfs);*/
-
-    xfs = new AscCommonExcel.CellXfs();
-    xfs.fill = new AscCommonExcel.Fill();
-    xfs.fill.fromColor(AscCommonExcel.createRgbColor(0,0,0));
-    arr.push(xfs);
-
-    xfs = new AscCommonExcel.CellXfs();
-    xfs.fill = new AscCommonExcel.Fill();
-    xfs.fill.fromColor(AscCommonExcel.createRgbColor(0,0,0));
-    arr.push(xfs);
-
-    xfs = new AscCommonExcel.CellXfs();
-    xfs.fill = new AscCommonExcel.Fill();
-    xfs.fill.fromColor(AscCommonExcel.createRgbColor(0,0,0));
-    arr.push(xfs);
-
-    xfs = new AscCommonExcel.CellXfs();
-    xfs.fill = new AscCommonExcel.Fill();
-    xfs.fill.fromColor(AscCommonExcel.createRgbColor(1,1,1));
-    xfs.font = new AscCommonExcel.Font();
-    xfs.font.setColor(AscCommonExcel.createRgbColor(255,255,255));
-    arr.push(xfs);
-
-    xfs = new AscCommonExcel.CellXfs();
-    xfs.fill = new AscCommonExcel.Fill();
-    xfs.fill.fromColor(AscCommonExcel.createRgbColor(1,1,1));
-    xfs.font = new AscCommonExcel.Font();
-    xfs.font.setColor(AscCommonExcel.createRgbColor(255,255,255));
-    arr.push(xfs);
-
-    xfs = new AscCommonExcel.CellXfs();
-    xfs.fill = new AscCommonExcel.Fill();
-    xfs.fill.fromColor(AscCommonExcel.createRgbColor(1,1,1));
-    xfs.font = new AscCommonExcel.Font();
-    xfs.font.setColor(AscCommonExcel.createRgbColor(255,255,255));
-    xfs.border = window['AscCommonExcel'].Border;
-    /*function makeBorder(b) {
-        var border = new AscCommonExcel.BorderProp();
-        if (b === false) {
-            border.setStyle(c_oAscBorderStyles.None);
-        } else if (b) {
-            if (b.style !== null && b.style !== undefined) {
-                border.setStyle(b.style);
-            }
-            if (b.color !== null && b.color !== undefined) {
-                if (b.color instanceof Asc.asc_CColor) {
-                    border.c = AscCommonExcel.CorrectAscColor(b.color);
-                }
-            }
-        }
-        return border;
-    }*/
-    xfs.font.setColor(AscCommonExcel.createRgbColor(255,255,255));
-    arr.push(xfs);
-
-    return arr;
-  };
+	spreadsheet_api.prototype.asc_getPreviewCF = function (id, props, text) {
+		if (!props && text) {
+			props = new AscCommonExcel.CellXfs();
+		}
+		if (props) {
+			props.asc_getPreview2(this, id, text);
+		}
+	};
 
 	spreadsheet_api.prototype.asc_setCF = function (arr, deleteIdArr, presetId) {
 		var ws = this.wb.getWorksheet();
@@ -5179,7 +5074,7 @@ var editor;
 		}
 	};
 
-	spreadsheet_api.prototype.asc_getCFIcons = function() {
+	spreadsheet_api.prototype.asc_getCFIcons = function () {
 		return AscCommonExcel.getFullCFIcons();
 	};
 
@@ -5217,10 +5112,6 @@ var editor;
 		}
 		return res;
 	};
-
-  /*spreadsheet_api.prototype._onCheckDefNameLock = function() {
-    return this.wb._onCheckDefNameLock();
-  };*/
 
   spreadsheet_api.prototype.asc_beforeInsertSlicer = function () {
     //пока возвращаю только данные о ф/т
