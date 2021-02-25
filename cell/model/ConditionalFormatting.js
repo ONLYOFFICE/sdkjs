@@ -1303,10 +1303,10 @@
 		this.ShowValue = true;
 
 		var formatValueObject1 = new CConditionalFormatValueObject();
-		formatValueObject1.type = AscCommonExcel.ECfvoType.AutoMin;
+		formatValueObject1.Type = AscCommonExcel.ECfvoType.AutoMin;
 		this.aCFVOs.push(formatValueObject1);
 		var formatValueObject2 = new CConditionalFormatValueObject();
-		formatValueObject2.type = AscCommonExcel.ECfvoType.AutoMax;
+		formatValueObject2.Type = AscCommonExcel.ECfvoType.AutoMax;
 		this.aCFVOs.push(formatValueObject2);
 	};
 	CDataBar.prototype.Write_ToBinary2 = function (writer) {
