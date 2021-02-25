@@ -3747,7 +3747,7 @@
 	 */
 	ApiDocument.prototype.SetTrackRevisions = function(isTrack)
 	{
-		this.Document.SetTrackRevisions(isTrack);
+		this.Document.SetGlobalTrackRevisions(isTrack);
 	};
 	/**
 	 * Is change tracking enabled

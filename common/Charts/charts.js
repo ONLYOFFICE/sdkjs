@@ -846,36 +846,43 @@ TextArtPreviewManager.prototype.getShape =  function()
 
 TextArtPreviewManager.prototype.getTAShape = function()
 {
-	if(!this.TAShape)
+	if (!this.TAShape)
 	{
-
 		var MainLogicDocument = (editor && editor.WordControl && editor.WordControl.m_oLogicDocument ? editor && editor.WordControl && editor.WordControl.m_oLogicDocument : null);
-		var TrackRevisions = (MainLogicDocument && MainLogicDocument.IsTrackRevisions ? MainLogicDocument.IsTrackRevisions() : false);
-		if (MainLogicDocument && true === TrackRevisions)
-			MainLogicDocument.SetTrackRevisions(false);
-		var oShape = this.getShape();
-        if(!oShape)
-        {
-			if (MainLogicDocument && true === TrackRevisions)
-				MainLogicDocument.SetTrackRevisions(true);
-            return null;
-        }
-		var oContent = oShape.getDocContent();
-		if(oContent)
+		var TrackRevisions    = false;
+		if (MainLogicDocument && MainLogicDocument.IsTrackRevisions && MainLogicDocument.IsTrackRevisions())
 		{
-			if(oContent.MoveCursorToStartPos)
+			TrackRevisions = MainLogicDocument.GetLocalTrackRevisions();
+			MainLogicDocument.SetLocalTrackRevisions(false);
+		}
+
+		var oShape = this.getShape();
+		if (!oShape)
+		{
+			if (false !== TrackRevisions)
+				MainLogicDocument.SetLocalTrackRevisions(TrackRevisions);
+
+			return null;
+		}
+
+		var oContent = oShape.getDocContent();
+		if (oContent)
+		{
+			if (oContent.MoveCursorToStartPos)
 			{
 				oContent.MoveCursorToStartPos();
 			}
 			oContent.AddText("Ta");
 			oContent.SetApplyToAll(true);
-			oContent.AddToParagraph(new ParaTextPr({FontSize: 109, RFonts: {Ascii : {Name: "Arial", Index: -1}}}));
+			oContent.AddToParagraph(new ParaTextPr({FontSize : 109, RFonts : {Ascii : {Name : "Arial", Index : -1}}}));
 			oContent.SetParagraphAlign(AscCommon.align_Center);
-			oContent.SetParagraphIndent({FirstLine: 0, Left: 0, Right: 0});
+			oContent.SetParagraphIndent({FirstLine : 0, Left : 0, Right : 0});
 			oContent.SetApplyToAll(false);
 		}
-		if (MainLogicDocument && true === TrackRevisions)
-			MainLogicDocument.SetTrackRevisions(true);
+
+		if (false !== TrackRevisions)
+			MainLogicDocument.SetLocalTrackRevisions(TrackRevisions);
+
 		this.TAShape = oShape;
 	}
 	return this.TAShape;

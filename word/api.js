@@ -6911,19 +6911,22 @@ background-repeat: no-repeat;\
 		var LogicDocument = this.WordControl.m_oLogicDocument;
 		if (LogicDocument)
 		{
-			var isTrackRevision = LogicDocument.IsTrackRevisions();
 			var isShowParaMarks = LogicDocument.Is_ShowParagraphMarks();
 
-			if (true === isTrackRevision)
-				LogicDocument.SetTrackRevisions(false);
+			var isLocalTrackRevisions = false;
+			if (LogicDocument.IsTrackRevisions())
+			{
+				isLocalTrackRevisions = LogicDocument.GetLocalTrackRevisions();
+				LogicDocument.SetLocalTrackRevisions(false);
+			}
 
 			if (true === isShowParaMarks)
 				LogicDocument.Set_ShowParagraphMarks(false, false);
 
 			StylesPainter.GenerateStyles(this, (null == this.LoadedObject) ? this.WordControl.m_oLogicDocument.Get_Styles().Style : this.LoadedObjectDS);
 
-			if (true === isTrackRevision)
-				LogicDocument.SetTrackRevisions(true);
+			if (false !== isLocalTrackRevisions)
+				LogicDocument.SetLocalTrackRevisions(isLocalTrackRevisions);
 
 			if (true === isShowParaMarks)
 				LogicDocument.Set_ShowParagraphMarks(true, false);

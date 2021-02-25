@@ -8853,8 +8853,12 @@ CDocument.prototype.GetSelectedContent = function(bUseHistory, oPr)
 	// При копировании нам не нужно, чтобы новые классы помечались как созданные в рецензировании, а при перетаскивании
 	// нужно.
 	var isTrack = this.IsTrackRevisions();
+	var isLocalTrack = false;
 	if (isTrack && !bUseHistory)
-		this.SetTrackRevisions(false);
+	{
+		isLocalTrack = this.GetLocalTrackRevisions();
+		this.SetLocalTrackRevisions(false);
+	}
 
 	var bNeedTurnOffTableId = g_oTableId.m_bTurnOff === false && true !== bUseHistory;
 	if (!bUseHistory)
@@ -8885,8 +8889,8 @@ CDocument.prototype.GetSelectedContent = function(bUseHistory, oPr)
 		g_oTableId.m_bTurnOff = false;
 	}
 
-	if (isTrack && !bUseHistory)
-		this.SetTrackRevisions(true);
+	if (false !== isLocalTrack)
+		this.SetLocalTrackRevisions(isLocalTrack);
 
 	return oSelectedContent;
 };
@@ -16457,6 +16461,14 @@ CDocument.prototype.SetGlobalTrackRevisions = function(isTrack)
 		this.FinalizeAction();
 	}
 };
+/**
+ * Получаем глобальный флаг рецензирования в файле
+ * @returns {boolean}
+ */
+CDocument.prototype.GetGlobalTrackRevisions = function()
+{
+	return this.Settings.TrackRevisions;
+};
 CDocument.prototype.GetNextRevisionChange = function()
 {
 	this.TrackRevisionsManager.ContinueTrackRevisions();
@@ -16749,9 +16761,9 @@ CDocument.prototype.AcceptRevisionChange = function(oChange)
 		{
 			this.StartAction(AscDFH.historydescription_Document_AcceptRevisionChange);
 
-			var isTrackRevision = this.IsTrackRevisions();
-			if (isTrackRevision)
-				this.SetTrackRevisions(false);
+			var isTrackRevision = this.GetLocalTrackRevisions();
+			if (false !== isTrackRevision)
+				this.SetLocalTrackRevisions(false);
 
 			if (oChange.IsComplexChange())
 			{
@@ -16764,8 +16776,8 @@ CDocument.prototype.AcceptRevisionChange = function(oChange)
 				this.AcceptRevisionChanges(oChange.GetType(), false);
 			}
 
-			if (isTrackRevision)
-				this.SetTrackRevisions(isTrackRevision);
+			if (false !== isTrackRevision)
+				this.SetLocalTrackRevisions(isTrackRevision);
 
 			this.FinalizeAction();
 		}
@@ -16826,9 +16838,9 @@ CDocument.prototype.RejectRevisionChange = function(oChange)
 		{
 			this.StartAction(AscDFH.historydescription_Document_RejectRevisionChange);
 
-			var isTrackRevision = this.IsTrackRevisions();
-			if (isTrackRevision)
-				this.SetTrackRevisions(false);
+			var isTrackRevision = this.GetLocalTrackRevisions();
+			if (false !== isTrackRevision)
+				this.SetLocalTrackRevisions(false);
 
 			if (oChange.IsComplexChange())
 			{
@@ -16841,8 +16853,8 @@ CDocument.prototype.RejectRevisionChange = function(oChange)
 				this.RejectRevisionChanges(oChange.GetType(), false);
 			}
 
-			if (isTrackRevision)
-				this.SetTrackRevisions(isTrackRevision);
+			if (false !== isTrackRevision)
+				this.SetLocalTrackRevisions(isTrackRevision);
 
 			this.FinalizeAction();
 		}
@@ -16878,14 +16890,14 @@ CDocument.prototype.AcceptRevisionChangesBySelection = function()
 		{
 			this.StartAction(AscDFH.historydescription_Document_AcceptRevisionChangesBySelection);
 
-			var isTrackRevision = this.IsTrackRevisions();
-			if (isTrackRevision)
-				this.SetTrackRevisions(false);
+			var isTrackRevision = this.GetLocalTrackRevisions();
+			if (false !== isTrackRevision)
+				this.SetLocalTrackRevisions(false);
 
 			this.AcceptRevisionChanges(undefined, false);
 
-			if (isTrackRevision)
-				this.SetTrackRevisions(isTrackRevision);
+			if (false !== isTrackRevision)
+				this.SetLocalTrackRevisions(isTrackRevision);
 
 			this.FinalizeAction();
 		}
@@ -16924,14 +16936,14 @@ CDocument.prototype.RejectRevisionChangesBySelection = function()
 		{
 			this.StartAction(AscDFH.historydescription_Document_AcceptRevisionChangesBySelection);
 
-			var isTrackRevision = this.IsTrackRevisions();
-			if (isTrackRevision)
-				this.SetTrackRevisions(false);
+			var isTrackRevision = this.GetLocalTrackRevisions();
+			if (false !== isTrackRevision)
+				this.SetLocalTrackRevisions(false);
 
 			this.RejectRevisionChanges(undefined, false);
 
-			if (isTrackRevision)
-				this.SetTrackRevisions(isTrackRevision);
+			if (false !== isTrackRevision)
+				this.SetLocalTrackRevisions(isTrackRevision);
 
 			this.FinalizeAction();
 		}
@@ -16953,9 +16965,9 @@ CDocument.prototype.AcceptAllRevisionChanges = function(isSkipCheckLock, isCheck
 	{
 		this.StartAction(AscDFH.historydescription_Document_AcceptAllRevisionChanges);
 
-		var isTrackRevision = this.IsTrackRevisions();
-		if (isTrackRevision)
-			this.SetTrackRevisions(false);
+		var isTrackRevision = this.GetLocalTrackRevisions();
+		if (false !== isTrackRevision)
+			this.SetLocalTrackRevisions(false);
 
 		var LogicDocuments = this.TrackRevisionsManager.Get_AllChangesLogicDocuments();
 		for (var LogicDocId in LogicDocuments)
@@ -16967,8 +16979,8 @@ CDocument.prototype.AcceptAllRevisionChanges = function(isSkipCheckLock, isCheck
 			}
 		}
 
-		if (isTrackRevision)
-			this.SetTrackRevisions(isTrackRevision);
+		if (false !== isTrackRevision)
+			this.SetLocalTrackRevisions(isTrackRevision);
 
 		if (true !== isSkipCheckLock && true === this.History.Is_LastPointEmpty())
 		{
@@ -16997,14 +17009,14 @@ CDocument.prototype.RejectAllRevisionChanges = function(isSkipCheckLock, isCheck
 	{
 		this.StartAction(AscDFH.historydescription_Document_RejectAllRevisionChanges);
 
-		var isTrackRevision = this.IsTrackRevisions();
-		if (isTrackRevision)
-			this.SetTrackRevisions(false);
+		var isTrackRevision = this.GetLocalTrackRevisions();
+		if (false !== isTrackRevision)
+			this.SetLocalTrackRevisions(false);
 
 		this.private_RejectAllRevisionChanges();
 
-		if (isTrackRevision)
-			this.SetTrackRevisions(isTrackRevision);
+		if (false !== isTrackRevision)
+			this.SetLocalTrackRevisions(isTrackRevision);
 
 		if (true !== isSkipCheckLock && true === this.History.Is_LastPointEmpty())
 		{

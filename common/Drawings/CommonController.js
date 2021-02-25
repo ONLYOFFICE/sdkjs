@@ -8404,10 +8404,13 @@ DrawingObjectsController.prototype =
     createTextArt: function(nStyle, bWord, wsModel, sStartString)
     {
         var MainLogicDocument = (editor && editor.WordControl && editor.WordControl.m_oLogicDocument ? editor && editor.WordControl && editor.WordControl.m_oLogicDocument : null);
-        var TrackRevisions = (MainLogicDocument ? MainLogicDocument.IsTrackRevisions() : false);
 
-        if (MainLogicDocument && true === TrackRevisions)
-            MainLogicDocument.SetTrackRevisions(false);
+		var TrackRevisions = false;
+		if (MainLogicDocument && MainLogicDocument.IsTrackRevisions && MainLogicDocument.IsTrackRevisions())
+		{
+			TrackRevisions = MainLogicDocument.GetLocalTrackRevisions();
+			MainLogicDocument.SetLocalTrackRevisions(false);
+		}
 
         var oShape = new AscFormat.CShape();
         oShape.setWordShape(bWord === true);
@@ -8591,8 +8594,8 @@ DrawingObjectsController.prototype =
             oShape.txBody.setBodyPr(oBodyPr);
         }
 
-        if (MainLogicDocument && true === TrackRevisions)
-            MainLogicDocument.SetTrackRevisions(true);
+        if (false !== TrackRevisions)
+            MainLogicDocument.SetLocalTrackRevisions(TrackRevisions);
 
         return oShape;
     },

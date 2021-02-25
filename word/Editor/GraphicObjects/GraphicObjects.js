@@ -311,12 +311,14 @@ CGraphicObjects.prototype =
         {
             return null;
         }
-        var TrackRevisions = this.document.IsTrackRevisions();
 
-        if (TrackRevisions)
-        {
-            this.document.SetTrackRevisions(false);
-        }
+		var bTrackRevisions = false;
+		if (this.document.IsTrackRevisions())
+		{
+			bTrackRevisions = this.document.GetLocalTrackRevisions();
+			this.document.SetLocalTrackRevisions(false);
+		}
+
         var oDrawing, extX, extY;
         var oSectPr = this.document.Get_SectionProps();
         var dMaxWidth = oSectPr.get_W() - oSectPr.get_LeftMargin() - oSectPr.get_RightMargin();
@@ -445,10 +447,12 @@ CGraphicObjects.prototype =
             oParaDrawing.Set_PositionH(Asc.c_oAscRelativeFromH.Margin, true,  Asc.c_oAscAlignH.Center, false);
             oParaDrawing.Set_PositionV(Asc.c_oAscRelativeFromV.Margin, true,  Asc.c_oAscAlignV.Center, false);
         }
-        if (TrackRevisions)
+
+        if (false !== bTrackRevisions)
         {
-            this.document.SetTrackRevisions(true);
+            this.document.SetLocalTrackRevisions(bTrackRevisions);
         }
+
         return oParaDrawing;
     },
 
@@ -2641,11 +2645,12 @@ CGraphicObjects.prototype =
         var objects_for_grouping = this.canGroup(true);
         if(objects_for_grouping.length < 2)
             return;
-        var bTrackRevisions = false;
-        if(this.document.TrackRevisions){
-            bTrackRevisions = true;
-            this.document.TrackRevisions = false;
-        }
+		var bTrackRevisions = false;
+		if (this.document.IsTrackRevisions())
+		{
+			bTrackRevisions = this.document.GetLocalTrackRevisions();
+			this.document.SetLocalTrackRevisions(false);
+		}
         var i;
         var common_bounds = this.checkCommonBounds(objects_for_grouping);
         var para_drawing = new ParaDrawing(common_bounds.maxX - common_bounds.minX, common_bounds.maxY - common_bounds.minY, null, this.drawingDocument, null, null);
@@ -2705,20 +2710,24 @@ CGraphicObjects.prototype =
         this.resetSelection();
         this.selectObject(group, page_index);
         this.document.Recalculate();
-        if(bTrackRevisions){
-            this.document.TrackRevisions = true;
-        }
+
+		if (false !== bTrackRevisions)
+		{
+			this.document.SetLocalTrackRevisions(bTrackRevisions);
+		}
     },
 
     unGroupSelectedObjects: function()
     {
         if(!(this.isViewMode() === false))
             return;
-        var bTrackRevisions = false;
-        if(this.document.TrackRevisions){
-            bTrackRevisions = true;
-            this.document.TrackRevisions = false;
-        }
+
+		var bTrackRevisions = false;
+		if (this.document.IsTrackRevisions())
+		{
+			bTrackRevisions = this.document.GetLocalTrackRevisions();
+			this.document.SetLocalTrackRevisions(false);
+		}
         var ungroup_arr = this.canUnGroup(true);
         if(ungroup_arr.length > 0)
         {
@@ -2818,9 +2827,11 @@ CGraphicObjects.prototype =
             }
             this.document.Recalculate();
         }
-        if(bTrackRevisions){
-            this.document.TrackRevisions = true;
-        }
+
+		if (false !== bTrackRevisions)
+		{
+			this.document.SetLocalTrackRevisions(bTrackRevisions);
+		}
     },
 
     setTableProps: function(Props)

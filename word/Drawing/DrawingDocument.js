@@ -5917,12 +5917,14 @@ function CDrawingDocument()
 		History.TurnOff();
 
 		var oLogicDocument = this.m_oWordControl.m_oLogicDocument;
-		var bTrackRevisions = oLogicDocument.IsTrackRevisions();
 
-		if (bTrackRevisions)
+		var bTrackRevisions = false;
+		if (oLogicDocument.IsTrackRevisions())
 		{
-			oLogicDocument.SetTrackRevisions(false);
+			bTrackRevisions = oLogicDocument.GetLocalTrackRevisions();
+			oLogicDocument.SetLocalTrackRevisions(false);
 		}
+
 		var _oldTurn = editor.isViewMode;
 		editor.isViewMode = true;
 
@@ -6118,10 +6120,10 @@ function CDrawingDocument()
 		this.m_oWordControl.m_oApi.ShowParaMarks = old_marks;
 
 		History.TurnOn();
-		if (bTrackRevisions)
-		{
-			oLogicDocument.SetTrackRevisions(true);
-		}
+
+		if (false !== bTrackRevisions)
+			oLogicDocument.SetLocalTrackRevisions(bTrackRevisions);
+
 		editor.isViewMode = _oldTurn;
 	};
 
@@ -6185,10 +6187,12 @@ function CDrawingDocument()
 		var oLogicDocument = this.m_oWordControl.m_oLogicDocument;
 		var _oldTurn = editor.isViewMode;
 		editor.isViewMode = true;
-		var bTrackRevisions = oLogicDocument.IsTrackRevisions();
-		if (bTrackRevisions)
+
+		var bTrackRevisions = false;
+		if (oLogicDocument.IsTrackRevisions())
 		{
-			oLogicDocument.SetTrackRevisions(false);
+			bTrackRevisions = oLogicDocument.GetLocalTrackRevisions();
+			oLogicDocument.SetLocalTrackRevisions(false);
 		}
 
 		var ctx = this.GuiCanvasFillTOF.getContext('2d');
@@ -6312,10 +6316,10 @@ function CDrawingDocument()
 		this.m_oWordControl.m_oApi.ShowParaMarks = old_marks;
 
 		History.TurnOn();
-		if (bTrackRevisions)
-		{
-			oLogicDocument.SetTrackRevisions(true);
-		}
+
+		if (false !== bTrackRevisions)
+			oLogicDocument.SetLocalTrackRevisions(bTrackRevisions);
+
 		editor.isViewMode = _oldTurn;
 	};
 
@@ -7012,9 +7016,12 @@ function CDrawingDocument()
 		History.TurnOff();
 		g_oTableId.m_bTurnOff = true;
 
-		var isTrackRevision = logicDoc && logicDoc.IsTrackRevisions();
-		if (isTrackRevision)
-			logicDoc.SetTrackRevisions(false);
+		var isTrackRevision = false;
+		if (logicDoc && logicDoc.IsTrackRevisions())
+		{
+			isTrackRevision = logicDoc.GetLocalTrackRevisions();
+			logicDoc.SetLocalTrackRevisions(false);
+		}
 
 		for (var i1 = 0; i1 < _styles_len; i1++)
 		{
@@ -7091,8 +7098,8 @@ function CDrawingDocument()
 		g_oTableId.m_bTurnOff = false;
 		History.TurnOn();
 
-		if (isTrackRevision)
-			logicDoc.SetTrackRevisions(true);
+		if (false !== isTrackRevision)
+			logicDoc.SetLocalTrackRevisions(isTrackRevision);
 
 		this.m_oWordControl.m_oApi.sync_InitEditorTableStyles(_dst_styles, AscCommon.AscBrowser.isCustomScalingAbove2());
 	}
@@ -7937,9 +7944,14 @@ function CDrawingDocument()
 
             var _srcDoc = this.m_oLogicDocument;
             _srcDoc.PrintSelection = true;
-            var _isTrackRevision = this.m_oLogicDocument.IsTrackRevisions();
-            if (_isTrackRevision)
-            	this.m_oLogicDocument.SetTrackRevisions(false);
+
+            var _isTrackRevision = false;
+            if (this.m_oLogicDocument.IsTrackRevisions())
+			{
+				_isTrackRevision = this.m_oLogicDocument.GetLocalTrackRevisions();
+				this.m_oLogicDocument.SetLocalTrackRevisions(false);
+			}
+
             var _document = new CDocument(_drDocument, false);
             var _srcDrawngObjects = _srcDoc.DrawingObjects;
             _srcDoc.DrawingObjects = _document.DrawingObjects;
@@ -7995,8 +8007,8 @@ function CDrawingDocument()
 
             this.printedDocument = _document;
 
-            if (_isTrackRevision)
-            	this.m_oLogicDocument.SetTrackRevisions(true);
+            if (false !== _isTrackRevision)
+            	this.m_oLogicDocument.SetLocalTrackRevisions(_isTrackRevision);
         }
         catch (err)
         {

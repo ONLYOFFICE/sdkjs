@@ -2057,13 +2057,14 @@ var GLOBAL_PATH_COUNT = 0;
             this.selection.textSelection.checkDocContent();
 
             var bTrackRevision = false;
-            if(typeof editor !== "undefined" && editor && editor.WordControl && editor.WordControl.m_oLogicDocument.TrackRevisions === true) {
-                bTrackRevision = true;
-                editor.WordControl.m_oLogicDocument.TrackRevisions = false;
+            if(typeof editor !== "undefined" && editor && editor.WordControl && editor.WordControl.m_oLogicDocument.IsTrackRevisions()) {
+                bTrackRevision = editor.WordControl.m_oLogicDocument.GetLocalTrackRevisions();
+                editor.WordControl.m_oLogicDocument.SetLocalTrackRevisions(false);
             }
             this.selection.textSelection.applyTextFunction(docContentFunction, tableFunction, args);
-            if(bTrackRevision) {
-                editor.WordControl.m_oLogicDocument.TrackRevisions = true;
+
+            if(false !== bTrackRevision) {
+                editor.WordControl.m_oLogicDocument.SetLocalTrackRevisions(bTrackRevision);
             }
         }
     };

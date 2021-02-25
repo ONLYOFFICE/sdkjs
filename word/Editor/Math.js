@@ -1187,13 +1187,17 @@ ParaMath.prototype.Add = function(Item)
         {
             var CtrRunPr = oContent.Get_ParentCtrRunPr(false); // ctrPrp (не копия)
 
-            if (true === TrackRevisions)
-                LogicDocument.SetTrackRevisions(false);
+			var isLocalTrack = false;
+            if (TrackRevisions)
+			{
+				isLocalTrack = LogicDocument.GetLocalTrackRevisions();
+				LogicDocument.SetLocalTrackRevisions(false);
+			}
 
             Run.Apply_TextPr(CtrRunPr, undefined, true);
 
-            if (true === TrackRevisions)
-                LogicDocument.SetTrackRevisions(true);
+            if (false !== isLocalTrack)
+                LogicDocument.SetLocalTrackRevisions(isLocalTrack);
         }
 
         if(Item.Value == 38)
@@ -1242,16 +1246,20 @@ ParaMath.prototype.Add = function(Item)
 
         TextPr.RFonts.SetAll("Cambria Math", -1);
 
-        if (true === TrackRevisions)
-            LogicDocument.SetTrackRevisions(false);
+		var isLocalTrack = false;
+		if (TrackRevisions)
+		{
+			isLocalTrack = LogicDocument.GetLocalTrackRevisions();
+			LogicDocument.SetLocalTrackRevisions(false);
+		}
 
         if(bPlh)
             oContent.Apply_TextPr(TextPr, undefined, true);
         else
             oContent.Apply_TextPr(TextPr, undefined, false, StartPos + 1, StartPos + lng2 - lng);
 
-        if (true === TrackRevisions)
-            LogicDocument.SetTrackRevisions(true);
+		if (false !== isLocalTrack)
+			LogicDocument.SetLocalTrackRevisions(isLocalTrack);
     }
 
     if ((para_Text === Type || para_Space === Type) && null !== NewElement)
