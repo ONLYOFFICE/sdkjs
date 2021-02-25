@@ -10806,18 +10806,27 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.onUpdateRestrictions = function()
 	{
-		var contentControls = null;
+		var oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument)
+			return;
+
 		if (this.WordControl && this.WordControl.m_oDrawingDocument)
-			contentControls = this.WordControl.m_oDrawingDocument.contentControls;
+		{
+			var contentControls = this.WordControl.m_oDrawingDocument.contentControls;
 
-		if (!contentControls)
-			return;
+			if (contentControls && contentControls.ContentControlObjects.length !== 0)
+			{
+				contentControls.clearAttack();
+				oLogicDocument.UpdateSelectionState();
+			}
+		}
 
-		if (contentControls.ContentControlObjects.length === 0)
-			return;
-
-		contentControls.clearAttack();
-		this.WordControl.m_oLogicDocument.Document_UpdateSelectionState();
+		var oHistory = oLogicDocument.GetHistory();
+		if (this.isRestrictionSignatures() && oHistory && !oHistory.Have_Changes())
+		{
+			oHistory.Clear();
+			oLogicDocument.UpdateInterface();
+		}
 	};
 
 	//-------------------------------------------------------------export---------------------------------------------------

@@ -7599,6 +7599,12 @@ background-repeat: no-repeat;\
 			if (this.WordControl.m_oDrawingDocument.placeholders)
 				this.WordControl.m_oDrawingDocument.placeholders.update(slide.getPlaceholdersControls());
 		}
+
+		if (this.isRestrictionSignatures() && !AscCommon.History.Have_Changes())
+		{
+			AscCommon.History.Clear();
+			logicDocument.Document_UpdateInterfaceState();
+		}
 	};
 
 	//-------------------------------------------------------------export---------------------------------------------------
