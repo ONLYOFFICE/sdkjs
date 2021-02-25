@@ -1529,6 +1529,10 @@
 		return this.ShowValue;
 	};
 	CDataBar.prototype.asc_getAxisPosition = function () {
+		//TODO после открытия менять значения для условного формтирования без ext
+		if (this.AxisPosition === AscCommonExcel.EDataBarAxisPosition.automatic && !this.AxisColor) {
+			this.AxisPosition = AscCommonExcel.EDataBarAxisPosition.none;
+		}
 		return this.AxisPosition;
 	};
 	CDataBar.prototype.asc_getGradient = function () {
@@ -1538,6 +1542,12 @@
 		return this.Direction;
 	};
 	CDataBar.prototype.asc_getNegativeBarColorSameAsPositive = function () {
+		//TODO после открытия менять значения для условного формтирования без ext
+		//в старом формате эта опция не используется
+		//буду ориентироваться что если не задан NegativeColor, то эта опция выставляется в true
+		if (!this.NegativeColor) {
+			this.NegativeBarColorSameAsPositive = true;
+		}
 		return this.NegativeBarColorSameAsPositive;
 	};
 	CDataBar.prototype.asc_getNegativeBarBorderColorSameAsPositive = function () {
