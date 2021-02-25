@@ -1266,10 +1266,10 @@
 					}
 				}
 
-				if (_compareColors(this.Color, val.Color) && _compareColors(this.NegativeColor, val.NegativeColor) &&
-					_compareColors(this.BorderColor, val.BorderColor) &&
-					_compareColors(this.NegativeBorderColor, val.NegativeBorderColor) &&
-					_compareColors(this.AxisColor, val.AxisColor)) {
+				if (_compareColors(this.Color, elem.Color) && _compareColors(this.NegativeColor, elem.NegativeColor) &&
+					_compareColors(this.BorderColor, elem.BorderColor) &&
+					_compareColors(this.NegativeBorderColor, elem.NegativeBorderColor) &&
+					_compareColors(this.AxisColor, elem.AxisColor)) {
 					return true;
 				}
 			}
