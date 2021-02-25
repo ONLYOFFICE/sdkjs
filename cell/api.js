@@ -5076,6 +5076,13 @@ var editor;
     }
   };
 
+  spreadsheet_api.prototype.onUpdateRestrictions = function () {
+    var oHistory = AscCommon.History;
+    if (this.isRestrictionSignatures() && oHistory && !oHistory.Have_Changes()) {
+        oHistory.Clear();
+    }
+  };
+
   /*
    * Export
    * -----------------------------------------------------------------------------
