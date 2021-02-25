@@ -21174,19 +21174,38 @@
 			History.Create_NewPoint();
 			History.StartTransaction();
 
-			var j;
+			var j, n;
 			if (deleteIdArr) {
 				for (j = 0; j < deleteIdArr.length; j++) {
+					var _oRule = t.model.getCFRuleById(deleteIdArr[j]);
+					var _ranges;
+					if (_oRule) {
+						_ranges = _oRule.ranges;
+					}
 					t.model.deleteCFRule(deleteIdArr[j], true);
+
+					if (_ranges) {
+						for (n = 0; n < _ranges.length; n++) {
+							t._updateRange(_ranges[n]);
+						}
+					}
 				}
 			}
 
 			if (arr && arr[nActive]) {
 				for (j = 0; j < arr[nActive].length; j++) {
 					t.model.setCFRule(arr[nActive][j]);
+
+					if (arr[nActive][j].ranges) {
+						for (n = 0; n < arr[nActive][j].ranges.length; n++) {
+							t._updateRange(arr[nActive][j].ranges[n]);
+						}
+					}
 				}
 			}
 
+			//TODO возможно здесь необходимо пересчитать формулы
+			t.draw();
 			History.EndTransaction();
 		};
 
@@ -21247,6 +21266,15 @@
 				t.model.tryClearCFRule(arr[i], _ranges ? [_ranges] : undefined);
 			}
 
+			//TODO возможно здесь необходимо пересчитать формулы
+			if (_ranges) {
+				for (i = 0; i < _ranges.length; i++) {
+					t._updateRange(_ranges[i]);
+				}
+			} else {
+				t._updateRange(new asc_Range(0, 0, t.cols.length - 1, t.rows.length - 1));
+			}
+			t.draw();
 			History.EndTransaction();
 		};
 
