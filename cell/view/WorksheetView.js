@@ -21179,8 +21179,8 @@
 				for (j = 0; j < deleteIdArr.length; j++) {
 					var _oRule = t.model.getCFRuleById(deleteIdArr[j]);
 					var _ranges;
-					if (_oRule) {
-						_ranges = _oRule.ranges;
+					if (_oRule && _oRule.val) {
+						_ranges = _oRule.val.ranges;
 					}
 					t.model.deleteCFRule(deleteIdArr[j], true);
 
@@ -21261,18 +21261,18 @@
 			History.Create_NewPoint();
 			History.StartTransaction();
 
+			var updateRanges = [];
 			for (var i = 0; i < arr.length; i++) {
 				//TODO для мультиселекта - передать массив!
-				t.model.tryClearCFRule(arr[i], _ranges ? [_ranges] : undefined);
+				updateRanges = updateRanges.concat(arr[i].ranges);
+				t.model.tryClearCFRule(arr[i], _ranges);
 			}
 
 			//TODO возможно здесь необходимо пересчитать формулы
-			if (_ranges) {
-				for (i = 0; i < _ranges.length; i++) {
-					t._updateRange(_ranges[i]);
+			if (updateRanges) {
+				for (i = 0; i < updateRanges.length; i++) {
+					t._updateRange(updateRanges[i]);
 				}
-			} else {
-				t._updateRange(new asc_Range(0, 0, t.cols.length - 1, t.rows.length - 1));
 			}
 			t.draw();
 			History.EndTransaction();
@@ -21291,6 +21291,10 @@
 			case Asc.c_oAscSelectionForCFType.pivot:
 				// ToDo
 				break;
+		}
+
+		if (_ranges) {
+			_ranges = [_ranges];
 		}
 
 		var lockArr = [];

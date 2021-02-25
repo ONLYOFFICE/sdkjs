@@ -3756,34 +3756,6 @@
 	WorkbookView.prototype.updateSkin = function () {
 		this.defaults.worksheetView.updateStyle();
 	};
-	WorkbookView.prototype.setCF = function (arr, deleteIdArr) {
-		var t = this;
-
-		var callback = function (isSuccess) {
-			if (false === isSuccess) {
-				return;
-			}
-
-			for(var i in arrPagesPrint) {
-				var ws = t.getWorksheet(parseInt(i));
-				ws.savePageOptions(arrPagesPrint[i], viewMode);
-				window["Asc"]["editor"]._onUpdateLayoutMenu(ws.model.Id);
-			}
-		};
-
-		var lockInfoArr = [];
-		var lockInfo;
-		for(var i in arrPagesPrint) {
-			lockInfo = this.getWorksheet(parseInt(i)).getLayoutLockInfo();
-			lockInfoArr.push(lockInfo);
-		}
-
-		if(viewMode) {
-			callback();
-		} else {
-			this.collaborativeEditing.lock(lockInfoArr, callback);
-		}
-	};
 
 
 	//------------------------------------------------------------export---------------------------------------------------

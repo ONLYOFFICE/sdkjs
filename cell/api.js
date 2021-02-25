@@ -4986,7 +4986,7 @@ var editor;
       }
     };
 
-	spreadsheet_api.prototype.asc_getCF = function (type, id, aChangedRules) {
+	spreadsheet_api.prototype.asc_getCF = function (type, id) {
 		var sheet;
 		var rules = this.wbModel.getRulesByType(type, id, true);
 		var aSheet = type === Asc.c_oAscSelectionForCFType.selection ? sheet : this.wbModel.getActiveWs();
