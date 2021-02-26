@@ -430,6 +430,18 @@
 		return propOld;
 	};
 
+	CConditionalFormattingRule.prototype.getUnionRange = function () {
+		var res = null;
+		for (var i = 0; i < this.ranges.length; i++) {
+			if (!res) {
+				res = this.ranges[i].clone();
+			} else {
+				res.union2(this.ranges[i]);
+			}
+		}
+		return res;
+	};
+
 	CConditionalFormattingRule.prototype.getTimePeriod = function () {
 		var start, end;
 		var now = new Asc.cDate();

@@ -9372,7 +9372,7 @@
 
 		this.aConditionalFormattingRules.push(val);
 		if (addToHistory) {
-			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_CFRuleAdd, this.getId(), null, new AscCommonExcel.UndoRedoData_CF(val.id, null, val));
+			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_CFRuleAdd, this.getId(), val.getUnionRange(), new AscCommonExcel.UndoRedoData_CF(val.id, null, val));
 		}
 	};
 
@@ -9403,7 +9403,7 @@
 			}
 
 			if (!_newRanges.length) {
-				this.deleteCFRule(rule.Id, true)
+				this.deleteCFRule(rule.id, true)
 			} else {
 				var newRule = rule.clone();
 				newRule.ranges = _newRanges;
@@ -9419,7 +9419,7 @@
 		if (oRule) {
 			this.aConditionalFormattingRules.splice(oRule.index, 1);
 			if (addToHistory) {
-				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_CFRuleDelete, this.getId(), null,
+				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_CFRuleDelete, this.getId(), oRule.val.getUnionRange(),
 					new AscCommonExcel.UndoRedoData_CF(id, oRule.val));
 			}
 		}
