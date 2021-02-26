@@ -16458,16 +16458,16 @@ CDocument.prototype.GetLocalTrackRevisions = function()
  */
 CDocument.prototype.SetGlobalTrackRevisions = function(isTrack, isUpdateInterface)
 {
-	if (isTrack !== this.Settings.TrackRevisions && this.IsSelectionLocked(AscCommon.changestype_Document_Settings))
+	if (isTrack !== this.Settings.TrackRevisions && !this.IsSelectionLocked(AscCommon.changestype_Document_Settings))
 	{
 		this.StartAction(AscDFH.historydescription_Document_SetTrackRevisions);
-		this.History.Add(new CChangesDocumentSettingsTrackRevisions(this, this.Settings.TrackRevisions, isTrack));
+		this.History.Add(new CChangesDocumentSettingsTrackRevisions(this, this.Settings.TrackRevisions, isTrack, this.Api.DocInfo.get_UserId()));
 		this.Settings.TrackRevisions = isTrack;
 		this.FinalizeAction();
-
-		if (true === isUpdateInterface)
-			this.private_OnTrackRevisionsChange();
 	}
+
+	if (true === isUpdateInterface)
+		this.private_OnTrackRevisionsChange();
 };
 /**
  * Получаем глобальный флаг рецензирования в файле

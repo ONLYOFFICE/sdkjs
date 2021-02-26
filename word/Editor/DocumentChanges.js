@@ -678,7 +678,7 @@ CChangesDocumentSettingsTrackRevisions.prototype.WriteToBinary = function(oWrite
 
 	if (this.UserId)
 	{
-		Writer.WriteString2(this.UserId);
+		oWriter.WriteString2(this.UserId);
 		nFlags |= 4;
 	}
 
