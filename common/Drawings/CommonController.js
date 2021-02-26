@@ -4647,7 +4647,7 @@ DrawingObjectsController.prototype =
         }
 
         if(chart.legend) {
-            ret.putLegendPos(AscFormat.isRealNumber(chart.legend.legendPos) ? chart.legend.legendPos : c_oAscChartLegendShowSettings.bottom);
+            ret.putLegendPos(chart.legend.getPropsPos());
         }
         else {
             ret.putLegendPos(c_oAscChartLegendShowSettings.none);

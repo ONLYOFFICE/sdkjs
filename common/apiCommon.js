@@ -1538,15 +1538,7 @@
 		}
 	};
 	asc_ChartSettings.prototype.isValidRange = function(sRange) {
-		if(sRange === "") {
-			return Asc.c_oAscError.ID.No;
-		}
-		var sCheck = sRange;
-		if(sRange[0] === "=") {
-			sCheck = sRange.slice(1);
-		}
-		var aRanges = AscFormat.fParseChartFormula(sCheck);
-		return (aRanges.length !== 0) ? Asc.c_oAscError.ID.No : Asc.c_oAscError.ID.DataRangeError;
+		return AscFormat.isValidChartRange(sRange);
 	};
 	asc_ChartSettings.prototype.getRange = function() {
 		if(this.chartSpace) {
@@ -1559,6 +1551,12 @@
 	};
 	asc_ChartSettings.prototype.getInColumns = function() {
 		return this.inColumns;
+	};
+	asc_ChartSettings.prototype.getInRows = function() {
+		if(this.inColumns === true || this.inColumns === false) {
+			return !this.inColumns;
+		}
+		return null;
 	};
 	asc_ChartSettings.prototype.putTitle = function(v) {
 		this.title = v;
@@ -5644,6 +5642,7 @@
 	prot["getRanges"] = prot.getRanges;
 	prot["putInColumns"] = prot.putInColumns;
 	prot["getInColumns"] = prot.getInColumns;
+	prot["getInRows"] = prot.getInRows;
 	prot["putShowMarker"] = prot.putShowMarker;
 	prot["getShowMarker"] = prot.getShowMarker;
 	prot["putLine"] = prot.putLine;

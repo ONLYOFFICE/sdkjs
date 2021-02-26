@@ -2904,19 +2904,9 @@
 		{
 			if(dataRange)
 			{
-				var sData = dataRange;
-				if(sData[0] === "=")
+				if(Asc.c_oAscError.ID.No === AscFormat.isValidChartRange(dataRange))
 				{
-					sData = sData.slice(1);
-				}
-				result = parserHelp.parse3DRef(sData);
-			}
-			if (result)
-			{
-				sheetModel = model.getWorksheetByName(result.sheet);
-				if (sheetModel)
-				{
-					range = AscCommonExcel.g_oRangeCache.getAscRange(result.range);
+					range = AscFormat.fParseChartFormula(dataRange);
 				}
 			}
 		}
@@ -2979,48 +2969,8 @@
 		{
 			if (Asc.c_oAscSelectionDialogType.Chart === dialogType)
 			{
-				// Проверка максимального дипазона
-				var maxSeries = AscFormat.MAX_SERIES_COUNT;
-				var maxValues = AscFormat.MAX_POINTS_COUNT;
-
-				var intervalValues, intervalSeries;
-				if (isRows)
-				{
-					intervalSeries = range.r2 - range.r1 + 1;
-					intervalValues = range.c2 - range.c1 + 1;
-				}
-				else
-				{
-					intervalSeries = range.c2 - range.c1 + 1;
-					intervalValues = range.r2 - range.r1 + 1;
-				}
-
-				if (Asc.c_oAscChartTypeSettings.stock === subType)
-				{
-					if (!AscFormat.checkStockRange(dataRange, !isRows))
-					{
-						return Asc.c_oAscError.ID.StockChartError;
-					}
-				}
-				else if(Asc.c_oAscChartTypeSettings.comboAreaBar === subType
-						|| Asc.c_oAscChartTypeSettings.comboBarLine === subType
-						|| Asc.c_oAscChartTypeSettings.comboBarLineSecondary === subType
-						|| Asc.c_oAscChartTypeSettings.comboCustom === subType)
-				{
-					if(intervalSeries < 2)
-					{
-						return Asc.c_oAscError.ID.ComboSeriesError;
-					}
-				}
-				else if (intervalSeries > maxSeries)
-				{
-					return Asc.c_oAscError.ID.MaxDataSeriesError;
-				}
-				else if(intervalValues > maxValues)
-				{
-					return Asc.c_oAscError.ID.MaxDataPointsError;
-
-				}
+				var oDataRefs = new AscFormat.CChartDataRefs(null);
+				return oDataRefs.checkDataRange(dataRange, isRows, subType);
 			}
 			else if (Asc.c_oAscSelectionDialogType.FormatTable === dialogType)
 			{

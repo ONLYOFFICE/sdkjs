@@ -939,12 +939,7 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 		var t = that.ArrowDrawer;
 		var xDeltaBORDER = 0.5, yDeltaBORDER = 1.5;
 		var roundDPR = that._roundForScale(AscBrowser.retinaPixelRatio);
-		var x1 = that.settings.isVerticalScroll ? 0 : roundDPR;
-		var y1 = that.settings.isVerticalScroll ? yDeltaBORDER * roundDPR : -roundDPR;
-		var x2 = 0;
-		var y2 = that.settings.isVerticalScroll ? 0 : 0;
-		var strokeW = t.SizeW - roundDPR;
-		var strokeH = t.SizeH - roundDPR;
+		var x1 = 0, y1 = 0, x2 = 0, y2 = 0;
 		var ctx = that.context;
 
 		ctx.beginPath();
