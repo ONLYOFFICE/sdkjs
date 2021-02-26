@@ -8490,6 +8490,42 @@ background-repeat: no-repeat;\
 
 		return oLogicDocument.IsTrackRevisions();
 	};
+	asc_docs_api.prototype.asc_SetLocalTrackRevisions          = function(bTrack)
+	{
+		var oLogicDocument = this.WordControl.m_oLogicDocument;
+		if (!oLogicDocument)
+			return;
+
+		return oLogicDocument.SetLocalTrackRevisions(bTrack, true);
+	};
+	asc_docs_api.prototype.asc_GetLocalTrackRevisions          = function()
+	{
+		var oLogicDocument = this.WordControl.m_oLogicDocument;
+		if (!oLogicDocument)
+			return;
+
+		return oLogicDocument.GetLocalTrackRevisions();
+	};
+	asc_docs_api.prototype.asc_SetGlobalTrackRevisions         = function(bTrack)
+	{
+		var oLogicDocument = this.WordControl.m_oLogicDocument;
+		if (!oLogicDocument)
+			return;
+
+		return oLogicDocument.SetGlobalTrackRevisions(bTrack, true);
+	};
+	asc_docs_api.prototype.asc_GetGlobalTrackRevisions         = function()
+	{
+		var oLogicDocument = this.WordControl.m_oLogicDocument;
+		if (!oLogicDocument)
+			return;
+
+		return oLogicDocument.GetGlobalTrackRevisions();
+	};
+	asc_docs_api.prototype.sync_OnTrackRevisionsChange         = function(localFlag, globalFlag, userId)
+	{
+		this.sendEvent("asc_onOnTrackRevisionsChange", localFlag, globalFlag, userId);
+	};
 	asc_docs_api.prototype.sync_BeginCatchRevisionsChanges     = function()
 	{
 		this.RevisionChangesStack = [];
@@ -11422,6 +11458,10 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_GetStyleNameById']                      = asc_docs_api.prototype.asc_GetStyleNameById;
 	asc_docs_api.prototype['asc_SetTrackRevisions']                     = asc_docs_api.prototype.asc_SetTrackRevisions;
 	asc_docs_api.prototype['asc_IsTrackRevisions']                      = asc_docs_api.prototype.asc_IsTrackRevisions;
+	asc_docs_api.prototype['asc_SetLocalTrackRevisions']                = asc_docs_api.prototype.asc_SetLocalTrackRevisions;
+	asc_docs_api.prototype['asc_GetLocalTrackRevisions']                = asc_docs_api.prototype.asc_GetLocalTrackRevisions;
+	asc_docs_api.prototype['asc_SetGlobalTrackRevisions']               = asc_docs_api.prototype.asc_SetGlobalTrackRevisions;
+	asc_docs_api.prototype['asc_GetGlobalTrackRevisions']               = asc_docs_api.prototype.asc_GetGlobalTrackRevisions;
 	asc_docs_api.prototype['sync_BeginCatchRevisionsChanges']           = asc_docs_api.prototype.sync_BeginCatchRevisionsChanges;
 	asc_docs_api.prototype['sync_EndCatchRevisionsChanges']             = asc_docs_api.prototype.sync_EndCatchRevisionsChanges;
 	asc_docs_api.prototype['asc_GetRevisionsChangesStack']              = asc_docs_api.prototype.asc_GetRevisionsChangesStack;

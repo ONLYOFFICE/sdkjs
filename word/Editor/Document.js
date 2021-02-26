@@ -16434,10 +16434,14 @@ CDocument.prototype.IsTrackRevisions = function()
 /**
  * Устанавливаем локальное значение TrackChanges
  * @param {boolean|null} isTrack
+ * @param {boolean} [isUpdateInterface=false] посылаем сообщение в интерфейс об изменении данного флага
  */
-CDocument.prototype.SetLocalTrackRevisions = function(isTrack)
+CDocument.prototype.SetLocalTrackRevisions = function(isTrack, isUpdateInterface)
 {
 	this.TrackRevisions = isTrack;
+
+	if (true === isUpdateInterface)
+		this.private_OnTrackRevisionsChange();
 };
 /**
  * Получаем локальный флаг рецензирования
@@ -16450,8 +16454,9 @@ CDocument.prototype.GetLocalTrackRevisions = function()
 /**
  * Устанавливаем глобальный флаг рецензирования в файле
  * @param {boolean} isTrack
+ * @param {boolean} [isUpdateInterface=false] посылаем сообщение в интерфейс об изменении данного флага
  */
-CDocument.prototype.SetGlobalTrackRevisions = function(isTrack)
+CDocument.prototype.SetGlobalTrackRevisions = function(isTrack, isUpdateInterface)
 {
 	if (isTrack !== this.Settings.TrackRevisions && this.IsSelectionLocked(AscCommon.changestype_Document_Settings))
 	{
@@ -16459,6 +16464,9 @@ CDocument.prototype.SetGlobalTrackRevisions = function(isTrack)
 		this.History.Add(new CChangesDocumentSettingsTrackRevisions(this, this.Settings.TrackRevisions, isTrack));
 		this.Settings.TrackRevisions = isTrack;
 		this.FinalizeAction();
+
+		if (true === isUpdateInterface)
+			this.private_OnTrackRevisionsChange();
 	}
 };
 /**
@@ -16468,6 +16476,10 @@ CDocument.prototype.SetGlobalTrackRevisions = function(isTrack)
 CDocument.prototype.GetGlobalTrackRevisions = function()
 {
 	return this.Settings.TrackRevisions;
+};
+CDocument.prototype.private_OnTrackRevisionsChange = function(sUserId)
+{
+	this.Api.sync_OnTrackRevisionsChange(this.TrackRevisions, this.Settings.TrackRevisions, sUserId);
 };
 CDocument.prototype.GetNextRevisionChange = function()
 {

@@ -625,16 +625,93 @@ CChangesDocumentSpecialFormsGlobalSettings.prototype.private_IsCreateEmptyObject
 };
 /**
  * @constructor
- * @extends {AscDFH.CChangesBaseBoolProperty}
+ * @extends {AscDFH.CChangesBase}
  */
-function CChangesDocumentSettingsTrackRevisions(Class, Old, New)
+function CChangesDocumentSettingsTrackRevisions(Class, Old, New, sUserId)
 {
-	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New);
+	AscDFH.CChangesBase.call(this, Class);
+
+	this.Old    = Old;
+	this.New    = New;
+	this.UserId = sUserId;
 }
-CChangesDocumentSettingsTrackRevisions.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesDocumentSettingsTrackRevisions.prototype = Object.create(AscDFH.CChangesBase.prototype);
 CChangesDocumentSettingsTrackRevisions.prototype.constructor = CChangesDocumentSettingsTrackRevisions;
 CChangesDocumentSettingsTrackRevisions.prototype.Type = AscDFH.historyitem_Document_Settings_TrackRevisions;
-CChangesDocumentSettingsTrackRevisions.prototype.private_SetValue = function(Value)
+CChangesDocumentSettingsTrackRevisions.prototype.Undo = function()
 {
-	this.Class.Settings.TrackRevisions = Value;
+	this.Class.Settings.TrackRevisions = this.Old;
+	this.Class.private_OnTrackRevisionsChange();
+};
+CChangesDocumentSettingsTrackRevisions.prototype.Redo = function()
+{
+	this.Class.Settings.TrackRevisions = this.New;
+	this.Class.private_OnTrackRevisionsChange();
+};
+CChangesDocumentSettingsTrackRevisions.prototype.Load = function()
+{
+	this.Class.Settings.TrackRevisions = this.New;
+	this.Class.private_OnTrackRevisionsChange(this.UserId);
+};
+CChangesDocumentSettingsTrackRevisions.prototype.WriteToBinary = function(oWriter)
+{
+	// Long   : Flags
+	// Bool   : New
+	// Bool   : Old
+	// String : UserId
+
+	var nStartPos = oWriter.GetCurPosition();
+	oWriter.Skip(4);
+	var nFlags = 0;
+
+	if (undefined !== this.Old)
+	{
+		oWriter.WriteBool(this.Old);
+		nFlags |= 1;
+	}
+
+	if (undefined !== this.New)
+	{
+		oWriter.WriteBool(this.New);
+		nFlags |= 2;
+	}
+
+	if (this.UserId)
+	{
+		Writer.WriteString2(this.UserId);
+		nFlags |= 4;
+	}
+
+	var nEndPos = oWriter.GetCurPosition();
+	oWriter.Seek(nStartPos);
+	oWriter.WriteLong(nFlags);
+	oWriter.Seek(nEndPos);
+};
+CChangesDocumentSettingsTrackRevisions.prototype.ReadFromBinary = function(oReader)
+{
+	// Long   : Flags
+	// Bool   : New
+	// Bool   : Old
+	// String : UserId
+
+	var nFlags = oReader.GetLong();
+
+	if (nFlags & 1)
+		this.Old = oReader.GetBool();
+	else
+		this.Old = undefined;
+
+	if (nFlags & 2)
+		this.New = oReader.GetBool();
+	else
+		this.New = undefined;
+
+	if (nFlags & 4)
+		this.UserId = oReader.GetString2();
+	else
+		this.UserId = undefined;
+};
+CChangesDocumentSettingsTrackRevisions.prototype.CreateReverseChange = function()
+{
+	return new CChangesDocumentSettingsTrackRevisions(this.Class, this.New, this.Old, this.UserId);
 };
