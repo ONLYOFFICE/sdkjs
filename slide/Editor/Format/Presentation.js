@@ -10783,15 +10783,15 @@ CPresentation.prototype.CalculateComments = function () {
 CPresentation.prototype.IsTrackRevisions = function () {
     return false;
 };
-CPresentation.prottoype.GetLocalTrackRevisions = function() {
+CPresentation.prototype.GetLocalTrackRevisions = function() {
 	return false;
 };
-CPresentation.prottoype.SetLocalTrackRevisions = function(isTrack) {
+CPresentation.prototype.SetLocalTrackRevisions = function(isTrack) {
 };
-CPresentation.prottoype.GetGlobalTrackRevisions = function() {
+CPresentation.prototype.GetGlobalTrackRevisions = function() {
 	return false;
 };
-CPresentation.prottoype.SetGlobalTrackRevisions = function(isTrack) {
+CPresentation.prototype.SetGlobalTrackRevisions = function(isTrack) {
 };
 CPresentation.prototype.IsViewModeInReview = function () {
     return false;
