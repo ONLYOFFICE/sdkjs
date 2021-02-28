@@ -3808,6 +3808,9 @@ function (window, undefined) {
 			case AscCH.historyitem_PivotTable_PivotFieldSetShowAll:
 				field.asc_setShowAll(value, pivotTable, Data.index);
 				break;
+			case AscCH.historyitem_PivotTable_PivotFieldVisible:
+				field.asc_setVisible(value, pivotTable, Data.index.from, Data.index.to);
+				break;
 			case AscCH.historyitem_PivotTable_PivotFieldSetSubtotals:
 				field.setSubtotals(value, pivotTable, Data.index);
 				field.checkSubtotal();

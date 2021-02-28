@@ -434,6 +434,8 @@
 				  self._onTableTotalClick.apply(self, arguments);
 			  }, "pivotFiltersClick": function () {
 				  self._onPivotFiltersClick.apply(self, arguments);
+			  }, "pivotCollapseClick": function () {
+				  self._onPivotCollapseClick.apply(self, arguments);
 			  }, "commentCellClick": function () {
 				  self._onCommentCellClick.apply(self, arguments);
 			  }, "isGlobalLockEditCell": function () {
@@ -1502,6 +1504,16 @@
     if (filterObj) {
       this.handlers.trigger("asc_onSetAFDialog", filterObj);
     }
+  };
+  WorkbookView.prototype._onPivotCollapseClick = function(idPivotCollapse) {
+    if (!idPivotCollapse) {
+      return;
+    }
+    var pivotTable = this.model.getPivotTableById(idPivotCollapse.id);
+    if (!pivotTable) {
+      return;
+    }
+    pivotTable.setVisibleFieldItem(this.Api, !idPivotCollapse.sd, idPivotCollapse.fld, idPivotCollapse.index);
   };
 
   WorkbookView.prototype._onGroupRowClick = function(x, y, target, type) {

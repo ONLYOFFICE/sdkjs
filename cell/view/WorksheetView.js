@@ -7993,9 +7993,14 @@
 							_isTableTotal = this._hitCursorFilterButton(_offsetX, _offsetY, col, row, true);
 						}
 
-						if (_isDataValidation || _isPivot) {
-							res = {cursor: kCurAutoFilter, target: c_oTargetType.FilterObject, col: c.col, row: r.row,
-								idPivot: pivotButton && pivotButton.idPivot, isDataValidation: _isDataValidation};
+						if (_isDataValidation) {
+							res = {cursor: kCurAutoFilter, target: c_oTargetType.FilterObject, col: c.col, row: r.row, isDataValidation: _isDataValidation};
+						} else if (_isPivot && pivotButton) {
+							if(pivotButton.idPivotCollapse) {
+								res = {cursor: kCurHyperlink, target: c_oTargetType.FilterObject, col: c.col, row: r.row, idPivotCollapse: pivotButton.idPivotCollapse};
+							} else {
+								res = {cursor: kCurAutoFilter, target: c_oTargetType.FilterObject, col: c.col, row: r.row, idPivot: pivotButton.idPivot};
+							}
 						} else if (_isTableTotal) {
 							res = {cursor: kCurAutoFilter, target: c_oTargetType.FilterObject, col: c.col, row: r.row, idTableTotal: {id: isTableTotal.index, colId: isTableTotal.colIndex}};
 						} else if (!pivotButton) {

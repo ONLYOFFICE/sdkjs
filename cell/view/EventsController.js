@@ -1459,6 +1459,8 @@
 								this.handlers.trigger('onDataValidation');
 							} else if (t.targetInfo.idPivot && Asc.CT_pivotTableDefinition.prototype.asc_filterByCell) {
 								this.handlers.trigger("pivotFiltersClick", t.targetInfo.idPivot);
+							} else if (t.targetInfo.idPivotCollapse) {
+								this.handlers.trigger("pivotCollapseClick", t.targetInfo.idPivotCollapse);
 							} else if (t.targetInfo.idTableTotal) {
 								this.handlers.trigger("tableTotalClick", t.targetInfo.idTableTotal);
 							} else {
