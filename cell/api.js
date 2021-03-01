@@ -2708,7 +2708,32 @@ var editor;
 		if (pivotTable && ws.selectionRange.inContains(pivotTable.getReportRanges())) {
 			var layout = pivotTable.getLayoutsForGroup(ws.selectionRange);
 			if (null !== layout.fld) {
-				if (layout.getGroupSize() > 1) {
+				var fieldGroupType = pivotTable.getFieldGroupType(layout.fld);
+				var rangePrRes = pivotTable.getGroupRangePr(layout.fld);
+				if (opt_rangePr && opt_rangePr.getFieldGroupType() === fieldGroupType) {
+					this._changePivotAndConnectedByPivotCacheWithLock(pivotTable, false, function (confirmation, pivotTables) {
+						var changeRes = t._changePivot(pivotTable, confirmation, true, function () {
+							var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
+
+							pivotTable.groupRangePr(layout.fld, opt_rangePr, opt_dateTypes);
+
+							var newPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
+							History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_PivotReplaceKeepRecords, ws.getId(),
+								null, new AscCommonExcel.UndoRedoData_PivotTableRedo(pivotTable.Get_Id(), oldPivot, newPivot));
+
+							pivotTable._updateCacheDataUpdateSlicersPost();
+							});
+						return changeRes;
+					});
+				} else if (rangePrRes) {
+					//todo dialog
+					//this.handlers.trigger("setAutoFiltersDialog", rangePrRes.rangePrRes, rangePrRes.dateTypes);
+					this.asc_groupPivot(rangePrRes.rangePr, rangePrRes.dateTypes);
+				} else if (1 === layout.getGroupSize() && c_oAscGroupType.Text !== pivotTable.getFieldGroupType(layout.fld)) {
+					rangePrRes = pivotTable.createGroupRangePr(layout.fld);
+					//todo dialog
+					this.asc_groupPivot(rangePrRes.rangePr, rangePrRes.dateTypes);
+				} else if (layout.getGroupSize() > 1) {
 					this._changePivotAndConnectedByPivotCacheWithLock(pivotTable, false, function(confirmation, pivotTables) {
 						var changeRes = t._changePivot(pivotTable, confirmation, true, function(){
 							var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
@@ -2724,26 +2749,6 @@ var editor;
 						});
 						return changeRes;
 					});
-				} else if (1 === layout.getGroupSize() && c_oAscGroupType.Text !== pivotTable.getFieldGroupType(layout.fld)) {
-					if (opt_rangePr) {
-						this._changePivotAndConnectedByPivotCacheWithLock(pivotTable, false, function (confirmation, pivotTables) {
-							var changeRes = t._changePivot(pivotTable, confirmation, true, function () {
-							var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
-
-							pivotTable.groupRangePr(layout.fld, opt_rangePr, opt_dateTypes);
-
-							var newPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
-							History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_PivotReplaceKeepRecords, ws.getId(),
-								null, new AscCommonExcel.UndoRedoData_PivotTableRedo(pivotTable.Get_Id(), oldPivot, newPivot));
-
-							pivotTable._updateCacheDataUpdateSlicersPost();
-							});
-							return changeRes;
-						});
-					} else {
-						//todo dialog
-						this.sendEvent('asc_onError', c_oAscError.ID.PivotGroup, c_oAscError.Level.Critical);
-					}
 				} else {
 					this.sendEvent('asc_onError', c_oAscError.ID.PivotGroup, c_oAscError.Level.Critical);
 				}
@@ -3945,8 +3950,6 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
-		this.asc_groupPivot();
-		return;
     var ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
       ws.objectRender.controller.setCellBold(isBold);
@@ -3957,8 +3960,6 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellItalic = function(isItalic) {
-    this.asc_ungroupPivot();
-    return;
     var ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellItalic) {
       ws.objectRender.controller.setCellItalic(isItalic);
@@ -3969,13 +3970,6 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellUnderline = function(isUnderline) {
-    var rangePr = new CT_RangePr();
-    rangePr.startNum = 1;
-    rangePr.endNum = 20;
-    rangePr.groupBy = c_oAscGroupBy.Range;
-    rangePr.groupInterval = 2;
-    this.asc_groupPivot(rangePr);
-    return;
     var ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellUnderline) {
       ws.objectRender.controller.setCellUnderline(isUnderline);
@@ -3986,14 +3980,6 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellStrikeout = function(isStrikeout) {
-    var rangePr = new CT_RangePr();
-    rangePr.startDate = new Asc.cDate();
-    rangePr.endDate = new Asc.cDate();
-    rangePr.groupBy = c_oAscGroupBy.Seconds;
-    rangePr.groupInterval = 1;
-    var types = [c_oAscGroupBy.Seconds, c_oAscGroupBy.Minutes, c_oAscGroupBy.Hours, c_oAscGroupBy.Days, c_oAscGroupBy.Months, c_oAscGroupBy.Quarters, c_oAscGroupBy.Years];
-    this.asc_groupPivot(rangePr, types);
-    return;
     var ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellStrikeout) {
       ws.objectRender.controller.setCellStrikeout(isStrikeout);
