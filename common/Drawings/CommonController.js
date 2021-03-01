@@ -1664,6 +1664,42 @@ DrawingObjectsController.prototype =
             }
             if(!is_selected || b_check_internal)
                 this.updateOverlay();
+
+
+            if(e.ClickCount > 1 && !e.ShiftKey && !e.CtrlKey && ((this.selection.groupSelection && this.selection.groupSelection.selectedObjects.length === 1) || this.selectedObjects.length === 1))
+            {
+                var drawing = this.selectedObjects[0].parent;
+
+                if (object.getObjectType() === AscDFH.historyitem_type_ChartSpace && this.handleChartDoubleClick) {
+                    this.handleChartDoubleClick(drawing, object, e, x, y, pageIndex);
+                    return true;
+                }
+                if(object.getObjectType() === AscDFH.historyitem_type_Shape){
+                    if(null !== object.signatureLine){
+                        if(this.handleSignatureDblClick){
+                            this.handleSignatureDblClick(object.signatureLine.id, object.extX, object.extY);
+                            return true;
+                        }
+                    }
+                    else if(this.handleDblClickEmptyShape){
+                        if(!object.getDocContent()){
+                            this.handleDblClickEmptyShape(object);
+                            if(object.getDocContent()) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+                if (object.getObjectType() === AscDFH.historyitem_type_OleObject && this.handleOleObjectDoubleClick){
+                    this.handleOleObjectDoubleClick(drawing, object, e, x, y, pageIndex);
+                    return true;
+                }
+                else if (2 == e.ClickCount && drawing instanceof ParaDrawing && drawing.IsMathEquation())
+                {
+                    this.handleMathDrawingDoubleClick(drawing, e, x, y, pageIndex);
+                    return true;
+                }
+            }
             if(object.canMove())
             {
                 this.checkSelectedObjectsForMove(group, pageIndex);
@@ -1687,32 +1723,6 @@ DrawingObjectsController.prototype =
                     group.resetInternalSelection();
                     this.updateOverlay();
                     this.changeCurrentState(new AscFormat.PreMoveInGroupState(this, group, x, y, e.ShiftKey, e.CtrlKey, object,  is_selected));
-                }
-                if(e.ClickCount > 1 && !e.ShiftKey && !e.CtrlKey && ((this.selection.groupSelection && this.selection.groupSelection.selectedObjects.length === 1) || this.selectedObjects.length === 1))
-                {
-                    var drawing = this.selectedObjects[0].parent;
-
-                    if (object.getObjectType() === AscDFH.historyitem_type_ChartSpace && this.handleChartDoubleClick)
-                        this.handleChartDoubleClick(drawing, object, e, x, y, pageIndex);
-                    if(object.getObjectType() === AscDFH.historyitem_type_Shape){
-                        if(null !== object.signatureLine){
-                            if(this.handleSignatureDblClick){
-                                this.handleSignatureDblClick(object.signatureLine.id, object.extX, object.extY)
-                            }
-                        }
-                        else if(this.handleDblClickEmptyShape){
-                            if(!object.getDocContent()){
-                                this.handleDblClickEmptyShape(object);
-                            }
-                        }
-                    }
-                    if (object.getObjectType() === AscDFH.historyitem_type_OleObject && this.handleOleObjectDoubleClick){
-                        this.handleOleObjectDoubleClick(drawing, object, e, x, y, pageIndex);
-                    }
-                    else if (2 == e.ClickCount && drawing instanceof ParaDrawing && drawing.IsMathEquation())
-                    {
-                        this.handleMathDrawingDoubleClick(drawing, e, x, y, pageIndex);
-                    }
                 }
             }
             return true;
