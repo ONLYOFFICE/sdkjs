@@ -11683,6 +11683,9 @@ CDocument.prototype.Document_UpdateInterfaceState = function(bSaveCurRevisionCha
 };
 CDocument.prototype.private_UpdateInterface = function(bSaveCurRevisionChange)
 {
+	if (!this.Api.isDocumentLoadComplete || true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead)
+		return;
+
 	if (true === this.TurnOffInterfaceEvents)
 		return;
 
