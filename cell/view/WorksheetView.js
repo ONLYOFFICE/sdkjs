@@ -143,6 +143,7 @@
     var gridlineSize = 1;
 
     var filterSizeButton = 17;
+    var collapsePivotSizeButton = 10;
 
     function getMergeType(merged) {
 		var res = c_oAscMergeType.none;
@@ -15755,8 +15756,8 @@
         return arrResult;
     };
 
-	WorksheetView.prototype._getFilterButtonSize = function () {
-	    return AscCommon.AscBrowser.convertToRetinaValue(filterSizeButton, true);
+	WorksheetView.prototype._getFilterButtonSize = function (collapsePivot) {
+	    return AscCommon.AscBrowser.convertToRetinaValue(!collapsePivot ? filterSizeButton : collapsePivotSizeButton, true);
 	};
 
 	WorksheetView.prototype.getButtonSize = function (row, col, isDataValidation) {
@@ -15925,8 +15926,9 @@
 		var row = props.row;
         var col = props.col;
 
+		var isPivotCollapsed = props.idPivotCollapse;
         var widthButtonPx, heightButtonPx;
-		widthButtonPx = heightButtonPx = this._getFilterButtonSize();
+		widthButtonPx = heightButtonPx = this._getFilterButtonSize(isPivotCollapsed);
 
 		var widthBorder = 1;
 		var scaleIndex = 1;
@@ -15957,11 +15959,24 @@
 		var y1 = t._getRowTop(row + 1) - heightWithBorders - 0.5 - offsetY - 1;
 
 		var _drawButtonFrame = function (startX, startY, width, height) {
-			ctx.setFillStyle(t.settings.cells.defaultState.background);
+			//TODO нужен цвет для заливки
+			ctx.setFillStyle(isPivotCollapsed ? new CColor(227, 228, 228) : t.settings.cells.defaultState.background);
 			ctx.setLineWidth(1);
 			ctx.setStrokeStyle(t.settings.cells.defaultState.border);
-			ctx.fillRect(startX, startY, width, height);
-			ctx.strokeRect(startX, startY, width, height);
+
+			var _diff = isPivotCollapsed ? 1 : 0;
+			ctx.fillRect(startX + _diff, startY + _diff, width - _diff, height - _diff);
+			if (isPivotCollapsed) {
+				ctx.beginPath();
+				ctx.lineHor(startX + _diff, startY, startX + width);
+				ctx.lineHor(startX + _diff, startY + height, startX + width);
+				ctx.lineVer(startX, startY + _diff, startY + height);
+				ctx.lineVer(startX + width, startY + _diff, startY + height);
+
+				ctx.stroke();
+			} else {
+				ctx.strokeRect(startX, startY, width, height);
+			}
 		};
 
 		var _drawSortArrow = function (startX, startY, isDescending, heightArrow) {
@@ -16077,6 +16092,8 @@
 
 				centerY = upLeftYButton + heigthObj + marginTop;
 				_drawFilterMark(centerX + 1, centerY, heigthObj);
+			} else if (isPivotCollapsed) {
+
 			} else {
 				_drawFilterDreieck(centerX, centerY, 4, 1);
 			}
