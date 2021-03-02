@@ -172,6 +172,13 @@
 		return AscCommonExcel.cDefIconSize * fontSize / AscCommonExcel.cDefIconFont;
 	}
 
+	var pivotCollapseButtonClose = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOSIgaGVpZ2h0PSI5IiB2aWV3Qm94PSIwIDAgOSA5IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cmVjdCB4PSIwLjUiIHk9IjAuNSIgd2lkdGg9IjgiIGhlaWdodD0iOCIgZmlsbD0id2hpdGUiIHN0cm9rZT0iI0NBQ0FDQSIvPgo8cGF0aCBkPSJNNSA0VjJINFY0SDJWNUg0VjdINVY1SDdWNEg1WiIgZmlsbD0iIzc4Nzg3OCIvPgo8L3N2Zz4K";
+	var pivotCollapseButtonOpen = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOSIgaGVpZ2h0PSI5IiB2aWV3Qm94PSIwIDAgOSA5IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cmVjdCB4PSIwLjUiIHk9IjAuNSIgd2lkdGg9IjgiIGhlaWdodD0iOCIgZmlsbD0id2hpdGUiIHN0cm9rZT0iI0NBQ0FDQSIvPgo8cmVjdCB4PSIyIiB5PSI0IiB3aWR0aD0iNSIgaGVpZ2h0PSIxIiBmaWxsPSIjNzg3ODc4Ii8+Cjwvc3ZnPgo=";
+
+	function getPivotButtonsForLoad() {
+		return [pivotCollapseButtonClose, pivotCollapseButtonOpen];
+	}
+
 	function CacheColumn() {
 	    this.left = 0;
 		this.width = 0;
@@ -16257,21 +16264,28 @@
 			x += getCFIconSize(fontSize);
 		}
 
+		var indent = align.getIndent();
+		if (indent) {
+			if (AscCommon.align_Right === cellHA) {
+				x -= indent * 3 * this.defaultSpaceWidth;
+			} else if (AscCommon.align_Left === cellHA) {
+				x += indent * 3 * this.defaultSpaceWidth;
+			}
+		}
+
 		var graphics = (ctx && ctx.DocumentRenderer) || this.handlers.trigger('getMainGraphics');
 		var cellValue = c.getNumberValue();
 
 
-		var iCheckGreen = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTUgOEMxNSAxMS44NjYgMTEuODY2IDE1IDggMTVDNC4xMzQwMSAxNSAxIDExLjg2NiAxIDhDMSA0LjEzNDAxIDQuMTM0MDEgMSA4IDFDMTEuODY2IDEgMTUgNC4xMzQwMSAxNSA4WiIgZmlsbD0iIzJFOTk1RiIvPjxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBkPSJNMTIuODA1MSA1LjU5MzJMNy42MzkxOCAxMi42MDQxTDQuMjQxNyA4LjY1MTg5TDUuNzU4MzMgNy4zNDgxMUw3LjUxODc1IDkuMzk1OTRMMTEuMTk1IDQuNDA2OEwxMi44MDUxIDUuNTkzMloiIGZpbGw9IndoaXRlIi8+PC9zdmc+';
-		var img = iCheckGreen;
+		var img = props.idPivotCollapse.sd ? pivotCollapseButtonOpen : pivotCollapseButtonClose;
 		if (!img) {
 			return;
 		}
 
-		var iconSize = AscCommon.AscBrowser.convertToRetinaValue(getCFIconSize(fontSize), true);
+		var iconSize = AscCommon.AscBrowser.convertToRetinaValue(this._getFilterButtonSize(true), true);
 		var rect = new AscCommon.asc_CRect(x, top, width, height);
 		var bl = rect._y + rect._height - Asc.round(this._getRowDescender(row) * this.getZoom());
 		var tm = new Asc.TextMetrics(iconSize, iconSize, 0, iconSize - 2 * fontSize / AscCommonExcel.cDefIconFont, 0, 0, 0);
-		var cellHA = align.getAlignHorizontal();
 
 		rect._x = this._calcTextHorizPos(rect._x, rect._x + rect._width, tm, cellHA);
 		rect._y = this._calcTextVertPos(rect._y, rect._height, bl, tm, align.getAlignVertical());
@@ -21336,9 +21350,12 @@
 		}
 	};
 
+
 	//------------------------------------------------------------export---------------------------------------------------
     window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 	window["AscCommonExcel"].CellFlags = CellFlags;
     window["AscCommonExcel"].WorksheetView = WorksheetView;
+
+	window['AscCommonExcel'].getPivotButtonsForLoad = getPivotButtonsForLoad;
 
 })(window);
