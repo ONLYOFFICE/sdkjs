@@ -16225,6 +16225,185 @@
 		}
 	};
 
+	WorksheetView.prototype._getPropsCollapseButton = function (offsetX, offsetY, props) {
+		var drawingCtx = props.isOverlay ? this.overlayCtx : this.drawingCtx;
+		var row = props.row;
+		var colStart = props.col;
+		var colEnd = props.col;
+		var col = props.col;
+
+
+
+
+		var height = this._getRowHeight(row);
+		if (0 === height && mergedCells) {
+			return;
+		}
+
+		var drawCells = {}, i;
+		var top = this._getRowTop(row);
+		var ctx = drawingCtx || this.drawingCtx;
+
+		var width = this._getColumnWidth(col);
+		if (0 === width && mergedCells) {
+			return;
+		}
+
+		// ToDo подумать, может стоит не брать ячейку из модели (а брать из кеш-а)
+		var c = this._getVisibleCell(col, row);
+		var mwidth = 0, mheight = 0;
+
+
+		var align = c.getAlign();
+		/*if (mergedCells) {
+		 mc = this.model.getMergedByCell(row, col);
+		 if (mc) {
+		 mergedCells[AscCommonExcel.getCellIndex(mc.r1, mc.c1)] = mc;
+		 col = mc.c2;
+		 return;
+		 }
+		 }
+
+		 if (mc) {
+		 if (col !== mc.c1 || row !== mc.r1) {
+		 return;
+		 }
+
+		 mwidth = this._getColLeft(mc.c2 + 1) - this._getColLeft(mc.c1 + 1);
+		 mheight = this._getRowTop(mc.r2 + 1) - this._getRowTop(mc.r1 + 1);
+		 }*/
+
+
+		//var showValue = this._drawCellCF(ctx, aRules, c, row, col, top, width + mwidth, height + mheight, offsetX, offsetY);
+
+		width = width + mwidth;
+		height = height + mheight;
+
+		var x = this._getColLeft(col) - offsetX + 1;
+		width -= 3; // indent
+		top += 1 - offsetY;
+
+		var graphics = (ctx && ctx.DocumentRenderer) || this.handlers.trigger('getMainGraphics');
+		var cellValue = c.getNumberValue();
+
+
+		var iCheckGreen = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTUgOEMxNSAxMS44NjYgMTEuODY2IDE1IDggMTVDNC4xMzQwMSAxNSAxIDExLjg2NiAxIDhDMSA0LjEzNDAxIDQuMTM0MDEgMSA4IDFDMTEuODY2IDEgMTUgNC4xMzQwMSAxNSA4WiIgZmlsbD0iIzJFOTk1RiIvPjxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBkPSJNMTIuODA1MSA1LjU5MzJMNy42MzkxOCAxMi42MDQxTDQuMjQxNyA4LjY1MTg5TDUuNzU4MzMgNy4zNDgxMUw3LjUxODc1IDkuMzk1OTRMMTEuMTk1IDQuNDA2OEwxMi44MDUxIDUuNTkzMloiIGZpbGw9IndoaXRlIi8+PC9zdmc+';
+		var img = iCheckGreen;
+		if (!img) {
+			return;
+		}
+
+		var fontSize = 10;
+
+		var iconSize = AscCommon.AscBrowser.convertToRetinaValue(getCFIconSize(fontSize), true);
+		var rect = new AscCommon.asc_CRect(x, top, width, height);
+		var bl = rect._y + rect._height - Asc.round(this._getRowDescender(row) * this.getZoom());
+		var tm = new Asc.TextMetrics(iconSize, iconSize, 0, iconSize - 2 * fontSize / AscCommonExcel.cDefIconFont, 0, 0, 0);
+		var cellHA = align.getAlignHorizontal();
+		/*if (oRuleElement.ShowValue || (AscCommon.align_Left !== cellHA && AscCommon.align_Right !== cellHA
+		 && AscCommon.align_Center !== cellHA)) {
+		 cellHA = AscCommon.align_Left;
+		 }*/
+		rect._x = this._calcTextHorizPos(rect._x, rect._x + rect._width, tm, cellHA);
+		rect._y = this._calcTextVertPos(rect._y, rect._height, bl, tm, align.getAlignVertical());
+		var dScale = asc_getcvt(0, 3, this._getPPIX());
+		rect._x *= dScale;
+		rect._y *= dScale;
+		rect._width *= dScale;
+		rect._height *= dScale;
+		AscFormat.ExecuteNoHistory(
+			function (img, rect, imgSize) {
+				var geometry = new AscFormat.CreateGeometry("rect");
+				geometry.Recalculate(imgSize, imgSize, true);
+
+				var oUniFill = new AscFormat.builder_CreateBlipFill(img, "stretch");
+
+				if (ctx instanceof AscCommonExcel.CPdfPrinter) {
+					graphics.SaveGrState();
+					graphics.SetBaseTransform(ctx.Transform || new AscCommon.CMatrix());
+				}
+
+				graphics.save();
+				var oMatrix = new AscCommon.CMatrix();
+				oMatrix.tx = rect._x;
+				oMatrix.ty = rect._y;
+				graphics.transform3(oMatrix);
+				var shapeDrawer = new AscCommon.CShapeDrawer();
+				shapeDrawer.Graphics = graphics;
+
+				shapeDrawer.fromShape2(new AscFormat.CColorObj(null, oUniFill, geometry), graphics, geometry);
+				shapeDrawer.draw(geometry);
+				graphics.restore();
+
+				if (ctx instanceof AscCommonExcel.CPdfPrinter) {
+					graphics.SetBaseTransform(null);
+					graphics.RestoreGrState();
+				}
+			}, this, [img, rect, iconSize * dScale * this.getZoom()]
+		);
+
+
+
+
+
+
+
+		return;
+
+
+
+
+
+
+
+
+		var col = props.col;
+		var row = props.row;
+		var t = this;
+		var ct = this._getCellTextCache(col, row);
+		if (!ct) {
+			return null;
+		}
+
+		var isMerged = ct.flags.isMerged(), range, isWrapped = ct.flags.wrapText;
+
+		if (isMerged) {
+			range = ct.flags.merged;
+			if (col !== range.c1 || row !== range.r1) {
+				return null;
+			}
+		}
+
+		var colL = isMerged ? range.c1 : Math.max(col, col - ct.sideL);
+		var colR = isMerged ? Math.min(range.c2, this.nColsCount - 1) : Math.min(col, col + ct.sideR);
+		var rowT = isMerged ? range.r1 : row;
+		var rowB = isMerged ? Math.min(range.r2, this.nRowsCount - 1) : row;
+		var isTrimmedR = !isMerged && colR !== col + ct.sideR;
+
+
+		var x1 = this._getColLeft(colL) - offsetX;
+		var y1 = this._getRowTop(rowT) - offsetY;
+		var w = this._getColLeft(colR + 1) - offsetX - x1;
+		var h = this._getRowTop(rowB + 1) - offsetY - y1;
+		var x2 = x1 + w - (isTrimmedR ? 0 : gridlineSize);
+		var y2 = y1 + h;
+		var bl = y2 - Asc.round((isMerged ? (ct.metrics.height - ct.metrics.baseline) : this._getRowDescender(rowB)) * this.getZoom());
+		var x1ct = isMerged ? x1 : this._getColLeft(col) - offsetX;
+		var x2ct = isMerged ? x2 : x1ct + this._getColumnWidth(col) - gridlineSize;
+		var textX = this._calcTextHorizPos(x1ct, x2ct, ct.metrics, ct.cellHA);
+		var textY = this._calcTextVertPos(y1, h, bl, ct.metrics, ct.cellVA);
+		var textW = this._calcTextWidth(x1ct, x2ct, ct.metrics, ct.cellHA);
+
+		var widthButtonPx, heightButtonPx;
+		widthButtonPx = heightButtonPx = this._getFilterButtonSize(true);
+
+		if (ct.angle) {
+
+		} else {
+			return {x: textX, y: textY, w: widthButtonPx, h: heightButtonPx};
+		}
+	};
+
 	WorksheetView.prototype._drawRightDownTableCorner = function (table, updatedRange, offsetX, offsetY) {
 		var t = this;
 		var ctx = t.drawingCtx;
