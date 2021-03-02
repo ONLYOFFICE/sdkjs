@@ -2707,7 +2707,7 @@ var editor;
     if (pivotTable && ws.selectionRange.inContains(pivotTable.getReportRanges())) {
       pivotTable.groupPivot(this, ws.selectionRange, opt_rangePr, opt_dateTypes);
     }
-    ;
+  };
     spreadsheet_api.prototype.asc_ungroupPivot = function () {
     var ws = this.wbModel.getActiveWs();
     var activeCell = ws.selectionRange.activeCell;
