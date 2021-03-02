@@ -2183,7 +2183,9 @@
 	function getFullCFIcons() {
 		return fullIconArray;
 	}
-
+	function getCFIconsByType() {
+		return c_arrIcons;
+	}
 	function getFullCFPresets() {
 		return conditionalFormattingPresets;
 	}
@@ -2224,6 +2226,7 @@
 	window['AscCommonExcel'].getDataBarGradientColor = getDataBarGradientColor;
 	window['AscCommonExcel'].getFullCFIcons = getFullCFIcons;
 	window['AscCommonExcel'].getFullCFPresets = getFullCFPresets;
+	window['AscCommonExcel'].getCFIconsByType = getCFIconsByType;
 
 	prot = CConditionalFormattingRule;
 	prot['asc_getDxf'] = prot.asc_getDxf;

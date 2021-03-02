@@ -5074,12 +5074,16 @@ var editor;
 		}
 	};
 
-	spreadsheet_api.prototype.asc_getCFIcons = function () {
+	spreadsheet_api.prototype.asc_getFullCFIcons = function () {
 		return AscCommonExcel.getFullCFIcons();
 	};
 
 	spreadsheet_api.prototype.asc_getCFPresets = function () {
 		return AscCommonExcel.getFullCFPresets();
+	};
+
+	spreadsheet_api.prototype.asc_getCFIconsByType = function () {
+		return AscCommonExcel.getCFIconsByType();
 	};
 
 	spreadsheet_api.prototype._onCheckCFRemoveLock = function (lockElem) {
@@ -5613,13 +5617,13 @@ var editor;
   prot["asc_getRemoveDuplicates"] = prot.asc_getRemoveDuplicates;
   prot["asc_setRemoveDuplicates"] = prot.asc_setRemoveDuplicates;
 
-  prot["asc_getCF"]        = prot.asc_getCF;
-  prot["asc_setCF"]        = prot.asc_setCF;
-  prot["asc_getPreviewCF"] = prot.asc_getPreviewCF;
-  prot["asc_clearCF"]      = prot.asc_clearCF;
-  prot["asc_getCFIcons"]   = prot.asc_getCFIcons;
-  prot["asc_getCFPresets"]   = prot.asc_getCFPresets;
-
+  prot["asc_getCF"]            = prot.asc_getCF;
+  prot["asc_setCF"]            = prot.asc_setCF;
+  prot["asc_getPreviewCF"]     = prot.asc_getPreviewCF;
+  prot["asc_clearCF"]          = prot.asc_clearCF;
+  prot["asc_getCFIconsByType"] = prot.asc_getCFIconsByType;
+  prot["asc_getCFPresets"]     = prot.asc_getCFPresets;
+  prot["asc_getFullCFIcons"]   = prot.asc_getFullCFIcons;
 
   prot["asc_beforeInsertSlicer"] = prot.asc_beforeInsertSlicer;
   prot["asc_insertSlicer"] = prot.asc_insertSlicer;
