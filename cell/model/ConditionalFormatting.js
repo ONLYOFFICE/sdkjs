@@ -2148,6 +2148,10 @@
 		return c_arrIcons;
 	}
 
+	function getFullCFPresets() {
+		return conditionalFormattingPresets;
+	}
+
 	//[AxisColor, BorderColor, Color, Gradient, NegativeBorderColor, NegativeColor]
 	var aDataBarStyles = [[0,6524614,6524614,true,16711680,16711680],[0,6538116,6538116,true,16711680,16711680],[0,16733530,16733530,true,16711680,16711680],[0,16758312,16758312,true,16711680,16711680],[0,35567,35567,true,16711680,16711680],[0,14024827,14024827,true,16711680,16711680],[0,,6524614,false,,16711680],[0,,6538116,false,,16711680],[0,,16733530,false,,16711680],[0,,16758312,false,,16711680],[0,,35567,false,,16711680],[0,,14024827,false,,16711680]];
 	//[[Type, Val, Rgb], [Type, Val, Rgb], ...]
@@ -2183,6 +2187,7 @@
 	window['AscCommonExcel'].getCFIcon = getCFIcon;
 	window['AscCommonExcel'].getDataBarGradientColor = getDataBarGradientColor;
 	window['AscCommonExcel'].getFullCFIcons = getFullCFIcons;
+	window['AscCommonExcel'].getFullCFPresets = getFullCFPresets;
 
 	prot = CConditionalFormattingRule;
 	prot['asc_getDxf'] = prot.asc_getDxf;

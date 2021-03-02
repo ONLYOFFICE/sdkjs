@@ -5078,6 +5078,10 @@ var editor;
 		return AscCommonExcel.getFullCFIcons();
 	};
 
+	spreadsheet_api.prototype.asc_getCFPresets = function () {
+		return AscCommonExcel.getFullCFPresets();
+	};
+
 	spreadsheet_api.prototype._onCheckCFRemoveLock = function (lockElem) {
 		//лок правила - с правилом делать ничего нельзя
 		//лок менеджера - незалоченное правило можно удалять и редактировать. новые правила добавлять нельзя.
@@ -5614,6 +5618,7 @@ var editor;
   prot["asc_getPreviewCF"] = prot.asc_getPreviewCF;
   prot["asc_clearCF"]      = prot.asc_clearCF;
   prot["asc_getCFIcons"]   = prot.asc_getCFIcons;
+  prot["asc_getCFPresets"]   = prot.asc_getCFPresets;
 
 
   prot["asc_beforeInsertSlicer"] = prot.asc_beforeInsertSlicer;
