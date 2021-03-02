@@ -1973,6 +1973,9 @@
 		res.IconId = this.IconId;
 		return res;
 	};
+	CConditionalFormatIconSet.prototype.isEqual = function (val) {
+		return this.IconSet === val.IconSet && this.IconId === val.IconId;
+	};
 	CConditionalFormatIconSet.prototype.Write_ToBinary2 = function (writer) {
 		if (null != this.IconSet) {
 			writer.WriteBool(true);
