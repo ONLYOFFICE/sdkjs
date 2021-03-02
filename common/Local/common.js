@@ -78,6 +78,10 @@
 	{
 		return this.isRestrictionView();
 	};
+	AscCommon.baseEditorsApi.prototype["local_sendEvent"] = function()
+	{
+		return this.sendEvent.apply(this, arguments);
+	};
 })(window);
 
 /////////////////////////////////////////////////////////
