@@ -4015,6 +4015,10 @@
 				if (this._getCellCF(aRules, c, row, col, Asc.ECfType.iconSet) && AscCommon.align_Left === ct.cellHA) {
 					textX += getCFIconSize(font.getSize());
 				}
+				var pivotButtons = this.model.getPivotTableButtons(new Asc.Range(col, row, col, row));
+				if (pivotButtons && pivotButtons[0] && pivotButtons[0].idPivotCollapse && AscCommon.align_Left === ct.cellHA) {
+					textX += this._getFilterButtonSize(true);
+				}
 				if (ct.indent) {
 					if (AscCommon.align_Right === ct.cellHA) {
 						textX -= ct.indent * 3 * this.defaultSpaceWidth;
@@ -15918,15 +15922,19 @@
 		var ctx = props.isOverlay ? this.overlayCtx : this.drawingCtx;
 		var isDataValidation = props.isOverlay;
 
-		var isMobileRetina = false;
+		if (props.idPivotCollapse) {
+			this._drawPivotCollapseButton(offsetX, offsetY, props);
+			return;
+		}
 
+		var isMobileRetina = false;
+		var isPivotCollapsed = false;
 	    //TODO пересмотреть масштабирование!!!
 		var isApplyAutoFilter = props.isSetFilter;
 		var isApplySortState = props.isSortState;
 		var row = props.row;
         var col = props.col;
 
-		var isPivotCollapsed = props.idPivotCollapse;
         var widthButtonPx, heightButtonPx;
 		widthButtonPx = heightButtonPx = this._getFilterButtonSize(isPivotCollapsed);
 
@@ -16136,6 +16144,78 @@
         scaleIndex *= AscBrowser.retinaPixelRatio;
 
 		_drawButton(x1 + diffX, y1 + diffY);
+	};
+
+
+	WorksheetView.prototype._drawPivotCollapseButton = function (offsetX, offsetY, props) {
+		var col = props.col;
+		var row = props.row;
+		var t = this;
+		var ct = this._getCellTextCache(col, row);
+		if (!ct) {
+			return null;
+		}
+		var isMerged = ct.flags.isMerged(), range, isWrapped = ct.flags.wrapText;
+		var ctx = props.isOverlay ? this.overlayCtx : this.drawingCtx;
+
+		if (isMerged) {
+			range = ct.flags.merged;
+			if (col !== range.c1 || row !== range.r1) {
+				return null;
+			}
+		}
+
+		var colL = isMerged ? range.c1 : Math.max(col, col - ct.sideL);
+		var colR = isMerged ? Math.min(range.c2, this.nColsCount - 1) : Math.min(col, col + ct.sideR);
+		var rowT = isMerged ? range.r1 : row;
+		var rowB = isMerged ? Math.min(range.r2, this.nRowsCount - 1) : row;
+		var isTrimmedR = !isMerged && colR !== col + ct.sideR;
+
+
+		var x1 = this._getColLeft(colL) - offsetX;
+		var y1 = this._getRowTop(rowT) - offsetY;
+		var w = this._getColLeft(colR + 1) - offsetX - x1;
+		var h = this._getRowTop(rowB + 1) - offsetY - y1;
+		var x2 = x1 + w - (isTrimmedR ? 0 : gridlineSize);
+		var y2 = y1 + h;
+		var bl = y2 - Asc.round((isMerged ? (ct.metrics.height - ct.metrics.baseline) : this._getRowDescender(rowB)) * this.getZoom());
+		var x1ct = isMerged ? x1 : this._getColLeft(col) - offsetX;
+		var x2ct = isMerged ? x2 : x1ct + this._getColumnWidth(col) - gridlineSize;
+		var textX = this._calcTextHorizPos(x1ct, x2ct, ct.metrics, ct.cellHA);
+		var textY = this._calcTextVertPos(y1, h, bl, ct.metrics, ct.cellVA);
+		var textW = this._calcTextWidth(x1ct, x2ct, ct.metrics, ct.cellHA);
+
+		var widthButtonPx, heightButtonPx;
+		widthButtonPx = heightButtonPx = this._getFilterButtonSize(true);
+
+		var _drawButtonFrame = function (startX, startY, width, height) {
+			//TODO нужен цвет для заливки
+			ctx.setFillStyle(new CColor(227, 228, 228));
+			ctx.setLineWidth(1);
+			ctx.setStrokeStyle(t.settings.cells.defaultState.border);
+
+			var _diff = 1;
+			ctx.fillRect(startX + _diff, startY + _diff, width - _diff, height - _diff);
+			ctx.beginPath();
+			ctx.lineHor(startX + _diff, startY, startX + width);
+			ctx.lineHor(startX + _diff, startY + height, startX + width);
+			ctx.lineVer(startX, startY + _diff, startY + height);
+			ctx.lineVer(startX + width, startY + _diff, startY + height);
+
+			ctx.stroke();
+		};
+
+		if (ct.angle) {
+
+		} else {
+			ctx.AddClipRect(x1, y1, w, h);
+
+			_drawButtonFrame(textX, textY, widthButtonPx, heightButtonPx);
+
+			ctx.RemoveClipRect();
+		}
+
+		return null;
 	};
 
 	WorksheetView.prototype._drawRightDownTableCorner = function (table, updatedRange, offsetX, offsetY) {
