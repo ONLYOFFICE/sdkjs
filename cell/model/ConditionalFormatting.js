@@ -1995,6 +1995,24 @@
 			this.IconId = reader.GetLong();
 		}
 	};
+	CConditionalFormatIconSet.prototype.asc_getIconSet = function () {
+		return this.IconSet;
+	};
+	CConditionalFormatIconSet.prototype.asc_getIconId = function () {
+		return this.IconId;
+	};
+	CConditionalFormatIconSet.prototype.asc_getIndex = function () {
+		this.IconId = val;
+	};
+	CConditionalFormatIconSet.prototype.asc_setIconSet = function (val) {
+		this.IconSet = val;
+	};
+	CConditionalFormatIconSet.prototype.asc_setIconId = function (val) {
+		this.IconId = val;
+	};
+	CConditionalFormatIconSet.prototype.asc_setIndex = function (val) {
+		this.IconId = val;
+	};
 
 	function CGradient(c1, c2) {
 		this.MaxColorIndex = 512;
@@ -2301,5 +2319,10 @@
 	prot['asc_getText'] = prot.asc_getText;
 	prot['asc_setText'] = prot.asc_setText;
 
+	prot = CConditionalFormatIconSet;
+	prot['asc_getIconSet'] = prot.asc_getIconSet;
+	prot['asc_getIconId'] = prot.asc_getIconId;
+	prot['asc_setIconSet'] = prot.asc_setIconSet;
+	prot['asc_setIconId'] = prot.asc_setIconId;
 
 })(window);
