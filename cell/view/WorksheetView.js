@@ -16148,6 +16148,36 @@
 
 
 	WorksheetView.prototype._drawPivotCollapseButton = function (offsetX, offsetY, props) {
+		var ctx = props.isOverlay ? this.overlayCtx : this.drawingCtx;
+		var buttonProps = this._getPropsCollapseButton(offsetX, offsetY, props);
+
+		if (buttonProps) {
+			//ctx.AddClipRect(x1, y1, w, h);
+			var width = buttonProps.w;
+			var height = buttonProps.h;
+			var startX = buttonProps.x;
+			var startY = buttonProps.y;
+
+			//TODO нужен цвет для заливки
+			ctx.setFillStyle(new CColor(227, 228, 228));
+			ctx.setLineWidth(1);
+			ctx.setStrokeStyle(this.settings.cells.defaultState.border);
+
+			var _diff = 1;
+			ctx.fillRect(startX + _diff, startY + _diff, width - _diff, height - _diff);
+			ctx.beginPath();
+			ctx.lineHor(startX + _diff, startY, startX + width);
+			ctx.lineHor(startX + _diff, startY + height, startX + width);
+			ctx.lineVer(startX, startY + _diff, startY + height);
+			ctx.lineVer(startX + width, startY + _diff, startY + height);
+
+			ctx.stroke();
+
+			//ctx.RemoveClipRect();
+		}
+	};
+
+	WorksheetView.prototype._getPropsCollapseButton = function (offsetX, offsetY, props) {
 		var col = props.col;
 		var row = props.row;
 		var t = this;
@@ -16155,8 +16185,8 @@
 		if (!ct) {
 			return null;
 		}
+
 		var isMerged = ct.flags.isMerged(), range, isWrapped = ct.flags.wrapText;
-		var ctx = props.isOverlay ? this.overlayCtx : this.drawingCtx;
 
 		if (isMerged) {
 			range = ct.flags.merged;
@@ -16188,34 +16218,11 @@
 		var widthButtonPx, heightButtonPx;
 		widthButtonPx = heightButtonPx = this._getFilterButtonSize(true);
 
-		var _drawButtonFrame = function (startX, startY, width, height) {
-			//TODO нужен цвет для заливки
-			ctx.setFillStyle(new CColor(227, 228, 228));
-			ctx.setLineWidth(1);
-			ctx.setStrokeStyle(t.settings.cells.defaultState.border);
-
-			var _diff = 1;
-			ctx.fillRect(startX + _diff, startY + _diff, width - _diff, height - _diff);
-			ctx.beginPath();
-			ctx.lineHor(startX + _diff, startY, startX + width);
-			ctx.lineHor(startX + _diff, startY + height, startX + width);
-			ctx.lineVer(startX, startY + _diff, startY + height);
-			ctx.lineVer(startX + width, startY + _diff, startY + height);
-
-			ctx.stroke();
-		};
-
 		if (ct.angle) {
 
 		} else {
-			ctx.AddClipRect(x1, y1, w, h);
-
-			_drawButtonFrame(textX, textY, widthButtonPx, heightButtonPx);
-
-			ctx.RemoveClipRect();
+			return {x: textX, y: textY, w: widthButtonPx, h: heightButtonPx};
 		}
-
-		return null;
 	};
 
 	WorksheetView.prototype._drawRightDownTableCorner = function (table, updatedRange, offsetX, offsetY) {
