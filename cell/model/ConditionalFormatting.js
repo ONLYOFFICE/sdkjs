@@ -1675,6 +1675,12 @@
 		}
 		return res;
 	};
+	CFormulaCF.prototype.asc_getText = function () {
+		return this.Text;
+	};
+	CFormulaCF.prototype.asc_setText = function (val) {
+		this.Text = val;
+	};
 
 	function CIconSet() {
 		this.IconSet = EIconSetType.Traffic3Lights1;
@@ -2290,6 +2296,10 @@
 	prot['asc_setGte'] = prot.asc_setGte;
 	prot['asc_setType'] = prot.asc_setType;
 	prot['asc_setVal'] = prot.asc_setVal;
+
+	prot = CFormulaCF;
+	prot['asc_getText'] = prot.asc_getText;
+	prot['asc_setText'] = prot.asc_setText;
 
 
 })(window);
