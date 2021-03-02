@@ -16228,53 +16228,17 @@
 	WorksheetView.prototype._getPropsCollapseButton = function (offsetX, offsetY, props) {
 		var drawingCtx = props.isOverlay ? this.overlayCtx : this.drawingCtx;
 		var row = props.row;
-		var colStart = props.col;
-		var colEnd = props.col;
 		var col = props.col;
-
-
-
-
 		var height = this._getRowHeight(row);
-		if (0 === height && mergedCells) {
-			return;
-		}
-
-		var drawCells = {}, i;
 		var top = this._getRowTop(row);
 		var ctx = drawingCtx || this.drawingCtx;
 
 		var width = this._getColumnWidth(col);
-		if (0 === width && mergedCells) {
-			return;
-		}
-
 		// ToDo подумать, может стоит не брать ячейку из модели (а брать из кеш-а)
 		var c = this._getVisibleCell(col, row);
 		var mwidth = 0, mheight = 0;
 
-
 		var align = c.getAlign();
-		/*if (mergedCells) {
-		 mc = this.model.getMergedByCell(row, col);
-		 if (mc) {
-		 mergedCells[AscCommonExcel.getCellIndex(mc.r1, mc.c1)] = mc;
-		 col = mc.c2;
-		 return;
-		 }
-		 }
-
-		 if (mc) {
-		 if (col !== mc.c1 || row !== mc.r1) {
-		 return;
-		 }
-
-		 mwidth = this._getColLeft(mc.c2 + 1) - this._getColLeft(mc.c1 + 1);
-		 mheight = this._getRowTop(mc.r2 + 1) - this._getRowTop(mc.r1 + 1);
-		 }*/
-
-
-		//var showValue = this._drawCellCF(ctx, aRules, c, row, col, top, width + mwidth, height + mheight, offsetX, offsetY);
 
 		width = width + mwidth;
 		height = height + mheight;
@@ -16282,6 +16246,16 @@
 		var x = this._getColLeft(col) - offsetX + 1;
 		width -= 3; // indent
 		top += 1 - offsetY;
+
+		var aRules = this.model.aConditionalFormattingRules.sort(function (v1, v2) {
+			return v2.priority - v1.priority;
+		});
+
+		var fontSize = c.getFont().getSize();
+		var cellHA = align.getAlignHorizontal();
+		if (this._getCellCF(aRules, c, row, col, Asc.ECfType.iconSet) && AscCommon.align_Left === cellHA) {
+			x += getCFIconSize(fontSize);
+		}
 
 		var graphics = (ctx && ctx.DocumentRenderer) || this.handlers.trigger('getMainGraphics');
 		var cellValue = c.getNumberValue();
@@ -16293,17 +16267,12 @@
 			return;
 		}
 
-		var fontSize = 10;
-
 		var iconSize = AscCommon.AscBrowser.convertToRetinaValue(getCFIconSize(fontSize), true);
 		var rect = new AscCommon.asc_CRect(x, top, width, height);
 		var bl = rect._y + rect._height - Asc.round(this._getRowDescender(row) * this.getZoom());
 		var tm = new Asc.TextMetrics(iconSize, iconSize, 0, iconSize - 2 * fontSize / AscCommonExcel.cDefIconFont, 0, 0, 0);
 		var cellHA = align.getAlignHorizontal();
-		/*if (oRuleElement.ShowValue || (AscCommon.align_Left !== cellHA && AscCommon.align_Right !== cellHA
-		 && AscCommon.align_Center !== cellHA)) {
-		 cellHA = AscCommon.align_Left;
-		 }*/
+
 		rect._x = this._calcTextHorizPos(rect._x, rect._x + rect._width, tm, cellHA);
 		rect._y = this._calcTextVertPos(rect._y, rect._height, bl, tm, align.getAlignVertical());
 		var dScale = asc_getcvt(0, 3, this._getPPIX());
@@ -16342,66 +16311,6 @@
 			}, this, [img, rect, iconSize * dScale * this.getZoom()]
 		);
 
-
-
-
-
-
-
-		return;
-
-
-
-
-
-
-
-
-		var col = props.col;
-		var row = props.row;
-		var t = this;
-		var ct = this._getCellTextCache(col, row);
-		if (!ct) {
-			return null;
-		}
-
-		var isMerged = ct.flags.isMerged(), range, isWrapped = ct.flags.wrapText;
-
-		if (isMerged) {
-			range = ct.flags.merged;
-			if (col !== range.c1 || row !== range.r1) {
-				return null;
-			}
-		}
-
-		var colL = isMerged ? range.c1 : Math.max(col, col - ct.sideL);
-		var colR = isMerged ? Math.min(range.c2, this.nColsCount - 1) : Math.min(col, col + ct.sideR);
-		var rowT = isMerged ? range.r1 : row;
-		var rowB = isMerged ? Math.min(range.r2, this.nRowsCount - 1) : row;
-		var isTrimmedR = !isMerged && colR !== col + ct.sideR;
-
-
-		var x1 = this._getColLeft(colL) - offsetX;
-		var y1 = this._getRowTop(rowT) - offsetY;
-		var w = this._getColLeft(colR + 1) - offsetX - x1;
-		var h = this._getRowTop(rowB + 1) - offsetY - y1;
-		var x2 = x1 + w - (isTrimmedR ? 0 : gridlineSize);
-		var y2 = y1 + h;
-		var bl = y2 - Asc.round((isMerged ? (ct.metrics.height - ct.metrics.baseline) : this._getRowDescender(rowB)) * this.getZoom());
-		var x1ct = isMerged ? x1 : this._getColLeft(col) - offsetX;
-		var x2ct = isMerged ? x2 : x1ct + this._getColumnWidth(col) - gridlineSize;
-		var textX = this._calcTextHorizPos(x1ct, x2ct, ct.metrics, ct.cellHA);
-		var textY = this._calcTextVertPos(y1, h, bl, ct.metrics, ct.cellVA);
-		var textW = this._calcTextWidth(x1ct, x2ct, ct.metrics, ct.cellHA);
-
-		var widthButtonPx, heightButtonPx;
-		widthButtonPx = heightButtonPx = this._getFilterButtonSize(true);
-
-		if (ct.angle) {
-
-		} else {
-			return {x: textX, y: textY, w: widthButtonPx, h: heightButtonPx};
-		}
 	};
 
 	WorksheetView.prototype._drawRightDownTableCorner = function (table, updatedRange, offsetX, offsetY) {
