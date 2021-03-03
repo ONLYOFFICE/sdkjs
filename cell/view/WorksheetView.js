@@ -4024,7 +4024,9 @@
 				}
 				var pivotButtons = this.model.getPivotTableButtons(new Asc.Range(col, row, col, row));
 				if (pivotButtons && pivotButtons[0] && pivotButtons[0].idPivotCollapse && AscCommon.align_Left === ct.cellHA) {
-					textX += this._getFilterButtonSize(true);
+					//TODO 3?
+					var _diff = 3;
+					textX += this._getFilterButtonSize(true)+ _diff;
 				}
 				if (ct.indent) {
 					if (AscCommon.align_Right === ct.cellHA) {
@@ -16159,11 +16161,12 @@
 		var buttonProps = this._getPropsCollapseButton(offsetX, offsetY, props);
 
 		if (buttonProps) {
-			//ctx.AddClipRect(x1, y1, w, h);
 			var width = buttonProps.w;
 			var height = buttonProps.h;
 			var startX = buttonProps.x;
 			var startY = buttonProps.y;
+
+			ctx.AddClipRect(startX, startY, width, height);
 
 			//TODO нужен цвет для заливки
 			ctx.setFillStyle(new CColor(227, 228, 228));
@@ -16180,7 +16183,7 @@
 
 			ctx.stroke();
 
-			//ctx.RemoveClipRect();
+			ctx.RemoveClipRect();
 		}
 	};
 
@@ -16282,12 +16285,19 @@
 			return;
 		}
 
+		var widthButtonPx, heightButtonPx;
+		widthButtonPx = heightButtonPx = this._getFilterButtonSize(true);
+
 		var iconSize = AscCommon.AscBrowser.convertToRetinaValue(this._getFilterButtonSize(true), true);
 		var rect = new AscCommon.asc_CRect(x, top, width, height);
 		var bl = rect._y + rect._height - Asc.round(this._getRowDescender(row) * this.getZoom());
 		var tm = new Asc.TextMetrics(iconSize, iconSize, 0, iconSize - 2 * fontSize / AscCommonExcel.cDefIconFont, 0, 0, 0);
 
-		rect._x = this._calcTextHorizPos(rect._x, rect._x + rect._width, tm, cellHA);
+		//TODO 1?
+		rect._x = this._calcTextHorizPos(rect._x, rect._x + rect._width, tm, cellHA) + 1;
+		if (AscCommon.align_Left !== cellHA) {
+			rect._x -= widthButtonPx;
+		}
 		rect._y = this._calcTextVertPos(rect._y, rect._height, bl, tm, align.getAlignVertical());
 		var dScale = asc_getcvt(0, 3, this._getPPIX());
 		rect._x *= dScale;
