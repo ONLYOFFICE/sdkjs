@@ -933,6 +933,12 @@
 			val = val.split(",");
 			this.ranges = [];
 			val.forEach(function (item) {
+				if (-1 !== item.indexOf("!")) {
+					var is3DRef = AscCommon.parserHelp.parse3DRef(item);
+					if (is3DRef) {
+						item = is3DRef.range;
+					}
+				}
 				t.ranges.push(AscCommonExcel.g_oRangeCache.getAscRange(item));
 			});
 		}
@@ -1911,7 +1917,7 @@
 	CConditionalFormatValueObject.prototype.Write_ToBinary2 = function (writer) {
 		if (null != this.Gte) {
 			writer.WriteBool(true);
-			writer.WriteBool(this.IconSet);
+			writer.WriteBool(this.Gte);
 		} else {
 			writer.WriteBool(false);
 		}
