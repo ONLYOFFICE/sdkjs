@@ -1701,11 +1701,15 @@
 		res.Percent = this.Percent;
 		res.Reverse = this.Reverse;
 		res.ShowValue = this.ShowValue;
-		for (i = 0; i < this.aCFVOs.length; ++i) {
-			res.aCFVOs.push(this.aCFVOs[i].clone());
+		if (this.aCFVOs) {
+			for (i = 0; i < this.aCFVOs.length; ++i) {
+				res.aCFVOs.push(this.aCFVOs[i].clone());
+			}
 		}
-		for (i = 0; i < this.aIconSets.length; ++i) {
-			res.aIconSets.push(this.aIconSets[i].clone());
+		if (this.aIconSets) {
+			for (i = 0; i < this.aIconSets.length; ++i) {
+				res.aIconSets.push(this.aIconSets[i].clone());
+			}
 		}
 		return res;
 	};
@@ -1882,7 +1886,7 @@
 		this.aCFVOs = val;
 	};
 	CIconSet.prototype.asc_setIconSets = function (val) {
-		this.aIconSets = val;
+		this.aIconSets = val == null ? [] : val;
 	};
 
 	function CConditionalFormatValueObject() {
@@ -2162,7 +2166,7 @@
 	}
 
 	function getCFIcon(oRuleElement, index) {
-		var oIconSet = oRuleElement.aIconSets[index];
+		var oIconSet = oRuleElement.aIconSets && oRuleElement.aIconSets[index];
 		var iconSetType = (oIconSet && null !== oIconSet.IconSet) ? oIconSet.IconSet : oRuleElement.IconSet;
 		if (EIconSetType.NoIcons === iconSetType) {
 			return null;
