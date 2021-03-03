@@ -2230,8 +2230,7 @@
 		[[4, '0', null], [4, '20', null], [4, '40', null], [4, '60', null], [4, '80', '80']],
 		[[4, '0', null], [4, '33', null], [4, '67', '67']],
 		[[4, '0', null], [4, '33', null], [4, '67', '67']],
-		[[4, '0', null], [4, '20', null], [4, '40', null], [4, '60', null], [4, '80', '80']],
-		[[4, '0', null], [4, '25', null], [4, '50', null], [4, '75', '75']]];
+		[[4, '0', null], [4, '20', null], [4, '40', null], [4, '60', null], [4, '80', '80']]];
 
 	var conditionalFormattingPresets = {};
 	conditionalFormattingPresets[Asc.c_oAscCFRuleTypeSettings.dataBar] = aDataBarStyles;
