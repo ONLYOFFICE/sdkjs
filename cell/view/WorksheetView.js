@@ -143,6 +143,7 @@
     var gridlineSize = 1;
 
     var filterSizeButton = 17;
+    var collapsePivotSizeButton = 10;
 
     function getMergeType(merged) {
 		var res = c_oAscMergeType.none;
@@ -169,6 +170,13 @@
 	}
 	function getCFIconSize(fontSize) {
 		return AscCommonExcel.cDefIconSize * fontSize / AscCommonExcel.cDefIconFont;
+	}
+
+	var pivotCollapseButtonClose = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOSIgaGVpZ2h0PSI5IiB2aWV3Qm94PSIwIDAgOSA5IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cmVjdCB4PSIwLjUiIHk9IjAuNSIgd2lkdGg9IjgiIGhlaWdodD0iOCIgZmlsbD0id2hpdGUiIHN0cm9rZT0iI0NBQ0FDQSIvPgo8cGF0aCBkPSJNNSA0VjJINFY0SDJWNUg0VjdINVY1SDdWNEg1WiIgZmlsbD0iIzc4Nzg3OCIvPgo8L3N2Zz4K";
+	var pivotCollapseButtonOpen = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOSIgaGVpZ2h0PSI5IiB2aWV3Qm94PSIwIDAgOSA5IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cmVjdCB4PSIwLjUiIHk9IjAuNSIgd2lkdGg9IjgiIGhlaWdodD0iOCIgZmlsbD0id2hpdGUiIHN0cm9rZT0iI0NBQ0FDQSIvPgo8cmVjdCB4PSIyIiB5PSI0IiB3aWR0aD0iNSIgaGVpZ2h0PSIxIiBmaWxsPSIjNzg3ODc4Ii8+Cjwvc3ZnPgo=";
+
+	function getPivotButtonsForLoad() {
+		return [pivotCollapseButtonClose, pivotCollapseButtonOpen];
 	}
 
 	function CacheColumn() {
@@ -4012,7 +4020,13 @@
 			} else {
 				ctx.AddClipRect(x1, y1, w, h);
 				if (this._getCellCF(aRules, c, row, col, Asc.ECfType.iconSet) && AscCommon.align_Left === ct.cellHA) {
-					textX += getCFIconSize(font.getSize());
+					textX += AscCommon.AscBrowser.convertToRetinaValue(getCFIconSize(font.getSize()) * this.getZoom(), true);
+				}
+				var pivotButtons = this.model.getPivotTableButtons(new Asc.Range(col, row, col, row));
+				if (pivotButtons && pivotButtons[0] && pivotButtons[0].idPivotCollapse && AscCommon.align_Left === ct.cellHA) {
+					//TODO 4?
+					var _diff = 4;
+					textX += (this._getFilterButtonSize(true)+ _diff) * this.getZoom();
 				}
 				if (ct.indent) {
 					if (AscCommon.align_Right === ct.cellHA) {
@@ -7988,7 +8002,7 @@
 						if (isDataValidation) {
 							_isDataValidation = this._hitCursorFilterButton(_offsetX, _offsetY, col, row, true);
 						} else if (pivotButton) {
-							_isPivot = this._hitCursorFilterButton(_offsetX, _offsetY, c.col, r.row);
+							_isPivot = this._hitCursorFilterButton(_offsetX, _offsetY, c.col, r.row, null, pivotButton.idPivotCollapse);
 						} else if (isTableTotal) {
 							_isTableTotal = this._hitCursorFilterButton(_offsetX, _offsetY, col, row, true);
 						}
@@ -15755,8 +15769,8 @@
         return arrResult;
     };
 
-	WorksheetView.prototype._getFilterButtonSize = function () {
-	    return AscCommon.AscBrowser.convertToRetinaValue(filterSizeButton, true);
+	WorksheetView.prototype._getFilterButtonSize = function (collapsePivot) {
+	    return AscCommon.AscBrowser.convertToRetinaValue(!collapsePivot ? filterSizeButton : collapsePivotSizeButton, true);
 	};
 
 	WorksheetView.prototype.getButtonSize = function (row, col, isDataValidation) {
@@ -15917,8 +15931,13 @@
 		var ctx = props.isOverlay ? this.overlayCtx : this.drawingCtx;
 		var isDataValidation = props.isOverlay;
 
-		var isMobileRetina = false;
+		if (props.idPivotCollapse) {
+			this._drawPivotCollapseButton(offsetX, offsetY, props);
+			return;
+		}
 
+		var isMobileRetina = false;
+		var isPivotCollapsed = false;
 	    //TODO пересмотреть масштабирование!!!
 		var isApplyAutoFilter = props.isSetFilter;
 		var isApplySortState = props.isSortState;
@@ -15926,7 +15945,7 @@
         var col = props.col;
 
         var widthButtonPx, heightButtonPx;
-		widthButtonPx = heightButtonPx = this._getFilterButtonSize();
+		widthButtonPx = heightButtonPx = this._getFilterButtonSize(isPivotCollapsed);
 
 		var widthBorder = 1;
 		var scaleIndex = 1;
@@ -15957,11 +15976,24 @@
 		var y1 = t._getRowTop(row + 1) - heightWithBorders - 0.5 - offsetY - 1;
 
 		var _drawButtonFrame = function (startX, startY, width, height) {
-			ctx.setFillStyle(t.settings.cells.defaultState.background);
+			//TODO нужен цвет для заливки
+			ctx.setFillStyle(isPivotCollapsed ? new CColor(227, 228, 228) : t.settings.cells.defaultState.background);
 			ctx.setLineWidth(1);
 			ctx.setStrokeStyle(t.settings.cells.defaultState.border);
-			ctx.fillRect(startX, startY, width, height);
-			ctx.strokeRect(startX, startY, width, height);
+
+			var _diff = isPivotCollapsed ? 1 : 0;
+			ctx.fillRect(startX + _diff, startY + _diff, width - _diff, height - _diff);
+			if (isPivotCollapsed) {
+				ctx.beginPath();
+				ctx.lineHor(startX + _diff, startY, startX + width);
+				ctx.lineHor(startX + _diff, startY + height, startX + width);
+				ctx.lineVer(startX, startY + _diff, startY + height);
+				ctx.lineVer(startX + width, startY + _diff, startY + height);
+
+				ctx.stroke();
+			} else {
+				ctx.strokeRect(startX, startY, width, height);
+			}
 		};
 
 		var _drawSortArrow = function (startX, startY, isDescending, heightArrow) {
@@ -16077,6 +16109,8 @@
 
 				centerY = upLeftYButton + heigthObj + marginTop;
 				_drawFilterMark(centerX + 1, centerY, heigthObj);
+			} else if (isPivotCollapsed) {
+
 			} else {
 				_drawFilterDreieck(centerX, centerY, 4, 1);
 			}
@@ -16119,6 +16153,123 @@
         scaleIndex *= AscBrowser.retinaPixelRatio;
 
 		_drawButton(x1 + diffX, y1 + diffY);
+	};
+
+
+	WorksheetView.prototype._drawPivotCollapseButton = function (offsetX, offsetY, props) {
+		var ctx = props.isOverlay ? this.overlayCtx : this.drawingCtx;
+		var buttonProps = this._getPropsCollapseButton(offsetX, offsetY, props);
+
+		if (buttonProps) {
+			var img = props.idPivotCollapse.sd ? pivotCollapseButtonOpen : pivotCollapseButtonClose;
+			if (!img) {
+				return;
+			}
+
+			var width = buttonProps.w;
+			var height = buttonProps.h;
+			var startX = buttonProps.x;
+			var startY = buttonProps.y;
+			var iconSize = buttonProps.size;
+
+			var rect = new AscCommon.asc_CRect(startX, startY, width, height);
+			var graphics = (ctx && ctx.DocumentRenderer) || this.handlers.trigger('getMainGraphics');
+			var dScale = asc_getcvt(0, 3, this._getPPIX());
+
+			rect._x *= dScale;
+			rect._y *= dScale;
+			rect._width *= dScale;
+			rect._height *= dScale;
+
+			AscFormat.ExecuteNoHistory(
+				function (img, rect, imgSize) {
+					var geometry = new AscFormat.CreateGeometry("rect");
+					geometry.Recalculate(imgSize, imgSize, true);
+
+					var oUniFill = new AscFormat.builder_CreateBlipFill(img, "stretch");
+
+					if (ctx instanceof AscCommonExcel.CPdfPrinter) {
+						graphics.SaveGrState();
+						graphics.SetBaseTransform(ctx.Transform || new AscCommon.CMatrix());
+					}
+
+					graphics.save();
+					var oMatrix = new AscCommon.CMatrix();
+					oMatrix.tx = rect._x;
+					oMatrix.ty = rect._y;
+					graphics.transform3(oMatrix);
+					var shapeDrawer = new AscCommon.CShapeDrawer();
+					shapeDrawer.Graphics = graphics;
+
+					shapeDrawer.fromShape2(new AscFormat.CColorObj(null, oUniFill, geometry), graphics, geometry);
+					shapeDrawer.draw(geometry);
+					graphics.restore();
+
+					if (ctx instanceof AscCommonExcel.CPdfPrinter) {
+						graphics.SetBaseTransform(null);
+						graphics.RestoreGrState();
+					}
+				}, this, [img, rect, iconSize * dScale * this.getZoom()]
+			);
+		}
+	};
+
+	WorksheetView.prototype._getPropsCollapseButton = function (offsetX, offsetY, props) {
+		var row = props.row;
+		var col = props.col;
+		var ct = this._getCellTextCache(col, row);
+		if (!ct) {
+			return null;
+		}
+		var c = this._getVisibleCell(col, row);
+		var isMerged = ct.flags.isMerged(), range, isWrapped = ct.flags.wrapText;
+
+		var colL = isMerged ? range.c1 : Math.max(col, col - ct.sideL);
+		var colR = isMerged ? Math.min(range.c2, this.nColsCount - 1) : Math.min(col, col + ct.sideR);
+		var rowT = isMerged ? range.r1 : row;
+		var rowB = isMerged ? Math.min(range.r2, this.nRowsCount - 1) : row;
+		var isTrimmedR = !isMerged && colR !== col + ct.sideR;
+
+		var x1 = this._getColLeft(colL) - offsetX;
+		var y1 = this._getRowTop(rowT) - offsetY;
+		var w = this._getColLeft(colR + 1) - offsetX - x1;
+		var h = this._getRowTop(rowB + 1) - offsetY - y1;
+		var x2 = x1 + w - (isTrimmedR ? 0 : gridlineSize);
+		var y2 = y1 + h;
+		var bl = y2 - Asc.round((isMerged ? (ct.metrics.height - ct.metrics.baseline) : this._getRowDescender(rowB)) * this.getZoom());
+		var x1ct = isMerged ? x1 : this._getColLeft(col) - offsetX;
+		var x2ct = isMerged ? x2 : x1ct + this._getColumnWidth(col) - gridlineSize;
+		var textX = this._calcTextHorizPos(x1ct, x2ct, ct.metrics, /*ct.cellHA*/AscCommon.align_Left);
+		var textY = this._calcTextVertPos(y1, h, bl, ct.metrics, ct.cellVA);
+		//var textW = this._calcTextWidth(x1ct, x2ct, ct.metrics, ct.cellHA);
+
+		//TODO пока решили не учитывать позицию текста. кнопка всегда прижата к левому краю. учитывается только левый индент
+
+		var fontSize = c.getFont().getSize();
+		var aRules = this.model.aConditionalFormattingRules.sort(function (v1, v2) {
+			return v2.priority - v1.priority;
+		});
+		var align = c.getAlign();
+		var cellHA = align.getAlignHorizontal();
+		if (this._getCellCF(aRules, c, row, col, Asc.ECfType.iconSet) /*&& AscCommon.align_Left === cellHA*/) {
+			textX += AscCommon.AscBrowser.convertToRetinaValue(getCFIconSize(fontSize) * this.getZoom(), true);
+		}
+		var indent = align.getIndent();
+		if (indent) {
+			/*if (AscCommon.align_Right === cellHA) {
+			 x -= indent * 3 * this.defaultSpaceWidth;
+			 } else*/ if (AscCommon.align_Left === cellHA) {
+				textX += indent * 3 * this.defaultSpaceWidth;
+			}
+		}
+
+		var iconSize = this._getFilterButtonSize(true);
+
+		//TODO 2?
+		textX += 2 * this.getZoom();
+		textY += (ct.metrics.height / 2 - iconSize / 2) * this.getZoom();
+
+		return {size: iconSize, x: textX, y: textY, w: iconSize, h: iconSize};
 	};
 
 	WorksheetView.prototype._drawRightDownTableCorner = function (table, updatedRange, offsetX, offsetY) {
@@ -16225,7 +16376,7 @@
 		return result;
 	};
 
-	WorksheetView.prototype._hitCursorFilterButton = function (x, y, col, row, isDataValidation) {
+	WorksheetView.prototype._hitCursorFilterButton = function (x, y, col, row, isDataValidation, pivotCollapse) {
 		var buttonSize = this.getButtonSize(row, col, isDataValidation);
 		var width = buttonSize.w, height = buttonSize.h;
 
@@ -16237,6 +16388,15 @@
 		if (isDataValidation && col !== AscCommon.gc_nMaxCol0) {
 			x1 = left + 0.5;
 			x2 = left + width + 0.5;
+		} else if (pivotCollapse) {
+			var zoom = this.getZoom();
+			var buttonProps = this._getPropsCollapseButton(0, 0, {row: row, col: col});
+			if (buttonProps) {
+				x1 = buttonProps.x;
+				x2 = buttonProps.x + buttonProps.w * zoom;
+				y1 = buttonProps.y;
+				y2 = buttonProps.y + buttonProps.h * zoom;
+			}
 		} else {
 			x1 = left - width - 0.5;
 			x2 = left - 0.5;
@@ -21144,9 +21304,12 @@
 		}
 	};
 
+
 	//------------------------------------------------------------export---------------------------------------------------
     window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 	window["AscCommonExcel"].CellFlags = CellFlags;
     window["AscCommonExcel"].WorksheetView = WorksheetView;
+
+	window['AscCommonExcel'].getPivotButtonsForLoad = getPivotButtonsForLoad;
 
 })(window);
