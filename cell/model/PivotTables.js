@@ -5867,13 +5867,12 @@ CT_pivotTableDefinition.prototype.getLayoutByCell = function(row, col) {
 		|| this.getLayoutByCellHeaderRow(row, col, rowFieldsOffset) || this.getLayoutByCellData(row, col, rowFieldsOffset);
 };
 CT_pivotTableDefinition.prototype.getLayoutsForGroup = function(selection) {
-
 	var res = new PivotLayoutGroup(), i, layout, activeCell = selection.activeCell, cellLayout;
 	layout = this.getLayoutByCell(activeCell.row, activeCell.col);
 	cellLayout = layout && layout.getGroupCellLayout();
 	if (cellLayout && st_VALUES !== cellLayout.fld) {
-		res.fld = cellLayout.fld;
 		if (Asc.PivotLayoutType.rowField === layout.type) {
+			res.fld = cellLayout.fld;
 			selection.ranges.forEach(function(range) {
 				for (i = range.r1; i <= range.r2; ++i) {
 					layout = this.getLayoutByCell(i, activeCell.col);
@@ -5884,6 +5883,7 @@ CT_pivotTableDefinition.prototype.getLayoutsForGroup = function(selection) {
 				}
 			}, this);
 		} else if (Asc.PivotLayoutType.colField === layout.type) {
+			res.fld = cellLayout.fld;
 			selection.ranges.forEach(function(range) {
 				for (i = range.c1; i <= range.c2; ++i) {
 					layout = this.getLayoutByCell(activeCell.row, i);
@@ -6088,105 +6088,99 @@ CT_pivotTableDefinition.prototype.getGroupRangePr = function (fld) {
 CT_pivotTableDefinition.prototype.createGroupRangePr = function (fld) {
 	return this.cacheDefinition.createGroupRangePr(fld);
 };
-CT_pivotTableDefinition.prototype.groupPivot = function (api, selectionRange, opt_rangePr, opt_dateTypes) {
+CT_pivotTableDefinition.prototype.groupPivot = function (api, layout, opt_rangePr, opt_dateTypes) {
 	var sheetId = this.worksheet.getId();
 	var pivotTable = this;
-	var layout = pivotTable.getLayoutsForGroup(selectionRange);
-	if (null !== layout.fld) {
-		var fieldGroupType = pivotTable.getFieldGroupType(layout.fld);
-		var baseFld = pivotTable.getGroupBase(layout.fld);
-		var rangePrRes = pivotTable.getGroupRangePr(baseFld);
-		if (opt_rangePr && opt_rangePr.getFieldGroupType() === fieldGroupType) {
-			api._changePivotAndConnectedByPivotCacheWithLock(pivotTable, false, function (confirmation, pivotTables) {
-				var changeRes = api._changePivot(pivotTable, confirmation, true, function () {
-					var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
+	var fieldGroupType = pivotTable.getFieldGroupType(layout.fld);
+	var baseFld = pivotTable.getGroupBase(layout.fld);
+	var rangePrRes = pivotTable.getGroupRangePr(baseFld);
+	if (opt_rangePr && opt_rangePr.getFieldGroupType() === fieldGroupType) {
+		api._changePivotAndConnectedByPivotCacheWithLock(pivotTable, false, function (confirmation, pivotTables) {
+			var changeRes = api._changePivot(pivotTable, confirmation, true, function () {
+				var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
 
-					AscFormat.ExecuteNoHistory(function () {
-						pivotTable.ungroupRangePr(baseFld);
-						pivotTable.groupRangePr(baseFld, opt_rangePr, opt_dateTypes);
-					}, api);
+				AscFormat.ExecuteNoHistory(function () {
+					pivotTable.ungroupRangePr(baseFld);
+					pivotTable.groupRangePr(baseFld, opt_rangePr, opt_dateTypes);
+				}, api);
 
-					var newPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
-					History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_PivotReplaceKeepRecords, sheetId,
-						null, new AscCommonExcel.UndoRedoData_PivotTableRedo(pivotTable.Get_Id(), oldPivot, newPivot));
+				var newPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
+				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_PivotReplaceKeepRecords, sheetId,
+					null, new AscCommonExcel.UndoRedoData_PivotTableRedo(pivotTable.Get_Id(), oldPivot, newPivot));
 
-					pivotTable._updateCacheDataUpdateSlicersPost();
-				});
-				return changeRes;
+				pivotTable._updateCacheDataUpdateSlicersPost();
 			});
-		} else if (rangePrRes) {
-			api.handlers.trigger("setPivotGroupDialog", rangePrRes.rangePr, rangePrRes.dateTypes);
-		} else if (1 === layout.getGroupSize() && c_oAscGroupType.Text !== pivotTable.getFieldGroupType(layout.fld)) {
-			var newRangePrRes = pivotTable.createGroupRangePr(layout.fld);
-			api.handlers.trigger("setPivotGroupDialog", newRangePrRes.rangePr, newRangePrRes.dateTypes);
-		} else if (layout.getGroupSize() > 1) {
-			api._changePivotAndConnectedByPivotCacheWithLock(pivotTable, false, function(confirmation, pivotTables) {
-				var changeRes = api._changePivot(pivotTable, confirmation, true, function(){
-					var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
+			return changeRes;
+		});
+	} else if (rangePrRes) {
+		api.handlers.trigger("setPivotGroupDialog", rangePrRes.rangePr, rangePrRes.dateTypes);
+	} else if (1 === layout.getGroupSize() && c_oAscGroupType.Text !== pivotTable.getFieldGroupType(layout.fld)) {
+		var newRangePrRes = pivotTable.createGroupRangePr(layout.fld);
+		api.handlers.trigger("setPivotGroupDialog", newRangePrRes.rangePr, newRangePrRes.dateTypes);
+	} else if (layout.getGroupSize() > 1) {
+		api._changePivotAndConnectedByPivotCacheWithLock(pivotTable, false, function(confirmation, pivotTables) {
+			var changeRes = api._changePivot(pivotTable, confirmation, true, function(){
+				var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
 
-					AscFormat.ExecuteNoHistory(function () {
-						var groupRes = pivotTable.groupDiscreteCache(layout);
-						pivotTable.groupDiscrete(layout, groupRes);
-					}, api);
+				AscFormat.ExecuteNoHistory(function () {
+					var groupRes = pivotTable.groupDiscreteCache(layout);
+					pivotTable.groupDiscrete(layout, groupRes);
+				}, api);
 
-					var newPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
-					History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_PivotReplaceKeepRecords, sheetId,
-						null, new AscCommonExcel.UndoRedoData_PivotTableRedo(pivotTable.Get_Id(), oldPivot, newPivot));
+				var newPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
+				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_PivotReplaceKeepRecords, sheetId,
+					null, new AscCommonExcel.UndoRedoData_PivotTableRedo(pivotTable.Get_Id(), oldPivot, newPivot));
 
-					pivotTable._updateCacheDataUpdateSlicersPost();
-				});
-				return changeRes;
+				pivotTable._updateCacheDataUpdateSlicersPost();
 			});
-		} else {
-			api.sendEvent('asc_onError', c_oAscError.ID.PivotGroup, c_oAscError.Level.Critical);
-		}
+			return changeRes;
+		});
+	} else {
+		api.sendEvent('asc_onError', c_oAscError.ID.PivotGroup, c_oAscError.Level.Critical);
 	}
 };
-CT_pivotTableDefinition.prototype.ungroupPivot = function (api, selectionRange) {
+CT_pivotTableDefinition.prototype.ungroupPivot = function (api, layout) {
 	var sheetId = this.worksheet.getId();
 	var pivotTable = this;
-		var layout = pivotTable.getLayoutsForGroup(selectionRange);
-		if (null !== layout.fld) {
-			var baseFld = pivotTable.getGroupBase(layout.fld);
-			var rangePrRes = pivotTable.getGroupRangePr(baseFld);
-			if (rangePrRes) {
-				api._changePivotAndConnectedByPivotCacheWithLock(pivotTable, false, function(confirmation, pivotTables) {
-					var changeRes = api._changePivot(pivotTable, confirmation, true, function(){
-						var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
+	var baseFld = pivotTable.getGroupBase(layout.fld);
+	var rangePrRes = pivotTable.getGroupRangePr(baseFld);
+	if (rangePrRes) {
+		api._changePivotAndConnectedByPivotCacheWithLock(pivotTable, false, function(confirmation, pivotTables) {
+			var changeRes = api._changePivot(pivotTable, confirmation, true, function(){
+				var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
 
-						AscFormat.ExecuteNoHistory(function () {
-							pivotTable.ungroupRangePr(baseFld);
-						}, api);
+				AscFormat.ExecuteNoHistory(function () {
+					pivotTable.ungroupRangePr(baseFld);
+				}, api);
 
-						var newPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
-						History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_PivotReplaceKeepRecords, sheetId,
-							null, new AscCommonExcel.UndoRedoData_PivotTableRedo(pivotTable.Get_Id(), oldPivot, newPivot));
+				var newPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
+				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_PivotReplaceKeepRecords, sheetId,
+					null, new AscCommonExcel.UndoRedoData_PivotTableRedo(pivotTable.Get_Id(), oldPivot, newPivot));
 
-						pivotTable._updateCacheDataUpdateSlicersPost();
-					});
-					return changeRes;
-				});
-			} else if (layout.getGroupSize() > 0) {
-				api._changePivotAndConnectedByPivotCacheWithLock(pivotTable, false, function(confirmation, pivotTables) {
-					var groupRes;
-					var changeRes = api._changePivot(pivotTable, confirmation, true, function(){
-						var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
+				pivotTable._updateCacheDataUpdateSlicersPost();
+			});
+			return changeRes;
+		});
+	} else if (layout.getGroupSize() > 0) {
+		api._changePivotAndConnectedByPivotCacheWithLock(pivotTable, false, function(confirmation, pivotTables) {
+			var groupRes;
+			var changeRes = api._changePivot(pivotTable, confirmation, true, function(){
+				var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
 
-						AscFormat.ExecuteNoHistory(function () {
-							groupRes = pivotTable.ungroupDiscreteCache(layout);
-							pivotTable.ungroupDiscrete(layout, groupRes);
-						}, api);
+				AscFormat.ExecuteNoHistory(function () {
+					groupRes = pivotTable.ungroupDiscreteCache(layout);
+					pivotTable.ungroupDiscrete(layout, groupRes);
+				}, api);
 
-						var newPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
-						History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_PivotReplaceKeepRecords, sheetId,
-							null, new AscCommonExcel.UndoRedoData_PivotTableRedo(pivotTable.Get_Id(), oldPivot, newPivot));
+				var newPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
+				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_PivotReplaceKeepRecords, sheetId,
+					null, new AscCommonExcel.UndoRedoData_PivotTableRedo(pivotTable.Get_Id(), oldPivot, newPivot));
 
-						pivotTable._updateCacheDataUpdateSlicersPost();
-					});
-					return changeRes;
-				});
-			}
-		}
+				pivotTable._updateCacheDataUpdateSlicersPost();
+			});
+			return changeRes;
+		});
+	}
 };
 CT_pivotTableDefinition.prototype.groupRangePr = function (fld, rangePr, dateTypes) {
 	//check params
