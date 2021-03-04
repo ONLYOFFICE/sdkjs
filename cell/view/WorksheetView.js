@@ -16254,7 +16254,7 @@
 		height = height + mheight;
 
 		var x = this._getColLeft(col) - offsetX + 1;
-		width -= 3; // indent
+		//width -= 3; // indent
 		top += 1 - offsetY;
 
 		var aRules = this.model.aConditionalFormattingRules.sort(function (v1, v2) {
@@ -16333,6 +16333,100 @@
 		);
 
 	};
+
+
+
+	WorksheetView.prototype._getPropsCollapseButton = function (offsetX, offsetY, props) {
+		var drawingCtx = props.isOverlay ? this.overlayCtx : this.drawingCtx;
+		var row = props.row;
+		var col = props.col;
+		var ct = this._getCellTextCache(col, row);
+		if (!ct) {
+			return null;
+		}
+		var c = this._getVisibleCell(col, row);
+		var font = c.getFont();
+		var color = font.getColor();
+		var isMerged = ct.flags.isMerged(), range, isWrapped = ct.flags.wrapText;
+		var ctx = drawingCtx || this.drawingCtx;
+
+		var colL = isMerged ? range.c1 : Math.max(col, col - ct.sideL);
+		var colR = isMerged ? Math.min(range.c2, this.nColsCount - 1) : Math.min(col, col + ct.sideR);
+		var rowT = isMerged ? range.r1 : row;
+		var rowB = isMerged ? Math.min(range.r2, this.nRowsCount - 1) : row;
+		var isTrimmedR = !isMerged && colR !== col + ct.sideR;
+
+
+		var graphics = (ctx && ctx.DocumentRenderer) || this.handlers.trigger('getMainGraphics');
+		var cellValue = c.getNumberValue();
+
+
+		var img = props.idPivotCollapse.sd ? pivotCollapseButtonOpen : pivotCollapseButtonClose;
+		if (!img) {
+			return;
+		}
+
+		var x1 = this._getColLeft(colL) - offsetX;
+		var y1 = this._getRowTop(rowT) - offsetY;
+		var w = this._getColLeft(colR + 1) - offsetX - x1;
+		var h = this._getRowTop(rowB + 1) - offsetY - y1;
+		var x2 = x1 + w - (isTrimmedR ? 0 : gridlineSize);
+		var y2 = y1 + h;
+		var bl = y2 - Asc.round((isMerged ? (ct.metrics.height - ct.metrics.baseline) : this._getRowDescender(rowB)) * this.getZoom());
+		var x1ct = isMerged ? x1 : this._getColLeft(col) - offsetX;
+		var x2ct = isMerged ? x2 : x1ct + this._getColumnWidth(col) - gridlineSize;
+		var textX = this._calcTextHorizPos(x1ct, x2ct, ct.metrics, ct.cellHA);
+		var textY = this._calcTextVertPos(y1, h, bl, ct.metrics, ct.cellVA);
+		var textW = this._calcTextWidth(x1ct, x2ct, ct.metrics, ct.cellHA);
+
+		var widthButtonPx, heightButtonPx;
+		widthButtonPx = heightButtonPx = this._getFilterButtonSize(true);
+		var iconSize = AscCommon.AscBrowser.convertToRetinaValue(widthButtonPx, true);
+
+		var rect = new AscCommon.asc_CRect(textX, textY, widthButtonPx, heightButtonPx);
+
+		//TODO 1?
+		//rect._x = textX;
+		rect._y += ct.metrics.height / 2 - iconSize / 2;
+		var dScale = asc_getcvt(0, 3, this._getPPIX());
+		rect._x *= dScale;
+		rect._y *= dScale;
+		rect._width *= dScale;
+		rect._height *= dScale;
+		AscFormat.ExecuteNoHistory(
+			function (img, rect, imgSize) {
+				var geometry = new AscFormat.CreateGeometry("rect");
+				geometry.Recalculate(imgSize, imgSize, true);
+
+				var oUniFill = new AscFormat.builder_CreateBlipFill(img, "stretch");
+
+				if (ctx instanceof AscCommonExcel.CPdfPrinter) {
+					graphics.SaveGrState();
+					graphics.SetBaseTransform(ctx.Transform || new AscCommon.CMatrix());
+				}
+
+				graphics.save();
+				var oMatrix = new AscCommon.CMatrix();
+				oMatrix.tx = rect._x;
+				oMatrix.ty = rect._y;
+				graphics.transform3(oMatrix);
+				var shapeDrawer = new AscCommon.CShapeDrawer();
+				shapeDrawer.Graphics = graphics;
+
+				shapeDrawer.fromShape2(new AscFormat.CColorObj(null, oUniFill, geometry), graphics, geometry);
+				shapeDrawer.draw(geometry);
+				graphics.restore();
+
+				if (ctx instanceof AscCommonExcel.CPdfPrinter) {
+					graphics.SetBaseTransform(null);
+					graphics.RestoreGrState();
+				}
+			}, this, [img, rect, iconSize * dScale * this.getZoom()]
+		);
+
+	};
+
+
 
 	WorksheetView.prototype._drawRightDownTableCorner = function (table, updatedRange, offsetX, offsetY) {
 		var t = this;
