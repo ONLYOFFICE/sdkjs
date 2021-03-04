@@ -16263,15 +16263,15 @@
 
 		var fontSize = c.getFont().getSize();
 		var cellHA = align.getAlignHorizontal();
-		if (this._getCellCF(aRules, c, row, col, Asc.ECfType.iconSet) && AscCommon.align_Left === cellHA) {
+		if (this._getCellCF(aRules, c, row, col, Asc.ECfType.iconSet) /*&& AscCommon.align_Left === cellHA*/) {
 			x += getCFIconSize(fontSize);
 		}
 
 		var indent = align.getIndent();
 		if (indent) {
-			if (AscCommon.align_Right === cellHA) {
+			/*if (AscCommon.align_Right === cellHA) {
 				x -= indent * 3 * this.defaultSpaceWidth;
-			} else if (AscCommon.align_Left === cellHA) {
+			} else*/ if (AscCommon.align_Left === cellHA) {
 				x += indent * 3 * this.defaultSpaceWidth;
 			}
 		}
@@ -16288,16 +16288,13 @@
 		var widthButtonPx, heightButtonPx;
 		widthButtonPx = heightButtonPx = this._getFilterButtonSize(true);
 
-		var iconSize = AscCommon.AscBrowser.convertToRetinaValue(this._getFilterButtonSize(true), true);
+		var iconSize = AscCommon.AscBrowser.convertToRetinaValue(widthButtonPx, true);
 		var rect = new AscCommon.asc_CRect(x, top, width, height);
 		var bl = rect._y + rect._height - Asc.round(this._getRowDescender(row) * this.getZoom());
 		var tm = new Asc.TextMetrics(iconSize, iconSize, 0, iconSize - 2 * fontSize / AscCommonExcel.cDefIconFont, 0, 0, 0);
 
 		//TODO 1?
-		rect._x = this._calcTextHorizPos(rect._x, rect._x + rect._width, tm, cellHA) + 1;
-		if (AscCommon.align_Left !== cellHA) {
-			rect._x -= widthButtonPx;
-		}
+		rect._x = this._calcTextHorizPos(rect._x, rect._x + rect._width, tm, AscCommon.align_Left) + 1;
 		rect._y = this._calcTextVertPos(rect._y, rect._height, bl, tm, align.getAlignVertical());
 		var dScale = asc_getcvt(0, 3, this._getPPIX());
 		rect._x *= dScale;
