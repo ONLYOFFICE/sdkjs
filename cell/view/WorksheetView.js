@@ -8002,7 +8002,7 @@
 						if (isDataValidation) {
 							_isDataValidation = this._hitCursorFilterButton(_offsetX, _offsetY, col, row, true);
 						} else if (pivotButton) {
-							_isPivot = this._hitCursorFilterButton(_offsetX, _offsetY, c.col, r.row);
+							_isPivot = this._hitCursorFilterButton(_offsetX, _offsetY, c.col, r.row, null, pivotButton.idPivotCollapse);
 						} else if (isTableTotal) {
 							_isTableTotal = this._hitCursorFilterButton(_offsetX, _offsetY, col, row, true);
 						}
@@ -16383,7 +16383,7 @@
 		return result;
 	};
 
-	WorksheetView.prototype._hitCursorFilterButton = function (x, y, col, row, isDataValidation) {
+	WorksheetView.prototype._hitCursorFilterButton = function (x, y, col, row, isDataValidation, pivotCollapse) {
 		var buttonSize = this.getButtonSize(row, col, isDataValidation);
 		var width = buttonSize.w, height = buttonSize.h;
 
@@ -16395,6 +16395,12 @@
 		if (isDataValidation && col !== AscCommon.gc_nMaxCol0) {
 			x1 = left + 0.5;
 			x2 = left + width + 0.5;
+		} else if (pivotCollapse) {
+			var buttonProps = this._getPropsCollapseButton(0, 0, {row: row, col: col});
+			x1 = buttonProps.x;
+			x2 = buttonProps.x + buttonProps.w * this.getZoom();
+			y1 = buttonProps.y;
+			y2 = buttonProps.y + buttonProps.h * this.getZoom();
 		} else {
 			x1 = left - width - 0.5;
 			x2 = left - 0.5;
