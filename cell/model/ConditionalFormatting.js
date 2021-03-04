@@ -40,6 +40,7 @@
 	var FT_Common = AscFonts.FT_Common;
 	var CellValueType = AscCommon.CellValueType;
 	var EIconSetType = Asc.EIconSetType;
+	var asc_error = Asc.c_oAscError.ID;
 
 	/**
 	 * Отвечает за условное форматирование
@@ -2071,6 +2072,137 @@
 	CGradient.prototype.getMaxColor = function () {
 		return new AscCommonExcel.RgbColor((this.r2 << 16) + (this.g2 << 8) + this.b2);
 	};
+
+	function fParseChartFormula(sFormula) {
+		if(!(typeof sFormula === "string" && sFormula.length > 0)) {
+			return [];
+		}
+		var oWB = Asc.editor && Asc.editor.wbModel;
+		if(!oWB) {
+			return [];
+		}
+		var _sFormula = sFormula;
+		if(_sFormula.charAt(0) === '=') {
+			_sFormula = _sFormula.slice(1);
+		}
+		var oWS = oWB.getWorksheet(0);
+		if(!oWS) {
+			return [];
+		}
+		var res;
+		AscCommonExcel.executeInR1C1Mode(false, function() {
+			res = AscCommonExcel.getRangeByRef(_sFormula, oWS);
+		});
+		return res;
+	}
+
+	function isValidDataRef(type, props) {
+		var i;
+		var ws;
+
+		var checkFormulaStack = function (_f) {
+			var stack = _f.outStack;
+			if (stack && stack.length) {
+				for (var i = 0; i < stack.length; i++) {
+					if (stack[i]) {
+						if (stack[i].type === AscCommonExcel.cElementType.cellsRange || stack[i].type === AscCommonExcel.cElementType.cellsRange3D) {
+							return asc_error.NotSingleReferenceCannotUsed;
+						} else if (stack[i].type === AscCommonExcel.cElementType.cell || stack[i].type === AscCommonExcel.cElementType.cell3D) {
+							//ссылки должны быть только абсолютные
+							var isAbsRow1 = this.isAbsRow(stack[i].range.refType1);
+							var isAbsCol1 = this.isAbsCol(stack[i].range.refType1);
+							var isAbsRow2 = this.isAbsRow(stack[i].range.refType2);
+							var isAbsCol2 = this.isAbsCol(stack[i].range.refType2);
+
+							if (!isAbsRow1 || !isAbsCol1 || !isAbsRow2 || !isAbsCol2) {
+								return asc_error.CannotUseRelativeReference;
+							}
+						}
+					}
+				}
+			}
+			return null;
+		};
+
+		var _doParseFormula = function (sFormula) {
+			if(!(typeof sFormula === "string" && sFormula.length > 0)) {
+				return;
+			}
+			if (!ws) {
+				var oWB = Asc.editor && Asc.editor.wbModel;
+				if(!oWB) {
+					return;
+				}
+				ws = oWB.getWorksheet(0);
+			}
+
+			if(sFormula.charAt(0) === '=') {
+				sFormula = sFormula.slice(1);
+			}
+
+			var _formulaParsed = new AscCommonExcel.parserFormula(sFormula, null, ws);
+			var _parseResultArg = new AscCommonExcel.ParseResult([], []);
+			_formulaParsed.parse(true, true, _parseResultArg, true);
+
+			return _formulaParsed;
+		};
+
+
+		var _checkValue = function(_val, _type) {
+			var isNumeric = !isNaN(parseFloat(_val)) && isFinite(_val);
+			switch (_type) {
+				case AscCommonExcel.ECfvoType.Formula:
+
+					break;
+				case AscCommonExcel.ECfvoType.Number:
+
+					break;
+				case AscCommonExcel.ECfvoType.Percent:
+					if (isNumeric) {
+						if (_val < 0 && _val > 100) {
+							//is not valid precentile
+							return asc_error.NotValidPercentage;
+						}
+					} else if (_val && _val[0] !== "=") {
+						_val = '"' + _val + '"';
+					} else {
+						var fParser = _doParseFormula(_val);
+						//если внутри диапазон - проверяем его
+						var _error = fParser && checkFormulaStack(fParser);
+						if (_error !== null) {
+							return _error;
+						}
+					}
+					break;
+				case AscCommonExcel.ECfvoType.Percentile:
+					//в случае с индивидуальное проверкой Percentile - выдаём только 2 ошибки
+					if (isNumeric) {
+						if (_val < 0 && _val > 100) {
+							//is not valid precentile
+							return asc_error.NotValidPercentile;
+						}
+					} else {
+						return asc_error.CannotAddConditionalFormatting;
+					}
+					break;
+			}
+		};
+
+		if (type === Asc.ECfType.colorScale) {
+			//value, type
+			for (i = 0; i < props.length; i++) {
+				_checkValue(props[i][0], props[i][1]);
+			}
+		} else if (type === Asc.ECfType.dataBar) {
+
+		} else if (type === Asc.ECfType.expression) {
+
+		} else if (type === Asc.ECfType.cellIs) {
+
+		} else if (type === Asc.ECfType.containsText) {
+
+		}
+	}
 
 	var cDefIconSize = 16;
 	var cDefIconFont = 11;
