@@ -6113,10 +6113,10 @@ CT_pivotTableDefinition.prototype.groupPivot = function (api, layout, opt_rangeP
 			return changeRes;
 		});
 	} else if (rangePrRes) {
-		api.handlers.trigger("setPivotGroupDialog", rangePrRes.rangePr, rangePrRes.dateTypes);
+		api.handlers.trigger("asc_onShowPivotGroupDialog", rangePrRes.rangePr, rangePrRes.dateTypes);
 	} else if (1 === layout.getGroupSize() && c_oAscGroupType.Text !== pivotTable.getFieldGroupType(layout.fld)) {
 		var newRangePrRes = pivotTable.createGroupRangePr(layout.fld);
-		api.handlers.trigger("setPivotGroupDialog", newRangePrRes.rangePr, newRangePrRes.dateTypes);
+		api.handlers.trigger("asc_onShowPivotGroupDialog", newRangePrRes.rangePr, newRangePrRes.dateTypes);
 	} else if (layout.getGroupSize() > 1) {
 		api._changePivotAndConnectedByPivotCacheWithLock(pivotTable, false, function(confirmation, pivotTables) {
 			var changeRes = api._changePivot(pivotTable, confirmation, true, function(){
