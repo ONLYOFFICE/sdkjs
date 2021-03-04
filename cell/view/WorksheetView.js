@@ -4020,7 +4020,7 @@
 			} else {
 				ctx.AddClipRect(x1, y1, w, h);
 				if (this._getCellCF(aRules, c, row, col, Asc.ECfType.iconSet) && AscCommon.align_Left === ct.cellHA) {
-					textX += getCFIconSize(font.getSize()) * this.getZoom();
+					textX += AscCommon.AscBrowser.convertToRetinaValue(getCFIconSize(font.getSize()) * this.getZoom(), true);
 				}
 				var pivotButtons = this.model.getPivotTableButtons(new Asc.Range(col, row, col, row));
 				if (pivotButtons && pivotButtons[0] && pivotButtons[0].idPivotCollapse && AscCommon.align_Left === ct.cellHA) {
@@ -16215,7 +16215,6 @@
 	};
 
 	WorksheetView.prototype._getPropsCollapseButton = function (offsetX, offsetY, props) {
-		var drawingCtx = props.isOverlay ? this.overlayCtx : this.drawingCtx;
 		var row = props.row;
 		var col = props.col;
 		var ct = this._getCellTextCache(col, row);
@@ -16223,10 +16222,7 @@
 			return null;
 		}
 		var c = this._getVisibleCell(col, row);
-		var font = c.getFont();
-		var color = font.getColor();
 		var isMerged = ct.flags.isMerged(), range, isWrapped = ct.flags.wrapText;
-		var ctx = drawingCtx || this.drawingCtx;
 
 		var colL = isMerged ? range.c1 : Math.max(col, col - ct.sideL);
 		var colR = isMerged ? Math.min(range.c2, this.nColsCount - 1) : Math.min(col, col + ct.sideR);
@@ -16245,8 +16241,9 @@
 		var x2ct = isMerged ? x2 : x1ct + this._getColumnWidth(col) - gridlineSize;
 		var textX = this._calcTextHorizPos(x1ct, x2ct, ct.metrics, /*ct.cellHA*/AscCommon.align_Left);
 		var textY = this._calcTextVertPos(y1, h, bl, ct.metrics, ct.cellVA);
-		var textW = this._calcTextWidth(x1ct, x2ct, ct.metrics, ct.cellHA);
+		//var textW = this._calcTextWidth(x1ct, x2ct, ct.metrics, ct.cellHA);
 
+		//TODO пока решили не учитывать позицию текста. кнопка всегда прижата к левому краю. учитывается только левый индент
 
 		var fontSize = c.getFont().getSize();
 		var aRules = this.model.aConditionalFormattingRules.sort(function (v1, v2) {
@@ -16255,7 +16252,7 @@
 		var align = c.getAlign();
 		var cellHA = align.getAlignHorizontal();
 		if (this._getCellCF(aRules, c, row, col, Asc.ECfType.iconSet) /*&& AscCommon.align_Left === cellHA*/) {
-			textX += getCFIconSize(fontSize) * this.getZoom();
+			textX += AscCommon.AscBrowser.convertToRetinaValue(getCFIconSize(fontSize) * this.getZoom(), true);
 		}
 		var indent = align.getIndent();
 		if (indent) {
@@ -16266,18 +16263,14 @@
 			}
 		}
 
-		var widthButtonPx, heightButtonPx;
-		widthButtonPx = heightButtonPx = this._getFilterButtonSize(true);
-		var iconSize = AscCommon.AscBrowser.convertToRetinaValue(widthButtonPx, true);
+		var iconSize = this._getFilterButtonSize(true);
 
 		//TODO 2?
 		textX += 2 * this.getZoom();
 		textY += (ct.metrics.height / 2 - iconSize / 2) * this.getZoom();
 
-		return {size: iconSize, x: textX, y: textY, w: widthButtonPx, h: heightButtonPx};
+		return {size: iconSize, x: textX, y: textY, w: iconSize, h: iconSize};
 	};
-
-
 
 	WorksheetView.prototype._drawRightDownTableCorner = function (table, updatedRange, offsetX, offsetY) {
 		var t = this;
@@ -16396,11 +16389,14 @@
 			x1 = left + 0.5;
 			x2 = left + width + 0.5;
 		} else if (pivotCollapse) {
+			var zoom = this.getZoom();
 			var buttonProps = this._getPropsCollapseButton(0, 0, {row: row, col: col});
-			x1 = buttonProps.x;
-			x2 = buttonProps.x + buttonProps.w * this.getZoom();
-			y1 = buttonProps.y;
-			y2 = buttonProps.y + buttonProps.h * this.getZoom();
+			if (buttonProps) {
+				x1 = buttonProps.x;
+				x2 = buttonProps.x + buttonProps.w * zoom;
+				y1 = buttonProps.y;
+				y2 = buttonProps.y + buttonProps.h * zoom;
+			}
 		} else {
 			x1 = left - width - 0.5;
 			x2 = left - 0.5;
