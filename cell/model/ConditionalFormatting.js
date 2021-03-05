@@ -2096,7 +2096,7 @@
 		return res;
 	}
 
-	function isValidDataRef(type, props) {
+	function isValidDataRefCf(type, props) {
 		var i;
 		var ws;
 
@@ -2232,14 +2232,16 @@
 			//в databar ошибка для подобного сравнения не возникает
 			//для iconSet сравниваем числа для типов Number/Percent/Percentile - должны идти по убыванию, сраниваем только соседние
 
-			if (type === Asc.ECfType.colorScale) {
-				if (_prevType === _type && type !== AscCommonExcel.ECfvoType.Formula && _prevVal > _val) {
-					return asc_error.ValueMustBeGreaterThen;
-				}
-			} else if (type === Asc.ECfType.iconSet) {
-				if (_prevType !== AscCommonExcel.ECfvoType.Formula && type !== AscCommonExcel.ECfvoType.Formula &&
-					_val > _prevVal) {
-					return asc_error.IconDataRangesOverlap;
+			if (_prevNum && _isNum) {
+				if (type === Asc.ECfType.colorScale) {
+					if (_prevType === _type && type !== AscCommonExcel.ECfvoType.Formula && _prevVal > _val) {
+						return asc_error.ValueMustBeGreaterThen;
+					}
+				} else if (type === Asc.ECfType.iconSet) {
+					if (_prevType !== AscCommonExcel.ECfvoType.Formula && type !== AscCommonExcel.ECfvoType.Formula &&
+						_val > _prevVal) {
+						return asc_error.IconDataRangesOverlap;
+					}
 				}
 			}
 
@@ -2249,41 +2251,54 @@
 		//value, type
 		var prevType, prevVal, prevNum;
 		var nError;
+		var _isNumeric;
 		for (i = 0; i < props.length; i++) {
-			var _isNumeric = isNumeric(props[i][0]);
-			nError = _checkValue(props[i][0], props[i][1], _isNumeric);
-			if (nError !== null) {
-				return [nError, i];
-			}
-
-			if (prevType === undefined) {
-				prevType = props[i][1];
-				prevVal = props[i][0];
-				prevNum = _isNumeric;
-			} else {
-				nError = compareRefs(prevVal, prevType, prevNum, props[i][0], props[i][1], _isNumeric);
+			if (undefined !== props[i][1]) {
+				_isNumeric = isNumeric(props[i][0]);
+				nError = _checkValue(props[i][0], props[i][1], _isNumeric);
 				if (nError !== null) {
 					return [nError, i];
 				}
 
-				prevType = props[i][1];
-				prevVal = props[i][0];
-				prevNum = _isNumeric;
+				if (prevType === undefined) {
+					prevType = props[i][1];
+					prevVal = props[i][0];
+					prevNum = _isNumeric;
+				} else {
+					nError = compareRefs(prevVal, prevType, prevNum, props[i][0], props[i][1], _isNumeric);
+					if (nError !== null) {
+						return [nError, i];
+					}
+
+					prevType = props[i][1];
+					prevVal = props[i][0];
+					prevNum = _isNumeric;
+				}
+			} else {
+				//в этом случае должны быть следующие типы
+				if (type === Asc.ECfType.expression) {
+					nError = _checkValue(props[i][0], AscCommonExcel.ECfvoType.Formula);
+					if (nError !== null) {
+						return nError;
+					}
+				} else if (type === Asc.ECfType.cellIs) {
+					nError = _checkValue(props[i][0], AscCommonExcel.ECfvoType.Formula);
+					if (nError !== null) {
+						return nError;
+					}
+				} else if (type === Asc.ECfType.containsText) {
+					nError = _checkValue(props[i][0], AscCommonExcel.ECfvoType.Formula);
+					if (nError !== null) {
+						return nError;
+					}
+				} else if (type === Asc.ECfType.top10) {
+					_isNumeric = isNumeric(props[i][0]);
+					if (!_isNumeric || props[i][0] < 0 || props[i][0] > 1000) {
+						return asc_error.ErrorTop10Between;
+					}
+				}
+
 			}
-		}
-
-		if (type === Asc.ECfType.colorScale) {
-
-		} else if (type === Asc.ECfType.dataBar) {
-
-		} else if (type === Asc.ECfType.expression) {
-
-		} else if (type === Asc.ECfType.cellIs) {
-
-		} else if (type === Asc.ECfType.containsText) {
-
-		} else if (type === Asc.ECfType.iconSet) {
-
 		}
 	}
 
@@ -2487,6 +2502,7 @@
 	window['AscCommonExcel'].getFullCFIcons = getFullCFIcons;
 	window['AscCommonExcel'].getFullCFPresets = getFullCFPresets;
 	window['AscCommonExcel'].getCFIconsByType = getCFIconsByType;
+	window['AscCommonExcel'].isValidDataRefCf = isValidDataRefCf;
 
 	prot = CConditionalFormattingRule;
 	prot['asc_getDxf'] = prot.asc_getDxf;

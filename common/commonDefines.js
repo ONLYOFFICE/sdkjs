@@ -271,7 +271,8 @@
 			NotSingleReferenceCannotUsed: 1006,
 			CannotUseRelativeReference: 1007,
 			ValueMustBeGreaterThen: 1008,
-			IconDataRangesOverlap: 1009
+			IconDataRangesOverlap: 1009,
+			ErrorTop10Between: 1010
 		}
 	};
 
@@ -2344,6 +2345,10 @@
 	prot['NotValidPercentage']               = prot.NotValidPercentage;
 	prot['NotSingleReferenceCannotUsed']     = prot.NotSingleReferenceCannotUsed;
 	prot['CannotUseRelativeReference']       = prot.CannotUseRelativeReference;
+	prot['ValueMustBeGreaterThen']           = prot.ValueMustBeGreaterThen;
+	prot['IconDataRangesOverlap']            = prot.IconDataRangesOverlap;
+	prot['ErrorTop10Between']                = prot.ErrorTop10Between;
+
 
 	window['Asc']['c_oAscAsyncAction']       = window['Asc'].c_oAscAsyncAction = c_oAscAsyncAction;
 	prot                                     = c_oAscAsyncAction;

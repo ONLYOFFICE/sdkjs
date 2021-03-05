@@ -5121,6 +5121,10 @@ var editor;
 		return res;
 	};
 
+	spreadsheet_api.prototype.asc_isValidDataRefCf = function (type, props) {
+		return AscCommonExcel.isValidDataRefCf(type, props);
+	};
+
   spreadsheet_api.prototype.asc_beforeInsertSlicer = function () {
     //пока возвращаю только данные о ф/т
     return this.wb.beforeInsertSlicer();
@@ -5617,6 +5621,7 @@ var editor;
   prot["asc_getRemoveDuplicates"] = prot.asc_getRemoveDuplicates;
   prot["asc_setRemoveDuplicates"] = prot.asc_setRemoveDuplicates;
 
+  //conditional formatting
   prot["asc_getCF"]            = prot.asc_getCF;
   prot["asc_setCF"]            = prot.asc_setCF;
   prot["asc_getPreviewCF"]     = prot.asc_getPreviewCF;
@@ -5624,6 +5629,7 @@ var editor;
   prot["asc_getCFIconsByType"] = prot.asc_getCFIconsByType;
   prot["asc_getCFPresets"]     = prot.asc_getCFPresets;
   prot["asc_getFullCFIcons"]   = prot.asc_getFullCFIcons;
+  prot["asc_isValidDataRefCf"] = prot.asc_isValidDataRefCf;
 
   prot["asc_beforeInsertSlicer"] = prot.asc_beforeInsertSlicer;
   prot["asc_insertSlicer"] = prot.asc_insertSlicer;
