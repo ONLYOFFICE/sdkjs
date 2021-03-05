@@ -269,7 +269,9 @@
 			CannotAddConditionalFormatting: 1004,
 			NotValidPercentage: 1005,
 			NotSingleReferenceCannotUsed: 1006,
-			CannotUseRelativeReference: 1007
+			CannotUseRelativeReference: 1007,
+			ValueMustBeGreaterThen: 1008,
+			IconDataRangesOverlap: 1009
 		}
 	};
 

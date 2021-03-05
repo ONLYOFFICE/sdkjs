@@ -2101,18 +2101,30 @@
 		var ws;
 
 		var checkFormulaStack = function (_f) {
+			if (_f) {
+				return null;
+			}
 			var stack = _f.outStack;
 			if (stack && stack.length) {
+				//если идут фрифметические операции, использования диапазонов внутри формул - ошибки на это нет
+				//поэтому я проверяю на одиночный диапазон
+				if (stack.length === 1 && (stack[0].type === AscCommonExcel.cElementType.cellsRange ||
+					stack[0].type === AscCommonExcel.cElementType.cellsRange3D)) {
+					return asc_error.NotSingleReferenceCannotUsed;
+				}
 				for (var i = 0; i < stack.length; i++) {
 					if (stack[i]) {
-						if (stack[i].type === AscCommonExcel.cElementType.cellsRange || stack[i].type === AscCommonExcel.cElementType.cellsRange3D) {
-							return asc_error.NotSingleReferenceCannotUsed;
-						} else if (stack[i].type === AscCommonExcel.cElementType.cell || stack[i].type === AscCommonExcel.cElementType.cell3D) {
+						//допускаются только абсолютные ссылки
+						if (stack[i].type === AscCommonExcel.cElementType.cellsRange ||
+							stack[i].type === AscCommonExcel.cElementType.cellsRange3D ||
+							stack[i].type === AscCommonExcel.cElementType.cell ||
+							stack[i].type === AscCommonExcel.cElementType.cell3D) {
 							//ссылки должны быть только абсолютные
-							var isAbsRow1 = this.isAbsRow(stack[i].range.refType1);
-							var isAbsCol1 = this.isAbsCol(stack[i].range.refType1);
-							var isAbsRow2 = this.isAbsRow(stack[i].range.refType2);
-							var isAbsCol2 = this.isAbsCol(stack[i].range.refType2);
+							var _range = stack[i].getRange();
+							var isAbsRow1 = _range.isAbsRow(_range.refType1);
+							var isAbsCol1 = _range.isAbsCol(_range.refType1);
+							var isAbsRow2 = _range.isAbsRow(_range.refType2);
+							var isAbsCol2 = _range.isAbsCol(_range.refType2);
 
 							if (!isAbsRow1 || !isAbsCol1 || !isAbsRow2 || !isAbsCol2) {
 								return asc_error.CannotUseRelativeReference;
@@ -2147,18 +2159,43 @@
 			return _formulaParsed;
 		};
 
+		var isNumeric = function (_val) {
+			return !isNaN(parseFloat(_val)) && isFinite(_val);
+		};
 
-		var _checkValue = function(_val, _type) {
-			var isNumeric = !isNaN(parseFloat(_val)) && isFinite(_val);
+		var _checkValue = function(_val, _type, _isNumeric) {
+			var fParser, _error;
 			switch (_type) {
 				case AscCommonExcel.ECfvoType.Formula:
+					if (_isNumeric) {
 
+					} else if (_val && _val[0] !== "=") {
+						_val = '"' + _val + '"';
+					} else {
+						fParser = _doParseFormula(_val);
+						//если внутри диапазон - проверяем его
+						_error = fParser && checkFormulaStack(fParser);
+						if (_error !== null) {
+							return _error;
+						}
+					}
 					break;
 				case AscCommonExcel.ECfvoType.Number:
+					if (_isNumeric) {
 
+					} else if (_val && _val[0] !== "=") {
+						_val = '"' + _val + '"';
+					} else {
+						fParser = _doParseFormula(_val);
+						//если внутри диапазон - проверяем его
+						_error = fParser && checkFormulaStack(fParser);
+						if (_error !== null) {
+							return _error;
+						}
+					}
 					break;
 				case AscCommonExcel.ECfvoType.Percent:
-					if (isNumeric) {
+					if (_isNumeric) {
 						if (_val < 0 && _val > 100) {
 							//is not valid precentile
 							return asc_error.NotValidPercentage;
@@ -2166,9 +2203,9 @@
 					} else if (_val && _val[0] !== "=") {
 						_val = '"' + _val + '"';
 					} else {
-						var fParser = _doParseFormula(_val);
+						fParser = _doParseFormula(_val);
 						//если внутри диапазон - проверяем его
-						var _error = fParser && checkFormulaStack(fParser);
+						_error = fParser && checkFormulaStack(fParser);
 						if (_error !== null) {
 							return _error;
 						}
@@ -2176,7 +2213,7 @@
 					break;
 				case AscCommonExcel.ECfvoType.Percentile:
 					//в случае с индивидуальное проверкой Percentile - выдаём только 2 ошибки
-					if (isNumeric) {
+					if (_isNumeric) {
 						if (_val < 0 && _val > 100) {
 							//is not valid precentile
 							return asc_error.NotValidPercentile;
@@ -2186,13 +2223,57 @@
 					}
 					break;
 			}
+
+			return null;
 		};
 
-		if (type === Asc.ECfType.colorScale) {
-			//value, type
-			for (i = 0; i < props.length; i++) {
-				_checkValue(props[i][0], props[i][1]);
+		var compareRefs = function (_prevVal, _prevType, _prevNum, _val, _type, _isNum) {
+			//далее сравниваем ближайшие значения с одним типом, предыдущее должно быть меньше следующего
+			//в databar ошибка для подобного сравнения не возникает
+			//для iconSet сравниваем числа для типов Number/Percent/Percentile - должны идти по убыванию, сраниваем только соседние
+
+			if (type === Asc.ECfType.colorScale) {
+				if (_prevType === _type && type !== AscCommonExcel.ECfvoType.Formula && _prevVal > _val) {
+					return asc_error.ValueMustBeGreaterThen;
+				}
+			} else if (type === Asc.ECfType.iconSet) {
+				if (_prevType !== AscCommonExcel.ECfvoType.Formula && type !== AscCommonExcel.ECfvoType.Formula &&
+					_val > _prevVal) {
+					return asc_error.IconDataRangesOverlap;
+				}
 			}
+
+			return null;
+		};
+
+		//value, type
+		var prevType, prevVal, prevNum;
+		var nError;
+		for (i = 0; i < props.length; i++) {
+			var _isNumeric = isNumeric(props[i][0]);
+			nError = _checkValue(props[i][0], props[i][1], _isNumeric);
+			if (nError !== null) {
+				return [nError, i];
+			}
+
+			if (prevType === undefined) {
+				prevType = props[i][1];
+				prevVal = props[i][0];
+				prevNum = _isNumeric;
+			} else {
+				nError = compareRefs(prevVal, prevType, prevNum, props[i][0], props[i][1], _isNumeric);
+				if (nError !== null) {
+					return [nError, i];
+				}
+
+				prevType = props[i][1];
+				prevVal = props[i][0];
+				prevNum = _isNumeric;
+			}
+		}
+
+		if (type === Asc.ECfType.colorScale) {
+
 		} else if (type === Asc.ECfType.dataBar) {
 
 		} else if (type === Asc.ECfType.expression) {
@@ -2200,6 +2281,8 @@
 		} else if (type === Asc.ECfType.cellIs) {
 
 		} else if (type === Asc.ECfType.containsText) {
+
+		} else if (type === Asc.ECfType.iconSet) {
 
 		}
 	}
