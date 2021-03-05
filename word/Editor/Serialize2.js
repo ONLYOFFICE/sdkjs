@@ -1532,7 +1532,7 @@ function readMoveRangeStart(length, bcr, stream, oReadResult, oParStruct, isFrom
 	var res = bcr.Read1(length, function(t, l) {
 		return ReadMoveRangeStartElem(t, l, stream, reviewInfo, options);
 	});
-	if (options.name && options.id) {
+	if (null !== options.name && null !== options.id) {
 		var move = new CParaRevisionMove(true, isFrom, options.name, reviewInfo);
 		oReadResult.moveRanges[options.id] = move;
 		oParStruct.addToContent(move);
@@ -1543,7 +1543,6 @@ function readMoveRangeEnd(length, bcr, stream, oReadResult, oParStruct, isFrom, 
 	if (!oParStruct) {
 		return false;
 	}
-	var oldPos = stream.GetCurPos();
 	var options = {id: null};
 	bcr.Read1(length, function(t, l) {
 		return ReadMoveRangeEndElem(t, l, stream, options);
@@ -1558,9 +1557,6 @@ function readMoveRangeEnd(length, bcr, stream, oReadResult, oParStruct, isFrom, 
 		} else {
 			oParStruct.addToContent(new CParaRevisionMove(false, isFrom, moveStart.GetMarkId()));
 		}
-	} else {
-		stream.Seek2(oldPos);
-		return false;
 	}
 	return true;
 }
@@ -1585,7 +1581,6 @@ function readBookmarkEnd(length, bcr, stream, oReadResult, oParStruct) {
 	if (!oParStruct) {
 		return false;
 	}
-	var oldPos = stream.GetCurPos();
 	var bookmark = oReadResult.bookmarkForRead;
 	bookmark.BookmarkId = undefined;
 	bcr.Read1(length, function(t, l){
@@ -1594,9 +1589,6 @@ function readBookmarkEnd(length, bcr, stream, oReadResult, oParStruct) {
 	if (oReadResult.bookmarksStarted[bookmark.BookmarkId]) {
 		delete oReadResult.bookmarksStarted[bookmark.BookmarkId];
 		oParStruct.addToContent(new CParagraphBookmark(false, bookmark.BookmarkId));
-	} else {
-		stream.Seek2(oldPos);
-		return false;
 	}
 	return true;
 }
