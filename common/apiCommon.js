@@ -256,7 +256,7 @@
 	asc_CSignatureLine.prototype.asc_setEmail = function(v){ this.email = v; };
 	asc_CSignatureLine.prototype.asc_getInstructions = function(){ return this.instructions; };
 	asc_CSignatureLine.prototype.asc_setInstructions = function(v){ this.instructions = v; };
-	asc_CSignatureLine.prototype.asc_getShowDate = function(){ return this.showDate; };
+	asc_CSignatureLine.prototype.asc_getShowDate = function(){ return this.showDate !== false; };
 	asc_CSignatureLine.prototype.asc_setShowDate = function(v){ this.showDate = v; };
 	asc_CSignatureLine.prototype.asc_getValid = function(){ return this.valid; };
 	asc_CSignatureLine.prototype.asc_setValid = function(v){ this.valid = v; };
