@@ -940,6 +940,9 @@
 
 				case 38: // up
 					stop();                          // Отключим стандартную обработку браузера нажатия up
+					if (canEdit && !t.getCellEditMode() && !selectionDialogMode && event.altKey && t.handlers.trigger("onDataValidation")) {
+						return result;
+					}
 					dr = ctrlKey ? -1.5 : -1;  // Движение стрелками (влево-вправо, вверх-вниз)
 					break;
 
@@ -952,6 +955,9 @@
 					stop();                          // Отключим стандартную обработку браузера нажатия down
 					// Обработка Alt + down
 					if (canEdit && !t.getCellEditMode() && !selectionDialogMode && event.altKey) {
+						if (t.handlers.trigger("onDataValidation")) {
+							return result;
+						}
 						t.handlers.trigger("showAutoComplete");
 						return result;
 					}
