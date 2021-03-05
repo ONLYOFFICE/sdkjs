@@ -6143,7 +6143,7 @@ CT_pivotTableDefinition.prototype.createGroupRangePr = function (fld) {
 	return this.cacheDefinition.createGroupRangePr(fld);
 };
 CT_pivotTableDefinition.prototype.groupPivot = function (api, layout, opt_rangePr, opt_dateTypes) {
-	var autoRangePrRes;
+	var newRangePrRes;
 	var sheetId = this.worksheet.getId();
 	var pivotTable = this;
 	var fieldGroupType = pivotTable.getFieldGroupType(layout.fld);
@@ -6169,12 +6169,11 @@ CT_pivotTableDefinition.prototype.groupPivot = function (api, layout, opt_rangeP
 		});
 	} else if (rangePrRes) {
 		rangePrRes.rangePr = rangePrRes.rangePr.clone();
-		autoRangePrRes = pivotTable.createGroupRangePr(baseFld);
-		api.handlers.trigger("asc_onShowPivotGroupDialog", rangePrRes.rangePr, rangePrRes.dateTypes, autoRangePrRes);
+		newRangePrRes = pivotTable.createGroupRangePr(baseFld);
+		api.handlers.trigger("asc_onShowPivotGroupDialog", rangePrRes.rangePr, rangePrRes.dateTypes, newRangePrRes.rangePr);
 	} else if (1 === layout.getGroupSize() && c_oAscGroupType.Text !== pivotTable.getFieldGroupType(layout.fld)) {
 		var newRangePrRes = pivotTable.createGroupRangePr(baseFld);
-		autoRangePrRes = newRangePrRes.rangePr.clone();
-		api.handlers.trigger("asc_onShowPivotGroupDialog", newRangePrRes.rangePr, newRangePrRes.dateTypes, autoRangePrRes);
+		api.handlers.trigger("asc_onShowPivotGroupDialog", newRangePrRes.rangePr, newRangePrRes.dateTypes, newRangePrRes.rangePr.clone());
 	} else if (layout.getGroupSize() > 1) {
 		api._changePivotAndConnectedByPivotCacheWithLock(pivotTable, false, function (confirmation, pivotTables) {
 			var changeRes = api._changePivot(pivotTable, confirmation, true, function () {
