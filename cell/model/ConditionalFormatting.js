@@ -2073,29 +2073,6 @@
 		return new AscCommonExcel.RgbColor((this.r2 << 16) + (this.g2 << 8) + this.b2);
 	};
 
-	function fParseChartFormula(sFormula) {
-		if(!(typeof sFormula === "string" && sFormula.length > 0)) {
-			return [];
-		}
-		var oWB = Asc.editor && Asc.editor.wbModel;
-		if(!oWB) {
-			return [];
-		}
-		var _sFormula = sFormula;
-		if(_sFormula.charAt(0) === '=') {
-			_sFormula = _sFormula.slice(1);
-		}
-		var oWS = oWB.getWorksheet(0);
-		if(!oWS) {
-			return [];
-		}
-		var res;
-		AscCommonExcel.executeInR1C1Mode(false, function() {
-			res = AscCommonExcel.getRangeByRef(_sFormula, oWS);
-		});
-		return res;
-	}
-
 	function isValidDataRefCf(type, props) {
 		var i;
 		var ws;
@@ -2279,22 +2256,22 @@
 				if (type === Asc.ECfType.expression) {
 					nError = _checkValue(props[i][0], AscCommonExcel.ECfvoType.Formula);
 					if (nError !== null) {
-						return nError;
+						return [nError, i];
 					}
 				} else if (type === Asc.ECfType.cellIs) {
 					nError = _checkValue(props[i][0], AscCommonExcel.ECfvoType.Formula);
 					if (nError !== null) {
-						return nError;
+						return [nError, i];
 					}
 				} else if (type === Asc.ECfType.containsText) {
 					nError = _checkValue(props[i][0], AscCommonExcel.ECfvoType.Formula);
 					if (nError !== null) {
-						return nError;
+						return [nError, i];
 					}
 				} else if (type === Asc.ECfType.top10) {
 					_isNumeric = isNumeric(props[i][0]);
 					if (!_isNumeric || props[i][0] < 0 || props[i][0] > 1000) {
-						return asc_error.ErrorTop10Between;
+						return [asc_error.ErrorTop10Between, i];
 					}
 				}
 
