@@ -2906,7 +2906,7 @@
 			{
 				if(Asc.c_oAscError.ID.No === AscFormat.isValidChartRange(dataRange))
 				{
-					range = AscFormat.fParseChartFormula(dataRange);
+					range = AscFormat.fParseChartFormulaExternal(dataRange);
 				}
 			}
 		}

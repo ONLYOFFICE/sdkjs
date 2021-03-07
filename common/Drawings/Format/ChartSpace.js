@@ -12056,7 +12056,7 @@ var GLOBAL_PATH_COUNT = 0;
     };
     CChartSpace.prototype.setRange = function(sRange) {
         var oDataRange = this.getDataRefs();
-        var aRefs = oDataRange.getSeriesRefsFromUnionRefs(AscFormat.fParseChartFormula(sRange), undefined, AscFormat.isScatterChartType(this.getChartType()));
+        var aRefs = oDataRange.getSeriesRefsFromUnionRefs(AscFormat.fParseChartFormulaExternal(sRange), undefined, AscFormat.isScatterChartType(this.getChartType()));
         if(!Array.isArray(aRefs)) {
             this.buildSeries([]);
         }
@@ -12124,9 +12124,7 @@ var GLOBAL_PATH_COUNT = 0;
         var aAllSeries = this.getAllSeries();
         var oFirstSeries = aAllSeries[0];
         if(oFirstSeries) {
-            if(oFirstSeries.cat) {
-                return oFirstSeries.cat.getFormula();
-            }
+            return oFirstSeries.asc_getCatValues();
         }
         return "";
     };
@@ -13237,7 +13235,7 @@ var GLOBAL_PATH_COUNT = 0;
         }
         var bScatter = AscFormat.isScatterChartType(options.getType());
         var oDataRange = new AscFormat.CChartDataRefs(null);
-        var aSeriesRefs = oDataRange.getSeriesRefsFromUnionRefs(AscFormat.fParseChartFormula(sRange), bHorValues, bScatter);
+        var aSeriesRefs = oDataRange.getSeriesRefsFromUnionRefs(AscFormat.fParseChartFormulaExternal(sRange), bHorValues, bScatter);
         if(!Array.isArray(aSeriesRefs)) {
             return [];
         }
