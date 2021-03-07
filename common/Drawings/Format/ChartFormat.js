@@ -3791,7 +3791,7 @@
         }
         return false;
     };
-    CSeriesBase.prototype.checR1C1ModeForExternal = function(sFormula) {
+    CSeriesBase.prototype.checkR1C1ModeForExternal = function(sFormula) {
         var bR1C1Mode = false;
         if(typeof AscCommonExcel === "object" && AscCommonExcel !== null) {
             bR1C1Mode = AscCommonExcel.g_R1C1Mode;
@@ -3814,7 +3814,7 @@
     CSeriesBase.prototype.asc_getName = function() {
         var oThis = this;
         return AscFormat.ExecuteNoHistory(function() {
-                return oThis.checR1C1ModeForExternal(oThis.getName());
+                return oThis.checkR1C1ModeForExternal(oThis.getName());
             }, this, []);
     };
     CSeriesBase.prototype["asc_getName"] = CSeriesBase.prototype.asc_getName;
@@ -3872,7 +3872,7 @@
     CSeriesBase.prototype.asc_getValues = function() {
         var oThis = this;
         return AscFormat.ExecuteNoHistory(function() {
-            return oThis.checR1C1ModeForExternal(oThis.val.getFormula());
+            return oThis.checkR1C1ModeForExternal(oThis.val.getFormula());
         }, this, []);
     };
     CSeriesBase.prototype["asc_getValues"] = CSeriesBase.prototype.asc_getValues;
@@ -3907,7 +3907,7 @@
         var oThis = this;
         return AscFormat.ExecuteNoHistory(function() {
             if(oThis.cat) {
-                return oThis.checR1C1ModeForExternal(oThis.cat.getFormula());
+                return oThis.checkR1C1ModeForExternal(oThis.cat.getFormula());
             }
             else {
                 return "";
@@ -3919,7 +3919,7 @@
         var oThis = this;
         return AscFormat.ExecuteNoHistory(function() {
             if(oThis.xVal) {
-                return oThis.checR1C1ModeForExternal(oThis.xVal.getFormula());
+                return oThis.checkR1C1ModeForExternal(oThis.xVal.getFormula());
             }
             else {
                 return "";
@@ -3950,23 +3950,23 @@
     };
     CSeriesBase.prototype["asc_IsValidYValues"] = CSeriesBase.prototype.asc_IsValidYValues;
     CSeriesBase.prototype.asc_getYValues = function() {
-        return AscFormat.ExecuteNoHistory(function() {
-            if(this.yVal) {
-                return this.yVal.getFormula();
-            }
-            return "";
-        }, this, []);
-    };
-    CSeriesBase.prototype["asc_getYValues"] = CSeriesBase.prototype.asc_getYValues;
-    CSeriesBase.prototype.asc_getYValuesArr = function() {
         var oThis = this;
         return AscFormat.ExecuteNoHistory(function() {
             if(oThis.yVal) {
-                return oThis.checR1C1ModeForExternal(oThis.yVal.getFormula());
+                return oThis.checkR1C1ModeForExternal(oThis.yVal.getFormula());
             }
             else {
                 return "";
             }
+        }, this, []);
+    };
+    CSeriesBase.prototype["asc_getYValues"] = CSeriesBase.prototype.asc_getYValues;
+    CSeriesBase.prototype.asc_getYValuesArr = function() {
+        return AscFormat.ExecuteNoHistory(function() {
+            if(this.yVal) {
+                return this.yVal.getValues();
+            }
+            return [];
         }, this, []);
     };
     CSeriesBase.prototype["asc_getYValuesArr"] = CSeriesBase.prototype.asc_getYValuesArr;
