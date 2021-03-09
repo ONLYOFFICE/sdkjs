@@ -12044,7 +12044,7 @@
 	};
 	Api.prototype.CoAuthoringChatSendMessage = function(sString)
 	{
-		if (typeof sString !== 'string')
+		if (typeof sString !== 'string' && sString !== '')
 			return false;
 
 		editor.asc_coAuthoringChatSendMessage(sString);
