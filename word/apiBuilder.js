@@ -12042,6 +12042,15 @@
 			oDocument.Document.RemoveSelection();
 		}
 	};
+	Api.prototype.CoAuthoringChatSendMessage = function(sString)
+	{
+		if (typeof sString !== 'string')
+			return false;
+
+		editor.asc_coAuthoringChatSendMessage(sString);
+		return true;
+	};
+	
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export
@@ -12075,6 +12084,8 @@
 	Api.prototype["ReplaceDocumentContent"]          = Api.prototype.ReplaceDocumentContent;
 	Api.prototype["MailMerge"]                       = Api.prototype.MailMerge;
 	Api.prototype["ReplaceTextSmart"]				 = Api.prototype.ReplaceTextSmart;
+	Api.prototype["CoAuthoringChatSendMessage"]		 = Api.prototype.CoAuthoringChatSendMessage;
+	
 	ApiUnsupported.prototype["GetClassType"]         = ApiUnsupported.prototype.GetClassType;
 
 	ApiDocumentContent.prototype["GetClassType"]     = ApiDocumentContent.prototype.GetClassType;
