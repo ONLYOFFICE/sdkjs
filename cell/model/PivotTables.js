@@ -1930,15 +1930,6 @@ CT_PivotCacheDefinition.prototype.getGroupBase = function(fld) {
 	var baseFld = cacheFields[fld].getGroupBase();
 	return (null === baseFld || undefined === baseFld) ? fld : baseFld;
 };
-CT_PivotCacheDefinition.prototype.ungroup = function() {
-	this.setPivotCacheId(AscCommon.CreateUInt32());
-};
-CT_PivotCacheDefinition.prototype.expand = function() {
-	this.setPivotCacheId(AscCommon.CreateUInt32());
-};
-CT_PivotCacheDefinition.prototype.collapse = function() {
-	this.setPivotCacheId(AscCommon.CreateUInt32());
-};
 
 function CT_PivotCacheDefinitionX14() {
 //Attributes
@@ -2186,10 +2177,12 @@ CT_PivotCacheRecords.prototype._getDataMapRowToTotal = function(cacheFields, row
 	for (i = 0; i < rowMapCur.total.length; ++i) {
 		total = rowMapCur.total[i];
 		var dataIndex = dataFields[i].fld;
-		if (dataIndex < this.getColsCount()) {
-			val = this._cols[dataIndex].get(row);
+		var cacheField = cacheFields[dataIndex];
+		var cacheFieldBaseIndex = cacheField.getGroupBaseIndex(dataIndex);
+		if (cacheFieldBaseIndex < this.getColsCount()) {
+			val = this._cols[cacheFieldBaseIndex].get(row);
 			if (c_oAscPivotRecType.Index === val.type && cacheFields) {
-				var cacheField = cacheFields[dataIndex];
+				var cacheField = cacheFields[cacheFieldBaseIndex];
 				val = cacheField && cacheField.getSharedItem(val.val) || val;
 			}
 			if (c_oAscPivotRecType.Number === val.type || c_oAscPivotRecType.DateTime === val.type) {
@@ -3829,6 +3822,9 @@ CT_pivotTableDefinition.prototype._getPivotLabelButtonsRowColLables = function (
 		r1 = pivotRange.r1 + location.firstHeaderRow;
 		c1 = pivotRange.c1 + location.firstDataCol;
 	}
+	if (!items || !fields) {
+		return;
+	}
 	var pivotFields = this.asc_getPivotFields();
 	for (i = 0; i < items.length; ++i) {
 		var item = items[i];
@@ -4053,7 +4049,7 @@ CT_pivotTableDefinition.prototype.checkPivotFieldItem = function(index, pivotFie
 	}
 	pivotField.items = newItems;
 	if (!oldCacheField) {
-		pivotField.sortItems(Asc.c_oAscSortOptions.Ascending, cacheField.sharedItems);
+		pivotField.sortItems(Asc.c_oAscSortOptions.Ascending, cacheField.getSharedItems());
 	}
 	pivotField.checkSubtotal();
 	History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_PivotField,
@@ -6172,7 +6168,7 @@ CT_pivotTableDefinition.prototype.groupPivot = function (api, layout, opt_rangeP
 		newRangePrRes = pivotTable.createGroupRangePr(baseFld);
 		api.handlers.trigger("asc_onShowPivotGroupDialog", rangePrRes.rangePr, rangePrRes.dateTypes, newRangePrRes.rangePr);
 	} else if (1 === layout.getGroupSize() && c_oAscGroupType.Text !== pivotTable.getFieldGroupType(layout.fld)) {
-		var newRangePrRes = pivotTable.createGroupRangePr(baseFld);
+		newRangePrRes = pivotTable.createGroupRangePr(baseFld);
 		api.handlers.trigger("asc_onShowPivotGroupDialog", newRangePrRes.rangePr, newRangePrRes.dateTypes, newRangePrRes.rangePr.clone());
 	} else if (layout.getGroupSize() > 1) {
 		api._changePivotAndConnectedByPivotCacheWithLock(pivotTable, false, function (confirmation, pivotTables) {
@@ -6241,10 +6237,13 @@ CT_pivotTableDefinition.prototype.ungroupPivot = function (api, layout) {
 };
 CT_pivotTableDefinition.prototype.groupRangePr = function (fld, rangePr, dateTypes) {
 	//check params
+	if (rangePr.groupInterval <= 0) {
+		rangePr.groupInterval = 1;
+	}
 	if (dateTypes) {
 		dateTypes.sort();
 		rangePr.groupBy = dateTypes[0];
-		if (dateTypes.length > 1 || c_oAscGroupBy.Days !== rangePr.groupBy || rangePr.groupInterval <= 0) {
+		if (dateTypes.length > 1 || c_oAscGroupBy.Days !== rangePr.groupBy) {
 			rangePr.groupInterval = 1;
 		}
 	} else {
@@ -6281,8 +6280,11 @@ CT_pivotTableDefinition.prototype.ungroupRangePr = function (fld) {
 	var pivotFields = this.asc_getPivotFields();
 	var cacheFields = this.asc_getCacheFields();
 	var removeFields = this.cacheDefinition.ungroupRangePr(fld);
-	pivotFields[fld].init(cacheFields[fld].getGroupOrSharedSize());
-	pivotFields[fld].checkSubtotal();
+	var pivotField = pivotFields[fld];
+	pivotField.init(cacheFields[fld].getGroupOrSharedSize());
+	var sortType = pivotField.sortType !== c_oAscFieldSortType.Manual ? pivotField.sortType : Asc.c_oAscSortOptions.Ascending;
+	pivotField.sortItems(sortType, cacheFields[fld].getGroupOrSharedItems());
+	pivotField.checkSubtotal();
 	if (removeFields.length > 0) {
 		var pivotFieldsMap = new Map();
 		var removeIndex = 0;
@@ -7035,9 +7037,7 @@ CT_DateTime.prototype.readAttributes = function(attr, uq) {
 		var val;
 		val = vals["v"];
 		if (undefined !== val) {
-			var d = new Asc.cDate(uq(val));
-			this.v = new Asc.cDate(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(),
-				d.getSeconds(),	d.getMilliseconds())).getExcelDateWithTime();
+			this.v = Asc.cDate.prototype.fromISO8601(val).getExcelDateWithTime2();
 		}
 		val = vals["u"];
 		if (undefined !== val) {
@@ -7076,7 +7076,7 @@ CT_DateTime.prototype.toXml = function(writer, name) {
 CT_DateTime.prototype.toXml2 = function(writer, name, val, obj) {
 	writer.WriteXmlNodeStart(name);
 	if (null !== val) {
-		writer.WriteXmlAttributeStringEncode("v", Asc.cDate.prototype.getDateFromExcelWithTime(val).toISOString().slice(0, 19));
+		writer.WriteXmlAttributeStringEncode("v", Asc.cDate.prototype.getDateFromExcelWithTime2(val).toISOString().slice(0, 19));
 	}
 	if (obj) {
 		if (null !== obj.u) {
@@ -9296,12 +9296,16 @@ CT_CacheField.prototype.createGroupRangePr = function () {
 			while (rangePr.groupInterval >= diff) {
 				rangePr.groupInterval /= 10;
 			}
+			rangePr.groupInterval *= 10;
 		}
 	} else if (c_oAscGroupType.Date === groupType) {
 		var minMaxDate = sharedItems.getMinMaxDate();
-		rangePr.groupBy = c_oAscGroupBy.Days;
+		rangePr.groupBy = c_oAscGroupBy.Months;
 		rangePr.startDate = minMaxDate.minDate;
 		rangePr.endDate = minMaxDate.maxDate;
+		if (rangePr.endDate.getExcelDateWithTime2() === rangePr.endDate.getExcelDate()) {
+			rangePr.endDate.addDays2(1);
+		}
 	}
 	rangePr.correctValues();
 	return rangePr;
@@ -12467,8 +12471,8 @@ CT_SharedItems.prototype.getMinMaxValue = function() {
 CT_SharedItems.prototype.getMinMaxDate = function () {
 	var res = this.getMinMaxValue();
 	return {
-		minDate: Asc.cDate.prototype.getDateFromExcelWithTime(res.minValue),
-		maxDate: Asc.cDate.prototype.getDateFromExcelWithTime(res.maxValue)
+		minDate: Asc.cDate.prototype.getDateFromExcelWithTime2(res.minValue),
+		maxDate: Asc.cDate.prototype.getDateFromExcelWithTime2(res.maxValue)
 	};
 };
 
@@ -12578,7 +12582,7 @@ CT_FieldGroup.prototype.getGroupIndex = function(index, sharedItem) {
 		if (c_oAscGroupType.Number === fieldGroupType && c_oAscPivotRecType.Number === sharedItem.type) {
 			res = this.rangePr.getGroupIndex(sharedItem.val, this.groupItems.getCount() - 1);
 		} else if (c_oAscGroupType.Date === fieldGroupType && c_oAscPivotRecType.DateTime === sharedItem.type) {
-			var date = Asc.cDate.prototype.getDateFromExcelWithTime(sharedItem.val)
+			var date = Asc.cDate.prototype.getDateFromExcelWithTime2(sharedItem.val)
 			res = this.rangePr.getGroupIndex(date, this.groupItems.getCount() - 1);
 		}
 	} else if (this.discretePr) {
@@ -12601,7 +12605,7 @@ CT_FieldGroup.prototype.group = function(fld, baseCacheField, rangePr, groupMap)
 		if (c_oAscGroupType.Number === fieldGroupType && c_oAscPivotRecType.Number === sharedItem.type) {
 			res = this.rangePr.getGroupIndex(sharedItem.val, this.groupItems.getCount() - 1);
 		} else if(c_oAscGroupType.Date === fieldGroupType && c_oAscPivotRecType.DateTime === sharedItem.type) {
-			var date = Asc.cDate.prototype.getDateFromExcelWithTime(sharedItem.val)
+			var date = Asc.cDate.prototype.getDateFromExcelWithTime2(sharedItem.val)
 			res = this.rangePr.getGroupIndex(date, this.groupItems.getCount() - 1);
 		}
 	} else if (groupMap) {
@@ -13472,15 +13476,11 @@ CT_RangePr.prototype.readAttributes = function(attr, uq) {
 		}
 		val = vals["startDate"];
 		if (undefined !== val) {
-			var d = new Asc.cDate(uq(val));
-			this.startDate = new Asc.cDate(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(),
-				d.getSeconds(),	d.getMilliseconds()));
+			this.startDate = Asc.cDate.prototype.fromISO8601(val);
 		}
 		val = vals["endDate"];
 		if (undefined !== val) {
-			var d = new Asc.cDate(uq(val));
-			this.endDate = new Asc.cDate(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(),
-				d.getSeconds(),	d.getMilliseconds()));
+			this.endDate = Asc.cDate.prototype.fromISO8601(val);
 		}
 		val = vals["groupInterval"];
 		if (undefined !== val) {
@@ -13534,8 +13534,14 @@ CT_RangePr.prototype.asc_getEndNum = function() {
 CT_RangePr.prototype.asc_getStartDate = function() {
 	return this.startDate && this.startDate.getTime();
 };
+CT_RangePr.prototype.asc_getStartDateText = function() {
+	return this._getDateText(this.startDate);
+};
 CT_RangePr.prototype.asc_getEndDate = function() {
 	return this.endDate && this.endDate.getTime();
+};
+CT_RangePr.prototype.asc_getEndDateText = function() {
+	return this._getDateText(this.endDate);
 };
 CT_RangePr.prototype.asc_getGroupInterval = function() {
 	return this.groupInterval;
@@ -13558,8 +13564,14 @@ CT_RangePr.prototype.asc_setEndNum = function(val) {
 CT_RangePr.prototype.asc_setStartDate = function(val) {
 	this.startDate = new Asc.cDate(val);
 };
+CT_RangePr.prototype.asc_setStartDateText = function(val) {
+	this.startDate = this._setDateText(val);
+};
 CT_RangePr.prototype.asc_setEndDate = function(val) {
 	this.endDate = new Asc.cDate(val);
+};
+CT_RangePr.prototype.asc_setEndDateText = function(val) {
+	this.endDate = this._setDateText(val);
 };
 CT_RangePr.prototype.asc_setGroupInterval = function(val) {
 	this.groupInterval = val;
@@ -13567,13 +13579,22 @@ CT_RangePr.prototype.asc_setGroupInterval = function(val) {
 CT_RangePr.prototype.getGroupIndex = function(val, maxIndex) {
 	var res = 0;
 	if (this.groupBy === c_oAscGroupBy.Range) {
-		var index = Math.floor((val - this.startNum) / this.groupInterval);
-		if (index < 0) {
-			res = 0;
-		} else if (index + 1 > maxIndex) {
+		//todo remove while(case startNum=0,endNum=1,groupInterval=0.1,val=1)
+		//var index = Math.floor((val - this.startNum) / this.groupInterval);
+		res = 0;
+		//case startNum=1.1,endNum=9.9,groupInterval=0.3,val=10
+		if (AscCommon.compareNumbers(val, this.endNum) > 0) {
 			res = maxIndex;
 		} else {
-			res = index + 1;
+			var curVal = this.startNum;
+			while (AscCommon.compareNumbers(curVal, val) <= 0 && res < maxIndex) {
+				curVal += this.groupInterval;
+				res++;
+			}
+			//case startNum=1,endNum=10,groupInterval=1,val=10
+			if (res === maxIndex && 0 <= AscCommon.compareNumbers(val, this.endNum)) {
+				res = maxIndex - 1;
+			}
 		}
 	} else {
 		if(val < this.startDate) {
@@ -13598,7 +13619,8 @@ CT_RangePr.prototype.getGroupIndex = function(val, maxIndex) {
 				if (1 === this.groupInterval) {
 					res = Math.floor((val.getTime() - Date.UTC(val.getUTCFullYear())) / AscCommonExcel.c_msPerDay);
 				} else {
-					res = Math.floor((val.getTime() - this.startDate.getTime()) / AscCommonExcel.c_msPerDay / this.groupInterval);
+					var startDate = Asc.cDate.prototype.getDateFromExcel(this.startDate.getExcelDate());//trim time
+					res = Math.floor((val.getTime() - startDate.getTime()) / AscCommonExcel.c_msPerDay / this.groupInterval);
 				}
 			}
 			res += 1;//0 for "< this.startDate"
@@ -13615,7 +13637,7 @@ CT_RangePr.prototype.generateGroupItems  = function () {
 		groupItems.addString('<' + numFormat.formatToChart(this.startNum));
 		var curVal = this.startNum;
 		var nextVal = this.startNum + this.groupInterval;
-		while (curVal < this.endNum) {
+		while (AscCommon.compareNumbers(curVal, this.endNum) < 0) {
 			groupItems.addString(numFormat.formatToChart(curVal) + '-' + numFormat.formatToChart(nextVal));
 			curVal = nextVal;
 			nextVal = nextVal + this.groupInterval;
@@ -13623,7 +13645,7 @@ CT_RangePr.prototype.generateGroupItems  = function () {
 		groupItems.addString('>' + numFormat.formatToChart(curVal));
 	} else {
 		numFormatShortDate = AscCommon.oNumFormatCache.get(AscCommon.getShortDateFormat());
-		groupItems.addString('<' + numFormatShortDate.formatToChart(this.startDate.getExcelDateWithTime()));
+		groupItems.addString('<' + numFormatShortDate.formatToChart(this.startDate.getExcelDateWithTime2()));
 		if (this.groupBy === c_oAscGroupBy.Seconds || this.groupBy === c_oAscGroupBy.Minutes) {
 			for(i = 0; i < 10; ++i) {
 				groupItems.addString(':0' + i);
@@ -13640,7 +13662,7 @@ CT_RangePr.prototype.generateGroupItems  = function () {
 			date = new Asc.cDate(Date.UTC(2000, 0, 1));
 			for(i = 0; i < 12; ++i) {
 				date.setMonth(i);
-				groupItems.addString(numFormat.formatToChart(date.getExcelDateWithTime()));
+				groupItems.addString(numFormat.formatToChart(date.getExcelDateWithTime2()));
 			}
 		} else if (this.groupBy === c_oAscGroupBy.Quarters) {
 			groupItems.addString("Qtr1");
@@ -13659,22 +13681,31 @@ CT_RangePr.prototype.generateGroupItems  = function () {
 				numFormat = AscCommon.oNumFormatCache.get("d-mmm");
 				date = new Asc.cDate(Date.UTC(2000, 0, 1));
 				for(i = 0; i < 366 ; ++i) {
-					groupItems.addString(numFormat.formatToChart(date.getExcelDateWithTime()));
-					date.addDays(1);
+					groupItems.addString(numFormat.formatToChart(date.getExcelDateWithTime2()));
+					date.addDays2(1);
 				}
 			} else {
 				var curDate = new Asc.cDate(this.startDate.getTime());
-				var nextDate = new Asc.cDate(this.startDate.getTime());
-				nextDate.addDays(this.groupInterval);
+				var nextDate = new Asc.cDate(curDate.getTime());
+				nextDate.addDays2(this.groupInterval);
 				while (nextDate < this.endDate) {
-					groupItems.addString(numFormatShortDate.formatToChart(curDate.getExcelDateWithTime()) + "-" + numFormatShortDate.formatToChart(nextDate.getExcelDateWithTime()));
-					curDate.addDays(this.groupInterval);
-					nextDate.addDays(this.groupInterval);
+					nextDate.addDays2(-1);
+					groupItems.addString(numFormatShortDate.formatToChart(curDate.getExcelDate()) + " - " + numFormatShortDate.formatToChart(nextDate.getExcelDate()));
+					nextDate.addDays2(1);
+					curDate.addDays2(this.groupInterval);
+					nextDate.addDays2(this.groupInterval);
 				}
-				groupItems.addString(numFormatShortDate.formatToChart(curDate.getExcelDateWithTime()) + "-" + numFormatShortDate.formatToChart(this.endDate.getExcelDateWithTime()));
+				var endDate = new Asc.cDate(this.endDate.getTime());
+				if (endDate.getExcelDate() === endDate.getExcelDateWithTime2()) {
+					endDate.addDays2(-1);
+					if (endDate.getTime() === curDate.getTime()) {
+						endDate.addDays2(1);
+					}
+				}
+				groupItems.addString(numFormatShortDate.formatToChart(curDate.getExcelDate()) + " - " + numFormatShortDate.formatToChart(endDate.getExcelDate()));
 			}
 		}
-		groupItems.addString('>' + numFormatShortDate.formatToChart(this.endDate.getExcelDateWithTime()));
+		groupItems.addString('>' + numFormatShortDate.formatToChart(this.endDate.getExcelDateWithTime2()));
 	}
 	return groupItems;
 };
@@ -13692,9 +13723,30 @@ CT_RangePr.prototype.correctValues = function () {
 	} else {
 		if (this.startDate >= this.endDate) {
 			this.endDate = new cDate(this.startDate.getTime());
-			this.endDate.addDays(1);
+			this.endDate.addDays2(1);
 		}
 	}
+};
+CT_RangePr.prototype._getDateText = function(date) {
+	var numFormat;
+	if (date) {
+		if (date.getExcelDateWithTime2() < 1) {
+			numFormat = AscCommon.oNumFormatCache.get(AscCommon.getShortTimeFormat());
+		} else if (date.getExcelDate() === date.getExcelDateWithTime2()) {
+			numFormat = AscCommon.oNumFormatCache.get(AscCommon.getShortDateFormat());
+		} else {
+			numFormat = AscCommon.oNumFormatCache.get(AscCommon.getShortDateFormat() + ' ' + AscCommon.getShortTimeFormat());
+		}
+		return numFormat.formatToChart(date.getExcelDateWithTime2());
+	}
+	return "";
+};
+CT_RangePr.prototype._setDateText = function (val) {
+	var parseRes = AscCommon.g_oFormatParser.parse(val);
+	if (null != parseRes) {
+		return cDate.prototype.getDateFromExcelWithTime2(parseRes.value);
+	}
+	return cDate(Number.NaN);
 };
 function CT_DiscretePr() {
 //Attributes
@@ -15523,7 +15575,9 @@ prot["asc_getGroupBy"] = prot.asc_getGroupBy;
 prot["asc_getStartNum"] = prot.asc_getStartNum;
 prot["asc_getEndNum"] = prot.asc_getEndNum;
 prot["asc_getStartDate"] = prot.asc_getStartDate;
+prot["asc_getStartDateText"] = prot.asc_getStartDateText;
 prot["asc_getEndDate"] = prot.asc_getEndDate;
+prot["asc_getEndDateText"] = prot.asc_getEndDateText;
 prot["asc_getGroupInterval"] = prot.asc_getGroupInterval;
 prot["asc_setAutoStart"] = prot.asc_setAutoStart;
 prot["asc_setAutoEnd"] = prot.asc_setAutoEnd;
@@ -15531,7 +15585,9 @@ prot["asc_setGroupBy"] = prot.asc_setGroupBy;
 prot["asc_setStartNum"] = prot.asc_setStartNum;
 prot["asc_setEndNum"] = prot.asc_setEndNum;
 prot["asc_setStartDate"] = prot.asc_setStartDate;
+prot["asc_setStartDateText"] = prot.asc_setStartDateText;
 prot["asc_setEndDate"] = prot.asc_setEndDate;
+prot["asc_setEndDateText"] = prot.asc_setEndDateText;
 prot["asc_setGroupInterval"] = prot.asc_setGroupInterval;
 
 window["Asc"]["CT_PivotFilter"] = window['Asc'].CT_PivotFilter = CT_PivotFilter;

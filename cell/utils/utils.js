@@ -2954,6 +2954,14 @@
 			return res;
 		};
 
+		cDate.prototype.getExcelDateWithTime2 = function () {
+			var year = Date.prototype.getUTCFullYear.call(this);
+			var month = Date.prototype.getUTCMonth.call(this);
+			var date = Date.prototype.getUTCDate.call(this);
+
+			return (Date.UTC(year, month, date, this.getUTCHours(), this.getUTCMinutes(), this.getUTCSeconds()) - this.getExcelNullDate() ) / c_msPerDay;
+		};
+
 		cDate.prototype.getDateFromExcel = function ( val ) {
 
 			val = Math.floor( val );
@@ -2974,6 +2982,10 @@
 				}
 			}
 		};
+		
+		cDate.prototype.getDateFromExcelWithTime2 = function ( val ) {
+			return new cDate( val * c_msPerDay + this.getExcelNullDate() );
+		};
 
 		cDate.prototype.addYears = function ( counts ) {
 			this.setUTCFullYear( this.getUTCFullYear() + Math.floor( counts ) );
@@ -2991,6 +3003,9 @@
 
 		cDate.prototype.addDays = function ( counts ) {
 			this.setUTCDate( this.getUTCDate() + Math.floor( counts ) );
+		};
+		cDate.prototype.addDays2 = function ( counts ) {
+			Date.prototype.setUTCDate.call(this, Date.prototype.getUTCDate.call(this) + Math.floor( counts ) );
 		};
 
 		cDate.prototype.lastDayOfMonth = function () {
@@ -3037,6 +3052,13 @@
 		};
 		cDate.prototype.getTimeString = function (api) {
 			return api.asc_getLocaleExample(AscCommon.getShortTimeFormat(), this.getExcelDateWithTime(true) - this.getTimezoneOffset()/(60*24));
+		};
+		cDate.prototype.fromISO8601 = function (dateStr) {
+			if (dateStr.endsWith("Z")) {
+				return new cDate(dateStr);
+			} else {
+				return new cDate(dateStr + "Z");
+			}
 		};
 
 		function getIconsForLoad() {
