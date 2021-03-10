@@ -12022,7 +12022,7 @@ var GLOBAL_PATH_COUNT = 0;
                                 oSeries.addDPt(oDPt);
                             }
                         }
-                        for(nDpt = oSeries.dPt.length; nDpt > -1; --nDpt) {
+                        for(nDpt = oSeries.dPt.length - 1; nDpt > -1; --nDpt) {
                             oDPt = oSeries.dPt[nDpt];
                             if(oDPt.idx >= nValCount) {
                                 oSeries.removeDPt(nDpt);
