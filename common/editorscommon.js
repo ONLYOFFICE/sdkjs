@@ -2957,6 +2957,17 @@
 				}
 			}
 		}
+		else if (Asc.c_oAscSelectionDialogType.ConditionalFormattingRule === dialogType) {
+			if (dataRange === null || dataRange === "") {
+				return Asc.c_oAscError.ID.DataRangeError;
+			} else {
+				if (!parserHelp.isArea(dataRange) && !parserHelp.isRef(dataRange) && !parserHelp.isTable(dataRange))
+				{
+					return Asc.c_oAscError.ID.DataRangeError;
+				}
+				return Asc.c_oAscError.ID.No;
+			}
+		}
 		else
 		{
 			range = AscCommonExcel.g_oRangeCache.getAscRange(dataRange);
