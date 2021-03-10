@@ -82,7 +82,8 @@ var c_oSerTableTypes = {
 	Core: 16,
 	DocumentComments: 17,
 	CustomProperties: 18,
-	Glossary: 19
+	Glossary: 19,
+	Customs: 20
 };
 var c_oSerSigTypes = {
     Version:0
@@ -963,6 +964,12 @@ var c_oSerNotes = {
 	PrEndPos: 10,
 	PrRef: 11
 };
+var c_oSerCustoms = {
+	Custom: 0,
+	ItemId: 1,
+	Uri: 2,
+	Content: 3
+};
 var c_oSerApp = {
 	Application: 0,
 	AppVersion: 1
@@ -1784,6 +1791,9 @@ function BinaryFileWriter(doc, bMailMergeDocx, bMailMergeHtml, isCompatible, opt
 				pptx_content_writer.BinaryFileWriter.ExportToMemory(t.memory);
 				pptx_content_writer.BinaryFileWriter.ImportFromMemory(old);
 			}});
+		}
+		if (this.Document.CustomXmls.length > 0) {
+			this.WriteTable(c_oSerTableTypes.Customs, new BinaryCustomsTableWriter(this.memory, this.Document, this.Document.CustomXmls));
 		}
 		//Write Settings
 		this.WriteTable(c_oSerTableTypes.Settings, new BinarySettingsTableWriter(this.memory, this.Document, this.saveParams));
@@ -6777,16 +6787,20 @@ function BinarySettingsTableWriter(memory, doc, saveParams)
 		// if (oThis.Document.Settings && null != oThis.Document.Settings.BookFoldRevPrinting) {
 		// 	this.bs.WriteItem(c_oSer_SettingsType.BookFoldRevPrinting, function() {oThis.memory.WriteBool(oThis.Document.Settings.BookFoldRevPrinting);});
 		// }
-		if (!oThis.Document.IsSdtGlobalSettingsDefault()) {
-			var rPr = new CTextPr();
-			rPr.Color = oThis.Document.GetSdtGlobalColor();
-			this.bs.WriteItem(c_oSer_SettingsType.SdtGlobalColor, function (){oThis.brPrs.Write_rPr(rPr, null, null);});
-			this.bs.WriteItem(c_oSer_SettingsType.SdtGlobalShowHighlight, function(){oThis.memory.WriteBool(oThis.Document.GetSdtGlobalShowHighlight());});
-		}
-		if (!oThis.Document.IsSpecialFormsSettingsDefault()) {
-			var rPr = new CTextPr();
-			rPr.Color = oThis.Document.GetSpecialFormsHighlight();
-			this.bs.WriteItem(c_oSer_SettingsType.SpecialFormsHighlight, function (){oThis.brPrs.Write_rPr(rPr, null, null);});
+		//do not write this settings within Glossary
+		if(oThis.Document.GlossaryDocument) {
+			//create custom.xml
+			if (!oThis.Document.IsSdtGlobalSettingsDefault()) {
+				var rPr = new CTextPr();
+				rPr.Color = oThis.Document.GetSdtGlobalColor();
+				this.bs.WriteItem(c_oSer_SettingsType.SdtGlobalColor, function (){oThis.brPrs.Write_rPr(rPr, null, null);});
+				this.bs.WriteItem(c_oSer_SettingsType.SdtGlobalShowHighlight, function(){oThis.memory.WriteBool(oThis.Document.GetSdtGlobalShowHighlight());});
+			}
+			if (!oThis.Document.IsSpecialFormsSettingsDefault()) {
+				var rPr = new CTextPr();
+				rPr.Color = oThis.Document.GetSpecialFormsHighlight();
+				this.bs.WriteItem(c_oSer_SettingsType.SpecialFormsHighlight, function (){oThis.brPrs.Write_rPr(rPr, null, null);});
+			}
 		}
 		this.bs.WriteItem(c_oSer_SettingsType.Compat, function (){oThis.WriteCompat();});
     }
@@ -7087,6 +7101,43 @@ function BinaryNotesTableWriter(memory, doc, oNumIdMap, oMapCommentId, copyParam
 		this.bs.WriteItem(c_oSerNotes.NoteId, function() {oThis.memory.WriteLong(index);});
 		var dtw = new BinaryDocumentTableWriter(this.memory, this.Document, this.oMapCommentId, this.oNumIdMap, this.copyParams, this.saveParams, null);
 		this.bs.WriteItem(c_oSerNotes.NoteContent, function(){dtw.WriteDocumentContent(note);});
+	};
+};
+function BinaryCustomsTableWriter(memory, doc, CustomXmls)
+{
+	this.memory = memory;
+	this.Document = doc;
+	this.bs = new BinaryCommonWriter(this.memory);
+	this.CustomXmls = CustomXmls;
+	this.Write = function()
+	{
+		var oThis = this;
+		this.bs.WriteItemWithLength(function(){oThis.WriteCustomXmls();});
+	};
+	this.WriteCustomXmls = function()
+	{
+		var oThis = this;
+		for (var i = 0; i < this.CustomXmls.length; ++i) {
+			this.bs.WriteItem(c_oSerCustoms.Custom, function() {oThis.WriteCustomXml(oThis.CustomXmls[i]);});
+		}
+	};
+	this.WriteCustomXml = function(customXml) {
+		var oThis = this;
+		for(var i = 0; i < customXml.Uri.length; ++i){
+			this.bs.WriteItem(c_oSerCustoms.Uri, function () {
+				oThis.memory.WriteString3(customXml.Uri[i]);
+			});
+		}
+		if (null !== customXml.ItemId) {
+			this.bs.WriteItem(c_oSerCustoms.ItemId, function() {
+				oThis.memory.WriteString3(customXml.ItemId);
+			});
+		}
+		if (null !== customXml.Content) {
+			this.bs.WriteItem(c_oSerCustoms.Content, function() {
+				oThis.memory.WriteString3(customXml.Content);
+			});
+		}
 	};
 };
 function BinaryFileReader(doc, openParams)
@@ -7422,6 +7473,10 @@ function BinaryFileReader(doc, openParams)
 					this.Document.CustomProperties = new AscCommon.CCustomProperties();
 					this.Document.CustomProperties.fromStream(fileStream);
 					this.stream.FromFileStream(fileStream);
+					break;
+				case c_oSerTableTypes.Customs:
+					this.stream.Seek2(mtiOffBits);
+					res = (new Binary_CustomsTableReader(this.Document, this.oReadResult, this.stream, this.Document.CustomXmls)).Read();
 					break;
 				case c_oSerTableTypes.Glossary:
 					if(!this.oReadResult.bCopyPaste || this.oReadResult.isDocumentPasting()) {
@@ -15885,6 +15940,45 @@ function Binary_OtherTableReader(doc, oReadResult, stream)
         return res;
     };
 };
+function Binary_CustomsTableReader(doc, oReadResult, stream, CustomXmls) {
+	this.Document = doc;
+	this.oReadResult = oReadResult;
+	this.stream = stream;
+	this.CustomXmls = CustomXmls;
+	this.bcr = new Binary_CommonReader(this.stream);
+	this.Read = function() {
+		var oThis = this;
+		return this.bcr.ReadTable(function(t, l) {
+			return oThis.ReadCustom(t, l);
+		});
+	};
+	this.ReadCustom = function(type, length) {
+		var res = c_oSerConstants.ReadOk;
+		var oThis = this;
+		if (c_oSerCustoms.Custom === type) {
+			var custom = {Uri: [], ItemId: null, Content: null};
+			res = this.bcr.Read1(length, function(t, l) {
+				return oThis.ReadCustomContent(t, l, custom);
+			});
+			this.CustomXmls.push(custom);
+		}
+		else
+			res = c_oSerConstants.ReadUnknown;
+		return res;
+	};
+	this.ReadCustomContent = function(type, length, custom) {
+		var res = c_oSerConstants.ReadOk;
+		if (c_oSerCustoms.Uri === type) {
+			custom.Uri.push(this.stream.GetString2LE(length));
+		} else if (c_oSerCustoms.ItemId === type) {
+			custom.ItemId = this.stream.GetString2LE(length);
+		} else if (c_oSerCustoms.Content === type) {
+			custom.Content = this.stream.GetString2LE(length);
+		} else
+			res = c_oSerConstants.ReadUnknown;
+		return res;
+	};
+}
 function Binary_CommentsTableReader(doc, oReadResult, stream, oComments)
 {
     this.Document = doc;
