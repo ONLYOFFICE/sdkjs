@@ -491,7 +491,8 @@ var c_oAscPopUpSelectorType = {
   var c_oAscCFRuleTypeSettings = {
     dataBar: 1,
     colorScale: 2,
-    icons: 3
+    icons: 3,
+    format: 4
   };
 
   //----------------------------------------------------------export----------------------------------------------------
@@ -794,6 +795,7 @@ var c_oAscPopUpSelectorType = {
   prot['dataBar'] = prot.dataBar;
   prot['colorScale'] = prot.colorScale;
   prot['icons'] = prot.icons;
+  prot['format'] = prot.format;
 
 
 

@@ -2452,10 +2452,15 @@
 		[[4, '0', null], [4, '33', null], [4, '67', '67']],
 		[[4, '0', null], [4, '20', null], [4, '40', null], [4, '60', null], [4, '80', '80']]];
 
+	//[[fontColor, fillColor, borderColor]]
+	var aFormatStyles = [["FF9C0006", "FFFFC7CE"], ["FF9C5700", "FFFFEB9C"], ["FF006100", "FFC6EFCE"], [, "FFFFC7CE"],
+		["FF9C0006"], [, , "FF9C0006"]];
+
 	var conditionalFormattingPresets = {};
 	conditionalFormattingPresets[Asc.c_oAscCFRuleTypeSettings.dataBar] = aDataBarStyles;
 	conditionalFormattingPresets[Asc.c_oAscCFRuleTypeSettings.colorScale] = aColorScaleStyles;
 	conditionalFormattingPresets[Asc.c_oAscCFRuleTypeSettings.icons] = aIconsStyles;
+	conditionalFormattingPresets[Asc.c_oAscCFRuleTypeSettings.format] = aFormatStyles;
 
 	/*
 	 * Export
