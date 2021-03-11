@@ -5028,7 +5028,7 @@ var editor;
 		var sheetId = lockElem.Element["sheetId"];
 		if (-1 !== sheetId && 0 === sheetId.indexOf(AscCommonExcel.CConditionalFormattingRule.sStartLockCFId)) {
 			sheetId = sheetId.split(AscCommonExcel.CConditionalFormattingRule.sStartLockCFId)[1];
-			var wsModel = this.wbModel.getWorksheetById(lockElem.Element["sheetId"]);
+			var wsModel = this.wbModel.getWorksheetById(sheetId);
 			if (wsModel) {
 				var wsIndex = wsModel.getIndex();
 				var cFRule = wsModel.getCFRuleById(lockElem.Element["rangeOrObjectId"]);
