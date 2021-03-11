@@ -2098,6 +2098,9 @@
 							stack[i].type === AscCommonExcel.cElementType.cell3D) {
 							//ссылки должны быть только абсолютные
 							var _range = stack[i].getRange();
+							if (_range.bbox) {
+								_range = _range.bbox;
+							}
 							var isAbsRow1 = _range.isAbsRow(_range.refType1);
 							var isAbsCol1 = _range.isAbsCol(_range.refType1);
 							var isAbsRow2 = _range.isAbsRow(_range.refType2);
