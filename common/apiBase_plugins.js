@@ -706,5 +706,16 @@
             AscCommon.g_inputContext.keyPressInput = "";
         }
     };
+    /**
+     * Send message to co-authoring chat.
+     * @memberof Api
+     * @typeofeditors ["CDE", "CSE", "CPE"]
+     * @alias CoAuthoringChatSendMessage
+     * @param {string} sText
+     */
+    Api.prototype["pluginMethod_CoAuthoringChatSendMessage"] = function(sText)
+    {
+        return this.CoAuthoringChatSendMessage(sText);
+    };
 
 })(window);

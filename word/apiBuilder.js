@@ -12047,7 +12047,7 @@
 		if (typeof sString !== 'string' || sString === '')
 			return false;
 
-		editor.asc_coAuthoringChatSendMessage(sString);
+		this.asc_coAuthoringChatSendMessage(sString);
 		return true;
 	};
 
