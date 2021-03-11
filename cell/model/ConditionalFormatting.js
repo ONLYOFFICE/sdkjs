@@ -958,6 +958,7 @@
 			this.aRuleElements[0].Text = this.getContainsTextFormula(val);
 			this.aRuleElements[1] = new CFormulaCF();
 			this.aRuleElements[1].Text = val;
+			this.text = null;
 		} else {
 			this.aRuleElements = [];
 			this.aRuleElements[0] = new CFormulaCF();
@@ -987,17 +988,17 @@
 				firstCellInRange = firstCellInRange.getName();
 			});
 
-			switch (this.operator) {
-				case AscCommonExcel.ECfOperator.Operator_beginsWith:
+			switch (this.type) {
+				case Asc.ECfType.notContainsText:
 					res = "LEFT(" + firstCellInRange + ",LEN(" + val + "=" + val;
 					break;
-				case Asc.c_oAscSelectionForCFType.Operator_containsText:
+				case Asc.ECfType.containsText:
 					res = "NOT(ISERROR(SEARCH(" + val + "," + firstCellInRange + ")))";
 					break;
-				case Asc.c_oAscSelectionForCFType.Operator_endsWith:
+				case Asc.ECfType.endsWith:
 					res = "RIGHT(" + firstCellInRange + ",LEN(" + val + "=" + val;
 					break;
-				case Asc.c_oAscSelectionForCFType.Operator_notContains:
+				case Asc.ECfType.beginsWith:
 					res = "ISERROR(SEARCH(" + val + "," + firstCellInRange + "))";
 					break;
 			}
