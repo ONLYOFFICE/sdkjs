@@ -2078,7 +2078,7 @@
 		var ws;
 
 		var checkFormulaStack = function (_f) {
-			if (_f) {
+			if (!_f) {
 				return null;
 			}
 			var stack = _f.outStack;
