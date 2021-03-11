@@ -953,12 +953,56 @@
 		if (val[0] === "=") {
 			val = val.slice(1);
 			//генерируем массив
-			var ruleElement = this.aRuleElements[1];
-			return ruleElement && ruleElement.getFormula ? ruleElement.Text : null;
-
+			this.aRuleElements = [];
+			this.aRuleElements[0] = new CFormulaCF();
+			this.aRuleElements[0].Text = this.getContainsTextFormula(val);
+			this.aRuleElements[1] = new CFormulaCF();
+			this.aRuleElements[1].Text = val;
 		} else {
+			this.aRuleElements = [];
+			this.aRuleElements[0] = new CFormulaCF();
+			this.aRuleElements[0].Text = this.getContainsTextFormula(val);
 			this.text = val;
 		}
+	};
+
+	CConditionalFormattingRule.prototype.getContainsTextFormula = function (val) {
+		/*
+		 <cfRule type="containsText" priority="6" operator="containsText" text="1">
+		 <formula>NOT(ISERROR(SEARCH("1",K5)))</formula>
+		 </cfRule>
+		 <cfRule type="notContainsText" priority="5" operator="notContains" text="112313">
+		 <formula>ISERROR(SEARCH("112313",K5))</formula>
+		 </cfRule>
+		 <cfRule type="beginsWith" priority="1" operator="beginsWith" text="sdfsdfsdf">
+		 <formula>LEFT(K5,LEN("sdfsdfsdf"))="sdfsdfsdf"</formula>
+		 </cfRule>
+		 */
+
+		var res = null;
+		if (this.ranges && this.ranges[0]) {
+			var firstCellInRange = new Asc.Range(this.ranges[0].c1, this.ranges[0].r1, this.ranges[0].c1, this.ranges[0].r1);
+
+			AscCommonExcel.executeInR1C1Mode(false, function () {
+				firstCellInRange = firstCellInRange.getName();
+			});
+
+			switch (this.operator) {
+				case AscCommonExcel.ECfOperator.Operator_beginsWith:
+					res = "LEFT(" + firstCellInRange + ",LEN(" + val + "=" + val;
+					break;
+				case Asc.c_oAscSelectionForCFType.Operator_containsText:
+					res = "NOT(ISERROR(SEARCH(" + val + "," + firstCellInRange + ")))";
+					break;
+				case Asc.c_oAscSelectionForCFType.Operator_endsWith:
+					res = "RIGHT(" + firstCellInRange + ",LEN(" + val + "=" + val;
+					break;
+				case Asc.c_oAscSelectionForCFType.Operator_notContains:
+					res = "ISERROR(SEARCH(" + val + "," + firstCellInRange + "))";
+					break;
+			}
+		}
+		return res;
 	};
 
 	CConditionalFormattingRule.prototype.asc_setTimePeriod = function (val) {
