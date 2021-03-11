@@ -3293,7 +3293,7 @@
                 && AscFormat.isRealNumber(this.tx.strRef.strCache.ptCount)
                 && this.tx.strRef.strCache.ptCount > 0) {
                 if(this.tx.strRef.strCache.pts.length > 0) {
-                    return this.tx.getText();
+                    return this.tx.getText(false);
                 }
                 return "";
             }
@@ -3821,7 +3821,7 @@
     CSeriesBase.prototype.asc_getNameVal = function() {
         return AscFormat.ExecuteNoHistory(function() {
             if(this.tx) {
-                return this.tx.getText();
+                return this.tx.getText(false);
             }
             return "";
         }, this, []);
@@ -10003,6 +10003,9 @@
                 this.updateCache();
             }
         }
+        if(!this.strCache) {
+            return "";
+        }
         var aValues = this.strCache.getValues(null);
         var sRet = "";
         for(var i = 0; i < aValues.length; ++i) {
@@ -12168,7 +12171,7 @@
     CTitle.prototype.getDefaultTextForTxBody = function() {
         var sText;
         if(this.tx && this.tx.strRef) {
-            sText = this.tx.strRef.getText(true);
+            sText = this.tx.strRef.getText(false);
             if(typeof sText === "string" && sText.length > 0) {
                 return sText;
             }
@@ -12179,7 +12182,7 @@
                 if(this.parent.plotArea && this.parent.plotArea.charts.length === 1 && Array.isArray(this.parent.plotArea.charts[0].series)
                     && this.parent.plotArea.charts[0].series.length === 1 && this.parent.plotArea.charts[0].series[0].tx) {
                     var oTx = this.parent.plotArea.charts[0].series[0].tx;
-                    sText = oTx.getText(true);
+                    sText = oTx.getText(false);
                     if(typeof sText === "string" && sText.length > 0) {
                         return sText;
                     }
