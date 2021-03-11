@@ -880,11 +880,11 @@
 	};
 	CConditionalFormattingRule.prototype.asc_getValue1 = function () {
 		var ruleElement = this.aRuleElements[0];
-		return ruleElement && ruleElement.getFormula ? ruleElement.Text : null;
+		return ruleElement && ruleElement.getFormula ? "=" + ruleElement.Text : null;
 	};
 	CConditionalFormattingRule.prototype.asc_getValue2 = function () {
 		var ruleElement = this.aRuleElements[1];
-		return ruleElement && ruleElement.getFormula ? ruleElement.Text : null;
+		return ruleElement && ruleElement.getFormula ? "=" + ruleElement.Text : null;
 	};
 	CConditionalFormattingRule.prototype.asc_getColorScaleOrDataBarOrIconSetRule = function () {
 		if ((Asc.ECfType.dataBar === this.type || Asc.ECfType.iconSet === this.type ||
@@ -1003,9 +1003,7 @@
 		<formula>FLOOR(A1,1)=TODAY()-1</formula>
 		</cfRule>*/
 
-		if (val && val[0] === "=") {
-			val = val.slice(1);
-		}
+		val = this.correctFromInterface(val);
 
 		this.aRuleElements[0] = new CFormulaCF();
 		this.aRuleElements[0].Text = val;
@@ -1015,12 +1013,50 @@
 			this.aRuleElements = [];
 		}
 
-		if (val && val[0] === "=") {
-			val = val.slice(1);
-		}
+		val = this.correctFromInterface(val);
 
 		this.aRuleElements[1] = new CFormulaCF();
 		this.aRuleElements[1].Text = val;
+	};
+
+	CConditionalFormattingRule.prototype.correctFromInterface = function (val) {
+		var t = this;
+
+		var addQuotes = function (_val) {
+			var _res;
+			if (_val[0] === '"') {
+				_res = _val.replace(/\"/g, "\"\"");
+				_res = "\"" + _res + "\"";
+			} else {
+				_res = "\"" + _val + "\"";
+			}
+			return _res;
+		};
+
+		var isNumeric = !isNaN(parseFloat(val)) && isFinite(val);
+		if (!isNumeric) {
+			var isDate;
+			var isFormula;
+
+			if (val[0] === "=") {
+				val = val.slice(1);
+				isFormula = true;
+			} else {
+				isDate = AscCommon.g_oFormatParser.parseDate(val, AscCommon.g_oDefaultCultureInfo);
+			}
+
+			//храним число
+			if (isDate) {
+				val = isDate.value;
+				return val;
+			}
+
+			if (!isFormula) {
+				val = addQuotes(val);
+			}
+		}
+
+		return val;
 	};
 
 	CConditionalFormattingRule.prototype.asc_setColorScaleOrDataBarOrIconSetRule = function (val) {
@@ -2245,7 +2281,7 @@
 		var nError;
 		var _isNumeric;
 		for (i = 0; i < props.length; i++) {
-			if (undefined !== props[i][1]) {
+			if (undefined !== props[i][1] && type !== Asc.ECfType.top10) {
 				_isNumeric = isNumeric(props[i][0]);
 				nError = _checkValue(props[i][0], props[i][1], _isNumeric);
 				if (nError !== null) {
@@ -2285,7 +2321,12 @@
 					}
 				} else if (type === Asc.ECfType.top10) {
 					_isNumeric = isNumeric(props[i][0]);
+					var isPrecent = props[i][1];
 					if (!_isNumeric || props[i][0] < 0 || props[i][0] > 1000) {
+						return [asc_error.ErrorTop10Between, i];
+					} else if (!isPrecent && (props[i][0] < 0 || props[i][0] > 1000)) {
+						return [asc_error.ErrorTop10Between, i];
+					} else if (isPrecent && (props[i][0] < 0 || props[i][0] > 100)) {
 						return [asc_error.ErrorTop10Between, i];
 					}
 				}
