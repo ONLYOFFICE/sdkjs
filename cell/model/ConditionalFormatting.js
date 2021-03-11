@@ -1003,6 +1003,10 @@
 		<formula>FLOOR(A1,1)=TODAY()-1</formula>
 		</cfRule>*/
 
+		if (val && val[0] === "=") {
+			val = val.slice(1);
+		}
+
 		this.aRuleElements[0] = new CFormulaCF();
 		this.aRuleElements[0].Text = val;
 	};
@@ -1010,6 +1014,11 @@
 		if (!this.aRuleElements) {
 			this.aRuleElements = [];
 		}
+
+		if (val && val[0] === "=") {
+			val = val.slice(1);
+		}
+
 		this.aRuleElements[1] = new CFormulaCF();
 		this.aRuleElements[1].Text = val;
 	};
@@ -2456,8 +2465,8 @@
 		[[4, '0', null], [4, '20', null], [4, '40', null], [4, '60', null], [4, '80', '80']]];
 
 	//[[fontColor, fillColor, borderColor]]
-	var aFormatStyles = [["FF9C0006", "FFFFC7CE"], ["FF9C5700", "FFFFEB9C"], ["FF006100", "FFC6EFCE"], [, "FFFFC7CE"],
-		["FF9C0006"], [, , "FF9C0006"]];
+	var aFormatStyles = [["9C0006", "FFC7CE"], ["9C5700", "FFEB9C"], ["006100", "C6EFCE"], [, "FFC7CE"], ["9C0006"],
+		[, , "9C0006"]];
 
 	var conditionalFormattingPresets = {};
 	conditionalFormattingPresets[Asc.c_oAscCFRuleTypeSettings.dataBar] = aDataBarStyles;
