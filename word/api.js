@@ -4262,6 +4262,7 @@ background-repeat: no-repeat;\
 				oLogicDocument.Recalculate();
 				this.sendEvent("asc_onAddSignature", sGuid);
 			}
+			oLogicDocument.UpdateInterface();
 			oLogicDocument.FinalizeAction();
         }
     };
