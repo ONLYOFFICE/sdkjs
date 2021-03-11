@@ -836,7 +836,7 @@
 				arrResult.push((sheet ? sheet.sName + "!" : "") + item.getAbsName());
 			});
 		}
-		return [isActive, arrResult.join(AscCommon.FormulaSeparators.functionArgumentSeparator)];
+		return [isActive, "=" + arrResult.join(AscCommon.FormulaSeparators.functionArgumentSeparator)];
 	};
 	CConditionalFormattingRule.prototype.asc_getContainsText = function () {
 		if (null !== this.text) {
@@ -931,6 +931,9 @@
 	CConditionalFormattingRule.prototype.asc_setLocation = function (val) {
 		var t = this;
 		if (val) {
+			if (val[0] === "=") {
+				val = val.slice(1);
+			}
 			val = val.split(",");
 			this.ranges = [];
 			val.forEach(function (item) {
