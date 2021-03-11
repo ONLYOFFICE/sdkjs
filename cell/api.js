@@ -5034,7 +5034,7 @@ var editor;
 				if (cFRule && cFRule.val) {
 					cFRule = cFRule.val;
 					cFRule.isLock = lockElem.UserId;
-					this.handlers.trigger("asc_onLockCFRule", cFRule.id);
+					this.handlers.trigger("asc_onLockCFRule", cFRule.id, lockElem.UserId);
 				} else {
 					var wsView = this.wb.getWorksheetById(sheetId);
 					wsView._lockAddNewRule = true;
