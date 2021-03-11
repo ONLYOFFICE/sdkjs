@@ -4998,7 +4998,7 @@ var editor;
 			});
 		}
 
-		return [rules, sActiveRanges.join(AscCommon.FormulaSeparators.functionArgumentSeparator)];
+		return [rules, "=" + sActiveRanges.join(AscCommon.FormulaSeparators.functionArgumentSeparator)];
 	};
 
 	spreadsheet_api.prototype.asc_getPreviewCF = function (id, props, text) {
