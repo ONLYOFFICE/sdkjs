@@ -5030,11 +5030,12 @@ var editor;
 			sheetId = sheetId.split(AscCommonExcel.CConditionalFormattingRule.sStartLockCFId)[1];
 			var wsModel = this.wbModel.getWorksheetById(lockElem.Element["sheetId"]);
 			if (wsModel) {
+				var wsIndex = wsModel.getIndex();
 				var cFRule = wsModel.getCFRuleById(lockElem.Element["rangeOrObjectId"]);
 				if (cFRule && cFRule.val) {
 					cFRule = cFRule.val;
 					cFRule.isLock = lockElem.UserId;
-					this.handlers.trigger("asc_onLockCFRule", cFRule.id, lockElem.UserId);
+					this.handlers.trigger("asc_onLockCFRule", wsIndex, cFRule.id, lockElem.UserId);
 				} else {
 					var wsView = this.wb.getWorksheetById(sheetId);
 					wsView._lockAddNewRule = true;

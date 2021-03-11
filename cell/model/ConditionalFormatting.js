@@ -843,7 +843,7 @@
 			return this.text;
 		}
 		var ruleElement = this.aRuleElements[1];
-		return ruleElement && ruleElement.getFormula ? ruleElement.Text : null;
+		return ruleElement && ruleElement.getFormula ? "=" + ruleElement.Text : null;
 	};
 	CConditionalFormattingRule.prototype.asc_getTimePeriod = function () {
 		return this.timePeriod;
@@ -950,12 +950,15 @@
 
 	//TODO?
 	CConditionalFormattingRule.prototype.asc_setContainsText = function (val) {
-		this.text = val;
-		/*if (null !== this.text) {
-			return this.text;
+		if (val[0] === "=") {
+			val = val.slice(1);
+			//генерируем массив
+			var ruleElement = this.aRuleElements[1];
+			return ruleElement && ruleElement.getFormula ? ruleElement.Text : null;
+
+		} else {
+			this.text = val;
 		}
-		var ruleElement = this.aRuleElements[1];
-		return ruleElement && ruleElement.getFormula ? ruleElement.Text : null;*/
 	};
 
 	CConditionalFormattingRule.prototype.asc_setTimePeriod = function (val) {
@@ -2322,7 +2325,7 @@
 				} else if (type === Asc.ECfType.top10) {
 					_isNumeric = isNumeric(props[i][0]);
 					var isPrecent = props[i][1];
-					if (!_isNumeric || props[i][0] < 0 || props[i][0] > 1000) {
+					if (!_isNumeric) {
 						return [asc_error.ErrorTop10Between, i];
 					} else if (!isPrecent && (props[i][0] < 0 || props[i][0] > 1000)) {
 						return [asc_error.ErrorTop10Between, i];
