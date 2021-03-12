@@ -12055,6 +12055,9 @@ var GLOBAL_PATH_COUNT = 0;
         return Asc.c_oAscError.ID.No;
     };
     CChartSpace.prototype.setRange = function(sRange) {
+        if(sRange === this.getCommonRange()) {
+            return;
+        }
         var oDataRange = this.getDataRefs();
         var aRefs = oDataRange.getSeriesRefsFromUnionRefs(AscFormat.fParseChartFormulaExternal(sRange), undefined, AscFormat.isScatterChartType(this.getChartType()));
         if(!Array.isArray(aRefs)) {
