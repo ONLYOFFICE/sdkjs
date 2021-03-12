@@ -112,7 +112,8 @@ var c_oSerPaddingType = {
 var c_oSerShdType = {
     Value: 0,
     Color: 1,
-	ColorTheme: 2
+	ColorTheme: 2,
+    Fill: 3
 };
   var c_oSer_ColorThemeType = {
     Auto: 0,
@@ -260,6 +261,8 @@ BinaryCommonWriter.prototype.WriteShd = function(Shd)
     }
     if (null != color && !color.Auto)
         this.WriteColor(c_oSerShdType.Color, color);
+    if(Shd.FillColor && !Shd.FillColor.Auto)
+        this.WriteColor(c_oSerShdType.Fill, Shd.FillColor);
 	if(null != Shd.Unifill || (null != Shd.Color && Shd.Color.Auto))
     {
 		this.memory.WriteByte(c_oSerShdType.ColorTheme);
@@ -559,6 +562,9 @@ Binary_CommonReader.prototype.ReadShd = function(type, length, Shd, themeColor)
 			res = this.Read2(length, function(t, l){
 				return oThis.ReadColorTheme(t, l, themeColor);
 			});
+			break;
+		case c_oSerShdType.Fill:
+            Shd.FillColor = this.ReadColor();break;
 			break;
         default:
             res = c_oSerConstants.ReadUnknown;

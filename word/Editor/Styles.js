@@ -9876,6 +9876,7 @@ function CDocumentShd()
 {
     this.Value   = Asc.c_oAscShd.Nil;
     this.Color   = new CDocumentColor(255, 255, 255);
+	this.FillColor = undefined;
     this.Unifill = undefined;
     this.FillRef = undefined;
 }
@@ -9896,6 +9897,11 @@ CDocumentShd.prototype =
         if( undefined !== this.FillRef )
             Shd.FillRef = this.FillRef.createDuplicate();
 
+		if( undefined !== this.FillColor )
+		{
+			Shd.FillColor = new CDocumentColor(this.FillColor.r, this.FillColor.g, this.FillColor.b, this.FillColor.Auto);
+		}
+
         return Shd;
     },
 
@@ -9913,7 +9919,22 @@ CDocumentShd.prototype =
 
                 case c_oAscShdClear:
                 {
-                    return this.Color.Compare( Shd.Color ) && AscFormat.CompareUnifillBool(this.Unifill, Shd.Unifill);
+					if( !this.Color.Compare( Shd.Color ) )
+					{
+						return false;
+					}
+					if( !AscFormat.CompareUnifillBool(this.Unifill, Shd.Unifill) )
+					{
+						return false;
+					}
+					if( this.FillColor )
+					{
+						if(!this.FillColor.Compare( Shd.FillColor ))
+						{
+							return false;
+						}
+					}
+                    return true;
                 }
             }
         }
@@ -9934,6 +9955,10 @@ CDocumentShd.prototype =
             var RGBA = this.Unifill.getRGBAColor();
             return new CDocumentColor( RGBA.R, RGBA.G, RGBA.B, false );
         }
+		else if( undefined !== this.FillColor )
+		{
+			return this.FillColor;
+		}
         else
             return this.Color;
     },
@@ -9946,6 +9971,10 @@ CDocumentShd.prototype =
             var RGBA = this.Unifill.getRGBAColor();
             return new CDocumentColor( RGBA.R, RGBA.G, RGBA.B, false );
         }
+		else if( undefined !== this.FillColor )
+		{
+			return this.FillColor;
+		}
         else
             return this.Color;
     },
@@ -9992,6 +10021,10 @@ CDocumentShd.prototype =
             {
                 this.FillRef = Shd.FillRef.createDuplicate();
             }
+			if( undefined != Shd.FillColor )
+			{
+				this.FillColor = new CDocumentColor(Shd.FillColor.r, Shd.FillColor.g, Shd.FillColor.b, Shd.FillColor.Auto);
+			}
         }
         else if ( undefined === Shd.Color )
             this.Color = undefined;
@@ -10035,6 +10068,15 @@ CDocumentShd.prototype =
             {
                 Writer.WriteBool(false);
             }
+            if(this.FillColor)
+            {
+                Writer.WriteBool(true);
+                this.FillColor.Write_ToBinary(Writer);
+            }
+            else
+            {
+                Writer.WriteBool(false);
+            }
         }
     },
 
@@ -10060,6 +10102,11 @@ CDocumentShd.prototype =
                 this.FillRef = new AscFormat.StyleRef();
                 this.FillRef.Read_FromBinary(Reader);
             }
+            if(Reader.GetBool())
+            {
+                this.FillColor = new CDocumentColor();
+                this.FillColor.Read_FromBinary(Reader);
+            }
         }
         else
             this.Color.Set(0, 0, 0);
@@ -10073,7 +10120,7 @@ CDocumentShd.prototype.IsEqual = function(oShd)
 	if (Asc.c_oAscShd.Nil === this.Value)
 		return true;
 
-	return (IsEqualStyleObjects(this.Color, oShd.Color) && IsEqualStyleObjects(this.Unifill, oShd.Unifill));
+	return (IsEqualStyleObjects(this.Color, oShd.Color) && IsEqualStyleObjects(this.FillColor, oShd.FillColor) && IsEqualStyleObjects(this.Unifill, oShd.Unifill));
 };
 CDocumentShd.prototype.IsNil = function()
 {
