@@ -3696,8 +3696,10 @@
 					if (multiplyRange.isIntersect(range)) {
 						if (needClone) {
 							var _id = _rule.id;
+							var isLocked = _rule.isLock;
 							_rule = _rule.clone();
 							_rule.id = _id;
+							_rule.isLock = isLocked;
 						}
 						rules.push(_rule);
 					}
@@ -3713,8 +3715,10 @@
 					var _rule = aRules[i];
 					if (needClone) {
 						var _id = aRules[i].id;
+						var isLocked = _rule.isLock;
 						_rule = _rule.clone();
 						_rule.id = _id;
+						_rule.isLock = isLocked;
 					}
 					rules.push(_rule);
 				}

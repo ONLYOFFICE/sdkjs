@@ -5119,7 +5119,7 @@ var editor;
 				var isLockedRules = false;
 				if (wsModel.aConditionalFormattingRules && wsModel.aConditionalFormattingRules.length) {
 					wsModel.aConditionalFormattingRules.forEach(function (_rule) {
-						if (true === _rule.isLock) {
+						if (_rule.isLock) {
 							isLockedRules = true;
 						}
 					});
@@ -5172,11 +5172,11 @@ var editor;
 					var wsIndex = wsModel.getIndex();
 					var cFRule = wsModel.getCFRuleById(lockElem["rangeOrObjectId"]);
 					if (cFRule) {
-						cFRule.isLock = null;
+						cFRule.val.isLock = null;
 						this.handlers.trigger("asc_onUnLockCFRule", wsIndex, lockElem["rangeOrObjectId"]);
 					} else {
 						var wsView = this.wb.getWorksheetById(sheetId);
-						wsView._lockAddNewRule = true;
+						wsView._lockAddNewRule = null;
 					}
 				}
 			}
