@@ -5917,12 +5917,14 @@ function CDrawingDocument()
 		History.TurnOff();
 
 		var oLogicDocument = this.m_oWordControl.m_oLogicDocument;
-		var bTrackRevisions = oLogicDocument.IsTrackRevisions();
 
-		if (bTrackRevisions)
+		var bTrackRevisions = false;
+		if (oLogicDocument.IsTrackRevisions())
 		{
-			oLogicDocument.SetTrackRevisions(false);
+			bTrackRevisions = oLogicDocument.GetLocalTrackRevisions();
+			oLogicDocument.SetLocalTrackRevisions(false);
 		}
+
 		var _oldTurn = editor.isViewMode;
 		editor.isViewMode = true;
 
@@ -6118,10 +6120,10 @@ function CDrawingDocument()
 		this.m_oWordControl.m_oApi.ShowParaMarks = old_marks;
 
 		History.TurnOn();
-		if (bTrackRevisions)
-		{
-			oLogicDocument.SetTrackRevisions(true);
-		}
+
+		if (false !== bTrackRevisions)
+			oLogicDocument.SetLocalTrackRevisions(bTrackRevisions);
+
 		editor.isViewMode = _oldTurn;
 	};
 
@@ -6185,10 +6187,12 @@ function CDrawingDocument()
 		var oLogicDocument = this.m_oWordControl.m_oLogicDocument;
 		var _oldTurn = editor.isViewMode;
 		editor.isViewMode = true;
-		var bTrackRevisions = oLogicDocument.IsTrackRevisions();
-		if (bTrackRevisions)
+
+		var bTrackRevisions = false;
+		if (oLogicDocument.IsTrackRevisions())
 		{
-			oLogicDocument.SetTrackRevisions(false);
+			bTrackRevisions = oLogicDocument.GetLocalTrackRevisions();
+			oLogicDocument.SetLocalTrackRevisions(false);
 		}
 
 		var ctx = this.GuiCanvasFillTOF.getContext('2d');
@@ -6312,10 +6316,10 @@ function CDrawingDocument()
 		this.m_oWordControl.m_oApi.ShowParaMarks = old_marks;
 
 		History.TurnOn();
-		if (bTrackRevisions)
-		{
-			oLogicDocument.SetTrackRevisions(true);
-		}
+
+		if (false !== bTrackRevisions)
+			oLogicDocument.SetLocalTrackRevisions(bTrackRevisions);
+
 		editor.isViewMode = _oldTurn;
 	};
 
@@ -6887,6 +6891,114 @@ function CDrawingDocument()
         }
 	};
 
+	this.SetDrawImagePreviewBulletChangeListLevel = function(id, props, isNoCheckFonts)
+    {
+        if (!isNoCheckFonts)
+        {
+            // check need load fonts
+            var fontsDict = {};
+            for (var i = 0, count = props.Lvl.length; i < count; i++)
+            {
+                var curLvl = props.Lvl[i];
+                var text = "";
+                for (var j = 0; j < curLvl.Text.length; j++)
+                {
+                    switch (curLvl.Text[j].Type)
+                    {
+                        case Asc.c_oAscNumberingLvlTextType.Text:
+                            text += curLvl.Text[j].Value;
+                            break;
+                        case Asc.c_oAscNumberingLvlTextType.Num:
+                            text += AscCommon.IntToNumberFormat(1, curLvl.Format);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                AscFonts.FontPickerByCharacter.checkTextLight(text);
+
+                if (curLvl.TextPr && curLvl.TextPr.RFonts)
+                {
+                    if (curLvl.TextPr.RFonts.Ascii) fontsDict[curLvl.TextPr.RFonts.Ascii.Name] = true;
+                    if (curLvl.TextPr.RFonts.EastAsia) fontsDict[curLvl.TextPr.RFonts.EastAsia.Name] = true;
+                    if (curLvl.TextPr.RFonts.HAnsi) fontsDict[curLvl.TextPr.RFonts.HAnsi.Name] = true;
+                    if (curLvl.TextPr.RFonts.CS) fontsDict[curLvl.TextPr.RFonts.CS.Name] = true;
+                }
+            }
+
+            var fonts = [];
+            for (var familyName in fontsDict)
+            {
+                fonts.push(new AscFonts.CFont(AscFonts.g_fontApplication.GetFontInfoName(familyName), 0, "", 0, null));
+            }
+            AscFonts.FontPickerByCharacter.extendFonts(fonts);
+
+            if (false === AscCommon.g_font_loader.CheckFontsNeedLoading(fonts))
+            {
+                return this.SetDrawImagePreviewBulletChangeListLevel(id, props, true);
+            }
+
+            this.m_oWordControl.m_oApi.asyncMethodCallback = function()
+            {
+                this.WordControl.m_oDrawingDocument.SetDrawImagePreviewBulletChangeListLevel(id, props, true);
+            };
+            AscCommon.g_font_loader.LoadDocumentFonts2(fonts);
+            return;
+        }
+        
+        var offsetBase = 5;
+        var line_w = 2;
+		var height_px_p = document.getElementById(id[0]).clientHeight;
+		var offset = (height_px_p - (line_w << 1)) >> 1;
+        var y = (height_px_p >> 1) - (line_w >> 1);
+        var text_base_offset_x = offset + ((3.25 * AscCommon.g_dKoef_mm_to_pix) >> 0);
+        var text_base_offset_dist = (3.25 * AscCommon.g_dKoef_mm_to_pix) >> 0;
+
+        for (var k = 0; k < 9; k++) 
+        {
+			// чтобы убрать отступ у i
+			props.Lvl[k].Align = 1;
+            var parent =  document.getElementById(id[k]);
+            if (!parent)
+                return;
+
+            var width_px = parent.clientWidth;
+            var height_px = parent.clientHeight;
+            
+            var canvas = parent.firstChild;
+			if (!canvas)
+			{
+				canvas = document.createElement('canvas');
+				canvas.style.cssText = "padding:0;margin:0;user-select:none;";
+				canvas.style.width = width_px + "px";
+				canvas.style.height = height_px + "px";
+				parent.appendChild(canvas);
+			}
+
+            canvas.width = AscCommon.AscBrowser.convertToRetinaValue(width_px, true);
+            canvas.height = AscCommon.AscBrowser.convertToRetinaValue(height_px, true);
+
+            var ctx = canvas.getContext("2d");
+
+            if (AscCommon.AscBrowser.retinaPixelRatio >= 2)
+                ctx.setTransform(2, 0, 0, 2, 0, 0);
+
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = "000000"; // "#CBCBCB";
+
+            var textYs = {x: text_base_offset_x - ((4.25 * AscCommon.g_dKoef_mm_to_pix) >> 0), y: y + (line_w << 1)};
+
+            ctx.moveTo(text_base_offset_x, y); ctx.lineTo(width_px - offsetBase, y);
+            ctx.stroke();
+            ctx.beginPath();
+
+            text_base_offset_x += text_base_offset_dist;
+
+            this.privateGetParagraphByString(props.Lvl[k], k, 1, textYs.x, textYs.y, (height_px >> 1), ctx, width_px, height_px);
+        }
+    };
+
+
 	this.StartTableStylesCheck = function ()
 	{
 		this.TableStylesCheckLookFlag = true;
@@ -7012,9 +7124,12 @@ function CDrawingDocument()
 		History.TurnOff();
 		g_oTableId.m_bTurnOff = true;
 
-		var isTrackRevision = logicDoc && logicDoc.IsTrackRevisions();
-		if (isTrackRevision)
-			logicDoc.SetTrackRevisions(false);
+		var isTrackRevision = false;
+		if (logicDoc && logicDoc.IsTrackRevisions())
+		{
+			isTrackRevision = logicDoc.GetLocalTrackRevisions();
+			logicDoc.SetLocalTrackRevisions(false);
+		}
 
 		for (var i1 = 0; i1 < _styles_len; i1++)
 		{
@@ -7091,8 +7206,8 @@ function CDrawingDocument()
 		g_oTableId.m_bTurnOff = false;
 		History.TurnOn();
 
-		if (isTrackRevision)
-			logicDoc.SetTrackRevisions(true);
+		if (false !== isTrackRevision)
+			logicDoc.SetLocalTrackRevisions(isTrackRevision);
 
 		this.m_oWordControl.m_oApi.sync_InitEditorTableStyles(_dst_styles, AscCommon.AscBrowser.isCustomScalingAbove2());
 	}
@@ -7937,9 +8052,14 @@ function CDrawingDocument()
 
             var _srcDoc = this.m_oLogicDocument;
             _srcDoc.PrintSelection = true;
-            var _isTrackRevision = this.m_oLogicDocument.IsTrackRevisions();
-            if (_isTrackRevision)
-            	this.m_oLogicDocument.SetTrackRevisions(false);
+
+            var _isTrackRevision = false;
+            if (this.m_oLogicDocument.IsTrackRevisions())
+			{
+				_isTrackRevision = this.m_oLogicDocument.GetLocalTrackRevisions();
+				this.m_oLogicDocument.SetLocalTrackRevisions(false);
+			}
+
             var _document = new CDocument(_drDocument, false);
             var _srcDrawngObjects = _srcDoc.DrawingObjects;
             _srcDoc.DrawingObjects = _document.DrawingObjects;
@@ -7995,8 +8115,8 @@ function CDrawingDocument()
 
             this.printedDocument = _document;
 
-            if (_isTrackRevision)
-            	this.m_oLogicDocument.SetTrackRevisions(true);
+            if (false !== _isTrackRevision)
+            	this.m_oLogicDocument.SetLocalTrackRevisions(_isTrackRevision);
         }
         catch (err)
         {

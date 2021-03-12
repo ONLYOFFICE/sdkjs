@@ -4647,7 +4647,7 @@ DrawingObjectsController.prototype =
         }
 
         if(chart.legend) {
-            ret.putLegendPos(AscFormat.isRealNumber(chart.legend.legendPos) ? chart.legend.legendPos : c_oAscChartLegendShowSettings.bottom);
+            ret.putLegendPos(chart.legend.getPropsPos());
         }
         else {
             ret.putLegendPos(c_oAscChartLegendShowSettings.none);
@@ -8127,6 +8127,7 @@ DrawingObjectsController.prototype =
             shape_props.ShapeProperties.textFitType = props.shapeProps.textFitType;
             shape_props.ShapeProperties.vertOverflowType = props.shapeProps.vertOverflowType;
             shape_props.ShapeProperties.shadow = props.shapeProps.shadow;
+            shape_props.ShapeProperties.signatureId = props.shapeProps.signatureId;
             if(props.shapeProps.textArtProperties && oDrawingDocument)
             {
                 oTextArtProperties = props.shapeProps.textArtProperties;
@@ -8404,10 +8405,13 @@ DrawingObjectsController.prototype =
     createTextArt: function(nStyle, bWord, wsModel, sStartString)
     {
         var MainLogicDocument = (editor && editor.WordControl && editor.WordControl.m_oLogicDocument ? editor && editor.WordControl && editor.WordControl.m_oLogicDocument : null);
-        var TrackRevisions = (MainLogicDocument ? MainLogicDocument.IsTrackRevisions() : false);
 
-        if (MainLogicDocument && true === TrackRevisions)
-            MainLogicDocument.SetTrackRevisions(false);
+		var TrackRevisions = false;
+		if (MainLogicDocument && MainLogicDocument.IsTrackRevisions && MainLogicDocument.IsTrackRevisions())
+		{
+			TrackRevisions = MainLogicDocument.GetLocalTrackRevisions();
+			MainLogicDocument.SetLocalTrackRevisions(false);
+		}
 
         var oShape = new AscFormat.CShape();
         oShape.setWordShape(bWord === true);
@@ -8591,8 +8595,8 @@ DrawingObjectsController.prototype =
             oShape.txBody.setBodyPr(oBodyPr);
         }
 
-        if (MainLogicDocument && true === TrackRevisions)
-            MainLogicDocument.SetTrackRevisions(true);
+        if (false !== TrackRevisions)
+            MainLogicDocument.SetLocalTrackRevisions(TrackRevisions);
 
         return oShape;
     },

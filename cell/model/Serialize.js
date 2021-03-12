@@ -724,7 +724,8 @@
         DataBar			: 15,
         FormulaCF		: 16,
 		IconSet			: 17,
-		Dxf				: 18
+		Dxf				: 18,
+		isExt			: 19
     };
     var c_oSer_ConditionalFormattingRuleColorScale = {
         CFVO			: 0,
@@ -8566,8 +8567,9 @@
             }
             else if (c_oSer_ConditionalFormatting.ConditionalFormattingRule === type) {
                 oConditionalFormattingRule = new AscCommonExcel.CConditionalFormattingRule();
+                var ext = {isExt: false};
                 res = this.bcr.Read1(length, function (t, l) {
-                    return oThis.ReadConditionalFormattingRule(t, l, oConditionalFormattingRule);
+                    return oThis.ReadConditionalFormattingRule(t, l, oConditionalFormattingRule, ext);
                 });
                 oConditionalFormatting.aRules.push(oConditionalFormattingRule);
             }
@@ -8575,7 +8577,7 @@
                 res = c_oSerConstants.ReadUnknown;
             return res;
         };
-        this.ReadConditionalFormattingRule = function (type, length, oConditionalFormattingRule) {
+        this.ReadConditionalFormattingRule = function (type, length, oConditionalFormattingRule, ext) {
             var res = c_oSerConstants.ReadOk;
             var oThis = this;
             var oConditionalFormattingRuleElement = null;
@@ -8639,6 +8641,8 @@
                     return oThis.ReadIconSet(t, l, oConditionalFormattingRuleElement);
                 });
                 oConditionalFormattingRule.aRuleElements.push(oConditionalFormattingRuleElement);
+            } else if (c_oSer_ConditionalFormattingRule.isExt === type) {
+                ext.isExt = this.stream.GetBool();
             } else
                 res = c_oSerConstants.ReadUnknown;
             return res;

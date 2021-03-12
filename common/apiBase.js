@@ -543,6 +543,7 @@
 	baseEditorsApi.prototype.asc_removeRestriction           = function(val)
 	{
 		this.restrictions &= ~val;
+		this.onUpdateRestrictions();
 	};
 	baseEditorsApi.prototype.canEdit                         = function()
 	{
@@ -1383,12 +1384,13 @@
 	};
 	baseEditorsApi.prototype._coSpellCheckInit                   = function()
 	{
+		var t = this;
+
 		if (!this.SpellCheckApi)
 		{
 			return; // Error
 		}
 
-		var t = this;
 		if (window["AscDesktopEditor"]) {
 
             window["asc_nativeOnSpellCheck"] = function(response) {
@@ -1453,6 +1455,38 @@
 				]);
 			}
 		} else {
+			if (!this.SpellCheckUrl) {
+				this.SpellCheckApi = {};
+				this.SpellCheckApi.log = true;
+				this.SpellCheckApi.worker = new CSpellchecker({
+					enginePath: "../../../../sdkjs/common/spell/spell",
+					dictionariesPath: "./../../../../dictionaries"
+				});
+				this.SpellCheckApi.checkDictionary = function (lang) {
+					if (this.log) console.log("checkDictionary: " + lang + ": " + this.worker.checkDictionary(lang));
+					return this.worker.checkDictionary(lang);
+				};
+				this.SpellCheckApi.spellCheck = function (spellData) {
+					if (this.log) {
+						console.log("spellCheck:");
+						console.log(spellData);
+					}
+					this.worker.command(spellData);
+				};
+				this.SpellCheckApi.worker.oncommand = function (spellData) {
+					if (t.SpellCheckApi.log) {
+						console.log("onSpellCheck:");
+						console.log(spellData);
+					}
+					t.SpellCheck_CallBack(spellData);
+				};
+				this.SpellCheckApi.disconnect = function ()
+				{
+				};
+				return;
+			}
+			
+			// Deprecated old scheme with server
 			if (this.SpellCheckUrl && this.isSpellCheckEnable) {
 				this.SpellCheckApi.set_url(this.SpellCheckUrl);
 			}

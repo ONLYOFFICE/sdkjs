@@ -23,7 +23,8 @@
 			"common/apiBase.js",
 			"common/apiBase_plugins.js",
 			"word/apiCommon.js",
-			"slide/api.js"
+			"slide/api.js",
+			"common/spell/spell.js"
 		],
 		"common": [			
 			"common/downloaderfiles.js",

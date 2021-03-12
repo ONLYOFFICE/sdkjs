@@ -2903,7 +2903,8 @@ function CPresentation(DrawingDocument) {
         HyphensWithDash        : true,
         AutomaticBulletedLists : true,
         AutomaticNumberedLists : true,
-        FrenchPunctuation      : true
+        FrenchPunctuation      : true,
+		FirstLetterOfSentences : true
     };
 }
 
@@ -6480,10 +6481,20 @@ CPresentation.prototype.OnKeyDown = function (e) {
             bRetValue = keydownresult_PreventAll;
         } else if (e.KeyCode == 37) // Left Arrow
         {
+            if (this.Slides.length > 1 && !this.FocusOnNotes && !e.CtrlKey && this.DrawingDocument.SlideCurrent > 0)
+            {
+                if(this.Slides[this.CurPage].graphicObjects.selectedObjects.length === 0)
+                    this.DrawingDocument.m_oWordControl.GoToPage(this.DrawingDocument.SlideCurrent - 1);
+            }
             this.MoveCursorLeft(true === e.ShiftKey, true === e.CtrlKey);
             bRetValue = keydownresult_PreventAll;
         } else if (e.KeyCode == 38) // Top Arrow
         {
+            if (this.Slides.length > 1 && !this.FocusOnNotes && !e.CtrlKey && this.DrawingDocument.SlideCurrent > 0)
+            {
+                if(this.Slides[this.CurPage].graphicObjects.selectedObjects.length === 0)
+                this.DrawingDocument.m_oWordControl.GoToPage(this.DrawingDocument.SlideCurrent - 1);
+            }
             this.MoveCursorUp(true === e.ShiftKey, true === e.CtrlKey);
             bRetValue = keydownresult_PreventAll;
         } else if (e.KeyCode == 39) // Right Arrow
@@ -6492,6 +6503,11 @@ CPresentation.prototype.OnKeyDown = function (e) {
             // if ( true != e.ShiftKey )
             //     this.DrawingDocument.TargetStart();
 
+            if (this.Slides.length > 1 && !this.FocusOnNotes && !e.CtrlKey && this.DrawingDocument.SlideCurrent < (this.Slides.length - 1))
+            {
+                if(this.Slides[this.CurPage].graphicObjects.selectedObjects.length === 0)
+                    this.DrawingDocument.m_oWordControl.GoToPage(this.DrawingDocument.SlideCurrent + 1);
+            }
             this.MoveCursorRight(true === e.ShiftKey, true === e.CtrlKey);
             bRetValue = keydownresult_PreventAll;
         } else if (e.KeyCode == 40) // Bottom Arrow
@@ -6500,6 +6516,11 @@ CPresentation.prototype.OnKeyDown = function (e) {
             //if ( true != e.ShiftKey )
             //    this.DrawingDocument.TargetStart();
 
+            if (this.Slides.length > 1 && !this.FocusOnNotes && !e.CtrlKey && this.DrawingDocument.SlideCurrent < (this.Slides.length - 1))
+            {
+                if(this.Slides[this.CurPage].graphicObjects.selectedObjects.length === 0)
+                this.DrawingDocument.m_oWordControl.GoToPage(this.DrawingDocument.SlideCurrent + 1);
+            }
             this.MoveCursorDown(true === e.ShiftKey, true === e.CtrlKey);
             bRetValue = keydownresult_PreventAll;
         } else if (e.KeyCode == 46) // Delete
@@ -10783,6 +10804,16 @@ CPresentation.prototype.CalculateComments = function () {
 CPresentation.prototype.IsTrackRevisions = function () {
     return false;
 };
+CPresentation.prototype.GetLocalTrackRevisions = function() {
+	return false;
+};
+CPresentation.prototype.SetLocalTrackRevisions = function(isTrack) {
+};
+CPresentation.prototype.GetGlobalTrackRevisions = function() {
+	return false;
+};
+CPresentation.prototype.SetGlobalTrackRevisions = function(isTrack) {
+};
 CPresentation.prototype.IsViewModeInReview = function () {
     return false;
 };
@@ -10900,6 +10931,22 @@ CPresentation.prototype.IsAutoCorrectHyphensWithDash = function()
 CPresentation.prototype.IsAutoCorrectFrenchPunctuation = function()
 {
     return this.AutoCorrectSettings.FrenchPunctuation;
+};
+/**
+ * Выставляем настройку атозамены для первового символа предложения
+ * @param {boolean} isCorrect
+ */
+CPresentation.prototype.SetAutoCorrectFirstLetterOfSentences = function(isCorrect)
+{
+	this.AutoCorrectSettings.FirstLetterOfSentences = isCorrect;
+};
+/**
+ * Запрашиваем настройку атозамены для первового символа предложения
+ * @return {boolean}
+ */
+CPresentation.prototype.IsAutoCorrectFirstLetterOfSentences = function()
+{
+	return this.AutoCorrectSettings.FirstLetterOfSentences;
 };
 
 function collectSelectedObjects(aSpTree, aCollectArray, bRecursive, oIdMap, bSourceFormatting) {

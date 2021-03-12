@@ -325,6 +325,10 @@ CHdrFtrController.prototype.GetCurrentParagraph = function(bIgnoreSelection, arr
 {
 	return this.HdrFtr.GetCurrentParagraph(bIgnoreSelection, arrSelectedParagraphs, oPr);
 };
+CHdrFtrController.prototype.GetCurrentTablesStack = function(arrTables)
+{
+	return this.HdrFtr.GetCurrentTablesStack(arrTables);
+};
 CHdrFtrController.prototype.GetSelectedElementsInfo = function(oInfo)
 {
 	this.HdrFtr.GetSelectedElementsInfo(oInfo);

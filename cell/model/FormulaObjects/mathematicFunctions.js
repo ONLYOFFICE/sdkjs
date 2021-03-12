@@ -3705,6 +3705,8 @@
 	cRANDBETWEEN.prototype.Calculate = function (arg) {
 
 		function randBetween(a, b) {
+			a = Math.round(a);
+			b = Math.round(b);
 			return new cNumber(Math.round(Math.random() * Math.abs(a - b)) + a);
 		}
 

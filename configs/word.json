@@ -24,7 +24,8 @@
 			"common/apiBase_plugins.js",
 			"word/apiCommon.js",
 			"word/api.js",
-			"word/api_plugins.js"
+			"word/api_plugins.js",
+			"common/spell/spell.js"
 		],
 		"common": [			
 			"common/downloaderfiles.js",

@@ -4818,6 +4818,39 @@ Asc['asc_docs_api'].prototype.AddImageUrlNative = function(url, _w, _h, _pageNum
 	this.WordControl.m_oLogicDocument.Recalculate();
 	this.WordControl.m_oLogicDocument.FinalizeAction();
 };
+Asc['asc_docs_api'].prototype.SetContentControlPictureUrlNative = function(sUrl, sId)
+{
+	if (this.WordControl && this.WordControl.m_oDrawingDocument)
+	{
+		this.WordControl.m_oDrawingDocument.UnlockCursorType();
+	}
+
+	var oLogicDocument = this.private_GetLogicDocument();
+	if (!oLogicDocument || AscCommon.isNullOrEmptyString(sUrl))
+		return;
+
+	var oCC = oLogicDocument.GetContentControl(sId);
+	oCC.SkipSpecialContentControlLock(true);
+	if (!oCC || !oCC.IsPicture() || !oCC.SelectPicture() || !oCC.CanBeEdited())
+	{
+		oCC.SkipSpecialContentControlLock(false);
+		return;
+	}
+
+	if (!oLogicDocument.IsSelectionLocked(AscCommon.changestype_Image_Properties, undefined, false, oLogicDocument.IsFormFieldEditing()))
+	{
+		oCC.SkipSpecialContentControlLock(false);
+		oLogicDocument.StartAction(AscDFH.historydescription_Document_ApplyImagePrWithUrl);
+		oLogicDocument.SetImageProps({ImageUrl : sUrl});
+		oCC.SetShowingPlcHdr(false);
+		oLogicDocument.UpdateTracks();
+		oLogicDocument.FinalizeAction();
+	}
+	else
+	{
+		oCC.SkipSpecialContentControlLock(false);
+	}
+}
 Asc['asc_docs_api'].prototype.AddImageUrlActionNative = function(src, _w, _h, _pageNum)
 {
   var section_select = this.WordControl.m_oLogicDocument.Get_PageSizesByDrawingObjects();

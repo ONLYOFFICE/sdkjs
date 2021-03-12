@@ -3298,6 +3298,14 @@
 		}
 		return res;
 	};
+	Workbook.prototype.getPivotTablesByCache = function(cache) {
+		var res = [];
+		for (var i = 0, l = this.aWorksheets.length; i < l; ++i) {
+			var caches = this.aWorksheets[i].getPivotTablesByCache(cache);
+			res = res.concat(caches);
+		}
+		return res;
+	};
 	Workbook.prototype.getPivotCacheByDataRef = function(dataRef) {
 		for (var i = 0, l = this.aWorksheets.length; i < l; ++i) {
 			var cache = this.aWorksheets[i].getPivotCacheByDataRef(dataRef);
@@ -7323,6 +7331,7 @@
 		var pivotRange = pivotTable.getRange();
 		var location = pivotTable.location;
 		var hasLeftAlignInRowLables = false;
+		var outlines = [0];
 		if (rowFieldsOffset) {
 			items = pivotTable.getRowItems();
 			fields = pivotTable.asc_getRowFields();
@@ -7330,6 +7339,12 @@
 			c1 = pivotRange.c1;
 			valuesIndex = pivotTable.getRowFieldsValuesIndex();
 			hasLeftAlignInRowLables = pivotTable.hasLeftAlignInRowLables();
+			for (i = 1; i < rowFieldsOffset.length; ++i) {
+				outlines[i] = outlines[i - 1] + 1;
+				if (rowFieldsOffset[i] !== rowFieldsOffset[i - 1]) {
+					outlines[i] = 0;
+				}
+			}
 		} else {
 			items = pivotTable.getColItems();
 			fields = pivotTable.asc_getColumnFields();
@@ -7376,12 +7391,16 @@
 			}
 			for (j = 0; j < item.x.length; ++j) {
 				fieldIndex = null;
+				var outline = 0;
 				if (rowFieldsOffset) {
 					cells = this.getRange4(r1 + i, c1 + rowFieldsOffset[r + j]);
 				} else {
 					cells = this.getRange4(r1 + r + j, c1 + i);
 				}
 				if (Asc.c_oAscItemType.Data === item.t) {
+					if (rowFieldsOffset) {
+						outline = outlines[r + j];
+					}
 					fieldIndex = fields[r + j].asc_getIndex();
 					if (AscCommonExcel.st_VALUES !== fieldIndex) {
 						oCellValue = pivotTable.getPivotFieldCellValue(fieldIndex, item.x[j].getV());
@@ -7429,6 +7448,9 @@
 				}
 				if (hasLeftAlignInRowLables) {
 					cells.setAlignHorizontal(AscCommon.align_Left);
+				}
+				if (outline > 0) {
+					cells.setIndent(outline);
 				}
 				cells.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
 			}
@@ -7514,6 +7536,7 @@
 			var rowR = rowItem.getR();
 			curDataRow = dataByRowIndex[rowR];
 			rowFieldSubtotal = Asc.c_oAscItemType.Default;
+			var itemSd = true;
 			if (Asc.c_oAscItemType.Grand !== rowItem.t && rowFields) {
 				for (var rowItemsXIndex = 0; rowItemsXIndex < rowItem.x.length; ++rowItemsXIndex) {
 					fieldIndex = rowFields[rowR + rowItemsXIndex].asc_getIndex();
@@ -7521,6 +7544,7 @@
 						field = pivotFields[fieldIndex];
 						rowFieldSubtotal = field.getSubtotalType();
 						fieldItem = field.getItem(rowItem.x[rowItemsXIndex].getV());
+						itemSd = fieldItem.sd;
 						curDataRow = curDataRow.vals[fieldItem.x];
 					}
 					dataByRowIndex.length = rowR + rowItemsXIndex + 1;
@@ -7533,7 +7557,7 @@
 			//todo
 			if (Asc.c_oAscItemType.Data !== rowItem.t || !rowFields || rowR + rowItem.x.length === rowFields.length ||
 				(AscCommonExcel.st_VALUES !== fieldIndex && pivotFields[fieldIndex] &&
-				pivotFields[fieldIndex].checkSubtotalTop() && rowR > valuesIndex)) {
+				(pivotFields[fieldIndex].checkSubtotalTop() || !itemSd) && rowR > valuesIndex)) {
 				dataByColIndex = [curDataRow];
 				for (var colItemsIndex = 0; colItemsIndex < colItems.length; ++colItemsIndex) {
 					var colItem = colItems[colItemsIndex];
@@ -8034,6 +8058,15 @@
 			if (this.pivotTables[i].getPivotCacheId() === pivotCacheId) {
 				res.push(this.pivotTables[i]);
 				break;
+			}
+		}
+		return res;
+	};
+	Worksheet.prototype.getPivotTablesByCache = function (cache) {
+		var res = [];
+		for (var i = 0; i < this.pivotTables.length; ++i) {
+			if (this.pivotTables[i].cacheDefinition === cache) {
+				res.push(this.pivotTables[i]);
 			}
 		}
 		return res;

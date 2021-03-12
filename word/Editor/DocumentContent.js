@@ -1903,6 +1903,23 @@ CDocumentContent.prototype.GetCurrentParagraph = function(bIgnoreSelection, arrS
 
 	return null;
 };
+CDocumentContent.prototype.GetCurrentTablesStack = function(arrTables)
+{
+	if (!arrTables)
+		arrTables = [];
+
+	if (true === this.Selection.Use)
+	{
+		if (this.Selection.StartPos === this.Selection.EndPos)
+			return this.Content[this.CurPos.ContentPos].GetCurrentTablesStack(arrTables);
+		else
+			return arrTables;
+	}
+	else
+	{
+		return this.Content[this.CurPos.ContentPos].GetCurrentTablesStack(arrTables);
+	}
+};
 CDocumentContent.prototype.IsContentOnFirstPage = function()
 {
 	if (this.Content.length <= 0)

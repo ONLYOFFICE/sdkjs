@@ -2994,6 +2994,17 @@ function (window, undefined) {
 			}
 			ws.deletePivotTable(Data.pivot);
 			ws.insertPivotTable(pivot, false, true);
+		} else if (AscCH.historyitem_Worksheet_PivotReplaceKeepRecords === Type) {
+			var data = bUndo ? Data.from : Data.to;
+			var pivot = data.getData();
+			pivot.init();
+			var oldPivot = ws.getPivotTableById(Data.pivot);
+			if (oldPivot) {
+				pivot.cacheDefinition.cacheRecords = oldPivot.cacheDefinition.cacheRecords;
+				pivot.replaceSlicersPivotCacheDefinition(oldPivot.cacheDefinition, pivot.cacheDefinition);
+				ws.deletePivotTable(Data.pivot);
+				ws.insertPivotTable(pivot, false, true);
+			}
 		} else if (AscCH.historyitem_Worksheet_SlicerAdd === Type) {
 			if (bUndo) {
 				ws.deleteSlicer(Data.to.name);
@@ -3865,6 +3876,9 @@ function (window, undefined) {
 				break;
 			case AscCH.historyitem_PivotTable_PivotFieldSetShowAll:
 				field.asc_setShowAll(value, pivotTable, Data.index);
+				break;
+			case AscCH.historyitem_PivotTable_PivotFieldVisible:
+				field.asc_setVisible(value, pivotTable, Data.index.from, Data.index.to);
 				break;
 			case AscCH.historyitem_PivotTable_PivotFieldSetSubtotals:
 				field.setSubtotals(value, pivotTable, Data.index);

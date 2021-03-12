@@ -2708,6 +2708,34 @@ var editor;
     }
   };
 
+  spreadsheet_api.prototype._canGroupPivot = function () {
+    var ws = this.wbModel.getActiveWs();
+    var activeCell = ws.selectionRange.activeCell;
+    var pivotTable = ws.getPivotTable(activeCell.col, activeCell.row);
+    if (pivotTable && ws.selectionRange.inContains(pivotTable.getReportRanges())) {
+      var layout = pivotTable.getLayoutsForGroup(ws.selectionRange);
+      if (null !== layout.fld) {
+        return {pivotTable: pivotTable, layout: layout};
+      }
+    }
+    return null;
+  };
+  spreadsheet_api.prototype.asc_canGroupPivot = function () {
+    return !!this._canGroupPivot();
+  };
+  spreadsheet_api.prototype.asc_groupPivot = function (opt_rangePr, opt_dateTypes) {
+    var canGroupRes = this._canGroupPivot();
+    if(canGroupRes) {
+      canGroupRes.pivotTable.groupPivot(this, canGroupRes.layout, opt_rangePr, opt_dateTypes);
+    }
+  };
+  spreadsheet_api.prototype.asc_ungroupPivot = function () {
+    var canGroupRes = this._canGroupPivot();
+    if(canGroupRes) {
+      canGroupRes.pivotTable.ungroupPivot(this, canGroupRes.layout);
+    }
+  };
+
   spreadsheet_api.prototype.asc_ungroup = function(val) {
     if(val) {
         this.wb.getWorksheet().changeWorksheet("groupRows", true);
@@ -2913,18 +2941,19 @@ var editor;
                 var nSheetIdx = oWorksheet.getIndex();
                 if (this.asc_getActiveWorksheetIndex() !== nSheetIdx) {
                     this.asc_showWorksheet(nSheetIdx);
-                    var oWSView = this.wb.getWorksheet();
-                    if(oWSView) {
-                        var oRender = oWSView.objectRender;
-                        if(oRender) {
-                            var oController = oRender.controller;
-                            if(oController) {
-                                oSp.Set_CurrentElement(false);
-                                oController.selection.textSelection = null;
-                                oController.updateSelectionState();
-                                oController.updateOverlay();
-                                oRender.sendGraphicObjectProps();
-                            }
+                }
+                var oWSView = this.wb.getWorksheet();
+                if(oWSView) {
+                    var oRender = oWSView.objectRender;
+                    if(oRender) {
+                        var oController = oRender.controller;
+                        if(oController) {
+                            oSp.Set_CurrentElement(false);
+                            oController.selection.textSelection = null;
+                            oWSView.setSelectionShape(true);
+                            oController.updateSelectionState();
+                            oController.updateOverlay();
+                            oRender.sendGraphicObjectProps();
                         }
                     }
                 }
@@ -4794,6 +4823,18 @@ var editor;
 		});
 		this.collaborativeEditing.lock(lockInfos, callback);
 	};
+	spreadsheet_api.prototype._isLockedPivotAndConnectedByPivotCache = function (pivotTables, callback) {
+		if (this.collaborativeEditing.getGlobalLock()) {
+			callback(false);
+			return;
+		}
+		var t = this;
+		var lockInfos = [];
+		pivotTables.forEach(function(pivotTable) {
+			pivotTable.fillLockInfo(lockInfos, t.collaborativeEditing);
+		});
+		this.collaborativeEditing.lock(lockInfos, callback);
+	};
 	spreadsheet_api.prototype._changePivotWithLock = function (pivot, onAction) {
 		this._changePivotWithLockExt(pivot, false, true, onAction);
 	};
@@ -4829,6 +4870,27 @@ var editor;
 				return;
 			}
 			onAction();
+		});
+	};
+	spreadsheet_api.prototype._changePivotAndConnectedByPivotCacheWithLock = function (pivot, confirmation, onAction) {
+		// Проверка глобального лока
+
+		var t = this;
+		var pivotTables = pivot.getPivotTablesConnectedByPivotCache();
+		this._isLockedPivotAndConnectedByPivotCache(pivotTables, function(res) {
+			if (!res) {
+				t.sendEvent('asc_onError', c_oAscError.ID.PivotOverlap, c_oAscError.Level.NoCritical);
+				return;
+			}
+			History.Create_NewPoint();
+			History.StartTransaction();
+			t.wbModel.dependencyFormulas.lockRecal();
+			var changeRes = onAction(confirmation, pivotTables);
+			t.wbModel.dependencyFormulas.unlockRecal();
+			History.EndTransaction();
+			t._changePivotEndCheckError(pivot, changeRes, function () {
+				t._changePivotAndConnectedByPivotCacheWithLock(pivot, true, onAction);
+			});
 		});
 	};
 	spreadsheet_api.prototype._changePivot = function(pivot, confirmation, updateSelection, onAction) {
@@ -5196,6 +5258,13 @@ var editor;
     }
   };
 
+  spreadsheet_api.prototype.onUpdateRestrictions = function () {
+    var oHistory = AscCommon.History;
+    if (this.isRestrictionSignatures() && oHistory && !oHistory.Have_Changes()) {
+        oHistory.Clear();
+    }
+  };
+
   /*
    * Export
    * -----------------------------------------------------------------------------
@@ -5377,6 +5446,9 @@ var editor;
   //Group data
   prot["asc_group"] = prot.asc_group;
   prot["asc_ungroup"] = prot.asc_ungroup;
+  prot["asc_canGroupPivot"] = prot.asc_canGroupPivot;
+  prot["asc_groupPivot"] = prot.asc_groupPivot;
+  prot["asc_ungroupPivot"] = prot.asc_ungroupPivot;
   prot["asc_clearOutline"] = prot.asc_clearOutline;
   prot["asc_changeGroupDetails"] = prot.asc_changeGroupDetails;
   prot["asc_checkAddGroup"] = prot.asc_checkAddGroup;

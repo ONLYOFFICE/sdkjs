@@ -295,6 +295,10 @@ CLogicDocumentController.prototype.GetCurrentParagraph = function(bIgnoreSelecti
 {
 	return this.LogicDocument.controller_GetCurrentParagraph(bIgnoreSelection, arrSelectedParagraphs, oPr);
 };
+CLogicDocumentController.prototype.GetCurrentTablesStack = function(arrTables)
+{
+	return this.LogicDocument.controller_GetCurrentTablesStack(arrTables)
+};
 CLogicDocumentController.prototype.GetSelectedElementsInfo = function(oInfo)
 {
 	this.LogicDocument.controller_GetSelectedElementsInfo(oInfo);

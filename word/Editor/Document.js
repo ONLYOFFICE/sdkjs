@@ -2206,10 +2206,11 @@ function CDocumentSettings()
 	this.SdtSettings          = new CSdtGlobalSettings();
 	this.SpecialFormsSettings = new CSpecialFormsGlobalSettings();
 
-	this.ListSeparator = undefined;
-	this.DecimalSymbol = undefined;
-	this.GutterAtTop   = false;
-	this.MirrorMargins = false;
+	this.ListSeparator  = undefined;
+	this.DecimalSymbol  = undefined;
+	this.GutterAtTop    = false;
+	this.MirrorMargins  = false;
+	this.TrackRevisions = false; // Флаг рецензирования, который записан в самом файле
 
 	// Compatibility
 	this.SplitPageBreakAndParaMark = false;
@@ -2262,7 +2263,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
     this.SectionsInfo = new CDocumentSectionsInfo();
 
 	// Режим рецензирования
-	this.TrackRevisions = false;
+	this.TrackRevisions = null; // Локальный флаг рецензирования, который перекрывает флаг Settings.TrackRevisions, если сам не null
 	this.TrackRevisionsManager = new CTrackRevisionsManager(this);
 
 	this.Content[0] = new Paragraph(DrawingDocument, this);
@@ -2412,7 +2413,6 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.RemoveEmptySelection      = true;  // При обновлении селекта, если он пустой тогда сбрасываем его
 	this.MoveDrawing               = false; // Происходит ли сейчас перенос автофигуры
 	this.PrintSelection            = false; // Печатаем выделенный фрагмент
-	this.CCActionByClick           = true;  // Выполнять ли действие с ContentControl по простому клику (если false, то мы должны находится внутри, чтобы действие выполнилось)
 	this.CheckFormPlaceHolder      = true;  // Выполняем ли специальную обработку для плейсхолдеров у форм
 
 	this.DrawTableMode = {
@@ -2530,7 +2530,8 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 		HyphensWithDash        : true,
     	AutomaticBulletedLists : true,
 		AutomaticNumberedLists : true,
-		FrenchPunctuation      : true
+		FrenchPunctuation      : true,
+		FirstLetterOfSentences : true
 	};
 
     // Контролируем изменения интерфейса
@@ -8852,8 +8853,12 @@ CDocument.prototype.GetSelectedContent = function(bUseHistory, oPr)
 	// При копировании нам не нужно, чтобы новые классы помечались как созданные в рецензировании, а при перетаскивании
 	// нужно.
 	var isTrack = this.IsTrackRevisions();
+	var isLocalTrack = false;
 	if (isTrack && !bUseHistory)
-		this.SetTrackRevisions(false);
+	{
+		isLocalTrack = this.GetLocalTrackRevisions();
+		this.SetLocalTrackRevisions(false);
+	}
 
 	var bNeedTurnOffTableId = g_oTableId.m_bTurnOff === false && true !== bUseHistory;
 	if (!bUseHistory)
@@ -8884,8 +8889,8 @@ CDocument.prototype.GetSelectedContent = function(bUseHistory, oPr)
 		g_oTableId.m_bTurnOff = false;
 	}
 
-	if (isTrack && !bUseHistory)
-		this.SetTrackRevisions(true);
+	if (false !== isLocalTrack)
+		this.SetLocalTrackRevisions(isLocalTrack);
 
 	return oSelectedContent;
 };
@@ -10587,14 +10592,14 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 			return;
 		}
 
-		if (!this.CCActionByClick && !this.IsFillingFormMode())
+		if (!this.IsFillingFormMode())
 		{
 			var oSelectedContent = this.GetSelectedElementsInfo();
 			var oInlineSdt       = oSelectedContent.GetInlineLevelSdt();
 			var oBlockSdt        = oSelectedContent.GetBlockLevelSdt();
 
-			if ((oInlineSdt && oInlineSdt.IsCheckBox()) || (oBlockSdt && oBlockSdt.IsCheckBox()))
-				this.CurPos.CC = (oInlineSdt && oInlineSdt.IsCheckBox()) ? oInlineSdt : oBlockSdt;
+			if ((oInlineSdt && oInlineSdt.IsForm() && oInlineSdt.IsCheckBox()) || (oBlockSdt && oBlockSdt.IsForm() && oBlockSdt.IsCheckBox()))
+				this.CurPos.CC = (oInlineSdt && oInlineSdt.IsForm() && oInlineSdt.IsCheckBox()) ? oInlineSdt : oBlockSdt;
 		}
 
 		this.Selection_SetStart(X, Y, e);
@@ -10851,7 +10856,7 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 	if ((oInlineSdt && oInlineSdt.IsCheckBox()) || (oBlockSdt && oBlockSdt.IsCheckBox()))
 	{
 		var oCC = (oInlineSdt && oInlineSdt.IsCheckBox()) ? oInlineSdt : oBlockSdt;
-		if (this.CCActionByClick || this.IsFillingFormMode() || oCC === this.CurPos.CC)
+		if (!oCC.IsForm() || this.IsFillingFormMode() || oCC === this.CurPos.CC)
 		{
 			oCC.SkipSpecialContentControlLock(true);
 			if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, this.IsFillingFormMode()))
@@ -11702,6 +11707,25 @@ CDocument.prototype.GetCurrentParagraph = function(bIgnoreSelection, bReturnSele
 CDocument.prototype.GetSelectedParagraphs = function()
 {
 	return this.GetCurrentParagraph(false, true);
+};
+/**
+ * Получаем текущую таблицу
+ * @returns {?CTable}
+ */
+CDocument.prototype.GetCurrentTable = function()
+{
+	var arrTables = this.GetCurrentTablesStack();
+	return arrTables.length > 0 ? arrTables[arrTables.length - 1] : null;
+};
+/**
+ * Получаем массив таблицц, в которых мы находимся
+ * @returns {CTable[]}
+ */
+CDocument.prototype.GetCurrentTablesStack = function()
+{
+	var arrTables = [];
+	this.Controller.GetCurrentTablesStack(arrTables)
+	return arrTables;
 };
 /**
  * Получаем информацию о текущем выделении
@@ -12950,7 +12974,7 @@ CDocument.prototype.EndSelectionLockCheck = function(isDontLockInFastMode)
 };
 CDocument.prototype.private_DocumentIsSelectionLocked = function(CheckType)
 {
-	if (AscCommon.changestype_None != CheckType)
+	if (AscCommon.changestype_None !== CheckType)
 	{
 		if (AscCommon.changestype_Document_SectPr === CheckType)
 		{
@@ -12964,12 +12988,16 @@ CDocument.prototype.private_DocumentIsSelectionLocked = function(CheckType)
 		{
 			this.DrawingObjects.Lock.Check(this.DrawingObjects.Get_Id());
 		}
-		else if(AscCommon.changestype_CorePr === CheckType)
+		else if (AscCommon.changestype_CorePr === CheckType)
 		{
-			if(this.Core)
+			if (this.Core)
 			{
 				this.Core.Lock.Check(this.Core.Get_Id());
 			}
+		}
+		else if (AscCommon.changestype_Document_Settings === CheckType)
+		{
+			this.Lock.Check(this.GetId());
 		}
 		else
 		{
@@ -14470,10 +14498,6 @@ CDocument.prototype.Get_EditingType = function()
 CDocument.prototype.Set_EditingType = function(EditingType)
 {
 	this.EditingType = EditingType;
-};
-CDocument.prototype.IsTrackRevisions = function()
-{
-	return this.TrackRevisions;
 };
 CDocument.prototype.GetTrackRevisionsManager = function()
 {
@@ -16070,6 +16094,46 @@ CDocument.prototype.SetContentControlTextPlaceholder = function(sText, oCC)
 	}
 };
 /**
+ * Выставляем текст у заданного заданного контент контрола
+ * @param {string} sText
+ * @param {CBlockLevelSdt | CInlineLevelSdt} oCC
+ */
+CDocument.prototype.SetContentControlText = function(sText, oCC)
+{
+	if (!oCC || oCC.IsCheckBox() || oCC.IsDropDownList() || oCC.IsPicture())
+		return;
+
+	if (!sText)
+		return;
+
+	oCC.SelectContentControl();
+
+	if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, false, this.IsFormFieldEditing()))
+	{
+		this.StartAction(AscDFH.historydescription_Document_SetContentControlText);
+
+		oCC.ReplacePlaceHolderWithContent();
+
+		var oRun;
+		if (oCC.IsBlockLevel())
+			oRun = this.Content.MakeSingleParagraphContent().MakeSingleRunParagraph(true);
+		else if (oCC.IsInlineLevel())
+			oRun = oCC.MakeSingleRunElement(true);
+
+		if (oRun)
+			oRun.AddText(sText);
+
+		this.RemoveSelection();
+		oCC.MoveCursorToContentControl(false);
+
+		this.Recalculate();
+		this.UpdateInterface();
+		this.UpdateSelection();
+
+		this.FinalizeAction();
+	}
+};
+/**
  * Выставляем глобальный параметр, находится ли переплет наверху документа
  * @param {boolean} isGutterAtTop
  */
@@ -16413,7 +16477,68 @@ CDocument.prototype.ContinueTrackRevisions = function()
 };
 CDocument.prototype.SetTrackRevisions = function(bTrack)
 {
-	this.TrackRevisions = bTrack;
+	return this.SetLocalTrackRevisions(bTrack);
+};
+/**
+ * Проверяем включено ли рецезирование в файле
+ * @return {boolean}
+ */
+CDocument.prototype.IsTrackRevisions = function()
+{
+	if (null === this.TrackRevisions)
+		return (true === this.Settings.TrackRevisions);
+
+	return this.TrackRevisions;
+};
+/**
+ * Устанавливаем локальное значение TrackChanges
+ * @param {boolean|null} isTrack
+ * @param {boolean} [isUpdateInterface=false] посылаем сообщение в интерфейс об изменении данного флага
+ */
+CDocument.prototype.SetLocalTrackRevisions = function(isTrack, isUpdateInterface)
+{
+	this.TrackRevisions = isTrack;
+
+	if (true === isUpdateInterface)
+		this.private_OnTrackRevisionsChange();
+};
+/**
+ * Получаем локальный флаг рецензирования
+ * @return {null|boolean}
+ */
+CDocument.prototype.GetLocalTrackRevisions = function()
+{
+	return this.TrackRevisions;
+};
+/**
+ * Устанавливаем глобальный флаг рецензирования в файле
+ * @param {boolean} isTrack
+ * @param {boolean} [isUpdateInterface=false] посылаем сообщение в интерфейс об изменении данного флага
+ */
+CDocument.prototype.SetGlobalTrackRevisions = function(isTrack, isUpdateInterface)
+{
+	if (isTrack !== this.Settings.TrackRevisions && !this.IsSelectionLocked(AscCommon.changestype_Document_Settings))
+	{
+		this.StartAction(AscDFH.historydescription_Document_SetTrackRevisions);
+		this.History.Add(new CChangesDocumentSettingsTrackRevisions(this, this.Settings.TrackRevisions, isTrack, this.Api.DocInfo.get_UserId()));
+		this.Settings.TrackRevisions = isTrack;
+		this.FinalizeAction();
+	}
+
+	if (true === isUpdateInterface)
+		this.private_OnTrackRevisionsChange();
+};
+/**
+ * Получаем глобальный флаг рецензирования в файле
+ * @returns {boolean}
+ */
+CDocument.prototype.GetGlobalTrackRevisions = function()
+{
+	return this.Settings.TrackRevisions;
+};
+CDocument.prototype.private_OnTrackRevisionsChange = function(sUserId)
+{
+	this.Api.sync_OnTrackRevisionsChange(this.TrackRevisions, this.Settings.TrackRevisions, sUserId);
 };
 CDocument.prototype.GetNextRevisionChange = function()
 {
@@ -16707,9 +16832,9 @@ CDocument.prototype.AcceptRevisionChange = function(oChange)
 		{
 			this.StartAction(AscDFH.historydescription_Document_AcceptRevisionChange);
 
-			var isTrackRevision = this.IsTrackRevisions();
-			if (isTrackRevision)
-				this.SetTrackRevisions(false);
+			var isTrackRevision = this.GetLocalTrackRevisions();
+			if (false !== isTrackRevision)
+				this.SetLocalTrackRevisions(false);
 
 			if (oChange.IsComplexChange())
 			{
@@ -16722,8 +16847,8 @@ CDocument.prototype.AcceptRevisionChange = function(oChange)
 				this.AcceptRevisionChanges(oChange.GetType(), false);
 			}
 
-			if (isTrackRevision)
-				this.SetTrackRevisions(isTrackRevision);
+			if (false !== isTrackRevision)
+				this.SetLocalTrackRevisions(isTrackRevision);
 
 			this.FinalizeAction();
 		}
@@ -16784,9 +16909,9 @@ CDocument.prototype.RejectRevisionChange = function(oChange)
 		{
 			this.StartAction(AscDFH.historydescription_Document_RejectRevisionChange);
 
-			var isTrackRevision = this.IsTrackRevisions();
-			if (isTrackRevision)
-				this.SetTrackRevisions(false);
+			var isTrackRevision = this.GetLocalTrackRevisions();
+			if (false !== isTrackRevision)
+				this.SetLocalTrackRevisions(false);
 
 			if (oChange.IsComplexChange())
 			{
@@ -16799,8 +16924,8 @@ CDocument.prototype.RejectRevisionChange = function(oChange)
 				this.RejectRevisionChanges(oChange.GetType(), false);
 			}
 
-			if (isTrackRevision)
-				this.SetTrackRevisions(isTrackRevision);
+			if (false !== isTrackRevision)
+				this.SetLocalTrackRevisions(isTrackRevision);
 
 			this.FinalizeAction();
 		}
@@ -16836,14 +16961,14 @@ CDocument.prototype.AcceptRevisionChangesBySelection = function()
 		{
 			this.StartAction(AscDFH.historydescription_Document_AcceptRevisionChangesBySelection);
 
-			var isTrackRevision = this.IsTrackRevisions();
-			if (isTrackRevision)
-				this.SetTrackRevisions(false);
+			var isTrackRevision = this.GetLocalTrackRevisions();
+			if (false !== isTrackRevision)
+				this.SetLocalTrackRevisions(false);
 
 			this.AcceptRevisionChanges(undefined, false);
 
-			if (isTrackRevision)
-				this.SetTrackRevisions(isTrackRevision);
+			if (false !== isTrackRevision)
+				this.SetLocalTrackRevisions(isTrackRevision);
 
 			this.FinalizeAction();
 		}
@@ -16882,14 +17007,14 @@ CDocument.prototype.RejectRevisionChangesBySelection = function()
 		{
 			this.StartAction(AscDFH.historydescription_Document_AcceptRevisionChangesBySelection);
 
-			var isTrackRevision = this.IsTrackRevisions();
-			if (isTrackRevision)
-				this.SetTrackRevisions(false);
+			var isTrackRevision = this.GetLocalTrackRevisions();
+			if (false !== isTrackRevision)
+				this.SetLocalTrackRevisions(false);
 
 			this.RejectRevisionChanges(undefined, false);
 
-			if (isTrackRevision)
-				this.SetTrackRevisions(isTrackRevision);
+			if (false !== isTrackRevision)
+				this.SetLocalTrackRevisions(isTrackRevision);
 
 			this.FinalizeAction();
 		}
@@ -16911,9 +17036,9 @@ CDocument.prototype.AcceptAllRevisionChanges = function(isSkipCheckLock, isCheck
 	{
 		this.StartAction(AscDFH.historydescription_Document_AcceptAllRevisionChanges);
 
-		var isTrackRevision = this.IsTrackRevisions();
-		if (isTrackRevision)
-			this.SetTrackRevisions(false);
+		var isTrackRevision = this.GetLocalTrackRevisions();
+		if (false !== isTrackRevision)
+			this.SetLocalTrackRevisions(false);
 
 		var LogicDocuments = this.TrackRevisionsManager.Get_AllChangesLogicDocuments();
 		for (var LogicDocId in LogicDocuments)
@@ -16925,8 +17050,8 @@ CDocument.prototype.AcceptAllRevisionChanges = function(isSkipCheckLock, isCheck
 			}
 		}
 
-		if (isTrackRevision)
-			this.SetTrackRevisions(isTrackRevision);
+		if (false !== isTrackRevision)
+			this.SetLocalTrackRevisions(isTrackRevision);
 
 		if (true !== isSkipCheckLock && true === this.History.Is_LastPointEmpty())
 		{
@@ -16955,14 +17080,14 @@ CDocument.prototype.RejectAllRevisionChanges = function(isSkipCheckLock, isCheck
 	{
 		this.StartAction(AscDFH.historydescription_Document_RejectAllRevisionChanges);
 
-		var isTrackRevision = this.IsTrackRevisions();
-		if (isTrackRevision)
-			this.SetTrackRevisions(false);
+		var isTrackRevision = this.GetLocalTrackRevisions();
+		if (false !== isTrackRevision)
+			this.SetLocalTrackRevisions(false);
 
 		this.private_RejectAllRevisionChanges();
 
-		if (isTrackRevision)
-			this.SetTrackRevisions(isTrackRevision);
+		if (false !== isTrackRevision)
+			this.SetLocalTrackRevisions(isTrackRevision);
 
 		if (true !== isSkipCheckLock && true === this.History.Is_LastPointEmpty())
 		{
@@ -20288,6 +20413,20 @@ CDocument.prototype.controller_GetCurrentParagraph = function(bIgnoreSelection, 
 		return this.Content[Pos].GetCurrentParagraph(bIgnoreSelection, null, oPr);
 	}
 };
+CDocument.prototype.controller_GetCurrentTablesStack = function(arrTables)
+{
+	if (true === this.Selection.Use)
+	{
+		if (this.Selection.StartPos !== this.Selection.EndPos)
+			return arrTables;
+		else
+			return this.Content[this.Selection.StartPos].GetCurrentTablesStack(arrTables);
+	}
+	else
+	{
+		return this.Content[this.CurPos.ContentPos].GetCurrentTablesStack(arrTables);
+	}
+};
 CDocument.prototype.controller_GetSelectedElementsInfo = function(oInfo)
 {
 	if (true === this.Selection.Use)
@@ -22324,7 +22463,6 @@ CDocument.prototype.AddTableOfFigures = function(oPr)
                     oStyles.SetTOFStyleType(nStylesType);
                 oComplexField.Update();
                 var oNextParagraph;
-                this.MoveCursorToEndPos(false);
                 var oParagraph = this.GetCurrentParagraph();
                 if(oParagraph)
                 {
@@ -22829,6 +22967,22 @@ CDocument.prototype.IsAutoCorrectHyphensWithDash = function()
 CDocument.prototype.IsAutoCorrectFrenchPunctuation = function()
 {
 	return this.AutoCorrectSettings.FrenchPunctuation;
+};
+/**
+ * Выставляем настройку атозамены для первового символа предложения
+ * @param {boolean} isCorrect
+ */
+CDocument.prototype.SetAutoCorrectFirstLetterOfSentences = function(isCorrect)
+{
+	this.AutoCorrectSettings.FirstLetterOfSentences = isCorrect;
+};
+/**
+ * Запрашиваем настройку атозамены для первового символа предложения
+ * @return {boolean}
+ */
+CDocument.prototype.IsAutoCorrectFirstLetterOfSentences = function()
+{
+	return this.AutoCorrectSettings.FirstLetterOfSentences;
 };
 /**
  * Получаем идентификатор текущего пользователя
@@ -24099,24 +24253,10 @@ CDocument.prototype.ClearAllSpecialForms = function()
 		for (var sId in this.SpecialForms)
 		{
 			var oForm = this.SpecialForms[sId];
-
 			if (!oCurrentForm && oForm.Is_UseInDocument())
 				oCurrentForm = oForm;
 
-			if (oForm.IsCheckBox())
-			{
-				oForm.SetCheckBoxChecked(false);
-			}
-			else if (oForm.IsPicture())
-			{
-				oForm.ReplaceContentWithPlaceHolder();
-				oForm.ApplyPicturePr(true);
-			}
-			else
-			{
-				oForm.ReplaceContentWithPlaceHolder();
-			}
-
+			oForm.ClearContentControlExt();
 			oForm.RemoveSelection();
 		}
 
@@ -24366,14 +24506,6 @@ CDocument.prototype.GetSectionsByApplyType = function(nType)
 	}
 
 	return [];
-};
-/**
- * Выполнять ли связанные действия с контейнером при простом клике в него (например выставление чекбокса)
- * @param {boolean} isPerform
- */
-CDocument.prototype.SetPerformContentControlActionByClick = function(isPerform)
-{
-	this.CCActionByClick = isPerform;
 };
 /**
  * Получаем разделитель для списков

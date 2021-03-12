@@ -422,7 +422,8 @@ module.exports = function(grunt) {
 								'Images/cursors/*',
 								'Native/*.js',
 								'libfont/js/fonts.*',
-								'libfont/wasm/fonts.*'
+								'libfont/wasm/fonts.*',
+								'spell/spell/*'
 							],
 							dest: path.join(deploy, 'common')
 						},

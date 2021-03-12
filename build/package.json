@@ -1,7 +1,7 @@
 {
   "name": "common",
   "version": "0.0.0",
-  "homepage": "http://www.onlyoffice.com",
+  "homepage": "https://www.onlyoffice.com",
   "private": true,
   "dependencies": {
     "google-closure-compiler": "20210106.0.0",

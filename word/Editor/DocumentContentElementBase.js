@@ -547,6 +547,10 @@ CDocumentContentElementBase.prototype.GetCurrentParagraph = function(bIgnoreSele
 {
 	return null;
 };
+CDocumentContentElementBase.prototype.GetCurrentTablesStack = function(arrTables)
+{
+	return arrTables ? arrTables : [];
+};
 CDocumentContentElementBase.prototype.AddTableRow = function(bBefore, nCount)
 {
 	return false;

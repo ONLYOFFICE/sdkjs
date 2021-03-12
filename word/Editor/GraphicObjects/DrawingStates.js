@@ -794,9 +794,12 @@ RotateState.prototype =
 
                                     // Автофигуры мы переносим так, как будто это происходит не в режиме рецензирования, но
                                     // при этом мы должны сохранить их начальные настройки рецензирования.
-                                    var bTrackRevisions = this.drawingObjects.document.IsTrackRevisions();
-                                    if (bTrackRevisions)
-                                        this.drawingObjects.document.SetTrackRevisions(false);
+                                    var bTrackRevisions = false;
+                                    if (this.drawingObjects.document.IsTrackRevisions())
+									{
+										bTrackRevisions = this.drawingObjects.document.GetLocalTrackRevisions();
+										this.drawingObjects.document.SetLocalTrackRevisions(false);
+									}
 
                                     this.drawingObjects.document.MoveDrawing = true;
 
@@ -813,8 +816,8 @@ RotateState.prototype =
 
                                     this.drawingObjects.document.MoveDrawing = false;
 
-                                    if (bTrackRevisions)
-                                        this.drawingObjects.document.SetTrackRevisions(true);
+                                    if (false !== bTrackRevisions)
+                                        this.drawingObjects.document.SetLocalTrackRevisions(bTrackRevisions);
 
                                     if(original.GraphicObj === this.drawingObjects.selection.cropSelection)
                                     {

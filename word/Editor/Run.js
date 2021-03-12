@@ -5395,6 +5395,18 @@ ParaRun.prototype.RecalculateMinMaxContentWidth = function(MinMax)
 
                 nCurMaxWidth += ItemWidth;
                 bCheckTextHeight = true;
+
+				// Если текущий символ с переносом, например, дефис, тогда на нем заканчивается слово
+				if (Item.IsSpaceAfter())
+				{
+					if (nMinWidth < nWordLen)
+						nMinWidth = nWordLen;
+
+					bWord     = false;
+					nWordLen  = 0;
+					nSpaceLen = 0;
+				}
+
                 break;
             }
             case para_Math_Text:
@@ -11971,6 +11983,9 @@ ParaRun.prototype.ProcessAutoCorrect = function(nPos)
 	if (this.private_ProcessHyperlinkAutoCorrect(oDocument, oParagraph, oContentPos, nPos, oRunElementsBefore, sText))
 		return;
 
+	if (oDocument.IsAutoCorrectFirstLetterOfSentences() && this.private_ProcessCapitalizeFirstLetterOfSentencesAutoCorrect(oDocument, oParagraph, oContentPos, nPos, oRunElementsBefore))
+		return;
+
 	// Автосоздание списка
 	if (oParagraph.bFromDocument && oParagraph.GetNumPr()
 	|| !oParagraph.bFromDocument && !oParagraph.PresentationPr.Bullet.IsNone())
@@ -12509,7 +12524,7 @@ ParaRun.prototype.private_ProcessFrenchPunctuation = function(oDocument, oParagr
  * @param oParagraph {Paragraph}
  * @param oContentPos {CParagraphContentPos}
  * @param nPos {number}
- * @param oRunElementsBefore
+ * @param oRunElementsBefore {CParagraphRunElements}
  * @param sText {string}
  * @returns {boolean}
  */
@@ -12577,6 +12592,92 @@ ParaRun.prototype.private_ProcessHyperlinkAutoCorrect = function(oDocument, oPar
 	}
 
 	return false;
+};
+/**
+ * Производим автозамену для первого символа в предложении
+ * @param oDocument {CDocument}
+ * @param oParagraph {Paragraph}
+ * @param oContentPos {CParagraphContentPos}
+ * @param nPos {number}
+ * @param oRunElementsBefore {CParagraphRunElements}
+ * @return {boolean}
+ */
+ParaRun.prototype.private_ProcessCapitalizeFirstLetterOfSentencesAutoCorrect = function(oDocument, oParagraph, oContentPos, nPos, oRunElementsBefore)
+{
+	var nMaxElements = 1000;
+
+	var arrElements = oRunElementsBefore.GetElements();
+	if (arrElements.length <= 0)
+		return false;
+
+	for (var nIndex = 0, nCount = arrElements.length; nIndex < nCount; ++nIndex)
+	{
+		if (para_Text !== arrElements[nIndex].Type)
+			return false;
+
+		var sTemp = String.fromCharCode(arrElements[nIndex].Value);
+		if (sTemp.toUpperCase() === sTemp)
+			return false;
+	}
+
+	var arrContentPos = oRunElementsBefore.GetContentPositions();
+	if (arrContentPos.length <= 0)
+		return false;
+
+	// Запоминаем позицию для автозамены
+	var oAutoCorrectContentPos = arrContentPos[arrContentPos.length - 1];
+
+	var oNextRunElementsBefore = new CParagraphRunElements(oAutoCorrectContentPos, nMaxElements, [para_Space, para_Tab], false);
+	oNextRunElementsBefore.SetBreakOnBadType(true);
+	oNextRunElementsBefore.SetBreakOnDifferentClass(true);
+	oNextRunElementsBefore.SetSaveContentPositions(true);
+	oParagraph.GetPrevRunElements(oNextRunElementsBefore);
+
+	if (!oNextRunElementsBefore.IsEnd())
+	{
+		var oNextContentPos;
+
+		arrContentPos = oNextRunElementsBefore.GetContentPositions();
+		if (arrContentPos.length <= 0)
+			oNextContentPos = oAutoCorrectContentPos;
+		else
+			oNextContentPos = arrContentPos[arrContentPos.length - 1];
+
+		var oRunElements = new CParagraphRunElements(oNextContentPos, 1, null, true);
+		oParagraph.GetPrevRunElements(oRunElements);
+
+		// TODO: Надо проверить окончание предложения со скобками, возможно надо проверять два последних символа
+		if (oRunElements.Elements.length > 0
+			&& !oRunElements.Elements[0].IsDot()
+			&& !oRunElements.Elements[0].IsExclamationMark()
+			&& !oRunElements.Elements[0].IsQuestionMark())
+			return false;
+	}
+
+	// Если мы дошли до этого момента, значит можно производить автозамену
+	var nDepth = oAutoCorrectContentPos.GetDepth();
+	if (nDepth <= 0)
+		return false;
+
+	var nInRunPos = oAutoCorrectContentPos.Get(nDepth);
+	oAutoCorrectContentPos.DecreaseDepth(1);
+	var oRun = oParagraph.GetElementByPos(oAutoCorrectContentPos);
+	if (!oRun || !(oRun instanceof ParaRun))
+		return false;
+
+	var oItem = oRun.GetElement(nInRunPos);
+	if (!oItem || oItem.Type !== para_Text)
+		return false;
+
+	oDocument.StartAction(AscDFH.historydescription_Document_AutoCorrectFirstLetterOfSentence);
+
+	var oNewItem = new ParaText(String.fromCharCode(oItem.Value).toUpperCase().charCodeAt(0));
+	oRun.RemoveFromContent(nInRunPos, 1, true);
+	oRun.AddToContent(nInRunPos, oNewItem, true);
+
+	oDocument.FinalizeAction();
+
+	return true;
 };
 ParaRun.prototype.UpdateBookmarks = function(oManager)
 {

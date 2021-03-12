@@ -2702,6 +2702,13 @@ CEndnotesController.prototype.GetCurrentParagraph = function(bIgnoreSelection, a
 {
 	return this.CurEndnote.GetCurrentParagraph(bIgnoreSelection, arrSelectedParagraphs, oPr);
 };
+CEndnotesController.prototype.GetCurrentTablesStack = function(arrTables)
+{
+	if (!arrTables)
+		arrTables = [];
+
+	return this.CurEndnote.GetCurrentTablesStack(arrTables);
+};
 CEndnotesController.prototype.GetSelectedElementsInfo = function(oInfo)
 {
 	if (true !== this.private_IsOneEndnoteSelected() || null === this.CurEndnote)

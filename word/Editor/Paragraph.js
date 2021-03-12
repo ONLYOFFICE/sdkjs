@@ -4242,6 +4242,7 @@ Paragraph.prototype.Add = function(Item)
 
 				case para_Math:
 				case para_Hyperlink:
+				case para_InlineLevelSdt:
 				{
 					CurItem.Add(Item);
 					break;
@@ -15826,8 +15827,9 @@ Paragraph.prototype.CheckTrackMoveMarkInSelection = function(isStart, isCheckTo)
 };
 /**
  * Очищаем содержимое параграфа, оставляем в нем ровно 1 пустой параграф
+ * @param {boolean} [isClearRun=true]
  */
-Paragraph.prototype.MakeSingleRunParagraph = function()
+Paragraph.prototype.MakeSingleRunParagraph = function(isClearRun)
 {
 	if (this.Content.length <= 1)
 	{
@@ -15840,7 +15842,10 @@ Paragraph.prototype.MakeSingleRunParagraph = function()
 	}
 
 	var oRun = this.Content[0];
-	oRun.ClearContent();
+
+	if (false !== isClearRun)
+		oRun.ClearContent();
+
 	return oRun;
 };
 Paragraph.prototype.Document_Is_SelectionLocked = function(CheckType)

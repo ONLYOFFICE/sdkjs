@@ -940,6 +940,9 @@
 
 				case 38: // up
 					stop();                          // Отключим стандартную обработку браузера нажатия up
+					if (canEdit && !t.getCellEditMode() && !selectionDialogMode && event.altKey && t.handlers.trigger("onDataValidation")) {
+						return result;
+					}
 					dr = ctrlKey ? -1.5 : -1;  // Движение стрелками (влево-вправо, вверх-вниз)
 					break;
 
@@ -952,6 +955,9 @@
 					stop();                          // Отключим стандартную обработку браузера нажатия down
 					// Обработка Alt + down
 					if (canEdit && !t.getCellEditMode() && !selectionDialogMode && event.altKey) {
+						if (t.handlers.trigger("onDataValidation")) {
+							return result;
+						}
 						t.handlers.trigger("showAutoComplete");
 						return result;
 					}
@@ -1459,6 +1465,8 @@
 								this.handlers.trigger('onDataValidation');
 							} else if (t.targetInfo.idPivot && Asc.CT_pivotTableDefinition.prototype.asc_filterByCell) {
 								this.handlers.trigger("pivotFiltersClick", t.targetInfo.idPivot);
+							} else if (t.targetInfo.idPivotCollapse) {
+								this.handlers.trigger("pivotCollapseClick", t.targetInfo.idPivotCollapse);
 							} else if (t.targetInfo.idTableTotal) {
 								this.handlers.trigger("tableTotalClick", t.targetInfo.idTableTotal);
 							} else {

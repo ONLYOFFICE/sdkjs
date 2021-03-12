@@ -344,3 +344,22 @@ CSdtBase.prototype.SetCurrent = function(isCurrent)
 CSdtBase.prototype.UpdatePlaceHolderTextPrForForm = function()
 {
 };
+/**
+ * Расширенное очищение контрола, с учетом типа контрола
+ */
+CSdtBase.prototype.ClearContentControlExt = function()
+{
+	if (this.IsCheckBox())
+	{
+		this.SetCheckBoxChecked(false);
+	}
+	else if (this.IsPicture())
+	{
+		this.ReplaceContentWithPlaceHolder();
+		this.ApplyPicturePr(true);
+	}
+	else
+	{
+		this.ReplaceContentWithPlaceHolder();
+	}
+};

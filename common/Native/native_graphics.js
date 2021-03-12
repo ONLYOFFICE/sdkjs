@@ -259,10 +259,10 @@ CNativeGraphics.prototype =
         this.m_oTextPr = textPr;
         if (theme)
         {
-            this.m_oGrFonts.Ascii.Name     = theme.themeElements.fontScheme.checkFont(this.m_oTextPr.RFonts.Ascii.Name);
-            this.m_oGrFonts.EastAsia.Name  = theme.themeElements.fontScheme.checkFont(this.m_oTextPr.RFonts.EastAsia.Name);
-            this.m_oGrFonts.HAnsi.Name     = theme.themeElements.fontScheme.checkFont(this.m_oTextPr.RFonts.HAnsi.Name);
-            this.m_oGrFonts.CS.Name        = theme.themeElements.fontScheme.checkFont(this.m_oTextPr.RFonts.CS.Name);
+            this.m_oGrFonts.Ascii.Name     = theme.themeElements.fontScheme.checkFont(this.m_oTextPr.RFonts.Ascii    ? this.m_oTextPr.RFonts.Ascii.Name    : null);
+            this.m_oGrFonts.EastAsia.Name  = theme.themeElements.fontScheme.checkFont(this.m_oTextPr.RFonts.EastAsia ? this.m_oTextPr.RFonts.EastAsia.Name : null);
+            this.m_oGrFonts.HAnsi.Name     = theme.themeElements.fontScheme.checkFont(this.m_oTextPr.RFonts.HAnsi    ? this.m_oTextPr.RFonts.HAnsi.Name    : null);
+            this.m_oGrFonts.CS.Name        = theme.themeElements.fontScheme.checkFont(this.m_oTextPr.RFonts.CS       ? this.m_oTextPr.RFonts.CS.Name       : null);
             this.m_oGrFonts.Ascii.Index    = -1;
             this.m_oGrFonts.EastAsia.Index = -1;
             this.m_oGrFonts.HAnsi.Index    = -1;
@@ -485,7 +485,6 @@ CNativeGraphics.prototype =
     },
     drawCollaborativeChanges : function(x, y, w, h, Color)
     {
-        this.Native["drawCollaborativeChanges"](x, y, w, h, Color.r, Color.g, Color.b, 255);
     },
     drawMailMergeField : function(x, y, w, h)
     {
@@ -661,7 +660,15 @@ CNativeGraphics.prototype =
     },
     put_BrushGradient : function(gradFill, points, transparent)
     {
-        this.Native["put_BrushGradient"](gradFill.colors, transparent, points.x0, points.y0, points.x1, points.y1, points.r0, points.r1);
+        var colors = new Array(gradFill.colors.length * 5);
+        for (var i = 0; i < gradFill.colors.length; i++) {
+            colors[i * 5] = gradFill.colors[i].pos;
+            colors[i * 5 + 1] = gradFill.colors[i].color.RGBA.R;
+            colors[i * 5 + 2] = gradFill.colors[i].color.RGBA.G;
+            colors[i * 5 + 3] = gradFill.colors[i].color.RGBA.B;
+            colors[i * 5 + 4] = gradFill.colors[i].color.RGBA.A;
+        }
+        this.Native["put_BrushGradient"](colors, transparent, points.x0, points.y0, points.x1, points.y1, points.r0, points.r1);
     },
     TransformPointX : function(x, y)
     {

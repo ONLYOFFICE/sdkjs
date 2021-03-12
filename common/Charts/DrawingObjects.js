@@ -2469,7 +2469,7 @@ GraphicOption.prototype.union = function(oGraphicOption) {
         }
         else
         {
-            oSpToEdit.setSignaturePr(oPr);
+            oSpToEdit.setSignaturePr(oPr, sImgUrl);
             oApi.sendEvent("asc_onAddSignature", sGuid);
         }
 

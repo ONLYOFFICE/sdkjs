@@ -429,6 +429,10 @@ CDrawingsController.prototype.GetCurrentParagraph = function(bIgnoreSelection, a
 {
 	return this.DrawingObjects.getCurrentParagraph(bIgnoreSelection, arrSelectedParagraphs, oPr);
 };
+CDrawingsController.prototype.GetCurrentTablesStack = function(arrTables)
+{
+	return this.DrawingObjects.getCurrentTablesStack(arrTables);
+};
 CDrawingsController.prototype.GetSelectedElementsInfo = function(oInfo)
 {
 	var oContentControl = this.private_GetParentContentControl();

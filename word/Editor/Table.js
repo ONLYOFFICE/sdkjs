@@ -8104,6 +8104,18 @@ CTable.prototype.GetCurrentParagraph = function(bIgnoreSelection, arrSelectedPar
 
 	return null;
 };
+CTable.prototype.GetCurrentTablesStack = function(arrTables)
+{
+	if (!arrTables)
+		arrTables = [];
+
+	arrTables.push(this);
+
+	if (true !== this.Selection.Use || table_Selection_Text === this.Selection.Type)
+		return this.CurCell.GetContent().GetCurrentTablesStack(arrTables);
+
+	return arrTables;
+};
 CTable.prototype.SetImageProps = function(Props)
 {
 	if ((true === this.Selection.Use && table_Selection_Text === this.Selection.Type) || false === this.Selection.Use)

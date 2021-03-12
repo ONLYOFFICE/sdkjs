@@ -2057,13 +2057,14 @@ var GLOBAL_PATH_COUNT = 0;
             this.selection.textSelection.checkDocContent();
 
             var bTrackRevision = false;
-            if(typeof editor !== "undefined" && editor && editor.WordControl && editor.WordControl.m_oLogicDocument.TrackRevisions === true) {
-                bTrackRevision = true;
-                editor.WordControl.m_oLogicDocument.TrackRevisions = false;
+            if(typeof editor !== "undefined" && editor && editor.WordControl && editor.WordControl.m_oLogicDocument.IsTrackRevisions()) {
+                bTrackRevision = editor.WordControl.m_oLogicDocument.GetLocalTrackRevisions();
+                editor.WordControl.m_oLogicDocument.SetLocalTrackRevisions(false);
             }
             this.selection.textSelection.applyTextFunction(docContentFunction, tableFunction, args);
-            if(bTrackRevision) {
-                editor.WordControl.m_oLogicDocument.TrackRevisions = true;
+
+            if(false !== bTrackRevision) {
+                editor.WordControl.m_oLogicDocument.SetLocalTrackRevisions(bTrackRevision);
             }
         }
     };
@@ -12021,7 +12022,7 @@ var GLOBAL_PATH_COUNT = 0;
                                 oSeries.addDPt(oDPt);
                             }
                         }
-                        for(nDpt = oSeries.dPt.length; nDpt > -1; --nDpt) {
+                        for(nDpt = oSeries.dPt.length - 1; nDpt > -1; --nDpt) {
                             oDPt = oSeries.dPt[nDpt];
                             if(oDPt.idx >= nValCount) {
                                 oSeries.removeDPt(nDpt);
@@ -12055,7 +12056,7 @@ var GLOBAL_PATH_COUNT = 0;
     };
     CChartSpace.prototype.setRange = function(sRange) {
         var oDataRange = this.getDataRefs();
-        var aRefs = oDataRange.getSeriesRefsFromUnionRefs(AscFormat.fParseChartFormula(sRange), undefined, AscFormat.isScatterChartType(this.getChartType()));
+        var aRefs = oDataRange.getSeriesRefsFromUnionRefs(AscFormat.fParseChartFormulaExternal(sRange), undefined, AscFormat.isScatterChartType(this.getChartType()));
         if(!Array.isArray(aRefs)) {
             this.buildSeries([]);
         }
@@ -12123,9 +12124,7 @@ var GLOBAL_PATH_COUNT = 0;
         var aAllSeries = this.getAllSeries();
         var oFirstSeries = aAllSeries[0];
         if(oFirstSeries) {
-            if(oFirstSeries.cat) {
-                return oFirstSeries.cat.getFormula();
-            }
+            return oFirstSeries.asc_getCatValues();
         }
         return "";
     };
@@ -13236,7 +13235,7 @@ var GLOBAL_PATH_COUNT = 0;
         }
         var bScatter = AscFormat.isScatterChartType(options.getType());
         var oDataRange = new AscFormat.CChartDataRefs(null);
-        var aSeriesRefs = oDataRange.getSeriesRefsFromUnionRefs(AscFormat.fParseChartFormula(sRange), bHorValues, bScatter);
+        var aSeriesRefs = oDataRange.getSeriesRefsFromUnionRefs(AscFormat.fParseChartFormulaExternal(sRange), bHorValues, bScatter);
         if(!Array.isArray(aSeriesRefs)) {
             return [];
         }

@@ -266,6 +266,22 @@ CRunElementBase.prototype.IsDot = function()
 	return false;
 };
 /**
+ * Проверяем является ли элемент символом знака восклицания
+ * @returns {boolean}
+ */
+CRunElementBase.prototype.IsExclamationMark = function()
+{
+	return false;
+};
+/**
+ * Проверяем является ли элемент символом знака вопроса
+ * @returns {boolean}
+ */
+CRunElementBase.prototype.IsQuestionMark = function()
+{
+	return false;
+};
+/**
  * Является ли данный элемент символом дефиса
  * @returns {boolean}
  */
@@ -551,6 +567,14 @@ ParaText.prototype.IsDiacriticalSymbol = function()
 ParaText.prototype.IsDot = function()
 {
 	return (this.Value === 0x002E);
+};
+ParaText.prototype.IsExclamationMark = function()
+{
+	return (this.Value === 0x0021);
+};
+ParaText.prototype.IsQuestionMark = function()
+{
+	return (this.Value === 0x003F);
 };
 ParaText.prototype.IsHyphen = function()
 {

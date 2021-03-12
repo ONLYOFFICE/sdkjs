@@ -142,7 +142,7 @@ var c_oAscError = Asc.c_oAscError;
 			this.LastUserSavedIndex = AscCommon.History.UserSavedIndex;
 		}
 
-		if (true === this.canSave && !this.isLongAction())
+		if (true === this.canSave && this._saveCheck())
 		{
 			var _isNaturalSave = this.IsUserSave;
 			this.canSave = false;

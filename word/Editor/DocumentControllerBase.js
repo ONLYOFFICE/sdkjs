@@ -624,6 +624,12 @@ CDocumentControllerBase.prototype.GetSelectedText = function(bClearText, oPr){re
  */
 CDocumentControllerBase.prototype.GetCurrentParagraph = function(bIgnoreSelection, arrSelectedParagraphs, oPr){return null};
 /**
+ * Получаем стек таблиц, в которых мы находимся
+ * @param arrTables
+ * @return {CTable[]}
+ */
+CDocumentControllerBase.prototype.GetCurrentTablesStack = function(arrTables) {return arrTables ? arrTables : [];};
+/**
  * Собираем информацию о выделенной части документа.
  * @param oInfo
  */

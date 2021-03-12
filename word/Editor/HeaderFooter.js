@@ -1019,6 +1019,11 @@ CHeaderFooter.prototype =
 		return this.Content.GetCurrentParagraph(bIgnoreSelection, arrSelectedParagraphs);
 	},
 
+	GetCurrentTablesStack : function(arrTables)
+	{
+		return this.Content.GetCurrentTablesStack(arrTables);
+	},
+
 	StartSelectionFromCurPos : function()
 	{
 		this.Content.StartSelectionFromCurPos();
@@ -2406,6 +2411,11 @@ CHeaderFooterController.prototype =
 	GetCurrentParagraph : function(bIgnoreSelection, arrSelectedParagraphs, oPr)
 	{
 		return this.CurHdrFtr.GetCurrentParagraph(bIgnoreSelection, arrSelectedParagraphs, oPr);
+	},
+
+	GetCurrentTablesStack : function(arrTables)
+	{
+		return this.CurHdrFtr ? this.CurHdrFtr.GetCurrentTablesStack(arrTables) : arrTables;
 	},
 
 	StartSelectionFromCurPos : function()

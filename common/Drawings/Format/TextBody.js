@@ -113,12 +113,12 @@
         if(this.content) {
             var bTrackRevision = false;
             if(typeof editor !== "undefined" && editor && editor.WordControl && editor.WordControl.m_oLogicDocument.TrackRevisions === true) {
-                bTrackRevision = true;
-                editor.WordControl.m_oLogicDocument.TrackRevisions = false;
+                bTrackRevision = editor.WordControl.m_oLogicDocument.GetLocalTrackRevisions();
+                editor.WordControl.m_oLogicDocument.SetLocalTrackRevisions(false);
             }
             ret.setContent(this.content.Copy3(ret));
-            if(bTrackRevision) {
-                editor.WordControl.m_oLogicDocument.TrackRevisions = true;
+            if(false !== bTrackRevision) {
+                editor.WordControl.m_oLogicDocument.SetLocalTrackRevisions(bTrackRevision);
             }
         }
         return ret;

@@ -94,8 +94,10 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Worksheet_DataValidationAdd = 48;
 	window['AscCH'].historyitem_Worksheet_DataValidationChange = 49;
 	window['AscCH'].historyitem_Worksheet_DataValidationDelete = 50;
-	window['AscCH'].historyitem_Worksheet_CFRuleAdd = 51;
-	window['AscCH'].historyitem_Worksheet_CFRuleDelete = 52;
+	window['AscCH'].historyitem_Worksheet_PivotReplaceKeepRecords = 51;
+
+	window['AscCH'].historyitem_Worksheet_CFRuleAdd = 52;
+	window['AscCH'].historyitem_Worksheet_CFRuleDelete = 53;
 
 	window['AscCH'].historyitem_RowCol_Fontname = 1;
 	window['AscCH'].historyitem_RowCol_Fontsize = 2;
@@ -219,6 +221,7 @@ function (window, undefined) {
 	window['AscCH'].historyitem_PivotTable_SetGridDropZones = 51;
 	window['AscCH'].historyitem_PivotTable_WorksheetSource = 52;
 	window['AscCH'].historyitem_PivotTable_PivotCacheId = 53;
+	window['AscCH'].historyitem_PivotTable_PivotFieldVisible = 54;
 
 	window['AscCH'].historyitem_SharedFormula_ChangeFormula = 1;
 	window['AscCH'].historyitem_SharedFormula_ChangeShared = 2;

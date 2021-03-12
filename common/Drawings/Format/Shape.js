@@ -1051,7 +1051,7 @@ CShape.prototype.setSignature = function(oSignature)
     History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ShapeSetSignature, this.signatureLine, oSignature));
     this.signatureLine = oSignature;
 };
-CShape.prototype.setSignaturePr = function(oPr)
+CShape.prototype.setSignaturePr = function(oPr, sUrl)
 {
     if(!oPr || !this.signatureLine)
     {
@@ -1060,6 +1060,12 @@ CShape.prototype.setSignaturePr = function(oPr)
     var oCopy = this.signatureLine.copyWithId();
     oCopy.setProperties(oPr);
     this.setSignature(oCopy);
+    if(sUrl) {
+        if(this.spPr) {
+            var oBlipFillUnifill = AscFormat.CreateBlipFillUniFillFromUrl(sUrl);
+            this.spPr.setFill(oBlipFillUnifill);
+        }
+    }
 };
 
 CShape.prototype.convertToWord = function (document) {
@@ -1096,6 +1102,9 @@ CShape.prototype.convertToWord = function (document) {
             }
             c.setTextBoxContent(new_content);
         }
+    }
+    if(this.signatureLine) {
+        c.setSignature(this.signatureLine.copy());
     }
     return c;
 };
@@ -1135,6 +1144,11 @@ CShape.prototype.convertToPPTX = function (drawingDocument, worksheet, bIsAddMat
         }
         tx_body.setContent(new_content);
         c.setTxBody(tx_body);
+    }
+    if(worksheet) {
+        if(this.signatureLine) {
+            c.setSignature(this.signatureLine.copy());
+        }
     }
     return c;
 };
@@ -5748,6 +5762,9 @@ CShape.prototype.hitInBoundingRect = function (x, y) {
 
 CShape.prototype.canRotate = function () {
     if(this.cropObject) {
+        return false;
+    }
+    if(this.signatureLine) {
         return false;
     }
     return AscFormat.CGraphicObjectBase.prototype.canRotate.call(this);

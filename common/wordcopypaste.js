@@ -3261,9 +3261,9 @@ PasteProcessor.prototype =
 				this.oDocument = this._GetTargetDocument(this.oDocument);
 
 				if (this.oDocument && this.oDocument.bPresentation) {
-					if (oThis.api.WordControl.m_oLogicDocument.TrackRevisions) {
-						oThis.api.WordControl.m_oLogicDocument.TrackRevisions = false;
-						bTurnOffTrackRevisions = true;
+					if (oThis.api.WordControl.m_oLogicDocument.IsTrackRevisions()) {
+						bTurnOffTrackRevisions = oThis.api.WordControl.m_oLogicDocument.GetLocalTrackRevisions();
+						oThis.api.WordControl.m_oLogicDocument.SetLocalTrackRevisions(false);
 					}
 				}
 			}
@@ -3301,8 +3301,8 @@ PasteProcessor.prototype =
 		}
 
 		if (true === bInsertFromBinary) {
-			if (bTurnOffTrackRevisions) {
-				oThis.api.WordControl.m_oLogicDocument.TrackRevisions = true;
+			if (false !== bTurnOffTrackRevisions) {
+				oThis.api.WordControl.m_oLogicDocument.SetLocalTrackRevisions(bTurnOffTrackRevisions);
 			}
 		} else if (node) {
 			this._pasteFromHtml(node, bTurnOffTrackRevisions);
@@ -4657,8 +4657,8 @@ PasteProcessor.prototype =
 				if (false === oThis.bNested) {
 					oThis.InsertInDocument();
 				}
-				if (bTurnOffTrackRevisions) {
-					oThis.api.WordControl.m_oLogicDocument.TrackRevisions = true;
+				if (false !== bTurnOffTrackRevisions) {
+					oThis.api.WordControl.m_oLogicDocument.SetLocalTrackRevisions(bTurnOffTrackRevisions);
 				}
 				if (false === oThis.bNested) {
 					if (oThis.pasteCallback) {
@@ -4695,8 +4695,8 @@ PasteProcessor.prototype =
 					}
 				}
 			}
-			if (bTurnOffTrackRevisions) {
-				oThis.api.WordControl.m_oLogicDocument.TrackRevisions = false;
+			if (false !== bTurnOffTrackRevisions) {
+				oThis.api.WordControl.m_oLogicDocument.SetLocalTrackRevisions(bTurnOffTrackRevisions);
 			}
 			//на время заполнения контента для вставки отключаем историю
 			oThis._Execute(node, {}, true, true, false);
@@ -4716,8 +4716,8 @@ PasteProcessor.prototype =
 				this._Prepeare(node, fPasteHtmlWordCallback);
 			}
 
-			if (bTurnOffTrackRevisions) {
-				oThis.api.WordControl.m_oLogicDocument.TrackRevisions = true;
+			if (false !== bTurnOffTrackRevisions) {
+				oThis.api.WordControl.m_oLogicDocument.SetLocalTrackRevisions(bTurnOffTrackRevisions);
 			}
 		} else {
 			this.oRootNode = node;

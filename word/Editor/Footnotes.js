@@ -2735,6 +2735,13 @@ CFootnotesController.prototype.GetCurrentParagraph = function(bIgnoreSelection, 
 {
 	return this.CurFootnote.GetCurrentParagraph(bIgnoreSelection, arrSelectedParagraphs, oPr);
 };
+CFootnotesController.prototype.GetCurrentTablesStack = function(arrTables)
+{
+	if (!arrTables)
+		arrTables = [];
+
+	return this.CurFootnote.GetCurrentTablesStack(arrTables);
+};
 CFootnotesController.prototype.GetSelectedElementsInfo = function(oInfo)
 {
 	if (true !== this.private_IsOnFootnoteSelected() || null === this.CurFootnote)

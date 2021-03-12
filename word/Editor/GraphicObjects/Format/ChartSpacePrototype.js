@@ -265,10 +265,13 @@ CChartSpace.prototype.recalculate = function()
         return;
     AscFormat.ExecuteNoHistory(function()
     {
-        var bOldTrackRevision =  editor.WordControl.m_oLogicDocument.TrackRevisions;
-        if(bOldTrackRevision){
-            editor.WordControl.m_oLogicDocument.TrackRevisions = false;
-        }
+		var bLocalTrackRevision = false;
+		if (editor.WordControl.m_oLogicDocument.IsTrackRevisions())
+		{
+			bLocalTrackRevision = editor.WordControl.m_oLogicDocument.GetLocalTrackRevisions();
+			editor.WordControl.m_oLogicDocument.SetLocalTrackRevisions(false);
+		}
+
         this.updateLinks();
 
 
@@ -419,9 +422,11 @@ CChartSpace.prototype.recalculate = function()
         {
             this.updatePosition(this.posX, this.posY);
         }
-        if(bOldTrackRevision){
-            editor.WordControl.m_oLogicDocument.TrackRevisions = true;
-        }
+
+		if (false !== bLocalTrackRevision)
+		{
+			editor.WordControl.m_oLogicDocument.SetLocalTrackRevisions(bLocalTrackRevision);
+		}
     }, this, []);
 };
 

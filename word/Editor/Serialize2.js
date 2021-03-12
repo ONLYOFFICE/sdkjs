@@ -1536,7 +1536,7 @@ function readMoveRangeStart(length, bcr, stream, oReadResult, oParStruct, isFrom
 	var res = bcr.Read1(length, function(t, l) {
 		return ReadMoveRangeStartElem(t, l, stream, reviewInfo, options);
 	});
-	if (options.name && options.id) {
+	if (null !== options.name && null !== options.id) {
 		var move = new CParaRevisionMove(true, isFrom, options.name, reviewInfo);
 		oReadResult.moveRanges[options.id] = move;
 		oParStruct.addToContent(move);
@@ -1547,7 +1547,6 @@ function readMoveRangeEnd(length, bcr, stream, oReadResult, oParStruct, isFrom, 
 	if (!oParStruct) {
 		return false;
 	}
-	var oldPos = stream.GetCurPos();
 	var options = {id: null};
 	bcr.Read1(length, function(t, l) {
 		return ReadMoveRangeEndElem(t, l, stream, options);
@@ -1562,9 +1561,6 @@ function readMoveRangeEnd(length, bcr, stream, oReadResult, oParStruct, isFrom, 
 		} else {
 			oParStruct.addToContent(new CParaRevisionMove(false, isFrom, moveStart.GetMarkId()));
 		}
-	} else {
-		stream.Seek2(oldPos);
-		return false;
 	}
 	return true;
 }
@@ -1589,7 +1585,6 @@ function readBookmarkEnd(length, bcr, stream, oReadResult, oParStruct) {
 	if (!oParStruct) {
 		return false;
 	}
-	var oldPos = stream.GetCurPos();
 	var bookmark = oReadResult.bookmarkForRead;
 	bookmark.BookmarkId = undefined;
 	bcr.Read1(length, function(t, l){
@@ -1598,9 +1593,6 @@ function readBookmarkEnd(length, bcr, stream, oReadResult, oParStruct) {
 	if (oReadResult.bookmarksStarted[bookmark.BookmarkId]) {
 		delete oReadResult.bookmarksStarted[bookmark.BookmarkId];
 		oParStruct.addToContent(new CParagraphBookmark(false, bookmark.BookmarkId));
-	} else {
-		stream.Seek2(oldPos);
-		return false;
 	}
 	return true;
 }
@@ -6748,7 +6740,7 @@ function BinarySettingsTableWriter(memory, doc, saveParams)
 		this.bs.WriteItem(c_oSer_SettingsType.ClrSchemeMapping, function(){oThis.WriteColorSchemeMapping();});
 		this.bs.WriteItem(c_oSer_SettingsType.DefaultTabStopTwips, function(){oThis.bs.writeMmToTwips(AscCommonWord.Default_Tab_Stop);});
 		this.bs.WriteItem(c_oSer_SettingsType.MathPr, function(){oThis.WriteMathPr();});
-		this.bs.WriteItem(c_oSer_SettingsType.TrackRevisions, function(){oThis.memory.WriteBool(oThis.Document.IsTrackRevisions());});
+		this.bs.WriteItem(c_oSer_SettingsType.TrackRevisions, function(){oThis.memory.WriteBool(oThis.Document.GetGlobalTrackRevisions());});
 		this.bs.WriteItem(c_oSer_SettingsType.FootnotePr, function(){
 			var index = oThis.WriteNotePr(oThis.Document.Footnotes, oThis.Document.Footnotes.FootnotePr, oThis.saveParams.footnotes, c_oSerNotes.PrFntPos);
 			if (index > oThis.saveParams.footnotesIndex) {
@@ -7972,7 +7964,7 @@ function BinaryFileReader(doc, openParams)
 		// for(var i = 0, length = this.oReadResult.aPostOpenStyleNumCallbacks.length; i < length; ++i)
 			// this.oReadResult.aPostOpenStyleNumCallbacks[i].call();
 		if (null != this.oReadResult.trackRevisions) {
-			this.Document.DrawingDocument.m_oWordControl.m_oApi.asc_SetTrackRevisions(this.oReadResult.trackRevisions);
+			this.Document.SetGlobalTrackRevisions(this.oReadResult.trackRevisions);
 		}
 		for (var i = 0; i < this.oReadResult.drawingToMath.length; ++i) {
 			this.oReadResult.drawingToMath[i].ConvertToMath();

@@ -215,6 +215,7 @@
 			LockedCellPivot				: -312,
 			PivotLabledColumns			: -313,
 			PivotOverlap				: -314,
+			PivotGroup					: -315,
 
 			ForceSaveButton: -331,
 			ForceSaveTimeout: -332,
@@ -1246,6 +1247,7 @@
 	var changestype_PresDefaultLang           = 74;
 	var changestype_SlideHide                 = 75;
 	var changestype_CorePr                    = 76;
+	var changestype_Document_Settings         = 77; // Изменение общих настроек документа Document.Settings
 
 	var changestype_2_InlineObjectMove       = 1; // Передвигаем объект в заданную позцию (проверяем место, в которое пытаемся передвинуть)
 	var changestype_2_HdrFtr                 = 2; // Изменения с колонтитулом
@@ -2310,6 +2312,7 @@
 	prot['LockedCellPivot']                  = prot.LockedCellPivot;
 	prot['PivotLabledColumns']               = prot.PivotLabledColumns;
 	prot['PivotOverlap']                     = prot.PivotOverlap;
+	prot['PivotGroup']                       = prot.PivotGroup;
 	prot['ForceSaveButton']                  = prot.ForceSaveButton;
 	prot['ForceSaveTimeout']                 = prot.ForceSaveTimeout;
 	prot['CannotChangeFormulaArray']         = prot.CannotChangeFormulaArray;
@@ -3007,6 +3010,8 @@
 	window["AscCommon"].changestype_PresDefaultLang           = changestype_PresDefaultLang;
 	window["AscCommon"].changestype_SlideHide                 = changestype_SlideHide;
 	window["AscCommon"].changestype_CorePr                    = changestype_CorePr;
+	window["AscCommon"].changestype_Document_Settings         = changestype_Document_Settings;
+
 	window["AscCommon"].changestype_2_InlineObjectMove        = changestype_2_InlineObjectMove;
 	window["AscCommon"].changestype_2_HdrFtr                  = changestype_2_HdrFtr;
 	window["AscCommon"].changestype_2_Comment                 = changestype_2_Comment;

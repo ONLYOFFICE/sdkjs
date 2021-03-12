@@ -1056,7 +1056,7 @@
 				var cacheFields = cacheDefinition.getFields();
 				var fieldIndex = cacheDefinition.getFieldIndexByName(name);
 				var cacheField = -1 !== fieldIndex && cacheFields[fieldIndex];
-				if (cacheField && cacheField.sharedItems) {
+				if (cacheField) {
 					this.sourceName = name;
 					//TODO для генерации имени нужна отдельная функция
 					this.name = this.generateSlicerCacheName(name);
@@ -1731,7 +1731,7 @@
 		var cacheFields = pivotTable.cacheDefinition.getFields();
 		var fieldIndex = pivotTable.cacheDefinition.getFieldIndexByName(this.sourceName);
 		var cacheField = -1 !== fieldIndex && cacheFields[fieldIndex];
-		if (cacheField && cacheField.sharedItems) {
+		if (cacheField) {
 			pivotTable.checkPivotFieldItems(fieldIndex);
 			var pivotField = pivotTable.asc_getPivotFields()[fieldIndex];
 
@@ -2764,7 +2764,7 @@
 	};
 	CT_tabularSlicerCache.prototype.syncWithCache = function (cacheField, pivotField, cacheFieldWithData) {
 		var pivotItems = pivotField.getItems();
-		var count = Math.min(cacheField.getSharedSize(), pivotItems.length);
+		var count = Math.min(cacheField.getGroupOrSharedSize(), pivotItems.length);
 		if (cacheFieldWithData) {
 			count = Math.min(count, cacheFieldWithData.length);
 		}
@@ -2781,7 +2781,7 @@
 				this.items.push(item);
 			}
 		}
-		this.sortItems(this.sortOrder, cacheField.sharedItems);
+		this.sortItems(this.sortOrder, cacheField.getGroupOrSharedItems());
 	};
 	CT_tabularSlicerCache.prototype.sortItems = function(type, sharedItems) {
 		var sign = ST_tabularSlicerCacheSortOrder.Ascending === type ? 1 : -1;
@@ -2804,7 +2804,7 @@
 		for (var i = 0; i < this.items.length; ++i) {
 			var item = this.items[i];
 			var elem = AscCommonExcel.AutoFiltersOptionsElements();
-			var sharedItem = cacheField.getSharedItem(item.x);
+			var sharedItem = cacheField.getGroupOrSharedItem(item.x);
 			var num = sharedItem.isDateOrNum() && cacheField.getNumFormat();
 			var cellValue = sharedItem.getCellValue();
 			elem.val = elem.text = cellValue.getTextValue(num);
