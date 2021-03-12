@@ -63,6 +63,8 @@ var g_nColorTextDefault = 1;
 var g_nColorHyperlink = 10;
 var g_nColorHyperlinkVisited = 11;
 
+var previewConditionalFormattingNum = 38718;
+
 var g_oThemeColorsDefaultModsSpreadsheet = [
     [0, -4.9989318521683403E-2, -0.14999847407452621, -0.249977111117893, -0.34998626667073579, -0.499984740745262],
     [0, -9.9978637043366805E-2, -0.249977111117893, -0.499984740745262, -0.749992370372631, -0.89999084444715716],
@@ -3011,8 +3013,7 @@ var g_oBorderProperties = {
 		if (this.num) {
 			var oNumFormat = AscCommon.oNumFormatCache.get(this.num.getFormat());
 			if (false == oNumFormat.isGeneralFormat()) {
-				//TODO получать значения из интерфейса
-				var aText = oNumFormat.format(123);
+				var aText = oNumFormat.format(previewConditionalFormattingNum);
 				text = AscCommonExcel.getStringFromMultiText(aText);
 			}
 		}
