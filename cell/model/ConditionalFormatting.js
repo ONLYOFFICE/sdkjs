@@ -968,8 +968,7 @@
 			});
 		}
 	};
-
-	//TODO?
+	
 	CConditionalFormattingRule.prototype.asc_setContainsText = function (val) {
 		if (val[0] === "=") {
 			val = val.slice(1);
@@ -989,51 +988,6 @@
 	};
 
 	CConditionalFormattingRule.prototype.getFormulaByType = function (val) {
-		/*
-		 <cfRule type="containsText" priority="6" operator="containsText" text="1">
-		 <formula>NOT(ISERROR(SEARCH("1",K5)))</formula>
-		 </cfRule>
-		 <cfRule type="notContainsText" priority="5" operator="notContains" text="112313">
-		 <formula>ISERROR(SEARCH("112313",K5))</formula>
-		 </cfRule>
-		 <cfRule type="beginsWith" priority="1" operator="beginsWith" text="sdfsdfsdf">
-		 <formula>LEFT(K5,LEN("sdfsdfsdf"))="sdfsdfsdf"</formula>
-		 </cfRule>
-		 */
-
-
-		/*<conditionalFormatting sqref="A1">
-			<cfRule type="timePeriod" priority="21" timePeriod="nextMonth">
-				<formula>AND(MONTH(A1)=MONTH(EDATE(TODAY(),0+1)),YEAR(A1)=YEAR(EDATE(TODAY(),0+1)))</formula>
-			</cfRule>
-			<cfRule type="timePeriod" priority="22" timePeriod="thisMonth">
-				<formula>AND(MONTH(A1)=MONTH(TODAY()),YEAR(A1)=YEAR(TODAY()))</formula>
-			</cfRule>
-			<cfRule type="timePeriod" priority="23" timePeriod="lastMonth">
-				<formula>AND(MONTH(A1)=MONTH(EDATE(TODAY(),0-1)),YEAR(A1)=YEAR(EDATE(TODAY(),0-1)))</formula>
-			</cfRule>
-			<cfRule type="timePeriod" priority="24" timePeriod="nextWeek">
-				<formula>AND(ROUNDDOWN(A1,0)-TODAY()>(7-WEEKDAY(TODAY())),ROUNDDOWN(A1,0)-TODAY()<(15-WEEKDAY(TODAY())))</formula>
-			</cfRule>
-			<cfRule type="timePeriod" priority="25" timePeriod="thisWeek">
-				<formula>AND(TODAY()-ROUNDDOWN(A1,0)<=WEEKDAY(TODAY())-1,ROUNDDOWN(A1,0)-TODAY()<=7-WEEKDAY(TODAY()))</formula>
-			</cfRule>
-			<cfRule type="timePeriod" priority="26" timePeriod="lastWeek">
-				<formula>AND(TODAY()-ROUNDDOWN(A1,0)>=(WEEKDAY(TODAY())),TODAY()-ROUNDDOWN(A1,0)<(WEEKDAY(TODAY())+7))</formula>
-			</cfRule>
-			<cfRule type="timePeriod" priority="27" timePeriod="last7Days"last7Days>
-				<formula>AND(TODAY()-FLOOR(A1,1)<=6,FLOOR(A1,1)<=TODAY())</formula>
-			</cfRule>
-			<cfRule type="timePeriod" priority="28" timePeriod="tomorrow">
-				<formula>FLOOR(A1,1)=TODAY()+1</formula>
-			</cfRule>
-			<cfRule type="timePeriod" priority="29" timePeriod="today">
-				<formula>FLOOR(A1,1)=TODAY()</formula>
-			</cfRule>
-			<cfRule type="timePeriod" priority="30" timePeriod="yesterday">
-				<formula>FLOOR(A1,1)=TODAY()-1</formula>
-			</cfRule>
-		</conditionalFormatting>*/
 		var t = this;
 		var _generateTimePeriodFunction = function () {
 			switch (this.timePeriod) {
@@ -1069,7 +1023,6 @@
 					break;
 			}
 		};
-
 
 		var res = null;
 		if (this.ranges && this.ranges[0]) {
