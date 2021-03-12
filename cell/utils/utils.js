@@ -2099,115 +2099,6 @@
 				sr.render(ctx, width_padding, textY, tm.width, oStyle.getFontColor() || new AscCommon.CColor(0, 0, 0));
 			}
 		}
-
-		function drawStyle2(ctx, graphics, sr, oStyle, sStyleName, width, height) {
-			var bc = null, bs = AscCommon.c_oAscBorderStyles.None, isNotFirst = false; // cached border color
-			ctx.clear();
-			// Fill cell
-			if (oStyle.ApplyFill) {
-				var fill = oStyle.getFill();
-				if (null !== fill) {
-					AscCommonExcel.drawFillCell(ctx, graphics, fill, new AscCommon.asc_CRect(0, 0, width, height));
-				}
-			}
-
-			function drawBorder(type, b, x1, y1, x2, y2) {
-				if (b && b.w > 0) {
-					var isStroke = false;
-					var isNewColor = !AscCommonExcel.g_oColorManager.isEqual(bc, b.c);
-					var isNewStyle = bs !== b.s;
-					if (isNotFirst && (isNewColor || isNewStyle)) {
-						ctx.stroke();
-						isStroke = true;
-					}
-
-					if (isNewColor) {
-						bc = b.c;
-						ctx.setStrokeStyle(bc);
-					}
-					if (isNewStyle) {
-						bs = b.s;
-						ctx.setLineWidth(b.w);
-						ctx.setLineDash(b.getDashSegments());
-					}
-
-					if (isStroke || false === isNotFirst) {
-						isNotFirst = true;
-						ctx.beginPath();
-					}
-
-					switch (type) {
-						case AscCommon.c_oAscBorderType.Hor:
-							ctx.lineHor(x1, y1, x2);
-							break;
-						case AscCommon.c_oAscBorderType.Ver:
-							ctx.lineVer(x1, y1, y2);
-							break;
-						case AscCommon.c_oAscBorderType.Diag:
-							ctx.lineDiag(x1, y1, x2, y2);
-							break;
-					}
-				}
-			}
-
-			if (oStyle.ApplyBorder) {
-				// borders
-				var oBorders = oStyle.getBorder();
-				drawBorder(AscCommon.c_oAscBorderType.Ver, oBorders.l, 0, 0, 0, height);
-				drawBorder(AscCommon.c_oAscBorderType.Hor, oBorders.b, 0, height - 1, width, height - 1);
-				drawBorder(AscCommon.c_oAscBorderType.Ver, oBorders.r, width - 1, height, width - 1, 0);
-				drawBorder(AscCommon.c_oAscBorderType.Hor, oBorders.t, width, 0, 0, 0);
-				if (isNotFirst) {
-					ctx.stroke();
-				}
-			}
-
-			// Draw text
-			var format = oStyle.getFont().clone();
-			// Для размера шрифта делаем ограничение для превью в 16pt (у Excel 18pt, но и высота превью больше 22px)
-			var nSize = format.getSize();
-			if (16 < format.getSize()) {
-				nSize = 16;
-			}
-
-			// рисуем в пикселях
-			if (window["IS_NATIVE_EDITOR"]) {
-				nSize *= AscCommon.AscBrowser.retinaPixelRatio;
-			}
-
-			format.setSize(nSize);
-
-
-
-
-			var tm = sr.measureString(sStyleName);
-			var width_padding = 4;
-			if (oStyle.xfs && oStyle.xfs.align && oStyle.xfs.align.hor === AscCommon.align_Center) {
-				width_padding = Asc.round(0.5 * (width - tm.width));
-			}
-
-			// Текст будем рисовать по центру (в Excel чуть по другому реализовано, у них постоянный отступ снизу)
-			var textY = Asc.round(0.5 * (height - tm.height));
-			ctx.setFont(format);
-			ctx.setFillStyle(oStyle.getFontColor() || new AscCommon.CColor(0, 0, 0));
-			//ctx.fillText(sStyleName, width_padding, textY + tm.baseline);
-
-
-			var cellFlags = new AscCommonExcel.CellFlags();
-			cellFlags.textAlign = oStyle.xfs.align && oStyle.xfs.align.hor;
-
-			var fragments = [];
-			var tempFragment = new AscCommonExcel.Fragment();
-			tempFragment.text = sStyleName;
-			tempFragment.format = format;
-			fragments.push(tempFragment);
-
-			var cellEditorWidth = width;
-			sr.setString(fragments, cellFlags);
-
-			var textMetrics = sr._measureChars(cellEditorWidth);
-			sr.render(ctx, width_padding, textY, textMetrics.width, oStyle.getFontColor() || new AscCommon.CColor(0, 0, 0));
-		}
 		
 		function drawFillCell(ctx, graphics, fill, rect) {
 			if (!fill.hasFill()) {
@@ -2422,6 +2313,7 @@
 			return canvas;
 		}
 
+		//TODO рассмотреть объединение с generateXfsStyle
 		function generateXfsStyle2(id, wb, xfs, text) {
 			var canvas = createAndPutCanvas(id);
 			if (!canvas) {

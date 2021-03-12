@@ -3147,26 +3147,6 @@ var g_oBorderProperties = {
 		this.num = new AscCommonExcel.Num({f:val});
 	};
 
-	/*CellXfs.prototype.asc_setNumFormat = function () {
-		return this.getNum2().getFormat();
-	};
-
-	CellXfs.prototype.asc_setHorAlign = function () {
-		return this.getAlign2().getAlignHorizontal();
-	};
-	CellXfs.prototype.asc_setVertAlign = function () {
-		return this.getAlign2().getAlignVertical();
-	};
-	CellXfs.prototype.asc_setAngle = function () {
-		return this.getAlign2().getAngle();
-	};
-	CellXfs.prototype.asc_setWrapText = function () {
-		return this.getAlign2().getWrap();
-	};
-	CellXfs.prototype.asc_setShrinkToFit = function () {
-		return this.getAlign2().getShrinkToFit();
-	};*/
-
 
 	function FromXml_ST_HorizontalAlignment(val) {
 		var res = -1;

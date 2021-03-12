@@ -1108,14 +1108,6 @@
 		if (!this.aRuleElements) {
 			this.aRuleElements = [];
 		}
-		//TODO
-		/*<cfRule type="containsText" dxfId="6" priority="9" operator="containsText" text="14">
-			<formula>NOT(ISERROR(SEARCH("14",A1)))</formula>
-			</cfRule>
-			<cfRule type="timePeriod" dxfId="7" priority="8" timePeriod="yesterday">
-		<formula>FLOOR(A1,1)=TODAY()-1</formula>
-		</cfRule>*/
-
 		val = this.correctFromInterface(val);
 
 		this.aRuleElements[0] = new CFormulaCF();
