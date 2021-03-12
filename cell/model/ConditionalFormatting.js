@@ -924,6 +924,27 @@
 
 	CConditionalFormattingRule.prototype.asc_setType = function (val) {
 		this.type = val;
+		this._cleanAfterChangeType();
+		var formula = this.getFormulaByType();
+		if (formula) {
+			this.aRuleElements = [];
+			this.aRuleElements[0] = new CFormulaCF();
+			this.aRuleElements[0].Text = formula;
+		}
+	};
+	CConditionalFormattingRule.prototype._cleanAfterChangeType = function () {
+		switch (this.type) {
+			case Asc.ECfType.notContainsErrors:
+			case Asc.ECfType.containsErrors:
+			case Asc.ECfType.notContainsBlanks:
+			case Asc.ECfType.containsBlanks:
+			case Asc.ECfType.timePeriod:
+				this.aRuleElements = [];
+				this.percent = null;
+				this.text = null;
+				this.rank = null;
+				break;
+		}
 	};
 	CConditionalFormattingRule.prototype.asc_setDxf = function (val) {
 		this.dxf = val;
@@ -955,19 +976,19 @@
 			//генерируем массив
 			this.aRuleElements = [];
 			this.aRuleElements[0] = new CFormulaCF();
-			this.aRuleElements[0].Text = this.getContainsTextFormula(val);
+			this.aRuleElements[0].Text = this.getFormulaByType(val);
 			this.aRuleElements[1] = new CFormulaCF();
 			this.aRuleElements[1].Text = val;
 			this.text = null;
 		} else {
 			this.aRuleElements = [];
 			this.aRuleElements[0] = new CFormulaCF();
-			this.aRuleElements[0].Text = this.getContainsTextFormula(val);
+			this.aRuleElements[0].Text = this.getFormulaByType(val);
 			this.text = val;
 		}
 	};
 
-	CConditionalFormattingRule.prototype.getContainsTextFormula = function (val) {
+	CConditionalFormattingRule.prototype.getFormulaByType = function (val) {
 		/*
 		 <cfRule type="containsText" priority="6" operator="containsText" text="1">
 		 <formula>NOT(ISERROR(SEARCH("1",K5)))</formula>
@@ -979,6 +1000,76 @@
 		 <formula>LEFT(K5,LEN("sdfsdfsdf"))="sdfsdfsdf"</formula>
 		 </cfRule>
 		 */
+
+
+		/*<conditionalFormatting sqref="A1">
+			<cfRule type="timePeriod" priority="21" timePeriod="nextMonth">
+				<formula>AND(MONTH(A1)=MONTH(EDATE(TODAY(),0+1)),YEAR(A1)=YEAR(EDATE(TODAY(),0+1)))</formula>
+			</cfRule>
+			<cfRule type="timePeriod" priority="22" timePeriod="thisMonth">
+				<formula>AND(MONTH(A1)=MONTH(TODAY()),YEAR(A1)=YEAR(TODAY()))</formula>
+			</cfRule>
+			<cfRule type="timePeriod" priority="23" timePeriod="lastMonth">
+				<formula>AND(MONTH(A1)=MONTH(EDATE(TODAY(),0-1)),YEAR(A1)=YEAR(EDATE(TODAY(),0-1)))</formula>
+			</cfRule>
+			<cfRule type="timePeriod" priority="24" timePeriod="nextWeek">
+				<formula>AND(ROUNDDOWN(A1,0)-TODAY()>(7-WEEKDAY(TODAY())),ROUNDDOWN(A1,0)-TODAY()<(15-WEEKDAY(TODAY())))</formula>
+			</cfRule>
+			<cfRule type="timePeriod" priority="25" timePeriod="thisWeek">
+				<formula>AND(TODAY()-ROUNDDOWN(A1,0)<=WEEKDAY(TODAY())-1,ROUNDDOWN(A1,0)-TODAY()<=7-WEEKDAY(TODAY()))</formula>
+			</cfRule>
+			<cfRule type="timePeriod" priority="26" timePeriod="lastWeek">
+				<formula>AND(TODAY()-ROUNDDOWN(A1,0)>=(WEEKDAY(TODAY())),TODAY()-ROUNDDOWN(A1,0)<(WEEKDAY(TODAY())+7))</formula>
+			</cfRule>
+			<cfRule type="timePeriod" priority="27" timePeriod="last7Days"last7Days>
+				<formula>AND(TODAY()-FLOOR(A1,1)<=6,FLOOR(A1,1)<=TODAY())</formula>
+			</cfRule>
+			<cfRule type="timePeriod" priority="28" timePeriod="tomorrow">
+				<formula>FLOOR(A1,1)=TODAY()+1</formula>
+			</cfRule>
+			<cfRule type="timePeriod" priority="29" timePeriod="today">
+				<formula>FLOOR(A1,1)=TODAY()</formula>
+			</cfRule>
+			<cfRule type="timePeriod" priority="30" timePeriod="yesterday">
+				<formula>FLOOR(A1,1)=TODAY()-1</formula>
+			</cfRule>
+		</conditionalFormatting>*/
+		var t = this;
+		var _generateTimePeriodFunction = function () {
+			switch (this.timePeriod) {
+				case AscCommonExcel.ST_TimePeriod.yesterday:
+					res = "FLOOR(" + firstCellInRange + ",1)" + "=TODAY()-1";
+					break;
+				case AscCommonExcel.ST_TimePeriod.today:
+					res = "FLOOR(" + firstCellInRange + ",1)" + "=TODAY()";
+					break;
+				case AscCommonExcel.ST_TimePeriod.tomorrow:
+					res = "FLOOR(" + firstCellInRange + ",1)" + "=TODAY()+1";
+					break;
+				case AscCommonExcel.ST_TimePeriod.last7Days:
+					res = "AND(TODAY()-FLOOR(" + firstCellInRange + ",1)<=6,FLOOR(" + firstCellInRange + ",1)<=TODAY())";
+					break;
+				case AscCommonExcel.ST_TimePeriod.lastWeek:
+					res = "AND(TODAY()-ROUNDDOWN(" + firstCellInRange + ",0)>=(WEEKDAY(TODAY())),TODAY()-ROUNDDOWN(" + firstCellInRange + ",0)<(WEEKDAY(TODAY())+7))";
+					break;
+				case AscCommonExcel.ST_TimePeriod.thisWeek:
+					res = "AND(TODAY()-ROUNDDOWN(" + firstCellInRange + ",0)<=WEEKDAY(TODAY())-1,ROUNDDOWN(" + firstCellInRange + ",0)-TODAY()<=7-WEEKDAY(TODAY()))";
+					break;
+				case AscCommonExcel.ST_TimePeriod.nextWeek:
+					res = "AND(ROUNDDOWN(" + firstCellInRange + ",0)-TODAY()>(7-WEEKDAY(TODAY())),ROUNDDOWN(" + firstCellInRange + ",0)-TODAY()<(15-WEEKDAY(TODAY())))";
+					break;
+				case AscCommonExcel.ST_TimePeriod.lastMonth:
+					res = "AND(MONTH(" +firstCellInRange + ")=MONTH(EDATE(TODAY(),0-1)),YEAR(" + firstCellInRange + ")=YEAR(EDATE(TODAY(),0-1)))";
+					break;
+				case AscCommonExcel.ST_TimePeriod.thisMonth:
+					res = "AND(MONTH(" + firstCellInRange + ")=MONTH(TODAY()),YEAR(" + firstCellInRange + ")=YEAR(TODAY()))";
+					break;
+				case AscCommonExcel.ST_TimePeriod.nextMonth:
+					res = "AND(MONTH(" + firstCellInRange + ")=MONTH(EDATE(TODAY(),0+1)),YEAR(" + firstCellInRange + ")=YEAR(EDATE(TODAY(),0+1)))";
+					break;
+			}
+		};
+
 
 		var res = null;
 		if (this.ranges && this.ranges[0]) {
@@ -1001,6 +1092,21 @@
 				case Asc.ECfType.beginsWith:
 					res = "ISERROR(SEARCH(" + val + "," + firstCellInRange + "))";
 					break;
+				case Asc.ECfType.notContainsErrors:
+					res = "NOT(ISERROR(" + firstCellInRange + "))";
+					break;
+				case Asc.ECfType.containsErrors:
+					res = "ISERROR(" + firstCellInRange + ")";
+					break;
+				case Asc.ECfType.notContainsBlanks:
+					res = "LEN(TRIM(" + firstCellInRange + "))>0";
+					break;
+				case Asc.ECfType.containsBlanks:
+					res = "LEN(TRIM(" + firstCellInRange + "))=0";
+					break;
+				case Asc.ECfType.timePeriod:
+					res = _generateTimePeriodFunction();
+					break;
 			}
 		}
 		return res;
@@ -1008,6 +1114,12 @@
 
 	CConditionalFormattingRule.prototype.asc_setTimePeriod = function (val) {
 		this.timePeriod = val;
+		var formula = this.getFormulaByType();
+		if (formula) {
+			this.aRuleElements = [];
+			this.aRuleElements[0] = new CFormulaCF();
+			this.aRuleElements[0].Text = formula;
+		}
 	};
 	CConditionalFormattingRule.prototype.asc_setOperator = function (val) {
 		this.operator = val;
