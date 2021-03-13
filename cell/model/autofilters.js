@@ -255,12 +255,12 @@
 			asc_getColumnName : function() { return this.columnName; },
 			asc_getSheetColumnName : function() { return this.sheetColumnName; },
 
-			setVisibleFromValues: function(values) {
+			setVisibleFromValues: function(visible) {
 				if (!this.values) {
 					return;
 				}
-				for (var i = 0; i < this.values.length && i < values.length; ++i) {
-					this.values[i].visible = values[i].visible;
+				for (var i = 0; i < this.values.length; ++i) {
+					this.values[i].visible = !!visible[this.values[i].val];
 				}
 			}
 		};

@@ -1448,6 +1448,13 @@
 		if (pivotTables.length === 0) {
 			return;
 		}
+		//todo assign values instead of setVisibleFromValues ?
+		var visible = {};
+		for (var i = 0; i < values.length; ++i) {
+			if (values[i].visible) {
+				visible[values[i].val] = 1;
+			}
+		}
 		var wb = this.wb;
 		for (var i = 0; i < pivotTables.length; ++i) {
 			var pivotTable = pivotTables[i];
@@ -1456,7 +1463,7 @@
 			}
 			var autoFilterObject = new Asc.AutoFiltersOptions();
 			pivotTable.fillAutoFiltersOptions(autoFilterObject, fld);
-			autoFilterObject.setVisibleFromValues(values);
+			autoFilterObject.setVisibleFromValues(visible);
 			autoFilterObject.filter.type = Asc.c_oAscAutoFilterTypes.Filters;
 			changeRes = api._changePivot(pivotTable, confirmation, false, function(ws) {
 				pivotTable.filterPivotItems(fld, autoFilterObject);
@@ -1469,7 +1476,7 @@
 			}
 		}
 		var oldVal = new AscCommonExcel.UndoRedoData_BinaryWrapper2(this);
-		this.data.tabular.fromAutoFiltersOptionsElements(values);
+		this.data.tabular.fromAutoFiltersOptionsElements(visible);
 		//add to history for 0 connection case(usually duplicate of syncSlicersWithPivot)
 		var newVal = new AscCommonExcel.UndoRedoData_BinaryWrapper2(this);
 		History.Add(AscCommonExcel.g_oUndoRedoSlicer, AscCH.historyitem_Slicer_SetCacheData,
@@ -2807,7 +2814,8 @@
 			var sharedItem = cacheField.getGroupOrSharedItem(item.x);
 			var num = sharedItem.isDateOrNum() && cacheField.getNumFormat();
 			var cellValue = sharedItem.getCellValue();
-			elem.val = elem.text = cellValue.getTextValue(num);
+			elem.val = item.x;
+			elem.text = cellValue.getTextValue(num);
 			elem.visible = item.s;
 			elem.hiddenByOtherColumns = item.nd || undefined;//todo
 			elem.isDateFormat = false;
@@ -2819,9 +2827,9 @@
 		}
 		return values;
 	};
-	CT_tabularSlicerCache.prototype.fromAutoFiltersOptionsElements = function(values) {
-		for(var i = 0; i < this.items.length && i < values.length; ++i){
-			this.items[i].s = values[i].visible;
+	CT_tabularSlicerCache.prototype.fromAutoFiltersOptionsElements = function(visible) {
+		for(var i = 0; i < this.items.length; ++i){
+			this.items[i].s = !!visible[this.items[i].x];
 		}
 	};
 	CT_tabularSlicerCache.prototype.setSortOrder = function (val) {

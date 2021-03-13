@@ -10961,11 +10961,12 @@ CT_PivotField.prototype.getFilterObject = function(cacheField, pageFilterItem, n
 			var item = items[i];
 			if (Asc.c_oAscItemType.Data === item.t || Asc.c_oAscItemType.Blank === item.t) {
 				var elem = AscCommonExcel.AutoFiltersOptionsElements();
-				elem.val = elem.text = "";
+				elem.val = item.x;
+				elem.text = "";
 				if (Asc.c_oAscItemType.Data === item.t) {
 					var sharedItem = cacheField.getGroupOrSharedItem(item.x);
 					if (sharedItem) {
-						elem.val = elem.text = sharedItem.getCellValue().getTextValue(num);
+						elem.text = sharedItem.getCellValue().getTextValue(num);
 					}
 				}
 				elem.visible = !item.h && (null == pageFilterItem || i === pageFilterItem);
