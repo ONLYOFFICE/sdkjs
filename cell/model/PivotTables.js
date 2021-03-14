@@ -9315,7 +9315,9 @@ CT_CacheField.prototype.getGroupRangePr = function () {
 };
 CT_CacheField.prototype.groupRangePr = function (fld, rangePr) {
 	this.fieldGroup = new CT_FieldGroup();
-	return this.fieldGroup.groupRangePr(fld, rangePr);
+	var sharedItems = this.getGroupOrSharedItems();
+	var containsInteger = sharedItems && sharedItems.containsInteger || false;
+	return this.fieldGroup.groupRangePr(fld, rangePr, containsInteger);
 };
 CT_CacheField.prototype.groupDiscrete = function (groupMap) {
 	return this.fieldGroup.groupDiscrete(groupMap);
@@ -12615,10 +12617,10 @@ CT_FieldGroup.prototype.group = function(fld, baseCacheField, rangePr, groupMap)
 		this.discretePr.group(reorderArray);
 	}
 };
-CT_FieldGroup.prototype.groupRangePr = function (fld, rangePr) {
+CT_FieldGroup.prototype.groupRangePr = function (fld, rangePr, containsInteger) {
 	this.base = fld;
 	this.rangePr = rangePr;
-	this.groupItems = this.rangePr.generateGroupItems();
+	this.groupItems = this.rangePr.generateGroupItems(containsInteger);
 };
 CT_FieldGroup.prototype.groupDiscrete = function (groupMap) {
 	var reorderArray = this._groupDiscrete(groupMap);
@@ -13629,7 +13631,7 @@ CT_RangePr.prototype.getGroupIndex = function(val, maxIndex) {
 	}
 	return res;
 };
-CT_RangePr.prototype.generateGroupItems  = function () {
+CT_RangePr.prototype.generateGroupItems  = function (containsInteger) {
 	var i, numFormat, numFormatShortDate, date;
 	var groupItems = new CT_SharedItems();
 	if (this.groupBy === c_oAscGroupBy.Range) {
@@ -13638,12 +13640,21 @@ CT_RangePr.prototype.generateGroupItems  = function () {
 		groupItems.addString('<' + numFormat.formatToChart(this.startNum));
 		var curVal = this.startNum;
 		var nextVal = this.startNum + this.groupInterval;
-		while (AscCommon.compareNumbers(curVal, this.endNum) < 0) {
-			groupItems.addString(numFormat.formatToChart(curVal) + '-' + numFormat.formatToChart(nextVal));
+		var integerСorrection = 0;
+		if (Number.isInteger(this.groupInterval) && Number.isInteger(this.startNum) && Number.isInteger(this.endNum) && containsInteger) {
+			integerСorrection = -1;
+		}
+		while (AscCommon.compareNumbers(nextVal, this.endNum) < 0) {
+			groupItems.addString(numFormat.formatToChart(curVal) + '-' + numFormat.formatToChart(nextVal + integerСorrection));
 			curVal = nextVal;
 			nextVal = nextVal + this.groupInterval;
 		}
-		groupItems.addString('>' + numFormat.formatToChart(curVal));
+		if (0 === AscCommon.compareNumbers(nextVal, this.endNum)) {
+			groupItems.addString(numFormat.formatToChart(curVal) + '-' + numFormat.formatToChart(nextVal));
+		} else {
+			groupItems.addString(numFormat.formatToChart(curVal) + '-' + numFormat.formatToChart(nextVal + integerСorrection));
+		}
+		groupItems.addString('>' + numFormat.formatToChart(nextVal));
 	} else {
 		numFormatShortDate = AscCommon.oNumFormatCache.get(AscCommon.getShortDateFormat());
 		groupItems.addString('<' + numFormatShortDate.formatToChart(this.startDate.getExcelDateWithTime2()));
