@@ -9525,49 +9525,53 @@
 				wsTo.tryClearCFRule(_rule, [oBBoxTo]);
 			});
 
-			if (this === wsTo) {
-				wsTo.forEachConditionalFormattingRules(function (_rule) {
-					var isChanged = null;
-					var ruleRanges = _rule.ranges;
-					var constantPart, movePart;
-					var _ranges = [];
-					for (var i = 0; i < ruleRanges.length; i++) {
-						movePart = ruleRanges[i].intersection(oBBoxFrom);
-						if (movePart) {
-							if (!copyRange) {
-								constantPart = oBBoxFrom.difference(ruleRanges[i]);
-								_ranges = _ranges.concat(constantPart);
-							}
-							movePart.setOffset(offset);
-							_ranges.push(movePart);
-							isChanged = true;
-						} else if (!copyRange) {
-							_ranges.push(ruleRanges[i]);
-						}
-					}
-					if (isChanged) {
-						if (copyRange) {
-							var _newRule = _rule.clone();
-							_rule.ranges = _ranges;
-							t.addCFRule(_newRule, true);
-						} else {
-							_rule.setLocation(_ranges, t, true);
-						}
-					}
-				});
-			} else {
-				var aDataValidations = this._getCopyDataValidationByRange(oBBoxFrom, offset);
-				if (aDataValidations) {
-					if (!copyRange) {
-						this.clearDataValidation([oBBoxFrom], true);
-					}
+			this.forEachConditionalFormattingRules(function (_rule) {
+				//если клонируем - то добавляем новое правило со смещенным диапазоном пересечения
+				//если нет + если в пределах одного листа - меняем диапазона у текущего правила
+				//если на другой лист - меняем диапазон у текущего правила + создаём новое со смещенным диапазоном пересечения
 
-					//далее необходимо создать новые объекты на новом листе
-					for (var i = 0; i < aDataValidations.length; i++) {
-						wsTo.addDataValidation(aDataValidations[i], true);
+				var isChanged = null;
+				var ruleRanges = _rule.ranges;
+				var constantPart, movePart;
+				var _moveRanges = [];
+				var _constantRanges = [];
+				for (var i = 0; i < ruleRanges.length; i++) {
+					movePart = ruleRanges[i].intersection(oBBoxFrom);
+					if (movePart) {
+						if (!copyRange) {
+							constantPart = oBBoxFrom.difference(ruleRanges[i]);
+							_constantRanges = _constantRanges.concat(constantPart);
+						}
+						movePart.setOffset(offset);
+						_moveRanges.push(movePart);
+						isChanged = true;
+					} else if (!copyRange) {
+						_constantRanges.push(ruleRanges[i]);
 					}
 				}
-			}
+				if (isChanged) {
+					//в случае клонирования фрагмента - создаём новое правило
+					var _newRule;
+					if (copyRange) {
+						_newRule = _rule.clone();
+						_newRule.ranges = _moveRanges;
+						wsTo.addCFRule(_newRule, true);
+					} else {
+						if (t !== wsTo) {
+							if (_moveRanges.length) {
+								_newRule = _rule.clone();
+								_newRule.ranges = _moveRanges;
+								wsTo.addCFRule(_newRule, true);
+							}
+							if (_constantRanges.length) {
+								_rule.setLocation(_constantRanges, t, true);
+							}
+						} else {
+							_rule.setLocation(_constantRanges.concat(_moveRanges), t, true);
+						}
+					}
+				}
+			});
 		}
 	};
 
