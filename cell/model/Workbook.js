@@ -9498,11 +9498,13 @@
 
 	Worksheet.prototype.updateConditionalFormattingOffset = function (range, offset) {
 		if (offset.row < 0 || offset.col < 0) {
-			return;
-			//this.deleteConditionalFormatting(range);
+			for (var i = 0; i < this.aConditionalFormattingRules.length; ++i) {
+				if (this.aConditionalFormattingRules[i].containsIntoRange(range)) {
+					this.deleteCFRule(this.aConditionalFormattingRules[i].id, true);
+				}
+			}
 		}
-		var bboxShift = AscCommonExcel.shiftGetBBox(range, 0 !== offset.col);
-		this.moveConditionalFormattingOffset(bboxShift, offset);
+		this.moveConditionalFormattingOffset(range, offset);
 	};
 	Worksheet.prototype.moveConditionalFormattingOffset = function (range, offset) {
 		var oRule;

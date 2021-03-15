@@ -438,17 +438,45 @@
 	CConditionalFormattingRule.prototype.setOffset = function(offset, range, ws, addToHistory) {
 		var newRanges = [];
 		var isChange = false;
+		var test = "";
+		var bboxShift = AscCommonExcel.shiftGetBBox(range, 0 !== offset.col);
 		for (var i = 0; i < this.ranges.length; i++) {
 			var newRange = this.ranges[i].clone();
-			if (range.containsRange(newRange)) {
-				newRange.setOffset(offset);
+			if (newRange.forShift(range, offset)) {
 				isChange = true;
 			}
+
+			//двигаем целиком
+			/*if (bboxShift.containsRange(newRange)) {
+				if (offset.col > 0 && offset.row > 0) {
+					newRange.setOffset(offset);
+				} else {
+					if (offset.col < 0) {
+						newRange.setOffsetFirst(new AscCommon.CellBase(0, range.r1 - newRange.r1));
+
+						newRange.setOffsetLast(new AscCommon.CellBase(0, newRange.r1 - newRange.r2));
+					} else if (offset.row < 0) {
+
+					}
+					this.setOffsetFirst(offset);
+					this.setOffsetLast(offset);
+				}
+				isChange = true;
+			} else if (0 !== offset.col && range.c1 >= newRange.c1 && range.c1 <= newRange.c2) {
+				newRange.setOffsetLast(offset);
+				isChange = true;
+			} else if (0 !== offset.row && range.r1 >= newRange.r1 && range.r1 <= newRange.r2) {
+				newRange.setOffsetLast(offset);
+				isChange = true;
+			}*/
+
 			newRanges.push(newRange);
+			test += newRange.getName();
 		}
 		if (isChange) {
 			this.setLocation(newRanges, ws, addToHistory);
 		}
+		console.log(test);
 	};
 
 	CConditionalFormattingRule.prototype.getUnionRange = function () {
@@ -712,6 +740,19 @@
 			}
 		}
 		return bbox;
+	};
+	CConditionalFormattingRule.prototype.containsIntoRange = function (range) {
+		var res = null;
+		if (this.ranges && this.ranges.length > 0) {
+			res = true;
+			for (var i = 0; i < this.ranges.length; ++i) {
+				if (!range.containsRange(this.ranges[i])) {
+					res = false;
+					break;
+				}
+			}
+		}
+		return res;
 	};
 	CConditionalFormattingRule.prototype.getIndexRule = function (values, ws, value) {
 		var valueCFVO;
