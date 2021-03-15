@@ -3983,8 +3983,17 @@ Paragraph.prototype.Internal_CalculateTextPr = function(LetterPos, StartPr)
 		TextPr.Merge(CurTextPr);
 	}
 
-	TextPr.FontFamily.Name  = TextPr.RFonts.Ascii.Name;
-	TextPr.FontFamily.Index = TextPr.RFonts.Ascii.Index;
+	// TODO: Пока возвращаем всегда шрифт лежащий в Ascii, в будущем надо будет это переделать
+	if (undefined !== TextPr.RFonts && null !== TextPr.RFonts)
+	{
+		TextPr.ReplaceThemeFonts(this.GetTheme().themeElements.fontScheme);
+
+		if (!TextPr.FontFamily)
+			TextPr.FontFamily = {Name : "", Index : -1};
+
+		TextPr.FontFamily.Name  = TextPr.RFonts.Ascii.Name;
+		TextPr.FontFamily.Index = TextPr.RFonts.Ascii.Index;
+	}
 
 	return TextPr;
 };
