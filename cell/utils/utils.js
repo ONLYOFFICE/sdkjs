@@ -2928,6 +2928,14 @@
 		// durations of months for the leap year
 		cDate.prototype.getDaysInMonth.L = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
+		cDate.prototype.getDayOfYear = function () {
+			//https://stackoverflow.com/a/8619946
+			var start = new Date(this.getFullYear(), 0, 0);
+			var diff = (this - start) + ((start.getTimezoneOffset() - this.getTimezoneOffset()) * 60 * 1000);
+			var oneDay = 1000 * 60 * 60 * 24;
+			return Math.floor(diff / oneDay);
+		};
+
 		cDate.prototype.truncate = function () {
 			this.setUTCHours( 0, 0, 0, 0 );
 			return this;

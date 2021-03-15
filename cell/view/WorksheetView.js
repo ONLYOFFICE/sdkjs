@@ -20825,14 +20825,7 @@
 		if (Asc.CT_pivotTableDefinition.prototype.asc_filterByCell) {
 			var pivotTable = this.model.inPivotTable(ar);
 			if (pivotTable) {
-				var pivotFields = pivotTable.asc_getPivotFields();
-				if(pivotFields){
-					var res = [];
-					for (var j = 0; j < pivotFields.length; j++) {
-						res.push(pivotTable.getCacheFieldName(j));
-					}
-					return res;
-				}
+				return pivotTable.getSlicerCaption();
 			}
 		}
 
