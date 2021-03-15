@@ -10951,7 +10951,7 @@ background-repeat: no-repeat;\
 			if (contentControls && contentControls.ContentControlObjects.length !== 0)
 			{
 				contentControls.clearAttack();
-				oLogicDocument.UpdateSelectionState();
+				oLogicDocument.UpdateSelection();
 			}
 		}
 
