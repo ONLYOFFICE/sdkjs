@@ -5170,12 +5170,16 @@ var editor;
 				var wsModel = t.wbModel.getWorksheetById(sheetId);
 				if (wsModel) {
 					var wsIndex = wsModel.getIndex();
+					var wsView = this.wb.getWorksheetById(sheetId);
 					var cFRule = wsModel.getCFRuleById(lockElem["rangeOrObjectId"]);
 					if (cFRule) {
-						cFRule.val.isLock = null;
+						if (cFRule.val.isLock) {
+							cFRule.val.isLock = null;
+						} else {
+							wsView._lockAddNewRule = null;
+						}
 						this.handlers.trigger("asc_onUnLockCFRule", wsIndex, lockElem["rangeOrObjectId"]);
 					} else {
-						var wsView = this.wb.getWorksheetById(sheetId);
 						wsView._lockAddNewRule = null;
 					}
 				}

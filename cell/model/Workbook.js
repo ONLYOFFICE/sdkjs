@@ -5066,6 +5066,9 @@
 			this.updateSortStateOffset(oActualRange, offset);
 			History.LocalChange = false;
 		}
+		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
+			this.updateConditionalFormattingOffset(oActualRange, offset);
+		}
 
 		var collapsedInfo = null, lastRowIndex;
 		var oDefRowPr = new AscCommonExcel.UndoRedoData_RowProp();
@@ -5159,6 +5162,9 @@
 			this.updateSortStateOffset(oActualRange, offset);
 			History.LocalChange = false;
 		}
+		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
+			this.updateConditionalFormattingOffset(oActualRange, offset);
+		}
 
 		this._updateFormulasParents(index, 0, gc_nMaxRow0, gc_nMaxCol0, oActualRange, offset, renameRes.shiftedShared);
 		var borders;
@@ -5233,6 +5239,9 @@
 			this.updateSortStateOffset(oActualRange, offset);
 			History.LocalChange = false;
 		}
+		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
+			this.updateConditionalFormattingOffset(oActualRange, offset);
+		}
 
 		var collapsedInfo = null, lastRowIndex;
 		var oDefColPr = new AscCommonExcel.UndoRedoData_ColProp();
@@ -5303,6 +5312,9 @@
 			History.LocalChange = true;
 			this.updateSortStateOffset(oActualRange, offset);
 			History.LocalChange = false;
+		}
+		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
+			this.updateConditionalFormattingOffset(oActualRange, offset);
 		}
 
 		this._updateFormulasParents(0, index, gc_nMaxRow0, gc_nMaxCol0, oActualRange, offset, renameRes.shiftedShared);
@@ -6608,6 +6620,9 @@
 		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
 			this.updatePivotOffset(oBBox, offset);
 		}
+		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
+			this.updateConditionalFormattingOffset(oBBox, offset);
+		}
 
 		this.getRange3(oBBox.r1, oBBox.c1, oBBox.r2, oBBox.c2)._foreachNoEmpty(function(cell){
 			t._removeCell(null, null, cell);
@@ -6647,6 +6662,9 @@
 		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
 			this.updatePivotOffset(oBBox, offset);
 		}
+		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
+			this.updateConditionalFormattingOffset(oBBox, offset);
+		}
 
 		this.getRange3(oBBox.r1, oBBox.c1, oBBox.r2, oBBox.c2)._foreachNoEmpty(function(cell){
 			t._removeCell(null, null, cell);
@@ -6681,6 +6699,9 @@
 		}
 		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
 			this.updatePivotOffset(oBBox, offset);
+		}
+		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
+			this.updateConditionalFormattingOffset(oBBox, offset);
 		}
 
 		this._updateFormulasParents(oActualRange.r1, oActualRange.c1, oActualRange.r2, oActualRange.c2, oBBox, offset, renameRes.shiftedShared);
@@ -6738,6 +6759,9 @@
 		}
 		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
 			this.updatePivotOffset(oBBox, offset);
+		}
+		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
+			this.updateConditionalFormattingOffset(oBBox, offset);
 		}
 
 		this._updateFormulasParents(oActualRange.r1, oActualRange.c1, oActualRange.r2, oActualRange.c2, oBBox, offset, renameRes.shiftedShared);
@@ -9470,6 +9494,22 @@
 		var oRule = new AscCommonExcel.CConditionalFormattingRule();
 		oRule.applyPreset(presetId);
 		return oRule;
+	};
+
+	Worksheet.prototype.updateConditionalFormattingOffset = function (range, offset) {
+		if (offset.row < 0 || offset.col < 0) {
+			return;
+			//this.deleteConditionalFormatting(range);
+		}
+		var bboxShift = AscCommonExcel.shiftGetBBox(range, 0 !== offset.col);
+		this.moveConditionalFormattingOffset(bboxShift, offset);
+	};
+	Worksheet.prototype.moveConditionalFormattingOffset = function (range, offset) {
+		var oRule;
+		for (var i = 0; i < this.aConditionalFormattingRules.length; ++i) {
+			oRule = this.aConditionalFormattingRules[i];
+			oRule.setOffset(offset, range, this, true);
+		}
 	};
 
 //-------------------------------------------------------------------------------------------------

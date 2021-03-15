@@ -404,20 +404,24 @@
 		}
 
 		if (this.ranges && val.ranges && !compareElements(this.ranges, val.ranges)) {
-			if (addToHistory) {
-				var getUndoRedoRange = function (_ranges) {
-					var needRanges = [];
-					for (var i = 0; i < _ranges.length; i++) {
-						needRanges.push(new AscCommonExcel.UndoRedoData_BBox(_ranges[i]));
-					}
-					return needRanges;
-				};
-
-				History.Add(AscCommonExcel.g_oUndoRedoCF, AscCH.historyitem_CFRule_SetRanges,
-					ws.getId(), null, new AscCommonExcel.UndoRedoData_CF(this.id, getUndoRedoRange(this.ranges), getUndoRedoRange(val.ranges)));
-			}
-			this.ranges = val.ranges;
+			this.setLocation(val.ranges, ws, true);
 		}
+	};
+
+	CConditionalFormattingRule.prototype.setLocation = function (location, ws, addToHistory) {
+		if (addToHistory) {
+			var getUndoRedoRange = function (_ranges) {
+				var needRanges = [];
+				for (var i = 0; i < _ranges.length; i++) {
+					needRanges.push(new AscCommonExcel.UndoRedoData_BBox(_ranges[i]));
+				}
+				return needRanges;
+			};
+
+			History.Add(AscCommonExcel.g_oUndoRedoCF, AscCH.historyitem_CFRule_SetRanges,
+				ws.getId(), null, new AscCommonExcel.UndoRedoData_CF(this.id, getUndoRedoRange(this.ranges), getUndoRedoRange(location)));
+		}
+		this.ranges = location;
 	};
 
 	CConditionalFormattingRule.prototype.checkProperty = function (propOld, propNew, type, ws, addToHistory) {
@@ -429,6 +433,22 @@
 			return propNew;
 		}
 		return propOld;
+	};
+
+	CConditionalFormattingRule.prototype.setOffset = function(offset, range, ws, addToHistory) {
+		var newRanges = [];
+		var isChange = false;
+		for (var i = 0; i < this.ranges.length; i++) {
+			var newRange = this.ranges[i].clone();
+			if (range.containsRange(newRange)) {
+				newRange.setOffset(offset);
+				isChange = true;
+			}
+			newRanges.push(newRange);
+		}
+		if (isChange) {
+			this.setLocation(newRanges, ws, addToHistory);
+		}
 	};
 
 	CConditionalFormattingRule.prototype.getUnionRange = function () {
