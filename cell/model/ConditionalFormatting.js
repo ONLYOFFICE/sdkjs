@@ -438,45 +438,16 @@
 	CConditionalFormattingRule.prototype.setOffset = function(offset, range, ws, addToHistory) {
 		var newRanges = [];
 		var isChange = false;
-		var test = "";
-		var bboxShift = AscCommonExcel.shiftGetBBox(range, 0 !== offset.col);
 		for (var i = 0; i < this.ranges.length; i++) {
 			var newRange = this.ranges[i].clone();
 			if (newRange.forShift(range, offset)) {
 				isChange = true;
 			}
-
-			//двигаем целиком
-			/*if (bboxShift.containsRange(newRange)) {
-				if (offset.col > 0 && offset.row > 0) {
-					newRange.setOffset(offset);
-				} else {
-					if (offset.col < 0) {
-						newRange.setOffsetFirst(new AscCommon.CellBase(0, range.r1 - newRange.r1));
-
-						newRange.setOffsetLast(new AscCommon.CellBase(0, newRange.r1 - newRange.r2));
-					} else if (offset.row < 0) {
-
-					}
-					this.setOffsetFirst(offset);
-					this.setOffsetLast(offset);
-				}
-				isChange = true;
-			} else if (0 !== offset.col && range.c1 >= newRange.c1 && range.c1 <= newRange.c2) {
-				newRange.setOffsetLast(offset);
-				isChange = true;
-			} else if (0 !== offset.row && range.r1 >= newRange.r1 && range.r1 <= newRange.r2) {
-				newRange.setOffsetLast(offset);
-				isChange = true;
-			}*/
-
 			newRanges.push(newRange);
-			test += newRange.getName();
 		}
 		if (isChange) {
 			this.setLocation(newRanges, ws, addToHistory);
 		}
-		console.log(test);
 	};
 
 	CConditionalFormattingRule.prototype.getUnionRange = function () {
@@ -1605,35 +1576,35 @@
 
 		if (null != this.Color) {
 			writer.WriteBool(true);
-			writer.WriteLong(this.Color.asc_getType());
+			writer.WriteLong(this.Color.getType());
 			this.Color.Write_ToBinary2(writer);
 		} else {
 			writer.WriteBool(false);
 		}
 		if (null != this.NegativeColor) {
 			writer.WriteBool(true);
-			writer.WriteLong(this.NegativeColor.asc_getType());
+			writer.WriteLong(this.NegativeColor.getType());
 			this.NegativeColor.Write_ToBinary2(writer);
 		} else {
 			writer.WriteBool(false);
 		}
 		if (null != this.BorderColor) {
 			writer.WriteBool(true);
-			writer.WriteLong(this.Color.asc_getType());
+			writer.WriteLong(this.Color.getType());
 			this.BorderColor.Write_ToBinary2(writer);
 		} else {
 			writer.WriteBool(false);
 		}
 		if (null != this.NegativeBorderColor) {
 			writer.WriteBool(true);
-			writer.WriteLong(this.NegativeBorderColor.asc_getType());
+			writer.WriteLong(this.NegativeBorderColor.getType());
 			this.NegativeBorderColor.Write_ToBinary2(writer);
 		} else {
 			writer.WriteBool(false);
 		}
 		if (null != this.AxisColor) {
 			writer.WriteBool(true);
-			writer.WriteLong(this.AxisColor.asc_getType());
+			writer.WriteLong(this.AxisColor.getType());
 			this.AxisColor.Write_ToBinary2(writer);
 		} else {
 			writer.WriteBool(false);
@@ -1662,7 +1633,7 @@
 			this.NegativeBarColorSameAsPositive = reader.GetBool();
 		}
 		if (reader.GetBool()) {
-			this.NegativeBarBorderColorSameAsPositive = reader.GetLong();
+			this.NegativeBarBorderColorSameAsPositive = reader.GetBool();
 		}
 
 		var i, length, type, elem;
@@ -1678,65 +1649,38 @@
 			}
 		}
 
-		if (reader.GetBool()) {
-			//TODO colors!!!
-			type = reader.GetLong();
+		var readColor = function () {
+			var type = reader.GetLong();
+			var _color;
 			switch (type) {
-				case Asc.ECfType.colorScale:
-					elem = null;
+				case AscCommonExcel.UndoRedoDataTypes.RgbColor:
+					_color = new AscCommonExcel.RgbColor();
+					break;
+				case AscCommonExcel.UndoRedoDataTypes.ThemeColor:
+					_color = new AscCommonExcel.ThemeColor();
 					break;
 			}
-			this.Color = elem.Read_FromBinary2(reader);
+			if (null != _color.Read_FromBinary2) {
+				_color.Read_FromBinary2(reader);
+			} else if (null != _color.Read_FromBinary2AndReplace) {
+				_color = elem.Read_FromBinary2AndReplace(reader);
+			}
+			return _color;
+		};
+		if (reader.GetBool()) {
+			this.Color = readColor();
 		}
 		if (reader.GetBool()) {
-			//TODO colors!!!
-			type = reader.GetLong();
-			switch (type) {
-				case Asc.ECfType.colorScale:
-					elem = null;
-					break;
-			}
-			this.Color = elem.Read_FromBinary2(reader);
+			this.NegativeColor = readColor();
 		}
 		if (reader.GetBool()) {
-			//TODO colors!!!
-			type = reader.GetLong();
-			switch (type) {
-				case Asc.ECfType.colorScale:
-					elem = null;
-					break;
-			}
-			this.NegativeColor = elem.Read_FromBinary2(reader);
+			this.BorderColor = readColor();
 		}
 		if (reader.GetBool()) {
-			//TODO colors!!!
-			type = reader.GetLong();
-			switch (type) {
-				case Asc.ECfType.colorScale:
-					elem = null;
-					break;
-			}
-			this.BorderColor = elem.Read_FromBinary2(reader);
+			this.NegativeBorderColor = readColor();
 		}
 		if (reader.GetBool()) {
-			//TODO colors!!!
-			type = reader.GetLong();
-			switch (type) {
-				case Asc.ECfType.colorScale:
-					elem = null;
-					break;
-			}
-			this.NegativeBorderColor = elem.Read_FromBinary2(reader);
-		}
-		if (reader.GetBool()) {
-			//TODO colors!!!
-			type = reader.GetLong();
-			switch (type) {
-				case Asc.ECfType.colorScale:
-					elem = null;
-					break;
-			}
-			this.AxisColor = elem.Read_FromBinary2(reader);
+			this.AxisColor = readColor();
 		}
 	};
 	CDataBar.prototype.asc_getPreview = function (api, id) {
