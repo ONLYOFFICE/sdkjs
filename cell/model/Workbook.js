@@ -6337,7 +6337,7 @@
 				});
 			}
 		}
-	}
+	};
 	Worksheet.prototype._moveMergedAndHyperlinksPrepare = function(oBBoxFrom, oBBoxTo, copyRange, wsTo, offset) {
 		var res = {merged: [], hyperlinks: []};
 		if (!(false == this.workbook.bUndoChanges && (false == this.workbook.bRedoChanges || this.workbook.bCollaborativeChanges))) {
@@ -6588,6 +6588,7 @@
 		this._moveCells(oBBoxFrom, oBBoxTo, copyRange, wsTo, offset);
 		this._moveMergedAndHyperlinks(prepared, oBBoxFrom, oBBoxTo, copyRange, wsTo, offset);
 		this._moveDataValidation(oBBoxFrom, oBBoxTo, copyRange, offset, wsTo);
+		this._moveConditionalFormatting(oBBoxFrom, oBBoxTo, copyRange, offset, wsTo);
 
 		if(true == this.workbook.bUndoChanges || true == this.workbook.bRedoChanges) {
 			wsTo.autoFilters.unmergeTablesAfterMove(oBBoxTo);
@@ -9453,11 +9454,11 @@
 					if (tempRanges.length) {
 						var tempRanges2 = [];
 						for (var k = 0; k < tempRanges.length; k++) {
-							tempRanges2 = tempRanges2.concat(ranges[j].difference(tempRanges[k]));
+							tempRanges2 = tempRanges2.concat(ranges[j].intersection(tempRanges[k]) ? ranges[j].difference(tempRanges[k]) : tempRanges[k]);
 						}
 						tempRanges = tempRanges2;
 					} else {
-						tempRanges = ranges[j].difference(ruleRanges[i]);
+						tempRanges = ranges[j].intersection(ruleRanges[i]) ? ranges[j].difference(ruleRanges[i]) : ruleRanges[i];
 					}
 				}
 				_newRanges = _newRanges.concat(tempRanges);
@@ -9504,13 +9505,75 @@
 				}
 			}
 		}
-		this.moveConditionalFormattingOffset(range, offset);
+		this.setConditionalFormattingOffset(range, offset);
 	};
-	Worksheet.prototype.moveConditionalFormattingOffset = function (range, offset) {
+	Worksheet.prototype.setConditionalFormattingOffset = function (range, offset) {
 		var oRule;
 		for (var i = 0; i < this.aConditionalFormattingRules.length; ++i) {
 			oRule = this.aConditionalFormattingRules[i];
 			oRule.setOffset(offset, range, this, true);
+		}
+	};
+	Worksheet.prototype._moveConditionalFormatting = function (oBBoxFrom, oBBoxTo, copyRange, offset, wsTo) {
+		var t = this;
+		if (!wsTo) {
+			wsTo = this;
+		}
+		if (false === this.workbook.bUndoChanges && false === this.workbook.bRedoChanges) {
+			//чистим ту область, куда переносим
+			wsTo.forEachConditionalFormattingRules(function (_rule) {
+				wsTo.tryClearCFRule(_rule, [oBBoxTo]);
+			});
+
+			if (this === wsTo) {
+				wsTo.forEachConditionalFormattingRules(function (_rule) {
+					var isChanged = null;
+					var ruleRanges = _rule.ranges;
+					var constantPart, movePart;
+					var _ranges = [];
+					for (var i = 0; i < ruleRanges.length; i++) {
+						movePart = ruleRanges[i].intersection(oBBoxFrom);
+						if (movePart) {
+							if (!copyRange) {
+								constantPart = oBBoxFrom.difference(ruleRanges[i]);
+								_ranges = _ranges.concat(constantPart);
+							}
+							movePart.setOffset(offset);
+							_ranges.push(movePart);
+							isChanged = true;
+						} else if (!copyRange) {
+							_ranges.push(ruleRanges[i]);
+						}
+					}
+					if (isChanged) {
+						if (copyRange) {
+							var _newRule = _rule.clone();
+							_rule.ranges = _ranges;
+							t.addCFRule(_newRule, true);
+						} else {
+							_rule.setLocation(_ranges, t, true);
+						}
+					}
+				});
+			} else {
+				var aDataValidations = this._getCopyDataValidationByRange(oBBoxFrom, offset);
+				if (aDataValidations) {
+					if (!copyRange) {
+						this.clearDataValidation([oBBoxFrom], true);
+					}
+
+					//далее необходимо создать новые объекты на новом листе
+					for (var i = 0; i < aDataValidations.length; i++) {
+						wsTo.addDataValidation(aDataValidations[i], true);
+					}
+				}
+			}
+		}
+	};
+
+	Worksheet.prototype.forEachConditionalFormattingRules = function (callback) {
+		for (var i = 0, l = this.aConditionalFormattingRules.length; i < l; ++i) {
+			callback(this.aConditionalFormattingRules[i], i);
 		}
 	};
 
