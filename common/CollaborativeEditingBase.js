@@ -1282,14 +1282,15 @@ CCollaborativeEditingBase.prototype.UpdateDocumentPositionsByState = function(Do
 
         editor.CoAuthoringApi.saveChanges(aSendingChanges, null, null, false, this.getCollaborativeEditing());
 
-        this.private_RestoreDocumentState(DocState);
-
-        oLogicDocument.TurnOnCheckChartSelection();
         this.private_RecalculateDocument(arrReverseChanges);
 
-        oLogicDocument.Document_UpdateSelectionState();
-        oLogicDocument.Document_UpdateInterfaceState();
-        oLogicDocument.Document_UpdateRulersState();
+		this.private_RestoreDocumentState(DocState);
+
+		oLogicDocument.TurnOnCheckChartSelection();
+
+        oLogicDocument.UpdateSelection();
+        oLogicDocument.UpdateInterface();
+        oLogicDocument.UpdateRulers();
     };
     CCollaborativeEditingBase.prototype.CanUndo = function()
     {
