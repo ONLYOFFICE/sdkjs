@@ -10844,6 +10844,7 @@
 								t.model.deletePivotTables(range.bbox);
 								t.model.removeSparklines(range.bbox);
 								t.model.clearDataValidation([range.bbox], true);
+								t.model.clearConditionalFormattingRulesByRanges([range.bbox]);
 								// Удаляем комментарии
                                 t.cellCommentator.deleteCommentsRange(range.bbox);
 								break;
@@ -10853,6 +10854,7 @@
 								t.model.deletePivotTables(range.bbox);
 								break;
 							case c_oAscCleanOptions.Format:
+								t.model.clearConditionalFormattingRulesByRanges([range.bbox]);
 							    range.cleanFormat();
 								break;
 							case c_oAscCleanOptions.Hyperlinks:
