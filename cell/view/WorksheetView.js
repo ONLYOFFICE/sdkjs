@@ -11398,6 +11398,12 @@
 			}
 		}
 
+		//conditional formatting
+		if (specialPasteProps.val && specialPasteProps.format) {
+			var offsetAll = new AscCommon.CellBase(arnToRange.r1 - refInsertBinary.r1, arnToRange.c1 - refInsertBinary.c1);
+			t.model.moveConditionalFormatting(refInsertBinary, arnToRange, true, offsetAll, this.model, val);
+		}
+
 		//делаем unmerge ф/т
 		intersectionRangeWithTableParts = t.model.autoFilters._intersectionRangeWithTableParts(arnToRange);
 		if (intersectionRangeWithTableParts && intersectionRangeWithTableParts.length) {

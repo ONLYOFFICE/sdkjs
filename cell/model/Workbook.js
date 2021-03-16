@@ -6588,7 +6588,7 @@
 		this._moveCells(oBBoxFrom, oBBoxTo, copyRange, wsTo, offset);
 		this._moveMergedAndHyperlinks(prepared, oBBoxFrom, oBBoxTo, copyRange, wsTo, offset);
 		this._moveDataValidation(oBBoxFrom, oBBoxTo, copyRange, offset, wsTo);
-		this._moveConditionalFormatting(oBBoxFrom, oBBoxTo, copyRange, offset, wsTo);
+		this.moveConditionalFormatting(oBBoxFrom, oBBoxTo, copyRange, offset, wsTo);
 
 		if(true == this.workbook.bUndoChanges || true == this.workbook.bRedoChanges) {
 			wsTo.autoFilters.unmergeTablesAfterMove(oBBoxTo);
@@ -9514,18 +9514,19 @@
 			oRule.setOffset(offset, range, this, true);
 		}
 	};
-	Worksheet.prototype._moveConditionalFormatting = function (oBBoxFrom, oBBoxTo, copyRange, offset, wsTo) {
+	Worksheet.prototype.moveConditionalFormatting = function (oBBoxFrom, oBBoxTo, copyRange, offset, wsTo, wsFrom) {
 		var t = this;
 		if (!wsTo) {
 			wsTo = this;
 		}
 		if (false === this.workbook.bUndoChanges && false === this.workbook.bRedoChanges) {
 			//чистим ту область, куда переносим
-			wsTo.forEachConditionalFormattingRules(function (_rule) {
-				wsTo.tryClearCFRule(_rule, [oBBoxTo]);
-			});
+			wsTo.clearConditionalFormattingRulesByRanges([oBBoxTo]);
 
-			this.forEachConditionalFormattingRules(function (_rule) {
+			if (!wsFrom) {
+				wsFrom = this;
+			}
+			wsFrom.forEachConditionalFormattingRules(function (_rule) {
 				//если клонируем - то добавляем новое правило со смещенным диапазоном пересечения
 				//если нет + если в пределах одного листа - меняем диапазона у текущего правила
 				//если на другой лист - меняем диапазон у текущего правила + создаём новое со смещенным диапазоном пересечения
@@ -9573,6 +9574,13 @@
 				}
 			});
 		}
+	};
+
+	Worksheet.prototype.clearConditionalFormattingRulesByRanges = function (ranges) {
+		var t = this;
+		this.forEachConditionalFormattingRules(function (_rule) {
+			t.tryClearCFRule(_rule, ranges);
+		});
 	};
 
 	Worksheet.prototype.forEachConditionalFormattingRules = function (callback) {
