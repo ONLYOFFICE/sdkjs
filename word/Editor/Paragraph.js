@@ -3505,6 +3505,10 @@ Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlyS
 					this.Content[StartPos].MoveCursorToStartPos();
 					this.Correct_ContentPos2();
 				}
+				else
+				{
+					this.CurPos.ContentPos = StartPos;
+				}
 			}
 		}
 		else
