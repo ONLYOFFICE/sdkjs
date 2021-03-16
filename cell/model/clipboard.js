@@ -2985,7 +2985,7 @@
 				var defrPr = oBinaryFileReader.oReadResult && oBinaryFileReader.oReadResult.DefrPr;
 				if (defrPr && newCDocument.Styles && newCDocument.Styles.Default && newCDocument.Styles.Default.TextPr) {
 					newCDocument.Styles.Default.TextPr.FontSize = defrPr.FontSize;
-					if (defrPr.RFonts) {
+					if (defrPr.RFonts && defrPr.RFonts.Ascii !== undefined) {
 						newCDocument.Styles.Default.TextPr.RFonts = defrPr.RFonts;
 					}
 				}
