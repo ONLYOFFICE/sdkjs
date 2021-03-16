@@ -1463,7 +1463,7 @@
 			}
 			if (curTop < 0) {
 				--this.topLineIndex;
-				if (this.textRender.lines && this.textRender.lines.length && this.topLineIndex > this.textRender.lines.length) {
+				if (this.textRender.lines && this.textRender.lines.length && this.topLineIndex >= this.textRender.lines.length) {
 					this.topLineIndex = this.textRender.lines.length - 1;
 				}
 				dy = asc_round(this.textRender.getLineInfo(this.topLineIndex).th * zoom);
