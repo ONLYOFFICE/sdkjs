@@ -4418,6 +4418,13 @@ ParaRun.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _Cur
 		}
 	}
 
+	if (false === UpdateLineMetricsText)
+	{
+		var oTextForm  = this.GetTextForm();
+		if (oTextForm && oTextForm.IsComb())
+			UpdateLineMetricsText = true;
+	}
+
 	if (true === UpdateLineMetricsText)
 	{
 		// Пересчитаем метрику строки относительно размера данного текста
