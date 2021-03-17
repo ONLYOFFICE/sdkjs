@@ -2949,9 +2949,18 @@ ParaDrawing.prototype.PreDelete = function()
 	var oGrObject = this.GraphicObj;
 	if(oGrObject && oGrObject.signatureLine)
 	{
-		var sId = oGrObject.signatureLine.id;
+		var oOldSignature = oGrObject.signatureLine;
 		oGrObject.setSignature(null);
-		editor && editor.sendEvent("asc_onRemoveSignature", sId);
+		editor && editor.sendEvent("asc_onRemoveSignature", oOldSignature);
+		oGrObject.setSignature(oOldSignature);
+	}
+};
+ParaDrawing.prototype.CheckSignatureLineOnAdd = function()
+{
+	var oGrObject = this.GraphicObj;
+	if(oGrObject && oGrObject.signatureLine)
+	{
+		editor && editor.sendEvent("asc_onAddSignature", oGrObject.signatureLine.id);
 	}
 };
 ParaDrawing.prototype.CheckContentControlEditingLock = function(){

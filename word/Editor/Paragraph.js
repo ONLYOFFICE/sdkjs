@@ -15606,6 +15606,28 @@ Paragraph.prototype.CheckRunContent = function(fCheck)
 
 	return false;
 };
+
+/**
+* Check signature lines are present in the content and send asc_onAddSignature event
+ */
+Paragraph.prototype.CheckSignatureLinesOnAdd = function()
+{
+	this.CheckRunContent(
+		function (oRun)
+		{
+			for (var nPos = 0, nCount = oRun.Content.length; nPos < nCount; ++nPos)
+			{
+				var oItem = oRun.Content[nPos];
+				if(oItem.Type === para_Drawing)
+				{
+					oItem.CheckSignatureLineOnAdd();
+				}
+			}
+
+		}
+	);
+};
+
 /**
  * Обрабатываем сложные поля данного параграфа
  */
