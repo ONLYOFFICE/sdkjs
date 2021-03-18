@@ -17175,6 +17175,17 @@ CDocument.prototype.Begin_CompositeInput = function()
 		if (oPara)
 		{
 			var oRun = oPara.Get_ElementByPos(oPara.Get_ParaContentPos(false, false));
+
+			if (oRun instanceof ParaRun)
+			{
+				var oRunParent = oRun.GetParent();
+				if (oRunParent instanceof CInlineLevelSdt && oRunParent.IsPlaceHolder())
+				{
+					oRunParent.ReplacePlaceHolderWithContent(false);
+					oRun = oRunParent.GetElement(0);
+				}
+			}
+
 			if (oRun instanceof ParaRun)
 			{
 				var oNewRun = oRun.CheckRunBeforeAdd();
