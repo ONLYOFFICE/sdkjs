@@ -526,7 +526,57 @@ MoveInlineObject.prototype =
 
 		if (this.majorObject.parent.CanInsertToPos(this.InlinePos))
 		{
-			if(!e.CtrlKey)
+			var oDstRun = null;
+			var arrClasses = this.InlinePos.Paragraph.GetClassesByPos(this.InlinePos.ContentPos);
+			for (var nIndex = arrClasses.length - 1; nIndex >= 0; --nIndex)
+			{
+				if (arrClasses[nIndex] instanceof ParaRun)
+				{
+					oDstRun = arrClasses[nIndex];
+					break;
+				}
+			}
+
+			var oDstPictureCC = null;
+			if (oDstRun)
+			{
+				var arrContentControls = oDstRun.GetParentContentControls();
+				for (var nIndex = arrContentControls.length - 1; nIndex >= 0; --nIndex)
+				{
+					if (arrContentControls[nIndex].IsPicture())
+					{
+						oDstPictureCC = arrContentControls[nIndex];
+						break;
+					}
+				}
+			}
+
+			if (oDstPictureCC)
+			{
+				var arrParaDrawings = oDstPictureCC.GetAllDrawingObjects();
+
+				if (this.majorObject.parent.IsPicture() && arrParaDrawings.length > 0 && !this.drawingObjects.document.IsSelectionLocked(AscCommon.changestype_None, {
+					Type      : AscCommon.changestype_Drawing_Props,
+					Elements  : [this.majorObject.parent.checkShapeChildAndGetTopParagraph(this.InlinePos.Paragraph)],
+					CheckType : AscCommon.changestype_Paragraph_Content
+				}, false, this.drawingObjects.document.IsFillingFormMode()))
+				{
+					this.drawingObjects.document.StartAction(AscDFH.historydescription_Document_CopyAndMoveInlineObject);
+
+					var oDrawing = this.majorObject.copy(undefined);
+					if (oDrawing.copyComments)
+						oDrawing.copyComments(this.drawingObjects.document);
+
+					oDrawing.setParent(arrParaDrawings[0]);
+					arrParaDrawings[0].Set_GraphicObject(oDrawing);
+
+					this.drawingObjects.resetSelection();
+					this.drawingObjects.selectObject(oDrawing, pageIndex);
+					this.drawingObjects.document.Recalculate();
+					this.drawingObjects.document.FinalizeAction();
+				}
+			}
+			else if(!e.CtrlKey)
 			{
 				var arrCheckTypes = [];
 
