@@ -12539,60 +12539,66 @@ ParaRun.prototype.private_ProcessHyperlinkAutoCorrect = function(oDocument, oPar
 	if (this.IsInHyperlink())
 		return false;
 
-	var nTypeHyper = AscCommon.getUrlType(sText);
-	if (AscCommon.c_oAscUrlType.Invalid !== nTypeHyper)
+	if (/(^(((http|https|ftp):\/\/)|(mailto:)|(www.)))|@/i.test(sText))
 	{
-		if (isPresentation || !oDocument.IsSelectionLocked({
-			Type      : AscCommon.changestype_2_ElementsArray_and_Type,
-			Elements  : [oParagraph],
-			CheckType : AscCommon.changestype_Paragraph_Properties
-		}))
-		{
-			oDocument.StartAction(AscDFH.historydescription_Document_AutomaticListAsType);
-			var oTopElement;
+		// Удаляем концевые пробелы и переводы строки перед проверкой гиперссылок
+		sText = sText.replace(/\s+$/, '');
 
-			if (isPresentation)
+		var nTypeHyper = AscCommon.getUrlType(sText);
+		if (AscCommon.c_oAscUrlType.Invalid !== nTypeHyper)
+		{
+			if (isPresentation || !oDocument.IsSelectionLocked({
+				Type      : AscCommon.changestype_2_ElementsArray_and_Type,
+				Elements  : [oParagraph],
+				CheckType : AscCommon.changestype_Paragraph_Properties
+			}))
 			{
-				var oParentContent = oParagraph.Parent;
-				var oTable         = oParentContent.IsInTable(true);
-				if (oTable)
+				oDocument.StartAction(AscDFH.historydescription_Document_AutomaticListAsType);
+				var oTopElement;
+
+				if (isPresentation)
 				{
-					oTopElement = oTable;
+					var oParentContent = oParagraph.Parent;
+					var oTable         = oParentContent.IsInTable(true);
+					if (oTable)
+					{
+						oTopElement = oTable;
+					}
+					else
+					{
+						oTopElement = oParentContent;
+					}
 				}
 				else
 				{
-					oTopElement = oParentContent;
+					oTopElement = oDocument;
 				}
+
+				var arrContentPosition = oRunElementsBefore.GetContentPositions();
+				var oStartPos          = arrContentPosition.length > 0 ? arrContentPosition[arrContentPosition.length - 1] : oRunElementsBefore.CurContentPos;
+				var oEndPos            = oContentPos;
+				oContentPos.Update(nPos, oContentPos.GetDepth());
+
+
+				var oDocPos = [{Class : this, Position : nPos + 1}];
+				this.GetDocumentPositionFromObject(oDocPos);
+				oDocument.TrackDocumentPositions([oDocPos]);
+
+
+				oParagraph.RemoveSelection();
+				oParagraph.SetSelectionUse(true);
+				oParagraph.SetSelectionContentPos(oStartPos, oEndPos, false);
+				oParagraph.AddHyperlink(new Asc.CHyperlinkProperty({Value : AscCommon.prepareUrl(sText, nTypeHyper)}));
+				oParagraph.RemoveSelection();
+
+				oDocument.RefreshDocumentPositions([oDocPos]);
+				oTopElement.SetContentPosition(oDocPos, 0, 0);
+				oDocument.Recalculate();
+				oDocument.FinalizeAction();
 			}
-			else
-			{
-				oTopElement = oDocument;
-			}
 
-			var arrContentPosition = oRunElementsBefore.GetContentPositions();
-			var oStartPos = arrContentPosition.length > 0 ? arrContentPosition[arrContentPosition.length - 1] : oRunElementsBefore.CurContentPos;
-			var oEndPos   = oContentPos;
-			oContentPos.Update(nPos, oContentPos.GetDepth());
-
-
-			var oDocPos = [{Class : this, Position : nPos + 1}];
-			this.GetDocumentPositionFromObject(oDocPos);
-			oDocument.TrackDocumentPositions([oDocPos]);
-
-
-			oParagraph.RemoveSelection();
-			oParagraph.SetSelectionUse(true);
-			oParagraph.SetSelectionContentPos(oStartPos, oEndPos, false);
-			oParagraph.AddHyperlink(new Asc.CHyperlinkProperty({Value : AscCommon.prepareUrl(sText, nTypeHyper)}));
-			oParagraph.RemoveSelection();
-
-			oDocument.RefreshDocumentPositions([oDocPos]);
-			oTopElement.SetContentPosition(oDocPos, 0, 0);
-			oDocument.Recalculate();
-			oDocument.FinalizeAction();
+			return true;
 		}
-
-		return true;
 	}
 
 	return false;
