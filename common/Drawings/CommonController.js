@@ -11336,6 +11336,9 @@ function ApplyPresetToChartSpace(oChartSpace, aPreset, bCreate){
                 var _category2 = (_type >> 16) & 0xFF;
                 _type &= 0xFFFF;
 
+                if (_category1 >= _sizes.length)
+                    continue;
+
                 if (undefined == _math.Data[_category1])
                 {
                     _math.Data[_category1] = new AscCommon.CAscMathCategory();

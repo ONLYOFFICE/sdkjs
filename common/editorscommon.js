@@ -6301,21 +6301,43 @@
         return { start : val, end: AscCommon.AscBrowser.convertToRetinaValue(val, true) };
     };
 
-    function calculateCanvasSize(element)
+    function calculateCanvasSize(element, useStyle)
 	{
         var scale = AscCommon.AscBrowser.retinaPixelRatio;
+		var new_width = 0;
+		var new_height = 0;
         if (Math.abs(scale - (scale >> 0)) < 0.001)
 		{
-            element.width = (scale * parseInt(element.style.width));
-            element.height = (scale * parseInt(element.style.height));
+			new_width = (scale * parseInt(element.style.width));
+			new_height = (scale * parseInt(element.style.height));
+
+			if (element.width !== new_width)
+				element.width = new_width;
+
+			if (element.height !== new_height)
+				element.height = new_height;
+
             return;
 		}
 
         var rect = element.getBoundingClientRect();
+        if (rect.width === 0 && rect.height === 0 && useStyle === true)
+		{
+			var style_width = parseInt(element.style.width);
+			var style_height = parseInt(element.style.height);
+
+			rect = {
+				x : 0, left : 0,
+				y : 0, top : 0,
+				width : style_width, right : style_width,
+				height : style_height, bottom : style_height
+			};
+		}
+
         if (!AscCommon.AscBrowser.isMozilla)
         {
-            element.width = Math.round(scale * rect.right) - Math.round(scale * rect.left);
-            element.height = Math.round(scale * rect.bottom) - Math.round(scale * rect.top);
+			new_width = Math.round(scale * rect.right) - Math.round(scale * rect.left);
+			new_height = Math.round(scale * rect.bottom) - Math.round(scale * rect.top);
         }
         else
         {
@@ -6324,9 +6346,15 @@
             if (sizeW.start !== rect.width) element.style.width = sizeW.start + "px";
             if (sizeH.start !== rect.height) element.style.height = sizeH.start + "px";
 
-            element.width = sizeW.end;
-            element.height = sizeH.end;
+			new_width = sizeW.end;
+			new_height = sizeH.end;
         }
+
+        if (element.width !== new_width)
+        	element.width = new_width;
+
+		if (element.height !== new_height)
+			element.height = new_height;
     };
 
 	//------------------------------------------------------------export---------------------------------------------------

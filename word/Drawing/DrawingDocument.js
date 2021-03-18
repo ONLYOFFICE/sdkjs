@@ -5659,12 +5659,16 @@ function CDrawingDocument()
 				if (0 == _height)
 					_height = 80;
 
-				if (this.GuiCanvasTextProps.width != _width || this.GuiCanvasTextProps.height != _height)
-				{
-					this.GuiCanvasTextProps.width = _width;
-					this.GuiCanvasTextProps.height = _height;
-				}
+				this.GuiCanvasTextProps.style.width = _width + "px";
+				this.GuiCanvasTextProps.style.height = _height + "px";
 			}
+
+			var old_width = this.GuiCanvasTextProps.width;
+			var old_height = this.GuiCanvasTextProps.height;
+			AscCommon.calculateCanvasSize(this.GuiCanvasTextProps, true);
+
+			if (old_width !== this.GuiCanvasTextProps.width || old_height !== this.GuiCanvasTextProps.height)
+				this.GuiLastTextProps = null;
 		}
 		else
 		{
@@ -5680,8 +5684,10 @@ function CDrawingDocument()
 			if (0 == _height)
 				_height = 80;
 
-			this.GuiCanvasTextProps.width = _width;
-			this.GuiCanvasTextProps.height = _height;
+			this.GuiCanvasTextProps.style.width = _width + "px";
+			this.GuiCanvasTextProps.style.height = _height + "px";
+
+			AscCommon.calculateCanvasSize(this.GuiCanvasTextProps, true);
 
 			_div_elem.appendChild(this.GuiCanvasTextProps);
 		}
@@ -5770,6 +5776,7 @@ function CDrawingDocument()
 		par.Pr = _paraPr;
 		var _textPr = new CTextPr();
 		_textPr.FontFamily = {Name: "Arial", Index: -1};
+		_textPr.FontSize = (AscCommon.AscBrowser.convertToRetinaValue(11 << 1, true) >> 0) * 0.5;
 
 		_textPr.Strikeout = this.GuiLastTextProps.Strikeout;
 

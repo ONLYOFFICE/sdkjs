@@ -2656,9 +2656,9 @@ ParaMath.prototype.MathToImageConverter = function(bCopy, _canvasInput, _widthPx
         h_px *= raster_koef;
 
         if (undefined !== _widthPx)
-            _widthPx *= raster_koef;
+            _widthPx = (_widthPx * raster_koef) >> 0;
         if (undefined !== _heightPx)
-            _heightPx *= raster_koef;
+            _heightPx = (_heightPx * raster_koef) >> 0;
     }
 
     var _canvas = null;
