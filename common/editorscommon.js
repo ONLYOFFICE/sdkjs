@@ -6286,27 +6286,27 @@
 		return aDelta;
 	}
 
-    function _getIntegerByDivide(val)
-    {
-        // поддерживаем scale, который
-        // 1) рациональное число
-        // 2) знаменатель несократимой дроби <= 10 (поддерживаем проценты кратные 1/10, 1/9, ... 1/2)
-        var test = val;
-        for (var i = 0; i < 10; i++)
-        {
-            test = (val - i) * AscCommon.AscBrowser.retinaPixelRatio;
-            if (test > 0 && Math.abs(test - (test >> 0)) < 0.001)
-                return { start: (val - i), end : (test >> 0) };
-        }
-        return { start : val, end: AscCommon.AscBrowser.convertToRetinaValue(val, true) };
-    };
-
-    function calculateCanvasSize(element, useStyle)
+	function _getIntegerByDivide(val)
 	{
-        var scale = AscCommon.AscBrowser.retinaPixelRatio;
+		// поддерживаем scale, который
+		// 1) рациональное число
+		// 2) знаменатель несократимой дроби <= 10 (поддерживаем проценты кратные 1/10, 1/9, ... 1/2)
+		var test = val;
+		for (var i = 0; i < 10; i++)
+		{
+			test = (val - i) * AscCommon.AscBrowser.retinaPixelRatio;
+			if (test > 0 && Math.abs(test - (test >> 0)) < 0.001)
+				return { start: (val - i), end : (test >> 0) };
+		}
+		return { start : val, end: AscCommon.AscBrowser.convertToRetinaValue(val, true) };
+	};
+
+	function calculateCanvasSize(element, useStyle)
+	{
+		var scale = AscCommon.AscBrowser.retinaPixelRatio;
 		var new_width = 0;
 		var new_height = 0;
-        if (Math.abs(scale - (scale >> 0)) < 0.001)
+		if (Math.abs(scale - (scale >> 0)) < 0.001)
 		{
 			new_width = (scale * parseInt(element.style.width));
 			new_height = (scale * parseInt(element.style.height));
@@ -6317,11 +6317,11 @@
 			if (element.height !== new_height)
 				element.height = new_height;
 
-            return;
+			return;
 		}
 
-        var rect = element.getBoundingClientRect();
-        if (rect.width === 0 && rect.height === 0 && useStyle === true)
+		var rect = element.getBoundingClientRect();
+		if (rect.width === 0 && rect.height === 0 && useStyle === true)
 		{
 			var style_width = parseInt(element.style.width);
 			var style_height = parseInt(element.style.height);
@@ -6334,28 +6334,28 @@
 			};
 		}
 
-        if (!AscCommon.AscBrowser.isMozilla)
-        {
+		if (!AscCommon.AscBrowser.isMozilla)
+		{
 			new_width = Math.round(scale * rect.right) - Math.round(scale * rect.left);
 			new_height = Math.round(scale * rect.bottom) - Math.round(scale * rect.top);
-        }
-        else
-        {
-            var sizeW = _getIntegerByDivide(rect.width);
-            var sizeH = _getIntegerByDivide(rect.height);
-            if (sizeW.start !== rect.width) element.style.width = sizeW.start + "px";
-            if (sizeH.start !== rect.height) element.style.height = sizeH.start + "px";
+		}
+		else
+		{
+			var sizeW = _getIntegerByDivide(rect.width);
+			var sizeH = _getIntegerByDivide(rect.height);
+			if (sizeW.start !== rect.width) element.style.width = sizeW.start + "px";
+			if (sizeH.start !== rect.height) element.style.height = sizeH.start + "px";
 
 			new_width = sizeW.end;
 			new_height = sizeH.end;
-        }
+		}
 
-        if (element.width !== new_width)
-        	element.width = new_width;
+		if (element.width !== new_width)
+			element.width = new_width;
 
 		if (element.height !== new_height)
 			element.height = new_height;
-    };
+	};
 
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
