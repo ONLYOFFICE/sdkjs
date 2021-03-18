@@ -5264,8 +5264,16 @@ background-repeat: no-repeat;\
         else{
             if(this.ImageLoader){
                 var oApi = this;
-                this.ImageLoader.LoadImagesWithCallback(urls, function(){
-                    if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Paragraph_Content)){
+                this.ImageLoader.LoadImagesWithCallback(urls, function()
+				{
+					var sContentControlId = oApi.asc_GetCurrentContentControl();
+					var oContentControl   = AscCommon.g_oTableId.Get_ById(sContentControlId);
+					if (oContentControl && oContentControl.IsPicture() && urls && urls.length)
+					{
+						oApi.asc_SetContentControlPictureUrl(urls[0], sContentControlId);
+					}
+					else if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Paragraph_Content))
+					{
                         var aImages = [];
                         for(var i = 0; i < urls.length; ++i){
                             var _image = oApi.ImageLoader.LoadImage(urls[i], 1);
@@ -5275,9 +5283,7 @@ background-repeat: no-repeat;\
                         }
                         if(aImages.length){
 							oApi.WordControl.m_oLogicDocument.StartAction();
-							oApi.WordControl.m_oLogicDocument.TurnOff_InterfaceEvents();
                             oApi.WordControl.m_oLogicDocument.AddImages(aImages);
-							oApi.WordControl.m_oLogicDocument.TurnOn_InterfaceEvents(true);
 							oApi.WordControl.m_oLogicDocument.FinalizeAction();
 						}
 
