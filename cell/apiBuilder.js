@@ -528,13 +528,22 @@
 		var formulas = this.wbModel.getAllFormulas(true);
 
 		var _compare = function (_val1, _val2) {
-			var kF = Math.pow(10, 16);
-			if (!isNaN(parseFloat(_val1)) && isFinite(_val1)) {
+			if (!isNaN(parseFloat(_val1)) && isFinite(_val1) && !isNaN(parseFloat(_val2)) && isFinite(_val2)) {
+				var nRound = null;
+				var maxLength = 14;
+				var sVal1 = _val1.toString();
+				if (sVal1) {
+					var aVal1 = sVal1.split('.');
+					if (aVal1 && aVal1[1] && aVal1[1].length) {
+						nRound = (aVal1[1].length === 0 || aVal1[1].length > maxLength) ? null : aVal1[1].length - 1;
+					}
+				}
+
+				var kF = Math.pow(10, nRound === null ? maxLength : nRound);
 				_val1 = (parseInt(_val1 * kF)) / kF;
-			}
-			if (!isNaN(parseFloat(_val2)) && isFinite(_val2)) {
 				_val2 = (parseInt(_val2 * kF)) / kF;
 			}
+
 			return _val1 == _val2;
 		};
 
