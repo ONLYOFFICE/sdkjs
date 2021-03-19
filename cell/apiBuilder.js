@@ -526,6 +526,18 @@
 
 	Api.prototype.RecalculateAllFormulas = function(fLogger) {
 		var formulas = this.wbModel.getAllFormulas(true);
+
+		var _compare = function (_val1, _val2) {
+			var kF = Math.pow(10, 16);
+			if (!isNaN(parseFloat(_val1)) && isFinite(_val1)) {
+				_val1 = (parseInt(_val1 * kF)) / kF;
+			}
+			if (!isNaN(parseFloat(_val2)) && isFinite(_val2)) {
+				_val2 = (parseInt(_val2 * kF)) / kF;
+			}
+			return _val1 == _val2;
+		};
+
 		for (var i = 0; i < formulas.length; ++i) {
 			var formula = formulas[i];
 			var nRow;
@@ -573,7 +585,7 @@
 				}
 
 				if (fLogger) {
-					if (oldValue != newValue) {
+					if (!_compare(oldValue, newValue)) {
 						//error
 						fLogger({
 							sheet: formula.ws.sName,
