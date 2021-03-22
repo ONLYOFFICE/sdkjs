@@ -9874,11 +9874,16 @@ CDocumentColor.prototype.Is_Equal = function(Color)
 
 function CDocumentShd()
 {
-    this.Value   = Asc.c_oAscShd.Nil;
-    this.Color   = new CDocumentColor(255, 255, 255);
+	this.Value     = Asc.c_oAscShd.Nil;
+	this.Color     = new CDocumentColor(255, 255, 255);
 	this.FillColor = undefined;
-    this.Unifill = undefined;
-    this.FillRef = undefined;
+	this.Unifill   = undefined;
+	this.FillRef   = undefined;
+
+	// TODO:
+	//  1. this.Color по умолчанию должен быть undefined
+	//  2. Добавить аналог для themeFill и переименовать Unifill в themeColor
+
 }
 
 CDocumentShd.prototype =
@@ -10125,6 +10130,208 @@ CDocumentShd.prototype.IsEqual = function(oShd)
 CDocumentShd.prototype.IsNil = function()
 {
 	return (Asc.c_oAscShd.Nil === this.Value);
+};
+CDocumentShd.prototype.GetSimpleColor = function(oTheme, oColorMap)
+{
+	var oFillColor   = g_oDocumentDefaultFillColor;
+	var oStrokeColor = g_oDocumentDefaultStrokeColor;
+
+	if (undefined !== this.UniThemeFill)
+	{
+		this.UniThemeFill.check(oTheme, oColorMap);
+		var RGBA = this.UniThemeFill.getRGBAColor();
+		oFillColor = new CDocumentColor(RGBA.R, RGBA.G, RGBA.B, false);
+	}
+	else if (undefined !== this.FillColor)
+	{
+		oFillColor = this.FillColor;
+	}
+
+	if (undefined !== this.Unifill)
+	{
+		this.Unifill.check(oTheme, oColorMap);
+		var RGBA = this.Unifill.getRGBAColor();
+		oStrokeColor = new CDocumentColor(RGBA.R, RGBA.G, RGBA.B, false);
+	}
+	else if (undefined !== this.Color)
+	{
+		oStrokeColor = this.Color;
+	}
+
+	var oResultColor;
+
+	switch (this.Value)
+	{
+		case Asc.c_oAscShd.Clear:
+		{
+			oResultColor = oFillColor;
+			break;
+		}
+		case Asc.c_oAscShd.Pct5:
+		{
+			oResultColor = this.private_GetPctShdColor(0.05, oStrokeColor, oFillColor);
+			break;
+		}
+		case Asc.c_oAscShd.Pct10:
+		{
+			oResultColor = this.private_GetPctShdColor(0.1, oStrokeColor, oFillColor);
+			break;
+		}
+		case Asc.c_oAscShd.Pct12:
+		{
+			oResultColor = this.private_GetPctShdColor(0.12, oStrokeColor, oFillColor);
+			break;
+		}
+		case Asc.c_oAscShd.Pct15:
+		{
+			oResultColor = this.private_GetPctShdColor(0.15, oStrokeColor, oFillColor);
+			break;
+		}
+		case Asc.c_oAscShd.Pct20:
+		{
+			oResultColor = this.private_GetPctShdColor(0.2, oStrokeColor, oFillColor);
+			break;
+		}
+		case Asc.c_oAscShd.Pct25:
+		{
+			oResultColor = this.private_GetPctShdColor(0.25, oStrokeColor, oFillColor);
+			break;
+		}
+		case Asc.c_oAscShd.Pct30:
+		{
+			oResultColor = this.private_GetPctShdColor(0.3, oStrokeColor, oFillColor);
+			break;
+		}
+		case Asc.c_oAscShd.Pct35:
+		{
+			oResultColor = this.private_GetPctShdColor(0.35, oStrokeColor, oFillColor);
+			break;
+		}
+		case Asc.c_oAscShd.Pct37:
+		{
+			oResultColor = this.private_GetPctShdColor(0.37, oStrokeColor, oFillColor);
+			break;
+		}
+		case Asc.c_oAscShd.Pct40:
+		{
+			oResultColor = this.private_GetPctShdColor(0.4, oStrokeColor, oFillColor);
+			break;
+		}
+		case Asc.c_oAscShd.Pct45:
+		{
+			oResultColor = this.private_GetPctShdColor(0.45, oStrokeColor, oFillColor);
+			break;
+		}
+		case Asc.c_oAscShd.Pct50:
+		{
+			oResultColor = this.private_GetPctShdColor(0.5, oStrokeColor, oFillColor);
+			break;
+		}
+		case Asc.c_oAscShd.Pct55:
+		{
+			oResultColor = this.private_GetPctShdColor(0.55, oStrokeColor, oFillColor);
+			break;
+		}
+		case Asc.c_oAscShd.Pct60:
+		{
+			oResultColor = this.private_GetPctShdColor(0.6, oStrokeColor, oFillColor);
+			break;
+		}
+		case Asc.c_oAscShd.Pct62:
+		{
+			oResultColor = this.private_GetPctShdColor(0.62, oStrokeColor, oFillColor);
+			break;
+		}
+		case Asc.c_oAscShd.Pct65:
+		{
+			oResultColor = this.private_GetPctShdColor(0.65, oStrokeColor, oFillColor);
+			break;
+		}
+		case Asc.c_oAscShd.Pct70:
+		{
+			oResultColor = this.private_GetPctShdColor(0.7, oStrokeColor, oFillColor);
+			break;
+		}
+		case Asc.c_oAscShd.Pct75:
+		{
+			oResultColor = this.private_GetPctShdColor(0.75, oStrokeColor, oFillColor);
+			break;
+		}
+		case Asc.c_oAscShd.Pct80:
+		{
+			oResultColor = this.private_GetPctShdColor(0.8, oStrokeColor, oFillColor);
+			break;
+		}
+		case Asc.c_oAscShd.Pct85:
+		{
+			oResultColor = this.private_GetPctShdColor(0.85, oStrokeColor, oFillColor);
+			break;
+		}
+		case Asc.c_oAscShd.Pct87:
+		{
+			oResultColor = this.private_GetPctShdColor(0.87, oStrokeColor, oFillColor);
+			break;
+		}
+		case Asc.c_oAscShd.Pct90:
+		{
+			oResultColor = this.private_GetPctShdColor(0.9, oStrokeColor, oFillColor);
+			break;
+		}
+		case Asc.c_oAscShd.Pct95:
+		{
+			oResultColor = this.private_GetPctShdColor(0.95, oStrokeColor, oFillColor);
+			break;
+		}
+
+		case Asc.c_oAscShd.DiagCross:
+		{
+			oResultColor = this.private_GetPctShdColor(0.75, oStrokeColor, oFillColor);
+			break;
+		}
+		case Asc.c_oAscShd.ThinDiagStripe:
+		case Asc.c_oAscShd.ThinHorzStripe:
+		case Asc.c_oAscShd.ThinReverseDiagStripe:
+		case Asc.c_oAscShd.ThinVertStripe:
+		{
+			oResultColor = this.private_GetPctShdColor(0.25, oStrokeColor, oFillColor);
+			break;
+		}
+		case Asc.c_oAscShd.DiagStripe:
+		case Asc.c_oAscShd.HorzCross:
+		case Asc.c_oAscShd.HorzStripe:
+		case Asc.c_oAscShd.ReverseDiagStripe:
+		case Asc.c_oAscShd.ThinDiagCross:
+		case Asc.c_oAscShd.ThinHorzCross:
+		case Asc.c_oAscShd.VertStripe:
+		{
+			oResultColor = this.private_GetPctShdColor(0.5, oStrokeColor, oFillColor);
+			break;
+		}
+
+		case Asc.c_oAscShd.Solid:
+		{
+			oResultColor = oStrokeColor;
+			break;
+		}
+
+		default:
+		{
+			oResultColor = oStrokeColor;
+			break;
+		}
+	}
+
+	return oResultColor;
+};
+CDocumentShd.prototype.private_GetPctShdColor = function(nPct, oColor1, oColor2)
+{
+	var _nPct = 1 - nPct;
+	return new CDocumentColor(
+		oColor1.r * nPct + oColor2.r * _nPct,
+		oColor1.g * nPct + oColor2.g * _nPct,
+		oColor1.b * nPct + oColor2.b * _nPct,
+		false
+	);
 };
 
 function CDocumentBorder()
@@ -17098,5 +17305,8 @@ g_oDocumentDefaultTablePr.InitDefault();
 g_oDocumentDefaultTableCellPr.InitDefault();
 g_oDocumentDefaultTableRowPr.InitDefault();
 g_oDocumentDefaultTableStylePr.InitDefault();
+
+var g_oDocumentDefaultFillColor   = new CDocumentColor(255, 255, 255, false);
+var g_oDocumentDefaultStrokeColor = new CDocumentColor(0, 0, 0, false);
 
 // ----------------------------------------------------------------

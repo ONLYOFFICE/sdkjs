@@ -666,6 +666,13 @@ Paragraph.prototype.Get_ColorMap = function()
 
 	return null;
 };
+Paragraph.prototype.GetColorMap = function()
+{
+	if (this.Parent)
+		return this.Parent.Get_ColorMap();
+
+	return null;
+};
 Paragraph.prototype.Reset = function(X, Y, XLimit, YLimit, PageNum, ColumnNum, ColumnsCount)
 {
 	this.X      = X;
@@ -2049,7 +2056,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 			//----------------------------------------------------------------------------------------------------------
 			// Заливка параграфа
 			//----------------------------------------------------------------------------------------------------------
-			if ((_Range.W > 0.001 || true === this.IsEmpty() || true !== this.IsEmptyRange(CurLine, CurRange) ) && ( ( this.Pages.length - 1 === CurPage ) || ( CurLine < this.Pages[CurPage + 1].FirstLine ) ) && Asc.c_oAscShdClear === Pr.ParaPr.Shd.Value && (Pr.ParaPr.Shd.Unifill || (Pr.ParaPr.Shd.Color && true !== Pr.ParaPr.Shd.Color.Auto)))
+			if ((_Range.W > 0.001 || true === this.IsEmpty() || true !== this.IsEmptyRange(CurLine, CurRange) ) && ( ( this.Pages.length - 1 === CurPage ) || ( CurLine < this.Pages[CurPage + 1].FirstLine ) ) && !Pr.ParaPr.Shd.IsNil())
 			{
 				if (pGraphics.Start_Command)
 				{
@@ -2150,20 +2157,12 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 						TempX1 += 0.5;
 				}
 
-				if (Pr.ParaPr.Shd.Unifill)
-				{
-					Pr.ParaPr.Shd.Unifill.check(this.Get_Theme(), this.Get_ColorMap());
-					var RGBA = Pr.ParaPr.Shd.Unifill.getRGBAColor();
-					pGraphics.b_color1(RGBA.R, RGBA.G, RGBA.B, 255);
-				}
-				else
-				{
-					pGraphics.b_color1(Pr.ParaPr.Shd.Color.r, Pr.ParaPr.Shd.Color.g, Pr.ParaPr.Shd.Color.b, 255);
-				}
+				var oShdColor = Pr.ParaPr.Shd.GetSimpleColor(this.GetTheme(), this.GetColorMap());
+				pGraphics.b_color1(oShdColor.r, oShdColor.g, oShdColor.b, 255);
+
 				if (pGraphics.SetShd)
-				{
 					pGraphics.SetShd(Pr.ParaPr.Shd);
-				}
+
 				pGraphics.rect(TempX0, this.Pages[CurPage].Y + TempTop, TempX1 - TempX0, TempBottom - TempTop);
 				pGraphics.df();
 

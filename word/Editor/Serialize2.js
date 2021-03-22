@@ -1680,8 +1680,6 @@ function ReadDocumentShd(length, bcr, oShd) {
 	var unifill = CreateThemeUnifill(themeColor.Color, themeColor.Tint, themeColor.Shade);
 	if (null != unifill)
 		oShd.Unifill = unifill;
-	else if (null != oShd.Color && !oShd.Color.Auto)
-		oShd.Unifill = AscFormat.CreteSolidFillRGB(oShd.Color.r, oShd.Color.g, oShd.Color.b);
 	return oShd;
 }
 
@@ -8889,8 +8887,6 @@ function Binary_pPrReader(doc, oReadResult, stream)
 			var unifill = CreateThemeUnifill(themeColor.Color, themeColor.Tint, themeColor.Shade);
 			if(null != unifill)
 				Border.Unifill = unifill;
-			else if (null != Border.Color && !Border.Color.Auto)
-			    Border.Unifill = AscFormat.CreteSolidFillRGB(Border.Color.r, Border.Color.g, Border.Color.b);
         }
         else
             res = c_oSerConstants.ReadUnknown;
@@ -9581,8 +9577,6 @@ function Binary_pPrReader(doc, oReadResult, stream)
 			var unifill = CreateThemeUnifill(themeColor.Color, themeColor.Tint, themeColor.Shade);
 			if(null != unifill)
 				Border.Unifill = unifill;
-			else if (null != Border.Color && !Border.Color.Auto)
-				Border.Unifill = AscFormat.CreteSolidFillRGB(Border.Color.r, Border.Color.g, Border.Color.b);
 		}
 		else
 			res = c_oSerConstants.ReadUnknown;
@@ -9760,8 +9754,6 @@ function Binary_rPrReader(doc, oReadResult, stream)
 				var unifill = CreateThemeUnifill(themeColor.Color, themeColor.Tint, themeColor.Shade);
 				if(null != unifill)
 					rPr.Unifill = unifill;
-				else if (null != rPr.Color && !rPr.Color.Auto)
-				    rPr.Unifill = AscFormat.CreteSolidFillRGB(rPr.Color.r, rPr.Color.g, rPr.Color.b);
 				break;
             case c_oSerProp_rPrType.Shd:
                 rPr.Shd = new CDocumentShd();
@@ -11126,8 +11118,6 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			var unifill = CreateThemeUnifill(themeColor.Color, themeColor.Tint, themeColor.Shade);
 			if(null != unifill)
 				oBackground.Unifill = unifill;
-			else if (null != oBackground.Color && !oBackground.Color.Auto)
-				oBackground.Unifill = AscFormat.CreteSolidFillRGB(oBackground.Color.r, oBackground.Color.g, oBackground.Color.b);
 		} else if(c_oSerBackgroundType.pptxDrawing === type) {
 			var oDrawing = {};
 			var oParStruct = new OpenParStruct(null, null);
