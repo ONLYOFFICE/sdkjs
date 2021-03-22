@@ -10568,7 +10568,7 @@
         }
     };
 
-    WorksheetView.prototype.emptySelection = function ( options, bIsCut ) {
+    WorksheetView.prototype.emptySelection = function ( options, bIsCut, isMineComments ) {
         // Удаляем выделенные графичекие объекты
         if ( this.objectRender.selectedGraphicObjectsExists() ) {
 			var isIntoShape = this.objectRender.controller.getTargetDocContent();
@@ -10580,7 +10580,7 @@
 				this.objectRender.controller.deleteSelectedObjects();
 			}
 		} else {
-            this.setSelectionInfo( "empty", options );
+            this.setSelectionInfo( "empty", options, null, isMineComments );
         }
     };
 
@@ -10599,7 +10599,7 @@
 		return null;
 	};
 
-    WorksheetView.prototype.setSelectionInfo = function (prop, val, onlyActive) {
+    WorksheetView.prototype.setSelectionInfo = function (prop, val, onlyActive, isMineComments) {
         // Проверка глобального лока
         if (this.collaborativeEditing.getGlobalLock() || !window["Asc"]["editor"].canEdit()) {
             return;
@@ -10840,8 +10840,12 @@
 								t.model.deletePivotTables(range.bbox);
 								t.model.removeSparklines(range.bbox);
 								t.model.clearDataValidation([range.bbox], true);
+
 								// Удаляем комментарии
-                                t.cellCommentator.deleteCommentsRange(range.bbox);
+								//TODO isMineComments - используется только здесь
+								// временный флаг, как только в сдк появится класс для групп, добавить этот флаг туда
+								isMineComments = isMineComments ? (this.Api.DocInfo && this.Api.DocInfo.get_UserId()) : null;
+								t.cellCommentator.deleteCommentsRange(range.bbox, isMineComments);
 								break;
 							case c_oAscCleanOptions.Text:
 							case c_oAscCleanOptions.Formula:
