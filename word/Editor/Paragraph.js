@@ -1830,18 +1830,9 @@ Paragraph.prototype.Draw = function(CurPage, pGraphics)
 	var Theme    = this.Get_Theme();
 	var ColorMap = this.Get_ColorMap();
 	var BgColor  = undefined;
-	if (undefined !== Pr.ParaPr.Shd && Asc.c_oAscShdNil !== Pr.ParaPr.Shd.Value && true !== Pr.ParaPr.Shd.Color.Auto)
+	if (Pr.ParaPr.Shd && !Pr.ParaPr.Shd.IsNil() && (!Pr.ParaPr.Shd.Color || true !== Pr.ParaPr.Shd.Color.Auto))
 	{
-		if (Pr.ParaPr.Shd.Unifill)
-		{
-			Pr.ParaPr.Shd.Unifill.check(this.Get_Theme(), this.Get_ColorMap());
-			var RGBA = Pr.ParaPr.Shd.Unifill.getRGBAColor();
-			BgColor  = new CDocumentColor(RGBA.R, RGBA.G, RGBA.B, false);
-		}
-		else
-		{
-			BgColor = Pr.ParaPr.Shd.Color;
-		}
+		BgColor = Pr.ParaPr.Shd.GetSimpleColor(this.GetTheme(), this.GetColorMap());
 	}
 	else
 	{

@@ -2188,8 +2188,8 @@ CTable.prototype.Get_TextBackGroundColor = function()
 	// Сначала проверим заливку данной таблицы, если ее нет, тогда спрашиваем у родительского класса
 	var Shd = this.Get_Shd();
 
-	if (Asc.c_oAscShdNil !== Shd.Value)
-		return Shd.Get_Color2(this.Get_Theme(), this.Get_ColorMap());
+	if (Shd && !Shd.IsNil())
+		return Shd.GetSimpleColor(this.Get_Theme(), this.Get_ColorMap());
 
 	return this.Parent.Get_TextBackGroundColor();
 };

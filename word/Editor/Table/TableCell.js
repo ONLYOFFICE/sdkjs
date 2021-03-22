@@ -469,8 +469,8 @@ CTableCell.prototype =
         // Сначала проверим заливку данной ячейки, если ее нет, тогда спрашиваем у таблицы
         var Shd = this.Get_Shd();
 
-        if ( Asc.c_oAscShdNil !== Shd.Value )
-            return Shd.Get_Color2(this.Get_Theme(), this.Get_ColorMap());
+        if (Shd && !Shd.IsNil())
+            return Shd.GetSimpleColor(this.Get_Theme(), this.Get_ColorMap());
 
         var oTable = this.GetTable();
         return oTable ? oTable.Get_TextBackGroundColor() : null;

@@ -5943,8 +5943,8 @@ ParaRun.prototype.Draw_Elements = function(PDSE)
         InfoMathText = new CMathInfoTextPr(InfoTextPr);
     }
 
-    if ( undefined !== CurTextPr.Shd && c_oAscShdNil !== CurTextPr.Shd.Value && !(CurTextPr.FontRef && CurTextPr.FontRef.Color) )
-        BgColor = CurTextPr.Shd.Get_Color( Para );
+	if (CurTextPr.Shd && !CurTextPr.Shd.IsNil() && !(CurTextPr.FontRef && CurTextPr.FontRef.Color))
+		BgColor = CurTextPr.Shd.GetSimpleColor(Para.GetTheme(), Para.GetColorMap());
 
     var AutoColor = ( undefined != BgColor && false === BgColor.Check_BlackAutoColor() ? new CDocumentColor( 255, 255, 255, false ) : new CDocumentColor( 0, 0, 0, false ) );
     var  RGBA, Theme = PDSE.Theme, ColorMap = PDSE.ColorMap;
