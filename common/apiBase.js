@@ -1451,7 +1451,8 @@
                     "4105",
                     "7177",
                     "9242",
-                    "10266"
+                    "10266",
+					"2067"
 				]);
 			}
 		} else {
@@ -1483,6 +1484,8 @@
 				this.SpellCheckApi.disconnect = function ()
 				{
 				};
+
+				this.sendEvent('asc_onSpellCheckInit', this.SpellCheckApi.worker.getLanguages());
 				return;
 			}
 			
