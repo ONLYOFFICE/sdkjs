@@ -1949,16 +1949,22 @@
 	 * */
 	ApiHyperlink.prototype.SetDefaultStyle = function()
 	{
-		var HyperRun = null;
+		var HyperRun    = null;
+		var ApiHyperRun = null;
 		var Styles = editor.WordControl.m_oLogicDocument.Get_Styles();
-
+		var oDefaultHyperlinkTextPt = Styles.Get(Styles.GetDefaultHyperlink()).GetTextPr();
+		
 		for (var nRun = 0; nRun < this.ParaHyperlink.Content.length; nRun++)
 		{
 			HyperRun = this.ParaHyperlink.Content[nRun];
 			if (!(HyperRun instanceof ParaRun))
 				continue;
 
-			HyperRun.Run.Set_RStyle(Styles.GetDefaultHyperlink());
+			ApiHyperRun = new ApiRun(HyperRun);
+			
+			var oRunTextPr = ApiHyperRun.GetTextPr();
+			oRunTextPr.TextPr.Merge(oDefaultHyperlinkTextPt);
+			oRunTextPr.private_OnChange();
 		}
 			
 		return true;
@@ -5699,7 +5705,7 @@
         return null;
     };
 	/**
-	 * Sets text properties of the paragraph.
+	 * Sets text properties of the run.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {ApiTextPr} oTextPr
