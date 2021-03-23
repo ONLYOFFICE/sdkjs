@@ -76,7 +76,7 @@
 				nRange--;
 			}
 		}
-	}
+	};
 	function private_TrackRangesPositions(bClearTrackedPosition)
 	{
 		var Document  = private_GetLogicDocument();
@@ -91,7 +91,7 @@
 			Document.CollaborativeEditing.Add_DocumentPosition(Range.StartPos);
 			Document.CollaborativeEditing.Add_DocumentPosition(Range.EndPos);
 		}
-	}
+	};
 	function private_RefreshRangesPosition()
 	{
 		var Document  = private_GetLogicDocument();
@@ -102,7 +102,97 @@
 			Range = arrApiRanges[nRange];
 			Document.RefreshDocumentPositions([Range.StartPos, Range.EndPos]);
 		}
-	}
+	};
+	/**
+	 * Get the Run that is first in position
+	 * @typeofeditors ["CDE"]
+	 * @param {Array} arrRuns - Array of Runs
+	 * @return {ApiRun | null} - returns null if param is invalid 
+	 */
+	function private_GetFirstRunInArray(arrRuns)
+	{
+		if (!Array.isArray(arrRuns))
+			return null;
+			
+		var min_pos_Index = 0; // Индекс рана в массиве, с которого начнется выделение
+
+		var MinPos = arrRuns[0].Run.GetDocumentPositionFromObject();
+
+		for (var Index = 1; Index < arrRuns.length; Index++)
+		{
+			var TempPos = arrRuns[Index].Run.GetDocumentPositionFromObject();
+
+			var MinPosLength = MinPos.length;
+			var UsedLength1  = 0;
+
+
+			if (MinPosLength <= TempPos.length)
+				UsedLength1 = MinPosLength;
+			else 
+				UsedLength1 = TempPos.length;
+
+			for (var Pos = 0; Pos < UsedLength1; Pos++)
+			{
+				if (TempPos[Pos].Position < MinPos[Pos].Position)
+				{
+					MinPos = TempPos;
+					min_pos_Index = Index;
+					break;
+				}
+				else if (TempPos[Pos].Position === MinPos[Pos].Position)
+					continue;
+				else if (TempPos[Pos].Position > MinPos[Pos].Position)
+					break;
+			}
+		}
+		
+		return arrRuns[min_pos_Index];
+	};
+	/**
+	 * Get the Run that is last in position
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @param {Array} arrRuns - Array of Runs
+	 * @return {ApiRun | null} - returns null if param is invalid. 
+	 */
+	function private_GetLastRunInArray(arrRuns)
+	{
+		if (!Array.isArray(arrRuns))
+			return false;
+			
+		var max_pos_Index = 0; // Индекс рана в массиве, на котором закончится
+
+		var MaxPos = arrRuns[0].Run.GetDocumentPositionFromObject();
+
+		for (var Index = 1; Index < arrRuns.length; Index++)
+		{
+			var TempPos = arrRuns[Index].Run.GetDocumentPositionFromObject();
+
+			var MaxPosLength = MaxPos.length;
+			var UsedLength2  = 0;
+
+			if (MaxPosLength <= TempPos.length)
+				UsedLength2 = MaxPosLength;
+			else 
+				UsedLength2 = TempPos.length;
+			
+			for (var Pos = 0; Pos < UsedLength2; Pos++)
+			{
+				if (TempPos[Pos].Position > MaxPos[Pos].Position)
+				{
+					MaxPos = TempPos;
+					max_pos_Index = Index;
+					break;
+				}
+				else if (TempPos[Pos].Position === MaxPos[Pos].Position)
+					continue;
+				else if (TempPos[Pos].Position < MaxPos[Pos].Position)
+					break;
+			}
+		}
+		return arrRuns[max_pos_Index];
+	};
+
 	/**
 	 * Class representing a container for paragraphs and tables.
 	 * @param Document
@@ -2475,14 +2565,31 @@
 		return new ApiParagraph(new Paragraph(private_GetDrawingDocument(), private_GetLogicDocument()));
 	};
 	/**
-	 * Create a new paragraph.
+	 * Create range of element.
+	 * if you do not specify the start and end position, the range will be taken from the entire element.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @returns {ApiParagraph}
+	 * @param oElement - the element from which the range will be taken.
+	 * @param nStart - start position of range.
+	 * @param nEnd - end position of range.
+	 * @returns {ApiRange | null} - returns null if oElement doesn't supported.
 	 */
-	Api.prototype.CreateRange = function(oElement, Start, End)
+	Api.prototype.CreateRange = function(oElement, nStart, nEnd)
 	{
-		return new ApiRange(oElement, Start, End);
+		switch (oElement.GetClassType())
+		{
+			case 'paragraph':
+			case 'hyperlink':
+			case 'run':
+			case 'table':
+			case 'documentContent':
+			case 'document':
+			case 'inlineLvlSdt':
+			case 'blockLvlSdt':
+				return oElement.GetRange(nStart, nEnd);
+			default:
+				return null;
+		}
 	};
 	/**
 	 * Create a new table with a specified number of rows and columns.
@@ -2694,10 +2801,6 @@
 	Api.prototype.CreateRadialGradientFill = function(aGradientStop)
 	{
 		return new ApiFill(AscFormat.builder_CreateRadialGradient(aGradientStop));
-	};
-	Api.prototype.CreateRange = function(oElement, Start, End)
-	{
-		return new ApiRange(oElement, Start, End);
 	};
 	/**
 	 * Create a pattern fill which allows to fill the object using a selected pattern as the object background.
@@ -3098,10 +3201,10 @@
 
 			var oDocument = private_GetLogicDocument();
 			
-			var StartRun = this.GetFirstRunInArray(oElement); 
+			var StartRun = private_GetFirstRunInArray(oElement); 
 			var StartPos = StartRun.Run.GetDocumentPositionFromObject();
 
-			var EndRun	= this.GetLastRunInArray(oElement)
+			var EndRun	= private_GetLastRunInArray(oElement)
 			var EndPos	= EndRun.Run.GetDocumentPositionFromObject();
 
 			oDocument.SetContentSelection(StartPos, EndPos, 0, 1, -1);
@@ -3118,97 +3221,7 @@
 		}
 	};
 
-	/**
-	 * Get the Run that is first in position
-	 * @memberof Api
-	 * @typeofeditors ["CDE"]
-	 * @param {Array} Runs - Array of Runs
-	 * @return {ApiRun | null} - returns null if param is invalid 
-	 */
-	Api.prototype.GetFirstRunInArray = function(arrRuns)
-	{
-		if (!Array.isArray(Runs))
-			return null;
-			
-		var min_pos_Index = 0; // Индекс рана в массиве, с которого начнется выделение
-
-		var MinPos = Runs[0].Run.GetDocumentPositionFromObject();
-
-		for (var Index = 1; Index < Runs.length; Index++)
-		{
-			var TempPos = Runs[Index].Run.GetDocumentPositionFromObject();
-
-			var MinPosLength = MinPos.length;
-			var UsedLength1  = 0;
-
-
-			if (MinPosLength <= TempPos.length)
-				UsedLength1 = MinPosLength;
-			else 
-				UsedLength1 = TempPos.length;
-
-			for (var Pos = 0; Pos < UsedLength1; Pos++)
-			{
-				if (TempPos[Pos].Position < MinPos[Pos].Position)
-				{
-					MinPos = TempPos;
-					min_pos_Index = Index;
-					break;
-				}
-				else if (TempPos[Pos].Position === MinPos[Pos].Position)
-					continue;
-				else if (TempPos[Pos].Position > MinPos[Pos].Position)
-					break;
-			}
-		}
-		
-		return Runs[min_pos_Index];
-	};
 	
-	/**
-	 * Get the Run that is last in position
-	 * @memberof Api
-	 * @typeofeditors ["CDE"]
-	 * @param {Array} Runs - Array of Runs
-	 * @return {ApiRun | null} - returns null if param is invalid. 
-	 */
-	Api.prototype.GetLastRunInArray = function(arrRuns)
-	{
-		if (!Array.isArray(Runs))
-			return false;
-			
-		var max_pos_Index = 0; // Индекс рана в массиве, на котором закончится
-
-		var MaxPos = Runs[0].Run.GetDocumentPositionFromObject();
-
-		for (var Index = 1; Index < Runs.length; Index++)
-		{
-			var TempPos = Runs[Index].Run.GetDocumentPositionFromObject();
-
-			var MaxPosLength = MaxPos.length;
-			var UsedLength2  = 0;
-
-			if (MaxPosLength <= TempPos.length)
-				UsedLength2 = MaxPosLength;
-			else 
-				UsedLength2 = TempPos.length;
-			
-			for (var Pos = 0; Pos < UsedLength2; Pos++)
-			{
-				if (TempPos[Pos].Position > MaxPos[Pos].Position)
-				{
-					MaxPos = TempPos;
-					max_pos_Index = Index;
-					break;
-				}
-				else if (TempPos[Pos].Position === MaxPos[Pos].Position)
-					continue;
-				else if (TempPos[Pos].Position < MaxPos[Pos].Position)
-					break;
-			}
-		}
-		return Runs[max_pos_Index];
-	};
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -12057,7 +12070,9 @@
 	Api.prototype["GetDocument"]                     = Api.prototype.GetDocument;
 	Api.prototype["CreateParagraph"]                 = Api.prototype.CreateParagraph;
 	Api.prototype["CreateTable"]                     = Api.prototype.CreateTable;
+	Api.prototype["AddComment"]                      = Api.prototype.AddComment;
 	Api.prototype["CreateRun"]                       = Api.prototype.CreateRun;
+	Api.prototype["CreateHyperlink"]                 = Api.prototype.CreateHyperlink;
 	Api.prototype["CreateImage"]                     = Api.prototype.CreateImage;
 	Api.prototype["CreateShape"]                     = Api.prototype.CreateShape;
 	Api.prototype["CreateChart"]                     = Api.prototype.CreateChart;
