@@ -4187,9 +4187,6 @@ background-repeat: no-repeat;\
 			}
 			else
 			{
-				// TODO: Пока ипользуем тип Asc.c_oAscShd.Solid, потому что цвета темы для
-				//       Fill нет, как появится надо будет вернуть Asc.c_oAscShd.Clear
-
 				var Unifill        = new AscFormat.CUniFill();
 				Unifill.fill       = new AscFormat.CSolidFill();
 				Unifill.fill.color = AscFormat.CorrectUniColor(color, Unifill.fill.color, 1);
