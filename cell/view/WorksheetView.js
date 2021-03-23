@@ -11550,7 +11550,7 @@
 			var _selection;
 			if (fromBinaryExcel) {
 				for (var n = 0; n < pastedInfo.length; n++) {
-					if (pastedInfo) {
+					if (pastedInfo && pastedInfo[n] && pastedInfo[n].selectData && pastedInfo[n].selectData[0]) {
 						_selection = t.model.selectionRange.ranges[n];
 						_selection.c2 = pastedInfo[n].selectData[0].c2;
 						_selection.r2 = pastedInfo[n].selectData[0].r2;
@@ -11559,7 +11559,7 @@
 				}
 			} else {
 				_selection = t.model.selectionRange.getLast();
-				if (pastedInfo) {
+				if (pastedInfo && pastedInfo[n] && pastedInfo[n].selectData && pastedInfo[n].selectData[0]) {
 					_selection.c2 = pastedInfo[0].selectData[0].c2;
 					_selection.r2 = pastedInfo[0].selectData[0].r2;
 				}
