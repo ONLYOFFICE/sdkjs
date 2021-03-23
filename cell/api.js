@@ -125,6 +125,8 @@ var editor;
     this.formulasList = null;	// Список всех формул
 
 	this.openingEnd = {bin: false, xlsxStart: false, xlsx: false, data: null};
+	
+	this.tmpR1C1mode = null;
 
     this._init();
     return this;
