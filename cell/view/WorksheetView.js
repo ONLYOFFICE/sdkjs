@@ -11559,7 +11559,7 @@
 				}
 			} else {
 				_selection = t.model.selectionRange.getLast();
-				if (pastedInfo && pastedInfo[n] && pastedInfo[n].selectData && pastedInfo[n].selectData[0]) {
+				if (pastedInfo && pastedInfo[0] && pastedInfo[0].selectData && pastedInfo[0].selectData[0]) {
 					_selection.c2 = pastedInfo[0].selectData[0].c2;
 					_selection.r2 = pastedInfo[0].selectData[0].r2;
 				}
