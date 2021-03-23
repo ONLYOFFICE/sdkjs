@@ -2507,7 +2507,7 @@
 			if (Asc.c_oAscCleanOptions.Comments === options) {
 				this.removeAllComments(false, true);
 			} else {
-				//TODO opt_changeOnlyMineComments - временный флаг, как только в сдк появится класс для групп, добавить этот флаг туда
+				//TODO isMineComments - временный флаг, как только в сдк появится класс для групп, добавить этот флаг туда
 				this.getWorksheet().emptySelection(options, null, isMineComments);
 			}
 			this.restoreFocus();
