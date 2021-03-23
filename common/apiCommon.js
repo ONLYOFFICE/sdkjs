@@ -2416,13 +2416,24 @@
 
 		if (obj) {
 			this.Value = (undefined != obj.Value) ? obj.Value : null;
-			if (obj.Unifill && obj.Unifill.fill && obj.Unifill.fill.type === c_oAscFill.FILL_TYPE_SOLID &&
-				obj.Unifill.fill.color) {
-				this.Color = CreateAscColor(obj.Unifill.fill.color);
-			} else {
-				this.Color =
-					(undefined != obj.Color && null != obj.Color) ? CreateAscColorCustom(obj.Color.r, obj.Color.g, obj.Color.b) :
-						null;
+
+			// TODO: В UI пока поддерживается ровно два типа заливки Nil, Clear
+			if (null !== this.Value && this.Value !== Asc.c_oAscShd.Nil)
+				this.Value = Asc.c_oAscShd.Clear;
+
+			if (obj.GetSimpleColor){
+				var oColor = obj.GetSimpleColor();
+				this.Color = CreateAscColorCustom(oColor.r, oColor.g, oColor.b, oColor.Auto);
+			}
+			else {
+				if (obj.Unifill && obj.Unifill.fill && obj.Unifill.fill.type === c_oAscFill.FILL_TYPE_SOLID &&
+					obj.Unifill.fill.color) {
+					this.Color = CreateAscColor(obj.Unifill.fill.color);
+				} else {
+					this.Color =
+						(undefined != obj.Color && null != obj.Color) ? CreateAscColorCustom(obj.Color.r, obj.Color.g, obj.Color.b) :
+							null;
+				}
 			}
 		} else {
 			this.Value = Asc.c_oAscShdNil;
