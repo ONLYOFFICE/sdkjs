@@ -42,15 +42,28 @@
 	{
 		if (obj)
 		{
-			if (obj.Unifill && obj.Unifill.fill && obj.Unifill.fill.type === window['Asc'].c_oAscFill.FILL_TYPE_SOLID && obj.Unifill.fill.color)
+			this.Value = (undefined != obj.Value) ? obj.Value : null;
+
+			if (obj.GetSimpleColor)
 			{
-				this.Color = AscCommon.CreateAscColor(obj.Unifill.fill.color);
+				// TODO: Поддерживаем пока только Asc.c_oAscShd.Clear и Asc.c_oAscShd.Nil
+				if (undefined !== obj.Value && Asc.c_oAscShd.Nil !== this.Value)
+					this.Value = Asc.c_oAscShd.Clear;
+
+				var oColor = obj.GetSimpleColor();
+				this.Color = AscCommon.CreateAscColorCustom(oColor.r, oColor.g, oColor.b, oColor.Auto);
 			}
 			else
 			{
-				this.Color = (undefined != obj.Color && null != obj.Color) ? AscCommon.CreateAscColorCustom(obj.Color.r, obj.Color.g, obj.Color.b) : null;
+				if (obj.Unifill && obj.Unifill.fill && obj.Unifill.fill.type === window['Asc'].c_oAscFill.FILL_TYPE_SOLID && obj.Unifill.fill.color)
+				{
+					this.Color = AscCommon.CreateAscColor(obj.Unifill.fill.color);
+				}
+				else
+				{
+					this.Color = (undefined != obj.Color && null != obj.Color) ? AscCommon.CreateAscColorCustom(obj.Color.r, obj.Color.g, obj.Color.b) : null;
+				}
 			}
-			this.Value = (undefined != obj.Value) ? obj.Value : null;
 		}
 		else
 		{
