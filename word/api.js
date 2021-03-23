@@ -3479,21 +3479,28 @@ background-repeat: no-repeat;\
 			if (undefined !== Props.OutlineLvl)
 				this.WordControl.m_oLogicDocument.SetParagraphOutlineLvl(Props.OutlineLvl);
 
-			if ("undefined" != typeof(Props.Shd) && null != Props.Shd)
+			if (Props.Shd)
 			{
 				var Unifill        = new AscFormat.CUniFill();
 				Unifill.fill       = new AscFormat.CSolidFill();
 				Unifill.fill.color = AscFormat.CorrectUniColor(Props.Shd.Color, Unifill.fill.color, 1);
-				this.WordControl.m_oLogicDocument.SetParagraphShd(
-					{
-						Value   : Props.Shd.Value,
-						Color   : {
-							r : Props.Shd.Color.asc_getR(),
-							g : Props.Shd.Color.asc_getG(),
-							b : Props.Shd.Color.asc_getB()
-						},
-						Unifill : Unifill
-					});
+
+				this.WordControl.m_oLogicDocument.SetParagraphShd({
+					Value   : Asc.c_oAscShd.Clear,
+					Color   : {
+						r    : Props.Shd.Color.asc_getR(),
+						g    : Props.Shd.Color.asc_getG(),
+						b    : Props.Shd.Color.asc_getB(),
+						Auto : false
+					},
+					Fill    : {
+						r    : Props.Shd.Color.asc_getR(),
+						g    : Props.Shd.Color.asc_getG(),
+						b    : Props.Shd.Color.asc_getB(),
+						Auto : false
+					},
+					Unifill : Unifill
+				});
 			}
 
 			if ("undefined" != typeof(Props.Brd) && null != Props.Brd)
@@ -4194,14 +4201,16 @@ background-repeat: no-repeat;\
 				this.WordControl.m_oLogicDocument.SetParagraphShd({
 					Value   : Asc.c_oAscShd.Clear,
 					Color   : {
-						r : color.asc_getR(),
-						g : color.asc_getG(),
-						b : color.asc_getB()
+						r    : color.asc_getR(),
+						g    : color.asc_getG(),
+						b    : color.asc_getB(),
+						Auto : false
 					},
 					Fill    : {
-						r : color.asc_getR(),
-						g : color.asc_getG(),
-						b : color.asc_getB()
+						r    : color.asc_getR(),
+						g    : color.asc_getG(),
+						b    : color.asc_getB(),
+						Auto : false
 					},
 					Unifill : Unifill
 				});
