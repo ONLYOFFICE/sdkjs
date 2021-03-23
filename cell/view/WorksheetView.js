@@ -10844,7 +10844,7 @@
 								// Удаляем комментарии
 								//TODO isMineComments - используется только здесь
 								// временный флаг, как только в сдк появится класс для групп, добавить этот флаг туда
-								isMineComments = isMineComments ? (this.Api.DocInfo && this.Api.DocInfo.get_UserId()) : null;
+								isMineComments = isMineComments ? (t.model.workbook.oApi.DocInfo && t.model.workbook.oApi.DocInfo.get_UserId()) : null;
 								t.cellCommentator.deleteCommentsRange(range.bbox, isMineComments);
 								break;
 							case c_oAscCleanOptions.Text:
