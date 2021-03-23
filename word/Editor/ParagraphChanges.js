@@ -76,6 +76,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Paragraph_PrReviewInfo]              = 
 AscDFH.changesFactory[AscDFH.historyitem_Paragraph_OutlineLvl]                = CChangesParagraphOutlineLvl;
 AscDFH.changesFactory[AscDFH.historyitem_Paragraph_DefaultTabSize]            = CChangesParagraphDefaultTabSize;
 AscDFH.changesFactory[AscDFH.historyitem_Paragraph_SuppressLineNumbers]       = CChangesParagraphSuppressLineNumbers;
+AscDFH.changesFactory[AscDFH.historyitem_Paragraph_Shd_Fill]                  = CChangesParagraphShdFill;
 
 function private_ParagraphChangesOnLoadPr(oColor)
 {
@@ -185,6 +186,7 @@ AscDFH.changesRelationMap[AscDFH.historyitem_Paragraph_Shd]                     
 	AscDFH.historyitem_Paragraph_Shd_Value,
 	AscDFH.historyitem_Paragraph_Shd_Color,
 	AscDFH.historyitem_Paragraph_Shd_Unifill,
+	AscDFH.historyitem_Paragraph_Shd_Fill,
 	AscDFH.historyitem_Paragraph_Shd,
 	AscDFH.historyitem_Paragraph_Pr
 ];
@@ -241,6 +243,7 @@ AscDFH.changesRelationMap[AscDFH.historyitem_Paragraph_Pr]                      
 	AscDFH.historyitem_Paragraph_Shd_Value,
 	AscDFH.historyitem_Paragraph_Shd_Color,
 	AscDFH.historyitem_Paragraph_Shd_Unifill,
+	AscDFH.historyitem_Paragraph_Shd_Fill,
 	AscDFH.historyitem_Paragraph_Shd,
 	AscDFH.historyitem_Paragraph_WidowControl,
 	AscDFH.historyitem_Paragraph_Tabs,
@@ -288,6 +291,11 @@ AscDFH.changesRelationMap[AscDFH.historyitem_Paragraph_OutlineLvl]              
 ];
 AscDFH.changesRelationMap[AscDFH.historyitem_Paragraph_SuppressLineNumbers]       = [
 	AscDFH.historyitem_Paragraph_SuppressLineNumbers,
+	AscDFH.historyitem_Paragraph_Pr
+];
+AscDFH.changesRelationMap[AscDFH.historyitem_Paragraph_Shd_Fill]                  = [
+	AscDFH.historyitem_Paragraph_Shd_Fill,
+	AscDFH.historyitem_Paragraph_Shd,
 	AscDFH.historyitem_Paragraph_Pr
 ];
 
@@ -1950,4 +1958,38 @@ CChangesParagraphSuppressLineNumbers.prototype.IsNeedRecalculate = function()
 CChangesParagraphSuppressLineNumbers.prototype.IsNeedRecalculateLineNumbers = function()
 {
 	return true;
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseObjectProperty}
+ */
+function CChangesParagraphShdFill(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseObjectProperty.call(this, Class, Old, New, Color);
+}
+CChangesParagraphShdFill.prototype = Object.create(AscDFH.CChangesBaseObjectProperty.prototype);
+CChangesParagraphShdFill.prototype.constructor = CChangesParagraphShdFill;
+CChangesParagraphShdFill.prototype.Type = AscDFH.historyitem_Paragraph_Shd_Fill;
+CChangesParagraphShdFill.prototype.private_CreateObject = function()
+{
+	return new CDocumentColor(0, 0, 0);
+};
+CChangesParagraphShdFill.prototype.private_SetValue = function(Value)
+{
+	var oParagraph = this.Class;
+
+	if (undefined === oParagraph.Pr.Shd)
+		oParagraph.Pr.Shd = new CDocumentShd();
+
+	oParagraph.Pr.Shd.Fill = Value;
+
+	oParagraph.CompiledPr.NeedRecalc = true;
+	oParagraph.private_UpdateTrackRevisionOnChangeParaPr(false);
+	private_ParagraphChangesOnSetValue(this.Class);
+};
+CChangesParagraphShdFill.prototype.Merge = private_ParagraphChangesOnMergeShdPr;
+CChangesParagraphShdFill.prototype.Load = private_ParagraphChangesOnLoadPr;
+CChangesParagraphShdFill.prototype.IsNeedRecalculate = function()
+{
+	return false;
 };

@@ -1569,6 +1569,7 @@
 	window['AscDFH'].historyitem_Paragraph_OutlineLvl                = window['AscDFH'].historyitem_type_Paragraph | 37;
 	window['AscDFH'].historyitem_Paragraph_DefaultTabSize            = window['AscDFH'].historyitem_type_Paragraph | 38;
 	window['AscDFH'].historyitem_Paragraph_SuppressLineNumbers       = window['AscDFH'].historyitem_type_Paragraph | 39;
+	window['AscDFH'].historyitem_Paragraph_Shd_Fill                  = window['AscDFH'].historyitem_type_Paragraph | 40;
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе ParaTextPr
 	//------------------------------------------------------------------------------------------------------------------

@@ -4170,24 +4170,38 @@ background-repeat: no-repeat;\
 			if (false === is_flag)
 			{
 				this.WordControl.m_oLogicDocument.SetParagraphShd({
-					Value   : Asc.c_oAscShdClear,
-					Color   : {
+					Value : Asc.c_oAscShd.Clear,
+					Color : {
+						r    : 0,
+						g    : 0,
+						b    : 0,
+						Auto : true
+					},
+					Fill  : {
 						r    : 255,
 						g    : 255,
 						b    : 255,
 						Auto : true
-					},
-					Unifill : undefined
+					}
 				});
 			}
 			else
 			{
+				// TODO: Пока ипользуем тип Asc.c_oAscShd.Solid, потому что цвета темы для
+				//       Fill нет, как появится надо будет вернуть Asc.c_oAscShd.Clear
+
 				var Unifill        = new AscFormat.CUniFill();
 				Unifill.fill       = new AscFormat.CSolidFill();
 				Unifill.fill.color = AscFormat.CorrectUniColor(color, Unifill.fill.color, 1);
+
 				this.WordControl.m_oLogicDocument.SetParagraphShd({
-					Value   : Asc.c_oAscShdClear,
+					Value   : Asc.c_oAscShd.Clear,
 					Color   : {
+						r : color.asc_getR(),
+						g : color.asc_getG(),
+						b : color.asc_getB()
+					},
+					Fill    : {
 						r : color.asc_getR(),
 						g : color.asc_getG(),
 						b : color.asc_getB()

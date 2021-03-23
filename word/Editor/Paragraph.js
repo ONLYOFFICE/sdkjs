@@ -10274,6 +10274,13 @@ Paragraph.prototype.Set_Shd = function(_Shd, bDeleteUndefined)
 			History.Add(new CChangesParagraphShdUnifill(this, this.Pr.Shd.Unifill, Shd.Unifill));
 			this.Pr.Shd.Unifill = Shd.Unifill;
 		}
+
+		if (Shd.Fill || true === bDeleteUndefined)
+		{
+			this.private_AddPrChange();
+			History.Add(new CChangesParagraphShdFill(this, this.Pr.Shd.Fill, Shd.Fill));
+			this.Pr.Shd.Fill = Shd.Fill;
+		}
 	}
 
 	// Надо пересчитать конечный стиль
