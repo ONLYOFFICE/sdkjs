@@ -3201,13 +3201,17 @@
 
 			var oDocument = private_GetLogicDocument();
 			
-			var StartRun = private_GetFirstRunInArray(oElement); 
-			var StartPos = StartRun.Run.GetDocumentPositionFromObject();
+			var oStartRun = private_GetFirstRunInArray(oElement); 
+			var StartPos = oStartRun.Run.GetDocumentPositionFromObject();
 
-			var EndRun	= private_GetLastRunInArray(oElement)
-			var EndPos	= EndRun.Run.GetDocumentPositionFromObject();
+			var oEndRun	= private_GetLastRunInArray(oElement)
+			var EndPos	= oEndRun.Run.GetDocumentPositionFromObject();
 
-			oDocument.SetContentSelection(StartPos, EndPos, 0, 1, -1);
+			StartPos.push({Class: oStartRun.Run, Position: 0});
+			EndPos.push({Class: oEndRun.Run, Position: oEndRun.Run.Content.length});
+
+			oDocument.Selection.Use = true;
+			oDocument.SetContentSelection(StartPos, EndPos, 0, 0, 0);
 			
 			var COMENT = oDocument.AddComment(CommentData, false);
 			oDocument.RemoveSelection();
@@ -4506,10 +4510,15 @@
 
 		var oDocument = private_GetLogicDocument()
 
-		var StartPos	= this.Paragraph.GetFirstRun().GetDocumentPositionFromObject();
-		var EndPos		= this.Paragraph.Content[this.Paragraph.Content.length - 2].GetDocumentPositionFromObject();
+		var oFirstun    = this.Paragraph.GetFirstRun();
+		var StartPos	= oFirstun.GetDocumentPositionFromObject();
+		var oEndRun     = this.Paragraph.Content[this.Paragraph.Content.length - 2];
+		var EndPos		= oEndRun.GetDocumentPositionFromObject();
+		StartPos.push({Class: oFirstun, Position: 0});
+		EndPos.push({Class: oEndRun, Position: oEndRun.Content.length});
 
-		oDocument.SetContentSelection(StartPos, EndPos, 0, 1, -1);
+		oDocument.Selection.Use = true;
+		oDocument.SetContentSelection(StartPos, EndPos, 0, 0, 0);
 
 		var COMENT = oDocument.AddComment(CommentData, false);
 		oDocument.RemoveSelection();
