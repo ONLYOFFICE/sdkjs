@@ -2924,6 +2924,7 @@
 
 	baseEditorsApi.prototype._beforeEvalCommand = function()
 	{
+		var oApi = this;
 		switch (this.editorId)
 		{
 			case AscCommon.c_oEditorId.Word:
