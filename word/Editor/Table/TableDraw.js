@@ -236,7 +236,7 @@ CTable.prototype.private_DrawRowBackground = function(oGraphics, oTableShd, nCel
 	if (!nCellsSpacing || this.bPresentation || Asc.c_oAscShdNil === oTableShd.Value)
 		return;
 
-	var RGBA = oTableShd.Get_Color2(this.Get_Theme(), this.Get_ColorMap());
+	var RGBA = oTableShd.GetSimpleColor(this.Get_Theme(), this.Get_ColorMap());
 
 	if (oGraphics.SetShd)
 		oGraphics.SetShd(oTableShd);
@@ -468,17 +468,20 @@ CTable.prototype.private_DrawCellsBackground = function(pGraphics, PNum, Row_sta
                 var CellShd = Cell.Get_Shd();
                 if(!this.bPresentation)
                 {
-                    var RGBA = CellShd.Get_Color2(Theme, ColorMap);
-                    if (true !== RGBA.Auto)
-                    {
-                        pGraphics.b_color1(RGBA.r, RGBA.g, RGBA.b, 255);
-                        if(pGraphics.SetShd)
-                        {
-                            pGraphics.SetShd(CellShd);
+                	if (CellShd && !CellShd.IsNil())
+					{
+						var RGBA = CellShd.GetSimpleColor(Theme, ColorMap);
+						if (true !== RGBA.Auto)
+						{
+							pGraphics.b_color1(RGBA.r, RGBA.g, RGBA.b, 255);
+							if (pGraphics.SetShd)
+							{
+								pGraphics.SetShd(CellShd);
 
-                        }
-                        pGraphics.TableRect(Math.min(X_cell_start, X_cell_end), Math.min(Y, Y + RealHeight), Math.abs(X_cell_end - X_cell_start), Math.abs(RealHeight));
-                    }
+							}
+							pGraphics.TableRect(Math.min(X_cell_start, X_cell_end), Math.min(Y, Y + RealHeight), Math.abs(X_cell_end - X_cell_start), Math.abs(RealHeight));
+						}
+					}
                 }
                 else
                 {
@@ -560,7 +563,7 @@ CTable.prototype.private_DrawCellsBackground = function(pGraphics, PNum, Row_sta
 
             // Заливаем ячейку
             var CellShd = Cell.Get_Shd();
-			if (Asc.c_oAscShdNil != CellShd.Value || (!this.bPresentation && reviewtype_Common !== nReviewType))
+			if (CellShd && (!CellShd.IsNil() || (!this.bPresentation && reviewtype_Common !== nReviewType)))
 			{
 				if (!this.bPresentation)
 				{
@@ -575,8 +578,7 @@ CTable.prototype.private_DrawCellsBackground = function(pGraphics, PNum, Row_sta
 					}
 					else
 					{
-
-						var RGBA = CellShd.Get_Color2(Theme, ColorMap);
+						var RGBA = CellShd.GetSimpleColor(Theme, ColorMap);
 						if (true !== RGBA.Auto)
 						{
 							pGraphics.b_color1(RGBA.r, RGBA.g, RGBA.b, 255);

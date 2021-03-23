@@ -1968,8 +1968,9 @@ CMathBase.prototype.Draw_Lines = function(PDSL)
     var Para       = PDSL.Paragraph;
 
     var BgColor = PDSL.BgColor;
-    if ( undefined !== CtrPrp.Shd && Asc.c_oAscShdNil !== CtrPrp.Shd.Value )
-        BgColor = CtrPrp.Shd.Get_Color( Para );
+    if (CtrPrp.Shd && !CtrPrp.Shd.IsNil())
+        BgColor = CtrPrp.Shd.GetSimpleColor(Para.GetTheme(), Para.GetColorMap());
+
     var AutoColor = ( undefined != BgColor && false === BgColor.Check_BlackAutoColor() ? new CDocumentColor( 255, 255, 255, false ) : new CDocumentColor( 0, 0, 0, false ) );
     var CurColor, RGBA, Theme = this.Paragraph.Get_Theme(), ColorMap = this.Paragraph.Get_ColorMap();
 

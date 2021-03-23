@@ -261,8 +261,8 @@ BinaryCommonWriter.prototype.WriteShd = function(Shd)
     }
     if (null != color && !color.Auto)
         this.WriteColor(c_oSerShdType.Color, color);
-    if(Shd.FillColor && !Shd.FillColor.Auto)
-        this.WriteColor(c_oSerShdType.Fill, Shd.FillColor);
+    if(Shd.Fill && !Shd.Fill.Auto)
+        this.WriteColor(c_oSerShdType.Fill, Shd.Fill);
 	if(null != Shd.Unifill || (null != Shd.Color && Shd.Color.Auto))
     {
 		this.memory.WriteByte(c_oSerShdType.ColorTheme);
@@ -564,7 +564,7 @@ Binary_CommonReader.prototype.ReadShd = function(type, length, Shd, themeColor)
 			});
 			break;
 		case c_oSerShdType.Fill:
-            Shd.FillColor = this.ReadColor();break;
+            Shd.Fill = this.ReadColor();
 			break;
         default:
             res = c_oSerConstants.ReadUnknown;
