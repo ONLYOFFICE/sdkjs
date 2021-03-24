@@ -1667,7 +1667,17 @@ Paragraph.prototype.GetNumberingTextPr = function()
 	oNumTextPr.Merge(this.TextPr.Value);
 	oNumTextPr.Merge(oLvl.GetTextPr());
 
-	oNumTextPr.FontFamily.Name = oNumTextPr.RFonts.Ascii.Name;
+	// TODO: Пока возвращаем всегда шрифт лежащий в Ascii, в будущем надо будет это переделать
+	if (undefined !== oNumTextPr.RFonts && null !== oNumTextPr.RFonts)
+	{
+		oNumTextPr.ReplaceThemeFonts(this.GetTheme().themeElements.fontScheme);
+
+		if (!oNumTextPr.FontFamily)
+			oNumTextPr.FontFamily = {Name : "", Index : -1};
+
+		oNumTextPr.FontFamily.Name  = oNumTextPr.RFonts.Ascii.Name;
+		oNumTextPr.FontFamily.Index = oNumTextPr.RFonts.Ascii.Index;
+	}
 
 	return oNumTextPr;
 };
