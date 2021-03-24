@@ -1951,8 +1951,6 @@
 	{
 		var HyperRun    = null;
 		var ApiHyperRun = null;
-		var Styles = editor.WordControl.m_oLogicDocument.Get_Styles();
-		var oDefaultHyperlinkTextPt = Styles.Get(Styles.GetDefaultHyperlink()).GetTextPr();
 		
 		for (var nRun = 0; nRun < this.ParaHyperlink.Content.length; nRun++)
 		{
@@ -1962,9 +1960,9 @@
 
 			ApiHyperRun = new ApiRun(HyperRun);
 			
-			var oRunTextPr = ApiHyperRun.GetTextPr();
-			oRunTextPr.TextPr.Merge(oDefaultHyperlinkTextPt);
-			oRunTextPr.private_OnChange();
+			HyperRun.Set_Underline(undefined);
+			HyperRun.Set_Color(undefined);
+			HyperRun.Set_Unifill(undefined);
 		}
 			
 		return true;
