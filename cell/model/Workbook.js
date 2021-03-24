@@ -11863,7 +11863,7 @@
 			mapRes[v.toLowerCase()] = true;
 		};
 		if (withEmpty) {
-			this._setProperty(null, null, fAction);
+			this._foreach(fAction);
 		} else {
 			this._setPropertyNoEmpty(null, null, fAction);
 		}
