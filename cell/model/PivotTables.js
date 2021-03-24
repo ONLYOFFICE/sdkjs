@@ -6249,7 +6249,7 @@ CT_pivotTableDefinition.prototype.groupPivot = function (api, layout, opt_rangeP
 			return changeRes;
 		});
 	} else {
-		api.sendEvent('asc_onError', c_oAscError.ID.PivotGroup, c_oAscError.Level.Critical);
+		api.sendEvent('asc_onError', c_oAscError.ID.PivotGroup, c_oAscError.Level.NoCritical);
 	}
 };
 CT_pivotTableDefinition.prototype.ungroupPivot = function (api, layout) {
