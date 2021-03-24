@@ -1950,7 +1950,7 @@
 	ApiHyperlink.prototype.SetDefaultStyle = function()
 	{
 		var HyperRun    = null;
-		var ApiHyperRun = null;
+		var Styles = editor.WordControl.m_oLogicDocument.Get_Styles();
 		
 		for (var nRun = 0; nRun < this.ParaHyperlink.Content.length; nRun++)
 		{
@@ -1958,11 +1958,10 @@
 			if (!(HyperRun instanceof ParaRun))
 				continue;
 
-			ApiHyperRun = new ApiRun(HyperRun);
-			
 			HyperRun.Set_Underline(undefined);
 			HyperRun.Set_Color(undefined);
 			HyperRun.Set_Unifill(undefined);
+			HyperRun.Set_RStyle(Styles.GetDefaultHyperlink());
 		}
 			
 		return true;
