@@ -6309,7 +6309,7 @@ CT_pivotTableDefinition.prototype.groupRangePr = function (fld, rangePr, dateTyp
 	} else {
 		rangePr.groupBy = c_oAscGroupBy.Range;
 	}
-	rangePr.correctValues();
+	rangePr.correctEndValue();
 	var addFields = this.cacheDefinition.groupRangePr(fld, rangePr, dateTypes);
 	var i;
 	var pivotFields = this.asc_getPivotFields();
@@ -9350,7 +9350,8 @@ CT_CacheField.prototype.createGroupRangePr = function () {
 		rangePr.groupBy = c_oAscGroupBy.Range;
 		rangePr.startNum = minMaxValue.minValue;
 		rangePr.endNum = minMaxValue.maxValue;
-		var diff = (minMaxValue.maxValue - minMaxValue.minValue) / 30;
+		rangePr.correctEndValue();
+		var diff = (rangePr.endNum - rangePr.startNum ) / 30;
 		if (diff >= 1) {
 			while (rangePr.groupInterval <= diff) {
 				rangePr.groupInterval *= 10;
@@ -9369,8 +9370,8 @@ CT_CacheField.prototype.createGroupRangePr = function () {
 		if (rangePr.endDate.getExcelDateWithTime2() === rangePr.endDate.getExcelDate()) {
 			rangePr.endDate.addDays2(1);
 		}
+		rangePr.correctEndValue();
 	}
-	rangePr.correctValues();
 	return rangePr;
 };
 CT_CacheField.prototype.getGroupRangePr = function () {
@@ -13856,7 +13857,7 @@ CT_RangePr.prototype.init = function() {
 CT_RangePr.prototype.getFieldGroupType = function() {
 	return this.groupBy === c_oAscGroupBy.Range ? c_oAscGroupType.Number : c_oAscGroupType.Date;
 };
-CT_RangePr.prototype.correctValues = function () {
+CT_RangePr.prototype.correctEndValue = function () {
 	if (c_oAscGroupBy.Range === this.groupBy) {
 		if (this.startNum >= this.endNum) {
 			this.endNum = this.startNum + 1;
