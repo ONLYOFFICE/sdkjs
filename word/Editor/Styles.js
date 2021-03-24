@@ -10025,12 +10025,15 @@ CDocumentShd.prototype.GetSimpleColor = function(oTheme, oColorMap)
 	var oFillColor   = g_oDocumentDefaultFillColor;
 	var oStrokeColor = g_oDocumentDefaultStrokeColor;
 
-	if (undefined !== this.UniThemeFill)
+	// TODO: Пока у нас неправильно работает сохранение и открытие в DOCX, поэтому считаем, что
+	//       цвет, заданный в теме влияет на оба цвета, чтобы работало нормально в текущей схеме
+
+	if (undefined !== this.Unifill)
 	{
 		if (oTheme && oColorMap)
-			this.UniThemeFill.check(oTheme, oColorMap);
+			this.Unifill.check(oTheme, oColorMap);
 
-		var RGBA = this.UniThemeFill.getRGBAColor();
+		var RGBA = this.Unifill.getRGBAColor();
 		oFillColor = new CDocumentColor(RGBA.R, RGBA.G, RGBA.B, false);
 	}
 	else if (undefined !== this.Fill)
