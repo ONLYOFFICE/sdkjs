@@ -16010,7 +16010,14 @@ CDocument.prototype.AddContentControlTextForm = function(oPr)
 	if (!oPr)
 		oPr = new CSdtTextFormPr();
 
-	this.RemoveTextSelection();
+	var sText   = this.GetSelectedText();
+	var oTextPr = this.GetDirectTextPr();
+
+	if (this.IsTextSelectionUse())
+		this.RemoveBeforePaste();
+	else
+		this.RemoveSelection();
+
 	var oCC = this.AddContentControl(c_oAscSdtLevelType.Inline);
 
 	if (oPr.Comb)
@@ -16044,6 +16051,15 @@ CDocument.prototype.AddContentControlTextForm = function(oPr)
 
 	oCC.ApplyTextFormPr(oPr);
 	oCC.MoveCursorToStartPos();
+
+	if (sText && oCC instanceof CInlineLevelSdt)
+	{
+		oCC.ReplacePlaceHolderWithContent();
+		var oRun = oCC.MakeSingleRunElement(false);
+		oRun.AddText(sText);
+		oRun.ApplyTextPr(oTextPr);
+		oCC.SelectContentControl();
+	}
 
 	this.UpdateSelection();
 	this.UpdateTracks();
