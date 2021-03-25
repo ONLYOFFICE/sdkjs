@@ -6151,7 +6151,7 @@ function parserFormula( formula, parent, _ws ) {
 					parseResult.activeArgumentPos = argFuncMap[currentFuncLevel].count;
 				}
 			}
-			if (argPosArrMap[currentFuncLevel]) {
+			if (argPosArrMap[currentFuncLevel] && levelFuncMap[currentFuncLevel]) {
 				//проверяем, вдруг данная функция может принимать в качестве данного аргумента массив
 				var _curFunc = levelFuncMap[currentFuncLevel].func;
 				var _curArg = argPosArrMap[currentFuncLevel].length;
