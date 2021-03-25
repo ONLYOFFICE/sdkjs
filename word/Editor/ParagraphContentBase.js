@@ -4088,7 +4088,7 @@ CParagraphContentWithParagraphLikeContent.prototype.FindNextFillingForm = functi
 		{
 			if (this.Content[nIndex].FindNextFillingForm)
 			{
-				var oRes = this.Content[nIndex].FindNextFillingForm(true, isCurrent && nIndex === nCurPos ? true : false, isStart);
+				var oRes = this.Content[nIndex].FindNextFillingForm(true, isCurrent && nIndex === nCurPos, isStart);
 				if (oRes)
 					return oRes;
 			}
@@ -4100,7 +4100,7 @@ CParagraphContentWithParagraphLikeContent.prototype.FindNextFillingForm = functi
 		{
 			if (this.Content[nIndex].FindNextFillingForm)
 			{
-				var oRes = this.Content[nIndex].FindNextFillingForm(false, isCurrent && nIndex === nCurPos ? true : false, isStart);
+				var oRes = this.Content[nIndex].FindNextFillingForm(false, isCurrent && nIndex === nCurPos, isStart);
 				if (oRes)
 					return oRes;
 			}

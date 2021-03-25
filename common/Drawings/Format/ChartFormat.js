@@ -11973,6 +11973,9 @@
         }
         return null;
     };
+    CTitle.prototype.FindNextFillingForm = function(isNext, isCurrent) {
+		return null;
+	};
     CTitle.prototype.Set_CurrentElement = function(bUpdate, pageIndex) {
 
         var chart = this.chart;

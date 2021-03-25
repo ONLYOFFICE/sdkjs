@@ -1368,6 +1368,15 @@ CShape.prototype.GetSearchElementId = function (bNext, bCurrent) {
     return null;
 };
 
+CShape.prototype.FindNextFillingForm = function(isNext, isCurrent) {
+	if (this.textBoxContent)
+		return this.textBoxContent.FindNextFillingForm(isNext, isCurrent, isCurrent);
+	else if (this.txBody && this.txBody.content)
+		return this.txBody.content.FindNextFillingForm(isNext, isCurrent, isCurrent);
+
+	return null;
+};
+
 CShape.prototype.documentUpdateRulersState = function () {
     var content = this.getDocContent();
     if (!content)

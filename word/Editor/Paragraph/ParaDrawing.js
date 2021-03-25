@@ -226,7 +226,13 @@ ParaDrawing.prototype.GetSearchElementId = function(bNext, bCurrent)
 
 	return null;
 };
+ParaDrawing.prototype.FindNextFillingForm = function(isNext, isCurrent)
+{
+	if (AscCommon.isRealObject(this.GraphicObj) && typeof this.GraphicObj.FindNextFillingForm === "function")
+		return this.GraphicObj.FindNextFillingForm(isNext, isCurrent);
 
+	return null;
+};
 ParaDrawing.prototype.CheckCorrect = function(){
 	if(!this.GraphicObj){
 		return false;

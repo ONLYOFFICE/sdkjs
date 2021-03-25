@@ -11790,6 +11790,9 @@ var GLOBAL_PATH_COUNT = 0;
         }
         return null;
     };
+	CChartSpace.prototype.FindNextFillingForm = function(isNext, isCurrent) {
+		return null;
+	};
     CChartSpace.prototype.isAccent1Background = function() {
         return this.spPr && this.spPr.Fill && this.spPr.Fill.isAccent1();
     };

@@ -1231,6 +1231,59 @@ function CGroupShape()
         return null;
     };
 
+	CGroupShape.prototype.FindNextFillingForm = function(isNext, isCurrent)
+	{
+		if (this.graphicObject)
+			return this.graphicObject.FindNextFillingForm(isNext, isCurrent);
+
+		var Current = -1;
+		var Len     = this.arrGraphicObjects.length;
+
+		var Id = null;
+		if (true === isCurrent)
+		{
+			for (var i = 0; i < Len; ++i)
+			{
+				if (this.arrGraphicObjects[i] === this.selection.textSelection)
+				{
+					Current = i;
+					break;
+				}
+			}
+		}
+
+		if (true === isNext)
+		{
+			var Start = (-1 !== Current ? Current : 0);
+
+			for (var i = Start; i < Len; i++)
+			{
+				if (this.arrGraphicObjects[i].FindNextFillingForm)
+				{
+					Id = this.arrGraphicObjects[i].FindNextFillingForm(true, i === Current, i === Current);
+					if (Id)
+						return Id;
+				}
+			}
+		}
+		else
+		{
+			var Start = (-1 !== Current ? Current : Len - 1);
+
+			for (var i = Start; i >= 0; i--)
+			{
+				if (this.arrGraphicObjects[i].FindNextFillingForm)
+				{
+					Id = this.arrGraphicObjects[i].FindNextFillingForm(false, i === Current, i === Current);
+					if (Id)
+						return Id;
+				}
+			}
+		}
+
+		return null;
+	};
+
     CGroupShape.prototype.getCompiledFill = function()
     {
         this.compiledFill = null;

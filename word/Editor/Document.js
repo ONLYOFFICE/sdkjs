@@ -21161,10 +21161,42 @@ CDocument.prototype.IsFormFieldEditing = function()
 };
 CDocument.prototype.MoveToFillingForm = function(isNext)
 {
-	var oRes = this.FindNextFillingForm(isNext, true, true);
+	var oRes = null;
+	if (docpostype_DrawingObjects === this.GetDocPosType())
+	{
+		var oParaDrawing = this.DrawingObjects.getMajorParaDrawing();
+
+		oRes = oParaDrawing.FindNextFillingForm(isNext, true);
+		if (!oRes)
+		{
+			this.DrawingObjects.resetSelection();
+			oParaDrawing.GoTo_Text(true !== isNext, false);
+		}
+	}
 
 	if (!oRes)
-		oRes = this.FindNextFillingForm(isNext, true, false);
+	{
+		if (docpostype_Content === this.GetDocPosType())
+		{
+			oRes = this.FindNextFillingForm(isNext, true, true);
+
+			if (!oRes)
+				oRes = this.SectionsInfo.FindNextFillingForm(isNext, false);
+
+			if (!oRes)
+				oRes = this.FindNextFillingForm(isNext, false, false);
+		}
+		else if (docpostype_HdrFtr === this.CurPos.Type)
+		{
+			oRes = this.SectionsInfo.FindNextFillingForm(isNext, true);
+
+			if (!oRes)
+				oRes = this.FindNextFillingForm(isNext, false, false);
+
+			if (!oRes)
+				oRes = this.SectionsInfo.FindNextFillingForm(isNext, false);
+		}
+	}
 
 	if (oRes)
 	{
@@ -25038,6 +25070,10 @@ CDocumentSectionsInfo.prototype.UpdateSection = function(oSectPr, oNewSectPr, is
 	}
 
 	return false;
+};
+CDocumentSectionsInfo.prototype.FindNextFillingForm = function(isNext, isCurrent)
+{
+	return null;
 };
 
 function CDocumentSectionsInfoElement(SectPr, Index)
