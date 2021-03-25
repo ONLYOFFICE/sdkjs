@@ -7420,10 +7420,25 @@ function parserFormula( formula, parent, _ws ) {
 					var range = wsR[j];
 					if (range) {
 						this._buildDependenciesRef(range.getWorksheet().getId(), range.getBBox0(), isDefName, true);
-						}
-							}
-						}
 					}
+				}
+			} else if (cElementType.operator === ref.type && ref.name === ":" && this.outStack[i - 1] &&
+				this.outStack[i - 2] &&
+				((cElementType.cell === this.outStack[i - 1].type || cElementType.cell === this.outStack[i - 2].type) ||
+				(cElementType.cell3D === this.outStack[i - 1].type ||
+				cElementType.cell3D === this.outStack[i - 2].type)) && this.outStack[i - 1].isValid() &&
+				this.outStack[i - 2].isValid()) {
+				var _wsId = this.outStack[i - 1].getWsId();
+				if (_wsId === this.outStack[i - 2].getWsId()) {
+					var _ref1 = this.outStack[i - 2].getRange().getBBox0();
+					var _ref2 = this.outStack[i - 1].getRange().getBBox0();
+					if (_ref1 && _ref2) {
+						var _range = new Asc.Range(_ref1.c1, _ref1.r1, _ref2.c1, _ref2.r1);
+						this._buildDependenciesRef(_wsId, _range, isDefName, true);
+					}
+				}
+			}
+		}
 	};
 	parserFormula.prototype.removeDependencies = function() {
 		if (!this.isInDependencies) {
