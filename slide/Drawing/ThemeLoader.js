@@ -219,6 +219,7 @@ function CThemeLoader()
             pres.GetHeightMM = AscCommonSlide.CPresentation.prototype.GetHeightMM;
             pres.slideMasters = [];
             pres.DrawingDocument = editor.WordControl.m_oDrawingDocument;
+            pres.CommentAuthors = {};
 
 
             AscCommon.History.MinorChanges = true;
