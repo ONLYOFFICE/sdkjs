@@ -7165,7 +7165,9 @@
 							if (oBBoxFrom.containsRange(cloneElem.sqRef)) {
 								//тут необходимо добавить новый спакрлайн на новом листе
 								moveOnNewSheet = true;
+								cloneElem.sqRef.setOffset(offset);
 								aSparkLinesToSheet.push(cloneElem);
+								isChange = true;
 							}
 						}
 
@@ -7191,7 +7193,11 @@
 							val.setSparklines(aSparklines, true, true);
 						}
 						if (aSparkLinesToSheet.length !== 0) {
-
+							var modelSparkline = new AscCommonExcel.sparklineGroup(true);
+							modelSparkline.worksheet = wsTo;
+							modelSparkline.set(val);
+							modelSparkline.setSparklines(aSparkLinesToSheet, true);
+							wsTo.addSparklineGroups(modelSparkline);
 						}
 					}
 				}
