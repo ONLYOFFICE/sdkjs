@@ -21176,25 +21176,70 @@ CDocument.prototype.MoveToFillingForm = function(isNext)
 
 	if (!oRes)
 	{
-		if (docpostype_Content === this.GetDocPosType())
+		var nDocPosType = this.GetDocPosType();
+		if (docpostype_Content === nDocPosType)
 		{
 			oRes = this.FindNextFillingForm(isNext, true, true);
 
 			if (!oRes)
-				oRes = this.SectionsInfo.FindNextFillingForm(isNext, false);
+				oRes = this.Footnotes.FindNextFillingForm(isNext, false);
+
+			if (!oRes)
+				oRes = this.Endnotes.FindNextFillingForm(isNext, false);
+
+			if (!oRes)
+				oRes = this.SectionsInfo.FindNextFillingForm(isNext, null);
 
 			if (!oRes)
 				oRes = this.FindNextFillingForm(isNext, false, false);
 		}
-		else if (docpostype_HdrFtr === this.CurPos.Type)
+		else if (docpostype_HdrFtr === nDocPosType)
 		{
-			oRes = this.SectionsInfo.FindNextFillingForm(isNext, true);
+			oRes = this.SectionsInfo.FindNextFillingForm(isNext, this.HdrFtr.GetCurHdrFtr());
 
 			if (!oRes)
 				oRes = this.FindNextFillingForm(isNext, false, false);
 
 			if (!oRes)
-				oRes = this.SectionsInfo.FindNextFillingForm(isNext, false);
+				oRes = this.Footnotes.FindNextFillingForm(isNext, false);
+
+			if (!oRes)
+				oRes = this.Endnotes.FindNextFillingForm(isNext, false);
+
+			if (!oRes)
+				oRes = this.SectionsInfo.FindNextFillingForm(isNext, null);
+		}
+		else if (docpostype_Footnotes === nDocPosType)
+		{
+			oRes = this.Footnotes.FindNextFillingForm(isNext, true);
+
+			if (!oRes)
+				oRes = this.Endnotes.FindNextFillingForm(isNext, false);
+
+			if (!oRes)
+				oRes = this.SectionsInfo.FindNextFillingForm(isNext, null);
+
+			if (!oRes)
+				oRes = this.FindNextFillingForm(isNext, false, false);
+
+			if (!oRes)
+				oRes = this.Footnotes.FindNextFillingForm(isNext, false);
+		}
+		else if (docpostype_Endnotes === nDocPosType)
+		{
+			oRes = this.Endnotes.FindNextFillingForm(isNext, true);
+
+			if (!oRes)
+				oRes = this.SectionsInfo.FindNextFillingForm(isNext, null);
+
+			if (!oRes)
+				oRes = this.FindNextFillingForm(isNext, false, false);
+
+			if (!oRes)
+				oRes = this.Footnotes.FindNextFillingForm(isNext, false);
+
+			if (!oRes)
+				oRes = this.Endnotes.FindNextFillingForm(isNext, false);
 		}
 	}
 
@@ -25071,8 +25116,106 @@ CDocumentSectionsInfo.prototype.UpdateSection = function(oSectPr, oNewSectPr, is
 
 	return false;
 };
-CDocumentSectionsInfo.prototype.FindNextFillingForm = function(isNext, isCurrent)
+CDocumentSectionsInfo.prototype.private_GetHdrFtrsArray = function(oCurHdrFtr)
 {
+	var isEvenOdd = EvenAndOddHeaders;
+
+	var nCurPos    = -1;
+	var arrHdrFtrs = [];
+	for (var nIndex = 0, nCount = this.Elements.length; nIndex < nCount; ++nIndex)
+	{
+		var oSectPr = this.Elements[nIndex].SectPr;
+		var isFirst = oSectPr.Get_TitlePage();
+
+		var oHeaderFirst   = oSectPr.Get_Header_First();
+		var oHeaderEven    = oSectPr.Get_Header_Even();
+		var oHeaderDefault = oSectPr.Get_Header_Default();
+		var oFooterFirst   = oSectPr.Get_Footer_First();
+		var oFooterEven    = oSectPr.Get_Footer_Even();
+		var oFooterDefault = oSectPr.Get_Footer_Default();
+
+		if (oHeaderFirst && isFirst)
+			arrHdrFtrs.push(oHeaderFirst);
+
+		if (oHeaderEven && isEvenOdd)
+			arrHdrFtrs.push(oHeaderEven);
+
+		if (oHeaderDefault)
+			arrHdrFtrs.push(oHeaderDefault);
+
+		if (oFooterFirst && isFirst)
+			arrHdrFtrs.push(oFooterFirst);
+
+		if (oFooterEven && isEvenOdd)
+			arrHdrFtrs.push(oFooterEven);
+
+		if (oFooterDefault)
+			arrHdrFtrs.push(oFooterDefault);
+	}
+
+	if (oCurHdrFtr)
+	{
+		for (var nIndex = 0, nCount = arrHdrFtrs.length; nIndex < nCount; ++nIndex)
+		{
+			if (oCurHdrFtr === arrHdrFtrs[nIndex])
+			{
+				nCurPos = nIndex;
+				break;
+			}
+		}
+	}
+
+	return {
+		HdrFtrs : arrHdrFtrs,
+		CurPos  : nCurPos
+	};
+};
+CDocumentSectionsInfo.prototype.FindNextFillingForm = function(isNext, oCurHdrFtr)
+{
+	var oInfo = this.private_GetHdrFtrsArray(oCurHdrFtr);
+
+	var arrHdrFtrs = oInfo.HdrFtrs;
+	var nCurPos    = oInfo.CurPos;
+
+	var nCount = arrHdrFtrs.length;
+
+	var isCurrent = true;
+	if (-1 === nCurPos)
+	{
+		isCurrent = false;
+		nCurPos   = isNext ? 0 : arrHdrFtrs.length - 1;
+		if (arrHdrFtrs[nCurPos])
+			oCurHdrFtr = arrHdrFtrs[nCurPos];
+	}
+
+	if (nCurPos >= 0 && nCurPos <= nCount - 1)
+	{
+		var oRes = oCurHdrFtr.GetContent().FindNextFillingForm(isNext, isCurrent, isCurrent);
+		if (oRes)
+			return oRes;
+
+		if (isNext)
+		{
+			for (var nIndex = nCurPos + 1; nIndex < nCount; ++nIndex)
+			{
+				oRes = arrHdrFtrs[nIndex].GetContent().FindNextFillingForm(isNext, false);
+
+				if (oRes)
+					return oRes;
+			}
+		}
+		else
+		{
+			for (var nIndex = nCurPos - 1; nIndex >= 0; --nIndex)
+			{
+				oRes = arrHdrFtrs[nIndex].GetContent().FindNextFillingForm(isNext, false);
+
+				if (oRes)
+					return oRes;
+			}
+		}
+	}
+
 	return null;
 };
 

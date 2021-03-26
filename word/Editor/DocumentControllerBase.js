@@ -809,3 +809,10 @@ CDocumentControllerBase.prototype.IsTableCellSelection = function(){return false
 CDocumentControllerBase.prototype.IsSelectionLocked  = function(CheckType)
 {
 };
+/**
+ * Ищем следующее поле в заданном направлении
+ * @param isNext {boolean}
+ * @param isCurrent {boolean}
+ * @return {?CInlineLevelSdt}
+ */
+CDocumentControllerBase.prototype.FindNextFillingForm = function(isNext, isCurrent) {return null;};
