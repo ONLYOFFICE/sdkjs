@@ -1928,7 +1928,7 @@ function CHorRuler()
             case 7:
             {
                 var pos = left + (_margin_left + this.m_arrTabs[this.m_lCurrentTab].pos) * dKoef_mm_to_pix;
-				this.m_dCurrentTabNewPosition = this.m_arrTabs[this.m_lCurrentTab].pos;
+                this.m_dCurrentTabNewPosition = this.m_arrTabs[this.m_lCurrentTab].pos;
                 word_control.m_oOverlayApi.VertLine(pos);
                 break;
             }
