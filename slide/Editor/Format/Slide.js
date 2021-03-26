@@ -1324,7 +1324,11 @@ Slide.prototype =
             var comments = this.slideComments.comments;
             for(i = 0; i < comments.length; ++i)
             {
-                comments[i].draw(graphics);
+                var oComment = comments[i];
+                if(AscCommon.UserInfoParser.canViewComment(oComment.GetUserName()) !== false)
+                {
+                    oComment.draw(graphics);
+                }
             }
         }
     },

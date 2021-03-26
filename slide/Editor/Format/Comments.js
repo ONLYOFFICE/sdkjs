@@ -974,6 +974,10 @@ CComment.prototype =
 
     hit: function(x, y)
     {
+        if(AscCommon.UserInfoParser.canViewComment(this.GetUserName()) === false)
+        {
+            return false;
+        }
         var Flags = 0;
         if(this.selected)
         {
@@ -1212,6 +1216,15 @@ CComment.prototype =
 
         if ( false === bUse )
             editor.WordControl.m_oLogicDocument.RemoveComment( this.Id, true );
+    },
+
+    GetUserName: function()
+    {
+        if(this.Data)
+        {
+            return this.Data.Get_Name();
+        }
+        return "";
     }
 };
 
