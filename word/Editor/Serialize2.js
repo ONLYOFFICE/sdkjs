@@ -13354,7 +13354,9 @@ function Binary_oMathReader(stream, oReadResult, curNote, openParams)
             res = this.bcr.Read1(length, function(t, l){
                 return oThis.ReadMathCtrlPr(t,l,props);
             });
-			oElem.setCtrPrp(props.ctrlPr);
+			if (oElem) {
+				oElem.setCtrPrp(props.ctrlPr);
+			}
         }
 		else if (c_oSer_OMathContentType.Delimiter === type)
         {
