@@ -1456,6 +1456,8 @@
 		ctx.strokeStyle = "#146FE1";
 		ctx.fillStyle 	= "#146FE1";
 
+		var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+
 		var _oldGlobalAlpha = ctx.globalAlpha;
 		ctx.globalAlpha = 1.0;
 
@@ -1469,19 +1471,19 @@
 
 			ctx.beginPath();
 
-			ctx.moveTo(pos1.X >> 0, pos1.Y >> 0);
-			ctx.lineTo(pos2.X >> 0, pos2.Y >> 0);
+			ctx.moveTo((rPR * pos1.X) >> 0, (rPR * pos1.Y) >> 0);
+			ctx.lineTo((rPR * pos2.X) >> 0, (rPR * pos2.Y) >> 0);
 
-			ctx.moveTo(pos3.X >> 0, pos3.Y >> 0);
-			ctx.lineTo(pos4.X >> 0, pos4.Y >> 0);
+			ctx.moveTo((rPR * pos3.X) >> 0, (rPR * pos3.Y) >> 0);
+			ctx.lineTo((rPR * pos4.X) >> 0, (rPR * pos4.Y) >> 0);
 
 			ctx.lineWidth = 2;
 			ctx.stroke();
 
 			ctx.beginPath();
 
-			overlay.AddEllipse(pos1.X, pos1.Y - 5, AscCommon.MOBILE_SELECT_TRACK_ROUND / 2);
-			overlay.AddEllipse(pos4.X, pos4.Y + 5, AscCommon.MOBILE_SELECT_TRACK_ROUND / 2);
+			overlay.AddEllipse(rPR * pos1.X, rPR * (pos1.Y - 5), rPR * AscCommon.MOBILE_SELECT_TRACK_ROUND / 2);
+			overlay.AddEllipse(rPR * pos4.X, rPR * (pos4.Y + 5), rPR * AscCommon.MOBILE_SELECT_TRACK_ROUND / 2);
 			ctx.fill();
 
 			ctx.beginPath();
@@ -1508,11 +1510,11 @@
 
 			ctx.beginPath();
 
-			ctx.moveTo(pos1.X, pos1.Y);
-			ctx.lineTo(pos2.X, pos2.Y);
+			ctx.moveTo(rPR * pos1.X, rPR * pos1.Y);
+			ctx.lineTo(rPR * pos2.X, rPR * pos2.Y);
 
-			ctx.moveTo(pos3.X, pos3.Y);
-			ctx.lineTo(pos4.X, pos4.Y);
+			ctx.moveTo(rPR * pos3.X, rPR * pos3.Y);
+			ctx.lineTo(rPR * pos4.X, rPR * pos4.Y);
 
 			ctx.lineWidth = 2;
 			ctx.stroke();
@@ -1538,8 +1540,8 @@
 			var _x2 = (pos4.X + ex) >> 0;
 			var _y2 = (pos4.Y + ey) >> 0;
 
-			overlay.AddEllipse(_x1, _y1, AscCommon.MOBILE_SELECT_TRACK_ROUND / 2);
-			overlay.AddEllipse(_x2, _y2, AscCommon.MOBILE_SELECT_TRACK_ROUND / 2);
+			overlay.AddEllipse(rPR * _x1, rPR * _y1, rPR * AscCommon.MOBILE_SELECT_TRACK_ROUND / 2);
+			overlay.AddEllipse(rPR * _x2, rPR * _y2, rPR * AscCommon.MOBILE_SELECT_TRACK_ROUND / 2);
 			ctx.fill();
 
 			ctx.beginPath();

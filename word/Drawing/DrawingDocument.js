@@ -5660,7 +5660,7 @@ function CDrawingDocument()
 
 			var old_width = this.GuiCanvasTextProps.width;
 			var old_height = this.GuiCanvasTextProps.height;
-			AscCommon.calculateCanvasSize(this.GuiCanvasTextProps, true);
+			AscCommon.calculateCanvasSize(this.GuiCanvasTextProps);
 
 			if (old_width !== this.GuiCanvasTextProps.width || old_height !== this.GuiCanvasTextProps.height)
 				this.GuiLastTextProps = null;
@@ -5682,7 +5682,7 @@ function CDrawingDocument()
 			this.GuiCanvasTextProps.style.width = _width + "px";
 			this.GuiCanvasTextProps.style.height = _height + "px";
 
-			AscCommon.calculateCanvasSize(this.GuiCanvasTextProps, true);
+			AscCommon.calculateCanvasSize(this.GuiCanvasTextProps);
 
 			_div_elem.appendChild(this.GuiCanvasTextProps);
 		}

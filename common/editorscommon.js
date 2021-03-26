@@ -6250,7 +6250,7 @@
 		return { start : val, end: AscCommon.AscBrowser.convertToRetinaValue(val, true) };
 	};
 
-	function calculateCanvasSize(element, useStyle)
+	function calculateCanvasSize(element)
 	{
 		var scale = AscCommon.AscBrowser.retinaPixelRatio;
 		var new_width = 0;
@@ -6270,7 +6270,7 @@
 		}
 
 		var rect = element.getBoundingClientRect();
-		if (rect.width === 0 && rect.height === 0 && useStyle === true)
+		if (rect.width === 0 && rect.height === 0)
 		{
 			var style_width = parseInt(element.style.width);
 			var style_height = parseInt(element.style.height);
