@@ -597,6 +597,13 @@ CComment.prototype.GetData = function()
 {
 	return this.Data;
 };
+CComment.prototype.GetUserName = function()
+{
+	if (this.Data)
+		return this.Data.GetUserName();
+
+	return "";
+};
 CComment.prototype.IsSolved = function()
 {
 	if (this.Data)

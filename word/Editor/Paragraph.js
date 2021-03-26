@@ -17073,7 +17073,7 @@ CParagraphDrawStateHighlights.prototype.AddComment = function(Id)
 		return;
 
 	var oComment = AscCommon.g_oTableId.Get_ById(Id);
-	if (!oComment || (!this.DrawSolvedComments && oComment.IsSolved()))
+	if (!oComment || (!this.DrawSolvedComments && oComment.IsSolved()) || !AscCommon.UserInfoParser.canViewComment(oComment.GetUserName()))
 		return;
 
 	this.Comments.push(Id);
@@ -17085,7 +17085,7 @@ CParagraphDrawStateHighlights.prototype.RemoveComment = function(Id)
 		return;
 
 	var oComment = AscCommon.g_oTableId.Get_ById(Id);
-	if (!oComment || (!this.DrawSolvedComments && oComment.IsSolved()))
+	if (!oComment || (!this.DrawSolvedComments && oComment.IsSolved()) || !AscCommon.UserInfoParser.canViewComment(oComment.GetUserName()))
 		return;
 
 	for (var nIndex = 0, nCount = this.Comments.length; nIndex < nCount; ++nIndex)
