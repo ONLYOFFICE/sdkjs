@@ -2282,16 +2282,15 @@ function CDrawingDocument()
 		var yDst = this.SlideCurrectRect.top;
 		var wDst = this.SlideCurrectRect.right - this.SlideCurrectRect.left;
 		var hDst = this.SlideCurrectRect.bottom - this.SlideCurrectRect.top;
+
 		dKoefX = wDst / this.m_oLogicDocument.GetWidthMM();
 		dKoefY = hDst / this.m_oLogicDocument.GetHeightMM();
 		var oTextMatrix = this.TextMatrix;
-		var _1px_mm_x = 1 / Math.max(dKoefX, 0.001);
-		var _1px_mm_y = 1 / Math.max(dKoefY, 0.001);
 		for (nIndex = 0; nIndex < PathLng; nIndex++)
 		{
 			oPath = this.MathTrack.GetPolygon(nIndex);
-			this.MathTrack.DrawWithMatrix(overlay, oPath, 0, 0, "#939393", dKoefX, dKoefY, xDst, yDst, oTextMatrix);
-			this.MathTrack.DrawWithMatrix(overlay, oPath, _1px_mm_x, _1px_mm_y, "#FFFFFF", dKoefX, dKoefY, xDst, yDst, oTextMatrix);
+			this.MathTrack.Draw(overlay, oPath, 0, 0, "#939393", dKoefX, dKoefY, xDst, yDst, oTextMatrix);
+			this.MathTrack.Draw(overlay, oPath, 1, 1, "#FFFFFF", dKoefX, dKoefY, xDst, yDst, oTextMatrix);
 		}
 		for (nIndex = 0, nCount = this.MathTrack.GetSelectPathsCount(); nIndex < nCount; nIndex++)
 		{

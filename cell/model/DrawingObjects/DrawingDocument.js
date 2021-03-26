@@ -606,13 +606,11 @@ function CDrawingDocument()
             _offY = this.AutoShapesTrack.Graphics.m_oCoordTransform.ty;
         }
         var oTextMatrix = this.TextMatrix || AscCommon.CMatrix();
-        var _1px_mm_x = 1 / Math.max(dKoefX, 0.001);
-        var _1px_mm_y = 1 / Math.max(dKoefY, 0.001);
         for (nIndex = 0; nIndex < PathLng; nIndex++)
         {
             oPath = this.MathTrack.GetPolygon(nIndex);
-            this.MathTrack.DrawWithMatrix(overlay, oPath, 0, 0, "#939393", dKoefX, dKoefY, _offX, _offY, oTextMatrix);
-            this.MathTrack.DrawWithMatrix(overlay, oPath, _1px_mm_x, _1px_mm_y, "#FFFFFF", dKoefX, dKoefY, _offX, _offY, oTextMatrix);
+            this.MathTrack.Draw(overlay, oPath, 0, 0, "#939393", dKoefX, dKoefY, _offX, _offY, oTextMatrix);
+            this.MathTrack.Draw(overlay, oPath, 1, 1, "#FFFFFF", dKoefX, dKoefY, _offX, _offY, oTextMatrix);
         }
         for (nIndex = 0, nCount = this.MathTrack.GetSelectPathsCount(); nIndex < nCount; nIndex++)
         {
