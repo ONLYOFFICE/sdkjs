@@ -495,7 +495,7 @@ CCellCommentator.prototype.isLockedComment = function(oComment, callbackFunc) {
 		var aComments = this.model.aComments;
 		for (var i = 0; i < aComments.length; ++i) {
 			commentCell = aComments[i];
-			if (this._checkHidden(commentCell)) {
+			if (this._checkHidden(commentCell) || !AscCommon.UserInfoParser.canViewComment(commentCell.sUserName)) {
 				continue;
 			}
 
@@ -827,7 +827,7 @@ CCellCommentator.prototype.cleanLastSelection = function() {
 	};
 
 	CCellCommentator.prototype._showComment = function (comment, bNew) {
-		if (comment && !this._checkHidden(comment)) {
+		if (comment && !this._checkHidden(comment) && AscCommon.UserInfoParser.canViewComment(comment.sUserName)) {
 			var coords = this.getCommentTooltipPosition(comment);
 			this.model.workbook.handlers.trigger("asc_onShowComment", [comment.asc_getId()], coords.dLeftPX,
 				coords.dTopPX, coords.dReverseLeftPX, bNew);
@@ -1040,7 +1040,7 @@ CCellCommentator.prototype.removeComment = function(id, bNoEvent, bNoAscLock, bN
 					}
 				}
 				if (comment) {
-					return (excludeHidden && this._checkHidden(comment)) ? null : comment;
+					return ((excludeHidden && this._checkHidden(comment)) || !AscCommon.UserInfoParser.canViewComment(comment.sUserName)) ? null : comment;
 				}
 			}
 		}
