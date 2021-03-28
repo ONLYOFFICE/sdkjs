@@ -515,9 +515,25 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 				}
 			}
 
-			if (StartPos === EndPos && this.Content[StartPos].IsTable() && (!this.Content[StartPos].IsCellSelection() || bOnTextAdd))
+			if (StartPos === EndPos && this.Content[StartPos].IsTable())
 			{
-				this.Content[StartPos].Remove(1, true, bRemoveOnlySelection, bOnTextAdd);
+				if (!this.Content[StartPos].IsCellSelection() || bOnTextAdd || Count > 0)
+				{
+					this.Content[StartPos].Remove(1, true, bRemoveOnlySelection, bOnTextAdd);
+				}
+				else if (this.Content[StartPos].IsRowSelection())
+				{
+					this.Content[StartPos].RemoveTableRow();
+				}
+				else
+				{
+					// В остальных ситуация мы не отслеживаем изменения
+					var oLogicDocument = this.GetLogicDocument();
+					var isLocalTrackRevisions = oLogicDocument.GetLocalTrackRevisions();
+					oLogicDocument.SetLocalTrackRevisions(false);
+					this.Content[StartPos].RemoveTableCells();
+					oLogicDocument.SetLocalTrackRevisions(isLocalTrackRevisions);
+				}
 			}
 			else
 			{
@@ -526,7 +542,7 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 				{
 					var oElement = this.Content[nIndex];
 					if (oElement.IsTable())
-						oElement.RemoveTableCells();
+						oElement.RemoveTableRow();
 					else
 						oElement.Remove(1, true, bRemoveOnlySelection, bOnTextAdd);
 				}

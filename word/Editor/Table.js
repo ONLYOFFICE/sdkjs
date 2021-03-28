@@ -17202,6 +17202,35 @@ CTable.prototype.IsCellSelection = function()
 
 	return false;
 };
+/**
+ * Проверяем, идет ли выделение по целым строкам
+ * @return {boolean}
+ * @constructor
+ */
+CTable.prototype.IsRowSelection = function()
+{
+	if (!this.IsCellSelection())
+		return false;
+
+	var arrSelectionArray = this.GetSelectionArray(true);
+
+	var oPrevPos = null;
+	for (var nIndex = 0, nCount = arrSelectionArray.length; nIndex < nCount; ++nIndex)
+	{
+		var oPos = arrSelectionArray[nIndex];
+		if ((!oPrevPos && 0 !== oPos.Cell)
+			|| (oPrevPos
+				&& ((oPrevPos.Row === oPos.Row && oPos.Cell !== oPrevPos.Cell + 1)
+					|| (oPrevPos.Row !== oPos.Row
+						&& (0 !== oPos.Cell
+							|| this.GetRow(oPrevPos.Row).GetCellsCount() - 1 !== oPrevPos.Cell)))))
+				return false;
+
+		oPrevPos = oPos;
+	}
+
+	return !(!oPrevPos || this.GetRow(oPrevPos.Row).GetCellsCount() - 1 !== oPrevPos.Cell);
+};
 CTable.prototype.SetTableProps = function(oProps)
 {
 	return this.Set_Props(oProps);
