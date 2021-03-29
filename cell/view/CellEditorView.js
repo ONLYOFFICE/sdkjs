@@ -605,6 +605,7 @@
 			this._expand();
 			this._adjustCanvas();
 			this._showCanvas();
+			this._calculateCanvasSize();
 			this._renderText();
 			this.topLineIndex = 0;
 			this._updateCursorPosition();
@@ -1077,6 +1078,7 @@
 		this._cleanSelection();
 		this._adjustCanvas();
 		this._showCanvas();
+		this._calculateCanvasSize();
 		this._renderText();
 		if (!this.getMenuEditorMode()) {
 			this.input.value = AscCommonExcel.getFragmentsText((this.options.fragments));
@@ -1090,6 +1092,7 @@
 
 		if (this._expand()) {
 			this._adjustCanvas();
+			this._calculateCanvasSize();
 		}
 
 		this._renderText();  // вызов нужен для пересчета поля line.startX, которое используется в _updateCursorPosition
@@ -1323,8 +1326,17 @@
 
 		this.canvas.style.width = this.canvasOverlay.style.width = widthStyle + 'px';
 		this.canvas.style.height = this.canvasOverlay.style.height = heightStyle + 'px';
-		AscCommon.calculateCanvasSize(this.canvas);
-        AscCommon.calculateCanvasSize(this.canvasOverlay);
+	};
+
+	CellEditor.prototype._calculateCanvasSize = function () {
+		//этот код вызывается после showCanvas, потому что внутри calculateCanvasSize использууется getBoundingClientRect
+		//если у канвы будет display = 'none', то размеры будут возвращаться нулевые
+		if (this.canvas) {
+			AscCommon.calculateCanvasSize(this.canvas);
+		}
+		if (this.canvasOverlay) {
+			AscCommon.calculateCanvasSize(this.canvasOverlay);
+		}
 	};
 
 	CellEditor.prototype._renderText = function (dy) {
