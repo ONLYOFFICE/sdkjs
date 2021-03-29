@@ -569,6 +569,7 @@ var editor;
     if (this.wb) {
       if (Math.abs(oldScale - AscCommon.AscBrowser.retinaPixelRatio) > 0.001) {
         this.wb.changeZoom(null);
+        this._sendWorkbookStyles();
       }
       this.wb.resize();
 

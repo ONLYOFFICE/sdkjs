@@ -1953,7 +1953,7 @@
 			var widthWithRetina = AscCommon.AscBrowser.convertToRetinaValue(w, true);
 			var heightWithRetina = AscCommon.AscBrowser.convertToRetinaValue(h, true);
 
-			var ctx = getContext(w, h, wb);
+			var ctx = getContext(widthWithRetina, heightWithRetina, wb);
 			var oCanvas = ctx.getCanvas();
 			var graphics = getGraphics(ctx);
 
@@ -1976,7 +1976,7 @@
 					if (window["IS_NATIVE_EDITOR"]) {
 						window["native"]["BeginDrawStyle"](type, name);
 					}
-					drawStyle(ctx, graphics, wb.stringRender, oStyle, displayName, w, h);
+					drawStyle(ctx, graphics, wb.stringRender, oStyle, displayName, widthWithRetina, heightWithRetina);
 					if (window["IS_NATIVE_EDITOR"]) {
 						window["native"]["EndDrawStyle"]();
 					} else {
