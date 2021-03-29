@@ -15613,12 +15613,15 @@ Paragraph.prototype.CheckRunContent = function(fCheck)
 Paragraph.prototype.CheckSignatureLinesOnAdd = function()
 {
 	this.CheckRunContent(
-		function (oRun)
+		function(oRun)
 		{
+			if (!(oRun instanceof AscCommonWord.ParaRun))
+				return;
+
 			for (var nPos = 0, nCount = oRun.Content.length; nPos < nCount; ++nPos)
 			{
 				var oItem = oRun.Content[nPos];
-				if(oItem.Type === para_Drawing)
+				if (oItem.Type === para_Drawing)
 				{
 					oItem.CheckSignatureLineOnAdd();
 				}
