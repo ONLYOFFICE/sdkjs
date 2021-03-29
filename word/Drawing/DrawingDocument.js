@@ -6981,16 +6981,14 @@ function CDrawingDocument()
             canvas.height = AscCommon.AscBrowser.convertToRetinaValue(height_px, true);
 
             var ctx = canvas.getContext("2d");
+			var rPR = AscCommon.AscBrowser.retinaPixelRatio;
 
-            if (AscCommon.AscBrowser.retinaPixelRatio >= 2)
-                ctx.setTransform(2, 0, 0, 2, 0, 0);
-
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 2 * Math.round(rPR);
             ctx.strokeStyle = "000000"; // "#CBCBCB";
 
             var textYs = {x: text_base_offset_x - ((4.25 * AscCommon.g_dKoef_mm_to_pix) >> 0), y: y + (line_w << 1)};
 
-            ctx.moveTo(text_base_offset_x, y); ctx.lineTo(width_px - offsetBase, y);
+            ctx.moveTo(Math.round(text_base_offset_x * rPR), Math.round(y * rPR)); ctx.lineTo(Math.round((width_px - offsetBase) * rPR), Math.round(y * rPR));
             ctx.stroke();
             ctx.beginPath();
 
