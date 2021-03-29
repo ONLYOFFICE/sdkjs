@@ -11920,16 +11920,17 @@
 				for (var nInfo = 0; nInfo < allRunsInfo.length; nInfo++)
 				{
 					var oInfo = allRunsInfo[nInfo];
-					if ((oChange.pos >= oInfo.GlobStartPos || oChange.pos + DelCount > oInfo.GlobStartPos) && oChange.pos <= oInfo.GlobEndPos)
+					if (((oChange.pos >= oInfo.GlobStartPos || oChange.pos + DelCount > oInfo.GlobStartPos) && oChange.pos <= oInfo.GlobEndPos) ||
+					    (oChange.pos >= oInfo.GlobStartPos || oChange.pos + DelCount > oInfo.GlobStartPos) && oChange.pos >= oInfo.GlobEndPos && nInfo === allRunsInfo.length - 1)
 					{
-						var nPosToDel = Math.max(0, oChange.pos - oInfo.GlobStartPos + oInfo.StartPos);
-						var nPosToAdd = nPosToDel
-						var countToDel = Math.min(oChange.deleteCount, oInfo.StringCount);
+						var nPosToDel   = Math.max(0, oChange.pos - oInfo.GlobStartPos + oInfo.StartPos);
+						var nPosToAdd   = nPosToDel
+						var nCharsToDel = Math.min(oChange.deleteCount, oInfo.StringCount);
 						
-						if (nPosToDel >= oInfo.Run.Content.length || (countToDel === 0 && oChange.deleteCount !== 0))
+						if ((nPosToDel >= oInfo.Run.Content.length && nCharsToDel !== 0) || (nCharsToDel === 0 && oChange.deleteCount !== 0))
 							continue;
 
-						for (var nDelChar = 0; nDelChar < countToDel; nDelChar++)
+						for (var nChar = 0; nChar < nCharsToDel; nChar++)
 						{
 							if (!oInfo.Run.Content[nPosToDel])
 								break;
@@ -11937,14 +11938,14 @@
 							if (para_Text === oInfo.Run.Content[nPosToDel].Type || para_Space === oInfo.Run.Content[nPosToDel].Type || para_Tab === oInfo.Run.Content[nPosToDel].Type)
 							{
 								oInfo.Run.RemoveFromContent(nPosToDel, 1);
-								nDelChar--;
+								nChar--;
 								oChange.deleteCount--;
-								countToDel--;
+								nCharsToDel--;
 							}
 							else
 							{
 								nPosToDel++;
-								nDelChar--;
+								nChar--;
 							}
 						}
 						
@@ -11960,15 +11961,15 @@
 							};
 							continue;
 						}
-							
-						for (var nAddChar = 0; nAddChar < oChange.insert.length; nAddChar++)
+						
+						for (var nChar = 0; nChar < oChange.insert.length; nChar++)
 						{
 							var itemText = null;
 							
-							if (AscCommon.IsSpace(oChange.insert[nAddChar]))
-								itemText = new AscCommonWord.ParaSpace(oChange.insert[nAddChar]);
+							if (AscCommon.IsSpace(oChange.insert[nChar]))
+								itemText = new AscCommonWord.ParaSpace(oChange.insert[nChar]);
 							else
-								itemText = new AscCommonWord.ParaText(oChange.insert[nAddChar]);
+								itemText = new AscCommonWord.ParaText(oChange.insert[nChar]);
 
 							itemText.Parent = oInfo.Run.GetParagraph();
 							if (oInfo.Run.Content.length === 0 && infoToAdd)
@@ -11980,7 +11981,7 @@
 								oInfo.Run.AddToContent(nPosToAdd, itemText);
 
 							oChange.insert.shift();
-							nAddChar--;
+							nChar--;
 							nPosToAdd++;
 						}
 					}
