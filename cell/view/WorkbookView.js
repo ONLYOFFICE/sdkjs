@@ -2459,12 +2459,12 @@
 		}
 	};
 
-  WorkbookView.prototype.undo = function() {
+  WorkbookView.prototype.undo = function(Options) {
     var oFormulaLocaleInfo = AscCommonExcel.oFormulaLocaleInfo;
     oFormulaLocaleInfo.Parse = false;
     oFormulaLocaleInfo.DigitSep = false;
     if (!this.getCellEditMode()) {
-      if (!History.Undo() && this.collaborativeEditing.getFast() && this.collaborativeEditing.getCollaborativeEditing()) {
+      if (!History.Undo(Options) && this.collaborativeEditing.getFast() && this.collaborativeEditing.getCollaborativeEditing()) {
         this.Api.sync_TryUndoInFastCollaborative();
       }
     } else {

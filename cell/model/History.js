@@ -360,7 +360,7 @@ CHistory.prototype.Can_Redo = function()
 	return this.Points.length > 0 && this.Index < this.Points.length - 1;
 };
 /** @returns {boolean} */
-CHistory.prototype.Undo = function()
+CHistory.prototype.Undo = function(Options)
 {
   // Проверяем можно ли сделать Undo
   if (true !== this.Can_Undo()) {
@@ -370,30 +370,46 @@ CHistory.prototype.Undo = function()
 	if (this.Index === this.Points.length - 1)
 		this.LastState = this.workbook.handlers.trigger("getSelectionState");
 
-	var Point = this.Points[this.Index--];
 	var oRedoObjectParam = new AscCommonExcel.RedoObjectParam();
 	this.UndoRedoPrepare(oRedoObjectParam, true);
 
-	// Откатываем все действия в обратном порядке (относительно их выполенения)
-	for ( var Index = Point.Items.length - 1; Index >= 0; Index-- )
-	{
-		var Item = Point.Items[Index];
-
-
-
-		if(!Item.Class.RefreshRecalcData)
-			Item.Class.Undo( Item.Type, Item.Data, Item.SheetId );
-		else
+	var t = this;
+	var doUndo = function () {
+		for ( var Index = Point.Items.length - 1; Index >= 0; Index-- )
 		{
-            if (Item.Class)
-            {
-                Item.Class.Undo();
-                Item.Class.RefreshRecalcData();
-            }
-        }
+			var Item = Point.Items[Index];
 
-		this._addRedoObjectParam(oRedoObjectParam, Item);
+			if(!Item.Class.RefreshRecalcData)
+				Item.Class.Undo( Item.Type, Item.Data, Item.SheetId );
+			else
+			{
+				if (Item.Class)
+				{
+					Item.Class.Undo();
+					Item.Class.RefreshRecalcData();
+				}
+			}
+
+			t._addRedoObjectParam(oRedoObjectParam, Item);
+		}
+	};
+
+	// Откатываем все действия в обратном порядке (относительно их выполенения)
+	var Point = null;
+	if (undefined !== Options && null !== Options && true === Options.All)
+	{
+		while (this.Index >= 0)
+		{
+			Point = this.Points[this.Index--];
+			doUndo();
+		}
 	}
+	else
+	{
+		Point = this.Points[this.Index--];
+		doUndo();
+	}
+
 	this.UndoRedoEnd(Point, oRedoObjectParam, true);
   return true;
 };

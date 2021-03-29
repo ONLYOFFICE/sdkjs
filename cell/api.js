@@ -5273,6 +5273,13 @@ var editor;
     }
   };
 
+  spreadsheet_api.prototype.asc_undoAllChanges = function() {
+  	if (this.wb.getCellEditMode()) {
+		this.asc_closeCellEditor();
+	}
+  	this.wb.undo({All : true});
+  };
+
   /*
    * Export
    * -----------------------------------------------------------------------------
