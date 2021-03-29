@@ -13463,6 +13463,10 @@
 	Range.prototype.setHyperlink=function(val, bWithoutStyle){
 		if(null != val && false == val.isValid())
 			return;
+
+		//обрезваем по длине, если больше максимальной
+		val.checkValid();
+
 		//проверяем, может эта ссылка уже существует
 		var i, length, hyp;
 		var bExist = false;

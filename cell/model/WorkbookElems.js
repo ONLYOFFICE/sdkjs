@@ -4090,6 +4090,11 @@ StyleManager.prototype =
 		this.Ref.setOffsetFirst(OffsetFirst);
 		this.Ref.setOffsetLast(OffsetLast);
 	};
+	Hyperlink.prototype.checkValid = function () {
+		if (this.Hyperlink && this.Hyperlink.length > Asc.c_nMaxHyperlinkLength - 1) {
+			this.Hyperlink = this.Hyperlink.substring(0, Asc.c_nMaxHyperlinkLength - 1);
+		}
+	};
 
 	/** @constructor */
 	function SheetFormatPr() {

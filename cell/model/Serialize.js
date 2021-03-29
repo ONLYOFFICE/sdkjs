@@ -4086,6 +4086,7 @@
                 this.memory.WriteString2(oHyperlink.Ref.getName());
             }
             if (null != oHyperlink.Hyperlink) {
+				oHyperlink.checkValid();
                 this.memory.WriteByte(c_oSerHyperlinkTypes.Hyperlink);
                 this.memory.WriteString2(oHyperlink.Hyperlink);
             }
