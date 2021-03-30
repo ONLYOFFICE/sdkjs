@@ -2359,7 +2359,6 @@
 		};
 		asc_CHyperlink.prototype.asc_setHyperlinkUrl = function (val) {
 			this.hyperlinkModel.Hyperlink = val;
-			this.hyperlinkModel.checkValid();
 		};
 		asc_CHyperlink.prototype.asc_setTooltip = function (val) {
 			this.hyperlinkModel.Tooltip = val ? val.slice(0, Asc.c_oAscMaxTooltipLength) : val;

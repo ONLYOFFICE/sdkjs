@@ -3974,7 +3974,8 @@ StyleManager.prototype =
 		return bRes;
 	};
 	Hyperlink.prototype.isValid = function () {
-		return null != this.Ref && (null != this.getLocation() || null != this.Hyperlink);
+		var isValidLength = !this.Hyperlink || (this.Hyperlink && this.Hyperlink.length <= Asc.c_nMaxHyperlinkLength);
+		return null != this.Ref && (null != this.getLocation() || null != this.Hyperlink) && isValidLength;
 	};
 	Hyperlink.prototype.setLocationSheet = function (LocationSheet) {
 		this.LocationSheet = LocationSheet;
@@ -4089,11 +4090,6 @@ StyleManager.prototype =
 		OffsetLast.col = collaborativeEditing.getLockMeColumn2(nSheetId, bbox.c2) - bbox.c2;
 		this.Ref.setOffsetFirst(OffsetFirst);
 		this.Ref.setOffsetLast(OffsetLast);
-	};
-	Hyperlink.prototype.checkValid = function () {
-		if (this.Hyperlink && this.Hyperlink.length > Asc.c_nMaxHyperlinkLength - 1) {
-			this.Hyperlink = this.Hyperlink.substring(0, Asc.c_nMaxHyperlinkLength - 1);
-		}
 	};
 
 	/** @constructor */

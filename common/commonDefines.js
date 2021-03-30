@@ -48,7 +48,7 @@
 	var c_nVersionNoBase64 = 10;
 	var c_dMaxParaRunContentLength = 256;
 	var c_rUneditableTypes = /^(?:(pdf|djvu|xps))$/;
-	var c_nMaxHyperlinkLength = 2084;
+	var c_nMaxHyperlinkLength = 2083;
 
 	//files type for Saving & DownloadAs
 	var c_oAscFileType = {

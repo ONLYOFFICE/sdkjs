@@ -8291,6 +8291,9 @@ PasteProcessor.prototype =
 							text = child.innerText ? child.innerText : child.textContent;
 						}
 
+						if (href && href.length > Asc.c_nMaxHyperlinkLength) {
+							isPasteHyperlink = false;
+						}
 						if (isPasteHyperlink) {
 							var HyperProps = new Asc.CHyperlinkProperty({Text: text, Value: href, ToolTip: title});
 							oThis.oDocument.Content[Pos].AddHyperlink(HyperProps);
