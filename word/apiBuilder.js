@@ -10079,8 +10079,9 @@
 			return false;
 
 		var currentHeight = this.Drawing.getXfrmExtY();
+		var currentWidth  = this.Drawing.getXfrmExtX();
 
-		this.Drawing.setExtent(undefined, currentHeight * coefficient);
+		this.Drawing.setExtent(currentWidth, currentHeight * coefficient);
 		if(this.Drawing.GraphicObj && this.Drawing.GraphicObj.spPr && this.Drawing.GraphicObj.spPr.xfrm)
 		{
 			this.Drawing.GraphicObj.spPr.xfrm.setExtY(currentHeight * coefficient);
@@ -10100,9 +10101,10 @@
 		if (typeof(coefficient) !== "number")
 			return false;
 
-		var currentWidth = this.Drawing.getXfrmExtX();
+		var currentHeight = this.Drawing.getXfrmExtY();
+		var currentWidth  = this.Drawing.getXfrmExtX();
 
-		this.Drawing.setExtent(currentWidth * coefficient, undefined);
+		this.Drawing.setExtent(currentWidth * coefficient, currentHeight);
 		if(this.Drawing.GraphicObj && this.Drawing.GraphicObj.spPr && this.Drawing.GraphicObj.spPr.xfrm)
 		{
 			this.Drawing.GraphicObj.spPr.xfrm.setExtX(currentWidth * coefficient);
