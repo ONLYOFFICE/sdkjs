@@ -400,7 +400,11 @@ function ConvertParagraphContentToPPTX(aOrigContent, oNewParagraph, bIsAddMath, 
             }
             else
             {
-                oNewParagraph.Internal_Content_Add(oNewParagraph.Content.length, ConvertHyperlinkToPPTX(Item, oNewParagraph), false);
+                var aChildContent = ConvertHyperlinkToPPTX(Item, oNewParagraph);
+                for(var nChildIdx = 0; nChildIdx < aChildContent.length; ++nChildIdx)
+                {
+                    oNewParagraph.Internal_Content_Add(oNewParagraph.Content.length, aChildContent[nChildIdx], false);
+                }
             }
 
         }
@@ -501,10 +505,17 @@ function ConvertHyperlinkToPPTX(hyperlink, paragraph)
         }
         else if(item.Type === para_Hyperlink)
         {
-            hyperlink_ret.Add_ToContent(pos++, ConvertHyperlinkToPPTX(item, paragraph));
+            var aConvertedContent = ConvertHyperlinkToPPTX(item, paragraph);
+            for(var nChildIdx = 0; nChildIdx < aConvertedContent.length; ++nChildIdx)
+            {
+                hyperlink_ret.Add_ToContent(pos++, aConvertedContent[nChildIdx]);
+            }
         }
     }
-    return hyperlink_ret;
+    if(typeof hyperlink.Value === "string" && hyperlink.Value.length > Asc.c_nMaxHyperlinkLength) {
+        return hyperlink_ret.Content;
+    }
+    return [hyperlink_ret];
 }
 
 function ConvertParagraphToWord(paragraph, docContent)
