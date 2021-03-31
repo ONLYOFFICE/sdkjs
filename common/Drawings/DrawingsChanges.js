@@ -826,7 +826,7 @@
 
     CChangesSparklinesChangeData.prototype.WriteToBinary = function(Writer){
         this.WritePr(Writer, this.OldPr);
-		//this.applyCollaborative(this.NewPr);
+		this.applyCollaborative(this.NewPr);
         this.WritePr(Writer, this.NewPr);
     };
 
