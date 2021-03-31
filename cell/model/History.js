@@ -547,7 +547,9 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 				oRedoObjectParam.oChangeWorksheetUpdate[i],{lockDraw: true, reinitRanges: true});
 
 		for (i in Point.UpdateRigions) {
-			this.workbook.handlers.trigger("cleanCellCache", i, [Point.UpdateRigions[i]]);
+			//последним параметром передаю resetCache, при добавлении/удаление строк/столбцов в случая прямого действия
+			//всегда делается cache -> reset, здесь аналогично делаю
+			this.workbook.handlers.trigger("cleanCellCache", i, [Point.UpdateRigions[i]], null, oRedoObjectParam.bAddRemoveRowCol);
 			var curSheet = this.workbook.getWorksheetById(i);
 			if (curSheet)
 				this.workbook.getWorksheetById(i).updateSlicersByRange(Point.UpdateRigions[i]);

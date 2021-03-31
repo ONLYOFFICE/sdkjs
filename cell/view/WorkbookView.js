@@ -816,9 +816,12 @@
 		  }
 	  });
 
-    this.model.handlers.add("cleanCellCache", function(wsId, oRanges, skipHeight) {
+    this.model.handlers.add("cleanCellCache", function(wsId, oRanges, skipHeight, needResetCache) {
       var ws = self.getWorksheetById(wsId, true);
       if (ws) {
+        if (needResetCache) {
+          ws.cache && ws.cache.reset();
+        }
         ws.updateRanges(oRanges, skipHeight);
       }
     });
