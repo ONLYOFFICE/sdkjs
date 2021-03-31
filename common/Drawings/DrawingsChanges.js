@@ -826,6 +826,7 @@
 
     CChangesSparklinesChangeData.prototype.WriteToBinary = function(Writer){
         this.WritePr(Writer, this.OldPr);
+		//this.applyCollaborative(this.NewPr);
         this.WritePr(Writer, this.NewPr);
     };
 
@@ -855,7 +856,8 @@
 	CChangesSparklinesChangeData.prototype.Redo = function () {
 		var wb = window["Asc"]["editor"].wb.model;
 		var t = this;
-		/*if (wb.bCollaborativeChanges) {
+
+		if (wb.bCollaborativeChanges) {
 			var collaborativeEditing = wb.oApi.collaborativeEditing;
 			var nSheetId = this.Class && this.Class.worksheet && this.Class.worksheet.Id;
 			if (collaborativeEditing && nSheetId) {
@@ -877,12 +879,34 @@
 					}
 				}
 			}
-		}*/
+		}
 		this.Fill(this.NewPr);
 	};
-	/*CChangesSparklinesChangeData.prototype.applyCollaborative = function (nSheetId, collaborativeEditing) {
-		var test = 1;
-	};*/
+	CChangesSparklinesChangeData.prototype.applyCollaborative = function () {
+		var wb = window["Asc"]["editor"].wb.model;
+		var t = this;
+
+        var collaborativeEditing = wb.oApi.collaborativeEditing;
+        var nSheetId = this.Class && this.Class.worksheet && this.Class.worksheet.Id;
+
+        if (this.NewPr && this.NewPr.length) {
+            for (var i = 0; i < this.NewPr.length; i++) {
+                this.NewPr[i].sqRef.r1 = collaborativeEditing.getLockMeRow2(nSheetId, this.NewPr[i].sqRef.r1);
+                this.NewPr[i].sqRef.c1 = collaborativeEditing.getLockMeColumn2(nSheetId, this.NewPr[i].sqRef.c1);
+                this.NewPr[i].sqRef.r2 = collaborativeEditing.getLockMeRow2(nSheetId, this.NewPr[i].sqRef.r2);
+                this.NewPr[i].sqRef.c2 = collaborativeEditing.getLockMeColumn2(nSheetId, this.NewPr[i].sqRef.c2);
+
+                this.NewPr[i]._f.r1 = collaborativeEditing.getLockMeRow2(nSheetId, this.NewPr[i]._f.r1);
+                this.NewPr[i]._f.c1 = collaborativeEditing.getLockMeColumn2(nSheetId, this.NewPr[i]._f.c1);
+                this.NewPr[i]._f.r2 = collaborativeEditing.getLockMeRow2(nSheetId, this.NewPr[i]._f.r2);
+                this.NewPr[i]._f.c2 = collaborativeEditing.getLockMeColumn2(nSheetId, this.NewPr[i]._f.c2);
+
+                AscCommonExcel.executeInR1C1Mode(false, function () {
+                    t.NewPr[i].f = t.NewPr[0]._f.getName();
+                });
+            }
+        }
+	};
     CChangesSparklinesChangeData.prototype.Load = function(){
         this.Redo();
         this.RefreshRecalcData();
