@@ -5747,7 +5747,7 @@
 			shiftY = Math.round(shiftY * rPR);
 		}
 
-		var isRoundDraw = (transform && !global_MatrixTransformer.IsIdentity2(transform)) ? false : true;
+		var isRoundDraw = (transform && !AscCommon.global_MatrixTransformer.IsIdentity2(transform)) ? false : true;
 
 		var Points = oPath.Points;
 		var nCount = Points.length;
