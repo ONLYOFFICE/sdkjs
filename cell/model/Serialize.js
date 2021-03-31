@@ -4086,8 +4086,9 @@
                 this.memory.WriteString2(oHyperlink.Ref.getName());
             }
             if (null != oHyperlink.Hyperlink) {
+                var sHyperlink = oHyperlink.Hyperlink.length > Asc.c_nMaxHyperlinkLength ? this.Hyperlink.substring(0, Asc.c_nMaxHyperlinkLength) : oHyperlink.Hyperlink;
                 this.memory.WriteByte(c_oSerHyperlinkTypes.Hyperlink);
-                this.memory.WriteString2(oHyperlink.Hyperlink);
+                this.memory.WriteString2(sHyperlink);
             }
             if (null !== oHyperlink.getLocation()) {
                 this.memory.WriteByte(c_oSerHyperlinkTypes.Location);
