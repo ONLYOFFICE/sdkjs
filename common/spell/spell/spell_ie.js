@@ -1,3 +1,35 @@
+/*
+ * (c) Copyright Ascensio System SIA 2010-2019
+ *
+ * This program is a free software product. You can redistribute it and/or
+ * modify it under the terms of the GNU Affero General Public License (AGPL)
+ * version 3 as published by the Free Software Foundation. In accordance with
+ * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
+ * that Ascensio System SIA expressly excludes the warranty of non-infringement
+ * of any third-party rights.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
+ * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ *
+ * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * street, Riga, Latvia, EU, LV-1050.
+ *
+ * The  interactive user interfaces in modified source and object code versions
+ * of the Program must display Appropriate Legal Notices, as required under
+ * Section 5 of the GNU AGPL version 3.
+ *
+ * Pursuant to Section 7(b) of the License you must retain the original Product
+ * logo when distributing the program. Pursuant to Section 7(e) we decline to
+ * grant you any rights under trademark law for use of our trademarks.
+ *
+ * All the Product's GUI elements, including illustrations and icon sets, as
+ * well as technical writing content are licensed under the terms of the
+ * Creative Commons Attribution-ShareAlike 4.0 International. See the License
+ * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ *
+ */
+
 var ob;function pb(h){var f=0;return function(){return f<h.length?{done:!1,value:h[f++]}:{done:!0}}}function qb(h){var f="undefined"!=typeof Symbol&&Symbol.iterator&&h[Symbol.iterator];return f?f.call(h):{next:pb(h)}}var dd="undefined"!=typeof window&&window===this?this:"undefined"!=typeof global&&null!=global?global:this,Fd="function"==typeof Object.defineProperties?Object.defineProperty:function(h,f,Ka){h!=Array.prototype&&h!=Object.prototype&&(h[f]=Ka.value)};
 function Gd(h,f){if(f){var Ka=dd;h=h.split(".");for(var Za=0;Za<h.length-1;Za++){var bb=h[Za];bb in Ka||(Ka[bb]={});Ka=Ka[bb]}h=h[h.length-1];Za=Ka[h];f=f(Za);f!=Za&&null!=f&&Fd(Ka,h,{configurable:!0,writable:!0,value:f})}}
 Gd("Promise",function(h){function f(f){this.MQf=0;this.Cug=void 0;this.Qie=[];var h=this.slg();try{f(h.resolve,h.reject)}catch(Tb){h.reject(Tb)}}function Ka(){this.FAd=null}function Za(h){return h instanceof f?h:new f(function(f){f(h)})}if(h)return h;Ka.prototype.nJg=function(f){if(null==this.FAd){this.FAd=[];var h=this;this.oJg(function(){h.Ihh()})}this.FAd.push(f)};var bb=dd.setTimeout;Ka.prototype.oJg=function(f){bb(f,0)};Ka.prototype.Ihh=function(){for(;this.FAd&&this.FAd.length;){var f=this.FAd;
