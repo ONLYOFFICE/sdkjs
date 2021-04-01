@@ -528,7 +528,13 @@
 		var formulas = this.wbModel.getAllFormulas(true);
 
 		var _compare = function (_val1, _val2) {
+			var eps = 1e-12;
 			if (!isNaN(parseFloat(_val1)) && isFinite(_val1) && !isNaN(parseFloat(_val2)) && isFinite(_val2)) {
+				if (Math.abs(_val2 - _val1) < eps) {
+					return true;
+				}
+				//_val1 = _val1.toString().substring(0,15);
+				//_val2 = _val2.toString().substring(0,15);
 				var nRound = null;
 				//max count digits in number
 				var maxLengthAfterPoint = 9;
@@ -547,6 +553,16 @@
 					var kF = Math.pow(10, nRound);
 					_val1 = (parseInt(_val1 * kF)) / kF;
 					_val2 = (parseInt(_val2 * kF)) / kF;
+				}
+			} else if (_val1 && _val2) {
+				var complexVal1 = AscCommonExcel.Complex.prototype.ParseString(_val1);
+				if (complexVal1 && complexVal1.real && complexVal1.img) {
+					var complexVal2 = AscCommonExcel.Complex.prototype.ParseString(_val2);
+					if (complexVal2 && complexVal2.real && complexVal2.img) {
+						if (_compare(complexVal1.real, complexVal2.real) && _compare(complexVal1.img, complexVal2.img)) {
+							return true;
+						}
+					}
 				}
 			}
 
@@ -594,6 +610,9 @@
 							newValue = formulaRes.getElementRowCol(rowArray, colArray);
 						}
 					}
+					newValue = newValue ? newValue.getValue() : "#N/A";
+				} else if (formulaRes.type === AscCommonExcel.cElementType.array) {
+					newValue = formulaRes.getElementRowCol(0, 0);
 					newValue = newValue ? newValue.getValue() : "#N/A";
 				} else {
 					newValue = formulaRes ? formulaRes.getValue() : "#N/A";
