@@ -645,6 +645,9 @@ function ParaSpace(nCharCode)
     this.Width        = 0x00000000 | 0;
     this.WidthVisible = 0x00000000 | 0;
     this.WidthOrigin  = 0x00000000 | 0;
+
+	if (AscFonts.IsCheckSymbols)
+		AscFonts.FontPickerByCharacter.getFontBySymbol(this.Value);
 }
 ParaSpace.prototype = Object.create(CRunElementBase.prototype);
 ParaSpace.prototype.constructor = ParaSpace;

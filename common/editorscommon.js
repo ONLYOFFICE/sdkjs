@@ -4077,6 +4077,7 @@
 	c_oAscSpaces[0x2003] = 1;
 	c_oAscSpaces[0x2005] = 1;
 	c_oAscSpaces[0x3000] = 1;
+	c_oAscSpaces[0xFEFF] = 1;
 
 	/**
 	 * Проверяем является ли заданный юников пробелом

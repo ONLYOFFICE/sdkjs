@@ -1096,7 +1096,22 @@
             dstM.fVertAdvance 	= (measureInfo.vertAdvance >> 6);
 
             if (isFromPicker && (0 == dstM.fHoriAdvance && 0 == measureInfo.width))
-            	return null;
+			{
+				if (this.m_bStringGID)
+					return null;
+
+				switch (glyph_index_or_unicode)
+				{
+					// список допустимых символов нулевой ширины
+					case 0xFEFF:
+					{
+						return oSizes;
+					}
+					default:
+						break;
+				}
+				return null;
+			}
 
             if (!isRaster)
             {
