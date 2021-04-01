@@ -939,6 +939,8 @@ function CEditorPage(api)
             case "id_buttonTabs":
             case "id_notes":
             case "id_notes_overlay":
+			case "id_thumbnails_background":
+			case "id_thumbnails":
             	return true;
 			default:
 				break;
@@ -3521,7 +3523,12 @@ function CEditorPage(api)
 
         if (drDoc.placeholders.objects.length > 0 && drDoc.SlideCurrent >= 0)
         {
-        	drDoc.placeholders.draw(overlay, drDoc.SlideCurrent, drDoc.SlideCurrectRect, this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM());
+			var rectSlide = {};
+			rectSlide.left = AscCommon.AscBrowser.convertToRetinaValue(drDoc.SlideCurrectRect.left, true);
+			rectSlide.top = AscCommon.AscBrowser.convertToRetinaValue(drDoc.SlideCurrectRect.top, true);
+			rectSlide.right = AscCommon.AscBrowser.convertToRetinaValue(drDoc.SlideCurrectRect.right, true);
+			rectSlide.bottom = AscCommon.AscBrowser.convertToRetinaValue(drDoc.SlideCurrectRect.bottom, true);
+        	drDoc.placeholders.draw(overlay, drDoc.SlideCurrent, rectSlide, this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM());
         }
 
 		drDoc.DrawHorVerAnchor();

@@ -181,11 +181,17 @@
 	};
 
 	// расчет всех ректов кнопок
-	Placeholder.prototype.getButtonRects = function(pointCenter, scale)
+	Placeholder.prototype.getButtonRects = function(pointCenter, scale, isDraw)
 	{
 		//координаты ретины - масштабируются при отрисовке
 		var ButtonSize = ButtonSize1x;//AscCommon.AscBrowser.convertToRetinaValue(ButtonSize1x, true);
 		var ButtonBetweenSize = ButtonBetweenSize1x;//AscCommon.AscBrowser.convertToRetinaValue(ButtonBetweenSize1x, true);
+
+		if (isDraw)
+		{
+			ButtonSize = AscCommon.AscBrowser.convertToRetinaValue(ButtonSize, true);
+			ButtonBetweenSize = AscCommon.AscBrowser.convertToRetinaValue(ButtonBetweenSize, true);
+		}
 
 		// максимум 2 ряда
 		var buttonsCount = this.buttons.length;
@@ -359,12 +365,12 @@
 			x : (pixelsRect.right - pixelsRect.left) / pageWidthMM,
 			y : (pixelsRect.bottom - pixelsRect.top) / pageHeightMM
 		};
-		var rects = this.getButtonRects(pointCenter, scale);
+		var rects = this.getButtonRects(pointCenter, scale, true);
 		if (rects.length != this.buttons.length)
 			return;
 
-		var ButtonSize = ButtonSize1x;//AscCommon.AscBrowser.convertToRetinaValue(ButtonSize1x, true);
-		var ButtonImageSize = ButtonImageSize1x;//AscCommon.AscBrowser.convertToRetinaValue(ButtonImageSize1x, true);
+		var ButtonSize = AscCommon.AscBrowser.convertToRetinaValue(ButtonSize1x, true);
+		var ButtonImageSize = AscCommon.AscBrowser.convertToRetinaValue(ButtonImageSize1x, true);
 		var offsetImage = (ButtonSize - ButtonImageSize) >> 1;
 
 		var ctx = overlay.m_oContext;
