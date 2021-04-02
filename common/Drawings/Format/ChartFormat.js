@@ -10810,9 +10810,13 @@
     }
     InitClass(CRadarSeries, CSeriesBase, AscDFH.historyitem_type_RadarSeries);
     CRadarSeries.prototype.removeDPt = function(idx) {
+        if(!Array.isArray(this.dPt)) {
+            return;
+        }
         if(this.dPt[idx]) {
-            this.dPt.setParent(null);
-            History.CanAddChanges() && History.Add(new CChangesDrawingsContent(this, AscDFH.historyitem_CommonSeries_RemoveDPt, idx, this.dPt.splice(idx, 1), false));
+            var arrPt = this.dPt.splice(idx, 1);
+            History.CanAddChanges() && History.Add(new CChangesDrawingsContent(this, AscDFH.historyitem_CommonSeries_RemoveDPt, idx, arrPt, false));
+            arrPt[0].setParent(null);
         }
     };
     CRadarSeries.prototype.getChildren = function() {
@@ -11212,9 +11216,13 @@
     }
     InitClass(CScatterSeries, CSeriesBase, AscDFH.historyitem_type_ScatterSer);
     CScatterSeries.prototype.removeDPt = function(idx) {
+        if(!Array.isArray(this.dPt)) {
+            return;
+        }
         if(this.dPt[idx]) {
-            this.dPt.setParent(null);
-            History.CanAddChanges() && History.Add(new CChangesDrawingsContent(this, AscDFH.historyitem_CommonSeries_RemoveDPt, idx, this.dPt.splice(idx, 1), false));
+            var arrPt = this.dPt.splice(idx, 1);
+            History.CanAddChanges() && History.Add(new CChangesDrawingsContent(this, AscDFH.historyitem_CommonSeries_RemoveDPt, idx, arrPt, false));
+            arrPt[0].setParent(null);
         }
     };
     CScatterSeries.prototype.fillObject = function(oCopy, oIdMap) {
