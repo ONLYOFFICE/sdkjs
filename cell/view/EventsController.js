@@ -131,6 +131,8 @@
                 this.smoothWheelCorrector.setNormalDeltaActive(3);
             }
 
+            this.lastTab = null;
+
             return this;
 		}
 
@@ -851,6 +853,9 @@
 						dc = -1;			// (shift + tab) - движение по ячейкам влево на 1 столбец
 						shiftKey = false;	// Сбросим shift, потому что мы не выделяем
 					} else {
+						if (t.lastTab === null) {
+							t.lastTab = dc;
+						}
 						dc = +1;			// (tab) - движение по ячейкам вправо на 1 столбец
 					}
 					break;
@@ -865,6 +870,9 @@
 						dr = -1;			// (shift + enter) - движение по ячейкам наверх на 1 строку
 						shiftKey = false;	// Сбросим shift, потому что мы не выделяем
 					} else {
+						if (t.lastTab !== null) {
+							dc = t.lastTab;
+						}
 						dr = +1;			// (enter) - движение по ячейкам вниз на 1 строку
 					}
 					break;
