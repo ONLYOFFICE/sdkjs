@@ -581,15 +581,12 @@ function CDrawingDocument()
 
     this.DrawMathTrack = function (overlay)
     {
-        if (!this.MathTrack.IsActive())
+        if (!this.MathTrack.IsActive() || !this.TextMatrix)
             return;
         var drawingObjects = this.getDrawingObjects();
-        if(!drawingObjects) {
+        if (!drawingObjects)
             return;
-        }
 
-        if(!this.TextMatrix)
-            return;
         overlay.Show();
         var nIndex, nCount;
         var oPath;
@@ -598,6 +595,7 @@ function CDrawingDocument()
 
         dKoefX = drawingObjects.convertMetric(1, 3, 0);
         dKoefY = dKoefX;
+
         var _offX = 0;
         var _offY = 0;
         if (this.AutoShapesTrack && this.AutoShapesTrack.Graphics && this.AutoShapesTrack.Graphics.m_oCoordTransform)
@@ -605,17 +603,27 @@ function CDrawingDocument()
             _offX = this.AutoShapesTrack.Graphics.m_oCoordTransform.tx;
             _offY = this.AutoShapesTrack.Graphics.m_oCoordTransform.ty;
         }
-        var oTextMatrix = this.TextMatrix || AscCommon.CMatrix();
+
+        // Draw methods apply retina scaling.
+        if (true)
+        {
+            var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+			dKoefX /= rPR;
+			dKoefY /= rPR;
+			_offX /= rPR;
+			_offY /= rPR;
+        }
+
         for (nIndex = 0; nIndex < PathLng; nIndex++)
         {
             oPath = this.MathTrack.GetPolygon(nIndex);
-            this.MathTrack.Draw(overlay, oPath, 0, 0, "#939393", dKoefX, dKoefY, _offX, _offY, oTextMatrix);
-            this.MathTrack.Draw(overlay, oPath, 1, 1, "#FFFFFF", dKoefX, dKoefY, _offX, _offY, oTextMatrix);
+            this.MathTrack.Draw(overlay, oPath, 0, 0, "#939393", dKoefX, dKoefY, _offX, _offY, this.TextMatrix);
+            this.MathTrack.Draw(overlay, oPath, 1, 1, "#FFFFFF", dKoefX, dKoefY, _offX, _offY, this.TextMatrix);
         }
         for (nIndex = 0, nCount = this.MathTrack.GetSelectPathsCount(); nIndex < nCount; nIndex++)
         {
             oPath =  this.MathTrack.GetSelectPath(nIndex);
-            this.MathTrack.DrawSelectPolygon(overlay, oPath, dKoefX, dKoefY, _offX, _offY, oTextMatrix);
+            this.MathTrack.DrawSelectPolygon(overlay, oPath, dKoefX, dKoefY, _offX, _offY, this.TextMatrix);
         }
     };
 
