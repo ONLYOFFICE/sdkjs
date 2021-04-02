@@ -1502,9 +1502,9 @@ function CEditorPage(api)
 	this.onButtonTabsDraw = function()
 	{
 		var _ctx = this.m_oLeftRuler_buttonsTabs.HtmlElement.getContext('2d');
-		_ctx.setTransform(AscCommon.AscBrowser.retinaPixelRatio, 0, 0, AscCommon.AscBrowser.retinaPixelRatio, 0, 0);
+		_ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-		var dPR = window.devicePixelRatio;
+		var dPR = AscCommon.AscBrowser.retinaPixelRatio;
 		var _width  = Math.round(19 * dPR);
 		var _height = Math.round(19 * dPR);
 
@@ -1512,6 +1512,7 @@ function CEditorPage(api)
 
 		_ctx.lineWidth   = Math.round(dPR);
 		_ctx.strokeStyle = GlobalSkin.RulerOutline;
+
 		_ctx.strokeRect(2.5 * _ctx.lineWidth, 3.5 * _ctx.lineWidth, Math.round(14 * dPR), Math.round(14 * dPR));
 		_ctx.beginPath();
 
