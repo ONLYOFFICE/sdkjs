@@ -1456,7 +1456,7 @@
 				]);
 			}
 		} else {
-			if (!this.SpellCheckUrl) {
+			if (!this.SpellCheckUrl && !window['NATIVE_EDITOR_ENJINE']) {
 				this.SpellCheckApi = {};
 				this.SpellCheckApi.log = false;
 				this.SpellCheckApi.worker = new CSpellchecker({
