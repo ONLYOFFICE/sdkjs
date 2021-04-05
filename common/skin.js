@@ -112,6 +112,17 @@ var EditorSkins = {
 		SplitterWidthMM                 : 1,
 		ThumbnailScrollWidthNullIfNoScrolling : false,
 
+		// demonstration
+		DemBackgroundColor       		: "#F0F0F0",
+		DemButtonBackgroundColor       	: "#FFFFFF",
+		DemButtonBackgroundColorHover  	: "#D8DADC",
+		DemButtonBackgroundColorActive 	: "#7D858C",
+		DemButtonBorderColor       		: "#CFCFCF",
+		DemButtonTextColor       		: "#444444",
+		DemButtonTextColorActive 		: "#FFFFFF",
+		DemSplitterColor 				: "#CBCBCB",
+		DemTextColor 					: "#666666",
+
 		/* spreadsheets */
 		//TODO названия не менял. использую такие же как и были ранее. пересмотреть!
 		Background               : "#F0F0F0",
@@ -213,6 +224,17 @@ var EditorSkins = {
 		SplitterWidthMM                       : 1,
 		ThumbnailScrollWidthNullIfNoScrolling : false,
 
+		// demonstration
+		DemBackgroundColor       		: "#666666",
+		DemButtonBackgroundColor       	: "#333333",
+		DemButtonBackgroundColorHover  	: "#555555",
+		DemButtonBackgroundColorActive 	: "#DDDDDD",
+		DemButtonBorderColor       		: "#CFCFCF",
+		DemButtonTextColor       		: "#FFFFFF",
+		DemButtonTextColorActive 		: "#333333",
+		DemSplitterColor 				: "#CBCBCB",
+		DemTextColor 					: "#FFFFFF",
+
 		/* spreadsheets */
 		Background               : "#666666",
 		BackgroundActive         : "#939393",
@@ -255,7 +277,6 @@ var GlobalSkin = EditorSkins["flat"];
 
 function updateGlobalSkin(obj)
 {
-	console.log(obj);
 	if (!obj) return;
 
 	if (typeof obj === "string" && undefined !== EditorSkins[obj])
@@ -316,6 +337,15 @@ function updateGlobalSkin(obj)
 		if (obj["SupportNotes"]) GlobalSkin.SupportNotes = obj["SupportNotes"];
 		if (obj["SplitterWidthMM"]) GlobalSkin.SplitterWidthMM = obj["SplitterWidthMM"];
 		if (obj["ThumbnailScrollWidthNullIfNoScrolling"]) GlobalSkin.ThumbnailScrollWidthNullIfNoScrolling = obj["ThumbnailScrollWidthNullIfNoScrolling"];
+		if (obj["DemBackgroundColor"]) GlobalSkin.DemBackgroundColor = obj["DemBackgroundColor"];
+		if (obj["DemButtonBackgroundColor"]) GlobalSkin.DemButtonBackgroundColor = obj["DemButtonBackgroundColor"];
+		if (obj["DemButtonBackgroundColorHover"]) GlobalSkin.DemButtonBackgroundColorHover = obj["DemButtonBackgroundColorHover"];
+		if (obj["DemButtonBackgroundColorActive"]) GlobalSkin.DemButtonBackgroundColorActive = obj["DemButtonBackgroundColorActive"];
+		if (obj["DemButtonBorderColor"]) GlobalSkin.DemButtonBorderColor = obj["DemButtonBorderColor"];
+		if (obj["DemButtonTextColor"]) GlobalSkin.DemButtonTextColor = obj["DemButtonTextColor"];
+		if (obj["DemButtonTextColorActive"]) GlobalSkin.DemButtonTextColorActive = obj["DemButtonTextColorActive"];
+		if (obj["DemSplitterColor"]) GlobalSkin.DemSplitterColor = obj["DemSplitterColor"];
+		if (obj["DemTextColor"]) GlobalSkin.DemTextColor = obj["DemTextColor"];
 
 		if (obj["Background"]) GlobalSkin.Background = obj["Background"];
 		if (obj["Border"]) GlobalSkin.Border = obj["Border"];
