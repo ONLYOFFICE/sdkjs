@@ -423,7 +423,8 @@ CopyProcessor.prototype =
     },
     ParseItem : function(ParaItem, oTarget, nextParaItem, lengthContent)
     {
-        switch ( ParaItem.Type )
+        var oSpan;
+    	switch ( ParaItem.Type )
         {
             case para_Text:
 				//экранируем спецсимволы
@@ -441,7 +442,7 @@ CopyProcessor.prototype =
 					oTarget.addChild(new CopyElement(" ", true));	
 				break;
 			case para_Tab:
-				var oSpan = new CopyElement("span");
+				oSpan = new CopyElement("span");
 				oSpan.oAttributes["style"] = "white-space:pre;";
 				oSpan.oAttributes["style"] = "mso-tab-count:1;";
 				oSpan.addChild(new CopyElement(String.fromCharCode(0x09), true));
@@ -459,7 +460,7 @@ CopyProcessor.prototype =
 				oTarget.addChild(oBr);
 				//todo закончить этот параграф и начать новый
 				//добавил неразрвной пробел для того, чтобы информация попадала в буфер обмена
-				var oSpan = new CopyElement("span");
+				oSpan = new CopyElement("span");
 				oSpan.addChild(new CopyElement("&nbsp;", true));
 				oTarget.addChild(oSpan);
                 break;
@@ -518,6 +519,15 @@ CopyProcessor.prototype =
 
 				var oLink = new CopyElement("a");
 				var index = this.aFootnoteReference.length + 1;
+				var prefix = "ftn";
+				oLink.oAttributes.style += "mso-footnote-id:" + prefix + index;
+				oLink.href += "#_" + prefix + index;
+				oLink.name = "_" + prefix + "ref" + index;
+				oLink.title = "";
+				oSpan = new CopyElement("span");
+
+
+
 				oLink.addChild(new CopyElement(CopyPasteCorrectString("[" + index + "]"), true));
 				this.parse_para_TextPr(ParaItem.Run.Get_CompiledTextPr(), oLink);
 				oTarget.addChild(oLink);
@@ -526,37 +536,36 @@ CopyProcessor.prototype =
         }
     },
     CopyRun: function (Item, oTarget) {
-        for (var i = 0; i < Item.Content.length; i++)
-            this.ParseItem(Item.Content[i], oTarget, Item.Content[i + 1], Item.Content.length);
+		for (var i = 0; i < Item.Content.length; i++) {
+			this.ParseItem(Item.Content[i], oTarget, Item.Content[i + 1], Item.Content.length);
+		}
     },
     CopyRunContent: function (Container, oTarget, bOmitHyperlink) {
-        for (var i = 0; i < Container.Content.length; i++) {
-            var item = Container.Content[i];
-            if (para_Run === item.Type) {
+		for (var i = 0; i < Container.Content.length; i++) {
+			var item = Container.Content[i];
+			if (para_Run === item.Type) {
 				var oSpan = new CopyElement("span");
-                this.CopyRun(item, oSpan);
-                if(!oSpan.isEmptyChild()){
+				this.CopyRun(item, oSpan);
+				if (!oSpan.isEmptyChild()) {
 					this.parse_para_TextPr(item.Get_CompiledTextPr(), oSpan);
 					oTarget.addChild(oSpan);
 				}
-            }
-            else if (para_Hyperlink === item.Type) {
-                if (!bOmitHyperlink) {
+			} else if (para_Hyperlink === item.Type) {
+				if (!bOmitHyperlink) {
 					var oHyperlink = new CopyElement("a");
-                    var sValue = item.GetValue();
-                    var sToolTip = item.GetToolTip();
+					var sValue = item.GetValue();
+					var sToolTip = item.GetToolTip();
 					oHyperlink.oAttributes["href"] = CopyPasteCorrectString(sValue);
 					oHyperlink.oAttributes["title"] = CopyPasteCorrectString(sToolTip);
 					//вложенные ссылки в html запрещены.
 					this.CopyRunContent(item, oHyperlink, true);
 					oTarget.addChild(oHyperlink);
-                }
-				else
+				} else {
 					this.CopyRunContent(item, oTarget, true);
-            }
-			else if(para_Math === item.Type){
-                var sSrc = item.MathToImageConverter();
-				if (null != sSrc && null != sSrc.ImageUrl){
+				}
+			} else if (para_Math === item.Type) {
+				var sSrc = item.MathToImageConverter();
+				if (null != sSrc && null != sSrc.ImageUrl) {
 					var oImg = new CopyElement("img");
 					if (sSrc.w_px > 0) {
 						oImg.oAttributes["width"] = sSrc.w_px;
@@ -567,11 +576,12 @@ CopyProcessor.prototype =
 					oImg.oAttributes["src"] = sSrc.ImageUrl;
 					oTarget.addChild(oImg);
 				}
-			} else if(para_InlineLevelSdt === item.Type) {
+			} else if (para_InlineLevelSdt === item.Type) {
 				this.CopyRunContent(item, oTarget);
-			} else if(para_Field === item.Type)
+			} else if (para_Field === item.Type) {
 				this.CopyRunContent(item, oTarget);
-        }
+			}
+		}
     },
     CopyParagraph : function(oDomTarget, Item, selectedAll)
     {
