@@ -865,8 +865,12 @@ var g_oFontProperties = {
 			oRes.u = this.u || font.u;
 			oRes.va = this.va || font.va;
 		}
-		if (isTable && isTableColor) {
-			oRes.c = font.c || this.c;
+		if (isTable) {
+			if (isTableColor) {
+				oRes.c = font.c || this.c;
+			} else {
+				oRes.c = this.c;
+			}
 		} else {
 			oRes.c = this.c || font.c;
 		}
