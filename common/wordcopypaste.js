@@ -228,7 +228,8 @@ function CopyProcessor(api, onlyBinaryCopy)
     if (this.api.ThemeLoader) {
         this.oPresentationWriter.Start_UseDocumentOrigin(this.api.ThemeLoader.ThemesUrlAbs);
     }
-	
+
+    this.aFootnoteReference = [];
 	this.oRoot = new CopyElement("root");
 }
 CopyProcessor.prototype =
@@ -486,24 +487,41 @@ CopyProcessor.prototype =
 					oTarget.addChild(oImg);
                     break;
                 }
-                // var _canvas     = document.createElement('canvas');
-                // var w = img.width;
-                // var h = img.height;
-
-                // _canvas.width   = w;
-                // _canvas.height  = h;
-
-                // var _ctx        = _canvas.getContext('2d');
-                // _ctx.globalCompositeOperation = "copy";
-                // _ctx.drawImage(img, 0, 0);
-
-                // var _data = _ctx.getImageData(0, 0, w, h);
-                // _ctx = null;
-                // delete _canvas;
                 break;
 			case para_PageNum:
 				if(null != ParaItem.String && "string" === typeof(ParaItem.String))
 					oTarget.addChild(new CopyElement(CopyPasteCorrectString(ParaItem.String), true));
+				break;
+			case para_FootnoteReference:
+
+
+			/*<p class=MsoNormal><a style='mso-footnote-id:ftn2' href="#_ftn2" name="_ftnref2"
+				title=""><span class=MsoFootnoteReference><b><i><u><span style='color:#FFD966;
+				mso-themecolor:accent4;mso-themetint:153;mso-style-textfill-fill-color:#FFD966;
+				mso-style-textfill-fill-themecolor:accent4;mso-style-textfill-fill-alpha:100.0%;
+				mso-style-textfill-fill-colortransforms:"lumm=60000 lumo=40000"'><span
+				style='mso-special-character:footnote'><![if !supportFootnotes]><span
+			class=MsoFootnoteReference><b style='mso-bidi-font-weight:normal'><u><span
+				style='font-size:11.0pt;line-height:115%;font-family:"Arial",sans-serif;
+				mso-ascii-theme-font:minor-latin;mso-fareast-font-family:Arial;mso-fareast-theme-font:
+				minor-latin;mso-hansi-theme-font:minor-latin;mso-bidi-font-family:"Times New Roman";
+				mso-bidi-theme-font:minor-bidi;color:#FFD966;mso-themecolor:accent4;mso-themetint:
+				153;mso-style-textfill-fill-color:#FFD966;mso-style-textfill-fill-themecolor:
+				accent4;mso-style-textfill-fill-alpha:100.0%;mso-style-textfill-fill-colortransforms:
+				"lumm=60000 lumo=40000";mso-ansi-language:EN-US;mso-fareast-language:EN-US;
+				mso-bidi-language:AR-SA'>[2]</span></u></b></span><![endif]></span></span></u></i></b></span></a><span
+			class=MsoFootnoteReference>T</span>ext<o:p></o:p></p>*/
+
+			/*<a style='mso-footnote-id:ftn2' href="#_ftn2" name="_ftnref2"
+				title=""><span class=MsoFootnoteReference>*/
+
+
+				var oLink = new CopyElement("a");
+				var index = this.aFootnoteReference.length + 1;
+				oLink.addChild(new CopyElement(CopyPasteCorrectString("[" + index + "]"), true));
+				this.parse_para_TextPr(ParaItem.Run.Get_CompiledTextPr(), oLink);
+				oTarget.addChild(oLink);
+				this.aFootnoteReference.push(ParaItem.Footnote);
 				break;
         }
     },
@@ -1498,21 +1516,23 @@ CopyProcessor.prototype =
 		}
 	},
 
-	Start : function () {
+	Start: function () {
 		var oDocument = this.oDocument;
 		var bFromPresentation;
 
 		window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
 
+		var sBase64, oElem, sStyle;
 		var selectedContent;
 		if (PasteElementsId.g_bIsDocumentCopyPaste) {
 			selectedContent = oDocument.GetSelectedContent();
 
 			var elementsContent;
-			if (selectedContent && selectedContent.Elements && selectedContent.Elements[0] && selectedContent.Elements[0].Element)
+			if (selectedContent && selectedContent.Elements && selectedContent.Elements[0] && selectedContent.Elements[0].Element) {
 				elementsContent = selectedContent.Elements;
-			else
+			} else {
 				return "";
+			}
 
 			//TODO заглушка для презентационных параграфов(выделен текст внутри диаграммы) - пока не пишем в бинарник
 			if (selectedContent.Elements[0].Element && selectedContent.Elements[0].Element.bFromDocument === false) {
@@ -1527,39 +1547,47 @@ CopyProcessor.prototype =
 			this.oBinaryFileWriter.CopyEnd();
 		} else {
 			selectedContent = oDocument.GetSelectedContent2();
-			if (!selectedContent[0].DocContent && (!selectedContent[0].Drawings || (selectedContent[0].Drawings && !selectedContent[0].Drawings.length)) && (!selectedContent[0].SlideObjects || (selectedContent[0].SlideObjects && !selectedContent[0].SlideObjects.length)))
+			if (!selectedContent[0].DocContent && (!selectedContent[0].Drawings ||
+				(selectedContent[0].Drawings && !selectedContent[0].Drawings.length)) &&
+				(!selectedContent[0].SlideObjects ||
+				(selectedContent[0].SlideObjects && !selectedContent[0].SlideObjects.length))) {
 				return false;
+			}
 
 			this.CopyDocument2(this.oRoot, oDocument, selectedContent);
 
-			var sBase64 = this.oPresentationWriter.GetBase64Memory();
+			sBase64 = this.oPresentationWriter.GetBase64Memory();
 			sBase64 = "pptData;" + this.oPresentationWriter.pos + ";" + sBase64;
 			if (this.oRoot.aChildren && this.oRoot.aChildren.length === 1 && AscBrowser.isSafariMacOs) {
-				var oElem = this.oRoot.aChildren[0];
-				var sStyle = oElem.oAttributes["style"];
-				if (null == sStyle)
+				oElem = this.oRoot.aChildren[0];
+				sStyle = oElem.oAttributes["style"];
+				if (null == sStyle) {
 					oElem.oAttributes["style"] = "font-weight:normal";
-				else
-					oElem.oAttributes["style"] = sStyle + ";font-weight:normal";//просто добавляем потому что в sStyle не могло быть font-weight, мы всегда пишем <b>
+				} else {
+					oElem.oAttributes["style"] = sStyle + ";font-weight:normal";
+				}//просто добавляем потому что в sStyle не могло быть font-weight, мы всегда пишем <b>
 				this.oRoot.wrapChild(new CopyElement("b"));
 			}
-			if (this.oRoot.aChildren && this.oRoot.aChildren.length > 0)
+			if (this.oRoot.aChildren && this.oRoot.aChildren.length > 0) {
 				this.oRoot.aChildren[0].oAttributes["class"] = sBase64;
+			}
 		}
 
 		if (PasteElementsId.g_bIsDocumentCopyPaste && PasteElementsId.copyPasteUseBinary && this.oBinaryFileWriter.copyParams.itemCount > 0 && !bFromPresentation) {
-			var sBase64 = "docData;" + this.oBinaryFileWriter.GetResult();
+			sBase64 = "docData;" + this.oBinaryFileWriter.GetResult();
 			if (this.oRoot.aChildren && this.oRoot.aChildren.length == 1 && AscBrowser.isSafariMacOs) {
-				var oElem = this.oRoot.aChildren[0];
-				var sStyle = oElem.oAttributes["style"];
-				if (null == sStyle)
+				oElem = this.oRoot.aChildren[0];
+				sStyle = oElem.oAttributes["style"];
+				if (null == sStyle) {
 					oElem.oAttributes["style"] = "font-weight:normal";
-				else
-					oElem.oAttributes["style"] = sStyle + ";font-weight:normal";//просто добавляем потому что в sStyle не могло быть font-weight, мы всегда пишем <b>
+				} else {
+					oElem.oAttributes["style"] = sStyle + ";font-weight:normal";
+				}//просто добавляем потому что в sStyle не могло быть font-weight, мы всегда пишем <b>
 				this.oRoot.wrapChild(new CopyElement("b"));
 			}
-			if (this.oRoot.aChildren && this.oRoot.aChildren.length > 0)
+			if (this.oRoot.aChildren && this.oRoot.aChildren.length > 0) {
 				this.oRoot.aChildren[0].oAttributes["class"] = sBase64;
+			}
 		}
 
 		return sBase64;
