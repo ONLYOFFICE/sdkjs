@@ -520,16 +520,17 @@ CopyProcessor.prototype =
 				var oLink = new CopyElement("a");
 				var index = this.aFootnoteReference.length + 1;
 				var prefix = "ftn";
-				oLink.oAttributes.style += "mso-footnote-id:" + prefix + index;
-				oLink.href += "#_" + prefix + index;
+				oLink.oAttributes.style = "mso-footnote-id:" + prefix + index;
+				oLink.href = "#_" + prefix + index;
 				oLink.name = "_" + prefix + "ref" + index;
 				oLink.title = "";
+
 				oSpan = new CopyElement("span");
+				oSpan.class = "MsoFootnoteReference";
 
-
-
-				oLink.addChild(new CopyElement(CopyPasteCorrectString("[" + index + "]"), true));
-				this.parse_para_TextPr(ParaItem.Run.Get_CompiledTextPr(), oLink);
+				oSpan.addChild(new CopyElement(CopyPasteCorrectString("[" + index + "]"), true));
+				this.parse_para_TextPr(ParaItem.Run.Get_CompiledTextPr(), oSpan);
+				oLink.addChild(oSpan);
 				oTarget.addChild(oLink);
 				this.aFootnoteReference.push(ParaItem.Footnote);
 				break;
@@ -1526,7 +1527,7 @@ CopyProcessor.prototype =
 		}
 	},
 
-	Start: function () {
+	Start : function () {
 		var oDocument = this.oDocument;
 		var bFromPresentation;
 
@@ -1554,6 +1555,7 @@ CopyProcessor.prototype =
 
 			this.oBinaryFileWriter.CopyStart();
 			this.CopyDocument2(this.oRoot, oDocument, elementsContent, bFromPresentation);
+			this.CopyFootnotes(this.oRoot, this.aFootnoteReference);
 			this.oBinaryFileWriter.CopyEnd();
 		} else {
 			selectedContent = oDocument.GetSelectedContent2();
@@ -1876,6 +1878,89 @@ CopyProcessor.prototype =
 			oDomTarget.addChild(oImg);
 		}
 		this.oPresentationWriter.WriteSpTreeElem(oGraphicObj);
+	},
+
+	CopyFootnotes: function (oDomTarget, aFootnotes) {
+
+		/*<div style='mso-element:footnote-list'>
+			<!										[if !supportFootnotes]>
+		<br clear=all>
+			<hr align=left size=1 width="33%">
+			<!												[endif]>
+			<div style='mso-element:footnote' id=ftn1>
+			<p class=MsoFootnoteText>
+			<a style='mso-footnote-id:ftn1' href="#_ftnref1" name="_ftn1" title="">
+			<span class=MsoFootnoteReference>
+			<span style='mso-special-character:
+		footnote'>
+		<!																	[if !supportFootnotes]>
+		<span class=MsoFootnoteReference>
+			<span style='font-size:9.0pt;mso-bidi-font-size:11.0pt;line-height:115%;font-family:
+		"Arial",sans-serif;mso-ascii-theme-font:minor-latin;mso-fareast-font-family:
+		Arial;mso-fareast-theme-font:minor-latin;mso-hansi-theme-font:minor-latin;
+		mso-bidi-font-family:"Times New Roman";mso-bidi-theme-font:minor-bidi;
+		mso-ansi-language:EN-US;mso-fareast-language:EN-US;mso-bidi-language:AR-SA'>[1]</span>
+		</span>
+		<!																	[endif]></span>
+		</span>
+		</a>
+		snoska
+		<o:p/>
+		</p>
+		</div>
+		<div style='mso-element:footnote' id=ftn2>
+			<p class=MsoFootnoteText>
+			<a style='mso-footnote-id:ftn2' href="#_ftnref2" name="_ftn2" title="">
+			<span class=MsoFootnoteReference>
+			<span style='mso-special-character:
+		footnote'>
+		<!																	[if !supportFootnotes]>
+		<span class=MsoFootnoteReference>
+			<span style='font-size:9.0pt;mso-bidi-font-size:11.0pt;line-height:115%;font-family:
+		"Arial",sans-serif;mso-ascii-theme-font:minor-latin;mso-fareast-font-family:
+		Arial;mso-fareast-theme-font:minor-latin;mso-hansi-theme-font:minor-latin;
+		mso-bidi-font-family:"Times New Roman";mso-bidi-theme-font:minor-bidi;
+		mso-ansi-language:EN-US;mso-fareast-language:EN-US;mso-bidi-language:AR-SA'>[2]</span>
+		</span>
+		<!																	[endif]></span>
+		</span>
+		</a>
+		snoska
+		<o:p/>
+		</p>
+		</div>*/
+
+
+		if (aFootnotes && aFootnotes.length) {
+			var _mainDiv = new CopyElement("div");
+			_mainDiv.style = "mso-element:footnote-list";
+
+			for (var i = 0; i < aFootnotes.length; i++) {
+				var _p = new CopyElement("p");
+				_p.class = "MsoFootnoteText";
+
+				var prefix = "ftn";
+				var _link = new CopyElement("a");
+				var index = i + 1;
+				_link.oAttributes.style = "mso-footnote-id:" + prefix + index;
+				_link.href = "#_" + prefix + index;
+				_link.name = "_" + prefix + "ref" + index;
+				_link.title = "";
+
+
+				var _span = new CopyElement("span");
+				_span.class = "MsoFootnoteReference";
+
+				//_span.addChild(new CopyElement(CopyPasteCorrectString("[" + "test" + "]"), true));
+				this.CopyDocument2(_span, null, aFootnotes[i].Content);
+				//this.parse_para_TextPr(ParaItem.Run.Get_CompiledTextPr(), oSpan);
+				_link.addChild(_span);
+				_p.addChild(_link);
+				_mainDiv.addChild(_p);
+			}
+
+			oDomTarget.addChild(_mainDiv);
+		}
 	}
 };
 
