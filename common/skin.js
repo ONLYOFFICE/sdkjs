@@ -39,7 +39,7 @@
 var EditorSkins = {
 	"theme-light" : {
 		Name                      : "theme-light",
-		Type					  : "light",
+		Type                      : "light",
 
 		RulersButton              : false,
 		NavigationButtons         : false,
@@ -78,7 +78,7 @@ var EditorSkins = {
 		STYLE_THUMBNAIL_HEIGHT    : 38,
 
 		isNeedInvertOnActive      : false,
-		ContentControlsBack	   : "#F1F1F1",
+		ContentControlsBack    : "#F1F1F1",
 		ContentControlsHover   : "#D8DADC",
 		ContentControlsActive  : "#7C838A",
 		ContentControlsText    : "#444444",
@@ -103,7 +103,7 @@ var EditorSkins = {
 		ThumbnailsPageNumberText        : "#000000",
 		ThumbnailsPageNumberTextActive  : "#000000",
 		ThumbnailsPageNumberTextHover   : "#000000",
-		BackgroundColorNotes       	    : "#F0F0F0",
+		BackgroundColorNotes            : "#F0F0F0",
 
 		THEMES_THUMBNAIL_WIDTH          : 85,
 		THEMES_THUMBNAIL_HEIGHT         : 38,
@@ -114,15 +114,15 @@ var EditorSkins = {
 		ThumbnailScrollWidthNullIfNoScrolling : false,
 
 		// demonstration
-		DemBackgroundColor       		: "#F0F0F0",
-		DemButtonBackgroundColor       	: "#FFFFFF",
-		DemButtonBackgroundColorHover  	: "#D8DADC",
-		DemButtonBackgroundColorActive 	: "#7D858C",
-		DemButtonBorderColor       		: "#CFCFCF",
-		DemButtonTextColor       		: "#444444",
-		DemButtonTextColorActive 		: "#FFFFFF",
-		DemSplitterColor 				: "#CBCBCB",
-		DemTextColor 					: "#666666",
+		DemBackgroundColor              : "#F0F0F0",
+		DemButtonBackgroundColor        : "#FFFFFF",
+		DemButtonBackgroundColorHover   : "#D8DADC",
+		DemButtonBackgroundColorActive  : "#7D858C",
+		DemButtonBorderColor            : "#CFCFCF",
+		DemButtonTextColor              : "#444444",
+		DemButtonTextColorActive        : "#FFFFFF",
+		DemSplitterColor                : "#CBCBCB",
+		DemTextColor                    : "#666666",
 
 		/* spreadsheets */
 		//TODO названия не менял. использую такие же как и были ранее. пересмотреть!
@@ -152,7 +152,7 @@ var EditorSkins = {
 	},
 	"theme-dark" : {
 		Name                      : "theme-dark",
-		Type					  : "dark",
+		Type                      : "dark",
 
 		RulersButton              : false,
 		NavigationButtons         : false,
@@ -216,7 +216,7 @@ var EditorSkins = {
 		ThumbnailsPageNumberText        : "#FFFFFF",
 		ThumbnailsPageNumberTextActive  : "#FFFFFF",
 		ThumbnailsPageNumberTextHover   : "#FFFFFF",
-		BackgroundColorNotes       	    : "#666666",
+		BackgroundColorNotes            : "#666666",
 
 		THEMES_THUMBNAIL_WIDTH  : 85,
 		THEMES_THUMBNAIL_HEIGHT : 38,
@@ -227,15 +227,15 @@ var EditorSkins = {
 		ThumbnailScrollWidthNullIfNoScrolling : false,
 
 		// demonstration
-		DemBackgroundColor       		: "#666666",
-		DemButtonBackgroundColor       	: "#333333",
-		DemButtonBackgroundColorHover  	: "#555555",
-		DemButtonBackgroundColorActive 	: "#DDDDDD",
-		DemButtonBorderColor       		: "#CFCFCF",
-		DemButtonTextColor       		: "#FFFFFF",
-		DemButtonTextColorActive 		: "#333333",
-		DemSplitterColor 				: "#CBCBCB",
-		DemTextColor 					: "#FFFFFF",
+		DemBackgroundColor              : "#666666",
+		DemButtonBackgroundColor        : "#333333",
+		DemButtonBackgroundColorHover   : "#555555",
+		DemButtonBackgroundColorActive  : "#DDDDDD",
+		DemButtonBorderColor            : "#CFCFCF",
+		DemButtonTextColor              : "#FFFFFF",
+		DemButtonTextColorActive        : "#333333",
+		DemSplitterColor                : "#CBCBCB",
+		DemTextColor                    : "#FFFFFF",
 
 		/* spreadsheets */
 		Background               : "#666666",
