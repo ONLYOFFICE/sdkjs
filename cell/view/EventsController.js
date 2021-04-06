@@ -765,6 +765,8 @@
 
 			t.skipKeyPress = true;
 
+			var isNeedCheckActiveCellChanged = null;
+
 			switch (event.which) {
 				case 82:
 					if (ctrlKey && shiftKey) {
@@ -930,6 +932,7 @@
 						/*event.altKey ? dc = -0.5 : */
 						dr = -0.5;
 					}
+					isNeedCheckActiveCellChanged = true;
 					break;
 
 				case 34: // PageDown
@@ -945,11 +948,13 @@
 						/*event.altKey ? dc = +0.5 : */
 						dr = +0.5;
 					}
+					isNeedCheckActiveCellChanged = true;
 					break;
 
 				case 37: // left
 					stop();                          // Отключим стандартную обработку браузера нажатия left
 					dc = ctrlKey ? -1.5 : -1;  // Движение стрелками (влево-вправо, вверх-вниз)
+					isNeedCheckActiveCellChanged = true;
 					break;
 
 				case 38: // up
@@ -958,11 +963,13 @@
 						return result;
 					}
 					dr = ctrlKey ? -1.5 : -1;  // Движение стрелками (влево-вправо, вверх-вниз)
+					isNeedCheckActiveCellChanged = true;
 					break;
 
 				case 39: // right
 					stop();                          // Отключим стандартную обработку браузера нажатия right
 					dc = ctrlKey ? +1.5 : +1;  // Движение стрелками (влево-вправо, вверх-вниз)
+					isNeedCheckActiveCellChanged = true;
 					break;
 
 				case 40: // down
@@ -976,6 +983,7 @@
 						return result;
 					}
 					dr = ctrlKey ? +1.5 : +1;  // Движение стрелками (влево-вправо, вверх-вниз)
+					isNeedCheckActiveCellChanged = true;
 					break;
 
 				case 36: // home
@@ -987,6 +995,7 @@
 					if (ctrlKey) {
 						dr = -2.5;
 					}
+					isNeedCheckActiveCellChanged = true;
 					break;
 
 				case 35: // end
@@ -998,6 +1007,7 @@
 					if (ctrlKey) {
 						dr = 2.5;
 					}
+					isNeedCheckActiveCellChanged = true;
 					break;
 
 				case 49:  // set number format		Ctrl + Shift + !
@@ -1020,6 +1030,7 @@
 					if (!(canEdit || t.handlers.trigger('isRestrictionComments'))|| selectionDialogMode) {
 						return true;
 					}
+					isNeedCheckActiveCellChanged = true;
 
 				case 65: // select all      Ctrl + a
 				case 80: // print           Ctrl + p
@@ -1146,12 +1157,23 @@
 
 			} // end of switch
 
+
+			var activeCellBefore, activeCellAfter;
+			if (isNeedCheckActiveCellChanged) {
+				activeCellBefore = t.handlers.trigger("getActiveCell");
+			}
 			if ((dc !== 0 || dr !== 0) && false === t.handlers.trigger("isGlobalLockEditCell")) {
 
 				// Проверка на движение в выделенной области
 				if (selectionActivePointChanged) {
 					t.handlers.trigger("selectionActivePointChanged", dc, dr, function (d) {
 						t.scroll(d);
+						if (activeCellBefore) {
+							activeCellAfter = t.handlers.trigger("getActiveCell");
+							if (!activeCellAfter.isEqual(activeCellBefore)) {
+								t.lastTab = null;
+							}
+						}
 					});
 				} else {
 					t.handlers.trigger("changeSelection", /*isStartPoint*/!shiftKey, dc, dr, /*isCoord*/false, false,
@@ -1161,6 +1183,12 @@
 								wb._onUpdateWorksheet(t.targetInfo.coordX, t.targetInfo.coordY, false);
 							}
 							t.scroll(d);
+							if (activeCellBefore) {
+								activeCellAfter = t.handlers.trigger("getActiveCell");
+								if (!activeCellAfter.isEqual(activeCellBefore)) {
+									t.lastTab = null;
+								}
+							}
 						});
 				}
 			}
