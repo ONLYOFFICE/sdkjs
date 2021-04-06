@@ -854,7 +854,10 @@
 						shiftKey = false;	// Сбросим shift, потому что мы не выделяем
 					} else {
 						if (t.lastTab === null) {
-							t.lastTab = dc;
+							var _activeCell = t.handlers.trigger("getActiveCell");
+							if (_activeCell) {
+								t.lastTab = _activeCell.c2;
+							}
 						}
 						dc = +1;			// (tab) - движение по ячейкам вправо на 1 столбец
 					}
@@ -871,7 +874,10 @@
 						shiftKey = false;	// Сбросим shift, потому что мы не выделяем
 					} else {
 						if (t.lastTab !== null) {
-							dc = t.lastTab;
+							var _activeCell = t.handlers.trigger("getActiveCell");
+							if (_activeCell) {
+								dc = t.lastTab - _activeCell.c2;
+							}
 						}
 						dr = +1;			// (enter) - движение по ячейкам вниз на 1 строку
 					}
@@ -1217,7 +1223,7 @@
 			if (16 === event.which) {
 				this.handlers.trigger("updateSelectionName");
 			}
-			this.handlers.trigger("graphicObjectWindowKeyUp", event)
+			this.handlers.trigger("graphicObjectWindowKeyUp", event);
 			
 			return true;
 		};

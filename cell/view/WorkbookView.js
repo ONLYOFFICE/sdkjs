@@ -448,6 +448,12 @@
 				  return self._onGroupRowClick.apply(self, arguments);
 			  }, "onChangeTableSelection": function () {
 				  return self._onChangeTableSelection.apply(self, arguments);
+			  }, "getActiveCell": function () {
+				  var ws = self.getWorksheet();
+				  if (ws) {
+					  return ws.getActiveCell(0, 0, false)
+				  }
+				  return null;
 			  },
 
 
@@ -1191,6 +1197,7 @@
     if (!this._isEqualRange(ws.model.selectionRange, isSelectOnShape)) {
       this._onWSSelectionChanged();
       this._onSelectionMathInfoChanged(ws.getSelectionMathInfo());
+      this.controller.lastTab = null;
     }
 
     // Нужно очистить поиск

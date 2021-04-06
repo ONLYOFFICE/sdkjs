@@ -9159,6 +9159,7 @@
 	};
 
 	WorksheetView.prototype.changeSelectionStartPoint = function (x, y, isCoord, isCtrl) {
+		console.log("asd");
 		this.cleanSelection();
         this.endEditChart();
 
