@@ -5356,6 +5356,7 @@
 		this.name    = "";
 		this.guid    = "";
 		this.baseUrl = "";
+		this.minVersion = "";
 
 		this.variations = [];
 	}
@@ -5383,6 +5384,14 @@
 	CPlugin.prototype["set_BaseUrl"] = function(value)
 	{
 		this.baseUrl = value;
+	};
+	CPlugin.prototype["get_MinVersion"] = function()
+	{
+		return this.minVersion;
+	};
+	CPlugin.prototype["set_MinVersion"] = function(value)
+	{
+		this.minVersion = value;
 	};
 
 	CPlugin.prototype["get_Variations"] = function()
