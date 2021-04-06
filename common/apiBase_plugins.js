@@ -147,6 +147,15 @@
     var Api = window["AscCommon"].baseEditorsApi;
 
     /**
+     * Get version of editor
+     * @memberof Api
+     * @typeofeditors ["CDE", "CSE", "CPE"]
+     * @alias GetVersion
+     * @returns {string} version
+     */
+    Api.prototype["pluginMethod_GetVersion"] = function() { return this.GetVersion(); };
+
+    /**
      * Adding ole object to editor
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]

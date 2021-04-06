@@ -3284,8 +3284,14 @@
 	baseEditorsApi.prototype.asc_setSkin = function(obj)
 	{
 	};
+	//---------------------------------------------------------version----------------------------------------------------
+	baseEditorsApi.prototype["GetVersion"] = baseEditorsApi.prototype.GetVersion = function()
+	{
+		var ver = "@@Version";
+		return (ver === "0.0.0" || ver.substr(2) === "Version") ? "develop" : ver;
+	};
 	//----------------------------------------------------------addons----------------------------------------------------
-    baseEditorsApi.prototype["asc_isSupportFeature"] = function(type)
+	baseEditorsApi.prototype["asc_isSupportFeature"] = function(type)
 	{
 		return (window["Asc"] && window["Asc"]["Addons"] && window["Asc"]["Addons"][type] === true) ? true : false;
 	};
