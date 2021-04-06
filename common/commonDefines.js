@@ -217,6 +217,7 @@
 			PivotLabledColumns			: -313,
 			PivotOverlap				: -314,
 			PivotGroup					: -315,
+			PivotWithoutUnderlyingData	: -316,
 
 			ForceSaveButton: -331,
 			ForceSaveTimeout: -332,
@@ -2305,6 +2306,7 @@
 	prot['PivotLabledColumns']               = prot.PivotLabledColumns;
 	prot['PivotOverlap']                     = prot.PivotOverlap;
 	prot['PivotGroup']                       = prot.PivotGroup;
+	prot['PivotWithoutUnderlyingData']       = prot.PivotWithoutUnderlyingData;
 	prot['ForceSaveButton']                  = prot.ForceSaveButton;
 	prot['ForceSaveTimeout']                 = prot.ForceSaveTimeout;
 	prot['CannotChangeFormulaArray']         = prot.CannotChangeFormulaArray;

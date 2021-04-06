@@ -4829,10 +4829,10 @@ var editor;
 		});
 		this.collaborativeEditing.lock(lockInfos, callback);
 	};
-	spreadsheet_api.prototype._changePivotWithLock = function (pivot, onAction) {
-		this._changePivotWithLockExt(pivot, false, true, onAction);
+	spreadsheet_api.prototype._changePivotWithLock = function (pivot, onAction, doNotCheckUnderlyingData) {
+		this._changePivotWithLockExt(pivot, false, true, onAction, doNotCheckUnderlyingData);
 	};
-	spreadsheet_api.prototype._changePivotWithLockExt = function (pivot, confirmation, updateSelection, onAction) {
+	spreadsheet_api.prototype._changePivotWithLockExt = function (pivot, confirmation, updateSelection, onAction, doNotCheckUnderlyingData) {
 		// Проверка глобального лока
 		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
 			return;
@@ -4846,7 +4846,7 @@ var editor;
 			History.Create_NewPoint();
 			History.StartTransaction();
 			t.wbModel.dependencyFormulas.lockRecal();
-			var changeRes = t._changePivot(pivot, confirmation, updateSelection, onAction);
+			var changeRes = t._changePivot(pivot, confirmation, updateSelection, onAction, doNotCheckUnderlyingData);
 			t.wbModel.dependencyFormulas.unlockRecal();
 			History.EndTransaction();
 			t._changePivotEndCheckError(pivot, changeRes, function () {
@@ -4887,7 +4887,10 @@ var editor;
 			});
 		});
 	};
-	spreadsheet_api.prototype._changePivot = function(pivot, confirmation, updateSelection, onAction) {
+	spreadsheet_api.prototype._changePivot = function(pivot, confirmation, updateSelection, onAction, doNotCheckUnderlyingData) {
+		if (!doNotCheckUnderlyingData && !pivot.checkPivotUnderlyingData()) {
+			return {error: c_oAscError.ID.PivotWithoutUnderlyingData, warning: c_oAscError.ID.No, updateRes: undefined};
+		}
 		var wsModel = pivot.GetWS();
 		pivot.stashCurReportRange();
 

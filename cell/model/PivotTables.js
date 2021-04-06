@@ -4044,6 +4044,9 @@ CT_pivotTableDefinition.prototype.checkPivotFieldItem = function(index, pivotFie
 		this.worksheet ? this.worksheet.getId() : null, null,
 		new AscCommonExcel.UndoRedoData_PivotField(this.Get_Id(), index, pivotFieldOld, pivotField.clone()));
 };
+CT_pivotTableDefinition.prototype.checkPivotUnderlyingData = function() {
+	return !!this.getRecords();
+};
 CT_pivotTableDefinition.prototype.refreshPivotFieldItem = function(index, pivotField, cacheRecords, cacheField, oldCacheField) {
 	var item, i, j, newItem, equalMap = {}, discretePrMap= {};
 	var pivotFieldOld = pivotField.clone();
@@ -4307,9 +4310,10 @@ CT_pivotTableDefinition.prototype._updateRowColItemsRecursively = function(index
 	}
 	var pivotField, indexItem, item, subDataMap, dataField;
 	var x = fields[index].x;
+	var dataFieldsLength = (dataFields && dataFields.length) || 0;
 	if (st_VALUES === x) {
 		if (dataFields) {
-			for (indexItem = 0; indexItem < dataFields.length; ++indexItem) {
+			for (indexItem = 0; indexItem < dataFieldsLength; ++indexItem) {
 				dataField = dataFields[indexItem];
 				if (dataField) {
 					pivotField = pivotFields[dataField.asc_getIndex()];
@@ -4324,7 +4328,7 @@ CT_pivotTableDefinition.prototype._updateRowColItemsRecursively = function(index
 		pivotField = pivotFields[x];
 		if (pivotField && pivotField.items) {
 			var sortDataIndex = pivotField.getSortDataIndex();
-			if (c_oAscFieldSortType.Manual !== pivotField.sortType && 0 <= sortDataIndex && sortDataIndex < dataFields.length) {
+			if (c_oAscFieldSortType.Manual !== pivotField.sortType && 0 <= sortDataIndex && sortDataIndex < dataFieldsLength) {
 				pivotField = pivotField.clone();
 				dataField = dataFields[sortDataIndex];
 				var sortedPivotItems = pivotField.items.item.map(function(currentValue, index) {
@@ -4354,7 +4358,7 @@ CT_pivotTableDefinition.prototype._updateRowColItemsRecursively = function(index
 						subDataMap = dataMap.vals[item.x];
 						if (!subDataMap && (showAll || pivotField.showAll)) {
 							showAll = showAll || pivotField.showAll;
-							subDataMap = new PivotDataElem(dataFields.length);
+							subDataMap = new PivotDataElem(dataFieldsLength);
 						} else {
 							showAll = false;
 						}
@@ -4371,7 +4375,7 @@ CT_pivotTableDefinition.prototype._updateRowColItemsRecursively = function(index
 						subDataMap = dataMap.vals[item.x];
 						if (!subDataMap && (showAll || pivotField.showAll)) {
 							showAll = showAll || pivotField.showAll;
-							subDataMap = new PivotDataElem(dataFields.length);
+							subDataMap = new PivotDataElem(dataFieldsLength);
 						} else {
 							showAll = false;
 						}
@@ -5260,7 +5264,7 @@ CT_pivotTableDefinition.prototype.asc_refresh = function(api) {
 	if (Asc.CT_pivotTableDefinition.prototype.isValidDataRef(dataRef)) {
 		api._changePivotWithLock(t, function (ws) {
 			t.updateCacheData(dataRef);
-		});
+		}, true);
 	} else {
 		api.sendEvent('asc_onError', c_oAscError.ID.PivotLabledColumns, c_oAscError.Level.NoCritical);
 	}
