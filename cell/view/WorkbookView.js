@@ -676,8 +676,11 @@
       	self.controller._onMouseMove(event);
 	  };
       this.Api.endInlineDropTarget = function (event) {
-      	self.controller.isMoveRangeMode = false;
       	var ws = self.getWorksheet();
+      	if (!ws.activeMoveRange) {
+      		return;
+      	}
+      	self.controller.isMoveRangeMode = false;
       	var newSelection = ws.activeMoveRange.clone();
       	ws._cleanSelectionMoveRange();
       	ws.dragAndDropRange = null;
