@@ -37,8 +37,9 @@
 // если хочется скрыть - то везде GlobalSkin => AscCommon.GlobalSkin
 
 var EditorSkins = {
-	"flat" : {
-		Name                      : "flat",
+	"theme-light" : {
+		Name                      : "theme-light",
+		Type					  : "light",
 
 		RulersButton              : false,
 		NavigationButtons         : false,
@@ -149,8 +150,9 @@ var EditorSkins = {
 		EditorBorder             : "#cbcbcb"
 
 	},
-	"flatDark" : {
-		Name                      : "flatDark",
+	"theme-dark" : {
+		Name                      : "theme-dark",
+		Type					  : "dark",
 
 		RulersButton              : false,
 		NavigationButtons         : false,
@@ -273,7 +275,7 @@ function setter_from_interface(obj)
 }
 */
 
-var GlobalSkin = EditorSkins["flat"];
+var GlobalSkin = EditorSkins["theme-light"];
 
 function updateGlobalSkin(obj)
 {
@@ -285,6 +287,10 @@ function updateGlobalSkin(obj)
 	}
 	else
 	{
+		if (obj["name"] && undefined !== EditorSkins[obj["name"]])
+			GlobalSkin = EditorSkins[obj["name"]];
+
+		// TODO: переделать на имена интерфейса
 		if (obj["Name"]) GlobalSkin.Name = obj["Name"];
 		if (obj["RulersButton"]) GlobalSkin.RulersButton = obj["RulersButton"];
 		if (obj["NavigationButtons"]) GlobalSkin.NavigationButtons = obj["NavigationButtons"];

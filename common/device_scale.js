@@ -33,6 +33,8 @@
 "use strict";
 (function (window, undefined) {
 	var supportedScaleValues = [1, 1.5, 2];
+	if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["GetSupportedScaleValues"])
+		supportedScaleValues = window["AscDesktopEditor"]["GetSupportedScaleValues"]();
 
 	// uncomment to debug all scales
 	//supportedScaleValues = [];

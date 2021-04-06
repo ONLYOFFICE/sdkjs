@@ -623,7 +623,7 @@ function CEditorPage(api)
 
 			var xOffset1 = "0";
 			var xOffset2 = "-20";
-			if (AscCommon.GlobalSkin.Name === "flatDark")
+			if (AscCommon.GlobalSkin.Type === "dark")
 			{
 				xOffset1 = "-20";
 				xOffset2 = "0";

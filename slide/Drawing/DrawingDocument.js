@@ -1014,7 +1014,7 @@ function CDrawingDocument()
 			return "rgb(" + this.TargetCursorColor.R + "," + this.TargetCursorColor.G + "," + this.TargetCursorColor.B + ")";
 
 		// check dark theme
-		if (AscCommon.GlobalSkin.Name !== "flatDark" || (this.TargetCursorColor.R > 10 || this.TargetCursorColor.R > 10 || this.TargetCursorColor.R > 10))
+		if (AscCommon.GlobalSkin.Type !== "dark" || (this.TargetCursorColor.R > 10 || this.TargetCursorColor.R > 10 || this.TargetCursorColor.R > 10))
 			return "rgb(" + this.TargetCursorColor.R + "," + this.TargetCursorColor.G + "," + this.TargetCursorColor.B + ")";
 		return "rgb(" + (255 - this.TargetCursorColor.R) + "," + (255 - this.TargetCursorColor.G) + "," + (255 - this.TargetCursorColor.B) + ")";
 	};
@@ -6005,7 +6005,7 @@ function CNotesDrawer(page)
 		g.init(ctx, w_px, h_px, w_mm, h_mm);
 		g.m_oFontManager = this.fontManager;
 
-		if (AscCommon.GlobalSkin.Name === "flatDark")
+		if (AscCommon.GlobalSkin.Type === "dark")
 		{
 			g.darkModeOverride();
 		}
