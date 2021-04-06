@@ -290,6 +290,9 @@ function updateGlobalSkin(obj)
 		if (obj["name"] && undefined !== EditorSkins[obj["name"]])
 			GlobalSkin = EditorSkins[obj["name"]];
 
+		for (var item in obj)
+			GlobalSkin[item] = obj[item];
+
 		// TODO: переделать на имена интерфейса
 		if (obj["Name"]) GlobalSkin.Name = obj["Name"];
 		if (obj["RulersButton"]) GlobalSkin.RulersButton = obj["RulersButton"];

@@ -441,6 +441,17 @@
 
 (function(window, undefined){
 
+	// className => { css property => key in theme object }
+	var g_themes_map = {
+		"body" : { "background-color" : "background-toolbar" },
+		".defaultlable" : { "color" : "text-normal" },
+		".form-control" : { "color" : "text-normal", "background-color" : "background-normal", "border-color" : "border-regular-control" },
+		".form-control:focus" : { "border-color" : "border-control-focus" },
+		".btn-text-default" : { "background-color" : "background-normal", "border-color" : "border-regular-control", "color" : "text-normal" },
+		".btn-text-default:hover" : { "background-color" : "highlight-button-hover" },
+		".btn-text-default:active" : { "background-color" : "highlight-button-pressed !important" }
+	};
+
     var g_isMouseSendEnabled = false;
     var g_language = "";
 
@@ -487,6 +498,42 @@
 
             if (type == "init")
                 window.Asc.plugin.info = pluginData;
+
+            if (!window.Asc.plugin.theme && undefined !== pluginData.theme)
+			{
+				var newTheme = pluginData.theme;
+
+				// correct theme
+				if (pluginData.theme.Name !== "theme-light") // default
+				{
+					var rules = "";
+					for (var className in g_themes_map)
+					{
+						rules += (className + " {");
+
+						var attributes = g_themes_map[className];
+						for (var attr in attributes)
+						{
+							var attrValue = attributes[attr];
+							var attrValueImportant = attrValue.indexOf(" !important");
+							if (-1 < attrValueImportant)
+								attrValue = attrValue.substr(0, attrValueImportant);
+							var newVal = newTheme[attrValue];
+							if (newVal)
+								rules += (attr + " : " + newVal + ((-1 === attrValueImportant) ? ";" : " !important;"));
+						}
+
+						rules += " }\n";
+					}
+
+					var styleTheme = document.createElement('style');
+					styleTheme.type = 'text/css';
+					styleTheme.innerHTML = rules;
+					document.getElementsByTagName('head')[0].appendChild(styleTheme);
+				}
+
+				window.Asc.plugin.theme = newTheme;
+			}
 
             if (!window.Asc.plugin.tr || !window.Asc.plugin.tr_init)
             {
@@ -635,63 +682,10 @@
         window.Asc.plugin.isStarted = true;
         window.startPluginApi();
 
-        window.Asc.plugin.checkPixelRatio = function(isAttack)
-        {
-            if (window.Asc.plugin.checkedPixelRatio && true !== isAttack)
-                return;
-
-            window.Asc.plugin.checkedPixelRatio = true;
-
-            var userAgent = navigator.userAgent.toLowerCase();
-            var isIE = (userAgent.indexOf("msie") > -1 || userAgent.indexOf("trident") > -1 || userAgent.indexOf("edge") > -1);
-            var isChrome = !isIE && (userAgent.indexOf("chrome") > -1);
-            var isMozilla = !isIE && (userAgent.indexOf("firefox") > -1);
-
-            var zoom = 1.0;
-            var isRetina = false;
-            var retinaPixelRatio = 1;
-
-            var isMobileVersion = window.Asc.plugin.info ? window.Asc.plugin.info.isMobileMode : false;
-
-            // пока отключаем мозиллу... хотя почти все работает
-            if ((/*isMozilla || */isChrome) && document && document.firstElementChild && document.body && !isMobileVersion)
-            {
-                if (window.devicePixelRatio > 0.1)
-                {
-                    if (window.devicePixelRatio < 1.99)
-                    {
-                        zoom = window.devicePixelRatio;
-                    }
-                    else
-                    {
-                        zoom = window.devicePixelRatio / 2;
-                        retinaPixelRatio = 2;
-                        isRetina = true;
-                    }
-
-                    document.firstElementChild.style.zoom = 1.0 / zoom;
-                }
-                else
-                {
-                    document.firstElementChild.style.zoom = "normal";
-                }
-            }
-            else
-            {
-                isRetina = (Math.abs(2 - window.devicePixelRatio) < 0.01);
-                if (isRetina)
-                    retinaPixelRatio = 2;
-
-                if (isMobileVersion)
-                {
-                    isRetina = (window.devicePixelRatio >= 1.9);
-                    retinaPixelRatio = window.devicePixelRatio;
-                }
-            }
-
-            window.Asc.plugin.zoom = zoom;
-            window.Asc.plugin.retinaPixelRatio = retinaPixelRatio;
-        };
+		var zoomValue = AscCommon.checkDeviceScale();
+		AscCommon.retinaPixelRatio = zoomValue.applicationPixelRatio;
+		AscCommon.zoom = zoomValue.zoom;
+		AscCommon.correctApplicationScale(zoomValue);
 
 		window.Asc.plugin.onEnableMouseEvent = function(isEnabled)
 		{
@@ -701,8 +695,6 @@
 				_frames[0].style.pointerEvents = isEnabled ? "none" : "";
 			}
 		};
-
-        window.Asc.plugin.checkPixelRatio();
     }
 
     window.onmousemove = function(e)
