@@ -359,6 +359,10 @@ CChangesParagraphAddItem.prototype.Redo = function()
 	{
 		var oItem = this.Items[nIndex];
 		oItem.Parent = this.Class;
+
+		if (oItem.SetParent)
+			oItem.SetParent(this.Class);
+
 		if (oItem.SetParagraph)
 			oItem.SetParagraph(this.Class);
 

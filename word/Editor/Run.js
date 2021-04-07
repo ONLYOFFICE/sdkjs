@@ -11442,6 +11442,9 @@ ParaRun.prototype.GetLineByPosition = function(nPos)
  */
 ParaRun.prototype.PreDelete = function()
 {
+	// TODO: Перенести это, когда удаляется непосредственно элемент из класса
+	//       Сейчас работает не совсем корректно, потому что при большой вложенности у элементов чистится Parent,
+	//       хотя по факту он должен чистится только у первого уровня элементов, с которых начинается удаление
 	this.SetParent(null);
 
 	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)

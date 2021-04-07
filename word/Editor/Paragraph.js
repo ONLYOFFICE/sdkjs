@@ -956,7 +956,12 @@ Paragraph.prototype.Internal_Content_Concat = function(arrItems)
 	{
 		this.Content.push(arrItems[nIndex]);
 
-		arrItems[nIndex].SetParagraph(this);
+		if (arrItems[nIndex].SetParent)
+			arrItems[nIndex].SetParent(this);
+
+		if (arrItems[nIndex].SetParagraph)
+			arrItems[nIndex].SetParagraph(this);
+
 		if (arrItems[nIndex].Recalc_RunsCompiledPr)
 			arrItems[nIndex].Recalc_RunsCompiledPr();
 	}
