@@ -501,38 +501,44 @@
 
             if (!window.Asc.plugin.theme && undefined !== pluginData.theme)
 			{
-				var newTheme = pluginData.theme;
+				window.Asc.plugin.theme = pluginData.theme;
 
-				// correct theme
-				if (pluginData.theme.Name !== "theme-light") // default
+				window.Asc.plugin.onThemeChangedBase = function(newTheme)
 				{
-					var rules = "";
-					for (var className in g_themes_map)
+					// correct theme
+					if (pluginData.theme.Name !== "theme-light") // default
 					{
-						rules += (className + " {");
-
-						var attributes = g_themes_map[className];
-						for (var attr in attributes)
+						var rules = "";
+						for (var className in g_themes_map)
 						{
-							var attrValue = attributes[attr];
-							var attrValueImportant = attrValue.indexOf(" !important");
-							if (-1 < attrValueImportant)
-								attrValue = attrValue.substr(0, attrValueImportant);
-							var newVal = newTheme[attrValue];
-							if (newVal)
-								rules += (attr + " : " + newVal + ((-1 === attrValueImportant) ? ";" : " !important;"));
+							rules += (className + " {");
+
+							var attributes = g_themes_map[className];
+							for (var attr in attributes)
+							{
+								var attrValue = attributes[attr];
+								var attrValueImportant = attrValue.indexOf(" !important");
+								if (-1 < attrValueImportant)
+									attrValue = attrValue.substr(0, attrValueImportant);
+								var newVal = newTheme[attrValue];
+								if (newVal)
+									rules += (attr + " : " + newVal + ((-1 === attrValueImportant) ? ";" : " !important;"));
+							}
+
+							rules += " }\n";
 						}
 
-						rules += " }\n";
+						var styleTheme = document.createElement('style');
+						styleTheme.type = 'text/css';
+						styleTheme.innerHTML = rules;
+						document.getElementsByTagName('head')[0].appendChild(styleTheme);
 					}
+				};
 
-					var styleTheme = document.createElement('style');
-					styleTheme.type = 'text/css';
-					styleTheme.innerHTML = rules;
-					document.getElementsByTagName('head')[0].appendChild(styleTheme);
-				}
-
-				window.Asc.plugin.theme = newTheme;
+				if (window.Asc.plugin.onThemeChanged)
+					window.Asc.plugin.onThemeChanged(window.Asc.plugin.theme);
+				else
+					window.Asc.plugin.onThemeChangedBase(window.Asc.plugin.theme);
 			}
 
             if (!window.Asc.plugin.tr || !window.Asc.plugin.tr_init)
