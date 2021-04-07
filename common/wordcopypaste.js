@@ -508,7 +508,6 @@ CopyProcessor.prototype =
 
 				var _oSpan2 = new CopyElement("span");
 				//_oSpan2.addChild(new CopyElement(CopyPasteCorrectString("[" + index + "]"), true));
-				this.parse_para_TextPr(ParaItem.Run.Get_CompiledTextPr(), _oSpan2);
 				if (_oSpan2.oAttributes["style"]) {
 					_oSpan2.oAttributes["style"] += ";"
 				} else {
@@ -517,6 +516,7 @@ CopyProcessor.prototype =
 				_oSpan2.oAttributes["style"] += "mso-special-character:footnote";
 
 				oSpan.addChild(_oSpan2);
+				this.parse_para_TextPr(ParaItem.Run.Get_CompiledTextPr(), oSpan);
 				oLink.addChild(oSpan);
 				oTarget.addChild(oLink);
 				this.aFootnoteReference.push(ParaItem.Footnote);
@@ -532,11 +532,16 @@ CopyProcessor.prototype =
 		for (var i = 0; i < Container.Content.length; i++) {
 			var item = Container.Content[i];
 			if (para_Run === item.Type) {
-				var oSpan = new CopyElement("span");
-				this.CopyRun(item, oSpan);
-				if (!oSpan.isEmptyChild()) {
-					this.parse_para_TextPr(item.Get_CompiledTextPr(), oSpan);
-					oTarget.addChild(oSpan);
+				//отдельная обработка для сносок, добавляем внутри данные
+				if (item.Content && item.Content.length === 1 && item.Content[0] && item.Content[0].Type === para_FootnoteReference) {
+					this.CopyRun(item, oTarget);
+				} else {
+					var oSpan = new CopyElement("span");
+					this.CopyRun(item, oSpan);
+					if (!oSpan.isEmptyChild()) {
+						this.parse_para_TextPr(item.Get_CompiledTextPr(), oSpan);
+						oTarget.addChild(oSpan);
+					}
 				}
 			} else if (para_Hyperlink === item.Type) {
 				if (!bOmitHyperlink) {
@@ -1870,7 +1875,7 @@ CopyProcessor.prototype =
 	CopyFootnotes: function (oDomTarget, aFootnotes) {
 		if (aFootnotes && aFootnotes.length) {
 			var _mainDiv = new CopyElement("div");
-			_mainDiv.style = "mso-element:footnote-list";
+			_mainDiv.oAttributes["style"] = "mso-element:footnote-list";
 
 			for (var i = 0; i < aFootnotes.length; i++) {
 				var prefix = "ftn";
@@ -1890,7 +1895,7 @@ CopyProcessor.prototype =
 				_link.oAttributes["title"] = "";
 
 				var _span = new CopyElement("span");
-				_span.class = "MsoFootnoteReference";
+				_span.oAttributes["class"] = "MsoFootnoteReference";
 
 				this.CopyDocument2(_span, null, aFootnotes[i].Content, true);
 				_link.addChild(_span);
