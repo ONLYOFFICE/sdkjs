@@ -1409,89 +1409,89 @@ CShapeDrawer.prototype =
             return points;
         }
 
-        // scale == true
-        var _grad_45 = (Math.PI / 2) - Math.atan2(max_y - min_y, max_x - min_x);
-        var _grad_90_45 = (Math.PI / 2) - _grad_45;
-        if (angle > 0 && angle < 90)
-        {
-            if (angle <= 45)
-            {
-                grad_a = (_grad_45 * angle / 45);
-            }
-            else
-            {
-                grad_a = _grad_45 + _grad_90_45 * (angle - 45) / 45;
-            }
+		// scale == true
+		var _grad_45 = (Math.PI / 2) - Math.atan2(max_y - min_y, max_x - min_x);
+		var _grad_90_45 = (Math.PI / 2) - _grad_45;
+		if (angle > 0 && angle < 90)
+		{
+			if (angle <= 45)
+			{
+				grad_a = (_grad_45 * angle / 45);
+			}
+			else
+			{
+				grad_a = _grad_45 + _grad_90_45 * (angle - 45) / 45;
+			}
 
-            var p = this.getNormalPoint(min_x, min_y, grad_a, max_x, max_y);
+			var p = this.getNormalPoint(min_x, min_y, grad_a, max_x, max_y);
 
-            points.x0 = min_x;
-            points.y0 = min_y;
-            points.x1 = p.X;
-            points.y1 = p.Y;
+			points.x0 = min_x;
+			points.y0 = min_y;
+			points.x1 = p.X;
+			points.y1 = p.Y;
 
-            return points;
-        }
-        if (angle > 90 && angle < 180)
-        {
-            if (angle <= 135)
-            {
-                grad_a = Math.PI / 2 + _grad_90_45 * (angle - 90) / 45;
-            }
-            else
-            {
-                grad_a = Math.PI / 2 + _grad_45 + _grad_90_45 * (angle - 135) / 45;
-            }
+			return points;
+		}
+		if (angle > 90 && angle < 180)
+		{
+			if (angle <= 135)
+			{
+				grad_a = Math.PI / 2 + _grad_90_45 * (angle - 90) / 45;
+			}
+			else
+			{
+				grad_a = Math.PI / 2 + _grad_90_45 + _grad_45 * (angle - 135) / 45;
+			}
 
-            var p = this.getNormalPoint(max_x, min_y, grad_a, min_x, max_y);
+			var p = this.getNormalPoint(max_x, min_y, grad_a, min_x, max_y);
 
-            points.x0 = max_x;
-            points.y0 = min_y;
-            points.x1 = p.X;
-            points.y1 = p.Y;
+			points.x0 = max_x;
+			points.y0 = min_y;
+			points.x1 = p.X;
+			points.y1 = p.Y;
 
-            return points;
-        }
-        if (angle > 180 && angle < 270)
-        {
-            if (angle <= 225)
-            {
-                grad_a = Math.PI + _grad_45 * (angle - 180) / 45;
-            }
-            else
-            {
-                grad_a = Math.PI + _grad_45 + _grad_90_45 * (angle - 225) / 45;
-            }
+			return points;
+		}
+		if (angle > 180 && angle < 270)
+		{
+			if (angle <= 225)
+			{
+				grad_a = Math.PI + _grad_45 * (angle - 180) / 45;
+			}
+			else
+			{
+				grad_a = Math.PI + _grad_45 + _grad_90_45 * (angle - 225) / 45;
+			}
 
-            var p = this.getNormalPoint(max_x, max_y, grad_a, min_x, min_y);
+			var p = this.getNormalPoint(max_x, max_y, grad_a, min_x, min_y);
 
-            points.x0 = max_x;
-            points.y0 = max_y;
-            points.x1 = p.X;
-            points.y1 = p.Y;
+			points.x0 = max_x;
+			points.y0 = max_y;
+			points.x1 = p.X;
+			points.y1 = p.Y;
 
-            return points;
-        }
-        if (angle > 270 && angle < 360)
-        {
-            if (angle <= 315)
-            {
-                grad_a = 3 * Math.PI / 2 + _grad_90_45 * (angle - 270) / 45;
-            }
-            else
-            {
-                grad_a = 3 * Math.PI / 2 + _grad_45 + _grad_90_45 * (angle - 315) / 45;
-            }
+			return points;
+		}
+		if (angle > 270 && angle < 360)
+		{
+			if (angle <= 315)
+			{
+				grad_a = 3 * Math.PI / 2 + _grad_90_45 * (angle - 270) / 45;
+			}
+			else
+			{
+				grad_a = 3 * Math.PI / 2 + _grad_90_45 + _grad_45 * (angle - 315) / 45;
+			}
 
-            var p = this.getNormalPoint(min_x, max_y, grad_a, max_x, min_y);
+			var p = this.getNormalPoint(min_x, max_y, grad_a, max_x, min_y);
 
-            points.x0 = min_x;
-            points.y0 = max_y;
-            points.x1 = p.X;
-            points.y1 = p.Y;
+			points.x0 = min_x;
+			points.y0 = max_y;
+			points.x1 = p.X;
+			points.y1 = p.Y;
 
-            return points;
-        }
+			return points;
+		}
         // никогда сюда не зайдем
         return points;
     },

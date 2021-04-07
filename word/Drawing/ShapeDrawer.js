@@ -1690,7 +1690,7 @@ CShapeDrawer.prototype =
             }
             else
             {
-				grad_a = Math.PI / 2 + _grad_45 + _grad_90_45 * (angle - 135) / 45;
+				grad_a = Math.PI / 2 + _grad_90_45 + _grad_45 * (angle - 135) / 45;
             }
 
             var p = this.getNormalPoint(max_x, min_y, grad_a, min_x, max_y);
@@ -1730,7 +1730,7 @@ CShapeDrawer.prototype =
             }
             else
             {
-				grad_a = 3 * Math.PI / 2 + _grad_45 + _grad_90_45 * (angle - 315) / 45;
+				grad_a = 3 * Math.PI / 2 + _grad_90_45 + _grad_45 * (angle - 315) / 45;
             }
 
             var p = this.getNormalPoint(min_x, max_y, grad_a, max_x, min_y);
