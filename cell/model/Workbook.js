@@ -3602,7 +3602,10 @@
 					aRefsToChange[nRef].handleOnChangeSheetName(sOldName, sNewName);
 				}
 				if(Asc.editor && Asc.editor.wb) {
+					var sOldSheetName = oWorksheet.sName;
+					oWorksheet.sName = sNewName;
 					Asc.editor.wb.recalculateDrawingObjects(null, false);
+					oWorksheet.sName = sOldSheetName;
 				}
 			}
 		});
