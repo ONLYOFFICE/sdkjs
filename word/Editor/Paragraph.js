@@ -8924,14 +8924,16 @@ Paragraph.prototype.SetNumPr = function(sNumId, nLvl)
 		if (oNumPrOld && oNumPrOld.NumId === sNumId && oNumPrOld.Lvl === nLvl)
 			return;
 
-		this.Pr.NumPr = new CNumPr(sNumId, nLvl);
-
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphNumbering(this, oNumPrOld, this.Pr.NumPr));
-		this.private_RefreshNumbering(oNumPrOld);
+
+		var oNewNumPr = new CNumPr(sNumId, nLvl);
+
+		History.Add(new CChangesParagraphNumbering(this, this.Pr.NumPr, oNewNumPr));
+		this.private_RefreshNumbering(oNewNumPr);
 		this.private_RefreshNumbering(this.Pr.NumPr);
 
-		// Надо пересчитать конечный стиль
+		this.Pr.NumPr = oNewNumPr;
+
 		this.CompiledPr.NeedRecalc = true;
 		this.private_UpdateTrackRevisionOnChangeParaPr(true);
 		this.UpdateDocumentOutline();
