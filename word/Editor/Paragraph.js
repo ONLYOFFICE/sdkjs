@@ -8921,6 +8921,9 @@ Paragraph.prototype.SetNumPr = function(sNumId, nLvl)
 			nLvl = 0;
 
 		var oNumPrOld = this.Pr.NumPr;
+		if (oNumPrOld && oNumPrOld.NumId === sNumId && oNumPrOld.Lvl === nLvl)
+			return;
+
 		this.Pr.NumPr = new CNumPr(sNumId, nLvl);
 
 		this.private_AddPrChange();
