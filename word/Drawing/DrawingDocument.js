@@ -6549,9 +6549,16 @@ function CDrawingDocument()
             }
         }
 
-        var api = this.m_oWordControl.m_oApi;
+		var api            = this.m_oWordControl.m_oApi;
+		var oLogicDocument = this.m_oWordControl.m_oLogicDocument;
+		if (!api || !oLogicDocument)
+			return;
 
-        History.TurnOff();
+		var oHistory = oLogicDocument.GetHistory();
+		oHistory.TurnOff();
+		var isLocalTrackRevisions = oLogicDocument.GetLocalTrackRevisions();
+		oLogicDocument.SetLocalTrackRevisions(false);
+
         var oldViewMode = api.isViewMode;
         var oldMarks = api.ShowParaMarks;
 
@@ -6638,7 +6645,8 @@ function CDrawingDocument()
         ctx.restore();
         ctx.restore();
 
-        History.TurnOn();
+		oHistory.TurnOn();
+		oLogicDocument.SetLocalTrackRevisions(isLocalTrackRevisions);
         api.isViewMode = oldViewMode;
         api.ShowParaMarks = oldMarks;
     };
