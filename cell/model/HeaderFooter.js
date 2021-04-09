@@ -804,9 +804,13 @@
 			obj.width = t.parentWidth;
 			obj.canvas = document.createElement('canvas');
 			obj.canvas.id = obj.id;
-            obj.canvas.style.width = t.parentWidth + "px";
-            obj.canvas.style.height = t.parentHeight + "px";
-            AscCommon.calculateCanvasSize(obj.canvas);
+			//TODO перепроверить код ниже. оставляю как было раньше
+			/*obj.canvas.style.width = t.parentWidth + "px";
+			 obj.canvas.style.height = t.parentHeight + "px";
+			 AscCommon.calculateCanvasSize(obj.canvas);*/
+			obj.canvas.width = t.parentWidth;
+			obj.canvas.height = t.parentHeight;
+			obj.canvas.style.width = AscCommon.AscBrowser.convertToRetinaValue(t.parentWidth) + "px";
 
 			var curElem = document.getElementById(id);
 			curElem.appendChild(obj.canvas);
