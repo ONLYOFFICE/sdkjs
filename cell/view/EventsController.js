@@ -877,6 +877,7 @@
 					if (shiftKey) {
 						dr = -1;			// (shift + enter) - движение по ячейкам наверх на 1 строку
 						shiftKey = false;	// Сбросим shift, потому что мы не выделяем
+						t.lastTab = null;
 					} else {
 						if (t.lastTab !== null) {
 							_activeCell = t.handlers.trigger("getActiveCell");
