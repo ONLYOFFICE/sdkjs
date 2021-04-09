@@ -50,8 +50,19 @@
 				if (undefined !== obj.Value && Asc.c_oAscShd.Nil !== this.Value)
 					this.Value = Asc.c_oAscShd.Clear;
 
-				var oColor = obj.GetSimpleColor();
-				this.Color = AscCommon.CreateAscColorCustom(oColor.r, oColor.g, oColor.b, oColor.Auto);
+				if (Asc.c_oAscShd.Clear === obj.Value
+					&& obj.Unifill
+					&& obj.Unifill.fill
+					&& obj.Unifill.fill.type === window['Asc'].c_oAscFill.FILL_TYPE_SOLID
+					&& obj.Unifill.fill.color)
+				{
+					this.Color = AscCommon.CreateAscColor(obj.Unifill.fill.color);
+				}
+				else
+				{
+					var oColor = obj.GetSimpleColor();
+					this.Color = AscCommon.CreateAscColorCustom(oColor.r, oColor.g, oColor.b, oColor.Auto);
+				}
 			}
 			else
 			{
