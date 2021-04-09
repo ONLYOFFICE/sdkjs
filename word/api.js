@@ -7576,6 +7576,9 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.GetCurrentVisiblePage     = function()
 	{
+		if (window["IS_NATIVE_EDITOR"])
+			return window["native"]["GetDrawingEndPage"]();
+
 		var lPage1 = this.WordControl.m_oDrawingDocument.m_lDrawingFirst;
 		var lPage2 = lPage1 + 1;
 
