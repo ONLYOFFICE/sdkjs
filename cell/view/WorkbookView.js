@@ -451,7 +451,10 @@
 			  }, "getActiveCell": function () {
 				  var ws = self.getWorksheet();
 				  if (ws) {
-					  return ws.getActiveCell(0, 0, false)
+				  	var selectionRanges = ws.getSelectedRanges();
+				  	if (selectionRanges.length === 1 && selectionRanges[0].bbox && selectionRanges[0].bbox.isOneCell()) {
+						  return ws.getActiveCell(0, 0, false)
+					  }
 				  }
 				  return null;
 			  },

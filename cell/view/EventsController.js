@@ -766,6 +766,7 @@
 			t.skipKeyPress = true;
 
 			var isNeedCheckActiveCellChanged = null;
+			var _activeCell;
 
 			switch (event.which) {
 				case 82:
@@ -855,11 +856,13 @@
 						dc = -1;			// (shift + tab) - движение по ячейкам влево на 1 столбец
 						shiftKey = false;	// Сбросим shift, потому что мы не выделяем
 					} else {
+						_activeCell = t.handlers.trigger("getActiveCell");
 						if (t.lastTab === null) {
-							var _activeCell = t.handlers.trigger("getActiveCell");
 							if (_activeCell) {
 								t.lastTab = _activeCell.c2;
 							}
+						} else if (!_activeCell) {
+							t.lastTab = null;
 						}
 						dc = +1;			// (tab) - движение по ячейкам вправо на 1 столбец
 					}
@@ -876,9 +879,11 @@
 						shiftKey = false;	// Сбросим shift, потому что мы не выделяем
 					} else {
 						if (t.lastTab !== null) {
-							var _activeCell = t.handlers.trigger("getActiveCell");
+							_activeCell = t.handlers.trigger("getActiveCell");
 							if (_activeCell) {
 								dc = t.lastTab - _activeCell.c2;
+							} else {
+								t.lastTab = null;
 							}
 						}
 						dr = +1;			// (enter) - движение по ячейкам вниз на 1 строку
@@ -1158,22 +1163,26 @@
 			} // end of switch
 
 
-			var activeCellBefore, activeCellAfter;
+			var activeCellBefore;
 			if (isNeedCheckActiveCellChanged) {
 				activeCellBefore = t.handlers.trigger("getActiveCell");
 			}
+			var _checkLastTab = function () {
+				if (isNeedCheckActiveCellChanged) {
+					var activeCellAfter = t.handlers.trigger("getActiveCell");
+					if (!activeCellBefore || !activeCellAfter || !activeCellAfter.isEqual(activeCellBefore)) {
+						t.lastTab = null;
+					}
+				}
+			};
+
 			if ((dc !== 0 || dr !== 0) && false === t.handlers.trigger("isGlobalLockEditCell")) {
 
 				// Проверка на движение в выделенной области
 				if (selectionActivePointChanged) {
 					t.handlers.trigger("selectionActivePointChanged", dc, dr, function (d) {
 						t.scroll(d);
-						if (activeCellBefore) {
-							activeCellAfter = t.handlers.trigger("getActiveCell");
-							if (!activeCellAfter.isEqual(activeCellBefore)) {
-								t.lastTab = null;
-							}
-						}
+						_checkLastTab();
 					});
 				} else {
 					t.handlers.trigger("changeSelection", /*isStartPoint*/!shiftKey, dc, dr, /*isCoord*/false, false,
@@ -1183,12 +1192,7 @@
 								wb._onUpdateWorksheet(t.targetInfo.coordX, t.targetInfo.coordY, false);
 							}
 							t.scroll(d);
-							if (activeCellBefore) {
-								activeCellAfter = t.handlers.trigger("getActiveCell");
-								if (!activeCellAfter.isEqual(activeCellBefore)) {
-									t.lastTab = null;
-								}
-							}
+							_checkLastTab();
 						});
 				}
 			}
