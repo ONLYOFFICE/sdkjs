@@ -443,13 +443,24 @@
 
 	// className => { css property => key in theme object }
 	var g_themes_map = {
-		"body" : { "background-color" : "background-toolbar" },
+		"body" : { "color" : "text-normal", "background-color" : "background-toolbar" },
 		".defaultlable" : { "color" : "text-normal" },
 		".form-control" : { "color" : "text-normal", "background-color" : "background-normal", "border-color" : "border-regular-control" },
 		".form-control:focus" : { "border-color" : "border-control-focus" },
 		".btn-text-default" : { "background-color" : "background-normal", "border-color" : "border-regular-control", "color" : "text-normal" },
 		".btn-text-default:hover" : { "background-color" : "highlight-button-hover" },
-		".btn-text-default:active" : { "background-color" : "highlight-button-pressed !important" }
+		".btn-text-default:active" : { "background-color" : "highlight-button-pressed !important" },
+		".select2-container--default .select2-selection--single" : { "color" : "text-normal", "background-color" : "background-normal" },
+		".select2-container--default .select2-selection--single .select2-selection__rendered" : { "color" : "text-normal" },
+		".select2-results" : { "background-color" : "background-normal" },
+		".select2-container--default .select2-results__option--highlighted[aria-selected]" : { "background-color" : "border-regular-control !important"},
+		".select2-container--default .select2-results__option[aria-selected=true]" : { "background-color" : "border-regular-control !important"},
+		".select2-dropdown, .select2-container--default .select2-selection--single" : { "border-color" : "border-regular-control !important"},
+		".select2-container--default.select2-container--open .select2-selection--single" : { "border-color" : "border-control-focus !important"},
+		".select2-container--default.select2-container--focus:not(.select2-container--open) .select2-selection--single" : { "border-color" : "border-regular-control !important"},
+		".select2-container--default.select2-container--open.select2-container--focus .select2-selection--single" : { "border-color" : "border-control-focus !important"},
+		".select2-search--dropdown" : { "background-color" : "background-normal !important"},
+		".select2-container--default .select2-search--dropdown .select2-search__field" : { "color" : "text-normal", "background-color" : "background-normal", "border-color" : "border-regular-control"}
 	};
 
     var g_isMouseSendEnabled = false;
