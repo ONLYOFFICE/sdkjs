@@ -630,7 +630,7 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 			if (_canvasH == this.canvasH && undefined !== settings.contentH)
 			{
 				var _maxScrollY = settings.contentH - settings.screenH > 0 ? settings.contentH - settings.screenH : 0;
-				if (_maxScrollY == this.maxScrollY)
+				if (_maxScrollY == this.maxScrollY && !isChangeTheme)
 					return;
 			}
 		}
@@ -639,7 +639,7 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 			if (settings.screenW == this.canvasW && undefined !== settings.contentW)
 			{
 				var _maxScrollX = settings.contentW - settings.screenW > 0 ? settings.contentW - settings.screenW : 0;
-				if (_maxScrollX == this.maxScrollX)
+				if (_maxScrollX == this.maxScrollX && !isChangeTheme)
 					return;
 			}
 		}

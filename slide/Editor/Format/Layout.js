@@ -1121,17 +1121,12 @@ function CLayoutThumbnailDrawer()
     {
         _layout.recalculate2();
 
-        var h_px = 67;
+        var h_px = 68;
         var w_px = (this.WidthMM * h_px / this.HeightMM) >> 0;
+        w_px = (w_px >> 2) << 2;
 
-        // пока не будем генерить для ретины
-        /*
-        if (this.IsRetina)
-        {
-            w_px <<= 1;
-            h_px <<= 1;
-        }
-        */
+        h_px = AscCommon.AscBrowser.convertToRetinaValue(h_px, true);
+		w_px = AscCommon.AscBrowser.convertToRetinaValue(w_px, true);
 
         this.WidthPx  = w_px;
         this.HeightPx = h_px;

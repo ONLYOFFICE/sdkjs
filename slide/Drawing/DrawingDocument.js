@@ -6033,6 +6033,44 @@ function CNotesDrawer(page)
 		g.RestoreGrState();
 	};
 
+	this.CreateScrollSettings = function(height)
+	{
+		var element = this.HtmlPage.m_oNotes.HtmlElement;
+		var settings = new AscCommon.ScrollSettings();
+		settings.screenW = element.width;
+		settings.screenH = element.height;
+		settings.vscrollStep = 45;
+		settings.hscrollStep = 45;
+		settings.contentW = 1;
+		settings.contentH = 2 * this.OffsetY + ((height * g_dKoef_mm_to_pix) >> 0);
+		settings.scrollerMinHeight = 5;
+
+		settings.screenW = AscCommon.AscBrowser.convertToRetinaValue(settings.screenW);
+		settings.screenH = AscCommon.AscBrowser.convertToRetinaValue(settings.screenH);
+
+		settings.scrollBackgroundColor = GlobalSkin.ScrollBackgroundColor;
+		settings.scrollBackgroundColorHover = GlobalSkin.ScrollBackgroundColor;
+		settings.scrollBackgroundColorActive = GlobalSkin.ScrollBackgroundColor;
+
+		settings.scrollerColor = GlobalSkin.ScrollerColor;
+		settings.scrollerHoverColor = GlobalSkin.ScrollerHoverColor;
+		settings.scrollerActiveColor = GlobalSkin.ScrollerActiveColor;
+
+		settings.arrowColor = GlobalSkin.ScrollArrowColor;
+		settings.arrowHoverColor = GlobalSkin.ScrollArrowHoverColor;
+		settings.arrowActiveColor = GlobalSkin.ScrollArrowActiveColor;
+
+		settings.strokeStyleNone = GlobalSkin.ScrollOutlineColor;
+		settings.strokeStyleOver = GlobalSkin.ScrollOutlineHoverColor;
+		settings.strokeStyleActive = GlobalSkin.ScrollOutlineActiveColor;
+
+		settings.targetColor = GlobalSkin.ScrollerTargetColor;
+		settings.targetHoverColor = GlobalSkin.ScrollerTargetHoverColor;
+		settings.targetActiveColor = GlobalSkin.ScrollerTargetActiveColor;
+
+		return settings;
+	};
+
 	this.OnRecalculateNote = function (slideNum, width, height)
 	{
 		var isChangedSlide = (this.Slide != slideNum) ? true : false;
@@ -6051,22 +6089,7 @@ function CNotesDrawer(page)
 			this.IsEmptyDraw = true;
 		}
 
-		var element = this.HtmlPage.m_oNotes.HtmlElement;
-		var settings = new AscCommon.ScrollSettings();
-		settings.screenW = element.width;
-		settings.screenH = element.height;
-		settings.vsscrollStep = 45;
-		settings.hsscrollStep = 45;
-		settings.contentW = 1;
-		settings.contentH = 2 * this.OffsetY + ((height * g_dKoef_mm_to_pix) >> 0);
-		settings.scrollerMinHeight = 5;
-
-		settings.scrollBackgroundColor = GlobalSkin.ScrollBackgroundColor;
-		settings.scrollBackgroundColorHover = GlobalSkin.ScrollBackgroundColor;
-		settings.scrollBackgroundColorActive = GlobalSkin.ScrollBackgroundColor;
-
-		settings.screenW = AscCommon.AscBrowser.convertToRetinaValue(settings.screenW);
-		settings.screenH = AscCommon.AscBrowser.convertToRetinaValue(settings.screenH);
+		var settings = this.CreateScrollSettings(height);
 
 		this.ScrollMax = Math.max(0, settings.contentH - settings.screenH);
 		if (this.Scroll > this.ScrollMax)

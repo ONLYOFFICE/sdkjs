@@ -3098,6 +3098,8 @@ function CEditorPage(api)
 
 		this.m_oBoundsController.ClearNoAttack();
 
+		this.UpdateScrolls();
+
 		this.OnScroll();
 		this.onTimerScroll_sync(true);
 
@@ -4171,8 +4173,8 @@ function CEditorPage(api)
 				}
 
 				arr[i].Image  = master.sldLayoutLst[i].ImageBase64;
-				arr[i].Width  = master.sldLayoutLst[i].Width64;
-				arr[i].Height = master.sldLayoutLst[i].Height64;
+				arr[i].Width  = AscCommon.AscBrowser.convertToRetinaValue(master.sldLayoutLst[i].Width64);
+				arr[i].Height =  AscCommon.AscBrowser.convertToRetinaValue(master.sldLayoutLst[i].Height64);
 			}
 
 			this.m_oApi.sendEvent("asc_onUpdateLayout", arr);
