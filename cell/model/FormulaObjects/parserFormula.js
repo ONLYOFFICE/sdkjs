@@ -7424,8 +7424,8 @@ function parserFormula( formula, parent, _ws ) {
 				}
 			} else if (cElementType.operator === ref.type && ref.name === ":" && this.outStack[i - 1] &&
 				this.outStack[i - 2] &&
-				((cElementType.cell === this.outStack[i - 1].type || cElementType.cell === this.outStack[i - 2].type) ||
-				(cElementType.cell3D === this.outStack[i - 1].type ||
+				((cElementType.cell === this.outStack[i - 1].type && cElementType.cell === this.outStack[i - 2].type) ||
+				(cElementType.cell3D === this.outStack[i - 1].type &&
 				cElementType.cell3D === this.outStack[i - 2].type)) && this.outStack[i - 1].isValid() &&
 				this.outStack[i - 2].isValid()) {
 				var _wsId = this.outStack[i - 1].getWsId();
