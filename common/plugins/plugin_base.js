@@ -468,7 +468,8 @@
 		".select2-container--default.select2-container--focus:not(.select2-container--open) .select2-selection--single" : { "border-color" : "border-regular-control !important"},
 		".select2-container--default.select2-container--open.select2-container--focus .select2-selection--single" : { "border-color" : "border-control-focus !important"},
 		".select2-search--dropdown" : { "background-color" : "background-normal !important"},
-		".select2-container--default .select2-search--dropdown .select2-search__field" : { "color" : "text-normal", "background-color" : "background-normal", "border-color" : "border-regular-control"}
+		".select2-container--default .select2-search--dropdown .select2-search__field" : { "color" : "text-normal", "background-color" : "background-normal", "border-color" : "border-regular-control"},
+		".select2-container--default.select2-container--disabled .select2-selection--single" : { "background-color" : "background-normal" }
 	};
 
     var g_isMouseSendEnabled = false;
