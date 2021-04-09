@@ -2691,10 +2691,12 @@ CTable.prototype.Copy = function(Parent, DrawingDocument, oPr)
 	for (Index = 0; Index < Rows; Index++)
 	{
 		Table.Content[Index] = this.Content[Index].Copy(Table, oPr);
+		Table.Content[Index].Recalc_CompiledPr();
 		History.Add(new CChangesTableAddRow(Table, Index, [Table.Content[Index]]));
 	}
 	Table.Internal_ReIndexing(0);
 	Table.private_UpdateTableGrid();
+	Table.Recalc_CompiledPr();
 
 	if (Table.Content.length > 0 && Table.Content[0].Get_CellsCount() > 0)
 		Table.CurCell = Table.Content[0].Get_Cell(0);

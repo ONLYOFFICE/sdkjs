@@ -127,6 +127,7 @@ CTableRow.prototype =
 		for (var Index = 0; Index < CellsCount; Index++)
 		{
 			Row.Content[Index] = this.Content[Index].Copy(Row, oPr);
+			Row.Content[Index].Recalc_CompiledPr();
 			History.Add(new CChangesTableRowAddCell(Row, Index, [Row.Content[Index]]));
 		}
 
