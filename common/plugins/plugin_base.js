@@ -449,6 +449,7 @@
 		"a.aboutlink" : { "color" : "text-normal" },
 		".form-control" : { "color" : "text-normal", "background-color" : "background-normal", "border-color" : "border-regular-control" },
 		".form-control:focus" : { "border-color" : "border-control-focus" },
+		".form-control[disabled]" : { "color" : "text-invers" },
 		".btn-text-default" : { "background-color" : "background-normal", "border-color" : "border-regular-control", "color" : "text-normal" },
 		".btn-text-default:hover" : { "background-color" : "highlight-button-hover" },
 		".btn-text-default:active" : { "background-color" : "highlight-button-pressed !important" },
