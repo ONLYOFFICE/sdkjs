@@ -676,32 +676,62 @@
         return [this.tmplLst];
     };
 
-    changesFactory[AscDFH.historyitem_BldSubBldChart] = CChangeObject;
-    changesFactory[AscDFH.historyitem_BldSubBldDgm] = CChangeObject;
+
+    changesFactory[AscDFH.historyitem_BldSubChart] = CChangeBool;
+    changesFactory[AscDFH.historyitem_BldSubAnimBg] = CChangeBool;
+    changesFactory[AscDFH.historyitem_BldSubRev] = CChangeBool;
+    changesFactory[AscDFH.historyitem_BldSubBldChart] = CChangeLong;
+    changesFactory[AscDFH.historyitem_BldSubBldDgm] = CChangeLong;
     drawingsChangesMap[AscDFH.historyitem_BldSubBldChart] = function(oClass, value) {oClass.bldChart = value;};
     drawingsChangesMap[AscDFH.historyitem_BldSubBldDgm] = function(oClass, value) {oClass.bldDgm = value;};
+    drawingsChangesMap[AscDFH.historyitem_BldSubChart] = function(oClass, value) {oClass.chart = value;};
+    drawingsChangesMap[AscDFH.historyitem_BldSubAnimBg] = function(oClass, value) {oClass.animBg = value;};
+    drawingsChangesMap[AscDFH.historyitem_BldSubRev] = function(oClass, value) {oClass.rev = value;};
     function CBldSub() {
         CBaseFormatObject.call(this);
+        this.chart = null;
+        this.animBg = null;
         this.bldChart = null;
         this.bldDgm = null;
+        this.rev = null;
     }
     InitClass(CBldSub, CBaseFormatObject, AscDFH.historyitem_type_BldSub);
     CBldSub.prototype.setBldChart = function(pr) {
-        oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BldSubBldChart, this.bldChart, pr));
+        oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BldSubBldChart, this.bldChart, pr));
         this.bldChart = pr;
-        this.setParentToChild(pr);
     };
     CBldSub.prototype.setBldDgm = function(pr) {
-        oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BldSubBldDgm, this.bldDgm, pr));
+        oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BldSubBldDgm, this.bldDgm, pr));
         this.bldDgm = pr;
-        this.setParentToChild(pr);
+    };
+    CBldSub.prototype.setChart = function(pr) {
+        oHistory.Add(new CChangeBool(this, AscDFH.historyitem_BldSubChart, this.chart, pr));
+        this.chart = pr;
+    };
+    CBldSub.prototype.setAnimBg = function(pr) {
+        oHistory.Add(new CChangeBool(this, AscDFH.historyitem_BldSubAnimBg, this.animBg, pr));
+        this.animBg = pr;
+    };
+    CBldSub.prototype.setRev = function(pr) {
+        oHistory.Add(new CChangeBool(this, AscDFH.historyitem_BldSubRev, this.rev, pr));
+        this.rev = pr;
     };
     CBldSub.prototype.fillObject = function(oCopy, oIdMap) {
-        if(this.bldChart) {
-            oCopy.setBldChart(this.bldChart.createDuplicate(oIdMap));
+        if(this.chart !== null) {
+            oCopy.setChart(this.chart);
         }
-        if(this.bldDgm) {
-            oCopy.setBldDgm(this.bldDgm.createDuplicate(oIdMap));
+        if(this.animBg !== null) {
+            oCopy.setAnimBg(this.animBg);
+        }
+
+        if(this.bldChart !== null) {
+            oCopy.setBldChart(this.bldChart);
+        }
+        if(this.bldDgm !== null) {
+            oCopy.setBldDgm(this.bldDgm);
+        }
+        if(this.rev !== null) {
+            oCopy.setRev(this.rev);
         }
     };
     CBldSub.prototype.privateWriteAttributes = function(pWriter) {
@@ -2473,7 +2503,7 @@
             var oColor;
             if(2 === nType || 3 === nType || 4 === nType) {
                 if(this.byRGB) {
-                    oColor = this.byRGB.createDuplicate(oIdMap);
+                    oColor = this.byRGB.createDuplicate({});
                 }
                 else {
                     oColor = new CColorPercentage();
@@ -2485,7 +2515,7 @@
             }
             else {
                 if(this.byHSL) {
-                    oColor = this.byHSL.createDuplicate(oIdMap);
+                    oColor = this.byHSL.createDuplicate({});
                 }
                 else {
                     oColor = new CColorPercentage();

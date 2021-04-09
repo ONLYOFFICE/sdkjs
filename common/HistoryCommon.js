@@ -2989,8 +2989,11 @@
 	AscDFH.historyitem_BldPBuild            = AscDFH.historyitem_type_BldP | 5;
 	AscDFH.historyitem_BldPRev              = AscDFH.historyitem_type_BldP | 6;
 
-	AscDFH.historyitem_BldSubBldChart = AscDFH.historyitem_type_BldSub | 1;
-	AscDFH.historyitem_BldSubBldDgm   = AscDFH.historyitem_type_BldSub | 2;
+	AscDFH.historyitem_BldSubChart = AscDFH.historyitem_type_BldSub    | 1;
+	AscDFH.historyitem_BldSubAnimBg = AscDFH.historyitem_type_BldSub   | 2;
+	AscDFH.historyitem_BldSubBldChart = AscDFH.historyitem_type_BldSub | 3;
+	AscDFH.historyitem_BldSubBldDgm = AscDFH.historyitem_type_BldSub   | 4;
+	AscDFH.historyitem_BldSubRev = AscDFH.historyitem_type_BldSub      | 5;
 
 	AscDFH.historyitem_DirTransitionDir = AscDFH.historyitem_type_DirTransition | 1;
 

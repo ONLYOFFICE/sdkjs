@@ -123,7 +123,7 @@ var asc_CShapeProperty = Asc.asc_CShapeProperty;
         this.parent = oParent;
     };
     CBaseFormatObject.prototype.setParentToChild = function(oChild) {
-        if(oChild) {
+        if(oChild && oChild.setParent) {
             oChild.setParent(this);
         }
     };
