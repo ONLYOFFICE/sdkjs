@@ -12732,6 +12732,17 @@ ParaRun.prototype.GetParentForm = function()
 {
 	return (this.Parent instanceof CInlineLevelSdt && this.Parent.IsForm() ? this.Parent : null);
 };
+ParaRun.prototype.GetParentPictureContentControl = function()
+{
+	var arrParentCC = this.GetParentContentControls();
+	for (var nIndex = 0, nCount = arrParentCC.length; nIndex < nCount; ++nIndex)
+	{
+		if (arrParentCC[nIndex].IsPicture())
+			return arrParentCC[nIndex];
+	}
+
+	return null;
+};
 ParaRun.prototype.CopyTextFormContent = function(oRun)
 {
 	var nRunLen = oRun.Content.length;
