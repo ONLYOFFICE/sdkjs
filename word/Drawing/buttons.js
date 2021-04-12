@@ -72,41 +72,76 @@
 		function PI()
 		{
 			this.images = [];
-			this.load = function(type, url)
-			{
-				this.images[0] = new Image();
-				this.images[0].onload = function() { this.asc_complete = true; };
-				this.images[0].src = "../../../../sdkjs/common/Images/placeholders/" + url + ".png";
-				AscCommon.backoffOnErrorImg(this.images[0]);
-
-				this.images[1] = new Image();
-				this.images[1].onload = function() { this.asc_complete = true; };
-				this.images[1].src = "../../../../sdkjs/common/Images/placeholders/" + url + "@2x.png";
-				AscCommon.backoffOnErrorImg(this.images[1]);
-			};
-			this.loadActive = function(url)
-			{
-				this.images[2] = new Image();
-				this.images[2].onload = function() { this.asc_complete = true; };
-				this.images[2].src = "../../../../sdkjs/common/Images/placeholders/" + url + "_active.png";
-				AscCommon.backoffOnErrorImg(this.images[2]);
-
-				this.images[3] = new Image();
-				this.images[3].onload = function() { this.asc_complete = true; };
-				this.images[3].src = "../../../../sdkjs/common/Images/placeholders/" + url + "_active@2x.png";
-				AscCommon.backoffOnErrorImg(this.images[3]);
-			};
-			this.get = function()
-			{
-				var index = AscCommon.AscBrowser.isCustomScalingAbove2() ? 1 : 0;
-				return this.images[index].asc_complete ? this.images[index] : null;
-			};
-			this.getActive = function()
-			{
-				var index = AscCommon.AscBrowser.isCustomScalingAbove2() ? 3 : 2;
-				return this.images[index].asc_complete ? this.images[index] : null;
-			};
+			this.images_active = [];
+			this.support = [1, 1.5, 2];
 		}
+
+		PI.prototype.getAddon = function(val)
+		{
+			val = (val * 10) >> 0;
+			if (10 === val)
+				return "";
+
+			var val1 = (val / 10) >> 0;
+			var val2 = val - (10 * val1);
+
+			if (0 === val2)
+				return "@" + val1 + "x";
+
+			return "@" + val1 + "." + val2 + "x";
+		};
+
+		PI.prototype.getIndex = function()
+		{
+			var scale = AscCommon.AscBrowser.retinaPixelRatio;
+			var index = 0;
+			var len = this.support.length;
+			while (index < len)
+			{
+				if (this.support[index] > (scale + 0.01))
+					break;
+				++index;
+			}
+			--index;
+			if (index < 0)
+				return 0;
+			if (index >= len)
+				return len - 1;
+			return index;
+		};
+
+		PI.prototype.load = function(type, url)
+		{
+			for (var i = 0, len = this.support.length; i < len; i++)
+			{
+				var img = new Image();
+				img.onload = function() { this.asc_complete = true; };
+				img.src = "../../../../sdkjs/common/Images/placeholders/" + url + this.getAddon(this.support[i]) + ".png";
+				AscCommon.backoffOnErrorImg(img);
+				this.images.push(img);
+			}
+		};
+		PI.prototype.loadActive = function(url)
+		{
+			for (var i = 0, len = this.support.length; i < len; i++)
+			{
+				var img = new Image();
+				img.onload = function() { this.asc_complete = true; };
+				img.src = "../../../../sdkjs/common/Images/placeholders/" + url + "_active" + this.getAddon(this.support[i]) + ".png";
+				AscCommon.backoffOnErrorImg(img);
+				this.images_active.push(img);
+			}
+		};
+		PI.prototype.get = function()
+		{
+			var index = this.getIndex();
+			return this.images[index].asc_complete ? this.images[index] : null;
+		};
+		PI.prototype.getActive = function()
+		{
+			var index = this.getIndex();
+			return this.images_active[index].asc_complete ? this.images_active[index] : null;
+		};
 
 		this.images = [];
 

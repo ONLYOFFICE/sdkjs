@@ -813,6 +813,24 @@
 			}
 		},
 
+		onThemeChanged : function(obj)
+		{
+			for (var guid in this.runnedPluginsMap)
+			{
+				var runObject = this.runnedPluginsMap[guid];
+				runObject.startData.setAttribute("type", "onThemeChanged");
+				runObject.startData.setAttribute("theme", obj);
+				this.correctData(runObject.startData);
+
+				var _iframe = document.getElementById(runObject.frameId);
+				if (_iframe)
+				{
+					runObject.startData.setAttribute("guid", guid);
+					_iframe.contentWindow.postMessage(runObject.startData.serialize(), "*");
+				}
+			}
+		},
+
 		onPluginMethodReturn : function(guid, _return)
 		{
 			var plugin = this.getPluginByGuid(guid);
