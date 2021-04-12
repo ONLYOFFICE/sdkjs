@@ -671,8 +671,7 @@
 		this.canvasObj.drawingCtx.clear();
 
 		var drawBackground = function () {
-			t.canvasObj.drawingCtx.setStrokeStyle(new AscCommon.CColor(12, 25, 55))
-				.setFillStyle(new AscCommon.CColor(255, 255, 255))
+			t.canvasObj.drawingCtx.setFillStyle(new AscCommon.CColor(255, 255, 255))
 				.fillRect(0, 0, t.canvasObj.canvas.width, t.canvasObj.canvas.height);
 		};
 
@@ -699,7 +698,7 @@
 		ws.stringRender.setString(this.fragments, cellFlags);
 		var textMetrics = ws.stringRender._measureChars(cellEditorWidth);
 		var parentHeight = document.getElementById(this.canvasObj.idParent).clientHeight;
-		canvas.height = textMetrics.height > parentHeight ? textMetrics.height : parentHeight;
+		canvas.height = textMetrics.height > parentHeight ? textMetrics.height : AscCommon.AscBrowser.convertToRetinaValue(parentHeight + 1, true);
 
 		drawBackground();
 		ws.stringRender.render(drawingCtx, wb.defaults.worksheetView.cells.padding, 0, cellEditorWidth, ws.settings.activeCellBorderColor);
@@ -822,7 +821,6 @@
 			obj.canvas.width = t.parentWidth;
 			obj.canvas.height = t.parentHeight;
 			obj.canvas.style.width = AscCommon.AscBrowser.convertToRetinaValue(t.parentWidth) + "px";
-			obj.canvas.style.height = AscCommon.AscBrowser.convertToRetinaValue(t.parentHeight) + "px";
 
 			var curElem = document.getElementById(id);
 			curElem.appendChild(obj.canvas);
@@ -833,7 +831,7 @@
 			return obj;
 		};
 
-		this.parentHeight = document.getElementById(idArr[0]).clientHeight;
+		this.parentHeight = AscCommon.AscBrowser.convertToRetinaValue(document.getElementById(idArr[0]).clientHeight + 1, true);
 
 		this.canvas[c_nPortionLeftHeader] = createAndPushCanvasObj(idArr[0]);
 		this.canvas[c_nPortionCenterHeader] = createAndPushCanvasObj(idArr[1]);
