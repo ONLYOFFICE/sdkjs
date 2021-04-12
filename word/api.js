@@ -2255,7 +2255,7 @@ background-repeat: no-repeat;\
 			return;
 
 		// TODO: isPasteImage заменить на проверку того, что вставляется просто картинка
-		var isPasteImage = false;
+		var isPasteImage = AscCommon.checkOnlyOneImage(data1);
 
 		var isLocked = true;
 		var oCC      = null;

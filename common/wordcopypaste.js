@@ -8948,6 +8948,33 @@ SpecialPasteShowOptions.prototype = {
 	}
 };
 
+function checkOnlyOneImage(node)
+{
+	var res = false;
+
+	if (node && node.childNodes) {
+		for (var i = 0; i < node.childNodes.length; i++) {
+			var sChildNodeName = node.childNodes[i].nodeName.toLowerCase();
+			if (sChildNodeName === "style" || sChildNodeName === "#comment" || sChildNodeName === "script") {
+				continue;
+			}
+			if (sChildNodeName === "img") {
+				if (res) {
+					res = false;
+					break;
+				} else {
+					res = true;
+				}
+			} else {
+				res = false;
+				break;
+			}
+		}
+	}
+
+	return res;
+}
+
   //---------------------------------------------------------export---------------------------------------------------
   window['AscCommon'] = window['AscCommon'] || {};
   window["AscCommon"].Check_LoadingDataBeforePrepaste = Check_LoadingDataBeforePrepaste;
@@ -8973,5 +9000,8 @@ SpecialPasteShowOptions.prototype = {
   prot["asc_getOptions"]					= prot.asc_getOptions;
   prot["asc_getShowPasteSpecial"]			= prot.asc_getShowPasteSpecial;
   prot["asc_getContainTables"]			    = prot.asc_getContainTables;
+
+  window["AscCommon"].checkOnlyOneImage = checkOnlyOneImage;
+
 
 })(window);
