@@ -377,6 +377,9 @@ function updateGlobalSkin(obj)
 		if (obj["EditorBorder"]) GlobalSkin.EditorBorder = obj["EditorBorder"];
 	}
 
+	if (window.g_asc_plugins)
+		window.g_asc_plugins.onThemeChanged(GlobalSkin);
+
 	window['AscCommon'].GlobalSkin = GlobalSkin;
 }
 

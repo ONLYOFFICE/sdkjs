@@ -520,46 +520,49 @@
             if (type == "init")
                 window.Asc.plugin.info = pluginData;
 
-            if (!window.Asc.plugin.theme && undefined !== pluginData.theme)
+            if (undefined !== pluginData.theme)
 			{
-				window.Asc.plugin.theme = pluginData.theme;
-
-				window.Asc.plugin.onThemeChangedBase = function(newTheme)
+				if (!window.Asc.plugin.theme || type === "onThemeChanged")
 				{
-					// correct theme
-					if (pluginData.theme.Name !== "theme-light") // default
-					{
-						var rules = "";
-						for (var className in g_themes_map)
-						{
-							rules += (className + " {");
+					window.Asc.plugin.theme = pluginData.theme;
 
-							var attributes = g_themes_map[className];
-							for (var attr in attributes)
+					if (!window.Asc.plugin.onThemeChangedBase)
+					{
+						window.Asc.plugin.onThemeChangedBase = function (newTheme)
+						{
+							// correct theme
+							var rules = "";
+							for (var className in g_themes_map)
 							{
-								var attrValue = attributes[attr];
-								var attrValueImportant = attrValue.indexOf(" !important");
-								if (-1 < attrValueImportant)
-									attrValue = attrValue.substr(0, attrValueImportant);
-								var newVal = newTheme[attrValue];
-								if (newVal)
-									rules += (attr + " : " + newVal + ((-1 === attrValueImportant) ? ";" : " !important;"));
+								rules += (className + " {");
+
+								var attributes = g_themes_map[className];
+								for (var attr in attributes)
+								{
+									var attrValue = attributes[attr];
+									var attrValueImportant = attrValue.indexOf(" !important");
+									if (-1 < attrValueImportant)
+										attrValue = attrValue.substr(0, attrValueImportant);
+									var newVal = newTheme[attrValue];
+									if (newVal)
+										rules += (attr + " : " + newVal + ((-1 === attrValueImportant) ? ";" : " !important;"));
+								}
+
+								rules += " }\n";
 							}
 
-							rules += " }\n";
-						}
-
-						var styleTheme = document.createElement('style');
-						styleTheme.type = 'text/css';
-						styleTheme.innerHTML = rules;
-						document.getElementsByTagName('head')[0].appendChild(styleTheme);
+							var styleTheme = document.createElement('style');
+							styleTheme.type = 'text/css';
+							styleTheme.innerHTML = rules;
+							document.getElementsByTagName('head')[0].appendChild(styleTheme);
+						};
 					}
-				};
 
-				if (window.Asc.plugin.onThemeChanged)
-					window.Asc.plugin.onThemeChanged(window.Asc.plugin.theme);
-				else
-					window.Asc.plugin.onThemeChangedBase(window.Asc.plugin.theme);
+					if (window.Asc.plugin.onThemeChanged)
+						window.Asc.plugin.onThemeChanged(window.Asc.plugin.theme);
+					else
+						window.Asc.plugin.onThemeChangedBase(window.Asc.plugin.theme);
+				}
 			}
 
             if (!window.Asc.plugin.tr || !window.Asc.plugin.tr_init)
