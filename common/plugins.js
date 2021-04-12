@@ -94,8 +94,6 @@
 
 		this.isNoSystemPluginsOnlyOne = true;
 
-		this.countEventDocContOrPluginsReady = 0;
-
 		this.guidAsyncMethod = "";
 
 		this.sendsToInterface = {};
@@ -106,6 +104,14 @@
 
 		if (this.api.isCheckCryptoReporter)
 			this.checkCryptoReporter();
+
+		// сообщения, которые ДОЛЖНЫ отправиться в каждый плагин один раз
+		// например onDocumentContentReady
+		// объект - { name : data ] } - список
+		this.mainEventTypes = {
+			"onDocumentContentReady" : true
+		};
+		this.mainEvents = {};
 	}
 
 	CPluginsManager.prototype =
@@ -424,6 +430,17 @@
 			if (!plugin || !runObject)
 				return;
 
+			// приходили главные евенты. нужно их послать
+			for (var mainEventType in this.mainEvents)
+			{
+				if (plugin.variations[runObject.currentVariation].eventsMap[mainEventType])
+				{
+					if (!runObject.waitEvents)
+						runObject.waitEvents = [];
+					runObject.waitEvents.push({ n : mainEventType, d : this.mainEvents[mainEventType] });
+				}
+			}
+
 			if (runObject.startData.getAttribute("resize") === true)
 				this.startLongAction();
 
@@ -722,6 +739,9 @@
 
         onPluginEvent : function(name, data)
         {
+			if (this.mainEventTypes[name])
+				this.mainEvents[name] = data;
+
             for (var guid in this.runnedPluginsMap)
             {
                 var plugin = this.getPluginByGuid(guid);
@@ -1168,10 +1188,6 @@
 				window.g_asc_plugins.loadExtensionPlugins(window["Asc"]["extensionPlugins"]);
 			}, 10);
 
-		});
-		window.g_asc_plugins.api.asc_registerCallback('asc_LoadPluginsOrDocument', function()
-		{
-			window.g_asc_plugins.countEventDocContOrPluginsReady++;
 		});
 
         if (window.location && window.location.search)
