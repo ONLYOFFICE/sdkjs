@@ -242,6 +242,22 @@ CRunElementBase.prototype.IsDiacriticalSymbol = function()
 	return false;
 };
 /**
+ * Может ли строка начинаться с данного элемента
+ * @returns {boolean}
+ */
+CRunElementBase.prototype.CanBeAtBeginOfLine = function()
+{
+	return true;
+};
+/**
+ * Может ли строка заканчиваться данным элементом
+ * @returns {boolean}
+ */
+CRunElementBase.prototype.CanBeAtEndOfLine = function()
+{
+	return true;
+};
+/**
  * Проверять ли автозамену на вводе данного элемента
  * @returns {boolean}
  */
@@ -280,6 +296,14 @@ CRunElementBase.prototype.IsHyphen = function()
 CRunElementBase.prototype.IsEqual = function(oElement)
 {
 	return (this.Type === oElement.Type)
+};
+/**
+ * Нужно ли ставить разрыв слова после данного элемента
+ * @returns {boolean}
+ */
+CRunElementBase.prototype.IsSpaceAfter = function()
+{
+	return false;
 };
 
 /**
