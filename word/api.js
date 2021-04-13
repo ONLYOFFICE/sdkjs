@@ -10916,6 +10916,14 @@ background-repeat: no-repeat;\
 		}
 	};
 
+	window["asc_docs_api"].prototype["asc_getButtonsTOC"] = function(id1, id2)
+	{
+		if (this.WordControl && this.WordControl.m_oDrawingDocument)
+		{
+			this.WordControl.m_oDrawingDocument.GetTOC_Buttons(id1, id2);
+		}
+	};
+
 	asc_docs_api.prototype.getDefaultFontFamily = function () {
 		//TODO переделать и отдавать дефолтовый шрифт
 		var defaultFont = "Arial";

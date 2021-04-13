@@ -5296,6 +5296,7 @@ function CDrawingDocument()
 		{
 			dstfonts[dstfonts.length] = new AscFonts.CFont(i, 0, "", 0, null);
 		}
+		AscFonts.FontPickerByCharacter.getFontsByString(AscCommon.translateManager.getValue("Heading" + " 123"));
         AscFonts.FontPickerByCharacter.extendFonts(dstfonts);
 		this.m_oWordControl.m_oLogicDocument.Fonts = dstfonts;
 		return;
@@ -6098,6 +6099,221 @@ function CDrawingDocument()
 			oLogicDocument.SetLocalTrackRevisions(bTrackRevisions);
 
 		editor.isViewMode = _oldTurn;
+	};
+
+	this.GetTOC_Buttons = function(idDiv1, idDiv2)
+	{
+		var div1 = document.getElementById(idDiv1);
+		var div2 = document.getElementById(idDiv2);
+
+		var canvas1 = div1.childNodes[0];
+		var canvas2 = div2.childNodes[0];
+		var isAdd = false;
+
+		if (!canvas1 || !canvas2)
+		{
+			canvas1 && div1.removeChild(canvas1);
+			canvas2 && div1.removeChild(canvas2);
+
+			canvas1 = document.createElement("canvas");
+			canvas2 = document.createElement("canvas");
+
+			canvas1.style.margins = canvas2.style.margins = "0px";
+			canvas1.style.padding = canvas2.style.padding = "0px";
+
+			isAdd = true;
+		}
+
+		var scaleAttribute = AscCommon.AscBrowser.retinaPixelRatio;
+		var scaleAttributeText = "" + ((scaleAttribute * 100) >> 0);
+
+		if (canvas1.scaleAttributeText === scaleAttributeText && canvas2.scaleAttributeText === scaleAttributeText)
+		{
+			// уже рисовали и ничего не изменилось
+			return;
+		}
+
+		canvas1.scaleAttributeText = scaleAttributeText;
+		canvas2.scaleAttributeText = scaleAttributeText;
+
+		var pixW = 248;
+		var pixW_natural = AscCommon.AscBrowser.convertToRetinaValue(pixW, true);
+		var pixH = 0;
+		var pixH_natural = 0;
+
+		var mmW = pixW_natural * g_dKoef_pix_to_mm / AscCommon.AscBrowser.retinaPixelRatio;
+		var mmH = pixH_natural * g_dKoef_pix_to_mm / AscCommon.AscBrowser.retinaPixelRatio;
+
+		var wPxOffset = AscBrowser.convertToRetinaValue(8, true);
+		var wMmOffset = wPxOffset * g_dKoef_pix_to_mm / AscCommon.AscBrowser.retinaPixelRatio;
+
+		var oLogicDocument = this.m_oWordControl.m_oLogicDocument;
+		var oStyles        = oLogicDocument.GetStyles();
+
+		// off
+		History.TurnOff();
+
+		var oldTrack = false;
+		if (oLogicDocument.IsTrackRevisions())
+		{
+			oldTrack = oLogicDocument.GetLocalTrackRevisions();
+			oLogicDocument.SetLocalTrackRevisions(false);
+		}
+
+		var oldTurn = editor.isViewMode;
+		editor.isViewMode = true;
+
+		var oldMarks = this.m_oWordControl.m_oApi.ShowParaMarks;
+		this.m_oWordControl.m_oApi.ShowParaMarks = false;
+
+		var props = [
+			{
+				OutlineStart : 1,
+				OutlineEnd : 3,
+				Hyperlink : false,
+				StylesType : Asc.c_oAscTOCStylesType.Simple,
+				RightTab : true,
+				PageNumbers : true,
+				TabLeader : Asc.c_oAscTabLeader.Dot,
+				Pages : [2, 5, 15]
+			},
+			{
+				OutlineStart : 1,
+				OutlineEnd : 3,
+				Hyperlink : true,
+				StylesType : Asc.c_oAscTOCStylesType.Web,
+				RightTab : true,
+				PageNumbers : false,
+				TabLeader : Asc.c_oAscTabLeader.None
+			}
+		];
+
+		for (var i = 0; i < 2; i++)
+		{
+			// content
+			var oStyles        = oLogicDocument.GetStyles();
+
+			var oHeader          = new CHeaderFooter(oLogicDocument.HdrFtr, oLogicDocument, this, AscCommon.hdrftr_Header);
+			var oDocumentContent = oHeader.GetContent();
+
+			var arrLevels         = [];
+			var arrStylesToDelete = [];
+			var prop = props[i];
+
+			for (var nCurrentLevel = prop.OutlineStart; nCurrentLevel <= prop.OutlineEnd; ++nCurrentLevel)
+			{
+				var sName = "Heading " + nCurrentLevel;
+				var nLvl  = nCurrentLevel - 1;
+
+				var oStyle = new CStyle("", null, null, styletype_Paragraph, true);
+				oStyle.CreateTOC(nLvl, prop.StylesType);
+
+				oStyle.ParaPr.Spacing.Line = 1.2;
+				oStyle.ParaPr.Spacing.LineRule = linerule_Auto;
+				oStyle.ParaPr.Spacing.Before = 0;
+				oStyle.ParaPr.Spacing.After = 0;
+				oStyle.ParaPr.ContextualSpacing = true;
+				
+				oStyle.ParaPr.Ind.Left = 15 * (nCurrentLevel - 1) * g_dKoef_pt_to_mm;
+
+				oStyle.TextPr.FontFamily = {Name: "Arial", Index: -1};
+				oStyle.TextPr.FontSize = 10;
+
+				oStyles.Add(oStyle);
+
+				arrLevels[nLvl] = {
+					Styles  : [sName],
+					StyleId : oStyle.GetId()
+				};
+
+				arrStylesToDelete.push(oStyle.GetId());
+			}
+
+			for (var nCurrentLevel = prop.OutlineStart; nCurrentLevel <= prop.OutlineEnd; ++nCurrentLevel)
+			{
+				var sStyleId = arrLevels[nCurrentLevel - 1].StyleId;
+				for (var nStyle = 0, nStylesCount = arrLevels[nCurrentLevel - 1].Styles.length; nStyle < nStylesCount; ++nStyle)
+				{
+					var sStyleName = AscCommon.translateManager.getValue(arrLevels[nCurrentLevel - 1].Styles[nStyle]);
+
+					var oParagraph = new Paragraph(this, oDocumentContent, false);
+					oDocumentContent.AddToContent(nCurrentLevel - 1, oParagraph);
+					oParagraph.SetParagraphStyleById(sStyleId);
+
+					var oRun = new ParaRun(oParagraph, false);
+					oParagraph.AddToContent(0, oRun);
+					oRun.AddText(sStyleName);
+
+					if (prop.PageNumbers)
+					{
+						if (prop.RightTab)
+						{
+							var oParaTabs = new CParaTabs();
+							oParaTabs.Add(new CParaTab(tab_Right, mmW - 4 - wMmOffset, prop.TabLeader));
+							oParagraph.SetParagraphTabs(oParaTabs);
+
+							oRun.AddToContent(-1, new ParaTab());
+						}
+						else
+						{
+							oRun.AddToContent(-1, new ParaSpace());
+						}
+
+						oRun.AddText("" + prop.Pages[nCurrentLevel - 1]);
+					}
+				}
+			}
+
+			// удаляем последний параграф
+			oDocumentContent.Content.splice(3, 1);
+			oDocumentContent.Reset(1, 0, 1000, 10000);
+			oDocumentContent.Recalculate_Page(0, true);
+
+			for (nStyle = 0, nStylesCount = arrStylesToDelete.length; nStyle < nStylesCount; ++nStyle)
+			{
+				oStyles.Remove(arrStylesToDelete[nStyle]);
+			}
+
+			mmH = oDocumentContent.GetSummaryHeight() + (wMmOffset * 2);
+			pixH = mmH / g_dKoef_pix_to_mm;
+			pixH = ((pixH + 3) >> 2) << 2;
+			pixH_natural = AscCommon.AscBrowser.convertToRetinaValue(pixH, true);
+
+			var canvas = (i === 0) ? canvas1 : canvas2;
+
+			canvas.style.width = pixW + "px";
+			canvas.style.height = pixH + "px";
+
+			canvas.width = pixW_natural;
+			canvas.height = pixH_natural;
+
+			var ctx = canvas.getContext('2d');
+
+			ctx.fillStyle = "#FFFFFF";
+			ctx.fillRect(0, 0, pixW_natural, pixH_natural);
+
+			var graphics = new AscCommon.CGraphics();
+			graphics.init(ctx, pixW_natural, pixH_natural, mmW, mmH);
+			graphics.m_oFontManager = AscCommon.g_fontManager;
+			graphics.m_oCoordTransform.tx = graphics.m_oCoordTransform.ty = wPxOffset;
+			graphics.transform(1, 0, 0, 1, 0, 0);
+			oDocumentContent.Draw(0, graphics);
+		}
+
+		this.m_oWordControl.m_oApi.ShowParaMarks = oldMarks;
+
+		History.TurnOn();
+
+		if (false !== oldTrack)
+			oLogicDocument.SetLocalTrackRevisions(oldTrack);
+
+		editor.isViewMode = oldTurn;
+
+		if (isAdd)
+		{
+			div1.appendChild(canvas1);
+			div2.appendChild(canvas2);
+		}
 	};
 
 	this.SetDrawImagePlaceTableOfFigures = function(id, props)
