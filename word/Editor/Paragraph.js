@@ -7538,7 +7538,10 @@ Paragraph.prototype.RemoveSelection = function()
 };
 Paragraph.prototype.DrawSelectionOnPage = function(CurPage)
 {
-	if (true != this.Selection.Use)
+	if (!this.IsRecalculated())
+		return;
+
+	if (true !== this.Selection.Use)
 		return;
 
 	if (CurPage < 0 || CurPage >= this.Pages.length)

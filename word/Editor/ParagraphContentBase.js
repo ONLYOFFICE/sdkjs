@@ -852,6 +852,12 @@ CParagraphContentBase.prototype.GetFirstRunElementPos = function(nType, oStartPo
 	return false;
 };
 /**
+ * @param isRecalculated
+ */
+CParagraphContentBase.prototype.SetIsRecalculated = function(isRecalculated)
+{
+};
+/**
  * Устанавливаем текущие позиции на текущий элемент
  */
 CParagraphContentBase.prototype.SetThisElementCurrentInParagraph = function()
