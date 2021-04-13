@@ -1660,98 +1660,44 @@
 			ctx.fill();
 			ctx.stroke();
 
-			function drawArrow(ctx, x, y, len, rgb, arrowType) {
+			function drawArrow(ctx, x, y, len, rgb, arrType) {
 				ctx.beginPath();
 
 				var arrowSize = len;
 				var _data, px,
 					_x = Math.round((arrowSize - len) / 2),
-					_y = Math.floor(arrowSize / 2);
-				
-				var r = rgb.r, g = rgb.g, b = rgb.b;
+					_y = Math.floor(arrowSize / 2),
+				     r = rgb.r, g = rgb.g, b = rgb.b;
 				_data = ctx.createImageData(arrowSize, arrowSize);
 				px = _data.data;
 
 				while (len > 0) {
-					switch(arrowType) {
-						// top arrow
-						case 1:
-							var ind = 4 * (arrowSize * _y + _x);
-							for (var i = 0; i < len; i++) {
-								px[ind++] = r;
-								px[ind++] = g;
-								px[ind++] = b;
-								px[ind++] = 255;
-							}
-
-							r = r >> 0;
-							g = g >> 0;
-							b = b >> 0;
-
-							_x += 1;
-							_y -= 1;
-							len -= 2;
-							break;
-						// bottom arrow
-						case 2:
-							var ind = 4 * (arrowSize * _y + _x);
-							for (var i = 0; i < len; i++) {
-								px[ind++] = r;
-								px[ind++] = g;
-								px[ind++] = b;
-								px[ind++] = 255;
-							}
-
-							r = r >> 0;
-							g = g >> 0;
-							b = b >> 0;
-
-							_x += 1;
-							_y += 1;
-							len -= 2;
-							break;
-						//left arrow
-						case 3:
-							var ind = 4 * (arrowSize * _x + _y);
-							var xx = _x;
-							for (var i = 0; i < len; i++) {
-								px[ind++] = r;
-								px[ind++] = g;
-								px[ind++] = b;
-								px[ind++] = 255;
-								++xx;
-								ind = 4 * (arrowSize * xx  + _y);
-							}
-							r = r >> 0;
-							g = g >> 0;
-							b = b >> 0;
-							_x += 1;
-							_y -= 1;
-							len -= 2;
-							break;
-						//right arrow
-						case 4:
-							var ind = 4 * (arrowSize * _x + _y);
-							var xx = _x;
-							for (var i = 0; i < len; i++) {
-								px[ind++] = r;
-								px[ind++] = g;
-								px[ind++] = b;
-								px[ind++] = 255;
-								++xx;
-								ind = 4 * (arrowSize * xx  + _y);
-							}
-							r = r >> 0;
-							g = g >> 0;
-							b = b >> 0;
-							_x += 1;
-							_y += 1;
-							len -= 2;
-							break;
+					var ind = (arrType === 1 || arrType === 2) ? 4 * (arrowSize * _y + _x) : 4 * (arrowSize * _x + _y);
+                    var xx = _x;
+					for (var i = 0; i < len; i++) {
+						px[ind++] = r;
+						px[ind++] = g;
+						px[ind++] = b;
+						px[ind++] = 255;
+						if(arrType === 3 || arrType === 4) {
+							++xx;
+							ind = 4 * (arrowSize * xx  + _y);
+						}
 					}
-
+					// top or left arrow
+					if(arrType === 1 || arrType === 3) {
+						_x += 1;
+						_y -= 1;
+						// bottom or right arrow
+					} else if(arrType === 2 || arrType === 4) {
+						_x += 1;
+						_y += 1;
+					}
+					len -= 2;
+					r = r >> 0;
+					g = g >> 0;
+					b = b >> 0;
 				}
-
 				ctx.putImageData(_data, x, y);
 			}
 			var x = Math.round(pos1.X  * rPR) +  Math.round(rPR) - Math.round((_epsRects + _rectWidth) * rPR);
