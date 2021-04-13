@@ -18840,7 +18840,7 @@
 			ctx.AddClipRect(bCol ? pos.pos - offsetX : x, bCol ? y : pos.pos - offsetY, bCol ? pos.size : w, bCol ? h : pos.size);
 			ctx.beginPath();
 
-			var paddingLine = Math.floor((w - sizeLine) / 2);
+			var paddingLine = Math.floor((w - sizeLine - borderSize) / 2);
 
 			if(w > sizeLine + 2) {
 				if(this._getGroupCollapsed(val, bCol)/*rowLevelMap[val] && rowLevelMap[val].collapsed*/) {
@@ -18875,16 +18875,16 @@
 
 			var posY = padding * 2 + buttonSize / 2 - padding + (level - 1) * buttonSize;
 			x = endPosX + colW/2 - buttonSize / 2;
-			y = posY - Math.floor(6 * zoom) * padding;
+			y = posY - Math.floor(AscCommon.AscBrowser.convertToRetinaValue(6, true) * zoom);
 		} else {
 			var endPosY = this._getRowTop(val);
 			var rowH = this._getRowHeight(val);
 			var posX = padding * 2 + buttonSize / 2 - padding + (level - 1) * buttonSize;
-			var x = posX - Math.floor(6 * zoom) * padding;
+			var x = posX - Math.floor(AscCommon.AscBrowser.convertToRetinaValue(6, true) * zoom);
 			var y = endPosY + rowH/2 - buttonSize / 2;
 		}
-		var w = buttonSize - 1;
-		var h = buttonSize - 1;
+		var w = buttonSize - padding;
+		var h = buttonSize - padding;
 
 		return {x: x, y: y, w: w, h: h, size: bCol ? colW : rowH, pos: bCol ? endPosX : endPosY};
 	};
