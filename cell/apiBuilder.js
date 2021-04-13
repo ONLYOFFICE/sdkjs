@@ -337,12 +337,12 @@
 	 * @returns {ApiRange | Error}
 	 */
 	Api.prototype.Intersect  = function (Range1, Range2) {
-		if (Range1.Worksheet.Id === Range2.Worksheet.Id) {
+		if (Range1.GetWorksheet().Id === Range2.GetWorksheet().Id) {
 			var res = Range1.range.bbox.intersection(Range2.range.bbox);
 			if (!res) {
 				return "Ranges do not intersect.";
 			} else {
-				return new ApiRange(this.ActiveSheet.worksheet.getRange3(res.r1, res.c1, res.r2, res.c2));
+				return new ApiRange(this.GetActiveSheet().worksheet.getRange3(res.r1, res.c1, res.r2, res.c2));
 			}
 		} else {
 			return new Error('Ranges should be from one worksheet.');
@@ -707,7 +707,7 @@
 	 */
 	ApiWorksheet.prototype.GetRows = function (value) {
 		if (typeof  value === "undefined") {
-			return this.Rows;
+			return this.GetCells();
 		} else if (typeof value == "number" || value.indexOf(':') == -1) {
 			value = parseInt(value);
 			if (value > 0) {
@@ -1206,7 +1206,7 @@
 				Hyperlink.asc_setHyperlinkUrl(sAddress);
 			} else {
 				Hyperlink.asc_setRange(sAddress);
-				Hyperlink.asc_setSheet(this.Name);
+				Hyperlink.asc_setSheet(this.GetName());
 			}
 			this.worksheet.workbook.oApi.wb.insertHyperlink(Hyperlink);
 		}
@@ -1458,10 +1458,10 @@
 	 */
 	ApiRange.prototype.GetRows = function (nRow) {
 		if (typeof nRow === "undefined") {
-			var r1 = this.range.bbox.r1;
-			var r2 = this.range.bbox.r2;
+			var r1 = this.range.bbox.r1 + 1;
+			var r2 = this.range.bbox.r2 + 1;
 			return new ApiWorksheet(this.range.worksheet).GetRows(r1 + ":" + r2);
-			// return new ApiWorksheet(this.range.worksheet).Rows;	// return all rows from current sheet
+			// return new ApiWorksheet(this.range.worksheet).GetRows();	// return all rows from current sheet
 		} else if ( (nRow >= this.range.bbox.r1) && (nRow <= this.range.bbox.r2) ) {
 			return new ApiWorksheet(this.range.worksheet).GetRows(nRow);
 		} else {
