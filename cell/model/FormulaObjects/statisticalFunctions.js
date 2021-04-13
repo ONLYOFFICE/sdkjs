@@ -6267,7 +6267,7 @@ function (window, undefined) {
 		var pFcMat = aETSCalc.GetForecastRange(pTMat);
 
 
-		return pFcMat && pFcMat[0] ? new cNumber(pFcMat[0][0]) : new cError(cErrorType.wrong_value_type);
+		return pFcMat && pFcMat[0] ? new cNumber(pFcMat[0][0]) : new cError(cErrorType.not_numeric);
 	};
 
 	/**
