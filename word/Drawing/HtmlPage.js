@@ -1192,31 +1192,34 @@ function CEditorPage(api)
 
 		_ctx.lineWidth   = Math.round(dPR);
 		_ctx.strokeStyle = GlobalSkin.RulerOutline;
-
 		_ctx.strokeRect(2.5 * _ctx.lineWidth, 3.5 * _ctx.lineWidth, Math.round(14 * dPR), Math.round(14 * dPR));
 		_ctx.beginPath();
 
 		_ctx.strokeStyle = GlobalSkin.RulerTabsColor;
 
-		_ctx.lineWidth = 2 * Math.round(dPR);
+		_ctx.lineWidth = (dPR === 1.5) ? 2 * Math.floor(dPR) : 2 * Math.round(dPR);
+		var dx = (dPR === 1.5) ? 1 : 0;
+		var dy = (dPR === 1.5) ? 2 : 0;
+
 		if (this.m_nTabsType == tab_Left)
 		{
-			_ctx.moveTo(Math.round(8 * dPR), Math.round(9 * dPR));
-			_ctx.lineTo(Math.round(8 * dPR), Math.round(14 * dPR));
-			_ctx.lineTo(Math.round(13 * dPR), Math.round(14 * dPR));
+			_ctx.moveTo(Math.round(8 * dPR) + dx, Math.round(8 * dPR) + dy);
+			_ctx.lineTo(Math.round(8 * dPR) + dx, Math.round(13 * dPR) + dy);
+			_ctx.lineTo(Math.round(13 * dPR) + dx, Math.round(13 * dPR) + dy);
 		}
 		else if (this.m_nTabsType == tab_Center)
 		{
-			_ctx.moveTo(Math.round(6 * dPR), Math.round(14 * dPR));
-			_ctx.lineTo(Math.round(14 * dPR), Math.round(14 * dPR));
-			_ctx.moveTo(Math.round(10 * dPR), Math.round(9 * dPR));
-			_ctx.lineTo(Math.round(10 * dPR), Math.round(14 * dPR));
+			var dx_center = (dPR === 2) ? -1 : 0;
+			_ctx.moveTo(Math.round(6 * dPR) + dx_center, Math.round(14 * dPR));
+			_ctx.lineTo(Math.round(14 * dPR) + dx_center, Math.round(14 * dPR));
+			_ctx.moveTo(Math.round(10 * dPR) + dx_center, Math.round(9 * dPR));
+			_ctx.lineTo(Math.round(10 * dPR) + dx_center, Math.round(14 * dPR));
 		}
 		else
 		{
-			_ctx.moveTo(Math.round(12 * dPR), Math.round(9 * dPR));
-			_ctx.lineTo(Math.round(12 * dPR), Math.round(14 * dPR));
-			_ctx.lineTo(Math.round(7 * dPR), Math.round(14 * dPR));
+			_ctx.moveTo(Math.round(12 * dPR) + dx, Math.round(9 * dPR) + dy);
+			_ctx.lineTo(Math.round(12 * dPR) + dx, Math.round(14 * dPR) + dy);
+			_ctx.lineTo(Math.round(7 * dPR) + dx, Math.round(14 * dPR) + dy);
 		}
 
 		_ctx.stroke();
