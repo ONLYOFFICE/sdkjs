@@ -2309,6 +2309,7 @@
 	prot['PivotWithoutUnderlyingData']       = prot.PivotWithoutUnderlyingData;
 	prot['ForceSaveButton']                  = prot.ForceSaveButton;
 	prot['ForceSaveTimeout']                 = prot.ForceSaveTimeout;
+	prot['Submit']                           = prot.Submit;
 	prot['CannotChangeFormulaArray']         = prot.CannotChangeFormulaArray;
 	prot['MultiCellsInTablesFormulaArray']   = prot.MultiCellsInTablesFormulaArray;
 	prot['MailToClientMissing']				 = prot.MailToClientMissing;
