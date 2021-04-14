@@ -1559,7 +1559,7 @@
 
 		var HtmlPage = this.delegate.HtmlPage;
 		var DrawingDocument = this.delegate.DrawingDocument;
-
+		var rPR = AscCommon.AscBrowser.retinaPixelRatio;
 		var horRuler = HtmlPage.m_oHorRuler;
 		var verRuler = HtmlPage.m_oVerRuler;
 
@@ -1626,12 +1626,10 @@
 			overlay.CheckPoint(TableMoveRect_x, TableMoveRect_y);
 			overlay.CheckPoint(TableMoveRect_x + _rectWidth, TableMoveRect_y + _rectWidth);
 
-			if (this.delegate.Name != "slide")
-				ctx.drawImage(window.g_table_track_mobile_move, TableMoveRect_x, TableMoveRect_y, window.g_table_track_mobile_move.size, window.g_table_track_mobile_move.size);
+			ctx.lineWidth = Math.round(rPR);
 
+			overlay.AddRoundRect(Math.round(pos1.X * rPR) + 0.5, Math.round(TableMoveRect_y * rPR) - 0.5, Math.round((pos2.X - pos1.X) * rPR) + 0.5, Math.round(_rectWidth * rPR), Math.round(4 * rPR));
 			ctx.fillStyle = _mainFillStyle;
-
-			overlay.AddRoundRect((pos1.X >> 0) + 0.5, TableMoveRect_y, (pos2.X - pos1.X) >> 0, _rectWidth, 4);
 
 			ctx.fill();
 			ctx.stroke();
@@ -1653,14 +1651,87 @@
 			var pos3 = DrawingDocument.ConvertCoordsToCursorWR(_tableOutline.X, _y1, DrawingDocument.m_lCurrentPage);
 			var pos4 = DrawingDocument.ConvertCoordsToCursorWR(_tableOutline.X, _y2, DrawingDocument.m_lCurrentPage);
 
-			var _ttX = (pos1.X >> 0) + 0.5 - (_epsRects + _rectWidth);
+			if (this.delegate.Name != "slide")
+			overlay.AddRoundRect(Math.round(pos1.X  * rPR) + 1.5 - Math.round((_epsRects + _rectWidth) * rPR), Math.round(TableMoveRect_y * rPR) - 0.5, Math.round(_rectWidth * rPR), Math.round(_rectWidth * rPR), Math.round(4 * rPR));
 
 			ctx.fillStyle = _mainFillStyle;
 
-			overlay.AddRoundRect((pos1.X >> 0) + 1.5 - (_epsRects + _rectWidth), (pos3.Y >> 0) + 0.5, _rectWidth - 1, (pos4.Y - pos3.Y) >> 0, 4);
+			overlay.AddRoundRect(Math.round(pos1.X  * rPR) + 1.5 - Math.round((_epsRects + _rectWidth) * rPR), Math.round(pos3.Y * rPR) + 0.5, Math.round((_rectWidth - 1) * rPR), Math.round((pos4.Y - pos3.Y) * rPR), Math.round(4 * rPR));
 
 			ctx.fill();
 			ctx.stroke();
+
+			function drawArrow(ctx, x, y, len, rgb, arrType) {
+				ctx.beginPath();
+
+				var arrowSize = len;
+				var _data, px,
+					_x = Math.round((arrowSize - len) / 2),
+					_y = Math.floor(arrowSize / 2);
+
+				var r = rgb.r, g = rgb.g, b = rgb.b;
+				_data = ctx.createImageData(arrowSize, arrowSize);
+				px = _data.data;
+
+				while (len > 0) {
+					var ind = (arrType === 1 || arrType === 2) ? 4 * (arrowSize * _y + _x) : 4 * (arrowSize * _x + _y);
+					var xx = _x;
+					for (var i = 0; i < len; i++) {
+						px[ind++] = r;
+						px[ind++] = g;
+						px[ind++] = b;
+						px[ind++] = 255;
+						if(arrType === 3 || arrType === 4) {
+							++xx;
+							ind = 4 * (arrowSize * xx  + _y);
+						}
+					}
+
+					// top or left arrow
+					if(arrType === 1 || arrType === 3) {
+						_x += 1;
+						_y -= 1;
+						// bottom or right arrow
+					} else if(arrType === 2 || arrType === 4) {
+						_x += 1;
+						_y += 1;
+					}
+					len -= 2;
+					r = r >> 0;
+					g = g >> 0;
+					b = b >> 0;
+
+				}
+
+				ctx.putImageData(_data, x, y);
+			}
+			if (this.delegate.Name != "slide") {
+				var x = Math.round(pos1.X * rPR) + Math.round(rPR) - Math.round((_epsRects + _rectWidth) * rPR);
+				var y = Math.round(TableMoveRect_y * rPR);
+
+				var canvasArrow = document.createElement('canvas'),
+					contextArrow = canvasArrow.getContext('2d'),
+					arrowSize = Math.round(8 * rPR);
+
+				if (0 == (arrowSize & 1)) {
+					arrowSize += 1;
+				}
+
+				var dx_scaling = 0;
+				if (rPR >= 1.5) {
+					dx_scaling = (rPR - Math.floor(rPR) >= 0.5) ? Math.floor(rPR) : Math.floor(rPR) - 1;
+				}
+				var dx = Math.round(Math.round(_rectWidth * rPR) / 2) - Math.floor(arrowSize / 2) - dx_scaling;
+				var dy = -Math.floor(arrowSize / 2) + arrowSize + Math.round(arrowSize / 2);
+				var arrowType = {top: 1, bottom: 2, left: 3, right: 4};
+				var rgb = {r: 20, g: 111, b: 255}
+				drawArrow(contextArrow, dx, dx_scaling, arrowSize, rgb, arrowType.top);
+				drawArrow(contextArrow, dx, dy + dx_scaling, arrowSize, rgb, arrowType.bottom);
+				drawArrow(contextArrow, dx - Math.round(arrowSize / 2), Math.round(arrowSize / 2) + dx_scaling, arrowSize, rgb, arrowType.left);
+				drawArrow(contextArrow, dx + Math.round(arrowSize / 2), Math.round(arrowSize / 2) + dx_scaling, arrowSize, rgb, arrowType.right);
+
+				ctx.drawImage(canvasArrow, x, y);
+			}
 
 			ctx.beginPath();
 
@@ -1683,7 +1754,7 @@
 				var _y = DrawingDocument.ConvertCoordsToCursorWR(0, _oldY, _PageNum);
 
 				ctx.beginPath();
-				overlay.AddDiamond(_x + 1.5 + (_rectWidth >> 1), _y.Y, AscCommon.MOBILE_TABLE_RULER_DIAMOND);
+				overlay.AddDiamond(Math.round(_x * rPR) + 1.5 + Math.round(Math.round(_rectWidth * rPR) / 2), Math.round(_y.Y * rPR), Math.round(AscCommon.MOBILE_TABLE_RULER_DIAMOND * rPR));
 				ctx.fill();
 				ctx.beginPath();
 
@@ -1702,10 +1773,10 @@
 				var _x = _col - _table_markup.Margins[i - 1].Right;
 				var _r = _col + ((i == _cols.length) ? 0 : _table_markup.Margins[i].Left);
 
-				var __c = ((xDst + dKoef * _col) >> 0) + 0.5;
+				var __c = ((xDst + dKoef * _col) >> 0);
 
 				ctx.beginPath();
-				overlay.AddDiamond(__c, TableMoveRect_y +_rectWidth / 2, AscCommon.MOBILE_TABLE_RULER_DIAMOND);
+				overlay.AddDiamond(Math.round(__c * rPR) + 0.5, Math.round(TableMoveRect_y * rPR) + Math.round(_rectWidth * rPR / 2), Math.round(AscCommon.MOBILE_TABLE_RULER_DIAMOND * rPR));
 				ctx.fill();
 				ctx.beginPath();
 
