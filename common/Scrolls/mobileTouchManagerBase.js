@@ -1611,6 +1611,9 @@
 
 		var _PageNum = _table_outline_dr.CurrentPageIndex;
 
+		var _lineW = Math.round(rPR);
+		var _pixelNet = _lineW / 2;
+
 		if (!_table_outline_dr.TableMatrix || global_MatrixTransformer.IsIdentity(_table_outline_dr.TableMatrix))
 		{
 			this.TableMovePoint = {X : _tableOutline.X, Y : _tableOutline.Y};
@@ -1626,9 +1629,9 @@
 			overlay.CheckPoint(TableMoveRect_x, TableMoveRect_y);
 			overlay.CheckPoint(TableMoveRect_x + _rectWidth, TableMoveRect_y + _rectWidth);
 
-			ctx.lineWidth = Math.round(rPR);
+			ctx.lineWidth = _lineW;
 
-			overlay.AddRoundRect(Math.round(pos1.X * rPR) + 0.5, Math.round(TableMoveRect_y * rPR) - 0.5, Math.round((pos2.X - pos1.X) * rPR) + 0.5, Math.round(_rectWidth * rPR), Math.round(4 * rPR));
+			overlay.AddRoundRect(Math.round(pos1.X * rPR) + _pixelNet, Math.round(TableMoveRect_y * rPR) - _pixelNet, Math.round((pos2.X - pos1.X) * rPR), Math.round(_rectWidth * rPR), Math.round(4 * rPR));
 			ctx.fillStyle = _mainFillStyle;
 
 			ctx.fill();
@@ -1652,11 +1655,11 @@
 			var pos4 = DrawingDocument.ConvertCoordsToCursorWR(_tableOutline.X, _y2, DrawingDocument.m_lCurrentPage);
 
 			if (this.delegate.Name != "slide")
-			overlay.AddRoundRect(Math.round(pos1.X  * rPR) + 1.5 - Math.round((_epsRects + _rectWidth) * rPR), Math.round(TableMoveRect_y * rPR) - 0.5, Math.round(_rectWidth * rPR), Math.round(_rectWidth * rPR), Math.round(4 * rPR));
+			overlay.AddRoundRect(Math.round(pos1.X  * rPR) + 1 + _pixelNet - Math.round((_epsRects + _rectWidth) * rPR), Math.round(TableMoveRect_y * rPR) - _pixelNet, Math.round(_rectWidth * rPR), Math.round(_rectWidth * rPR), Math.round(4 * rPR));
 
 			ctx.fillStyle = _mainFillStyle;
 
-			overlay.AddRoundRect(Math.round(pos1.X  * rPR) + 1.5 - Math.round((_epsRects + _rectWidth) * rPR), Math.round(pos3.Y * rPR) + 0.5, Math.round((_rectWidth - 1) * rPR), Math.round((pos4.Y - pos3.Y) * rPR), Math.round(4 * rPR));
+			overlay.AddRoundRect(Math.round(pos1.X  * rPR) + 1 + _pixelNet - Math.round((_epsRects + _rectWidth) * rPR), Math.round(pos3.Y * rPR) + _pixelNet, Math.round((_rectWidth - 1) * rPR), Math.round((pos4.Y - pos3.Y) * rPR), Math.round(4 * rPR));
 
 			ctx.fill();
 			ctx.stroke();

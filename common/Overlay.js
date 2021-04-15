@@ -557,6 +557,7 @@ COverlay.prototype =
         _ctx.quadraticCurveTo(x, y + h, x, y + h - r);
         _ctx.lineTo(x, y + r);
         _ctx.quadraticCurveTo(x, y, x + r, y);
+        _ctx.closePath();
     },
 
     AddRoundRectCtx : function(ctx, x, y, w, h, r)
@@ -574,6 +575,7 @@ COverlay.prototype =
         _ctx.quadraticCurveTo(x, y + h, x, y + h - r);
         _ctx.lineTo(x, y + r);
         _ctx.quadraticCurveTo(x, y, x + r, y);
+		_ctx.closePath();
     },
     DrawFrozenPlaceHorLine: function(y, left, right)
     {
