@@ -13844,7 +13844,7 @@ CT_RangePr.prototype.generateGroupItems  = function (containsInteger, containsBl
 			numFormat = AscCommon.oNumFormatCache.get("mmm");
 			date = new Asc.cDate(Date.UTC(2000, 0, 1));
 			for(i = 0; i < 12; ++i) {
-				date.setMonth(i);
+				date.setUTCMonth(i);
 				groupItems.addString(numFormat.formatToChart(date.getExcelDateWithTime2()));
 			}
 		} else if (this.groupBy === c_oAscGroupBy.Quarters) {
