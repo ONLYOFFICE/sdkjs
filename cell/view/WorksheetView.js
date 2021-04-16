@@ -8056,32 +8056,30 @@
 				commentCoords: coords
 			};
 			if(!oHyperlink) {
-				var formulaParsed;
 				this.model.getCell3(r.row, c.col)._foreachNoEmpty(function (cell) {
 					if (cell.isFormula()) {
-						formulaParsed = cell.getFormulaParsed();
+						cell.processFormula(function(formulaParsed) {
+							var formulaHyperlink = formulaParsed.getFormulaHyperlink();
+							if (formulaHyperlink) {
+								//запсускаю пересчет в связи с тем, что после открытия значение не рассчитано,
+								// но показывать результат при наведении на ссылку нужно
+								if(null === formulaParsed.value || formulaParsed.getShared()) {
+									formulaParsed.calculate();
+								}
+								if(formulaParsed.value && formulaParsed.value.hyperlink) {
+									oHyperlink = new AscCommonExcel.Hyperlink();
+									oHyperlink.Hyperlink = formulaParsed.value.hyperlink;
+								} else if(formulaParsed.value && AscCommonExcel.cElementType.array === formulaParsed.value.type) {
+									var firstArrayElem = formulaParsed.value.getElementRowCol(0,0);
+									if(firstArrayElem && firstArrayElem.hyperlink) {
+										oHyperlink = new AscCommonExcel.Hyperlink();
+										oHyperlink.Hyperlink = firstArrayElem.hyperlink;
+									}
+								}
+							}
+						});
 					}
 				});
-				if (formulaParsed) {
-					var formulaHyperlink = formulaParsed.getFormulaHyperlink();
-					if (formulaHyperlink) {
-						//запсускаю пересчет в связи с тем, что после открытия значение не рассчитано,
-						// но показывать результат при наведении на ссылку нужно
-						if(null === formulaParsed.value) {
-							formulaParsed.calculate();
-						}
-						if(formulaParsed.value && formulaParsed.value.hyperlink) {
-							oHyperlink = new AscCommonExcel.Hyperlink();
-							oHyperlink.Hyperlink = formulaParsed.value.hyperlink;
-						} else if(formulaParsed.value && AscCommonExcel.cElementType.array === formulaParsed.value.type) {
-							var firstArrayElem = formulaParsed.value.getElementRowCol(0,0);
-							if(firstArrayElem && firstArrayElem.hyperlink) {
-								oHyperlink = new AscCommonExcel.Hyperlink();
-								oHyperlink.Hyperlink = firstArrayElem.hyperlink;
-							}
-						}
-					}
-				}
 			}
 
 			if (oHyperlink) {
