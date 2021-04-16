@@ -471,6 +471,7 @@
 		".select2-search--dropdown" : { "background-color" : "background-normal !important"},
 		".select2-container--default .select2-search--dropdown .select2-search__field" : { "color" : "text-normal", "background-color" : "background-normal", "border-color" : "border-regular-control"},
 		".select2-container--default.select2-container--disabled .select2-selection--single" : { "background-color" : "background-normal" },
+		".select2-container--default .select2-selection--single .select2-selection__arrow b" : { "border-color" : "text-normal !important" },
 		".ps .ps__rail-y:hover" : {"background-color" : "background-toolbar" },
 		".ps .ps__rail-y.ps--clicking" : {"background-color" : "background-toolbar" },
 		".ps__thumb-y" : {"background-color" : "background-normal", "border-color" : "background-normal" },
