@@ -447,7 +447,7 @@
 		".defaultlable" : { "color" : "text-normal" },
 		".aboutlable" : { "color" : "text-normal" },
 		"a.aboutlink" : { "color" : "text-normal" },
-		".form-control" : { "color" : "text-normal", "background-color" : "background-normal", "border-color" : "border-regular-control" },
+		".form-control, .form-control[readonly], .form-control[disabled]" : { "color" : "text-normal", "background-color" : "background-normal", "border-color" : "border-regular-control" },
 		".form-control:focus" : { "border-color" : "border-control-focus" },
 		".form-control[disabled]" : { "color" : "text-invers" },
 		".btn-text-default" : { "background-color" : "background-normal", "border-color" : "border-regular-control", "color" : "text-normal" },
