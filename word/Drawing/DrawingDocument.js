@@ -6936,6 +6936,7 @@ function CDrawingDocument()
             canvas.style.cssText = "padding:0;margin:0;user-select:none;";
             canvas.style.width = width_px + "px";
             canvas.style.height = height_px + "px";
+            canvas.style.background = "#FFFFFF";
             parent.appendChild(canvas);
         }
 
@@ -7169,6 +7170,7 @@ function CDrawingDocument()
 				canvas.style.cssText = "padding:0;margin:0;user-select:none;";
 				canvas.style.width = width_px + "px";
 				canvas.style.height = height_px + "px";
+				canvas.style.background = "#FFFFFF";
 				parent.appendChild(canvas);
 			}
 
