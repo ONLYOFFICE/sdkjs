@@ -202,6 +202,8 @@ function CEditorPage(api)
 	this.m_oApi = api;
 	var oThis   = this;
 
+	this.MouseHandObject = null;
+
 	//this.UseRequestAnimationFrame = false;
 	this.UseRequestAnimationFrame = AscCommon.AscBrowser.isChrome;
 	this.RequestAnimationFrame    = (function()
@@ -411,6 +413,8 @@ function CEditorPage(api)
 		this.m_oDrawingDocument.AutoShapesTrack.init2(this.m_oOverlayApi);
 
 		this.OnResize(true);
+
+		this.checkMouseHandMode();
 	};
 
     this.CheckRetinaDisplay = function()
@@ -760,6 +764,24 @@ function CEditorPage(api)
 				};
 			}
 		}
+	};
+
+	this.checkMouseHandMode = function()
+	{
+		if (!this.m_oApi || !this.m_oApi.isRestrictionForms())
+		{
+			this.MouseHandObject = null;
+			return;
+		}
+
+		this.MouseHandObject = {
+			check : function(_this, _pos) {
+				var logicDoc = _this.m_oLogicDocument;
+				if (!logicDoc || !(logicDoc.IsInForm(_pos.X, _pos.Y, _pos.Page) || logicDoc.IsInForm(_pos.X, _pos.Y, _pos.Page)))
+					return true;
+				return false;
+			}
+		};
 	};
 
 	this.onButtonRulersClick       = function()
@@ -1496,12 +1518,28 @@ function CEditorPage(api)
 			oWordControl.m_bIsMouseLock = true;
 		}
 
+		var pos = null;
+
+		if (oWordControl.MouseHandObject)
+		{
+			pos = oWordControl.m_oDrawingDocument.ConvertCoordsFromCursor2(global_mouseEvent.X, global_mouseEvent.Y);
+			if (oWordControl.MouseHandObject.check(oWordControl, pos))
+			{
+				oWordControl.MouseHandObject.X = global_mouseEvent.X;
+				oWordControl.MouseHandObject.Y = global_mouseEvent.Y;
+				oWordControl.MouseHandObject.Active = true;
+				oWordControl.MouseHandObject.ScrollX = oWordControl.m_dScrollX;
+				oWordControl.MouseHandObject.ScrollY = oWordControl.m_dScrollY;
+				oWordControl.m_oDrawingDocument.SetCursorType("grabbing");
+				return;
+			}
+		}
+
 		oWordControl.StartUpdateOverlay();
 		var bIsSendSelectWhell = false;
 
 		if ((0 == global_mouseEvent.Button) || (undefined == global_mouseEvent.Button))
 		{
-			var pos = null;
 			if (oWordControl.m_oDrawingDocument.AutoShapesTrackLockPageNum == -1)
 				pos = oWordControl.m_oDrawingDocument.ConvertCoordsFromCursor2(global_mouseEvent.X, global_mouseEvent.Y);
 			else
@@ -1582,6 +1620,33 @@ function CEditorPage(api)
 		var oWordControl = oThis;
 
 		var pos = null;
+		if (oWordControl.MouseHandObject)
+		{
+			if (oWordControl.MouseHandObject.Active)
+			{
+				oWordControl.m_oDrawingDocument.SetCursorType("grabbing");
+
+				var scrollX = global_mouseEvent.X - oWordControl.MouseHandObject.X;
+				var scrollY = global_mouseEvent.Y - oWordControl.MouseHandObject.Y;
+
+				if (0 != scrollX && oWordControl.m_bIsHorScrollVisible)
+					oWordControl.m_oScrollHorApi.scrollToX(oWordControl.MouseHandObject.ScrollX - scrollX);
+				if (0 != scrollY)
+					oWordControl.m_oScrollVerApi.scrollToY(oWordControl.MouseHandObject.ScrollY - scrollY);
+
+				return;
+			}
+
+			pos = oWordControl.m_oDrawingDocument.ConvertCoordsFromCursor2(global_mouseEvent.X, global_mouseEvent.Y);
+			if (oWordControl.MouseHandObject.check(oWordControl, pos))
+			{
+				oWordControl.m_oDrawingDocument.SetCursorType("grab");
+				return;
+			}
+
+			oWordControl.m_oDrawingDocument.SetCursorType("default");
+		}
+
 		if (oWordControl.m_oDrawingDocument.AutoShapesTrackLockPageNum == -1)
 			pos = oWordControl.m_oDrawingDocument.ConvertCoordsFromCursor2(global_mouseEvent.X, global_mouseEvent.Y);
 		else
@@ -1676,6 +1741,14 @@ function CEditorPage(api)
 		//    return;
 
 		var oWordControl = oThis;
+
+		if (oWordControl.MouseHandObject && oWordControl.MouseHandObject.Active)
+		{
+			oWordControl.MouseHandObject.Active = false;
+			oWordControl.m_oDrawingDocument.SetCursorType("grab");
+			return;
+		}
+
 		if (!global_mouseEvent.IsLocked && 0 == oWordControl.MouseDownDocumentCounter)
 			return;
 
@@ -1910,6 +1983,9 @@ function CEditorPage(api)
 			if (false === window["AscDesktopEditor"]["CheckNeedWheel"]())
 				return;
 		}
+
+		if (oThis.MouseHandObject && oThis.MouseHandObject.IsActive)
+			return;
 
 		var _ctrl = false;
 		if (e.metaKey !== undefined)

@@ -10986,6 +10986,9 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.onUpdateRestrictions = function()
 	{
+		if (this.WordControl)
+			this.WordControl.checkMouseHandMode();
+
 		var oLogicDocument = this.private_GetLogicDocument();
 		if (!oLogicDocument)
 			return;
