@@ -2125,7 +2125,7 @@ function (window, undefined) {
 	cXLOOKUP.prototype.argumentsMin = 3;
 	cXLOOKUP.prototype.argumentsMax = 6;
 	cXLOOKUP.prototype.arrayIndexes = {1: 1, 2: 1};
-	cXLOOKUP.prototype.argumentsType = [argType.any, argType.reference, argType.reference];
+	cXLOOKUP.prototype.argumentsType = [argType.any, argType.number, argType.number, argType.logical, argType.number, argType.number];
 	cXLOOKUP.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cXLOOKUP.prototype.isXLFN = true;
 	cXLOOKUP.prototype.Calculate = function (arg) {
