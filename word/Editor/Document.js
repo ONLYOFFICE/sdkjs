@@ -9403,6 +9403,44 @@ CDocument.prototype.IsInDrawing = function(X, Y, PageIndex)
 		}
 	}
 };
+/**
+ * Проверяем, попали ли мы в форму
+ * @param X
+ * @param Y
+ * @param nPageAbs
+ * @returns {boolean}
+ */
+CDocument.prototype.IsInForm = function(X, Y, nPageAbs)
+{
+	var oAnchor = this.Get_NearestPos(nPageAbs, X, Y);
+	if (!oAnchor || !oAnchor.Paragraph)
+		return false;
+
+	var oClass = oAnchor.Paragraph.GetClassByPos(oAnchor.ContentPos);
+	if (!oClass || !(oClass instanceof ParaRun))
+		return false;
+
+	return (!!oClass.GetParentForm());
+};
+/**
+ * Проверяем, попали ли мы в контейнер
+ * @param X
+ * @param Y
+ * @param nPageAbs
+ * @returns {boolean}
+ */
+CDocument.prototype.IsInContentControl = function(X, Y, nPageAbs)
+{
+	var oAnchor = this.Get_NearestPos(nPageAbs, X, Y);
+	if (!oAnchor || !oAnchor.Paragraph)
+		return false;
+
+	var oClass = oAnchor.Paragraph.GetClassByPos(oAnchor.ContentPos);
+	if (!oClass || !(oClass instanceof ParaRun))
+		return false;
+
+	return (oClass.GetParentContentControls().length > 0);
+};
 CDocument.prototype.Is_UseInDocument = function(Id)
 {
 	var Count = this.Content.length;
