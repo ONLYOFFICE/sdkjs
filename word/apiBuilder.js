@@ -11750,6 +11750,12 @@
 		Document.UpdateSelection();
 	};
 
+	/**
+	 * Replaces each paragraph(or text in cell) in the select with the corresponding text from an array of strings.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {Array} arrString - represents an array of strings. 
+	 */
 	Api.prototype.ReplaceTextSmart = function(arrString)
 	{
 		var allRunsInfo      = null;
