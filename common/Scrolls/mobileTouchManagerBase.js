@@ -1664,7 +1664,7 @@
 			ctx.fill();
 			ctx.stroke();
 
-			function drawArrow(ctx, x, y, len, rgb, arrType) {
+			function drawArrow(ctx, x, y, len, rgb) {
 				ctx.beginPath();
 
 				var arrowSize = len;
@@ -1677,33 +1677,19 @@
 				px = _data.data;
 
 				while (len > 0) {
-					var ind = (arrType === 1 || arrType === 2) ? 4 * (arrowSize * _y + _x) : 4 * (arrowSize * _x + _y);
-					var xx = _x;
+					var ind = 4 * (arrowSize * _y + _x);
 					for (var i = 0; i < len; i++) {
 						px[ind++] = r;
 						px[ind++] = g;
 						px[ind++] = b;
 						px[ind++] = 255;
-						if(arrType === 3 || arrType === 4) {
-							++xx;
-							ind = 4 * (arrowSize * xx  + _y);
-						}
 					}
-
-					// top or left arrow
-					if(arrType === 1 || arrType === 3) {
-						_x += 1;
-						_y -= 1;
-						// bottom or right arrow
-					} else if(arrType === 2 || arrType === 4) {
-						_x += 1;
-						_y += 1;
-					}
+					_x += 1;
+					_y -= 1;
 					len -= 2;
 					r = r >> 0;
 					g = g >> 0;
 					b = b >> 0;
-
 				}
 
 				ctx.putImageData(_data, x, y);
@@ -1712,28 +1698,35 @@
 				var x = Math.round(pos1.X * rPR) + Math.round(rPR) - Math.round((_epsRects + _rectWidth) * rPR);
 				var y = Math.round(TableMoveRect_y * rPR);
 
-				var canvasArrow = document.createElement('canvas'),
-					contextArrow = canvasArrow.getContext('2d'),
+				var canvasVert = document.createElement('canvas'),
+					contextVert = canvasVert.getContext('2d'),
+					canvasHor = document.createElement('canvas'),
+					contextHor = canvasHor.getContext('2d'),
 					arrowSize = Math.round(8 * rPR);
 
 				if (0 == (arrowSize & 1)) {
 					arrowSize += 1;
 				}
 
-				var dx_scaling = 0;
-				if (rPR >= 1.5) {
-					dx_scaling = (rPR - Math.floor(rPR) >= 0.5) ? Math.floor(rPR) : Math.floor(rPR) - 1;
-				}
-				var dx = Math.round(Math.round(_rectWidth * rPR) / 2) - Math.floor(arrowSize / 2) - dx_scaling;
-				var dy = -Math.floor(arrowSize / 2) + arrowSize + Math.round(arrowSize / 2);
-				var arrowType = {top: 1, bottom: 2, left: 3, right: 4};
-				var rgb = {r: 20, g: 111, b: 255}
-				drawArrow(contextArrow, dx, dx_scaling, arrowSize, rgb, arrowType.top);
-				drawArrow(contextArrow, dx, dy + dx_scaling, arrowSize, rgb, arrowType.bottom);
-				drawArrow(contextArrow, dx - Math.round(arrowSize / 2), Math.round(arrowSize / 2) + dx_scaling, arrowSize, rgb, arrowType.left);
-				drawArrow(contextArrow, dx + Math.round(arrowSize / 2), Math.round(arrowSize / 2) + dx_scaling, arrowSize, rgb, arrowType.right);
+				var rectSize = Math.round(_rectWidth * rPR);
+				var arrowHalf = Math.round(arrowSize / 2);
 
-				ctx.drawImage(canvasArrow, x, y);
+				var dx = Math.round(rectSize / 2) - Math.round(arrowSize / 2) + 1,
+					dy = Math.floor((rectSize - arrowSize - 2 * arrowHalf) / 2),
+				    rgb = {r: 20, g: 111, b: 255};
+
+				drawArrow(contextVert, 0, 0, arrowSize, rgb);
+				contextVert.translate(Math.round(arrowSize / 2), Math.round(arrowSize / 2));
+				contextVert.rotate(Math.PI);
+				contextVert.translate(-Math.round(arrowSize / 2), -Math.round(arrowSize / 2));
+				contextVert.drawImage(canvasVert, 1, (-arrowSize));
+				ctx.drawImage(canvasVert, Math.round(x + dx), Math.round(y) + dy);
+
+				contextHor.translate(Math.round(arrowSize / 2), Math.round(arrowSize / 2));
+				contextHor.rotate(Math.PI / 2);
+				contextHor.translate(-Math.round(arrowSize / 2), -Math.round(arrowSize / 2));
+				contextHor.drawImage(canvasVert, Math.round(arrowSize / 2) + dy,  - dx - Math.round(arrowSize / 2) + 1);
+				ctx.drawImage(canvasHor, Math.round(x), Math.round(y));
 			}
 
 			ctx.beginPath();
