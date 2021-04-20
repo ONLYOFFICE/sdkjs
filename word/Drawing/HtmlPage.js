@@ -1633,12 +1633,14 @@ function CEditorPage(api)
 
 				return;
 			}
-
-			pos = oWordControl.m_oDrawingDocument.ConvertCoordsFromCursor2(global_mouseEvent.X, global_mouseEvent.Y);
-			if (oWordControl.MouseHandObject.check(oWordControl, pos))
+			else if (!global_mouseEvent.IsLocked)
 			{
-				oWordControl.m_oDrawingDocument.SetCursorType("grab");
-				return;
+				pos = oWordControl.m_oDrawingDocument.ConvertCoordsFromCursor2(global_mouseEvent.X, global_mouseEvent.Y);
+				if (oWordControl.MouseHandObject.check(oWordControl, pos))
+				{
+					oWordControl.m_oDrawingDocument.SetCursorType("grab");
+					return;
+				}
 			}
 
 			oWordControl.m_oDrawingDocument.SetCursorType("default");
