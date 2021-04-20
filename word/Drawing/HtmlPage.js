@@ -777,7 +777,7 @@ function CEditorPage(api)
 		this.MouseHandObject = {
 			check : function(_this, _pos) {
 				var logicDoc = _this.m_oLogicDocument;
-				if (!logicDoc || !(logicDoc.IsInForm(_pos.X, _pos.Y, _pos.Page) || logicDoc.IsInForm(_pos.X, _pos.Y, _pos.Page)))
+				if (!logicDoc || !(logicDoc.IsInForm(_pos.X, _pos.Y, _pos.Page) || logicDoc.IsInContentControl(_pos.X, _pos.Y, _pos.Page)))
 					return true;
 				return false;
 			}
