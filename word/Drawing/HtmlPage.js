@@ -1744,6 +1744,7 @@ function CEditorPage(api)
 
 		if (oWordControl.MouseHandObject && oWordControl.MouseHandObject.Active)
 		{
+			AscCommon.check_MouseUpEvent(e);
 			oWordControl.MouseHandObject.Active = false;
 			oWordControl.m_oDrawingDocument.SetCursorType("grab");
 			return;
