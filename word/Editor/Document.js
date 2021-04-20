@@ -10919,30 +10919,30 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 				this.Api.sync_MarkerFormatCallback(true);
 			}
 		}
-	}
 
-	var oSelectedContent = this.GetSelectedElementsInfo();
-	var oInlineSdt       = oSelectedContent.GetInlineLevelSdt();
-	var oBlockSdt        = oSelectedContent.GetBlockLevelSdt();
-	if ((oInlineSdt && oInlineSdt.IsCheckBox()) || (oBlockSdt && oBlockSdt.IsCheckBox()))
-	{
-		var oCC = (oInlineSdt && oInlineSdt.IsCheckBox()) ? oInlineSdt : oBlockSdt;
-		if (!oCC.IsForm() || this.IsFillingFormMode() || oCC === this.CurPos.CC)
+		var oSelectedContent = this.GetSelectedElementsInfo();
+		var oInlineSdt       = oSelectedContent.GetInlineLevelSdt();
+		var oBlockSdt        = oSelectedContent.GetBlockLevelSdt();
+		if ((oInlineSdt && oInlineSdt.IsCheckBox()) || (oBlockSdt && oBlockSdt.IsCheckBox()))
 		{
-			oCC.SkipSpecialContentControlLock(true);
-			if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, this.IsFillingFormMode()))
+			var oCC = (oInlineSdt && oInlineSdt.IsCheckBox()) ? oInlineSdt : oBlockSdt;
+			if (!oCC.IsForm() || this.IsFillingFormMode() || oCC === this.CurPos.CC)
 			{
-				this.StartAction();
-				oCC.ToggleCheckBox();
-				this.Recalculate();
-				this.UpdateTracks();
-				this.FinalizeAction();
+				oCC.SkipSpecialContentControlLock(true);
+				if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, this.IsFillingFormMode()))
+				{
+					this.StartAction();
+					oCC.ToggleCheckBox();
+					this.Recalculate();
+					this.UpdateTracks();
+					this.FinalizeAction();
+				}
+				oCC.SkipSpecialContentControlLock(false);
 			}
-			oCC.SkipSpecialContentControlLock(false);
 		}
 	}
 
-	this.private_CheckCursorPosInFillingFormMode();
+	this.private_CheckCursorPosInFillingFormMode(12);
 
 	this.private_UpdateCursorXY(true, true);
 };
