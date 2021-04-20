@@ -1777,10 +1777,22 @@ CInlineLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType)
 		return;
 	}
 
-	var isCheckContentControlLock = this.Paragraph && this.Paragraph.LogicDocument ? this.Paragraph.LogicDocument.IsCheckContentControlsLock() : true;
+	var oLogicDocument = this.Paragraph ? this.Paragraph.LogicDocument : null;
+	if (oLogicDocument)
+	{
+		if (!oLogicDocument.IsCheckContentControlsLock())
+			return;
 
-	if (!isCheckContentControlLock)
-		return;
+		if (oLogicDocument.IsFillingFormMode()
+			&& !this.IsSelectionUse()
+			&& ((this.IsPlaceHolder() && (AscCommon.changestype_Remove === CheckType || AscCommon.changestype_Delete === CheckType))
+				|| (this.Cursor_Is_Start() && AscCommon.changestype_Remove === CheckType)
+				|| (this.Cursor_Is_End() && AscCommon.changestype_Delete === CheckType))
+		)
+		{
+			return AscCommon.CollaborativeEditing.Add_CheckLock(true);
+		}
+	}
 
 	var nContentControlLock = this.GetContentControlLock();
 
