@@ -11046,12 +11046,16 @@ Paragraph.prototype.UpdateCursorType = function(X, Y, CurPage)
 		}
 	}
 
-	var isInText = this.IsInText(X, Y, CurPage);
+	var isInText   = this.IsInText(X, Y, CurPage);
+	var isCheckBox = false;
 
 	var oContentControl = oInfo.GetInlineLevelSdt();
 	var oHyperlink      = oInfo.GetHyperlink();
 	if (oContentControl)
+	{
 		oContentControl.DrawContentControlsTrack(true, X, Y, CurPage);
+		isCheckBox = oContentControl.IsCheckBox();
+	}
 
 	var Footnote  = this.CheckFootnote(X, Y, CurPage);
 
@@ -11073,7 +11077,7 @@ Paragraph.prototype.UpdateCursorType = function(X, Y, CurPage)
 		MMData.Type = Asc.c_oAscMouseMoveDataTypes.Common;
 	}
 
-	if (isInText && (null != oHyperlink || bPageRefLink) && true === AscCommon.global_keyboardEvent.CtrlKey)
+	if (isCheckBox || (isInText && (null != oHyperlink || bPageRefLink) && true === AscCommon.global_keyboardEvent.CtrlKey))
 		this.DrawingDocument.SetCursorType("pointer", MMData);
 	else
 		this.DrawingDocument.SetCursorType("text", MMData);
