@@ -10721,6 +10721,8 @@ Paragraph.prototype.Get_NearestPos = function(CurPage, X, Y, bAnchor, Drawing)
 {
 	var SearchPosXY = this.Get_ParaContentPosByXY(X, Y, CurPage, false, false);
 
+	var oState = this.SaveSelectionState();
+
 	this.Set_ParaContentPos(SearchPosXY.Pos, true, SearchPosXY.Line, SearchPosXY.Range);
 	var ContentPos = this.Get_ParaContentPos(false, false);
 
@@ -10734,8 +10736,10 @@ Paragraph.prototype.Get_NearestPos = function(CurPage, X, Y, bAnchor, Drawing)
 	Result.Paragraph  = this;
 	Result.transform  = this.Get_ParentTextTransform();
 
-	if (true === bAnchor && undefined != Drawing && null != Drawing)
+	if (true === bAnchor && undefined !== Drawing && null !== Drawing)
 		this.Internal_CorrectAnchorPos(Result, Drawing);
+
+	this.LoadSelectionState(oState);
 
 	return Result;
 };
