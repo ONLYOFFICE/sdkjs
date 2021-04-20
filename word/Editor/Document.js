@@ -10928,6 +10928,7 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 			var oCC = (oInlineSdt && oInlineSdt.IsCheckBox()) ? oInlineSdt : oBlockSdt;
 			if (!oCC.IsForm() || this.IsFillingFormMode() || oCC === this.CurPos.CC)
 			{
+				this.CurPos.CC = oCC;
 				oCC.SkipSpecialContentControlLock(true);
 				if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, this.IsFillingFormMode()))
 				{
@@ -10939,6 +10940,7 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 				}
 				oCC.SkipSpecialContentControlLock(false);
 			}
+			this.UpdateSelection();
 		}
 	}
 
@@ -20854,6 +20856,13 @@ CDocument.prototype.controller_UpdateSelectionState = function()
 				this.DrawingDocument.SelectEnabled(false);
 				this.DrawingDocument.TargetStart();
 				this.DrawingDocument.TargetShow();
+
+				if (this.IsFillingFormMode())
+				{
+					var oContentControl = this.GetContentControl();
+					if (oContentControl && oContentControl.IsCheckBox())
+						this.DrawingDocument.TargetEnd();
+				}
 			}
 		}
 	}
@@ -20866,6 +20875,13 @@ CDocument.prototype.controller_UpdateSelectionState = function()
 
 		this.DrawingDocument.SelectEnabled(false);
 		this.DrawingDocument.TargetShow();
+
+		if (this.IsFillingFormMode())
+		{
+			var oContentControl = this.GetContentControl();
+			if (oContentControl && oContentControl.IsCheckBox())
+				this.DrawingDocument.TargetEnd();
+		}
 	}
 };
 CDocument.prototype.controller_GetSelectionState = function()
