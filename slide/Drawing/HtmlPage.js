@@ -1013,10 +1013,7 @@ function CEditorPage(api)
         AscCommon.addMouseEvent(this.m_oOverlay.HtmlElement, "move", this.onMouseMove);
         AscCommon.addMouseEvent(this.m_oOverlay.HtmlElement, "up", this.onMouseUp);
 
-        var _cur         = document.getElementById('id_target_cursor');
-        AscCommon.addMouseEvent(_cur, "down", this.onMouseDownTarget);
-        AscCommon.addMouseEvent(_cur, "move", this.onMouseMoveTarget);
-        AscCommon.addMouseEvent(_cur, "up", this.onMouseUpTarget);
+		document.getElementById('id_target_cursor').style.pointerEvents = "none";
 
 		this.m_oMainContent.HtmlElement.onmousewheel = this.onMouseWhell;
 		if (this.m_oMainContent.HtmlElement.addEventListener)
