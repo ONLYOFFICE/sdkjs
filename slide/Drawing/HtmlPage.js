@@ -1518,35 +1518,48 @@ function CEditorPage(api)
 
 		_ctx.lineWidth   = Math.round(dPR);
 		_ctx.strokeStyle = GlobalSkin.RulerOutline;
+		var rectSize = Math.round(14 * dPR);
+		var lineWidth = _ctx.lineWidth;
 
-		_ctx.strokeRect(2.5 * _ctx.lineWidth, 3.5 * _ctx.lineWidth, Math.round(14 * dPR), Math.round(14 * dPR));
+		_ctx.strokeRect(2.5 * lineWidth, 3.5 * lineWidth, Math.round(14 * dPR), Math.round(14 * dPR));
 		_ctx.beginPath();
 
 		_ctx.strokeStyle = GlobalSkin.RulerTabsColor;
 
-		_ctx.lineWidth = (dPR === 1.5) ? 2 * Math.floor(dPR) : 2 * Math.round(dPR);
-		var dx = (dPR === 1.5) ? 1 : 0;
-		var dy = (dPR === 1.5) ? 2 : 0;
+		_ctx.lineWidth = (dPR === 1.5) ? Math.round(dPR) : 2 * Math.round(dPR);
+		lineWidth = _ctx.lineWidth;
+		var tab_width = Math.round(5 * dPR);
+
+		var dx = Math.round((rectSize - 2 * Math.round(dPR) - tab_width) / 7 * 4);
+		var dy = Math.round((rectSize - 2 * Math.round(dPR) - tab_width) / 7 * 5);
+		var x = 2 * Math.round(dPR) + lineWidth + dx;
+		var y = 4 * Math.round(dPR) + dy;
+		x = (dPR === 1.5) ? x + lineWidth : x;
 
 		if (this.m_nTabsType == tab_Left)
 		{
-			_ctx.moveTo(Math.round(8 * dPR) + dx, Math.round(8 * dPR) + dy);
-			_ctx.lineTo(Math.round(8 * dPR) + dx, Math.round(13 * dPR) + dy);
-			_ctx.lineTo(Math.round(13 * dPR) + dx, Math.round(13 * dPR) + dy);
+			_ctx.moveTo(x, y);
+			_ctx.lineTo(x, y + tab_width);
+			_ctx.lineTo(x + tab_width, y + tab_width);
 		}
 		else if (this.m_nTabsType == tab_Center)
 		{
-			var dx_center = (dPR === 2) ? -1 : 0;
-			_ctx.moveTo(Math.round(6 * dPR) + dx_center, Math.round(14 * dPR));
-			_ctx.lineTo(Math.round(14 * dPR) + dx_center, Math.round(14 * dPR));
-			_ctx.moveTo(Math.round(10 * dPR) + dx_center, Math.round(9 * dPR));
-			_ctx.lineTo(Math.round(10 * dPR) + dx_center, Math.round(14 * dPR));
+			tab_width = Math.round(8 * dPR);
+			tab_width = (tab_width % 2 === 1) ? tab_width - 1 : tab_width;
+			var dx = Math.round((rectSize - Math.round(dPR) - tab_width) / 2);
+			var x = 3 * Math.round(dPR) + dx;
+			var vert_tab_width = Math.round(5 * dPR);
+			_ctx.moveTo(x, y + vert_tab_width);
+			_ctx.lineTo(x + tab_width, y + vert_tab_width);
+			_ctx.moveTo(x + tab_width / 2, y);
+			_ctx.lineTo(x + tab_width / 2, y + vert_tab_width);
 		}
 		else
 		{
-			_ctx.moveTo(Math.round(12 * dPR) + dx, Math.round(9 * dPR) + dy);
-			_ctx.lineTo(Math.round(12 * dPR) + dx, Math.round(14 * dPR) + dy);
-			_ctx.lineTo(Math.round(7 * dPR) + dx, Math.round(14 * dPR) + dy);
+			var x = 3 * Math.round(dPR) + dx;
+			_ctx.moveTo(x, tab_width + y);
+			_ctx.lineTo(x + tab_width,  tab_width + y);
+			_ctx.lineTo(x + tab_width, y);
 		}
 
 		_ctx.stroke();
