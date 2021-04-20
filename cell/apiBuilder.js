@@ -45,12 +45,35 @@
 	 * @global
 	 * @class
 	 * @name Api
+	 * @property {ApiWorksheet[]} Sheets - get sheets property
+	 * @property {ApiWorksheet} ActiveSheet - get activeSheet property
+	 * @property {ApiRange} Selection - get selection property
 	 */
 	var Api = window["Asc"]["spreadsheet_api"];
 
 	/**
 	 * Class representing a sheet.
 	 * @constructor
+	 * @property {bool} Visible - get and set visible property
+	 * @property {number} Active - get active property
+	 * @property {ApiRange} ActiveCell - get activeCell property
+	 * @property {ApiRange} Selection - get selection property
+	 * @property {ApiRange} Cells - get cells property
+	 * @property {ApiRange} Rows - get rows property
+	 * @property {ApiRange} Cols - get cols property
+	 * @property {ApiRange} UsedRange - get usedRange property
+	 * @property {string} Name - get and set name sheet property
+	 * @property {number} Index - get index sheet property
+	 * @property {number} Index - get index sheet property
+	 * @property {number} LeftMargin - get and set leftMargin sheet property in points
+	 * @property {number} RightMargin - get and set rightMargin sheet property in points
+	 * @property {number} TopMargin - get and set topMargin sheet property in points
+	 * @property {number} BottomMargin - get and set bottomMargin sheet property in points
+	 * @property {PageOrientation} PageOrientation - get and set pageOrientation sheet property
+	 * @property {bool} PrintHeadings - get and set printHeadings sheet property
+	 * @property {bool} PrintGridlines - get and set printGridlines sheet property
+	 * @property {ApiName[]} Defnames - get defNames sheet property
+	 * @property {ApiComment[]} Comments - get comments sheet property
 	 */
 	function ApiWorksheet(worksheet) {
 		this.worksheet = worksheet;
@@ -59,6 +82,22 @@
 	/**
 	 * Class representing a range.
 	 * @constructor
+	 * @property {number} Row - get row property
+	 * @property {number} Col - get col property
+	 * @property {ApiRange} Rows - get rows property
+	 * @property {number} Count - get count cells property
+	 * @property {string} Value - get or set value property
+	 * @property {string} Formula - get or set formula property
+	 * @property {string} Value2 - get or set value2 property
+	 * @property {string} Text - get or set text property
+	 * @property {ApiColor} FontColor - get or set fontColor property
+	 * @property {bool} Hidden - get or set hidden property
+	 * @property {number} ColumnWidth - get or set first column width property
+	 * @property {number} Width - get column width property
+	 * @property {number} RowHeight - get or set first row height property
+	 * @property {number} Height - get row height property
+	 * @property {number} FontSize - get font size property
+	 * @property {string} FontName - get font name property
 	 */
 	function ApiRange(range) {
 		this.range = range;
