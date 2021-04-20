@@ -7552,6 +7552,9 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage)
 	if (0 === CurPage && this.Pages[0].EndLine < 0)
 		return;
 
+	var oLogicDocument = this.GetLogicDocument();
+	var isFillingForm  = oLogicDocument ? oLogicDocument.IsFillingFormMode() : false;
+
 	switch (this.Selection.Flag)
 	{
 		case selectionflag_Common:
@@ -7589,6 +7592,21 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage)
 				// Определяем позицию и высоту строки
 				DrawSelection.StartY = this.Pages[CurPage].Y + this.Lines[CurLine].Top;
 				DrawSelection.H      = this.Lines[CurLine].Bottom - this.Lines[CurLine].Top;
+
+				// Специальная ветка, чтобы в режиме заполнения форм выделение не выходило за рамки самих форм
+				if (isFillingForm)
+				{
+					if (CurLine === _StartLine)
+					{
+						DrawSelection.StartY = this.Pages[CurPage].Y + this.Lines[CurLine].Y - this.Lines[CurLine].Metrics.Ascent;
+						DrawSelection.H      = this.Lines[CurLine].Bottom - (this.Lines[CurLine].Y - this.Lines[CurLine].Metrics.Ascent);
+					}
+
+					if (CurLine === _EndLine)
+					{
+						DrawSelection.H = this.Lines[CurLine].Metrics.Ascent + this.Lines[CurLine].Metrics.Descent;
+					}
+				}
 
 				for (var CurRange = 0; CurRange < RangesCount; CurRange++)
 				{
