@@ -11011,6 +11011,30 @@ background-repeat: no-repeat;\
 			oLogicDocument.UpdateInterface();
 		}
 	};
+	asc_docs_api.prototype.isShowShapeAdjustments = function()
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		if (oLogicDocument)
+			return oLogicDocument.IsShowShapeAdjustments();
+
+		return true;
+	};
+	asc_docs_api.prototype.isShowTableAdjustments = function()
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		if (oLogicDocument)
+			return oLogicDocument.IsShowTableAdjustments();
+
+		return true;
+	};
+	asc_docs_api.prototype.isShowEquationTrack = function()
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		if (oLogicDocument)
+			return oLogicDocument.IsShowEquationTrack();
+
+		return true;
+	};
 
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                       = window['Asc'] || {};

@@ -626,6 +626,18 @@
 		}
 		return res;
 	};
+	baseEditorsApi.prototype.isShowShapeAdjustments = function()
+	{
+		return true;
+	};
+	baseEditorsApi.prototype.isShowTableAdjustments = function()
+	{
+		return true;
+	};
+	baseEditorsApi.prototype.isShowEquationTrack = function()
+	{
+		return true;
+	};
 	baseEditorsApi.prototype.onPrint                             = function()
 	{
 		this.sendEvent("asc_onPrint");

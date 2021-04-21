@@ -24718,6 +24718,29 @@ CDocument.prototype.ChangeTextCase = function(nCaseType)
 		this.UpdateSelection();
 	}
 };
+/**
+ * @return {boolean}
+ */
+CDocument.prototype.IsShowShapeAdjustments = function()
+{
+	return (!!this.CanEdit());
+};
+/**
+ * Рисовать ли трек у таблицы и давать ли возможность таскать границы
+ * @return {boolean}
+ */
+CDocument.prototype.IsShowTableAdjustments = function()
+{
+	return (!!this.CanEdit());
+};
+/**
+ * Рисовать ли трек у таблицы и давать ли возможность таскать границы
+ * @return {boolean}
+ */
+CDocument.prototype.IsShowEquationTrack = function()
+{
+	return (!!this.CanEdit());
+};
 
 function CDocumentSelectionState()
 {
