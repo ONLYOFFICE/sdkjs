@@ -12071,7 +12071,7 @@ CDocument.prototype.private_UpdateTracks = function(bSelection, bEmptySelection)
 	var oSelectedInfo = this.GetSelectedElementsInfo();
 
 	var Math = oSelectedInfo.GetMath();
-	if (null !== Math)
+	if (null !== Math && this.IsShowEquationTrack())
 		this.DrawingDocument.Update_MathTrack(true, (false === bSelection || true === bEmptySelection ? true : false), Math);
 	else
 		this.DrawingDocument.Update_MathTrack(false);

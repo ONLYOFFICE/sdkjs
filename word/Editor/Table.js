@@ -3462,46 +3462,61 @@ CTable.prototype.UpdateCursorType = function(X, Y, CurPage)
 	if (true === this.Selection.Start || table_Selection_Border === this.Selection.Type2 || table_Selection_Border_InnerTable === this.Selection.Type2)
 		return;
 
-	// Случай, когда у нас уже есть трэк вложенной таблицы и курсор выходит во внешнюю. Чтобы трэк сразу не пропадал,
-	// пока курсор находится в области табличного трэка для вложенной таблицы.
-	if (true !== this.DrawingDocument.IsCursorInTableCur(X, Y, this.GetAbsolutePage(CurPage))
-		&& true === this.Check_EmptyPages(CurPage - 1)
-		&& true !== this.IsEmptyPage(CurPage))
+	if (this.LogicDocument && this.LogicDocument.IsShowTableAdjustments())
 	{
-		this.private_StartTrackTable(CurPage);
-	}
-
-	var oHitInfo = this.private_CheckHitInBorder(X, Y, CurPage);
-	if (true === oHitInfo.RowSelection)
-	{
-		return this.DrawingDocument.SetCursorType("select-table-row", new CMouseMoveData());
-	}
-	else if (true === oHitInfo.ColumnSelection)
-	{
-		return this.DrawingDocument.SetCursorType("select-table-column", new CMouseMoveData());
-	}
-	else if (true === oHitInfo.CellSelection)
-	{
-		return this.DrawingDocument.SetCursorType("select-table-cell", new CMouseMoveData());
-	}
-	else if (-1 !== oHitInfo.Border)
-	{
-		var Transform = this.Get_ParentTextTransform();
-		if (null !== Transform)
+		// Случай, когда у нас уже есть трэк вложенной таблицы и курсор выходит во внешнюю. Чтобы трэк сразу не пропадал,
+		// пока курсор находится в области табличного трэка для вложенной таблицы.
+		if (true !== this.DrawingDocument.IsCursorInTableCur(X, Y, this.GetAbsolutePage(CurPage))
+			&& true === this.Check_EmptyPages(CurPage - 1)
+			&& true !== this.IsEmptyPage(CurPage))
 		{
-			var dX = Math.abs(Transform.TransformPointX(0, 0) - Transform.TransformPointX(0, 1));
-			var dY = Math.abs(Transform.TransformPointY(0, 0) - Transform.TransformPointY(0, 1));
+			this.private_StartTrackTable(CurPage);
+		}
 
-			if (Math.abs(dY) > Math.abs(dX))
+		var oHitInfo = this.private_CheckHitInBorder(X, Y, CurPage);
+		if (true === oHitInfo.RowSelection)
+		{
+			return this.DrawingDocument.SetCursorType("select-table-row", new CMouseMoveData());
+		}
+		else if (true === oHitInfo.ColumnSelection)
+		{
+			return this.DrawingDocument.SetCursorType("select-table-column", new CMouseMoveData());
+		}
+		else if (true === oHitInfo.CellSelection)
+		{
+			return this.DrawingDocument.SetCursorType("select-table-cell", new CMouseMoveData());
+		}
+		else if (-1 !== oHitInfo.Border)
+		{
+			var Transform = this.Get_ParentTextTransform();
+			if (null !== Transform)
 			{
-				switch (oHitInfo.Border)
+				var dX = Math.abs(Transform.TransformPointX(0, 0) - Transform.TransformPointX(0, 1));
+				var dY = Math.abs(Transform.TransformPointY(0, 0) - Transform.TransformPointY(0, 1));
+
+				if (Math.abs(dY) > Math.abs(dX))
 				{
-					case 0:
-					case 2:
-						return this.DrawingDocument.SetCursorType("row-resize", new CMouseMoveData());
-					case 1:
-					case 3:
-						return this.DrawingDocument.SetCursorType("col-resize", new CMouseMoveData());
+					switch (oHitInfo.Border)
+					{
+						case 0:
+						case 2:
+							return this.DrawingDocument.SetCursorType("row-resize", new CMouseMoveData());
+						case 1:
+						case 3:
+							return this.DrawingDocument.SetCursorType("col-resize", new CMouseMoveData());
+					}
+				}
+				else
+				{
+					switch (oHitInfo.Border)
+					{
+						case 0:
+						case 2:
+							return this.DrawingDocument.SetCursorType("col-resize", new CMouseMoveData());
+						case 1:
+						case 3:
+							return this.DrawingDocument.SetCursorType("row-resize", new CMouseMoveData());
+					}
 				}
 			}
 			else
@@ -3510,23 +3525,11 @@ CTable.prototype.UpdateCursorType = function(X, Y, CurPage)
 				{
 					case 0:
 					case 2:
-						return this.DrawingDocument.SetCursorType("col-resize", new CMouseMoveData());
+						return this.DrawingDocument.SetCursorType("row-resize", new CMouseMoveData());
 					case 1:
 					case 3:
-						return this.DrawingDocument.SetCursorType("row-resize", new CMouseMoveData());
+						return this.DrawingDocument.SetCursorType("col-resize", new CMouseMoveData());
 				}
-			}
-		}
-		else
-		{
-			switch (oHitInfo.Border)
-			{
-				case 0:
-				case 2:
-					return this.DrawingDocument.SetCursorType("row-resize", new CMouseMoveData());
-				case 1:
-				case 3:
-					return this.DrawingDocument.SetCursorType("col-resize", new CMouseMoveData());
 			}
 		}
 	}
