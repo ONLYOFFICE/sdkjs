@@ -10674,6 +10674,29 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 		}
 
 		this.Selection_SetStart(X, Y, e);
+		
+		var oSelectedContent = this.GetSelectedElementsInfo();
+		var oInlineSdt       = oSelectedContent.GetInlineLevelSdt();
+		var oBlockSdt        = oSelectedContent.GetBlockLevelSdt();
+		if ((oInlineSdt && oInlineSdt.IsCheckBox()) || (oBlockSdt && oBlockSdt.IsCheckBox()))
+		{
+			var oCC = (oInlineSdt && oInlineSdt.IsCheckBox()) ? oInlineSdt : oBlockSdt;
+			if (!oCC.IsForm() || this.IsFillingFormMode() || oCC === this.CurPos.CC)
+			{
+				this.CurPos.CC = oCC;
+				oCC.SkipSpecialContentControlLock(true);
+				if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, this.IsFillingFormMode()))
+				{
+					this.StartAction();
+					oCC.ToggleCheckBox();
+					this.Recalculate();
+					this.UpdateTracks();
+					this.FinalizeAction();
+				}
+				oCC.SkipSpecialContentControlLock(false);
+			}
+			this.UpdateSelection();
+		}
 
 		if (e.ClickCount <= 1 && 1 !== this.Selection.DragDrop.Flag)
 		{
@@ -10918,29 +10941,6 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 
 				this.Api.sync_MarkerFormatCallback(true);
 			}
-		}
-
-		var oSelectedContent = this.GetSelectedElementsInfo();
-		var oInlineSdt       = oSelectedContent.GetInlineLevelSdt();
-		var oBlockSdt        = oSelectedContent.GetBlockLevelSdt();
-		if ((oInlineSdt && oInlineSdt.IsCheckBox()) || (oBlockSdt && oBlockSdt.IsCheckBox()))
-		{
-			var oCC = (oInlineSdt && oInlineSdt.IsCheckBox()) ? oInlineSdt : oBlockSdt;
-			if (!oCC.IsForm() || this.IsFillingFormMode() || oCC === this.CurPos.CC)
-			{
-				this.CurPos.CC = oCC;
-				oCC.SkipSpecialContentControlLock(true);
-				if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, this.IsFillingFormMode()))
-				{
-					this.StartAction();
-					oCC.ToggleCheckBox();
-					this.Recalculate();
-					this.UpdateTracks();
-					this.FinalizeAction();
-				}
-				oCC.SkipSpecialContentControlLock(false);
-			}
-			this.UpdateSelection();
 		}
 	}
 
