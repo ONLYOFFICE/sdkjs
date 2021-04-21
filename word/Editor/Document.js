@@ -24719,7 +24719,7 @@ CDocument.prototype.ChangeTextCase = function(nCaseType)
 	}
 };
 /**
- * @return {boolean}
+ * @returns {boolean}
  */
 CDocument.prototype.IsShowShapeAdjustments = function()
 {
@@ -24727,7 +24727,7 @@ CDocument.prototype.IsShowShapeAdjustments = function()
 };
 /**
  * Рисовать ли трек у таблицы и давать ли возможность таскать границы
- * @return {boolean}
+ * @returns {boolean}
  */
 CDocument.prototype.IsShowTableAdjustments = function()
 {

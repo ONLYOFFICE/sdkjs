@@ -5722,12 +5722,15 @@ ParaRun.prototype.Draw_HighLights = function(PDSH)
     var bDrawColl = PDSH.DrawColl;
 
     var oCompiledPr = this.Get_CompiledPr(false);
-    var oShd = oCompiledPr.Shd;
-    var bDrawShd  = ( oShd === undefined || c_oAscShdNil === oShd.Value || (oShd.Color && true === oShd.Color.Auto) ? false : true );
-    var ShdColor  = ( true === bDrawShd ? oShd.Get_Color( PDSH.Paragraph ) : null );
+    var oShd        = oCompiledPr.Shd;
+    var bDrawShd    = ( oShd === undefined || oShd.IsNil() ? false : true );
+    var ShdColor    = ( true === bDrawShd ? oShd.GetSimpleColor(PDSH.Paragraph.GetTheme(), PDSH.Paragraph.GetColorMap()) : null );
 
-    if(this.Type == para_Math_Run && this.IsPlaceholder())
-        bDrawShd = false;
+    if (!ShdColor || true === ShdColor.Auto || (this.Type === para_Math_Run && this.IsPlaceholder()))
+	{
+		ShdColor = null;
+		bDrawShd = false;
+	}
 
     var X  = PDSH.X;
     var Y0 = PDSH.Y0;
