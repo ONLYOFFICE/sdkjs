@@ -12144,9 +12144,12 @@ var GLOBAL_PATH_COUNT = 0;
             aAllSeries[i].setCategories(sFormula);
         }
     };
-    CChartSpace.prototype.onDataUpdate = function() {
+    CChartSpace.prototype.onDataUpdateRecalc = function() {
         this.handleUpdateInternalChart();
         this.recalcInfo.recalculateReferences = true;
+    };
+    CChartSpace.prototype.onDataUpdate = function() {
+        this.onDataUpdateRecalc();
         this.recalculate();
         this.onUpdate(null);
     };

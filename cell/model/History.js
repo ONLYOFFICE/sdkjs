@@ -494,7 +494,6 @@ CHistory.prototype.RedoExecute = function(Point, oRedoObjectParam)
 		this._addRedoObjectParam(oRedoObjectParam, Item);
 	}
 	AscCommon.CollaborativeEditing.Apply_LinkData();
-	Asc["editor"].wb.recalculateDrawingObjects(Point, false);
 };
 CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 	var wsViews, i, oState = null, bCoaut = false, t = this;
@@ -502,7 +501,7 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 		Point = this.Points[this.Index];
 		AscCommon.CollaborativeEditing.Apply_LinkData();
 		bCoaut = true;
-        if(!window["NATIVE_EDITOR_ENJINE"] || window['IS_NATIVE_EDITOR']) {
+        if(!AscCommon.isFileBuild()) {
 			Asc["editor"].wb.recalculateDrawingObjects(Point, true);
         }
 	}
@@ -563,7 +562,7 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 				this.workbook.handlers.trigger("asc_onUpdateTabColor", curSheet.getIndex());
 		}
 
-        if(!window["NATIVE_EDITOR_ENJINE"] || window['IS_NATIVE_EDITOR']) {
+        if(!AscCommon.isFileBuild()) {
 			Asc["editor"].wb.recalculateDrawingObjects(Point, false);
         }
 
@@ -703,14 +702,54 @@ CHistory.prototype.Get_RecalcData = function(Point2)
                         Item.Class.RefreshRecalcData();
 					if(Item.Type === AscCH.historyitem_Workbook_ChangeColorScheme && Item.Class === AscCommonExcel.g_oUndoRedoWorkbook)
 					{
-						var wsViews = Asc["editor"].wb.wsViews;
-						for(var i = 0; i < wsViews.length; ++i)
+						if(Asc["editor"].wb)
 						{
-							if(wsViews[i] && wsViews[i].objectRender && wsViews[i].objectRender.controller)
+							var wsViews = Asc["editor"].wb.wsViews;
+							for(var i = 0; i < wsViews.length; ++i)
 							{
-								wsViews[i].objectRender.controller.RefreshAfterChangeColorScheme();
+								if(wsViews[i] && wsViews[i].objectRender && wsViews[i].objectRender.controller)
+								{
+									wsViews[i].objectRender.controller.RefreshAfterChangeColorScheme();
+								}
 							}
 						}
+					}
+					if(Item.Type === AscCH.historyitem_Worksheet_Rename)
+					{
+						var oWorkbook = Asc["editor"].wbModel;
+						var oData = Item.Data;
+						if(oWorkbook && oData)
+						{
+							var oWorksheet = oWorkbook.getWorksheetById(Item.SheetId);
+							if(oWorksheet)
+							{
+								var oOldNameData = oWorkbook.getChartSheetRenameData(oWorksheet, oData.from);
+								var oNewNameData = oWorkbook.getChartSheetRenameData(oWorksheet, oData.to);
+								var oAllIdMap = {};
+								var nId, sKey;
+								for(nId = 0; nId < oOldNameData.ids.length; ++nId)
+								{
+									oAllIdMap[oOldNameData.ids[nId]] = true;
+								}
+								for(nId = 0; nId < oNewNameData.ids.length; ++nId)
+								{
+									oAllIdMap[oNewNameData.ids[nId]] = true;
+								}
+								for(sKey in oAllIdMap)
+								{
+									var oChart = AscCommon.g_oTableId.Get_ById(sKey);
+									if(oChart &&
+										oChart.onDataUpdateRecalc &&
+										oChart.addToRecalculate)
+									{
+										oChart.onDataUpdateRecalc();
+										oChart.addToRecalculate();
+									}
+								}
+
+							}
+						}
+
 					}
 				}
 			}

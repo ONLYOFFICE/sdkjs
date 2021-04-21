@@ -3578,38 +3578,45 @@
 			}
 		});
 	};
-	Workbook.prototype.handleChartsOnChangeSheetName = function (oWorksheet, sNewName) {
-		if(!History.CanAddChanges()) {
-			return;
-		}
+	Workbook.prototype.getChartsWithSheetData = function(oWorksheet) {
 		var aRefsToChange = [];
 		var aId = [];
+		var aCharts = [];
 		var aRanges = [new AscCommonExcel.Range(oWorksheet, 0, 0, gc_nMaxRow0, gc_nMaxCol0)];
 		this.handleDrawings(function(oDrawing) {
 			if(oDrawing.getObjectType() === AscDFH.historyitem_type_ChartSpace) {
 				var nPrevLength = aRefsToChange.length;
+				oDrawing.clearDataRefs();
 				oDrawing.collectIntersectionRefs(aRanges, aRefsToChange);
+				oDrawing.clearDataRefs();
 				if(aRefsToChange.length > nPrevLength) {
+					aCharts.push(oDrawing);
 					aId.push(oDrawing.Get_Id());
 				}
 			}
 		});
+		return {refs: aRefsToChange, ids: aId, charts: aCharts};
 
-		var sNewNameEscaped = parserHelp.getEscapeSheetName(sNewName);
-		var sOldName = parserHelp.getEscapeSheetName(oWorksheet.sName);
-		this.checkObjectsLock(aId, function(bNoLock) {
-			if(bNoLock) {
-				for(var nRef = 0; nRef < aRefsToChange.length; ++nRef) {
-					aRefsToChange[nRef].handleOnChangeSheetName(sOldName, sNewNameEscaped);
-				}
-				if(Asc.editor && Asc.editor.wb) {
-					var sOldSheetName = oWorksheet.sName;
-					oWorksheet.sName = sNewName;
-					Asc.editor.wb.recalculateDrawingObjects(null, false);
-					oWorksheet.sName = sOldSheetName;
-				}
+	};
+	Workbook.prototype.getChartSheetRenameData = function (oWorksheet, sOldName) {
+		var sOldSheetName = oWorksheet.sName;
+		oWorksheet.sName = sOldName;
+		var oData = this.getChartsWithSheetData(oWorksheet);
+		oWorksheet.sName = sOldSheetName;
+		return oData;
+	};
+	Workbook.prototype.changeSheetNameInRefs = function (aRefsToChange, sOldName, sNewName) {
+		if(aRefsToChange.length > 0) {
+			var sNewNameEscaped = parserHelp.getEscapeSheetName(sNewName);
+			var sOldNameEscaped = parserHelp.getEscapeSheetName(sOldName);
+			for(var nRef = 0; nRef < aRefsToChange.length; ++nRef) {
+				aRefsToChange[nRef].handleOnChangeSheetName(sOldNameEscaped, sNewNameEscaped);
 			}
-		});
+		}
+	};
+	Workbook.prototype.handleChartsOnChangeSheetName = function (oWorksheet, sOldName, sNewName) {
+		var oData = this.getChartSheetRenameData(oWorksheet, sOldName);
+		this.changeSheetNameInRefs(oData.refs, sOldName, sNewName);
 	};
 	Workbook.prototype.handleChartsOnMoveRange = function (oRangeFrom, oRangeTo) {
 		if(!History.CanAddChanges()) {
@@ -4764,15 +4771,11 @@
 	Worksheet.prototype.getName=function(){
 		return this.sName !== undefined && this.sName.length > 0 ? this.sName : "";
 	};
-	Worksheet.prototype.setName=function(name, bFromUndoRedo){
+	Worksheet.prototype.setName=function(name){
 		if(name.length <= g_nSheetNameMaxLength)
 		{
 			var lastName = this.sName;
 			History.Create_NewPoint();
-			if(!bFromUndoRedo)
-			{
-				this.workbook.handleChartsOnChangeSheetName(this, name);
-			}
 			var prepared = this.workbook.dependencyFormulas.prepareChangeSheet(this.getId(), {rename: {from: lastName, to: name}});
 			this.sName = name;
 			this.workbook.dependencyFormulas.changeSheet(prepared);

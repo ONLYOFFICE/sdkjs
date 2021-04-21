@@ -2977,6 +2977,25 @@
             this.onShowDrawingObjects();
         }
     };
+    WorkbookView.prototype.handleChartsOnChangeSheetName = function (oWorksheet, sOldName, sNewName) {
+        //change sheet name in chart references
+        var oWorkbook = this.model;
+        var oRenameData = oWorkbook.getChartSheetRenameData(oWorksheet, sOldName);
+        var oThis = this;
+        if(oRenameData.refs.length > 0) {
+            oWorkbook.checkObjectsLock(oRenameData.ids, function(bNoLock) {
+                if(bNoLock) {
+                    oWorkbook.changeSheetNameInRefs(oRenameData.refs, sOldName, sNewName);
+                }
+                //recalculate in any case. Some charts might depend on new chart name
+                oThis.recalculateDrawingObjects(null, false);
+            });
+        }
+        else {
+            //recalculate in any case. Some charts might depend on new chart name
+            oThis.recalculateDrawingObjects(null, false);
+        }
+    };
     WorkbookView.prototype.recalculateDrawingObjects = function(oHistoryPoint, bAll) {
         var aWSVies = this.wsViews;
         var oWSView, oDrawingsRender;

@@ -2267,8 +2267,15 @@ var editor;
       if (res) {
         AscFonts.FontPickerByCharacter.getFontsByString(name);
         t._loadFonts([], function() {
-            t.wbModel.getWorksheet(i).setName(name);
+            var oWorkbook = t.wbModel;
+            var oWorksheet = oWorkbook.getWorksheet(i);
+            var sOldName = oWorksheet.getName();
+            oWorksheet.setName(name);
             t.sheetsChanged();
+            if(t.wb) {
+                //change sheet name in chart references
+                t.wb.handleChartsOnChangeSheetName(oWorksheet, sOldName, name);
+            }
         });
       } else {
         t.handlers.trigger("asc_onError", c_oAscError.ID.LockedWorksheetRename, c_oAscError.Level.NoCritical);

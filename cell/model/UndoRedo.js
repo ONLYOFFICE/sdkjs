@@ -2731,9 +2731,9 @@ function (window, undefined) {
 			worksheetView.model.autoFilters.reDrawFilter(from);
 		} else if (AscCH.historyitem_Worksheet_Rename == Type) {
 			if (bUndo) {
-				ws.setName(Data.from, true);
+				ws.setName(Data.from);
 			} else {
-				ws.setName(Data.to, true);
+				ws.setName(Data.to);
 			}
 		} else if (AscCH.historyitem_Worksheet_Hide == Type) {
 			if (bUndo) {
