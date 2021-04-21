@@ -1403,7 +1403,7 @@
 	/**
 	 * Get the type of this class.
 	 * @memberof ApiRange
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CSE"]
 	 * @returns {"range"}
 	 */
 	ApiRange.prototype.GetClassType = function()

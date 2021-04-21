@@ -706,6 +706,7 @@
 		{
 			var image = new CCI();
 			image.load(type, url);
+			image.loadActive(url);
 			this.images[type] = image;
 		};
 
@@ -1661,57 +1662,26 @@
 										ctx.beginPath();
 									}
 
-									var cx = _x - 0.5 * Math.round(rPR) + Math.round(4 * rPR);
-									var cy = _y - 0.5 * Math.round(rPR) + Math.round(4 * rPR);
+									var cx = _x - 0.5 * Math.round(rPR) + Math.round(5 * rPR);
+									var cy = _y - 0.5 * Math.round(rPR) + Math.round(5 * rPR);
 
-									var _color1 = "#ADADAD";
-									var _color2 = "#D4D4D4";
+									var px3 = Math.round(2 * rPR);
+									var px5 = Math.round(4 * rPR);
+									var px10 = Math.round(8 * rPR);
 
+									var _color = "#ADADAD";
 									if (0 == this.ContentControlObjectState || 1 == this.ContentControlObjectState)
-									{
-										_color1 = "#444444";
-										_color2 = "#9D9D9D";
-									}
+										_color = "#444444";
 
-									overlay.AddRect(cx, cy, Math.round(3 * rPR), Math.round(3 * rPR));
-									overlay.AddRect(cx + Math.round(5 * rPR), cy, Math.round(3 * rPR), Math.round(3 * rPR));
-									overlay.AddRect(cx, cy + Math.round(5 * rPR), Math.round(3 * rPR), Math.round(3 * rPR));
-									overlay.AddRect(cx + Math.round(5 * rPR), cy + Math.round(5 * rPR), Math.round(3 * rPR), Math.round(3 * rPR));
-									overlay.AddRect(cx, cy + Math.round(10 * rPR), Math.round(3 * rPR), Math.round(3 * rPR));
-									overlay.AddRect(cx + Math.round(5 * rPR), cy + Math.round(10 * rPR), Math.round(3 * rPR), Math.round(3 * rPR));
+									overlay.AddRect(cx, cy, px3, px3);
+									overlay.AddRect(cx, cy + px5, px3, px3);
+									overlay.AddRect(cx, cy + px10, px3, px3);
+									overlay.AddRect(cx + px5, cy, px3, px3);
+									overlay.AddRect(cx + px5, cy + px5, px3, px3);
+									overlay.AddRect(cx + px5, cy + px10, px3, px3);
 
-									ctx.fillStyle = _color2;
+									ctx.fillStyle = _color;
 									ctx.fill();
-									ctx.beginPath();
-
-									ctx.moveTo(cx + Math.round(1 * rPR) + 0.5 * Math.round(rPR), cy);
-									ctx.lineTo(cx + Math.round(1 * rPR) + 0.5 * Math.round(rPR), cy + Math.round(3 * rPR));
-									ctx.moveTo(cx + Math.round(6 * rPR) + 0.5 * Math.round(rPR), cy);
-									ctx.lineTo(cx + Math.round(6 * rPR) + 0.5 * Math.round(rPR), cy + Math.round(3 * rPR));
-									ctx.moveTo(cx + Math.round(1 * rPR) + 0.5 * Math.round(rPR), cy + Math.round(5 * rPR));
-									ctx.lineTo(cx + Math.round(1 * rPR) + 0.5 * Math.round(rPR), cy + Math.round(8 * rPR));
-									ctx.moveTo(cx + Math.round(6 * rPR) + 0.5 * Math.round(rPR), cy + Math.round(5 * rPR));
-									ctx.lineTo(cx + Math.round(6 * rPR) + 0.5 * Math.round(rPR), cy + Math.round(8 * rPR));
-									ctx.moveTo(cx + Math.round(1 * rPR) + 0.5 * Math.round(rPR), cy + Math.round(10 * rPR));
-									ctx.lineTo(cx + Math.round(1 * rPR) + 0.5 * Math.round(rPR), cy + Math.round(13 * rPR));
-									ctx.moveTo(cx + Math.round(6 * rPR) + 0.5 * Math.round(rPR), cy + Math.round(10 * rPR));
-									ctx.lineTo(cx + Math.round(6 * rPR) + 0.5 * Math.round(rPR), cy + Math.round(13 * rPR));
-
-									ctx.moveTo(cx, cy + Math.round(1 * rPR) + 0.5 * Math.round(rPR));
-									ctx.lineTo(cx + Math.round(3 * rPR), cy + Math.round(1 * rPR) + 0.5 * Math.round(rPR));
-									ctx.moveTo(cx + Math.round(5 * rPR), cy + Math.round(1 * rPR) + 0.5 * Math.round(rPR));
-									ctx.lineTo(cx + Math.round(8 * rPR), cy + Math.round(1 * rPR) + 0.5 * Math.round(rPR));
-									ctx.moveTo(cx, cy + Math.round(6.5 * rPR));
-									ctx.lineTo(cx + Math.round(3 * rPR), cy + Math.round(6 * rPR) + 0.5 * Math.round(rPR));
-									ctx.moveTo(cx + Math.round(5 * rPR), cy + Math.round(6 * rPR) + 0.5 * Math.round(rPR));
-									ctx.lineTo(cx + Math.round(8 * rPR), cy + Math.round(6 * rPR) + 0.5 * Math.round(rPR));
-									ctx.moveTo(cx, cy + Math.round(11 * rPR) + 0.5 * Math.round(rPR));
-									ctx.lineTo(cx + Math.round(3 * rPR), cy + Math.round(11 * rPR) + 0.5 * Math.round(rPR));
-									ctx.moveTo(cx + Math.round(5 * rPR), cy + Math.round(11 * rPR) + 0.5 * Math.round(rPR));
-									ctx.lineTo(cx + Math.round(8 * rPR), cy + Math.round(11 * rPR) + 0.5 * Math.round(rPR));
-
-									ctx.strokeStyle = _color1;
-									ctx.stroke();
 									ctx.beginPath();
 								}
 
