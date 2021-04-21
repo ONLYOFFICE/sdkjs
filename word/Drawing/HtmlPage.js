@@ -774,9 +774,15 @@ function CEditorPage(api)
 		this.MouseHandObject = {
 			check : function(_this, _pos) {
 				var logicDoc = _this.m_oLogicDocument;
-				if (!logicDoc || !(logicDoc.IsInForm(_pos.X, _pos.Y, _pos.Page) || logicDoc.IsInContentControl(_pos.X, _pos.Y, _pos.Page)))
+				if (!logicDoc)
 					return true;
-				return false;
+				var isForms = (logicDoc.IsInForm(_pos.X, _pos.Y, _pos.Page) || logicDoc.IsInContentControl(_pos.X, _pos.Y, _pos.Page)) ? true : false;
+				var isButtons = _this.m_oDrawingDocument.contentControls.checkPointerInButtons(_pos);
+
+				if (isForms || isButtons)
+					return false;
+
+				return true;
 			}
 		};
 	};
