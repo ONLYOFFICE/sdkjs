@@ -1265,6 +1265,12 @@ Geometry.prototype=
 
     drawAdjustments: function(drawingDocument, transform, bTextWarp)
     {
+        var oApi = Asc.editor || editor;
+        var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
+        if(isDrawHandles === false)
+        {
+            return { hit: false, adjPolarFlag: null, adjNum: null, warp: false };
+        }
         var _adjustments = this.ahXYLst;
         var _adj_count = _adjustments.length;
         var _adj_index;

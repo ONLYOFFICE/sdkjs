@@ -1344,9 +1344,9 @@ CDrawingDocument.prototype =
     },
 
     // треки
-    DrawTrack : function(type, matrix, left, top, width, height, isLine, canRotate)
+    DrawTrack : function(type, matrix, left, top, width, height, isLine, canRotate, isNoMove, isDrawHandles)
     {
-        this.AutoShapesTrack.DrawTrack(type, matrix, left, top, width, height, isLine, canRotate);
+        this.AutoShapesTrack.DrawTrack(type, matrix, left, top, width, height, isLine, canRotate, isNoMove, isDrawHandles);
     },
     DrawTrackSelectShapes : function(x, y, w, h)
     {

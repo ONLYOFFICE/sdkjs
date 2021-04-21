@@ -639,7 +639,12 @@ function handleGroup(drawing, drawingObjectsController, e, x, y, group, pageInde
                                         {
                                             tx = invert_transform_text.TransformPointX(x, y);
                                             ty = invert_transform_text.TransformPointY(x, y);
-                                            content.UpdateCursorType(tx, ty, 0);
+                                            var oApi = Asc.editor || editor;
+                                            var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
+                                            if(isDrawHandles)
+                                            {
+                                                content.UpdateCursorType(tx, ty, 0);
+                                            }
                                         }
                                     }
                                     return {objectId: drawing.Get_Id(), cursorType: "text"};
@@ -1497,7 +1502,12 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
                                                 {
                                                     tx = invert_transform_text.TransformPointX(x, y);
                                                     ty = invert_transform_text.TransformPointY(x, y);
-                                                    content.UpdateCursorType(tx, ty, 0);
+                                                    var oApi = Asc.editor || editor;
+                                                    var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
+                                                    if(isDrawHandles)
+                                                    {
+                                                        content.UpdateCursorType(tx, ty, 0);
+                                                    }
                                                 }
                                             }
                                             return {objectId: drawing.Get_Id(), cursorType: "text", title: oDLbl};
@@ -1620,7 +1630,12 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
                         {
                             tx = invert_transform_text.TransformPointX(x, y);
                             ty = invert_transform_text.TransformPointY(x, y);
-                            content.UpdateCursorType(tx, ty, 0);
+                            var oApi = Asc.editor || editor;
+                            var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
+                            if(isDrawHandles)
+                            {
+                                content.UpdateCursorType(tx, ty, 0);
+                            }
                         }
                     }
                     return {objectId: drawing.Get_Id(), cursorType: "text", title: title};

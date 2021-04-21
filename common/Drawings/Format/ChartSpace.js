@@ -1212,16 +1212,19 @@ var GLOBAL_PATH_COUNT = 0;
     };
     CChartSpace.prototype.drawSelect = function(drawingDocument, nPageIndex) {
         var i, oPath;
+
+        var oApi = Asc.editor || editor;
+        var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
         if(this.selectStartPage === nPageIndex) {
-            drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.SHAPE, this.getTransformMatrix(), 0, 0, this.extX, this.extY, false, this.canRotate());
+            drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.SHAPE, this.getTransformMatrix(), 0, 0, this.extX, this.extY, false, this.canRotate(), undefined, isDrawHandles);
             if(window["NATIVE_EDITOR_ENJINE"]) {
                 return;
             }
             if(this.selection.textSelection) {
-                drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, this.selection.textSelection.transform, 0, 0, this.selection.textSelection.extX, this.selection.textSelection.extY, false, false, false);
+                drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, this.selection.textSelection.transform, 0, 0, this.selection.textSelection.extX, this.selection.textSelection.extY, false, false, false, isDrawHandles);
             }
             else if(this.selection.title) {
-                drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, this.selection.title.transform, 0, 0, this.selection.title.extX, this.selection.title.extY, false, false, false);
+                drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, this.selection.title.transform, 0, 0, this.selection.title.extX, this.selection.title.extY, false, false, false, isDrawHandles);
             }
             else if(AscFormat.isRealNumber(this.selection.dataLbls)) {
                 var series = this.getAllSeries();
@@ -1231,35 +1234,35 @@ var GLOBAL_PATH_COUNT = 0;
                     if(!AscFormat.isRealNumber(this.selection.dataLbl)) {
                         for(i = 0; i < pts.length; ++i) {
                             if(pts[i] && pts[i].compiledDlb && !pts[i].compiledDlb.bDelete) {
-                                drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, pts[i].compiledDlb.transform, 0, 0, pts[i].compiledDlb.extX, pts[i].compiledDlb.extY, false, false);
+                                drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, pts[i].compiledDlb.transform, 0, 0, pts[i].compiledDlb.extX, pts[i].compiledDlb.extY, false, false, undefined, isDrawHandles);
                             }
                         }
                     }
                     else {
                         if(pts[this.selection.dataLbl] && pts[this.selection.dataLbl].compiledDlb) {
-                            drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, pts[this.selection.dataLbl].compiledDlb.transform, 0, 0, pts[this.selection.dataLbl].compiledDlb.extX, pts[this.selection.dataLbl].compiledDlb.extY, false, false);
+                            drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, pts[this.selection.dataLbl].compiledDlb.transform, 0, 0, pts[this.selection.dataLbl].compiledDlb.extX, pts[this.selection.dataLbl].compiledDlb.extY, false, false, undefined, isDrawHandles);
                         }
                     }
                 }
 
             }
             else if(this.selection.dataLbl) {
-                drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, this.selection.dataLbl.transform, 0, 0, this.selection.dataLbl.extX, this.selection.dataLbl.extY, false, false);
+                drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, this.selection.dataLbl.transform, 0, 0, this.selection.dataLbl.extX, this.selection.dataLbl.extY, false, false, undefined, isDrawHandles);
             }
             else if(this.selection.legend) {
                 if(AscFormat.isRealNumber(this.selection.legendEntry)) {
                     var oEntry = this.chart.legend.findCalcEntryByIdx(this.selection.legendEntry);
                     if(oEntry) {
-                        drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, oEntry.transformText, 0, 0, oEntry.contentWidth, oEntry.contentHeight, false, false);
+                        drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, oEntry.transformText, 0, 0, oEntry.contentWidth, oEntry.contentHeight, false, false, undefined, isDrawHandles);
                     }
                 }
                 else {
-                    drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.SHAPE, this.selection.legend.transform, 0, 0, this.selection.legend.extX, this.selection.legend.extY, false, false);
+                    drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.SHAPE, this.selection.legend.transform, 0, 0, this.selection.legend.extX, this.selection.legend.extY, false, false, undefined, isDrawHandles);
                 }
             }
             else if(this.selection.axisLbls) {
                 var oLabels = this.selection.axisLbls.labels;
-                drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, this.transform, oLabels.x, oLabels.y, oLabels.extX, oLabels.extY, false, false);
+                drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, this.transform, oLabels.x, oLabels.y, oLabels.extX, oLabels.extY, false, false, undefined, isDrawHandles);
             }
             else if(this.selection.hiLowLines) {
                 if(this.chartObj) {
@@ -1316,7 +1319,7 @@ var GLOBAL_PATH_COUNT = 0;
             else if(this.selection.plotArea) {
 
                 var oChartSize = this.getChartSizes(true);
-                drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.SHAPE, this.transform, oChartSize.startX, oChartSize.startY, oChartSize.w, oChartSize.h, false, false);
+                drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.SHAPE, this.transform, oChartSize.startX, oChartSize.startY, oChartSize.w, oChartSize.h, false, false, undefined, isDrawHandles);
                 /*if(!this.selection.rotatePlotArea)
                  {
                  drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, this.transform, oChartSize.startX, oChartSize.startY, oChartSize.w, oChartSize.h, false, false);

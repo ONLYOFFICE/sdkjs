@@ -6098,6 +6098,12 @@ CPresentation.prototype.SelectAll = function () {
 
 CPresentation.prototype.UpdateCursorType = function (X, Y, MouseEvent) {
 
+    var oApi = Asc.editor || editor;
+    var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
+    if(isDrawHandles === false)
+    {
+        return;
+    }
     var oController = this.GetCurrentController();
     if (oController) {
         var graphicObjectInfo = oController.isPointInDrawingObjects(X, Y, MouseEvent);

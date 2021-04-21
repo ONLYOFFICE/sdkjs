@@ -1561,6 +1561,9 @@ Path.prototype = {
 
         drawTracks: function(drawingDocument, transform)
         {
+
+            var oApi = Asc.editor || editor;
+            var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
             var i = 0;
             var len = this.PathMemory.ArrPathCommand[this.startPos];
 
@@ -1573,20 +1576,20 @@ Path.prototype = {
                 {
                     case moveTo:
                     {
-                        drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, transform, path[this.startPos + i+2] - dDist, path[this.startPos + i + 3] - dDist, 2*dDist, 2*dDist, false, false);
+                        drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, transform, path[this.startPos + i+2] - dDist, path[this.startPos + i + 3] - dDist, 2*dDist, 2*dDist, false, false, undefined, isDrawHandles);
                         i+=3;
                         break;
                     }
                     case lineTo:
                     {
-                        drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, transform, path[this.startPos + i+2] - dDist, path[this.startPos + i + 3] - dDist, 2*dDist, 2*dDist, false, false);
+                        drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, transform, path[this.startPos + i+2] - dDist, path[this.startPos + i + 3] - dDist, 2*dDist, 2*dDist, false, false, undefined, isDrawHandles);
                         i+=3;
                         break;
                     }
                     case bezier3:
                     {
                       //  drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, transform, path[this.startPos + i+2] - dDist, path[this.startPos + i + 3] - dDist, 2*dDist, 2*dDist, false, false);
-                        drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, transform, path[this.startPos + i+4] - dDist, path[this.startPos + i + 5] - dDist, 2*dDist, 2*dDist, false, false);
+                        drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, transform, path[this.startPos + i+4] - dDist, path[this.startPos + i + 5] - dDist, 2*dDist, 2*dDist, false, false, undefined, isDrawHandles);
                         i+=5;
                         break;
                     }
@@ -1594,7 +1597,7 @@ Path.prototype = {
                     {
                       //  drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, transform, path[this.startPos + i+2] - dDist, path[this.startPos + i + 3] - dDist, 2*dDist,2*dDist, false, false);
                        // drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, transform, path[this.startPos + i+4] - dDist, path[this.startPos + i + 5] - dDist, 2*dDist,2*dDist, false, false); i+=7;
-                        drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, transform, path[this.startPos + i+6] - dDist, path[this.startPos + i + 7] - dDist, 2*dDist,2*dDist, false, false); i+=7;
+                        drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, transform, path[this.startPos + i+6] - dDist, path[this.startPos + i + 7] - dDist, 2*dDist,2*dDist, false, false, undefined, isDrawHandles); i+=7;
                         break;
                     }
                     case arcTo:
@@ -1626,7 +1629,7 @@ Path.prototype = {
                                 }
                             }
                         }
-                        drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, transform, lastX - dDist, lastY - dDist,  2*dDist, 2*dDist, false, false);
+                        drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, transform, lastX - dDist, lastY - dDist,  2*dDist, 2*dDist, false, false, undefined, isDrawHandles);
                         i+=7;
                         break;
                     }

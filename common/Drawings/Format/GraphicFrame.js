@@ -374,6 +374,12 @@ CGraphicFrame.prototype.Set_Props= function(props)
 
 CGraphicFrame.prototype.updateCursorType= function(x, y, e)
     {
+        var oApi = Asc.editor || editor;
+        var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
+        if(isDrawHandles === false)
+        {
+            return;
+        }
         var tx = this.invertTransform.TransformPointX(x, y);
         var ty = this.invertTransform.TransformPointY(x, y);
         this.graphicObject.UpdateCursorType(tx, ty, 0)

@@ -177,6 +177,12 @@ function hitToCropHandles(x, y, object)
 
 function hitToHandles(x, y, object)
 {
+    var oApi = Asc.editor || editor;
+    var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
+    if(isDrawHandles === false)
+    {
+        return -1;
+    }
     if(object.cropObject)
     {
         return hitToCropHandles(x, y, object);
@@ -4594,6 +4600,12 @@ CShape.prototype.hitInTextRect = function (x, y) {
 
 CShape.prototype.updateCursorType = function (x, y, e)
 {
+    var oApi = Asc.editor || editor;
+    var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
+    if(isDrawHandles === false)
+    {
+        return;
+    }
     if(this.invertTransformText)
     {
         var tx = this.invertTransformText.TransformPointX(x, y);
@@ -5671,6 +5683,13 @@ CShape.prototype.changeLine = function (line)
 };
 
 CShape.prototype.hitToAdjustment = function (x, y) {
+
+    var oApi = Asc.editor || editor;
+    var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
+    if(isDrawHandles === false)
+    {
+        return { hit: false, adjPolarFlag: null, adjNum: null, warp: false };
+    }
     var invert_transform;
     var t_x, t_y, ret;
     var _calcGeoem = this.calcGeometry || (this.spPr && this.spPr.geometry);

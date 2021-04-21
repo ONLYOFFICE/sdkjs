@@ -627,6 +627,12 @@
         return this.getNoResize() === false;
     };
     CGraphicObjectBase.prototype.canMove = function() {
+        var oApi = Asc.editor || editor;
+        var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
+        if(isDrawHandles === false)
+        {
+            return false;
+        }
         return this.getNoMove() === false;
     };
     CGraphicObjectBase.prototype.canGroup = function() {

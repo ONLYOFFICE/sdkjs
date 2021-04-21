@@ -671,9 +671,9 @@ CDrawingDocument.prototype.CorrectRulerPosition = function(pos)
 };
 
 // вот здесь весь трекинг
-CDrawingDocument.prototype.DrawTrack = function(type, matrix, left, top, width, height, isLine, canRotate, isNoMove)
+CDrawingDocument.prototype.DrawTrack = function(type, matrix, left, top, width, height, isLine, canRotate, isNoMove, isDrawHandles)
 {
-    this.AutoShapesTrack.DrawTrack(type, matrix, left, top, width, height, isLine, canRotate, isNoMove);
+    this.AutoShapesTrack.DrawTrack(type, matrix, left, top, width, height, isLine, canRotate, isNoMove, isDrawHandles);
 };
 
 CDrawingDocument.prototype.LockSlide = function(slideNum)
