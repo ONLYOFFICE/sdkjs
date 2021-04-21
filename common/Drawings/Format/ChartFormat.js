@@ -4933,6 +4933,17 @@
         for(var nSeries = 0; nSeries < aSeries.length; ++nSeries) {
             var oSeries = new AscFormat.CPieSeries();
             aSeries[nSeries].fillObject(oSeries);
+            //remove this----------
+            if(oSeries.spPr) {
+                var oSpPr = oSeries.spPr;
+                if(oSpPr.Fill) {
+                    oSpPr.setFill(null);
+                }
+                if(oSpPr.ln) {
+                    oSpPr.setLn(null);
+                }
+            }
+            //----------------------
             oPieChart.addSer(oSeries);
         }
         if(nType === Asc.c_oAscChartTypeSettings.pie3d) {
@@ -4976,6 +4987,17 @@
         for(var nSeries = 0; nSeries < aSeries.length; ++nSeries) {
             var oSeries = new AscFormat.CPieSeries();
             aSeries[nSeries].fillObject(oSeries);
+            //remove this------------
+            if(oSeries.spPr) {
+                var oSpPr = oSeries.spPr;
+                if(oSpPr.Fill) {
+                    oSpPr.setFill(null);
+                }
+                if(oSpPr.ln) {
+                    oSpPr.setLn(null);
+                }
+            }
+            //-----------------------
             oDoughnutChart.addSer(oSeries);
         }
         this.parent.check3DOptions(false, false);
