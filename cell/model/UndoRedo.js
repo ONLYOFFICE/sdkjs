@@ -3775,7 +3775,7 @@ function (window, undefined) {
 		} else {
 			fields = pivotTable.asc_getPivotFields();
 		}
-		var index = AscCH.historyitem_PivotTable_PivotFieldVisible === Type ? Data.index.to : Data.index;
+		var index = AscCH.historyitem_PivotTable_PivotFieldVisible === Type ? Data.index.from : Data.index;
 		if (!fields || !fields[index]) {
 			return;
 		}
@@ -3810,7 +3810,7 @@ function (window, undefined) {
 				field.asc_setShowAll(value, pivotTable, index);
 				break;
 			case AscCH.historyitem_PivotTable_PivotFieldVisible:
-				field.asc_setVisible(value, pivotTable, Data.index.from, index);
+				field.asc_setVisible(value, pivotTable, index, Data.index.to);
 				break;
 			case AscCH.historyitem_PivotTable_PivotFieldSetSubtotals:
 				field.setSubtotals(value, pivotTable, index);
