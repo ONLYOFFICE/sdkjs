@@ -4332,6 +4332,14 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 			return 'h:mm;@'
 		}
 	}
+	function getLongTimeFormat(opt_cultureInfo) {
+		var cultureInfo = opt_cultureInfo ? opt_cultureInfo : g_oDefaultCultureInfo;
+		if (cultureInfo.AMDesignator.length > 0 && cultureInfo.PMDesignator.length > 0) {
+			return 'h:mm:ss AM/PM;@';
+		} else {
+			return 'h:mm:ss;@'
+		}
+	}
 
 	function getNumberFormatSimple(opt_separate, opt_fraction) {
 		var numberFormat = opt_separate ? '#,##0' : '0';
@@ -4968,6 +4976,7 @@ setCurrentCultureInfo(1033);//en-US//1033//fr-FR//1036//basq//1069//ru-Ru//1049/
 	window['AscCommon'].getShortDateFormat = getShortDateFormat;
 	window['AscCommon'].getShortDateFormat2 = getShortDateFormat2;
 	window['AscCommon'].getShortTimeFormat = getShortTimeFormat;
+	window['AscCommon'].getLongTimeFormat = getLongTimeFormat;
 	window['AscCommon'].getShortDateMonthFormat = getShortDateMonthFormat;
 	window['AscCommon'].getNumberFormatSimple = getNumberFormatSimple;
 	window['AscCommon'].getNumberFormat = getNumberFormat;

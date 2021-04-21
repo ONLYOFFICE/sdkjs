@@ -13914,11 +13914,11 @@ CT_RangePr.prototype._getDateText = function(date) {
 	var numFormat;
 	if (date) {
 		if (date.getExcelDateWithTime2() < 1) {
-			numFormat = AscCommon.oNumFormatCache.get(AscCommon.getShortTimeFormat());
+			numFormat = AscCommon.oNumFormatCache.get(AscCommon.getLongTimeFormat());
 		} else if (date.getExcelDate() === date.getExcelDateWithTime2()) {
 			numFormat = AscCommon.oNumFormatCache.get(AscCommon.getShortDateFormat());
 		} else {
-			numFormat = AscCommon.oNumFormatCache.get(AscCommon.getShortDateFormat() + ' ' + AscCommon.getShortTimeFormat());
+			numFormat = AscCommon.oNumFormatCache.get(AscCommon.getShortDateFormat() + ' ' + AscCommon.getLongTimeFormat());
 		}
 		return numFormat.formatToChart(date.getExcelDateWithTime2());
 	}
