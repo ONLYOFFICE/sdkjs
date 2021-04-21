@@ -98,6 +98,17 @@
 	 * @property {number} Height - get row height property
 	 * @property {number} FontSize - get font size property
 	 * @property {string} FontName - get font name property
+	 * @property {'center' | 'bottom' | 'top' | 'distributed' | 'justify'} AlignVertical - set align vertical property
+	 * @property {{'left' | 'right' | 'center' | 'justify'}} AlignHorizontal - set align horizontal property
+	 * @property {bool} Bold - set bold property
+	 * @property {'none' | 'single' | 'singleAccounting' | 'double' | 'doubleAccounting'} Underline - set underline property
+	 * @property {bool} Strikeout - set strikeout property
+	 * @property {ApiColor|'No Fill'} FillColor - get and set fill color property
+	 * @property {string} NumberFormat - set numberFormat property
+	 * @property {ApiRange} MergeArea - get merge area property
+	 * @property {ApiWorksheet} Worksheet - get worksheet property
+	 * @property {ApiName} DefName - get defName property
+	 * @property {ApiComment | null} Comments - get comments property
 	 */
 	function ApiRange(range) {
 		this.range = range;
@@ -204,6 +215,9 @@
 	/**
 	 * Class representing a names
 	 * @constructor
+	 * @property {string} Name - get or set name property
+	 * @property {string} RefersTo - get or set RefersTo property
+	 * @property {apiRange} RefersToRange - get RefersTo property
 	 */
 	function ApiName(DefName) {
 		this.DefName = DefName;
@@ -212,6 +226,7 @@
 	/**
 	 * Class representing a comments
 	 * @constructor
+	 * @property {string} Text - get text property
 	 */
 	function ApiComment(comment) {
 		this.Comment = comment;
