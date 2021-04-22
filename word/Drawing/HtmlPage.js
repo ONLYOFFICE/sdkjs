@@ -1566,14 +1566,14 @@ function CEditorPage(api)
 				var ret = oWordControl.m_oDrawingDocument.checkMouseDown_Drawing(pos);
 				if (ret === true)
 				{
-					if (-1 == oWordControl.m_oTimerScrollSelect)
+					if (-1 == oWordControl.m_oTimerScrollSelect && AscCommon.global_mouseEvent.IsLocked)
 						oWordControl.m_oTimerScrollSelect = setInterval(oWordControl.SelectWheel, 20);
 
 					AscCommon.stopEvent(e);
 					return;
 				}
 
-				if (-1 == oWordControl.m_oTimerScrollSelect)
+				if (-1 == oWordControl.m_oTimerScrollSelect && AscCommon.global_mouseEvent.IsLocked)
 				{
 					// добавим это и здесь, чтобы можно было отменять во время LogicDocument.OnMouseDown
 					oWordControl.m_oTimerScrollSelect = setInterval(oWordControl.SelectWheel, 20);
@@ -1595,7 +1595,7 @@ function CEditorPage(api)
 		else if (global_mouseEvent.Button == 2)
 			oWordControl.MouseDownDocumentCounter++;
 
-		if (!bIsSendSelectWhell && -1 == oWordControl.m_oTimerScrollSelect)
+		if (!bIsSendSelectWhell && -1 == oWordControl.m_oTimerScrollSelect && AscCommon.global_mouseEvent.IsLocked)
 		{
 			oWordControl.m_oTimerScrollSelect = setInterval(oWordControl.SelectWheel, 20);
 		}

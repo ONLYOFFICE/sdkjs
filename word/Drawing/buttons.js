@@ -724,9 +724,12 @@
 			this.images[AscCommon.CCButtonType.Combo] = imageCC;
 			imageCC.type = AscCommon.CCButtonType.Combo;
 
-			for (var i = 0; i < 4; i++)
+			var sizes = [20, 30, 40];
+			for (var i = 0; i < 6; i++)
 			{
-				var size = (i > 1) ? 40 : 20;
+				var index = i >> 1;
+				var isActive = (0x01 === (0x01 & i));
+				var size = sizes[index];
 
 				var image = document.createElement("canvas");
 				image.width = size;
@@ -741,7 +744,7 @@
 				var x = (size - len) >> 1;
 				var y = (size - count) >> 1;
 
-				var color = (0x01 === (0x01 & i)) ? 255 : 0;
+				var color = isActive ? 255 : 0;
 
 				while ( len > 0 )
 				{
@@ -763,10 +766,10 @@
 
 				image.asc_complete = true;
 
-				if (i > 1)
-					imageCC.images_active[i - 2] = image;
+				if (isActive)
+					imageCC.images_active[index] = image;
 				else
-					imageCC.images[i] = image;
+					imageCC.images[index] = image;
 			}
 		};
 	}
@@ -1765,8 +1768,8 @@
 							if (_object.ComboRect)
 							{
 								_x = (((_drawingPage.left + _koefX * (_object.ComboRect.X + _object.OffsetX)) * rPR) >> 0) + 0.5 * Math.round(rPR);
-								_y = (((_drawingPage.top + _koefY * (_object.ComboRect.Y + _object.OffsetY)) >> 0)) * rPR + 0.5 * Math.round(rPR);
-								_b = (((_drawingPage.top + _koefY * (_object.ComboRect.B + _object.OffsetY))) * rPR >> 0) + 0.5 * Math.round(rPR);
+								_y = (((_drawingPage.top  + _koefY * (_object.ComboRect.Y + _object.OffsetY)) * rPR) >> 0) + 0.5 * Math.round(rPR);
+								_b = (((_drawingPage.top  + _koefY * (_object.ComboRect.B + _object.OffsetY)) * rPR) >> 0) + 0.5 * Math.round(rPR);
 								var nIndexB = _object.Buttons.length;
 
 								ctx.beginPath();
@@ -1785,7 +1788,7 @@
 
 								var image = this.icons.getImage(AscCommon.CCButtonType.Combo, _object.Buttons.length == _object.ActiveButtonIndex);
 								if (image && Math.round(7 * rPR) < (_b - _y))
-									ctx.drawImage(image, _x, _y + ((_b - _y - Math.round(20 * rPR)) >> 1) + 0.5 * Math.round(rPR), Math.round(20 * rPR), Math.round(20 * rPR));
+									ctx.drawImage(image, _x + 0.5 * Math.round(rPR), _y + 1.5 * Math.round(rPR) + ((_b - _y - Math.round(20 * rPR)) >> 1), Math.round(20 * rPR), Math.round(20 * rPR));
 							}
 						}
 						else
@@ -1793,10 +1796,10 @@
 							var _ft = _object.transform.CreateDublicate();
 
 							var coords = new AscCommon.CMatrix();
-							coords.sx = _koefX;
-							coords.sy = _koefY;
-							coords.tx = _drawingPage.left;
-							coords.ty = _drawingPage.top;
+							coords.sx = _koefX * rPR;
+							coords.sy = _koefY * rPR;
+							coords.tx = _drawingPage.left * rPR;
+							coords.ty = _drawingPage.top * rPR;
 							global_MatrixTransformer.MultiplyAppend(_ft, coords);
 							ctx.transform(_ft.sx, _ft.shy, _ft.shx, _ft.sy, _ft.tx, _ft.ty);
 
@@ -1999,7 +2002,7 @@
 								var image = this.icons.getImage(AscCommon.CCButtonType.Combo, _object.Buttons.length == _object.ActiveButtonIndex);
 								var scaleY_7 = 7 / _koefY;
 								if (image && scaleY_7 < (_b - _y))
-									ctx.drawImage(image, _x, _y + ((_b - _y - scaleY_20) >> 1) + 0.5, scaleX_20, scaleY_20);
+									ctx.drawImage(image, _x, _y + ((_b - _y - scaleY_20) / 2), scaleX_20, scaleY_20);
 							}
 
 							// рисуем единую обводку
