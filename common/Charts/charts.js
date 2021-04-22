@@ -908,8 +908,8 @@ TextArtPreviewManager.prototype.getWordArtPreviews = function()
 	{
 		var sPreset = AscCommon.g_aTextArtPresets[nIdx];
 		var oPreview = {};
-		oPreview["Type"] = oPreview.Type = sPreset;
-		oPreview["Image"] = oPreview.Image = this.getWordArtPreview(sPreset);
+		oPreview["Type"] = sPreset;
+		oPreview["Image"] = this.getWordArtPreview(sPreset);
 		aRet.push(oPreview);
 	}
 	return aRet;
