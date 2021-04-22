@@ -1841,13 +1841,12 @@ Paragraph.prototype.Draw = function(CurPage, pGraphics)
 	var Pr = this.Get_CompiledPr();
 
 	// Выясним какая заливка у нашего текста
-
-	var Theme    = this.Get_Theme();
-	var ColorMap = this.Get_ColorMap();
 	var BgColor  = undefined;
-	if (Pr.ParaPr.Shd && !Pr.ParaPr.Shd.IsNil() && (!Pr.ParaPr.Shd.Color || true !== Pr.ParaPr.Shd.Color.Auto))
+	if (Pr.ParaPr.Shd && !Pr.ParaPr.Shd.IsNil())
 	{
 		BgColor = Pr.ParaPr.Shd.GetSimpleColor(this.GetTheme(), this.GetColorMap());
+		if (true === BgColor.Auto)
+			BgColor = this.Parent.Get_TextBackGroundColor();
 	}
 	else
 	{
@@ -1873,7 +1872,7 @@ Paragraph.prototype.Draw = function(CurPage, pGraphics)
 
 	// 4 часть отрисовки :
 	//    Рисуем сами элементы параграфа
-	this.Internal_Draw_4(CurPage, pGraphics, Pr, BgColor, Theme, ColorMap);
+	this.Internal_Draw_4(CurPage, pGraphics, Pr, BgColor, this.GetTheme(), this.GetColorMap());
 
 	// 5 часть отрисовки :
 	//    Рисуем различные подчеркивания и зачеркивания.
