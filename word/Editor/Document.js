@@ -9421,7 +9421,11 @@ CDocument.prototype.IsInForm = function(X, Y, nPageAbs)
 	if (!oClass || !(oClass instanceof ParaRun))
 		return false;
 
-	return (!!oClass.GetParentForm());
+	var oForm = oClass.GetParentForm();
+	if (!oForm)
+		return false;
+
+	return oForm.CheckHitInContentControlByXY(X, Y, nPageAbs);
 };
 /**
  * Проверяем, попали ли мы в контейнер
@@ -9440,7 +9444,14 @@ CDocument.prototype.IsInContentControl = function(X, Y, nPageAbs)
 	if (!oClass || !(oClass instanceof ParaRun))
 		return false;
 
-	return (oClass.GetParentContentControls().length > 0);
+	var arrContentControls = oClass.GetParentContentControls();
+	for (var nIndex = 0, nCount = arrContentControls.length; nIndex < nCount; ++nIndex)
+	{
+		if (arrContentControls[nIndex].CheckHitInContentControlByXY(X, Y, nPageAbs))
+			return true;
+	}
+
+	return false;
 };
 CDocument.prototype.Is_UseInDocument = function(Id)
 {

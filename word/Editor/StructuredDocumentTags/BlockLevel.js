@@ -2490,6 +2490,24 @@ CBlockLevelSdt.prototype.private_OnAddFormPr = function()
 {
 	this.Content.Recalc_AllParagraphs_CompiledPr();
 };
+CBlockLevelSdt.prototype.CheckHitInContentControlByXY = function(X, Y, nPageAbs)
+{
+	for (var nPageIndex = 0, nPagesCount = this.GetPagesCount(); nPageIndex < nPagesCount; ++nPageIndex)
+	{
+		if (this.IsEmptyPage(nPageIndex))
+			continue;
+
+		if (this.GetAbsolutePage(nPageIndex) === nPageAbs)
+		{
+			var oBounds = this.Content.GetContentBounds(nPageIndex);
+
+			if (oBounds.Left <= X && X <= oBounds.Right && oBounds.Top <= Y && Y <= oBounds.Bottom)
+				return true;
+		}
+	}
+
+	return false;
+};
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CBlockLevelSdt = CBlockLevelSdt;

@@ -553,7 +553,7 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCu
 		for (var sKey in this.Bounds)
 		{
 			var oBound = this.Bounds[sKey];
-			if (oBound.PageInternal === nCurPage && oBound.X <= X && X <= oBound.X + oBound.W && oBound.Y <= Y && oBound.Y + oBound.H)
+			if (oBound.PageInternal === nCurPage && oBound.X <= X && X <= oBound.X + oBound.W && oBound.Y <= Y && Y <= oBound.Y + oBound.H)
 			{
 				isHit = true;
 				break;
@@ -1926,6 +1926,21 @@ CInlineLevelSdt.prototype.UpdatePlaceHolderTextPrForForm = function()
 				this.Content[nIndex].SetPr(this.Pr.TextPr.Copy());
 		}
 	}
+};
+CInlineLevelSdt.prototype.CheckHitInContentControlByXY = function(X, Y, nPageAbs)
+{
+	var oParagraph = this.GetParagraph();
+	if (!oParagraph)
+		return false;
+
+	for (var sKey in this.Bounds)
+	{
+		var oBound = this.Bounds[sKey];
+		if (oParagraph.GetAbsolutePage(oBound.PageInternal) === nPageAbs && oBound.X <= X && X <= oBound.X + oBound.W && oBound.Y <= Y && Y <= oBound.Y + oBound.H)
+			return true;
+	}
+
+	return false;
 };
 
 //--------------------------------------------------------export--------------------------------------------------------
