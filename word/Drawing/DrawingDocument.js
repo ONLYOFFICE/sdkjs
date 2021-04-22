@@ -4566,7 +4566,7 @@ function CDrawingDocument()
 			var _h = _b - _y + 1;
 
 			this.Overlay.CheckRect(rPR * _x, rPR * _y, rPR * _w, rPR * _h);
-			this.Overlay.m_oContext.rect(rPR * _x, rPR *_y, _w * rPR, _h * rPR);
+			this.Overlay.m_oContext.rect((rPR * _x) >> 0, (rPR *_y) >> 0, (_w * rPR) >> 0, (_h * rPR) >> 0);
 			// this.Overlay.
 		}
 		else
