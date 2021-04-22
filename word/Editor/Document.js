@@ -16088,7 +16088,7 @@ CDocument.prototype.AddContentControlTextForm = function(oPr)
 
 	if (this.IsTextSelectionUse())
 		this.RemoveBeforePaste();
-	else
+	else if (this.IsSelectionUse())
 		this.RemoveSelection();
 
 	var oCC = this.AddContentControl(c_oAscSdtLevelType.Inline);
