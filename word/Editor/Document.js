@@ -10693,7 +10693,7 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 		if ((oInlineSdt && oInlineSdt.IsCheckBox()) || (oBlockSdt && oBlockSdt.IsCheckBox()))
 		{
 			var oCC = (oInlineSdt && oInlineSdt.IsCheckBox()) ? oInlineSdt : oBlockSdt;
-			if (!oCC.IsForm() || this.IsFillingFormMode() || oCC === this.CurPos.CC)
+			if (oCC.CheckHitInContentControlByXY(X, Y, PageIndex) && (!oCC.IsForm() || this.IsFillingFormMode() || oCC === this.CurPos.CC))
 			{
 				this.CurPos.CC = oCC;
 				oCC.SkipSpecialContentControlLock(true);
