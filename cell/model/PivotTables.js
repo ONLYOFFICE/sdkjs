@@ -5715,7 +5715,12 @@ CT_pivotTableDefinition.prototype._sortPivotItems = function(index, type, sortDa
 	pivotField.setSortType(type, sortDataIndex);
 	if (pivotField.sortType !== c_oAscFieldSortType.Manual && -1 === pivotField.getSortDataIndex()) {
 		pivotField.removeSubtotal();
-		pivotField.sortItems(type, cacheField.getGroupOrSharedItems());
+		var rangePr = cacheField.getGroupRangePr();
+		if (rangePr && c_oAscGroupBy.Months === rangePr.groupBy) {
+			pivotField.sortItemsMonth(type);
+		} else {
+			pivotField.sortItems(type, cacheField.getGroupOrSharedItems());
+		}
 		pivotField.checkSubtotal();
 	}
 };
@@ -11130,6 +11135,27 @@ CT_PivotField.prototype.sortItems = function(type, sharedItems) {
 		this.items.item.sort(function(a, b) {
 			return sign * cmpPivotItems(sharedItems, a, b);
 		});
+	}
+};
+CT_PivotField.prototype.sortItemsMonth = function (type) {
+	if (this.items && this.items.item) {
+		var newItems = [], newItem, i;
+		var length = this.items.item.length;
+		for (i = 1; i < length - 1; ++i) {
+			newItem = new CT_Item();
+			newItem.x = i;
+			newItems.push(newItem);
+		}
+		newItem = new CT_Item();
+		newItem.x = 0;
+		newItems.push(newItem);
+		newItem = new CT_Item();
+		newItem.x = length - 1;
+		newItems.push(newItem);
+		if (Asc.c_oAscSortOptions.Descending === type) {
+			newItems.reverse();
+		}
+		this.items.item = newItems;
 	}
 };
 CT_PivotField.prototype.getSortVal = function() {
