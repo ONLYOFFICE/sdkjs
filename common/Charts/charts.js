@@ -688,11 +688,16 @@ TextArtPreviewManager.prototype.getCanvas = function()
 {
 	if (null === this.canvas)
 	{
-		this.canvas = document.createElement('canvas');
-		this.canvas.width = AscCommon.AscBrowser.convertToRetinaValue(this.canvasWidth, true);
-        this.canvas.height = AscCommon.AscBrowser.convertToRetinaValue(this.canvasHeight, true);
+		this.canvas = this.createCanvas();
 	}
 	return this.canvas;
+};
+TextArtPreviewManager.prototype.createCanvas = function()
+{
+	var oCanvas = document.createElement('canvas');
+	oCanvas.width = AscCommon.AscBrowser.convertToRetinaValue(this.canvasWidth, true);
+	oCanvas.height = AscCommon.AscBrowser.convertToRetinaValue(this.canvasHeight, true);
+	return oCanvas;
 };
 
 TextArtPreviewManager.prototype.getShapeByPrst = function(prst)
@@ -773,6 +778,10 @@ TextArtPreviewManager.prototype.getShapeByPrst = function(prst)
 		{
 			return AscFormat.CreatePrstTxWarpGeometry(prst)
 		}, []);
+	oBodypr.lIns = 2.54;
+	oBodypr.tIns = 2.54;
+	oBodypr.rIns = 2.54;
+	oBodypr.bIns = 2.54;
 	if(!oShape.bWordShape)
 	{
 		oShape.txBody.setBodyPr(oBodypr);
@@ -890,7 +899,24 @@ TextArtPreviewManager.prototype.getTAShape = function()
 
 TextArtPreviewManager.prototype.getWordArtPreview = function(prst)
 {
-	var _canvas = this.getCanvas();
+	return this.getWordArtPreviewCanvas(prst).toDataURL("image/png");
+};
+TextArtPreviewManager.prototype.getWordArtPreviews = function()
+{
+	var aRet = [];
+	for(var nIdx = 0; nIdx < AscCommon.g_aTextArtPresets.length; ++nIdx)
+	{
+		var sPreset = AscCommon.g_aTextArtPresets[nIdx];
+		var oPreview = {};
+		oPreview["Type"] = oPreview.Type = sPreset;
+		oPreview["Image"] = oPreview.Image = this.getWordArtPreview(sPreset);
+		aRet.push(oPreview);
+	}
+	return aRet;
+};
+TextArtPreviewManager.prototype.getWordArtPreviewCanvas = function(prst)
+{
+	var _canvas = this.createCanvas();
 	var ctx = _canvas.getContext('2d');
 	var graphics = new AscCommon.CGraphics();
 	var oShape = this.getShapeByPrst(prst);
@@ -898,6 +924,15 @@ TextArtPreviewManager.prototype.getWordArtPreview = function(prst)
     {
         return "";
     }
+	oShape.recalcText();
+	if(!oShape.bWordShape)
+	{
+		oShape.recalculate();
+	}
+	else
+	{
+		oShape.recalculateText();
+	}
 	graphics.init(ctx, _canvas.width, _canvas.height, oShape.extX, oShape.extY);
 	graphics.m_oFontManager = AscCommon.g_fontManager;
 	graphics.transform(1,0,0,1,0,0);
@@ -914,7 +949,7 @@ TextArtPreviewManager.prototype.getWordArtPreview = function(prst)
 	{
 		editor.ShowParaMarks = oldShowParaMarks;
 	}
-	return _canvas.toDataURL("image/png");
+	return _canvas;
 };
 
 TextArtPreviewManager.prototype.generateTextArtStyles = function()
@@ -972,26 +1007,6 @@ TextArtPreviewManager.prototype.generateTextArtStyles = function()
     }, this, []);
 };
 
-
-
-function GenerateWordArtPrewiewCode()
-{
-	var oWordArtPreview = new TextArtPreviewManager();
-	var i, j;
-	var oRetString =  "g_PresetTxWarpTypes = \n [";
-	for(i = 0; i < AscCommon.g_PresetTxWarpTypes.length; ++i)
-	{
-		var aByTypes = AscCommon.g_PresetTxWarpTypes[i];
-		oRetString += "\n\t[";
-		for(j = 0; j < aByTypes.length; ++j)
-		{
-			oRetString += "\n\t\t{Type: \"" + aByTypes[j]['Type'] + "\", Image: \"" + oWordArtPreview.getWordArtPreview(aByTypes[j]['Image']) + "\"}" + ((j === aByTypes.length - 1) ? "" : ",");
-		}
-		oRetString += "\n\t]" + (i < (AscCommon.g_PresetTxWarpTypes.length - 1) ? "," : "");
-	}
-	oRetString += "\n];";
-	return oRetString;
-}
 
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};

@@ -1656,7 +1656,7 @@
 	};
 	baseEditorsApi.prototype.asc_getPropertyEditorTextArts       = function()
 	{
-		return [AscCommon.g_oPresetTxWarpGroups, AscCommon.g_PresetTxWarpTypes];
+		return this.textArtPreviewManager.getWordArtPreviews();
 	};
 	// Add image
 	baseEditorsApi.prototype._addImageUrl                        = function()
