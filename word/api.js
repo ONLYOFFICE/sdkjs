@@ -9549,7 +9549,7 @@ background-repeat: no-repeat;\
 		if (!oRun)
 			return null;
 
-		return oRun.GetTextFormAutoWidth();
+		return AscCommon.MMToTwips(oRun.GetTextFormAutoWidth());
 	};
 	asc_docs_api.prototype.asc_GetFormsCountByKey = function(sKey)
 	{
