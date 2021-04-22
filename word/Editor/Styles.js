@@ -10212,7 +10212,7 @@ CDocumentShd.prototype.GetSimpleColor = function(oTheme, oColorMap)
 
 		default:
 		{
-			oResultColor = oStrokeColor;
+			oResultColor = oFillColor;
 			break;
 		}
 	}
