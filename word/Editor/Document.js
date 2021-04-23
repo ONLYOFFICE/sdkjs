@@ -24403,8 +24403,20 @@ CDocument.prototype.ClearAllSpecialForms = function()
 			}
 			else if (oForm.IsPicture())
 			{
-				oForm.ReplaceContentWithPlaceHolder();
-				oForm.ApplyPicturePr(true);
+				var arrDrawings = oForm.GetAllDrawingObjects();
+				if (arrDrawings.length > 0 && arrDrawings[0].IsPicture())
+				{
+					var nW = arrDrawings[0].Extent.W;
+					var nH = arrDrawings[0].Extent.H;
+
+					oForm.ReplaceContentWithPlaceHolder();
+					oForm.ApplyPicturePr(true, nW, nH);
+				}
+				else
+				{
+					oForm.ReplaceContentWithPlaceHolder();
+					oForm.ApplyPicturePr(true);
+				}
 			}
 			else
 			{

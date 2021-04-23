@@ -1369,7 +1369,7 @@ CInlineLevelSdt.prototype.SetPicturePr = function(isPicture)
 		this.Pr.Picture = isPicture;
 	}
 };
-CInlineLevelSdt.prototype.private_UpdatePictureContent = function()
+CInlineLevelSdt.prototype.private_UpdatePictureContent = function(_nW, _nH)
 {
 	if (!this.IsPicture())
 		return;
@@ -1402,8 +1402,8 @@ CInlineLevelSdt.prototype.private_UpdatePictureContent = function()
 		if (!oDrawingObjects)
 			return;
 
-		var nW = 50;
-		var nH = 50;
+		var nW = _nW ? _nW : 50;
+		var nH = _nH ? _nH : 50;
 
 		oDrawing   = new ParaDrawing(nW, nH, null, oDrawingObjects, this.Paragraph.LogicDocument, null);
 		var oImage = oDrawingObjects.createImage(AscCommon.g_sWordPlaceholderImage, 0, 0, nW, nH);
@@ -1416,11 +1416,13 @@ CInlineLevelSdt.prototype.private_UpdatePictureContent = function()
 /**
  * Применяме к данному контейнеру настройку того, что это специальный контейнер для картинок
  * @param isPicture {boolean}
+ * @param [nW=-1] {number} если не задано (или значение не положительное), тогда используется стандартное значение
+ * @param [nH=-1] {number} если не задано (или значение не положительное), тогда используется стандартное значение
  */
-CInlineLevelSdt.prototype.ApplyPicturePr = function(isPicture)
+CInlineLevelSdt.prototype.ApplyPicturePr = function(isPicture, nW, nH)
 {
 	this.SetPicturePr(isPicture);
-	this.private_UpdatePictureContent();
+	this.private_UpdatePictureContent(nW, nH);
 };
 /**
  * Выделяем изображение, если это специальный контейнер для изображения
