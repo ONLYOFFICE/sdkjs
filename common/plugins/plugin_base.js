@@ -476,7 +476,10 @@
 		".ps .ps__rail-y.ps--clicking" : {"background-color" : "background-toolbar" },
 		".ps__thumb-y" : { "background-color" : "background-normal", "border-color" : "Border !important" },
 		".ps__rail-y:hover > .ps__thumb-y" : {"border-color" : "canvas-scroll-thumb-hover" },
-		"a:link" : { "color" : "text-link" }
+		"a:link" : { "color" : "text-link" },
+		"*::-webkit-scrollbar-track" : { "background" : "canvas-background" },
+		"*::-webkit-scrollbar-thumb" : { "background-color" : "background-toolbar", "border-color" : "canvas-scroll-thumb-border" },
+		"*::-webkit-scrollbar-thumb:hover" : { "background-color" : "canvas-scroll-thumb-hover" }
 	};
 
     var g_isMouseSendEnabled = false;
