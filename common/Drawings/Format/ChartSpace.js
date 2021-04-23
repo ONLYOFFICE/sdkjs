@@ -12176,6 +12176,9 @@ var GLOBAL_PATH_COUNT = 0;
             this.checkDlblsPosition();
         }
     };
+    CChartSpace.prototype.canChangeToStockChart = function() {
+        return this.chart.plotArea.canChangeToStockChart();
+    };
     CChartSpace.prototype.checkDlblsPosition = function() {
         this.chart.checkDlblsPosition();
     };

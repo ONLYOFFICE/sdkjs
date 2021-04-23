@@ -494,14 +494,11 @@ function CheckStockChart(oDrawingObjects, oApi)
     if(selectedObjectsByType.charts[0])
     {
         var chartSpace = selectedObjectsByType.charts[0];
-        if(chartSpace && chartSpace.chart && chartSpace.chart.plotArea && chartSpace.chart.plotArea.charts[0] && chartSpace.chart.plotArea.charts[0].getObjectType() !== AscDFH.historyitem_type_StockChart)
+        if(!chartSpace.canChangeToStockChart())
         {
-            if(chartSpace.chart.plotArea.charts[0].series.length !== 4)
-            {
-                oApi.sendEvent("asc_onError", c_oAscError.ID.StockChartError, c_oAscError.Level.NoCritical);
-                oApi.WordControl.m_oLogicDocument.Document_UpdateInterfaceState();
-                return false;
-            }
+            oApi.sendEvent("asc_onError", c_oAscError.ID.StockChartError, c_oAscError.Level.NoCritical);
+            oApi.WordControl.m_oLogicDocument.Document_UpdateInterfaceState();
+            return false;
         }
     }
     return true;

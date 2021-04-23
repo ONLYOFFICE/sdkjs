@@ -1643,18 +1643,33 @@
 		return this.separator;
 	};
 	asc_ChartSettings.prototype.changeType = function(type) {
-		this.putType(type);
 		if(this.chartSpace) {
-			var oController = this.chartSpace.getDrawingObjectsController();
-			if(oController) {
-				var oThis = this;
-				var oChartSpace = this.chartSpace;
-				oController.checkSelectedObjectsAndCallback(function() {
-					oChartSpace.changeChartType(type);
-					oThis.updateChart();
-				}, [], false, 0, []);
+			if(type === Asc.c_oAscChartTypeSettings.stock) {
+				if(!this.chartSpace.canChangeToStockChart()){
+					var oApi = Asc.editor || editor;
+					if(oApi) {
+						oApi.sendEvent("asc_onError", Asc.c_oAscError.ID.StockChartError, Asc.c_oAscError.Level.NoCritical);
+					}
+					return false;
+				}
+			}
+			this.putType(type);
+			if(this.chartSpace) {
+				var oController = this.chartSpace.getDrawingObjectsController();
+				if(oController) {
+					var oThis = this;
+					var oChartSpace = this.chartSpace;
+					oController.checkSelectedObjectsAndCallback(function() {
+						oChartSpace.changeChartType(type);
+						oThis.updateChart();
+					}, [], false, 0, []);
+				}
 			}
 		}
+		else {
+			this.putType(type);
+		}
+		return true;
 	};
 	asc_ChartSettings.prototype.getSeries = function() {
 		if(this.chartSpace) {

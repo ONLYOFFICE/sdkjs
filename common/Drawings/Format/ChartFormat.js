@@ -5097,9 +5097,30 @@
                 return;
             }
         }
+        if(!this.canChangeToStockChart()) {
+            return;
+        }
         var aAxes = this.createRegularAxes("General", false);
         var oStockChart = this.createStockChart(nType, this.getAllSeries(), aAxes, this.charts[0]);
         this.addChartWithAxes(oStockChart);
+    };
+    CPlotArea.prototype.canChangeToStockChart = function() {
+        var oChartSpace = this.getChartSpace();
+        var nType = oChartSpace.getChartType();
+        if(nType === Asc.c_oAscChartTypeSettings.stock) {
+            return true;
+        }
+        var oTestDataRefs = new AscFormat.CChartDataRefs(null);
+
+        var oDataRefs = oChartSpace.getDataRefs();
+        var sRange = oDataRefs.getRange();
+        var nInfo = oDataRefs.getInfo();
+        var bVert = (nInfo & AscFormat.SERIES_FLAG_HOR_VALUE) !== 0;
+        var nTestResult = oTestDataRefs.checkDataRange(sRange, !bVert, Asc.c_oAscChartTypeSettings.stock);
+        if(nTestResult === Asc.c_oAscError.ID.No) {
+            return true;
+        }
+        return false;
     };
     CPlotArea.prototype.changeChartType = function(nType) {
         if(!this.parent) {
