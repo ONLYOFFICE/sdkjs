@@ -1933,10 +1933,21 @@ CInlineLevelSdt.prototype.CheckHitInContentControlByXY = function(X, Y, nPageAbs
 	if (!oParagraph)
 		return false;
 
+	var oTransform = this.Get_ParentTextTransform();
+
+	var _X = X;
+	var _Y = Y;
+	if (oTransform)
+	{
+		oTransform = oTransform.Invert();
+		_X = oTransform.TransformPointX(X, Y);
+		_Y = oTransform.TransformPointY(X, Y);
+	}
+
 	for (var sKey in this.Bounds)
 	{
 		var oBound = this.Bounds[sKey];
-		if (oParagraph.GetAbsolutePage(oBound.PageInternal) === nPageAbs && oBound.X <= X && X <= oBound.X + oBound.W && oBound.Y <= Y && Y <= oBound.Y + oBound.H)
+		if (oParagraph.GetAbsolutePage(oBound.PageInternal) === nPageAbs && oBound.X <= _X && _X <= oBound.X + oBound.W && oBound.Y <= _Y && _Y <= oBound.Y + oBound.H)
 			return true;
 	}
 

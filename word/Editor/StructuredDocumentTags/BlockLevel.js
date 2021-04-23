@@ -2492,6 +2492,17 @@ CBlockLevelSdt.prototype.private_OnAddFormPr = function()
 };
 CBlockLevelSdt.prototype.CheckHitInContentControlByXY = function(X, Y, nPageAbs)
 {
+	var oTransform = this.Get_ParentTextTransform();
+
+	var _X = X;
+	var _Y = Y;
+	if (oTransform)
+	{
+		oTransform = oTransform.Invert();
+		_X = oTransform.TransformPointX(X, Y);
+		_Y = oTransform.TransformPointY(X, Y);
+	}
+
 	for (var nPageIndex = 0, nPagesCount = this.GetPagesCount(); nPageIndex < nPagesCount; ++nPageIndex)
 	{
 		if (this.IsEmptyPage(nPageIndex))
@@ -2501,7 +2512,7 @@ CBlockLevelSdt.prototype.CheckHitInContentControlByXY = function(X, Y, nPageAbs)
 		{
 			var oBounds = this.Content.GetContentBounds(nPageIndex);
 
-			if (oBounds.Left <= X && X <= oBounds.Right && oBounds.Top <= Y && Y <= oBounds.Bottom)
+			if (oBounds.Left <= _X && _X <= oBounds.Right && oBounds.Top <= _Y && _Y <= oBounds.Bottom)
 				return true;
 		}
 	}
