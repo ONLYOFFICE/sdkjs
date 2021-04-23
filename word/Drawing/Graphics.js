@@ -2385,7 +2385,8 @@ CGraphics.prototype =
 
         if (this.m_bIntegerGrid)
         {
-            if (AscCommon.global_MatrixTransformer.IsIdentity2(this.m_oFullTransform))
+            var tr = this.m_oFullTransform;
+            if (0.0 === tr.shx && 0.0 === tr.shy)
             {
                 var _x = (this.m_oFullTransform.TransformPointX(x, y) + 0.5) >> 0;
                 var _y = (this.m_oFullTransform.TransformPointY(x, y) + 0.5) >> 0;
