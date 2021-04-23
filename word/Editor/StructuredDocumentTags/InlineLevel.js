@@ -1942,6 +1942,36 @@ CInlineLevelSdt.prototype.CheckHitInContentControlByXY = function(X, Y, nPageAbs
 
 	return false;
 };
+CInlineLevelSdt.prototype.IsSelectedAll = function(Props)
+{
+	if (!this.Selection.Use)
+		return false;
+
+	if (this.IsPlaceHolder())
+		return true;
+
+	return CParagraphContentWithParagraphLikeContent.prototype.IsSelectedAll.apply(this, arguments);
+};
+CInlineLevelSdt.prototype.IsSelectedFromStart = function()
+{
+	if (!this.Selection.Use)
+		return false;
+
+	if (this.IsPlaceHolder())
+		return true;
+
+	return CParagraphContentWithParagraphLikeContent.prototype.IsSelectedFromStart.apply(this, arguments);
+};
+CInlineLevelSdt.prototype.IsSelectedToEnd = function()
+{
+	if (!this.Selection.Use)
+		return false;
+
+	if (this.IsPlaceHolder())
+		return true;
+
+	return CParagraphContentWithParagraphLikeContent.prototype.IsSelectedToEnd.apply(this, arguments);
+};
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
