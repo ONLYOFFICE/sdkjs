@@ -760,7 +760,7 @@ var c_oAscPopUpSelectorType = {
   prot['current'] = prot.current;
 
   window['Asc']['c_oAscFormulaArgumentType'] = window['Asc'].c_oAscFormulaArgumentType = c_oAscFormulaArgumentType;
-  prot = c_oAscPrintTitlesRangeType;
+  prot = c_oAscFormulaArgumentType;
   prot['number'] = prot.number;
   prot['text'] = prot.text;
   prot['reference'] = prot.reference;
