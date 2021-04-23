@@ -6013,6 +6013,10 @@ CShape.prototype.recalculateBounds = function()
 
 CShape.prototype.checkContentWordArt = function(oContent)
 {
+    if(!oContent)
+    {
+        return false;
+    }
     return oContent.CheckRunContent(CheckWordArtTextPr);
 };
 
