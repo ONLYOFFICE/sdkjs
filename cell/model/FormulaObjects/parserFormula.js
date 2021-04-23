@@ -4964,7 +4964,7 @@ _func.binarySearchByRange = function ( sElem, area, regExp ) {
 	var bbox, ws;
 	if (cElementType.cellsRange3D === area.type) {
 		bbox = area.bbox;
-		ws = area.getWs();
+		ws = area.getWS();
 	} else if (cElementType.cellsRange === area.type) {
 		bbox = area.range.bbox;
 		ws = area.ws;
