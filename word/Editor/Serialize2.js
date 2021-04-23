@@ -1668,9 +1668,10 @@ function writeNestedReviewType(type, reviewInfo, fWriteRecord, fCallback) {
 
 function ReadDocumentShd(length, bcr, oShd) {
 	var themeColor = { Auto: null, Color: null, Tint: null, Shade: null };
+	var themeColorFill = { Auto: null, Color: null, Tint: null, Shade: null };
 	oShd.Color = undefined;
 	var res = bcr.Read2(length, function (t, l) {
-		return bcr.ReadShd(t, l, oShd, themeColor);
+		return bcr.ReadShd(t, l, oShd, themeColor, themeColorFill);
 	});
 	if(!oShd.Color) {
 		oShd.Color = new AscCommonWord.CDocumentColor(255, 255, 255, true);
@@ -1680,6 +1681,12 @@ function ReadDocumentShd(length, bcr, oShd) {
 	var unifill = CreateThemeUnifill(themeColor.Color, themeColor.Tint, themeColor.Shade);
 	if (null != unifill)
 		oShd.Unifill = unifill;
+	if (true == themeColorFill.Auto) {
+		if(!oShd.Fill) {
+			oShd.Fill = new AscCommonWord.CDocumentColor(255, 255, 255, true);
+		}
+		oShd.Fill.Auto = true;//todo менять полностью цвет
+	}
 	return oShd;
 }
 
