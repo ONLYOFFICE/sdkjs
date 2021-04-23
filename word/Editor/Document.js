@@ -14881,7 +14881,7 @@ CDocument.prototype.Continue_FastCollaborativeEditing = function()
 		}
 	}
 };
-CDocument.prototype.Save_DocumentStateBeforeLoadChanges = function()
+CDocument.prototype.Save_DocumentStateBeforeLoadChanges = function(isRemoveSelection)
 {
 	var State = {};
 
@@ -14916,7 +14916,10 @@ CDocument.prototype.Save_DocumentStateBeforeLoadChanges = function()
 	State.EndPos     = [];
 
 	this.Controller.SaveDocumentStateBeforeLoadChanges(State);
-	this.RemoveSelection();
+
+	// TODO: Разобраться зачем здесь делается RemoveSelection, по логике надо вынести за пределы данной функции
+	if (false !== isRemoveSelection)
+		this.RemoveSelection();
 
 	this.CollaborativeEditing.WatchDocumentPositionsByState(State);
 
@@ -14961,9 +14964,9 @@ CDocument.prototype.Load_DocumentStateAfterLoadChanges = function(State)
 
 	this.UpdateSelection();
 };
-CDocument.prototype.SaveDocumentState = function()
+CDocument.prototype.SaveDocumentState = function(isRemoveSelection)
 {
-	return this.Save_DocumentStateBeforeLoadChanges();
+	return this.Save_DocumentStateBeforeLoadChanges(isRemoveSelection);
 };
 CDocument.prototype.LoadDocumentState = function(oState)
 {
@@ -24683,7 +24686,7 @@ CDocument.prototype.ChangeTextCase = function(nCaseType)
 	var oState = null;
 	if (!this.IsSelectionUse())
 	{
-		oState = this.SaveDocumentState();
+		oState = this.SaveDocumentState(false);
 		if (!this.SelectCurrentWord())
 		{
 			this.LoadDocumentState(oState);
