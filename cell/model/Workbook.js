@@ -8589,7 +8589,7 @@
 	};
 
 	Worksheet.prototype.calculateWizardFormula = function (formula, type) {
-		var res = null, resultStr = "";
+		var res = null, resultStr = null;
 		if (formula) {
 			var parser = new AscCommonExcel.parserFormula(formula, /*formulaParsed.parent*/null, this);
 			var parseResultArg = new AscCommonExcel.ParseResult([], []);
@@ -8598,6 +8598,7 @@
 				res = parser.calculate();
 			}
 
+			resultStr = "";
 			if (res) {
 				//TODO рассчеты аргументов зависят от конкретных функций
 				//допустим, sum и acos - типа аргумента number, но результат для cellsRange3D разный
