@@ -2681,7 +2681,7 @@
     };
     CDLbl.prototype.getPercentageString = function() {
         if(this.series && this.pt) {
-            return this.series.getValByIndex(this.pt.idx, true)
+            return this.series.getStrPercentageValByIndex(this.pt.idx)
         }
         return "";
     };
@@ -2695,11 +2695,11 @@
                 sFormatCode = this.pt.formatCode;
             }
             else {
-                sFormatCode = this.series.getValSourceNumFormat();
+                sFormatCode = this.series.getValObjectSourceNumFormat(this.pt.idx);
             }
 
             var num_format = AscCommon.oNumFormatCache.get(sFormatCode);
-            return num_format.formatToChart(this.series.getValByIndex(this.pt.idx))
+            return num_format.formatToChart(this.pt.val)
         }
         return "";
     };
@@ -3365,52 +3365,22 @@
         }
         return (idx + 1) + "";
     };
-    CSeriesBase.prototype.getValByIndex = function(idx, bPercent) {
-        var pts;
-        var val;
-        if(this.val) {
-            val = this.val;
-        }
-        else if(this.yVal) {
-            val = this.yVal;
-        }
-        if(val) {
-            if(val && val.strRef && val.strRef.strCache) {
-                pts = val.strRef.strCache.pts;
-            }
-            else if(val.strLit) {
-                pts = val.strLit.pts;
-            }
-            else if(val.numRef && val.numRef.numCache) {
-                pts = val.numRef.numCache.pts;
-            }
-            else if(val.numLit) {
-                pts = val.numLit.pts;
-            }
-            if(Array.isArray(pts)) {
-                var i;
-                if(!(bPercent === true)) {
-                    for(i = 0; i < pts.length; ++i) {
-                        if(pts[i].idx === idx) {
-                            return pts[i].val + "";
-                        }
-                    }
-                }
-                else {
-                    var summ = 0, value;
-                    for(i = 0; i < pts.length; ++i) {
-                        if(AscFormat.isRealNumber(pts[i].val))
-                            summ += Math.abs(pts[i].val);
+    CSeriesBase.prototype.getStrPercentageValByIndex = function(idx) {
+        var pts = this.getNumPts();
+        if(Array.isArray(pts)) {
+            var i;
+            var summ = 0, value;
+            for(i = 0; i < pts.length; ++i) {
+                if(AscFormat.isRealNumber(pts[i].val))
+                    summ += Math.abs(pts[i].val);
 
-                        if(pts[i].idx === idx) {
-                            value = pts[i].val;
-                        }
-                    }
-
-                    if(summ > 0 && AscFormat.isRealNumber(value))
-                        return Math.round(100 * (value / summ)) + "%";
+                if(pts[i].idx === idx) {
+                    value = pts[i].val;
                 }
             }
+
+            if(summ > 0 && AscFormat.isRealNumber(value))
+                return Math.round(100 * (value / summ)) + "%";
         }
         return "";
     };
@@ -3707,11 +3677,15 @@
                 return "0%";
             }
         }
+        return this.getValObjectSourceNumFormat(0);
+    };
+
+    CSeriesBase.prototype.getValObjectSourceNumFormat = function(nPtIdx) {
         var oVal = this.val || this.yVal;
         if(!oVal) {
             return "General";
         }
-        return oVal.getSourceNumFormat();
+        return oVal.getSourceNumFormat(nPtIdx);
     };
     CSeriesBase.prototype.handleOnChangeSheetName = function(sOldSheetName, sNewSheetName) {
         if(this.val) {
@@ -9972,11 +9946,11 @@
         }
         return this.numCache.getValues(nMaxValues);
     };
-    CNumRef.prototype.getNumFormat = function() {
+    CNumRef.prototype.getNumFormat = function(nPtIdx) {
         if(!this.numCache) {
             return "General";
         }
-        return this.numCache.getNumFormat();
+        return this.numCache.getNumFormat(nPtIdx);
     };
     CNumRef.prototype.fillFromAsc = function(oValCache, bUseCache) {
         this.setF(oValCache.Formula);
@@ -10386,8 +10360,9 @@
         sRet += "}";
         return sRet;
     };
-    CNumLit.prototype.getNumFormat = function() {
-        var oPt = this.pts[0];
+    CNumLit.prototype.getNumFormat = function(nPtIdx) {
+        var nIdx = AscFormat.isRealNumber(nPtIdx) ? nPtIdx : 0;
+        var oPt = this.pts[nIdx];
         if(oPt) {
             if(typeof oPt.formatCode === "string" && oPt.formatCode.length > 0) {
                 return oPt.formatCode;
@@ -12557,12 +12532,12 @@
             this.numRef.updateCache(displayEmptyCellsAs, displayHidden, ser);
         }
     };
-    CYVal.prototype.getSourceNumFormat = function() {
+    CYVal.prototype.getSourceNumFormat = function(nPtIdx) {
         if(this.numRef) {
-            return this.numRef.getNumFormat();
+            return this.numRef.getNumFormat(nPtIdx);
         }
         if(this.numLit) {
-            return this.numLit.getNumFormat();
+            return this.numLit.getNumFormat(nPtIdx);
         }
         return "General";
     };
