@@ -9322,8 +9322,8 @@ Paragraph.prototype.Get_CompiledPr = function()
 	var NumPr   = this.GetNumPr();
 	var FramePr = this.Get_FramePr();
 
-	var PrevEl = this.Get_DocumentPrev();
-	var NextEl = this.Get_DocumentNext();
+	var PrevEl = this.GetPrevDocumentElement();
+	var NextEl = this.GetNextDocumentElement();
 
 	var oPrevParagraph = this.GetPrevParagraph();
 	var oNextParagraph = this.GetNextParagraph();
@@ -9353,11 +9353,11 @@ Paragraph.prototype.Get_CompiledPr = function()
 	}
 	else
 	{
-		while (null !== PrevEl && type_Paragraph === PrevEl.GetType() && undefined !== PrevEl.Get_FramePr())
-			PrevEl = PrevEl.Get_DocumentPrev();
+		while (PrevEl && PrevEl.IsParagraph() && undefined !== PrevEl.Get_FramePr())
+			PrevEl = PrevEl.GetPrevDocumentElement();
 
-		while (null !== NextEl && type_Paragraph === NextEl.GetType() && undefined !== NextEl.Get_FramePr())
-			NextEl = NextEl.Get_DocumentNext();
+		while (NextEl && NextEl.IsParagraph() && undefined !== NextEl.Get_FramePr())
+			NextEl = NextEl.GetNextDocumentElement();
 	}
 
 	if (PrevEl && PrevEl.IsParagraph())
@@ -9372,6 +9372,10 @@ Paragraph.prototype.Get_CompiledPr = function()
 		{
 			Pr.ParaPr.Brd.First = true;
 		}
+	}
+	else if (PrevEl && PrevEl.IsBlockLevelSdt())
+	{
+		PrevEl = PrevEl.GetLastParagraph();
 	}
 
 	if (oPrevParagraph && StyleId === oPrevParagraph.Style_Get() && Pr.ParaPr.ContextualSpacing)
@@ -9454,12 +9458,6 @@ Paragraph.prototype.Get_CompiledPr = function()
 		{
 			Pr.ParaPr.Spacing.Before = 14 * g_dKoef_pt_to_mm;
 		}
-	}
-	else if (PrevEl.IsBlockLevelSdt())
-	{
-		var oPrevPara = PrevEl.GetLastParagraph();
-		if (oPrevPara && oPrevPara.Style_Get() === StyleId)
-			Pr.ParaPr.Spacing.Before = 0;
 	}
 
 	if (NextEl && NextEl.IsParagraph())

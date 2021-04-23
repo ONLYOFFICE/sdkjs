@@ -120,6 +120,22 @@ CDocumentContentElementBase.prototype.Get_DocumentPrev = function()
 {
 	return this.Prev;
 };
+CDocumentContentElementBase.prototype.GetNextDocumentElement = function()
+{
+	var oNext = this.Get_DocumentNext();
+	if (!oNext && this.Parent && this.Parent.GetNextDocumentElement)
+		return this.Parent.GetNextDocumentElement();
+
+	return oNext;
+};
+CDocumentContentElementBase.prototype.GetPrevDocumentElement = function()
+{
+	var oPrev = this.Get_DocumentPrev();
+	if (!oPrev && this.Parent && this.Parent.GetPrevDocumentElement)
+		return this.Parent.GetPrevDocumentElement();
+
+	return oPrev;
+};
 CDocumentContentElementBase.prototype.GetParent = function()
 {
 	return this.Parent;
