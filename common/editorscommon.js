@@ -6307,7 +6307,9 @@
 
 		var new_width = 0;
 		var new_height = 0;
-		if (!AscCommon.AscBrowser.isMozilla)
+
+		// в мозилле поправили баг. отключаем особую ветку
+		if (true || !AscCommon.AscBrowser.isMozilla)
 		{
 			new_width = Math.round(scale * rect.right) - Math.round(scale * rect.left);
 			new_height = Math.round(scale * rect.bottom) - Math.round(scale * rect.top);
