@@ -11530,7 +11530,7 @@ Paragraph.prototype.Set_FramePr = function(FramePr, bDelete)
 		}
 	}
 
-	if (undefined != FramePr.Shd)
+	if (FramePr.Shd)
 	{
 		var Count = FrameParas.length;
 		for (var Index = 0; Index < Count; Index++)

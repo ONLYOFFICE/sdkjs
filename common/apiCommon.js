@@ -2460,8 +2460,11 @@
 				}
 			}
 		} else {
+
+			// TODO: Пока мы не работает отдельно с Color и Fill, поэтому пишем и тот и другой
 			this.Value = Asc.c_oAscShdNil;
 			this.Color = CreateAscColorCustom(255, 255, 255);
+			this.Fill  = CreateAscColorCustom(255, 255, 255);
 		}
 	}
 
@@ -2474,6 +2477,7 @@
 			return this.Color;
 		}, asc_putColor: function (v) {
 			this.Color = (v) ? v : null;
+			this.Fill  = (v) ? v : null;
 		}
 	};
 
