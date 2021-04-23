@@ -180,10 +180,10 @@ function Dictionary()
         {
         	xhr.sender.status = 2;
         	self.spellchecker.onLoadDictionary(this.sender);
-        }
+        };
 
         xhr.send(null);
-	}
+	};
 
 	this.load = function()
 	{
@@ -232,7 +232,7 @@ function Spellchecker()
 				this.languageQueue.shift();
 			}
 		}
-	}
+	};
 
 	this.deleteDictionaty = function(lk) 
 	{
@@ -251,7 +251,7 @@ function Spellchecker()
 		this.freeString(engineIDptr);
 		this.freeString(langAffptr);
 		this.freeString(langDicptr);
-	}
+	};
 
 	this.init = function()
 	{
@@ -360,7 +360,7 @@ function Spellchecker()
 	{
 		var inputLen = string.length;
 		var testLen = 6 * inputLen + 1;
-		if (testLen > this.tmpStrings.length)
+		if (testLen > this.tmpStrings.byteLength)
 			this.tmpStrings = new ArrayBuffer(testLen);
 
 		var code = 0;
