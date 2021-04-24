@@ -1737,6 +1737,10 @@
 		AscCommon.History.StartTransaction();
 	};
 	asc_ChartSettings.prototype.endEdit = function() {
+		if(AscCommon.History.Is_LastPointEmpty()) {
+			this.cancelEdit();
+			return;
+		}
 		this.bStartEdit = false;
 		AscCommon.History.EndTransaction();
 		this.updateChart();

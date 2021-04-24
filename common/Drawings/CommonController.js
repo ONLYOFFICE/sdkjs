@@ -3546,6 +3546,11 @@ DrawingObjectsController.prototype =
         var objects_by_types = this.getSelectedObjectsByTypes();
         if(objects_by_types.charts.length === 1)
         {
+            var oCurProps = this.getPropsFromChart(objects_by_types.charts[0]);
+            if(oCurProps.isEqual(chart))
+            {
+                return;
+            }
             this.checkSelectedObjectsAndCallback(this.editChartCallback, [chart], false, AscDFH.historydescription_Spreadsheet_EditChart);
         }
     },

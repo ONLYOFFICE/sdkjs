@@ -1180,7 +1180,13 @@ CHistory.prototype.GetSerializeArray = function()
 		}
 		this.PosInCurPoint = null; 
 	};
+	CHistory.prototype.Is_LastPointEmpty = function()
+	{
+		if (!this.Points[this.Index] || this.Points[this.Index].Items.length <= 0)
+			return true;
 
+		return false;
+	};
 	//------------------------------------------------------------export--------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window['AscCommon'].CHistory = CHistory;
