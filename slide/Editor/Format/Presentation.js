@@ -7169,6 +7169,39 @@ CPresentation.prototype.OnEndTextDrag = function (NearPos, bCopy) {
     }
 };
 
+
+/**
+ * @returns {boolean}
+ */
+CPresentation.prototype.IsShowShapeAdjustments = function()
+{
+    return (!!this.CanEdit());
+};
+/**
+ * Рисовать ли трек у таблицы и давать ли возможность таскать границы
+ * @returns {boolean}
+ */
+CPresentation.prototype.IsShowTableAdjustments = function()
+{
+    return (!!this.CanEdit());
+};
+/**
+ * Рисовать ли трек у таблицы и давать ли возможность таскать границы
+ * @returns {boolean}
+ */
+CPresentation.prototype.IsShowEquationTrack = function()
+{
+    return (!!this.CanEdit());
+};
+/**
+ * Можем ли перетаскивать текст
+ * @returns {boolean}
+ */
+CPresentation.prototype.CanDragAndDrop = function()
+{
+    return (!!this.CanEdit());
+};
+
 CPresentation.prototype.IsFocusOnNotes = function () {
     return this.FocusOnNotes;
 };

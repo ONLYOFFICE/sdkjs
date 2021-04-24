@@ -2516,6 +2516,7 @@ CTable.prototype.GetTableOffsetCorrection = function()
 	if (true === this.Parent.IsTableCellContent()
 		|| this.bPresentation
 		|| !this.LogicDocument
+		|| !this.LogicDocument.GetCompatibilityMode
 		|| this.LogicDocument.GetCompatibilityMode() >= AscCommon.document_compatibility_mode_Word15)
 		return 0;
 
@@ -2559,6 +2560,7 @@ CTable.prototype.GetRightTableOffsetCorrection = function()
 	if (true === this.Parent.IsTableCellContent()
 		|| this.bPresentation
 		|| !this.LogicDocument
+		|| !this.LogicDocument.GetCompatibilityMode
 		|| this.LogicDocument.GetCompatibilityMode() >= AscCommon.document_compatibility_mode_Word15)
 		return 0;
 
@@ -3462,7 +3464,7 @@ CTable.prototype.UpdateCursorType = function(X, Y, CurPage)
 	if (true === this.Selection.Start || table_Selection_Border === this.Selection.Type2 || table_Selection_Border_InnerTable === this.Selection.Type2)
 		return;
 
-	if (this.LogicDocument && this.LogicDocument.IsShowTableAdjustments())
+	if (this.LogicDocument && this.LogicDocument.IsShowTableAdjustments && this.LogicDocument.IsShowTableAdjustments())
 	{
 		// Случай, когда у нас уже есть трэк вложенной таблицы и курсор выходит во внешнюю. Чтобы трэк сразу не пропадал,
 		// пока курсор находится в области табличного трэка для вложенной таблицы.
@@ -3610,7 +3612,7 @@ CTable.prototype.Document_UpdateInterfaceState = function()
 	{
 		this.CurCell.Content.Document_UpdateInterfaceState();
 
-		if (this.LogicDocument && !this.bPresentation)
+		if (this.LogicDocument && !this.bPresentation && this.LogicDocument.GetTrackRevisionsManager)
 		{
 			var oTrackManager = this.LogicDocument.GetTrackRevisionsManager();
 
