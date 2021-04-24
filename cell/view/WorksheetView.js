@@ -13313,11 +13313,35 @@
 						updateDrawingObjectsInfo2.operType, updateDrawingObjectsInfo2.updateRange);
 				}
 				t.model.onUpdateRanges(arrChangedRanges);
+
+
                 var aRanges = [];
                 var oBBox;
                 for(var nRange = 0; nRange < arrChangedRanges.length; ++nRange) {
                     oBBox = arrChangedRanges[nRange];
                     aRanges.push(new AscCommonExcel.Range(t.model, oBBox.r1, oBBox.c1, oBBox.r2, oBBox.c2));
+                }
+                if (updateDrawingObjectsInfo2 && updateDrawingObjectsInfo2.updateRange) {
+                    var nOperType = updateDrawingObjectsInfo2.operType;
+                    var oUpdateRange = updateDrawingObjectsInfo2.updateRange;
+                    switch(nOperType) {
+                        case c_oAscInsertOptions.InsertColumns:
+                        case c_oAscDeleteOptions.DeleteColumns:
+                        case c_oAscInsertOptions.InsertCellsAndShiftRight:
+                        case c_oAscDeleteOptions.DeleteCellsAndShiftLeft:
+                        {
+                            aRanges.push(new AscCommonExcel.Range(t.model, oUpdateRange.r1, oUpdateRange.c1, oUpdateRange.r2, gc_nMaxCol0));
+                            break;
+                        }
+                        case c_oAscInsertOptions.InsertRows:
+                        case c_oAscInsertOptions.InsertCellsAndShiftDown:
+                        case c_oAscDeleteOptions.DeleteRows:
+                        case c_oAscDeleteOptions.DeleteCellsAndShiftTop:
+                        {
+                            aRanges.push(new AscCommonExcel.Range(t.model, oUpdateRange.r1, oUpdateRange.c1, gc_nMaxRow0, oUpdateRange.c2));
+                            break;
+                        }
+                    }
                 }
                 Asc.editor.wb.handleChartsOnWorkbookChange(aRanges);
 			}
