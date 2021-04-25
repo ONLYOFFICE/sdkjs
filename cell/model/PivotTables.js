@@ -2106,6 +2106,18 @@ CT_PivotCacheRecords.prototype._getDataMapFromFields = function(cacheFields, ind
 	}
 	return dataMap;
 };
+CT_PivotCacheRecords.prototype._getSharedRow = function(cacheFields, index, row) {
+	if (index < cacheFields.length) {
+		var cacheFieldBaseIndex = index;
+		if (cacheFieldBaseIndex < this.getColsCount()) {
+			var val = this._cols[cacheFieldBaseIndex].get(row);
+			if (c_oAscPivotRecType.Index === val.type) {
+				return val.val
+			}
+		}
+	}
+	return -1;
+};
 CT_PivotCacheRecords.prototype._getGroupOrSharedRow = function(cacheFields, index, row) {
 	if (index < cacheFields.length) {
 		var cacheField = cacheFields[index];
@@ -2212,7 +2224,7 @@ CT_PivotCacheRecords.prototype.getDataMap = function(cacheFields, filterMaps, ca
 	var row, rowMapCur;
 	var res = new PivotDataElem(dataFields.length);
 	for (row = 0; row < this.getRowsCount(); ++row) {
-		if (this.getDataMapLabelFilters(cacheFields, row, filterMaps, cacheFieldsWithData)) {
+		if (this.getDataMapLabelFilters(cacheFields, row, filterMaps)) {
 			continue;
 		}
 		this.fillVisibleFields(cacheFields, row, cacheFieldsWithData);
@@ -2299,22 +2311,16 @@ CT_PivotCacheRecords.prototype._getDataMapConvertFilterBySubtotal = function(row
 		this._getDataMapTrimBySubtotal(rowMap, subtotal);
 	}
 };
-CT_PivotCacheRecords.prototype.getDataMapLabelFilters = function(cacheFields, row, filterMaps, cacheFieldsWithData) {
+CT_PivotCacheRecords.prototype.getDataMapLabelFilters = function(cacheFields, row, filterMaps) {
+	var sharedIndex;
 	for (var i = 0; i < filterMaps.labelFilters.length; ++i) {
 		var filter = filterMaps.labelFilters[i];
-		var sharedIndex = this._getGroupOrSharedRow(cacheFields, filter.index, row);
+		if (filter.isGroup) {
+			sharedIndex = this._getSharedRow(cacheFields, filter.index, row);
+		} else {
+			sharedIndex = this._getGroupOrSharedRow(cacheFields, filter.index, row);
+		}
 		if(sharedIndex >= 0 && !filter.map.has(sharedIndex)) {
-			if (cacheFieldsWithData[filter.index]) {
-				//find other filters
-				for (var j = i + 1; j < filterMaps.labelFilters.length; ++j) {
-					var subFilter = filterMaps.labelFilters[j];
-					var subVal = this._cols[subFilter.index].get(row);
-					if (c_oAscPivotRecType.Index === subVal.type && !subFilter.map.has(subVal.val)) {
-						return true;
-					}
-				}
-				cacheFieldsWithData[filter.index][sharedIndex] = 1;
-			}
 			return true;
 		}
 	}
@@ -4141,7 +4147,11 @@ CT_pivotTableDefinition.prototype.getFilterMaps = function(cacheFieldsWithData) 
 			if (filterColumn) {
 				this.checkPivotFieldItems(pivotFilter.fld);
 				if (pivotFilter.isLabelFilter()) {
-					labelFilters.push({index: pivotFilter.fld, map: pivotField.getFilterMapFilterColumn(cacheField, filterColumn, this.getPivotFieldNum(pivotFilter.fld))});
+					if (cacheField.hasGroup() && cacheField.getSharedItems()) {
+						labelFilters.push({index: pivotFilter.fld, isGroup: true, map: pivotField.getFilterMapFilterColumnGroup(cacheField, filterColumn, this.getPivotFieldNum(pivotFilter.fld))});
+					} else {
+						labelFilters.push({index: pivotFilter.fld, map: pivotField.getFilterMapFilterColumn(cacheField, filterColumn, this.getPivotFieldNum(pivotFilter.fld))});
+					}
 				} else {
 					valueFilters.push({index: pivotFilter.fld, pivotField: pivotField, pivotFilter: pivotFilter});
 				}
@@ -11095,6 +11105,20 @@ CT_PivotField.prototype.getFilterMapFilterColumn = function(cacheField, filterCo
 				if (!filterColumn.isHideValue(val, null, null, null, true)) {
 					map.set(item.x, 1);
 				}
+			}
+		}
+	}
+	return map;
+};
+CT_PivotField.prototype.getFilterMapFilterColumnGroup = function(cacheField, filterColumn, num) {
+	var map = new Map();
+	var sharedItems = cacheField.getSharedItems();
+	if (sharedItems) {
+		for (var i = 0; i < sharedItems.getCount(); ++i) {
+			var sharedItem = sharedItems.getItem(i);
+			var val = sharedItem.getCellValue().getTextValue(num);
+			if (!filterColumn.isHideValue(val, null, null, null, true)) {
+				map.set(i, 1);
 			}
 		}
 	}
