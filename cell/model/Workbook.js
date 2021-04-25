@@ -4276,7 +4276,7 @@
 			var aRefsToChange = [];
 			var sNewName = parserHelp.getEscapeSheetName(oNewWs.sName);
 			var aRanges = [new AscCommonExcel.Range(this, 0, 0, gc_nMaxRow0, gc_nMaxCol0)];
-			this.handleDrawings(function(oDrawing) {
+			oNewWs.handleDrawings(function(oDrawing) {
 				if(oDrawing.getObjectType() === AscDFH.historyitem_type_ChartSpace) {
 					oDrawing.collectIntersectionRefs(aRanges, aRefsToChange);
 				}
