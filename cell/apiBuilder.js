@@ -45,35 +45,34 @@
 	 * @global
 	 * @class
 	 * @name Api
-	 * @property {ApiWorksheet[]} Sheets - get sheets property
-	 * @property {ApiWorksheet} ActiveSheet - get activeSheet property
-	 * @property {ApiRange} Selection - get selection property
+	 * @property {ApiWorksheet[]} Sheets - returns a Sheets collection that represents all the sheets in the active workbook
+	 * @property {ApiWorksheet} ActiveSheet - returns the object that represents the active sheet
+	 * @property {ApiRange} Selection - returns an object that represents the selection range
 	 */
 	var Api = window["Asc"]["spreadsheet_api"];
 
+	//todo property {number} Active - get active property
 	/**
 	 * Class representing a sheet.
 	 * @constructor
-	 * @property {bool} Visible - get and set visible property
-	 * @property {number} Active - get active property
-	 * @property {ApiRange} ActiveCell - get activeCell property
-	 * @property {ApiRange} Selection - get selection property
-	 * @property {ApiRange} Cells - get cells property
-	 * @property {ApiRange} Rows - get rows property
-	 * @property {ApiRange} Cols - get cols property
-	 * @property {ApiRange} UsedRange - get usedRange property
-	 * @property {string} Name - get and set name sheet property
-	 * @property {number} Index - get index sheet property
-	 * @property {number} Index - get index sheet property
-	 * @property {number} LeftMargin - get and set leftMargin sheet property in points
-	 * @property {number} RightMargin - get and set rightMargin sheet property in points
-	 * @property {number} TopMargin - get and set topMargin sheet property in points
-	 * @property {number} BottomMargin - get and set bottomMargin sheet property in points
-	 * @property {PageOrientation} PageOrientation - get and set pageOrientation sheet property
-	 * @property {bool} PrintHeadings - get and set printHeadings sheet property
-	 * @property {bool} PrintGridlines - get and set printGridlines sheet property
-	 * @property {ApiName[]} Defnames - get defNames sheet property
-	 * @property {ApiComment[]} Comments - get comments sheet property
+	 * @property {bool} Visible - returns or sets visible of sheet
+	 * @property {ApiRange} ActiveCell - Returns an object that represents the active cell
+	 * @property {ApiRange} Selection - Returns an object that represents the selection range
+	 * @property {ApiRange} Cells - Returns a ApiRange that represents all the cells on the worksheet (not just the cells that are currently in use)
+	 * @property {ApiRange} Rows - Returns a ApiRange that represents all the cells on the rows range
+	 * @property {ApiRange} Cols - Returns a ApiRange that represents all the cells on the columns range
+	 * @property {ApiRange} UsedRange - Returns a ApiRange that represents the used range on the specified worksheet
+	 * @property {string} Name - Returns or sets a name to the current active sheet
+	 * @property {number} Index - Get sheet index
+	 * @property {number} LeftMargin - Get or set left margin sheet in points
+	 * @property {number} RightMargin - Get or set right margin sheet in points
+	 * @property {number} TopMargin - Get or set top margin sheet in points
+	 * @property {number} BottomMargin - Get or set bottom margin sheet in points
+	 * @property {PageOrientation} PageOrientation - Get or set page orientation
+	 * @property {bool} PrintHeadings - Get or Sets page PrintHeadings property
+	 * @property {bool} PrintGridlines - Get or Sets page PrintGridlines property
+	 * @property {ApiName[]} Defnames - Returns array a ApiName
+	 * @property {ApiComment[]} Comments - Returns a ApiComment
 	 */
 	function ApiWorksheet(worksheet) {
 		this.worksheet = worksheet;
@@ -82,33 +81,33 @@
 	/**
 	 * Class representing a range.
 	 * @constructor
-	 * @property {number} Row - get row property
-	 * @property {number} Col - get col property
-	 * @property {ApiRange} Rows - get rows property
-	 * @property {number} Count - get count cells property
-	 * @property {string} Value - get or set value property
-	 * @property {string} Formula - get or set formula property
-	 * @property {string} Value2 - get or set value2 property
-	 * @property {string} Text - get or set text property
-	 * @property {ApiColor} FontColor - get or set fontColor property
-	 * @property {bool} Hidden - get or set hidden property
-	 * @property {number} ColumnWidth - get or set first column width property
-	 * @property {number} Width - get column width property
-	 * @property {number} RowHeight - get or set first row height property
-	 * @property {number} Height - get row height property
-	 * @property {number} FontSize - get font size property
-	 * @property {string} FontName - get font name property
-	 * @property {'center' | 'bottom' | 'top' | 'distributed' | 'justify'} AlignVertical - set align vertical property
-	 * @property {'left' | 'right' | 'center' | 'justify'} AlignHorizontal - set align horizontal property
-	 * @property {bool} Bold - set bold property
+	 * @property {number} Row - Get the number of the row for the selected cell
+	 * @property {number} Col - Get the number of the column for the selected cell
+	 * @property {ApiRange} Rows - Returns a Range object that represents the rows in the specified range
+	 * @property {number} Count - Get count rows or columns
+	 * @property {string} Value - Gets the formula of the first cell in range
+	 * @property {string} Formula - Gets or sets the formula of the first cell in range
+	 * @property {string} Value2 - Gets or sets the value2 of the first cell in range
+	 * @property {string} Text - Gets or sets the text of the first cell in range
+	 * @property {ApiColor} FontColor - Set the text color for the current cell range with the previously created color object
+	 * @property {bool} Hidden - Get or Set hidden value
+	 * @property {number} ColumnWidth - Returns or sets the width of all columns in the specified range
+	 * @property {number} Width - Returns a value that represents the width of a range in points
+	 * @property {number} RowHeight - Returns or sets the height of the first row in the range specified, measured in points
+	 * @property {number} Height - Returns a value that represents the height, in points, of the range
+	 * @property {number} FontSize - Set the font size for the characters of the current cell range
+	 * @property {string} FontName - Set the specified font family as the font name for the current cell range
+	 * @property {'center' | 'bottom' | 'top' | 'distributed' | 'justify'} AlignVertical - Set the vertical alignment of the text in the current cell range
+	 * @property {'left' | 'right' | 'center' | 'justify'} AlignHorizontal - Set the horizontal alignment of the text in the current cell range
+	 * @property {bool} Bold - Set the bold property to the text characters in the current cell or cell range
 	 * @property {'none' | 'single' | 'singleAccounting' | 'double' | 'doubleAccounting'} Underline - set underline property
-	 * @property {bool} Strikeout - set strikeout property
-	 * @property {ApiColor|'No Fill'} FillColor - get and set fill color property
-	 * @property {string} NumberFormat - set numberFormat property
-	 * @property {ApiRange} MergeArea - get merge area property
-	 * @property {ApiWorksheet} Worksheet - get worksheet property
-	 * @property {ApiName} DefName - get defName property
-	 * @property {ApiComment | null} Comments - get comments property
+	 * @property {bool} Strikeout -
+	 * @property {ApiColor|'No Fill'} FillColor - Get or set the background color for the current cell range
+	 * @property {string} NumberFormat -
+	 * @property {ApiRange} MergeArea - Returns one cell or cells from the megre area
+	 * @property {ApiWorksheet} Worksheet - Returns a Worksheet object that represents the worksheet containing the specified range. Read-only.
+	 * @property {ApiName} DefName - Returns a ApiName
+	 * @property {ApiComment | null} Comments - Returns a ApiComment
 	 */
 	function ApiRange(range) {
 		this.range = range;
@@ -215,9 +214,9 @@
 	/**
 	 * Class representing a names
 	 * @constructor
-	 * @property {string} Name - get or set name property
-	 * @property {string} RefersTo - get or set RefersTo property
-	 * @property {apiRange} RefersToRange - get RefersTo property
+	 * @property {string} Name - Set a name to the current active sheet
+	 * @property {string} RefersTo - Returns or sets the formula that the name is defined to refer to
+	 * @property {apiRange} RefersToRange - Returns an ApiRange object by reference
 	 */
 	function ApiName(DefName) {
 		this.DefName = DefName;
@@ -226,7 +225,7 @@
 	/**
 	 * Class representing a comments
 	 * @constructor
-	 * @property {string} Text - get text property
+	 * @property {string} Text - Gets the text of the first cell in range
 	 */
 	function ApiComment(comment) {
 		this.Comment = comment;
