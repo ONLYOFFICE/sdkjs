@@ -230,6 +230,7 @@ function CopyProcessor(api, onlyBinaryCopy)
     }
 	
 	this.oRoot = new CopyElement("root");
+    this.listLevelMap = [];
 }
 CopyProcessor.prototype =
 {
@@ -700,12 +701,25 @@ CopyProcessor.prototype =
 					if((bBullet && "ul" === oPrevElem.sName) || (!bBullet && "ol" === oPrevElem.sName))
 						oTargetList = oPrevElem;
 				}
-				if(null == oTargetList){
-					if(bBullet)
+
+				if (!bBullet) {
+					if (!this.listLevelMap[oNumPr.NumId]) {
+						this.listLevelMap[oNumPr.NumId] = 1;
+					} else {
+						this.listLevelMap[oNumPr.NumId]++;
+					}
+				}
+				if (null == oTargetList) {
+					if (bBullet) {
 						oTargetList = new CopyElement("ul");
-					else
+					} else {
 						oTargetList = new CopyElement("ol");
+					}
 					oTargetList.oAttributes["style"] = "padding-left:40px";
+					//если список идёт с промежуточными элементами, добавляем аттрибут start
+					if (!bBullet && this.listLevelMap[oNumPr.NumId]) {
+						oTargetList.oAttributes["start"] = this.listLevelMap[oNumPr.NumId];
+					}
 					oDomTarget.addChild(oTargetList);
 				}
 				oTargetList.addChild(Li);
