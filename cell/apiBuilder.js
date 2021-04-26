@@ -99,7 +99,7 @@
 	 * @property {number} FontSize - get font size property
 	 * @property {string} FontName - get font name property
 	 * @property {'center' | 'bottom' | 'top' | 'distributed' | 'justify'} AlignVertical - set align vertical property
-	 * @property {{'left' | 'right' | 'center' | 'justify'}} AlignHorizontal - set align horizontal property
+	 * @property {'left' | 'right' | 'center' | 'justify'} AlignHorizontal - set align horizontal property
 	 * @property {bool} Bold - set bold property
 	 * @property {'none' | 'single' | 'singleAccounting' | 'double' | 'doubleAccounting'} Underline - set underline property
 	 * @property {bool} Strikeout - set strikeout property
