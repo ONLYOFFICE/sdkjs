@@ -2497,56 +2497,70 @@ CDocumentContent.prototype.AddNewParagraph = function(bForceAdd)
                 // Создаем новый параграф
                 var NewParagraph   = new Paragraph(this.DrawingDocument, this, this.bPresentation === true);
 
-                // Проверим позицию в текущем параграфе
-                if (true === Item.IsCursorAtEnd())
-                {
-                    var StyleId = Item.Style_Get();
-                    var NextId  = undefined;
-
-                    if (undefined != StyleId)
-                    {
-                        var Styles = this.Parent.Get_Styles();
-                        NextId     = Styles.Get_Next(StyleId);
-
-						var oNextStyle = Styles.Get(NextId);
-						if (!NextId || !oNextStyle || !oNextStyle.IsParagraphStyle())
-							NextId = StyleId;
-                    }
-
-
-                    if (StyleId === NextId)
-                    {
-                        // Продолжаем (в плане настроек) новый параграф
-                        Item.Continue(NewParagraph);
-                    }
-                    else
-                    {
-                        // Простое добавление стиля, без дополнительных действий
-                        if (NextId === this.Get_Styles().Get_Default_Paragraph())
-                            NewParagraph.Style_Remove();
-                        else
-                            NewParagraph.Style_Add(NextId, true);
-                    }
-
-					var LastRun = Item.Content[Item.Content.length - 1];
-					if (LastRun && LastRun.Pr.Lang && LastRun.Pr.Lang.Val)
-					{
-						NewParagraph.SelectAll();
-						NewParagraph.Add(new ParaTextPr({Lang : LastRun.Pr.Lang.Copy()}));
-						NewParagraph.RemoveSelection();
-					}
-                }
-                else
+				if (Item.IsCursorAtBegin())
 				{
-					Item.Split(NewParagraph);
+					// Продолжаем (в плане настроек) новый параграф
+					Item.Continue(NewParagraph);
+
+					NewParagraph.Correct_Content();
+					NewParagraph.MoveCursorToStartPos();
+
+					var nContentPos = this.CurPos.ContentPos;
+					this.AddToContent(nContentPos, NewParagraph);
+					this.CurPos.ContentPos = nContentPos + 1;
 				}
+				else
+				{
+					if (true === Item.IsCursorAtEnd())
+					{
+						var StyleId = Item.Style_Get();
+						var NextId  = undefined;
 
-				NewParagraph.Correct_Content();
-                NewParagraph.MoveCursorToStartPos();
+						if (undefined != StyleId)
+						{
+							var Styles = this.Parent.Get_Styles();
+							NextId     = Styles.Get_Next(StyleId);
 
-                var nContentPos = this.CurPos.ContentPos + 1;
-                this.AddToContent(nContentPos, NewParagraph);
-                this.CurPos.ContentPos = nContentPos;
+							var oNextStyle = Styles.Get(NextId);
+							if (!NextId || !oNextStyle || !oNextStyle.IsParagraphStyle())
+								NextId = StyleId;
+						}
+
+
+						if (StyleId === NextId)
+						{
+							// Продолжаем (в плане настроек) новый параграф
+							Item.Continue(NewParagraph);
+						}
+						else
+						{
+							// Простое добавление стиля, без дополнительных действий
+							if (NextId === this.Get_Styles().Get_Default_Paragraph())
+								NewParagraph.Style_Remove();
+							else
+								NewParagraph.Style_Add(NextId, true);
+						}
+
+						var LastRun = Item.Content[Item.Content.length - 1];
+						if (LastRun && LastRun.Pr.Lang && LastRun.Pr.Lang.Val)
+						{
+							NewParagraph.SelectAll();
+							NewParagraph.Add(new ParaTextPr({Lang : LastRun.Pr.Lang.Copy()}));
+							NewParagraph.RemoveSelection();
+						}
+					}
+					else
+					{
+						Item.Split(NewParagraph);
+					}
+
+					NewParagraph.Correct_Content();
+					NewParagraph.MoveCursorToStartPos();
+
+					var nContentPos = this.CurPos.ContentPos + 1;
+					this.AddToContent(nContentPos, NewParagraph);
+					this.CurPos.ContentPos = nContentPos;
+				}
 
                 if (true === this.IsTrackRevisions())
                 {
