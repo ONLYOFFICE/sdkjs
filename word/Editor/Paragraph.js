@@ -2061,7 +2061,11 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 			//----------------------------------------------------------------------------------------------------------
 			// Заливка параграфа
 			//----------------------------------------------------------------------------------------------------------
-			if ((_Range.W > 0.001 || true === this.IsEmpty() || true !== this.IsEmptyRange(CurLine, CurRange) ) && ( ( this.Pages.length - 1 === CurPage ) || ( CurLine < this.Pages[CurPage + 1].FirstLine ) ) && !Pr.ParaPr.Shd.IsNil())
+			var oShdColor = Pr.ParaPr.Shd.IsNil() ? null : Pr.ParaPr.Shd.GetSimpleColor(this.GetTheme(), this.GetColorMap());
+			if ((_Range.W > 0.001 || true === this.IsEmpty() || true !== this.IsEmptyRange(CurLine, CurRange))
+				&& ((this.Pages.length - 1 === CurPage) || (CurLine < this.Pages[CurPage + 1].FirstLine))
+				&& oShdColor
+				&& !oShdColor.IsAuto())
 			{
 				if (pGraphics.Start_Command)
 				{
@@ -2162,7 +2166,6 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 						TempX1 += 0.5;
 				}
 
-				var oShdColor = Pr.ParaPr.Shd.GetSimpleColor(this.GetTheme(), this.GetColorMap());
 				pGraphics.b_color1(oShdColor.r, oShdColor.g, oShdColor.b, 255);
 
 				if (pGraphics.SetShd)

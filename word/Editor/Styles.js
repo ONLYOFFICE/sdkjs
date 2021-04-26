@@ -9870,6 +9870,10 @@ CDocumentColor.prototype.Is_Equal = function(Color)
 {
 	return this.IsEqual(Color);
 };
+CDocumentColor.prototype.IsAuto = function()
+{
+	return this.Auto;
+};
 
 
 function CDocumentShd()
