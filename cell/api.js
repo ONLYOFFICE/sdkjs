@@ -5182,6 +5182,11 @@ var editor;
       return this.canEdit();
   };
 
+  spreadsheet_api.prototype.asc_getEscapeSheetName = function(sheet)
+  {
+      return AscCommon.parserHelp.getEscapeSheetName(sheet)
+  };
+
   /*
    * Export
    * -----------------------------------------------------------------------------
@@ -5621,5 +5626,9 @@ var editor;
   prot["asc_getDataValidationProps"] = prot.asc_getDataValidationProps;
 
   prot["asc_setSkin"] = prot.asc_setSkin;
+
+  prot["asc_getEscapeSheetName"] = prot.asc_getEscapeSheetName;
+
+
 
 })(window);
