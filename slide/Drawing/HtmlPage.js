@@ -1526,15 +1526,13 @@ function CEditorPage(api)
 
 		_ctx.strokeStyle = GlobalSkin.RulerTabsColor;
 
-		_ctx.lineWidth = (dPR === 1.5) ? Math.round(dPR) : 2 * Math.round(dPR);
-		lineWidth = _ctx.lineWidth;
+		_ctx.lineWidth = 2 * Math.round(dPR - 0.25);
 		var tab_width = Math.round(5 * dPR);
 
 		var dx = Math.round((rectSize - 2 * Math.round(dPR) - tab_width) / 7 * 4);
-		var dy = Math.round((rectSize - 2 * Math.round(dPR) - tab_width) / 7 * 5);
-		var x = 2 * Math.round(dPR) + lineWidth + dx;
+		var dy = Math.round((rectSize - 2 * Math.round(dPR) - tab_width) / 7 * 4);
+		var x = 4 * Math.round(dPR) + dx;
 		var y = 4 * Math.round(dPR) + dy;
-		x = (dPR === 1.5) ? x + lineWidth : x;
 
 		if (this.m_nTabsType == tab_Left)
 		{
