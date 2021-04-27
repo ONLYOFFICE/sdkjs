@@ -1578,6 +1578,7 @@
 		oAdditionalData["nobase64"] = isNoBase64;
 		if (DownloadType.Print === downloadType)
 		{
+			oAdditionalData["withoutPassword"] = true;
 			oAdditionalData["inline"] = 1;
 		}
 
