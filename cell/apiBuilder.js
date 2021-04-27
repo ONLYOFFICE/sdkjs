@@ -51,11 +51,11 @@
 	 */
 	var Api = window["Asc"]["spreadsheet_api"];
 
-	//todo property {number} Active - get active property
 	/**
 	 * Class representing a sheet.
 	 * @constructor
 	 * @property {bool} Visible - returns or sets visible of sheet
+	 * @property {number} Active - makes the current sheet the active sheet
 	 * @property {ApiRange} ActiveCell - returns an object that represents the active cell
 	 * @property {ApiRange} Selection - returns an object that represents the selection range
 	 * @property {ApiRange} Cells - returns a ApiRange that represents all the cells on the worksheet (not just the cells that are currently in use)
@@ -694,7 +694,7 @@
 		this.worksheet.workbook.setActive(this.worksheet.index);
 	};
 	Object.defineProperty(ApiWorksheet.prototype, "Active", {
-		get: function () {
+		set: function () {
 			this.SetActive();
 		}
 	});
