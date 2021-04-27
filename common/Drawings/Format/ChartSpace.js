@@ -11939,6 +11939,9 @@ var GLOBAL_PATH_COUNT = 0;
         oDataRange.collectRefsInsideRange(oRange, aRefs);
     };
     CChartSpace.prototype.collectIntersectionRefs = function(aRanges, aRefs) {
+        if(!Array.isArray(aRanges) || aRanges.length === 0) {
+            return;
+        }
         var oDataRange = this.getDataRefs();
         oDataRange.collectIntersectionRefs(aRanges, aRefs);
     };

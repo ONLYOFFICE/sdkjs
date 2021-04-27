@@ -2956,6 +2956,9 @@
       }
   };
     WorkbookView.prototype.handleChartsOnWorkbookChange = function (aRanges) {
+        if(!Array.isArray(aRanges) || aRanges.length === 0) {
+            return;
+        }
         var aRefsToChange = [];
         var aCharts = [];
         this.model.handleDrawings(function(oDrawing) {

@@ -14089,7 +14089,13 @@
         if(!oWS) {
             return [];
         }
-        return AscCommonExcel.getRangeByRef(_sFormula, oWS);
+        var aParsed = AscCommonExcel.getRangeByRef(_sFormula, oWS);
+        for(var nParsed = aParsed.length - 1; nParsed > -1; nParsed--) {
+            if(!aParsed[nParsed].bbox || !aParsed[nParsed].worksheet) {
+                aParsed.splice(nParsed, 1);
+            }
+        }
+        return aParsed;
     }
     function fCreateRef(oBBoxInfo) {
         if(oBBoxInfo) {
@@ -15869,6 +15875,9 @@
         }
     };
     CChartDataRefs.prototype.collectIntersectionRefs = function(aRanges, aCollectedRefs) {
+        if(!Array.isArray(aRanges) || aRanges.length === 0) {
+            return;
+        }
         var aIntersectionRanges = [];
         var oRange;
         for(var nRange = 0; nRange < aRanges.length; ++nRange) {
