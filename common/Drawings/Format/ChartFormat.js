@@ -15408,8 +15408,19 @@
                 //if the last cell in the row/col contains a non empty non numeric value
                 aGridRow = aGrid[0];
                 oRef = aGridRow[aGridRow.length - 1];
+                oBBox = oRef.bbox;
                 nCol = oBBox.c2;
-                for(nRow = oBBox.r2; nRow >= oBBox.r1; --nRow) {
+
+                var nStartRow = oBBox.r2;
+                if(aGridRow.length === 1) {
+                    for(nRow = oBBox.r2; nRow >= oBBox.r1; --nRow) {
+                        if(!this.privateCheckCellDateTimeFormatFull(oRef.worksheet.getCell3(nRow, nCol))) {
+                            break;
+                        }
+                    }
+                    nStartRow = nRow;
+                }
+                for(nRow = nStartRow; nRow >= oBBox.r1; --nRow) {
                     if(this.privateCheckCellValueForHeader(oRef.worksheet.getCell3(nRow, nCol))) {
                         break;
                     }
@@ -15423,8 +15434,18 @@
 
                 aGridRow = aGrid[aGrid.length - 1];
                 oRef = aGridRow[0];
+                oBBox = oRef.bbox;
                 nRow = oBBox.r2;
-                for(nCol = oBBox.c2; nCol >= oBBox.c1; --nCol) {
+                var nStartCol = oBBox.c2;
+                if(aGrid.length === 1) {
+                    for(nCol = oBBox.c2; nCol >= oBBox.c1; --nCol) {
+                        if(!this.privateCheckCellDateTimeFormatFull(oRef.worksheet.getCell3(nRow, nCol))) {
+                            break;
+                        }
+                    }
+                    nStartCol = nCol;
+                }
+                for(nCol = nStartCol; nCol >= oBBox.c1; --nCol) {
                     if(this.privateCheckCellValueForHeader(oRef.worksheet.getCell3(nRow, nCol))) {
                         break;
                     }
@@ -15775,16 +15796,30 @@
         fFillDataFromSelectedRange(this, oSelectedRange);
     };
     CChartDataRefs.prototype.privateCheckCellValueForHeader = function(oCell) {
-        var sValue = oCell.getValue();
-        var nNumFmtType = oCell.getNumFormatType();
-        if(!AscCommon.isNumber(sValue) && sValue !== "") {
+        if(!this.privateCheckCellValueNumberOrEmpty(oCell)) {
             return true;
         }
-        else {
-            if(Asc.c_oAscNumFormatType.Time === nNumFmtType ||
-                Asc.c_oAscNumFormatType.Date === nNumFmtType) {
-                return true;
-            }
+        return this.privateCheckCellDateTimeFormat(oCell);
+    };
+    CChartDataRefs.prototype.privateCheckCellValueNumberOrEmpty = function(oCell) {
+        var sValue = oCell.getValue();
+        if(AscCommon.isNumber(sValue) || sValue === "") {
+            return true;
+        }
+        return false;
+    };
+    CChartDataRefs.prototype.privateCheckCellDateTimeFormat = function(oCell) {
+        var nNumFmtType = oCell.getNumFormatType();
+        if(Asc.c_oAscNumFormatType.Time === nNumFmtType ||
+            Asc.c_oAscNumFormatType.Date === nNumFmtType) {
+            return true;
+        }
+        return false;
+    };
+    CChartDataRefs.prototype.privateCheckCellDateTimeFormatFull = function(oCell) {
+        if(this.privateCheckCellValueNumberOrEmpty(oCell) &&
+            this.privateCheckCellDateTimeFormat(oCell)) {
+            return true;
         }
         return false;
     };
