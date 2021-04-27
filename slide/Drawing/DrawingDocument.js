@@ -4593,9 +4593,27 @@ function CThumbnailsManager()
 			settings.screenH = word_control.m_oThumbnails.HtmlElement.height;
 			settings.cornerRadius = 1;
 			settings.slimScroll = true;
+			
 			settings.scrollBackgroundColor = GlobalSkin.BackgroundColorThumbnails;
 			settings.scrollBackgroundColorHover = GlobalSkin.BackgroundColorThumbnails;
 			settings.scrollBackgroundColorActive = GlobalSkin.BackgroundColorThumbnails;
+
+			settings.scrollerColor = GlobalSkin.ScrollerColor;
+			settings.scrollerHoverColor = GlobalSkin.ScrollerHoverColor;
+			settings.scrollerActiveColor = GlobalSkin.ScrollerActiveColor;
+
+			settings.arrowColor = GlobalSkin.ScrollArrowColor;
+			settings.arrowHoverColor = GlobalSkin.ScrollArrowHoverColor;
+			settings.arrowActiveColor = GlobalSkin.ScrollArrowActiveColor;
+
+			settings.strokeStyleNone = GlobalSkin.ScrollOutlineColor;
+			settings.strokeStyleOver = GlobalSkin.ScrollOutlineHoverColor;
+			settings.strokeStyleActive = GlobalSkin.ScrollOutlineActiveColor;
+
+			settings.targetColor = GlobalSkin.ScrollerTargetColor;
+			settings.targetHoverColor = GlobalSkin.ScrollerTargetHoverColor;
+			settings.targetActiveColor = GlobalSkin.ScrollerTargetActiveColor;
+
             settings.contentH = nHeightPix;
 
 			if (word_control.m_oScrollThumb_)
