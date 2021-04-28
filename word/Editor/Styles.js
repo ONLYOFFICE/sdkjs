@@ -9883,7 +9883,7 @@ function CDocumentShd()
 	this.Fill    = undefined;
 	this.Unifill = undefined;
 	this.FillRef = undefined;
-
+	this.themeFill = undefined;
 	// TODO:
 	//  1. this.Color по умолчанию должен быть undefined
 	//  2. Добавить аналог для themeFill и переименовать Unifill в themeColor

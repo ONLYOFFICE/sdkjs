@@ -260,21 +260,31 @@ BinaryCommonWriter.prototype.WriteShd = function(Shd)
         var RGBA = Shd.Unifill.getRGBAColor();
         color = new AscCommonWord.CDocumentColor(RGBA.R, RGBA.G, RGBA.B);
     }
+	var fill = null;
+	if (null != Shd.Fill)
+		fill = Shd.Fill;
+	else if (null != Shd.themeFill) {
+		var doc = editor.WordControl.m_oLogicDocument;
+		Shd.themeFill.check(doc.Get_Theme(), doc.Get_ColorMap());
+		var RGBA = Shd.themeFill.getRGBAColor();
+		fill = new AscCommonWord.CDocumentColor(RGBA.R, RGBA.G, RGBA.B);
+	}
     if (null != color && !color.Auto)
         this.WriteColor(c_oSerShdType.Color, color);
-    if(Shd.Fill && !Shd.Fill.Auto)
-        this.WriteColor(c_oSerShdType.Fill, Shd.Fill);
+	if (null != fill && !fill.Auto)
+        this.WriteColor(c_oSerShdType.Fill, fill);
 	if(null != Shd.Unifill || (null != Shd.Color && Shd.Color.Auto))
     {
-		this.memory.WriteByte(c_oSerShdType.ColorTheme);
+		//ColorTheme и FillTheme перепутаны в x2t
+		this.memory.WriteByte(c_oSerShdType.FillTheme);
 		this.memory.WriteByte(c_oSerPropLenType.Variable);
 		this.WriteItemWithLength(function(){_this.WriteColorTheme(Shd.Unifill, Shd.Color);});
     }
-	if((null != Shd.Fill && Shd.Fill.Auto))
+	if(null != Shd.themeFill || (null != Shd.Fill && Shd.Fill.Auto))
 	{
-		this.memory.WriteByte(c_oSerShdType.FillTheme);
+		this.memory.WriteByte(c_oSerShdType.ColorTheme);
 		this.memory.WriteByte(c_oSerPropLenType.Variable);
-		this.WriteItemWithLength(function(){_this.WriteColorTheme(null, Shd.Fill);});
+		this.WriteItemWithLength(function(){_this.WriteColorTheme(Shd.themeFill, Shd.Fill);});
 	}
 };
 BinaryCommonWriter.prototype.WritePaddings = function(Paddings)
@@ -557,7 +567,7 @@ Binary_CommonReader.prototype.ReadColor = function()
     var b = this.stream.GetUChar();
     return new AscCommonWord.CDocumentColor(r, g, b);
 };
-Binary_CommonReader.prototype.ReadShd = function(type, length, Shd, themeColor, themeColorFill)
+Binary_CommonReader.prototype.ReadShd = function(type, length, Shd, themeColor, themeFill)
 {
     var res = c_oSerConstants.ReadOk;
 	var oThis = this;
@@ -566,8 +576,9 @@ Binary_CommonReader.prototype.ReadShd = function(type, length, Shd, themeColor, 
         case c_oSerShdType.Value: Shd.Value = this.stream.GetUChar();break;
         case c_oSerShdType.Color: Shd.Color = this.ReadColor();break;
 		case c_oSerShdType.ColorTheme:
+			//ColorTheme и FillTheme перепутаны в x2t
 			res = this.Read2(length, function(t, l){
-				return oThis.ReadColorTheme(t, l, themeColor);
+				return oThis.ReadColorTheme(t, l, themeFill);
 			});
 			break;
 		case c_oSerShdType.Fill:
@@ -575,7 +586,7 @@ Binary_CommonReader.prototype.ReadShd = function(type, length, Shd, themeColor, 
 			break;
 		case c_oSerShdType.FillTheme:
 			res = this.Read2(length, function(t, l){
-				return oThis.ReadColorTheme(t, l, themeColorFill);
+				return oThis.ReadColorTheme(t, l, themeColor);
 			});
 			break;
         default:

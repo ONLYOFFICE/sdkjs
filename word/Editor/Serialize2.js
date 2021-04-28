@@ -1668,25 +1668,29 @@ function writeNestedReviewType(type, reviewInfo, fWriteRecord, fCallback) {
 
 function ReadDocumentShd(length, bcr, oShd) {
 	var themeColor = { Auto: null, Color: null, Tint: null, Shade: null };
-	var themeColorFill = { Auto: null, Color: null, Tint: null, Shade: null };
+	var themeFill = { Auto: null, Color: null, Tint: null, Shade: null };
 	oShd.Color = undefined;
 	var res = bcr.Read2(length, function (t, l) {
-		return bcr.ReadShd(t, l, oShd, themeColor, themeColorFill);
+		return bcr.ReadShd(t, l, oShd, themeColor, themeFill);
 	});
+	//1. this.Color по умолчанию должен быть undefined
 	if(!oShd.Color) {
 		oShd.Color = new AscCommonWord.CDocumentColor(255, 255, 255, true);
 	}
 	if (true == themeColor.Auto && null != oShd.Color)
 		oShd.Color.Auto = true;//todo менять полностью цвет
-	var unifill = CreateThemeUnifill(themeColor.Color, themeColor.Tint, themeColor.Shade);
-	if (null != unifill)
-		oShd.Unifill = unifill;
-	if (true == themeColorFill.Auto) {
+	if (true === themeFill.Auto) {
 		if(!oShd.Fill) {
 			oShd.Fill = new AscCommonWord.CDocumentColor(255, 255, 255, true);
 		}
 		oShd.Fill.Auto = true;//todo менять полностью цвет
 	}
+	var unifill = CreateThemeUnifill(themeColor.Color, themeColor.Tint, themeColor.Shade);
+	if (null != unifill)
+		oShd.Unifill = unifill;
+	unifill = CreateThemeUnifill(themeFill.Color, themeFill.Tint, themeFill.Shade);
+	if (null != unifill)
+		oShd.themeFill = unifill;
 	return oShd;
 }
 
