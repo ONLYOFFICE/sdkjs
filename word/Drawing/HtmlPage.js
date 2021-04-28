@@ -1663,8 +1663,6 @@ function CEditorPage(api)
 					return;
 				}
 			}
-
-			oWordControl.m_oDrawingDocument.SetCursorType("default");
 		}
 
 		if (oWordControl.m_oDrawingDocument.AutoShapesTrackLockPageNum == -1)
