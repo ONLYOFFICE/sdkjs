@@ -10700,6 +10700,7 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 				oCC.SkipSpecialContentControlLock(true);
 				if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, this.IsFillingFormMode()))
 				{
+					this.RemoveSelection();
 					this.StartAction();
 					oCC.ToggleCheckBox();
 					this.Recalculate();
