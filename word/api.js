@@ -1244,6 +1244,8 @@ background-repeat: no-repeat;\
 			document.getElementById("id_viewer").style.backgroundColor = AscCommon.GlobalSkin.BackgroundColor;
 			document.getElementById("id_panel_right").style.backgroundColor = AscCommon.GlobalSkin.ScrollBackgroundColor;
 			document.getElementById("id_horscrollpanel").style.backgroundColor = AscCommon.GlobalSkin.ScrollBackgroundColor;
+
+			this.WordControl.m_oEditor.HtmlElement.fullRepaint = true;
 		}
 
 		if (this.WordControl && this.WordControl.m_oBody)

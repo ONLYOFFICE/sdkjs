@@ -3344,6 +3344,11 @@ function CEditorPage(api)
 
         if (AscCommon.AscBrowser.isSailfish)
             context.fillRect(0, 0, canvas.width, canvas.height);
+		else if (true === canvas.fullRepaint)
+		{
+			context.fillRect(0, 0, canvas.width, canvas.height);
+			delete canvas.fullRepaint;
+		}
 
 		if (this.m_oDrawingDocument.m_lDrawingFirst < 0 || this.m_oDrawingDocument.m_lDrawingEnd < 0)
 			return;
