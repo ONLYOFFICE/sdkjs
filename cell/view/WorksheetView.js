@@ -17567,6 +17567,14 @@
 		var table = t.model.autoFilters._getFilterByDisplayName(tableName);
 		var tableRange = null !== table ? table.Ref : null;
 
+		if (tableRange && range && tableRange.isEqual(range)) {
+			if (callbackAfterChange) {
+				callbackAfterChange(false);
+			} else {
+				return false;
+			}
+		}
+
 		var lockRange = range;
 		if (null !== tableRange) {
 			var r1 = tableRange.r1 < range.r1 ? tableRange.r1 : range.r1;

@@ -9201,6 +9201,9 @@
 						}
 					});
 				}
+				if (table.TableColumns.length < (table.Ref.c2 - table.Ref.c1 + 1)) {
+					table.Ref.c2 = table.Ref.c1 + table.TableColumns.length - 1;
+				}
 			}
 		}
 	};

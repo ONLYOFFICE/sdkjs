@@ -6191,6 +6191,9 @@ function RangeDataManagerElem(bbox, data)
 
 				for (var j = 0; j < newTableColumns.length; j++) {
 					tableColumn = newTableColumns[j];
+					if (!tableColumn) {
+						tableColumn = newTableColumns[j] = new TableColumn();
+					}
 					if (tableColumn.Name === null) {
 						tableColumn.Name = autoFilters._generateColumnName2(newTableColumns);
 					}
