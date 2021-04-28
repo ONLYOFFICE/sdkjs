@@ -2449,6 +2449,12 @@ DrawingObjectsController.prototype =
                 for (i = 0; i < oController2.selectedObjects.length; ++i) {
                     oController2.selectedObjects[i].draw(g);
                 }
+                if (AscCommon.g_fontManager) {
+                    AscCommon.g_fontManager.m_pFont = null;
+                }
+                if (AscCommon.g_fontManager2) {
+                    AscCommon.g_fontManager2.m_pFont = null;
+                }
                 AscCommon.IsShapeToImageConverter = false;
 
                 try {
