@@ -562,7 +562,7 @@ CopyProcessor.prototype =
 			} else if (para_Hyperlink === item.Type) {
 				if (!bOmitHyperlink) {
 					var oHyperlink = new CopyElement("a");
-					var sValue = item.GetValue();
+					var sValue = item.IsAnchor() ? "#" + item.Anchor : item.GetValue();
 					var sToolTip = item.GetToolTip();
 					oHyperlink.oAttributes["href"] = CopyPasteCorrectString(sValue);
 					oHyperlink.oAttributes["title"] = CopyPasteCorrectString(sToolTip);
@@ -590,6 +590,12 @@ CopyProcessor.prototype =
 			} else if (para_Field === item.Type) {
 				this.CopyRunContent(item, oTarget);
 			} else if (para_Bookmark === item.Type) {
+				//для внутренних ссылок
+				//если конец ссылки находится в тепкущем параграфе, то закрываем тэг ссылки здесь
+				//если он находится в следующем параграфе, то закрываем после того, как прошлись по всему содержимому данного параграфа
+				//ms в данном случае берёт только первый элемент
+				//чтобы заранее не проходиться по всему контенту параграфа в поисках закрытия bookmark - закрываю его после всего цикла
+				//на следующий параграф не переносим
 				if (item.Start) {
 					bookmarkLevel++;
 					bookmarksStartMap[item.BookmarkId] = 1;
