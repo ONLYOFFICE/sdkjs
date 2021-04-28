@@ -244,7 +244,7 @@ CopyProcessor.prototype =
     },
     RGBToCSS : function(rgb, unifill)
     {
-        if (null == rgb && null != unifill) {
+        if (null != unifill) {
             unifill.check(this.oDocument.Get_Theme(), this.oDocument.Get_ColorMap());
             var RGBA = unifill.getRGBAColor();
             rgb = new CDocumentColor(RGBA.R, RGBA.G, RGBA.B);
