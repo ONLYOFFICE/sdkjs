@@ -2153,7 +2153,7 @@
 						}
 						else
 						{
-							var rectOrigin = rectName || rectMove;
+							var rectOrigin = rectMove;
 							if (!rectOrigin)
 								return false;
 							x = rectOrigin.X + rectOrigin.W;
