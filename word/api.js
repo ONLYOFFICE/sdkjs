@@ -1244,12 +1244,14 @@ background-repeat: no-repeat;\
 			document.getElementById("id_viewer").style.backgroundColor = AscCommon.GlobalSkin.BackgroundColor;
 			document.getElementById("id_panel_right").style.backgroundColor = AscCommon.GlobalSkin.ScrollBackgroundColor;
 			document.getElementById("id_horscrollpanel").style.backgroundColor = AscCommon.GlobalSkin.ScrollBackgroundColor;
-
-			this.WordControl.m_oEditor.HtmlElement.fullRepaint = true;
 		}
 
 		if (this.WordControl && this.WordControl.m_oBody)
+		{
 			this.WordControl.OnResize(true);
+			if (this.WordControl.m_oEditor && this.WordControl.m_oEditor.HtmlElement)
+				this.WordControl.m_oEditor.HtmlElement.fullRepaint = true;
+		}
 	};
 
 	asc_docs_api.prototype.GetCopyPasteDivId = function()

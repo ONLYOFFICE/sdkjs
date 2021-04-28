@@ -3802,7 +3802,7 @@
 				else
 				{
 					ctx.save();
-					//ctx.clip();
+					ctx.clip();
 
 					ctx.fillStyle = AscCommon.GlobalSkin.FormsContentControlsMarkersBackground;
 					ctx.beginPath();
