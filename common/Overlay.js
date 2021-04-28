@@ -2971,19 +2971,20 @@ CAutoshapeTrack.prototype =
             ctx.strokeStyle = "#000000";
             var indent = 0.5 * Math.round(rPR);
 
-            for (var i = 0; i < __h; i+= 2 * Math.round(rPR))
+			var step = Math.round(rPR);
+            for (var i = 0; i < __h; i += (2 * step))
             {
                 ctx.moveTo(__x,__y + i + indent);
-                ctx.lineTo(__x + 2 * Math.round( rPR),__y + i + indent);
+                ctx.lineTo(__x + 2 * step, __y + i + indent);
             }
             ctx.stroke();
 
             ctx.beginPath();
             ctx.strokeStyle = "#FFFFFF";
-            for (var i = Math.round(rPR); i < __h; i+= 2 * Math.round(rPR))
+            for (var i = step; i < __h; i += (2 * step))
             {
                 ctx.moveTo(__x,__y + i + indent);
-                ctx.lineTo(__x + 2 * Math.round(rPR),__y + i + indent);
+                ctx.lineTo(__x + 2 * step, __y + i + indent);
             }
             ctx.stroke();
 
@@ -2997,11 +2998,10 @@ CAutoshapeTrack.prototype =
             var _x2 = matrix.TransformPointX(x, y + h);
             var _y2 = matrix.TransformPointY(x, y + h);
 
-            _x1 = (xDst + dKoefX * _x1) >> 0;
-            _y1 = (yDst + dKoefY * _y1) >> 0;
-
-            _x2 = (xDst + dKoefX * _x2) >> 0;
-            _y2 = (yDst + dKoefY * _y2) >> 0;
+            _x1 = xDst + dKoefX * _x1;
+            _y1 = yDst + dKoefY * _y1;
+            _x2 = xDst + dKoefX * _x2;
+            _y2 = yDst + dKoefY * _y2;
 
             overlay.CheckPoint(_x1, _y1);
             overlay.CheckPoint(_x2, _y2);
@@ -3022,12 +3022,16 @@ CAutoshapeTrack.prototype =
             ctx.strokeStyle = "#000000";
 
             var _vec_len = Math.sqrt((_x2 - _x1)*(_x2 - _x1) + (_y2 - _y1)*(_y2 - _y1));
-            var _dx = Math.round((_x2 - _x1) / _vec_len * rPR);
-            var _dy = Math.round((_y2 - _y1) / _vec_len * rPR);
+            var _dx = ((_x2 - _x1) / _vec_len);
+            var _dy = ((_y2 - _y1) / _vec_len);
 
             var __x = _x1;
             var __y = _y1;
-            for (var i = 0; i < _vec_len; i += 2 * Math.round(rPR))
+
+			var step = rPR;
+			_dx *= step;
+			_dy *= step;
+            for (var i = 0; i < _vec_len; i += (2 * step))
             {
                 ctx.moveTo(__x, __y);
 

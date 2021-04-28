@@ -2816,8 +2816,11 @@
 		this.rectComboWidth = this.rectComboWidthPx / koef;
 		this.roundSize = this.roundSizePx / koef;
 
-		//this.wideOutlineX = 1 / koef;
-		this.wideOutlineY = 1 / koef;
+		if (!object.transform)
+		{
+			//this.wideOutlineX = 1 / koef;
+			this.wideOutlineY = 1 / koef;
+		}
 		this.koef = koef;
 	};
 	CPolygonCC.prototype.moveTo = function(x, y)
@@ -3545,10 +3548,10 @@
 
 			var matrix = object.transform;
 			var coordMatrix = new AscCommon.CMatrix();
-			coordMatrix.sx = koefX;
-			coordMatrix.sy = koefY;
-			coordMatrix.tx = drPage.left;
-			coordMatrix.ty = drPage.top;
+			coordMatrix.sx = koefX * rPR;
+			coordMatrix.sy = koefY * rPR;
+			coordMatrix.tx = drPage.left * rPR;
+			coordMatrix.ty = drPage.top * rPR;
 			AscCommon.global_MatrixTransformer.MultiplyPrepend(coordMatrix, matrix);
 
 			while (true)
@@ -3685,8 +3688,8 @@
 					_x = matrix.TransformPointX(point.x, point.y);
 					_y = matrix.TransformPointY(point.x, point.y);
 
-					_x = drPage.left + koefX * _x;
-					_y = drPage.top + koefY * _y;
+					_x = (drPage.left + koefX * _x) * rPR;
+					_y = (drPage.top + koefY * _y) * rPR;
 
 					overlay.CheckPoint(_x, _y);
 
@@ -3701,31 +3704,32 @@
 					{
 						var x1, y1, x2, y2, xCP, yCP;
 						var isX = true;
+						var roundSizePxTmp = 0; // this.roundSizePx
 						switch (point.inDir)
 						{
 							case PointDirection.Left:
 							{
-								x1 = _x + this.roundSizePx;
+								x1 = _x + roundSizePxTmp;
 								y1 = _y;
 								break;
 							}
 							case PointDirection.Right:
 							{
-								x1 = _x - this.roundSizePx;
+								x1 = _x - roundSizePxTmp;
 								y1 = _y;
 								break;
 							}
 							case PointDirection.Up:
 							{
 								x1 = _x;
-								y1 = _y + this.roundSizePx;
+								y1 = _y + roundSizePxTmp;
 								isX = false;
 								break;
 							}
 							case PointDirection.Down:
 							{
 								x1 = _x;
-								y1 = _y - this.roundSizePx;
+								y1 = _y - roundSizePxTmp;
 								isX = false;
 								break;
 							}
@@ -3736,26 +3740,26 @@
 						{
 							case PointDirection.Left:
 							{
-								x2 = _x - this.roundSizePx;
+								x2 = _x - roundSizePxTmp;
 								y2 = _y;
 								break;
 							}
 							case PointDirection.Right:
 							{
-								x2 = _x + this.roundSizePx;
+								x2 = _x + roundSizePxTmp;
 								y2 = _y;
 								break;
 							}
 							case PointDirection.Up:
 							{
 								x2 = _x;
-								y2 = _y - this.roundSizePx;
+								y2 = _y - roundSizePxTmp;
 								break;
 							}
 							case PointDirection.Down:
 							{
 								x2 = _x;
-								y2 = _y + this.roundSizePx;
+								y2 = _y + roundSizePxTmp;
 								break;
 							}
 							default:
@@ -3798,7 +3802,7 @@
 				else
 				{
 					ctx.save();
-					ctx.clip();
+					//ctx.clip();
 
 					ctx.fillStyle = AscCommon.GlobalSkin.FormsContentControlsMarkersBackground;
 					ctx.beginPath();
