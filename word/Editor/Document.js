@@ -10690,6 +10690,7 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 		var oSelectedContent = this.GetSelectedElementsInfo();
 		var oInlineSdt       = oSelectedContent.GetInlineLevelSdt();
 		var oBlockSdt        = oSelectedContent.GetBlockLevelSdt();
+
 		if ((oInlineSdt && oInlineSdt.IsCheckBox()) || (oBlockSdt && oBlockSdt.IsCheckBox()))
 		{
 			var oCC = (oInlineSdt && oInlineSdt.IsCheckBox()) ? oInlineSdt : oBlockSdt;
@@ -10710,6 +10711,11 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 			this.UpdateSelection();
 		}
 
+		if (this.IsFillingFormMode() && (oBlockSdt || oInlineSdt))
+		{
+			this.CurPos.CC = oInlineSdt ? oInlineSdt : oBlockSdt;
+		}
+
 		if (e.ClickCount <= 1 && 1 !== this.Selection.DragDrop.Flag)
 		{
 			this.RecalculateCurPos();
@@ -10721,6 +10727,14 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 {
 	if (PageIndex < 0)
 		return;
+
+	if (this.IsFillingFormMode() && this.CurPos.CC && !this.CurPos.CC.CheckHitInContentControlByXY(X, Y, PageIndex))
+	{
+		if (this.Selection.Start)
+			this.StopSelection();
+
+		return;
+	}
 
 	if (this.DrawTableMode.Draw || this.DrawTableMode.Erase)
 	{
@@ -10963,6 +10977,9 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 CDocument.prototype.OnMouseMove = function(e, X, Y, PageIndex)
 {
 	if (PageIndex < 0)
+		return;
+
+	if (this.IsFillingFormMode() && this.CurPos.CC && !this.CurPos.CC.CheckHitInContentControlByXY(X, Y, PageIndex))
 		return;
 
 	if (this.DrawTableMode.Start
