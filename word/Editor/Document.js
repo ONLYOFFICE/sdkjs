@@ -10735,7 +10735,7 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 
 		return;
 	}
-
+	
 	if (this.DrawTableMode.Draw || this.DrawTableMode.Erase)
 	{
 		if (!this.DrawTableMode.Start)
@@ -10979,9 +10979,6 @@ CDocument.prototype.OnMouseMove = function(e, X, Y, PageIndex)
 	if (PageIndex < 0)
 		return;
 
-	if (this.IsFillingFormMode() && this.CurPos.CC && !this.CurPos.CC.CheckHitInContentControlByXY(X, Y, PageIndex))
-		return;
-
 	if (this.DrawTableMode.Start
 		&& (PageIndex === this.DrawTableMode.Page)
 		&& (this.DrawTableMode.Draw || this.DrawTableMode.Erase))
@@ -11025,6 +11022,9 @@ CDocument.prototype.OnMouseMove = function(e, X, Y, PageIndex)
 
 		return;
 	}
+
+	if (this.IsFillingFormMode() && this.CurPos.CC && !this.CurPos.CC.CheckHitInContentControlByXY(X, Y, PageIndex))
+		return;
 
 	if (true === this.Selection.Use && true === this.Selection.Start)
 	{
