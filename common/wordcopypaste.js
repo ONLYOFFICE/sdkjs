@@ -244,7 +244,7 @@ CopyProcessor.prototype =
     },
     RGBToCSS : function(rgb, unifill)
     {
-        if (null != unifill) {
+        if (null == rgb && null != unifill) {
             unifill.check(this.oDocument.Get_Theme(), this.oDocument.Get_ColorMap());
             var RGBA = unifill.getRGBAColor();
             rgb = new CDocumentColor(RGBA.R, RGBA.G, RGBA.B);
@@ -733,7 +733,8 @@ CopyProcessor.prototype =
             res += name + ":none;";
         else
         {
-            var size = 0.5;
+            //TODO получение цвета рассмотреть аналогично получению фону у ячейки с ипользованием функции GetSimpleColor
+        	var size = 0.5;
             var color = border.Color;
             var unifill = border.Unifill;
             if(null != border.Size)
@@ -829,7 +830,7 @@ CopyProcessor.prototype =
 			var presentation = editor.WordControl.m_oLogicDocument;
 			var curSlide = presentation.Slides[presentation.CurPage];
 			if(presentation && curSlide && curSlide.Layout && curSlide.Layout.Master && curSlide.Layout.Master.Theme)
-        AscFormat.checkTableCellPr(cell.CompiledPr.Pr, curSlide, curSlide.Layout, curSlide.Layout.Master, curSlide.Layout.Master.Theme);	
+        AscFormat.checkTableCellPr(cell.CompiledPr.Pr, curSlide, curSlide.Layout, curSlide.Layout.Master, curSlide.Layout.Master.Theme);
 		}
 		
 		if(null != cell.CompiledPr && null != cell.CompiledPr.Pr)
@@ -841,8 +842,16 @@ CopyProcessor.prototype =
         }
         if(null != cellPr && null != cellPr.Shd)
         {
-            if (c_oAscShdNil !== cellPr.Shd.Value && (null != cellPr.Shd.Color || null != cellPr.Shd.Unifill))
-                tcStyle += "background-color:" + this.RGBToCSS(cellPr.Shd.Color, cellPr.Shd.Unifill) + ";";
+			if (c_oAscShdNil !== cellPr.Shd.Value && (null != cellPr.Shd.Color || null != cellPr.Shd.Unifill)) {
+				var _shdColor = cellPr.Shd.GetSimpleColor(this.oDocument.Get_Theme(), this.oDocument.Get_ColorMap());
+				//todo проверить и убрать else, всегда использовать GetSimpleColor
+				if (_shdColor) {
+					_shdColor = this.RGBToCSS(_shdColor);
+				} else {
+					_shdColor = this.RGBToCSS(cellPr.Shd.Color, cellPr.Shd.Unifill);
+				}
+				tcStyle += "background-color:" + _shdColor + ";";
+			}
         }
         else if(null != tablePr && null != tablePr.Shd)
         {
