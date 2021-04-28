@@ -10730,12 +10730,20 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 
 	if (this.IsFillingFormMode() && this.CurPos.CC && !this.CurPos.CC.CheckHitInContentControlByXY(X, Y, PageIndex))
 	{
-		if (this.Selection.Start)
-			this.StopSelection();
+		var oCorrectedPos = this.CurPos.CC.CorrectXYToHitIn(X, Y, PageIndex);
+		if (!oCorrectedPos)
+		{
+			if (this.Selection.Start)
+				this.StopSelection();
 
-		return;
+			return;
+		}
+
+		X = oCorrectedPos.X;
+		Y = oCorrectedPos.Y;
 	}
-	
+
+
 	if (this.DrawTableMode.Draw || this.DrawTableMode.Erase)
 	{
 		if (!this.DrawTableMode.Start)
@@ -11024,7 +11032,14 @@ CDocument.prototype.OnMouseMove = function(e, X, Y, PageIndex)
 	}
 
 	if (this.IsFillingFormMode() && this.CurPos.CC && !this.CurPos.CC.CheckHitInContentControlByXY(X, Y, PageIndex))
-		return;
+	{
+		var oCorrectedPos = this.CurPos.CC.CorrectXYToHitIn(X, Y, PageIndex);
+		if (!oCorrectedPos)
+			return;
+
+		X = oCorrectedPos.X;
+		Y = oCorrectedPos.Y;
+	}
 
 	if (true === this.Selection.Use && true === this.Selection.Start)
 	{

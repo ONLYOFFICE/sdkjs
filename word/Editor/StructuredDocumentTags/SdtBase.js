@@ -355,3 +355,14 @@ CSdtBase.prototype.CheckHitInContentControlByXY = function(X, Y, nPageAbs)
 {
 	return false;
 };
+/**
+ * Ищем ближаюшую позицию, которая попадала бы в контейнер
+ * @param X
+ * @param Y
+ * @param nPageAbs
+ * @returns {?{X:number,Y:number}}
+ */
+CSdtBase.prototype.CorrectXYToHitIn = function(X, Y, nPageAbs)
+{
+	return null;
+};

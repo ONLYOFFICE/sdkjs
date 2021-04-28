@@ -1955,6 +1955,111 @@ CInlineLevelSdt.prototype.CheckHitInContentControlByXY = function(X, Y, nPageAbs
 
 	return false;
 };
+CInlineLevelSdt.prototype.CorrectXYToHitIn = function(X, Y, nPageAbs)
+{
+	var oParagraph = this.GetParagraph();
+	if (!oParagraph)
+		return false;
+
+	var oTransform = this.Get_ParentTextTransform();
+
+	var _X = X;
+	var _Y = Y;
+	if (oTransform)
+	{
+		oTransform = oTransform.Invert();
+		_X = oTransform.TransformPointX(X, Y);
+		_Y = oTransform.TransformPointY(X, Y);
+	}
+
+	function private_Diff(oBound, X, Y)
+	{
+		var _X = 0;
+		var _Y = 0;
+
+		if (oBound.Y <= Y && Y <= oBound.Y + oBound.H)
+			_Y = 0;
+		else if (Y < oBound.Y)
+			_Y = oBound.Y - Y;
+		else
+			_Y = Y - oBound.Y - oBound.H;
+
+		if (oBound.X <= X && X <= oBound.X + oBound.W)
+			_X = 0;
+		else if (X < oBound.X)
+			_X = oBound.X - X;
+		else
+			_X = X - oBound.X - oBound.W;
+
+		return {X : _X, Y : _Y};
+	}
+
+	var oDiff      = null;
+	var oNearBound = null;
+	for (var sKey in this.Bounds)
+	{
+		var oBound = this.Bounds[sKey];
+		if (oParagraph.GetAbsolutePage(oBound.PageInternal) === nPageAbs)
+		{
+			if (!oNearBound)
+			{
+				oDiff      = private_Diff(oBound, _X, _Y);
+				oNearBound = oBound;
+			}
+			else
+			{
+				var _oDiff = private_Diff(oBound, _X, _Y);
+				if ((0 === oDiff.Y && 0 === _oDiff.Y && _oDiff.X < oDiff.Y)
+					|| (0 !== oDiff.Y
+						&& (0 === _oDiff.Y
+							|| (_oDiff.Y < oDiff.Y)
+							|| (Math.abs(_oDiff.Y - oDiff.Y) < 0.001 && _oDiff.X < oDiff.X))))
+				{
+					oDiff      = _oDiff;
+					oNearBound = oBound;
+				}
+			}
+
+			if (oDiff && 0 === oDiff.Y && 0 === oDiff.X)
+				return {X : X, Y : Y};
+		}
+	}
+
+	if (oNearBound)
+	{
+		var __X, __Y;
+
+		if (oNearBound.Y <= _Y && _Y <= oNearBound.Y + oNearBound.H)
+			__Y = _Y;
+		else if (_Y < oNearBound.Y)
+			__Y = oNearBound.Y + 0.001;
+		else
+			__Y = oNearBound.Y + oNearBound.H - 0.001;
+
+		if (oNearBound.X <= _X && _X <= oNearBound.X + oNearBound.W)
+			__X = _X;
+		else if (_X < oNearBound.X)
+			__X = oNearBound.X + 0.001;
+		else
+			__X = oNearBound.X + oNearBound.W - 0.001;
+
+		if (oTransform)
+		{
+			oTransform = oTransform.Invert();
+			_X = oTransform.TransformPointX(__X, __Y);
+			_Y = oTransform.TransformPointY(__X, __Y);
+		}
+		else
+		{
+			_X = __X;
+			_Y = __Y;
+		}
+
+		return {X : _X, Y : _Y};
+	}
+
+	return null;
+};
 CInlineLevelSdt.prototype.IsSelectedAll = function(Props)
 {
 	if (!this.Selection.Use)
