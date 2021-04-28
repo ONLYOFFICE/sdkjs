@@ -7470,6 +7470,10 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 			oField.SelectAll(1);
 			oField.SelectThisElement(1);
 		}
+		else if (oSdt && oSdt.IsCheckBox())
+		{
+			this.RemoveSelection();
+		}
 		else
 		{
 			var ClickCounter = MouseEvent.ClickCount % 2;
