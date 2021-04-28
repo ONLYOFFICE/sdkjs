@@ -4666,6 +4666,8 @@ CShape.prototype.updateSelectionState = function ()
         var content = this.getDocContent();
         if(content)
         {
+        	var oLogicDocument = content.GetLogicDocument ? content.GetLogicDocument() : null;
+
             var oMatrix = null;
             if(this.transformText)
             {
@@ -4708,6 +4710,13 @@ CShape.prototype.updateSelectionState = function ()
 
                         drawing_document.TargetStart();
                         drawing_document.TargetShow();
+
+						if (oLogicDocument && oLogicDocument.IsFillingFormMode && oLogicDocument.IsFillingFormMode())
+						{
+							var oContentControl = oLogicDocument.GetContentControl();
+							if (oContentControl && oContentControl.IsCheckBox())
+								drawing_document.TargetEnd();
+						}
                     }
                 }
             }
@@ -4718,6 +4727,13 @@ CShape.prototype.updateSelectionState = function ()
 
                 drawing_document.TargetStart();
                 drawing_document.TargetShow();
+
+				if (oLogicDocument && oLogicDocument.IsFillingFormMode && oLogicDocument.IsFillingFormMode())
+				{
+					var oContentControl = oLogicDocument.GetContentControl();
+					if (oContentControl && oContentControl.IsCheckBox())
+						drawing_document.TargetEnd();
+				}
             }
         }
         else
