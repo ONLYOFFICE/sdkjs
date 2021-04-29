@@ -377,6 +377,11 @@
         if(AscCommon.isRealObject(oObjectsMap[this.spid])){
             this.setSpid(oObjectsMap[this.spid].Id);
         }
+        else {
+            if(this.parent) {
+                this.parent.onRemoveChild(this);
+            }
+        }
     };
     CObjectTarget.prototype.fillObject = function(oCopy, oIdMap) {
         var sSpId = this.spid;
@@ -417,8 +422,14 @@
     };
 
     CBldBase.prototype.assignConnection = function(oObjectsMap) {
-        if(AscCommon.isRealObject(oObjectsMap[this.spid])){
+        if(AscCommon.isRealObject(oObjectsMap[this.spid]) &&
+            (oObjectsMap[this.spid].getObjectType && oObjectsMap[this.spid].getObjectType() === AscDFH.historyitem_type_ChartSpace)) {
             this.setSpid(oObjectsMap[this.spid].Id);
+        }
+        else {
+            if(this.parent) {
+                this.parent.onRemoveChild(this);
+            }
         }
     };
     CBldBase.prototype.setUiExpand = function(pr) {
@@ -828,6 +839,11 @@
     CGraphicEl.prototype.assignConnection = function(oObjectsMap) {
         if(AscCommon.isRealObject(oObjectsMap[this.spid])){
             this.setSpid(oObjectsMap[this.dgmId].Id);
+        }
+        else {
+            if(this.parent) {
+                this.parent.onRemoveChild(this);
+            }
         }
     };
     CGraphicEl.prototype.setDgmBuildStep = function(pr) {
@@ -2011,11 +2027,25 @@
         this.subSpId = pr;
     };
     CSpTgt.prototype.assignConnection = function(oObjectsMap) {
-        if(AscCommon.isRealObject(oObjectsMap[this.spid])){
-            this.setSpid(oObjectsMap[this.spid].Id);
+        if(this.spid !== null) {
+            if(AscCommon.isRealObject(oObjectsMap[this.spid])){
+                this.setSpid(oObjectsMap[this.spid].Id);
+            }
+            else {
+                if(this.parent) {
+                    this.parent.onRemoveChild(this);
+                }
+            }
         }
-        if(AscCommon.isRealObject(oObjectsMap[this.subSpId])){
-            this.setSubSpId(oObjectsMap[this.subSpId].Id);
+        if(this.subSpId !== null) {
+            if(AscCommon.isRealObject(oObjectsMap[this.subSpId])){
+                this.setSubSpId(oObjectsMap[this.subSpId].Id);
+            }
+            else {
+                if(this.parent) {
+                    this.parent.onRemoveChild(this);
+                }
+            }
         }
     };
     CSpTgt.prototype.setTxEl = function(pr) {
