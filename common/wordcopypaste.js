@@ -261,7 +261,7 @@ CopyProcessor.prototype =
             sB = "0" + sB;
         return "#" + sR + sG + sB;
     },
-    Commit_pPr : function(Item, Para)
+    Commit_pPr : function(Item, Para, nextElem)
     {
         //pPr
         var apPr = [];
@@ -346,7 +346,21 @@ CopyProcessor.prototype =
             if(null != Item_pPr.Brd)
             {
                 apPr.push("border:none");
-                var borderStyle = this._BordersToStyle(Item_pPr.Brd, false, true, "mso-", "-alt");
+
+                //сравниваю бордеры со следующим параграфом
+                var isNeedPrefix = true;
+                if (Item && type_Paragraph === Item.GetType() && Item.IsTableCellContent && !Item.IsTableCellContent()) {
+					isNeedPrefix = false;
+                	if (nextElem && type_Paragraph === nextElem.GetType()) {
+						isNeedPrefix = true;
+						var Next_pPr = nextElem.CompiledPr && nextElem.CompiledPr.Pr && nextElem.CompiledPr.Pr.ParaPr ? nextElem.CompiledPr.Pr.ParaPr : nextElem.Pr;
+						if (Next_pPr && Item_pPr && !nextElem.private_CompareBorderSettings(Next_pPr, Item_pPr)) {
+							isNeedPrefix = false;
+						}
+					}
+				}
+
+                var borderStyle = this._BordersToStyle(Item_pPr.Brd, false, true, isNeedPrefix ? "mso-" : null, isNeedPrefix ? "-alt" : null);
                 if(null != borderStyle)
                 {
                     var nborderStyleLength = borderStyle.length;
@@ -556,7 +570,7 @@ CopyProcessor.prototype =
 				this.CopyRunContent(item, oTarget);
         }
     },
-    CopyParagraph : function(oDomTarget, Item, selectedAll)
+    CopyParagraph : function(oDomTarget, Item, selectedAll, nextElem)
     {
         var oDocument = this.oDocument;
 		var Para = null;
@@ -675,7 +689,7 @@ CopyProcessor.prototype =
             }
         }
         //pPr
-        this.Commit_pPr(Item, Para);
+        this.Commit_pPr(Item, Para, nextElem);
 
         if(false === selectedAll)
         {
@@ -1120,11 +1134,19 @@ CopyProcessor.prototype =
 				{
 					var SelectedAll = Index === elementsContent.length - 1 ? elementsContent[Index].SelectedAll : true;
 					//todo может только для верхнего уровня надо Index == End
-					if(!dNotGetBinary)
+					if (!dNotGetBinary) {
 						this.oBinaryFileWriter.CopyParagraph(Item, SelectedAll);
-						
-					if(!this.onlyBinaryCopy)
-						this.CopyParagraph(oDomTarget, Item, SelectedAll);
+					}
+
+					if (!this.onlyBinaryCopy) {
+						var _nextElem;
+						if (elementsContent[Index + 1] && elementsContent[Index + 1].Element) {
+							_nextElem = elementsContent[Index + 1].Element;
+						} else {
+							_nextElem = elementsContent[Index + 1];
+						}
+						this.CopyParagraph(oDomTarget, Item, SelectedAll, _nextElem);
+					}
 				}
 				else if(type_BlockLevelSdt === Item.GetType() )
 				{
