@@ -7294,7 +7294,7 @@
 				}
 				oCellValue = new AscCommonExcel.CCellValue();
 				oCellValue.type = AscCommon.CellValueType.String;
-				oCellValue.text = AscCommonExcel.ToName_ST_ItemType(Asc.c_oAscItemType.Default);
+				oCellValue.text = AscCommon.translateManager.getValue(AscCommonExcel.ToName_ST_ItemType(Asc.c_oAscItemType.Default));
 				cells.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
 			}
 			if (rowFieldsOffset && false === pivotTable.showHeaders && false === pivotTable.gridDropZones && pivotTable.getDataFieldsCount() > 0) {
@@ -7349,7 +7349,7 @@
 					if (-1 === valuesIndex) {
 						oCellValue.text = pivotTable.grandTotalCaption || AscCommon.translateManager.getValue(AscCommonExcel.GRAND_TOTAL_CAPTION);
 					} else {
-						oCellValue.text = AscCommonExcel.ToName_ST_ItemType(item.t);
+						oCellValue.text = AscCommon.translateManager.getValue(AscCommonExcel.ToName_ST_ItemType(item.t));
 						oCellValue.text += ' ' + pivotTable.getDataFieldName(item.i);
 					}
 				} else if (Asc.c_oAscItemType.Blank === item.t) {
@@ -7365,7 +7365,7 @@
 								oCellValue.text = field.subtotalCaption;
 							} else {
 								oCellValue.text = totalTitleRange[r + j].getValueWithFormatSkipToSpace();
-								oCellValue.text += ' ' + AscCommonExcel.ToName_ST_ItemType(item.t);
+								oCellValue.text += ' ' + AscCommon.translateManager.getValue(AscCommonExcel.ToName_ST_ItemType(item.t));
 							}
 						}
 					} else {
