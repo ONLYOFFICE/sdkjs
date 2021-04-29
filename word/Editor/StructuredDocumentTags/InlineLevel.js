@@ -305,6 +305,25 @@ CInlineLevelSdt.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _C
 	if (0 === CurLine)
 		Y0 = oParagraph.Lines[_CurLine].Y + oParagraph.Pages[_CurPage].Y - oParagraph.Lines[_CurLine].Metrics.Ascent;
 
+	if (this.IsForm() && !this.IsPicture() && (this.Content[0] instanceof ParaRun))
+	{
+		var oRun    = this.Content[0];
+		var oTextPr = oRun.Get_CompiledPr(false);
+
+		g_oTextMeasurer.SetTextPr(oTextPr, oParagraph.GetTheme());
+		g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
+
+		var nTextHeight  = g_oTextMeasurer.GetHeight();
+		var nTextDescent = Math.abs(g_oTextMeasurer.GetDescender());
+		var nTextAscent  = nTextHeight - nTextDescent;
+		var nYOffset     = oTextPr.Position;
+
+		if (0 === CurLine)
+			Y0 = oParagraph.Lines[_CurLine].Y + oParagraph.Pages[_CurPage].Y - nTextAscent - nYOffset;
+
+		Y1 = oParagraph.Lines[_CurLine].Y + oParagraph.Pages[_CurPage].Y + nTextDescent - nYOffset;
+	}
+
 	if (!isFastRangeRecalc)
 	{
 		for (var Key in this.Bounds)
@@ -320,6 +339,18 @@ CInlineLevelSdt.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _C
 	CParagraphContentWithParagraphLikeContent.prototype.Recalculate_Range_Spaces.apply(this, arguments);
 
 	var X1 = PRSA.X;
+
+	if (this.IsForm() && this.IsPicture() && Math.abs(X1 - X0) > 0.001)
+	{
+		var arrDrawings = this.GetAllDrawingObjects();
+		if (arrDrawings.length > 0 && arrDrawings[0].IsPicture())
+		{
+			Y0 = arrDrawings[0].GraphicObj.y;
+			Y1 = arrDrawings[0].GraphicObj.y + arrDrawings[0].GraphicObj.extY;
+			X0 = arrDrawings[0].GraphicObj.x;
+			X1 = arrDrawings[0].GraphicObj.x + arrDrawings[0].GraphicObj.extX;
+		}
+	}
 
 	if (isFastRangeRecalc && this.Bounds[((CurLine << 16) & 0xFFFF0000) | (CurRange & 0x0000FFFF)])
 	{

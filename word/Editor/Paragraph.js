@@ -11076,7 +11076,7 @@ Paragraph.prototype.UpdateCursorType = function(X, Y, CurPage)
 	if (oContentControl)
 	{
 		oContentControl.DrawContentControlsTrack(true, X, Y, CurPage);
-		isCheckBox = oContentControl.IsCheckBox();
+		isCheckBox = oContentControl.IsCheckBox() && oContentControl.CheckHitInContentControlByXY(X, Y, this.GetAbsolutePage(CurPage));
 	}
 
 	var Footnote  = this.CheckFootnote(X, Y, CurPage);
