@@ -250,8 +250,9 @@ var GROUP_HOURS_CAPTION = 'Hours';
 var GROUP_DAYS_CAPTION = 'Days';
 var GROUP_MONTHS_CAPTION = 'Months';
 var GROUP_QUARTERS_CAPTION = 'Quarters';
+var GROUP_QUARTER_CAPTION = 'Qtr';
 var GROUP_YEARS_CAPTION = 'Years';
-var GROUP_OR_CAPTION = 'or';
+var GROUP_OR_CAPTION = '%1 or %2';
 var NEW_PIVOT_LAST_COL_OFFSET = 2;
 var NEW_PIVOT_LAST_ROW_OFFSET = 17;
 var NEW_PIVOT_LAST_COL_OFFSET_GRID_DROP_ZONES = 6;
@@ -13845,8 +13846,9 @@ CT_RangePr.prototype.generateGroupItems  = function (containsInteger, containsBl
 			if (this.autoStart) {
 				firstElem = AscCommon.translateManager.getValue(AscCommonExcel.BLANK_CAPTION);
 			} else {
-				firstElem += ' ' + AscCommon.translateManager.getValue(GROUP_OR_CAPTION) + ' '
-					+ AscCommon.translateManager.getValue(AscCommonExcel.BLANK_CAPTION);
+				var blankName = AscCommon.translateManager.getValue(AscCommonExcel.BLANK_CAPTION);
+				var orName = AscCommon.translateManager.getValue(GROUP_OR_CAPTION);
+				firstElem = orName.replace("%1", firstElem).replace("%2", blankName);
 			}
 		}
 		groupItems.addString(firstElem);
@@ -13874,8 +13876,9 @@ CT_RangePr.prototype.generateGroupItems  = function (containsInteger, containsBl
 			if (this.autoStart) {
 				firstElem = AscCommon.translateManager.getValue(AscCommonExcel.BLANK_CAPTION);
 			} else {
-				firstElem += ' ' + AscCommon.translateManager.getValue(GROUP_OR_CAPTION) + ' '
-					+ AscCommon.translateManager.getValue(AscCommonExcel.BLANK_CAPTION);
+				var blankName = AscCommon.translateManager.getValue(AscCommonExcel.BLANK_CAPTION);
+				var orName = AscCommon.translateManager.getValue(GROUP_OR_CAPTION);
+				firstElem = orName.replace("%1", firstElem).replace("%2", blankName);
 			}
 		}
 		groupItems.addString(firstElem);
@@ -13898,10 +13901,11 @@ CT_RangePr.prototype.generateGroupItems  = function (containsInteger, containsBl
 				groupItems.addString(numFormat.formatToChart(date.getExcelDateWithTime2()));
 			}
 		} else if (this.groupBy === c_oAscGroupBy.Quarters) {
-			groupItems.addString("Qtr1");
-			groupItems.addString("Qtr2");
-			groupItems.addString("Qtr3");
-			groupItems.addString("Qtr4");
+			var qtr = AscCommon.translateManager.getValue(GROUP_QUARTER_CAPTION);
+			groupItems.addString(qtr + "1");
+			groupItems.addString(qtr + "2");
+			groupItems.addString(qtr + "3");
+			groupItems.addString(qtr + "4");
 		} else if (this.groupBy === c_oAscGroupBy.Years) {
 			date = new Asc.cDate(this.startDate.getTime());
 			while (date < this.endDate) {
