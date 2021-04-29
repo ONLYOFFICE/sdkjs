@@ -535,8 +535,8 @@
         return [this.bldSub];
     };
 
-    changesFactory[AscDFH.historyitem_BldGraphicBldSub] = CChangeBool;
-    drawingsChangesMap[AscDFH.historyitem_BldGraphicBldAsOne] = function(oClass, value) {oClass.animBg = value;};
+    changesFactory[AscDFH.historyitem_BldOleChartAnimBg] = CChangeBool;
+    drawingsChangesMap[AscDFH.historyitem_BldOleChartAnimBg] = function(oClass, value) {oClass.animBg = value;};
     function CBldOleChart() {
         CBldDgm.call(this);
         this.animBg = null;
@@ -1118,17 +1118,17 @@
     changesFactory[AscDFH.historyitem_CBhvrTo] = CChangeString;
     changesFactory[AscDFH.historyitem_CBhvrXfrmType] = CChangeLong;
 
-    drawingsChangesMap[AscDFH.historyitem_CBhvrAttrNameLst] = function(oClass, value) {this.attrNameLst = value;};
-    drawingsChangesMap[AscDFH.historyitem_CBhvrCTn] = function(oClass, value) {this.cTn = value;};
-    drawingsChangesMap[AscDFH.historyitem_CBhvrTgtEl] = function(oClass, value) {this.tgtEl = value;};
-    drawingsChangesMap[AscDFH.historyitem_CBhvrAccumulate] = function(oClass, value) {this.accumulate = value;};
-    drawingsChangesMap[AscDFH.historyitem_CBhvrAdditive] = function(oClass, value) {this.additive = value;};
-    drawingsChangesMap[AscDFH.historyitem_CBhvrBy] = function(oClass, value) {this.by = value;};
-    drawingsChangesMap[AscDFH.historyitem_CBhvrFrom] = function(oClass, value) {this.from = value;};
-    drawingsChangesMap[AscDFH.historyitem_CBhvrOverride] = function(oClass, value) {this.override = value;};
-    drawingsChangesMap[AscDFH.historyitem_CBhvrRctx] = function(oClass, value) {this.rctx = value;};
-    drawingsChangesMap[AscDFH.historyitem_CBhvrTo] = function(oClass, value) {this.to = value;};
-    drawingsChangesMap[AscDFH.historyitem_CBhvrXfrmType] = function(oClass, value) {this.xfrmType = value;};
+    drawingsChangesMap[AscDFH.historyitem_CBhvrAttrNameLst] = function(oClass, value) {oClass.attrNameLst = value;};
+    drawingsChangesMap[AscDFH.historyitem_CBhvrCTn] = function(oClass, value) {oClass.cTn = value;};
+    drawingsChangesMap[AscDFH.historyitem_CBhvrTgtEl] = function(oClass, value) {oClass.tgtEl = value;};
+    drawingsChangesMap[AscDFH.historyitem_CBhvrAccumulate] = function(oClass, value) {oClass.accumulate = value;};
+    drawingsChangesMap[AscDFH.historyitem_CBhvrAdditive] = function(oClass, value) {oClass.additive = value;};
+    drawingsChangesMap[AscDFH.historyitem_CBhvrBy] = function(oClass, value) {oClass.by = value;};
+    drawingsChangesMap[AscDFH.historyitem_CBhvrFrom] = function(oClass, value) {oClass.from = value;};
+    drawingsChangesMap[AscDFH.historyitem_CBhvrOverride] = function(oClass, value) {oClass.override = value;};
+    drawingsChangesMap[AscDFH.historyitem_CBhvrRctx] = function(oClass, value) {oClass.rctx = value;};
+    drawingsChangesMap[AscDFH.historyitem_CBhvrTo] = function(oClass, value) {oClass.to = value;};
+    drawingsChangesMap[AscDFH.historyitem_CBhvrXfrmType] = function(oClass, value) {oClass.xfrmType = value;};
     function CCBhvr() {
         CBaseFormatObject.call(this);
         this.attrNameLst = null;
@@ -1196,7 +1196,7 @@
             oCopy.setAttrNameLst(this.attrNameLst.createDuplicate(oIdMap));
         }
         if(this.cTn !== null) {
-            oCopy.setCTn(this.cTn);
+            oCopy.setCTn(this.cTn.createDuplicate(oIdMap));
         }
         if(this.tgtEl !== null) {
             oCopy.setTgtEl(this.tgtEl.createDuplicate(oIdMap));
@@ -1300,7 +1300,7 @@
     changesFactory[AscDFH.historyitem_CTnBldLvl] = CChangeLong;
     changesFactory[AscDFH.historyitem_CTnDecel] = CChangeLong;
     changesFactory[AscDFH.historyitem_CTnDisplay] = CChangeBool;
-    changesFactory[AscDFH.historyitem_CTnDur] = CChangeLong;
+    changesFactory[AscDFH.historyitem_CTnDur] = CChangeString;
     changesFactory[AscDFH.historyitem_CTnEvtFilter] = CChangeString;
     changesFactory[AscDFH.historyitem_CTnFill] = CChangeLong;
     changesFactory[AscDFH.historyitem_CTnGrpId] = CChangeLong;
@@ -1318,35 +1318,35 @@
     changesFactory[AscDFH.historyitem_CTnSyncBehavior] = CChangeLong;
     changesFactory[AscDFH.historyitem_CTnTmFilter] = CChangeString;
 
-    drawingsChangesMap[AscDFH.historyitem_CTnChildTnLst] = function(oClass, value) {this.childTnLst = value;};
-    drawingsChangesMap[AscDFH.historyitem_CTnEndCondLst] = function(oClass, value) {this.endCondLst = value;};
-    drawingsChangesMap[AscDFH.historyitem_CTnEndSync] = function(oClass, value) {this.endSync = value;};
-    drawingsChangesMap[AscDFH.historyitem_CTnIterate] = function(oClass, value) {this.iterate = value;};
-    drawingsChangesMap[AscDFH.historyitem_CTnStCondLst] = function(oClass, value) {this.stCondLst = value;};
-    drawingsChangesMap[AscDFH.historyitem_CTnSubTnLst] = function(oClass, value) {this.subTnLst = value;};
-    drawingsChangesMap[AscDFH.historyitem_CTnAccel] = function(oClass, value) {this.accel = value;};
-    drawingsChangesMap[AscDFH.historyitem_CTnAfterEffect] = function(oClass, value) {this.afterEffect = value;};
-    drawingsChangesMap[AscDFH.historyitem_CTnAutoRev] = function(oClass, value) {this.autoRev = value;};
-    drawingsChangesMap[AscDFH.historyitem_CTnBldLvl] = function(oClass, value) {this.bldLvl = value;};
-    drawingsChangesMap[AscDFH.historyitem_CTnDecel] = function(oClass, value) {this.decel = value;};
-    drawingsChangesMap[AscDFH.historyitem_CTnDisplay] = function(oClass, value) {this.display = value;};
-    drawingsChangesMap[AscDFH.historyitem_CTnDur] = function(oClass, value) {this.dur = value;};
-    drawingsChangesMap[AscDFH.historyitem_CTnEvtFilter] = function(oClass, value) {this.evtFilter = value;};
-    drawingsChangesMap[AscDFH.historyitem_CTnFill] = function(oClass, value) {this.fill = value;};
-    drawingsChangesMap[AscDFH.historyitem_CTnGrpId] = function(oClass, value) {this.grpId = value;};
-    drawingsChangesMap[AscDFH.historyitem_CTnId] = function(oClass, value) {this.id = value;};
-    drawingsChangesMap[AscDFH.historyitem_CTnMasterRel] = function(oClass, value) {this.masterRel = value;};
-    drawingsChangesMap[AscDFH.historyitem_CTnNodePh] = function(oClass, value) {this.nodePh = value;};
-    drawingsChangesMap[AscDFH.historyitem_CTnNodeType] = function(oClass, value) {this.nodeType = value;};
-    drawingsChangesMap[AscDFH.historyitem_CTnPresetClass] = function(oClass, value) {this.presetClass = value;};
-    drawingsChangesMap[AscDFH.historyitem_CTnPresetID] = function(oClass, value) {this.presetID = value;};
-    drawingsChangesMap[AscDFH.historyitem_CTnPresetSubtype] = function(oClass, value) {this.presetSubtype = value;};
-    drawingsChangesMap[AscDFH.historyitem_CTnRepeatCount] = function(oClass, value) {this.repeatCount = value;};
-    drawingsChangesMap[AscDFH.historyitem_CTnRepeatDur] = function(oClass, value) {this.repeatDur = value;};
-    drawingsChangesMap[AscDFH.historyitem_CTnRestart] = function(oClass, value) {this.restart = value;};
-    drawingsChangesMap[AscDFH.historyitem_CTnSpd] = function(oClass, value) {this.spd = value;};
-    drawingsChangesMap[AscDFH.historyitem_CTnSyncBehavior] = function(oClass, value) {this.syncBehavior = value;};
-    drawingsChangesMap[AscDFH.historyitem_CTnTmFilter] = function(oClass, value) {this.tmFilter = value;};
+    drawingsChangesMap[AscDFH.historyitem_CTnChildTnLst] = function(oClass, value) {oClass.childTnLst = value;};
+    drawingsChangesMap[AscDFH.historyitem_CTnEndCondLst] = function(oClass, value) {oClass.endCondLst = value;};
+    drawingsChangesMap[AscDFH.historyitem_CTnEndSync] = function(oClass, value) {oClass.endSync = value;};
+    drawingsChangesMap[AscDFH.historyitem_CTnIterate] = function(oClass, value) {oClass.iterate = value;};
+    drawingsChangesMap[AscDFH.historyitem_CTnStCondLst] = function(oClass, value) {oClass.stCondLst = value;};
+    drawingsChangesMap[AscDFH.historyitem_CTnSubTnLst] = function(oClass, value) {oClass.subTnLst = value;};
+    drawingsChangesMap[AscDFH.historyitem_CTnAccel] = function(oClass, value) {oClass.accel = value;};
+    drawingsChangesMap[AscDFH.historyitem_CTnAfterEffect] = function(oClass, value) {oClass.afterEffect = value;};
+    drawingsChangesMap[AscDFH.historyitem_CTnAutoRev] = function(oClass, value) {oClass.autoRev = value;};
+    drawingsChangesMap[AscDFH.historyitem_CTnBldLvl] = function(oClass, value) {oClass.bldLvl = value;};
+    drawingsChangesMap[AscDFH.historyitem_CTnDecel] = function(oClass, value) {oClass.decel = value;};
+    drawingsChangesMap[AscDFH.historyitem_CTnDisplay] = function(oClass, value) {oClass.display = value;};
+    drawingsChangesMap[AscDFH.historyitem_CTnDur] = function(oClass, value) {oClass.dur = value;};
+    drawingsChangesMap[AscDFH.historyitem_CTnEvtFilter] = function(oClass, value) {oClass.evtFilter = value;};
+    drawingsChangesMap[AscDFH.historyitem_CTnFill] = function(oClass, value) {oClass.fill = value;};
+    drawingsChangesMap[AscDFH.historyitem_CTnGrpId] = function(oClass, value) {oClass.grpId = value;};
+    drawingsChangesMap[AscDFH.historyitem_CTnId] = function(oClass, value) {oClass.id = value;};
+    drawingsChangesMap[AscDFH.historyitem_CTnMasterRel] = function(oClass, value) {oClass.masterRel = value;};
+    drawingsChangesMap[AscDFH.historyitem_CTnNodePh] = function(oClass, value) {oClass.nodePh = value;};
+    drawingsChangesMap[AscDFH.historyitem_CTnNodeType] = function(oClass, value) {oClass.nodeType = value;};
+    drawingsChangesMap[AscDFH.historyitem_CTnPresetClass] = function(oClass, value) {oClass.presetClass = value;};
+    drawingsChangesMap[AscDFH.historyitem_CTnPresetID] = function(oClass, value) {oClass.presetID = value;};
+    drawingsChangesMap[AscDFH.historyitem_CTnPresetSubtype] = function(oClass, value) {oClass.presetSubtype = value;};
+    drawingsChangesMap[AscDFH.historyitem_CTnRepeatCount] = function(oClass, value) {oClass.repeatCount = value;};
+    drawingsChangesMap[AscDFH.historyitem_CTnRepeatDur] = function(oClass, value) {oClass.repeatDur = value;};
+    drawingsChangesMap[AscDFH.historyitem_CTnRestart] = function(oClass, value) {oClass.restart = value;};
+    drawingsChangesMap[AscDFH.historyitem_CTnSpd] = function(oClass, value) {oClass.spd = value;};
+    drawingsChangesMap[AscDFH.historyitem_CTnSyncBehavior] = function(oClass, value) {oClass.syncBehavior = value;};
+    drawingsChangesMap[AscDFH.historyitem_CTnTmFilter] = function(oClass, value) {oClass.tmFilter = value;};
     function CCTn() {
         CBaseFormatObject.call(this);
         this.childTnLst = null;
@@ -1435,7 +1435,7 @@
         this.display = pr;
     };
     CCTn.prototype.setDur = function(pr) {
-        oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CTnDur, this.dur, pr));
+        oHistory.Add(new CChangeString(this, AscDFH.historyitem_CTnDur, this.dur, pr));
         this.dur = pr;
     };
     CCTn.prototype.setEvtFilter = function(pr) {
@@ -1700,11 +1700,11 @@
     changesFactory[AscDFH.historyitem_CondDelay] = CChangeString;
     changesFactory[AscDFH.historyitem_CondEvt] = CChangeLong;
 
-    drawingsChangesMap[AscDFH.historyitem_CondRtn] = function(oClass, value) {this.rtn = value;};
-    drawingsChangesMap[AscDFH.historyitem_CondTgtEl] = function(oClass, value) {this.tgtEl = value;};
-    drawingsChangesMap[AscDFH.historyitem_CondTn] = function(oClass, value) {this.tn = value;};
-    drawingsChangesMap[AscDFH.historyitem_CondDelay] = function(oClass, value) {this.delay = value;};
-    drawingsChangesMap[AscDFH.historyitem_CondEvt] = function(oClass, value) {this.evt = value;};
+    drawingsChangesMap[AscDFH.historyitem_CondRtn] = function(oClass, value) {oClass.rtn = value;};
+    drawingsChangesMap[AscDFH.historyitem_CondTgtEl] = function(oClass, value) {oClass.tgtEl = value;};
+    drawingsChangesMap[AscDFH.historyitem_CondTn] = function(oClass, value) {oClass.tn = value;};
+    drawingsChangesMap[AscDFH.historyitem_CondDelay] = function(oClass, value) {oClass.delay = value;};
+    drawingsChangesMap[AscDFH.historyitem_CondEvt] = function(oClass, value) {oClass.evt = value;};
 
     function CCond() {
         CBaseFormatObject.call(this);
@@ -1785,7 +1785,7 @@
     };
 
     changesFactory[AscDFH.historyitem_RtnVal] = CChangeLong;
-    drawingsChangesMap[AscDFH.historyitem_RtnVal] = function(oClass, value) {this.val = value;};
+    drawingsChangesMap[AscDFH.historyitem_RtnVal] = function(oClass, value) {oClass.val = value;};
     function CRtn() {
         CBaseFormatObject.call(this);
         this.val = null;
@@ -3800,8 +3800,8 @@
     };
 
 
-    changesFactory[AscDFH.historyitem_WheelSpokes] = CChangeString;
-    drawingsChangesMap[AscDFH.historyitem_WheelSpokes] = function(oClass, value) {oClass.text = value;};
+    changesFactory[AscDFH.historyitem_AttrNameText] = CChangeString;
+    drawingsChangesMap[AscDFH.historyitem_AttrNameText] = function(oClass, value) {oClass.text = value;};
     function CAttrName() {
         CBaseFormatObject.call(this);
         this.text = null;
@@ -3834,4 +3834,58 @@
 
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].CTiming = CTiming;
+    window['AscFormat'].CEmptyObject = CEmptyObject;
+    window['AscFormat'].CCommonTimingList = CCommonTimingList;
+    window['AscFormat'].CAttrNameLst = CAttrNameLst;
+    window['AscFormat'].CBldLst = CBldLst;
+    window['AscFormat'].CCondLst = CCondLst;
+    window['AscFormat'].CChildTnLst = CChildTnLst;
+    window['AscFormat'].CTmplLst = CTmplLst;
+    window['AscFormat'].CTnLst = CTnLst;
+    window['AscFormat'].CTavLst = CTavLst;
+    window['AscFormat'].CObjectTarget = CObjectTarget;
+    window['AscFormat'].CBldBase = CBldBase;
+    window['AscFormat'].CBldDgm = CBldDgm;
+    window['AscFormat'].CBldGraphic = CBldGraphic;
+    window['AscFormat'].CBldOleChart = CBldOleChart;
+    window['AscFormat'].CBldP = CBldP;
+    window['AscFormat'].CBldSub = CBldSub;
+    window['AscFormat'].CDirTransition = CDirTransition;
+    window['AscFormat'].COptionalBlackTransition = COptionalBlackTransition;
+    window['AscFormat'].CGraphicEl = CGraphicEl;
+    window['AscFormat'].CIndexRg = CIndexRg;
+    window['AscFormat'].CTmpl = CTmpl;
+    window['AscFormat'].CAnim = CAnim;
+    window['AscFormat'].CCBhvr = CCBhvr;
+    window['AscFormat'].CCTn = CCTn;
+    window['AscFormat'].CCond = CCond;
+    window['AscFormat'].CRtn = CRtn;
+    window['AscFormat'].CTgtEl = CTgtEl;
+    window['AscFormat'].CSndTgt = CSndTgt;
+    window['AscFormat'].CSpTgt = CSpTgt;
+    window['AscFormat'].CIterateData = CIterateData;
+    window['AscFormat'].CTm = CTm;
+    window['AscFormat'].CTav = CTav;
+    window['AscFormat'].CAnimVariant = CAnimVariant;
+    window['AscFormat'].CAnimClr = CAnimClr;
+    window['AscFormat'].CAnimEffect = CAnimEffect;
+    window['AscFormat'].CAnimMotion = CAnimMotion;
+    window['AscFormat'].CAnimRot = CAnimRot;
+    window['AscFormat'].CAnimScale = CAnimScale;
+    window['AscFormat'].CAudio = CAudio;
+    window['AscFormat'].CCMediaNode = CCMediaNode;
+    window['AscFormat'].CCmd = CCmd;
+    window['AscFormat'].CTimeNodeContainer = CTimeNodeContainer;
+    window['AscFormat'].CPar = CPar;
+    window['AscFormat'].CExcl = CExcl;
+    window['AscFormat'].CSeq = CSeq;
+    window['AscFormat'].CSet = CSet;
+    window['AscFormat'].CVideo = CVideo;
+    window['AscFormat'].COleChartEl = COleChartEl;
+    window['AscFormat'].CTLPoint = CTLPoint;
+    window['AscFormat'].CSndAc = CSndAc;
+    window['AscFormat'].CStSnd = CStSnd;
+    window['AscFormat'].CTxEl = CTxEl;
+    window['AscFormat'].CWheel = CWheel;
+    window['AscFormat'].CAttrName = CAttrName;
 })(window);
