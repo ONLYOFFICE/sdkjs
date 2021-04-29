@@ -460,7 +460,7 @@ function CBinaryFileWriter()
 
     this._WriteDouble1 = function(type, val)
     {
-        var _val = val * 10000;
+        var _val = val * 100000;
         this._WriteInt1(type, _val);
     };
     this._WriteDouble2 = function(type, val)

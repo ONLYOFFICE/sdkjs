@@ -2339,7 +2339,7 @@
             return;
         }
         if(null !== this.fltVal) {
-            pWriter._WriteInt2(3, this.fltVal * 10000 + 0.5 >> 0);
+            pWriter._WriteInt2(3, this.fltVal * 100000 + 0.5 >> 0);
             return;
         }
     };
@@ -2353,7 +2353,7 @@
         if (0 === nType) this.setBoolVal(oStream.GetBool());
         else if (1 === nType) this.setStrVal(oStream.GetString2());
         else if (2 === nType) this.setIntVal(oStream.GetLong());
-        else if (3 === nType) this.setFltVal(oStream.GetLong() / 10000);
+        else if (3 === nType) this.setFltVal(oStream.GetLong() / 100000);
     };
     CAnimVariant.prototype.readChild = function(nType, pReader) {
         if(0 === nType) {
@@ -2877,20 +2877,20 @@
     }
     InitClass(CAnimRot, CBaseFormatObject, AscDFH.historyitem_type_AnimRot);
     CAnimRot.prototype.setCBhvr = function(pr) {
-        oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Unknown_Unknown, this.cBhvr, pr));
+        oHistory.Add(new CChangeObject(this, AscDFH.historyitem_AnimRotCBhvr, this.cBhvr, pr));
         this.cBhvr = pr;
         this.setParentToChild(pr);
     };
     CAnimRot.prototype.setBy = function(pr) {
-        oHistory.Add(new CChangeLong(this, AscDFH.historyitem_Unknown_Unknown, this.by, pr));
+        oHistory.Add(new CChangeLong(this, AscDFH.historyitem_AnimRotBy, this.by, pr));
         this.by = pr;
     };
     CAnimRot.prototype.setFrom = function(pr) {
-        oHistory.Add(new CChangeLong(this, AscDFH.historyitem_Unknown_Unknown, this.from, pr));
+        oHistory.Add(new CChangeLong(this, AscDFH.historyitem_AnimRotFrom, this.from, pr));
         this.from = pr;
     };
     CAnimRot.prototype.setTo = function(pr) {
-        oHistory.Add(new CChangeLong(this, AscDFH.historyitem_Unknown_Unknown, this.to, pr));
+        oHistory.Add(new CChangeLong(this, AscDFH.historyitem_AnimRotTo, this.to, pr));
         this.to = pr;
     };
     CAnimRot.prototype.fillObject = function(oCopy, oIdMap) {
