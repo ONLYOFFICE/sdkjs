@@ -175,7 +175,8 @@
 		}
 		function convertPxToPt(value) {
 			value = value * sizePxinPt;
-			value = Asc.ceil(value / AscBrowser.retinaPixelRatio * 10) / 10;
+			//пункты округляем до сотых
+			value = Asc.ceil(value / AscBrowser.retinaPixelRatio * 100) / 100;
 			return value;
 		}
 
