@@ -1960,7 +1960,7 @@ CInlineLevelSdt.prototype.UpdatePlaceHolderTextPrForForm = function()
 		}
 	}
 };
-CInlineLevelSdt.prototype.CheckHitInContentControlByXY = function(X, Y, nPageAbs)
+CInlineLevelSdt.prototype.CheckHitInContentControlByXY = function(X, Y, nPageAbs, isUseTransform)
 {
 	var oParagraph = this.GetParagraph();
 	if (!oParagraph)
@@ -1970,7 +1970,7 @@ CInlineLevelSdt.prototype.CheckHitInContentControlByXY = function(X, Y, nPageAbs
 
 	var _X = X;
 	var _Y = Y;
-	if (oTransform)
+	if (oTransform && false !== isUseTransform)
 	{
 		oTransform = oTransform.Invert();
 		_X = oTransform.TransformPointX(X, Y);
@@ -1986,7 +1986,7 @@ CInlineLevelSdt.prototype.CheckHitInContentControlByXY = function(X, Y, nPageAbs
 
 	return false;
 };
-CInlineLevelSdt.prototype.CorrectXYToHitIn = function(X, Y, nPageAbs)
+CInlineLevelSdt.prototype.CorrectXYToHitIn = function(X, Y, nPageAbs, isUseTransform)
 {
 	var oParagraph = this.GetParagraph();
 	if (!oParagraph)
@@ -1996,7 +1996,7 @@ CInlineLevelSdt.prototype.CorrectXYToHitIn = function(X, Y, nPageAbs)
 
 	var _X = X;
 	var _Y = Y;
-	if (oTransform)
+	if (oTransform && false !== isUseTransform)
 	{
 		oTransform = oTransform.Invert();
 		_X = oTransform.TransformPointX(X, Y);
@@ -2090,6 +2090,38 @@ CInlineLevelSdt.prototype.CorrectXYToHitIn = function(X, Y, nPageAbs)
 	}
 
 	return null;
+};
+CInlineLevelSdt.prototype.IntersectWithRect = function(X, Y, W, H, nPageAbs)
+{
+	var arrRects = [];
+
+	var oParagraph = this.GetParagraph();
+	if (!oParagraph)
+		return [];
+
+	for (var sKey in this.Bounds)
+	{
+		var oBound = this.Bounds[sKey];
+		if (oParagraph.GetAbsolutePage(oBound.PageInternal) === nPageAbs)
+		{
+			var nLeft   = Math.max(X, oBound.X);
+			var nRight  = Math.min(X + W, oBound.X + oBound.W);
+			var nTop    = Math.max(Y, oBound.Y);
+			var nBottom = Math.min(Y + H, oBound.Y + oBound.H);
+
+			if (nLeft < nRight && nTop < nBottom)
+			{
+				arrRects.push({
+					X : nLeft,
+					Y : nTop,
+					W : nRight - nLeft,
+					H : nBottom - nTop
+				});
+			}
+		}
+	}
+
+	return arrRects;
 };
 CInlineLevelSdt.prototype.IsSelectedAll = function(Props)
 {

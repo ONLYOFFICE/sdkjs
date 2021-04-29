@@ -7561,6 +7561,14 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage)
 	var oLogicDocument = this.GetLogicDocument();
 	var isFillingForm  = oLogicDocument ? oLogicDocument.IsFillingFormMode() : false;
 
+	var oFillingCC = null;
+	if (isFillingForm)
+	{
+		var oInfo = new CSelectedElementsInfo();
+		this.GetSelectedElementsInfo(oInfo);
+		oFillingCC = oInfo.GetInlineLevelSdt();
+	}
+
 	switch (this.Selection.Flag)
 	{
 		case selectionflag_Common:
@@ -7598,21 +7606,6 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage)
 				// Определяем позицию и высоту строки
 				DrawSelection.StartY = this.Pages[CurPage].Y + this.Lines[CurLine].Top;
 				DrawSelection.H      = this.Lines[CurLine].Bottom - this.Lines[CurLine].Top;
-
-				// Специальная ветка, чтобы в режиме заполнения форм выделение не выходило за рамки самих форм
-				if (isFillingForm)
-				{
-					if (CurLine === _StartLine)
-					{
-						DrawSelection.StartY = this.Pages[CurPage].Y + this.Lines[CurLine].Y - this.Lines[CurLine].Metrics.Ascent;
-						DrawSelection.H      = this.Lines[CurLine].Bottom - (this.Lines[CurLine].Y - this.Lines[CurLine].Metrics.Ascent);
-					}
-
-					if (CurLine === _EndLine)
-					{
-						DrawSelection.H = this.Lines[CurLine].Metrics.Ascent + this.Lines[CurLine].Metrics.Descent;
-					}
-				}
 
 				for (var CurRange = 0; CurRange < RangesCount; CurRange++)
 				{
@@ -7657,9 +7650,23 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage)
 						H      = Math.min(H, Frame_Y_max - StartY);
 					}
 
-					// Отрисовываем селект
-					if (W > 0.001)
-						this.DrawingDocument.AddPageSelection(PageAbs, StartX, StartY, W, H);
+					if (oFillingCC)
+					{
+						var arrRects = oFillingCC.IntersectWithRect(StartX, StartY, W, H, PageAbs);
+
+						for (var nIndex = 0, nCount = arrRects.length; nIndex < nCount; ++nIndex)
+						{
+							var oRect = arrRects[nIndex];
+
+							if (oRect.W > 0.001 && oRect.H > 0.001)
+								this.DrawingDocument.AddPageSelection(PageAbs, oRect.X, oRect.Y, oRect.W, oRect.H);
+						}
+					}
+					else
+					{
+						if (W > 0.001)
+							this.DrawingDocument.AddPageSelection(PageAbs, StartX, StartY, W, H);
+					}
 				}
 			}
 
@@ -11076,7 +11083,7 @@ Paragraph.prototype.UpdateCursorType = function(X, Y, CurPage)
 	if (oContentControl)
 	{
 		oContentControl.DrawContentControlsTrack(true, X, Y, CurPage);
-		isCheckBox = oContentControl.IsCheckBox() && oContentControl.CheckHitInContentControlByXY(X, Y, this.GetAbsolutePage(CurPage));
+		isCheckBox = oContentControl.IsCheckBox() && oContentControl.CheckHitInContentControlByXY(X, Y, this.GetAbsolutePage(CurPage), false);
 	}
 
 	var Footnote  = this.CheckFootnote(X, Y, CurPage);
