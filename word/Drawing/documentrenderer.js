@@ -1995,10 +1995,10 @@ CDocMeta.prototype =
                     var rPR = AscCommon.AscBrowser.retinaPixelRatio;
                     if (_lineEx == 1 && _lineEy == 0)
                     {
-						var _x = (rPR * (xDst + dKoefX * (_lineX + off1))) >> 0;
-						var _r = (rPR * (xDst + dKoefX * (_lineX + off2))) >> 0;
-						var _y = (rPR * (yDst + dKoefY * (_lineY - _lineAscent))) >> 0;
-						var _b = (rPR * (yDst + dKoefY * (_lineY + _lineDescent))) >> 0;
+                        var _x = (rPR * (xDst + dKoefX * (_lineX + off1))) >> 0;
+                        var _r = (rPR * (xDst + dKoefX * (_lineX + off2))) >> 0;
+                        var _y = (rPR * (yDst + dKoefY * (_lineY - _lineAscent))) >> 0;
+                        var _b = (rPR * (yDst + dKoefY * (_lineY + _lineDescent))) >> 0;
 
                         if (_x < overlay.min_x)
                             overlay.min_x = _x;
