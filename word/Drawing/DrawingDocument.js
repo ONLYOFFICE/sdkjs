@@ -2168,7 +2168,6 @@ function CDrawingDocument()
 	this.LastDrawingUrl = "";
 
 	this.GuiCanvasTextProps = null;
-	this.GuiCanvasTextPropsId = "gui_textprops_canvas_id";
 	this.GuiLastTextProps = null;
 
 	this.GuiCanvasFillTOCParentId = "";
@@ -4529,7 +4528,7 @@ function CDrawingDocument()
 		if (this.IsTextMatrixUse && this.IsTextSelectionOutline)
 		{
 			ctx.strokeStyle = "#9ADBFE";
-			ctx.lineWidth = Math.round(window.devicePixelRatio);
+			ctx.lineWidth = Math.round(AscCommon.AscBrowser.retinaPixelRatio);
 			ctx.globalAlpha = 1.0;
 			ctx.stroke();
 		}
@@ -6536,8 +6535,8 @@ function CDrawingDocument()
 
         var ctx = canvas.getContext("2d");
 
-        if (AscCommon.AscBrowser.retinaPixelRatio >= 2)
-        	ctx.setTransform(2, 0, 0, 2, 0, 0);
+        var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+
 
         var offset = 10;
         var page_width_mm = props.W;
@@ -6604,29 +6603,41 @@ function CDrawingDocument()
 
 		ctx.fillStyle = "#FFFFFF";
         ctx.strokeStyle = "#000000";
-        ctx.lineWidth = 1;
+        ctx.lineWidth = Math.round(rPR);
+		var indent = 0.5 * Math.round(rPR);
+
+		var __move = function(ctx, x, y) {
+			ctx.moveTo(((x * rPR) >> 0) + indent, ((y * rPR) >> 0) + indent);
+		};
+		var __line = function(ctx, x, y) {
+			ctx.lineTo(((x * rPR) >> 0) + indent, ((y * rPR) >> 0) + indent);
+		};
+		var __rect = function(ctx, x, y, w, h) {
+			ctx.rect(((x * rPR) >> 0) + indent, ((y * rPR) >> 0) + indent, w * rPR, h * rPR);
+		};
+
         for (var page = 0; page < pageRects.length; page++)
 		{
 			// page
 			ctx.beginPath();
-			ctx.rect(pageRects[page].X + 0.5, pageRects[page].Y + 0.5, pageRects[page].W, pageRects[page].H);
+			__rect(ctx, pageRects[page].X, pageRects[page].Y, pageRects[page].W, pageRects[page].H);
 			ctx.fill();
 			ctx.stroke();
 
 			// gutter
 			if (gutterSize > 0)
 			{
-                ctx.setLineDash([2, 2]);
+                ctx.setLineDash([Math.round(2 * rPR), Math.round(2 * rPR)]);
                 var gutterEvenOdd = 0;
 				switch (gutterPos)
 				{
 					case 0:
 					{
-                        var x = pageRects[page].X + 0.5;
+                        var x = pageRects[page].X;
 						for (var i = 0; i < gutterSize; i++)
 						{
-							ctx.moveTo(x + i, pageRects[page].Y + gutterEvenOdd);
-                            ctx.lineTo(x + i, pageRects[page].Y + pageRects[page].H);
+							__move(ctx, x + i, pageRects[page].Y + gutterEvenOdd);
+                            __line(ctx, x + i, pageRects[page].Y + pageRects[page].H);
                             ctx.stroke();
                             ctx.beginPath();
                             gutterEvenOdd = (0 === gutterEvenOdd) ? 2 : 0;
@@ -6635,11 +6646,11 @@ function CDrawingDocument()
 					}
 					case 1:
 					{
-                        var x = pageRects[page].X + pageRects[page].W - 0.5;
+                        var x = pageRects[page].X + pageRects[page].W;
                         for (var i = 0; i < gutterSize; i++)
                         {
-                            ctx.moveTo(x - i, pageRects[page].Y + gutterEvenOdd);
-                            ctx.lineTo(x - i, pageRects[page].Y + pageRects[page].H);
+							__move(ctx, x - i, pageRects[page].Y + gutterEvenOdd);
+							__line(ctx, x - i, pageRects[page].Y + pageRects[page].H);
                             ctx.stroke();
                             ctx.beginPath();
                             gutterEvenOdd = (0 === gutterEvenOdd) ? 2 : 0;
@@ -6648,11 +6659,11 @@ function CDrawingDocument()
 					}
 					case 2:
 					{
-                        var y = pageRects[page].Y + 0.5;
+                        var y = pageRects[page].Y;
                         for (var i = 0; i < gutterSize; i++)
                         {
-                            ctx.moveTo(pageRects[page].X + gutterEvenOdd, y + i);
-                            ctx.lineTo(pageRects[page].X + pageRects[page].W, y + i);
+							__move(ctx, pageRects[page].X + gutterEvenOdd, y + i);
+							__line(ctx, pageRects[page].X + pageRects[page].W, y + i);
                             ctx.stroke();
                             ctx.beginPath();
                             gutterEvenOdd = (0 === gutterEvenOdd) ? 2 : 0;
@@ -6718,22 +6729,22 @@ function CDrawingDocument()
             var cur = t;
             while (cur < b)
 			{
-				ctx.moveTo(lf, cur + 0.5); ctx.lineTo(r, cur + 0.5);
+				__move(ctx, lf, cur); __line(ctx, r, cur);
 
 				cur += 2;
 				if (cur >= b) break;
 
-                ctx.moveTo(l, cur + 0.5); ctx.lineTo(r, cur + 0.5);
+				__move(ctx, l, cur); __line(ctx, r, cur);
 
                 cur += 2;
                 if (cur >= b) break;
 
-                ctx.moveTo(l, cur + 0.5); ctx.lineTo(r, cur + 0.5);
+				__move(ctx, l, cur); __line(ctx, r, cur);
 
                 cur += 2;
                 if (cur >= b) break;
 
-                ctx.moveTo(l, cur + 0.5); ctx.lineTo(rf, cur + 0.5);
+				__move(ctx, l, cur); __line(ctx, rf, cur);
 
                 cur += 6;
 			}

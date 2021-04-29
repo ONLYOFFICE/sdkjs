@@ -6290,9 +6290,18 @@
 		var rect = element.getBoundingClientRect();
 		if (rect.width === 0 && rect.height === 0)
 		{
-			element.correctionTimeout = setTimeout(function(){
-				calculateCanvasSize(element, true);
-			}, 100);
+			var isNoVisibleElement = false;
+			if (element.style.display === "none")
+				isNoVisibleElement = true;
+			else if (element.parentNode && element.parentNode.style.display === "none")
+				isNoVisibleElement = true;
+
+			if (!isNoVisibleElement)
+			{
+				element.correctionTimeout = setTimeout(function (){
+					calculateCanvasSize(element, true);
+				}, 100);
+			}
 
 			var style_width = parseInt(element.style.width);
 			var style_height = parseInt(element.style.height);

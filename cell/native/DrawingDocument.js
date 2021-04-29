@@ -1618,10 +1618,7 @@ function CDrawingDocument()
     this.GuiCanvasFillTextureCtxTextArt = null;
     this.LastDrawingUrlTextArt = "";
 
-
-
     this.GuiCanvasTextProps = null;
-    this.GuiCanvasTextPropsId = "gui_textprops_canvas_id";
     this.GuiLastTextProps = null;
 
     this.TableStylesLastLook = null;
