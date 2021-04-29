@@ -863,6 +863,9 @@
 
 			if (this.ClosureParams.isDivCopy === true)
 			{
+				if (!this.isCopyOutEnabled())
+					return;
+
 				if (_format == AscCommon.c_oAscClipboardDataFormat.Html)
 				{
 					this.CommonDiv.innerHTML = _data;
