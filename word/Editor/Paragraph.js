@@ -6596,6 +6596,9 @@ Paragraph.prototype.Correct_Content = function(_StartPos, _EndPos, bDoNotDeleteE
 	{
 		var CurElement = this.Content[CurPos];
 
+		if (CurElement.CorrectContent)
+			CurElement.CorrectContent();
+
 		if ((para_Hyperlink === CurElement.Type || para_Math === CurElement.Type || para_Field === CurElement.Type || para_InlineLevelSdt === CurElement.Type) && true === CurElement.Is_Empty() && true !== CurElement.Is_CheckingNearestPos())
 		{
 			this.Internal_Content_Remove(CurPos);
@@ -12228,6 +12231,12 @@ Paragraph.prototype.Concat = function(Para, isUseConcatedStyle)
 	// Очистим содержимое параграфа (это нужно, чтобы не лежали ссылки на одинаковые объекты в разных параграфах)
 	Para.ClearContent();
 
+	// TODO: Пока вынуждены так делать, потому что SetParent чистится неправильно на удалении элементов
+	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
+	{
+		this.Content[nIndex].SetParent(this);
+	}
+
 	// Если на данном параграфе оканчивалась секция, тогда удаляем эту секцию
 	this.Set_SectionPr(undefined);
 
@@ -12283,6 +12292,12 @@ Paragraph.prototype.ConcatBefore = function(oPara)
 
 	// Очистим содержимое параграфа (это нужно, чтобы не лежали ссылки на одинаковые объекты в разных параграфах)
 	oPara.ClearContent();
+
+	// TODO: Пока вынуждены так делать, потому что SetParent чистится неправильно на удалении элементов
+	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
+	{
+		this.Content[nIndex].SetParent(this);
+	}
 
 	// Если на данном параграфе оканчивалась секция, тогда удаляем эту секцию
 	oPara.Set_SectionPr(undefined);

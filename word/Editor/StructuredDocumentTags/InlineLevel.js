@@ -961,6 +961,17 @@ CInlineLevelSdt.prototype.ReplaceContentWithPlaceHolder = function(isSelect)
 {
 	this.private_ReplaceContentWithPlaceHolder(isSelect);
 };
+CInlineLevelSdt.prototype.CorrectContent = function()
+{
+	if (this.IsForm())
+	{
+		this.MakeSingleRunElement(false);
+	}
+	else
+	{
+		CParagraphContentWithParagraphLikeContent.prototype.CorrectContent.apply(this, arguments);
+	}
+};
 //----------------------------------------------------------------------------------------------------------------------
 // Выставление настроек
 //----------------------------------------------------------------------------------------------------------------------
