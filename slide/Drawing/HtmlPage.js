@@ -1523,8 +1523,10 @@ function CEditorPage(api)
 
 		_ctx.strokeStyle = GlobalSkin.RulerTabsColor;
 
-		_ctx.lineWidth = 2 * Math.round(dPR - 0.25);
+		_ctx.lineWidth = (dPR - Math.floor(dPR) === 0.5) ? 2 * Math.round(dPR) - 1 : 2 * Math.round(dPR);
+
 		var tab_width = Math.round(5 * dPR);
+		var offset = _ctx.lineWidth % 2 === 1 ? 0.5 : 0;
 
 		var dx = Math.round((rectSize - 2 * Math.round(dPR) - tab_width) / 7 * 4);
 		var dy = Math.round((rectSize - 2 * Math.round(dPR) - tab_width) / 7 * 4);
@@ -1533,9 +1535,9 @@ function CEditorPage(api)
 
 		if (this.m_nTabsType == tab_Left)
 		{
-			_ctx.moveTo(x, y);
-			_ctx.lineTo(x, y + tab_width);
-			_ctx.lineTo(x + tab_width, y + tab_width);
+			_ctx.moveTo(x + offset, y);
+			_ctx.lineTo(x + offset, y + tab_width + offset);
+			_ctx.lineTo(x + tab_width, y + tab_width + offset);
 		}
 		else if (this.m_nTabsType == tab_Center)
 		{
@@ -1544,17 +1546,17 @@ function CEditorPage(api)
 			var dx = Math.round((rectSize - Math.round(dPR) - tab_width) / 2);
 			var x = 3 * Math.round(dPR) + dx;
 			var vert_tab_width = Math.round(5 * dPR);
-			_ctx.moveTo(x, y + vert_tab_width);
-			_ctx.lineTo(x + tab_width, y + vert_tab_width);
-			_ctx.moveTo(x + tab_width / 2, y);
-			_ctx.lineTo(x + tab_width / 2, y + vert_tab_width);
+			_ctx.moveTo(x , y + vert_tab_width + offset);
+			_ctx.lineTo(x + tab_width, y + vert_tab_width + offset);
+			_ctx.moveTo(x - offset + tab_width / 2, y);
+			_ctx.lineTo(x - offset + tab_width / 2, y + vert_tab_width);
 		}
 		else
 		{
 			var x = 3 * Math.round(dPR) + dx;
-			_ctx.moveTo(x, tab_width + y);
-			_ctx.lineTo(x + tab_width,  tab_width + y);
-			_ctx.lineTo(x + tab_width, y);
+			_ctx.moveTo(x, tab_width + y + offset);
+			_ctx.lineTo(x + tab_width + offset,  tab_width + y + offset);
+			_ctx.lineTo(x + tab_width + offset, y);
 		}
 
 		_ctx.stroke();
