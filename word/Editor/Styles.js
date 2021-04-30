@@ -10247,7 +10247,7 @@ CDocumentShd.prototype.Write_ToBinary = function(Writer)
 	{
 		if (this.Color)
 		{
-			Writer.WriteBool(false);
+			Writer.WriteBool(true);
 			this.Color.Write_ToBinary(Writer);
 		}
 		else
