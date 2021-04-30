@@ -7175,7 +7175,8 @@ CStyle.prototype.CreateIntenseQuote = function()
 
 		Shd : {
 			Value : c_oAscShdClear,
-			Color : {r : 0xF2, g : 0xF2, b : 0xF2}
+			Fill  : {r : 0xF2, g : 0xF2, b : 0xF2},
+			Color : {r : 0xff, g : 0xff, b : 0xff, Auto : true}
 		},
 
 		Brd : {
