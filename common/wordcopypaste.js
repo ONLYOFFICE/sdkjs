@@ -353,8 +353,10 @@ CopyProcessor.prototype =
 					isNeedPrefix = false;
                 	if (nextElem && type_Paragraph === nextElem.GetType()) {
 						isNeedPrefix = true;
-						var Next_pPr = nextElem.CompiledPr && nextElem.CompiledPr.Pr && nextElem.CompiledPr.Pr.ParaPr ? nextElem.CompiledPr.Pr.ParaPr : nextElem.Pr;
-						if (Next_pPr && Item_pPr && !nextElem.private_CompareBorderSettings(Next_pPr, Item_pPr)) {
+						var Item_pPrCompile = Item.CompiledPr && Item.CompiledPr.Pr && Item.CompiledPr.Pr.ParaPr;
+						var Next_pPrCompile = nextElem.Get_CompiledPr2 && nextElem.Get_CompiledPr2(false);
+						Next_pPrCompile = Next_pPrCompile && Next_pPrCompile.ParaPr;
+						if (Next_pPrCompile && Item_pPrCompile && !nextElem.private_CompareBorderSettings(Next_pPrCompile, Item_pPrCompile)) {
 							isNeedPrefix = false;
 						}
 					}

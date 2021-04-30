@@ -3464,6 +3464,7 @@ function CEditorPage(api)
 		{
 			ctx.fillStyle   = "rgba(51,102,204,255)";
 			ctx.strokeStyle = "#9ADBFE";
+			ctx.lineWidth = Math.round(AscCommon.AscBrowser.retinaPixelRatio);
 
 			ctx.beginPath();
 
@@ -3495,6 +3496,7 @@ function CEditorPage(api)
 			var ctxOverlay = overlayNotes.m_oContext;
 			ctxOverlay.fillStyle   = "rgba(51,102,204,255)";
 			ctxOverlay.strokeStyle = "#9ADBFE";
+			ctxOverlay.lineWidth = Math.round(AscCommon.AscBrowser.retinaPixelRatio);
 
 			ctxOverlay.beginPath();
 
@@ -3506,7 +3508,6 @@ function CEditorPage(api)
 			ctxOverlay.globalAlpha = 1.0;
 			ctxOverlay.stroke();
 			ctxOverlay.beginPath();
-			ctxOverlay.globalAlpha = 1.0;
 		}
 
 		if (this.MobileTouchManager)
