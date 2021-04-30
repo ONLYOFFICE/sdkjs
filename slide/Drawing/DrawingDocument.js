@@ -2349,10 +2349,10 @@ function CDrawingDocument()
 		if (this.m_oWordControl.IsSupportNotes && this.m_oWordControl.m_oNotesApi && this.m_oLogicDocument.IsFocusOnNotes())
 		{
 			overlay = this.m_oWordControl.m_oNotesApi.m_oOverlayApi;
-			xDst = AscCommon.AscBrowser.convertToRetinaValue(this.m_oWordControl.m_oNotesApi.OffsetX);
-			yDst = -this.m_oWordControl.m_oNotesApi.Scroll;
-			dKoefX = g_dKoef_mm_to_pix;
-			dKoefY = g_dKoef_mm_to_pix;
+			xDst = this.m_oWordControl.m_oNotesApi.OffsetX;
+			yDst = -dPR * this.m_oWordControl.m_oNotesApi.Scroll;
+			dKoefX = g_dKoef_mm_to_pix * dPR;
+			dKoefY = g_dKoef_mm_to_pix * dPR;
 		}
 
 		if (null == this.TextMatrix || global_MatrixTransformer.IsIdentity(this.TextMatrix))
