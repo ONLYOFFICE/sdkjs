@@ -9079,12 +9079,18 @@ CT_CacheField.prototype.initGroupPar = function (par) {
 		this.fieldGroup = new CT_FieldGroup();
 	}
 	this.fieldGroup.initPar(par);
+	if (this.fieldGroup.isEmpty()) {
+		this.fieldGroup = null;
+	}
 };
 CT_CacheField.prototype.initGroupBase = function (base) {
 	if (!this.fieldGroup) {
 		this.fieldGroup = new CT_FieldGroup();
 	}
 	this.fieldGroup.initBase(base);
+	if (this.fieldGroup.isEmpty()) {
+		this.fieldGroup = null;
+	}
 };
 CT_CacheField.prototype.initGroupDiscrete = function (name, base, baseCacheField) {
 	this.name = name;
@@ -9440,7 +9446,7 @@ CT_CacheField.prototype.ungroupDiscrete = function (base, baseCacheField, groupM
 	return this.fieldGroup.ungroupDiscrete(base, baseCacheField, groupMap);
 };
 CT_CacheField.prototype.ungroupRangePr = function () {
-	return this.fieldGroup = null;
+	this.fieldGroup = null;
 };
 CT_CacheField.prototype.refreshGroupDiscrete = function (sharedItems, discretePrMap) {
 	return this.fieldGroup.refreshGroupDiscrete(sharedItems, discretePrMap);
@@ -12675,6 +12681,9 @@ CT_FieldGroup.prototype.initDiscrete = function(base, baseCacheField) {
 	this.discretePr = new CT_DiscretePr();
 	this.discretePr.init(baseCacheField.getGroupOrSharedSize());
 	this.groupItems = baseCacheField.sharedItems.clone();
+};
+CT_FieldGroup.prototype.isEmpty = function () {
+	return null === this.par && null === this.base && null === this.rangePr && null === this.discretePr && null === this.groupItems;
 };
 CT_FieldGroup.prototype.clone = function() {
 	var res = new CT_FieldGroup();
