@@ -5335,9 +5335,11 @@
                     }
                     if(oAx.crosses === null || oAx.crosses === CROSSES_AUTO_ZERO || oAx.crosses === CROSSES_MIN) {
                         oValAx.setCrosses(CROSSES_MAX);
+                        oCatAx.setCrosses(CROSSES_MAX);
                     }
                     else {
                         oValAx.setCrosses(CROSSES_AUTO_ZERO);
+                        oCatAx.setCrosses(CROSSES_AUTO_ZERO);
                     }
                 }
             }
@@ -7195,11 +7197,6 @@
             if(this.crossAx.crossBetween !== new_lbl_position) {
                 this.crossAx.setCrossBetween(new_lbl_position);
                 bChanged = true;
-            }
-        }
-        if(bChanged) {
-            if(this.bDelete === true) {
-                this.setDelete(false);
             }
         }
         if(props.getShow() !== null) {
