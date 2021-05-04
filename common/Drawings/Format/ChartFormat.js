@@ -4864,6 +4864,12 @@
         oLineChart.setGrouping(nNewGrouping);
         oLineChart.setVaryColors(false);
         oLineChart.setMarker(new AscFormat.CMarker());
+        if(oLineChart.hiLowLines) {
+            oLineChart.setHiLowLines(null);
+        }
+        if(oLineChart.upDownBars) {
+            oLineChart.setUpDownBars(null);
+        }
         oLineChart.marker.setSymbol(AscFormat.SYMBOL_NONE);
         for(nSeries = 0; nSeries < aSeries.length; ++nSeries) {
             oSeries = new AscFormat.CLineSeries();
@@ -4872,6 +4878,9 @@
             oSeries.marker.setSymbol(AscFormat.SYMBOL_NONE);
             oSeries.setSmooth(false);
             oLineChart.addSer(oSeries);
+            if(oSeries.spPr && oSeries.spPr.hasNoFillLine()) {
+                oSeries.spPr.setLn(null);
+            }
         }
         oLineChart.addAxes(aAxes);
         var bMarker = this.getIsMarkerByType(nType);
@@ -12885,27 +12894,38 @@
         }
     };
     CCat.prototype.fillFromAsc = function(oCatCache, bUseCache) {
-        //var bVal = true;
-        //var aPts = oCatCache.NumCache, oPt, nPt;
-        //for(nPt = 0; nPt < aPts.length; ++nPt) {
-        //    oPt = aPts[nPt];
-        //    if(oPt) {
-        //        if(!oPt.isDateTimeFormat && !AscFormat.isRealNumber(parseFloat(oPt.val))) {
-        //            bVal = false;
-        //            break;
-        //        }
-        //    }
-        //}
-        //if(bVal) {
-        //    this.setNumRef(new CNumRef());
-        //    this.numRef.fillFromAsc(oCatCache, bUseCache);
-        //}
-        //else {
-        //    this.setStrRef(new CStrRef());
-        //    this.strRef.fillFromAsc(oCatCache, bUseCache);
-        //}
-        this.setStrRef(new CStrRef());
-        this.strRef.fillFromAsc(oCatCache, bUseCache);
+        var bVal = false;
+        var sFormatCode = oCatCache.formatCode;
+        var oNumFormat = null;
+        if(typeof sFormatCode === "string" && sFormatCode.length > 0) {
+            oNumFormat = AscCommon.oNumFormatCache.get(oCatCache.formatCode);
+        }
+        if(oNumFormat && oNumFormat.isDateTimeFormat()) {
+            var aPts = oCatCache.NumCache, oPt, nPt;
+            for(nPt = 0; nPt < aPts.length; ++nPt) {
+                oPt = aPts[nPt];
+                if(oPt) {
+                    sFormatCode = oPt.numFormatStr;
+                    if(typeof sFormatCode === "string" && sFormatCode.length > 0) {
+                        oNumFormat = AscCommon.oNumFormatCache.get(sFormatCode);
+                        if(!oNumFormat.isDateTimeFormat() || !AscFormat.isRealNumber(parseFloat(oPt.val))) {
+                            break;
+                        }
+                    }
+                }
+            }
+            if(nPt === aPts.length) {
+                bVal = true;
+            }
+        }
+        if(bVal) {
+            this.setNumRef(new CNumRef());
+            this.numRef.fillFromAsc(oCatCache, bUseCache);
+        }
+        else {
+            this.setStrRef(new CStrRef());
+            this.strRef.fillFromAsc(oCatCache, bUseCache);
+        }
     };
     CCat.prototype.getNumCache = function() {
         if(this.calculatedRef) {
