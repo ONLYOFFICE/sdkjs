@@ -5610,9 +5610,8 @@
             if(this.workbook.Api.isMobileVersion) {
                 //Add radius of mobile pins
                 var nRad = (AscCommon.MOBILE_SELECT_TRACK_ROUND / 2 + 0.5) >> 0;
-                if (AscCommon.AscBrowser.isRetina) {
-                    nRad = AscCommon.AscBrowser.convertToRetinaValue(nRad, true);
-                }
+                nRad = AscCommon.AscBrowser.convertToRetinaValue(nRad, true);
+
                 x1 -= nRad;
                 x2 += nRad;
                 y1 -= nRad;
