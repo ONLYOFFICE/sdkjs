@@ -2723,17 +2723,31 @@ var editor;
   spreadsheet_api.prototype.asc_canGroupPivot = function () {
     return !!this._canGroupPivot();
   };
-  spreadsheet_api.prototype.asc_groupPivot = function (opt_rangePr, opt_dateTypes) {
+  spreadsheet_api.prototype._groupPivot = function (confirmation, onRepeat, opt_rangePr, opt_dateTypes) {
     var canGroupRes = this._canGroupPivot();
     if(canGroupRes) {
-      canGroupRes.pivotTable.groupPivot(this, canGroupRes.layout, opt_rangePr, opt_dateTypes);
+      canGroupRes.pivotTable.groupPivot(this, canGroupRes.layout, confirmation, onRepeat, opt_rangePr, opt_dateTypes);
+    }
+  };
+  spreadsheet_api.prototype.asc_groupPivot = function (opt_rangePr, opt_dateTypes) {
+    var t = this;
+    var onRepeat = function(){
+      t._groupPivot(true, onRepeat, opt_rangePr, opt_dateTypes);
+    };
+    this._groupPivot(false, onRepeat, opt_rangePr, opt_dateTypes);
+  };
+  spreadsheet_api.prototype._ungroupPivot = function (confirmation, onRepeat) {
+    var canGroupRes = this._canGroupPivot();
+    if(canGroupRes) {
+      canGroupRes.pivotTable.ungroupPivot(this, canGroupRes.layout, confirmation, onRepeat);
     }
   };
   spreadsheet_api.prototype.asc_ungroupPivot = function () {
-    var canGroupRes = this._canGroupPivot();
-    if(canGroupRes) {
-      canGroupRes.pivotTable.ungroupPivot(this, canGroupRes.layout);
-    }
+    var t = this;
+    var onRepeat = function(){
+      t._ungroupPivot(true, onRepeat);
+    };
+    this._ungroupPivot(false, onRepeat);
   };
 
   spreadsheet_api.prototype.asc_ungroup = function(val) {
@@ -4873,7 +4887,7 @@ var editor;
 			onAction();
 		});
 	};
-	spreadsheet_api.prototype._changePivotAndConnectedByPivotCacheWithLock = function (pivot, confirmation, onAction) {
+	spreadsheet_api.prototype._changePivotAndConnectedByPivotCacheWithLock = function (pivot, confirmation, onAction, onRepeat) {
 		// Проверка глобального лока
 
 		var t = this;
@@ -4889,9 +4903,7 @@ var editor;
 			var changeRes = onAction(confirmation, pivotTables);
 			t.wbModel.dependencyFormulas.unlockRecal();
 			History.EndTransaction();
-			t._changePivotEndCheckError(pivot, changeRes, function () {
-				t._changePivotAndConnectedByPivotCacheWithLock(pivot, true, onAction);
-			});
+			t._changePivotEndCheckError(pivot, changeRes, onRepeat);
 		});
 	};
 	spreadsheet_api.prototype._changePivot = function(pivot, confirmation, updateSelection, onAction, doNotCheckUnderlyingData) {
