@@ -15416,7 +15416,7 @@
 
                 var nStartRow = oBBox.r2;
                 if(aGridRow.length === 1) {
-                    for(nRow = oBBox.r2; nRow >= oBBox.r1; --nRow) {
+                    for(nRow = oBBox.r2 - 1; nRow >= oBBox.r1; --nRow) {
                         if(!this.privateCheckCellDateTimeFormatFull(oRef.worksheet.getCell3(nRow, nCol))) {
                             break;
                         }
@@ -15441,7 +15441,7 @@
                 nRow = oBBox.r2;
                 var nStartCol = oBBox.c2;
                 if(aGrid.length === 1) {
-                    for(nCol = oBBox.c2; nCol >= oBBox.c1; --nCol) {
+                    for(nCol = oBBox.c2 - 1; nCol >= oBBox.c1; --nCol) {
                         if(!this.privateCheckCellDateTimeFormatFull(oRef.worksheet.getCell3(nRow, nCol))) {
                             break;
                         }

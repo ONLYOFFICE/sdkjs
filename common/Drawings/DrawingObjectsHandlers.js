@@ -1425,7 +1425,7 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
 
             var aCharts = drawing.chart.plotArea.charts;
             var series = drawing.getAllSeries();
-            var _len = aCharts.length === 1 && aCharts[0].getObjectType() === AscDFH.historyitem_type_PieChart ? 1 : series.length;
+            var _len = aCharts.length === 1 && aCharts[0].getObjectType() === AscDFH.historyitem_type_PieChart ? Math.min(1, series.length) : series.length;
             for(var i = _len - 1; i > -1; --i)
             {
                 var ser = series[i];
