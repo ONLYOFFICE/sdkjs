@@ -476,7 +476,7 @@
 		".ps .ps__rail-y.ps--clicking" : {"background-color" : "background-toolbar" },
 		".ps__thumb-y" : { "background-color" : "background-normal", "border-color" : "Border !important" },
 		".ps__rail-y:hover > .ps__thumb-y" : {"border-color" : "canvas-scroll-thumb-hover" },
-		"a:link" : { "color" : "text-link" },
+		"a" : { "color" : "text-link !important" },
 		"*::-webkit-scrollbar-track" : { "background" : "background-normal" },
 		"*::-webkit-scrollbar-track:hover" : { "background" : "background-toolbar-additional" },
 		"*::-webkit-scrollbar-thumb" : { "background-color" : "background-toolbar", "border-color" : "border-regular-control" },
