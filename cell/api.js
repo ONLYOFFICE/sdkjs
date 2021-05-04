@@ -3058,7 +3058,7 @@ var editor;
 
   // Cell comment interface
   spreadsheet_api.prototype.asc_addComment = function(oComment) {
-    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+    if (this.collaborativeEditing.getGlobalLock() || (!this.canEdit() && !this.isRestrictionComments())) {
       return false;
     }
     var oPlace = oComment.bDocument ? this.wb : this.wb.getWorksheet();
@@ -3093,7 +3093,7 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_RemoveAllComments = function(isMine, isCurrent) {
-	if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+	if (this.collaborativeEditing.getGlobalLock() || (!this.canEdit() && !this.isRestrictionComments())) {
 	  return;
 	}
   	this.wb.removeAllComments(isMine, isCurrent);
