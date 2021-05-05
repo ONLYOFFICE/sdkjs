@@ -347,6 +347,38 @@
 			}
 			return oUniFill;
 		}
+
+		function getFullHyperlinkLength(str) {
+			var res = 0;
+			if (!str) {
+				return res;
+			}
+
+			var validStr = "ABCDEFabcdef0123456789";
+			//new RegExp('/^[xX]?[0-9a-fA-F]{6}$/', 'g')
+			var checkHex = function (_val) {
+				if (_val !== undefined && validStr.indexOf(_val) !== -1) {
+					return true;
+				}
+				return false;
+			};
+
+
+			for (var i = 0; i < str.length; i++) {
+				if (str[i] === "%") {
+					if (checkHex(str[i + 1]) && checkHex(str[i + 2])) {
+						res++;
+					} else {
+						res += 3;
+					}
+				} else {
+					res++;
+				}
+			}
+
+			return res;
+		}
+
 		var referenceType = {
 			A: 0,			// Absolute
 			ARRC: 1,	// Absolute row; relative column
@@ -3114,6 +3146,7 @@
 		window["AscCommonExcel"].getFindRegExp = getFindRegExp;
 		window["AscCommonExcel"].convertFillToUnifill = convertFillToUnifill;
 		window["AscCommonExcel"].replaceSpellCheckWords = replaceSpellCheckWords;
+		window["AscCommonExcel"].getFullHyperlinkLength = getFullHyperlinkLength;
 		window["Asc"].outputDebugStr = outputDebugStr;
 		window["Asc"].isNumberInfinity = isNumberInfinity;
 		window["Asc"].trim = trim;
