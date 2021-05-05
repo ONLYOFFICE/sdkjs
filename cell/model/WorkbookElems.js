@@ -5008,7 +5008,6 @@ StyleManager.prototype =
 		return sRes;
 	}
 	function isEqualMultiText(multiText1, multiText2) {
-		var sRes = "";
 		if (multiText1 && multiText2) {
 			if (multiText1.length === multiText2.length) {
 				for (var i = 0, length = multiText1.length; i < length; ++i) {
@@ -9698,6 +9697,13 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 				},
 				has: function(key) {
 					return !!this.storage[key];
+				},
+				forEach: function(callback, context) {
+					for (var i in this.storage) {
+						if (this.storage.hasOwnProperty(i)) {
+							callback.call(context, this.storage[i], i, this);
+						}
+					}
 				}
 			};
 
@@ -9711,9 +9717,7 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 	function CSharedStrings () {
 		this.all = [];
 		this.text = new Map();
-		//
-		this.multiText = [];
-		this.multiTextIndex = [];
+		this.multiTextMap = new Map();
 	}
 
 	CSharedStrings.prototype.addText = function(text) {
@@ -9730,17 +9734,24 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 	};
 	CSharedStrings.prototype.addMultiText = function(multiText) {
 		var index, i;
-		for (i = 0; i < this.multiText.length; ++i) {
-			if (AscCommonExcel.isEqualMultiText(multiText, this.multiText[i])) {
-				index = this.multiTextIndex[i];
+		var text = multiText.reduce(function(accumulator, currentValue) {
+			return accumulator + currentValue.text;
+		}, '');
+		var mapElem = this.multiTextMap.get(text);
+		if (!mapElem) {
+			mapElem = [];
+			this.multiTextMap.set(text, mapElem);
+		}
+		for (i = 0; i < mapElem.length; ++i) {
+			if (AscCommonExcel.isEqualMultiText(multiText, this.all[mapElem[i] - 1])) {
+				index = mapElem[i];
 				break;
 			}
 		}
 		if (undefined === index) {
 			this.all.push(multiText);
 			index = this.all.length;
-			this.multiText.push(multiText);
-			this.multiTextIndex.push(index);
+			mapElem.push(index);
 			if (AscFonts.IsCheckSymbols) {
 				for (i = 0; i < multiText.length; ++i) {
 					AscFonts.FontPickerByCharacter.getFontsByString(multiText[i].text);
@@ -9756,15 +9767,17 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 		return this.all.length;
 	};
 	CSharedStrings.prototype.generateFontMap = function(oFontMap) {
-		for (var i = 0; i < this.multiText.length; ++i) {
-			var multiText = this.multiText[i];
-			for (var j = 0; j < multiText.length; ++j) {
-				var part = multiText[j];
-				if (null != part.format) {
-					oFontMap[part.format.getName()] = 1;
+		this.multiTextMap.forEach(function(mapElem) {
+			for (var i = 0; i < mapElem.length; ++i) {
+				var multiText = this.all[mapElem[i] - 1];
+				for (var j = 0; j < multiText.length; ++j) {
+					var part = multiText[j];
+					if (part && part.format) {
+						oFontMap[part.format.getName()] = 1;
+					}
 				}
 			}
-		}
+		}, this);
 	};
 
 	/**
