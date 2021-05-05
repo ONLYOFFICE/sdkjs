@@ -4029,10 +4029,19 @@
 					textX += (this._getFilterButtonSize(true)+ _diff) * this.getZoom();
 				}
 				if (ct.indent) {
-					if (AscCommon.align_Right === ct.cellHA) {
-						textX -= ct.indent * 3 * this.defaultSpaceWidth;
-					} else if (AscCommon.align_Left === ct.cellHA) {
-						textX += ct.indent * 3 * this.defaultSpaceWidth;
+					var verticalText = ct.angle === AscCommonExcel.g_nVerticalTextAngle || (ct.flags && ct.flags.verticalText);
+					if (verticalText) {
+						if (Asc.c_oAscVAlign.Bottom === ct.cellVA) {
+							//textY -= ct.indent * 3 * this.defaultSpaceWidth;
+						} else if (Asc.c_oAscVAlign.Top === ct.cellVA) {
+							textY += ct.indent * 3 * this.defaultSpaceWidth;
+						}
+					} else {
+						if (AscCommon.align_Right === ct.cellHA) {
+							textX -= ct.indent * 3 * this.defaultSpaceWidth;
+						} else if (AscCommon.align_Left === ct.cellHA) {
+							textX += ct.indent * 3 * this.defaultSpaceWidth;
+						}
 					}
 				}
 				this.stringRender.restoreInternalState(ct.state).render(drawingCtx, textX, textY, textW, color);
@@ -5991,10 +6000,18 @@
 		tm = this._roundTextMetrics(this.stringRender.measureString(str, fl, maxW));
 
 		if (indent) {
-			if (AscCommon.align_Right === alignH) {
-				tm.width += indent * 3 * this.defaultSpaceWidth + 1;
-			} else if (AscCommon.align_Left === alignH) {
-				tm.width += indent * 3 * this.defaultSpaceWidth;
+			if (verticalText) {
+				if (Asc.c_oAscVAlign.Bottom === va) {
+					tm.height += indent * 3 * this.defaultSpaceWidth;
+				} else if (Asc.c_oAscVAlign.Top === va) {
+					tm.height += indent * 3 * this.defaultSpaceWidth;
+				}
+			} else {
+				if (AscCommon.align_Right === alignH) {
+					tm.width += indent * 3 * this.defaultSpaceWidth + 1;
+				} else if (AscCommon.align_Left === alignH) {
+					tm.width += indent * 3 * this.defaultSpaceWidth;
+				}
 			}
 		}
 
@@ -10649,7 +10666,7 @@
             History.StartTransaction();
 
             checkRange.forEach(function (item, i) {
-                var c;
+                var c, _align, _verticalText;
 				var bIsUpdate = true;
                 var range = t.model.getRange3(item.r1, item.c1, item.r2, item.c2);
                 var isLargeRange = t._isLargeRange(range.bbox);
@@ -10684,7 +10701,9 @@
                         range.setFontAlign(val);
                         break;
                     case "a":
-						if (!(val === AscCommon.align_Right || val === AscCommon.align_Left) && checkIndent(range)) {
+						_align = range.getAlign();
+						_verticalText = _align && _align.angle === AscCommonExcel.g_nVerticalTextAngle;
+						if (!(val === AscCommon.align_Right || val === AscCommon.align_Left) && !_verticalText && checkIndent(range)) {
 							range.setIndent(0);
 						}
                         range.setAlignHorizontal(val);
@@ -10729,18 +10748,19 @@
                         canChangeColWidth = c_oAscCanChangeColWidth.numbers;
                         break;
                     case "angle":
-						if (val !== 0 && checkIndent(range)) {
+						if (val !== 0 && val !== AscCommonExcel.g_nVerticalTextAngle && checkIndent(range)) {
 							range.setIndent(0);
 						}
                         range.setAngle(val);
                         break;
 					case "indent":
-						var _align = range.getAlign();
+						_align = range.getAlign();
 						if (_align) {
-							if (!(_align.hor === AscCommon.align_Right || _align.hor === AscCommon.align_Left)) {
+							_verticalText = _align.angle === AscCommonExcel.g_nVerticalTextAngle;
+							if (!_verticalText && !(_align.hor === AscCommon.align_Right || _align.hor === AscCommon.align_Left)) {
 								range.setAlignHorizontal(AscCommon.align_Left);
 							}
-							if (_align.angle !== 0) {
+							if (_align.angle !== 0 && !_verticalText) {
 								range.setAngle(0);
 							}
 						}
@@ -10780,7 +10800,9 @@
                             callTrigger = true;
                             t.handlers.trigger("slowOperation", true);
                         }
-						if (val === c_oAscMergeOptions.MergeCenter && checkIndent(range)) {
+						_align = range.getAlign();
+						_verticalText = _align && _align.angle === AscCommonExcel.g_nVerticalTextAngle;
+						if (val === c_oAscMergeOptions.MergeCenter && checkIndent(range) && !_verticalText) {
 							range.setIndent(0);
 						}
                         switch (val) {
