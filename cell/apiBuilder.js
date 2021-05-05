@@ -1247,7 +1247,7 @@
 		var p = /^(?:http:\/\/|https:\/\/)/;
 		if (range && range.range.isOneCell() && sAddress) {
 			var externalLink = sAddress.match(p) || sAddress.search(/mailto:/i) !== -1;
-			if (externalLink && sAddress.length > Asc.c_nMaxHyperlinkLength) {
+			if (externalLink && AscCommonExcel.getFullHyperlinkLength(sAddress) > Asc.c_nMaxHyperlinkLength) {
 				return null;
 			}
 

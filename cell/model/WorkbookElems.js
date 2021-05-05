@@ -3978,7 +3978,7 @@ StyleManager.prototype =
 		return bRes;
 	};
 	Hyperlink.prototype.isValid = function () {
-		var isValidLength = !this.Hyperlink || (this.Hyperlink && this.Hyperlink.length <= Asc.c_nMaxHyperlinkLength);
+		var isValidLength = !this.Hyperlink || (this.Hyperlink && AscCommonExcel.getFullHyperlinkLength(this.Hyperlink) <= Asc.c_nMaxHyperlinkLength);
 		return null != this.Ref && (null != this.getLocation() || null != this.Hyperlink) && isValidLength;
 	};
 	Hyperlink.prototype.setLocationSheet = function (LocationSheet) {
