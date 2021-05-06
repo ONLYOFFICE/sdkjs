@@ -377,6 +377,86 @@ CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 {
 	PDSH.AddInlineSdt(this);
 	CParagraphContentWithParagraphLikeContent.prototype.Draw_HighLights.apply(this, arguments);
+
+
+	// Для экспорта в PDF записываем поля. Поля, находящиеся в автофигурах, пока не пишем
+	// var oGraphics = PDSH.Graphics;
+	// if (this.IsForm() && oGraphics && oGraphics.AddTextField && !this.Get_ParentTextTransform())
+	// {
+	// 	var aHypers = PDSH.HyperCF;
+	// 	Element     = aHypers.Get_Next();
+	// 	while (Element)
+	// 	{
+	// 		var oCF = Element.Additional.HyperlinkCF;
+	//
+	// 		var sValue  = oCF.GetValue();
+	// 		var sAnchor = oCF.GetAnchor();
+	//
+	// 		var _l = Element.x0;
+	// 		var _t = Element.y0;
+	// 		var _r = Element.x1;
+	// 		var _b = Element.y1;
+	//
+	// 		if (Math.abs(_b - _t) < 0.001 || Math.abs(_r - _l) < 0.001)
+	// 		{
+	// 			Element = aHypers.Get_Next();
+	// 			continue;
+	// 		}
+	//
+	// 		var oTransform = this.Get_ParentTextTransform();
+	//
+	// 		if (oTransform)
+	// 		{
+	// 			var x1 = oTransform.TransformPointX(_l, _t);
+	// 			var y1 = oTransform.TransformPointY(_l, _t);
+	// 			var x2 = oTransform.TransformPointX(_r, _t);
+	// 			var y2 = oTransform.TransformPointY(_r, _t);
+	// 			var x3 = oTransform.TransformPointX(_r, _b);
+	// 			var y3 = oTransform.TransformPointY(_r, _b);
+	// 			var x4 = oTransform.TransformPointX(_l, _b);
+	// 			var y4 = oTransform.TransformPointY(_l, _b);
+	//
+	// 			_l = Math.min(x1, x2, x3, x4);
+	// 			_r = Math.max(x1, x2, x3, x4);
+	// 			_t = Math.min(y1, y2, y3, y4);
+	// 			_b = Math.max(y1, y2, y3, y4);
+	// 		}
+	//
+	// 		if (sValue)
+	// 		{
+	// 			var _sValue = sAnchor ? sValue + "#" + sAnchor : sValue;
+	// 			pGraphics.AddHyperlink(_l, _t, _r - _l, _b - _t, _sValue, _sValue);
+	// 		}
+	// 		else if (sAnchor)
+	// 		{
+	// 			var oLogicDocument = this.GetLogicDocument();
+	// 			var oBookmark;
+	// 			if(oLogicDocument && oLogicDocument.BookmarksManager)
+	// 			{
+	// 				oBookmark = oLogicDocument.BookmarksManager.GetBookmarkByName(sAnchor);
+	// 			}
+	// 			if (oBookmark)
+	// 			{
+	// 				var oBookmarkPos = oBookmark[0].GetDestinationXY();
+	// 				if (oBookmarkPos)
+	// 				{
+	// 					var _dx = oBookmarkPos.X;
+	// 					var _dy = oBookmarkPos.Y;
+	//
+	// 					if (oBookmarkPos.Transform)
+	// 					{
+	// 						_dx = oBookmarkPos.Transform.TransformPointX(oBookmarkPos.X, oBookmarkPos.Y);
+	// 						_dy = oBookmarkPos.Transform.TransformPointY(oBookmarkPos.X, oBookmarkPos.Y);
+	// 					}
+	//
+	// 					pGraphics.AddLink(_l, _t, _r - _l, _b - _t, _dx, _dy, oBookmarkPos.PageNum);
+	// 				}
+	// 			}
+	// 		}
+	//
+	// 		Element = aHypers.Get_Next();
+	// 	}
+	// }
 };
 CInlineLevelSdt.prototype.GetRangeBounds = function(_CurLine, _CurRange)
 {

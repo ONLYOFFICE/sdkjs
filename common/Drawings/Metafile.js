@@ -1145,6 +1145,7 @@
 
 		this.ctHyperlink = 160;
 		this.ctLink      = 161;
+		this.ctFormField = 162;
 
 		this.ctPageWidth  = 200;
 		this.ctPageHeight = 201;
@@ -1956,6 +1957,64 @@
 			this.Memory.WriteDouble(dx);
 			this.Memory.WriteDouble(dy);
 			this.Memory.WriteLong(dPage);
+		},
+
+		AddFormField : function(x, y, w, h, oForm)
+		{
+			if (!oForm)
+				return;
+
+			this.Memory.WriteByte(CommandType.ctFormField);
+
+			var nStartPos = this.Memory.GetCurPosition();
+			this.Memory.Skip(4);
+
+			this.Memory.WriteDouble(x);
+			this.Memory.WriteDouble(y);
+			this.Memory.WriteDouble(w);
+			this.Memory.WriteDouble(h);
+
+			var nFlagPos = this.Memory.GetCurPosition();
+			var nFlag = 0;
+
+			var sFormKey = oForm.GetKey();
+			if (sFormKey)
+			{
+				nFlag |= 1;
+				this.Memory.WriteString(sFormKey);
+			}
+
+			var sHelpText = oForm.GetHelpText();
+			if (sHelpText)
+			{
+				nFlag |= 2;
+				this.Memory.WriteString(sHelpText);
+			}
+
+			if (oForm.GetRequired())
+				nFlag |= 4;
+
+			if (oForm.IsTextForm())
+			{
+				var oTextFormPr = oForm.GetTextFormPr();
+
+				 if (oTextFormPr.Comb)
+				 	nFlag |= (1 << 20);
+
+
+			}
+			else
+			{
+
+			}
+
+			var nEndPos = this.Memory.GetCurPosition();
+			this.Memory.Seek(nFlagPos);
+			this.Memory.WriteLong(nFlag);
+
+			this.Memory.Seek(nStartPos);
+			this.Memory.WriteLong(nEndPos - nStartPos);
+			this.Memory.Seek(nEndPos);
 		}
 	};
 
