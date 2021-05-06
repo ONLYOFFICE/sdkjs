@@ -327,8 +327,17 @@ CopyProcessor.prototype =
             //if(Def_pPr.Spacing.After != Item_pPr.Spacing.After)
             apPr.push("margin-bottom:" + (Item_pPr.Spacing.After * g_dKoef_mm_to_pt) + "pt");
             //Shd
-            if (null != Item_pPr.Shd && c_oAscShdNil !== Item_pPr.Shd.Value && (null != Item_pPr.Shd.Color || null != Item_pPr.Shd.Unifill))
-                apPr.push("background-color:" + this.RGBToCSS(Item_pPr.Shd.Color, Item_pPr.Shd.Unifill));
+            if (null != Item_pPr.Shd && c_oAscShdNil !== Item_pPr.Shd.Value && (null != Item_pPr.Shd.Color || null != Item_pPr.Shd.Unifill)){
+				var _shdColor = Item_pPr.Shd.GetSimpleColor && Item_pPr.Shd.GetSimpleColor(this.oDocument.Get_Theme(), this.oDocument.Get_ColorMap());
+				//TODO проверить сохранение в epub
+				//todo проверить и убрать else, всегда использовать GetSimpleColor
+				if (_shdColor) {
+					_shdColor = this.RGBToCSS(_shdColor);
+				} else {
+					_shdColor = this.RGBToCSS(Item_pPr.Shd.Color, Item_pPr.Shd.Unifill);
+				}
+            	apPr.push("background-color:" + _shdColor);
+			}
             //Tabs
             if(Item_pPr.Tabs.Get_Count() > 0)
             {
