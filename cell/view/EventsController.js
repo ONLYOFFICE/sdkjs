@@ -1736,7 +1736,7 @@
 				deltaY = event.detail;
 			} else if (undefined !== event.deltaY && 0 !== event.deltaY) {
 				// FF
-				deltaY = event.deltaY;
+				deltaY = Math.sign(event.deltaY) * 3;
 			}
             if (undefined !== event.deltaX && 0 !== event.deltaX) {
                 deltaX = event.deltaX;
