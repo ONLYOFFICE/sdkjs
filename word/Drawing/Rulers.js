@@ -2940,6 +2940,11 @@ function CVerRuler()
         var part1 = dPR;
         var part2 = 2.5 * dPR;
 
+		var l_part1 = Math.floor(middleHor - part1);
+		var r_part1 = Math.ceil(middleHor + part1);
+		var l_part2 = Math.floor(middleHor - part2);
+		var r_part2 = Math.ceil(middleHor + part2);
+
         context.font = Math.round(7 * dPR) + "pt Arial";
 
         if (this.Units == c_oAscDocumentUnits.Millimeter)
@@ -2974,24 +2979,24 @@ function CVerRuler()
             {
                 // 1/4
                 context.beginPath();
-                context.moveTo(middleHor - part1, lYPos);
-                context.lineTo(middleHor + part1, lYPos);
+                context.moveTo(l_part1, lYPos);
+                context.lineTo(r_part1, lYPos);
                 context.stroke();
             }
             else if (2 == index)
             {
                 // 1/2
                 context.beginPath();
-                context.moveTo(middleHor - part2, lYPos);
-                context.lineTo(middleHor + part2, lYPos);
+                context.moveTo(l_part2, lYPos);
+                context.lineTo(r_part2, lYPos);
                 context.stroke();
             }
             else if (isDraw1_4)
             {
                 // 1/4
                 context.beginPath();
-                context.moveTo(middleHor - part1, lYPos);
-                context.lineTo(middleHor + part1, lYPos);
+                context.moveTo(l_part1, lYPos);
+                context.lineTo(r_part1, lYPos);
                 context.stroke();
             }
         }
@@ -3022,24 +3027,24 @@ function CVerRuler()
             {
                 // 1/4
                 context.beginPath();
-                context.moveTo(middleHor - part1, lYPos);
-                context.lineTo(middleHor + part1, lYPos);
+                context.moveTo(l_part1, lYPos);
+                context.lineTo(r_part1, lYPos);
                 context.stroke();
             }
             else if (2 == index)
             {
                 // 1/2
                 context.beginPath();
-                context.moveTo(middleHor - part2, lYPos);
-                context.lineTo(middleHor + part2, lYPos);
+                context.moveTo(l_part2, lYPos);
+                context.lineTo(r_part2, lYPos);
                 context.stroke();
             }
             else if (isDraw1_4)
             {
                 // 1/4
                 context.beginPath();
-                context.moveTo(middleHor - part1, lYPos);
-                context.lineTo(middleHor + part1, lYPos);
+                context.moveTo(l_part1, lYPos);
+                context.lineTo(r_part1, lYPos);
                 context.stroke();
             }
         }
@@ -3076,16 +3081,16 @@ function CVerRuler()
                 {
                     // 1/2
                     context.beginPath();
-                    context.moveTo(middleHor - part2, lYPos);
-                    context.lineTo(middleHor + part2, lYPos);
+                    context.moveTo(l_part2, lYPos);
+                    context.lineTo(r_part2, lYPos);
                     context.stroke();
                 }
                 else if (inch_1_8 > 8)
                 {
                     // 1/8
                     context.beginPath();
-                    context.moveTo(middleHor - part1, lYPos);
-                    context.lineTo(middleHor + part1, lYPos);
+                    context.moveTo(l_part1, lYPos);
+                    context.lineTo(r_part1, lYPos);
                     context.stroke();
                 }
             }
@@ -3165,8 +3170,8 @@ function CVerRuler()
                 {
                     // 1/8
                     context.beginPath();
-                    context.moveTo(middleHor - part1, lYPos);
-                    context.lineTo(middleHor + part1, lYPos);
+                    context.moveTo(l_part1, lYPos);
+                    context.lineTo(r_part1, lYPos);
                     context.stroke();
                 }
             }
@@ -3197,8 +3202,8 @@ function CVerRuler()
                 {
                     // 1/8
                     context.beginPath();
-                    context.moveTo(middleHor - part1, lYPos);
-                    context.lineTo(middleHor + part1, lYPos);
+                    context.moveTo(l_part1, lYPos);
+                    context.lineTo(r_part1, lYPos);
                     context.stroke();
                 }
             }
