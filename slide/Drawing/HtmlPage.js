@@ -602,7 +602,7 @@ function CEditorPage(api)
 			_documentDem.setAttribute("id", "id_reporter_dem");
 			_documentDem.setAttribute("class", "block_elem");
 			_documentDem.style.overflow = "hidden";
-			_documentDem.style.backgroundColor = GlobalSkin.BackgroundColor;
+			_documentDem.style.backgroundColor = GlobalSkin.BackgroundColorThumbnails;
 			_documentParent.appendChild(_documentDem);
 
 			this.m_oDemonstrationDivId = CreateControlContainer("id_reporter_dem");
@@ -616,7 +616,7 @@ function CEditorPage(api)
 			demBottonsDiv.setAttribute("id", "id_reporter_dem_controller");
 			demBottonsDiv.setAttribute("class", "block_elem");
 			demBottonsDiv.style.overflow = "hidden";
-			demBottonsDiv.style.backgroundColor = GlobalSkin.BackgroundColor;
+			demBottonsDiv.style.backgroundColor = GlobalSkin.BackgroundColorThumbnails;
 			demBottonsDiv.style.cursor = "default";
 			_documentParent.appendChild(demBottonsDiv);
 
@@ -648,12 +648,22 @@ function CEditorPage(api)
 				xOffset2 = "0";
 			}
 
-			styleContent += (".btn-play { background-position: " + xOffset1 + "px -40px; } .btn-play:active { background-position: " + xOffset2 + "px -40px; }");
-			styleContent += (".btn-prev { background-position: " + xOffset1 + "px 0px; } .btn-prev:active { background-position: " + xOffset2 + "px 0px; }");
-			styleContent += (".btn-next { background-position: " + xOffset1 + "px -20px; } .btn-next:active { background-position: " + xOffset2 + "px -20px; }");
-			styleContent += (".btn-pause { background-position: " + xOffset1 + "px -80px; } .btn-pause:active { background-position: " + xOffset2 + "px -80px; }");
-			styleContent += (".btn-pointer { background-position: " + xOffset1 + "px -100px; } .btn-pointer-active { background-position: " + xOffset2 + "px -100px; }");
-			styleContent += (".btn-pointer:active { background-position: " + xOffset2 + "px -100px; }");
+			styleContent += (".btn-play { background-position: " + xOffset1 + "px -40px; }");
+			styleContent += (".btn-prev { background-position: " + xOffset1 + "px 0px; }");
+			styleContent += (".btn-next { background-position: " + xOffset1 + "px -20px; }");
+			styleContent += (".btn-pause { background-position: " + xOffset1 + "px -80px; }");
+			styleContent += (".btn-pointer { background-position: " + xOffset1 + "px -100px; }");
+			styleContent += (".btn-pointer-active { background-position: " + xOffset2 + "px -100px; }");
+
+			if (false) // менять цвет при нажатии
+			{
+				styleContent += (".btn-play:active { background-position: " + xOffset2 + "px -40px; }");
+				styleContent += (".btn-prev:active { background-position: " + xOffset2 + "px 0px; }");
+				styleContent += (".btn-next:active { background-position: " + xOffset2 + "px -20px; }");
+				styleContent += (".btn-pause:active { background-position: " + xOffset2 + "px -80px; }");
+				styleContent += (".btn-pointer:active { background-position: " + xOffset2 + "px -100px; }");
+			}
+
 			styleContent += this.getStylesReporter();
 
 			var style		 = document.createElement('style');

@@ -1413,6 +1413,10 @@ background-repeat: no-repeat;\
 				style.type = 'text/css';
 				style.innerHTML = this.WordControl.getStylesReporter();
 				_head.appendChild(style);
+
+				document.getElementById("id_reporter_dem").style.backgroundColor = GlobalSkin.BackgroundColorThumbnails;
+				document.getElementById("id_reporter_dem_controller").style.backgroundColor = GlobalSkin.BackgroundColorThumbnails;
+				document.getElementById("id_main_parent").style.backgroundColor = GlobalSkin.BackgroundColorThumbnails;
 			}
 		}
 
