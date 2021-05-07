@@ -2477,6 +2477,7 @@ function CHorRuler()
                 context.stroke();
             }
 
+			context.strokeStyle = GlobalSkin.RulerTabsColorOld;
             if (-1 != this.m_lCurrentTab && this.m_lCurrentTab < this.m_arrTabs.length)
             {
                 var _tab = this.m_arrTabs[this.m_lCurrentTab];

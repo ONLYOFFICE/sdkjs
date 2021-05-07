@@ -4542,6 +4542,9 @@ function CThumbnailsManager()
 		if (this.const_offset_x < 25)
 			this.const_offset_x = 25;
 
+		// focus/select rects
+		this.const_offset_x += Math.round(5 * AscCommon.AscBrowser.retinaPixelRatio);
+
 		nWidthSlide -= this.const_offset_x;
 
 		var nHeightSlide = (nWidthSlide * this.SlideHeight / this.SlideWidth) >> 0;
