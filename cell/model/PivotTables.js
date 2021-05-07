@@ -13863,19 +13863,19 @@ CT_RangePr.prototype.generateGroupItems  = function (containsInteger, containsBl
 		groupItems.addString(firstElem);
 		var curVal = this.startNum;
 		var nextVal = this.startNum + this.groupInterval;
-		var integerСorrection = 0;
+		var integerCorrection = 0;
 		if (Number.isInteger(this.groupInterval) && Number.isInteger(this.startNum) && Number.isInteger(this.endNum) && containsInteger) {
-			integerСorrection = -1;
+			integerCorrection = -1;
 		}
 		while (AscCommon.compareNumbers(nextVal, this.endNum) < 0) {
-			groupItems.addString(numFormat.formatToChart(curVal) + '-' + numFormat.formatToChart(nextVal + integerСorrection));
+			groupItems.addString(numFormat.formatToChart(curVal) + '-' + numFormat.formatToChart(nextVal + integerCorrection));
 			curVal = nextVal;
 			nextVal = nextVal + this.groupInterval;
 		}
 		if (0 === AscCommon.compareNumbers(nextVal, this.endNum)) {
 			groupItems.addString(numFormat.formatToChart(curVal) + '-' + numFormat.formatToChart(nextVal));
 		} else {
-			groupItems.addString(numFormat.formatToChart(curVal) + '-' + numFormat.formatToChart(nextVal + integerСorrection));
+			groupItems.addString(numFormat.formatToChart(curVal) + '-' + numFormat.formatToChart(nextVal + integerCorrection));
 		}
 		groupItems.addString('>' + numFormat.formatToChart(nextVal));
 	} else {
