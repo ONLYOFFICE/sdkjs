@@ -9622,8 +9622,8 @@ AutoFilterDateElem.prototype.Read_FromBinary2 = function(r) {
 AutoFilterDateElem.prototype.clone = function() {
 	var res = new AutoFilterDateElem();
 	res.start = this.start;
-	this.end = this.end;
-	this.dateTimeGrouping = this.dateTimeGrouping;
+	res.end = this.end;
+	res.dateTimeGrouping = this.dateTimeGrouping;
 
 	return res;
 };
