@@ -1736,6 +1736,8 @@
 				deltaY = event.detail;
 			} else if (undefined !== event.deltaY && 0 !== event.deltaY) {
 				// FF
+				//постоянный шаг из-за некорректного значения deltaY после обновления FF
+				//TODO: переход в таблицах на DOMMouseScroll с корректными значениями и учетом системного шага
 				deltaY = Math.sign(event.deltaY) * 3;
 			}
             if (undefined !== event.deltaX && 0 !== event.deltaX) {
