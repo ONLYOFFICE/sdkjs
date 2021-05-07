@@ -99,8 +99,8 @@ function (window, undefined)
 	};
 	CMobileDelegateEditorCell.prototype.ConvertCoordsFromCursor = function(x, y)
 	{
-		var _x = x - this.Offset.X * AscCommon.AscBrowser.retinaPixelRatio;
-		var _y = y - this.Offset.Y * AscCommon.AscBrowser.retinaPixelRatio;
+		var _x = (x - this.Offset.X) * AscCommon.AscBrowser.retinaPixelRatio;
+		var _y = (y - this.Offset.Y) * AscCommon.AscBrowser.retinaPixelRatio;
 
 		var _res = this.WB.ConvertXYToLogic(_x, _y);
 		var _point = {X: _res.X, Y: _res.Y, Page: 0, DrawPage: 0};
@@ -648,11 +648,13 @@ function (window, undefined)
 			}
 			case AscCommon.MobileTouchMode.Select:
 			{
-				var _x1 = this.RectSelect1.x + 0.5;
-				var _y1 = this.RectSelect1.y + 0.5;
+				// сдвиг на чуток, чтобы не попасть на "перемещение" ячеек
+				var epsilonForCell = 1.5;
+				var _x1 = this.RectSelect1.x + epsilonForCell;
+				var _y1 = this.RectSelect1.y + epsilonForCell;
 
-				var _x2 = this.RectSelect2.x + this.RectSelect2.w - 0.5;
-				var _y2 = this.RectSelect2.y + this.RectSelect2.h - 0.5;
+				var _x2 = this.RectSelect2.x + this.RectSelect2.w - epsilonForCell;
+				var _y2 = this.RectSelect2.y + this.RectSelect2.h - epsilonForCell;
 
 				if (this.RectSelectType === Asc.c_oAscSelectionType.RangeCol || this.RectSelectType === Asc.c_oAscSelectionType.RangeRow)
 					AscCommon.global_mouseEvent.KoefPixToMM = -10; // чтобы не попасть в движения
@@ -685,7 +687,7 @@ function (window, undefined)
 					}
 					else
 					{
-						var __X = _matrix.TransformPointX (_x1, _y1);
+						var __X = _matrix.TransformPointX(_x1, _y1);
 						var __Y = _matrix.TransformPointY(_x1, _y1);
 
 						this.delegate.Logic_OnMouseDown(global_mouseEvent, __X, __Y, this.PageSelect1);
