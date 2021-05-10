@@ -408,8 +408,12 @@ function CEditorPage(api)
 
 		if (this.m_oApi.isReporterMode)
 		{
-			this.Splitter2Pos = 90;
+			this.Splitter2Pos = window.innerHeight * 0.5 * AscCommon.g_dKoef_pix_to_mm;
 			this.Splitter2PosMax = 200;
+			if (this.Splitter2Pos > this.Splitter2PosMax)
+				this.Splitter2Pos = this.Splitter2PosMax;
+			if (this.Splitter2Pos < this.Splitter2PosMin)
+				this.Splitter2Pos = this.Splitter2PosMin;
 		}
 
 		var ScrollWidthMm  = this.ScrollWidthPx * g_dKoef_pix_to_mm;

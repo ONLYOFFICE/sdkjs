@@ -1414,9 +1414,9 @@ background-repeat: no-repeat;\
 				style.innerHTML = this.WordControl.getStylesReporter();
 				_head.appendChild(style);
 
-				document.getElementById("id_reporter_dem").style.backgroundColor = GlobalSkin.BackgroundColorThumbnails;
-				document.getElementById("id_reporter_dem_controller").style.backgroundColor = GlobalSkin.BackgroundColorThumbnails;
-				document.getElementById("id_main_parent").style.backgroundColor = GlobalSkin.BackgroundColorThumbnails;
+				["id_reporter_dem", "id_reporter_dem_controller", "id_main_parent", "id_reporter_dem_parent", "id_main"].forEach(function (id) {
+					document.getElementById(id).style.backgroundColor = GlobalSkin.BackgroundColorThumbnails;
+				});
 			}
 		}
 
