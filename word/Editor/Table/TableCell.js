@@ -2247,7 +2247,7 @@ CTableCell.prototype.CheckNonEmptyBorder = function(nType)
 		var nCurGridStart = oRow.GetCellInfo(this.Index).StartGridCol;
 
 		if (this.Get_Border(nType).Value === 0)
-			this.Set_Border(border, nType);
+			this.Set_Border(oBorder, nType);
 
 		if (nVMergeCount > 1)
 		{
