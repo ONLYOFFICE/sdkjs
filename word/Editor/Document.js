@@ -10424,7 +10424,7 @@ CDocument.prototype.OnKeyDown = function(e)
 				bRetValue = keydownresult_PreventAll;
 			}
 		}
-		else if ((e.KeyCode === 93) || (/*в Opera такой код*/AscCommon.AscBrowser.isOpera && (57351 === e.KeyCode)) ||
+		else if ((e.KeyCode === 93 && !e.MacCmdKey) || (/*в Opera такой код*/AscCommon.AscBrowser.isOpera && (57351 === e.KeyCode)) ||
 			(e.KeyCode === 121 && true === e.ShiftKey)) // // Shift + F10 - контекстное меню
 		{
 			var X_abs, Y_abs, oPosition, ConvertedPos;

@@ -720,6 +720,7 @@
 		asc_CEventsController.prototype._onWindowKeyDown = function (event) {
 			var t = this, dc = 0, dr = 0, canEdit = this.canEdit(), action = false, enterOptions;
 			var ctrlKey = !AscCommon.getAltGr(event) && (event.metaKey || event.ctrlKey);
+			var macCmdKey = AscCommon.AscBrowser.isMacOs && event.metaKey;
 			var shiftKey = event.shiftKey;
 			var selectionDialogMode = this.getSelectionDialogMode();
 			var isFormulaEditMode = this.getFormulaEditMode();
@@ -1122,9 +1123,11 @@
 					return result;
 
 				case 93:
-					stop();
-					this.handlers.trigger('onContextMenu', event);
-					return result;
+					if (!macCmdKey) {
+						stop();
+						this.handlers.trigger('onContextMenu', event);
+						return result;
+					}
 
 				default:
 					this.skipKeyPress = false;
