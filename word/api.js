@@ -1250,7 +1250,10 @@ background-repeat: no-repeat;\
 		{
 			this.WordControl.OnResize(true);
 			if (this.WordControl.m_oEditor && this.WordControl.m_oEditor.HtmlElement)
+			{
 				this.WordControl.m_oEditor.HtmlElement.fullRepaint = true;
+				this.WordControl.OnScroll();
+			}
 		}
 	};
 

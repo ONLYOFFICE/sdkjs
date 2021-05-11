@@ -369,6 +369,20 @@ function updateGlobalSkinColors(theme)
 		EditorBorder                    : "border-toolbar"
 	};
 
+	// корректируем цвета для старого хрома:
+	// в старых хромах (desktop windows XP)
+	// если начинается цвет с цифры (#0-9) - то помечается символом \3 (конец текста)
+	for (var item in theme)
+	{
+		var testValue = theme[item];
+		if (0 === testValue.indexOf("#\\3"))
+		{
+			testValue = testValue.replace("\\3", "");
+			testValue = testValue.replace(" ", "");
+			theme[item] = testValue;
+		}
+	}
+
 	for (var color in colorMap)
 	{
 		if (undefined === GlobalSkin[color])
@@ -412,10 +426,9 @@ function updateGlobalSkin(obj)
 		}
 	}
 
+	updateGlobalSkinColors(obj);
 	for (var item in obj)
 		GlobalSkin[item] = obj[item];
-
-	updateGlobalSkinColors(obj);
 
 	if (window.g_asc_plugins)
 		window.g_asc_plugins.onThemeChanged(GlobalSkin);
