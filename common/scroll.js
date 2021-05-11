@@ -1001,6 +1001,10 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 	};
 
 	ScrollObject.prototype._drawScroll = function (fillColor, targetColor, strokeColor) {
+		fillColor = Math.round(fillColor);
+		targetColor = Math.round(targetColor);
+		strokeColor = Math.round(strokeColor);
+
 		var that = this;
 		that.context.beginPath();
 		var roundDPR = this._roundForScale(AscBrowser.retinaPixelRatio);
@@ -1133,8 +1137,6 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 		    strokeColor = _HEXTORGB_(that.settings.strokeStyleNone).R,
 			strokeHoverColor = _HEXTORGB_(that.settings.strokeStyleOver).R;
 
-
-
 		cnvs.width = sizeW;
 		cnvs.height = sizeH;
 
@@ -1180,34 +1182,41 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 			}
 		}
 
+		var stepsCount = 17;
+		var step = Math.abs((defaultColor - hoverColor)) / stepsCount;
+
 		//dimming the arrow
 		if (fadeIn) {
 			if(arrowType.arrowColor === arrowHoverColor && arrowType.arrowBackColor === hoverColor) {
 				return;
 			}
 
-			if (arrowType.arrowBackColor - hoverColor > 2) {
-				arrowType.arrowBackColor -= 2;
-			} else if (arrowType.arrowBackColor - hoverColor < -2) {
-				arrowType.arrowBackColor += 2;
+			if (arrowType.arrowBackColor - hoverColor > step) {
+				arrowType.arrowBackColor -= step;
+			} else if (arrowType.arrowBackColor - hoverColor < -step) {
+				arrowType.arrowBackColor += step;
 			} else {
 				arrowType.arrowBackColor = hoverColor;
 			}
 
-			if (arrowType.arrowColor - arrowHoverColor > 4) {
-				arrowType.arrowColor -= 4;
-			} else if (arrowType.arrowColor - arrowHoverColor < -4) {
-				arrowType.arrowColor += 4;
-			} else {
-				arrowType.arrowColor = arrowHoverColor;
-			}
+			step = Math.abs((strokeColor - strokeHoverColor)) / stepsCount;
 
-			if (arrowType.arrowStrokeColor - strokeHoverColor > 2) {
-				arrowType.arrowStrokeColor -= 2;
-			} else if (arrowType.arrowStrokeColor - strokeHoverColor < -2) {
-				arrowType.arrowStrokeColor += 2;
+			if (arrowType.arrowStrokeColor - strokeHoverColor > step) {
+				arrowType.arrowStrokeColor -= step;
+			} else if (arrowType.arrowStrokeColor - strokeHoverColor < -step) {
+				arrowType.arrowStrokeColor += step;
 			} else {
 				arrowType.arrowStrokeColor = strokeHoverColor;
+			}
+
+			step = Math.abs((arrowColor - arrowHoverColor)) / stepsCount;
+
+			if (arrowType.arrowColor - arrowHoverColor > step) {
+				arrowType.arrowColor -= step;
+			} else if (arrowType.arrowColor - arrowHoverColor < -step) {
+				arrowType.arrowColor += step;
+			} else {
+				arrowType.arrowColor = arrowHoverColor;
 			}
 		} else
 			//reverse dimming
@@ -1216,26 +1225,30 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 				return;
 			}
 
-			if (arrowType.arrowBackColor - defaultColor < -2) {
-				arrowType.arrowBackColor += 2;
-			} else if (arrowType.arrowBackColor - defaultColor > 2) {
-				arrowType.arrowBackColor -= 2;
+			if (arrowType.arrowBackColor - defaultColor < -step) {
+				arrowType.arrowBackColor += step;
+			} else if (arrowType.arrowBackColor - defaultColor > step) {
+				arrowType.arrowBackColor -= step;
 			} else {
 				arrowType.arrowBackColor = defaultColor;
 			}
 
-			if (arrowType.arrowColor - arrowColor > 4) {
-				arrowType.arrowColor -= 4;
-			} else if (arrowType.arrowColor - arrowColor < -4) {
-				arrowType.arrowColor += 4;
+			step = Math.abs((arrowColor - arrowHoverColor)) / stepsCount;
+
+			if (arrowType.arrowColor - arrowColor > step) {
+				arrowType.arrowColor -= step;
+			} else if (arrowType.arrowColor - arrowColor < -step) {
+				arrowType.arrowColor += step;
 			} else {
 				arrowType.arrowColor = arrowColor;
 			}
 
-			if (arrowType.arrowStrokeColor - strokeColor > 2) {
-				arrowType.arrowStrokeColor -= 2;
-			} else if (arrowType.arrowStrokeColor - strokeColor < -2) {
-				arrowType.arrowStrokeColor += 2;
+			step = Math.abs((strokeColor - strokeHoverColor)) / stepsCount;
+
+			if (arrowType.arrowStrokeColor - strokeColor > step) {
+				arrowType.arrowStrokeColor -= step;
+			} else if (arrowType.arrowStrokeColor - strokeColor < -step) {
+				arrowType.arrowStrokeColor += step;
 			} else {
 				arrowType.arrowStrokeColor = strokeColor;
 			}
@@ -1262,14 +1275,16 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 		ctx = that.context;
 
         ctx.beginPath();
-        ctx.fillStyle = "rgb(" + arrowType.arrowBackColor + "," +
-            arrowType.arrowBackColor + "," +
-            arrowType.arrowBackColor + ")";
+        var arrowBackColor = Math.round(arrowType.arrowBackColor);
+        ctx.fillStyle = "rgb(" + arrowBackColor + "," +
+			arrowBackColor + "," +
+			arrowBackColor + ")";
 
         ctx.fillRect( x + fillRectX,  y +  fillRectY, sizeW, sizeH);
 
 		if (that.ArrowDrawer.IsDrawBorders) {
-			ctx.strokeStyle = "rgb(" + arrowType.arrowStrokeColor + "," + arrowType.arrowStrokeColor + "," + arrowType.arrowStrokeColor + ")";
+			var arrowStrokeColor = Math.round(arrowType.arrowStrokeColor)
+			ctx.strokeStyle = "rgb(" + arrowStrokeColor + "," + arrowStrokeColor + "," + arrowStrokeColor + ")";
 			ctx.lineWidth = roundDPR;
             ctx.rect(x + 0.5 * ctx.lineWidth + strokeRectX, y + 1.5 * ctx.lineWidth + strokeRectY, sizeW - roundDPR, sizeH - roundDPR);
             ctx.stroke();
@@ -1278,9 +1293,10 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 		//drawing arrow icon
 		var imgContext = arrowImage.getContext('2d');
 		imgContext.globalCompositeOperation = "source-in";
-		imgContext.fillStyle = "rgb(" + arrowType.arrowColor + "," +
-			arrowType.arrowColor + "," +
-			arrowType.arrowColor + ")";
+		var arrowColor = Math.round(arrowType.arrowColor);
+		imgContext.fillStyle = "rgb(" + arrowColor + "," +
+			arrowColor + "," +
+			arrowColor + ")";
 		imgContext.fillRect(0.5, 1.5, sizeW , sizeH);
         ctx.drawImage(arrowImage,  x, y, sizeW, sizeH);
 		ctx.closePath();
@@ -1303,8 +1319,6 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 			strokeHoverColor = _HEXTORGB_(that.settings.strokeStyleOver).R,
 			strokeColor = _HEXTORGB_(that.settings.strokeStyleNone).R;
 
-
-
 		that.context.beginPath();
 		that._drawScroll(that.scrollColor, that.targetColor, that.strokeColor);
 
@@ -1313,29 +1327,36 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 			return;
 		}
 
+		var stepsCount = 17;
+		var step = Math.abs((defaultColor - hoverColor)) / stepsCount;
+		
 		//dimming the scroll
 		if (fadeIn) {
 
-			if (that.scrollColor - hoverColor > 2) {
-				that.scrollColor -= 2;
-			} else if (that.scrollColor - hoverColor < -2) {
-				that.scrollColor += 2;
+			if (that.scrollColor - hoverColor > step) {
+				that.scrollColor -= step;
+			} else if (that.scrollColor - hoverColor < -step) {
+				that.scrollColor += step;
 			} else {
 				that.scrollColor = hoverColor;
 			}
 
-			if (that.targetColor - targetHoverColor > 2) {
-				that.targetColor -= 2;
-			} else if (that.targetColor - targetHoverColor < -2) {
-				that.targetColor += 2;
+			step =  Math.abs((targetDefaultColor - targetHoverColor)) / stepsCount;
+
+			if (that.targetColor - targetHoverColor > step) {
+				that.targetColor -= step;
+			} else if (that.targetColor - targetHoverColor < -step) {
+				that.targetColor += step;
 			} else {
 				that.targetColor = targetHoverColor;
 			}
 
-			if (that.strokeColor - strokeHoverColor > 2) {
-				that.strokeColor -= 2;
-			} else if (that.strokeColor - strokeHoverColor < -2) {
-				that.strokeColor += 2;
+			step = Math.abs((strokeColor - strokeHoverColor)) / stepsCount;
+
+			if (that.strokeColor - strokeHoverColor > step) {
+				that.strokeColor -= step;
+			} else if (that.strokeColor - strokeHoverColor < -step) {
+				that.strokeColor += step;
 			} else {
 				that.strokeColor = strokeHoverColor;
 			}
@@ -1343,27 +1364,31 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 		} else
 			//reverse dimming
 		if (fadeIn === false) {
-			if (that.scrollColor - defaultColor > 2) {
-				that.scrollColor -= 2;
-			} else if (that.scrollColor - defaultColor < -2) {
-				that.scrollColor += 2;
+			if (that.scrollColor - defaultColor > step) {
+				that.scrollColor -= step;
+			} else if (that.scrollColor - defaultColor < -step) {
+				that.scrollColor += step;
 			} else {
 				that.scrollColor = defaultColor;
 			}
 
-			if (that.targetColor - targetDefaultColor > 2) {
-				that.targetColor -= 2;
-			} else if (that.targetColor - targetDefaultColor < -2) {
-				that.targetColor += 2;
+			step = Math.abs((targetDefaultColor - targetHoverColor)) / stepsCount;
+
+			if (that.targetColor - targetDefaultColor > step) {
+				that.targetColor -= step;
+			} else if (that.targetColor - targetDefaultColor < -step) {
+				that.targetColor += step;
 			} else {
 				that.targetColor = targetDefaultColor;
 				that.strokeColor = strokeColor;
 			}
 
-			if (that.strokeColor - strokeColor > 2) {
-				that.strokeColor -= 2;
-			} else if (that.strokeColor - strokeColor < -2) {
-				that.strokeColor += 2;
+			step = Math.abs((strokeColor - strokeHoverColor)) / stepsCount;
+
+			if (that.strokeColor - strokeColor > step) {
+				that.strokeColor -= step;
+			} else if (that.strokeColor - strokeColor < -step) {
+				that.strokeColor += step;
 			} else {
 				that.strokeColor = strokeColor;
 			}
