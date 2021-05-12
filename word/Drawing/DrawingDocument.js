@@ -6819,6 +6819,7 @@ function CDrawingDocument()
 
         par.Reset(0, 0, 1000, 1000, 0, 0, 1);
         par.Recalculate_Page(0);
+        par.LineNumbersInfo = null;
 
         var baseLineOffset = par.Lines[0].Y;
         var bounds = par.Get_PageBounds(0);
