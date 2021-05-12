@@ -531,6 +531,16 @@ CopyProcessor.prototype =
 				if(null != ParaItem.String && "string" === typeof(ParaItem.String))
 					oTarget.addChild(new CopyElement(CopyPasteCorrectString(ParaItem.String), true));
 				break;
+			case para_FieldChar:
+				if (ParaItem.ComplexField && ParaItem.ComplexField.Instruction && ParaItem.ComplexField.Instruction instanceof CFieldInstructionHYPERLINK) {
+					if (fldchartype_Begin === ParaItem.CharType) {
+						var oHyperlink = new CopyElement("a");
+						var hyperlinkValue = "#" + ParaItem.ComplexField.Instruction.BookmarkName;
+						oHyperlink.oAttributes["href"] = CopyPasteCorrectString(hyperlinkValue);
+						oTarget.addChild(oHyperlink);
+					}
+				}
+				break;
         }
     },
     CopyRun: function (Item, oTarget) {
@@ -588,6 +598,7 @@ CopyProcessor.prototype =
 			} else if (para_InlineLevelSdt === item.Type) {
 				this.CopyRunContent(item, oTarget);
 			} else if (para_Field === item.Type) {
+
 				this.CopyRunContent(item, oTarget);
 			} else if (para_Bookmark === item.Type) {
 				//для внутренних ссылок
