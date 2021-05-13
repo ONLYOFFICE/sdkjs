@@ -694,7 +694,7 @@
 		cellFlags.textAlign = this.getAlign();
 
 
-		var cellEditorWidth = width - 2 * wb.defaults.worksheetView.cells.padding + 1;
+		var cellEditorWidth = width - 2 * wb.defaults.worksheetView.cells.padding + 1 + 2 * correctCanvasDiff;
 		ws.stringRender.setString(this.fragments, cellFlags);
 		var textMetrics = ws.stringRender._measureChars(cellEditorWidth);
 		var parentHeight = document.getElementById(this.canvasObj.idParent).clientHeight;
@@ -771,6 +771,7 @@
 		return textField;
 	}
 
+	var correctCanvasDiff = 0;
 	window.Asc.g_header_footer_editor = null;
 	function CHeaderFooterEditor(idArr, width, pageType) {
 		window.Asc.g_header_footer_editor = this;
@@ -973,8 +974,10 @@
 			return val;
 		}
 
+		correctCanvasDiff = 0;
 		if (AscBrowser.retinaPixelRatio === 1.5 && 0 !== val % 4) {
-			val -= val % 4;
+			correctCanvasDiff = val % 4;
+			val -= correctCanvasDiff;
 		}
 
 		return val;
@@ -1024,7 +1027,7 @@
 				for(var i = 0; i < 30; i++) {
 					bottomArr.push(t.parentHeight + i * 19);
 				}
-				return {l: [0], r: [t.parentWidth], b: bottomArr, cellX: 0, cellY: 0, ri: 0, bi: 0};
+				return {l: [0], r: [t.parentWidth + 2 * correctCanvasDiff], b: bottomArr, cellX: 0, cellY: 0, ri: 0, bi: 0};
 			},
 			checkVisible: function () {
 				return true;
