@@ -3896,16 +3896,6 @@ function CDrawingDocument()
 		var _r = (drPage.left + dKoefX * this.FrameRect.Rect.R) * rPR;
 		var _b = (drPage.top + dKoefY * this.FrameRect.Rect.B) * rPR;
 
-		if (_x < overlay.min_x)
-			overlay.min_x = _x;
-		if (_r > overlay.max_x)
-			overlay.max_x = _r;
-
-		if (_y < overlay.min_y)
-			overlay.min_y = _y;
-		if (_b > overlay.max_y)
-			overlay.max_y = _b;
-
 		var ctx = overlay.m_oContext;
 		ctx.strokeStyle = "#939393";
 		ctx.lineWidth = Math.round(rPR);
@@ -3938,6 +3928,9 @@ function CDrawingDocument()
 		ctx.fillStyle = "#777777";
 		ctx.fill();
 		ctx.beginPath();
+
+		overlay.CheckPoint(_x - _wc, _y - _wc);
+		overlay.CheckPoint(_r + _wc, _b + _wc);
 
 		// move
 		if (this.FrameRect.IsTracked)
