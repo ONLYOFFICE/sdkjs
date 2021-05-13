@@ -375,6 +375,9 @@ function updateGlobalSkinColors(theme)
 	for (var item in theme)
 	{
 		var testValue = theme[item];
+		if (typeof testValue !== "string")
+			continue;
+
 		if (0 === testValue.indexOf("#\\3"))
 		{
 			testValue = testValue.replace("\\3", "");
