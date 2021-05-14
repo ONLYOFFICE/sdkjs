@@ -1975,24 +1975,27 @@
 			this.Memory.WriteDouble(h);
 
 			var nFlagPos = this.Memory.GetCurPosition();
+			this.Memory.Skip(4);
 			var nFlag = 0;
 
-			var sFormKey = oForm.GetKey();
+			var oFormPr = oForm.GetFormPr();
+
+			var sFormKey = oFormPr.GetKey();
 			if (sFormKey)
 			{
 				nFlag |= 1;
 				this.Memory.WriteString(sFormKey);
 			}
 
-			var sHelpText = oForm.GetHelpText();
+			var sHelpText = oFormPr.GetHelpText();
 			if (sHelpText)
 			{
-				nFlag |= 2;
+				nFlag |= (1 << 1);
 				this.Memory.WriteString(sHelpText);
 			}
 
-			if (oForm.GetRequired())
-				nFlag |= 4;
+			if (oFormPr.GetRequired())
+				nFlag |= (1 << 2);
 
 			if (oForm.IsTextForm())
 			{
@@ -2000,8 +2003,6 @@
 
 				 if (oTextFormPr.Comb)
 				 	nFlag |= (1 << 20);
-
-
 			}
 			else
 			{
@@ -2787,6 +2788,12 @@
 		{
 			if (0 !== this.m_lPagesCount)
 				this.m_arrayPages[this.m_lPagesCount - 1].AddLink(x, y, w, h, dx, dy, dPage);
+		},
+
+		AddFormField : function(x, y, w, h, oForm)
+		{
+			if (0 !== this.m_lPagesCount)
+				this.m_arrayPages[this.m_lPagesCount - 1].AddFormField(x, y, w, h, oForm);
 		}
 	};
 
