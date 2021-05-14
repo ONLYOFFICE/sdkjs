@@ -365,7 +365,7 @@ function updateGlobalSkinColors(theme)
 		ColorDarkActive                 : "text-contrast-background",
 		ColorDarkHighlighted            : "text-contrast-background",
 
-		GroupDataBorder                 : "border-toolbar",
+		GroupDataBorder                 : "canvas-high-contrast",
 		EditorBorder                    : "border-toolbar"
 	};
 
