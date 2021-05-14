@@ -365,7 +365,7 @@ function updateGlobalSkinColors(theme)
 		ColorDarkActive                 : "text-contrast-background",
 		ColorDarkHighlighted            : "text-contrast-background",
 
-		GroupDataBorder                 : "border-toolbar",
+		GroupDataBorder                 : "canvas-high-contrast",
 		EditorBorder                    : "border-toolbar"
 	};
 
@@ -470,27 +470,15 @@ window['AscCommon'].RgbaHexToRGBA = function(color)
 
 		ret.R = (ret.R << 4) | ret.R;
 		ret.G = (ret.G << 4) | ret.G;
-		ret.B = (ret.B << 4) | ret.B;
+		ret.R = (ret.B << 4) | ret.B;
 	}
 
 	return ret;
 };
 window['AscCommon'].RgbaTextToRgbaHex = function(color)
 {
-	var toHex = function (c) {
-		var res = Number(c).toString(16);
-		return res.length === 1 ? "0" + res : res;
-	};
-
 	if (0 !== color.indexOf("rgb"))
-	{
-		if (color.length < 6)
-		{
-			var rgba = AscCommon.RgbaHexToRGBA(color);
-			return "#" + toHex(rgba.R) + toHex(rgba.G) + toHex(rgba.B);
-		}
 		return color;
-	}
 
 	var start = color.indexOf("(");
 	var end = color.indexOf(")");
@@ -504,6 +492,11 @@ window['AscCommon'].RgbaTextToRgbaHex = function(color)
 	var g = colors[1] || 0;
 	var b = colors[2] || 0;
 	var a = (colors[3] === undefined) ? 255 : colors[3];
+
+	var toHex = function (c) {
+		var res = Number(c).toString(16);
+		return res.length === 1 ? "0" + res : res;
+	};
 
 	return "#" + toHex(r) + toHex(g) + toHex(b);
 };
