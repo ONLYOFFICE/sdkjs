@@ -467,7 +467,7 @@
 	};
 	/**
 	 * Remove an array of specified comments
-	 * @param {array.strings} arrIds
+	 * @param {string[]} arrIds
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias RemoveComments

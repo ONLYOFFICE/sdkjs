@@ -50,7 +50,7 @@
 	 * @property {?string} [baseUrl=""]
 	 * Path to the plugin. All the other paths are calculated relative to this path. In case the plugin is installed on the server, an additional parameter (path to the plugins) is added there. If baseUrl == "" the path to all plugins will be used.
      *
-	 * @property {Variation[]}
+	 * @property {Variation[]} variations
 	 * Plugin variations or "subplugins" - see the Plugin variations section
      */
 
@@ -131,7 +131,7 @@
 
     /**
 	 * Plugin buttons
-	 * @typedef Button
+	 * @typedef {object} Button
 	 * @property {string} text
 	 * @property {string} textLocale
 	 * @property {boolean} primary
@@ -729,7 +729,7 @@
 
 	/**
 	 * A current selection type
-	 * @typedef {("none" | "text" | "drawing" | slide)} SelectionType
+	 * @typedef {("none" | "text" | "drawing" | "slide")} SelectionType
 	 */
 
 	/**
