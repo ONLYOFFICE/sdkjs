@@ -3252,6 +3252,7 @@
 		window["AscCommonExcel"].applyFunction = applyFunction;
 		window['AscCommonExcel'].g_IncludeNewRowColInTable = true;
 		window['AscCommonExcel'].g_AutoCorrectHyperlinks = false;
+		window['AscCommonExcel'].g_ShowZeroCellValues = false;
 
 		window["Asc"]["cDate"] = window["Asc"].cDate = window['AscCommonExcel'].cDate = cDate;
 		prot = cDate.prototype;

@@ -2852,6 +2852,10 @@ var editor;
       window['AscCommonExcel'].g_IncludeNewRowColInTable = value;
     };
 
+	spreadsheet_api.prototype.asc_setShowZeroCellValues = function (value) {
+		window['AscCommonExcel'].g_ShowZeroCellValues = value;
+	};
+
   // Spreadsheet interface
 
   spreadsheet_api.prototype.asc_getColumnWidth = function() {
@@ -5694,6 +5698,8 @@ var editor;
 
   prot["asc_setR1C1Mode"] = prot.asc_setR1C1Mode;
   prot["asc_setIncludeNewRowColTable"] = prot.asc_setIncludeNewRowColTable;
+
+  prot["asc_setShowZeroCellValues"] = prot.asc_setShowZeroCellValues;
   prot["asc_setAutoCorrectHyperlinks"] = prot.asc_setAutoCorrectHyperlinks;
 
 

@@ -3860,7 +3860,13 @@
 	        if (!ct) {
 				return null;
             }
+
 			var c = this._getVisibleCell(col, row);
+
+	        if (!window['AscCommonExcel'].g_ShowZeroCellValues && c.getValue() === "0") {
+	        	return;
+			}
+
 	        var font = c.getFont();
 			var color = font.getColor();
 			var isMerged = ct.flags.isMerged(), range, isWrapped = ct.flags.wrapText;
