@@ -2844,6 +2844,10 @@ var editor;
         }
 	};
 
+	spreadsheet_api.prototype.asc_setAutoCorrectHyperlinks = function (value) {
+		window['AscCommonExcel'].g_AutoCorrectHyperlinks = value;
+	};
+
     spreadsheet_api.prototype.asc_setIncludeNewRowColTable = function (value) {
       window['AscCommonExcel'].g_IncludeNewRowColInTable = value;
     };
@@ -5690,6 +5694,8 @@ var editor;
 
   prot["asc_setR1C1Mode"] = prot.asc_setR1C1Mode;
   prot["asc_setIncludeNewRowColTable"] = prot.asc_setIncludeNewRowColTable;
+  prot["asc_setAutoCorrectHyperlinks"] = prot.asc_setAutoCorrectHyperlinks;
+
 
   // Spreadsheet interface
 

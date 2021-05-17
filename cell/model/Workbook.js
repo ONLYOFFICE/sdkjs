@@ -10086,7 +10086,7 @@
 			}
 		} else if (val) {
 			this._setValue(val, ignoreHyperlink);
-			if (!ignoreHyperlink) {
+			if (!ignoreHyperlink && window['AscCommonExcel'].g_AutoCorrectHyperlinks) {
 				this._autoformatHyperlink(val);
 			}
 			wb.dependencyFormulas.addToChangedCell(this);
@@ -11210,7 +11210,7 @@
 		for(var i = 0, length = aVal.length; i < length; ++i)
 			sSimpleText += aVal[i].text;
 		this._setValue(sSimpleText);
-		if (!ignoreHyperlink) {
+		if (!ignoreHyperlink && window['AscCommonExcel'].g_AutoCorrectHyperlinks) {
 			this._autoformatHyperlink(sSimpleText);
 		}
 		var nRow = this.nRow;

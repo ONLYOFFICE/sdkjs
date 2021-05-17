@@ -3251,6 +3251,7 @@
 		window['AscCommonExcel'].c_msPerDay = c_msPerDay;
 		window["AscCommonExcel"].applyFunction = applyFunction;
 		window['AscCommonExcel'].g_IncludeNewRowColInTable = true;
+		window['AscCommonExcel'].g_AutoCorrectHyperlinks = false;
 
 		window["Asc"]["cDate"] = window["Asc"].cDate = window['AscCommonExcel'].cDate = cDate;
 		prot = cDate.prototype;
