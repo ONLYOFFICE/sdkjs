@@ -257,6 +257,13 @@ CChartSpace.prototype.recalculate = function()
 {
     if(this.bDeleted)
         return;
+
+    var oController = this.getDrawingObjectsController();
+    //Use this check to prevent charts recalculation on not initialized sheets bug 50467
+    if(!oController) {
+        return;
+    }
+    //---------------------------------------------------
     AscFormat.ExecuteNoHistory(function()
     {
         this.updateLinks();
