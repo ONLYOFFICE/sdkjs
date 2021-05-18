@@ -4962,7 +4962,7 @@
     };
 
     /** Для api закрепленных областей */
-    WorksheetView.prototype.freezePane = function () {
+    WorksheetView.prototype.freezePane = function (type) {
         var t = this;
         var activeCell = this.model.selectionRange.activeCell.clone();
         var onChangeFreezePane = function (isSuccess) {
@@ -4970,25 +4970,33 @@
                 return;
             }
             var col, row, mc;
-            if (null !== t.topLeftFrozenCell) {
-                col = row = 0;
-            } else {
-                col = activeCell.col;
-                row = activeCell.row;
+            if (type === Asc.c_oAscFrozenPaneAddType.firstRow) {
+            	col = 0;
+            	row = 1;
+			} else if (type === Asc.c_oAscFrozenPaneAddType.firstCol) {
+				col = 1;
+				row = 0;
+			} else {
+				if (null !== t.topLeftFrozenCell) {
+					col = row = 0;
+				} else {
+					col = activeCell.col;
+					row = activeCell.row;
 
-                if (0 !== row || 0 !== col) {
-                    mc = t.model.getMergedByCell(row, col);
-                    if (mc) {
-                        col = mc.c1;
-                        row = mc.r1;
-                    }
-                }
+					if (0 !== row || 0 !== col) {
+						mc = t.model.getMergedByCell(row, col);
+						if (mc) {
+							col = mc.c1;
+							row = mc.r1;
+						}
+					}
 
-                if (0 === col && 0 === row) {
-                    col = ((t.visibleRange.c2 - t.visibleRange.c1) / 2) >> 0;
-                    row = ((t.visibleRange.r2 - t.visibleRange.r1) / 2) >> 0;
-                }
-            }
+					if (0 === col && 0 === row) {
+						col = ((t.visibleRange.c2 - t.visibleRange.c1) / 2) >> 0;
+						row = ((t.visibleRange.r2 - t.visibleRange.r1) / 2) >> 0;
+					}
+				}
+			}
             t._updateFreezePane(col, row);
         };
 
