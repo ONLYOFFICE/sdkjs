@@ -901,6 +901,10 @@
 
 		var newRanges = [];
 		var bDel, isChanged;
+		//TODO правлю ошибку. 50521 - попытаться понять, как получился такой файл.
+		if (!this.ranges) {
+			return -1;
+		}
 		for (var i = 0; i < this.ranges.length; i++) {
 			if (!bInsert && updateRange.containsRange(this.ranges[i])) {
 				bDel = true;
