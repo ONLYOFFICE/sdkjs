@@ -1959,20 +1959,23 @@
 			this.Memory.WriteLong(dPage);
 		},
 
-		AddFormField : function(x, y, w, h, oForm)
+		AddFormField : function(nX, nY, nW, nH, nBaseLineOffset, oForm)
 		{
 			if (!oForm)
 				return;
+
+			var oParagraph = oForm.GetParagraph();
 
 			this.Memory.WriteByte(CommandType.ctFormField);
 
 			var nStartPos = this.Memory.GetCurPosition();
 			this.Memory.Skip(4);
 
-			this.Memory.WriteDouble(x);
-			this.Memory.WriteDouble(y);
-			this.Memory.WriteDouble(w);
-			this.Memory.WriteDouble(h);
+			this.Memory.WriteDouble(nX);
+			this.Memory.WriteDouble(nY);
+			this.Memory.WriteDouble(nW);
+			this.Memory.WriteDouble(nH);
+			this.Memory.WriteDouble(nBaseLineOffset);
 
 			var nFlagPos = this.Memory.GetCurPosition();
 			this.Memory.Skip(4);
@@ -1997,12 +2000,59 @@
 			if (oFormPr.GetRequired())
 				nFlag |= (1 << 2);
 
+			// 4-ый бит - текстовые настройки рана
+			if (oForm.IsTextForm())
+			{
+				nFlag |= (1 << 3);
+				var nTextPrPos = this.Memory.GetCurPosition();
+				this.Memory.Skip(4);
+
+				var oRun = oForm.Content[0];
+				if (oRun && oRun instanceof ParaRun)
+				{
+					var oTextPr = oRun.Get_CompiledPr(false);
+					var oColor  = oTextPr.GetSimpleTextColor(oParagraph.GetTheme(), oParagraph.GetColorMap());
+
+					this.Memory.WriteString(oTextPr.FontFamily.Name);
+					this.Memory.WriteDouble(oTextPr.FontSize);
+					this.Memory.WriteBool(oTextPr.Bold);
+					this.Memory.WriteBool(oTextPr.Italic);
+					this.Memory.WriteLong(oTextPr.Strikeout ? 1 : (oTextPr.DStrikeout ? 2 : 0));
+					this.Memory.WriteLong(oTextPr.Underline ? 1 : 0);
+					this.Memory.WriteByte(oColor.r);
+					this.Memory.WriteByte(oColor.g);
+					this.Memory.WriteByte(oColor.b);
+					this.Memory.WriteByte(255); // Резервируем место под альфу на всякий случай
+				}
+
+				var nCurPos = this.Memory.GetCurPosition();
+				this.Memory.Seek(nTextPrPos);
+				this.Memory.WriteLong(nCurPos - nTextPrPos);
+				this.Memory.Seek(nCurPos);
+			}
+
+			if (oForm.IsPlaceHolder())
+				nFlag |= (1 << 4);
+
 			if (oForm.IsTextForm())
 			{
 				var oTextFormPr = oForm.GetTextFormPr();
 
-				 if (oTextFormPr.Comb)
-				 	nFlag |= (1 << 20);
+				if (oTextFormPr.Comb)
+					nFlag |= (1 << 20);
+
+				if (oTextFormPr.MaxCharacters)
+				{
+					nFlag |= (1 << 21);
+					this.Memory.WriteLong(oTextFormPr.MaxCharacters);
+				}
+
+				var sValue = oForm.GetSelectedText(true);
+				if (sValue)
+				{
+					nFlag |= (1 << 22);
+					this.Memory.WriteString(sValue);
+				}
 			}
 			else
 			{
@@ -2790,10 +2840,10 @@
 				this.m_arrayPages[this.m_lPagesCount - 1].AddLink(x, y, w, h, dx, dy, dPage);
 		},
 
-		AddFormField : function(x, y, w, h, oForm)
+		AddFormField : function(nX, nY, nW, nH, nBaseLineOffset, oForm)
 		{
 			if (0 !== this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1].AddFormField(x, y, w, h, oForm);
+				this.m_arrayPages[this.m_lPagesCount - 1].AddFormField(nX, nY, nW, nH, nBaseLineOffset, oForm);
 		}
 	};
 

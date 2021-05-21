@@ -13383,7 +13383,23 @@ CTextPr.prototype.GetIncDecFontSizeCS = function(IncFontSize)
 	}
 	return FontSize_IncreaseDecreaseValue(IncFontSize, FontSize);
 };
+CTextPr.prototype.GetSimpleTextColor = function(oTheme, oColorMap)
+{
+	if (this.Unifill)
+	{
+		if (oTheme && oColorMap)
+			this.Unifill.check(oTheme, oColorMap);
 
+		var oRGBA = this.Unifill.getRGBAColor();
+		return new CDocumentColor(oRGBA.R, oRGBA.G, oRGBA.B);
+	}
+	else if (this.Color)
+	{
+		return this.Color;
+	}
+
+	return new CDocumentColor();
+}
 
 CTextPr.prototype.GetIncDecFontSize = function(IncFontSize)
 {

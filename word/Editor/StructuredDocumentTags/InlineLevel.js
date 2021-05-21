@@ -395,9 +395,37 @@ CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 			}
 		}
 
-		if (oBounds)
-			oGraphics.AddFormField(oBounds.X, oBounds.Y, oBounds.W, oBounds.H, this);
+		var oRun = this.Content[0];
+		if (oBounds && oRun)
+		{
+			var oTextPr = oRun.Get_CompiledPr(false);
+
+			g_oTextMeasurer.SetTextPr(oTextPr, PDSH.Paragraph.GetTheme());
+			g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
+
+			var nTextHeight  = g_oTextMeasurer.GetHeight();
+			var nTextDescent = Math.abs(g_oTextMeasurer.GetDescender());
+			var nTextAscent  = nTextHeight - nTextDescent;
+
+			oGraphics.AddFormField(oBounds.X, oBounds.Y, oBounds.W, oBounds.H, nTextAscent, this);
+		}
 	}
+};
+CInlineLevelSdt.prototype.Draw_Elements = function(PDSE)
+{
+	var oGraphics = PDSE.Graphics;
+	if (this.IsForm() && oGraphics && oGraphics.AddFormField && !this.Get_ParentTextTransform())
+		return;
+
+	CParagraphContentWithParagraphLikeContent.prototype.Draw_Elements.apply(this, arguments);
+};
+CInlineLevelSdt.prototype.Draw_Lines = function(PDSL)
+{
+	var oGraphics = PDSL.Graphics;
+	if (this.IsForm() && oGraphics && oGraphics.AddFormField && !this.Get_ParentTextTransform())
+		return;
+
+	CParagraphContentWithParagraphLikeContent.prototype.Draw_Lines.apply(this, arguments);
 };
 CInlineLevelSdt.prototype.GetRangeBounds = function(_CurLine, _CurRange)
 {
