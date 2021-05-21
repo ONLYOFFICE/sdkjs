@@ -3105,6 +3105,8 @@ function (window, undefined) {
 			} else {
 				ws.deleteCFRule(Data.id);
 			}
+		} else if (AscCH.historyitem_Worksheet_SetShowZeros === Type) {
+			ws.setShowZeros(bUndo ? Data.from : Data.to);
 		}
 	};
 	UndoRedoWoorksheet.prototype.forwardTransformationIsAffect = function (Type) {

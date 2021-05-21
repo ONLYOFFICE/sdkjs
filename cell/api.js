@@ -2852,10 +2852,6 @@ var editor;
       window['AscCommonExcel'].g_IncludeNewRowColInTable = value;
     };
 
-	spreadsheet_api.prototype.asc_setShowZeroCellValues = function (value) {
-		window['AscCommonExcel'].g_ShowZeroCellValues = value;
-	};
-
   // Spreadsheet interface
 
   spreadsheet_api.prototype.asc_getColumnWidth = function() {
@@ -3019,6 +3015,10 @@ var editor;
 
 	spreadsheet_api.prototype.asc_setDisplayHeadings = function (value) {
 		this.wb.getWorksheet().changeSheetViewSettings(AscCH.historyitem_Worksheet_SetDisplayHeadings, value);
+	};
+
+	spreadsheet_api.prototype.asc_setShowZeros = function (value) {
+		this.wb.getWorksheet().changeSheetViewSettings(AscCH.historyitem_Worksheet_SetShowZeros, value);
 	};
 
   // Images & Charts
@@ -5729,6 +5729,7 @@ var editor;
   prot["asc_getSheetViewSettings"] = prot.asc_getSheetViewSettings;
   prot["asc_setDisplayGridlines"] = prot.asc_setDisplayGridlines;
   prot["asc_setDisplayHeadings"] = prot.asc_setDisplayHeadings;
+  prot["asc_setShowZeros"] = prot.asc_setShowZeros;
 
   // Defined Names
   prot["asc_getDefinedNames"] = prot.asc_getDefinedNames;

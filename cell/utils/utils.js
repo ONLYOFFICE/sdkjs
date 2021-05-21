@@ -2656,6 +2656,8 @@
 			//current view zoom
 			this.zoomScale = 100;
 
+			this.showZeros = null;
+
 			return this;
 		}
 
@@ -2666,11 +2668,14 @@
 				result.showGridLines = this.showGridLines;
 				result.showRowColHeaders = this.showRowColHeaders;
 				result.zoom = this.zoom;
-				if (this.pane)
+				if (this.pane) {
 					result.pane = this.pane.clone();
+				}
+				result.showZeros = this.showZeros;
 				return result;
 			},
 			isEqual: function (settings) {
+				//TODO showzeros?
 				return this.asc_getShowGridLines() === settings.asc_getShowGridLines() &&
 					this.asc_getShowRowColHeaders() === settings.asc_getShowRowColHeaders();
 			},
@@ -2678,9 +2683,11 @@
 			asc_getShowRowColHeaders: function () { return false !== this.showRowColHeaders; },
 			asc_getZoomScale: function () { return this.zoomScale; },
 			asc_getIsFreezePane: function () { return null !== this.pane && this.pane.isInit(); },
+			asc_getShowZeros: function () { return false !== this.showZeros; },
 			asc_setShowGridLines: function (val) { this.showGridLines = val; },
 			asc_setShowRowColHeaders: function (val) { this.showRowColHeaders = val; },
-			asc_setZoomScale: function (val) { this.zoomScale = val; }
+			asc_setZoomScale: function (val) { this.zoomScale = val; },
+			asc_setShowZeros: function (val) { this.showZeros = val; }
 		};
 
 		/** @constructor */
@@ -3284,7 +3291,6 @@
 		window["AscCommonExcel"].applyFunction = applyFunction;
 		window['AscCommonExcel'].g_IncludeNewRowColInTable = true;
 		window['AscCommonExcel'].g_AutoCorrectHyperlinks = true;
-		window['AscCommonExcel'].g_ShowZeroCellValues = true;
 
 		window["Asc"]["cDate"] = window["Asc"].cDate = window['AscCommonExcel'].cDate = cDate;
 		prot = cDate.prototype;
@@ -3401,8 +3407,10 @@
 		prot["asc_getShowGridLines"] = prot.asc_getShowGridLines;
 		prot["asc_getShowRowColHeaders"] = prot.asc_getShowRowColHeaders;
 		prot["asc_getIsFreezePane"] = prot.asc_getIsFreezePane;
+		prot["asc_getShowZeros"] = prot.asc_getShowZeros;
 		prot["asc_setShowGridLines"] = prot.asc_setShowGridLines;
 		prot["asc_setShowRowColHeaders"] = prot.asc_setShowRowColHeaders;
+		prot["asc_setShowZeros"] = prot.asc_setShowZeros;
 
 		window["AscCommonExcel"].asc_CPane = asc_CPane;
 		window["AscCommonExcel"].asc_CSheetPr = asc_CSheetPr;

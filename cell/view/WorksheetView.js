@@ -3863,7 +3863,7 @@
 
 		var c = this._getVisibleCell(col, row);
 
-		if (!window['AscCommonExcel'].g_ShowZeroCellValues && c.getValue() === "0") {
+		if (false === this.model.getSheetView().asc_getShowZeros() && c.getValue() === "0") {
 			return;
 		}
 
@@ -13392,6 +13392,8 @@
 
 			if (AscCH.historyitem_Worksheet_SetDisplayHeadings === type) {
 				t.model.setDisplayHeadings(val);
+			} else if (AscCH.historyitem_Worksheet_SetShowZeros === type) {
+				t.model.setShowZeros(val);
 			} else {
 				t.model.setDisplayGridlines(val);
 			}
