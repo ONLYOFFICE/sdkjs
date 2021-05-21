@@ -6185,7 +6185,11 @@
 				if (this.updateRowHeightValuePx) {
                     this.updateRowHeightValuePx = newHeight;
 				}
-				rowInfo.height = Asc.round(newHeight * this.getZoom());
+				//TODO правлю на хотфикс ошибку. это следствие, а не причина. нужно пересмотреть! баг 50489
+				var _rowHeight = Asc.round(newHeight * this.getZoom());
+				if (rowInfo) {
+					rowInfo.height = _rowHeight;
+				}
 				History.TurnOff();
 				res = newHeight;
 				var oldExcludeCollapsed = this.model.bExcludeCollapsed;
@@ -6200,7 +6204,7 @@
 						maxW = tm.width;
 					}
 
-					cache.textBound = this.stringRender.getTransformBound(cache.angle, colWidth, rowInfo.height, tm.width,
+					cache.textBound = this.stringRender.getTransformBound(cache.angle, colWidth, _rowHeight, tm.width,
 						cache.cellHA, va, maxW);
 				}
 
