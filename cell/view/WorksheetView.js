@@ -4961,18 +4961,18 @@
         this._isLockedFrozenPane( onChangeFrozenCallback );
     };
 
-    /** Для api закрепленных областей */
-    WorksheetView.prototype.freezePane = function (type) {
-        var t = this;
-        var activeCell = this.model.selectionRange.activeCell.clone();
-        var onChangeFreezePane = function (isSuccess) {
-            if (false === isSuccess) {
-                return;
-            }
-            var col, row, mc;
-            if (type === Asc.c_oAscFrozenPaneAddType.firstRow) {
-            	col = 0;
-            	row = 1;
+	/** Для api закрепленных областей */
+	WorksheetView.prototype.freezePane = function (type) {
+		var t = this;
+		var activeCell = this.model.selectionRange.activeCell.clone();
+		var onChangeFreezePane = function (isSuccess) {
+			if (false === isSuccess) {
+				return;
+			}
+			var col, row, mc;
+			if (type === Asc.c_oAscFrozenPaneAddType.firstRow) {
+				col = 0;
+				row = 1;
 			} else if (type === Asc.c_oAscFrozenPaneAddType.firstCol) {
 				col = 1;
 				row = 0;
@@ -4997,11 +4997,11 @@
 					}
 				}
 			}
-            t._updateFreezePane(col, row);
-        };
+			t._updateFreezePane(col, row);
+		};
 
-        return this._isLockedFrozenPane(onChangeFreezePane);
-    };
+		return this._isLockedFrozenPane(onChangeFreezePane);
+	};
 
     WorksheetView.prototype._updateFreezePane = function (col, row, lockDraw) {
         if (window['IS_NATIVE_EDITOR'])
