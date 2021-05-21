@@ -16273,9 +16273,6 @@
 
 		if (isMerged) {
 			range = ct.flags.merged;
-			if (col !== range.c1 || row !== range.r1) {
-				return null;
-			}
 		}
 
 		var colL = isMerged ? range.c1 : Math.max(col, col - ct.sideL);
