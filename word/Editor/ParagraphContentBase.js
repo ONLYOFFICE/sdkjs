@@ -394,6 +394,9 @@ CParagraphContentBase.prototype.Draw_Elements = function(PDSE)
 CParagraphContentBase.prototype.Draw_Lines = function(PDSL)
 {
 };
+CParagraphContentBase.prototype.SkipDraw = function(PDS)
+{
+};
 //----------------------------------------------------------------------------------------------------------------------
 // Функции для работы с курсором
 //----------------------------------------------------------------------------------------------------------------------
@@ -2642,6 +2645,19 @@ CParagraphContentWithParagraphLikeContent.prototype.Draw_Lines = function(PDSL)
 		PDSL.CurDepth = nCurDepth + 1;
 
 		this.Content[CurPos].Draw_Lines(PDSL);
+	}
+};
+CParagraphContentWithParagraphLikeContent.prototype.SkipDraw = function(PDS)
+{
+	var CurLine  = PDS.Line - this.StartLine;
+	var CurRange = (0 === CurLine ? PDS.Range - this.StartRange : PDS.Range);
+
+	var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
+	var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
+
+	for (var CurPos = StartPos; CurPos <= EndPos; CurPos++)
+	{
+		this.Content[CurPos].SkipDraw(PDS);
 	}
 };
 //----------------------------------------------------------------------------------------------------------------------

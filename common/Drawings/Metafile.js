@@ -2000,48 +2000,21 @@
 			if (oFormPr.GetRequired())
 				nFlag |= (1 << 2);
 
-			// 4-ый бит - текстовые настройки рана
-			if (oForm.IsTextForm())
-			{
-				nFlag |= (1 << 3);
-				var nTextPrPos = this.Memory.GetCurPosition();
-				this.Memory.Skip(4);
-
-				var oRun = oForm.Content[0];
-				if (oRun && oRun instanceof ParaRun)
-				{
-					var oTextPr = oRun.Get_CompiledPr(false);
-					var oColor  = oTextPr.GetSimpleTextColor(oParagraph.GetTheme(), oParagraph.GetColorMap());
-
-					this.Memory.WriteString(oTextPr.FontFamily.Name);
-					this.Memory.WriteDouble(oTextPr.FontSize);
-					this.Memory.WriteBool(oTextPr.Bold);
-					this.Memory.WriteBool(oTextPr.Italic);
-					this.Memory.WriteLong(oTextPr.Strikeout ? 1 : (oTextPr.DStrikeout ? 2 : 0));
-					this.Memory.WriteLong(oTextPr.Underline ? 1 : 0);
-					this.Memory.WriteByte(oColor.r);
-					this.Memory.WriteByte(oColor.g);
-					this.Memory.WriteByte(oColor.b);
-					this.Memory.WriteByte(255); // Резервируем место под альфу на всякий случай
-				}
-
-				var nCurPos = this.Memory.GetCurPosition();
-				this.Memory.Seek(nTextPrPos);
-				this.Memory.WriteLong(nCurPos - nTextPrPos);
-				this.Memory.Seek(nCurPos);
-			}
-
 			if (oForm.IsPlaceHolder())
-				nFlag |= (1 << 4);
+				nFlag |= (1 << 3);
+
+			// 0 - Неизвестно поле
+			// 1 - Текстовое поле
 
 			if (oForm.IsTextForm())
 			{
+				this.Memory.WriteLong(1);
 				var oTextFormPr = oForm.GetTextFormPr();
 
 				if (oTextFormPr.Comb)
 					nFlag |= (1 << 20);
 
-				if (oTextFormPr.MaxCharacters)
+				if (oTextFormPr.MaxCharacters > 0)
 				{
 					nFlag |= (1 << 21);
 					this.Memory.WriteLong(oTextFormPr.MaxCharacters);
@@ -2056,7 +2029,7 @@
 			}
 			else
 			{
-
+				this.Memory.WriteLong(0);
 			}
 
 			var nEndPos = this.Memory.GetCurPosition();

@@ -1387,7 +1387,7 @@ CSdtFormPr.prototype.ReadFromBinary = function(oReader)
 		this.HelpText = oReader.GetString2();
 
 	if (nFlags & 8)
-		this.Required = Reader.GetBool();
+		this.Required = oReader.GetBool();
 };
 CSdtFormPr.prototype.Write_ToBinary = function(oWriter)
 {
