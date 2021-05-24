@@ -540,7 +540,14 @@
 				aValue = list.getValue().split(AscCommon.FormulaSeparators.functionArgumentSeparatorDef);
 				if (aValue && aValue.length) {
 					for (var i = 0; i < aValue.length; i++) {
-						aValue[i] = aValue[i].trim();
+						//обрезаем только вначале строки
+						if (aValue[i] && aValue[i].length) {
+							var pos = 0;
+							while((pos < aValue[i].length) && (aValue[i][pos] == ' ')){
+								++pos;
+							}
+							aValue[i] = pos ? aValue[i].substr(pos) : aValue[i];
+						}
 					}
 				}
 			} else {
