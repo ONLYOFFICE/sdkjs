@@ -1101,9 +1101,9 @@
 					var pluginData = new CPluginData();
 					pluginData.setAttribute("guid", guid);
 					pluginData.setAttribute("type", "onCommandCallback");
-					var _iframe = document.getElementById(runObject.frameId);
 					pluginData.setAttribute("commandReturnData", _return);
 
+					var _iframe = document.getElementById(runObject.frameId);
 					if (_iframe)
 						_iframe.contentWindow.postMessage(pluginData.serialize(), "*");
 				}
