@@ -5000,6 +5000,17 @@
 			t._updateFreezePane(col, row);
 		};
 
+		if (this.topLeftFrozenCell && type === Asc.c_oAscFrozenPaneAddType.firstRow) {
+			if (this.topLeftFrozenCell.col === 1 && this.topLeftFrozenCell.row === 2) {
+				return;
+			}
+		}
+		if (this.topLeftFrozenCell && type === Asc.c_oAscFrozenPaneAddType.firstCol) {
+			if (this.topLeftFrozenCell.col === 2 && this.topLeftFrozenCell.row === 1) {
+				return;
+			}
+		}
+
 		return this._isLockedFrozenPane(onChangeFreezePane);
 	};
 
