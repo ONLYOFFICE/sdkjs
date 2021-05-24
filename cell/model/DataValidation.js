@@ -538,6 +538,11 @@
 		if (list && AscCommonExcel.cElementType.error !== list.type) {
 			if (AscCommonExcel.cElementType.string === list.type) {
 				aValue = list.getValue().split(AscCommon.FormulaSeparators.functionArgumentSeparatorDef);
+				if (aValue && aValue.length) {
+					for (var i = 0; i < aValue.length; i++) {
+						aValue[i] = aValue[i].trim();
+					}
+				}
 			} else {
 				list = list.getRange();
 				if (list) {
