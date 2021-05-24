@@ -1040,6 +1040,7 @@
 			if (value && value != "")
 			{
 				var _command_callback_send = ("command" == name);
+				let _return;
 				try
 				{
 					if (pluginData.getAttribute("interface"))
@@ -1055,7 +1056,7 @@
 						var _script = "(function(){ var Api = window.g_asc_plugins.api;\n" + value + "\n})();";
 						try
 						{
-							eval(_script);
+							_return = eval(_script);
 						}
 						catch (err)
 						{
@@ -1070,6 +1071,7 @@
 								var pluginData = new CPluginData();
 								pluginData.setAttribute("guid", guid);
 								pluginData.setAttribute("type", "onCommandCallback");
+								pluginData.setAttribute("commandReturnData", _return);
 
 								var _iframe = document.getElementById(runObject.frameId);
 								if (_iframe)
@@ -1100,6 +1102,8 @@
 					pluginData.setAttribute("guid", guid);
 					pluginData.setAttribute("type", "onCommandCallback");
 					var _iframe = document.getElementById(runObject.frameId);
+					pluginData.setAttribute("commandReturnData", _return);
+
 					if (_iframe)
 						_iframe.contentWindow.postMessage(pluginData.serialize(), "*");
 				}
