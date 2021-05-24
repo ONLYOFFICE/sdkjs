@@ -3277,8 +3277,8 @@ function CDrawingDocument()
 		var _pageW      = 297;
 		var _pageH      = 210;
 		var _canvas     = document.createElement('canvas');
-		_canvas.width   = TABLE_STYLE_WIDTH_PIX;
-		_canvas.height  = TABLE_STYLE_HEIGHT_PIX;
+		_canvas.width   = (TABLE_STYLE_WIDTH_PIX * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+		_canvas.height  = (TABLE_STYLE_HEIGHT_PIX * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 		var ctx         = _canvas.getContext('2d');
 		var oTable;
 		for (var i = 0; i < logicDoc.TablesForInterface.length; i++)
