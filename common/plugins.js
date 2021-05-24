@@ -1040,7 +1040,7 @@
 			if (value && value != "")
 			{
 				var _command_callback_send = ("command" == name);
-				let _return;
+				var _return;
 				try
 				{
 					if (pluginData.getAttribute("interface"))
