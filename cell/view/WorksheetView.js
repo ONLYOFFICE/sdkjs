@@ -5088,24 +5088,54 @@
         }
     };
 
-	WorksheetView.prototype._getFreezePaneOffset = function (type, range) {
+	WorksheetView.prototype._getFreezePaneOffset = function (type, range, bInsert) {
 		if (this.topLeftFrozenCell) {
 			var lastCol = this.topLeftFrozenCell.getCol0();
 			var lastRow = this.topLeftFrozenCell.getRow0();
 			var row, col;
 			if ((type === c_oAscInsertOptions.InsertColumns || type === c_oAscInsertOptions.DeleteColumns) && lastCol) {
-				var diffCol = lastCol - range.c1;
-				if (diffCol > 0) {
-					col = type === c_oAscInsertOptions.InsertColumns ? (lastCol + diffCol + 1) : (lastCol - diffCol + 1);
+				var diffCol;
+				if (bInsert) {
+					if (lastCol >= range.c1) {
+						diffCol =  range.c2 - range.c1 + 1;
+					}
+					if (diffCol) {
+						col = lastCol + diffCol;
+					}
+				} else {
+					if (range.c2 <= lastCol) {
+						diffCol = range.c2 - range.c1 + 1;
+					} else if (lastCol >= range.c1) {
+						diffCol = lastCol - range.c1;
+					}
+
+					if (diffCol > 0) {
+						col = lastCol - diffCol;
+					}
 				}
 				if (col < 0) {
 					col = 0;
 				}
 			}
 			if ((type === c_oAscInsertOptions.InsertRows || type === c_oAscInsertOptions.DeleteRows) && lastRow) {
-				var diffRow = lastRow - range.r1;
-				if (diffRow > 0) {
-					row = type === c_oAscInsertOptions.InsertRows ? (lastRow + diffRow + 1) : (lastRow - diffRow + 1);
+				var diffRow;
+				if (bInsert) {
+					if (lastRow >= range.r1) {
+						diffRow =  range.r2 - range.r1 + 1;
+					}
+					if (diffRow) {
+						row = lastRow + diffRow;
+					}
+				} else {
+					if (range.r2 <= lastRow) {
+						diffRow = range.r2 - range.r1 + 1;
+					} else if (lastRow >= range.r1) {
+						diffRow = lastRow - range.r1;
+					}
+
+					if (diffRow > 0) {
+						row = lastRow - diffRow;
+					}
 				}
 				if (row < 0) {
 					row = 0;
@@ -13631,8 +13661,8 @@
 		};
 
 		var changeFreezePane;
-		var _checkFreezePaneOffset = function (_type, _range, callback) {
-			changeFreezePane = t._getFreezePaneOffset(_type, _range);
+		var _checkFreezePaneOffset = function (_type, _range, callback, bInsert) {
+			changeFreezePane = t._getFreezePaneOffset(_type, _range, bInsert);
 			if (changeFreezePane) {
 				t._isLockedFrozenPane(function (_success) {
 					if (_success) {
@@ -13836,7 +13866,7 @@
 						_checkFreezePaneOffset(val, lockRange, function () {
 							t._isLockedCells(lockRange, c_oAscLockTypeElemSubType.InsertColumns,
 								onChangeWorksheetCallback);
-						});
+						}, true);
 						break;
 					case c_oAscInsertOptions.InsertRows:
 						lockRange = new asc_Range(0, arn.r1, gc_nMaxCol0, arn.r2);
@@ -13868,7 +13898,7 @@
 						_checkFreezePaneOffset(val, lockRange, function () {
 							t._isLockedCells(lockRange, c_oAscLockTypeElemSubType.InsertRows,
 								onChangeWorksheetCallback);
-						});
+						}, true);
 						break;
 				}
 				break;
