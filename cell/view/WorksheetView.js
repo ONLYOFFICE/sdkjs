@@ -5088,7 +5088,40 @@
         }
     };
 
-    /** */
+	WorksheetView.prototype._getFreezePaneOffset = function (type, range) {
+		if (this.topLeftFrozenCell) {
+			var lastCol = this.topLeftFrozenCell.getCol0();
+			var lastRow = this.topLeftFrozenCell.getRow0();
+			var row, col;
+			if ((type === c_oAscInsertOptions.InsertColumns || type === c_oAscInsertOptions.DeleteColumns) && lastCol) {
+				var diffCol = lastCol - range.c1;
+				if (diffCol > 0) {
+					col = type === c_oAscInsertOptions.InsertColumns ? (lastCol + diffCol + 1) : (lastCol - diffCol + 1);
+				}
+				if (col < 0) {
+					col = 0;
+				}
+			}
+			if ((type === c_oAscInsertOptions.InsertRows || type === c_oAscInsertOptions.DeleteRows) && lastRow) {
+				var diffRow = lastRow - range.r1;
+				if (diffRow > 0) {
+					row = type === c_oAscInsertOptions.InsertRows ? (lastRow + diffRow + 1) : (lastRow - diffRow + 1);
+				}
+				if (row < 0) {
+					row = 0;
+				}
+			}
+
+			if (row !== undefined || col !== undefined) {
+				return {row: row === undefined ? lastRow : row, col: col === undefined ? lastCol : col};
+			}
+		}
+
+		return null;
+	};
+
+
+	/** */
 
     WorksheetView.prototype._drawSelectionElement = function (visibleRange, offsetX, offsetY, args) {
         var range = args[0];
@@ -13597,6 +13630,20 @@
 			return true;
 		};
 
+		var changeFreezePane;
+		var _checkFreezePaneOffset = function (_type, _range, callback) {
+			changeFreezePane = t._getFreezePaneOffset(_type, _range);
+			if (changeFreezePane) {
+				t._isLockedFrozenPane(function (_success) {
+					if (_success) {
+						callback();
+					}
+				});
+			} else {
+				callback();
+			}
+		};
+
 		switch (prop) {
 			case "colWidth":
 				functionModelAction = function () {
@@ -13779,12 +13826,17 @@
 							updateDrawingObjectsInfo2 = {bInsert: true, operType: val, updateRange: arn};
 							t.cellCommentator.updateCommentsDependencies(true, val, arn);
 							t.model.shiftDataValidation(true, val, arn, true);
+							if (changeFreezePane) {
+								t._updateFreezePane(changeFreezePane.col, changeFreezePane.row, true);
+							}
 							History.EndTransaction();
 						};
 
 						arrChangedRanges.push(lockRange);
-						this._isLockedCells(lockRange, c_oAscLockTypeElemSubType.InsertColumns,
-							onChangeWorksheetCallback);
+						_checkFreezePaneOffset(val, lockRange, function () {
+							t._isLockedCells(lockRange, c_oAscLockTypeElemSubType.InsertColumns,
+								onChangeWorksheetCallback);
+						});
 						break;
 					case c_oAscInsertOptions.InsertRows:
 						lockRange = new asc_Range(0, arn.r1, gc_nMaxCol0, arn.r2);
@@ -13807,10 +13859,16 @@
 							updateDrawingObjectsInfo2 = {bInsert: true, operType: val, updateRange: arn};
 							t.cellCommentator.updateCommentsDependencies(true, val, arn);
 							t.model.shiftDataValidation(true, val, arn, true);
+							if (changeFreezePane) {
+								t._updateFreezePane(changeFreezePane.col, changeFreezePane.row, true);
+							}
 						};
 
 						arrChangedRanges.push(lockRange);
-						this._isLockedCells(lockRange, c_oAscLockTypeElemSubType.InsertRows, onChangeWorksheetCallback);
+						_checkFreezePaneOffset(val, lockRange, function () {
+							t._isLockedCells(lockRange, c_oAscLockTypeElemSubType.InsertRows,
+								onChangeWorksheetCallback);
+						});
 						break;
 				}
 				break;
@@ -13929,13 +13987,18 @@
 							t.model.autoFilters.isEmptyAutoFilters(arn, c_oAscDeleteOptions.DeleteColumns);
 							t.model.removeCols(checkRange.c1, checkRange.c2);
 							t._updateGroups(true);
+							if (changeFreezePane) {
+								t._updateFreezePane(changeFreezePane.col, changeFreezePane.row, true);
+							}
 							updateDrawingObjectsInfo2 = {bInsert: false, operType: val, updateRange: arn};
 							History.EndTransaction();
 						};
 
 						arrChangedRanges.push(lockRange);
-						this._isLockedCells(lockRange, c_oAscLockTypeElemSubType.DeleteColumns,
-							onChangeWorksheetCallback);
+						_checkFreezePaneOffset(val, lockRange, function () {
+							t._isLockedCells(lockRange, c_oAscLockTypeElemSubType.DeleteColumns,
+								onChangeWorksheetCallback);
+						});
 						break;
 					case c_oAscDeleteOptions.DeleteRows:
 						isCheckChangeAutoFilter =
@@ -13972,11 +14035,17 @@
 							t._updateSlicers(arn);
 							t._updateGroups();
 							updateDrawingObjectsInfo2 = {bInsert: false, operType: val, updateRange: arn};
+							if (changeFreezePane) {
+								t._updateFreezePane(changeFreezePane.col, changeFreezePane.row, true);
+							}
 							History.EndTransaction();
 						};
 
 						arrChangedRanges.push(lockRange);
-						this._isLockedCells(lockRange, c_oAscLockTypeElemSubType.DeleteRows, onChangeWorksheetCallback);
+						_checkFreezePaneOffset(val, lockRange, function () {
+							t._isLockedCells(lockRange, c_oAscLockTypeElemSubType.DeleteRows,
+								onChangeWorksheetCallback);
+						});
 						break;
 				}
 				this.handlers.trigger("selectionNameChanged", t.getSelectionName(/*bRangeText*/false));
