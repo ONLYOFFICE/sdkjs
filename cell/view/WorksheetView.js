@@ -1165,32 +1165,6 @@
 
             arCopy = ar.clone(true);
 
-			var _generateFormulaText = function (_functionName, innerText) {
-				var res = null;
-
-				var bLocale = AscCommonExcel.oFormulaLocaleInfo.Parse;
-				var cFormulaList = (bLocale && AscCommonExcel.cFormulaFunctionLocalized) ? AscCommonExcel.cFormulaFunctionLocalized : AscCommonExcel.cFormulaFunction;
-				var isSummFunc;
-				if (cFormulaList && _functionName.toUpperCase() in cFormulaList) {
-					var tempFunc = cFormulaList[_functionName.toUpperCase()];
-					if (tempFunc && tempFunc.prototype && tempFunc.prototype.name === "SUM") {
-						isSummFunc = true;
-					}
-				}
-
-				if (isSummFunc && (t.model.AutoFilter && t.model.AutoFilter.isApplyAutoFilter() || t.model.autoFilters._getTableIntersectionWithActiveCell(activeCell, true, true))) {
-					var _name = "SUBTOTAL";
-					var _f = bLocale && AscCommonExcel.cFormulaFunctionToLocale ?
-						AscCommonExcel.cFormulaFunctionToLocale[_name] : _name;
-					var _separator = AscCommon.FormulaSeparators.functionArgumentSeparator;
-					var funcType = 9;
-
-					res = "=" + _f + "(" + funcType + _separator + innerText + ")";
-				}
-
-				return res ? res : ("=" + _functionName + "(" + innerText + ")");
-			};
-
             var functionAction = null;
             var changedRange = null;
 
@@ -1207,7 +1181,7 @@
                         c = hasNumber.arrCols[i];
                         cell = t._getVisibleCell(c, arCopy.r2);
 						text = (new asc_Range(c, arCopy.r1, c, arCopy.r2 - 1)).getName();
-                        val = _generateFormulaText(functionName, text);
+                        val = t.generateAutoCompleteFormula(functionName, text);
                         // ToDo - при вводе формулы в заголовок автофильтра надо писать "0"
                         cell.setValue(val);
                     }
@@ -1216,13 +1190,13 @@
                         r = hasNumber.arrRows[i];
                         cell = t._getVisibleCell(arCopy.c2, r);
                         text = (new asc_Range(arCopy.c1, r, arCopy.c2 - 1, r)).getName();
-                        val = _generateFormulaText(functionName, text);
+                        val = t.generateAutoCompleteFormula(functionName, text);
                         cell.setValue(val);
                     }
                     // Значение в правой нижней ячейке
                     cell = t._getVisibleCell(arCopy.c2, arCopy.r2);
                     text = (new asc_Range(arCopy.c1, arCopy.r2, arCopy.c2 - 1, arCopy.r2)).getName();
-                    val = _generateFormulaText(functionName, text);
+                    val = t.generateAutoCompleteFormula(functionName, text);
                     cell.setValue(val);
                 };
             } else if (true === hasNumberInLastRow && false === hasNumberInLastColumn) {
@@ -1236,7 +1210,7 @@
                         r = hasNumber.arrRows[i];
                         cell = t._getVisibleCell(arCopy.c2, r);
                         text = (new asc_Range(arCopy.c1, r, arCopy.c2 - 1, r)).getName();
-                        val = _generateFormulaText(functionName, text);
+                        val = t.generateAutoCompleteFormula(functionName, text);
                         cell.setValue(val);
                     }
                 };
@@ -1251,7 +1225,7 @@
                         c = hasNumber.arrCols[i];
                         cell = t._getVisibleCell(c, arCopy.r2);
                         text = (new asc_Range(c, arCopy.r1, c, arCopy.r2 - 1)).getName();
-                        val = _generateFormulaText(functionName, text);
+                        val = t.generateAutoCompleteFormula(functionName, text);
                         cell.setValue(val);
                     }
                 };
@@ -1264,7 +1238,7 @@
                         cell = t._getVisibleCell(arCopy.c2, arCopy.r2);
                         // ToDo вводить в первое свободное место, а не сразу за диапазоном
                         text = (new asc_Range(arCopy.c1, arCopy.r2, arCopy.c2 - 1, arCopy.r2)).getName();
-                        val = _generateFormulaText(functionName, text);
+                        val = t.generateAutoCompleteFormula(functionName, text);
                         cell.setValue(val);
                     };
                 } else {
@@ -1278,7 +1252,7 @@
                             cell = t._getVisibleCell(c, arCopy.r2);
                             // ToDo вводить в первое свободное место, а не сразу за диапазоном
                             text = (new asc_Range(c, arCopy.r1, c, arCopy.r2 - 1)).getName();
-                            val = _generateFormulaText(functionName, text);
+                            val = t.generateAutoCompleteFormula(functionName, text);
                             cell.setValue(val);
                         }
                     };
@@ -1428,6 +1402,33 @@
 
 		return result;
     };
+
+	WorksheetView.prototype.generateAutoCompleteFormula = function (name, text) {
+		var _res = null;
+
+		var activeCell = this.model.selectionRange.activeCell;
+		var bLocale = AscCommonExcel.oFormulaLocaleInfo.Parse;
+		var cFormulaList = (bLocale && AscCommonExcel.cFormulaFunctionLocalized) ? AscCommonExcel.cFormulaFunctionLocalized : AscCommonExcel.cFormulaFunction;
+		name = name.toUpperCase();
+		var isSumFunc;
+		if (cFormulaList && name in cFormulaList) {
+			var tempFunc = cFormulaList[name];
+			if (tempFunc && tempFunc.prototype && tempFunc.prototype.name === "SUM") {
+				isSumFunc = true;
+			}
+		}
+
+		if (isSumFunc && ((this.model.AutoFilter && this.model.AutoFilter.isApplyAutoFilter()) || this.model.autoFilters._getTableIntersectionWithActiveCell(activeCell, true, true))) {
+			var _name = "SUBTOTAL";
+			var _f = bLocale && AscCommonExcel.cFormulaFunctionToLocale ? AscCommonExcel.cFormulaFunctionToLocale[_name] : _name;
+			var _separator = AscCommon.FormulaSeparators.functionArgumentSeparator;
+			var funcType = 9;
+
+			_res = "=" + _f + "(" + funcType + _separator + text + ")";
+		}
+
+		return _res ? _res : ("=" + name + "(" + text + ")");
+	};
 
     WorksheetView.prototype._prepareComments = function () {
         // ToDo возможно не нужно это делать именно тут..
