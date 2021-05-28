@@ -12038,7 +12038,7 @@
 						if (!this.wb.getCellEditMode())
 							tempRange.SetValue(resultText);
 						else
-							this.wb.cellEditor._addChars(resultText);
+							this.wb.cellEditor.pasteText(resultText);
 				}
 			}
 		}
