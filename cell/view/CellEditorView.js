@@ -1406,6 +1406,21 @@
 		return selection;
 	};
 
+	CellEditor.prototype.calculateOffset = function (pos) {
+		var left = 0;
+		var top = 0;
+		if (pos != null && this.textRender) {
+			var _top = this.textRender.calcLineOffset(this.topLineIndex);
+			var _begInfo = this.textRender.calcCharOffset(pos);
+			var _topLine = _begInfo ? this.textRender.calcLineOffset(_begInfo.lineIndex) : null;
+
+			left = _begInfo && _begInfo.left ? _begInfo.left : 0;
+			top = _topLine != null && _top != null ? _topLine - _top : 0;
+		}
+
+		return [left, top];
+	};
+
 	// Cursor
 
     CellEditor.prototype._updateCursorStyle = function (cursor) {

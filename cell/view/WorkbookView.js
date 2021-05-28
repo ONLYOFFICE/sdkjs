@@ -2271,7 +2271,7 @@
       }
     }
     if (0 < arrResult.length) {
-      this.handlers.trigger('asc_onFormulaCompleteMenu', arrResult);
+      this.handlers.trigger('asc_onFormulaCompleteMenu', arrResult, this.cellEditor.calculateOffset(fPos));
 
       this.lastFPos = fPos;
       this.lastFNameLength = fName.length;
