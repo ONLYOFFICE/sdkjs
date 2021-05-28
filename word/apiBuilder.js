@@ -12035,7 +12035,10 @@
 					nTextToReplace += nCountLinesInCell;
 
 					if (resultText !== '')
-						tempRange.SetValue(resultText);
+						if (!this.wb.getCellEditMode())
+							tempRange.SetValue(resultText);
+						else
+							this.wb.cellEditor._addChars(resultText);
 				}
 			}
 		}
