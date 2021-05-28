@@ -8443,7 +8443,8 @@
 		var vr = this.visibleRange;
 		var nRowsCount = this.nRowsCount;
 		var nColsCount = this.nColsCount;
-		var ar = range || this._getSelection().getLast();
+		var selection = this.model.selectionRange || this.model.copySelection;
+		var ar = range || selection.getLast();
 		if (this.getFormulaEditMode()) {
 			// Для формул нужно сделать ограничение по range (у нас хранится полный диапазон)
 			if (ar.c2 >= this.nColsCount || ar.r2 >= this.nRowsCount) {
