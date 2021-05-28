@@ -6937,8 +6937,11 @@ function BinaryPPTYLoader()
                                 var _object = this.ReadPic(_type);
                                 if (!IsHiddenObj(_object))
                                 {
-                                    shapes[shapes.length] = _object;
-                                    _object.setParent2(this.TempMainObject);
+                                    if(_type !== 6 || _object.checkCorrect())
+                                    {
+                                        shapes[shapes.length] = _object;
+                                        _object.setParent2(this.TempMainObject);
+                                    }
                                 }
                                 break;
                             }
@@ -7044,14 +7047,6 @@ function BinaryPPTYLoader()
                 {
                     if(isOle) {
                         this.ReadOleInfo(pic);
-                        // if(pic.m_sObjectFile === "maskFile.docx"
-                        //     ||  pic.m_sObjectFile === "maskFile.xlsx"){
-                        //     var oParent = pic.parent;
-                        //     pic = AscFormat.CImageShape.prototype.copy.call(pic);
-                        //     if(oParent){
-                        //         pic.setParent(oParent);
-                        //     }
-                        // }
                     } else {
                         s.SkipRecord();
                     }
@@ -12115,14 +12110,6 @@ CCore.prototype.Refresh_RecalcData2 = function(){
                     {
                         if(isOle) {
                             this.ReadOleInfo(pic);
-                            // if(pic.m_sObjectFile === "maskFile.docx"
-                            //     ||  pic.m_sObjectFile === "maskFile.xlsx"){
-                            //     var oParent = pic.parent;
-                            //     pic = AscFormat.CImageShape.prototype.copy.call(pic);
-                            //     if(oParent){
-                            //         pic.setParent(oParent);
-                            //     }
-                            // }
                         } else {
                             s.SkipRecord();
                         }

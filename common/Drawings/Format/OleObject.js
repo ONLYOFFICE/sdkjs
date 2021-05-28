@@ -206,7 +206,14 @@ function (window, undefined) {
         AscFormat.CImageShape.prototype.handleUpdateExtents.call(this, []);
     };
     COleObject.prototype.checkTypeCorrect = function(){
-        if(!this.m_sData){
+        var bCorrectData = false;
+        if(this.m_sData) {
+            bCorrectData = true;
+        }
+        else if(this.m_sObjectFile && this.m_aBinaryData) {
+            bCorrectData = true;
+        }
+        if(!bCorrectData){
             return false;
         }
         if(!this.m_sApplicationId){
