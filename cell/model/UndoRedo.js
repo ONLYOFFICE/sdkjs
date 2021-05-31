@@ -1189,6 +1189,43 @@ function (window, undefined) {
 		this.c2 = collaborativeEditing.getLockMeColumn2(nSheetId, this.c2);
 	};
 
+
+	function UndoRedoData_FrozenBBox(oBBox) {
+		if (null != oBBox) {
+			this.c1 = oBBox.c1;
+			this.r1 = oBBox.r1;
+			this.c2 = oBBox.c2;
+			this.r2 = oBBox.r2;
+		} else {
+			this.c1 = null;
+			this.r1 = null;
+			this.c2 = null;
+			this.r2 = null;
+		}
+	}
+
+	UndoRedoData_FrozenBBox.prototype = Object.create(UndoRedoData_BBox.prototype);
+	UndoRedoData_FrozenBBox.prototype.applyCollaborative = function (nSheetId, collaborativeEditing) {
+		var _r1 = this.r1 > 0 ? collaborativeEditing.getLockMeRow2(nSheetId, this.r1 - 1) : null;
+		var _r2 = this.r2 > 0 ? collaborativeEditing.getLockMeRow2(nSheetId, this.r2 - 1) : null;
+		var _c1 = this.c1 > 0 ? collaborativeEditing.getLockMeRow2(nSheetId, this.c1 - 1) : null;
+		var _c2 = this.c2 > 0 ? collaborativeEditing.getLockMeRow2(nSheetId, this.c2 - 1) : null;
+
+		if (_r1 !== null && _r1 !== this.r1 - 1) {
+			this.r1 = _r1 + 1;
+		}
+		if (_r2 !== null && _r2 !== this.r2 - 1) {
+			this.r2 = _r2 + 1;
+		}
+		if (_c1 !== null && _c1 !== this.c1 - 1) {
+			this.c1 = _c1 + 1;
+		}
+		if (_c2 !== null && _c2 !== this.c2 - 1) {
+			this.c2 = _c2 + 1;
+		}
+	};
+
+
 	function UndoRedoData_SortData(bbox, places, sortByRow) {
 		this.bbox = bbox;
 		this.places = places;
@@ -2910,15 +2947,15 @@ function (window, undefined) {
 			worksheetView = wb.oApi.wb.getWorksheetById(nSheetId);
 			var updateData = bUndo ? Data.from : Data.to;
 
-			var _r1 = collaborativeEditing.getLockOtherRow2(nSheetId, updateData.r1 - 1);
-			var _c1 = collaborativeEditing.getLockOtherColumn2(nSheetId, updateData.c1 - 1);
+			var _r1 = updateData.r1 > 0 ? collaborativeEditing.getLockOtherRow2(nSheetId, updateData.r1 - 1) : null;
+			var _c1 = updateData.c1 > 0 ? collaborativeEditing.getLockOtherColumn2(nSheetId, updateData.c1 - 1) : null;
 
-			if (_r1 !== updateData.r1 - 1) {
+			if (_r1 !== null && _r1 !== updateData.r1 - 1) {
 				_r1++;
 			} else {
 				_r1 = updateData.r1;
 			}
-			if (_c1 !== updateData.c1 - 1) {
+			if (_c1 !== null && _c1 !== updateData.c1 - 1) {
 				_c1++;
 			} else {
 				_c1 = updateData.c1;
@@ -4252,6 +4289,7 @@ function (window, undefined) {
 	window['AscCommonExcel'].UndoRedoData_ColProp = UndoRedoData_ColProp;
 	window['AscCommonExcel'].UndoRedoData_RowProp = UndoRedoData_RowProp;
 	window['AscCommonExcel'].UndoRedoData_BBox = UndoRedoData_BBox;
+	window['AscCommonExcel'].UndoRedoData_FrozenBBox = UndoRedoData_FrozenBBox;
 	window['AscCommonExcel'].UndoRedoData_SortData = UndoRedoData_SortData;
 	window['AscCommonExcel'].UndoRedoData_PivotTable = UndoRedoData_PivotTable;
 	window['AscCommonExcel'].UndoRedoData_PivotTableRedo = UndoRedoData_PivotTableRedo;
