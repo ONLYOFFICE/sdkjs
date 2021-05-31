@@ -3563,14 +3563,16 @@
 
 		this._prepareCellTextMetricsCache(range);
 
+		var cfIterator = this.model.getConditionalFormattingRangeIterator();
+
 		var mergedCells = {}, mc;
 		for (var row = range.r1; row <= range.r2; ++row) {
-			this._drawRowBG(drawingCtx, row, range.c1, range.c2, offsetX, offsetY, mergedCells);
+			this._drawRowBG(drawingCtx, row, range.c1, range.c2, offsetX, offsetY, mergedCells, null, cfIterator);
 		}
 		// draw merged cells at last stage to fix cells background issue
 		for (var i in mergedCells) {
 			mc = mergedCells[i];
-			this._drawRowBG(drawingCtx, mc.r1, mc.c1, mc.c1, offsetX, offsetY, null, mc);
+			this._drawRowBG(drawingCtx, mc.r1, mc.c1, mc.c1, offsetX, offsetY, null, mc, cfIterator);
 		}
 		this._drawSparklines(drawingCtx, range, offsetX, offsetY);
 		this._drawCellsBorders(drawingCtx, range, offsetX, offsetY, mergedCells);
@@ -3588,16 +3590,13 @@
     };
 
     /** Рисует фон ячеек в строке */
-    WorksheetView.prototype._drawRowBG = function (drawingCtx, row, colStart, colEnd, offsetX, offsetY, mergedCells, mc) {
+    WorksheetView.prototype._drawRowBG = function (drawingCtx, row, colStart, colEnd, offsetX, offsetY, mergedCells, mc, cfIterator) {
 		var height = this._getRowHeight(row);
 		if (0 === height && mergedCells) {
 			return;
 		}
 
 		var drawCells = {}, i;
-		var aRules = this.model.aConditionalFormattingRules.sort(function (v1, v2) {
-			return v2.priority - v1.priority;
-		});
 
 		var top = this._getRowTop(row);
 		var ctx = drawingCtx || this.drawingCtx;
@@ -3652,7 +3651,7 @@
                 AscCommonExcel.drawFillCell(ctx, graphics, fill, new AscCommon.asc_CRect(x - offsetX, y - offsetY, w, h));
 			}
 
-			var showValue = this._drawCellCF(ctx, aRules, c, row, col, top, width + mwidth, height + mheight, offsetX, offsetY);
+			var showValue = this._drawCellCF(ctx, cfIterator, c, row, col, top, width + mwidth, height + mheight, offsetX, offsetY);
 			if (showValue) {
 				drawCells[col] = 1;
 			}
@@ -3671,13 +3670,13 @@
 		}
 		// draw text
 		for (i in drawCells) {
-			this._drawCellText(drawingCtx, aRules, i >> 0, row, colStart, colEnd, offsetX, offsetY);
+			this._drawCellText(drawingCtx, cfIterator, i >> 0, row, colStart, colEnd, offsetX, offsetY);
 		}
     };
 
-	WorksheetView.prototype._getCellCF = function (aRules, c, row, col, type) {
+	WorksheetView.prototype._getCellCF = function (cfIterator, c, row, col, type) {
 		var ct = this._getCellTextCache(col, row);
-		if (!ct || !ct.flags.isNumberFormat || 0 === aRules.length) {
+		if (!ct || !ct.flags.isNumberFormat || 0 === cfIterator.getSize()) {
 			return null;
 		}
 		var cellValue = c.getNumberValue();
@@ -3685,32 +3684,31 @@
 			return null;
 		}
 
-		var oRule, oRuleElement, ranges, multiplyRange, values;
+		var oRule, oRuleElement, ranges, values;
+		var aRules = cfIterator.get(row, col);
+
 		for (var i = aRules.length - 1; i >= 0; --i) {
 			oRule = aRules[i];
 			ranges = oRule.ranges;
-			multiplyRange = new AscCommonExcel.MultiplyRange(ranges);
-			if (multiplyRange.contains(col, row)) {
-				oRuleElement = oRule.asc_getColorScaleOrDataBarOrIconSetRule();
-				if (!oRuleElement || Asc.ECfType.colorScale === oRuleElement.type) {
-					continue;
-				}
-				if (type !== oRule.type) {
-					continue;
-				}
-
-				if (Asc.ECfType.iconSet === oRule.type) {
-					if (ct.angle && oRuleElement.ShowValue) {
-						continue;
-					}
-					values = this.model._getValuesForConditionalFormatting(ranges, true);
-					var img = AscCommonExcel.getCFIcon(oRuleElement, oRule.getIndexRule(values, this.model, cellValue));
-					if (!img) {
-						continue;
-					}
-				}
-				return oRule;
+			oRuleElement = oRule.asc_getColorScaleOrDataBarOrIconSetRule();
+			if (!oRuleElement || Asc.ECfType.colorScale === oRuleElement.type) {
+				continue;
 			}
+			if (type !== oRule.type) {
+				continue;
+			}
+
+			if (Asc.ECfType.iconSet === oRule.type) {
+				if (ct.angle && oRuleElement.ShowValue) {
+					continue;
+				}
+				values = this.model._getValuesForConditionalFormatting(ranges, true);
+				var img = AscCommonExcel.getCFIcon(oRuleElement, oRule.getIndexRule(values, this.model, cellValue));
+				if (!img) {
+					continue;
+				}
+			}
+			return oRule;
 		}
 
 		return null;
@@ -3852,9 +3850,9 @@
 			}, this, [img, rect, iconSize * dScale * this.getZoom()]
 		);
 	};
-    WorksheetView.prototype._drawCellCF = function (ctx, aRules, c, row, col, top, width, height, offsetX, offsetY) {
-		var oDataBarRule = this._getCellCF(aRules, c, row, col, Asc.ECfType.dataBar);
-		var oIconSetRule = this._getCellCF(aRules, c, row, col, Asc.ECfType.iconSet);
+    WorksheetView.prototype._drawCellCF = function (ctx, cfIterator, c, row, col, top, width, height, offsetX, offsetY) {
+		var oDataBarRule = this._getCellCF(cfIterator, c, row, col, Asc.ECfType.dataBar);
+		var oIconSetRule = this._getCellCF(cfIterator, c, row, col, Asc.ECfType.iconSet);
 		if (!oDataBarRule && !oIconSetRule) {
 			return true;
 		}
@@ -3883,7 +3881,7 @@
 	};
 
 	/** Рисует текст ячейки */
-	WorksheetView.prototype._drawCellText = function (drawingCtx, aRules, col, row, colStart, colEnd, offsetX, offsetY) {
+	WorksheetView.prototype._drawCellText = function (drawingCtx, cfIterator, col, row, colStart, colEnd, offsetX, offsetY) {
 		var ct = this._getCellTextCache(col, row);
 		if (!ct) {
 			return null;
@@ -4061,7 +4059,7 @@
 			}
 		} else {
 			ctx.AddClipRect(x1, y1, w, h);
-			if (this._getCellCF(aRules, c, row, col, Asc.ECfType.iconSet) && AscCommon.align_Left === ct.cellHA) {
+			if (this._getCellCF(cfIterator, c, row, col, Asc.ECfType.iconSet) && AscCommon.align_Left === ct.cellHA) {
 				textX +=
 					AscCommon.AscBrowser.convertToRetinaValue(getCFIconSize(font.getSize()) * this.getZoom(), true);
 			}
@@ -4661,22 +4659,6 @@
 				var x1 = this._getColLeft(col) - offsetX;
 				var x2 = x1 + w - gridlineSize;
 
-				if (row === t.nRowsCount) {
-					bBotPrev = bBotCur = bBotNext = null;
-				} else {
-					if (isFirstColTmp) {
-						bBotPrev = arrNextRow[prevCol] =
-							new CellBorderObject(isPrevColExist ? t._getVisibleCell(prevCol, nextRow).getBorder() :
-								null, objMCNextRow ? objMCNextRow[prevCol] : null, prevCol, nextRow);
-						bBotCur = arrNextRow[col] =
-							new CellBorderObject(t._getVisibleCell(col, nextRow).getBorder(), objMCNextRow ?
-								objMCNextRow[col] : null, col, nextRow);
-					} else {
-						bBotPrev = bBotCur;
-						bBotCur = bBotNext;
-					}
-				}
-
 				if (isFirstColTmp) {
 					bPrev = arrCurrRow[prevCol] =
 						new CellBorderObject(isPrevColExist ? t._getVisibleCell(prevCol, row).getBorder() :
@@ -4700,14 +4682,6 @@
 						new CellBorderObject(t._getVisibleCell(nextCol, row).getBorder(), objMCRow ? objMCRow[nextCol] :
 							null, nextCol, row);
 					bTopNext = arrPrevRow[nextCol];
-
-					if (row === t.nRowsCount) {
-						bBotNext = null;
-					} else {
-						bBotNext = arrNextRow[nextCol] =
-							new CellBorderObject(t._getVisibleCell(nextCol, nextRow).getBorder(), objMCNextRow ?
-								objMCNextRow[nextCol] : null, nextCol, nextRow);
-					}
 				}
 
 				if (mc && row !== mc.r1 && row !== mc.r2 && col !== mc.c1 && col !== mc.c2) {
@@ -4769,6 +4743,64 @@
 //							drawHorizontalBorder.call(this, tb, lb, lbPrev, rb, rbPrev, x1, y1, x2);
 //						}
 				}
+			}
+			isFirstCol = true;
+			for (col = range.c1; col <= range.c2 && col < t.nColsCount; col = nextCol) {
+				nextCol = col + 1;
+				w = this._getColumnWidth(col);
+				if (0 === w) {
+					continue;
+				}
+				// Нужно отсеять пустые справа
+				for (; nextCol <= range.c2 && nextCol < t.nColsCount; ++nextCol) {
+					if (0 < this._getColumnWidth(nextCol)) {
+						break;
+					}
+				}
+
+				var isFirstColTmp = isFirstCol, isLastCol = nextCol > range.c2 || nextCol >= t.nColsCount;
+				isFirstCol = false; // Это уже не первая колонка (определяем не по совпадению с range.c1, а по видимости)
+
+				mc = objMCRow ? objMCRow[col] : null;
+
+				var x1 = this._getColLeft(col) - offsetX;
+				var x2 = x1 + w - gridlineSize;
+
+				bCur = arrCurrRow[col];
+
+				if (row === t.nRowsCount) {
+					bBotPrev = bBotCur = bBotNext = null;
+				} else {
+					if (isFirstColTmp) {
+
+						bBotPrev = arrNextRow[prevCol] =
+							new CellBorderObject(isPrevColExist ? t._getVisibleCell(prevCol, nextRow).getBorder() :
+								null, objMCNextRow ? objMCNextRow[prevCol] : null, prevCol, nextRow);
+						bBotCur = arrNextRow[col] =
+							new CellBorderObject(t._getVisibleCell(col, nextRow).getBorder(), objMCNextRow ?
+								objMCNextRow[col] : null, col, nextRow);
+					} else {
+						bBotPrev = bBotCur;
+						bBotCur = bBotNext;
+					}
+				}
+
+				if (col === t.nColsCount) {
+				} else {
+					if (row === t.nRowsCount) {
+						bBotNext = null;
+					} else {
+
+						bBotNext = arrNextRow[nextCol] =
+							new CellBorderObject(t._getVisibleCell(nextCol, nextRow).getBorder(), objMCNextRow ?
+								objMCNextRow[nextCol] : null, nextCol, nextRow);
+					}
+				}
+
+				if (mc && row !== mc.r1 && row !== mc.r2 && col !== mc.c1 && col !== mc.c2) {
+					continue;
+				}
+				
 				if (!mc || row === mc.r2) {
 					// draw bottom border
 					drawHorizontalBorder(bCur, bBotCur, x1, y2, x2);
@@ -16591,12 +16623,10 @@
 		//TODO пока решили не учитывать позицию текста. кнопка всегда прижата к левому краю. учитывается только левый индент
 
 		var fontSize = c.getFont().getSize();
-		var aRules = this.model.aConditionalFormattingRules.sort(function (v1, v2) {
-			return v2.priority - v1.priority;
-		});
+		var cfIterator = this.model.getConditionalFormattingRangeIterator();
 		var align = c.getAlign();
 		var cellHA = align.getAlignHorizontal();
-		if (this._getCellCF(aRules, c, row, col, Asc.ECfType.iconSet) /*&& AscCommon.align_Left === cellHA*/) {
+		if (this._getCellCF(cfIterator, c, row, col, Asc.ECfType.iconSet) /*&& AscCommon.align_Left === cellHA*/) {
 			textX += AscCommon.AscBrowser.convertToRetinaValue(getCFIconSize(fontSize) * this.getZoom(), true);
 		}
 		var indent = align.getIndent();

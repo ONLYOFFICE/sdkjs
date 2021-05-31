@@ -5978,6 +5978,13 @@
 			}
 		});
 	}
+	if (!Object.values) {
+		Object.values = function (obj) {
+			return Object.keys(obj).map(function (e) {
+				return obj[e];
+			});
+		}
+	}
 	if (typeof Int8Array !== 'undefined' && !Int8Array.prototype.fill) {
 		Int8Array.prototype.fill = Array.prototype.fill;
 	}
@@ -6430,6 +6437,94 @@
 
 	var g_oCRC32 = new CRC32();
 
+	function RangeTopBottomIterator() {
+		this.size = 0;
+		this.rangesTop = null;
+		this.indexTop = 0;
+		this.rangesBottom = null;
+		this.indexBottom = 0;
+		this.lastRow = -1;
+		this.mmap = null;
+		this.mmapCache = null;
+	}
+	RangeTopBottomIterator.prototype.init = function (arr, fGetRanges) {
+		var rangesTop = this.rangesTop = [];
+		var rangesBottom = this.rangesBottom = [];
+		var nextId = 0;
+		this.size = arr.length;
+		arr.forEach(function (elem) {
+			var ranges = fGetRanges(elem);
+			for (var i = 0; i < ranges.length; i++) {
+				var rangeElem = {id: nextId++, bbox: ranges[i], data: elem, isInsert: false};
+				rangesTop.push(rangeElem);
+				rangesBottom.push(rangeElem);
+			}
+		});
+		//Array.sort is stable in all browsers
+		//https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#browser_compatibility
+		this.rangesTop.sort(RangeTopBottomIterator.prototype.compareByLeftTop);
+		this.rangesBottom.sort(RangeTopBottomIterator.prototype.compareByRightBottom);
+		this.reset();
+	};
+	RangeTopBottomIterator.prototype.compareByLeftTop = function (a, b) {
+		return Asc.Range.prototype.compareByLeftTop(a.bbox, b.bbox);
+	};
+	RangeTopBottomIterator.prototype.compareByRightBottom = function (a, b) {
+		return Asc.Range.prototype.compareByRightBottom(a.bbox, b.bbox);
+	};
+	RangeTopBottomIterator.prototype.getSize = function () {
+		return this.size;
+	};
+	RangeTopBottomIterator.prototype.reset = function () {
+		this.indexTop = 0;
+		this.indexBottom = 0;
+		this.lastRow = -1;
+		if (this.mmap) {
+			this.mmap.forEach(function (rangeElem) {
+				rangeElem.isInsert = false;
+			});
+		}
+		this.mmap = new Map();
+		this.mmapCache = null;
+	};
+	RangeTopBottomIterator.prototype.get = function (row, col) {
+		//todo binary search
+		//todo dynamic column range or preassigned column range
+		if (this.lastRow > row) {
+			this.reset();
+		}
+		var rangeElem;
+		while (this.indexTop < this.rangesTop.length && row >= this.rangesTop[this.indexTop].bbox.r1) {
+			rangeElem = this.rangesTop[this.indexTop++];
+			if (row <= rangeElem.bbox.r2) {
+				rangeElem.isInsert = true;
+				this.mmap.set(rangeElem.id, rangeElem);
+				this.mmapCache = null;
+			}
+		}
+		while (this.indexBottom < this.rangesBottom.length && row > this.rangesBottom[this.indexBottom].bbox.r2) {
+			rangeElem = this.rangesBottom[this.indexBottom++];
+			if (rangeElem.isInsert) {
+				rangeElem.isInsert = false;
+				this.mmap.delete(rangeElem.id);
+				this.mmapCache = null;
+			}
+		}
+		var t = this;
+		if (!this.mmapCache) {
+			this.mmapCache = [];
+			this.mmap.forEach(function (rangeElem) {
+				for (var i = rangeElem.bbox.c1; i <= rangeElem.bbox.c2; ++i) {
+					if (!t.mmapCache[i]) {
+						t.mmapCache[i] = [];
+					}
+					t.mmapCache[i].push(rangeElem.data);
+				}
+			});
+		}
+		this.lastRow = row;
+		return t.mmapCache[col] || [];
+	};
 
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
@@ -6571,6 +6666,7 @@
 
 	window["AscCommon"].CCustomShortcutActionSymbol = window["AscCommon"]["CCustomShortcutActionSymbol"] = CCustomShortcutActionSymbol;
 	window['AscCommon'].g_oCRC32  = g_oCRC32;
+	window["AscCommon"].RangeTopBottomIterator = RangeTopBottomIterator;
 })(window);
 
 window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo)

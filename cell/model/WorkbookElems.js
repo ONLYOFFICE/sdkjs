@@ -3944,7 +3944,8 @@ StyleManager.prototype =
 	/** @constructor */
 	function SheetMergedStyles() {
 		this.stylesTablePivot = [];
-		this.stylesConditional = [];
+		this.stylesConditional = {};
+		this.stylesConditionalIterator = null;
 	}
 
 	SheetMergedStyles.prototype.setTablePivotStyle = function(range, xf, stripe) {
@@ -3958,14 +3959,19 @@ StyleManager.prototype =
 			}
 		}
 	};
-	SheetMergedStyles.prototype.setConditionalStyle = function(multiplyRange, formula) {
-		this.stylesConditional.push({multiplyRange: multiplyRange, formula: formula});
+	SheetMergedStyles.prototype.setConditionalStyle = function(id, ranges, formula) {
+		this.stylesConditionalIterator = null;
+		this.stylesConditional[id] = {ranges: ranges, formula: formula};
 	};
 	SheetMergedStyles.prototype.clearConditionalStyle = function(multiplyRange) {
-		for (var i = this.stylesConditional.length - 1; i >= 0; --i) {
-			var style = this.stylesConditional[i];
-			if (style.multiplyRange.isIntersect(multiplyRange)) {
-				this.stylesConditional.splice(i, 1);
+		this.stylesConditionalIterator = null;
+		for (var i in this.stylesConditional) {
+			if (this.stylesConditional.hasOwnProperty(i)) {
+				var style = this.stylesConditional[i];
+				var mr = new AscCommonExcel.MultiplyRange(style.ranges);
+				if (mr.isIntersect(multiplyRange)) {
+					delete this.stylesConditional[i];
+				}
 			}
 		}
 	};
@@ -3974,13 +3980,17 @@ StyleManager.prototype =
 		if (opt_ws) {
 			opt_ws._updateConditionalFormatting();
 		}
-		for (var i = 0; i < this.stylesConditional.length; ++i) {
-			var style = this.stylesConditional[i];
-			if (style.multiplyRange.contains(col, row)) {
-				var xf = style.formula(row, col);
-				if (xf) {
-					res.conditional.push(xf);
-				}
+		if (!this.stylesConditionalIterator) {
+			this.stylesConditionalIterator = new AscCommon.RangeTopBottomIterator();
+			this.stylesConditionalIterator.init(Object.values(this.stylesConditional), function(elem) {
+				return elem.ranges;
+			});
+		}
+		var rules = this.stylesConditionalIterator.get(row, col);
+		for (var i = 0; i < rules.length; ++i) {
+			var xf = rules[i].formula(row, col);
+			if (xf) {
+				res.conditional.push(xf);
 			}
 		}
 		for (var i = 0; i < this.stylesTablePivot.length; ++i) {

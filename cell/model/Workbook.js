@@ -3972,6 +3972,7 @@
 		this.hyperlinkManager.setDependenceManager(this.mergeManager);
 		this.sheetViews = [];
 		this.aConditionalFormattingRules = [];
+		this.conditionalFormattingRangeIterator = null;
 		this.updateConditionalFormattingRange = null;
 		this.dataValidations = null;
 		this.sheetPr = null;
@@ -4458,7 +4459,7 @@
 		var aRules = this.aConditionalFormattingRules.sort(function(v1, v2) {
 			return v2.priority - v1.priority;
 		});
-		var oGradient1, oGradient2, aWeights, oRule, multiplyRange, oRuleElement, bboxCf, formulaParent, parsed1, parsed2;
+		var oGradient1, oGradient2, aWeights, oRule, oRuleElement, bboxCf, formulaParent, parsed1, parsed2;
 		var o, l, cell, ranges, values, value, tmp, dxf, compareFunction, nc, sum;
 		this.sheetMergedStyles.clearConditionalStyle(range);
 		var getCacheFunction = function(rule, setFunc) {
@@ -4495,7 +4496,6 @@
 			oRule = aRules[i];
 			ranges = oRule.ranges;
 			if (this._isConditionalFormattingIntersect(range, ranges)) {
-				multiplyRange = new AscCommonExcel.MultiplyRange(ranges);
 				oRuleElement = oRule.asc_getColorScaleOrDataBarOrIconSetRule();
 					if (oRuleElement) {
 						if (Asc.ECfType.colorScale !== oRuleElement.type) {
@@ -4818,7 +4818,7 @@
 						}
 					}
 					if (compareFunction) {
-						this.sheetMergedStyles.setConditionalStyle(multiplyRange, compareFunction);
+						this.sheetMergedStyles.setConditionalStyle(oRule.Get_Id(), ranges, compareFunction);
 					}
 				}
 			}
@@ -9580,6 +9580,7 @@
 		}
 
 		this.aConditionalFormattingRules.push(val);
+		this.cleanConditionalFormattingRangeIterator();
 		if (addToHistory) {
 			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_CFRuleAdd, this.getId(), val.getUnionRange(), new AscCommonExcel.UndoRedoData_CF(val.id, null, val));
 		}
@@ -9627,6 +9628,7 @@
 		var oRule = this.getCFRuleById(id);
 		if (oRule) {
 			this.aConditionalFormattingRules.splice(oRule.index, 1);
+			this.cleanConditionalFormattingRangeIterator();
 			if (addToHistory) {
 				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_CFRuleDelete, this.getId(), oRule.val.getUnionRange(),
 					new AscCommonExcel.UndoRedoData_CF(id, oRule.val));
@@ -9734,6 +9736,21 @@
 		for (var i = 0, l = this.aConditionalFormattingRules.length; i < l; ++i) {
 			callback(this.aConditionalFormattingRules[i], i);
 		}
+	};
+	Worksheet.prototype.cleanConditionalFormattingRangeIterator = function() {
+		this.conditionalFormattingRangeIterator = null;
+	};
+	Worksheet.prototype.getConditionalFormattingRangeIterator = function() {
+		if (!this.conditionalFormattingRangeIterator) {
+			this.aConditionalFormattingRules.sort(function(v1, v2) {
+				return v2.priority - v1.priority;
+			});
+			this.conditionalFormattingRangeIterator = new AscCommon.RangeTopBottomIterator();
+			this.conditionalFormattingRangeIterator.init(this.aConditionalFormattingRules, function(rule) {
+				return rule.ranges || [];
+			});
+		}
+		return this.conditionalFormattingRangeIterator;
 	};
 
 //-------------------------------------------------------------------------------------------------
