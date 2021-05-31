@@ -12098,7 +12098,11 @@
 			arrSelectedParas = oDocument.Document.GetSelectedParagraphs();
 			
 			ReplaceInParas(arrSelectedParas);
-			oDocument.Document.RemoveSelection();
+			
+			if (arrSelectedParas[0] && arrSelectedParas[0].Parent)
+				arrSelectedParas[0].Parent.RemoveSelection();
+			else 
+				oDocument.Document.RemoveSelection();
 		}
 	};
 	Api.prototype.CoAuthoringChatSendMessage = function(sString)
