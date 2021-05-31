@@ -2480,6 +2480,7 @@ function (window, undefined) {
 		}
 		var collaborativeEditing = wb.oApi.collaborativeEditing;
 		var workSheetView;
+		var changeFreezePane;
 		if (AscCH.historyitem_Worksheet_RemoveCell == Type) {
 			nRow = Data.nRow;
 			nCol = Data.nCol;
@@ -2607,6 +2608,13 @@ function (window, undefined) {
 			worksheetView = wb.oApi.wb.getWorksheetById(nSheetId);
 			worksheetView.cellCommentator.updateCommentsDependencies(bInsert, operType, range);
 
+			if (wb.bCollaborativeChanges) {
+				changeFreezePane = worksheetView._getFreezePaneOffset(operType, range, bInsert);
+				if (changeFreezePane) {
+					worksheetView._updateFreezePane(changeFreezePane.col, changeFreezePane.row, true);
+				}
+			}
+
 			//ws.shiftDataValidation(bInsert, operType, range);
 		} else if (AscCH.historyitem_Worksheet_AddCols == Type || AscCH.historyitem_Worksheet_RemoveCols == Type) {
 			from = Data.from;
@@ -2644,6 +2652,13 @@ function (window, undefined) {
 			// ToDo Так делать неправильно, нужно поправить (перенести логику в model, а отрисовку отделить)
 			worksheetView = wb.oApi.wb.getWorksheetById(nSheetId);
 			worksheetView.cellCommentator.updateCommentsDependencies(bInsert, operType, range);
+
+			if (wb.bCollaborativeChanges) {
+				changeFreezePane = worksheetView._getFreezePaneOffset(operType, range, bInsert);
+				if (changeFreezePane) {
+					worksheetView._updateFreezePane(changeFreezePane.col, changeFreezePane.row, true);
+				}
+			}
 
 			//ws.shiftDataValidation(bInsert, operType, range)
 		} else if (AscCH.historyitem_Worksheet_ShiftCellsLeft == Type ||
@@ -2894,7 +2909,22 @@ function (window, undefined) {
 		} else if (AscCH.historyitem_Worksheet_ChangeFrozenCell === Type) {
 			worksheetView = wb.oApi.wb.getWorksheetById(nSheetId);
 			var updateData = bUndo ? Data.from : Data.to;
-			worksheetView._updateFreezePane(updateData.c1, updateData.r1, /*lockDraw*/true);
+
+			var _r1 = collaborativeEditing.getLockOtherRow2(nSheetId, updateData.r1 - 1);
+			var _c1 = collaborativeEditing.getLockOtherColumn2(nSheetId, updateData.c1 - 1);
+
+			if (_r1 !== updateData.r1 - 1) {
+				_r1++;
+			} else {
+				_r1 = updateData.r1;
+			}
+			if (_c1 !== updateData.c1 - 1) {
+				_c1++;
+			} else {
+				_c1 = updateData.c1;
+			}
+
+			worksheetView._updateFreezePane(_c1, _r1, /*lockDraw*/true);
 		} else if (AscCH.historyitem_Worksheet_SetTabColor === Type) {
 			ws.setTabColor(bUndo ? Data.from : Data.to);
 		} else if (AscCH.historyitem_Worksheet_SetSummaryRight === Type) {
