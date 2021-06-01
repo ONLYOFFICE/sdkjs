@@ -9722,7 +9722,31 @@
 			});
 		}
 	};
+	
+	Worksheet.prototype.getIntersectionRules = function (range) {
+		var t = this;
+		var res = [];
+		this.forEachConditionalFormattingRules(function (_rule) {
+			var changedRanges = _rule.getIntersections(range);
+			if (changedRanges) {
+				res.push({ranges: changedRanges, id: _rule.id});
+			}
+		});
+		return res.length ? res : null;
+	};
 
+	Worksheet.prototype.getRuleById = function (id) {
+		var t = this;
+		var res = null;
+		this.forEachConditionalFormattingRules(function (_rule, index) {
+			if (_rule.id === id) {
+				res = {data: _rule, index: index};
+				return true;
+			}
+		});
+		return res;
+	};
+	
 	Worksheet.prototype.clearConditionalFormattingRulesByRanges = function (ranges) {
 		var t = this;
 		this.forEachConditionalFormattingRules(function (_rule) {
@@ -9732,7 +9756,9 @@
 
 	Worksheet.prototype.forEachConditionalFormattingRules = function (callback) {
 		for (var i = 0, l = this.aConditionalFormattingRules.length; i < l; ++i) {
-			callback(this.aConditionalFormattingRules[i], i);
+			if (callback(this.aConditionalFormattingRules[i], i)) {
+				break;
+			}
 		}
 	};
 
@@ -15576,7 +15602,6 @@
 				var aDataValidations;
 				if (wsFrom.dataValidations && wsTo.dataValidations) {
 					wsTo.clearDataValidation([to], true);
-					aDataValidations = wsFrom.dataValidations.getIntersectionByRange(from);
 				}
 				if(aDataValidations && aDataValidations.length > 0) {
 					var newDataValidations = [];
@@ -15627,6 +15652,65 @@
 						}
 					}
 				}
+
+				var aRules;
+				if (wsTo.aConditionalFormattingRules && wsTo.aConditionalFormattingRules.length) {
+					wsTo.clearConditionalFormattingRulesByRanges([to])
+				}
+				if (wsFrom.aConditionalFormattingRules && wsFrom.aConditionalFormattingRules.length) {
+					aRules = wsFrom.getIntersectionRules(from);
+				}
+				if(aRules && aRules.length > 0) {
+					var newRules = [];
+					for (var i = to.c1; i <= to.c2; i += nDx) {
+						for (var j = to.r1; j <= to.r2; j += nDy) {
+							for(var k = 0, length3 = aRules.length; k < length3; k++){
+								var oRule = aRules[k];
+								var ranges = oRule.ranges;
+								for (var n = 0; n < ranges.length; n++) {
+									var _newRange = new Asc.Range(i + ranges[n].c1 - from.c1, j + ranges[n].r1 - from.r1, i + ranges[n].c2 - from.c1, j + ranges[n].r2 - from.r1);
+									if (to.containsRange(_newRange)) {
+										if (!newRules[k]) {
+											newRules[k] = [];
+										}
+										newRules[k].push(_newRange);
+									}
+								}
+							}
+						}
+					}
+					if (newRules && newRules.length) {
+						for (var i = 0; i < newRules.length; i++) {
+							if (newRules[i] && newRules[i].length) {
+								var fromRule = wsFrom.getRuleById(aRules[i].id);
+								if (fromRule) {
+									fromRule = fromRule.data;
+									var toRule = fromRule.clone();
+									toRule.id = fromRule.id;
+									toRule.ranges = fromRule.ranges.concat(newRules[i]);
+									wsTo.setCFRule(toRule);
+								}
+							}
+						}
+					}
+				}
+
+				if (wsTo.aSparklineGroups && wsTo.aSparklineGroups.length) {
+					wsTo.removeSparklines(to);
+				}
+				if(wsFrom === wsTo && wsFrom.aSparklineGroups && wsFrom.aSparklineGroups.length) {
+					for (var i = to.c1; i <= to.c2; i += nDx) {
+						for (var j = to.r1; j <= to.r2; j += nDy) {
+							for(var k = 0, length3 = wsFrom.aSparklineGroups.length; k < length3; k++){
+								var _arrSparklines = wsFrom.aSparklineGroups[k].getModifySparklinesForPromote(from, to, new AscCommon.CellBase(j - from.r1, i - from.c1));
+								if (_arrSparklines) {
+									wsFrom.aSparklineGroups[k].setSparklines(_arrSparklines, true, true);
+								}
+							}
+						}
+					}
+				}
+
 			}
 		}
 
