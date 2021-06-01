@@ -99,9 +99,9 @@
         setCommentPermissions: function(groups) {
             if (groups && typeof groups == 'object') {
                 commentGroups = {
-                    view: (typeof groups.view == 'object' && groups.view.length>=0) ? groups.view : null,
-                    edit: (typeof groups.edit == 'object' && groups.edit.length>=0) ? groups.edit : null,
-                    remove: (typeof groups.remove == 'object' && groups.remove.length>=0) ? groups.remove : null
+                    view: (typeof groups["view"] == 'object' && groups["view"].length>=0) ? groups["view"] : null,
+                    edit: (typeof groups["edit"] == 'object' && groups["edit"].length>=0) ? groups["edit"] : null,
+                    remove: (typeof groups["remove"] == 'object' && groups["remove"].length>=0) ? groups["remove"] : null
                 };
             }
         },
