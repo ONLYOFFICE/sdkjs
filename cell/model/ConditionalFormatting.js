@@ -728,6 +728,31 @@
 		}
 		return res;
 	};
+	CConditionalFormattingRule.prototype.containsIntoRange = function (range) {
+		var res = null;
+		if (this.ranges && this.ranges.length > 0) {
+			res = true;
+			for (var i = 0; i < this.ranges.length; ++i) {
+				if (!range.containsRange(this.ranges[i])) {
+					res = false;
+					break;
+				}
+			}
+		}
+		return res;
+	};
+	CConditionalFormattingRule.prototype.getIntersections = function (range) {
+		var res = [];
+		if (this.ranges) {
+			for (var i = 0; i < this.ranges.length; ++i) {
+				var intersection = this.ranges[i].intersection(range);
+				if (intersection) {
+					res.push(intersection);
+				}
+			}
+		}
+		return res.length ? res : null;
+	};
 	CConditionalFormattingRule.prototype.getIndexRule = function (values, ws, value) {
 		var valueCFVO;
 		var aCFVOs = this._getCFVOs();
