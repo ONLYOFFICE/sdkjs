@@ -422,6 +422,9 @@
 				ws.getId(), null, new AscCommonExcel.UndoRedoData_CF(this.id, getUndoRedoRange(this.ranges), getUndoRedoRange(location)));
 		}
 		this.ranges = location;
+		if (ws) {
+			ws.cleanConditionalFormattingRangeIterator();
+		}
 	};
 
 	CConditionalFormattingRule.prototype.checkProperty = function (propOld, propNew, type, ws, addToHistory) {
