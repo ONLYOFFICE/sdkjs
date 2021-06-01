@@ -16066,8 +16066,7 @@ CTable.prototype.AcceptRevisionChanges = function(nType, bAll)
 			}
 		}
 
-		isAllSelected   = true;
-		isCellSelection = true;
+		isAllSelected = true;
 	}
 
 	if ((bAll || (isCellSelection && !this.ApplyToAll)) && (undefined === nType || c_oAscRevisionsChangeType.TablePr === nType || c_oAscRevisionsChangeType.RowsAdd === nType || c_oAscRevisionsChangeType.RowsRem === nType))
