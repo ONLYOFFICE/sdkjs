@@ -15602,6 +15602,7 @@
 				var aDataValidations;
 				if (wsFrom.dataValidations && wsTo.dataValidations) {
 					wsTo.clearDataValidation([to], true);
+					aDataValidations = wsFrom.dataValidations.getIntersectionByRange(from);
 				}
 				if(aDataValidations && aDataValidations.length > 0) {
 					var newDataValidations = [];
@@ -15694,23 +15695,6 @@
 						}
 					}
 				}
-
-				if (wsTo.aSparklineGroups && wsTo.aSparklineGroups.length) {
-					wsTo.removeSparklines(to);
-				}
-				if(wsFrom === wsTo && wsFrom.aSparklineGroups && wsFrom.aSparklineGroups.length) {
-					for (var i = to.c1; i <= to.c2; i += nDx) {
-						for (var j = to.r1; j <= to.r2; j += nDy) {
-							for(var k = 0, length3 = wsFrom.aSparklineGroups.length; k < length3; k++){
-								var _arrSparklines = wsFrom.aSparklineGroups[k].getModifySparklinesForPromote(from, to, new AscCommon.CellBase(j - from.r1, i - from.c1));
-								if (_arrSparklines) {
-									wsFrom.aSparklineGroups[k].setSparklines(_arrSparklines, true, true);
-								}
-							}
-						}
-					}
-				}
-
 			}
 		}
 
