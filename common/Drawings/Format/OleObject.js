@@ -219,7 +219,7 @@ function (window, undefined) {
         if(this.m_sData) {
             bCorrectData = true;
         }
-        else if(this.m_sObjectFile && this.m_aBinaryData) {
+        else if(this.m_sObjectFile) {
             bCorrectData = true;
         }
         if(!bCorrectData){
