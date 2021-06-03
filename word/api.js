@@ -9785,7 +9785,10 @@ background-repeat: no-repeat;\
 					break;
 				}
 
-				if (oCurCC.IsForm() && oCurCC.IsFormRequired() && (true !== isNotFilled || !oCurCC.IsFormFilled()))
+				if (oCurCC.IsForm()
+					&& oCurCC.IsFormRequired()
+					&& !oCurCC.IsCheckBox()
+					&& (true !== isNotFilled || !oCurCC.IsFormFilled()))
 					break;
 
 				if (!oStartCC)
