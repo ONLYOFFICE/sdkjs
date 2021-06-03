@@ -1537,7 +1537,7 @@
 				var aPastedImages = this._readExcelBinary(base64, tempWorkbook);
 
 				if (!isIntoShape && this._checkCutBefore(worksheet, tempWorkbook)) {
-					return;
+					return true;
 				}
 
 				var pasteData = null;
