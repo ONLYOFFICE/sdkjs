@@ -2272,6 +2272,59 @@ CInlineLevelSdt.prototype.IsSelectedToEnd = function()
 
 	return CParagraphContentWithParagraphLikeContent.prototype.IsSelectedToEnd.apply(this, arguments);
 };
+CInlineLevelSdt.prototype.IsFormFilled = function()
+{
+	if (!this.IsForm())
+		return true;
+
+	if (this.IsPlaceHolder())
+		return false;
+
+	if (this.IsTextForm())
+	{
+		var sText = this.GetSelectedText(true);
+		var oTextFormPr = this.GetTextFormPr();
+
+		if (oTextFormPr.IsComb())
+		{
+			var nMaxLen = oTextFormPr.GetMaxCharacters();
+			return (nMaxLen === sText.length);
+		}
+		else
+		{
+			return (sText !== "");
+		}
+	}
+	else if (this.IsComboBox())
+	{
+		var sText = this.GetSelectedText(true);
+		return (sText !== "");
+	}
+	else if (this.IsDropDownList())
+	{
+		var sText = this.GetSelectedText(true);
+
+		var oListPr = this.GetDropDownListPr();
+		for (var nIndex = 0, nCount = oListPr.GetItemsCount(); nIndex < nCount; ++nIndex)
+		{
+			if (sText === oListPr.GetItemDisplayText(nIndex))
+				return true;
+		}
+
+		return false;
+	}
+	else if (this.IsPicture())
+	{
+		// Мы уже не проверили, что тут Placeholder, значит форма заполнена
+		return true;
+	}
+	else if (this.IsCheckBox())
+	{
+		return true;
+	}
+
+	return false;
+}
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

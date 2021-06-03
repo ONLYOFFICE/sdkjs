@@ -9761,15 +9761,58 @@ background-repeat: no-repeat;\
 
 		return oLogicDocument.GetSpecialFormsByKey(sKey).length;
 	};
-	asc_docs_api.prototype.asc_MoveToFillingForm = function(isNext)
+	asc_docs_api.prototype.asc_MoveToFillingForm = function(isNext, isRequired, isNotFilled)
 	{
 		var oLogicDocument = this.private_GetLogicDocument();
 		if (!oLogicDocument)
 			return;
 
-		oLogicDocument.MoveToFillingForm(isNext);
+		if (true === isRequired)
+		{
+			var oStartCC  = oLogicDocument.GetContentControl();
+			var oDocState = oLogicDocument.SaveDocumentState(false);
+
+			// Защита от зависания, по логике сравнение с предыдущим не нужно
+			var oPrevCC = null, oCurCC;
+			while (1)
+			{
+				oLogicDocument.MoveToFillingForm(isNext);
+				oCurCC = oLogicDocument.GetContentControl();
+
+				if (!oCurCC || oCurCC === oStartCC || oCurCC === oPrevCC)
+				{
+					oLogicDocument.LoadDocumentState(oDocState);
+					break;
+				}
+
+				if (oCurCC.IsForm() && oCurCC.IsFormRequired() && (true !== isNotFilled || !oCurCC.IsFormFilled()))
+					break;
+
+				if (!oStartCC)
+					oStartCC = oCurCC;
+
+				oPrevCC = oCurCC;
+			}
+		}
+		else
+		{
+			oLogicDocument.MoveToFillingForm(isNext);
+		}
+
 		oLogicDocument.UpdateSelection();
 		oLogicDocument.UpdateInterface();
+	};
+	asc_docs_api.prototype.asc_IsAllRequiredFormsFilled = function()
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument)
+			return true;
+
+		return oLogicDocument.IsAllRequiredSpecialFormsFilled();
+	};
+	asc_docs_api.prototype.sync_OnAllRequiredFormsFilled = function(isFilled)
+	{
+		this.sendEvent("sync_onAllRequiredFormsFilled", isFilled);
 	};
 
 	asc_docs_api.prototype.asc_UncheckContentControlButtons = function()
@@ -11895,6 +11938,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_GetTextFormAutoWidth']                  = asc_docs_api.prototype.asc_GetTextFormAutoWidth;
 	asc_docs_api.prototype['asc_GetFormsCountByKey']                    = asc_docs_api.prototype.asc_GetFormsCountByKey;
 	asc_docs_api.prototype['asc_MoveToFillingForm']                     = asc_docs_api.prototype.asc_MoveToFillingForm;
+	asc_docs_api.prototype['asc_IsAllRequiredFormsFilled']              = asc_docs_api.prototype.asc_IsAllRequiredFormsFilled;
 	asc_docs_api.prototype['asc_SendForm']                    			= asc_docs_api.prototype.asc_SendForm;
 
 	asc_docs_api.prototype['asc_BeginViewModeInReview']                 = asc_docs_api.prototype.asc_BeginViewModeInReview;
