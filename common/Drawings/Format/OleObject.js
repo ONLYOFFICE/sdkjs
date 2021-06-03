@@ -216,7 +216,7 @@ function (window, undefined) {
         if(!bCorrectData){
             return false;
         }
-        if(!this.m_sApplicationId){
+        if(this.m_sApplicationId === null){
             return false;
         }
         if(this.m_nPixHeight === null || this.m_nPixHeight === null){
