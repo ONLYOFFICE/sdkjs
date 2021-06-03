@@ -3129,6 +3129,9 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 		}
 	}
 
+	if (this.IsFillingFormMode())
+		this.Api.sync_OnAllRequiredFormsFilled(this.IsAllRequiredSpecialFormsFilled());
+
 	if (this.Action.UpdateInterface)
 		this.private_UpdateInterface();
 
@@ -12579,6 +12582,9 @@ CDocument.prototype.Document_Undo = function(Options)
 			this.Document_UpdateRulersState();
 		}
 	}
+
+	if (this.IsFillingFormMode())
+		this.Api.sync_OnAllRequiredFormsFilled(this.IsAllRequiredSpecialFormsFilled());
 };
 CDocument.prototype.Document_Redo = function()
 {
@@ -12604,6 +12610,9 @@ CDocument.prototype.Document_Redo = function()
 		this.Document_UpdateInterfaceState();
 		this.Document_UpdateRulersState();
 	}
+
+	if (this.IsFillingFormMode())
+		this.Api.sync_OnAllRequiredFormsFilled(this.IsAllRequiredSpecialFormsFilled());
 };
 CDocument.prototype.GetSelectionState = function()
 {
@@ -24602,6 +24611,21 @@ CDocument.prototype.GetSpecialFormsByKey = function(sKey)
 	}
 
 	return arrForms;
+};
+/**
+ * Все ли обязательные поля заполнены
+ * @returns {boolean}
+ */
+CDocument.prototype.IsAllRequiredSpecialFormsFilled = function()
+{
+	for (var sId in this.SpecialForms)
+	{
+		var oForm = this.SpecialForms[sId];
+		if (oForm.IsFormRequired() && !oForm.IsFormFilled())
+			return false;
+	}
+
+	return true;
 };
 /**
  *  Функция, которая используется для отрисовки символа конца секции

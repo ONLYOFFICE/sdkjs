@@ -248,6 +248,13 @@ CSdtBase.prototype.IsForm = function()
 	return (undefined !== this.Pr.FormPr);
 };
 /**
+ * returns {boolean}
+ */
+CSdtBase.prototype.IsFormRequired = function()
+{
+	return (this.Pr.FormPr ? this.Pr.FormPr.GetRequired() : false);
+};
+/**
  * Получаем ключ для специальной формы, если он задан
  * @returns {?string}
  */
@@ -385,3 +392,11 @@ CSdtBase.prototype.ClearContentControlExt = function()
 		this.ReplaceContentWithPlaceHolder();
 	}
 };
+/**
+ * Проверяем правильно ли заполнена форма
+ * @returns {boolean}
+ */
+CSdtBase.prototype.IsFormFilled = function()
+{
+	return true;
+}
