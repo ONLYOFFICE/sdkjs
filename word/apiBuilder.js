@@ -12021,6 +12021,9 @@
 			{
 				for (var nCol = oRange.range.bbox.c1; nCol <= oRange.range.bbox.c2; nCol++)
 				{
+					if (oWorksheet.worksheet.getRowHidden(nRow) || oWorksheet.worksheet.getColHidden(nCol))
+						continue;
+
 					resultText        = '';
 					tempRange         = oWorksheet.GetRangeByNumber(nRow, nCol);
 					nCountLinesInCell = tempRange.GetValue().split('\n').length;
