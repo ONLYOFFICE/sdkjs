@@ -12074,7 +12074,7 @@
 			{
 				for (var nCol = oRange.range.bbox.c1; nCol <= oRange.range.bbox.c2; nCol++)
 				{
-					if (oWorksheet.worksheet.getRowHidden(nRow) || oWorksheet.worksheet.getColHidden(nCol))
+					if (oWorksheet.worksheet.getRowHidden(nRow))
 						continue;
 
 					resultText        = '';
