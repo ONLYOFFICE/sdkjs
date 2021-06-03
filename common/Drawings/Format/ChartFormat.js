@@ -10587,7 +10587,7 @@
         if(sFormula !== null) {
             for(var nName = 0; nName < aNames.length; ++nName) {
                 sName = aNames[nName];
-                sFormula = sFormula.replace(sName, "#REF");
+                sFormula = sFormula.replace(new RegExp(RegExp.escape(sName), 'g'), "#REF");
             }
             if(this.f !== sFormula) {
                 this.setF(sFormula);
@@ -10598,7 +10598,7 @@
         if(typeof this.f === "string" && this.f.length > 0) {
             var sFormula = this.f;
             if(sFormula.indexOf(sOldSheetName) > -1) {
-                this.setF(sFormula.replace(new RegExp(sOldSheetName, 'g'), sNewSheetName));
+                this.setF(sFormula.replace(new RegExp(RegExp.escape(sOldSheetName), 'g'), sNewSheetName));
             }
         }
     };

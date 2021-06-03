@@ -155,6 +155,10 @@
 		return false;
 	};
 
+	RegExp.escape = function ( text ) {
+		return text.replace( /[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&" );
+	};
+
 	if (typeof require === 'function' && !window['XRegExp'])
 	{
 		window['XRegExp'] = require('xregexp');

@@ -600,9 +600,6 @@ Math.trunc = Math.trunc || function(v) {
 	return (v - v % 1)   ||   (!isFinite(v) || v === 0 ? v : v < 0 ? -0 : 0);
 };
 
-RegExp.escape = function ( text ) {
-    return text.replace( /[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&" );
-};
 
 parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSeparator);
 
