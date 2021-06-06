@@ -9036,6 +9036,27 @@ CDocumentContent.prototype.SetCalculatedFrame = function(oFrame)
 		this.Content[nPos].SetCalculatedFrame(oFrame);
 	}
 };
+CDocumentContent.prototype.IsCursorInSpecialForm = function()
+{
+	if (this.Content.length <= 0)
+		return false;
+
+	if (this.Selection.Use)
+	{
+		if (0 !== this.Selection.StartPos || 0 !== this.Selection.EndPos)
+			return false;
+	}
+	else
+	{
+		if (0 !== this.CurPos.ContentPos)
+			return false;
+	}
+
+	if (!this.Content[0].IsParagraph())
+		return false;
+
+	return this.Content[0].IsCursorInSpecialForm();
+};
 
 
 function CDocumentContentStartState(DocContent)

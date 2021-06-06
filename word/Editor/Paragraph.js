@@ -16262,6 +16262,24 @@ Paragraph.prototype.IsCountLineNumbers = function()
 	var oPrev = this.Get_DocumentPrev();
 	return (this.IsInline() && (!this.Get_SectionPr() || !this.IsEmpty() || (oPrev && oPrev.IsParagraph() && undefined !== oPrev.Get_SectionPr())) && !this.IsSuppressLineNumbers());
 };
+/**
+ * Проверяем находится ли курсор в специальной форме
+ * @returns {boolean}
+ */
+Paragraph.prototype.IsCursorInSpecialForm = function()
+{
+	var nPos = -1;
+	if (this.Selection.Use && this.Selection.StartPos === this.Selection.EndPos)
+		nPos = this.Selection.EndPos;
+	else if (!this.Selection.Use)
+		nPos = this.CurPos.ContentPos;
+
+	if (-1 === nPos)
+		return false;
+
+	var oElement = this.Content[nPos];
+	return (oElement && oElement instanceof CInlineLevelSdt && oElement.IsForm())
+};
 
 Paragraph.prototype.asc_getText = function()
 {

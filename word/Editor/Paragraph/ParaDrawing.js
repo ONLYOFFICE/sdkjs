@@ -64,6 +64,8 @@ function ParaDrawing(W, H, GraphicObj, DrawingDocument, DocumentContent, Parent)
 	this.DrawingType = drawing_Inline;
 	this.GraphicObj  = GraphicObj;
 
+	this.Form = true; // Флаг, означающий, является ли данная автофигура контейнером для специальной формой
+
 	this.X      = 0;
 	this.Y      = 0;
 	this.Width  = 0;
@@ -1654,6 +1656,15 @@ ParaDrawing.prototype.IsInline = function()
 {
 	return this.Is_Inline();
 };
+ParaDrawing.prototype.IsForm = function()
+{
+	return this.Form;
+};
+ParaDrawing.prototype.SetForm = function(isForm)
+{
+	History.Add(new CChangesParaDrawingForm(this, this.DrawingType, isForm));
+	this.Form = isForm;
+}
 ParaDrawing.prototype.Use_TextWrap = function()
 {
 	// Если автофигура привязана к параграфу с рамкой, обтекание не делается

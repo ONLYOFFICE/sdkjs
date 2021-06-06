@@ -2183,9 +2183,16 @@ DrawingObjectsController.prototype =
         {
             if(this.selection.textSelection.selectStartPage === pageIndex)
             {
-                drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.TEXT, this.selection.textSelection.getTransformMatrix(), 0, 0, this.selection.textSelection.extX, this.selection.textSelection.extY, AscFormat.CheckObjectLine(this.selection.textSelection), this.selection.textSelection.canRotate(), undefined, isDrawHandles);
-                if(this.selection.textSelection.drawAdjustments)
-                    this.selection.textSelection.drawAdjustments(drawingDocument);
+				if (this.selection.textSelection.isForm())
+				{
+					//drawingDocument.OnDrawContentControl()
+				}
+				else
+				{
+					drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.TEXT, this.selection.textSelection.getTransformMatrix(), 0, 0, this.selection.textSelection.extX, this.selection.textSelection.extY, AscFormat.CheckObjectLine(this.selection.textSelection), this.selection.textSelection.canRotate(), undefined, isDrawHandles);
+					if (this.selection.textSelection.drawAdjustments)
+						this.selection.textSelection.drawAdjustments(drawingDocument);
+				}
             }
         }
         else if(this.selection.cropSelection)

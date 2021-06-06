@@ -1304,6 +1304,9 @@ CShape.prototype.applyTextFunction = function (docContentFunction, tableFunction
     }
     if (content_to_add)
     {
+    	if (this.isForm() && !content_to_add.IsCursorInSpecialForm())
+    		return;
+
         docContentFunction.apply(content_to_add, args);
     }
     if(!editor || !editor.noCreatePoint || editor.exucuteHistory)
