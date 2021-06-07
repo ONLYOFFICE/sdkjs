@@ -4890,6 +4890,35 @@ Paragraph.prototype.Set_ParaContentPos = function(ContentPos, CorrectEndLinePos,
 	if (Pos < 0)
 		Pos = 0;
 
+	if (this.IsInAnchorForm())
+	{
+		var nFormPos = -1;
+		for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
+		{
+			if (this.Content[nIndex] instanceof CInlineLevelSdt && this.Content[nIndex].IsForm())
+			{
+				nFormPos = nIndex;
+				break;
+			}
+		}
+
+		if (-1 !== nFormPos)
+		{
+			if (Pos < nFormPos)
+			{
+				this.Content[nFormPos].Get_StartPos(ContentPos, 1);
+				Pos = nFormPos;
+			}
+			else if (Pos > nFormPos)
+			{
+				this.Content[nFormPos].Get_EndPos(false, ContentPos, 1);
+				Pos = nFormPos;
+			}
+
+			bCorrectPos = false;
+		}
+	}
+
 	this.CurPos.ContentPos = Pos;
 	this.Content[Pos].Set_ParaContentPos(ContentPos, 1);
 
@@ -4922,6 +4951,46 @@ Paragraph.prototype.Set_SelectionContentPos = function(StartContentPos, EndConte
 	var StartPos = StartContentPos.Get(Depth);
 	var EndPos   = EndContentPos.Get(Depth);
 
+	if (this.IsInAnchorForm())
+	{
+		var nFormPos = -1;
+		for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
+		{
+			if (this.Content[nIndex] instanceof CInlineLevelSdt && this.Content[nIndex].IsForm())
+			{
+				nFormPos = nIndex;
+				break;
+			}
+		}
+
+		if (-1 !== nFormPos)
+		{
+			if (StartPos < nFormPos)
+			{
+				this.Content[nFormPos].Get_StartPos(StartContentPos, 1);
+				StartPos = nFormPos;
+			}
+			else if (StartPos > nFormPos)
+			{
+				this.Content[nFormPos].Get_EndPos(false, StartContentPos, 1);
+				StartPos = nFormPos;
+			}
+
+			if (EndPos < nFormPos)
+			{
+				this.Content[nFormPos].Get_StartPos(EndContentPos, 1);
+				EndPos = nFormPos;
+			}
+			else if (EndPos > nFormPos)
+			{
+				this.Content[nFormPos].Get_EndPos(false, EndContentPos, 1);
+				EndPos = nFormPos;
+			}
+
+			CorrectAnchor = false;
+		}
+	}
+
 	this.Selection.StartPos = StartPos;
 	this.Selection.EndPos   = EndPos;
 
@@ -4947,6 +5016,8 @@ Paragraph.prototype.Set_SelectionContentPos = function(StartContentPos, EndConte
 			this.Content[CurPos].RemoveSelection();
 		}
 	}
+
+
 
 	if (StartPos === EndPos)
 	{
@@ -13991,11 +14062,54 @@ Paragraph.prototype.SetContentSelection = function(StartDocPos, EndDocPos, Depth
         }
     }
 
-    this.Selection.Use      = true;
-    this.Selection.StartPos = StartPos;
-    this.Selection.EndPos   = EndPos;
+    if (this.IsInAnchorForm())
+	{
+		var nFormPos = -1;
+		for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
+		{
+			if (this.Content[nIndex] instanceof CInlineLevelSdt && this.Content[nIndex].IsForm())
+			{
+				nFormPos = nIndex;
+				break;
+			}
+		}
 
-    if (StartPos !== EndPos)
+		if (-1 !== nFormPos)
+		{
+			if (StartPos < nFormPos)
+			{
+				_StartDocPos = null;
+				_StartFlag   = 1;
+				StartPos     = nFormPos;
+			}
+			else if (StartPos > nFormPos)
+			{
+				_StartDocPos = null;
+				_StartFlag   = -1;
+				StartPos     = nFormPos;
+			}
+
+			if (EndPos < nFormPos)
+			{
+				_EndDocPos = null;
+				_EndFlag   = 1;
+				EndPos     = nFormPos;
+
+			}
+			else if (EndPos > nFormPos)
+			{
+				_EndDocPos = null;
+				_EndFlag   = -1;
+				EndPos     = nFormPos;
+			}
+		}
+	}
+
+	this.Selection.Use      = true;
+	this.Selection.StartPos = StartPos;
+	this.Selection.EndPos   = EndPos;
+
+	if (StartPos !== EndPos)
     {
         if (this.Content[StartPos] && this.Content[StartPos].SetContentSelection)
         this.Content[StartPos].SetContentSelection(_StartDocPos, null, Depth + 1, _StartFlag, StartPos > EndPos ? 1 : -1);
@@ -14065,6 +14179,35 @@ Paragraph.prototype.SetContentPosition = function(DocPos, Depth, Flag)
 		Pos     = this.Content.length - 2;
 		_Flag   = -1;
 		_DocPos = null;
+	}
+
+	if (this.IsInAnchorForm())
+	{
+		var nFormPos = -1;
+		for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
+		{
+			if (this.Content[nIndex] instanceof CInlineLevelSdt && this.Content[nIndex].IsForm())
+			{
+				nFormPos = nIndex;
+				break;
+			}
+		}
+
+		if (-1 !== nFormPos)
+		{
+			if (Pos < nFormPos)
+			{
+				_DocPos = null;
+				_Flag   = 1;
+				Pos     = nFormPos;
+			}
+			else if (StartPos > nFormPos)
+			{
+				_DocPos = null;
+				_Flag   = -1;
+				Pos     = nFormPos;
+			}
+		}
 	}
 
     this.CurPos.ContentPos = Pos;
@@ -16304,6 +16447,11 @@ Paragraph.prototype.GetInnerForm = function()
 	}
 
 	return (-1 !== nIndex ? this.Content[nIndex] : null);
+};
+Paragraph.prototype.IsInAnchorForm = function()
+{
+	var oShape = this.Parent ? this.Parent.Is_DrawingShape(true) : null;
+	return (oShape && oShape.isForm())
 };
 
 Paragraph.prototype.asc_getText = function()
