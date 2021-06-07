@@ -2183,11 +2183,7 @@ DrawingObjectsController.prototype =
         {
             if(this.selection.textSelection.selectStartPage === pageIndex)
             {
-				if (this.selection.textSelection.isForm())
-				{
-					//drawingDocument.OnDrawContentControl()
-				}
-				else
+				if (!this.selection.textSelection.isForm())
 				{
 					drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.TEXT, this.selection.textSelection.getTransformMatrix(), 0, 0, this.selection.textSelection.extX, this.selection.textSelection.extY, AscFormat.CheckObjectLine(this.selection.textSelection), this.selection.textSelection.canRotate(), undefined, isDrawHandles);
 					if (this.selection.textSelection.drawAdjustments)

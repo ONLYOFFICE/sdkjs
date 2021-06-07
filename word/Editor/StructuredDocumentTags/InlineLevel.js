@@ -663,6 +663,33 @@ CInlineLevelSdt.prototype.GetBoundingPolygonAnchorPoint = function()
 
 	return {X : nR, Y : (nT + nB) / 2, Page : nPageAbs, Transform : this.Get_ParentTextTransform()};
 };
+CInlineLevelSdt.prototype.IsAnchorForm = function()
+{
+	if (!this.IsForm() || !this.Paragraph)
+		return false;
+
+	var oShape = this.Paragraph.Parent ? this.Paragraph.Parent.Is_DrawingShape(true) : null;
+	return (oShape && oShape.isForm());
+};
+CInlineLevelSdt.prototype.GetAnchorFormBounds = function()
+{
+	if (!this.Paragraph)
+		return {X : 0, Y : 0, W : 0, H : 0, Page : 0};
+
+	var oShape = this.Paragraph.Parent ? this.Paragraph.Parent.Is_DrawingShape(true) : null;
+	if (oShape && oShape.isForm())
+	{
+		return {
+			X    : -oShape.bodyPr.lIns,
+			Y    : -oShape.bodyPr.tIns,
+			W    : oShape.extX,
+			H    : oShape.extY,
+			Page : oShape.parent.PageNum
+		};
+	}
+
+	return {X : 0, Y : 0, W : 0, H : 0, Page : 0};
+};
 CInlineLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCurPage)
 {
 	if (!this.Paragraph && this.Paragraph.LogicDocument)
@@ -721,6 +748,26 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCu
 	}
 
 	oDrawingDocument.OnDrawContentControl(this, isHover ? AscCommon.ContentControlTrack.Hover : AscCommon.ContentControlTrack.In, this.GetBoundingPolygon());
+};
+CInlineLevelSdt.prototype.DrawContentControlTrackForFixedForm = function()
+{
+	if (!this.Paragraph && this.Paragraph.LogicDocument)
+		return;
+
+	var oLogicDocument = this.Paragraph.LogicDocument;
+
+	if (!oLogicDocument)
+		return;
+
+	var oDrawingDocument = oLogicDocument.GetDrawingDocument();
+
+	var oShape = this.Paragraph.Parent ? this.Paragraph.Parent.Is_DrawingShape(true) : null;
+	if (this.IsForm() && oShape && oShape.isForm())
+	{
+		var oPolygon = new AscCommon.CPolygon();
+		oPolygon.fill([[{ X : -oShape.bodyPr.lIns, Y : -oShape.bodyPr.tIns, W : oShape.extX, H : oShape.extY, Page : oShape.parent.PageNum}]]);
+		oDrawingDocument.OnDrawContentControl(this, AscCommon.ContentControlTrack.In, oPolygon.GetPaths(0));
+	}
 };
 CInlineLevelSdt.prototype.SelectContentControl = function()
 {

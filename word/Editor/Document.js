@@ -12164,7 +12164,16 @@ CDocument.prototype.private_UpdateTracks = function(bSelection, bEmptySelection)
 	}
 	else
 	{
-		this.DrawingDocument.OnDrawContentControl(null, AscCommon.ContentControlTrack.In);
+		var oForm = null, oMajorParaDrawing;
+		if (docpostype_DrawingObjects === this.GetDocPosType()
+			&& (oMajorParaDrawing = this.DrawingObjects.getMajorParaDrawing())
+			&& this.DrawingObjects.getTargetDocContent())
+			oForm = oMajorParaDrawing.GetInnerForm();
+
+		if (oForm)
+			oForm.DrawContentControlsTrack(false);
+		else
+			this.DrawingDocument.OnDrawContentControl(null, AscCommon.ContentControlTrack.In);
 	}
 
 	if (this.private_SetCurrentSpecialForm(oCurrentForm))

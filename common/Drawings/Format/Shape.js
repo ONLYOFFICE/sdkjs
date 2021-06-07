@@ -6393,6 +6393,10 @@ CShape.prototype.getColumnNumber = function(){
             }
         }
     };
+    CShape.prototype.getInnerForm = function() {
+		return this.textBoxContent ? this.textBoxContent.GetInnerForm() : null;
+	}
+
 function CreateBinaryReader(szSrc, offset, srcLen)
 {
     var nWritten = 0;

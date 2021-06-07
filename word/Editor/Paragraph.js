@@ -2209,6 +2209,10 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 							pGraphics.b_color1(FormsHighlight.r, FormsHighlight.g, FormsHighlight.b, 255);
 							nPrevColorState = 1;
 						}
+
+						if (oInlineSdt.IsAnchorForm())
+							oSdtBounds = oInlineSdt.GetAnchorFormBounds();
+
 					}
 					else if (!isForm && SdtHighlightColor)
 					{
@@ -16279,6 +16283,27 @@ Paragraph.prototype.IsCursorInSpecialForm = function()
 
 	var oElement = this.Content[nPos];
 	return (oElement && oElement instanceof CInlineLevelSdt && oElement.IsForm())
+};
+Paragraph.prototype.GetInnerForm = function()
+{
+	var nIndex = -1;
+	var nCount = this.Content.length - 1; // TODO: ParaEnd
+	for (var nPos = 0; nPos < nCount; ++nPos)
+	{
+		if (this.Content[nPos] instanceof CInlineLevelSdt)
+		{
+			if (-1 === nIndex && this.Content[nPos].IsForm())
+				nIndex = nPos;
+			else
+				return null;
+		}
+		else if (!(this.Content[nPos] instanceof ParaRun) || !this.Content[nPos].IsEmpty())
+		{
+			return null;
+		}
+	}
+
+	return (-1 !== nIndex ? this.Content[nIndex] : null);
 };
 
 Paragraph.prototype.asc_getText = function()

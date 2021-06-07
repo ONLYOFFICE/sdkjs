@@ -1665,6 +1665,10 @@ ParaDrawing.prototype.SetForm = function(isForm)
 	History.Add(new CChangesParaDrawingForm(this, this.DrawingType, isForm));
 	this.Form = isForm;
 }
+ParaDrawing.prototype.GetInnerForm = function()
+{
+	return this.GraphicObj ? this.GraphicObj.getInnerForm() : null;
+};
 ParaDrawing.prototype.Use_TextWrap = function()
 {
 	// Если автофигура привязана к параграфу с рамкой, обтекание не делается

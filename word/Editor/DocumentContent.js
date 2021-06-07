@@ -9057,6 +9057,13 @@ CDocumentContent.prototype.IsCursorInSpecialForm = function()
 
 	return this.Content[0].IsCursorInSpecialForm();
 };
+CDocumentContent.prototype.GetInnerForm = function()
+{
+	if (this.Content.length !== 1 || !this.Content[0].IsParagraph())
+		return null;
+
+	return this.Content[0].GetInnerForm();
+};
 
 
 function CDocumentContentStartState(DocContent)
