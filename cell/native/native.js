@@ -4456,7 +4456,7 @@ window["native"]["offline_get_selection"] = function(x, y, width, height, autoco
 window["native"]["offline_get_charts_ranges"] = function() {
     var ws = _api.wb.getWorksheet();
     
-    var ranges = _api.wb.getWorksheet().__chartsRanges();
+    var ranges = ws.__chartsRanges();
     var cattbbox = null;
     var serbbox = null;
     
@@ -4465,11 +4465,34 @@ window["native"]["offline_get_charts_ranges"] = function() {
     var selected_objects = controller.selection.groupSelection ? controller.selection.groupSelection.selectedObjects : controller.selectedObjects;
     if (selected_objects.length === 1 && selected_objects[0].getObjectType() === AscDFH.historyitem_type_ChartSpace) {
         chart = selected_objects[0];
-        ranges = ranges ? ranges : _api.wb.getWorksheet().__chartsRanges([chart.bbox.seriesBBox]);
-        cattbbox = chart.bbox.catBBox ? _api.wb.getWorksheet().__chartsRanges([chart.bbox.catBBox]) : null;
-        serbbox = chart.bbox.serBBox ? _api.wb.getWorksheet().__chartsRanges([chart.bbox.serBBox]) : null;
+        var oDataRange = null, oCatRange = null, oSerRange = null;
+        if (ws.isChartAreaEditMode && ws.oOtherRanges) {
+            var aChartRanges = ws.oOtherRanges.ranges;
+            for(var nRange = 0; nRange < aChartRanges.length; ++nRange) {
+                var oChartRange = aChartRanges[nRange];
+                if(oChartRange.chartRangeIndex === 0) {
+                    oDataRange = oChartRange;
+                }
+                else if(oChartRange.chartRangeIndex === 1) {
+                    oSerRange = oChartRange;
+                }
+                else if(oChartRange.chartRangeIndex === 2) {
+                    oCatRange = oChartRange;
+                }
+            }
+            if(oDataRange) {
+                var ranges = ranges ? ranges : ws.__chartsRanges([oDataRange]);
+                var catbbox = null;//oCatRange ? ws.__chartsRanges([oCatRange]) : null;
+                var serbbox = null;//oSerRange ? ws.__chartsRanges([oSerRange]) : null;
+                return {
+                    'ranges': ranges,
+                    'cattbbox': catbbox,
+                    'serbbox': serbbox
+                };
+            }
+        }
+        return {'ranges': null, 'cattbbox': null, 'serbbox': null};
     }
-    
     return {'ranges':ranges, 'cattbbox':cattbbox, 'serbbox':serbbox};
 }
 window["native"]["offline_get_worksheet_bounds"] = function() {return _s.getMaxBounds();}
