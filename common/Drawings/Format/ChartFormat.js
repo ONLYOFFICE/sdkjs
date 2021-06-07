@@ -12547,7 +12547,7 @@
 
     InitClass(CSurfaceSeries, CSeriesBase, AscDFH.historyitem_type_SurfaceSeries);
     CSurfaceSeries.prototype.fillObject = function(oCopy, oIdMap) {
-        CSeriesBase.prototype.fillObject.call(oCopy, oIdMap);
+        CSeriesBase.prototype.fillObject.call(this, oCopy, oIdMap);
     };
     CSurfaceSeries.prototype.setCat = function(pr) {
         History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_SurfaceSeries_SetCat, this.cat, pr));
