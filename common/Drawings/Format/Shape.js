@@ -1941,6 +1941,9 @@ CShape.prototype.recalculateTransformText = function () {
 
     var oBodyPr = this.getBodyPr();
     this.clipRect = this.checkTransformTextMatrix(this.localTransformText, oContent, oBodyPr, false);
+    if(this.isForm && this.isForm()) {
+        this.clipRect = {x: 0, y: 0, w: this.extX, h: this.extY};
+    }
     this.transformText = this.localTransformText.CreateDublicate();
     this.invertTransformText = global_MatrixTransformer.Invert(this.transformText);
 
@@ -2330,13 +2333,27 @@ CShape.prototype.getTextRect = function () {
 CShape.prototype.getFormRelRect = function () {
     var oSpTransform = this.transform;
     var oInvTextTransform = this.invertTransformText;
-    var fX = oSpTransform.TransformPointX(0, 0);
-    var fY = oSpTransform.TransformPointY(0, 0);
-    var fRelX = oInvTextTransform.TransformPointX(fX, fY);
-    var fRelY = oInvTextTransform.TransformPointY(fX, fY);
+
+    var aX = [0, this.extX];
+    var aY = [0, this.extY];
+    var fX0, fY0;
+
+    var aRelX = [], aRelY = [];
+    for(var nX = 0; nX < aX.length; ++nX) {
+        fX0 = aX[nX];
+        for(var nY = 0; nY < aY.length; ++nY) {
+            fY0 = aY[nY];
+            var fX = oSpTransform.TransformPointX(fX0, fY0);
+            var fY = oSpTransform.TransformPointY(fX0, fY0);
+            var fRelX = oInvTextTransform.TransformPointX(fX, fY);
+            var fRelY = oInvTextTransform.TransformPointY(fX, fY);
+            aRelX.push(fRelX);
+            aRelY.push(fRelY);
+        }
+    }
     return {
-        X    : fRelX,
-        Y    : fRelY,
+        X    : Math.min.apply(Math, aRelX),
+        Y    : Math.min.apply(Math, aRelY),
         W    : this.extX,
         H    : this.extY,
         Page : this.parent.PageNum
