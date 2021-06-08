@@ -3557,7 +3557,7 @@
         if(this.dLbls && oCopy.setDLbls) {
             oCopy.setDLbls(this.dLbls.createDuplicate());
         }
-        if(this.dPt.length > 0 && oCopy.addDPt) {
+        if(Array.isArray(this.dPt) && this.dPt.length > 0 && oCopy.addDPt) {
             for(var nDpt = 0; nDpt < this.dPt.length; ++nDpt) {
                 oCopy.addDPt(this.dPt[nDpt].createDuplicate());
             }
@@ -12538,6 +12538,8 @@
         }
         return nType;
     };
+    CSurfaceChart.prototype.setDlblsProps = function(oProps) {
+    };
 
     function CSurfaceSeries() {
         CSeriesBase.call(this);
@@ -12566,6 +12568,8 @@
             return false;
         }
         return this.parent.isWireframe();
+    };
+    CSurfaceSeries.prototype.setDlblsProps = function(oProps) {
     };
 
     function CTitle() {
