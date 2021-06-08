@@ -2361,6 +2361,104 @@ CInlineLevelSdt.prototype.IsFormFilled = function()
 
 	return false;
 }
+CInlineLevelSdt.prototype.ConvertFormToAnchor = function()
+{
+	var oParagraph        = this.GetParagraph();
+	var oParent           = this.GetParent();
+	var oParentDocContent = oParagraph.GetParent();
+	var oLogicDocument    = oParagraph ? oParagraph.GetLogicDocument() : null;
+	var nPosInParent      = this.GetPosInParent(oParent);
+
+	if (!oParagraph
+		|| !oParent
+		|| !oParentDocContent
+		|| !oLogicDocument
+		|| -1 === nPosInParent
+		|| oParagraph.IsInAnchorForm())
+		return null;
+
+	var oShape = new AscFormat.CShape();
+	oShape.setWordShape(true);
+	oShape.setBDeleted(false);
+
+	var oSpPr = new AscFormat.CSpPr();
+	var oXfrm = new AscFormat.CXfrm();
+	oXfrm.setOffX(0);
+	oXfrm.setOffY(0);
+	oXfrm.setExtX(50);
+	oXfrm.setExtY(50);
+	oSpPr.setXfrm(oXfrm);
+	oXfrm.setParent(oSpPr);
+
+	oSpPr.setFill(AscFormat.CreateNoFillUniFill());
+	oSpPr.setLn(AscFormat.CreateNoFillLine());
+	oSpPr.setGeometry(AscFormat.CreateGeometry("rect"));
+	oSpPr.setParent(oShape);
+	oShape.setSpPr(oSpPr);
+
+	oShape.createTextBoxContent();
+	var oContent = oShape.getDocContent();
+
+	var oInnerParagraph = oContent.GetElement(0);
+	if (!oInnerParagraph)
+		return this;
+
+	oInnerParagraph.MoveCursorToStartPos();
+	oInnerParagraph.Add(this);
+
+	var oBodyPr = oShape.getBodyPr().createDuplicate();
+
+	oBodyPr.spcFirstLastPara = false;
+	oBodyPr.vertOverflow     = AscFormat.nOTOwerflow;
+	oBodyPr.horzOverflow     = AscFormat.nOTOwerflow;
+	oBodyPr.vert             = AscFormat.nVertTThorz;
+
+	oBodyPr.rot         = 0;
+	oBodyPr.lIns        = 0.0;
+	oBodyPr.tIns        = 0.0;
+	oBodyPr.rIns        = 0.0;
+	oBodyPr.bIns        = 0.0;
+	oBodyPr.numCol      = 1;
+	oBodyPr.spcCol      = 0;
+	oBodyPr.rtlCol      = 0;
+	oBodyPr.fromWordArt = false;
+	oBodyPr.anchor      = 1;
+	oBodyPr.anchorCtr   = false;
+	oBodyPr.forceAA     = false;
+	oBodyPr.compatLnSpc = true;
+	oBodyPr.prstTxWarp  = null;
+
+	oShape.setBodyPr(oBodyPr);
+
+	var oParaDrawing = new ParaDrawing(oShape.spPr.xfrm.extX, oShape.spPr.xfrm.extY, oShape, oLogicDocument.GetDrawingDocument(), oParentDocContent, null);
+	oShape.setParent(oParaDrawing);
+	oParaDrawing.Set_DrawingType(drawing_Inline);
+	oParaDrawing.SetForm(true);
+
+	var oRun = new ParaRun(oParagraph, false);
+	oRun.AddToContent(0, oParaDrawing);
+
+	oParent.RemoveFromContent(nPosInParent, 1, true);
+	oParent.AddToContent(nPosInParent, oRun, true);
+
+	return oParaDrawing;
+};
+CInlineLevelSdt.prototype.ConvertFormToInline = function()
+{
+	var oParagraph = this.GetParagraph();
+	var oParent    = this.GetParent();
+	if (!oParagraph || !oParent || !oParagraph.IsInAnchorForm())
+		return this;
+
+
+	var oShape = this.Parent.Is_DrawingShape(true);
+	if (!oShape)
+		return this;
+
+
+
+	return this;
+};
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

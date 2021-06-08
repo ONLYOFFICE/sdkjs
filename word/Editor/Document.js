@@ -21648,7 +21648,7 @@ CDocument.prototype.RemoveContentControlWrapper = function(Id)
 };
 CDocument.prototype.GetContentControl = function(Id)
 {
-	if (undefined === Id)
+	if (undefined === Id || null === Id)
 	{
 		var oInfo          = this.GetSelectedElementsInfo({SkipTOC : true});
 		var oInlineControl = oInfo.GetInlineLevelSdt();
@@ -24635,6 +24635,50 @@ CDocument.prototype.IsAllRequiredSpecialFormsFilled = function()
 	}
 
 	return true;
+};
+/**
+ * Конвертируем
+ * @param sId
+ * @param isToAnchor
+ * @returns {boolean}
+ */
+CDocument.prototype.ConvertFormAnchorType = function(sId, isToAnchor)
+{
+	var oForm = this.GetContentControl(sId);
+	if (!oForm || !oForm.IsForm())
+		return false;
+
+	var isLocked   = false;
+	var oParagraph = oForm.GetParagraph();
+	if (oParagraph)
+	{
+		isLocked = this.IsSelectionLocked(AscCommon.changestype_None, {
+			Type      : AscCommon.changestype_2_ElementsArray_and_Type,
+			Elements  : [oParagraph],
+			CheckType : AscCommon.changestype_Paragraph_Properties
+		}, false, false);
+	}
+
+	if (!isLocked)
+	{
+		this.StartAction(AscDFH.historydescription_Document_ConvertFormAnchorType);
+
+		if (isToAnchor)
+			oForm.ConvertFormToAnchor();
+		else
+			oForm.ConvertToInline();
+
+		oForm.MoveCursorToContentControl(false);
+
+		this.Recalculate();
+		this.UpdateInterface();
+		this.UpdateSelection();
+		this.FinalizeAction();
+
+		return true;
+	}
+
+	return false;
 };
 /**
  *  Функция, которая используется для отрисовки символа конца секции

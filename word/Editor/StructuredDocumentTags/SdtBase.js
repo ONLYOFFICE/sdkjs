@@ -400,3 +400,19 @@ CSdtBase.prototype.IsFormFilled = function()
 {
 	return true;
 }
+/**
+ * Оборачиваем форму в графический контейнер
+ * @returns {?ParaDrawing}
+ */
+CSdtBase.prototype.ConvertFormToAnchor = function()
+{
+	return null;
+};
+/**
+ * Уладаляем графичейский контейнер у формы
+ * @returns {?CSdtBase}
+ */
+CSdtBase.prototype.ConvertFormToInline = function()
+{
+	return this;
+};

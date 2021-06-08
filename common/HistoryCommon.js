@@ -1219,6 +1219,9 @@
 			case AscDFH.historydescription_Document_ResolveAllComments:
 				sString = "Document_ResolveAllComments";
 				break;
+			case AscDFH.historydescription_Document_ConvertFormAnchorType:
+				sString = "Document_ConvertFormAnchorType";
+				break;
 		}
 		return sString;
 	}
@@ -3674,7 +3677,8 @@
 	window['AscDFH'].historydescription_Document_AutoCorrectFirstLetterOfSentence   = 0x0188;
 	window['AscDFH'].historydescription_Document_ConvertTextToTable                 = 0x0189;
 	window['AscDFH'].historydescription_Document_ConvertTableToText                 = 0x018a;
-	window['AscDFH'].historydescription_Document_ResolveAllComments                 = 0x0189;
+	window['AscDFH'].historydescription_Document_ResolveAllComments                 = 0x018b;
+	window['AscDFH'].historydescription_Document_ConvertFormAnchorType              = 0x018c;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//

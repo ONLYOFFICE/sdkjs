@@ -9817,6 +9817,14 @@ background-repeat: no-repeat;\
 	{
 		this.sendEvent("sync_onAllRequiredFormsFilled", isFilled);
 	};
+	asc_docs_api.prototype.asc_SetFixedForm = function(sId, isFixed)
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument)
+			return;
+
+		oLogicDocument.ConvertFormAnchorType(sId, isFixed);
+	};
 
 	asc_docs_api.prototype.asc_UncheckContentControlButtons = function()
 	{

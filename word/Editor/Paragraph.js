@@ -16451,7 +16451,7 @@ Paragraph.prototype.GetInnerForm = function()
 Paragraph.prototype.IsInAnchorForm = function()
 {
 	var oShape = this.Parent ? this.Parent.Is_DrawingShape(true) : null;
-	return (oShape && oShape.isForm())
+	return (oShape && oShape.isForm());
 };
 
 Paragraph.prototype.asc_getText = function()
