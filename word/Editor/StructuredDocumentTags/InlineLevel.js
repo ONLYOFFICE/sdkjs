@@ -679,13 +679,7 @@ CInlineLevelSdt.prototype.GetAnchorFormBounds = function()
 	var oShape = this.Paragraph.Parent ? this.Paragraph.Parent.Is_DrawingShape(true) : null;
 	if (oShape && oShape.isForm())
 	{
-		return {
-			X    : -oShape.bodyPr.lIns,
-			Y    : -oShape.bodyPr.tIns,
-			W    : oShape.extX,
-			H    : oShape.extY,
-			Page : oShape.parent.PageNum
-		};
+		return oShape.getFormRelRect();
 	}
 
 	return {X : 0, Y : 0, W : 0, H : 0, Page : 0};
@@ -706,7 +700,7 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCu
 	if (this.IsForm() && oShape && oShape.isForm())
 	{
 		var oPolygon = new AscCommon.CPolygon();
-		oPolygon.fill([[{ X : -oShape.bodyPr.lIns, Y : -oShape.bodyPr.tIns, W : oShape.extX, H : oShape.extY, Page : oShape.parent.PageNum}]]);
+		oPolygon.fill([[oShape.getFormRelRect()]]);
 		oDrawingDocument.OnDrawContentControl(this, isHover ? AscCommon.ContentControlTrack.Hover : AscCommon.ContentControlTrack.In, oPolygon.GetPaths(0));
 		return;
 	}

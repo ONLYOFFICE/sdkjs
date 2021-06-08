@@ -2327,6 +2327,21 @@ CShape.prototype.getTextRect = function () {
         b: this.extY
     };
 };
+CShape.prototype.getFormRelRect = function () {
+    var oSpTransform = this.transform;
+    var oInvTextTransform = this.invertTransformText;
+    var fX = oSpTransform.TransformPointX(0, 0);
+    var fY = oSpTransform.TransformPointY(0, 0);
+    var fRelX = oInvTextTransform.TransformPointX(fX, fY);
+    var fRelY = oInvTextTransform.TransformPointY(fX, fY);
+    return {
+        X    : fRelX,
+        Y    : fRelY,
+        W    : this.extX,
+        H    : this.extY,
+        Page : this.parent.PageNum
+    };
+};
 
 CShape.prototype.checkTransformTextMatrix = function (oMatrix, oContent, oBodyPr, bWordArtTransform, bIgnoreInsets) {
     oMatrix.Reset();
