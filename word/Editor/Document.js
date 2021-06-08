@@ -24666,7 +24666,7 @@ CDocument.prototype.ConvertFormAnchorType = function(sId, isToAnchor)
 		if (isToAnchor)
 			oForm.ConvertFormToAnchor();
 		else
-			oForm.ConvertToInline();
+			oForm.ConvertFormToInline();
 
 		oForm.MoveCursorToContentControl(false);
 

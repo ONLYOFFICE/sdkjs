@@ -2439,19 +2439,53 @@ CInlineLevelSdt.prototype.ConvertFormToAnchor = function()
 };
 CInlineLevelSdt.prototype.ConvertFormToInline = function()
 {
-	var oParagraph = this.GetParagraph();
-	var oParent    = this.GetParent();
-	if (!oParagraph || !oParent || !oParagraph.IsInAnchorForm())
-		return this;
+	var oParagraph   = this.GetParagraph();
+	var oParent      = this.GetParent();
+	var nPosInParent = this.GetPosInParent(oParent);
+	if (!oParagraph || !oParent || !oParagraph.IsInAnchorForm() || -1 === nPosInParent)
+		return false;
 
+	var oShape = oParagraph.Parent.Is_DrawingShape(true);
+	if (!oShape || !oShape.parent)
+		return false;
 
-	var oShape = this.Parent.Is_DrawingShape(true);
-	if (!oShape)
-		return this;
+	var oParaDrawing = oShape.parent;
+	var oRun = oParaDrawing.GetRun();
+	if (!oRun)
+		return false;
 
+	var oRunParent = oRun.GetParent();
+	var nInRunParentPos = oRun.GetPosInParent(oRunParent);
+	if (!oRunParent || -1 === nInRunParentPos)
+		return false;
 
+	if (1 === oRun.GetElementsCount())
+	{
+		oParent.RemoveFromContent(nPosInParent, 1, true);
+		oRunParent.RemoveFromContent(nInRunParentPos, 1, true);
+		oRunParent.AddToContent(nInRunParentPos, this, true);
+	}
+	else
+	{
+		var nInRunPos = -1;
+		for (var nPos = 0, nRunLen = oRun.GetElementsCount(); nPos < nRunLen; ++nPos)
+		{
+			if (oRun.GetElement() === oParaDrawing)
+			{
+				nInRunPos = nPos;
+				break;
+			}
+		}
 
-	return this;
+		if (-1 === nInRunPos)
+			return false;
+
+		oParent.RemoveFromContent(nPosInParent, 1, true);
+		oRun.RemoveFromContent(nInRunPos, 1);
+		oRunParent.AddToContent(nInRunParentPos, this, true);
+	}
+
+	return true;
 };
 
 //--------------------------------------------------------export--------------------------------------------------------
