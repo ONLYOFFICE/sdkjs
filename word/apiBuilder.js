@@ -12083,6 +12083,9 @@
 
 					for (var nText = nTextToReplace; nText < nTextToReplace + nCountLinesInCell; nText++) 
 					{
+						if (!arrString[nText])
+							continue;
+							
 						resultText += arrString[nText];
 						if (nText !== nTextToReplace + nCountLinesInCell - 1)
 							resultText += '\n';
