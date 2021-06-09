@@ -369,7 +369,10 @@ CDrawingsController.prototype.IsSelectionEmpty = function(bCheckHidden)
 };
 CDrawingsController.prototype.DrawSelectionOnPage = function(PageAbs)
 {
-	this.DrawingDocument.SetTextSelectionOutline(true);
+	var oParaDrawing = this.DrawingObjects.getMajorParaDrawing();
+	if (!oParaDrawing || !oParaDrawing.IsForm())
+		this.DrawingDocument.SetTextSelectionOutline(true);
+
 	this.DrawingObjects.drawSelectionPage(PageAbs);
 };
 CDrawingsController.prototype.GetSelectionBounds = function()

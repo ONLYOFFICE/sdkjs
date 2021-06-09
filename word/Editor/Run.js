@@ -6125,79 +6125,82 @@ ParaRun.prototype.Draw_Elements = function(PDSE)
                 if (!Para.LogicDocument || Para.LogicDocument !== Para.Parent)
                     SectPr = undefined;
 
-                if ( undefined === SectPr )
-                {
-                	var oEndTextPr = Para.GetParaEndCompiledPr();
-
-                    if (reviewtype_Common !== ReviewType)
-                    {
-                        pGraphics.SetTextPr(oEndTextPr, PDSE.Theme);
-                        pGraphics.b_color1(ReviewColor.r, ReviewColor.g, ReviewColor.b, 255);
-                    }
-                    else if (oEndTextPr.Unifill)
-                    {
-                        oEndTextPr.Unifill.check(PDSE.Theme, PDSE.ColorMap);
-                        var RGBAEnd = oEndTextPr.Unifill.getRGBAColor();
-                        pGraphics.SetTextPr(oEndTextPr, PDSE.Theme);
-                        if(pGraphics.m_bIsTextDrawer !== true)
-                        {
-                            pGraphics.b_color1(RGBAEnd.R, RGBAEnd.G, RGBAEnd.B, 255);
-                        }
-                    }
-                    else
-                    {
-                        pGraphics.SetTextPr(oEndTextPr, PDSE.Theme);
-                        if(pGraphics.m_bIsTextDrawer !== true)
-                        {
-                            if (true === oEndTextPr.Color.Auto)
-                            {
-                                pGraphics.b_color1(AutoColor.r, AutoColor.g, AutoColor.b, 255);
-                            }
-                            else
-                            {
-                                pGraphics.b_color1(oEndTextPr.Color.r, oEndTextPr.Color.g, oEndTextPr.Color.b, 255);
-                            }
-                        }
-                        else
-                        {
-                            if (true === oEndTextPr.Color.Auto && !oEndTextPr.TextFill)
-                            {
-                                pGraphics.b_color1(AutoColor.r, AutoColor.g, AutoColor.b, 255);
-                            }
-                        }
-                    }
-
-					Y = TempY;
-					switch (oEndTextPr.VertAlign)
+				if (!Para.IsInAnchorForm())
+				{
+					if (undefined === SectPr)
 					{
-						case AscCommon.vertalign_SubScript:
+						var oEndTextPr = Para.GetParaEndCompiledPr();
+
+						if (reviewtype_Common !== ReviewType)
 						{
-							Y -= AscCommon.vaKSub * oEndTextPr.FontSize * g_dKoef_pt_to_mm;
-							break;
+							pGraphics.SetTextPr(oEndTextPr, PDSE.Theme);
+							pGraphics.b_color1(ReviewColor.r, ReviewColor.g, ReviewColor.b, 255);
 						}
-						case AscCommon.vertalign_SuperScript:
+						else if (oEndTextPr.Unifill)
 						{
-							Y -= AscCommon.vaKSuper * oEndTextPr.FontSize * g_dKoef_pt_to_mm;
-							break;
+							oEndTextPr.Unifill.check(PDSE.Theme, PDSE.ColorMap);
+							var RGBAEnd = oEndTextPr.Unifill.getRGBAColor();
+							pGraphics.SetTextPr(oEndTextPr, PDSE.Theme);
+							if (pGraphics.m_bIsTextDrawer !== true)
+							{
+								pGraphics.b_color1(RGBAEnd.R, RGBAEnd.G, RGBAEnd.B, 255);
+							}
 						}
+						else
+						{
+							pGraphics.SetTextPr(oEndTextPr, PDSE.Theme);
+							if (pGraphics.m_bIsTextDrawer !== true)
+							{
+								if (true === oEndTextPr.Color.Auto)
+								{
+									pGraphics.b_color1(AutoColor.r, AutoColor.g, AutoColor.b, 255);
+								}
+								else
+								{
+									pGraphics.b_color1(oEndTextPr.Color.r, oEndTextPr.Color.g, oEndTextPr.Color.b, 255);
+								}
+							}
+							else
+							{
+								if (true === oEndTextPr.Color.Auto && !oEndTextPr.TextFill)
+								{
+									pGraphics.b_color1(AutoColor.r, AutoColor.g, AutoColor.b, 255);
+								}
+							}
+						}
+
+						Y = TempY;
+						switch (oEndTextPr.VertAlign)
+						{
+							case AscCommon.vertalign_SubScript:
+							{
+								Y -= AscCommon.vaKSub * oEndTextPr.FontSize * g_dKoef_pt_to_mm;
+								break;
+							}
+							case AscCommon.vertalign_SuperScript:
+							{
+								Y -= AscCommon.vaKSuper * oEndTextPr.FontSize * g_dKoef_pt_to_mm;
+								break;
+							}
+						}
+
+						var bEndCell = false;
+
+						var oDocContent = Para.GetParent();
+						var oCell       = oDocContent.IsTableCellContent(true);
+						if (oCell)
+						{
+							var oCellContent = oCell.GetContent();
+							bEndCell         = Para === oCellContent.GetLastParagraph();
+						}
+
+						Item.Draw(X, Y - this.YOffset, pGraphics, bEndCell, reviewtype_Common !== ReviewType);
 					}
-
-                    var bEndCell = false;
-
-                    var oDocContent = Para.GetParent();
-                    var oCell       = oDocContent.IsTableCellContent(true);
-                    if (oCell)
+					else
 					{
-						var oCellContent = oCell.GetContent();
-						bEndCell = Para === oCellContent.GetLastParagraph();
+						Item.Draw(X, Y - this.YOffset, pGraphics, false, false);
 					}
-
-                    Item.Draw(X, Y - this.YOffset, pGraphics, bEndCell, reviewtype_Common !== ReviewType ?  true : false);
-                }
-                else
-                {
-                    Item.Draw(X, Y - this.YOffset, pGraphics, false, false);
-                }
+				}
 
                 X += Item.Get_Width();
 
