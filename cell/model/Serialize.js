@@ -3748,7 +3748,7 @@
             if (null !== oSheetView.showZeros && !oThis.isCopyPaste)
                 this.bs.WriteItem(c_oSer_SheetView.ShowZeros, function(){oThis.memory.WriteBool(oSheetView.showZeros);});
             if (null !== oSheetView.topLeftCell && !oThis.isCopyPaste)
-                this.bs.WriteItem(c_oSer_SheetView.TopLeftCell, function(){oThis.memory.WriteString2(oSheetView.topLeftCell.getName());});
+                this.bs.WriteItem(c_oSer_SheetView.TopLeftCell, function(){oThis.memory.WriteString3(oSheetView.topLeftCell.getName());});
         };
         this.WriteSheetViewPane = function (oPane) {
             var oThis = this;

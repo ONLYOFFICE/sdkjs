@@ -9761,12 +9761,10 @@
 		}
 		
 		if (!view.topLeftCell) {
-			view.topLeftCell = new Asc.Range(0, 0, 0, 0);
+			view.topLeftCell = new AscCommon.CellBase(0, 0);
 		}
-		view.topLeftCell.r1 = range.r1;
-		view.topLeftCell.c1 = range.c1;
-		view.topLeftCell.r2 = range.r1;
-		view.topLeftCell.c2 = range.c1;
+		view.topLeftCell.row = range.r1;
+		view.topLeftCell.col = range.c1;
 	};
 
 //-------------------------------------------------------------------------------------------------
