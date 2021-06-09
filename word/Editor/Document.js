@@ -24011,7 +24011,16 @@ CDocument.prototype.DrawTable = function()
 	if (!this.DrawTableMode.Table)
 	{
 		if (!this.DrawTableMode.Draw || Math.abs(this.DrawTableMode.StartX - this.DrawTableMode.EndX) < 1 || Math.abs(this.DrawTableMode.StartY - this.DrawTableMode.EndY) < 1)
+		{
+			if (this.DrawTableMode.StartX === this.DrawTableMode.EndX && this.DrawTableMode.StartY === this.DrawTableMode.EndY)
+			{
+				this.DrawTableMode.Draw && editor.sync_TableDrawModeCallback(false);
+				this.DrawTableMode.Erase && editor.sync_TableEraseModeCallback(false);
+				this.UpdateCursorType(this.CurPos.RealX, this.CurPos.RealY, this.CurPage, new AscCommon.CMouseEventHandler());
+			}
+
 			return;
+		}
 
 		var oSelectionState = this.GetSelectionState();
 
@@ -24054,7 +24063,13 @@ CDocument.prototype.DrawTable = function()
 		var oTable = this.DrawTableMode.Table;
 
 		this.StartAction(AscDFH.historydescription_Document_DrawTable);
-		oTable.DrawTableCells(this.DrawTableMode.StartX, this.DrawTableMode.StartY, this.DrawTableMode.EndX, this.DrawTableMode.EndY, this.DrawTableMode.TablePageStart, this.DrawTableMode.TablePageEnd, isDraw);
+		var bKeepDrawMode = oTable.DrawTableCells(this.DrawTableMode.StartX, this.DrawTableMode.StartY, this.DrawTableMode.EndX, this.DrawTableMode.EndY, this.DrawTableMode.TablePageStart, this.DrawTableMode.TablePageEnd, isDraw);
+
+		if (bKeepDrawMode === false)
+		{
+			isDraw  = false;
+			isErase = false;
+		}
 
 		if (oTable.GetRowsCount() <= 0 && oTable.GetParent())
 		{
@@ -24090,6 +24105,7 @@ CDocument.prototype.DrawTable = function()
 			this.Api.SetTableDrawMode(true);
 		else if (isErase)
 			this.Api.SetTableEraseMode(true);
+		this.UpdateCursorType(this.CurPos.RealX, this.CurPos.RealY, this.CurPage, new AscCommon.CMouseEventHandler());
 	}
 };
 /**
