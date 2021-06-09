@@ -10365,7 +10365,7 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 		// Если делаем просто щелчок по границе
 		if (X1 === X2 && Y1 === Y2)
 		{
-			this.DrawBorderByClick(X1, Y1, CurPageStart);
+			return this.DrawBorderByClick(X1, Y1, CurPageStart);
 		}
 		// Если рисуем вертикальную линию
 		else if (Math.abs(Y2 - Y1) > 2 && Math.abs(X2 - X1) < 3)
@@ -10386,7 +10386,7 @@ CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPage
 	// Если стираем (ctrl + F2)
 	else if (drawMode === false)
 	{
-		this.EraseTable(X1, Y1, X2, Y2, CurPageStart);
+		return this.EraseTable(X1, Y1, X2, Y2, CurPageStart);
 	}
 };
 /**
@@ -10533,9 +10533,6 @@ CTable.prototype.EraseTable = function(X1, Y1, X2, Y2, CurPageStart)
 	{
 		var SelectedCells = this.GetCellAndBorderByClick(X1, Y1, CurPageStart, false);
 
-		if (SelectedCells === undefined)
-			return false;
-
 		isVSelect  = SelectedCells.isVSelect;  // Была ли выбрана вертикальная граница
 		isHSelect  = SelectedCells.isHSelect;   // Была ли выбрана горизонтальная граница
 
@@ -10544,11 +10541,13 @@ CTable.prototype.EraseTable = function(X1, Y1, X2, Y2, CurPageStart)
 		isTopBorder    = SelectedCells.isTopBorder;
 		isBottomBorder = SelectedCells.isBottomBorder;
 
-		if (SelectedCells.Cells.length > 0)
-		{
-			isSelected = true;
-			click = true;
-		}
+		if (SelectedCells.Cells.length === 0)
+			return false;
+		else if (!isRightBorder && !isLeftBorder && !isTopBorder && !isBottomBorder && !isVSelect && !isHSelect)
+			return true;
+
+		isSelected = true;
+		click = true;
 
 		this.private_SetSelectionData(SelectedCells.Cells);
 	}
@@ -10603,7 +10602,7 @@ CTable.prototype.EraseTable = function(X1, Y1, X2, Y2, CurPageStart)
 
 	// Проверяем можем ли удалить всю таблицу целиком, или её часть (столбец или строку, или несколько)
 	if (this.DeleteTablePart(X_Front, X_After, Y_Over, Y_Under, bCanMerge))
-		return true;
+		return;
 
 	var CellsCanBeMerge = [];// Массив из групп ячеек, которые можно будет объеденить
 	CellsCanBeMerge.push(this.Selection.Data);
@@ -12116,9 +12115,6 @@ CTable.prototype.DrawBorderByClick = function(X1, Y1, CurPageStart)
 	// *Необходимо для случаев, когда у ячейки VMerge_count > 1*
 	var SelectedCells = this.GetCellAndBorderByClick(X1, Y1, CurPageStart, true);
 
-	if (SelectedCells === undefined)
-		return false;
-
 	var isVSelect  = SelectedCells.isVSelect;  // Была ли выбрана вертикальная граница
 	var isHSelect  = SelectedCells.isHSelect;   // Была ли выбрана горизонтальная граница
 
@@ -12127,14 +12123,12 @@ CTable.prototype.DrawBorderByClick = function(X1, Y1, CurPageStart)
 	var isTopBorder    = SelectedCells.isTopBorder;
 	var isBottomBorder = SelectedCells.isBottomBorder;
 
-	if (SelectedCells.Cells.length > 0)
-	{
+	if (SelectedCells.Cells.length === 0)
+		return false;
+	else if (isRightBorder || isLeftBorder || isTopBorder || isBottomBorder || isVSelect || isHSelect)
 		this.Selection.Data = SelectedCells.Cells;
-	}
 	else
-	{
-		return;
-	}
+		return true;
 
 	//отрисовка бордеров
 	if (this.Selection.Data.length === 1)
@@ -12868,6 +12862,7 @@ CTable.prototype.GetCellAndBorderByClick = function(X, Y, CurPageStart)
 
 	var two_cells = false;
 
+	var clickedCell = null;
 	var SelectedCells = {
 		Cells : [],
 		isVSelect : false,
@@ -12911,8 +12906,17 @@ CTable.prototype.GetCellAndBorderByClick = function(X, Y, CurPageStart)
 			if (this.RowsInfo[curRow].Y[CurPageStart] < Y && Y < this.RowsInfo[curRow].Y[CurPageStart] + rowHSum)
 				isInsideRow = true;
 			if (this.GetRow(curRow).CellsInfo[curCell].X_cell_start < X  &&  X < this.GetRow(curRow).CellsInfo[curCell].X_cell_end)
-				isInsideCellBorders= true;
+				isInsideCellBorders = true;
 
+			if (isInsideRow && isInsideCellBorders)
+			{
+				clickedCell = 
+				{
+					Cell: curCell,
+					Row : curRow
+				};
+			}
+				
 			// Попадание в правую границу ячейки
 			if (Math.abs(X - this.GetRow(curRow).CellsInfo[curCell].X_cell_end) < 1.5 && isInsideRow)
 			{
@@ -13038,7 +13042,7 @@ CTable.prototype.GetCellAndBorderByClick = function(X, Y, CurPageStart)
 					if (this.GetRow(curRow).CellsInfo[Index].X_cell_start < X  &&  X < this.GetRow(curRow).CellsInfo[Index].X_cell_end)
 					{
 						if (Cell.GetVMerge() === 2)
-							return;
+							continue;
 
 						var cell_pos =
 						{
@@ -13066,7 +13070,7 @@ CTable.prototype.GetCellAndBorderByClick = function(X, Y, CurPageStart)
 			else if (Math.abs(Y - (this.RowsInfo[curRow].Y[CurPageStart] + rowHSum)) < 1.5 && isInsideCellBorders)
 			{
 				if (Cell.GetVMerge() === 2)
-					return;
+					continue;
 
 				var cell_pos1 =
 				{
@@ -13118,6 +13122,9 @@ CTable.prototype.GetCellAndBorderByClick = function(X, Y, CurPageStart)
 			}
 		}
 	}
+
+	if (SelectedCells.Cells.length === 0 && clickedCell)
+		SelectedCells.Cells.push(clickedCell);
 
 	return SelectedCells;
 };
