@@ -12181,7 +12181,7 @@ CTable.prototype.DrawBorderByClick = function(X1, Y1, CurPageStart)
 
 			if (VMerge_count_1 > 1)
 			{
-				Cell_1 = this.GetRow(Cell_1_pos.Row + VMerge_count_1 -1).Get_Cell(Cell_1_pos.Cell);
+				Cell_1 = this.GetCellByStartGridCol(Cell_1_pos.Row + VMerge_count_1 - 1, Grid_start_1);
 			}
 
 			Cell_1.CheckNonEmptyBorder(2);
@@ -12583,7 +12583,7 @@ CTable.prototype.HorSplitCells = function(Y, RowIndex, CellsIndexes, CurPageStar
 					if (RowIndex != this.Get_RowsCount() - 1)
 					{
 						var TempRow 	 = this.GetRow(Cell_pos.Row + 1);
-						var TempCell	 = TempRow.Get_Cell(Cell_pos.Cell);
+						var TempCell	 = this.GetCellByStartGridCol(TempRow.GetIndex(), Grid_start);
 
 						TempCell.SetVMerge(vmerge_Restart);
 					}
