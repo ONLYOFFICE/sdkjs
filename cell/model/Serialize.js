@@ -3747,6 +3747,11 @@
 				this.bs.WriteItem(c_oSer_SheetView.Selection, function(){oThis.WriteSheetViewSelection(ws.selectionRange);});
             if (null !== oSheetView.showZeros && !oThis.isCopyPaste)
                 this.bs.WriteItem(c_oSer_SheetView.ShowZeros, function(){oThis.memory.WriteBool(oSheetView.showZeros);});
+            if (!oThis.isCopyPaste)
+            {
+                var _topLeftCell = ws.getTopLeftCell();
+                this.bs.WriteItem(c_oSer_SheetView.TopLeftCell, function(){oThis.memory.WriteString2(_topLeftCell);});
+            }
         };
         this.WriteSheetViewPane = function (oPane) {
             var oThis = this;
@@ -8838,7 +8843,7 @@
 			} else if (c_oSer_SheetView.TabSelected === type) {
 				this.stream.GetBool();
 			} else if (c_oSer_SheetView.TopLeftCell === type) {
-				this.stream.GetString2LE(length);
+                oSheetView.topLeftCell = this.stream.GetString2LE(length);
 			} else if (c_oSer_SheetView.View === type) {
 				this.stream.GetUChar();
 			} else if (c_oSer_SheetView.WindowProtection === type) {
