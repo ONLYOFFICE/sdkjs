@@ -9752,6 +9752,22 @@
 		}
 		return this.conditionalFormattingRangeIterator;
 	};
+	Worksheet.prototype.updateTopLeftCell = function(range) {
+		var view = this.sheetViews[0];
+		
+		if (range.c1 === 0 && range.r1 === 0) {
+			view.topLeftCell = null;
+			return;
+		}
+		
+		if (!view.topLeftCell) {
+			view.topLeftCell = new Asc.Range(0, 0, 0, 0);
+		}
+		view.topLeftCell.r1 = range.r1;
+		view.topLeftCell.c1 = range.c1;
+		view.topLeftCell.r2 = range.r1;
+		view.topLeftCell.c2 = range.c1;
+	};
 
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;

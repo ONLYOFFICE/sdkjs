@@ -7453,6 +7453,7 @@
         this.cellCommentator.drawCommentCells();
 		window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Update_Position();
         this.handlers.trigger("toggleAutoCorrectOptions", true);
+        this.model.updateTopLeftCell(this.visibleRange);
         return this;
     };
 
@@ -7611,6 +7612,7 @@
         this.cellCommentator.drawCommentCells();
 		window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Update_Position();
         this.handlers.trigger("toggleAutoCorrectOptions", true);
+		this.model.updateTopLeftCell(this.visibleRange);
         return this;
     };
 
