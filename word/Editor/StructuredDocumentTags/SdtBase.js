@@ -248,6 +248,13 @@ CSdtBase.prototype.IsForm = function()
 	return (undefined !== this.Pr.FormPr);
 };
 /**
+ * @returns {boolean}
+ */
+CSdtBase.prototype.IsAnchorForm = function()
+{
+	return false;
+};
+/**
  * returns {boolean}
  */
 CSdtBase.prototype.IsFormRequired = function()
