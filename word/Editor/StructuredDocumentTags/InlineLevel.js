@@ -2375,12 +2375,25 @@ CInlineLevelSdt.prototype.ConvertFormToAnchor = function()
 	oShape.setWordShape(true);
 	oShape.setBDeleted(false);
 
+	var nW = 50;
+	var nH = 50;
+
+	for (var Key in this.Bounds)
+	{
+		if (this.Bounds[Key].W > 0.001 && this.Bounds[Key].H > 0.001)
+		{
+			nW = this.Bounds[Key].W + 0.5;
+			nH = this.Bounds[Key].H + 0.1;
+			break;
+		}
+	}
+
 	var oSpPr = new AscFormat.CSpPr();
 	var oXfrm = new AscFormat.CXfrm();
 	oXfrm.setOffX(0);
 	oXfrm.setOffY(0);
-	oXfrm.setExtX(50);
-	oXfrm.setExtY(50);
+	oXfrm.setExtX(nW);
+	oXfrm.setExtY(nH);
 	oSpPr.setXfrm(oXfrm);
 	oXfrm.setParent(oSpPr);
 
@@ -2399,6 +2412,8 @@ CInlineLevelSdt.prototype.ConvertFormToAnchor = function()
 
 	oInnerParagraph.MoveCursorToStartPos();
 	oInnerParagraph.Add(this);
+	oInnerParagraph.SetParagraphAlign(AscCommon.align_Left);
+	oInnerParagraph.SetParagraphSpacing({Before : 0, After : 0, Line : 1, LineRule : AscCommon.linerule_Auto});
 
 	var oBodyPr = oShape.getBodyPr().createDuplicate();
 
@@ -2431,6 +2446,19 @@ CInlineLevelSdt.prototype.ConvertFormToAnchor = function()
 
 	var oRun = new ParaRun(oParagraph, false);
 	oRun.AddToContent(0, oParaDrawing);
+
+	if (this.Content.length > 0 && this.Content[0] instanceof ParaRun)
+	{
+		var oInnerRun = this.Content[0];
+		var oTextPr   = oInnerRun.Get_CompiledPr(false);
+
+		g_oTextMeasurer.SetTextPr(oTextPr, oParagraph.GetTheme());
+		g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
+
+		var nTextDescent = Math.abs(g_oTextMeasurer.GetDescender());
+
+		oRun.Set_Position(-nTextDescent);
+	}
 
 	oParent.RemoveFromContent(nPosInParent, 1, true);
 	oParent.AddToContent(nPosInParent, oRun, true);
