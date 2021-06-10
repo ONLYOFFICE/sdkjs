@@ -1039,18 +1039,27 @@
 				History.TurnOff();
 			}
 
+			var startUpdateRow = row;
+			var endUpdateRow = row;
 			var _selectionRange = t.model.selectionRange;
 			if (_selectionRange && _selectionRange.ranges && _selectionRange.isContainsOnlyFullRowOrCol(true)) {
 				for (var i = 0; i < _selectionRange.ranges.length; i++) {
 					var _range = _selectionRange.ranges[i];
 					t.model.setRowHeight(AscCommonExcel.convertPxToPt(newHeight), _range.r1, _range.r2, true);
+					if (_range.r1 < startUpdateRow) {
+						startUpdateRow = _range.r1;
+					}
+					if (_range.r2 > endUpdateRow) {
+						endUpdateRow = _range.r2;
+					}
 				}
 			} else {
 				t.model.setRowHeight(AscCommonExcel.convertPxToPt(newHeight), row, row, true);
 			}
 
-            t.model.autoFilters.reDrawFilter(null, row);
-            t._cleanCache(new asc_Range(0, row, t.cols.length - 1, row));
+			var updateRange = new asc_Range(0, startUpdateRow, t.cols.length - 1, endUpdateRow);
+            t.model.autoFilters.reDrawFilter(updateRange);
+            t._cleanCache(updateRange);
             t.changeWorksheet("update", {reinitRanges: true});
             t._updateGroups(false, undefined, undefined, true);
             t._updateVisibleRowsCount();
