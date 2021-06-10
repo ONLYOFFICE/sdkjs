@@ -8842,7 +8842,7 @@
 			} else if (c_oSer_SheetView.TopLeftCell === type) {
                 var _topLeftCell = AscCommonExcel.g_oRangeCache.getAscRange(this.stream.GetString2LE(length));
                 if (_topLeftCell) {
-                    oSheetView.topLeftCell = new AscCommon.CellBase(_topLeftCell.r1, _topLeftCell.c1);
+                    oSheetView.topLeftCell = new Asc.Range(_topLeftCell.r1, _topLeftCell.c1, _topLeftCell.r1, _topLeftCell.c1);
                 }
 			} else if (c_oSer_SheetView.View === type) {
 				this.stream.GetUChar();

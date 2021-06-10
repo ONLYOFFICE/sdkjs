@@ -9758,9 +9758,11 @@
 		if (range.c1 === 0 && range.r1 === 0) {
 			newVal = null;
 		} else {
-			newVal = new AscCommon.CellBase(0, 0);
-			newVal.row = range.r1;
-			newVal.col = range.c1;
+			newVal = new Asc.Range(0, 0, 0, 0);
+			newVal.c1 = range.r1;
+			newVal.r1 = range.c1;
+			newVal.c2 = range.r1;
+			newVal.r2 = range.c1;
 		}
 
 		this.setTopLeftCell(newVal, true);
@@ -9775,7 +9777,7 @@
 			if (addToHistory) {
 				History.Create_NewPoint();
 				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_SetTopLeftCell,
-					this.getId(), null, new UndoRedoData_FromTo(view.showGridLines, value));
+					this.getId(), null, new UndoRedoData_FromTo(new UndoRedoData_BBox(oldValue), new UndoRedoData_BBox(val)));
 			}
 		}
 	};
