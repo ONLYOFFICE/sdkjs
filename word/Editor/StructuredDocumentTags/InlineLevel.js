@@ -2244,19 +2244,17 @@ CInlineLevelSdt.prototype.IntersectWithRect = function(X, Y, W, H, nPageAbs)
 {
 	var arrRects = [];
 
-	var oParagraph = this.GetParagraph();
-	if (!oParagraph)
-		return [];
-
-	for (var sKey in this.Bounds)
+	if (this.IsAnchorForm())
 	{
-		var oBound = this.Bounds[sKey];
-		if (oParagraph.GetAbsolutePage(oBound.PageInternal) === nPageAbs)
+		var oShape  = this.Paragraph.Parent.Is_DrawingShape(true);
+		var oBounds = oShape.getFormRelRect();
+
+		if (nPageAbs === oBounds.Page)
 		{
-			var nLeft   = Math.max(X, oBound.X);
-			var nRight  = Math.min(X + W, oBound.X + oBound.W);
-			var nTop    = Math.max(Y, oBound.Y);
-			var nBottom = Math.min(Y + H, oBound.Y + oBound.H);
+			var nLeft   = Math.max(X, oBounds.X);
+			var nRight  = Math.min(X + W, oBounds.X + oBounds.W);
+			var nTop    = Math.max(Y, oBounds.Y);
+			var nBottom = Math.min(Y + H, oBounds.Y + oBounds.H);
 
 			if (nLeft < nRight && nTop < nBottom)
 			{
@@ -2266,6 +2264,34 @@ CInlineLevelSdt.prototype.IntersectWithRect = function(X, Y, W, H, nPageAbs)
 					W : nRight - nLeft,
 					H : nBottom - nTop
 				});
+			}
+		}
+	}
+	else
+	{
+		var oParagraph = this.GetParagraph();
+		if (!oParagraph)
+			return [];
+
+		for (var sKey in this.Bounds)
+		{
+			var oBound = this.Bounds[sKey];
+			if (oParagraph.GetAbsolutePage(oBound.PageInternal) === nPageAbs)
+			{
+				var nLeft   = Math.max(X, oBound.X);
+				var nRight  = Math.min(X + W, oBound.X + oBound.W);
+				var nTop    = Math.max(Y, oBound.Y);
+				var nBottom = Math.min(Y + H, oBound.Y + oBound.H);
+
+				if (nLeft < nRight && nTop < nBottom)
+				{
+					arrRects.push({
+						X : nLeft,
+						Y : nTop,
+						W : nRight - nLeft,
+						H : nBottom - nTop
+					});
+				}
 			}
 		}
 	}

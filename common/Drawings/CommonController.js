@@ -5297,7 +5297,7 @@ DrawingObjectsController.prototype =
 				var oCursorPos = oParagraph.GetCalculatedCurPosXY();
 				var oBounds    = oForm.GetAnchorFormBounds();
 
-				var nDx = 0, nDy = 0, nPad = 0.5;
+				var nDx = 0, nDy = 0, nPad = 0;
 
 				if (oCursorPos.X < oBounds.X + nPad)
 					nDx = oBounds.X + nPad - oCursorPos.X;

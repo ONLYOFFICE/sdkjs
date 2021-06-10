@@ -7650,7 +7650,7 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage)
 	var isFillingForm  = oLogicDocument ? oLogicDocument.IsFillingFormMode() : false;
 
 	var oFillingCC = null;
-	if (isFillingForm)
+	if (isFillingForm || this.IsInAnchorForm())
 	{
 		var oInfo = new CSelectedElementsInfo();
 		this.GetSelectedElementsInfo(oInfo);
