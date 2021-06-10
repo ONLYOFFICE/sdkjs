@@ -9754,17 +9754,30 @@
 	};
 	Worksheet.prototype.updateTopLeftCell = function(range) {
 		var view = this.sheetViews[0];
-		
+		var newVal;
 		if (range.c1 === 0 && range.r1 === 0) {
-			view.topLeftCell = null;
-			return;
+			newVal = null;
+		} else {
+			newVal = new AscCommon.CellBase(0, 0);
+			newVal.row = range.r1;
+			newVal.col = range.c1;
 		}
-		
-		if (!view.topLeftCell) {
-			view.topLeftCell = new AscCommon.CellBase(0, 0);
+
+		this.setTopLeftCell(newVal, true);
+	};
+
+	Worksheet.prototype.setTopLeftCell = function(val, addToHistory) {
+		var view = this.sheetViews[0];
+
+		if (val !== view.topLeftCell || (val && view.topLeftCell && !val.isEqual(view.topLeftCell))) {
+			var oldValue = view.topLeftCell ? view.topLeftCell.clone() : null;
+			view.topLeftCell = val;
+			if (addToHistory) {
+				History.Create_NewPoint();
+				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_SetTopLeftCell,
+					this.getId(), null, new UndoRedoData_FromTo(view.showGridLines, value));
+			}
 		}
-		view.topLeftCell.row = range.r1;
-		view.topLeftCell.col = range.c1;
 	};
 
 //-------------------------------------------------------------------------------------------------
