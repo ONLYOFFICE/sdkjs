@@ -964,7 +964,17 @@
 				History.TurnOff();
 			}
             var bIsHidden = t.model.getColHidden(col);
-            t.model.setColWidth(cc, col, col);
+
+			var _selectionRange = t.model.selectionRange;
+            if (_selectionRange && _selectionRange.ranges && _selectionRange.isContainsOnlyFullRowOrCol(true)) {
+				for (var i = 0; i < _selectionRange.ranges.length; i++) {
+					var _range = _selectionRange.ranges[i];
+					t.model.setColWidth(cc, _range.c1, _range.c2);
+				}
+			} else {
+				t.model.setColWidth(cc, col, col);
+			}
+
             t._cleanCache(new asc_Range(0, 0, t.cols.length - 1, t.rows.length - 1));
             t.changeWorksheet("update", {reinitRanges: true});
 			t._updateGroups(true, undefined, undefined, true);
@@ -1028,7 +1038,17 @@
 			if (viewMode) {
 				History.TurnOff();
 			}
-            t.model.setRowHeight(AscCommonExcel.convertPxToPt(newHeight), row, row, true);
+
+			var _selectionRange = t.model.selectionRange;
+			if (_selectionRange && _selectionRange.ranges && _selectionRange.isContainsOnlyFullRowOrCol(true)) {
+				for (var i = 0; i < _selectionRange.ranges.length; i++) {
+					var _range = _selectionRange.ranges[i];
+					t.model.setRowHeight(AscCommonExcel.convertPxToPt(newHeight), _range.r1, _range.r2, true);
+				}
+			} else {
+				t.model.setRowHeight(AscCommonExcel.convertPxToPt(newHeight), row, row, true);
+			}
+
             t.model.autoFilters.reDrawFilter(null, row);
             t._cleanCache(new asc_Range(0, row, t.cols.length - 1, row));
             t.changeWorksheet("update", {reinitRanges: true});
