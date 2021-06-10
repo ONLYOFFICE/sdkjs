@@ -133,6 +133,9 @@ function CDocumentContent(Parent, DrawingDocument, X, Y, XLimit, YLimit, Split, 
 
     this.ClipInfo = [];
 
+    this.ShiftViewX = 0;
+    this.ShiftViewY = 0;
+
     this.ApplyToAll = false; // Специальный параметр, используемый в ячейках таблицы.
                              // True, если ячейка попадает в выделение по ячейкам.
 
@@ -656,6 +659,9 @@ CDocumentContent.prototype.CheckTableCoincidence = function(Table)
 //-----------------------------------------------------------------------------------
 CDocumentContent.prototype.Reset = function(X, Y, XLimit, YLimit)
 {
+	if (XLimit < 0)
+		XLimit = MEASUREMENT_MAX_MM_VALUE * 10;
+
 	this.X      = X;
 	this.Y      = Y;
 	this.XLimit = XLimit;
@@ -1533,6 +1539,24 @@ CDocumentContent.prototype.Shift = function(CurPage, Dx, Dy)
 		var ElementPageIndex = this.private_GetElementPageIndex(Index, CurPage, 0, 1);
 		Element.Shift(ElementPageIndex, Dx, Dy);
 	}
+};
+CDocumentContent.prototype.ShiftView = function(nDx, nDy)
+{
+	if (this.Pages.length <= 0)
+		return;
+
+	this.Shift(0, nDx, nDy);
+	this.ShiftViewX += nDx;
+	this.ShiftViewY += nDy;
+};
+CDocumentContent.prototype.ResetShiftView = function()
+{
+	if (this.Pages.length <= 0)
+		return;
+
+	this.Shift(0, -this.ShiftViewX, -this.ShiftViewY);
+	this.ShiftViewX = 0;
+	this.ShiftViewY = 0;
 };
 CDocumentContent.prototype.UpdateEndInfo = function()
 {

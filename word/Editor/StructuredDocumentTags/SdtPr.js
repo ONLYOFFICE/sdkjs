@@ -1162,6 +1162,7 @@ function CSdtTextFormPr(nMax, isComb, nWidth, nSymbol, sFont, oCombBorder)
 	this.CombPlaceholderSymbol = nSymbol;
 	this.CombPlaceholderFont   = sFont;
 	this.CombBorder            = undefined !== oCombBorder ? oCombBorder.Copy() : undefined;
+	this.MultiLine             = true;
 }
 CSdtTextFormPr.prototype.Copy = function()
 {
@@ -1173,6 +1174,7 @@ CSdtTextFormPr.prototype.Copy = function()
 	oText.CombPlaceholderSymbol = this.CombPlaceholderSymbol;
 	oText.CombPlaceholderFont   = this.CombPlaceholderFont;
 	oText.CombBorder            = this.CombBorder ? this.CombBorder.Copy() : undefined;
+	oText.MultiLine             = this.MultiLine;
 
 	return oText;
 };
@@ -1184,6 +1186,7 @@ CSdtTextFormPr.prototype.IsEqual = function(oOther)
 		&& this.CombPlaceholderSymbol === oOther.CombPlaceholderSymbol
 		&& this.CombPlaceholderFont === oOther.CombPlaceholderFont
 		&& ((!this.CombBorder && !oOther) || (this.CombBorder && this.CombBorder.IsEqual(oOther)))
+		&& this.MultiLine === oOther.MultiLine
 	);
 };
 CSdtTextFormPr.prototype.WriteToBinary = function(oWriter)
@@ -1221,6 +1224,8 @@ CSdtTextFormPr.prototype.WriteToBinary = function(oWriter)
 	{
 		oWriter.WriteBool(false);
 	}
+
+	oWriter.WriteBool(this.MultiLine);
 };
 CSdtTextFormPr.prototype.ReadFromBinary = function(oReader)
 {
@@ -1239,6 +1244,8 @@ CSdtTextFormPr.prototype.ReadFromBinary = function(oReader)
 		this.CombBorder = new CDocumentBorder();
 		this.CombBorder.ReadFromBinary(oReader);
 	}
+
+	this.MultiLine = oReader.GetBool();
 };
 CSdtTextFormPr.prototype.Write_ToBinary = function(oWriter)
 {
@@ -1314,6 +1321,14 @@ CSdtTextFormPr.prototype.SetAscCombBorder = function(oAscBorder)
 CSdtTextFormPr.prototype.IsComb = function()
 {
 	return !!(this.Comb && undefined !== this.MaxCharacters && this.MaxCharacters <= 1000);
+};
+CSdtTextFormPr.prototype.GetMultiLine = function()
+{
+	return this.MultiLine;
+};
+CSdtTextFormPr.prototype.SetMultiLine = function(isMultiLine)
+{
+	this.MultiLine = isMultiLine;
 };
 
 function CSdtFormPr(sKey, sLabel, sHelpText, isRequired)
@@ -1537,3 +1552,5 @@ CSdtTextFormPr.prototype['get_PlaceHolderFont']   = CSdtTextFormPr.prototype.Get
 CSdtTextFormPr.prototype['put_PlaceHolderFont']   = CSdtTextFormPr.prototype.SetPlaceHolderFont;
 CSdtTextFormPr.prototype['get_CombBorder']        = CSdtTextFormPr.prototype.GetAscCombBorder;
 CSdtTextFormPr.prototype['put_CombBorder']        = CSdtTextFormPr.prototype.SetAscCombBorder;
+CSdtTextFormPr.prototype['get_MultiLine']         = CSdtTextFormPr.prototype.GetMultiLine;
+CSdtTextFormPr.prototype['put_MultiLine']         = CSdtTextFormPr.prototype.SetMultiLine;

@@ -5284,38 +5284,71 @@ DrawingObjectsController.prototype =
 
 
     checkRedrawOnChangeCursorPosition: function(oStartContent, oStartPara)
-    {
-        if(this.document)
-        {
-            return;
-        }
-        var oEndContent = AscFormat.checkEmptyPlaceholderContent(this.getTargetDocContent());
-        var bRedraw = false;
-        var oEndPara = null;
-        if(oStartContent || oEndContent)
-        {
-            if(oStartContent !== oEndContent)
-            {
-                bRedraw = true;
-            }
-            else
-            {
-                if(oEndContent)
-                {
-                    oEndPara = oEndContent.GetCurrentParagraph();
-                }
-                if(oEndPara !== oStartPara)
-                {
-                    bRedraw = true;
-                }
-            }
-        }
-        if(bRedraw)
-        {
-            this.checkChartTextSelection(true);
-            this.drawingObjects.showDrawingObjects && this.drawingObjects.showDrawingObjects();
-        }
-    },
+	{
+		var bRedraw = false;
+
+		if (this.document)
+		{
+			var oDocContent = this.getTargetDocContent();
+			var oParagraph  = oDocContent.GetElement(0);
+			var oForm;
+			if (oParagraph && oParagraph.IsParagraph() && oParagraph.IsInAnchorForm() && (oForm = oParagraph.GetInnerForm()))
+			{
+				var oCursorPos = oParagraph.GetCalculatedCurPosXY();
+				var oBounds    = oForm.GetAnchorFormBounds();
+
+				var nDx = 0, nDy = 0, nPad = 0.5;
+
+				if (oCursorPos.X < oBounds.X + nPad)
+					nDx = oBounds.X + nPad - oCursorPos.X;
+				else if (oCursorPos.X > oBounds.W - nPad)
+					nDx = oBounds.W - nPad - oCursorPos.X;
+
+				if (oCursorPos.Y < oBounds.Y + nPad)
+					nDy = oBounds.Y + nPad - oCursorPos.Y;
+				else if (oCursorPos.Y + oCursorPos.Height > oBounds.H - nPad)
+					nDy = oBounds.H - nPad - oCursorPos.Y - oCursorPos.Height;
+
+				if (Math.abs(nDx) > 0.001 || Math.abs(nDy) > 0.001)
+				{
+					oDocContent.ShiftView(nDx, nDy);
+					bRedraw = true;
+				}
+			}
+
+			if (bRedraw)
+				this.document.ReDraw(oDocContent.GetAbsolutePage(0));
+		}
+		else
+		{
+			var oEndContent = AscFormat.checkEmptyPlaceholderContent(this.getTargetDocContent());
+			var oEndPara    = null;
+			if (oStartContent || oEndContent)
+			{
+				if (oStartContent !== oEndContent)
+				{
+					bRedraw = true;
+				}
+				else
+				{
+					if (oEndContent)
+					{
+						oEndPara = oEndContent.GetCurrentParagraph();
+					}
+					if (oEndPara !== oStartPara)
+					{
+						bRedraw = true;
+					}
+				}
+			}
+
+			if (bRedraw)
+			{
+				this.checkChartTextSelection(true);
+				this.drawingObjects.showDrawingObjects && this.drawingObjects.showDrawingObjects();
+			}
+		}
+	},
 
     cursorMoveToStartPos: function()
     {

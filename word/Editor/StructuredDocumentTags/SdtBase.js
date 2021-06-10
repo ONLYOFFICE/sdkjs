@@ -423,3 +423,10 @@ CSdtBase.prototype.ConvertFormToInline = function()
 {
 	return this;
 };
+/**
+ * @returns {boolean}
+ */
+CSdtBase.prototype.IsMultiLineForm = function()
+{
+	return true;
+};

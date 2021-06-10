@@ -2515,6 +2515,14 @@ CInlineLevelSdt.prototype.ConvertFormToInline = function()
 
 	return true;
 };
+CInlineLevelSdt.prototype.IsMultiLineForm = function()
+{
+	var oTextFormPr = this.GetTextFormPr();
+	if (oTextFormPr)
+		return oTextFormPr.GetMultiLine();
+
+	return true;
+};
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

@@ -4210,8 +4210,13 @@ CShape.prototype.recalculateDocContent = function(oDocContent, oBodyPr)
         while ( recalcresult2_End !== RecalcResult  )
             RecalcResult = oDocContent.Recalculate_Page( CurPage++, true );*/
 
-        oDocContent.RecalculateContent(oRet.w, oRet.h, nStartPage);
+		var oContentW = oRet.w;
 
+		var oForm = null;
+		if (this.isForm() && (oForm = this.getInnerForm()) && !oForm.IsMultiLineForm())
+			oContentW = -1;
+
+        oDocContent.RecalculateContent(oContentW, oRet.h, nStartPage);
         oRet.contentH = oDocContent.GetSummaryHeight();
 
         if(this.bWordShape)
