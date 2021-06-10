@@ -2338,19 +2338,30 @@ CShape.prototype.getFormRelRect = function () {
     var aY = [0, this.extY];
     var fX0, fY0;
 
-    var aRelX = [], aRelY = [];
-    for(var nX = 0; nX < aX.length; ++nX) {
-        fX0 = aX[nX];
-        for(var nY = 0; nY < aY.length; ++nY) {
-            fY0 = aY[nY];
-            var fX = oSpTransform.TransformPointX(fX0, fY0);
-            var fY = oSpTransform.TransformPointY(fX0, fY0);
-            var fRelX = oInvTextTransform.TransformPointX(fX, fY);
-            var fRelY = oInvTextTransform.TransformPointY(fX, fY);
-            aRelX.push(fRelX);
-            aRelY.push(fRelY);
-        }
-    }
+    if (!oSpTransform || !oInvTextTransform) {
+		return {
+			X    : 0,
+			Y    : 0,
+			W    : this.extX,
+			H    : this.extY,
+			Page : this.parent.PageNum
+		};
+	}
+
+	var aRelX = [], aRelY = [];
+	for(var nX = 0; nX < aX.length; ++nX) {
+		fX0 = aX[nX];
+		for(var nY = 0; nY < aY.length; ++nY) {
+			fY0 = aY[nY];
+			var fX = oSpTransform.TransformPointX(fX0, fY0);
+			var fY = oSpTransform.TransformPointY(fX0, fY0);
+			var fRelX = oInvTextTransform.TransformPointX(fX, fY);
+			var fRelY = oInvTextTransform.TransformPointY(fX, fY);
+			aRelX.push(fRelX);
+			aRelY.push(fRelY);
+		}
+	}
+
     return {
         X    : Math.min.apply(Math, aRelX),
         Y    : Math.min.apply(Math, aRelY),

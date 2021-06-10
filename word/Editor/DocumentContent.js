@@ -699,6 +699,9 @@ CDocumentContent.prototype.Reset_RecalculateCache = function()
 // Пересчитываем отдельную страницу DocumentContent
 CDocumentContent.prototype.Recalculate_Page               = function(PageIndex, bStart)
 {
+	this.ShiftViewX = 0;
+	this.ShiftViewY = 0;
+
 	var oDocContentRI = this.GetDocumentContentForRecalcInfo();
 	var oRecalcInfo   = oDocContentRI.RecalcInfo;
 
@@ -1557,6 +1560,78 @@ CDocumentContent.prototype.ResetShiftView = function()
 	this.Shift(0, -this.ShiftViewX, -this.ShiftViewY);
 	this.ShiftViewX = 0;
 	this.ShiftViewY = 0;
+};
+CDocumentContent.prototype.CheckFormViewWindow = function()
+{
+	var isChanged = false;
+	var oForm = this.GetInnerForm();
+	if (!this.LogicDocument || !oForm || this.Content.length !== 1 || !this.Content[0].IsParagraph())
+		return false;
+
+	var oParagraph  = this.GetElement(0);
+	var oPageBounds = this.GetContentBounds(0);
+	var oFormBounds = oForm.GetAnchorFormBounds();
+
+	var nDx = 0, nDy = 0, nPad = 0;
+
+	if (oPageBounds.Right - oPageBounds.Left > oFormBounds.W)
+	{
+		if (oPageBounds.Left > oFormBounds.X)
+			nDx = -oPageBounds.Left + oFormBounds.X;
+		else if (oPageBounds.Right < oFormBounds.X + oFormBounds.W)
+			nDx = oFormBounds.X + oFormBounds.W - oPageBounds.Right;
+	}
+	else
+	{
+		nDx = -this.ShiftViewX;
+	}
+
+	if (oPageBounds.Bottom - oPageBounds.Top > oFormBounds.H)
+	{
+		if (oPageBounds.Top > oFormBounds.Y)
+			nDy = -oPageBounds.Top + oFormBounds.Y;
+		else if (oPageBounds.Bottom < oFormBounds.Y + oFormBounds.H)
+			nDy = oFormBounds.Y + oFormBounds.H - oPageBounds.Bottom;
+	}
+	else
+	{
+		nDy = -this.ShiftViewY;
+	}
+
+	if (Math.abs(nDx) > 0.001 || Math.abs(nDy) > 0.001)
+	{
+		this.ShiftView(nDx, nDy);
+		isChanged = true;
+	}
+
+	var oCursorPos = oParagraph.GetCalculatedCurPosXY();
+
+	nDx = 0;
+	nDy = 0;
+
+	if (oPageBounds.Right - oPageBounds.Left > oFormBounds.W)
+	{
+		if (oCursorPos.X < oFormBounds.X + nPad)
+			nDx = oFormBounds.X + nPad - oCursorPos.X;
+		else if (oCursorPos.X > oFormBounds.W - nPad)
+			nDx = oFormBounds.W - nPad - oCursorPos.X;
+	}
+
+	if (oPageBounds.Bottom - oPageBounds.Top > oFormBounds.H)
+	{
+		if (oCursorPos.Y < oFormBounds.Y + nPad)
+			nDy = oFormBounds.Y + nPad - oCursorPos.Y;
+		else if (oCursorPos.Y + oCursorPos.Height > oFormBounds.H - nPad)
+			nDy = oFormBounds.H - nPad - oCursorPos.Y - oCursorPos.Height;
+	}
+
+	if (Math.abs(nDx) > 0.001 || Math.abs(nDy) > 0.001)
+	{
+		this.ShiftView(nDx, nDy);
+		isChanged = true;
+	}
+
+	return isChanged;
 };
 CDocumentContent.prototype.UpdateEndInfo = function()
 {

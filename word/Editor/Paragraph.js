@@ -3410,6 +3410,9 @@ Paragraph.prototype.ReDraw = function()
 };
 Paragraph.prototype.Shift = function(PageIndex, Dx, Dy)
 {
+	if (!this.IsRecalculated())
+		return;
+
 	if (0 === PageIndex)
 	{
 		this.X += Dx;
