@@ -5290,34 +5290,37 @@ DrawingObjectsController.prototype =
 		if (this.document)
 		{
 			var oDocContent = this.getTargetDocContent();
-			var oParagraph  = oDocContent.GetElement(0);
-			var oForm;
-			if (oParagraph && oParagraph.IsParagraph() && oParagraph.IsInAnchorForm() && (oForm = oParagraph.GetInnerForm()))
-			{
-				var oCursorPos = oParagraph.GetCalculatedCurPosXY();
-				var oBounds    = oForm.GetAnchorFormBounds();
+            if(oDocContent)
+            {
+                var oParagraph  = oDocContent.GetElement(0);
+                var oForm;
+                if (oParagraph && oParagraph.IsParagraph() && oParagraph.IsInAnchorForm() && (oForm = oParagraph.GetInnerForm()))
+                {
+                    var oCursorPos = oParagraph.GetCalculatedCurPosXY();
+                    var oBounds    = oForm.GetAnchorFormBounds();
 
-				var nDx = 0, nDy = 0, nPad = 0;
+                    var nDx = 0, nDy = 0, nPad = 0;
 
-				if (oCursorPos.X < oBounds.X + nPad)
-					nDx = oBounds.X + nPad - oCursorPos.X;
-				else if (oCursorPos.X > oBounds.W - nPad)
-					nDx = oBounds.W - nPad - oCursorPos.X;
+                    if (oCursorPos.X < oBounds.X + nPad)
+                        nDx = oBounds.X + nPad - oCursorPos.X;
+                    else if (oCursorPos.X > oBounds.W - nPad)
+                        nDx = oBounds.W - nPad - oCursorPos.X;
 
-				if (oCursorPos.Y < oBounds.Y + nPad)
-					nDy = oBounds.Y + nPad - oCursorPos.Y;
-				else if (oCursorPos.Y + oCursorPos.Height > oBounds.H - nPad)
-					nDy = oBounds.H - nPad - oCursorPos.Y - oCursorPos.Height;
+                    if (oCursorPos.Y < oBounds.Y + nPad)
+                        nDy = oBounds.Y + nPad - oCursorPos.Y;
+                    else if (oCursorPos.Y + oCursorPos.Height > oBounds.H - nPad)
+                        nDy = oBounds.H - nPad - oCursorPos.Y - oCursorPos.Height;
 
-				if (Math.abs(nDx) > 0.001 || Math.abs(nDy) > 0.001)
-				{
-					oDocContent.ShiftView(nDx, nDy);
-					bRedraw = true;
-				}
-			}
+                    if (Math.abs(nDx) > 0.001 || Math.abs(nDy) > 0.001)
+                    {
+                        oDocContent.ShiftView(nDx, nDy);
+                        bRedraw = true;
+                    }
+                }
 
-			if (bRedraw)
-				this.document.ReDraw(oDocContent.GetAbsolutePage(0));
+                if (bRedraw)
+                    this.document.ReDraw(oDocContent.GetAbsolutePage(0));
+            }
 		}
 		else
 		{
@@ -6520,6 +6523,7 @@ DrawingObjectsController.prototype =
         }
         if (oTargetTextObject) {
 
+            var bRedraw = false;
             var warpGeometry = oTargetTextObject.recalcInfo && oTargetTextObject.recalcInfo.warpGeometry;
             if(warpGeometry && warpGeometry.preset !== "textNoShape" || oTargetTextObject.worksheet)
             {
@@ -6551,13 +6555,25 @@ DrawingObjectsController.prototype =
                     }, this, []);
 
                 }
+                bRedraw = true;
+            }
+            var oDocContent = this.getTargetDocContent();
+            if(oDocContent) {
+                var oParagraph  = oDocContent.GetElement(0);
+                var oForm;
+                if (oParagraph && oParagraph.IsParagraph() && oParagraph.IsInAnchorForm() && (oForm = oParagraph.GetInnerForm())) {
+                    oDocContent.ResetShiftView();
+                    bRedraw = true;
+                }
+            }
+            if(bRedraw) {
                 if (this.document)
                 {
                     nPageNum2 = nSelectStartPage;
                 }
                 else if (this.drawingObjects.cSld)
                 {
-                 //   if (!(bNoRedraw === true))
+                    //   if (!(bNoRedraw === true))
                     {
                         nPageNum2 = this.drawingObjects.num;
                     }
@@ -6567,7 +6583,6 @@ DrawingObjectsController.prototype =
                     nPageNum2 = 0;
                 }
             }
-
         }
 
         if(AscFormat.isRealNumber(nPageNum1))

@@ -64,7 +64,7 @@ function ParaDrawing(W, H, GraphicObj, DrawingDocument, DocumentContent, Parent)
 	this.DrawingType = drawing_Inline;
 	this.GraphicObj  = GraphicObj;
 
-	this.Form = false; // Флаг, означающий, является ли данная автофигура контейнером для специальной формой
+	this.Form = true; // Флаг, означающий, является ли данная автофигура контейнером для специальной формой
 
 	this.X      = 0;
 	this.Y      = 0;
