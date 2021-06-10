@@ -13713,7 +13713,17 @@
 		switch (prop) {
 			case "colWidth":
 				functionModelAction = function () {
-					t.model.setColWidth(val, checkRange.c1, checkRange.c2);
+
+					var _selectionRange = t.model.selectionRange;
+					if (_selectionRange && _selectionRange.ranges) {
+						for (var i = 0; i < _selectionRange.ranges.length; i++) {
+							var _range = _selectionRange.ranges[i];
+							t.model.setColWidth(val, _range.c1, _range.c2);
+						}
+					} else {
+						t.model.setColWidth(val, checkRange.c1, checkRange.c2);
+					}
+
 					isUpdateCols = true;
 					oRecalcType = AscCommonExcel.recalcType.full;
 					reinitRanges = true;
@@ -13751,7 +13761,17 @@
 					// Приводим к px (чтобы было ровно)
 					val = val / AscCommonExcel.sizePxinPt;
 					val = (val | val) * AscCommonExcel.sizePxinPt;
-					t.model.setRowHeight(Math.min(val, Asc.c_oAscMaxRowHeight), checkRange.r1, checkRange.r2, true);
+
+					var _selectionRange = t.model.selectionRange;
+					if (_selectionRange && _selectionRange.ranges) {
+						for (var i = 0; i < _selectionRange.ranges.length; i++) {
+							var _range = _selectionRange.ranges[i];
+							t.model.setRowHeight(Math.min(val, Asc.c_oAscMaxRowHeight), _range.r1, _range.r2, true);
+						}
+					} else {
+						t.model.setRowHeight(Math.min(val, Asc.c_oAscMaxRowHeight), checkRange.r1, checkRange.r2, true);
+					}
+
 					isUpdateRows = true;
 					oRecalcType = AscCommonExcel.recalcType.full;
 					reinitRanges = true;
