@@ -963,17 +963,52 @@
             if (viewMode) {
 				History.TurnOff();
 			}
-            var bIsHidden = t.model.getColHidden(col);
+            
+            var getHiddenMap = function (start, end, opt_compare) {
+            	var res = null;
+            	for (var j = start; j < end; j++) {
+            		if (opt_compare) {
+            			if (t.model.getColHidden(j) !== opt_compare[j]) {
+							if (!res) {
+								res = {};
+							}
+            				res[j] = t.model.getColHidden(j);
+						}
+					} else {
+						if (!res) {
+							res = {};
+						}
+            			res[j] = t.model.getColHidden(j);
+					}
+				}
+            	return res;
+			};
 
+            var getRangesFromMap = function (_tempArrAfter, container) {
+				if (!_tempArrAfter) {
+					return;
+				}
+            	for (var j in _tempArrAfter) {
+					var _oRange = new AscCommonExcel.Range(t.model, 0, j, gc_nMaxRow0, j);
+					container.push(_oRange);
+				}
+			};
+            
+            var bIsHidden = t.model.getColHidden(col);
+            
+			var bIsHiddenArr;
             var startUpdateCol = col;
 			var _selectionRange = t.model.selectionRange;
             if (_selectionRange && _selectionRange.ranges && _selectionRange.isContainsOnlyFullRowOrCol(true)) {
-				for (var i = 0; i < _selectionRange.ranges.length; i++) {
+				bIsHiddenArr  = [];
+            	for (var i = 0; i < _selectionRange.ranges.length; i++) {
 					var _range = _selectionRange.ranges[i];
+					var _tempArr = getHiddenMap(_range.c1, _range.c2);
 					t.model.setColWidth(cc, _range.c1, _range.c2);
 					if (_range.c1 < startUpdateCol) {
 						startUpdateCol = _range.c1;
 					}
+					getRangesFromMap(getHiddenMap(_range.c1, _range.c2, _tempArr), bIsHiddenArr);
 				}
 			} else {
 				t.model.setColWidth(cc, col, col);
@@ -986,10 +1021,15 @@
 			t.cellCommentator.updateActiveComment();
             t.cellCommentator.updateAreaComments();
 
-            if(bIsHidden !==  t.model.getColHidden(col)) {
+            if (bIsHiddenArr) {
+            	if (bIsHiddenArr.length) {
+					Asc.editor.wb.handleChartsOnWorkbookChange(bIsHiddenArr);
+				}
+			} else if(bIsHidden !==  t.model.getColHidden(col)) {
                 var oRange = new AscCommonExcel.Range(t.model, 0, col, gc_nMaxRow0, col);
                 Asc.editor.wb.handleChartsOnWorkbookChange([oRange]);
             }
+
             if (t.objectRender) {
                 t.objectRender.updateSizeDrawingObjects({target: AscCommonExcel.c_oTargetType.ColumnResize, col: startUpdateCol});
             }
@@ -1043,12 +1083,44 @@
 				History.TurnOff();
 			}
 
+			var getHiddenMap = function (start, end, opt_compare) {
+				var res = null;
+				for (var j = start; j < end; j++) {
+					if (opt_compare) {
+						if (t.model.getRowHidden(j) !== opt_compare[j]) {
+							if (!res) {
+								res = {};
+							}
+							res[j] = t.model.getRowHidden(j);
+						}
+					} else {
+						if (!res) {
+							res = {};
+						}
+						res[j] = t.model.getRowHidden(j);
+					}
+				}
+				return res;
+			};
+
+			var getRangesFromMap = function (_tempArrAfter, container) {
+				if (!_tempArrAfter) {
+					return;
+				}
+				for (var j in _tempArrAfter) {
+					var _oRange = AscCommonExcel.Range(t.model, j, gc_nMaxCol0, j, gc_nMaxCol0);
+					container.push(_oRange);
+				}
+			};
+
+			var bIsHiddenArr;
 			var startUpdateRow = row;
 			var endUpdateRow = row;
 			var _selectionRange = t.model.selectionRange;
 			if (_selectionRange && _selectionRange.ranges && _selectionRange.isContainsOnlyFullRowOrCol(true)) {
 				for (var i = 0; i < _selectionRange.ranges.length; i++) {
 					var _range = _selectionRange.ranges[i];
+					var _tempArr = getHiddenMap(_range.r1, _range.cr);
 					t.model.setRowHeight(AscCommonExcel.convertPxToPt(newHeight), _range.r1, _range.r2, true);
 					if (_range.r1 < startUpdateRow) {
 						startUpdateRow = _range.r1;
@@ -1056,6 +1128,7 @@
 					if (_range.r2 > endUpdateRow) {
 						endUpdateRow = _range.r2;
 					}
+					getRangesFromMap(getHiddenMap(_range.r1, _range.r2, _tempArr), bIsHiddenArr);
 				}
 			} else {
 				t.model.setRowHeight(AscCommonExcel.convertPxToPt(newHeight), row, row, true);
@@ -1069,10 +1142,17 @@
             t._updateVisibleRowsCount();
 			t.cellCommentator.updateActiveComment();
 			t.cellCommentator.updateAreaComments();
-            if(bIsHidden !==  t.model.getRowHidden(row)) {
-                var oRange = new AscCommonExcel.Range(t.model, row, gc_nMaxCol0, row, gc_nMaxCol0);
-                Asc.editor.wb.handleChartsOnWorkbookChange([oRange]);
-            }
+
+
+			if (bIsHiddenArr) {
+				if (bIsHiddenArr.length) {
+					Asc.editor.wb.handleChartsOnWorkbookChange(bIsHiddenArr);
+				}
+			} else if(bIsHidden !==  t.model.getRowHidden(row)) {
+				var oRange = new AscCommonExcel.Range(t.model, row, gc_nMaxCol0, row, gc_nMaxCol0);
+				Asc.editor.wb.handleChartsOnWorkbookChange([oRange]);
+			}
+
             if (t.objectRender) {
                 t.objectRender.updateSizeDrawingObjects({target: AscCommonExcel.c_oTargetType.RowResize, row: startUpdateRow});
             }
