@@ -965,11 +965,15 @@
 			}
             var bIsHidden = t.model.getColHidden(col);
 
+            var startUpdateCol = col;
 			var _selectionRange = t.model.selectionRange;
             if (_selectionRange && _selectionRange.ranges && _selectionRange.isContainsOnlyFullRowOrCol(true)) {
 				for (var i = 0; i < _selectionRange.ranges.length; i++) {
 					var _range = _selectionRange.ranges[i];
 					t.model.setColWidth(cc, _range.c1, _range.c2);
+					if (_range.c1 < startUpdateCol) {
+						startUpdateCol = _range.c1;
+					}
 				}
 			} else {
 				t.model.setColWidth(cc, col, col);
@@ -987,7 +991,7 @@
                 Asc.editor.wb.handleChartsOnWorkbookChange([oRange]);
             }
             if (t.objectRender) {
-                t.objectRender.updateSizeDrawingObjects({target: AscCommonExcel.c_oTargetType.ColumnResize, col: col});
+                t.objectRender.updateSizeDrawingObjects({target: AscCommonExcel.c_oTargetType.ColumnResize, col: startUpdateCol});
             }
 			if (viewMode) {
 				History.TurnOn();
@@ -1070,7 +1074,7 @@
                 Asc.editor.wb.handleChartsOnWorkbookChange([oRange]);
             }
             if (t.objectRender) {
-                t.objectRender.updateSizeDrawingObjects({target: AscCommonExcel.c_oTargetType.RowResize, row: row});
+                t.objectRender.updateSizeDrawingObjects({target: AscCommonExcel.c_oTargetType.RowResize, row: startUpdateRow});
             }
 			if (viewMode) {
 				History.TurnOn();
@@ -13743,10 +13747,14 @@
 			case "colWidth":
 				functionModelAction = function () {
 
+					var minUpdateCol = checkRange.c1;
 					var _selectionRange = t.model.selectionRange;
 					if (_selectionRange && _selectionRange.ranges) {
 						for (var i = 0; i < _selectionRange.ranges.length; i++) {
 							var _range = _selectionRange.ranges[i];
+							if (_range.c1 < minUpdateCol) {
+								minUpdateCol = _range.c1;
+							}
 							t.model.setColWidth(val, _range.c1, _range.c2);
 						}
 					} else {
@@ -13756,7 +13764,7 @@
 					isUpdateCols = true;
 					oRecalcType = AscCommonExcel.recalcType.full;
 					reinitRanges = true;
-					updateDrawingObjectsInfo = {target: c_oTargetType.ColumnResize, col: checkRange.c1};
+					updateDrawingObjectsInfo = {target: c_oTargetType.ColumnResize, col: minUpdateCol};
 				};
 				this._isLockedAll(onChangeWorksheetCallback);
 				break;
@@ -13791,10 +13799,14 @@
 					val = val / AscCommonExcel.sizePxinPt;
 					val = (val | val) * AscCommonExcel.sizePxinPt;
 
+					var minUpdateRow = checkRange.r1;
 					var _selectionRange = t.model.selectionRange;
 					if (_selectionRange && _selectionRange.ranges) {
 						for (var i = 0; i < _selectionRange.ranges.length; i++) {
 							var _range = _selectionRange.ranges[i];
+							if (_range.r1 < minUpdateRow) {
+								minUpdateRow = _range.r1;
+							}
 							t.model.setRowHeight(Math.min(val, Asc.c_oAscMaxRowHeight), _range.r1, _range.r2, true);
 						}
 					} else {
@@ -13804,7 +13816,7 @@
 					isUpdateRows = true;
 					oRecalcType = AscCommonExcel.recalcType.full;
 					reinitRanges = true;
-					updateDrawingObjectsInfo = {target: c_oTargetType.RowResize, row: checkRange.r1};
+					updateDrawingObjectsInfo = {target: c_oTargetType.RowResize, row: minUpdateRow};
 				};
 				return this._isLockedAll(onChangeWorksheetCallback);
 			case "showRows":
