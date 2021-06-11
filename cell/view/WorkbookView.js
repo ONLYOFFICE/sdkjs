@@ -862,6 +862,9 @@
     this.model.handlers.add("drawWS", function() {
       self.drawWS.apply(self, arguments);
     });
+    this.model.handlers.add("scrollToTopLeftCell", function() {
+      self.scrollToTopLeftCell.apply(self, arguments);
+    });
     this.model.handlers.add("showDrawingObjects", function() {
       self.onShowDrawingObjects.apply(self, arguments);
     });
@@ -2967,6 +2970,9 @@
 
   WorkbookView.prototype.drawWS = function() {
     this.getWorksheet().draw();
+  };
+  WorkbookView.prototype.scrollToTopLeftCell = function() {
+    this.getWorksheet().scrollToTopLeftCell();
   };
   WorkbookView.prototype.onShowDrawingObjects = function() {
       var oWSView = this.getWorksheet();

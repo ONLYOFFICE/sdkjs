@@ -22035,6 +22035,13 @@
 		History.EndTransaction();
 	};
 
+	WorksheetView.prototype.scrollToTopLeftCell = function () {
+		var topLeftCell = this.model.getTopLeftCell();
+		if (topLeftCell) {
+			this._scrollToRange(topLeftCell);
+		}
+	};
+
 	//------------------------------------------------------------export---------------------------------------------------
     window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 	window["AscCommonExcel"].CellFlags = CellFlags;

@@ -9781,6 +9781,11 @@
 		}
 	};
 
+	Worksheet.prototype.getTopLeftCell = function() {
+		var view = this.sheetViews[0];
+		return view.topLeftCell;
+	};
+
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;
 	var g_nCellOffsetXf = g_nCellOffsetFlag + 1;
