@@ -1324,7 +1324,7 @@ CSdtTextFormPr.prototype.IsComb = function()
 };
 CSdtTextFormPr.prototype.GetMultiLine = function()
 {
-	return this.MultiLine;
+	return (this.MultiLine && !this.IsComb());
 };
 CSdtTextFormPr.prototype.SetMultiLine = function(isMultiLine)
 {

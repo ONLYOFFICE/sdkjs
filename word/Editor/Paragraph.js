@@ -3001,23 +3001,57 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 		}
 
 		Element = aCombForms.Get_Next(true);
-		while (Element)
+		if (Element)
 		{
-			var nFormY0 = Page.Y + Line.Y - Line.Metrics.Ascent;
-			var nFormY1 = Page.Y + Line.Y + Line.Metrics.Descent;
-
-			pGraphics.p_color(Element.r, Element.g, Element.b, 255);
-			pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Bottom, nFormY0, Element.x0, Element.x1, Element.w, -Element.w / 2, Element.w / 2);
-			pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Top, nFormY1, Element.x0, Element.x1, Element.w, -Element.w / 2, Element.w / 2);
-			pGraphics.drawVerLine(c_oAscLineDrawingRule.Center, Element.x0, nFormY0, nFormY1, Element.w);
-			pGraphics.drawVerLine(c_oAscLineDrawingRule.Center, Element.x1, nFormY0, nFormY1, Element.w);
-
-			for (var nInterIndex = 0, nIntersCount = Element.Intermediate.length; nInterIndex < nIntersCount; ++nInterIndex)
+			if (this.IsInAnchorForm())
 			{
-				pGraphics.drawVerLine(c_oAscLineDrawingRule.Center, Element.Intermediate[nInterIndex], nFormY0, nFormY1, Element.w);
-			}
+				var oForm   = this.GetInnerForm();
+				var oBounds = oForm.GetAnchorFormBounds();
+				var oTextFormPr = oForm.GetTextFormPr();
+				var nCombMax    = 1;
+				if (oTextFormPr && oTextFormPr.IsComb() && (nCombMax = oTextFormPr.GetMaxCharacters()) > 0)
+				{
+					var nFormX0 = oBounds.X + 0.001;
+					var nFormX1 = oBounds.X + oBounds.W - 0.001;
+					var nFormY0 = oBounds.Y + 0.001;
+					var nFormY1 = oBounds.Y + oBounds.H - 0.001;
 
-			Element = aCombForms.Get_Next(true);
+					pGraphics.p_color(Element.r, Element.g, Element.b, 255);
+					pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Bottom, nFormY0, nFormX0, nFormX1, Element.w, -Element.w / 2, Element.w / 2);
+					pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Top, nFormY1, nFormX0, nFormX1, Element.w, -Element.w / 2, Element.w / 2);
+					pGraphics.drawVerLine(c_oAscLineDrawingRule.Left, nFormX0, nFormY0, nFormY1, Element.w);
+					pGraphics.drawVerLine(c_oAscLineDrawingRule.Right, nFormX1, nFormY0, nFormY1, Element.w);
+
+					var nInterStep = oBounds.W / nCombMax;
+					var nInterX    = nFormX0;
+					for (var nInterIndex = 0, nIntersCount = nCombMax - 1; nInterIndex < nIntersCount; ++nInterIndex)
+					{
+						nInterX += nInterStep;
+						pGraphics.drawVerLine(c_oAscLineDrawingRule.Center, nInterX, nFormY0, nFormY1, Element.w);
+					}
+				}
+			}
+			else
+			{
+				while (Element)
+				{
+					var nFormY0 = Page.Y + Line.Y - Line.Metrics.Ascent;
+					var nFormY1 = Page.Y + Line.Y + Line.Metrics.Descent;
+
+					pGraphics.p_color(Element.r, Element.g, Element.b, 255);
+					pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Bottom, nFormY0, Element.x0, Element.x1, Element.w, -Element.w / 2, Element.w / 2);
+					pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Top, nFormY1, Element.x0, Element.x1, Element.w, -Element.w / 2, Element.w / 2);
+					pGraphics.drawVerLine(c_oAscLineDrawingRule.Center, Element.x0, nFormY0, nFormY1, Element.w);
+					pGraphics.drawVerLine(c_oAscLineDrawingRule.Center, Element.x1, nFormY0, nFormY1, Element.w);
+
+					for (var nInterIndex = 0, nIntersCount = Element.Intermediate.length; nInterIndex < nIntersCount; ++nInterIndex)
+					{
+						pGraphics.drawVerLine(c_oAscLineDrawingRule.Center, Element.Intermediate[nInterIndex], nFormY0, nFormY1, Element.w);
+					}
+
+					Element = aCombForms.Get_Next(true);
+				}
+			}
 		}
 
 		if (pGraphics.End_Command)
@@ -11421,7 +11455,7 @@ Paragraph.prototype.PreDelete = function()
 		var Item = this.Content[Index];
 
 		if (Item.PreDelete)
-			Item.PreDelete();
+			Item.PreDelete(true);
 
 		if(this.LogicDocument)
 		{

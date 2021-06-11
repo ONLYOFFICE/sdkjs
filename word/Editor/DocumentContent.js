@@ -1565,7 +1565,12 @@ CDocumentContent.prototype.CheckFormViewWindow = function()
 {
 	var isChanged = false;
 	var oForm = this.GetInnerForm();
-	if (!this.LogicDocument || !oForm || this.Content.length !== 1 || !this.Content[0].IsParagraph())
+	if (!this.LogicDocument
+		|| !oForm
+		|| (!oForm.IsTextForm() && !oForm.IsCheckBox())
+		|| (oForm.IsTextForm() && !oForm.GetTextFormPr().IsComb())
+		|| this.Content.length !== 1
+		|| !this.Content[0].IsParagraph())
 		return false;
 
 	var oParagraph  = this.GetElement(0);

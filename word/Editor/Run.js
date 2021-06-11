@@ -3005,6 +3005,16 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 
 		if (!nCombWidth || nCombWidth < 0)
 			nCombWidth = this.TextAscent;
+
+		var oParagraph = this.GetParagraph();
+		if (oParagraph && oParagraph.IsInAnchorForm())
+		{
+			var oShape  = oParagraph.Parent.Is_DrawingShape(true);
+			var oBounds = oShape.getFormRelRect();
+
+			if (nMaxComb > 0)
+				nCombWidth = oBounds.W / nMaxComb;
+		}
 	}
 
 	if (nCombWidth && nMaxComb > 0)
@@ -11469,17 +11479,18 @@ ParaRun.prototype.GetLineByPosition = function(nPos)
 /**
  * Данная функция вызывается перед удалением данного рана из родительского класса.
  */
-ParaRun.prototype.PreDelete = function()
+ParaRun.prototype.PreDelete = function(isDeep)
 {
 	// TODO: Перенести это, когда удаляется непосредственно элемент из класса
 	//       Сейчас работает не совсем корректно, потому что при большой вложенности у элементов чистится Parent,
 	//       хотя по факту он должен чистится только у первого уровня элементов, с которых начинается удаление
-	this.SetParent(null);
+	if (true !== isDeep)
+		this.SetParent(null);
 
 	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
 	{
 		if (this.Content[nIndex].PreDelete)
-			this.Content[nIndex].PreDelete();
+			this.Content[nIndex].PreDelete(true);
 	}
 
 	this.RemoveSelection();
