@@ -54,7 +54,7 @@
     var sColumnRange = sColumnName + sColon + sColumnName;
     var sCellRange = '(' + sCellCellRange + ')\|(' + sRowRange + ')\|(' + sColumnRange + ')';
     var sCellReference = '(' + sCellRange + ')\|(' + sCellName + ')';
-    var sBookmark = "[_A-Z]([A-Z0-9]{0,39})";//TODO: not only latin
+    var sBookmark = "[_A-ZА-Я]([A-ZА-Я0-9]{0,39})";
     var sBookmarkCellRef = sBookmark + '( +(' + sCellReference + '))*';
     var sFunctions = "(ABS\|AND\|AVERAGE\|COUNT\|DEFINED\|FALSE\|IF\|INT\|MAX\|MIN\|MOD\|NOT\|OR\|PRODUCT\|ROUND\|SIGN\|SUM\|TRUE)" ;
 
