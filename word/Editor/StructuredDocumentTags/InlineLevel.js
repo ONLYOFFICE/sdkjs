@@ -2438,7 +2438,7 @@ CInlineLevelSdt.prototype.ConvertFormToAnchor = function()
 
 	oInnerParagraph.MoveCursorToStartPos();
 	oInnerParagraph.Add(this);
-	oInnerParagraph.SetParagraphAlign(AscCommon.align_Left);
+	oInnerParagraph.SetParagraphAlign(this.IsCheckBox() ? AscCommon.align_Center : AscCommon.align_Left);
 	oInnerParagraph.SetParagraphSpacing({Before : 0, After : 0, Line : 1, LineRule : AscCommon.linerule_Auto});
 
 	var oBodyPr = oShape.getBodyPr().createDuplicate();
@@ -2548,6 +2548,34 @@ CInlineLevelSdt.prototype.IsMultiLineForm = function()
 		return oTextFormPr.GetMultiLine();
 
 	return true;
+};
+CInlineLevelSdt.prototype.OnChangeAnchoredFormTrack = function(nW, nH)
+{
+	if (!this.IsForm() || !this.IsCheckBox())
+		return;
+
+	var oParagraph = this.GetParagraph();
+	if (!oParagraph || !oParagraph.Parent)
+		return;
+
+	var oShape = oParagraph.Parent.Is_DrawingShape(true);
+	if (!oShape)
+		return;
+
+	var oRun = this.Content[0];
+
+	var oTextPr = oRun.Get_CompiledPr(false);
+
+	g_oTextMeasurer.SetTextPr(oTextPr, oParagraph.GetTheme());
+	g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
+
+	var nTextHeight = g_oTextMeasurer.GetHeight();
+
+	var nKoef = 1.2 * Math.min(nW, nH * 0.8) / nTextHeight;
+
+	var nFontSize    = oTextPr.FontSize;
+	var nNewFontSize = oTextPr.FontSize * nKoef;
+	oRun.Set_FontSize(nNewFontSize);
 };
 
 //--------------------------------------------------------export--------------------------------------------------------

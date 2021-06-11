@@ -1567,8 +1567,8 @@ CDocumentContent.prototype.CheckFormViewWindow = function()
 	var oForm = this.GetInnerForm();
 	if (!this.LogicDocument
 		|| !oForm
-		|| (!oForm.IsTextForm() && !oForm.IsCheckBox())
-		|| (oForm.IsTextForm() && !oForm.GetTextFormPr().IsComb())
+		|| oForm.IsCheckBox()
+		|| (oForm.IsTextForm() && oForm.GetTextFormPr().IsComb())
 		|| this.Content.length !== 1
 		|| !this.Content[0].IsParagraph())
 		return false;

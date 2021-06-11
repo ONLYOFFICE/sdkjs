@@ -1367,7 +1367,18 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                     this.originalObject.checkDrawingBaseCoords();
                 }, this, []);
             }
-        };
+
+			if (this.originalObject instanceof CShape && this.originalObject.isForm())
+			{
+				var nW = this.originalObject.spPr.xfrm.extX;
+				var nH = this.originalObject.spPr.xfrm.extY;
+
+				var oForm = this.originalObject.getInnerForm();
+				if (oForm)
+					oForm.OnChangeAnchoredFormTrack(nW, nH);
+			}
+
+		};
     }, this, []);
 }
 
