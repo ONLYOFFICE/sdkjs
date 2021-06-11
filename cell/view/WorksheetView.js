@@ -989,7 +989,7 @@
 					return;
 				}
             	for (var j in _tempArrAfter) {
-					var _oRange = new AscCommonExcel.Range(t.model, 0, j, gc_nMaxRow0, j);
+					var _oRange = new AscCommonExcel.Range(t.model, 0, parseInt(j), gc_nMaxRow0, parseInt(j));
 					container.push(_oRange);
 				}
 			};
@@ -1108,7 +1108,7 @@
 					return;
 				}
 				for (var j in _tempArrAfter) {
-					var _oRange = AscCommonExcel.Range(t.model, j, gc_nMaxCol0, j, gc_nMaxCol0);
+					var _oRange = new AscCommonExcel.Range(t.model, parseInt(j), gc_nMaxCol0, parseInt(j), gc_nMaxCol0);
 					container.push(_oRange);
 				}
 			};
@@ -1117,10 +1117,11 @@
 			var startUpdateRow = row;
 			var endUpdateRow = row;
 			var _selectionRange = t.model.selectionRange;
-			if (_selectionRange && _selectionRange.ranges && _selectionRange.isContainsOnlyFullRowOrCol(true)) {
+			if (_selectionRange && _selectionRange.ranges && _selectionRange.isContainsOnlyFullRowOrCol()) {
+				bIsHiddenArr = [];
 				for (var i = 0; i < _selectionRange.ranges.length; i++) {
 					var _range = _selectionRange.ranges[i];
-					var _tempArr = getHiddenMap(_range.r1, _range.cr);
+					var _tempArr = getHiddenMap(_range.r1, _range.r2);
 					t.model.setRowHeight(AscCommonExcel.convertPxToPt(newHeight), _range.r1, _range.r2, true);
 					if (_range.r1 < startUpdateRow) {
 						startUpdateRow = _range.r1;
