@@ -9753,16 +9753,15 @@
 		return this.conditionalFormattingRangeIterator;
 	};
 	Worksheet.prototype.updateTopLeftCell = function(range) {
-		var view = this.sheetViews[0];
 		var newVal;
 		if (range.c1 === 0 && range.r1 === 0) {
 			newVal = null;
 		} else {
 			newVal = new Asc.Range(0, 0, 0, 0);
-			newVal.c1 = range.r1;
-			newVal.r1 = range.c1;
-			newVal.c2 = range.r1;
-			newVal.r2 = range.c1;
+			newVal.c1 = range.c1;
+			newVal.r1 = range.r1;
+			newVal.c2 = range.c1;
+			newVal.r2 = range.r1;
 		}
 
 		this.setTopLeftCell(newVal, true);
