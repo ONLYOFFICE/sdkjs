@@ -4457,6 +4457,10 @@ CShape.prototype.checkExtentsByDocContent = function(bForce, bNeedRecalc)
             }
             else
             {
+            	var oForm;
+            	if (this.isForm() && (oForm = this.getInnerForm()) && oForm.IsAutoFitContent())
+					oForm.ProcessAutoFitContent();
+
                 if(bForce)
                 {
                     this.recalculateContentWitCompiledPr();

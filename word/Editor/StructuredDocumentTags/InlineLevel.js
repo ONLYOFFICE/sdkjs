@@ -2551,6 +2551,7 @@ CInlineLevelSdt.prototype.IsMultiLineForm = function()
 };
 CInlineLevelSdt.prototype.OnChangeAnchoredFormTrack = function(nW, nH)
 {
+	// Размеры подгоняем пока только для чекбоксов
 	if (!this.IsForm() || !this.IsCheckBox())
 		return;
 
@@ -2574,8 +2575,56 @@ CInlineLevelSdt.prototype.OnChangeAnchoredFormTrack = function(nW, nH)
 	var nKoef = 1.2 * Math.min(nW, nH * 0.8) / nTextHeight;
 
 	var nFontSize    = oTextPr.FontSize;
-	var nNewFontSize = oTextPr.FontSize * nKoef;
+	var nNewFontSize = nFontSize * nKoef;
 	oRun.Set_FontSize(nNewFontSize);
+};
+CInlineLevelSdt.prototype.IsAutoFitContent = function()
+{
+	if (!this.IsForm())
+		return false;
+
+	return true;
+
+	var oTextPr = this.GetTextFormPr();
+	if (oTextPr)
+		return oTextPr.GetAutoFit();
+
+	var oComboPr = this.GetComboBoxPr();
+	if (oComboPr)
+		return oComboPr.GetAutoFit();
+
+	return false;
+};
+CInlineLevelSdt.prototype.ProcessAutoFitContent = function()
+{
+	var oParagraph = this.GetParagraph();
+	var oRun       = this.GetElement(0);
+	var oTextPr    = this.Get_CompiledTextPr();
+	var oShape     = oParagraph.Parent ? oParagraph.Parent.Is_DrawingShape(true) : null;
+	if (!oShape || !oShape.isForm())
+		return;
+
+	var oShapeBounds = oShape.getFormRelRect();
+
+	if (this.IsMultiLineForm())
+	{
+
+	}
+	else
+	{
+		g_oTextMeasurer.SetTextPr(oTextPr, oParagraph.GetTheme());
+		g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
+
+		var nTextHeight = g_oTextMeasurer.GetHeight();
+		var nMaxWidth   = oParagraph.RecalculateMinMaxContentWidth(false).Max;
+
+		if (nMaxWidth < 0.001 || nTextHeight < 0.001)
+			return;
+
+		var nNewFontSize = Math.min(oTextPr.FontSize * oShapeBounds.H / nTextHeight * 0.9, 100, oTextPr.FontSize * oShapeBounds.W / nMaxWidth);
+		nNewFontSize = ((nNewFontSize * 100) | 0) / 100;
+		oRun.Set_FontSize(nNewFontSize);
+	}
 };
 
 //--------------------------------------------------------export--------------------------------------------------------

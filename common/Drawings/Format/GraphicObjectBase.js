@@ -2124,7 +2124,7 @@
         return AscFormat.CShape.prototype.getCanvasContext.call(this);
     };
 	CGraphicObjectBase.prototype.isForm = function() {
-		return (this.parent && this.parent.IsForm());
+		return (this.parent && this.parent.IsForm && this.parent.IsForm());
 	}
 	CGraphicObjectBase.prototype.getInnerForm = function() {
 		return null;

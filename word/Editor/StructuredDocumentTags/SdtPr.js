@@ -910,6 +910,7 @@ function CSdtComboBoxPr()
 {
 	this.ListItems = [];
 	this.LastValue = -1;
+	this.AutoFit   = false;
 }
 CSdtComboBoxPr.prototype.Copy = function()
 {
@@ -922,6 +923,8 @@ CSdtComboBoxPr.prototype.Copy = function()
 	{
 		oList.ListItems.push(this.ListItems[nIndex].Copy());
 	}
+
+	oList.AutoFit = this.AutoFit;
 
 	return oList;
 };
@@ -976,6 +979,7 @@ CSdtComboBoxPr.prototype.WriteToBinary = function(oWriter)
 	{
 		this.ListItems[nIndex].WriteToBinary(oWriter);
 	}
+	oWriter.WriteBool(this.AutoFit);
 };
 CSdtComboBoxPr.prototype.ReadFromBinary = function(oReader)
 {
@@ -988,6 +992,7 @@ CSdtComboBoxPr.prototype.ReadFromBinary = function(oReader)
 		oItem.ReadFromBinary(oReader);
 		this.ListItems.push(oItem);
 	}
+	this.AutoFit = oReader.GetBool();
 };
 CSdtComboBoxPr.prototype.Write_ToBinary = function(oWriter)
 {
@@ -1024,6 +1029,14 @@ CSdtComboBoxPr.prototype.FindByText = function(sValue)
 	}
 
 	return -1;
+};
+CSdtComboBoxPr.prototype.GetAutoFit = function()
+{
+	return this.AutoFit;
+};
+CSdtComboBoxPr.prototype.SetAutoFit = function(isAutoFit)
+{
+	this.AutoFit = isAutoFit;
 };
 
 /**
@@ -1163,6 +1176,7 @@ function CSdtTextFormPr(nMax, isComb, nWidth, nSymbol, sFont, oCombBorder)
 	this.CombPlaceholderFont   = sFont;
 	this.CombBorder            = undefined !== oCombBorder ? oCombBorder.Copy() : undefined;
 	this.MultiLine             = true;
+	this.AutoFit               = false;
 }
 CSdtTextFormPr.prototype.Copy = function()
 {
@@ -1175,6 +1189,7 @@ CSdtTextFormPr.prototype.Copy = function()
 	oText.CombPlaceholderFont   = this.CombPlaceholderFont;
 	oText.CombBorder            = this.CombBorder ? this.CombBorder.Copy() : undefined;
 	oText.MultiLine             = this.MultiLine;
+	oText.AutoFit               = this.AutoFit;
 
 	return oText;
 };
@@ -1187,6 +1202,7 @@ CSdtTextFormPr.prototype.IsEqual = function(oOther)
 		&& this.CombPlaceholderFont === oOther.CombPlaceholderFont
 		&& ((!this.CombBorder && !oOther) || (this.CombBorder && this.CombBorder.IsEqual(oOther)))
 		&& this.MultiLine === oOther.MultiLine
+		&& this.AutoFit === oOther.AutoFit
 	);
 };
 CSdtTextFormPr.prototype.WriteToBinary = function(oWriter)
@@ -1226,6 +1242,7 @@ CSdtTextFormPr.prototype.WriteToBinary = function(oWriter)
 	}
 
 	oWriter.WriteBool(this.MultiLine);
+	oWriter.WriteBool(this.AutoFit);
 };
 CSdtTextFormPr.prototype.ReadFromBinary = function(oReader)
 {
@@ -1246,6 +1263,7 @@ CSdtTextFormPr.prototype.ReadFromBinary = function(oReader)
 	}
 
 	this.MultiLine = oReader.GetBool();
+	this.AutoFit   = oReader.GetBool();
 };
 CSdtTextFormPr.prototype.Write_ToBinary = function(oWriter)
 {
@@ -1329,6 +1347,14 @@ CSdtTextFormPr.prototype.GetMultiLine = function()
 CSdtTextFormPr.prototype.SetMultiLine = function(isMultiLine)
 {
 	this.MultiLine = isMultiLine;
+};
+CSdtTextFormPr.prototype.GetAutoFit = function()
+{
+	return this.AutoFit;
+};
+CSdtTextFormPr.prototype.SetAutoFit = function(isAutoFit)
+{
+	this.AutoFit = isAutoFit;
 };
 
 function CSdtFormPr(sKey, sLabel, sHelpText, isRequired)
@@ -1510,6 +1536,8 @@ CSdtComboBoxPr.prototype['get_TextByValue']     = CSdtComboBoxPr.prototype.GetTe
 CSdtComboBoxPr.prototype['get_ItemsCount']      = CSdtComboBoxPr.prototype.GetItemsCount;
 CSdtComboBoxPr.prototype['get_ItemDisplayText'] = CSdtComboBoxPr.prototype.GetItemDisplayText;
 CSdtComboBoxPr.prototype['get_ItemValue']       = CSdtComboBoxPr.prototype.GetItemValue;
+CSdtComboBoxPr.prototype['put_AutoFit']         = CSdtComboBoxPr.prototype.GetAutoFit;
+CSdtComboBoxPr.prototype['put_AutoFit']         = CSdtComboBoxPr.prototype.SetAutoFit;
 
 window['AscCommon'].CSdtDatePickerPr    = CSdtDatePickerPr;
 window['AscCommon']['CSdtDatePickerPr'] = CSdtDatePickerPr;
@@ -1554,3 +1582,6 @@ CSdtTextFormPr.prototype['get_CombBorder']        = CSdtTextFormPr.prototype.Get
 CSdtTextFormPr.prototype['put_CombBorder']        = CSdtTextFormPr.prototype.SetAscCombBorder;
 CSdtTextFormPr.prototype['get_MultiLine']         = CSdtTextFormPr.prototype.GetMultiLine;
 CSdtTextFormPr.prototype['put_MultiLine']         = CSdtTextFormPr.prototype.SetMultiLine;
+CSdtTextFormPr.prototype['put_AutoFit']           = CSdtTextFormPr.prototype.GetAutoFit;
+CSdtTextFormPr.prototype['put_AutoFit']           = CSdtTextFormPr.prototype.SetAutoFit;
+

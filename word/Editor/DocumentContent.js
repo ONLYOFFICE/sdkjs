@@ -631,7 +631,7 @@ CDocumentContent.prototype.IsFootnote = function(bReturnFootnote)
 };
 CDocumentContent.prototype.Is_DrawingShape = function(bRetShape)
 {
-	if (this.Parent)
+	if (this.Parent && this.Parent.Is_DrawingShape)
 		return this.Parent.Is_DrawingShape(bRetShape);
 	else
 		return (bRetShape ? null : false);

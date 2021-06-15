@@ -4103,6 +4103,16 @@
 		return sResult;
 	}
 
+	/**
+	 * Корректируем значение размера шрифта к допустимому
+	 * @param {number} nFontSize
+	 * @param {boolean} isCeil
+	 */
+	function CorrectFontSize(nFontSize, isCeil)
+	{
+		return isCeil ? Math.ceil(nFontSize * 2) / 2 : Math.floor(nFontSize * 2) / 2;
+	}
+
 	var c_oAscSpaces = [];
 	c_oAscSpaces[0x000A] = 1;
 	c_oAscSpaces[0x0020] = 1;
@@ -6493,6 +6503,7 @@
 	window["AscCommon"].LatinNumberingToInt = LatinNumberingToInt;
 	window["AscCommon"].IntToNumberFormat = IntToNumberFormat;
 	window["AscCommon"].IsSpace = IsSpace;
+	window["AscCommon"].CorrectFontSize = CorrectFontSize;
 
 	window["AscCommon"].loadSdk = loadSdk;
     window["AscCommon"].loadScript = loadScript;
