@@ -3159,10 +3159,10 @@
 		return "unsupported";
 	};
 	/**
-	 * Add a comment to the desired element or array of elements.
+	 * Add a comment to the desired element or array of Runs.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @param {Array | ApiParagraph | ApiDocument} oElement - May be Document, Paragraph or Run[].
+	 * @param {ApiRun[] | ApiParagraph | ApiDocument} oElement - May be Document, Paragraph or Run[].
 	 * @param {string} Comment - The comment text.
 	 * @param {string} Autor - The author's name (not obligatory).
 	 * @returns {bool} - returns false if params are invalid.
