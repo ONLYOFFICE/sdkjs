@@ -456,6 +456,7 @@
     }
 
 	WorksheetView.prototype._init = function () {
+		this._initTopLeftCell();
 		this._initWorksheetDefaultWidth();
 		this._initPane();
 		this._updateGroups();
@@ -22039,6 +22040,13 @@
 		var topLeftCell = this.model.getTopLeftCell();
 		if (topLeftCell) {
 			this._scrollToRange(topLeftCell);
+		}
+	};
+
+	WorksheetView.prototype._initTopLeftCell = function () {
+		var topLeftCell = this.model.getTopLeftCell();
+		if (topLeftCell) {
+			this.visibleRange = topLeftCell.clone();
 		}
 	};
 
