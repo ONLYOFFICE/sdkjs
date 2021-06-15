@@ -5720,7 +5720,7 @@ background-repeat: no-repeat;\
 				if (sImageUrl)
 				{
 
-					if (window["AscDesktopEditor"])
+					if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]())
 					{
 						var _url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](sImageToDownLoad);
 						_url     = g_oDocumentUrls.getImageUrl(_url);
@@ -9438,7 +9438,7 @@ background-repeat: no-repeat;\
 
 			if (sImageUrl)
 			{
-				if (window["AscDesktopEditor"])
+				if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]())
 				{
 					var _url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](sImageToDownLoad);
 					_url     = g_oDocumentUrls.getImageUrl(_url);
