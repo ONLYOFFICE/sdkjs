@@ -2088,6 +2088,9 @@
                                 return;
                             }
                         }
+                    } else if (oLastFunction instanceof CSUMFunctionNode && oLastFunction.operands.length === 1 && oLastFunction.operands[0] instanceof CNumberNode) {
+                      this.setError(ERROR_TYPE_SYNTAX_ERROR, this.getErrorString(nStartPos, this.pos));
+                      return;
                     }
                     oLastFunction.argumentsCount = oLastFunction.operands.length;
                     oToken = aStack.pop();
