@@ -452,7 +452,7 @@
 				  var ws = self.getWorksheet();
 				  if (ws) {
 				  	var selectionRanges = ws.getSelectedRanges();
-				  	if (selectionRanges.length === 1 && selectionRanges[0].bbox && selectionRanges[0].bbox.isOneCell()) {
+				  	if (selectionRanges && selectionRanges.length === 1 && selectionRanges[0].bbox && selectionRanges[0].bbox.isOneCell()) {
 						  return ws.getActiveCell(0, 0, false)
 					  }
 				  }

@@ -817,16 +817,22 @@
         return this._getRange(lastRange.c1, lastRange.r1, lastRange.c2, lastRange.r2);
     };
 
-    WorksheetView.prototype.getSelectedRanges = function () {
-        var ret = [];
-        var aRanges = this.model.selectionRange.ranges;
-        var oRange;
-        for(var i = 0; i < aRanges.length; ++i) {
-            oRange = aRanges[i];
-            ret.push(this._getRange(oRange.c1, oRange.r1, oRange.c2, oRange.r2))
-        }
-        return ret;
-    };
+	WorksheetView.prototype.getSelectedRanges = function () {
+		var selection = this.model.getSelection();
+		var aRanges = selection && selection.ranges;
+
+		if (!aRanges) {
+			return null;
+		}
+
+		var ret = [];
+		var oRange;
+		for (var i = 0; i < aRanges.length; ++i) {
+			oRange = aRanges[i];
+			ret.push(this._getRange(oRange.c1, oRange.r1, oRange.c2, oRange.r2))
+		}
+		return ret;
+	};
 
     WorksheetView.prototype.resize = function (isUpdate, editor) {
         if (isUpdate) {
