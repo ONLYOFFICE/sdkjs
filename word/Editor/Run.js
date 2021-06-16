@@ -3199,7 +3199,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
     var WordLen             = PRS.WordLen;
 
     var X                   = PRS.X;
-    var XEnd                = PRS.XEnd;
+    var XEnd                = this.Paragraph.IsUseXLimit() ? PRS.XEnd : MEASUREMENT_MAX_MM_VALUE * 10;
 
     var ParaLine            = PRS.Line;
     var ParaRange           = PRS.Range;

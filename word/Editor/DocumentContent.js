@@ -68,6 +68,9 @@ function CDocumentContent(Parent, DrawingDocument, X, Y, XLimit, YLimit, Split, 
     this.XLimit = XLimit;
     this.YLimit = YLimit;
 
+    this.UseXLimit = true;
+    this.UseYLimit = true;
+
 	this.StartPage    = 0;
 	this.StartColumn  = 0;
 	this.ColumnsCount = 1;
@@ -659,9 +662,6 @@ CDocumentContent.prototype.CheckTableCoincidence = function(Table)
 //-----------------------------------------------------------------------------------
 CDocumentContent.prototype.Reset = function(X, Y, XLimit, YLimit)
 {
-	if (XLimit < 0)
-		XLimit = MEASUREMENT_MAX_MM_VALUE * 10;
-
 	this.X      = X;
 	this.Y      = Y;
 	this.XLimit = XLimit;
@@ -678,6 +678,14 @@ CDocumentContent.prototype.Reset = function(X, Y, XLimit, YLimit)
 	}
 
 	this.ClipInfo = [];
+};
+CDocumentContent.prototype.SetUseXLimit = function(isUse)
+{
+	this.UseXLimit = isUse;
+};
+CDocumentContent.prototype.SetUseYLimit = function(isUse)
+{
+	this.UseYLimit = isUse;
 };
 CDocumentContent.prototype.Recalculate                    = function()
 {
@@ -1197,6 +1205,8 @@ CDocumentContent.prototype.Recalculate_Page               = function(PageIndex, 
             {
                 Element.Set_DocumentIndex(Index);
                 Element.Reset(X, Y, XLimit, YLimit, PageIndex, 0, 1);
+                Element.SetUseXLimit(this.UseXLimit);
+                Element.SetUseYLimit(this.UseYLimit);
             }
 
             if (this.IsEmptyParagraphAfterTableInTableCell(Index))

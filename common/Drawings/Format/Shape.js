@@ -4225,7 +4225,9 @@ CShape.prototype.recalculateDocContent = function(oDocContent, oBodyPr)
 
 		var oForm = null;
 		if (this.isForm() && (oForm = this.getInnerForm()) && !oForm.IsMultiLineForm())
-			oContentW = -1;
+			oDocContent.SetUseXLimit(false);
+		else
+			oDocContent.SetUseXLimit(true);
 
         oDocContent.RecalculateContent(oContentW, oRet.h, nStartPage);
         oRet.contentH = oDocContent.GetSummaryHeight();

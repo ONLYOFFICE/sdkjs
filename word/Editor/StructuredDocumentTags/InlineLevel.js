@@ -2583,8 +2583,6 @@ CInlineLevelSdt.prototype.IsAutoFitContent = function()
 	if (!this.IsForm())
 		return false;
 
-	return true;
-
 	var oTextPr = this.GetTextFormPr();
 	if (oTextPr)
 		return oTextPr.GetAutoFit();
