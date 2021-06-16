@@ -3005,6 +3005,13 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 		{
 			if (this.IsInAnchorForm())
 			{
+				var isIntegerGrid = pGraphics.GetIntegerGrid();
+				if (!isIntegerGrid)
+				{
+					pGraphics.SaveGrState();
+					pGraphics.SetIntegerGrid(true);
+				}
+
 				var oForm   = this.GetInnerForm();
 				var oBounds = oForm.GetAnchorFormBounds();
 				var oTextFormPr = oForm.GetTextFormPr();
@@ -3030,6 +3037,9 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 						pGraphics.drawVerLine(c_oAscLineDrawingRule.Center, nInterX, nFormY0, nFormY1, Element.w);
 					}
 				}
+
+				if (!isIntegerGrid)
+					pGraphics.RestoreGrState();
 			}
 			else
 			{

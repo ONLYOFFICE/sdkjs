@@ -8069,7 +8069,7 @@ ParaRun.prototype.Internal_Compile_Pr = function ()
 
 			var MathFont    = {Name : "Cambria Math", Index : -1};
 			var oShapeStyle = null, oShapeTextPr = null;
-			;
+
 			if (Styles && typeof Styles.lastId === "string")
 			{
 				StyleId      = Styles.lastId;

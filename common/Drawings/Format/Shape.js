@@ -1942,7 +1942,7 @@ CShape.prototype.recalculateTransformText = function () {
     var oBodyPr = this.getBodyPr();
     this.clipRect = this.checkTransformTextMatrix(this.localTransformText, oContent, oBodyPr, false);
     if(this.isForm && this.isForm()) {
-        this.clipRect = {x: 0, y: 0, w: this.extX, h: this.extY};
+        this.clipRect = {x: -0.2, y: -0.2, w: this.extX + 0.4, h: this.extY + 0.4};
     }
     this.transformText = this.localTransformText.CreateDublicate();
     this.invertTransformText = global_MatrixTransformer.Invert(this.transformText);
