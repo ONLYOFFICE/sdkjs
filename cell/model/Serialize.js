@@ -10670,6 +10670,7 @@
     prot['dataBar'] = prot.dataBar;
     prot['duplicateValues'] = prot.duplicateValues;
     prot['expression'] = prot.expression;
+    prot['iconSet'] = prot.iconSet;
     prot['notContainsBlanks'] = prot.notContainsBlanks;
     prot['notContainsErrors'] = prot.notContainsErrors;
     prot['notContainsText'] = prot.notContainsText;
