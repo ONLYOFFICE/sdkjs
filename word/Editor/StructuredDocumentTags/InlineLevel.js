@@ -2606,25 +2606,85 @@ CInlineLevelSdt.prototype.ProcessAutoFitContent = function()
 
 	var oShapeBounds = oShape.getFormRelRect();
 
+	g_oTextMeasurer.SetTextPr(oTextPr, oParagraph.GetTheme());
+	g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
+
+	var nTextHeight = g_oTextMeasurer.GetHeight();
+	var nMaxWidth   = oParagraph.RecalculateMinMaxContentWidth(false).Max;
+	var nFontSize   = oTextPr.FontSize;
+
+	if (nMaxWidth < 0.001 || nTextHeight < 0.001 || oShapeBounds.W < 0.001 || oShapeBounds.H < 0.001)
+		return;
+
+	var nNewFontSize = nFontSize;
+
+	History.TurnOff();
 	if (this.IsMultiLineForm())
 	{
+		var nFontStep = 0.1;
 
+		if (nMaxWidth > oShapeBounds.W)
+		{
+			oParagraph.Recalculate_Page(0);
+			var oContentBounds = oParagraph.GetContentBounds(0);
+			if (oContentBounds.Bottom - oContentBounds.Top > oShapeBounds.H)
+			{
+				nNewFontSize = AscCommon.CorrectFontSize(nFontSize, true);
+				while (nNewFontSize > 1)
+				{
+					oRun.Set_FontSize(nNewFontSize);
+					oParagraph.Recalculate_Page(0);
+
+					oContentBounds = oParagraph.GetContentBounds(0);
+					if (oContentBounds.Bottom - oContentBounds.Top < oShapeBounds.H)
+						break;
+
+					nNewFontSize -= nFontStep;
+				}
+			}
+			else
+			{
+				var nMaxFontSize = this.Pr.TextPr.FontSize;
+				if (!nMaxFontSize)
+					nMaxFontSize = 12;
+
+				//nNewFontSize = AscCommon.CorrectFontSize(nFontSize, true);
+				while (nNewFontSize <= nMaxFontSize)
+				{
+					oRun.Set_FontSize(nNewFontSize);
+					oParagraph.Recalculate_Page(0);
+
+					var oContentBounds = oParagraph.GetContentBounds(0);
+					if (oContentBounds.Bottom - oContentBounds.Top > oShapeBounds.H)
+					{
+						nNewFontSize -= nFontStep;
+						oRun.Set_FontSize(nNewFontSize);
+						break;
+					}
+
+					nNewFontSize += nFontStep;
+				}
+
+				nNewFontSize = Math.min(nNewFontSize, nMaxFontSize);
+			}
+		}
+
+		oParagraph.Recalculate_Page(0);
+		oShape.recalcContent();
+		oShape.recalculateText();
+
+		// Восстанавливаем старое значение, чтобы в историю все правильно записалось
+		oRun.Set_FontSize(nFontSize);
 	}
 	else
 	{
-		g_oTextMeasurer.SetTextPr(oTextPr, oParagraph.GetTheme());
-		g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
-
-		var nTextHeight = g_oTextMeasurer.GetHeight();
-		var nMaxWidth   = oParagraph.RecalculateMinMaxContentWidth(false).Max;
-
-		if (nMaxWidth < 0.001 || nTextHeight < 0.001)
-			return;
-
-		var nNewFontSize = Math.min(oTextPr.FontSize * oShapeBounds.H / nTextHeight * 0.9, 100, oTextPr.FontSize * oShapeBounds.W / nMaxWidth);
-		nNewFontSize = ((nNewFontSize * 100) | 0) / 100;
-		oRun.Set_FontSize(nNewFontSize);
+		nNewFontSize = Math.min(nFontSize * oShapeBounds.H / nTextHeight * 0.9, 100, nFontSize * oShapeBounds.W / nMaxWidth);
 	}
+	nNewFontSize = ((nNewFontSize * 100) | 0) / 100;
+	History.TurnOn();
+
+	if (Math.abs(nNewFontSize - nFontSize) > 0.001)
+		oRun.Set_FontSize(nNewFontSize);
 };
 
 //--------------------------------------------------------export--------------------------------------------------------

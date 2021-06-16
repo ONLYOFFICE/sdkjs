@@ -123,6 +123,13 @@ var keydownresult_PreventAll      = 0xFFFF;
 
 var MEASUREMENT_MAX_MM_VALUE = 1000; // Маскимальное значение в мм, используемое в документе (MS Word) - 55,87 см, или 558,7 мм.
 
+var document_recalcresult_FastFlag = 0x1000;
+
+var document_recalcresult_NoRecal       = 0x0000;
+var document_recalcresult_FastRange     = 0x0001 | document_recalcresult_FastFlag;
+var document_recalcresult_FastParagraph = 0x0002 | document_recalcresult_FastFlag;
+var document_recalcresult_LongRecalc    = 0x00FF;
+
 function CDocumentColumnProps()
 {
     this.W     = 0;
@@ -3121,7 +3128,11 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 	{
 		if (this.Action.Recalculate)
 		{
-			this.private_Recalculate();
+			var nRecalcResult = this.private_Recalculate();
+
+			if (!(nRecalcResult & document_recalcresult_FastFlag) && this.Action.Additional.FormAutoFit)
+				this.private_FinalizeFormAutoFit();
+
 		}
 		else if (undefined !== this.Action.Redraw.Start && undefined !== this.Action.Redraw.End)
 		{
@@ -3337,6 +3348,15 @@ CDocument.prototype.private_FinalizeFormChange = function()
 
 	delete this.Action.Additional.FormChangeStart;
 };
+CDocument.prototype.private_FinalizeFormAutoFit = function()
+{
+	for (var nIndex = 0, nCount = this.Action.Additional.FormAutoFit.length; nIndex < nCount; ++nIndex)
+	{
+		this.Action.Additional.FormAutoFit[nIndex].ProcessAutoFitContent();
+	}
+
+
+};
 /**
  * Данная функция предназначена для отключения пересчета. Это может быть полезно, т.к. редактор всегда запускает
  * пересчет после каждого действия.
@@ -3423,7 +3443,7 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
 	{
 		this.RecalcInfo.Set_NeedRecalculateFromStart(false);
 		this.RecalculateFromStart();
-		return;
+		return document_recalcresult_NoRecal;
 	}
 
 	this.DocumentOutline.Update();
@@ -3431,7 +3451,7 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
     this.StartTime = new Date().getTime();
 
     if (true !== this.Is_OnRecalculate())
-        return;
+        return document_recalcresult_NoRecal;
 
     // Останавливаем поиск
     if (false != this.SearchEngine.ClearOnRecalc)
@@ -3461,10 +3481,10 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
     	var arrChanges = this.History.GetNonRecalculatedChanges();
 
     	if (this.private_RecalculateFastRunRange(arrChanges))
-			return;
+			return document_recalcresult_FastRange;
 
     	if (this.private_RecalculateFastParagraph(arrChanges))
-    		return;
+    		return document_recalcresult_FastParagraph;
     }
 
 	// // Recalculation LOG
@@ -3619,7 +3639,7 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
 		{
 			this.DrawingDocument.ClearCachePages();
 			this.DrawingDocument.FirePaint();
-			return;
+			return document_recalcresult_LongRecalc;
 		}
 		else if (ChangeIndex >= this.Content.length)
 		{
@@ -3680,7 +3700,7 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
 			{
 				// // Recalculation LOG
 				// console.log("No need to recalc");
-				return;
+				return document_recalcresult_LongRecalc;
 			}
 
 			clearTimeout(this.FullRecalc.Id);
@@ -3731,6 +3751,8 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
 	{
 		this.Recalculate_Page();
 	}
+
+    return document_recalcresult_LongRecalc;
 };
 /**
  * Запускаем пересчет документа.
@@ -24012,7 +24034,17 @@ CDocument.prototype.CheckTrackMoveInSelection = function()
 
 	return null;
 };
+/**
+ * Сообщаем, что в конце действия нужно будет проверить размер содержимого формы
+ * @param {CSdtBase} oForm
+ */
+CDocument.prototype.CheckFormAutoFit = function(oForm)
+{
+	if (!this.Action.Additional.FormAutoFit)
+		this.Action.Additional.FormAutoFit = [];
 
+	this.Action.Additional.FormAutoFit.push(oForm);
+};
 /**
  * Функция для рисования таблицы с помощью мыши
  */

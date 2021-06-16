@@ -4458,8 +4458,8 @@ CShape.prototype.checkExtentsByDocContent = function(bForce, bNeedRecalc)
             else
             {
             	var oForm;
-            	if (this.isForm() && (oForm = this.getInnerForm()) && oForm.IsAutoFitContent())
-					oForm.ProcessAutoFitContent();
+            	if (this.isForm() && (oForm = this.getInnerForm()) && oForm.IsAutoFitContent() && oForm.GetLogicDocument() && oForm.GetLogicDocument().CheckFormAutoFit)
+					oForm.GetLogicDocument().CheckFormAutoFit(oForm);
 
                 if(bForce)
                 {
