@@ -2706,7 +2706,6 @@ CGraphicObjects.prototype =
                 objects_for_grouping[i].setParent(null);
             }
         }
-        para_drawing.Set_XYForAdd( common_bounds.minX,  common_bounds.minY, nearest_pos, nPageIndex);
         para_drawing.Set_Props(new asc_CImgProperty(
             {
                 PositionH:
@@ -2725,6 +2724,8 @@ CGraphicObjects.prototype =
                     Value       : common_bounds.minY
                 }
             }));
+        para_drawing.Set_XYForAdd( common_bounds.minX,  common_bounds.minY, nearest_pos, nPageIndex);
+
         para_drawing.Add_ToDocument2(first_paragraph);
         para_drawing.Parent = first_paragraph;
         this.addGraphicObject(para_drawing);
