@@ -8293,7 +8293,11 @@
     CValAx.prototype.getFormatCode = function(oChartSpace, oSeries) {
         var oNumFmt = this.numFmt;
         var sFormatCode = null;
+
         if(oNumFmt) {
+            if(oNumFmt.sourceLinked) {
+                return this.getSourceFormatCode();
+            }
             sFormatCode = oNumFmt.formatCode;
             if(typeof sFormatCode === "string" && sFormatCode.length > 0) {
                 return sFormatCode;
