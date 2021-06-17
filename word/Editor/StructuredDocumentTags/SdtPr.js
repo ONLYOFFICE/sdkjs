@@ -1595,6 +1595,6 @@ CSdtTextFormPr.prototype['get_CombBorder']        = CSdtTextFormPr.prototype.Get
 CSdtTextFormPr.prototype['put_CombBorder']        = CSdtTextFormPr.prototype.SetAscCombBorder;
 CSdtTextFormPr.prototype['get_MultiLine']         = CSdtTextFormPr.prototype.GetMultiLine;
 CSdtTextFormPr.prototype['put_MultiLine']         = CSdtTextFormPr.prototype.SetMultiLine;
-CSdtTextFormPr.prototype['put_AutoFit']           = CSdtTextFormPr.prototype.GetAutoFit;
+CSdtTextFormPr.prototype['get_AutoFit']           = CSdtTextFormPr.prototype.GetAutoFit;
 CSdtTextFormPr.prototype['put_AutoFit']           = CSdtTextFormPr.prototype.SetAutoFit;
 
