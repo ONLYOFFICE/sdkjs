@@ -2518,7 +2518,7 @@
 			}
 
 			if (null === index) {
-				return null;descending
+				return null;
 			}
 
 			var level = new Asc.CSortPropertiesLevel();
