@@ -2478,13 +2478,13 @@
 		}
 	});
 
-	ApiRange.prototype.Sort = function (Key1, Order1, Key2, Type, Order2, Key3, Order3, Header, OrderCustom, MatchCase, Orientation, SortMethod, DataOption1, DataOption2, DataOption3) {
+	ApiRange.prototype.SetSort = function (Key1, Order1, Key2, Type, Order2, Key3, Order3, Header, OrderCustom, MatchCase, Orientation, SortMethod, DataOption1, DataOption2, DataOption3) {
 		var ws = this.range.worksheet;
 		var sortSettings = new Asc.CSortProperties(ws);
-		var range = this.range;
+		var range = this.range.bbox;
 
 		var aMerged = ws.mergeManager.get(range);
-		if (aMerged.outer.length > 0 || (aMerged.inner.length > 0 && null == window['AscCommonExcel']._isSameSizeMerged(selection, aMerged.inner, true))) {
+		if (aMerged.outer.length > 0 || (aMerged.inner.length > 0 && null == window['AscCommonExcel']._isSameSizeMerged(range, aMerged.inner, true))) {
 			return;
 		}
 		
@@ -2504,31 +2504,38 @@
 					AscCommonExcel.executeInR1C1Mode(false, function () {
 						defNameRef = AscCommonExcel.getRangeByRef(_defName.ref, ws, true, true)
 					});
-					if (defNameRef && defNameRef[0] && defNameRef[0].worksheet && defNameRef[0].worksheet.Id === ws.Id) {
-						index = columnSort ? defNameRef[0].bbox.c1 - range.c1 : defNameRef[0].bbox.r1 - range.r1;
+					if (defNameRef && defNameRef[0] && defNameRef[0].worksheet) {
+						if (range.contains(defNameRef[0].bbox.c1, defNameRef[0].bbox.r1)) {
+							if (defNameRef[0].worksheet.Id === ws.Id) {
+								index = columnSort ? defNameRef[0].bbox.c1 - range.c1 : defNameRef[0].bbox.r1 - range.r1;
+							}
+						} else {
+							//error
+							return false;
+						}
 					}
 				}
 			}
 
 			if (null === index) {
-				return;
+				return null;descending
 			}
 
 			var level = new Asc.CSortPropertiesLevel();
 			level.index = index;
-			level.descending = _order === "xlDescending";
+			level.descending = _order === "xlDescending" ? Asc.c_oAscSortOptions.Descending : Asc.c_oAscSortOptions.Ascending;
 			sortSettings.levels.push(level);
 		};
 
 		sortSettings.levels = [];
-		if (Key1) {
-			getSortLevel(Key1, Order1);
+		if (Key1 && false === getSortLevel(Key1, Order1)) {
+			return;
 		}
-		if (Key2) {
-			getSortLevel(Key2, Order2);
+		if (Key2 && false === getSortLevel(Key2, Order2)) {
+			return;
 		}
-		if (Key3) {
-			getSortLevel(Key3, Order3);
+		if (Key3 && false === getSortLevel(Key3, Order3)) {
+			return;
 		}
 
 		var oWorksheet = Asc['editor'].wb.getWorksheet();
@@ -2539,8 +2546,14 @@
 		} else if(ws.AutoFilter && ws.AutoFilter.Ref && ws.AutoFilter.Ref.intersection(range)) {
 			obj = ws.AutoFilter;
 		}
-		ws.setCustomSort(sortSettings, obj,null, oWorksheet && oWorksheet.cellCommentator, range);
+		ws.setCustomSort(sortSettings, obj, null, oWorksheet && oWorksheet.cellCommentator, range);
 	};
+
+	Object.defineProperty(ApiRange.prototype, "Sort", {
+		set: function (Key1, Order1, Key2, Type, Order2, Key3, Order3, Header, OrderCustom, MatchCase, Orientation, SortMethod, DataOption1, DataOption2, DataOption3) {
+			return this.SetSort(Key1, Order1, Key2, Type, Order2, Key3, Order3, Header, OrderCustom, MatchCase, Orientation, SortMethod, DataOption1, DataOption2, DataOption3);
+		}
+	});
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
