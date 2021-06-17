@@ -452,6 +452,15 @@ CDrawingsController.prototype.GetSelectedElementsInfo = function(oInfo)
 	}
 
 	this.DrawingObjects.getSelectedElementsInfo(oInfo);
+
+	var oParaDrawing = this.DrawingObjects.getMajorParaDrawing();
+	if (oParaDrawing && oParaDrawing.IsForm())
+	{
+		var oInnerForm = oParaDrawing.GetInnerForm();
+		if (oInnerForm)
+			oInfo.SetInlineLevelSdt(oInnerForm);
+	}
+
 };
 CDrawingsController.prototype.AddTableRow = function(bBefore, nCount)
 {
