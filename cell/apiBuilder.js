@@ -1676,28 +1676,46 @@
 	 * @param {string} RefStyle - The reference style.
 	 * @param {bool} External - Defines if the range is in the current file or not.
 	 * @param {range} RelativeTo - The range which the current range is relative to.
-	 * @returns {string | null} - returns null if range does not consist of one cell. 
+	 * @returns {string | null} - returns address of range as string. 
 	 */
-	ApiRange.prototype.GetAddress = function (RowAbs, ColAbs, RefStyle, External, RelativeTo) {
-		if (this.range.isOneCell()) {
-			var range = this.range.bbox;
-			var ws = this.range.worksheet;
-			if (RefStyle == 'xlA1') {
-				(ColAbs && RowAbs) ? range.setAbs(1, 1, 1, 1) : (ColAbs) ? range.setAbs(0, 1, 0, 1) : (RowAbs) ? range.setAbs(1, 0, 1, 0) : range.setAbs(0, 0, 0, 0);
+	 ApiRange.prototype.GetAddress = function (RowAbs, ColAbs, RefStyle, External, RelativeTo) {
+		var range = this.range.bbox;
+		var isOneCell = this.range.isOneCell();
+		var ws = this.range.worksheet;
+		var value = ""
+		var row1 = range.r1 + ( (RowAbs || RefStyle != "xlR1C1") ? 1 : 0),
+			col1 = range.c1 + ( (ColAbs || RefStyle != "xlR1C1") ? 1 : 0),
+			row2 = range.r2 + ( (RowAbs || RefStyle != "xlR1C1") ? 1 : 0),
+			col2 = range.c2 + ( (ColAbs || RefStyle != "xlR1C1") ? 1 : 0);
+		if (RefStyle == 'xlR1C1') {
+			if (RowAbs) {
+				row1 = "R" + row1;
+				row2 = isOneCell ? "" : ":R" + row2;
+			} else {
+				var tmpR = (RelativeTo instanceof ApiRange) ? RelativeTo.range.bbox.r1 : 0;
+				row1 = "R" + ((row1 - tmpR) !== 0 ? "[" + (row1 - tmpR) + "]" : "");
+				row2 = isOneCell ? "" : ":R" + ((row2 - tmpR) !== 0 ? "[" + (row2 - tmpR) + "]" : "");
 			}
-			// } else if (!RelativeTo) { 
-			// 	name[1] = (ColAbs) ? 'R' + (range[1] + 1) : 'R[' + range[1] + ']';
-			// 	name[2] = (ColAbs) ? 'C' + (range[0] + 1) : 'C[' + range[0] + ']';
-			// } else {
-			// 	var relRange = [RelativeTo.range.bbox.c1, RelativeTo.range.bbox.c1];
-			// 	name[1] = (ColAbs) ? 'R' + (range[1] + 1) : 'R[' + (range[1] - relRange[1]) + ']'; 
-			// 	name[2] = (ColAbs) ? 'C' + (range[0] + 1) : 'C[' + (range[0] - relRange[0]) + ']';
-			// }
-			return (External) ? '[' + ws.workbook.oApi.DocInfo.Title + ']' + AscCommon.parserHelp.get3DRef(ws.sName, range.getName()) : range.getName();
+
+			if (ColAbs) {
+				col1 = "C" + col1;
+				col2 = isOneCell ? "" : "C" + col2;
+			} else {
+				var tmpC = (RelativeTo instanceof ApiRange) ? RelativeTo.range.bbox.c1 : 0;
+				col1 = "C" + ((col1 - tmpC) !== 0 ? "[" + (col1 - tmpC) + "]" : "");
+				col2 = isOneCell ? "" : "C" + ((col2 - tmpC) !== 0 ? "[" + (col2 - tmpC) + "]" : "");
+			}
+			value = row1 + col1 + row2 + col2;
 		} else {
-			return null;
+			// xlA1 - default
+			row1 = (RowAbs ? "$" : "") + row1;
+			col1 = (ColAbs ? "$" : "") + AscCommon.g_oCellAddressUtils.colnumToColstr(col1);
+			row2 = isOneCell ? "" : ( (RowAbs ? "$" : "") + row2);
+			col2 = isOneCell ? "" : ( (ColAbs ? ":$" : ":") + AscCommon.g_oCellAddressUtils.colnumToColstr(col2) );
+			value = col1 + row1 + col2 + row2;
 		}
-	};
+		return (External) ? '[' + ws.workbook.oApi.DocInfo.Title + ']' + AscCommon.parserHelp.get3DRef(ws.sName, value) : value;
+};
 
 	/**
 	 * Get rows or columns count.
