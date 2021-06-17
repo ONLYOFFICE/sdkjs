@@ -5117,7 +5117,8 @@ PasteProcessor.prototype =
                 oCurParagraph.Internal_Content_Add(0, oCurRun);
 				for (var oIterator = text.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
 					if (bAddParagraph) {
-                        oContent.Internal_Content_Add(oContent.Content.length, new Paragraph(oContent.DrawingDocument, oContent, oContent.bPresentation === true));
+                        oCurParagraph = new Paragraph(oContent.DrawingDocument, oContent, oContent.bPresentation === true);
+                        oContent.Internal_Content_Add(oContent.Content.length, oCurParagraph);
                         oCurRun = new ParaRun(oCurParagraph, false);
                         oCurParagraph.Internal_Content_Add(0, oCurRun);
 						bAddParagraph = false;
