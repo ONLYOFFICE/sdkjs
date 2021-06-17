@@ -8709,6 +8709,7 @@
     };
     CDLbls.prototype.fillObject = function(oCopy, oIdMap) {
         oCopy.setDelete(this.bDelete);
+        oCopy.removeAllDLbls();
         for(var i = 0; i < this.dLbl.length; ++i) {
             oCopy.addDLbl(this.dLbl[i].createDuplicate());
         }
@@ -8783,6 +8784,11 @@
         this.onChartUpdateDataLabels();
     };
     CDLbls.prototype.addDLbl = function(pr) {
+        for(var nDLbl = this.dLbl.length - 1; nDLbl > -1; --nDLbl) {
+            if(this.dLbl[nDLbl].idx === pr.idx) {
+                this.removeDLbl(nDLbl);
+            }
+        }
         History.CanAddChanges() && History.Add(new CChangesDrawingsContent(this, AscDFH.historyitem_DLbls_SetDLbl, this.dLbl.length, [pr], true));
         this.dLbl.push(pr);
         this.setParentToChild(pr);
@@ -8867,13 +8873,24 @@
         this.onChartUpdateDataLabels();
     };
     CDLbls.prototype.setDeleteValue = function(bValue) {
-        if(this.bDelete !== bValue) {
-            this.setDelete(bValue);
+        if(bValue === false) {
+            if(this.bDelete !== null) {
+                this.setDelete(null);
+            }
+            for(var nDlbl = this.dLbl.length - 1; nDlbl > -1; --nDlbl) {
+                var oDlbl = this.dLbl[nDlbl];
+                if(oDlbl.bDelete) {
+                    this.removeDLbl(nDlbl);
+                }
+                if(oDlbl.bDelete === false) {
+                    oDlbl.setDelete(null);
+                }
+            }
         }
-        for(var nLbl = 0; nLbl < this.dLbl.length; ++nLbl) {
-            var oDLbl = this.dLbl[nLbl];
-            if(oDLbl) {
-                oDLbl.setDelete(bValue);
+        else {
+            if(this.bDelete !== true) {
+                this.setDelete(true);
+                this.removeAllDLbls();
             }
         }
     };
@@ -8917,14 +8934,20 @@
             aColors = oColors.generateColors(nMaxSeriesIdx + 1);
             this.applyStyleEntry(oChartStyle.dataLabel, aColors, this.parent.idx);
             this.removeAllDLbls();
-            if(this.parent.isVaryColors()) {
-                var nPtsCount = this.parent.getValuesCount();
-                aColors = oColors.generateColors(nPtsCount);
-                for(var nDLbl = 0; nDLbl < nPtsCount; ++nDLbl) {
-                    var oDLbl = new CDLbl();
-                    oDLbl.setIdx(nDLbl);
-                    this.addDLbl(oDLbl);
-                    oDLbl.applyStyleEntry(oChartStyle.dataLabel, aColors, nDLbl);
+            if(this.bDelete !== true) {
+                if(this.bDelete !== null) {
+                    this.setDelete(null);
+                }
+                if(this.parent.isVaryColors()) {
+                    var nPtsCount = this.parent.getValuesCount();
+                    aColors = oColors.generateColors(nPtsCount);
+                    for(var nDLbl = 0; nDLbl < nPtsCount; ++nDLbl) {
+                        var oDLbl = new CDLbl();
+                        CDLbl.prototype.fillObject.call(this, oDLbl);
+                        oDLbl.setIdx(nDLbl);
+                        this.addDLbl(oDLbl);
+                        oDLbl.applyStyleEntry(oChartStyle.dataLabel, aColors, nDLbl);
+                    }
                 }
             }
         }

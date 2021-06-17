@@ -3110,23 +3110,16 @@ var GLOBAL_PATH_COUNT = 0;
                     ser.setDLbls(oDlbls);
                 }
                 if(!AscFormat.isRealNumber(this.selection.dataLbl)) {
-                    oDlbls.setDelete(true);
+                    oDlbls.setDeleteValue(true);
                 }
                 else {
                     var pts = ser.getNumPts();
                     var pt = pts[this.selection.dataLbl];
                     if(pt) {
-                        var dLbl = ser.dLbls && ser.dLbls.findDLblByIdx(pt.idx);
-                        if(!dLbl) {
-                            dLbl = new AscFormat.CDLbl();
-                            dLbl.setIdx(pt.idx);
-                            if(ser.dLbls.txPr) {
-                                dLbl.merge(ser.dLbls);
-                            }
-                            ser.dLbls.addDLbl(dLbl);
-
-                        }
+                        var dLbl = new AscFormat.CDLbl();
+                        dLbl.setIdx(pt.idx);
                         dLbl.setDelete(true);
+                        ser.dLbls.addDLbl(dLbl);
                     }
                 }
             }
