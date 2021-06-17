@@ -2484,34 +2484,51 @@
 		var range = this.range;
 
 		var aMerged = ws.mergeManager.get(range);
-		if (aMerged.outer.length > 0 || (aMerged.inner.length > 0 && null == window['AscCommonExcel']._isSameSizeMerged(range, aMerged.inner, true))) {
-			t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotFillRange, c_oAscError.Level.NoCritical);
+		if (aMerged.outer.length > 0 || (aMerged.inner.length > 0 && null == window['AscCommonExcel']._isSameSizeMerged(selection, aMerged.inner, true))) {
 			return;
 		}
-
+		
 		sortSettings.hasHeaders = Header;
 		//"xlSortColumns"/"xlSortRows"
-		sortSettings.columnSort = Orientation !== "xlSortRows";
+		var columnSort = sortSettings.columnSort = Orientation !== "xlSortRows";
 
 		var getSortLevel = function(_key, _order) {
+			var index = null;
+			if (_key instanceof ApiRange) {
+				index = columnSort ? _key.range.c1 - range.c1 : _key.range.r1 - range.r1;
+			} else if (typeof _key === "string") {
+				//named range
+				var _defName = ws.workbook.getDefinesNames(_key);
+				if (_defName) {
+					var defNameRef;
+					AscCommonExcel.executeInR1C1Mode(false, function () {
+						defNameRef = AscCommonExcel.getRangeByRef(_defName.ref, ws, true, true)
+					});
+					if (defNameRef && defNameRef[0] && defNameRef[0].worksheet && defNameRef[0].worksheet.Id === ws.Id) {
+						index = columnSort ? defNameRef[0].bbox.c1 - range.c1 : defNameRef[0].bbox.r1 - range.r1;
+					}
+				}
+			}
+
+			if (null === index) {
+				return;
+			}
+
 			var level = new Asc.CSortPropertiesLevel();
-
-			//level.index = getKeyIndex(_key);
-
+			level.index = index;
 			level.descending = _order === "xlDescending";
-
-			return level;
+			sortSettings.levels.push(level);
 		};
 
 		sortSettings.levels = [];
 		if (Key1) {
-			sortSettings.levels.push(getSortLevel(Key1, Order1));
+			getSortLevel(Key1, Order1);
 		}
 		if (Key2) {
-			sortSettings.levels.push(getSortLevel(Key2, Order2));
+			getSortLevel(Key2, Order2);
 		}
 		if (Key3) {
-			sortSettings.levels.push(getSortLevel(Key3, Order3));
+			getSortLevel(Key3, Order3);
 		}
 
 		var oWorksheet = Asc['editor'].wb.getWorksheet();
