@@ -11191,7 +11191,7 @@
                         }
                         break;
 
-                    case "sort":
+					case "sort":
                         if (isLargeRange && !callTrigger) {
                             callTrigger = true;
                             t.handlers.trigger("slowOperation", true);
@@ -11199,7 +11199,7 @@
                        	var opt_by_rows = false;
 						//var props = t.getSortProps(true);
                         //t.cellCommentator.sortComments(range.sort(val.type, opt_by_rows ? activeCell.row : activeCell.col, val.color, true, opt_by_rows, props.levels));
-                        t.cellCommentator.sortComments(t._doSort(range, val.type, opt_by_rows ? activeCell.row : activeCell.col, val.color, true, opt_by_rows));
+                        t.cellCommentator.sortComments(t.model._doSort(range, val.type, opt_by_rows ? activeCell.row : activeCell.col, val.color, true, opt_by_rows));
 						t.setSortProps(t._generateSortProps(val.type, opt_by_rows ? activeCell.row : activeCell.col, val.color, true, opt_by_rows, range.bbox), true);
                         break;
 
@@ -15889,7 +15889,7 @@
 					}
 				}
 
-				var sort = t._doSort(sortRange, type, startCol, rgbColor, null, null, null, sortState);
+				var sort = t.model._doSort(sortRange, type, startCol, rgbColor, null, null, null, sortState);
 				t.cellCommentator.sortComments(sort);
 			}
 
@@ -16122,7 +16122,7 @@
                 var rgbColor = color ? new AscCommonExcel.RgbColor((color.asc_getR() << 16) + (color.asc_getG() << 8) + color.asc_getB()) : null;
 
 
-                var sort = t._doSort(sortProps.sortRange, type, sortProps.startCol, rgbColor);
+                var sort = t.model._doSort(sortProps.sortRange, type, sortProps.startCol, rgbColor);
                 t.cellCommentator.sortComments(sort);
                 t.model.autoFilters.sortColFilter(type, cellId, ar, sortProps, displayName, rgbColor);
 
@@ -20890,38 +20890,6 @@
 			res = c_oAscError.ID.CustomSortMoreOneSelectedError;
 		} else if(((bRow && (range.r1 < ar.r1 || range.r1 > ar.r2)) || (!bRow && (range.c1 < ar.c1 || range.c1 > ar.c2)))) {
 			res = c_oAscError.ID.CustomSortNotOriginalSelectError;
-		}
-
-		return res;
-	};
-
-	WorksheetView.prototype._doSort = function (range, nOption, nStartRowCol, sortColor, opt_guessHeader, opt_by_row, opt_custom_sort) {
-		var res;
-
-		var bordersArr = [];
-		range._foreachNoEmpty(function(cell, row, col) {
-			var style = cell ? cell.getStyle() : null;
-			if(style && style.border) {
-				if(!bordersArr[row]) {
-					bordersArr[row] = [];
-				}
-				bordersArr[row][col] = style.border;
-				cell.setBorder(null);
-			}
-		});
-		res = range.sort(nOption, nStartRowCol, sortColor, opt_guessHeader, opt_by_row, opt_custom_sort);
-		for(var i = 0; i < bordersArr.length; i++) {
-			if(bordersArr[i]) {
-				for(var j = 0; j < bordersArr[i].length; j++) {
-					if(bordersArr[i][j]) {
-						var curBorder = bordersArr[i][j];
-						this.model._getCell(i, j, function(cell) {
-							cell.setBorder(curBorder);
-						});
-
-					}
-				}
-			}
 		}
 
 		return res;
