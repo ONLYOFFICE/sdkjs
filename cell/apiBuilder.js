@@ -2477,6 +2477,11 @@
 			return this.SetOrientation();
 		}
 	});
+
+	ApiRange.prototype.Sort = function (Key1, Order1, Key2, Type, Order2, Key3, Order3, Header, OrderCustom, MatchCase, Orientation, SortMethod, DataOption1, DataOption2, DataOption3) {
+
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiDrawing

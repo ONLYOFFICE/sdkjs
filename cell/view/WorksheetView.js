@@ -20836,104 +20836,15 @@
 
 		//TODO отдельная обработка для таблиц
 		var callback = function(obj) {
-			//формируем sortState из настроек
-			var sortState = new AscCommonExcel.SortState();
+			t.model.setCustomSort(props, obj, doNotSortRange);
 
-			//? activeRange
-			sortState.Ref = new Asc.Range(selection.c1, selection.r1, selection.c2, selection.r2);
-
-			History.Create_NewPoint();
-			History.StartTransaction();
-
-			var columnSort = props.columnSort;
-			sortState.ColumnSort = !columnSort;
-			sortState.CaseSensitive = props.caseSensitive;
-			for(var i = 0; i < props.levels.length; i++) {
-				var sortCondition = new AscCommonExcel.SortCondition();
-				var level = props.levels[i];
-				var r1 = columnSort ? selection.r1 : level.index + selection.r1;
-				var c1 = columnSort ? selection.c1 + level.index : selection.c1;
-				var r2 = columnSort ? selection.r2 : level.index + selection.r1;
-				var c2  = columnSort ? selection.c1 + level.index : selection.c2;
-				sortCondition.Ref = new Asc.Range(c1, r1, c2, r2);
-				sortCondition.ConditionSortBy = null;
-				sortCondition.ConditionDescending = Asc.c_oAscSortOptions.Descending === level.descending;
-
-				var conditionSortBy = level.sortBy;
-				var sortColor = null, newDxf, isRgbColor;
-				switch (conditionSortBy) {
-					case Asc.c_oAscSortOptions.ByColorFill: {
-						sortCondition.ConditionSortBy = Asc.ESortBy.sortbyCellColor;
-						sortColor = level.color;
-						isRgbColor = sortColor && sortColor.getType && sortColor.getType() === AscCommonExcel.UndoRedoDataTypes.RgbColor;
-						sortColor = sortColor && !isRgbColor ? new AscCommonExcel.RgbColor((sortColor.asc_getR() << 16) + (sortColor.asc_getG() << 8) + sortColor.asc_getB()) : null;
-
-						newDxf = new AscCommonExcel.CellXfs();
-						newDxf.fill = new AscCommonExcel.Fill();
-						newDxf.fill.fromColor(sortColor);
-
-						break;
-					}
-					case Asc.c_oAscSortOptions.ByColorFont: {
-						sortCondition.ConditionSortBy = Asc.ESortBy.sortbyFontColor;
-						sortColor = level.color;
-						isRgbColor = sortColor && sortColor.getType && sortColor.getType() === AscCommonExcel.UndoRedoDataTypes.RgbColor;
-						sortColor = sortColor && !isRgbColor ? new AscCommonExcel.RgbColor((sortColor.asc_getR() << 16) + (sortColor.asc_getG() << 8) + sortColor.asc_getB()) : null;
-
-						newDxf = new AscCommonExcel.CellXfs();
-						newDxf.font = new AscCommonExcel.Font();
-						newDxf.font.setColor(sortColor);
-
-						break;
-					}
-					case Asc.c_oAscSortOptions.ByIcon: {
-						sortCondition.ConditionSortBy = Asc.ESortBy.sortbyIcon;
-						break;
-					}
-					default: {
-						sortCondition.ConditionSortBy = Asc.ESortBy.sortbyValue;
-						break;
-					}
-				}
-
-				if(newDxf) {
-					sortCondition.dxf = AscCommonExcel.g_StyleCache.addXf(newDxf);
-				}
-
-
-				if(!sortState.SortConditions) {
-					sortState.SortConditions = [];
-				}
-
-				sortState.SortConditions.push(sortCondition);
+			if(obj && !obj.isAutoFilter()) {
+				t._onUpdateFormatTable(selection);
 			}
 
-			if(obj) {
-				History.Add(AscCommonExcel.g_oUndoRedoSortState, AscCH.historyitem_SortState_Add, t.model.getId(), null,
-					new AscCommonExcel.UndoRedoData_SortState(obj.sortState ? obj.sortState.clone() : null, sortState ? sortState.clone() : null, true, obj.DisplayName));
-
-				obj.SortState = sortState;
-
-				if(!obj.isAutoFilter()) {
-					t._onUpdateFormatTable(selection);
-				}
-			} else {
-				History.Add(AscCommonExcel.g_oUndoRedoSortState, AscCH.historyitem_SortState_Add, t.model.getId(), null,
-					new AscCommonExcel.UndoRedoData_SortState(t.model.sortState ? t.model.sortState.clone() : null, sortState ? sortState.clone() : null));
-
-				sortState._hasHeaders = props.hasHeaders;
-				t.model.sortState = sortState;
-			}
-
-			if(!doNotSortRange) {
-				var range = t.model.getRange3(selection.r1, selection.c1, selection.r2, selection.c2);
-				t.cellCommentator.sortComments(t._doSort(range, null, null, null, null, !columnSort, sortState));
-			}
 			if(props && props.selection) {
 				revertSelection();
 			}
-
-			History.EndTransaction();
 		};
 
 		//TODO lock
@@ -20944,7 +20855,6 @@
 		} else if(t.model.AutoFilter && t.model.AutoFilter.Ref && t.model.AutoFilter.Ref.intersection(selection)) {
 			obj = t.model.AutoFilter;
 		}
-
 
 		this._isLockedAll(callback(obj));
 	};
