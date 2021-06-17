@@ -3318,6 +3318,7 @@
 	ApiRange.prototype["Select"] = ApiRange.prototype.Select;
 	ApiRange.prototype["SetOrientation"] = ApiRange.prototype.SetOrientation;
 	ApiRange.prototype["GetOrientation"] = ApiRange.prototype.GetOrientation;
+	ApiRange.prototype["SetSort"] = ApiRange.prototype.SetSort;
 
 
 	ApiDrawing.prototype["GetClassType"]               =  ApiDrawing.prototype.GetClassType;
