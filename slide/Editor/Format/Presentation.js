@@ -3820,7 +3820,7 @@ CPresentation.prototype.Begin_CompositeInput = function () {
             return;
         }
     }
-    if (false === this.Document_Is_SelectionLocked(changestype_Drawing_Props, null, true)) {
+    if (false === this.Document_Is_SelectionLocked(changestype_Drawing_Props, null, undefined, undefined, true)) {
         this.Create_NewHistoryPoint(AscDFH.historydescription_Document_CompositeInput);
         var oController = this.GetCurrentController();
         if (oController) {
@@ -10090,9 +10090,9 @@ CPresentation.prototype.moveSlides = function (slidesIndexes, pos) {
 
 CPresentation.prototype.IsSelectionLocked = function(nCheckType, oAdditionalData, isDontLockInFastMode, isIgnoreCanEditFlag)
 {
-    return this.Document_Is_SelectionLocked(nCheckType, oAdditionalData, isIgnoreCanEditFlag);
+    return this.Document_Is_SelectionLocked(nCheckType, oAdditionalData, isIgnoreCanEditFlag, undefined, isDontLockInFastMode);
 };
-CPresentation.prototype.Document_Is_SelectionLocked = function (CheckType, AdditionalData, isIgnoreCanEditFlag, aAdditionaObjects) {
+CPresentation.prototype.Document_Is_SelectionLocked = function (CheckType, AdditionalData, isIgnoreCanEditFlag, aAdditionaObjects, DontLockInFastMode) {
     if (!this.CanEdit() && true !== isIgnoreCanEditFlag)
         return true;
 
@@ -10376,7 +10376,7 @@ CPresentation.prototype.Document_Is_SelectionLocked = function (CheckType, Addit
         this.defaultTextStyleLock.Lock.Check(check_obj);
     }
 
-    var bResult = AscCommon.CollaborativeEditing.OnEnd_CheckLock();
+    var bResult = AscCommon.CollaborativeEditing.OnEnd_CheckLock(DontLockInFastMode);
 
     if (true === bResult) {
         this.Document_UpdateSelectionState();

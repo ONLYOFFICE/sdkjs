@@ -347,6 +347,38 @@
 			}
 			return oUniFill;
 		}
+
+		function getFullHyperlinkLength(str) {
+			var res = 0;
+			if (!str) {
+				return res;
+			}
+
+			var validStr = "ABCDEFabcdef0123456789";
+			//new RegExp('/^[xX]?[0-9a-fA-F]{6}$/', 'g')
+			var checkHex = function (_val) {
+				if (_val !== undefined && validStr.indexOf(_val) !== -1) {
+					return true;
+				}
+				return false;
+			};
+
+
+			for (var i = 0; i < str.length; i++) {
+				if (str[i] === "%") {
+					if (checkHex(str[i + 1]) && checkHex(str[i + 2])) {
+						res++;
+					} else {
+						res += 3;
+					}
+				} else {
+					res++;
+				}
+			}
+
+			return res;
+		}
+
 		var referenceType = {
 			A: 0,			// Absolute
 			ARRC: 1,	// Absolute row; relative column
@@ -2624,6 +2656,8 @@
 			//current view zoom
 			this.zoomScale = 100;
 
+			this.showZeros = null;
+
 			return this;
 		}
 
@@ -2634,11 +2668,14 @@
 				result.showGridLines = this.showGridLines;
 				result.showRowColHeaders = this.showRowColHeaders;
 				result.zoom = this.zoom;
-				if (this.pane)
+				if (this.pane) {
 					result.pane = this.pane.clone();
+				}
+				result.showZeros = this.showZeros;
 				return result;
 			},
 			isEqual: function (settings) {
+				//TODO showzeros?
 				return this.asc_getShowGridLines() === settings.asc_getShowGridLines() &&
 					this.asc_getShowRowColHeaders() === settings.asc_getShowRowColHeaders();
 			},
@@ -2646,9 +2683,11 @@
 			asc_getShowRowColHeaders: function () { return false !== this.showRowColHeaders; },
 			asc_getZoomScale: function () { return this.zoomScale; },
 			asc_getIsFreezePane: function () { return null !== this.pane && this.pane.isInit(); },
+			asc_getShowZeros: function () { return false !== this.showZeros; },
 			asc_setShowGridLines: function (val) { this.showGridLines = val; },
 			asc_setShowRowColHeaders: function (val) { this.showRowColHeaders = val; },
-			asc_setZoomScale: function (val) { this.zoomScale = val; }
+			asc_setZoomScale: function (val) { this.zoomScale = val; },
+			asc_setShowZeros: function (val) { this.showZeros = val; }
 		};
 
 		/** @constructor */
@@ -3251,6 +3290,7 @@
 		window['AscCommonExcel'].c_msPerDay = c_msPerDay;
 		window["AscCommonExcel"].applyFunction = applyFunction;
 		window['AscCommonExcel'].g_IncludeNewRowColInTable = true;
+		window['AscCommonExcel'].g_AutoCorrectHyperlinks = true;
 
 		window["Asc"]["cDate"] = window["Asc"].cDate = window['AscCommonExcel'].cDate = cDate;
 		prot = cDate.prototype;
@@ -3274,6 +3314,7 @@
 		window["AscCommonExcel"].getFindRegExp = getFindRegExp;
 		window["AscCommonExcel"].convertFillToUnifill = convertFillToUnifill;
 		window["AscCommonExcel"].replaceSpellCheckWords = replaceSpellCheckWords;
+		window["AscCommonExcel"].getFullHyperlinkLength = getFullHyperlinkLength;
 		window["Asc"].outputDebugStr = outputDebugStr;
 		window["Asc"].isNumberInfinity = isNumberInfinity;
 		window["Asc"].trim = trim;
@@ -3366,8 +3407,10 @@
 		prot["asc_getShowGridLines"] = prot.asc_getShowGridLines;
 		prot["asc_getShowRowColHeaders"] = prot.asc_getShowRowColHeaders;
 		prot["asc_getIsFreezePane"] = prot.asc_getIsFreezePane;
+		prot["asc_getShowZeros"] = prot.asc_getShowZeros;
 		prot["asc_setShowGridLines"] = prot.asc_setShowGridLines;
 		prot["asc_setShowRowColHeaders"] = prot.asc_setShowRowColHeaders;
+		prot["asc_setShowZeros"] = prot.asc_setShowZeros;
 
 		window["AscCommonExcel"].asc_CPane = asc_CPane;
 		window["AscCommonExcel"].asc_CSheetPr = asc_CSheetPr;

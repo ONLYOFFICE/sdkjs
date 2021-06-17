@@ -3896,16 +3896,6 @@ function CDrawingDocument()
 		var _r = (drPage.left + dKoefX * this.FrameRect.Rect.R) * rPR;
 		var _b = (drPage.top + dKoefY * this.FrameRect.Rect.B) * rPR;
 
-		if (_x < overlay.min_x)
-			overlay.min_x = _x;
-		if (_r > overlay.max_x)
-			overlay.max_x = _r;
-
-		if (_y < overlay.min_y)
-			overlay.min_y = _y;
-		if (_b > overlay.max_y)
-			overlay.max_y = _b;
-
 		var ctx = overlay.m_oContext;
 		ctx.strokeStyle = "#939393";
 		ctx.lineWidth = Math.round(rPR);
@@ -3938,6 +3928,9 @@ function CDrawingDocument()
 		ctx.fillStyle = "#777777";
 		ctx.fill();
 		ctx.beginPath();
+
+		overlay.CheckPoint(_x - _wc, _y - _wc);
+		overlay.CheckPoint(_r + _wc, _b + _wc);
 
 		// move
 		if (this.FrameRect.IsTracked)
@@ -6531,13 +6524,11 @@ function CDrawingDocument()
             	parent.appendChild(canvas);
 		}
 
-		canvas.width = AscCommon.AscBrowser.convertToRetinaValue(width_px, true);
-        canvas.height = AscCommon.AscBrowser.convertToRetinaValue(height_px, true);
+		AscCommon.calculateCanvasSize(canvas, undefined, true);
+        canvas.width = canvas.width;
 
         var ctx = canvas.getContext("2d");
-
         var rPR = AscCommon.AscBrowser.retinaPixelRatio;
-
 
         var offset = 10;
         var page_width_mm = props.W;
@@ -6604,17 +6595,19 @@ function CDrawingDocument()
 
 		ctx.fillStyle = "#FFFFFF";
         ctx.strokeStyle = "#000000";
-        ctx.lineWidth = Math.round(rPR);
+        var lineW = Math.round(rPR);
+        ctx.lineWidth = lineW;
 		var indent = 0.5 * Math.round(rPR);
 
-		var __move = function(ctx, x, y) {
-			ctx.moveTo(((x * rPR) >> 0) + indent, ((y * rPR) >> 0) + indent);
+		var __move = function(ctx, x, y, is_vert) {
+			ctx.moveTo(((x * rPR) >> 0) + (is_vert ? indent : 0), ((y * rPR) >> 0) + (is_vert ? 0 : indent));
 		};
-		var __line = function(ctx, x, y) {
-			ctx.lineTo(((x * rPR) >> 0) + indent, ((y * rPR) >> 0) + indent);
+		var __line = function(ctx, x, y, is_vert) {
+			ctx.lineTo(((x * rPR) >> 0) + (is_vert ? indent : 0), ((y * rPR) >> 0) + (is_vert ? 0 : indent));
 		};
-		var __rect = function(ctx, x, y, w, h) {
-			ctx.rect(((x * rPR) >> 0) + indent, ((y * rPR) >> 0) + indent, w * rPR, h * rPR);
+		var __rect = function(ctx, x, y, w, h, indent) {
+			indent = (undefined === indent) ? 0 : indent;
+			ctx.rect(((x * rPR) >> 0) + indent, ((y * rPR) >> 0) + indent, (w * rPR) >> 0, (h * rPR) >> 0);
 		};
 
         for (var page = 0; page < pageRects.length; page++)
@@ -6623,7 +6616,11 @@ function CDrawingDocument()
 			ctx.beginPath();
 			__rect(ctx, pageRects[page].X, pageRects[page].Y, pageRects[page].W, pageRects[page].H);
 			ctx.fill();
+
+			ctx.beginPath();
+			__rect(ctx, pageRects[page].X, pageRects[page].Y, pageRects[page].W, pageRects[page].H, indent);
 			ctx.stroke();
+			ctx.beginPath();
 
 			// gutter
 			if (gutterSize > 0)
@@ -6635,10 +6632,10 @@ function CDrawingDocument()
 					case 0:
 					{
                         var x = pageRects[page].X;
-						for (var i = 0; i < gutterSize; i++)
+						for (var i = 0; i < gutterSize; i += lineW)
 						{
-							__move(ctx, x + i, pageRects[page].Y + gutterEvenOdd);
-                            __line(ctx, x + i, pageRects[page].Y + pageRects[page].H);
+							ctx.moveTo(((x * rPR) >> 0) + i + indent, ((pageRects[page].Y + gutterEvenOdd) * rPR) >> 0);
+							ctx.lineTo(((x * rPR) >> 0) + i + indent, ((pageRects[page].Y + pageRects[page].H) * rPR) >> 0);
                             ctx.stroke();
                             ctx.beginPath();
                             gutterEvenOdd = (0 === gutterEvenOdd) ? 2 : 0;
@@ -6648,10 +6645,10 @@ function CDrawingDocument()
 					case 1:
 					{
                         var x = pageRects[page].X + pageRects[page].W;
-                        for (var i = 0; i < gutterSize; i++)
+                        for (var i = 0; i < gutterSize; i += lineW)
                         {
-							__move(ctx, x - i, pageRects[page].Y + gutterEvenOdd);
-							__line(ctx, x - i, pageRects[page].Y + pageRects[page].H);
+							ctx.moveTo(((x * rPR) >> 0) - i - indent, ((pageRects[page].Y + gutterEvenOdd) * rPR) >> 0);
+							ctx.lineTo(((x * rPR) >> 0) - i - indent, ((pageRects[page].Y + pageRects[page].H) * rPR) >> 0);
                             ctx.stroke();
                             ctx.beginPath();
                             gutterEvenOdd = (0 === gutterEvenOdd) ? 2 : 0;
@@ -6661,10 +6658,10 @@ function CDrawingDocument()
 					case 2:
 					{
                         var y = pageRects[page].Y;
-                        for (var i = 0; i < gutterSize; i++)
+                        for (var i = 0; i < gutterSize; i += lineW)
                         {
-							__move(ctx, pageRects[page].X + gutterEvenOdd, y + i);
-							__line(ctx, pageRects[page].X + pageRects[page].W, y + i);
+							ctx.moveTo(((pageRects[page].X + gutterEvenOdd) * rPR) >> 0, ((y * rPR) >> 0) + i + indent);
+							ctx.lineTo(((pageRects[page].X + pageRects[page].W) * rPR) >> 0, ((y * rPR) >> 0) + i + indent);
                             ctx.stroke();
                             ctx.beginPath();
                             gutterEvenOdd = (0 === gutterEvenOdd) ? 2 : 0;
@@ -6727,27 +6724,35 @@ function CDrawingDocument()
             var lf = l + (((r - l) / 8) >> 0);
             var rf = l + (((r - l) / 3) >> 0);
 
-            var cur = t;
+			l = (l * rPR) >> 0;
+			r = (r * rPR) >> 0;
+			b = (b * rPR) >> 0;
+			lf = (lf * rPR) >> 0;
+			rf = (rf * rPR) >> 0;
+            var cur = ((t * rPR) >> 0) + indent;
+            var cur_offset = 2 * lineW;
+			var cur_offset_end = 6 * lineW;
+
             while (cur < b)
 			{
-				__move(ctx, lf, cur); __line(ctx, r, cur);
+				ctx.moveTo(lf, cur); ctx.lineTo(r, cur);
 
-				cur += 2;
+				cur += cur_offset;
 				if (cur >= b) break;
 
-				__move(ctx, l, cur); __line(ctx, r, cur);
+				ctx.moveTo(l, cur); ctx.lineTo(r, cur);
 
-                cur += 2;
+                cur += cur_offset;
                 if (cur >= b) break;
 
-				__move(ctx, l, cur); __line(ctx, r, cur);
+				ctx.moveTo(l, cur); ctx.lineTo(r, cur);
 
-                cur += 2;
+                cur += cur_offset;
                 if (cur >= b) break;
 
-				__move(ctx, l, cur); __line(ctx, rf, cur);
+				ctx.moveTo(l, cur); ctx.lineTo(rf, cur);
 
-                cur += 6;
+                cur += cur_offset_end;
 			}
 			ctx.stroke();
             ctx.beginPath();
@@ -6808,6 +6813,7 @@ function CDrawingDocument()
 
         par.Reset(0, 0, 1000, 1000, 0, 0, 1);
         par.Recalculate_Page(0);
+        par.LineNumbersInfo = null;
 
         var baseLineOffset = par.Lines[0].Y;
         var bounds = par.Get_PageBounds(0);
@@ -6952,8 +6958,8 @@ function CDrawingDocument()
             	parent.appendChild(canvas);
         }
 
-        canvas.width = AscCommon.AscBrowser.convertToRetinaValue(width_px, true);
-        canvas.height = AscCommon.AscBrowser.convertToRetinaValue(height_px, true);
+		AscCommon.calculateCanvasSize(canvas, undefined, true);
+        canvas.width = canvas.width;
 
         var ctx = canvas.getContext("2d");
 		var rPR = AscCommon.AscBrowser.retinaPixelRatio;
@@ -7034,8 +7040,11 @@ function CDrawingDocument()
 				right_offset = Math.round((width_px - offsetBase) * rPR),
 				y_dist = Math.round((line_w + line_distance) * rPR);
 
-            ctx.moveTo(offsetBase * rPR, y); ctx.lineTo((width_px - offsetBase) * rPR, y); y += y_dist;
-            ctx.moveTo(offsetBase * rPR, y); ctx.lineTo((width_px - offsetBase) * rPR, y); y += y_dist;
+			var left_offset2 = Math.round(offsetBase * rPR);
+			var right_offset2 = Math.round((width_px - offsetBase) * rPR);
+
+            ctx.moveTo(left_offset2, y); ctx.lineTo(right_offset2, y); y += y_dist;
+            ctx.moveTo(left_offset2, y); ctx.lineTo(right_offset2, y); y += y_dist;
             ctx.stroke();
             ctx.beginPath();
             ctx.strokeStyle = "#000000";
@@ -7049,8 +7058,8 @@ function CDrawingDocument()
             ctx.stroke();
             ctx.beginPath();
             ctx.strokeStyle = "#CBCBCB";
-            ctx.moveTo(offsetBase * rPR, y); ctx.lineTo((width_px - offsetBase) * rPR, y); y += y_dist;
-            ctx.moveTo(offsetBase * rPR, y); ctx.lineTo((width_px - offsetBase) * rPR, y);
+            ctx.moveTo(left_offset2, y); ctx.lineTo(right_offset2, y); y += y_dist;
+            ctx.moveTo(left_offset2, y); ctx.lineTo(right_offset2, y);
             ctx.stroke();
             ctx.beginPath();
         }

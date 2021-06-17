@@ -73,8 +73,8 @@ function Paragraph(DrawingDocument, Parent, bFromPresentation)
     };
     this.Pr = new CParaPr();
 
-    // Рассчитанное положение рамки
-    this.CalculatedFrame = new CCalculatedFrame();
+    // Рассчитанное положение рамки (CCalculatedFrame | null)
+    this.CalculatedFrame = null;
 
     // Данный TextPr будет относится только к символу конца параграфа
     this.TextPr = new ParaTextPr();
@@ -8268,16 +8268,19 @@ Paragraph.prototype.GetSelectedText = function(bClearText, oPr)
 {
 	var Str = "";
 
-	var oNumPr = this.GetNumPr();
-	if (oNumPr && oNumPr.IsValid() && this.IsSelectionFromStart(false))
+	if (!oPr || false !== oPr.Numbering)
 	{
-		Str += this.GetNumberingText(false);
+		var oNumPr = this.GetNumPr();
+		if (oNumPr && oNumPr.IsValid() && this.IsSelectionFromStart(false))
+		{
+			Str += this.GetNumberingText(false);
 
-		var nSuff = this.Parent.GetNumbering().GetNum(oNumPr.NumId).GetLvl(oNumPr.Lvl).GetSuff();
-		if (Asc.c_oAscNumberingSuff.Tab === nSuff)
-			Str += "	";
-		else if (Asc.c_oAscNumberingSuff.Space === nSuff)
-			Str += " ";
+			var nSuff = this.Parent.GetNumbering().GetNum(oNumPr.NumId).GetLvl(oNumPr.Lvl).GetSuff();
+			if (Asc.c_oAscNumberingSuff.Tab === nSuff)
+				Str += "	";
+			else if (Asc.c_oAscNumberingSuff.Space === nSuff)
+				Str += " ";
+		}
 	}
 
 	var Count = this.Content.length;
@@ -11200,7 +11203,7 @@ Paragraph.prototype.Document_Get_AllFontNames = function(AllFonts)
  */
 Paragraph.prototype.Document_UpdateRulersState = function()
 {
-	if (this.CalculatedFrame)
+	if (this.IsRecalculated() && this.CalculatedFrame)
 	{
 		var oFrame = this.CalculatedFrame;
 		this.Parent.DrawingDocument.Set_RulerState_Paragraph({
@@ -11212,15 +11215,9 @@ Paragraph.prototype.Document_UpdateRulersState = function()
 			Frame     : this
 		}, false);
 	}
-	else
+	else if (this.Parent instanceof CDocument && this.LogicDocument)
 	{
-		if (this.Parent instanceof CDocument)
-		{
-			if(this.LogicDocument)
-			{
-				this.LogicDocument.Document_UpdateRulersStateBySection();
-			}
-		}
+		this.LogicDocument.Document_UpdateRulersStateBySection();
 	}
 };
 /**
@@ -15786,6 +15783,10 @@ Paragraph.prototype.CheckSignatureLinesOnAdd = function()
  */
 Paragraph.prototype.ProcessComplexFields = function()
 {
+	if(!this.bFromDocument)
+	{
+		return;
+	}
 	var oComplexFields = new CParagraphComplexFieldsInfo();
 	oComplexFields.ResetPage(this, 0);
 

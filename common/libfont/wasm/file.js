@@ -1049,8 +1049,16 @@
             //var measure_time_start = performance.now();
 
 			var load_mode = this.GetCharLoadMode(nUnicodeForHintTest);
-			if (this.m_bStringGID || !isRaster || this.m_bNeedDoBold || !AscFonts.isUseBitmapStrikes(glyph_index_or_unicode))
+
+			if (this.m_bStringGID || !isRaster || this.m_bNeedDoBold)
 				load_mode |= AscFonts.FT_Load_Mode.FT_LOAD_NO_BITMAP;
+			else if (!AscFonts.isUseBitmapStrikes(glyph_index_or_unicode))
+				load_mode |= AscFonts.FT_Load_Mode.FT_LOAD_NO_BITMAP;
+			else
+			{
+				if (Math.abs(this.m_arrdTextMatrix[1]) > 0.001 || Math.abs(this.m_arrdTextMatrix[2]) > 0.001)
+					load_mode |= AscFonts.FT_Load_Mode.FT_LOAD_NO_BITMAP;
+			}
 
             if (this.FT_Load_Glyph_Wrapper(this.m_pFace, unGID, load_mode))
                 return oSizes;

@@ -475,7 +475,7 @@
 		".ps .ps__rail-y:hover" : {"background-color" : "background-toolbar" },
 		".ps .ps__rail-y.ps--clicking" : {"background-color" : "background-toolbar" },
 		".ps__thumb-y" : { "background-color" : "background-normal", "border-color" : "Border !important" },
-		".ps__rail-y:hover > .ps__thumb-y" : {"border-color" : "canvas-scroll-thumb-hover" },
+		".ps__rail-y:hover > .ps__thumb-y" : {"border-color" : "canvas-scroll-thumb-hover", "background-color" : "canvas-scroll-thumb-hover !important" },
 		".ps .ps__rail-x:hover" : {"background-color" : "background-toolbar" },
 		".ps .ps__rail-x.ps--clicking" : {"background-color" : "background-toolbar" },
 		".ps__thumb-x" : { "background-color" : "background-normal", "border-color" : "Border !important" },

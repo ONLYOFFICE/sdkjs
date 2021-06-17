@@ -452,7 +452,7 @@
 				  var ws = self.getWorksheet();
 				  if (ws) {
 				  	var selectionRanges = ws.getSelectedRanges();
-				  	if (selectionRanges.length === 1 && selectionRanges[0].bbox && selectionRanges[0].bbox.isOneCell()) {
+				  	if (selectionRanges && selectionRanges.length === 1 && selectionRanges[0].bbox && selectionRanges[0].bbox.isOneCell()) {
 						  return ws.getActiveCell(0, 0, false)
 					  }
 				  }
@@ -2271,7 +2271,7 @@
       }
     }
     if (0 < arrResult.length) {
-      this.handlers.trigger('asc_onFormulaCompleteMenu', arrResult);
+      this.handlers.trigger('asc_onFormulaCompleteMenu', arrResult, this.cellEditor.calculateOffset(fPos));
 
       this.lastFPos = fPos;
       this.lastFNameLength = fName.length;
@@ -2345,10 +2345,10 @@
                 }
                 if (cellRange.text) {
                     // Меняем значение ячейки
-                    name = "=" + name + "(" + cellRange.text + ")";
+                    name = ws.generateAutoCompleteFormula(name, cellRange.text);
                 } else {
                     // Меняем значение ячейки
-                    name = "=" + name + "()";
+                    name = ws.generateAutoCompleteFormula(name, "")
                 }
                 // Вычисляем позицию курсора (он должен быть в функции)
                 cursorPos = name.length - 1;

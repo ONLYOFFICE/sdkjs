@@ -376,7 +376,72 @@ CInlineLevelSdt.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _C
 CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 {
 	PDSH.AddInlineSdt(this);
-	CParagraphContentWithParagraphLikeContent.prototype.Draw_HighLights.apply(this, arguments);
+
+	// Для экспорта в PDF записываем поля. Поля, находящиеся в автофигурах, пока не пишем
+	var oGraphics = PDSH.Graphics;
+	if (this.IsForm() && oGraphics && oGraphics.AddFormField && !this.Get_ParentTextTransform())
+	{
+		this.SkipDraw(PDSH);
+
+		// Ищем первый ненулевой промежуток, если он на данной странице, тогда сохраняем его в форму
+		var oBounds = null;
+		for (var Key in this.Bounds)
+		{
+			if (this.Bounds[Key].W > 0.001 && this.Bounds[Key].H > 0.001)
+			{
+				if (this.Bounds[Key].PageInternal === PDSH.Page)
+					oBounds = this.Bounds[Key];
+
+				var CurLine  = PDSH.Line - this.StartLine;
+				var CurRange = (0 === CurLine ? PDSH.Range - this.StartRange : PDSH.Range);
+
+				if ((Key | 0) !== ((CurLine << 16) & 0xFFFF0000) | (CurRange & 0x0000FFFF))
+					return;
+
+				break;
+			}
+		}
+
+		var oRun = this.Content[0];
+		if (oBounds && oRun)
+		{
+			var oTextPr = oRun.Get_CompiledPr(false);
+
+			g_oTextMeasurer.SetTextPr(oTextPr, PDSH.Paragraph.GetTheme());
+			g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
+
+			var nTextHeight  = g_oTextMeasurer.GetHeight();
+			var nTextDescent = Math.abs(g_oTextMeasurer.GetDescender());
+			var nTextAscent  = nTextHeight - nTextDescent;
+
+			var oColor = oTextPr.GetSimpleTextColor(PDSH.Paragraph.GetTheme(), PDSH.Paragraph.GetColorMap());
+			oGraphics.SetTextPr(oTextPr, PDSH.Paragraph.GetTheme());
+			oGraphics.b_color1(oColor.r, oColor.g, oColor.b, this.IsPlaceHolder() ? 127 : 255);
+			oGraphics.SetFontSlot(fontslot_ASCII); // Именно на этой функции записываются настройки шрифта в метафайл
+
+			oGraphics.AddFormField(oBounds.X, oBounds.Y, oBounds.W, oBounds.H, nTextAscent, this);
+		}
+	}
+	else
+	{
+		CParagraphContentWithParagraphLikeContent.prototype.Draw_HighLights.apply(this, arguments);
+	}
+};
+CInlineLevelSdt.prototype.Draw_Elements = function(PDSE)
+{
+	var oGraphics = PDSE.Graphics;
+	if (this.IsForm() && oGraphics && oGraphics.AddFormField && !this.Get_ParentTextTransform())
+		this.SkipDraw(PDSE);
+	else
+		CParagraphContentWithParagraphLikeContent.prototype.Draw_Elements.apply(this, arguments);
+};
+CInlineLevelSdt.prototype.Draw_Lines = function(PDSL)
+{
+	var oGraphics = PDSL.Graphics;
+	if (this.IsForm() && oGraphics && oGraphics.AddFormField && !this.Get_ParentTextTransform())
+		this.SkipDraw(PDSL);
+	else
+		CParagraphContentWithParagraphLikeContent.prototype.Draw_Lines.apply(this, arguments);
 };
 CInlineLevelSdt.prototype.GetRangeBounds = function(_CurLine, _CurRange)
 {
@@ -2207,6 +2272,59 @@ CInlineLevelSdt.prototype.IsSelectedToEnd = function()
 
 	return CParagraphContentWithParagraphLikeContent.prototype.IsSelectedToEnd.apply(this, arguments);
 };
+CInlineLevelSdt.prototype.IsFormFilled = function()
+{
+	if (!this.IsForm())
+		return true;
+
+	if (this.IsPlaceHolder())
+		return false;
+
+	if (this.IsTextForm())
+	{
+		var sText = this.GetSelectedText(true);
+		var oTextFormPr = this.GetTextFormPr();
+
+		if (oTextFormPr.IsComb())
+		{
+			var nMaxLen = oTextFormPr.GetMaxCharacters();
+			return (nMaxLen === sText.length);
+		}
+		else
+		{
+			return (sText !== "");
+		}
+	}
+	else if (this.IsComboBox())
+	{
+		var sText = this.GetSelectedText(true);
+		return (sText !== "");
+	}
+	else if (this.IsDropDownList())
+	{
+		var sText = this.GetSelectedText(true);
+
+		var oListPr = this.GetDropDownListPr();
+		for (var nIndex = 0, nCount = oListPr.GetItemsCount(); nIndex < nCount; ++nIndex)
+		{
+			if (sText === oListPr.GetItemDisplayText(nIndex))
+				return true;
+		}
+
+		return false;
+	}
+	else if (this.IsPicture())
+	{
+		// Мы уже не проверили, что тут Placeholder, значит форма заполнена
+		return true;
+	}
+	else if (this.IsCheckBox())
+	{
+		return true;
+	}
+
+	return false;
+}
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

@@ -2844,6 +2844,10 @@ var editor;
         }
 	};
 
+	spreadsheet_api.prototype.asc_setAutoCorrectHyperlinks = function (value) {
+		window['AscCommonExcel'].g_AutoCorrectHyperlinks = value;
+	};
+
     spreadsheet_api.prototype.asc_setIncludeNewRowColTable = function (value) {
       window['AscCommonExcel'].g_IncludeNewRowColInTable = value;
     };
@@ -3011,6 +3015,10 @@ var editor;
 
 	spreadsheet_api.prototype.asc_setDisplayHeadings = function (value) {
 		this.wb.getWorksheet().changeSheetViewSettings(AscCH.historyitem_Worksheet_SetDisplayHeadings, value);
+	};
+
+	spreadsheet_api.prototype.asc_setShowZeros = function (value) {
+		this.wb.getWorksheet().changeSheetViewSettings(AscCH.historyitem_Worksheet_SetShowZeros, value);
 	};
 
   // Images & Charts
@@ -3495,7 +3503,7 @@ var editor;
     }
     if(fReplaceCallback) {
 
-      if (window["AscDesktopEditor"]) {
+      if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]()) {
         var firstUrl = window["AscDesktopEditor"]["LocalFileGetImageUrl"](sImageUrl);
         firstUrl = g_oDocumentUrls.getImageUrl(firstUrl);
         fReplaceCallback(firstUrl);
@@ -4022,9 +4030,9 @@ var editor;
   };
 
   // Frozen pane
-  spreadsheet_api.prototype.asc_freezePane = function () {
+  spreadsheet_api.prototype.asc_freezePane = function (type) {
     if (this.canEdit()) {
-      this.wb.getWorksheet().freezePane();
+      this.wb.getWorksheet().freezePane(type);
     }
   };
 
@@ -4397,6 +4405,10 @@ var editor;
 
   spreadsheet_api.prototype.asc_removeHyperlink = function() {
     this.wb.removeHyperlink();
+  };
+
+  spreadsheet_api.prototype.asc_getFullHyperlinkLength = function(str) {
+    return window["AscCommonExcel"].getFullHyperlinkLength(str);
   };
 
     spreadsheet_api.prototype.asc_cleanSelectRange = function () {
@@ -5024,7 +5036,9 @@ var editor;
 		}
 	};
 	spreadsheet_api.prototype.asc_insertPivotExistingWorksheet = function(dataRef, pivotRef, confirmation) {
-		var location = Asc.CT_pivotTableDefinition.prototype.parseDataRef(pivotRef);
+		var location = AscFormat.ExecuteNoHistory(function() {
+			return Asc.CT_pivotTableDefinition.prototype.parseDataRef(pivotRef);
+		}, this, []);
 		if (location) {
 			var wb = this.wbModel;
 			var ws = location.ws;
@@ -5691,6 +5705,10 @@ var editor;
   prot["asc_setR1C1Mode"] = prot.asc_setR1C1Mode;
   prot["asc_setIncludeNewRowColTable"] = prot.asc_setIncludeNewRowColTable;
 
+  prot["asc_setShowZeroCellValues"] = prot.asc_setShowZeroCellValues;
+  prot["asc_setAutoCorrectHyperlinks"] = prot.asc_setAutoCorrectHyperlinks;
+
+
   // Spreadsheet interface
 
   prot["asc_getColumnWidth"] = prot.asc_getColumnWidth;
@@ -5713,6 +5731,7 @@ var editor;
   prot["asc_getSheetViewSettings"] = prot.asc_getSheetViewSettings;
   prot["asc_setDisplayGridlines"] = prot.asc_setDisplayGridlines;
   prot["asc_setDisplayHeadings"] = prot.asc_setDisplayHeadings;
+  prot["asc_setShowZeros"] = prot.asc_setShowZeros;
 
   // Defined Names
   prot["asc_getDefinedNames"] = prot.asc_getDefinedNames;
@@ -5894,6 +5913,8 @@ var editor;
   prot["asc_selectFunction"] = prot.asc_selectFunction;
   prot["asc_insertHyperlink"] = prot.asc_insertHyperlink;
   prot["asc_removeHyperlink"] = prot.asc_removeHyperlink;
+  prot["asc_getFullHyperlinkLength"] = prot.asc_getFullHyperlinkLength;
+
 
   prot["asc_cleanSelectRange"] = prot.asc_cleanSelectRange;
   prot["asc_insertInCell"] = prot.asc_insertInCell;

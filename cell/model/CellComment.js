@@ -380,6 +380,12 @@ function (window, undefined) {
 	asc_CCommentData.prototype.setSolved = function (isSolved) {
 		this.bSolved = isSolved;
 	};
+	asc_CCommentData.prototype.convertToThreadedComment = function () {
+		var prefix = this.sUserName + ":\n";
+		if (this.sText && this.sText.startsWith(prefix)) {
+			this.sText = this.sText.slice(prefix.length);
+		}
+	};
 
 /** @constructor */
 function CCellCommentator(currentSheet) {

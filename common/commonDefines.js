@@ -2342,6 +2342,7 @@
 	prot['RemoveDuplicates']                 = prot.RemoveDuplicates;
 	prot['LargeRangeWarning']                = prot.LargeRangeWarning;
 	prot['LockedEditView']                   = prot.LockedEditView;
+	prot['Password']                         = prot.Password;
 	prot['SecondaryAxis']                    = prot.SecondaryAxis;
 	prot['ComboSeriesError']                 = prot.ComboSeriesError;
 

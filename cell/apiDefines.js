@@ -46,7 +46,8 @@ function (window, undefined) {
 
 var c_oAscConfirm = {
   ConfirmReplaceRange: 0,
-  ConfirmPutMergeRange: 1
+  ConfirmPutMergeRange: 1,
+  ConfirmReplaceFormulaInTable: 2
 };
 
 var c_oAscMergeOptions = {
@@ -495,6 +496,11 @@ var c_oAscPopUpSelectorType = {
     format: 4
   };
 
+  var c_oAscFrozenPaneAddType = {
+    firstRow: 1,
+    firstCol: 2
+  };
+
   //----------------------------------------------------------export----------------------------------------------------
   window['AscCommonExcel'] = window['AscCommonExcel'] || {};
   window['AscCommonExcel'].c_oAscDrawDepOptions = c_oAscDrawDepOptions;
@@ -543,6 +549,7 @@ var c_oAscPopUpSelectorType = {
   prot = c_oAscConfirm;
   prot['ConfirmReplaceRange'] = prot.ConfirmReplaceRange;
   prot['ConfirmPutMergeRange'] = prot.ConfirmPutMergeRange;
+  prot['ConfirmReplaceFormulaInTable'] = prot.ConfirmReplaceFormulaInTable;
   window['Asc']['c_oAscMergeOptions'] = window['Asc'].c_oAscMergeOptions = c_oAscMergeOptions;
   prot = c_oAscMergeOptions;
   prot['Disabled'] = prot.Disabled;
@@ -796,6 +803,11 @@ var c_oAscPopUpSelectorType = {
   prot['colorScale'] = prot.colorScale;
   prot['icons'] = prot.icons;
   prot['format'] = prot.format;
+
+  window['Asc']['c_oAscFrozenPaneAddType'] = window['Asc'].c_oAscFrozenPaneAddType = c_oAscFrozenPaneAddType;
+  prot = c_oAscFrozenPaneAddType;
+  prot['firstRow'] = prot.firstRow;
+  prot['firstCol'] = prot.firstCol;
 
 
 

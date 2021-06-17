@@ -365,6 +365,25 @@ function CEditorPage(api)
 		return false;
 	};
 
+	this.getStylesReporter = function()
+	{
+		var styleContent = "";
+		styleContent += (".btn-text-default { position: absolute; background: " + AscCommon.GlobalSkin.DemButtonBackgroundColor + "; border: 1px solid " + AscCommon.GlobalSkin.DemButtonBorderColor + "; border-radius: 2px; color: " + AscCommon.GlobalSkin.DemButtonTextColor + "; font-size: 11px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; height: 22px; cursor: pointer; }");
+		styleContent += ".btn-text-default-img { background-repeat: no-repeat; position: absolute; background: transparent; border: none; height: 22px; cursor: pointer; }";
+		styleContent += (".btn-text-default-img:focus { outline: 0; outline-offset: 0; } .btn-text-default-img:hover { background-color: " + AscCommon.GlobalSkin.DemButtonBackgroundColorHover + "; }");
+		styleContent += (".btn-text-default-img:active, .btn-text-default.active { background-color: " + AscCommon.GlobalSkin.DemButtonBackgroundColorActive + " !important; -webkit-box-shadow: none; box-shadow: none; }");
+		styleContent += (".btn-text-default:focus { outline: 0; outline-offset: 0; } .btn-text-default:hover { background-color: " + AscCommon.GlobalSkin.DemButtonBackgroundColorHover + "; }");
+		styleContent += (".btn-text-default:active, .btn-text-default.active { background-color: " + AscCommon.GlobalSkin.DemButtonBackgroundColorActive + " !important; color: " + AscCommon.GlobalSkin.DemButtonTextColorActive + "; -webkit-box-shadow: none; box-shadow: none; }");
+		styleContent += (".separator { margin: 0px 10px; height: 19px; display: inline-block; position: absolute; border-left: 1px solid " + AscCommon.GlobalSkin.DemSplitterColor + "; vertical-align: top; padding: 0; width: 0; box-sizing: border-box; }");
+		styleContent += (".btn-text-default-img2 { background-repeat: no-repeat; position: absolute; background-color: " + AscCommon.GlobalSkin.DemButtonBackgroundColorActive + "; border: none; color: #7d858c; font-size: 11px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; height: 22px; cursor: pointer; }");
+		styleContent += ".btn-text-default-img2:focus { outline: 0; outline-offset: 0; }";
+		styleContent += ".btn-text-default::-moz-focus-inner { border: 0; padding: 0; }";
+		styleContent += ".btn-text-default-img::-moz-focus-inner { border: 0; padding: 0; }";
+		styleContent += ".btn-text-default-img2::-moz-focus-inner { border: 0; padding: 0; }";
+		styleContent += (".dem-text-color { color:" + AscCommon.GlobalSkin.DemTextColor + "; }");
+		return styleContent;
+	};
+
 	this.Init = function()
 	{
 		if (this.m_oApi.isReporterMode)
@@ -391,8 +410,12 @@ function CEditorPage(api)
 
 		if (this.m_oApi.isReporterMode)
 		{
-			this.Splitter2Pos = 90;
+			this.Splitter2Pos = window.innerHeight * 0.5 * AscCommon.g_dKoef_pix_to_mm;
 			this.Splitter2PosMax = 200;
+			if (this.Splitter2Pos > this.Splitter2PosMax)
+				this.Splitter2Pos = this.Splitter2PosMax;
+			if (this.Splitter2Pos < this.Splitter2PosMin)
+				this.Splitter2Pos = this.Splitter2PosMin;
 		}
 
 		var ScrollWidthMm  = this.ScrollWidthPx * g_dKoef_pix_to_mm;
@@ -585,7 +608,7 @@ function CEditorPage(api)
 			_documentDem.setAttribute("id", "id_reporter_dem");
 			_documentDem.setAttribute("class", "block_elem");
 			_documentDem.style.overflow = "hidden";
-			_documentDem.style.backgroundColor = GlobalSkin.BackgroundColor;
+			_documentDem.style.backgroundColor = GlobalSkin.BackgroundColorThumbnails;
 			_documentParent.appendChild(_documentDem);
 
 			this.m_oDemonstrationDivId = CreateControlContainer("id_reporter_dem");
@@ -599,7 +622,7 @@ function CEditorPage(api)
 			demBottonsDiv.setAttribute("id", "id_reporter_dem_controller");
 			demBottonsDiv.setAttribute("class", "block_elem");
 			demBottonsDiv.style.overflow = "hidden";
-			demBottonsDiv.style.backgroundColor = GlobalSkin.BackgroundColor;
+			demBottonsDiv.style.backgroundColor = GlobalSkin.BackgroundColorThumbnails;
 			demBottonsDiv.style.cursor = "default";
 			_documentParent.appendChild(demBottonsDiv);
 
@@ -631,26 +654,23 @@ function CEditorPage(api)
 				xOffset2 = "0";
 			}
 
-			styleContent += "";
-			styleContent += (".btn-text-default { position: absolute; background: " + AscCommon.GlobalSkin.DemButtonBackgroundColor + "; border: 1px solid " + AscCommon.GlobalSkin.DemButtonBorderColor + "; border-radius: 2px; color: " + AscCommon.GlobalSkin.DemButtonTextColor + "; font-size: 11px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; height: 22px; cursor: pointer; }");
-			styleContent += ".btn-text-default-img { background-repeat: no-repeat; position: absolute; background: transparent; border: none; height: 22px; cursor: pointer; }";
-			styleContent += (".btn-text-default-img:focus { outline: 0; outline-offset: 0; } .btn-text-default-img:hover { background-color: " + AscCommon.GlobalSkin.DemButtonBackgroundColorHover + "; }");
-			styleContent += (".btn-text-default-img:active, .btn-text-default.active { background-color: " + AscCommon.GlobalSkin.DemButtonBackgroundColorActive + " !important; -webkit-box-shadow: none; box-shadow: none; }");
-			styleContent += (".btn-text-default:focus { outline: 0; outline-offset: 0; } .btn-text-default:hover { background-color: " + AscCommon.GlobalSkin.DemButtonBackgroundColorHover + "; }");
-			styleContent += (".btn-text-default:active, .btn-text-default.active { background-color: " + AscCommon.GlobalSkin.DemButtonBackgroundColorActive + " !important; color: " + AscCommon.GlobalSkin.DemButtonTextColorActive + "; -webkit-box-shadow: none; box-shadow: none; }");
-			styleContent += (".separator { margin: 0px 10px; height: 19px; display: inline-block; position: absolute; border-left: 1px solid " + AscCommon.GlobalSkin.DemSplitterColor + "; vertical-align: top; padding: 0; width: 0; box-sizing: border-box; }");
-			styleContent += (".btn-play { background-position: " + xOffset1 + "px -40px; } .btn-play:active { background-position: " + xOffset2 + "px -40px; }");
-			styleContent += (".btn-prev { background-position: " + xOffset1 + "px 0px; } .btn-prev:active { background-position: " + xOffset2 + "px 0px; }");
-			styleContent += (".btn-next { background-position: " + xOffset1 + "px -20px; } .btn-next:active { background-position: " + xOffset2 + "px -20px; }");
-			styleContent += (".btn-pause { background-position: " + xOffset1 + "px -80px; } .btn-pause:active { background-position: " + xOffset2 + "px -80px; }");
-			styleContent += (".btn-pointer { background-position: " + xOffset1 + "px -100px; } .btn-pointer-active { background-position: " + xOffset2 + "px -100px; }");
-			styleContent += (".btn-pointer:active { background-position: " + xOffset2 + "px -100px; }");
-			styleContent += (".btn-text-default-img2 { background-repeat: no-repeat; position: absolute; background-color: " + AscCommon.GlobalSkin.DemButtonBackgroundColorActive + "; border: none; color: #7d858c; font-size: 11px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; height: 22px; cursor: pointer; }");
-			styleContent += ".btn-text-default-img2:focus { outline: 0; outline-offset: 0; }";
-			styleContent += ".btn-text-default::-moz-focus-inner { border: 0; padding: 0; }";
-			styleContent += ".btn-text-default-img::-moz-focus-inner { border: 0; padding: 0; }";
-			styleContent += ".btn-text-default-img2::-moz-focus-inner { border: 0; padding: 0; }";
+			styleContent += (".btn-play { background-position: " + xOffset1 + "px -40px; }");
+			styleContent += (".btn-prev { background-position: " + xOffset1 + "px 0px; }");
+			styleContent += (".btn-next { background-position: " + xOffset1 + "px -20px; }");
+			styleContent += (".btn-pause { background-position: " + xOffset1 + "px -80px; }");
+			styleContent += (".btn-pointer { background-position: " + xOffset1 + "px -100px; }");
+			styleContent += (".btn-pointer-active { background-position: " + xOffset2 + "px -100px; }");
 
+			if (false) // менять цвет при нажатии
+			{
+				styleContent += (".btn-play:active { background-position: " + xOffset2 + "px -40px; }");
+				styleContent += (".btn-prev:active { background-position: " + xOffset2 + "px 0px; }");
+				styleContent += (".btn-next:active { background-position: " + xOffset2 + "px -20px; }");
+				styleContent += (".btn-pause:active { background-position: " + xOffset2 + "px -80px; }");
+				styleContent += (".btn-pointer:active { background-position: " + xOffset2 + "px -100px; }");
+			}
+
+			styleContent += this.getStylesReporter();
 
 			var style		 = document.createElement('style');
 			style.type 	 = 'text/css';
@@ -670,7 +690,7 @@ function CEditorPage(api)
 			}
 
 			var _buttonsContent = "";
-			_buttonsContent += "<label class=\"block_elem_no_select\" id=\"dem_id_time\" style=\"color:" + AscCommon.GlobalSkin.DemTextColor + ";text-shadow: none;white-space: nowrap;font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 11px; position:absolute; left:10px; bottom: 7px;\">00:00:00</label>";
+			_buttonsContent += "<label class=\"block_elem_no_select dem-text-color\" id=\"dem_id_time\" style=\"text-shadow: none;white-space: nowrap;font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 11px; position:absolute; left:10px; bottom: 7px;\">00:00:00</label>";
 			_buttonsContent += "<button class=\"btn-text-default-img\" id=\"dem_id_play\" style=\"left: 60px; bottom: 3px; width: 20px; height: 20px;\"><span class=\"btn-play back_image_buttons\" id=\"dem_id_play_span\" style=\"width:100%;height:100%;\"></span></button>";
 			_buttonsContent += ("<button class=\"btn-text-default\" id=\"dem_id_reset\" style=\"left: 85px; bottom: 2px; \">" + this.reporterTranslates[0] + "</button>");
 			_buttonsContent += ("<button class=\"btn-text-default\" id=\"dem_id_end\" style=\"right: 10px; bottom: 2px; \">" + this.reporterTranslates[2] + "</button>");
@@ -680,7 +700,7 @@ function CEditorPage(api)
 
 			_buttonsContent += "<div class=\"separator block_elem_no_select\" id=\"dem_id_sep\" style=\"left: 185px; bottom: 3px;\"></div>";
 
-			_buttonsContent += "<label class=\"block_elem_no_select\" id=\"dem_id_slides\" style=\"color:" + AscCommon.GlobalSkin.DemTextColor + ";text-shadow: none;white-space: nowrap;font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 11px; position:absolute; left:207px; bottom: 7px;\"></label>";
+			_buttonsContent += "<label class=\"block_elem_no_select dem-text-color\" id=\"dem_id_slides\" style=\"text-shadow: none;white-space: nowrap;font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 11px; position:absolute; left:207px; bottom: 7px;\"></label>";
 
 			_buttonsContent += "<div class=\"separator block_elem_no_select\" id=\"dem_id_sep2\" style=\"left: 350px; bottom: 3px;\"></div>";
 

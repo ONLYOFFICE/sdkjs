@@ -1423,6 +1423,22 @@ background-repeat: no-repeat;\
 			document.getElementById("id_notes").style.backgroundColor = AscCommon.GlobalSkin.BackgroundColorNotes;
 		}
 
+		if (this.isReporterMode)
+		{
+			if (document.getElementById("dem_id_pointer") && this.WordControl)
+			{
+				var _head = document.getElementsByTagName('head')[0];
+				var style = document.createElement('style');
+				style.type = 'text/css';
+				style.innerHTML = this.WordControl.getStylesReporter();
+				_head.appendChild(style);
+
+				["id_reporter_dem", "id_reporter_dem_controller", "id_main_parent", "id_reporter_dem_parent", "id_main"].forEach(function (id) {
+					document.getElementById(id).style.backgroundColor = GlobalSkin.BackgroundColorThumbnails;
+				});
+			}
+		}
+
 		if (this.WordControl && this.WordControl.m_oBody)
 			this.WordControl.OnResize(true);
 	};
@@ -2863,7 +2879,7 @@ background-repeat: no-repeat;\
 			else
 			{
 
-				if (window["AscDesktopEditor"])
+				if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]())
 				{
 					image_url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](sImageUrl);
 					image_url = g_oDocumentUrls.getImageUrl(image_url);
@@ -3054,7 +3070,7 @@ background-repeat: no-repeat;\
                 }
                 else
                 {
-                    if (window["AscDesktopEditor"])
+                    if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]())
                     {
                         image_url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](sImageUrl);
                         image_url = g_oDocumentUrls.getImageUrl(image_url);
@@ -4296,7 +4312,7 @@ background-repeat: no-repeat;\
 			}
 			else
 			{
-				if (window["AscDesktopEditor"])
+				if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]())
                 {
                     this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.UploadImage);
                     var _url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](sImageUrl);
@@ -6444,6 +6460,7 @@ background-repeat: no-repeat;\
 	{
 		this.reporterStartObject = startObject;
 		this.reporterStartObject["translate"] = AscCommon.translateManager.mapTranslate;
+		this.reporterStartObject["skin"] = AscCommon.GlobalSkin;
 
 		if (window["AscDesktopEditor"])
 		{
@@ -6623,6 +6640,8 @@ background-repeat: no-repeat;\
 	{
 		if (data["translate"])
 			this.translateManager = AscCommon.translateManager.init(data["translate"]);
+		if (data["skin"])
+			this.asc_setSkin(data["skin"]);
 
 		this.reporterTranslates = [data["translations"]["reset"], data["translations"]["slideOf"], data["translations"]["endSlideshow"], data["translations"]["finalMessage"]];
 

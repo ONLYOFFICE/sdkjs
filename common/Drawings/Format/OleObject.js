@@ -215,13 +215,17 @@ function (window, undefined) {
         AscFormat.CImageShape.prototype.handleUpdateExtents.call(this, []);
     };
     COleObject.prototype.checkTypeCorrect = function(){
-        if(!this.m_sData){
+        var bCorrectData = false;
+        if(this.m_sData) {
+            bCorrectData = true;
+        }
+        else if(this.m_sObjectFile) {
+            bCorrectData = true;
+        }
+        if(!bCorrectData){
             return false;
         }
-        if(!this.m_sApplicationId){
-            return false;
-        }
-        if(this.m_nPixHeight === null || this.m_nPixHeight === null){
+        if(this.m_sApplicationId === null){
             return false;
         }
         return true;

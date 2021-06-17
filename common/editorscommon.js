@@ -155,6 +155,10 @@
 		return false;
 	};
 
+	RegExp.escape = function ( text ) {
+		return text.replace( /[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&" );
+	};
+
 	if (typeof require === 'function' && !window['XRegExp'])
 	{
 		window['XRegExp'] = require('xregexp');
@@ -6306,7 +6310,7 @@
 		element.getContext("2d").putImageData(data, 0, 0);
 	};
 
-	function calculateCanvasSize(element, is_correction)
+	function calculateCanvasSize(element, is_correction, is_wait_correction)
 	{
 		if (true !== is_correction && undefined !== element.correctionTimeout)
 		{
@@ -6325,7 +6329,8 @@
 		}
 
 		var rect = element.getBoundingClientRect();
-		if (rect.width === 0 && rect.height === 0)
+		var isCorrectRect = (rect.width === 0 && rect.height === 0) ? false : true;
+		if (is_wait_correction || !isCorrectRect)
 		{
 			var isNoVisibleElement = false;
 			if (element.style.display === "none")
@@ -6340,15 +6345,18 @@
 				}, 100);
 			}
 
-			var style_width = parseInt(element.style.width);
-			var style_height = parseInt(element.style.height);
+			if (!isCorrectRect)
+			{
+				var style_width = parseInt(element.style.width);
+				var style_height = parseInt(element.style.height);
 
-			rect = {
-				x : 0, left : 0,
-				y : 0, top : 0,
-				width : style_width, right : style_width,
-				height : style_height, bottom : style_height
-			};
+				rect = {
+					x: 0, left: 0,
+					y: 0, top: 0,
+					width: style_width, right: style_width,
+					height: style_height, bottom: style_height
+				};
+			}
 		}
 
 		var new_width = 0;

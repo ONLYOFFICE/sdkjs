@@ -4945,6 +4945,21 @@
 			}
 		}
 	};
+	Worksheet.prototype.setShowZeros = function (value) {
+		var view = this.sheetViews[0];
+		if (value !== view.showZeros) {
+			History.Create_NewPoint();
+			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_SetShowZeros,
+				this.getId(), null, new UndoRedoData_FromTo(view.showZeros, value));
+			view.showZeros = value;
+
+			//TODO
+			this.workbook.handlers.trigger("changeSheetViewSettings", this.getId(), AscCH.historyitem_Worksheet_SetDisplayHeadings);
+			if (!this.workbook.bUndoChanges && !this.workbook.bRedoChanges) {
+				this.workbook.handlers.trigger("asc_onUpdateSheetViewSettings");
+			}
+		}
+	};
 	Worksheet.prototype.getRowsCount=function(){
 		var result = this.nRowsCount;
 		var pane = this.sheetViews.length && this.sheetViews[0].pane;
@@ -9717,9 +9732,36 @@
 
 	Worksheet.prototype.forEachConditionalFormattingRules = function (callback) {
 		for (var i = 0, l = this.aConditionalFormattingRules.length; i < l; ++i) {
-			callback(this.aConditionalFormattingRules[i], i);
+			if (callback(this.aConditionalFormattingRules[i], i)) {
+				break;
+			}
 		}
 	};
+
+	Worksheet.prototype.getIntersectionRules = function (range) {
+		var t = this;
+		var res = [];
+		this.forEachConditionalFormattingRules(function (_rule) {
+			var changedRanges = _rule.getIntersections(range);
+			if (changedRanges) {
+				res.push({ranges: changedRanges, id: _rule.id});
+			}
+		});
+		return res.length ? res : null;
+	};
+
+	Worksheet.prototype.getRuleById = function (id) {
+		var t = this;
+		var res = null;
+		this.forEachConditionalFormattingRules(function (_rule, index) {
+			if (_rule.id === id) {
+				res = {data: _rule, index: index};
+				return true;
+			}
+		});
+		return res;
+	};
+
 
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;
@@ -10086,7 +10128,7 @@
 			}
 		} else if (val) {
 			this._setValue(val, ignoreHyperlink);
-			if (!ignoreHyperlink) {
+			if (!ignoreHyperlink && window['AscCommonExcel'].g_AutoCorrectHyperlinks) {
 				this._autoformatHyperlink(val);
 			}
 			wb.dependencyFormulas.addToChangedCell(this);
@@ -11210,7 +11252,7 @@
 		for(var i = 0, length = aVal.length; i < length; ++i)
 			sSimpleText += aVal[i].text;
 		this._setValue(sSimpleText);
-		if (!ignoreHyperlink) {
+		if (!ignoreHyperlink && window['AscCommonExcel'].g_AutoCorrectHyperlinks) {
 			this._autoformatHyperlink(sSimpleText);
 		}
 		var nRow = this.nRow;
@@ -11531,7 +11573,15 @@
 		}
 		if (0 !== (flags & 0x2000)) {
 			this.setTypeInternal(CellValueType.String);
-			this.setValueMultiTextInternal(this.fromXLSBRichText(stream));
+			var multiText = [];
+			if (this.fromXLSBRichText(stream, multiText)) {
+				this.setValueMultiTextInternal(multiText);
+			} else {
+				var text = multiText.reduce(function(accumulator, currentValue) {
+					return accumulator + currentValue.text;
+				}, '');
+				this.setValueTextInternal(text);
+			}
 		}
 
 		stream.Seek2(end);
@@ -11577,8 +11627,8 @@
 			formula.si = stream.GetULongLE();
 		}
 	};
-	Cell.prototype.fromXLSBRichText = function(stream) {
-		var res = [];
+	Cell.prototype.fromXLSBRichText = function(stream, richText) {
+		var hasFormat = false;
 		var count = stream.GetULongLE();
 		while (count-- > 0) {
 			var typeRun = stream.GetUChar();
@@ -11587,6 +11637,7 @@
 				run = new AscCommonExcel.CMultiTextElem();
 				run.text = "";
 				if (stream.GetBool()) {
+					hasFormat = true;
 					run.format = new AscCommonExcel.Font();
 					run.format.fromXLSB(stream);
 					run.format.checkSchemeFont(this.ws.workbook.theme);
@@ -11595,15 +11646,15 @@
 				while (textCount-- > 0) {
 					run.text += stream.GetString();
 				}
-				res.push(run);
+				richText.push(run);
 			}
 			else if (0x2 === typeRun) {
 				run = new AscCommonExcel.CMultiTextElem();
 				run.text = stream.GetString();
-				res.push(run);
+				richText.push(run);
 			}
 		}
-		return res;
+		return hasFormat;
 	};
 	Cell.prototype.toXLSB = function(stream, nXfsId, formulaToWrite, oSharedStrings) {
 		var len = 4 + 4 + 2;
@@ -13134,6 +13185,14 @@
 		var isFormula;
 		this.worksheet._getCellNoEmpty(this.bbox.r1,this.bbox.c1, function(cell) {
 			isFormula = (null != cell) ? cell.isFormula() : false;
+		});
+		return isFormula;
+	};
+	Range.prototype.isFormulaContains=function(){
+		var isFormula;
+		this._foreachNoEmpty(function(cell) {
+			isFormula = (null != cell) ? cell.isFormula() : false;
+			return isFormula ? isFormula : null;
 		});
 		return isFormula;
 	};
@@ -15590,6 +15649,48 @@
 								var _arrSparklines = wsFrom.aSparklineGroups[k].getModifySparklinesForPromote(from, to, new AscCommon.CellBase(j - from.r1, i - from.c1));
 								if (_arrSparklines) {
 									wsFrom.aSparklineGroups[k].setSparklines(_arrSparklines, true, true);
+								}
+							}
+						}
+					}
+				}
+
+				var aRules;
+				if (wsTo.aConditionalFormattingRules && wsTo.aConditionalFormattingRules.length) {
+					wsTo.clearConditionalFormattingRulesByRanges([to])
+				}
+				if (wsFrom.aConditionalFormattingRules && wsFrom.aConditionalFormattingRules.length) {
+					aRules = wsFrom.getIntersectionRules(from);
+				}
+				if(aRules && aRules.length > 0) {
+					var newRules = [];
+					for (var i = to.c1; i <= to.c2; i += nDx) {
+						for (var j = to.r1; j <= to.r2; j += nDy) {
+							for(var k = 0, length3 = aRules.length; k < length3; k++){
+								var oRule = aRules[k];
+								var ranges = oRule.ranges;
+								for (var n = 0; n < ranges.length; n++) {
+									var _newRange = new Asc.Range(i + ranges[n].c1 - from.c1, j + ranges[n].r1 - from.r1, i + ranges[n].c2 - from.c1, j + ranges[n].r2 - from.r1);
+									if (to.containsRange(_newRange)) {
+										if (!newRules[k]) {
+											newRules[k] = [];
+										}
+										newRules[k].push(_newRange);
+									}
+								}
+							}
+						}
+					}
+					if (newRules && newRules.length) {
+						for (var i = 0; i < newRules.length; i++) {
+							if (newRules[i] && newRules[i].length) {
+								var fromRule = wsFrom.getRuleById(aRules[i].id);
+								if (fromRule) {
+									fromRule = fromRule.data;
+									var toRule = fromRule.clone();
+									toRule.id = fromRule.id;
+									toRule.ranges = fromRule.ranges.concat(newRules[i]);
+									wsTo.setCFRule(toRule);
 								}
 							}
 						}

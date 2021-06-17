@@ -2138,15 +2138,12 @@
 	};
 	CMobileTouchManagerBase.prototype.checkPointerEvent = function(e)
 	{
-		if (!AscCommon.AscBrowser.isIE)
-			return false;
-
 		var _type = e.type;
 		if (_type.toLowerCase)
 			_type = _type.toLowerCase();
 
 		if (-1 == _type.indexOf("pointer"))
-			return -1;
+			return false;
 
 		if (undefined == e["pointerId"])
 			return false;

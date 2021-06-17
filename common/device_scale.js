@@ -32,7 +32,7 @@
 
 "use strict";
 (function (window, undefined) {
-	var supportedScaleValues = [1, 1.5, 2];
+	var supportedScaleValues = [1, 1.25, 1.5, 1.75, 2];
 	if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["GetSupportedScaleValues"])
 		supportedScaleValues = window["AscDesktopEditor"]["GetSupportedScaleValues"]();
 

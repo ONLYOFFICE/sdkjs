@@ -912,16 +912,18 @@ TextArtPreviewManager.prototype.getWordArtPreview = function(prst)
 };
 TextArtPreviewManager.prototype.getWordArtPreviews = function()
 {
-	var aRet = [];
-	for(var nIdx = 0; nIdx < AscCommon.g_aTextArtPresets.length; ++nIdx)
-	{
-		var sPreset = AscCommon.g_aTextArtPresets[nIdx];
-		var oPreview = {};
-		oPreview["Type"] = sPreset;
-		oPreview["Image"] = this.getWordArtPreview(sPreset);
-		aRet.push(oPreview);
-	}
-	return aRet;
+	return AscFormat.ExecuteNoHistory(function(){
+		var aRet = [];
+		for(var nIdx = 0; nIdx < AscCommon.g_aTextArtPresets.length; ++nIdx)
+		{
+			var sPreset = AscCommon.g_aTextArtPresets[nIdx];
+			var oPreview = {};
+			oPreview["Type"] = sPreset;
+			oPreview["Image"] = this.getWordArtPreview(sPreset);
+			aRet.push(oPreview);
+		}
+		return aRet;
+	}, this, []);
 };
 TextArtPreviewManager.prototype.getWordArtPreviewCanvas = function(prst)
 {

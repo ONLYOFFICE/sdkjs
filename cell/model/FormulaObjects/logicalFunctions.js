@@ -428,6 +428,7 @@
 	cSWITCH.prototype.argumentsMin = 3;
 	cSWITCH.prototype.argumentsMax = 126;
 	cSWITCH.prototype.isXLFN = true;
+	cSWITCH.prototype.argumentsType = [argType.any, argType.any, argType.any, [argType.any, argType.any]];
 	cSWITCH.prototype.Calculate = function (arg) {
 		var oArguments = this._prepareArguments(arg, arguments[1], true);
 		var argClone = oArguments.args;

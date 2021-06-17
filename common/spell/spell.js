@@ -68,19 +68,6 @@ function CSpellchecker(settings)
 	var worker_src = useWasm ? "spell.js" : "spell_ie.js";
 	worker_src = enginePath + worker_src;
 
-	var _worker = this;
-	var _port = null;
-	if (isUseSharedWorker)
-	{
-		this.worker = new SharedWorker(worker_src, "onlyoffice-spellchecker");
-		_port = this.worker.port;
-	}
-	else
-	{
-		this.worker = new Worker(worker_src);
-		_port = this.worker;
-	}
-
 	this.languages = {
 		"1068" : "az_Latn_AZ",
 		"1026" : "bg_BG",
@@ -130,21 +117,15 @@ function CSpellchecker(settings)
 		"2067" : "nl_NL" // nl_BE
 	};
 
-	_port.onmessage = function(message) {
-		_worker.oncommand && _worker.oncommand(message.data);
-	};
-	_port.postMessage({ "type" : "init", "dictionaries_path" : dictionariesPath, "languages" : this.languages });
-
 	this.stop = function()
 	{
+		if (!this.worker)
+			return;
+
 		this.worker.terminate();
 		this.worker = null;
 	};
 
-	this.command = function(message)
-	{
-		_port && _port.postMessage(message);
-	};
 	this.oncommand = function(message) { console.log(message); };
 
 	this.checkDictionary = function(lang) {
@@ -156,4 +137,36 @@ function CSpellchecker(settings)
 			ret.push(lang);
 		return ret;
 	};
+
+	this._start = function(_port)
+	{
+		var _worker = this;
+
+		_port.onmessage = function(message) {
+			_worker.oncommand && _worker.oncommand(message.data);
+		};
+		_port.postMessage({ "type" : "init", "dictionaries_path" : dictionariesPath, "languages" : this.languages });
+
+		this.command = function(message)
+		{
+			_port && _port.postMessage(message);
+		};
+	};
+
+	if (isUseSharedWorker)
+	{
+		this.worker = new SharedWorker(worker_src, "onlyoffice-spellchecker");
+		this.worker.creator = this;
+		this.worker.onerror = function() {
+			var creator = this.creator;
+			creator.worker = new Worker(worker_src);
+			creator._start(creator.worker);
+		};
+		this._start(this.worker.port);
+	}
+	else
+	{
+		this.worker = new Worker(worker_src);
+		this._start(this.worker);
+	}
 }

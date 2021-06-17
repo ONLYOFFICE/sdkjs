@@ -444,25 +444,28 @@ CSelectedContent.prototype =
 
         var isNonParagraph = false;
         for (var Pos = 0; Pos < Count; Pos++)
-        {
-            var Element = this.Elements[Pos].Element;
-            Element.GetAllDrawingObjects(this.DrawingObjects);
-            Element.GetAllComments(this.Comments);
-            Element.GetAllMaths(this.Maths);
+		{
+			var oElement = this.Elements[Pos].Element;
 
-            var nElementType = Element.GetType();
+			oElement.Set_DocumentPrev(0 === Pos ? null : this.Elements[Pos - 1].Element);
+			oElement.Set_DocumentNext(Pos === Count - 1 ? null : this.Elements[Pos + 1].Element);
+			oElement.ProcessComplexFields();
 
-			if (type_Paragraph === nElementType && Count > 1)
-				Element.Correct_Content();
+			oElement.GetAllDrawingObjects(this.DrawingObjects);
+			oElement.GetAllComments(this.Comments);
+			oElement.GetAllMaths(this.Maths);
 
-			if (type_Table === nElementType)
+			if (oElement.IsParagraph() && Count > 1)
+				oElement.CorrectContent();
+
+			if (oElement.IsTable())
 				this.HaveTable = true;
 
-			if (type_Paragraph !== nElementType)
+			if (!oElement.IsParagraph())
 				isNonParagraph = true;
 
-			Element.MoveCursorToEndPos(false);
-        }
+			oElement.MoveCursorToEndPos(false);
+		}
 
         this.HaveMath = (this.Maths.length > 0 ? true : false);
 
@@ -2267,11 +2270,11 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.TrackRevisions = null; // Локальный флаг рецензирования, который перекрывает флаг Settings.TrackRevisions, если сам не null
 	this.TrackRevisionsManager = new CTrackRevisionsManager(this);
 
+	this.Settings = new CDocumentSettings();
+
 	this.Content[0] = new Paragraph(DrawingDocument, this);
     this.Content[0].Set_DocumentNext(null);
     this.Content[0].Set_DocumentPrev(null);
-
-    this.Settings = new CDocumentSettings();
 
     this.CurPos  =
     {
@@ -3125,6 +3128,9 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 			this.private_Redraw(this.Action.Redraw.Start, this.Action.Redraw.End);
 		}
 	}
+
+	if (this.IsFillingFormMode())
+		this.Api.sync_OnAllRequiredFormsFilled(this.IsAllRequiredSpecialFormsFilled());
 
 	if (this.Action.UpdateInterface)
 		this.private_UpdateInterface();
@@ -10425,7 +10431,7 @@ CDocument.prototype.OnKeyDown = function(e)
 				bRetValue = keydownresult_PreventAll;
 			}
 		}
-		else if ((e.KeyCode === 93) || (/*в Opera такой код*/AscCommon.AscBrowser.isOpera && (57351 === e.KeyCode)) ||
+		else if ((e.KeyCode === 93 && !e.MacCmdKey) || (/*в Opera такой код*/AscCommon.AscBrowser.isOpera && (57351 === e.KeyCode)) ||
 			(e.KeyCode === 121 && true === e.ShiftKey)) // // Shift + F10 - контекстное меню
 		{
 			var X_abs, Y_abs, oPosition, ConvertedPos;
@@ -12576,6 +12582,9 @@ CDocument.prototype.Document_Undo = function(Options)
 			this.Document_UpdateRulersState();
 		}
 	}
+
+	if (this.IsFillingFormMode())
+		this.Api.sync_OnAllRequiredFormsFilled(this.IsAllRequiredSpecialFormsFilled());
 };
 CDocument.prototype.Document_Redo = function()
 {
@@ -12601,6 +12610,9 @@ CDocument.prototype.Document_Redo = function()
 		this.Document_UpdateInterfaceState();
 		this.Document_UpdateRulersState();
 	}
+
+	if (this.IsFillingFormMode())
+		this.Api.sync_OnAllRequiredFormsFilled(this.IsAllRequiredSpecialFormsFilled());
 };
 CDocument.prototype.GetSelectionState = function()
 {
@@ -23999,7 +24011,16 @@ CDocument.prototype.DrawTable = function()
 	if (!this.DrawTableMode.Table)
 	{
 		if (!this.DrawTableMode.Draw || Math.abs(this.DrawTableMode.StartX - this.DrawTableMode.EndX) < 1 || Math.abs(this.DrawTableMode.StartY - this.DrawTableMode.EndY) < 1)
+		{
+			if (this.DrawTableMode.StartX === this.DrawTableMode.EndX && this.DrawTableMode.StartY === this.DrawTableMode.EndY)
+			{
+				this.DrawTableMode.Draw && editor.sync_TableDrawModeCallback(false);
+				this.DrawTableMode.Erase && editor.sync_TableEraseModeCallback(false);
+				this.UpdateCursorType(this.CurPos.RealX, this.CurPos.RealY, this.CurPage, new AscCommon.CMouseEventHandler());
+			}
+
 			return;
+		}
 
 		var oSelectionState = this.GetSelectionState();
 
@@ -24042,7 +24063,13 @@ CDocument.prototype.DrawTable = function()
 		var oTable = this.DrawTableMode.Table;
 
 		this.StartAction(AscDFH.historydescription_Document_DrawTable);
-		oTable.DrawTableCells(this.DrawTableMode.StartX, this.DrawTableMode.StartY, this.DrawTableMode.EndX, this.DrawTableMode.EndY, this.DrawTableMode.TablePageStart, this.DrawTableMode.TablePageEnd, isDraw);
+		var bKeepDrawMode = oTable.DrawTableCells(this.DrawTableMode.StartX, this.DrawTableMode.StartY, this.DrawTableMode.EndX, this.DrawTableMode.EndY, this.DrawTableMode.TablePageStart, this.DrawTableMode.TablePageEnd, isDraw);
+
+		if (bKeepDrawMode === false)
+		{
+			isDraw  = false;
+			isErase = false;
+		}
 
 		if (oTable.GetRowsCount() <= 0 && oTable.GetParent())
 		{
@@ -24078,6 +24105,7 @@ CDocument.prototype.DrawTable = function()
 			this.Api.SetTableDrawMode(true);
 		else if (isErase)
 			this.Api.SetTableEraseMode(true);
+		this.UpdateCursorType(this.CurPos.RealX, this.CurPos.RealY, this.CurPage, new AscCommon.CMouseEventHandler());
 	}
 };
 /**
@@ -24599,6 +24627,21 @@ CDocument.prototype.GetSpecialFormsByKey = function(sKey)
 	}
 
 	return arrForms;
+};
+/**
+ * Все ли обязательные поля заполнены
+ * @returns {boolean}
+ */
+CDocument.prototype.IsAllRequiredSpecialFormsFilled = function()
+{
+	for (var sId in this.SpecialForms)
+	{
+		var oForm = this.SpecialForms[sId];
+		if (oForm.IsFormRequired() && !oForm.IsFormFilled())
+			return false;
+	}
+
+	return true;
 };
 /**
  *  Функция, которая используется для отрисовки символа конца секции

@@ -830,13 +830,12 @@ DrawingArea.prototype.drawSelection = function(drawingDocument) {
     trackOverlay.Clear();
     drawingDocument.Overlay = trackOverlay;
 
-    oWS.overlayCtx.clear();
     oWS.overlayGraphicCtx.clear();
     oWS._drawCollaborativeElements(autoShapeTrack);
 
 	var controller = oWS.objectRender.controller;
-    if ( !controller.selectedObjects.length && !this.api.isStartAddShape) {
-		oWS._drawSelection();
+    if ( controller.selectedObjects.length || this.api.isStartAddShape) {
+		oWS.overlayCtx.clear();
 	}
     var chart;
     var selected_objects = controller.selection.groupSelection ? controller.selection.groupSelection.selectedObjects : controller.selectedObjects;

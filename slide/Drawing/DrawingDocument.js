@@ -3288,8 +3288,8 @@ function CDrawingDocument()
 		var _pageW      = 297;
 		var _pageH      = 210;
 		var _canvas     = document.createElement('canvas');
-		_canvas.width   = TABLE_STYLE_WIDTH_PIX;
-		_canvas.height  = TABLE_STYLE_HEIGHT_PIX;
+		_canvas.width   = (TABLE_STYLE_WIDTH_PIX * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+		_canvas.height  = (TABLE_STYLE_HEIGHT_PIX * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 		var ctx         = _canvas.getContext('2d');
 		var oTable;
 		for (var i = 0; i < logicDoc.TablesForInterface.length; i++)
@@ -4104,6 +4104,8 @@ function CThPage()
 
 function CThumbnailsManager()
 {
+	this.isInit = false;
+	this.lastPixelRatio = 0;
 	this.m_oFontManager = new AscFonts.CFontManager();
 
 	this.m_bIsScrollVisible = true;
@@ -4891,17 +4893,24 @@ function CThumbnailsManager()
 		g_fontApplication.LoadFont(font.FontFamily.Name, AscCommon.g_font_loader, this.m_oFontManager, font.FontSize, oFontStyle, 96, 96);
 	};
 
-	this.Init = function()
+	this.InitCheckOnResize = function()
 	{
-		this.m_oFontManager.Initialize(true);
-		this.m_oFontManager.SetHintsProps(true, true);
+		if (!this.isInit)
+			return;
 
-		var font = {FontFamily : {Name : "Arial", Index : -1}, Italic : false, Bold : false, FontSize : 10};
-		this.SetFont(font);
+		if (Math.abs(this.lastPixelRatio - AscCommon.AscBrowser.retinaPixelRatio) < 0.01)
+			return;
+
+		this.lastPixelRatio = AscCommon.AscBrowser.retinaPixelRatio;
+		this.SetFont({
+			FontFamily: {Name: "Arial", Index: -1},
+			Italic: false,
+			Bold: false,
+			FontSize: Math.round(10 * AscCommon.AscBrowser.retinaPixelRatio)
+		});
 
 		// измеряем все цифры
-		for (var i = 0; i < 10; i++)
-		{
+		for (var i = 0; i < 10; i++) {
 			var _meas = this.m_oFontManager.MeasureChar(("" + i).charCodeAt(0));
 			if (_meas)
 				this.DigitWidths[i] = _meas.fAdvanceX * 25.4 / 96;
@@ -4909,13 +4918,19 @@ function CThumbnailsManager()
 				this.DigitWidths[i] = 10;
 		}
 
-		if (true)
-		{
-			this.const_offset_y = 17;
-			this.const_offset_b = this.const_offset_y;
-			this.const_offset_r = 8;
-			this.const_border_w = 7;
-		}
+		this.const_offset_y = Math.round(this.lastPixelRatio * 17);
+		this.const_offset_b = this.const_offset_y;
+		this.const_offset_r = Math.round(this.lastPixelRatio * 10);
+		this.const_border_w = Math.round(this.lastPixelRatio * 7);
+	};
+
+	this.Init = function()
+	{
+		this.isInit = true;
+		this.m_oFontManager.Initialize(true);
+		this.m_oFontManager.SetHintsProps(true, true);
+
+		this.InitCheckOnResize();
 
 		this.MouseTrackCommonImage = document.createElement("canvas");
 
@@ -4957,6 +4972,7 @@ function CThumbnailsManager()
 
 	this.CheckSizes = function()
 	{
+		this.InitCheckOnResize();
 		var word_control = this.m_oWordControl;
 
 		var dKoefToPix = AscCommon.AscBrowser.retinaPixelRatio * g_dKoef_mm_to_pix;
@@ -4981,6 +4997,9 @@ function CThumbnailsManager()
 		this.const_offset_x = (_tmpDig * dKoefToPix * (("") + (this.SlidesCount + 1)).length) >> 0;
 		if (this.const_offset_x < 25)
 			this.const_offset_x = 25;
+
+		// focus/select rects
+		this.const_offset_x += Math.round(5 * AscCommon.AscBrowser.retinaPixelRatio);
 
 		nWidthSlide -= this.const_offset_x;
 
@@ -5241,7 +5260,7 @@ function CThumbnailsManager()
 			g.m_oFontManager = this.m_oFontManager;
 			g.transform(1, 0, 0, 1, 0, 0);
 
-			var font = {FontFamily : {Name : "Arial", Index : -1}, Italic : false, Bold : false, FontSize : 10};
+			var font = {FontFamily : {Name : "Arial", Index : -1}, Italic : false, Bold : false, FontSize : Math.round(10 * AscCommon.AscBrowser.retinaPixelRatio)};
 			g.SetFont(font);
 
 			// меряем надпись номера слайда
@@ -5256,27 +5275,14 @@ function CThumbnailsManager()
 
 			page.Draw(context, page.left, page.top, page.right - page.left, page.bottom - page.top);
 
-			/*
-			 if (!page.IsSelected)
-			 g.b_color1(0, 0, 0, 255);
-			 else
-			 g.b_color1(210, 72, 72, 255);
-			 */
+			var text_color = null;
 			if (!page.IsLocked)
-			{
-				/*
-				if (i == this.m_oWordControl.m_oDrawingDocument.SlideCurrent || !page.IsSelected)
-					g.b_color1(0, 0, 0, 255);
-				else
-					g.b_color1(191, 191, 191, 255);
-				*/
-				// теперь рисуем не выделяя текущий
-				g.b_color1(0, 0, 0, 255);
-			}
+				text_color = AscCommon.RgbaHexToRGBA(AscCommon.GlobalSkin.ThumbnailsPageNumberText);
 			else
-				g.b_color1(211, 79, 79, 255);
+				text_color = AscCommon.RgbaHexToRGBA(AscCommon.GlobalSkin.ThumbnailsLockColor);
+			g.b_color1(text_color.R, text_color.G, text_color.B, 255);
 
-			var _bounds = g.t("" + (i + 1), (_digit_distance - num_slide_text_width) / 2, (page.top * g_dKoef_pix_to_mm + 3), true);
+			var _bounds = g.t("" + (i + 1), (_digit_distance - num_slide_text_width) / 2, (page.top * g_dKoef_pix_to_mm + 3 * AscCommon.AscBrowser.retinaPixelRatio), true);
 			if (_logicDocument.Slides[i] && !_logicDocument.Slides[i].isVisible())
 			{
 				context.lineWidth = 1;
@@ -5311,14 +5317,9 @@ function CThumbnailsManager()
 		context.fillStyle = GlobalSkin.BackgroundColorThumbnails;
 		context.fillRect(0, 0, _width, _height);
 
-		//var _style_select     = "#FFE063";
-		//var _style_focus      = "#E8EAEC";
-		//var _style_select_focus = "#FFEF9D";
-
-		//var _style_select       = "#E98859";
-		var _style_select       = "#848484";
-		var _style_focus        = "#CFCFCF";
-		var _style_select_focus = "#848484";
+		var _style_select       = GlobalSkin.ThumbnailsPageOutlineActive;
+		var _style_focus        = GlobalSkin.ThumbnailsPageOutlineHover;
+		var _style_select_focus = GlobalSkin.ThumbnailsPageOutlineActive;
 
 		// selected pages
 		context.fillStyle = _style_select;
@@ -5329,26 +5330,8 @@ function CThumbnailsManager()
 
 			if (page.IsLocked)
 			{
-				var _lock_focus = "#D34F4F";
-				var _lock_color = "#D34F4F";
-				/*
-				 if (page.IsSelected && page.IsFocused)
-				 {
-				 this.FocusRectFlat("#CA2B1F", context, page.left, page.top, page.right, page.bottom);
-				 }
-				 else if (page.IsSelected)
-				 {
-				 this.FocusRectFlat("#9F1F15", context, page.left, page.top, page.right, page.bottom);
-				 }
-				 else if (page.IsFocused)
-				 {
-				 this.FocusRectFlat("#FF5E52", context, page.left, page.top, page.right, page.bottom);
-				 }
-				 else
-				 {
-				 this.FocusRectFlat("#EE3525", context, page.left, page.top, page.right, page.bottom);
-				 }
-				 */
+				var _lock_focus = AscCommon.GlobalSkin.ThumbnailsLockColor;
+				var _lock_color = AscCommon.GlobalSkin.ThumbnailsLockColor;
 
 				if (page.IsFocused)
 				{
@@ -5372,7 +5355,7 @@ function CThumbnailsManager()
 			}
 			else if (page.IsFocused)
 			{
-				this.FocusRectFlat(_style_focus, context, page.left, page.top, page.right, page.bottom);
+				this.FocusRectFlat(_style_focus, context, page.left, page.top, page.right, page.bottom, true);
 			}
 		}
 
@@ -5420,25 +5403,19 @@ function CThumbnailsManager()
 	{
 		ctx.rect(x - this.const_border_w, y, r - x + this.const_border_w, b - y);
 	};
-	this.FocusRectFlat = function(_color, ctx, x, y, r, b)
+	this.FocusRectFlat = function(_color, ctx, x, y, r, b, isFocus)
 	{
 		ctx.beginPath();
 		ctx.strokeStyle = _color;
-		ctx.lineWidth   = 2;
+		var lineW = Math.round((isFocus ? 2 : 3) * AscCommon.AscBrowser.retinaPixelRatio);
+		var dist = Math.round(2 * AscCommon.AscBrowser.retinaPixelRatio);
+		ctx.lineWidth = lineW;
+		var extend = dist + (lineW / 2);
 
-		ctx.rect(x - 2, y - 2, r - x + 4, b - y + 4);
+		ctx.rect(x - extend, y - extend, r - x + (2 * extend), b - y + (2 * extend));
 		ctx.stroke();
 
 		ctx.beginPath();
-
-		if (true)
-		{
-			ctx.lineWidth   = 1;
-			ctx.strokeStyle = "#FFFFFF";
-			ctx.rect(x - 0.5, y - 0.5, r - x + 1, b - y + 1);
-			ctx.stroke();
-			ctx.beginPath();
-		}
 	};
 
 	this.onCheckUpdate = function()

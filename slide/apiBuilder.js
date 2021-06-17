@@ -77,7 +77,7 @@
 	ApiShape.prototype.constructor = ApiShape;
 
     /**
-     * Class representing a image.
+     * Class representing an image.
      * @constructor
      */
     function ApiImage(oImage){
@@ -109,7 +109,7 @@
 
 
 	/**
-     * Represents table in presentation
+     * Class representing a table.
      * @param oGraphicFrame
      * @constructor
      * */
@@ -125,7 +125,7 @@
 
 
     /**
-     * Represents table row
+     * Class representing a table row.
      * @param oTableRow
      * @constructor
      */
@@ -136,7 +136,7 @@
 
 
     /**
-     * Represents table cell
+     * Class representing a table cell.
      * @param oCell
      * @constructor
      */
@@ -166,12 +166,12 @@
      */
 
     /**
-     * A 60000th of a degree (5400000 = 90 degrees).
+     * 60000th of a degree (5400000 = 90 degrees).
      * @typedef {number} PositiveFixedAngle
      * */
 
     /**
-     * A border type
+     * A border type.
      * @typedef {("none" | "single")} BorderType
      */
 
@@ -239,7 +239,7 @@
 
     /**
      * The type of a fill which uses an image as a background.
-     * * **"tile"** - if the image is smaller than the shaped which is filled, the image will be tiled all over the created shape surface.
+     * * **"tile"** - if the image is smaller than the shape which is filled, the image will be tiled all over the created shape surface.
      * * **"stretch"** - if the image is smaller than the shape which is filled, the image will be stretched to fit the created shape surface.
      * @typedef {"tile" | "stretch"} BlipFillType
      * */
@@ -252,6 +252,7 @@
 
 
     /**
+     * The available types of tick mark appearance.
      * @typedef {("cross" | "in" | "none" | "out")} TickMark
      * */
 
@@ -342,8 +343,8 @@
      * @param {Array} aSeriesNames - The array of the names (the source table column names) used for the data which the chart will be build from.
      * @param {Array} aCatNames - The array of the names (the source table row names) used for the data which the chart will be build from.
      * @param {EMU} nWidth - The chart width in English measure units.
-     * @param {EMU} nHeight - 	The chart height in English measure units.
-     * @param {number} nStyleIndex - 	The chart color style index (can be <b>1 - 48</b>, as described in OOXML specification).
+     * @param {EMU} nHeight - The chart height in English measure units.
+     * @param {number} nStyleIndex - The chart color style index (can be <b>1 - 48</b>, as described in OOXML specification).
      * @returns {ApiChart}
      * */
     Api.prototype.CreateChart = function(sType, aSeries, aSeriesNames, aCatNames, nWidth, nHeight, nStyleIndex)
@@ -357,6 +358,7 @@
     /**
      * Create a group of drawings.
      * @memberof Api
+     * @param {Array} aDrawings - The array of drawings.
      * @returns {ApiGroup}
      * */
     Api.prototype.CreateGroup = function(aDrawings){
@@ -372,9 +374,9 @@
 
 
     /**
-     * Create table
-     * @param nCols
-     * @param nRows
+     * Create a table.
+     * @param nCols - Number of columns.
+     * @param nRows - Number of raws.
      * @returns {?ApiTable}
      */
     Api.prototype.CreateTable = function(nCols, nRows){
@@ -404,7 +406,7 @@
     };
 
     /**
-	 * Saves changes to the specified document.
+	 * Save changes to the specified document.
 	 * @typeofeditors ["CPE"]
 	 * @memberof Api
 	 */
@@ -504,7 +506,12 @@
 
 
     /**
-     * Replace current image
+     * Replace current image.
+     * @typeofeditors ["CPE"]
+     * @memberof ApiPresentation
+     * @param {string} sImageUrl - The image source where the image to be inserted should be taken from (currently only internet URL or Base64 encoded images are supported).
+     * @param {EMU} Width - The image width in English measure units.
+     * @param {EMU} Height - The image height in English measure units.
      */
     ApiPresentation.prototype.ReplaceCurrentImage = function(sImageUrl, Width, Height)
     {
@@ -692,7 +699,7 @@
 
     /**
      * Set the position of the drawing on the slide.
-     * @param {EMU} nPosX - The distance from the left side of the slide to left side of the drawing measured in English measure units.
+     * @param {EMU} nPosX - The distance from the left side of the slide to the left side of the drawing measured in English measure units.
      * @param {EMU} nPosY - The distance from the top side of the slide to the upper side of the drawing measured in English measure units.
      */
     ApiDrawing.prototype.SetPosition = function(nPosX, nPosY)
@@ -740,7 +747,7 @@
 
 
     /**
-     * Deprecated in 6.2
+     * Deprecated in 6.2.
      * Get the shape inner contents where a paragraph or text runs can be inserted. 
      * @typeofeditors ["CPE"]
      * @returns {?ApiDocumentContent}
@@ -862,8 +869,8 @@
     };
 
     /**
-     * Specifies a legend position
-     * @number nFontSize
+     * Specify a legend font size.
+     * @param {pt} nFontSize - The text size value measured in points.
      * */
     ApiChart.prototype.SetLegendFontSize = function(nFontSize)
     {
@@ -871,23 +878,25 @@
     };
 
     /**
-     * Specifies a  vertical axis orientation
-     * @param {bool} bIsMinMax
+     * Specify a vertical axis orientation.
+     * @param {bool} bIsMinMax - The <code>true</code> value will set the normal data direction for the horizontal axis
+	 * (from minimum to maximum). The <code>false</code> value will set the inverted data direction for the horizontal axis (from maximum to minimum).
      * */
     ApiChart.prototype.SetVerAxisOrientation = function(bIsMinMax){
         AscFormat.builder_SetChartVertAxisOrientation(this.Chart, bIsMinMax);
     };
 
     /**
-     * Specifies a  horizontal axis orientation
-     * @param {bool} bIsMinMax
+     * Specify a horizontal axis orientation.
+     * @param {bool} bIsMinMax - The <code>true</code> value will set the normal data direction for the horizontal axis
+	 * (from minimum to maximum). The <code>false</code> value will set the inverted data direction for the horizontal axis (from maximum to minimum).
      * */
     ApiChart.prototype.SetHorAxisOrientation = function(bIsMinMax){
         AscFormat.builder_SetChartHorAxisOrientation(this.Chart, bIsMinMax);
     };
 
     /**
-     *  Specifies which chart data labels are shown for the chart.
+     *  Specify which chart data labels are shown for the chart.
      * @typeofeditors ["CPE"]
      * @param {boolean} bShowSerName - Whether to show or hide the source table column names used for the data which the chart will be build from.
      * @param {boolean} bShowCatName - Whether to show or hide the source table row names used for the data which the chart will be build from.
@@ -900,13 +909,13 @@
     };
 
     /**
-     * Spicifies a show options for data labels
-     * @param {number} nSeriesIndex
-     * @param {number} nPointIndex
-     * @param {boolean} bShowSerName
-     * @param {boolean} bShowCatName
-     * @param {boolean} bShowVal
-     * @param {boolean} bShowPercent
+     * Spicify the show options for data labels.
+     * @param {number} nSeriesIndex - The series index from the array of the data used to build the chart from.
+     * @param {number} nPointIndex - The point index from this series.
+     * @param {boolean} bShowSerName - Whether to show or hide the source table column names used for the data which the chart will be build from.
+     * @param {boolean} bShowCatName - Whether to show or hide the source table row names used for the data which the chart will be build from.
+     * @param {boolean} bShowVal - Whether to show or hide the chart data values.
+     * @param {boolean} bShowPercent - Whether to show or hide the percent for the data values (works with stacked chart types).
      * */
     ApiChart.prototype.SetShowPointDataLabel = function(nSeriesIndex, nPointIndex, bShowSerName, bShowCatName, bShowVal, bShowPercent)
     {
@@ -914,16 +923,16 @@
     };
 
     /**
-     * Spicifies tick labels position vertical axis
-     * @param {TickLabelPosition} sTickLabelPosition
+     * Spicify tick labels position for vertical axis.
+     * @param {TickLabelPosition} sTickLabelPosition - The type for the position of chart vertical tick labels.
      * */
     ApiChart.prototype.SetVertAxisTickLabelPosition = function(sTickLabelPosition)
     {
         AscFormat.builder_SetChartVertAxisTickLablePosition(this.Chart, sTickLabelPosition);
     };
     /**
-     * Spicifies tick labels position horizontal axis
-     * @param {TickLabelPosition} sTickLabelPosition
+     * Spicify tick labels position for horizontal axis.
+     * @param {TickLabelPosition} sTickLabelPosition - The type for the position of chart horizontal tick labels.
      * */
     ApiChart.prototype.SetHorAxisTickLabelPosition = function(sTickLabelPosition)
     {
@@ -934,16 +943,16 @@
 
 
     /**
-     * Specifies major tick mark for horizontal axis
-     * @param {TickMark} sTickMark
+     * Specify major tick mark for horizontal axis.
+     * @param {TickMark} sTickMark - The type of tick mark appearance.
      * */
 
     ApiChart.prototype.SetHorAxisMajorTickMark = function(sTickMark){
         AscFormat.builder_SetChartHorAxisMajorTickMark(this.Chart, sTickMark);
     };
     /**
-     * Specifies minor tick mark for horizontal axis
-     * @param {TickMark} sTickMark
+     * Specify minor tick mark for horizontal axis.
+     * @param {TickMark} sTickMark - The type of tick mark appearance.
      * */
 
     ApiChart.prototype.SetHorAxisMinorTickMark = function(sTickMark){
@@ -951,8 +960,8 @@
     };
 
     /**
-     * Specifies major tick mark for vertical axis
-     * @param {TickMark} sTickMark
+     * Specify major tick mark for vertical axis.
+     * @param {TickMark} sTickMark - The type of tick mark appearance.
      * */
 
     ApiChart.prototype.SetVertAxisMajorTickMark = function(sTickMark){
@@ -960,8 +969,8 @@
     };
 
     /**
-     * Specifies minor tick mark for vertical axis
-     * @param {TickMark} sTickMark
+     * Specify minor tick mark for vertical axis.
+     * @param {TickMark} sTickMark - The type of tick mark appearance.
      * */
     ApiChart.prototype.SetVertAxisMinorTickMark = function(sTickMark){
         AscFormat.builder_SetChartVerAxisMinorTickMark(this.Chart, sTickMark);
@@ -971,8 +980,8 @@
 
 
     /**
-     * Specifies major vertical gridline's visual properties
-     * @param {?ApiStroke} oStroke
+     * Specify major vertical gridline's visual properties.
+     * @param {?ApiStroke} oStroke - The stroke used to create the element shadow.
      * */
     ApiChart.prototype.SetMajorVerticalGridlines = function(oStroke)
     {
@@ -980,8 +989,8 @@
     };
 
     /**
-     * Specifies minor vertical gridline's visual properties
-     * @param {?ApiStroke} oStroke
+     * Specify minor vertical gridline's visual properties.
+     * @param {?ApiStroke} oStroke - The stroke used to create the element shadow.
      * */
     ApiChart.prototype.SetMinorVerticalGridlines = function(oStroke)
     {
@@ -990,8 +999,8 @@
 
 
     /**
-     * Specifies major horizontal gridline's visual properties
-     * @param {?ApiStroke} oStroke
+     * Specify major horizontal gridline's visual properties.
+     * @param {?ApiStroke} oStroke - The stroke used to create the element shadow.
      * */
     ApiChart.prototype.SetMajorHorizontalGridlines = function(oStroke)
     {
@@ -999,8 +1008,8 @@
     };
 
     /**
-     * Specifies minor vertical gridline's visual properties
-     * @param {?ApiStroke} oStroke
+     * Specify minor vertical gridline's visual properties.
+     * @param {?ApiStroke} oStroke - The stroke used to create the element shadow.
      * */
     ApiChart.prototype.SetMinorHorizontalGridlines = function(oStroke)
     {
@@ -1009,16 +1018,16 @@
 
 
     /**
-     * Specifies font size for labels of horizontal axis
-     * @param {number} nFontSize
+     * Specify font size for labels of horizontal axis.
+     * @param {pt} nFontSize - The text size value measured in points.
      */
     ApiChart.prototype.SetHorAxisLablesFontSize = function(nFontSize){
         AscFormat.builder_SetHorAxisFontSize(this.Chart, nFontSize);
     };
 
     /**
-     * Specifies font size for labels of vertical axis
-     * @param {number} nFontSize
+     * Specify font size for labels of vertical axis.
+     * @param {pt} nFontSize - The text size value measured in points.
      */
     ApiChart.prototype.SetVertAxisLablesFontSize = function(nFontSize){
         AscFormat.builder_SetVerAxisFontSize(this.Chart, nFontSize);
@@ -1031,8 +1040,8 @@
     //
     //------------------------------------------------------------------------------------------------------------------
     /**
-     * Returns type of object
-     * @returns {"table"};
+     * Return type of object.
+     * @returns {"table"}
      * */
     ApiTable.prototype.GetClassType = function(){
         return "table";
@@ -1040,8 +1049,8 @@
 
 
     /**
-     * Returns row by index
-     * @param nIndex {number}
+     * Return row by index.
+     * @param nIndex {number} - The row number (position) in the table.
      * @returns {?ApiTableRow}
      * */
     ApiTable.prototype.GetRow = function(nIndex){
@@ -1056,9 +1065,9 @@
     };
 
     /**
-     * Merge array of cells. If merge was done successfully it will return merged cell, otherwise "null".
-     * <b>Warning</b>: The number of cells in any row and the numbers of rows in the current table may be changed.
-     * @param {ApiTableCell[]} aCells
+     * Merge array of cells. If merge was done successfully, it will return merged cell, otherwise "null".
+     * <b>Warning</b>: The number of cells in any row and the number of rows in the current table may be changed.
+     * @param {ApiTableCell[]} aCells - The array of cells.
      * @returns {?ApiTableCell}
      */
     ApiTable.prototype.MergeCells = function(aCells)
@@ -1124,8 +1133,8 @@
     /**
      * Specify the components of the conditional formatting of the referenced table style (if one exists)
      * which shall be applied to the set of table rows with the current table-level property exceptions. A table style
-     * can specify up to six different optional conditional formats [Example: Different formatting for first column.
-     * end example], which then can be applied or omitted from individual table rows in the parent table.
+     * can specify up to six different optional conditional formats [Example: Different formatting for first column],
+     * which then can be applied or omitted from individual table rows in the parent table.
      *
      * The default setting is to apply the row and column banding formatting, but not the first row, last row, first
      * column, or last column formatting.
@@ -1153,7 +1162,7 @@
     /**
      * Add a new row to the current table.
      * @param {ApiTableCell} [oCell] - If not specified a new row will be added to the end of the table.
-     * @param {boolean} [isBefore=false] - Add a new row before or after the specified cell. If no cell is specified
+     * @param {boolean} [isBefore=false] - Add a new row before or after the specified cell. If no cell is specified,
      * then this parameter will be ignored.
      * @returns {ApiTableRow}
      */
@@ -1183,7 +1192,7 @@
     /**
      * Add a new column to the end of the current table.
      * @param {ApiTableCell} [oCell] - If not specified a new column will be added to the end of the table.
-     * @param {boolean} [isBefore=false] - Add a new column before or after the specified cell. If no cell is specified
+     * @param {boolean} [isBefore=false] - Add a new column before or after the specified cell. If no cell is specified,
      * then this parameter will be ignored.
      */
     ApiTable.prototype.AddColumn = function(oCell, isBefore)
@@ -1207,8 +1216,8 @@
     };
     /**
      * Remove the table row with a specified cell.
-     * @param {ApiTableCell} oCell
-     * @returns {boolean} Is the table empty after removing.
+     * @param {ApiTableCell} oCell - The table cell specified.
+     * @returns {boolean} - defines if the table is empty after removing or not.
      */
     ApiTable.prototype.RemoveRow = function(oCell)
     {
@@ -1222,8 +1231,8 @@
     };
     /**
      * Remove the table column with a specified cell.
-     * @param {ApiTableCell} oCell
-     * @returns {boolean} Is the table empty after removing.
+     * @param {ApiTableCell} oCell - The table cell specified.
+     * @returns {boolean} - defines if the table is empty after removing or not.
      */
     ApiTable.prototype.RemoveColumn = function(oCell)
     {
@@ -1309,8 +1318,8 @@
         return this.Row.Content.length;
     };
     /**
-     * Get cell by position.
-     * @param {number} nPos
+     * Get the cell by its position.
+     * @param {number} nPos - The cell position in the table row.
      * @returns {ApiTableCell}
      */
     ApiTableRow.prototype.GetCell = function(nPos)
@@ -1324,7 +1333,7 @@
 
     /**
      * Set the height of the current table row within the current table.
-     * @param {EMU} [nValue]
+     * @param {EMU} [nValue] - The row height in English measure units.
      */
     ApiTableRow.prototype.SetHeight = function(nValue)
     {
@@ -1368,7 +1377,7 @@
     };
 
     /**
-     * Returns cell content
+     * Returns cell content.
      * @returns {ApiDocumentContent}
      */
     ApiTableCell.prototype.GetContent = function(){
@@ -1429,8 +1438,8 @@
 
 
     /**
-     * Specifies the amount of space which shall be left between the bottom extent of the cell contents and the border
-     * of a specific table cell within a table.
+     * Specify the amount of space which shall be left between the bottom extent of the cell contents and the border
+     * of a specific individual table cell within a table.
      * @param {?twips} nValue - If this value is <code>null</code>, then default table cell bottom margin shall be used,
      * otherwise override the table cell bottom margin with specified value for the current cell.
      */
@@ -1455,7 +1464,7 @@
         this.Cell.Set_Pr(oPr);
     };
     /**
-     * Specifies the amount of space which shall be left between the left extent of the current cell contents and the
+     * Specify the amount of space which shall be left between the left extent of the current cell contents and the
      * left edge border of a specific individual table cell within a table.
      * @param {?twips} nValue - If this value is <code>null</code>, then default table cell bottom margin shall be used,
      * otherwise override the table cell bottom margin with specified value for the current cell.
@@ -1535,7 +1544,7 @@
     /**
      * Set the border which shall be displayed at the bottom of the current table cell.
      * @param {mm} fSize - The width of the current border.
-     * @param {ApiFill} oApiFill
+     * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
      */
     ApiTableCell.prototype.SetCellBorderBottom = function(fSize, oApiFill)
     {
@@ -1552,7 +1561,7 @@
     /**
      * Set the border which shall be displayed at the left of the current table cell.
      * @param {mm} fSize - The width of the current border.
-     * @param {ApiFill} oApiFill
+     * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
      */
     ApiTableCell.prototype.SetCellBorderLeft = function(fSize, oApiFill)
     {
@@ -1569,7 +1578,7 @@
     /**
      * Set the border which shall be displayed at the right of the current table cell.
      * @param {mm} fSize - The width of the current border.
-     * @param {ApiFill} oApiFill
+     * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
      */
     ApiTableCell.prototype.SetCellBorderRight = function(fSize, oApiFill)
     {
@@ -1586,7 +1595,7 @@
     /**
      * Set the border which shall be displayed at the top of the current table cell.
      * @param {mm} fSize - The width of the current border.
-     * @param {ApiFill} oApiFill
+     * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
      */
     ApiTableCell.prototype.SetCellBorderTop = function(fSize, oApiFill)
     {
@@ -1602,7 +1611,7 @@
 
     /**
      * Specify the vertical alignment for text within the current table cell.
-     * @param {("top" | "center" | "bottom")} sType
+     * @param {("top" | "center" | "bottom")} sType - The type of the vertical alignment.
      */
     ApiTableCell.prototype.SetVerticalAlign = function(sType)
     {
@@ -1617,7 +1626,7 @@
     };
     /**
      * Specify the direction of the text flow for this table cell.
-     * @param {("lrtb" | "tbrl" | "btlr")} sType
+     * @param {("lrtb" | "tbrl" | "btlr")} sType - The type of the text flow direction. 
      */
     ApiTableCell.prototype.SetTextDirection = function(sType)
     {

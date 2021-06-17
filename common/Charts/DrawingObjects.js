@@ -3956,6 +3956,15 @@ GraphicOption.prototype.union = function(oGraphicOption) {
             _this.controller.onMouseUp( e, pxToMm(x - offsets.x), pxToMm(y - offsets.y) );
     };
 
+    _this.isPointInDrawingObjects3 = function(x, y, page, bSelected, bText) {
+
+
+        var offsets = _this.drawingArea.getOffsets(x, y, true);
+        if ( offsets )
+            return _this.controller.isPointInDrawingObjects3(pxToMm(x - offsets.x), pxToMm(y - offsets.y), page, bSelected, bText );
+        return false;
+    };
+
     // keyboard
 
     _this.graphicObjectKeyDown = function(e) {
@@ -4057,7 +4066,6 @@ GraphicOption.prototype.union = function(oGraphicOption) {
 
         worksheet.endEditChart();
         _this.controller.resetSelectionState();
-        _this.OnUpdateOverlay();
     };
 
     _this.getDrawingObject = function(id) {
