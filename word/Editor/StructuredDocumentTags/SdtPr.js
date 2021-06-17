@@ -439,7 +439,10 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 	this.PlaceholderText = oContentControl.GetPlaceholderText();
 
 	if (oContentControl.IsForm())
+	{
 		this.FormPr = oContentControl.GetFormPr().Copy();
+		this.FormPr.SetFixed(oContentControl.IsAnchorForm());
+	}
 };
 CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 {
@@ -1363,6 +1366,7 @@ function CSdtFormPr(sKey, sLabel, sHelpText, isRequired)
 	this.Label    = sLabel;
 	this.HelpText = sHelpText;
 	this.Required = isRequired;
+	this.Fixed    = false;
 }
 CSdtFormPr.prototype.Copy = function()
 {
@@ -1470,6 +1474,14 @@ CSdtFormPr.prototype.SetRequired = function(isRequired)
 {
 	this.Required = isRequired;
 };
+CSdtFormPr.prototype.GetFixed = function()
+{
+	return this.Fixed;
+};
+CSdtFormPr.prototype.SetFixed = function(isFixed)
+{
+	this.Fixed = isFixed;
+};
 
 
 //--------------------------------------------------------export--------------------------------------------------------
@@ -1564,6 +1576,7 @@ CSdtFormPr.prototype['get_HelpText'] = CSdtFormPr.prototype.GetHelpText;
 CSdtFormPr.prototype['put_HelpText'] = CSdtFormPr.prototype.SetHelpText;
 CSdtFormPr.prototype['get_Required'] = CSdtFormPr.prototype.GetRequired;
 CSdtFormPr.prototype['put_Required'] = CSdtFormPr.prototype.SetRequired;
+CSdtFormPr.prototype['get_Fixed']    = CSdtFormPr.prototype.GetFixed;
 
 window['AscCommon'].CSdtTextFormPr    = CSdtTextFormPr;
 window['AscCommon']['CSdtTextFormPr'] = CSdtTextFormPr;
