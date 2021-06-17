@@ -8755,8 +8755,15 @@ var GLOBAL_PATH_COUNT = 0;
         else {
             if(oMarker) {
                 oMarker.localX = fX;
+                var fMarkerWidth = oMarker.spPr.geometry.gdLst['w'];
                 oMarker.localY = fYFirstLineMiddle - oMarker.spPr.geometry.gdLst['h'] / 2.0;
-                oEntry.localX = oMarker.localX + oMarker.spPr.geometry.gdLst['w'] + fDistance;
+                oEntry.localX = fX + fMarkerWidth + fDistance;
+                if(this.chartStyle && this.chartStyle.isSpecialStyle()) {
+                    var fSpecialSize = oFirstLine.Bottom - oFirstLine.Top;
+                    oMarker.spPr.geometry.Recalculate(fSpecialSize, fSpecialSize);
+                    oMarker.localX = fX + (fMarkerWidth - fSpecialSize) / 2.0;
+                    oMarker.localY = fYFirstLineMiddle - fSpecialSize / 2.0;
+                }
             }
             else {
                 oEntry.localX = fX + fDistance;
@@ -9204,22 +9211,6 @@ var GLOBAL_PATH_COUNT = 0;
                         for(i = 0; i < cut_index && i < calc_entryes.length; ++i) {
                             calc_entry = calc_entryes[i];
                             this.layoutLegendEntry(calc_entry, distance_to_text, summ_h, distance_to_text);
-                            // if(calc_entry.calcMarkerUnion.marker)
-                            // {
-                            //     calc_entry.calcMarkerUnion.marker.localX = distance_to_text + line_marker_width/2 - calc_entry.calcMarkerUnion.marker.extX/2;
-                            //     calc_entry.calcMarkerUnion.marker.localY = summ_h + (calc_entry.txBody.content.Content[0].Lines[0].Bottom - calc_entry.txBody.content.Content[0].Lines[0].Top)/2 - marker_size/2;
-                            //     calc_entry.localX = calc_entry.calcMarkerUnion.marker.localX + line_marker_width + distance_to_text;
-                            // }
-                            //
-                            // if(calc_entry.calcMarkerUnion.lineMarker)
-                            // {
-                            //     calc_entry.calcMarkerUnion.lineMarker.localX = distance_to_text;
-                            //     calc_entry.calcMarkerUnion.lineMarker.localY = summ_h + (calc_entry.txBody.content.Content[0].Lines[0].Bottom - calc_entry.txBody.content.Content[0].Lines[0].Top)/2;// - calc_entry.calcMarkerUnion.lineMarker.penWidth/2;
-                            //     calc_entry.localX = calc_entry.calcMarkerUnion.lineMarker.localX + line_marker_width + distance_to_text;
-                            // }
-                            // calc_entry.localY = summ_h;
-
-
                             summ_h += arr_heights[i];
                         }
                         legend.setPosition(0, 0);
@@ -9315,13 +9306,6 @@ var GLOBAL_PATH_COUNT = 0;
                             for(i = 0; i < cut_index && i < calc_entryes.length; ++i) {
                                 calc_entry = calc_entryes[i];
                                 this.layoutLegendEntry(calc_entry, distance_to_text, summ_h, distance_to_text);
-                                // if(calc_entry.calcMarkerUnion.marker)
-                                // {
-                                //     calc_entry.calcMarkerUnion.marker.localX = distance_to_text;
-                                //     calc_entry.calcMarkerUnion.marker.localY = summ_h + (calc_entry.txBody.content.Content[0].Lines[0].Bottom - calc_entry.txBody.content.Content[0].Lines[0].Top)/2 - marker_size/2;
-                                // }
-                                // calc_entry.localX = 2*distance_to_text + marker_size;
-                                // calc_entry.localY = summ_h;
                                 summ_h += arr_heights[i];
                             }
                         }
@@ -9330,13 +9314,6 @@ var GLOBAL_PATH_COUNT = 0;
                             for(i = calc_entryes.length - 1; i > -1; --i) {
                                 calc_entry = calc_entryes[i];
                                 this.layoutLegendEntry(calc_entry, distance_to_text, summ_h, distance_to_text);
-                                // if(calc_entry.calcMarkerUnion.marker)
-                                // {
-                                //     calc_entry.calcMarkerUnion.marker.localX = distance_to_text;
-                                //     calc_entry.calcMarkerUnion.marker.localY = summ_h + (calc_entry.txBody.content.Content[0].Lines[0].Bottom - calc_entry.txBody.content.Content[0].Lines[0].Top)/2 - marker_size/2;
-                                // }
-                                // calc_entry.localX = 2*distance_to_text + marker_size;
-                                // calc_entry.localY = summ_h;
                                 summ_h += arr_heights[i];
                             }
                         }
@@ -9474,37 +9451,7 @@ var GLOBAL_PATH_COUNT = 0;
                             for(j = 0; j < nColsCount && (i * nColsCount + j) < calc_entryes.length; ++j) {
                                 var nEntryIndex = i * nColsCount + j;
                                 oCurEntry = calc_entryes[nEntryIndex];
-                                // oUnionMarker = oCurEntry.calcMarkerUnion;
-                                // oLineMarker = oUnionMarker.lineMarker;
-                                // oMarker = oUnionMarker.marker;
-                                // if(oLineMarker){
-                                //     oLineMarker.localX = fCurPosX + distance_to_text;
-                                //     if(oLineMarker.pen){
-                                //         if(AscFormat.isRealNumber(oLineMarker.pen.w)){
-                                //             fPenWidth = oLineMarker.pen.w/36000.0;
-                                //         }
-                                //         else{
-                                //             fPenWidth = 12700.0/36000.0;
-                                //         }
-                                //     }
-                                //     else{
-                                //         fPenWidth = 0.0;
-                                //     }
-                                //     oLineMarker.localY = Math.max(0.0, fCurPosY + Math.max.apply(Math, aHeights)/2.0 - fPenWidth/2.0);
-                                //     if(oMarker){
-                                //         oMarker.localX = oLineMarker.localX + line_marker_width/2.0 - marker_size/2.0;
-                                //         oMarker.localY = Math.max(0.0, fCurPosY + Math.max.apply(Math, aHeights)/2.0 - marker_size/2.0);
-                                //     }
-                                // }
-                                // else{
-                                //     if(oMarker){
-                                //         oMarker.localX = fCurPosX + distance_to_text;
-                                //         oMarker.localY = Math.max(0.0, fCurPosY + Math.max.apply(Math, aHeights)/2.0  - marker_size/2.0);
-                                //     }
-                                // }
                                 this.layoutLegendEntry(oCurEntry, fCurPosX + distance_to_text, Math.max(0, fCurPosY + Math.max.apply(Math, aHeights) / 2.0 - aHeights[nEntryIndex] / 2.0), distance_to_text);
-                                // oCurEntry.localX = fCurPosX + distance_to_text + fMarkerWidth + distance_to_text;
-                                // oCurEntry.localY = Math.max(0, fCurPosY + Math.max.apply(Math, aHeights)/2.0 - aHeights[nEntryIndex]/2.0);
                                 fCurPosX += (fMaxEntryWidth + fDistanceBetweenLabels);
                             }
                             fCurPosY += (Math.max.apply(Math, aHeights) + fVertDistanceBetweenLabels);
