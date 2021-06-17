@@ -1119,9 +1119,9 @@ CBlockLevelSdt.prototype.IsCell = function(isReturnCell)
 {
 	return this.Parent.IsTableCellContent(isReturnCell);
 };
-CBlockLevelSdt.prototype.Is_DrawingShape = function()
+CBlockLevelSdt.prototype.Is_DrawingShape = function(bRetShape)
 {
-	return this.Parent.Is_DrawingShape();
+	return this.Parent.Is_DrawingShape(bRetShape);
 };
 CBlockLevelSdt.prototype.Get_Numbering = function()
 {

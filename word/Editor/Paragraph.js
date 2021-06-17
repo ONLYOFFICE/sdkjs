@@ -14248,7 +14248,7 @@ Paragraph.prototype.SetContentPosition = function(DocPos, Depth, Flag)
 				_Flag   = 1;
 				Pos     = nFormPos;
 			}
-			else if (StartPos > nFormPos)
+			else if (Pos > nFormPos)
 			{
 				_DocPos = null;
 				_Flag   = -1;
