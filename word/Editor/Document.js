@@ -21582,7 +21582,7 @@ CDocument.prototype.GetAllContentControls = function()
 CDocument.prototype.RemoveContentControl = function(Id)
 {
 	var oContentControl = this.TableId.Get_ById(Id);
-	if (!oContentControl)
+	if (!oContentControl || !oContentControl.GetContentControlType)
 		return;
 
 	if (c_oAscSdtLevelType.Block === oContentControl.GetContentControlType() && oContentControl.Parent)
