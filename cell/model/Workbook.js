@@ -9796,10 +9796,10 @@
 		return view && view.topLeftCell;
 	};
 
-	Worksheet.prototype.setCustomSort = function(props, obj, doNotSortRange) {
+	Worksheet.prototype.setCustomSort = function(props, obj, doNotSortRange, cellCommentator, opt_range) {
 		//формируем sortState из настроек
 		var t = this;
-		var selection = this.selectionRange.getLast();
+		var selection = opt_range ? opt_range : this.selectionRange.getLast();
 		var sortState = new AscCommonExcel.SortState();
 
 		//? activeRange
@@ -9886,7 +9886,10 @@
 
 		if(!doNotSortRange) {
 			var range = t.getRange3(selection.r1, selection.c1, selection.r2, selection.c2);
-			t.cellCommentator.sortComments(t._doSort(range, null, null, null, null, !columnSort, sortState));
+			var oSort = t._doSort(range, null, null, null, null, !columnSort, sortState);
+			if (cellCommentator) {
+				cellCommentator.sortComments(oSort);
+			}
 		}
 
 		History.EndTransaction();

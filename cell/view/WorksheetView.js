@@ -20836,7 +20836,7 @@
 
 		//TODO отдельная обработка для таблиц
 		var callback = function(obj) {
-			t.model.setCustomSort(props, obj, doNotSortRange);
+			t.model.setCustomSort(props, obj, doNotSortRange, t.cellCommentator);
 
 			if(obj && !obj.isAutoFilter()) {
 				t._onUpdateFormatTable(selection);

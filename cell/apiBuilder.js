@@ -2479,7 +2479,50 @@
 	});
 
 	ApiRange.prototype.Sort = function (Key1, Order1, Key2, Type, Order2, Key3, Order3, Header, OrderCustom, MatchCase, Orientation, SortMethod, DataOption1, DataOption2, DataOption3) {
+		var ws = this.range.worksheet;
+		var sortSettings = new Asc.CSortProperties(ws);
+		var range = this.range;
 
+		var aMerged = ws.mergeManager.get(range);
+		if (aMerged.outer.length > 0 || (aMerged.inner.length > 0 && null == window['AscCommonExcel']._isSameSizeMerged(range, aMerged.inner, true))) {
+			t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotFillRange, c_oAscError.Level.NoCritical);
+			return;
+		}
+
+		sortSettings.hasHeaders = Header;
+		//"xlSortColumns"/"xlSortRows"
+		sortSettings.columnSort = Orientation !== "xlSortRows";
+
+		var getSortLevel = function(_key, _order) {
+			var level = new Asc.CSortPropertiesLevel();
+
+			//level.index = getKeyIndex(_key);
+
+			level.descending = _order === "xlDescending";
+
+			return level;
+		};
+
+		sortSettings.levels = [];
+		if (Key1) {
+			sortSettings.levels.push(getSortLevel(Key1, Order1));
+		}
+		if (Key2) {
+			sortSettings.levels.push(getSortLevel(Key2, Order2));
+		}
+		if (Key3) {
+			sortSettings.levels.push(getSortLevel(Key3, Order3));
+		}
+
+		var oWorksheet = Asc['editor'].wb.getWorksheet();
+		var tables = ws.autoFilters.getTablesIntersectionRange(range);
+		var obj;
+		if(tables && tables.length) {
+			obj = tables[0];
+		} else if(ws.AutoFilter && ws.AutoFilter.Ref && ws.AutoFilter.Ref.intersection(range)) {
+			obj = ws.AutoFilter;
+		}
+		ws.setCustomSort(sortSettings, obj,null, oWorksheet && oWorksheet.cellCommentator, range);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
