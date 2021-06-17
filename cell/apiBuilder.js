@@ -1476,6 +1476,20 @@
 	 * @typedef {("None" | "Double" | "Hair" | "DashDotDot" | "DashDot" | "Dotted" | "Dashed" | "Thin" | "MediumDashDotDot" | "SlantDashDot" | "MediumDashDot" | "MediumDashed" | "Medium" | "Thick")} LineStyle
 	 */
 
+	//TODO xlManual param
+	/**
+	 * @typedef {("xlAscending" | "xlDescending")}  SortOrder
+	 * */
+
+	//TODO xlGuess param
+	/**
+	 * @typedef {("xlNo" | "xlYes")} SortHeader
+	 * */
+
+	/**
+	 * @typedef {("xlSortColumns" | "xlSortRows")} SortOrientation
+	 * */
+
 	/**
 	 * Get the type of this class.
 	 * @memberof ApiRange
@@ -2478,7 +2492,21 @@
 		}
 	});
 
-	ApiRange.prototype.SetSort = function (Key1, Order1, Key2, Type, Order2, Key3, Order3, Header, OrderCustom, MatchCase, Orientation, SortMethod, DataOption1, DataOption2, DataOption3) {
+	/**
+	 * Add a comment to the range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange | String} key1 - first sort field
+	 * @param {SortOrder} sSortOrder1 - determines the sort order for the values specified in Key1
+	 * @param {ApiRange | String} key2 - second sort field
+	 * @param {SortOrder} sSortOrder2 - determines the sort order for the values specified in Key2
+	 * @param {ApiRange | String} key3 - third sort field
+	 * @param {SortOrder} sSortOrder3 - determines the sort order for the values specified in Key3
+	 * @param {SortHeader} sHeader - specifies whether the first row contains header information
+	 * @param {SortOrientation} sOrientation - specifies if the sort should be by row (default) or column
+	 */
+
+	ApiRange.prototype.SetSort = function (key1, sSortOrder1, key2, /*Type,*/ sSortOrder2, key3, sSortOrder3, sHeader, /*OrderCustom, MatchCase,*/ sOrientation/*, SortMethod, DataOption1, DataOption2, DataOption3*/) {
 		var ws = this.range.worksheet;
 		var sortSettings = new Asc.CSortProperties(ws);
 		var range = this.range.bbox;
@@ -2487,10 +2515,9 @@
 		if (aMerged.outer.length > 0 || (aMerged.inner.length > 0 && null == window['AscCommonExcel']._isSameSizeMerged(range, aMerged.inner, true))) {
 			return;
 		}
-		
-		sortSettings.hasHeaders = Header;
-		//"xlSortColumns"/"xlSortRows"
-		var columnSort = sortSettings.columnSort = Orientation !== "xlSortRows";
+
+		sortSettings.hasHeaders = sHeader === "xlYes";
+		var columnSort = sortSettings.columnSort = sOrientation !== "xlSortRows";
 
 		var getSortLevel = function(_key, _order) {
 			var index = null;
@@ -2528,13 +2555,13 @@
 		};
 
 		sortSettings.levels = [];
-		if (Key1 && false === getSortLevel(Key1, Order1)) {
+		if (key1 && false === getSortLevel(key1, sSortOrder1)) {
 			return;
 		}
-		if (Key2 && false === getSortLevel(Key2, Order2)) {
+		if (key2 && false === getSortLevel(key2, sSortOrder2)) {
 			return;
 		}
-		if (Key3 && false === getSortLevel(Key3, Order3)) {
+		if (key3 && false === getSortLevel(key3, sSortOrder3)) {
 			return;
 		}
 
@@ -2549,11 +2576,13 @@
 		ws.setCustomSort(sortSettings, obj, null, oWorksheet && oWorksheet.cellCommentator, range);
 	};
 
-	Object.defineProperty(ApiRange.prototype, "Sort", {
-		set: function (Key1, Order1, Key2, Type, Order2, Key3, Order3, Header, OrderCustom, MatchCase, Orientation, SortMethod, DataOption1, DataOption2, DataOption3) {
-			return this.SetSort(Key1, Order1, Key2, Type, Order2, Key3, Order3, Header, OrderCustom, MatchCase, Orientation, SortMethod, DataOption1, DataOption2, DataOption3);
+	/*Object.defineProperty(ApiRange.prototype, "Sort", {
+		set: function (obj) {
+			return this.SetSort(obj.Key1, obj.Order1, obj.Key2, obj.Type, obj.Order2, obj.Key3, obj.Order3, obj.Header,
+				obj.OrderCustom, obj.MatchCase, obj.Orientation, obj.SortMethod, obj.DataOption1, obj.DataOption2,
+				obj.DataOption3);
 		}
-	});
+	});*/
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
