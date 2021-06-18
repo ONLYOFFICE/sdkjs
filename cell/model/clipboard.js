@@ -788,8 +788,11 @@
 					}
 					return oCopyProcessor.getInnerHtml();
 				} else if (isSelectedImages && isSelectedImages !== -1) {//графические объекты
-					container = doc.createElement("DIV");
 					htmlObj = this._generateHtmlImg(isSelectedImages, worksheet);
+					if (!htmlObj) {
+						return false;
+					}
+					container = doc.createElement("DIV");
 					container.appendChild(htmlObj);
 
 					if (sBase64 && container.children[0]) {
