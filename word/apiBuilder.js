@@ -6531,7 +6531,7 @@
 		if (CellVMergeCount > 1 && CellVMergeCount < nRow)
 			return null;
 
-		this.Table.Recalculate_Grid();
+		this.Table.Recalculate();
 		var Grid_start = oCell.Cell.GetRow().Get_CellInfo( oCell.Cell.GetIndex()).StartGridCol;
 		var Grid_span  = oCell.Cell.Get_GridSpan();
 		var Sum_before = this.Table.TableSumGrid[Grid_start - 1];
