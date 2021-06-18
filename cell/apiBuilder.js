@@ -2522,7 +2522,7 @@
 		var getSortLevel = function(_key, _order) {
 			var index = null;
 			if (_key instanceof ApiRange) {
-				index = columnSort ? _key.range.c1 - range.c1 : _key.range.r1 - range.r1;
+				index = columnSort ? _key.range.bbox.c1 - range.c1 : _key.range.bbox.r1 - range.r1;
 			} else if (typeof _key === "string") {
 				//named range
 				var _defName = ws.workbook.getDefinesNames(_key);
