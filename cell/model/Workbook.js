@@ -9753,6 +9753,13 @@
 		return this.conditionalFormattingRangeIterator;
 	};
 	Worksheet.prototype.updateTopLeftCell = function(range) {
+		this.setTopLeftCell(this.generateTopLeftCellFromRange(range), true);
+	};
+	Worksheet.prototype.generateTopLeftCellFromRange = function(range) {
+		if (!range) {
+			return null;
+		}
+
 		var newVal;
 		if (range.c1 === 0 && range.r1 === 0) {
 			newVal = null;
@@ -9764,12 +9771,15 @@
 			newVal.r2 = range.r1;
 		}
 
-		this.setTopLeftCell(newVal, true);
+		return newVal;
 	};
-
 	Worksheet.prototype.setTopLeftCell = function(val, addToHistory) {
 		var view = this.sheetViews[0];
-
+		
+		if (!view) {
+			return;
+		}
+		
 		if (val !== view.topLeftCell || (val && view.topLeftCell && !val.isEqual(view.topLeftCell))) {
 			var oldValue = view.topLeftCell ? view.topLeftCell.clone() : null;
 			view.topLeftCell = val;
@@ -9782,8 +9792,8 @@
 	};
 
 	Worksheet.prototype.getTopLeftCell = function() {
-		var view = this.sheetViews[0];
-		return view.topLeftCell;
+		var view = this.sheetViews && this.sheetViews[0];
+		return view && view.topLeftCell;
 	};
 
 //-------------------------------------------------------------------------------------------------

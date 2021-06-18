@@ -3848,6 +3848,20 @@
 		this.defaults.worksheetView.updateStyle();
 	};
 
+	WorkbookView.prototype.executeWithCurrentTopLeftCell = function (runFunction) {
+		var i, oWS;
+		var aTrueTopLeftCell = [];
+		for(i = 0; i < this.wsViews.length; i++) {
+			oWS = this.wsViews[i];
+			aTrueTopLeftCell.push(oWS.model.getTopLeftCell());
+			oWS.model.setTopLeftCell(oWS.getCurrentTopLeftCell());
+		}
+		runFunction();
+		for(i = 0; i < this.wsViews.length; i++) {
+			oWS = this.wsViews[i];
+			oWS.model.setTopLeftCell(aTrueTopLeftCell[i]);
+		}
+	};
 
 	//------------------------------------------------------------export---------------------------------------------------
   window['AscCommonExcel'] = window['AscCommonExcel'] || {};

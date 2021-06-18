@@ -22050,6 +22050,10 @@
 		}
 	};
 
+	WorksheetView.prototype.getCurrentTopLeftCell = function () {
+		return this.model.generateTopLeftCellFromRange(this.visibleRange);
+	};
+
 	//------------------------------------------------------------export---------------------------------------------------
     window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 	window["AscCommonExcel"].CellFlags = CellFlags;
