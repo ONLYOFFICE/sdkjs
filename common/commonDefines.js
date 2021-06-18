@@ -376,8 +376,8 @@
 
 	var c_oAscDrawingLayerType = {
 		BringToFront : 0,
-		SendToBack   : 1,
-		BringForward : 2,
+		BringForward : 1,
+		SendToBack   : 2,
 		SendBackward : 3
 	};
 
