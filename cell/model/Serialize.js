@@ -652,6 +652,25 @@
         QueryTableDeletedFields: 8,
         SortState: 9
     };
+
+	var c_oSer_QueryTableField =
+    {
+        QueryTableField: 0,
+        Id: 1,
+        TableColumnId: 2,
+        Name: 3,
+        RowNumbers: 4,
+        FillFormulas: 5,
+        DataBound: 6,
+        Clipped: 7
+    };
+
+	var c_oSer_QueryTableDeletedField =
+    {
+        QueryTableDeletedField: 0,
+        Name: 1
+    };
+	
     /** @enum */
     var c_oSer_Dxf =
     {
@@ -5975,105 +5994,99 @@
 					return oThis.ReadSortState(t, l, queryTableRefresh.sortState);
 				});
 			}
-			/*else if(c_oSer_QueryTableRefresh.QueryTableFields == type)
+			else if(c_oSer_QueryTableRefresh.QueryTableFields == type)
 			{
-				pQueryTableRefresh->QueryTableFields.Init();
-				READ1_DEF(length, res, this->ReadQueryTableFields, pQueryTableRefresh->QueryTableFields.GetPointer());
+				res = this.bcr.Read1(length, function (t, l) {
+					return oThis.ReadQueryTableFields(t, l, queryTableRefresh);
+				});
 			}
 			else if(c_oSer_QueryTableRefresh.QueryTableDeletedFields == type)
 			{
-				pQueryTableRefresh->QueryTableDeletedFields.Init();
-				READ1_DEF(length, res, this->ReadQueryTableDeletedFields, pQueryTableRefresh->QueryTableDeletedFields.GetPointer());
-			}*/
+				res = this.bcr.Read1(length, function (t, l) {
+					return oThis.ReadQueryTableDeletedFields(t, l, queryTableRefresh);
+				});
+			}
 			else
 				res = c_oSerConstants.ReadUnknown;
 
 			return res;
 		};
-		/*int BinaryTableReader::ReadQueryTableFields(BYTE type, long length, void* poResult)
+		this.ReadQueryTableFields = function (type, length, queryTableRefresh) {
+			var oThis = this;
+			var res = c_oSerConstants.ReadOk;
+			if (c_oSer_QueryTableField.QueryTableField === type) {
+				var queryTableField = new AscCommonExcel.QueryTableField(true);
+				res = this.bcr.Read1(length, function (t, l) {
+					return oThis.ReadQueryTableField(t, l, queryTableField);
+				});
+				queryTableRefresh.queryTableFields.push(queryTableField);
+			} else
+				res = c_oSerConstants.ReadUnknown;
+			return res;
+		};
+		this.ReadQueryTableField = function(type, length, queryTableField)
 		{
-			OOX::Spreadsheet::CQueryTableFields* pQueryTableFields = static_cast<OOX::Spreadsheet::CQueryTableFields*>(poResult);
-
-			int res = c_oSerConstants::ReadOk;
-			if(c_oSer_QueryTableField::QueryTableField == type)
+			var res = c_oSerConstants.ReadOk;
+			if(c_oSer_QueryTableField.Name == type)
 			{
-				OOX::Spreadsheet::CQueryTableField* pQueryTableField = new OOX::Spreadsheet::CQueryTableField();
-				READ1_DEF(length, res, this->ReadQueryTableField, pQueryTableField);
+				queryTableField.name = this.stream.GetString2LE(length);
+			}
+			else if(c_oSer_QueryTableField.Id == type)
+			{
+				queryTableField.id = this.stream.GetString2LE(length);
+			}
+			else if(c_oSer_QueryTableField.TableColumnId == type)
+			{
+				queryTableField.tableColumnId = this.stream.GetString2LE(length);
+			}
+			else if(c_oSer_QueryTableField.RowNumbers == type)
+			{
+				queryTableField.rowNumbers = this.stream.GetBool();
+			}
+			else if(c_oSer_QueryTableField.FillFormulas == type)
+			{
+				queryTableField.fillFormulas = this.stream.GetBool();
+			}
+			else if(c_oSer_QueryTableField.DataBound == type)
+			{
+				queryTableField.dataBound = this.stream.GetBool();
+			}
+			else if(c_oSer_QueryTableField.Clipped == type)
+			{
+				queryTableField.clipped = this.stream.GetBool();
+			}
+			else
+				res = c_oSerConstants.ReadUnknown;
 
-				pQueryTableFields->m_arrItems.push_back(pQueryTableField);
+			return res;
+		};
+		this.ReadQueryTableDeletedFields = function(type, length, queryTableRefresh)
+		{
+			var oThis = this;
+			var res = c_oSerConstants.ReadOk;
+			if(c_oSer_QueryTableDeletedField.QueryTableDeletedField == type)
+			{
+				var queryTableDeletedField = new AscCommonExcel.QueryTableDeletedField();
+				res = this.bcr.Read1(length, function (t, l) {
+					return oThis.ReadQueryTableDeletedField(t, l, queryTableDeletedField);
+				});
+				queryTableRefresh.queryTableDeletedFields.push(queryTableDeletedField);
 			}
 			else
 				res = c_oSerConstants.ReadUnknown;
 			return res;
-		}
-		int BinaryTableReader::ReadQueryTableDeletedField(BYTE type, long length, void* poResult)
+		};
+		this.ReadQueryTableDeletedField = function(type, length, pQueryTableDeletedField)
 		{
-			OOX::Spreadsheet::CQueryTableDeletedField* pQueryTableDeletedField = static_cast<OOX::Spreadsheet::CQueryTableDeletedField*>(poResult);
-
-			int res = c_oSerConstants::ReadOk;
-			if(c_oSer_QueryTableDeletedField::Name == type)
+			var res = c_oSerConstants.ReadOk;
+			if(c_oSer_QueryTableDeletedField.Name == type)
 			{
-				pQueryTableDeletedField->Name = this.stream.GetString2LE(length);
+				pQueryTableDeletedField.Name = this.stream.GetString2LE(length);
 			}
 			else
-				res = c_oSerConstants::ReadUnknown;
+				res = c_oSerConstants.ReadUnknown;
 			return res;
-		}
-		int BinaryTableReader::ReadQueryTableDeletedFields(BYTE type, long length, void* poResult)
-		{
-			OOX::Spreadsheet::CQueryTableDeletedFields* pQueryTableDeletedFields = static_cast<OOX::Spreadsheet::CQueryTableDeletedFields*>(poResult);
-
-			int res = c_oSerConstants::ReadOk;
-			if(c_oSer_QueryTableDeletedField::QueryTableDeletedField == type)
-			{
-				OOX::Spreadsheet::CQueryTableDeletedField* pQueryTableDeletedField = new OOX::Spreadsheet::CQueryTableDeletedField();
-				READ1_DEF(length, res, this->ReadQueryTableDeletedField, pQueryTableDeletedField);
-
-				pQueryTableDeletedFields->m_arrItems.push_back(pQueryTableDeletedField);
-			}
-			else
-				res = c_oSerConstants::ReadUnknown;
-			return res;
-		}
-		int BinaryTableReader::ReadQueryTableField(BYTE type, long length, void* poResult)
-		{
-			OOX::Spreadsheet::CQueryTableField* pQueryTableField = static_cast<OOX::Spreadsheet::CQueryTableField*>(poResult);
-
-			int res = c_oSerConstants::ReadOk;
-			if(c_oSer_QueryTableField::Name == type)
-			{
-				pQueryTableField->Name = this.stream.GetString2LE(length);
-			}
-			else if(c_oSer_QueryTableField::Id == type)
-			{
-				pQueryTableField->Id.Init();
-				pQueryTableField->Id->SetValue(this.stream.GetLong());
-			}
-			else if(c_oSer_QueryTableField::TableColumnId == type)
-			{
-				pQueryTableField->TableColumnId.Init();
-				pQueryTableField->TableColumnId->SetValue(this.stream.GetLong());
-			}
-			else if(c_oSer_QueryTableField::RowNumbers == type)
-			{
-				pQueryTableField->RowNumbers = this.stream.GetBool();
-			}
-			else if(c_oSer_QueryTableField::FillFormulas == type)
-			{
-				pQueryTableField->FillFormulas = this.stream.GetBool();
-			}
-			else if(c_oSer_QueryTableField::DataBound == type)
-			{
-				pQueryTableField->DataBound = this.stream.GetBool();
-			}
-			else if(c_oSer_QueryTableField::Clipped == type)
-			{
-				pQueryTableField->Clipped = this.stream.GetBool();
-			}
-			else
-				res = c_oSerConstants::ReadUnknown;
-			return res;
-		}*/
+		};
     }
     /** @constructor */
     function Binary_SharedStringTableReader(stream, wb, aSharedStrings)

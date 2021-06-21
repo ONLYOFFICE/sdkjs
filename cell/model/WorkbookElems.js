@@ -10038,6 +10038,43 @@ QueryTableRefresh.prototype.clone = function() {
 	return res;
 };
 
+
+/** @constructor */
+function QueryTableField() {
+	this.name = null;
+	this.id = null;
+	this.tableColumnId = null;
+
+	this.rowNumbers = null;
+	this.fillFormulas = null;
+	this.dataBound = null;
+	this.clipped = null;
+}
+QueryTableField.prototype.clone = function() {
+	var res = new QueryTableField();
+
+	res.name = this.name;
+	res.id = this.id;
+	res.tableColumnId = this.tableColumnId;
+	res.rowNumbers = this.rowNumbers;
+	res.fillFormulas = this.fillFormulas;
+	res.dataBound = this.dataBound;
+	res.clipped = this.clipped;
+
+	return res;
+};
+
+/** @constructor */
+function QueryTableDeletedField() {
+	this.name = null;
+}
+QueryTableField.prototype.clone = function() {
+	var res = new QueryTableDeletedField();
+	res.name = this.name;
+	return res;
+};
+
+
 	if (typeof Map === 'undefined') {
 		(function() {
 			var Map = function() {
@@ -11465,6 +11502,8 @@ QueryTableRefresh.prototype.clone = function() {
 	window['AscCommonExcel'].AutoFilterDateElem = AutoFilterDateElem;
 	window['AscCommonExcel'].QueryTable = QueryTable;
 	window['AscCommonExcel'].QueryTableRefresh = QueryTableRefresh;
+	window['AscCommonExcel'].QueryTableField = QueryTableField;
+	window['AscCommonExcel'].QueryTableDeletedField = QueryTableDeletedField;
 	window['AscCommonExcel'].c_oAscPatternType = c_oAscPatternType;
 
 
