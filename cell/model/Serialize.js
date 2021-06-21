@@ -7965,7 +7965,7 @@
                 oBinary_TableReader = new Binary_TableReader(this.stream, this.oReadResult, oWorksheet, this.Dxfs);
                 oBinary_TableReader.Read(length, oWorksheet.TableParts);
             } else if ( c_oSerWorksheetsTypes.Comments == type
-                && !(typeof editor !== "undefined" && editor.WordControl && editor.WordControl.LogicDocument && Array.isArray(editor.WordControl.LogicDocument.Slides))) {
+                && !(typeof editor !== "undefined" && editor.WordControl && editor.WordControl.m_oLogicDocument && Array.isArray(editor.WordControl.m_oLogicDocument.Slides))) {
                 res = this.bcr.Read1(length, function(t,l){
                     return oThis.ReadComments(t,l, oWorksheet);
                 });
@@ -8043,10 +8043,6 @@
 				namedSheetViews.fromStream(fileStream, this.wb);
 				oWorksheet.aNamedSheetViews = namedSheetViews.namedSheetView;
 				this.stream.FromFileStream(fileStream);
-			} else if (c_oSerWorksheetsTypes.QueryTable == type) {
-				/*oBinary_TableReader = new Binary_TableReader(this.stream, this.oReadResult, oWorksheet, this.Dxfs);
-				oBinary_TableReader.Read(length, oWorksheet.TableParts);*/
-                var test = 1;
 			} else
 				res = c_oSerConstants.ReadUnknown;
 			return res;
