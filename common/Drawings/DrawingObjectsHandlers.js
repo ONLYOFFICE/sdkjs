@@ -1846,6 +1846,11 @@ function handleInlineShapeImage(drawing, drawingObjectsController, e, x, y, page
     {
         if(drawing.bWordShape /*&& (!drawing.txWarpStruct || drawingObjectsController.curState.startTargetTextObject === drawing || drawing.haveSelectedDrawingInContent && drawing.haveSelectedDrawingInContent())*/)
         {
+            if(drawing.getObjectType() === AscDFH.historyitem_type_Shape &&
+                drawing.isForm() && drawing.getInnerForm() && drawing.getInnerForm().IsPicture())
+            {
+                return handleInlineHitNoText(drawing, drawingObjectsController, e, x, y, pageIndex, false);
+            }
             var all_drawings = drawing.getDocContent().GetAllDrawingObjects();
             var drawings2 = [];
             for(var i = 0; i < all_drawings.length; ++i)
