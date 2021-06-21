@@ -7828,8 +7828,8 @@
                 oNewWorksheet.aFormulaExt = [];
                 var DrawingDocument = oNewWorksheet.getDrawingDocument();
 				//TODO при copy/paste в word из excel необходимо подменить DrawingDocument из word - пересмотреть правку!
-				if(typeof editor != "undefined" && editor && editor.WordControl && editor.WordControl.LogicDocument && editor.WordControl.LogicDocument.DrawingDocument) {
-                    this.wb.DrawingDocument = editor.WordControl.LogicDocument.DrawingDocument;
+				if(typeof editor != "undefined" && editor && editor.WordControl && editor.WordControl.m_oLogicDocument && editor.WordControl.m_oLogicDocument.DrawingDocument) {
+                   this.wb.DrawingDocument = editor.WordControl.m_oLogicDocument.DrawingDocument;
                 }
 
 				
