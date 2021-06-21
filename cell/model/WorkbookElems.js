@@ -9946,6 +9946,98 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 	this.dateTimeGrouping = oDateGroupItem.DateTimeGrouping;
 };
 
+/** @constructor */
+function QueryTable() {
+	this.queryTableRefresh = null;
+
+	this.adjustColumnWidth = null;
+	this.applyAlignmentFormats = null;
+	this.applyBorderFormats = null;
+	this.applyFontFormats = null;
+	this.applyNumberFormats = null;
+	this.applyPatternFormats = null;
+	this.applyWidthHeightFormats = null;
+	this.autoFormatId = null;
+	this.backgroundRefresh = null;
+
+	this.connectionId = null;
+	this.disableEdit = null;
+	this.disableRefresh = null;
+	this.fillFormulas = null;
+	this.firstBackgroundRefresh = null;
+	this.growShrinkType = null;
+	this.headers = null;
+	this.intermediate = null;
+	this.name = null;
+	this.preserveFormatting = null;
+	this.refreshOnLoad = null;
+	this.removeDataOnSave = null;
+	this.rowNumbers = null;
+}
+QueryTable.prototype.clone = function() {
+	var res = new QueryTable();
+
+	res.queryTableRefresh = this.queryTableRefresh ? this.queryTableRefresh : null;
+
+	res.adjustColumnWidth = this.adjustColumnWidth;
+	res.applyAlignmentFormats = this.applyAlignmentFormats;
+	res.applyBorderFormats = this.applyBorderFormats;
+	res.applyFontFormats = this.applyFontFormats;
+	res.applyNumberFormats = this.applyNumberFormats;
+	res.applyPatternFormats = this.applyPatternFormats;
+	res.applyWidthHeightFormats = this.applyWidthHeightFormats;
+	res.autoFormatId = this.autoFormatId;
+	res.backgroundRefresh = this.backgroundRefresh;
+
+	res.connectionId = this.connectionId;
+	res.disableEdit = this.disableEdit;
+	res.disableRefresh = this.disableRefresh;
+	res.fillFormulas = this.fillFormulas;
+	res.firstBackgroundRefresh = this.firstBackgroundRefresh;
+	res.growShrinkType = this.growShrinkType;
+	res.headers = this.headers;
+	res.intermediate = this.intermediate;
+	res.name = this.name;
+	res.preserveFormatting = this.preserveFormatting;
+	res.refreshOnLoad = this.refreshOnLoad;
+	res.removeDataOnSave = this.removeDataOnSave;
+	res.rowNumbers = this.rowNumbers;
+
+	return res;
+};
+
+/** @constructor */
+function QueryTableRefresh() {
+	this.queryTableDeletedFields = null;
+	this.queryTableFields = null;
+	this.sortState = null;
+
+	this.fieldIdWrapped = null;
+	this.headersInLastRefr = null;
+	this.minimumVersion = null;
+	this.nextId = null;
+	this.preserveSortFilterLayout = null;
+	this.unboundColumnsLeft = null;
+	this.unboundColumnsRight = null;
+}
+QueryTableRefresh.prototype.clone = function() {
+	var res = new QueryTableRefresh();
+
+	res.queryTableDeletedFields = this.queryTableDeletedFields ? this.queryTableDeletedFields.clone() : null;
+	res.queryTableFields = this.queryTableFields ? this.queryTableFields.clone() : null;
+	res.sortState = this.sortState ? this.sortState.clone() : null;
+
+	res.fieldIdWrapped = this.fieldIdWrapped;
+	res.headersInLastRefr = this.headersInLastRefr;
+	res.minimumVersion = this.minimumVersion;
+	res.nextId = this.nextId;
+	res.preserveSortFilterLayout = this.preserveSortFilterLayout;
+	res.unboundColumnsLeft = this.unboundColumnsLeft;
+	res.unboundColumnsRight = this.unboundColumnsRight;
+
+	return res;
+};
+
 	if (typeof Map === 'undefined') {
 		(function() {
 			var Map = function() {
@@ -11371,7 +11463,10 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 	window['AscCommonExcel'].DateGroupItem = DateGroupItem;
 	window['AscCommonExcel'].SortCondition = SortCondition;
 	window['AscCommonExcel'].AutoFilterDateElem = AutoFilterDateElem;
+	window['AscCommonExcel'].QueryTable = QueryTable;
+	window['AscCommonExcel'].QueryTableRefresh = QueryTableRefresh;
 	window['AscCommonExcel'].c_oAscPatternType = c_oAscPatternType;
+
 
 	window["Asc"]["CustomFilters"]			= window["Asc"].CustomFilters = CustomFilters;
 	prot									= CustomFilters.prototype;
