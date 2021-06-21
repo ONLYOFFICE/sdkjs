@@ -5451,7 +5451,7 @@
 			{
 				oTable.QueryTable = new AscCommonExcel.QueryTable();
 				res = this.bcr.Read1(length, function(t,l){
-					return oThis.ReadQueryTable(l, oTable.QueryTable);
+					return oThis.ReadQueryTable(t, l, oTable.QueryTable);
 				});
 			}
             else
@@ -5841,16 +5841,7 @@
                 res = c_oSerConstants.ReadUnknown;
             return res;
         };
-		this.ReadQueryTable = function(length, oQueryTable)
-		{
-			var res = c_oSerConstants.ReadOk;
-			var oThis = this;
-		    res = this.bcr.Read1(length, function(t,l){
-				return oThis.ReadQueryTableContent(t,l, oQueryTable);
-			});
-			return res;
-		};
-		this.ReadQueryTableContent = function(type, length, oQueryTable)
+		this.ReadQueryTable = function(type, length, oQueryTable)
 		{
 			var oThis = this;
 		    var res = c_oSerConstants.ReadOk;
@@ -5945,7 +5936,7 @@
 			else if(c_oSer_QueryTable.QueryTableRefresh == type)
 			{
 				oQueryTable.queryTableRefresh = new AscCommonExcel.QueryTableRefresh();
-				res = this.bcr.Read2Spreadsheet(length, function(t,l){
+				res = this.bcr.Read1(length, function(t,l){
 					return oThis.ReadQueryTableRefresh(t,l, oQueryTable.queryTableRefresh);
 				});
 			}
@@ -6019,6 +6010,9 @@
 				res = this.bcr.Read1(length, function (t, l) {
 					return oThis.ReadQueryTableField(t, l, queryTableField);
 				});
+				if (null == queryTableRefresh.queryTableFields) {
+					queryTableRefresh.queryTableFields = [];
+				}
 				queryTableRefresh.queryTableFields.push(queryTableField);
 			} else
 				res = c_oSerConstants.ReadUnknown;
@@ -6033,11 +6027,11 @@
 			}
 			else if(c_oSer_QueryTableField.Id == type)
 			{
-				queryTableField.id = this.stream.GetString2LE(length);
+				queryTableField.id = this.stream.GetULongLE(length);
 			}
 			else if(c_oSer_QueryTableField.TableColumnId == type)
 			{
-				queryTableField.tableColumnId = this.stream.GetString2LE(length);
+				queryTableField.tableColumnId = this.stream.GetULongLE(length);
 			}
 			else if(c_oSer_QueryTableField.RowNumbers == type)
 			{
@@ -6070,6 +6064,9 @@
 				res = this.bcr.Read1(length, function (t, l) {
 					return oThis.ReadQueryTableDeletedField(t, l, queryTableDeletedField);
 				});
+				if (null == queryTableRefresh.queryTableDeletedFields) {
+					queryTableRefresh.queryTableDeletedFields = [];
+				}
 				queryTableRefresh.queryTableDeletedFields.push(queryTableDeletedField);
 			}
 			else
