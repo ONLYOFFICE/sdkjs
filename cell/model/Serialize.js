@@ -1649,6 +1649,9 @@
                 this.bs.WriteItem(c_oSer_TablePart.TableStyleInfo, function(){oThis.WriteTableStyleInfo(table.TableStyleInfo);});
 			if(null != table.altText || null != table.altTextSummary)
 				this.bs.WriteItem(c_oSer_TablePart.AltTextTable, function(){oThis.WriteAltTextTable(table);});
+
+			if(null != table.QueryTable)
+				this.bs.WriteItem(c_oSer_TablePart.QueryTable, function(){oThis.WriteQueryTable(table.QueryTable);});
         };
 		this.WriteAltTextTable = function(table)
 		{
@@ -1996,7 +1999,185 @@
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
                 this.memory.WriteBool(tableStyleInfo.ShowLastColumn);
             }
-        }
+        };
+
+		this.WriteQueryTable = function(queryTable)
+		{
+			var oThis = this;
+
+			if (null != queryTable.ConnectionId) {
+				this.bs.WriteItem(c_oSer_QueryTable.ConnectionId, function () {
+					oThis.memory.WriteLong(queryTable.ConnectionId);
+				});
+			}
+			if (null != queryTable.Name) {
+				this.bs.WriteItem(c_oSer_QueryTable.Name, function () {
+					oThis.memory.WriteString2(queryTable.Name);
+				});
+			}
+			if (null != queryTable.AutoFormatId) {
+				this.bs.WriteItem(c_oSer_QueryTable.AutoFormatId, function () {
+					oThis.memory.WriteLong(queryTable.AutoFormatId);
+				});
+			}
+			if (null != queryTable.GrowShrinkType) {
+				this.bs.WriteItem(c_oSer_QueryTable.GrowShrinkType, function () {
+					oThis.memory.WriteString2(queryTable.GrowShrinkType);
+				});
+			}
+			if (null != queryTable.AdjustColumnWidth) {
+				this.bs.WriteItem(c_oSer_QueryTable.AdjustColumnWidth, function () {
+					oThis.memory.WriteBool(queryTable.AdjustColumnWidth);
+				});
+			}
+			if (null != queryTable.ApplyAlignmentFormats) {
+				this.bs.WriteItem(c_oSer_QueryTable.ApplyAlignmentFormats, function () {
+					oThis.memory.WriteBool(queryTable.ApplyAlignmentFormats);
+				});
+			}
+			if (null != queryTable.ApplyBorderFormats) {
+				this.bs.WriteItem(c_oSer_QueryTable.ApplyBorderFormats, function () {
+					oThis.memory.WriteBool(queryTable.ApplyBorderFormats);
+				});
+			}
+			if (null != queryTable.ApplyFontFormats) {
+				this.bs.WriteItem(c_oSer_QueryTable.ApplyFontFormats, function () {
+					oThis.memory.WriteBool(queryTable.ApplyFontFormats);
+				});
+			}
+			if (null != queryTable.ApplyNumberFormats) {
+				this.bs.WriteItem(c_oSer_QueryTable.ApplyNumberFormats, function () {
+					oThis.memory.WriteBool(queryTable.ApplyNumberFormats);
+				});
+			}
+			if (null != queryTable.ApplyPatternFormats) {
+				this.bs.WriteItem(c_oSer_QueryTable.ApplyPatternFormats, function () {
+					oThis.memory.WriteBool(queryTable.ApplyPatternFormats);
+				});
+			}
+			if (null != queryTable.ApplyWidthHeightFormats) {
+				this.bs.WriteItem(c_oSer_QueryTable.ApplyWidthHeightFormats, function () {
+					oThis.memory.WriteBool(queryTable.ApplyWidthHeightFormats);
+				});
+			}
+			if (null != queryTable.BackgroundRefresh) {
+				this.bs.WriteItem(c_oSer_QueryTable.BackgroundRefresh, function () {
+					oThis.memory.WriteBool(queryTable.BackgroundRefresh);
+				});
+			}
+			if (null != queryTable.DisableEdit) {
+				this.bs.WriteItem(c_oSer_QueryTable.DisableEdit, function () {
+					oThis.memory.WriteBool(queryTable.DisableEdit);
+				});
+			}
+			if (null != queryTable.DisableRefresh) {
+				this.bs.WriteItem(c_oSer_QueryTable.DisableRefresh, function () {
+					oThis.memory.WriteBool(queryTable.DisableRefresh);
+				});
+			}
+			if (null != queryTable.FillFormulas) {
+				this.bs.WriteItem(c_oSer_QueryTable.FillFormulas, function () {
+					oThis.memory.WriteBool(queryTable.FillFormulas);
+				});
+			}
+			if (null != queryTable.FirstBackgroundRefresh) {
+				this.bs.WriteItem(c_oSer_QueryTable.FirstBackgroundRefresh, function () {
+					oThis.memory.WriteBool(queryTable.FirstBackgroundRefresh);
+				});
+			}
+			if (null != queryTable.Headers) {
+				this.bs.WriteItem(c_oSer_QueryTable.Headers, function () {
+					oThis.memory.WriteBool(queryTable.Headers);
+				});
+			}
+			if (null != queryTable.PreserveFormatting) {
+				this.bs.WriteItem(c_oSer_QueryTable.PreserveFormatting, function () {
+					oThis.memory.WriteBool(queryTable.PreserveFormatting);
+				});
+			}
+			if (null != queryTable.RefreshOnLoad) {
+				this.bs.WriteItem(c_oSer_QueryTable.RefreshOnLoad, function () {
+					oThis.memory.WriteBool(queryTable.RefreshOnLoad);
+				});
+			}
+			if (null != queryTable.RemoveDataOnSave) {
+				this.bs.WriteItem(c_oSer_QueryTable.RemoveDataOnSave, function () {
+					oThis.memory.WriteBool(queryTable.RemoveDataOnSave);
+				});
+			}
+			if (null != queryTable.RowNumbers) {
+				this.bs.WriteItem(c_oSer_QueryTable.RowNumbers, function () {
+					oThis.memory.WriteBool(queryTable.RowNumbers);
+				});
+			}
+			if (null != queryTable.queryTableRefresh) {
+				this.bs.WriteItem(c_oSer_QueryTable.QueryTableRefresh, function () {
+					oThis.WriteQueryTableRefresh(queryTable.queryTableRefresh);
+				});
+			}
+		};
+
+		this.WriteQueryTableRefresh = function(queryTableRefresh)
+		{
+			var oThis = this;
+			if (null != queryTableRefresh.NextId) {
+				this.bs.WriteItem(c_oSer_QueryTableRefresh.NextId, function () {
+					oThis.memory.WriteLong(queryTableRefresh.NextId);
+				});
+			}
+			if (null != queryTableRefresh.MinimumVersion) {
+				this.bs.WriteItem(c_oSer_QueryTableRefresh.MinimumVersion, function () {
+					oThis.memory.WriteLong(queryTableRefresh.MinimumVersion);
+				});
+			}
+			if (null != queryTableRefresh.UnboundColumnsLeft) {
+				this.bs.WriteItem(c_oSer_QueryTableRefresh.UnboundColumnsLeft, function () {
+					oThis.memory.WriteLong(queryTableRefresh.UnboundColumnsLeft);
+				});
+			}
+			if (null != queryTableRefresh.UnboundColumnsRight) {
+				this.bs.WriteItem(c_oSer_QueryTableRefresh.UnboundColumnsRight, function () {
+					oThis.memory.WriteLong(queryTableRefresh.UnboundColumnsRight);
+				});
+			}
+			if (null != queryTableRefresh.FieldIdWrapped) {
+				this.bs.WriteItem(c_oSer_QueryTableRefresh.FieldIdWrapped, function () {
+					oThis.memory.WriteBool(queryTableRefresh.FieldIdWrapped);
+				});
+			}
+			if (null != queryTableRefresh.HeadersInLastRefresh) {
+				this.bs.WriteItem(c_oSer_QueryTableRefresh.HeadersInLastRefresh, function () {
+					oThis.memory.WriteBool(queryTableRefresh.HeadersInLastRefresh);
+				});
+			}
+			if (null != queryTableRefresh.PreserveSortFilterLayout) {
+				this.bs.WriteItem(c_oSer_QueryTableRefresh.PreserveSortFilterLayout, function () {
+					oThis.memory.WriteBool(queryTableRefresh.PreserveSortFilterLayout);
+				});
+			}
+
+
+            /*else if(c_oSer_QueryTableRefresh.SortState == type)
+             {
+             queryTableRefresh.sortState = new AscCommonExcel.SortState();
+             res = this.bcr.Read1(length, function(t, l) {
+             return oThis.ReadSortState(t, l, queryTableRefresh.sortState);
+             });
+             }
+             else if(c_oSer_QueryTableRefresh.QueryTableFields == type)
+             {
+             res = this.bcr.Read1(length, function (t, l) {
+             return oThis.ReadQueryTableFields(t, l, queryTableRefresh);
+             });
+             }
+             else if(c_oSer_QueryTableRefresh.QueryTableDeletedFields == type)
+             {
+             res = this.bcr.Read1(length, function (t, l) {
+             return oThis.ReadQueryTableDeletedFields(t, l, queryTableRefresh);
+             });
+             }*/
+
+		};
     }
     /** @constructor */
 	function BinarySharedStringsTableWriter(memory, wb, oSharedStrings, bsw)
