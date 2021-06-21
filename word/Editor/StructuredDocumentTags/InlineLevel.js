@@ -1262,6 +1262,9 @@ CInlineLevelSdt.prototype.SetContentControlPr = function(oPr)
 	}
 
 	oPr.SetToContentControl(this);
+
+	if (this.IsForm())
+		this.GetLogicDocument().CheckFormAutoFit(this);
 };
 CInlineLevelSdt.prototype.GetContentControlPr = function()
 {

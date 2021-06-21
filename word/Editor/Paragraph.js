@@ -936,7 +936,11 @@ Paragraph.prototype.Internal_Content_Add = function(Pos, Item, bCorrectPos)
 
 	this.SpellChecker.Update_OnAdd(this, Pos, Item);
 
-	Item.SetParagraph(this);
+	if (Item.SetParent)
+		Item.SetParent(this);
+
+	if (Item.SetParagraph)
+		Item.SetParagraph(this);
 };
 Paragraph.prototype.Add_ToContent = function(Pos, Item)
 {
