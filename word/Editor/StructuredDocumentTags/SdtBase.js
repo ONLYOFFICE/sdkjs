@@ -430,3 +430,10 @@ CSdtBase.prototype.IsMultiLineForm = function()
 {
 	return true;
 };
+/**
+ * @returns {boolean}
+ */
+CSdtBase.prototype.IsPictureForm = function()
+{
+	return false;
+};

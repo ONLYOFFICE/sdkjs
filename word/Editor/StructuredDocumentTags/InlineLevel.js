@@ -205,6 +205,9 @@ CInlineLevelSdt.prototype.private_CopyPrTo = function(oContentControl)
 
 	if (undefined !== this.Pr.TextForm)
 		oContentControl.SetTextFormPr(this.Pr.TextForm);
+
+	if (undefined !== this.Pr.PictureFormPr)
+		oContentContro.SetPictureFormPr(this.Pr.PictureFormPr);
 };
 CInlineLevelSdt.prototype.GetSelectedContent = function(oSelectedContent)
 {
@@ -1624,6 +1627,35 @@ CInlineLevelSdt.prototype.SelectPicture = function()
 	return true;
 };
 /**
+ * Проверяем, является ли данный класс специальной формой для картинок
+ * @returns {boolean}
+ */
+CInlineLevelSdt.prototype.IsPictureForm = function()
+{
+	return (this.IsForm() && this.IsPicture() && undefined !== this.Pr.PictureFormPr);
+};
+/**
+ * Выставляем настройк для формы с картинкой
+ * @param oPr {CSdtPictureFormPr}
+ */
+CInlineLevelSdt.prototype.SetPictureFormPr = function(oPr)
+{
+	if (undefined === this.Pr.PictureFormPr || !this.Pr.PictureFormPr.IsEqual(oPr))
+	{
+		var _oPr = oPr ? oPr.Copy() : undefined;
+		History.Add(new CChangesSdtPrPictureFormPr(this, this.Pr.PictureFormPr, _oPr));
+		this.Pr.PictureFormPr = _oPr;
+	}
+};
+/**
+ * Получаем настройки для картиночной формы
+ * @returns {?CSdtPictureFormPr}
+ */
+CInlineLevelSdt.prototype.GetPictureFormPr = function()
+{
+	return this.Pr.PictureFormPr;
+};
+/**
  * Проверяем является ли данный контейнер специальным для поля со списком
  * @returns {boolean}
  */
@@ -2499,7 +2531,7 @@ CInlineLevelSdt.prototype.ConvertFormToInline = function()
 	var oParagraph   = this.GetParagraph();
 	var oParent      = this.GetParent();
 	var nPosInParent = this.GetPosInParent(oParent);
-	if (!oParagraph || !oParent || !oParagraph.IsInAnchorForm() || -1 === nPosInParent)
+	if (!oParagraph || !oParent || !oParagraph.IsInAnchorForm() || -1 === nPosInParent || this.IsPicture())
 		return false;
 
 	var oShape = oParagraph.Parent.Is_DrawingShape(true);
