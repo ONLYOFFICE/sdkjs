@@ -1006,9 +1006,14 @@ ParaDrawing.prototype.CheckWH = function()
 	var oldExtH = this.Extent.H;
 	if (this.GraphicObj.spPr && this.GraphicObj.spPr.xfrm
 		&& AscFormat.isRealNumber(this.GraphicObj.spPr.xfrm.extX)
-		&& AscFormat.isRealNumber(this.GraphicObj.spPr.xfrm.extY)){
+		&& AscFormat.isRealNumber(this.GraphicObj.spPr.xfrm.extY))
+	{
 		this.Extent.W = this.GraphicObj.spPr.xfrm.extX;
 		this.Extent.H = this.GraphicObj.spPr.xfrm.extY;
+	}
+	if(this.GraphicObj.getObjectType() === AscDFH.historyitem_type_Shape)
+	{
+		this.GraphicObj.handleUpdateExtents();
 	}
 	this.GraphicObj.recalculate();
 	this.Extent.W = oldExtW;
