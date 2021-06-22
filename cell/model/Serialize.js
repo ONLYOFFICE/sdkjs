@@ -2156,28 +2156,28 @@
 				});
 			}
 
-
-            /*else if(c_oSer_QueryTableRefresh.SortState == type)
-             {
-             queryTableRefresh.sortState = new AscCommonExcel.SortState();
-             res = this.bcr.Read1(length, function(t, l) {
-             return oThis.ReadSortState(t, l, queryTableRefresh.sortState);
-             });
-             }
-             else if(c_oSer_QueryTableRefresh.QueryTableFields == type)
-             {
-             res = this.bcr.Read1(length, function (t, l) {
-             return oThis.ReadQueryTableFields(t, l, queryTableRefresh);
-             });
-             }
-             else if(c_oSer_QueryTableRefresh.QueryTableDeletedFields == type)
-             {
-             res = this.bcr.Read1(length, function (t, l) {
-             return oThis.ReadQueryTableDeletedFields(t, l, queryTableRefresh);
-             });
-             }*/
-
+			if (null != queryTableRefresh.SortState) {
+                this.bs.WriteItem(c_oSer_QueryTableRefresh.SortState, function () {
+                    oThis.WriteSortState(queryTableRefresh.SortState);
+                });
+            }
+			if (null != queryTableRefresh.QueryTableFields) {
+			    this.bs.WriteItem(c_oSer_QueryTableRefresh.QueryTableFields, function () {
+                    oThis.WriteQueryTableFields(queryTableRefresh.QueryTableFields);
+                });
+            }
+			if (null != queryTableRefresh.QueryTableDeletedFields) {
+                this.bs.WriteItem(c_oSer_QueryTableRefresh.QueryTableDeletedFields, function () {
+                    oThis.WriteQueryTableDeletedFields(queryTableRefresh.QueryTableDeletedFields);
+                });
+            }
 		};
+        this.WriteQueryTableFields = function(queryTableFields)
+        {
+            var oThis = this;
+            for(var i = 0, length = queryTableFields.length; i < length; ++i)
+                this.bs.WriteItem( c_oSer_Sparkline.SparklineGroup, function(){oThis.WriteSparklineGroup(aSparklineGroups[i]);});
+        };
     }
     /** @constructor */
 	function BinarySharedStringsTableWriter(memory, wb, oSharedStrings, bsw)
