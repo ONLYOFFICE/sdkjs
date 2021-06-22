@@ -2586,8 +2586,7 @@ CInlineLevelSdt.prototype.IsMultiLineForm = function()
 };
 CInlineLevelSdt.prototype.OnChangeAnchoredFormTrack = function(nW, nH)
 {
-	// Размеры подгоняем пока только для чекбоксов
-	if (!this.IsForm() || !this.IsCheckBox())
+	if (!this.IsForm())
 		return;
 
 	var oParagraph = this.GetParagraph();
@@ -2598,20 +2597,27 @@ CInlineLevelSdt.prototype.OnChangeAnchoredFormTrack = function(nW, nH)
 	if (!oShape)
 		return;
 
-	var oRun = this.Content[0];
+	if (this.IsCheckBox())
+	{
+		var oRun = this.Content[0];
 
-	var oTextPr = oRun.Get_CompiledPr(false);
+		var oTextPr = oRun.Get_CompiledPr(false);
 
-	g_oTextMeasurer.SetTextPr(oTextPr, oParagraph.GetTheme());
-	g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
+		g_oTextMeasurer.SetTextPr(oTextPr, oParagraph.GetTheme());
+		g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
 
-	var nTextHeight = g_oTextMeasurer.GetHeight();
+		var nTextHeight = g_oTextMeasurer.GetHeight();
 
-	var nKoef = 1.2 * Math.min(nW, nH * 0.8) / nTextHeight;
+		var nKoef = 1.2 * Math.min(nW, nH * 0.8) / nTextHeight;
 
-	var nFontSize    = oTextPr.FontSize;
-	var nNewFontSize = nFontSize * nKoef;
-	oRun.Set_FontSize(nNewFontSize);
+		var nFontSize    = oTextPr.FontSize;
+		var nNewFontSize = nFontSize * nKoef;
+		oRun.Set_FontSize(nNewFontSize);
+	}
+	else if (this.IsPicture())
+	{
+		this.private_UpdatePictureFormLayout(nW, nH);
+	}
 };
 CInlineLevelSdt.prototype.IsAutoFitContent = function()
 {
@@ -2718,6 +2724,67 @@ CInlineLevelSdt.prototype.ProcessAutoFitContent = function()
 
 	if (Math.abs(nNewFontSize - nFontSize) > 0.001)
 		oRun.Set_FontSize(nNewFontSize);
+};
+CInlineLevelSdt.prototype.private_UpdatePictureFormLayout = function(nW, nH)
+{
+	var arrDrawings = this.GetAllDrawingObjects();
+	if (1 !== arrDrawings.length || nW < 0.001 || nH < 0.001)
+		return;
+
+	var oDrawing = arrDrawings[0];
+	var oShape   = oDrawing.GraphicObj;
+
+	if (this.IsPlaceHolder() || !oDrawing.IsPicture())
+	{
+		oShape.spPr.xfrm.setExtX(nW);
+		oShape.spPr.xfrm.setExtY(nH);
+	}
+	else
+	{
+		var oLogicDocument = this.GetLogicDocument();
+		if (!oLogicDocument || !oLogicDocument.GetDrawingObjects() || !oLogicDocument.GetApi())
+			return;
+
+		var oDrawingProps = oLogicDocument.GetDrawingObjects().getDrawingPropsFromArray([oDrawing]);
+		if (!oDrawingProps || !oDrawingProps.imageProps)
+			return;
+
+		var oProps = new Asc.asc_CImgProperty();
+		oProps.ImageUrl = oDrawingProps.imageProps.ImageUrl;
+
+		var oOriginSize = oProps.asc_getOriginSize(oLogicDocument.GetApi());
+		if (!oOriginSize.asc_getIsCorrect())
+			return;
+
+		var nOriginW = oOriginSize.asc_getImageWidth();
+		var nOriginH = oOriginSize.asc_getImageHeight();
+
+		var oPictureFormPr = this.GetPictureFormPr();
+		if (!oPictureFormPr || nOriginW < 0.001 || nOriginH < 0.001)
+			return;
+
+		var nScaleFlag = oPictureFormPr.GetScaleFlag();
+
+		if (Asc.c_oAscPictureFormScaleFlag.Never === nScaleFlag
+			|| (Asc.c_oAscPictureFormScaleFlag.Smaller === nScaleFlag && (nOriginH > nH || nOriginW > nW))
+			|| (Asc.c_oAscPictureFormScaleFlag.Bigger === nScaleFlag && (nH > nOriginH || nW > nOriginW)))
+			return;
+
+		// TODO: RespectBorders
+		if (oPictureFormPr.IsConstantProportions())
+		{
+
+		}
+		else
+		{
+			oShape.spPr.xfrm.setExtX(nW);
+			oShape.spPr.xfrm.setExtY(nH);
+		}
+	}
+
+	oDrawing.SetSizeRelH({RelativeFrom : AscCommon.c_oAscSizeRelFromH.sizerelfromhPage, Percent : 0});
+	oDrawing.SetSizeRelV({RelativeFrom : AscCommon.c_oAscSizeRelFromV.sizerelfromvPage, Percent : 0});
+	oDrawing.CheckWH();
 };
 
 //--------------------------------------------------------export--------------------------------------------------------
