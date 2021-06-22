@@ -6323,6 +6323,8 @@ function RangeDataManagerElem(bbox, data)
 		this.TableColumns = null;
 		this.TableStyleInfo = null;
 
+		this.QueryTable = null;
+		
 		this.altText = null;
 		this.altTextSummary = null;
 
@@ -6357,6 +6359,11 @@ function RangeDataManagerElem(bbox, data)
 				res.result.push(this.result[i].clone());
 			}
 		}
+
+		if (this.QueryTable) {
+			res.QueryTable = this.QueryTable.clone();
+		}
+
 		res.DisplayName = this.DisplayName;
 
 		res.altText = this.altText;
