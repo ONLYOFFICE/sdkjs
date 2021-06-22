@@ -695,19 +695,19 @@ var g_sWordPlaceholderImage = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMg
 	window['AscCommon'].g_oLegendBinaries = window['AscCommon']['g_oLegendBinaries'] || {};
 	window['AscCommon']['g_oLegendBinaries'] = window['AscCommon'].g_oLegendBinaries;
 
-	window['AscCommon'].g_oCatBinaries = window['AscCommon'].g_oCatBinaries || {};
+	window['AscCommon'].g_oCatBinaries = window['AscCommon']['g_oCatBinaries'] || {};
 	window['AscCommon']['g_oCatBinaries'] = window['AscCommon'].g_oCatBinaries;
 
-	window['AscCommon'].g_oValBinaries = window['AscCommon'].g_oValBinaries || {};
+	window['AscCommon'].g_oValBinaries = window['AscCommon']['g_oValBinaries'] || {};
 	window['AscCommon']['g_oValBinaries'] = window['AscCommon'].g_oValBinaries;
 
-	window['AscCommon'].g_oBarParams = window['AscCommon'].g_oBarParams || {};
+	window['AscCommon'].g_oBarParams = window['AscCommon']['g_oBarParams'] || {};
 	window['AscCommon']['g_oBarParams'] = window['AscCommon'].g_oBarParams;
 
-	window['AscCommon'].g_oView3dBinaries = window['AscCommon'].g_oView3dBinaries || {};
+	window['AscCommon'].g_oView3dBinaries = window['AscCommon']['g_oView3dBinaries'] || {};
 	window['AscCommon']['g_oView3dBinaries'] = window['AscCommon'].g_oView3dBinaries;
 
-	window['AscCommon'].g_oChartStylesIdMap = window['AscCommon'].g_oChartStylesIdMap || {};
+	window['AscCommon'].g_oChartStylesIdMap = window['AscCommon']['g_oChartStylesIdMap'] || {};
 	window['AscCommon']['g_oChartStylesIdMap'] = window['AscCommon'].g_oChartStylesIdMap;
 
 	function fGetAttributeString(attribute) {
