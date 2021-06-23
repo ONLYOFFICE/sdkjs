@@ -1995,8 +1995,9 @@
 			}
 			if(null != tableColumn.queryTableFieldId)
 			{
-				this.memory.WriteByte(c_oSer_TableColumns.QueryTableFieldId);
-				this.memory.WriteLong(tableColumn.queryTableFieldId);
+				this.bs.WriteItem(c_oSer_TableColumns.QueryTableFieldId, function () {
+					oThis.memory.WriteLong(tableColumn.queryTableFieldId);
+				});
 			}
         };
         this.WriteTableStyleInfo = function(tableStyleInfo)
@@ -2043,7 +2044,7 @@
 			}
 			if (null != queryTable.name) {
 				this.bs.WriteItem(c_oSer_QueryTable.Name, function () {
-					oThis.memory.WriteString2(queryTable.name);
+					oThis.memory.WriteString3(queryTable.name);
 				});
 			}
 			if (null != queryTable.autoFormatId) {
