@@ -1352,65 +1352,6 @@ CShape.prototype.getBodyPr = function () {
     }, this, []);
 };
 
-    CShape.prototype.ResetParametersWithResize = function(bNoResetRelSize)
-    {
-        var oParaDrawing = AscFormat.getParaDrawing(this);
-        if(oParaDrawing && !(bNoResetRelSize === true))
-        {
-            if(oParaDrawing.SizeRelH)
-            {
-                oParaDrawing.SetSizeRelH(undefined);
-            }
-            if(oParaDrawing.SizeRelV)
-            {
-                oParaDrawing.SetSizeRelV(undefined);
-            }
-        }
-            var oPropsToSet = null;
-            if(this.bWordShape)
-            {
-                if(!this.textBoxContent)
-                    return;
-                if(this.bodyPr)
-                {
-                    oPropsToSet = this.bodyPr.createDuplicate();
-                }
-                else
-                {
-                    oPropsToSet = new AscFormat.CBodyPr();
-                }
-            }
-            else
-            {
-                if(!this.txBody)
-                    return;
-                if(this.txBody.bodyPr)
-                {
-                    oPropsToSet = this.txBody.bodyPr.createDuplicate();
-                }
-                else
-                {
-                    oPropsToSet = new AscFormat.CBodyPr();
-                }
-            }
-            var oBodyPr = this.getBodyPr();
-            if(oBodyPr.wrap === AscFormat.nTWTNone)
-            {
-                oPropsToSet.wrap = AscFormat.nTWTSquare;
-            }
-            if(this.bWordShape)
-            {
-                this.setBodyPr(oPropsToSet);
-            }
-            else
-            {
-                this.txBody.setBodyPr(oPropsToSet);
-                if(this.checkExtentsByDocContent)
-                {
-                    this.checkExtentsByDocContent(true, true);
-                }
-            }
-    }
 
 CShape.prototype.GetRevisionsChangeElement = function(SearchEngine){
     var oContent = this.getDocContent();

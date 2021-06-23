@@ -495,7 +495,7 @@ function CheckSpPrXfrm(object, bNoResetAutofit)
         object.spPr.xfrm.setExtY(object.extY);
         if(bNoResetAutofit !== true)
         {
-            CheckShapeBodyAutoFitReset(object);
+            object.ResetParametersWithResize();
         }
     }
 }
@@ -3896,7 +3896,7 @@ DrawingObjectsController.prototype =
                         oDrawing.SetSizeRelH({RelativeFrom: c_oAscSizeRelFromH.sizerelfromhPage, Percent: 0});
                     }
                 }
-                CheckShapeBodyAutoFitReset(objects_by_type.shapes[i], true);
+                objects_by_type.shapes[i].ResetParametersWithResize(true);
                 if(objects_by_type.shapes[i].group)
                 {
                     checkObjectInArray(aGroups, objects_by_type.shapes[i].group.getMainGroup());
