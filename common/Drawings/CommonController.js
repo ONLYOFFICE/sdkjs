@@ -227,76 +227,6 @@ var DISTANCE_TO_TEXT_LEFTRIGHT = 3.2;
         }
     }
 
-function CheckShapeBodyAutoFitReset(oShape, bNoResetRelSize)
-{
-    var oParaDrawing = AscFormat.getParaDrawing(oShape);
-    if(oParaDrawing && !(bNoResetRelSize === true))
-    {
-        if(oParaDrawing.SizeRelH)
-        {
-            oParaDrawing.SetSizeRelH(undefined);
-        }
-        if(oParaDrawing.SizeRelV)
-        {
-            oParaDrawing.SetSizeRelV(undefined);
-        }
-    }
-    if(oShape instanceof AscFormat.CShape)
-    {
-        var oPropsToSet = null;
-        if(oShape.bWordShape)
-        {
-            if(!oShape.textBoxContent)
-                return;
-            if(oShape.bodyPr)
-            {
-                oPropsToSet = oShape.bodyPr.createDuplicate();
-            }
-            else
-            {
-                oPropsToSet = new AscFormat.CBodyPr();
-            }
-        }
-        else
-        {
-            if(!oShape.txBody)
-                return;
-            if(oShape.txBody.bodyPr)
-            {
-                oPropsToSet = oShape.txBody.bodyPr.createDuplicate();
-            }
-            else
-            {
-                oPropsToSet = new AscFormat.CBodyPr();
-            }
-        }
-        var oBodyPr = oShape.getBodyPr();
-        if(oBodyPr.textFit && oBodyPr.textFit.type === AscFormat.text_fit_Auto)
-        {
-            if(!oPropsToSet.textFit)
-            {
-                oPropsToSet.textFit = new AscFormat.CTextFit();
-            }
-            oPropsToSet.textFit.type = AscFormat.text_fit_No;
-        }
-        if(oBodyPr.wrap === AscFormat.nTWTNone)
-        {
-            oPropsToSet.wrap = AscFormat.nTWTSquare;
-        }
-        if(oShape.bWordShape)
-        {
-           oShape.setBodyPr(oPropsToSet);
-        }
-        else
-        {
-            oShape.txBody.setBodyPr(oPropsToSet);
-            if(oShape.checkExtentsByDocContent)
-            {
-                oShape.checkExtentsByDocContent(true, true);
-            }
-        }
-    }
-}
 
 function CDistance(L, T, R, B)
 {
@@ -10915,7 +10845,6 @@ function CalcLiterByLength(aAlphaBet, nLength)
 
     window['AscFormat'].CURSOR_TYPES_BY_CARD_DIRECTION = CURSOR_TYPES_BY_CARD_DIRECTION;
     window['AscFormat'].checkTxBodyDefFonts = checkTxBodyDefFonts;
-    window['AscFormat'].CheckShapeBodyAutoFitReset = CheckShapeBodyAutoFitReset;
     window['AscFormat'].CDistance = CDistance;
     window['AscFormat'].ConvertRelPositionHToRelSize = ConvertRelPositionHToRelSize;
     window['AscFormat'].ConvertRelPositionVToRelSize = ConvertRelPositionVToRelSize;

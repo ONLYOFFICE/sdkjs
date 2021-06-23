@@ -1353,7 +1353,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
             }
             if(!this.originalObject.isCrop)
             {
-                AscFormat.CheckShapeBodyAutoFitReset(this.originalObject);
+                this.originalObject.ResetParametersWithResize();
                 this.originalObject.checkDrawingBaseCoords();
                 if(this.originalObject.checkExtentsByDocContent)
                 {
@@ -1363,7 +1363,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
             else
             {
                 AscFormat.ExecuteNoHistory(function () {
-                    AscFormat.CheckShapeBodyAutoFitReset(this.originalObject);
+                    this.originalObject.ResetParametersWithResize();
                     this.originalObject.checkDrawingBaseCoords();
                 }, this, []);
             }
@@ -2078,7 +2078,7 @@ function ResizeTrackGroup(originalObject, cardDirection, parentTrack)
             }
             this.original.checkDrawingBaseCoords();
 
-            AscFormat.CheckShapeBodyAutoFitReset(this.original);
+            this.original.ResetParametersWithResize();
 
 
         };
@@ -2190,7 +2190,7 @@ function ShapeForResizeInGroup(originalObject, parentTrack)
             xfrm.setExtX(this.extX);
             xfrm.setExtY(this.extY);
 
-            AscFormat.CheckShapeBodyAutoFitReset(this.originalObject);
+            this.originalObject.ResetParametersWithResize();
         };
 
         this.updateTransform = function()
