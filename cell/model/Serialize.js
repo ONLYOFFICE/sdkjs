@@ -519,6 +519,7 @@
         ShowFirstColumn:3,
         ShowLastColumn:4
     };
+    
     /** @enum */
     var c_oSer_TableColumns =
     {
@@ -528,7 +529,15 @@
         TotalsRowLabel:3,
         TotalsRowFunction:4,
         TotalsRowFormula:5,
-        CalculatedColumnFormula:6
+        CalculatedColumnFormula:6,
+		DataCellStyle: 7,
+		HeaderRowCellStyle: 8,
+		HeaderRowDxfId: 9,
+		Id: 10,
+		QueryTableFieldId: 11,
+		TotalsRowCellStyle: 12,
+		TotalsRowDxfId: 13,
+		UniqueName: 14
     };
     /** @enum */
     var c_oSer_SortState =
@@ -1652,6 +1661,9 @@
 
 			if(null != table.QueryTable)
 				this.bs.WriteItem(c_oSer_TablePart.QueryTable, function(){oThis.WriteQueryTable(table.QueryTable);});
+
+			if(null != table.tableType)
+				this.bs.WriteItem(c_oSer_TablePart.TableType, function(){oThis.memory.WriteULong(elem.tableType);});
         };
 		this.WriteAltTextTable = function(table)
 		{
@@ -1966,6 +1978,26 @@
                 this.memory.WriteByte(c_oSer_TableColumns.CalculatedColumnFormula);
                 this.memory.WriteString2(tableColumn.CalculatedColumnFormula);
             }
+			if(null != tableColumn.CalculatedColumnFormula)
+			{
+				this.memory.WriteByte(c_oSer_TableColumns.CalculatedColumnFormula);
+				this.memory.WriteString2(tableColumn.CalculatedColumnFormula);
+			}
+			if(null != tableColumn.CalculatedColumnFormula)
+			{
+				this.memory.WriteByte(c_oSer_TableColumns.CalculatedColumnFormula);
+				this.memory.WriteString2(tableColumn.CalculatedColumnFormula);
+			}
+			if(null != tableColumn.uniqueName)
+			{
+				this.memory.WriteByte(c_oSer_TableColumns.UniqueName);
+				this.memory.WriteString2(tableColumn.uniqueName);
+			}
+			if(null != tableColumn.queryTableFieldId)
+			{
+				this.memory.WriteByte(c_oSer_TableColumns.QueryTableFieldId);
+				this.memory.WriteLong(tableColumn.queryTableFieldId);
+			}
         };
         this.WriteTableStyleInfo = function(tableStyleInfo)
         {
@@ -5688,6 +5720,9 @@
 					return oThis.ReadQueryTable(t, l, oTable.QueryTable);
 				});
 			}
+			else if (c_oSer_TablePart.TableType == type) {
+				oTable.tableType = this.stream.GetULongLE();
+            }
             else
                 res = c_oSerConstants.ReadUnknown;
             return res;
@@ -6038,6 +6073,12 @@
 			{
 				oTableColumn.CalculatedColumnFormula = this.stream.GetString2LE(length);
 			}*/
+            else if ( c_oSer_TableColumns.QueryTableFieldId == type ) {
+				oTableColumn.queryTableFieldId = this.stream.GetULongLE();
+			}
+			else if ( c_oSer_TableColumns.UniqueName == type ) {
+				oTableColumn.uniqueName = this.stream.GetString2LE(length);
+			}
             else
                 res = c_oSerConstants.ReadUnknown;
             return res;
