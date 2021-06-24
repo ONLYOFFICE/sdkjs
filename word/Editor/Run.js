@@ -4621,6 +4621,9 @@ ParaRun.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
             }
 			case para_FieldChar:
 			{
+				if (reviewtype_Remove === this.GetReviewType())
+					break;
+
 				if (this.Paragraph && this.Paragraph.m_oPRSW.IsFastRecalculate())
 					PRSC.ComplexFields.ProcessFieldChar(Item);
 				else
@@ -4650,6 +4653,9 @@ ParaRun.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
 			case para_InstrText:
 			{
 				if (this.Paragraph && this.Paragraph.m_oPRSW.IsFastRecalculate())
+					break;
+
+				if (reviewtype_Remove === this.GetReviewType())
 					break;
 
 				PRSC.ComplexFields.ProcessInstruction(Item);
@@ -5066,17 +5072,10 @@ ParaRun.prototype.Recalculate_PageEndInfo = function(PRSI, _CurLine, _CurRange)
 };
 ParaRun.prototype.RecalculateEndInfo = function(oPRSI)
 {
-	if (this.Paragraph)
-	{
-		if(this.Paragraph.m_oPRSW.IsFastRecalculate())
-		{
-			return;
-		}
-		if(this.Paragraph.bFromDocument === false)
-		{
-			return;
-		}
-	}
+	if (reviewtype_Remove === this.GetReviewType()
+		|| (this.Paragraph
+			&& (this.Paragraph.m_oPRSW.IsFastRecalculate() || this.Paragraph.bFromDocument === false)))
+		return;
 
 	for (var nCurPos = 0, nCount = this.Content.length; nCurPos < nCount; ++nCurPos)
 	{
@@ -12735,6 +12734,9 @@ ParaRun.prototype.CheckRunContent = function(fCheck)
 };
 ParaRun.prototype.ProcessComplexFields = function(oComplexFields)
 {
+	if (reviewtype_Remove === this.GetReviewType())
+		return;
+
 	for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
 	{
 		var oItem     = this.private_CheckInstrText(this.Content[nPos]);
