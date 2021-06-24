@@ -1899,7 +1899,7 @@ CTableCell.prototype =
         var TablePr = oTable.Get_CompiledPr(false).TablePr;
         if (tbllayout_AutoFit === TablePr.TableLayout)
         {
-            if (oTable.Parent.Pages.length > 0)
+            if (oTable.Parent && oTable.Parent.Pages.length > 0)
             {
                 // Если изменение внутри ячейки влечет за собой изменение сетки таблицы, тогда
                 // пересчитывать таблицу надо с самого начала.

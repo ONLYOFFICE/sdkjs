@@ -2207,7 +2207,10 @@ CTable.prototype.Set_Props = function(Props)
 };
 CTable.prototype.Get_Styles = function(Lvl)
 {
-	return this.Parent.Get_Styles(Lvl);
+	if (this.Parent)
+		return this.Parent.Get_Styles(Lvl);
+
+	return null;
 };
 CTable.prototype.Get_TextBackGroundColor = function()
 {
@@ -2221,7 +2224,10 @@ CTable.prototype.Get_TextBackGroundColor = function()
 };
 CTable.prototype.Get_Numbering = function()
 {
-	return this.Parent.Get_Numbering();
+	if (this.Parent)
+		return this.Parent.Get_Numbering();
+
+	return null;
 };
 CTable.prototype.Get_PageBounds = function(CurPage)
 {
@@ -8195,7 +8201,7 @@ CTable.prototype.Get_CompiledPr = function(bCopy)
 {
 	if (true === this.CompiledPr.NeedRecalc)
 	{
-		if (true === AscCommon.g_oIdCounter.m_bLoad && true === AscCommon.g_oIdCounter.m_bRead)
+		if ((true === AscCommon.g_oIdCounter.m_bLoad && true === AscCommon.g_oIdCounter.m_bRead) || !this.Parent)
 		{
 			this.CompiledPr.Pr         = {
 				TextPr : g_oDocumentDefaultTextPr,
