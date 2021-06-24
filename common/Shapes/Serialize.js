@@ -12060,9 +12060,11 @@ CCore.prototype.Refresh_RecalcData2 = function(){
                         var oBinary_DocumentTableReader = new Binary_DocumentTableReader(shape.textBoxContent, oThis.oReadResult, oThis.openParams, oThis.stream, false, oThis.oComments);
                         var nDocLength = oThis.stream.GetULongLE();
                         var content_arr = [];
+                        var oCurParaDrawing = this.ParaDrawing;
                         oThis.bcr.Read1(nDocLength, function(t,l){
                             return oBinary_DocumentTableReader.ReadDocumentContent(t,l, content_arr);
                         });
+                        this.ParaDrawing = oCurParaDrawing;
                         for(var i = 0, length = content_arr.length; i < length; ++i){
                             if(i == length - 1)
                                 shape.textBoxContent.Internal_Content_Add(i, content_arr[i], true);
