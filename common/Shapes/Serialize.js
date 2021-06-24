@@ -9564,6 +9564,9 @@ function CPres()
                         if (shape.textBoxContent.Content.length == 0)
                             shape.textBoxContent.Internal_Content_Add(0, _old_cont);
 
+                        // Ole-object multiple graph traversal causes ParaDrawing not to be destroyed and next time it is set to Parent resulting in an error in the computation
+                        this.ParaDrawing = null
+
                         break;
                     }
                     case 5:
