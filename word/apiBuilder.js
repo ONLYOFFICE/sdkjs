@@ -12838,6 +12838,12 @@
 			oShd.Value = Asc.c_oAscShdClear;
 
 		oShd.Color.Set(r, g, b, isAuto);
+		oShd.Fill = {
+			r: r,
+			g: g,
+			b: b,
+			Auto: isAuto
+		}
 		return oShd;
 	}
 
