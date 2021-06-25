@@ -12834,7 +12834,7 @@
 		color.r    = r;
 		color.g    = g;
 		color.b    = b;
-		color.Auto = false;
+		color.Auto = isAuto;
 		
 		var oShd = new CDocumentShd();
 
