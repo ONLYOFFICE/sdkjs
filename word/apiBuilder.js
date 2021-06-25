@@ -218,7 +218,7 @@
 	 * Each Range object is determined by the position of the start and end characters
 	 * @constructor
 	 */
-	function ApiConvert(oConfig)
+	function CMarkdownConverter(oConfig)
 	{
 		this.HtmlTags =
 		{
@@ -268,9 +268,9 @@
 		this.currNumberingLvl   = -1;
 		this.openedListsHtml    = [];
 	};
-	ApiConvert.prototype.constructor = ApiConvert;
+	CMarkdownConverter.prototype.constructor = CMarkdownConverter;
 
-	ApiConvert.prototype.WrapInSymbol = function(sText, sSyblols, sWrapType)
+	CMarkdownConverter.prototype.WrapInSymbol = function(sText, sSyblols, sWrapType)
 	{
 		switch (sWrapType)
 		{
@@ -283,7 +283,7 @@
 				return sSyblols + sText + sSyblols;
 		}
 	};
-	ApiConvert.prototype.WrapInTag = function(sText, sHtmlTag, sWrapType)
+	CMarkdownConverter.prototype.WrapInTag = function(sText, sHtmlTag, sWrapType)
 	{
 		switch (sWrapType)
 		{
@@ -296,7 +296,7 @@
 				return sHtmlTag + sText + sHtmlTag.replace('<', '</');
 		}
 	};
-	ApiConvert.prototype.DoMarkdown = function()
+	CMarkdownConverter.prototype.DoMarkdown = function()
 	{
 		var oApi               = editor;
 		var oDocument          = oApi.GetDocument();
@@ -338,7 +338,7 @@
 
 		return sOutputText;
 	};
-	ApiConvert.prototype.DoHtml = function()
+	CMarkdownConverter.prototype.DoHtml = function()
 	{
 		var oApi               = editor;
 		var oDocument          = oApi.GetDocument();
@@ -376,7 +376,7 @@
 
 		return sOutputText;
 	};
-	ApiConvert.prototype.HandleChildElement = function(oChild, sType)
+	CMarkdownConverter.prototype.HandleChildElement = function(oChild, sType)
 	{
 		var childType = oChild.GetClassType();
 		switch (childType)
@@ -397,7 +397,7 @@
 				return '';
 		}
 	};
-	ApiConvert.prototype.HandleParagraph = function(oPara, sType)
+	CMarkdownConverter.prototype.HandleParagraph = function(oPara, sType)
 	{
 		function GetParaNumberingLvl(oParagraph)
 		{
@@ -417,76 +417,76 @@
 				isBulleted = oDocument.Numbering.GetNum(sNumId).GetLvl().IsBulleted();
 
 			// если markdown, то маркируем список без тегов списка
-			if (oApiConvert.Config.convertType === 'markdown' && !oApiConvert.isTableCellContent)
+			if (oCMarkdownConverter.Config.convertType === 'markdown' && !oCMarkdownConverter.isTableCellContent)
 			{
 				// маркированный/нумерованный получают соответсвующие символы для markdown.
 				if (sNumId && isBulleted)
-					sOutputText = oApiConvert.WrapInSymbol(sOutputText, '- ', 'open');
+					sOutputText = oCMarkdownConverter.WrapInSymbol(sOutputText, '- ', 'open');
 				else
-					sOutputText = oApiConvert.WrapInSymbol(sOutputText, String(oPara.Paragraph.GetNumberingCalculatedValue()) + '. ', 'open');
+					sOutputText = oCMarkdownConverter.WrapInSymbol(sOutputText, String(oPara.Paragraph.GetNumberingCalculatedValue()) + '. ', 'open');
 
-				if (!oApiConvert.isTableCellContent)
+				if (!oCMarkdownConverter.isTableCellContent)
 				{
 					// отступы для уровней нумерации
 					for (var nLvl = 0; nLvl < oNumPr.Lvl; nLvl++)
-						sOutputText = oApiConvert.WrapInSymbol(sOutputText, '   ', 'open');
+						sOutputText = oCMarkdownConverter.WrapInSymbol(sOutputText, '   ', 'open');
 				}
 			}
-			else if (oApiConvert.Config.convertType === 'html' || oApiConvert.isTableCellContent)
+			else if (oCMarkdownConverter.Config.convertType === 'html' || oCMarkdownConverter.isTableCellContent)
 			{
-				// если имеем новый уровень маркерованного/нумерованного списка выше текущего, помечаем это в oApiConvert.currNumberingLvl
+				// если имеем новый уровень маркерованного/нумерованного списка выше текущего, помечаем это в oCMarkdownConverter.currNumberingLvl
 				// и открываем новый список для нового уровня
-				if (oApiConvert.currNumberingLvl < oNumPr.Lvl)
+				if (oCMarkdownConverter.currNumberingLvl < oNumPr.Lvl)
 				{
-					oApiConvert.currNumberingLvl = oNumPr.Lvl;
+					oCMarkdownConverter.currNumberingLvl = oNumPr.Lvl;
 
 					// маркированный/нумерованный получают соответсвующие теги для html.
 					if (isBulleted)
 					{
-						sOutputText = oApiConvert.WrapInTag(sOutputText, oApiConvert.HtmlTags.Numberring.Item, 'wholly');
-						sOutputText = oApiConvert.WrapInTag(sOutputText, oApiConvert.HtmlTags.Numberring.Bulleted + '\n', 'open');
+						sOutputText = oCMarkdownConverter.WrapInTag(sOutputText, oCMarkdownConverter.HtmlTags.Numberring.Item, 'wholly');
+						sOutputText = oCMarkdownConverter.WrapInTag(sOutputText, oCMarkdownConverter.HtmlTags.Numberring.Bulleted + '\n', 'open');
 
 						// запоминаем открытые списки
-						oApiConvert.openedListsHtml.push(oApiConvert.HtmlTags.Numberring.Bulleted);
+						oCMarkdownConverter.openedListsHtml.push(oCMarkdownConverter.HtmlTags.Numberring.Bulleted);
 					}
 					else
 					{
-						sOutputText = oApiConvert.WrapInTag(sOutputText, oApiConvert.HtmlTags.Numberring.Item, 'wholly');
-						sOutputText = oApiConvert.WrapInTag(sOutputText, oApiConvert.HtmlTags.Numberring.Numbered + '\n', 'open');
+						sOutputText = oCMarkdownConverter.WrapInTag(sOutputText, oCMarkdownConverter.HtmlTags.Numberring.Item, 'wholly');
+						sOutputText = oCMarkdownConverter.WrapInTag(sOutputText, oCMarkdownConverter.HtmlTags.Numberring.Numbered + '\n', 'open');
 
 						// запоминаем открытые списки
-						oApiConvert.openedListsHtml.push(oApiConvert.HtmlTags.Numberring.Numbered);
+						oCMarkdownConverter.openedListsHtml.push(oCMarkdownConverter.HtmlTags.Numberring.Numbered);
 					}
 				}
-				else if (oApiConvert.currNumberingLvl >= oNumPr.Lvl)
+				else if (oCMarkdownConverter.currNumberingLvl >= oNumPr.Lvl)
 				{
-					oApiConvert.currNumberingLvl = oNumPr.Lvl;
+					oCMarkdownConverter.currNumberingLvl = oNumPr.Lvl;
 
-					sOutputText = oApiConvert.WrapInTag(sOutputText, oApiConvert.HtmlTags.Numberring.Item, 'wholly');
+					sOutputText = oCMarkdownConverter.WrapInTag(sOutputText, oCMarkdownConverter.HtmlTags.Numberring.Item, 'wholly');
 				}
 
 				// если следующий параграф не содержит нумерованный/маркированный список или уровень списка меньше текущего,
 				// то закрываем текущий список
 				var nNextParaNumberingLvl = GetParaNumberingLvl(oPara.Paragraph.GetNextParagraph());
-				if (nNextParaNumberingLvl < oApiConvert.currNumberingLvl)
+				if (nNextParaNumberingLvl < oCMarkdownConverter.currNumberingLvl)
 				{
 					if (isBulleted)
-						sOutputText = oApiConvert.WrapInTag(sOutputText, '\n' + oApiConvert.HtmlTags.Numberring.Bulleted, 'close');
+						sOutputText = oCMarkdownConverter.WrapInTag(sOutputText, '\n' + oCMarkdownConverter.HtmlTags.Numberring.Bulleted, 'close');
 					else
-						sOutputText = oApiConvert.WrapInTag(sOutputText, '\n' + oApiConvert.HtmlTags.Numberring.Numbered, 'close');
-					oApiConvert.openedListsHtml.shift();
+						sOutputText = oCMarkdownConverter.WrapInTag(sOutputText, '\n' + oCMarkdownConverter.HtmlTags.Numberring.Numbered, 'close');
+					oCMarkdownConverter.openedListsHtml.shift();
 
 					// == -1 означает, что следующего параграфа не существует или нет нумерации,
 					// значит нужно закрыть все открытые списки
 					if (nNextParaNumberingLvl == -1)
 					{
-						for (var nList = 0, nCount = oApiConvert.openedListsHtml.length; nList < nCount; nList++)
+						for (var nList = 0, nCount = oCMarkdownConverter.openedListsHtml.length; nList < nCount; nList++)
 						{
-							sOutputText = oApiConvert.WrapInTag(sOutputText, '\n' + oApiConvert.openedListsHtml.shift(), 'close');
+							sOutputText = oCMarkdownConverter.WrapInTag(sOutputText, '\n' + oCMarkdownConverter.openedListsHtml.shift(), 'close');
 						}
 					}
-					oApiConvert.isNumbering      = false;
-					oApiConvert.currNumberingLvl = -1;
+					oCMarkdownConverter.isNumbering      = false;
+					oCMarkdownConverter.currNumberingLvl = -1;
 				}
 			}
 			return sOutputText;
@@ -515,21 +515,21 @@
 			if (nHeadingLvl !== -1)
 			{
 				// понижаем уровень заголовка, если указано в конфиге (h1 -> h2)
-				if (oApiConvert.Config.demoteHeadings && nHeadingLvl === 0)
+				if (oCMarkdownConverter.Config.demoteHeadings && nHeadingLvl === 0)
 					nHeadingLvl = 1;
 
-				if (oApiConvert.Config.convertType === 'html' || oApiConvert.isTableCellContent || oApiConvert.Config.htmlHeadings)
-					return oApiConvert.WrapInTag(sOutputText, oApiConvert.HtmlTags.Headings['h' + String(nHeadingLvl + 1)],'wholly');
-				else if (oApiConvert.Config.convertType === 'markdown')
-					return oApiConvert.WrapInSymbol(sOutputText, oApiConvert.MdSymbols.Headings['h' + String(nHeadingLvl + 1)], 'open');
+				if (oCMarkdownConverter.Config.convertType === 'html' || oCMarkdownConverter.isTableCellContent || oCMarkdownConverter.Config.htmlHeadings)
+					return oCMarkdownConverter.WrapInTag(sOutputText, oCMarkdownConverter.HtmlTags.Headings['h' + String(nHeadingLvl + 1)],'wholly');
+				else if (oCMarkdownConverter.Config.convertType === 'markdown')
+					return oCMarkdownConverter.WrapInSymbol(sOutputText, oCMarkdownConverter.MdSymbols.Headings['h' + String(nHeadingLvl + 1)], 'open');
 			}
 		};
 		function SetQuote()
 		{
-			if (oApiConvert.Config.convertType === 'html' || oApiConvert.isTableCellContent)
-				return oApiConvert.WrapInTag(sOutputText, oApiConvert.HtmlTags.Quote, 'wholly');
-			else if (oApiConvert.Config.convertType === 'markdown')
-				return oApiConvert.WrapInSymbol(sOutputText, oApiConvert.MdSymbols.Quote, 'open');
+			if (oCMarkdownConverter.Config.convertType === 'html' || oCMarkdownConverter.isTableCellContent)
+				return oCMarkdownConverter.WrapInTag(sOutputText, oCMarkdownConverter.HtmlTags.Quote, 'wholly');
+			else if (oCMarkdownConverter.Config.convertType === 'markdown')
+				return oCMarkdownConverter.WrapInSymbol(sOutputText, oCMarkdownConverter.MdSymbols.Quote, 'open');
 		};
 		function IsHeading(oParagraph)
 		{
@@ -597,19 +597,19 @@
 
 		function SetCodeBlock(sOutputText)
 		{
-			if (oApiConvert.Config.convertType === 'markdown')
+			if (oCMarkdownConverter.Config.convertType === 'markdown')
 			{
-				sOutputText = oApiConvert.WrapInSymbol(sOutputText, '\n' + oApiConvert.MdSymbols.CodeLine + '\n', 'open');
+				sOutputText = oCMarkdownConverter.WrapInSymbol(sOutputText, '\n' + oCMarkdownConverter.MdSymbols.CodeLine + '\n', 'open');
 				// если следующий параграф не с кодом или имеется нумерация или параграф стилизован, то закрываем блок кода
 				if (!IsCodeLine(oPara.GetNext()) || GetParaNumberingLvl(oPara.GetNext().Paragraph) !== -1 || oPara.GetNext().Paragraph.Pr.PStyle != undefined)
-					sOutputText = oApiConvert.WrapInSymbol(sOutputText, '\n' + oApiConvert.MdSymbols.CodeLine + '\n', 'close');
+					sOutputText = oCMarkdownConverter.WrapInSymbol(sOutputText, '\n' + oCMarkdownConverter.MdSymbols.CodeLine + '\n', 'close');
 			}
-			else if (oApiConvert.Config.convertType === 'html')
+			else if (oCMarkdownConverter.Config.convertType === 'html')
 			{
-				sOutputText = oApiConvert.WrapInTag(sOutputText, '\n' + oApiConvert.HtmlTags.CodeLine.replace('>', ' class="prettyprint">') + '\n', 'open');
+				sOutputText = oCMarkdownConverter.WrapInTag(sOutputText, '\n' + oCMarkdownConverter.HtmlTags.CodeLine.replace('>', ' class="prettyprint">') + '\n', 'open');
 				// если следующий параграф не с кодом или имеется нумерация или параграф стилизован, то закрываем блок кода
 				if (!IsCodeLine(oPara.GetNext()) || GetParaNumberingLvl(oPara.GetNext().Paragraph) !== -1 || oPara.GetNext().Paragraph.Pr.PStyle != undefined)
-					sOutputText = oApiConvert.WrapInTag(sOutputText, '\n' + oApiConvert.HtmlTags.CodeLine + '\n', 'close');
+					sOutputText = oCMarkdownConverter.WrapInTag(sOutputText, '\n' + oCMarkdownConverter.HtmlTags.CodeLine + '\n', 'close');
 			}
 
 			return sOutputText;
@@ -623,7 +623,7 @@
 		var oDocument  = private_GetLogicDocument();
 		var sNumId     = oPara.Paragraph.Numbering.Internal.FinalNumId;
 		var oNumPr     = oPara.Paragraph.GetNumPr();
-		var oApiConvert = this;
+		var oCMarkdownConverter = this;
 
 
 		// если не будет нумерации, тогда проверим на заголовки (одновременно и то и другое в конвертации не применяется)
@@ -691,7 +691,7 @@
 			sOutputText = this.WrapInTag(sOutputText, this.HtmlTags.Paragraph, 'wholly');
 		return sOutputText + '\n';
 	};
-	ApiConvert.prototype.HandleHyperlink = function(oHyperlink, sType)
+	CMarkdownConverter.prototype.HandleHyperlink = function(oHyperlink, sType)
 	{
 		var sOutputText = '';
 		if (sType === 'html')
@@ -711,7 +711,7 @@
 
 		return sOutputText;
 	};
-	ApiConvert.prototype.HandleRun = function(oRun, sType)
+	CMarkdownConverter.prototype.HandleRun = function(oRun, sType)
 	{
 		function IsHaveCodeRun(oRun)
 		{
@@ -762,9 +762,9 @@
 						if (Item.IsPicture())
 						{
 							if (sType === 'markdown')
-								sText += oApiConvert.Config.base64img ? '![](' + Item.GraphicObj.getBase64Img() + ')' : '![](' + Item.GraphicObj.getImageUrl() + ')';
+								sText += oCMarkdownConverter.Config.base64img ? '![](' + Item.GraphicObj.getBase64Img() + ')' : '![](' + Item.GraphicObj.getImageUrl() + ')';
 							else if (sType === 'html')
-								sText += oApiConvert.Config.base64img ? '<img src="' + Item.GraphicObj.getBase64Img() + '">' : '<img src="' + Item.GraphicObj.getImageUrl() + '">';
+								sText += oCMarkdownConverter.Config.base64img ? '<img src="' + Item.GraphicObj.getBase64Img() + '">' : '<img src="' + Item.GraphicObj.getImageUrl() + '">';
 						}
 					}
 					case para_PageNum:
@@ -791,7 +791,7 @@
 			return sText;
 		};
 
-		var oApiConvert    = this;
+		var oCMarkdownConverter    = this;
 		var arrAllDrawings = oRun.Run.GetAllDrawingObjects();
 		var hasPicture     = false;
 		var sOutputText    = oRun.Run.GetText();
@@ -915,7 +915,7 @@
 
 		return sOutputText;
 	};
-	ApiConvert.prototype.HandleTable = function(oTable)
+	CMarkdownConverter.prototype.HandleTable = function(oTable)
 	{
 		var sOutputText = '<table>\n';
 
@@ -927,7 +927,7 @@
 		sOutputText += '</table>\n';
 		return sOutputText;
 	};
-	ApiConvert.prototype.HandleTableRow = function(oTableRow)
+	CMarkdownConverter.prototype.HandleTableRow = function(oTableRow)
 	{
 		var sOutputText = '  <tr>\n';
 
@@ -939,7 +939,7 @@
 		sOutputText += '  </tr>\n';
 		return sOutputText;
 	};
-	ApiConvert.prototype.HandleTableCell = function(oTableCell)
+	CMarkdownConverter.prototype.HandleTableCell = function(oTableCell)
 	{
 		var sOutputText = '   <td>\n';
 		var apiCellContent = oTableCell.GetContent();
@@ -4831,6 +4831,54 @@
 		}
 
 		return arrApiRanges;
+	};
+	/**
+	 * Convert document to markdown.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @param {bool} [bHtmlHeadings=false] - If you have used multiple Heading 1 headings in your Doc, set this param true to demote all heading levels to conform with the following standard: single H1 as title, H2 as top-level heading in the text body.
+	 * @param {bool} [bBase64img=false] - set this param true if you want images to be created in base64 format.
+	 * @param {bool} [bDemoteHeadings=false] - Not all Markdown renderers handle Markdown-style IDs. If that is the case for your target platform, set this param true to generate HTML headings and IDs.
+	 * @param {bool} [bRenderHTMLTags=false] - By default, angle brackets (<) will be replaced by the &lt; entity. If you really want to embed HTML tags in your Markdown, set this param true to preserve them. 
+	 * Or, if you just want to use an occasional HTML tag, you can escape the opening angle bracket like this: \<tag>text\</tag>.
+	 * @returns {string}
+	 */
+	ApiDocument.prototype.ToMarkdown = function(bHtmlHeadings, bBase64img, bDemoteHeadings, bRenderHTMLTags) 
+	{
+		var oConfig = 
+		{
+			convertType : "markdown",
+			htmlHeadings : bHtmlHeadings || false,
+			base64img : bBase64img || false,
+			demoteHeadings : bDemoteHeadings || false,
+			renderHTMLTags : bRenderHTMLTags || false
+		};
+		var oMarkdown = new CMarkdownConverter(oConfig);
+		return oMarkdown.DoMarkdown();
+	};
+	/**
+	 * Convert document to html.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @param {bool} [bHtmlHeadings=false] - If you have used multiple Heading 1 headings in your Doc, set this param true to demote all heading levels to conform with the following standard: single H1 as title, H2 as top-level heading in the text body.
+	 * @param {bool} [bBase64img=false] - set this param true if you want images to be created in base64 format.
+	 * @param {bool} [bDemoteHeadings=false] - Not all Markdown renderers handle Markdown-style IDs. If that is the case for your target platform, set this param true to generate HTML headings and IDs.
+	 * @param {bool} [bRenderHTMLTags=false] - By default, angle brackets (<) will be replaced by the &lt; entity. If you really want to embed HTML tags in your Markdown, set this param true to preserve them. 
+	 * Or, if you just want to use an occasional HTML tag, you can escape the opening angle bracket like this: \<tag>text\</tag>.
+	 * @returns {string}
+	 */
+	ApiDocument.prototype.ToHtml = function(bHtmlHeadings, bBase64img, bDemoteHeadings, bRenderHTMLTags) 
+	{
+		var oConfig = 
+		{
+			convertType : "html",
+			htmlHeadings : bHtmlHeadings || false,
+			base64img : bBase64img || false,
+			demoteHeadings : bDemoteHeadings || false,
+			renderHTMLTags : bRenderHTMLTags || false
+		};
+		var oMarkdown = new CMarkdownConverter(oConfig);
+		return oMarkdown.DoHtml();
 	};
 
 	/**
@@ -12895,7 +12943,7 @@
 		return true;
 	};
 	/**
-	 * Convert docuement to markdown or html text.
+	 * Convert document to markdown or html text.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @param {"markdown" | "html"} [sConvertType="markdown"] - type of converting.
@@ -12908,19 +12956,11 @@
 	 */
 	Api.prototype.ConvertDocument = function(sConvertType, bHtmlHeadings, bBase64img, bDemoteHeadings, bRenderHTMLTags) 
 	{
-		var oConfig = 
-		{
-			convertType : sConvertType || "markdown",
-			htmlHeadings : bHtmlHeadings || false,
-			base64img : bBase64img || false,
-			demoteHeadings : bDemoteHeadings || false,
-			renderHTMLTags : bRenderHTMLTags || false
-		};
-		var oMarkdown = new ApiConvert(oConfig);
-		if (sConvertType === "markdown")
-			return oMarkdown.DoMarkdown();
+		var oDocument = this.GetDocument();
+		if (sConvertType === "html")
+			return oDocument.ToHtml(bHtmlHeadings, bBase64img, bDemoteHeadings, bRenderHTMLTags);
 		else
-			return oMarkdown.DoHtml();
+			return oDocument.ToMarkdown(bHtmlHeadings, bBase64img, bDemoteHeadings, bRenderHTMLTags);
 	};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -12958,8 +12998,6 @@
 	Api.prototype["MailMerge"]                       = Api.prototype.MailMerge;
 	Api.prototype["ReplaceTextSmart"]				 = Api.prototype.ReplaceTextSmart;
 	Api.prototype["CoAuthoringChatSendMessage"]		 = Api.prototype.CoAuthoringChatSendMessage;
-	Api.prototype["DocToMarkdown"]		             = Api.prototype.DocToMarkdown;
-	Api.prototype["DocToHtml"]		                 = Api.prototype.DocToHtml;
 	
 	ApiUnsupported.prototype["GetClassType"]         = ApiUnsupported.prototype.GetClassType;
 
@@ -13035,6 +13073,8 @@
 	ApiDocument.prototype["GetAllImages"]            = ApiDocument.prototype.GetAllImages;
 	ApiDocument.prototype["GetAllCharts"]            = ApiDocument.prototype.GetAllCharts;
 	ApiDocument.prototype["Search"]                  = ApiDocument.prototype.Search;
+	ApiDocument.prototype["ToMarkdown"]              = ApiDocument.prototype.ToMarkdown;
+	ApiDocument.prototype["ToHtml"]                  = ApiDocument.prototype.ToHtml;
 
 	ApiParagraph.prototype["GetClassType"]           = ApiParagraph.prototype.GetClassType;
 	ApiParagraph.prototype["AddText"]                = ApiParagraph.prototype.AddText;
