@@ -665,6 +665,14 @@ CContentControlPr.prototype.SetFormPr = function(oPr)
 {
 	this.FormPr = oPr;
 };
+CContentControlPr.prototype.SetPictureFormPr = function(oPr)
+{
+	this.PictureFormPr = oPr;
+};
+CContentControlPr.prototype.GetPictureFormPr = function()
+{
+	return this.PictureFormPr;
+};
 
 /**
  * Класс с глобальными настройками для всех контейнеров
@@ -1513,13 +1521,13 @@ function CSdtPictureFormPr()
 }
 CSdtPictureFormPr.prototype.Copy = function()
 {
-	var oFormPr = new CStdPictureFormPr();
+	var oFormPr = new CSdtPictureFormPr();
 
-	oFormPr.ScaleFlag      = this.ScaleFlag;
-	oFormPr.Proportions    = this.Proportions;
-	oFormPr.Borders = this.Borders;
-	oFormPr.ShiftX = this.ShiftX;
-	oFormPr.ShiftY = this.ShiftY;
+	oFormPr.ScaleFlag   = this.ScaleFlag;
+	oFormPr.Proportions = this.Proportions;
+	oFormPr.Borders     = this.Borders;
+	oFormPr.ShiftX      = this.ShiftX;
+	oFormPr.ShiftY      = this.ShiftY;
 
 	return oFormPr;
 };
@@ -1630,6 +1638,8 @@ CContentControlPr.prototype['get_PlaceholderText']    = CContentControlPr.protot
 CContentControlPr.prototype['put_PlaceholderText']    = CContentControlPr.prototype.SetPlaceholderText;
 CContentControlPr.prototype['get_FormPr']             = CContentControlPr.prototype.GetFormPr;
 CContentControlPr.prototype['put_FormPr']             = CContentControlPr.prototype.SetFormPr;
+CContentControlPr.prototype['get_PictureFormPr']      = CContentControlPr.prototype.GetPictureFormPr;
+CContentControlPr.prototype['put_PictureFormPr']      = CContentControlPr.prototype.SetPictureFormPr;
 
 window['AscCommon'].CSdtCheckBoxPr    = CSdtCheckBoxPr;
 window['AscCommon']['CSdtCheckBoxPr'] = CSdtCheckBoxPr;

@@ -207,7 +207,7 @@ CInlineLevelSdt.prototype.private_CopyPrTo = function(oContentControl)
 		oContentControl.SetTextFormPr(this.Pr.TextForm);
 
 	if (undefined !== this.Pr.PictureFormPr)
-		oContentContro.SetPictureFormPr(this.Pr.PictureFormPr);
+		oContentControl.SetPictureFormPr(this.Pr.PictureFormPr);
 };
 CInlineLevelSdt.prototype.GetSelectedContent = function(oSelectedContent)
 {
@@ -2745,7 +2745,7 @@ CInlineLevelSdt.prototype.private_UpdatePictureFormLayout = function(nW, nH)
 		if (!oLogicDocument || !oLogicDocument.GetDrawingObjects() || !oLogicDocument.GetApi())
 			return;
 
-		var oDrawingProps = oLogicDocument.GetDrawingObjects().getDrawingPropsFromArray([oDrawing]);
+		var oDrawingProps = oLogicDocument.GetDrawingObjects().getDrawingPropsFromArray([oDrawing.GraphicObj]);
 		if (!oDrawingProps || !oDrawingProps.imageProps)
 			return;
 
