@@ -12830,14 +12830,34 @@
 
 	function private_GetShd(sType, r, g, b, isAuto)
 	{
+		var color = new Asc.asc_CColor();
+		color.r    = r;
+		color.g    = g;
+		color.b    = b;
+		color.Auto = false;
+		
 		var oShd = new CDocumentShd();
 
 		if ("nil" === sType)
 			oShd.Value = Asc.c_oAscShdNil;
 		else if ("clear" === sType)
-			oShd.Value = Asc.c_oAscShdClear;
+		{
+			var Unifill        = new AscFormat.CUniFill();
+			Unifill.fill       = new AscFormat.CSolidFill();
+			Unifill.fill.color = AscFormat.CorrectUniColor(color, Unifill.fill.color, 1);
+			var _Shd = {
+				Value   : Asc.c_oAscShdClear,
+				Color   : {
+					r : color.asc_getR(),
+					g : color.asc_getG(),
+					b : color.asc_getB()
+				},
+				Unifill : Unifill
+			};
 
-		oShd.Color.Set(r, g, b, isAuto);
+			oShd.Set_FromObject(_Shd);
+		}
+			
 		return oShd;
 	}
 
