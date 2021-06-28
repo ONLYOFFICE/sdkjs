@@ -2725,6 +2725,11 @@ CInlineLevelSdt.prototype.ProcessAutoFitContent = function()
 	if (Math.abs(nNewFontSize - nFontSize) > 0.001)
 		oRun.Set_FontSize(nNewFontSize);
 };
+CInlineLevelSdt.prototype.UpdatePictureFormLayout = function()
+{
+	var oBounds = this.GetAnchorFormBounds();
+	this.private_UpdatePictureFormLayout(oBounds.W, oBounds.H);
+};
 CInlineLevelSdt.prototype.private_UpdatePictureFormLayout = function(nW, nH)
 {
 	var arrDrawings = this.GetAllDrawingObjects();
@@ -2764,22 +2769,54 @@ CInlineLevelSdt.prototype.private_UpdatePictureFormLayout = function(nW, nH)
 			return;
 
 		var nScaleFlag = oPictureFormPr.GetScaleFlag();
+		
+		var nDstW, nDstH, isCrop = false;
+
+		// TODO: RespectBorders
 
 		if (Asc.c_oAscPictureFormScaleFlag.Never === nScaleFlag
 			|| (Asc.c_oAscPictureFormScaleFlag.Smaller === nScaleFlag && (nOriginH > nH || nOriginW > nW))
-			|| (Asc.c_oAscPictureFormScaleFlag.Bigger === nScaleFlag && (nH > nOriginH || nW > nOriginW)))
-			return;
-
-		// TODO: RespectBorders
-		if (oPictureFormPr.IsConstantProportions())
+			|| (Asc.c_oAscPictureFormScaleFlag.Bigger === nScaleFlag && nH > nOriginH && nW > nOriginW))
 		{
+			nDstW  = nOriginW;
+			nDstH  = nOriginH;
+			isCrop = true;
+		}
+		else if (oPictureFormPr.IsConstantProportions())
+		{
+			var nCoef = Math.min(nW / nOriginW, nH / nOriginH);
+			nDstW     = nOriginW * nCoef;
+			nDstH     = nOriginH * nCoef;
+			isCrop    = true;
+		}
+		
+		if (isCrop)
+		{
+			var nSpaceX = nW - nDstW;
+			var nSpaceY = nH - nDstH;
 
+			var nPadL = oPictureFormPr.GetShiftX() / 1000 * nSpaceX;
+			var nPadT = oPictureFormPr.GetShiftY() / 1000 * nSpaceY;
+
+			var oSrcRect = new AscFormat.CSrcRect();
+			oSrcRect.setLTRB(
+				100 * -nPadL / nDstW,
+				100 * -nPadT / nDstH,
+				100 * (1 + (nSpaceX - nPadL) / nDstW),
+				100 * (1 + (nSpaceY - nPadT) / nDstH)
+			);
+			oShape.setSrcRect(oSrcRect);
 		}
 		else
 		{
-			oShape.spPr.xfrm.setExtX(nW);
-			oShape.spPr.xfrm.setExtY(nH);
+			var oSrcRect = new AscFormat.CSrcRect();
+			oSrcRect.setLTRB(0, 0, 100, 100);
+			oShape.setSrcRect(oSrcRect)
 		}
+
+
+		oShape.spPr.xfrm.setExtX(nW);
+		oShape.spPr.xfrm.setExtY(nH);
 	}
 
 	oDrawing.SetSizeRelH({RelativeFrom : AscCommon.c_oAscSizeRelFromH.sizerelfromhPage, Percent : 0});

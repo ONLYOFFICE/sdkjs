@@ -518,7 +518,10 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 		oContentControl.SetFormPr(this.FormPr);
 
 	if (undefined !== this.PictureFormPr && oContentControl.IsInlineLevel())
+	{
 		oContentControl.SetPictureFormPr(this.PictureFormPr);
+		oContentControl.UpdatePictureFormLayout();
+	}
 };
 CContentControlPr.prototype.GetId = function()
 {
