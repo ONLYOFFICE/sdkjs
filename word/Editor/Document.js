@@ -3101,6 +3101,9 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 
 	if (this.Action.Additional.FormChange)
 		this.private_FinalizeFormChange();
+
+	if (this.Action.Additional.RadioRequired)
+		this.private_FinalizeRadioRequired();
 	//------------------------------------------------------------------------------------------------------------------
 
 	var isAllPointsEmpty = true;
@@ -3354,8 +3357,21 @@ CDocument.prototype.private_FinalizeFormAutoFit = function()
 	{
 		this.Action.Additional.FormAutoFit[nIndex].ProcessAutoFitContent();
 	}
+};
+CDocument.prototype.private_FinalizeRadioRequired = function()
+{
+	for (var sGroupKey in this.Action.Additional.RadioRequired)
+	{
+		var isRequired = this.Action.Additional.RadioRequired[sGroupKey];
 
-
+		var arrRadioGroup = this.GetSpecialRadioButtons(sGroupKey);
+		for (var nIndex = 0, nCount = arrRadioGroup.length; nIndex < nCount; ++nIndex)
+		{
+			var oRadioButton = arrRadioGroup[nIndex];
+			if (oRadioButton.IsFormRequired() !== isRequired)
+				oRadioButton.SetFormRequired(isRequired);
+		}
+	}
 };
 /**
  * Данная функция предназначена для отключения пересчета. Это может быть полезно, т.к. редактор всегда запускает
@@ -24564,6 +24580,21 @@ CDocument.prototype.OnChangeForm = function(sKey, oForm, oPr)
 	this.Action.Additional.FormChange[sKey] = {Form : oForm, Pr : oPr};
 };
 /**
+ * Сохраняем изменение, что радиогруппа должна иметь заданный статус Required
+ * @param {string} sGroupKey
+ * @param {boolean} isRequired
+ */
+CDocument.prototype.OnChangeRadioRequired = function(sGroupKey, isRequired)
+{
+	if (!this.Action.Start)
+		return;
+	
+	if (!this.Action.Additional.RadioRequired)
+		this.Action.Additional.RadioRequired = {};
+
+	this.Action.Additional.RadioRequired[sGroupKey] = isRequired;
+};
+/**
  * Очищаем все специальные формы до плейсхолдеров
  */
 CDocument.prototype.ClearAllSpecialForms = function()
@@ -24658,6 +24689,23 @@ CDocument.prototype.GetSpecialFormsByKey = function(sKey)
 	return arrForms;
 };
 /**
+ * Получаем массив всех специальных радио кнопок
+ * @param sGroupKey
+ * @returns {[]}
+ */
+CDocument.prototype.GetSpecialRadioButtons = function(sGroupKey)
+{
+	var arrForms = [];
+	for (var sId in this.SpecialForms)
+	{
+		var oForm = this.SpecialForms[sId];
+		if (oForm.IsRadioButton() && oForm.Is_UseInDocument() && sGroupKey === oForm.GetCheckBoxPr().GetGroupKey())
+			arrForms.push(oForm);
+	}
+
+	return arrForms;
+};
+/**
  * Все ли обязательные поля заполнены
  * @returns {boolean}
  */
@@ -24666,7 +24714,7 @@ CDocument.prototype.IsAllRequiredSpecialFormsFilled = function()
 	for (var sId in this.SpecialForms)
 	{
 		var oForm = this.SpecialForms[sId];
-		if (oForm.IsFormRequired() && !oForm.IsFormFilled())
+		if (oForm.Is_UseInDocument() && oForm.IsFormRequired() && !oForm.IsFormFilled())
 			return false;
 	}
 

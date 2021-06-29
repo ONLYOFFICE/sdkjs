@@ -2406,12 +2406,28 @@ CInlineLevelSdt.prototype.IsFormFilled = function()
 	}
 	else if (this.IsPicture())
 	{
-		// Мы уже не проверили, что тут Placeholder, значит форма заполнена
+		// Мы уже проверили, что тут не Placeholder, значит форма заполнена
 		return true;
 	}
-	else if (this.IsCheckBox())
+	else if (this.IsCheckBox() && !this.IsRadioButton())
 	{
-		return true;
+		return this.GetCheckBoxPr().GetChecked();
+	}
+	else if (this.IsCheckBox() && this.IsRadioButton())
+	{
+		var oLogicDocument = this.GetLogicDocument();
+		if (!oLogicDocument)
+			return false;
+
+		var arrRadioGroup = oLogicDocument.GetSpecialRadioButtons(this.GetCheckBoxPr().GetGroupKey());
+		for (var nIndex = 0, nCount = arrRadioGroup.length; nIndex < nCount; ++nIndex)
+		{
+			var oRadioForm = arrRadioGroup[nIndex];
+			if (oRadioForm.GetCheckBoxPr().GetChecked())
+				return true;
+		}
+
+		return false;
 	}
 
 	return false;

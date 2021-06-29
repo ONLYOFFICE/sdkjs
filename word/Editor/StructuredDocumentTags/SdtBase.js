@@ -262,6 +262,20 @@ CSdtBase.prototype.IsFormRequired = function()
 	return (this.Pr.FormPr ? this.Pr.FormPr.GetRequired() : false);
 };
 /**
+ * Устанавливаем флаг Required
+ * @param {boolean} isRequired
+ */
+CSdtBase.prototype.SetFormRequired = function(isRequired)
+{
+	var oFormPr = this.GetFormPr();
+	if (oFormPr && isRequired !== oFormPr.GetRequired())
+	{
+		var oNewPr = oFormPr.Copy();
+		oNewPr.SetRequired(isRequired);
+		this.SetFormPr(oNewPr);
+	}
+};
+/**
  * Получаем ключ для специальной формы, если он задан
  * @returns {?string}
  */
@@ -436,4 +450,10 @@ CSdtBase.prototype.IsMultiLineForm = function()
 CSdtBase.prototype.IsPictureForm = function()
 {
 	return false;
+};
+/**
+ * Функция обновления картиночной формы
+ */
+CSdtBase.prototype.UpdatePictureFormLayout = function()
+{
 };

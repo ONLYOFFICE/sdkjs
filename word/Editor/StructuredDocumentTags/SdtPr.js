@@ -466,6 +466,15 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 	if (!oContentControl)
 		return;
 
+	if (undefined !== this.FormPr
+		&& oContentControl.IsRadioButton()
+		&& oContentControl.IsFormRequired() !== this.FormPr.GetRequired()
+		&& oContentControl.GetLogicDocument())
+	{
+		oContentControl.GetLogicDocument().OnChangeRadioRequired(oContentControl.GetRadioButtonGroupKey(), this.FormPr.GetRequired());
+	}
+
+
 	if (undefined !== this.Tag)
 		oContentControl.SetTag(this.Tag);
 
