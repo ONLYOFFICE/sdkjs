@@ -5967,6 +5967,9 @@ CDocument.prototype.AddNewParagraph = function(bRecalculate, bForceAdd)
  */
 CDocument.prototype.Extend_ToPos = function(X, Y)
 {
+	if (!this.CanPerformAction())
+		return;
+
     var LastPara  = this.GetLastParagraph();
     var LastPara2 = LastPara;
 
@@ -12328,6 +12331,9 @@ CDocument.prototype.GetWatermarkProps = function()
 
 CDocument.prototype.SetWatermarkProps = function(oProps)
 {
+	if (!this.CanPerformAction())
+		return;
+
     this.StartAction(AscDFH.historydescription_Document_AddWatermark);
     var SectionPageInfo = this.Get_SectionPageNumInfo(this.CurPage);
     var bFirst = SectionPageInfo.bFirst;
@@ -12945,12 +12951,21 @@ CDocument.prototype.IsCursorInHyperlink = function(bCheckEnd)
 //----------------------------------------------------------------------------------------------------------------------
 // Функции для работы с совместным редактирования
 //----------------------------------------------------------------------------------------------------------------------
+/**
+ * Проверяем можно ли выполнять действия
+ *
+ * Данная функция вызывается в основной функции проверки лока совместного редактирования, но есть действия, которые
+ * не требуют проверки лока совместки, в таких случая перед выполнением действия надо вызывать эту проверку
+ * @param [isIgnoreCanEditFlag=false]
+ * @returns {boolean}
+ */
+CDocument.prototype.CanPerformAction = function(isIgnoreCanEditFlag)
+{
+	return !((!this.CanEdit() && true !== isIgnoreCanEditFlag) || (true === this.CollaborativeEditing.Get_GlobalLock()));
+};
 CDocument.prototype.Document_Is_SelectionLocked = function(CheckType, AdditionalData, DontLockInFastMode, isIgnoreCanEditFlag)
 {
-	if (!this.CanEdit() && true !== isIgnoreCanEditFlag)
-		return true;
-
-	if (true === this.CollaborativeEditing.Get_GlobalLock())
+	if (!this.CanPerformAction(isIgnoreCanEditFlag))
 		return true;
 
 	this.CollaborativeEditing.OnStart_CheckLock();
@@ -18054,7 +18069,7 @@ CDocument.prototype.ConvertFootnoteType = function(isCurrent, isFootnotes, isEnd
 
 	if (false === this.Document_Is_SelectionLocked(changestype_None, { Type : changestype_2_ElementsArray_and_Type, Elements : arrParagraphs, CheckType : changestype_Paragraph_Content }, true))
 	{
-		this.StartAction(AscDFH.history);
+		this.StartAction(AscDFH.historydescription_Document_ConvertFootnoteType);
 
 		for (var nIndex = 0, nCount = arrFootnotes.length; nIndex < nCount; ++nIndex)
 		{
@@ -21620,6 +21635,9 @@ CDocument.prototype.RemoveContentControl = function(Id)
 };
 CDocument.prototype.RemoveContentControlWrapper = function(Id)
 {
+	if (!this.CanPerformAction())
+		return;
+
 	var oContentControl = this.TableId.Get_ById(Id);
 	if (!oContentControl)
 		return;
@@ -23594,6 +23612,8 @@ CDocument.prototype.ParseTableFormulaInstrLine = function(sInstrLine)
 
 CDocument.prototype.AddCaption = function(oPr)
 {
+	if (!this.CanPerformAction())
+		return;
 
     this.StartAction(AscDFH.historydescription_Document_AddCaption);
     var NewParagraph;

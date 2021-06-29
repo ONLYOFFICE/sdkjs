@@ -9169,7 +9169,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.asc_SetGlobalContentControlHighlightColor = function(r, g, b)
 	{
 		var oLogicDocument = this.private_GetLogicDocument();
-		if (!oLogicDocument)
+		if (!oLogicDocument || !oLogicDocument.CanPerformAction())
 			return;
 
 		// Если цвет не задан
@@ -9207,7 +9207,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.asc_SetGlobalContentControlShowHighlight = function(isShow, r, g, b)
 	{
 		var oLogicDocument = this.private_GetLogicDocument();
-		if (!oLogicDocument)
+		if (!oLogicDocument || !oLogicDocument.CanPerformAction())
 			return;
 
 		// Лок можно не проверять, таким изменения нормально мержаться
@@ -9704,7 +9704,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.asc_SetSpecialFormsHighlightColor = function(r, g, b)
 	{
 		var oLogicDocument = this.private_GetLogicDocument();
-		if (!oLogicDocument)
+		if (!oLogicDocument || !oLogicDocument.CanPerformAction())
 			return;
 
 		// Лок можно не проверять, такие изменения нормально мержаться
@@ -10973,7 +10973,7 @@ background-repeat: no-repeat;\
 		var frameWindow = window.frames[_iframeId];
 		if (frameWindow)
 		{
-			if (null != frameWindow.document && null != frameWindow.document.body)
+			if (null != frameWindow.document && null != frameWindow.document.body && this.WordControl.m_oLogicDocument.CanPerformAction())
 			{
 				ifr.style.display = "block";
 				this.WordControl.m_oLogicDocument.StartAction();

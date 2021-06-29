@@ -2662,6 +2662,9 @@ CDocumentContent.prototype.AddNewParagraph = function(bForceAdd)
 // Y0 - низ последнего параграфа, YLimit - предел страницы
 CDocumentContent.prototype.Extend_ToPos                       = function(X, Y)
 {
+	if (!this.LogicDocument || !this.LogicDocument.CanPerformAction || !this.LogicDocument.CanPerformAction())
+		return;
+
 	if (this.IsBlockLevelSdtContent())
 	{
 		var oParent = this.Parent.GetParent();
