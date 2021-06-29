@@ -4981,8 +4981,27 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
                     }
                     else
 					{
+						// ColumnStartX и ParaTop считаются по тексту, смотри баг #50253
+						var nPageStartLine = Para.Pages[_CurPage].StartLine;
+						var nParaTop       = Para.Pages[_CurPage].Y + Para.Lines[nPageStartLine].Y - Para.Lines[nPageStartLine].Metrics.Ascent;
+						var nLineTop       = Para.Pages[CurPage].Y + Para.Lines[CurLine].Y - Para.Lines[CurLine].Metrics.Ascent;
+						var _nColumnStartX = ColumnStartX;
+
+						if (Para.Lines[nPageStartLine].Ranges.length > 1)
+						{
+							var arrTempRanges = Para.Lines[nPageStartLine].Ranges;
+							for (var nTempCurRange = 0, nTempRangesCount = arrTempRanges.length; nTempCurRange < nTempRangesCount; ++nTempCurRange)
+							{
+								if (arrTempRanges[nTempCurRange].W > 0.001 || arrTempRanges[nTempCurRange].WEnd > 0.001)
+								{
+									_nColumnStartX = arrTempRanges[nTempCurRange].X;
+									break;
+								}
+							}
+						}
+
 						// Картинка ложится на или под текст, в данном случае пересчет можно спокойно продолжать
-						Item.Update_Position(PRSA.Paragraph, new CParagraphLayout(PRSA.X, PRSA.Y, PageAbs, PRSA.LastW, ColumnStartX, ColumnEndX, X_Left_Margin, X_Right_Margin, Page_Width, Top_Margin, Bottom_Margin, Page_H, PageFields.X, PageFields.Y, Para.Pages[CurPage].Y + Para.Lines[CurLine].Y - Para.Lines[CurLine].Metrics.Ascent, Para.Pages[_CurPage].Y), PageLimits, PageLimitsOrigin, _CurLine);
+						Item.Update_Position(PRSA.Paragraph, new CParagraphLayout(PRSA.X, PRSA.Y, PageAbs, PRSA.LastW, _nColumnStartX, ColumnEndX, X_Left_Margin, X_Right_Margin, Page_Width, Top_Margin, Bottom_Margin, Page_H, PageFields.X, PageFields.Y, nLineTop, nParaTop), PageLimits, PageLimitsOrigin, _CurLine);
 						Item.Reset_SavedPosition();
 					}
                 }
