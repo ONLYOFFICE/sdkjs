@@ -9421,7 +9421,13 @@ background-repeat: no-repeat;\
 					oCC.SetShowingPlcHdr(false);
 
 					if (oCC.IsPictureForm())
+					{
 						oCC.UpdatePictureFormLayout();
+
+						var oShape = oCC.GetFixedFormWrapperShape();
+						if (oShape && oShape.parent instanceof ParaDrawing)
+							oApi.WordControl.m_oLogicDocument.Select_DrawingObject(oShape.parent.GetId());
+					}
 
 					oApi.WordControl.m_oLogicDocument.UpdateTracks();
 					oApi.WordControl.m_oLogicDocument.FinalizeAction();

@@ -2839,6 +2839,18 @@ CInlineLevelSdt.prototype.private_UpdatePictureFormLayout = function(nW, nH)
 	oDrawing.SetSizeRelV({RelativeFrom : AscCommon.c_oAscSizeRelFromV.sizerelfromvPage, Percent : 0});
 	oDrawing.CheckWH();
 };
+CInlineLevelSdt.prototype.GetFixedFormWrapperShape = function()
+{
+	var oParagraph = this.GetParagraph();
+	if (!oParagraph || !oParagraph.Parent)
+		return null;
+
+	var oShape = oParagraph.Parent.Is_DrawingShape(true);
+	if (!oShape || !oShape.isForm())
+		return null;
+
+	return oShape;
+};
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
