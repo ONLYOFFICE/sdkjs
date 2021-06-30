@@ -2650,8 +2650,11 @@ CInlineLevelSdt.prototype.IsAutoFitContent = function()
 
 	return false;
 };
-CInlineLevelSdt.prototype.ProcessAutoFitContent = function()
+CInlineLevelSdt.prototype.ProcessAutoFitContent = function(isFastRecalc)
 {
+	if (this.IsMultiLineForm() && isFastRecalc)
+		return;
+
 	var oParagraph = this.GetParagraph();
 	var oRun       = this.GetElement(0);
 	var oTextPr    = this.Get_CompiledTextPr();
@@ -2734,6 +2737,17 @@ CInlineLevelSdt.prototype.ProcessAutoFitContent = function()
 	else
 	{
 		nNewFontSize = Math.min(nFontSize * oShapeBounds.H / nTextHeight * 0.9, 100, nFontSize * oShapeBounds.W / nMaxWidth);
+
+		if (!isFastRecalc)
+		{
+			oRun.Set_FontSize(nNewFontSize);
+			oParagraph.Recalculate_Page(0);
+			oShape.recalcContent();
+			oShape.recalculateText();
+
+			// Восстанавливаем старое значение, чтобы в историю все правильно записалось
+			oRun.Set_FontSize(nFontSize);
+		}
 	}
 	nNewFontSize = ((nNewFontSize * 100) | 0) / 100;
 	History.TurnOn();

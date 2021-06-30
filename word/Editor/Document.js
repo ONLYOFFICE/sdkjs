@@ -3133,8 +3133,8 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 		{
 			var nRecalcResult = this.private_Recalculate();
 
-			if (!(nRecalcResult & document_recalcresult_FastFlag) && this.Action.Additional.FormAutoFit)
-				this.private_FinalizeFormAutoFit();
+			if (this.Action.Additional.FormAutoFit)
+				this.private_FinalizeFormAutoFit(nRecalcResult & document_recalcresult_FastFlag);
 
 		}
 		else if (undefined !== this.Action.Redraw.Start && undefined !== this.Action.Redraw.End)
@@ -3351,11 +3351,11 @@ CDocument.prototype.private_FinalizeFormChange = function()
 
 	delete this.Action.Additional.FormChangeStart;
 };
-CDocument.prototype.private_FinalizeFormAutoFit = function()
+CDocument.prototype.private_FinalizeFormAutoFit = function(isFastRecalc)
 {
 	for (var nIndex = 0, nCount = this.Action.Additional.FormAutoFit.length; nIndex < nCount; ++nIndex)
 	{
-		this.Action.Additional.FormAutoFit[nIndex].ProcessAutoFitContent();
+		this.Action.Additional.FormAutoFit[nIndex].ProcessAutoFitContent(isFastRecalc);
 	}
 };
 CDocument.prototype.private_FinalizeRadioRequired = function()
