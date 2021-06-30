@@ -610,6 +610,7 @@ MoveInlineObject.prototype =
 					this.drawingObjects.document.StartAction(AscDFH.historydescription_Document_CopyAndMoveInlineObject);
 					var new_para_drawing = new ParaDrawing(this.majorObject.parent.Extent.W, this.majorObject.parent.Extent.H, null, this.drawingObjects.drawingDocument, null, null);
 					var drawing = this.majorObject.copy(undefined);
+					new_para_drawing.SetForm(this.majorObject.parent.IsForm());
 
 					var oRunPr = this.majorObject.parent && this.majorObject.parent.GetRun() ? this.majorObject.parent.GetRun().GetDirectTextPr() : null;
 					if(drawing.copyComments)
