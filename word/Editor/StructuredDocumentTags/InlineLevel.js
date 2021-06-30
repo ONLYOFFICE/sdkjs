@@ -666,7 +666,7 @@ CInlineLevelSdt.prototype.GetBoundingPolygonAnchorPoint = function()
 
 	return {X : nR, Y : (nT + nB) / 2, Page : nPageAbs, Transform : this.Get_ParentTextTransform()};
 };
-CInlineLevelSdt.prototype.IsAnchorForm = function()
+CInlineLevelSdt.prototype.IsFixedForm = function()
 {
 	if (!this.IsForm() || !this.Paragraph)
 		return false;
@@ -674,7 +674,7 @@ CInlineLevelSdt.prototype.IsAnchorForm = function()
 	var oShape = this.Paragraph.Parent ? this.Paragraph.Parent.Is_DrawingShape(true) : null;
 	return (oShape && oShape.isForm());
 };
-CInlineLevelSdt.prototype.GetAnchorFormBounds = function()
+CInlineLevelSdt.prototype.GetFixedFormBounds = function()
 {
 	if (!this.Paragraph)
 		return {X : 0, Y : 0, W : 0, H : 0, Page : 0};
@@ -2279,7 +2279,7 @@ CInlineLevelSdt.prototype.IntersectWithRect = function(X, Y, W, H, nPageAbs)
 {
 	var arrRects = [];
 
-	if (this.IsAnchorForm())
+	if (this.IsFixedForm())
 	{
 		var oShape  = this.Paragraph.Parent.Is_DrawingShape(true);
 		var oBounds = oShape.getFormRelRect();
@@ -2445,7 +2445,7 @@ CInlineLevelSdt.prototype.ConvertFormToAnchor = function()
 		|| !oParentDocContent
 		|| !oLogicDocument
 		|| -1 === nPosInParent
-		|| oParagraph.IsInAnchorForm())
+		|| oParagraph.IsInFixedForm())
 		return null;
 
 	var oShape = new AscFormat.CShape();
@@ -2547,7 +2547,7 @@ CInlineLevelSdt.prototype.ConvertFormToInline = function()
 	var oParagraph   = this.GetParagraph();
 	var oParent      = this.GetParent();
 	var nPosInParent = this.GetPosInParent(oParent);
-	if (!oParagraph || !oParent || !oParagraph.IsInAnchorForm() || -1 === nPosInParent || this.IsPicture())
+	if (!oParagraph || !oParent || !oParagraph.IsInFixedForm() || -1 === nPosInParent || this.IsPicture())
 		return false;
 
 	var oShape = oParagraph.Parent.Is_DrawingShape(true);
@@ -2600,7 +2600,7 @@ CInlineLevelSdt.prototype.IsMultiLineForm = function()
 
 	return true;
 };
-CInlineLevelSdt.prototype.OnChangeAnchoredFormTrack = function(nW, nH)
+CInlineLevelSdt.prototype.OnChangeFixedFormTrack = function(nW, nH)
 {
 	if (!this.IsForm())
 		return;
@@ -2743,7 +2743,7 @@ CInlineLevelSdt.prototype.ProcessAutoFitContent = function()
 };
 CInlineLevelSdt.prototype.UpdatePictureFormLayout = function()
 {
-	var oBounds = this.GetAnchorFormBounds();
+	var oBounds = this.GetFixedFormBounds();
 	this.private_UpdatePictureFormLayout(oBounds.W, oBounds.H);
 };
 CInlineLevelSdt.prototype.private_UpdatePictureFormLayout = function(nW, nH)

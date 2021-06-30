@@ -458,7 +458,7 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 	if (oContentControl.IsForm())
 	{
 		this.FormPr = oContentControl.GetFormPr().Copy();
-		this.FormPr.SetFixed(oContentControl.IsAnchorForm());
+		this.FormPr.SetFixed(oContentControl.IsFixedForm());
 	}
 };
 CContentControlPr.prototype.SetToContentControl = function(oContentControl)

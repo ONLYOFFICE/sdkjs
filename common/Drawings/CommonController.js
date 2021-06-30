@@ -5291,7 +5291,7 @@ DrawingObjectsController.prototype =
 		{
 			var oDocContent = this.getTargetDocContent();
 			var oParagraph  = oDocContent.GetElement(0);
-			if (oParagraph && oParagraph.IsParagraph() && oParagraph.IsInAnchorForm())
+			if (oParagraph && oParagraph.IsParagraph() && oParagraph.IsInFixedForm())
 				bRedraw = oDocContent.CheckFormViewWindow();
 
 			if (bRedraw)
@@ -6536,7 +6536,7 @@ DrawingObjectsController.prototype =
             if(oDocContent) {
                 var oParagraph  = oDocContent.GetElement(0);
                 var oForm;
-                if (oParagraph && oParagraph.IsParagraph() && oParagraph.IsInAnchorForm() && (oForm = oParagraph.GetInnerForm())) {
+                if (oParagraph && oParagraph.IsParagraph() && oParagraph.IsInFixedForm() && (oForm = oParagraph.GetInnerForm())) {
                     oDocContent.ResetShiftView();
                     bRedraw = true;
                 }

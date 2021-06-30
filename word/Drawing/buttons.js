@@ -788,7 +788,7 @@
 		this.isForm = this.base.IsForm();
 		this.formInfo = null;
 		this.state = state;
-		this.isAnchorForm = this.base.IsAnchorForm();
+		this.isFixedForm = this.base.IsFixedForm();
 
 		this.geom = geom;
 		this.rects = undefined;
@@ -844,7 +844,7 @@
 
 	CContentControlTrack.prototype.IsUseMoveRect = function()
 	{
-		if (this.IsNoButtons || this.IsFillFormsMode || this.isAnchorForm)
+		if (this.IsNoButtons || this.IsFillFormsMode || this.isFixedForm)
 			return false;
 		return true;
 	};
@@ -919,7 +919,7 @@
 	// расчет области для переноса
 	CContentControlTrack.prototype.CalculateMoveRect = function(koefX, koefY, isCheckTrack)
 	{
-		if (this.IsNoUseButtons() || this.IsFillFormsMode || this.isAnchorForm)
+		if (this.IsNoUseButtons() || this.IsFillFormsMode || this.isFixedForm)
 		{
 			if (true !== isCheckTrack)
 				return null;
@@ -2796,7 +2796,7 @@
 			this.isUseMoveRect = false;
 		}
 
-		if (object.isAnchorForm)
+		if (object.isFixedForm)
 		{
 			this.isUseMoveRect = false;
 		}

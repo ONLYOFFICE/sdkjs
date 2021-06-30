@@ -1585,7 +1585,7 @@ CDocumentContent.prototype.CheckFormViewWindow = function()
 
 	var oParagraph  = this.GetElement(0);
 	var oPageBounds = this.GetContentBounds(0);
-	var oFormBounds = oForm.GetAnchorFormBounds();
+	var oFormBounds = oForm.GetFixedFormBounds();
 
 	var nDx = 0, nDy = 0, nPad = 0;
 

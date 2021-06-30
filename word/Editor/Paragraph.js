@@ -2214,8 +2214,8 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 							nPrevColorState = 1;
 						}
 
-						if (oInlineSdt.IsAnchorForm())
-							oSdtBounds = oInlineSdt.GetAnchorFormBounds();
+						if (oInlineSdt.IsFixedForm())
+							oSdtBounds = oInlineSdt.GetFixedFormBounds();
 
 					}
 					else if (!isForm && SdtHighlightColor)
@@ -3007,7 +3007,7 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 		Element = aCombForms.Get_Next(true);
 		if (Element)
 		{
-			if (this.IsInAnchorForm())
+			if (this.IsInFixedForm())
 			{
 				var isIntegerGrid = pGraphics.GetIntegerGrid();
 				if (!isIntegerGrid)
@@ -3016,8 +3016,8 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 					pGraphics.SetIntegerGrid(true);
 				}
 
-				var oForm   = this.GetInnerForm();
-				var oBounds = oForm.GetAnchorFormBounds();
+				var oForm       = this.GetInnerForm();
+				var oBounds     = oForm.GetFixedFormBounds();
 				var oTextFormPr = oForm.GetTextFormPr();
 				var nCombMax    = 1;
 				if (oTextFormPr && oTextFormPr.IsComb() && (nCombMax = oTextFormPr.GetMaxCharacters()) > 0)
@@ -4941,7 +4941,7 @@ Paragraph.prototype.Set_ParaContentPos = function(ContentPos, CorrectEndLinePos,
 	if (Pos < 0)
 		Pos = 0;
 
-	if (this.IsInAnchorForm())
+	if (this.IsInFixedForm())
 	{
 		var nFormPos = -1;
 		for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
@@ -5002,7 +5002,7 @@ Paragraph.prototype.Set_SelectionContentPos = function(StartContentPos, EndConte
 	var StartPos = StartContentPos.Get(Depth);
 	var EndPos   = EndContentPos.Get(Depth);
 
-	if (this.IsInAnchorForm())
+	if (this.IsInFixedForm())
 	{
 		var nFormPos = -1;
 		for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
@@ -7701,7 +7701,7 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage)
 	var isFillingForm  = oLogicDocument ? oLogicDocument.IsFillingFormMode() : false;
 
 	var oFillingCC = null;
-	if (isFillingForm || this.IsInAnchorForm())
+	if (isFillingForm || this.IsInFixedForm())
 	{
 		var oInfo = new CSelectedElementsInfo();
 		this.GetSelectedElementsInfo(oInfo);
@@ -14113,7 +14113,7 @@ Paragraph.prototype.SetContentSelection = function(StartDocPos, EndDocPos, Depth
         }
     }
 
-    if (this.IsInAnchorForm())
+    if (this.IsInFixedForm())
 	{
 		var nFormPos = -1;
 		for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
@@ -14232,7 +14232,7 @@ Paragraph.prototype.SetContentPosition = function(DocPos, Depth, Flag)
 		_DocPos = null;
 	}
 
-	if (this.IsInAnchorForm())
+	if (this.IsInFixedForm())
 	{
 		var nFormPos = -1;
 		for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
@@ -16499,7 +16499,7 @@ Paragraph.prototype.GetInnerForm = function()
 
 	return (-1 !== nIndex ? this.Content[nIndex] : null);
 };
-Paragraph.prototype.IsInAnchorForm = function()
+Paragraph.prototype.IsInFixedForm = function()
 {
 	var oShape = this.Parent ? this.Parent.Is_DrawingShape(true) : null;
 	return (oShape && oShape.isForm());

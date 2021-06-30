@@ -1375,7 +1375,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
 
 				var oForm = this.originalObject.getInnerForm();
 				if (oForm)
-					oForm.OnChangeAnchoredFormTrack(nW, nH);
+					oForm.OnChangeFixedFormTrack(nW, nH);
 			}
 
 		};

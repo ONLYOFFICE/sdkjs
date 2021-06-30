@@ -250,7 +250,7 @@ CSdtBase.prototype.IsForm = function()
 /**
  * @returns {boolean}
  */
-CSdtBase.prototype.IsAnchorForm = function()
+CSdtBase.prototype.IsFixedForm = function()
 {
 	return false;
 };

@@ -3007,7 +3007,7 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 			nCombWidth = this.TextAscent;
 
 		var oParagraph = this.GetParagraph();
-		if (oParagraph && oParagraph.IsInAnchorForm())
+		if (oParagraph && oParagraph.IsInFixedForm())
 		{
 			var oShape  = oParagraph.Parent.Is_DrawingShape(true);
 			var oBounds = oShape.getFormRelRect();
@@ -6135,7 +6135,7 @@ ParaRun.prototype.Draw_Elements = function(PDSE)
                 if (!Para.LogicDocument || Para.LogicDocument !== Para.Parent)
                     SectPr = undefined;
 
-				if (!Para.IsInAnchorForm())
+				if (!Para.IsInFixedForm())
 				{
 					if (undefined === SectPr)
 					{
