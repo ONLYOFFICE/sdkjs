@@ -2730,7 +2730,6 @@ CInlineLevelSdt.prototype.ProcessAutoFitContent = function(isFastRecalc)
 		oParagraph.Recalculate_Page(0);
 		oShape.recalcContent();
 		oShape.recalculateText();
-
 		// Восстанавливаем старое значение, чтобы в историю все правильно записалось
 		oRun.Set_FontSize(nFontSize);
 	}
@@ -2744,7 +2743,13 @@ CInlineLevelSdt.prototype.ProcessAutoFitContent = function(isFastRecalc)
 			oParagraph.Recalculate_Page(0);
 			oShape.recalcContent();
 			oShape.recalculateText();
-
+			// Восстанавливаем старое значение, чтобы в историю все правильно записалось
+			oRun.Set_FontSize(nFontSize);
+		}
+		else if (AscCommon.align_Left !== oParagraph.GetParagraphAlign())
+		{
+			oRun.Set_FontSize(nNewFontSize);
+			oParagraph.private_RecalculateFastRange(0, 0);
 			// Восстанавливаем старое значение, чтобы в историю все правильно записалось
 			oRun.Set_FontSize(nFontSize);
 		}

@@ -14663,6 +14663,10 @@ Paragraph.prototype.SetParagraphAlign = function(Align)
 {
 	this.Set_Align(Align);
 };
+Paragraph.prototype.GetParagraphAlign = function()
+{
+	return this.Get_CompiledPr2(false).ParaPr.Jc;
+};
 Paragraph.prototype.SetParagraphDefaultTabSize = function(TabSize)
 {
 	this.Set_DefaultTabSize(TabSize);
