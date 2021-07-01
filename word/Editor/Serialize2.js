@@ -6096,8 +6096,7 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 			this.memory.WriteString2(docPr.descr);
 		}
 		if (oParaDrawing && oParaDrawing.IsForm()) {
-			this.memory.WriteByte(c_oSerDocPr.Form);
-			this.memory.WriteBool(oParaDrawing.IsForm());
+			this.bs.WriteItem(c_oSerDocPr.Form, function(){oThis.memory.WriteBool(oParaDrawing.IsForm());});
 		}
 	}
 	this.WriteEffectExtent = function(EffectExtent)
