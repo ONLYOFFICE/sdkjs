@@ -10552,6 +10552,12 @@ CDocumentBorder.prototype.GetWidth = function()
 
 	return this.Size;
 };
+CDocumentBorder.prototype.SetSimpleColor = function(r, g, b)
+{
+	this.Color   = new CDocumentColor(r, g, b);
+	this.Unifill = undefined;
+	this.LineRef = undefined;
+};
 CDocumentBorder.prototype.GetColor = function(oParagraph)
 {
 	return this.Get_Color(oParagraph);

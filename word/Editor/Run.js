@@ -6330,7 +6330,15 @@ ParaRun.prototype.Draw_Lines = function(PDSL)
     var aDUnderline = PDSL.DUnderline;
     var aCombForms  = PDSL.CombForms;
 
-    var oCombBorder = this.GetTextForm() && this.GetTextForm().IsComb() && this.GetTextForm().GetCombBorder() ? this.GetTextForm().GetCombBorder() : null;
+    var oForm       = this.GetParentForm();
+    var oCombBorder = null;
+    if (oForm)
+	{
+		if (oForm.IsFormRequired() && PDSL.GetLogicDocument().IsHighlightRequiredFields())
+			oCombBorder = PDSL.GetLogicDocument().GetRequiredFieldsBorder();
+		else if (oForm.IsTextForm() && this.GetTextForm().IsComb() && this.GetTextForm().GetCombBorder())
+			oCombBorder = this.GetTextForm().GetCombBorder();
+	}
 
     var CurTextPr = this.Get_CompiledPr( false );
     var StrikeoutY = Y - this.YOffset;

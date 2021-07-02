@@ -3022,7 +3022,20 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 				var oBounds     = oForm.GetFixedFormBounds();
 				var oTextFormPr = oForm.GetTextFormPr();
 				var nCombMax    = 1;
-				if (oTextFormPr && oTextFormPr.IsComb() && (nCombMax = oTextFormPr.GetMaxCharacters()) > 0)
+				if (oForm.IsFormRequired() && this.GetLogicDocument().IsHighlightRequiredFields())
+				{
+					var nFormX0 = oBounds.X + 0.001;
+					var nFormX1 = oBounds.X + oBounds.W - 0.001;
+					var nFormY0 = oBounds.Y + 0.001;
+					var nFormY1 = oBounds.Y + oBounds.H - 0.001;
+
+					pGraphics.p_color(Element.r, Element.g, Element.b, 255);
+					pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Bottom, nFormY0, nFormX0, nFormX1, Element.w, -Element.w / 2, Element.w / 2);
+					pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Top, nFormY1, nFormX0, nFormX1, Element.w, -Element.w / 2, Element.w / 2);
+					pGraphics.drawVerLine(c_oAscLineDrawingRule.Left, nFormX0, nFormY0, nFormY1, Element.w);
+					pGraphics.drawVerLine(c_oAscLineDrawingRule.Right, nFormX1, nFormY0, nFormY1, Element.w);
+				}
+				else if (oTextFormPr && oTextFormPr.IsComb() && (nCombMax = oTextFormPr.GetMaxCharacters()) > 0)
 				{
 					var nFormX0 = oBounds.X + 0.001;
 					var nFormX1 = oBounds.X + oBounds.W - 0.001;
@@ -3049,6 +3062,7 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 			}
 			else
 			{
+				var oForm = this.GetInnerForm();
 				while (Element)
 				{
 					var nFormY0 = Page.Y + Line.Y - Line.Metrics.Ascent;
@@ -3060,9 +3074,12 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 					pGraphics.drawVerLine(c_oAscLineDrawingRule.Center, Element.x0, nFormY0, nFormY1, Element.w);
 					pGraphics.drawVerLine(c_oAscLineDrawingRule.Center, Element.x1, nFormY0, nFormY1, Element.w);
 
-					for (var nInterIndex = 0, nIntersCount = Element.Intermediate.length; nInterIndex < nIntersCount; ++nInterIndex)
+					if (!oForm || !oForm.IsFormRequired() || !this.GetLogicDocument().IsHighlightRequiredFields())
 					{
-						pGraphics.drawVerLine(c_oAscLineDrawingRule.Center, Element.Intermediate[nInterIndex], nFormY0, nFormY1, Element.w);
+						for (var nInterIndex = 0, nIntersCount = Element.Intermediate.length; nInterIndex < nIntersCount; ++nInterIndex)
+						{
+							pGraphics.drawVerLine(c_oAscLineDrawingRule.Center, Element.Intermediate[nInterIndex], nFormY0, nFormY1, Element.w);
+						}
 					}
 
 					Element = aCombForms.Get_Next(true);
@@ -17680,6 +17697,10 @@ CParagraphDrawStateLines.prototype.GetSpellingErrorsCounter = function()
 	}
 
 	return nCounter;
+};
+CParagraphDrawStateLines.prototype.GetLogicDocument = function()
+{
+	return this.Paragraph.GetLogicDocument();
 };
 
 var g_oPDSH = new CParagraphDrawStateHighlights();
