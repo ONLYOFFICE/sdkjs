@@ -452,6 +452,8 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 		this.DateTimePr = oContentControl.GetDatePickerPr().Copy();
 	else if (oContentControl.IsTextForm())
 		this.TextFormPr = oContentControl.GetTextFormPr().Copy();
+	else if (oContentControl.IsPictureForm())
+		this.PictureFormPr = oContentControl.GetPictureFormPr().Copy();
 
 	this.PlaceholderText = oContentControl.GetPlaceholderText();
 
