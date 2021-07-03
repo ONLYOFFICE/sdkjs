@@ -1635,7 +1635,7 @@ CDocumentContent.prototype.CheckFormViewWindow = function()
 
 	if (oPageBounds.Bottom - oPageBounds.Top > oFormBounds.H)
 	{
-		if (oCursorPos.Y < oFormBounds.Y + nPad)
+		if (oCursorPos.Height > oFormBounds.H - nPad || oCursorPos.Y < oFormBounds.Y + nPad)
 			nDy = oFormBounds.Y + nPad - oCursorPos.Y;
 		else if (oCursorPos.Y + oCursorPos.Height > oFormBounds.H - nPad)
 			nDy = oFormBounds.H - nPad - oCursorPos.Y - oCursorPos.Height;
