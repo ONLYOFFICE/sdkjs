@@ -2471,10 +2471,15 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 
 			if (this.Lines.length - 1 === CurLine)
 			{
-				var NextEl = this.Get_DocumentNext();
-				if (null != NextEl && type_Paragraph === NextEl.GetType() && true === NextEl.IsStartFromNewPage())
+				var NextEl = this.GetNextDocumentElement();
+				while (NextEl && NextEl.IsBlockLevelSdt())
+				{
+					NextEl = NextEl.GetElement(0);
+				}
+
+				if (NextEl && NextEl.IsParagraph() && NextEl.IsStartFromNewPage())
 					TempBottom = this.Lines[CurLine].Y + this.Lines[CurLine].Metrics.Descent + this.Lines[CurLine].Metrics.LineGap;
-				else if ((true === Pr.ParaPr.Brd.Last || (null !== NextEl && (type_Table === NextEl.Get_Type() || true === NextEl.private_IsEmptyPageWithBreak(0)))) && ( Pr.ParaPr.Brd.Bottom.Value === border_Single || Asc.c_oAscShdClear === Pr.ParaPr.Shd.Value ))
+				else if ((true === Pr.ParaPr.Brd.Last || (NextEl && (!NextEl.IsParagraph() || true === NextEl.private_IsEmptyPageWithBreak(0)))) && ( Pr.ParaPr.Brd.Bottom.Value === border_Single || Asc.c_oAscShdClear === Pr.ParaPr.Shd.Value ))
 					TempBottom -= Pr.ParaPr.Spacing.After;
 			}
 
@@ -3243,22 +3248,26 @@ Paragraph.prototype.Internal_Draw_6 = function(CurPage, pGraphics, Pr)
 	var bEnd    = (this.Lines[CurLine].Info & paralineinfo_End ? true : false);
 
 	var bDrawBottom = false;
-	var NextEl      = this.Get_DocumentNext();
+	var NextEl      = this.GetNextDocumentElement();
+	while (NextEl && NextEl.IsBlockLevelSdt())
+	{
+		NextEl = NextEl.GetElement(0);
+	}
+
 	if (border_Single === Pr.ParaPr.Brd.Bottom.Value
 		&& true === bEnd
 		&& (true === Pr.ParaPr.Brd.Last
-		|| type_Table === NextEl.Get_Type()
-		|| true === NextEl.private_IsEmptyPageWithBreak(0)))
+			|| !NextEl
+			|| !NextEl.IsParagraph()
+			|| NextEl.private_IsEmptyPageWithBreak(0)))
 	{
 		bDrawBottom = true;
 	}
 
 	if (true === bDrawBottom)
 	{
-		var TempY        = this.Pages[CurPage].Y;
-		var NextEl       = this.Get_DocumentNext();
-		var DrawLineRule = c_oAscLineDrawingRule.Bottom;
-		if (null != NextEl && type_Paragraph === NextEl.GetType() && true === NextEl.IsStartFromNewPage())
+		var TempY, DrawLineRule;
+		if (NextEl && NextEl.IsParagraph() && NextEl.IsStartFromNewPage())
 		{
 			TempY        = this.Pages[CurPage].Y + this.Lines[CurLine].Y + this.Lines[CurLine].Metrics.Descent + this.Lines[CurLine].Metrics.LineGap;
 			DrawLineRule = c_oAscLineDrawingRule.Top;
@@ -9513,22 +9522,30 @@ Paragraph.prototype.Get_CompiledPr = function()
 			NextEl = NextEl.GetNextDocumentElement();
 	}
 
-	if (PrevEl && PrevEl.IsParagraph())
+	while (PrevEl && PrevEl.IsBlockLevelSdt())
 	{
-		var oPrevPr = PrevEl.Get_CompiledPr2(false).ParaPr;
-		if (true === this.private_CompareBorderSettings(oPrevPr, Pr.ParaPr) && undefined === PrevEl.Get_SectionPr() && true !== Pr.ParaPr.PageBreakBefore)
+		PrevEl = PrevEl.GetLastElement();
+	}
+
+	if (PrevEl)
+	{
+		if (PrevEl.IsParagraph())
 		{
-			Pr.ParaPr.Brd.First   = false;
-			Pr.ParaPr.Brd.Between = oPrevPr.Brd.Between.Copy();
+			var oPrevPr = PrevEl.Get_CompiledPr2(false).ParaPr;
+			if (true === this.private_CompareBorderSettings(oPrevPr, Pr.ParaPr) && undefined === PrevEl.Get_SectionPr() && true !== Pr.ParaPr.PageBreakBefore)
+			{
+				Pr.ParaPr.Brd.First   = false;
+				Pr.ParaPr.Brd.Between = oPrevPr.Brd.Between.Copy();
+			}
+			else
+			{
+				Pr.ParaPr.Brd.First = true;
+			}
 		}
 		else
 		{
-			Pr.ParaPr.Brd.First = true;
+			PrevEl = PrevEl.GetLastParagraph();
 		}
-	}
-	else if (PrevEl && PrevEl.IsBlockLevelSdt())
-	{
-		PrevEl = PrevEl.GetLastParagraph();
 	}
 
 	if (oPrevParagraph && StyleId === oPrevParagraph.Style_Get() && Pr.ParaPr.ContextualSpacing)
@@ -9613,10 +9630,16 @@ Paragraph.prototype.Get_CompiledPr = function()
 		}
 	}
 
-	if (NextEl && NextEl.IsParagraph())
+	var oTempNextEl = NextEl;
+	while (oTempNextEl && oTempNextEl.IsBlockLevelSdt())
 	{
-		var oNextPr = NextEl.Get_CompiledPr2(false).ParaPr;
-		if (true === this.private_CompareBorderSettings(oNextPr, Pr.ParaPr) && undefined === this.Get_SectionPr() && (undefined === NextEl.Get_SectionPr() || true !== NextEl.IsEmpty()) && true !== oNextPr.PageBreakBefore)
+		oTempNextEl = oTempNextEl.GetElement(0);
+	}
+
+	if (oTempNextEl && oTempNextEl.IsParagraph())
+	{
+		var oNextPr = oTempNextEl.Get_CompiledPr2(false).ParaPr;
+		if (true === this.private_CompareBorderSettings(oNextPr, Pr.ParaPr) && undefined === this.Get_SectionPr() && (undefined === oTempNextEl.Get_SectionPr() || true !== oTempNextEl.IsEmpty()) && true !== oNextPr.PageBreakBefore)
 			Pr.ParaPr.Brd.Last = false;
 		else
 			Pr.ParaPr.Brd.Last = true;

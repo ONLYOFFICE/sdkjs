@@ -1597,6 +1597,14 @@ CBlockLevelSdt.prototype.GetLastElement = function()
 
 	return this.Content.GetElement(nCount - 1);
 };
+CBlockLevelSdt.prototype.GetElement = function(nIndex)
+{
+	return this.Content.GetElement(nIndex);
+};
+CBlockLevelSdt.prototype.GetElementsCount = function()
+{
+	return this.Content.GetElementsCount();
+};
 CBlockLevelSdt.prototype.GetLastParagraph = function()
 {
 	return this.Content.GetLastParagraph();
