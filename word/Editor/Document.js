@@ -9076,6 +9076,8 @@ CDocument.prototype.InsertContent = function(SelectedContent, NearPos)
 				nInLastClassPos = 0;
 			}
 
+			LastClass.State.ContentPos = nInLastClassPos;
+
 			var nInRunStartPos = LastClass.State.ContentPos;
 			LastClass.AddText(SelectedContent.GetText({ParaEndToSpace : false}), nInLastClassPos);
 			var nInRunEndPos = LastClass.State.ContentPos;
