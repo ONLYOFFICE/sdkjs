@@ -63,10 +63,10 @@ function CDocumentContent(Parent, DrawingDocument, X, Y, XLimit, YLimit, Split, 
 
     this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
-    this.X = X;
-    this.Y = Y;
-    this.XLimit = XLimit;
-    this.YLimit = YLimit;
+	this.X      = X;
+	this.Y      = Y;
+	this.XLimit = XLimit;
+	this.YLimit = YLimit;
 
     this.UseXLimit = true;
     this.UseYLimit = true;
@@ -290,26 +290,31 @@ CDocumentContent.prototype.Get_ColorMap = function()
 
 	return null;
 };
-CDocumentContent.prototype.Get_PageLimits = function(PageIndex)
+CDocumentContent.prototype.Get_PageLimits = function(nCurPage)
 {
 	if (true === this.Parent.IsCell())
 	{
 		var Margins = this.Parent.GetMargins();
 
-		var Y      = this.Pages[PageIndex].Y - Margins.Top.W;
-		var YLimit = this.Pages[PageIndex].YLimit + Margins.Bottom.W;
-		var X      = this.Pages[PageIndex].X - Margins.Left.W;
-		var XLimit = this.Pages[PageIndex].XLimit + Margins.Right.W;
+		var Y      = this.Pages[nCurPage].OriginY - Margins.Top.W;
+		var YLimit = this.Pages[nCurPage].OriginYLimit + Margins.Bottom.W;
+		var X      = this.Pages[nCurPage].OriginX - Margins.Left.W;
+		var XLimit = this.Pages[nCurPage].OriginXLimit + Margins.Right.W;
 
-		return {X : X, XLimit : XLimit, Y : Y, YLimit : YLimit}
+		return {
+			X      : X,
+			XLimit : XLimit,
+			Y      : Y,
+			YLimit : YLimit
+		};
 	}
 	else
 	{
-		if (null === this.LogicDocument)
+		if (!this.LogicDocument)
 			return {X : 0, Y : 0, XLimit : 0, YLimit : 0};
 
-		var Page_abs = this.Get_StartPage_Absolute() + PageIndex;
-		var Index    = ( undefined !== this.LogicDocument.Pages[Page_abs] ? this.LogicDocument.Pages[Page_abs].Pos : 0 );
+		var nPageAbs = this.GetAbsolutePage(nCurPage);
+		var Index    = ( undefined !== this.LogicDocument.Pages[nPageAbs] ? this.LogicDocument.Pages[nPageAbs].Pos : 0 );
 		var SectPr   = this.LogicDocument.SectionsInfo.Get_SectPr(Index).SectPr;
 
 		var W = SectPr.GetPageWidth();

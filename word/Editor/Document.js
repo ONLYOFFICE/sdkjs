@@ -1185,10 +1185,15 @@ function CDocumentPage()
     this.Pos    = 0;
     this.EndPos = 0;
 
-    this.X      = 0;
-    this.Y      = 0;
-    this.XLimit = 0;
-    this.YLimit = 0;
+	this.X      = 0;
+	this.Y      = 0;
+	this.XLimit = 0;
+	this.YLimit = 0;
+
+	this.OriginX      = 0; // Начальные значения X, Y без учета использования функции Shift
+	this.OriginY      = 0; // Используется, например, при расчете позиции автофигуры внутри ячейки таблицы,
+	this.OriginXLimit = 0; // которая имеет вертикальное выравнивание по центру или по низу
+	this.OriginTLimit = 0;
 
     this.Sections = [];
 
@@ -1202,10 +1207,15 @@ function CDocumentPage()
 
 CDocumentPage.prototype.Update_Limits = function(Limits)
 {
-    this.X      = Limits.X;
-    this.XLimit = Limits.XLimit;
-    this.Y      = Limits.Y;
-    this.YLimit = Limits.YLimit;
+	this.X      = Limits.X;
+	this.XLimit = Limits.XLimit;
+	this.Y      = Limits.Y;
+	this.YLimit = Limits.YLimit;
+
+	this.OriginX      = Limits.X;
+	this.OriginY      = Limits.Y;
+	this.OriginXLimit = Limits.X;
+	this.OriginYLimit = Limits.Y;
 };
 CDocumentPage.prototype.Shift = function(Dx, Dy)
 {
