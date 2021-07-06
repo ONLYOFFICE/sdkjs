@@ -9833,7 +9833,7 @@ background-repeat: no-repeat;\
 		if (!oLogicDocument)
 			return;
 
-		oLogicDocument.ConvertFormAnchorType(sId, isFixed);
+		oLogicDocument.ConvertFormFixedType(sId, isFixed);
 	};
 
 	asc_docs_api.prototype.asc_UncheckContentControlButtons = function()

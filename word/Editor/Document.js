@@ -24771,10 +24771,10 @@ CDocument.prototype.IsAllRequiredSpecialFormsFilled = function()
 /**
  * Конвертируем
  * @param sId
- * @param isToAnchor
+ * @param isToFixed
  * @returns {boolean}
  */
-CDocument.prototype.ConvertFormAnchorType = function(sId, isToAnchor)
+CDocument.prototype.ConvertFormFixedType = function(sId, isToFixed)
 {
 	var oForm = this.GetContentControl(sId);
 	if (!oForm || !oForm.IsForm())
@@ -24793,10 +24793,10 @@ CDocument.prototype.ConvertFormAnchorType = function(sId, isToAnchor)
 
 	if (!isLocked)
 	{
-		this.StartAction(AscDFH.historydescription_Document_ConvertFormAnchorType);
+		this.StartAction(AscDFH.historydescription_Document_ConvertFormFixedType);
 
-		if (isToAnchor)
-			oForm.ConvertFormToAnchor();
+		if (isToFixed)
+			oForm.ConvertFormToFixed();
 		else
 			oForm.ConvertFormToInline();
 

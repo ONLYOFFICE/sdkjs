@@ -2432,7 +2432,7 @@ CInlineLevelSdt.prototype.IsFormFilled = function()
 
 	return false;
 }
-CInlineLevelSdt.prototype.ConvertFormToAnchor = function()
+CInlineLevelSdt.prototype.ConvertFormToFixed = function()
 {
 	var oParagraph        = this.GetParagraph();
 	var oParent           = this.GetParent();
@@ -2534,7 +2534,8 @@ CInlineLevelSdt.prototype.ConvertFormToAnchor = function()
 
 		var nTextDescent = Math.abs(g_oTextMeasurer.GetDescender());
 
-		oRun.Set_Position(-nTextDescent);
+		oRun.Set_Position(oTextPr.Position - nTextDescent);
+		oInnerRun.Recalc_CompiledPr(true);
 	}
 
 	oParent.RemoveFromContent(nPosInParent, 1, true);

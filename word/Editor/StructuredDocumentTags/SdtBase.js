@@ -425,7 +425,7 @@ CSdtBase.prototype.IsFormFilled = function()
  * Оборачиваем форму в графический контейнер
  * @returns {?ParaDrawing}
  */
-CSdtBase.prototype.ConvertFormToAnchor = function()
+CSdtBase.prototype.ConvertFormToFixed = function()
 {
 	return null;
 };

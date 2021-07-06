@@ -8159,6 +8159,9 @@ ParaRun.prototype.Internal_Compile_Pr = function ()
 	TextPr.FontFamily.Name  = TextPr.RFonts.Ascii.Name;
 	TextPr.FontFamily.Index = TextPr.RFonts.Ascii.Index;
 
+	if (this.Paragraph.IsInFixedForm())
+		TextPr.Position = 0;
+
 	return TextPr;
 };
 
