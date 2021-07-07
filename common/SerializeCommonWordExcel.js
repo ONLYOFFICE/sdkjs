@@ -280,11 +280,25 @@ BinaryCommonWriter.prototype.WriteShd = function(Shd)
 		this.memory.WriteByte(c_oSerPropLenType.Variable);
 		this.WriteItemWithLength(function(){_this.WriteColorTheme(Shd.Unifill, Shd.Color);});
     }
-	if(null != Shd.themeFill || (null != Shd.Fill && Shd.Fill.Auto))
+
+	// TODO: Пока оставим так, до тех пор пока не будут переделаны по-нормальному ThemeFill и ThemeColor
+	if (Shd.themeFill || (Shd.Fill && Shd.Fill.Auto))
 	{
 		this.memory.WriteByte(c_oSerShdType.ColorTheme);
 		this.memory.WriteByte(c_oSerPropLenType.Variable);
-		this.WriteItemWithLength(function(){_this.WriteColorTheme(Shd.themeFill, Shd.Fill);});
+		this.WriteItemWithLength(function()
+		{
+			_this.WriteColorTheme(Shd.themeFill, Shd.Fill);
+		});
+	}
+	else if (Shd.Unifill)
+	{
+		this.memory.WriteByte(c_oSerShdType.ColorTheme);
+		this.memory.WriteByte(c_oSerPropLenType.Variable);
+		this.WriteItemWithLength(function()
+		{
+			_this.WriteColorTheme(Shd.Unifill, Shd.Fill);
+		});
 	}
 };
 BinaryCommonWriter.prototype.WritePaddings = function(Paddings)
