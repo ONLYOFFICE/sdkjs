@@ -1214,8 +1214,8 @@ CDocumentPage.prototype.Update_Limits = function(Limits)
 
 	this.OriginX      = Limits.X;
 	this.OriginY      = Limits.Y;
-	this.OriginXLimit = Limits.X;
-	this.OriginYLimit = Limits.Y;
+	this.OriginXLimit = Limits.XLimit;
+	this.OriginYLimit = Limits.YLimit;
 };
 CDocumentPage.prototype.Shift = function(Dx, Dy)
 {
