@@ -7674,7 +7674,6 @@ ParaRun.prototype.IsSelectionUse = function()
 {
     return this.State.Selection.Use;
 };
-
 ParaRun.prototype.IsSelectedAll = function(Props)
 {
     var Selection = this.State.Selection;
@@ -7769,29 +7768,26 @@ ParaRun.prototype.SkipAnchorsAtSelectionStart = function(Direction)
 
 ParaRun.prototype.RemoveSelection = function()
 {
-    var Selection = this.State.Selection;
+	if (this.Selection.Use)
+		this.State.ContentPos = Math.min(this.Content.length, Math.max(0, this.Selection.EndPos));
 
-    Selection.Use      = false;
-    Selection.StartPos = 0;
-    Selection.EndPos   = 0;
+	this.Selection.Use      = false;
+	this.Selection.StartPos = 0;
+	this.Selection.EndPos   = 0;
 };
-
-ParaRun.prototype.SelectAll = function(Direction)
+ParaRun.prototype.SelectAll = function(nDirection)
 {
-    var Selection = this.State.Selection;
-
-    Selection.Use      = true;
-
-    if ( -1 === Direction )
-    {
-        Selection.StartPos = this.Content.length;
-        Selection.EndPos   = 0;
-    }
-    else
-    {
-        Selection.StartPos = 0;
-        Selection.EndPos   = this.Content.length;
-    }
+	this.Selection.Use = true;
+	if (nDirection < 0)
+	{
+		this.Selection.StartPos = this.Content.length;
+		this.Selection.EndPos   = 0;
+	}
+	else
+	{
+		this.Selection.StartPos = 0;
+		this.Selection.EndPos   = this.Content.length;
+	}
 };
 
 ParaRun.prototype.Selection_DrawRange = function(_CurLine, _CurRange, SelectionDraw)
