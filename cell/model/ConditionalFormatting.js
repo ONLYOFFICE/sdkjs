@@ -419,7 +419,7 @@
 			};
 
 			History.Add(AscCommonExcel.g_oUndoRedoCF, AscCH.historyitem_CFRule_SetRanges,
-				ws.getId(), null, new AscCommonExcel.UndoRedoData_CF(this.id, getUndoRedoRange(this.ranges), getUndoRedoRange(location)));
+				ws.getId(), this.getUnionRange(location), new AscCommonExcel.UndoRedoData_CF(this.id, getUndoRedoRange(this.ranges), getUndoRedoRange(location)));
 		}
 		this.ranges = location;
 	};
@@ -427,7 +427,7 @@
 	CConditionalFormattingRule.prototype.checkProperty = function (propOld, propNew, type, ws, addToHistory) {
 		if (propOld !== propNew) {
 			if (addToHistory) {
-				History.Add(AscCommonExcel.g_oUndoRedoCF, type, ws.getId(), null,
+				History.Add(AscCommonExcel.g_oUndoRedoCF, type, ws.getId(), this.getUnionRange(),
 					new AscCommonExcel.UndoRedoData_CF(this.id, propOld, propNew));
 			}
 			return propNew;
@@ -450,15 +450,39 @@
 		}
 	};
 
-	CConditionalFormattingRule.prototype.getUnionRange = function () {
+	CConditionalFormattingRule.prototype.getUnionRange = function (opt_ranges) {
 		var res = null;
-		for (var i = 0; i < this.ranges.length; i++) {
-			if (!res) {
-				res = this.ranges[i].clone();
-			} else {
-				res.union2(this.ranges[i]);
+
+		var _getUnionRanges = function (_ranges) {
+			if (!_ranges) {
+				return null;
+			}
+
+			var _res = null;
+			for (var i = 0; i < _ranges.length; i++) {
+				if (!_res) {
+					_res = _ranges[i].clone();
+				} else {
+					_res.union2(_ranges[i]);
+				}
+			}
+			return _res;
+		};
+
+		if (opt_ranges) {
+			res = _getUnionRanges(opt_ranges);
+		}
+		if (this.ranges) {
+			var tempRange = _getUnionRanges(this.ranges);
+			if (tempRange) {
+				if (res) {
+					res.union2(tempRange)
+				} else {
+					res = tempRange;
+				}
 			}
 		}
+
 		return res;
 	};
 
