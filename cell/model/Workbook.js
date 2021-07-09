@@ -15654,44 +15654,44 @@
 						}
 					}
 				}
+			}
 
-				var aRules;
-				if (wsTo.aConditionalFormattingRules && wsTo.aConditionalFormattingRules.length) {
-					wsTo.clearConditionalFormattingRulesByRanges([to])
-				}
-				if (wsFrom.aConditionalFormattingRules && wsFrom.aConditionalFormattingRules.length) {
-					aRules = wsFrom.getIntersectionRules(from);
-				}
-				if(aRules && aRules.length > 0) {
-					var newRules = [];
-					for (var i = to.c1; i <= to.c2; i += nDx) {
-						for (var j = to.r1; j <= to.r2; j += nDy) {
-							for(var k = 0, length3 = aRules.length; k < length3; k++){
-								var oRule = aRules[k];
-								var ranges = oRule.ranges;
-								for (var n = 0; n < ranges.length; n++) {
-									var _newRange = new Asc.Range(i + ranges[n].c1 - from.c1, j + ranges[n].r1 - from.r1, i + ranges[n].c2 - from.c1, j + ranges[n].r2 - from.r1);
-									if (to.containsRange(_newRange)) {
-										if (!newRules[k]) {
-											newRules[k] = [];
-										}
-										newRules[k].push(_newRange);
+			var aRules;
+			if (wsTo.aConditionalFormattingRules && wsTo.aConditionalFormattingRules.length) {
+				wsTo.clearConditionalFormattingRulesByRanges([to])
+			}
+			if (wsFrom.aConditionalFormattingRules && wsFrom.aConditionalFormattingRules.length) {
+				aRules = wsFrom.getIntersectionRules(from);
+			}
+			if(aRules && aRules.length > 0) {
+				var newRules = [];
+				for (var i = to.c1; i <= to.c2; i += nDx) {
+					for (var j = to.r1; j <= to.r2; j += nDy) {
+						for(var k = 0, length3 = aRules.length; k < length3; k++){
+							var oRule = aRules[k];
+							var ranges = oRule.ranges;
+							for (var n = 0; n < ranges.length; n++) {
+								var _newRange = new Asc.Range(i + ranges[n].c1 - from.c1, j + ranges[n].r1 - from.r1, i + ranges[n].c2 - from.c1, j + ranges[n].r2 - from.r1);
+								if (to.containsRange(_newRange)) {
+									if (!newRules[k]) {
+										newRules[k] = [];
 									}
+									newRules[k].push(_newRange);
 								}
 							}
 						}
 					}
-					if (newRules && newRules.length) {
-						for (var i = 0; i < newRules.length; i++) {
-							if (newRules[i] && newRules[i].length) {
-								var fromRule = wsFrom.getRuleById(aRules[i].id);
-								if (fromRule) {
-									fromRule = fromRule.data;
-									var toRule = fromRule.clone();
-									toRule.id = fromRule.id;
-									toRule.ranges = fromRule.ranges.concat(newRules[i]);
-									wsTo.setCFRule(toRule);
-								}
+				}
+				if (newRules && newRules.length) {
+					for (var i = 0; i < newRules.length; i++) {
+						if (newRules[i] && newRules[i].length) {
+							var fromRule = wsFrom.getRuleById(aRules[i].id);
+							if (fromRule) {
+								fromRule = fromRule.data;
+								var toRule = fromRule.clone();
+								toRule.id = fromRule.id;
+								toRule.ranges = fromRule.ranges.concat(newRules[i]);
+								wsTo.setCFRule(toRule);
 							}
 						}
 					}
