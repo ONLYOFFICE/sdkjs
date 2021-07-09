@@ -1321,7 +1321,7 @@
 		for (var i = 0; i < presetStyles.length; i++) {
 			var formatValueObject = new CConditionalFormatValueObject();
 			formatValueObject.Type = presetStyles[i][0] ? presetStyles[i][0] : null;
-			formatValueObject.Val = presetStyles[i][1] ? presetStyles[i][1] : null;
+			formatValueObject.Val = presetStyles[i][1] ? presetStyles[i][1] + "" : null;
 			var colorObject = new AscCommonExcel.RgbColor(presetStyles[i][2] ? presetStyles[i][2] : 0);
 			this.aCFVOs.push(formatValueObject);
 			this.aColors.push(colorObject);
