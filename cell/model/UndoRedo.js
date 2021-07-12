@@ -441,6 +441,8 @@ function (window, undefined) {
 		this.CFDataInner = 151;
 		this.ColorScale = 152;
 		this.CFormulaCF = 153;
+		this.DataBar = 154;
+		this.IconSet = 155;
 
 		this.Create = function (nType) {
 			switch (nType) {
@@ -631,6 +633,10 @@ function (window, undefined) {
 					return new AscCommonExcel.CColorScale();
 				case this.CFormulaCF:
 					return new AscCommonExcel.CFormulaCF();
+				case this.DataBar:
+					return new AscCommonExcel.CDataBar();
+				case this.IconSet:
+					return new AscCommonExcel.CIconSet();
 			}
 			return null;
 		};

@@ -1834,6 +1834,9 @@
 	CDataBar.prototype.asc_setAxisColor = function (val) {
 		this.AxisColor = AscCommonExcel.CorrectAscColor(val);
 	};
+	CDataBar.prototype.getType = function () {
+		return window['AscCommonExcel'].UndoRedoDataTypes.DataBar;
+	};
 
 	function CFormulaCF() {
 		this.Text = null;
@@ -2101,6 +2104,9 @@
 	};
 	CIconSet.prototype.asc_setIconSets = function (val) {
 		this.aIconSets = val == null ? [] : val;
+	};
+	CIconSet.prototype.getType = function () {
+		return window['AscCommonExcel'].UndoRedoDataTypes.IconSet;
 	};
 
 	function CConditionalFormatValueObject() {
