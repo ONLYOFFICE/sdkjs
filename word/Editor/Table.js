@@ -12589,8 +12589,6 @@ CTable.prototype.HorSplitCells = function(Y, RowIndex, CellsIndexes, CurPageStar
 			{
 				var TempRow	       = null;
 				
-				
-
 				// Если попадаем в окрестность верхней границы ячейки, то добавляем границу сверху
 				if (Math.abs(this.RowsInfo[RowIndex].Y[CurPageStart] - Y) <= 1.5)
 				{
