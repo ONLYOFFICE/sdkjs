@@ -2442,6 +2442,10 @@
 			for (var i = 0; i < iconImgs.length; i++) {
 				var img = iconImgs[i];
 
+				if (!img) {
+					continue;
+				}
+
 				var geometry = new AscFormat.CreateGeometry("rect");
 				geometry.Recalculate(5, 5, true);
 
