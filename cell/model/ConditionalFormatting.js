@@ -2213,7 +2213,7 @@
 	CConditionalFormatIconSet.prototype.Write_ToBinary2 = function (writer) {
 		if (null != this.IconSet) {
 			writer.WriteBool(true);
-			writer.WriteBool(this.IconSet);
+			writer.WriteLong(this.IconSet);
 		} else {
 			writer.WriteBool(false);
 		}
@@ -2226,7 +2226,7 @@
 	};
 	CConditionalFormatIconSet.prototype.Read_FromBinary2 = function (reader) {
 		if (reader.GetBool()) {
-			this.IconSet = reader.GetBool();
+			this.IconSet = reader.GetLong();
 		}
 		if (reader.GetBool()) {
 			this.IconId = reader.GetLong();
