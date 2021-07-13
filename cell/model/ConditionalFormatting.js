@@ -1283,7 +1283,17 @@
 				}
 				break;
 			case Asc.c_oAscSelectionForCFType.pivot:
-				// ToDo
+				sheet = wb.getActiveWs();
+				var _activeCell = sheet.selectionRange.activeCell;
+				var _pivot = sheet.getPivotTable(_activeCell.col, _activeCell.row);
+				if (_pivot) {
+					range = _pivot.location && _pivot.location.ref;
+				}
+
+				if (!range) {
+					sheet = null;
+				}
+
 				break;
 		}
 

@@ -21720,7 +21720,12 @@
 				}
 				break;
 			case Asc.c_oAscSelectionForCFType.pivot:
-				// ToDo
+				var _activeCell = this.model.selectionRange.activeCell;
+				var _pivot = this.model.getPivotTable(_activeCell.col, _activeCell.row);
+				if (_pivot) {
+					_ranges = _pivot.location && _pivot.location.ref;
+				}
+
 				break;
 		}
 
