@@ -2172,7 +2172,7 @@ background-repeat: no-repeat;\
 
 	};
 
-	asc_docs_api.prototype.asc_CheckCopy = function(_clipboard /* CClipboardData */, _formats)
+	asc_docs_api.prototype.asc_CheckCopy = function(_clipboard /* CClipboardData */, _formats, oCopyPr)
 	{
 		if (!this.WordControl.m_oLogicDocument)
 		{
@@ -2200,7 +2200,9 @@ background-repeat: no-repeat;\
 		//TEXT
 		if (AscCommon.c_oAscClipboardDataFormat.Text & _formats)
 		{
-			_data = this.WordControl.m_oLogicDocument.GetSelectedText(false, {NewLineParagraph : true});
+			oCopyPr = oCopyPr ? Object.assign(oCopyPr, {NewLineParagraph : true}) : {NewLineParagraph : true};
+			
+			_data = this.WordControl.m_oLogicDocument.GetSelectedText(false, oCopyPr);
 			_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Text, checkData(_data))
 		}
 		//HTML

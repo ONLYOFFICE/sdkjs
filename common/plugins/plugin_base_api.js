@@ -88,6 +88,7 @@ window.startPluginApi = function() {
 	 *
 	 * @property {initDataType} initDataType The data type selected in the editor and sent to the plugin: "text" - the text data, "html" - HTML formatted code, "ole" - OLE object data, "none" - no data will be send to the plugin from the editor.
 	 * @property {string} initData Is always equal to "" - this is the data which is sent from the editor to the plugin at the plugin start (e.g. if initDataType == "text", the plugin will receive the selected text when run).
+	 * @property {bool} isNeedNumbering Is always equal to false - determines whether the selected text in the editor will be sent to the plugin with or without numbering.
 	 *
 	 * @property {number[]} [size] Size of the plugin window
 	 *

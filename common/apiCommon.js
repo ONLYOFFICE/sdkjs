@@ -5200,8 +5200,9 @@
 		this.isInsideMode = false;      // отрисовка не в окне а внутри редактора (в панели) (используется только для визуального немодального)
 		this.isCustomWindow = false;	// ued only if this.isModal == true
 
-		this.initDataType = EPluginDataType.none;
-		this.initData     = "";
+		this.initDataType    = EPluginDataType.none;
+		this.initData        = "";
+        this.isNeedNumbering = true;
 
 		this.isUpdateOleOnResize = false;
 
@@ -5323,6 +5324,14 @@
 	{
 		this.initData = value;
 	};
+	CPluginVariation.prototype["get_isNeedNumbering"]     = function()
+	{
+		return this.isNeedNumbering;
+	};
+	CPluginVariation.prototype["set_isNeedNumbering"]     = function(value)
+	{
+		this.isNeedNumbering = value;
+	};
 
 	CPluginVariation.prototype["get_UpdateOleOnResize"] = function()
 	{
@@ -5389,8 +5398,9 @@
 		_object["isInsideMode"] = this.isInsideMode;
 		_object["isCustomWindow"] = this.isCustomWindow;
 
-		_object["initDataType"] = this.initDataType;
-		_object["initData"]     = this.initData;
+		_object["initDataType"]        = this.initDataType;
+		_object["initData"]            = this.initData;
+		_object["isNeedNumbering"]     = this.isNeedNumbering;
 
 		_object["isUpdateOleOnResize"] = this.isUpdateOleOnResize;
 
@@ -5417,8 +5427,9 @@
 		this.isInsideMode = (_object["isInsideMode"] != null) ? _object["isInsideMode"] : this.isInsideMode;
 		this.isCustomWindow = (_object["isCustomWindow"] != null) ? _object["isCustomWindow"] : this.isCustomWindow;
 
-		this.initDataType = (_object["initDataType"] != null) ? _object["initDataType"] : this.initDataType;
-		this.initData     = (_object["initData"] != null) ? _object["initData"] : this.initData;
+		this.initDataType    = (_object["initDataType"] != null) ? _object["initDataType"] : this.initDataType;
+		this.initData        = (_object["initData"] != null) ? _object["initData"] : this.initData;
+        this.isNeedNumbering = (_object["isNeedNumbering"] != null) ? _object["isNeedNumbering"] : this.isNeedNumbering;
 
 		this.isUpdateOleOnResize = (_object["isUpdateOleOnResize"] != null) ? _object["isUpdateOleOnResize"] : this.isUpdateOleOnResize;
 

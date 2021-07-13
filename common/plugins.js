@@ -563,6 +563,10 @@
 			var plugin = this.getPluginByGuid(guid);
 			var runObject = this.runnedPluginsMap[guid];
 
+            var oCopyPr = {
+                Numbering: plugin.get_Variations()[runObject.currentVariation].get_isNeedNumbering()
+            }
+
 			if (!plugin || !runObject || !runObject.startData)
 				return;
 
@@ -580,7 +584,7 @@
 									  }
 						};
 
-						this.api.asc_CheckCopy(text_data, 1);
+						this.api.asc_CheckCopy(text_data, 1, oCopyPr);
 						if (text_data.data == null)
 							text_data.data = "";
 						runObject.startData.setAttribute("data", text_data.data);
