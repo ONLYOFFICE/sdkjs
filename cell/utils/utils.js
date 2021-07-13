@@ -2355,8 +2355,8 @@
 			if (!canvas) {
 				return;
 			}
-			var w = canvas.clientWidth;
-			var h = canvas.clientHeight;
+			var w = canvas.width;
+			var h = canvas.height;
 
 			var ctx = new Asc.DrawingContext({canvas: canvas, units: 0/*px*/, fmgrGraphics: wb.fmgrGraphics, font: wb.m_oFont});
 			var graphics = getGraphics(ctx);
@@ -2376,8 +2376,8 @@
 			if (!canvas) {
 				return;
 			}
-			var w = canvas.clientWidth;
-			var h = canvas.clientHeight;
+			var w = canvas.width;
+			var h = canvas.height;
 
 			var ctx = new Asc.DrawingContext({canvas: canvas, units: 0/*px*/, fmgrGraphics: wb.fmgrGraphics, font: wb.m_oFont});
 			var graphics = getGraphics(ctx);
