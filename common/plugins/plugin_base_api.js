@@ -361,7 +361,7 @@ window.startPluginApi = function() {
 	 */
 	Plugin.callCommand = function(func, isClose, isCalc, callback)
     {
-        var _txtFunc = "var Asc = {}; Asc.scope = " + JSON.stringify(window.Asc.scope) + "; var scope = Asc.scope; (" + func.toString() + ")();";
+        var _txtFunc = "var Asc = {}; Asc.scope = " + JSON.stringify(window.Asc.scope) + "; var scope = Asc.scope; return (" + func.toString() + ")();";
         var _type = (isClose === true) ? "close" : "command";
         window.Asc.plugin.info.recalculate = (false === isCalc) ? false : true;
         window.Asc.plugin.executeCommand(_type, _txtFunc, callback);
