@@ -6354,7 +6354,7 @@
 			var res = c_oSerConstants.ReadOk;
 			if(c_oSer_QueryTableDeletedField.Name == type)
 			{
-				pQueryTableDeletedField.Name = this.stream.GetString2LE(length);
+				pQueryTableDeletedField.name = this.stream.GetString2LE(length);
 			}
 			else
 				res = c_oSerConstants.ReadUnknown;
