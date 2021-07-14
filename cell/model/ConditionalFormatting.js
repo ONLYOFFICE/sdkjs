@@ -1742,24 +1742,11 @@
 			this.AxisColor = readColor();
 		}
 	};
-	CDataBar.prototype.asc_getPreview = function (api, id) {
-		var color = this.Color;
-		var aColors = [];
-		var isReverse = this.Direction === AscCommonExcel.EDataBarDirection.rightToLeft;
-		if (color) {
-			if (this.Gradient) {
-				var endColor = getDataBarGradientColor(color);
-				if (isReverse) {
-					aColors = [endColor, color];
-				} else {
-					aColors = [color, endColor];
-				}
-			} else {
-				aColors = [color];
-			}
-		}
-
-		AscCommonExcel.drawGradientPreview(id, api.wb, aColors, new AscCommon.CColor(202, 202, 202)/*this.settings.cells.defaultState.border*/, this.BorderColor, isReverse ? - 0.75 : 0.75, 2);
+	CDataBar.prototype.asc_setInterfaceDefault = function () {
+		//ms всегда создаёт правило с такими настройками, хотя в документации други дефолтовые значения
+		//дёргаем этот метод при создании нового правила из интерфейса
+		this.MinLength = 0;
+		this.MaxLength = 100;
 	};
 	CDataBar.prototype.asc_getShowValue = function () {
 		return this.ShowValue;
@@ -2764,6 +2751,7 @@
 	prot['asc_setColors'] = prot.asc_setColors;
 
 	prot = CDataBar.prototype;
+	prot['asc_setInterfaceDefault'] = prot.asc_setInterfaceDefault;
 	prot['asc_getShowValue'] = prot.asc_getShowValue;
 	prot['asc_getAxisPosition'] = prot.asc_getAxisPosition;
 	prot['asc_getGradient'] = prot.asc_getGradient;
