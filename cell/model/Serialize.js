@@ -2259,9 +2259,8 @@
         this.WriteQueryTableDeletedField = function (queryTableDeletedField) {
             var oThis = this;
             if (null != queryTableDeletedField.name) {
-                this.bs.WriteItem(c_oSer_QueryTableDeletedField.Name, function () {
-                    oThis.memory.WriteString2(queryTableDeletedField.name);
-                });
+				this.memory.WriteByte(c_oSer_QueryTableDeletedField.Name);
+				this.memory.WriteString2(queryTableDeletedField.name);
             }
         };
     }
@@ -7359,7 +7358,7 @@
 				return oThis.ReadDxf(t, l, dxf);
 			});
 			return dxf;
-		}
+		};
         this.ReadTableStyles = function(type, length, oTableStyles, oCustomStyles)
         {
             var res = c_oSerConstants.ReadOk;
