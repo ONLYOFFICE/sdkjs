@@ -25237,7 +25237,7 @@ CDocument.prototype.ConvertTextToTable = function(oProps)
 				IsReplace = true;
 			}
 		}
-		else if (oSelectedContent.HaveTable && oSelectedContent.Elements[ElCount-1].Element.IsTable())
+		else if (oSelectedContent.HaveTable)// && oSelectedContent.Elements[ElCount-1].Element.IsTable())
 		{
 			IsReplace = true;
 		}
@@ -25349,9 +25349,12 @@ CDocument.prototype.private_ConvertTextToTable = function(oSelectedContent, oPro
 		{
 			var oCellContent = oTable.GetRow(i).GetCell(j).GetContent();
 			// oCellContent.ClearConten(false);
-			oCellContent.AddContent([oArrRows[i][j]]);
-			if (oArrRows[i][j].IsTable())
-				haveTable = true;
+			if (oArrRows[i][j])
+			{
+				oCellContent.AddContent([oArrRows[i][j]]);
+				if (oArrRows[i][j].IsTable())
+					haveTable = true;
+			}
 		}
 	}
 	oTable.SelectAll();
