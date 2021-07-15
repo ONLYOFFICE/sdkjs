@@ -6540,6 +6540,10 @@ function RangeDataManagerElem(bbox, data)
 			var deleted = this.TableColumns.splice(startCol, diff);
 			this.removeDependencies(deleted);
 
+			if (this.QueryTable) {
+				this.QueryTable.deleteTableColumns(deleted);
+			}
+
 			//todo undo
 			var deletedMap = {};
 			for (var i = 0; i < deleted.length; ++i) {
@@ -10018,6 +10022,18 @@ QueryTable.prototype.clone = function() {
 	return res;
 };
 
+QueryTable.prototype.deleteTableColumns = function(deletedTableColumns) {
+	if (!deletedTableColumns) {
+		return;
+	}
+
+	if (this.queryTableRefresh) {
+		this.queryTableRefresh.deleteTableColumns(deletedTableColumns);
+	}
+};
+
+
+
 /** @constructor */
 function QueryTableRefresh() {
 	this.queryTableDeletedFields = null;
@@ -10048,6 +10064,31 @@ QueryTableRefresh.prototype.clone = function() {
 	res.unboundColumnsRight = this.unboundColumnsRight;
 
 	return res;
+};
+QueryTableRefresh.prototype.deleteTableColumns = function(deletedTableColumns) {
+	if (!deletedTableColumns) {
+		return;
+	}
+
+	if (this.queryTableFields) {
+		for (var i = 0; i < deletedTableColumns.length; i++) {
+			for (var j = 0; j < this.queryTableFields.length; j++) {
+				if (deletedTableColumns[i].queryTableFieldId === this.queryTableFields[j].tableColumnId) {
+					var deletedField = this.queryTableFields.splice(j, 1);
+					this.addDeletedField(deletedField[0]);
+					j--;
+				}
+			}
+		}
+	}
+};
+QueryTableRefresh.prototype.addDeletedField = function(deletedField) {
+	if (!this.queryTableDeletedFields) {
+		this.queryTableDeletedFields = [];
+	}
+	var newDeletedField = new QueryTableDeletedField();
+	newDeletedField.name = deletedField.name;
+	this.queryTableDeletedFields.push(newDeletedField);
 };
 
 
