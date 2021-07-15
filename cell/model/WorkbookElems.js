@@ -6542,6 +6542,7 @@ function RangeDataManagerElem(bbox, data)
 
 			if (this.QueryTable) {
 				this.QueryTable.deleteTableColumns(deleted);
+				this.QueryTable.syncIndexes(this.TableColumns);
 			}
 
 			//todo undo
@@ -6585,6 +6586,10 @@ function RangeDataManagerElem(bbox, data)
 
 		this.TableColumns = newTableColumns;
 
+		if (this.QueryTable) {
+			this.QueryTable.syncIndexes(this.TableColumns);
+		}
+
 		/*if(this.SortState && this.SortState.SortConditions && this.SortState.SortConditions[0])
 		 {
 		 var SortConditions = this.SortState.SortConditions[0];
@@ -6610,6 +6615,9 @@ function RangeDataManagerElem(bbox, data)
 		newTableColumns[newTableColumns.length - 1].Name = autoFilters._generateColumnName2(newTableColumns);
 
 		this.TableColumns = newTableColumns;
+		if (this.QueryTable) {
+			this.QueryTable.syncIndexes(this.TableColumns);
+		}
 		this.buildDependencies();
 	};
 
@@ -10031,6 +10039,14 @@ QueryTable.prototype.deleteTableColumns = function(deletedTableColumns) {
 		this.queryTableRefresh.deleteTableColumns(deletedTableColumns);
 	}
 };
+QueryTable.prototype.syncIndexes = function(tableColumns) {
+	//при удалении приходится меняться tableColumnId, поскольку id  у колонок таблиц у нас формируются на сохранение
+	//а соотсетствие именно по id tableColumn
+
+	if (this.queryTableRefresh) {
+		this.queryTableRefresh.syncIndexes(tableColumns);
+	}
+};
 
 
 
@@ -10076,7 +10092,6 @@ QueryTableRefresh.prototype.deleteTableColumns = function(deletedTableColumns) {
 				if (deletedTableColumns[i].queryTableFieldId === this.queryTableFields[j].tableColumnId) {
 					var deletedField = this.queryTableFields.splice(j, 1);
 					this.addDeletedField(deletedField[0]);
-					j--;
 				}
 			}
 		}
@@ -10089,6 +10104,20 @@ QueryTableRefresh.prototype.addDeletedField = function(deletedField) {
 	var newDeletedField = new QueryTableDeletedField();
 	newDeletedField.name = deletedField.name;
 	this.queryTableDeletedFields.push(newDeletedField);
+};
+QueryTableRefresh.prototype.syncIndexes = function(tableColumns) {
+	//при удалении приходится меняться tableColumnId, поскольку id  у колонок таблиц у нас формируются на сохранение
+	//а соотсетствие именно по id tableColumn
+
+	if (this.queryTableFields) {
+		for (var i = 0; i < tableColumns.length; i++) {
+			for (var j = 0; j < this.queryTableFields.length; j++) {
+				if (tableColumns[i].queryTableFieldId === this.queryTableFields[j].tableColumnId) {
+					this.queryTableFields[j].tableColumnId = i + 1;
+				}
+			}
+		}
+	}
 };
 
 
