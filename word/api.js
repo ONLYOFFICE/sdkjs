@@ -8886,6 +8886,26 @@ background-repeat: no-repeat;\
 			oLogicDocument.RemoveSelection();
 			oContentControl.SelectContentControl();
 
+			if (oContentControl.IsFixedForm())
+			{
+				var oShape = oContentControl.GetFixedFormWrapperShape();
+				if (!oShape || !(oShape.parent instanceof ParaDrawing))
+					return;
+
+				oLogicDocument.Select_DrawingObject(oShape.parent.GetId());
+				if (!oLogicDocument.IsSelectionLocked(AscCommon.changestype_Remove))
+				{
+					oLogicDocument.StartAction(AscDFH.historydescription_Document_RemoveContentControl);
+					oLogicDocument.Remove(-1, true, false, false, false);
+					oLogicDocument.Recalculate();
+					oLogicDocument.UpdateInterface();
+					oLogicDocument.UpdateSelection();
+					oLogicDocument.FinalizeAction();
+				}
+
+				return;
+			}
+
 			if (c_oAscSdtLevelType.Block === oContentControl.GetContentControlType())
 			{
 				isLocked = oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_None, {
