@@ -2177,7 +2177,7 @@ CInlineLevelSdt.prototype.CheckHitInContentControlByXY = function(X, Y, nPageAbs
 		for (var sKey in this.Bounds)
 		{
 			var oBounds = this.Bounds[sKey];
-			if (oParagraph.GetAbsolutePage(oBound.PageInternal) === nPageAbs && oBounds.X <= _X && _X <= oBounds.X + oBounds.W && oBounds.Y <= _Y && _Y <= oBounds.Y + oBounds.H)
+			if (oParagraph.GetAbsolutePage(oBounds.PageInternal) === nPageAbs && oBounds.X <= _X && _X <= oBounds.X + oBounds.W && oBounds.Y <= _Y && _Y <= oBounds.Y + oBounds.H)
 				return true;
 		}
 	}
