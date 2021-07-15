@@ -1424,7 +1424,7 @@ Paragraph.prototype.GetEndInfoByPage = function(CurPage)
 {
 	// Здесь может приходить отрицательное значение
 	if (CurPage < 0)
-		return this.Parent.GetPrevElementEndInfo(this);
+		return this.Parent ? this.Parent.GetPrevElementEndInfo(this) : null;
 	else
 		return this.Pages[CurPage].EndInfo.Copy();
 };
