@@ -6781,6 +6781,7 @@ background-repeat: no-repeat;\
 					var oCommentData = oComment.GetData().Copy();
 					oCommentData.SetSolved(true);
 					oComment.SetData(oCommentData);
+					this.sync_ChangeCommentData(arrCommentsId[nIndex], oCommentData);
 				}
 			}
 
