@@ -2305,6 +2305,11 @@ PasteProcessor.prototype =
 				if (oDocument.Footnotes && oDocument.Footnotes.CurFootnote)
 					oDocument = oDocument.Footnotes.CurFootnote
 			}
+			else if (nDocPosType === docpostype_Endnotes)
+			{
+				if (oDocument.Endnotes && oDocument.Endnotes.CurEndnote)
+					oDocument = oDocument.Endnotes.CurEndnote
+			}
 
 			// Отдельно обрабатываем случай, когда курсор находится внутри таблицы
 			var Item = oDocument.Content[oDocument.CurPos.ContentPos];
