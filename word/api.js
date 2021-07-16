@@ -8889,7 +8889,7 @@ background-repeat: no-repeat;\
 			if (oContentControl.IsFixedForm())
 			{
 				var oShape = oContentControl.GetFixedFormWrapperShape();
-				if (!oShape || !(oShape.parent instanceof ParaDrawing))
+				if (!oShape || !(oShape.parent instanceof AscCommonWord.ParaDrawing))
 					return;
 
 				oLogicDocument.Select_DrawingObject(oShape.parent.GetId());
