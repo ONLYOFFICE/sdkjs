@@ -2468,7 +2468,8 @@
 							newArrRows.push(newArrCells);
 							newArrCells = [];
 						}
-						newArrCells.push((tmpArr[i]) ? tmpArr[i] : new Paragraph(this.Document.DrawingDocument, this.Document));
+						// newArrCells.push((tmpArr[i]) ? tmpArr[i] : new Paragraph(this.Document.DrawingDocument, this.Document));
+						newArrCells.push((tmpArr[i]) ? tmpArr[i] : null);
 					}
 
 					if (newArrCells.length)
@@ -2484,7 +2485,8 @@
 						for (var j = 0; j < (count - size.cols); j++)
 						{
 							var oNewParagraph = new Paragraph(this.Document.DrawingDocument, this.Document);
-							this.ArrRows[i].push(oNewParagraph);
+							// this.ArrRows[i].push(oNewParagraph);
+							this.ArrRows[i].push(null);
 						}
 					}
 				}
