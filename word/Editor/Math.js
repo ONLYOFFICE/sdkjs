@@ -2491,9 +2491,9 @@ ParaMath.prototype.Is_BrkBinBefore = function()
 
     return this.Is_Inline() ? false : MathSettings.Get_BrkBin() == BREAK_BEFORE;
 };
-ParaMath.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange)
+ParaMath.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPage)
 {
-    this.Root.Shift_Range(Dx, Dy, _CurLine, _CurRange);
+    this.Root.Shift_Range(Dx, Dy, _CurLine, _CurRange, _CurPage);
 };
 //-----------------------------------------------------------------------------------
 // Функция для работы с формулой

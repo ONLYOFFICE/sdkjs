@@ -3462,12 +3462,12 @@ Paragraph.prototype.ReDraw = function()
 {
 	this.Parent.OnContentReDraw(this.Get_AbsolutePage(0), this.Get_AbsolutePage(this.Pages.length - 1));
 };
-Paragraph.prototype.Shift = function(PageIndex, Dx, Dy)
+Paragraph.prototype.Shift = function(CurPage, Dx, Dy)
 {
 	if (!this.IsRecalculated())
 		return;
 
-	if (0 === PageIndex)
+	if (0 === CurPage)
 	{
 		this.X += Dx;
 		this.Y += Dy;
@@ -3478,10 +3478,10 @@ Paragraph.prototype.Shift = function(PageIndex, Dx, Dy)
 		this.X_ColumnEnd += Dx;
 	}
 
-	this.Pages[PageIndex].Shift(Dx, Dy);
+	this.Pages[CurPage].Shift(Dx, Dy);
 
-	var StartLine = this.Pages[PageIndex].StartLine;
-	var EndLine   = this.Pages[PageIndex].EndLine;
+	var StartLine = this.Pages[CurPage].StartLine;
+	var EndLine   = this.Pages[CurPage].EndLine;
 
 	for (var CurLine = StartLine; CurLine <= EndLine; CurLine++)
 		this.Lines[CurLine].Shift(Dx, Dy);
@@ -3501,7 +3501,7 @@ Paragraph.prototype.Shift = function(PageIndex, Dx, Dy)
 			for (var Pos = StartPos; Pos <= EndPos; Pos++)
 			{
 				var Item = this.Content[Pos];
-				Item.Shift_Range(Dx, Dy, CurLine, CurRange);
+				Item.Shift_Range(Dx, Dy, CurLine, CurRange, CurPage);
 			}
 		}
 	}

@@ -1552,14 +1552,14 @@ CMathContent.prototype.setPosition = function(pos, PosInfo)
             this.Content[Pos].setPosition(pos, PosInfo);
     }
 };
-CMathContent.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange)
+CMathContent.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPage)
 {
     var CurLine  = _CurLine - this.StartLine;
     var CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
 
     this.Bounds.ShiftPos(CurLine, CurRange, Dx, Dy);
 
-	CParagraphContentWithParagraphLikeContent.prototype.Shift_Range.call(this, Dx, Dy, _CurLine, _CurRange);
+	CParagraphContentWithParagraphLikeContent.prototype.Shift_Range.call(this, Dx, Dy, _CurLine, _CurRange, _CurPage);
 };
 CMathContent.prototype.SetParent = function(Parent, ParaMath)
 {

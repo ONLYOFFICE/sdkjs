@@ -5696,13 +5696,18 @@ ParaRun.prototype.Get_Range_VisibleWidth = function(RangeW, _CurLine, _CurRange)
     }
 };
 
-ParaRun.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange)
+ParaRun.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPage)
 {
 	var CurLine  = _CurLine - this.StartLine;
 	var CurRange = (0 === CurLine ? _CurRange - this.StartRange : _CurRange);
 
 	var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
 	var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
+
+	var nPageAbs   = undefined;
+	var oParagraph = this.GetParagraph();
+	if (oParagraph)
+		nPageAbs = oParagraph.GetAbsolutePage(_CurPage);
 
 	for (var CurPos = StartPos; CurPos < EndPos; CurPos++)
 	{
@@ -5719,7 +5724,7 @@ ParaRun.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange)
 					Dx = 0;
 			}
 
-			Item.Shift(Dx, Dy);
+			Item.Shift(Dx, Dy, nPageAbs);
 		}
 	}
 };

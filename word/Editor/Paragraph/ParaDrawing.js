@@ -1508,8 +1508,11 @@ ParaDrawing.prototype.selectionIsEmpty = function()
 ParaDrawing.prototype.recalculateDocContent = function()
 {
 };
-ParaDrawing.prototype.Shift = function(Dx, Dy)
+ParaDrawing.prototype.Shift = function(Dx, Dy, nPageAbs)
 {
+	if (undefined !== nPageAbs)
+		this.PageNum = nPageAbs;
+
 	this.ShiftX += Dx;
 	this.ShiftY += Dy;
 	this.X = this.OrigX + this.ShiftX;
