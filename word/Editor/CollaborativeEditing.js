@@ -49,6 +49,8 @@ function CWordCollaborativeEditing()
     this.m_aForeignCursorsToShow = {};
 
     this.m_aSkipContentControlsOnCheckEditingLock = {};
+
+    this.CheckLockCallback = null;
 }
 
 CWordCollaborativeEditing.prototype = Object.create(AscCommon.CCollaborativeEditingBase.prototype);
@@ -232,7 +234,7 @@ CWordCollaborativeEditing.prototype.Check_MergeData = function()
     var LogicDocument = editor.WordControl.m_oLogicDocument;
     LogicDocument.Comments.Check_MergeData();
 };
-CWordCollaborativeEditing.prototype.OnEnd_CheckLock = function(DontLockInFastMode)
+CWordCollaborativeEditing.prototype.OnEnd_CheckLock = function(DontLockInFastMode, fCallback)
 {
     var aIds = [];
 
@@ -242,18 +244,33 @@ CWordCollaborativeEditing.prototype.OnEnd_CheckLock = function(DontLockInFastMod
         var oItem = this.m_aCheckLocks[Index];
 
         if (true === oItem) // сравниваем по значению и типу обязательно
-            return true;
+		{
+			if (fCallback)
+				fCallback(false);
+
+			this.CheckLockCallback = null;
+			return true;
+		}
         else if (false !== oItem)
-            aIds.push(oItem);
+		{
+			aIds.push(oItem);
+		}
     }
 
     if (true === DontLockInFastMode && true === this.Is_Fast())
-        return false;
+	{
+		if (fCallback)
+			fCallback(true);
+
+		this.CheckLockCallback = null;
+		return false;
+	}
 
     if (aIds.length > 0)
     {
         // Отправляем запрос на сервер со списком Id
         editor.CoAuthoringApi.askLock(aIds, this.OnCallback_AskLock);
+		this.CheckLockCallback = fCallback ? fCallback : null;
 
         // Ставим глобальный лок, только во время совместного редактирования
         if (-1 === this.m_nUseType)
@@ -282,6 +299,13 @@ CWordCollaborativeEditing.prototype.OnEnd_CheckLock = function(DontLockInFastMod
             this.m_aCheckLocks.length = 0;
         }
     }
+    else
+	{
+		if (fCallback)
+			fCallback(false);
+
+		this.CheckLockCallback = null;
+	}
 
     return false;
 };
@@ -290,6 +314,7 @@ CWordCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
     var oThis   = AscCommon.CollaborativeEditing;
     var oEditor = editor;
 
+    var isLock = false;
     if (true === oThis.Get_GlobalLock())
     {
         // Здесь проверяем есть ли длинная операция, если она есть, то до ее окончания нельзя делать
@@ -319,7 +344,9 @@ CWordCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
                     }
                 }
             }
-        }
+
+			isLock = false;
+		}
         else if (result["error"])
         {
             // Если у нас началось редактирование диаграммы, а вернулось, что ее редактировать нельзя,
@@ -330,10 +357,18 @@ CWordCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
             // Делаем откат на 1 шаг назад и удаляем из Undo/Redo эту последнюю точку
             oEditor.WordControl.m_oLogicDocument.Document_Undo();
             AscCommon.History.Clear_Redo();
+
+			isLock = true;
         }
 
         oEditor.isChartEditor = false;
     }
+
+    if (this.CheckLockCallback)
+	{
+		this.CheckLockCallback(!isLock);
+		this.CheckLockCallback = null;
+	}
 };
 CWordCollaborativeEditing.prototype.AddContentControlForSkippingOnCheckEditingLock = function(oContentControl)
 {

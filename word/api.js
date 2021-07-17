@@ -459,6 +459,11 @@
 
 			var _obj = null;
 
+			function private_CheckLockCallback(isSuccess)
+			{
+				console.log("CheckLock " + isSuccess);
+			}
+
 			while (this.current < this.documents.length) // no recursion
 			{
 				var _current = this.documents[this.current];
@@ -470,15 +475,16 @@
 				{
 					var _internalId     = _current["Props"]["InternalId"];
 					var _contentControl = g_oTableId.Get_ById(_internalId);
-					_isLocked = LogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_None, {
+					_isLocked = LogicDocument.IsSelectionLocked(AscCommon.changestype_None, {
 						Type      : AscCommon.changestype_2_ElementsArray_and_Type,
 						Elements  : [_contentControl],
 						CheckType : AscCommon.changestype_Document_Content_Add
-					});
+					}, false, false, private_CheckLockCallback);
 				}
 				else
 				{
-					_isLocked = LogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Document_Content_Add);
+					_isLocked = LogicDocument.IsSelectionLocked(AscCommon.changestype_Document_Content_Add,
+						undefined, false, false, private_CheckLockCallback);
 				}
 
 				if (false === _isLocked)
