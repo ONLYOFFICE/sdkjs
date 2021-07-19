@@ -1511,7 +1511,7 @@
 			if (!_color1 && !_color2) {
 				return true;
 			}
-			if (_color1 && _color2 && _color2.isEqual(_color2)) {
+			if (_color1 && _color2 && _color1.isEqual(_color2)) {
 				return true;
 			}
 			return false;
