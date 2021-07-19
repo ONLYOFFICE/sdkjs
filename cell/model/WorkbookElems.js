@@ -5852,6 +5852,7 @@ function RangeDataManagerElem(bbox, data)
 		return unionRange.isSingleRange() ? unionRange : result;
 	};
 	sparklineGroup.prototype.setSparklinesFromRange = function (dataRange, locationRange, addToHistory) {
+		var t = this;
 		var isVertLocationRange = locationRange.c1 === locationRange.c2;
 		var count = !isVertLocationRange ? locationRange.c2 - locationRange.c1 + 1 :
 			locationRange.r2 - locationRange.r1 + 1;
@@ -5866,7 +5867,10 @@ function RangeDataManagerElem(bbox, data)
 			var _r2 = isVertDataRange ? dataRange.r1 + i : dataRange.r2;
 			var _c1 = !isVertDataRange ? dataRange.c1 + i: dataRange.c1;
 			var _c2 = !isVertDataRange ? dataRange.c1 + i: dataRange.c2;
-			var f = (dataRange.sheet ? dataRange.sheet : this.worksheet.sName) + "!" + new Asc.Range(_c1, _r1, _c2, _r2).getName();
+			var f;
+			AscCommonExcel.executeInR1C1Mode(false, function () {
+				f = (dataRange.sheet ? dataRange.sheet : t.worksheet.sName) + "!" + new Asc.Range(_c1, _r1, _c2, _r2).getName();
+			});
 			sL.setF(f);
 
 			var _col = !isVertLocationRange ? locationRange.c1 + i : locationRange.c1;
