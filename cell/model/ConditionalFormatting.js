@@ -777,10 +777,11 @@
 	CConditionalFormattingRule.prototype.getIndexRule = function (values, ws, value) {
 		var valueCFVO;
 		var aCFVOs = this._getCFVOs();
+		var bReverse = this.aRuleElements && this.aRuleElements[0] && this.aRuleElements[0].Reverse;
 		for (var i = aCFVOs.length - 1; i >= 0; --i) {
 			valueCFVO = this._getValue(values, aCFVOs[i], ws);
 			if (value > valueCFVO || (aCFVOs[i].Gte && value === valueCFVO)) {
-				return i;
+				return bReverse ? aCFVOs.length - 1 - i : i;
 			}
 		}
 		return 0;
