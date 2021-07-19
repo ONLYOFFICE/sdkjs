@@ -5667,9 +5667,36 @@ CPresentation.prototype.GetAddedTextOnKeyDown = function (e) {
     return [];
 };
 
-CPresentation.prototype.Get_PresentationBulletByNumInfo = function (NumInfo) {
-    return AscFormat.fGetPresentationBulletByNumInfo(NumInfo);
+CPresentation.prototype.ConvertEquationToMath = function(oEquation, isAll) {
+    if(isAll) {
+        var aEquations = [];
+        var aSlides = this.Slides;
+        for(var nSlide = 0; nSlide < aSlides.length; ++nSlide) {
+            var oSlide = aSlides[nSlide];
+            var aSpTree = oSlide.cSld.spTree;
+            for(var nSp = 0; nSp < aSpTree.length; ++nSp) {
+                aSpTree[nSp].collectEquations3(aSpTree[nSp]);
+            }
+        }
+        if(aEquations.length > 0) {
+            if(this.Document_Is_SelectionLocked(AscCommon.changestype_Drawing_Props, undefined, undefined, aEquations)) {
+                AscCommon.History.Create_NewPoint(0);
+                for(var nEquation = 0; nEquation < aEquations.length; ++nEquation) {
+                    aEquations[nEquation].replaceToMath();
+                }
+                this.Recalculate();
+            }
+        }
+    }
+    else {
+        if(this.Document_Is_SelectionLocked(AscCommon.changestype_Drawing_Props, undefined, undefined, [oEquation])) {
+            AscCommon.History.Create_NewPoint(0);
+            oEquation.replaceToMath();
+            this.Recalculate();
+        }
+    }
 };
+
 
 CPresentation.prototype.SetParagraphAlign = function (Align) {
 

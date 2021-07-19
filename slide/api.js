@@ -7345,6 +7345,28 @@ background-repeat: no-repeat;\
 
         return oLogicDocument.GetAddedTextOnKeyDown(e);
     };
+	asc_docs_api.prototype.sync_OnConvertEquationToMath = function(oEquation)
+	{
+		this.sendEvent("asc_onConvertEquationToMath", oEquation);
+	};
+	asc_docs_api.prototype.asc_ConvertEquationToMath = function(oEquation, isAll)
+	{
+		var oLogicDocument = this.WordControl.m_oLogicDocument;
+
+		// TODO: Вообще здесь нужно запрашивать шрифты, которые использовались в старой формуле,
+		//      но пока это только 1 шрифт "Cambria Math".
+		var loader   = AscCommon.g_font_loader;
+		var fontinfo = g_fontApplication.GetFontInfo("Cambria Math");
+		var isasync  = loader.LoadFont(fontinfo, function()
+		{
+			oLogicDocument.ConvertEquationToMath(oEquation, isAll);
+		}, this);
+
+		if (false === isasync)
+		{
+			oLogicDocument.ConvertEquationToMath(oEquation, isAll);
+		}
+	};
 
     //test
 	window["asc_docs_api"]                                 = asc_docs_api;
@@ -8225,6 +8247,9 @@ background-repeat: no-repeat;\
 	// password
 	asc_docs_api.prototype["asc_setCurrentPassword"] 				= asc_docs_api.prototype.asc_setCurrentPassword;
 	asc_docs_api.prototype["asc_resetPassword"] 					= asc_docs_api.prototype.asc_resetPassword;
+
+	asc_docs_api.prototype["sync_OnConvertEquationToMath"] 		    = asc_docs_api.prototype.sync_OnConvertEquationToMath;
+	asc_docs_api.prototype["asc_ConvertEquationToMath"] 		    = asc_docs_api.prototype.asc_ConvertEquationToMath;
 
 
 	window['Asc']['asc_CCommentData'] = window['Asc'].asc_CCommentData = asc_CCommentData;

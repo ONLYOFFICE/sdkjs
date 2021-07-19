@@ -734,6 +734,16 @@
 
     CGraphicObjectBase.prototype.getAllFonts = function(mapUrl){
     };
+    CGraphicObjectBase.prototype.collectEquations3 = function(aEquations) {
+        if(Array.isArray(this.spTree)) {
+            for(var nSp = 0; nSp < this.spTree.length; ++nSp) {
+                this.spTree[nSp].collectEquations3(aEquations);
+            }
+        }
+        if(this.m_oMathObject) {
+            aEquations.push(this);
+        }
+    };
 
     CGraphicObjectBase.prototype.getOuterShdw = function(){
         if(this.spPr && this.spPr.effectProps && this.spPr.effectProps.EffectLst && this.spPr.effectProps.EffectLst.outerShdw)

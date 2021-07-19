@@ -231,14 +231,23 @@ function CGroupShape()
         this.group = group;
     };
 
-    CGroupShape.prototype.removeFromSpTree = function(id)
-    {
+    CGroupShape.prototype.getPosInSpTree = function(id) {
         for(var i = this.spTree.length-1; i > -1 ; --i)
         {
             if(this.spTree[i].Get_Id() === id)
             {
-                return this.removeFromSpTreeByPos(i);
+                return i;
             }
+        }
+        return null;
+    };
+
+    CGroupShape.prototype.removeFromSpTree = function(id)
+    {
+        var nPos = this.getPosInSpTree(id);
+        if(nPos !== null)
+        {
+            return this.removeFromSpTreeByPos(nPos);
         }
         return null;
     };

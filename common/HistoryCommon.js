@@ -2723,6 +2723,7 @@
 	window['AscDFH'].historyitem_ImageShapeSetObjectFile	= window['AscDFH'].historyitem_type_ImageShape | 10;
 	window['AscDFH'].historyitem_ImageShapeSetOleType   	= window['AscDFH'].historyitem_type_ImageShape | 11;
 	window['AscDFH'].historyitem_ImageShapeSetBinaryData   	= window['AscDFH'].historyitem_type_ImageShape | 12;
+	window['AscDFH'].historyitem_ImageShapeSetMathObject   	= window['AscDFH'].historyitem_type_ImageShape | 13;
 
 	window['AscDFH'].historyitem_GeometrySetParent      = window['AscDFH'].historyitem_type_Geometry | 1;
 	window['AscDFH'].historyitem_GeometryAddAdj         = window['AscDFH'].historyitem_type_Geometry | 2;

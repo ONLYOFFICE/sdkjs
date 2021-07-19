@@ -17161,6 +17161,7 @@ window['AscCommonWord'] = window['AscCommonWord'] || {};
 window["AscCommonWord"].BinaryFileReader = BinaryFileReader;
 window["AscCommonWord"].BinaryFileWriter = BinaryFileWriter;
 window["AscCommonWord"].EThemeColor = EThemeColor;
+window["AscCommonWord"].c_oSer_OMathContentType = c_oSer_OMathContentType;
 window["AscCommonWord"].DocReadResult = DocReadResult;
 window["AscCommonWord"].DocSaveParams = DocSaveParams;
 window["AscCommonWord"].CreateThemeUnifill = CreateThemeUnifill;
