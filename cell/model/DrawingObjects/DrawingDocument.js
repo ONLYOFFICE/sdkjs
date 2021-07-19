@@ -1722,7 +1722,6 @@ function CDrawingDocument()
                     y += (line_w + line_distance);
                 }
             }
-
         }
     };
 }

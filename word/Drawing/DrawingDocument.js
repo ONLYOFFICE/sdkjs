@@ -7434,6 +7434,7 @@ function CDrawingDocument()
             return;
         }
 		var elNone = document.getElementById(id[0]);
+		History.TurnOff();
 		if (elNone)
 		{
 			var width_px = elNone.clientWidth;
@@ -7599,8 +7600,8 @@ function CDrawingDocument()
 						text_base_offset_x += text_base_offset_dist;
 				}
 			}
-
 		}
+		History.TurnOn();
 	};
 
 	this.StartTableStylesCheck = function ()
