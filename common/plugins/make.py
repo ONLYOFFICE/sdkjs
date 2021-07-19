@@ -10,6 +10,7 @@ compilation_level = "SIMPLE_OPTIMIZATIONS"
 base.cmd("java", ["-jar", "../../build/node_modules/google-closure-compiler-java/compiler.jar", 
                   "--compilation_level", compilation_level,
                   "--js_output_file", "plugins.js",
+                  "--js", "../device_scale.js", 
                   "--js", "plugin_base.js", 
                   "--js", "plugin_base_api.js"])
 
@@ -21,6 +22,7 @@ endCode = dst_content.find("/*</code>*/")
 
 code_content = code_content.replace("\r", "")
 code_content = code_content.replace("\n", "")
+code_content = code_content.replace("\\", "\\\\")
 code_content = code_content.replace("\"", "\\\"")
 
 content = ""

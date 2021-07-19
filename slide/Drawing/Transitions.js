@@ -94,17 +94,14 @@ function CTransitionAnimation(htmlpage)
 
         var w = _page.m_oEditor.HtmlElement.width;
         var _px_h = _page.m_oEditor.HtmlElement.height;
-        if (this.HtmlPage.bIsRetinaSupport)
-        {
-            w /= AscCommon.AscBrowser.retinaPixelRatio;
-            _px_h /= AscCommon.AscBrowser.retinaPixelRatio;
-        }
+        w /= AscCommon.AscBrowser.retinaPixelRatio;
+        _px_h /= AscCommon.AscBrowser.retinaPixelRatio;
 
         var h = (((_page.m_oBody.AbsolutePosition.B - _page.m_oBody.AbsolutePosition.T) -
             (_page.m_oTopRuler.AbsolutePosition.B - _page.m_oTopRuler.AbsolutePosition.T)) * g_dKoef_mm_to_pix) >> 0;
 
-        var _pageWidth = _page.m_oLogicDocument.Width * g_dKoef_mm_to_pix;
-        var _pageHeight = _page.m_oLogicDocument.Height * g_dKoef_mm_to_pix;
+        var _pageWidth = _page.m_oLogicDocument.GetWidthMM() * g_dKoef_mm_to_pix;
+        var _pageHeight = _page.m_oLogicDocument.GetHeightMM() * g_dKoef_mm_to_pix;
 
         var _hor_Zoom = 100;
         if (0 != _pageWidth)
@@ -120,16 +117,16 @@ function CTransitionAnimation(htmlpage)
 
         var dKoef = (_new_value * g_dKoef_mm_to_pix / 100);
 
-        var _slideW = (dKoef * _page.m_oLogicDocument.Width) >> 0;
-        var _slideH = (dKoef * _page.m_oLogicDocument.Height) >> 0;
+        var _slideW = (dKoef * _page.m_oLogicDocument.GetWidthMM()) >> 0;
+        var _slideH = (dKoef * _page.m_oLogicDocument.GetHeightMM()) >> 0;
 
         var _centerX = (w / 2) >> 0;
-        var _centerSlideX = (dKoef * _page.m_oLogicDocument.Width / 2) >> 0;
+        var _centerSlideX = (dKoef * _page.m_oLogicDocument.GetWidthMM() / 2) >> 0;
         var _hor_width_left = Math.min(0, _centerX - (_centerSlideX) - _page.SlideDrawer.CONST_BORDER);
         var _hor_width_right = Math.max(w - 1, _centerX + (_slideW - _centerSlideX) + _page.SlideDrawer.CONST_BORDER);
 
         var _centerY = (_px_h / 2) >> 0;
-        var _centerSlideY = (dKoef * _page.m_oLogicDocument.Height / 2) >> 0;
+        var _centerSlideY = (dKoef * _page.m_oLogicDocument.GetHeightMM() / 2) >> 0;
         var _ver_height_top = Math.min(0, _centerY - _centerSlideY - _page.SlideDrawer.CONST_BORDER);
         var _ver_height_bottom = Math.max(_px_h - 1, _centerX + (_slideH - _centerSlideY) + _page.SlideDrawer.CONST_BORDER);
 
@@ -144,8 +141,8 @@ function CTransitionAnimation(htmlpage)
         var _width = this.HtmlPage.DemonstrationManager.Canvas.width;
         var _height = this.HtmlPage.DemonstrationManager.Canvas.height;
 
-        var _w_mm = this.HtmlPage.m_oLogicDocument.Width;
-        var _h_mm = this.HtmlPage.m_oLogicDocument.Height;
+        var _w_mm = this.HtmlPage.m_oLogicDocument.GetWidthMM();
+        var _h_mm = this.HtmlPage.m_oLogicDocument.GetHeightMM();
 
         // проверим аспект
         var aspectDisplay = _width / _height;
@@ -182,11 +179,7 @@ function CTransitionAnimation(htmlpage)
         if (this.DemonstrationObject == null)
         {
             var ctx1 = this.HtmlPage.m_oEditor.HtmlElement.getContext('2d');
-            if (this.HtmlPage.bIsRetinaSupport)
-                ctx1.setTransform(AscCommon.AscBrowser.retinaPixelRatio, 0, 0, AscCommon.AscBrowser.retinaPixelRatio, 0, 0);
-            else
-                ctx1.setTransform(1, 0, 0, 1, 0, 0);
-
+            ctx1.setTransform(AscCommon.AscBrowser.retinaPixelRatio, 0, 0, AscCommon.AscBrowser.retinaPixelRatio, 0, 0);
             this.HtmlPage.m_oOverlayApi.SetBaseTransform();
         }
         else
@@ -221,8 +214,8 @@ function CTransitionAnimation(htmlpage)
         {
             var _w = this.Rect.w;
             var _h = this.Rect.h;
-            var _w_mm = this.HtmlPage.m_oLogicDocument.Width;
-            var _h_mm = this.HtmlPage.m_oLogicDocument.Height;
+            var _w_mm = this.HtmlPage.m_oLogicDocument.GetWidthMM();
+            var _h_mm = this.HtmlPage.m_oLogicDocument.GetHeightMM();
 
             this.CacheImage1.Image = this.CreateImage(_w, _h);
 
@@ -262,8 +255,8 @@ function CTransitionAnimation(htmlpage)
         {
             var _w = this.Rect.w;
             var _h = this.Rect.h;
-            var _w_mm = this.HtmlPage.m_oLogicDocument.Width;
-            var _h_mm = this.HtmlPage.m_oLogicDocument.Height;
+            var _w_mm = this.HtmlPage.m_oLogicDocument.GetWidthMM();
+            var _h_mm = this.HtmlPage.m_oLogicDocument.GetHeightMM();
 
             this.CacheImage2.Image = this.CreateImage(_w, _h);
 
@@ -317,7 +310,7 @@ function CTransitionAnimation(htmlpage)
         this.StartTime = new Date().getTime();
         this.EndTime = this.StartTime + this.Duration;
 
-        if (this.HtmlPage.bIsRetinaSupport)
+        if (AscCommon.AscBrowser.isCustomScaling())
         {
             var ctx1 = oThis.HtmlPage.m_oEditor.HtmlElement.getContext('2d');
             ctx1.setTransform(AscCommon.AscBrowser.retinaPixelRatio, 0, 0, AscCommon.AscBrowser.retinaPixelRatio, 0, 0);
@@ -2712,8 +2705,8 @@ function CDemonstrationManager(htmlpage)
     {
         var _w = this.Transition.Rect.w;
         var _h = this.Transition.Rect.h;
-        var _w_mm = this.HtmlPage.m_oLogicDocument.Width;
-        var _h_mm = this.HtmlPage.m_oLogicDocument.Height;
+        var _w_mm = this.HtmlPage.m_oLogicDocument.GetWidthMM();
+        var _h_mm = this.HtmlPage.m_oLogicDocument.GetHeightMM();
 
         var _image = this.CacheImagesManager.Lock(_w, _h);
 
@@ -3010,14 +3003,14 @@ function CDemonstrationManager(htmlpage)
         }
 
         var _slides = oThis.HtmlPage.m_oLogicDocument.Slides;
-        var _timing = null;
+        var _transition = null;
         if (is_transition_use && _slides[oThis.SlideNum])
         {
-            _timing = _slides[oThis.SlideNum].timing;
+            _transition = _slides[oThis.SlideNum].transition;
 
-            if (_timing.TransitionType != c_oAscSlideTransitionTypes.None && _timing.TransitionDuration > 0)
+            if (_transition.TransitionType != c_oAscSlideTransitionTypes.None && _transition.TransitionDuration > 0)
             {
-                oThis.StartTransition(_timing, is_first_play, false);
+                oThis.StartTransition(_transition, is_first_play, false);
                 return;
             }
         }
@@ -3052,11 +3045,11 @@ function CDemonstrationManager(htmlpage)
         }
 
         var _slides = oThis.HtmlPage.m_oLogicDocument.Slides;
-        var _timing = _slides[oThis.SlideNum].timing;
+        var _transition = _slides[oThis.SlideNum].transition;
 
-        if (!_is_transition && (_timing.TransitionType != c_oAscSlideTransitionTypes.None && _timing.TransitionDuration > 0))
+        if (!_is_transition && (_transition.TransitionType != c_oAscSlideTransitionTypes.None && _transition.TransitionDuration > 0))
         {
-            oThis.StartTransition(_timing, false, true);
+            oThis.StartTransition(_transition, false, true);
             return;
         }
 
@@ -3077,7 +3070,7 @@ function CDemonstrationManager(htmlpage)
         this.CheckSlideDuration = -1;
     }
 
-    this.StartTransition = function(_timing, is_first, is_backward)
+    this.StartTransition = function(_transition, is_first, is_backward)
     {
         // сначала проверим, создан ли уже оверлей (в идеале спрашивать еще у транзишна, нужен ли ему оверлей)
         // пока так.
@@ -3100,9 +3093,9 @@ function CDemonstrationManager(htmlpage)
             this.DemonstrationDiv.appendChild(oThis.Overlay);
         }
 
-        oThis.Transition.Type = _timing.TransitionType;
-        oThis.Transition.Param = _timing.TransitionOption;
-        oThis.Transition.Duration = _timing.TransitionDuration;
+        oThis.Transition.Type = _transition.TransitionType;
+        oThis.Transition.Param = _transition.TransitionOption;
+        oThis.Transition.Duration = _transition.TransitionDuration;
 
         oThis.PrepareTransition(is_first, is_backward);
         oThis.Transition.Start(false);
@@ -3146,11 +3139,11 @@ function CDemonstrationManager(htmlpage)
         // теперь запустим функцию
 
         var _slides = oThis.HtmlPage.m_oLogicDocument.Slides;
-        var _timing = _slides[oThis.SlideNum] ? _slides[oThis.SlideNum].timing : null;
-        if (!_timing)
+        var _transition = _slides[oThis.SlideNum] ? _slides[oThis.SlideNum].transition : null;
+        if (!_transition)
             return;
 
-        if (_timing.SlideAdvanceAfter === true)
+        if (_transition.SlideAdvanceAfter === true)
         {
             oThis.CheckSlideDuration = setTimeout(function()
             {
@@ -3168,7 +3161,7 @@ function CDemonstrationManager(htmlpage)
 					oThis.TmpSlideVisible = -1;
                 }
             },
-            _timing.SlideAdvanceDuration);
+                _transition.SlideAdvanceDuration);
         }
     }
 
@@ -3526,8 +3519,8 @@ function CDemonstrationManager(htmlpage)
 
             var _w = transition.Rect.w;
             var _h = transition.Rect.h;
-            var _w_mm = oThis.HtmlPage.m_oLogicDocument.Width;
-            var _h_mm = oThis.HtmlPage.m_oLogicDocument.Height;
+            var _w_mm = oThis.HtmlPage.m_oLogicDocument.GetWidthMM();
+            var _h_mm = oThis.HtmlPage.m_oLogicDocument.GetHeightMM();
 
             var _x = global_mouseEvent.X - transition.Rect.x;
             var _y = global_mouseEvent.Y - transition.Rect.y;
@@ -3676,9 +3669,9 @@ function CDemonstrationManager(htmlpage)
             else
             {
                 var _slides = oThis.HtmlPage.m_oLogicDocument.Slides;
-                var _timing = _slides[oThis.SlideNum].timing;
+                var _transition = _slides[oThis.SlideNum].transition;
 
-                if (_timing.SlideAdvanceOnMouseClick === true)
+                if (_transition.SlideAdvanceOnMouseClick === true)
                 {
                     oThis.NextSlide();
                 }

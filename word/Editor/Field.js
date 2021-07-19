@@ -90,7 +90,7 @@ ParaField.prototype.Copy = function(Selected, oPr)
 };
 ParaField.prototype.GetSelectedElementsInfo = function(Info, ContentPos, Depth)
 {
-	Info.Set_Field(this);
+	Info.SetField(this);
 	CParagraphContentWithParagraphLikeContent.prototype.GetSelectedElementsInfo.apply(this, arguments);
 };
 ParaField.prototype.Get_Bounds = function()

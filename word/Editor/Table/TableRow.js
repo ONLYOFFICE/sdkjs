@@ -127,6 +127,7 @@ CTableRow.prototype =
 		for (var Index = 0; Index < CellsCount; Index++)
 		{
 			Row.Content[Index] = this.Content[Index].Copy(Row, oPr);
+			Row.Content[Index].Recalc_CompiledPr();
 			History.Add(new CChangesTableRowAddCell(Row, Index, [Row.Content[Index]]));
 		}
 
@@ -235,6 +236,10 @@ CTableRow.prototype =
     Recalc_CompiledPr : function()
     {
         this.CompiledPr.NeedRecalc = true;
+
+        var oTable = this.GetTable();
+        if (oTable)
+        	oTable.RecalcInfo.RecalcBorders();
     },
 
     // Формируем конечные свойства параграфа на основе стиля и прямых настроек.
@@ -698,7 +703,7 @@ CTableRow.prototype =
             this.Table.RecalcInfo.Add_Cell( this.Get_Cell(CurCell) );
         }
 
-        this.Table.RecalcInfo.Recalc_Borders();
+        this.Table.RecalcInfo.RecalcBorders();
 
         if ( true === bNeedRecalc )
             this.Refresh_RecalcData2( 0, 0 );
@@ -1145,6 +1150,51 @@ CTableRow.prototype.private_UpdateTableGrid = function()
 		oTable.private_UpdateTableGrid();
 };
 
+CTableRow.prototype.FindParaWithStyle = function (sStyleId, bBackward, nStartIdx)
+{
+	var nSearchStartIdx, nIdx, oResult, oContent;
+	if(bBackward)
+	{
+		if(nStartIdx !== null)
+		{
+			nSearchStartIdx = Math.min(nStartIdx, this.Content.length - 1);
+		}
+		else
+		{
+			nSearchStartIdx = this.Content.length - 1;
+		}
+		for(nIdx = nSearchStartIdx; nIdx >= 0; --nIdx)
+		{
+			oContent = this.Content[nIdx].GetContent();
+			oResult = oContent.FindParaWithStyle(sStyleId, bBackward, null);
+			if(oResult)
+			{
+				return oResult
+			}
+		}
+	}
+	else
+	{
+		if(nStartIdx !== null)
+		{
+			nSearchStartIdx = Math.max(nStartIdx, 0);
+		}
+		else
+		{
+			nSearchStartIdx = 0;
+		}
+		for(nIdx = nSearchStartIdx; nIdx < this.Content.length; ++nIdx)
+		{
+			oContent = this.Content[nIdx].GetContent();
+			oResult = oContent.FindParaWithStyle(sStyleId, bBackward, null);
+			if(oResult)
+			{
+				return oResult
+			}
+		}
+	}
+	return null;
+};
 
 function CTableRowRecalculateObject()
 {

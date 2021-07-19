@@ -125,9 +125,12 @@
 	StatisticOnlineAlgorithm.prototype.getStdDevP = function() {
 		return Math.sqrt(this.getVarP());
 	};
+	StatisticOnlineAlgorithm.prototype.isEmpty = function() {
+		return 0 === this.count && 0 === this.countNums;
+	};
 	StatisticOnlineAlgorithm.prototype.getCellValue = function(dataType, fieldType, rowType, colType) {
 		var oCellValue;
-		if (0 === this.count && 0 === this.countNums) {
+		if (this.isEmpty()) {
 			return oCellValue;
 		}
 		oCellValue = new AscCommonExcel.CCellValue();

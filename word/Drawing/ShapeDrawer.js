@@ -891,8 +891,8 @@ CShapeDrawer.prototype =
                 if (undefined == _patt_name)
                     _patt_name = "cross";
 
-                var _fc = _fill.fgClr.RGBA;
-                var _bc = _fill.bgClr.RGBA;
+                var _fc = _fill.fgClr && _fill.fgClr.RGBA || {R: 0, G: 0, B: 0, A: 255};
+                var _bc = _fill.bgClr && _fill.bgClr.RGBA || {R: 255, G: 255, B: 255, A: 255};
 
                 var __fa = (null === this.UniFill.transparent) ? _fc.A : 255;
                 var __ba = (null === this.UniFill.transparent) ? _bc.A : 255;
@@ -1315,8 +1315,8 @@ CShapeDrawer.prototype =
                         if (undefined == _patt_name)
                             _patt_name = "cross";
 
-                        var _fc = _fill.fgClr.RGBA;
-                        var _bc = _fill.bgClr.RGBA;
+                        var _fc = _fill.fgClr && _fill.fgClr.RGBA || {R: 0, G: 0, B: 0, A: 255};
+                        var _bc = _fill.bgClr && _fill.bgClr.RGBA || {R: 255, G: 255, B: 255, A: 255};
 
                         var __fa = (null === this.UniFill.transparent) ? _fc.A : 255;
                         var __ba = (null === this.UniFill.transparent) ? _bc.A : 255;
@@ -1690,7 +1690,7 @@ CShapeDrawer.prototype =
             }
             else
             {
-                grad_a = Math.PI - _grad_45 * (angle - 135) / 45;
+				grad_a = Math.PI / 2 + _grad_90_45 + _grad_45 * (angle - 135) / 45;
             }
 
             var p = this.getNormalPoint(max_x, min_y, grad_a, min_x, max_y);
@@ -1710,7 +1710,7 @@ CShapeDrawer.prototype =
             }
             else
             {
-                grad_a = 3 * Math.PI / 2 - _grad_90_45 * (angle - 225) / 45;
+				grad_a = Math.PI + _grad_45 + _grad_90_45 * (angle - 225) / 45;
             }
 
             var p = this.getNormalPoint(max_x, max_y, grad_a, min_x, min_y);
@@ -1730,7 +1730,7 @@ CShapeDrawer.prototype =
             }
             else
             {
-                grad_a = 2 * Math.PI - _grad_45 * (angle - 315) / 45;
+				grad_a = 3 * Math.PI / 2 + _grad_90_45 + _grad_45 * (angle - 315) / 45;
             }
 
             var p = this.getNormalPoint(min_x, max_y, grad_a, max_x, min_y);
@@ -1813,22 +1813,40 @@ function ShapeToImageConverter(shape, pageIndex)
         _bounds_cheker.Bounds.min_y -= _w_pen;
     }*/
 
-    var _canvas = document.createElement('canvas');
-    _canvas.width = _need_pix_width >> 0;
-    _canvas.height = _need_pix_height >> 0;
+	var _canvas = null;
+	if (window["NATIVE_EDITOR_ENJINE"] === true && window["IS_NATIVE_EDITOR"] !== true)
+	{
+		_need_pix_width = _need_pix_width >> 0;
+		_need_pix_height = _need_pix_height >> 0;
+		_canvas = new CNativeGraphics();
+		_canvas.width  = _need_pix_width;
+		_canvas.height = _need_pix_height;
+		_canvas.create(window["native"], _need_pix_width, _need_pix_height, _need_pix_width / dKoef, _need_pix_height / dKoef);
+		_canvas.CoordTransformOffset(-_bounds_cheker.Bounds.min_x, -_bounds_cheker.Bounds.min_y);
+		_canvas.transform(1, 0, 0, 1, 0, 0);
+		shape.draw(_canvas, 0);
+	}
+	else
+	{
+		_canvas = document.createElement("canvas");
+		_canvas.width = _need_pix_width >> 0;
+		_canvas.height = _need_pix_height >> 0;
+		var _ctx = _canvas.getContext("2d");
+		var g = new AscCommon.CGraphics;
+		g.init(_ctx, w_px, h_px, w_mm, h_mm);
+		g.m_oFontManager = AscCommon.g_fontManager;
+		g.m_oCoordTransform.tx = -_bounds_cheker.Bounds.min_x;
+		g.m_oCoordTransform.ty = -_bounds_cheker.Bounds.min_y;
+		g.transform(1, 0, 0, 1, 0, 0);
+		shape.draw(g, 0);
+	}
 
-    var _ctx = _canvas.getContext('2d');
-
-    var g = new AscCommon.CGraphics();
-    g.init(_ctx, w_px, h_px, w_mm, h_mm);
-    g.m_oFontManager = AscCommon.g_fontManager;
-
-    g.m_oCoordTransform.tx = -_bounds_cheker.Bounds.min_x;
-    g.m_oCoordTransform.ty = -_bounds_cheker.Bounds.min_y;
-    g.transform(1,0,0,1,0,0);
-
-    shape.draw(g, /*pageIndex*/0);
-
+    if (AscCommon.g_fontManager) {
+        AscCommon.g_fontManager.m_pFont = null;
+    }
+    if (AscCommon.g_fontManager2) {
+        AscCommon.g_fontManager2.m_pFont = null;
+    }
     AscCommon.IsShapeToImageConverter = false;
 
     var _ret = { ImageNative : _canvas, ImageUrl : "" };

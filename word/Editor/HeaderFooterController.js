@@ -55,9 +55,9 @@ CHdrFtrController.prototype.CanUpdateTarget = function()
 {
 	return true;
 };
-CHdrFtrController.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY)
+CHdrFtrController.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY, isUpdateTarget)
 {
-	return this.HdrFtr.RecalculateCurPos(bUpdateX, bUpdateY);
+	return this.HdrFtr.RecalculateCurPos(bUpdateX, bUpdateY, isUpdateTarget);
 };
 CHdrFtrController.prototype.GetCurPage = function()
 {

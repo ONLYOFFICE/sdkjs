@@ -854,7 +854,8 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                 this.resizedflipH = this.originalFlipH;
                 this.resizedflipV = this.originalFlipV;
             }
-            if(this.originalObject.getObjectType() && this.originalObject.getObjectType() === AscDFH.historyitem_type_OleObject){
+            if(this.originalObject.signatureLine ||
+                (this.originalObject.getObjectType && this.originalObject.getObjectType() === AscDFH.historyitem_type_OleObject)){
                 this.resizedflipH = false;
                 this.resizedflipV = false;
             }
@@ -1248,7 +1249,9 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                         xfrm.setOffY(this.resizedPosY + this.resizedExtY/2.0  - this.originalObject.extY/2);
                     }
                 }
-                if(this.originalObject.getObjectType() !== AscDFH.historyitem_type_ChartSpace && this.originalObject.getObjectType() !== AscDFH.historyitem_type_GraphicFrame)
+                if(this.originalObject.getObjectType() !== AscDFH.historyitem_type_ChartSpace &&
+                    this.originalObject.getObjectType() !== AscDFH.historyitem_type_GraphicFrame &&
+                    this.originalObject.getObjectType() !== AscDFH.historyitem_type_SlicerView)
                 {
 
                     if(!this.originalObject.isCrop)

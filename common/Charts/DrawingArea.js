@@ -574,7 +574,7 @@ function FrozenPlace(ws, type) {
 	};
 	
 	_this.updateRange = function(object, oRange) {
-		var oClipRange = _this.range.intersectionSimple(oRange)
+		var oClipRange = _this.range.intersectionSimple(oRange);
 		if(!oClipRange) {
 			return;
 		}
@@ -612,6 +612,8 @@ function FrozenPlace(ws, type) {
 			if(AscCommon.AscBrowser.isRetina) {
 				nH = AscCommon.AscBrowser.convertToRetinaValue(nH, true);
 			}
+			autoShapeTrack.m_oOverlay.CheckPoint1(left, y - nH);
+			autoShapeTrack.m_oOverlay.CheckPoint2(right, y + nH);
 			autoShapeTrack.drawImage(sFrozenImageUrl, left, y, right, nH);
 		}
 		else {
@@ -625,6 +627,8 @@ function FrozenPlace(ws, type) {
 			if(AscCommon.AscBrowser.isRetina) {
 				nW = AscCommon.AscBrowser.convertToRetinaValue(nW, true);
 			}
+			autoShapeTrack.m_oOverlay.CheckPoint1(x - nW, top);
+			autoShapeTrack.m_oOverlay.CheckPoint2(x + nW, bottom);
 			autoShapeTrack.drawImage(sFrozenImageRotUrl, x, top, nW, bottom);
 		}
 		else {
@@ -650,8 +654,12 @@ function FrozenPlace(ws, type) {
 			drawingDocument.private_StartDrawSelection(trackOverlay);
 			this.worksheet.objectRender.controller.drawTextSelection();
 			drawingDocument.private_EndDrawSelection();
+			this.worksheet.handlers.trigger("drawMobileSelection", trackOverlay, undefined);
+		}
 
-			this.worksheet.handlers.trigger("drawMobileSelection");
+		if (drawingDocument.MathTrack.IsActive())
+		{
+			drawingDocument.DrawMathTrack(trackOverlay);
 		}
 		ctx.globalAlpha = 1.0;
 		this.worksheet.objectRender.controller.drawSelection(drawingDocument);
@@ -664,40 +672,6 @@ function FrozenPlace(ws, type) {
 		}
 		// Restore
 		_this.restore(autoShapeTrack);
-		var nShadowLength = 10;
-		var fLeft, fTop, fRight, fBottom;
-		if(_this.type === FrozenAreaType.Bottom){
-			//autoShapeTrack.Graphics.put_GlobalAlpha(true, 1);
-			fTop = this.worksheet._getRowTop(_this.frozenCell.row);
-			fLeft = 0;
-			this.drawFrozenPaneBorderHor(autoShapeTrack, fTop, fLeft, autoShapeTrack.Graphics.m_lWidthPix);
-		}
-		else if(_this.type === FrozenAreaType.Right){
-			fTop = 0;
-			fLeft = this.worksheet._getColLeft(_this.frozenCell.col);
-			this.drawFrozenPaneBorderVer(autoShapeTrack, fLeft, fTop, autoShapeTrack.Graphics.m_lHeightPix);
-		}
-		else if(_this.type === FrozenAreaType.RightBottom){
-			//autoShapeTrack.Graphics.put_GlobalAlpha(true, 1);
-			fTop = this.worksheet._getRowTop(_this.frozenCell.row);
-			fLeft = this.worksheet._getColLeft(_this.frozenCell.col);
-			
-			this.drawFrozenPaneBorderHor(autoShapeTrack, fTop, fLeft, autoShapeTrack.Graphics.m_lWidthPix);
-			this.drawFrozenPaneBorderVer(autoShapeTrack, fLeft, fTop, autoShapeTrack.Graphics.m_lHeightPix);
-		}
-		else if(_this.type === FrozenAreaType.LeftBottom){
-			fTop = this.worksheet._getRowTop(_this.frozenCell.row);
-			fLeft = 0;
-			fRight = this.worksheet._getColLeft(_this.frozenCell.col);
-			
-			this.drawFrozenPaneBorderHor(autoShapeTrack, fTop, fLeft, fRight);
-		}
-		else if(_this.type === FrozenAreaType.RightTop){
-			fTop = 0;
-			fLeft = this.worksheet._getColLeft(_this.frozenCell.col);
-			fBottom = this.worksheet._getRowTop(_this.frozenCell.row);
-			this.drawFrozenPaneBorderVer(autoShapeTrack, fLeft, fTop, fBottom);
-		}	
 	};
 	
 	_this.setTransform = function(shapeCtx, shapeOverlayCtx, autoShapeTrack, trackOverlay) {
@@ -729,6 +703,41 @@ function FrozenPlace(ws, type) {
             trackOverlay.m_oHtmlPage.drawingPage.right = x + width;
             trackOverlay.m_oHtmlPage.drawingPage.bottom  = y + height;
         }
+	};
+
+	_this.drawPaneBorder = function(autoShapeTrack) {
+		var fLeft, fTop, fRight, fBottom;
+		if(_this.type === FrozenAreaType.Bottom){
+			fTop = this.worksheet._getRowTop(_this.frozenCell.row);
+			fLeft = 0;
+			this.drawFrozenPaneBorderHor(autoShapeTrack, fTop, fLeft, autoShapeTrack.Graphics.m_lWidthPix);
+		}
+		else if(_this.type === FrozenAreaType.Right){
+			fTop = 0;
+			fLeft = this.worksheet._getColLeft(_this.frozenCell.col);
+			this.drawFrozenPaneBorderVer(autoShapeTrack, fLeft, fTop, autoShapeTrack.Graphics.m_lHeightPix);
+		}
+		else if(_this.type === FrozenAreaType.RightBottom){
+			//autoShapeTrack.Graphics.put_GlobalAlpha(true, 1);
+			fTop = this.worksheet._getRowTop(_this.frozenCell.row);
+			fLeft = this.worksheet._getColLeft(_this.frozenCell.col);
+
+			this.drawFrozenPaneBorderHor(autoShapeTrack, fTop, fLeft, autoShapeTrack.Graphics.m_lWidthPix);
+			this.drawFrozenPaneBorderVer(autoShapeTrack, fLeft, fTop, autoShapeTrack.Graphics.m_lHeightPix);
+		}
+		else if(_this.type === FrozenAreaType.LeftBottom){
+			fTop = this.worksheet._getRowTop(_this.frozenCell.row);
+			fLeft = 0;
+			fRight = this.worksheet._getColLeft(_this.frozenCell.col);
+
+			this.drawFrozenPaneBorderHor(autoShapeTrack, fTop, fLeft, fRight);
+		}
+		else if(_this.type === FrozenAreaType.RightTop){
+			fTop = 0;
+			fLeft = this.worksheet._getColLeft(_this.frozenCell.col);
+			fBottom = this.worksheet._getRowTop(_this.frozenCell.row);
+			this.drawFrozenPaneBorderVer(autoShapeTrack, fLeft, fTop, fBottom);
+		}
 	};
 	
 	// Range constructor	
@@ -839,6 +848,7 @@ DrawingArea.prototype.drawSelection = function(drawingDocument) {
         this.frozenPlaces[i].drawSelection(drawingDocument, shapeCtx, shapeOverlayCtx, autoShapeTrack, trackOverlay);
     }
 
+	this.drawFrozenPaneBorders(autoShapeTrack);
     var oWatermark = this.api.watermarkDraw;
 	if(oWatermark) {
 		oWatermark.zoom = 1.0;
@@ -846,6 +856,12 @@ DrawingArea.prototype.drawSelection = function(drawingDocument) {
 		oWatermark.Draw(ctx, ctx.canvas.width, ctx.canvas.height);
 	}
 };
+
+	DrawingArea.prototype.drawFrozenPaneBorders = function(autoShapeTrack) {
+		for ( var i = 0; i < this.frozenPlaces.length; i++ ) {
+			this.frozenPlaces[i].drawPaneBorder(autoShapeTrack);
+		}
+	};
 
 DrawingArea.prototype.getOffsets = function(x, y, bEvents) {
         for ( var i = 0; i < this.frozenPlaces.length; i++ ) {

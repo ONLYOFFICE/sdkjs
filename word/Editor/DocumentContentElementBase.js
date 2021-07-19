@@ -120,6 +120,22 @@ CDocumentContentElementBase.prototype.Get_DocumentPrev = function()
 {
 	return this.Prev;
 };
+CDocumentContentElementBase.prototype.GetNextDocumentElement = function()
+{
+	var oNext = this.Get_DocumentNext();
+	if (!oNext && this.Parent && this.Parent.GetNextDocumentElement)
+		return this.Parent.GetNextDocumentElement();
+
+	return oNext;
+};
+CDocumentContentElementBase.prototype.GetPrevDocumentElement = function()
+{
+	var oPrev = this.Get_DocumentPrev();
+	if (!oPrev && this.Parent && this.Parent.GetPrevDocumentElement)
+		return this.Parent.GetPrevDocumentElement();
+
+	return oPrev;
+};
 CDocumentContentElementBase.prototype.GetParent = function()
 {
 	return this.Parent;
@@ -279,7 +295,7 @@ CDocumentContentElementBase.prototype.GetSelectionBounds = function()
 		Direction : 0
 	};
 };
-CDocumentContentElementBase.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY)
+CDocumentContentElementBase.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY, isUpdateTarget)
 {
 	return null;
 };
@@ -656,14 +672,6 @@ CDocumentContentElementBase.prototype.SaveRecalculateObject = function()
 CDocumentContentElementBase.prototype.LoadRecalculateObject = function(RecalcObj)
 {
 };
-CDocumentContentElementBase.prototype.Set_ApplyToAll = function(bValue)
-{
-	this.SetApplyToAll(bValue);
-};
-CDocumentContentElementBase.prototype.Get_ApplyToAll = function()
-{
-	return this.IsApplyToAll();
-};
 CDocumentContentElementBase.prototype.SetApplyToAll = function(isApplyAll)
 {
 	this.ApplyToAll = isApplyAll;
@@ -956,6 +964,13 @@ CDocumentContentElementBase.prototype.GetTableOfContents = function(isUnique, is
 	return null;
 };
 /**
+ * Get all tables of figures inside
+ * @param arrComplexFields
+ */
+CDocumentContentElementBase.prototype.GetTablesOfFigures = function(arrComplexFields)
+{
+};
+/**
  * Проверяем у родительского класса выделен ли только один элемент
  * @returns {boolean}
  */
@@ -1192,6 +1207,10 @@ CDocumentContentElementBase.prototype.GetFramePr = function(){return null;};
  * @returns {{GapLeft : {number}, GapRight : {number}, GridWidth : {number}}}
  */
 CDocumentContentElementBase.prototype.GetMaxTableGridWidth = function(){return {GapLeft : 0, GapRight : 0, GridWidth : -1};};
+/**
+ * Обновляем нумерацию строк
+ */
+CDocumentContentElementBase.prototype.UpdateLineNumbersInfo = function(){};
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

@@ -50,6 +50,8 @@ function CNumberingLvl()
 	this.LvlText = [];
 	this.Legacy  = undefined;
 	this.IsLgl   = false;
+
+	this.private_CheckSymbols();
 }
 /**
  * Доступ к типу прилегания данного уровня
@@ -208,7 +210,7 @@ CNumberingLvl.prototype.InitDefault = function(nLvl, nType)
 CNumberingLvl.prototype.private_InitDefault = function(nLvl)
 {
 	this.Jc      = AscCommon.align_Left;
-	this.Format  = Asc.c_oAscNumberingFormat.Bullet;
+	this.SetFormat(Asc.c_oAscNumberingFormat.Bullet);
 	this.PStyle  = undefined;
 	this.Start   = 1;
 	this.Restart = -1; // -1 - делаем нумерацию сначала всегда, 0 - никогда не начинаем нумерацию заново
@@ -223,17 +225,17 @@ CNumberingLvl.prototype.private_InitDefault = function(nLvl)
 
 	if (0 == nLvl % 3)
 	{
-		this.TextPr.RFonts.Set_All("Symbol", -1);
+		this.TextPr.RFonts.SetAll("Symbol", -1);
 		this.LvlText.push(new CNumberingLvlTextString(String.fromCharCode(0x00B7)));
 	}
 	else if (1 == nLvl % 3)
 	{
-		this.TextPr.RFonts.Set_All("Courier New", -1);
+		this.TextPr.RFonts.SetAll("Courier New", -1);
 		this.LvlText.push(new CNumberingLvlTextString("o"));
 	}
 	else
 	{
-		this.TextPr.RFonts.Set_All("Wingdings", -1);
+		this.TextPr.RFonts.SetAll("Wingdings", -1);
 		this.LvlText.push(new CNumberingLvlTextString(String.fromCharCode(0x00A7)));
 	}
 };
@@ -250,21 +252,21 @@ CNumberingLvl.prototype.private_InitDefaultNumbered = function(nLvl)
 	var nLeft      = 36 * (nLvl + 1) * g_dKoef_pt_to_mm;
 	var nFirstLine = -18 * g_dKoef_pt_to_mm;
 
-	if (0 == nLvl % 3)
+	if (0 === nLvl % 3)
 	{
-		this.Jc     = AscCommon.align_Left;
-		this.Format = Asc.c_oAscNumberingFormat.Decimal;
+		this.Jc = AscCommon.align_Left;
+		this.SetFormat(Asc.c_oAscNumberingFormat.Decimal);
 	}
-	else if (1 == nLvl % 3)
+	else if (1 === nLvl % 3)
 	{
-		this.Jc     = AscCommon.align_Left;
-		this.Format = Asc.c_oAscNumberingFormat.LowerLetter;
+		this.Jc = AscCommon.align_Left;
+		this.SetFormat(Asc.c_oAscNumberingFormat.LowerLetter);
 	}
 	else
 	{
-		this.Jc     = AscCommon.align_Right;
-		this.Format = Asc.c_oAscNumberingFormat.LowerRoman;
-		nFirstLine  = -9 * g_dKoef_pt_to_mm;
+		this.Jc = AscCommon.align_Right;
+		this.SetFormat(Asc.c_oAscNumberingFormat.LowerRoman);
+		nFirstLine = -9 * g_dKoef_pt_to_mm;
 	}
 
 	this.LvlText = [];
@@ -287,7 +289,7 @@ CNumberingLvl.prototype.private_InitDefaultBullet = function(nLvl)
 	this.Restart = -1;
 	this.Suff    = Asc.c_oAscNumberingSuff.Tab;
 	this.Jc      = AscCommon.align_Left;
-	this.Format  = Asc.c_oAscNumberingFormat.Bullet;
+	this.SetFormat(Asc.c_oAscNumberingFormat.Bullet);
 
 	this.ParaPr               = new CParaPr();
 	this.ParaPr.Ind.Left      = 36 * (nLvl + 1) * g_dKoef_pt_to_mm;
@@ -295,19 +297,19 @@ CNumberingLvl.prototype.private_InitDefaultBullet = function(nLvl)
 
 	this.TextPr  = new CTextPr();
 	this.LvlText = [];
-	if (0 == nLvl % 3)
+	if (0 === nLvl % 3)
 	{
-		this.TextPr.RFonts.Set_All("Symbol", -1);
+		this.TextPr.RFonts.SetAll("Symbol", -1);
 		this.LvlText.push(new CNumberingLvlTextString(String.fromCharCode(0x00B7)));
 	}
-	else if (1 == nLvl % 3)
+	else if (1 === nLvl % 3)
 	{
-		this.TextPr.RFonts.Set_All("Courier New", -1);
+		this.TextPr.RFonts.SetAll("Courier New", -1);
 		this.LvlText.push(new CNumberingLvlTextString("o"));
 	}
 	else
 	{
-		this.TextPr.RFonts.Set_All("Wingdings", -1);
+		this.TextPr.RFonts.SetAll("Wingdings", -1);
 		this.LvlText.push(new CNumberingLvlTextString(String.fromCharCode(0x00A7)));
 	}
 };
@@ -322,17 +324,17 @@ CNumberingLvl.prototype.private_InitDefaultMultilevel1 = function(nLvl)
 	this.Suff    = Asc.c_oAscNumberingSuff.Tab;
 	this.Jc      = AscCommon.align_Left;
 
-	if (0 == nLvl % 3)
+	if (0 === nLvl % 3)
 	{
-		this.Format = Asc.c_oAscNumberingFormat.Decimal;
+		this.SetFormat(Asc.c_oAscNumberingFormat.Decimal);
 	}
-	else if (1 == nLvl % 3)
+	else if (1 === nLvl % 3)
 	{
-		this.Format = Asc.c_oAscNumberingFormat.LowerLetter;
+		this.SetFormat(Asc.c_oAscNumberingFormat.LowerLetter);
 	}
 	else
 	{
-		this.Format = Asc.c_oAscNumberingFormat.LowerRoman;
+		this.SetFormat(Asc.c_oAscNumberingFormat.LowerRoman);
 	}
 
 	this.LvlText = [];
@@ -355,7 +357,7 @@ CNumberingLvl.prototype.private_InitDefaultMultilevel1 = function(nLvl)
 CNumberingLvl.prototype.private_InitDefaultMultilevel2 = function(nLvl)
 {
 	this.Jc     = AscCommon.align_Left;
-	this.Format = Asc.c_oAscNumberingFormat.Decimal;
+	this.SetFormat(Asc.c_oAscNumberingFormat.Decimal);
 	this.Start   = 1;
 	this.Restart = -1;
 	this.Suff    = Asc.c_oAscNumberingSuff.Tab;
@@ -425,7 +427,7 @@ CNumberingLvl.prototype.private_InitDefaultMultiLevel3 = function(nLvl)
 	this.Start   = 1;
 	this.Restart = -1;
 	this.Suff    = Asc.c_oAscNumberingSuff.Tab;
-	this.Format  = Asc.c_oAscNumberingFormat.Bullet;
+	this.SetFormat(Asc.c_oAscNumberingFormat.Bullet);
 	this.Jc      = AscCommon.align_Left;
 	this.LvlText = [];
 
@@ -469,9 +471,9 @@ CNumberingLvl.prototype.private_InitDefaultMultiLevel3 = function(nLvl)
 
 	this.TextPr = new CTextPr();
 	if (3 === nLvl || 4 === nLvl || 7 === nLvl || 8 === nLvl)
-		this.TextPr.RFonts.Set_All("Symbol", -1);
+		this.TextPr.RFonts.SetAll("Symbol", -1);
 	else
-		this.TextPr.RFonts.Set_All("Wingdings", -1);
+		this.TextPr.RFonts.SetAll("Wingdings", -1);
 };
 /**
  * Создаем копию
@@ -499,7 +501,7 @@ CNumberingLvl.prototype.Copy = function()
 	if (this.Legacy)
 		oLvl.Legacy = this.Legacy.Copy();
 
-	oLvl.IsLgl = oLvl.IsLgl;
+	oLvl.IsLgl = this.IsLgl;
 
 	return oLvl;
 };
@@ -515,19 +517,19 @@ CNumberingLvl.prototype.SetByType = function(nType, nLvl, sText, oTextPr)
 	switch (nType)
 	{
 		case c_oAscNumberingLevel.None:
-			this.Format  = Asc.c_oAscNumberingFormat.None;
+			this.SetFormat(Asc.c_oAscNumberingFormat.None);
 			this.LvlText = [];
 			this.TextPr  = new CTextPr();
 			break;
 		case c_oAscNumberingLevel.Bullet:
-			this.Format  = Asc.c_oAscNumberingFormat.Bullet;
+			this.SetFormat(Asc.c_oAscNumberingFormat.Bullet);
 			this.TextPr  = oTextPr;
 			this.LvlText = [];
 			this.LvlText.push(new CNumberingLvlTextString(sText));
 			break;
 		case c_oAscNumberingLevel.DecimalBracket_Right:
 			this.Jc      = AscCommon.align_Right;
-			this.Format  = Asc.c_oAscNumberingFormat.Decimal;
+			this.SetFormat(Asc.c_oAscNumberingFormat.Decimal);
 			this.LvlText = [];
 			this.LvlText.push(new CNumberingLvlTextNum(nLvl));
 			this.LvlText.push(new CNumberingLvlTextString(")"));
@@ -535,7 +537,7 @@ CNumberingLvl.prototype.SetByType = function(nType, nLvl, sText, oTextPr)
 			break;
 		case c_oAscNumberingLevel.DecimalBracket_Left:
 			this.Jc      = AscCommon.align_Left;
-			this.Format  = Asc.c_oAscNumberingFormat.Decimal;
+			this.SetFormat(Asc.c_oAscNumberingFormat.Decimal);
 			this.LvlText = [];
 			this.LvlText.push(new CNumberingLvlTextNum(nLvl));
 			this.LvlText.push(new CNumberingLvlTextString(")"));
@@ -543,7 +545,7 @@ CNumberingLvl.prototype.SetByType = function(nType, nLvl, sText, oTextPr)
 			break;
 		case c_oAscNumberingLevel.DecimalDot_Right:
 			this.Jc      = AscCommon.align_Right;
-			this.Format  = Asc.c_oAscNumberingFormat.Decimal;
+			this.SetFormat(Asc.c_oAscNumberingFormat.Decimal);
 			this.LvlText = [];
 			this.LvlText.push(new CNumberingLvlTextNum(nLvl));
 			this.LvlText.push(new CNumberingLvlTextString("."));
@@ -551,7 +553,7 @@ CNumberingLvl.prototype.SetByType = function(nType, nLvl, sText, oTextPr)
 			break;
 		case c_oAscNumberingLevel.DecimalDot_Left:
 			this.Jc      = AscCommon.align_Left;
-			this.Format  = Asc.c_oAscNumberingFormat.Decimal;
+			this.SetFormat(Asc.c_oAscNumberingFormat.Decimal);
 			this.LvlText = [];
 			this.LvlText.push(new CNumberingLvlTextNum(nLvl));
 			this.LvlText.push(new CNumberingLvlTextString("."));
@@ -559,7 +561,7 @@ CNumberingLvl.prototype.SetByType = function(nType, nLvl, sText, oTextPr)
 			break;
 		case c_oAscNumberingLevel.UpperRomanDot_Right:
 			this.Jc      = AscCommon.align_Right;
-			this.Format  = Asc.c_oAscNumberingFormat.UpperRoman;
+			this.SetFormat(Asc.c_oAscNumberingFormat.UpperRoman);
 			this.LvlText = [];
 			this.LvlText.push(new CNumberingLvlTextNum(nLvl));
 			this.LvlText.push(new CNumberingLvlTextString("."));
@@ -567,7 +569,7 @@ CNumberingLvl.prototype.SetByType = function(nType, nLvl, sText, oTextPr)
 			break;
 		case c_oAscNumberingLevel.UpperLetterDot_Left:
 			this.Jc      = AscCommon.align_Left;
-			this.Format  = Asc.c_oAscNumberingFormat.UpperLetter;
+			this.SetFormat(Asc.c_oAscNumberingFormat.UpperLetter);
 			this.LvlText = [];
 			this.LvlText.push(new CNumberingLvlTextNum(nLvl));
 			this.LvlText.push(new CNumberingLvlTextString("."));
@@ -575,7 +577,7 @@ CNumberingLvl.prototype.SetByType = function(nType, nLvl, sText, oTextPr)
 			break;
 		case c_oAscNumberingLevel.LowerLetterBracket_Left:
 			this.Jc      = AscCommon.align_Left;
-			this.Format  = Asc.c_oAscNumberingFormat.LowerLetter;
+			this.SetFormat(Asc.c_oAscNumberingFormat.LowerLetter);
 			this.LvlText = [];
 			this.LvlText.push(new CNumberingLvlTextNum(nLvl));
 			this.LvlText.push(new CNumberingLvlTextString(")"));
@@ -583,7 +585,7 @@ CNumberingLvl.prototype.SetByType = function(nType, nLvl, sText, oTextPr)
 			break;
 		case c_oAscNumberingLevel.LowerLetterDot_Left:
 			this.Jc      = AscCommon.align_Left;
-			this.Format  = Asc.c_oAscNumberingFormat.LowerLetter;
+			this.SetFormat(Asc.c_oAscNumberingFormat.LowerLetter);
 			this.LvlText = [];
 			this.LvlText.push(new CNumberingLvlTextNum(nLvl));
 			this.LvlText.push(new CNumberingLvlTextString("."));
@@ -591,7 +593,7 @@ CNumberingLvl.prototype.SetByType = function(nType, nLvl, sText, oTextPr)
 			break;
 		case c_oAscNumberingLevel.LowerRomanDot_Right:
 			this.Jc      = AscCommon.align_Right;
-			this.Format  = Asc.c_oAscNumberingFormat.LowerRoman;
+			this.SetFormat(Asc.c_oAscNumberingFormat.LowerRoman);
 			this.LvlText = [];
 			this.LvlText.push(new CNumberingLvlTextNum(nLvl));
 			this.LvlText.push(new CNumberingLvlTextString("."));
@@ -599,7 +601,7 @@ CNumberingLvl.prototype.SetByType = function(nType, nLvl, sText, oTextPr)
 			break;
 		case c_oAscNumberingLevel.UpperRomanBracket_Left:
 			this.Jc      = AscCommon.align_Left;
-			this.Format  = Asc.c_oAscNumberingFormat.UpperRoman;
+			this.SetFormat(Asc.c_oAscNumberingFormat.UpperRoman);
 			this.LvlText = [];
 			this.LvlText.push(new CNumberingLvlTextNum(nLvl));
 			this.LvlText.push(new CNumberingLvlTextString(")"));
@@ -607,7 +609,7 @@ CNumberingLvl.prototype.SetByType = function(nType, nLvl, sText, oTextPr)
 			break;
 		case c_oAscNumberingLevel.LowerRomanBracket_Left:
 			this.Jc      = AscCommon.align_Left;
-			this.Format  = Asc.c_oAscNumberingFormat.LowerRoman;
+			this.SetFormat(Asc.c_oAscNumberingFormat.LowerRoman);
 			this.LvlText = [];
 			this.LvlText.push(new CNumberingLvlTextNum(nLvl));
 			this.LvlText.push(new CNumberingLvlTextString(")"));
@@ -615,7 +617,7 @@ CNumberingLvl.prototype.SetByType = function(nType, nLvl, sText, oTextPr)
 			break;
 		case c_oAscNumberingLevel.UpperLetterBracket_Left:
 			this.Jc      = AscCommon.align_Left;
-			this.Format  = Asc.c_oAscNumberingFormat.UpperLetter;
+			this.SetFormat(Asc.c_oAscNumberingFormat.UpperLetter);
 			this.LvlText = [];
 			this.LvlText.push(new CNumberingLvlTextNum(nLvl));
 			this.LvlText.push(new CNumberingLvlTextString(")"));
@@ -712,7 +714,7 @@ CNumberingLvl.prototype.GetPresetType = function()
 CNumberingLvl.prototype.SetByFormat = function(nLvl, nType, sFormatText, nAlign)
 {
 	this.Jc      = nAlign;
-	this.Format  = nType;
+	this.SetFormat(nType);
 	this.LvlText = [];
 
 	var nLastPos = 0;
@@ -855,7 +857,7 @@ CNumberingLvl.prototype.FillToAscNumberingLvl = function(oAscLvl)
 CNumberingLvl.prototype.FillFromAscNumberingLvl = function(oAscLvl)
 {
 	if (undefined !== oAscLvl.get_Format())
-		this.Format = oAscLvl.get_Format();
+		this.SetFormat(oAscLvl.get_Format());
 
 	if (undefined !== oAscLvl.get_Align())
 		this.Jc = oAscLvl.get_Align();
@@ -960,7 +962,7 @@ CNumberingLvl.prototype.ReadFromBinary = function(oReader)
 
 
 	this.Jc     = oReader.GetLong();
-	this.Format = oReader.GetLong();
+	this.SetFormat(oReader.GetLong());
 
 	this.PStyle = oReader.GetString2();
 	if ("" === this.PStyle)
@@ -1050,6 +1052,133 @@ CNumberingLvl.prototype.GetRelatedLvlList = function()
 
 	return arrLvls;
 };
+CNumberingLvl.prototype.SetFormat = function(nFormat)
+{
+	this.Format = nFormat;
+	this.private_CheckSymbols();
+};
+CNumberingLvl.prototype.private_CheckSymbols = function()
+{
+	if (AscFonts.IsCheckSymbols)
+	{
+		for (var nIndex = 0, nCount = this.LvlText.length; nIndex < nCount; ++nIndex)
+		{
+			var oItem = this.LvlText[nIndex];
+			if (oItem.IsText())
+			{
+				AscFonts.FontPickerByCharacter.getFontBySymbol(oItem.GetValue().charCodeAt(0));
+			}
+		}
+
+		switch (this.Format)
+		{
+			case Asc.c_oAscNumberingFormat.Bullet:
+			{
+				break;
+			}
+			case Asc.c_oAscNumberingFormat.Decimal:
+			case Asc.c_oAscNumberingFormat.DecimalZero:
+			{
+				for (var nValue = 0; nValue < 10; ++nValue)
+				{
+					AscFonts.FontPickerByCharacter.getFontBySymbol(0x30 + nValue);
+				}
+				break;
+			}
+			case Asc.c_oAscNumberingFormat.DecimalEnclosedCircle:
+			{
+				for (var nValue = 0; nValue < 10; ++nValue)
+				{
+					AscFonts.FontPickerByCharacter.getFontBySymbol(0x30 + nValue);
+				}
+
+				for (var nValue = 0; nValue < 20; ++nValue)
+				{
+					AscFonts.FontPickerByCharacter.getFontBySymbol(0x2460 + nValue);
+				}
+				break;
+			}
+
+			case Asc.c_oAscNumberingFormat.LowerLetter:
+			case Asc.c_oAscNumberingFormat.UpperLetter:
+			case Asc.c_oAscNumberingFormat.LowerRoman:
+			case Asc.c_oAscNumberingFormat.UpperRoman:
+			{
+				for (var nValue = 0; nValue < 26; ++nValue)
+				{
+					AscFonts.FontPickerByCharacter.getFontBySymbol(97 + nValue);
+					AscFonts.FontPickerByCharacter.getFontBySymbol(65 + nValue);
+				}
+				break;
+			}
+
+			case Asc.c_oAscNumberingFormat.RussianLower:
+			case Asc.c_oAscNumberingFormat.RussianUpper:
+			{
+				for (var nValue = 0; nValue < 32; ++nValue)
+				{
+					AscFonts.FontPickerByCharacter.getFontBySymbol(0x0430 + nValue);
+					AscFonts.FontPickerByCharacter.getFontBySymbol(0x0410 + nValue);
+				}
+				break;
+			}
+
+
+			case Asc.c_oAscNumberingFormat.ChineseCounting:
+			{
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x25CB);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x4E00);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x4E8C);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x4E09);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x56DB);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x4E94);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x516D);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x4E03);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x516B);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x4E5D);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x5341);
+				break;
+			}
+			case Asc.c_oAscNumberingFormat.ChineseCountingThousand:
+			{
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x25CB);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x4E00);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x4E8C);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x4E09);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x56DB);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x4E94);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x516D);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x4E03);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x516B);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x4E5D);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x5341);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x767E);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x5343);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x4E07);
+				break;
+			}
+			case Asc.c_oAscNumberingFormat.ChineseLegalSimplified:
+			{
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x96F6);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x58F9);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x8D30);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x53C1);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x8086);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x4F0D);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x9646);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x67D2);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x634C);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x7396);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x62FE);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x4F70);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x4EDF);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x842C);
+				break;
+			}
+		}
+	}
+}
+
 
 
 function CNumberingLvlTextString(Val)

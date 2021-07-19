@@ -170,17 +170,13 @@
 
 		function convertPtToPx(value) {
 			value = value / sizePxinPt;
-			if (AscBrowser.isRetina) {
-				value = value * AscBrowser.retinaPixelRatio;
-			}
-			value = value | value;
+			value = (value * AscBrowser.retinaPixelRatio) >> 0;			
 			return value;
 		}
 		function convertPxToPt(value) {
 			value = value * sizePxinPt;
-			if (AscBrowser.isRetina) {
-				value = Asc.ceil(value / AscBrowser.retinaPixelRatio * 10) / 10;
-			}
+			//пункты округляем до сотых
+			value = Asc.ceil(value / AscBrowser.retinaPixelRatio * 100) / 100;
 			return value;
 		}
 
@@ -219,8 +215,10 @@
 				return border2;
 			}
 
-			var r1 = border1.c.getR(), g1 = border1.c.getG(), b1 = border1.c.getB();
-			var r2 = border2.c.getR(), g2 = border2.c.getG(), b2 = border2.c.getB();
+			var bc1 = border1.getColorOrDefault();
+			var bc2 = border2.getColorOrDefault();
+			var r1 = bc1.getR(), g1 = bc1.getG(), b1 = bc1.getB();
+			var r2 = bc2.getR(), g2 = bc2.getG(), b2 = bc2.getB();
 			var Brightness_1_1 = r1 + b1 + 2 * g1;
 			var Brightness_1_2 = r2 + b2 + 2 * g2;
 			if (Brightness_1_1 < Brightness_1_2) {
@@ -349,6 +347,38 @@
 			}
 			return oUniFill;
 		}
+
+		function getFullHyperlinkLength(str) {
+			var res = 0;
+			if (!str) {
+				return res;
+			}
+
+			var validStr = "ABCDEFabcdef0123456789";
+			//new RegExp('/^[xX]?[0-9a-fA-F]{6}$/', 'g')
+			var checkHex = function (_val) {
+				if (_val !== undefined && validStr.indexOf(_val) !== -1) {
+					return true;
+				}
+				return false;
+			};
+
+
+			for (var i = 0; i < str.length; i++) {
+				if (str[i] === "%") {
+					if (checkHex(str[i + 1]) && checkHex(str[i + 2])) {
+						res++;
+					} else {
+						res += 3;
+					}
+				} else {
+					res++;
+				}
+			}
+
+			return res;
+		}
+
 		var referenceType = {
 			A: 0,			// Absolute
 			ARRC: 1,	// Absolute row; relative column
@@ -435,9 +465,31 @@
 			return range && this.c1 === range.c1 && this.r1 === range.r1 && this.c2 === range.c2 && this.r2 === range.r2;
 		};
 
+		Range.prototype.isEqualCols = function (range) {
+			return range && this.c1 === range.c1 && this.c2 === range.c2;
+		};
+
+		Range.prototype.isEqualRows = function (range) {
+			return range && this.r1 === range.r1 && this.r2 === range.r2;
+		};
+		Range.prototype.isNeighbor = function (range) {
+			if(this.isEqualCols(range)) {
+				if(this.r2 === range.r1 - 1 || range.r2 === this.r1 - 1) {
+					return true;
+				}
+			}
+			else if(this.isEqualRows(range)) {
+				if(this.c2 === range.c1 - 1 || range.c2 === this.c1 - 1) {
+					return true;
+				}
+			}
+			return false;
+		};
+
 		Range.prototype.isEqualAll = function (range) {
 			return this.isEqual(range) && this.refType1 === range.refType1 && this.refType2 === range.refType2;
 		};
+
 		Range.prototype.isEqualWithOffsetRow = function (range, offsetRow) {
 			return this.c1 === range.c1 && this.c2 === range.c2 &&
 				this.isAbsC1() === range.isAbsC1() && this.isAbsC2() === range.isAbsC2() &&
@@ -567,7 +619,8 @@
 			var isNoDelete = true;
 			var isHor = 0 != offset.col;
 			var toDelete = offset.col < 0 || offset.row < 0;
-
+			var isLastRow = this.r2 === gc_nMaxRow0;
+			var isLastCol = this.c2 === gc_nMaxCol0;
 			if (isHor) {
 				if (toDelete) {
 					if (this.c1 < bbox.c1) {
@@ -600,7 +653,11 @@
 					if (this.c1 < bbox.c1) {
 						this.setOffsetLast(offset);
 					} else {
-						this.setOffset(offset);
+						if (this.c1 + offset.col <= gc_nMaxCol0) {
+							this.setOffset(offset);
+						} else {
+							isNoDelete = false;
+						}
 					}
 				}
 			} else {
@@ -635,9 +692,20 @@
 					if (this.r1 < bbox.r1) {
 						this.setOffsetLast(offset);
 					} else {
-						this.setOffset(offset);
+						if (this.r1 + offset.row <= gc_nMaxRow0) {
+							this.setOffset(offset);
+						} else {
+							isNoDelete = false;
+						}
 					}
 				}
+			}
+			//range sticks to the gc_nMaxRow0/gc_nMaxCol0(but not to 0) and cannot be shifted
+			if(isLastRow) {
+				this.r2 = gc_nMaxRow0;
+			}
+			if(isLastCol) {
+				this.c2 = gc_nMaxCol0;
 			}
 			return isNoDelete;
 		};
@@ -1057,7 +1125,6 @@
 			});
 		};
 		SelectionRange.prototype.inContains = function (ranges) {
-			var t = this;
 			return this.ranges.every(function (item1) {
 				return ranges.some(function (item2) {
 					return item2.containsRange(item1);
@@ -1916,12 +1983,10 @@
 		function generateCellStyles(w, h, wb) {
 			var result = [];
 
-			if (AscCommon.AscBrowser.isRetina) {
-				w = AscCommon.AscBrowser.convertToRetinaValue(w, true);
-				h = AscCommon.AscBrowser.convertToRetinaValue(h, true);
-			}
+			var widthWithRetina = AscCommon.AscBrowser.convertToRetinaValue(w, true);
+			var heightWithRetina = AscCommon.AscBrowser.convertToRetinaValue(h, true);
 
-			var ctx = getContext(w, h, wb);
+			var ctx = getContext(widthWithRetina, heightWithRetina, wb);
 			var oCanvas = ctx.getCanvas();
 			var graphics = getGraphics(ctx);
 
@@ -1944,7 +2009,7 @@
 					if (window["IS_NATIVE_EDITOR"]) {
 						window["native"]["BeginDrawStyle"](type, name);
 					}
-					drawStyle(ctx, graphics, wb.stringRender, oStyle, displayName, w, h);
+					drawStyle(ctx, graphics, wb.stringRender, oStyle, displayName, widthWithRetina, heightWithRetina);
 					if (window["IS_NATIVE_EDITOR"]) {
 						window["native"]["EndDrawStyle"]();
 					} else {
@@ -1974,7 +2039,7 @@
 			function drawBorder(type, b, x1, y1, x2, y2) {
 				if (b && b.w > 0) {
 					var isStroke = false;
-					var isNewColor = !AscCommonExcel.g_oColorManager.isEqual(bc, b.c);
+					var isNewColor = !AscCommonExcel.g_oColorManager.isEqual(bc, b.getColorOrDefault());
 					var isNewStyle = bs !== b.s;
 					if (isNotFirst && (isNewColor || isNewStyle)) {
 						ctx.stroke();
@@ -1982,7 +2047,7 @@
 					}
 
 					if (isNewColor) {
-						bc = b.c;
+						bc = b.getColorOrDefault();
 						ctx.setStrokeStyle(bc);
 					}
 					if (isNewStyle) {
@@ -2173,26 +2238,26 @@
 			var oBorder = dxf && dxf.getBorder();
 			if (oBorder) {
 				var oS = oBorder.l;
-				if(oS && oS.s !== AscCommon.c_oAscBorderStyles.None && oS.c) {
-					ctx.setStrokeStyle(oS.c).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
+				if(oS && oS.s !== AscCommon.c_oAscBorderStyles.None) {
+					ctx.setStrokeStyle(oS.getColorOrDefault()).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
 					ctx.lineVer(x0, y0, y1);
 					ctx.stroke();
 				}
 				oS = oBorder.t;
-				if(oS && oS.s !== AscCommon.c_oAscBorderStyles.None && oS.c) {
-					ctx.setStrokeStyle(oS.c).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
+				if(oS && oS.s !== AscCommon.c_oAscBorderStyles.None) {
+					ctx.setStrokeStyle(oS.getColorOrDefault()).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
 					ctx.lineHor(x0 + 1, y0, x1 - 1);
 					ctx.stroke();
 				}
 				oS = oBorder.r;
-				if(oS && oS.s !== AscCommon.c_oAscBorderStyles.None && oS.c) {
-					ctx.setStrokeStyle(oS.c).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
+				if(oS && oS.s !== AscCommon.c_oAscBorderStyles.None) {
+					ctx.setStrokeStyle(oS.getColorOrDefault()).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
 					ctx.lineVer(x1 - 1, y0, y1);
 					ctx.stroke();
 				}
 				oS = oBorder.b;
-				if(oS && oS.s !== AscCommon.c_oAscBorderStyles.None && oS.c) {
-					ctx.setStrokeStyle(oS.c).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
+				if(oS && oS.s !== AscCommon.c_oAscBorderStyles.None) {
+					ctx.setStrokeStyle(oS.getColorOrDefault()).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
 					ctx.lineHor(x0 + 1, y1 - 1, x1 - 1);
 					ctx.stroke();
 				}
@@ -2494,7 +2559,6 @@
 
 		function RedoObjectParam () {
 			this.bIsOn = false;
-			this.bIsReInit = false;
 			this.oChangeWorksheetUpdate = {};
 			this.bUpdateWorksheetByModel = false;
 			this.bOnSheetsChanged = false;
@@ -2762,12 +2826,6 @@
 			this.isIgnoreNumbers = false;
 		}
 
-		CSpellcheckState.prototype.init = function (startCell) {
-			if (!this.startCell) {
-				this.startCell = startCell.clone();
-				this.currentCell = startCell.clone();
-			}
-		};
 		CSpellcheckState.prototype.clean = function () {
 			this.isStart = false;
 			this.lastSpellInfo = null;
@@ -2903,6 +2961,14 @@
 		// durations of months for the leap year
 		cDate.prototype.getDaysInMonth.L = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
+		cDate.prototype.getDayOfYear = function () {
+			//https://stackoverflow.com/a/8619946
+			var start = new Date(this.getFullYear(), 0, 0);
+			var diff = (this - start) + ((start.getTimezoneOffset() - this.getTimezoneOffset()) * 60 * 1000);
+			var oneDay = 1000 * 60 * 60 * 24;
+			return Math.floor(diff / oneDay);
+		};
+
 		cDate.prototype.truncate = function () {
 			this.setUTCHours( 0, 0, 0, 0 );
 			return this;
@@ -2929,6 +2995,14 @@
 			return res;
 		};
 
+		cDate.prototype.getExcelDateWithTime2 = function () {
+			var year = Date.prototype.getUTCFullYear.call(this);
+			var month = Date.prototype.getUTCMonth.call(this);
+			var date = Date.prototype.getUTCDate.call(this);
+
+			return (Date.UTC(year, month, date, this.getUTCHours(), this.getUTCMinutes(), this.getUTCSeconds()) - this.getExcelNullDate() ) / c_msPerDay;
+		};
+
 		cDate.prototype.getDateFromExcel = function ( val ) {
 
 			val = Math.floor( val );
@@ -2949,6 +3023,10 @@
 				}
 			}
 		};
+		
+		cDate.prototype.getDateFromExcelWithTime2 = function ( val ) {
+			return new cDate( val * c_msPerDay + this.getExcelNullDate() );
+		};
 
 		cDate.prototype.addYears = function ( counts ) {
 			this.setUTCFullYear( this.getUTCFullYear() + Math.floor( counts ) );
@@ -2966,6 +3044,9 @@
 
 		cDate.prototype.addDays = function ( counts ) {
 			this.setUTCDate( this.getUTCDate() + Math.floor( counts ) );
+		};
+		cDate.prototype.addDays2 = function ( counts ) {
+			Date.prototype.setUTCDate.call(this, Date.prototype.getUTCDate.call(this) + Math.floor( counts ) );
 		};
 
 		cDate.prototype.lastDayOfMonth = function () {
@@ -3013,9 +3094,16 @@
 		cDate.prototype.getTimeString = function (api) {
 			return api.asc_getLocaleExample(AscCommon.getShortTimeFormat(), this.getExcelDateWithTime(true) - this.getTimezoneOffset()/(60*24));
 		};
+		cDate.prototype.fromISO8601 = function (dateStr) {
+			if (dateStr.endsWith("Z")) {
+				return new cDate(dateStr);
+			} else {
+				return new cDate(dateStr + "Z");
+			}
+		};
 
 		function getIconsForLoad() {
-			return AscCommonExcel.getCFIconsForLoad().concat(AscCommonExcel.getSlicerIconsForLoad());
+			return AscCommonExcel.getCFIconsForLoad().concat(AscCommonExcel.getSlicerIconsForLoad()).concat(AscCommonExcel.getPivotButtonsForLoad());
 		}
 
 
@@ -3034,6 +3122,7 @@
 		window['AscCommonExcel'].c_sPerDay = c_sPerDay;
 		window['AscCommonExcel'].c_msPerDay = c_msPerDay;
 		window["AscCommonExcel"].applyFunction = applyFunction;
+		window['AscCommonExcel'].g_IncludeNewRowColInTable = true;
 
 		window["Asc"]["cDate"] = window["Asc"].cDate = window['AscCommonExcel'].cDate = cDate;
 		prot = cDate.prototype;
@@ -3057,6 +3146,7 @@
 		window["AscCommonExcel"].getFindRegExp = getFindRegExp;
 		window["AscCommonExcel"].convertFillToUnifill = convertFillToUnifill;
 		window["AscCommonExcel"].replaceSpellCheckWords = replaceSpellCheckWords;
+		window["AscCommonExcel"].getFullHyperlinkLength = getFullHyperlinkLength;
 		window["Asc"].outputDebugStr = outputDebugStr;
 		window["Asc"].isNumberInfinity = isNumberInfinity;
 		window["Asc"].trim = trim;

@@ -1058,7 +1058,7 @@ function ParaMath()
     this.DefaultTextPr      = new CTextPr();
 
     this.DefaultTextPr.FontFamily = {Name  : "Cambria Math", Index : -1 };
-    this.DefaultTextPr.RFonts.Set_All("Cambria Math", -1);
+    this.DefaultTextPr.RFonts.SetAll("Cambria Math", -1);
 
     // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
 	g_oTableId.Add( this, this.Id );
@@ -1187,13 +1187,17 @@ ParaMath.prototype.Add = function(Item)
         {
             var CtrRunPr = oContent.Get_ParentCtrRunPr(false); // ctrPrp (не копия)
 
-            if (true === TrackRevisions)
-                LogicDocument.SetTrackRevisions(false);
+			var isLocalTrack = false;
+            if (TrackRevisions)
+			{
+				isLocalTrack = LogicDocument.GetLocalTrackRevisions();
+				LogicDocument.SetLocalTrackRevisions(false);
+			}
 
             Run.Apply_TextPr(CtrRunPr, undefined, true);
 
-            if (true === TrackRevisions)
-                LogicDocument.SetTrackRevisions(true);
+            if (false !== isLocalTrack)
+                LogicDocument.SetLocalTrackRevisions(isLocalTrack);
         }
 
         if(Item.Value == 38)
@@ -1240,18 +1244,22 @@ ParaMath.prototype.Add = function(Item)
 
         var lng2 = oContent.Content.length;
 
-        TextPr.RFonts.Set_All("Cambria Math", -1);
+        TextPr.RFonts.SetAll("Cambria Math", -1);
 
-        if (true === TrackRevisions)
-            LogicDocument.SetTrackRevisions(false);
+		var isLocalTrack = false;
+		if (TrackRevisions)
+		{
+			isLocalTrack = LogicDocument.GetLocalTrackRevisions();
+			LogicDocument.SetLocalTrackRevisions(false);
+		}
 
         if(bPlh)
             oContent.Apply_TextPr(TextPr, undefined, true);
         else
             oContent.Apply_TextPr(TextPr, undefined, false, StartPos + 1, StartPos + lng2 - lng);
 
-        if (true === TrackRevisions)
-            LogicDocument.SetTrackRevisions(true);
+		if (false !== isLocalTrack)
+			LogicDocument.SetLocalTrackRevisions(isLocalTrack);
     }
 
     if ((para_Text === Type || para_Space === Type) && null !== NewElement)
@@ -1412,7 +1420,7 @@ ParaMath.prototype.Remove = function(Direction, bOnAddText)
                         oContent.Select_ElementByPos(nStartPos + 1, true);
                     }
                 }
-                else //if (Direction < 0)
+                else
                 {
                     var oPrevElement = oContent.getElem(nStartPos - 1);
                     if (para_Math_Run === oPrevElement.Type)
@@ -1671,7 +1679,7 @@ ParaMath.prototype.Get_AllFontNames = function(AllFonts)
 
 ParaMath.prototype.GetSelectedElementsInfo = function(Info, ContentPos, Depth)
 {
-    Info.Set_Math(this);
+    Info.SetMath(this);
 };
 
 ParaMath.prototype.GetSelectedText = function(bAll, bClearText, oPr)
@@ -1806,7 +1814,6 @@ ParaMath.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 		// информация о пересчете
 		var RPI = new CRPI();
 		RPI.MergeMathInfo(this.ParaMathRPI);
-
 		this.Root.PreRecalc(null, this, new CMathArgSize(), RPI);
 
 		this.PageInfo.Reset();
@@ -1888,11 +1895,11 @@ ParaMath.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 				// Уберем из массива информацию о рассчитанных ширинах, чтобы не учлась рассчитанная ранее максимальная ширина (в связи с тем, что отрезок, в к-ом нужно расположить, изменился по ширине)
 				// выставляем EmptyLine = false, т.к. нужно сделать заново пересчет в новом отрезке (а не перенести формулу под картинку)
 				// т.к. инициируем пересчет заново, то в проверку на ParaNewLine : if (true === NotInlineMath && true !== PRS.EmptyLine) не зайдем, т.к. NewRange = true
+				this.private_SetRestartRecalcInfo(PRS);
 				this.PageInfo.Reset_Page(Page);
 				this.ParaMathRPI.bInternalRanges = true;
 				// не выставляем EmtyLine = false, т.к. так и так выйдем из пересчета данной строки при расчете Ranges, до пересчета картинок не дойдем, поэтому PRS.EmptyLine = false  выставлять не нужно
 				//PRS.EmptyLine = false;
-				this.private_SetRestartRecalcInfo(PRS);
 			}
 			else if (UpdWrap == MATH_UPDWRAP_UNDERFLOW)
 			{
@@ -2562,10 +2569,6 @@ ParaMath.prototype.SetRecalcCtrPrp = function(Class)
 };
 ParaMath.prototype.MathToImageConverter = function(bCopy, _canvasInput, _widthPx, _heightPx, raster_koef)
 {
-    if(window['IS_NATIVE_EDITOR'])
-    {
-        return null;
-    }
     var bTurnOnId = false;
     if (false === g_oTableId.m_bTurnOff)
     {
@@ -2653,46 +2656,72 @@ ParaMath.prototype.MathToImageConverter = function(bCopy, _canvasInput, _widthPx
         h_px *= raster_koef;
 
         if (undefined !== _widthPx)
-            _widthPx *= raster_koef;
+            _widthPx = (_widthPx * raster_koef) >> 0;
         if (undefined !== _heightPx)
-            _heightPx *= raster_koef;
+            _heightPx = (_heightPx * raster_koef) >> 0;
     }
 
-    var _canvas = (_canvasInput === undefined) ? document.createElement('canvas') : _canvasInput;
-
-    _canvas.width   = (undefined == _widthPx) ? w_px : _widthPx;
-    _canvas.height  = (undefined == _heightPx) ? h_px : _heightPx;
-
-    var _ctx = _canvas.getContext('2d');
-
-    var g = new AscCommon.CGraphics();
-    g.init(_ctx, w_px, h_px, w_mm, h_mm);
-    g.m_oFontManager = AscCommon.g_fontManager;
-
-    g.m_oCoordTransform.tx = 0;
-    g.m_oCoordTransform.ty = 0;
-
-    if (_widthPx !== undefined && _heightPx !== undefined)
+    var _canvas = null;
+    if (window["NATIVE_EDITOR_ENJINE"] === true && window["IS_NATIVE_EDITOR"] !== true)
     {
-        g.m_oCoordTransform.tx = (_widthPx - w_px) / 2;
-        g.m_oCoordTransform.ty = (_heightPx - h_px) / 2;
+        var _width  = undefined == _widthPx  ? w_px : _widthPx;
+        var _height = undefined == _heightPx ? h_px : _heightPx;
+        _canvas = new CNativeGraphics();
+        _canvas.width  = _width;
+        _canvas.height = _height;
+        _canvas.create(window["native"], _width, _height, _width / dKoef, _height / dKoef);
+        _canvas.CoordTransformOffset(_widthPx  !== undefined ? (_widthPx  - w_px) / 2 : 0,
+                                     _heightPx !== undefined ? (_heightPx - h_px) / 2 : 0);
+        _canvas.transform(1, 0, 0, 1, 0, 0);
+        var bNeedSetParaMarks = false;
+        if (AscCommon.isRealObject(editor) && editor.ShowParaMarks) 
+        {
+          bNeedSetParaMarks = true;
+          editor.ShowParaMarks = false;
+        }
+        par.Draw(0, _canvas);
+        if (bNeedSetParaMarks) 
+        {
+          editor.ShowParaMarks = true;
+        }
     }
-
-    g.transform(1,0,0,1,0,0);
-
-
-    var bNeedSetParaMarks = false;
-    if(AscCommon.isRealObject(editor) && editor.ShowParaMarks)
+    else
     {
-        bNeedSetParaMarks = true;
-        editor.ShowParaMarks = false;
-    }
+        var _canvas = (_canvasInput === undefined) ? document.createElement('canvas') : _canvasInput;
 
-    par.Draw(0, g);
+        _canvas.width   = (undefined == _widthPx) ? w_px : _widthPx;
+        _canvas.height  = (undefined == _heightPx) ? h_px : _heightPx;
 
-    if(bNeedSetParaMarks)
-    {
-        editor.ShowParaMarks = true;
+        var _ctx = _canvas.getContext('2d');
+
+        var g = new AscCommon.CGraphics();
+        g.init(_ctx, w_px, h_px, w_mm, h_mm);
+        g.m_oFontManager = AscCommon.g_fontManager;
+
+        g.m_oCoordTransform.tx = 0;
+        g.m_oCoordTransform.ty = 0;
+
+        if (_widthPx !== undefined && _heightPx !== undefined)
+        {
+            g.m_oCoordTransform.tx = (_widthPx - w_px) / 2;
+            g.m_oCoordTransform.ty = (_heightPx - h_px) / 2;
+        }
+
+        g.transform(1,0,0,1,0,0);
+
+        var bNeedSetParaMarks = false;
+        if(AscCommon.isRealObject(editor) && editor.ShowParaMarks)
+        {
+            bNeedSetParaMarks = true;
+            editor.ShowParaMarks = false;
+        }
+
+        par.Draw(0, g);
+
+        if(bNeedSetParaMarks)
+        {
+            editor.ShowParaMarks = true;
+        }
     }
 
     AscCommon.IsShapeToImageConverter = false;

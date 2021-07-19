@@ -478,14 +478,14 @@
 			case AscDFH.historydescription_Document_ShiftDeleteButton                  :
 				sString = "Document_ShiftDeleteButton";
 				break;
-			case AscDFH.historydescription_Document_SetStyleHeading1                   :
-				sString = "Document_SetStyleHeading1";
+			case AscDFH.historydescription_Document_Shortcut_SetStyleHeading1:
+				sString = "Document_Shortcut_SetStyleHeading1";
 				break;
-			case AscDFH.historydescription_Document_SetStyleHeading2                   :
-				sString = "Document_SetStyleHeading2";
+			case AscDFH.historydescription_Document_Shortcut_SetStyleHeading2:
+				sString = "Document_Shortcut_SetStyleHeading2";
 				break;
-			case AscDFH.historydescription_Document_SetStyleHeading3                   :
-				sString = "Document_SetStyleHeading3";
+			case AscDFH.historydescription_Document_Shortcut_SetStyleHeading3:
+				sString = "Document_Shortcut_SetStyleHeading3";
 				break;
 			case AscDFH.historydescription_Document_SetTextStrikeoutHotKey             :
 				sString = "Document_SetTextStrikeoutHotKey";
@@ -764,8 +764,8 @@
 			case AscDFH.historydescription_Presentation_BringBackward                  :
 				sString = "Presentation_BringBackward";
 				break;
-			case AscDFH.historydescription_Presentation_ApplyTiming                    :
-				sString = "Presentation_ApplyTiming";
+			case AscDFH.historydescription_Presentation_ApplyTransition                :
+				sString = "Presentation_ApplyTransition";
 				break;
 			case AscDFH.historydescription_Presentation_MoveSlidesToEnd                :
 				sString = "Presentation_MoveSlidesToEnd";
@@ -1175,6 +1175,30 @@
 			case AscDFH.historydescription_Document_AutoCorrectCommon:
 				sString = "Document_AutoCorrectCommon";
 				break;
+			case AscDFH.historydescription_Document_Shortcut_ClearFormatting:
+				sString = "Document_Shortcut_ClearFormatting";
+				break;
+			case AscDFH.historydescription_Document_Shortcut_AddNonBreakingSpace:
+				sString = "Document_Shortcut_AddNonBreakingSpace";
+				break;
+			case AscDFH.historydescription_Document_SetParagraphSuppressLineNumbers:
+				sString = "Document_SetParagraphSuppressLineNumbers";
+				break;
+			case AscDFH.historydescription_Document_SetLineNumbersProps:
+				sString = "Document_SetLineNumbersProps";
+				break;
+			case AscDFH.historydescription_Document_AddCrossRef:
+				sString = "Document_AddCrossRef";
+				break;
+			case AscDFH.historydescription_Document_ClearAllSpecialForms:
+				sString = "Document_ClearAllSpecialForms";
+				break;
+			case AscDFH.historydescription_Document_ChangeTextCase:
+				sString = "Document_ChangeTextCase";
+				break;
+			case AscDFH.historydescription_Document_SetNumberingLvl:
+				sString = "Document_SetNumberingLvl";
+				break;
 		}
 		return sString;
 	}
@@ -1415,7 +1439,65 @@
 	window['AscDFH'].historyitem_type_AbsSizeAnchor          = 1135 << 16;
 	window['AscDFH'].historyitem_type_Core                   = 1136 << 16;
 	window['AscDFH'].historyitem_type_SlicerView             = 1137 << 16;
-
+	window['AscDFH'].historyitem_type_PivotWorksheetSource   = 1138 << 16;
+	window['AscDFH'].historyitem_type_NamedSheetView         = 1139 << 16;
+	window['AscDFH'].historyitem_type_DataValidation         = 1140 << 16;
+	window['AscDFH'].historyitem_type_EmptyObject            = 1141 << 16;
+	window['AscDFH'].historyitem_type_Timing                 = 1142 << 16;
+	window['AscDFH'].historyitem_type_CommonTimingList       = 1143 << 16;
+	window['AscDFH'].historyitem_type_ObjectTarget           = 1144 << 16;
+	window['AscDFH'].historyitem_type_BldBase                = 1145 << 16;
+	window['AscDFH'].historyitem_type_BldDgm                 = 1146 << 16;
+	window['AscDFH'].historyitem_type_BldGraphic             = 1147 << 16;
+	window['AscDFH'].historyitem_type_BldOleChart            = 1148 << 16;
+	window['AscDFH'].historyitem_type_BldP                   = 1149 << 16;
+	window['AscDFH'].historyitem_type_BldSub                 = 1150 << 16;
+	window['AscDFH'].historyitem_type_DirTransition          = 1151 << 16;
+	window['AscDFH'].historyitem_type_OptBlackTransition     = 1152 << 16;
+	window['AscDFH'].historyitem_type_GraphicEl              = 1153 << 16;
+	window['AscDFH'].historyitem_type_IndexRg                = 1154 << 16;
+	window['AscDFH'].historyitem_type_Tmpl                   = 1155 << 16;
+	window['AscDFH'].historyitem_type_Anim                   = 1156 << 16;
+	window['AscDFH'].historyitem_type_CBhvr                  = 1157 << 16;
+	window['AscDFH'].historyitem_type_CTn                    = 1158 << 16;
+	window['AscDFH'].historyitem_type_Cond                   = 1159 << 16;
+	window['AscDFH'].historyitem_type_Rtn                    = 1160 << 16;
+	window['AscDFH'].historyitem_type_TgtEl                  = 1161 << 16;
+	window['AscDFH'].historyitem_type_SndTgt                 = 1162 << 16;
+	window['AscDFH'].historyitem_type_SpTgt                  = 1163 << 16;
+	window['AscDFH'].historyitem_type_IterateData            = 1164 << 16;
+	window['AscDFH'].historyitem_type_Tm                     = 1165 << 16;
+	window['AscDFH'].historyitem_type_Tav                    = 1166 << 16;
+	window['AscDFH'].historyitem_type_AnimVariant            = 1167 << 16;
+	window['AscDFH'].historyitem_type_AnimClr                = 1168 << 16;
+	window['AscDFH'].historyitem_type_AnimEffect             = 1169 << 16;
+	window['AscDFH'].historyitem_type_AnimMotion             = 1170 << 16;
+	window['AscDFH'].historyitem_type_AnimRot                = 1171 << 16;
+	window['AscDFH'].historyitem_type_AnimScale              = 1172 << 16;
+	window['AscDFH'].historyitem_type_Audio                  = 1173 << 16;
+	window['AscDFH'].historyitem_type_CMediaNode             = 1174 << 16;
+	window['AscDFH'].historyitem_type_Cmd                    = 1175 << 16;
+	window['AscDFH'].historyitem_type_TimeNodeContainer      = 1176 << 16;
+	window['AscDFH'].historyitem_type_Seq                    = 1177 << 16;
+	window['AscDFH'].historyitem_type_Set                    = 1178 << 16;
+	window['AscDFH'].historyitem_type_Video                  = 1179 << 16;
+	window['AscDFH'].historyitem_type_OleChartEl             = 1180 << 16;
+	window['AscDFH'].historyitem_type_TlPoint                = 1181 << 16;
+	window['AscDFH'].historyitem_type_SndAc                  = 1182 << 16;
+	window['AscDFH'].historyitem_type_StSnd                  = 1183 << 16;
+	window['AscDFH'].historyitem_type_TxEl                   = 1184 << 16;
+	window['AscDFH'].historyitem_type_Wheel                  = 1185 << 16;
+	window['AscDFH'].historyitem_type_AttrName               = 1186 << 16;
+	window['AscDFH'].historyitem_type_AttrNameLst            = 1187 << 16;
+	window['AscDFH'].historyitem_type_BldLst                 = 1188 << 16;
+	window['AscDFH'].historyitem_type_CondLst                = 1189 << 16;
+	window['AscDFH'].historyitem_type_ChildTnLst             = 1190 << 16;
+	window['AscDFH'].historyitem_type_Par                    = 1191 << 16;
+	window['AscDFH'].historyitem_type_Excl                   = 1192 << 16;
+	window['AscDFH'].historyitem_type_TmplLst                = 1193 << 16;
+	window['AscDFH'].historyitem_type_TnLst                  = 1194 << 16;
+	window['AscDFH'].historyitem_type_TavLst                 = 1195 << 16;
+	window['AscDFH'].historyitem_type_SldSz                  = 1196 << 16;
 
 	window['AscDFH'].historyitem_type_DocumentMacros         = 2000 << 16;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1434,15 +1516,17 @@
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CDocument
 	//------------------------------------------------------------------------------------------------------------------
-	window['AscDFH'].historyitem_Document_AddItem                = window['AscDFH'].historyitem_type_Document | 1;
-	window['AscDFH'].historyitem_Document_RemoveItem             = window['AscDFH'].historyitem_type_Document | 2;
-	window['AscDFH'].historyitem_Document_DefaultTab             = window['AscDFH'].historyitem_type_Document | 3;
-	window['AscDFH'].historyitem_Document_EvenAndOddHeaders      = window['AscDFH'].historyitem_type_Document | 4;
-	window['AscDFH'].historyitem_Document_DefaultLanguage        = window['AscDFH'].historyitem_type_Document | 5;
-	window['AscDFH'].historyitem_Document_MathSettings           = window['AscDFH'].historyitem_type_Document | 6;
-	window['AscDFH'].historyitem_Document_SdtGlobalSettings      = window['AscDFH'].historyitem_type_Document | 7;
-	window['AscDFH'].historyitem_Document_Settings_GutterAtTop   = window['AscDFH'].historyitem_type_Document | 8;
-	window['AscDFH'].historyitem_Document_Settings_MirrorMargins = window['AscDFH'].historyitem_type_Document | 9;
+	window['AscDFH'].historyitem_Document_AddItem                    = window['AscDFH'].historyitem_type_Document | 1;
+	window['AscDFH'].historyitem_Document_RemoveItem                 = window['AscDFH'].historyitem_type_Document | 2;
+	window['AscDFH'].historyitem_Document_DefaultTab                 = window['AscDFH'].historyitem_type_Document | 3;
+	window['AscDFH'].historyitem_Document_EvenAndOddHeaders          = window['AscDFH'].historyitem_type_Document | 4;
+	window['AscDFH'].historyitem_Document_DefaultLanguage            = window['AscDFH'].historyitem_type_Document | 5;
+	window['AscDFH'].historyitem_Document_MathSettings               = window['AscDFH'].historyitem_type_Document | 6;
+	window['AscDFH'].historyitem_Document_SdtGlobalSettings          = window['AscDFH'].historyitem_type_Document | 7;
+	window['AscDFH'].historyitem_Document_Settings_GutterAtTop       = window['AscDFH'].historyitem_type_Document | 8;
+	window['AscDFH'].historyitem_Document_Settings_MirrorMargins     = window['AscDFH'].historyitem_type_Document | 9;
+	window['AscDFH'].historyitem_Document_SpecialFormsGlobalSettings = window['AscDFH'].historyitem_type_Document | 10;
+	window['AscDFH'].historyitem_Document_Settings_TrackRevisions    = window['AscDFH'].historyitem_type_Document | 11;
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе Paragraph
 	//------------------------------------------------------------------------------------------------------------------
@@ -1484,6 +1568,8 @@
 	window['AscDFH'].historyitem_Paragraph_PrReviewInfo              = window['AscDFH'].historyitem_type_Paragraph | 36;
 	window['AscDFH'].historyitem_Paragraph_OutlineLvl                = window['AscDFH'].historyitem_type_Paragraph | 37;
 	window['AscDFH'].historyitem_Paragraph_DefaultTabSize            = window['AscDFH'].historyitem_type_Paragraph | 38;
+	window['AscDFH'].historyitem_Paragraph_SuppressLineNumbers       = window['AscDFH'].historyitem_type_Paragraph | 39;
+	window['AscDFH'].historyitem_Paragraph_Shd_Fill                  = window['AscDFH'].historyitem_type_Paragraph | 40;
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе ParaTextPr
 	//------------------------------------------------------------------------------------------------------------------
@@ -1516,6 +1602,7 @@
 	window['AscDFH'].historyitem_TextPr_FontSizeCS      = window['AscDFH'].historyitem_type_TextPr | 27;
 	window['AscDFH'].historyitem_TextPr_Outline         = window['AscDFH'].historyitem_type_TextPr | 28;
 	window['AscDFH'].historyitem_TextPr_Fill            = window['AscDFH'].historyitem_type_TextPr | 29;
+	window['AscDFH'].historyitem_TextPr_HighlightColor  = window['AscDFH'].historyitem_type_TextPr | 30;
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе ParaDrawing
 	//------------------------------------------------------------------------------------------------------------------
@@ -1734,6 +1821,7 @@
 	window['AscDFH'].historyitem_MathBase_ReviewType      = window['AscDFH'].historyitem_type_Math | 318;
 	window['AscDFH'].historyitem_MathBase_TextFill        = window['AscDFH'].historyitem_type_Math | 319;
 	window['AscDFH'].historyitem_MathBase_TextOutline     = window['AscDFH'].historyitem_type_Math | 320;
+	window['AscDFH'].historyitem_MathBase_HighlightColor  = window['AscDFH'].historyitem_type_Math | 321;
 	window['AscDFH'].historyitem_MathBox_AlnAt            = window['AscDFH'].historyitem_type_Math | 401;
 	window['AscDFH'].historyitem_MathBox_ForcedBreak      = window['AscDFH'].historyitem_type_Math | 402;
 	window['AscDFH'].historyitem_MathFraction_Type        = window['AscDFH'].historyitem_type_Math | 501;
@@ -1812,6 +1900,7 @@
 	window['AscDFH'].historyitem_ParaRun_OnEndSplit        = window['AscDFH'].historyitem_type_ParaRun | 41;
 	window['AscDFH'].historyitem_ParaRun_MathAlnAt         = window['AscDFH'].historyitem_type_ParaRun | 42;
 	window['AscDFH'].historyitem_ParaRun_MathForcedBreak   = window['AscDFH'].historyitem_type_ParaRun | 43;
+	window['AscDFH'].historyitem_ParaRun_HighlightColor    = window['AscDFH'].historyitem_type_ParaRun | 44;
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CSectionPr
 	//------------------------------------------------------------------------------------------------------------------
@@ -1852,6 +1941,7 @@
 	window['AscDFH'].historyitem_Section_Endnote_NumStart    = window['AscDFH'].historyitem_type_Section | 35;
 	window['AscDFH'].historyitem_Section_Endnote_NumRestart  = window['AscDFH'].historyitem_type_Section | 36;
 	window['AscDFH'].historyitem_Section_Endnote_NumFormat   = window['AscDFH'].historyitem_type_Section | 37;
+	window['AscDFH'].historyitem_Section_LnNumType           = window['AscDFH'].historyitem_type_Section | 38;
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе AscCommon.ParaComment
 	//------------------------------------------------------------------------------------------------------------------
@@ -2182,10 +2272,9 @@
 	window['AscDFH'].historyitem_LineChart_SetGrouping   = window['AscDFH'].historyitem_type_LineChart | 4;
 	window['AscDFH'].historyitem_LineChart_SetHiLowLines = window['AscDFH'].historyitem_type_LineChart | 5;
 	window['AscDFH'].historyitem_LineChart_SetMarker     = window['AscDFH'].historyitem_type_LineChart | 6;
-	window['AscDFH'].historyitem_LineChart_AddSer        = window['AscDFH'].historyitem_type_LineChart | 7;
-	window['AscDFH'].historyitem_LineChart_SetSmooth     = window['AscDFH'].historyitem_type_LineChart | 8;
-	window['AscDFH'].historyitem_LineChart_SetUpDownBars = window['AscDFH'].historyitem_type_LineChart | 9;
-	window['AscDFH'].historyitem_LineChart_SetVaryColors = window['AscDFH'].historyitem_type_LineChart | 10;
+	window['AscDFH'].historyitem_LineChart_SetSmooth     = window['AscDFH'].historyitem_type_LineChart | 7;
+	window['AscDFH'].historyitem_LineChart_SetUpDownBars = window['AscDFH'].historyitem_type_LineChart | 8;
+	window['AscDFH'].historyitem_LineChart_SetVaryColors = window['AscDFH'].historyitem_type_LineChart | 9;
 
 	window['AscDFH'].historyitem_DLbls_SetDelete          = window['AscDFH'].historyitem_type_DLbls | 1;
 	window['AscDFH'].historyitem_DLbls_SetDLbl            = window['AscDFH'].historyitem_type_DLbls | 2;
@@ -2213,68 +2302,59 @@
 	window['AscDFH'].historyitem_BarChart_SetGapWidth   = window['AscDFH'].historyitem_type_BarChart | 4;
 	window['AscDFH'].historyitem_BarChart_SetGrouping   = window['AscDFH'].historyitem_type_BarChart | 5;
 	window['AscDFH'].historyitem_BarChart_SetOverlap    = window['AscDFH'].historyitem_type_BarChart | 6;
-	window['AscDFH'].historyitem_BarChart_AddSer        = window['AscDFH'].historyitem_type_BarChart | 7;
-	window['AscDFH'].historyitem_BarChart_SetSerLines   = window['AscDFH'].historyitem_type_BarChart | 8;
-	window['AscDFH'].historyitem_BarChart_SetVaryColors = window['AscDFH'].historyitem_type_BarChart | 9;
-	window['AscDFH'].historyitem_BarChart_Set3D         = window['AscDFH'].historyitem_type_BarChart | 10;
-	window['AscDFH'].historyitem_BarChart_SetGapDepth   = window['AscDFH'].historyitem_type_BarChart | 11;
-	window['AscDFH'].historyitem_BarChart_SetShape      = window['AscDFH'].historyitem_type_BarChart | 12;
+	window['AscDFH'].historyitem_BarChart_SetSerLines   = window['AscDFH'].historyitem_type_BarChart | 7;
+	window['AscDFH'].historyitem_BarChart_SetVaryColors = window['AscDFH'].historyitem_type_BarChart | 8;
+	window['AscDFH'].historyitem_BarChart_Set3D         = window['AscDFH'].historyitem_type_BarChart | 9;
+	window['AscDFH'].historyitem_BarChart_SetGapDepth   = window['AscDFH'].historyitem_type_BarChart | 10;
+	window['AscDFH'].historyitem_BarChart_SetShape      = window['AscDFH'].historyitem_type_BarChart | 11;
 
 	window['AscDFH'].historyitem_BubbleChart_AddAxId           = window['AscDFH'].historyitem_type_BubbleChart | 1;
 	window['AscDFH'].historyitem_BubbleChart_SetBubble3D       = window['AscDFH'].historyitem_type_BubbleChart | 2;
 	window['AscDFH'].historyitem_BubbleChart_SetBubbleScale    = window['AscDFH'].historyitem_type_BubbleChart | 3;
 	window['AscDFH'].historyitem_BubbleChart_SetDLbls          = window['AscDFH'].historyitem_type_BubbleChart | 4;
-	window['AscDFH'].historyitem_BubbleChart_AddSerie          = window['AscDFH'].historyitem_type_BubbleChart | 5;
-	window['AscDFH'].historyitem_BubbleChart_SetShowNegBubbles = window['AscDFH'].historyitem_type_BubbleChart | 6;
-	window['AscDFH'].historyitem_BubbleChart_SetSizeRepresents = window['AscDFH'].historyitem_type_BubbleChart | 7;
-	window['AscDFH'].historyitem_BubbleChart_SetVaryColors     = window['AscDFH'].historyitem_type_BubbleChart | 8;
+	window['AscDFH'].historyitem_BubbleChart_SetShowNegBubbles = window['AscDFH'].historyitem_type_BubbleChart | 5;
+	window['AscDFH'].historyitem_BubbleChart_SetSizeRepresents = window['AscDFH'].historyitem_type_BubbleChart | 6;
+	window['AscDFH'].historyitem_BubbleChart_SetVaryColors     = window['AscDFH'].historyitem_type_BubbleChart | 7;
 
 	window['AscDFH'].historyitem_DoughnutChart_SetDLbls         = window['AscDFH'].historyitem_type_DoughnutChart | 1;
 	window['AscDFH'].historyitem_DoughnutChart_SetFirstSliceAng = window['AscDFH'].historyitem_type_DoughnutChart | 2;
 	window['AscDFH'].historyitem_DoughnutChart_SetHoleSize      = window['AscDFH'].historyitem_type_DoughnutChart | 3;
-	window['AscDFH'].historyitem_DoughnutChart_AddSer           = window['AscDFH'].historyitem_type_DoughnutChart | 4;
-	window['AscDFH'].historyitem_DoughnutChart_SetVaryColor     = window['AscDFH'].historyitem_type_DoughnutChart | 5;
+	window['AscDFH'].historyitem_DoughnutChart_SetVaryColor     = window['AscDFH'].historyitem_type_DoughnutChart | 4;
 
 	window['AscDFH'].historyitem_OfPieChart_AddCustSplit     = window['AscDFH'].historyitem_type_OfPieChart | 1;
 	window['AscDFH'].historyitem_OfPieChart_SetDLbls         = window['AscDFH'].historyitem_type_OfPieChart | 2;
 	window['AscDFH'].historyitem_OfPieChart_SetGapWidth      = window['AscDFH'].historyitem_type_OfPieChart | 3;
 	window['AscDFH'].historyitem_OfPieChart_SetOfPieType     = window['AscDFH'].historyitem_type_OfPieChart | 4;
 	window['AscDFH'].historyitem_OfPieChart_SetSecondPieSize = window['AscDFH'].historyitem_type_OfPieChart | 5;
-	window['AscDFH'].historyitem_OfPieChart_AddSer           = window['AscDFH'].historyitem_type_OfPieChart | 6;
-	window['AscDFH'].historyitem_OfPieChart_SetSerLines      = window['AscDFH'].historyitem_type_OfPieChart | 7;
-	window['AscDFH'].historyitem_OfPieChart_SetSplitPos      = window['AscDFH'].historyitem_type_OfPieChart | 8;
-	window['AscDFH'].historyitem_OfPieChart_SetSplitType     = window['AscDFH'].historyitem_type_OfPieChart | 9;
-	window['AscDFH'].historyitem_OfPieChart_SetVaryColors    = window['AscDFH'].historyitem_type_OfPieChart | 10;
+	window['AscDFH'].historyitem_OfPieChart_SetSerLines      = window['AscDFH'].historyitem_type_OfPieChart | 6;
+	window['AscDFH'].historyitem_OfPieChart_SetSplitPos      = window['AscDFH'].historyitem_type_OfPieChart | 7;
+	window['AscDFH'].historyitem_OfPieChart_SetSplitType     = window['AscDFH'].historyitem_type_OfPieChart | 8;
+	window['AscDFH'].historyitem_OfPieChart_SetVaryColors    = window['AscDFH'].historyitem_type_OfPieChart | 9;
 
 	window['AscDFH'].historyitem_PieChart_SetDLbls         = window['AscDFH'].historyitem_type_PieChart | 1;
 	window['AscDFH'].historyitem_PieChart_SetFirstSliceAng = window['AscDFH'].historyitem_type_PieChart | 2;
-	window['AscDFH'].historyitem_PieChart_AddSer           = window['AscDFH'].historyitem_type_PieChart | 3;
-	window['AscDFH'].historyitem_PieChart_SetVaryColors    = window['AscDFH'].historyitem_type_PieChart | 4;
-	window['AscDFH'].historyitem_PieChart_3D               = window['AscDFH'].historyitem_type_PieChart | 5;
+	window['AscDFH'].historyitem_PieChart_SetVaryColors    = window['AscDFH'].historyitem_type_PieChart | 3;
+	window['AscDFH'].historyitem_PieChart_3D               = window['AscDFH'].historyitem_type_PieChart | 4;
 
 	window['AscDFH'].historyitem_RadarChart_AddAxId       = window['AscDFH'].historyitem_type_RadarChart | 1;
 	window['AscDFH'].historyitem_RadarChart_SetDLbls      = window['AscDFH'].historyitem_type_RadarChart | 2;
 	window['AscDFH'].historyitem_RadarChart_SetRadarStyle = window['AscDFH'].historyitem_type_RadarChart | 3;
-	window['AscDFH'].historyitem_RadarChart_AddSer        = window['AscDFH'].historyitem_type_RadarChart | 4;
-	window['AscDFH'].historyitem_RadarChart_SetVaryColors = window['AscDFH'].historyitem_type_RadarChart | 5;
+	window['AscDFH'].historyitem_RadarChart_SetVaryColors = window['AscDFH'].historyitem_type_RadarChart | 4;
 
 	window['AscDFH'].historyitem_ScatterChart_AddAxId         = window['AscDFH'].historyitem_type_ScatterChart | 1;
 	window['AscDFH'].historyitem_ScatterChart_SetDLbls        = window['AscDFH'].historyitem_type_ScatterChart | 2;
 	window['AscDFH'].historyitem_ScatterChart_SetScatterStyle = window['AscDFH'].historyitem_type_ScatterChart | 3;
-	window['AscDFH'].historyitem_ScatterChart_AddSer          = window['AscDFH'].historyitem_type_ScatterChart | 4;
-	window['AscDFH'].historyitem_ScatterChart_SetVaryColors   = window['AscDFH'].historyitem_type_ScatterChart | 5;
+	window['AscDFH'].historyitem_ScatterChart_SetVaryColors   = window['AscDFH'].historyitem_type_ScatterChart | 4;
 
 	window['AscDFH'].historyitem_StockChart_AddAxId       = window['AscDFH'].historyitem_type_StockChart | 1;
 	window['AscDFH'].historyitem_StockChart_SetDLbls      = window['AscDFH'].historyitem_type_StockChart | 2;
 	window['AscDFH'].historyitem_StockChart_SetDropLines  = window['AscDFH'].historyitem_type_StockChart | 3;
 	window['AscDFH'].historyitem_StockChart_SetHiLowLines = window['AscDFH'].historyitem_type_StockChart | 4;
-	window['AscDFH'].historyitem_StockChart_AddSer        = window['AscDFH'].historyitem_type_StockChart | 5;
-	window['AscDFH'].historyitem_StockChart_SetUpDownBars = window['AscDFH'].historyitem_type_StockChart | 6;
+	window['AscDFH'].historyitem_StockChart_SetUpDownBars = window['AscDFH'].historyitem_type_StockChart | 5;
 
 	window['AscDFH'].historyitem_SurfaceChart_AddAxId      = window['AscDFH'].historyitem_type_SurfaceChart | 1;
 	window['AscDFH'].historyitem_SurfaceChart_AddBandFmt   = window['AscDFH'].historyitem_type_SurfaceChart | 2;
-	window['AscDFH'].historyitem_SurfaceChart_AddSer       = window['AscDFH'].historyitem_type_SurfaceChart | 3;
-	window['AscDFH'].historyitem_SurfaceChart_SetWireframe = window['AscDFH'].historyitem_type_SurfaceChart | 4;
+	window['AscDFH'].historyitem_SurfaceChart_SetWireframe = window['AscDFH'].historyitem_type_SurfaceChart | 3;
 
 	window['AscDFH'].historyitem_BandFmt_SetIdx  = window['AscDFH'].historyitem_type_BandFmt | 1;
 	window['AscDFH'].historyitem_BandFmt_SetSpPr = window['AscDFH'].historyitem_type_BandFmt | 2;
@@ -2283,8 +2363,7 @@
 	window['AscDFH'].historyitem_AreaChart_SetDLbls      = window['AscDFH'].historyitem_type_AreaChart | 2;
 	window['AscDFH'].historyitem_AreaChart_SetDropLines  = window['AscDFH'].historyitem_type_AreaChart | 3;
 	window['AscDFH'].historyitem_AreaChart_SetGrouping   = window['AscDFH'].historyitem_type_AreaChart | 4;
-	window['AscDFH'].historyitem_AreaChart_AddSer        = window['AscDFH'].historyitem_type_AreaChart | 5;
-	window['AscDFH'].historyitem_AreaChart_SetVaryColors = window['AscDFH'].historyitem_type_AreaChart | 6;
+	window['AscDFH'].historyitem_AreaChart_SetVaryColors = window['AscDFH'].historyitem_type_AreaChart | 5;
 
 	window['AscDFH'].historyitem_ScatterSer_SetDLbls     = window['AscDFH'].historyitem_type_ScatterSer | 1;
 	window['AscDFH'].historyitem_ScatterSer_SetDPt       = window['AscDFH'].historyitem_type_ScatterSer | 2;
@@ -2295,9 +2374,8 @@
 	window['AscDFH'].historyitem_ScatterSer_SetSmooth    = window['AscDFH'].historyitem_type_ScatterSer | 7;
 	window['AscDFH'].historyitem_ScatterSer_SetSpPr      = window['AscDFH'].historyitem_type_ScatterSer | 8;
 	window['AscDFH'].historyitem_ScatterSer_SetTrendline = window['AscDFH'].historyitem_type_ScatterSer | 9;
-	window['AscDFH'].historyitem_ScatterSer_SetTx        = window['AscDFH'].historyitem_type_ScatterSer | 10;
-	window['AscDFH'].historyitem_ScatterSer_SetXVal      = window['AscDFH'].historyitem_type_ScatterSer | 11;
-	window['AscDFH'].historyitem_ScatterSer_SetYVal      = window['AscDFH'].historyitem_type_ScatterSer | 12;
+	window['AscDFH'].historyitem_ScatterSer_SetXVal      = window['AscDFH'].historyitem_type_ScatterSer | 10;
+	window['AscDFH'].historyitem_ScatterSer_SetYVal      = window['AscDFH'].historyitem_type_ScatterSer | 11;
 
 	window['AscDFH'].historyitem_DPt_SetBubble3D         = window['AscDFH'].historyitem_type_DPt | 1;
 	window['AscDFH'].historyitem_DPt_SetExplosion        = window['AscDFH'].historyitem_type_DPt | 2;
@@ -2316,8 +2394,8 @@
 	window['AscDFH'].historyitem_ErrBars_SetSpPr       = window['AscDFH'].historyitem_type_ErrBars | 7;
 	window['AscDFH'].historyitem_ErrBars_SetVal        = window['AscDFH'].historyitem_type_ErrBars | 8;
 
-	window['AscDFH'].historyitem_MinusPlus_SetnNumLit = window['AscDFH'].historyitem_type_MinusPlus | 1;
-	window['AscDFH'].historyitem_MinusPlus_SetnNumRef = window['AscDFH'].historyitem_type_MinusPlus | 2;
+	window['AscDFH'].historyitem_MinusPlus_SetNumLit = window['AscDFH'].historyitem_type_MinusPlus | 1;
+	window['AscDFH'].historyitem_MinusPlus_SetNumRef = window['AscDFH'].historyitem_type_MinusPlus | 2;
 
 	window['AscDFH'].historyitem_NumLit_SetFormatCode = window['AscDFH'].historyitem_type_NumLit | 1;
 	window['AscDFH'].historyitem_NumLit_AddPt         = window['AscDFH'].historyitem_type_NumLit | 2;
@@ -2354,11 +2432,6 @@
 	window['AscDFH'].historyitem_StrPoint_SetIdx = window['AscDFH'].historyitem_type_StrPoint | 1;
 	window['AscDFH'].historyitem_StrPoint_SetVal = window['AscDFH'].historyitem_type_StrPoint | 2;
 
-	window['AscDFH'].historyitem_XVal_SetMultiLvlStrRef = window['AscDFH'].historyitem_type_XVal | 1;
-	window['AscDFH'].historyitem_XVal_SetNumLit         = window['AscDFH'].historyitem_type_XVal | 2;
-	window['AscDFH'].historyitem_XVal_SetNumRef         = window['AscDFH'].historyitem_type_XVal | 3;
-	window['AscDFH'].historyitem_XVal_SetStrLit         = window['AscDFH'].historyitem_type_XVal | 4;
-	window['AscDFH'].historyitem_XVal_SetStrRef         = window['AscDFH'].historyitem_type_XVal | 5;
 
 	window['AscDFH'].historyitem_MultiLvlStrRef_SetF                = window['AscDFH'].historyitem_type_MultiLvlStrRef | 1;
 	window['AscDFH'].historyitem_MultiLvlStrRef_SetMultiLvlStrCache = window['AscDFH'].historyitem_type_MultiLvlStrRef | 2;
@@ -2381,8 +2454,7 @@
 	window['AscDFH'].historyitem_AreaSeries_SetPictureOptions = window['AscDFH'].historyitem_type_AreaSeries | 7;
 	window['AscDFH'].historyitem_AreaSeries_SetSpPr           = window['AscDFH'].historyitem_type_AreaSeries | 8;
 	window['AscDFH'].historyitem_AreaSeries_SetTrendline      = window['AscDFH'].historyitem_type_AreaSeries | 9;
-	window['AscDFH'].historyitem_AreaSeries_SetTx             = window['AscDFH'].historyitem_type_AreaSeries | 10;
-	window['AscDFH'].historyitem_AreaSeries_SetVal            = window['AscDFH'].historyitem_type_AreaSeries | 11;
+	window['AscDFH'].historyitem_AreaSeries_SetVal            = window['AscDFH'].historyitem_type_AreaSeries | 10;
 
 	window['AscDFH'].historyitem_Cat_SetMultiLvlStrRef = window['AscDFH'].historyitem_type_Cat | 1;
 	window['AscDFH'].historyitem_Cat_SetNumLit         = window['AscDFH'].historyitem_type_Cat | 2;
@@ -2403,8 +2475,7 @@
 	window['AscDFH'].historyitem_RadarSeries_SetMarker = window['AscDFH'].historyitem_type_RadarSeries | 5;
 	window['AscDFH'].historyitem_RadarSeries_SetOrder  = window['AscDFH'].historyitem_type_RadarSeries | 6;
 	window['AscDFH'].historyitem_RadarSeries_SetSpPr   = window['AscDFH'].historyitem_type_RadarSeries | 7;
-	window['AscDFH'].historyitem_RadarSeries_SetTx     = window['AscDFH'].historyitem_type_RadarSeries | 8;
-	window['AscDFH'].historyitem_RadarSeries_SetVal    = window['AscDFH'].historyitem_type_RadarSeries | 9;
+	window['AscDFH'].historyitem_RadarSeries_SetVal    = window['AscDFH'].historyitem_type_RadarSeries | 8;
 
 	window['AscDFH'].historyitem_BarSeries_SetCat              = window['AscDFH'].historyitem_type_BarSeries | 1;
 	window['AscDFH'].historyitem_BarSeries_SetDLbls            = window['AscDFH'].historyitem_type_BarSeries | 2;
@@ -2417,8 +2488,7 @@
 	window['AscDFH'].historyitem_BarSeries_SetShape            = window['AscDFH'].historyitem_type_BarSeries | 9;
 	window['AscDFH'].historyitem_BarSeries_SetSpPr             = window['AscDFH'].historyitem_type_BarSeries | 10;
 	window['AscDFH'].historyitem_BarSeries_SetTrendline        = window['AscDFH'].historyitem_type_BarSeries | 11;
-	window['AscDFH'].historyitem_BarSeries_SetTx               = window['AscDFH'].historyitem_type_BarSeries | 12;
-	window['AscDFH'].historyitem_BarSeries_SetVal              = window['AscDFH'].historyitem_type_BarSeries | 13;
+	window['AscDFH'].historyitem_BarSeries_SetVal              = window['AscDFH'].historyitem_type_BarSeries | 12;
 
 	window['AscDFH'].historyitem_LineSeries_SetCat       = window['AscDFH'].historyitem_type_LineSeries | 1;
 	window['AscDFH'].historyitem_LineSeries_SetDLbls     = window['AscDFH'].historyitem_type_LineSeries | 2;
@@ -2430,8 +2500,7 @@
 	window['AscDFH'].historyitem_LineSeries_SetSmooth    = window['AscDFH'].historyitem_type_LineSeries | 8;
 	window['AscDFH'].historyitem_LineSeries_SetSpPr      = window['AscDFH'].historyitem_type_LineSeries | 9;
 	window['AscDFH'].historyitem_LineSeries_SetTrendline = window['AscDFH'].historyitem_type_LineSeries | 10;
-	window['AscDFH'].historyitem_LineSeries_SetTx        = window['AscDFH'].historyitem_type_LineSeries | 11;
-	window['AscDFH'].historyitem_LineSeries_SetVal       = window['AscDFH'].historyitem_type_LineSeries | 12;
+	window['AscDFH'].historyitem_LineSeries_SetVal       = window['AscDFH'].historyitem_type_LineSeries | 11;
 
 	window['AscDFH'].historyitem_PieSeries_SetCat       = window['AscDFH'].historyitem_type_PieSeries | 1;
 	window['AscDFH'].historyitem_PieSeries_SetDLbls     = window['AscDFH'].historyitem_type_PieSeries | 2;
@@ -2440,15 +2509,13 @@
 	window['AscDFH'].historyitem_PieSeries_SetIdx       = window['AscDFH'].historyitem_type_PieSeries | 5;
 	window['AscDFH'].historyitem_PieSeries_SetOrder     = window['AscDFH'].historyitem_type_PieSeries | 6;
 	window['AscDFH'].historyitem_PieSeries_SetSpPr      = window['AscDFH'].historyitem_type_PieSeries | 7;
-	window['AscDFH'].historyitem_PieSeries_SetTx        = window['AscDFH'].historyitem_type_PieSeries | 8;
-	window['AscDFH'].historyitem_PieSeries_SetVal       = window['AscDFH'].historyitem_type_PieSeries | 9;
+	window['AscDFH'].historyitem_PieSeries_SetVal       = window['AscDFH'].historyitem_type_PieSeries | 8;
 
 	window['AscDFH'].historyitem_SurfaceSeries_SetCat   = window['AscDFH'].historyitem_type_SurfaceSeries | 1;
 	window['AscDFH'].historyitem_SurfaceSeries_SetIdx   = window['AscDFH'].historyitem_type_SurfaceSeries | 2;
 	window['AscDFH'].historyitem_SurfaceSeries_SetOrder = window['AscDFH'].historyitem_type_SurfaceSeries | 3;
 	window['AscDFH'].historyitem_SurfaceSeries_SetSpPr  = window['AscDFH'].historyitem_type_SurfaceSeries | 4;
-	window['AscDFH'].historyitem_SurfaceSeries_SetTx    = window['AscDFH'].historyitem_type_SurfaceSeries | 5;
-	window['AscDFH'].historyitem_SurfaceSeries_SetVal   = window['AscDFH'].historyitem_type_SurfaceSeries | 6;
+	window['AscDFH'].historyitem_SurfaceSeries_SetVal   = window['AscDFH'].historyitem_type_SurfaceSeries | 5;
 
 	window['AscDFH'].historyitem_BubbleSeries_SetBubble3D         = window['AscDFH'].historyitem_type_BubbleSeries | 1;
 	window['AscDFH'].historyitem_BubbleSeries_SetBubbleSize       = window['AscDFH'].historyitem_type_BubbleSeries | 2;
@@ -2460,9 +2527,8 @@
 	window['AscDFH'].historyitem_BubbleSeries_SetOrder            = window['AscDFH'].historyitem_type_BubbleSeries | 8;
 	window['AscDFH'].historyitem_BubbleSeries_SetSpPr             = window['AscDFH'].historyitem_type_BubbleSeries | 9;
 	window['AscDFH'].historyitem_BubbleSeries_SetTrendline        = window['AscDFH'].historyitem_type_BubbleSeries | 10;
-	window['AscDFH'].historyitem_BubbleSeries_SetTx               = window['AscDFH'].historyitem_type_BubbleSeries | 11;
-	window['AscDFH'].historyitem_BubbleSeries_SetXVal             = window['AscDFH'].historyitem_type_BubbleSeries | 12;
-	window['AscDFH'].historyitem_BubbleSeries_SetYVal             = window['AscDFH'].historyitem_type_BubbleSeries | 13;
+	window['AscDFH'].historyitem_BubbleSeries_SetXVal             = window['AscDFH'].historyitem_type_BubbleSeries | 11;
+	window['AscDFH'].historyitem_BubbleSeries_SetYVal             = window['AscDFH'].historyitem_type_BubbleSeries | 12;
 
 	window['AscDFH'].historyitem_ExternalData_SetAutoUpdate = window['AscDFH'].historyitem_type_ExternalData | 1;
 	window['AscDFH'].historyitem_ExternalData_SetId         = window['AscDFH'].historyitem_type_ExternalData | 2;
@@ -2750,7 +2816,7 @@
 	window['AscDFH'].historyitem_SlideSetShowMasterSp   = window['AscDFH'].historyitem_type_Slide | 4;
 	window['AscDFH'].historyitem_SlideSetLayout         = window['AscDFH'].historyitem_type_Slide | 5;
 	window['AscDFH'].historyitem_SlideSetNum            = window['AscDFH'].historyitem_type_Slide | 6;
-	window['AscDFH'].historyitem_SlideSetTiming         = window['AscDFH'].historyitem_type_Slide | 7;
+	window['AscDFH'].historyitem_SlideSetTransition     = window['AscDFH'].historyitem_type_Slide | 7;
 	window['AscDFH'].historyitem_SlideSetSize           = window['AscDFH'].historyitem_type_Slide | 8;
 	window['AscDFH'].historyitem_SlideSetBg             = window['AscDFH'].historyitem_type_Slide | 9;
 	window['AscDFH'].historyitem_SlideSetLocks          = window['AscDFH'].historyitem_type_Slide | 10;
@@ -2759,6 +2825,7 @@
 	window['AscDFH'].historyitem_SlideSetCSldName       = window['AscDFH'].historyitem_type_Slide | 13;
 	window['AscDFH'].historyitem_SlideSetClrMapOverride = window['AscDFH'].historyitem_type_Slide | 14;
 	window['AscDFH'].historyitem_SlideSetNotes          = window['AscDFH'].historyitem_type_Slide | 15;
+	window['AscDFH'].historyitem_SlideSetTiming         = window['AscDFH'].historyitem_type_Slide | 16;
 
 	window['AscDFH'].historyitem_SlideLayoutSetMaster         = window['AscDFH'].historyitem_type_SlideLayout | 1;
 	window['AscDFH'].historyitem_SlideLayoutSetMatchingName   = window['AscDFH'].historyitem_type_SlideLayout | 2;
@@ -2772,6 +2839,8 @@
 	window['AscDFH'].historyitem_SlideLayoutAddToSpTree       = window['AscDFH'].historyitem_type_SlideLayout | 10;
 	window['AscDFH'].historyitem_SlideLayoutSetSize           = window['AscDFH'].historyitem_type_SlideLayout | 11;
 	window['AscDFH'].historyitem_SlideLayoutSetHF             = window['AscDFH'].historyitem_type_SlideLayout | 12;
+	window['AscDFH'].historyitem_SlideLayoutSetTiming         = window['AscDFH'].historyitem_type_SlideLayout | 13;
+	window['AscDFH'].historyitem_SlideLayoutSetTransition     = window['AscDFH'].historyitem_type_SlideLayout | 14;
 
 	window['AscDFH'].historyitem_SlideMasterAddToSpTree       = window['AscDFH'].historyitem_type_SlideMaster | 1;
 	window['AscDFH'].historyitem_SlideMasterSetTheme          = window['AscDFH'].historyitem_type_SlideMaster | 2;
@@ -2782,6 +2851,9 @@
 	window['AscDFH'].historyitem_SlideMasterAddLayout         = window['AscDFH'].historyitem_type_SlideMaster | 7;
 	window['AscDFH'].historyitem_SlideMasterSetThemeIndex     = window['AscDFH'].historyitem_type_SlideMaster | 8;
 	window['AscDFH'].historyitem_SlideMasterSetSize           = window['AscDFH'].historyitem_type_SlideMaster | 9;
+	window['AscDFH'].historyitem_SlideMasterSetHF             = window['AscDFH'].historyitem_type_SlideMaster | 10;
+	window['AscDFH'].historyitem_SlideMasterSetTiming         = window['AscDFH'].historyitem_type_SlideMaster | 11;
+	window['AscDFH'].historyitem_SlideMasterSetTransition     = window['AscDFH'].historyitem_type_SlideMaster | 12;
 
 	window['AscDFH'].historyitem_SlideCommentsAddComment    = window['AscDFH'].historyitem_type_SlideComments | 1;
 	window['AscDFH'].historyitem_SlideCommentsRemoveComment = window['AscDFH'].historyitem_type_SlideComments | 2;
@@ -2891,6 +2963,238 @@
 	// Типы изменений класса CSlicerView
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_SlicerViewName = window['AscDFH'].historyitem_type_SlicerView | 1;
+
+	AscDFH.historyitem_TimingBldLst = AscDFH.historyitem_type_Timing | 1;
+	AscDFH.historyitem_TimingTnLst  = AscDFH.historyitem_type_Timing | 2;
+
+	AscDFH.historyitem_CommonTimingListAdd    = AscDFH.historyitem_type_CommonTimingList | 1;
+	AscDFH.historyitem_CommonTimingListRemove = AscDFH.historyitem_type_CommonTimingList | 2;
+
+	AscDFH.historyitem_ObjectTargetSpid = AscDFH.historyitem_type_ObjectTarget | 1;
+
+	AscDFH.historyitem_BldBaseGrpId    = AscDFH.historyitem_type_BldBase | 1;
+	AscDFH.historyitem_BldBaseUIExpand = AscDFH.historyitem_type_BldBase | 2;
+
+	AscDFH.historyitem_BldDgmBld = AscDFH.historyitem_type_BldDgm | 1;
+
+	AscDFH.historyitem_BldGraphicBldAsOne = AscDFH.historyitem_type_BldGraphic | 1;
+	AscDFH.historyitem_BldGraphicBldSub   = AscDFH.historyitem_type_BldGraphic | 2;
+
+	AscDFH.historyitem_BldOleChartAnimBg = AscDFH.historyitem_type_BldOleChart | 1;
+
+	AscDFH.historyitem_BldPTmplLst          = AscDFH.historyitem_type_BldP | 1;
+	AscDFH.historyitem_BldPAdvAuto          = AscDFH.historyitem_type_BldP | 2;
+	AscDFH.historyitem_BldPAutoUpdateAnimBg = AscDFH.historyitem_type_BldP | 3;
+	AscDFH.historyitem_BldPBldLvl           = AscDFH.historyitem_type_BldP | 4;
+	AscDFH.historyitem_BldPBuild            = AscDFH.historyitem_type_BldP | 5;
+	AscDFH.historyitem_BldPRev              = AscDFH.historyitem_type_BldP | 6;
+
+	AscDFH.historyitem_BldSubChart = AscDFH.historyitem_type_BldSub    | 1;
+	AscDFH.historyitem_BldSubAnimBg = AscDFH.historyitem_type_BldSub   | 2;
+	AscDFH.historyitem_BldSubBldChart = AscDFH.historyitem_type_BldSub | 3;
+	AscDFH.historyitem_BldSubBldDgm = AscDFH.historyitem_type_BldSub   | 4;
+	AscDFH.historyitem_BldSubRev = AscDFH.historyitem_type_BldSub      | 5;
+
+	AscDFH.historyitem_DirTransitionDir = AscDFH.historyitem_type_DirTransition | 1;
+
+	AscDFH.historyitem_OptBlackTransitionThruBlk = AscDFH.historyitem_type_OptBlackTransition | 1;
+
+
+	AscDFH.historyitem_GraphicElDgmId          = AscDFH.historyitem_type_GraphicEl | 1;
+	AscDFH.historyitem_GraphicElDgmBuildStep   = AscDFH.historyitem_type_GraphicEl | 2;
+	AscDFH.historyitem_GraphicElChartBuildStep = AscDFH.historyitem_type_GraphicEl | 3;
+	AscDFH.historyitem_GraphicElSeriesIdx      = AscDFH.historyitem_type_GraphicEl | 4;
+	AscDFH.historyitem_GraphicElCategoryIdx    = AscDFH.historyitem_type_GraphicEl | 5;
+
+	AscDFH.historyitem_IndexRgSt  = AscDFH.historyitem_type_IndexRg | 1;
+	AscDFH.historyitem_IndexRgEnd = AscDFH.historyitem_type_IndexRg | 2;
+
+	AscDFH.historyitem_TmplLvl   = AscDFH.historyitem_type_Tmpl | 1;
+	AscDFH.historyitem_TmplTnLst = AscDFH.historyitem_type_Tmpl | 2;
+
+	AscDFH.historyitem_AnimCBhvr     = AscDFH.historyitem_type_Anim | 1;
+	AscDFH.historyitem_AnimTavLst    = AscDFH.historyitem_type_Anim | 2;
+	AscDFH.historyitem_AnimBy        = AscDFH.historyitem_type_Anim | 3;
+	AscDFH.historyitem_AnimCalcmode  = AscDFH.historyitem_type_Anim | 4;
+	AscDFH.historyitem_AnimFrom      = AscDFH.historyitem_type_Anim | 5;
+	AscDFH.historyitem_AnimTo        = AscDFH.historyitem_type_Anim | 6;
+	AscDFH.historyitem_AnimValueType = AscDFH.historyitem_type_Anim | 7;
+
+	AscDFH.historyitem_CBhvrAttrNameLst = AscDFH.historyitem_type_CBhvr | 1;
+	AscDFH.historyitem_CBhvrCTn         = AscDFH.historyitem_type_CBhvr | 2;
+	AscDFH.historyitem_CBhvrTgtEl       = AscDFH.historyitem_type_CBhvr | 3;
+	AscDFH.historyitem_CBhvrAccumulate  = AscDFH.historyitem_type_CBhvr | 4;
+	AscDFH.historyitem_CBhvrAdditive    = AscDFH.historyitem_type_CBhvr | 5;
+	AscDFH.historyitem_CBhvrBy          = AscDFH.historyitem_type_CBhvr | 6;
+	AscDFH.historyitem_CBhvrFrom        = AscDFH.historyitem_type_CBhvr | 7;
+	AscDFH.historyitem_CBhvrOverride    = AscDFH.historyitem_type_CBhvr | 8;
+	AscDFH.historyitem_CBhvrRctx        = AscDFH.historyitem_type_CBhvr | 9;
+	AscDFH.historyitem_CBhvrTo          = AscDFH.historyitem_type_CBhvr | 10;
+	AscDFH.historyitem_CBhvrXfrmType    = AscDFH.historyitem_type_CBhvr | 11;
+
+	AscDFH.historyitem_CTnChildTnLst    = AscDFH.historyitem_type_CTn | 1;
+	AscDFH.historyitem_CTnEndCondLst    = AscDFH.historyitem_type_CTn | 2;
+	AscDFH.historyitem_CTnEndSync       = AscDFH.historyitem_type_CTn | 3;
+	AscDFH.historyitem_CTnIterate       = AscDFH.historyitem_type_CTn | 4;
+	AscDFH.historyitem_CTnStCondLst     = AscDFH.historyitem_type_CTn | 5;
+	AscDFH.historyitem_CTnSubTnLst      = AscDFH.historyitem_type_CTn | 6;
+	AscDFH.historyitem_CTnAccel         = AscDFH.historyitem_type_CTn | 7;
+	AscDFH.historyitem_CTnAfterEffect   = AscDFH.historyitem_type_CTn | 8;
+	AscDFH.historyitem_CTnAutoRev       = AscDFH.historyitem_type_CTn | 9;
+	AscDFH.historyitem_CTnBldLvl        = AscDFH.historyitem_type_CTn | 10;
+	AscDFH.historyitem_CTnDecel         = AscDFH.historyitem_type_CTn | 11;
+	AscDFH.historyitem_CTnDisplay       = AscDFH.historyitem_type_CTn | 12;
+	AscDFH.historyitem_CTnDur           = AscDFH.historyitem_type_CTn | 13;
+	AscDFH.historyitem_CTnEvtFilter     = AscDFH.historyitem_type_CTn | 14;
+	AscDFH.historyitem_CTnFill          = AscDFH.historyitem_type_CTn | 15;
+	AscDFH.historyitem_CTnGrpId         = AscDFH.historyitem_type_CTn | 16;
+	AscDFH.historyitem_CTnId            = AscDFH.historyitem_type_CTn | 17;
+	AscDFH.historyitem_CTnMasterRel     = AscDFH.historyitem_type_CTn | 18;
+	AscDFH.historyitem_CTnNodePh        = AscDFH.historyitem_type_CTn | 19;
+	AscDFH.historyitem_CTnNodeType      = AscDFH.historyitem_type_CTn | 20;
+	AscDFH.historyitem_CTnPresetClass   = AscDFH.historyitem_type_CTn | 21;
+	AscDFH.historyitem_CTnPresetID      = AscDFH.historyitem_type_CTn | 22;
+	AscDFH.historyitem_CTnPresetSubtype = AscDFH.historyitem_type_CTn | 23;
+	AscDFH.historyitem_CTnRepeatCount   = AscDFH.historyitem_type_CTn | 24;
+	AscDFH.historyitem_CTnRepeatDur     = AscDFH.historyitem_type_CTn | 25;
+	AscDFH.historyitem_CTnRestart       = AscDFH.historyitem_type_CTn | 26;
+	AscDFH.historyitem_CTnSpd           = AscDFH.historyitem_type_CTn | 27;
+	AscDFH.historyitem_CTnSyncBehavior  = AscDFH.historyitem_type_CTn | 28;
+	AscDFH.historyitem_CTnTmFilter      = AscDFH.historyitem_type_CTn | 29;
+
+	AscDFH.historyitem_CondRtn   = AscDFH.historyitem_type_Cond | 1;
+	AscDFH.historyitem_CondTgtEl = AscDFH.historyitem_type_Cond | 2;
+	AscDFH.historyitem_CondTn    = AscDFH.historyitem_type_Cond | 3;
+	AscDFH.historyitem_CondDelay = AscDFH.historyitem_type_Cond | 4;
+	AscDFH.historyitem_CondEvt   = AscDFH.historyitem_type_Cond | 5;
+
+	AscDFH.historyitem_RtnVal = AscDFH.historyitem_type_Rtn | 1;
+
+	AscDFH.historyitem_TgtElInkTgt = AscDFH.historyitem_type_TgtEl | 1;
+	AscDFH.historyitem_TgtElSldTgt = AscDFH.historyitem_type_TgtEl | 2;
+	AscDFH.historyitem_TgtElSndTgt = AscDFH.historyitem_type_TgtEl | 3;
+	AscDFH.historyitem_TgtElSpTgt  = AscDFH.historyitem_type_TgtEl | 4;
+
+	AscDFH.historyitem_SndTgtEmbed   = AscDFH.historyitem_type_SndTgt | 1;
+	AscDFH.historyitem_SndTgtName    = AscDFH.historyitem_type_SndTgt | 2;
+	AscDFH.historyitem_SndTgtBuiltIn = AscDFH.historyitem_type_SndTgt | 3;
+
+	AscDFH.historyitem_SpTgtBg         = AscDFH.historyitem_type_SpTgt | 1;
+	AscDFH.historyitem_SpTgtGraphicEl  = AscDFH.historyitem_type_SpTgt | 2;
+	AscDFH.historyitem_SpTgtOleChartEl = AscDFH.historyitem_type_SpTgt | 3;
+	AscDFH.historyitem_SpTgtSubSpId    = AscDFH.historyitem_type_SpTgt | 4;
+	AscDFH.historyitem_SpTgtTxEl       = AscDFH.historyitem_type_SpTgt | 5;
+
+	AscDFH.historyitem_IterateDataTmAbs     = AscDFH.historyitem_type_IterateData | 1;
+	AscDFH.historyitem_IterateDataTmPct     = AscDFH.historyitem_type_IterateData | 2;
+	AscDFH.historyitem_IterateDataBackwards = AscDFH.historyitem_type_IterateData | 3;
+	AscDFH.historyitem_IterateDataType      = AscDFH.historyitem_type_IterateData | 4;
+
+	AscDFH.historyitem_TmVal = AscDFH.historyitem_type_Tm | 1;
+
+	AscDFH.historyitem_TavVal  = AscDFH.historyitem_type_Tav | 1;
+	AscDFH.historyitem_TavFmla = AscDFH.historyitem_type_Tav | 2;
+	AscDFH.historyitem_TavTm   = AscDFH.historyitem_type_Tav | 3;
+
+	AscDFH.historyitem_AnimVariantBoolVal = AscDFH.historyitem_type_AnimVariant | 1;
+	AscDFH.historyitem_AnimVariantClrVal  = AscDFH.historyitem_type_AnimVariant | 2;
+	AscDFH.historyitem_AnimVariantFltVal  = AscDFH.historyitem_type_AnimVariant | 3;
+	AscDFH.historyitem_AnimVariantIntVal  = AscDFH.historyitem_type_AnimVariant | 4;
+	AscDFH.historyitem_AnimVariantStrVal  = AscDFH.historyitem_type_AnimVariant | 5;
+
+	AscDFH.historyitem_AnimClrByRGB  = AscDFH.historyitem_type_AnimClr | 1;
+	AscDFH.historyitem_AnimClrByHSL  = AscDFH.historyitem_type_AnimClr | 2;
+	AscDFH.historyitem_AnimClrCBhvr  = AscDFH.historyitem_type_AnimClr | 3;
+	AscDFH.historyitem_AnimClrFrom   = AscDFH.historyitem_type_AnimClr | 4;
+	AscDFH.historyitem_AnimClrTo     = AscDFH.historyitem_type_AnimClr | 5;
+	AscDFH.historyitem_AnimClrClrSpc = AscDFH.historyitem_type_AnimClr | 6;
+	AscDFH.historyitem_AnimClrDir    = AscDFH.historyitem_type_AnimClr | 7;
+
+	AscDFH.historyitem_AnimEffectCBhvr      = AscDFH.historyitem_type_AnimEffect | 1;
+	AscDFH.historyitem_AnimEffectProgress   = AscDFH.historyitem_type_AnimEffect | 2;
+	AscDFH.historyitem_AnimEffectFilter     = AscDFH.historyitem_type_AnimEffect | 3;
+	AscDFH.historyitem_AnimEffectPrLst      = AscDFH.historyitem_type_AnimEffect | 4;
+	AscDFH.historyitem_AnimEffectTransition = AscDFH.historyitem_type_AnimEffect | 5;
+
+	AscDFH.historyitem_AnimMotionBy           = AscDFH.historyitem_type_AnimMotion | 1;
+	AscDFH.historyitem_AnimMotionCBhvr        = AscDFH.historyitem_type_AnimMotion | 2;
+	AscDFH.historyitem_AnimMotionFrom         = AscDFH.historyitem_type_AnimMotion | 3;
+	AscDFH.historyitem_AnimMotionRCtr         = AscDFH.historyitem_type_AnimMotion | 4;
+	AscDFH.historyitem_AnimMotionTo           = AscDFH.historyitem_type_AnimMotion | 5;
+	AscDFH.historyitem_AnimMotionOrigin       = AscDFH.historyitem_type_AnimMotion | 6;
+	AscDFH.historyitem_AnimMotionPath         = AscDFH.historyitem_type_AnimMotion | 7;
+	AscDFH.historyitem_AnimMotionPathEditMode = AscDFH.historyitem_type_AnimMotion | 8;
+	AscDFH.historyitem_AnimMotionPtsTypes     = AscDFH.historyitem_type_AnimMotion | 9;
+	AscDFH.historyitem_AnimMotionRAng         = AscDFH.historyitem_type_AnimMotion | 10;
+
+	AscDFH.historyitem_AnimRotCBhvr = AscDFH.historyitem_type_AnimRot | 1;
+	AscDFH.historyitem_AnimRotBy    = AscDFH.historyitem_type_AnimRot | 2;
+	AscDFH.historyitem_AnimRotFrom  = AscDFH.historyitem_type_AnimRot | 3;
+	AscDFH.historyitem_AnimRotTo    = AscDFH.historyitem_type_AnimRot | 4;
+
+	AscDFH.historyitem_AnimScaleCBhvr        = AscDFH.historyitem_type_AnimScale | 1;
+	AscDFH.historyitem_AnimScaleBy           = AscDFH.historyitem_type_AnimScale | 2;
+	AscDFH.historyitem_AnimScaleFrom         = AscDFH.historyitem_type_AnimScale | 3;
+	AscDFH.historyitem_AnimScaleTo           = AscDFH.historyitem_type_AnimScale | 4;
+	AscDFH.historyitem_AnimScaleZoomContents = AscDFH.historyitem_type_AnimScale | 5;
+
+	AscDFH.historyitem_AudioCMediaNode  = AscDFH.historyitem_type_Audio | 1;
+	AscDFH.historyitem_AudioIsNarration = AscDFH.historyitem_type_Audio | 2;
+
+	AscDFH.historyitem_CMediaNodeCTn             = AscDFH.historyitem_type_CMediaNode | 1;
+	AscDFH.historyitem_CMediaNodeTgtEl           = AscDFH.historyitem_type_CMediaNode | 2;
+	AscDFH.historyitem_CMediaNodeMute            = AscDFH.historyitem_type_CMediaNode | 3;
+	AscDFH.historyitem_CMediaNodeNumSld          = AscDFH.historyitem_type_CMediaNode | 4;
+	AscDFH.historyitem_CMediaNodeShowWhenStopped = AscDFH.historyitem_type_CMediaNode | 5;
+	AscDFH.historyitem_CMediaNodeVol             = AscDFH.historyitem_type_CMediaNode | 6;
+
+	AscDFH.historyitem_CmdCBhvr = AscDFH.historyitem_type_Cmd | 1;
+	AscDFH.historyitem_CmdCmd   = AscDFH.historyitem_type_Cmd | 2;
+	AscDFH.historyitem_CmdType  = AscDFH.historyitem_type_Cmd | 3;
+
+
+	AscDFH.historyitem_OleChartElLvl  = AscDFH.historyitem_type_OleChartEl | 1;
+	AscDFH.historyitem_OleChartElType = AscDFH.historyitem_type_OleChartEl | 2;
+
+
+	AscDFH.historyitem_TimeNodeContainerCTn = AscDFH.historyitem_type_TimeNodeContainer | 1;
+
+	AscDFH.historyitem_SeqNextCondLst = AscDFH.historyitem_type_Seq | 1;
+	AscDFH.historyitem_SeqPrevCondLst = AscDFH.historyitem_type_Seq | 2;
+	AscDFH.historyitem_SeqConcurrent  = AscDFH.historyitem_type_Seq | 3;
+	AscDFH.historyitem_SeqNextAc      = AscDFH.historyitem_type_Seq | 4;
+	AscDFH.historyitem_SeqPrevAc      = AscDFH.historyitem_type_Seq | 5;
+
+	AscDFH.historyitem_SetCBhvr = AscDFH.historyitem_type_Set | 1;
+	AscDFH.historyitem_SetTo    = AscDFH.historyitem_type_Set | 2;
+
+	AscDFH.historyitem_VideoCMediaNode = AscDFH.historyitem_type_Video | 1;
+	AscDFH.historyitem_VideoFullScrn   = AscDFH.historyitem_type_Video | 2;
+
+	AscDFH.historyitem_OleChartElLvl  = AscDFH.historyitem_type_OleChartEl | 1;
+	AscDFH.historyitem_OleChartElType = AscDFH.historyitem_type_OleChartEl | 2;
+
+	AscDFH.historyitem_TlPointX = AscDFH.historyitem_type_TlPoint | 1;
+	AscDFH.historyitem_TlPointY = AscDFH.historyitem_type_TlPoint | 2;
+
+	AscDFH.historyitem_SndAcEndSnd = AscDFH.historyitem_type_SndAc | 1;
+	AscDFH.historyitem_SndAcStSnd  = AscDFH.historyitem_type_SndAc | 2;
+
+	AscDFH.historyitem_StSndSnd  = AscDFH.historyitem_type_StSnd | 1;
+	AscDFH.historyitem_StSndLoop = AscDFH.historyitem_type_StSnd | 2;
+
+	AscDFH.historyitem_TxElCharRg = AscDFH.historyitem_type_TxEl | 1;
+	AscDFH.historyitem_TxElPRg    = AscDFH.historyitem_type_TxEl | 2;
+
+	AscDFH.historyitem_WheelSpokes = AscDFH.historyitem_type_Wheel | 1;
+
+	AscDFH.historyitem_AttrNameText = AscDFH.historyitem_type_AttrName | 1;
+
+	AscDFH.historyitem_SldSzCX   = AscDFH.historyitem_type_SldSz | 1;
+	AscDFH.historyitem_SldSzCY   = AscDFH.historyitem_type_SldSz | 2;
+	AscDFH.historyitem_SldSzType = AscDFH.historyitem_type_SldSz | 3;
+
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3042,9 +3346,9 @@
 	window['AscDFH'].historydescription_Document_ShiftInsertSafari                  = 0x008d;
 	window['AscDFH'].historydescription_Document_DeleteButton                       = 0x008e;
 	window['AscDFH'].historydescription_Document_ShiftDeleteButton                  = 0x008f;
-	window['AscDFH'].historydescription_Document_SetStyleHeading1                   = 0x0090;
-	window['AscDFH'].historydescription_Document_SetStyleHeading2                   = 0x0091;
-	window['AscDFH'].historydescription_Document_SetStyleHeading3                   = 0x0092;
+	window['AscDFH'].historydescription_Document_Shortcut_SetStyleHeading1          = 0x0090;
+	window['AscDFH'].historydescription_Document_Shortcut_SetStyleHeading2          = 0x0091;
+	window['AscDFH'].historydescription_Document_Shortcut_SetStyleHeading3          = 0x0092;
 	window['AscDFH'].historydescription_Document_SetTextStrikeoutHotKey             = 0x0093;
 	window['AscDFH'].historydescription_Document_SetTextBoldHotKey                  = 0x0094;
 	window['AscDFH'].historydescription_Document_SetParagraphAlignHotKey            = 0x0095;
@@ -3137,7 +3441,7 @@
 	window['AscDFH'].historydescription_Presentation_BringForward                   = 0x00ec;
 	window['AscDFH'].historydescription_Presentation_SendToBack                     = 0x00ed;
 	window['AscDFH'].historydescription_Presentation_BringBackward                  = 0x00ef;
-	window['AscDFH'].historydescription_Presentation_ApplyTiming                    = 0x00f0;
+	window['AscDFH'].historydescription_Presentation_ApplyTransition                = 0x00f0;
 	window['AscDFH'].historydescription_Presentation_MoveSlidesToEnd                = 0x00f1;
 	window['AscDFH'].historydescription_Presentation_MoveSlidesNextPos              = 0x00f2;
 	window['AscDFH'].historydescription_Presentation_MoveSlidesPrevPos              = 0x00f3;
@@ -3204,7 +3508,7 @@
 	window['AscDFH'].historydescription_Document_AcceptRevisionChangesBySelection   = 0x012b;
 	window['AscDFH'].historydescription_Document_RejectRevisionChangesBySelection   = 0x012c;
 	window['AscDFH'].historydescription_Document_AddLetterUnion                     = 0x012d;
-	window['AscDFH'].historydescription_Presentation_ApplyTimingToAll               = 0x012e;
+	window['AscDFH'].historydescription_Presentation_ApplyTransitionToAll           = 0x012e;
 	window['AscDFH'].historydescription_Document_SetColumnsFromRuler                = 0x012f;
 	window['AscDFH'].historydescription_Document_SetColumnsProps                    = 0x0130;
 	window['AscDFH'].historydescription_Document_AddColumnBreak                     = 0x0131;
@@ -3284,6 +3588,15 @@
 	window['AscDFH'].historydescription_Document_SetEndnotePr                       = 0x017a;
 	window['AscDFH'].historydescription_Document_ConvertFootnoteType                = 0x017b;
 	window['AscDFH'].historydescription_Document_AutoCorrectCommon                  = 0x017c;
+	window['AscDFH'].historydescription_Document_Shortcut_ClearFormatting           = 0x017d;
+	window['AscDFH'].historydescription_Document_Shortcut_AddNonBreakingSpace       = 0x017e;
+	window['AscDFH'].historydescription_Document_SetParagraphSuppressLineNumbers    = 0x017f;
+	window['AscDFH'].historydescription_Document_SetLineNumbersProps                = 0x0180;
+	window['AscDFH'].historydescription_Document_AddCrossRef                        = 0x0181;
+	window['AscDFH'].historydescription_Document_ClearAllSpecialForms               = 0x0182;
+	window['AscDFH'].historydescription_Document_ChangeTextCase                     = 0x0183;
+	window['AscDFH'].historydescription_Document_SetNumberingLvl                    = 0x0184;
+	window['AscDFH'].historydescription_Document_SetTrackRevisions                  = 0x0185;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
@@ -3322,6 +3635,10 @@
 		this.Reverted = false;
 	}
 	CChangesBase.prototype.Type = window['AscDFH'].historyitem_Unknown_Unknown;
+	CChangesBase.prototype.GetType = function()
+	{
+		return this.Type;
+	};
 	CChangesBase.prototype.Undo = function()
 	{
 		if (this.Class && this.Class.Undo)
@@ -3387,6 +3704,14 @@
 	{
 		return true;
 	};
+	CChangesBase.prototype.IsNeedRecalculateLineNumbers = function()
+	{
+		return false;
+	};
+	CChangesBase.prototype.IsDescriptionChange = function()
+	{
+		return false;
+	};
 	window['AscDFH'].CChangesBase = CChangesBase;
 	/**
 	 * Базовый класс для изменений, которые меняют содержимое родительского класса.*
@@ -3430,6 +3755,17 @@
 	CChangesBaseContentChange.prototype.GetItemsCount = function()
 	{
 		return this.Items.length;
+	};
+	CChangesBaseContentChange.prototype.GetItem = function(nIndex)
+	{
+		return this.Items[nIndex];
+	};
+	CChangesBaseContentChange.prototype.GetPos = function(nIndex)
+	{
+		if (nIndex === undefined)
+			nIndex = 0;
+
+		return this.UseArray ? this.PosArray[nIndex] : this.Pos + nIndex;
 	};
 	CChangesBaseContentChange.prototype.WriteToBinary = function(Writer)
 	{

@@ -185,7 +185,7 @@ CDocContentStructure.prototype.checkByWarpStruct = function(oWarpStruct, dWidth,
                 else
                 {
                     oNextPointOnPolygon = this.checkTransformByOddPath(oMatrix, oWarpedObject, aWarpedObjects[t+1], oNextPointOnPolygon, dContentHeight, dKoeff, bArcDown, oPolygon, XLimit);
-                    oWarpedObject.geometry.transform(oMatrix);
+                    oWarpedObject.geometry.transform(oMatrix, dKoeff);
                 }
             }
         }
@@ -930,8 +930,6 @@ function CTextDrawer(dWidth, dHeight, bDivByLInes, oTheme, bDivGlyphs)
         this.m_aByParagraphs = [];
     }
 
-    this.UseBColor = false;
-    this.UsePColor = false;
     this.m_bIsTextDrawer = true;
     this.pathMemory = new AscFormat.CPathMemory();
 }
@@ -955,9 +953,26 @@ CTextDrawer.prototype =
         {
             this.m_oPen.Color.A = a;
         }
-        this.UsePColor = true;
+        var oLastCommand = this.m_aStack[this.m_aStack.length - 1];
+        if(oLastCommand)
+        {
+            if(oLastCommand.m_nType === DRAW_COMMAND_LINE && 
+                oLastCommand.m_nDrawType === 3)
+            {
+                if(this.m_oTextPr && this.m_oTheme)
+                {
+                    var oTextPr = this.m_oTextPr.Copy();
+                    if(!oTextPr.TextOutline)
+                    {
+                        oTextPr.TextOutline = new AscFormat.CLn();
+                    }
+                    oTextPr.TextOutline.Fill = AscFormat.CreateUnfilFromRGB(r, g, b);
+                    this.SetTextPr(oTextPr, this.m_oTheme);
+                    return;
+                }
+            }
+        }
         this.Get_PathToDraw(false, true);
-        this.UsePColor = false;
     },
     AddSmartRect: function()
     {},
@@ -986,9 +1001,25 @@ CTextDrawer.prototype =
         {
             this.m_oBrush.Color1.A = a;
         }
-        this.UseBColor = true;
+        var oLastCommand = this.m_aStack[this.m_aStack.length - 1];
+        if(oLastCommand)
+        {
+            if(oLastCommand.m_nType === DRAW_COMMAND_LINE && 
+                (oLastCommand.m_nDrawType === 0))
+            {
+                if(this.m_oTextPr && this.m_oTheme)
+                {
+                    var oTextPr = this.m_oTextPr.Copy();
+                    oTextPr.Unifill = undefined;
+                    oTextPr.TextFill = undefined;
+                    oTextPr.FontRef = undefined;
+                    oTextPr.Color = new CDocumentColor(r, g, b, false);
+                    this.SetTextPr(oTextPr, this.m_oTheme);
+                    return;
+                }
+            }
+        }
         this.Get_PathToDraw(false, true);
-        this.UseBColor = false;
     },
 
     set_fillColor: function(R, G, B)
@@ -2152,6 +2183,9 @@ CTextDrawer.prototype =
 
     SetTextPr : function(textPr, theme)
     {
+		if (theme && textPr && textPr.ReplaceThemeFonts)
+			textPr.ReplaceThemeFonts(theme.themeElements.fontScheme);
+
         var bNeedGetPath = false;
         if(!this.CheckCompareFillBrush(textPr, this.m_oTextPr))
         {
@@ -2188,7 +2222,7 @@ CTextDrawer.prototype =
 
     GetFillFromTextPr: function(oTextPr)
     {
-        if(oTextPr && !this.UseBColor)
+        if(oTextPr)
         {
             if(oTextPr.TextFill)
             {
@@ -2200,7 +2234,28 @@ CTextDrawer.prototype =
             }
             if(oTextPr.Color)
             {
-                return AscFormat.CreateUnfilFromRGB(oTextPr.Color.r, oTextPr.Color.g, oTextPr.Color.b);
+                var oColor = oTextPr.Color;
+                if(oColor.Auto && oTextPr.FontRef && oTextPr.FontRef.Color && this.m_oTheme)
+                {
+                    var oColorMap = AscFormat.DEFAULT_COLOR_MAP;
+                    var oApi = window && window.editor;
+                    if(oApi)
+                    {
+                        var oDoc = oApi.WordControl && oApi.WordControl.m_oLogicDocument;
+                        if(oDoc && oDoc.Get_ColorMap)
+                        {
+                            var _cm = oDoc.Get_ColorMap();
+                            if(_cm)
+                            {
+                                oColorMap = _cm;
+                            }
+                        }
+                    }
+                    oTextPr.FontRef.Color.check(this.m_oTheme, oColorMap);
+                    var RGBA = oTextPr.FontRef.Color.RGBA;
+                    oColor = new CDocumentColor( RGBA.R, RGBA.G, RGBA.B, RGBA.A );
+                }
+                return AscFormat.CreateUnfilFromRGB(oColor.r, oColor.g, oColor.b);
             }
             return null;
         }
@@ -2220,16 +2275,9 @@ CTextDrawer.prototype =
 
     GetPenFromTextPr: function(oTextPr)
     {
-        if(oTextPr && !this.UsePColor)
+        if(oTextPr)
         {
             return oTextPr.TextOutline;
-        }
-        if(this.UsePColor)
-        {
-            var oC = this.m_oPen.Color;
-            var oUC = AscFormat.CreateUniColorRGB(oC.R, oC.G, oC.B);
-            var oUF = AscFormat.CreateUniFillByUniColor(oUC);
-            return AscFormat.CreatePenFromParams(oUF,undefined, undefined, undefined, undefined, 0);
         }
         return null;
     },

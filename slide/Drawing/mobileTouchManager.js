@@ -63,14 +63,13 @@
 	{
 		var HtmlPage = this.HtmlPage;
 		var w = HtmlPage.m_oEditor.HtmlElement.width;
-		if (HtmlPage.bIsRetinaSupport)
-			w /= AscCommon.AscBrowser.retinaPixelRatio;
+		w /= AscCommon.AscBrowser.retinaPixelRatio;
 
 		var h = (((HtmlPage.m_oBody.AbsolutePosition.B - HtmlPage.m_oBody.AbsolutePosition.T) -
 			(HtmlPage.m_oTopRuler.AbsolutePosition.B - HtmlPage.m_oTopRuler.AbsolutePosition.T)) * g_dKoef_mm_to_pix) >> 0;
 
-		var _pageWidth  = this.LogicDocument.Width * g_dKoef_mm_to_pix;
-		var _pageHeight = this.LogicDocument.Height * g_dKoef_mm_to_pix;
+		var _pageWidth  = this.LogicDocument.GetWidthMM() * g_dKoef_mm_to_pix;
+		var _pageHeight = this.LogicDocument.GetHeightMM() * g_dKoef_mm_to_pix;
 
 		var _hor_Zoom = 100;
 		if (0 != _pageWidth)

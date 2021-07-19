@@ -75,6 +75,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Section_Endnote_Pos]         = CChanges
 AscDFH.changesFactory[AscDFH.historyitem_Section_Endnote_NumStart]    = CChangesSectionEndnoteNumStart;
 AscDFH.changesFactory[AscDFH.historyitem_Section_Endnote_NumRestart]  = CChangesSectionEndnoteNumRestart;
 AscDFH.changesFactory[AscDFH.historyitem_Section_Endnote_NumFormat]   = CChangesSectionEndnoteNumFormat;
+AscDFH.changesFactory[AscDFH.historyitem_Section_LnNumType]           = CChangesSectionLnNumType;
 
 //----------------------------------------------------------------------------------------------------------------------
 // Карта зависимости изменений
@@ -116,6 +117,7 @@ AscDFH.changesRelationMap[AscDFH.historyitem_Section_Endnote_Pos]         = [Asc
 AscDFH.changesRelationMap[AscDFH.historyitem_Section_Endnote_NumStart]    = [AscDFH.historyitem_Section_Endnote_NumStart];
 AscDFH.changesRelationMap[AscDFH.historyitem_Section_Endnote_NumRestart]  = [AscDFH.historyitem_Section_Endnote_NumRestart];
 AscDFH.changesRelationMap[AscDFH.historyitem_Section_Endnote_NumFormat]   = [AscDFH.historyitem_Section_Endnote_NumFormat];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_LnNumType]           = [AscDFH.historyitem_Section_LnNumType];
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -969,4 +971,24 @@ CChangesSectionEndnoteNumFormat.prototype.Type = AscDFH.historyitem_Section_Endn
 CChangesSectionEndnoteNumFormat.prototype.private_SetValue = function(Value)
 {
 	this.Class.EndnotePr.NumFormat = Value;
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseObjectProperty}
+ */
+function CChangesSectionLnNumType(Class, Old, New)
+{
+	AscDFH.CChangesBaseObjectProperty.call(this, Class, Old, New);
+}
+CChangesSectionLnNumType.prototype = Object.create(AscDFH.CChangesBaseObjectProperty.prototype);
+CChangesSectionLnNumType.prototype.constructor = CChangesSectionLnNumType;
+CChangesSectionLnNumType.prototype.Type = AscDFH.historyitem_Section_LnNumType;
+CChangesSectionLnNumType.prototype.private_CreateObject = function()
+{
+	return new CSectionLnNumType();
+};
+CChangesSectionLnNumType.prototype.private_SetValue = function(Value)
+{
+	this.Class.LnNumType = Value;
 };

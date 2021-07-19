@@ -217,15 +217,6 @@
 			return co;
 		};
 
-		CellTextRender.prototype.calcCharHeight = function (pos) {
-			var t = this;
-			for (var p = t.charProps[pos]; (!p || !p.font) && pos > 0; --pos) {
-				p = t.charProps[pos - 1];
-			}
-			return t._calcLineMetrics(p.fsz !== undefined ? p.fsz : p.font.FontSize, p.va, p.fm);
-		};
-
-
 		CellTextRender.prototype.getCharsCount = function () {
 			return this.chars.length;
 		};

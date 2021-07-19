@@ -7255,4 +7255,8 @@ function (window, undefined) {
 		return res;
 
 	};
+
+	//----------------------------------------------------------export----------------------------------------------------
+	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
+	window['AscCommonExcel'].Complex = Complex;
 })(window);

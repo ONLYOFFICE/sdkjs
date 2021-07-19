@@ -77,8 +77,8 @@ window.startPluginApi = function() {
 	 * @property {editorType[]} EditorsSupport=Array.<string>("word","cell","slide") The editors which the plugin is available for ("word" - text document editor, "cell" - spreadsheet editor, "slide" - presentation editor).
 	 *
 	 * @property {boolean} isVisual Specifies if the plugin is visual (will open a window for some action, or introduce some additions to the editor panel interface) or non-visual (will provide a button (or buttons) which is going to apply some transformations or manipulations to the document).
-	 * @property {boolean} isModal Specifies if the opened plugin window is modal, i.e. a separate modal window must be opened, or not (used for visual plugins only). The following rule must be observed at all times: isModal != isInsideMode.
-	 * @property {boolean} isInsideMode Specifies if the plugin must be displayed inside the editor panel instead of its own window (used for visual non-modal plugins only). The following rule must be observed at all times: isModal != isInsideMode.
+	 * @property {boolean} isModal Specifies if the opened plugin window is modal (used for visual plugins only, and if isInsideMode is not true).
+	 * @property {boolean} isInsideMode Specifies if the plugin must be displayed inside the editor panel instead of its own window.
 	 * @property {boolean} [isSystem] Specifies if the plugin is not displayed in the editor interface and is started in background with the server (or desktop editors start) not interfering with the other plugins, so that they can work simultaneously.
 	 * @property {boolean} [isDisplayedInViewer] Specifies if the plugin will be displayed in viewer mode as well as in editor mode (isDisplayedInViewer == true) or in the editor mode only (isDisplayedInViewer == false).
 	 *
@@ -101,6 +101,7 @@ window.startPluginApi = function() {
 	 * @typedef {Object} Config
 	 * @property {string} basePath="" Path to the plugin. All the other paths are calculated relative to this path. In case the plugin is installed on the server, an additional parameter (path to the plugins) is added there. If baseUrl == "" the path to all plugins will be used.
 	 * @property {string} guid Plugin identifier. It <b>must<b> be of the asc.{UUID} type.
+	 * @property {string} [minVersion] The minimum supported editors version.
 	 *
 	 * @property {string} name Plugin name which will be visible at the plugin toolbar.
 	 * @property {localeTranslate} [nameLocale] Translations for name field

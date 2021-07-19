@@ -165,7 +165,9 @@ function CDrawingDocument()
 
 	this.CollaborativeTargets            = [];
 	this.CollaborativeTargetsUpdateTasks = [];
-};
+
+    this.MathTrack = new AscCommon.CMathTrack();
+}
 
 CDrawingDocument.prototype.Notes_GetWidth = function()
 {
@@ -247,7 +249,7 @@ CDrawingDocument.prototype.OnStartRecalculate = function(pageCount)
     {
         return;
     }
-    this.Native["DD_OnStartRecalculate"](pageCount, this.LogicDocument.Width, this.LogicDocument.Height);
+    this.Native["DD_OnStartRecalculate"](pageCount, this.LogicDocument.GetWidthMM(), this.LogicDocument.GetHeightMM());
 };
 
 CDrawingDocument.prototype.SetTargetColor = function(r, g, b)
@@ -291,9 +293,9 @@ CDrawingDocument.prototype.OnRecalculatePage = function(index, pageObject)
     }
     else
     {
-        r = this.m_oLogicDocument.Width;
+        r = this.m_oLogicDocument.GetWidthMM();
         l = 0.0;
-        b = this.m_oLogicDocument.Height;
+        b = this.m_oLogicDocument.GetHeightMM();
         t = 0.0;
     }
     this.Native["DD_OnRecalculatePage"](index, l, t, r, b, bIsHidden, pageObject.Get_Id());
@@ -319,7 +321,7 @@ CDrawingDocument.prototype.RenderDocument = function(Renderer)
 {
     for (var i = 0; i < this.SlidesCount; i++)
     {
-        Renderer.BeginPage(this.m_oLogicDocument.Width, this.m_oLogicDocument.Height);
+        Renderer.BeginPage(this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM());
         this.m_oLogicDocument.DrawPage(i, Renderer);
         Renderer.EndPage();
     }
@@ -352,7 +354,7 @@ CDrawingDocument.prototype.ToRenderer2    = function()
     var ret = "";
     for (var i = 0; i < this.SlidesCount; i++)
     {
-        Renderer.BeginPage(this.m_oLogicDocument.Width, this.m_oLogicDocument.Height);
+        Renderer.BeginPage(this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM());
         this.m_oLogicDocument.DrawPage(i, Renderer);
         Renderer.EndPage();
 
@@ -392,17 +394,17 @@ CDrawingDocument.prototype.ToRendererPart = function(noBase64)
 
     for (var i = start; i <= end; i++)
     {
-        renderer.BeginPage(this.m_oLogicDocument.Width, this.m_oLogicDocument.Height);
+        renderer.BeginPage(this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM());
         this.m_oLogicDocument.DrawPage(i, renderer);
         renderer.EndPage();
 
         if (watermark)
-            watermark.DrawOnRenderer(renderer, this.m_oLogicDocument.Width, this.m_oLogicDocument.Height);
+            watermark.DrawOnRenderer(renderer, this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM());
     }
 
     if (end == -1)
     {
-        renderer.BeginPage(this.m_oLogicDocument.Width, this.m_oLogicDocument.Height);
+        renderer.BeginPage(this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM());
         renderer.EndPage()
     }
 
@@ -624,6 +626,10 @@ CDrawingDocument.prototype.Set_RulerState_Paragraph = function(obj, margins)
     this.Native["DD_Set_RulerState_Paragraph"](obj, margins);
 };
 
+CDrawingDocument.prototype.Update_MathTrack = function (IsActive, IsContentActive, oMath)
+{
+    //TODO: Implement
+};
 
 CDrawingDocument.prototype.Update_ParaTab = function(Default_Tab, ParaTabs)
 {
@@ -665,9 +671,9 @@ CDrawingDocument.prototype.CorrectRulerPosition = function(pos)
 };
 
 // вот здесь весь трекинг
-CDrawingDocument.prototype.DrawTrack = function(type, matrix, left, top, width, height, isLine, canRotate, isNoMove)
+CDrawingDocument.prototype.DrawTrack = function(type, matrix, left, top, width, height, isLine, canRotate, isNoMove, isDrawHandles)
 {
-    this.AutoShapesTrack.DrawTrack(type, matrix, left, top, width, height, isLine, canRotate, isNoMove);
+    this.AutoShapesTrack.DrawTrack(type, matrix, left, top, width, height, isLine, canRotate, isNoMove, isDrawHandles);
 };
 
 CDrawingDocument.prototype.LockSlide = function(slideNum)
@@ -688,6 +694,11 @@ CDrawingDocument.prototype.DrawTrackSelectShapes = function(x, y, w, h)
 CDrawingDocument.prototype.DrawAdjustment = function(matrix, x, y, bTextWarp)
 {
     this.AutoShapesTrack.DrawAdjustment(matrix, x, y, bTextWarp);
+};
+
+CDrawingDocument.prototype.DrawMathTrack = function (overlay)
+{
+    //TODO: Implement
 };
 
 // cursor
@@ -724,7 +735,6 @@ CDrawingDocument.prototype.UpdateThumbnailsAttack = function()
         {
             var oSlide = aSlides[i];
             this.Native["DD_UpdateThumbnailAttack"](i, oSlide.Id, !oSlide.isVisible());
-            DrawingDocument.OnRecalculatePage(i, aSlides[i]);
         }
     }
     DrawingDocument.OnEndRecalculate();
@@ -928,8 +938,8 @@ CDrawingDocument.prototype.CheckLayouts = function(oMaster){
 
     // NOTE: need check
 
-    var page_w_mm = logicDoc.Width;//THEME_TH_WIDTH * 2.54 / (72.0 / 96.0);
-    var page_h_mm = logicDoc.Height;//THEME_TH_HEIGHT * 2.54 / (72.0 / 96.0);
+    var page_w_mm = logicDoc.GetWidthMM();//THEME_TH_WIDTH * 2.54 / (72.0 / 96.0);
+    var page_h_mm = logicDoc.GetHeightMM();//THEME_TH_HEIGHT * 2.54 / (72.0 / 96.0);
     var page_w_px = THEME_TH_WIDTH * 2;
     var page_h_px = THEME_TH_HEIGHT * 2;
 

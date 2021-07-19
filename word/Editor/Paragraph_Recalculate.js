@@ -197,10 +197,10 @@ Paragraph.prototype.Recalculate_FastWholeParagraph = function()
 /**
  * Пытаемся быстро рассчитать отрезок, в котором произошли изменения, и если ничего не съехало, тогда
  * перерисовываем страницу, в противном случаем запускаем обычный пересчет.
- * @param SimpleChanges
+ * @param {CParaPos} oParaPos
  * @returns {*} -1 если быстрый пересчет не получился, либо номер страницы, которую нужно перерисовать
  */
-Paragraph.prototype.Recalculate_FastRange = function(SimpleChanges)
+Paragraph.prototype.RecalculateFastRunRange = function(oParaPos)
 {
 	if (this.Pages.length <= 0)
         return -1;
@@ -208,18 +208,16 @@ Paragraph.prototype.Recalculate_FastRange = function(SimpleChanges)
     if (true === this.Parent.IsHdrFtr(false))
         return -1;
 
-    var Run = SimpleChanges[0].Class;
-    var ParaPos = Run.Get_SimpleChanges_ParaPos(SimpleChanges);
-    if ( null === ParaPos )
+    if (!oParaPos)
         return -1;
 
-    var Line  = ParaPos.Line;
-    var Range = ParaPos.Range;
+    var Line  = oParaPos.Line;
+    var Range = oParaPos.Range;
 
     // Такое возможно, если у нас шел долгий пересчет (например, из-за изменений второго пользователя) и в это же время
 	// запустился быстрый (ввод символа). Долгий пересчет успел сбросить рассчет данного параграфа, но не пересчитал параграф
 	// до конца, а в это время у данного параграфа запросился быстрый пересчет.
-    if (this.Lines.length <= ParaPos.Line)
+    if (this.Lines.length <= oParaPos.Line)
     	return -1;
 
     // TODO: Отключаем это ускорение в таблицах, т.к. в таблицах и так есть свое ускорение. Но можно и это ускорение
@@ -416,6 +414,9 @@ Paragraph.prototype.Recalculate_Page = function(CurPage)
 
     if (RecalcResult & recalcresult_NextElement && window['AscCommon'].g_specialPasteHelper && window['AscCommon'].g_specialPasteHelper.showButtonIdParagraph === this.GetId())
 		window['AscCommon'].g_specialPasteHelper.SpecialPasteButtonById_Show();
+
+    if (RecalcResult & recalcresult_NextElement)
+		this.UpdateLineNumbersInfo();
 
     return RecalcResult;
 };
@@ -1196,7 +1197,7 @@ Paragraph.prototype.private_RecalculateLineInfo        = function(CurLine, CurPa
     if (true === PRS.BadLeftTab)
         this.Lines[CurLine].Info |= paralineinfo_BadLeftTab;
 
-    if (PRS.GetFootnoteReferencesCount(null, true) > 0 || PRS.GetEndnoteReferenceCount(null, true) > 0)
+    if (PRS.GetFootnoteReferencesCount(null, true) > 0 || PRS.GetEndnoteReferenceCount() > 0)
     	this.Lines[CurLine].Info |= paralineinfo_Notes;
 
     if (true === PRS.TextOnLine)
@@ -3382,7 +3383,7 @@ CParagraphRecalculateStateWrap.prototype =
             var FirstTextPr = Para.Get_FirstTextPr2();
 
 
-            if (Bullet.Get_Type() >= numbering_presentationnumfrmt_AlphaLcParenR)
+            if (Bullet.IsAlpha())
             {
                 if(BulletNum > 780)
                 {
@@ -3400,7 +3401,7 @@ CParagraphRecalculateStateWrap.prototype =
             NumberingItem.Measure(g_oTextMeasurer, FirstTextPr, Para.Get_Theme(), Para.Get_ColorMap());
 
 
-            if ( numbering_presentationnumfrmt_None != Bullet.Get_Type() )
+            if ( !Bullet.IsNone() )
             {
                 if ( ParaPr.Ind.FirstLine < 0 )
                     NumberingItem.WidthVisible = Math.max( NumberingItem.Width, Para.Pages[CurPage].X + ParaPr.Ind.Left + ParaPr.Ind.FirstLine - X, Para.Pages[CurPage].X + ParaPr.Ind.Left - X );
@@ -3466,24 +3467,26 @@ CParagraphRecalculateStateWrap.prototype.AddEndnoteReference = function(oEndnote
 
 	this.Endnotes.push({EndnoteReference : oEndnoteReference, Pos : oPos});
 };
-CParagraphRecalculateStateWrap.prototype.GetEndnoteReferenceCount = function(oEndnoteReference, isAllowCustom)
+CParagraphRecalculateStateWrap.prototype.GetEndnoteReferenceNumber = function(oEndnoteReference)
 {
-	var _isAllowCustom = (true === isAllowCustom ? true : false);
-
-	// Если данную ссылку мы добавляли уже в строке, тогда ищем сколько было элементов до нее, если не добавляли,
-	// тогда возвращаем просто количество ссылок. Ссылки с флагом CustomMarkFollows не учитываются
+	if (this.Endnotes.length <= 0 || this.Endnotes[0].EndnoteReference === oEndnoteReference)
+		return -1;
 
 	var nRefsCount = 0;
 	for (var nIndex = 0, nCount = this.Endnotes.length; nIndex < nCount; ++nIndex)
 	{
 		if (this.Endnotes[nIndex].EndnoteReference === oEndnoteReference)
-			return nRefsCount;
+			return (this.Endnotes[0].EndnoteReference.Number + nRefsCount);
 
-		if (true === _isAllowCustom || true !== this.Endnotes[nIndex].EndnoteReference.IsCustomMarkFollows())
+		if (true !== this.Endnotes[nIndex].EndnoteReference.IsCustomMarkFollows())
 			nRefsCount++;
 	}
 
-	return nRefsCount;
+	return (this.Endnotes[0].EndnoteReference.Number + nRefsCount);
+};
+CParagraphRecalculateStateWrap.prototype.GetEndnoteReferenceCount = function()
+{
+	return this.Endnotes.length;
 };
 CParagraphRecalculateStateWrap.prototype.SetFast = function(bValue)
 {
@@ -3690,6 +3693,10 @@ function CParagraphRecalculateStateAlign()
 
 	this.ComplexFields = new CParagraphComplexFieldsInfo();
 }
+CParagraphRecalculateStateAlign.prototype.IsFastRangeRecalc = function()
+{
+	return this.RecalcFast;
+};
 
 function CParagraphRecalculateStateInfo()
 {

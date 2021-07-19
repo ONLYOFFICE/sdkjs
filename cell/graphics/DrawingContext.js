@@ -46,7 +46,7 @@
 
 	function colorObjToAscColor(color) {
 		if (!color) {
-			return color;
+			return AscCommon.CreateAscColorCustom(0, 0, 0, true);
 		}
 
 		var oRes = null;
@@ -468,17 +468,13 @@
 	}
 
 	DrawingContext.prototype._ppiInit = function () {
-		this.ppiX = 96;
-		this.ppiY = 96;
 		this.scaleFactor = 1;
 
 		if (window["IS_NATIVE_EDITOR"]) {
 			this.ppiX = this.ppiY = window["native"]["GetDeviceDPI"]();
 		} else {
-			if (AscCommon.AscBrowser.isRetina) {
-				this.ppiX = AscCommon.AscBrowser.convertToRetinaValue(this.ppiX, true);
-				this.ppiY = AscCommon.AscBrowser.convertToRetinaValue(this.ppiY, true);
-			}
+            this.ppiX = AscCommon.AscBrowser.convertToRetinaValue(96, true);
+            this.ppiY = AscCommon.AscBrowser.convertToRetinaValue(96, true);
 		}
 	};
 
@@ -863,10 +859,8 @@
 	DrawingContext.prototype.getFontMetrics = function (units) {
 		var fm = this.fmgrGraphics[3];
 		var d = Math.abs(fm.m_lDescender);
-		var ppiX = 96;
-		if (AscCommon.AscBrowser.isRetina) {
-			ppiX = AscCommon.AscBrowser.convertToRetinaValue(ppiX, true);
-		}
+		var ppiX = AscCommon.AscBrowser.convertToRetinaValue(96, true);
+
 		var r = getCvtRatio(0/*px*/, units >= 0 && units <= 3 ? units : this.units, ppiX);
 		var r2 = getCvtRatio(1/*pt*/, units >= 0 && units <= 3 ? units : this.units, ppiX);
 		var factor = this.getFontSize() * r / fm.m_lUnits_Per_Em;
@@ -947,6 +941,7 @@
 			if (!angle) {
 				window["native"]["PD_LoadFont"](fontInfo.Path, fontInfo.FaceIndex, this.font.getSize(), flag);
 			}
+			AscCommon.g_oTextMeasurer.Flush();
 			fontInfo = g_oTextMeasurer.Measurer["LoadFont"](fontInfo.Path, fontInfo.FaceIndex, this.font.getSize(), flag);
 			if (angle) {
 				this.fmgrGraphics[1].init(fontInfo);

@@ -38,6 +38,7 @@ var _internalStorage = {
 };
 
 window['SockJS'] = createSockJS();
+window['JSZipUtils'] = JSZipUtils();
 
 Asc['asc_docs_api'].prototype.Update_ParaInd = function( Ind )
 {
@@ -753,6 +754,31 @@ function asc_menu_ReadParaShd(_params, _cursor)
             }
         }
     }
+    if(_shd.Value === Asc.c_oAscShd.Clear) {
+        if(_shd.Color) {
+            if(_shd.Color.Auto) {
+                _shd.Color.r = 0;
+                _shd.Color.g = 0;
+                _shd.Color.b = 0;
+                _shd.Fill = {};
+                _shd.Fill.Auto = true;
+                _shd.Fill.r = 255;
+                _shd.Fill.g = 255;
+                _shd.Fill.b = 255;
+            }
+            else {
+                _shd.Color.Auto = false;
+                _shd.Fill.Auto = false;
+                _shd.Fill.r = _shd.Color.r;
+                _shd.Fill.g = _shd.Color.g;
+                _shd.Fill.b = _shd.Color.b;
+                var Unifill        = new AscFormat.CUniFill();
+                Unifill.fill       = new AscFormat.CSolidFill();
+                Unifill.fill.color = AscFormat.CorrectUniColor(_shd.Color, Unifill.fill.color, 1);
+                _shd.Unifill = Unifill;
+            }
+        }
+    }
     return _shd;
 }
 function asc_menu_WriteParaShd(_type, _shd, _stream)
@@ -1167,7 +1193,11 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
                     case 8:
                     {
                         var color = asc_menu_ReadColor(_params, _current);
-                        _textPr.HighLight = { r: color.r, g: color.g, b: color.b };
+                        if (color.a < 1) {
+                            _textPr.HighLight = AscCommonWord.highlight_None;
+                        } else {
+                            _textPr.HighLight = { r: color.r, g: color.g, b: color.b };
+                        }
                         break;
                     }
                     case 9:
@@ -1913,19 +1943,8 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
                     }
                 }
             }
-
-            if ( false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Document_Content_Add) )
-            {
-                this.WordControl.m_oLogicDocument.StartAction();
-                this.WordControl.m_oLogicDocument.AddInlineTable(_rows, _cols);
-
-                if (_style != null)
-                {
-                    this.WordControl.m_oLogicDocument.SetTableProps({TableStyle : _style});
-                }
-
-                this.WordControl.m_oLogicDocument.FinalizeAction();
-            }
+            _style = _style + "";
+            this.put_Table(_rows, _cols, _style);
             break;
         }
         case 50: // ASC_MENU_EVENT_TYPE_INSERT_IMAGE
@@ -1941,19 +1960,8 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
         case 53: // ASC_MENU_EVENT_TYPE_INSERT_SHAPE
         {
             var _shapeProp = asc_menu_ReadShapePr(_params, _current);
-
             var _pageNum = _shapeProp.InsertPageNum;
-            // получаем размеры страницы
-            var _sectionPr = this.WordControl.m_oLogicDocument.Get_PageLimits(_pageNum);
-
-            var _min = Math.min(_sectionPr.XLimit / 2, _sectionPr.YLimit / 2);
-
-            this.WordControl.m_oLogicDocument.DrawingObjects.addShapeOnPage(_shapeProp.type, _pageNum,
-                                                                            _sectionPr.X + _sectionPr.XLimit / 4,
-                                                                            _sectionPr.Y + _sectionPr.YLimit / 4,
-                                                                            _min,
-                                                                            _min);
-            //this.StartAddShape(_shapeProp.type, true);
+            this.WordControl.m_oLogicDocument.DrawingObjects.addShapeOnPage(_shapeProp.type, _shapeProp.InsertPageNum);
             break;
         }
         case 52: // ASC_MENU_EVENT_TYPE_INSERT_HYPERLINK
@@ -2468,15 +2476,15 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
         }
 
         case 23102: // ASC_MENU_EVENT_TYPE_DO_SHOW_COMMENT
-            {
-                var json = JSON.parse(params[0]);
-                if (json && json["id"]) {
-                    if (_api.asc_showComment) {
-                        _api.asc_showComment(json["id"], json["isNew"]);
-                    }
+        {
+            var json = JSON.parse(_params[0]);
+            if (json && json["id"]) {
+                if (_api.asc_showComment) {
+                    _api.asc_showComment(json["id"], json["isNew"] === true);
                 }
-                break;
             }
+            break;
+        }
 
         case 23103: // ASC_MENU_EVENT_TYPE_DO_SELECT_COMMENTS
         {
@@ -2624,6 +2632,17 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
             break;
         }
 
+        case 23109: // ASC_MENU_EVENT_TYPE_DO_CAN_ADD_QUOTED_COMMENT
+        {
+            var _stream = global_memory_stream_menu;
+            _stream["ClearNoAttack"]();
+            _stream["WriteString2"](JSON.stringify({
+                result: this.can_AddQuotedComment() !== false
+            }));
+            _return = _stream;
+            break;
+        }
+
         case 24101: // ASC_MENU_EVENT_TYPE_DO_SET_TRACK_REVISIONS
         {
             var json = JSON.parse(_params[0]);
@@ -2710,6 +2729,31 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
         {
             if (_api.asc_FollowRevisionMove) {
                 _api.asc_FollowRevisionMove(_internalStorage.changesReview[0]);
+            }
+            break;
+        }
+
+        case 25001: // ASC_MENU_EVENT_TYPE_DO_API_FUNCTION_CALL
+        {
+            var json = JSON.parse(_params[0]),
+                func = json["func"],
+                params = json["params"] || [],
+                returnable = json["returnable"] || false; // need return result
+
+            if (json && func) {
+                if (_api[func]) {
+                    if (returnable) {
+                        var _stream = global_memory_stream_menu;
+                        _stream["ClearNoAttack"]();
+                        var result = _api[func].apply(_api, params);
+                        _stream["WriteString2"](JSON.stringify({
+                            result: result
+                        }));
+                        _return = _stream;
+                    } else {
+                        _api[func].apply(_api, params);
+                    }
+                }
             }
             break;
         }
@@ -3516,457 +3560,17 @@ function asc_menu_WriteTablePr(_tablePr, _stream)
 ///////////////////////////////////////////////////////////////////////////
 // IMAGE
 ///////////////////////////////////////////////////////////////////////////
-function asc_menu_ReadAscValAxisSettings(_params, _cursor)
-{
-    var _settings = new AscCommon.asc_ValAxisSettings();
 
-    var _continue = true;
-    while (_continue)
-    {
-        var _attr = _params[_cursor.pos++];
-        switch (_attr)
-        {
-            case 0:
-            {
-                _settings.minValRule = _params[_cursor.pos++];
-                break;
-            }
-            case 1:
-            {
-                _settings.minVal = _params[_cursor.pos++];
-                break;
-            }
-            case 2:
-            {
-                _settings.maxValRule = _params[_cursor.pos++];
-                break;
-            }
-            case 3:
-            {
-                _settings.maxVal = _params[_cursor.pos++];
-                break;
-            }
-            case 4:
-            {
-                _settings.invertValOrder = _params[_cursor.pos++];
-                break;
-            }
-            case 5:
-            {
-                _settings.logScale = _params[_cursor.pos++];
-                break;
-            }
-            case 6:
-            {
-                _settings.logBase = _params[_cursor.pos++];
-                break;
-            }
-            case 7:
-            {
-                _settings.dispUnitsRule = _params[_cursor.pos++];
-                break;
-            }
-            case 8:
-            {
-                _settings.units = _params[_cursor.pos++];
-                break;
-            }
-            case 9:
-            {
-                _settings.showUnitsOnChart = _params[_cursor.pos++];
-                break;
-            }
-            case 10:
-            {
-                _settings.majorTickMark = _params[_cursor.pos++];
-                break;
-            }
-            case 11:
-            {
-                _settings.minorTickMark = _params[_cursor.pos++];
-                break;
-            }
-            case 12:
-            {
-                _settings.tickLabelsPos = _params[_cursor.pos++];
-                break;
-            }
-            case 13:
-            {
-                _settings.crossesRule = _params[_cursor.pos++];
-                break;
-            }
-            case 14:
-            {
-                _settings.crosses = _params[_cursor.pos++];
-                break;
-            }
-            case 15:
-            {
-                _settings.axisType = _params[_cursor.pos++];
-                break;
-            }
-            case 255:
-            default:
-            {
-                _continue = false;
-                break;
-            }
-        }
-    }
-
-    return _settings;
-};
-function asc_menu_WriteAscValAxisSettings(_type, _settings, _stream)
-{
-    if (!_settings)
-        return;
-
-    _stream["WriteByte"](_type);
-
-    if (_settings.minValRule !== undefined && _settings.minValRule !== null)
-    {
-        _stream["WriteByte"](0);
-        _stream["WriteLong"](_settings.minValRule);
-    }
-    if (_settings.minVal !== undefined && _settings.minVal !== null)
-    {
-        _stream["WriteByte"](1);
-        _stream["WriteLong"](_settings.minVal);
-    }
-    if (_settings.maxValRule !== undefined && _settings.maxValRule !== null)
-    {
-        _stream["WriteByte"](2);
-        _stream["WriteLong"](_settings.maxValRule);
-    }
-    if (_settings.maxVal !== undefined && _settings.maxVal !== null)
-    {
-        _stream["WriteByte"](3);
-        _stream["WriteLong"](_settings.maxVal);
-    }
-    if (_settings.invertValOrder !== undefined && _settings.invertValOrder !== null)
-    {
-        _stream["WriteByte"](4);
-        _stream["WriteBool"](_settings.invertValOrder);
-    }
-    if (_settings.logScale !== undefined && _settings.logScale !== null)
-    {
-        _stream["WriteByte"](5);
-        _stream["WriteBool"](_settings.logScale);
-    }
-    if (_settings.logBase !== undefined && _settings.logBase !== null)
-    {
-        _stream["WriteByte"](6);
-        _stream["WriteLong"](_settings.logBase);
-    }
-    if (_settings.dispUnitsRule !== undefined && _settings.dispUnitsRule !== null)
-    {
-        _stream["WriteByte"](7);
-        _stream["WriteLong"](_settings.dispUnitsRule);
-    }
-    if (_settings.units !== undefined && _settings.units !== null)
-    {
-        _stream["WriteByte"](8);
-        _stream["WriteLong"](_settings.units);
-    }
-    if (_settings.showUnitsOnChart !== undefined && _settings.showUnitsOnChart !== null)
-    {
-        _stream["WriteByte"](9);
-        _stream["WriteBool"](_settings.showUnitsOnChart);
-    }
-    if (_settings.majorTickMark !== undefined && _settings.majorTickMark !== null)
-    {
-        _stream["WriteByte"](10);
-        _stream["WriteLong"](_settings.majorTickMark);
-    }
-    if (_settings.minorTickMark !== undefined && _settings.minorTickMark !== null)
-    {
-        _stream["WriteByte"](11);
-        _stream["WriteLong"](_settings.minorTickMark);
-    }
-    if (_settings.tickLabelsPos !== undefined && _settings.tickLabelsPos !== null)
-    {
-        _stream["WriteByte"](12);
-        _stream["WriteLong"](_settings.tickLabelsPos);
-    }
-    if (_settings.crossesRule !== undefined && _settings.crossesRule !== null)
-    {
-        _stream["WriteByte"](13);
-        _stream["WriteLong"](_settings.crossesRule);
-    }
-    if (_settings.crosses !== undefined && _settings.crosses !== null)
-    {
-        _stream["WriteByte"](14);
-        _stream["WriteLong"](_settings.crosses);
-    }
-    if (_settings.axisType !== undefined && _settings.axisType !== null)
-    {
-        _stream["WriteByte"](15);
-        _stream["WriteLong"](_settings.axisType);
-    }
-
-    _stream["WriteByte"](255);
-};
-
-function asc_menu_ReadChartPr(_params, _cursor)
-{
+function asc_menu_ReadChartPr(_params, _cursor){
     var _settings = new Asc.asc_ChartSettings();
-
-    var _continue = true;
-    while (_continue)
-    {
-        var _attr = _params[_cursor.pos++];
-        switch (_attr)
-        {
-            case 0:
-            {
-                _settings.style = _params[_cursor.pos++];
-                break;
-            }
-            case 1:
-            {
-                _settings.title = _params[_cursor.pos++];
-                break;
-            }
-            case 2:
-            {
-                _settings.rowCols = _params[_cursor.pos++];
-                break;
-            }
-            case 3:
-            {
-                _settings.horAxisLabel = _params[_cursor.pos++];
-                break;
-            }
-            case 4:
-            {
-                _settings.vertAxisLabel = _params[_cursor.pos++];
-                break;
-            }
-            case 5:
-            {
-                _settings.legendPos = _params[_cursor.pos++];
-                break;
-            }
-            case 6:
-            {
-                _settings.dataLabelsPos = _params[_cursor.pos++];
-                break;
-            }
-            case 7:
-            {
-                _settings.horAx = _params[_cursor.pos++];
-                break;
-            }
-            case 8:
-            {
-                _settings.vertAx = _params[_cursor.pos++];
-                break;
-            }
-            case 9:
-            {
-                _settings.horGridLines = _params[_cursor.pos++];
-                break;
-            }
-            case 10:
-            {
-                _settings.vertGridLines = _params[_cursor.pos++];
-                break;
-            }
-            case 11:
-            {
-                _settings.type = _params[_cursor.pos++];
-                break;
-            }
-            case 12:
-            {
-                _settings.showSerName = _params[_cursor.pos++];
-                break;
-            }
-            case 13:
-            {
-                _settings.showCatName = _params[_cursor.pos++];
-                break;
-            }
-            case 14:
-            {
-                _settings.showVal = _params[_cursor.pos++];
-                break;
-            }
-            case 15:
-            {
-                _settings.separator = _params[_cursor.pos++];
-                break;
-            }
-            case 16:
-            {
-                _settings.horAxisProps = asc_menu_ReadAscValAxisSettings(_params, _cursor);
-                break;
-            }
-            case 17:
-            {
-                _settings.vertAxisProps = asc_menu_ReadAscValAxisSettings(_params, _cursor);
-                break;
-            }
-            case 18:
-            {
-                _settings.putRange(_params[_cursor.pos++]);
-                break;
-            }
-            case 19:
-            {
-                _settings.inColumns = _params[_cursor.pos++];
-                break;
-            }
-            case 20:
-            {
-                _settings.showMarker = _params[_cursor.pos++];
-                break;
-            }
-            case 21:
-            {
-                _settings.bLine = _params[_cursor.pos++];
-                break;
-            }
-            case 22:
-            {
-                _settings.smooth = _params[_cursor.pos++];
-                break;
-            }
-            case 255:
-            default:
-            {
-                _continue = false;
-                break;
-            }
-        }
-    }
-
+    _settings.read(_params, _cursor);
     return _settings;
-};
-function asc_menu_WriteChartPr(_type, _chartPr, _stream)
-{
+}
+function asc_menu_WriteChartPr(_type, _chartPr, _stream){
     if (!_chartPr)
         return;
-
-    _stream["WriteByte"](_type);
-
-    if (_chartPr.style !== undefined && _chartPr.style !== null)
-    {
-        _stream["WriteByte"](0);
-        _stream["WriteLong"](_chartPr.style);
-    }
-    if (_chartPr.title !== undefined && _chartPr.title !== null)
-    {
-        _stream["WriteByte"](1);
-        _stream["WriteLong"](_chartPr.title);
-    }
-    if (_chartPr.rowCols !== undefined && _chartPr.rowCols !== null)
-    {
-        _stream["WriteByte"](2);
-        _stream["WriteLong"](_chartPr.rowCols);
-    }
-    if (_chartPr.horAxisLabel !== undefined && _chartPr.horAxisLabel !== null)
-    {
-        _stream["WriteByte"](3);
-        _stream["WriteLong"](_chartPr.horAxisLabel);
-    }
-    if (_chartPr.vertAxisLabel !== undefined && _chartPr.vertAxisLabel !== null)
-    {
-        _stream["WriteByte"](4);
-        _stream["WriteLong"](_chartPr.vertAxisLabel);
-    }
-    if (_chartPr.legendPos !== undefined && _chartPr.legendPos !== null)
-    {
-        _stream["WriteByte"](5);
-        _stream["WriteLong"](_chartPr.legendPos);
-    }
-    if (_chartPr.dataLabelsPos !== undefined && _chartPr.dataLabelsPos !== null)
-    {
-        _stream["WriteByte"](6);
-        _stream["WriteLong"](_chartPr.dataLabelsPos);
-    }
-    if (_chartPr.horAx !== undefined && _chartPr.horAx !== null)
-    {
-        _stream["WriteByte"](7);
-        _stream["WriteLong"](_chartPr.horAx);
-    }
-    if (_chartPr.vertAx !== undefined && _chartPr.vertAx !== null)
-    {
-        _stream["WriteByte"](8);
-        _stream["WriteLong"](_chartPr.vertAx);
-    }
-    if (_chartPr.horGridLines !== undefined && _chartPr.horGridLines !== null)
-    {
-        _stream["WriteByte"](9);
-        _stream["WriteLong"](_chartPr.horGridLines);
-    }
-    if (_chartPr.vertGridLines !== undefined && _chartPr.vertGridLines !== null)
-    {
-        _stream["WriteByte"](10);
-        _stream["WriteLong"](_chartPr.vertGridLines);
-    }
-    if (_chartPr.type !== undefined && _chartPr.type !== null)
-    {
-        _stream["WriteByte"](11);
-        _stream["WriteLong"](_chartPr.type);
-    }
-
-    if (_chartPr.showSerName !== undefined && _chartPr.showSerName !== null)
-    {
-        _stream["WriteByte"](12);
-        _stream["WriteBool"](_chartPr.showSerName);
-    }
-    if (_chartPr.showCatName !== undefined && _chartPr.showCatName !== null)
-    {
-        _stream["WriteByte"](13);
-        _stream["WriteBool"](_chartPr.showCatName);
-    }
-    if (_chartPr.showVal !== undefined && _chartPr.showVal !== null)
-    {
-        _stream["WriteByte"](14);
-        _stream["WriteBool"](_chartPr.showVal);
-    }
-
-    if (_chartPr.separator !== undefined && _chartPr.separator !== null)
-    {
-        _stream["WriteByte"](15);
-        _stream["WriteString2"](_chartPr.separator);
-    }
-
-    asc_menu_WriteAscValAxisSettings(16, _chartPr.horAxisProps, _stream);
-    asc_menu_WriteAscValAxisSettings(17, _chartPr.vertAxisProps, _stream);
-
-    var sRange = _chartPr.getRange();
-    if (sRange !== undefined && sRange !== null)
-    {
-        _stream["WriteByte"](18);
-        _stream["WriteString2"](sRange);
-    }
-
-    if (_chartPr.inColumns !== undefined && _chartPr.inColumns !== null)
-    {
-        _stream["WriteByte"](19);
-        _stream["WriteBool"](_chartPr.inColumns);
-    }
-    if (_chartPr.showMarker !== undefined && _chartPr.showMarker !== null)
-    {
-        _stream["WriteByte"](20);
-        _stream["WriteBool"](_chartPr.showMarker);
-    }
-    if (_chartPr.bLine !== undefined && _chartPr.bLine !== null)
-    {
-        _stream["WriteByte"](21);
-        _stream["WriteBool"](_chartPr.bLine);
-    }
-    if (_chartPr.smooth !== undefined && _chartPr.smooth !== null)
-    {
-        _stream["WriteByte"](22);
-        _stream["WriteBool"](_chartPr.showVal);
-    }
-
-    _stream["WriteByte"](255);
-};
+    _chartPr.write(_type, _stream);
+}
 
 function asc_menu_ReadAscFill_solid(_params, _cursor)
 {
@@ -5146,6 +4750,10 @@ Asc['asc_docs_api'].prototype.ImgApply = function(obj)
                 {
                     this.exucuteHistory = false;
                 }
+                if(this.exucuteHistoryEnd)
+                {
+                    this.exucuteHistoryEnd = false;
+                }
             }
             else
             {
@@ -5487,10 +5095,10 @@ Asc['asc_docs_api'].prototype.asc_findText = function(text, isNext, isMatchCase)
 {
     var SearchEngine = editor.WordControl.m_oLogicDocument.Search( text, { MatchCase : isMatchCase } );
 
-    var Id = this.WordControl.m_oLogicDocument.Search_GetId( isNext );
+    var Id = this.WordControl.m_oLogicDocument.GetSearchElementId( isNext );
 
     if ( null != Id )
-        this.WordControl.m_oLogicDocument.Search_Select( Id );
+        this.WordControl.m_oLogicDocument.SelectSearchElement( Id );
 
     return SearchEngine.Count;
 };
@@ -5501,7 +5109,7 @@ Asc['asc_docs_api'].prototype.asc_replaceText = function(text, replaceWith, isRe
 
     if ( true === isReplaceAll )
     {
-        this.WordControl.m_oLogicDocument.Search_Replace(replaceWith, true, -1);
+        this.WordControl.m_oLogicDocument.ReplaceSearchElement(replaceWith, true, -1);
         return true;
     }
     else
@@ -5509,13 +5117,13 @@ Asc['asc_docs_api'].prototype.asc_replaceText = function(text, replaceWith, isRe
         var CurId = this.WordControl.m_oLogicDocument.SearchEngine.CurId;
         var bDirection = this.WordControl.m_oLogicDocument.SearchEngine.Direction;
         if ( -1 != CurId )
-            this.WordControl.m_oLogicDocument.Search_Replace(replaceWith, false, CurId);
+            this.WordControl.m_oLogicDocument.ReplaceSearchElement(replaceWith, false, CurId);
 
-        var Id = this.WordControl.m_oLogicDocument.Search_GetId( bDirection );
+        var Id = this.WordControl.m_oLogicDocument.GetSearchElementId( bDirection );
 
         if ( null != Id )
         {
-            this.WordControl.m_oLogicDocument.Search_Select( Id );
+            this.WordControl.m_oLogicDocument.SelectSearchElement( Id );
             return true;
         }
 
@@ -5525,12 +5133,12 @@ Asc['asc_docs_api'].prototype.asc_replaceText = function(text, replaceWith, isRe
 
 Asc['asc_docs_api'].prototype._selectSearchingResults = function(bShow)
 {
-    this.WordControl.m_oLogicDocument.Search_Set_Selection(bShow);
+    this.WordControl.m_oLogicDocument.HighlightSearchResults(bShow);
 };
 
 Asc['asc_docs_api'].prototype.asc_isSelectSearchingResults = function()
 {
-    return this.WordControl.m_oLogicDocument.Search_Get_Selection();
+    return this.WordControl.m_oLogicDocument.IsHighlightSearchResults();
 };
 // endfind ----------------------------------------------------------------------------------------------
 
@@ -5609,8 +5217,8 @@ function CFontManager()
 
 function CStylesPainter()
 {
-    this.STYLE_THUMBNAIL_WIDTH  = AscCommonWord.GlobalSkin.STYLE_THUMBNAIL_WIDTH;
-    this.STYLE_THUMBNAIL_HEIGHT = AscCommonWord.GlobalSkin.STYLE_THUMBNAIL_HEIGHT;
+    this.STYLE_THUMBNAIL_WIDTH  = AscCommon.GlobalSkin.STYLE_THUMBNAIL_WIDTH;
+    this.STYLE_THUMBNAIL_HEIGHT = AscCommon.GlobalSkin.STYLE_THUMBNAIL_HEIGHT;
 
     this.CurrentTranslate = null;
     this.IsRetinaEnabled = false;
@@ -5924,12 +5532,12 @@ Asc['asc_docs_api'].prototype["Native_Editor_Initialize_Settings"] = function(_p
         {
             case 0:
             {
-                AscCommonWord.GlobalSkin.STYLE_THUMBNAIL_WIDTH = _params[_current.pos++];
+                AscCommon.GlobalSkin.STYLE_THUMBNAIL_WIDTH = _params[_current.pos++];
                 break;
             }
             case 1:
             {
-                AscCommonWord.GlobalSkin.STYLE_THUMBNAIL_HEIGHT = _params[_current.pos++];
+                AscCommon.GlobalSkin.STYLE_THUMBNAIL_HEIGHT = _params[_current.pos++];
                 break;
             }
             case 2:
@@ -6408,6 +6016,7 @@ function NativeOpenFile3(_params, documentInfo)
             initTrackRevisions();
         }
     }
+    _api.isDocumentLoadComplete = true;
 }
 
 // Common
@@ -6764,7 +6373,7 @@ function onApiShowRevisionsChange(data) {
                     if (value.Get_SpacingBeforeAutoSpacing())
                         changes.push("|Spacing before| |auto|");
                     else if (value.Get_SpacingBefore() !== undefined)
-                        changes.push("|Spacing before|" + " " + recalcFromMM(value.Get_SpacingBefore()).toFixed(2) + ' ' + Common.Utils.Metric.getCurrentMetricName());
+                        changes.push("|Spacing before|" + " " + recalcFromMM(value.Get_SpacingBefore()).toFixed(2) + ' ' + metricName);
                     if (value.Get_SpacingAfterAutoSpacing())
                         changes.push("|Spacing after| |auto|");
                     else if (value.Get_SpacingAfter() !== undefined)
@@ -6805,6 +6414,8 @@ function onApiShowRevisionsChange(data) {
 
             var revisionChange = {
                 userName: userName,
+                userId: item.get_UserId(),
+                lock: (item.get_LockUserId()!==null),
                 date: (item.get_DateTime() == '' ? new Date().getMilliseconds() : item.get_DateTime()),
                 goto: (item.get_MoveType() == Asc.c_oAscRevisionsMove.MoveTo || item.get_MoveType() == Asc.c_oAscRevisionsMove.MoveFrom),
                 commonChanges: commonChanges,

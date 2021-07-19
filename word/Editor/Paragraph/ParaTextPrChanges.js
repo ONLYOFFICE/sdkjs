@@ -66,6 +66,7 @@ AscDFH.changesFactory[AscDFH.historyitem_TextPr_Unifill]         = CChangesParaT
 AscDFH.changesFactory[AscDFH.historyitem_TextPr_FontSizeCS]      = CChangesParaTextPrFontSizeCS;
 AscDFH.changesFactory[AscDFH.historyitem_TextPr_Outline]         = CChangesParaTextPrTextOutline;
 AscDFH.changesFactory[AscDFH.historyitem_TextPr_Fill]            = CChangesParaTextPrTextFill;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_HighlightColor]  = CChangesParaTextPrHighlightColor;
 
 //----------------------------------------------------------------------------------------------------------------------
 // Карта зависимости изменений
@@ -155,7 +156,8 @@ AscDFH.changesRelationMap[AscDFH.historyitem_TextPr_Value]           = [
 	AscDFH.historyitem_TextPr_Unifill,
 	AscDFH.historyitem_TextPr_FontSizeCS,
 	AscDFH.historyitem_TextPr_Outline,
-	AscDFH.historyitem_TextPr_Fill
+	AscDFH.historyitem_TextPr_Fill,
+	AscDFH.historyitem_TextPr_HighlightColor
 ];
 AscDFH.changesRelationMap[AscDFH.historyitem_TextPr_RFonts]          = [
 	AscDFH.historyitem_TextPr_RFonts,
@@ -227,6 +229,10 @@ AscDFH.changesRelationMap[AscDFH.historyitem_TextPr_Outline]         = [
 ];
 AscDFH.changesRelationMap[AscDFH.historyitem_TextPr_Fill]            = [
 	AscDFH.historyitem_TextPr_Fill,
+	AscDFH.historyitem_TextPr_Value
+];
+AscDFH.changesRelationMap[AscDFH.historyitem_TextPr_HighlightColor]            = [
+	AscDFH.historyitem_TextPr_HighlightColor,
 	AscDFH.historyitem_TextPr_Value
 ];
 
@@ -491,6 +497,72 @@ CChangesParaTextPrHighLight.prototype.ReadFromBinary = function(Reader)
 	}
 };
 CChangesParaTextPrHighLight.prototype.Merge = private_ParaTextPrChangesOnMergeValue;
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseProperty}
+ */
+function CChangesParaTextPrHighlightColor(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+}
+CChangesParaTextPrHighlightColor.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesParaTextPrHighlightColor.prototype.constructor = CChangesParaTextPrHighlightColor;
+CChangesParaTextPrHighlightColor.prototype.Type = AscDFH.historyitem_TextPr_HighlightColor;
+CChangesParaTextPrHighlightColor.prototype.private_SetValue = function(Value)
+{
+	this.Class.Value.HighlightColor = Value;
+};
+CChangesParaTextPrHighlightColor.prototype.WriteToBinary = function(Writer)
+{
+	var nFlags = 0;
+
+	if (false !== this.Color)
+		nFlags |= 1;
+
+	if (undefined === this.New)
+		nFlags |= 2;
+
+	if (undefined === this.Old)
+		nFlags |= 4;
+
+	Writer.WriteLong(nFlags);
+
+	if (undefined !== this.New)
+		this.New.Write_ToBinary(Writer);
+
+	if (undefined !== this.Old)
+		this.Old.Write_ToBinary(Writer);
+};
+CChangesParaTextPrHighlightColor.prototype.ReadFromBinary = function(Reader)
+{
+	var nFlags = Reader.GetLong();
+
+	if (nFlags & 1)
+		this.Color = true;
+	else
+		this.Color = false;
+
+	if (nFlags & 2)
+	{
+		this.New = undefined;
+	}
+	else
+	{
+		this.New = new AscFormat.CUniColor();
+		this.New.Read_FromBinary(Reader);
+	}
+
+	if (nFlags & 4)
+	{
+		this.Old = undefined;
+	}
+	else
+	{
+		this.Old = new AscFormat.CUniColor();
+		this.Old.Read_FromBinary(Reader);
+	}
+};
+CChangesParaTextPrHighlightColor.prototype.Merge = private_ParaTextPrChangesOnMergeValue;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseStringProperty}
@@ -785,6 +857,11 @@ CChangesParaTextPrValue.prototype.Merge = function(oChange)
 		case AscDFH.historyitem_TextPr_Fill:
 		{
 			this.New.TextFill = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_TextPr_HighlightColor:
+		{
+			this.New.HighlightColor = oChange.New;
 			break;
 		}
 	}

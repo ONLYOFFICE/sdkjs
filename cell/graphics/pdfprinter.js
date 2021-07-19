@@ -51,9 +51,7 @@ function CPdfPrinter(fontManager, font)
     }
 
     vector_koef = 25.4 / (this._ppiX * this._zoom);
-
-    if (AscCommon.AscBrowser.isRetina)
-        vector_koef /= AscCommon.AscBrowser.retinaPixelRatio;
+    vector_koef /= AscCommon.AscBrowser.retinaPixelRatio;
 
     this.DocumentRenderer = new AscCommon.CDocumentRenderer();
     if (!window['IS_NATIVE_EDITOR']) {
@@ -232,7 +230,8 @@ CPdfPrinter.prototype =
 	    for (var i = 0; i < params.length; ++i) {
 			tmp.push(params[i] * vector_koef);
         }
-		return this.DocumentRenderer.p_dash(tmp);
+		this.DocumentRenderer.p_dash(tmp);
+	    return this;
 	},
     setLineCap : function(cap)
     {

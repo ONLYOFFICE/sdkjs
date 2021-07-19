@@ -79,13 +79,16 @@ var c_oAscError = Asc.c_oAscError;
 			var file = _file;
 			if (Array.isArray(file))
 				file = file[0];
-
-			if (file == "")
+			if (!file)
 				return;
 
 			var _url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](file);
 			t._addImageUrl([AscCommon.g_oDocumentUrls.getImageUrl(_url)], obj);
 		});
+	};
+	spreadsheet_api.prototype.AddImageUrlAction = function(url)
+	{
+		this._addImageUrl([url]);
 	};
 	spreadsheet_api.prototype.asc_setAdvancedOptions = function(idOption, option)
 	{
@@ -139,7 +142,7 @@ var c_oAscError = Asc.c_oAscError;
 			this.LastUserSavedIndex = AscCommon.History.UserSavedIndex;
 		}
 
-		if (true === this.canSave && !this.isLongAction())
+		if (true === this.canSave && this._saveCheck())
 		{
 			var _isNaturalSave = this.IsUserSave;
 			this.canSave = false;
@@ -229,8 +232,6 @@ var c_oAscError = Asc.c_oAscError;
 		var _param = "";
 		if (isSaveAs === true)
 			_param += "saveas=true;";
-		if (AscCommon.AscBrowser.isRetina)
-			_param += "retina=true;";
 
 		window["AscDesktopEditor"]["LocalFileSave"](_param, (password === undefined) ? asc["editor"].currentPassword : password, docinfo);
 	};

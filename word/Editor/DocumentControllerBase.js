@@ -226,7 +226,7 @@ CDocumentControllerBase.prototype.Refresh_RecalcData2 = function()
  * @param {boolean} bReturnTopTable - Возвращается объект или true/false
  * @returns {boolean | CTable}
  */
-CDocumentControllerBase.prototype.Is_InTable = function(bReturnTopTable)
+CDocumentControllerBase.prototype.IsInTable = function(bReturnTopTable)
 {
 	if (true === bReturnTopTable)
 		return null;
@@ -284,7 +284,7 @@ CDocumentControllerBase.prototype.CanUpdateTarget = function(){return true;};
  * Пересчитываем текущую позицию.
  * @returns {{X: number, Y: number, Height: number, PageNum: number, Internal: {Line: number, Page: number, Range: number}, Transform: null}}
  */
-CDocumentControllerBase.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY){return {X : 0, Y : 0, Height : 0, PageNum : 0, Internal : {Line : 0, Page : 0, Range : 0}, Transform : null};};
+CDocumentControllerBase.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY, isUpdateTarget){return {X : 0, Y : 0, Height : 0, PageNum : 0, Internal : {Line : 0, Page : 0, Range : 0}, Transform : null};};
 /**
  * Получаем текущий номер страницы.
  * @returns {number} -1 - значит, номер страницы определеить невозможно
@@ -809,3 +809,10 @@ CDocumentControllerBase.prototype.IsTableCellSelection = function(){return false
 CDocumentControllerBase.prototype.IsSelectionLocked  = function(CheckType)
 {
 };
+/**
+ * Ищем следующее поле в заданном направлении
+ * @param isNext {boolean}
+ * @param isCurrent {boolean}
+ * @return {?CInlineLevelSdt}
+ */
+CDocumentControllerBase.prototype.FindNextFillingForm = function(isNext, isCurrent) {return null;};

@@ -69,6 +69,7 @@ CChangesParaFieldAddItem.prototype.Undo = function()
 	oField.private_UpdateSpellChecking();
 	oField.private_UpdateTrackRevisions();
 	oField.private_CheckUpdateBookmarks(this.Items);
+	oField.SetIsRecalculated(false);
 };
 CChangesParaFieldAddItem.prototype.Redo = function()
 {
@@ -81,6 +82,7 @@ CChangesParaFieldAddItem.prototype.Redo = function()
 	oField.private_UpdateTrackRevisions();
 	oField.private_CheckUpdateBookmarks(this.Items);
 	oField.private_UpdateSpellChecking();
+	oField.SetIsRecalculated(false);
 
 	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
 	{
@@ -134,6 +136,7 @@ CChangesParaFieldAddItem.prototype.Load = function(Color)
 	oField.private_UpdateTrackRevisions();
 	oField.private_CheckUpdateBookmarks(this.Items);
 	oField.private_UpdateSpellChecking();
+	oField.SetIsRecalculated(false);
 };
 CChangesParaFieldAddItem.prototype.IsRelated = function(oChanges)
 {
@@ -168,6 +171,7 @@ CChangesParaFieldRemoveItem.prototype.Undo = function()
 	oField.private_UpdateSpellChecking();
 	oField.private_CheckUpdateBookmarks(this.Items);
 	oField.private_UpdateTrackRevisions();
+	oField.SetIsRecalculated(false);
 
 	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
 	{
@@ -191,6 +195,7 @@ CChangesParaFieldRemoveItem.prototype.Redo = function()
 	oField.private_UpdateTrackRevisions();
 	oField.private_CheckUpdateBookmarks(this.Items);
 	oField.private_UpdateSpellChecking();
+	oField.SetIsRecalculated(false);
 };
 CChangesParaFieldRemoveItem.prototype.private_WriteItem = function(Writer, Item)
 {
@@ -216,6 +221,7 @@ CChangesParaFieldRemoveItem.prototype.Load = function(Color)
 	oField.private_UpdateTrackRevisions();
 	oField.private_CheckUpdateBookmarks(this.Items);
 	oField.private_UpdateSpellChecking();
+	oField.SetIsRecalculated(false);
 };
 CChangesParaFieldRemoveItem.prototype.IsRelated = function(oChanges)
 {

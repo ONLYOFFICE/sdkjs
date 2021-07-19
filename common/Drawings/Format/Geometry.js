@@ -1265,6 +1265,12 @@ Geometry.prototype=
 
     drawAdjustments: function(drawingDocument, transform, bTextWarp)
     {
+        var oApi = Asc.editor || editor;
+        var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
+        if(isDrawHandles === false)
+        {
+            return { hit: false, adjPolarFlag: null, adjNum: null, warp: false };
+        }
         var _adjustments = this.ahXYLst;
         var _adj_count = _adjustments.length;
         var _adj_index;
@@ -1547,7 +1553,7 @@ Geometry.prototype=
         {
             aPathLst[i].checkBetweenPolygons(oBoundsController, oPolygonWrapper1, oPolygonWrapper2);
         }
-    },  
+    },
     checkByPolygon: function(oPolygon, bFlag, XLimit, ContentHeight, dKoeff, oBounds) {
         var aPathLst = this.pathLst;
         for(var i = 0; i < aPathLst.length; ++i)
@@ -1555,12 +1561,12 @@ Geometry.prototype=
             aPathLst[i].checkByPolygon(oPolygon, bFlag, XLimit, ContentHeight, dKoeff, oBounds);
         }
     },
-    
-    transform: function (oTransform) {
+
+    transform: function (oTransform, dKoeff) {
         var aPathLst = this.pathLst;
         for(var i = 0; i < aPathLst.length; ++i)
         {
-            aPathLst[i].transform(oTransform);
+            aPathLst[i].transform(oTransform, dKoeff);
         }
     }
 };

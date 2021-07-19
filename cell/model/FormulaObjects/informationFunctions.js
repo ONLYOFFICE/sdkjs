@@ -122,6 +122,7 @@
 	cCell.prototype.argumentsMax = 2;
 	cCell.prototype.ca = true;
 	cCell.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.area_to_ref;
+	cCell.prototype.argumentsType = [argType.text, argType.reference];
 	cCell.prototype.Calculate = function (arg, opt_bbox, opt_defName, ws) {
 		//специально ввожу ограничения - минимум 2 аргумента
 		//в случае одного аргумента необходимо следить всегда за последней измененной ячейкой
@@ -138,6 +139,12 @@
 
 			var cell, bbox;
 			if(arg1) {
+				//TODO добавил заглушку, на случай если приходит массив.
+				// необходимо пересмотреть - сейчас мы рассматриваем как функции массива все дочерние элементы аргумента с типом .reference
+				if (cElementType.array === arg1.type) {
+					arg1 = arg1.getElementRowCol(0,0);
+				}
+
 				var isRangeArg1 = cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type;
 				if (isRangeArg1 || cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
 					var _tempValue = isRangeArg1 ? arg1.getValueByRowCol(0,0) : arg1.getValue();

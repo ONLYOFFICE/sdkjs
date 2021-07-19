@@ -236,6 +236,7 @@ function CBookmarksManager(oLogicDocument)
 
 	this.IdCounter    = 0;
 	this.IdCounterTOC = 0;
+	this.IdCounterRef = 0;
 }
 CBookmarksManager.prototype.SetNeedUpdate = function(isNeed)
 {
@@ -252,6 +253,7 @@ CBookmarksManager.prototype.BeginCollectingProcess = function()
 
 	this.IdCounter    = 0;
 	this.IdCounterTOC = 0;
+	this.IdCounterRef = 0;
 };
 CBookmarksManager.prototype.ProcessBookmarkChar = function(oParaBookmark)
 {
@@ -284,11 +286,21 @@ CBookmarksManager.prototype.ProcessBookmarkChar = function(oParaBookmark)
 	if (oParaBookmark.IsStart())
 	{
 		var sBookmarkName = oParaBookmark.GetBookmarkName();
-		if (sBookmarkName && 0 === sBookmarkName.indexOf("_Toc"))
+		var nId;
+		if(typeof sBookmarkName === "string")
 		{
-			var nId = parseInt(sBookmarkName.substring(4));
-			if (!isNaN(nId))
-				this.IdCounterTOC = Math.max(this.IdCounterTOC, nId);
+			if (0 === sBookmarkName.indexOf("_Toc"))
+			{
+				nId = parseInt(sBookmarkName.substring(4));
+				if (!isNaN(nId))
+					this.IdCounterTOC = Math.max(this.IdCounterTOC, nId);
+			}
+			else if(0 === sBookmarkName.indexOf("_Ref"))
+			{
+				nId = parseInt(sBookmarkName.substring(4));
+				if (!isNaN(nId))
+					this.IdCounterRef = Math.max(this.IdCounterRef, nId);
+			}
 		}
 
 		var nId = parseInt(sBookmarkId);
@@ -365,6 +377,13 @@ CBookmarksManager.prototype.GetNewBookmarkNameTOC = function()
 	this.Update();
 
 	return ("_Toc" + ++this.IdCounterTOC);
+};
+
+CBookmarksManager.prototype.GetNewBookmarkNameRef = function()
+{
+	this.Update();
+
+	return ("_Ref" + ++this.IdCounterRef);
 };
 CBookmarksManager.prototype.RemoveTOCBookmarks = function()
 {

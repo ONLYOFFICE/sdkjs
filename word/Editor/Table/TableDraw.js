@@ -236,7 +236,7 @@ CTable.prototype.private_DrawRowBackground = function(oGraphics, oTableShd, nCel
 	if (!nCellsSpacing || this.bPresentation || Asc.c_oAscShdNil === oTableShd.Value)
 		return;
 
-	var RGBA = oTableShd.Get_Color2(this.Get_Theme(), this.Get_ColorMap());
+	var RGBA = oTableShd.GetSimpleColor(this.Get_Theme(), this.Get_ColorMap());
 
 	if (oGraphics.SetShd)
 		oGraphics.SetShd(oTableShd);
@@ -468,17 +468,20 @@ CTable.prototype.private_DrawCellsBackground = function(pGraphics, PNum, Row_sta
                 var CellShd = Cell.Get_Shd();
                 if(!this.bPresentation)
                 {
-                    var RGBA = CellShd.Get_Color2(Theme, ColorMap);
-                    if (true !== RGBA.Auto)
-                    {
-                        pGraphics.b_color1(RGBA.r, RGBA.g, RGBA.b, 255);
-                        if(pGraphics.SetShd)
-                        {
-                            pGraphics.SetShd(CellShd);
+                	if (CellShd && !CellShd.IsNil())
+					{
+						var RGBA = CellShd.GetSimpleColor(Theme, ColorMap);
+						if (true !== RGBA.Auto)
+						{
+							pGraphics.b_color1(RGBA.r, RGBA.g, RGBA.b, 255);
+							if (pGraphics.SetShd)
+							{
+								pGraphics.SetShd(CellShd);
 
-                        }
-                        pGraphics.TableRect(Math.min(X_cell_start, X_cell_end), Math.min(Y, Y + RealHeight), Math.abs(X_cell_end - X_cell_start), Math.abs(RealHeight));
-                    }
+							}
+							pGraphics.TableRect(Math.min(X_cell_start, X_cell_end), Math.min(Y, Y + RealHeight), Math.abs(X_cell_end - X_cell_start), Math.abs(RealHeight));
+						}
+					}
                 }
                 else
                 {
@@ -560,7 +563,7 @@ CTable.prototype.private_DrawCellsBackground = function(pGraphics, PNum, Row_sta
 
             // Заливаем ячейку
             var CellShd = Cell.Get_Shd();
-			if (Asc.c_oAscShdNil != CellShd.Value || (!this.bPresentation && reviewtype_Common !== nReviewType))
+			if (CellShd && (!CellShd.IsNil() || (!this.bPresentation && reviewtype_Common !== nReviewType)))
 			{
 				if (!this.bPresentation)
 				{
@@ -575,8 +578,7 @@ CTable.prototype.private_DrawCellsBackground = function(pGraphics, PNum, Row_sta
 					}
 					else
 					{
-
-						var RGBA = CellShd.Get_Color2(Theme, ColorMap);
+						var RGBA = CellShd.GetSimpleColor(Theme, ColorMap);
 						if (true !== RGBA.Auto)
 						{
 							pGraphics.b_color1(RGBA.r, RGBA.g, RGBA.b, 255);
@@ -822,7 +824,7 @@ CTable.prototype.private_DrawCellsBorders = function(pGraphics, PNum, Row_start,
                 }
                 else
                 {
-                    var CellBordersInfo = Cell.Get_BorderInfo();
+                    var CellBordersInfo = Cell.GetBorderInfo();
 
                     // Левая граница
                     var BorderInfo_Left = CellBordersInfo.Left;
@@ -904,7 +906,7 @@ CTable.prototype.private_DrawCellsBorders = function(pGraphics, PNum, Row_start,
                         // Верхняя граница первой строки на новой странице должна рисоваться, либо
                         // как задано в ячейке, либо как задано в таблице.
                         if ( 0 != PNum && CurRow === Row_start )
-                            CurBorderInfo = this.Internal_CompareBorders( TableBorders.Top, CurBorderInfo, true, false );
+                            CurBorderInfo = this.private_ResolveBordersConflict( TableBorders.Top, CurBorderInfo, true, false );
 
                         var X0 = Page.X + this.TableSumGrid[Index + CurGridCol - 1];
                         var X1 = Page.X + this.TableSumGrid[Index + CurGridCol];
@@ -951,13 +953,13 @@ CTable.prototype.private_DrawCellsBorders = function(pGraphics, PNum, Row_start,
 
                                         if ( true === bLeft )
                                         {
-                                            var Prev_Cell_BorderInfo_Left = Prev_Cell.Get_BorderInfo().Left;
+                                            var Prev_Cell_BorderInfo_Left = Prev_Cell.GetBorderInfo().Left;
                                             if( null != Prev_Cell_BorderInfo_Left && Prev_Cell_BorderInfo_Left.length > Num && border_Single === Prev_Cell_BorderInfo_Left[Num].Value )
                                                 Max_r = Prev_Cell_BorderInfo_Left[Num].Size / 2;
                                         }
                                         else
                                         {
-                                            var Prev_Cell_BorderInfo_Right = Prev_Cell.Get_BorderInfo().Right;
+                                            var Prev_Cell_BorderInfo_Right = Prev_Cell.GetBorderInfo().Right;
                                             if( null != Prev_Cell_BorderInfo_Right && Prev_Cell_BorderInfo_Right.length > Num && border_Single === Prev_Cell_BorderInfo_Right[Num].Value )
                                                 Max_r = Prev_Cell_BorderInfo_Right[Num].Size / 2;
                                         }
@@ -1017,14 +1019,14 @@ CTable.prototype.private_DrawCellsBorders = function(pGraphics, PNum, Row_start,
 
                                         if ( true === bLeft )
                                         {
-                                            var Prev_Cell_BorderInfo_Left = Prev_Cell.Get_BorderInfo().Left;
+                                            var Prev_Cell_BorderInfo_Left = Prev_Cell.GetBorderInfo().Left;
                                             if( null != Prev_Cell_BorderInfo_Left && Prev_Cell_BorderInfo_Left.length > Num && border_Single === Prev_Cell_BorderInfo_Left[Num].Value )
                                                 Max_l = Prev_Cell_BorderInfo_Left[Num].Size / 2;
 
                                         }
                                         else
                                         {
-                                            var Prev_Cell_BorderInfo_Right = Prev_Cell.Get_BorderInfo().Right;
+                                            var Prev_Cell_BorderInfo_Right = Prev_Cell.GetBorderInfo().Right;
                                             if( null != Prev_Cell_BorderInfo_Right && Prev_Cell_BorderInfo_Right.length > Num && border_Single === Prev_Cell_BorderInfo_Right[Num].Value )
                                                 Max_l = Prev_Cell_BorderInfo_Right[Num].Size / 2;
                                         }
@@ -1073,6 +1075,17 @@ CTable.prototype.private_DrawCellsBorders = function(pGraphics, PNum, Row_start,
         var CellSpacing = Row.Get_CellSpacing();
 
         var LastBorderTop = { W : 0, L : 0 };
+
+		var oHeaderLastRow = null;
+
+		if (CurRow === Row_start
+			&& this.HeaderInfo.Count > 0
+			&& PNum > this.HeaderInfo.PageIndex
+			&& true === this.HeaderInfo.Pages[PNum].Draw
+			&& this.HeaderInfo.Pages[PNum].Rows.length > 0)
+		{
+			oHeaderLastRow = this.HeaderInfo.Pages[PNum].Rows[this.HeaderInfo.Pages[PNum].Rows.length - 1];
+		}
 
         // Рисуем ячейки начиная с последней, потому что левая ячейка
         // должна рисоваться поверх правой при конфликте границ.
@@ -1188,7 +1201,7 @@ CTable.prototype.private_DrawCellsBorders = function(pGraphics, PNum, Row_start,
             }
             else
             {
-                var CellBordersInfo = Cell.Get_BorderInfo();
+                var CellBordersInfo = Cell.GetBorderInfo();
 
                 // Левая граница
                 var BorderInfo_Left  = CellBordersInfo.Left;
@@ -1278,16 +1291,17 @@ CTable.prototype.private_DrawCellsBorders = function(pGraphics, PNum, Row_start,
 
 
                 // Верхняя граница
-                var BorderInfo_Top   = CellBordersInfo.Top;
+                var BorderInfo_Top   = oHeaderLastRow ? CellBordersInfo.TopHeader : CellBordersInfo.Top;
                 var LastBorderTop_prev = { W : LastBorderTop.W, H : LastBorderTop.H };
+
                 for ( var Index = 0; Index < BorderInfo_Top.length; Index++ )
                 {
                     var CurBorderInfo = BorderInfo_Top[Index];
 
                     // Верхняя граница первой строки на новой странице должна рисоваться, либо
                     // как задано в ячейке, либо как задано в таблице.
-                    if ( 0 != PNum && CurRow === Row_start )
-                        CurBorderInfo = this.Internal_CompareBorders( TableBorders.Top, CurBorderInfo, true, false );
+					if (0 !== PNum && CurRow === Row_start)
+						CurBorderInfo = this.private_ResolveBordersConflict(TableBorders.Top, CurBorderInfo, true, false);
 
                     var X0 = Page.X + this.TableSumGrid[Index + CurGridCol - 1];
                     var X1 = Page.X + this.TableSumGrid[Index + CurGridCol];
@@ -1297,9 +1311,9 @@ CTable.prototype.private_DrawCellsBorders = function(pGraphics, PNum, Row_start,
                     if ( BorderInfo_Top.length - 1 === Index )
                     {
                         var Max_r = 0;
-                        if ( 0 != CurRow )
+                        if ( oHeaderLastRow || 0 != CurRow )
                         {
-                            var Prev_Row = this.Content[CurRow - 1];
+                            var Prev_Row = oHeaderLastRow ? oHeaderLastRow : this.Content[CurRow - 1];
                             var Prev_CellsCount = Prev_Row.Get_CellsCount();
                             for ( var TempIndex = 0; TempIndex < Prev_CellsCount; TempIndex++ )
                             {
@@ -1334,13 +1348,13 @@ CTable.prototype.private_DrawCellsBorders = function(pGraphics, PNum, Row_start,
 
                                     if ( true === bLeft )
                                     {
-                                        var Prev_Cell_BorderInfo_Left = Prev_Cell.Get_BorderInfo().Left;
+                                        var Prev_Cell_BorderInfo_Left = Prev_Cell.GetBorderInfo().Left;
                                         if( null != Prev_Cell_BorderInfo_Left && Prev_Cell_BorderInfo_Left.length > Num && border_Single === Prev_Cell_BorderInfo_Left[Num].Value )
                                             Max_r = Prev_Cell_BorderInfo_Left[Num].Size / 2;
                                     }
                                     else
                                     {
-                                        var Prev_Cell_BorderInfo_Right = Prev_Cell.Get_BorderInfo().Right;
+                                        var Prev_Cell_BorderInfo_Right = Prev_Cell.GetBorderInfo().Right;
                                         if( null != Prev_Cell_BorderInfo_Right && Prev_Cell_BorderInfo_Right.length > Num && border_Single === Prev_Cell_BorderInfo_Right[Num].Value )
                                             Max_r = Prev_Cell_BorderInfo_Right[Num].Size / 2;
                                     }
@@ -1366,9 +1380,9 @@ CTable.prototype.private_DrawCellsBorders = function(pGraphics, PNum, Row_start,
                     if ( 0 === Index )
                     {
                         var Max_l = 0;
-                        if ( 0 != CurRow )
+                        if ( oHeaderLastRow || 0 != CurRow )
                         {
-                            var Prev_Row = this.Content[CurRow - 1];
+                            var Prev_Row = oHeaderLastRow ? oHeaderLastRow : this.Content[CurRow - 1];
                             var Prev_CellsCount = Prev_Row.Get_CellsCount();
                             for ( var TempIndex = 0; TempIndex < Prev_CellsCount; TempIndex++ )
                             {
@@ -1403,14 +1417,14 @@ CTable.prototype.private_DrawCellsBorders = function(pGraphics, PNum, Row_start,
 
                                     if ( true === bLeft )
                                     {
-                                        var Prev_Cell_BorderInfo_Left = Prev_Cell.Get_BorderInfo().Left;
+                                        var Prev_Cell_BorderInfo_Left = Prev_Cell.GetBorderInfo().Left;
                                         if( null != Prev_Cell_BorderInfo_Left && Prev_Cell_BorderInfo_Left.length > Num && border_Single === Prev_Cell_BorderInfo_Left[Num].Value )
                                             Max_l = Prev_Cell_BorderInfo_Left[Num].Size / 2;
 
                                     }
                                     else
                                     {
-                                        var Prev_Cell_BorderInfo_Right = Prev_Cell.Get_BorderInfo().Right;
+                                        var Prev_Cell_BorderInfo_Right = Prev_Cell.GetBorderInfo().Right;
                                         if( null != Prev_Cell_BorderInfo_Right && Prev_Cell_BorderInfo_Right.length > Num && border_Single === Prev_Cell_BorderInfo_Right[Num].Value )
                                             Max_l = Prev_Cell_BorderInfo_Right[Num].Size / 2;
                                     }

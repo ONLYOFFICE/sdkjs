@@ -64,6 +64,7 @@ function CHistory(Document)
 		NumPr        : [],
 		NotesEnd     : false,
 		NotesEndPage : 0,
+		LineNumbers  : false,
 		Update       : true
 	};
 
@@ -220,6 +221,8 @@ CHistory.prototype =
 
     Undo : function(Options)
     {
+    	var arrChanges = [];
+
         this.CheckUnionLastPoints();
 
         // Проверяем можно ли сделать Undo
@@ -231,8 +234,6 @@ CHistory.prototype =
             this.LastState = this.Document.GetSelectionState();
         
         this.Document.RemoveSelection(true);
-
-        this.private_ClearRecalcData();
 
         var Point = null;
         if (undefined !== Options && null !== Options && true === Options.All)
@@ -249,7 +250,7 @@ CHistory.prototype =
 					if (Item.Data)
 					{
 						Item.Data.Undo();
-						Item.Data.RefreshRecalcData();
+						arrChanges.push(Item.Data);
 					}
                     this.private_UpdateContentChangesOnUndo(Item);
                 }
@@ -266,13 +267,11 @@ CHistory.prototype =
 				if (Item.Data)
 				{
 					Item.Data.Undo();
-					Item.Data.RefreshRecalcData();
+					arrChanges.push(Item.Data);
 				}
 				this.private_UpdateContentChangesOnUndo(Item);
             }
         }
-
-		this.private_PostProcessingRecalcData();
 
         if (null != Point)
             this.Document.SetSelectionState( Point.State );
@@ -282,20 +281,20 @@ CHistory.prototype =
 			window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide(true);
 		}
 		
-        return this.RecalculateData;
+        return arrChanges;
     },
 
     Redo : function()
     {
+		var arrChanges = [];
+
         // Проверяем можно ли сделать Redo
-        if ( true != this.Can_Redo() )
+        if (true !== this.Can_Redo())
             return null;
 
         this.Document.RemoveSelection(true);
         
         var Point = this.Points[++this.Index];
-
-        this.private_ClearRecalcData();
 
         // Выполняем все действия в прямом порядке
         for ( var Index = 0; Index < Point.Items.length; Index++ )
@@ -305,12 +304,10 @@ CHistory.prototype =
 			if (Item.Data)
 			{
 				Item.Data.Redo();
-				Item.Data.RefreshRecalcData();
+				arrChanges.push(Item.Data);
 			}
 			this.private_UpdateContentChangesOnRedo(Item);
         }
-
-        this.private_PostProcessingRecalcData();
 
         // Восстанавливаем состояние на следующую точку
         var State = null;
@@ -326,7 +323,7 @@ CHistory.prototype =
 			window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
 		}
 		
-        return this.RecalculateData;
+        return arrChanges;
     },
 
 	/**
@@ -340,8 +337,8 @@ CHistory.prototype =
 		if ( 0 !== this.TurnOffHistory )
 			return false;
 
-		if (this.Document && this.Document.OnCreateNewHistoryPoint)
-			this.Document.OnCreateNewHistoryPoint();
+		if (this.Document && this.Document.ClearListsCache)
+			this.Document.ClearListsCache();
 
         this.CanNotAddChanges = false;
 		this.CollectChanges   = false;
@@ -479,7 +476,7 @@ CHistory.prototype =
 				Len : Binary_Len
 			},
 
-			NeedRecalc : !this.MinorChanges && (!_Class || _Class.IsNeedRecalculate())
+			NeedRecalc : !this.MinorChanges && (!_Class || _Class.IsNeedRecalculate() || _Class.IsNeedRecalculateLineNumbers())
 		};
 
 		this.Points[this.Index].Items.push(Item);
@@ -649,6 +646,11 @@ CHistory.prototype =
     {
         this.RecalculateData.Tables[TableId] = true;
     },
+
+	AddLineNumbersToRecalculateData : function()
+	{
+		this.RecalculateData.LineNumbers = true;
+	},
 
     OnEnd_GetRecalcData : function()
     {
@@ -864,20 +866,24 @@ CHistory.prototype =
 		return false;
 	},
 
-    Get_RecalcData : function(RecalcData, arrChanges)
+    Get_RecalcData : function(oRecalcData, arrChanges, nChangeStart, nChangeEnd)
     {
-        if (RecalcData)
+        if (oRecalcData)
         {
-            this.RecalculateData = RecalcData;
+            this.RecalculateData = oRecalcData;
         }
         else if (arrChanges)
 		{
 			this.private_ClearRecalcData();
-			for (var nIndex = 0, nCount = arrChanges.length; nIndex < nCount; ++nIndex)
+
+			var nStart = undefined !== nChangeStart ? nChangeStart : 0;
+			var nEnd   = undefined !== nChangeEnd ? nChangeEnd : arrChanges.length - 1;
+			for (var nIndex = nStart; nIndex <= nEnd; ++nIndex)
 			{
 				var oChange = arrChanges[nIndex];
 				oChange.RefreshRecalcData();
 			}
+
 			this.private_PostProcessingRecalcData();
 		}
         else
@@ -912,50 +918,6 @@ CHistory.prototype =
     Reset_RecalcIndex : function()
     {
         this.RecIndex = this.Index;
-    },
-
-    Is_SimpleChanges : function()
-    {
-        var Count, Items;
-        if (this.Index - this.RecIndex !== 1 && this.RecIndex >= -1)
-        {
-            Items = [];
-            Count = 0;
-            for (var PointIndex = this.RecIndex + 1; PointIndex <= this.Index; PointIndex++)
-            {
-                Items = Items.concat(this.Points[PointIndex].Items);
-                Count += this.Points[PointIndex].Items.length;
-            }
-        }
-        else if (this.Index >= 0)
-        {
-            // Считываем изменения, начиная с последней точки, и смотрим что надо пересчитать.
-            var Point = this.Points[this.Index];
-
-            Count = Point.Items.length;
-            Items = Point.Items;
-        }
-        else
-            return [];
-        
-
-        if (Items.length > 0)
-        {
-            var Class = Items[0].Class;
-            // Смотрим, чтобы класс, в котором произошли все изменения был один и тот же
-            for (var Index = 1; Index < Count; Index++)
-            {
-                var Item = Items[Index];
-
-                if (Class !== Item.Class)
-                    return [];
-            }
-
-            if (Class instanceof ParaRun && Class.Is_SimpleChanges(Items))
-                return [Items[0]];
-        }
-
-        return [];
     },
 
     Set_Additional_ExtendDocumentToPos : function()
@@ -1197,81 +1159,6 @@ CHistory.prototype.RemoveLastPoint = function()
 {
 	this.Remove_LastPoint();
 };
-CHistory.prototype.IsParagraphSimpleChanges = function()
-{
-	var nCount, arrItems;
-	if (this.Index - this.RecIndex !== 1 && this.RecIndex >= -1)
-	{
-		arrItems = [];
-		nCount = 0;
-		for (var PointIndex = this.RecIndex + 1; PointIndex <= this.Index; PointIndex++)
-		{
-			arrItems = arrItems.concat(this.Points[PointIndex].Items);
-			nCount += this.Points[PointIndex].Items.length;
-		}
-	}
-	else if (this.Index >= 0)
-	{
-		// Считываем изменения, начиная с последней точки, и смотрим что надо пересчитать.
-		var Point = this.Points[this.Index];
-
-		nCount = Point.Items.length;
-		arrItems = Point.Items;
-	}
-	else
-	{
-		return [];
-	}
-
-	if (arrItems.length > 0)
-	{
-		// Смотрим, чтобы изменения происходили только внутри параграфов. Если есть изменение,
-		// которое не возвращает параграф, значит возвращаем null.
-		// А также проверяем, что каждое из этих изменений влияет только на параграф.
-
-		var arrParagraphs = [];
-		for (var nIndex = 0; nIndex < nCount; ++nIndex)
-		{
-			var oClass = arrItems[nIndex].Class;
-			var oPara  = null;
-
-			if (oClass instanceof Paragraph)
-				oPara = oClass;
-			else if (oClass instanceof AscCommon.CTableId || oClass instanceof AscCommon.CComments)
-				continue;
-			else if (oClass.GetParagraph)
-				oPara = oClass.GetParagraph();
-			else
-				return [];
-
-			// Такое может быть, если класс еще не приписан ни к какому параграфу. Либо класс дальше небудет
-			// использован, либо его добавят в параграф и в этом изменении мы отметим параграф
-			// Поэтому мы не отказываемся от быстрого пересчета в данной ситуации
-			if (!oPara)
-				continue;
-
-			if (!oClass.IsParagraphSimpleChanges || !oClass.IsParagraphSimpleChanges(arrItems[nIndex]))
-				return [];
-
-			var isAdd = true;
-			for (var nParaIndex = 0, nParasCount = arrParagraphs.length; nParaIndex < nParasCount; ++nParaIndex)
-			{
-				if (oPara === arrParagraphs[nParaIndex])
-				{
-					isAdd = false;
-					break;
-				}
-			}
-
-			if (isAdd)
-				arrParagraphs.push(oPara);
-		}
-
-		return arrParagraphs;
-	}
-
-	return [];
-};
 CHistory.prototype.private_ClearRecalcData = function()
 {
 	// NumPr здесь не обнуляем
@@ -1296,6 +1183,7 @@ CHistory.prototype.private_ClearRecalcData = function()
 		Update        : true,
 		ChangedStyles : {},
 		ChangedNums   : {},
+		LineNumbers   : false,
 		AllParagraphs : null
 	};
 };
@@ -1351,57 +1239,101 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 
 		this.SavedIndex = null;
 	};
+	/**
+	 * Получаем массив изменений, которые еще не были пересчитаны
+	 * @returns {[]}
+	 */
+	CHistory.prototype.GetNonRecalculatedChanges = function()
+	{
+		var arrChanges = [];
 
-function CRC32()
-{
-    this.m_aTable = [];
-    this.private_InitTable();
-}
-CRC32.prototype.private_InitTable = function()
-{
-    var CRC_POLY = 0xEDB88320;
-    var nChar;
-    for(var nIndex = 0; nIndex < 256; nIndex++)
-    {
-        nChar = nIndex;
-        for(var nCounter = 0; nCounter < 8; nCounter++)
-        {
-            nChar = ((nChar & 1) ? ((nChar >>> 1) ^ CRC_POLY) : (nChar >>> 1));
-        }
-        this.m_aTable[nIndex] = nChar;
-    }
-};
-CRC32.prototype.Calculate_ByString = function(sStr, nSize)
-{
-    var CRC_MASK = 0xD202EF8D;
-    var nCRC = 0 ^ (-1);
+		if (this.Index - this.RecIndex !== 1 && this.RecIndex >= -1)
+		{
+			for (var nPointIndex = this.RecIndex + 1; nPointIndex <= this.Index; ++nPointIndex)
+			{
+				this.GetChangesFromPoint(nPointIndex, arrChanges);
+			}
+		}
+		else if (this.Index >= 0)
+		{
+			this.GetChangesFromPoint(this.Index, arrChanges);
+		}
 
-    for (var nIndex = 0; nIndex < nSize; nIndex++)
-    {
-        nCRC = this.m_aTable[(nCRC ^ sStr.charCodeAt(nIndex)) & 0xFF] ^ (nCRC >>> 8);
-        nCRC ^= CRC_MASK;
-    }
+		return arrChanges;
+	};
+	/**
+	 * Получем массив изменений	из заданной точки
+	 * @param nPointIndex {number}
+	 * @param [arrChanges=undefined] {[CChangesBase]}
+	 * @returns {[CChangesBase]}
+	 */
+	CHistory.prototype.GetChangesFromPoint = function(nPointIndex, arrChanges)
+	{
+		if (!arrChanges)
+			arrChanges = [];
 
-    return (nCRC ^ (-1)) >>> 0;
-};
-CRC32.prototype.Calculate_ByByteArray = function(aArray, nSize)
-{
-    var CRC_MASK = 0xD202EF8D;
-    var nCRC = 0 ^ (-1);
+		var oHPoint = this.Points[nPointIndex];
+		if (oHPoint)
+		{
+			for (var nIndex = 0, nItemsCount = oHPoint.Items.length; nIndex < nItemsCount; ++nIndex)
+			{
+				arrChanges.push(oHPoint.Items[nIndex].Data);
+			}
+		}
 
-    for (var nIndex = 0; nIndex < nSize; nIndex++)
-    {
-        nCRC = (nCRC >>> 8) ^ this.m_aTable[(nCRC ^ aArray[nIndex]) & 0xFF];
-        nCRC ^= CRC_MASK;
-    }
+		return arrChanges;
+	};
 
-    return (nCRC ^ (-1)) >>> 0;
-};
+	function CRC32()
+	{
+		this.m_aTable = [];
+		this.private_InitTable();
+	}
+	CRC32.prototype.private_InitTable = function()
+	{
+		var CRC_POLY = 0xEDB88320;
+		var nChar;
+		for (var nIndex = 0; nIndex < 256; nIndex++)
+		{
+			nChar = nIndex;
+			for (var nCounter = 0; nCounter < 8; nCounter++)
+			{
+				nChar = ((nChar & 1) ? ((nChar >>> 1) ^ CRC_POLY) : (nChar >>> 1));
+			}
+			this.m_aTable[nIndex] = nChar;
+		}
+	};
+	CRC32.prototype.Calculate_ByString = function(sStr, nSize)
+	{
+		var CRC_MASK = 0xD202EF8D;
+		var nCRC     = 0 ^ (-1);
 
-var g_oCRC32 = new CRC32();
+		for (var nIndex = 0; nIndex < nSize; nIndex++)
+		{
+			nCRC = this.m_aTable[(nCRC ^ sStr.charCodeAt(nIndex)) & 0xFF] ^ (nCRC >>> 8);
+			nCRC ^= CRC_MASK;
+		}
 
-    //----------------------------------------------------------export--------------------------------------------------
-    window['AscCommon'] = window['AscCommon'] || {};
-    window['AscCommon'].CHistory = CHistory;
-    window['AscCommon'].History = new CHistory();
+		return (nCRC ^ (-1)) >>> 0;
+	};
+	CRC32.prototype.Calculate_ByByteArray = function(aArray, nSize)
+	{
+		var CRC_MASK = 0xD202EF8D;
+		var nCRC     = 0 ^ (-1);
+
+		for (var nIndex = 0; nIndex < nSize; nIndex++)
+		{
+			nCRC = (nCRC >>> 8) ^ this.m_aTable[(nCRC ^ aArray[nIndex]) & 0xFF];
+			nCRC ^= CRC_MASK;
+		}
+
+		return (nCRC ^ (-1)) >>> 0;
+	};
+
+	var g_oCRC32 = new CRC32();
+
+	//----------------------------------------------------------export--------------------------------------------------
+	window['AscCommon']          = window['AscCommon'] || {};
+	window['AscCommon'].CHistory = CHistory;
+	window['AscCommon'].History  = new CHistory();
 })(window);

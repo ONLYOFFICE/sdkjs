@@ -312,20 +312,20 @@ CParaSpellChecker.prototype =
         this.Words    = {};
     },
 
-    Add : function(StartPos, EndPos, Word, Lang, isEndDot)
-    {
-    	if (Word.length > 0)
+	Add : function(StartPos, EndPos, Word, Lang, Prefix, Ending)
+	{
+		if (Word.length > 0)
 		{
-			if (Word.charAt(Word.length - 1) == '\'')
+			if ('\'' === Word.charAt(Word.length - 1))
 				Word = Word.substr(0, Word.length - 1);
-			if (Word.charAt(0) == '\'')
+			if ('\'' === Word.charAt(0))
 				Word = Word.substr(1);
 		}
 
-        var SpellCheckerEl = new CParaSpellCheckerElement(StartPos, EndPos, Word, Lang, isEndDot);
-        this.Paragraph.Add_SpellCheckerElement( SpellCheckerEl );
-        this.Elements.push( SpellCheckerEl );
-    },
+		var SpellCheckerEl = new CParaSpellCheckerElement(StartPos, EndPos, Word, Lang, Prefix, Ending);
+		this.Paragraph.Add_SpellCheckerElement(SpellCheckerEl);
+		this.Elements.push(SpellCheckerEl);
+	},
     
     GetErrorsCount : function()
     {
@@ -355,35 +355,49 @@ CParaSpellChecker.prototype =
         var usrWords = [];
         var usrLang  = [];
 
-        var Count = this.Elements.length;
-        for ( var Index = 0; Index < Count; Index++ )
-        {
-            var Element = this.Elements[Index];
-            Element.CurPos = false;
+		for (var nIndex = 0, nCount = this.Elements.length; nIndex < nCount; ++nIndex)
+		{
+			var oElement    = this.Elements[nIndex];
+			oElement.CurPos = false;
 
-            if (1 >= Element.Word.length || AscCommon.private_IsAbbreviation(Element.Word))
+			if (!editor.SpellCheckApi.checkDictionary(this.Elements[nIndex].Lang) || 1 >= oElement.Word.length || AscCommon.private_IsAbbreviation(oElement.Word))
 			{
-				Element.Checked = true;
+				oElement.Checked = true;
 			}
-            else if ( editor.asc_IsSpellCheckCurrentWord() !== true && null === Element.Checked && -1 != CurPos && Element.EndPos.Compare( CurPos ) >= 0 && Element.StartPos.Compare( CurPos ) <= 0 )
-            {
-                Element.Checked = true;
-                Element.CurPos  = true;
-                editor.WordControl.m_oLogicDocument.Spelling.Add_CurPara( this.ParaId, g_oTableId.Get_ById( this.ParaId ) );
-            }
+			else if (editor.asc_IsSpellCheckCurrentWord() !== true && null === oElement.Checked && -1 !== CurPos && oElement.EndPos.Compare(CurPos) >= 0 && oElement.StartPos.Compare(CurPos) <= 0)
+			{
+				oElement.Checked = true;
+				oElement.CurPos  = true;
+				editor.WordControl.m_oLogicDocument.Spelling.Add_CurPara(this.ParaId, g_oTableId.Get_ById(this.ParaId));
+			}
 
-            if ( null === Element.Checked && editor.SpellCheckApi.checkDictionary(this.Elements[Index].Lang) )
-            {
-                usrWords.push(this.Elements[Index].Word);
-                usrLang.push(this.Elements[Index].Lang);
+			if (null === oElement.Checked)
+			{
+				usrWords.push(this.Elements[nIndex].Word);
+				usrLang.push(this.Elements[nIndex].Lang);
 
-                if (this.Elements[Index].IsEndDot())
+				var nPrefix = this.Elements[nIndex].GetPrefix();
+				var nEnding = this.Elements[nIndex].GetEnding();
+
+				if (nPrefix)
 				{
-					usrWords.push(this.Elements[Index].Word + ".");
-					usrLang.push(this.Elements[Index].Lang);
+					usrWords.push(String.fromCharCode(nPrefix) + this.Elements[nIndex].Word);
+					usrLang.push(this.Elements[nIndex].Lang);
 				}
-            }
-        }
+
+				if (nEnding)
+				{
+					usrWords.push(this.Elements[nIndex].Word + String.fromCharCode(nEnding));
+					usrLang.push(this.Elements[nIndex].Lang);
+				}
+
+				if (nPrefix && nEnding)
+				{
+					usrWords.push(String.fromCharCode(nPrefix) + this.Elements[nIndex].Word + String.fromCharCode(nEnding));
+					usrLang.push(this.Elements[nIndex].Lang);
+				}
+			}
+		}
 
         if ( 0 < usrWords.length )        
         {
@@ -400,46 +414,50 @@ CParaSpellChecker.prototype =
             ParagraphForceRedraw.ReDraw();
     },
 
-    Check_CallBack : function(RecalcId, UsrCorrect)
-    {
-        if ( RecalcId == this.RecalcId )
-        {
-            var DocumentSpelling = editor.WordControl.m_oLogicDocument.Spelling;
-            var Count = this.Elements.length;
-            var Index2 = 0;
-            for ( var Index = 0; Index < Count; Index++ )
-            {
-                var Element = this.Elements[Index];
+	Check_CallBack : function(RecalcId, UsrCorrect)
+	{
+		if (RecalcId === this.RecalcId)
+		{
+			var DocumentSpelling = editor.WordControl.m_oLogicDocument.Spelling;
+			var Index2           = 0;
+			for (var nIndex = 0, nCount = this.Elements.length; nIndex < nCount; ++nIndex)
+			{
+				var oElement = this.Elements[nIndex];
 
-                if ( null === Element.Checked && true != Element.Checked )
-                {
-                    // Если слово есть в локальном словаре, не проверяем его
-                    if ( true === DocumentSpelling.Check_Word( Element.Word ) )
+				if (null === oElement.Checked)
+				{
+					// Если слово есть в локальном словаре, не проверяем его
+					if (true === DocumentSpelling.Check_Word(oElement.Word))
 					{
-						Element.Checked = true;
+						oElement.Checked = true;
 					}
-					else if (Element.IsEndDot())
+					else if (oElement.GetPrefix() && oElement.GetEnding())
 					{
-						Element.Checked = UsrCorrect[Index2] || UsrCorrect[Index2 + 1];
+						oElement.Checked = UsrCorrect[Index2] || UsrCorrect[Index2 + 1] || UsrCorrect[Index2 + 2] || UsrCorrect[Index2 + 3];
+						Index2 += 3;
+					}
+					else if (oElement.GetPrefix() || oElement.GetEnding())
+					{
+						oElement.Checked = UsrCorrect[Index2] || UsrCorrect[Index2 + 1];
 						Index2++;
 					}
-                    else
+					else
 					{
-						Element.Checked = UsrCorrect[Index2];
+						oElement.Checked = UsrCorrect[Index2];
 					}
 
-                    Index2++;
-                }
-            }
-            
-            this.Update_WordsList();
-            this.Remove_RightWords();
-            
-            this.Internal_UpdateParagraphState();
-        }
+					Index2++;
+				}
+			}
 
-        editor.WordControl.m_oLogicDocument.Spelling.Remove_WaitingParagraph(this.Paragraph);
-    },
+			this.Update_WordsList();
+			this.Remove_RightWords();
+
+			this.Internal_UpdateParagraphState();
+		}
+
+		editor.WordControl.m_oLogicDocument.Spelling.Remove_WaitingParagraph(this.Paragraph);
+	},
 
     Internal_UpdateParagraphState : function()
     {
@@ -594,40 +612,38 @@ CParaSpellChecker.prototype =
     },
 
     Compare_WithPrevious : function()
-    {
-        var ElementsCount = this.Elements.length;
+	{
+		for (var nIndex = 0, nCount = this.Elements.length; nIndex < nCount; ++nIndex)
+		{
+			var oElement = this.Elements[nIndex];
 
-        for (var Index = 0; Index < ElementsCount; Index++)
-        {
-            var Element = this.Elements[Index];
+			var sWord = oElement.Word;
+			var nLang = oElement.Lang;
 
-            var Word = Element.Word;
-            var Lang = Element.Lang;
-            
-            if (undefined !== this.Words[Word])
-            {
-                if (undefined === this.Words[Word][Lang] || this.Words[Word].EndDot !== Element.IsEndDot())
-                {
-                    Element.Checked  = null;
-                    Element.Variants = null;
-                }
-				else if (true === this.Words[Word][Lang])
+			if (undefined !== this.Words[sWord])
+			{
+				if (undefined === this.Words[sWord][nLang] || this.Words[sWord].Prefix !== oElement.GetPrefix() || this.Words[sWord].Ending !== oElement.GetEnding())
 				{
-					Element.Checked  = true;
-					Element.Variants = null;
+					oElement.Checked  = null;
+					oElement.Variants = null;
 				}
-                else
-                {
-                    Element.Checked  = false;
-                    Element.Variants = this.Words[Word][Lang];
-                }
-            }
-        }
-        
-        this.Clear_WordsList();
-        this.Update_WordsList();
-        this.Remove_RightWords();       
-    },
+				else if (true === this.Words[sWord][nLang])
+				{
+					oElement.Checked  = true;
+					oElement.Variants = null;
+				}
+				else
+				{
+					oElement.Checked  = false;
+					oElement.Variants = this.Words[sWord][nLang];
+				}
+			}
+		}
+
+		this.Clear_WordsList();
+		this.Update_WordsList();
+		this.Remove_RightWords();
+	},
     
     Clear_WordsList : function()
     {
@@ -635,32 +651,39 @@ CParaSpellChecker.prototype =
     },
     
     Update_WordsList : function()
-    {
-        var Count = this.Elements.length;
-        for (var Index = Count - 1; Index >= 0; Index--)
-        {
-            var Element = this.Elements[Index];
+	{
+		for (var nIndex = this.Elements.length - 1; nIndex >= 0; --nIndex)
+		{
+			var oElement = this.Elements[nIndex];
 
-            if (true === Element.Checked && true !== Element.CurPos)
-            {
-                if (undefined == this.Words[Element.Word])
+			if (true === oElement.Checked && true !== oElement.CurPos)
+			{
+				if (!this.Words[oElement.Word])
 				{
-					this.Words[Element.Word] = {EndDot : Element.IsEndDot()};
+					this.Words[oElement.Word] = {
+						Prefix : oElement.GetPrefix(),
+						Ending : oElement.GetEnding()
+					};
 				}
 
-                if (undefined === this.Words[Element.Word][Element.Lang])
-					this.Words[Element.Word][Element.Lang] = true;
-            }
-            else if (false === Element.Checked)
-            {
-                if (undefined == this.Words[Element.Word])
-                    this.Words[Element.Word] = {EndDot : Element.IsEndDot()};
+				if (undefined === this.Words[oElement.Word][oElement.Lang])
+					this.Words[oElement.Word][oElement.Lang] = true;
+			}
+			else if (false === oElement.Checked)
+			{
+				if (!this.Words[oElement.Word])
+				{
+					this.Words[oElement.Word] = {
+						Prefix : oElement.GetPrefix(),
+						Ending : oElement.GetEnding()
+					};
+				}
 
-                if (undefined === this.Words[Element.Word][Element.Lang])
-                    this.Words[Element.Word][Element.Lang] = Element.Variants;
-            }
-        }        
-    },
+				if (undefined === this.Words[oElement.Word][oElement.Lang])
+					this.Words[oElement.Word][oElement.Lang] = oElement.Variants;
+			}
+		}
+	},
 
 	Remove_RightWords : function()
 	{
@@ -732,27 +755,26 @@ CParaSpellChecker.prototype.ClearPausedEngine = function()
 {
 	this.Engine = null;
 };
-/**
- * Проверяем является ли заданное слово аббревиатурой
- * @param {string} sWord
- * @returns {boolean}
- */
 //----------------------------------------------------------------------------------------------------------------------
 // CParaSpellCheckerElement
 //----------------------------------------------------------------------------------------------------------------------
-function CParaSpellCheckerElement(StartPos, EndPos, Word, Lang, isEndDot)
+function CParaSpellCheckerElement(StartPos, EndPos, Word, Lang, Prefix, Ending)
 {
-    this.StartPos = StartPos;
-    this.EndPos   = EndPos;
-    this.Word     = Word;
-    this.Lang     = Lang;
-    this.EndDot   = isEndDot; // Данный флаг появился в связи с багом 41954
-    this.Checked  = null; // null - неизвестно, true - правильное слово, false - неправильное слово
-    this.CurPos   = false;
-    this.Variants = null;
+	this.StartPos = StartPos;
+	this.EndPos   = EndPos;
+	this.Word     = Word;
+	this.Lang     = Lang;
+	this.Checked  = null; // null - неизвестно, true - правильное слово, false - неправильное слово
+	this.CurPos   = false;
+	this.Variants = null;
 
-    this.StartRun = null;
-    this.EndRun   = null;
+	this.StartRun = null;
+	this.EndRun   = null;
+
+	// В некоторых языках слова идут вместе со знаками пунктуации до или после, например,
+	// -abwicklung и bwz. (в немецком языке)
+	this.Prefix = Prefix; // Символ приставки, если есть, например, "-"
+	this.Ending = Ending; // Символ окончания, если есть, например, "."
 }
 
 CParaSpellCheckerElement.prototype.GetStartPos = function()
@@ -763,9 +785,13 @@ CParaSpellCheckerElement.prototype.GetEndPos = function()
 {
 	return this.EndPos;
 };
-CParaSpellCheckerElement.prototype.IsEndDot = function()
+CParaSpellCheckerElement.prototype.GetPrefix = function()
 {
-	return this.EndDot;
+	return this.Prefix;
+};
+CParaSpellCheckerElement.prototype.GetEnding = function()
+{
+	return this.Ending;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -814,12 +840,11 @@ CDocument.prototype.ContinueCheckSpelling = function()
 {
     this.Spelling.ContinueCheckSpelling();
 };
-
-CDocument.prototype.TurnOff_CheckSpelling = function()
+CDocument.prototype.TurnOffCheckSpelling = function()
 {
     this.Spelling.TurnOff();
 };
-CDocument.prototype.TurnOn_CheckSpelling = function()
+CDocument.prototype.TurnOnCheckSpelling = function()
 {
     this.Spelling.TurnOn();
 };
@@ -1106,24 +1131,19 @@ ParaRun.prototype.CheckSpelling = function(oSpellCheckerEngine, nDepth)
 
 	var nStartPos = 0;
 
+	if (reviewtype_Remove === this.GetReviewType() || this.GetParentForm())
+	{
+		oSpellCheckerEngine.FlushWord();
+
+		if (reviewtype_Remove === this.GetReviewType())
+			return;
+	}
+
 	var bWord        = oSpellCheckerEngine.bWord;
 	var sWord        = oSpellCheckerEngine.sWord;
 	var CurLcid      = oSpellCheckerEngine.CurLcid;
 	var SpellChecker = oSpellCheckerEngine.SpellChecker;
 	var ContentPos   = oSpellCheckerEngine.ContentPos;
-
-	if (reviewtype_Remove === this.GetReviewType())
-	{
-		if (true === bWord)
-		{
-			SpellChecker.Add(oSpellCheckerEngine.StartPos, oSpellCheckerEngine.EndPos, sWord, CurLcid, false);
-
-			oSpellCheckerEngine.bWord   = false;
-			oSpellCheckerEngine.sWord   = "";
-			oSpellCheckerEngine.CurLcid = CurLcid;
-		}
-		return;
-	}
 
 	var oCurTextPr = this.Get_CompiledPr(false);
 
@@ -1142,13 +1162,13 @@ ParaRun.prototype.CheckSpelling = function(oSpellCheckerEngine, nDepth)
 		if (true === bWord && CurLcid !== oCurTextPr.Lang.Val)
 		{
 			bWord = false;
-			SpellChecker.Add(oSpellCheckerEngine.StartPos, oSpellCheckerEngine.EndPos, sWord, CurLcid, false);
+			SpellChecker.Add(oSpellCheckerEngine.StartPos, oSpellCheckerEngine.EndPos, sWord, CurLcid, oSpellCheckerEngine.GetPrefix(), 0);
 		}
 
 		CurLcid = oCurTextPr.Lang.Val;
 	}
 
-    for (var nPos = nStartPos, nContentLen = this.Content.length; nPos < nContentLen; ++nPos)
+	for (var nPos = nStartPos, nContentLen = this.Content.length; nPos < nContentLen; ++nPos)
 	{
 		if (oSpellCheckerEngine.IsExceedLimit())
 		{
@@ -1191,7 +1211,12 @@ ParaRun.prototype.CheckSpelling = function(oSpellCheckerEngine, nDepth)
 			if (true === bWord)
 			{
 				bWord = false;
-				SpellChecker.Add(oSpellCheckerEngine.StartPos, oSpellCheckerEngine.EndPos, sWord, CurLcid, oItem.IsDot());
+				SpellChecker.Add(oSpellCheckerEngine.StartPos, oSpellCheckerEngine.EndPos, sWord, CurLcid, oSpellCheckerEngine.GetPrefix(), oItem.IsDot() ? oItem.GetCharCode() : 0);
+				oSpellCheckerEngine.CheckPrefix(null);
+			}
+			else
+			{
+				oSpellCheckerEngine.CheckPrefix(oItem);
 			}
 		}
 
@@ -1201,6 +1226,9 @@ ParaRun.prototype.CheckSpelling = function(oSpellCheckerEngine, nDepth)
 	oSpellCheckerEngine.bWord   = bWord;
 	oSpellCheckerEngine.sWord   = sWord;
 	oSpellCheckerEngine.CurLcid = CurLcid;
+
+	if (this.GetParentForm())
+		oSpellCheckerEngine.FlushWord();
 };
 
 ParaRun.prototype.Add_SpellCheckerElement = function(Element, Start, Depth)
@@ -1318,14 +1346,15 @@ ParaField.prototype.Clear_SpellingMarks = function()
 
 function CParagraphSpellCheckerEngine(oSpellChecker, isForceFullCheck)
 {
-    this.ContentPos   = new CParagraphContentPos();
-    this.SpellChecker = oSpellChecker;
+	this.ContentPos   = new CParagraphContentPos();
+	this.SpellChecker = oSpellChecker;
 
-    this.CurLcid    = -1;
-    this.bWord      = false;
-    this.sWord      = "";
-    this.StartPos   = null; // CParagraphContentPos
-    this.EndPos     = null; // CParagraphContentPos
+	this.CurLcid  = -1;
+	this.bWord    = false;
+	this.sWord    = "";
+	this.StartPos = null; // CParagraphContentPos
+	this.EndPos   = null; // CParagraphContentPos
+	this.Prefix   = null;
 
 
 	// Защита от проверки орфографии в большом параграфе
@@ -1389,6 +1418,34 @@ CParagraphSpellCheckerEngine.prototype.IsFindStart = function()
 CParagraphSpellCheckerEngine.prototype.SetFindStart = function(isFind)
 {
 	this.FindStart = isFind;
+};
+/**
+ * Получиаем возможную приставку до слова (обычно это знак "-")
+ * @returns {number}
+ */
+CParagraphSpellCheckerEngine.prototype.GetPrefix = function()
+{
+	if (this.Prefix && this.Prefix.IsHyphen())
+		return this.Prefix.GetCharCode();
+
+	return 0;
+};
+CParagraphSpellCheckerEngine.prototype.CheckPrefix = function(oItem)
+{
+	this.Prefix = oItem;
+};
+/**
+ * Данная команда останавливает сборку элемента для проверки орфографии
+ */
+CParagraphSpellCheckerEngine.prototype.FlushWord = function()
+{
+	if (this.bWord)
+	{
+		this.SpellChecker.Add(this.StartPos, this.EndPos, this.sWord, this.CurLcid, this.GetPrefix(), 0);
+
+		this.bWord = false;
+		this.sWord = "";
+	}
 };
 
 function CParagraphSpellingMark(SpellCheckerElement, Start, Depth)

@@ -101,7 +101,7 @@ function offline_timeoutFire(id) {
 
 
 var console = {
-    log : function(param) { window["native"]["consoleLog"](param); },
+    log : function(param) { window["native"]["ConsoleLog"](param); },
     time : function (param) {},
     timeEnd : function (param) {}
 };
@@ -116,3 +116,4 @@ window["NativeCorrectImageUrlOnCopy"] = function(url) {
 var global_memory_stream_menu = CreateNativeMemoryStream();
 
 window['SockJS'] = createSockJS();
+window['JSZipUtils'] = JSZipUtils();

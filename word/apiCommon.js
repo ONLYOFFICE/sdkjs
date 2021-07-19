@@ -42,15 +42,39 @@
 	{
 		if (obj)
 		{
-			if (obj.Unifill && obj.Unifill.fill && obj.Unifill.fill.type === window['Asc'].c_oAscFill.FILL_TYPE_SOLID && obj.Unifill.fill.color)
+			this.Value = (undefined != obj.Value) ? obj.Value : null;
+
+			if (obj.GetSimpleColor)
 			{
-				this.Color = AscCommon.CreateAscColor(obj.Unifill.fill.color);
+				// TODO: Поддерживаем пока только Asc.c_oAscShd.Clear и Asc.c_oAscShd.Nil
+				if (undefined !== obj.Value && Asc.c_oAscShd.Nil !== this.Value)
+					this.Value = Asc.c_oAscShd.Clear;
+
+				if (Asc.c_oAscShd.Clear === obj.Value
+					&& obj.Unifill
+					&& obj.Unifill.fill
+					&& obj.Unifill.fill.type === window['Asc'].c_oAscFill.FILL_TYPE_SOLID
+					&& obj.Unifill.fill.color)
+				{
+					this.Color = AscCommon.CreateAscColor(obj.Unifill.fill.color);
+				}
+				else
+				{
+					var oColor = obj.GetSimpleColor();
+					this.Color = AscCommon.CreateAscColorCustom(oColor.r, oColor.g, oColor.b, oColor.Auto);
+				}
 			}
 			else
 			{
-				this.Color = (undefined != obj.Color && null != obj.Color) ? AscCommon.CreateAscColorCustom(obj.Color.r, obj.Color.g, obj.Color.b) : null;
+				if (obj.Unifill && obj.Unifill.fill && obj.Unifill.fill.type === window['Asc'].c_oAscFill.FILL_TYPE_SOLID && obj.Unifill.fill.color)
+				{
+					this.Color = AscCommon.CreateAscColor(obj.Unifill.fill.color);
+				}
+				else
+				{
+					this.Color = (undefined != obj.Color && null != obj.Color) ? AscCommon.CreateAscColorCustom(obj.Color.r, obj.Color.g, obj.Color.b) : null;
+				}
 			}
-			this.Value = (undefined != obj.Value) ? obj.Value : null;
 		}
 		else
 		{
@@ -1388,8 +1412,8 @@
 	function CTableOfContentsPr()
 	{
 		this.Hyperlink    = true;
-		this.OutlineStart = -1;
-		this.OutlineEnd   = -1;
+		this.OutlineStart = 1;
+		this.OutlineEnd   = 9;
 		this.Styles       = [];
 		this.PageNumbers  = true;
 		this.RightTab     = true;
@@ -1400,6 +1424,8 @@
 		this.StylesType   = Asc.c_oAscTOCStylesType.Current;
 
 		this.ComplexField = null;
+		this.Caption = undefined;// undefined for TOC, null or string for TOF
+		this.IsIncludeLabelAndNumber = true;
 	}
 	CTableOfContentsPr.prototype.InitFromTOCInstruction = function(oComplexField)
 	{
@@ -1430,6 +1456,15 @@
 		}
 
 		this.ComplexField = oComplexField;
+		if(oInstruction.IsTableOfFigures())
+		{
+			this.Caption = oInstruction.Caption || oInstruction.CaptionOnlyText;
+			if(!this.Caption)
+			{
+				this.Caption = null;
+			}
+			this.IsIncludeLabelAndNumber = (this.CaptionOnlyText === undefined);
+		}
 	};
 	CTableOfContentsPr.prototype.InitFromSdtTOC = function(oSdtTOC)
 	{
@@ -1438,7 +1473,16 @@
 	CTableOfContentsPr.prototype.CheckStylesType = function(oStyles)
 	{
 		if (oStyles)
-			this.StylesType = oStyles.GetTOCStylesType();
+		{
+			if(this.Caption !== undefined)
+			{
+				this.StylesType = oStyles.GetTOFStyleType();
+			}
+			else
+			{
+				this.StylesType = oStyles.GetTOCStylesType();
+			}
+		}
 	};
 	CTableOfContentsPr.prototype.get_Hyperlink = function()
 	{
@@ -1527,28 +1571,61 @@
 	{
 		return this.ComplexField;
 	};
-
+	CTableOfContentsPr.prototype.put_Caption = function(sCaption)
+	{
+		this.Caption = sCaption;
+	};
+	CTableOfContentsPr.prototype.get_Caption = function()
+	{
+		return this.Caption;
+	};
+	CTableOfContentsPr.prototype.get_CaptionForInstruction = function()
+	{
+		if(typeof this.Caption === "string")
+		{
+			var aSplit = this.Caption.split(" ");
+			var sResult = aSplit[0];
+			for(var nIdx = 1; nIdx < aSplit.length; ++nIdx)
+			{
+				sResult += ("_" + aSplit[nIdx]);
+			}
+			return sResult;
+		}
+		return this.Caption;
+	};
+	CTableOfContentsPr.prototype.put_IncludeLabelAndNumber = function(bInclude)
+	{
+		this.IsIncludeLabelAndNumber = bInclude;
+	};
+	CTableOfContentsPr.prototype.get_IncludeLabelAndNumber = function()
+	{
+		return this.IsIncludeLabelAndNumber;
+	};
 
 	window['Asc']['CTableOfContentsPr'] = window['Asc'].CTableOfContentsPr = CTableOfContentsPr;
-	CTableOfContentsPr.prototype['get_Hyperlink']       = CTableOfContentsPr.prototype.get_Hyperlink;
-	CTableOfContentsPr.prototype['put_Hyperlink']       = CTableOfContentsPr.prototype.put_Hyperlink;
-	CTableOfContentsPr.prototype['get_OutlineStart']    = CTableOfContentsPr.prototype.get_OutlineStart;
-	CTableOfContentsPr.prototype['get_OutlineEnd']      = CTableOfContentsPr.prototype.get_OutlineEnd;
-	CTableOfContentsPr.prototype['put_OutlineRange']    = CTableOfContentsPr.prototype.put_OutlineRange;
-	CTableOfContentsPr.prototype['get_StylesCount']     = CTableOfContentsPr.prototype.get_StylesCount;
-	CTableOfContentsPr.prototype['get_StyleName']       = CTableOfContentsPr.prototype.get_StyleName;
-	CTableOfContentsPr.prototype['get_StyleLevel']      = CTableOfContentsPr.prototype.get_StyleLevel;
-	CTableOfContentsPr.prototype['clear_Styles']        = CTableOfContentsPr.prototype.clear_Styles;
-	CTableOfContentsPr.prototype['add_Style']           = CTableOfContentsPr.prototype.add_Style;
-	CTableOfContentsPr.prototype['put_ShowPageNumbers'] = CTableOfContentsPr.prototype.put_ShowPageNumbers;
-	CTableOfContentsPr.prototype['get_ShowPageNumbers'] = CTableOfContentsPr.prototype.get_ShowPageNumbers;
-	CTableOfContentsPr.prototype['put_RightAlignTab']   = CTableOfContentsPr.prototype.put_RightAlignTab;
-	CTableOfContentsPr.prototype['get_RightAlignTab']   = CTableOfContentsPr.prototype.get_RightAlignTab;
-	CTableOfContentsPr.prototype['get_TabLeader']       = CTableOfContentsPr.prototype.get_TabLeader;
-	CTableOfContentsPr.prototype['put_TabLeader']       = CTableOfContentsPr.prototype.put_TabLeader;
-	CTableOfContentsPr.prototype['get_StylesType']      = CTableOfContentsPr.prototype.get_StylesType;
-	CTableOfContentsPr.prototype['put_StylesType']      = CTableOfContentsPr.prototype.put_StylesType;
-	CTableOfContentsPr.prototype['get_InternalClass']   = CTableOfContentsPr.prototype.get_InternalClass;
+	CTableOfContentsPr.prototype['get_Hyperlink']             = CTableOfContentsPr.prototype.get_Hyperlink;
+	CTableOfContentsPr.prototype['put_Hyperlink']             = CTableOfContentsPr.prototype.put_Hyperlink;
+	CTableOfContentsPr.prototype['get_OutlineStart']          = CTableOfContentsPr.prototype.get_OutlineStart;
+	CTableOfContentsPr.prototype['get_OutlineEnd']            = CTableOfContentsPr.prototype.get_OutlineEnd;
+	CTableOfContentsPr.prototype['put_OutlineRange']          = CTableOfContentsPr.prototype.put_OutlineRange;
+	CTableOfContentsPr.prototype['get_StylesCount']           = CTableOfContentsPr.prototype.get_StylesCount;
+	CTableOfContentsPr.prototype['get_StyleName']             = CTableOfContentsPr.prototype.get_StyleName;
+	CTableOfContentsPr.prototype['get_StyleLevel']            = CTableOfContentsPr.prototype.get_StyleLevel;
+	CTableOfContentsPr.prototype['clear_Styles']              = CTableOfContentsPr.prototype.clear_Styles;
+	CTableOfContentsPr.prototype['add_Style']                 = CTableOfContentsPr.prototype.add_Style;
+	CTableOfContentsPr.prototype['put_ShowPageNumbers']       = CTableOfContentsPr.prototype.put_ShowPageNumbers;
+	CTableOfContentsPr.prototype['get_ShowPageNumbers']       = CTableOfContentsPr.prototype.get_ShowPageNumbers;
+	CTableOfContentsPr.prototype['put_RightAlignTab']         = CTableOfContentsPr.prototype.put_RightAlignTab;
+	CTableOfContentsPr.prototype['get_RightAlignTab']         = CTableOfContentsPr.prototype.get_RightAlignTab;
+	CTableOfContentsPr.prototype['get_TabLeader']             = CTableOfContentsPr.prototype.get_TabLeader;
+	CTableOfContentsPr.prototype['put_TabLeader']             = CTableOfContentsPr.prototype.put_TabLeader;
+	CTableOfContentsPr.prototype['get_StylesType']            = CTableOfContentsPr.prototype.get_StylesType;
+	CTableOfContentsPr.prototype['put_StylesType']            = CTableOfContentsPr.prototype.put_StylesType;
+	CTableOfContentsPr.prototype['get_InternalClass']         = CTableOfContentsPr.prototype.get_InternalClass;
+	CTableOfContentsPr.prototype['put_Caption']               = CTableOfContentsPr.prototype.put_Caption;
+	CTableOfContentsPr.prototype['get_Caption']               = CTableOfContentsPr.prototype.get_Caption;
+	CTableOfContentsPr.prototype['put_IncludeLabelAndNumber'] = CTableOfContentsPr.prototype.put_IncludeLabelAndNumber;
+	CTableOfContentsPr.prototype['get_IncludeLabelAndNumber'] = CTableOfContentsPr.prototype.get_IncludeLabelAndNumber;
 
 
 	/**
@@ -1601,17 +1678,26 @@
 	{
 		return this.StyleId;
 	};
+	CAscStyle.prototype.get_TranslatedName = function()
+	{
+		if(typeof this.Name === "string" && this.Name.length > 0)
+		{
+			return AscCommon.translateManager.getValue(this.Name);
+		}
+		return this.Name;
+	};
 
 	window['Asc']['CAscStyle'] = window['Asc'].CAscStyle = CAscStyle;
-	CAscStyle.prototype['get_Name']       = CAscStyle.prototype.get_Name;
-	CAscStyle.prototype['put_Name']       = CAscStyle.prototype.put_Name;
-	CAscStyle.prototype['get_Type']       = CAscStyle.prototype.get_Type;
-	CAscStyle.prototype['put_Type']       = CAscStyle.prototype.put_Type;
-	CAscStyle.prototype['get_QFormat']    = CAscStyle.prototype.get_QFormat;
-	CAscStyle.prototype['put_QFormat']    = CAscStyle.prototype.put_QFormat;
-	CAscStyle.prototype['get_UIPriority'] = CAscStyle.prototype.get_UIPriority;
-	CAscStyle.prototype['put_UIPriority'] = CAscStyle.prototype.put_UIPriority;
-	CAscStyle.prototype['get_StyleId']    = CAscStyle.prototype.get_StyleId;
+	CAscStyle.prototype['get_Name']           = CAscStyle.prototype.get_Name;
+	CAscStyle.prototype['put_Name']           = CAscStyle.prototype.put_Name;
+	CAscStyle.prototype['get_Type']           = CAscStyle.prototype.get_Type;
+	CAscStyle.prototype['put_Type']           = CAscStyle.prototype.put_Type;
+	CAscStyle.prototype['get_QFormat']        = CAscStyle.prototype.get_QFormat;
+	CAscStyle.prototype['put_QFormat']        = CAscStyle.prototype.put_QFormat;
+	CAscStyle.prototype['get_UIPriority']     = CAscStyle.prototype.get_UIPriority;
+	CAscStyle.prototype['put_UIPriority']     = CAscStyle.prototype.put_UIPriority;
+	CAscStyle.prototype['get_StyleId']        = CAscStyle.prototype.get_StyleId;
+	CAscStyle.prototype['get_TranslatedName'] = CAscStyle.prototype.get_TranslatedName;
 
 
 	/**
@@ -2114,7 +2200,19 @@
 	window['Asc']['CAscCaptionProperties'] = window['Asc'].CAscCaptionProperties = CAscCaptionProperties;
 	var prot = CAscCaptionProperties.prototype;
 	prot.get_Name = prot["get_Name"] = function(){return this.Name;};
-	prot.get_Label = prot["get_Label"] = function(){return this.Label;};
+	prot.get_Label = prot["get_Label"] = function(){
+		if(typeof this.Label === "string")
+		{
+			var aSplit = this.Label.split("_");
+			var sResult = aSplit[0];
+			for(var nIdx = 1; nIdx < aSplit.length; ++nIdx)
+			{
+				sResult += (" " + aSplit[nIdx]);
+			}
+			return sResult;
+		}
+		return this.Label;
+	};
 	prot.get_Before = prot["get_Before"] = function(){return this.Before;};
 	prot.get_ExcludeLabel = prot["get_ExcludeLabel"] = function(){return this.ExcludeLabel;};
 	prot.get_Format = prot["get_Format"] = function(){return this.Format;};
@@ -2157,8 +2255,6 @@
 	prot.put_HeadingLvl = prot["put_HeadingLvl"] = function(v){this.HeadingLvl = v;};
 	prot.put_Separator = prot["put_Separator"] = function(v){this.Separator = v;};
 	prot.put_Additional = prot["put_Additional"] = function(v){this.Additional = v;};
-
-
 	prot.getSeqInstruction = function()
 	{
 		var oComplexField = new CFieldInstructionSEQ();
@@ -2168,7 +2264,7 @@
 		}
 		if(this.Label)
 		{
-			oComplexField.SetId(this.Label);
+			oComplexField.SetId(this.getLabelForInstruction());
 		}
 		if(AscFormat.isRealNumber(this.HeadingLvl))
 		{
@@ -2176,7 +2272,20 @@
 		}
 		return oComplexField;
 	};
-
+	prot.getLabelForInstruction = function()
+	{
+		if(typeof this.Label === "string")
+		{
+			var aSplited = this.Label.split(" ");
+			var sResult = aSplited[0];
+			for(var nIdx = 1; nIdx < aSplited.length; ++nIdx)
+			{
+				sResult += ("_" + aSplited[nIdx]);
+			}
+			return sResult;
+		}
+		return "";
+	};
 	prot.getSeqInstructionLine = function()
 	{
 		return this.getSeqInstruction().ToString();

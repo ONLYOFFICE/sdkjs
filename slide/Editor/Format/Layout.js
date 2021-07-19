@@ -48,12 +48,15 @@ AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetShowMasterSp] = AscDFH.CC
 AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetClrMapOverride] = AscDFH.CChangesDrawingsObject;
 AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutAddToSpTree] = AscDFH.CChangesDrawingsContent;
 AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetSize] = AscDFH.CChangesDrawingsObjectNoId;
+AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetTransition] = AscDFH.CChangesDrawingsObjectNoId;
+AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetTiming] = AscDFH.CChangesDrawingsObject;
 
 AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideLayoutSetBg] = AscFormat.CBg;
 AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideLayoutSetSize] = AscFormat.CDrawingBaseCoordsWritable;
+AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideLayoutSetTransition] = Asc.CAscSlideTransition;
 
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetMaster]            = function(oClass, value){oClass.Master = value;};
-AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetHF]            = function(oClass, value){oClass.hf = value;};
+AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetHF]                = function(oClass, value){oClass.hf = value;};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetMatchingName]      = function(oClass, value){oClass.matchingName = value;};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetType]              = function(oClass, value){oClass.type = value;};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetBg]                = function(oClass, value, FromLoad){
@@ -79,6 +82,8 @@ AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetShowPhAnim]        = 
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetShowMasterSp]      = function(oClass, value){oClass.showMasterSp = value;};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetClrMapOverride]    = function(oClass, value){oClass.clrMap = value;};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetSize]              = function(oClass, value){oClass.Width = value.a; oClass.Height = value.b;};
+AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetTiming]            = function(oClass, value){oClass.timing = value;};
+AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetTransition]        = function(oClass, value){oClass.transition = value;};
 
 AscDFH.drawingContentChanges[AscDFH.historyitem_SlideLayoutAddToSpTree] = function(oClass){
     oClass.recalcInfo.recalculateBounds = true;
@@ -101,6 +106,9 @@ function SlideLayout()
     this.type = null;
 
     this.userDrawn = true;
+
+    this.timing = null;
+    this.transition = null;
 
     this.ImageBase64 = "";
     this.Width64 = 0;
@@ -182,6 +190,9 @@ SlideLayout.prototype =
         if(this.type !== copy.type){
             copy.setType(this.type);
         }
+        if(this.timing) {
+            copy.setTiming(this.timing.createDuplicate(oIdMap));
+        }
         return copy;
     },
 
@@ -259,6 +270,39 @@ SlideLayout.prototype =
         History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_SlideLayoutSetSize, new AscFormat.CDrawingBaseCoordsWritable(this.Width, this.Height), new AscFormat.CDrawingBaseCoordsWritable(w, h)));
         this.Width = w;
         this.Height = h;
+    },
+
+    applyTransition: function(transition) {
+        var oldTransition;
+        if(this.transition) {
+            oldTransition = this.transition.createDuplicate();
+        }
+        else {
+            oldTransition = null;
+        }
+
+        var oNewTransition;
+        if(transition) {
+            if(this.transition) {
+                oNewTransition = this.transition.createDuplicate();
+            }
+            else {
+                oNewTransition = new Asc.CAscSlideTransition();
+                oNewTransition.setDefaultParams();
+            }
+            oNewTransition.applyProps(transition);
+        }
+        else {
+            oNewTransition = null;
+        }
+        this.transition = oNewTransition;
+        History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_SlideLayoutSetTransition, oldTransition, oNewTransition));
+    },
+
+    setTiming: function(oTiming)
+    {
+        History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_SlideLayoutSetTiming, this.timing, oTiming));
+        this.timing = oTiming;
     },
 
     changeSize: Slide.prototype.changeSize,
@@ -583,6 +627,26 @@ SlideLayout.prototype =
             if(typeof  this.cSld.spTree[i].getAllFonts === "function")
                 this.cSld.spTree[i].getAllFonts(fonts);
         }
+    },
+
+    createFontMap: function (oFontsMap, oCheckedMap, isNoPh) {
+        if(oCheckedMap[this.Get_Id()]) {
+            return;
+        }
+        var aSpTree = this.cSld.spTree;
+        var nSp, oSp, nSpCount = aSpTree.length;
+        for(nSp = 0; nSp < nSpCount; ++nSp) {
+            oSp = aSpTree[nSp];
+            if(isNoPh)
+            {
+                if(oSp.isPlaceholder())
+                {
+                    continue;
+                }
+            }
+            oSp.createFontMap(oFontsMap);
+        }
+        oCheckedMap[this.Get_Id()] = this;
     },
 
     addToRecalculate: function()
@@ -1057,17 +1121,12 @@ function CLayoutThumbnailDrawer()
     {
         _layout.recalculate2();
 
-        var h_px = 67;
+        var h_px = 68;
         var w_px = (this.WidthMM * h_px / this.HeightMM) >> 0;
+        w_px = (w_px >> 2) << 2;
 
-        // пока не будем генерить для ретины
-        /*
-        if (this.IsRetina)
-        {
-            w_px <<= 1;
-            h_px <<= 1;
-        }
-        */
+        h_px = AscCommon.AscBrowser.convertToRetinaValue(h_px, true);
+		w_px = AscCommon.AscBrowser.convertToRetinaValue(w_px, true);
 
         this.WidthPx  = w_px;
         this.HeightPx = h_px;

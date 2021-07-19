@@ -46,6 +46,43 @@ var c_oAscShdClear = Asc.c_oAscShdClear;
 var c_oAscColor = Asc.c_oAscColor;
 var c_oAscFill = Asc.c_oAscFill;
 
+var c_oVariantTypes = {
+    vtEmpty: 0,
+    vtNull: 1,
+    vtVariant: 2,
+    vtVector: 3,
+    vtArray: 4,
+    vtVStream: 5,
+    vtBlob: 6,
+    vtOBlob: 7,
+    vtI1: 8,
+    vtI2: 9,
+    vtI4: 10,
+    vtI8: 11,
+    vtInt: 12,
+    vtUi1: 13,
+    vtUi2: 14,
+    vtUi4: 15,
+    vtUi8: 16,
+    vtUint: 17,
+    vtR4: 18,
+    vtR8: 19,
+    vtDecimal: 20,
+    vtLpstr: 21,
+    vtLpwstr: 22,
+    vtBstr: 23,
+    vtDate: 24,
+    vtFiletime: 25,
+    vtBool: 26,
+    vtCy: 27,
+    vtError: 28,
+    vtStream: 29,
+    vtOStream: 30,
+    vtStorage: 31,
+    vtOStorage: 32,
+    vtClsid: 33
+};
+
 var c_dScalePPTXSizes = 36000;
 function IsHiddenObj(object)
 {
@@ -163,42 +200,25 @@ function BinaryPPTYLoader()
     this.aSlideLayouts = [];
     this.aThemes = [];
 
-	this.arr_connectors = [];
+	this.oConnectedObjects = {};
 	this.map_shapes_by_id = {};
 	this.fields = [];
 
 
-
-	this.ClearConnectorsMaps = function(){
-        this.arr_connectors.length = 0;
+	this.ClearConnectedObjects = function(){
+        this.oConnectedObjects = {};
         this.map_shapes_by_id = {};
     };
-
-	this.AssignConnectorsId = function () {
-	    var oPr = null;
-        for(var i = 0; i < this.arr_connectors.length; ++i){
-            oPr = this.arr_connectors[i].nvSpPr.nvUniSpPr;
-            if(AscFormat.isRealNumber(oPr.stCnxId)){
-                if(AscCommon.isRealObject(this.map_shapes_by_id[oPr.stCnxId])){
-                    oPr.stCnxId = this.map_shapes_by_id[oPr.stCnxId].Id;
-                }
-                else{
-                    oPr.stCnxId = null;
-                    oPr.stCnxIdx = null;
-                }
+	this.AddConnectedObject = function(oObject){
+        this.oConnectedObjects[oObject.Id] = oObject;
+    };
+	this.AssignConnectedObjects = function () {
+        for(var sId in this.oConnectedObjects) {
+            if(this.oConnectedObjects.hasOwnProperty(sId)) {
+                this.oConnectedObjects[sId].assignConnection(this.map_shapes_by_id);
             }
-            if(AscFormat.isRealNumber(oPr.endCnxId)){
-                if(AscCommon.isRealObject(this.map_shapes_by_id[oPr.endCnxId])){
-                    oPr.endCnxId = this.map_shapes_by_id[oPr.endCnxId].Id;
-                }
-                else{
-                    oPr.endCnxId = null;
-                    oPr.endCnxIdx = null;
-                }
-            }
-            this.arr_connectors[i].nvSpPr.setUniSpPr(oPr.copy());
         }
-        this.ClearConnectorsMaps();
+        this.ClearConnectedObjects();
     };
 
     this.Start_UseFullUrl = function(insertDocumentUrlsData)
@@ -370,6 +390,8 @@ function BinaryPPTYLoader()
         this.LoadDocument();
         if(AscFonts.IsCheckSymbols)
         {
+            var bLoad = AscCommon.g_oIdCounter.m_bLoad;
+            AscCommon.g_oIdCounter.Set_Load(false);
             for(var nField = 0; nField < this.fields.length; ++nField)
             {
                 var oField = this.fields[nField];
@@ -379,6 +401,7 @@ function BinaryPPTYLoader()
                     AscFonts.FontPickerByCharacter.getFontsByString(sValue);
                 }
             }
+            AscCommon.g_oIdCounter.Set_Load(bLoad);
         }
         this.fields.length = 0;
         AscFormat.checkPlaceholdersText();
@@ -433,6 +456,15 @@ function BinaryPPTYLoader()
                 this.presentation.Core = new CCore();
                 this.presentation.Core.fromStream(s);
             }
+
+            if (undefined != _main_tables["48"])
+            {
+                // core
+                s.Seek2(_main_tables["48"]);
+
+                this.presentation.CustomProperties = new CCustomProperties();
+                this.presentation.CustomProperties.fromStream(s);
+            }
         }
 
         if (undefined != _main_tables["3"])
@@ -445,30 +477,20 @@ function BinaryPPTYLoader()
 
             pres.fromStream(s, this);
 
-            if(pres.attrShowSpecialPlsOnTitleSld !== null)
+            if(!this.IsThemeLoader)
             {
-                this.presentation.setShowSpecialPlsOnTitleSld(pres.attrShowSpecialPlsOnTitleSld);
-            }
+                if(pres.attrShowSpecialPlsOnTitleSld !== null)
+                {
+                    this.presentation.setShowSpecialPlsOnTitleSld(pres.attrShowSpecialPlsOnTitleSld);
+                }
 
-            if(pres.attrFirstSlideNum !== null)
-            {
-                this.presentation.setFirstSlideNum(pres.attrFirstSlideNum);
+                if(pres.attrFirstSlideNum !== null)
+                {
+                    this.presentation.setFirstSlideNum(pres.attrFirstSlideNum);
+                }
             }
 
             this.presentation.defaultTextStyle = pres.defaultTextStyle;
-            if(pres.SldSz)
-            {
-                this.presentation.Width = pres.SldSz.cx / c_dScalePPTXSizes;
-                this.presentation.Height = pres.SldSz.cy / c_dScalePPTXSizes;
-            }
-            else
-            {
-                this.presentation.Width = 254;
-                this.presentation.Height = 190.5;
-                pres.SldSz = {};
-                pres.SldSz.cx = this.presentation.Width * c_dScalePPTXSizes;
-                pres.SldSz.cy = this.presentation.Height * c_dScalePPTXSizes;
-            }
         }
 
         if (!this.IsThemeLoader)
@@ -521,7 +543,7 @@ function BinaryPPTYLoader()
             for (var i = 0; i < _sm_count; i++)
             {
                 this.presentation.slideMasters[i] = this.ReadSlideMaster();
-                this.presentation.slideMasters[i].setSlideSize(this.presentation.Width, this.presentation.Height);
+                this.presentation.slideMasters[i].setSlideSize(this.presentation.GetWidthMM(), this.presentation.GetHeightMM());
             }
         }
 
@@ -535,7 +557,7 @@ function BinaryPPTYLoader()
             for (var i = 0; i < _sl_count; i++)
             {
                 this.aSlideLayouts[i] = this.ReadSlideLayout();
-                this.aSlideLayouts[i].setSlideSize(this.presentation.Width, this.presentation.Height);
+                this.aSlideLayouts[i].setSlideSize(this.presentation.GetWidthMM(), this.presentation.GetHeightMM());
             }
         }
 
@@ -556,7 +578,6 @@ function BinaryPPTYLoader()
                 for (var i = 0; i < _s_count; i++)
                 {
                     this.presentation.insertSlide(i, this.ReadSlide(i)) ;
-                    this.presentation.Slides[i].setSlideSize(this.presentation.Width, this.presentation.Height);
                 }
                 if(this.Api)
                 {
@@ -3944,6 +3965,7 @@ function BinaryPPTYLoader()
     this.ReadSlideMaster = function()
     {
         var master = new MasterSlide(this.presentation, null);
+        this.ClearConnectedObjects();
         this.TempMainObject = master;
 
         var s = this.stream;
@@ -3999,7 +4021,18 @@ function BinaryPPTYLoader()
                     break;
                 }
                 case 2:
+                {
+                    var _transition = this.ReadTransition();
+                    master.applyTransition(_transition);
+                    break;
+                }
                 case 3:
+                {
+                    var oTiming = new AscFormat.CTiming();
+                    oTiming.fromPPTY(this);
+                    master.setTiming(oTiming);
+                    break;
+                }
                 case 4:
                 {
                     var _len = s.GetULong();
@@ -4026,6 +4059,7 @@ function BinaryPPTYLoader()
 
         s.Seek2(end);
         this.TempMainObject = null;
+        this.AssignConnectedObjects();
         return master;
     }
 
@@ -4076,6 +4110,7 @@ function BinaryPPTYLoader()
     this.ReadSlideLayout = function()
     {
         var layout = new SlideLayout(null);
+        this.ClearConnectedObjects();
         this.TempMainObject = layout;
 
         var s = this.stream;
@@ -4153,6 +4188,20 @@ function BinaryPPTYLoader()
                     layout.setClMapOverride(this.ReadClrOverride());
                     break;
                 }
+
+                case 2:
+                {
+                    var _transition = this.ReadTransition();
+                    layout.applyTransition(_transition);
+                    break;
+                }
+                case 3:
+                {
+                    var oTiming = new AscFormat.CTiming();
+                    oTiming.fromPPTY(this);
+                    layout.setTiming(oTiming);
+                    break;
+                }
                 case 4:
                 {
                     layout.setHF(this.ReadHF());
@@ -4169,6 +4218,7 @@ function BinaryPPTYLoader()
 
         s.Seek2(end);
         this.TempMainObject = null;
+        this.AssignConnectedObjects();
         return layout;
     }
 
@@ -4179,6 +4229,7 @@ function BinaryPPTYLoader()
     this.ReadSlide = function(sldIndex)
     {
         var slide = new Slide(this.presentation, null, sldIndex);
+        this.ClearConnectedObjects();
         this.TempMainObject = slide;
 
         slide.maxId = -1;
@@ -4229,8 +4280,15 @@ function BinaryPPTYLoader()
                 }
                 case 2:
                 {
-                    var _timing = this.ReadTransition();
-                    slide.applyTiming(_timing);
+                    var _transition = this.ReadTransition();
+                    slide.applyTransition(_transition);
+                    break;
+                }
+                case 3:
+                {
+                    var oTiming = new AscFormat.CTiming();
+                    oTiming.fromPPTY(this);
+                    slide.setTiming(oTiming);
                     break;
                 }
                 case 4:
@@ -4251,6 +4309,7 @@ function BinaryPPTYLoader()
 
         s.Seek2(end);
         this.TempMainObject = null;
+        this.AssignConnectedObjects();
         return slide;
     }
 
@@ -4371,14 +4430,14 @@ function BinaryPPTYLoader()
 
     this.ReadTransition = function()
     {
-        var _timing = new CAscSlideTiming();
-        _timing.setDefaultParams();
+        var _transition = new Asc.CAscSlideTransition();
+        _transition.setDefaultParams();
 
         var s = this.stream;
         var end = s.cur + s.GetULong() + 4;
 
         if (s.cur == end)
-            return _timing;
+            return _transition;
 
         s.Skip2(1); // attribute start
         var _presentDuration = false;
@@ -4390,16 +4449,16 @@ function BinaryPPTYLoader()
 
             if (0 == _at)
             {
-                _timing.SlideAdvanceOnMouseClick = s.GetBool();
+                _transition.SlideAdvanceOnMouseClick = s.GetBool();
             }
             else if (1 == _at)
             {
-                _timing.SlideAdvanceAfter = true;
-                _timing.SlideAdvanceDuration = s.GetULong();
+                _transition.SlideAdvanceAfter = true;
+                _transition.SlideAdvanceDuration = s.GetULong();
             }
             else if (2 == _at)
             {
-                _timing.TransitionDuration = s.GetULong();
+                _transition.TransitionDuration = s.GetULong();
                 _presentDuration = true;
             }
             else if (3 == _at)
@@ -4407,11 +4466,11 @@ function BinaryPPTYLoader()
                 var _spd = s.GetUChar();
                 if (!_presentDuration)
                 {
-                    _timing.TransitionDuration = 250;
+                    _transition.TransitionDuration = 250;
                     if (_spd == 1)
-                        _timing.TransitionDuration = 500;
+                        _transition.TransitionDuration = 500;
                     else if (_spd == 2)
-                        _timing.TransitionDuration = 750;
+                        _transition.TransitionDuration = 750;
                 }
             }
         }
@@ -4465,108 +4524,108 @@ function BinaryPPTYLoader()
                         // тут все поддерживаемые переходы
                         if ("p:fade" == _type)
                         {
-                            _timing.TransitionType = c_oAscSlideTransitionTypes.Fade;
-                            _timing.TransitionOption = c_oAscSlideTransitionParams.Fade_Smoothly;
+                            _transition.TransitionType = c_oAscSlideTransitionTypes.Fade;
+                            _transition.TransitionOption = c_oAscSlideTransitionParams.Fade_Smoothly;
 
                             if (1 == _len && _paramNames[0] == "thruBlk" && _paramValues[0] == "1")
                             {
-                                _timing.TransitionOption = c_oAscSlideTransitionParams.Fade_Through_Black;
+                                _transition.TransitionOption = c_oAscSlideTransitionParams.Fade_Through_Black;
                             }
                         }
                         else if ("p:push" == _type)
                         {
-                            _timing.TransitionType = c_oAscSlideTransitionTypes.Push;
-                            _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Bottom;
+                            _transition.TransitionType = c_oAscSlideTransitionTypes.Push;
+                            _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Bottom;
 
                             if (1 == _len && _paramNames[0] == "dir")
                             {
                                 if ("l" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Right;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Right;
                                 if ("r" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Left;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Left;
                                 if ("d" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Top;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Top;
                             }
                         }
                         else if ("p:wipe" == _type)
                         {
-                            _timing.TransitionType = c_oAscSlideTransitionTypes.Wipe;
-                            _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Right;
+                            _transition.TransitionType = c_oAscSlideTransitionTypes.Wipe;
+                            _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Right;
 
                             if (1 == _len && _paramNames[0] == "dir")
                             {
                                 if ("u" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Bottom;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Bottom;
                                 if ("r" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Left;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Left;
                                 if ("d" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Top;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Top;
                             }
                         }
                         else if ("p:strips" == _type)
                         {
-                            _timing.TransitionType = c_oAscSlideTransitionTypes.Wipe;
-                            _timing.TransitionOption = c_oAscSlideTransitionParams.Param_TopRight;
+                            _transition.TransitionType = c_oAscSlideTransitionTypes.Wipe;
+                            _transition.TransitionOption = c_oAscSlideTransitionParams.Param_TopRight;
 
                             if (1 == _len && _paramNames[0] == "dir")
                             {
                                 if ("rd" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_TopLeft;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_TopLeft;
                                 if ("ru" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_BottomLeft;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_BottomLeft;
                                 if ("lu" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_BottomRight;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_BottomRight;
                             }
                         }
                         else if ("p:cover" == _type)
                         {
-                            _timing.TransitionType = c_oAscSlideTransitionTypes.Cover;
-                            _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Right;
+                            _transition.TransitionType = c_oAscSlideTransitionTypes.Cover;
+                            _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Right;
 
                             if (1 == _len && _paramNames[0] == "dir")
                             {
                                 if ("u" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Bottom;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Bottom;
                                 if ("r" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Left;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Left;
                                 if ("d" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Top;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Top;
                                 if ("rd" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_TopLeft;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_TopLeft;
                                 if ("ru" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_BottomLeft;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_BottomLeft;
                                 if ("lu" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_BottomRight;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_BottomRight;
                                 if ("ld" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_TopRight;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_TopRight;
                             }
                         }
                         else if ("p:pull" == _type)
                         {
-                            _timing.TransitionType = c_oAscSlideTransitionTypes.UnCover;
-                            _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Right;
+                            _transition.TransitionType = c_oAscSlideTransitionTypes.UnCover;
+                            _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Right;
 
                             if (1 == _len && _paramNames[0] == "dir")
                             {
                                 if ("u" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Bottom;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Bottom;
                                 if ("r" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Left;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Left;
                                 if ("d" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_Top;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_Top;
                                 if ("rd" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_TopLeft;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_TopLeft;
                                 if ("ru" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_BottomLeft;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_BottomLeft;
                                 if ("lu" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_BottomRight;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_BottomRight;
                                 if ("ld" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Param_TopRight;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Param_TopRight;
                             }
                         }
                         else if ("p:split" == _type)
                         {
-                            _timing.TransitionType = c_oAscSlideTransitionTypes.Split;
+                            _transition.TransitionType = c_oAscSlideTransitionTypes.Split;
 
                             var _is_vert = true;
                             var _is_out = true;
@@ -4586,53 +4645,53 @@ function BinaryPPTYLoader()
                             if (_is_vert)
                             {
                                 if (_is_out)
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Split_VerticalOut;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Split_VerticalOut;
                                 else
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Split_VerticalIn;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Split_VerticalIn;
                             }
                             else
                             {
                                 if (_is_out)
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Split_HorizontalOut;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Split_HorizontalOut;
                                 else
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Split_HorizontalIn;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Split_HorizontalIn;
                             }
                         }
                         else if ("p:wheel" == _type)
                         {
-                            _timing.TransitionType = c_oAscSlideTransitionTypes.Clock;
-                            _timing.TransitionOption = c_oAscSlideTransitionParams.Clock_Clockwise;
+                            _transition.TransitionType = c_oAscSlideTransitionTypes.Clock;
+                            _transition.TransitionOption = c_oAscSlideTransitionParams.Clock_Clockwise;
                         }
                         else if ("p14:wheelReverse" == _type)
                         {
-                            _timing.TransitionType = c_oAscSlideTransitionTypes.Clock;
-                            _timing.TransitionOption = c_oAscSlideTransitionParams.Clock_Counterclockwise;
+                            _transition.TransitionType = c_oAscSlideTransitionTypes.Clock;
+                            _transition.TransitionOption = c_oAscSlideTransitionParams.Clock_Counterclockwise;
                         }
                         else if ("p:wedge" == _type)
                         {
-                            _timing.TransitionType = c_oAscSlideTransitionTypes.Clock;
-                            _timing.TransitionOption = c_oAscSlideTransitionParams.Clock_Wedge;
+                            _transition.TransitionType = c_oAscSlideTransitionTypes.Clock;
+                            _transition.TransitionOption = c_oAscSlideTransitionParams.Clock_Wedge;
                         }
                         else if ("p14:warp" == _type)
                         {
-                            _timing.TransitionType = c_oAscSlideTransitionTypes.Zoom;
-                            _timing.TransitionOption = c_oAscSlideTransitionParams.Zoom_Out;
+                            _transition.TransitionType = c_oAscSlideTransitionTypes.Zoom;
+                            _transition.TransitionOption = c_oAscSlideTransitionParams.Zoom_Out;
 
                             if (1 == _len && _paramNames[0] == "dir")
                             {
                                 if ("in" == _paramValues[0])
-                                    _timing.TransitionOption = c_oAscSlideTransitionParams.Zoom_In;
+                                    _transition.TransitionOption = c_oAscSlideTransitionParams.Zoom_In;
                             }
                         }
                         else if ("p:newsflash" == _type)
                         {
-                            _timing.TransitionType = c_oAscSlideTransitionTypes.Zoom;
-                            _timing.TransitionOption = c_oAscSlideTransitionParams.Zoom_AndRotate;
+                            _transition.TransitionType = c_oAscSlideTransitionTypes.Zoom;
+                            _transition.TransitionOption = c_oAscSlideTransitionParams.Zoom_AndRotate;
                         }
                         else if ("p:none" != _type)
                         {
-                            _timing.TransitionType = c_oAscSlideTransitionTypes.Fade;
-                            _timing.TransitionOption = c_oAscSlideTransitionParams.Fade_Smoothly;
+                            _transition.TransitionType = c_oAscSlideTransitionTypes.Fade;
+                            _transition.TransitionOption = c_oAscSlideTransitionParams.Fade_Smoothly;
                         }
                     }
 
@@ -4648,7 +4707,7 @@ function BinaryPPTYLoader()
         }
 
         s.Seek2(end);
-        return _timing;
+        return _transition;
     }
 
     this.ReadHF = function()
@@ -4683,8 +4742,8 @@ function BinaryPPTYLoader()
 
     this.ReadNoteMaster = function()
     {
-
         var oNotesMaster = new AscCommonSlide.CNotesMaster();
+        this.ClearConnectedObjects();
         this.TempMainObject = oNotesMaster;
         this.stream.Skip2(1); // type
         var end = this.stream.cur + this.stream.GetLong() + 4;
@@ -4732,12 +4791,14 @@ function BinaryPPTYLoader()
 
         this.stream.Seek2(end);
         this.TempMainObject = null;
+        this.AssignConnectedObjects()
         return oNotesMaster;
     }
 
     this.ReadNote = function()
     {
         var oNotes = new AscCommonSlide.CNotes();
+        this.ClearConnectedObjects()
         this.TempMainObject = oNotes;
         var _s = this.stream;
         _s.Skip2(1); // type
@@ -4790,6 +4851,7 @@ function BinaryPPTYLoader()
         }
         this.TempMainObject = null;
         _s.Seek2(_end);
+        this.AssignConnectedObjects();
         return oNotes;
     }
 
@@ -4825,10 +4887,7 @@ function BinaryPPTYLoader()
                 }
                 case 1:
                 {
-                    // SHAPES
-                    this.ClearConnectorsMaps();
                     csld.spTree = this.ReadGroupShapeMain();
-                    this.AssignConnectorsId();
                     break;
                 }
                 default:
@@ -5786,12 +5845,12 @@ function BinaryPPTYLoader()
 				}
 				case 6:
 				{
-					s.GetBool();
+                    ret.showDate = s.GetBool();
 					break;
 				}
 				case 7:
 				{
-					s.GetString2();
+					ret.instructions = s.GetString2();
 					break;
 				}
 				case 8:
@@ -6602,6 +6661,11 @@ function BinaryPPTYLoader()
                     txXfrm = this.ReadXfrm();
 					break;
 				}
+                case 7:
+                {
+                    shape.setSignature(this.ReadSignatureLine());
+                    break;
+                }
                 default:
                 {
                     s.SkipRecord();
@@ -6873,8 +6937,11 @@ function BinaryPPTYLoader()
                                 var _object = this.ReadPic(_type);
                                 if (!IsHiddenObj(_object))
                                 {
-                                    shapes[shapes.length] = _object;
-                                    _object.setParent2(this.TempMainObject);
+                                    if(_type !== 6 || _object.checkCorrect())
+                                    {
+                                        shapes[shapes.length] = _object;
+                                        _object.setParent2(this.TempMainObject);
+                                    }
                                 }
                                 break;
                             }
@@ -6980,14 +7047,6 @@ function BinaryPPTYLoader()
                 {
                     if(isOle) {
                         this.ReadOleInfo(pic);
-                        // if(pic.m_sObjectFile === "maskFile.docx"
-                        //     ||  pic.m_sObjectFile === "maskFile.xlsx"){
-                        //     var oParent = pic.parent;
-                        //     pic = AscFormat.CImageShape.prototype.copy.call(pic);
-                        //     if(oParent){
-                        //         pic.setParent(oParent);
-                        //     }
-                        // }
                     } else {
                         s.SkipRecord();
                     }
@@ -7093,7 +7152,7 @@ function BinaryPPTYLoader()
                 }
             }
         }
-        this.arr_connectors.push(shape);
+        this.AddConnectedObject(shape);
         s.Seek2(_end_rec);
         return shape;
     }
@@ -7440,6 +7499,11 @@ function BinaryPPTYLoader()
                                     var value;
                                     switch(_at2)
                                     {
+                                        case 0:{
+                                            value = s.GetBool();
+                                            locks |= (AscFormat.LOCKS_MASKS.txBox | (value ? AscFormat.LOCKS_MASKS.txBox << 1 : 0));
+                                            break;
+                                        }
                                         case 1 :{
                                             value = s.GetBool();
                                             locks |= (AscFormat.LOCKS_MASKS.noAdjustHandles | (value ? AscFormat.LOCKS_MASKS.noAdjustHandles << 1 : 0));
@@ -8058,8 +8122,6 @@ function BinaryPPTYLoader()
 
     this.ReadCell = function(cell)
     {
-        // cell.Content.Content.splice(0, cell.Content.Content.length);
-        cell.Content.Internal_Content_RemoveAll();
         var s = this.stream;
 
         var _rec_start = s.cur;
@@ -9805,6 +9867,10 @@ function BinaryPPTYLoader()
                 {
                     s.Skip2(4);
                     var _c = s.GetULong();
+                    if(_c > 0)
+                    {
+                        content.Internal_Content_RemoveAll();
+                    }
                     for (var i = 0; i < _c; i++)
                     {
                         s.Skip2(1); // type
@@ -10739,10 +10805,495 @@ CCore.prototype.Refresh_RecalcData2 = function(){
         }, this, []);
     };
 
-function CPres()
+    function CVariantVector()
+    {
+        this.baseType = null;
+        this.size = null;
+
+        this.variants = [];
+    }
+    CVariantVector.prototype.fromStream = function(s)
+    {
+        var _type;
+        var _len = s.GetULong();
+        var _start_pos = s.cur;
+        var _end_pos = _len + _start_pos;
+        var _at;
+
+        // attributes
+        var _sa = s.GetUChar();
+
+        while (true)
+        {
+            _at = s.GetUChar();
+
+            if (_at == g_nodeAttributeEnd)
+                break;
+
+            switch (_at)
+            {
+                case 0: { this.baseType = s.GetUChar(); break; }
+                case 1: { this.size = s.GetLong(); break; }
+                default:
+                    return;
+            }
+        }
+        while (true)
+        {
+            if (s.cur >= _end_pos)
+                break;
+
+            _type = s.GetUChar();
+            switch (_type)
+            {
+                case 0:
+                {
+                    s.Skip2(4);
+                    var _c = s.GetULong();
+                    for (var i = 0; i < _c; ++i) {
+                        s.Skip2(1); // type
+                        var tmp = new CVariant();
+                        tmp.fromStream(s);
+                        this.variants.push(tmp);
+                    }
+                    break;
+                }
+                default:
+                {
+                    s.SkipRecord();
+                    break;
+                }
+            }
+        }
+        s.Seek2(_end_pos);
+    };
+    CVariantVector.prototype.toStream = function(s) {
+        s.WriteUChar(AscCommon.g_nodeAttributeStart);
+        s._WriteUChar2(0, this.baseType);
+        s._WriteInt2(1, this.size);
+        s.WriteUChar(g_nodeAttributeEnd);
+
+        s.WriteRecordArray4(0, 0, this.variants);
+    };
+    function CVariantArray()
+    {
+        this.baseType = null;
+        this.lBounds = null;
+        this.uBounds = null;
+
+        this.variants = [];
+    }
+    CVariantArray.prototype.fromStream = function(s)
+    {
+        var _type;
+        var _len = s.GetULong();
+        var _start_pos = s.cur;
+        var _end_pos = _len + _start_pos;
+        var _at;
+
+        // attributes
+        var _sa = s.GetUChar();
+
+        while (true)
+        {
+            _at = s.GetUChar();
+
+            if (_at == g_nodeAttributeEnd)
+                break;
+
+            switch (_at)
+            {
+                case 0: { this.baseType = s.GetUChar(); break; }
+                case 1: { this.lBounds = s.GetString2(); break; }
+                case 2: { this.uBounds = s.GetString2(); break; }
+                default:
+                    return;
+            }
+        }
+        while (true)
+        {
+            if (s.cur >= _end_pos)
+                break;
+
+            _type = s.GetUChar();
+            switch (_type)
+            {
+                case 0:
+                {
+                    s.Skip2(4);
+                    var _c = s.GetULong();
+                    for (var i = 0; i < _c; ++i) {
+                        s.Skip2(1); // type
+                        var tmp = new CVariant();
+                        tmp.fromStream(s);
+                        this.variants.push(tmp);
+                    }
+                    break;
+                }
+                default:
+                {
+                    s.SkipRecord();
+                    break;
+                }
+            }
+        }
+        s.Seek2(_end_pos);
+    };
+    CVariantArray.prototype.toStream = function(s) {
+        s.WriteUChar(AscCommon.g_nodeAttributeStart);
+        s._WriteUChar2(0, this.baseType);
+        s._WriteString2(1, this.lBounds);
+        s._WriteString2(2, this.uBounds);
+        s.WriteUChar(g_nodeAttributeEnd);
+
+        s.WriteRecordArray4(0, 0, this.variants);
+    };
+    function CVariantVStream()
+    {
+        this.version = null;
+
+        this.strContent = null;
+    }
+    CVariantVStream.prototype.fromStream = function(s)
+    {
+        var _type;
+        var _len = s.GetULong();
+        var _start_pos = s.cur;
+        var _end_pos = _len + _start_pos;
+        var _at;
+
+        // attributes
+        var _sa = s.GetUChar();
+
+        while (true)
+        {
+            _at = s.GetUChar();
+
+            if (_at == g_nodeAttributeEnd)
+                break;
+
+            switch (_at)
+            {
+                case 0: { this.version = s.GetString2(); break; }
+                default:
+                    return;
+            }
+        }
+        while (true)
+        {
+            if (s.cur >= _end_pos)
+                break;
+
+            _type = s.GetUChar();
+            switch (_type)
+            {
+                case 0:
+                {
+                    this.strContent = s.GetString2();
+                    break;
+                }
+                default:
+                {
+                    s.SkipRecord();
+                    break;
+                }
+            }
+        }
+        s.Seek2(_end_pos);
+    };
+    CVariantVStream.prototype.toStream = function(s) {
+        s.WriteUChar(AscCommon.g_nodeAttributeStart);
+        s._WriteString2(0, this.version);
+        s.WriteUChar(g_nodeAttributeEnd);
+
+        s._WriteString2(0, this.strContent);
+    };
+    function CVariant()
+    {
+        this.type = null;
+        this.strContent = null;
+        this.iContent = null;
+        this.uContent = null;
+        this.dContent = null;
+        this.bContent = null;
+        this.variant = null;
+        this.vector = null;
+        this.array = null;
+        this.vStream = null;
+
+    }
+    CVariant.prototype.fromStream = function(s)
+    {
+        var _type;
+        var _len = s.GetULong();
+        var _start_pos = s.cur;
+        var _end_pos = _len + _start_pos;
+        var _at;
+
+        // attributes
+        var _sa = s.GetUChar();
+
+        while (true)
+        {
+            _at = s.GetUChar();
+
+            if (_at == g_nodeAttributeEnd)
+                break;
+
+            switch (_at)
+            {
+                case 0: { this.type = s.GetUChar(); break; }
+                default:
+                    return;
+            }
+        }
+        while (true)
+        {
+            if (s.cur >= _end_pos)
+                break;
+
+            _type = s.GetUChar();
+            switch (_type)
+            {
+                case 0:
+                {
+                    this.strContent = s.GetString2();
+                    break;
+                }
+                case 1:
+                {
+                    this.iContent = s.GetLong();
+                    break;
+                }
+                case 2:
+                {
+                    this.iContent = s.GetULong();
+                    break;
+                }
+                case 3:
+                {
+                    this.dContent = s.GetDouble();
+                    break;
+                }
+                case 4:
+                {
+                    this.bContent = s.GetBool();
+                    break;
+                }
+                case 5:
+                {
+                    this.variant = new CVariant();
+                    this.variant.fromStream(s);
+                    break;
+                }
+                case 6:
+                {
+                    this.vector = new CVariantVector();
+                    this.vector.fromStream(s);
+                    break;
+                }
+                case 7:
+                {
+                    this.array = new CVariantArray();
+                    this.array.fromStream(s);
+                    break;
+                }
+                case 8:
+                {
+                    this.vStream = new CVariantVStream();
+                    this.vStream.fromStream(s);
+                    break;
+                }
+                default:
+                {
+                    s.SkipRecord();
+                    break;
+                }
+            }
+        }
+        s.Seek2(_end_pos);
+    };
+    CVariant.prototype.toStream = function(s) {
+        s.WriteUChar(AscCommon.g_nodeAttributeStart);
+        s._WriteUChar2(0, this.type);
+        s.WriteUChar(g_nodeAttributeEnd);
+
+        s._WriteString2(0, this.strContent);
+        s._WriteInt2(1, this.iContent);
+        s._WriteUInt2(2, this.uContent);
+        s._WriteDoubleReal2(3, this.dContent);
+        s._WriteBool2(4, this.bContent);
+        s.WriteRecord4(5, this.variant);
+        s.WriteRecord4(6, this.vector);
+        s.WriteRecord4(7, this.array);
+        s.WriteRecord4(8, this.vStream);
+    };
+    CVariant.prototype.setText = function(val) {
+        this.type = c_oVariantTypes.vtLpwstr;
+        this.strContent = val;
+    };
+    CVariant.prototype.setNumber = function(val) {
+        this.type = c_oVariantTypes.vtI4;
+        this.iContent = val;
+    };
+    CVariant.prototype.setDate = function(val) {
+        this.type = c_oVariantTypes.vtFiletime;
+        this.strContent = val.toISOString().slice(0, 19) + 'Z';
+    };
+    CVariant.prototype.setBool = function(val) {
+        this.type = c_oVariantTypes.vtBool;
+        this.bContent = val;
+    };
+    
+    function CCustomProperty()
+    {
+        this.fmtid = null;
+        this.pid = null;
+        this.name = null;
+        this.linkTarget = null;
+
+        this.content = null;
+    }
+    CCustomProperty.prototype.fromStream = function(s)
+    {
+        var _type;
+        var _len = s.GetULong();
+        var _start_pos = s.cur;
+        var _end_pos = _len + _start_pos;
+        var _at;
+
+        // attributes
+        var _sa = s.GetUChar();
+
+        while (true)
+        {
+            _at = s.GetUChar();
+
+            if (_at == g_nodeAttributeEnd)
+                break;
+
+            switch (_at)
+            {
+                case 0: { this.fmtid = s.GetString2(); break; }
+                case 1: { this.pid = s.GetLong(); break; }
+                case 2: { this.name = s.GetString2(); break; }
+                case 3: { this.linkTarget = s.GetString2(); break; }
+                default:
+                    return;
+            }
+        }
+        while (true)
+        {
+            if (s.cur >= _end_pos)
+                break;
+
+            _type = s.GetUChar();
+            switch (_type)
+            {
+                case 0:
+                {
+                    this.content = new CVariant();
+                    this.content.fromStream(s);
+                    break;
+                }
+                default:
+                {
+                    s.SkipRecord();
+                    break;
+                }
+            }
+        }
+        s.Seek2(_end_pos);
+    };
+    CCustomProperty.prototype.toStream = function(s) {
+        s.WriteUChar(AscCommon.g_nodeAttributeStart);
+        s._WriteString2(0, this.fmtid);
+        s._WriteInt2(1, this.pid);
+        s._WriteString2(2, this.name);
+        s._WriteString2(3, this.linkTarget);
+        s.WriteUChar(g_nodeAttributeEnd);
+
+        s.WriteRecord4(0, this.content);
+    };
+    function CCustomProperties()
+    {
+        this.properties = [];
+    }
+    CCustomProperties.prototype.fromStream = function(s)
+    {
+        var _type = s.GetUChar();
+        var _len = s.GetULong();
+        var _start_pos = s.cur;
+        var _end_pos = _len + _start_pos;
+        var _at;
+
+        // attributes
+        var _sa = s.GetUChar();
+
+        while (true)
+        {
+            _at = s.GetUChar();
+
+            if (_at == g_nodeAttributeEnd)
+                break;
+        }
+        while (true)
+        {
+            if (s.cur >= _end_pos)
+                break;
+
+            _type = s.GetUChar();
+            switch (_type)
+            {
+                case 0:
+                {
+                    s.Skip2(4);
+                    var _c = s.GetULong();
+                    for (var i = 0; i < _c; ++i) {
+                        s.Skip2(1); // type
+                        var tmp = new CCustomProperty();
+                        tmp.fromStream(s);
+                        this.properties.push(tmp);
+                    }
+                    break;
+                }
+                default:
+                {
+                    s.SkipRecord();
+                    break;
+                }
+            }
+        }
+        s.Seek2(_end_pos);
+    };
+    CCustomProperties.prototype.toStream = function(s) {
+        s.StartRecord(AscCommon.c_oMainTables.CustomProperties);
+        s.WriteUChar(AscCommon.g_nodeAttributeStart);
+        s.WriteUChar(g_nodeAttributeEnd);
+
+        this.fillNewPid();
+        s.WriteRecordArray4(0, 0, this.properties);
+        s.EndRecord();
+    };
+    CCustomProperties.prototype.fillNewPid = function(s) {
+        var index = 2;
+        this.properties.forEach(function(property) {
+            property.pid = index++;
+        });
+    };
+    CCustomProperties.prototype.add = function(name, variant, opt_linkTarget) {
+        var newProperty = new CCustomProperty();
+        newProperty.fmtid = "{D5CDD505-2E9C-101B-9397-08002B2CF9AE}";
+        newProperty.pid = null;
+        newProperty.name = name;
+        newProperty.linkTarget = opt_linkTarget || null;
+        newProperty.content = variant;
+        this.properties.push(newProperty);
+    };
+
+    function CPres()
 {
     this.defaultTextStyle = null;
-    this.SldSz = null;
     this.NotesSz = null;
 
     this.attrAutoCompressPictures = null;
@@ -10768,6 +11319,7 @@ function CPres()
         // attributes
         var _sa = s.GetUChar();
 
+        var oPresentattion = reader.presentation;
         while (true)
         {
             var _at = s.GetUChar();
@@ -10813,7 +11365,7 @@ function CPres()
                 case 4: { s.SkipRecord(); break; }
                 case 5:
                 {
-                    this.SldSz = {};
+                    var oSldSize = new AscCommonSlide.CSlideSize();
                     s.Skip2(5); // len + start attributes
 
                     while (true)
@@ -10825,14 +11377,17 @@ function CPres()
 
                         switch (_at)
                         {
-                            case 0: { this.SldSz.cx = s.GetLong(); break; }
-                            case 1: { this.SldSz.cy = s.GetLong(); break; }
-                            case 2: { this.SldSz.type = s.GetUChar(); break; }
+                            case 0: { oSldSize.setCX(s.GetLong()); break; }
+                            case 1: { oSldSize.setCY(s.GetLong()); break; }
+                            case 2: { oSldSize.setType(s.GetUChar()); break; }
                             default:
                                 return;
                         }
                     }
-
+                    if(oPresentattion.setSldSz)
+                    {
+                        oPresentattion.setSldSz(oSldSize);
+                    }
                     break;
                 }
                 case 6:
@@ -10888,7 +11443,7 @@ function CPres()
 
                                     s.Seek2(_end_rec3);
 
-                                    reader.presentation.CommentAuthors[_author.Name] = _author;
+                                    oPresentattion.CommentAuthors[_author.Name] = _author;
                                 }
 
                                 break;
@@ -10909,13 +11464,13 @@ function CPres()
 					var _length = s.GetULong();
 					var _end_rec2 = s.cur + _length;
 
-					reader.presentation.Api.macros.SetData(AscCommon.GetStringUtf8(s, _length));
+                    oPresentattion.Api.macros.SetData(AscCommon.GetStringUtf8(s, _length));
 					s.Seek2(_end_rec2);
 					break;
 				}
                 case 10:
                 {
-                    reader.ReadComments(reader.presentation.writecomments);
+                    reader.ReadComments(oPresentattion.writecomments);
                     break;
                 }
                 default:
@@ -10925,9 +11480,9 @@ function CPres()
                 }
             }
         }
-        if(reader.presentation.Load_Comments)
+        if(oPresentattion.Load_Comments)
         {
-            reader.presentation.Load_Comments(reader.presentation.CommentAuthors);
+            oPresentattion.Load_Comments(oPresentattion.CommentAuthors);
         }
         s.Seek2(_end_pos);
     }
@@ -11555,14 +12110,6 @@ function CPres()
                     {
                         if(isOle) {
                             this.ReadOleInfo(pic);
-                            // if(pic.m_sObjectFile === "maskFile.docx"
-                            //     ||  pic.m_sObjectFile === "maskFile.xlsx"){
-                            //     var oParent = pic.parent;
-                            //     pic = AscFormat.CImageShape.prototype.copy.call(pic);
-                            //     if(oParent){
-                            //         pic.setParent(oParent);
-                            //     }
-                            // }
                         } else {
                             s.SkipRecord();
                         }
@@ -12131,5 +12678,17 @@ function CPres()
     prot["asc_putLastPrinted"] = prot.asc_putLastPrinted;
     prot["asc_putSubject"] = prot.asc_putSubject;
     prot["asc_putVersion"] = prot.asc_putVersion;
+
+    window['AscCommon'].CCustomProperties = CCustomProperties;
+    prot = CCustomProperties.prototype;
+    prot["add"] = prot.add;
+
+    window['AscCommon'].c_oVariantTypes = c_oVariantTypes;
+    window['AscCommon'].CVariant = CVariant;
+    prot = CVariant.prototype;
+    prot["setText"] = prot.setText;
+    prot["setNumber"] = prot.setNumber;
+    prot["setDate"] = prot.setDate;
+    prot["setBool"] = prot.setBool;
 
 })(window);

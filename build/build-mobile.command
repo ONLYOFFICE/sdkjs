@@ -3,8 +3,6 @@
 BASEDIR="$(cd "$(dirname "$0")" && pwd)"
 cd $BASEDIR
 
-PRODUCT_VERSION="5.4.1"
-BUILD_NUMBER="1"
 LAST_VERSION_TAG=$(git describe --abbrev=0 --tags)
 
 version=$(echo $LAST_VERSION_TAG | sed -e "s/v//")
@@ -37,18 +35,18 @@ CopyScriptTo() {
     printf $'\r' > temp.txt
 
     echo "Copy: word sdk-all.js"
-    cat "../../web-apps/vendor/xregexp/xregexp-all-min.js" "temp.txt" "../../web-apps/vendor/underscore/underscore-min.js" "temp.txt" "../common/Native/native.js" "temp.txt" "../common/Native/Wrappers/common.js" "temp.txt" "../common/Native/jquery_native.js" "temp.txt" > "banners.js"
+    cat "../../web-apps/vendor/xregexp/xregexp-all-min.js" "temp.txt" "../../web-apps/vendor/underscore/underscore-min.js" "temp.txt" "../common/externs/jszip-utils.js" "temp.txt" "../common/Native/native.js" "temp.txt" "../common/Native/Wrappers/common.js" "temp.txt" "../common/Native/jquery_native.js" "temp.txt" > "banners.js"
 
     cat "banners.js" "../deploy/sdkjs/word/sdk-all-min.js" "../deploy/sdkjs/word/sdk-all.js" > $DOCUMENTS_PATH"/script.bin"
     rm -f -r "banners.js"
 
     echo "Copy: cell sdk-all.js"
-    cat "../../web-apps/vendor/xregexp/xregexp-all-min.js" "temp.txt" "../../web-apps/vendor/underscore/underscore-min.js" "temp.txt" "../common/Native/native.js" "temp.txt" "../cell/native/common.js" "temp.txt" "../common/Native/jquery_native.js" "temp.txt" > "banners.js"
+    cat "../../web-apps/vendor/xregexp/xregexp-all-min.js" "temp.txt" "../../web-apps/vendor/underscore/underscore-min.js" "temp.txt" "../common/externs/jszip-utils.js" "temp.txt" "../common/Native/native.js" "temp.txt" "../cell/native/common.js" "temp.txt" "../common/Native/jquery_native.js" "temp.txt" > "banners.js"
     cat "banners.js" "../deploy/sdkjs/cell/sdk-all-min.js" "../deploy/sdkjs/cell/sdk-all.js" > $SPREADSHEETS_PATH"/script.bin"
     rm -f -r "banners.js"
 
     echo "Copy: slide sdk-all.js"
-    cat "../../web-apps/vendor/xregexp/xregexp-all-min.js" "temp.txt" "../../web-apps/vendor/underscore/underscore-min.js" "temp.txt" "../common/Native/native.js" "temp.txt" "../common/Native/Wrappers/common.js" "temp.txt" "../common/Native/jquery_native.js" "temp.txt" > "banners.js"
+    cat "../../web-apps/vendor/xregexp/xregexp-all-min.js" "temp.txt" "../../web-apps/vendor/underscore/underscore-min.js" "temp.txt" "../common/externs/jszip-utils.js" "temp.txt" "../common/Native/native.js" "temp.txt" "../common/Native/Wrappers/common.js" "temp.txt" "../common/Native/jquery_native.js" "temp.txt" > "banners.js"
     cat "banners.js" "../deploy/sdkjs/slide/sdk-all-min.js" "../deploy/sdkjs/slide/sdk-all.js" > $PRESENTATIONS_PATH"/script.bin"
     rm -f -r "banners.js"
 
@@ -70,7 +68,7 @@ echo "----------------------------------------"
 echo "Compile SDKJS"
 echo "----------------------------------------"
 
-PRODUCT_VERSION=$PRODUCT_VERSION BUILD_NUMBER=$BUILD_NUMBER grunt --level=WHITESPACE_ONLY --mobile=true #--level=ADVANCED | WHITESPACE_ONLY
+PRODUCT_VERSION=$PRODUCT_VERSION BUILD_NUMBER=$BUILD_NUMBER npx grunt --level=WHITESPACE_ONLY --mobile=true #--level=ADVANCED | WHITESPACE_ONLY
 
 if [ -z "$1" ] ; then
     # iOS

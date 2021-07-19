@@ -49,6 +49,7 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Workbook_DefinedNamesChange = 7;
 	window['AscCH'].historyitem_Workbook_DefinedNamesChangeUndo = 8;
 	window['AscCH'].historyitem_Workbook_Calculate = 9;
+	window['AscCH'].historyitem_Workbook_PivotWorksheetSource = 10;
 
 	window['AscCH'].historyitem_Worksheet_RemoveCell = 1;
 	window['AscCH'].historyitem_Worksheet_RemoveRows = 2;
@@ -87,6 +88,13 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Worksheet_PivotReplace = 42;
 	window['AscCH'].historyitem_Worksheet_SlicerAdd = 43;
 	window['AscCH'].historyitem_Worksheet_SlicerDelete = 44;
+	window['AscCH'].historyitem_Worksheet_SetActiveNamedSheetView = 45;
+	window['AscCH'].historyitem_Worksheet_SheetViewAdd = 46;
+	window['AscCH'].historyitem_Worksheet_SheetViewDelete = 47;
+	window['AscCH'].historyitem_Worksheet_DataValidationAdd = 48;
+	window['AscCH'].historyitem_Worksheet_DataValidationChange = 49;
+	window['AscCH'].historyitem_Worksheet_DataValidationDelete = 50;
+	window['AscCH'].historyitem_Worksheet_PivotReplaceKeepRecords = 51;
 
 	window['AscCH'].historyitem_RowCol_Fontname = 1;
 	window['AscCH'].historyitem_RowCol_Fontsize = 2;
@@ -107,6 +115,7 @@ function (window, undefined) {
 	window['AscCH'].historyitem_RowCol_SetStyle = 18;
 	window['AscCH'].historyitem_RowCol_SetCellStyle = 19;
 	window['AscCH'].historyitem_RowCol_Num = 20;
+	window['AscCH'].historyitem_RowCol_Indent = 21;
 
 	window['AscCH'].historyitem_Cell_Fontname = 1;
 	window['AscCH'].historyitem_Cell_Fontsize = 2;
@@ -133,6 +142,7 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Cell_Num = 24;
 	window['AscCH'].historyitem_Cell_SetPivotButton = 25;
 	window['AscCH'].historyitem_Cell_RemoveSharedFormula = 26;
+	window['AscCH'].historyitem_Cell_Indent = 27;
 
 	window['AscCH'].historyitem_Comment_Add = 1;
 	window['AscCH'].historyitem_Comment_Remove = 2;
@@ -187,7 +197,7 @@ function (window, undefined) {
 	window['AscCH'].historyitem_PivotTable_PivotFieldSetName = 30;
 	window['AscCH'].historyitem_PivotTable_PivotFieldSetOutline = 31;
 	window['AscCH'].historyitem_PivotTable_PivotFieldSetCompact = 32;
-	window['AscCH'].historyitem_PivotTable_PivotFieldFillDownLabelsDefault = 32;
+	window['AscCH'].historyitem_PivotTable_PivotFieldFillDownLabelsDefault = 33;
 	window['AscCH'].historyitem_PivotTable_PivotFieldSetInsertBlankRow = 34;
 	window['AscCH'].historyitem_PivotTable_PivotFieldSetDefaultSubtotal = 35;
 	window['AscCH'].historyitem_PivotTable_PivotFieldSetSubtotalTop = 36;
@@ -199,6 +209,16 @@ function (window, undefined) {
 	window['AscCH'].historyitem_PivotTable_ColItems = 42;
 	window['AscCH'].historyitem_PivotTable_Location = 43;
 	window['AscCH'].historyitem_PivotTable_SetDataPosition = 44;
+	window['AscCH'].historyitem_PivotTable_CacheField = 45;
+	window['AscCH'].historyitem_PivotTable_PivotField = 46;
+	window['AscCH'].historyitem_PivotTable_PivotFilter = 47;
+	window['AscCH'].historyitem_PivotTable_PivotFilterDataField = 48;
+	window['AscCH'].historyitem_PivotTable_PivotFilterMeasureFld = 49;
+	window['AscCH'].historyitem_PivotTable_PageFilter = 50;
+	window['AscCH'].historyitem_PivotTable_SetGridDropZones = 51;
+	window['AscCH'].historyitem_PivotTable_WorksheetSource = 52;
+	window['AscCH'].historyitem_PivotTable_PivotCacheId = 53;
+	window['AscCH'].historyitem_PivotTable_PivotFieldVisible = 54;
 
 	window['AscCH'].historyitem_SharedFormula_ChangeFormula = 1;
 	window['AscCH'].historyitem_SharedFormula_ChangeShared = 2;
@@ -249,6 +269,12 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Slicer_SetCacheCustomListSort = 15;
 	window['AscCH'].historyitem_Slicer_SetCacheCrossFilter = 16;
 	window['AscCH'].historyitem_Slicer_SetCacheHideItemsWithNoData = 17;
+	window['AscCH'].historyitem_Slicer_SetCacheData = 18;
+	window['AscCH'].historyitem_Slicer_SetCacheMovePivot = 19;
+	window['AscCH'].historyitem_Slicer_SetCacheCopySheet = 20;
+	
+	window['AscCH'].historyitem_NamedSheetView_SetName = 1;
+	window['AscCH'].historyitem_NamedSheetView_DeleteFilter = 2;
 
 
 
@@ -392,7 +418,7 @@ CHistory.prototype.RedoAdd = function(oRedoObjectParam, Class, Type, sheetid, ra
 	if(bNeedOff)
 		this.TurnOff();
 
-	var bChangeActive = oRedoObjectParam.bChangeActive && AscCommonExcel.g_oUndoRedoWorkbook === Class;
+	var bChangeActive = oRedoObjectParam.bChangeActive && (AscCommonExcel.g_oUndoRedoWorkbook === Class || (AscCommonExcel.g_oUndoRedoWorksheet === Class && AscCH.historyitem_Worksheet_Hide === Type));
 	if (bChangeActive && null != oRedoObjectParam.activeSheet) {
 		//it can be delete action, so set active and get after action
 		this.workbook.setActiveById(oRedoObjectParam.activeSheet);
@@ -426,13 +452,13 @@ CHistory.prototype.RedoAdd = function(oRedoObjectParam, Class, Type, sheetid, ra
 			}
 		}
 	}
-	if (bChangeActive) {
-		oRedoObjectParam.activeSheet = this.workbook.getActiveWs().getId();
-	}
     var curPoint = this.Points[this.Index];
     if (curPoint) {
         this._addRedoObjectParam(oRedoObjectParam, curPoint.Items[curPoint.Items.length - 1]);
     }
+	if (bChangeActive) {
+		oRedoObjectParam.activeSheet = this.workbook.getActiveWs().getId();
+	}
 };
 
 CHistory.prototype.Remove_LastPoint = function()
@@ -446,6 +472,11 @@ CHistory.prototype.Remove_LastPoint = function()
 CHistory.prototype.RemoveLastPoint = function()
 {
 	this.Remove_LastPoint();
+};
+CHistory.prototype.Clear_Redo = function()
+{
+	// Удаляем ненужные точки
+	this.Points.length = this.Index + 1;
 };
 CHistory.prototype.RedoExecute = function(Point, oRedoObjectParam)
 {
@@ -463,15 +494,6 @@ CHistory.prototype.RedoExecute = function(Point, oRedoObjectParam)
 		this._addRedoObjectParam(oRedoObjectParam, Item);
 	}
 	AscCommon.CollaborativeEditing.Apply_LinkData();
-	var wsViews = Asc["editor"].wb.wsViews;
-	this.Get_RecalcData(Point);
-	for(var i = 0; i < wsViews.length; ++i)
-	{
-		if(wsViews[i] && wsViews[i].objectRender && wsViews[i].objectRender.controller)
-		{
-			wsViews[i].objectRender.controller.recalculate2(undefined);
-		}
-	}
 };
 CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 	var wsViews, i, oState = null, bCoaut = false, t = this;
@@ -479,14 +501,8 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 		Point = this.Points[this.Index];
 		AscCommon.CollaborativeEditing.Apply_LinkData();
 		bCoaut = true;
-        if(!window["NATIVE_EDITOR_ENJINE"] || window['IS_NATIVE_EDITOR']) {
-            this.Get_RecalcData(Point);
-            wsViews = Asc["editor"].wb.wsViews;
-            for (i = 0; i < wsViews.length; ++i) {
-                if (wsViews[i] && wsViews[i].objectRender && wsViews[i].objectRender.controller) {
-                    wsViews[i].objectRender.controller.recalculate2(true);
-                }
-            }
+        if(!AscCommon.isFileBuild()) {
+			Asc["editor"].wb.recalculateDrawingObjects(Point, true);
         }
 	}
 
@@ -530,7 +546,9 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 				oRedoObjectParam.oChangeWorksheetUpdate[i],{lockDraw: true, reinitRanges: true});
 
 		for (i in Point.UpdateRigions) {
-			this.workbook.handlers.trigger("cleanCellCache", i, [Point.UpdateRigions[i]]);
+			//последним параметром передаю resetCache, при добавлении/удаление строк/столбцов в случая прямого действия
+			//всегда делается cache -> reset, здесь аналогично делаю
+			this.workbook.handlers.trigger("cleanCellCache", i, [Point.UpdateRigions[i]], null, oRedoObjectParam.bAddRemoveRowCol);
 			var curSheet = this.workbook.getWorksheetById(i);
 			if (curSheet)
 				this.workbook.getWorksheetById(i).updateSlicersByRange(Point.UpdateRigions[i]);
@@ -544,14 +562,8 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 				this.workbook.handlers.trigger("asc_onUpdateTabColor", curSheet.getIndex());
 		}
 
-        if(!window["NATIVE_EDITOR_ENJINE"] || window['IS_NATIVE_EDITOR']) {
-            this.Get_RecalcData(Point);
-            wsViews = Asc["editor"].wb.wsViews;
-            for (i = 0; i < wsViews.length; ++i) {
-                if (wsViews[i] && wsViews[i].objectRender && wsViews[i].objectRender.controller) {
-                    wsViews[i].objectRender.controller.recalculate2(undefined);
-                }
-            }
+        if(!AscCommon.isFileBuild()) {
+			Asc["editor"].wb.recalculateDrawingObjects(Point, false);
         }
 
 		if (oRedoObjectParam.oOnUpdateSheetViewSettings[this.workbook.getWorksheet(this.workbook.getActive()).getId()])
@@ -562,8 +574,6 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 			this.workbook.bUndoChanges = false;
 		else
 			this.workbook.bRedoChanges = false;
-		if (oRedoObjectParam.bIsReInit)
-			this.workbook.handlers.trigger("reInit");
 		//TODO вызывать только в случае, если были изменения строк/столбцов и отдельно для строк и столбцов
 		this.workbook.handlers.trigger("updateGroupData");
 		this.workbook.handlers.trigger("drawWS");
@@ -638,7 +648,6 @@ CHistory.prototype._addRedoObjectParam = function (oRedoObjectParam, Point) {
 	if (AscCommonExcel.g_oUndoRedoWorksheet === Point.Class &&
 		(AscCH.historyitem_Worksheet_SetDisplayGridlines === Point.Type ||
 		AscCH.historyitem_Worksheet_SetDisplayHeadings === Point.Type)) {
-		oRedoObjectParam.bIsReInit = true;
 		oRedoObjectParam.oOnUpdateSheetViewSettings[Point.SheetId] = Point.SheetId;
 	}
 	else if (AscCommonExcel.g_oUndoRedoWorksheet === Point.Class && (AscCH.historyitem_Worksheet_RowProp == Point.Type || AscCH.historyitem_Worksheet_ColProp == Point.Type || AscCH.historyitem_Worksheet_RowHide == Point.Type))
@@ -693,14 +702,54 @@ CHistory.prototype.Get_RecalcData = function(Point2)
                         Item.Class.RefreshRecalcData();
 					if(Item.Type === AscCH.historyitem_Workbook_ChangeColorScheme && Item.Class === AscCommonExcel.g_oUndoRedoWorkbook)
 					{
-						var wsViews = Asc["editor"].wb.wsViews;
-						for(var i = 0; i < wsViews.length; ++i)
+						if(Asc["editor"].wb)
 						{
-							if(wsViews[i] && wsViews[i].objectRender && wsViews[i].objectRender.controller)
+							var wsViews = Asc["editor"].wb.wsViews;
+							for(var i = 0; i < wsViews.length; ++i)
 							{
-								wsViews[i].objectRender.controller.RefreshAfterChangeColorScheme();
+								if(wsViews[i] && wsViews[i].objectRender && wsViews[i].objectRender.controller)
+								{
+									wsViews[i].objectRender.controller.RefreshAfterChangeColorScheme();
+								}
 							}
 						}
+					}
+					if(Item.Type === AscCH.historyitem_Worksheet_Rename)
+					{
+						var oWorkbook = Asc["editor"].wbModel;
+						var oData = Item.Data;
+						if(oWorkbook && oData)
+						{
+							var oWorksheet = oWorkbook.getWorksheetById(Item.SheetId);
+							if(oWorksheet)
+							{
+								var oOldNameData = oWorkbook.getChartSheetRenameData(oWorksheet, oData.from);
+								var oNewNameData = oWorkbook.getChartSheetRenameData(oWorksheet, oData.to);
+								var oAllIdMap = {};
+								var nId, sKey;
+								for(nId = 0; nId < oOldNameData.ids.length; ++nId)
+								{
+									oAllIdMap[oOldNameData.ids[nId]] = true;
+								}
+								for(nId = 0; nId < oNewNameData.ids.length; ++nId)
+								{
+									oAllIdMap[oNewNameData.ids[nId]] = true;
+								}
+								for(sKey in oAllIdMap)
+								{
+									var oChart = AscCommon.g_oTableId.Get_ById(sKey);
+									if(oChart &&
+										oChart.onDataUpdateRecalc &&
+										oChart.addToRecalculate)
+									{
+										oChart.onDataUpdateRecalc();
+										oChart.addToRecalculate();
+									}
+								}
+
+							}
+						}
+
 					}
 				}
 			}
@@ -1112,7 +1161,7 @@ CHistory.prototype.GetSerializeArray = function()
 		{
 			if(this.PosInCurPoint !== null)
 			{
-				for ( var Index = oPoint.Items.length - 1; Index > this.PosInCurPoint; Index-- )
+				for ( var Index = oPoint.Items.length - 1; Index >= this.PosInCurPoint; Index-- )
 				{
 					var Item = oPoint.Items[Index];
 					if(!Item.Class.RefreshRecalcData)
@@ -1126,11 +1175,18 @@ CHistory.prototype.GetSerializeArray = function()
 						}
 					}
 				}
+				oPoint.Items.splice(this.PosInCurPoint);
 			}
 		}
 		this.PosInCurPoint = null; 
 	};
+	CHistory.prototype.Is_LastPointEmpty = function()
+	{
+		if (!this.Points[this.Index] || this.Points[this.Index].Items.length <= 0)
+			return true;
 
+		return false;
+	};
 	//------------------------------------------------------------export--------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window['AscCommon'].CHistory = CHistory;

@@ -33,7 +33,7 @@
 "use strict";
 
 // ---------------------------------------------------------------
-function CAscSlideTiming()
+function CAscSlideTransition()
 {
     this.TransitionType     = undefined;
     this.TransitionOption   = undefined;
@@ -45,23 +45,23 @@ function CAscSlideTiming()
     this.ShowLoop                   = undefined;
 }
 
-CAscSlideTiming.prototype.put_TransitionType = function(v) { this.TransitionType = v; };
-CAscSlideTiming.prototype.get_TransitionType = function() { return this.TransitionType; };
-CAscSlideTiming.prototype.put_TransitionOption = function(v) { this.TransitionOption = v; };
-CAscSlideTiming.prototype.get_TransitionOption = function() { return this.TransitionOption; };
-CAscSlideTiming.prototype.put_TransitionDuration = function(v) { this.TransitionDuration = v; };
-CAscSlideTiming.prototype.get_TransitionDuration = function() { return this.TransitionDuration; };
+CAscSlideTransition.prototype.put_TransitionType = function(v) { this.TransitionType = v; };
+CAscSlideTransition.prototype.get_TransitionType = function() { return this.TransitionType; };
+CAscSlideTransition.prototype.put_TransitionOption = function(v) { this.TransitionOption = v; };
+CAscSlideTransition.prototype.get_TransitionOption = function() { return this.TransitionOption; };
+CAscSlideTransition.prototype.put_TransitionDuration = function(v) { this.TransitionDuration = v; };
+CAscSlideTransition.prototype.get_TransitionDuration = function() { return this.TransitionDuration; };
 
-CAscSlideTiming.prototype.put_SlideAdvanceOnMouseClick = function(v) { this.SlideAdvanceOnMouseClick = v; };
-CAscSlideTiming.prototype.get_SlideAdvanceOnMouseClick = function() { return this.SlideAdvanceOnMouseClick; };
-CAscSlideTiming.prototype.put_SlideAdvanceAfter = function(v) { this.SlideAdvanceAfter = v; };
-CAscSlideTiming.prototype.get_SlideAdvanceAfter = function() { return this.SlideAdvanceAfter; };
-CAscSlideTiming.prototype.put_SlideAdvanceDuration = function(v) { this.SlideAdvanceDuration = v; };
-CAscSlideTiming.prototype.get_SlideAdvanceDuration = function() { return this.SlideAdvanceDuration; };
-CAscSlideTiming.prototype.put_ShowLoop = function(v) { this.ShowLoop = v; };
-CAscSlideTiming.prototype.get_ShowLoop = function() { return this.ShowLoop; };
+CAscSlideTransition.prototype.put_SlideAdvanceOnMouseClick = function(v) { this.SlideAdvanceOnMouseClick = v; };
+CAscSlideTransition.prototype.get_SlideAdvanceOnMouseClick = function() { return this.SlideAdvanceOnMouseClick; };
+CAscSlideTransition.prototype.put_SlideAdvanceAfter = function(v) { this.SlideAdvanceAfter = v; };
+CAscSlideTransition.prototype.get_SlideAdvanceAfter = function() { return this.SlideAdvanceAfter; };
+CAscSlideTransition.prototype.put_SlideAdvanceDuration = function(v) { this.SlideAdvanceDuration = v; };
+CAscSlideTransition.prototype.get_SlideAdvanceDuration = function() { return this.SlideAdvanceDuration; };
+CAscSlideTransition.prototype.put_ShowLoop = function(v) { this.ShowLoop = v; };
+CAscSlideTransition.prototype.get_ShowLoop = function() { return this.ShowLoop; };
 
-CAscSlideTiming.prototype.applyProps = function(v)
+CAscSlideTransition.prototype.applyProps = function(v)
 {
     if (undefined !== v.TransitionType && null !== v.TransitionType)
         this.TransitionType = v.TransitionType;
@@ -80,9 +80,9 @@ CAscSlideTiming.prototype.applyProps = function(v)
         this.ShowLoop = v.ShowLoop;
 };
 
-CAscSlideTiming.prototype.createDuplicate = function(v)
+CAscSlideTransition.prototype.createDuplicate = function(v)
 {
-    var _slideT = new CAscSlideTiming();
+    var _slideT = new Asc.CAscSlideTransition();
 
     _slideT.TransitionType     = this.TransitionType;
     _slideT.TransitionOption   = this.TransitionOption;
@@ -96,7 +96,7 @@ CAscSlideTiming.prototype.createDuplicate = function(v)
     return _slideT;
 };
 
-CAscSlideTiming.prototype.makeDuplicate = function(_slideT)
+CAscSlideTransition.prototype.makeDuplicate = function(_slideT)
 {
     if (!_slideT)
         return;
@@ -111,7 +111,7 @@ CAscSlideTiming.prototype.makeDuplicate = function(_slideT)
     _slideT.ShowLoop                   = this.ShowLoop;
 };
 
-CAscSlideTiming.prototype.setUndefinedOptions = function()
+CAscSlideTransition.prototype.setUndefinedOptions = function()
 {
     this.TransitionType     = undefined;
     this.TransitionOption   = undefined;
@@ -123,7 +123,7 @@ CAscSlideTiming.prototype.setUndefinedOptions = function()
     this.ShowLoop                   = undefined;
 };
 
-CAscSlideTiming.prototype.setDefaultParams = function()
+CAscSlideTransition.prototype.setDefaultParams = function()
 {
     this.TransitionType     = c_oAscSlideTransitionTypes.None;
     this.TransitionOption   = -1;
@@ -134,7 +134,7 @@ CAscSlideTiming.prototype.setDefaultParams = function()
     this.SlideAdvanceDuration       = 10000;
     this.ShowLoop                   = true;
 };
-CAscSlideTiming.prototype.setDefaultParams = function()
+CAscSlideTransition.prototype.setDefaultParams = function()
 {
     this.TransitionType     = c_oAscSlideTransitionTypes.None;
     this.TransitionOption   = -1;
@@ -147,7 +147,7 @@ CAscSlideTiming.prototype.setDefaultParams = function()
 };
 
 
-CAscSlideTiming.prototype.Write_ToBinary = function(w)
+CAscSlideTransition.prototype.Write_ToBinary = function(w)
 {
     w.WriteBool(AscFormat.isRealNumber(this.TransitionType));
     if(AscFormat.isRealNumber(this.TransitionType))
@@ -176,7 +176,7 @@ CAscSlideTiming.prototype.Write_ToBinary = function(w)
     AscFormat.writeBool(w, this.ShowLoop);
 };
 
-CAscSlideTiming.prototype.Read_FromBinary = function(r)
+CAscSlideTransition.prototype.Read_FromBinary = function(r)
 {
 
     if(r.GetBool())
@@ -202,7 +202,7 @@ CAscSlideTiming.prototype.Read_FromBinary = function(r)
     this.ShowLoop = AscFormat.readBool(r);
 };
 
-CAscSlideTiming.prototype.ToArray = function()
+CAscSlideTransition.prototype.ToArray = function()
 {
     var _ret = [];
     _ret.push(this.TransitionType);
@@ -216,7 +216,7 @@ CAscSlideTiming.prototype.ToArray = function()
     return _ret;
 };
 
-AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideSetTiming            ] = CAscSlideTiming;
+AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideSetTransition] = CAscSlideTransition;
 
 
 // информация о темах --------------------------------------------
@@ -250,31 +250,31 @@ CLayoutThumbnail.prototype.get_Width = function() { return this.Width; };
 CLayoutThumbnail.prototype.get_Height = function() { return this.Height; };
 
 
-function CompareTiming(timing1, timing2){
-    if(!timing1 || !timing2){
+function CompareTransitions(transition1, transition2){
+    if(!transition1 || !transition2){
         return null;
     }
-    var ret = new CAscSlideTiming();
-    if(timing1.TransitionType === timing2.TransitionType){
-        ret.TransitionType = timing1.TransitionType;
+    var ret = new Asc.CAscSlideTransition();
+    if(transition1.TransitionType === transition2.TransitionType){
+        ret.TransitionType = transition1.TransitionType;
     }
-    if(timing1.TransitionOption === timing2.TransitionOption){
-        ret.TransitionOption = timing1.TransitionOption;
+    if(transition1.TransitionOption === transition2.TransitionOption){
+        ret.TransitionOption = transition1.TransitionOption;
     }
-    if(timing1.TransitionDuration === timing2.TransitionDuration){
-        ret.TransitionDuration = timing1.TransitionDuration;
+    if(transition1.TransitionDuration === transition2.TransitionDuration){
+        ret.TransitionDuration = transition1.TransitionDuration;
     }
-    if(timing1.SlideAdvanceOnMouseClick === timing2.SlideAdvanceOnMouseClick){
-        ret.SlideAdvanceOnMouseClick = timing1.SlideAdvanceOnMouseClick;
+    if(transition1.SlideAdvanceOnMouseClick === transition2.SlideAdvanceOnMouseClick){
+        ret.SlideAdvanceOnMouseClick = transition1.SlideAdvanceOnMouseClick;
     }
-    if(timing1.SlideAdvanceAfter === timing2.SlideAdvanceAfter){
-        ret.SlideAdvanceAfter = timing1.SlideAdvanceAfter;
+    if(transition1.SlideAdvanceAfter === transition2.SlideAdvanceAfter){
+        ret.SlideAdvanceAfter = transition1.SlideAdvanceAfter;
     }
-    if(timing1.SlideAdvanceDuration === timing2.SlideAdvanceDuration){
-        ret.SlideAdvanceDuration = timing1.SlideAdvanceDuration;
+    if(transition1.SlideAdvanceDuration === transition2.SlideAdvanceDuration){
+        ret.SlideAdvanceDuration = transition1.SlideAdvanceDuration;
     }
-    if(timing1.ShowLoop === timing2.ShowLoop){
-        ret.ShowLoop = timing1.ShowLoop;
+    if(transition1.ShowLoop === transition2.ShowLoop){
+        ret.ShowLoop = transition1.ShowLoop;
     }
     return ret;
 }
@@ -363,35 +363,14 @@ CAscHFProps.prototype['put_ShowDateTime'] = CAscHFProps.prototype.put_ShowDateTi
 
 CAscHFProps.prototype['put_DivId'] = CAscHFProps.prototype.put_DivId = function(v){this.DivId = v;};
 CAscHFProps.prototype['updateView'] = CAscHFProps.prototype.updateView = function(){
-    var oDiv = document.getElementById(this.DivId);
-    if(!oDiv){
+    var oCanvas = AscCommon.checkCanvasInDiv(this.DivId);
+    if(!oCanvas) {
         return;
-    }
-    var aChildren = oDiv.children;
-    var oCanvas = null, i;
-    for(i = 0; i < aChildren.length; ++i){
-        if(aChildren[i].nodeName && aChildren[i].nodeName.toUpperCase() === 'CANVAS'){
-            oCanvas = aChildren[i];
-            break;
-        }
-    }
-    if(null === oCanvas){
-        oCanvas = document.createElement('canvas');
-        oCanvas.style.width = "100%";
-        oCanvas.style.height = "100%";
-        oDiv.appendChild(oCanvas);
-        var nCanvasW = oCanvas.clientWidth;
-        var nCanvasH = oCanvas.clientHeight;
-        if (AscCommon.AscBrowser.isRetina) {
-            nCanvasW = AscCommon.AscBrowser.convertToRetinaValue(nCanvasW, true);
-            nCanvasH = AscCommon.AscBrowser.convertToRetinaValue(nCanvasH, true);
-        }
-        oCanvas.width = nCanvasW;
-        oCanvas.height = nCanvasH;
     }
     var oContext = oCanvas.getContext('2d');
     oContext.clearRect(0, 0, oCanvas.width, oCanvas.height);
     var oSp, nPhType, aSpTree, oSlideObject = null, l, t, r, b;
+    var i;
     if(this.slide) {
         oSlideObject = this.slide.Layout;
     }
@@ -403,14 +382,16 @@ CAscHFProps.prototype['updateView'] = CAscHFProps.prototype.updateView = functio
 
         oContext.fillStyle = "#FFFFFF";
         oContext.fillRect(0, 0, oCanvas.width, oCanvas.height);
+        var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+        oContext.lineWidth = Math.round(rPR);
         oContext.fillStyle = "#000000";
         if(Array.isArray(aSpTree)) {
             for(i = 0; i < aSpTree.length; ++i) {
                 oSp = aSpTree[i];
                 if(oSp.isPlaceholder()) {
                     oSp.recalculate();
-                    l = ((oSp.x / oSlideObject.Width * oCanvas.width) >> 0) + 1;
-                    t = ((oSp.y / oSlideObject.Height * oCanvas.height) >> 0) + 1;
+                    l = ((oSp.x / oSlideObject.Width * oCanvas.width) >> 0) + Math.round(rPR);
+                    t = ((oSp.y / oSlideObject.Height * oCanvas.height) >> 0) + Math.round(rPR);
                     r = (((oSp.x + oSp.extX)/ oSlideObject.Width * oCanvas.width) >> 0);
                     b = (((oSp.y + oSp.extY)/ oSlideObject.Height * oCanvas.height) >> 0);
                     nPhType = oSp.getPhType();
@@ -462,29 +443,29 @@ window['AscCommonSlide']['CAscDateTime'] = window['AscCommonSlide'].CAscDateTime
 window['AscCommonSlide']['CAscHFProps'] = window['AscCommonSlide'].CAscHFProps = CAscHFProps;
 window['AscCommonSlide']['CAscHF'] = window['AscCommonSlide'].CAscHF = CAscHF;
 
-window['Asc']['CAscSlideTiming'] = CAscSlideTiming;
-window['AscCommonSlide'].CompareTiming = CompareTiming;
-CAscSlideTiming.prototype['put_TransitionType'] = CAscSlideTiming.prototype.put_TransitionType;
-CAscSlideTiming.prototype['get_TransitionType'] = CAscSlideTiming.prototype.get_TransitionType;
-CAscSlideTiming.prototype['put_TransitionOption'] = CAscSlideTiming.prototype.put_TransitionOption;
-CAscSlideTiming.prototype['get_TransitionOption'] = CAscSlideTiming.prototype.get_TransitionOption;
-CAscSlideTiming.prototype['put_TransitionDuration'] = CAscSlideTiming.prototype.put_TransitionDuration;
-CAscSlideTiming.prototype['get_TransitionDuration'] = CAscSlideTiming.prototype.get_TransitionDuration;
-CAscSlideTiming.prototype['put_SlideAdvanceOnMouseClick'] = CAscSlideTiming.prototype.put_SlideAdvanceOnMouseClick;
-CAscSlideTiming.prototype['get_SlideAdvanceOnMouseClick'] = CAscSlideTiming.prototype.get_SlideAdvanceOnMouseClick;
-CAscSlideTiming.prototype['put_SlideAdvanceAfter'] = CAscSlideTiming.prototype.put_SlideAdvanceAfter;
-CAscSlideTiming.prototype['get_SlideAdvanceAfter'] = CAscSlideTiming.prototype.get_SlideAdvanceAfter;
-CAscSlideTiming.prototype['put_SlideAdvanceDuration'] = CAscSlideTiming.prototype.put_SlideAdvanceDuration;
-CAscSlideTiming.prototype['get_SlideAdvanceDuration'] = CAscSlideTiming.prototype.get_SlideAdvanceDuration;
-CAscSlideTiming.prototype['put_ShowLoop'] = CAscSlideTiming.prototype.put_ShowLoop;
-CAscSlideTiming.prototype['get_ShowLoop'] = CAscSlideTiming.prototype.get_ShowLoop;
-CAscSlideTiming.prototype['applyProps'] = CAscSlideTiming.prototype.applyProps;
-CAscSlideTiming.prototype['createDuplicate'] = CAscSlideTiming.prototype.createDuplicate;
-CAscSlideTiming.prototype['makeDuplicate'] = CAscSlideTiming.prototype.makeDuplicate;
-CAscSlideTiming.prototype['setUndefinedOptions'] = CAscSlideTiming.prototype.setUndefinedOptions;
-CAscSlideTiming.prototype['setDefaultParams'] = CAscSlideTiming.prototype.setDefaultParams;
-CAscSlideTiming.prototype['Write_ToBinary'] = CAscSlideTiming.prototype.Write_ToBinary;
-CAscSlideTiming.prototype['Read_FromBinary'] = CAscSlideTiming.prototype.Read_FromBinary;
+window['Asc']['CAscSlideTransition'] = CAscSlideTransition;
+window['AscCommonSlide'].CompareTransitions = CompareTransitions;
+CAscSlideTransition.prototype['put_TransitionType'] = CAscSlideTransition.prototype.put_TransitionType;
+CAscSlideTransition.prototype['get_TransitionType'] = CAscSlideTransition.prototype.get_TransitionType;
+CAscSlideTransition.prototype['put_TransitionOption'] = CAscSlideTransition.prototype.put_TransitionOption;
+CAscSlideTransition.prototype['get_TransitionOption'] = CAscSlideTransition.prototype.get_TransitionOption;
+CAscSlideTransition.prototype['put_TransitionDuration'] = CAscSlideTransition.prototype.put_TransitionDuration;
+CAscSlideTransition.prototype['get_TransitionDuration'] = CAscSlideTransition.prototype.get_TransitionDuration;
+CAscSlideTransition.prototype['put_SlideAdvanceOnMouseClick'] = CAscSlideTransition.prototype.put_SlideAdvanceOnMouseClick;
+CAscSlideTransition.prototype['get_SlideAdvanceOnMouseClick'] = CAscSlideTransition.prototype.get_SlideAdvanceOnMouseClick;
+CAscSlideTransition.prototype['put_SlideAdvanceAfter'] = CAscSlideTransition.prototype.put_SlideAdvanceAfter;
+CAscSlideTransition.prototype['get_SlideAdvanceAfter'] = CAscSlideTransition.prototype.get_SlideAdvanceAfter;
+CAscSlideTransition.prototype['put_SlideAdvanceDuration'] = CAscSlideTransition.prototype.put_SlideAdvanceDuration;
+CAscSlideTransition.prototype['get_SlideAdvanceDuration'] = CAscSlideTransition.prototype.get_SlideAdvanceDuration;
+CAscSlideTransition.prototype['put_ShowLoop'] = CAscSlideTransition.prototype.put_ShowLoop;
+CAscSlideTransition.prototype['get_ShowLoop'] = CAscSlideTransition.prototype.get_ShowLoop;
+CAscSlideTransition.prototype['applyProps'] = CAscSlideTransition.prototype.applyProps;
+CAscSlideTransition.prototype['createDuplicate'] = CAscSlideTransition.prototype.createDuplicate;
+CAscSlideTransition.prototype['makeDuplicate'] = CAscSlideTransition.prototype.makeDuplicate;
+CAscSlideTransition.prototype['setUndefinedOptions'] = CAscSlideTransition.prototype.setUndefinedOptions;
+CAscSlideTransition.prototype['setDefaultParams'] = CAscSlideTransition.prototype.setDefaultParams;
+CAscSlideTransition.prototype['Write_ToBinary'] = CAscSlideTransition.prototype.Write_ToBinary;
+CAscSlideTransition.prototype['Read_FromBinary'] = CAscSlideTransition.prototype.Read_FromBinary;
 
 window['AscCommonSlide'].CAscThemeInfo = CAscThemeInfo;
 CAscThemeInfo.prototype['get_Name'] = CAscThemeInfo.prototype.get_Name;

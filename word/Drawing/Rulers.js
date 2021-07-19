@@ -237,123 +237,49 @@ function CHorRuler()
 
     this.Units = c_oAscDocumentUnits.Millimeter;
 
-    this.InitTablePict = function()
-    {
-        var _data = g_memory.ctx.createImageData(7, 8);
-        var _px = _data.data;
-        var is2 = false;
+    this.DrawTablePict = function() {
+        var ctx = g_memory.ctx;
+        var dPR = AscCommon.AscBrowser.retinaPixelRatio;
+        var isNeedRedraw = (dPR - Math.floor(dPR)) >= 0.5 ? true : false;
+        var roundDPR = isNeedRedraw ? Math.floor(dPR) : Math.round(dPR);
 
-        var black_level = 100;
+        var canvasWidth = (isNeedRedraw && dPR >= 1 ) ? Math.round(7 * (Math.floor(dPR) + 0.5)) : 7 * (isNeedRedraw ? dPR : ( dPR >= 1 ? Math.round(dPR) : dPR)),
+            canvasHeight = (isNeedRedraw && dPR >= 1) ? Math.round(8 * (Math.floor(dPR) + 0.5)) : 8 * (isNeedRedraw ? dPR : ( dPR >= 1 ? Math.round(dPR) : dPR));
 
-        for (var j = 0; j < 8; j++)
-        {
-            var ind = j * 4 * 7;
-            if (is2)
-            {
-                for (i = 0; i < 7; i++)
-                {
-                    _px[ind++] = black_level;
-                    _px[ind++] = black_level;
-                    _px[ind++] = black_level;
-                    _px[ind++] = 255;
-                }
-            }
-            else
-            {
-                var is22 = false;
-                for (var i = 0; i < 7; i++)
-                {
-                    if (is22)
-                    {
-                        _px[ind++] = black_level;
-                        _px[ind++] = black_level;
-                        _px[ind++] = black_level;
-                        _px[ind++] = 255;
-                    }
-                    else
-                    {
-                        _px[ind++] = 255;
-                        _px[ind++] = 255;
-                        _px[ind++] = 255;
-                        _px[ind++] = 255;
-                    }
-                    is22 = !is22;
-                }
-            }
-            is2 = !is2;
-        }
-        return _data;
-    }
-
-    this.InitTablePict2 = function()
-    {
-        var _data = g_memory.ctx.createImageData(14, 16);
-        var _px = _data.data;
-
-        var black_level = 100;
-
-        for (var j = 0; j < 16; j++)
-        {
-            var ind = j * 4 * 14;
-            var is2 = j - ((j >> 2) << 2);
-
-            if (is2 >= 2)
-            {
-                for (i = 0; i < 14; i++)
-                {
-                    _px[ind++] = black_level;
-                    _px[ind++] = black_level;
-                    _px[ind++] = black_level;
-                    _px[ind++] = 255;
-                }
-            }
-            else
-            {
-                var is22 = false;
-                for (var i = 0; i < 7; i++)
-                {
-                    if (is22)
-                    {
-                        _px[ind++] = black_level;
-                        _px[ind++] = black_level;
-                        _px[ind++] = black_level;
-                        _px[ind++] = 255;
-                        _px[ind++] = black_level;
-                        _px[ind++] = black_level;
-                        _px[ind++] = black_level;
-                        _px[ind++] = 255;
-                    }
-                    else
-                    {
-                        _px[ind++] = 255;
-                        _px[ind++] = 255;
-                        _px[ind++] = 255;
-                        _px[ind++] = 255;
-                        _px[ind++] = 255;
-                        _px[ind++] = 255;
-                        _px[ind++] = 255;
-                        _px[ind++] = 255;
-                    }
-                    is22 = !is22;
-                }
-            }
-        }
-        return _data;
-    }
-
-    this.CheckTableSprite = function(is_retina)
-    {
         if (null != this.tableSprite)
         {
-            if (!is_retina && this.tableSprite.width == 7)
-                return;
-            if (is_retina && this.tableSprite.width == 14)
+            if (ctx.canvas.width == canvasWidth)
                 return;
         }
-        if (!is_retina)
-            this.tableSprite = this.InitTablePict();
-        else
-            this.tableSprite = this.InitTablePict2();
+
+        ctx.canvas.width = canvasWidth;
+        ctx.canvas.height = canvasHeight;
+
+
+        ctx.beginPath();
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+        ctx.rect(0,0,ctx.canvas.width, ctx.canvas.height)
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.strokeStyle = '#646464';
+        ctx.lineWidth = roundDPR;
+
+        var step = isNeedRedraw ? Math.round(dPR): ctx.lineWidth;
+        for (var i = 0; i < 7 * ctx.canvas.width; i += step + ctx.lineWidth) {
+            ctx.moveTo(0,  0.5 * ctx.lineWidth + step + i);
+            ctx.lineTo(ctx.canvas.width, 0.5 * ctx.lineWidth + step + i);
+            ctx.stroke();
+        }
+        for (var i = 0; i < 8 * ctx.canvas.height; i += step + ctx.lineWidth) {
+            ctx.moveTo(0.5 * ctx.lineWidth + step + i, 0);
+            ctx.lineTo(0.5 * ctx.lineWidth + step + i, ctx.canvas.height);
+            ctx.stroke();
+        }
+
+        return ctx.canvas;
     }
 
     this.tableSprite = null;
@@ -361,24 +287,22 @@ function CHorRuler()
     this.CheckCanvas = function()
     {
         this.m_dZoom = this.m_oWordControl.m_nZoomValue / 100;
-        this.IsRetina = this.m_oWordControl.bIsRetinaSupport;
+		var dPR = AscCommon.AscBrowser.retinaPixelRatio;
 
-        this.CheckTableSprite(this.IsRetina);
+        var tablePict = this.DrawTablePict();
+        if (tablePict)
+            this.tableSprite = tablePict;
 
         var dKoef_mm_to_pix = g_dKoef_mm_to_pix * this.m_dZoom;
-        if (this.IsRetina)
-            dKoef_mm_to_pix *= 2;
+        dKoef_mm_to_pix *= dPR;
 
         var widthNew    = dKoef_mm_to_pix * this.m_oPage.width_mm;
 
-        var _width      = 10 + widthNew;
-        if (this.IsRetina)
-            _width += 10;
+        var _width      = 10 * Math.round(dPR) + widthNew;
+        if (dPR > 1)
+            _width += Math.round(dPR);
 
-        var _height     = 8 * g_dKoef_mm_to_pix;
-
-        if (this.IsRetina)
-            _height *= 2;
+        var _height     = 8 * g_dKoef_mm_to_pix * dPR;
 
         var intW = _width >> 0;
         var intH = _height >> 0;
@@ -414,9 +338,6 @@ function CHorRuler()
 
         this.m_oPage = cachedPage;
         var width = this.CheckCanvas();
-
-        if (this.IsRetina)
-            width >>= 1;
 
         if (0 == this.DragType)
         {
@@ -519,17 +440,16 @@ function CHorRuler()
         checker.Type = this.CurrentObjectType;
         checker.BlitAttack = true;
 
-        var dKoef_mm_to_pix = g_dKoef_mm_to_pix * this.m_dZoom;
+        var dPR = AscCommon.AscBrowser.retinaPixelRatio;
+        var dKoef_mm_to_pix = g_dKoef_mm_to_pix * this.m_dZoom * dPR;
 
         // не править !!!
-        this.m_nTop     = 6;//(1.8 * g_dKoef_mm_to_pix) >> 0;
-        this.m_nBottom  = 19;//(5.2 * g_dKoef_mm_to_pix) >> 0;
+        this.m_nTop     = Math.round(6 * dPR);//(1.8 * g_dKoef_mm_to_pix) >> 0;
+        this.m_nBottom  = Math.round(19 * dPR);//(5.2 * g_dKoef_mm_to_pix) >> 0;
 
         var context = this.m_oCanvas.getContext('2d');
-        if (!this.IsRetina)
-            context.setTransform(1, 0, 0, 1, 5, 0);
-        else
-            context.setTransform(2, 0, 0, 2, 10, 0);
+        context.setTransform(1, 0, 0, 1, 5 * Math.round( dPR), 0);
+
 
         context.fillStyle = GlobalSkin.BackgroundColor;
         context.fillRect(0, 0, this.m_oCanvas.width, this.m_oCanvas.height);
@@ -592,19 +512,19 @@ function CHorRuler()
 
             checker.columns = this.m_oColumnMarkup.CreateDuplicate();
         }
-
+        var indent = 0.5 * Math.round(dPR);
         context.fillStyle = GlobalSkin.RulerLight;
-        context.fillRect(left_margin + 0.5, this.m_nTop + 0.5, right_margin - left_margin, this.m_nBottom - this.m_nTop);
+        context.fillRect(left_margin + indent, this.m_nTop + indent, right_margin - left_margin, this.m_nBottom - this.m_nTop);
 
         var intW = width >> 0;
 
-        if (window["flat_desine"] === true)
+        if (true)
         {
             context.beginPath();
             context.fillStyle = GlobalSkin.RulerDark;
 
-            context.fillRect(0.5, this.m_nTop + 0.5, left_margin, this.m_nBottom - this.m_nTop);
-            context.fillRect(right_margin + 0.5, this.m_nTop + 0.5, Math.max(intW - right_margin, 1), this.m_nBottom - this.m_nTop);
+            context.fillRect(indent, this.m_nTop + indent, left_margin, this.m_nBottom - this.m_nTop);
+            context.fillRect(right_margin + indent, this.m_nTop + indent, Math.max(intW - right_margin, 1), this.m_nBottom - this.m_nTop);
             context.beginPath();
         }
 
@@ -612,32 +532,20 @@ function CHorRuler()
         //context.shadowBlur = 0;
         //context.shadowColor = "#81878F";
 
-        context.strokeStyle = GlobalSkin.RulerOutline;
-
-        context.lineWidth = 1;
-        context.strokeRect(0.5, this.m_nTop + 0.5, Math.max(intW - 1, 1), this.m_nBottom - this.m_nTop);
         context.beginPath();
-        context.moveTo(left_margin + 0.5, this.m_nTop + 0.5);
-        context.lineTo(left_margin + 0.5, this.m_nBottom - 0.5);
-
-        context.moveTo(right_margin + 0.5, this.m_nTop + 0.5);
-        context.lineTo(right_margin + 0.5, this.m_nBottom - 0.5);
-
-        context.stroke();
-        context.beginPath();
-
-        context.strokeStyle = "#585B5E";
-        context.fillStyle = "#585B5E";
+        context.lineWidth = Math.round(dPR);
+        context.strokeStyle = GlobalSkin.RulerTextColor;
+        context.fillStyle = GlobalSkin.RulerTextColor;
 
         var mm_1_4 = 10 * dKoef_mm_to_pix / 4;
         var inch_1_8 = 25.4 * dKoef_mm_to_pix / 8;
         var isDraw1_4 = (mm_1_4 > 7) ? true : false;
 
         var middleVert = (this.m_nTop + this.m_nBottom) / 2;
-        var part1 = 1;
-        var part2 = 2.5;
+        var part1 = 1.5 * Math.round(dPR);
+        var part2 = 2.5 * Math.round(dPR);
 
-        context.font = "7pt Arial";
+        context.font = Math.round(7 * dPR) + "pt Arial";
 
         if (this.Units == c_oAscDocumentUnits.Millimeter)
         {
@@ -648,7 +556,7 @@ function CHorRuler()
         var num = 0;
         for (var i = 1; i < lCount1; i++)
         {
-            var lXPos = ((left_margin + i * mm_1_4) >> 0) + 0.5;
+            var lXPos = ((left_margin + i * mm_1_4) >> 0) + indent;
             index++;
 
             if (index == 4)
@@ -661,7 +569,7 @@ function CHorRuler()
                 var strNum = "" + num;
                 var lWidthText = context.measureText(strNum).width;
                 lXPos -= (lWidthText / 2.0);
-                context.fillText(strNum, lXPos, this.m_nBottom - 3);
+                context.fillText(strNum, lXPos, this.m_nBottom - Math.round(3 * dPR));
             }
             else if (1 == index && isDraw1_4)
             {
@@ -693,7 +601,7 @@ function CHorRuler()
         num = 0;
         for (var i = 1; i <= lCount2; i++)
         {
-            var lXPos = ((left_margin - i * mm_1_4) >> 0) + 0.5;
+            var lXPos = ((left_margin - i * mm_1_4) >> 0) + indent;
             index++;
 
             if (index == 4)
@@ -706,7 +614,7 @@ function CHorRuler()
                 var strNum = "" + num;
                 var lWidthText = context.measureText(strNum).width;
                 lXPos -= (lWidthText / 2.0);
-                context.fillText(strNum, lXPos, this.m_nBottom - 3);
+                context.fillText(strNum, lXPos, this.m_nBottom - Math.round(3 * dPR) );
             }
             else if (1 == index && isDraw1_4)
             {
@@ -743,7 +651,7 @@ function CHorRuler()
             var num = 0;
             for (var i = 1; i < lCount1; i++)
             {
-                var lXPos = ((left_margin + i * inch_1_8) >> 0) + 0.5;
+                var lXPos = ((left_margin + i * inch_1_8) >> 0) + indent;
                 index++;
 
                 if (index == 8)
@@ -756,7 +664,7 @@ function CHorRuler()
                     var strNum = "" + num;
                     var lWidthText = context.measureText(strNum).width;
                     lXPos -= (lWidthText / 2.0);
-                    context.fillText(strNum, lXPos, this.m_nBottom - 3);
+                    context.fillText(strNum, lXPos, this.m_nBottom - Math.round(3 * dPR));
                 }
                 else if (4 == index)
                 {
@@ -780,7 +688,7 @@ function CHorRuler()
             num = 0;
             for (var i = 1; i <= lCount2; i++)
             {
-                var lXPos = ((left_margin - i * inch_1_8) >> 0) + 0.5;
+                var lXPos = ((left_margin - i * inch_1_8) >> 0) + indent;
                 index++;
 
                 if (index == 8)
@@ -793,7 +701,7 @@ function CHorRuler()
                     var strNum = "" + num;
                     var lWidthText = context.measureText(strNum).width;
                     lXPos -= (lWidthText / 2.0);
-                    context.fillText(strNum, lXPos, this.m_nBottom - 3);
+                    context.fillText(strNum, lXPos, this.m_nBottom - Math.round(3 * dPR));
                 }
                 else if (4 == index)
                 {
@@ -824,7 +732,7 @@ function CHorRuler()
             var num = 0;
             for (var i = 1; i < lCount1; i++)
             {
-                var lXPos = ((left_margin + i * point_1_12) >> 0) + 0.5;
+                var lXPos = ((left_margin + i * point_1_12) >> 0) + indent;
                 index++;
 
                 if (index == 12)
@@ -837,7 +745,7 @@ function CHorRuler()
                     var strNum = "" + (num * 36);
                     var lWidthText = context.measureText(strNum).width;
                     lXPos -= (lWidthText / 2.0);
-                    context.fillText(strNum, lXPos, this.m_nBottom - 3);
+                    context.fillText(strNum, lXPos, this.m_nBottom - Math.round(3 * dPR));
                 }
                 else if (point_1_12 > 5)
                 {
@@ -853,7 +761,7 @@ function CHorRuler()
             num = 0;
             for (var i = 1; i <= lCount2; i++)
             {
-                var lXPos = ((left_margin - i * point_1_12) >> 0) + 0.5;
+                var lXPos = ((left_margin - i * point_1_12) >> 0) + indent;
                 index++;
 
                 if (index == 12)
@@ -866,7 +774,7 @@ function CHorRuler()
                     var strNum = "" + (num * 36);
                     var lWidthText = context.measureText(strNum).width;
                     lXPos -= (lWidthText / 2.0);
-                    context.fillText(strNum, lXPos, this.m_nBottom - 3);
+                    context.fillText(strNum, lXPos, this.m_nBottom - Math.round(3 * dPR));
                 }
                 else if (point_1_12 > 5)
                 {
@@ -891,37 +799,28 @@ function CHorRuler()
                 for (var i = 0; i <= _count; i++)
                 {
                     var __xID = 0;
-                    if (!this.IsRetina)
-                        __xID = (2.5 + _offset * dKoef_mm_to_pix) >> 0;
-                    else
-                        __xID = ((2.5 + _offset * dKoef_mm_to_pix) * 2) >> 0;
+                        __xID = (-2.5 * dPR + _offset * dKoef_mm_to_pix) >> 0;
 
-                    var __yID = this.m_nBottom - 10;
-                    if (this.IsRetina)
-                        __yID <<= 1;
+                    var __yID = this.m_nBottom - Math.round(10 * dPR);
 
                     if (0 == i)
                     {
-                        context.putImageData(this.tableSprite, __xID, __yID);
+                        context.drawImage(this.tableSprite, __xID, __yID);
                         _offset += markup.Cols[i];
                         continue;
                     }
                     if (i == _count)
                     {
-                        context.putImageData(this.tableSprite, __xID, __yID);
+                        context.drawImage(this.tableSprite, __xID, __yID);
                         break;
                     }
 
-                    var __x = (((_offset - markup.Margins[i-1].Right) * dKoef_mm_to_pix) >> 0) + 0.5;
-                    var __r = (((_offset + markup.Margins[i].Left) * dKoef_mm_to_pix) >> 0) + 0.5;
+                    var __x = (((_offset - markup.Margins[i-1].Right) * dKoef_mm_to_pix) >> 0) + indent;
+                    var __r = (((_offset + markup.Margins[i].Left) * dKoef_mm_to_pix) >> 0) + indent;
 
-                    context.fillRect(__x, this.m_nTop + 0.5, __r - __x, this.m_nBottom - this.m_nTop);
-                    context.strokeRect(__x, this.m_nTop + 0.5, __r - __x, this.m_nBottom - this.m_nTop);
-
-                    if (!this.IsRetina)
-                        context.putImageData(this.tableSprite, __xID, __yID);
-                    else
-                        context.putImageData(this.tableSprite, __xID, __yID);
+                    context.fillRect(__x, this.m_nTop + indent, __r - __x, this.m_nBottom - this.m_nTop);
+                    context.strokeRect(__x, this.m_nTop + indent, __r - __x, this.m_nBottom - this.m_nTop);
+                    context.drawImage(this.tableSprite, __xID, __yID);
 
                     _offset += markup.Cols[i];
                 }
@@ -962,32 +861,30 @@ function CHorRuler()
                         continue;
 
                     var __xID = 0;
-                    if (!this.IsRetina)
-                        __xID = (2.5 + _offset * dKoef_mm_to_pix) >> 0;
-                    else
-                        __xID = (5 + _offset * dKoef_mm_to_pix * 2) >> 0;
+                        __xID = ((2.5 + _offset * dKoef_mm_to_pix)) * dPR >> 0;
 
-                    var __yID = this.m_nBottom - 10;
-                    if (this.IsRetina)
-                        __yID <<= 1;
+                    var __yID = this.m_nBottom - Math.round(10 * dPR);
 
-                    var __x = ((__xTmp * dKoef_mm_to_pix) >> 0) + 0.5;
-                    var __r = ((__rTmp * dKoef_mm_to_pix) >> 0) + 0.5;
+                    var __x = ((__xTmp * dKoef_mm_to_pix) >> 0) + indent;
+                    var __r = ((__rTmp * dKoef_mm_to_pix) >> 0) + indent;
 
-                    context.fillRect(__x, this.m_nTop + 0.5, __r - __x, this.m_nBottom - this.m_nTop);
-                    context.strokeRect(__x, this.m_nTop + 0.5, __r - __x, this.m_nBottom - this.m_nTop);
+                    context.fillRect(__x, this.m_nTop + indent, __r - __x, this.m_nBottom - this.m_nTop);
+                    context.strokeRect(__x, this.m_nTop + indent, __r - __x, this.m_nBottom - this.m_nTop);
 
                     if (!markup.EqualWidth)
-                        context.putImageData(this.tableSprite, __xID, __yID);
+                        context.drawImage(this.tableSprite, __xID, __yID);
 
                     if ((__r - __x) > 10)
                     {
                         context.fillStyle = GlobalSkin.RulerLight;
-                        context.strokeStyle = "#81878F";
-                        context.fillRect(__x + 3, this.m_nTop + 0.5 + 3, 3, this.m_nBottom - this.m_nTop - 6);
-                        context.fillRect(__r - 6, this.m_nTop + 0.5 + 3, 3, this.m_nBottom - this.m_nTop - 6);
-                        context.strokeRect(__x + 3, this.m_nTop + 0.5 + 3, 3, this.m_nBottom - this.m_nTop - 6);
-                        context.strokeRect(__r - 6, this.m_nTop + 0.5 + 3, 3, this.m_nBottom - this.m_nTop - 6);
+                        context.strokeStyle = GlobalSkin.RulerMarkersOutlineColor;
+
+                        var roundV1 = Math.round(3 * dPR);
+                        var roundV2 = Math.round(6 * dPR);
+                        context.fillRect(__x + roundV1, this.m_nTop + indent + roundV1, roundV1, this.m_nBottom - this.m_nTop - roundV2);
+                        context.fillRect(__r - roundV2, this.m_nTop + indent + roundV1, roundV1, this.m_nBottom - this.m_nTop - roundV2);
+                        context.strokeRect(__x + roundV1, this.m_nTop + indent + roundV1, roundV1, this.m_nBottom - this.m_nTop - roundV2);
+                        context.strokeRect(__r - roundV2, this.m_nTop + indent + roundV1, roundV1, this.m_nBottom - this.m_nTop - roundV2);
                         context.fillStyle = GlobalSkin.RulerDark;
                         context.strokeStyle = GlobalSkin.RulerOutline;
                     }
@@ -996,6 +893,18 @@ function CHorRuler()
                 }
             }
         }
+
+        context.beginPath();
+        context.strokeStyle = GlobalSkin.RulerOutline;
+        context.strokeRect(indent, this.m_nTop + indent, Math.max(intW - 1, 1), this.m_nBottom - this.m_nTop);
+        context.beginPath();
+        context.moveTo(left_margin + indent, this.m_nTop + indent);
+        context.lineTo(left_margin + indent, this.m_nBottom - indent);
+
+        context.moveTo(right_margin + indent, this.m_nTop + indent);
+        context.lineTo(right_margin + indent, this.m_nBottom - indent);
+
+        context.stroke();
     }
 
     this.CorrectTabs = function()
@@ -2019,6 +1928,7 @@ function CHorRuler()
             case 7:
             {
                 var pos = left + (_margin_left + this.m_arrTabs[this.m_lCurrentTab].pos) * dKoef_mm_to_pix;
+                this.m_dCurrentTabNewPosition = this.m_arrTabs[this.m_lCurrentTab].pos;
                 word_control.m_oOverlayApi.VertLine(pos);
                 break;
             }
@@ -2406,6 +2316,8 @@ function CHorRuler()
 
     this.BlitToMain = function(left, top, htmlElement)
     {
+        var dPR = AscCommon.AscBrowser.retinaPixelRatio;
+        left = Math.round(dPR * left);
         var _margin_left = this.m_dMarginLeft;
         var _margin_right = this.m_dMarginRight;
         if (this.CurrentObjectType == RULER_OBJECT_TYPE_TABLE || this.CurrentObjectType == RULER_OBJECT_TYPE_COLUMNS)
@@ -2466,62 +2378,57 @@ function CHorRuler()
                     checker.BlitTabs[ii] = { type: this.m_arrTabs[ii].type, pos: this.m_arrTabs[ii].pos };
                 }
             }
-
+            var roundDPR = Math.round(dPR);
+            var indent = 0.5 * roundDPR;
             //context.drawImage(this.m_oCanvas, left - 5, 0, this.m_oCanvas.width, this.m_oCanvas.height,
             //    0, 0, this.m_oCanvas.width, this.m_oCanvas.height);
 
-            if (!this.IsRetina)
-            {
-                context.drawImage(this.m_oCanvas, 5, 0, this.m_oCanvas.width - 10, this.m_oCanvas.height,
-                    left, 0, this.m_oCanvas.width - 10, this.m_oCanvas.height);
-            }
-            else
-            {
-                context.drawImage(this.m_oCanvas, 10, 0, this.m_oCanvas.width - 20, this.m_oCanvas.height,
-                    left << 1, 0, this.m_oCanvas.width - 20, this.m_oCanvas.height);
-                context.setTransform(2, 0, 0, 2, 0, 0);
-            }
+            context.drawImage(this.m_oCanvas, 5 * roundDPR, 0, this.m_oCanvas.width - 10 * roundDPR, this.m_oCanvas.height,
+                    left, 0, this.m_oCanvas.width - 10 * roundDPR, this.m_oCanvas.height);
 
             if (!this.IsDrawAnyMarkers)
                 return;
-
-            var dKoef_mm_to_pix = g_dKoef_mm_to_pix * this.m_dZoom;
-
+            var dKoef_mm_to_pix = g_dKoef_mm_to_pix * this.m_dZoom * dPR;
             var dCenterX = 0;
             var var1 = 0;
             var var2 = 0;
             var var3 = 0;
             var var4 = 0;
 
-            var _positon_y = this.m_nBottom - 5;
+            var _positon_y = this.m_nBottom - 5 * dPR;
 
-            context.strokeStyle = "#81878F";
             // не менять!!!
-            var2 = 5;//(1.4 * g_dKoef_mm_to_pix) >> 0;
-            var3 = 3;//(1 * g_dKoef_mm_to_pix) >> 0;
+            var2 = 5 * dPR;//(1.4 * g_dKoef_mm_to_pix) >> 0;
+            var3 = 3 * dPR;//(1 * g_dKoef_mm_to_pix) >> 0;
 
             checker.BlitMarginLeftInd = _margin_left;
             checker.BlitMarginRightInd = _margin_right;
 
+			var _1mm_to_pix = g_dKoef_mm_to_pix * dPR;
+
             // old position --------------------------------------
-            context.fillStyle = "#CDD1D6";
+			context.strokeStyle = GlobalSkin.RulerMarkersOutlineColorOld;
+            context.fillStyle = GlobalSkin.RulerMarkersFillColorOld;
             if ((-10000 != this.m_dIndentLeft_old) && (this.m_dIndentLeft_old != this.m_dIndentLeft))
             {
                 dCenterX = left + (_margin_left +  this.m_dIndentLeft_old) * dKoef_mm_to_pix;
+				var1 = parseInt(dCenterX - _1mm_to_pix) - indent + Math.round(dPR) - 1;
+				var4 = parseInt(dCenterX + _1mm_to_pix) + indent + Math.round(dPR) - 1;
 
-                var1 = parseInt(dCenterX - 1 * g_dKoef_mm_to_pix) - 0.5;
-                var4 = parseInt(dCenterX + 1 * g_dKoef_mm_to_pix) + 0.5;
+				if ( 0 != ((var1 - var4 + Math.round(dPR)) & 1))
+					var4 += 1;
 
                 context.beginPath();
-                context.moveTo(var1, this.m_nBottom + 0.5);
-                context.lineTo(var4, this.m_nBottom + 0.5);
-                context.lineTo(var4, this.m_nBottom + 0.5 + var2);
-                context.lineTo(var1, this.m_nBottom + 0.5 + var2);
-                context.lineTo(var1, this.m_nBottom + 0.5);
-                context.lineTo(var1, this.m_nBottom + 0.5 - var3);
-                context.lineTo((var1 + var4) / 2, this.m_nBottom - var2 * 1.2);
-                context.lineTo(var4, this.m_nBottom + 0.5 - var3);
-                context.lineTo(var4, this.m_nBottom + 0.5);
+                context.lineWidth = Math.round(dPR);
+				context.moveTo(var1, this.m_nBottom + indent);
+				context.lineTo(var4, this.m_nBottom + indent);
+				context.lineTo(var4, this.m_nBottom + indent + Math.round(var2));
+				context.lineTo(var1, this.m_nBottom + indent + Math.round(var2));
+				context.lineTo(var1, this.m_nBottom + indent);
+				context.lineTo(var1, this.m_nBottom + indent - Math.round(var3));
+				context.lineTo((var1 + var4) / 2, this.m_nBottom - Math.round(var2 * 1.2));
+				context.lineTo(var4, this.m_nBottom + indent - Math.round(var3));
+				context.lineTo(var4, this.m_nBottom + indent);
 
                 context.fill();
                 context.stroke();
@@ -2529,17 +2436,21 @@ function CHorRuler()
             if ((-10000 != this.m_dIndentLeftFirst_old) && (this.m_dIndentLeftFirst_old != this.m_dIndentLeftFirst))
             {
                 dCenterX = left + (_margin_left +  this.m_dIndentLeftFirst_old) * dKoef_mm_to_pix;
-                var1 = parseInt(dCenterX - 1 * g_dKoef_mm_to_pix) - 0.5;
-                var4 = parseInt(dCenterX + 1 * g_dKoef_mm_to_pix) + 0.5;
+				var1 = parseInt(dCenterX - _1mm_to_pix) - indent + Math.round(dPR) - 1;
+				var4 = parseInt(dCenterX + _1mm_to_pix) + indent + Math.round(dPR) - 1;
+
+				if ( 0 != ((var1 - var4 + Math.round(dPR)) & 1))
+					var4 += 1;
 
                 // first line indent
                 context.beginPath();
-                context.moveTo(var1, this.m_nTop + 0.5);
-                context.lineTo(var1, this.m_nTop + 0.5 - var3);
-                context.lineTo(var4, this.m_nTop + 0.5 - var3);
-                context.lineTo(var4, this.m_nTop + 0.5);
-                context.lineTo((var1 + var4) / 2, this.m_nTop + var2 * 1.2);
-                context.closePath();
+                context.lineWidth = Math.round(dPR);
+				context.moveTo(var1, this.m_nTop + indent);
+				context.lineTo(var1, this.m_nTop + indent - Math.round(var3));
+				context.lineTo(var4, this.m_nTop + indent - Math.round(var3));
+				context.lineTo(var4, this.m_nTop + indent);
+				context.lineTo((var1 + var4) / 2, this.m_nTop + Math.round(var2 * 1.2));
+				context.closePath();
 
                 context.fill();
                 context.stroke();
@@ -2547,36 +2458,41 @@ function CHorRuler()
             if ((-10000 != this.m_dIndentRight_old) && (this.m_dIndentRight_old != this.m_dIndentRight))
             {
                 dCenterX = left + (_margin_right -  this.m_dIndentRight_old) * dKoef_mm_to_pix;
-                var1 = parseInt(dCenterX - 1 * g_dKoef_mm_to_pix) - 0.5;
-                var4 = parseInt(dCenterX + 1 * g_dKoef_mm_to_pix) + 0.5;
+				var1 = parseInt(dCenterX - _1mm_to_pix) - indent + Math.round(dPR) - 1;
+				var4 = parseInt(dCenterX + _1mm_to_pix) + indent + Math.round(dPR) - 1;
+
+				if ( 0 != ((var1 - var4 + Math.round(dPR)) & 1))
+					var4 += 1;
 
                 context.beginPath();
-                context.moveTo(var1, this.m_nBottom + 0.5);
-                context.lineTo(var4, this.m_nBottom + 0.5);
-                context.lineTo(var4, this.m_nBottom + 0.5 - var3);
-                context.lineTo((var1 + var4) / 2, this.m_nBottom - var2 * 1.2);
-                context.lineTo(var1, this.m_nBottom + 0.5 - var3);
-                context.closePath();
+                context.lineWidth = Math.round(dPR);
+				context.moveTo(var1, this.m_nBottom + indent);
+				context.lineTo(var4, this.m_nBottom + indent);
+				context.lineTo(var4, this.m_nBottom + indent - Math.round(var3));
+				context.lineTo((var1 + var4) / 2, this.m_nBottom - Math.round(var2 * 1.2));
+				context.lineTo(var1, this.m_nBottom + indent - Math.round(var3));
+				context.closePath();
 
                 context.fill();
                 context.stroke();
             }
 
+			context.strokeStyle = GlobalSkin.RulerTabsColorOld;
             if (-1 != this.m_lCurrentTab && this.m_lCurrentTab < this.m_arrTabs.length)
             {
                 var _tab = this.m_arrTabs[this.m_lCurrentTab];
                 var _x = parseInt((_margin_left + _tab.pos) * dKoef_mm_to_pix) + left;
 
                 var _old_w = context.lineWidth;
-                context.lineWidth = 2;
+                context.lineWidth = 2 * roundDPR;
                 switch (_tab.type)
                 {
                     case tab_Left:
                     {
                         context.beginPath();
                         context.moveTo(_x, _positon_y);
-                        context.lineTo(_x, _positon_y + 5);
-                        context.lineTo(_x + 5, _positon_y + 5);
+                        context.lineTo(_x, _positon_y + Math.round(5 * dPR));
+                        context.lineTo(_x + Math.round(5 * dPR), _positon_y + Math.round(5 * dPR));
                         context.stroke();
                         break;
                     }
@@ -2584,8 +2500,8 @@ function CHorRuler()
                     {
                         context.beginPath();
                         context.moveTo(_x, _positon_y);
-                        context.lineTo(_x, _positon_y + 5);
-                        context.lineTo(_x - 5, _positon_y + 5);
+                        context.lineTo(_x, _positon_y + Math.round(5 * dPR));
+                        context.lineTo(_x - Math.round(5 * dPR), _positon_y + Math.round(5 * dPR));
                         context.stroke();
                         break;
                     }
@@ -2593,9 +2509,9 @@ function CHorRuler()
                     {
                         context.beginPath();
                         context.moveTo(_x, _positon_y);
-                        context.lineTo(_x, _positon_y + 5);
-                        context.moveTo(_x - 5, _positon_y + 5);
-                        context.lineTo(_x + 5, _positon_y + 5);
+                        context.lineTo(_x, _positon_y + Math.round(5 * dPR));
+                        context.moveTo(_x - Math.round(5 * dPR), _positon_y + Math.round(5 * dPR));
+                        context.lineTo(_x + Math.round(5 * dPR), _positon_y + Math.round(5 * dPR));
                         context.stroke();
                         break;
                     }
@@ -2621,41 +2537,50 @@ function CHorRuler()
 
             if (posL < posR)
             {
+				context.strokeStyle = GlobalSkin.RulerMarkersOutlineColor;
                 context.fillStyle = GlobalSkin.RulerMarkersFillColor;
 
                 // left indent
                 dCenterX = left + (_margin_left +  this.m_dIndentLeft) * dKoef_mm_to_pix;
 
-                var _1mm_to_pix = g_dKoef_mm_to_pix;
+                var _1mm_to_pix = g_dKoef_mm_to_pix * dPR;
 
-                var1 = parseInt(dCenterX - _1mm_to_pix) - 0.5;
-                var4 = parseInt(dCenterX + _1mm_to_pix) + 0.5;
+                var1 = parseInt(dCenterX - _1mm_to_pix) - indent + Math.round(dPR) - 1;
+                var4 = parseInt(dCenterX + _1mm_to_pix) + indent + Math.round(dPR) - 1;
+
+                if ( 0 != ((var1 - var4 + Math.round(dPR)) & 1))
+                    var4 += 1;
 
                 context.beginPath();
-                context.moveTo(var1, this.m_nBottom + 0.5);
-                context.lineTo(var4, this.m_nBottom + 0.5);
-                context.lineTo(var4, this.m_nBottom + 0.5 + var2);
-                context.lineTo(var1, this.m_nBottom + 0.5 + var2);
-                context.lineTo(var1, this.m_nBottom + 0.5);
-                context.lineTo(var1, this.m_nBottom + 0.5 - var3);
-                context.lineTo((var1 + var4) / 2, this.m_nBottom - var2 * 1.2);
-                context.lineTo(var4, this.m_nBottom + 0.5 - var3);
-                context.lineTo(var4, this.m_nBottom + 0.5);
+                context.lineWidth = roundDPR;
+                context.moveTo(var1, this.m_nBottom + indent);
+                context.lineTo(var4, this.m_nBottom + indent);
+                context.lineTo(var4, this.m_nBottom + indent + Math.round(var2));
+                context.lineTo(var1, this.m_nBottom + indent + Math.round(var2));
+                context.lineTo(var1, this.m_nBottom + indent);
+                context.lineTo(var1, this.m_nBottom + indent - Math.round(var3));
+                context.lineTo((var1 + var4) / 2, this.m_nBottom - Math.round(var2 * 1.2));
+                context.lineTo(var4, this.m_nBottom + indent - Math.round(var3));
+                context.lineTo(var4, this.m_nBottom + indent);
 
                 context.fill();
                 context.stroke();
 
                 // right indent
                 dCenterX = left + (_margin_right - this.m_dIndentRight) * dKoef_mm_to_pix;
-                var1 = parseInt(dCenterX - _1mm_to_pix) - 0.5;
-                var4 = parseInt(dCenterX + _1mm_to_pix) + 0.5;
+                var1 = parseInt(dCenterX - _1mm_to_pix) - indent + Math.round(dPR) - 1;
+                var4 = parseInt(dCenterX + _1mm_to_pix) + indent + Math.round(dPR) - 1;
+
+                if ( 0 != ((var1 - var4 + Math.round(dPR)) & 1))
+                    var4 += 1;
 
                 context.beginPath();
-                context.moveTo(var1, this.m_nBottom + 0.5);
-                context.lineTo(var4, this.m_nBottom + 0.5);
-                context.lineTo(var4, this.m_nBottom + 0.5 - var3);
-                context.lineTo((var1 + var4) / 2, this.m_nBottom - var2 * 1.2);
-                context.lineTo(var1, this.m_nBottom + 0.5 - var3);
+                context.lineWidth = Math.round(dPR);
+                context.moveTo(var1, this.m_nBottom + indent);
+                context.lineTo(var4, this.m_nBottom + indent);
+                context.lineTo(var4, this.m_nBottom + indent - Math.round(var3));
+                context.lineTo((var1 + var4) / 2, this.m_nBottom - Math.round(var2 * 1.2));
+                context.lineTo(var1, this.m_nBottom + indent - Math.round(var3));
                 context.closePath();
 
                 context.fill();
@@ -2663,15 +2588,19 @@ function CHorRuler()
 
                 // first line indent
                 dCenterX = left + (_margin_left +  this.m_dIndentLeftFirst) * dKoef_mm_to_pix;
-                var1 = parseInt(dCenterX - _1mm_to_pix) - 0.5;
-                var4 = parseInt(dCenterX + _1mm_to_pix) + 0.5;
+                var1 = parseInt(dCenterX - _1mm_to_pix) - indent + Math.round(dPR) - 1;
+                var4 = parseInt(dCenterX + _1mm_to_pix) + indent + Math.round(dPR) - 1;
+
+                if ( 0 != ((var1 - var4 + Math.round(dPR)) & 1))
+                    var4 += 1;
 
                 context.beginPath();
-                context.moveTo(var1, this.m_nTop + 0.5);
-                context.lineTo(var1, this.m_nTop + 0.5 - var3);
-                context.lineTo(var4, this.m_nTop + 0.5 - var3);
-                context.lineTo(var4, this.m_nTop + 0.5);
-                context.lineTo((var1 + var4) / 2, this.m_nTop + var2 * 1.2);
+                context.lineWidth = Math.round(dPR);
+                context.moveTo(var1, this.m_nTop + indent);
+                context.lineTo(var1, this.m_nTop + indent - Math.round(var3));
+                context.lineTo(var4, this.m_nTop + indent - Math.round(var3));
+                context.lineTo(var4, this.m_nTop + indent);
+                context.lineTo((var1 + var4) / 2, this.m_nTop + Math.round(var2 * 1.2));
                 context.closePath();
 
                 context.fill();
@@ -2681,7 +2610,7 @@ function CHorRuler()
             // теперь рисуем табы ----------------------------------------
             // default
             var position_default_tab = this.m_dDefaultTab;
-            _positon_y = this.m_nBottom + 1.5;
+            _positon_y = this.m_nBottom + Math.round(1.5 * dPR);
 
             var _min_default_value = Math.max(0, this.m_dMaxTab);
             if (this.m_dDefaultTab > 0.01)
@@ -2697,10 +2626,10 @@ function CHorRuler()
                         continue;
                     }
 
-                    var _x = parseInt((_margin_left + position_default_tab) * dKoef_mm_to_pix) + left + 0.5;
+                    var _x = parseInt((_margin_left + position_default_tab) * dKoef_mm_to_pix) + left + indent;
                     context.beginPath();
                     context.moveTo(_x, _positon_y);
-                    context.lineTo(_x, _positon_y + 3);
+                    context.lineTo(_x, _positon_y + Math.round(3 * dPR));
                     context.stroke();
 
                     position_default_tab += this.m_dDefaultTab;
@@ -2711,10 +2640,10 @@ function CHorRuler()
             var _len_tabs = this.m_arrTabs.length;
             if (0 != _len_tabs)
             {
-                context.strokeStyle = "#000000";
-                context.lineWidth = 2;
+                context.strokeStyle = GlobalSkin.RulerTabsColor;
+                context.lineWidth = 2 * roundDPR;
 
-                _positon_y = this.m_nBottom - 5;
+                _positon_y = this.m_nBottom - Math.round(5 * dPR);
                 for (var i = 0; i < _len_tabs; i++)
                 {
                     var tab = this.m_arrTabs[i];
@@ -2742,8 +2671,8 @@ function CHorRuler()
                         {
                             context.beginPath();
                             context.moveTo(_x, _positon_y);
-                            context.lineTo(_x, _positon_y + 5);
-                            context.lineTo(_x + 5, _positon_y + 5);
+                            context.lineTo(_x, _positon_y + Math.round(5 * dPR));
+                            context.lineTo(_x + Math.round(5 * dPR), _positon_y + Math.round(5 * dPR));
                             context.stroke();
                             break;
                         }
@@ -2751,8 +2680,8 @@ function CHorRuler()
                         {
                             context.beginPath();
                             context.moveTo(_x, _positon_y);
-                            context.lineTo(_x, _positon_y + 5);
-                            context.lineTo(_x - 5, _positon_y + 5);
+                            context.lineTo(_x, _positon_y + Math.round(5 * dPR));
+                            context.lineTo(_x - Math.round(5 * dPR), _positon_y + Math.round(5 * dPR));
                             context.stroke();
                             break;
                         }
@@ -2760,9 +2689,9 @@ function CHorRuler()
                         {
                             context.beginPath();
                             context.moveTo(_x, _positon_y);
-                            context.lineTo(_x, _positon_y + 5);
-                            context.moveTo(_x - 5, _positon_y + 5);
-                            context.lineTo(_x + 5, _positon_y + 5);
+                            context.lineTo(_x, _positon_y + Math.round(5 * dPR));
+                            context.moveTo(_x - Math.round(5 * dPR), _positon_y + Math.round(5 * dPR));
+                            context.lineTo(_x + Math.round(5 * dPR), _positon_y + Math.round(5 * dPR));
                             context.stroke();
                             break;
                         }
@@ -2819,22 +2748,16 @@ function CVerRuler()
     this.CheckCanvas = function()
     {
         this.m_dZoom = this.m_oWordControl.m_nZoomValue / 100;
-        this.IsRetina = this.m_oWordControl.bIsRetinaSupport;
-
-        var dKoef_mm_to_pix = g_dKoef_mm_to_pix * this.m_dZoom;
-        if (this.IsRetina)
-            dKoef_mm_to_pix *= 2;
+        var dPR = AscCommon.AscBrowser.retinaPixelRatio;
+        var dKoef_mm_to_pix = g_dKoef_mm_to_pix * this.m_dZoom * dPR;
 
         var heightNew    = dKoef_mm_to_pix * this.m_oPage.height_mm;
 
-        var _height      = 10 + heightNew;
-        if (this.IsRetina)
-            _height += 10;
+        var _height      = Math.round(10 * dPR) + heightNew;
+        if (dPR > 1)
+            _height += Math.round(dPR);
 
-        var _width       = 5 * g_dKoef_mm_to_pix;
-
-        if (this.IsRetina)
-            _width *= 2;
+        var _width       = 5 * g_dKoef_mm_to_pix * dPR;
 
         var intW = _width >> 0;
         var intH = _height >> 0;
@@ -2870,9 +2793,6 @@ function CVerRuler()
         
         this.m_oPage = cachedPage;
         var height = this.CheckCanvas();
-
-        if (this.IsRetina)
-            height >>= 1;
 
         if (0 == this.DragType)
         {
@@ -2930,17 +2850,15 @@ function CVerRuler()
         checker.Type = this.CurrentObjectType;
         checker.BlitAttack = true;
 
-        var dKoef_mm_to_pix = g_dKoef_mm_to_pix * this.m_dZoom;
+        var dPR = AscCommon.AscBrowser.retinaPixelRatio;
+        var dKoef_mm_to_pix = g_dKoef_mm_to_pix * this.m_dZoom * dPR;
 
         // не править !!!
-        this.m_nLeft   = 3;//(0.8 * g_dKoef_mm_to_pix) >> 0;
-        this.m_nRight  = 15;//(4.2 * g_dKoef_mm_to_pix) >> 0;
+        this.m_nLeft   = Math.round(3 * dPR);//(0.8 * g_dKoef_mm_to_pix) >> 0;
+        this.m_nRight  = Math.round(15 * dPR);//(4.2 * g_dKoef_mm_to_pix) >> 0;
 
         var context = this.m_oCanvas.getContext('2d');
-        if (!this.IsRetina)
-            context.setTransform(1, 0, 0, 1, 0, 5);
-        else
-            context.setTransform(2, 0, 0, 2, 0, 10);
+        context.setTransform(1, 0, 0, 1, 0, Math.round(5 * dPR));
 
         context.fillStyle = GlobalSkin.BackgroundColor;
         context.fillRect(0, 0, this.m_oCanvas.width, this.m_oCanvas.height);
@@ -2990,51 +2908,45 @@ function CVerRuler()
             }
         }
 
+        var indent = 0.5 * Math.round(dPR);
+
         if (bottom_margin > top_margin)
         {
             context.fillStyle = GlobalSkin.RulerLight;
-            context.fillRect(this.m_nLeft + 0.5, top_margin + 0.5, this.m_nRight - this.m_nLeft, bottom_margin - top_margin);
+            context.fillRect(this.m_nLeft + indent, top_margin + indent, this.m_nRight - this.m_nLeft, bottom_margin - top_margin);
         }
 
         var intH = height >> 0;
 
-        if (window["flat_desine"] === true)
+        if (true)
         {
             context.beginPath();
             context.fillStyle = GlobalSkin.RulerDark;
 
-            context.fillRect(this.m_nLeft + 0.5, 0.5, this.m_nRight - this.m_nLeft, top_margin);
-            context.fillRect(this.m_nLeft + 0.5, bottom_margin + 0.5, this.m_nRight - this.m_nLeft, Math.max(intH - bottom_margin, 1));
+            context.fillRect(this.m_nLeft + indent, indent, this.m_nRight - this.m_nLeft, top_margin);
+            context.fillRect(this.m_nLeft + indent, bottom_margin + indent, this.m_nRight - this.m_nLeft, Math.max(intH - bottom_margin, 1));
             context.beginPath();
         }
 
-		// рамка
-        context.strokeStyle = GlobalSkin.RulerOutline;
-
-        context.lineWidth = 1;
-        context.strokeRect(this.m_nLeft + 0.5, 0.5, this.m_nRight - this.m_nLeft, Math.max(intH - 1, 1));
         context.beginPath();
-        context.moveTo(this.m_nLeft + 0.5, top_margin + 0.5);
-        context.lineTo(this.m_nRight - 0.5, top_margin + 0.5);
-
-        context.moveTo(this.m_nLeft + 0.5, bottom_margin + 0.5);
-        context.lineTo(this.m_nRight - 0.5, bottom_margin + 0.5);
-
-        context.stroke();
-        context.beginPath();
-
-        context.strokeStyle = "#585B5E";
-        context.fillStyle = "#585B5E";
+        context.lineWidth = Math.round(dPR);
+        context.strokeStyle = GlobalSkin.RulerTextColor;
+        context.fillStyle = GlobalSkin.RulerTextColor;
 
         var mm_1_4 = 10 * dKoef_mm_to_pix / 4;
 		var isDraw1_4 = (mm_1_4 > 7) ? true : false;
         var inch_1_8 = 25.4 * dKoef_mm_to_pix / 8;
 
         var middleHor = (this.m_nLeft + this.m_nRight) / 2;
-        var part1 = 1;
-        var part2 = 2.5;
+        var part1 = dPR;
+        var part2 = 2.5 * dPR;
 
-        context.font = "7pt Arial";
+		var l_part1 = Math.floor(middleHor - part1);
+		var r_part1 = Math.ceil(middleHor + part1);
+		var l_part2 = Math.floor(middleHor - part2);
+		var r_part2 = Math.ceil(middleHor + part2);
+
+        context.font = Math.round(7 * dPR) + "pt Arial";
 
         if (this.Units == c_oAscDocumentUnits.Millimeter)
         {
@@ -3045,7 +2957,7 @@ function CVerRuler()
         var num = 0;
         for (var i = 1; i < lCount1; i++)
         {
-            var lYPos = ((top_margin + i * mm_1_4) >> 0) + 0.5;
+            var lYPos = ((top_margin + i * mm_1_4) >> 0) + indent;
             index++;
 
             if (index == 4)
@@ -3061,35 +2973,31 @@ function CVerRuler()
 
                 context.translate(middleHor, lYPos);
                 context.rotate(-Math.PI / 2);
-                context.fillText(strNum, -lWidthText / 2.0, 4);
-
-                if (!this.IsRetina)
-                    context.setTransform(1, 0, 0, 1, 0, 5);
-                else
-                    context.setTransform(2, 0, 0, 2, 0, 10);
+                context.fillText(strNum, -lWidthText / 2.0, Math.round(4 * dPR));
+                context.setTransform(1, 0, 0, 1, 0, Math.round(5 * dPR));
             }
             else if (1 == index && isDraw1_4)
             {
                 // 1/4
                 context.beginPath();
-                context.moveTo(middleHor - part1, lYPos);
-                context.lineTo(middleHor + part1, lYPos);
+                context.moveTo(l_part1, lYPos);
+                context.lineTo(r_part1, lYPos);
                 context.stroke();
             }
             else if (2 == index)
             {
                 // 1/2
                 context.beginPath();
-                context.moveTo(middleHor - part2, lYPos);
-                context.lineTo(middleHor + part2, lYPos);
+                context.moveTo(l_part2, lYPos);
+                context.lineTo(r_part2, lYPos);
                 context.stroke();
             }
             else if (isDraw1_4)
             {
                 // 1/4
                 context.beginPath();
-                context.moveTo(middleHor - part1, lYPos);
-                context.lineTo(middleHor + part1, lYPos);
+                context.moveTo(l_part1, lYPos);
+                context.lineTo(r_part1, lYPos);
                 context.stroke();
             }
         }
@@ -3098,7 +3006,7 @@ function CVerRuler()
         num = 0;
         for (var i = 1; i <= lCount2; i++)
         {
-            var lYPos = ((top_margin - i * mm_1_4) >> 0) + 0.5;
+            var lYPos = ((top_margin - i * mm_1_4) >> 0) + indent;
             index++;
 
             if (index == 4)
@@ -3113,35 +3021,31 @@ function CVerRuler()
 
                 context.translate(middleHor, lYPos);
                 context.rotate(-Math.PI / 2);
-                context.fillText(strNum, -lWidthText / 2.0, 4);
-
-                if (!this.IsRetina)
-                    context.setTransform(1, 0, 0, 1, 0, 5);
-                else
-                    context.setTransform(2, 0, 0, 2, 0, 10);
+                context.fillText(strNum, -lWidthText / 2.0, Math.round(4 * dPR));
+                context.setTransform(1, 0, 0, 1, 0, Math.round(5 * dPR));
             }
             else if (1 == index && isDraw1_4)
             {
                 // 1/4
                 context.beginPath();
-                context.moveTo(middleHor - part1, lYPos);
-                context.lineTo(middleHor + part1, lYPos);
+                context.moveTo(l_part1, lYPos);
+                context.lineTo(r_part1, lYPos);
                 context.stroke();
             }
             else if (2 == index)
             {
                 // 1/2
                 context.beginPath();
-                context.moveTo(middleHor - part2, lYPos);
-                context.lineTo(middleHor + part2, lYPos);
+                context.moveTo(l_part2, lYPos);
+                context.lineTo(r_part2, lYPos);
                 context.stroke();
             }
             else if (isDraw1_4)
             {
                 // 1/4
                 context.beginPath();
-                context.moveTo(middleHor - part1, lYPos);
-                context.lineTo(middleHor + part1, lYPos);
+                context.moveTo(l_part1, lYPos);
+                context.lineTo(r_part1, lYPos);
                 context.stroke();
             }
         }
@@ -3155,7 +3059,7 @@ function CVerRuler()
             var num = 0;
             for (var i = 1; i < lCount1; i++)
             {
-                var lYPos = ((top_margin + i * inch_1_8) >> 0) + 0.5;
+                var lYPos = ((top_margin + i * inch_1_8) >> 0) + indent;
                 index++;
 
                 if (index == 8)
@@ -3171,27 +3075,23 @@ function CVerRuler()
 
                     context.translate(middleHor, lYPos);
                     context.rotate(-Math.PI / 2);
-                    context.fillText(strNum, -lWidthText / 2.0, 4);
-
-                    if (!this.IsRetina)
-                        context.setTransform(1, 0, 0, 1, 0, 5);
-                    else
-                        context.setTransform(2, 0, 0, 2, 0, 10);
+                    context.fillText(strNum, -lWidthText / 2.0, Math.round(4 * dPR));
+                    context.setTransform(1, 0, 0, 1, 0, Math.round(5 * dPR));
                 }
                 else if (4 == index)
                 {
                     // 1/2
                     context.beginPath();
-                    context.moveTo(middleHor - part2, lYPos);
-                    context.lineTo(middleHor + part2, lYPos);
+                    context.moveTo(l_part2, lYPos);
+                    context.lineTo(r_part2, lYPos);
                     context.stroke();
                 }
                 else if (inch_1_8 > 8)
                 {
                     // 1/8
                     context.beginPath();
-                    context.moveTo(middleHor - part1, lYPos);
-                    context.lineTo(middleHor + part1, lYPos);
+                    context.moveTo(l_part1, lYPos);
+                    context.lineTo(r_part1, lYPos);
                     context.stroke();
                 }
             }
@@ -3200,7 +3100,7 @@ function CVerRuler()
             num = 0;
             for (var i = 1; i <= lCount2; i++)
             {
-                var lYPos = ((top_margin - i * inch_1_8) >> 0) + 0.5;
+                var lYPos = ((top_margin - i * inch_1_8) >> 0) + indent;
                 index++;
 
                 if (index == 8)
@@ -3215,12 +3115,9 @@ function CVerRuler()
 
                     context.translate(middleHor, lYPos);
                     context.rotate(-Math.PI / 2);
-                    context.fillText(strNum, -lWidthText / 2.0, 4);
+                    context.fillText(strNum, -lWidthText / 2.0, Math.round(4 * dPR));
+                    context.setTransform(1, 0, 0, 1, 0, Math.round(5 * dPR));
 
-                    if (!this.IsRetina)
-                        context.setTransform(1, 0, 0, 1, 0, 5);
-                    else
-                        context.setTransform(2, 0, 0, 2, 0, 10);
                 }
                 else if (4 == index)
                 {
@@ -3251,7 +3148,7 @@ function CVerRuler()
             var num = 0;
             for (var i = 1; i < lCount1; i++)
             {
-                var lYPos = ((top_margin + i * point_1_12) >> 0) + 0.5;
+                var lYPos = ((top_margin + i * point_1_12) >> 0) + indent;
                 index++;
 
                 if (index == 12)
@@ -3267,19 +3164,15 @@ function CVerRuler()
 
                     context.translate(middleHor, lYPos);
                     context.rotate(-Math.PI / 2);
-                    context.fillText(strNum, -lWidthText / 2.0, 4);
-
-                    if (!this.IsRetina)
-                        context.setTransform(1, 0, 0, 1, 0, 5);
-                    else
-                        context.setTransform(2, 0, 0, 2, 0, 10);
+                    context.fillText(strNum, -lWidthText / 2.0, Math.round(4 * dPR));
+                    context.setTransform(1, 0, 0, 1, 0, Math.round(5 * dPR));
                 }
                 else if (point_1_12 > 5)
                 {
                     // 1/8
                     context.beginPath();
-                    context.moveTo(middleHor - part1, lYPos);
-                    context.lineTo(middleHor + part1, lYPos);
+                    context.moveTo(l_part1, lYPos);
+                    context.lineTo(r_part1, lYPos);
                     context.stroke();
                 }
             }
@@ -3288,7 +3181,7 @@ function CVerRuler()
             num = 0;
             for (var i = 1; i <= lCount2; i++)
             {
-                var lYPos = ((top_margin - i * point_1_12) >> 0) + 0.5;
+                var lYPos = ((top_margin - i * point_1_12) >> 0) + indent;
                 index++;
 
                 if (index == 12)
@@ -3303,19 +3196,15 @@ function CVerRuler()
 
                     context.translate(middleHor, lYPos);
                     context.rotate(-Math.PI / 2);
-                    context.fillText(strNum, -lWidthText / 2.0, 4);
-
-                    if (!this.IsRetina)
-                        context.setTransform(1, 0, 0, 1, 0, 5);
-                    else
-                        context.setTransform(2, 0, 0, 2, 0, 10);
+                    context.fillText(strNum, -lWidthText / 2.0, Math.round(4 * dPR));
+                    context.setTransform(1, 0, 0, 1, 0, Math.round(5 * dPR));
                 }
                 else if (point_1_12 > 5)
                 {
                     // 1/8
                     context.beginPath();
-                    context.moveTo(middleHor - part1, lYPos);
-                    context.lineTo(middleHor + part1, lYPos);
+                    context.moveTo(l_part1, lYPos);
+                    context.lineTo(r_part1, lYPos);
                     context.stroke();
                 }
             }
@@ -3323,7 +3212,8 @@ function CVerRuler()
 
         if ((this.CurrentObjectType == RULER_OBJECT_TYPE_TABLE) && (null != markup))
         {
-            var dKoef_mm_to_pix = g_dKoef_mm_to_pix * this.m_dZoom;
+            var dPR = AscCommon.AscBrowser.retinaPixelRatio;
+            var dKoef_mm_to_pix = g_dKoef_mm_to_pix * this.m_dZoom * dPR;
 
             // не будет нулевых таблиц.
             var _count = markup.Rows.length;
@@ -3331,23 +3221,35 @@ function CVerRuler()
             if (0 == _count)
                 return;
 
-            var start_dark = (((markup.Rows[0].Y + markup.Rows[0].H) * dKoef_mm_to_pix) >> 0) + 0.5;
+            var start_dark = (((markup.Rows[0].Y + markup.Rows[0].H) * dKoef_mm_to_pix) >> 0) + indent;
             var end_dark = 0;
 
             context.fillStyle = GlobalSkin.RulerDark;
             context.strokeStyle = GlobalSkin.RulerOutline;
 
-            var _x = this.m_nLeft + 0.5;
+            var _x = this.m_nLeft + indent;
             var _w = this.m_nRight - this.m_nLeft;
             for (var i = 1; i < _count; i++)
             {
-                end_dark = ((markup.Rows[i].Y * dKoef_mm_to_pix) >> 0) + 0.5;
-                context.fillRect(_x, start_dark, _w, Math.max(end_dark - start_dark, 7));
-                context.strokeRect(_x, start_dark, _w, Math.max(end_dark - start_dark, 7));
+                end_dark = ((markup.Rows[i].Y * dKoef_mm_to_pix) >> 0) + indent;
+                context.fillRect(_x, start_dark, _w, Math.max(end_dark - start_dark, Math.round(7 * dPR)));
+                context.strokeRect(_x, start_dark, _w, Math.max(end_dark - start_dark, Math.round(7 * dPR)));
 
-                start_dark = (((markup.Rows[i].Y + markup.Rows[i].H) * dKoef_mm_to_pix) >> 0) + 0.5;
+                start_dark = (((markup.Rows[i].Y + markup.Rows[i].H) * dKoef_mm_to_pix) >> 0) + indent;
             }
         }
+
+        // рамка
+        context.beginPath();
+        context.strokeStyle = GlobalSkin.RulerOutline;
+        context.strokeRect(this.m_nLeft + indent, indent, this.m_nRight - this.m_nLeft, Math.max(intH - 1, 1));
+        context.beginPath();
+        context.moveTo(this.m_nLeft + indent, top_margin + indent);
+        context.lineTo(this.m_nRight - indent, top_margin + indent);
+
+        context.moveTo(this.m_nLeft + indent, bottom_margin + indent);
+        context.lineTo(this.m_nRight - indent, bottom_margin + indent);
+        context.stroke();
     }
 
     this.OnMouseMove = function(left, top, e)
@@ -3775,6 +3677,8 @@ function CVerRuler()
     {
         if (!this.RepaintChecker.BlitAttack && top == this.RepaintChecker.BlitTop)
             return;
+        var dPR = AscCommon.AscBrowser.retinaPixelRatio;
+        top = Math.round(top * dPR);
         this.RepaintChecker.BlitTop = top;
         this.RepaintChecker.BlitAttack = false;
 
@@ -3783,16 +3687,8 @@ function CVerRuler()
 
         if (null != this.m_oCanvas)
         {
-            if (!this.IsRetina)
-            {
-                context.drawImage(this.m_oCanvas, 0, 5, this.m_oCanvas.width, this.m_oCanvas.height - 10,
-                    0, top, this.m_oCanvas.width, this.m_oCanvas.height - 10);
-            }
-            else
-            {
-                context.drawImage(this.m_oCanvas, 0, 10, this.m_oCanvas.width, this.m_oCanvas.height - 20,
-                    0, top << 1, this.m_oCanvas.width, this.m_oCanvas.height - 20);
-            }
+                context.drawImage(this.m_oCanvas, 0, Math.round(5 * dPR), this.m_oCanvas.width, this.m_oCanvas.height - Math.round(10 * dPR),
+                    0, top, this.m_oCanvas.width, this.m_oCanvas.height - Math.round(10 * dPR));
         }
     }
 

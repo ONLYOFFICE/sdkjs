@@ -154,14 +154,6 @@ function CGroupShape()
         }
     };
 
-    CGroupShape.prototype.checkRemoveCache = function()
-    {
-        for(var i = 0; i < this.spTree.length; ++i)
-        {
-            this.spTree[i].checkRemoveCache && this.spTree[i].checkRemoveCache();
-        }
-    };
-
     CGroupShape.prototype.documentUpdateSelectionState = function()
     {
         if(this.selection.textSelection)
@@ -423,6 +415,12 @@ function CGroupShape()
         }
     };
 
+    CGroupShape.prototype.getAllSlicerViews = function(aSlicerView) {
+        for(var nSp = 0; nSp < this.spTree.length; ++nSp) {
+            this.spTree[nSp].getAllSlicerViews(aSlicerView);
+        }
+    };
+
     CGroupShape.prototype.hit = function(x, y)
     {
         for(var i = this.spTree.length - 1; i > -1; --i)
@@ -445,7 +443,7 @@ function CGroupShape()
         }
         return false;
     };
-    
+
     CGroupShape.prototype.draw = function(graphics)
     {
         if(this.checkNeedRecalculate && this.checkNeedRecalculate()){
@@ -1076,24 +1074,6 @@ function CGroupShape()
             this.selectedObjects[0].documentUpdateRulersState();
     };
 
-    CGroupShape.prototype.updateChartReferences = function(oldWorksheet, newWorksheet, bNoRebuildCache)
-    {
-        for(var i = 0; i < this.spTree.length; ++i)
-        {
-            if(this.spTree[i].updateChartReferences)
-                this.spTree[i].updateChartReferences(oldWorksheet, newWorksheet, bNoRebuildCache);
-        }
-    };
-
-    CGroupShape.prototype.rebuildSeries = function(data)
-    {
-        for(var i = 0; i < this.spTree.length; ++i)
-        {
-            if(this.spTree[i].rebuildSeries)
-                this.spTree[i].rebuildSeries(data);
-        }
-    };
-
     CGroupShape.prototype.CheckNeedRecalcAutoFit = function(oSectPr)
     {
         var bRet = false;
@@ -1201,55 +1181,108 @@ function CGroupShape()
         }
     };
 
-    CGroupShape.prototype.Search_GetId  = function(bNext, bCurrent)
+    CGroupShape.prototype.GetSearchElementId  = function(bNext, bCurrent)
     {
         var Current = -1;
         var Len = this.arrGraphicObjects.length;
-       
+
         var Id = null;
         if ( true === bCurrent )
         {
             for(var i = 0; i < Len; ++i)
-            {                
+            {
                 if(this.arrGraphicObjects[i] === this.selection.textSelection)
                 {
                     Current = i;
                     break;
                 }
-            } 
+            }
         }
-        
+
         if ( true === bNext )
-        {      
+        {
             var Start = ( -1 !== Current ? Current : 0 );
-            
+
             for ( var i = Start; i < Len; i++ )
             {
-                if ( this.arrGraphicObjects[i].Search_GetId )
+                if ( this.arrGraphicObjects[i].GetSearchElementId )
                 {
-                    Id = this.arrGraphicObjects[i].Search_GetId(true, i === Current ? true : false);
+                    Id = this.arrGraphicObjects[i].GetSearchElementId(true, i === Current ? true : false);
                     if ( null !== Id )
                         return Id;
                 }
             }
-        }        
+        }
         else
         {
             var Start = ( -1 !== Current ? Current : Len - 1 );
 
             for ( var i = Start; i >= 0; i-- )
             {
-                if ( this.arrGraphicObjects[i].Search_GetId )
+                if ( this.arrGraphicObjects[i].GetSearchElementId )
                 {
-                    Id = this.arrGraphicObjects[i].Search_GetId(false, i === Current ? true : false);
+                    Id = this.arrGraphicObjects[i].GetSearchElementId(false, i === Current ? true : false);
                     if ( null !== Id )
                         return Id;
                 }
             }
         }
-                
+
         return null;
     };
+
+	CGroupShape.prototype.FindNextFillingForm = function(isNext, isCurrent)
+	{
+		if (this.graphicObject)
+			return this.graphicObject.FindNextFillingForm(isNext, isCurrent);
+
+		var Current = -1;
+		var Len     = this.arrGraphicObjects.length;
+
+		var Id = null;
+		if (true === isCurrent)
+		{
+			for (var i = 0; i < Len; ++i)
+			{
+				if (this.arrGraphicObjects[i] === this.selection.textSelection)
+				{
+					Current = i;
+					break;
+				}
+			}
+		}
+
+		if (true === isNext)
+		{
+			var Start = (-1 !== Current ? Current : 0);
+
+			for (var i = Start; i < Len; i++)
+			{
+				if (this.arrGraphicObjects[i].FindNextFillingForm)
+				{
+					Id = this.arrGraphicObjects[i].FindNextFillingForm(true, i === Current, i === Current);
+					if (Id)
+						return Id;
+				}
+			}
+		}
+		else
+		{
+			var Start = (-1 !== Current ? Current : Len - 1);
+
+			for (var i = Start; i >= 0; i--)
+			{
+				if (this.arrGraphicObjects[i].FindNextFillingForm)
+				{
+					Id = this.arrGraphicObjects[i].FindNextFillingForm(false, i === Current, i === Current);
+					if (Id)
+						return Id;
+				}
+			}
+		}
+
+		return null;
+	};
 
     CGroupShape.prototype.getCompiledFill = function()
     {
@@ -1434,7 +1467,7 @@ function CGroupShape()
         }
     };
 
-    
+
 
     CGroupShape.prototype.normalize = function()
     {
@@ -1904,6 +1937,13 @@ function CGroupShape()
             }
         }
         return res;
+    };
+
+    CGroupShape.prototype.handleObject = function (fCallback) {
+        fCallback(this);
+        for(var nSp = 0; nSp < this.spTree.length; ++nSp) {
+            this.spTree[nSp].handleObject(fCallback);
+        }
     };
 
     //--------------------------------------------------------export----------------------------------------------------

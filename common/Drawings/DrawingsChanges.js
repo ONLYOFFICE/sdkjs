@@ -720,7 +720,7 @@
     window['AscDFH'].CChangesDrawingChangeTheme = CChangesDrawingChangeTheme;
 
 
-    function CChangesDrawingTimingLocks(Class, deleteLock, backgroundLock, timingLock, transitionLock, layoutLock, showLock){
+    function CChangesDrawingSlideLocks(Class, deleteLock, backgroundLock, timingLock, transitionLock, layoutLock, showLock){
         this.Type = AscDFH.historyitem_SlideSetLocks;
         this.deleteLock = deleteLock;
         this.backgroundLock = backgroundLock;
@@ -731,10 +731,10 @@
 		AscDFH.CChangesBase.call(this, Class);
     }
 
-	CChangesDrawingTimingLocks.prototype = Object.create(AscDFH.CChangesBase.prototype);
-	CChangesDrawingTimingLocks.prototype.constructor = CChangesDrawingTimingLocks;
+	CChangesDrawingSlideLocks.prototype = Object.create(AscDFH.CChangesBase.prototype);
+	CChangesDrawingSlideLocks.prototype.constructor = CChangesDrawingSlideLocks;
 
-    CChangesDrawingTimingLocks.prototype.WriteToBinary = function(Writer){
+    CChangesDrawingSlideLocks.prototype.WriteToBinary = function(Writer){
         AscFormat.writeObject(Writer, this.deleteLock);
         AscFormat.writeObject(Writer, this.backgroundLock);
         AscFormat.writeObject(Writer, this.timingLock);
@@ -743,7 +743,7 @@
         AscFormat.writeObject(Writer, this.showLock);
     };
 
-    CChangesDrawingTimingLocks.prototype.ReadFromBinary = function(Reader){
+    CChangesDrawingSlideLocks.prototype.ReadFromBinary = function(Reader){
         this.deleteLock = AscFormat.readObject(Reader);
         this.backgroundLock = AscFormat.readObject(Reader);
         this.timingLock = AscFormat.readObject(Reader);
@@ -752,7 +752,7 @@
         this.showLock = AscFormat.readObject(Reader);
     };
 
-    CChangesDrawingTimingLocks.prototype.Undo = function(){
+    CChangesDrawingSlideLocks.prototype.Undo = function(){
         var oSlide = this.Class;
         oSlide.deleteLock = null;
         oSlide.backgroundLock = null;
@@ -762,7 +762,7 @@
         oSlide.showLock = null;
     };
 
-    CChangesDrawingTimingLocks.prototype.Redo = function(){
+    CChangesDrawingSlideLocks.prototype.Redo = function(){
         var oSlide = this.Class;
          oSlide.deleteLock = this.deleteLock;
          oSlide.backgroundLock = this.backgroundLock;
@@ -771,16 +771,16 @@
          oSlide.layoutLock = this.layoutLock;
          oSlide.showLock = this.showLock;
     };
-    CChangesDrawingTimingLocks.prototype.Load = function(){
+    CChangesDrawingSlideLocks.prototype.Load = function(){
         this.Redo();
         this.RefreshRecalcData();
     };
-    CChangesDrawingTimingLocks.prototype.CreateReverseChange = function()
+    CChangesDrawingSlideLocks.prototype.CreateReverseChange = function()
     {
         return new this.constructor(this.Class, null, null, null, null, null);
     };
 
-    window['AscDFH'].CChangesDrawingTimingLocks = CChangesDrawingTimingLocks;
+    window['AscDFH'].CChangesDrawingSlideLocks = CChangesDrawingSlideLocks;
 
 
     function CChangesSparklinesChangeData(Class, OldPr, NewPr){

@@ -102,7 +102,6 @@ CChartSpace.prototype.setRecalculateInfo = function()
         recalculateUpDownBars: true,
         recalculateLegend: true,
         recalculateReferences: true,
-        recalculateBBox: true,
         recalculateFormulas: true,
         recalculatePenBrush: true,
         recalculateTextPr : true,
@@ -258,6 +257,13 @@ CChartSpace.prototype.recalculate = function()
 {
     if(this.bDeleted)
         return;
+
+    var oController = this.getDrawingObjectsController();
+    //Use this check to prevent charts recalculation on not initialized sheets bug 50467
+    if(!oController) {
+        return;
+    }
+    //---------------------------------------------------
     AscFormat.ExecuteNoHistory(function()
     {
         this.updateLinks();
@@ -283,11 +289,6 @@ CChartSpace.prototype.recalculate = function()
         {
             this.recalculateReferences();
             this.recalcInfo.recalculateReferences = false;
-        }
-        if(this.recalcInfo.recalculateBBox)
-        {
-            this.recalculateBBox();
-            this.recalcInfo.recalculateBBox = false;
         }
         if(this.recalcInfo.recalculateMarkers)
         {

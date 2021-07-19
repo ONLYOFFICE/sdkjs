@@ -180,7 +180,7 @@
     function drawHorBorder(graphics, oBorderPr, oPrevBorderPr, align, y, x, r) {
         var oLastBorderPr = null;
         if(oBorderPr && oBorderPr.s !== AscCommon.c_oAscBorderStyles.None) {
-            graphics.drawHorLine(align, y, x, r, setGraphicsSettings(graphics, oBorderPr));
+            graphics.drawHorLine(align, y, x, r, setGraphicsSettings(graphics, oBorderPr, oPrevBorderPr));
             oLastBorderPr = oBorderPr;
         }
         return oLastBorderPr;
@@ -188,7 +188,7 @@
     function drawVerBorder(graphics, oBorderPr, oPrevBorderPr, align, x, y, b) {
         var oLastBorderPr = null;
         if(oBorderPr && oBorderPr.s !== AscCommon.c_oAscBorderStyles.None) {
-            graphics.drawVerLine(align, x, y, b, setGraphicsSettings(graphics, oBorderPr));
+            graphics.drawVerLine(align, x, y, b, setGraphicsSettings(graphics, oBorderPr, oPrevBorderPr));
             oLastBorderPr = oBorderPr;
         }
         return oLastBorderPr;
@@ -400,7 +400,6 @@
         }
         return true;
     };
-
     CSlicerData.prototype.onViewUpdate = function () {
         var oWorksheet = this.slicer.getWorksheet();
         if(!oWorksheet) {
@@ -433,7 +432,6 @@
             }
             aValuesToApply.push(oApplyValue);
         }
-
         if(bNeedUpdate) {
             if(this.slicer.isSubscribed()) {
                 this.values = aValuesToApply;
@@ -447,6 +445,9 @@
         }
     };
     CSlicerData.prototype.onDataUpdate = function() {
+        if(AscCommon.isFileBuild()) {
+           return;
+        }
         var oOldCache = this.save();
         this.clear();
         if(this.needUpdateValues(oOldCache)) {
@@ -729,6 +730,21 @@
         return false;
     };
     CSlicer.prototype.recalculate = function () {
+        if(AscCommon.isFileBuild()) {
+            return;
+        }
+
+        //--------------For bug 46500--------------------
+        var bCollaborativeChanges = false;
+        var oWorkbook = this.getWorkbook();
+        if(oWorkbook) {
+            bCollaborativeChanges = oWorkbook.bCollaborativeChanges;
+        }
+        if(AscFonts.IsCheckSymbols && bCollaborativeChanges) {
+            return;
+        }
+        //-------------------------------------------------
+        
         AscFormat.ExecuteNoHistory(function () {
             AscFormat.CShape.prototype.recalculate.call(this);
             if(this.recalcInfo.recalculateHeader) {
@@ -744,14 +760,14 @@
     };
     CSlicer.prototype.recalculateHeader = function() {
         var bShowHeader = this.getShowCaption();
-        var sCaption = this.getCaption();
-        if(!bShowHeader || sCaption.length < 1) {
+        if(!bShowHeader) {
             this.header = null;
             return;
         }
         if(!this.header) {
             this.header = new CHeader(this);
         }
+        this.header.worksheet = this.worksheet;
         this.header.setRecalculateInfo();
         this.header.recalculate();
     };
@@ -845,7 +861,6 @@
         var oBorder = this.getBorder(STYLE_TYPE.WHOLE);
         if(oBorder) {
             var oTransform = transform || this.transform;
-            graphics.SaveGrState();
             graphics.transform3(oTransform);
             var oSide, oLastDrawn;
             oSide = oBorder.l;
@@ -856,7 +871,7 @@
             oLastDrawn = drawVerBorder(graphics, oSide, oLastDrawn, 1, this.extX, 0, this.extY) || oLastDrawn;
             oSide = oBorder.b;
             oLastDrawn = drawHorBorder(graphics, oSide, oLastDrawn, 1, this.extY, 0, this.extX) || oLastDrawn;
-            graphics.RestoreGrState();
+            graphics.reset();
         }
         if(!AscCommon.IsShapeToImageConverter && !graphics.RENDERER_PDF_FLAG) {
             if(this.getLocked()) {
@@ -1014,11 +1029,17 @@
         return this.buttonsContainer.onWheel(deltaX, deltaY);
     };
     CSlicer.prototype.onSlicerUpdate = function (sName) {
+        if(AscCommon.isFileBuild()) {
+            return;
+        }
         if(this.name === sName) {
             this.onDataUpdate();
         }
     };
     CSlicer.prototype.onSlicerLock = function (sName, bLock) {
+        if(AscCommon.isFileBuild()) {
+            return;
+        }
         if(this.name === sName) {
             this.data.setLocked(bLock);
             this.onUpdate(this.bounds);
@@ -1026,21 +1047,44 @@
         }
     };
     CSlicer.prototype.onSlicerChangeName = function (sName, sNewName) {
+        if(AscCommon.isFileBuild()) {
+            return;
+        }
         if(this.name === sName) {
             this.setName(sNewName);
             this.onDataUpdate();
         }
     };
     CSlicer.prototype.onSlicerDelete = function (sName) {
-         var bRet = false;
+        if(AscCommon.isFileBuild()) {
+            return false;
+        }
+        var bRet = false;
+        var oMainGroup, oCurGroup;
         if(this.name === sName) {
-            if(this.drawingBase) {
-                this.deleteDrawingBase();
+            if(this.group) {
+                this.group.removeFromSpTree(this.Id);
+                oCurGroup = this.group;
+                while (oCurGroup.spTree.length === 0 && oCurGroup.group) {
+                    oCurGroup.group.removeFromSpTree(oCurGroup.Get_Id());
+                    oCurGroup = oCurGroup.group;
+                }
+                if(oCurGroup.spTree.length === 0) {
+                    if(oCurGroup.drawingBase) {
+                        oCurGroup.deleteDrawingBase();
+                    }
+                }
+                else {
+                    oMainGroup = this.group.getMainGroup();
+                    if(oMainGroup) {
+                        oMainGroup.updateCoordinatesAfterInternalResize();
+                    }
+                }
                 bRet = true;
             }
             else {
-                if(this.group) {
-                    this.group.removeFromSpTree(this.Id);
+                if(this.drawingBase) {
+                    this.deleteDrawingBase();
                     bRet = true;
                 }
             }
@@ -1144,6 +1188,9 @@
             return this;
         }
         return null;
+    };
+    CSlicer.prototype.getAllSlicerViews = function(aSlicerView) {
+        aSlicerView.push(this);
     };
 
     function CHeader(slicer) {
@@ -1701,14 +1748,12 @@
         }
         var oBorder = this.parent.getBorder(this.getState());
         if(oBorder) {
-            graphics.SaveGrState();
             graphics.transform3(this.transform);
             var oLastDrawn = null;
             oLastDrawn = drawVerBorder(graphics, oBorder.l, oLastDrawn, 0, 0, 0, this.extY) || oLastDrawn;
             oLastDrawn = drawHorBorder(graphics, oBorder.t, oLastDrawn, 0, 0, 0, this.extX) || oLastDrawn;
             oLastDrawn = drawVerBorder(graphics, oBorder.r, oLastDrawn, 2, this.extX, 0, this.extY) || oLastDrawn;
             oLastDrawn = drawHorBorder(graphics, oBorder.b, oLastDrawn, 2, this.extY, 0, this.extX) || oLastDrawn;
-            graphics.RestoreGrState();
         }
     };
     CButtonBase.prototype.hit = function(x, y) {
@@ -2043,10 +2088,28 @@
         return ((this.buttons.length - 1) / this.getColumnsCount() >> 0) + 1;
     };
     CButtonsContainer.prototype.getRowsInFrame = function () {
-        return (this.extY + SPACE_BETWEEN) / (this.getButtonHeight() + SPACE_BETWEEN)  >> 0;
+        if(this.buttons.length === 0) {
+            return 0;
+        }
+        var dCount = (this.extY) / (this.getButtonHeight() + SPACE_BETWEEN);
+        var nCeil = (dCount >> 0);
+        if(dCount - nCeil > 0) {
+            ++nCeil;
+        }
+        return Math.min(this.buttons.length, nCeil);
+    };
+    CButtonsContainer.prototype.getRowsInFrameFull = function () {
+        if(this.buttons.length === 0) {
+            return 0;
+        }
+        var dCount = (this.extY + SPACE_BETWEEN) / (this.getButtonHeight() + SPACE_BETWEEN);
+        if(dCount <= 0) {
+            return 0;
+        }
+        return (dCount >> 0);
     };
     CButtonsContainer.prototype.getScrolledRows = function () {
-        return this.getRowsCount() - this.getRowsInFrame();
+        return this.getRowsCount() - this.getRowsInFrameFull();
     };
     CButtonsContainer.prototype.getTotalHeight = function () {
         var nRowsCount = this.getRowsCount();
@@ -2088,7 +2151,7 @@
             this.checkScrollTop();
             var nColumns = this.getColumnsCount();
             var nStart = this.scrollTop * nColumns;
-            var nEnd = Math.min(this.buttons.length - 1, nStart + (this.getRowsInFrame() + 1) * nColumns);
+            var nEnd = Math.min(this.buttons.length - 1, nStart + this.getRowsInFrame() * nColumns - 1);
             for(var nButton = nStart; nButton <= nEnd; ++nButton) {
                 this.buttons[nButton].draw(graphics);
             }

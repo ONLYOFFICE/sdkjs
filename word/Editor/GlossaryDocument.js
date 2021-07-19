@@ -63,11 +63,17 @@ function CGlossaryDocument(oLogicDocument)
 	// Инициализировать нужно сразу, чтобы не было проблем с совместным редактированием
 	this.DefaultPlaceholder = {
 		Text     : this.private_CreateDefaultPlaceholder(c_oAscDefaultPlaceholderName.Text, AscCommon.translateManager.getValue("Your text here")),
-		List     : this.private_CreateDefaultPlaceholder(c_oAscDefaultPlaceholderName.List, AscCommon.translateManager.getValue("Choose an item.")),
-		DateTime : this.private_CreateDefaultPlaceholder(c_oAscDefaultPlaceholderName.DateTime, AscCommon.translateManager.getValue("Enter a date.")),
-		Equation : this.private_CreateDefaultPlaceholder(c_oAscDefaultPlaceholderName.Equation, AscCommon.translateManager.getValue("Type equation here.")),
+		List     : this.private_CreateDefaultPlaceholder(c_oAscDefaultPlaceholderName.List, AscCommon.translateManager.getValue("Choose an item")),
+		DateTime : this.private_CreateDefaultPlaceholder(c_oAscDefaultPlaceholderName.DateTime, AscCommon.translateManager.getValue("Enter a date")),
+		Equation : this.private_CreateDefaultPlaceholder(c_oAscDefaultPlaceholderName.Equation, AscCommon.translateManager.getValue("Type equation here")),
 		TextForm : this.private_CreateDefaultTextFormPlaceholder()
 	};
+
+	// TODO: Реализовать работу нумерации, стилей, сносок, заданных в контентах по-нормальному
+	this.Numbering = new CNumbering();
+	this.Styles    = new CStyles();
+	this.Footnotes = new CFootnotesController(oLogicDocument);
+	this.Endnotes  = new CEndnotesController(oLogicDocument);
 
 	oLogicDocument.GetTableId().Add(this, this.Id);
 }
@@ -89,6 +95,34 @@ CGlossaryDocument.prototype.GetId = function()
 CGlossaryDocument.prototype.Get_Id = function()
 {
 	return this.Id;
+};
+/**
+ * @return {CNumbering}
+ */
+CGlossaryDocument.prototype.GetNumbering = function()
+{
+	return this.Numbering;
+};
+/**
+ * @return {CStyles}
+ */
+CGlossaryDocument.prototype.GetStyles = function()
+{
+	return this.Styles;
+};
+/**
+ * @return {CFootnotesController}
+ */
+CGlossaryDocument.prototype.GetFootnotes = function()
+{
+	return this.Footnotes;
+};
+/**
+ * @return {CEndnotesController}
+ */
+CGlossaryDocument.prototype.GetEndnotes = function()
+{
+	return this.Endnotes;
 };
 /**
  * Создаем новый контент
@@ -304,15 +338,17 @@ CDocPart.prototype.Refresh_RecalcData2 = function(nIndex, nCurPage)
 CDocPart.prototype.Write_ToBinary2 = function(oWriter)
 {
 	oWriter.WriteLong(AscDFH.historyitem_type_DocPart);
+	oWriter.WriteString2(this.Glossary ? this.Glossary.GetId() : "");
 	this.Pr.WriteToBinary(oWriter);
 	CDocumentContent.prototype.Write_ToBinary2.call(this, oWriter);
 };
 CDocPart.prototype.Read_FromBinary2 = function(oReader)
 {
 	// historyitem_type_DocPart
+	// String : Glossary.Id
 	// CDocPartPr
+	this.Glossary =  AscCommon.g_oTableId.Get_ById(oReader.GetString2());
 	this.Pr.ReadFromBinary(oReader);
-
 	oReader.GetLong(); // Должен вернуть historyitem_type_DocumentContent
 	CDocumentContent.prototype.Read_FromBinary2.call(this, oReader);
 };

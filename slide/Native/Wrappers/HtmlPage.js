@@ -42,61 +42,6 @@ var X_Right_Margin  = 15;  // 1.5 cm
 var Y_Bottom_Margin = 20;  // 2   cm
 var Y_Top_Margin    = 20;  // 2   cm
 
-var GlobalSkinTeamlab = {
-    Name : "classic",
-    RulersButton : true,
-    NavigationButtons : true,
-    BackgroundColor : "#B0B0B0",
-    BackgroundColorThumbnails : "#EBEBEB",
-    RulerDark : "#B0B0B0",
-    RulerLight : "EDEDED",
-    RulerOutline : "#929292",
-    RulerMarkersFillColor : "#E7E7E7",
-    PageOutline : "#81878F",
-    STYLE_THUMBNAIL_WIDTH : 80,
-    STYLE_THUMBNAIL_HEIGHT : 40,
-    BorderSplitterColor : "#787878",
-    SupportNotes : true,
-    SplitterWidthMM : 1.5,
-    ThumbnailScrollWidthNullIfNoScrolling : true
-};
-var GlobalSkinFlat = {
-    Name : "flat",
-    RulersButton : false,
-    NavigationButtons : false,
-    BackgroundColor : "#F4F4F4",
-    BackgroundColorThumbnails : "#F4F4F4",
-    RulerDark : "#CFCFCF",
-    RulerLight : "#FFFFFF",
-    RulerOutline : "#BBBEC2",
-    RulerMarkersFillColor : "#FFFFFF",
-    PageOutline : "#BBBEC2",
-    STYLE_THUMBNAIL_WIDTH : 109,
-    STYLE_THUMBNAIL_HEIGHT : 45,
-    BorderSplitterColor : "#CBCBCB",
-    SupportNotes : false,
-    SplitterWidthMM : 1,
-    ThumbnailScrollWidthNullIfNoScrolling : false
-};
-
-var GlobalSkin = GlobalSkinTeamlab;
-
-function updateGlobalSkin(newSkin) {
-    GlobalSkin.Name = newSkin.Name;
-    GlobalSkin.RulersButton = newSkin.RulersButton;
-    GlobalSkin.NavigationButtons = newSkin.NavigationButtons;
-    GlobalSkin.BackgroundColor = newSkin.BackgroundColor;
-    GlobalSkin.RulerDark = newSkin.RulerDark;
-    GlobalSkin.RulerLight = newSkin.RulerLight;
-    GlobalSkin.BackgroundScroll = newSkin.BackgroundScroll;
-    GlobalSkin.RulerOutline = newSkin.RulerOutline;
-    GlobalSkin.RulerMarkersFillColor = newSkin.RulerMarkersFillColor;
-    GlobalSkin.PageOutline = newSkin.PageOutline;
-    GlobalSkin.STYLE_THUMBNAIL_WIDTH = newSkin.STYLE_THUMBNAIL_WIDTH;
-    GlobalSkin.STYLE_THUMBNAIL_HEIGHT = newSkin.STYLE_THUMBNAIL_HEIGHT;
-    GlobalSkin.isNeedInvertOnActive = newSkin.isNeedInvertOnActive;
-}
-
 function CEditorPage(api)
 {
     // ------------------------------------------------------------------
@@ -658,9 +603,6 @@ CEditorPage.prototype.SaveDocument = function()
 //------------------------------------------------------------export----------------------------------------------------
 window['AscCommon'] = window['AscCommon'] || {};
 window['AscCommonSlide'] = window['AscCommonSlide'] || {};
-window['AscCommonSlide'].GlobalSkinFlat = GlobalSkinFlat;
-window['AscCommonSlide'].GlobalSkin = GlobalSkin;
-window['AscCommonSlide'].updateGlobalSkin = updateGlobalSkin;
 window['AscCommonSlide'].CEditorPage = CEditorPage;
 
 window['AscCommon'].Page_Width = Page_Width;

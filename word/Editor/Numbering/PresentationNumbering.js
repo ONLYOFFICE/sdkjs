@@ -41,60 +41,133 @@
 var g_oTextMeasurer = AscCommon.g_oTextMeasurer;
 var History         = AscCommon.History;
 
-var numbering_presentationnumfrmt_None          =     0;
-var numbering_presentationnumfrmt_Char          =     1;
-var numbering_presentationnumfrmt_ArabicPeriod  =   100;  // 1., 2., 3., ...
-var numbering_presentationnumfrmt_ArabicParenR  =   101;  // 1), 2), 3), ...
-var numbering_presentationnumfrmt_RomanUcPeriod =   102;  // I., II., III., ...
-var numbering_presentationnumfrmt_RomanLcPeriod =   103;  // i., ii., iii., ...
-var numbering_presentationnumfrmt_AlphaLcParenR =   104;  // a), b), c), ...
-var numbering_presentationnumfrmt_AlphaLcPeriod =   105;  // a., b., c.,
-var numbering_presentationnumfrmt_AlphaUcParenR =   106;  // A), B), C), ...
-var numbering_presentationnumfrmt_AlphaUcPeriod =   107;  // A., B., C., ...
 
+var numbering_presentationnumfrmt_AlphaLcParenBoth = 0;
+var numbering_presentationnumfrmt_AlphaLcParenR = 1;
+var numbering_presentationnumfrmt_AlphaLcPeriod = 2;
+var numbering_presentationnumfrmt_AlphaUcParenBoth = 3;
+var numbering_presentationnumfrmt_AlphaUcParenR = 4;
+var numbering_presentationnumfrmt_AlphaUcPeriod = 5;
+var numbering_presentationnumfrmt_Arabic1Minus = 6;
+var numbering_presentationnumfrmt_Arabic2Minus = 7;
+var numbering_presentationnumfrmt_ArabicDbPeriod = 8;
+var numbering_presentationnumfrmt_ArabicDbPlain = 9;
+var numbering_presentationnumfrmt_ArabicParenBoth = 10;
+var numbering_presentationnumfrmt_ArabicParenR = 11;
+var numbering_presentationnumfrmt_ArabicPeriod = 12;
+var numbering_presentationnumfrmt_ArabicPlain = 13;
+var numbering_presentationnumfrmt_CircleNumDbPlain = 14;
+var numbering_presentationnumfrmt_CircleNumWdBlackPlain = 15;
+var numbering_presentationnumfrmt_CircleNumWdWhitePlain = 16;
+var numbering_presentationnumfrmt_Ea1ChsPeriod = 17;
+var numbering_presentationnumfrmt_Ea1ChsPlain = 18;
+var numbering_presentationnumfrmt_Ea1ChtPeriod = 19;
+var numbering_presentationnumfrmt_Ea1ChtPlain = 20;
+var numbering_presentationnumfrmt_Ea1JpnChsDbPeriod = 21;
+var numbering_presentationnumfrmt_Ea1JpnKorPeriod = 22;
+var numbering_presentationnumfrmt_Ea1JpnKorPlain = 23;
+var numbering_presentationnumfrmt_Hebrew2Minus = 24;
+var numbering_presentationnumfrmt_HindiAlpha1Period = 25;
+var numbering_presentationnumfrmt_HindiAlphaPeriod = 26;
+var numbering_presentationnumfrmt_HindiNumParenR = 27;
+var numbering_presentationnumfrmt_HindiNumPeriod = 28;
+var numbering_presentationnumfrmt_RomanLcParenBoth = 29;
+var numbering_presentationnumfrmt_RomanLcParenR = 30;
+var numbering_presentationnumfrmt_RomanLcPeriod = 31;
+var numbering_presentationnumfrmt_RomanUcParenBoth = 32;
+var numbering_presentationnumfrmt_RomanUcParenR = 33;
+var numbering_presentationnumfrmt_RomanUcPeriod = 34;
+var numbering_presentationnumfrmt_ThaiAlphaParenBoth = 35;
+var numbering_presentationnumfrmt_ThaiAlphaParenR = 36;
+var numbering_presentationnumfrmt_ThaiAlphaPeriod = 37;
+var numbering_presentationnumfrmt_ThaiNumParenBoth = 38;
+var numbering_presentationnumfrmt_ThaiNumParenR = 39;
+var numbering_presentationnumfrmt_ThaiNumPeriod = 40;
 
-var g_NumberingArr = [];
-g_NumberingArr[0] = numbering_presentationnumfrmt_AlphaLcParenR;
-g_NumberingArr[1] = numbering_presentationnumfrmt_AlphaLcParenR;
-g_NumberingArr[2] = numbering_presentationnumfrmt_AlphaLcPeriod;
-g_NumberingArr[3] = numbering_presentationnumfrmt_AlphaUcParenR;
-g_NumberingArr[4] = numbering_presentationnumfrmt_AlphaUcParenR;
-g_NumberingArr[5] = numbering_presentationnumfrmt_AlphaUcPeriod;
-g_NumberingArr[6] = numbering_presentationnumfrmt_ArabicPeriod;
-g_NumberingArr[7] = numbering_presentationnumfrmt_ArabicPeriod;
-g_NumberingArr[8] = numbering_presentationnumfrmt_ArabicPeriod;
-g_NumberingArr[9] = numbering_presentationnumfrmt_ArabicPeriod;
-g_NumberingArr[10] = numbering_presentationnumfrmt_ArabicParenR;
-g_NumberingArr[11] = numbering_presentationnumfrmt_ArabicParenR;
-g_NumberingArr[12] = numbering_presentationnumfrmt_ArabicPeriod;
-g_NumberingArr[13] = numbering_presentationnumfrmt_AlphaLcParenR;
-g_NumberingArr[14] = numbering_presentationnumfrmt_AlphaLcParenR;
-g_NumberingArr[15] = numbering_presentationnumfrmt_AlphaLcParenR;
-g_NumberingArr[16] = numbering_presentationnumfrmt_AlphaLcParenR;
-g_NumberingArr[17] = numbering_presentationnumfrmt_AlphaLcParenR;
-g_NumberingArr[18] = numbering_presentationnumfrmt_AlphaLcParenR;
-g_NumberingArr[19] = numbering_presentationnumfrmt_AlphaLcParenR;
-g_NumberingArr[20] = numbering_presentationnumfrmt_AlphaLcParenR;
-g_NumberingArr[21] = numbering_presentationnumfrmt_AlphaLcParenR;
-g_NumberingArr[22] = numbering_presentationnumfrmt_AlphaLcParenR;
-g_NumberingArr[23] = numbering_presentationnumfrmt_AlphaLcParenR;
-g_NumberingArr[24] = numbering_presentationnumfrmt_AlphaLcParenR;
-g_NumberingArr[25] = numbering_presentationnumfrmt_AlphaLcParenR;
-g_NumberingArr[26] = numbering_presentationnumfrmt_AlphaLcParenR;
-g_NumberingArr[27] = numbering_presentationnumfrmt_AlphaLcParenR;
-g_NumberingArr[28] = numbering_presentationnumfrmt_AlphaLcParenR;
-g_NumberingArr[29] = numbering_presentationnumfrmt_RomanLcPeriod;
-g_NumberingArr[30] = numbering_presentationnumfrmt_RomanLcPeriod;
-g_NumberingArr[31] = numbering_presentationnumfrmt_RomanLcPeriod;
-g_NumberingArr[32] = numbering_presentationnumfrmt_RomanUcPeriod;
-g_NumberingArr[33] = numbering_presentationnumfrmt_RomanUcPeriod;
-g_NumberingArr[34] = numbering_presentationnumfrmt_RomanUcPeriod;
-g_NumberingArr[35] = numbering_presentationnumfrmt_AlphaLcParenR;
-g_NumberingArr[36] = numbering_presentationnumfrmt_AlphaLcParenR;
-g_NumberingArr[37] = numbering_presentationnumfrmt_AlphaLcParenR;
-g_NumberingArr[38] = numbering_presentationnumfrmt_AlphaLcParenR;
-g_NumberingArr[39] = numbering_presentationnumfrmt_AlphaLcParenR;
-g_NumberingArr[40] = numbering_presentationnumfrmt_AlphaLcPeriod;
+var numbering_presentationnumfrmt_None          =     100;
+var numbering_presentationnumfrmt_Char          =     101;
+
+function IsAlphaPrNumbering(nType)
+{
+	if(AscFormat.isRealNumber(nType))
+	{
+		return nType >= numbering_presentationnumfrmt_AlphaLcParenBoth &&
+				nType <= numbering_presentationnumfrmt_AlphaUcPeriod;
+	}
+	return false;
+}
+function IsArabicPrNumbering(nType)
+{
+	if(AscFormat.isRealNumber(nType))
+	{
+		return nType >= numbering_presentationnumfrmt_Arabic1Minus &&
+			nType <= numbering_presentationnumfrmt_ArabicPlain;
+	}
+	return false;
+}
+function IsCirclePrNumbering(nType)
+{
+	if(AscFormat.isRealNumber(nType))
+	{
+		return nType >= numbering_presentationnumfrmt_CircleNumDbPlain &&
+			nType <= numbering_presentationnumfrmt_CircleNumWdWhitePlain;
+	}
+	return false;
+}
+function IsEaPrNumbering(nType)
+{
+	if(AscFormat.isRealNumber(nType))
+	{
+		return nType >= numbering_presentationnumfrmt_Ea1ChsPeriod &&
+			nType <= numbering_presentationnumfrmt_Ea1JpnKorPlain;
+	}
+	return false;
+}
+
+function IsHebrewPrNumbering(nType)
+{
+	return nType === numbering_presentationnumfrmt_Hebrew2Minus;
+}
+
+function IsHindiPrNumbering(nType)
+{
+	if(AscFormat.isRealNumber(nType))
+	{
+		return nType >= numbering_presentationnumfrmt_HindiAlpha1Period &&
+			nType <= numbering_presentationnumfrmt_HindiNumPeriod;
+	}
+	return false;
+}
+function IsRomanPrNumbering(nType)
+{
+	if(AscFormat.isRealNumber(nType))
+	{
+		return nType >= numbering_presentationnumfrmt_RomanLcParenBoth &&
+			nType <= numbering_presentationnumfrmt_RomanUcPeriod;
+	}
+	return false;
+}
+function IsThaiPrNumbering(nType)
+{
+	if(AscFormat.isRealNumber(nType))
+	{
+		return nType >= numbering_presentationnumfrmt_ThaiAlphaParenBoth &&
+			nType <= numbering_presentationnumfrmt_ThaiNumPeriod;
+	}
+	return false;
+}
+
+function IsPrNumberingSameType(nType1, nType2)
+{
+	return IsAlphaPrNumbering(nType1) && IsAlphaPrNumbering(nType2) ||
+		IsArabicPrNumbering(nType1) && IsArabicPrNumbering(nType2) ||
+		IsCirclePrNumbering(nType1) && IsCirclePrNumbering(nType2) ||
+		IsEaPrNumbering(nType1) && IsEaPrNumbering(nType2) ||
+		IsHebrewPrNumbering(nType1) && IsHebrewPrNumbering(nType2) ||
+		IsHindiPrNumbering(nType1) && IsHindiPrNumbering(nType2) ||
+		IsRomanPrNumbering(nType1) && IsRomanPrNumbering(nType2) ||
+		IsThaiPrNumbering(nType1) && IsThaiPrNumbering(nType2);
+}
 
 // Класс для работы с нумерацией в презентациях
 function CPresentationBullet()
@@ -141,6 +214,12 @@ CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Them
 			break;
 		}
 
+		case numbering_presentationnumfrmt_AlphaLcParenBoth:
+		{
+			sT = "(" + Numbering_Number_To_Alpha( Num, true ) + ")";
+			break;
+		}
+
 		case numbering_presentationnumfrmt_AlphaLcParenR:
 		{
 			sT = Numbering_Number_To_Alpha( Num, true ) + ")";
@@ -150,6 +229,12 @@ CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Them
 		case numbering_presentationnumfrmt_AlphaLcPeriod:
 		{
 			sT = Numbering_Number_To_Alpha( Num, true ) + ".";
+			break;
+		}
+
+		case numbering_presentationnumfrmt_AlphaUcParenBoth:
+		{
+			sT = "(" + Numbering_Number_To_Alpha( Num, false ) + ")";
 			break;
 		}
 
@@ -165,6 +250,12 @@ CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Them
 			break;
 		}
 
+		case numbering_presentationnumfrmt_ArabicParenBoth:
+		{
+			sT += "(" + Numbering_Number_To_String(Num) + ")";
+			break;
+		}
+
 		case numbering_presentationnumfrmt_ArabicParenR:
 		{
 			sT += Numbering_Number_To_String(Num) + ")";
@@ -177,15 +268,49 @@ CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Them
 			break;
 		}
 
+		case numbering_presentationnumfrmt_ArabicPlain:
+		{
+			sT += Numbering_Number_To_String(Num);
+			break;
+		}
+
+		case numbering_presentationnumfrmt_RomanLcParenBoth:
+		{
+			sT += "(" + Numbering_Number_To_Roman(Num, true) + ")";
+			break;
+		}
+		case numbering_presentationnumfrmt_RomanLcParenR:
+		{
+			sT += Numbering_Number_To_Roman(Num, true) + ")";
+			break;
+		}
 		case numbering_presentationnumfrmt_RomanLcPeriod:
 		{
 			sT += Numbering_Number_To_Roman(Num, true) + ".";
 			break;
 		}
-
+		case numbering_presentationnumfrmt_RomanUcParenBoth:
+		{
+			sT += "(" + Numbering_Number_To_Roman(Num, false) + ")";
+			break;
+		}
+		case numbering_presentationnumfrmt_RomanUcParenR:
+		{
+			sT += Numbering_Number_To_Roman(Num, false) + ")";
+			break;
+		}
 		case numbering_presentationnumfrmt_RomanUcPeriod:
 		{
 			sT += Numbering_Number_To_Roman(Num, false) + ".";
+			break;
+		}
+		case numbering_presentationnumfrmt_None:
+		{
+			break;
+		}
+		default:
+		{
+			sT += Numbering_Number_To_String(Num) + ".";
 			break;
 		}
 	}
@@ -250,12 +375,13 @@ CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Them
 	}
 
 	var TextPr_ = new CTextPr();
+	var bIsNumbered = this.IsNumbered();
 	TextPr_.Set_FromObject({
 		RFonts: RFonts,
 		Unifill: this.Unifill,
 		FontSize : dFontSize,
-		Bold     : ( this.m_nType >= numbering_presentationnumfrmt_ArabicPeriod ? FirstTextPr.Bold   : false ),
-		Italic   : ( this.m_nType >= numbering_presentationnumfrmt_ArabicPeriod ? FirstTextPr.Italic : false )
+		Bold     : ( bIsNumbered ? FirstTextPr.Bold   : false ),
+		Italic   : ( bIsNumbered ? FirstTextPr.Italic : false )
 	});
 	FirstTextPr_.Merge(TextPr_);
 	this.m_oTextPr = FirstTextPr_;
@@ -335,8 +461,31 @@ CPresentationBullet.prototype.Draw = function(X, Y, Context, PDSE)
 			this.m_oColor.g = RGBA.G;
 			this.m_oColor.b = RGBA.B;
 		}
-		Context.p_color( this.m_oColor.r, this.m_oColor.g, this.m_oColor.b, 255 );
-		Context.b_color1( this.m_oColor.r, this.m_oColor.g, this.m_oColor.b, 255 );
+		var r = this.m_oColor.r;
+		var g = this.m_oColor.g;
+		var b = this.m_oColor.b;
+		if(PDSE.Paragraph && PDSE.Paragraph.IsEmpty())
+		{
+			var dAlpha = 0.4;
+			var rB, gB, bB;
+			if(PDSE.BgColor)
+			{
+				rB = PDSE.BgColor.r;
+				gB = PDSE.BgColor.g;
+				bB = PDSE.BgColor.b;
+			}
+			else
+			{
+				rB = 255;
+				gB = 255;
+				bB = 255;
+			}
+			r = Math.min(255, (r  * dAlpha + rB * (1 - dAlpha) + 0.5) >> 0);
+			g = Math.min(255, (g  * dAlpha + gB * (1 - dAlpha) + 0.5) >> 0);
+			b = Math.min(255, (b  * dAlpha + bB * (1 - dAlpha) + 0.5) >> 0);
+		}
+		Context.p_color(r, g, b, 255 );
+		Context.b_color1(r, g, b, 255 );
 	}
 	g_oTextMeasurer.SetTextPr( this.m_oTextPr, PDSE.Theme  );
 	g_oTextMeasurer.SetFontSlot( FontSlot );
@@ -358,7 +507,20 @@ CPresentationBullet.prototype.Draw = function(X, Y, Context, PDSE)
 		g_oTextMeasurer.SetTextPr( OldTextPr2, PDSE.Theme  );
 	}
 };
+CPresentationBullet.prototype.IsNumbered = function()
+{
+	return this.m_nType >= numbering_presentationnumfrmt_AlphaLcParenBoth
+		&& this.m_nType <= numbering_presentationnumfrmt_ThaiNumPeriod;
+};
+CPresentationBullet.prototype.IsNone = function()
+{
+	return this.m_nType === numbering_presentationnumfrmt_None;
+};
+CPresentationBullet.prototype.IsAlpha = function()
+{
+	return IsAlphaPrNumbering(this.m_nType);
+};
+
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
-window['AscCommonWord'].g_NumberingArr = g_NumberingArr;

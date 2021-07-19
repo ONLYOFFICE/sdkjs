@@ -291,6 +291,11 @@ function MoveShapeImageTrack(originalObject)
                         this.originalObject.transform = this.transform;
                         this.originalObject.invertTransform = AscCommon.global_MatrixTransformer.Invert(this.transform);
                         this.originalObject.calculateSrcRect();
+                        var oParaDrawing = this.originalObject.parent;
+                        if(oParaDrawing && oParaDrawing.Check_WrapPolygon)
+                        {
+                            oParaDrawing.Check_WrapPolygon();
+                        }
                     }
                     return;
                 }

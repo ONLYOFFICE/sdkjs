@@ -378,6 +378,7 @@
 				this.handlers.trigger("asc_onLockPrintArea");
 				this.handlers.trigger("updateAllHeaderFooterLock");
 				this.handlers.trigger("onUpdateAllPrintScaleLock");
+				this.handlers.trigger("updateAllSheetViewLock");
 
 
 				if (0 === this.m_nUseType)
@@ -888,6 +889,49 @@
 			if (!this.m_oRecalcIndexRows.hasOwnProperty(sheetId))
 				return row;
 			return this.m_oRecalcIndexRows[sheetId].getLockSaveOther(row);
+		};
+		CCollaborativeEditing.prototype.checkObjectsLock = function(aObjectId, callback) {
+			var oApi = Asc.editor;
+			var bCanNotEdit = this.getGlobalLock() || oApi && !oApi.canEdit();
+			if(bCanNotEdit) {
+				if(callback) {
+					callback(false, true);
+				}
+				return false;
+			}
+			if(oApi) {
+				oApi.incrementCounterLongAction();
+			}
+			var callbackEx = function(result, sync) {
+				if(oApi) {
+					oApi.decrementCounterLongAction();
+				}
+				if ( callback )
+					callback(result, sync);
+			};
+			var bRet = true;
+			if (!aObjectId.length) {
+				asc_applyFunction(callbackEx, true, true);
+				return bRet;
+			}
+			this.onStartCheckLock();
+			for ( var i = 0; i < aObjectId.length; i++ ) {
+				var lockInfo = this.getLockInfo( AscCommonExcel.c_oAscLockTypeElem.Object, null, "", aObjectId[i] );
+				if ( false === this.getCollaborativeEditing() ) {
+					asc_applyFunction(callbackEx, true, true);
+					callbackEx = undefined;
+				}
+				if ( false !== this.getLockIntersection(lockInfo, c_oAscLockTypes.kLockTypeMine, false) ) {
+					continue;
+				}
+				else if ( false !== this.getLockIntersection(lockInfo, c_oAscLockTypes.kLockTypeOther, false) ) {
+					asc_applyFunction(callbackEx, false);
+					return false;
+				}
+				this.addCheckLock(lockInfo);
+			}
+			this.onEndCheckLock(callbackEx);
+			return bRet;
 		};
 
 		/**

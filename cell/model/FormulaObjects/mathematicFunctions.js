@@ -81,7 +81,7 @@
 		cATAN, cATAN2, cATANH, cBASE, cCEILING, cCEILING_MATH, cCEILING_PRECISE, cCOMBIN, cCOMBINA, cCOS, cCOSH, cCOT,
 		cCOTH, cCSC, cCSCH, cDECIMAL, cDEGREES, cECMA_CEILING, cEVEN, cEXP, cFACT, cFACTDOUBLE, cFLOOR, cFLOOR_PRECISE,
 		cFLOOR_MATH, cGCD, cINT, cISO_CEILING, cLCM, cLN, cLOG, cLOG10, cMDETERM, cMINVERSE, cMMULT, cMOD, cMROUND,
-		cMULTINOMIAL, cODD, cPI, cPOWER, cPRODUCT, cQUOTIENT, cRADIANS, cRAND, cRANDBETWEEN, cROMAN, cROUND, cROUNDDOWN,
+		cMULTINOMIAL, cMUNIT, cODD, cPI, cPOWER, cPRODUCT, cQUOTIENT, cRADIANS, cRAND, cRANDARRAY, cRANDBETWEEN, cROMAN, cROUND, cROUNDDOWN,
 		cROUNDUP, cSEC, cSECH, cSERIESSUM, cSIGN, cSIN, cSINH, cSQRT, cSQRTPI, cSUBTOTAL, cSUM, cSUMIF, cSUMIFS,
 		cSUMPRODUCT, cSUMSQ, cSUMX2MY2, cSUMX2PY2, cSUMXMY2, cTAN, cTANH, cTRUNC);
 
@@ -2786,7 +2786,8 @@
 				}
 			}
 
-			if (A.length != B[0].length) {
+
+			if (!((B[0] && A.length === B[0].length) || (A[0] && B.length === A[0].length))) {
 				return new cError(cErrorType.wrong_value_type);
 			}
 			var C = new Array(A.length);
@@ -2806,14 +2807,14 @@
 		}
 
 		var arg0 = arg[0], arg1 = arg[1];
-		if (arg0 instanceof cArea || arg0 instanceof cArray) {
+		if (arg0 instanceof cArea || arg0 instanceof cArray || arg0 instanceof cRef  || arg0 instanceof cRef3D) {
 			arg0 = arg0.getMatrix();
 		} else if(arg1 instanceof cArea3D) {
 			arg0 = arg0.getMatrix()[0];
 		} else {
 			return new cError(cErrorType.not_available);
 		}
-		if (arg1 instanceof cArea || arg1 instanceof cArray) {
+		if (arg1 instanceof cArea || arg1 instanceof cArray || arg1 instanceof cRef || arg1 instanceof cRef3D) {
 			arg1 = arg1.getMatrix();
 		} else if(arg1 instanceof cArea3D) {
 			arg1 = arg1.getMatrix()[0];
@@ -3106,6 +3107,63 @@
 		}
 
 		return new cNumber(Math.fact(arg0.getValue()) / fact);
+	};
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cMUNIT() {
+	}
+
+	cMUNIT.prototype = Object.create(cBaseFunction.prototype);
+	cMUNIT.prototype.constructor = cMUNIT;
+	cMUNIT.prototype.name = "MUNIT";
+	cMUNIT.prototype.argumentsMin = 1;
+	cMUNIT.prototype.argumentsMax = 1;
+	cMUNIT.prototype.isXLFN = true;
+	cMUNIT.prototype.argumentsType = [argType.number];
+	cMUNIT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
+	cMUNIT.prototype.numFormat = AscCommonExcel.cNumFormatNone;
+	cMUNIT.prototype.Calculate = function (arg) {
+		var arg0 = arg[0];
+		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+			arg0 = arg0.cross(arguments[1]);
+		}
+		arg0 = arg0.tocNumber();
+		if (arg0 instanceof cError) {
+			return arg0;
+		} else if (arg0 instanceof cArray) {
+			//по обработке массива есть вопросы
+			//в случае если аргуметт функции должен вернуть массив - берётся первый элемента массива
+			//в случае формулы массива возвращается результат от каждого значения массива
+			//реализовываю второй вариант
+			arg0.foreach(function (elem, r, c) {
+				if (elem instanceof cNumber) {
+					this.array[r][c] = parseInt(elem.getValue()) > 0 ? new cNumber(1) : new cError(cErrorType.wrong_value_type);
+				} else {
+					this.array[r][c] = new cError(cErrorType.wrong_value_type);
+				}
+			});
+			return arg0;
+		} else {
+			var num = parseInt(arg0);
+			if (num <= 0) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+			var _arr = [];
+			for (var i = 0; i < num; i++) {
+				for (var j = 0; j < num; j++) {
+					if (!_arr[i]) {
+						_arr[i] = [];
+					}
+					_arr[i][j] = i === j ? new cNumber(1) : new cNumber(0);
+				}
+			}
+			var res = new cArray();
+			res.fillFromArray(_arr);
+			return res;
+		}
 	};
 
 	/**
@@ -3460,6 +3518,172 @@
 	cRAND.prototype.argumentsType = null;
 	cRAND.prototype.Calculate = function () {
 		return new cNumber(Math.random());
+	};
+
+	function cRANDARRAY() {
+	}
+
+	//***array-formula***
+	cRANDARRAY.prototype = Object.create(cBaseFunction.prototype);
+	cRANDARRAY.prototype.constructor = cRANDARRAY;
+	cRANDARRAY.prototype.name = 'RANDARRAY';
+	cRANDARRAY.prototype.argumentsMin = 0;
+	cRANDARRAY.prototype.argumentsMax = 5;
+	cRANDARRAY.prototype.ca = true;
+	cRANDARRAY.prototype.isXLFN = true;
+	cRANDARRAY.prototype.numFormat = AscCommonExcel.cNumFormatNone;
+	cRANDARRAY.prototype.argumentsType = [argType.number, argType.number, argType.number, argType.number, argType.number];
+	cRANDARRAY.prototype.Calculate = function (arg) {
+		//var oArguments = this._prepareArguments(arg, arguments[1]);
+		var argClone = arg;
+
+		//если какой-то из аргументов массив - обрабатываю здесь
+		//если обрабатывать выше и проходиться по массиву, то данная функция всегда будет возвращать массив
+		//а нам нужно только значение с индексом 0,0 у возвращаемого массива
+
+		var i, j;
+		var matrixRowCount;
+		var matrixColCount;
+		for (i = 0; i < argClone.length; i++) {
+			if (argClone[i].type === cElementType.empty && i !== 4) {
+				if (i !== 2) {
+					argClone[i] = new cNumber(1);
+				} else {
+					argClone[i] = new cNumber(0);
+				}
+			} else if (argClone[i].type === cElementType.array || cElementType.cellsRange === argClone[i].type || cElementType.cellsRange3D === argClone[i].type) {
+				argClone[i] = argClone[i].getMatrix();
+				if (cElementType.cellsRange3D === argClone[i].type) {
+					argClone[i] = argClone[i][0];
+				}
+				if (matrixRowCount === undefined || matrixRowCount > argClone[i].length) {
+					matrixRowCount = argClone[i].length;
+				}
+				if (matrixColCount === undefined || matrixColCount > argClone[i][0].length) {
+					matrixColCount = argClone[i][0].length;
+				}
+			} else if (i !== 4) {
+				argClone[i] = argClone[i].tocNumber()
+			}
+		}
+
+		if (argClone[4]) {
+			if (matrixRowCount === undefined) {
+				if (argClone[4].type === cElementType.cell || argClone[4].type === cElementType.cell3D) {
+					argClone[4] = argClone[4].getValue();
+				}
+				if (argClone[4].type === cElementType.string) {
+					return new cError(cErrorType.wrong_value_type);
+				} else if (argClone[4].type === cElementType.error) {
+					return argClone[4];
+				}
+
+				argClone[4] = argClone[4].tocBool();
+			}
+		}
+
+		var argError;
+		if (argError = this._checkErrorArg(argClone)) {
+			return argError;
+		}
+
+		function randBetween(a, b, _wholeNumber) {
+			if (_wholeNumber) {
+				return new cNumber(Math.floor(Math.random() * (b - a + 1)) + a);
+			} else {
+				return new cNumber(Math.random() * (max - min) + min);
+			}
+		}
+
+		var rowCount;
+		var colCount;
+		var min;
+		var max;
+		var wholeNumber;
+		var _array;
+		if (matrixRowCount !== undefined) {
+			_array = new cArray();
+			for (i = 0; i < matrixRowCount; i++) {
+				_array.addRow();
+				for (j = 0; j < matrixColCount; j++) {
+					if (argClone[0] && argClone[0][i] && argClone[0][i][j] && argClone[0][i][j].type === cElementType.error) {
+						_array.addElement(argClone[0][i][j]);
+						continue;
+					} else if (argClone[1] && argClone[1][i] && argClone[1][i][j] && argClone[1][i][j].type === cElementType.error) {
+						_array.addElement(argClone[1][i][j]);
+						continue;
+					}
+
+					min = 0;
+					if (argClone[2] && argClone[2][i]) {
+						if (argClone[2][i][j] && argClone[2][i][j].type === cElementType.error) {
+							_array.addElement(argClone[2][i][j]);
+							continue;
+						}
+						min = argClone[2][i][j].getValue();
+					} else if (argClone[2]) {
+						min = argClone[2].getValue();
+					}
+					max = 1;
+					if (argClone[3] && argClone[3][i]) {
+						if (argClone[3][i][j] && argClone[3][i][j].type === cElementType.error) {
+							_array.addElement(argClone[3][i][j]);
+							continue;
+						}
+						max = argClone[3][i][j].getValue();
+					} else if (argClone[3]) {
+						max = argClone[3].getValue();
+					}
+					wholeNumber = false;
+					if (argClone[4] && argClone[4][i]) {
+						if (argClone[4][i][j] && (argClone[4][i][j].type === cElementType.error || argClone[4][i][j].type === cElementType.string)) {
+							if (argClone[4][i][j].type === cElementType.string) {
+								_array.addElement(new cError(cErrorType.wrong_value_type))
+							} else {
+								_array.addElement(argClone[4][i][j]);
+							}
+							continue;
+						}
+						wholeNumber = argClone[4][i][j].getValue();
+					} else if (argClone[4]) {
+						if (argClone[4][i][j].type === cElementType.string) {
+							_array.addElement(new cError(cErrorType.wrong_value_type))
+							continue;
+						}
+						wholeNumber = argClone[4].toBool();
+					}
+					
+					_array.addElement(randBetween(min, max, wholeNumber));
+				}
+			}
+		} else {
+			rowCount = argClone[0] ? parseInt(argClone[0].getValue()) : 1;
+			colCount = argClone[1] ? parseInt(argClone[1].getValue()) : 1;
+			min = argClone[2] ? argClone[2].getValue() : 0;
+			max = argClone[3] ? argClone[3].getValue() : 1;
+			wholeNumber = argClone[4] ? argClone[4].toBool() : false;
+
+			if (min > max) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+			if (wholeNumber && (!Number.isInteger(min) || !Number.isInteger(max))) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+
+			if (rowCount <= 0 || colCount <= 0) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+
+			_array = new cArray();
+			for (i = 0; i < rowCount; i++) {
+				_array.addRow();
+				for (j = 0; j < colCount; j++) {
+					_array.addElement(randBetween(min, max, wholeNumber));
+				}
+			}
+		}
+
+		return _array;
 	};
 
 	/**
@@ -4419,8 +4643,8 @@
 	cSUBTOTAL.prototype = Object.create(cBaseFunction.prototype);
 	cSUBTOTAL.prototype.constructor = cSUBTOTAL;
 	cSUBTOTAL.prototype.name = 'SUBTOTAL';
-	cSUBTOTAL.prototype.argumentsMin = 1;
-	cSUBTOTAL.prototype.argumentsType = [argType.number, [argType.reference]];
+	cSUBTOTAL.prototype.argumentsMin = 2;
+	cSUBTOTAL.prototype.argumentsType = [argType.number, argType.reference, [argType.reference]];
 	//TODO все оставшиеся аргументы приходят на вход функции как массивы
 	cSUBTOTAL.prototype.arrayIndexes = {1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1};
 	cSUBTOTAL.prototype.Calculate = function (arg) {
@@ -4885,6 +5109,7 @@
 	cSUMPRODUCT.prototype.argumentsMin = 1;
 	cSUMPRODUCT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cSUMPRODUCT.prototype.argumentsType = [[argType.array]];
+	cSUMPRODUCT.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cSUMPRODUCT.prototype.Calculate = function (arg) {
 		var arg0 = new cNumber(0), resArr = [], col = 0, row = 0, res = 1, _res = [], i;
 

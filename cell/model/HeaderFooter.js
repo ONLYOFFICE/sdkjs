@@ -667,9 +667,17 @@
 		return this.fragments;
 	};
 	CHeaderFooterEditorSection.prototype.drawText = function () {
+		var t = this;
 		this.canvasObj.drawingCtx.clear();
+
+		var drawBackground = function () {
+			t.canvasObj.drawingCtx.setFillStyle(new AscCommon.CColor(255, 255, 255))
+				.fillRect(0, 0, t.canvasObj.canvas.width, t.canvasObj.canvas.height);
+		};
+
 		if(!this.fragments) {
 			//возможно стоит очищать канву в данном случае
+			drawBackground();
 			return;
 		}
 
@@ -686,12 +694,13 @@
 		cellFlags.textAlign = this.getAlign();
 
 
-		var cellEditorWidth = width - 2 * wb.defaults.worksheetView.cells.padding + 1;
+		var cellEditorWidth = width - 2 * wb.defaults.worksheetView.cells.padding + 1 + 2 * correctCanvasDiff;
 		ws.stringRender.setString(this.fragments, cellFlags);
-
 		var textMetrics = ws.stringRender._measureChars(cellEditorWidth);
 		var parentHeight = document.getElementById(this.canvasObj.idParent).clientHeight;
-		canvas.height = textMetrics.height > parentHeight ? textMetrics.height : parentHeight;
+		canvas.height = textMetrics.height > parentHeight ? textMetrics.height : AscCommon.AscBrowser.convertToRetinaValue(parentHeight + 1, true);
+
+		drawBackground();
 		ws.stringRender.render(drawingCtx, wb.defaults.worksheetView.cells.padding, 0, cellEditorWidth, ws.settings.activeCellBorderColor);
 	};
 	CHeaderFooterEditorSection.prototype.getElem = function () {
@@ -762,12 +771,13 @@
 		return textField;
 	}
 
+	var correctCanvasDiff = 0;
 	window.Asc.g_header_footer_editor = null;
 	function CHeaderFooterEditor(idArr, width, pageType) {
 		window.Asc.g_header_footer_editor = this;
 
-		this.parentWidth = AscBrowser.isRetina ? AscCommon.AscBrowser.convertToRetinaValue(width, true) : width;
-		this.parentHeight = 90;
+		this.parentWidth = AscCommon.AscBrowser.convertToRetinaValue(this.correctCanvasWidth(width), true);
+		this.parentHeight = AscCommon.AscBrowser.convertToRetinaValue(90, true);
 		this.pageType = undefined === pageType ? asc.c_oAscHeaderFooterType.odd : pageType;//odd, even, first
 		this.canvas = [];
 		this.sections = [];
@@ -802,11 +812,16 @@
 			obj.idParent = id;
 			obj.id = id + "-canvas";
 			obj.width = t.parentWidth;
+			obj.height = t.parentHeight;
 			obj.canvas = document.createElement('canvas');
 			obj.canvas.id = obj.id;
+			//TODO перепроверить код ниже. оставляю как было раньше
+			/*obj.canvas.style.width = t.parentWidth + "px";
+			 obj.canvas.style.height = t.parentHeight + "px";
+			 AscCommon.calculateCanvasSize(obj.canvas);*/
 			obj.canvas.width = t.parentWidth;
 			obj.canvas.height = t.parentHeight;
-			obj.canvas.style.width = AscBrowser.isRetina ? AscCommon.AscBrowser.convertToRetinaValue(t.parentWidth) + "px" : t.parentWidth + "px";
+			obj.canvas.style.width = AscCommon.AscBrowser.convertToRetinaValue(t.parentWidth) + "px";
 
 			var curElem = document.getElementById(id);
 			curElem.appendChild(obj.canvas);
@@ -817,7 +832,7 @@
 			return obj;
 		};
 
-		this.parentHeight = document.getElementById(idArr[0]).clientHeight;
+		this.parentHeight = AscCommon.AscBrowser.convertToRetinaValue(document.getElementById(idArr[0]).clientHeight + 1, true);
 
 		this.canvas[c_nPortionLeftHeader] = createAndPushCanvasObj(idArr[0]);
 		this.canvas[c_nPortionCenterHeader] = createAndPushCanvasObj(idArr[1]);
@@ -928,8 +943,7 @@
 							}, "resizeEditorHeight": function () {
 								self.handlers.trigger("asc_resizeEditorHeight");
 							}
-						}, AscCommon.AscBrowser.isRetina ? AscCommon.AscBrowser.convertToRetinaValue(2, true) :
-							2, true);
+						}, AscCommon.AscBrowser.convertToRetinaValue(2, true), true);
 
 					//временно меняем cellEditor у wb
 					wb.cellEditor = t.cellEditor;
@@ -953,6 +967,20 @@
 		};
 
 		editLockCallback();
+	};
+
+	CHeaderFooterEditor.prototype.correctCanvasWidth = function (val) {
+		if (!val) {
+			return val;
+		}
+
+		correctCanvasDiff = 0;
+		if (AscBrowser.retinaPixelRatio === 1.5 && 0 !== val % 4) {
+			correctCanvasDiff = val % 4;
+			val -= correctCanvasDiff;
+		}
+
+		return val;
 	};
 
 	CHeaderFooterEditor.prototype._openCellEditor = function (editor, fragments, x, y) {
@@ -999,7 +1027,7 @@
 				for(var i = 0; i < 30; i++) {
 					bottomArr.push(t.parentHeight + i * 19);
 				}
-				return {l: [0], r: [t.parentWidth], b: bottomArr, cellX: 0, cellY: 0, ri: 0, bi: 0};
+				return {l: [0], r: [t.parentWidth + 2 * correctCanvasDiff], b: bottomArr, cellX: 0, cellY: 0, ri: 0, bi: 0};
 			},
 			checkVisible: function () {
 				return true;
@@ -1021,7 +1049,7 @@
 		var wb = api.wb;
 		var ws = wb.getWorksheet();
 
-		if(bSave /*&& bChanged*/) {
+		if(bSave /*&& bChanged*/&& !ws.collaborativeEditing.getGlobalLock() && wb.canEdit()) {
 			var checkError = this._checkSave();
 			if(null === checkError) {
 				wb.cellEditor.close();

@@ -147,6 +147,15 @@
     var Api = window["AscCommon"].baseEditorsApi;
 
     /**
+     * Get version of editor
+     * @memberof Api
+     * @typeofeditors ["CDE", "CSE", "CPE"]
+     * @alias GetVersion
+     * @returns {string} version
+     */
+    Api.prototype["pluginMethod_GetVersion"] = function() { return this.GetVersion(); };
+
+    /**
      * Adding ole object to editor
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
@@ -489,7 +498,7 @@
                 }
                 else
                 {
-                    this._onNeedParams(undefined, true);
+                    this._onNeedParams({ message : obj["message"] }, true);
                 }
                 break;
             }
@@ -530,8 +539,35 @@
                 }
                 case "watermark_on_draw":
                 {
-                    this.watermarkDraw = obj[prop] ? new AscCommon.CWatermarkOnDraw(obj[prop], this) : null;
-                    this.watermarkDraw.checkOnReady();
+                    var sText = "";
+                    var tempProp = {};
+                    try
+                    {
+                        tempProp = (typeof obj[prop] === "string") ? JSON.parse(obj[prop]) : obj[prop];
+                    }
+                    catch (err)
+                    {
+                        tempProp = {};
+                    }
+                    if (tempProp["paragraphs"])
+                    {
+                        tempProp["paragraphs"].forEach(function (el) {
+                            if (el["runs"])
+                            {
+                                sText += el["runs"].reduce(function (accum, curel) {
+                                    return accum + (curel["text"] ? curel["text"] : "");
+                                }, "");
+                            }
+                        });
+                    }
+                    
+                    if(!(typeof sText === "string"))
+                        sText = "";
+                    
+                    AscFonts.FontPickerByCharacter.checkText(sText, this, function () {
+                        this.watermarkDraw = obj[prop] ? new AscCommon.CWatermarkOnDraw(obj[prop], this) : null;
+                        this.watermarkDraw.checkOnReady();
+                    });
                     break;
                 }
                 case "hideContentControlTrack":
@@ -559,7 +595,7 @@
      * @param {string} guid Guid helper
      * @param {number} w Width
      * @param {number} h Height
-	 * @param {boolean} isKeyboardTake Is catch keyboard
+     * @param {boolean} isKeyboardTake Is catch keyboard
      */
     Api.prototype["pluginMethod_ShowInputHelper"] = function(guid, w, h, isKeyboardTake)
     {
@@ -679,5 +715,105 @@
             AscCommon.g_inputContext.keyPressInput = "";
         }
     };
+
+	/**
+	 * A current selection type
+	 * @typedef {("none" | "text" | "drawing" | slide)} SelectionType
+	 */
+
+	/**
+	 * Get current selection type
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @alias GetSelectionType
+	 * @param {SelectionType} selection type
+	 */
+	Api.prototype["pluginMethod_GetSelectionType"] = function()
+	{
+		switch (this.editorId)
+		{
+			case AscCommon.c_oEditorId.Word:
+			{
+				if (!this.WordControl || !this.WordControl.m_oLogicDocument)
+					return "none";
+				var logicDoc = this.WordControl.m_oLogicDocument;
+
+				if (!logicDoc.IsSelectionUse())
+					return "none";
+
+				var selectionBounds = logicDoc.GetSelectionBounds();
+				var eps = 0.0001;
+				if (selectionBounds && selectionBounds.Start && selectionBounds.End &&
+					(Math.abs(selectionBounds.Start.W) > eps) &&
+					(Math.abs(selectionBounds.End.W) > eps))
+				{
+					return "text";
+				}
+
+				if (logicDoc.DrawingObjects.getSelectedObjectsBounds())
+					return "drawing";
+
+				return "none";
+			}
+			case AscCommon.c_oEditorId.Presentation:
+			{
+				if (!this.WordControl || !this.WordControl.m_oLogicDocument)
+					return "none";
+				var logicDoc = this.WordControl.m_oLogicDocument;
+
+				if (-1 === logicDoc.CurPage)
+					return "none";
+
+				var _controller = logicDoc.Slides[logicDoc.CurPage].graphicObjects;
+				var _elementsCount = _controller.selectedObjects.length;
+
+				var retType = "slide";
+				if (!_controller.IsSelectionUse() && _elementsCount > 0)
+					retType = "none";
+
+				var selectionBounds = logicDoc.GetSelectionBounds();
+				var eps = 0.0001;
+				if (selectionBounds && selectionBounds.Start && selectionBounds.End &&
+					(Math.abs(selectionBounds.Start.W) > eps) &&
+					(Math.abs(selectionBounds.End.W) > eps))
+				{
+					return "text";
+				}
+				
+				if (retType === "slide" && _controller.getSelectedObjectsBounds())
+					retType = "drawing";
+
+				return retType;
+			}
+			case AscCommon.c_oEditorId.Spreadsheet:
+			{
+				if (!this.wb || !this.wb.getWorksheet())
+					return "none";
+
+				var objectRender = this.wb.getWorksheet().objectRender;
+				if (!objectRender)
+					return "none";
+
+				var controller = objectRender.controller;
+				if (!controller)
+					return "none";
+
+				var selection = this.wb.GetSelectionRectsBounds();
+				var retType = "none";
+
+				if (!controller.IsSelectionUse() && !selection)
+					retType = "none";
+				if (controller.GetSelectionBounds() || selection)
+					retType = "text";
+				if (controller.getSelectedObjectsBounds())
+					retType = "drawing";
+
+				return retType;
+			}
+			default:
+				break;
+		}
+		return "none";
+	};
 
 })(window);

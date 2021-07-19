@@ -823,14 +823,14 @@ CAutoshapeTrack.prototype =
     /*************************************************************************/
     /******************************** TRACKS *********************************/
     /*************************************************************************/
-	DrawTrack : function(type, matrix, left, top, width, height, isLine, isCanRotate, isNoMove)
+	DrawTrack : function(type, matrix, left, top, width, height, isLine, isCanRotate, isNoMove, isDrawHandles)
 	{
         if (!matrix)
             this.Native["DD_DrawTrackTransform"]();
         else
             this.Native["DD_DrawTrackTransform"](matrix.sx, matrix.shy, matrix.shx, matrix.sy, matrix.tx, matrix.ty);
 
-        this.Native["DD_DrawTrack"](type, left, top, width, height, isLine, isCanRotate);
+        this.Native["DD_DrawTrack"](type, left, top, width, height, isLine, isCanRotate, isNoMove, isDrawHandles);
 
 
 //		if (true === isNoMove)

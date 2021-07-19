@@ -186,6 +186,7 @@ function (window, undefined) {
 		this.sUserName = "";
 		this.bDocument = true; 	// For compatibility with 'Word Comment Control'
 		this.bSolved = false;
+		this.m_sUserData = ""; 	// For compatibility with 'Word Comment Control'
 		this.aReplies = [];
 
 		this.coords = null;
@@ -218,6 +219,7 @@ function (window, undefined) {
 		this.sUserName = comment.sUserName;
 		this.bDocument = comment.bDocument;
 		this.bSolved = comment.bSolved;
+		this.m_sUserData = comment.m_sUserData;
 		this.aReplies = [];
 
 		for (var i = 0; i < comment.aReplies.length; i++) {
@@ -287,6 +289,9 @@ function (window, undefined) {
 
 	asc_CCommentData.prototype.asc_putSolved = function(val) { this.bSolved = val; };
 	asc_CCommentData.prototype.asc_getSolved = function() { return this.bSolved; };
+
+	asc_CCommentData.prototype.asc_putUserData = function(val) { this.m_sUserData = val; };
+	asc_CCommentData.prototype.asc_getUserData = function() { return this.m_sUserData; };
 
 	asc_CCommentData.prototype.asc_getRepliesCount = function() { return this.aReplies.length; };
 	asc_CCommentData.prototype.asc_getReply = function(index) { return this.aReplies[index]; };
@@ -784,11 +789,10 @@ CCellCommentator.prototype.cleanLastSelection = function() {
 		pos.dTopPX = this.worksheet._getRowTop(top) + ((this.worksheet._getRowHeight(top) / 2) | 0) -
 			this.worksheet._getRowTop(fvr) + headerCellsOffset.top + frozenOffset.offsetY;
 
-		if (AscCommon.AscBrowser.isRetina) {
-			pos.dLeftPX = AscCommon.AscBrowser.convertToRetinaValue(pos.dLeftPX);
-			pos.dTopPX = AscCommon.AscBrowser.convertToRetinaValue(pos.dTopPX);
-			pos.dReverseLeftPX = AscCommon.AscBrowser.convertToRetinaValue(pos.dReverseLeftPX);
-		}
+		pos.dLeftPX = AscCommon.AscBrowser.convertToRetinaValue(pos.dLeftPX);
+		pos.dTopPX = AscCommon.AscBrowser.convertToRetinaValue(pos.dTopPX);
+		pos.dReverseLeftPX = AscCommon.AscBrowser.convertToRetinaValue(pos.dReverseLeftPX);
+
 		return pos;
 	};
 
@@ -1374,6 +1378,8 @@ CCellCommentator.prototype.Redo = function(type, data) {
 	prot["asc_getHiddenFlag"] = prot.asc_getHiddenFlag;
 	prot["asc_putSolved"] = prot.asc_putSolved;
 	prot["asc_getSolved"] = prot.asc_getSolved;
+	prot["asc_putUserData"] = prot.asc_putUserData;
+	prot["asc_getUserData"] = prot.asc_getUserData;
 	prot["asc_getRepliesCount"] = prot.asc_getRepliesCount;
 	prot["asc_getReply"] = prot.asc_getReply;
 	prot["asc_addReply"] = prot.asc_addReply;

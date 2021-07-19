@@ -145,6 +145,9 @@ ParaTextPr.prototype.Apply_TextPr = function(TextPr)
 	if (undefined !== TextPr.HighLight)
 		this.Set_HighLight(TextPr.HighLight);
 
+	if (undefined !== TextPr.HighlightColor)
+		this.SetHighlightColor(TextPr.HighlightColor);
+
 	if (undefined !== TextPr.RStyle)
 		this.Set_RStyle(TextPr.RStyle);
 
@@ -227,6 +230,9 @@ ParaTextPr.prototype.Clear_Style = function()
 
 	if (undefined != this.Value.HighLight)
 		this.Set_HighLight(undefined);
+
+	if (undefined != this.Value.HighlightColor)
+		this.SetHighlightColor(undefined);
 
 	if (undefined != this.Value.RStyle)
 		this.Set_RStyle(undefined);
@@ -348,6 +354,14 @@ ParaTextPr.prototype.Set_HighLight = function(Value)
 
 	History.Add(new CChangesParaTextPrHighLight(this, this.Value.HighLight, Value));
 	this.Value.HighLight = Value;
+};
+ParaTextPr.prototype.SetHighlightColor = function(Value)
+{
+	if (null === Value)
+		Value = undefined;
+
+	History.Add(new CChangesParaTextPrHighlightColor(this, this.Value.HighlightColor, Value));
+	this.Value.HighlightColor = Value;
 };
 ParaTextPr.prototype.Set_RStyle = function(Value)
 {

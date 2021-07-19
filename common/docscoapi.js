@@ -381,6 +381,12 @@
 		}
 		return false;
 	};
+	CDocsCoApi.prototype.callPRC = function(data, timeout, callback) {
+		if (this._CoAuthoringApi && this._onlineWork) {
+			return this._CoAuthoringApi.callPRC(data, timeout, callback);
+		}
+		return false;
+	};
 
   CDocsCoApi.prototype.callback_OnAuthParticipantsChanged = function(e, id) {
     if (this.onAuthParticipantsChanged) {
@@ -589,6 +595,8 @@
     this._participantsTimestamp;
     this._countEditUsers = 0;
     this._countUsers = 0;
+    this._countCalls = 0;
+    this._waitingForResponse = {};
 
     this.isLicenseInit = false;
     this._locks = {};
@@ -930,6 +938,25 @@
 		}
 		return res;
 	};
+  DocsCoApi.prototype.callPRC = function(data, timeout, callback) {
+    var t = this;
+    var responseKey = ++this._countCalls;
+    this._waitingForResponse[responseKey] = callback;
+    if (timeout > 0) {
+      setTimeout(function() {
+        t._onPRC(responseKey, true, undefined);
+      }, timeout)
+    }
+    this._send({'type': 'rpc', 'responseKey': responseKey, 'data': data});
+    return true;
+  };
+  DocsCoApi.prototype._onPRC = function(responseKey, isTimeout, response) {
+    var callback = this._waitingForResponse[responseKey];
+    delete this._waitingForResponse[responseKey];
+    if (callback) {
+      callback(isTimeout, response);
+    }
+  };
 
   DocsCoApi.prototype.openDocument = function(data) {
     this._send({"type": "openDocument", "message": data});
@@ -1333,6 +1360,7 @@
     if (participants) {
       for (i = 0; i < participants.length; ++i) {
         tmpUser = new AscCommon.asc_CUser(participants[i]);
+        tmpUser.setState(true);
         participantsNew[tmpUser.asc_getId()] = tmpUser;
         if (!tmpUser.asc_getView()) {
           ++countEditUsersNew;
@@ -1341,17 +1369,17 @@
       }
     }
     if (needChanged) {
-      for (i in participantsNew) {
-        if (!this._participants[i]) {
-          tmpUser = participantsNew[i];
-          tmpUser.setState(true);
+      for (i in this._participants) {
+        if (!(participantsNew[i] && this._participants[i].isEqual(participantsNew[i]))) {
+          tmpUser = this._participants[i];
+          tmpUser.setState(false);
           usersStateChanged.push(tmpUser);
         }
       }
-      for (i in this._participants) {
-        if (!participantsNew[i]) {
-          tmpUser = this._participants[i];
-          tmpUser.setState(false);
+      for (i in participantsNew) {
+        if (!(this._participants[i] && this._participants[i].isEqual(participantsNew[i]))) {
+          tmpUser = participantsNew[i];
+          tmpUser.setState(true);
           usersStateChanged.push(tmpUser);
         }
       }
@@ -1752,6 +1780,9 @@
 				break;
 			case 'forceSave' :
 				this._onForceSave(dataObject["messages"]);
+				break;
+			case 'rpc' :
+				this._onPRC(dataObject["responseKey"], false, dataObject["data"]);
 				break;
 		}
 	};

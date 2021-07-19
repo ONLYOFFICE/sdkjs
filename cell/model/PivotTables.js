@@ -228,6 +228,11 @@ var c_oAscAllocationMethod = {
 	WeightedAllocation: 2,
 	WeightedIncrement: 3
 };
+var c_oAscGroupType = {
+	Text: 0,
+	Number: 1,
+	Date: 2
+};
 
 var st_VALUES = -2;
 var DATA_CAPTION = 'Values';
@@ -238,12 +243,28 @@ var COL_HEADER_CAPTION = 'Column Labels';
 var PAGE_ALL_CAPTION = '(All)';
 var PAGE_MULTIPLE_CAPTION = '(Multiple Items)';
 var FIELD_CAPTION = '%1 of %2';
+var GROUP_TEXT_CAPTION = 'Group';
+var GROUP_SECONDS_CAPTION = 'Seconds';
+var GROUP_MINUTES_CAPTION = 'Minutes';
+var GROUP_HOURS_CAPTION = 'Hours';
+var GROUP_DAYS_CAPTION = 'Days';
+var GROUP_MONTHS_CAPTION = 'Months';
+var GROUP_QUARTERS_CAPTION = 'Quarters';
+var GROUP_QUARTER_CAPTION = 'Qtr';
+var GROUP_YEARS_CAPTION = 'Years';
+var GROUP_OR_CAPTION = '%1 or %2';
 var NEW_PIVOT_LAST_COL_OFFSET = 2;
 var NEW_PIVOT_LAST_ROW_OFFSET = 17;
+var NEW_PIVOT_LAST_COL_OFFSET_GRID_DROP_ZONES = 6;
+var NEW_PIVOT_LAST_ROW_OFFSET_GRID_DROP_ZONES = 13;
 var NEW_PIVOT_ROW = 2;
 var NEW_PIVOT_COL = 0;
 
 var cDate = Asc.cDate;
+var c_oAscError = window['Asc'].c_oAscError;
+var History = AscCommon.History;
+var c_oAscAutoFilterTypes = Asc.c_oAscAutoFilterTypes;
+var c_oAscCustomAutoFilter = Asc.c_oAscCustomAutoFilter;
 
 function cmpPivotItems(sharedItems, a, b) {
 	var sharedItem = sharedItems.Items.get(a.x);
@@ -312,14 +333,85 @@ function setFieldProperty(pivot, index, oldVal, newVal, addToHistory, historyTyp
 		pivot.setChanged(true);
 	}
 };
-function toXmlWithLength(w, elem) {
+function toXmlWithLength(w, elem, name, val1) {
 	var StartPos = w.GetCurPosition();
 	w.WriteLong(0);
-	elem.toXml(w);
+	elem.toXml(w, name, val1);
 	var EndPos = w.GetCurPosition();
 	w.Seek(StartPos);
 	w.WriteLong(EndPos - StartPos - 4);
 	w.Seek(EndPos);
+}
+
+function XmlReaderWrapper(name, elem) {
+	this.name = name;
+	this.elem = elem;
+}
+
+XmlReaderWrapper.prototype.onStartNode = function (elem, attr, uq) {
+	var newContext = this;
+	if (this.name === elem) {
+		newContext = this.elem;
+		if (newContext.readAttributes) {
+			newContext.readAttributes(attr, uq);
+		}
+	} else {
+		newContext = null;
+	}
+	return newContext;
+};
+function ReadNumXml(vals, uq, elem) {
+	var val;
+	var formatId = null;
+	var formatCode = null;
+	val = vals["formatId"];
+	if (undefined !== val) {
+		formatId = val - 0;
+	}
+	val = vals["formatCode"];
+	if (undefined !== val) {
+		formatCode = AscCommon.unleakString(uq(val));
+	}
+	if (null !== formatId || null !== formatCode) {
+		//from history
+		elem.num = AscCommonExcel.Num.prototype.initFromParams(formatId, formatCode, null);
+	} else {
+		val = vals["numFmtId"];
+		if (undefined !== val) {
+			elem.numFmtId = val - 0;
+		}
+	}
+}
+function WriteNumXml(writer, num, stylesForWrite) {
+	if (null !== num) {
+		if (stylesForWrite) {
+			var numFmtId = stylesForWrite.getNumIdByFormat(num);
+			writer.WriteXmlAttributeNumber("numFmtId", numFmtId);
+		} else {
+			//for history
+			if (null != num.id) {
+				writer.WriteXmlAttributeNumber("formatId", num.id);
+			}
+			var format = num.getFormat();
+			if (null != format) {
+				writer.WriteXmlAttributeStringEncode("formatCode", format);
+			}
+		}
+	}
+}
+
+function getDateGroupCaption(groupBy) {
+	var newName = GROUP_TEXT_CAPTION;
+	switch (groupBy) {
+		case c_oAscGroupBy.Seconds: newName = GROUP_SECONDS_CAPTION; break;
+		case c_oAscGroupBy.Minutes: newName = GROUP_MINUTES_CAPTION; break;
+		case c_oAscGroupBy.Hours: newName = GROUP_HOURS_CAPTION; break;
+		case c_oAscGroupBy.Days: newName = GROUP_DAYS_CAPTION; break;
+		case c_oAscGroupBy.Months: newName = GROUP_MONTHS_CAPTION; break;
+		case c_oAscGroupBy.Quarters: newName = GROUP_QUARTERS_CAPTION; break;
+		case c_oAscGroupBy.Years: newName = GROUP_YEARS_CAPTION; break;
+	}
+	return AscCommon.translateManager.getValue(newName);
 }
 
 function FromXml_ST_SourceType(val) {
@@ -1317,11 +1409,31 @@ function CT_PivotCacheDefinition() {
 	this.dimensions = null;
 	this.measureGroups = null;
 	this.maps = null;
-	this.extLst = null;
+	//ext
+	this.pivotCacheDefinitionX14 = null;
 	//editor
 	this.cacheRecords = null;
 	this.Id = AscCommon.g_oIdCounter.Get_NewId();
 }
+CT_PivotCacheDefinition.prototype.initPostOpenZip = function(oNumFmts) {
+	var cacheFields = this.getFields();
+	if (cacheFields) {
+		cacheFields.forEach(function(cacheField){
+			cacheField.initPostOpenZip(oNumFmts);
+		});
+	}
+};
+CT_PivotCacheDefinition.prototype.clone = function () {
+	var data = new AscCommonExcel.UndoRedoData_BinaryWrapper(this);
+	return data.getData();
+};
+CT_pivotTableDefinition.prototype.cloneShallow = function () {
+	var oldCacheRecords = this.cacheRecords;
+	this.cacheRecords = null;
+	var newPivot = this.clone();
+	this.cacheRecords = newPivot.cacheRecords = oldCacheRecords;
+	return newPivot;
+};
 CT_PivotCacheDefinition.prototype.getType = function() {
 	return AscCommonExcel.UndoRedoDataTypes.PivotCacheDefinition;
 };
@@ -1496,13 +1608,22 @@ CT_PivotCacheDefinition.prototype.onStartNode = function(elem, attr, uq) {
 		if (newContext.readAttributes) {
 			newContext.readAttributes(attr, uq);
 		}
-		this.extLst = newContext;
 	} else {
 		newContext = null;
 	}
 	return newContext;
 };
-CT_PivotCacheDefinition.prototype.toXml = function(writer) {
+CT_PivotCacheDefinition.prototype.onEndNode = function(prevContext, elem) {
+	if ("extLst" === elem) {
+		for (var i = 0; i < prevContext.ext.length; ++i) {
+			var ext = prevContext.ext[i];
+			if ('{725AE2AE-9491-48be-B2B4-4EB974FC3084}' === ext.uri) {
+				this.pivotCacheDefinitionX14 = ext.elem;
+			}
+		}
+	}
+};
+CT_PivotCacheDefinition.prototype.toXml = function(writer, stylesForWrite) {
 	writer.WriteXmlString("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>");
 	writer.WriteXmlNodeStart("pivotCacheDefinition");
 	writer.WriteXmlString(
@@ -1567,7 +1688,7 @@ CT_PivotCacheDefinition.prototype.toXml = function(writer) {
 		this.cacheSource.toXml(writer, "cacheSource");
 	}
 	if (null !== this.cacheFields) {
-		this.cacheFields.toXml(writer, "cacheFields");
+		this.cacheFields.toXml(writer, "cacheFields", stylesForWrite);
 	}
 	if (null !== this.cacheHierarchies) {
 		this.cacheHierarchies.toXml(writer, "cacheHierarchies");
@@ -1593,13 +1714,27 @@ CT_PivotCacheDefinition.prototype.toXml = function(writer) {
 	if (null !== this.maps) {
 		this.maps.toXml(writer, "maps");
 	}
-	if (null !== this.extLst) {
-		this.extLst.toXml(writer, "extLst");
+	if (null !== this.pivotCacheDefinitionX14) {
+		var ext = new CT_Extension();
+		ext.uri = "{725AE2AE-9491-48be-B2B4-4EB974FC3084}";
+		ext.elem = this.pivotCacheDefinitionX14;
+		var extList = new CT_ExtensionList();
+		extList.ext.push(ext);
+		extList.toXml(writer, "extLst");
 	}
 	writer.WriteXmlNodeEnd("pivotCacheDefinition");
 };
 CT_PivotCacheDefinition.prototype.getFields = function () {
 	return this.cacheFields && this.cacheFields.cacheField;
+};
+CT_PivotCacheDefinition.prototype.getFieldIndexByName = function(name) {
+	var cacheFields = this.getFields();
+	if (cacheFields) {
+		return cacheFields.findIndex(function(elem) {
+			return elem.name === name;
+		});
+	}
+	return -1;
 };
 CT_PivotCacheDefinition.prototype.getRecords = function () {
 	return this.cacheRecords;
@@ -1609,6 +1744,9 @@ CT_PivotCacheDefinition.prototype.isValidCacheSource = function () {
 };
 CT_PivotCacheDefinition.prototype.getWorksheetSource = function() {
 	return this.cacheSource && this.cacheSource.worksheetSource;
+};
+CT_PivotCacheDefinition.prototype.getDataRef = function() {
+	return this.getWorksheetSource() && this.getWorksheetSource().getDataRef() || '';
 };
 CT_PivotCacheDefinition.prototype.fromDataRef = function(dataRef) {
 	this.cacheSource = new CT_CacheSource();
@@ -1622,6 +1760,245 @@ CT_PivotCacheDefinition.prototype.fromDataRef = function(dataRef) {
 		this.cacheRecords.fromWorksheetRange(location, this.cacheFields);
 	}
 };
+CT_PivotCacheDefinition.prototype.asc_create = function() {
+	this.createdVersion = 4;//default value blocks label filter clear button
+	this.refreshedVersion = 4;//default value blocks adding slices
+	this.minRefreshableVersion = 3;
+};
+CT_PivotCacheDefinition.prototype.getPivotCacheId = function() {
+	return this.pivotCacheDefinitionX14 && this.pivotCacheDefinitionX14.pivotCacheId || null;
+};
+CT_PivotCacheDefinition.prototype.setPivotCacheId = function(val) {
+	if (null === val) {
+		return;
+	}
+	if (!this.pivotCacheDefinitionX14) {
+		this.pivotCacheDefinitionX14 = new CT_PivotCacheDefinitionX14();
+	}
+	this.pivotCacheDefinitionX14.pivotCacheId = val;
+};
+CT_PivotCacheDefinition.prototype.createNewPivotCacheId = function() {
+	this.setPivotCacheId(AscCommon.CreateUInt32());
+};
+CT_PivotCacheDefinition.prototype.getSlicerCaption = function () {
+	var res = [];
+	var cacheFields = this.getFields();
+	if (cacheFields) {
+		cacheFields.forEach(function (elem) {
+			if (!elem.formula) {
+				res.push(elem.name);
+			}
+		});
+	}
+	return res;
+};
+CT_PivotCacheDefinition.prototype.getFieldGroupType = function (fld) {
+	var cacheField = this.getFields()[fld];
+	if (cacheField) {
+		return cacheField.getFieldGroupType();
+	}
+	return c_oAscGroupType.Text;
+};
+CT_PivotCacheDefinition.prototype.groupRangePr = function (fld, rangePr, dateTypes) {
+	var res;
+	var i, cacheField;
+	var cacheFields = this.getFields();
+	cacheField = cacheFields[fld];
+	cacheField.groupRangePr(fld, rangePr);
+	if(dateTypes) {
+		res = [];
+		for (i = 1; i < dateTypes.length; ++i) {
+			rangePr = rangePr.clone();
+			rangePr.groupBy = dateTypes[i];
+			var parFld = cacheFields.length;
+			var parCacheField = new CT_CacheField();
+			parCacheField.initGroupRangePr(this.cacheFields.generateNewName(getDateGroupCaption(rangePr.groupBy)));
+			parCacheField.groupRangePr(fld, rangePr);
+			cacheFields.push(parCacheField);
+			res.push(parFld);
+
+			cacheField.initGroupPar(parFld);
+		}
+	}
+	return res;
+};
+CT_PivotCacheDefinition.prototype.ungroupRangePr = function (fld) {
+	var cacheFields = this.getFields();
+	var cacheField = cacheFields[fld];
+	cacheField.ungroupRangePr();
+	var removeFields = this.getFieldsWithBase(fld);
+	for (var i = removeFields.length - 1; i >= 0; --i) {
+		cacheFields.splice(removeFields[i], 1);
+	}
+	return removeFields;
+};
+CT_PivotCacheDefinition.prototype.getGroupRangePr = function (fld) {
+	var cacheFields = this.getFields();
+	var cacheField = cacheFields[fld];
+	var rangePr = cacheField.getGroupRangePr();
+	if (rangePr) {
+		var dateTypes = null;
+		if (c_oAscGroupBy.Range !== rangePr.groupBy) {
+			dateTypes = [];
+			var fields = this.getFieldsWithBase(fld);
+			for (var i = 0; i < fields.length; ++i) {
+				var dateRangePr = cacheFields[fields[i]].getGroupRangePr();
+				if (dateRangePr) {
+					dateTypes.push(dateRangePr.groupBy);
+				}
+			}
+			dateTypes.sort();
+		}
+		return {rangePr: rangePr, dateTypes: dateTypes};
+	}
+	return undefined;
+};
+CT_PivotCacheDefinition.prototype.createGroupRangePr = function (fld) {
+	var rangePr = this.getFields()[fld].createGroupRangePr();
+	var dateTypes = null;
+	if (c_oAscGroupBy.Range !== rangePr.groupBy) {
+		dateTypes = [rangePr.groupBy];
+	}
+	return {rangePr: rangePr, dateTypes: dateTypes};
+};
+CT_PivotCacheDefinition.prototype.groupDiscreteAddField = function(layoutGroup) {
+	var fld = layoutGroup.fld;
+	var cacheFields = this.getFields();
+	var cacheField = cacheFields[fld];
+	var parFld = cacheField.getGroupPar();
+	var parCacheField = cacheFields[parFld];
+	var baseFld = cacheField.getGroupBase();
+	var baseCacheField = cacheFields[baseFld];
+	var addField = cacheField.databaseField || cacheField.containsGroup(layoutGroup.groupMap);
+	if (!parCacheField && addField) {
+		parCacheField = new CT_CacheField();
+		if (cacheField.databaseField) {
+			parCacheField.initGroupDiscrete(this.cacheFields.generateNewName(cacheField.name), fld, cacheField);
+		} else {
+			parCacheField = cacheField.clone();
+			parCacheField.name = this.cacheFields.generateNewName(baseCacheField.name);
+		}
+		cacheFields.push(parCacheField);
+
+		parFld = cacheFields.length - 1;
+		cacheField.initGroupPar(parFld);
+	}
+	if (parCacheField && addField) {
+		layoutGroup = layoutGroup.clone();
+		layoutGroup.fld = parFld;
+		layoutGroup.groupMap = cacheField.convertFromDiscreteGroupMap(layoutGroup.groupMap);
+		layoutGroup.groupMap = parCacheField.convertToDiscreteGroupMap(layoutGroup.groupMap);
+	}
+	return layoutGroup;
+};
+CT_PivotCacheDefinition.prototype.groupDiscrete = function(layoutGroupCache) {
+	return this.getFields()[layoutGroupCache.fld].groupDiscrete(layoutGroupCache.groupMap);
+};
+CT_PivotCacheDefinition.prototype.ungroupDiscrete = function(layoutGroupCache) {
+	var res;
+	var cacheFields = this.getFields();
+	var cacheField = cacheFields[layoutGroupCache.fld];
+	var baseFld = this.getBaseDiscrete(layoutGroupCache.fld);
+	var baseCacheField = cacheField && cacheFields[baseFld];
+	if (baseCacheField) {
+		res = cacheField.ungroupDiscrete(baseFld, baseCacheField, layoutGroupCache.groupMap);
+		if (layoutGroupCache.fld !== baseFld && cacheField.getGroupOrSharedSize() === baseCacheField.getGroupOrSharedSize()) {
+			baseCacheField.initGroupPar(cacheField.getGroupPar());
+			cacheFields.splice(layoutGroupCache.fld, 1);
+			res.removeField = true;
+		}
+	}
+	return res;
+};
+CT_PivotCacheDefinition.prototype.getBaseDiscrete = function(fld) {
+	var cacheFields = this.getFields();
+	for(var i = 0; i < cacheFields.length; ++i) {
+		if(fld === cacheFields[i].getGroupPar()) {
+			return i;
+		}
+	}
+	return -1;
+};
+CT_PivotCacheDefinition.prototype.getFieldsWithBase = function(fld) {
+	var res = [];
+	var cacheFields = this.getFields();
+	for(var i = 0; i < cacheFields.length; ++i) {
+		if(fld === cacheFields[i].getGroupBase()) {
+			res.push(i);
+		}
+	}
+	return res;
+};
+CT_PivotCacheDefinition.prototype.getFieldsTopParWithBase = function (fld) {
+	var cacheFields = this.getFields();
+	var withBase = this.getFieldsWithBase(fld);
+	for(var i = 0; i < withBase.length; ++i) {
+		if(!cacheFields[cacheFields[withBase[i]].getGroupPar()]) {
+			return withBase[i];
+		}
+	}
+	return undefined;
+};
+CT_PivotCacheDefinition.prototype.getGroupBase = function(fld) {
+	var cacheFields = this.getFields();
+	var baseFld = cacheFields[fld].getGroupBase();
+	return (null === baseFld || undefined === baseFld) ? fld : baseFld;
+};
+
+function CT_PivotCacheDefinitionX14() {
+//Attributes
+	this.slicerData = false;
+	this.pivotCacheId = null;
+	this.supportSubqueryNonVisual = false;
+	this.supportSubqueryCalcMem = false;
+	this.supportAddCalcMems = false;
+}
+CT_PivotCacheDefinitionX14.prototype.readAttributes = function(attr, uq) {
+	if (attr()) {
+		var vals = attr();
+		var val;
+		val = vals["slicerData"];
+		if (undefined !== val) {
+			this.slicerData = AscCommon.getBoolFromXml(val);
+		}
+		val = vals["pivotCacheId"];
+		if (undefined !== val) {
+			this.pivotCacheId = AscCommon.getNumFromXml(val);
+		}
+		val = vals["supportSubqueryNonVisual"];
+		if (undefined !== val) {
+			this.supportSubqueryNonVisual = AscCommon.getBoolFromXml(val);
+		}
+		val = vals["supportSubqueryCalcMem"];
+		if (undefined !== val) {
+			this.supportSubqueryCalcMem = AscCommon.getBoolFromXml(val);
+		}
+		val = vals["supportAddCalcMems"];
+		if (undefined !== val) {
+			this.supportAddCalcMems = AscCommon.getBoolFromXml(val);
+		}
+	}
+};
+CT_PivotCacheDefinitionX14.prototype.toXml = function(writer) {
+	writer.WriteXmlNodeStart("x14:pivotCacheDefinition");
+	if (false !== this.slicerData) {
+		writer.WriteXmlAttributeBool("slicerData", this.slicerData);
+	}
+	if (null !== this.pivotCacheId) {
+		writer.WriteXmlAttributeNumber("pivotCacheId", this.pivotCacheId);
+	}
+	if (false !== this.supportSubqueryNonVisual) {
+		writer.WriteXmlAttributeBool("supportSubqueryNonVisual", this.supportSubqueryNonVisual);
+	}
+	if (false !== this.supportSubqueryCalcMem) {
+		writer.WriteXmlAttributeBool("supportSubqueryCalcMem", this.supportSubqueryCalcMem);
+	}
+	if (false !== this.supportAddCalcMems) {
+		writer.WriteXmlAttributeBool("supportAddCalcMems", this.supportAddCalcMems);
+	}
+	writer.WriteXmlNodeEnd("pivotCacheDefinition", true, true);
+};
+
 function CT_PivotCacheRecords() {
 //Attributes
 //	this.count = null;
@@ -1667,6 +2044,9 @@ CT_PivotCacheRecords.prototype.onStartNode = function(elem, attr, uq) {
 	return newContext;
 };
 CT_PivotCacheRecords.prototype.onEndNode = function(prevContext, elem) {
+	if ("r" === elem) {
+		return;
+	}
 	if (this._getCol(this._curColIndex).onEndNode(prevContext, elem)) {
 		this._curColIndex++;
 	}
@@ -1685,7 +2065,7 @@ CT_PivotCacheRecords.prototype.toXml = function(writer) {
 
 	for (var i = 0; i < count; ++i) {
 		writer.WriteXmlNodeStart("r", true);
-		for (var j = 0; j < this._cols.length; ++j) {
+		for (var j = 0; j < this.getColsCount(); ++j) {
 			this._cols[j].toXml(writer, i);
 		}
 		writer.WriteXmlNodeEnd("r");
@@ -1694,6 +2074,9 @@ CT_PivotCacheRecords.prototype.toXml = function(writer) {
 		this.extLst.toXml(writer, "extLst");
 	}
 	writer.WriteXmlNodeEnd("pivotCacheRecords");
+};
+CT_PivotCacheRecords.prototype.getColsCount = function() {
+	return this._cols && this._cols.length || 0;
 };
 CT_PivotCacheRecords.prototype.getRowsCount = function() {
 	return this._cols && this._cols[0] && this._cols[0].getSize() || 0;
@@ -1713,13 +2096,42 @@ CT_PivotCacheRecords.prototype._getCol = function(index) {
 	}
 	return col;
 };
-CT_PivotCacheRecords.prototype._getDataMapFromFields = function(indexes, length, row, dataMap) {
-	var i, val;
+CT_PivotCacheRecords.prototype._getDataMapFromFields = function(cacheFields, indexes, length, row, dataMap) {
+	var i, index;
 	for (i = 0; i < length; ++i) {
-		val = this._cols[indexes[i]].get(row);
-		dataMap = this._getDataMapAddElem(dataMap, val.val, dataMap.total.length);
+		index = indexes[i];
+		var sharedIndex = this._getGroupOrSharedRow(cacheFields, index, row);
+		if(sharedIndex >= 0) {
+			dataMap = this._getDataMapAddElem(dataMap, sharedIndex, dataMap.total.length);
+		}
 	}
 	return dataMap;
+};
+CT_PivotCacheRecords.prototype._getSharedRow = function(cacheFields, index, row) {
+	if (index < cacheFields.length) {
+		var cacheFieldBaseIndex = index;
+		if (cacheFieldBaseIndex < this.getColsCount()) {
+			var val = this._cols[cacheFieldBaseIndex].get(row);
+			if (c_oAscPivotRecType.Index === val.type) {
+				return val.val
+			}
+		}
+	}
+	return -1;
+};
+CT_PivotCacheRecords.prototype._getGroupOrSharedRow = function(cacheFields, index, row) {
+	if (index < cacheFields.length) {
+		var cacheField = cacheFields[index];
+		var cacheFieldBaseIndex = cacheField.getGroupBaseIndex(index);
+		if (cacheFieldBaseIndex < this.getColsCount()) {
+			var val = this._cols[cacheFieldBaseIndex].get(row);
+			if (c_oAscPivotRecType.Index === val.type) {
+				var cacheFieldBase = cacheFields[cacheFieldBaseIndex];
+				return cacheField.getGroupOrSharedIndex(cacheFieldBase, val.val);
+			}
+		}
+	}
+	return -1;
 };
 CT_PivotCacheRecords.prototype._getDataMapAddElem = function(dataMap, val, dataLen) {
 	var elem = dataMap.vals[val];
@@ -1791,33 +2203,38 @@ CT_PivotCacheRecords.prototype._getDataMapRowToTotal = function(cacheFields, row
 	for (i = 0; i < rowMapCur.total.length; ++i) {
 		total = rowMapCur.total[i];
 		var dataIndex = dataFields[i].fld;
-		val = this._cols[dataIndex].get(row);
-		if (c_oAscPivotRecType.Index === val.type && cacheFields) {
-			var cacheField = cacheFields[dataIndex];
-			val = cacheField && cacheField.sharedItems && cacheField.sharedItems.Items && cacheField.sharedItems.Items.get(val.val) || val;
-		}
-		if (c_oAscPivotRecType.Number === val.type || c_oAscPivotRecType.DateTime === val.type) {
-			total.add(val.val);
-		} else if (c_oAscPivotRecType.Error === val.type) {
-			total.addError(val.val);
-		} else if (c_oAscPivotRecType.Missing !== val.type) {
-			total.addCount(val.val);
+		var cacheField = cacheFields[dataIndex];
+		var cacheFieldBaseIndex = cacheField.getGroupBaseIndex(dataIndex);
+		if (cacheFieldBaseIndex < this.getColsCount()) {
+			val = this._cols[cacheFieldBaseIndex].get(row);
+			if (c_oAscPivotRecType.Index === val.type && cacheFields) {
+				var cacheField = cacheFields[cacheFieldBaseIndex];
+				val = cacheField && cacheField.getSharedItem(val.val) || val;
+			}
+			if (c_oAscPivotRecType.Number === val.type || c_oAscPivotRecType.DateTime === val.type) {
+				total.add(val.val);
+			} else if (c_oAscPivotRecType.Error === val.type) {
+				total.addError(val.val);
+			} else if (c_oAscPivotRecType.Missing !== val.type) {
+				total.addCount(val.val);
+			}
 		}
 	}
 };
-CT_PivotCacheRecords.prototype.getDataMap = function(cacheFields, filterMaps, rowIndexes, colIndexes, dataFields) {
+CT_PivotCacheRecords.prototype.getDataMap = function(cacheFields, filterMaps, cacheFieldsWithData, rowIndexes, colIndexes, dataFields) {
 	var row, rowMapCur;
 	var res = new PivotDataElem(dataFields.length);
 	for (row = 0; row < this.getRowsCount(); ++row) {
-		if (this.getDataMapLabelFilters(row, filterMaps)) {
+		if (this.getDataMapLabelFilters(cacheFields, row, filterMaps)) {
 			continue;
 		}
+		this.fillVisibleFields(cacheFields, row, cacheFieldsWithData);
 		rowMapCur = res;
 		if (rowIndexes.length > 0) {
-			rowMapCur = this._getDataMapFromFields(rowIndexes, rowIndexes.length, row, rowMapCur);
+			rowMapCur = this._getDataMapFromFields(cacheFields, rowIndexes, rowIndexes.length, row, rowMapCur);
 		}
 		if (colIndexes.length > 0) {
-			rowMapCur = this._getDataMapFromFields(colIndexes, colIndexes.length, row, rowMapCur);
+			rowMapCur = this._getDataMapFromFields(cacheFields, colIndexes, colIndexes.length, row, rowMapCur);
 		}
 		this._getDataMapRowToTotal(cacheFields, row, rowMapCur, dataFields);
 	}
@@ -1872,11 +2289,12 @@ CT_PivotCacheRecords.prototype._getDataMapConvertValueFiltersIsHide = function(r
 		} else {
 			for (i in elems) {
 				if (elems.hasOwnProperty(i)) {
-					res = res || this._getDataMapConvertValueFiltersIsHide(elems[i], isRow, index + 1, indexes, valueFilter, dataFields)
+					res = this._getDataMapConvertValueFiltersIsHide(elems[i], isRow, index + 1, indexes, valueFilter, dataFields) || res;
+					var subElems = isRow ? elems[i].vals : elems[i].subtotal;
+					if (AscCommon.isEmptyObject(subElems)) {
+						delete elems[i];
+					}
 				}
-			}
-			if (res && AscCommon.isEmptyObject(elems)) {
-				delete elems[i];
 			}
 		}
 	}
@@ -1894,15 +2312,31 @@ CT_PivotCacheRecords.prototype._getDataMapConvertFilterBySubtotal = function(row
 		this._getDataMapTrimBySubtotal(rowMap, subtotal);
 	}
 };
-CT_PivotCacheRecords.prototype.getDataMapLabelFilters = function(row, filterMaps) {
+CT_PivotCacheRecords.prototype.getDataMapLabelFilters = function(cacheFields, row, filterMaps) {
+	var sharedIndex;
 	for (var i = 0; i < filterMaps.labelFilters.length; ++i) {
 		var filter = filterMaps.labelFilters[i];
-		var val = this._cols[filter.index].get(row);
-		if (c_oAscPivotRecType.Index === val.type && !filter.map.has(val.val)) {
+		if (filter.isGroup) {
+			sharedIndex = this._getSharedRow(cacheFields, filter.index, row);
+		} else {
+			sharedIndex = this._getGroupOrSharedRow(cacheFields, filter.index, row);
+		}
+		if(sharedIndex >= 0 && !filter.map.has(sharedIndex)) {
 			return true;
 		}
 	}
 	return false;
+};
+CT_PivotCacheRecords.prototype.fillVisibleFields = function(cacheFields, row, cacheFieldsWithData) {
+	for (var index in cacheFieldsWithData) {
+		if (cacheFieldsWithData.hasOwnProperty(index)) {
+			var visible = cacheFieldsWithData[index];
+			var sharedIndex = this._getGroupOrSharedRow(cacheFields, index, row);
+			if(sharedIndex >= 0 && sharedIndex < visible.length) {
+				visible[sharedIndex] = 1;
+			}
+		}
+	}
 };
 CT_PivotCacheRecords.prototype._getDataMapInitFilter = function(elems, valueFilter, dataFields) {
 	var pivotFilter = valueFilter.pivotFilter;
@@ -1921,7 +2355,7 @@ CT_PivotCacheRecords.prototype._getDataMapInitFilter = function(elems, valueFilt
 				}
 			}
 		}
-		filterColumn.initByArray(arr);
+		filterColumn.initByArray(arr, Asc.c_oAscPivotFilterType.Sum === pivotFilter.type);
 	}
 	return pivotFilter;
 };
@@ -1946,7 +2380,11 @@ CT_PivotCacheRecords.prototype.convertToSharedItems = function(index, si) {
 	}
 };
 CT_PivotCacheRecords.prototype.fromWorksheetRange = function(location, cacheFields) {
+	var i;
 	var ws = location.ws;
+	if (!ws) {
+		return;
+	}
 	var bbox = location.bbox;
 	var headings = location.headings;
 	if (!headings) {
@@ -1961,40 +2399,47 @@ CT_PivotCacheRecords.prototype.fromWorksheetRange = function(location, cacheFiel
 		return;
 	}
 	var nameDuplicateMap = new Map();
-	for (var i = 0; i < headings.length; ++i) {
+	for (i = 0; i < headings.length; ++i) {
 		var text = headings[i];
-		var index = nameDuplicateMap.get(text);
-		if (undefined !== index) {
+		var index = 1;
+		while (nameDuplicateMap.has(text)) {
 			index++;
-			text = text + index;
-		} else {
-			index = 1;
+			text = headings[i] + index;
 		}
-		nameDuplicateMap.set(text, index);
+		nameDuplicateMap.set(text, 1);
 		var cacheField = new CT_CacheField();
 		cacheField.name = text;
-		cacheField.numFmtId = 0;
 		cacheField.sharedItems = new CT_SharedItems();
 		cacheFields.cacheField.push(cacheField);
 	}
 	this._cols = [];
-	for (var i = 0; i < cacheFields.cacheField.length; ++i) {
+	var lastRowMax = 0, firstRow = location.headings ? bbox.r1 : bbox.r1 + 1;
+	for (i = 0; i < cacheFields.cacheField.length; ++i) {
 		var cacheField = cacheFields.cacheField[i];
+		var cacheFieldNum = undefined;
 		var si = cacheField.sharedItems;
 		si.containsSemiMixedTypes = false;
 		si.containsNonDate = false;
 		si.containsString = false;
 		si.containsInteger = true;
-		si.maxValue = si.maxDate = Number.NEGATIVE_INFINITY;
-		si.minValue = si.minDate = Number.POSITIVE_INFINITY;
+		var maxValue = Number.NEGATIVE_INFINITY, maxDate = Number.NEGATIVE_INFINITY;
+		var minValue = Number.POSITIVE_INFINITY, minDate = Number.POSITIVE_INFINITY;
 		var records = new PivotRecords();
-		var lastRow = location.headings ? bbox.r1 - 1 : bbox.r1;
+		var lastRow, lastRowWithText;
+		lastRow = lastRowWithText = firstRow - 1;
 		ws.getRange3(lastRow + 1, bbox.c1 + i, bbox.r2, bbox.c1 + i)._foreachNoEmptyByCol(function(cell) {
+			if (undefined === cacheFieldNum) {
+				cacheFieldNum = cell.xfs && cell.xfs.num || null;
+			}
+			if (!(cacheFieldNum && cell.xfs && cell.xfs.num && cacheFieldNum.isEqual(cell.xfs.num) && lastRow + 1 === cell.nRow)) {
+				cacheFieldNum = null;
+			}
 			if (!cell.isNullTextString()) {
-				if (lastRow + 1 < cell.nRow) {
-					records.addMissing(cell.nRow - lastRow - 1);
+				if (lastRowWithText + 1 < cell.nRow) {
+					records.addMissing(cell.nRow - lastRowWithText - 1);
+					si.containsBlank = true;
 				}
-				lastRow = cell.nRow;
+				lastRowWithText = cell.nRow;
 				switch (cell.getType()) {
 					case AscCommon.CellValueType.Number:
 						var num = cell.getNumberValue();
@@ -2002,16 +2447,16 @@ CT_PivotCacheRecords.prototype.fromWorksheetRange = function(location, cacheFiel
 							records.addNumber(num);
 							si.containsNumber = true;
 							si.containsNonDate = true;
-							si.minValue = Math.min(si.minValue, num);
-							si.maxValue = Math.max(si.maxValue, num);
+							minValue = Math.min(minValue, num);
+							maxValue = Math.max(maxValue, num);
 							if (si.containsInteger && !Number.isInteger(num)) {
 								si.containsInteger = false;
 							}
 						} else {
 							records.addDate(num);
 							si.containsDate = true;
-							si.minDate = Math.min(si.minDate, num);
-							si.maxDate = Math.max(si.maxDate, num);
+							minDate = Math.min(minDate, num);
+							maxDate = Math.max(maxDate, num);
 						}
 						break;
 					case AscCommon.CellValueType.String:
@@ -2034,12 +2479,23 @@ CT_PivotCacheRecords.prototype.fromWorksheetRange = function(location, cacheFiel
 						si.containsNonDate = true;
 						break;
 				}
-			} else {
-				si.containsBlank = true;
 			}
+			lastRow = cell.nRow;
 		});
+		if (maxValue !== Number.NEGATIVE_INFINITY) {
+			si.minValue = minValue;
+			si.maxValue = maxValue;
+		}
+		if (maxDate !== Number.NEGATIVE_INFINITY) {
+			si.minDate = Asc.cDate.prototype.getDateFromExcelWithTime2(minDate);
+			si.maxDate = Asc.cDate.prototype.getDateFromExcelWithTime2(maxDate);
+		}
+		lastRowMax = Math.max(lastRowMax, lastRow);
+		if (lastRowWithText < bbox.r2) {
+			si.containsBlank = true;
+		}
 		if (lastRow < bbox.r2) {
-			records.addMissing(bbox.r2 - lastRow);
+			cacheFieldNum = null;
 		}
 		this._cols.push(records);
 		if (si.containsString || si.containsBlank) {
@@ -2060,8 +2516,19 @@ CT_PivotCacheRecords.prototype.fromWorksheetRange = function(location, cacheFiel
 			si.minValue = null;
 			si.maxValue = null;
 		}
+		if (cacheFieldNum) {
+			cacheField.num = cacheFieldNum;
+		}
 	}
-	//todo trim missing
+	var expectedSize = lastRowMax - firstRow + 1;
+	if (lastRowMax < bbox.r2) {
+		expectedSize += 1;
+	}
+	for (i = 0; i < this._cols.length; ++i) {
+		if (this._cols[i].size < expectedSize) {
+			this._cols[i].addMissing(expectedSize - this._cols[i].size);
+		}
+	}
 };
 CT_PivotCacheRecords.prototype.getType = function() {
 	return AscCommonExcel.UndoRedoDataTypes.PivotCacheRecords;
@@ -2079,6 +2546,9 @@ CT_PivotCacheRecords.prototype.Read_FromBinary2 = function(r) {
 	AscCommonExcel.executeInR1C1Mode(false, function () {
 		new AscCommon.openXml.SaxParserBase().parse(AscCommon.GetStringUtf8(r, len), t);
 	});
+};
+CT_PivotCacheRecords.prototype.updateCacheData = function() {
+	this.cacheRecords.updateCacheData();
 };
 
 function PivotTableChanged() {
@@ -2250,6 +2720,23 @@ CT_pivotTableDefinition.prototype.setDefaults = function () {
 	this.mdxSubqueries = false;
 	this.customListSort = true;
 };
+CT_pivotTableDefinition.prototype.initPostOpenZip = function (oNumFmts) {
+	if(this.cacheDefinition) {
+		this.cacheDefinition.initPostOpenZip(oNumFmts);
+	}
+	var pivotFields = this.asc_getPivotFields();
+	if (pivotFields) {
+		pivotFields.forEach(function(pivotField) {
+			pivotField.initPostOpenZip(oNumFmts);
+		});
+	}
+	var dataFields = this.asc_getDataFields();
+	if (dataFields) {
+		dataFields.forEach(function(dataField) {
+			dataField.initPostOpenZip(oNumFmts);
+		});
+	}
+};
 CT_pivotTableDefinition.prototype.getObjectType = function () {
 	return AscDFH.historyitem_type_PivotTableDefinition;
 };
@@ -2265,7 +2752,7 @@ CT_pivotTableDefinition.prototype.setWS = function (ws) {
 CT_pivotTableDefinition.prototype.clone = function () {
 	var data = new AscCommonExcel.UndoRedoData_BinaryWrapper(this);
 	var pivot = data.getData();
-	pivot.Id = AscCommon.g_oIdCounter.Get_NewId();
+	pivot.createNewIds();
 	pivot.init();
 	return pivot;
 };
@@ -2275,6 +2762,28 @@ CT_pivotTableDefinition.prototype.cloneShallow = function () {
 	var newPivot = this.clone();
 	this.cacheDefinition = newPivot.cacheDefinition = oldCacheDefinition;
 	return newPivot;
+};
+CT_pivotTableDefinition.prototype.cloneForHistory = function (withCache, withRecords) {
+	var oldCacheDefinition = this.cacheDefinition;
+	var oldCacheRecords = this.cacheDefinition.cacheRecords;
+	if(!withCache) {
+		this.cacheDefinition = null;
+	} else if(!withRecords) {
+		this.cacheDefinition.cacheRecords = null;
+	}
+	var data = new AscCommonExcel.UndoRedoData_BinaryWrapper(this);
+	var newPivot = data.getData();
+	newPivot.init();
+	this.cacheDefinition = oldCacheDefinition;
+	this.cacheDefinition.cacheRecords = oldCacheRecords;
+	return newPivot;
+};
+CT_pivotTableDefinition.prototype.prepareToPaste = function (ws, offset, changeName) {
+	this.setWS(ws);
+	if (changeName) {
+		this.name = this.GetWS().workbook.dependencyFormulas.getNextPivotName();
+	}
+	this.setOffset(offset, false);
 };
 CT_pivotTableDefinition.prototype.stashCurReportRange = function () {
 	var t = this;
@@ -2722,13 +3231,13 @@ CT_pivotTableDefinition.prototype.onEndNode = function(prevContext, elem) {
 	if ("extLst" === elem) {
 		for (var i = 0; i < prevContext.ext.length; ++i) {
 			var ext = prevContext.ext[i];
-			if ('{962EF5D1-5CA2-4c93-8EF4-DBF5C05439D2}' == ext.uri) {
+			if ('{962EF5D1-5CA2-4c93-8EF4-DBF5C05439D2}' === ext.uri) {
 				this.pivotTableDefinitionX14 = ext.elem;
 			}
 		}
 	}
 };
-CT_pivotTableDefinition.prototype.toXml = function(writer) {
+CT_pivotTableDefinition.prototype.toXml = function(writer, stylesForWrite) {
 	writer.WriteXmlString("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>");
 	writer.WriteXmlNodeStart("pivotTableDefinition");
 	writer.WriteXmlString(
@@ -2942,7 +3451,7 @@ CT_pivotTableDefinition.prototype.toXml = function(writer) {
 		this.location.toXml(writer, "location");
 	}
 	if (null !== this.pivotFields) {
-		this.pivotFields.toXml(writer, "pivotFields");
+		this.pivotFields.toXml(writer, "pivotFields", stylesForWrite);
 	}
 	if (null !== this.rowFields && this.rowFields.getCount() > 0) {
 		this.rowFields.toXml(writer, "rowFields");
@@ -2960,7 +3469,7 @@ CT_pivotTableDefinition.prototype.toXml = function(writer) {
 		this.pageFields.toXml(writer, "pageFields");
 	}
 	if (null !== this.dataFields) {
-		this.dataFields.toXml(writer, "dataFields");
+		this.dataFields.toXml(writer, "dataFields", stylesForWrite);
 	}
 	if (null !== this.formats) {
 		this.formats.toXml(writer, "formats");
@@ -3026,6 +3535,12 @@ CT_pivotTableDefinition.prototype.init = function () {
 	}
 	this.updatePivotType();
 };
+CT_pivotTableDefinition.prototype.createNewIds = function () {
+	this.Id = AscCommon.g_oIdCounter.Get_NewId();
+	if (this.cacheDefinition && null !== this.cacheDefinition.getPivotCacheId()) {
+		this.cacheDefinition.createNewPivotCacheId();
+	}
+};
 CT_pivotTableDefinition.prototype.updatePivotType = function () {
 	this.clearGrid = false;
 	this.hasCompactField = false;
@@ -3072,6 +3587,13 @@ CT_pivotTableDefinition.prototype.contains = function (col, row) {
 	return (this.location && this.location.contains(col, row)) ||
 		this.pageFieldsIntersection(new Asc.Range(col, row, col, row));
 };
+CT_pivotTableDefinition.prototype.containsRange = function (bbox) {
+	var ranges = this.getReportRanges();
+	return ranges.every(function(range) {
+		return range.containsRange(bbox);
+	});
+};
+
 CT_pivotTableDefinition.prototype.getRange = function () {
 	return this.location && this.location.ref;
 };
@@ -3104,18 +3626,12 @@ CT_pivotTableDefinition.prototype.getColumnFieldsCount = function (withoutValues
 		}
 	}
 	return res;
-}
+};
 CT_pivotTableDefinition.prototype.fillAutoFiltersOptions = function (autoFilterObject, index) {
 	var pivotField = this.asc_getPivotFields()[index];
 	var cacheField = this.asc_getCacheFields()[index];
 	var dataFields = this.asc_getDataFields();
-	//todo autoSortScope
-	var sortVal = null;
-	if (c_oAscFieldSortType.Ascending === pivotField.sortType) {
-		sortVal = Asc.c_oAscSortOptions.Ascending;
-	} else if (c_oAscFieldSortType.Descending === pivotField.sortType) {
-		sortVal = Asc.c_oAscSortOptions.Descending;
-	}
+	var sortVal = pivotField.getSortVal();
 	var pageFieldItem = null;
 	if (c_oAscAxis.AxisPage === pivotField.axis && !pivotField.multipleItemSelectionAllowed) {
 		var pageFilter = this.getPageFieldByFieldIndex(index);
@@ -3123,7 +3639,7 @@ CT_pivotTableDefinition.prototype.fillAutoFiltersOptions = function (autoFilterO
 			pageFieldItem = pageFilter.item;
 		}
 	}
-	var values = pivotField.getFilterObject(cacheField, pageFieldItem);
+	var values = pivotField.getFilterObject(cacheField, pageFieldItem, this.getPivotFieldNum(index));
 	var filterObj = new Asc.AutoFilterObj();
 	filterObj.type = Asc.c_oAscAutoFilterTypes.None;
 	var pivotFilter = this.getPivotFilter(index);
@@ -3139,9 +3655,14 @@ CT_pivotTableDefinition.prototype.fillAutoFiltersOptions = function (autoFilterO
 		});
 	}
 	var iMeasureFld = pivotFilter && null !== pivotFilter.iMeasureFld ? (pivotFilter.iMeasureFld + 1) : 0;
+	var sortDataIndex = pivotField.getSortDataIndex();
+	var indexSorting = 0;
+	if (dataFields && 0 <= sortDataIndex && sortDataIndex < dataFields.length) {
+		indexSorting = sortDataIndex + 1;
+	}
 	var pivotFilterObj = new Asc.PivotFilterObj();
 	pivotFilterObj.asc_setDataFields(pivotDataFields);
-	pivotFilterObj.asc_setDataFieldIndexSorting(0);
+	pivotFilterObj.asc_setDataFieldIndexSorting(indexSorting);
 	pivotFilterObj.asc_setDataFieldIndexFilter(iMeasureFld);
 	pivotFilterObj.asc_setIsPageFilter(pivotField.axis === c_oAscAxis.AxisPage);
 	pivotFilterObj.asc_setIsMultipleItemSelectionAllowed(pivotField.multipleItemSelectionAllowed);
@@ -3155,7 +3676,7 @@ CT_pivotTableDefinition.prototype.getPivotTableButtons = function (range, button
 	if (!this.intersection(range)) {
 		return;
 	}
-	var i, index, pivotField;
+	var i, j, index, pivotField, layout;
 	var pivotRange = this.getRange();
 	var location = this.location;
 	var pivotFields = this.asc_getPivotFields();
@@ -3211,6 +3732,7 @@ CT_pivotTableDefinition.prototype.getPivotTableButtons = function (range, button
 			}
 		}
 	}
+	this._getPivotLabelButtons(range, buttons);
 };
 CT_pivotTableDefinition.prototype.getPivotFieldButtonCompact = function(range, buttons, rowColFields, row, col) {
 	if (!range.contains(col, row)) {
@@ -3270,7 +3792,7 @@ CT_pivotTableDefinition.prototype._getPivotFieldButton = function (range, index,
 	}
 	var autoFilterObject = new Asc.AutoFiltersOptions();
 	this.fillAutoFiltersOptions(autoFilterObject, index);
-	var isSortState = null !== autoFilterObject.sortVal ? Asc.c_oAscSortOptions.Ascending === autoFilterObject.sortVal : null;
+	var isSortState = null !== autoFilterObject.sortVal ? Asc.c_oAscSortOptions.Descending === autoFilterObject.sortVal : null;
 	var isSetFilter = autoFilterObject.filter.type !== Asc.c_oAscAutoFilterTypes.None;
 	return {isSortState: isSortState, isSetFilter: isSetFilter, row: row, col: col, idPivot: {id: this.Get_Id(), fld: index, row: row, col: col}};
 };
@@ -3280,6 +3802,80 @@ CT_pivotTableDefinition.prototype.getPivotFieldButton = function(range, buttons,
 		buttons.push(button);
 	}
 };
+CT_pivotTableDefinition.prototype._getPivotLabelButtons = function (range, buttons) {
+	var rowFieldsOffset = this._getPivotLabelButtonsRowFieldsOffset();
+	this._getPivotLabelButtonsRowColLables(range, buttons);
+	this._getPivotLabelButtonsRowColLables(range, buttons, rowFieldsOffset);
+};
+CT_pivotTableDefinition.prototype._getPivotLabelButtonsRowFieldsOffset = function () {
+	//code copied from _updatePivotTableCellsRowHeaderLabels
+	var rowFieldsOffset = [0];
+	var rowFields = this.asc_getRowFields();
+	if (!rowFields) {
+		return rowFieldsOffset;
+	}
+	var index, field;
+	var pivotFields = this.asc_getPivotFields();
+	var pivotRange = this.getRange();
+	var c1 = pivotRange.c1;
+	for (var i = 1; i < rowFields.length; ++i) {
+		index = rowFields[i - 1].asc_getIndex();
+		var isTabular;
+		if (AscCommonExcel.st_VALUES !== index) {
+			field = pivotFields[index];
+			isTabular = field && !(field.compact && field.outline);
+		} else {
+			isTabular = !(this.compact && this.outline);
+		}
+		if (isTabular) {
+			++c1;
+		}
+		rowFieldsOffset[i] = c1 - pivotRange.c1;
+	}
+	return rowFieldsOffset;
+}
+CT_pivotTableDefinition.prototype._getPivotLabelButtonsRowColLables = function (range, buttons, rowFieldsOffset) {
+	//code copied from _updatePivotTableCellsRowColLables
+	var items, fields, fieldIndex, r1, c1, i, j, row, col;
+	var pivotRange = this.getRange();
+	var location = this.location;
+	if (rowFieldsOffset) {
+		items = this.getRowItems();
+		fields = this.asc_getRowFields();
+		r1 = pivotRange.r1 + location.firstDataRow;
+		c1 = pivotRange.c1;
+	} else {
+		items = this.getColItems();
+		fields = this.asc_getColumnFields();
+		r1 = pivotRange.r1 + location.firstHeaderRow;
+		c1 = pivotRange.c1 + location.firstDataCol;
+	}
+	if (!items || !fields) {
+		return;
+	}
+	var pivotFields = this.asc_getPivotFields();
+	for (i = 0; i < items.length; ++i) {
+		var item = items[i];
+		var r = item.getR();
+		for (j = 0; j < item.x.length && r + j < fields.length - 1; ++j) {
+			fieldIndex = fields[r + j].asc_getIndex()
+			if (Asc.c_oAscItemType.Data === item.t && AscCommonExcel.st_VALUES !== fieldIndex) {
+				if (rowFieldsOffset) {
+					row = r1 + i;
+					col = c1 + rowFieldsOffset[r + j];
+				} else {
+					row = r1 + r + j;
+					col = c1 + i;
+				}
+				var fieldItemIndex = item.x[j].getV();
+				var sd = pivotFields[fieldIndex].asc_getVisible(fieldItemIndex);
+				buttons.push({isSortState: null, isSetFilter: false, row: row, col: col, idPivotCollapse: {id: this.Get_Id(), fld: fieldIndex, index: fieldItemIndex, sd: sd}
+				});
+			}
+		}
+	}
+}
+
 CT_pivotTableDefinition.prototype.getColumnFieldsValuesIndex = function () {
 	var colFields = this.asc_getColumnFields();
 	if (colFields) {
@@ -3409,12 +4005,30 @@ CT_pivotTableDefinition.prototype.asc_select = function (api) {
 	this.getAllRange(api.wbModel.getActiveWs()).Select();
 };
 CT_pivotTableDefinition.prototype.asc_getDataRef = function() {
-	return this.cacheDefinition && this.cacheDefinition.getWorksheetSource() && this.cacheDefinition.getWorksheetSource().getDataRef() || '';
+	return this.cacheDefinition && this.cacheDefinition.getDataRef() || '';
 };
-
+CT_pivotTableDefinition.prototype.asc_getFillDownLabelsDefault = function() {
+	return !!(this.pivotTableDefinitionX14 && this.pivotTableDefinitionX14.fillDownLabelsDefault);
+};
 
 CT_pivotTableDefinition.prototype.setCacheDefinition = function(newCacheDefinition) {
 	this.cacheDefinition = newCacheDefinition;
+};
+CT_pivotTableDefinition.prototype.getPivotCacheId = function() {
+	return this.cacheDefinition && this.cacheDefinition.getPivotCacheId();
+};
+CT_pivotTableDefinition.prototype.setPivotCacheId = function(val) {
+	return this.cacheDefinition && this.cacheDefinition.setPivotCacheId(val);
+};
+CT_pivotTableDefinition.prototype.checkPivotCacheId = function() {
+	if (this.cacheDefinition) {
+		if(null === this.cacheDefinition.getPivotCacheId()) {
+			this.cacheDefinition.createNewPivotCacheId();
+			History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_PivotCacheId,
+				this.worksheet ? this.worksheet.getId() : null, null,
+				new AscCommonExcel.UndoRedoData_PivotTable(this.Get_Id(), null, this.cacheDefinition.getPivotCacheId()));
+		}
+	}
 };
 CT_pivotTableDefinition.prototype.checkPivotFieldItems = function(index) {
 	var pivotField = this.asc_getPivotFields()[index];
@@ -3427,53 +4041,73 @@ CT_pivotTableDefinition.prototype.checkPivotFieldItems = function(index) {
 		}
 	}
 };
-CT_pivotTableDefinition.prototype.checkPivotFieldItem = function(index, pivotField, cacheRecords, cacheField, oldCacheField) {
-	var item, i, j, newItem, equalMap = {};
+CT_pivotTableDefinition.prototype.checkPivotFieldItem = function(index, pivotField, cacheRecords, cacheField) {
+	cacheField.checkSharedItems(this, index, cacheRecords);
+	var pivotFieldOld = pivotField.clone();
+	pivotField.init(cacheField.sharedItems.Items.getSize());
+	pivotField.sortItems(Asc.c_oAscSortOptions.Ascending, cacheField.getSharedItems());
+	pivotField.checkSubtotal();
+	History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_PivotField,
+		this.worksheet ? this.worksheet.getId() : null, null,
+		new AscCommonExcel.UndoRedoData_PivotField(this.Get_Id(), index, pivotFieldOld, pivotField.clone()));
+};
+CT_pivotTableDefinition.prototype.checkPivotUnderlyingData = function() {
+	return !!this.getRecords();
+};
+CT_pivotTableDefinition.prototype.refreshPivotFieldItem = function(index, pivotField, cacheRecords, cacheField, oldCacheField) {
+	var item, i, j, newItem, equalMap = {}, discretePrMap= {};
+	var pivotFieldOld = pivotField.clone();
 	var newItems = new CT_Items();
-	if (!(cacheField.sharedItems && cacheField.sharedItems.Items.getSize() > 0)) {
-		if(!cacheField.sharedItems){
-			cacheField.sharedItems = new CT_SharedItems();
-		}
-		cacheRecords.convertToSharedItems(index, cacheField.sharedItems);
-	}
-	//save old items order
-	if (pivotField.items && oldCacheField) {
-		for (i = 0; i < pivotField.items.item.length; ++i) {
-			item = pivotField.items.item[i];
-			if (Asc.c_oAscItemType.Data === item.t && !item.m) {
-				var oldSharedItem = oldCacheField.getSharedItem(item.x);
-				if (oldSharedItem) {
-					for (j = 0; j < cacheField.getSharedSize(); ++j) {
-						if (oldSharedItem.shallowEqual(cacheField.getSharedItem(j))) {
-							//create new to lose other flags
-							newItem = item.clone();
-							newItem.x = j;
-							newItems.item.push(newItem);
-							equalMap[newItem.x] = 1;
-							break;
+	cacheField.checkSharedItems(this, index, cacheRecords);
+	var rangePr = oldCacheField.getGroupRangePr();
+	if (rangePr && rangePr.getFieldGroupType() === cacheField.getFieldGroupType()) {
+		var rangePrAuto = cacheField.createGroupRangePr();
+		cacheField.refreshGroupRangePr(index, rangePr.clone(), rangePrAuto);
+		pivotField.groupRangePr(cacheField.getGroupOrSharedSize());
+	} else {
+		//save old items order
+		if (pivotField.items) {
+			for (i = 0; i < pivotField.items.item.length; ++i) {
+				item = pivotField.items.item[i];
+				if (Asc.c_oAscItemType.Data === item.t && !item.m) {
+					var oldSharedItem = oldCacheField.getSharedItem(item.x);
+					if (oldSharedItem) {
+						//todo getGroupOrSharedSize
+						for (j = 0; j < cacheField.getSharedSize(); ++j) {
+							if (oldSharedItem.shallowEqual(cacheField.getSharedItem(j))) {
+								//create new to lose other flags
+								newItem = item.clone();
+								newItem.x = j;
+								newItems.item.push(newItem);
+								equalMap[newItem.x] = 1;
+								discretePrMap[item.x] = newItem.x;
+								break;
+							}
 						}
 					}
 				}
 			}
 		}
-	}
-	for (i = 0; i < cacheField.sharedItems.Items.getSize(); ++i) {
-		if(!equalMap[i]){
-			newItem = new CT_Item();
-			newItem.x = i;
-			newItems.item.push(newItem);
+		for (i = 0; i < cacheField.sharedItems.Items.getSize(); ++i) {
+			if(!equalMap[i]){
+				newItem = new CT_Item();
+				newItem.x = i;
+				newItems.item.push(newItem);
+			}
 		}
-	}
-	pivotField.items = newItems;
-	if (!oldCacheField) {
-		pivotField.sortItems(Asc.c_oAscSortOptions.Ascending, cacheField.sharedItems);
+		pivotField.items = newItems;
 	}
 	pivotField.checkSubtotal();
+	History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_PivotField,
+		this.worksheet ? this.worksheet.getId() : null, null,
+		new AscCommonExcel.UndoRedoData_PivotField(this.Get_Id(), index, pivotFieldOld, pivotField.clone()));
+	return discretePrMap;
 };
-CT_pivotTableDefinition.prototype.getFilterMaps = function() {
+CT_pivotTableDefinition.prototype.getFilterMaps = function(cacheFieldsWithData) {
+	var t = this;
 	var labelFilters = [];
 	var valueFilters = [];
-	var i, j, map, pageField, pivotField, cacheField, pivotFilter, item;
+	var i, map, pageField, pivotField, cacheField, pivotFilter, item;
 	var pageFields = this.asc_getPageFields();
 	var pivotFields = this.asc_getPivotFields();
 	var cacheFields = this.asc_getCacheFields();
@@ -3483,10 +4117,14 @@ CT_pivotTableDefinition.prototype.getFilterMaps = function() {
 			pageField = pageFields[i];
 			if (AscCommonExcel.st_VALUES !== pageField.fld && null !== pageField.fld) {
 				this.checkPivotFieldItems(pageField.fld);
-				if (null !== pageField.item) {
-					map = new Map();
-					map.set(pageField.item, 1);
-					labelFilters.push({index: pageField.fld, map: map});
+				pivotField = pivotFields[pageField.fld];
+				if (pivotField) {
+					item = pivotField.getItem(pageField.item);
+					if (item) {
+						map = new Map();
+						map.set(item.x, 1);
+						labelFilters.push({index: pageField.fld, map: map});
+					}
 				}
 			}
 		}
@@ -3494,7 +4132,9 @@ CT_pivotTableDefinition.prototype.getFilterMaps = function() {
 	if (pivotFields) {
 		for (i = 0; i < pivotFields.length; ++i) {
 			pivotField = pivotFields[i];
-			if ((c_oAscAxis.AxisPage !== pivotField.axis || pivotField.multipleItemSelectionAllowed) && !pivotField.isAllVisible()) {
+			if ((c_oAscAxis.AxisRow === pivotField.axis || c_oAscAxis.AxisCol === pivotField.axis ||
+				(c_oAscAxis.AxisPage === pivotField.axis && pivotField.multipleItemSelectionAllowed))
+				&& !pivotField.isAllVisible()) {
 				labelFilters.push({index: i, map: pivotField.getFilterMap()});
 			}
 		}
@@ -3506,13 +4146,35 @@ CT_pivotTableDefinition.prototype.getFilterMaps = function() {
 			cacheField = cacheFields[pivotFilter.fld];
 			var filterColumn = pivotField && pivotFilter.getFilterColumn();
 			if (filterColumn) {
+				this.checkPivotFieldItems(pivotFilter.fld);
 				if (pivotFilter.isLabelFilter()) {
-					labelFilters.push({index: pivotFilter.fld, map: pivotField.getFilterMapByFilter(cacheField, filterColumn)});
+					if (cacheField.hasGroup() && cacheField.getSharedItems()) {
+						labelFilters.push({index: pivotFilter.fld, isGroup: true, map: pivotField.getFilterMapFilterColumnGroup(cacheField, filterColumn, this.getPivotFieldNum(pivotFilter.fld))});
+					} else {
+						labelFilters.push({index: pivotFilter.fld, map: pivotField.getFilterMapFilterColumn(cacheField, filterColumn, this.getPivotFieldNum(pivotFilter.fld))});
+					}
 				} else {
 					valueFilters.push({index: pivotFilter.fld, pivotField: pivotField, pivotFilter: pivotFilter});
 				}
 			}
 		}
+	}
+	var ws = this.worksheet;
+	if (this.cacheDefinition && pivotFields) {
+		var slicerCaches = ws.workbook.getSlicerCachesByPivotTable(ws.getId(), this.name);
+		slicerCaches.forEach(function(slicerCache) {
+			var fieldIndex = t.cacheDefinition.getFieldIndexByName(slicerCache.sourceName);
+			pivotField = pivotFields[fieldIndex];
+			if (pivotField) {
+				t.checkPivotFieldItems(fieldIndex);
+				if (slicerCache.getIndicateItemsWithNoData()) {
+					cacheFieldsWithData[fieldIndex] = new Uint8Array(pivotField.getItemsCount());
+				}
+				if ((null === pivotField.axis || c_oAscAxis.AxisValues === pivotField.axis) && !pivotField.isAllVisible()) {
+					labelFilters.push({index: fieldIndex, map: pivotField.getFilterMap()});
+				}
+			}
+		});
 	}
 	return {labelFilters: labelFilters, valueFilters: valueFilters};
 };
@@ -3560,8 +4222,23 @@ CT_pivotTableDefinition.prototype.getPivotFieldCellValue = function(fieldIndex, 
 	var cacheFields = this.asc_getCacheFields();
 	var pivotField = pivotFields[fieldIndex];
 	var pivotFieldItem = pivotField.getItem(valueIndex);
-	var sharedItem = cacheFields[fieldIndex].getSharedItem(pivotFieldItem.x);
-	return sharedItem.getCellValue();
+	var sharedItem = cacheFields[fieldIndex].getGroupOrSharedItem(pivotFieldItem.x);
+	if (sharedItem) {
+		return sharedItem.getCellValue();
+	}
+	return new AscCommonExcel.CCellValue();
+};
+CT_pivotTableDefinition.prototype.getPivotFieldNum = function(fieldIndex) {
+	if (st_VALUES !== fieldIndex) {
+		var pivotField = this.asc_getPivotFields()[fieldIndex];
+		var cacheField = this.asc_getCacheFields()[fieldIndex];
+		if (pivotField && pivotField.num) {
+			return pivotField.num;
+		} else if (cacheField && cacheField.containsDate()) {
+			return AscCommonExcel.Num.prototype.initFromParams(14, AscCommon.getFormatByStandardId(14));
+		}
+	}
+	return null;
 };
 CT_pivotTableDefinition.prototype.getPageFieldCellValue = function(index) {
 	var pageField = this.asc_getPageFields()[index];
@@ -3590,15 +4267,22 @@ CT_pivotTableDefinition.prototype.getPageFieldCellValue = function(index) {
 	}
 	return oCellValue;
 };
-CT_pivotTableDefinition.prototype.updateRowColItems = function () {
-	var dataRow, pivotFields, rowFields, colFields, dataFields, cacheRecords, indexValues;
-	cacheRecords = this.getRecords();
-	if(!cacheRecords){
-		return;
+CT_pivotTableDefinition.prototype.calculateDataRow = function () {
+	var dataRow = new PivotDataElem(this.getDataFieldsCount());
+	var res = {dataRow: dataRow, cacheFieldsWithData: {}};
+	var cacheRecords = this.getRecords();
+	if (cacheRecords) {
+		var rowIndexes = this.getRowColIndexes(this.asc_getRowFields(), true);
+		var colIndexes = this.getRowColIndexes(this.asc_getColumnFields(), true);
+		var filterMaps = this.getFilterMaps(res.cacheFieldsWithData);
+		res.dataRow = cacheRecords.getDataMap(this.asc_getCacheFields(), filterMaps, res.cacheFieldsWithData, rowIndexes, colIndexes, this.asc_getDataFields() || []);
 	}
-	var rowIndexes = this.getRowColIndexes(this.asc_getRowFields(),true);
-	var colIndexes = this.getRowColIndexes(this.asc_getColumnFields(),true);
-	dataRow = cacheRecords.getDataMap(this.asc_getCacheFields(), this.getFilterMaps(), rowIndexes, colIndexes, this.asc_getDataFields() || []);
+	return res;
+};
+CT_pivotTableDefinition.prototype.updateRowColItems = function () {
+	var res = this.calculateDataRow();
+	var dataRow = res.dataRow;
+	var pivotFields, rowFields, colFields, dataFields, cacheRecords, indexValues, cacheFieldsWithData = {};
 	pivotFields = this.asc_getPivotFields();
 	rowFields = this.asc_getRowFields();
 	colFields = this.asc_getColumnFields();
@@ -3608,13 +4292,13 @@ CT_pivotTableDefinition.prototype.updateRowColItems = function () {
 	if (rowFields) {
 		rowItems = new CT_rowItems();
 		indexValues = this.getRowFieldsValuesIndex();
-		this._updateRowColItemsRecursively(0, dataRow, undefined, rowItems.i, rowFields, false, pivotFields, 0, dataFields, indexValues, false);
+		this._updateRowColItemsRecursively(0, dataRow, undefined, rowItems.i, rowFields, false, pivotFields, 0, dataFields, indexValues, false, true);
 		this._updateRowColItemsGrandTotal(this.rowGrandTotals, indexValues, rowItems.i, rowFields, dataFields);
 	}
 	if (colFields) {
 		colItems = new CT_colItems();
 		indexValues = this.getColumnFieldsValuesIndex();
-		this._updateRowColItemsRecursively(0, {vals: dataRow.subtotal}, undefined, colItems.i, colFields, true, pivotFields, 0, dataFields, indexValues, false);
+		this._updateRowColItemsRecursively(0, {vals: dataRow.subtotal}, undefined, colItems.i, colFields, true, pivotFields, 0, dataFields, indexValues, false, true);
 		this._updateRowColItemsGrandTotal(this.colGrandTotals, indexValues, colItems.i, colFields, dataFields);
 	}
 	if (rowFields || colFields || dataFields) {
@@ -3629,7 +4313,7 @@ CT_pivotTableDefinition.prototype.updateRowColItems = function () {
 	}
 	this.setRowItems(rowItems, true);
 	this.setColItems(colItems, true);
-	return dataRow;
+	return res;
 };
 CT_pivotTableDefinition.prototype._updateRowColItemsRecursively = function(index, dataMap, parentI, items, fields, isCol, pivotFields, dataIndex, dataFields, indexValues, showAll) {
 	if (index >= fields.length) {
@@ -3637,14 +4321,15 @@ CT_pivotTableDefinition.prototype._updateRowColItemsRecursively = function(index
 	}
 	var pivotField, indexItem, item, subDataMap, dataField;
 	var x = fields[index].x;
+	var dataFieldsLength = (dataFields && dataFields.length) || 0;
 	if (st_VALUES === x) {
 		if (dataFields) {
-			for (indexItem = 0; indexItem < dataFields.length; ++indexItem) {
+			for (indexItem = 0; indexItem < dataFieldsLength; ++indexItem) {
 				dataField = dataFields[indexItem];
 				if (dataField) {
 					pivotField = pivotFields[dataField.asc_getIndex()];
 					if (pivotField) {
-						this._updateRowColItemsRecursivelyElem(index, dataMap, items, fields, isCol, pivotField, pivotFields, indexItem, dataFields, indexItem, parentI, indexValues, showAll);
+						this._updateRowColItemsRecursivelyElem(index, dataMap, items, fields, isCol, pivotField, pivotFields, indexItem, dataFields, indexItem, parentI, indexValues, showAll, true);
 						parentI = null;
 					}
 				}
@@ -3653,26 +4338,69 @@ CT_pivotTableDefinition.prototype._updateRowColItemsRecursively = function(index
 	} else {
 		pivotField = pivotFields[x];
 		if (pivotField && pivotField.items) {
-			for (indexItem = 0; indexItem < pivotField.items.item.length; ++indexItem) {
-				item = pivotField.items.item[indexItem];
-				if (Asc.c_oAscItemType.Data === item.t) {
-					subDataMap = dataMap.vals[item.x];
-					if(!subDataMap && (showAll || pivotField.showAll)){
-						showAll = showAll || pivotField.showAll;
-						subDataMap = new PivotDataElem(dataFields.length);
-					} else {
-						showAll = false;
+			var sortDataIndex = pivotField.getSortDataIndex();
+			if (c_oAscFieldSortType.Manual !== pivotField.sortType && 0 <= sortDataIndex && sortDataIndex < dataFieldsLength) {
+				pivotField = pivotField.clone();
+				dataField = dataFields[sortDataIndex];
+				var sortedPivotItems = pivotField.items.item.map(function(currentValue, index) {
+					return {item: currentValue, index: index};
+				});
+				var sign = Asc.c_oAscSortOptions.Ascending == pivotField.sortType ? 1 : -1;
+				sortedPivotItems.sort(function(a, b) {
+					var aDataMap = dataMap.vals[a.item.x];
+					aDataMap = aDataMap && aDataMap.total[sortDataIndex].getCellValue(dataField.subtotal, Asc.c_oAscItemType.Default, Asc.c_oAscItemType.Default, Asc.c_oAscItemType.Default);
+					var bDataMap = dataMap.vals[b.item.x];
+					bDataMap = bDataMap && bDataMap.total[sortDataIndex].getCellValue(dataField.subtotal, Asc.c_oAscItemType.Default, Asc.c_oAscItemType.Default, Asc.c_oAscItemType.Default);
+					var res = 0;
+					if (aDataMap && aDataMap.type === AscCommon.CellValueType.Number && bDataMap && bDataMap.type === AscCommon.CellValueType.Number) {
+						res = aDataMap.number - bDataMap.number;
+					} else if (aDataMap && aDataMap.type === AscCommon.CellValueType.Number) {
+						res = 1;
+					} else if (bDataMap && bDataMap.type === AscCommon.CellValueType.Number) {
+						res = -1;
 					}
-					if (subDataMap) {
-						this._updateRowColItemsRecursivelyElem(index, subDataMap, items, fields, isCol, pivotField, pivotFields, dataIndex, dataFields, indexItem, parentI, indexValues, showAll);
-						parentI = null;
+					return sign * res;
+				});
+				for (indexItem = 0; indexItem < sortedPivotItems.length; ++indexItem) {
+					var sortedPivotItem = sortedPivotItems[indexItem];
+					item = sortedPivotItem.item;
+					var itemIndex = sortedPivotItem.index;
+					if (Asc.c_oAscItemType.Data === item.t) {
+						subDataMap = dataMap.vals[item.x];
+						if (!subDataMap && (showAll || pivotField.showAll)) {
+							showAll = showAll || pivotField.showAll;
+							subDataMap = new PivotDataElem(dataFieldsLength);
+						} else {
+							showAll = false;
+						}
+						if (subDataMap) {
+							this._updateRowColItemsRecursivelyElem(index, subDataMap, items, fields, isCol, pivotField, pivotFields, dataIndex, dataFields, itemIndex, parentI, indexValues, showAll, item.sd);
+							parentI = null;
+						}
+					}
+				}
+			} else {
+				for (indexItem = 0; indexItem < pivotField.items.item.length; ++indexItem) {
+					item = pivotField.items.item[indexItem];
+					if (Asc.c_oAscItemType.Data === item.t) {
+						subDataMap = dataMap.vals[item.x];
+						if (!subDataMap && (showAll || pivotField.showAll)) {
+							showAll = showAll || pivotField.showAll;
+							subDataMap = new PivotDataElem(dataFieldsLength);
+						} else {
+							showAll = false;
+						}
+						if (subDataMap) {
+							this._updateRowColItemsRecursivelyElem(index, subDataMap, items, fields, isCol, pivotField, pivotFields, dataIndex, dataFields, indexItem, parentI, indexValues, showAll, item.sd);
+							parentI = null;
+						}
 					}
 				}
 			}
 		}
 	}
 };
-CT_pivotTableDefinition.prototype._updateRowColItemsRecursivelyElem = function(index, dataMap, items, fields, isCol, parentPivotField, pivotFields, dataIndex, dataFields, indexItem, parentI, indexValues, showAll) {
+CT_pivotTableDefinition.prototype._updateRowColItemsRecursivelyElem = function(index, dataMap, items, fields, isCol, parentPivotField, pivotFields, dataIndex, dataFields, indexItem, parentI, indexValues, showAll, sd) {
 	var newI, newParentI, i, j;
 	var newX = new CT_X();
 	newX.v = indexItem;
@@ -3687,6 +4415,9 @@ CT_pivotTableDefinition.prototype._updateRowColItemsRecursivelyElem = function(i
 		newI.x.push(newX);
 		items.push(newI);
 		newParentI = isTabular ? newI : undefined;
+	}
+	if (!sd) {
+		return;
 	}
 	this._updateRowColItemsRecursively(index + 1, dataMap, newParentI, items,
 			fields,	isCol, pivotFields, dataIndex, dataFields, indexValues, showAll);
@@ -3742,9 +4473,9 @@ CT_pivotTableDefinition.prototype._updateRowColItemsGrandTotal = function(grandT
 	}
 };
 CT_pivotTableDefinition.prototype.updateAfterEdit = function() {
-	var dataRow = this.updateRowColItems();
+	var res = this.updateRowColItems();
 	this.updateLocation();
-	return dataRow;
+	return res;
 };
 CT_pivotTableDefinition.prototype.setLocation = function(location, addToHistory) {
 	if (addToHistory) {
@@ -3785,16 +4516,27 @@ CT_pivotTableDefinition.prototype.updateLocation = function() {
 	var dataFields = this.asc_getDataFields();
 	var pageFields = this.asc_getPageFields();
 	if (rowFields || colFields || dataFields) {
+		var colFieldsCount = colFields ? colFields.length : 0;
+		var colFieldsCountWithoutValues = colFieldsCount;
+		var rowFieldsCount = rowFields ? rowFields.length : 0;
+		var dataFieldsCount = dataFields ? dataFields.length : 0;
+		location.firstDataCol = 0;
 		location.firstHeaderRow = 1;
-		var colFieldsCount = 0;
-		if (colFields) {
-			colFieldsCount = colFields.length;
-			if (1 === colFieldsCount && st_VALUES === colFields[0].asc_getIndex()) {
-				location.firstHeaderRow = 0;
+		if (1 === colFieldsCount && st_VALUES === colFields[0].asc_getIndex()) {
+			location.firstHeaderRow = 0;
+			colFieldsCountWithoutValues = 0;
+		}
+		if (this.gridDropZones && (0 === colFieldsCountWithoutValues || 0 === rowFieldsCount)) {
+			location.firstHeaderRow = 1;
+			if (0 < rowFieldsCount && 0 === colFieldsCountWithoutValues && dataFieldsCount < 2) {
+				location.firstHeaderRow = 2;
 			}
+			location.firstDataCol = 1;
+		}
+		if (false === this.showHeaders && false === this.gridDropZones && (1 !== dataFieldsCount || (0 < colFieldsCountWithoutValues && 0 === rowFieldsCount))) {
+			location.firstHeaderRow = 0;
 		}
 		location.firstDataRow = location.firstHeaderRow + colFieldsCount;
-		location.firstDataCol = 0;
 		if (rowFields) {
 			location.firstDataCol = 1;
 			for (i = 0; i < rowFields.length - 1; ++i) {
@@ -3810,7 +4552,7 @@ CT_pivotTableDefinition.prototype.updateLocation = function() {
 					}
 				}
 			}
-		} else if (colFields && dataFields && 1 === dataFields.length) {
+		} else if (colFields && 1 === dataFieldsCount) {
 			location.firstDataCol = 1;
 		}
 		var rowItemsCount = (rowFields || dataFields) ? this.rowItems.i.length : 0;
@@ -3818,8 +4560,16 @@ CT_pivotTableDefinition.prototype.updateLocation = function() {
 		if (!this.compact) {
 			colItemsCount = Math.max(colItemsCount, colFieldsCount);
 		}
-		location.ref.r2 = location.ref.r1 + location.firstDataRow + rowItemsCount - 1;
-		location.ref.c2 = location.ref.c1 + location.firstDataCol + colItemsCount - 1;
+		if (this.gridDropZones && 0 < colFieldsCount && 0 === rowFieldsCount && 0 === dataFieldsCount) {
+			location.ref.r2 = location.ref.r1 + location.firstDataRow + NEW_PIVOT_LAST_ROW_OFFSET_GRID_DROP_ZONES - 1;
+		} else {
+			location.ref.r2 = location.ref.r1 + location.firstDataRow + rowItemsCount - 1;
+		}
+		if (this.gridDropZones && 0 < rowFieldsCount && 0 === colFieldsCount && 0 === dataFieldsCount) {
+			location.ref.c2 = location.ref.c1 + location.firstDataCol + NEW_PIVOT_LAST_COL_OFFSET_GRID_DROP_ZONES - 1;
+		} else {
+			location.ref.c2 = location.ref.c1 + location.firstDataCol + colItemsCount - 1;
+		}
 	} else if (this.asc_getPageFields()) {
 		location.ref.r2 = location.ref.r1;
 		location.ref.c2 = location.ref.c1;
@@ -3827,8 +4577,13 @@ CT_pivotTableDefinition.prototype.updateLocation = function() {
 		location.firstDataRow = 0;
 		location.firstDataCol = 0;
 	} else {
-		location.ref.r2 = location.ref.r1 + NEW_PIVOT_LAST_ROW_OFFSET;
-		location.ref.c2 = location.ref.c1 + NEW_PIVOT_LAST_COL_OFFSET;
+		if (this.gridDropZones) {
+			location.ref.r2 = location.ref.r1 + NEW_PIVOT_LAST_ROW_OFFSET_GRID_DROP_ZONES;
+			location.ref.c2 = location.ref.c1 + NEW_PIVOT_LAST_COL_OFFSET_GRID_DROP_ZONES;
+		} else {
+			location.ref.r2 = location.ref.r1 + NEW_PIVOT_LAST_ROW_OFFSET;
+			location.ref.c2 = location.ref.c1 + NEW_PIVOT_LAST_COL_OFFSET;
+		}
 		location.firstHeaderRow = 1;
 		location.firstDataRow = 1;
 		location.firstDataCol = 0;
@@ -3847,16 +4602,19 @@ CT_pivotTableDefinition.prototype.parseDataRef = function(dataRef) {
 	return worksheetSource.getDataLocation();
 };
 CT_pivotTableDefinition.prototype.isValidDataRef = function(dataRef) {
-	var location = this.parseDataRef(dataRef);
-	if (location && location.bbox.getHeight() > 0) {
-		if (location.headings) {
-			return location.headings.length === location.bbox.getWidth();
-		} else if (location.bbox.getHeight() > 1) {
-			var header = this._prepareDataRange(location.ws, location.bbox.r1, location.bbox.c1, location.bbox.c2);
-			return header.countCol === location.bbox.getWidth();
+	return AscFormat.ExecuteNoHistory(function()
+	{
+		var location = this.parseDataRef(dataRef);
+		if (location && location.ws && location.bbox.getHeight() > 0) {
+			if (location.headings) {
+				return location.headings.length === location.bbox.getWidth();
+			} else if (location.bbox.getHeight() > 1) {
+				var header = this._prepareDataRange(location.ws, location.bbox.r1, location.bbox.c1, location.bbox.c2);
+				return header.countCol === location.bbox.getWidth();
+			}
 		}
-	}
-	return false;
+		return false;
+	}, this, []);
 };
 CT_pivotTableDefinition.prototype.prepareDataRange = function(ws, range) {
 	var header = this._prepareDataRange(ws, range.r1, range.c1, range.c2);
@@ -3881,6 +4639,1837 @@ CT_pivotTableDefinition.prototype._prepareDataRange = function(ws, row, c1, c2) 
 		}
 	});
 	return res;
+};
+CT_pivotTableDefinition.prototype.syncSlicersWithPivot = function(cacheFieldsWithData) {
+	var t = this;
+	var ws = this.worksheet;
+	var slicerCaches = ws.workbook.getSlicerCachesByPivotTable(ws.getId(), this.name);
+	slicerCaches.forEach(function(slicerCache) {
+		slicerCache.syncWithPivot(t, cacheFieldsWithData);
+	});
+};
+CT_pivotTableDefinition.prototype.isEmptyReport = function() {
+	return 0 === this.getColumnFieldsCount() + this.getRowFieldsCount() + this.getDataFieldsCount();
+};
+CT_pivotTableDefinition.prototype.asc_set = function (api, newVal) {
+	var t = this;
+	if (null !== newVal.ascDataRef && newVal.ascDataRef !== t.asc_getDataRef() && !this.isValidDataRef(newVal.ascDataRef)) {
+		api.sendEvent('asc_onError', c_oAscError.ID.PivotLabledColumns, c_oAscError.Level.NoCritical);
+		return;
+	}
+	api._changePivotWithLock(this, function (ws) {
+		var oldName = t.name;
+		if (null !== newVal.name) {
+			t.asc_setName(newVal.name, true);
+		}
+		var newName = t.name;
+		if (null !== newVal.rowGrandTotals) {
+			t.asc_setRowGrandTotals(newVal.rowGrandTotals, true);
+		}
+		if (null !== newVal.colGrandTotals) {
+			t.asc_setColGrandTotals(newVal.colGrandTotals, true);
+		}
+		if (null !== newVal.pageOverThenDown) {
+			t.asc_setPageOverThenDown(newVal.pageOverThenDown, true);
+		}
+		if (null !== newVal.pageWrap) {
+			t.asc_setPageWrap(newVal.pageWrap, true);
+		}
+		if (null !== newVal.showHeaders) {
+			t.asc_setShowHeaders(newVal.showHeaders, true);
+		}
+		if (null !== newVal.compact) {
+			t.setCompact(newVal.compact, true);
+		}
+		if (null !== newVal.outline) {
+			t.setOutline(newVal.outline, true);
+		}
+		if (null !== newVal.gridDropZones) {
+			t.asc_setGridDropZones(newVal.gridDropZones, true);
+		}
+		if (null != newVal.ascFillDownLabels) {
+			t.setFillDownLabelsDefault(newVal.ascFillDownLabels, true);
+		}
+		if (null !== newVal.ascDataRef && newVal.ascDataRef !== t.asc_getDataRef()) {
+			t.updateCacheData(newVal.ascDataRef);
+		}
+		if (null != newVal.ascAltText) {
+			t.setTitle(newVal.ascAltText, true);
+		}
+		if (null != newVal.ascAltTextSummary) {
+			t.setDescription(newVal.ascAltTextSummary, true);
+		}
+		if (null !== newVal.ascInsertBlankRow) {
+			t.setInsertBlankRow(newVal.ascInsertBlankRow, true);
+		}
+		if (null !== newVal.ascDefaultSubtotal) {
+			t.setDefaultSubtotal(newVal.ascDefaultSubtotal, true);
+		}
+		if (null !== newVal.ascSubtotalTop) {
+			t.setSubtotalTop(newVal.ascSubtotalTop, true);
+		}
+		if (oldName !== newName) {
+			var slicerCaches = ws.workbook.getSlicerCachesByPivotTable(ws.getId(), oldName);
+			slicerCaches.forEach(function(slicerCache) {
+				slicerCache.movePivotTable(ws.getId(), oldName, ws.getId(), newName);
+			});
+		}
+	});
+};
+CT_pivotTableDefinition.prototype.asc_setName = function(newVal, addToHistory) {
+	setTableProperty(this, this.name, newVal, addToHistory, AscCH.historyitem_PivotTable_SetName);
+	this.name = newVal;
+};
+CT_pivotTableDefinition.prototype.asc_setRowGrandTotals = function(newVal, addToHistory) {
+	setTableProperty(this, this.rowGrandTotals, newVal, addToHistory, AscCH.historyitem_PivotTable_SetRowGrandTotals, true);
+	this.rowGrandTotals = newVal;
+};
+CT_pivotTableDefinition.prototype.asc_setColGrandTotals = function(newVal, addToHistory) {
+	setTableProperty(this, this.colGrandTotals, newVal, addToHistory, AscCH.historyitem_PivotTable_SetColGrandTotals, true);
+	this.colGrandTotals = newVal;
+};
+CT_pivotTableDefinition.prototype.asc_setPageOverThenDown = function(newVal, addToHistory) {
+	setTableProperty(this, this.pageOverThenDown, newVal, addToHistory, AscCH.historyitem_PivotTable_SetPageOverThenDown, true);
+	this.pageOverThenDown = newVal;
+};
+CT_pivotTableDefinition.prototype.asc_setPageWrap = function(newVal, addToHistory) {
+	setTableProperty(this, this.pageWrap, newVal, addToHistory, AscCH.historyitem_PivotTable_SetPageWrap, true);
+	this.pageWrap = newVal;
+};
+CT_pivotTableDefinition.prototype.asc_setShowHeaders = function(newVal, addToHistory) {
+	setTableProperty(this, this.showHeaders, newVal, addToHistory, AscCH.historyitem_PivotTable_SetShowHeaders, true);
+	this.showHeaders = newVal;
+};
+CT_pivotTableDefinition.prototype.asc_setCompact = function(newVal, addToHistory) {
+	setTableProperty(this, this.compact, newVal, addToHistory, AscCH.historyitem_PivotTable_SetCompact, true);
+	this.compact = newVal;
+	this.compactData = this.compact;
+};
+CT_pivotTableDefinition.prototype.setCompact = function(newVal, addToHistory) {
+	this.asc_setCompact(newVal, addToHistory);
+	var pivotFields = this.asc_getPivotFields();
+	if (addToHistory && pivotFields) {
+		for (var i = 0; i < pivotFields.length; ++i) {
+			pivotFields[i].asc_setCompact(newVal, this, i, addToHistory);
+		}
+	}
+};
+CT_pivotTableDefinition.prototype.asc_setOutline = function(newVal, addToHistory) {
+	setTableProperty(this, this.outline, newVal, addToHistory, AscCH.historyitem_PivotTable_SetOutline, true);
+	this.outline = newVal;
+	this.outlineData = this.outline;
+};
+CT_pivotTableDefinition.prototype.setOutline = function(newVal, addToHistory) {
+	this.asc_setOutline(newVal, addToHistory);
+	var pivotFields = this.asc_getPivotFields();
+	if (addToHistory && pivotFields) {
+		for (var i = 0; i < pivotFields.length; ++i) {
+			pivotFields[i].asc_setOutline(newVal, this, i, addToHistory);
+		}
+	}
+};
+CT_pivotTableDefinition.prototype.asc_setGridDropZones = function(newVal, addToHistory) {
+	setTableProperty(this, this.gridDropZones, newVal, addToHistory, AscCH.historyitem_PivotTable_SetGridDropZones, true);
+	this.gridDropZones = newVal;
+};
+CT_pivotTableDefinition.prototype.asc_setFillDownLabelsDefault = function(newVal) {
+	this.ascFillDownLabels = newVal;
+};
+CT_pivotTableDefinition.prototype.setFillDownLabelsDefault = function(newVal, addToHistory) {
+	if (!this.pivotTableDefinitionX14) {
+		this.pivotTableDefinitionX14 = new CT_pivotTableDefinitionX14();
+	}
+	var oldVal = this.pivotTableDefinitionX14.fillDownLabelsDefault;
+	setTableProperty(this, oldVal, newVal, addToHistory, AscCH.historyitem_PivotTable_SetFillDownLabelsDefault, true);
+	this.pivotTableDefinitionX14.fillDownLabelsDefault = newVal;
+
+	var pivotFields = this.asc_getPivotFields();
+	if (addToHistory && pivotFields) {
+		for (var i = 0; i < pivotFields.length; ++i) {
+			pivotFields[i].setFillDownLabelsDefault(newVal, this, i, addToHistory);
+		}
+	}
+};
+CT_pivotTableDefinition.prototype.asc_setDataRef = function(newVal) {
+	this.ascDataRef = newVal;
+};
+CT_pivotTableDefinition.prototype.asc_setTitle = function(newVal) {
+	this.ascAltText = newVal;
+};
+CT_pivotTableDefinition.prototype.setTitle = function(newVal, addToHistory) {
+	if (!this.pivotTableDefinitionX14) {
+		this.pivotTableDefinitionX14 = new CT_pivotTableDefinitionX14();
+	}
+	var oldVal = this.pivotTableDefinitionX14.altText;
+	setTableProperty(this, oldVal, newVal, addToHistory, AscCH.historyitem_PivotTable_SetAltText, true);
+	this.pivotTableDefinitionX14.altText = newVal;
+};
+CT_pivotTableDefinition.prototype.asc_setDescription = function(newVal, addToHistory) {
+	this.ascAltTextSummary = newVal;
+};
+CT_pivotTableDefinition.prototype.setDescription = function(newVal, addToHistory) {
+	if (!this.pivotTableDefinitionX14) {
+		this.pivotTableDefinitionX14 = new CT_pivotTableDefinitionX14();
+	}
+	var oldVal = this.pivotTableDefinitionX14.altTextSummary;
+	setTableProperty(this, oldVal, newVal, addToHistory, AscCH.historyitem_PivotTable_SetAltTextSummary, true);
+	this.pivotTableDefinitionX14.altTextSummary = newVal;
+};
+CT_pivotTableDefinition.prototype.asc_setInsertBlankRow = function(newVal) {
+	this.ascInsertBlankRow = newVal;
+};
+CT_pivotTableDefinition.prototype.setInsertBlankRow = function(newVal, addToHistory) {
+	var pivotFields = this.asc_getPivotFields();
+	if (pivotFields) {
+		for (var i = 0; i < pivotFields.length; ++i) {
+			pivotFields[i].asc_setInsertBlankRow(newVal, this, i, addToHistory);
+		}
+	}
+};
+CT_pivotTableDefinition.prototype.asc_setDefaultSubtotal = function(newVal) {
+	this.ascDefaultSubtotal = newVal;
+};
+CT_pivotTableDefinition.prototype.setDefaultSubtotal = function(newVal, addToHistory) {
+	var pivotFields = this.asc_getPivotFields();
+	if (pivotFields) {
+		for (var i = 0; i < pivotFields.length; ++i) {
+			pivotFields[i].asc_setDefaultSubtotal(newVal, this, i, addToHistory);
+			//todo
+			pivotFields[i].checkSubtotal();
+		}
+	}
+};
+CT_pivotTableDefinition.prototype.asc_setSubtotalTop = function(newVal) {
+	this.ascSubtotalTop = newVal;
+};
+CT_pivotTableDefinition.prototype.setSubtotalTop = function(newVal, addToHistory) {
+	var pivotFields = this.asc_getPivotFields();
+	if (pivotFields) {
+		for (var i = 0; i < pivotFields.length; ++i) {
+			pivotFields[i].asc_setSubtotalTop(newVal, this, i, addToHistory);
+		}
+	}
+};
+CT_pivotTableDefinition.prototype.asc_addDataField = function(api, pivotIndex, insertIndex) {
+	var pivotField = this.asc_getPivotFields()[pivotIndex];
+	if (pivotField && !pivotField.dragToData) {
+		//todo The field you are moving cannot be placed in thet PivotTable area
+		return;
+	}
+	var t = this;
+	api._changePivotWithLock(this, function() {
+		t.addDataFieldAndReIndex(pivotIndex, insertIndex, true);
+		t.addValuesField(true);
+	});
+};
+CT_pivotTableDefinition.prototype.addDataFieldAndReIndex = function(pivotIndex, insertIndex, addToHistory) {
+	insertIndex = this.addDataField(pivotIndex, insertIndex, true);
+
+	var reindex = AscCommon.getRangeArray(0, this.getDataFieldsCount());
+	AscCommon.arrayMove(reindex, insertIndex, this.getDataFieldsCount() - 1);
+	reindex[this.getDataFieldsCount() - 1] = undefined;
+	this.reIndexDataFields(reindex);
+};
+CT_pivotTableDefinition.prototype.addDataField = function(pivotIndex, insertIndex, addToHistory) {
+	var pivotField = this.asc_getPivotFields()[pivotIndex];
+	pivotField.dataField = true;
+	var newField = new CT_DataField(true);
+	newField.fld = pivotIndex;
+	var cacheField = this.asc_getCacheFields()[pivotIndex];
+	if (cacheField && cacheField.isSumSubtotal()) {
+		newField.subtotal = c_oAscDataConsolidateFunction.Sum;
+	} else {
+		newField.subtotal = c_oAscDataConsolidateFunction.Count;
+	}
+	if (!this.dataFields) {
+		this.dataFields = new CT_DataFields();
+	}
+	//todo translation
+	var newName = AscCommon.translateManager.getValue(FIELD_CAPTION);
+	newName = newName.replace("%1", ToName_ST_DataConsolidateFunction(newField.subtotal)).replace("%2", this.getPivotFieldName(pivotIndex));
+	if (this.dataFields.checkDuplicateName(newName)) {
+		var lastChar = newName.slice(-1);
+		var delimiter = "";
+		if ("0" <= lastChar && lastChar <= "9") {
+			delimiter = "_";
+		}
+		var index = 2;
+		while (this.dataFields.checkDuplicateName(newName + delimiter + index)) {
+			index++;
+		}
+		newName = newName + delimiter + index;
+	}
+	newField.name = newName;
+	newField.baseField = 0;
+	newField.baseItem = 0;
+	insertIndex = this.dataFields.add(newField, insertIndex);
+	if (addToHistory) {
+		History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_AddDataField,
+			this.worksheet ? this.worksheet.getId() : null, null,
+			new AscCommonExcel.UndoRedoData_PivotTable(this.Get_Id(), pivotIndex, insertIndex));
+	}
+	this.setChanged(true);
+	return insertIndex;
+};
+CT_pivotTableDefinition.prototype.asc_addRowField = function(api, pivotIndex, insertIndex) {
+	var pivotField = this.asc_getPivotFields()[pivotIndex];
+	if (pivotField && !pivotField.dragToRow) {
+		//todo The field you are moving cannot be placed in thet PivotTable area
+		return;
+	}
+	var t = this;
+	api._changePivotWithLock(this, function() {
+		var deleteIndex = t.removeNoDataField(pivotIndex, true);
+		insertIndex = t.checkInsertIndex(insertIndex, deleteIndex);
+		t.addRowField(pivotIndex, insertIndex, true);
+	});
+};
+CT_pivotTableDefinition.prototype.addRowField = function(pivotIndex, insertIndex, addToHistory) {
+	var pivotField = this.asc_getPivotFields()[pivotIndex];
+	if (pivotField) {
+		pivotField.axis = c_oAscAxis.AxisRow;
+	}
+	var newField = new CT_Field();
+	newField.x = pivotIndex;
+	if (!this.rowFields) {
+		this.rowFields = new CT_RowFields();
+	}
+	insertIndex = this.rowFields.add(newField, insertIndex);
+	if (addToHistory) {
+		History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_AddRowField,
+			this.worksheet ? this.worksheet.getId() : null, null,
+			new AscCommonExcel.UndoRedoData_PivotTable(this.Get_Id(), pivotIndex, insertIndex));
+	}
+	this.setChanged(true);
+};
+CT_pivotTableDefinition.prototype.asc_addColField = function(api, pivotIndex, insertIndex) {
+	var pivotField = this.asc_getPivotFields()[pivotIndex];
+	if (pivotField && !pivotField.dragToCol) {
+		//todo The field you are moving cannot be placed in thet PivotTable area
+		return;
+	}
+	var t = this;
+	api._changePivotWithLock(this, function() {
+		var deleteIndex = t.removeNoDataField(pivotIndex, true);
+		insertIndex = t.checkInsertIndex(insertIndex, deleteIndex);
+		t.addColField(pivotIndex, insertIndex, true);
+	});
+};
+CT_pivotTableDefinition.prototype.addColField = function(pivotIndex, insertIndex, addToHistory) {
+	var pivotField = this.asc_getPivotFields()[pivotIndex];
+	if (pivotField) {
+		pivotField.axis = c_oAscAxis.AxisCol;
+	}
+	var newField = new CT_Field();
+	newField.x = pivotIndex;
+	if (!this.colFields) {
+		this.colFields = new CT_ColFields();
+	}
+	insertIndex = this.colFields.add(newField, insertIndex);
+	if (addToHistory) {
+		History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_AddColField,
+			this.worksheet ? this.worksheet.getId() : null, null,
+			new AscCommonExcel.UndoRedoData_PivotTable(this.Get_Id(), pivotIndex, insertIndex));
+	}
+	this.setChanged(true);
+};
+CT_pivotTableDefinition.prototype.asc_addPageField = function(api, pivotIndex, insertIndex) {
+	var pivotField = this.asc_getPivotFields()[pivotIndex];
+	if (pivotField && !pivotField.dragToPage) {
+		//todo The field you are moving cannot be placed in thet PivotTable area
+		return;
+	}
+	var t = this;
+	api._changePivotWithLock(this, function() {
+		var deleteIndex = t.removeNoDataField(pivotIndex, true);
+		insertIndex = t.checkInsertIndex(insertIndex, deleteIndex);
+		t.addPageField(pivotIndex, insertIndex, true);
+	});
+};
+CT_pivotTableDefinition.prototype.addPageField = function(pivotIndex, insertIndex, addToHistory) {
+	var pivotField = this.asc_getPivotFields()[pivotIndex];
+	pivotField.axis = c_oAscAxis.AxisPage;
+	var newField = new CT_PageField();
+	newField.fld = pivotIndex;
+	newField.hier = -1;
+	if (!this.pageFields) {
+		this.pageFields = new CT_PageFields();
+	}
+	insertIndex = this.pageFields.add(newField, insertIndex);
+	if (addToHistory) {
+		History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_AddPageField,
+			this.worksheet ? this.worksheet.getId() : null, null,
+			new AscCommonExcel.UndoRedoData_PivotTable(this.Get_Id(), pivotIndex, insertIndex));
+	}
+	this.setChanged(true);
+};
+CT_pivotTableDefinition.prototype.addValuesField = function(addToHistory) {
+	var dataPosition;
+	if (this.getDataFieldsCount() > 1) {
+		if (this.dataOnRows) {
+			if (-1 === this.getRowFieldsValuesIndex()) {
+				this.removeValuesField(addToHistory);
+				if (null !== this.dataPosition && this.rowFields) {
+					if (this.dataPosition < this.rowFields.getCount()) {
+						dataPosition = this.dataPosition;
+					} else {
+						this.setDataPosition(null, addToHistory);
+					}
+				}
+				this.addRowField(st_VALUES, dataPosition, addToHistory);
+			}
+		} else {
+			if (-1 === this.getColumnFieldsValuesIndex()) {
+				this.removeValuesField(addToHistory);
+				if (null !== this.dataPosition && this.colFields) {
+					if (this.dataPosition < this.colFields.getCount()) {
+						dataPosition = this.dataPosition;
+					} else {
+						this.setDataPosition(null, addToHistory);
+					}
+				}
+				this.addColField(st_VALUES, dataPosition, addToHistory);
+			}
+		}
+	}
+};
+CT_pivotTableDefinition.prototype.asc_addField = function(api, index) {
+	var cacheField = this.asc_getCacheFields()[index];
+	if (cacheField && cacheField.isSumSubtotal()) {
+		this.asc_addDataField(api, index);
+	} else {
+		this.asc_addRowField(api, index);
+	}
+};
+CT_pivotTableDefinition.prototype.asc_removeField = function(api, pivotIndex) {
+	if (st_VALUES === pivotIndex) {
+		return;
+	}
+	var t = this;
+	api._changePivotWithLock(this, function(ws) {
+		t.removeNoDataField(pivotIndex, true);
+		t.removeDataFieldAndReIndex(pivotIndex, undefined, true);
+	});
+};
+CT_pivotTableDefinition.prototype.asc_removeNoDataField = function(api, pivotIndex) {
+	var t = this;
+	api._changePivotWithLock(this, function(ws) {
+		if (st_VALUES === pivotIndex) {
+			var dataFields = t.asc_getDataFields();
+			if (dataFields) {
+				for (var i = dataFields.length - 1; i >= 0; --i) {
+					var dataField = dataFields[i];
+					t.removeDataFieldAndReIndex(dataField.asc_getIndex(), i, true);
+				}
+			}
+		} else {
+			t.removeNoDataField(pivotIndex, true);
+		}
+	});
+};
+CT_pivotTableDefinition.prototype.asc_removeDataField = function(api, pivotIndex, dataIndex) {
+	if (st_VALUES === pivotIndex) {
+		return;
+	}
+	var t = this;
+	api._changePivotWithLock(this, function(ws) {
+		t.removeDataFieldAndReIndex(pivotIndex, dataIndex, true);
+	});
+};
+CT_pivotTableDefinition.prototype.asc_moveToPageField = function(api, pivotIndex, dataIndex) {
+	if (st_VALUES === pivotIndex) {
+		return;
+	}
+	var pivotField = this.asc_getPivotFields()[pivotIndex];
+	if (pivotField && !pivotField.dragToPage) {
+		//todo The field you are moving cannot be placed in thet PivotTable area
+		return;
+	}
+	var t = this;
+	api._changePivotWithLock(this, function(ws) {
+		var deleteIndex = t.removeNoDataField(pivotIndex, true);
+		if (undefined === deleteIndex && undefined !== dataIndex) {
+			t.removeDataFieldAndReIndex(pivotIndex, dataIndex, true);
+		}
+		t.addPageField(pivotIndex, undefined, true);
+	});
+};
+CT_pivotTableDefinition.prototype.asc_moveToRowField = function(api, pivotIndex, dataIndex) {
+	var pivotField = this.asc_getPivotFields()[pivotIndex];
+	if (pivotField && !pivotField.dragToRow) {
+		//todo The field you are moving cannot be placed in thet PivotTable area
+		return;
+	}
+	var t = this;
+	api._changePivotWithLock(this, function(ws) {
+		if (st_VALUES === pivotIndex) {
+			t.removeValuesField(true);
+			if (t.dataOnRows !== true) {
+				t.setDataPosition(null, true);
+			}
+			t.setDataOnRows(true, true);
+			t.addValuesField(true);
+		} else {
+			var deleteIndex = t.removeNoDataField(pivotIndex, true);
+			if (undefined === deleteIndex && undefined !== dataIndex) {
+				t.removeDataFieldAndReIndex(pivotIndex, dataIndex, true);
+			}
+			t.addRowField(pivotIndex, undefined, true);
+		}
+	});
+};
+CT_pivotTableDefinition.prototype.asc_moveToColField = function(api, pivotIndex, dataIndex) {
+	var pivotField = this.asc_getPivotFields()[pivotIndex];
+	if (pivotField && !pivotField.dragToCol) {
+		//todo The field you are moving cannot be placed in thet PivotTable area
+		return;
+	}
+	var t = this;
+	api._changePivotWithLock(this, function(ws) {
+		if (st_VALUES === pivotIndex) {
+			t.removeValuesField(true);
+			if (t.dataOnRows !== false) {
+				t.setDataPosition(null, true);
+			}
+			t.setDataOnRows(false, true);
+			t.addValuesField(true);
+		} else {
+			var deleteIndex = t.removeNoDataField(pivotIndex, true);
+			if (undefined === deleteIndex && undefined !== dataIndex) {
+				t.removeDataFieldAndReIndex(pivotIndex, dataIndex, true);
+			}
+			t.addColField(pivotIndex, undefined, true);
+		}
+	});
+};
+CT_pivotTableDefinition.prototype.asc_moveToDataField = function(api, pivotIndex, dataIndex) {
+	if (st_VALUES === pivotIndex) {
+		return;
+	}
+	var pivotField = this.asc_getPivotFields()[pivotIndex];
+	if (pivotField && !pivotField.dragToData) {
+		//todo The field you are moving cannot be placed in thet PivotTable area
+		return;
+	}
+	var t = this;
+	api._changePivotWithLock(this, function(ws) {
+		var deleteIndex = t.removeNoDataField(pivotIndex, true);
+		if (undefined === deleteIndex && undefined !== dataIndex) {
+			t.removeDataFieldAndReIndex(pivotIndex, dataIndex, true);
+		}
+		t.addDataFieldAndReIndex(pivotIndex, undefined, true);
+		t.addValuesField(true);
+	});
+};
+CT_pivotTableDefinition.prototype.setDataOnRows = function(newVal, addToHistory) {
+	setTableProperty(this, this.dataOnRows, newVal, addToHistory, AscCH.historyitem_PivotTable_SetDataOnRows, true);
+	this.dataOnRows = newVal;
+};
+CT_pivotTableDefinition.prototype.setDataPosition = function(newVal, addToHistory) {
+	setTableProperty(this, this.dataPosition, newVal, addToHistory, AscCH.historyitem_PivotTable_SetDataPosition, true);
+	this.dataPosition = newVal;
+};
+CT_pivotTableDefinition.prototype.asc_movePageField = function(api, from, to) {
+	var t = this;
+	api._changePivotWithLock(this, function(ws) {
+		t.moveField(t.asc_getPageFields(), from, to, true, AscCH.historyitem_PivotTable_MovePageField);
+	});
+};
+CT_pivotTableDefinition.prototype.asc_moveRowField = function(api, from, to) {
+	var t = this;
+	api._changePivotWithLock(this, function(ws) {
+		t.moveDataPosition(t.asc_getRowFields(), from, to, true);
+		t.moveField(t.asc_getRowFields(), from, to, true, AscCH.historyitem_PivotTable_MoveRowField);
+	});
+};
+CT_pivotTableDefinition.prototype.asc_moveColField = function(api, from, to) {
+	var t = this;
+	api._changePivotWithLock(this, function(ws) {
+		t.moveDataPosition(t.asc_getColumnFields(), from, to, true);
+		t.moveField(t.asc_getColumnFields(), from, to, true, AscCH.historyitem_PivotTable_MoveColField);
+	});
+};
+CT_pivotTableDefinition.prototype.asc_moveDataField = function(api, from, to) {
+	var t = this;
+	api._changePivotWithLock(this, function(ws) {
+		var dataFields = t.asc_getDataFields();
+		var isMoved = t.moveField(dataFields, from, to, true, AscCH.historyitem_PivotTable_MoveDataField);
+
+		if (isMoved) {
+			var reindex = AscCommon.getRangeArray(0, dataFields.length);
+			AscCommon.arrayMove(reindex, to, from);
+			t.reIndexDataFields(reindex);
+		}
+	});
+};
+
+CT_pivotTableDefinition.prototype.reIndexDataFields = function(reindex) {
+	var i, newIndex;
+	var pivotFields = this.asc_getPivotFields();
+	if (pivotFields) {
+		for (i = 0; i < pivotFields.length; ++i) {
+			var pivotField = pivotFields[i];
+			var sortDataIndex = pivotField.getSortDataIndex();
+			if (-1 !== sortDataIndex) {
+				newIndex = reindex[sortDataIndex];
+				if (newIndex !== sortDataIndex) {
+					if (undefined !== newIndex) {
+						this.sortPivotItems(i, pivotField.getSortVal(), newIndex);
+					} else {
+						this.sortPivotItems(i, c_oAscFieldSortType.Ascending, -1);
+						this.sortPivotItems(i, null, -1);
+					}
+				}
+			}
+		}
+	}
+	var pivotFilters = this.asc_getPivotFilters();
+	if (pivotFilters) {
+		for (i = pivotFilters.length - 1; i >= 0; --i) {
+			var pivotFilter = pivotFilters[i];
+			if (null !== pivotFilter.iMeasureFld) {
+				newIndex = reindex[pivotFilter.iMeasureFld];
+				if (newIndex !== pivotFilter.iMeasureFld) {
+					if (undefined !== newIndex) {
+						var oldVal = pivotFilter.iMeasureFld;
+						pivotFilter.setMeasureFld(newIndex);
+						History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_PivotFilterMeasureFld,
+							this.worksheet ? this.worksheet.getId() : null, null,
+							new AscCommonExcel.UndoRedoData_PivotField(this.Get_Id(), i, oldVal, newIndex));
+					} else {
+						pivotFilters.splice(i, 1);
+						History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_PivotFilter,
+							this.worksheet ? this.worksheet.getId() : null, null,
+							new AscCommonExcel.UndoRedoData_PivotField(this.Get_Id(), i, pivotFilter, null));
+					}
+				}
+			}
+		}
+	}
+};
+CT_pivotTableDefinition.prototype.moveDataPosition = function(arr, from, to, addToHistory) {
+	if(st_VALUES === arr[from].x){
+		if (to + 1 < arr.length) {
+			this.setDataPosition(to, addToHistory);
+		} else {
+			this.setDataPosition(null, addToHistory);
+		}
+	}
+};
+CT_pivotTableDefinition.prototype.moveField = function(arr, from, to, addToHistory, historyType) {
+	if (arr && 0 <= from && from < arr.length && 0 <= to && to < arr.length) {
+		AscCommon.arrayMove(arr, from, to);
+		if (addToHistory) {
+			History.Add(AscCommonExcel.g_oUndoRedoPivotTables, historyType,
+				this.worksheet ? this.worksheet.getId() : null, null,
+				new AscCommonExcel.UndoRedoData_PivotTable(this.Get_Id(), from, to));
+		}
+		this.setChanged(true);
+		return true;
+	}
+	return false;
+};
+CT_pivotTableDefinition.prototype.asc_refresh = function(api) {
+	var t = this;
+	var dataRef = t.asc_getDataRef();
+	if (Asc.CT_pivotTableDefinition.prototype.isValidDataRef(dataRef)) {
+		api._changePivotWithLock(t, function (ws) {
+			t.updateCacheData(dataRef);
+		}, true);
+	} else {
+		api.sendEvent('asc_onError', c_oAscError.ID.PivotLabledColumns, c_oAscError.Level.NoCritical);
+	}
+};
+CT_pivotTableDefinition.prototype.updateCacheData = function (dataRef) {
+	var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(this);
+	var newCacheDefinition = new CT_PivotCacheDefinition();
+	newCacheDefinition.asc_create();
+	newCacheDefinition.fromDataRef(dataRef);
+	newCacheDefinition.setPivotCacheId(this.cacheDefinition.getPivotCacheId());
+
+	var pivotFieldsMap = new Map();
+	var newCTPivotFields = new CT_PivotFields();
+	this._updateCacheDataUpdatePivotFieldsIndexes(newCacheDefinition, newCTPivotFields, pivotFieldsMap);
+	this.updateIndexesForNewPivotFields(newCacheDefinition, newCTPivotFields, pivotFieldsMap);
+
+	this.setChanged(true);
+	var newPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(this);
+	History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_PivotReplace, this.worksheet.getId(),
+		null, new AscCommonExcel.UndoRedoData_PivotTableRedo(this.Get_Id(), oldPivot, newPivot));
+
+	this._updateCacheDataUpdateSlicersPost();
+};
+CT_pivotTableDefinition.prototype.updateIndexesForNewPivotFields = function (newCacheDefinition, newCTPivotFields, pivotFieldsMap) {
+	var newCTPageFields = null;
+	if (this.asc_getPageFields()) {
+		newCTPageFields = new CT_PageFields();
+		this._updateCacheDataUpdatePageDataFieldsIndexes(this.asc_getPageFields(), newCTPageFields.pageField, pivotFieldsMap);
+	}
+	var newCTDataFields = null;
+	if (this.asc_getDataFields()) {
+		newCTDataFields = new CT_DataFields();
+		this._updateCacheDataUpdatePageDataFieldsIndexes(this.asc_getDataFields(), newCTDataFields.dataField, pivotFieldsMap);
+	}
+	var newCTPivotFilters = null;
+	if (this.asc_getPivotFilters()) {
+		newCTPivotFilters = new CT_PivotFilters();
+		this._updateCacheDataUpdatePageDataFieldsIndexes(this.asc_getPivotFilters(), newCTPivotFilters.filter, pivotFieldsMap);
+	}
+	var newCTRowFields = this._updateCacheDataUpdateRowColFieldsIndexes(this.asc_getRowFields(), new CT_RowFields(), newCTDataFields, pivotFieldsMap);
+	var newCTColFields = this._updateCacheDataUpdateRowColFieldsIndexes(this.asc_getColumnFields(), new CT_ColFields(), newCTDataFields, pivotFieldsMap);
+
+	this._updateCacheDataUpdateSlicers(newCacheDefinition, pivotFieldsMap);
+
+	this.cacheDefinition = newCacheDefinition;
+	this.pivotFields = newCTPivotFields;
+	this.pageFields = newCTPageFields;
+	this.dataFields = newCTDataFields;
+	this.filters = newCTPivotFilters;
+	this.rowFields = newCTRowFields;
+	this.colFields = newCTColFields;
+};
+CT_pivotTableDefinition.prototype._updateCacheDataUpdatePivotFieldsIndexes = function (newCacheDefinition, newCTPivotFields, pivotFieldsMap) {
+	var i, discretePrMaps = {};
+	var cacheDefinitionMap = new Map();
+	var newCacheFields = newCacheDefinition.getFields();
+	for (i = 0; i < newCacheFields.length; ++i) {
+		cacheDefinitionMap.set(newCacheFields[i].asc_getName(), i);
+	}
+
+	newCTPivotFields.fillWithEmpty(newCacheFields);
+	var newPivotFields = newCTPivotFields.pivotField;
+
+	var oldPivotFields = this.asc_getPivotFields();
+	var oldCacheFields = this.cacheDefinition.getFields();
+	for (i = 0; i < oldCacheFields.length; ++i) {
+		var oldPivotField = oldPivotFields[i];
+		var oldCacheField = oldCacheFields[i];
+		if(!oldCacheField.databaseField) {
+			continue;
+		}
+		var newIndex = cacheDefinitionMap.get(oldCacheField.asc_getName());
+		if (undefined !== newIndex && oldPivotField) {
+			var discretePrMap = this._updateCacheDataUpdatePivotFieldsIndexesItems(oldCacheField, oldPivotField, newIndex, newCacheDefinition);
+			//oldPivotField.items = null;
+			newPivotFields[newIndex] = oldPivotField;
+			pivotFieldsMap.set(i, newIndex);
+			if (discretePrMap) {
+				discretePrMaps[i] = discretePrMap;
+			}
+		}
+	}
+	this._updateCacheDataUpdatePivotFieldsIndexesGroup(newCacheDefinition, newCTPivotFields, pivotFieldsMap, cacheDefinitionMap, discretePrMaps);
+};
+CT_pivotTableDefinition.prototype._updateCacheDataUpdatePivotFieldsIndexesGroup = function (newCacheDefinition, newCTPivotFields, pivotFieldsMap, cacheDefinitionMap, discretePrMaps) {
+	var i;
+	var newCacheFields = newCacheDefinition.getFields();
+	var newPivotFields = newCTPivotFields.pivotField;
+	var oldPivotFields = this.asc_getPivotFields();
+	var oldCacheFields = this.cacheDefinition.getFields();
+	for (i = 0; i < oldCacheFields.length; ++i) {
+		var oldPivotField = oldPivotFields[i];
+		var oldCacheField = oldCacheFields[i];
+		if (!oldCacheField.databaseField && oldPivotField) {
+			var oldBaseCacheField = oldCacheFields[oldCacheField.getGroupBase()];
+			if (oldBaseCacheField) {
+				var newBaseIndex = cacheDefinitionMap.get(oldBaseCacheField.asc_getName());
+				var newBaseCacheField = newCacheFields[newBaseIndex];
+				var newBaseRangePr = newBaseCacheField && newBaseCacheField.getGroupRangePr();
+				var oldRangePr = oldCacheField.getGroupRangePr();
+				if (newBaseCacheField && discretePrMaps[newBaseIndex] &&
+					(!oldRangePr || (oldRangePr.getFieldGroupType() === (newBaseRangePr && newBaseRangePr.getFieldGroupType())))) {
+					var newIndexPar = newCacheFields.length;
+					var newCacheField = oldCacheField.clone();
+					if (-1 !== newCacheDefinition.cacheFields.getIndexByName(newCacheField.name)) {
+						newCacheField.name = newCacheDefinition.cacheFields.generateNewName(newCacheField.name);
+					}
+					var newPivotField = oldPivotField.clone();
+					if (c_oAscGroupType.Text === newCacheField.getFieldGroupType()) {
+						var groupItemsMap = newCacheField.refreshGroupDiscrete(newBaseCacheField.getGroupOrSharedItems(), discretePrMaps[newBaseIndex]);
+						newPivotField.refreshGroupDiscrete(groupItemsMap, newCacheField.getGroupOrSharedSize());
+						var topCacheField = newCacheFields[newCacheDefinition.getFieldsTopParWithBase(newBaseIndex)];
+						if (topCacheField) {
+							topCacheField.initGroupPar(newIndexPar);
+						} else {
+							newBaseCacheField.initGroupPar(newIndexPar);
+						}
+					} else {
+						var rangePrAuto = newBaseCacheField.createGroupRangePr();
+						var rangePr = newCacheField.getGroupRangePr().clone();
+						newCacheField.refreshGroupRangePr(newBaseIndex, rangePr, rangePrAuto);
+						newPivotField.groupRangePr(newCacheField.getGroupOrSharedSize());
+						newBaseCacheField.initGroupPar(newIndexPar);
+					}
+					newCacheField.initGroupBase(newBaseIndex);
+					if (newCacheField.name === oldCacheField.name) {
+						pivotFieldsMap.set(i, newIndexPar);
+					} else {
+						newPivotField.removeGroupFromAxis();
+					}
+					newCacheFields[newIndexPar] = newCacheField;
+					newPivotFields[newIndexPar] = newPivotField;
+				}
+			}
+		}
+	}
+};
+CT_pivotTableDefinition.prototype._updateCacheDataUpdatePivotFieldsIndexesItems = function(oldCacheField, oldPivotField, newIndex, newCacheDefinition) {
+	var newCacheFields = newCacheDefinition.getFields();
+	if (null !== oldPivotField.items && newCacheFields && newCacheFields[newIndex]) {
+		return this.refreshPivotFieldItem(newIndex, oldPivotField, newCacheDefinition.cacheRecords, newCacheFields[newIndex], oldCacheField);
+	}
+};
+CT_pivotTableDefinition.prototype._updateCacheDataUpdatePageDataFieldsIndexes = function(oldFields, newFields, pivotFieldsMap) {
+	for (var i = 0; i < oldFields.length; ++i) {
+		var oldDataField = oldFields[i];
+		var newIndex = pivotFieldsMap.get(oldDataField.fld);
+		if (undefined !== newIndex) {
+			oldDataField.fld = newIndex;
+			newFields.push(oldDataField);
+		}
+	}
+};
+CT_pivotTableDefinition.prototype._updateCacheDataUpdateRowColFieldsIndexes = function(oldFields, newCTFields, newCTDataFields, pivotFieldsMap) {
+	if (!oldFields) {
+		return null;
+	}
+	for (var i = 0; i < oldFields.length; ++i) {
+		var oldField = oldFields[i];
+		if (st_VALUES === oldField.x) {
+			if (newCTDataFields.getCount() > 1) {
+				newCTFields.field.push(oldField);
+			}
+		} else {
+			var newIndex = pivotFieldsMap.get(oldField.x);
+			if (undefined !== newIndex) {
+				oldField.x = newIndex;
+				newCTFields.field.push(oldField);
+			}
+		}
+	}
+	return newCTFields;
+};
+CT_pivotTableDefinition.prototype._updateCacheDataUpdateSlicers = function(pivotCacheDefinition, pivotFieldsMap) {
+	var wb = this.worksheet.workbook;
+	var sheetId = this.worksheet.getId();
+	var pivotName = this.name;
+	var cacheFieldsToDelete = {};
+	var oldCacheFields = this.cacheDefinition.getFields();
+	for (var i = 0; i < oldCacheFields.length; ++i) {
+		if(!pivotFieldsMap.has(i)) {
+			cacheFieldsToDelete[oldCacheFields[i].asc_getName()] = 1;
+		}
+	}
+	wb.deleteSlicersByPivotTableAndFields(sheetId, pivotName, cacheFieldsToDelete);
+	this.replaceSlicersPivotCacheDefinition(this.cacheDefinition, pivotCacheDefinition);
+};
+CT_pivotTableDefinition.prototype._updateCacheDataUpdateSlicersPost = function() {
+	var wb = this.worksheet.workbook;
+	var sheetId = this.worksheet.getId();
+	var pivotName = this.name;
+	this.syncSlicersWithPivot({});
+	wb.slicersUpdateAfterChangePivotTable(sheetId, pivotName);
+};
+CT_pivotTableDefinition.prototype.replaceSlicersPivotCacheDefinition = function(oldCacheDefinition, newCacheDefinition) {
+	var wb = this.worksheet.workbook;
+	var sheetId = this.worksheet.getId();
+	var pivotName = this.name;
+	var slicerCaches = this.worksheet.workbook.getSlicerCachesByPivotCacheId(oldCacheDefinition.getPivotCacheId());
+	slicerCaches.forEach(function(slicerCache) {
+		slicerCache.setPivotCacheDefinition(newCacheDefinition);
+	});
+	wb.slicersUpdateAfterChangePivotTable(sheetId, pivotName);
+};
+CT_pivotTableDefinition.prototype.asc_create = function(ws, name, cacheDefinition, bbox) {
+	this.worksheet = ws;
+	this.cacheDefinition = cacheDefinition;
+
+	this.cacheId = null;
+	this.name = name;
+	this.applyNumberFormats = false;
+	this.applyBorderFormats = false;
+	this.applyFontFormats = false;
+	this.applyPatternFormats = false;
+	this.applyAlignmentFormats = false;
+	this.applyWidthHeightFormats = true;
+	this.dataCaption = AscCommon.translateManager.getValue(DATA_CAPTION);
+	this.useAutoFormatting = true;
+	this.itemPrintTitles = true;
+	this.createdVersion = 4;//default value blocks label filter clear button
+	this.updatedVersion = 4;//default value blocks adding slices
+	this.minRefreshableVersion = 3;
+	this.indent = 0;
+	this.outline = true;
+	this.outlineData = true;
+	this.multipleFieldFilters = false;
+
+	this.pivotFields = new CT_PivotFields();
+	this.pivotFields.fillWithEmpty(this.cacheDefinition.getFields());
+
+	this.pivotTableStyleInfo = new CT_PivotTableStyle();
+	this.pivotTableStyleInfo.name = this.worksheet.workbook.TableStyles.DefaultPivotStyle;
+	this.pivotTableStyleInfo.showRowHeaders = true;
+	this.pivotTableStyleInfo.showColHeaders = true;
+	this.pivotTableStyleInfo.showRowStripes = false;
+	this.pivotTableStyleInfo.showColStripes = false;
+	this.pivotTableStyleInfo.showLastColumn = true;
+
+	this.location = new CT_Location();
+	this.location.ref = bbox;
+	this.updateLocation();
+
+	this.init();
+};
+CT_pivotTableDefinition.prototype.setRowItems = function(rowItems, addToHistory) {
+	if (addToHistory) {
+		History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_RowItems,
+			this.worksheet ? this.worksheet.getId() : null, null,
+			new AscCommonExcel.UndoRedoData_PivotTable(this.Get_Id(), this.rowItems, rowItems));
+	}
+	this.rowItems = rowItems;
+};
+CT_pivotTableDefinition.prototype.setColItems = function(colItems, addToHistory) {
+	if (addToHistory) {
+		History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_ColItems,
+			this.worksheet ? this.worksheet.getId() : null, null,
+			new AscCommonExcel.UndoRedoData_PivotTable(this.Get_Id(), this.colItems, colItems));
+	}
+	this.colItems = colItems;
+};
+CT_pivotTableDefinition.prototype.checkInsertIndex = function (insertIndex, deleteIndex) {
+	if(undefined !== insertIndex && insertIndex >= deleteIndex){
+		insertIndex--;
+	}
+	return insertIndex;
+}
+CT_pivotTableDefinition.prototype.removeValuesField = function (addToHistory) {
+	var deleteIndex = this._removeRowField(st_VALUES);
+	if (undefined !== deleteIndex) {
+		if (addToHistory) {
+			History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_RemoveRowField,
+				this.worksheet ? this.worksheet.getId() : null, null,
+				new AscCommonExcel.UndoRedoData_PivotTable(this.Get_Id(), st_VALUES, deleteIndex));
+		}
+		this.setChanged(true);
+	}
+	deleteIndex = this._removeColField(st_VALUES);
+	if (undefined !== deleteIndex) {
+		if (addToHistory) {
+			History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_RemoveColField,
+				this.worksheet ? this.worksheet.getId() : null, null,
+				new AscCommonExcel.UndoRedoData_PivotTable(this.Get_Id(), st_VALUES, deleteIndex));
+		}
+		this.setChanged(true);
+	}
+};
+CT_pivotTableDefinition.prototype.removeNoDataField = function (pivotIndex, addToHistory) {
+	if (st_VALUES === pivotIndex) {
+		return this.removeValuesField(addToHistory);
+	}
+	var deleteIndex, t = this;
+	var pivotField = this.asc_getPivotFields()[pivotIndex];
+	var historyType;
+	switch (pivotField.axis) {
+		case c_oAscAxis.AxisRow:
+			deleteIndex = this._removeRowField(pivotIndex);
+			historyType = AscCH.historyitem_PivotTable_RemoveRowField;
+			break;
+		case c_oAscAxis.AxisCol:
+			deleteIndex = this._removeColField(pivotIndex);
+			historyType = AscCH.historyitem_PivotTable_RemoveColField;
+			break;
+		case c_oAscAxis.AxisPage:
+			deleteIndex = this._removePageField(pivotIndex);
+			historyType = AscCH.historyitem_PivotTable_RemovePageField;
+			break;
+	}
+	if (undefined !== deleteIndex) {
+		if (addToHistory) {
+			History.Add(AscCommonExcel.g_oUndoRedoPivotTables, historyType,
+				this.worksheet ? this.worksheet.getId() : null, null,
+				new AscCommonExcel.UndoRedoData_PivotTable(this.Get_Id(), pivotIndex, deleteIndex));
+		}
+		pivotField.axis = null;
+		this.setChanged(true);
+	}
+	return deleteIndex;
+};
+CT_pivotTableDefinition.prototype.removeDataFieldAndReIndex = function (pivotIndex, dataIndex, addToHistory) {
+	var removed = this.removeDataField(pivotIndex, dataIndex, addToHistory);
+	if (undefined !== removed) {
+		var reindex = AscCommon.getRangeArray(0, this.getDataFieldsCount() + removed.length);
+		for (var i = 0; i < removed.length; ++i) {
+			AscCommon.arrayMove(reindex, reindex.length - 1, removed[i] + i);
+			reindex[removed[i] + i] = undefined;
+		}
+		this.reIndexDataFields(reindex);
+	}
+};
+CT_pivotTableDefinition.prototype.removeDataField = function (pivotIndex, dataIndex, addToHistory) {
+	var pivotField = this.asc_getPivotFields()[pivotIndex];
+	var removed;
+	if (this.dataFields) {
+		removed = this.dataFields.remove(pivotIndex, dataIndex);
+
+		var dataFieldOldVal = pivotField.dataField;
+		pivotField.dataField = this.dataFields.hasField(pivotIndex);
+		History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_PivotFilterDataField,
+			this.worksheet ? this.worksheet.getId() : null, null,
+			new AscCommonExcel.UndoRedoData_PivotField(this.Get_Id(), pivotIndex, dataFieldOldVal, pivotField.dataField));
+
+		if (this.dataFields.getCount() < 2) {
+			this.removeValuesField(addToHistory);
+		}
+		if (0 === this.dataFields.getCount()) {
+			this.dataFields = null;
+		}
+	}
+	if (addToHistory && undefined !== removed) {
+		History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_RemoveDataField,
+			this.worksheet ? this.worksheet.getId() : null, null,
+			new AscCommonExcel.UndoRedoData_PivotTable(this.Get_Id(), pivotIndex, removed));
+	}
+	this.setChanged(true);
+	return removed;
+};
+CT_pivotTableDefinition.prototype._removeColField = function(fld) {
+	if (this.colFields) {
+		var deleteIndex = this.colFields.remove(fld);
+		if (this.colFields && 0 === this.colFields.getCount()) {
+			this.colFields = null;
+		}
+		return deleteIndex;
+	}
+};
+CT_pivotTableDefinition.prototype._removeRowField = function(fld) {
+	if (this.rowFields) {
+		var deleteIndex = this.rowFields.remove(fld);
+		if (this.rowFields && 0 === this.rowFields.getCount()) {
+			this.rowFields = null;
+		}
+		return deleteIndex;
+	}
+};
+CT_pivotTableDefinition.prototype._removePageField = function(fld) {
+	if (this.pageFields) {
+		var deleteIndex = this.pageFields.remove(fld);
+		if (0 === this.pageFields.getCount()) {
+			this.pageFields = null;
+		}
+		return deleteIndex;
+	}
+};
+CT_pivotTableDefinition.prototype.asc_setVisibleFieldItemByCell = function (api, visible) {
+	var activeCell = api.wbModel.getActiveWs().selectionRange.activeCell;
+	var t = this;
+	var layout = t.getLayoutByCell(activeCell.row, activeCell.col);
+	var cellLayout = layout && layout.getGroupCellLayout();
+	if (cellLayout && st_VALUES !== cellLayout.fld) {
+		this.setVisibleFieldItem(api, visible, cellLayout.fld, cellLayout.v);
+	}
+};
+CT_pivotTableDefinition.prototype.setVisibleFieldItem = function (api, visible, fld, index) {
+	var t = this;
+	api._changePivotWithLock(this, function () {
+		t._setVisibleFieldItem(visible, fld, index);
+	});
+};
+CT_pivotTableDefinition.prototype._setVisibleFieldItem = function (visible, fld, index) {
+	var pivotField = this.asc_getPivotFields()[fld];
+	if (pivotField) {
+		pivotField.asc_setVisible(visible, this, fld, index, true);
+	}
+};
+CT_pivotTableDefinition.prototype.asc_sortByCell = function(api, type, row, col) {
+	if (this.contains(col, row)) {
+		var t = this;
+		var layout = t.getLayoutByCell(row, col);
+		if (layout) {
+			var fld = layout.getFieldIndex(this);
+			if (null !== fld) {
+				this.sortByFieldIndex(api, fld, type, -1);
+			}
+		}
+	} else {
+		//todo
+		api.sendEvent('asc_onError', c_oAscError.ID.LockedCellPivot, c_oAscError.Level.NoCritical);
+	}
+};
+CT_pivotTableDefinition.prototype.fillLockInfo = function (lockInfos, collaborativeEditing) {
+	var sheetId = this.worksheet.getId();
+	lockInfos.push(collaborativeEditing.getLockInfo(AscCommonExcel.c_oAscLockTypeElem.Sheet, /*subType*/null, sheetId, sheetId));
+};
+CT_pivotTableDefinition.prototype.sortByFieldIndex = function(api, fld, type, sortDataIndex) {
+	var t = this;
+	api._changePivotWithLock(this, function(ws) {
+		t.sortPivotItems(fld, type, sortDataIndex);
+	});
+};
+CT_pivotTableDefinition.prototype.sortPivotItems = function(index, type, sortDataIndex) {
+	var pivotField = this.asc_getPivotFields()[index];
+	if (!pivotField) {
+		return;
+	}
+	var pivotFieldOld = pivotField.clone();
+	this._sortPivotItems(index, type, sortDataIndex);
+	History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_PivotField,
+		this.worksheet ? this.worksheet.getId() : null, null,
+		new AscCommonExcel.UndoRedoData_PivotField(this.Get_Id(), index, pivotFieldOld, pivotField.clone()));
+	this.setChanged(true);
+};
+CT_pivotTableDefinition.prototype._sortPivotItems = function(index, type, sortDataIndex) {
+	var pivotField = this.asc_getPivotFields()[index];
+	var cacheField = this.asc_getCacheFields()[index];
+	if (!pivotField || !cacheField) {
+		return;
+	}
+	pivotField.setSortType(type, sortDataIndex);
+	if (pivotField.sortType !== c_oAscFieldSortType.Manual && -1 === pivotField.getSortDataIndex()) {
+		pivotField.removeSubtotal();
+		var rangePr = cacheField.getGroupRangePr();
+		if (rangePr && c_oAscGroupBy.Months === rangePr.groupBy) {
+			pivotField.sortItemsMonth(type);
+		} else {
+			pivotField.sortItems(type, cacheField.getGroupOrSharedItems());
+		}
+		pivotField.checkSubtotal();
+	}
+};
+CT_pivotTableDefinition.prototype.asc_filterByCell = function(api, autoFilterObject, row, col) {
+	var t = this;
+	var layout = t.getLayoutByCell(row, col);
+	if (layout) {
+		var fld = layout.getFieldIndex(this);
+		if (null !== fld) {
+			this.filterByFieldIndex(api, autoFilterObject, fld, false);
+		}
+	}
+};
+CT_pivotTableDefinition.prototype.filterByFieldIndex = function (api, autoFilterObject, fld, confirmation) {
+	var t = this;
+	api._changePivotAndConnectedBySlicerWithLock(this, [fld], function () {
+		History.Create_NewPoint();
+		History.StartTransaction();
+		api.wbModel.dependencyFormulas.lockRecal();
+		var changeRes = api._changePivot(t, confirmation, true, function (ws) {
+			t.filterPivotItems(fld, autoFilterObject);
+		});
+		if (c_oAscError.ID.No === changeRes.error && c_oAscError.ID.No === changeRes.warning) {
+			if (changeRes.updateRes) {
+				t.syncSlicersWithPivot(changeRes.updateRes.cacheFieldsWithData);
+			}
+			changeRes = t.filterPivotSlicers(api, fld, confirmation, changeRes);
+		}
+		api.wbModel.dependencyFormulas.unlockRecal();
+		History.EndTransaction();
+		api._changePivotEndCheckError(t, changeRes, function () {
+			t.filterByFieldIndex(api, autoFilterObject, fld, true);
+		});
+	});
+};
+CT_pivotTableDefinition.prototype.filterPivotSlicers = function(api, fld, confirmation, changeRes) {
+	var ws = this.worksheet;
+	var slicerCache = ws.workbook.getSlicerCacheByPivotTableFld(ws.getId(), this.name, fld);
+	if (slicerCache) {
+		var pivotField = this.asc_getPivotFields()[fld];
+		var cacheField = this.asc_getCacheFields()[fld];
+		var values = pivotField.getFilterObject(cacheField, null, this.getPivotFieldNum(fld));
+		changeRes = slicerCache.applyPivotFilter(api, values, this, confirmation);
+	}
+	return changeRes;
+};
+CT_pivotTableDefinition.prototype.filterPivotItems = function(index, autoFilterObject) {
+	var filter = autoFilterObject.filter;
+	var pivotObj = autoFilterObject.asc_getPivotObj();
+	var pivotField = this.asc_getPivotFields()[index];
+	var pivotFieldOld = pivotField.clone();
+	if (c_oAscAxis.AxisPage === pivotField.axis && c_oAscAutoFilterTypes.Filters === filter.type) {
+		pivotField.multipleItemSelectionAllowed = pivotObj.isMultipleItemSelectionAllowed;
+		this.filterPivotItemsFilters(index, autoFilterObject.values);
+		var pageFieldItem = null;
+		if (!pivotField.multipleItemSelectionAllowed) {
+			var visible = [];
+			autoFilterObject.values.forEach(function(value, index) {
+				if (value.visible) {
+					visible.push(index);
+				}
+			});
+			if (1 === visible.length) {
+				pageFieldItem = visible[0];
+				pivotField.removeFilter();
+			} else if (visible.length > 1) {
+				pivotField.multipleItemSelectionAllowed = true;
+			}
+		}
+		var pageField = this.getPageFieldByFieldIndex(index);
+		if (pageField) {
+			var pageFieldItemOld = pageField.item;
+			pageField.item = pageFieldItem;
+			History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_PageFilter,
+				this.worksheet ? this.worksheet.getId() : null, null,
+				new AscCommonExcel.UndoRedoData_PivotField(this.Get_Id(), index, pageFieldItemOld, pageFieldItem));
+		}
+	} else {
+		var sortDataIndex = -1;
+		if (0 < pivotObj.dataFieldIndexSorting && pivotObj.dataFieldIndexSorting <= this.getDataFieldsCount()) {
+			sortDataIndex = pivotObj.dataFieldIndexSorting - 1;
+		}
+		this._sortPivotItems(index, autoFilterObject.sortVal, sortDataIndex);
+
+		this.removeFilter(index);
+		var iMeasureFld = pivotObj.dataFieldIndexFilter;
+		var pivotFilter = new CT_PivotFilter();
+		switch (filter.type) {
+			case c_oAscAutoFilterTypes.Filters:
+				this.filterPivotItemsFilters(index, autoFilterObject.values);
+				break;
+			case c_oAscAutoFilterTypes.CustomFilters:
+				if (0 < iMeasureFld && iMeasureFld <= this.getDataFieldsCount()) {
+					pivotFilter.initFromCustom(index, filter.filter, iMeasureFld - 1);
+				} else {
+					pivotFilter.initFromCustom(index, filter.filter, null);
+				}
+				break;
+			case c_oAscAutoFilterTypes.DynamicFilter:
+				pivotFilter.initFromDynamic(index, filter.filter);
+				break;
+			case c_oAscAutoFilterTypes.Top10:
+				if (0 < iMeasureFld && iMeasureFld <= this.getDataFieldsCount()) {
+					pivotFilter.initFromTop10(index, filter.filter, pivotObj.isTop10Sum, iMeasureFld - 1);
+				}
+				break;
+		}
+		this.addFilter(pivotFilter);
+	}
+	History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_PivotField,
+		this.worksheet ? this.worksheet.getId() : null, null,
+		new AscCommonExcel.UndoRedoData_PivotField(this.Get_Id(), index, pivotFieldOld, pivotField.clone()));
+	this.setChanged(true);
+};
+CT_pivotTableDefinition.prototype.addFilter = function(pivotFilter) {
+	if (null !== pivotFilter.type && Asc.c_oAscPivotFilterType.Unknown !== pivotFilter.type) {
+		if (!this.filters) {
+			this.filters = new CT_PivotFilters();
+		}
+		var insertIndex;
+		if (pivotFilter.isValueFilter()) {
+			insertIndex = this.filters.filter.length;
+			this.filters.filter.push(pivotFilter);
+		} else {
+			this.filters.filter.unshift(pivotFilter);
+			insertIndex = 0;
+		}
+		History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_PivotFilter,
+			this.worksheet ? this.worksheet.getId() : null, null,
+			new AscCommonExcel.UndoRedoData_PivotField(this.Get_Id(), insertIndex, null, pivotFilter));
+	}
+};
+CT_pivotTableDefinition.prototype.asc_removeFilters = function(api) {
+	var t = this, i, changeRes;
+	var pivotFields = this.asc_getPivotFields();
+	if (pivotFields) {
+		var flds = [];
+		//todo collect only fld with actual filter
+		for (i = 0; i < pivotFields.length; ++i) {
+			flds.push(i);
+		}
+		this.removeFiltersWithLock(api, flds, false);
+	}
+};
+CT_pivotTableDefinition.prototype.removeFiltersWithLock = function(api, flds, confirmation) {
+	var t = this, changeRes;
+	api._changePivotAndConnectedBySlicerWithLock(this, flds, function() {
+		History.Create_NewPoint();
+		History.StartTransaction();
+		api.wbModel.dependencyFormulas.lockRecal();
+
+		for (var i = 0; i < flds.length; ++i) {
+			if (t.hasFilter(flds[i])) {
+				changeRes = t.removeFilterWithSlicer(api, flds[i], confirmation, false);
+				if (c_oAscError.ID.No !== changeRes.error || c_oAscError.ID.No !== changeRes.warning) {
+					break;
+				}
+			}
+		}
+		api.wbModel.dependencyFormulas.unlockRecal();
+		History.EndTransaction();
+		api._changePivotEndCheckError(t, changeRes, function() {
+			t.removeFiltersWithLock(api, flds, true);
+		});
+	});
+};
+CT_pivotTableDefinition.prototype.asc_removeFilterByCell = function(api, row, col) {
+	var t = this;
+	var layout = t.getLayoutByCell(row, col);
+	if (layout) {
+		var fld = layout.getFieldIndex(this);
+		if (null !== fld) {
+			this.removeFiltersWithLock(api, [fld], false);
+		}
+	}
+};
+CT_pivotTableDefinition.prototype.removeFilter = function(index, isRemovePageFilter) {
+	if (this.filters) {
+		var filters = this.filters.filter;
+		for (var i = filters.length - 1; i >= 0; --i) {
+			if (index === filters[i].fld) {
+				var pivotFilter = filters[i];
+				filters.splice(i, 1);
+				History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_PivotFilter,
+					this.worksheet ? this.worksheet.getId() : null, null,
+					new AscCommonExcel.UndoRedoData_PivotField(this.Get_Id(), i, pivotFilter, null));
+			}
+		}
+		if (0 === filters.length) {
+			this.filters = null;
+		}
+	}
+	var pageField = this.getPageFieldByFieldIndex(index);
+	if (pageField) {
+		var pageFieldItemOld = pageField.item;
+		pageField.item = null;
+		History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_PageFilter,
+			this.worksheet ? this.worksheet.getId() : null, null,
+			new AscCommonExcel.UndoRedoData_PivotField(this.Get_Id(), index, pageFieldItemOld, null));
+	}
+	var pivotField = this.asc_getPivotFields()[index];
+	if (pivotField) {
+		var pivotFieldOld = pivotField.clone();
+		pivotField.removeFilter();
+		History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_PivotField,
+			this.worksheet ? this.worksheet.getId() : null, null,
+			new AscCommonExcel.UndoRedoData_PivotField(this.Get_Id(), index, pivotFieldOld, pivotField.clone()));
+	}
+	this.setChanged(true);
+};
+CT_pivotTableDefinition.prototype.removeFilterWithSlicer = function(api, fld, confirmation, updateSelection) {
+	var t = this;
+	var changeRes = api._changePivot(this, confirmation, updateSelection, function(){
+		t.removeFilter(fld);
+	});
+	if (c_oAscError.ID.No === changeRes.error && c_oAscError.ID.No === changeRes.warning) {
+		if (changeRes.updateRes) {
+			this.syncSlicersWithPivot(changeRes.updateRes.cacheFieldsWithData);
+		}
+		changeRes = this.filterPivotSlicers(api, fld, confirmation, changeRes);
+	}
+	return changeRes;
+};
+CT_pivotTableDefinition.prototype.removeValueFilters = function() {
+	if (this.filters) {
+		var filters = this.filters.filter;
+		for (var i = filters.length - 1; i >= 0; --i) {
+			if (filters[i].isValueFilter()) {
+				filters.splice(i, 1);
+			}
+		}
+		if (0 === filters.length) {
+			this.filters = null;
+		}
+	}
+};
+CT_pivotTableDefinition.prototype.hasFilter = function (fld) {
+	var autoFilterObject = new Asc.AutoFiltersOptions();
+	this.fillAutoFiltersOptions(autoFilterObject, fld);
+	return autoFilterObject.filter.type !== Asc.c_oAscAutoFilterTypes.None;
+};
+CT_pivotTableDefinition.prototype.isClearFilterButtonEnabled = function() {
+	var pageFields = this.asc_getPageFields();
+	if (pageFields && pageFields.length > 0) {
+		return true;
+	}
+	var pivotFilters = this.asc_getPivotFilters();
+	if (pivotFilters && pivotFilters.length > 0) {
+		return true;
+	}
+	var pivotFields = this.asc_getPivotFields();
+	if (pivotFields) {
+		for (var i = 0; i < pivotFields.length; ++i) {
+			if (!pivotFields[i].isAllVisible()) {
+				return true;
+			}
+		}
+	}
+	return false;
+};
+CT_pivotTableDefinition.prototype.filterPivotItemsFilters = function(index, values) {
+	var pivotField = this.asc_getPivotFields()[index];
+	pivotField.applyFilterObject(values);
+	this.setChanged(true);
+};
+CT_pivotTableDefinition.prototype.getLayoutByCell = function(row, col) {
+	var rowFieldsOffset = [];
+	return this.getLayoutByCellPage(row, col) || this.getLayoutByCellHeaderCol(row, col)
+		|| this.getLayoutByCellHeaderRow(row, col, rowFieldsOffset) || this.getLayoutByCellData(row, col, rowFieldsOffset);
+};
+CT_pivotTableDefinition.prototype.getLayoutsForGroup = function(selection) {
+	var res = new PivotLayoutGroup(), i, layout, activeCell = selection.activeCell, cellLayout;
+	layout = this.getLayoutByCell(activeCell.row, activeCell.col);
+	cellLayout = layout && layout.getGroupCellLayout();
+	if (cellLayout && st_VALUES !== cellLayout.fld) {
+		if (Asc.PivotLayoutType.rowField === layout.type) {
+			res.fld = cellLayout.fld;
+			selection.ranges.forEach(function(range) {
+				for (i = range.r1; i <= range.r2; ++i) {
+					layout = this.getLayoutByCell(i, activeCell.col);
+					cellLayout = layout && layout.getGroupCellLayout();
+					if (cellLayout && res.fld === cellLayout.fld) {
+						res.groupMap[cellLayout.v] = 1;
+					}
+				}
+			}, this);
+		} else if (Asc.PivotLayoutType.colField === layout.type) {
+			res.fld = cellLayout.fld;
+			selection.ranges.forEach(function(range) {
+				for (i = range.c1; i <= range.c2; ++i) {
+					layout = this.getLayoutByCell(activeCell.row, i);
+					cellLayout = layout && layout.getGroupCellLayout();
+					if (cellLayout && res.fld === cellLayout.fld) {
+						res.groupMap[cellLayout.v] = 1;
+					}
+				}
+			}, this);
+		}
+	}
+	return res;
+};
+CT_pivotTableDefinition.prototype.getLayoutByCellPage = function(row, col) {
+	if (this.pageFieldsPositions) {
+		for (var i = 0; i < this.pageFieldsPositions.length; ++i) {
+			var pos = this.pageFieldsPositions[i];
+			if (pos.row === row && (pos.col === col || pos.col + 1 === col)) {
+				return PivotLayout.prototype.createPage(pos.pageField.fld);
+			}
+		}
+	}
+};
+CT_pivotTableDefinition.prototype.getLayoutByCellHeaderCol = function(row, col) {
+	var location = this.location;
+	if (0 === location.firstHeaderRow) {
+		return;
+	}
+	var pivotRange = this.getRange();
+	var r1 = pivotRange.r1;
+	var c1 = pivotRange.c1;
+	var rowFields = this.asc_getRowFields();
+	var colFields = this.asc_getColumnFields();
+	var dataFields = this.asc_getDataFields();
+	if (dataFields && 1 === dataFields.length) {
+		if (rowFields && !colFields) {
+			c1 = pivotRange.c1 + location.firstDataCol;
+		} else if (!rowFields && colFields) {
+			r1 = pivotRange.r1 + location.firstDataRow;
+		}
+		if (r1 === row && c1 === col) {
+			return PivotLayout.prototype.createHeaderData(0);
+		}
+	}
+	if (this.showHeaders && colFields) {
+		r1 = pivotRange.r1;
+		c1 = pivotRange.c1 + location.firstDataCol;
+		if (this.compact) {
+			if (r1 === row && c1 === col) {
+				return PivotLayout.prototype.createHeaderCompact(PivotLayoutType.headerCompactCol);
+			}
+		} else {
+			for (var i = 0; i < colFields.length; ++i) {
+				var index = colFields[i].asc_getIndex();
+				if (r1 === row && c1 === col) {
+					return PivotLayout.prototype.createHeaderRowCol(PivotLayoutType.headerCol, index);
+				}
+				c1++;
+			}
+		}
+	}
+};
+CT_pivotTableDefinition.prototype.getLayoutByCellHeaderRow = function(row, col, rowFieldsOffset) {
+	rowFieldsOffset.push(0);
+	var rowFields = this.asc_getRowFields();
+	if (!rowFields) {
+		return;
+	}
+	var index, field;
+	var pivotFields = this.asc_getPivotFields();
+	var pivotRange = this.getRange();
+	var location = this.location;
+	var c1 = pivotRange.c1;
+	var r1 = pivotRange.r1 + location.firstDataRow - 1;
+	if (this.showHeaders && r1 === row && c1 === col) {
+		if (this.compact || location.firstDataCol !== rowFields.length) {
+			if (1 === rowFields.length && AscCommonExcel.st_VALUES === rowFields[0].asc_getIndex()) {
+				return PivotLayout.prototype.createHeaderData();
+			} else {
+				return PivotLayout.prototype.createHeaderCompact(PivotLayoutType.headerCompactRow, index);
+			}
+		} else {
+			index = rowFields[0].asc_getIndex();
+			return PivotLayout.prototype.createHeaderRowCol(PivotLayoutType.headerRow, index);
+		}
+	}
+	for (var i = 1; i < rowFields.length; ++i) {
+		index = rowFields[i - 1].asc_getIndex();
+		var isTabular;
+		if (AscCommonExcel.st_VALUES !== index) {
+			field = pivotFields[index];
+			isTabular = field && !(field.compact && field.outline);
+		} else {
+			isTabular = !(this.compact && this.outline);
+		}
+		if (isTabular) {
+			index = rowFields[i].asc_getIndex();
+			++c1;
+			if (this.showHeaders && r1 === row && c1 === col) {
+				return PivotLayout.prototype.createHeaderRowCol(PivotLayoutType.headerRow, index);
+			}
+		}
+		rowFieldsOffset[c1 - pivotRange.c1] = i;
+	}
+};
+CT_pivotTableDefinition.prototype.getLayoutByCellData = function(row, col, rowFieldsOffset) {
+	var pivotRange = this.getRange();
+	var location = this.location;
+	var rowHeader = pivotRange.r1 + location.firstHeaderRow;
+	var rowDataStart = pivotRange.r1 + location.firstDataRow;
+	var rowDataEnd = pivotRange.r2;
+	var rowFields = this.asc_getRowFields();
+	var rowItems = this.getRowItems();
+	var rows = this._getLayoutByCellItems(row, rowHeader, rowDataStart, rowDataEnd, rowFields, rowItems);
+	var colHeader = pivotRange.c1;
+	var colDataStart = pivotRange.c1 + location.firstDataCol;
+	var colDataEnd = pivotRange.c2;
+	var colFields = this.asc_getColumnFields();
+	var colItems = this.getColItems();
+	var cols = this._getLayoutByCellItems(col, colHeader, colDataStart, colDataEnd, colFields, colItems);
+	return PivotLayout.prototype.createCell(rows, cols, row - rowHeader + 1, rowFieldsOffset && (rowFieldsOffset[col - colHeader] + 1));
+};
+CT_pivotTableDefinition.prototype._getLayoutByCellItems = function(index, indexHeader, indexDataStart, indexDataEnd, fields, items) {
+	if (index < indexDataStart || index > indexDataEnd || !fields || !items) {
+		return;
+	}
+	var res = null;
+	if (index >= indexDataStart) {
+		res = [];
+		var itemIndex = index - indexDataStart;
+		var item = items[itemIndex];
+		if (item) {
+			var r = item.r;
+			this._getLayoutByCellItem(r, item.x.length, item, fields, res);
+			while (r > 0 && --itemIndex >= 0) {
+				var prevItem = items[itemIndex];
+				var prevR = prevItem.r;
+				this._getLayoutByCellItem(prevR, r - prevR, prevItem, fields, res);
+				r = Math.min(r, prevR);
+			}
+		}
+	}
+	return res;
+};
+CT_pivotTableDefinition.prototype._getLayoutByCellItem = function(r, len, item, fields, res) {
+	for (var i = 0; i < Math.min(item.x.length, len); ++i) {
+		var fieldIndex = fields[r + i].asc_getIndex();
+		res[r + i] = new PivotLayoutCell(item.t, fieldIndex, item.x[i].getV(), item.i);
+	}
+};
+CT_pivotTableDefinition.prototype.updateSelection = function(wsView) {
+	var ws = this.worksheet;
+	var activeCell = ws.selectionRange.activeCell;
+	if (!this.contains(activeCell.col, activeCell.row)) {
+		var pivotRange = this.getRange();
+		var selection = new Asc.Range(pivotRange.c1, pivotRange.r1, pivotRange.c1, pivotRange.r1);
+		wsView.setSelection(selection);
+		wsView.workbook._onWSSelectionChanged();
+		History.SetSelectionRedo(selection);
+	}
+};
+CT_pivotTableDefinition.prototype.hasLeftAlignInRowLables = function() {
+	var i, index;
+	var rowFields = this.asc_getRowFields();
+	var pivotFields = this.asc_getPivotFields();
+	if (rowFields && pivotFields) {
+		if (this.compact) {
+			return !rowFields.every(function(rowField) {
+				index = rowField.asc_getIndex();
+				return st_VALUES === index || false === pivotFields[index].outline;
+			});
+		} else {
+			return rowFields.some(function(rowField) {
+				index = rowField.asc_getIndex();
+				return st_VALUES !== index && true === pivotFields[index].compact;
+			});
+		}
+	}
+	return false;
+};
+CT_pivotTableDefinition.prototype.getPivotTablesConnectedBySlicer = function(fld) {
+	var res = [];
+	var ws = this.worksheet;
+	var slicerCache = ws.workbook.getSlicerCacheByPivotTableFld(ws.getId(), this.name, fld);
+	if (slicerCache) {
+		res = res.concat(slicerCache.getPivotTables());
+	}
+	return res;
+};
+CT_pivotTableDefinition.prototype.getPivotTablesConnectedByPivotCache = function() {
+	return this.worksheet.workbook.getPivotTablesByCache(this.cacheDefinition);
+};
+CT_pivotTableDefinition.prototype.getSlicerCaption = function () {
+	return this.cacheDefinition.getSlicerCaption();
+};
+CT_pivotTableDefinition.prototype.getFieldGroupType = function (fld) {
+	return this.cacheDefinition.getFieldGroupType(fld);
+};
+CT_pivotTableDefinition.prototype.getGroupBase = function(fld) {
+	return this.cacheDefinition.getGroupBase(fld);
+};
+CT_pivotTableDefinition.prototype.getGroupRangePr = function (fld) {
+	return this.cacheDefinition.getGroupRangePr(fld);
+};
+CT_pivotTableDefinition.prototype.createGroupRangePr = function (fld) {
+	return this.cacheDefinition.createGroupRangePr(fld);
+};
+CT_pivotTableDefinition.prototype.groupPivot = function (api, layout, confirmation, onRepeat, opt_rangePr, opt_dateTypes) {
+	var newRangePrRes;
+	var sheetId = this.worksheet.getId();
+	var pivotTable = this;
+	var fieldGroupType = pivotTable.getFieldGroupType(layout.fld);
+	var baseFld = pivotTable.getGroupBase(layout.fld);
+	var rangePrRes = pivotTable.getGroupRangePr(baseFld);
+	if (opt_rangePr && opt_rangePr.getFieldGroupType() === fieldGroupType) {
+		api._changePivotAndConnectedByPivotCacheWithLock(pivotTable, confirmation, function (confirmation, pivotTables) {
+			var changeRes = api._changePivot(pivotTable, confirmation, true, function () {
+				var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
+
+				AscFormat.ExecuteNoHistory(function () {
+					pivotTable.ungroupRangePr(baseFld);
+					pivotTable.groupRangePr(baseFld, opt_rangePr, opt_dateTypes);
+				}, api);
+
+				var newPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
+				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_PivotReplaceKeepRecords, sheetId,
+					null, new AscCommonExcel.UndoRedoData_PivotTableRedo(pivotTable.Get_Id(), oldPivot, newPivot));
+
+				pivotTable._updateCacheDataUpdateSlicersPost();
+			});
+			return changeRes;
+		}, onRepeat);
+	} else if (rangePrRes) {
+		rangePrRes.rangePr = rangePrRes.rangePr.clone();
+		newRangePrRes = pivotTable.createGroupRangePr(baseFld);
+		api.handlers.trigger("asc_onShowPivotGroupDialog", rangePrRes.rangePr, rangePrRes.dateTypes, newRangePrRes.rangePr);
+	} else if (1 === layout.getGroupSize() && c_oAscGroupType.Text !== pivotTable.getFieldGroupType(layout.fld)) {
+		newRangePrRes = pivotTable.createGroupRangePr(baseFld);
+		api.handlers.trigger("asc_onShowPivotGroupDialog", newRangePrRes.rangePr, newRangePrRes.dateTypes, newRangePrRes.rangePr.clone());
+	} else if (layout.getGroupSize() > 1) {
+		api._changePivotAndConnectedByPivotCacheWithLock(pivotTable, confirmation, function (confirmation, pivotTables) {
+			var changeRes = api._changePivot(pivotTable, confirmation, true, function () {
+				var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
+
+				AscFormat.ExecuteNoHistory(function () {
+					var groupRes = pivotTable.groupDiscreteCache(layout);
+					pivotTable.groupDiscrete(layout.fld, groupRes);
+				}, api);
+
+				var newPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
+				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_PivotReplaceKeepRecords, sheetId,
+					null, new AscCommonExcel.UndoRedoData_PivotTableRedo(pivotTable.Get_Id(), oldPivot, newPivot));
+
+				pivotTable._updateCacheDataUpdateSlicersPost();
+			});
+			return changeRes;
+		}, onRepeat);
+	} else {
+		api.sendEvent('asc_onError', c_oAscError.ID.PivotGroup, c_oAscError.Level.NoCritical);
+	}
+};
+CT_pivotTableDefinition.prototype.ungroupPivot = function (api, layout, confirmation, onRepeat) {
+	var sheetId = this.worksheet.getId();
+	var pivotTable = this;
+	var baseFld = pivotTable.getGroupBase(layout.fld);
+	var rangePrRes = pivotTable.getGroupRangePr(baseFld);
+	if (rangePrRes) {
+		api._changePivotAndConnectedByPivotCacheWithLock(pivotTable, confirmation, function (confirmation, pivotTables) {
+			var changeRes = api._changePivot(pivotTable, confirmation, true, function () {
+				var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
+
+				AscFormat.ExecuteNoHistory(function () {
+					pivotTable.ungroupRangePr(baseFld);
+				}, api);
+
+				var newPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
+				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_PivotReplaceKeepRecords, sheetId,
+					null, new AscCommonExcel.UndoRedoData_PivotTableRedo(pivotTable.Get_Id(), oldPivot, newPivot));
+
+				pivotTable._updateCacheDataUpdateSlicersPost();
+			});
+			return changeRes;
+		}, onRepeat);
+	} else if (layout.getGroupSize() > 0) {
+		api._changePivotAndConnectedByPivotCacheWithLock(pivotTable, confirmation, function (confirmation, pivotTables) {
+			var groupRes;
+			var changeRes = api._changePivot(pivotTable, confirmation, true, function () {
+				var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
+
+				AscFormat.ExecuteNoHistory(function () {
+					groupRes = pivotTable.ungroupDiscreteCache(layout);
+					pivotTable.ungroupDiscrete(layout.fld, groupRes);
+				}, api);
+
+				var newPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
+				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_PivotReplaceKeepRecords, sheetId,
+					null, new AscCommonExcel.UndoRedoData_PivotTableRedo(pivotTable.Get_Id(), oldPivot, newPivot));
+
+				pivotTable._updateCacheDataUpdateSlicersPost();
+			});
+			return changeRes;
+		}, onRepeat);
+	}
+};
+CT_pivotTableDefinition.prototype.groupRangePr = function (fld, rangePr, dateTypes) {
+	//check params
+	if (rangePr.groupInterval <= 0) {
+		rangePr.groupInterval = 1;
+	}
+	if (dateTypes) {
+		dateTypes.sort();
+		rangePr.groupBy = dateTypes[0];
+		if (dateTypes.length > 1 || c_oAscGroupBy.Days !== rangePr.groupBy) {
+			rangePr.groupInterval = 1;
+		}
+	} else {
+		rangePr.groupBy = c_oAscGroupBy.Range;
+	}
+	rangePr.correctEndValue();
+	var addFields = this.cacheDefinition.groupRangePr(fld, rangePr, dateTypes);
+	var i;
+	var pivotFields = this.asc_getPivotFields();
+	var cacheFields = this.asc_getCacheFields();
+	pivotFields[fld].groupRangePr(cacheFields[fld].getGroupOrSharedSize());
+	if (addFields) {
+		var insertIndexRow = this.rowFields && this.rowFields.find(fld);
+		var insertIndexCol = this.colFields && this.colFields.find(fld);
+		for (i = 0; i < addFields.length; ++i) {
+			var pivotIndex = pivotFields.length;
+			var newPivotField = pivotFields[fld].clone();
+			newPivotField.groupRangePr(cacheFields[pivotIndex].getGroupOrSharedSize());
+			pivotFields.push(newPivotField);
+			if (null !== insertIndexRow && -1 !== insertIndexRow) {
+				this.addRowField(pivotIndex, insertIndexRow, false);
+			}
+			if (null !== insertIndexCol && -1 !== insertIndexCol) {
+				this.addColField(pivotIndex, insertIndexCol, false);
+			}
+		}
+	}
+	this.setChanged(true);
+};
+CT_pivotTableDefinition.prototype.ungroupRangePr = function (fld) {
+	var i;
+	var pivotFields = this.asc_getPivotFields();
+	var cacheFields = this.asc_getCacheFields();
+	var removeFields = this.cacheDefinition.ungroupRangePr(fld);
+	var pivotField = pivotFields[fld];
+	pivotField.init(cacheFields[fld].getGroupOrSharedSize());
+	var sortType = pivotField.sortType !== c_oAscFieldSortType.Manual ? pivotField.sortType : Asc.c_oAscSortOptions.Ascending;
+	pivotField.sortItems(sortType, cacheFields[fld].getGroupOrSharedItems());
+	pivotField.checkSubtotal();
+	if (removeFields.length > 0) {
+		var pivotFieldsMap = new Map();
+		var removeIndex = 0;
+		var mapIndex = 0;
+		for (i = 0; i < pivotFields.length; ++i) {
+			if (i !== removeFields[removeIndex]) {
+				pivotFieldsMap.set(i, mapIndex++);
+			} else if (removeIndex < removeFields.length - 1) {
+				removeIndex++;
+			}
+		}
+		for (i = removeFields.length - 1; i >= 0; --i) {
+			pivotFields.splice(removeFields[i], 1);
+		}
+		this.updateIndexesForNewPivotFields(this.cacheDefinition, this.pivotFields, pivotFieldsMap);
+	}
+	this.setChanged(true);
+};
+CT_pivotTableDefinition.prototype.groupDiscreteCache = function (layoutGroup) {
+	this.checkPivotFieldItems(layoutGroup.fld);
+	var layoutGroupCacheBase = this._convertToCacheGroupLayout(layoutGroup);
+	var layoutGroupCache = this.cacheDefinition.groupDiscreteAddField(layoutGroupCacheBase);
+	if (layoutGroupCacheBase.fld !== layoutGroupCache.fld) {
+		this._groupDiscreteAddFields(layoutGroup.fld, layoutGroupCache.fld);
+		var ungroupRes = this.cacheDefinition.ungroupDiscrete(layoutGroupCache);
+		this.ungroupDiscrete(layoutGroupCache.fld, ungroupRes);
+		layoutGroupCache = this.cacheDefinition.groupDiscreteAddField(layoutGroupCacheBase);
+	}
+	var reorderArray = this.cacheDefinition.groupDiscrete(layoutGroupCache);
+	return {layoutGroupCache: layoutGroupCache, reorderArray: reorderArray};
+};
+CT_pivotTableDefinition.prototype.groupDiscrete = function (fld, groupRes) {
+	if (!groupRes) {
+		return;
+	}
+	this.checkPivotFieldItems(fld);
+	this._groupDiscreteAddFields(fld, groupRes.layoutGroupCache.fld);
+	var pivotFields = this.asc_getPivotFields();
+	var pivotField = pivotFields[groupRes.layoutGroupCache.fld];
+	pivotField.groupDiscrete(groupRes.reorderArray);
+	this.setChanged(true);
+};
+CT_pivotTableDefinition.prototype.ungroupDiscreteCache = function (layoutGroup) {
+	var layoutGroupCache = this._convertToCacheGroupLayout(layoutGroup);
+	return this.cacheDefinition.ungroupDiscrete(layoutGroupCache);
+};
+CT_pivotTableDefinition.prototype.ungroupDiscrete = function (fld, groupRes) {
+	if (!groupRes) {
+		return;
+	}
+	var i;
+	this.checkPivotFieldItems(fld);
+	var pivotFields = this.asc_getPivotFields();
+	var pivotField = pivotFields[fld];
+	var basePivotField = pivotFields[groupRes.base];
+	var groupMembersOffset = basePivotField.convertGroupMembers(groupRes.groupMembersPos);
+	if (pivotField) {
+		pivotField.ungroupDiscrete(groupRes.reorderArray, groupMembersOffset);
+	}
+	if (groupRes.removeField) {
+		var pivotFieldsMap = new Map();
+		var mapIndex = 0;
+		for (var i = 0; i < pivotFields.length; ++i) {
+			if (i !== fld) {
+				pivotFieldsMap.set(i, mapIndex++);
+			}
+		}
+		pivotFields.splice(fld, 1);
+		this.updateIndexesForNewPivotFields(this.cacheDefinition, this.pivotFields, pivotFieldsMap);
+	}
+
+	this.setChanged(true);
+};
+CT_pivotTableDefinition.prototype._convertToCacheGroupLayout = function(layoutGroup) {
+	var res = layoutGroup.clone();
+	var pivotFields = this.asc_getPivotFields();
+	var pivotField = pivotFields[res.fld];
+	if (!pivotField) {
+		return res;
+	}
+	res.groupMap = pivotField.convertToCacheGroupMap(res.groupMap);
+	return res;
+};
+CT_pivotTableDefinition.prototype._groupDiscreteAddFields = function(fld, parFld) {
+	var pivotFields = this.asc_getPivotFields();
+	if (!pivotFields[parFld]) {
+		var newPivotField = pivotFields[fld].clone();
+		pivotFields.push(newPivotField);
+		var pivotIndex = pivotFields.length - 1;
+		var insertIndex = this.rowFields && this.rowFields.find(fld);
+		if (null !== insertIndex && -1 !== insertIndex) {
+			this.addRowField(pivotIndex, insertIndex, true);
+		}
+		insertIndex = this.colFields && this.colFields.find(fld);
+		if (null !== insertIndex && -1 !== insertIndex) {
+			this.addColField(pivotIndex, insertIndex, true);
+		}
+	}
 };
 
 function CT_pivotTableDefinitionX14() {
@@ -3994,7 +6583,7 @@ CT_pivotTableDefinitionX14.prototype.toXml = function(writer) {
 	if (false !== this.hideValuesRow) {
 		writer.WriteXmlAttributeBool("hideValuesRow", this.hideValuesRow);
 	}
-	writer.WriteXmlNodeEnd("pivotTableDefinition", true, true);
+	writer.WriteXmlNodeEnd("x14:pivotTableDefinition", true, true);
 };
 function CT_CacheSource() {
 //Attributes
@@ -4086,7 +6675,7 @@ CT_CacheFields.prototype.onStartNode = function(elem, attr, uq) {
 	}
 	return newContext;
 };
-CT_CacheFields.prototype.toXml = function(writer, name) {
+CT_CacheFields.prototype.toXml = function(writer, name, stylesForWrite) {
 	writer.WriteXmlNodeStart(name);
 	if (this.cacheField.length > 0) {
 		writer.WriteXmlAttributeNumber("count", this.cacheField.length);
@@ -4094,10 +6683,37 @@ CT_CacheFields.prototype.toXml = function(writer, name) {
 	writer.WriteXmlNodeEnd(name, true);
 	for (var i = 0; i < this.cacheField.length; ++i) {
 		var elem = this.cacheField[i];
-		elem.toXml(writer, "cacheField");
+		elem.toXml(writer, "cacheField", stylesForWrite);
 	}
 	writer.WriteXmlNodeEnd(name);
 };
+CT_CacheFields.prototype.getIndexByName = function(name) {
+	return this.cacheField.findIndex(function(elem){
+		return elem.name === name;
+	});
+};
+CT_CacheFields.prototype.generateNewName = function(name) {
+	var nameDuplicateMap = new Map();
+	for (var i = 0; i < this.cacheField.length; ++i) {
+		var cacheField = this.cacheField[i];
+		nameDuplicateMap.set(cacheField.name, 1);
+	}
+	var newName = name;
+	var suffix = '';
+	if (name && '0' <= name[name.length - 1] && name[name.length - 1] <= '9') {
+		suffix = '_';
+	}
+	var index = 1;
+	while (nameDuplicateMap.has(newName)) {
+		index++;
+		newName = name + suffix + index;
+	}
+	return newName;
+};
+CT_CacheFields.prototype.add = function(cacheField) {
+	this.cacheField.push(cacheField);
+};
+
 function CT_CacheHierarchies() {
 //Attributes
 // 	this.count = null;
@@ -4513,9 +7129,7 @@ CT_DateTime.prototype.readAttributes = function(attr, uq) {
 		var val;
 		val = vals["v"];
 		if (undefined !== val) {
-			var d = new Asc.cDate(uq(val));
-			this.v = new Asc.cDate(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(),
-				d.getSeconds(),	d.getMilliseconds())).getExcelDateWithTime();
+			this.v = Asc.cDate.prototype.fromISO8601(val).getExcelDateWithTime2();
 		}
 		val = vals["u"];
 		if (undefined !== val) {
@@ -4554,7 +7168,7 @@ CT_DateTime.prototype.toXml = function(writer, name) {
 CT_DateTime.prototype.toXml2 = function(writer, name, val, obj) {
 	writer.WriteXmlNodeStart(name);
 	if (null !== val) {
-		writer.WriteXmlAttributeStringEncode("v", Asc.cDate.prototype.getDateFromExcelWithTime(val).toISOString().slice(0, 19));
+		writer.WriteXmlAttributeStringEncode("v", Asc.cDate.prototype.getDateFromExcelWithTime2(val).toISOString().slice(0, 19));
 	}
 	if (obj) {
 		if (null !== obj.u) {
@@ -4740,8 +7354,8 @@ CT_Error.prototype.toXml2 = function(writer, name, val, obj) {
 };
 CT_Error.prototype.isSimpleValue = function() {
 	return null === this.u && null === this.f && null === this.c && null === this.cp && null === this.in &&
-		null === this.bc && null === this.fc && null === this.i && null === this.un && null === this.st &&
-		null === this.b && null === 0 === this.tpls.length && 0 === this.x.length;
+		null === this.bc && null === this.fc && false === this.i && false === this.un && false === this.st &&
+		false === this.b && 0 === this.tpls.length && 0 === this.x.length;
 };
 CT_Error.prototype.clean = function() {
 	this.v = null;
@@ -4900,8 +7514,8 @@ CT_Missing.prototype.toXml2 = function(writer, name, obj) {
 };
 CT_Missing.prototype.isSimpleValue = function() {
 	return null === this.u && null === this.f && null === this.c && null === this.cp && null === this.in &&
-		null === this.bc && null === this.fc && null === this.i && null === this.un && null === this.st &&
-		null === this.b && 0 === this.tpls.length && 0 === this.x.length;
+		null === this.bc && null === this.fc && false === this.i && false === this.un && false === this.st &&
+		false === this.b && 0 === this.tpls.length && 0 === this.x.length;
 };
 CT_Missing.prototype.clean = function() {
 	this.v = null;
@@ -5070,8 +7684,8 @@ CT_Number.prototype.toXml2 = function(writer, name, val, obj) {
 };
 CT_Number.prototype.isSimpleValue = function() {
 	return null === this.u && null === this.f && null === this.c && null === this.cp && null === this.in &&
-		null === this.bc && null === this.fc && null === this.i && null === this.un && null === this.st &&
-		null === this.b && 0 === this.tpls.length && 0 === this.x.length;
+		null === this.bc && null === this.fc && false === this.i && false === this.un && false === this.st &&
+		false === this.b && 0 === this.tpls.length && 0 === this.x.length;
 };
 CT_Number.prototype.clean = function() {
 	this.v = null;
@@ -5238,8 +7852,8 @@ CT_String.prototype.toXml2 = function(writer, name, val, obj) {
 };
 CT_String.prototype.isSimpleValue = function() {
 	return null === this.u && null === this.f && null === this.c && null === this.cp && null === this.in &&
-		null === this.bc && null === this.fc && null === this.i && null === this.un && null === this.st &&
-		null === this.b && 0 === this.tpls.length && 0 === this.x.length;
+		null === this.bc && null === this.fc && false === this.i && false === this.un && false === this.st &&
+		false === this.b && 0 === this.tpls.length && 0 === this.x.length;
 };
 CT_String.prototype.clean = function() {
 	this.v = null;
@@ -5261,6 +7875,11 @@ function CT_Index() {
 //Attributes
 	this.v = null;
 }
+CT_Index.prototype.clone = function() {
+	var res = new CT_Index();
+	res.v = this.v;
+	return res;
+};
 CT_Index.prototype.readAttributes = function(attr, uq) {
 	if (attr()) {
 		var vals = attr();
@@ -5440,7 +8059,7 @@ CT_PivotFields.prototype.onStartNode = function(elem, attr, uq) {
 	}
 	return newContext;
 };
-CT_PivotFields.prototype.toXml = function(writer, name) {
+CT_PivotFields.prototype.toXml = function(writer, name, stylesForWrite) {
 	writer.WriteXmlNodeStart(name);
 	if (this.pivotField.length > 0) {
 		writer.WriteXmlAttributeNumber("count", this.pivotField.length);
@@ -5448,14 +8067,17 @@ CT_PivotFields.prototype.toXml = function(writer, name) {
 	writer.WriteXmlNodeEnd(name, true);
 	for (var i = 0; i < this.pivotField.length; ++i) {
 		var elem = this.pivotField[i];
-		elem.toXml(writer, "pivotField");
+		elem.toXml(writer, "pivotField", stylesForWrite);
 	}
 	writer.WriteXmlNodeEnd(name);
 };
-CT_PivotFields.prototype.fillWithEmpty = function(count) {
-	for (var i = 0; i < count; ++i) {
+CT_PivotFields.prototype.fillWithEmpty = function(cacheFields) {
+	for (var i = 0; i < cacheFields.length; ++i) {
 		var pivotField = new CT_PivotField(true);
 		pivotField.showAll = false;
+		if (cacheFields[i].isNumType()) {
+			pivotField.num = cacheFields[i].num;
+		}
 		this.pivotField.push(pivotField);
 	}
 };
@@ -5478,8 +8100,9 @@ function removeFieldBase(index, array) {
 	var deleteIndex = findFieldBase(index, array);
 	if (-1 !== deleteIndex) {
 		array.splice(deleteIndex, 1);
+		return deleteIndex;
 	}
-	return deleteIndex;
+	return undefined;
 }
 function CT_RowFields() {
 //Attributes
@@ -5737,7 +8360,7 @@ CT_DataFields.prototype.onStartNode = function(elem, attr, uq) {
 	}
 	return newContext;
 };
-CT_DataFields.prototype.toXml = function(writer, name) {
+CT_DataFields.prototype.toXml = function(writer, name, stylesForWrite) {
 	writer.WriteXmlNodeStart(name);
 	if (this.dataField.length > 0) {
 		writer.WriteXmlAttributeNumber("count", this.dataField.length);
@@ -5745,7 +8368,7 @@ CT_DataFields.prototype.toXml = function(writer, name) {
 	writer.WriteXmlNodeEnd(name, true);
 	for (var i = 0; i < this.dataField.length; ++i) {
 		var elem = this.dataField[i];
-		elem.toXml(writer, "dataField");
+		elem.toXml(writer, "dataField", stylesForWrite);
 	}
 	writer.WriteXmlNodeEnd(name);
 };
@@ -5759,7 +8382,7 @@ CT_DataFields.prototype.remove = function(index, dataIndex) {
 	} else {
 		var res = [];
 		var deleteIndex = removeFieldBase(index, this.dataField);
-		while (-1 !== deleteIndex) {
+		while (undefined !== deleteIndex) {
 			res.push(deleteIndex);
 			deleteIndex = removeFieldBase(index, this.dataField);
 		}
@@ -5989,6 +8612,81 @@ CT_PivotTableStyle.prototype.asc_getShowRowStripes = function() {
 CT_PivotTableStyle.prototype.asc_getShowColStripes = function() {
 	return this.showColStripes;
 };
+CT_PivotTableStyle.prototype.asc_setName = function(api, pivot, newVal) {
+	if (newVal !== this.name) {
+		var t = this;
+		api._changePivotWithLock(pivot, function(ws) {t._setName(newVal, pivot, ws)});
+	}
+};
+CT_PivotTableStyle.prototype.asc_setShowRowHeaders = function(api, pivot, newVal) {
+	if (newVal !== this.showRowHeaders) {
+		var t = this;
+		api._changePivotWithLock(pivot, function(ws) {t._setShowRowHeaders(newVal, pivot, ws)});
+	}
+};
+CT_PivotTableStyle.prototype.asc_setShowColHeaders = function(api, pivot, newVal) {
+	if (newVal !== this.showColHeaders) {
+		var t = this;
+		api._changePivotWithLock(pivot, function(ws) {t._setShowColHeaders(newVal, pivot, ws)});
+	}
+};
+CT_PivotTableStyle.prototype.asc_setShowRowStripes = function(api, pivot, newVal) {
+	if (newVal !== this.showRowStripes) {
+		var t = this;
+		api._changePivotWithLock(pivot, function(ws) {t._setShowRowStripes(newVal, pivot, ws)});
+	}
+};
+CT_PivotTableStyle.prototype.asc_setShowColStripes = function(api, pivot, newVal) {
+	if (newVal !== this.showColStripes) {
+		var t = this;
+		api._changePivotWithLock(pivot, function(ws) {t._setShowColStripes(newVal, pivot, ws)});
+	}
+};
+CT_PivotTableStyle.prototype._setName = function (newVal, pivot, ws) {
+	if (History.Is_On() && this.name !== newVal) {
+		History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_StyleName,
+			ws ? ws.getId() : null, null,
+			new AscCommonExcel.UndoRedoData_PivotTable(pivot && pivot.Get_Id(), this.name, newVal));
+	}
+	this.name = newVal;
+	pivot.setChanged(false, true);
+};
+CT_PivotTableStyle.prototype._setShowRowHeaders = function (newVal, pivot, ws) {
+	if (History.Is_On() && this.showRowHeaders !== newVal) {
+		History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_StyleShowRowHeaders,
+			ws ? ws.getId() : null, null,
+			new AscCommonExcel.UndoRedoData_PivotTable(pivot && pivot.Get_Id(), this.showRowHeaders, newVal));
+	}
+	this.showRowHeaders = newVal;
+	pivot.setChanged(false, true);
+};
+CT_PivotTableStyle.prototype._setShowColHeaders = function (newVal, pivot, ws) {
+	if (History.Is_On() && this.showColHeaders !== newVal) {
+		History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_StyleShowColHeaders,
+			ws ? ws.getId() : null, null,
+			new AscCommonExcel.UndoRedoData_PivotTable(pivot && pivot.Get_Id(), this.showColHeaders, newVal));
+	}
+	this.showColHeaders = newVal;
+	pivot.setChanged(false, true);
+};
+CT_PivotTableStyle.prototype._setShowRowStripes = function (newVal, pivot, ws) {
+	if (History.Is_On() && this.showRowStripes !== newVal) {
+		History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_StyleShowRowStripes,
+			ws ? ws.getId() : null, null,
+			new AscCommonExcel.UndoRedoData_PivotTable(pivot && pivot.Get_Id(), this.showRowStripes, newVal));
+	}
+	this.showRowStripes = newVal;
+	pivot.setChanged(false, true);
+};
+CT_PivotTableStyle.prototype._setShowColStripes = function (newVal, pivot, ws) {
+	if (History.Is_On() && this.showColStripes !== newVal) {
+		History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_StyleShowColStripes,
+			ws ? ws.getId() : null, null,
+			new AscCommonExcel.UndoRedoData_PivotTable(pivot && pivot.Get_Id(), this.showColStripes, newVal));
+	}
+	this.showColStripes = newVal;
+	pivot.setChanged(false, true);
+};
 
 function CT_PivotFilters() {
 //Attributes
@@ -6150,11 +8848,66 @@ function CT_WorksheetSource() {
 	this.id = null;
 //Private
 	this.formula = null;
+	this.Id = AscCommon.g_oIdCounter.Get_NewId();
+	AscCommon.g_oTableId.Add( this, this.Id );
 }
+CT_WorksheetSource.prototype.getObjectType = function () {
+	return AscDFH.historyitem_type_PivotWorksheetSource;
+};
+CT_WorksheetSource.prototype.Get_Id = function () {
+	return this.Id;
+};
 CT_WorksheetSource.prototype.onFormulaEvent = function (type, eventData) {
 	if (AscCommon.c_oNotifyParentType.ChangeFormula === type) {
-		// ToDo update formula with eventData.assemble;
+		//add to history for undo
+		var oldVal = new AscCommonExcel.UndoRedoData_BinaryWrapper(this);
+		this._updateAttributes();
+		var newVal = new AscCommonExcel.UndoRedoData_BinaryWrapper(this);
+		History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_PivotWorksheetSource, null, null,
+			new AscCommonExcel.UndoRedoData_PivotTable(this.Get_Id(), oldVal, newVal));
+	} else if (AscCommon.c_oNotifyParentType.ProcessNotify === type) {
+		var data = eventData.notifyData;
+		if (AscCommon.c_oNotifyType.ChangeDefName === data.type && !data.to) {
+			if (this.formula && 1 === this.formula.getOutStackSize()) {
+				var elem = this.formula.getOutStackElem(0);
+				if (elem.type === AscCommonExcel.cElementType.table) {
+					var table = elem.getTable();
+					if (table.isHeaderRow()) {
+						var dataLocation = this.getDataLocation();
+						if (dataLocation && dataLocation.ws) {
+							eventData.formula.removeTableName(data.from, true);
+							var bbox = dataLocation.bbox.clone();
+							bbox.r1--;
+							bbox.r2 = bbox.r1;
+							var offset = new AscCommon.CellBase(-1, 0);
+							eventData.formula.shiftCells(AscCommon.c_oNotifyType.Shift, dataLocation.ws.getId(), bbox, offset);
+							bbox.r1++;
+							bbox.r2 = bbox.r1;
+							offset = new AscCommon.CellBase(1, 0);
+							eventData.formula.shiftCells(AscCommon.c_oNotifyType.Shift, dataLocation.ws.getId(), bbox, offset);
+						}
+					}
+					return true;
+				}
+			}
+		} else if(AscCommon.c_oNotifyType.Shift === data.type) {
+			eventData.formula.shiftCells(data.type, data.sheetId, data.bbox, data.offset, data.sheetIdTo, true);
+			return true;
+		}
 	}
+};
+CT_WorksheetSource.prototype.Write_ToBinary2 = function(writer) {
+	writer.WriteString2(this.ref ? this.ref : "");
+	writer.WriteString2(this.name ? this.name : "");
+	writer.WriteString2(this.sheet ? this.sheet : "");
+};
+CT_WorksheetSource.prototype.Read_FromBinary2 = function(reader) {
+	var ref = reader.GetString2();
+	var name = reader.GetString2();
+	var sheet = reader.GetString2();
+	this.ref = "" !== ref ? ref : null;
+	this.name = "" !== name ? name : null;
+	this.sheet = "" !== sheet ? sheet : null;
 };
 CT_WorksheetSource.prototype.readAttributes = function(attr, uq) {
 	if (attr()) {
@@ -6177,21 +8930,7 @@ CT_WorksheetSource.prototype.readAttributes = function(attr, uq) {
 			this.id = AscCommon.unleakString(uq(val));
 		}
 
-		var text;
-		if (this.name) {
-			if (this.sheet) {
-				text = AscCommon.parserHelp.getEscapeSheetName(this.sheet) + "!" + this.name;
-			} else {
-				text = this.name;
-			}
-		} else if (this.ref && this.sheet) {
-			text = AscCommon.parserHelp.get3DRef(this.sheet, this.ref);
-		}
-		if (text) {
-			this.formula = new AscCommonExcel.parserFormula(text, this, AscCommonExcel.g_DefNameWorksheet);
-			this.formula.parse();
-			this.formula.buildDependencies();
-		}
+		this.fromWorksheetSource(this);
 	}
 };
 CT_WorksheetSource.prototype.toXml = function(writer, name) {
@@ -6226,7 +8965,8 @@ CT_WorksheetSource.prototype.getDataLocation = function() {
 				case AscCommonExcel.cElementType.cellsRange:
 				case AscCommonExcel.cElementType.cell3D:
 				case AscCommonExcel.cElementType.cellsRange3D:
-					return {ws: val.getWS(), bbox: val.getBBox0(), headings: headings};
+					var ws = val.getWS() !== AscCommonExcel.g_DefNameWorksheet ? val.getWS() : null;
+					return {ws: ws, bbox: val.getBBox0(), headings: headings};
 					break;
 			}
 		}
@@ -6234,7 +8974,7 @@ CT_WorksheetSource.prototype.getDataLocation = function() {
 };
 CT_WorksheetSource.prototype.getDataRef = function() {
 	if (this.formula) {
-		return this.formula.getFormula();
+		return this.formula.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true);
 	}
 };
 CT_WorksheetSource.prototype.fromDataRef = function(dataRef) {
@@ -6244,10 +8984,35 @@ CT_WorksheetSource.prototype.fromDataRef = function(dataRef) {
 		this.formula.buildDependencies();
 	}
 };
+CT_WorksheetSource.prototype.fromWorksheetSource = function(worksheetSource, addToBuildDependencyPivot) {
+	if (this.formula) {
+		this.formula.removeDependencies();
+		this.formula = null;
+	}
+	var text;
+	if (worksheetSource.name) {
+		if (worksheetSource.sheet) {
+			text = AscCommon.parserHelp.getEscapeSheetName(worksheetSource.sheet) + "!" + worksheetSource.name;
+		} else {
+			text = worksheetSource.name;
+		}
+	} else if (worksheetSource.ref && worksheetSource.sheet) {
+		text = AscCommon.parserHelp.get3DRef(worksheetSource.sheet, worksheetSource.ref);
+	}
+	if (text) {
+		this.formula = new AscCommonExcel.parserFormula(text, this, AscCommonExcel.g_DefNameWorksheet);
+		this.formula.parse();
+		if (addToBuildDependencyPivot) {
+			var ws = this.formula.getWs();
+			if (ws && ws.workbook) {
+				ws.workbook.dependencyFormulas.addToBuildDependencyPivot(this.formula);
+			}
+		} else {
+			this.formula.buildDependencies();
+		}
+	}
+};
 CT_WorksheetSource.prototype._updateAttributes = function() {
-	this.ref = null;
-	this.name = null;
-	this.sheet = null;
 	if (this.formula && 1 === this.formula.getOutStackSize()) {
 		var elem = this.formula.getOutStackElem(0);
 		if (elem) {
@@ -6258,15 +9023,21 @@ CT_WorksheetSource.prototype._updateAttributes = function() {
 				case AscCommonExcel.cElementType.cellsRange3D:
 					this.sheet = elem.getWS().getName();
 					this.ref = elem.getBBox0().getName(AscCommonExcel.referenceType.R);
+					this.name = null;
 					break;
 				case AscCommonExcel.cElementType.name:
+					this.sheet = null;
+					this.ref = null;
 					this.name = elem.toString();
 					break;
 				case AscCommonExcel.cElementType.name3D:
 					this.sheet = elem.getWS().getName();
+					this.ref = null;
 					this.name = AscCommonExcel.cName.prototype.toString.call(elem);
 					break;
 				case AscCommonExcel.cElementType.table:
+					this.sheet = null;
+					this.ref = null;
 					//todo without '[]'
 					this.name = elem.toString();
 					break;
@@ -6283,6 +9054,7 @@ function CT_CacheField() {
 	this.serverField = false;
 	this.uniqueList = true;
 	this.numFmtId = null;
+	this.num = null;
 	this.formula = null;
 	this.sqlType = 0;
 	this.hierarchy = 0;
@@ -6296,6 +9068,70 @@ function CT_CacheField() {
 	this.mpMap = [];
 	this.extLst = null;
 }
+CT_CacheField.prototype.initPostOpenZip = function (oNumFmts) {
+	if (null !== this.numFmtId) {
+		this.num = AscCommonExcel.Num.prototype.initFromParams(this.numFmtId, null, oNumFmts);
+		this.numFmtId = null;
+	}
+};
+CT_CacheField.prototype.initGroupPar = function (par) {
+	if (!this.fieldGroup) {
+		this.fieldGroup = new CT_FieldGroup();
+	}
+	this.fieldGroup.initPar(par);
+	if (this.fieldGroup.isEmpty()) {
+		this.fieldGroup = null;
+	}
+};
+CT_CacheField.prototype.initGroupBase = function (base) {
+	if (!this.fieldGroup) {
+		this.fieldGroup = new CT_FieldGroup();
+	}
+	this.fieldGroup.initBase(base);
+	if (this.fieldGroup.isEmpty()) {
+		this.fieldGroup = null;
+	}
+};
+CT_CacheField.prototype.initGroupDiscrete = function (name, base, baseCacheField) {
+	this.name = name;
+	this.num = AscCommonExcel.Num.prototype.initFromParams(0);
+	this.databaseField = false;
+	this.fieldGroup = new CT_FieldGroup();
+	this.fieldGroup.initDiscrete(base, baseCacheField);
+};
+CT_CacheField.prototype.initGroupRangePr = function (name) {
+	this.name = name;
+	this.num = AscCommonExcel.Num.prototype.initFromParams(0);
+	this.databaseField = false;
+};
+CT_CacheField.prototype.clone = function() {
+	var res = new CT_CacheField();
+	res.name = this.name;
+	res.caption = this.caption;
+	res.propertyName = this.propertyName;
+	res.serverField = this.serverField;
+	res.uniqueList = this.uniqueList;
+	res.numFmtId = this.numFmtId;
+	res.num = this.num;
+	res.formula = this.formula;
+	res.sqlType = this.sqlType;
+	res.hierarchy = this.hierarchy;
+	res.level = this.level;
+	res.databaseField = this.databaseField;
+	res.mappingCount = this.mappingCount;
+	res.memberPropertyField = this.memberPropertyField;
+	if (this.sharedItems) {
+		res.sharedItems = this.sharedItems.clone();
+	}
+	if (this.fieldGroup) {
+		res.fieldGroup = this.fieldGroup.clone();
+	}
+	if (this.mpMap) {
+		res.mpMap = this.mpMap.map(function(elem){return elem.clone();});
+	}
+	res.extLst = null;
+	return res;
+};
 CT_CacheField.prototype.readAttributes = function(attr, uq) {
 	if (attr()) {
 		var vals = attr();
@@ -6320,10 +9156,8 @@ CT_CacheField.prototype.readAttributes = function(attr, uq) {
 		if (undefined !== val) {
 			this.uniqueList = AscCommon.getBoolFromXml(val);
 		}
-		val = vals["numFmtId"];
-		if (undefined !== val) {
-			this.numFmtId = val - 0;
-		}
+		ReadNumXml(vals, uq, this);
+
 		val = vals["formula"];
 		if (undefined !== val) {
 			this.formula = AscCommon.unleakString(uq(val));
@@ -6385,7 +9219,7 @@ CT_CacheField.prototype.onStartNode = function(elem, attr, uq) {
 	}
 	return newContext;
 };
-CT_CacheField.prototype.toXml = function(writer, name) {
+CT_CacheField.prototype.toXml = function(writer, name, stylesForWrite) {
 	writer.WriteXmlNodeStart(name);
 	if (null !== this.name) {
 		writer.WriteXmlAttributeStringEncode("name", this.name);
@@ -6402,9 +9236,7 @@ CT_CacheField.prototype.toXml = function(writer, name) {
 	if (true !== this.uniqueList) {
 		writer.WriteXmlAttributeBool("uniqueList", this.uniqueList);
 	}
-	if (null !== this.numFmtId) {
-		writer.WriteXmlAttributeNumber("numFmtId", this.numFmtId);
-	}
+	WriteNumXml(writer, this.num, stylesForWrite);
 	if (null !== this.formula) {
 		writer.WriteXmlAttributeStringEncode("formula", this.formula);
 	}
@@ -6442,8 +9274,25 @@ CT_CacheField.prototype.toXml = function(writer, name) {
 	}
 	writer.WriteXmlNodeEnd(name);
 };
+CT_CacheField.prototype.Write_ToBinary2 = function(writer) {
+	//todo write binary
+	var t = this;
+	AscCommonExcel.executeInR1C1Mode(false, function () {
+		toXmlWithLength(writer, t, "cacheField");
+	});
+};
+CT_CacheField.prototype.Read_FromBinary2 = function(reader) {
+	var tmp = new XmlReaderWrapper("cacheField", this);
+	var len = reader.GetLong();
+	AscCommonExcel.executeInR1C1Mode(false, function () {
+		new AscCommon.openXml.SaxParserBase().parse(AscCommon.GetStringUtf8(reader, len), tmp);
+	});
+};
 CT_CacheField.prototype.asc_getName = function () {
 	return this.name;
+};
+CT_CacheField.prototype.getSharedItems = function () {
+	return this.sharedItems;
 };
 CT_CacheField.prototype.getSharedItem = function (index) {
 	return this.sharedItems && this.sharedItems.Items.get(index);
@@ -6451,8 +9300,167 @@ CT_CacheField.prototype.getSharedItem = function (index) {
 CT_CacheField.prototype.getSharedSize = function () {
 	return this.sharedItems && this.sharedItems.Items.getSize() || 0;
 };
-CT_CacheField.prototype.isSumSubtotal = function (index) {
-	return this.sharedItems && false === this.sharedItems.containsSemiMixedTypes && true === this.sharedItems.containsNumber;
+CT_CacheField.prototype.getGroupOrSharedItems = function () {
+	return (this.fieldGroup && this.fieldGroup.groupItems) || this.sharedItems;
+};
+CT_CacheField.prototype.getGroupOrSharedItem = function (index) {
+	var sharedItems = this.getGroupOrSharedItems();
+	return sharedItems && sharedItems.Items.get(index);
+};
+CT_CacheField.prototype.getGroupOrSharedSize = function () {
+	var sharedItems = this.getGroupOrSharedItems();
+	return sharedItems && sharedItems.Items.getSize() || 0;
+};
+CT_CacheField.prototype.getGroupBaseIndex = function (defaultIndex) {
+	return (this.fieldGroup && null !== this.fieldGroup.base) ? this.fieldGroup.base : defaultIndex;
+};
+CT_CacheField.prototype.getGroupOrSharedIndex = function (cacheFieldBase, index) {
+	if (this.fieldGroup) {
+		return this.fieldGroup.getGroupIndex(index, cacheFieldBase.getSharedItem(index));
+	} else {
+		return index;
+	}
+};
+CT_CacheField.prototype.isSumSubtotal = function () {
+	var sharedItems = this.getGroupOrSharedItems();
+	return sharedItems && false === sharedItems.containsSemiMixedTypes && true === sharedItems.containsNumber;
+};
+CT_CacheField.prototype.isNumType = function () {
+	return this.sharedItems && false === this.sharedItems.containsSemiMixedTypes && (true === this.sharedItems.containsNumber || true === this.sharedItems.containsDate) && !this.hasGroup();
+};
+CT_CacheField.prototype.containsDate = function () {
+	return this.sharedItems && this.sharedItems.containsDate;
+};
+CT_CacheField.prototype.getNumFormat = function () {
+	if (this.num) {
+		return this.num;
+	} else if (this.sharedItems && this.sharedItems.containsDate) {
+		return AscCommonExcel.Num.prototype.initFromParams(14, AscCommon.getFormatByStandardId(14));
+	}
+};
+CT_CacheField.prototype.checkSharedItems = function (pivot, index, cacheRecords) {
+	if (this.sharedItems && this.sharedItems.Items.getSize() > 0 || !this.databaseField) {
+		return;
+	}
+	if(!this.sharedItems){
+		this.sharedItems = new CT_SharedItems();
+	}
+	cacheRecords.convertToSharedItems(index, this.sharedItems);
+	History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_CacheField, pivot.GetWS().getId(),
+		null, new AscCommonExcel.UndoRedoData_PivotField(pivot.Get_Id(), index, null, null));
+};
+CT_CacheField.prototype.hasGroup = function () {
+	return !!(this.fieldGroup && this.fieldGroup.groupItems);
+};
+CT_CacheField.prototype.getGroupPar = function () {
+	return this.fieldGroup && this.fieldGroup.par;
+};
+CT_CacheField.prototype.getGroupBase = function () {
+	return this.fieldGroup && this.fieldGroup.base;
+};
+CT_CacheField.prototype.getFieldGroupType = function () {
+	if (this.fieldGroup) {
+		return this.fieldGroup.getFieldGroupType();
+	}
+	var sharedItems = this.getGroupOrSharedItems();
+	if (sharedItems && false === sharedItems.containsMixedTypes) {
+		if (sharedItems.containsNumber) {
+			return c_oAscGroupType.Number;
+		} else if (sharedItems.containsDate) {
+			return c_oAscGroupType.Date;
+		}
+	}
+	return c_oAscGroupType.Text;
+};
+CT_CacheField.prototype.createGroupRangePr = function () {
+	var rangePr = new CT_RangePr(true);
+	rangePr.autoStart = true;
+	rangePr.autoEnd = true;
+	var groupType = this.getFieldGroupType();
+	var sharedItems = this.getSharedItems();
+	//todo default
+	rangePr.groupInterval = 1;
+	if (c_oAscGroupType.Number === groupType) {
+		var minMaxValue = sharedItems.getMinMaxValue();
+		rangePr.groupBy = c_oAscGroupBy.Range;
+		rangePr.startNum = minMaxValue.minValue;
+		rangePr.endNum = minMaxValue.maxValue;
+		rangePr.correctEndValue();
+		var diff = (rangePr.endNum - rangePr.startNum ) / 30;
+		if (diff >= 1) {
+			while (rangePr.groupInterval <= diff) {
+				rangePr.groupInterval *= 10;
+			}
+		} else if (diff <= 0.1) {
+			while (rangePr.groupInterval >= diff) {
+				rangePr.groupInterval /= 10;
+			}
+			rangePr.groupInterval *= 10;
+		}
+	} else if (c_oAscGroupType.Date === groupType) {
+		var minMaxDate = sharedItems.getMinMaxDate();
+		rangePr.groupBy = c_oAscGroupBy.Months;
+		rangePr.startDate = minMaxDate.minDate;
+		rangePr.endDate = minMaxDate.maxDate;
+		if (rangePr.endDate.getExcelDateWithTime2() === rangePr.endDate.getExcelDate()) {
+			rangePr.endDate.addDays2(1);
+		}
+		rangePr.correctEndValue();
+	}
+	return rangePr;
+};
+CT_CacheField.prototype.getGroupRangePr = function () {
+	return this.fieldGroup && this.fieldGroup.rangePr;
+};
+CT_CacheField.prototype.groupRangePr = function (fld, rangePr) {
+	this.fieldGroup = new CT_FieldGroup();
+	var sharedItems = this.getGroupOrSharedItems();
+	var containsInteger = sharedItems && sharedItems.containsInteger || false;
+	var containsBlank = sharedItems && sharedItems.containsBlank || false;
+	return this.fieldGroup.groupRangePr(fld, rangePr, containsInteger, containsBlank);
+};
+CT_CacheField.prototype.groupDiscrete = function (groupMap) {
+	return this.fieldGroup.groupDiscrete(groupMap);
+};
+CT_CacheField.prototype.convertFromDiscreteGroupMap = function(groupMap) {
+	if (this.fieldGroup) {
+		return this.fieldGroup.convertFromDiscreteGroupMap(groupMap);
+	} else {
+		return groupMap;
+	}
+};
+CT_CacheField.prototype.convertToDiscreteGroupMap = function (groupMap) {
+	return this.fieldGroup.convertToDiscreteGroupMap(groupMap);
+};
+CT_CacheField.prototype.convertToDiscreteGroupMembers = function (groupMembers) {
+	if (this.fieldGroup) {
+		return this.fieldGroup.convertToDiscreteGroupMembers(groupMembers);
+	} else {
+		return groupMembers;
+	}
+};
+CT_CacheField.prototype.containsGroup = function (groupMap) {
+	return this.fieldGroup && this.fieldGroup.containsGroup(groupMap);
+};
+CT_CacheField.prototype.ungroupDiscrete = function (base, baseCacheField, groupMap) {
+	return this.fieldGroup.ungroupDiscrete(base, baseCacheField, groupMap);
+};
+CT_CacheField.prototype.ungroupRangePr = function () {
+	this.fieldGroup = null;
+};
+CT_CacheField.prototype.refreshGroupDiscrete = function (sharedItems, discretePrMap) {
+	return this.fieldGroup.refreshGroupDiscrete(sharedItems, discretePrMap);
+};
+CT_CacheField.prototype.refreshGroupRangePr = function (baseFld, rangePr, rangePrAuto) {
+	if (rangePr.autoStart) {
+		rangePr.startNum = rangePrAuto.startNum;
+		rangePr.startDate = rangePrAuto.startDate;
+	}
+	if (rangePr.autoEnd) {
+		rangePr.endNum = rangePrAuto.endNum;
+		rangePr.endDate = rangePrAuto.endDate;
+	}
+	return this.groupRangePr(baseFld, rangePr);
 };
 
 function CT_CacheHierarchy() {
@@ -7207,27 +10215,52 @@ CT_Extension.prototype.onStartNode = function(elem, attr, uq) {
 			newContext.readAttributes(attr, uq);
 		}
 		this.elem = newContext;
+	} else if ("x14:pivotCacheDefinition" === elem) {
+		newContext = new CT_PivotCacheDefinitionX14();
+		if (newContext.readAttributes) {
+			newContext.readAttributes(attr, uq);
+		}
+		this.elem = newContext;
+	} else if ("x14:pivotField" === elem) {
+		newContext = new CT_PivotFieldX14();
+		if (newContext.readAttributes) {
+			newContext.readAttributes(attr, uq);
+		}
+		this.elem = newContext;
 	} else {
 		newContext = null;
 	}
 	return newContext;
 };
 CT_Extension.prototype.toXml = function(writer, name) {
-  if ("{962EF5D1-5CA2-4c93-8EF4-DBF5C05439D2}" === this.uri && this.elem) {
-    writer.WriteXmlNodeStart(name);
-    if (null !== this.uri) {
-      writer.WriteXmlAttributeStringEncode("uri", this.uri);
-      writer.WriteXmlString(" xmlns:x14=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/main\"");
-    }
-    writer.WriteXmlNodeEnd(name, true);
-    this.elem.toXml(writer, "x14:pivotTableDefinition");
-    writer.WriteXmlNodeEnd(name);
-  }
+	if (!this.elem) {
+		return;
+	}
+
+	writer.WriteXmlNodeStart(name);
+	if (null !== this.uri) {
+		writer.WriteXmlAttributeStringEncode("uri", this.uri);
+	}
+	writer.WriteXmlString(" xmlns:x14=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/main\"");
+	writer.WriteXmlNodeEnd(name, true);
+	if ("{962EF5D1-5CA2-4c93-8EF4-DBF5C05439D2}" === this.uri) {
+		this.elem.toXml(writer, "x14:pivotTableDefinition");
+	} else if ("{725AE2AE-9491-48be-B2B4-4EB974FC3084}" === this.uri) {
+		this.elem.toXml(writer, "x14:pivotCacheDefinition");
+	} else if ("{2946ED86-A175-432a-8AC1-64E0C546D7DE}" === this.uri) {
+		this.elem.toXml(writer, "x14:pivotField");
+	}
+	writer.WriteXmlNodeEnd(name);
 };
 function CT_X() {
 //Attributes
 	this.v = 0;
 }
+CT_X.prototype.clone = function() {
+	var res = new CT_X();
+	res.v = this.v;
+	return res;
+};
 CT_X.prototype.readAttributes = function(attr, uq) {
 	if (attr()) {
 		var vals = attr();
@@ -7301,6 +10334,7 @@ function CT_PivotField(setDefaults) {
 	this.compact = null;
 	this.allDrilled = null;
 	this.numFmtId = null;
+	this.num = null;
 	this.outline = null;
 	this.subtotalTop = null;
 	this.dragToRow = null;
@@ -7342,13 +10376,31 @@ function CT_PivotField(setDefaults) {
 //Members
 	this.items = null;
 	this.autoSortScope = null;
-	this.extLst = null;
+	this.pivotFieldX14 = null;
 
 	this.ascSubtotals = null;
+	this.ascFillDownLabels = null;
 	if (setDefaults) {
 		this.setDefaults();
 	}
 }
+CT_PivotField.prototype.initPostOpenZip = function (oNumFmts) {
+	if (null !== this.numFmtId) {
+		this.num = AscCommonExcel.Num.prototype.initFromParams(this.numFmtId, null, oNumFmts);
+		this.numFmtId = null;
+	}
+};
+CT_PivotField.prototype.init = function (count) {
+	this.showAll = false;
+	this.items = new CT_Items();
+	var items = this.items.item;
+	for(var i = 0; i < count; ++i){
+		var newItem = new CT_Item();
+		newItem.x = i;
+		items.push(newItem);
+	}
+	return items;
+};
 CT_PivotField.prototype.setDefaults = function() {
 	this.dataField = false;
 	this.showDropDowns = true;
@@ -7391,6 +10443,65 @@ CT_PivotField.prototype.setDefaults = function() {
 	this.showPropTip = false;
 	this.showPropAsCaption = false;
 	this.defaultAttributeDrillState = false;
+};
+CT_PivotField.prototype.clone = function() {
+	var res = new CT_PivotField(true);
+	res.name = this.name;
+	res.axis = this.axis;
+	res.dataField = this.dataField;
+	res.subtotalCaption = this.subtotalCaption;
+	res.showDropDowns = this.showDropDowns;
+	res.hiddenLevel = this.hiddenLevel;
+	res.uniqueMemberProperty = this.uniqueMemberProperty;
+	res.compact = this.compact;
+	res.allDrilled = this.allDrilled;
+	res.numFmtId = this.numFmtId;
+	res.num = this.num;
+	res.outline = this.outline;
+	res.subtotalTop = this.subtotalTop;
+	res.dragToRow = this.dragToRow;
+	res.dragToCol = this.dragToCol;
+	res.multipleItemSelectionAllowed = this.multipleItemSelectionAllowed;
+	res.dragToPage = this.dragToPage;
+	res.dragToData = this.dragToData;
+	res.dragOff = this.dragOff;
+	res.showAll = this.showAll;
+	res.insertBlankRow = this.insertBlankRow;
+	res.serverField = this.serverField;
+	res.insertPageBreak = this.insertPageBreak;
+	res.autoShow = this.autoShow;
+	res.topAutoShow = this.topAutoShow;
+	res.hideNewItems = this.hideNewItems;
+	res.measureFilter = this.measureFilter;
+	res.includeNewItemsInFilter = this.includeNewItemsInFilter;
+	res.itemPageCount = this.itemPageCount;
+	res.sortType = this.sortType;
+	res.dataSourceSort = this.dataSourceSort;
+	res.nonAutoSortDefault = this.nonAutoSortDefault;
+	res.rankBy = this.rankBy;
+	res.defaultSubtotal = this.defaultSubtotal;
+	res.sumSubtotal = this.sumSubtotal;
+	res.countASubtotal = this.countASubtotal;
+	res.avgSubtotal = this.avgSubtotal;
+	res.maxSubtotal = this.maxSubtotal;
+	res.minSubtotal = this.minSubtotal;
+	res.productSubtotal = this.productSubtotal;
+	res.countSubtotal = this.countSubtotal;
+	res.stdDevSubtotal = this.stdDevSubtotal;
+	res.stdDevPSubtotal = this.stdDevPSubtotal;
+	res.varSubtotal = this.varSubtotal;
+	res.varPSubtotal = this.varPSubtotal;
+	res.showPropCell = this.showPropCell;
+	res.showPropTip = this.showPropTip;
+	res.showPropAsCaption = this.showPropAsCaption;
+	res.defaultAttributeDrillState = this.defaultAttributeDrillState;
+	if (this.items) {
+		res.items = this.items.clone();
+	}
+	if (this.autoSortScope) {
+		res.autoSortScope = this.autoSortScope.clone();
+	}
+	return res;
 };
 CT_PivotField.prototype.readAttributes = function(attr, uq) {
 	if (attr()) {
@@ -7435,10 +10546,8 @@ CT_PivotField.prototype.readAttributes = function(attr, uq) {
 		if (undefined !== val) {
 			this.allDrilled = AscCommon.getBoolFromXml(val);
 		}
-		val = vals["numFmtId"];
-		if (undefined !== val) {
-			this.numFmtId = val - 0;
-		}
+		ReadNumXml(vals, uq, this);
+
 		val = vals["outline"];
 		if (undefined !== val) {
 			this.outline = AscCommon.getBoolFromXml(val);
@@ -7615,13 +10724,22 @@ CT_PivotField.prototype.onStartNode = function(elem, attr, uq) {
 		if (newContext.readAttributes) {
 			newContext.readAttributes(attr, uq);
 		}
-		this.extLst = newContext;
 	} else {
 		newContext = null;
 	}
 	return newContext;
 };
-CT_PivotField.prototype.toXml = function(writer, name) {
+CT_PivotField.prototype.onEndNode = function(prevContext, elem) {
+	if ("extLst" === elem) {
+		for (var i = 0; i < prevContext.ext.length; ++i) {
+			var ext = prevContext.ext[i];
+			if ('{2946ED86-A175-432a-8AC1-64E0C546D7DE}' === ext.uri) {
+				this.pivotFieldX14 = ext.elem;
+			}
+		}
+	}
+};
+CT_PivotField.prototype.toXml = function(writer, name, stylesForWrite) {
 	writer.WriteXmlNodeStart(name);
 	if (null !== this.name) {
 		writer.WriteXmlAttributeStringEncode("name", this.name);
@@ -7650,9 +10768,7 @@ CT_PivotField.prototype.toXml = function(writer, name) {
 	if (false !== this.allDrilled) {
 		writer.WriteXmlAttributeBool("allDrilled", this.allDrilled);
 	}
-	if (null !== this.numFmtId) {
-		writer.WriteXmlAttributeNumber("numFmtId", this.numFmtId);
-	}
+	WriteNumXml(writer, this.num, stylesForWrite);
 	if (true !== this.outline) {
 		writer.WriteXmlAttributeBool("outline", this.outline);
 	}
@@ -7774,10 +10890,32 @@ CT_PivotField.prototype.toXml = function(writer, name) {
 	if (null !== this.autoSortScope) {
 		this.autoSortScope.toXml(writer, "autoSortScope");
 	}
-	if (null !== this.extLst) {
-		this.extLst.toXml(writer, "extLst");
+	if (null !== this.pivotFieldX14) {
+		var ext = new CT_Extension();
+		ext.uri = "{2946ED86-A175-432a-8AC1-64E0C546D7DE}";
+		ext.elem = this.pivotFieldX14;
+		var extList = new CT_ExtensionList();
+		extList.ext.push(ext);
+		extList.toXml(writer, "extLst");
 	}
 	writer.WriteXmlNodeEnd(name);
+};
+CT_PivotField.prototype.getType = function() {
+	return AscCommonExcel.UndoRedoDataTypes.PivotFieldElem;
+};
+CT_PivotField.prototype.Write_ToBinary2 = function(writer) {
+	//todo write binary
+	var t = this;
+	AscCommonExcel.executeInR1C1Mode(false, function () {
+		toXmlWithLength(writer, t, "pivotField");
+	});
+};
+CT_PivotField.prototype.Read_FromBinary2 = function(reader) {
+	var tmp = new XmlReaderWrapper("pivotField", this);
+	var len = reader.GetLong();
+	AscCommonExcel.executeInR1C1Mode(false, function () {
+		new AscCommon.openXml.SaxParserBase().parse(AscCommon.GetStringUtf8(reader, len), tmp);
+	});
 };
 CT_PivotField.prototype.asc_getName = function () {
 	return this.name;
@@ -7789,7 +10927,7 @@ CT_PivotField.prototype.asc_getCompact = function () {
 	return this.compact;
 };
 CT_PivotField.prototype.asc_getFillDownLabelsDefault = function () {
-	return false;
+	return !!(this.pivotFieldX14 && this.pivotFieldX14.fillDownLabels);
 };
 CT_PivotField.prototype.asc_getInsertBlankRow = function () {
 	return this.insertBlankRow;
@@ -7802,6 +10940,13 @@ CT_PivotField.prototype.asc_getSubtotalTop = function () {
 };
 CT_PivotField.prototype.asc_getShowAll = function () {
 	return this.showAll;
+};
+CT_PivotField.prototype.asc_getVisible = function (index) {
+	var items = this.getItems();
+	if (items && index < items.length) {
+		return items[index].sd;
+	}
+	return false;
 };
 CT_PivotField.prototype.asc_getSubtotals = function(withDefault) {
 	var res = [];
@@ -7845,11 +10990,26 @@ CT_PivotField.prototype.asc_getSubtotals = function(withDefault) {
 	}
 	return res;
 };
+CT_PivotField.prototype.getItemsCount = function() {
+	return (this.items && this.items.item.length) || 0;
+};
 CT_PivotField.prototype.getItems = function () {
 	return this.items && this.items.item;
 };
 CT_PivotField.prototype.getItem = function (index) {
 	return this.items && this.items.item[index];
+};
+CT_PivotField.prototype.getItemIndexByValue = function(value) {
+	var res = {};
+	var items = this.getItems();
+	if (items) {
+		for (var i = 0; i < items.length; ++i) {
+			if (value === items[i].x) {
+				return i;
+			}
+		}
+	}
+	return -1;
 };
 CT_PivotField.prototype.checkSubtotal = function() {
 	if (!this.items) {
@@ -7887,10 +11047,12 @@ CT_PivotField.prototype.getSubtotalType = function() {
 CT_PivotField.prototype.getVisibleIndexes = function() {
 	var res = [];
 	var items = this.getItems();
-	for (var i = 0; i < items.length; ++i) {
-		var item = items[i];
-		if ((Asc.c_oAscItemType.Data === item.t || Asc.c_oAscItemType.Blank === item.t) && false === item.h) {
-			res.push(i);
+	if (items) {
+		for (var i = 0; i < items.length; ++i) {
+			var item = items[i];
+			if ((Asc.c_oAscItemType.Data === item.t || Asc.c_oAscItemType.Blank === item.t) && false === item.h) {
+				res.push(i);
+			}
 		}
 	}
 	return res;
@@ -7907,7 +11069,7 @@ CT_PivotField.prototype.isAllVisible = function() {
 	}
 	return true;
 };
-CT_PivotField.prototype.getFilterObject = function(cacheField, pageFilterItem) {
+CT_PivotField.prototype.getFilterObject = function(cacheField, pageFilterItem, num) {
 	var values = [];
 	var items = this.getItems();
 	if (items) {
@@ -7915,12 +11077,13 @@ CT_PivotField.prototype.getFilterObject = function(cacheField, pageFilterItem) {
 			var item = items[i];
 			if (Asc.c_oAscItemType.Data === item.t || Asc.c_oAscItemType.Blank === item.t) {
 				var elem = AscCommonExcel.AutoFiltersOptionsElements();
-				if(Asc.c_oAscItemType.Data === item.t){
-					var sharedItem = cacheField.getSharedItem(item.x);
-					var cellValue = sharedItem.getCellValue();
-					elem.val = elem.text = cellValue.getTextValue();
-				} else {
-					elem.val = elem.text = "";
+				elem.val = item.x;
+				elem.text = "";
+				if (Asc.c_oAscItemType.Data === item.t) {
+					var sharedItem = cacheField.getGroupOrSharedItem(item.x);
+					if (sharedItem) {
+						elem.text = sharedItem.getCellValue().getTextValue(num);
+					}
 				}
 				elem.visible = !item.h && (null == pageFilterItem || i === pageFilterItem);
 				elem.isDateFormat = false;
@@ -7932,20 +11095,37 @@ CT_PivotField.prototype.getFilterObject = function(cacheField, pageFilterItem) {
 	}
 	return values;
 };
-CT_PivotField.prototype.getFilterMapByFilter = function(cacheField, filterColumn) {
+CT_PivotField.prototype.getFilterMapFilterColumn = function(cacheField, filterColumn, num) {
 	var map = new Map();
 	var items = this.getItems();
-	for (var i = 0; i < items.length; ++i) {
-		var item = items[i];
-		if (Asc.c_oAscItemType.Data === item.t || Asc.c_oAscItemType.Blank === item.t) {
-			var val = "";
-			if (Asc.c_oAscItemType.Data === item.t) {
-				var sharedItem = cacheField.getSharedItem(item.x);
-				var cellValue = sharedItem.getCellValue();
-				val = cellValue.getTextValue();
+	if (items) {
+		for (var i = 0; i < items.length; ++i) {
+			var item = items[i];
+			if (Asc.c_oAscItemType.Data === item.t || Asc.c_oAscItemType.Blank === item.t) {
+				var val = "";
+				if (Asc.c_oAscItemType.Data === item.t) {
+					var sharedItem = cacheField.getGroupOrSharedItem(item.x);
+					if (sharedItem) {
+						val = sharedItem.getCellValue().getTextValue(num);
+					}
+				}
+				if (!filterColumn.isHideValue(val, null, null, null, true)) {
+					map.set(item.x, 1);
+				}
 			}
-			if (!filterColumn.isHideValue(val)) {
-				map.set(item.x, 1);
+		}
+	}
+	return map;
+};
+CT_PivotField.prototype.getFilterMapFilterColumnGroup = function(cacheField, filterColumn, num) {
+	var map = new Map();
+	var sharedItems = cacheField.getSharedItems();
+	if (sharedItems) {
+		for (var i = 0; i < sharedItems.getCount(); ++i) {
+			var sharedItem = sharedItems.getItem(i);
+			var val = sharedItem.getCellValue().getTextValue(num);
+			if (!filterColumn.isHideValue(val, null, null, null, true)) {
+				map.set(i, 1);
 			}
 		}
 	}
@@ -7954,18 +11134,22 @@ CT_PivotField.prototype.getFilterMapByFilter = function(cacheField, filterColumn
 CT_PivotField.prototype.getFilterMap = function() {
 	var map = new Map();
 	var items = this.getItems();
-	for (var i = 0; i < items.length; ++i) {
-		var item = items[i];
-		if ((Asc.c_oAscItemType.Data === item.t || Asc.c_oAscItemType.Blank === item.t) && false === item.h) {
-			map.set(item.x, 1);
+	if (items) {
+		for (var i = 0; i < items.length; ++i) {
+			var item = items[i];
+			if ((Asc.c_oAscItemType.Data === item.t || Asc.c_oAscItemType.Blank === item.t) && false === item.h) {
+				map.set(item.x, 1);
+			}
 		}
 	}
 	return map;
 };
 CT_PivotField.prototype.applyFilterObject = function(values) {
 	var items = this.getItems();
-	for (var i = 0; i < values.length && i < items.length; ++i) {
-		items[i].h = !values[i].visible;
+	if (items) {
+		for (var i = 0; i < values.length && i < items.length; ++i) {
+			items[i].h = !values[i].visible;
+		}
 	}
 };
 CT_PivotField.prototype.removeFilter = function() {
@@ -7977,12 +11161,347 @@ CT_PivotField.prototype.removeFilter = function() {
 	}
 };
 CT_PivotField.prototype.sortItems = function(type, sharedItems) {
-	var sign = Asc.c_oAscSortOptions.Ascending == type ? 1 : -1;
-	this.items.item.sort(function(a, b) {
-		return sign * cmpPivotItems(sharedItems, a, b);
-	});
+	if (this.items && this.items.item) {
+		var sign = Asc.c_oAscSortOptions.Ascending == type ? 1 : -1;
+		this.items.item.sort(function(a, b) {
+			return sign * cmpPivotItems(sharedItems, a, b);
+		});
+	}
+};
+CT_PivotField.prototype.sortItemsMonth = function (type) {
+	if (this.items && this.items.item) {
+		var newItems = [], newItem, i;
+		var length = this.items.item.length;
+		for (i = 1; i < length - 1; ++i) {
+			newItem = new CT_Item();
+			newItem.x = i;
+			newItems.push(newItem);
+		}
+		newItem = new CT_Item();
+		newItem.x = 0;
+		newItems.push(newItem);
+		newItem = new CT_Item();
+		newItem.x = length - 1;
+		newItems.push(newItem);
+		if (Asc.c_oAscSortOptions.Descending === type) {
+			newItems.reverse();
+		}
+		this.items.item = newItems;
+	}
+};
+CT_PivotField.prototype.getSortVal = function() {
+	var sortVal = null;
+	if (c_oAscFieldSortType.Ascending === this.sortType) {
+		sortVal = Asc.c_oAscSortOptions.Ascending;
+	} else if (c_oAscFieldSortType.Descending === this.sortType) {
+		sortVal = Asc.c_oAscSortOptions.Descending;
+	}
+	return sortVal;
+};
+CT_PivotField.prototype.getSortDataIndex = function() {
+	if (this.autoSortScope && this.autoSortScope.pivotArea && this.autoSortScope.pivotArea.references) {
+		var reference = this.autoSortScope.pivotArea.references.reference[0];
+		if (reference && reference.x[0]) {
+			return reference.x[0].v;
+		}
+	}
+	return -1;
+};
+CT_PivotField.prototype.asc_set = function (api, pivot, index, newVal) {
+	var pivotFields = pivot.asc_getPivotFields();
+	if(pivotFields && index < pivotFields.length) {
+		var field = pivotFields[index];
+		api._changePivotWithLock(pivot, function (ws) {
+			if (null !== newVal.name) {
+				field.asc_setName(newVal.name, pivot, index, true);
+			}
+			if (null !== newVal.outline) {
+				field.asc_setOutline(newVal.outline, pivot, index, true);
+			}
+			if (null !== newVal.compact) {
+				field.asc_setCompact(newVal.compact, pivot, index, true);
+			}
+			if (null !== newVal.ascFillDownLabels) {
+				field.setFillDownLabelsDefault(newVal.ascFillDownLabels, pivot, index, true);
+			}
+			if (null !== newVal.insertBlankRow) {
+				field.asc_setInsertBlankRow(newVal.insertBlankRow, pivot, index, true);
+			}
+			if (null !== newVal.defaultSubtotal) {
+				field.asc_setDefaultSubtotal(newVal.defaultSubtotal, pivot, index, true);
+			}
+			if (null !== newVal.subtotalTop) {
+				field.asc_setSubtotalTop(newVal.subtotalTop, pivot, index, true);
+			}
+			if (null !== newVal.showAll) {
+				field.asc_setShowAll(newVal.showAll, pivot, index, true);
+			}
+			if (null !== newVal.ascSubtotals) {
+				field.setSubtotals(newVal.ascSubtotals, pivot, index, true);
+			}
+			field.checkSubtotal();
+		});
+	}
+};
+CT_PivotField.prototype.asc_setName = function (newVal, pivot, index, addToHistory) {
+	setFieldProperty(pivot, index, this.name, newVal, addToHistory, AscCH.historyitem_PivotTable_PivotFieldSetName, true);
+	this.name = newVal;
+};
+CT_PivotField.prototype.asc_setOutline = function (newVal, pivot, index, addToHistory) {
+	setFieldProperty(pivot, index, this.outline, newVal, addToHistory, AscCH.historyitem_PivotTable_PivotFieldSetOutline, true);
+	this.outline = newVal;
+};
+CT_PivotField.prototype.asc_setCompact = function (newVal, pivot, index, addToHistory) {
+	setFieldProperty(pivot, index, this.compact, newVal, addToHistory, AscCH.historyitem_PivotTable_PivotFieldSetCompact, true);
+	this.compact = newVal;
+};
+CT_PivotField.prototype.asc_setFillDownLabelsDefault = function (newVal) {
+	this.ascFillDownLabels = newVal;
+};
+CT_PivotField.prototype.setFillDownLabelsDefault = function (newVal, pivot, index, addToHistory) {
+	if (!this.pivotFieldX14) {
+		this.pivotFieldX14 = new CT_PivotFieldX14();
+	}
+	var oldVal = this.pivotFieldX14.fillDownLabels;
+	setFieldProperty(pivot, index, oldVal, newVal, addToHistory, AscCH.historyitem_PivotTable_PivotFieldFillDownLabelsDefault, true);
+	this.pivotFieldX14.fillDownLabels = newVal;
+};
+CT_PivotField.prototype.asc_setInsertBlankRow = function (newVal, pivot, index, addToHistory) {
+	setFieldProperty(pivot, index, this.insertBlankRow, newVal, addToHistory, AscCH.historyitem_PivotTable_PivotFieldSetInsertBlankRow, true);
+	this.insertBlankRow = newVal;
+};
+CT_PivotField.prototype.asc_setDefaultSubtotal = function (newVal, pivot, index, addToHistory) {
+	setFieldProperty(pivot, index, this.defaultSubtotal, newVal, addToHistory, AscCH.historyitem_PivotTable_PivotFieldSetDefaultSubtotal, true);
+	this.defaultSubtotal = newVal;
+};
+CT_PivotField.prototype.asc_setSubtotalTop = function (newVal, pivot, index, addToHistory) {
+	setFieldProperty(pivot, index, this.subtotalTop, newVal, addToHistory, AscCH.historyitem_PivotTable_PivotFieldSetSubtotalTop, true);
+	this.subtotalTop = newVal;
+};
+CT_PivotField.prototype.asc_setShowAll = function (newVal, pivot, index, addToHistory) {
+	setFieldProperty(pivot, index, this.showAll, newVal, addToHistory, AscCH.historyitem_PivotTable_PivotFieldSetShowAll, true);
+	this.showAll = newVal;
+};
+CT_PivotField.prototype.asc_setVisible = function (newVal, pivot, fld, index, addToHistory) {
+	var items = this.getItems();
+	if (items && index < items.length) {
+		var oldVal = items[index].sd;
+		setFieldProperty(pivot, new AscCommonExcel.UndoRedoData_FromTo(fld, index), oldVal, newVal, addToHistory, AscCH.historyitem_PivotTable_PivotFieldVisible, true);
+		items[index].sd = newVal;
+	}
+};
+CT_PivotField.prototype.asc_setSubtotals = function (newVals) {
+	this.ascSubtotals = newVals;
+};
+CT_PivotField.prototype.setSubtotals = function (newVals, pivot, index, addToHistory) {
+	var oldVals = this.asc_getSubtotals();
+	setFieldProperty(pivot, index, oldVals, newVals, addToHistory, AscCH.historyitem_PivotTable_PivotFieldSetSubtotals, true);
+	this.sumSubtotal = this.countASubtotal = this.avgSubtotal = this.maxSubtotal = this.minSubtotal = false;
+	this.productSubtotal = this.countSubtotal =	this.stdDevSubtotal = this.stdDevPSubtotal = this.varSubtotal = false;
+	this.varPSubtotal = false;
+	for (var i = 0; i < newVals.length; ++i) {
+		var type = newVals[i];
+		switch (type) {
+			case Asc.c_oAscItemType.Sum:
+				this.sumSubtotal = true;
+				break;
+			case Asc.c_oAscItemType.CountA:
+				this.countASubtotal = true;
+				break;
+			case Asc.c_oAscItemType.Avg:
+				this.avgSubtotal = true;
+				break;
+			case Asc.c_oAscItemType.Max:
+				this.maxSubtotal = true;
+				break;
+			case Asc.c_oAscItemType.Min:
+				this.minSubtotal = true;
+				break;
+			case Asc.c_oAscItemType.Product:
+				this.productSubtotal = true;
+				break;
+			case Asc.c_oAscItemType.Count:
+				this.countSubtotal = true;
+				break;
+			case Asc.c_oAscItemType.StdDev:
+				this.stdDevSubtotal = true;
+				break;
+			case Asc.c_oAscItemType.StdDevP:
+				this.stdDevPSubtotal = true;
+				break;
+			case Asc.c_oAscItemType.Var:
+				this.varSubtotal = true;
+				break;
+			case Asc.c_oAscItemType.VarP:
+				this.varPSubtotal = true;
+				break;
+		}
+	}
+};
+CT_PivotField.prototype.setSortType = function(sortVal, sortDataIndex) {
+	this.sortType = c_oAscFieldSortType.Manual;
+	if (Asc.c_oAscSortOptions.Ascending === sortVal) {
+		this.sortType = c_oAscFieldSortType.Ascending;
+	} else if (Asc.c_oAscSortOptions.Descending === sortVal) {
+		this.sortType = c_oAscFieldSortType.Descending;
+	}
+	if (this.sortType !== c_oAscFieldSortType.Manual && sortDataIndex >= 0) {
+		var x = new CT_Index();
+		x.v = sortDataIndex;
+		var reference = new CT_PivotAreaReference();
+		reference.field = 4294967294;
+		reference.selected = false;
+		reference.x.push(x);
+		var references = new CT_PivotAreaReferences();
+		references.reference.push(reference);
+		var pivotArea = new CT_PivotArea();
+		pivotArea.dataOnly = false;
+		pivotArea.outline = false;
+		pivotArea.fieldPosition = 0;
+		pivotArea.references = references;
+		var autoSortScope = new CT_AutoSortScope();
+		autoSortScope.pivotArea = pivotArea;
+		this.autoSortScope = autoSortScope;
+	} else {
+		this.autoSortScope = null;
+	}
+};
+CT_PivotField.prototype.groupDiscrete = function(reorderArray) {
+	var newItem, processed = {};
+	var items = this.items && this.items.item;
+	if (items) {
+		var newItems = [];
+		for (var i = 0; i < items.length; ++i) {
+			if (!items[i].isData()) {
+				continue;
+			}
+			var newIndex = reorderArray[items[i].x];
+			if(!processed[newIndex]) {
+				processed[newIndex] = 1;
+				newItem = new CT_Item();
+				newItem.x = newIndex;
+				newItems.push(newItem);
+			}
+		}
+		this.items.item = newItems;
+		this.checkSubtotal();
+	}
+};
+CT_PivotField.prototype.groupRangePr = function(cacheSize) {
+	this.init(cacheSize);
+	this.checkSubtotal();
+};
+CT_PivotField.prototype.convertToCacheGroupMap = function (groupMap) {
+	var res = {};
+	for (var index in groupMap) {
+		if (groupMap.hasOwnProperty(index)) {
+			var item = this.getItem(parseInt(index));
+			res[item.x] = 1;
+		}
+	}
+	return res;
+};
+CT_PivotField.prototype.convertGroupMembers = function (cacheGroupMap) {
+	var t = this;
+	var res = {};
+	for (var i in cacheGroupMap) {
+		if (cacheGroupMap.hasOwnProperty(i)) {
+			var cacheGroupKeys = Object.keys(cacheGroupMap[i]);
+			res[i] = [];
+			for(var j = 0; j < cacheGroupKeys.length; ++j) {
+				res[i].push(j);
+			}
+			res[i].sort(function (a, b) {
+				return t.getItemIndexByValue(cacheGroupKeys[a]) - t.getItemIndexByValue(cacheGroupKeys[b]);
+			});
+		}
+	}
+	return res;
+};
+CT_PivotField.prototype.ungroupDiscrete = function(reorderArray, groupMembers) {
+	var newItem, index;
+	var items = this.items && this.items.item;
+	if (items) {
+		var newItems = [];
+		for (var i = 0; i < items.length; ++i) {
+			if (!items[i].isData()) {
+				continue;
+			}
+			index = reorderArray[items[i].x];
+			if (groupMembers[index]) {
+				for (var j = 0; j < groupMembers[index].length; ++j) {
+					newItem = new CT_Item();
+					newItem.x = index + groupMembers[index][j];
+					newItems.push(newItem);
+				}
+			} else {
+				newItem = new CT_Item();
+				newItem.x = index;
+				newItems.push(newItem);
+			}
+		}
+		this.items.item = newItems;
+		this.checkSubtotal();
+	}
+};
+CT_PivotField.prototype.refreshGroupDiscrete = function(groupItemsMap, size) {
+	var newItems = new CT_Items();
+	for(var i = 0; i < this.items.item.length; ++i){
+		var index = groupItemsMap[this.items.item[i].x];
+		if(undefined !== index) {
+			var newItem = new CT_Item();
+			newItem.x = index;
+			newItems.item.push(newItem);
+		}
+	}
+	for(var i = newItems.item.length; i < size; ++i){
+		var newItem = new CT_Item();
+		newItem.x = i;
+		newItems.item.push(newItem);
+	}
+	this.items = newItems;
+	this.checkSubtotal();
+};
+CT_PivotField.prototype.removeGroupFromAxis = function() {
+	this.axis = null;
+	this.dataField = false;
 };
 
+function CT_PivotFieldX14() {
+//Attributes
+	this.fillDownLabels = false;
+	this.ignore = false;
+}
+CT_PivotFieldX14.prototype.clone = function() {
+	var res = new CT_PivotFieldX14(true);
+	res.fillDownLabels = this.fillDownLabels;
+	res.ignore = this.ignore;
+	return res;
+};
+CT_PivotFieldX14.prototype.readAttributes = function(attr, uq) {
+	if (attr()) {
+		var vals = attr();
+		var val;
+		val = vals["fillDownLabels"];
+		if (undefined !== val) {
+			this.fillDownLabels = AscCommon.getBoolFromXml(val);
+		}
+		val = vals["ignore"];
+		if (undefined !== val) {
+			this.ignore = AscCommon.getBoolFromXml(val);
+		}
+	}
+};
+CT_PivotFieldX14.prototype.toXml = function(writer) {
+	writer.WriteXmlNodeStart("x14:pivotField");
+	if (false !== this.fillDownLabels) {
+		writer.WriteXmlAttributeBool("fillDownLabels", this.fillDownLabels);
+	}
+	if (false !== this.ignore) {
+		writer.WriteXmlAttributeBool("ignore", this.ignore);
+	}
+	writer.WriteXmlNodeEnd("x14:pivotField", true, true);
+};
 
 function CT_Field() {
 //Attributes
@@ -8158,6 +11677,7 @@ function CT_DataField(setDefaults) {
 	this.baseField = null;
 	this.baseItem = null;
 	this.numFmtId = null;
+	this.num = null;
 //Members
 	this.extLst = null;
 
@@ -8165,6 +11685,12 @@ function CT_DataField(setDefaults) {
 		this.setDefaults();
 	}
 }
+CT_DataField.prototype.initPostOpenZip = function (oNumFmts) {
+	if (null !== this.numFmtId) {
+		this.num = AscCommonExcel.Num.prototype.initFromParams(this.numFmtId, null, oNumFmts);
+		this.numFmtId = null;
+	}
+};
 CT_DataField.prototype.setDefaults = function() {
 	this.subtotal = c_oAscDataConsolidateFunction.Sum;
 	this.showDataAs = c_oAscShowDataAs.Normal;
@@ -8205,10 +11731,7 @@ CT_DataField.prototype.readAttributes = function(attr, uq) {
 		if (undefined !== val) {
 			this.baseItem = val - 0;
 		}
-		val = vals["numFmtId"];
-		if (undefined !== val) {
-			this.numFmtId = val - 0;
-		}
+		ReadNumXml(vals, uq, this);
 	}
 };
 CT_DataField.prototype.onStartNode = function(elem, attr, uq) {
@@ -8224,7 +11747,7 @@ CT_DataField.prototype.onStartNode = function(elem, attr, uq) {
 	}
 	return newContext;
 };
-CT_DataField.prototype.toXml = function(writer, name) {
+CT_DataField.prototype.toXml = function(writer, name, stylesForWrite) {
 	writer.WriteXmlNodeStart(name);
 	if (null !== this.name) {
 		writer.WriteXmlAttributeStringEncode("name", this.name);
@@ -8244,9 +11767,7 @@ CT_DataField.prototype.toXml = function(writer, name) {
 	if (null !== this.baseItem) {
 		writer.WriteXmlAttributeNumber("baseItem", this.baseItem);
 	}
-	if (null !== this.numFmtId) {
-		writer.WriteXmlAttributeNumber("numFmtId", this.numFmtId);
-	}
+	WriteNumXml(writer, this.num, stylesForWrite);
 	writer.WriteXmlNodeEnd(name, true);
 	if (null !== this.extLst) {
 		this.extLst.toXml(writer, "extLst");
@@ -8264,6 +11785,28 @@ CT_DataField.prototype.asc_getSubtotal = function () {
 };
 CT_DataField.prototype.asc_getShowDataAs = function () {
 	return this.showDataAs;
+};
+CT_DataField.prototype.asc_set = function (api, pivot, index, newVal) {
+	var dataFields = pivot.asc_getDataFields();
+	if(dataFields && index < dataFields.length) {
+		var field = dataFields[index];
+		api._changePivotWithLock(pivot, function (ws) {
+			if (null !== newVal.name) {
+				field.asc_setName(newVal.name, pivot, index, true);
+			}
+			if (null !== newVal.subtotal) {
+				field.asc_setSubtotal(newVal.subtotal, pivot, index, true);
+			}
+		});
+	}
+};
+CT_DataField.prototype.asc_setName = function(newVal, pivot, index, addToHistory) {
+	setFieldProperty(pivot, index, this.name, newVal, addToHistory, AscCH.historyitem_PivotTable_DataFieldSetName, true);
+	this.name = newVal;
+};
+CT_DataField.prototype.asc_setSubtotal = function(newVal, pivot, index, addToHistory) {
+	setFieldProperty(pivot, index, this.subtotal, newVal, addToHistory, AscCH.historyitem_PivotTable_DataFieldSetSubtotal, true);
+	this.subtotal = newVal;
 };
 function CT_Format() {
 //Attributes
@@ -8729,6 +12272,23 @@ CT_PivotFilter.prototype.toXml = function(writer, name, id) {
 	}
 	writer.WriteXmlNodeEnd(name);
 };
+CT_PivotFilter.prototype.getType = function() {
+	return AscCommonExcel.UndoRedoDataTypes.PivotFilter;
+};
+CT_PivotFilter.prototype.Write_ToBinary2 = function(writer) {
+	//todo write binary
+	var t = this;
+	AscCommonExcel.executeInR1C1Mode(false, function () {
+		toXmlWithLength(writer, t, "pivotFilter", null);
+	});
+};
+CT_PivotFilter.prototype.Read_FromBinary2 = function(reader) {
+	var tmp = new XmlReaderWrapper("pivotFilter", this);
+	var len = reader.GetLong();
+	AscCommonExcel.executeInR1C1Mode(false, function () {
+		new AscCommon.openXml.SaxParserBase().parse(AscCommon.GetStringUtf8(reader, len), tmp);
+	});
+};
 CT_PivotFilter.prototype.isLabelFilter = function() {
 	return !this.isValueFilter();
 };
@@ -8738,7 +12298,87 @@ CT_PivotFilter.prototype.isValueFilter = function() {
 };
 CT_PivotFilter.prototype.getFilterColumn = function() {
 	return this.autoFilter && this.autoFilter.FilterColumns && this.autoFilter.FilterColumns[0];
-}
+};
+CT_PivotFilter.prototype.initTemplate = function(fld) {
+	var filterColumn = new AscCommonExcel.FilterColumn();
+	filterColumn.ColId = 0;
+	var autoFilter = new AscCommonExcel.AutoFilter();
+	autoFilter.Ref = new Asc.Range(0,0,0,0);
+	autoFilter.FilterColumns = [filterColumn];
+	this.fld = fld;
+	this.evalOrder = -1;
+	this.autoFilter = autoFilter;
+	this.type = Asc.c_oAscPivotFilterType.Unknown;
+};
+CT_PivotFilter.prototype.initFromCustom = function(index, filter, iMeasureFld) {
+	//todo date
+	this.initTemplate(index);
+	this.fld = index;
+	this.iMeasureFld = iMeasureFld;
+	var isCaption = null === iMeasureFld;
+	var isDate = false;
+	var baseEqual;
+	var baseBetween;
+	if(isCaption){
+		baseEqual = Asc.c_oAscPivotFilterType.CaptionEqual;
+		baseBetween = Asc.c_oAscPivotFilterType.CaptionBetween;
+	} else if(isDate){
+		baseEqual = Asc.c_oAscPivotFilterType.DateEqual;
+		baseBetween = Asc.c_oAscPivotFilterType.DateBetween;
+	} else {
+		baseEqual = Asc.c_oAscPivotFilterType.ValueEqual;
+		baseBetween = Asc.c_oAscPivotFilterType.ValueBetween;
+	}
+	if (filter.CustomFilters) {
+		if (1 === filter.CustomFilters.length) {
+			filter.asc_setAnd(false);
+			this.type = baseEqual + filter.CustomFilters[0].Operator - c_oAscCustomAutoFilter.equals;
+			if (this.type !== Asc.c_oAscPivotFilterType.Unknown && isCaption) {
+				this.stringValue1 = filter.CustomFilters[0].Val;
+			}
+		} else if (2 === filter.CustomFilters.length) {
+			if (filter.CustomFilters[0].Operator === c_oAscCustomAutoFilter.isGreaterThanOrEqualTo &&
+				filter.CustomFilters[1].Operator === c_oAscCustomAutoFilter.isLessThanOrEqualTo &&
+				true === filter.And) {
+				this.type = baseBetween;
+			} else if (filter.CustomFilters[0].Operator === c_oAscCustomAutoFilter.isLessThan &&
+				filter.CustomFilters[1].Operator === c_oAscCustomAutoFilter.isGreaterThan &&
+				false === filter.And) {
+				this.type = baseBetween + Asc.c_oAscPivotFilterType.CaptionNotBetween - Asc.c_oAscPivotFilterType.CaptionBetween;
+			}
+			if (this.type !== Asc.c_oAscPivotFilterType.Unknown && isCaption) {
+				this.stringValue1 = filter.CustomFilters[0].Val;
+				this.stringValue2 = filter.CustomFilters[1].Val;
+			}
+		}
+	}
+	this.autoFilter.FilterColumns[0].CustomFiltersObj = filter;
+};
+CT_PivotFilter.prototype.initFromDynamic = function(index, filter) {
+	this.initTemplate(index);
+	if(Asc.c_oAscDynamicAutoFilter.aboveAverage !== filter.asc_getType() && Asc.c_oAscDynamicAutoFilter.belowAverage !== filter.asc_getType()){
+		this.type = filter.asc_getType()
+	} else {
+		this.type = Asc.c_oAscPivotFilterType.Unknown;
+	}
+	this.autoFilter.FilterColumns[0].DynamicFilter = filter;
+};
+CT_PivotFilter.prototype.initFromTop10 = function(index, filter, isSum, iMeasureFld) {
+	this.initTemplate(index);
+	if (filter.asc_getPercent()) {
+		this.type = Asc.c_oAscPivotFilterType.Percent;
+	} else if (isSum) {
+		this.type = Asc.c_oAscPivotFilterType.Sum;
+	} else {
+		this.type = Asc.c_oAscPivotFilterType.Count;
+	}
+	this.iMeasureFld = iMeasureFld;
+	this.autoFilter.FilterColumns[0].Top10 = filter;
+};
+CT_PivotFilter.prototype.setMeasureFld = function(val) {
+	this.iMeasureFld = val;
+};
+
 function CT_HierarchyUsage() {
 //Attributes
 	this.hierarchyUsage = null;
@@ -8841,6 +12481,26 @@ function CT_SharedItems() {
 //Members
 	this.Items = new PivotRecords();
 }
+CT_SharedItems.prototype.clone = function() {
+	var res = new CT_SharedItems();
+	res.containsSemiMixedTypes = this.containsSemiMixedTypes;
+	res.containsNonDate = this.containsNonDate;
+	res.containsDate = this.containsDate;
+	res.containsString = this.containsString;
+	res.containsBlank = this.containsBlank;
+	res.containsMixedTypes = this.containsMixedTypes;
+	res.containsNumber = this.containsNumber;
+	res.containsInteger = this.containsInteger;
+	res.minValue = this.minValue;
+	res.maxValue = this.maxValue;
+	res.minDate = this.minDate;
+	res.maxDate = this.maxDate;
+	res.longText = this.longText;
+	for (var i = 0; i < this.getCount(); ++i) {
+		res.addItem(this.getItem(i));
+	}
+	return res;
+};
 CT_SharedItems.prototype.readAttributes = function(attr, uq) {
 	if (attr()) {
 		var vals = attr();
@@ -8886,12 +12546,12 @@ CT_SharedItems.prototype.readAttributes = function(attr, uq) {
 			this.maxValue = val - 0;
 		}
 		val = vals["minDate"];
-		if (undefined !== val) {
-			this.minDate = AscCommon.unleakString(uq(val));
+		if (undefined !== val && "" !== val) {//empty string was before 6.3
+			this.minDate = Asc.cDate.prototype.fromISO8601(val);
 		}
 		val = vals["maxDate"];
-		if (undefined !== val) {
-			this.maxDate = AscCommon.unleakString(uq(val));
+		if (undefined !== val && "" !== val) {//empty string was before 6.3
+			this.maxDate = Asc.cDate.prototype.fromISO8601(val);
 		}
 		val = vals["longText"];
 		if (undefined !== val) {
@@ -8945,10 +12605,10 @@ CT_SharedItems.prototype.toXml = function(writer, name) {
 		writer.WriteXmlAttributeNumber("maxValue", this.maxValue);
 	}
 	if (null !== this.minDate) {
-		writer.WriteXmlAttributeStringEncode("minDate", this.minDate);
+		writer.WriteXmlAttributeStringEncode("minDate", this.minDate.toISOString().slice(0, 19));
 	}
 	if (null !== this.maxDate) {
-		writer.WriteXmlAttributeStringEncode("maxDate", this.maxDate);
+		writer.WriteXmlAttributeStringEncode("maxDate", this.maxDate.toISOString().slice(0, 19));
 	}
 	var count = this.Items.getSize();
 	if (count > 0) {
@@ -8961,6 +12621,46 @@ CT_SharedItems.prototype.toXml = function(writer, name) {
 	this.Items.toXml(writer);
 	writer.WriteXmlNodeEnd(name);
 };
+CT_SharedItems.prototype.getCount = function() {
+	return this.Items.getSize();
+};
+CT_SharedItems.prototype.getItem = function(index) {
+	return this.Items.get(index);
+};
+CT_SharedItems.prototype.addString = function() {
+	return this.Items.addString.apply(this.Items, arguments);
+};
+CT_SharedItems.prototype.addItem = function(item) {
+	return this.Items.addRecordValue(item);
+};
+CT_SharedItems.prototype.getMinMaxValue = function () {
+	var res;
+	if (this.getCount() > 0) {
+		for (var i = 0; i < this.getCount(); ++i) {
+			var item = this.getItem(i);
+			if (c_oAscPivotRecType.Missing !== item.type) {
+				if (!res) {
+					res = {minValue: item.val, maxValue: item.val};
+				} else {
+					res.minValue = Math.min(res.minValue, item.val);
+					res.maxValue = Math.max(res.maxValue, item.val);
+				}
+			}
+		}
+	}
+	if (!res) {
+		res = {minValue: 0, maxValue: 0};
+	}
+	return res;
+};
+CT_SharedItems.prototype.getMinMaxDate = function () {
+	var res = this.getMinMaxValue();
+	return {
+		minDate: Asc.cDate.prototype.getDateFromExcelWithTime2(res.minValue),
+		maxDate: Asc.cDate.prototype.getDateFromExcelWithTime2(res.maxValue)
+	};
+};
+
 function CT_FieldGroup() {
 //Attributes
 	this.par = null;
@@ -8970,6 +12670,36 @@ function CT_FieldGroup() {
 	this.discretePr = null;
 	this.groupItems = null;
 }
+CT_FieldGroup.prototype.initPar = function (par) {
+	this.par = par;
+};
+CT_FieldGroup.prototype.initBase = function (base) {
+	this.base = base;
+};
+CT_FieldGroup.prototype.initDiscrete = function(base, baseCacheField) {
+	this.base = base;
+	this.discretePr = new CT_DiscretePr();
+	this.discretePr.init(baseCacheField.getGroupOrSharedSize());
+	this.groupItems = baseCacheField.sharedItems.clone();
+};
+CT_FieldGroup.prototype.isEmpty = function () {
+	return null === this.par && null === this.base && null === this.rangePr && null === this.discretePr && null === this.groupItems;
+};
+CT_FieldGroup.prototype.clone = function() {
+	var res = new CT_FieldGroup();
+	res.par = this.par;
+	res.base = this.base;
+	if (this.rangePr) {
+		res.rangePr = this.rangePr.clone();
+	}
+	if (this.discretePr) {
+		res.discretePr = this.discretePr.clone();
+	}
+	if (this.groupItems) {
+		res.groupItems = this.groupItems.clone();
+	}
+	return res;
+};
 CT_FieldGroup.prototype.readAttributes = function(attr, uq) {
 	if (attr()) {
 		var vals = attr();
@@ -8987,7 +12717,7 @@ CT_FieldGroup.prototype.readAttributes = function(attr, uq) {
 CT_FieldGroup.prototype.onStartNode = function(elem, attr, uq) {
 	var newContext = this;
 	if ("rangePr" === elem) {
-		newContext = new CT_RangePr();
+		newContext = new CT_RangePr(true);
 		if (newContext.readAttributes) {
 			newContext.readAttributes(attr, uq);
 		}
@@ -8999,7 +12729,7 @@ CT_FieldGroup.prototype.onStartNode = function(elem, attr, uq) {
 		}
 		this.discretePr = newContext;
 	} else if ("groupItems" === elem) {
-		newContext = new CT_GroupItems();
+		newContext = new CT_SharedItems();
 		if (newContext.readAttributes) {
 			newContext.readAttributes(attr, uq);
 		}
@@ -9029,6 +12759,169 @@ CT_FieldGroup.prototype.toXml = function(writer, name) {
 	}
 	writer.WriteXmlNodeEnd(name);
 };
+CT_FieldGroup.prototype.getGroupIndex = function(index, sharedItem) {
+	var res = index;
+	if (!this.groupItems) {
+		return res;
+	}
+
+	if (this.rangePr && sharedItem) {
+		var fieldGroupType = this.rangePr.getFieldGroupType();
+		if (c_oAscGroupType.Number === fieldGroupType && c_oAscPivotRecType.Number === sharedItem.type) {
+			res = this.rangePr.getGroupIndex(sharedItem.val, this.groupItems.getCount() - 1);
+		} else if (c_oAscGroupType.Date === fieldGroupType && c_oAscPivotRecType.DateTime === sharedItem.type) {
+			var date = Asc.cDate.prototype.getDateFromExcelWithTime2(sharedItem.val)
+			res = this.rangePr.getGroupIndex(date, this.groupItems.getCount() - 1);
+		} else {
+			res = 0;
+		}
+	} else if (this.discretePr) {
+		res = this.discretePr.getGroupIndex(index);
+	}
+	return res;
+};
+CT_FieldGroup.prototype.getFieldGroupType = function () {
+	if (this.rangePr) {
+		return this.rangePr.getFieldGroupType();
+	}
+	return c_oAscGroupType.Text;
+};
+CT_FieldGroup.prototype.group = function(fld, baseCacheField, rangePr, groupMap) {
+	var res;
+	this.base = fld;
+	this.rangePr = rangePr;
+	if (this.rangePr && sharedItem) {
+		var fieldGroupType = this.rangePr.getFieldGroupType();
+		if (c_oAscGroupType.Number === fieldGroupType && c_oAscPivotRecType.Number === sharedItem.type) {
+			res = this.rangePr.getGroupIndex(sharedItem.val, this.groupItems.getCount() - 1);
+		} else if(c_oAscGroupType.Date === fieldGroupType && c_oAscPivotRecType.DateTime === sharedItem.type) {
+			var date = Asc.cDate.prototype.getDateFromExcelWithTime2(sharedItem.val)
+			res = this.rangePr.getGroupIndex(date, this.groupItems.getCount() - 1);
+		}
+	} else if (groupMap) {
+		var reorderArray = this.groupDiscrete(groupMap);
+		this.discretePr = new CT_DiscretePr();
+		this.discretePr.group(reorderArray);
+	}
+};
+CT_FieldGroup.prototype.groupRangePr = function (fld, rangePr, containsInteger, containsBlank) {
+	this.base = fld;
+	this.rangePr = rangePr;
+	this.groupItems = this.rangePr.generateGroupItems(containsInteger, containsBlank, null !== this.par);
+};
+CT_FieldGroup.prototype.groupDiscrete = function (groupMap) {
+	var reorderArray = this._groupDiscrete(groupMap);
+	this.discretePr.group(reorderArray);
+	return reorderArray;
+};
+CT_FieldGroup.prototype.convertFromDiscreteGroupMap = function(groupMap) {
+	if (this.discretePr) {
+		return this.discretePr.convertFromDiscreteGroupMap(groupMap);
+	} else {
+		return groupMap;
+	}
+};
+CT_FieldGroup.prototype.convertToDiscreteGroupMap = function (groupMap) {
+	return this.discretePr.convertToDiscreteGroupMap(groupMap);
+};
+CT_FieldGroup.prototype.containsGroup = function (groupMap) {
+	return this.discretePr.containsGroup(groupMap);
+};
+CT_FieldGroup.prototype.convertToDiscreteGroupMembers = function (groupMembers) {
+	if (this.discretePr) {
+		return this.discretePr.convertToDiscreteGroupMembers(groupMembers);
+	} else {
+		return groupMembers;
+	}
+};
+CT_FieldGroup.prototype.ungroupDiscrete = function (base, baseCacheField, groupMap) {
+	var groupMembers = this.discretePr.getGroupMembers(groupMap);
+	groupMembers = baseCacheField.convertToDiscreteGroupMembers(groupMembers);
+	var ungroupRes = this._ungroupDiscrete(baseCacheField, groupMembers);
+	this.discretePr.ungroup(ungroupRes.reorderArray, groupMembers, ungroupRes.groupMembersPos);
+	return {base: base, reorderArray: ungroupRes.reorderArray, groupMembersPos: ungroupRes.groupMembersPos};
+};
+CT_FieldGroup.prototype.refreshGroupDiscrete = function (sharedItems, discretePrMap) {
+	var groupItemsMap = this.discretePr.refreshGroupDiscrete(sharedItems.getCount(), discretePrMap);
+	var groupItemsIndexReverse = new Array(Object.keys(groupItemsMap).length);
+	var i, item;
+	for (i in groupItemsMap) {
+		if (groupItemsMap.hasOwnProperty(i)) {
+			groupItemsIndexReverse[groupItemsMap[i]] = parseInt(i);
+		}
+	}
+	var newGroupItems = new CT_SharedItems();
+	for (i = 0; i < groupItemsIndexReverse.length; ++i) {
+		item = this.groupItems.getItem(groupItemsIndexReverse[i]);
+		newGroupItems.addItem(item);
+	}
+	for (i = 0; i < sharedItems.getCount(); ++i) {
+		if(undefined === discretePrMap[i]) {
+			newGroupItems.addItem(sharedItems.getItem(i));
+		}
+	}
+	this.groupItems = newGroupItems;
+	return groupItemsMap;
+};
+CT_FieldGroup.prototype._groupDiscrete = function(groupMap) {
+	var i, item;
+	var newGroupItems = new CT_SharedItems();
+	var reorderArray = [];
+	var groupNameMap = new Map();
+	for (i = 0; i < this.groupItems.getCount(); ++i) {
+		if (!groupMap[i]) {
+			reorderArray[i] = newGroupItems.getCount();
+			item = this.groupItems.getItem(i);
+			newGroupItems.addItem(item);
+			if (c_oAscPivotRecType.String === item.type) {
+				groupNameMap.set(item.val, 1);
+			}
+		}
+	}
+	for (i in groupMap) {
+		if (groupMap.hasOwnProperty(i)) {
+			reorderArray[i] = newGroupItems.getCount();
+		}
+	}
+	if (newGroupItems.getCount() < this.groupItems.getCount()) {
+		var newName = AscCommon.translateManager.getValue(GROUP_TEXT_CAPTION);
+		var newIndex = 1;
+		while (groupNameMap.has(newName + newIndex)) {
+			newIndex++;
+		}
+		item = new PivotRecordValue();
+		item.init(c_oAscPivotRecType.String, newName + newIndex);
+		newGroupItems.addItem(item);
+	}
+	this.groupItems = newGroupItems;
+	return reorderArray;
+};
+CT_FieldGroup.prototype._ungroupDiscrete = function (baseCacheField, groupMembers) {
+	var i, item;
+	var newGroupItems = new CT_SharedItems();
+	var reorderArray = [];
+	var groupMembersPos = {};
+	for (i = 0; i < this.groupItems.getCount(); ++i) {
+		reorderArray[i] = newGroupItems.getCount();
+		if (groupMembers[i]) {
+			var positions = {};
+			for (var j in groupMembers[i]) {
+				if (groupMembers[i].hasOwnProperty(j) && !positions[groupMembers[i][j]]) {
+					positions[groupMembers[i][j]] = newGroupItems.getCount();
+					item = baseCacheField.getGroupOrSharedItem(groupMembers[i][j]);
+					newGroupItems.addItem(item);
+				}
+			}
+			groupMembersPos[i] = positions;
+		} else {
+			item = this.groupItems.getItem(i);
+			newGroupItems.addItem(item);
+		}
+	}
+	this.groupItems = newGroupItems;
+	return {reorderArray: reorderArray, groupMembersPos: groupMembersPos};
+};
+
 function CT_FieldsUsage() {
 //Attributes
 //	this.count = null;
@@ -9260,6 +13153,25 @@ function CT_PivotArea() {
 	this.references = null;
 	this.extLst = null;
 }
+CT_PivotArea.prototype.clone = function() {
+	var res = new CT_PivotArea();
+	res.field = this.field;
+	res.type = this.type;
+	res.dataOnly = this.dataOnly;
+	res.labelOnly = this.labelOnly;
+	res.grandRow = this.grandRow;
+	res.grandCol = this.grandCol;
+	res.cacheIndex = this.cacheIndex;
+	res.outline = this.outline;
+	res.offset = this.offset;
+	res.collapsedLevelsAreSubtotals = this.collapsedLevelsAreSubtotals;
+	res.axis = this.axis;
+	res.fieldPosition = this.fieldPosition;
+	if (this.references) {
+		res.references = this.references.clone()
+	}
+	return res;
+};
 CT_PivotArea.prototype.readAttributes = function(attr, uq) {
 	if (attr()) {
 		var vals = attr();
@@ -9429,6 +13341,13 @@ function CT_Items() {
 //Members
 	this.item = [];
 }
+CT_Items.prototype.clone = function() {
+	var res = new CT_Items();
+	for (var i = 0; i < this.item.length; ++i) {
+		res.item.push(this.item[i].clone());
+	}
+	return res;
+};
 CT_Items.prototype.onStartNode = function(elem, attr, uq) {
 	var newContext = this;
 	if ("item" === elem) {
@@ -9458,6 +13377,13 @@ function CT_AutoSortScope() {
 //Members
 	this.pivotArea = null;
 }
+CT_AutoSortScope.prototype.clone = function() {
+	var res = new CT_AutoSortScope();
+	if (this.pivotArea) {
+		res.pivotArea = this.pivotArea.clone()
+	}
+	return res;
+};
 CT_AutoSortScope.prototype.onStartNode = function(elem, attr, uq) {
 	var newContext = this;
 	if ("pivotArea" === elem) {
@@ -9696,8 +13622,34 @@ CT_RangeSet.prototype.toXml = function(writer, name) {
 	// }
 	writer.WriteXmlNodeEnd(name, true, true);
 };
-function CT_RangePr() {
+function CT_RangePr(setDefaults) {
 //Attributes
+	this.autoStart = null;
+	this.autoEnd = null;
+	this.groupBy = null;
+	this.startNum = null;
+	this.endNum = null;
+	this.startDate = null;
+	this.endDate = null;
+	this.groupInterval = null;
+
+	if (setDefaults) {
+		this.setDefaults();
+	}
+}
+CT_RangePr.prototype.clone = function() {
+	var res = new CT_RangePr();
+	res.autoStart = this.autoStart;
+	res.autoEnd = this.autoEnd;
+	res.groupBy = this.groupBy;
+	res.startNum = this.startNum;
+	res.endNum = this.endNum;
+	res.startDate = this.startDate;
+	res.endDate = this.endDate;
+	res.groupInterval = this.groupInterval;
+	return res;
+};
+CT_RangePr.prototype.setDefaults = function() {
 	this.autoStart = true;
 	this.autoEnd = true;
 	this.groupBy = c_oAscGroupBy.Range;
@@ -9706,7 +13658,7 @@ function CT_RangePr() {
 	this.startDate = null;
 	this.endDate = null;
 	this.groupInterval = 1;
-}
+};
 CT_RangePr.prototype.readAttributes = function(attr, uq) {
 	if (attr()) {
 		var vals = attr();
@@ -9736,11 +13688,11 @@ CT_RangePr.prototype.readAttributes = function(attr, uq) {
 		}
 		val = vals["startDate"];
 		if (undefined !== val) {
-			this.startDate = AscCommon.unleakString(uq(val));
+			this.startDate = Asc.cDate.prototype.fromISO8601(val);
 		}
 		val = vals["endDate"];
 		if (undefined !== val) {
-			this.endDate = AscCommon.unleakString(uq(val));
+			this.endDate = Asc.cDate.prototype.fromISO8601(val);
 		}
 		val = vals["groupInterval"];
 		if (undefined !== val) {
@@ -9766,15 +13718,281 @@ CT_RangePr.prototype.toXml = function(writer, name) {
 		writer.WriteXmlAttributeNumber("endNum", this.endNum);
 	}
 	if (null !== this.startDate) {
-		writer.WriteXmlAttributeStringEncode("startDate", this.startDate);
+		writer.WriteXmlAttributeStringEncode("startDate", this.startDate.toISOString().slice(0, 19));
 	}
 	if (null !== this.endDate) {
-		writer.WriteXmlAttributeStringEncode("endDate", this.endDate);
+		writer.WriteXmlAttributeStringEncode("endDate", this.endDate.toISOString().slice(0, 19));
 	}
 	if (1 !== this.groupInterval) {
 		writer.WriteXmlAttributeNumber("groupInterval", this.groupInterval);
 	}
 	writer.WriteXmlNodeEnd(name, true, true);
+};
+CT_RangePr.prototype.asc_getAutoStart = function() {
+	return this.autoStart;
+};
+CT_RangePr.prototype.asc_getAutoEnd = function() {
+	return this.autoEnd;
+};
+CT_RangePr.prototype.asc_getGroupBy = function() {
+	return this.groupBy;
+};
+CT_RangePr.prototype.asc_getStartNum = function() {
+	return this.startNum;
+};
+CT_RangePr.prototype.asc_getEndNum = function() {
+	return this.endNum;
+};
+CT_RangePr.prototype.asc_getStartDate = function() {
+	return this.startDate && this.startDate.getTime();
+};
+CT_RangePr.prototype.asc_getStartDateText = function() {
+	return this._getDateText(this.startDate);
+};
+CT_RangePr.prototype.asc_getEndDate = function() {
+	return this.endDate && this.endDate.getTime();
+};
+CT_RangePr.prototype.asc_getEndDateText = function() {
+	return this._getDateText(this.endDate);
+};
+CT_RangePr.prototype.asc_getGroupInterval = function() {
+	return this.groupInterval;
+};
+CT_RangePr.prototype.asc_setAutoStart = function(val) {
+	this.autoStart = val;
+};
+CT_RangePr.prototype.asc_setAutoEnd = function(val) {
+	this.autoEnd = val;
+};
+CT_RangePr.prototype.asc_setGroupBy = function(val) {
+	this.groupBy = val;
+};
+CT_RangePr.prototype.asc_setStartNum = function(val) {
+	this.startNum = val;
+};
+CT_RangePr.prototype.asc_setEndNum = function(val) {
+	this.endNum = val;
+};
+CT_RangePr.prototype.asc_setStartDate = function(val) {
+	this.startDate = new Asc.cDate(val);
+};
+CT_RangePr.prototype.asc_setStartDateText = function(val) {
+	this.startDate = this._setDateText(val);
+};
+CT_RangePr.prototype.asc_setEndDate = function(val) {
+	this.endDate = new Asc.cDate(val);
+};
+CT_RangePr.prototype.asc_setEndDateText = function(val) {
+	this.endDate = this._setDateText(val);
+};
+CT_RangePr.prototype.asc_setGroupInterval = function(val) {
+	this.groupInterval = val;
+};
+CT_RangePr.prototype.getGroupIndex = function(val, maxIndex) {
+	var res = 0;
+	if (this.groupBy === c_oAscGroupBy.Range) {
+		//todo remove while(case startNum=0,endNum=1,groupInterval=0.1,val=1)
+		//var index = Math.floor((val - this.startNum) / this.groupInterval);
+		res = 0;
+		//case startNum=1.1,endNum=9.9,groupInterval=0.3,val=10
+		if (AscCommon.compareNumbers(val, this.endNum) > 0) {
+			res = maxIndex;
+		} else {
+			var curVal = this.startNum;
+			while (AscCommon.compareNumbers(curVal, val) <= 0 && res < maxIndex) {
+				curVal += this.groupInterval;
+				res++;
+			}
+			//case startNum=1,endNum=10,groupInterval=1,val=10
+			if (res === maxIndex && 0 <= AscCommon.compareNumbers(val, this.endNum)) {
+				res = maxIndex - 1;
+			}
+		}
+	} else {
+		if(val < this.startDate) {
+			res = 0;
+		} else if(val > this.endDate) {
+			res = maxIndex;
+		} else {
+			if (this.groupBy === c_oAscGroupBy.Seconds) {
+				res = val.getUTCSeconds();
+			} else if (this.groupBy === c_oAscGroupBy.Minutes) {
+				res = val.getUTCMinutes();
+			} else if (this.groupBy === c_oAscGroupBy.Hours) {
+				res = val.getUTCHours();
+			} else if (this.groupBy === c_oAscGroupBy.Months) {
+				res = val.getUTCMonth();
+			} else if (this.groupBy === c_oAscGroupBy.Quarters) {
+				res = Math.floor(val.getUTCMonth() / 3);
+			} else if (this.groupBy === c_oAscGroupBy.Years) {
+				res = val.getUTCFullYear() - this.startDate.getUTCFullYear();
+			} else {
+				//c_oAscGroupBy.Days
+				if (1 === this.groupInterval) {
+					res = val.getDayOfYear();
+					if (res >= 60 && !val.isLeapYear()) {
+						res += 1;
+					}
+					res -= 1;//day of year starts with 1
+				} else {
+					var startDate = Asc.cDate.prototype.getDateFromExcel(this.startDate.getExcelDate());//trim time
+					res = Math.floor((val.getTime() - startDate.getTime()) / AscCommonExcel.c_msPerDay / this.groupInterval);
+				}
+			}
+			res += 1;//0 for "< this.startDate"
+		}
+	}
+	return res;
+};
+CT_RangePr.prototype.generateGroupItems  = function (containsInteger, containsBlank, hasPar) {
+	var i, numFormat, numFormatShortDate, date, firstElem;
+	var groupItems = new CT_SharedItems();
+	if (this.groupBy === c_oAscGroupBy.Range) {
+		var sGeneral = AscCommon.DecodeGeneralFormat(this.startNum, AscCommon.CellValueType.String, AscCommon.gc_nMaxDigCount) || "General";
+		numFormat = AscCommon.oNumFormatCache.get(sGeneral);
+		firstElem = '<' + numFormat.formatToChart(this.startNum);
+		if (containsBlank) {
+			if (this.autoStart) {
+				firstElem = AscCommon.translateManager.getValue(AscCommonExcel.BLANK_CAPTION);
+			} else {
+				var blankName = AscCommon.translateManager.getValue(AscCommonExcel.BLANK_CAPTION);
+				var orName = AscCommon.translateManager.getValue(GROUP_OR_CAPTION);
+				firstElem = orName.replace("%1", firstElem).replace("%2", blankName);
+			}
+		}
+		groupItems.addString(firstElem);
+		var curVal = this.startNum;
+		var nextVal = this.startNum + this.groupInterval;
+		var integerCorrection = 0;
+		if (Number.isInteger(this.groupInterval) && Number.isInteger(this.startNum) && Number.isInteger(this.endNum) && containsInteger) {
+			integerCorrection = -1;
+		}
+		while (AscCommon.compareNumbers(nextVal, this.endNum) < 0) {
+			groupItems.addString(numFormat.formatToChart(curVal) + '-' + numFormat.formatToChart(nextVal + integerCorrection));
+			curVal = nextVal;
+			nextVal = nextVal + this.groupInterval;
+		}
+		if (0 === AscCommon.compareNumbers(nextVal, this.endNum)) {
+			groupItems.addString(numFormat.formatToChart(curVal) + '-' + numFormat.formatToChart(nextVal));
+		} else {
+			groupItems.addString(numFormat.formatToChart(curVal) + '-' + numFormat.formatToChart(nextVal + integerCorrection));
+		}
+		groupItems.addString('>' + numFormat.formatToChart(nextVal));
+	} else {
+		numFormatShortDate = AscCommon.oNumFormatCache.get(AscCommon.getShortDateFormat());
+		firstElem = '<' + numFormatShortDate.formatToChart(this.startDate.getExcelDateWithTime2());
+		if (containsBlank && !hasPar) {
+			if (this.autoStart) {
+				firstElem = AscCommon.translateManager.getValue(AscCommonExcel.BLANK_CAPTION);
+			} else {
+				var blankName = AscCommon.translateManager.getValue(AscCommonExcel.BLANK_CAPTION);
+				var orName = AscCommon.translateManager.getValue(GROUP_OR_CAPTION);
+				firstElem = orName.replace("%1", firstElem).replace("%2", blankName);
+			}
+		}
+		groupItems.addString(firstElem);
+		if (this.groupBy === c_oAscGroupBy.Seconds || this.groupBy === c_oAscGroupBy.Minutes) {
+			for(i = 0; i < 10; ++i) {
+				groupItems.addString(':0' + i);
+			}
+			for(i = 10; i < 60; ++i) {
+				groupItems.addString(':' + i);
+			}
+		} else if (this.groupBy === c_oAscGroupBy.Hours) {
+			for(i = 0; i < 24; ++i) {
+				groupItems.addString(i.toString());
+			}
+		} else if (this.groupBy === c_oAscGroupBy.Months) {
+			numFormat = AscCommon.oNumFormatCache.get("mmm");
+			date = new Asc.cDate(Date.UTC(2000, 0, 1));
+			for(i = 0; i < 12; ++i) {
+				date.setUTCMonth(i);
+				groupItems.addString(numFormat.formatToChart(date.getExcelDateWithTime2()));
+			}
+		} else if (this.groupBy === c_oAscGroupBy.Quarters) {
+			var qtr = AscCommon.translateManager.getValue(GROUP_QUARTER_CAPTION);
+			groupItems.addString(qtr + "1");
+			groupItems.addString(qtr + "2");
+			groupItems.addString(qtr + "3");
+			groupItems.addString(qtr + "4");
+		} else if (this.groupBy === c_oAscGroupBy.Years) {
+			date = new Asc.cDate(this.startDate.getTime());
+			while (date < this.endDate) {
+				groupItems.addString(date.getUTCFullYear().toString());
+				date.addYears(1);
+			}
+		} else {
+			//c_oAscGroupBy.Days
+			if (1 === this.groupInterval) {
+				numFormat = AscCommon.oNumFormatCache.get("d-mmm");
+				date = new Asc.cDate(Date.UTC(2000, 0, 1));
+				for(i = 0; i < 366 ; ++i) {
+					groupItems.addString(numFormat.formatToChart(date.getExcelDateWithTime2()));
+					date.addDays2(1);
+				}
+			} else {
+				var curDate = new Asc.cDate(this.startDate.getTime());
+				var nextDate = new Asc.cDate(curDate.getTime());
+				nextDate.addDays2(this.groupInterval);
+				while (nextDate < this.endDate) {
+					nextDate.addDays2(-1);
+					groupItems.addString(numFormatShortDate.formatToChart(curDate.getExcelDate()) + " - " + numFormatShortDate.formatToChart(nextDate.getExcelDate()));
+					nextDate.addDays2(1);
+					curDate.addDays2(this.groupInterval);
+					nextDate.addDays2(this.groupInterval);
+				}
+				var endDate = new Asc.cDate(this.endDate.getTime());
+				if (endDate.getExcelDate() === endDate.getExcelDateWithTime2()) {
+					endDate.addDays2(-1);
+					if (endDate.getTime() === curDate.getTime()) {
+						endDate.addDays2(1);
+					}
+				}
+				groupItems.addString(numFormatShortDate.formatToChart(curDate.getExcelDate()) + " - " + numFormatShortDate.formatToChart(endDate.getExcelDate()));
+			}
+		}
+		groupItems.addString('>' + numFormatShortDate.formatToChart(this.endDate.getExcelDateWithTime2()));
+	}
+	return groupItems;
+};
+CT_RangePr.prototype.init = function() {
+	return this.groupBy === c_oAscGroupBy.Range;
+};
+CT_RangePr.prototype.getFieldGroupType = function() {
+	return this.groupBy === c_oAscGroupBy.Range ? c_oAscGroupType.Number : c_oAscGroupType.Date;
+};
+CT_RangePr.prototype.correctEndValue = function () {
+	if (c_oAscGroupBy.Range === this.groupBy) {
+		if (this.startNum >= this.endNum) {
+			this.endNum = this.startNum + 1;
+		}
+	} else {
+		if (this.startDate >= this.endDate) {
+			this.endDate = new cDate(this.startDate.getTime());
+			this.endDate.addDays2(1);
+		}
+	}
+};
+CT_RangePr.prototype._getDateText = function(date) {
+	var numFormat;
+	if (date) {
+		if (date.getExcelDateWithTime2() < 1) {
+			numFormat = AscCommon.oNumFormatCache.get(AscCommon.getLongTimeFormat());
+		} else if (date.getExcelDate() === date.getExcelDateWithTime2()) {
+			numFormat = AscCommon.oNumFormatCache.get(AscCommon.getShortDateFormat());
+		} else {
+			numFormat = AscCommon.oNumFormatCache.get(AscCommon.getShortDateFormat() + ' ' + AscCommon.getLongTimeFormat());
+		}
+		return numFormat.formatToChart(date.getExcelDateWithTime2());
+	}
+	return "";
+};
+CT_RangePr.prototype._setDateText = function (val) {
+	var parseRes = AscCommon.g_oFormatParser.parse(val);
+	if (null != parseRes) {
+		return cDate.prototype.getDateFromExcelWithTime2(parseRes.value);
+	}
+	return cDate(Number.NaN);
 };
 function CT_DiscretePr() {
 //Attributes
@@ -9782,6 +14000,18 @@ function CT_DiscretePr() {
 //Members
 	this.x = [];
 }
+CT_DiscretePr.prototype.init = function(count) {
+	for (var i = 0; i < count; ++i) {
+		var index = new CT_Index();
+		index.v = i;
+		this.x.push(index);
+	}
+};
+CT_DiscretePr.prototype.clone = function() {
+	var res = new CT_DiscretePr();
+	res.x = this.x.map(function(elem){return elem.clone();});
+	return res;
+};
 CT_DiscretePr.prototype.onStartNode = function(elem, attr, uq) {
 	var newContext = this;
 	if ("x" === elem) {
@@ -9807,35 +14037,115 @@ CT_DiscretePr.prototype.toXml = function(writer, name) {
 	}
 	writer.WriteXmlNodeEnd(name);
 };
-function CT_GroupItems() {
-//Attributes
-//	this.count = null;
-//Members
-	this.Items = new PivotRecords();
-}
-CT_GroupItems.prototype.onStartNode = function(elem, attr, uq) {
-	var newContext = this;
-	var newContextCandidate = this.Items.onStartNode(elem, attr, uq);
-	if (newContextCandidate) {
-		newContext = newContextCandidate;
-	} else {
-		newContext = null;
+CT_DiscretePr.prototype.getGroupIndex = function(index) {
+	var res = 0;
+	if(0 <= index && index < this.x.length) {
+		res = this.x[index].v;
 	}
-	return newContext;
+	return res;
 };
-CT_GroupItems.prototype.onEndNode = function(prevContext, elem) {
-	this.Items.onEndNode(prevContext, elem);
-};
-CT_GroupItems.prototype.toXml = function(writer, name) {
-	writer.WriteXmlNodeStart(name);
-	var count = this.Items.getSize();
-	if (count > 0) {
-		writer.WriteXmlAttributeNumber("count", count);
+CT_DiscretePr.prototype.group = function (reorderArray) {
+	for(var i = 0; i < this.x.length; ++i) {
+		this.x[i].v = reorderArray[this.x[i].v];
 	}
-	writer.WriteXmlNodeEnd(name, true);
-	this.Items.toXml(writer);
-	writer.WriteXmlNodeEnd(name);
 };
+CT_DiscretePr.prototype.convertFromDiscreteGroupMap = function (groupMap) {
+	var res = {};
+	for(var i = 0; i < this.x.length; ++i) {
+		if(groupMap[this.x[i].v]) {
+			res[i] = 1;
+		}
+	}
+	return res;
+};
+CT_DiscretePr.prototype.convertToDiscreteGroupMap = function (groupMap) {
+	var res = {};
+	for (var index in groupMap) {
+		if (groupMap.hasOwnProperty(index)) {
+			res[this.x[parseInt(index)].v] = 1;
+		}
+	}
+	return res;
+};
+CT_DiscretePr.prototype.convertToDiscreteGroupMembers = function (groupMembers) {
+	var res = {};
+	for (var i in groupMembers) {
+		if (groupMembers.hasOwnProperty(i)) {
+			var newMembers = {};
+			var members = groupMembers[i];
+			for(var j in members) {
+				if (members.hasOwnProperty(j)) {
+					newMembers[j] = this.x[members[j]].v;
+				}
+			}
+			res[i] = newMembers;
+		}
+	}
+	return res;
+};
+
+CT_DiscretePr.prototype.getGroupMembers = function (groupMap) {
+	var groupMembers = {};
+	for(var i = 0; i < this.x.length; ++i) {
+		var val = this.x[i].v;
+		if(groupMap[val]) {
+			if(!groupMembers[val]) {
+				groupMembers[val] = {};
+			}
+			groupMembers[val][i] = i;
+		}
+	}
+	return groupMembers;
+};
+CT_DiscretePr.prototype.containsGroup = function(groupMap) {
+	var groupMembers = this.getGroupMembers(groupMap);
+	for (var index in groupMembers) {
+		if (groupMembers.hasOwnProperty(index) && Object.keys(groupMembers[index]).length > 1) {
+			return true;
+		}
+	}
+	return false;
+};
+CT_DiscretePr.prototype.ungroup = function (reorderArray, groupMembers, groupMembersPos) {
+	for (var i = 0; i < this.x.length; ++i) {
+		var x = this.x[i];
+		if (groupMembers[x.v] && groupMembersPos[x.v]) {
+			var pos = groupMembers[x.v][i];
+			x.v = groupMembersPos[x.v][pos];
+		} else {
+			x.v = reorderArray[x.v];
+		}
+	}
+};
+CT_DiscretePr.prototype.refreshGroupDiscrete = function (size, discretePrMap) {
+	var i, newX = [], groupItemsMap = {}, groupItemsIndex = 0, discretePrMapNewToOld = {};
+	for (i in discretePrMap) {
+		if (discretePrMap.hasOwnProperty(i)) {
+			discretePrMapNewToOld[discretePrMap[i]] = parseInt(i);
+		}
+	}
+	for (i in discretePrMap) {
+		if (discretePrMap.hasOwnProperty(i)) {
+			var index = this.x[parseInt(i)].v;
+			if (undefined === groupItemsMap[index]) {
+				groupItemsMap[index] = groupItemsIndex++;
+			}
+		}
+	}
+	for (i = 0; i < size; ++i) {
+		var x = new CT_Index();
+		if(undefined !== discretePrMapNewToOld[i]) {
+			x.v = groupItemsMap[this.x[discretePrMapNewToOld[i]].v];
+		} else {
+			x.v = groupItemsIndex++;
+		}
+		newX.push(x);
+	}
+	this.x = newX;
+	return groupItemsMap;
+};
+
+
 function CT_FieldUsage() {
 //Attributes
 	this.x = null;
@@ -9937,6 +14247,13 @@ function CT_PivotAreaReferences() {
 //Members
 	this.reference = [];
 }
+CT_PivotAreaReferences.prototype.clone = function() {
+	var res = new CT_PivotAreaReferences();
+	for (var i = 0; i < this.reference.length; ++i) {
+		res.reference.push(this.reference[i].clone());
+	}
+	return res;
+};
 CT_PivotAreaReferences.prototype.onStartNode = function(elem, attr, uq) {
 	var newContext = this;
 	if ("reference" === elem) {
@@ -10081,6 +14398,10 @@ CT_Item.prototype.toXml = function(writer, name) {
 	}
 	writer.WriteXmlNodeEnd(name, true, true);
 };
+CT_Item.prototype.isData = function() {
+	return Asc.c_oAscItemType.Data === this.t || Asc.c_oAscItemType.Blank === this.t;
+};
+
 function CT_MemberProperty() {
 //Attributes
 	this.name = null;
@@ -10262,6 +14583,29 @@ function CT_PivotAreaReference() {
 	this.x = [];
 	this.extLst = null;
 }
+CT_PivotAreaReference.prototype.clone = function() {
+	var res = new CT_PivotAreaReference();
+	res.field = this.field;
+	res.selected = this.selected;
+	res.byPosition = this.byPosition;
+	res.relative = this.relative;
+	res.defaultSubtotal = this.defaultSubtotal;
+	res.sumSubtotal = this.sumSubtotal;
+	res.countASubtotal = this.countASubtotal;
+	res.avgSubtotal = this.avgSubtotal;
+	res.maxSubtotal = this.maxSubtotal;
+	res.minSubtotal = this.minSubtotal;
+	res.productSubtotal = this.productSubtotal;
+	res.countSubtotal = this.countSubtotal;
+	res.stdDevSubtotal = this.stdDevSubtotal;
+	res.stdDevPSubtotal = this.stdDevPSubtotal;
+	res.varSubtotal = this.varSubtotal;
+	res.varPSubtotal = this.varPSubtotal;
+	for (var i = 0; i < this.x.length; ++i) {
+		res.x.push(this.x[i].clone());
+	}
+	return res;
+};
 CT_PivotAreaReference.prototype.readAttributes = function(attr, uq) {
 	if (attr()) {
 		var vals = attr();
@@ -10561,6 +14905,11 @@ var c_nNumberMissingValue =  2147483647;//Math.pow(2, 31) - 1
 function PivotRecordValue() {
 	this.clean();
 };
+PivotRecordValue.prototype.init = function(type, val, addition) {
+	this.type = type;
+	this.val = val;
+	this.addition = addition;
+}
 PivotRecordValue.prototype.clean = function() {
 	this.type = undefined;
 	this.val = undefined;
@@ -10570,7 +14919,7 @@ PivotRecordValue.prototype.getCellValue = function() {
 	var res = new AscCommonExcel.CCellValue();
 	switch (this.type) {
 		case c_oAscPivotRecType.Boolean:
-			res.type = AscCommon.CellValueType.Number;
+			res.type = AscCommon.CellValueType.Bool;
 			res.number = this.val ? 1 : 0;
 			break;
 		case c_oAscPivotRecType.DateTime:
@@ -10601,6 +14950,9 @@ PivotRecordValue.prototype.getCellValue = function() {
 };
 PivotRecordValue.prototype.isBlank = function() {
 	return c_oAscPivotRecType.Missing === this.type;
+};
+PivotRecordValue.prototype.isDateOrNum = function() {
+	return c_oAscPivotRecType.DateTime === this.type || c_oAscPivotRecType.Number === this.type;
 };
 PivotRecordValue.prototype.shallowEqual = function(elem) {
 	return this.type === elem.type && this.val === elem.val;
@@ -10762,6 +15114,13 @@ PivotRecords.prototype.addString = function(val, addition) {
 PivotRecords.prototype.addIndex = function(val) {
 	val++;//0 is missing value
 	this._add(c_oAscPivotRecType.Index, val);
+};
+PivotRecords.prototype.addRecordValue = function (record) {
+	var val = record.val;
+	if (c_oAscPivotRecType.String === record.type) {
+		val = window["Asc"]["editor"].wbModel.sharedStrings.addText(val);
+	}
+	this._add(record.type, val, record.addition);
 };
 PivotRecords.prototype.get = function(index) {
 	this.output.clean();
@@ -11012,6 +15371,130 @@ PivotRecords.prototype._toXml = function(writer, elem) {
 	}
 };
 
+function PivotLayoutGroup(){
+	this.fld = null;
+	this.groupMap = {};
+}
+PivotLayoutGroup.prototype.clone = function() {
+	var res = new PivotLayoutGroup();
+	res.fld = this.fld;
+	for (var i in this.groupMap) {
+		if (this.groupMap.hasOwnProperty(i)) {
+			res.groupMap[i] = this.groupMap[i];
+		}
+	}
+	return res;
+};
+PivotLayoutGroup.prototype.getGroupSize = function() {
+	return Object.keys(this.groupMap).length;
+};
+function PivotLayoutCell(t, fld, v, i){
+	this.t = t;
+	this.fld = fld;
+	this.v = v;
+	this.i = i;
+}
+var PivotLayoutType = {
+	none: 0,
+	page: 1,
+	headerData: 2,
+	headerRow: 3,
+	headerCol: 4,
+	headerCompactRow: 5,
+	headerCompactCol: 6,
+	rowField: 7,
+	colField: 8,
+	cell: 9
+};
+function PivotLayout(){
+	this.type = PivotLayoutType.none;
+	this.fld = null;
+	this.rows = null;
+	this.cols = null;
+}
+
+PivotLayout.prototype.createPage = function(fld) {
+	var res = new PivotLayout();
+	res.type = PivotLayoutType.page;
+	res.fld = fld;
+	return res;
+};
+PivotLayout.prototype.createHeaderData = function(fld) {
+	var res = new PivotLayout();
+	res.type = PivotLayoutType.headerData;
+	res.fld = AscCommonExcel.st_VALUES;
+	return res;
+};
+PivotLayout.prototype.createHeaderRowCol = function(type, fld) {
+	var res = new PivotLayout();
+	res.type = type;
+	res.fld = fld;
+	return res;
+};
+PivotLayout.prototype.createHeaderCompact = function(type) {
+	var res = new PivotLayout();
+	res.type = type;
+	return res;
+};
+PivotLayout.prototype.createCell = function(rows, cols, rowOffset, colOffset) {
+	var res = new PivotLayout();
+	res.rows = rows;
+	res.cols = cols;
+	if (res.rows && res.cols) {
+		res.type = PivotLayoutType.cell;
+	} else if (res.cols) {
+		res.type = PivotLayoutType.colField;
+		res.cols = res.cols.slice(0, rowOffset);
+	} else if (res.rows && undefined !== colOffset) {
+		res.type = PivotLayoutType.rowField;
+		res.rows = res.rows.slice(0, colOffset);
+	} else {
+		res = undefined;
+	}
+	return res;
+};
+PivotLayout.prototype.getFieldIndex = function(pivotTable) {
+	//todo PivotLayoutType.cell
+	var fld = this.fld;
+	if ((PivotLayoutType.rowField === this.type || PivotLayoutType.cell === this.type) && this.rows && this.rows.length > 0) {
+		fld = this.rows[this.rows.length - 1].fld;
+	} else if (PivotLayoutType.colField === this.type && this.cols && this.cols.length > 0) {
+		fld = this.cols[this.cols.length - 1].fld;
+	} else if (PivotLayoutType.headerCompactRow === this.type && pivotTable.rowFields) {
+		fld = pivotTable.rowFields.getFirstIndexExceptValue();
+	} else if (PivotLayoutType.headerCompactCol === this.type && pivotTable.colFields) {
+		fld = pivotTable.colFields.getFirstIndexExceptValue();
+	}
+	return fld;
+};
+PivotLayout.prototype.getGroupCellLayout = function() {
+	if (this.rows) {
+		return this.rows[this.rows.length - 1];
+	}
+	if (this.cols) {
+		return this.cols[this.cols.length - 1];
+	}
+	return null;
+};
+PivotLayout.prototype.getMeasureFld = function() {
+	var iMeasureFld = 0;
+	if (this.rows) {
+		for (var i = 0; i < this.rows.length; ++i) {
+			if (st_VALUES === this.rows[i].fld) {
+				return this.rows[i].i;
+			}
+		}
+	}
+	if (this.cols) {
+		for (var i = 0; i < this.cols.length; ++i) {
+			if (st_VALUES === this.cols[i].fld) {
+				return this.cols[i].i;
+			}
+		}
+	}
+	return iMeasureFld;
+};
+
 var prot;
 
 window['Asc']['c_oAscSourceType'] = window['Asc'].c_oAscSourceType = c_oAscSourceType;
@@ -11228,13 +15711,18 @@ window['AscCommonExcel'].PAGE_MULTIPLE_CAPTION = PAGE_MULTIPLE_CAPTION;
 window['AscCommonExcel'].FIELD_CAPTION = FIELD_CAPTION;
 window['AscCommonExcel'].NEW_PIVOT_LAST_COL_OFFSET = NEW_PIVOT_LAST_COL_OFFSET;
 window['AscCommonExcel'].NEW_PIVOT_LAST_ROW_OFFSET = NEW_PIVOT_LAST_ROW_OFFSET;
+window['AscCommonExcel'].NEW_PIVOT_LAST_COL_OFFSET_GRID_DROP_ZONES = NEW_PIVOT_LAST_COL_OFFSET_GRID_DROP_ZONES;
+window['AscCommonExcel'].NEW_PIVOT_LAST_ROW_OFFSET_GRID_DROP_ZONES = NEW_PIVOT_LAST_ROW_OFFSET_GRID_DROP_ZONES;
+
 window['AscCommonExcel'].NEW_PIVOT_ROW = NEW_PIVOT_ROW;
 window['AscCommonExcel'].NEW_PIVOT_COL = NEW_PIVOT_COL;
 
 window['AscCommonExcel'].ToName_ST_ItemType = ToName_ST_ItemType;
 window['AscCommonExcel'].ToName_ST_DataConsolidateFunction = ToName_ST_DataConsolidateFunction;
+window['AscCommonExcel'].cmpPivotItems = cmpPivotItems;
 
 window['Asc']['CT_PivotCacheDefinition'] = window['Asc'].CT_PivotCacheDefinition = CT_PivotCacheDefinition;
+window['Asc']['CT_pivotTableDefinitionX14'] = window['Asc'].CT_pivotTableDefinitionX14 = CT_pivotTableDefinitionX14;
 
 window['Asc']['CT_PivotCacheRecords'] = window['Asc'].CT_PivotCacheRecords = CT_PivotCacheRecords;
 
@@ -11259,6 +15747,42 @@ prot["asc_getDataFields"] = prot.asc_getDataFields;
 prot["asc_select"] = prot.asc_select;
 prot["getCacheFieldName"] = prot.getCacheFieldName;
 prot["getPivotFieldName"] = prot.getPivotFieldName;
+prot["asc_set"] = prot.asc_set;
+prot["asc_setName"] = prot.asc_setName;
+prot["asc_setRowGrandTotals"] = prot.asc_setRowGrandTotals;
+prot["asc_setColGrandTotals"] = prot.asc_setColGrandTotals;
+prot["asc_setPageOverThenDown"] = prot.asc_setPageOverThenDown;
+prot["asc_setPageWrap"] = prot.asc_setPageWrap;
+prot["asc_setShowHeaders"] = prot.asc_setShowHeaders;
+prot["asc_setCompact"] = prot.asc_setCompact;
+prot["asc_setOutline"] = prot.asc_setOutline;
+prot["asc_setGridDropZones"] = prot.asc_setGridDropZones;
+prot["asc_setFillDownLabelsDefault"] = prot.asc_setFillDownLabelsDefault;
+prot["asc_getFillDownLabelsDefault"] = prot.asc_getFillDownLabelsDefault;
+prot["asc_setDataRef"] = prot.asc_setDataRef;
+prot["asc_setTitle"] = prot.asc_setTitle;
+prot["asc_setDescription"] = prot.asc_setDescription;
+prot["asc_setInsertBlankRow"] = prot.asc_setInsertBlankRow;
+prot["asc_setDefaultSubtotal"] = prot.asc_setDefaultSubtotal;
+prot["asc_setSubtotalTop"] = prot.asc_setSubtotalTop;
+prot["asc_addPageField"] = prot.asc_addPageField;
+prot["asc_addRowField"] = prot.asc_addRowField;
+prot["asc_addColField"] = prot.asc_addColField;
+prot["asc_addDataField"] = prot.asc_addDataField;
+prot["asc_addField"] = prot.asc_addField;
+prot["asc_removeField"] = prot.asc_removeField;
+prot["asc_removeNoDataField"] = prot.asc_removeNoDataField;
+prot["asc_removeDataField"] = prot.asc_removeDataField;
+prot["asc_moveToPageField"] = prot.asc_moveToPageField;
+prot["asc_moveToRowField"] = prot.asc_moveToRowField;
+prot["asc_moveToColField"] = prot.asc_moveToColField;
+prot["asc_moveToDataField"] = prot.asc_moveToDataField;
+prot["asc_movePageField"] = prot.asc_movePageField;
+prot["asc_moveRowField"] = prot.asc_moveRowField;
+prot["asc_moveColField"] = prot.asc_moveColField;
+prot["asc_moveDataField"] = prot.asc_moveDataField;
+prot["asc_refresh"] = prot.asc_refresh;
+prot["asc_setVisibleFieldItemByCell"] = prot.asc_setVisibleFieldItemByCell;
 
 window["Asc"]["CT_PivotTableStyle"] = window['Asc'].CT_PivotTableStyle = CT_PivotTableStyle;
 prot = CT_PivotTableStyle.prototype;
@@ -11267,7 +15791,13 @@ prot["asc_getShowRowHeaders"] = prot.asc_getShowRowHeaders;
 prot["asc_getShowColHeaders"] = prot.asc_getShowColHeaders;
 prot["asc_getShowRowStripes"] = prot.asc_getShowRowStripes;
 prot["asc_getShowColStripes"] = prot.asc_getShowColStripes;
+prot["asc_setName"] = prot.asc_setName;
+prot["asc_setShowRowHeaders"] = prot.asc_setShowRowHeaders;
+prot["asc_setShowColHeaders"] = prot.asc_setShowColHeaders;
+prot["asc_setShowRowStripes"] = prot.asc_setShowRowStripes;
+prot["asc_setShowColStripes"] = prot.asc_setShowColStripes;
 
+window["Asc"]["CT_CacheField"] = window['Asc'].CT_CacheField = CT_CacheField;
 prot = CT_CacheField.prototype;
 prot["asc_getName"] = prot.asc_getName;
 
@@ -11282,6 +15812,16 @@ prot["asc_getDefaultSubtotal"] = prot.asc_getDefaultSubtotal;
 prot["asc_getSubtotalTop"] = prot.asc_getSubtotalTop;
 prot["asc_getShowAll"] = prot.asc_getShowAll;
 prot["asc_getSubtotals"] = prot.asc_getSubtotals;
+prot["asc_set"] = prot.asc_set;
+prot["asc_setName"] = prot.asc_setName;
+prot["asc_setOutline"] = prot.asc_setOutline;
+prot["asc_setCompact"] = prot.asc_setCompact;
+prot["asc_setFillDownLabelsDefault"] = prot.asc_setFillDownLabelsDefault;
+prot["asc_setInsertBlankRow"] = prot.asc_setInsertBlankRow;
+prot["asc_setDefaultSubtotal"] = prot.asc_setDefaultSubtotal;
+prot["asc_setSubtotalTop"] = prot.asc_setSubtotalTop;
+prot["asc_setShowAll"] = prot.asc_setShowAll;
+prot["asc_setSubtotals"] = prot.asc_setSubtotals;
 
 prot = CT_Field.prototype;
 prot["asc_getIndex"] = prot.asc_getIndex;
@@ -11296,5 +15836,36 @@ prot["asc_getName"] = prot.asc_getName;
 prot["asc_getIndex"] = prot.asc_getIndex;
 prot["asc_getSubtotal"] = prot.asc_getSubtotal;
 prot["asc_getShowDataAs"] = prot.asc_getShowDataAs;
+prot["asc_set"] = prot.asc_set;
+prot["asc_setName"] = prot.asc_setName;
+prot["asc_setSubtotal"] = prot.asc_setSubtotal;
+
+window["Asc"]["CT_RangePr"] = window['Asc'].CT_RangePr = CT_RangePr;
+prot = CT_RangePr.prototype;
+prot["asc_getAutoStart"] = prot.asc_getAutoStart;
+prot["asc_getAutoEnd"] = prot.asc_getAutoEnd;
+prot["asc_getGroupBy"] = prot.asc_getGroupBy;
+prot["asc_getStartNum"] = prot.asc_getStartNum;
+prot["asc_getEndNum"] = prot.asc_getEndNum;
+prot["asc_getStartDate"] = prot.asc_getStartDate;
+prot["asc_getStartDateText"] = prot.asc_getStartDateText;
+prot["asc_getEndDate"] = prot.asc_getEndDate;
+prot["asc_getEndDateText"] = prot.asc_getEndDateText;
+prot["asc_getGroupInterval"] = prot.asc_getGroupInterval;
+prot["asc_setAutoStart"] = prot.asc_setAutoStart;
+prot["asc_setAutoEnd"] = prot.asc_setAutoEnd;
+prot["asc_setGroupBy"] = prot.asc_setGroupBy;
+prot["asc_setStartNum"] = prot.asc_setStartNum;
+prot["asc_setEndNum"] = prot.asc_setEndNum;
+prot["asc_setStartDate"] = prot.asc_setStartDate;
+prot["asc_setStartDateText"] = prot.asc_setStartDateText;
+prot["asc_setEndDate"] = prot.asc_setEndDate;
+prot["asc_setEndDateText"] = prot.asc_setEndDateText;
+prot["asc_setGroupInterval"] = prot.asc_setGroupInterval;
 
 window["Asc"]["CT_PivotFilter"] = window['Asc'].CT_PivotFilter = CT_PivotFilter;
+window["Asc"]["CT_WorksheetSource"] = window['Asc'].CT_WorksheetSource = CT_WorksheetSource;
+
+window["Asc"]["PivotLayoutType"] = window['Asc'].PivotLayoutType = PivotLayoutType;
+window["Asc"]["PivotLayout"] = window['Asc'].PivotLayout = PivotLayout;
+window["Asc"]["PivotLayoutCell"] = window['Asc'].PivotLayoutCell = PivotLayoutCell;

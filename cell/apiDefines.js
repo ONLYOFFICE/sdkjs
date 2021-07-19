@@ -111,7 +111,8 @@ var c_oAscSelectionDialogType = {
   PivotTableData: 6,
   PivotTableReport: 7,
   PrintTitles: 8,
-  Function: 9
+  Function: 9,
+  DataValidation: 10
 };
 
 var c_oAscScrollType = {
@@ -154,7 +155,8 @@ var c_oAscLockTypeElemSubType = {
   DeleteRows: 3,
   InsertRows: 4,
   ChangeProperties: 5,
-  DefinedNames: 6
+  DefinedNames: 6,
+  NamedSheetView: 7
 };
 
 var c_oAscRecalcIndexTypes = {
@@ -478,11 +480,6 @@ var c_oAscPopUpSelectorType = {
     pivot: 4
   };
 
-  var c_oAscDefNameType = {
-    table: 1,
-    slicer: 2
-  };
-
   var c_kMaxPrintPages = 1500;
 
   var c_oAscFrozenPaneBorderType = {
@@ -582,6 +579,7 @@ var c_oAscPopUpSelectorType = {
   prot['PivotTableReport'] = prot.PivotTableReport;
   prot['PrintTitles'] = prot.PrintTitles;
   prot['Function'] = prot.Function;
+  prot['DataValidation'] = prot.DataValidation;
   window['Asc']['c_oAscHyperlinkType'] = window['Asc'].c_oAscHyperlinkType = c_oAscHyperlinkType;
   prot = c_oAscHyperlinkType;
   prot['WebLink'] = prot.WebLink;
@@ -762,7 +760,7 @@ var c_oAscPopUpSelectorType = {
   prot['current'] = prot.current;
 
   window['Asc']['c_oAscFormulaArgumentType'] = window['Asc'].c_oAscFormulaArgumentType = c_oAscFormulaArgumentType;
-  prot = c_oAscPrintTitlesRangeType;
+  prot = c_oAscFormulaArgumentType;
   prot['number'] = prot.number;
   prot['text'] = prot.text;
   prot['reference'] = prot.reference;
@@ -776,10 +774,6 @@ var c_oAscPopUpSelectorType = {
   prot['table'] = prot.table;
   prot['pivot'] = prot.pivot;
 
-  window['Asc']['c_oAscDefNameType'] = window['Asc'].c_oAscDefNameType = c_oAscDefNameType;
-  prot = c_oAscDefNameType;
-  prot['table'] = prot.table;
-  prot['slicer'] = prot.slicer;
 
   window['Asc']['c_oAscFrozenPaneBorderType'] = window['Asc'].c_oAscFrozenPaneBorderType = c_oAscFrozenPaneBorderType;
   prot = c_oAscFrozenPaneBorderType;

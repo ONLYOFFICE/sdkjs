@@ -102,12 +102,6 @@ CGraphicFrame.prototype.GetDocumentPositionFromObject = function(arrPos)
 {
 	if (!arrPos)
 		arrPos = [];
-
-	// TODO: Судя по тому как записывается позиция и как она читается
-	//       класс CGraphicFrame не должен попадать в позицию
-	if (arrPos && arrPos.length > 0 && arrPos[0].Class === this)
-		arrPos.splice(0, 1);
-
 	return arrPos;
 };
 
@@ -241,14 +235,22 @@ CGraphicFrame.prototype.Search = function(Str, Props, SearchEngine, Type)
         }
 };
 
-CGraphicFrame.prototype.Search_GetId = function(bNext, bCurrent)
+CGraphicFrame.prototype.GetSearchElementId = function(bNext, bCurrent)
     {
         if(this.graphicObject)
         {
-            return this.graphicObject.Search_GetId(bNext, bCurrent);
+            return this.graphicObject.GetSearchElementId(bNext, bCurrent);
         }
 
         return null;
+};
+
+CGraphicFrame.prototype.FindNextFillingForm = function(isNext, isCurrent)
+{
+	if (this.graphicObject)
+		return this.graphicObject.FindNextFillingForm(isNext, isCurrent);
+
+	return null;
 };
 
 CGraphicFrame.prototype.copy = function(oPr)
@@ -361,10 +363,10 @@ CGraphicFrame.prototype.Set_Props= function(props)
         {
             var bApplyToAll = this.parent.graphicObjects.State.textObject !== this;
            // if(bApplyToAll)
-           //     this.graphicObject.Set_ApplyToAll(true);
+           //     this.graphicObject.SetApplyToAll(true);
             this.graphicObject.Set_Props(props, bApplyToAll);
             //if(bApplyToAll)
-            //    this.graphicObject.Set_ApplyToAll(false);
+            //    this.graphicObject.SetApplyToAll(false);
             this.OnContentRecalculate();
             editor.WordControl.m_oLogicDocument.recalcMap[this.Id] = this;
         }
@@ -372,6 +374,12 @@ CGraphicFrame.prototype.Set_Props= function(props)
 
 CGraphicFrame.prototype.updateCursorType= function(x, y, e)
     {
+        var oApi = Asc.editor || editor;
+        var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
+        if(isDrawHandles === false)
+        {
+            return;
+        }
         var tx = this.invertTransform.TransformPointX(x, y);
         var ty = this.invertTransform.TransformPointY(x, y);
         this.graphicObject.UpdateCursorType(tx, ty, 0)
@@ -683,7 +691,7 @@ CGraphicFrame.prototype.Check_AutoFit = function()
         return false;
 };
 
-CGraphicFrame.prototype.Is_InTable = function()
+CGraphicFrame.prototype.IsInTable = function()
     {
         return null;
 };
@@ -992,9 +1000,9 @@ CGraphicFrame.prototype.applyAllAlign = function(val)
     {
         if(isRealObject(this.graphicObject))
         {
-            this.graphicObject.Set_ApplyToAll(true);
+            this.graphicObject.SetApplyToAll(true);
             this.graphicObject.SetParagraphAlign(val);
-            this.graphicObject.Set_ApplyToAll(false);
+            this.graphicObject.SetApplyToAll(false);
         }
 };
 
@@ -1010,9 +1018,9 @@ CGraphicFrame.prototype.applyAllSpacing = function(val)
     {
         if(isRealObject(this.graphicObject))
         {
-            this.graphicObject.Set_ApplyToAll(true);
+            this.graphicObject.SetApplyToAll(true);
             this.graphicObject.SetParagraphSpacing(val);
-            this.graphicObject.Set_ApplyToAll(false);
+            this.graphicObject.SetApplyToAll(false);
         }
 };
 
@@ -1091,9 +1099,9 @@ CGraphicFrame.prototype.Get_PageContentStartPos = function(PageNum)
         var presentation = editor.WordControl.m_oLogicDocument;
         return {
             X : 0,
-            XLimit: presentation.Width,
+            XLimit: presentation.GetWidthMM(),
             Y : 0,
-            YLimit : presentation.Height,
+            YLimit : presentation.GetHeightMM(),
             MaxTopBorder : 0
         };
 
@@ -1287,6 +1295,11 @@ CGraphicFrame.prototype.Is_ThisElementCurrent = function()
             }
         }
         return ret;
+    };
+    CGraphicFrame.prototype.documentCreateFontMap = function(oMap) {
+        if(this.graphicObject && this.graphicObject.Document_CreateFontMap) {
+            this.graphicObject.Document_CreateFontMap(oMap);
+        }
     };
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};

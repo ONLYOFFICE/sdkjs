@@ -54,13 +54,10 @@
 	cFormulaFunctionGroup['Statistical'] = cFormulaFunctionGroup['Statistical'] || [];
 	cFormulaFunctionGroup['Statistical'].push(cFORECAST_ETS, cFORECAST_ETS_CONFINT,
 		cFORECAST_ETS_SEASONALITY, cFORECAST_ETS_STAT);
-	cFormulaFunctionGroup['Mathematic'] = cFormulaFunctionGroup['Mathematic'] || [];
-	cFormulaFunctionGroup['Mathematic'].push(cMUNIT);
 
 	cFormulaFunctionGroup['NotRealised'] = cFormulaFunctionGroup['NotRealised'] || [];
 	cFormulaFunctionGroup['NotRealised'].push(cDBCS, cFORECAST_ETS,
-		cFORECAST_ETS_CONFINT, cFORECAST_ETS_SEASONALITY, cFORECAST_ETS_STAT,
-		cMUNIT);
+		cFORECAST_ETS_CONFINT, cFORECAST_ETS_SEASONALITY, cFORECAST_ETS_STAT);
 
 	/**
 	 * @constructor
@@ -137,18 +134,6 @@
 	cFORECAST_ETS_STAT.prototype.isXLFN = true;
 	cFORECAST_ETS_STAT.prototype.argumentsType = [argType.reference, argType.reference, argType.number, argType.number,
 		argType.number, argType.number];
-	/**
-	 * @constructor
-	 * @extends {AscCommonExcel.cBaseFunction}
-	 */
-	function cMUNIT() {	
-	}
-
-	cMUNIT.prototype = Object.create(cBaseFunction.prototype);
-	cMUNIT.prototype.constructor = cMUNIT;
-	cMUNIT.prototype.name = "MUNIT";
-	cMUNIT.prototype.isXLFN = true;
-	cMUNIT.prototype.argumentsType = [argType.number];
 
 	/**
 	 * @constructor

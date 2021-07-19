@@ -49,22 +49,25 @@
 		var asc_typeof  = asc.typeOf;
 		var asc_round   = asc.round;
 
-		function LineInfo(tw, th, bl, a, d) {
-			this.tw = tw !== undefined ? tw : 0;
-			this.th = th !== undefined ? th : 0;
-			this.bl = bl !== undefined ? bl : 0;
-			this.a = a !== undefined ? a : 0;
-			this.d = d !== undefined ? d : 0;
+		function LineInfo(lm) {
+			this.tw = 0;
+			this.th = 0;
+			this.bl = 0;
+			this.a = 0;
+			this.d = 0;
 			this.beg = undefined;
 			this.end = undefined;
 			this.startX = undefined;
+
+			this.assign(lm);
 		}
-		LineInfo.prototype.assign = function (tw, th, bl, a, d) {
-			if (tw !== undefined) {this.tw = tw;}
-			if (th !== undefined) {this.th = th;}
-			if (bl !== undefined) {this.bl = bl;}
-			if (a !== undefined) {this.a = a;}
-			if (d !== undefined) {this.d = d;}
+		LineInfo.prototype.assign = function (lm) {
+			if (lm) {
+				this.th = lm.th;
+				this.bl = lm.bl;
+				this.a = lm.a;
+				this.d = lm.d;
+			}
 		};
 
 		/** @constructor */
@@ -505,7 +508,7 @@
 
 			if (!va) {
 				var _a = Math.max(0, asc.ceil(fm.nat_y1 * f / fm.nat_scale));
-				var _d = Math.max(0, asc.ceil(-fm.nat_y2 * f / fm.nat_scale));
+				var _d = Math.max(0, asc.ceil(-fm.nat_y2 * f / fm.nat_scale)) + 1; // 1 px for border
 
 				l.th = _a + _d;
 				l.bl = _a;
@@ -555,7 +558,7 @@
 			var l = new lineMetrics();
 
 			var a = Math.max(0, asc.ceil(fm.nat_y1 * f / fm.nat_scale));
-			var d = Math.max(0, asc.ceil(-fm.nat_y2 * f / fm.nat_scale));
+			var d = Math.max(0, asc.ceil(-fm.nat_y2 * f / fm.nat_scale)) + 1; // 1 px for border
 
 			/*
 			// ToDo
@@ -595,14 +598,14 @@
 				self.lines.push(l);
 				if (TW < l.tw) {TW = l.tw;}
 				BL = TH + l.bl;
-				TH += l.th + 1;
+				TH += l.th;
 			}
 
 			if (0 >= this.chars.length) {
 				p = this.charProps[0];
 				if (p && p.font) {
 					lm = this._calcLineMetrics(p.fsz !== undefined ? p.fsz : p.font.getSize(), p.va, p.fm);
-					l.assign(0, lm.th, lm.bl, lm.a, lm.d);
+					l.assign(lm);
 					addLine(-1, -1);
 					l.beg = l.end = 0;
 				}
@@ -614,7 +617,7 @@
 					if (p && p.font) {
 						lm = this._calcLineMetrics(p.fsz !== undefined ? p.fsz : p.font.getSize(), p.va, p.fm);
 						if (i === 0) {
-							l.assign(0, lm.th, lm.bl, lm.a, lm.d);
+							l.assign(lm);
 						} else {
 							l.th += this.calcDelta(lm.bl, l.bl) + this.calcDelta(lm.th - lm.bl, l.th - l.bl);
 							l.bl += this.calcDelta(lm.bl, l.bl);
@@ -635,7 +638,7 @@
 						addLine(beg, i);
 						beg = i + (p.nl ? 1 : 0);
 						lm = this._calcLineMetrics(p_.fsz !== undefined ? p_.fsz : p_.font.getSize(), p_.va, p_.fm);
-						l = new LineInfo(0, lm.th, lm.bl, lm.a, lm.d);
+						l = new LineInfo(lm);
 					}
 				}
 				if (beg <= i) {

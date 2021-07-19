@@ -441,12 +441,64 @@
 
 (function(window, undefined){
 
+	// className => { css property => key in theme object }
+	var g_themes_map = {
+		"body" : { "color" : "text-normal", "background-color" : "background-toolbar" },
+		".defaultlable" : { "color" : "text-normal" },
+		".aboutlable" : { "color" : "text-normal" },
+		"a.aboutlink" : { "color" : "text-normal" },
+		".form-control, .form-control[readonly], .form-control[disabled]" : { "color" : "text-normal", "background-color" : "background-normal", "border-color" : "border-regular-control" },
+		".form-control:focus" : { "border-color" : "border-control-focus" },
+		".form-control[disabled]" : { "color" : "text-invers" },
+		".btn-text-default" : { "background-color" : "background-normal", "border-color" : "border-regular-control", "color" : "text-normal" },
+		".btn-text-default:hover" : { "background-color" : "highlight-button-hover" },
+		".btn-text-default:active" : { "background-color" : "highlight-button-pressed !important" },
+		".btn-text-default[disabled]:hover,\
+		.btn-text-default.disabled:hover,\
+		.btn-text-default[disabled]:active,\
+		.btn-text-default[disabled].active,\
+		.btn-text-default.disabled:active,\
+		.btn-text-default.disabled.active": {"background-color" : "background-normal !important", "color" : "text-normal"},
+		".select2-container--default .select2-selection--single" : { "color" : "text-normal", "background-color" : "background-normal" },
+		".select2-container--default .select2-selection--single .select2-selection__rendered" : { "color" : "text-normal" },
+		".select2-results" : { "background-color" : "background-normal" },
+		".select2-container--default .select2-results__option--highlighted[aria-selected]" : { "background-color" : "border-regular-control !important"},
+		".select2-container--default .select2-results__option[aria-selected=true]" : { "background-color" : "border-regular-control !important"},
+		".select2-dropdown, .select2-container--default .select2-selection--single" : { "border-color" : "border-regular-control !important"},
+		".select2-container--default.select2-container--open .select2-selection--single" : { "border-color" : "border-control-focus !important"},
+		".select2-container--default.select2-container--focus:not(.select2-container--open) .select2-selection--single" : { "border-color" : "border-regular-control !important"},
+		".select2-container--default.select2-container--open.select2-container--focus .select2-selection--single" : { "border-color" : "border-control-focus !important"},
+		".select2-search--dropdown" : { "background-color" : "background-normal !important"},
+		".select2-container--default .select2-search--dropdown .select2-search__field" : { "color" : "text-normal", "background-color" : "background-normal", "border-color" : "border-regular-control"},
+		".select2-container--default.select2-container--disabled .select2-selection--single" : { "background-color" : "background-normal" },
+		".select2-container--default .select2-selection--single .select2-selection__arrow b" : { "border-color" : "text-normal !important" },
+		".ps .ps__rail-y:hover" : {"background-color" : "background-toolbar" },
+		".ps .ps__rail-y.ps--clicking" : {"background-color" : "background-toolbar" },
+		".ps__thumb-y" : { "background-color" : "background-normal", "border-color" : "Border !important" },
+		".ps__rail-y:hover > .ps__thumb-y" : {"border-color" : "canvas-scroll-thumb-hover" },
+		".ps .ps__rail-x:hover" : {"background-color" : "background-toolbar" },
+		".ps .ps__rail-x.ps--clicking" : {"background-color" : "background-toolbar" },
+		".ps__thumb-x" : { "background-color" : "background-normal", "border-color" : "Border !important" },
+		".ps__rail-x:hover > .ps__thumb-x" : {"border-color" : "canvas-scroll-thumb-hover" },
+		"a" : { "color" : "text-link !important" },
+		"a:hover" : { "color" : "text-link-hover !important" },
+		"a:active" : { "color" : "text-link-active !important" },
+		"a:visited" : { "color" : "text-link-visited !important" },
+		"*::-webkit-scrollbar-track" : { "background" : "background-normal" },
+		"*::-webkit-scrollbar-track:hover" : { "background" : "background-toolbar-additional" },
+		"*::-webkit-scrollbar-thumb" : { "background-color" : "background-toolbar", "border-color" : "border-regular-control" },
+		"*::-webkit-scrollbar-thumb:hover" : { "background-color" : "canvas-scroll-thumb-hover" }
+	};
+
     var g_isMouseSendEnabled = false;
     var g_language = "";
 
     window.plugin_sendMessage = function sendMessage(data)
     {
-        window.parent.postMessage(data, "*");
+        if (window.Asc.plugin.ie_channel)
+            window.Asc.plugin.ie_channel.postMessage(data);
+        else
+            window.parent.postMessage(data, "*");
     };
 
     window.plugin_onMessage = function(event)
@@ -484,6 +536,51 @@
 
             if (type == "init")
                 window.Asc.plugin.info = pluginData;
+
+            if (undefined !== pluginData.theme)
+			{
+				if (!window.Asc.plugin.theme || type === "onThemeChanged")
+				{
+					window.Asc.plugin.theme = pluginData.theme;
+
+					if (!window.Asc.plugin.onThemeChangedBase)
+					{
+						window.Asc.plugin.onThemeChangedBase = function (newTheme)
+						{
+							// correct theme
+							var rules = "";
+							for (var className in g_themes_map)
+							{
+								rules += (className + " {");
+
+								var attributes = g_themes_map[className];
+								for (var attr in attributes)
+								{
+									var attrValue = attributes[attr];
+									var attrValueImportant = attrValue.indexOf(" !important");
+									if (-1 < attrValueImportant)
+										attrValue = attrValue.substr(0, attrValueImportant);
+									var newVal = newTheme[attrValue];
+									if (newVal)
+										rules += (attr + " : " + newVal + ((-1 === attrValueImportant) ? ";" : " !important;"));
+								}
+
+								rules += " }\n";
+							}
+
+							var styleTheme = document.createElement('style');
+							styleTheme.type = 'text/css';
+							styleTheme.innerHTML = rules;
+							document.getElementsByTagName('head')[0].appendChild(styleTheme);
+						};
+					}
+
+					if (window.Asc.plugin.onThemeChanged)
+						window.Asc.plugin.onThemeChanged(window.Asc.plugin.theme);
+					else
+						window.Asc.plugin.onThemeChangedBase(window.Asc.plugin.theme);
+				}
+			}
 
             if (!window.Asc.plugin.tr || !window.Asc.plugin.tr_init)
             {
@@ -632,65 +729,19 @@
         window.Asc.plugin.isStarted = true;
         window.startPluginApi();
 
-        window.Asc.plugin.checkPixelRatio = function(isAttack)
-        {
-            if (window.Asc.plugin.checkedPixelRatio && true !== isAttack)
-                return;
+		var zoomValue = AscCommon.checkDeviceScale();
+		AscCommon.retinaPixelRatio = zoomValue.applicationPixelRatio;
+		AscCommon.zoom = zoomValue.zoom;
+		AscCommon.correctApplicationScale(zoomValue);
 
-            window.Asc.plugin.checkedPixelRatio = true;
-
-            var userAgent = navigator.userAgent.toLowerCase();
-            var isIE = (userAgent.indexOf("msie") > -1 || userAgent.indexOf("trident") > -1 || userAgent.indexOf("edge") > -1);
-            var isChrome = !isIE && (userAgent.indexOf("chrome") > -1);
-            var isMozilla = !isIE && (userAgent.indexOf("firefox") > -1);
-
-            var zoom = 1.0;
-            var isRetina = false;
-            var retinaPixelRatio = 1;
-
-            var isMobileVersion = window.Asc.plugin.info ? window.Asc.plugin.info.isMobileMode : false;
-
-            // пока отключаем мозиллу... хотя почти все работает
-            if ((/*isMozilla || */isChrome) && document && document.firstElementChild && document.body && !isMobileVersion)
-            {
-                if (window.devicePixelRatio > 0.1)
-                {
-                    if (window.devicePixelRatio < 1.99)
-                    {
-                        zoom = window.devicePixelRatio;
-                    }
-                    else
-                    {
-                        zoom = window.devicePixelRatio / 2;
-                        retinaPixelRatio = 2;
-                        isRetina = true;
-                    }
-
-                    document.firstElementChild.style.zoom = 1.0 / zoom;
-                }
-                else
-                {
-                    document.firstElementChild.style.zoom = "normal";
-                }
-            }
-            else
-            {
-                isRetina = (Math.abs(2 - window.devicePixelRatio) < 0.01);
-                if (isRetina)
-                    retinaPixelRatio = 2;
-
-                if (isMobileVersion)
-                {
-                    isRetina = (window.devicePixelRatio >= 1.9);
-                    retinaPixelRatio = window.devicePixelRatio;
-                }
-            }
-
-            window.Asc.plugin.zoom = zoom;
-            window.Asc.plugin.retinaPixelRatio = retinaPixelRatio;
-        };
-
-        window.Asc.plugin.checkPixelRatio();
+		window.Asc.plugin.onEnableMouseEvent = function(isEnabled)
+		{
+			var _frames = document.getElementsByTagName("iframe");
+			if (_frames && _frames[0])
+			{
+				_frames[0].style.pointerEvents = isEnabled ? "none" : "";
+			}
+		};
     }
 
     window.onmousemove = function(e)

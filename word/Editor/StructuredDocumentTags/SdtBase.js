@@ -65,6 +65,9 @@ CSdtBase.prototype.GetPlaceholderText = function()
  */
 CSdtBase.prototype.SetPlaceholderText = function(sText)
 {
+	if (!sText)
+		return this.SetPlaceholder(undefined);
+
 	var oLogicDocument = this.GetLogicDocument();
 	var oGlossary      = oLogicDocument.GetGlossaryDocument();
 
@@ -88,17 +91,32 @@ CSdtBase.prototype.SetPlaceholderText = function(sText)
 	var oParaPr = oDocPart.GetDirectParaPr();
 
 	oDocPart.ClearContent(true);
+	if (this.IsForm())
+		oDocPart.MakeSingleParagraphContent();
+
 	oDocPart.SelectAll();
 
 	var oParagraph = oDocPart.GetFirstParagraph();
 	oParagraph.CorrectContent();
+
+	var oRun = null;
+	if (this.IsForm())
+		oRun = oParagraph.MakeSingleRunParagraph();
+
 	oParagraph.SetDirectParaPr(oParaPr);
 	oParagraph.SetDirectTextPr(oTextPr);
 
-	oDocPart.AddText(sText);
+	if (oRun)
+		oRun.AddText(sText);
+	else
+		oDocPart.AddText(sText);
+
 	oDocPart.RemoveSelection();
 
-	if (this.IsPlaceHolder())
+	var isPlaceHolder = this.IsPlaceHolder();
+	if (isPlaceHolder && this.IsPicture())
+		this.private_UpdatePictureContent();
+	else if (isPlaceHolder)
 		this.private_FillPlaceholderContent();
 
 	return oDocPart;
@@ -186,7 +204,7 @@ CSdtBase.prototype.IsContentControlTemporary = function()
  */
 CSdtBase.prototype.SetFormPr = function(oFormPr)
 {
-	if ((!this.Pr.FormPr && oFormPr) || this.Pr.FormPr.IsEqual(oFormPr))
+	if ((!this.Pr.FormPr && oFormPr) || !this.Pr.FormPr.IsEqual(oFormPr))
 	{
 		History.Add(new CChangesSdtPrFormPr(this, this.Pr.FormPr, oFormPr));
 		this.Pr.FormPr = oFormPr;
@@ -194,8 +212,27 @@ CSdtBase.prototype.SetFormPr = function(oFormPr)
 		var oLogicDocument = this.GetLogicDocument();
 		if (oLogicDocument)
 			oLogicDocument.RegisterForm(this);
+
+		this.private_OnAddFormPr();
 	}
 }
+/**
+ * Удаляем настройки специальных форм
+ */
+CSdtBase.prototype.RemoveFormPr = function()
+{
+	if (this.Pr.FormPr)
+	{
+		History.Add(new CChangesSdtPrFormPr(this, this.Pr.FormPr, undefined));
+		this.Pr.FormPr = undefined;
+
+		var oLogicDocument = this.GetLogicDocument();
+		if (oLogicDocument)
+			oLogicDocument.UnregisterForm(this);
+
+		this.private_OnAddFormPr();
+	}
+};
 /**
  * @returns {?CSdtFormPr}
  */
@@ -236,4 +273,96 @@ CSdtBase.prototype.IsRadioButton = function()
 CSdtBase.prototype.IsTextForm = function()
 {
 	return false;
+};
+/**
+ * Получаем ключ для группы радио-кнопок
+ * @returns {?string}
+ */
+CSdtBase.prototype.GetRadioButtonGroupKey = function()
+{
+	if (!this.IsRadioButton())
+		return undefined;
+
+	return (this.Pr.CheckBox.GroupKey);
+};
+/**
+ * Для чекбоксов и радио-кнопок получаем состояние
+ * @returns {bool}
+ */
+CSdtBase.prototype.IsCheckBoxChecked = function()
+{
+	if (this.IsCheckBox())
+		return this.Pr.CheckBox.Checked;
+
+	return false;
+};
+/**
+ * Копируем placeholder
+ * @return {string}
+ */
+CSdtBase.prototype.private_CopyPlaceholder = function()
+{
+	var oLogicDocument = this.GetLogicDocument();
+	if (!oLogicDocument || !this.Pr.Placeholder)
+		return;
+
+	var oGlossary = oLogicDocument.GetGlossaryDocument();
+	var oDocPart  = oGlossary.GetDocPartByName(this.Pr.Placeholder);
+	if (!oDocPart)
+		return;
+
+	if (oGlossary.IsDefaultDocPart(oDocPart))
+	{
+		return this.Pr.Placeholder;
+	}
+	else
+	{
+		var oCopyName = oGlossary.GetNewName();
+		oGlossary.AddDocPart(oDocPart.Copy(oCopyName));
+		return oCopyName;
+	}
+};
+/**
+ * Проверяем является ли данный контрол текущим
+ * @return {boolean}
+ */
+CSdtBase.prototype.IsCurrent = function()
+{
+	return this.Current;
+};
+/**
+ * Выставляем, является ли данный контрол текущим
+ * @param {boolean} isCurrent
+ */
+CSdtBase.prototype.SetCurrent = function(isCurrent)
+{
+	this.Current = isCurrent;
+};
+/**
+ * Специальная функция, которая обновляет текстовые настройки у плейсхолдера для форм
+ */
+CSdtBase.prototype.UpdatePlaceHolderTextPrForForm = function()
+{
+};
+/**
+ * Проверяем попадание в контейнер
+ * @param X
+ * @param Y
+ * @param nPageAbs
+ * @returns {boolean}
+ */
+CSdtBase.prototype.CheckHitInContentControlByXY = function(X, Y, nPageAbs)
+{
+	return false;
+};
+/**
+ * Ищем ближаюшую позицию, которая попадала бы в контейнер
+ * @param X
+ * @param Y
+ * @param nPageAbs
+ * @returns {?{X:number,Y:number}}
+ */
+CSdtBase.prototype.CorrectXYToHitIn = function(X, Y, nPageAbs)
+{
+	return null;
 };

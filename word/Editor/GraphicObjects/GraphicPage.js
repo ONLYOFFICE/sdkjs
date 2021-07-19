@@ -292,6 +292,9 @@ CGraphicPage.prototype =
 
     drawSelect: function()
     {
+
+        var oApi = Asc.editor || editor;
+        var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
         var _graphic_objects = this.selectionInfo.selectionArray;
         var _object_index;
         var _objects_count = _graphic_objects.length;
@@ -308,7 +311,7 @@ CGraphicPage.prototype =
                 _extensions = {extX: 0, extY: 0};
 
 
-            this.drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.SHAPE , _transform, 0, 0, _extensions.extX, _extensions.extY, /*shape.geometry ? shape.geometry.preset == "line"  : false*/false);
+            this.drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.SHAPE , _transform, 0, 0, _extensions.extX, _extensions.extY, /*shape.geometry ? shape.geometry.preset == "line"  : false*/false, undefined, undefined, isDrawHandles);
         }
     },
 

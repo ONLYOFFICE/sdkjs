@@ -192,6 +192,8 @@ CGraphicObjects.prototype =
         return this.selectedObjects;
     },
 
+    getSelectedArray: DrawingObjectsController.prototype.getSelectedArray,
+
     getTheme: function()
     {
         return this.document.theme;
@@ -237,7 +239,16 @@ CGraphicObjects.prototype =
         if(ret)
         {
             if(ret.cursorType !== "text")
+            {
+                var oApi = Asc.editor || editor;
+                var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
+                if(isDrawHandles === false)
+                {
+                    this.drawingDocument.SetCursorType("default");
+                    return true;
+                }
                 this.drawingDocument.SetCursorType(ret.cursorType);
+            }
             return true;
         }
         return false;
@@ -309,12 +320,14 @@ CGraphicObjects.prototype =
         {
             return null;
         }
-        var TrackRevisions = this.document.IsTrackRevisions();
 
-        if (TrackRevisions)
-        {
-            this.document.SetTrackRevisions(false);
-        }
+		var bTrackRevisions = false;
+		if (this.document.IsTrackRevisions())
+		{
+			bTrackRevisions = this.document.GetLocalTrackRevisions();
+			this.document.SetLocalTrackRevisions(false);
+		}
+
         var oDrawing, extX, extY;
         var oSectPr = this.document.Get_SectionProps();
         var dMaxWidth = oSectPr.get_W() - oSectPr.get_LeftMargin() - oSectPr.get_RightMargin();
@@ -369,7 +382,7 @@ CGraphicObjects.prototype =
             AscFormat.AddToContentFromString(oContent, oProps.get_Text());
             var oTextPr = new CTextPr();
             oTextPr.FontSize = (oTextPropMenu.get_FontSize() > 0 ? oTextPropMenu.get_FontSize() : 20);
-            oTextPr.RFonts.Set_All(oTextPropMenu.get_FontFamily().get_Name(), -1);
+            oTextPr.RFonts.SetAll(oTextPropMenu.get_FontFamily().get_Name(), -1);
             oTextPr.Bold = oTextPropMenu.get_Bold();
             oTextPr.Italic = oTextPropMenu.get_Italic();
             oTextPr.Underline = oTextPropMenu.get_Underline();
@@ -380,12 +393,12 @@ CGraphicObjects.prototype =
             {
                 oTextPr.SetLang(oTextPropMenu.get_Lang());
             }
-            oContent.Set_ApplyToAll(true);
+            oContent.SetApplyToAll(true);
             oContent.AddToParagraph(new ParaTextPr(oTextPr));
             oContent.SetParagraphAlign(AscCommon.align_Center);
             oContent.SetParagraphSpacing({Before : 0, After: 0,  LineRule : Asc.linerule_Auto, Line : 1.0});
             oContent.SetParagraphIndent({FirstLine:0, Left:0, Right:0});
-            oContent.Set_ApplyToAll(false);
+            oContent.SetApplyToAll(false);
             var oBodyPr = oDrawing.getBodyPr().createDuplicate();
             oBodyPr.rot = 0;
             oBodyPr.spcFirstLastPara = false;
@@ -421,9 +434,9 @@ CGraphicObjects.prototype =
                     extX = dMaxWidth;
                 }
                 oTextPr.FontSize *= (extX / oContentSize.w);
-                oContent.Set_ApplyToAll(true);
+                oContent.SetApplyToAll(true);
                 oContent.AddToParagraph(new ParaTextPr(oTextPr));
-                oContent.Set_ApplyToAll(false);
+                oContent.SetApplyToAll(false);
                 oContentSize = AscFormat.GetContentOneStringSizes(oContent);
                 oXfrm.setExtX(extX + 1);
                 oXfrm.setExtY(oContentSize.h);
@@ -443,10 +456,12 @@ CGraphicObjects.prototype =
             oParaDrawing.Set_PositionH(Asc.c_oAscRelativeFromH.Margin, true,  Asc.c_oAscAlignH.Center, false);
             oParaDrawing.Set_PositionV(Asc.c_oAscRelativeFromV.Margin, true,  Asc.c_oAscAlignV.Center, false);
         }
-        if (TrackRevisions)
+
+        if (false !== bTrackRevisions)
         {
-            this.document.SetTrackRevisions(true);
+            this.document.SetLocalTrackRevisions(bTrackRevisions);
         }
+
         return oParaDrawing;
     },
 
@@ -1050,9 +1065,7 @@ CGraphicObjects.prototype =
 
     editChart: function(chart)
     {
-        var chart_space = this.getChartSpace2(chart, null), select_start_page, parent_paragraph, nearest_pos;
-
-
+        var chart_space = this.getChartSpace2(chart, null), select_start_page;
         var by_types;
         by_types = AscFormat.getObjectsByTypesFromArr(this.selectedObjects, true);
 
@@ -1316,7 +1329,7 @@ CGraphicObjects.prototype =
     },
 
 
-    addShapeOnPage: function(sPreset, nPageIndex, dX, dY, dExtX, dExtY)
+    addShapeOnPage: function(sPreset, nPageIndex)
     {
         if ( docpostype_HdrFtr !== this.document.GetDocPosType() || null !== this.document.HdrFtr.CurHdrFtr )
         {
@@ -1339,6 +1352,17 @@ CGraphicObjects.prototype =
                 DocContent.Selection.Start = true;
             }
 
+            var dX, dY, dExtX, dExtY;
+            var oSectPr = this.document.Get_PageLimits(nPageIndex);
+            var oExt = AscFormat.fGetDefaultShapeExtents(sPreset);
+            var dSize = Math.min(oSectPr.XLimit / 2, oSectPr.YLimit / 2);
+            var dScale = dSize/Math.max(oExt.x, oExt.y);
+            dExtX = oExt.x * dScale;
+            dExtY = oExt.y * dScale;
+            dX = (oSectPr.XLimit - oSectPr.X - dExtX) / 2;
+            dX = Math.max(0, dX);
+            dY = (oSectPr.YLimit - oSectPr.Y - dExtY) / 2;
+            dY = Math.max(0, dY);
             this.changeCurrentState(new AscFormat.StartAddNewShape(this, sPreset));
             this.OnMouseDown({}, dX, dY, nPageIndex);
             if(AscFormat.isRealNumber(dExtX) && AscFormat.isRealNumber(dExtY))
@@ -1431,6 +1455,7 @@ CGraphicObjects.prototype =
     getEditorApi: DrawingObjectsController.prototype.getEditorApi,
     resetConnectors: DrawingObjectsController.prototype.resetConnectors,
     checkDlblsPosition: DrawingObjectsController.prototype.checkDlblsPosition,
+    resetChartElementsSelection: DrawingObjectsController.prototype.resetChartElementsSelection,
 
 
     handleChartDoubleClick: function(drawing, chart, e, x, y, pageIndex)
@@ -1851,6 +1876,8 @@ CGraphicObjects.prototype =
         {
             this.drawingDocument.SelectClear();
             this.drawingDocument.TargetEnd();
+			this.drawingDocument.SelectEnabled(true);
+			this.drawingDocument.SelectShow();
         }
     },
 
@@ -2109,17 +2136,17 @@ CGraphicObjects.prototype =
     {
 
         if(this.selectedObjects.length === 0)
-            Info.Set_Drawing(-1);
+            Info.SetDrawing(-1);
 
         var content = this.getTargetDocContent();
         if(content)
         {
-            Info.Set_Drawing(selected_DrawingObjectText);
+            Info.SetDrawing(selected_DrawingObjectText);
             content.GetSelectedElementsInfo(Info);
         }
         else
         {
-            Info.Set_Drawing(selected_DrawingObject);
+            Info.SetDrawing(selected_DrawingObject);
         }
         return Info;
     },
@@ -2146,7 +2173,7 @@ CGraphicObjects.prototype =
         var content = this.getTargetDocContent(oPr && oPr.CheckDocContent, undefined);
         if(content)
         {
-            return content.GetCurrentParagraph(bIgnoreSelection, arrSelectedParagraphs);
+            return content.GetCurrentParagraph(bIgnoreSelection, arrSelectedParagraphs, oPr);
         }
         else
         {
@@ -2158,18 +2185,7 @@ CGraphicObjects.prototype =
         }
     },
 
-    getSelectedText: function(bClearText, oPr)
-    {
-        var content = this.getTargetDocContent();
-        if(content)
-        {
-            return content.GetSelectedText(bClearText, oPr);
-        }
-        else
-        {
-            return "";
-        }
-    },
+    GetSelectedText: DrawingObjectsController.prototype.GetSelectedText,
 
     getCurPosXY: function()
     {
@@ -2638,11 +2654,12 @@ CGraphicObjects.prototype =
         var objects_for_grouping = this.canGroup(true);
         if(objects_for_grouping.length < 2)
             return;
-        var bTrackRevisions = false;
-        if(this.document.TrackRevisions){
-            bTrackRevisions = true;
-            this.document.TrackRevisions = false;
-        }
+		var bTrackRevisions = false;
+		if (this.document.IsTrackRevisions())
+		{
+			bTrackRevisions = this.document.GetLocalTrackRevisions();
+			this.document.SetLocalTrackRevisions(false);
+		}
         var i;
         var common_bounds = this.checkCommonBounds(objects_for_grouping);
         var para_drawing = new ParaDrawing(common_bounds.maxX - common_bounds.minX, common_bounds.maxY - common_bounds.minY, null, this.drawingDocument, null, null);
@@ -2670,8 +2687,9 @@ CGraphicObjects.prototype =
         var nPageIndex = objects_for_grouping[0].parent.pageIndex;
         for(i = 0; i < objects_for_grouping.length; ++i)
         {
-            objects_for_grouping[i].parent.PreDelete();
+			objects_for_grouping[i].parent.bNotPreDelete = true;
             objects_for_grouping[i].parent.Remove_FromDocument(false);
+			objects_for_grouping[i].parent.bNotPreDelete = undefined;
             if(objects_for_grouping[i].setParent){
                 objects_for_grouping[i].setParent(null);
             }
@@ -2701,20 +2719,24 @@ CGraphicObjects.prototype =
         this.resetSelection();
         this.selectObject(group, page_index);
         this.document.Recalculate();
-        if(bTrackRevisions){
-            this.document.TrackRevisions = true;
-        }
+
+		if (false !== bTrackRevisions)
+		{
+			this.document.SetLocalTrackRevisions(bTrackRevisions);
+		}
     },
 
     unGroupSelectedObjects: function()
     {
         if(!(this.isViewMode() === false))
             return;
-        var bTrackRevisions = false;
-        if(this.document.TrackRevisions){
-            bTrackRevisions = true;
-            this.document.TrackRevisions = false;
-        }
+
+		var bTrackRevisions = false;
+		if (this.document.IsTrackRevisions())
+		{
+			bTrackRevisions = this.document.GetLocalTrackRevisions();
+			this.document.SetLocalTrackRevisions(false);
+		}
         var ungroup_arr = this.canUnGroup(true);
         if(ungroup_arr.length > 0)
         {
@@ -2743,8 +2765,10 @@ CGraphicObjects.prototype =
                 parent_paragraph = cur_group.parent.Get_ParentParagraph();
                 page_num = cur_group.selectStartPage;
                 cur_group.normalize();
-                cur_group.parent.PreDelete();
+				
+				cur_group.parent.bNotPreDelete = true;
                 cur_group.parent.Remove_FromDocument(false);
+				cur_group.parent.bNotPreDelete = undefined;
                 cur_group.setBDeleted(true);
                 sp_tree = cur_group.spTree;
                 aPos = arrCenterPos[i];
@@ -2812,9 +2836,11 @@ CGraphicObjects.prototype =
             }
             this.document.Recalculate();
         }
-        if(bTrackRevisions){
-            this.document.TrackRevisions = true;
-        }
+
+		if (false !== bTrackRevisions)
+		{
+			this.document.SetLocalTrackRevisions(bTrackRevisions);
+		}
     },
 
     setTableProps: function(Props)
@@ -2899,36 +2925,40 @@ CGraphicObjects.prototype =
         }
     },
 
-    moveCursorToSignature: function(sGuid)
+    goToSignature: function(sGuid)
     {
+        if(!this.document)
+        {
+            return;
+        }
+        var oDrawingDocument = this.document.GetDrawingDocument();
+        if(!oDrawingDocument)
+        {
+            return;
+        }
+        var oWordControl = oDrawingDocument.m_oWordControl;
+        if(!oWordControl)
+        {
+            return;
+        }
         var aSignatureShapes = this.getAllSignatures2([], this.getDrawingArray());
-        var oShape, oMainGroup;
+        var oShape;
         for(var i = 0; i < aSignatureShapes.length; ++i)
         {
             oShape = aSignatureShapes[i];
-            if(oShape && oShape.signatureLine && oShape.signatureLine.id === sGuid)
+            if(oShape && !oShape.group && oShape.signatureLine && oShape.signatureLine.id === sGuid && oShape.parent)
             {
-                oMainGroup = oShape.getMainGroup();
-                if(oMainGroup)
-                {
-                    if(oMainGroup.parent)
-                    {
-                        this.resetSelection();
-                        oMainGroup.parent.GoTo_Text(true, true);
-                    }
-                }
-                else
-                {
-                    if(oShape.parent)
-                    {
-                        this.resetSelection();
-                        oShape.parent.GoTo_Text(true, true);
-                    }
-                }
+                oWordControl.ScrollToPosition(oShape.x, oShape.y, oShape.parent.PageNum, oShape.extY);
+                oShape.Set_CurrentElement(false, oShape.parent.PageNum);
+                this.selection.textSelection = null;
+                this.document.Document_UpdateInterfaceState();
+                this.document.Document_UpdateRulersState();
+                this.document.Document_UpdateSelectionState();
                 return;
             }
         }
     },
+
 
     recalculateCurPos: function(bUpdateX, bUpdateY)
     {
@@ -3123,9 +3153,6 @@ CGraphicObjects.prototype =
                 {
                     this.selectedObjects[i].parent.PreDelete();
                     this.selectedObjects[i].parent.Remove_FromDocument(false);
-                    if(this.selectedObjects[i].signatureLine){
-                        this.document.Api.sendEvent("asc_onRemoveSignature", this.selectedObjects[i].signatureLine.id);
-                    }
                     arr_drawings_.push(this.selectedObjects[i].parent);
                 }
                 this.resetSelection();
@@ -4081,6 +4108,8 @@ CGraphicObjects.prototype =
     endImageCrop: DrawingObjectsController.prototype.endImageCrop,
     cropFit: DrawingObjectsController.prototype.cropFit,
     cropFill: DrawingObjectsController.prototype.cropFill,
+
+    checkRedrawOnChangeCursorPosition: DrawingObjectsController.prototype.checkRedrawOnChangeCursorPosition,
 
     getFromTargetTextObjectContextMenuPosition: function(oTargetTextObject, pageIndex)
     {

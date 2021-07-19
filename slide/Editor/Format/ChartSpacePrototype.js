@@ -208,7 +208,6 @@ CChartSpace.prototype.setRecalculateInfo = function()
         recalculateUpDownBars: true,
         recalculateLegend: true,
         recalculateReferences: true,
-        recalculateBBox: true,
         recalculateFormulas: true,
         recalculatePenBrush: true,
         recalculateTextPr : true,
@@ -374,11 +373,6 @@ CChartSpace.prototype.recalculate = function()
         {
             this.recalculateReferences();
             this.recalcInfo.recalculateReferences = false;
-        }
-        if(this.recalcInfo.recalculateBBox)
-        {
-            this.recalculateBBox();
-            this.recalcInfo.recalculateBBox = false;
         }
         if(this.recalcInfo.recalculateMarkers)
         {

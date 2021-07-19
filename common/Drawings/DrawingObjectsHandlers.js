@@ -281,7 +281,7 @@ function handleSelectedObjects(drawingObjectsController, e, x, y, group, pageInd
                 var Coords              =  drawingObjectsController.getDrawingDocument().ConvertCoordsToCursorWR(drawing.bounds.x, drawing.bounds.y, pageIndex, null);
                 MMData.X_abs            = Coords.X - 5;
                 MMData.Y_abs            = Coords.Y;
-                MMData.Type             = AscCommon.c_oAscMouseMoveDataTypes.LockedObject;
+                MMData.Type             = Asc.c_oAscMouseMoveDataTypes.LockedObject;
                 MMData.UserId           = drawing.Lock.Get_UserId();
                 MMData.HaveChanges      = drawing.Lock.Have_Changes();
                 editor.sync_MouseMoveCallback(MMData);
@@ -343,7 +343,7 @@ function handleFloatObjects(drawingObjectsController, drawingArr, e, x, y, group
                     var Coords              =  drawingObjectsController.getDrawingDocument().ConvertCoordsToCursorWR(drawing.bounds.x, drawing.bounds.y, pageIndex, null);
                     MMData.X_abs            = Coords.X - 5;
                     MMData.Y_abs            = Coords.Y;
-                    MMData.Type             = AscCommon.c_oAscMouseMoveDataTypes.LockedObject;
+                    MMData.Type             = Asc.c_oAscMouseMoveDataTypes.LockedObject;
                     MMData.UserId           = drawing.Lock.Get_UserId();
                     MMData.HaveChanges      = drawing.Lock.Have_Changes();
                     editor.sync_MouseMoveCallback(MMData);
@@ -444,7 +444,7 @@ function handleShapeImage(drawing, drawingObjectsController, e, x, y, group, pag
     {
         if(drawingObjectsController.isSlideShow())
         {
-            var sMediaFile = drawing.getMediaFileName && drawing.getMediaFileName();
+            var sMediaFile = drawing.getMediaFileName();
             if(!sMediaFile)
             {
                 return false;
@@ -470,7 +470,7 @@ function handleShapeImage(drawing, drawingObjectsController, e, x, y, group, pag
         {
             if(!AscFormat.fCheckObjectHyperlink(drawing,x, y))
             {
-                return false
+                return false;
             }
         }
         var oTextObject = AscFormat.getTargetTextObject(drawingObjectsController);
@@ -506,7 +506,7 @@ function handleShapeImageInGroup(drawingObjectsController, drawing, shape, e, x,
     {
         if(drawingObjectsController.isSlideShow())
         {
-            var sMediaFile = drawing.getMediaFileName && drawing.getMediaFileName();
+            var sMediaFile = drawing.getMediaFileName();
             if(!sMediaFile)
             {
                 return false;
@@ -1425,11 +1425,11 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
 
             var aCharts = drawing.chart.plotArea.charts;
             var series = drawing.getAllSeries();
-            var _len = aCharts.length === 1 && aCharts[0].getObjectType() === AscDFH.historyitem_type_PieChart ? 1 : series.length;
+            var _len = aCharts.length === 1 && aCharts[0].getObjectType() === AscDFH.historyitem_type_PieChart ? Math.min(1, series.length) : series.length;
             for(var i = _len - 1; i > -1; --i)
             {
                 var ser = series[i];
-                var pts = AscFormat.getPtsFromSeries(ser);
+                var pts = ser.getNumPts();
                 var oDLbl;
                 for(var j = 0; j < pts.length; ++j)
                 {
@@ -1588,7 +1588,7 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
                 }
 
             }
-            else if(hit_in_text_rect)
+            else if(hit_in_text_rect && drawing.selection.title === title)
             {
                 if(drawingObjectsController.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
                 {

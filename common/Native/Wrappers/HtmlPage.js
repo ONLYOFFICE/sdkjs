@@ -52,54 +52,6 @@ var selectionflag_DrawingObject = 0x002;
 
 var tableSpacingMinValue = 0.02;//0.02мм
 
-var GlobalSkinTeamlab = {
-    Name : "classic",
-    RulersButton : true,
-    NavigationButtons : true,
-    BackgroundColor : "#B0B0B0",
-    RulerDark : "#B0B0B0",
-    RulerLight : "EDEDED",
-    BackgroundScroll : "#D3D3D3",
-    RulerOutline : "#929292",
-    RulerMarkersFillColor : "#E7E7E7",
-    PageOutline : "#81878F",
-    STYLE_THUMBNAIL_WIDTH : 80,
-    STYLE_THUMBNAIL_HEIGHT : 40
-};
-var GlobalSkinFlat = {
-    Name : "flat",
-    RulersButton : false,
-    NavigationButtons : false,
-    BackgroundColor : "#F4F4F4",
-    RulerDark : "#CFCFCF",
-    RulerLight : "#FFFFFF",
-    BackgroundScroll : "#F1F1F1",
-    RulerOutline : "#BBBEC2",
-    RulerMarkersFillColor : "#FFFFFF",
-    PageOutline : "#BBBEC2",
-    STYLE_THUMBNAIL_WIDTH : 109,
-    STYLE_THUMBNAIL_HEIGHT : 45,
-    isNeedInvertOnActive: false
-};
-
-var GlobalSkin = GlobalSkinTeamlab;
-
-function updateGlobalSkin(newSkin) {
-    GlobalSkin.Name = newSkin.Name;
-    GlobalSkin.RulersButton = newSkin.RulersButton;
-    GlobalSkin.NavigationButtons = newSkin.NavigationButtons;
-    GlobalSkin.BackgroundColor = newSkin.BackgroundColor;
-    GlobalSkin.RulerDark = newSkin.RulerDark;
-    GlobalSkin.RulerLight = newSkin.RulerLight;
-    GlobalSkin.BackgroundScroll = newSkin.BackgroundScroll;
-    GlobalSkin.RulerOutline = newSkin.RulerOutline;
-    GlobalSkin.RulerMarkersFillColor = newSkin.RulerMarkersFillColor;
-    GlobalSkin.PageOutline = newSkin.PageOutline;
-    GlobalSkin.STYLE_THUMBNAIL_WIDTH = newSkin.STYLE_THUMBNAIL_WIDTH;
-    GlobalSkin.STYLE_THUMBNAIL_HEIGHT = newSkin.STYLE_THUMBNAIL_HEIGHT;
-    GlobalSkin.isNeedInvertOnActive = newSkin.isNeedInvertOnActive;
-}
-
 function CEditorPage(api)
 {
     this.Name = "";
@@ -488,9 +440,6 @@ function CEditorPage(api)
 //------------------------------------------------------------export----------------------------------------------------
 window['AscCommon'] = window['AscCommon'] || {};
 window['AscCommonWord'] = window['AscCommonWord'] || {};
-window['AscCommonWord'].GlobalSkinFlat = GlobalSkinFlat;
-window['AscCommonWord'].GlobalSkin = GlobalSkin;
-window['AscCommonWord'].updateGlobalSkin = updateGlobalSkin;
 window['AscCommonWord'].CEditorPage = CEditorPage;
 
 window['AscCommon'].Page_Width = Page_Width;

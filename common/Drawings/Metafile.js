@@ -1239,10 +1239,10 @@
                 if (!this.LastPickFont)
 				{
 					// такого при правильном кэше быть не должно
-                    if (window["NATIVE_EDITOR_ENJINE"] && fontId.file.Status != 0)
-                    {
-                        fontId.file.LoadFontNative();
-                    }
+					if (window["NATIVE_EDITOR_ENJINE"] && fontId.file.Status != 0)
+					{
+						fontId.file.LoadFontNative();
+					}
 					this.LastPickFont = cache.LockFont(fontId.file.stream_index, fontId.id, fontId.faceIndex, size, "", this.Manager);
 				}
 
@@ -2665,6 +2665,9 @@
 			if (0 != this.m_lPagesCount)
 			{
 				var _page = this.m_arrayPages[this.m_lPagesCount - 1];
+
+				if (theme && textPr && textPr.ReplaceThemeFonts)
+					textPr.ReplaceThemeFonts(theme.themeElements.fontScheme);
 
 				_page.m_oTextPr = textPr;
 				if (theme)

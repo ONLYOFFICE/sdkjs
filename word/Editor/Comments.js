@@ -54,11 +54,12 @@ function CCommentData()
     this.m_bSolved    = false;
 	this.m_nDurableId = null;
     this.m_aReplies   = [];
-    
+    this.m_sUserData  = "";    // Пользовательские данные (этого нет в формате)
+
     this.Copy = function()
     {
         var NewData = new CCommentData();
-        
+
         NewData.m_sText      = this.m_sText;
         NewData.m_sTime      = this.m_sTime;
 		NewData.m_sOOTime    = this.m_sOOTime;
@@ -69,7 +70,8 @@ function CCommentData()
         NewData.m_sQuoteText = this.m_sQuoteText;
         NewData.m_bSolved    = this.m_bSolved;
 		NewData.m_nDurableId = this.m_nDurableId;
-        
+		NewData.m_sUserData  = this.m_sUserData;
+
         var Count = this.m_aReplies.length;
         for (var Pos = 0; Pos < Count; Pos++)
         {
@@ -149,6 +151,7 @@ function CCommentData()
         this.m_sUserName  = AscCommentData.asc_getUserName();
 		this.m_sInitials  = AscCommentData.asc_getInitials();
 		this.m_nDurableId = AscCommentData.asc_getDurableId();
+		this.m_sUserData  = AscCommentData.asc_getUserData();
 
         var RepliesCount  = AscCommentData.asc_getRepliesCount();
         for ( var Index = 0; Index < RepliesCount; Index++ )
@@ -173,6 +176,7 @@ function CCommentData()
         // Bool              : Null ли QuoteText
         // String            : (Если предыдущий параметр false) QuoteText
         // Bool              : Solved
+		// String            : m_sUserData
         // Long              : Количество отетов
         // Array of Variable : Ответы
 
@@ -200,6 +204,7 @@ function CCommentData()
             Writer.WriteString2( this.m_sQuoteText );
         }
         Writer.WriteBool( this.m_bSolved );
+		Writer.WriteString2(this.m_sUserData);
         Writer.WriteLong( Count );
 
         for ( var Index = 0; Index < Count; Index++ )
@@ -217,6 +222,7 @@ function CCommentData()
         // Bool              : Null ли QuoteText
         // String            : (Если предыдущий параметр false) QuoteText
         // Bool              : Solved
+		// String            : m_sUserData
         // Long              : Количество отетов
         // Array of Variable : Ответы
 
@@ -238,7 +244,8 @@ function CCommentData()
         else
             this.m_sQuoteText = null;
 
-        this.m_bSolved = Reader.GetBool();
+        this.m_bSolved   = Reader.GetBool();
+		this.m_sUserData = Reader.GetString2();
 
         var Count = Reader.GetLong();
         this.m_aReplies.length = 0;
@@ -286,6 +293,10 @@ CCommentData.prototype.GetQuoteText = function()
 {
 	return this.Get_QuoteText();
 };
+CCommentData.prototype.SetQuoteText = function(sText)
+{
+	this.Set_QuoteText(sText);
+};
 CCommentData.prototype.IsSolved = function()
 {
 	return this.m_bSolved;
@@ -296,6 +307,63 @@ CCommentData.prototype.CreateNewCommentsGuid = function()
 	for (var Pos = 0; Pos < this.m_aReplies.length; Pos++)
 	{
 		this.m_aReplies[Pos].CreateNewCommentsGuid();
+	}
+};
+CCommentData.prototype.GetUserData = function()
+{
+	return this.m_sUserData;
+};
+CCommentData.prototype.SetUserData = function(sData)
+{
+	this.m_sUserData = sData;
+};
+CCommentData.prototype.ConvertToSimpleObject = function()
+{
+	var obj = {};
+
+	obj["Text"]      = this.m_sText;
+	obj["Time"]      = this.m_sTime;
+	obj["UserName"]  = this.m_sUserName;
+	obj["QuoteText"] = this.m_sQuoteText;
+	obj["Solved"]    = this.m_bSolved;
+	obj["UserData"]  = this.m_sUserData;
+	obj["Replies"]   = [];
+
+	for (var nIndex = 0, nCount = this.m_aReplies.length; nIndex < nCount; ++nIndex)
+	{
+		obj["Replies"].push(this.m_aReplies[nIndex].ConvertToSimpleObject());
+	}
+
+	return obj;
+};
+CCommentData.prototype.ReadFromSimpleObject = function(oData)
+{
+	if (!oData)
+		return;
+
+	if (oData["Text"])
+		this.m_sText = oData["Text"];
+
+	if (oData["Time"])
+		this.m_sTime = oData["Time"];
+
+	if (oData["UserName"])
+		this.m_sUserName = oData["UserName"];
+
+	if (oData["Solved"])
+		this.m_bSolved = oData["Solved"];
+
+	if (oData["UserData"])
+		this.m_sUserData = oData["UserData"];
+
+	if (oData["Replies"] && oData["Replies"].length)
+	{
+		for (var nIndex = 0, nCount = oData["Replies"].length; nIndex < nCount; ++nIndex)
+		{
+			var oCD = new CCommentData();
+			oCD.ReadFromSimpleObject(oData["Replies"][nIndex]);
+			this.m_aReplies.push(oCD);
+		}
 	}
 };
 
@@ -324,7 +392,7 @@ function CComment(Parent, Data)
         Type : comment_type_Common,
         Data : null
     };
-    
+
     this.StartId = null; // Id объекта, в содержимом которого идет начало комментария
     this.EndId   = null; // Id объекта, в содержимом которого идет конец комментария
 
@@ -342,28 +410,28 @@ function CComment(Parent, Data)
         this.Lock.Set_Type( AscCommon.locktype_Mine, false );
         AscCommon.CollaborativeEditing.Add_Unlock2( this );
     }
-    
+
     this.Copy = function()
     {
         return new CComment(this.Parent, this.Data.Copy());
     };
-    
+
     this.Set_StartId = function(ObjId)
     {
-        this.StartId = ObjId;        
+        this.StartId = ObjId;
     };
-    
+
     this.Set_EndId = function(ObjId)
     {
         this.EndId = ObjId;
     };
-    
+
     this.Set_StartInfo = function(PageNum, X, Y, H)
     {
         this.m_oStartInfo.X       = X;
         this.m_oStartInfo.Y       = Y;
         this.m_oStartInfo.H       = H;
-        this.m_oStartInfo.PageNum = PageNum;        
+        this.m_oStartInfo.PageNum = PageNum;
     };
 
 	this.Set_Data = function(Data)
@@ -565,6 +633,14 @@ CComment.prototype.IsCurrentUser = function()
 
 	return true;
 };
+CComment.prototype.MoveCursorToStart = function()
+{
+	var oStartPara = g_oTableId.Get_ById(this.StartId);
+	if (oStartPara && (oStartPara instanceof Paragraph))
+	{
+		oStartPara.MoveCursorToCommentMark(this.Id);
+	}
+};
 
 var comments_NoComment        = 0;
 var comments_NonActiveComment = 1;
@@ -579,7 +655,7 @@ function CComments()
 
     this.m_aComments    = {};    // ассоциативный  массив
     this.m_sCurrent     = null;  // текущий комментарий
-    
+
     this.Pages = [];
 
     this.Get_Id = function()
@@ -946,10 +1022,6 @@ ParaComment.prototype.GetCommentId = function()
 ParaComment.prototype.IsCommentStart = function()
 {
 	return this.Start;
-};
-ParaComment.prototype.CheckRunContent = function(fCheck)
-{
-    return fCheck(this);
 };
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommon'] = window['AscCommon'] || {};

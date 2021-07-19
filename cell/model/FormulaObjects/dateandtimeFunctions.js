@@ -1276,7 +1276,10 @@
 			if (val < 0) {
 				return new cError(cErrorType.not_numeric);
 			} else {
-				val = parseInt(( ( val * 24 - Math.floor(val * 24) ) * 60 ).toFixed(cExcelDateTimeDigits)) % 60;
+				//TODO исплользую функцию parseDate. по идее необходима только первая часть этой функции
+				d = AscCommon.NumFormat.prototype.parseDate(val);
+				val = d.min;
+
 				return t.setCalcValue(new cNumber(val), 0);
 			}
 		};
@@ -1519,9 +1522,12 @@
 			var difAbs = ( end - start );
 			difAbs = ( difAbs + (c_msPerDay) ) / c_msPerDay;
 
+			var date = new cDate(start);
+			var startTime = date.getTime();
 			for (var i = 0; i < difAbs; i++) {
-				var date = new cDate(start);
+				date.setTime(startTime);
 				date.setUTCDate(start.getUTCDate() + i);
+
 				if (!_includeInHolidays(date, holidays) && !weekends[date.getUTCDay()]) {
 					count++;
 				}

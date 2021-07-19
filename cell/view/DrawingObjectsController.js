@@ -157,26 +157,7 @@ DrawingObjectsController.prototype.recalculate = function(bAll, Point, bCheckPoi
     {
         History.Get_RecalcData(Point);//Только для таблиц
     }
-    if(bAll)
-    {
-        var drawings = this.getDrawingObjects();
-        for(var i = 0; i < drawings.length; ++i)
-        {
-            if(drawings[i].recalcText)
-            {
-                drawings[i].recalcText();
-            }
-            drawings[i].recalculate();
-        }
-    }
-    else
-    {
-        for(var key in this.objectsForRecalculate)
-        {
-            this.objectsForRecalculate[key].recalculate();
-        }
-    }
-    this.objectsForRecalculate = {};
+    this.recalculate2(bAll);
 };
 
 DrawingObjectsController.prototype.recalculate2 = function(bAll)
@@ -251,10 +232,10 @@ DrawingObjectsController.prototype.checkSelectedObjectsAndFireCallback = functio
         return;
     }
     var selection_state = this.getSelectionState();
-    this.drawingObjects.objectLocker.reset();
+    var aId = [];
     for(var i = 0; i < this.selectedObjects.length; ++i)
     {
-        this.drawingObjects.objectLocker.addObjectId(this.selectedObjects[i].Get_Id());
+        aId.push(this.selectedObjects[i].Get_Id());
     }
     var _this = this;
     var callback2 = function(bLock, bSync)
@@ -268,7 +249,7 @@ DrawingObjectsController.prototype.checkSelectedObjectsAndFireCallback = functio
             callback.apply(_this, args);
         }
     };
-    this.drawingObjects.objectLocker.checkObjects(callback2);
+    oApi.checkObjectsLock(aId, callback2);
 };
 DrawingObjectsController.prototype.onMouseDown = function(e, x, y)
 {
@@ -380,7 +361,7 @@ DrawingObjectsController.prototype.handleOleObjectDoubleClick = function(drawing
 DrawingObjectsController.prototype.addChartDrawingObject = function(options)
 {
     History.Create_NewPoint();
-    var chart = this.getChartSpace(this.drawingObjects.getWorksheetModel(), options, true);
+    var chart = this.getChartSpace(options, false);
     if(chart)
     {
         chart.setWorksheet(this.drawingObjects.getWorksheetModel());
@@ -407,12 +388,12 @@ DrawingObjectsController.prototype.addChartDrawingObject = function(options)
         }
         else
         {
-            chartLeft =  -this.drawingObjects.convertMetric(this.drawingObjects.getScrollOffset().getX(), 0, 3) + this.drawingObjects.convertMetric((this.drawingObjects.getContextWidth()  - w) / 2, 0, 3);
+            chartLeft =  -this.drawingObjects.convertMetric(this.drawingObjects.getScrollOffset().getX(), 0, 3) + (this.drawingObjects.convertMetric(this.drawingObjects.getContextWidth(), 0, 3) - w) / 2;
             if(chartLeft < 0)
             {
                 chartLeft = 0;
             }
-            chartTop =  -this.drawingObjects.convertMetric(this.drawingObjects.getScrollOffset().getY(), 0, 3) + this.drawingObjects.convertMetric((this.drawingObjects.getContextHeight()  - h) / 2, 0, 3);
+            chartTop =  -this.drawingObjects.convertMetric(this.drawingObjects.getScrollOffset().getY(), 0, 3) + (this.drawingObjects.convertMetric(this.drawingObjects.getContextHeight(), 0, 3) - h) / 2;
             if(chartTop < 0)
             {
                 chartTop = 0;
@@ -438,12 +419,11 @@ DrawingObjectsController.prototype.addChartDrawingObject = function(options)
         {
             var old_range = options.getRange();
             options.putRange(null);
-            options.style = null;
-            options.horAxisProps = null;
-            options.vertAxisProps = null;
-            options.showMarker = null;
+            options.putStyle(null);
+            options.removeAllAxesProps();
+            //options.putShowMarker(null);
             this.editChartCallback(options);
-            options.style = 1;
+            options.putStyle(1);
            // options.bCreate = true;
             this.editChartCallback(options);
             options.putRange(old_range);
@@ -536,9 +516,7 @@ DrawingObjectsController.prototype.getDrawingDocument = function()
 DrawingObjectsController.prototype.convertPixToMM = function(pix)
 {
     var _ret = this.drawingObjects ? this.drawingObjects.convertMetric(pix, 0, 3) : 0;
-    if(AscCommon.AscBrowser.isRetina){
-        _ret *= 2;
-    }
+    _ret *= AscCommon.AscBrowser.retinaPixelRatio;
     return _ret;
 };
 
@@ -648,7 +626,7 @@ DrawingObjectsController.prototype.onKeyPress = function(e)
     {
         var oApi = window["Asc"] && window["Asc"]["editor"];
         var fCallback = function(){
-            this.paragraphAdd(new ParaSpace(1));
+            this.paragraphAdd(new ParaSpace());
             this.checkMobileCursorPosition();
             this.recalculateCurPos(true, true);
         };
@@ -659,6 +637,78 @@ DrawingObjectsController.prototype.onKeyPress = function(e)
 
     return bRetValue;
 };
+
+
+    DrawingObjectsController.prototype.checkSlicerCopies = function (aCopies)
+    {
+        var i;
+        var aSlicers = [];
+        var aSlicerViewNames = [];
+        var oDrawing, oSlicer, sSlicerViewName;
+        var oWSView;
+        var oWB = Asc["editor"] && Asc["editor"].wbModel;
+        var oControllerParent = this.drawingObjects;
+        var oThis = this;
+        if(oControllerParent && oControllerParent.getWorksheet)
+        {
+            oWSView = oControllerParent.getWorksheet();
+        }
+        if(!oWB || !oWSView)
+        {
+            return;
+        }
+        var aSlicerView = [];
+
+        for(i = 0; i < aCopies.length; ++i)
+        {
+            aCopies[i].getAllSlicerViews(aSlicerView);
+        }
+        for(i = 0; i < aSlicerView.length; ++i)
+        {
+            oDrawing = aSlicerView[i];
+            sSlicerViewName = oDrawing.getName();
+            oSlicer = oWB.getSlicerByName(sSlicerViewName);
+            if(oSlicer)
+            {
+                aSlicers.push(oSlicer);
+                aSlicerViewNames.push(sSlicerViewName);
+            }
+        }
+        if(aSlicers.length > 0)
+        {
+            History.StartTransaction();
+            oWSView.tryPasteSlicers(aSlicers, function(bSuccess, aSlicerNames)
+            {
+                if(!bSuccess || aSlicerNames.length !== aSlicerViewNames.length)
+                {
+                    History.EndTransaction();
+                    History.Undo();
+                    return;
+                }
+                History.EndTransaction();
+                var i, j;
+                var oDrawing;
+                var sOldSlicerName, sNewSlicerName;
+                for(i = 0; i < aSlicerNames.length; ++i)
+                {
+                    sOldSlicerName = aSlicerViewNames[i];
+                    sNewSlicerName = aSlicerNames[i];
+                    for(j = 0; j < aSlicerView.length; ++j)
+                    {
+                        oDrawing = aSlicerView[j];
+                        if(oDrawing.getName() === sOldSlicerName)
+                        {
+                            oDrawing.setName(sNewSlicerName);
+                            oDrawing.onDataUpdate();
+                            break;
+                        }
+                    }
+                }
+                oThis.startRecalculate();
+                oThis.drawingObjects.sendGraphicObjectProps();
+            });
+        }
+    }
 //------------------------------------------------------------export---------------------------------------------------
 window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 window['AscCommonExcel'].CheckIdSatetShapeAdd = CheckIdSatetShapeAdd;

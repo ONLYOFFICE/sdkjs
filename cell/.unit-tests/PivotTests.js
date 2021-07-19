@@ -33,8 +33,8 @@
 $(function() {
 	QUnit.config.autostart = false;
 
-	// Tests completed in 2279 milliseconds.
-	// 1845 assertions of 1879 passed, 34 failed.
+	// Tests completed in 3980 milliseconds.
+	// 3322 assertions of 3355 passed, 33 failed.
 
 	// function getValues(ws, range) {
 	// 	var res = [];
@@ -47,6 +47,7 @@ $(function() {
 	// 	return res;
 	// }
 	// function getReportValues(pivot) {
+	// 	pivot.init();
 	// 	return getValues(pivot.GetWS(), new AscCommonExcel.MultiplyRange(pivot.getReportRanges()).getUnionRange());
 	// }
 	//
@@ -110,7 +111,9 @@ $(function() {
 	};
 	AscCommonExcel.WorksheetView.prototype._init = function() {
 	};
-	AscCommonExcel.WorksheetView.prototype._onUpdateFormatTable = function() {
+	AscCommonExcel.WorksheetView.prototype.updateRanges = function() {
+	};
+	AscCommonExcel.WorksheetView.prototype._autoFitColumnsWidth = function() {
 	};
 	AscCommonExcel.WorksheetView.prototype.setSelection = function() {
 	};
@@ -118,10 +121,12 @@ $(function() {
 	};
 	AscCommonExcel.WorksheetView.prototype._prepareDrawingObjects = function() {
 	};
+
 	AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function() {
 	};
 
-
+	var CT_PivotField = Asc.CT_PivotField;
+	var c_oAscDataConsolidateFunction = Asc.c_oAscDataConsolidateFunction;
 	var sData = AscCommon.getEmpty();
 	var api = new Asc.spreadsheet_api({
 		'id-view': 'editor_sdk'
@@ -162,7 +167,8 @@ $(function() {
 	var testDataRangeHeader = AscCommonExcel.g_oRangeCache.getAscRange("B54:O55");
 	var testDataRangeTable = AscCommonExcel.g_oRangeCache.getAscRange("B57:H68");
 	var testDataRefreshFieldSettings = AscCommonExcel.g_oRangeCache.getAscRange("B70:H81");
-	var testDataRangeFilters = AscCommonExcel.g_oRangeCache.getAscRange("B83:H94");
+	var testDataRangeFilters = AscCommonExcel.g_oRangeCache.getAscRange("B83:H93");
+	var testDataRangeNumFormat = AscCommonExcel.g_oRangeCache.getAscRange("B96:L107");
 	var testDataRangeDefName = AscCommonExcel.g_oRangeCache.getAscRange("J57:P68");
 	var testDataRangeDefNameLocal = AscCommonExcel.g_oRangeCache.getAscRange("R57:X68");
 	var testDataRefreshRecords = AscCommonExcel.g_oRangeCache.getAscRange("J70:P81");
@@ -278,6 +284,20 @@ $(function() {
 		["West","Boy","Fancy","5","5","20","11.51"],
 		["West","Girl","Tee","6","6","20","13.29"]
 	];
+	var testDataNumFormat = [
+		["Text","Date","Units","Units2","Units3","Price","hasBlank","Mix","MixFormat","bool","error"],
+		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Tee"})},  {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38383})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 12})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 12})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 12})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 11.04})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.42})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.42})},                                     {format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.42})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 1})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#DIV/0!"})}],
+		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Golf"})}, {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38384})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 12})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 12})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 12})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 13})},   {format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 12.6 })},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 12.6 })},                                     {format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 12.6 })},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 1})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#DIV/0!"})}],
+		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Fancy"})},{format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38385})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 12})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 12})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 12})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 11.96})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.74})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.74})},                                     {format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.74})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 1})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#DIV/0!"})}],
+		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Tee"})},  {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38386})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 10})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 10})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 11.27})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue()},               {format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "qwe"})}, {format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.27})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 1})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#DIV/0!"})}],
+		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Golf"})}, {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38387})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 10})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 10})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 12.12})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.95})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.95})},                                     {format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.95})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 0})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#DIV/0!"})}],
+		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Fancy"})},{format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38388})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 10})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 10})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 13.74})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 13.33})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 13.33})},                                     {format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 13.33})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 0})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#DIV/0!"})}],
+		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Tee"})},  {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38389})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 11})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 11})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 11.44})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.94})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.94})},                                     {format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.94})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 0})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#DIV/0!"})}],
+		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Golf"})}, {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38390})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 11})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 11})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 12.63})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.73})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.73})},                                     {format: "0.00%",                                                             value: new AscCommonExcel.CCellValue({number: 11.73})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 0})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#N/A"})}   ],
+		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Fancy"})},{format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38391})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 11})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 11})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 12.06})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.51})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.51})},                                     {format: "0.00%",                                                             value: new AscCommonExcel.CCellValue({number: 11.51})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 0})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#N/A"})}   ],
+		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Tee"})},  {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38392})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 15})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 15})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 15})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 13.42})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 13.29})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 13.29})},                                     {format: "0.00%",                                                             value: new AscCommonExcel.CCellValue({number: 13.29})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 0})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#N/A"})}   ],
+		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Golf"})}, {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38393})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 15})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 15})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 15})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 11.48})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.67})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.67})},                                     {format: "0.00%",                                                             value: new AscCommonExcel.CCellValue({number: 10.67})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 0})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#N/A"})}   ]
+	];
 	var multiElem1 = new AscCommonExcel.CMultiTextElem();
 	multiElem1.text = "qwe";
 	var multiElem2 = new AscCommonExcel.CMultiTextElem();
@@ -325,6 +345,7 @@ $(function() {
 	fillData(wsData, testDataHeader, testDataRangeHeader);
 	fillData(wsData, testData, testDataRangeTable);
 	fillData(wsData, testDataFilter, testDataRangeFilters);
+	fillData(wsData, testDataNumFormat, testDataRangeNumFormat);
 	var addFormatTableOptions = new AscCommonExcel.AddFormatTableOptions();
 	addFormatTableOptions.asc_setRange(testDataRangeTable.getAbsName());
 	addFormatTableOptions.asc_setIsTitle(true);
@@ -361,6 +382,7 @@ $(function() {
 	var dataRefRecords = wsData.getName() + "!" + testDataRefreshRecords.getName();
 	var dataRefStructure = wsData.getName() + "!" + testDataRefreshStructure.getName();
 	var dataRefFilters = wsData.getName() + "!" + testDataRangeFilters.getName();
+	var dataRefNumFormat = wsData.getName() + "!" + testDataRangeNumFormat.getName();
 
 
 	function fillData(ws, data, range) {
@@ -424,26 +446,56 @@ $(function() {
 		strictEqual(dataError, "", message + "_dataError");
 	}
 
+	var memory = new AscCommon.CMemory();
+	function getXml(pivot, addCacheDefinition){
+		memory.Seek(0);
+		pivot.toXml(memory);
+		if(addCacheDefinition) {
+			memory.WriteXmlString('\n\n');
+			pivot.cacheDefinition.toXml(memory);
+		}
+		var buffer = new Uint8Array(memory.GetCurPosition());
+		for (var i = 0; i < memory.GetCurPosition(); i++)
+		{
+			buffer[i] = memory.data[i];
+		}
+		return new TextDecoder("utf-8").decode(buffer);
+	}
+
 	function checkHistoryOperation(pivot, standards, message, action) {
 		var wb = pivot.GetWS().workbook;
 		var undoValues = getReportValues(pivot);
+		var xmlUndo = getXml(pivot, false);
+		var pivotStart = pivot.clone();
+		pivotStart.Id = pivot.Get_Id();
+
 		AscCommon.History.Create_NewPoint();
 		AscCommon.History.StartTransaction();
 		action();
 		AscCommon.History.EndTransaction();
 		pivot = wb.getPivotTableById(pivot.Get_Id());
 		checkReportValues(pivot, getReportValues(pivot), standards, message);
+		var xmlDo = getXml(pivot, true);
 		var changes = wb.SerializeHistory();
+
 		AscCommon.History.Undo();
 		pivot = wb.getPivotTableById(pivot.Get_Id());
 		checkReportValues(pivot, getReportValues(pivot), undoValues, message + "_undo");
+		strictEqual(getXml(pivot, false), xmlUndo, message + "_undo_xml");
+
 		AscCommon.History.Redo();
 		pivot = wb.getPivotTableById(pivot.Get_Id());
 		checkReportValues(pivot, getReportValues(pivot), standards, message + "_redo");
+		strictEqual(getXml(pivot, true), xmlDo, message + "_redo_xml");
+
 		AscCommon.History.Undo();
+		ws.deletePivotTable(pivot.Get_Id());
+		pivot = pivotStart;
+		ws.insertPivotTable(pivot, false, false);
 		wb.DeserializeHistory(changes);
 		pivot = wb.getPivotTableById(pivot.Get_Id());
 		checkReportValues(pivot, getReportValues(pivot), standards, message + "_changes");
+		strictEqual(getXml(pivot, true), xmlDo, message + "_changes_xml");
 		return pivot;
 	}
 
@@ -1828,6 +1880,825 @@ $(function() {
 				["Total Sum of Price","","","13.74","12.06","11.96","37.76","12.12","12.63","13","11.48","49.23","11.27","11.44","11.04","13.42","47.17","134.16"],
 				["Total Sum of Cost","","","13.33","11.51","11.74","36.58","11.95","11.73","12.6","10.67","46.95","10.56","10.94","10.42","13.29","45.21","128.74"]
 		],
+		"gridDropZones_0row_0col_0data": [
+			["","","","","","",""],
+			["","","","","","",""],
+			["","","","","","",""],
+			["","","","","","",""],
+			["","","","","","",""],
+			["","","","","","",""],
+			["","","","","","",""],
+			["","","","","","",""],
+			["","","","","","",""],
+			["","","","","","",""],
+			["","","","","","",""],
+			["","","","","","",""],
+			["","","","","","",""],
+			["","","","","","",""]
+		],
+		"gridDropZones_0row_0col_1data": [
+			["Sum of Price","Total"],
+			["Total","134.16"]
+		],
+		"gridDropZones_0row_0col_2data_col": [
+			["","Values",""],
+			["","Sum of Price","Sum of Cost"],
+			["Total","134.16","128.74"]
+		],
+		"gridDropZones_0row_0col_2data_row": [
+			["Values","Total"],
+			["Sum of Price","134.16"],
+			["Sum of Cost","128.74"]
+		],
+		"gridDropZones_0row_1col_0data": [
+			["","Style","","",""],
+			["","Fancy","Golf","Tee","Grand Total"],
+			["","","","",""],
+			["","","","",""],
+			["","","","",""],
+			["","","","",""],
+			["","","","",""],
+			["","","","",""],
+			["","","","",""],
+			["","","","",""],
+			["","","","",""],
+			["","","","",""],
+			["","","","",""],
+			["","","","",""],
+			["","","","",""]
+		],
+		"gridDropZones_0row_1col_1data": [
+			["Sum of Price","Style","","",""],
+			["","Fancy","Golf","Tee","Grand Total"],
+			["Total","37.76","49.23","47.17","134.16"]
+		],
+		"gridDropZones_0row_1col_2data_col": [
+			["","Style","Values","","","","","",""],
+			["","Fancy","","Golf","","Tee","","Total Sum of Price","Total Sum of Cost"],
+			["","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","",""],
+			["Total","37.76","36.58","49.23","46.95","47.17","45.21","134.16","128.74"]
+		],
+		"gridDropZones_0row_1col_2data_row": [
+			["","Style","","",""],
+			["Values","Fancy","Golf","Tee","Grand Total"],
+			["Sum of Price","37.76","49.23","47.17","134.16"],
+			["Sum of Cost","36.58","46.95","45.21","128.74"]
+		],
+		"gridDropZones_0row_2col_0data": [
+			["","Style","Units","","","","","","","","","","","","",""],
+			["","Fancy","","","Fancy Total","Golf","","","","Golf Total","Tee","","","","Tee Total","Grand Total"],
+			["","10","11","12","","10","11","12","15","","10","11","12","15","",""],
+			["","","","","","","","","","","","","","","",""],
+			["","","","","","","","","","","","","","","",""],
+			["","","","","","","","","","","","","","","",""],
+			["","","","","","","","","","","","","","","",""],
+			["","","","","","","","","","","","","","","",""],
+			["","","","","","","","","","","","","","","",""],
+			["","","","","","","","","","","","","","","",""],
+			["","","","","","","","","","","","","","","",""],
+			["","","","","","","","","","","","","","","",""],
+			["","","","","","","","","","","","","","","",""],
+			["","","","","","","","","","","","","","","",""],
+			["","","","","","","","","","","","","","","",""],
+			["","","","","","","","","","","","","","","",""]
+		],
+		"gridDropZones_0row_2col_1data": [
+			["Sum of Price","Style","Units","","","","","","","","","","","","",""],
+			["","Fancy","","","Fancy Total","Golf","","","","Golf Total","Tee","","","","Tee Total","Grand Total"],
+			["","10","11","12","","10","11","12","15","","10","11","12","15","",""],
+			["Total","13.74","12.06","11.96","37.76","12.12","12.63","13","11.48","49.23","11.27","11.44","11.04","13.42","47.17","134.16"]
+		],
+		"gridDropZones_0row_2col_2data_col": [
+			["","Style","Units","Values","","","","","","","","","","","","","","","","","","","","","","","","","","",""],
+			["","Fancy","","","","","","Fancy Sum of Price","Fancy Sum of Cost","Golf","","","","","","","","Golf Sum of Price","Golf Sum of Cost","Tee","","","","","","","","Tee Sum of Price","Tee Sum of Cost","Total Sum of Price","Total Sum of Cost"],
+			["","10","","11","","12","","","","10","","11","","12","","15","","","","10","","11","","12","","15","","","","",""],
+			["","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","","","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","","","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","","","",""],
+			["Total","13.74","13.33","12.06","11.51","11.96","11.74","37.76","36.58","12.12","11.95","12.63","11.73","13","12.6","11.48","10.67","49.23","46.95","11.27","10.56","11.44","10.94","11.04","10.42","13.42","13.29","47.17","45.21","134.16","128.74"]
+		],
+		"gridDropZones_0row_2col_2data_row": [
+			["","Style","Units","","","","","","","","","","","","",""],
+			["","Fancy","","","Fancy Total","Golf","","","","Golf Total","Tee","","","","Tee Total","Grand Total"],
+			["Values","10","11","12","","10","11","12","15","","10","11","12","15","",""],
+			["Sum of Price","13.74","12.06","11.96","37.76","12.12","12.63","13","11.48","49.23","11.27","11.44","11.04","13.42","47.17","134.16"],
+			["Sum of Cost","13.33","11.51","11.74","36.58","11.95","11.73","12.6","10.67","46.95","10.56","10.94","10.42","13.29","45.21","128.74"]
+		],
+		"gridDropZones_1row_0col_0data": [
+			["","","","","","",""],
+			["Region","","","","","",""],
+			["East","","","","","",""],
+			["West","","","","","",""],
+			["Grand Total","","","","","",""]
+		],
+		"gridDropZones_1row_0col_1data": [
+			["Sum of Price",""],
+			["Region","Total"],
+			["East","73.13"],
+			["West","61.03"],
+			["Grand Total","134.16"]
+		],
+		"gridDropZones_1row_0col_2data_col": [
+			["","Values",""],
+			["Region","Sum of Price","Sum of Cost"],
+			["East","73.13","70.6"],
+			["West","61.03","58.14"],
+			["Grand Total","134.16","128.74"]
+		],
+		"gridDropZones_1row_0col_2data_row": [
+			["Region","Values","Total"],
+			["East","Sum of Price","73.13"],
+			["","Sum of Cost","70.6"],
+			["West","Sum of Price","61.03"],
+			["","Sum of Cost","58.14"],
+			["Total Sum of Price","","134.16"],
+			["Total Sum of Cost","","128.74"]
+		],
+		"gridDropZones_1row_1col_0data": [
+			["","Style","","",""],
+			["Region","Fancy","Golf","Tee","Grand Total"],
+			["East","","","",""],
+			["West","","","",""],
+			["Grand Total","","","",""]
+		],
+		"gridDropZones_1row_1col_1data": [
+			["Sum of Price","Style","","",""],
+			["Region","Fancy","Golf","Tee","Grand Total"],
+			["East","25.7","25.12","22.31","73.13"],
+			["West","12.06","24.11","24.86","61.03"],
+			["Grand Total","37.76","49.23","47.17","134.16"]
+		],
+		"gridDropZones_1row_1col_2data_col": [
+			["","Style","Values","","","","","",""],
+			["","Fancy","","Golf","","Tee","","Total Sum of Price","Total Sum of Cost"],
+			["Region","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","",""],
+			["East","25.7","25.07","25.12","24.55","22.31","20.98","73.13","70.6"],
+			["West","12.06","11.51","24.11","22.4","24.86","24.23","61.03","58.14"],
+			["Grand Total","37.76","36.58","49.23","46.95","47.17","45.21","134.16","128.74"]
+		],
+		"gridDropZones_1row_1col_2data_row": [
+			["","","Style","","",""],
+			["Region","Values","Fancy","Golf","Tee","Grand Total"],
+			["East","Sum of Price","25.7","25.12","22.31","73.13"],
+			["","Sum of Cost","25.07","24.55","20.98","70.6"],
+			["West","Sum of Price","12.06","24.11","24.86","61.03"],
+			["","Sum of Cost","11.51","22.4","24.23","58.14"],
+			["Total Sum of Price","","37.76","49.23","47.17","134.16"],
+			["Total Sum of Cost","","36.58","46.95","45.21","128.74"]
+		],
+		"gridDropZones_1row_2col_0data": [
+			["","Style","Units","","","","","","","","","","","","",""],
+			["","Fancy","","","Fancy Total","Golf","","","","Golf Total","Tee","","","","Tee Total","Grand Total"],
+			["Region","10","11","12","","10","11","12","15","","10","11","12","15","",""],
+			["East","","","","","","","","","","","","","","",""],
+			["West","","","","","","","","","","","","","","",""],
+			["Grand Total","","","","","","","","","","","","","","",""]
+		],
+		"gridDropZones_1row_2col_1data": [
+			["Sum of Price","Style","Units","","","","","","","","","","","","",""],
+			["","Fancy","","","Fancy Total","Golf","","","","Golf Total","Tee","","","","Tee Total","Grand Total"],
+			["Region","10","11","12","","10","11","12","15","","10","11","12","15","",""],
+			["East","13.74","","11.96","25.7","12.12","","13","","25.12","11.27","","11.04","","22.31","73.13"],
+			["West","","12.06","","12.06","","12.63","","11.48","24.11","","11.44","","13.42","24.86","61.03"],
+			["Grand Total","13.74","12.06","11.96","37.76","12.12","12.63","13","11.48","49.23","11.27","11.44","11.04","13.42","47.17","134.16"]
+		],
+		"gridDropZones_1row_2col_2data_col": [
+			["","Style","Units","Values","","","","","","","","","","","","","","","","","","","","","","","","","","",""],
+			["","Fancy","","","","","","Fancy Sum of Price","Fancy Sum of Cost","Golf","","","","","","","","Golf Sum of Price","Golf Sum of Cost","Tee","","","","","","","","Tee Sum of Price","Tee Sum of Cost","Total Sum of Price","Total Sum of Cost"],
+			["","10","","11","","12","","","","10","","11","","12","","15","","","","10","","11","","12","","15","","","","",""],
+			["Region","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","","","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","","","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","","","",""],
+			["East","13.74","13.33","","","11.96","11.74","25.7","25.07","12.12","11.95","","","13","12.6","","","25.12","24.55","11.27","10.56","","","11.04","10.42","","","22.31","20.98","73.13","70.6"],
+			["West","","","12.06","11.51","","","12.06","11.51","","","12.63","11.73","","","11.48","10.67","24.11","22.4","","","11.44","10.94","","","13.42","13.29","24.86","24.23","61.03","58.14"],
+			["Grand Total","13.74","13.33","12.06","11.51","11.96","11.74","37.76","36.58","12.12","11.95","12.63","11.73","13","12.6","11.48","10.67","49.23","46.95","11.27","10.56","11.44","10.94","11.04","10.42","13.42","13.29","47.17","45.21","134.16","128.74"]
+		],
+		"gridDropZones_1row_2col_2data_row": [
+			["","","Style","Units","","","","","","","","","","","","",""],
+			["","","Fancy","","","Fancy Total","Golf","","","","Golf Total","Tee","","","","Tee Total","Grand Total"],
+			["Region","Values","10","11","12","","10","11","12","15","","10","11","12","15","",""],
+			["East","Sum of Price","13.74","","11.96","25.7","12.12","","13","","25.12","11.27","","11.04","","22.31","73.13"],
+			["","Sum of Cost","13.33","","11.74","25.07","11.95","","12.6","","24.55","10.56","","10.42","","20.98","70.6"],
+			["West","Sum of Price","","12.06","","12.06","","12.63","","11.48","24.11","","11.44","","13.42","24.86","61.03"],
+			["","Sum of Cost","","11.51","","11.51","","11.73","","10.67","22.4","","10.94","","13.29","24.23","58.14"],
+			["Total Sum of Price","","13.74","12.06","11.96","37.76","12.12","12.63","13","11.48","49.23","11.27","11.44","11.04","13.42","47.17","134.16"],
+			["Total Sum of Cost","","13.33","11.51","11.74","36.58","11.95","11.73","12.6","10.67","46.95","10.56","10.94","10.42","13.29","45.21","128.74"]
+		],
+		"gridDropZones_2row_0col_0data": [
+			["","","","","","","",""],
+			["Region","Gender","","","","","",""],
+			["East","Boy","","","","","",""],
+			["","Girl","","","","","",""],
+			["East Total","","","","","","",""],
+			["West","Boy","","","","","",""],
+			["","Girl","","","","","",""],
+			["West Total","","","","","","",""],
+			["Grand Total","","","","","","",""]
+		],
+		"gridDropZones_2row_0col_1data": [
+			["Sum of Price","",""],
+			["Region","Gender","Total"],
+			["East","Boy","36"],
+			["","Girl","37.13"],
+			["East Total","","73.13"],
+			["West","Boy","36.13"],
+			["","Girl","24.9"],
+			["West Total","","61.03"],
+			["Grand Total","","134.16"]
+		],
+		"gridDropZones_2row_0col_2data_col": [
+			["","","Values",""],
+			["Region","Gender","Sum of Price","Sum of Cost"],
+			["East","Boy","36","34.76"],
+			["","Girl","37.13","35.84"],
+			["East Total","","73.13","70.6"],
+			["West","Boy","36.13","34.18"],
+			["","Girl","24.9","23.96"],
+			["West Total","","61.03","58.14"],
+			["Grand Total","","134.16","128.74"]
+		],
+		"gridDropZones_2row_0col_2data_row": [
+			["Region","Gender","Values","Total"],
+			["East","Boy","Sum of Price","36"],
+			["","","Sum of Cost","34.76"],
+			["","Girl","Sum of Price","37.13"],
+			["","","Sum of Cost","35.84"],
+			["East Sum of Price","","","73.13"],
+			["East Sum of Cost","","","70.6"],
+			["West","Boy","Sum of Price","36.13"],
+			["","","Sum of Cost","34.18"],
+			["","Girl","Sum of Price","24.9"],
+			["","","Sum of Cost","23.96"],
+			["West Sum of Price","","","61.03"],
+			["West Sum of Cost","","","58.14"],
+			["Total Sum of Price","","","134.16"],
+			["Total Sum of Cost","","","128.74"]
+		],
+		"gridDropZones_2row_1col_0data": [
+			["","","Style","","",""],
+			["Region","Gender","Fancy","Golf","Tee","Grand Total"],
+			["East","Boy","","","",""],
+			["","Girl","","","",""],
+			["East Total","","","","",""],
+			["West","Boy","","","",""],
+			["","Girl","","","",""],
+			["West Total","","","","",""],
+			["Grand Total","","","","",""]
+		],
+		"gridDropZones_2row_1col_1data": [
+			["Sum of Price","","Style","","",""],
+			["Region","Gender","Fancy","Golf","Tee","Grand Total"],
+			["East","Boy","11.96","13","11.04","36"],
+			["","Girl","13.74","12.12","11.27","37.13"],
+			["East Total","","25.7","25.12","22.31","73.13"],
+			["West","Boy","12.06","12.63","11.44","36.13"],
+			["","Girl","","11.48","13.42","24.9"],
+			["West Total","","12.06","24.11","24.86","61.03"],
+			["Grand Total","","37.76","49.23","47.17","134.16"]
+		],
+		"gridDropZones_2row_1col_2data_col": [
+			["","","Style","Values","","","","","",""],
+			["","","Fancy","","Golf","","Tee","","Total Sum of Price","Total Sum of Cost"],
+			["Region","Gender","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","",""],
+			["East","Boy","11.96","11.74","13","12.6","11.04","10.42","36","34.76"],
+			["","Girl","13.74","13.33","12.12","11.95","11.27","10.56","37.13","35.84"],
+			["East Total","","25.7","25.07","25.12","24.55","22.31","20.98","73.13","70.6"],
+			["West","Boy","12.06","11.51","12.63","11.73","11.44","10.94","36.13","34.18"],
+			["","Girl","","","11.48","10.67","13.42","13.29","24.9","23.96"],
+			["West Total","","12.06","11.51","24.11","22.4","24.86","24.23","61.03","58.14"],
+			["Grand Total","","37.76","36.58","49.23","46.95","47.17","45.21","134.16","128.74"]
+		],
+		"gridDropZones_2row_1col_2data_row": [
+			["","","","Style","","",""],
+			["Region","Gender","Values","Fancy","Golf","Tee","Grand Total"],
+			["East","Boy","Sum of Price","11.96","13","11.04","36"],
+			["","","Sum of Cost","11.74","12.6","10.42","34.76"],
+			["","Girl","Sum of Price","13.74","12.12","11.27","37.13"],
+			["","","Sum of Cost","13.33","11.95","10.56","35.84"],
+			["East Sum of Price","","","25.7","25.12","22.31","73.13"],
+			["East Sum of Cost","","","25.07","24.55","20.98","70.6"],
+			["West","Boy","Sum of Price","12.06","12.63","11.44","36.13"],
+			["","","Sum of Cost","11.51","11.73","10.94","34.18"],
+			["","Girl","Sum of Price","","11.48","13.42","24.9"],
+			["","","Sum of Cost","","10.67","13.29","23.96"],
+			["West Sum of Price","","","12.06","24.11","24.86","61.03"],
+			["West Sum of Cost","","","11.51","22.4","24.23","58.14"],
+			["Total Sum of Price","","","37.76","49.23","47.17","134.16"],
+			["Total Sum of Cost","","","36.58","46.95","45.21","128.74"]
+		],
+		"gridDropZones_2row_2col_0data": [
+			["","","Style","Units","","","","","","","","","","","","",""],
+			["","","Fancy","","","Fancy Total","Golf","","","","Golf Total","Tee","","","","Tee Total","Grand Total"],
+			["Region","Gender","10","11","12","","10","11","12","15","","10","11","12","15","",""],
+			["East","Boy","","","","","","","","","","","","","","",""],
+			["","Girl","","","","","","","","","","","","","","",""],
+			["East Total","","","","","","","","","","","","","","","",""],
+			["West","Boy","","","","","","","","","","","","","","",""],
+			["","Girl","","","","","","","","","","","","","","",""],
+			["West Total","","","","","","","","","","","","","","","",""],
+			["Grand Total","","","","","","","","","","","","","","","",""]
+		],
+		"gridDropZones_2row_2col_1data": [
+			["Sum of Price","","Style","Units","","","","","","","","","","","","",""],
+			["","","Fancy","","","Fancy Total","Golf","","","","Golf Total","Tee","","","","Tee Total","Grand Total"],
+			["Region","Gender","10","11","12","","10","11","12","15","","10","11","12","15","",""],
+			["East","Boy","","","11.96","11.96","","","13","","13","","","11.04","","11.04","36"],
+			["","Girl","13.74","","","13.74","12.12","","","","12.12","11.27","","","","11.27","37.13"],
+			["East Total","","13.74","","11.96","25.7","12.12","","13","","25.12","11.27","","11.04","","22.31","73.13"],
+			["West","Boy","","12.06","","12.06","","12.63","","","12.63","","11.44","","","11.44","36.13"],
+			["","Girl","","","","","","","","11.48","11.48","","","","13.42","13.42","24.9"],
+			["West Total","","","12.06","","12.06","","12.63","","11.48","24.11","","11.44","","13.42","24.86","61.03"],
+			["Grand Total","","13.74","12.06","11.96","37.76","12.12","12.63","13","11.48","49.23","11.27","11.44","11.04","13.42","47.17","134.16"]
+		],
+		"gridDropZones_2row_2col_2data_col": [
+			["","","Style","Units","Values","","","","","","","","","","","","","","","","","","","","","","","","","","",""],
+			["","","Fancy","","","","","","Fancy Sum of Price","Fancy Sum of Cost","Golf","","","","","","","","Golf Sum of Price","Golf Sum of Cost","Tee","","","","","","","","Tee Sum of Price","Tee Sum of Cost","Total Sum of Price","Total Sum of Cost"],
+			["","","10","","11","","12","","","","10","","11","","12","","15","","","","10","","11","","12","","15","","","","",""],
+			["Region","Gender","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","","","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","","","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","","","",""],
+			["East","Boy","","","","","11.96","11.74","11.96","11.74","","","","","13","12.6","","","13","12.6","","","","","11.04","10.42","","","11.04","10.42","36","34.76"],
+			["","Girl","13.74","13.33","","","","","13.74","13.33","12.12","11.95","","","","","","","12.12","11.95","11.27","10.56","","","","","","","11.27","10.56","37.13","35.84"],
+			["East Total","","13.74","13.33","","","11.96","11.74","25.7","25.07","12.12","11.95","","","13","12.6","","","25.12","24.55","11.27","10.56","","","11.04","10.42","","","22.31","20.98","73.13","70.6"],
+			["West","Boy","","","12.06","11.51","","","12.06","11.51","","","12.63","11.73","","","","","12.63","11.73","","","11.44","10.94","","","","","11.44","10.94","36.13","34.18"],
+			["","Girl","","","","","","","","","","","","","","","11.48","10.67","11.48","10.67","","","","","","","13.42","13.29","13.42","13.29","24.9","23.96"],
+			["West Total","","","","12.06","11.51","","","12.06","11.51","","","12.63","11.73","","","11.48","10.67","24.11","22.4","","","11.44","10.94","","","13.42","13.29","24.86","24.23","61.03","58.14"],
+			["Grand Total","","13.74","13.33","12.06","11.51","11.96","11.74","37.76","36.58","12.12","11.95","12.63","11.73","13","12.6","11.48","10.67","49.23","46.95","11.27","10.56","11.44","10.94","11.04","10.42","13.42","13.29","47.17","45.21","134.16","128.74"]
+		],
+		"gridDropZones_2row_2col_2data_col2": [
+			["","","Style","Values","Units","","","","","","","","","","","","","","","","","","","","","","","","","","",""],
+			["","","Fancy","","","","","","Fancy Sum of Price","Fancy Sum of Cost","Golf","","","","","","","","Golf Sum of Price","Golf Sum of Cost","Tee","","","","","","","","Tee Sum of Price","Tee Sum of Cost","Total Sum of Price","Total Sum of Cost"],
+			["","","Sum of Price","","","Sum of Cost","","","","","Sum of Price","","","","Sum of Cost","","","","","","Sum of Price","","","","Sum of Cost","","","","","","",""],
+			["Region","Gender","10","11","12","10","11","12","","","10","11","12","15","10","11","12","15","","","10","11","12","15","10","11","12","15","","","",""],
+			["East","Boy","","","11.96","","","11.74","11.96","11.74","","","13","","","","12.6","","13","12.6","","","11.04","","","","10.42","","11.04","10.42","36","34.76"],
+			["","Girl","13.74","","","13.33","","","13.74","13.33","12.12","","","","11.95","","","","12.12","11.95","11.27","","","","10.56","","","","11.27","10.56","37.13","35.84"],
+			["East Total","","13.74","","11.96","13.33","","11.74","25.7","25.07","12.12","","13","","11.95","","12.6","","25.12","24.55","11.27","","11.04","","10.56","","10.42","","22.31","20.98","73.13","70.6"],
+			["West","Boy","","12.06","","","11.51","","12.06","11.51","","12.63","","","","11.73","","","12.63","11.73","","11.44","","","","10.94","","","11.44","10.94","36.13","34.18"],
+			["","Girl","","","","","","","","","","","","11.48","","","","10.67","11.48","10.67","","","","13.42","","","","13.29","13.42","13.29","24.9","23.96"],
+			["West Total","","","12.06","","","11.51","","12.06","11.51","","12.63","","11.48","","11.73","","10.67","24.11","22.4","","11.44","","13.42","","10.94","","13.29","24.86","24.23","61.03","58.14"],
+			["Grand Total","","13.74","12.06","11.96","13.33","11.51","11.74","37.76","36.58","12.12","12.63","13","11.48","11.95","11.73","12.6","10.67","49.23","46.95","11.27","11.44","11.04","13.42","10.56","10.94","10.42","13.29","47.17","45.21","134.16","128.74"]
+		],
+		"gridDropZones_2row_2col_2data_col1": [
+			["","","Values","Style","Units","","","","","","","","","","","","","","","","","","","","","","","","","","",""],
+			["","","Sum of Price","","","","","","","","","","","","","","Sum of Cost","","","","","","","","","","","","","","Total Sum of Price","Total Sum of Cost"],
+			["","","Fancy","","","Fancy Total","Golf","","","","Golf Total","Tee","","","","Tee Total","Fancy","","","Fancy Total","Golf","","","","Golf Total","Tee","","","","Tee Total","",""],
+			["Region","Gender","10","11","12","","10","11","12","15","","10","11","12","15","","10","11","12","","10","11","12","15","","10","11","12","15","","",""],
+			["East","Boy","","","11.96","11.96","","","13","","13","","","11.04","","11.04","","","11.74","11.74","","","12.6","","12.6","","","10.42","","10.42","36","34.76"],
+			["","Girl","13.74","","","13.74","12.12","","","","12.12","11.27","","","","11.27","13.33","","","13.33","11.95","","","","11.95","10.56","","","","10.56","37.13","35.84"],
+			["East Total","","13.74","","11.96","25.7","12.12","","13","","25.12","11.27","","11.04","","22.31","13.33","","11.74","25.07","11.95","","12.6","","24.55","10.56","","10.42","","20.98","73.13","70.6"],
+			["West","Boy","","12.06","","12.06","","12.63","","","12.63","","11.44","","","11.44","","11.51","","11.51","","11.73","","","11.73","","10.94","","","10.94","36.13","34.18"],
+			["","Girl","","","","","","","","11.48","11.48","","","","13.42","13.42","","","","","","","","10.67","10.67","","","","13.29","13.29","24.9","23.96"],
+			["West Total","","","12.06","","12.06","","12.63","","11.48","24.11","","11.44","","13.42","24.86","","11.51","","11.51","","11.73","","10.67","22.4","","10.94","","13.29","24.23","61.03","58.14"],
+			["Grand Total","","13.74","12.06","11.96","37.76","12.12","12.63","13","11.48","49.23","11.27","11.44","11.04","13.42","47.17","13.33","11.51","11.74","36.58","11.95","11.73","12.6","10.67","46.95","10.56","10.94","10.42","13.29","45.21","134.16","128.74"]
+		],
+		"gridDropZones_2row_2col_2data_row": [
+			["","","","Style","Units","","","","","","","","","","","","",""],
+			["","","","Fancy","","","Fancy Total","Golf","","","","Golf Total","Tee","","","","Tee Total","Grand Total"],
+			["Region","Gender","Values","10","11","12","","10","11","12","15","","10","11","12","15","",""],
+			["East","Boy","Sum of Price","","","11.96","11.96","","","13","","13","","","11.04","","11.04","36"],
+			["","","Sum of Cost","","","11.74","11.74","","","12.6","","12.6","","","10.42","","10.42","34.76"],
+			["","Girl","Sum of Price","13.74","","","13.74","12.12","","","","12.12","11.27","","","","11.27","37.13"],
+			["","","Sum of Cost","13.33","","","13.33","11.95","","","","11.95","10.56","","","","10.56","35.84"],
+			["East Sum of Price","","","13.74","","11.96","25.7","12.12","","13","","25.12","11.27","","11.04","","22.31","73.13"],
+			["East Sum of Cost","","","13.33","","11.74","25.07","11.95","","12.6","","24.55","10.56","","10.42","","20.98","70.6"],
+			["West","Boy","Sum of Price","","12.06","","12.06","","12.63","","","12.63","","11.44","","","11.44","36.13"],
+			["","","Sum of Cost","","11.51","","11.51","","11.73","","","11.73","","10.94","","","10.94","34.18"],
+			["","Girl","Sum of Price","","","","","","","","11.48","11.48","","","","13.42","13.42","24.9"],
+			["","","Sum of Cost","","","","","","","","10.67","10.67","","","","13.29","13.29","23.96"],
+			["West Sum of Price","","","","12.06","","12.06","","12.63","","11.48","24.11","","11.44","","13.42","24.86","61.03"],
+			["West Sum of Cost","","","","11.51","","11.51","","11.73","","10.67","22.4","","10.94","","13.29","24.23","58.14"],
+			["Total Sum of Price","","","13.74","12.06","11.96","37.76","12.12","12.63","13","11.48","49.23","11.27","11.44","11.04","13.42","47.17","134.16"],
+			["Total Sum of Cost","","","13.33","11.51","11.74","36.58","11.95","11.73","12.6","10.67","46.95","10.56","10.94","10.42","13.29","45.21","128.74"]
+		],
+		"gridDropZones_2row_2col_2data_row2": [
+			["","","","Style","Units","","","","","","","","","","","","",""],
+			["","","","Fancy","","","Fancy Total","Golf","","","","Golf Total","Tee","","","","Tee Total","Grand Total"],
+			["Region","Values","Gender","10","11","12","","10","11","12","15","","10","11","12","15","",""],
+			["East","Sum of Price","Boy","","","11.96","11.96","","","13","","13","","","11.04","","11.04","36"],
+			["","","Girl","13.74","","","13.74","12.12","","","","12.12","11.27","","","","11.27","37.13"],
+			["","Sum of Cost","Boy","","","11.74","11.74","","","12.6","","12.6","","","10.42","","10.42","34.76"],
+			["","","Girl","13.33","","","13.33","11.95","","","","11.95","10.56","","","","10.56","35.84"],
+			["East Sum of Price","","","13.74","","11.96","25.7","12.12","","13","","25.12","11.27","","11.04","","22.31","73.13"],
+			["East Sum of Cost","","","13.33","","11.74","25.07","11.95","","12.6","","24.55","10.56","","10.42","","20.98","70.6"],
+			["West","Sum of Price","Boy","","12.06","","12.06","","12.63","","","12.63","","11.44","","","11.44","36.13"],
+			["","","Girl","","","","","","","","11.48","11.48","","","","13.42","13.42","24.9"],
+			["","Sum of Cost","Boy","","11.51","","11.51","","11.73","","","11.73","","10.94","","","10.94","34.18"],
+			["","","Girl","","","","","","","","10.67","10.67","","","","13.29","13.29","23.96"],
+			["West Sum of Price","","","","12.06","","12.06","","12.63","","11.48","24.11","","11.44","","13.42","24.86","61.03"],
+			["West Sum of Cost","","","","11.51","","11.51","","11.73","","10.67","22.4","","10.94","","13.29","24.23","58.14"],
+			["Total Sum of Price","","","13.74","12.06","11.96","37.76","12.12","12.63","13","11.48","49.23","11.27","11.44","11.04","13.42","47.17","134.16"],
+			["Total Sum of Cost","","","13.33","11.51","11.74","36.58","11.95","11.73","12.6","10.67","46.95","10.56","10.94","10.42","13.29","45.21","128.74"]
+		],
+		"gridDropZones_2row_2col_2data_row1": [
+			["","","","Style","Units","","","","","","","","","","","","",""],
+			["","","","Fancy","","","Fancy Total","Golf","","","","Golf Total","Tee","","","","Tee Total","Grand Total"],
+			["Values","Region","Gender","10","11","12","","10","11","12","15","","10","11","12","15","",""],
+			["Sum of Price","East","Boy","","","11.96","11.96","","","13","","13","","","11.04","","11.04","36"],
+			["","","Girl","13.74","","","13.74","12.12","","","","12.12","11.27","","","","11.27","37.13"],
+			["","East Total","","13.74","","11.96","25.7","12.12","","13","","25.12","11.27","","11.04","","22.31","73.13"],
+			["","West","Boy","","12.06","","12.06","","12.63","","","12.63","","11.44","","","11.44","36.13"],
+			["","","Girl","","","","","","","","11.48","11.48","","","","13.42","13.42","24.9"],
+			["","West Total","","","12.06","","12.06","","12.63","","11.48","24.11","","11.44","","13.42","24.86","61.03"],
+			["Sum of Cost","East","Boy","","","11.74","11.74","","","12.6","","12.6","","","10.42","","10.42","34.76"],
+			["","","Girl","13.33","","","13.33","11.95","","","","11.95","10.56","","","","10.56","35.84"],
+			["","East Total","","13.33","","11.74","25.07","11.95","","12.6","","24.55","10.56","","10.42","","20.98","70.6"],
+			["","West","Boy","","11.51","","11.51","","11.73","","","11.73","","10.94","","","10.94","34.18"],
+			["","","Girl","","","","","","","","10.67","10.67","","","","13.29","13.29","23.96"],
+			["","West Total","","","11.51","","11.51","","11.73","","10.67","22.4","","10.94","","13.29","24.23","58.14"],
+			["Total Sum of Price","","","13.74","12.06","11.96","37.76","12.12","12.63","13","11.48","49.23","11.27","11.44","11.04","13.42","47.17","134.16"],
+			["Total Sum of Cost","","","13.33","11.51","11.74","36.58","11.95","11.73","12.6","10.67","46.95","10.56","10.94","10.42","13.29","45.21","128.74"]
+		],
+		"showHeaders_0row_0col_0data": [
+			["","",""],
+			["","",""],
+			["","",""],
+			["","",""],
+			["","",""],
+			["","",""],
+			["","",""],
+			["","",""],
+			["","",""],
+			["","",""],
+			["","",""],
+			["","",""],
+			["","",""],
+			["","",""],
+			["","",""],
+			["","",""],
+			["","",""],
+			["","",""]
+		],
+		"showHeaders_0row_0col_1data": [
+			["Sum of Price"],
+			["134.16"]
+		],
+		"showHeaders_0row_0col_2data_col": [
+			["Sum of Price","Sum of Cost"],
+			["134.16","128.74"]
+		],
+		"showHeaders_0row_0col_2data_row": [
+			["Sum of Price","134.16"],
+			["Sum of Cost","128.74"]
+		],
+		"showHeaders_0row_1col_0data": [
+			["Fancy","Golf","Tee","Grand Total"]
+		],
+		"showHeaders_0row_1col_1data": [
+			["","Fancy","Golf","Tee","Grand Total"],
+			["Sum of Price","37.76","49.23","47.17","134.16"]
+		],
+		"showHeaders_0row_1col_2data_col": [
+			["Fancy","","Golf","","Tee","","Total Sum of Price","Total Sum of Cost"],
+			["Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","",""],
+			["37.76","36.58","49.23","46.95","47.17","45.21","134.16","128.74"]
+		],
+		"showHeaders_0row_1col_2data_row": [
+			["","Fancy","Golf","Tee","Grand Total"],
+			["Sum of Price","37.76","49.23","47.17","134.16"],
+			["Sum of Cost","36.58","46.95","45.21","128.74"]
+		],
+		"showHeaders_0row_2col_0data": [
+			["Fancy","","","Fancy Total","Golf","","","","Golf Total","Tee","","","","Tee Total","Grand Total"],
+			["10","11","12","","10","11","12","15","","10","11","12","15","",""]
+		],
+		"showHeaders_0row_2col_1data": [
+			["","Fancy","","","Fancy Total","Golf","","","","Golf Total","Tee","","","","Tee Total","Grand Total"],
+			["","10","11","12","","10","11","12","15","","10","11","12","15","",""],
+			["Sum of Price","13.74","12.06","11.96","37.76","12.12","12.63","13","11.48","49.23","11.27","11.44","11.04","13.42","47.17","134.16"]
+		],
+		"showHeaders_0row_2col_2data_col": [
+			["Fancy","","","","","","Fancy Sum of Price","Fancy Sum of Cost","Golf","","","","","","","","Golf Sum of Price","Golf Sum of Cost","Tee","","","","","","","","Tee Sum of Price","Tee Sum of Cost","Total Sum of Price","Total Sum of Cost"],
+			["10","","11","","12","","","","10","","11","","12","","15","","","","10","","11","","12","","15","","","","",""],
+			["Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","","","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","","","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","","","",""],
+			["13.74","13.33","12.06","11.51","11.96","11.74","37.76","36.58","12.12","11.95","12.63","11.73","13","12.6","11.48","10.67","49.23","46.95","11.27","10.56","11.44","10.94","11.04","10.42","13.42","13.29","47.17","45.21","134.16","128.74"]
+		],
+		"showHeaders_0row_2col_2data_row": [
+			["","Fancy","","","Fancy Total","Golf","","","","Golf Total","Tee","","","","Tee Total","Grand Total"],
+			["","10","11","12","","10","11","12","15","","10","11","12","15","",""],
+			["Sum of Price","13.74","12.06","11.96","37.76","12.12","12.63","13","11.48","49.23","11.27","11.44","11.04","13.42","47.17","134.16"],
+			["Sum of Cost","13.33","11.51","11.74","36.58","11.95","11.73","12.6","10.67","46.95","10.56","10.94","10.42","13.29","45.21","128.74"]
+		],
+		"showHeaders_1row_0col_0data": [
+			["East"],
+			["West"],
+			["Grand Total"]
+		],
+		"showHeaders_1row_0col_1data": [
+			["","Sum of Price"],
+			["East","73.13"],
+			["West","61.03"],
+			["Grand Total","134.16"]
+		],
+		"showHeaders_1row_0col_2data_col": [
+			["","Sum of Price","Sum of Cost"],
+			["East","73.13","70.6"],
+			["West","61.03","58.14"],
+			["Grand Total","134.16","128.74"]
+		],
+		"showHeaders_1row_0col_2data_row": [
+			["East",""],
+			["Sum of Price","73.13"],
+			["Sum of Cost","70.6"],
+			["West",""],
+			["Sum of Price","61.03"],
+			["Sum of Cost","58.14"],
+			["Total Sum of Price","134.16"],
+			["Total Sum of Cost","128.74"]
+		],
+		"showHeaders_1row_1col_0data": [
+			["","Fancy","Golf","Tee","Grand Total"],
+			["East","","","",""],
+			["West","","","",""],
+			["Grand Total","","","",""]
+		],
+		"showHeaders_1row_1col_1data": [
+			["Sum of Price","","","",""],
+			["","Fancy","Golf","Tee","Grand Total"],
+			["East","25.7","25.12","22.31","73.13"],
+			["West","12.06","24.11","24.86","61.03"],
+			["Grand Total","37.76","49.23","47.17","134.16"]
+		],
+		"showHeaders_1row_1col_2data_col": [
+			["","Fancy","","Golf","","Tee","","Total Sum of Price","Total Sum of Cost"],
+			["","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","",""],
+			["East","25.7","25.07","25.12","24.55","22.31","20.98","73.13","70.6"],
+			["West","12.06","11.51","24.11","22.4","24.86","24.23","61.03","58.14"],
+			["Grand Total","37.76","36.58","49.23","46.95","47.17","45.21","134.16","128.74"]
+		],
+		"showHeaders_1row_1col_2data_row": [
+			["","Fancy","Golf","Tee","Grand Total"],
+			["East","","","",""],
+			["Sum of Price","25.7","25.12","22.31","73.13"],
+			["Sum of Cost","25.07","24.55","20.98","70.6"],
+			["West","","","",""],
+			["Sum of Price","12.06","24.11","24.86","61.03"],
+			["Sum of Cost","11.51","22.4","24.23","58.14"],
+			["Total Sum of Price","37.76","49.23","47.17","134.16"],
+			["Total Sum of Cost","36.58","46.95","45.21","128.74"]
+		],
+		"showHeaders_1row_2col_0data": [
+			["","Fancy","","","Fancy Total","Golf","","","","Golf Total","Tee","","","","Tee Total","Grand Total"],
+			["","10","11","12","","10","11","12","15","","10","11","12","15","",""],
+			["East","","","","","","","","","","","","","","",""],
+			["West","","","","","","","","","","","","","","",""],
+			["Grand Total","","","","","","","","","","","","","","",""]
+		],
+		"showHeaders_1row_2col_1data": [
+			["Sum of Price","","","","","","","","","","","","","","",""],
+			["","Fancy","","","Fancy Total","Golf","","","","Golf Total","Tee","","","","Tee Total","Grand Total"],
+			["","10","11","12","","10","11","12","15","","10","11","12","15","",""],
+			["East","13.74","","11.96","25.7","12.12","","13","","25.12","11.27","","11.04","","22.31","73.13"],
+			["West","","12.06","","12.06","","12.63","","11.48","24.11","","11.44","","13.42","24.86","61.03"],
+			["Grand Total","13.74","12.06","11.96","37.76","12.12","12.63","13","11.48","49.23","11.27","11.44","11.04","13.42","47.17","134.16"]
+		],
+		"showHeaders_1row_2col_2data_col": [
+			["","Fancy","","","","","","Fancy Sum of Price","Fancy Sum of Cost","Golf","","","","","","","","Golf Sum of Price","Golf Sum of Cost","Tee","","","","","","","","Tee Sum of Price","Tee Sum of Cost","Total Sum of Price","Total Sum of Cost"],
+			["","10","","11","","12","","","","10","","11","","12","","15","","","","10","","11","","12","","15","","","","",""],
+			["","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","","","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","","","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","","","",""],
+			["East","13.74","13.33","","","11.96","11.74","25.7","25.07","12.12","11.95","","","13","12.6","","","25.12","24.55","11.27","10.56","","","11.04","10.42","","","22.31","20.98","73.13","70.6"],
+			["West","","","12.06","11.51","","","12.06","11.51","","","12.63","11.73","","","11.48","10.67","24.11","22.4","","","11.44","10.94","","","13.42","13.29","24.86","24.23","61.03","58.14"],
+			["Grand Total","13.74","13.33","12.06","11.51","11.96","11.74","37.76","36.58","12.12","11.95","12.63","11.73","13","12.6","11.48","10.67","49.23","46.95","11.27","10.56","11.44","10.94","11.04","10.42","13.42","13.29","47.17","45.21","134.16","128.74"]
+		],
+		"showHeaders_1row_2col_2data_row": [
+			["","Fancy","","","Fancy Total","Golf","","","","Golf Total","Tee","","","","Tee Total","Grand Total"],
+			["","10","11","12","","10","11","12","15","","10","11","12","15","",""],
+			["East","","","","","","","","","","","","","","",""],
+			["Sum of Price","13.74","","11.96","25.7","12.12","","13","","25.12","11.27","","11.04","","22.31","73.13"],
+			["Sum of Cost","13.33","","11.74","25.07","11.95","","12.6","","24.55","10.56","","10.42","","20.98","70.6"],
+			["West","","","","","","","","","","","","","","",""],
+			["Sum of Price","","12.06","","12.06","","12.63","","11.48","24.11","","11.44","","13.42","24.86","61.03"],
+			["Sum of Cost","","11.51","","11.51","","11.73","","10.67","22.4","","10.94","","13.29","24.23","58.14"],
+			["Total Sum of Price","13.74","12.06","11.96","37.76","12.12","12.63","13","11.48","49.23","11.27","11.44","11.04","13.42","47.17","134.16"],
+			["Total Sum of Cost","13.33","11.51","11.74","36.58","11.95","11.73","12.6","10.67","46.95","10.56","10.94","10.42","13.29","45.21","128.74"]
+		],
+		"showHeaders_2row_0col_0data": [
+			["East"],
+			["Boy"],
+			["Girl"],
+			["West"],
+			["Boy"],
+			["Girl"],
+			["Grand Total"]
+		],
+		"showHeaders_2row_0col_1data": [
+			["","Sum of Price"],
+			["East","73.13"],
+			["Boy","36"],
+			["Girl","37.13"],
+			["West","61.03"],
+			["Boy","36.13"],
+			["Girl","24.9"],
+			["Grand Total","134.16"]
+		],
+		"showHeaders_2row_0col_2data_col": [
+			["","Sum of Price","Sum of Cost"],
+			["East","73.13","70.6"],
+			["Boy","36","34.76"],
+			["Girl","37.13","35.84"],
+			["West","61.03","58.14"],
+			["Boy","36.13","34.18"],
+			["Girl","24.9","23.96"],
+			["Grand Total","134.16","128.74"]
+		],
+		"showHeaders_2row_0col_2data_row": [
+			["East",""],
+			["Boy",""],
+			["Sum of Price","36"],
+			["Sum of Cost","34.76"],
+			["Girl",""],
+			["Sum of Price","37.13"],
+			["Sum of Cost","35.84"],
+			["East Sum of Price","73.13"],
+			["East Sum of Cost","70.6"],
+			["West",""],
+			["Boy",""],
+			["Sum of Price","36.13"],
+			["Sum of Cost","34.18"],
+			["Girl",""],
+			["Sum of Price","24.9"],
+			["Sum of Cost","23.96"],
+			["West Sum of Price","61.03"],
+			["West Sum of Cost","58.14"],
+			["Total Sum of Price","134.16"],
+			["Total Sum of Cost","128.74"]
+		],
+		"showHeaders_2row_1col_0data": [
+			["","Fancy","Golf","Tee","Grand Total"],
+			["East","","","",""],
+			["Boy","","","",""],
+			["Girl","","","",""],
+			["West","","","",""],
+			["Boy","","","",""],
+			["Girl","","","",""],
+			["Grand Total","","","",""]
+		],
+		"showHeaders_2row_1col_1data": [
+			["Sum of Price","","","",""],
+			["","Fancy","Golf","Tee","Grand Total"],
+			["East","25.7","25.12","22.31","73.13"],
+			["Boy","11.96","13","11.04","36"],
+			["Girl","13.74","12.12","11.27","37.13"],
+			["West","12.06","24.11","24.86","61.03"],
+			["Boy","12.06","12.63","11.44","36.13"],
+			["Girl","","11.48","13.42","24.9"],
+			["Grand Total","37.76","49.23","47.17","134.16"]
+		],
+		"showHeaders_2row_1col_2data_col": [
+			["","Fancy","","Golf","","Tee","","Total Sum of Price","Total Sum of Cost"],
+			["","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","",""],
+			["East","25.7","25.07","25.12","24.55","22.31","20.98","73.13","70.6"],
+			["Boy","11.96","11.74","13","12.6","11.04","10.42","36","34.76"],
+			["Girl","13.74","13.33","12.12","11.95","11.27","10.56","37.13","35.84"],
+			["West","12.06","11.51","24.11","22.4","24.86","24.23","61.03","58.14"],
+			["Boy","12.06","11.51","12.63","11.73","11.44","10.94","36.13","34.18"],
+			["Girl","","","11.48","10.67","13.42","13.29","24.9","23.96"],
+			["Grand Total","37.76","36.58","49.23","46.95","47.17","45.21","134.16","128.74"]
+		],
+		"showHeaders_2row_1col_2data_row": [
+			["","Fancy","Golf","Tee","Grand Total"],
+			["East","","","",""],
+			["Boy","","","",""],
+			["Sum of Price","11.96","13","11.04","36"],
+			["Sum of Cost","11.74","12.6","10.42","34.76"],
+			["Girl","","","",""],
+			["Sum of Price","13.74","12.12","11.27","37.13"],
+			["Sum of Cost","13.33","11.95","10.56","35.84"],
+			["East Sum of Price","25.7","25.12","22.31","73.13"],
+			["East Sum of Cost","25.07","24.55","20.98","70.6"],
+			["West","","","",""],
+			["Boy","","","",""],
+			["Sum of Price","12.06","12.63","11.44","36.13"],
+			["Sum of Cost","11.51","11.73","10.94","34.18"],
+			["Girl","","","",""],
+			["Sum of Price","","11.48","13.42","24.9"],
+			["Sum of Cost","","10.67","13.29","23.96"],
+			["West Sum of Price","12.06","24.11","24.86","61.03"],
+			["West Sum of Cost","11.51","22.4","24.23","58.14"],
+			["Total Sum of Price","37.76","49.23","47.17","134.16"],
+			["Total Sum of Cost","36.58","46.95","45.21","128.74"]
+		],
+		"showHeaders_2row_2col_0data": [
+			["","Fancy","","","Fancy Total","Golf","","","","Golf Total","Tee","","","","Tee Total","Grand Total"],
+			["","10","11","12","","10","11","12","15","","10","11","12","15","",""],
+			["East","","","","","","","","","","","","","","",""],
+			["Boy","","","","","","","","","","","","","","",""],
+			["Girl","","","","","","","","","","","","","","",""],
+			["West","","","","","","","","","","","","","","",""],
+			["Boy","","","","","","","","","","","","","","",""],
+			["Girl","","","","","","","","","","","","","","",""],
+			["Grand Total","","","","","","","","","","","","","","",""]
+		],
+		"showHeaders_2row_2col_1data": [
+			["Sum of Price","","","","","","","","","","","","","","",""],
+			["","Fancy","","","Fancy Total","Golf","","","","Golf Total","Tee","","","","Tee Total","Grand Total"],
+			["","10","11","12","","10","11","12","15","","10","11","12","15","",""],
+			["East","13.74","","11.96","25.7","12.12","","13","","25.12","11.27","","11.04","","22.31","73.13"],
+			["Boy","","","11.96","11.96","","","13","","13","","","11.04","","11.04","36"],
+			["Girl","13.74","","","13.74","12.12","","","","12.12","11.27","","","","11.27","37.13"],
+			["West","","12.06","","12.06","","12.63","","11.48","24.11","","11.44","","13.42","24.86","61.03"],
+			["Boy","","12.06","","12.06","","12.63","","","12.63","","11.44","","","11.44","36.13"],
+			["Girl","","","","","","","","11.48","11.48","","","","13.42","13.42","24.9"],
+			["Grand Total","13.74","12.06","11.96","37.76","12.12","12.63","13","11.48","49.23","11.27","11.44","11.04","13.42","47.17","134.16"]
+		],
+		"showHeaders_2row_2col_2data_col": [
+			["","Fancy","","","","","","Fancy Sum of Price","Fancy Sum of Cost","Golf","","","","","","","","Golf Sum of Price","Golf Sum of Cost","Tee","","","","","","","","Tee Sum of Price","Tee Sum of Cost","Total Sum of Price","Total Sum of Cost"],
+			["","10","","11","","12","","","","10","","11","","12","","15","","","","10","","11","","12","","15","","","","",""],
+			["","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","","","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","","","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","","","",""],
+			["East","13.74","13.33","","","11.96","11.74","25.7","25.07","12.12","11.95","","","13","12.6","","","25.12","24.55","11.27","10.56","","","11.04","10.42","","","22.31","20.98","73.13","70.6"],
+			["Boy","","","","","11.96","11.74","11.96","11.74","","","","","13","12.6","","","13","12.6","","","","","11.04","10.42","","","11.04","10.42","36","34.76"],
+			["Girl","13.74","13.33","","","","","13.74","13.33","12.12","11.95","","","","","","","12.12","11.95","11.27","10.56","","","","","","","11.27","10.56","37.13","35.84"],
+			["West","","","12.06","11.51","","","12.06","11.51","","","12.63","11.73","","","11.48","10.67","24.11","22.4","","","11.44","10.94","","","13.42","13.29","24.86","24.23","61.03","58.14"],
+			["Boy","","","12.06","11.51","","","12.06","11.51","","","12.63","11.73","","","","","12.63","11.73","","","11.44","10.94","","","","","11.44","10.94","36.13","34.18"],
+			["Girl","","","","","","","","","","","","","","","11.48","10.67","11.48","10.67","","","","","","","13.42","13.29","13.42","13.29","24.9","23.96"],
+			["Grand Total","13.74","13.33","12.06","11.51","11.96","11.74","37.76","36.58","12.12","11.95","12.63","11.73","13","12.6","11.48","10.67","49.23","46.95","11.27","10.56","11.44","10.94","11.04","10.42","13.42","13.29","47.17","45.21","134.16","128.74"]
+		],
+		"showHeaders_2row_2col_2data_col2": [
+			["","Column Labels","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""],
+			["","Fancy","","","","","","Fancy Sum of Price","Fancy Sum of Cost","Golf","","","","","","","","Golf Sum of Price","Golf Sum of Cost","Tee","","","","","","","","Tee Sum of Price","Tee Sum of Cost","Total Sum of Price","Total Sum of Cost"],
+			["","Sum of Price","","","Sum of Cost","","","","","Sum of Price","","","","Sum of Cost","","","","","","Sum of Price","","","","Sum of Cost","","","","","","",""],
+			["Row Labels","10","11","12","10","11","12","","","10","11","12","15","10","11","12","15","","","10","11","12","15","10","11","12","15","","","",""],
+			["East","13.74","","11.96","13.33","","11.74","25.7","25.07","12.12","","13","","11.95","","12.6","","25.12","24.55","11.27","","11.04","","10.56","","10.42","","22.31","20.98","73.13","70.6"],
+			["Boy","","","11.96","","","11.74","11.96","11.74","","","13","","","","12.6","","13","12.6","","","11.04","","","","10.42","","11.04","10.42","36","34.76"],
+			["Girl","13.74","","","13.33","","","13.74","13.33","12.12","","","","11.95","","","","12.12","11.95","11.27","","","","10.56","","","","11.27","10.56","37.13","35.84"],
+			["West","","12.06","","","11.51","","12.06","11.51","","12.63","","11.48","","11.73","","10.67","24.11","22.4","","11.44","","13.42","","10.94","","13.29","24.86","24.23","61.03","58.14"],
+			["Boy","","12.06","","","11.51","","12.06","11.51","","12.63","","","","11.73","","","12.63","11.73","","11.44","","","","10.94","","","11.44","10.94","36.13","34.18"],
+			["Girl","","","","","","","","","","","","11.48","","","","10.67","11.48","10.67","","","","13.42","","","","13.29","13.42","13.29","24.9","23.96"],
+			["Grand Total","13.74","12.06","11.96","13.33","11.51","11.74","37.76","36.58","12.12","12.63","13","11.48","11.95","11.73","12.6","10.67","49.23","46.95","11.27","11.44","11.04","13.42","10.56","10.94","10.42","13.29","47.17","45.21","134.16","128.74"]
+		],
+		"showHeaders_2row_2col_2data_col1": [
+			["","Sum of Price","","","","","","","","","","","","","","Sum of Cost","","","","","","","","","","","","","","Total Sum of Price","Total Sum of Cost"],
+			["","Fancy","","","Fancy Total","Golf","","","","Golf Total","Tee","","","","Tee Total","Fancy","","","Fancy Total","Golf","","","","Golf Total","Tee","","","","Tee Total","",""],
+			["","10","11","12","","10","11","12","15","","10","11","12","15","","10","11","12","","10","11","12","15","","10","11","12","15","","",""],
+			["East","13.74","","11.96","25.7","12.12","","13","","25.12","11.27","","11.04","","22.31","13.33","","11.74","25.07","11.95","","12.6","","24.55","10.56","","10.42","","20.98","73.13","70.6"],
+			["Boy","","","11.96","11.96","","","13","","13","","","11.04","","11.04","","","11.74","11.74","","","12.6","","12.6","","","10.42","","10.42","36","34.76"],
+			["Girl","13.74","","","13.74","12.12","","","","12.12","11.27","","","","11.27","13.33","","","13.33","11.95","","","","11.95","10.56","","","","10.56","37.13","35.84"],
+			["West","","12.06","","12.06","","12.63","","11.48","24.11","","11.44","","13.42","24.86","","11.51","","11.51","","11.73","","10.67","22.4","","10.94","","13.29","24.23","61.03","58.14"],
+			["Boy","","12.06","","12.06","","12.63","","","12.63","","11.44","","","11.44","","11.51","","11.51","","11.73","","","11.73","","10.94","","","10.94","36.13","34.18"],
+			["Girl","","","","","","","","11.48","11.48","","","","13.42","13.42","","","","","","","","10.67","10.67","","","","13.29","13.29","24.9","23.96"],
+			["Grand Total","13.74","12.06","11.96","37.76","12.12","12.63","13","11.48","49.23","11.27","11.44","11.04","13.42","47.17","13.33","11.51","11.74","36.58","11.95","11.73","12.6","10.67","46.95","10.56","10.94","10.42","13.29","45.21","134.16","128.74"]
+		],
+		"showHeaders_2row_2col_2data_row": [
+			["","Fancy","","","Fancy Total","Golf","","","","Golf Total","Tee","","","","Tee Total","Grand Total"],
+				["","10","11","12","","10","11","12","15","","10","11","12","15","",""],
+				["East","","","","","","","","","","","","","","",""],
+				["Boy","","","","","","","","","","","","","","",""],
+				["Sum of Price","","","11.96","11.96","","","13","","13","","","11.04","","11.04","36"],
+				["Sum of Cost","","","11.74","11.74","","","12.6","","12.6","","","10.42","","10.42","34.76"],
+				["Girl","","","","","","","","","","","","","","",""],
+				["Sum of Price","13.74","","","13.74","12.12","","","","12.12","11.27","","","","11.27","37.13"],
+				["Sum of Cost","13.33","","","13.33","11.95","","","","11.95","10.56","","","","10.56","35.84"],
+				["East Sum of Price","13.74","","11.96","25.7","12.12","","13","","25.12","11.27","","11.04","","22.31","73.13"],
+				["East Sum of Cost","13.33","","11.74","25.07","11.95","","12.6","","24.55","10.56","","10.42","","20.98","70.6"],
+				["West","","","","","","","","","","","","","","",""],
+				["Boy","","","","","","","","","","","","","","",""],
+				["Sum of Price","","12.06","","12.06","","12.63","","","12.63","","11.44","","","11.44","36.13"],
+				["Sum of Cost","","11.51","","11.51","","11.73","","","11.73","","10.94","","","10.94","34.18"],
+				["Girl","","","","","","","","","","","","","","",""],
+				["Sum of Price","","","","","","","","11.48","11.48","","","","13.42","13.42","24.9"],
+				["Sum of Cost","","","","","","","","10.67","10.67","","","","13.29","13.29","23.96"],
+				["West Sum of Price","","12.06","","12.06","","12.63","","11.48","24.11","","11.44","","13.42","24.86","61.03"],
+				["West Sum of Cost","","11.51","","11.51","","11.73","","10.67","22.4","","10.94","","13.29","24.23","58.14"],
+				["Total Sum of Price","13.74","12.06","11.96","37.76","12.12","12.63","13","11.48","49.23","11.27","11.44","11.04","13.42","47.17","134.16"],
+				["Total Sum of Cost","13.33","11.51","11.74","36.58","11.95","11.73","12.6","10.67","46.95","10.56","10.94","10.42","13.29","45.21","128.74"]
+			],
+		"showHeaders_2row_2col_2data_row2": [
+			["","Fancy","","","Fancy Total","Golf","","","","Golf Total","Tee","","","","Tee Total","Grand Total"],
+			["","10","11","12","","10","11","12","15","","10","11","12","15","",""],
+			["East","","","","","","","","","","","","","","",""],
+			["Sum of Price","","","","","","","","","","","","","","",""],
+			["Boy","","","11.96","11.96","","","13","","13","","","11.04","","11.04","36"],
+			["Girl","13.74","","","13.74","12.12","","","","12.12","11.27","","","","11.27","37.13"],
+			["Sum of Cost","","","","","","","","","","","","","","",""],
+			["Boy","","","11.74","11.74","","","12.6","","12.6","","","10.42","","10.42","34.76"],
+			["Girl","13.33","","","13.33","11.95","","","","11.95","10.56","","","","10.56","35.84"],
+			["East Sum of Price","13.74","","11.96","25.7","12.12","","13","","25.12","11.27","","11.04","","22.31","73.13"],
+			["East Sum of Cost","13.33","","11.74","25.07","11.95","","12.6","","24.55","10.56","","10.42","","20.98","70.6"],
+			["West","","","","","","","","","","","","","","",""],
+			["Sum of Price","","","","","","","","","","","","","","",""],
+			["Boy","","12.06","","12.06","","12.63","","","12.63","","11.44","","","11.44","36.13"],
+			["Girl","","","","","","","","11.48","11.48","","","","13.42","13.42","24.9"],
+			["Sum of Cost","","","","","","","","","","","","","","",""],
+			["Boy","","11.51","","11.51","","11.73","","","11.73","","10.94","","","10.94","34.18"],
+			["Girl","","","","","","","","10.67","10.67","","","","13.29","13.29","23.96"],
+			["West Sum of Price","","12.06","","12.06","","12.63","","11.48","24.11","","11.44","","13.42","24.86","61.03"],
+			["West Sum of Cost","","11.51","","11.51","","11.73","","10.67","22.4","","10.94","","13.29","24.23","58.14"],
+			["Total Sum of Price","13.74","12.06","11.96","37.76","12.12","12.63","13","11.48","49.23","11.27","11.44","11.04","13.42","47.17","134.16"],
+			["Total Sum of Cost","13.33","11.51","11.74","36.58","11.95","11.73","12.6","10.67","46.95","10.56","10.94","10.42","13.29","45.21","128.74"]
+		],
+		"showHeaders_2row_2col_2data_row1": [
+			["","Fancy","","","Fancy Total","Golf","","","","Golf Total","Tee","","","","Tee Total","Grand Total"],
+			["","10","11","12","","10","11","12","15","","10","11","12","15","",""],
+			["Sum of Price","","","","","","","","","","","","","","",""],
+			["East","13.74","","11.96","25.7","12.12","","13","","25.12","11.27","","11.04","","22.31","73.13"],
+			["Boy","","","11.96","11.96","","","13","","13","","","11.04","","11.04","36"],
+			["Girl","13.74","","","13.74","12.12","","","","12.12","11.27","","","","11.27","37.13"],
+			["West","","12.06","","12.06","","12.63","","11.48","24.11","","11.44","","13.42","24.86","61.03"],
+			["Boy","","12.06","","12.06","","12.63","","","12.63","","11.44","","","11.44","36.13"],
+			["Girl","","","","","","","","11.48","11.48","","","","13.42","13.42","24.9"],
+			["Sum of Cost","","","","","","","","","","","","","","",""],
+			["East","13.33","","11.74","25.07","11.95","","12.6","","24.55","10.56","","10.42","","20.98","70.6"],
+			["Boy","","","11.74","11.74","","","12.6","","12.6","","","10.42","","10.42","34.76"],
+			["Girl","13.33","","","13.33","11.95","","","","11.95","10.56","","","","10.56","35.84"],
+			["West","","11.51","","11.51","","11.73","","10.67","22.4","","10.94","","13.29","24.23","58.14"],
+			["Boy","","11.51","","11.51","","11.73","","","11.73","","10.94","","","10.94","34.18"],
+			["Girl","","","","","","","","10.67","10.67","","","","13.29","13.29","23.96"],
+			["Total Sum of Price","13.74","12.06","11.96","37.76","12.12","12.63","13","11.48","49.23","11.27","11.44","11.04","13.42","47.17","134.16"],
+			["Total Sum of Cost","13.33","11.51","11.74","36.58","11.95","11.73","12.6","10.67","46.95","10.56","10.94","10.42","13.29","45.21","128.74"]
+		],
 		"subtotal_compact_none": [
 				["Row Labels",""],
 				["East",""],
@@ -3057,6 +3928,134 @@ $(function() {
 			["","6","","","","","","","20","20","20"],
 			["Girl Total","","","9","6","15","","","20","20","35"],
 			["Grand Total","","3","9","6","18","7","40","20","67","85"]
+		],
+		"bug-46141-row": [
+			["Region","Gender","Style","Sum of Price"],
+			["East","Girl","Fancy","13.74"],
+			["","Girl Total","","13.74"],
+			["East Total","","","13.74"],
+			["Grand Total","","","13.74"]
+		],
+		"bug-46141-col" : [
+			["","Region","Gender","Style",""],
+			["","East","","East Total","Grand Total"],
+			["","Girl","Girl Total","",""],
+			["","Fancy","","",""],
+			["Sum of Price","13.74","13.74","13.74","13.74"]
+		],
+		"top10":[
+			["","","","Gender","Values","","","",""],
+			["","","","Boy","","Girl","","Total Sum of Price","Total Sum of Cost"],
+			["Region","Style","Units","Sum of Price","Sum of Cost","Sum of Price","Sum of Cost","",""],
+			["West","Fancy","11","12.06","11.51","","","12.06","11.51"],
+			["","Fancy Total","","12.06","11.51","","","12.06","11.51"],
+			["West Total","","","12.06","11.51","","","12.06","11.51"],
+			["Grand Total","","","12.06","11.51","","","12.06","11.51"]
+		],
+		"label1":[
+			["Units","Price","Cost","Sum of Ship date"],
+			["10","13.74","13.33","38383"],
+			["","13,74 Total","","38383"],
+			["10 Total","","","38383"],
+			["12","13","12.6","38383"],
+			["","13 Total","","38383"],
+			["12 Total","","","38383"],
+			["15","13.42","13.29","38383"],
+			["","13,42 Total","","38383"],
+			["15 Total","","","38383"],
+			["Grand Total","","","115149"]
+		],
+		"reIndexStart":[
+			["","","Region","Gender","Values","","","","","","","","","","","","",""],
+			["","","West","","","","","","","","West Sum of Price","West Sum of Cost","West Sum of Price2","West Sum of Cost2","Total Sum of Price","Total Sum of Cost","Total Sum of Price2","Total Sum of Cost2"],
+			["","","Boy","","","","Girl","","","","","","","","","","",""],
+			["Style","Units","Sum of Price","Sum of Cost","Sum of Price2","Sum of Cost2","Sum of Price","Sum of Cost","Sum of Price2","Sum of Cost2","","","","","","","",""],
+			["Golf","11","12.63","11.73","12.63","11.73","","","","","12.63","11.73","12.63","11.73","12.63","11.73","12.63","11.73"],
+			["","15","","","","","11.48","10.67","11.48","10.67","11.48","10.67","11.48","10.67","11.48","10.67","11.48","10.67"],
+			["","10","","","","","","","","","","","","","","","",""],
+			["","12","","","","","","","","","","","","","","","",""],
+			["Golf Total","","12.63","11.73","12.63","11.73","11.48","10.67","11.48","10.67","24.11","22.4","24.11","22.4","24.11","22.4","24.11","22.4"],
+			["Tee","15","","","","","13.42","13.29","13.42","13.29","13.42","13.29","13.42","13.29","13.42","13.29","13.42","13.29"],
+			["","11","11.44","10.94","11.44","10.94","","","","","11.44","10.94","11.44","10.94","11.44","10.94","11.44","10.94"],
+			["","10","","","","","","","","","","","","","","","",""],
+			["","12","","","","","","","","","","","","","","","",""],
+			["Tee Total","","11.44","10.94","11.44","10.94","13.42","13.29","13.42","13.29","24.86","24.23","24.86","24.23","24.86","24.23","24.86","24.23"],
+			["Grand Total","","24.07","22.67","24.07","22.67","24.9","23.96","24.9","23.96","48.97","46.63","48.97","46.63","48.97","46.63","48.97","46.63"]
+		],
+		"reIndexMove":[
+			["","","Region","Gender","Values","","","","","","","","","","","","",""],
+			["","","West","","","","","","","","West Sum of Cost2","West Sum of Price","West Sum of Cost","West Sum of Price2","Total Sum of Cost2","Total Sum of Price","Total Sum of Cost","Total Sum of Price2"],
+			["","","Boy","","","","Girl","","","","","","","","","","",""],
+			["Style","Units","Sum of Cost2","Sum of Price","Sum of Cost","Sum of Price2","Sum of Cost2","Sum of Price","Sum of Cost","Sum of Price2","","","","","","","",""],
+			["Golf","11","11.73","12.63","11.73","12.63","","","","","11.73","12.63","11.73","12.63","11.73","12.63","11.73","12.63"],
+			["","15","","","","","10.67","11.48","10.67","11.48","10.67","11.48","10.67","11.48","10.67","11.48","10.67","11.48"],
+			["","10","","","","","","","","","","","","","","","",""],
+			["","12","","","","","","","","","","","","","","","",""],
+			["Golf Total","","11.73","12.63","11.73","12.63","10.67","11.48","10.67","11.48","22.4","24.11","22.4","24.11","22.4","24.11","22.4","24.11"],
+			["Tee","15","","","","","13.29","13.42","13.29","13.42","13.29","13.42","13.29","13.42","13.29","13.42","13.29","13.42"],
+			["","11","10.94","11.44","10.94","11.44","","","","","10.94","11.44","10.94","11.44","10.94","11.44","10.94","11.44"],
+			["","10","","","","","","","","","","","","","","","",""],
+			["","12","","","","","","","","","","","","","","","",""],
+			["Tee Total","","10.94","11.44","10.94","11.44","13.29","13.42","13.29","13.42","24.23","24.86","24.23","24.86","24.23","24.86","24.23","24.86"],
+			["Grand Total","","22.67","24.07","22.67","24.07","23.96","24.9","23.96","24.9","46.63","48.97","46.63","48.97","46.63","48.97","46.63","48.97"]
+		],
+		"reIndexDelete":[
+			["","","Region","Gender","Values","","","","","","","","","","",""],
+			["","","East","","","","East Sum of Price","East Sum of Price2","West","","","","West Sum of Price","West Sum of Price2","Total Sum of Price","Total Sum of Price2"],
+			["","","Girl","","Boy","","","","Boy","","Girl","","","","",""],
+			["Style","Units","Sum of Price","Sum of Price2","Sum of Price","Sum of Price2","","","Sum of Price","Sum of Price2","Sum of Price","Sum of Price2","","","",""],
+			["Golf","10","12.12","12.12","","","12.12","12.12","","","","","","","12.12","12.12"],
+			["","11","","","","","","","12.63","12.63","","","12.63","12.63","12.63","12.63"],
+			["","12","","","13","13","13","13","","","","","","","13","13"],
+			["","15","","","","","","","","","11.48","11.48","11.48","11.48","11.48","11.48"],
+			["Golf Total","","12.12","12.12","13","13","25.12","25.12","12.63","12.63","11.48","11.48","24.11","24.11","49.23","49.23"],
+			["Tee","10","11.27","11.27","","","11.27","11.27","","","","","","","11.27","11.27"],
+			["","11","","","","","","","11.44","11.44","","","11.44","11.44","11.44","11.44"],
+			["","12","","","11.04","11.04","11.04","11.04","","","","","","","11.04","11.04"],
+			["","15","","","","","","","","","13.42","13.42","13.42","13.42","13.42","13.42"],
+			["Tee Total","","11.27","11.27","11.04","11.04","22.31","22.31","11.44","11.44","13.42","13.42","24.86","24.86","47.17","47.17"],
+			["Grand Total","","23.39","23.39","24.04","24.04","47.43","47.43","24.07","24.07","24.9","24.9","48.97","48.97","96.4","96.4"]
+		],
+		"reIndexAdd":[
+			["","","Region","Gender","Values","","","","","","","","","","","","","","","","","",""],
+			["","","East","","","","","","East Sum of Price","East Sum of Cost","East Sum of Price2","West","","","","","","West Sum of Price","West Sum of Cost","West Sum of Price2","Total Sum of Price","Total Sum of Cost","Total Sum of Price2"],
+			["","","Girl","","","Boy","","","","","","Boy","","","Girl","","","","","","","",""],
+			["Style","Units","Sum of Price","Sum of Cost","Sum of Price2","Sum of Price","Sum of Cost","Sum of Price2","","","","Sum of Price","Sum of Cost","Sum of Price2","Sum of Price","Sum of Cost","Sum of Price2","","","","","",""],
+			["Golf","10","12.12","11.95","12.12","","","","12.12","11.95","12.12","","","","","","","","","","12.12","11.95","12.12"],
+			["","11","","","","","","","","","","12.63","11.73","12.63","","","","12.63","11.73","12.63","12.63","11.73","12.63"],
+			["","12","","","","13","12.6","13","13","12.6","13","","","","","","","","","","13","12.6","13"],
+			["","15","","","","","","","","","","","","","11.48","10.67","11.48","11.48","10.67","11.48","11.48","10.67","11.48"],
+			["Golf Total","","12.12","11.95","12.12","13","12.6","13","25.12","24.55","25.12","12.63","11.73","12.63","11.48","10.67","11.48","24.11","22.4","24.11","49.23","46.95","49.23"],
+			["Tee","10","11.27","10.56","11.27","","","","11.27","10.56","11.27","","","","","","","","","","11.27","10.56","11.27"],
+			["","11","","","","","","","","","","11.44","10.94","11.44","","","","11.44","10.94","11.44","11.44","10.94","11.44"],
+			["","12","","","","11.04","10.42","11.04","11.04","10.42","11.04","","","","","","","","","","11.04","10.42","11.04"],
+			["","15","","","","","","","","","","","","","13.42","13.29","13.42","13.42","13.29","13.42","13.42","13.29","13.42"],
+			["Tee Total","","11.27","10.56","11.27","11.04","10.42","11.04","22.31","20.98","22.31","11.44","10.94","11.44","13.42","13.29","13.42","24.86","24.23","24.86","47.17","45.21","47.17"],
+			["Grand Total","","23.39","22.51","23.39","24.04","23.02","24.04","47.43","45.53","47.43","24.07","22.67","24.07","24.9","23.96","24.9","48.97","46.63","48.97","96.4","92.16","96.4"]
+		],
+		"numFormat" : [
+			["Units","1000.0%","","","","","","","","","","","","","","","","","","","","",""],
+			["","","","","","","","","","","","","","","","","","","","","","",""],
+			["Sum of Price","","","","Price","hasBlank","Mix","MixFormat","bool","error","","","","","","","","","","","","",""],
+			["","","","","$11.3","","","","","$11.3 Total","$12.1","","","","","$12.1 Total","$13.7","","","","","$13.7 Total","Grand Total"],
+			["","","","","(blank)","","","","(blank) Total","","11.95","","","","11.95 Total","","13.33","","","","13.33 Total","",""],
+			["","","","","qwe","","","qwe Total","","","11.95","","","11.95 Total","","","13.33","","","13.33 Total","","",""],
+			["","","","","11.27","","11.27 Total","","","","11.95","","11.95 Total","","","","13.33","","13.33 Total","","","",""],
+			["","","","","TRUE","TRUE Total","","","","","FALSE","FALSE Total","","","","","FALSE","FALSE Total","","","","",""],
+			["Text","Date","Units2","Units3","#DIV/0!","","","","","","#DIV/0!","","","","","","#DIV/0!","","","","","",""],
+			["Fancy","02/05/05","$ 10.0","1.0E+01","","","","","","","","","","","","","13.74","13.74","13.74","13.74","13.74","13.74","13.74"],
+			["",""," $10.0  Total","","","","","","","","","","","","","","13.74","13.74","13.74","13.74","13.74","13.74","13.74"],
+			["","02/05/05 Total","","","","","","","","","","","","","","","13.74","13.74","13.74","13.74","13.74","13.74","13.74"],
+			["Fancy Total","","","","","","","","","","","","","","","","13.74","13.74","13.74","13.74","13.74","13.74","13.74"],
+			["Golf","02/04/05","$ 10.0","1.0E+01","","","","","","","12.12","12.12","12.12","12.12","12.12","12.12","","","","","","","12.12"],
+			["",""," $10.0  Total","","","","","","","","12.12","12.12","12.12","12.12","12.12","12.12","","","","","","","12.12"],
+			["","02/04/05 Total","","","","","","","","","12.12","12.12","12.12","12.12","12.12","12.12","","","","","","","12.12"],
+			["Golf Total","","","","","","","","","","12.12","12.12","12.12","12.12","12.12","12.12","","","","","","","12.12"],
+			["Tee","02/03/05","$ 10.0","1.0E+01","11.27","11.27","11.27","11.27","11.27","11.27","","","","","","","","","","","","","11.27"],
+			["",""," $10.0  Total","","11.27","11.27","11.27","11.27","11.27","11.27","","","","","","","","","","","","","11.27"],
+			["","02/03/05 Total","","","11.27","11.27","11.27","11.27","11.27","11.27","","","","","","","","","","","","","11.27"],
+			["Tee Total","","","","11.27","11.27","11.27","11.27","11.27","11.27","","","","","","","","","","","","","11.27"],
+			["Grand Total","","","","11.27","11.27","11.27","11.27","11.27","11.27","12.12","12.12","12.12","12.12","12.12","12.12","13.74","13.74","13.74","13.74","13.74","13.74","37.13"]
 		]
 	};
 
@@ -3075,6 +4074,17 @@ $(function() {
 				props.asc_setCompact(false);
 				props.asc_setOutline(false);
 				break;
+			case "gridDropZones":
+				props.asc_setCompact(false);
+				props.asc_setOutline(false);
+				props.asc_setGridDropZones(true);
+				break;
+			case "showHeaders":
+				props.asc_setCompact(true);
+				props.asc_setOutline(true);
+				props.asc_setShowHeaders(false);
+				break;
+
 		}
 		pivot.asc_set(api, props);
 	}
@@ -3265,6 +4275,9 @@ $(function() {
 		test("Test: InsertBlankRow", function() {
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
+			pivot.checkPivotFieldItems(0);
+			pivot.checkPivotFieldItems(1);
+			pivot.checkPivotFieldItems(2);
 			pivot.asc_addDataField(api, 5);
 			pivot.asc_addDataField(api, 6);
 			var props = new Asc.CT_pivotTableDefinition();
@@ -3345,7 +4358,7 @@ $(function() {
 			AscCommon.History.Clear();
 			pivot = checkHistoryOperation(pivot, standards["field0"], "field0", function() {
 				var pivotField = pivot.asc_getPivotFields()[0];
-				var props = new CT_PivotField();
+				var props = new Asc.CT_PivotField();
 				props.asc_setCompact(false);
 				props.asc_setOutline(true);
 				props.asc_setSubtotalTop(false);
@@ -3355,7 +4368,7 @@ $(function() {
 
 			pivot = checkHistoryOperation(pivot, standards["field4"], "field4", function() {
 				var pivotField = pivot.asc_getPivotFields()[4];
-				var props = new CT_PivotField();
+				var props = new Asc.CT_PivotField();
 				props.asc_setName("UnitsCustom");
 				props.asc_setOutline(false);
 				props.asc_setCompact(false);
@@ -3380,21 +4393,21 @@ $(function() {
 
 			pivot = checkHistoryOperation(pivot, standards["fieldSubtotalNone"], "fieldSubtotalNone", function() {
 				var pivotField = pivot.asc_getPivotFields()[0];
-				var props = new CT_PivotField();
+				var props = new Asc.CT_PivotField();
 				props.asc_setDefaultSubtotal(false);
 				pivotField.asc_set(api, pivot, 0, props);
 			});
 
 			pivot = checkHistoryOperation(pivot, standards["fieldSubtotalAuto"], "fieldSubtotalAuto", function() {
 				var pivotField = pivot.asc_getPivotFields()[0];
-				var props = new CT_PivotField();
+				var props = new Asc.CT_PivotField();
 				props.asc_setDefaultSubtotal(true);
 				pivotField.asc_set(api, pivot, 0, props);
 			});
 
 			pivot = checkHistoryOperation(pivot, standards["fieldSubtotalCustom"], "fieldSubtotalCustom", function() {
 				var pivotField = pivot.asc_getPivotFields()[0];
-				var props = new CT_PivotField();
+				var props = new Asc.CT_PivotField();
 				props.asc_setDefaultSubtotal(true);
 				props.asc_setSubtotals([Asc.c_oAscItemType.Count]);
 				pivotField.asc_set(api, pivot, 0, props);
@@ -3402,7 +4415,7 @@ $(function() {
 
 			pivot = checkHistoryOperation(pivot, standards["fieldSubtotalAll"], "fieldSubtotalAll", function() {
 				var pivotField = pivot.asc_getPivotFields()[0];
-				var props = new CT_PivotField();
+				var props = new Asc.CT_PivotField();
 				props.asc_setDefaultSubtotal(true);
 				props.asc_setSubtotals([Asc.c_oAscItemType.Sum, Asc.c_oAscItemType.Count, Asc.c_oAscItemType.Avg,
 					Asc.c_oAscItemType.Max, Asc.c_oAscItemType.Min, Asc.c_oAscItemType.Product,
@@ -3419,16 +4432,16 @@ $(function() {
 		test("Test: data values", function() {
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
+			pivot.asc_addRowField(api, 0);
+			pivot.asc_addRowField(api, 1);
 
 			AscCommon.History.Clear();
 			pivot = checkHistoryOperation(pivot, standards["data_values1"], "values1", function() {
-				pivot.asc_addRowField(api, 0);
-				pivot.asc_addRowField(api, 1);
 				var i;
-				var types = [c_oAscDataConsolidateFunction.Count, c_oAscDataConsolidateFunction.CountNums, c_oAscDataConsolidateFunction.Min,
-					c_oAscDataConsolidateFunction.Max, c_oAscDataConsolidateFunction.Sum, c_oAscDataConsolidateFunction.Average,
-					c_oAscDataConsolidateFunction.Product, c_oAscDataConsolidateFunction.StdDev, c_oAscDataConsolidateFunction.StdDevp,
-					c_oAscDataConsolidateFunction.Var, c_oAscDataConsolidateFunction.Varp];
+				var types = [Asc.c_oAscDataConsolidateFunction.Count, Asc.c_oAscDataConsolidateFunction.CountNums, Asc.c_oAscDataConsolidateFunction.Min,
+					Asc.c_oAscDataConsolidateFunction.Max, Asc.c_oAscDataConsolidateFunction.Sum, Asc.c_oAscDataConsolidateFunction.Average,
+					Asc.c_oAscDataConsolidateFunction.Product, Asc.c_oAscDataConsolidateFunction.StdDev, Asc.c_oAscDataConsolidateFunction.StdDevp,
+					Asc.c_oAscDataConsolidateFunction.Var, Asc.c_oAscDataConsolidateFunction.Varp];
 				for (i = 0; i < types.length; ++i) {
 					pivot.asc_addDataField(api, 5);
 				}
@@ -3486,6 +4499,20 @@ $(function() {
 		test("Test: header rename", function() {
 			var pivot = api._asc_insertPivot(wb, dataRefHeader, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
+			pivot.checkPivotFieldItems(0);
+			pivot.checkPivotFieldItems(1);
+			pivot.checkPivotFieldItems(2);
+			pivot.checkPivotFieldItems(3);
+			pivot.checkPivotFieldItems(4);
+			pivot.checkPivotFieldItems(5);
+			pivot.checkPivotFieldItems(6);
+			pivot.checkPivotFieldItems(7);
+			pivot.checkPivotFieldItems(8);
+			pivot.checkPivotFieldItems(9);
+			pivot.checkPivotFieldItems(10);
+			pivot.checkPivotFieldItems(11);
+			pivot.checkPivotFieldItems(12);
+			pivot.checkPivotFieldItems(13);
 
 			AscCommon.History.Clear();
 			pivot = checkHistoryOperation(pivot, standards["headerRename"], "header rename", function(){
@@ -3516,6 +4543,13 @@ $(function() {
 		test("Test: Field Manipulation", function() {
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
+			pivot.checkPivotFieldItems(0);
+			pivot.checkPivotFieldItems(1);
+			pivot.checkPivotFieldItems(2);
+			pivot.checkPivotFieldItems(3);
+			pivot.checkPivotFieldItems(4);
+			pivot.checkPivotFieldItems(5);
+			pivot.checkPivotFieldItems(6);
 
 			AscCommon.History.Clear();
 			pivot = checkHistoryOperation(pivot, standards["addField"], "addField", function(){
@@ -3683,19 +4717,19 @@ $(function() {
 			pivot.asc_addDataField(api, 6);
 
 			pivotField = pivot.asc_getPivotFields()[0];
-			props = new CT_PivotField();
+			props = new Asc.CT_PivotField();
 			props.asc_setCompact(false);
 			props.asc_setOutline(false);
 			props.asc_setSubtotals([Asc.c_oAscItemType.Avg]);
 			pivotField.asc_set(api, pivot, 0, props);
 
 			pivotField = pivot.asc_getPivotFields()[2];
-			props = new CT_PivotField();
+			props = new Asc.CT_PivotField();
 			props.asc_setDefaultSubtotal(false);
 			pivotField.asc_set(api, pivot, 2, props);
 
 			pivotField = pivot.asc_getPivotFields()[4];
-			props = new CT_PivotField();
+			props = new Asc.CT_PivotField();
 			props.asc_setName("RenamedUnits");
 			pivotField.asc_set(api, pivot, 4, props);
 
@@ -3733,6 +4767,8 @@ $(function() {
 		test("Test: data source", function() {
 			var pivot = api._asc_insertPivot(wb, dataRefTable, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
+			pivot.checkPivotFieldItems(0);
+			pivot.checkPivotFieldItems(2);
 
 			AscCommon.History.Clear();
 			pivot = checkHistoryOperation(pivot, standards["compact_1row_1col_1data"], "table", function(){
@@ -3786,6 +4822,11 @@ $(function() {
 			var pivot = api._asc_insertPivot(wb, dataRefFilters, ws, reportRange);
 			setPivotLayout(pivot, 'tabular');
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
+			pivot.asc_addRowField(api, 1);
+			pivot.asc_addRowField(api, 3);
+			pivot.asc_addColField(api, 0);
+			pivot.asc_addColField(api, 4);
+			pivot.asc_addDataField(api, 5);
 
 			var getNewFilter = function(val){
 				var pivotFilterObj = new Asc.PivotFilterObj();
@@ -3811,19 +4852,13 @@ $(function() {
 
 			AscCommon.History.Clear();
 			pivot = checkHistoryOperation(pivot, standards["valueFilterOrder1"], "order1", function(){
-				pivot.asc_addRowField(api, 1);
-				pivot.asc_addRowField(api, 3);
-				pivot.asc_addColField(api, 0);
-				pivot.asc_addColField(api, 4);
-				pivot.asc_addDataField(api, 5);
-
 				pivot.filterByFieldIndex(api, getNewFilter(1), 4, true);
 				pivot.filterByFieldIndex(api, getNewFilter(2), 3, true);
 				pivot.filterByFieldIndex(api, getNewFilter(18), 0, true);
 				pivot.filterByFieldIndex(api, getNewFilter(20), 1, true);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["valueFilterOrder2"], "order1", function(){
+			pivot = checkHistoryOperation(pivot, standards["valueFilterOrder2"], "order2", function(){
 				pivot.asc_removeFilters(api);
 
 				pivot.filterByFieldIndex(api, getNewFilter(20), 1, true);
@@ -3836,10 +4871,255 @@ $(function() {
 		});
 	}
 
+	function testFiltersValueFilterBug46141() {
+		test("Test: value filter bug 46141", function() {
+			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
+			setPivotLayout(pivot, 'tabular');
+			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
+			pivot.asc_addRowField(api, 0);
+			pivot.asc_addRowField(api, 1);
+			pivot.asc_addRowField(api, 2);
+			pivot.asc_addDataField(api, 5);
+
+			var getNewFilter = function(val){
+				var pivotFilterObj = new Asc.PivotFilterObj();
+				pivotFilterObj.asc_setDataFieldIndexSorting(0);
+				pivotFilterObj.asc_setDataFieldIndexFilter(1);
+				pivotFilterObj.asc_setIsPageFilter(false);
+				pivotFilterObj.asc_setIsMultipleItemSelectionAllowed(false);
+				pivotFilterObj.asc_setIsTop10Sum(false);
+				var filterObj = new Asc.AutoFilterObj();
+				filterObj.asc_setFilter(new Asc.CustomFilters());
+				filterObj.asc_setType(Asc.c_oAscAutoFilterTypes.CustomFilters);
+				var customFilter = filterObj.asc_getFilter();
+				customFilter.asc_setCustomFilters([new Asc.CustomFilter()]);
+				customFilter.asc_setAnd(true);
+				var customFilters = customFilter.asc_getCustomFilters();
+				customFilters[0].asc_setOperator(Asc.c_oAscCustomAutoFilter.isGreaterThan);
+				customFilters[0].asc_setVal(val);
+				var autoFilterObject = new Asc.AutoFiltersOptions();
+				autoFilterObject.pivotObj = pivotFilterObj;
+				autoFilterObject.filter = filterObj;
+				return autoFilterObject;
+			};
+
+			AscCommon.History.Clear();
+			pivot = checkHistoryOperation(pivot, standards["bug-46141-row"], "rows", function(){
+				pivot.filterByFieldIndex(api, getNewFilter(13.5), 2, true);
+			});
+
+			pivot = checkHistoryOperation(pivot, standards["bug-46141-col"], "cols", function(){
+				pivot.asc_moveToColField(api, 0);
+				pivot.asc_moveToColField(api, 1);
+				pivot.asc_moveToColField(api, 2);
+			});
+
+			ws.deletePivotTables(new AscCommonExcel.MultiplyRange(pivot.getReportRanges()).getUnionRange());
+		});
+	}
+
+
+	function testFiltersTop10() {
+		test("Test: filters top10", function() {
+			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
+			setPivotLayout(pivot, 'tabular');
+			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
+			pivot.asc_addRowField(api, 0);
+			pivot.asc_addRowField(api, 2);
+			pivot.asc_addRowField(api, 4);
+			pivot.asc_addColField(api, 1);
+			pivot.asc_addDataField(api, 5);
+			pivot.asc_addDataField(api, 6);
+
+			var getNewFilter = function(top, isPercent, val, isTop10Sum, dataIndex){
+				var pivotFilterObj = new Asc.PivotFilterObj();
+				pivotFilterObj.asc_setDataFieldIndexSorting(0);
+				pivotFilterObj.asc_setDataFieldIndexFilter(dataIndex);
+				pivotFilterObj.asc_setIsPageFilter(false);
+				pivotFilterObj.asc_setIsMultipleItemSelectionAllowed(false);
+				pivotFilterObj.asc_setIsTop10Sum(isTop10Sum);
+				var filterObj = new Asc.AutoFilterObj();
+				filterObj.asc_setFilter(new Asc.Top10());
+				filterObj.asc_setType(Asc.c_oAscAutoFilterTypes.Top10);
+				var top10Filter = filterObj.asc_getFilter();
+				top10Filter.asc_setTop(top);
+				top10Filter.asc_setPercent(isPercent);
+				top10Filter.asc_setVal(val);
+				var autoFilterObject = new Asc.AutoFiltersOptions();
+				autoFilterObject.pivotObj = pivotFilterObj;
+				autoFilterObject.filter = filterObj;
+				return autoFilterObject;
+			};
+
+			AscCommon.History.Clear();
+			pivot = checkHistoryOperation(pivot, standards["top10"], "top10", function(){
+				pivot.filterByFieldIndex(api, getNewFilter(true, false, 1, false, 1), 4, true);
+				pivot.filterByFieldIndex(api, getNewFilter(false, true, 2, false, 2), 2, true);
+				pivot.filterByFieldIndex(api, getNewFilter(true, false, 12, true, 1), 0, true);
+			});
+
+			ws.deletePivotTables(new AscCommonExcel.MultiplyRange(pivot.getReportRanges()).getUnionRange());
+		});
+	}
+
+	function testFiltersLabel() {
+		test("Test: filters label", function() {
+			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
+			setPivotLayout(pivot, 'tabular');
+			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
+			pivot.asc_addRowField(api, 4);
+			pivot.asc_addRowField(api, 5);
+			pivot.asc_addRowField(api, 6);
+			pivot.asc_addDataField(api, 3);
+
+			var getNewFilter = function(type1, val1, type2, val3){
+				var pivotFilterObj = new Asc.PivotFilterObj();
+				pivotFilterObj.asc_setDataFieldIndexSorting(0);
+				pivotFilterObj.asc_setDataFieldIndexFilter(1);
+				pivotFilterObj.asc_setIsPageFilter(false);
+				pivotFilterObj.asc_setIsMultipleItemSelectionAllowed(false);
+				pivotFilterObj.asc_setIsTop10Sum(false);
+				var filterObj = new Asc.AutoFilterObj();
+				filterObj.asc_setFilter(new Asc.CustomFilters());
+				filterObj.asc_setType(Asc.c_oAscAutoFilterTypes.CustomFilters);
+				var filter = filterObj.asc_getFilter();
+				filter.asc_setAnd(true);
+				var customFilters = [];
+				var customFilter;
+				customFilter= new Asc.CustomFilter();
+				customFilter.asc_setOperator(type1);
+				customFilter.asc_setVal(val1);
+				customFilters.push(customFilter);
+				if (undefined !== type2) {
+					customFilter = new Asc.CustomFilter();
+					customFilter.asc_setOperator(type2);
+					customFilter.asc_setVal(val2);
+					customFilters.push(customFilter);
+				}
+				filter.asc_setCustomFilters(customFilters);
+				var autoFilterObject = new Asc.AutoFiltersOptions();
+				autoFilterObject.pivotObj = pivotFilterObj;
+				autoFilterObject.filter = filterObj;
+				return autoFilterObject;
+			};
+
+			AscCommon.History.Clear();
+			pivot = checkHistoryOperation(pivot, standards["label1"], "label1", function(){
+				pivot.filterByFieldIndex(api, getNewFilter(Asc.c_oAscCustomAutoFilter.isGreaterThan, 10.6), 6, true);
+				pivot.filterByFieldIndex(api, getNewFilter(Asc.c_oAscCustomAutoFilter.contains, 3), 5, true);
+				pivot.filterByFieldIndex(api, getNewFilter(Asc.c_oAscCustomAutoFilter.doesNotEqual, 11), 4, true);
+			});
+
+			ws.deletePivotTables(new AscCommonExcel.MultiplyRange(pivot.getReportRanges()).getUnionRange());
+		});
+	}
+
+	function testFiltersReIndex() {
+		test("Test: filters reIndex", function() {
+			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
+			setPivotLayout(pivot, 'tabular');
+			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
+			pivot.asc_addColField(api, 0);
+			pivot.asc_addColField(api, 1);
+			pivot.asc_addRowField(api, 2);
+			pivot.asc_addRowField(api, 4);
+			pivot.asc_addDataField(api, 5);
+			pivot.asc_addDataField(api, 6);
+			pivot.asc_addDataField(api, 5);
+			pivot.asc_addDataField(api, 6);
+
+			var getNewFilter = function(val, iMeasureFld){
+				var pivotFilterObj = new Asc.PivotFilterObj();
+				pivotFilterObj.asc_setDataFieldIndexSorting(0);
+				pivotFilterObj.asc_setDataFieldIndexFilter(iMeasureFld);
+				pivotFilterObj.asc_setIsPageFilter(false);
+				pivotFilterObj.asc_setIsMultipleItemSelectionAllowed(false);
+				pivotFilterObj.asc_setIsTop10Sum(false);
+				var filterObj = new Asc.AutoFilterObj();
+				filterObj.asc_setFilter(new Asc.CustomFilters());
+				filterObj.asc_setType(Asc.c_oAscAutoFilterTypes.CustomFilters);
+				var customFilter = filterObj.asc_getFilter();
+				customFilter.asc_setCustomFilters([new Asc.CustomFilter()]);
+				customFilter.asc_setAnd(true);
+				var customFilters = customFilter.asc_getCustomFilters();
+				customFilters[0].asc_setOperator(Asc.c_oAscCustomAutoFilter.isGreaterThan);
+				customFilters[0].asc_setVal(val);
+				var autoFilterObject = new Asc.AutoFiltersOptions();
+				autoFilterObject.pivotObj = pivotFilterObj;
+				autoFilterObject.filter = filterObj;
+				return autoFilterObject;
+			};
+
+			AscCommon.History.Clear();
+
+			pivot = checkHistoryOperation(pivot, standards["reIndexStart"], "reIndexStart", function(){
+				pivot.filterByFieldIndex(api, getNewFilter("40", 1), 2, true);
+				pivot.filterByFieldIndex(api, getNewFilter("46", 4), 0, true);
+				pivot.sortByFieldIndex(api, 4, Asc.c_oAscSortOptions.Descending, 1);
+				pivot.sortByFieldIndex(api, 1, Asc.c_oAscSortOptions.Ascending, 2);
+			});
+
+			pivot = checkHistoryOperation(pivot, standards["reIndexMove"], "reIndexMove", function(){
+				pivot.asc_moveDataField(api, 3, 0);
+			});
+
+			pivot = checkHistoryOperation(pivot, standards["reIndexDelete"], "reIndexDelete", function(){
+				pivot.asc_removeField(api, 6);
+			});
+
+			pivot = checkHistoryOperation(pivot, standards["reIndexAdd"], "reIndexAdd", function(){
+				pivot.asc_addDataField(api, 6, 1);
+			});
+
+			ws.deletePivotTables(new AscCommonExcel.MultiplyRange(pivot.getReportRanges()).getUnionRange());
+		});
+	}
+
+	function testNumFormat() {
+		test("Test: num format", function() {
+			var pivot = api._asc_insertPivot(wb, dataRefNumFormat, ws, reportRange);
+			setPivotLayout(pivot, 'tabular');
+			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
+			pivot.asc_addRowField(api, 0);
+			pivot.asc_addRowField(api, 1);
+			pivot.asc_addPageField(api, 2);
+			pivot.asc_addRowField(api, 3);
+			pivot.asc_addRowField(api, 4);
+			pivot.asc_addColField(api, 5);
+			pivot.asc_addDataField(api, 5);
+			pivot.asc_addColField(api, 6);
+			pivot.asc_addColField(api, 7);
+			pivot.asc_addColField(api, 8);
+			pivot.asc_addColField(api, 9);
+			pivot.asc_addColField(api, 10);
+
+			var getNewFilter = function(fld, index) {
+				var autoFilterObject = new Asc.AutoFiltersOptions();
+				pivot.fillAutoFiltersOptions(autoFilterObject, fld);
+				for (var i = 0; i < autoFilterObject.values.length; ++i) {
+					autoFilterObject.values[i].visible = i == index;
+				}
+				autoFilterObject.filter.type = Asc.c_oAscAutoFilterTypes.Filters;
+				return autoFilterObject;
+			};
+
+			AscCommon.History.Clear();
+			pivot = checkHistoryOperation(pivot, standards["numFormat"], "numFormat", function(){
+				pivot.filterByFieldIndex(api, getNewFilter(2, 0), 2, true);
+			});
+
+			ws.deletePivotTables(new AscCommonExcel.MultiplyRange(pivot.getReportRanges()).getUnionRange());
+		});
+	}
+
 	function testPivotMisc() {
 		test("Test: misc", function() {
 			var pivot = api._asc_insertPivot(wb, dataRef1Row, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
+			pivot.pivotTableDefinitionX14 = new Asc.CT_pivotTableDefinitionX14();
+			pivot.checkPivotFieldItems(0);
+			pivot.checkPivotFieldItems(1);
+			pivot.checkPivotFieldItems(2);
 
 			AscCommon.History.Clear();
 			pivot = checkHistoryOperation(pivot, standards["compact_0row_0col_0data"], "misc", function(){
@@ -3862,7 +5142,7 @@ $(function() {
 				props.asc_setColGrandTotals(false);
 				pivot.asc_set(api, props);
 				var pivotField = pivot.asc_getPivotFields()[1];
-				props = new CT_PivotField();
+				props = new Asc.CT_PivotField();
 				props.asc_setDefaultSubtotal(false);
 				pivotField.asc_set(api, pivot, 1, props);
 			});
@@ -3886,6 +5166,10 @@ $(function() {
 		testLayout("outline");
 
 		testLayout("tabular");
+
+		testLayout("gridDropZones");
+
+		testLayout("showHeaders");
 
 		testLayoutValues("compact");
 
@@ -3918,6 +5202,16 @@ $(function() {
 		testDataSource();
 
 		testFiltersValueFilter();
+
+		testFiltersValueFilterBug46141();
+
+		testFiltersTop10();
+
+		testFiltersLabel();
+
+		testFiltersReIndex();
+
+		testNumFormat();
 
 		testPivotMisc();
 	}

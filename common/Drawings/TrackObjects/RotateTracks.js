@@ -53,8 +53,7 @@ function OverlayObject(geometry, extX, extY, brush, pen, transform )
     this.extY = extY;
 
     var _brush, _pen;
-    if((!brush || !brush.fill || brush.fill.type === c_oAscFill.FILL_TYPE_NOFILL) &&
-        (!pen || !pen.Fill || !pen.Fill || !pen.Fill.fill || pen.Fill.fill.type === c_oAscFill.FILL_TYPE_NOFILL || pen.w === 0))
+    if((!brush || !brush.isVisible()) && (!pen || !pen.isVisible()))
     {
         var penBrush = AscFormat.CreatePenBrushForChartTrack();
         _brush = penBrush.brush;
@@ -163,10 +162,7 @@ function OverlayObject(geometry, extX, extY, brush, pen, transform )
     this.checkDrawGeometry = function()
     {
         return this.geometry &&
-            ( (this.pen && this.pen.Fill && this.pen.Fill.fill
-                && this.pen.Fill.fill.type != c_oAscFill.FILL_TYPE_NOFILL && this.pen.Fill.fill.type != c_oAscFill.FILL_TYPE_NONE)
-                || (this.brush && this.brush.fill && this.brush.fill
-                && this.brush.fill.type != c_oAscFill.FILL_TYPE_NOFILL && this.brush.fill.type != c_oAscFill.FILL_TYPE_NONE) );
+            ((this.pen && this.pen.isVisible()) || (this.brush && this.brush.isVisible()));
     };
 
 
@@ -642,12 +638,12 @@ function Chart3dAdjustTrack(oChartSpace, numHandle, startX, startY)
         var nPointsCount = 0;
         if(oChartObj.getObjectType() === AscDFH.historyitem_type_PieChart || oChartObj.getObjectType() === AscDFH.historyitem_type_PieChart){
             if(oChartObj.series[0]){
-                nPointsCount = AscFormat.getPtsFromSeries(oChartObj.series[0]).length;
+                nPointsCount = oChartObj.series[0].getNumPts().length;
             }
         }
         else{
             for(var i = 0; i < oChartObj.series.length; ++i){
-                nPointsCount += AscFormat.getPtsFromSeries(oChartObj.series[i]).length;
+                nPointsCount += oChartObj.series[i].getNumPts().length;
             }
         }
 

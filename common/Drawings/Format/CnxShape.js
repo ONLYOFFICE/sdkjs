@@ -557,6 +557,53 @@
     CConnectionShape.prototype.getEndCxnIdx = function(){
         return this.nvSpPr.nvUniSpPr.endCnxIdx;
     };
+    CConnectionShape.prototype.assignConnection = function(oObjectsMap){
+        var oPr = this.nvSpPr.nvUniSpPr;
+        var oStartSp, oEndSp;
+        var oCnx;
+        var aCnx;
+        if(AscFormat.isRealNumber(oPr.stCnxId)){
+            oStartSp = oObjectsMap[oPr.stCnxId];
+            if(AscCommon.isRealObject(oStartSp)){
+                aCnx = oStartSp.getGeom().cnxLstInfo;
+                if(aCnx) {
+                    oCnx = aCnx[oPr.stCnxIdx];
+                }
+                if(oCnx) {
+                    oPr.stCnxId = oStartSp.Id;
+                }
+                else {
+                    oPr.stCnxId = null;
+                    oPr.stCnxIdx = null;
+                }
+            }
+            else{
+                oPr.stCnxId = null;
+                oPr.stCnxIdx = null;
+            }
+        }
+        if(AscFormat.isRealNumber(oPr.endCnxId)){
+            oEndSp = oObjectsMap[oPr.endCnxId];
+            if(AscCommon.isRealObject(oEndSp)){
+                aCnx = oEndSp.getGeom().cnxLstInfo;
+                if(aCnx) {
+                    oCnx = aCnx[oPr.endCnxIdx];
+                }
+                if(oCnx) {
+                    oPr.endCnxId = oEndSp.Id;
+                }
+                else {
+                    oPr.endCnxId = null;
+                    oPr.endCnxIdx = null;
+                }
+            }
+            else{
+                oPr.endCnxId = null;
+                oPr.endCnxIdx = null;
+            }
+        }
+        this.nvSpPr.setUniSpPr(oPr.copy());
+    };
 
     CConnectionShape.prototype.calculateTransform = function (bMove) {
         var oBeginDrawing = null;

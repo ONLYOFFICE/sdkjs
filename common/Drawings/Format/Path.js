@@ -1139,7 +1139,7 @@ Path.prototype = {
     checkByPolygon: function (oPolygon, bFlag, XLimit, ContentHeight, dKoeff, oBounds) {
     },
 
-    transform: function (oTransform) {
+    transform: function (oTransform, dKoeff) {
     }
 };
 
@@ -1561,6 +1561,9 @@ Path.prototype = {
 
         drawTracks: function(drawingDocument, transform)
         {
+
+            var oApi = Asc.editor || editor;
+            var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
             var i = 0;
             var len = this.PathMemory.ArrPathCommand[this.startPos];
 
@@ -1573,20 +1576,20 @@ Path.prototype = {
                 {
                     case moveTo:
                     {
-                        drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, transform, path[this.startPos + i+2] - dDist, path[this.startPos + i + 3] - dDist, 2*dDist, 2*dDist, false, false);
+                        drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, transform, path[this.startPos + i+2] - dDist, path[this.startPos + i + 3] - dDist, 2*dDist, 2*dDist, false, false, undefined, isDrawHandles);
                         i+=3;
                         break;
                     }
                     case lineTo:
                     {
-                        drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, transform, path[this.startPos + i+2] - dDist, path[this.startPos + i + 3] - dDist, 2*dDist, 2*dDist, false, false);
+                        drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, transform, path[this.startPos + i+2] - dDist, path[this.startPos + i + 3] - dDist, 2*dDist, 2*dDist, false, false, undefined, isDrawHandles);
                         i+=3;
                         break;
                     }
                     case bezier3:
                     {
                       //  drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, transform, path[this.startPos + i+2] - dDist, path[this.startPos + i + 3] - dDist, 2*dDist, 2*dDist, false, false);
-                        drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, transform, path[this.startPos + i+4] - dDist, path[this.startPos + i + 5] - dDist, 2*dDist, 2*dDist, false, false);
+                        drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, transform, path[this.startPos + i+4] - dDist, path[this.startPos + i + 5] - dDist, 2*dDist, 2*dDist, false, false, undefined, isDrawHandles);
                         i+=5;
                         break;
                     }
@@ -1594,7 +1597,7 @@ Path.prototype = {
                     {
                       //  drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, transform, path[this.startPos + i+2] - dDist, path[this.startPos + i + 3] - dDist, 2*dDist,2*dDist, false, false);
                        // drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, transform, path[this.startPos + i+4] - dDist, path[this.startPos + i + 5] - dDist, 2*dDist,2*dDist, false, false); i+=7;
-                        drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, transform, path[this.startPos + i+6] - dDist, path[this.startPos + i + 7] - dDist, 2*dDist,2*dDist, false, false); i+=7;
+                        drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, transform, path[this.startPos + i+6] - dDist, path[this.startPos + i + 7] - dDist, 2*dDist,2*dDist, false, false, undefined, isDrawHandles); i+=7;
                         break;
                     }
                     case arcTo:
@@ -1610,8 +1613,8 @@ Path.prototype = {
                             {
                                 case AscFormat.moveTo:
                                 {
-                                    lastX =cur_arc_to_command.X; 
-                                    lastY =cur_arc_to_command.Y; 
+                                    lastX =cur_arc_to_command.X;
+                                    lastY =cur_arc_to_command.Y;
                                   //  drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, transform, cur_arc_to_command.X - dDist, cur_arc_to_command.Y - dDist,  2*dDist, 2*dDist, false, false);
                                     break;
                                 }
@@ -1626,7 +1629,7 @@ Path.prototype = {
                                 }
                             }
                         }
-                        drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, transform, lastX - dDist, lastY - dDist,  2*dDist, 2*dDist, false, false);
+                        drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, transform, lastX - dDist, lastY - dDist,  2*dDist, 2*dDist, false, false, undefined, isDrawHandles);
                         i+=7;
                         break;
                     }
@@ -1768,7 +1771,7 @@ Path.prototype = {
             }
 
         },
-        
+
         isSmartLine : function()
         {
             var i = 0;
@@ -2178,7 +2181,7 @@ Path.prototype = {
             oRet.y = y0t;
             return oRet;
         },
-        
+
         checkBetweenPolygons: function (oBoundsController, oPolygonWrapper1, oPolygonWrapper2) {
 
             var path = this.ArrPathCommand;
@@ -2202,10 +2205,10 @@ Path.prototype = {
                     }
                     case bezier3:
                     {
-                      
+
                         p = CheckPointByPaths(path[this.startPos + i + 2], path[this.startPos + i + 3], dWidth, dHeight, dMinX, dMinY, oPolygonWrapper1, oPolygonWrapper2);
                         path[this.startPos + i + 2] = p.x;
-                        path[this.startPos + i + 3] = p.y; 
+                        path[this.startPos + i + 3] = p.y;
                         p = CheckPointByPaths(path[this.startPos + i + 4], path[this.startPos + i + 5], dWidth, dHeight, dMinX, dMinY, oPolygonWrapper1, oPolygonWrapper2);
                         path[this.startPos + i + 4] = p.x;
                         path[this.startPos + i + 5] = p.y;
@@ -2300,7 +2303,7 @@ Path.prototype = {
             }
         },
 
-        transform: function (oTransform) {
+        transform: function (oTransform, dKoeff) {
             var path = this.ArrPathCommand;
             var i = 0;
             var len = this.PathMemory.ArrPathCommand[this.startPos];
@@ -2313,8 +2316,8 @@ Path.prototype = {
                     case moveTo:
                     case lineTo:
                     {
-                        x = oTransform.TransformPointX(path[this.startPos + i + 2], path[this.startPos + i + 3]);
-                        y = oTransform.TransformPointY(path[this.startPos + i + 2], path[this.startPos + i + 3]);
+                        x = oTransform.TransformPointX(path[this.startPos + i + 2]*dKoeff, path[this.startPos + i + 3]*dKoeff);
+                        y = oTransform.TransformPointY(path[this.startPos + i + 2]*dKoeff, path[this.startPos + i + 3]*dKoeff);
                         path[this.startPos + i + 2] = x;
                         path[this.startPos + i + 3] = y;
                         i+=3;
@@ -2322,12 +2325,12 @@ Path.prototype = {
                     }
                     case bezier3:
                     {
-                        x = oTransform.TransformPointX(path[this.startPos + i + 2], path[this.startPos + i + 3]);
-                        y = oTransform.TransformPointY(path[this.startPos + i + 2], path[this.startPos + i + 3]);
+                        x = oTransform.TransformPointX(path[this.startPos + i + 2]*dKoeff, path[this.startPos + i + 3]*dKoeff);
+                        y = oTransform.TransformPointY(path[this.startPos + i + 2]*dKoeff, path[this.startPos + i + 3]*dKoeff);
                         path[this.startPos + i + 2] = x;
                         path[this.startPos + i + 3] = y;
-                        x = oTransform.TransformPointX(path[this.startPos + i + 4], path[this.startPos + i + 5]);
-                        y = oTransform.TransformPointY(path[this.startPos + i + 4], path[this.startPos + i + 5]);
+                        x = oTransform.TransformPointX(path[this.startPos + i + 4]*dKoeff, path[this.startPos + i + 5]*dKoeff);
+                        y = oTransform.TransformPointY(path[this.startPos + i + 4]*dKoeff, path[this.startPos + i + 5]*dKoeff);
                         path[this.startPos + i + 4] = x;
                         path[this.startPos + i + 5] = y;
                         i+=5;
@@ -2335,16 +2338,16 @@ Path.prototype = {
                     }
                     case bezier4:
                     {
-                        x = oTransform.TransformPointX(path[this.startPos + i + 2], path[this.startPos + i + 3]);
-                        y = oTransform.TransformPointY(path[this.startPos + i + 2], path[this.startPos + i + 3]);
+                        x = oTransform.TransformPointX(path[this.startPos + i + 2]*dKoeff, path[this.startPos + i + 3]*dKoeff);
+                        y = oTransform.TransformPointY(path[this.startPos + i + 2]*dKoeff, path[this.startPos + i + 3]*dKoeff);
                         path[this.startPos + i + 2] = x;
                         path[this.startPos + i + 3] = y;
-                        x = oTransform.TransformPointX(path[this.startPos + i + 4], path[this.startPos + i + 5]);
-                        y = oTransform.TransformPointY(path[this.startPos + i + 4], path[this.startPos + i + 5]);
+                        x = oTransform.TransformPointX(path[this.startPos + i + 4]*dKoeff, path[this.startPos + i + 5]*dKoeff);
+                        y = oTransform.TransformPointY(path[this.startPos + i + 4]*dKoeff, path[this.startPos + i + 5]*dKoeff);
                         path[this.startPos + i + 4] = x;
                         path[this.startPos + i + 5] = y;
-                        x = oTransform.TransformPointX(path[this.startPos + i + 6], path[this.startPos + i + 7]);
-                        y = oTransform.TransformPointY(path[this.startPos + i + 6], path[this.startPos + i + 7]);
+                        x = oTransform.TransformPointX(path[this.startPos + i + 6]*dKoeff, path[this.startPos + i + 7]*dKoeff);
+                        y = oTransform.TransformPointY(path[this.startPos + i + 6]*dKoeff, path[this.startPos + i + 7]*dKoeff);
                         path[this.startPos + i + 6] = x;
                         path[this.startPos + i + 7] = y;
                         i+=7;

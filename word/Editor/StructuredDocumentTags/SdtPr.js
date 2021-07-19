@@ -45,18 +45,6 @@ function CSdtPr()
 	this.Label = undefined;
 	this.Lock  = undefined;
 
-	// section property
-	this.SectionBreak = undefined;
-	this.PageSizeW	  = undefined;
-	this.PageSizeH	  = undefined;
-	this.Orient 	  = undefined;
-
-	// Margins 
-	this.MarginT	 		 = undefined;
-	this.MarginL	 		 = undefined;
-	this.MarginR	 		 = undefined;
-	this.MarginB	 		 = undefined;
-
 	this.DocPartObj = {
 		Gallery  : undefined,
 		Category : undefined,
@@ -473,11 +461,20 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 	if (undefined !== this.Appearance)
 		oContentControl.SetAppearance(this.Appearance);
 
+	// Тут может быть как CDocumentColor так и Asc.asc_CColor
 	if (undefined !== this.Color)
-		oContentControl.SetColor(this.Color);
+	{
+		if (!this.Color)
+			oContentControl.SetColor(undefined);
+		else
+			oContentControl.SetColor(new CDocumentColor(this.Color.r, this.Color.g, this.Color.b));
+	}
 
 	if (undefined !== this.CheckBoxPr)
 	{
+		if (undefined !== this.CheckBoxPr.GroupKey && undefined !== this.CheckBoxPr.Checked)
+			this.CheckBoxPr.Checked = false;
+
 		oContentControl.SetCheckBoxPr(this.CheckBoxPr);
 		oContentControl.private_UpdateCheckBoxContent();
 	}
@@ -694,6 +691,62 @@ CSdtGlobalSettings.prototype.Read_FromBinary = function(oReader)
 };
 
 /**
+ * Класс с глобальными настройками для всех специальных форм
+ */
+function CSpecialFormsGlobalSettings()
+{
+	this.Highlight = new AscCommonWord.CDocumentColor(201, 200, 255);
+}
+CSpecialFormsGlobalSettings.prototype.Copy = function()
+{
+	var oSettings = new CSpecialFormsGlobalSettings();
+
+	if (this.Highlight)
+		oSettings.Highlight = this.Highlight.Copy();
+
+	return oSettings;
+};
+/**
+ * Проверяем все ли параметры выставлены по умолчанию
+ * @returns {boolean}
+ */
+CSpecialFormsGlobalSettings.prototype.IsDefault = function()
+{
+	return (undefined === this.Highlight);
+};
+CSpecialFormsGlobalSettings.prototype.Write_ToBinary = function(oWriter)
+{
+	var nStartPos = oWriter.GetCurPosition();
+	oWriter.Skip(4);
+	var nFlags = 0;
+
+	if (undefined !== this.Highlight)
+	{
+		this.Highlight.WriteToBinary(oWriter);
+		nFlags |= 1;
+	}
+
+	var nEndPos = oWriter.GetCurPosition();
+	oWriter.Seek(nStartPos);
+	oWriter.WriteLong(nFlags);
+	oWriter.Seek(nEndPos);
+};
+CSpecialFormsGlobalSettings.prototype.Read_FromBinary = function(oReader)
+{
+	var nFlags = oReader.GetLong();
+
+	if (nFlags & 1)
+	{
+		this.Highlight = new AscCommonWord.CDocumentColor();
+		this.Highlight.ReadFromBinary(oReader);
+	}
+	else
+	{
+		this.Highlight = undefined;
+	}
+};
+
+/**
  * Класс с настройками чекбокса
  * @constructor
  */
@@ -768,6 +821,14 @@ CSdtCheckBoxPr.prototype.Write_ToBinary = function(oWriter)
 CSdtCheckBoxPr.prototype.Read_FromBinary = function(oReader)
 {
 	this.ReadFromBinary(oReader);
+};
+CSdtCheckBoxPr.prototype.SetChecked = function(isChecked)
+{
+	this.Checked = isChecked;
+};
+CSdtCheckBoxPr.prototype.GetChecked = function()
+{
+	return this.Checked;
 };
 CSdtCheckBoxPr.prototype.GetCheckedSymbol = function()
 {
@@ -954,6 +1015,16 @@ CSdtComboBoxPr.prototype.GetItemValue = function(nIndex)
 
 	return this.ListItems[nIndex].Value;
 };
+CSdtComboBoxPr.prototype.FindByText = function(sValue)
+{
+	for (var nIndex = 0, nCount = this.ListItems.length; nIndex < nCount; ++nIndex)
+	{
+		if (this.ListItems[nIndex].DisplayText === sValue)
+			return nIndex;
+	}
+
+	return -1;
+};
 
 /**
  * Класс с настройками для даты
@@ -1083,13 +1154,14 @@ CSdtDatePickerPr.prototype.GetFormatsExamples = function()
  * Клосс с настройками для текстовой формы
  * @constructor
  */
-function CSdtTextFormPr(nMax, isComb, nWidth, nSymbol, sFont)
+function CSdtTextFormPr(nMax, isComb, nWidth, nSymbol, sFont, oCombBorder)
 {
 	this.MaxCharacters         = undefined !== nMax ? nMax : -1;
 	this.Comb                  = undefined !== isComb ? isComb : false;
 	this.Width                 = nWidth;
 	this.CombPlaceholderSymbol = nSymbol;
 	this.CombPlaceholderFont   = sFont;
+	this.CombBorder            = undefined !== oCombBorder ? oCombBorder.Copy() : undefined;
 }
 CSdtTextFormPr.prototype.Copy = function()
 {
@@ -1100,12 +1172,19 @@ CSdtTextFormPr.prototype.Copy = function()
 	oText.Width                 = this.Width;
 	oText.CombPlaceholderSymbol = this.CombPlaceholderSymbol;
 	oText.CombPlaceholderFont   = this.CombPlaceholderFont;
+	oText.CombBorder            = this.CombBorder ? this.CombBorder.Copy() : undefined;
 
 	return oText;
 };
 CSdtTextFormPr.prototype.IsEqual = function(oOther)
 {
-	return (this.MaxCharacters === oOther.MaxCharacters && this.Comb === oOther.Comb && this.Width === oOther.Width && this.CombPlaceholderSymbol === oOther.CombPlaceholderSymbol && this.CombPlaceholderFont === oOther.CombPlaceholderFont);
+	return (this.MaxCharacters === oOther.MaxCharacters
+		&& this.Comb === oOther.Comb
+		&& this.Width === oOther.Width
+		&& this.CombPlaceholderSymbol === oOther.CombPlaceholderSymbol
+		&& this.CombPlaceholderFont === oOther.CombPlaceholderFont
+		&& ((!this.CombBorder && !oOther) || (this.CombBorder && this.CombBorder.IsEqual(oOther)))
+	);
 };
 CSdtTextFormPr.prototype.WriteToBinary = function(oWriter)
 {
@@ -1132,6 +1211,16 @@ CSdtTextFormPr.prototype.WriteToBinary = function(oWriter)
 	{
 		oWriter.WriteBool(false);
 	}
+
+	if (undefined !== this.CombBorder)
+	{
+		oWriter.WriteBool(true);
+		this.CombBorder.WriteToBinary(oWriter);
+	}
+	else
+	{
+		oWriter.WriteBool(false);
+	}
 };
 CSdtTextFormPr.prototype.ReadFromBinary = function(oReader)
 {
@@ -1144,6 +1233,12 @@ CSdtTextFormPr.prototype.ReadFromBinary = function(oReader)
 
 	if (oReader.GetBool())
 		this.CombPlaceholderFont = oReader.GetString2();
+
+	if (oReader.GetBool())
+	{
+		this.CombBorder = new CDocumentBorder();
+		this.CombBorder.ReadFromBinary(oReader);
+	}
 };
 CSdtTextFormPr.prototype.Write_ToBinary = function(oWriter)
 {
@@ -1192,6 +1287,33 @@ CSdtTextFormPr.prototype.GetPlaceHolderFont = function()
 CSdtTextFormPr.prototype.SetPlaceHolderFont = function(sFont)
 {
 	this.CombPlaceholderFont = sFont;
+};
+CSdtTextFormPr.prototype.GetCombBorder = function()
+{
+	return this.CombBorder;
+};
+CSdtTextFormPr.prototype.GetAscCombBorder = function()
+{
+	if (!this.CombBorder)
+		return undefined;
+
+	return (new Asc.asc_CTextBorder(this.CombBorder));
+};
+CSdtTextFormPr.prototype.SetAscCombBorder = function(oAscBorder)
+{
+	if (!oAscBorder)
+	{
+		this.CombBorder = undefined;
+	}
+	else
+	{
+		this.CombBorder = new CDocumentBorder();
+		this.CombBorder.Set_FromObject(oAscBorder);
+	}
+};
+CSdtTextFormPr.prototype.IsComb = function()
+{
+	return !!(this.Comb && undefined !== this.MaxCharacters && this.MaxCharacters <= 1000);
 };
 
 function CSdtFormPr(sKey, sLabel, sHelpText, isRequired)
@@ -1242,7 +1364,7 @@ CSdtFormPr.prototype.WriteToBinary = function(oWriter)
 
 	if (undefined !== this.Required)
 	{
-		Writer.WriteBool(this.Required);
+		oWriter.WriteBool(this.Required);
 		nFlags |= 8;
 	}
 
@@ -1351,6 +1473,8 @@ CContentControlPr.prototype['put_FormPr']             = CContentControlPr.protot
 window['AscCommon'].CSdtCheckBoxPr    = CSdtCheckBoxPr;
 window['AscCommon']['CSdtCheckBoxPr'] = CSdtCheckBoxPr;
 
+CSdtCheckBoxPr.prototype['get_Checked']         = CSdtCheckBoxPr.prototype.GetChecked;
+CSdtCheckBoxPr.prototype['put_Checked']         = CSdtCheckBoxPr.prototype.SetChecked;
 CSdtCheckBoxPr.prototype['get_CheckedSymbol']   = CSdtCheckBoxPr.prototype.GetCheckedSymbol;
 CSdtCheckBoxPr.prototype['put_CheckedSymbol']   = CSdtCheckBoxPr.prototype.SetCheckedSymbol;
 CSdtCheckBoxPr.prototype['get_CheckedFont']     = CSdtCheckBoxPr.prototype.GetCheckedFont;
@@ -1411,3 +1535,5 @@ CSdtTextFormPr.prototype['get_PlaceHolderSymbol'] = CSdtTextFormPr.prototype.Get
 CSdtTextFormPr.prototype['put_PlaceHolderSymbol'] = CSdtTextFormPr.prototype.SetPlaceHolderSymbol;
 CSdtTextFormPr.prototype['get_PlaceHolderFont']   = CSdtTextFormPr.prototype.GetPlaceHolderFont;
 CSdtTextFormPr.prototype['put_PlaceHolderFont']   = CSdtTextFormPr.prototype.SetPlaceHolderFont;
+CSdtTextFormPr.prototype['get_CombBorder']        = CSdtTextFormPr.prototype.GetAscCombBorder;
+CSdtTextFormPr.prototype['put_CombBorder']        = CSdtTextFormPr.prototype.SetAscCombBorder;

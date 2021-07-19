@@ -362,7 +362,7 @@ CCollaborativeEditing.prototype.OnEnd_Load_Objects = function()
     editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.ApplyChanges);
 };
 
-CCollaborativeEditing.prototype.OnEnd_CheckLock = function()
+CCollaborativeEditing.prototype.OnEnd_CheckLock = function(DontLockInFastMode)
 {
     var aIds = [];
 
@@ -376,6 +376,10 @@ CCollaborativeEditing.prototype.OnEnd_CheckLock = function()
         else if ( false !== oItem )
             aIds.push( oItem );
     }
+
+
+    if (true === DontLockInFastMode && true === this.Is_Fast())
+        return false;
 
     if ( aIds.length > 0 )
     {
@@ -751,8 +755,8 @@ CCollaborativeEditing.prototype.Update_ForeignCursorLabelPosition = function(Use
 };
 
 
-CCollaborativeEditing.prototype.private_RecalculateDocument = function(oRecalcData){
-    this.m_oLogicDocument.Recalculate(oRecalcData);
+CCollaborativeEditing.prototype.private_RecalculateDocument = function(arrChanges){
+    this.m_oLogicDocument.Recalculate(AscCommon.History.Get_RecalcData(null, arrChanges));
 };
 
 

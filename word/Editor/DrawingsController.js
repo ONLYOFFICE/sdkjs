@@ -82,9 +82,9 @@ CDrawingsController.prototype.CanUpdateTarget = function()
 {
 	return true;
 };
-CDrawingsController.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY)
+CDrawingsController.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY, isUpdateTarget)
 {
-	return this.DrawingObjects.recalculateCurPos(bUpdateX, bUpdateY);
+	return this.DrawingObjects.recalculateCurPos(bUpdateX, bUpdateY, isUpdateTarget);
 };
 CDrawingsController.prototype.GetCurPage = function()
 {
@@ -423,7 +423,7 @@ CDrawingsController.prototype.GetCurPosXY = function()
 };
 CDrawingsController.prototype.GetSelectedText = function(bClearText, oPr)
 {
-	return this.DrawingObjects.getSelectedText(bClearText, oPr);
+	return this.DrawingObjects.GetSelectedText(bClearText, oPr);
 };
 CDrawingsController.prototype.GetCurrentParagraph = function(bIgnoreSelection, arrSelectedParagraphs, oPr)
 {

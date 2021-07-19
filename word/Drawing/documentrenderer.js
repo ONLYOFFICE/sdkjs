@@ -1522,7 +1522,9 @@ CDocMeta.prototype =
                 case 122:
                 {
                     // begin/end command
-                    s.Skip(4);
+                    var _command_type = s.GetLong();
+                    if (33 == _command_type)
+                        s.Skip(4);
                     break;
                 }
                 default:
@@ -1681,7 +1683,9 @@ CDocMeta.prototype =
                 case 122:
                 {
                     // begin/end command
-                    s.Skip(4);
+                    var _command_type = s.GetLong();
+                    if (33 == _command_type)
+                        s.Skip(4);
                     break;
                 }
                 default:
@@ -1987,25 +1991,26 @@ CDocMeta.prototype =
 
                     // â ïðèíöèïå êîä îäèí è òîò æå. Íî ïî÷òè âñåãäà ëèíèè ãîðèçîíòàëüíûå.
                     // à äëÿ ãîðèçîíòàëüíîé ëèíèè âñå ìîæíî ïîîïòèìèçèðîâàòü
+
+                    var rPR = AscCommon.AscBrowser.retinaPixelRatio;
                     if (_lineEx == 1 && _lineEy == 0)
                     {
-                        var _x = parseInt(xDst + dKoefX * (_lineX + off1)) - 0.5;
-                        var _y = parseInt(yDst + dKoefY * (_lineY - _lineAscent)) - 0.5;
-
-                        var _w = parseInt(dKoefX * (off2 - off1)) + 1;
-                        var _h = parseInt(dKoefY * (_lineAscent + _lineDescent)) + 1;
+                        var _x = (rPR * (xDst + dKoefX * (_lineX + off1))) >> 0;
+                        var _r = (rPR * (xDst + dKoefX * (_lineX + off2))) >> 0;
+                        var _y = (rPR * (yDst + dKoefY * (_lineY - _lineAscent))) >> 0;
+                        var _b = (rPR * (yDst + dKoefY * (_lineY + _lineDescent))) >> 0;
 
                         if (_x < overlay.min_x)
                             overlay.min_x = _x;
-                        if ((_x + _w) > overlay.max_x)
-                            overlay.max_x = _x + _w;
+                        if (_r > overlay.max_x)
+                            overlay.max_x = _r;
 
                         if (_y < overlay.min_y)
                             overlay.min_y = _y;
-                        if ((_y + _h) > overlay.max_y)
-                            overlay.max_y = _y + _h;
+                        if (_b > overlay.max_y)
+                            overlay.max_y = _b;
 
-                        overlay.m_oContext.rect(_x,_y,_w,_h);
+                        overlay.m_oContext.rect(_x,_y,_r-_x,_b-_y);
                     }
                     else
                     {
@@ -2028,15 +2033,15 @@ CDocMeta.prototype =
                         var _x4 = _x3 + ortX * (_lineAscent + _lineDescent);
                         var _y4 = _y3 + ortY * (_lineAscent + _lineDescent);
 
-                        _x1 = xDst + dKoefX * _x1;
-                        _x2 = xDst + dKoefX * _x2;
-                        _x3 = xDst + dKoefX * _x3;
-                        _x4 = xDst + dKoefX * _x4;
+                        _x1 = rPR * (xDst + dKoefX * _x1);
+                        _x2 = rPR * (xDst + dKoefX * _x2);
+                        _x3 = rPR * (xDst + dKoefX * _x3);
+                        _x4 = rPR * (xDst + dKoefX * _x4);
 
-                        _y1 = yDst + dKoefY * _y1;
-                        _y2 = yDst + dKoefY * _y2;
-                        _y3 = yDst + dKoefY * _y3;
-                        _y4 = yDst + dKoefY * _y4;
+                        _y1 = rPR * (yDst + dKoefY * _y1);
+                        _y2 = rPR * (yDst + dKoefY * _y2);
+                        _y3 = rPR * (yDst + dKoefY * _y3);
+                        _y4 = rPR * (yDst + dKoefY * _y4);
 
                         overlay.CheckPoint(_x1, _y1);
                         overlay.CheckPoint(_x2, _y2);
@@ -2072,7 +2077,9 @@ CDocMeta.prototype =
                 case 122:
                 {
                     // begin/end command
-                    s.Skip(4);
+                    var _command_type = s.GetLong();
+                    if (33 == _command_type)
+                        s.Skip(4);
                     break;
                 }
                 default:
@@ -2410,7 +2417,9 @@ CDocMeta.prototype =
                 case 122:
                 {
                     // begin/end command
-                    s.Skip(4);
+                    var _command_type = s.GetLong();
+                    if (33 == _command_type)
+                        s.Skip(4);
                     break;
                 }
                 default:
@@ -2614,7 +2623,9 @@ CDocMeta.prototype =
                 case 122:
                 {
                     // begin/end command
-                    s.Skip(4);
+                    var _command_type = s.GetLong();
+                    if (33 == _command_type)
+                        s.Skip(4);
                     break;
                 }
                 default:
@@ -2888,7 +2899,9 @@ CDocMeta.prototype =
                 case 122:
                 {
                     // begin/end command
-                    s.Skip(4);
+                    var _command_type = s.GetLong();
+                    if (33 == _command_type)
+                        s.Skip(4);
                     break;
                 }
                 default:
@@ -3100,7 +3113,9 @@ CDocMeta.prototype =
                 case 122:
                 {
                     // begin/end command
-                    s.Skip(4);
+                    var _command_type = s.GetLong();
+                    if (33 == _command_type)
+                        s.Skip(4);
                     break;
                 }
                 default:
@@ -3331,7 +3346,9 @@ CDocMeta.prototype =
                 case 122:
                 {
                     // begin/end command
-                    s.Skip(4);
+                    var _command_type = s.GetLong();
+                    if (33 == _command_type)
+                        s.Skip(4);
                     break;
                 }
                 default:

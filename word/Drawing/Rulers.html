@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script type="text/javascript" src="../../develop/sdkjs/word/scripts.js"></script>
+    <script type="text/javascript" src="../../vendor/jquery.min.js"></script>
+    <link type="text/css" href="../../vendor/qunit/qunit-1.11.0.css" rel="stylesheet" media="screen"/>
+    <script type="text/javascript" src="../../vendor/qunit/qunit-1.11.0.js"></script>
+    <script type="text/javascript" src="../../vendor/xregexp-all-min.js"></script>
+    <script type="text/javascript">
+        window.sdk_scripts.forEach(function (item) {
+            document.write('<script type="text/javascript" src="' + item.substring('../'.length) + '"><\/script>');
+        });
+    </script>
+    <script>
+        function tableOn() {
+            if (document.getElementById("id_panel_top")) document.getElementById("id_panel_top").remove();
+            if (document.getElementById("id_panel_left")) document.getElementById("id_panel_left").remove();
+
+            var checkbox = document.getElementById('table_ruler');
+            if(checkbox.checked === true) {
+            createRulers(3)
+            } else {
+             createRulers(1)
+            }
+        };
+        function columnOn() {
+            if (document.getElementById("id_panel_top")) document.getElementById("id_panel_top").remove();
+            if (document.getElementById("id_panel_left")) document.getElementById("id_panel_left").remove();
+
+            var checkbox = document.getElementById('column_ruler');
+            if(checkbox.checked === true) {
+                createRulers(2);
+            } else {
+                createRulers(1);
+            }
+        };
+    </script>
+</head>
+
+<body>
+<div style="width: 350px; height: 100px; padding-left: 500px; padding-top: 200px; z-index: 100" id="menu">
+    <input type="checkbox" id="table_ruler"  onchange="tableOn();"> Ruler table mode
+    <input type="checkbox" id="column_ruler"  onchange="columnOn();"> Column table mode
+</div>
+
+<div id="id_main"></div>
+<script type="text/javascript">
+    function createRulers(MODE) {
+        var divHorRuler = document.createElement('div');
+        divHorRuler.id = "id_panel_top";
+        divHorRuler.className = "block_elem";
+        divHorRuler.style.position = "absolute"
+        divHorRuler.style.display = "block";
+        divHorRuler.style.left = "0px";
+        divHorRuler.style.top = "0px";
+        divHorRuler.style.width = "794px";
+        divHorRuler.style.height = "26px";
+        divHorRuler.innerHTML = `<canvas id="id_hor_ruler" class="block_elem" width="${Math.round(794 * window.devicePixelRatio)}" height="${Math.round(26 * window.devicePixelRatio)}"
+            style="left: 0px; top: 0px; width: 100%; height: 100%;"></canvas>`;
+        document.body.appendChild(divHorRuler);
+
+        var divVertRuler = document.createElement('div');
+        divVertRuler.id = "id_panel_left";
+        divVertRuler.style.position = "absolute"
+        divVertRuler.className = "block_elem";
+        divVertRuler.style.display = "block";
+        divVertRuler.style.left = "0px";
+        divVertRuler.style.top = "0px";
+        divVertRuler.style.width = "19px";
+        divVertRuler.style.height = "794px";
+        divVertRuler.innerHTML = `<canvas id="id_vert_ruler" class="block_elem" width="${Math.round(19 * window.devicePixelRatio)}" height="${Math.round(821 * window.devicePixelRatio)}"
+            style="left: 0px; top: 0px; width: 100%; height: 100%;"></canvas>`;
+        document.body.appendChild(divVertRuler);
+
+        var horRuler = new CHorRuler();
+        var verRuler = new CVerRuler();
+        horRuler.m_oWordControl = new CEditorPage({isMobileVersion: false});
+        verRuler.m_oWordControl = horRuler.m_oWordControl;
+        horRuler.m_oWordControl.m_oMainContent = CreateControlContainer("id_main");
+        horRuler.m_oWordControl.m_o = CreateControlContainer("id_main");
+        horRuler.m_oWordControl.update;
+
+        var cachedPage = {
+            width_mm: 210.0086111111111,
+            height_mm: 297.00361111111107,
+            margin_left: 30.00375,
+            margin_top: 20.002499999999998,
+            margin_right: 195.01555555555555,
+            margin_bottom: 277.0011111111111
+        };
+        switch (MODE) {
+            case 1: {
+                horRuler.CurrentObjectType = RULER_OBJECT_TYPE_PARAGRAPH;
+                break;
+            }
+            case 2: {
+                horRuler.CurrentObjectType = RULER_OBJECT_TYPE_COLUMNS;
+                if (typeof Object.prototype.CreateDuplicate !== 'function') {
+                    Object.defineProperty(Object.prototype, 'CreateDuplicate', {
+                        value: function () {
+                            return true;
+                        },
+                    });
+                }
+                break;
+            }
+            case 3: {
+                horRuler.CurrentObjectType = RULER_OBJECT_TYPE_TABLE;
+                break;
+            }
+        }
+        horRuler.m_oTableMarkup = {
+            Cols: [
+                27.49902,
+                28.096940000000004,
+                26.901110000000003,
+                27.49902,
+                27.49902,
+                27.49902
+            ],
+            Margins: [
+                {Left: 1.9049999999999998, Right: 1.9049999999999998},
+                {Left: 1.9049999999999998, Right: 1.9049999999999998},
+                {Left: 1.9049999999999998, Right: 1.9049999999999998},
+                {Left: 1.9049999999999998, Right: 1.9049999999999998},
+                {Left: 1.9049999999999998, Right: 1.9049999999999998},
+                {Left: 1.9049999999999998, Right: 1.9049999999999998}
+            ],
+            X: 29.404027777777777
+        }
+        horRuler.m_oColumnMarkup = {
+            Cols: [],
+            CurCol: 0,
+            EqualWidth: true,
+            Num: 3,
+            R: 195.01555555555555,
+            Space: 12.5,
+            X: 30.00375
+        }
+
+        horRuler.CreateBackground(cachedPage);
+        verRuler.CreateBackground(cachedPage);
+        var idHorRuler = document.getElementById('id_hor_ruler');
+        var idVertRuler = document.getElementById('id_vert_ruler');
+
+        horRuler.CheckCanvas();
+        verRuler.CheckCanvas();
+        horRuler.BlitToMain(0, 0, idHorRuler);
+        verRuler.BlitToMain(0, 0, idVertRuler);
+
+        idHorRuler.addEventListener('mousemove', e => {
+            horRuler.OnMouseMove(26, 0, e);
+        });
+        idHorRuler.addEventListener('mousedown', e => {
+            horRuler.OnMouseDown(26, 0, e);
+        });
+    }
+
+    createRulers();
+    window.onresize = function() {
+        if (document.getElementById("id_panel_top")) document.getElementById("id_panel_top").remove();
+        if (document.getElementById("id_panel_left")) document.getElementById("id_panel_left").remove();
+        document.getElementById('table_ruler').checked = false;
+        document.getElementById('column_ruler').checked = false;
+        createRulers(1);
+    }
+
+</script>
+</body>
+
+</html>

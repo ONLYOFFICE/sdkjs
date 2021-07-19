@@ -44,7 +44,7 @@ var c_oAscNumFormatType = Asc.c_oAscNumFormatType;
 
 var gc_sFormatDecimalPoint = ".";
 var gc_sFormatThousandSeparator = ",";
-
+var LocaleFormatSymbol ={};
 var numFormat_Text = 0;
 var numFormat_TextPlaceholder = 1;
 var numFormat_Bracket = 2;
@@ -75,6 +75,7 @@ var numFormat_General = 103;
 var numFormat_DigitDrop = 104;
 var numFormat_Plus = 105;
 var numFormat_Minus = 106;
+var numFormat_ThousandText = 107;
 
 var FormatStates = {Decimal: 1, Frac: 2, Scientific: 3, Slash: 4, SlashFrac: 5};
 var SignType = {Negative: 1, Null:2, Positive: 3};
@@ -289,6 +290,327 @@ function FormatObjBracket(sData)
     };
     this.parse(sData);
 }
+function ParseLocalFormatSymbol(Name)
+{
+	LocaleFormatSymbol['Y'] = 'Y';
+	LocaleFormatSymbol['y'] = 'y';
+	LocaleFormatSymbol['M'] = 'M';
+	LocaleFormatSymbol['m'] = 'm';
+	LocaleFormatSymbol['D'] = 'D';
+	LocaleFormatSymbol['d'] = 'd';
+	LocaleFormatSymbol['H'] = 'H';
+	LocaleFormatSymbol['h'] = 'h';
+	LocaleFormatSymbol['Minute'] = 'M';
+	LocaleFormatSymbol['minute'] = 'm';
+	LocaleFormatSymbol['S'] = 'S';
+	LocaleFormatSymbol['s'] = 's';
+	LocaleFormatSymbol['general'] = 'General';
+	switch (Name) {
+//___________________________________________________fi________________________________________________________________
+		case("fi"):
+		case("smn"):
+		case("sms"):
+		case("fi-FI"):
+		case("se-FI"):
+		case("smn-FI"):
+		case("sms-FI"):
+		case("sv-AX"):
+		case("sv-FI"):
+		case("en-FI"): {
+			LocaleFormatSymbol['Y'] = 'V';
+			LocaleFormatSymbol['y'] = 'v';
+			LocaleFormatSymbol['M'] = 'K';
+			LocaleFormatSymbol['m'] = 'k';
+			LocaleFormatSymbol['D'] = 'P';
+			LocaleFormatSymbol['d'] = 'p';
+			LocaleFormatSymbol['H'] = 'T';
+			LocaleFormatSymbol['h'] = 't';
+			LocaleFormatSymbol['general'] = 'Yleinen';
+			break;
+		}
+//___________________________________________________fy________________________________________________________________
+		case("fy"):
+		case("nds"):
+		case("nl"):
+		case("en-NL"):
+		case("fy-NL"):
+		case("nds-NL"):
+		case("nl-BE"):
+		case("nl-NL"): {
+			LocaleFormatSymbol['Y'] = 'J';
+			LocaleFormatSymbol['y'] = 'j';
+			LocaleFormatSymbol['H'] = 'U';
+			LocaleFormatSymbol['h'] = 'u';
+			LocaleFormatSymbol['general'] = 'Standaard';
+			break;
+		}
+//___________________________________________________ES________________________________________________________________
+		case("ast"):
+		case("eu"):
+		case("gl"):
+		case("ast-ES"):
+		case("ca-ES"):
+		case("es-ES"):
+		case("es-MX"):
+		case("eu-ES"):
+		case("gl-ES"):
+		case("ca-ES-valencia"): {
+			LocaleFormatSymbol['Y'] = 'A';
+			LocaleFormatSymbol['y'] = 'a';
+			LocaleFormatSymbol['general'] = 'Estándar';
+			break;
+		}
+		case("pt-BR"):
+		case("es-BR"): {
+			LocaleFormatSymbol['Y'] = 'A';
+			LocaleFormatSymbol['y'] = 'a';
+			LocaleFormatSymbol['general'] = 'Geral';
+			break;
+		}
+		case("pt"):
+		case("pt-PT"): {
+			LocaleFormatSymbol['Y'] = 'A';
+			LocaleFormatSymbol['y'] = 'a';
+			LocaleFormatSymbol['general'] = 'Éstandar';
+			break;
+		}
+//____________________________________________________ru_______________________________________________________________
+		case("ba"):
+		case("ce"):
+		case("cu"):
+		case("kk"):
+		case("os"):
+		case("rm"):
+		case("ru"):
+		case("sah"):
+		case("tt"):
+		case("wae"):
+		case("ba-RU"):
+		case("ce-RU"):
+		case("cu-RU"):
+		case("de-BE"):
+		case("en-BE"):
+		case("en-CH"):
+		case("kk-KZ"):
+		case("os-RU"):
+		case("pt-CH"):
+		case("rm-CH"):
+		case("ru-KZ"):
+		case("ru-RU"):
+		case("sah-RU"):
+		case("tt-RU"):
+		case("wae-CH"): {
+			LocaleFormatSymbol['Y'] = 'Г';
+			LocaleFormatSymbol['y'] = 'г';
+			LocaleFormatSymbol['M'] = 'М';
+			LocaleFormatSymbol['m'] = 'М';
+			LocaleFormatSymbol['D'] = 'Д';
+			LocaleFormatSymbol['d'] = 'д';
+			LocaleFormatSymbol['H'] = 'Ч';
+			LocaleFormatSymbol['h'] = 'ч';
+			LocaleFormatSymbol['Minute'] = 'М';
+			LocaleFormatSymbol['minute'] = 'м'
+			LocaleFormatSymbol['S'] = 'C';
+			LocaleFormatSymbol['s'] = 'с';
+			LocaleFormatSymbol['general'] = 'Основной';
+			break;
+		}
+//____________________________________________________fr_______________________________________________________________
+		case("oc"):
+		case("br"):
+		case("co"):
+		case("fr"):
+		case("br-FR"):
+		case("ca-FR"):
+		case("co-FR"):
+		case("fr-BE"):
+		case("fr-CA"):
+		case("fr-CH"):
+		case("fr-FR"):
+		case("gsw-FR"): {
+			LocaleFormatSymbol['Y'] = 'A';
+			LocaleFormatSymbol['y'] = 'a';
+			LocaleFormatSymbol['D'] = 'J';
+			LocaleFormatSymbol['d'] = 'j';
+			LocaleFormatSymbol['general'] = 'Standard';
+			break;
+		}
+//____________________________________________________de_______________________________________________________________
+		case("de"):
+		case("ksh"):
+		case("dsb"):
+		case("hsb"):
+		case("de-AT"):
+		case("de-CH"):
+		case("de-DE"):
+		case("dsb-DE"):
+		case("en-AT"):
+		case("en-DE"):
+		case("hsb-DE"):
+		case("ksh-DE"):
+		case("nds-DE"): {
+			LocaleFormatSymbol['Y'] = 'J';
+			LocaleFormatSymbol['y'] = 'j';
+			LocaleFormatSymbol['M'] = 'M';
+			LocaleFormatSymbol['m'] = 'M';
+			LocaleFormatSymbol['Minute'] = 'M';
+			LocaleFormatSymbol['minute'] = 'm';
+			LocaleFormatSymbol['D'] = 'T';
+			LocaleFormatSymbol['d'] = 't';
+			LocaleFormatSymbol['general'] = 'Standard';
+			break;
+		}
+//____________________________________________________it_______________________________________________________________
+		case("ca"):
+		case("it"):
+		case("fur"):
+		case("ca-IT"):
+		case("de-IT"):
+		case("fur-IT"):
+		case("it-CH"):
+		case("it-IT"):
+		case("it-VA"): {
+			LocaleFormatSymbol['Y'] = 'A';
+			LocaleFormatSymbol['y'] = 'a';
+			LocaleFormatSymbol['D'] = 'G';
+			LocaleFormatSymbol['d'] = 'g';
+			LocaleFormatSymbol['general'] = 'Standard';
+			break;
+		}
+//____________________________________________________da_______________________________________________________________
+		case("sv"):
+		case("en-SE"):
+		case("se-SE"):
+		case("sma-SE"):
+		case("smj-SE"):
+		case("sv-SE"): {
+			LocaleFormatSymbol['Y'] = 'Å';
+			LocaleFormatSymbol['y'] = 'å';
+			LocaleFormatSymbol['m'] = 'M'
+			LocaleFormatSymbol['M'] = 'M';
+			LocaleFormatSymbol['Minute'] = 'M';
+			LocaleFormatSymbol['minute'] = 'm';
+			LocaleFormatSymbol['H'] = 'T';
+			LocaleFormatSymbol['h'] = 't';
+			LocaleFormatSymbol['general'] = 'Standard';
+			break;
+		}
+		case("nb"):
+		case("nn"):
+		case("se"):
+		case("smj"):
+		case("sma"):
+		case("fo"):
+		case("da"):
+		case("smj-NO"):
+		case("sma-NO"):
+		case("se-NO"):
+		case("nn-NO"):
+		case("nb-SJ"):
+		case("nb-NO"):
+		case("fo-DK"):
+		case("da-DK"): {
+			LocaleFormatSymbol['Y'] = 'Å';
+			LocaleFormatSymbol['y'] = 'å';
+			LocaleFormatSymbol['H'] = 'T';
+			LocaleFormatSymbol['h'] = 't';
+			LocaleFormatSymbol['general'] = 'Standard';
+			break;
+		}
+//_____________________________________________________ch______________________________________________________________
+		case("bo"):
+		case("ii"):
+		case("ug"):
+		case("zh"):
+		case("bo-CN"):
+		case("ii-CN"):
+		case("mn-Mong-CN"):
+		case("ug-CN"):
+		case("zh-CN"):
+		case("zh-Hans"):
+		case("zh-TW"): {
+			LocaleFormatSymbol['general'] = 'G/通用格式';
+			break;
+		}
+//_________________________________________________special_____________________________________________________________
+		case("el"):
+		case("el-GR"): {
+			LocaleFormatSymbol['Y'] = 'Ε';
+			LocaleFormatSymbol['y'] = 'ε';
+			LocaleFormatSymbol['M'] = 'Μ';
+			LocaleFormatSymbol['m'] = 'μ';
+			LocaleFormatSymbol['D'] = 'Η';
+			LocaleFormatSymbol['d'] = 'η';
+			LocaleFormatSymbol['H'] = 'Ω';
+			LocaleFormatSymbol['h'] = 'ω';
+			LocaleFormatSymbol['Minute'] = 'Λ';
+			LocaleFormatSymbol['minute'] = 'λ';
+			LocaleFormatSymbol['S'] = 'Δ';
+			LocaleFormatSymbol['s'] = 'δ';
+			LocaleFormatSymbol['general'] = 'Γενικός τύπος';
+			break;
+		}
+		case("hu"):
+		case("hu-HU"): {
+			LocaleFormatSymbol['Y'] = 'É';
+			LocaleFormatSymbol['y'] = 'é';
+			LocaleFormatSymbol['M'] = 'H';
+			LocaleFormatSymbol['m'] = 'h';
+			LocaleFormatSymbol['D'] = 'N';
+			LocaleFormatSymbol['d'] = 'n';
+			LocaleFormatSymbol['H'] = 'Ó';
+			LocaleFormatSymbol['h'] = 'ó';
+			LocaleFormatSymbol['Minute'] = 'P';
+			LocaleFormatSymbol['minute'] = 'p';
+			LocaleFormatSymbol['S'] = 'M';
+			LocaleFormatSymbol['s'] = 'm';
+			LocaleFormatSymbol['general'] = 'Normál';
+			break;
+		}
+		case("tr"):
+		case("tr-TR"): {
+			LocaleFormatSymbol['M'] = 'A';
+			LocaleFormatSymbol['m'] = 'a';
+			LocaleFormatSymbol['D'] = 'G';
+			LocaleFormatSymbol['d'] = 'g';
+			LocaleFormatSymbol['H'] = 'S';
+			LocaleFormatSymbol['h'] = 's';
+			LocaleFormatSymbol['Minute'] = 'D';
+			LocaleFormatSymbol['minute'] = 'd';
+			LocaleFormatSymbol['S'] = 'N';
+			LocaleFormatSymbol['s'] = 'n';
+			LocaleFormatSymbol['general'] = 'Genel';
+			break;
+		}
+		case("pl"):
+		case("pl-PL"): {
+			LocaleFormatSymbol['Y'] = 'R';
+			LocaleFormatSymbol['y'] = 'r';
+			LocaleFormatSymbol['H'] = 'G';
+			LocaleFormatSymbol['h'] = 'g';
+			LocaleFormatSymbol['general'] = 'Standardowy';
+			break;
+		}
+		case("cs"):
+		case("cs-CZ"): {
+			LocaleFormatSymbol['Y'] = 'R';
+			LocaleFormatSymbol['y'] = 'r';
+			LocaleFormatSymbol['general'] = 'Vęeobecný';
+			break;
+		}
+		case("ja"):
+		case("ja-JP"): {
+			LocaleFormatSymbol['general'] = 'G/標準';
+			break;
+		}
+		case("ko"):
+		case("ko-KR"): {
+			LocaleFormatSymbol['general'] = 'G/표준';
+			break;
+		}
+	}
+	return true;
+}
 function NumFormat(bAddMinusIfNes)
 {
     //Stream чтения формата
@@ -432,9 +754,59 @@ NumFormat.prototype =
             this.bDateTime = true;
         }
     },
-    _parseFormat : function(digitSpaceSymbol)
+    _parseFormat : function(digitSpaceSymbol, useLocaleFormat)
     {
-        var sGeneral = AscCommon.g_cGeneralFormat.toLowerCase();
+        var sGeneral;
+        var DecimalSeparator;
+        var GroupSeparator;
+        var TimeSeparator;
+        var Year;
+        var Month;
+        var Day;
+        var Hour;
+        var year;
+        var month;
+        var day;
+        var hour;
+        var Minute;
+        var minute;
+        var Second;
+        var second;
+		if (useLocaleFormat) {
+			sGeneral = LocaleFormatSymbol['general'].toLowerCase();
+			DecimalSeparator = g_oDefaultCultureInfo.NumberDecimalSeparator;
+			TimeSeparator = g_oDefaultCultureInfo.TimeSeparator;
+			GroupSeparator = g_oDefaultCultureInfo.NumberGroupSeparator;
+			Year = LocaleFormatSymbol['Y'];
+			year = LocaleFormatSymbol['y'];
+			Month = LocaleFormatSymbol['M'];
+			month = LocaleFormatSymbol['m'];
+			Day = LocaleFormatSymbol['D'];
+			day = LocaleFormatSymbol['d'];
+			Hour = LocaleFormatSymbol['H'];
+			hour = LocaleFormatSymbol['h'];
+			Minute = LocaleFormatSymbol['Minute'];
+			minute = LocaleFormatSymbol['minute'];
+			Second = LocaleFormatSymbol['S'];
+			second = LocaleFormatSymbol['s'];
+		} else {
+			sGeneral = AscCommon.g_cGeneralFormat.toLowerCase();
+			DecimalSeparator = gc_sFormatDecimalPoint;
+			TimeSeparator = ':';
+			GroupSeparator = gc_sFormatThousandSeparator;
+			Year = 'Y';
+			year = 'y';
+			Month = 'M';
+			month = 'm';
+			Day = 'D';
+			day = 'd';
+			Hour = 'H';
+			hour = 'h';
+			Minute = 'M';
+			minute = 'm';
+			Second = 'S';
+			second = 's';
+		}
         var sGeneralFirst = sGeneral[0];
         this.bGeneralChart = true;
         while(true)
@@ -453,15 +825,11 @@ NumFormat.prototype =
             {
                 this._addToFormat(numFormat_Percent);
             }
-            else if("$" == next || "+" == next || "-" == next || "(" == next || ")" == next || " " == next)
-            {
-                this._addToFormat(numFormat_Text, next);
-            }
-			else if(":" == next)
+            else if(TimeSeparator == next)
             {
                 this._addToFormat(numFormat_TimeSeparator);
             }
-            else if(0 <= next && next <= 9)
+            else if('0' <= next && next <= '9')
             {
                 //не 0 может быть только в дробях
                 this._addToFormat(numFormat_Digit, next - 0);
@@ -474,7 +842,7 @@ NumFormat.prototype =
             {
                 this._addToFormat(numFormat_DigitSpace);
             }
-            else if (gc_sFormatDecimalPoint == next)
+            else if(DecimalSeparator == next)
             {
                 this._addToFormat(numFormat_DecimalPoint);
             }
@@ -482,9 +850,18 @@ NumFormat.prototype =
             {
                 this._addToFormat2(new FormatObjDecimalFrac([], []));
             }
-            else if (gc_sFormatThousandSeparator == next)
+            else if(GroupSeparator == next)
             {
                 this._addToFormat(numFormat_Thousand, 1);
+            }
+            else if("$" == next || "+" == next || "-" == next || "(" == next || ")" == next || " " == next)
+            {
+                this._addToFormat(numFormat_Text, next);
+            }
+            else if (sGeneralFirst === next.toLowerCase() &&
+                sGeneral === (next + this._GetText(sGeneral.length - 1)).toLowerCase()) {
+                this._addToFormat(numFormat_General);
+                this._skip(sGeneral.length - 1);
             }
             else if("E" == next || "e" == next)
             {
@@ -511,38 +888,39 @@ NumFormat.prototype =
             {
                 this._addToFormat(numFormat_TextPlaceholder);
             }
-            else if("Y" == next || "y" == next)
+            else if(Year == next || year == next)
             {
                 this._addToFormat2(new FormatObjDateVal(numFormat_Year, 1, false));
             }
-            else if("M" == next || "m" == next)
+            else if(Month == next || month == next)
             {
-                this._addToFormat2(new FormatObjDateVal(numFormat_MonthMinute, 1, false));
+                if (Month === Minute) {
+                    this._addToFormat2(new FormatObjDateVal(numFormat_MonthMinute, 1, false));
+                } else {
+                    this._addToFormat2(new FormatObjDateVal(numFormat_Month, 1, false));
+                }
             }
-            else if("D" == next || "d" == next)
+            else if(Day == next || day == next)
             {
                 this._addToFormat2(new FormatObjDateVal(numFormat_Day, 1, false));
             }
-            else if("H" == next || "h" == next)
+            else if(Hour == next || hour == next)
             {
                 this._addToFormat2(new FormatObjDateVal(numFormat_Hour, 1, false));
             }
-            else if("S" == next || "s" == next)
+            else if(Minute == next || minute == next)
+            {
+                this._addToFormat2(new FormatObjDateVal(numFormat_Minute, 1, false));
+            }
+            else if(Second == next || second == next)
             {
                 this._addToFormat2(new FormatObjDateVal(numFormat_Second, 1, false));
             }
             else if ("A" == next || "a" == next) {
                 this._ReadAmPm(next);
-            }
-            else {
-                if (sGeneralFirst === next.toLowerCase() &&
-                    sGeneral === (next + this._GetText(sGeneral.length - 1)).toLowerCase()) {
-                    this._addToFormat(numFormat_General);
-                    this._skip(sGeneral.length - 1);
-                } else {
-                    bNoFormat = true;
-                    this._addToFormat(numFormat_Text, next);
-                }
+            } else {
+                bNoFormat = true;
+                this._addToFormat(numFormat_Text, next);
             }
             if (!bNoFormat)
                 this.bGeneralChart = false;
@@ -664,7 +1042,7 @@ NumFormat.prototype =
                     }
                 }
             }
-            else if(numFormat_Year == item.type || numFormat_MonthMinute == item.type || numFormat_Day == item.type || numFormat_Hour == item.type || numFormat_Second == item.type || numFormat_Thousand == item.type)
+            else if(numFormat_Year == item.type || numFormat_MonthMinute == item.type || numFormat_Month == item.type || numFormat_Day == item.type || numFormat_Hour == item.type || numFormat_Minute == item.type || numFormat_Second == item.type || numFormat_Thousand == item.type)
             {
                 //Собираем в одно целое последовательности hhh
                 var nStartType = item.type;
@@ -884,7 +1262,7 @@ NumFormat.prototype =
                         bLeftCond = true;
                 }
                 
-                if( true == bLeftCond || true == bRightCond)
+                if((true == bLeftCond || true == bRightCond) && item.val <= 2)
 				{
                     item.type = numFormat_Minute;
 					this.bTime = true;
@@ -904,63 +1282,22 @@ NumFormat.prototype =
             }
             else if(numFormat_Thousand == item.type)
             {
-                if(FormatStates.Decimal == nReadState)
-                {
-                    var bStartCondition = false;
-                    if(i > 0)
-                    {
-                        var prevItem = this.aRawFormat[i - 1];
-                        if(this._isDigitType(prevItem.type))
-                        {
-                            bStartCondition = true;
-                        }
-                    }
-                    var bEndCondition = false;
-                    if(i+1 < nFormatLength)
-                    {
-                        var nextItem = this.aRawFormat[i+1];
-                        if(this._isDigitType(nextItem.type))
-                            bEndCondition = true;
-                    }
-
-                    if(true == bStartCondition && true == bEndCondition)
-                    {
+                var isPrevDigit = i > 0 && this._isDigitType(this.aRawFormat[i - 1].type);
+                var isPrevDecimalPoint = i > 0 && numFormat_DecimalPoint === this.aRawFormat[i - 1].type;
+                var isNextDigit = i + 1 < nFormatLength && this._isDigitType(this.aRawFormat[i + 1].type);
+                if (isPrevDigit && isNextDigit) {
+                    if(FormatStates.Decimal == nReadState) {
                         this.bThousandSep = true;
                     }
-                    else if(bEndCondition == true)
-                    {
-                        //преобразуем в текст
-                        item.type = numFormat_Text;
-                        item.val = gc_sFormatThousandSeparator;
-                    }
-                }
-                //проверка на концевой nThousandScale
-                var bStartCondition = false;
-                if(i > 0)
-                {
-                    var prevItem = this.aRawFormat[i - 1];
-                    if(this._isDigitType(prevItem.type))
-                    {
-                        bStartCondition = true;
-                    }
-                }
-                var bEndCondition = true;
-                //в последующем тексте нет numFormat_Digit, numFormat_DigitNoDisp, numFormat_DigitSpace
-                for(var j = i + 1; j < nFormatLength; ++j)
-                {
-                    var nextItem = this.aRawFormat[j];
-                    if(this._isDigitType(nextItem.type) || numFormat_DecimalPoint == nextItem.type)
-                    {
-                        bEndCondition = false;
-                        break;
-                    }
-                }
-                if(true == bStartCondition && true == bEndCondition)
+                } else if (isPrevDigit || isPrevDecimalPoint) {
                     this.nThousandScale = item.val;
-
+                } else {
+                    item.type = numFormat_ThousandText;
+                }
             }
             else if(this._isDigitType(item.type))
             {
+                this.nThousandScale = 0;
                 if(FormatStates.Decimal == nReadState)
                 {
                     this.aDecFormat.push(item);
@@ -1429,7 +1766,7 @@ NumFormat.prototype =
             }
         }
     },
-    setFormat: function(format, cultureInfo, formatType) {
+    setFormat: function(format, cultureInfo, formatType, useLocaleFormat) {
 		if (null == cultureInfo) {
             cultureInfo = g_oDefaultCultureInfo;
         }
@@ -1441,7 +1778,7 @@ NumFormat.prototype =
 		} else if (NumFormatType.WordFieldNumeric === formatType) {
 			this.valid = this._parseFormatWordNumeric("#");
 		} else {
-			this.valid = this._parseFormat("?");
+			this.valid = this._parseFormat("?", useLocaleFormat);
 		}
         if (true == this.valid) {
             //prepare tokens
@@ -1642,6 +1979,9 @@ NumFormat.prototype =
                 }
                 else if (numFormat_DecimalPointText == item.type) {
                     oCurText.text += cultureInfo.NumberDecimalSeparator;
+                }
+                else if (numFormat_ThousandText == item.type) {
+                    oCurText.text += cultureInfo.NumberGroupSeparator;
                 }
                 else if(this._isDigitType(item.type))
                 {
@@ -1901,11 +2241,53 @@ NumFormat.prototype =
 		}
         return res;
     },
-    toString : function(output, nShift)
-    {
-        var bRes = true;
-        if(this.bDateTime || this.bSlash || this.bTextFormat || (nShift < 0 && 0 == this.aFracFormat.length))
-            return false;
+	shiftFormat : function(output, nShift, useLocaleFormat) {
+		if (this.bDateTime || this.bSlash || this.bTextFormat || (nShift < 0 && 0 == this.aFracFormat.length))
+			return false;
+		output.format = this.toString(nShift, useLocaleFormat);
+		return true;
+	},
+	toString : function(nShift, useLocaleFormat)
+	{
+		var sGeneral;
+		var DecimalSeparator;
+		var GroupSeparator;
+		var TimeSeparator;
+		var year;
+		var month;
+		var day;
+		var hour;
+		var minute;
+		var second;
+		if (useLocaleFormat) {
+			sGeneral = LocaleFormatSymbol['general'];
+			DecimalSeparator = g_oDefaultCultureInfo.NumberDecimalSeparator;
+			TimeSeparator = g_oDefaultCultureInfo.TimeSeparator;
+			GroupSeparator = g_oDefaultCultureInfo.NumberGroupSeparator;
+			if (LocaleFormatSymbol['M'] === LocaleFormatSymbol['m']) {
+				year = LocaleFormatSymbol['Y'];
+				month = LocaleFormatSymbol['M'];
+				day = LocaleFormatSymbol['D'];
+			} else {
+				year = LocaleFormatSymbol['y'];
+				month = LocaleFormatSymbol['m'];
+				day = LocaleFormatSymbol['d'];
+			}
+			hour = LocaleFormatSymbol['h'];
+			minute = LocaleFormatSymbol['minute'];
+			second = LocaleFormatSymbol['s'];
+		} else {
+			sGeneral = AscCommon.g_cGeneralFormat;
+			DecimalSeparator = gc_sFormatDecimalPoint;
+			TimeSeparator = ':';
+			GroupSeparator = gc_sFormatThousandSeparator;
+			year = 'y';
+			month = 'm';
+			day = 'd';
+			hour = 'h';
+			minute = 'm';
+			second = 's';
+		}
         var nDecLength = this.aDecFormat.length;
         var nDecIndex = 0;
         var nFracLength = this.aFracFormat.length;
@@ -1965,10 +2347,7 @@ NumFormat.prototype =
 				case NumComporationOperators.notequal: res += "[<>" + this.ComporationOperator.operatorValue +"]";break;
 			}
 		}
-        //ThousandSep
-        var bAddThousandSep = this.bThousandSep;
-        var nThousandScale = this.nThousandScale;
-            
+
         var nFormatLength = this.aRawFormat.length;    
         for(var i = 0; i < nFormatLength; ++i)
         {
@@ -1990,16 +2369,16 @@ NumFormat.prototype =
             else if(numFormat_DecimalPoint == item.type)
             {
                 nReadState = FormatStates.Frac;
-                if(0 != nNewFracLength && 0 != nShift)
-                    res += gc_sFormatDecimalPoint;
+                if(0 != nNewFracLength)
+                    res += DecimalSeparator;
             }
             else if (numFormat_DecimalPointText == item.type) {
-                res += gc_sFormatDecimalPoint;
+                res += DecimalSeparator;
             }
-            else if(numFormat_Thousand == item.type)
+            else if(numFormat_Thousand == item.type || numFormat_ThousandText == item.type)
             {
                 for(var j = 0; j < item.val; ++j)
-                    res += gc_sFormatThousandSeparator;
+                    res += GroupSeparator;
             }
             else if(this._isDigitType(item.type))
             {
@@ -2065,36 +2444,36 @@ NumFormat.prototype =
 			else if(numFormat_DateSeparator == item.type)
                 res += "/";
 			else if(numFormat_TimeSeparator == item.type)
-                res += ":";
+                res += TimeSeparator;
             else if(numFormat_Year == item.type)
             {
                 for(var j = 0; j < item.val; ++j)
-                    res += "y";
+                    res += year;
             }
             else if(numFormat_Month == item.type)
             {
                 for(var j = 0; j < item.val; ++j)
-                    res += "m";
+                    res += month;
             }
             else if(numFormat_Day == item.type)
             {
                 for(var j = 0; j < item.val; ++j)
-                    res += "d";
+                    res += day;
             }
             else if(numFormat_Hour == item.type)
             {
                 for(var j = 0; j < item.val; ++j)
-                    res += "h";
+                    res += hour;
             }
             else if(numFormat_Minute == item.type)
             {
                 for(var j = 0; j < item.val; ++j)
-                    res += "m";
+                    res += minute;
             }
             else if(numFormat_Second == item.type)
             {
                 for(var j = 0; j < item.val; ++j)
-                    res += "s";
+                    res += second;
             }
             else if(numFormat_AmPm == item.type)
                 res += "AM/PM";
@@ -2104,9 +2483,10 @@ NumFormat.prototype =
 				res += "+";
 			else if(numFormat_Minus == item.type)
 				res += "-";
+			else if(numFormat_General == item.type)
+				res += sGeneral;
         }
-        output.format = res;
-        return true;
+        return res;
     },
 	getFormatCellsInfo: function() {
 		var info = new Asc.asc_CFormatCellsInfo();
@@ -2134,7 +2514,7 @@ NumFormatCache.prototype =
         var res = this.oNumFormats[key];
         if(null == res)
         {
-            res = new CellFormat(format, formatType);
+            res = new CellFormat(format, formatType, false);
             this.oNumFormats[key] = res;
         }
         return res;
@@ -2143,7 +2523,7 @@ NumFormatCache.prototype =
 //кеш структур по строке формата
 var oNumFormatCache = new NumFormatCache();
 
-function CellFormat(format, formatType)
+function CellFormat(format, formatType, useLocaleFormat)
 {
     this.sFormat = format;
     this.oPositiveFormat = null;
@@ -2167,7 +2547,7 @@ function CellFormat(format, formatType)
       }
     }
 		var oNewFormat = new NumFormat(false);
-		oNewFormat.setFormat(sNewFormat, undefined, formatType);
+		oNewFormat.setFormat(sNewFormat, undefined, formatType, useLocaleFormat);
 		aParsedFormats.push(oNewFormat);
 	}
   var nFormatsLength = aParsedFormats.length;
@@ -2219,7 +2599,7 @@ function CellFormat(format, formatType)
 				}
 			}
 			this.oTextFormat = new NumFormat(false);
-			this.oTextFormat.setFormat("@");
+			this.oTextFormat.setFormat("@", undefined, undefined, useLocaleFormat);
 			if(null == oPositive || null == oNegative || null == oNull)
 			{
 				//по результатам опытов, если оператор сравнения проходит через 0, то надо добавлять знак минус в зависимости от значения
@@ -2440,20 +2820,20 @@ CellFormat.prototype =
         }
         return res;
     },
-    shiftFormat : function(output, nShift)
+    shiftFormat : function(output, nShift, useLocaleFormat)
     {
         var bRes = false;
         var bCurRes = true;
 		if(null == this.aComporationFormats)
 		{
-			bCurRes = this.oPositiveFormat.toString(output, nShift);
+			bCurRes = this.oPositiveFormat.shiftFormat(output, nShift, useLocaleFormat);
 			if(false == bCurRes)
 				output.format = this.oPositiveFormat.formatString;
 			bRes |= bCurRes;
 			if(null != this.oNegativeFormat && this.oPositiveFormat != this.oNegativeFormat)
 			{
 				var oTempOutput = {};
-				bCurRes = this.oNegativeFormat.toString(oTempOutput, nShift);
+				bCurRes = this.oNegativeFormat.shiftFormat(oTempOutput, nShift, useLocaleFormat);
 				if(false == bCurRes)
 					output.format += ";" + this.oNegativeFormat.formatString;
 				else
@@ -2463,7 +2843,7 @@ CellFormat.prototype =
 			if(null != this.oNullFormat && this.oPositiveFormat != this.oNullFormat)
 			{
 				var oTempOutput = {};
-				bCurRes = this.oNullFormat.toString(oTempOutput, nShift);
+				bCurRes = this.oNullFormat.shiftFormat(oTempOutput, nShift, useLocaleFormat);
 				if(false == bCurRes)
 					output.format += ";" + this.oNullFormat.formatString;
 				else
@@ -2473,7 +2853,7 @@ CellFormat.prototype =
 			if(null != this.oTextFormat && this.oPositiveFormat != this.oTextFormat)
 			{
 				var oTempOutput = {};
-				bCurRes = this.oTextFormat.toString(oTempOutput, nShift);
+				bCurRes = this.oTextFormat.shiftFormat(oTempOutput, nShift, useLocaleFormat);
 				if(false == bCurRes)
 					output.format += ";" + this.oTextFormat.formatString;
 				else
@@ -2489,7 +2869,7 @@ CellFormat.prototype =
 			{
 				var oTempOutput = {};
 				var oCurFormat = this.aComporationFormats[i];
-				var bCurRes = oCurFormat.toString(oTempOutput, nShift);
+				var bCurRes = oCurFormat.shiftFormat(oTempOutput, nShift, useLocaleFormat);
 				if(0 != i)
 					output.format += ";";
 				if(false == bCurRes)
@@ -2501,6 +2881,33 @@ CellFormat.prototype =
 		}
         return bRes;
     },
+	toString: function(nShift, useLocaleFormat) {
+		var res = '';
+		if (null == this.aComporationFormats) {
+			res += this.oPositiveFormat.toString(nShift, useLocaleFormat);
+			if (null != this.oNegativeFormat && this.oPositiveFormat != this.oNegativeFormat) {
+				res += ";" + this.oNegativeFormat.toString(nShift, useLocaleFormat);
+			}
+			if (null != this.oNullFormat && this.oPositiveFormat != this.oNullFormat) {
+				res += ";" + this.oNullFormat.toString(nShift, useLocaleFormat);
+			}
+			if (null != this.oTextFormat && this.oPositiveFormat != this.oTextFormat) {
+				res += ";" + this.oTextFormat.toString(nShift, useLocaleFormat);
+			}
+		}
+		else {
+			var length = this.aComporationFormats.length;
+			for (var i = 0; i < length; ++i) {
+				var oCurFormat = this.aComporationFormats[i];
+				if (0 != i) {
+					res += ";";
+				} else {
+					res += oCurFormat.toString(nShift, useLocaleFormat);
+				}
+			}
+		}
+		return res;
+	},
 	formatToMathInfo : function(number, nValType, dDigitsCount)
 	{
 		return this._formatToText(number, nValType, dDigitsCount, false);
@@ -3437,8 +3844,12 @@ FormatParser.prototype =
                                     }
                                 }
                             }
-                        }
-                        else {
+                        } else if(3 == nDateLength && aDate[0] > 1000) {
+                            res.y = aDate[0];
+                            res.m = aDate[1];
+                            res.d = aDate[2];
+                            res.sDateFormat = getShortDateFormat(cultureInfo);
+                        } else {
                             for (var i = 0, length = cultureInfo.ShortDatePattern.length; i < length; i++)
                             {
                                 var nIndex = cultureInfo.ShortDatePattern[i] - 0;
@@ -3780,7 +4191,7 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 			AscCommon.g_oDefaultCultureInfo = g_oDefaultCultureInfo = JSON.parse(JSON.stringify(cultureInfoNew)); // ToDo clone
 			res = true;
 		}
-
+		ParseLocalFormatSymbol(g_oDefaultCultureInfo.Name);
 		decimalSeparator = (null != decimalSeparator) ? decimalSeparator : cultureInfoNew.NumberDecimalSeparator;
 		if (decimalSeparator !== g_oDefaultCultureInfo.NumberDecimalSeparator) {
 			g_oDefaultCultureInfo.NumberDecimalSeparator = decimalSeparator;
@@ -3919,6 +4330,14 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 			return 'h:mm AM/PM;@';
 		} else {
 			return 'h:mm;@'
+		}
+	}
+	function getLongTimeFormat(opt_cultureInfo) {
+		var cultureInfo = opt_cultureInfo ? opt_cultureInfo : g_oDefaultCultureInfo;
+		if (cultureInfo.AMDesignator.length > 0 && cultureInfo.PMDesignator.length > 0) {
+			return 'h:mm:ss AM/PM;@';
+		} else {
+			return 'h:mm:ss;@'
 		}
 	}
 
@@ -4254,10 +4673,13 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 					res.push('[$-F800]dddd, mmmm dd, yyyy');
 				}
 				res.push(getShortDateFormat2(1, 1, 0, cultureInfo) + ';@');
+				res.push(getShortDateFormat2(2, 2, 0, cultureInfo) + ';@');
 				res.push(getShortDateFormat2(1, 1, 2, cultureInfo) + ';@');
 				res.push(getShortDateFormat2(2, 2, 2, cultureInfo) + ';@');
 				res.push(getShortDateFormat2(1, 1, 4, cultureInfo) + ';@');
+				res.push(getShortDateFormat2(2, 2, 4, cultureInfo) + ';@');
 				res.push(getShortDateFormat2(1, 1, 2, cultureInfo) + ' h:mm;@');
+				res.push(getShortDateFormat2(2, 2, 2, cultureInfo) + ' h:mm;@');
 				res.push('[$-409]' + getShortDateFormat2(1, 1, 2, cultureInfo) + ' h:mm AM/PM;@');
 				var locale = getLocaleFormat(cultureInfo, false);
 				res.push(locale + 'mmmmm;@');
@@ -4275,10 +4697,11 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 					res.push(locale + 'd' + separator + 'mmm' + separator + 'yyyy;@');
 					res.push(locale + 'yyyy' + separator + 'mmm' + separator + 'd;@');
 					res.push(locale + 'yy' + separator + 'mmm' + separator + 'd;@');
+					res.push('yy' + separator + 'm' + separator + 'd;@');
+					res.push('yy' + separator + 'mm' + separator + 'dd;@');
+					res.push('yyyy' + separator + 'm' + separator + 'd;@');
+					res.push('yyyy' + separator + 'mm' + separator + 'dd;@');
 				}
-				res.push('yy/m/d;@');
-				res.push('yy/mm/dd;@');
-				res.push('yyyy/m/d;@');
 			} else if (Asc.c_oAscNumFormatType.Time === info.type) {
 				res = gc_aTimeFormats;
 			} else if (Asc.c_oAscNumFormatType.Percent === info.type) {
@@ -4325,7 +4748,6 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 				res.push(AscCommon.getCurrencyFormat(null, 0, false, false));
 				res.push(AscCommon.getCurrencyFormat(null, 2, true, false));
 				res.push(AscCommon.getCurrencyFormat(null, 2, false, false));
-				//todo add all used in workbook formats
 			} else {
 				res.push(AscCommon.g_cGeneralFormat);
 				res.push('0.00');
@@ -4458,6 +4880,7 @@ var g_aCultureInfos = {
 	1045: {LCID: 1045, Name: "pl-PL", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "zł", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["niedziela", "poniedziałek", "wtorek", "środa", "czwartek", "piątek", "sobota"], AbbreviatedDayNames: ["niedz.", "pon.", "wt.", "śr.", "czw.", "pt.", "sob."], MonthNames: ["styczeń", "luty", "marzec", "kwiecień", "maj", "czerwiec", "lipiec", "sierpień", "wrzesień", "październik", "listopad", "grudzień", ""], AbbreviatedMonthNames: ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru", ""], MonthGenitiveNames: ["stycznia", "lutego", "marca", "kwietnia", "maja", "czerwca", "lipca", "sierpnia", "września", "października", "listopada", "grudnia", ""], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135"},
 	1046: {LCID: 1046, Name: "pt-BR", CurrencyPositivePattern: 2, CurrencyNegativePattern: 9, CurrencySymbol: "R$", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"], AbbreviatedDayNames: ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"], MonthNames: ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro", ""], AbbreviatedMonthNames: ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "", PMDesignator: "", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135"},
 	1049: {LCID: 1049, Name: "ru-RU", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "₽", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["воскресенье", "понедельник", "вторник", "среда", "четверг", "пятница", "суббота"], AbbreviatedDayNames: ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"], MonthNames: ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь", ""], AbbreviatedMonthNames: ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек", ""], MonthGenitiveNames: ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря", ""], AbbreviatedMonthGenitiveNames: ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек", ""], AMDesignator: "", PMDesignator: "", DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135"},
+	1050: {LCID: 1050, Name: "hr-HR", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "kn", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["nedjelja", "ponedjeljak", "utorak", "srijeda", "četvrtak", "petak", "subota"], AbbreviatedDayNames: ["ned", "pon", "uto", "sri", "čet", "pet", "sub"], MonthNames: ["siječanj", "veljača", "ožujak", "travanj", "svibanj", "lipanj", "srpanj", "kolovoz", "rujan", "listopad", "studeni", "prosinac", ""], AbbreviatedMonthNames: ["sij", "vlj", "ožu", "tra", "svi", "lip", "srp", "kol", "ruj", "lis", "stu", "pro", ""], MonthGenitiveNames: ["siječnja", "veljače", "ožujka", "travnja", "svibnja", "lipnja", "srpnja", "kolovoza", "rujna", "listopada", "studenog", "prosinca", ""], AbbreviatedMonthGenitiveNames: [], AMDesignator: "", PMDesignator: "", DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "025"},
 	1051: {LCID: 1051, Name: "sk-SK", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["nedeľa", "pondelok", "utorok", "streda", "štvrtok", "piatok", "sobota"], AbbreviatedDayNames: ["ne", "po", "ut", "st", "št", "pi", "so"], MonthNames: ["január", "február", "marec", "apríl", "máj", "jún", "júl", "august", "september", "október", "november", "december", ""], AbbreviatedMonthNames: ["jan", "feb", "mar", "apr", "máj", "jún", "júl", "aug", "sep", "okt", "nov", "dec", ""], MonthGenitiveNames: ["januára", "februára", "marca", "apríla", "mája", "júna", "júla", "augusta", "septembra", "októbra", "novembra", "decembra", ""], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", DateSeparator: ". ", TimeSeparator: ":", ShortDatePattern: "025"},
 	1053: {LCID: 1053, Name: "sv-SE", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "kr", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["söndag", "måndag", "tisdag", "onsdag", "torsdag", "fredag", "lördag"], AbbreviatedDayNames: ["sön", "mån", "tis", "ons", "tor", "fre", "lör"], MonthNames: ["januari", "februari", "mars", "april", "maj", "juni", "juli", "augusti", "september", "oktober", "november", "december", ""], AbbreviatedMonthNames: ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "", PMDesignator: "", DateSeparator: "-", TimeSeparator: ":", ShortDatePattern: "531"},
 	1055: {LCID: 1055, Name: "tr-TR", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "₺", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"], AbbreviatedDayNames: ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"], MonthNames: ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık", ""], AbbreviatedMonthNames: ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "ÖÖ", PMDesignator: "ÖS", DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "035"},
@@ -4485,58 +4908,59 @@ var g_aCultureInfos = {
 	4100: {LCID: 4100, Name: "zh-SG", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"], AbbreviatedDayNames: ["周日", "周一", "周二", "周三", "周四", "周五", "周六"], MonthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月", ""], AbbreviatedMonthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "上午", PMDesignator: "下午", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
 	4103: {LCID: 4103, Name: "de-LU", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"], AbbreviatedDayNames: ["So.", "Mo.", "Di.", "Mi.", "Do.", "Fr.", "Sa."], MonthNames: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: ["Jan.", "Feb.", "März", "Apr.", "Mai", "Juni", "Juli", "Aug.", "Sept.", "Okt.", "Nov.", "Dez.", ""], AMDesignator: "AM", PMDesignator: "PM", DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135"},
 	4105: {LCID: 4105, Name: "en-CA", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", DateSeparator: "-", TimeSeparator: ":", ShortDatePattern: "531"},
-	4106: {LCID: 4106, Name: "es-GT", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "Q", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "035"},
+	4106: {LCID: 4106, Name: "es-GT", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "Q", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "035"},
 	4108: {LCID: 4108, Name: "fr-CH", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "CHF", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"], AbbreviatedDayNames: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."], MonthNames: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre", ""], AbbreviatedMonthNames: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135"},
+	4122: {LCID: 4122, Name: "hr-BA", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "KM", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["nedjelja", "ponedjeljak", "utorak", "srijeda", "četvrtak", "petak", "subota"], AbbreviatedDayNames: ["ned", "pon", "uto", "sri", "čet", "pet", "sub"], MonthNames: ["siječanj", "veljača", "ožujak", "travanj", "svibanj", "lipanj", "srpanj", "kolovoz", "rujan", "listopad", "studeni", "prosinac", ""], AbbreviatedMonthNames: ["sij", "velj", "ožu", "tra", "svi", "lip", "srp", "kol", "ruj", "lis", "stu", "pro", ""], MonthGenitiveNames: ["siječnja", "veljače", "ožujka", "travnja", "svibnja", "lipnja", "srpnja", "kolovoza", "rujna", "listopada", "studenoga", "prosinca", ""], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", DateSeparator: ". ", TimeSeparator: ":", ShortDatePattern: "025"},
 	5124: {LCID: 5124, Name: "zh-MO", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "MOP", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"], AbbreviatedDayNames: ["週日", "週一", "週二", "週三", "週四", "週五", "週六"], MonthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月", ""], AbbreviatedMonthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "上午", PMDesignator: "下午", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
 	5127: {LCID: 5127, Name: "de-LI", CurrencyPositivePattern: 2, CurrencyNegativePattern: 9, CurrencySymbol: "CHF", NumberDecimalSeparator: ".", NumberGroupSeparator: "’", NumberGroupSizes: [3], DayNames: ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"], AbbreviatedDayNames: ["So.", "Mo.", "Di.", "Mi.", "Do.", "Fr.", "Sa."], MonthNames: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: ["Jan.", "Feb.", "März", "Apr.", "Mai", "Juni", "Juli", "Aug.", "Sept.", "Okt.", "Nov.", "Dez.", ""], AMDesignator: "AM", PMDesignator: "PM", DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135"},
 	5129: {LCID: 5129, Name: "en-NZ", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "am", PMDesignator: "pm", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "035"},
-	5130: {LCID: 5130, Name: "es-CR", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "₡", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
+	5130: {LCID: 5130, Name: "es-CR", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "₡", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
 	5132: {LCID: 5132, Name: "fr-LU", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"], AbbreviatedDayNames: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."], MonthNames: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre", ""], AbbreviatedMonthNames: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135"},
 	6153: {LCID: 6153, Name: "en-IE", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "€", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "am", PMDesignator: "pm", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135"},
-	6154: {LCID: 6154, Name: "es-PA", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "B/.", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "315"},
+	6154: {LCID: 6154, Name: "es-PA", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "B/.", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "315"},
 	6156: {LCID: 6156, Name: "fr-MC", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"], AbbreviatedDayNames: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."], MonthNames: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre", ""], AbbreviatedMonthNames: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135"},
 	7177: {LCID: 7177, Name: "en-ZA", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "R", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "am", PMDesignator: "pm", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "531"},
-	7178: {LCID: 7178, Name: "es-DO", CurrencyPositivePattern: 0, CurrencyNegativePattern: 0, CurrencySymbol: "$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
+	7178: {LCID: 7178, Name: "es-DO", CurrencyPositivePattern: 0, CurrencyNegativePattern: 0, CurrencySymbol: "$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
 	7180: {LCID: 7180, Name: "fr-029", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "EC$", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"], AbbreviatedDayNames: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."], MonthNames: ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre", ""], AbbreviatedMonthNames: ["Janv.", "Févr.", "Mars", "Avr.", "Mai", "Juin", "Juil.", "Août", "Sept.", "Oct.", "Nov.", "Déc.", ""], MonthGenitiveNames: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre", ""], AbbreviatedMonthGenitiveNames: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc.", ""], AMDesignator: "AM", PMDesignator: "PM", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135"},
 	8201: {LCID: 8201, Name: "en-JM", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "am", PMDesignator: "pm", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
-	8202: {LCID: 8202, Name: "es-VE", CurrencyPositivePattern: 0, CurrencyNegativePattern: 2, CurrencySymbol: "Bs.S", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sept.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
+	8202: {LCID: 8202, Name: "es-VE", CurrencyPositivePattern: 0, CurrencyNegativePattern: 2, CurrencySymbol: "Bs.S", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sept.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
 	8204: {LCID: 8204, Name: "fr-RE", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"], AbbreviatedDayNames: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."], MonthNames: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre", ""], AbbreviatedMonthNames: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135"},
 	9225: {LCID: 9225, Name: "en-029", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "EC$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135"},
-	9226: {LCID: 9226, Name: "es-CO", CurrencyPositivePattern: 2, CurrencyNegativePattern: 9, CurrencySymbol: "$", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sept.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "035"},
+	9226: {LCID: 9226, Name: "es-CO", CurrencyPositivePattern: 2, CurrencyNegativePattern: 9, CurrencySymbol: "$", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sept.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "035"},
 	9228: {LCID: 9228, Name: "fr-CD", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "FC", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"], AbbreviatedDayNames: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."], MonthNames: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre", ""], AbbreviatedMonthNames: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135"},
 	10249: {LCID: 10249, Name: "en-BZ", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "am", PMDesignator: "pm", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135"},
-	10250: {LCID: 10250, Name: "es-PE", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "S/", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Setiembre", "Octubre", "Noviembre", "Diciembre", ""], AbbreviatedMonthNames: ["Ene.", "Feb.", "Mar.", "Abr.", "May.", "Jun.", "Jul.", "Ago.", "Set.", "Oct.", "Nov.", "Dic.", ""], MonthGenitiveNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "setiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthGenitiveNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "set.", "oct.", "nov.", "dic.", ""], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "035"},
+	10250: {LCID: 10250, Name: "es-PE", CurrencyPositivePattern: 2, CurrencyNegativePattern: 9, CurrencySymbol: "S/", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Setiembre", "Octubre", "Noviembre", "Diciembre", ""], AbbreviatedMonthNames: ["Ene.", "Feb.", "Mar.", "Abr.", "May.", "Jun.", "Jul.", "Ago.", "Set.", "Oct.", "Nov.", "Dic.", ""], MonthGenitiveNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "setiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthGenitiveNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "set.", "oct.", "nov.", "dic.", ""], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "035"},
 	10252: {LCID: 10252, Name: "fr-SN", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "CFA", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"], AbbreviatedDayNames: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."], MonthNames: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre", ""], AbbreviatedMonthNames: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135"},
 	11273: {LCID: 11273, Name: "en-TT", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "am", PMDesignator: "pm", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135"},
-	11274: {LCID: 11274, Name: "es-AR", CurrencyPositivePattern: 2, CurrencyNegativePattern: 9, CurrencySymbol: "$", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
+	11274: {LCID: 11274, Name: "es-AR", CurrencyPositivePattern: 2, CurrencyNegativePattern: 9, CurrencySymbol: "$", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
 	11276: {LCID: 11276, Name: "fr-CM", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "FCFA", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"], AbbreviatedDayNames: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."], MonthNames: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre", ""], AbbreviatedMonthNames: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "mat.", PMDesignator: "soir", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135"},
 	12297: {LCID: 12297, Name: "en-ZW", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "US$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "am", PMDesignator: "pm", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
-	12298: {LCID: 12298, Name: "es-EC", CurrencyPositivePattern: 0, CurrencyNegativePattern: 2, CurrencySymbol: "$", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
+	12298: {LCID: 12298, Name: "es-EC", CurrencyPositivePattern: 0, CurrencyNegativePattern: 2, CurrencySymbol: "$", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
 	12300: {LCID: 12300, Name: "fr-CI", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "CFA", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"], AbbreviatedDayNames: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."], MonthNames: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre", ""], AbbreviatedMonthNames: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135"},
 	13321: {LCID: 13321, Name: "en-PH", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "₱", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "am", PMDesignator: "pm", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135"},
-	13322: {LCID: 13322, Name: "es-CL", CurrencyPositivePattern: 0, CurrencyNegativePattern: 2, CurrencySymbol: "$", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sept.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "-", TimeSeparator: ":", ShortDatePattern: "135"},
+	13322: {LCID: 13322, Name: "es-CL", CurrencyPositivePattern: 0, CurrencyNegativePattern: 2, CurrencySymbol: "$", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sept.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "-", TimeSeparator: ":", ShortDatePattern: "135"},
 	13324: {LCID: 13324, Name: "fr-ML", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "CFA", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"], AbbreviatedDayNames: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."], MonthNames: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre", ""], AbbreviatedMonthNames: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135"},
 	14345: {LCID: 14345, Name: "en-ID", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "Rp", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135"},
-	14346: {LCID: 14346, Name: "es-UY", CurrencyPositivePattern: 2, CurrencyNegativePattern: 9, CurrencySymbol: "$", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Setiembre", "Octubre", "Noviembre", "Diciembre", ""], AbbreviatedMonthNames: ["Ene.", "Feb.", "Mar.", "Abr.", "May.", "Jun.", "Jul.", "Ago.", "Set.", "Oct.", "Nov.", "Dic.", ""], MonthGenitiveNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "setiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthGenitiveNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "set.", "oct.", "nov.", "dic.", ""], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
+	14346: {LCID: 14346, Name: "es-UY", CurrencyPositivePattern: 2, CurrencyNegativePattern: 9, CurrencySymbol: "$", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Setiembre", "Octubre", "Noviembre", "Diciembre", ""], AbbreviatedMonthNames: ["Ene.", "Feb.", "Mar.", "Abr.", "May.", "Jun.", "Jul.", "Ago.", "Set.", "Oct.", "Nov.", "Dic.", ""], MonthGenitiveNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "setiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthGenitiveNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "set.", "oct.", "nov.", "dic.", ""], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
 	14348: {LCID: 14348, Name: "fr-MA", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "DH", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"], AbbreviatedDayNames: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."], MonthNames: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre", ""], AbbreviatedMonthNames: ["jan.", "fév.", "mar.", "avr.", "mai", "jui.", "juil.", "août", "sept.", "oct.", "nov.", "déc.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135"},
 	15369: {LCID: 15369, Name: "en-HK", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "am", PMDesignator: "pm", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
-	15370: {LCID: 15370, Name: "es-PY", CurrencyPositivePattern: 2, CurrencyNegativePattern: 12, CurrencySymbol: "₲", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sept.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
+	15370: {LCID: 15370, Name: "es-PY", CurrencyPositivePattern: 2, CurrencyNegativePattern: 12, CurrencySymbol: "₲", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sept.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
 	15372: {LCID: 15372, Name: "fr-HT", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "G", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"], AbbreviatedDayNames: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."], MonthNames: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre", ""], AbbreviatedMonthNames: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135"},
 	16393: {LCID: 16393, Name: "en-IN", CurrencyPositivePattern: 2, CurrencyNegativePattern: 12, CurrencySymbol: "₹", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3, 2], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", DateSeparator: "-", TimeSeparator: ":", ShortDatePattern: "135"},
-	16394: {LCID: 16394, Name: "es-BO", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "Bs", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
+	16394: {LCID: 16394, Name: "es-BO", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "Bs", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
 	17417: {LCID: 17417, Name: "en-MY", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "RM", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
-	17418: {LCID: 17418, Name: "es-SV", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
+	17418: {LCID: 17418, Name: "es-SV", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
 	18441: {LCID: 18441, Name: "en-SG", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "am", PMDesignator: "pm", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
-	18442: {LCID: 18442, Name: "es-HN", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "L", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
-	19466: {LCID: 19466, Name: "es-NI", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "C$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
-	20490: {LCID: 20490, Name: "es-PR", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "315"},
+	18442: {LCID: 18442, Name: "es-HN", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "L", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
+	19466: {LCID: 19466, Name: "es-NI", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "C$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
+	20490: {LCID: 20490, Name: "es-PR", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "315"},
 	21514: {LCID: 21514, Name: "es-US", CurrencyPositivePattern: 0, CurrencyNegativePattern: 0, CurrencySymbol: "$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "205"},
 	22538: {LCID: 22538, Name: "es-419", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "XDR", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a.m.", PMDesignator: "p.m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
 	23562: {LCID: 23562, Name: "es-CU", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a.m.", PMDesignator: "p.m.", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
 	29740: {LCID: 29740, Name: "az-Cyrl", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "₼", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["базар", "базар ертәси", "чәршәнбә ахшамы", "чәршәнбә", "ҹүмә ахшамы", "ҹүмә", "шәнбә"], AbbreviatedDayNames: ["Б", "Бе", "Ча", "Ч", "Ҹа", "Ҹ", "Ш"], MonthNames: ["jанвар", "феврал", "март", "апрел", "мај", "ијун", "ијул", "август", "сентјабр", "октјабр", "нојабр", "декабр", ""], AbbreviatedMonthNames: ["Јан", "Фев", "Мар", "Апр", "Мај", "Ијун", "Ијул", "Авг", "Сен", "Окт", "Ноя", "Дек", ""], MonthGenitiveNames: ["јанвар", "феврал", "март", "апрел", "мај", "ијун", "ијул", "август", "сентјабр", "октјабр", "нојабр", "декабр", ""], AbbreviatedMonthGenitiveNames: ["Јан", "Фев", "Мар", "Апр", "мая", "ијун", "ијул", "Авг", "Сен", "Окт", "Ноя", "Дек", ""], AMDesignator: "", PMDesignator: "", DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135"},
 	30724: {LCID: 30724, Name: "zh", CurrencyPositivePattern: 0, CurrencyNegativePattern: 2, CurrencySymbol: "¥", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"], AbbreviatedDayNames: ["周日", "周一", "周二", "周三", "周四", "周五", "周六"], MonthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月", ""], AbbreviatedMonthNames: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "上午", PMDesignator: "下午", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "520"},
 	30764: {LCID: 30764, Name: "az-Latn", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "₼", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["bazar", "bazar ertəsi", "çərşənbə axşamı", "çərşənbə", "cümə axşamı", "cümə", "şənbə"], AbbreviatedDayNames: ["B.", "B.E.", "Ç.A.", "Ç.", "C.A.", "C.", "Ş."], MonthNames: ["Yanvar", "Fevral", "Mart", "Aprel", "May", "İyun", "İyul", "Avqust", "Sentyabr", "Oktyabr", "Noyabr", "Dekabr", ""], AbbreviatedMonthNames: ["yan", "fev", "mar", "apr", "may", "iyn", "iyl", "avq", "sen", "okt", "noy", "dek", ""], MonthGenitiveNames: ["yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avqust", "sentyabr", "oktyabr", "noyabr", "dekabr", ""], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135"},
-	31748: {LCID: 31748, Name: "zh-Hant", CurrencyPositivePattern: 0, CurrencyNegativePattern: 0, CurrencySymbol: "HK$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"], AbbreviatedDayNames: ["週日", "週一", "週二", "週三", "週四", "週五", "週六"], MonthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月", ""], AbbreviatedMonthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "上午", PMDesignator: "下午", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"},
+	31748: {LCID: 31748, Name: "zh-Hant", CurrencyPositivePattern: 0, CurrencyNegativePattern: 0, CurrencySymbol: "HK$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"], AbbreviatedDayNames: ["週日", "週一", "週二", "週三", "週四", "週五", "週六"], MonthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月", ""], AbbreviatedMonthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "上午", PMDesignator: "下午", DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025"}
 };
 var g_oDefaultCultureInfo, g_oLCID;
 setCurrentCultureInfo(1033);//en-US//1033//fr-FR//1036//basq//1069//ru-Ru//1049//hindi//1081
@@ -4552,6 +4976,7 @@ setCurrentCultureInfo(1033);//en-US//1033//fr-FR//1036//basq//1069//ru-Ru//1049/
 	window['AscCommon'].getShortDateFormat = getShortDateFormat;
 	window['AscCommon'].getShortDateFormat2 = getShortDateFormat2;
 	window['AscCommon'].getShortTimeFormat = getShortTimeFormat;
+	window['AscCommon'].getLongTimeFormat = getLongTimeFormat;
 	window['AscCommon'].getShortDateMonthFormat = getShortDateMonthFormat;
 	window['AscCommon'].getNumberFormatSimple = getNumberFormatSimple;
 	window['AscCommon'].getNumberFormat = getNumberFormat;
