@@ -6787,12 +6787,7 @@ function CDrawingDocument()
 		if (!api || !oLogicDocument)
 			return;
 
-		var oHistory = oLogicDocument.GetHistory();
-		oHistory.TurnOff();
-		var isLocalTrackRevisions = oLogicDocument.GetLocalTrackRevisions();
-		oLogicDocument.SetLocalTrackRevisions(false);
-
-        var oldViewMode = api.isViewMode;
+		var oldViewMode = api.isViewMode;
         var oldMarks = api.ShowParaMarks;
 
         api.isViewMode = true;
@@ -6879,8 +6874,6 @@ function CDrawingDocument()
         ctx.restore();
         ctx.restore();
 
-		oHistory.TurnOn();
-		oLogicDocument.SetLocalTrackRevisions(isLocalTrackRevisions);
         api.isViewMode = oldViewMode;
         api.ShowParaMarks = oldMarks;
     };
@@ -7006,6 +6999,10 @@ function CDrawingDocument()
             editor.sendEvent("asc_onPreviewLevelChange", level);
         });
 
+        var oDocState = null;
+        if (this.m_oLogicDocument)
+        	oDocState = this.m_oLogicDocument.StartNoHistoryMode();
+
         if (!is_multi_level)
         {
             var offsetBase = 10;
@@ -7108,6 +7105,9 @@ function CDrawingDocument()
                 this.privateGetParagraphByString(props.Lvl[i], level, 1, textYs[i].x, textYs[i].y, line_distance, ctx, width_px, height_px);
             }
         }
+
+        if (oDocState)
+        	this.m_oLogicDocument.EndNoHistoryMode(oDocState);
 	};
 
 	this.SetDrawImagePreviewBulletChangeListLevel = function(id, props, isNoCheckFonts)
@@ -7176,6 +7176,10 @@ function CDrawingDocument()
         var text_base_offset_x = offset + ((3.25 * AscCommon.g_dKoef_mm_to_pix) >> 0);
         var text_base_offset_dist = ( (props.IsOnes ? 2.25 : 3.25) * AscCommon.g_dKoef_mm_to_pix) >> 0;
 
+		var oDocState = null;
+		if (this.m_oLogicDocument)
+			oDocState = this.m_oLogicDocument.StartNoHistoryMode();
+
         for (var k = 0; k < 9; k++) 
         {
 			// чтобы убрать отступ у i
@@ -7217,6 +7221,9 @@ function CDrawingDocument()
 
             this.privateGetParagraphByString(props.Lvl[k], k, 1, textYs.x, textYs.y, (height_px >> 1), ctx, width_px, height_px);
         }
+
+        if (oDocState)
+        	this.m_oLogicDocument.EndNoHistoryMode(oDocState);
     };
 
 	this.SetDrawImagePreviewBulletForMenu = function(id, type, props, isNoCheckFonts)
@@ -7434,7 +7441,11 @@ function CDrawingDocument()
             return;
         }
 		var elNone = document.getElementById(id[0]);
-		History.TurnOff();
+
+		var oDocState = null;
+		if (this.m_oLogicDocument)
+			oDocState = this.m_oLogicDocument.StartNoHistoryMode();
+
 		if (elNone)
 		{
 			var width_px = elNone.clientWidth;
@@ -7601,7 +7612,9 @@ function CDrawingDocument()
 				}
 			}
 		}
-		History.TurnOn();
+
+		if (this.m_oLogicDocument)
+			this.m_oLogicDocument.EndNoHistoryMode(oDocState);
 	};
 
 	this.StartTableStylesCheck = function ()

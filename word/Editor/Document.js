@@ -14734,6 +14734,33 @@ CDocument.prototype.End_SilentMode = function(bUpdate)
 	this.TurnOn_InterfaceEvents(bUpdate);
 };
 /**
+ * Стартуем режим, в котором новые классы не регистрируются в истории, а также отключается рецензирование
+ * Возвращается текущее состояние редактора
+ * @returns {object}
+ */
+CDocument.prototype.StartNoHistoryMode = function()
+{
+	var oState = {};
+
+	oState.LocalTrackRevisions = this.GetLocalTrackRevisions();
+
+	this.History.TurnOff();
+	this.TableId.TurnOff();
+	this.SetLocalTrackRevisions(false);
+
+	return oState;
+};
+/**
+ * Останавливаем режим "без истории"
+ * @param oState
+ */
+CDocument.prototype.EndNoHistoryMode = function(oState)
+{
+	this.History.TurnOn();
+	this.TableId.TurnOn();
+	this.SetLocalTrackRevisions(oState.LocalTrackRevisions);
+};
+/**
  * Начинаем селект с текущей точки. Если селект уже есть, тогда ничего не делаем.
  */
 CDocument.prototype.StartSelectionFromCurPos = function()
