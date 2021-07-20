@@ -245,6 +245,10 @@ function (window, undefined) {
         if(!this.m_oMathObject) {
             return null;
         }
+        var oController = this.getDrawingObjectsController && this.getDrawingObjectsController();
+        if(!oController) {
+            return null;
+        }
         var oShape = new AscFormat.CShape();
         oShape.setBDeleted(false);
         if(this.worksheet)
@@ -274,22 +278,58 @@ function (window, undefined) {
         var oParagraph = oContent.Content[0];
         oParagraph.AddToContent(1, this.m_oMathObject);
         oParagraph.Correct_Content();
+        oParagraph.SetParagraphAlign(AscCommon.align_Center);
+        var oBodyPr = oShape.getBodyPr().createDuplicate();
+        oBodyPr.rot = 0;
+        oBodyPr.spcFirstLastPara = false;
+        oBodyPr.vertOverflow = AscFormat.nOTOwerflow;
+        oBodyPr.horzOverflow = AscFormat.nOTOwerflow;
+        oBodyPr.vert = AscFormat.nVertTThorz;
+        oBodyPr.wrap = AscFormat.nTWTNone;
+        oBodyPr.lIns = 2.54;
+        oBodyPr.tIns = 1.27;
+        oBodyPr.rIns = 2.54;
+        oBodyPr.bIns = 1.27;
+        oBodyPr.numCol = 1;
+        oBodyPr.spcCol = 0;
+        oBodyPr.rtlCol = 0;
+        oBodyPr.fromWordArt = false;
+        oBodyPr.anchor = 1;
+        oBodyPr.anchorCtr = false;
+        oBodyPr.forceAA = false;
+        oBodyPr.compatLnSpc = true;
+        oBodyPr.prstTxWarp = AscFormat.ExecuteNoHistory(function(){return AscFormat.CreatePrstTxWarpGeometry("textNoShape");}, this, []);
+        oBodyPr.textFit = new AscFormat.CTextFit();
+        oBodyPr.textFit.type = AscFormat.text_fit_Auto;
+        oShape.txBody.setBodyPr(oBodyPr);
         var nPos;
         if(this.group) {
             nPos = this.group.getPosInSpTree(this.Id);
             if(null !== nPos && nPos > -1) {
                 this.group.removeFromSpTreeByPos(nPos);
                 this.group.addToSpTree(nPos, oShape);
-                if(this.selected) {
-                    this.deselect()
-                }
             }
         }
         else {
             nPos = this.deleteDrawingBase();
             if(null !== nPos && nPos > -1) {
-                this.addToDrawingObjects(nPos);
+                oShape.addToDrawingObjects(nPos);
             }
+        }
+        oShape.checkExtentsByDocContent(true, false);
+        var fXc = this.x + this.extX / 2;
+        var fYc = this.y + this.extY / 2;
+        oShape.spPr.xfrm.setOffX(fXc - oShape.extX / 2);
+        oShape.spPr.xfrm.setOffY(fYc - oShape.extY / 2);
+        oShape.spPr.xfrm.setRot(this.rot);
+        oShape.checkDrawingBaseCoords();
+        if(this.group) {
+            this.group.updateCoordinatesAfterInternalResize();
+        }
+        if(this.selected) {
+            var nSelectStartPage = this.selectStartPage;
+            this.deselect(oController);
+            oShape.select(oController, nSelectStartPage)
         }
         return oShape;
     };

@@ -5675,11 +5675,11 @@ CPresentation.prototype.ConvertEquationToMath = function(oEquation, isAll) {
             var oSlide = aSlides[nSlide];
             var aSpTree = oSlide.cSld.spTree;
             for(var nSp = 0; nSp < aSpTree.length; ++nSp) {
-                aSpTree[nSp].collectEquations3(aSpTree[nSp]);
+                aSpTree[nSp].collectEquations3(aEquations);
             }
         }
         if(aEquations.length > 0) {
-            if(this.Document_Is_SelectionLocked(AscCommon.changestype_Drawing_Props, undefined, undefined, aEquations)) {
+            if(!this.Document_Is_SelectionLocked(AscCommon.changestype_Drawing_Props, undefined, undefined, aEquations)) {
                 AscCommon.History.Create_NewPoint(0);
                 for(var nEquation = 0; nEquation < aEquations.length; ++nEquation) {
                     aEquations[nEquation].replaceToMath();
