@@ -656,7 +656,9 @@ var editor;
 					this.wb.model.nActive = ws.model.index;
 					ws.draw();
 				} else {
+					ws.cleanSelection();
 					ws.model.selectionRange = selectionRange;
+					ws._drawSelection();
 				}
 			}
 		}
