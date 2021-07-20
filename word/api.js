@@ -459,9 +459,9 @@
 
 			var _obj = null;
 
-			function private_CheckLockCallback(isSuccess)
+			function private_CheckLockCallback(isLocked)
 			{
-				console.log("CheckLock " + isSuccess);
+				console.log("isLocked " + isLocked);
 			}
 
 			while (this.current < this.documents.length) // no recursion

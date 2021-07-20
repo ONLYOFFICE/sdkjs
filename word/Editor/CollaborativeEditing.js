@@ -49,8 +49,6 @@ function CWordCollaborativeEditing()
     this.m_aForeignCursorsToShow = {};
 
     this.m_aSkipContentControlsOnCheckEditingLock = {};
-
-    this.CheckLockCallback = null;
 }
 
 CWordCollaborativeEditing.prototype = Object.create(AscCommon.CCollaborativeEditingBase.prototype);
@@ -234,87 +232,113 @@ CWordCollaborativeEditing.prototype.Check_MergeData = function()
     var LogicDocument = editor.WordControl.m_oLogicDocument;
     LogicDocument.Comments.Check_MergeData();
 };
-CWordCollaborativeEditing.prototype.OnEnd_CheckLock = function(DontLockInFastMode, fCallback)
+CWordCollaborativeEditing.prototype.OnEnd_CheckLock = function(isDontLockInFastMode, fCallback)
 {
-    var aIds = [];
+	// Если задан fCallback, тогда действие нужно выполнять именно на нём, поэотому возвращаемое значение true
 
-    var Count = this.m_aCheckLocks.length;
-    for (var Index = 0; Index < Count; Index++)
-    {
-        var oItem = this.m_aCheckLocks[Index];
+	var aIds = [];
+	for (var nIndex = 0, nCount = this.m_aCheckLocks.length; nIndex < nCount; ++nIndex)
+	{
+		var oItem = this.m_aCheckLocks[nIndex];
 
-        if (true === oItem) // сравниваем по значению и типу обязательно
+		if (true === oItem) // сравниваем по значению и типу обязательно
 		{
 			if (fCallback)
-				fCallback(false);
+				fCallback(true);
 
-			this.CheckLockCallback = null;
 			return true;
 		}
-        else if (false !== oItem)
+		else if (false !== oItem)
 		{
 			aIds.push(oItem);
 		}
-    }
-
-    if (true === DontLockInFastMode && true === this.Is_Fast())
-	{
-		if (fCallback)
-			fCallback(true);
-
-		this.CheckLockCallback = null;
-		return false;
 	}
 
-    if (aIds.length > 0)
-    {
-        // Отправляем запрос на сервер со списком Id
-        editor.CoAuthoringApi.askLock(aIds, this.OnCallback_AskLock);
-		this.CheckLockCallback = fCallback ? fCallback : null;
-
-        // Ставим глобальный лок, только во время совместного редактирования
-        if (-1 === this.m_nUseType)
+	if (true === isDontLockInFastMode && true === this.Is_Fast())
+	{
+		if (fCallback)
 		{
+			fCallback(false);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	if (fCallback)
+	{
+		if (aIds.length > 0)
+		{
+			var oThis = this;
+			editor.CoAuthoringApi.askLock(aIds, function(result)
+			{
+				oThis.Set_GlobalLock(false);
+
+				if (result["lock"])
+				{
+					oThis.private_LockByMe();
+					fCallback(false);
+				}
+				else if (result["error"])
+				{
+					fCallback(true);
+				}
+			});
+
 			this.Set_GlobalLock(true);
 		}
-        else
-        {
-            // Пробегаемся по массиву и проставляем, что залочено нами
-            var Count = this.m_aCheckLocks.length;
-            for (var Index = 0; Index < Count; Index++)
-            {
-                var oItem = this.m_aCheckLocks[Index];
-
-                if (true !== oItem && false !== oItem) // сравниваем по значению и типу обязательно
-                {
-                    var Class = AscCommon.g_oTableId.Get_ById(oItem);
-                    if (null != Class)
-                    {
-                        Class.Lock.Set_Type(AscCommon.locktype_Mine, false);
-                        this.Add_Unlock2(Class);
-                    }
-                }
-            }
-
-            this.m_aCheckLocks.length = 0;
-        }
-    }
-    else
-	{
-		if (fCallback)
+		else
+		{
 			fCallback(false);
+		}
 
-		this.CheckLockCallback = null;
+		return true;
 	}
+	else
+	{
+		if (aIds.length > 0)
+		{
+			// Отправляем запрос на сервер со списком Id
+			editor.CoAuthoringApi.askLock(aIds, this.OnCallback_AskLock);
 
-    return false;
+			// Ставим глобальный лок, только во время совместного редактирования
+			if (-1 === this.m_nUseType)
+			{
+				this.Set_GlobalLock(true);
+			}
+			else
+			{
+				this.private_LockByMe();
+				this.m_aCheckLocks.length = 0;
+			}
+		}
+
+		return false;
+	}
+};
+CWordCollaborativeEditing.prototype.private_LockByMe = function()
+{
+	for (var nIndex = 0, nCount = this.m_aCheckLocks.length; nIndex < nCount; ++nIndex)
+	{
+		var oItem = this.m_aCheckLocks[nIndex];
+		if (true !== oItem && false !== oItem) // сравниваем по значению и типу обязательно
+		{
+			var oClass = AscCommon.g_oTableId.Get_ById(oItem);
+			if (oClass)
+			{
+				oClass.Lock.Set_Type(AscCommon.locktype_Mine);
+				this.Add_Unlock2(oClass);
+			}
+		}
+	}
 };
 CWordCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
 {
     var oThis   = AscCommon.CollaborativeEditing;
     var oEditor = editor;
 
-    var isLock = false;
     if (true === oThis.Get_GlobalLock())
     {
         // Здесь проверяем есть ли длинная операция, если она есть, то до ее окончания нельзя делать
@@ -327,25 +351,7 @@ CWordCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
 
         if (result["lock"])
         {
-            // Пробегаемся по массиву и проставляем, что залочено нами
-
-            var Count = oThis.m_aCheckLocks.length;
-            for (var Index = 0; Index < Count; Index++)
-            {
-                var oItem = oThis.m_aCheckLocks[Index];
-
-                if (true !== oItem && false !== oItem) // сравниваем по значению и типу обязательно
-                {
-                    var Class = AscCommon.g_oTableId.Get_ById(oItem);
-                    if (null != Class)
-                    {
-                        Class.Lock.Set_Type(AscCommon.locktype_Mine);
-                        oThis.Add_Unlock2(Class);
-                    }
-                }
-            }
-
-			isLock = false;
+        	oThis.private_LockByMe();
 		}
         else if (result["error"])
         {
@@ -357,18 +363,10 @@ CWordCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
             // Делаем откат на 1 шаг назад и удаляем из Undo/Redo эту последнюю точку
             oEditor.WordControl.m_oLogicDocument.Document_Undo();
             AscCommon.History.Clear_Redo();
-
-			isLock = true;
         }
 
         oEditor.isChartEditor = false;
     }
-
-    if (this.CheckLockCallback)
-	{
-		this.CheckLockCallback(!isLock);
-		this.CheckLockCallback = null;
-	}
 };
 CWordCollaborativeEditing.prototype.AddContentControlForSkippingOnCheckEditingLock = function(oContentControl)
 {
