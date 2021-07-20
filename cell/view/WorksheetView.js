@@ -5783,7 +5783,7 @@
 
 			return Asc.c_oAscError.ID.No;
 		} else {
-			return error;
+			this.model.workbook.handlers.trigger("asc_onError", error, c_oAscError.Level.NoCritical);
 		}
 	};
 
