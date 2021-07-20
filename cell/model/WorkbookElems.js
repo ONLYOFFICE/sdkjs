@@ -5870,8 +5870,8 @@ function RangeDataManagerElem(bbox, data)
 			var f;
 			AscCommonExcel.executeInR1C1Mode(false, function () {
 				f = (dataRange.sheet ? dataRange.sheet : t.worksheet.sName) + "!" + new Asc.Range(_c1, _r1, _c2, _r2).getName();
+				sL.setF(f);
 			});
-			sL.setF(f);
 
 			var _col = !isVertLocationRange ? locationRange.c1 + i : locationRange.c1;
 			var _row = isVertLocationRange ? locationRange.r1 + i : locationRange.r1;
@@ -6274,6 +6274,7 @@ function RangeDataManagerElem(bbox, data)
 		this.sqRef.setAbs(true, true, true, true);
 	};
 	sparkline.prototype.setF = function (f) {
+		//TODO AscCommonExcel.executeInR1C1Mode. пока выставляю сверху. перепроверить и добавить здесь.
 		this.f = f;
 		this._f = AscCommonExcel.g_oRangeCache.getRange3D(this.f);
 	};
