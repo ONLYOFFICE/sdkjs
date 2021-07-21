@@ -245,9 +245,26 @@ function (window, undefined) {
         if(!this.m_oMathObject) {
             return null;
         }
-        var oController = this.getDrawingObjectsController && this.getDrawingObjectsController();
-        if(!oController) {
+        if(!this.getDrawingObjectsController) {
             return null;
+        }
+        var oController = this.getDrawingObjectsController();
+        if(!oController) {
+            if(this.worksheet) {
+                if(Asc && Asc.editor && Asc.editor.wb && Asc.editor.wbModel) {
+                    Asc.editor.wb.getWorksheet(Asc.editor.wbModel.getWorksheetIndexByName(this.worksheet.getName()));
+                    oController = this.getDrawingObjectsController();
+                    if(!oController) {
+                        return null;
+                    }
+                }
+                else {
+                    return null;
+                }
+            }
+            else {
+                return null;
+            }
         }
         var oShape = new AscFormat.CShape();
         oShape.setBDeleted(false);

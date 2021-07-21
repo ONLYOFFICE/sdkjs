@@ -3644,6 +3644,38 @@
 			}
 		});
 	};
+	Workbook.prototype.convertEquationToMath = function (oEquation, isAll) {
+		var aId = [];
+		var aEquations = [];
+		if(isAll) {
+			this.handleDrawings(function(oDrawing) {
+				oDrawing.collectEquations3(aEquations);
+			});
+
+		}
+		else {
+			aEquations.push(oEquation);
+		}
+		if(aEquations.length > 0) {
+			var nEquation;
+			var oObjectForCheck;
+			for(nEquation = 0; nEquation < aEquations.length; ++nEquation) {
+				oObjectForCheck = (aEquations[nEquation].getMainGroup() || aEquations[nEquation]);
+				aId.push(oObjectForCheck.Get_Id());
+			}
+			this.checkObjectsLock(aId, function(bNoLock) {
+				if(bNoLock) {
+					AscCommon.History.Create_NewPoint(0);
+					for(nEquation = 0; nEquation < aEquations.length; ++nEquation) {
+						aEquations[nEquation].replaceToMath();
+					}
+					if(Asc.editor && Asc.editor.wb) {
+						Asc.editor.wb.recalculateDrawingObjects(null, false);
+					}
+				}
+			});
+		}
+	};
 
 	Workbook.prototype.cleanCollaborativeFilterObj = function () {
 		if (!Asc.CT_NamedSheetView.prototype.asc_getName) {

@@ -3857,6 +3857,9 @@
 			oWS.model.setTopLeftCell(aTrueTopLeftCell[i]);
 		}
 	};
+	WorkbookView.prototype.convertEquationToMath = function (oEquation, isAll) {
+		this.model.convertEquationToMath(oEquation, isAll);
+	};
 
 	//------------------------------------------------------------export---------------------------------------------------
   window['AscCommonExcel'] = window['AscCommonExcel'] || {};

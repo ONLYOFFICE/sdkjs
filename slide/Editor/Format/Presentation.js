@@ -5668,8 +5668,8 @@ CPresentation.prototype.GetAddedTextOnKeyDown = function (e) {
 };
 
 CPresentation.prototype.ConvertEquationToMath = function(oEquation, isAll) {
+    var aEquations = [];
     if(isAll) {
-        var aEquations = [];
         var aSlides = this.Slides;
         for(var nSlide = 0; nSlide < aSlides.length; ++nSlide) {
             var oSlide = aSlides[nSlide];
@@ -5678,20 +5678,22 @@ CPresentation.prototype.ConvertEquationToMath = function(oEquation, isAll) {
                 aSpTree[nSp].collectEquations3(aEquations);
             }
         }
-        if(aEquations.length > 0) {
-            if(!this.Document_Is_SelectionLocked(AscCommon.changestype_Drawing_Props, undefined, undefined, aEquations)) {
-                AscCommon.History.Create_NewPoint(0);
-                for(var nEquation = 0; nEquation < aEquations.length; ++nEquation) {
-                    aEquations[nEquation].replaceToMath();
-                }
-                this.Recalculate();
-            }
-        }
+
     }
     else {
-        if(this.Document_Is_SelectionLocked(AscCommon.changestype_Drawing_Props, undefined, undefined, [oEquation])) {
+        aEquations.push(oEquation);
+    }
+    if(aEquations.length > 0) {
+        var nEquation;
+        var aObjectsForCheck = [];
+        for(nEquation = 0; nEquation < aEquations.length; ++nEquation) {
+            aObjectsForCheck.push(aEquations[nEquation].getMainGroup() || aEquations[nEquation]);
+        }
+        if(!this.Document_Is_SelectionLocked(AscCommon.changestype_Drawing_Props, undefined, undefined, aObjectsForCheck)) {
             AscCommon.History.Create_NewPoint(0);
-            oEquation.replaceToMath();
+            for(nEquation = 0; nEquation < aEquations.length; ++nEquation) {
+                aEquations[nEquation].replaceToMath();
+            }
             this.Recalculate();
         }
     }

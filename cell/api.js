@@ -5588,6 +5588,23 @@ var editor;
 	}
   	this.wb.undo({All : true});
   };
+  spreadsheet_api.prototype.asc_ConvertEquationToMath = function(oEquation, isAll)
+  {
+      // TODO: Вообще здесь нужно запрашивать шрифты, которые использовались в старой формуле,
+      //      но пока это только 1 шрифт "Cambria Math".
+      var oWorkbook = this.wb;
+      var loader   = AscCommon.g_font_loader;
+      var fontinfo = AscFonts.g_fontApplication.GetFontInfo("Cambria Math");
+      var isasync  = loader.LoadFont(fontinfo, function()
+      {
+          oWorkbook.convertEquationToMath(oEquation, isAll);
+      }, this);
+
+      if (false === isasync)
+      {
+          oWorkbook.convertEquationToMath(oEquation, isAll);
+      }
+  };
 
   /*
    * Export
@@ -6054,4 +6071,7 @@ var editor;
   prot["asc_setSkin"] = prot.asc_setSkin;
 
   prot["asc_getEscapeSheetName"] = prot.asc_getEscapeSheetName;
+
+
+  prot["asc_ConvertEquationToMath"] = prot.asc_ConvertEquationToMath;
 })(window);
