@@ -10119,6 +10119,32 @@ QueryTableRefresh.prototype.syncIndexes = function(tableColumns) {
 		}
 	}
 };
+QueryTableRefresh.prototype.syncIndexes2 = function(tableColumns) {
+	//при удалении приходится меняться tableColumnId, поскольку id  у колонок таблиц у нас формируются на сохранение
+	//а соотсетствие именно по id tableColumn
+
+	if (this.queryTableFields) {
+		var i;
+		var changeQueryTableFieldId = [];
+		for (var j = 0; j < this.queryTableFields.length; j++) {
+			for (i = 0; i < tableColumns.length; i++) {
+				if (tableColumns[i].queryTableFieldId === this.queryTableFields[j].tableColumnId) {
+					this.queryTableFields[j].tableColumnId = i + 1;
+					this.queryTableFields[j].id = i + 1;
+					changeQueryTableFieldId[i] =  i + 1;
+					break;
+				}
+			}
+		}
+		for (i = 0; i < changeQueryTableFieldId.length; i++) {
+			tableColumns[i].queryTableFieldId = changeQueryTableFieldId[i];
+			if (null !== tableColumns[i].uniqueName) {
+				tableColumns[i].uniqueName = changeQueryTableFieldId[i];
+			}
+		}
+	}
+
+};
 
 
 /** @constructor */
