@@ -5867,9 +5867,9 @@ function RangeDataManagerElem(bbox, data)
 			var _r2 = isVertDataRange ? dataRange.r1 + i : dataRange.r2;
 			var _c1 = !isVertDataRange ? dataRange.c1 + i: dataRange.c1;
 			var _c2 = !isVertDataRange ? dataRange.c1 + i: dataRange.c2;
-			var f;
 			AscCommonExcel.executeInR1C1Mode(false, function () {
-				f = (dataRange.sheet ? dataRange.sheet : t.worksheet.sName) + "!" + new Asc.Range(_c1, _r1, _c2, _r2).getName();
+				var sheetName = dataRange.sheet ? dataRange.sheet : t.worksheet.sName;
+				var f = AscCommon.parserHelp.get3DRef(sheetName, new Asc.Range(_c1, _r1, _c2, _r2).getName());
 				sL.setF(f);
 			});
 
