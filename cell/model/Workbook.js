@@ -9594,6 +9594,22 @@
 		if (!from) {
 			return;
 		}
+
+		var updateRange;
+		if (from) {
+			updateRange = from.ranges;
+		}
+		if (to) {
+			if (updateRange) {
+				updateRange = updateRange.concat(to.ranges);
+			} else {
+				updateRange = to.ranges;
+			}
+		}
+		if (updateRange) {
+			this.setDirtyConditionalFormatting(new AscCommonExcel.MultiplyRange(updateRange));
+		}
+
 		from.set(to, addToHistory, this);
 	};
 
@@ -9660,6 +9676,9 @@
 			if (addToHistory) {
 				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_CFRuleDelete, this.getId(), oRule.val.getUnionRange(),
 					new AscCommonExcel.UndoRedoData_CF(id, oRule.val));
+			}
+			if (oRule.ranges) {
+				this.setDirtyConditionalFormatting(new AscCommonExcel.MultiplyRange(oRule.ranges));
 			}
 		}
 	};
