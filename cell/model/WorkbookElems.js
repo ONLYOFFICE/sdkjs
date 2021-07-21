@@ -6541,8 +6541,9 @@ function RangeDataManagerElem(bbox, data)
 			this.removeDependencies(deleted);
 
 			if (this.QueryTable) {
-				this.QueryTable.deleteTableColumns(deleted);
-				this.QueryTable.syncIndexes(this.TableColumns);
+				this.cleanQueryTables();
+				//this.QueryTable.deleteTableColumns(deleted);
+				//this.QueryTable.syncIndexes(this.TableColumns);
 			}
 
 			//todo undo
@@ -6587,7 +6588,8 @@ function RangeDataManagerElem(bbox, data)
 		this.TableColumns = newTableColumns;
 
 		if (this.QueryTable) {
-			this.QueryTable.syncIndexes(this.TableColumns);
+			this.cleanQueryTables();
+			//this.QueryTable.syncIndexes(this.TableColumns);
 		}
 
 		/*if(this.SortState && this.SortState.SortConditions && this.SortState.SortConditions[0])
@@ -6894,6 +6896,21 @@ function RangeDataManagerElem(bbox, data)
 					}
 				}
 			}
+		}
+	};
+	TablePart.prototype.cleanQueryTables = function () {
+		//удаляю инфомарцию об queryTables после удаления/добавления колонки таблицы
+		//связано это с тем, что необходимо следить за всеми полями из queryTables + синхронизировать их с tableColumns,
+		//+ есть нюанс - id колонок таблиц сейчас записывается в x2t по порядку в массиве. queryTables связаны с id таблиц
+		//необходимо перейти на генерацию id в js и следить за id
+		//+ записывать в историю, обрабатывать undo/redo
+		//поля, которые попадают в список удаленных, необходимо при undo вовращать с прежними индексами и айдишниками
+		//TODO в следующих версиях необходимо реализовать данный функционал в полном объеме
+		this.QueryTable = null;
+		this.tableType = null;
+		for(var i = 0; i < this.TableColumns.length; i++) {
+			this.TableColumns[i].queryTableFieldId = null;
+			this.TableColumns[i].uniqueName = null;
 		}
 	};
 
