@@ -25220,28 +25220,26 @@ CDocument.prototype.CanDragAndDrop = function()
 CDocument.prototype.ConvertTextToTable = function(oProps)
 {
 	if (!this.IsTextSelectionUse())
-	return;
+		return;
 
 	if (!this.IsSelectionLocked(AscCommon.changestype_Document_Contentt))
 	{
 		this.StartAction(AscDFH.historydescription_Document_ConvertTextToTable);
 
-		var oSelectedContent = this.GetSelectedContent(true);
 		var IsReplace = false;
 		var oTable = this.GetCurrentTablesStack().pop();
-		var ElCount = oSelectedContent.Elements.length;
+		var ElCount = oProps.Selected.Elements.length;
 		if (oTable && ElCount == 1)
 		{
 			if (oTable.Parent === this && oTable.IsSelectedAll())
-			{
 				IsReplace = true;
-			}
 		}
-		else if (oSelectedContent.HaveTable)// && oSelectedContent.Elements[ElCount-1].Element.IsTable())
+		else if (oProps.Selected.HaveTable)// && oProps.Selected.Elements[ElCount-1].Element.IsTable())
 		{
 			IsReplace = true;
 		}
-		this.private_ConvertTextToTable(oSelectedContent, oProps);
+		var oSelectedContent = new CSelectedContent();
+		this.private_ConvertTextToTable(oProps, oSelectedContent);
 		var oParagraph = this.GetCurrentParagraph();
 		var oParent = oParagraph.GetParent();
 		if (oSelectedContent && oParent)
@@ -25300,15 +25298,13 @@ CDocument.prototype.ConvertTextToTable = function(oProps)
 		this.FinalizeAction();
 	}
 };
-CDocument.prototype.private_ConvertTextToTable = function(oSelectedContent, oProps)
+CDocument.prototype.private_ConvertTextToTable = function(oProps, oSelectedContent)
 {
 	var TableSeize = oProps.get_Size();
 	TableSeize = {rows: TableSeize[0], cols : TableSeize[1]};
-	var oFirstItem = oSelectedContent.Elements[0].Element.GetParent();
-	this.private_PreConvertTextToTable(oSelectedContent, oProps);
-	oSelectedContent.Reset();
-	oProps.put_ColsCount(TableSeize.cols, true);
-	var oArrRows = oProps.get_Rows();
+	var TableArr = this.private_PreConvertTextToTable(oProps);
+	var oFirstItem = oProps.Selected.Elements[0].Element.GetParent();
+	var haveTable = oProps.Selected.HaveTable;
 	var oItem = (oFirstItem === this) ? oFirstItem : this.GetCurrentParagraph().GetParent();
 	var Grid = [];
 	var W;
@@ -25341,22 +25337,27 @@ CDocument.prototype.private_ConvertTextToTable = function(oSelectedContent, oPro
 		Grid[Index] = W / TableSeize.cols;
 	
 	var oTable = new CTable(this.DrawingDocument, this, true, TableSeize.rows, TableSeize.cols, Grid);
-
-	var haveTable = false;
-	for (var i = 0; i < oArrRows.length; i++)
+	
+	var index = -1;
+	var k = 1;
+	var SeparatorType = oProps.get_SeparatorType();
+	for (var i = 0; i < TableArr.length; i++)
 	{
-		for (var j = 0; j < oArrRows[i].length; j++)
+		if (SeparatorType !== 1)
+			k = 1;
+
+		for (var j = 0; j < TableArr[i].length; j++, k++)
 		{
-			var oCellContent = oTable.GetRow(i).GetCell(j).GetContent();
-			// oCellContent.ClearConten(false);
-			if (oArrRows[i][j])
-			{
-				oCellContent.AddContent([oArrRows[i][j]]);
-				if (oArrRows[i][j].IsTable())
-					haveTable = true;
-			}
+			if (k == 1)
+				index++;
+
+			var oCellContent = oTable.GetRow(index).GetCell(k-1).GetContent();
+			oCellContent.AddContent([TableArr[i][j]]);
+			if (k == TableSeize.cols && ( (TableArr[i].length == 1 || j < TableArr[i].length - 1) && (i < TableArr.length -1 || SeparatorType !== 1)) )
+				k = 0;
 		}
 	}
+
 	oTable.SelectAll();
 	if (oProps.get_AutoFitType() !== 3)
 	{
@@ -25370,7 +25371,6 @@ CDocument.prototype.private_ConvertTextToTable = function(oSelectedContent, oPro
 		oTable.SetTableProps(oTableProps);
 	}
 	oSelectedContent.Add(new CSelectedElement(oTable, true));
-	return oSelectedContent;
 };
 /**
 * Подготовка к преобразованию текста в таблицу
@@ -25383,14 +25383,14 @@ CDocument.prototype.PreConvertTextToTable = function(oProps)
 
 	if (!this.IsSelectionLocked(AscCommon.changestype_Document_Contentt))
 	{
-		var oSelectedContent = this.GetSelectedContent(true);
 		if (!oProps)
 		{
-			oProps = new Asc.CAscTextToTableProperties(this);
+			oProps = new Asc.CAscTextToTableProperties(this, this.GetSelectedContent(true));
 			var separator = {tab : true, comma : true};
-			for (var i = 0; i < oSelectedContent.Elements.length && (separator.comma || separator.tab); i++)
+			var Elements = oProps.Selected.Elements;
+			for (var i = 0; i < Elements.length && (separator.comma || separator.tab); i++)
 			{
-				var oEl = oSelectedContent.Elements[i].Element;
+				var oEl = Elements[i].Element;
 				if (separator.comma)
 				{
 					var oElText = (oEl.GetText) ? oEl.GetText() : "";
@@ -25428,28 +25428,27 @@ CDocument.prototype.PreConvertTextToTable = function(oProps)
 				oProps.put_Separator(0x003B);
 			}
 		}
-		this.private_PreConvertTextToTable(oSelectedContent, oProps);
+		oProps.private_recalculate();
 		return oProps;
 	}
 };
-CDocument.prototype.private_PreConvertTextToTable = function(oSelectedContent, oProps)
+CDocument.prototype.private_PreConvertTextToTable = function(oProps)
 {
-	var oArrRows = [];
-	var oArrCells = [];
-	var FNewArrCells = false;
-	var oCellsCount = 0;
 	var SeparatorType = oProps.get_SeparatorType();
-	var Separator = (SeparatorType == 3) ? oProps.get_Separator() : null;
+	var Separator     = (SeparatorType == 3) ? oProps.get_Separator() : null;
+	var oCollsCount   = 0;
+	var Elements      = oProps.Selected.Elements;
+	var oArrRows      = [];
+	var oArrCells     = [];
 	
-	for (var i = oSelectedContent.Elements.length - 1; i >= 0; i--)
+	for (var i = Elements.length - 1; i >= 0; i--)
 	{
-		if (FNewArrCells)
-			oArrCells = [];
-		var oElement = oSelectedContent.Elements[i].Element;
+		var oElement = Elements[i].Element.Copy();
 		if (oElement.IsParagraph() && SeparatorType !== 1)
 		{
 			var oNewParagraph = new Paragraph(this.DrawingDocument, this);
 			oArrCells.unshift(oNewParagraph);
+
 			for (var j = oElement.Content.length - 1; j >= 0; j--)
 			{
 				var oSecondEl = oElement.Content[j];
@@ -25461,32 +25460,17 @@ CDocument.prototype.private_PreConvertTextToTable = function(oSelectedContent, o
 						if (oThirdEl.Type === para_End)
 							continue;
 
-						if (SeparatorType === 2)
+						if ( (SeparatorType === 2 && oThirdEl.Type === para_Tab) || (oThirdEl.Type === para_Text && oThirdEl.Value === Separator) )
 						{
-							if (oThirdEl.Type === para_Tab)
-							{
-								var oNewRun = oSecondEl.Split2(k, oNewParagraph, 0);
-								oNewRun.Remove_FromContent(0, 1)
-								oNewParagraph.AddToContent(0, oNewRun);
-								oNewParagraph = new Paragraph(this.DrawingDocument, this);
-								oArrCells.unshift(oNewParagraph);
-							}
+							var oNewRun = oSecondEl.Split2(k, oNewParagraph, 0);
+							oNewRun.Remove_FromContent(0, 1);
+							oNewParagraph.AddToContent(0, oNewRun);
+							oNewParagraph = new Paragraph(this.DrawingDocument, this);
+							oArrCells.unshift(oNewParagraph);
 						}
-						else
-						{
-							if (oThirdEl.Type === para_Text && oThirdEl.Value === Separator)
-							{
-								var oNewRun = oSecondEl.Split2(k, oNewParagraph, 0);
-								oNewRun.Remove_FromContent(0, 1);
-								oNewParagraph.AddToContent(0, oNewRun);
-								oNewParagraph = new Paragraph(this.DrawingDocument, this);
-								oArrCells.unshift(oNewParagraph);
-							}
-						}
+
 						if (!k && oSecondEl.Content.length)
-						{
 							oNewParagraph.AddToContent(0, oSecondEl);
-						}
 
 					}
 				}
@@ -25498,34 +25482,26 @@ CDocument.prototype.private_PreConvertTextToTable = function(oSelectedContent, o
 		}
 		else if (oElement.IsTable() && SeparatorType == 1)
 		{
-			FNewArrCells = false;
 			oArrCells.unshift(oElement);
 		}
 		else
 		{
 			oArrRows.unshift([oElement]);
-			if (!oCellsCount)
-				oCellsCount = 1;
+			oArrCells = [];
+			if (!oCollsCount)
+				oCollsCount = 1;
 		}
+
 		if (oArrCells.length)
 		{
-			if (oCellsCount < oArrCells.length)
-				oCellsCount = oArrCells.length;
+			if (oCollsCount < oArrCells.length)
+				oCollsCount = oArrCells.length;
 
-			if (i == 0 || i > 0 && !oSelectedContent.Elements[i-1].Element.IsTable())
-			{
-				oArrRows.unshift(oArrCells);
-				FNewArrCells = true;
-			}
-			else
-			{
-				FNewArrCells = false;
-			}
+			oArrRows.unshift(oArrCells);
+			oArrCells = [];
 		}
 	}
-	oProps.put_Rows(oArrRows, true);
-	oProps.put_ColsCount(oCellsCount, false, true);
-	oProps.put_RowsCount(oArrRows.length);
+	return oArrRows;
 };
 /**
  * Конвертируем текущую таблицу в текст

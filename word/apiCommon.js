@@ -2331,7 +2331,7 @@
 	* @param CDocument
 	* @constructor
 	*/
-	function CAscTextToTableProperties(CDocument)
+	function CAscTextToTableProperties(CDocument, oSelectedContent)
 	{
 		/* Separator types:
 			1 - ParaEnd
@@ -2345,59 +2345,28 @@
 		*/
 		this.Rows			= 0;
 		this.Cols			= 0;
-		this.ArrRows		= [];
-		this.Default		= {ArrRows : [], rows : 0, cols : 0};
 		this.AutoFitType	= 1;
 		this.FitValue		= -1;
 		this.SeparatorType	= 1;
 		this.Separator		= null;
 		this.Document		= CDocument;
+		this.Selected		= oSelectedContent;
 	}
 	CAscTextToTableProperties.prototype.get_Size = function()
 	{
 		return [this.Rows, this.Cols];
 	};
-	CAscTextToTableProperties.prototype.put_ColsCount = function(count, needRecal, isDefault)
+	CAscTextToTableProperties.prototype.put_ColsCount = function(count, needRecal)
 	{
-		var colscount = (count > 1) ? count : 1;
+		this.Cols = (count > 1) ? count : 1;
 		if (needRecal)
-		{
-			this.private_recalculate(colscount);
-			return this.get_Size();
-		}
-		else
-			this.Cols = colscount;
+			this.private_recalculate(true);
 
-		if (isDefault)
-			this.Default.cols = colscount;
-	};
-	CAscTextToTableProperties.prototype.get_Rows = function()
-	{
-		return this.ArrRows;
+		return this.get_Size();
 	};
 	CAscTextToTableProperties.prototype.put_RowsCount = function(count)
 	{
 		this.Rows = (count > 1) ? count : 1;
-	};
-	CAscTextToTableProperties.prototype.put_Rows = function(newRows, isDefault)
-	{
-		this.ArrRows = newRows.map(function (item) {
-			return item.slice();
-		});
-		if (isDefault)
-			this.put_DefaultRows(newRows);
-	};
-	CAscTextToTableProperties.prototype.get_DefaultRows = function()
-	{
-		return this.Default.ArrRows;
-	};
-	CAscTextToTableProperties.prototype.put_DefaultRows = function(newRows)
-	{
-		this.Default.ArrRows = newRows;
-		// newRows.map(function (item) {
-		// 	return [...item]
-		// });
-		this.Default.rows = newRows.length;
 	};
 	CAscTextToTableProperties.prototype.get_AutoFitType = function()
 	{
@@ -2423,10 +2392,9 @@
 	{
 		this.SeparatorType = (type > 0 && type <= 3) ? type : 1;
 		if (needRecal)
-		{
 			this.private_recalculate();
-			return this.get_Size();
-		}
+
+		return this.get_Size();
 	};
 	CAscTextToTableProperties.prototype.get_Separator = function()
 	{
@@ -2437,93 +2405,108 @@
 		this.Separator = val;
 		return this.put_SeparatorType(3, needRecal);
 	};
-	CAscTextToTableProperties.prototype.private_recalculate = function(count)
+	CAscTextToTableProperties.prototype.private_recalculate = function(bFixed)
 	{
-		this.put_Rows(this.get_DefaultRows(), false);
-		// size надо тоже сделать ещё дефолтный вариант, для восставноления
-		// и обновлять его надо тоже при каждом пересчете
-		var size =
+		var SeparatorType = this.get_SeparatorType();
+		var Separator     = (SeparatorType == 3) ? this.get_Separator() : null;
+		var oCollsCount   = 0;
+		var oRowsCount    = 0;
+		var Cells         = 0;
+		var Elements      = this.Selected.Elements;
+		var Cols          = bFixed ? this.Cols : 0;
+		
+		for (var i = 0; i < Elements.length; i++)
 		{
-			rows : this.Default.rows,
-			cols : this.Default.cols
-		};
-		if (count)
-		{
-			if (size.cols < count){
-				if (this.get_SeparatorType() == 1)
+			var oElement = Elements[i].Element;
+			if (oElement.IsParagraph() && SeparatorType !== 1)
+			{
+				Cells++;
+				
+				for (var j = 0; j < oElement.Content.length; j++)
 				{
-					// если в плюс и сепаратор абзац (то мы просто заполняем все ячейки по порядку абзацами до конца строки)
-					var newArrRows = [];
-					var newArrCells = [];
-					var tmpArr = [];
-					for (var i = 0; i < size.rows; i++)
+					var oSecondEl = oElement.Content[j];
+					if (oSecondEl.Type === para_Run)
 					{
-						tmpArr = tmpArr.concat(this.ArrRows[i]);
-					}
-					var end = Math.max(tmpArr.length, count);
-					for (var i = 0; i < end; i ++)
-					{
-						if (newArrCells.length >= count)
+						for (var k = 0; k < oSecondEl.Content.length; k++)
 						{
-							newArrRows.push(newArrCells);
-							newArrCells = [];
+
+							var oThirdEl = oSecondEl.Content[k];
+							if (oThirdEl.Type === para_End)
+								continue;
+
+							if ( (SeparatorType === 2 && oThirdEl.Type === para_Tab) || (oThirdEl.Type === para_Text && oThirdEl.Value === Separator) )
+							{
+								if (Cols)
+								{
+									if (Cells < Cols)
+									{
+										Cells++;
+									}
+									else
+									{
+										if (oCollsCount < Cells)
+											oCollsCount = Cells;
+										
+										oRowsCount++;
+										Cells = 1;
+									}
+								}
+								else
+								{
+									Cells++;
+								}
+							}
 						}
-						// newArrCells.push((tmpArr[i]) ? tmpArr[i] : new Paragraph(this.Document.DrawingDocument, this.Document));
-						newArrCells.push((tmpArr[i]) ? tmpArr[i] : null);
 					}
+				}
+			}
+			else
+			{
+				if (Cols)
+				{
+					if (Cells < Cols)
+					{
+						Cells++;
+					}
+					else
+					{
+						if (oCollsCount < Cells)
+							oCollsCount = Cells;
 
-					if (newArrCells.length)
-						newArrRows.push(newArrCells);
-
-					this.put_Rows(newArrRows, false);
+						oRowsCount++;
+						Cells = 1;
+					}
 				}
 				else
 				{
-					// если в плюс и сепаратор не абзац, то создаём просто пустые ячейки
-					for (var i = 0; i < size.rows; i++)
-					{
-						for (var j = 0; j < (count - size.cols); j++)
-						{
-							this.ArrRows[i].push(null);
-						}
-					}
-				}
-			}
-			else if (size.cols > count)
-			{
-				var remCount = size.cols - count;
-				if (remCount > 0)
-				{
-					var newArrRows = [];
-					for (var i = 0; i < size.rows; i++)
-					{
-						while (this.ArrRows[i].length > count)
-							newArrRows.push(this.ArrRows[i].splice(0, count));
-						
-						newArrRows.push(this.ArrRows[i]);
-					}
-					this.put_Rows(newArrRows, false);
+					Cells++;
 				}
 			}
 
-			this.put_ColsCount(count);
-			this.put_RowsCount(this.ArrRows.length);
+			if (Cells)
+			{
+				if ( SeparatorType == 1 && Cells < Cols && (i !== Elements.length -1) )
+				{
+					continue;
+				}
+				else
+				{
+					if (oCollsCount < Cells)
+						oCollsCount = Cells;
+
+					oRowsCount++;
+					Cells = 0
+				}
+			}
 		}
-		else
-		{
-			this.Document.PreConvertTextToTable(this);
-			this.put_DefaultRows(this.ArrRows);
-		}
+		this.put_ColsCount( (bFixed ? Cols : oCollsCount), false);
+		this.put_RowsCount(oRowsCount);
 	};
 
 	window['Asc']['CAscTextToTableProperties']				 = window['Asc'].CAscTextToTableProperties = CAscTextToTableProperties;
 	CAscTextToTableProperties.prototype['get_Size']			 = CAscTextToTableProperties.prototype.get_Size;
-	CAscTextToTableProperties.prototype['get_Rows']			 = CAscTextToTableProperties.prototype.get_Rows;
 	CAscTextToTableProperties.prototype['put_RowsCount']	 = CAscTextToTableProperties.prototype.put_RowsCount;
 	CAscTextToTableProperties.prototype['put_ColsCount']	 = CAscTextToTableProperties.prototype.put_ColsCount;
-	CAscTextToTableProperties.prototype['put_Rows'] 		 = CAscTextToTableProperties.prototype.put_Rows;
-	CAscTextToTableProperties.prototype['get_DefaultRows'] 	 = CAscTextToTableProperties.prototype.get_DefaultRows;
-	CAscTextToTableProperties.prototype['put_DefaultRows'] 	 = CAscTextToTableProperties.prototype.put_DefaultRows;
 	CAscTextToTableProperties.prototype['get_AutoFitType']	 = CAscTextToTableProperties.prototype.get_AutoFitType;
 	CAscTextToTableProperties.prototype['put_AutoFitType'] 	 = CAscTextToTableProperties.prototype.put_AutoFitType;
 	CAscTextToTableProperties.prototype['get_Fit']			 = CAscTextToTableProperties.prototype.get_Fit;
