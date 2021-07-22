@@ -1107,8 +1107,21 @@
 		};
 
 		var res = null;
+		var range;
+		if (val !== null && val !== undefined) {
+			val = this._addQuotes(val);
+		}
 		if (this.ranges && this.ranges[0]) {
-			var firstCellInRange = new Asc.Range(this.ranges[0].c1, this.ranges[0].r1, this.ranges[0].c1, this.ranges[0].r1);
+			range = this.ranges[0];
+		} else {
+			var api_sheet = Asc['editor'];
+			var wb = api_sheet.wbModel;
+			var sheet = wb.getActiveWs();
+			range = sheet && sheet.selectionRange && sheet.selectionRange.ranges && sheet.selectionRange.ranges[0];
+		}
+
+		if (range) {
+			var firstCellInRange = new Asc.Range(range.c1, range.r1, range.c1, range.r1);
 
 			AscCommonExcel.executeInR1C1Mode(false, function () {
 				firstCellInRange = firstCellInRange.getName();
@@ -1116,16 +1129,24 @@
 
 			switch (this.type) {
 				case Asc.ECfType.notContainsText:
-					res = "LEFT(" + firstCellInRange + ",LEN(" + val + "=" + val;
+					if (val !== null && val !== undefined) {
+						res = "LEFT(" + firstCellInRange + ",LEN(" + val + "=" + val;
+					}
 					break;
 				case Asc.ECfType.containsText:
-					res = "NOT(ISERROR(SEARCH(" + val + "," + firstCellInRange + ")))";
+					if (val !== null && val !== undefined) {
+						res = "NOT(ISERROR(SEARCH(" + val + "," + firstCellInRange + ")))";
+					}
 					break;
 				case Asc.ECfType.endsWith:
-					res = "RIGHT(" + firstCellInRange + ",LEN(" + val + "=" + val;
+					if (val !== null && val !== undefined) {
+						res = "RIGHT(" + firstCellInRange + ",LEN(" + val + "=" + val;
+					}
 					break;
 				case Asc.ECfType.beginsWith:
-					res = "ISERROR(SEARCH(" + val + "," + firstCellInRange + "))";
+					if (val !== null && val !== undefined) {
+						res = "ISERROR(SEARCH(" + val + "," + firstCellInRange + "))";
+					}
 					break;
 				case Asc.ECfType.notContainsErrors:
 					res = "NOT(ISERROR(" + firstCellInRange + "))";
@@ -1209,17 +1230,6 @@
 	CConditionalFormattingRule.prototype.correctFromInterface = function (val) {
 		var t = this;
 
-		var addQuotes = function (_val) {
-			var _res;
-			if (_val[0] === '"') {
-				_res = _val.replace(/\"/g, "\"\"");
-				_res = "\"" + _res + "\"";
-			} else {
-				_res = "\"" + _val + "\"";
-			}
-			return _res;
-		};
-
 		var isNumeric = !isNaN(parseFloat(val)) && isFinite(val);
 		if (!isNumeric) {
 			var isDate;
@@ -1239,11 +1249,22 @@
 			}
 
 			if (!isFormula) {
-				val = addQuotes(val);
+				val = this._addQuotes(val);
 			}
 		}
 
 		return val;
+	};
+
+	CConditionalFormattingRule.prototype._addQuotes = function (val) {
+		var _res;
+		if (val[0] === '"') {
+			_res = val.replace(/\"/g, "\"\"");
+			_res = "\"" + _res + "\"";
+		} else {
+			_res = "\"" + val + "\"";
+		}
+		return _res;
 	};
 
 	CConditionalFormattingRule.prototype.asc_setColorScaleOrDataBarOrIconSetRule = function (val) {
