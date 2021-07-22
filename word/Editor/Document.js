@@ -25238,7 +25238,7 @@ CDocument.prototype.ConvertTextToTable = function(oProps)
 		{
 			IsReplace = true;
 		}
-		var oSelectedContent = new CSelectedContent();
+		var oSelectedContent = this.GetSelectedContent(true);
 		this.private_ConvertTextToTable(oProps, oSelectedContent);
 		var oParagraph = this.GetCurrentParagraph();
 		var oParent = oParagraph.GetParent();
@@ -25302,9 +25302,10 @@ CDocument.prototype.private_ConvertTextToTable = function(oProps, oSelectedConte
 {
 	var TableSeize = oProps.get_Size();
 	TableSeize = {rows: TableSeize[0], cols : TableSeize[1]};
-	var TableArr = this.private_PreConvertTextToTable(oProps);
-	var oFirstItem = oProps.Selected.Elements[0].Element.GetParent();
-	var haveTable = oProps.Selected.HaveTable;
+	var TableArr = this.private_PreConvertTextToTable(oProps, oSelectedContent);
+	var oFirstItem = oSelectedContent.Elements[0].Element.GetParent();
+	var haveTable = oSelectedContent.HaveTable;
+	oSelectedContent.Reset();
 	var oItem = (oFirstItem === this) ? oFirstItem : this.GetCurrentParagraph().GetParent();
 	var Grid = [];
 	var W;
@@ -25381,63 +25382,60 @@ CDocument.prototype.PreConvertTextToTable = function(oProps)
 	if (!this.IsTextSelectionUse())
 		return;
 
-	if (!this.IsSelectionLocked(AscCommon.changestype_Document_Contentt))
+	if (!oProps)
 	{
-		if (!oProps)
+		oProps = new Asc.CAscTextToTableProperties(this, this.GetSelectedContent());
+		var separator = {tab : true, comma : true};
+		var Elements = oProps.Selected.Elements;
+		for (var i = 0; i < Elements.length && (separator.comma || separator.tab); i++)
 		{
-			oProps = new Asc.CAscTextToTableProperties(this, this.GetSelectedContent(true));
-			var separator = {tab : true, comma : true};
-			var Elements = oProps.Selected.Elements;
-			for (var i = 0; i < Elements.length && (separator.comma || separator.tab); i++)
+			var oEl = Elements[i].Element;
+			if (separator.comma)
 			{
-				var oEl = Elements[i].Element;
-				if (separator.comma)
+				var oElText = (oEl.GetText) ? oEl.GetText() : "";
+				separator.comma = oElText.indexOf(";") !== -1;
+			}
+			if (separator.tab)
+			{
+				var hasTab = false;
+				for (var j = 0; j < oEl.Content.length && !hasTab; j++)
 				{
-					var oElText = (oEl.GetText) ? oEl.GetText() : "";
-					separator.comma = oElText.indexOf(";") !== -1;
-				}
-				if (separator.tab)
-				{
-					var hasTab = false;
-					for (var j = 0; j < oEl.Content.length && !hasTab; j++)
+					var oInsideEl = oEl.Content[j];
+					if (oInsideEl.Type === para_Run)
 					{
-						var oInsideEl = oEl.Content[j];
-						if (oInsideEl.Type === para_Run)
+						for (var k = 0; k < oInsideEl.Content.length; k++)
 						{
-							for (var k = 0; k < oInsideEl.Content.length; k++)
+							if (oInsideEl.Content[k].Type === para_Tab)
 							{
-								if (oInsideEl.Content[k].Type === para_Tab)
-								{
-									hasTab = true;
-									break;
-								}
+								hasTab = true;
+								break;
 							}
 						}
 					}
-					separator.tab = hasTab;
 				}
-			}
-
-			if (separator.tab)
-			{
-				oProps.put_SeparatorType(2);
-			}
-			else if (separator.comma)
-			{
-				oProps.put_SeparatorType(3);
-				oProps.put_Separator(0x003B);
+				separator.tab = hasTab;
 			}
 		}
-		oProps.private_recalculate();
-		return oProps;
+
+		if (separator.tab)
+		{
+			oProps.put_SeparatorType(2);
+		}
+		else if (separator.comma)
+		{
+			oProps.put_SeparatorType(3);
+			oProps.put_Separator(0x003B);
+		}
 	}
+	oProps.private_recalculate();
+	return oProps;
 };
-CDocument.prototype.private_PreConvertTextToTable = function(oProps)
+CDocument.prototype.private_PreConvertTextToTable = function(oProps, oSelectedContent)
 {
 	var SeparatorType = oProps.get_SeparatorType();
 	var Separator     = (SeparatorType == 3) ? oProps.get_Separator() : null;
 	var oCollsCount   = 0;
-	var Elements      = oProps.Selected.Elements;
+	var Elements      = oSelectedContent.Elements;
 	var oArrRows      = [];
 	var oArrCells     = [];
 	
