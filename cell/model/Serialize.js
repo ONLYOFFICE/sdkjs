@@ -2181,64 +2181,65 @@
 				this.bs.WriteItem(c_oSer_QueryTableRefresh.SortState, function () {
 					oThis.WriteSortState(queryTableRefresh.sortState);
 				});
-            }
+			}
 			if (null != queryTableRefresh.queryTableFields) {
-			    this.bs.WriteItem(c_oSer_QueryTableRefresh.QueryTableFields, function () {
-                    oThis.WriteQueryTableFields(queryTableRefresh.queryTableFields);
-                });
-            }
+				this.bs.WriteItem(c_oSer_QueryTableRefresh.QueryTableFields, function () {
+					oThis.WriteQueryTableFields(queryTableRefresh.queryTableFields);
+				});
+			}
 			if (null != queryTableRefresh.queryTableDeletedFields) {
-                this.bs.WriteItem(c_oSer_QueryTableRefresh.QueryTableDeletedFields, function () {
-                    oThis.WriteQueryTableDeletedFields(queryTableRefresh.queryTableDeletedFields);
-                });
-            }
+				this.bs.WriteItem(c_oSer_QueryTableRefresh.QueryTableDeletedFields, function () {
+					oThis.WriteQueryTableDeletedFields(queryTableRefresh.queryTableDeletedFields);
+				});
+			}
 		};
-        this.WriteQueryTableFields = function (queryTableFields) {
-            var oThis = this;
-            for (var i = 0, length = queryTableFields.length; i < length; ++i)
-                this.bs.WriteItem(c_oSer_QueryTableField.QueryTableField, function () {
-                    oThis.WriteQueryTableField(queryTableFields[i]);
-                });
-        };
-        this.WriteQueryTableField = function (queryTableField) {
+		this.WriteQueryTableFields = function (queryTableFields) {
+			var oThis = this;
+			for (var i = 0, length = queryTableFields.length; i < length; ++i) {
+				this.bs.WriteItem(c_oSer_QueryTableField.QueryTableField, function () {
+					oThis.WriteQueryTableField(queryTableFields[i]);
+				});
+			}
+		};
+		this.WriteQueryTableField = function (queryTableField) {
 
-            var oThis = this;
-            if (null != queryTableField.name) {
-                this.bs.WriteItem(c_oSer_QueryTableField.Name, function () {
-                    oThis.memory.WriteString3(queryTableField.name);
-                });
-            }
-            if (null != queryTableField.id) {
-                this.bs.WriteItem(c_oSer_QueryTableField.Id, function () {
-                    oThis.memory.WriteLong(queryTableField.id);
-                });
-            }
-            if (null != queryTableField.tableColumnId) {
-                this.bs.WriteItem(c_oSer_QueryTableField.TableColumnId, function () {
-                    oThis.memory.WriteLong(queryTableField.tableColumnId);
-                });
-            }
-            if (null != queryTableField.rowNumbers) {
-                this.bs.WriteItem(c_oSer_QueryTableField.RowNumbers, function () {
-                    oThis.memory.WriteBool(queryTableField.rowNumbers);
-                });
-            }
-            if (null != queryTableField.fillFormulas) {
-                this.bs.WriteItem(c_oSer_QueryTableField.FillFormulas, function () {
-                    oThis.memory.WriteBool(queryTableField.fillFormulas);
-                });
-            }
-            if (null != queryTableField.dataBound) {
-                this.bs.WriteItem(c_oSer_QueryTableField.DataBound, function () {
-                    oThis.memory.WriteBool(queryTableField.dataBound);
-                });
-            }
-            if (null != queryTableField.clipped) {
-                this.bs.WriteItem(c_oSer_QueryTableField.Clipped, function () {
-                    oThis.memory.WriteBool(queryTableField.clipped);
-                });
-            }
-        };
+			var oThis = this;
+			if (null != queryTableField.name) {
+				this.bs.WriteItem(c_oSer_QueryTableField.Name, function () {
+					oThis.memory.WriteString3(queryTableField.name);
+				});
+			}
+			if (null != queryTableField.id) {
+				this.bs.WriteItem(c_oSer_QueryTableField.Id, function () {
+					oThis.memory.WriteLong(queryTableField.id);
+				});
+			}
+			if (null != queryTableField.tableColumnId) {
+				this.bs.WriteItem(c_oSer_QueryTableField.TableColumnId, function () {
+					oThis.memory.WriteLong(queryTableField.tableColumnId);
+				});
+			}
+			if (null != queryTableField.rowNumbers) {
+				this.bs.WriteItem(c_oSer_QueryTableField.RowNumbers, function () {
+					oThis.memory.WriteBool(queryTableField.rowNumbers);
+				});
+			}
+			if (null != queryTableField.fillFormulas) {
+				this.bs.WriteItem(c_oSer_QueryTableField.FillFormulas, function () {
+					oThis.memory.WriteBool(queryTableField.fillFormulas);
+				});
+			}
+			if (null != queryTableField.dataBound) {
+				this.bs.WriteItem(c_oSer_QueryTableField.DataBound, function () {
+					oThis.memory.WriteBool(queryTableField.dataBound);
+				});
+			}
+			if (null != queryTableField.clipped) {
+				this.bs.WriteItem(c_oSer_QueryTableField.Clipped, function () {
+					oThis.memory.WriteBool(queryTableField.clipped);
+				});
+			}
+		};
 		this.WriteQueryTableDeletedFields = function (queryTableDeletedFields) {
 			var oThis = this;
 			for (var i = 0, length = queryTableDeletedFields.length; i < length; ++i) {
@@ -2247,13 +2248,13 @@
 				});
 			}
 		};
-        this.WriteQueryTableDeletedField = function (queryTableDeletedField) {
-            var oThis = this;
-            if (null != queryTableDeletedField.name) {
+		this.WriteQueryTableDeletedField = function (queryTableDeletedField) {
+			var oThis = this;
+			if (null != queryTableDeletedField.name) {
 				this.memory.WriteByte(c_oSer_QueryTableDeletedField.Name);
 				this.memory.WriteString2(queryTableDeletedField.name);
-            }
-        };
+			}
+		};
     }
     /** @constructor */
 	function BinarySharedStringsTableWriter(memory, wb, oSharedStrings, bsw)
