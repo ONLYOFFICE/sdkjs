@@ -6618,7 +6618,8 @@ function RangeDataManagerElem(bbox, data)
 
 		this.TableColumns = newTableColumns;
 		if (this.QueryTable) {
-			this.QueryTable.syncIndexes(this.TableColumns);
+			this.cleanQueryTables();
+			//this.QueryTable.syncIndexes(this.TableColumns);
 		}
 		this.buildDependencies();
 	};

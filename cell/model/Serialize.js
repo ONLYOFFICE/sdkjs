@@ -1978,16 +1978,6 @@
                 this.memory.WriteByte(c_oSer_TableColumns.CalculatedColumnFormula);
                 this.memory.WriteString2(tableColumn.CalculatedColumnFormula);
             }
-			if(null != tableColumn.CalculatedColumnFormula)
-			{
-				this.memory.WriteByte(c_oSer_TableColumns.CalculatedColumnFormula);
-				this.memory.WriteString2(tableColumn.CalculatedColumnFormula);
-			}
-			if(null != tableColumn.CalculatedColumnFormula)
-			{
-				this.memory.WriteByte(c_oSer_TableColumns.CalculatedColumnFormula);
-				this.memory.WriteString2(tableColumn.CalculatedColumnFormula);
-			}
 			if(null != tableColumn.uniqueName)
 			{
 				this.memory.WriteByte(c_oSer_TableColumns.UniqueName);
@@ -2188,9 +2178,9 @@
 			}
 
 			if (null != queryTableRefresh.sortState) {
-                this.bs.WriteItem(c_oSer_QueryTableRefresh.SortState, function () {
-                    oThis.WriteSortState(queryTableRefresh.sortState);
-                });
+				this.bs.WriteItem(c_oSer_QueryTableRefresh.SortState, function () {
+					oThis.WriteSortState(queryTableRefresh.sortState);
+				});
             }
 			if (null != queryTableRefresh.queryTableFields) {
 			    this.bs.WriteItem(c_oSer_QueryTableRefresh.QueryTableFields, function () {
@@ -2249,13 +2239,14 @@
                 });
             }
         };
-        this.WriteQueryTableDeletedFields = function (queryTableDeletedFields) {
-            var oThis = this;
-            for (var i = 0, length = queryTableDeletedFields.length; i < length; ++i)
-                this.bs.WriteItem(c_oSer_QueryTableDeletedField.QueryTableDeletedField, function () {
-                    oThis.WriteQueryTableDeletedField(queryTableDeletedFields[i]);
-                });
-        };
+		this.WriteQueryTableDeletedFields = function (queryTableDeletedFields) {
+			var oThis = this;
+			for (var i = 0, length = queryTableDeletedFields.length; i < length; ++i) {
+				this.bs.WriteItem(c_oSer_QueryTableDeletedField.QueryTableDeletedField, function () {
+					oThis.WriteQueryTableDeletedField(queryTableDeletedFields[i]);
+				});
+			}
+		};
         this.WriteQueryTableDeletedField = function (queryTableDeletedField) {
             var oThis = this;
             if (null != queryTableDeletedField.name) {
