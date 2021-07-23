@@ -2434,7 +2434,7 @@
 							if (oThirdEl.Type === para_End)
 								continue;
 
-							if ( (SeparatorType === 2 && oThirdEl.Type === para_Tab) || (oThirdEl.Type === para_Text && oThirdEl.Value === Separator) )
+							if ( (SeparatorType === 2 && oThirdEl.Type === para_Tab) || ((oThirdEl.Type === para_Text || oThirdEl.Type === para_Space) && oThirdEl.Value === Separator) )
 							{
 								if (Cols)
 								{
@@ -2454,6 +2454,42 @@
 								else
 								{
 									Cells++;
+								}
+							}
+						}
+					}
+					else if (oSecondEl.Type === para_Math && SeparatorType === 3)
+					{
+						for (var k = 0; k < oSecondEl.Root.Content.length; k++)
+						{
+							var oThirdEl = oSecondEl.Root.Content[k];
+							if (oThirdEl.Type !== para_Math_Run)
+								continue;
+
+							for (var p = 0; p < oThirdEl.Content.length; p++)
+							{
+								var oFourthEl = oThirdEl.Content[p];
+								if (((oFourthEl.Type === para_Math_Text || oFourthEl.Type === para_Math_Ampersand || oFourthEl.Type === para_Math_BreakOperator) && oFourthEl.value === Separator) )
+								{
+									if (Cols)
+									{
+										if (Cells < Cols)
+										{
+											Cells++;
+										}
+										else
+										{
+											if (oCollsCount < Cells)
+												oCollsCount = Cells;
+											
+											oRowsCount++;
+											Cells = 1;
+										}
+									}
+									else
+									{
+										Cells++;
+									}
 								}
 							}
 						}

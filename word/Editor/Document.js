@@ -25441,7 +25441,7 @@ CDocument.prototype.private_PreConvertTextToTable = function(oProps, oSelectedCo
 	
 	for (var i = Elements.length - 1; i >= 0; i--)
 	{
-		var oElement = Elements[i].Element.Copy();
+		var oElement = Elements[i].Element;
 		if (oElement.IsParagraph() && SeparatorType !== 1)
 		{
 			var oNewParagraph = new Paragraph(this.DrawingDocument, this);
@@ -25458,9 +25458,9 @@ CDocument.prototype.private_PreConvertTextToTable = function(oProps, oSelectedCo
 						if (oThirdEl.Type === para_End)
 							continue;
 
-						if ( (SeparatorType === 2 && oThirdEl.Type === para_Tab) || (oThirdEl.Type === para_Text && oThirdEl.Value === Separator) )
+						if ( (SeparatorType === 2 && oThirdEl.Type === para_Tab) || ((oThirdEl.Type === para_Text || oThirdEl.Type === para_Space) && oThirdEl.Value === Separator) )
 						{
-							var oNewRun = oSecondEl.Split2(k, oNewParagraph, 0);
+							var oNewRun = oSecondEl.Split2(k);
 							oNewRun.Remove_FromContent(0, 1);
 							oNewParagraph.AddToContent(0, oNewRun);
 							oNewParagraph = new Paragraph(this.DrawingDocument, this);
@@ -25469,7 +25469,48 @@ CDocument.prototype.private_PreConvertTextToTable = function(oProps, oSelectedCo
 
 						if (!k && oSecondEl.Content.length)
 							oNewParagraph.AddToContent(0, oSecondEl);
+					}
+				}
+				else if (oSecondEl.Type === para_Math && SeparatorType ===3)
+				{
+					var oMath = new ParaMath();
+					for (var k = oSecondEl.Root.Content.length -1; k >= 0; k--)
+					{
+						var oThirdEl = oSecondEl.Root.Content[k];
+						if (oThirdEl.Type !== para_Math_Run)
+						{
+							oMath.Root.AddToContent(0, oThirdEl);
+							oSecondEl.Root.Remove_FromContent(k, 1);
+							continue;
+						}
 
+						for (var p = oThirdEl.Content.length -1 ; p >= 0; p--)
+						{
+							var oFourthEl = oThirdEl.Content[p];
+							if (((oFourthEl.Type === para_Math_Text || oFourthEl.Type === para_Math_Ampersand || oFourthEl.Type === para_Math_BreakOperator) && oFourthEl.value === Separator) )
+							{
+								var oNewRun = oThirdEl.Split2(p);
+								oNewRun.Remove_FromContent(0, 1);
+								oMath.Root.AddToContent(0, oNewRun);
+								oMath.Root.Correct_Content();
+								oNewParagraph.AddToContent(0, oMath);
+								oMath = new ParaMath();
+								oNewParagraph = new Paragraph(this.DrawingDocument, this);
+								oArrCells.unshift(oNewParagraph);
+							}
+
+							if (!p && oThirdEl.Content.length)
+							{
+								oMath.Root.AddToContent(0, oThirdEl);
+								oSecondEl.Root.Remove_FromContent(k, 1);
+							}
+						}
+						
+						if (!k && oMath.Root.Content.length)
+						{
+							oMath.Root.Correct_Content();
+							oNewParagraph.AddToContent(0, oMath);
+						}
 					}
 				}
 				else
