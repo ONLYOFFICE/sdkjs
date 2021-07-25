@@ -9636,6 +9636,7 @@
 			return;
 		}
 
+		var isDel = false;
 		if (ranges) {
 			var _newRanges = [];
 
@@ -9658,7 +9659,8 @@
 			}
 
 			if (!_newRanges.length) {
-				this.deleteCFRule(rule.id, true)
+				this.deleteCFRule(rule.id, true);
+				isDel = true;
 			} else {
 				var newRule = rule.clone();
 				newRule.ranges = _newRanges;
@@ -9666,7 +9668,10 @@
 			}
 		} else {
 			this.deleteCFRule(rule.id, true);
+			isDel = true;
 		}
+
+		return isDel;
 	};
 
 	Worksheet.prototype.deleteCFRule = function (id, addToHistory) {
@@ -9773,10 +9778,11 @@
 	};
 
 	Worksheet.prototype.clearConditionalFormattingRulesByRanges = function (ranges) {
-		var t = this;
-		this.forEachConditionalFormattingRules(function (_rule) {
-			t.tryClearCFRule(_rule, ranges);
-		});
+		for (var i = 0, l = this.aConditionalFormattingRules.length; i < l; ++i) {
+			if (this.tryClearCFRule(this.aConditionalFormattingRules[i], ranges)) {
+				i--;
+			}
+		}
 	};
 
 	Worksheet.prototype.forEachConditionalFormattingRules = function (callback) {
