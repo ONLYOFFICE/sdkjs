@@ -10954,10 +10954,8 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 	{
 		if (true === this.Comments.Is_Use())
 		{
-			var Type = ( docpostype_HdrFtr === this.CurPos.Type ? AscCommon.comment_type_HdrFtr : AscCommon.comment_type_Common );
-
 			// Проверяем не попали ли мы в комментарий
-			var arrComments = this.Comments.Get_ByXY(PageIndex, X, Y, Type);
+			var arrComments = this.Comments.GetByXY(PageIndex, X, Y);
 
 			var CommentsX     = null;
 			var CommentsY     = null;
@@ -13631,8 +13629,26 @@ CDocument.prototype.GetAllComments = function(isMine, isCurrent)
 	{
 		if (true === this.Comments.Is_Use())
 		{
-			var oCurPosXY   = this.GetCursorRealPosition();
-			var arrComments = this.Comments.Get_ByXY(this.CurPage, oCurPosXY.X, oCurPosXY.Y, docpostype_HdrFtr === this.GetDocPosType() ? AscCommon.comment_type_HdrFtr : AscCommon.comment_type_Common);
+			var arrComments = [];
+			if (this.IsSelectionUse())
+			{
+				var oSelectionBounds = this.GetSelectionBounds();
+				if (oSelectionBounds)
+				{
+					var oBounds;
+					if (-1 === oSelectionBounds.Direction)
+						oBounds = oSelectionBounds.Start;
+					else
+						oBounds = oSelectionBounds.End;
+
+					arrComments = this.Comments.GetByRect(this.CurPage, oBounds.X, oBounds.Y, oBounds.W, oBounds.H);
+				}
+			}
+			else
+			{
+				var oCurPosXY = this.GetCursorRealPosition();
+				arrComments   = this.Comments.GetByXY(this.CurPage, oCurPosXY.X, oCurPosXY.Y);
+			}
 
 			for (var nCommentIndex = 0, nCommentsCount = arrComments.length; nCommentIndex < nCommentsCount; ++nCommentIndex)
 			{
