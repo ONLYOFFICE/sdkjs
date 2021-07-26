@@ -9722,7 +9722,7 @@
 		}
 		if (false === this.workbook.bUndoChanges && false === this.workbook.bRedoChanges) {
 			//чистим ту область, куда переносим
-			wsTo.clearConditionalFormattingRulesByRanges([oBBoxTo]);
+			wsTo.clearConditionalFormattingRulesByRanges([oBBoxTo], oBBoxFrom);
 
 			if (!wsFrom) {
 				wsFrom = this;
@@ -9777,9 +9777,10 @@
 		}
 	};
 
-	Worksheet.prototype.clearConditionalFormattingRulesByRanges = function (ranges) {
+	Worksheet.prototype.clearConditionalFormattingRulesByRanges = function (ranges, exceptionRange) {
 		for (var i = 0, l = this.aConditionalFormattingRules.length; i < l; ++i) {
-			if (this.tryClearCFRule(this.aConditionalFormattingRules[i], ranges)) {
+			var isExcept = exceptionRange && this.aConditionalFormattingRules[i].getIntersections(exceptionRange);
+			if (!isExcept && this.tryClearCFRule(this.aConditionalFormattingRules[i], ranges)) {
 				i--;
 			}
 		}
