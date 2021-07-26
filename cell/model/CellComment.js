@@ -1372,6 +1372,16 @@ CCellCommentator.prototype.Redo = function(type, data) {
 	CCellCommentator.prototype.showSolved = function () {
 		return this.model.workbook.handlers.trigger('showSolved');
 	};
+	CCellCommentator.prototype.isContainsOtherComments = function (range) {
+		var aComments = this.model.aComments;
+		for (var i = 0; i < aComments.length; ++i) {
+			var comment = aComments[i];
+			if (range.contains(comment.nCol, comment.nRow) && !AscCommon.UserInfoParser.canViewComment(comment.sUserName)) {
+				return true;
+			}
+		}
+		return false;
+	};
 
 	//----------------------------------------------------------export----------------------------------------------------
 	var prot;

@@ -13883,6 +13883,10 @@
 							this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
 							return;
 						}
+						if (t.cellCommentator.isContainsOtherComments(arn)) {
+							return;
+						}
+
 						this._isLockedCells(lockRange, null, onChangeWorksheetCallback);
 						break;
 					case c_oAscDeleteOptions.DeleteCellsAndShiftTop:
@@ -13922,6 +13926,9 @@
 							this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
 							return;
 						}
+						if (t.cellCommentator.isContainsOtherComments(arn)) {
+							return;
+						}
 
 						this._isLockedCells(lockRange, null, onChangeWorksheetCallback);
 						break;
@@ -13940,6 +13947,9 @@
 						}
 						if (!this.model.checkShiftArrayFormulas(lockRange, new AscCommon.CellBase(0, -count))) {
 							this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
+							return;
+						}
+						if (t.cellCommentator.isContainsOtherComments(arn)) {
 							return;
 						}
 
@@ -13977,6 +13987,9 @@
 						}
 						if (!this.model.checkShiftArrayFormulas(lockRange, new AscCommon.CellBase(-count, 0))) {
 							this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
+							return;
+						}
+						if (t.cellCommentator.isContainsOtherComments(arn)) {
 							return;
 						}
 
