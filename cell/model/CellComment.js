@@ -934,10 +934,14 @@ CCellCommentator.prototype.addComment = function(comment, bIsNotUpdate) {
 			oComment.asc_putRow(activeCell.row);
 		}
 
-		var existComment = this.getComment(oComment.nCol, oComment.nRow, false);
+		var existComment = this.getComment(oComment.nCol, oComment.nRow, false, true);
 		if (existComment) {
-			oComment = existComment;
-			bChange = true;
+			if (!AscCommon.UserInfoParser.canViewComment(existComment.sUserName)) {
+				return;
+			} else {
+				oComment = existComment;
+				bChange = true;
+			}
 		}
 	}
 
@@ -1036,7 +1040,7 @@ CCellCommentator.prototype.removeComment = function(id, bNoEvent, bNoAscLock, bN
 
 // Extra functions
 
-	CCellCommentator.prototype.getComment = function (col, row, excludeHidden) {
+	CCellCommentator.prototype.getComment = function (col, row, excludeHidden, notCheckCanView) {
 		// Array of root items
 		var comment = null;
 		var _col = col, _row = row, mergedRange = null;
@@ -1068,7 +1072,9 @@ CCellCommentator.prototype.removeComment = function(id, bNoEvent, bNoAscLock, bN
 					}
 				}
 				if (comment) {
-					return ((excludeHidden && this._checkHidden(comment)) || !AscCommon.UserInfoParser.canViewComment(comment.sUserName)) ? null : comment;
+					var _isHidden = excludeHidden && this._checkHidden(comment);
+					var _canView = notCheckCanView || (!notCheckCanView && AscCommon.UserInfoParser.canViewComment(comment.sUserName));
+					return (_isHidden || !_canView) ? null : comment;
 				}
 			}
 		}
