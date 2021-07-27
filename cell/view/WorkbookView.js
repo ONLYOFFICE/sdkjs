@@ -3842,6 +3842,19 @@
 		this.defaults.worksheetView.updateStyle();
 	};
 
+	WorkbookView.prototype.removeHandlersList = function () {
+		var eventList = ["changeSheetViewSettings", "cleanCellCache", "changeWorksheetUpdate", "showWorksheet",
+			"setSelection", "getSelectionState", "setSelectionState", "drawWS", "showDrawingObjects", "setCanUndo",
+			"setCanRedo", "setDocumentModified", "updateWorksheetByModel", "undoRedoAddRemoveRowCols",
+			"undoRedoHideSheet", "updateSelection", "asc_onLockDefNameManager", 'addComment', 'removeComment',
+			'hiddenComments', 'showSolved', "hideSpecialPasteOptions", "toggleAutoCorrectOptions", "cleanCutData",
+			"updateGroupData"];
+
+		for (var i = 0; i < eventList.length; i++) {
+			this.handlers.remove(eventList[i]);
+		}
+	};
+
 
 	//------------------------------------------------------------export---------------------------------------------------
   window['AscCommonExcel'] = window['AscCommonExcel'] || {};

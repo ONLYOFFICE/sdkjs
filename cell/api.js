@@ -1291,6 +1291,12 @@ var editor;
 		this.isApplyChangesOnOpenEnabled = true;
 		this.isDocumentLoadComplete = false;
 
+		//удаляю весь handlersList, добавленный при инициализации wbView
+		//потому что старый при открытии использовать нельзя(в случае с истрией версий при повторном открытии файла там остаются старые функции от предыдущего workbookview)
+		//по идее нужно делать его полное зануление, а при открытии создавать заново. но есть функции, которые
+		//добавляются в интерфейсе и в случае с историей версий заново не добавляются
+		this.wb.removeHandlersList();
+
 		if (this.wbModel.DrawingDocument) {
 			this.wbModel.DrawingDocument.CloseFile();
 		}
@@ -2056,6 +2062,7 @@ var editor;
 			if (this.VersionHistory.changes) {
 				this.VersionHistory.applyChanges(this);
 			}
+			this.sheetsChanged();
 			this.asc_Resize();
 		}
 		//this.asc_Resize(); // Убрал, т.к. сверху приходит resize (http://bugzilla.onlyoffice.com/show_bug.cgi?id=14680)
@@ -4724,7 +4731,7 @@ var editor;
 			this.CoAuthoringApi.onSaveChanges(e[Index], null, true);
 		}
 		this.collaborativeEditing.applyChanges();
-		this._onUpdateAfterApplyChanges();
+		//this._onUpdateAfterApplyChanges();
 	};
 
   spreadsheet_api.prototype.asc_nativeGetFile = function() {
