@@ -1291,11 +1291,6 @@ var editor;
 		this.isApplyChangesOnOpenEnabled = true;
 		this.isDocumentLoadComplete = false;
 
-		/*var oLogicDocument = this.WordControl.m_oLogicDocument;
-		oLogicDocument.StopRecalculate();
-		oLogicDocument.Stop_CheckSpelling();
-		AscCommon.pptx_content_loader.ImageMapChecker = {};*/
-
 		if (this.wbModel.DrawingDocument) {
 			this.wbModel.DrawingDocument.CloseFile();
 		}
