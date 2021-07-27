@@ -1275,8 +1275,7 @@ var editor;
   spreadsheet_api.prototype.openDocument = function(file) {
 	//todo native.js -> openDocument
   	if (file.changes && this.VersionHistory) {
-		this.VersionHistory.changes = file.changes;
-		this.VersionHistory.applyChanges(this);
+  		this.VersionHistory.changes = file.changes;
 	}
 
 	this._openDocument(file.data);
@@ -2058,6 +2057,12 @@ var editor;
 			this.sendEvent('asc_onError', c_oAscError.ID.OpenWarning, c_oAscError.Level.NoCritical);
 		}
 
+		if (this.VersionHistory) {
+			if (this.VersionHistory.changes) {
+				this.VersionHistory.applyChanges(this);
+			}
+			this.asc_Resize();
+		}
 		//this.asc_Resize(); // Убрал, т.к. сверху приходит resize (http://bugzilla.onlyoffice.com/show_bug.cgi?id=14680)
 	};
 
