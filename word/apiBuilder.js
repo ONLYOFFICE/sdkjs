@@ -11955,7 +11955,8 @@
 						var nPosToAdd   = nPosToDel
 						var nCharsToDel = Math.min(oChange.deleteCount, oInfo.StringCount);
 						
-						if ((nPosToDel >= oInfo.Run.Content.length && nCharsToDel !== 0) || (nCharsToDel === 0 && oChange.deleteCount !== 0))
+						if ((nPosToDel >= oInfo.Run.Content.length && nCharsToDel !== 0) || (nCharsToDel === 0 && oChange.deleteCount !== 0)
+							|| nPosToAdd > oInfo.Run.Content.length)
 							continue;
 
 						for (var nChar = 0; nChar < nCharsToDel; nChar++)
