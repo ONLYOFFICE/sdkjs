@@ -6678,10 +6678,10 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 			oThis.bs.WriteItem(c_oSerSdt.PictureFormPrRespectBorders, function (){oThis.memory.WriteBool(val.Borders);});
 		}
 		if (null != val.ShiftX) {
-			oThis.bs.WriteItem(c_oSerSdt.PictureFormPrShiftX, function (){oThis.memory.WriteDouble(val.ShiftX);});
+			oThis.bs.WriteItem(c_oSerSdt.PictureFormPrShiftX, function (){oThis.memory.WriteDouble2(val.ShiftX);});
 		}
 		if (null != val.ShiftY) {
-			oThis.bs.WriteItem(c_oSerSdt.PictureFormPrShiftY, function (){oThis.memory.WriteDouble(val.ShiftY);});
+			oThis.bs.WriteItem(c_oSerSdt.PictureFormPrShiftY, function (){oThis.memory.WriteDouble2(val.ShiftY);});
 		}
 	};
 };
@@ -13150,9 +13150,9 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		} else if (c_oSerSdt.PictureFormPrRespectBorders === type) {
 			val.Borders = this.stream.GetBool();
 		} else if (c_oSerSdt.PictureFormPrShiftX === type) {
-			val.ShiftX = this.stream.GetDouble();
+			val.ShiftX = this.stream.GetDoubleLE();
 		} else if (c_oSerSdt.PictureFormPrShiftY === type) {
-			val.ShiftY = this.stream.GetDouble();
+			val.ShiftY = this.stream.GetDoubleLE();
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}
