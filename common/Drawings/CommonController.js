@@ -2181,6 +2181,12 @@ DrawingObjectsController.prototype =
 
         var oApi = Asc.editor || editor;
         var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
+
+		if (this.selectedObjects.length === 1
+			&& this.selectedObjects[0].isForm()
+			&& this.selectedObjects[0].getInnerForm().IsFormLocked())
+			isDrawHandles = false;
+
         var i;
         if(this.selection.textSelection)
         {

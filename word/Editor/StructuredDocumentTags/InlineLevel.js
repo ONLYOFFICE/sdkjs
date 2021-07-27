@@ -1297,6 +1297,14 @@ CInlineLevelSdt.prototype.CanBeEdited = function()
 
 	return (undefined === this.Pr.Lock || c_oAscSdtLockType.Unlocked === this.Pr.Lock || c_oAscSdtLockType.SdtLocked === this.Pr.Lock);
 };
+/**
+ * Проверяем, залочена ли данная форма
+ * @returns {boolean}
+ */
+CInlineLevelSdt.prototype.IsFormLocked = function()
+{
+	return !(undefined === this.Pr.Lock || c_oAscSdtLockType.Unlocked === this.Pr.Lock || c_oAscSdtLockType.ContentLocked === this.Pr.Lock);
+};
 //----------------------------------------------------------------------------------------------------------------------
 // Функции совместного редактирования
 //----------------------------------------------------------------------------------------------------------------------
