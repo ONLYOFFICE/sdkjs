@@ -2547,7 +2547,6 @@ CInlineLevelSdt.prototype.ConvertFormToFixed = function()
 		g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
 
 		var nTextDescent = Math.abs(g_oTextMeasurer.GetDescender());
-
 		oRun.Set_Position(oTextPr.Position - nTextDescent);
 		oInnerRun.Recalc_CompiledPr(true);
 	}

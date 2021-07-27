@@ -24867,6 +24867,7 @@ CDocument.prototype.ConvertFormFixedType = function(sId, isToFixed)
 		else
 			oForm.ConvertFormToInline();
 
+		this.RemoveSelection();
 		oForm.MoveCursorToContentControl(false);
 
 		this.Recalculate();
